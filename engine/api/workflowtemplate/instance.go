@@ -2,42 +2,121 @@ package workflowtemplate
 
 import (
 	"context"
+	"fmt"
+	"strings"
 	"time"
 
 	"github.com/go-gorp/gorp"
 
+	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/group"
+	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/exportentities"
 	"github.com/ovh/cds/sdk/log"
 )
 
-type TemplateRequestModifierFunc func(req *sdk.WorkflowTemplateRequest)
+type TemplateRequestModifierFunc func(wt sdk.WorkflowTemplate, req *sdk.WorkflowTemplateRequest) error
 
 var TemplateRequestModifiers = struct {
-	Detached TemplateRequestModifierFunc
+	Detached                   TemplateRequestModifierFunc
+	DefaultKeys                func(proj sdk.Project) TemplateRequestModifierFunc
+	DefaultNameAndRepositories func(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj sdk.Project, repoURL string) TemplateRequestModifierFunc
 }{
-	Detached: func(req *sdk.WorkflowTemplateRequest) { req.Detached = true },
+	Detached:                   requestModifyDetached,
+	DefaultKeys:                requestModifyDefaultKeysfunc,
+	DefaultNameAndRepositories: requestModifyDefaultNameAndRepositories,
+}
+
+func requestModifyDetached(wt sdk.WorkflowTemplate, req *sdk.WorkflowTemplateRequest) error {
+	req.Detached = true
+	return nil
+}
+
+func requestModifyDefaultKeysfunc(proj sdk.Project) TemplateRequestModifierFunc {
+	return func(wt sdk.WorkflowTemplate, req *sdk.WorkflowTemplateRequest) error {
+		defaultSSHKey := sdk.GenerateProjectDefaultKeyName(proj.Key, sdk.KeyTypeSSH)
+		defaultPGPKey := sdk.GenerateProjectDefaultKeyName(proj.Key, sdk.KeyTypePGP)
+		var defaultSSHKeyFound, defaultPGPKeyFound bool
+		for _, p := range proj.Keys {
+			if p.Type == sdk.KeyTypeSSH && p.Name == defaultSSHKey {
+				defaultSSHKeyFound = true
+			}
+			if p.Type == sdk.KeyTypePGP && p.Name == defaultPGPKey {
+				defaultPGPKeyFound = true
+			}
+			if defaultSSHKeyFound && defaultPGPKeyFound {
+				break
+			}
+		}
+		if req.Parameters == nil {
+			req.Parameters = make(map[string]string)
+		}
+		for _, p := range wt.Parameters {
+			if _, ok := req.Parameters[p.Key]; ok || !p.Required {
+				continue
+			}
+			if p.Type == sdk.ParameterTypeSSHKey && defaultSSHKeyFound {
+				req.Parameters[p.Key] = defaultSSHKey
+			}
+			if p.Type == sdk.ParameterTypePGPKey && defaultPGPKeyFound {
+				req.Parameters[p.Key] = defaultPGPKey
+			}
+		}
+		return nil
+	}
+}
+
+func requestModifyDefaultNameAndRepositories(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj sdk.Project, repoURL string) TemplateRequestModifierFunc {
+	return func(wt sdk.WorkflowTemplate, req *sdk.WorkflowTemplateRequest) error {
+		var repoPath string
+	loopVCSServer:
+		for _, vcs := range proj.VCSServers {
+			repos, err := repositoriesmanager.GetReposForProjectVCSServer(ctx, db, store, proj, vcs.Name, repositoriesmanager.Options{})
+			if err != nil {
+				return err
+			}
+			for _, r := range repos {
+				path := fmt.Sprintf("%s/%s", vcs.Name, r.Fullname)
+				if repoURL == r.HTTPCloneURL || repoURL == r.SSHCloneURL {
+					repoPath = path
+					break loopVCSServer
+				}
+			}
+		}
+
+		if repoPath == "" {
+			return nil
+		}
+
+		splittedPath := strings.Split(repoPath, "/")
+		repoName := splittedPath[len(splittedPath)-1]
+		if req.WorkflowName == "" {
+			req.WorkflowName = repoName
+		}
+		if req.Parameters == nil {
+			req.Parameters = make(map[string]string)
+		}
+		for _, p := range wt.Parameters {
+			if _, ok := req.Parameters[p.Key]; ok || !p.Required {
+				continue
+			}
+			if p.Type == sdk.ParameterTypeRepository {
+				req.Parameters[p.Key] = repoPath
+			}
+		}
+
+		return nil
+	}
 }
 
 // CheckAndExecuteTemplate will execute the workflow template if given workflow components contains a template instance.
 // When detached is set this will not create/update any template instance in database (this is useful for workflow ascode branches).
 func CheckAndExecuteTemplate(ctx context.Context, db *gorp.DbMap, consumer sdk.AuthConsumer, p sdk.Project,
 	data *exportentities.WorkflowComponents, mods ...TemplateRequestModifierFunc) (*sdk.WorkflowTemplateInstance, error) {
-	if data.Template.Name == "" {
+	if data.Template.From == "" {
 		return nil, nil
 	}
-
-	req := sdk.WorkflowTemplateRequest{
-		ProjectKey:   p.Key,
-		WorkflowName: data.Template.Name,
-		Parameters:   data.Template.Parameters,
-	}
-	for i := range mods {
-		mods[i](&req)
-	}
-
-	var result exportentities.WorkflowComponents
 
 	groupName, templateSlug, templateVersion, err := data.Template.ParseFrom()
 	if err != nil {
@@ -70,15 +149,28 @@ func CheckAndExecuteTemplate(ctx context.Context, db *gorp.DbMap, consumer sdk.A
 
 	wt, err := LoadBySlugAndGroupID(ctx, db, templateSlug, grp.ID, LoadOptions.Default)
 	if err != nil {
-		return nil, sdk.WrapError(err, "could not find a template with slug %s in group %s", templateSlug, grp.Name)
+		return nil, sdk.NewErrorFrom(err, "could not find a template with slug %s in group %s", templateSlug, grp.Name)
 	}
 	if templateVersion > 0 {
 		wta, err := LoadAuditByTemplateIDAndVersion(ctx, db, wt.ID, templateVersion)
 		if err != nil {
-			return nil, sdk.WrapError(err, "could not find a template audit with version %d for %s", templateVersion, wt.Path())
+			return nil, err
 		}
 		wt = &wta.DataAfter
 	}
+
+	req := sdk.WorkflowTemplateRequest{
+		ProjectKey:   p.Key,
+		WorkflowName: data.Template.Name,
+		Parameters:   data.Template.Parameters,
+	}
+	for i := range mods {
+		if err := mods[i](*wt, &req); err != nil {
+			return nil, err
+		}
+	}
+
+	var result exportentities.WorkflowComponents
 
 	if req.Detached {
 		wti := &sdk.WorkflowTemplateInstance{

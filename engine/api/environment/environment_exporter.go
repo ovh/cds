@@ -62,7 +62,7 @@ func ExportEnvironment(db gorp.SqlExecutor, env sdk.Environment, encryptFunc sdk
 			return exportentities.Environment{}, sdk.WrapError(err, "Unable to encrypt key")
 		}
 		ek := exportentities.EncryptedKey{
-			Type:    k.Type,
+			Type:    string(k.Type),
 			Name:    k.Name,
 			Content: content,
 		}

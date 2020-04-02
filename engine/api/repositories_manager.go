@@ -376,50 +376,20 @@ func (api *API) getReposFromRepositoriesManagerHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		projectKey := vars[permProjectKey]
-		rmName := vars["name"]
+		vcsServerName := vars["name"]
 		sync := FormBool(r, "synchronize")
 
 		proj, err := project.Load(api.mustDB(), api.Cache, projectKey)
 		if err != nil {
-			return sdk.NewErrorWithStack(err,
-				sdk.NewErrorFrom(sdk.ErrNoReposManagerClientAuth, "cannot get client got %s %s", projectKey, rmName))
-		}
-
-		log.Debug("getReposFromRepositoriesManagerHandler> Loading repo for %s", rmName)
-
-		vcsServer := repositoriesmanager.GetProjectVCSServer(*proj, rmName)
-		if vcsServer == nil {
-			return sdk.WrapError(sdk.ErrNoReposManagerClientAuth, "cannot get client got %s %s", projectKey, rmName)
-		}
-
-		log.Debug("getReposFromRepositoriesManagerHandler> Loading repo for %s; ok", vcsServer.Name)
-
-		client, err := repositoriesmanager.AuthorizedClient(ctx, api.mustDB(), api.Cache, projectKey, vcsServer)
-		if err != nil {
 			return sdk.NewErrorWithStack(err, sdk.NewErrorFrom(sdk.ErrNoReposManagerClientAuth,
-				"cannot get client got %s %s", projectKey, rmName))
+				"cannot get client got %s %s", projectKey, vcsServerName))
 		}
 
-		cacheKey := cache.Key("reposmanager", "repos", projectKey, rmName)
-		if sync {
-			if err := api.Cache.Delete(cacheKey); err != nil {
-				log.Error(ctx, "getReposFromRepositoriesManagerHandler> error on delete cache key %v: %s", cacheKey, err)
-			}
-		}
-
-		var repos []sdk.VCSRepo
-		find, err := api.Cache.Get(cacheKey, &repos)
+		repos, err := repositoriesmanager.GetReposForProjectVCSServer(ctx, api.mustDB(), api.Cache, *proj, vcsServerName, repositoriesmanager.Options{
+			Sync: sync,
+		})
 		if err != nil {
-			log.Error(ctx, "cannot get from cache %s: %v", cacheKey, err)
-		}
-		if !find || len(repos) == 0 {
-			repos, err = client.Repos(ctx)
-			if err != nil {
-				return sdk.WrapError(err, "cannot get repos")
-			}
-			if err := api.Cache.SetWithTTL(cacheKey, repos, 0); err != nil {
-				log.Error(ctx, "cannot SetWithTTL: %s: %v", cacheKey, err)
-			}
+			return err
 		}
 
 		return service.WriteJSON(w, repos, http.StatusOK)

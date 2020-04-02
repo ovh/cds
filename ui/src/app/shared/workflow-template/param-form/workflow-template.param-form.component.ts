@@ -5,7 +5,8 @@ import {
     EventEmitter,
     Input,
     OnInit,
-    Output
+    Output,
+    ViewChild
 } from '@angular/core';
 import { FormControl } from '@angular/forms';
 import { Project } from 'app/model/project.model';
@@ -16,6 +17,9 @@ import {
     WorkflowTemplateInstance
 } from 'app/model/workflow-template.model';
 import { RepoManagerService } from 'app/service/repomanager/project.repomanager.service';
+import { ThemeStore } from 'app/service/theme/theme.store';
+import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
+import { Subscription } from 'rxjs';
 import { finalize, first } from 'rxjs/operators';
 
 @Component({
@@ -24,7 +28,10 @@ import { finalize, first } from 'rxjs/operators';
     styleUrls: ['./workflow-template.param-form.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush
 })
+@AutoUnsubscribe()
 export class WorkflowTemplateParamFormComponent implements OnInit {
+    @ViewChild('codemirror', { static: false }) codemirror: any;
+
     _project: Project;
     @Input('project') set project(data: Project) {
         this._project = data;
@@ -38,13 +45,18 @@ export class WorkflowTemplateParamFormComponent implements OnInit {
     @Output() paramChange = new EventEmitter<ParamData>();
 
     vcsNames: Array<string>;
+    sshKeys: Array<string>;
+    pgpKeys: Array<string>;
     parameterValues: any;
     loading: boolean;
     result: WorkflowTemplateApplyResult;
     codeMirrorConfig: any;
+    themeSubscription: Subscription;
 
     constructor(
-        private _repoManagerService: RepoManagerService, private _cd: ChangeDetectorRef
+        private _repoManagerService: RepoManagerService,
+        private _cd: ChangeDetectorRef,
+        private _theme: ThemeStore
     ) {
         this.codeMirrorConfig = this.codeMirrorConfig = {
             matchBrackets: true,
@@ -54,6 +66,15 @@ export class WorkflowTemplateParamFormComponent implements OnInit {
             autoRefresh: true,
             lineNumbers: true,
         };
+
+        this.themeSubscription = this._theme.get()
+            .pipe(finalize(() => this._cd.markForCheck()))
+            .subscribe(t => {
+                this.codeMirrorConfig.theme = t === 'night' ? 'darcula' : 'default';
+                if (this.codemirror && this.codemirror.instance) {
+                    this.codemirror.instance.setOption('theme', this.codeMirrorConfig.theme);
+                }
+            });
     }
 
     ngOnInit(): void {
@@ -63,6 +84,11 @@ export class WorkflowTemplateParamFormComponent implements OnInit {
     initProject() {
         if (this.project && this.project.vcs_servers) {
             this.vcsNames = this.project.vcs_servers.map(vcs => vcs.name);
+        }
+
+        if (this.project && this.project.keys) {
+            this.sshKeys = this.project.keys.filter(k => k.type === 'ssh').map(k => k.name);
+            this.pgpKeys = this.project.keys.filter(k => k.type === 'pgp').map(k => k.name);
         }
 
         this.parameterValues = {};

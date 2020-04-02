@@ -15,7 +15,7 @@ type DecryptFunc func(gorp.SqlExecutor, int64, string) (string, error)
 // Parse and decrypts an exported key
 func Parse(db gorp.SqlExecutor, projID int64, kname string, kval exportentities.KeyValue, decryptFunc DecryptFunc) (*sdk.Key, error) {
 	k := new(sdk.Key)
-	k.Type = kval.Type
+	k.Type = sdk.KeyType(kval.Type)
 	k.Name = kname
 	if kval.Value != "" {
 		privateKey, err := decryptFunc(db, projID, kval.Value)

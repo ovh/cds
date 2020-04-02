@@ -1386,7 +1386,7 @@ func Push(ctx context.Context, db *gorp.DbMap, store cache.Store, proj *sdk.Proj
 		// load the workflow from database if exists
 		workflowExists, err = Exists(db, proj.Key, data.Workflow.GetName())
 		if err != nil {
-			return nil, nil, nil, sdk.WrapError(err, "Cannot check if workflow exists")
+			return nil, nil, nil, sdk.WrapError(err, "cannot check if workflow exists")
 		}
 		if workflowExists {
 			oldWf, err = Load(ctx, db, store, *proj, data.Workflow.GetName(), LoadOptions{WithIcon: true})
@@ -1403,21 +1403,21 @@ func Push(ctx context.Context, db *gorp.DbMap, store cache.Store, proj *sdk.Proj
 
 	tx, err := db.Begin()
 	if err != nil {
-		return nil, nil, nil, sdk.WrapError(err, "Unable to start tx")
+		return nil, nil, nil, sdk.WrapError(err, "unable to start tx")
 	}
 	defer tx.Rollback() // nolint
 
-	allMsg := []sdk.Message{}
+	var allMsg []sdk.Message
 	for _, app := range data.Applications {
 		var fromRepo string
 		if opts != nil {
 			fromRepo = opts.FromRepository
 		}
 		appDB, msgList, err := application.ParseAndImport(ctx, tx, store, *proj, &app, application.ImportOptions{Force: true, FromRepository: fromRepo}, decryptFunc, u)
-		if err != nil {
-			return nil, nil, nil, sdk.ErrorWithFallback(err, sdk.ErrWrongRequest, "unable to import application %s/%s", proj.Key, app.Name)
-		}
 		allMsg = append(allMsg, msgList...)
+		if err != nil {
+			return allMsg, nil, nil, sdk.ErrorWithFallback(err, sdk.ErrWrongRequest, "unable to import application %s/%s", proj.Key, app.Name)
+		}
 		proj.SetApplication(*appDB)
 	}
 
@@ -1427,10 +1427,10 @@ func Push(ctx context.Context, db *gorp.DbMap, store cache.Store, proj *sdk.Proj
 			fromRepo = opts.FromRepository
 		}
 		envDB, msgList, err := environment.ParseAndImport(tx, *proj, env, environment.ImportOptions{Force: true, FromRepository: fromRepo}, decryptFunc, u)
-		if err != nil {
-			return nil, nil, nil, sdk.ErrorWithFallback(err, sdk.ErrWrongRequest, "unable to import environment %s/%s", proj.Key, env.Name)
+    allMsg = append(allMsg, msgList...)
+    if err != nil {
+			return allMsg, nil, nil, sdk.ErrorWithFallback(err, sdk.ErrWrongRequest, "unable to import environment %s/%s", proj.Key, env.Name)
 		}
-		allMsg = append(allMsg, msgList...)
 		proj.SetEnvironment(*envDB)
 	}
 
@@ -1440,10 +1440,10 @@ func Push(ctx context.Context, db *gorp.DbMap, store cache.Store, proj *sdk.Proj
 			fromRepo = opts.FromRepository
 		}
 		pipDB, msgList, err := pipeline.ParseAndImport(ctx, tx, store, *proj, &pip, u, pipeline.ImportOptions{Force: true, FromRepository: fromRepo})
-		if err != nil {
-			return nil, nil, nil, sdk.ErrorWithFallback(err, sdk.ErrWrongRequest, "unable to import pipeline %s/%s", proj.Key, pip.Name)
+    allMsg = append(allMsg, msgList...)
+    if err != nil {
+			return allMsg, nil, nil, sdk.ErrorWithFallback(err, sdk.ErrWrongRequest, "unable to import pipeline %s/%s", proj.Key, pip.Name)
 		}
-		allMsg = append(allMsg, msgList...)
 		proj.SetPipeline(*pipDB)
 	}
 
@@ -1467,8 +1467,9 @@ func Push(ctx context.Context, db *gorp.DbMap, store cache.Store, proj *sdk.Proj
 	}
 
 	wf, msgList, err := ParseAndImport(ctx, tx, store, *proj, oldWf, data.Workflow, u, importOptions)
-	if err != nil {
-		return msgList, nil, nil, sdk.WrapError(err, "unable to import workflow %s", data.Workflow.GetName())
+  allMsg = append(allMsg, msgList...)
+  if err != nil {
+		return allMsg, nil, nil, sdk.WrapError(err, "unable to import workflow %s", data.Workflow.GetName())
 	}
 
 	// If the workflow is "as-code", it should always be linked to a git repository
@@ -1489,8 +1490,6 @@ func Push(ctx context.Context, db *gorp.DbMap, store cache.Store, proj *sdk.Proj
 		}
 		wf.Applications[wf.WorkflowData.Node.Context.ApplicationID] = app
 	}
-
-	allMsg = append(allMsg, msgList...)
 
 	if !isDefaultBranch {
 		_ = tx.Rollback()
