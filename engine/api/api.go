@@ -707,6 +707,10 @@ func (a *API) Serve(ctx context.Context) error {
 		return migrate.CleanDuplicateHooks(ctx, a.DBConnectionFactory.GetDBMap(), a.Cache, false)
 	}})
 
+	migrate.Add(ctx, sdk.Migration{Name: "FixEmptyUUIDHooks", Release: "0.44.0", Blocker: false, Automatic: false, ExecFunc: func(ctx context.Context) error {
+		return migrate.FixEmptyUUIDHooks(ctx, a.DBConnectionFactory.GetDBMap(), a.Cache)
+	}})
+
 	isFreshInstall, errF := version.IsFreshInstall(a.mustDB())
 	if errF != nil {
 		return sdk.WrapError(errF, "Unable to check if it's a fresh installation of CDS")
