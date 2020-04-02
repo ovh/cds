@@ -18,7 +18,7 @@ import { WorkflowState } from './workflow.state';
         CommonModule,
         ServicesModule,
         SharedModule,
-        NgxsLoggerPluginModule.forRoot({ logger: console, collapsed: false, disabled: !env.production }),
+        NgxsLoggerPluginModule.forRoot({ logger: console, collapsed: false, disabled: env.production }),
         NgxsReduxDevtoolsPluginModule.forRoot({ disabled: env.production }),
         NgxsModule.forRoot([
             AuthenticationState,
