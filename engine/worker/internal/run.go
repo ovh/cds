@@ -449,6 +449,43 @@ func (w *CurrentWorker) setupKeysDirectory(ctx context.Context, jobInfo sdk.Work
 	return kdFile, kdAbs, nil
 }
 
+func (w *CurrentWorker) setupTmpDirectory(ctx context.Context, jobInfo sdk.WorkflowNodeJobRunData) (afero.File, string, error) {
+	tmpDirectory, err := workingDirectory(ctx, w.basedir, jobInfo, "tmp")
+	if err != nil {
+		return nil, "", err
+	}
+
+	fs := w.basedir
+	if err := fs.MkdirAll(tmpDirectory, 0700); err != nil {
+		return nil, "", err
+	}
+
+	tdFile, err := w.basedir.Open(tmpDirectory)
+	if err != nil {
+		return nil, "", err
+	}
+
+	tdAbs, err := filepath.Abs(tdFile.Name())
+	if err != nil {
+		return nil, "", err
+	}
+
+	switch x := w.basedir.(type) {
+	case *afero.BasePathFs:
+		tdAbs, err = x.RealPath(tdFile.Name())
+		if err != nil {
+			return nil, "", err
+		}
+
+		tdAbs, err = filepath.Abs(tdAbs)
+		if err != nil {
+			return nil, "", err
+		}
+	}
+
+	return tdFile, tdAbs, nil
+}
+
 func (w *CurrentWorker) ProcessJob(jobInfo sdk.WorkflowNodeJobRunData) (sdk.Result, error) {
 	ctx := w.currentJob.context
 	t0 := time.Now()
@@ -494,6 +531,16 @@ func (w *CurrentWorker) ProcessJob(jobInfo sdk.WorkflowNodeJobRunData) (sdk.Resu
 	}
 	ctx = workerruntime.SetKeysDirectory(ctx, kdFile)
 	log.Debug("processJob> Setup key directory - %s", kdFile.Name())
+
+	tdFile, _, err := w.setupTmpDirectory(ctx, jobInfo)
+	if err != nil {
+		return sdk.Result{
+			Status: sdk.StatusFail,
+			Reason: fmt.Sprintf("Error: unable to setup tmp directory: %v", err),
+		}, err
+	}
+	ctx = workerruntime.SetTmpDirectory(ctx, tdFile)
+	log.Debug("processJob> Setup tmp directory - %s", tdFile.Name())
 
 	w.currentJob.context = ctx
 

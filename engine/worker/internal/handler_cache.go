@@ -15,6 +15,7 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/spf13/afero"
 
+	"github.com/ovh/cds/engine/worker/pkg/workerruntime"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
@@ -45,16 +46,61 @@ func cachePushHandler(ctx context.Context, wk *CurrentWorker) http.HandlerFunc {
 			return
 		}
 
-		res, size, errTar := sdk.CreateTarFromPaths(afero.NewOsFs(), c.WorkingDirectory, c.Files, nil)
-		if errTar != nil {
-			errTar = sdk.Error{
-				Message: fmt.Sprintf("worker cache push > Cannot tar (%+v) : %v", c.Files, errTar.Error()),
-				Status:  http.StatusBadRequest,
+		tmpDirectory, err := workerruntime.TmpDirectory(wk.currentJob.context)
+		if err != nil {
+			err = sdk.Error{
+				Message: "worker cache push > Cannot get tmp directory : " + err.Error(),
+				Status:  http.StatusInternalServerError,
 			}
-			log.Error(ctx, "%v", errTar)
-			writeError(w, r, errTar)
+			log.Error(ctx, "%v", err)
+			writeError(w, r, err)
 			return
 		}
+
+		tarF, err := afero.TempFile(wk.BaseDir(), tmpDirectory.Name(), "tar-")
+		if err != nil {
+			err = sdk.Error{
+				Message: "worker cache push > Cannot create tmp tar file : " + err.Error(),
+				Status:  http.StatusInternalServerError,
+			}
+			log.Error(ctx, "%v", err)
+			writeError(w, r, err)
+			return
+		}
+		defer tarF.Close() // nolint
+
+		if err := sdk.CreateTarFromPaths(afero.NewOsFs(), c.WorkingDirectory, c.Files, tarF, nil); err != nil {
+			err = sdk.Error{
+				Message: fmt.Sprintf("worker cache push > Cannot tar (%+v) : %v", c.Files, err.Error()),
+				Status:  http.StatusBadRequest,
+			}
+			log.Error(ctx, "%v", err)
+			writeError(w, r, err)
+			return
+		}
+
+		// Seek to be able to read the content of the file just after it had been written
+		if _, err := tarF.Seek(0, 0); err != nil {
+			err = sdk.Error{
+				Message: "worker cache push > Cannot seek tmp tar : " + err.Error(),
+				Status:  http.StatusInternalServerError,
+			}
+			log.Error(ctx, "%v", err)
+			writeError(w, r, err)
+			return
+		}
+
+		tarInfo, err := tarF.Stat()
+		if err != nil {
+			err = sdk.Error{
+				Message: "worker cache push > Cannot get tmp tar file info : " + err.Error(),
+				Status:  http.StatusInternalServerError,
+			}
+			log.Error(ctx, "%v", err)
+			writeError(w, r, err)
+			return
+		}
+
 		params := wk.currentJob.wJob.Parameters
 		projectKey := sdk.ParameterValue(params, "cds.project")
 		if projectKey == "" {
@@ -69,14 +115,14 @@ func cachePushHandler(ctx context.Context, wk *CurrentWorker) http.HandlerFunc {
 
 		var errPush error
 		for i := 0; i < 10; i++ {
-			if errPush = wk.client.WorkflowCachePush(projectKey, sdk.DefaultIfEmptyStorage(c.IntegrationName), vars["ref"], res, size); errPush == nil {
+			if errPush = wk.client.WorkflowCachePush(projectKey, sdk.DefaultIfEmptyStorage(c.IntegrationName), vars["ref"], tarF, int(tarInfo.Size())); errPush == nil {
 				return
 			}
 			time.Sleep(3 * time.Second)
 			log.Error(ctx, "worker cache push > cannot push cache (retry x%d) : %v", i, errPush)
 		}
 
-		err := sdk.Error{
+		err = sdk.Error{
 			Message: "worker cache push > Cannot push cache: " + errPush.Error(),
 			Status:  http.StatusInternalServerError,
 		}

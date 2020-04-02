@@ -190,13 +190,8 @@ func (c *client) Stream(ctx context.Context, method string, path string, body io
 	pprof.SetGoroutineLabels(ctx)
 	var savederror error
 
-	var bodyContent []byte
-	var err error
-	if body != nil {
-		bodyContent, err = ioutil.ReadAll(body)
-		if err != nil {
-			return nil, nil, 0, sdk.WithStack(err)
-		}
+	if body == nil {
+		body = bytes.NewBuffer(nil)
 	}
 
 	var url string
@@ -207,7 +202,7 @@ func (c *client) Stream(ctx context.Context, method string, path string, body io
 	}
 
 	for i := 0; i <= c.config.Retry; i++ {
-		req, requestError := http.NewRequest(method, url, bytes.NewBuffer(bodyContent))
+		req, requestError := http.NewRequest(method, url, body)
 		if requestError != nil {
 			savederror = requestError
 			continue
