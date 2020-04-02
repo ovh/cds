@@ -1,8 +1,7 @@
 <ng-template let-context let-modal="modal" #hookModalComponent>
     <div class="header">{{ 'workflow_node_hook_modal_title' | translate }}</div>
     <div class="content">
-        <app-workflow-node-hook-form [project]="project" [workflow]="workflow" [node]="node" [hook]="hook"
-            #hookFormComponent></app-workflow-node-hook-form>
+        <app-workflow-node-hook-form [workflow]="workflow" #hookFormComponent></app-workflow-node-hook-form>
     </div>
     <div class="actions">
         <button class="ui grey button" [disabled]="loading"

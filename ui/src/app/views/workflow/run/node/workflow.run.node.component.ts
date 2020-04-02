@@ -6,7 +6,6 @@ import { PipelineStatus } from 'app/model/pipeline.model';
 import { Project } from 'app/model/project.model';
 import { WorkflowNodeRun } from 'app/model/workflow.run.model';
 import { RouterService } from 'app/service/router/router.service';
-import { WorkflowRunService } from 'app/service/workflow/run/workflow.run.service';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { AuthenticationState } from 'app/store/authentication.state';
 import { ProjectState } from 'app/store/project.state';
@@ -35,11 +34,11 @@ export class WorkflowNodeRunComponent implements OnInit {
     currentNodeRunID: number;
     currentNodeRunStatus: string;
     currentNodeRunNum: number;
-    commitsLength: number = 0;
-    artifactLength: number = 0;
-    staticFilesLength: number = 0;
-    historyLength: number = 0;
-    testsTotal: number = 0;
+    commitsLength = 0;
+    artifactLength = 0;
+    staticFilesLength = 0;
+    historyLength = 0;
+    testsTotal = 0;
     hasVulnerability;
 
     pipelineName = '';
@@ -59,7 +58,6 @@ export class WorkflowNodeRunComponent implements OnInit {
         private _activatedRoute: ActivatedRoute,
         private _router: Router,
         private _routerService: RouterService,
-        private _workflowRunService: WorkflowRunService,
         private _titleService: Title,
         private _cd: ChangeDetectorRef
     ) {

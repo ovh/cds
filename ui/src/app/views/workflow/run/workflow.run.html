@@ -4,7 +4,7 @@
     </app-workflow-run-summary>
     <ng-container *ngIf="workflowRunData['status'] !== pipelineStatusEnum.PENDING; else pendingBlock">
         <ng-container
-            *ngIf="!workflowRunData['workflow'] || !workflowRunData['workflow'].workflow_data || displayError">
+            *ngIf="displayError">
             <div class="ui grid">
                 <div class="ui row">
                     <div class="ui one wide column mt">
@@ -72,7 +72,7 @@
                 </div>
             </div>
         </ng-container>
-        <ng-container *ngIf="workflowRunData['workflow'] && workflowRunData['workflow'].workflow_data && !displayError">
+        <ng-container *ngIf="workflowRunData['workflow'] && workflowRunData['workflow'].workflow_data">
             <app-workflow-graph class="graph" [direction]="direction" [project]="project"
                                 [workflowData]="workflowRunData['workflow']">
             </app-workflow-graph>

@@ -9,9 +9,8 @@ import {
     ViewChild
 } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
+import { Select, Store } from '@ngxs/store';
 import * as AU from 'ansi_up';
-import cloneDeep from 'lodash-es/cloneDeep';
-import { Observable, Subscription } from 'rxjs';
 import { Action } from 'app/model/action.model';
 import { Job, StepStatus } from 'app/model/job.model';
 import { BuildResult, Log, PipelineStatus } from 'app/model/pipeline.model';
@@ -19,9 +18,10 @@ import { WorkflowNodeJobRun } from 'app/model/workflow.run.model';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { DurationService } from 'app/shared/duration/duration.service';
 import { CDSWebWorker } from 'app/shared/worker/web.worker';
-import { WorkflowState, WorkflowStateModel } from 'app/store/workflow.state';
 import { ProjectState } from 'app/store/project.state';
-import { Select, Store } from '@ngxs/store';
+import { WorkflowState, WorkflowStateModel } from 'app/store/workflow.state';
+import cloneDeep from 'lodash-es/cloneDeep';
+import { Observable, Subscription } from 'rxjs';
 
 @Component({
     selector: 'app-workflow-step-log',
@@ -113,31 +113,34 @@ export class WorkflowStepLogComponent implements OnInit, OnDestroy {
                 refresh = true;
                 this.currentNodeJobRunID = nrj.id;
                 this.job = nrj.job;
-                if (this.job.action.actions.length >= this.stepOrder+1) {
+                if (this.job.action.actions.length >= this.stepOrder + 1) {
                     this.step = this.job.action.actions[this.stepOrder];
                 }
-                if (nrj.job.step_status && nrj.job.step_status.length >= this.stepOrder+1) {
+                if (nrj.job.step_status && nrj.job.step_status.length >= this.stepOrder + 1) {
                     this.stepStatus = nrj.job.step_status[this.stepOrder];
                 }
                 if (this.stepStatus) {
-                    if (this.stepStatus.status === this.pipelineBuildStatusEnum.BUILDING || this.stepStatus.status === this.pipelineBuildStatusEnum.WAITING ||
+                    if (this.stepStatus.status === this.pipelineBuildStatusEnum.BUILDING ||
+                        this.stepStatus.status === this.pipelineBuildStatusEnum.WAITING ||
                         (this.stepStatus.status === this.pipelineBuildStatusEnum.FAIL && !this.step.optional)) {
                         this.showLogs = true;
                     }
-                    if (this.pipelineBuildStatusEnum.isActive(this.stepStatus.status) || this.pipelineBuildStatusEnum.isDone(this.stepStatus.status)) {
+                    if (this.pipelineBuildStatusEnum.isActive(this.stepStatus.status) ||
+                        this.pipelineBuildStatusEnum.isDone(this.stepStatus.status)) {
                         this.initWorker();
                     }
                 }
 
             } else {
                 // check if step status change
-                if (nrj.job.step_status && nrj.job.step_status.length >= this.stepOrder+1) {
+                if (nrj.job.step_status && nrj.job.step_status.length >= this.stepOrder + 1) {
                     let status = nrj.job.step_status[this.stepOrder].status;
                     if (!this.stepStatus || status !== this.stepStatus.status) {
                         if (!this.stepStatus) {
                             this.initWorker();
                             this.showLogs = true;
-                        } else if (this.pipelineBuildStatusEnum.isActive(this.stepStatus.status) && this.pipelineBuildStatusEnum.isDone(status)) {
+                        } else if (this.pipelineBuildStatusEnum.isActive(this.stepStatus.status) &&
+                            this.pipelineBuildStatusEnum.isDone(status)) {
                             this.showLogs = false;
                         }
                         this.stepStatus = nrj.job.step_status[this.stepOrder];

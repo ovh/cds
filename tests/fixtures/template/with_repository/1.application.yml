@@ -2,3 +2,5 @@ version: v1.0
 name: [[.name]]
 vcs_server: [[.params.repo.vcs]]
 repo: [[.params.repo.repository]]
+vcs_connection_type: ssh
+vcs_ssh_key: [[.params.ssh_key_name]]

@@ -1,11 +1,11 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit } from '@angular/core';
+import { Select } from '@ngxs/store';
 import { Commit } from 'app/model/repositories.model';
-import { Column, ColumnType } from '../table/data-table.component';
-import { Select, Store } from '@ngxs/store';
-import { WorkflowState } from 'app/store/workflow.state';
-import { Observable, Subscription } from 'rxjs';
 import { WorkflowNodeRun } from 'app/model/workflow.run.model';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
+import { WorkflowState } from 'app/store/workflow.state';
+import { Observable, Subscription } from 'rxjs';
+import { Column, ColumnType } from '../table/data-table.component';
 
 @Component({
     selector: 'app-commit-list',
@@ -22,7 +22,7 @@ export class CommitListComponent implements OnInit {
     commits: Array<Commit>;
     columns: Column<Commit>[];
 
-    constructor(private _store: Store, private _cd: ChangeDetectorRef) {
+    constructor(private _cd: ChangeDetectorRef) {
         this.columns = [
             <Column<Commit>>{
                 type: ColumnType.IMG_TEXT,

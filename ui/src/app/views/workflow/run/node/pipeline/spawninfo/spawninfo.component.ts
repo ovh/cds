@@ -9,18 +9,17 @@ import {
     ViewChild
 } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
+import { Select, Store } from '@ngxs/store';
 import * as AU from 'ansi_up';
+import { Parameter } from 'app/model/parameter.model';
 import { PipelineStatus, SpawnInfo } from 'app/model/pipeline.model';
 import { WorkflowNodeJobRun } from 'app/model/workflow.run.model';
+import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { CDSWebWorker } from 'app/shared/worker/web.worker';
-import { Observable, Subscription } from 'rxjs';
-import { WorkflowRunJobVariableComponent } from '../variables/job.variables.component';
-import { Select, Store } from '@ngxs/store';
 import { ProjectState } from 'app/store/project.state';
 import { WorkflowState, WorkflowStateModel } from 'app/store/workflow.state';
-import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
-import { Parameter } from 'app/model/parameter.model';
-import { WorkflowRunService } from 'app/service/workflow/run/workflow.run.service';
+import { Observable, Subscription } from 'rxjs';
+import { WorkflowRunJobVariableComponent } from '../variables/job.variables.component';
 
 @Component({
     selector: 'app-workflow-run-job-spawn-info',
@@ -72,7 +71,6 @@ export class WorkflowRunJobSpawnInfoComponent implements OnDestroy, OnInit {
     constructor(
         private _translate: TranslateService,
         private _cd: ChangeDetectorRef,
-        private _workflowRunService: WorkflowRunService,
         private _store: Store
     ) {
         this.zone = new NgZone({ enableLongStackTrace: false });

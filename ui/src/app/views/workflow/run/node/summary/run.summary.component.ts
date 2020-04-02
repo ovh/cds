@@ -1,5 +1,11 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnInit, ViewChild } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit, ViewChild } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
+import { Select, Store } from '@ngxs/store';
+import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
+import { DurationService } from 'app/shared/duration/duration.service';
+import { ProjectState } from 'app/store/project.state';
+import { WorkflowState, WorkflowStateModel } from 'app/store/workflow.state';
+import { Observable, Subscription } from 'rxjs';
 import { finalize, first } from 'rxjs/operators';
 import { PipelineStatus } from '../../../../../model/pipeline.model';
 import { Project } from '../../../../../model/project.model';
@@ -8,12 +14,6 @@ import { WorkflowNodeRun } from '../../../../../model/workflow.run.model';
 import { WorkflowRunService } from '../../../../../service/workflow/run/workflow.run.service';
 import { ToastService } from '../../../../../shared/toast/ToastService';
 import { WorkflowNodeRunParamComponent } from '../../../../../shared/workflow/node/run/node.run.param.component';
-import { Select, Store } from '@ngxs/store';
-import { ProjectState } from 'app/store/project.state';
-import { WorkflowState, WorkflowStateModel } from 'app/store/workflow.state';
-import { Observable, Subscription } from 'rxjs';
-import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
-import { DurationService } from 'app/shared/duration/duration.service';
 
 @Component({
     selector: 'app-workflow-node-run-summary',

@@ -3,20 +3,19 @@ import {
     ChangeDetectorRef,
     Component,
     ElementRef,
-    Input,
     NgZone,
     OnDestroy, OnInit,
     ViewChild
 } from '@angular/core';
+import { Select, Store } from '@ngxs/store';
 import * as AU from 'ansi_up';
 import { PipelineStatus, ServiceLog } from 'app/model/pipeline.model';
 import { WorkflowNodeJobRun } from 'app/model/workflow.run.model';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { CDSWebWorker } from 'app/shared/worker/web.worker';
-import { Observable, Subscription } from 'rxjs';
 import { ProjectState } from 'app/store/project.state';
 import { WorkflowState, WorkflowStateModel } from 'app/store/workflow.state';
-import { Select, Store } from '@ngxs/store';
+import { Observable, Subscription } from 'rxjs';
 
 @Component({
     selector: 'app-workflow-service-log',

@@ -1,10 +1,10 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnInit } from '@angular/core';
-import { WorkflowNodeRun, WorkflowNodeRunArtifact, WorkflowNodeRunStaticFiles } from 'app/model/workflow.run.model';
-import { Column, ColumnType, Filter } from 'app/shared/table/data-table.component';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { Select } from '@ngxs/store';
+import { WorkflowNodeRun, WorkflowNodeRunArtifact, WorkflowNodeRunStaticFiles } from 'app/model/workflow.run.model';
+import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
+import { Column, ColumnType, Filter } from 'app/shared/table/data-table.component';
 import { WorkflowState } from 'app/store/workflow.state';
 import { Observable, Subscription } from 'rxjs';
-import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 
 @Component({
     selector: 'app-workflow-artifact-list',
@@ -64,7 +64,8 @@ export class WorkflowRunArtifactListComponent implements OnInit  {
                 this.artifacts = nr.artifacts;
                 this._cd.markForCheck();
             }
-            if ( (!this.staticFiles && nr.static_files) || (this.staticFiles && nr.static_files && this.staticFiles.length !== nr.static_files.length )){
+            if ( (!this.staticFiles && nr.static_files) ||
+                (this.staticFiles && nr.static_files && this.staticFiles.length !== nr.static_files.length )) {
                 this.staticFiles = nr.static_files;
                 this._cd.markForCheck();
             }

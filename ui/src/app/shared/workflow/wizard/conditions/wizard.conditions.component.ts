@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, EventEmitter, Input, OnInit, Output, ViewChild } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
-import { Store } from '@ngxs/store';
+import { Select, Store } from '@ngxs/store';
 import { PipelineStatus } from 'app/model/pipeline.model';
 import { Project } from 'app/model/project.model';
 // tslint:disable-next-line: max-line-length
@@ -10,9 +10,12 @@ import { WorkflowService } from 'app/service/workflow/workflow.service';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { Table } from 'app/shared/table/table';
 import { ToastService } from 'app/shared/toast/ToastService';
+import { ProjectState } from 'app/store/project.state';
 import { UpdateWorkflow } from 'app/store/workflow.action';
+import { WorkflowState } from 'app/store/workflow.state';
 import cloneDeep from 'lodash-es/cloneDeep';
 import uniqBy from 'lodash-es/uniqBy';
+import { Observable } from 'rxjs';
 import { finalize, first } from 'rxjs/operators';
 import { Subscription } from 'rxjs/Subscription';
 
@@ -24,59 +27,23 @@ import { Subscription } from 'rxjs/Subscription';
 })
 @AutoUnsubscribe()
 export class WorkflowWizardNodeConditionComponent extends Table<WorkflowNodeCondition> implements OnInit {
+    @Input() workflow: Workflow;
+    @Input() readonly = true;
+    @Output() conditionsChange = new EventEmitter<boolean>();
+
     @ViewChild('textareaCodeMirror', { static: false }) codemirror: any;
 
-    @Input() project: Project;
-    @Input() workflow: Workflow;
-    @Input() pipelineId: number;
+    @Select(WorkflowState.getSelectedNode()) node$: Observable<WNode>;
     editableNode: WNode;
-    @Input('node') set node(data: WNode) {
-        if (data) {
-            this.editableNode = cloneDeep(data);
-            if (!this.editableNode.context) {
-                this.editableNode.context = new WNodeContext();
-            }
-            if (!this.editableNode.context.conditions) {
-                this.editableNode.context.conditions = new WorkflowNodeConditions();
-            }
-            if (!this.editableNode.context.conditions.plain) {
-                this.editableNode.context.conditions.plain = new Array<WorkflowNodeCondition>();
-            }
-            this.previousValue = this.editableNode.context.conditions.lua_script;
-            let condition = this.editableNode.context.conditions.plain.find(cc => cc.variable === 'cds.manual');
-            if (condition) {
-                condition.value = <any>(condition.value !== 'false');
-            }
-        }
-    };
-    get node(): WNode {
-        return this.editableNode;
-    }
+    nodeSub: Subscription;
+
+    @Select(WorkflowState.getSelectedHook()) hook$: Observable<WNodeHook>;
     editableHook: WNodeHook;
-    @Input('hook') set hook(data: WNodeHook) {
-        if (data) {
-            this.editableHook = cloneDeep(data);
-            if (!this.editableHook.conditions) {
-                this.editableHook.conditions = new WorkflowNodeConditions();
-            }
-            if (!this.editableHook.conditions.plain) {
-                this.editableHook.conditions.plain = new Array<WorkflowNodeCondition>();
-            }
+    hookSub: Subscription;
 
-            this.previousValue = this.editableHook.conditions.lua_script;
-            let condition = this.editableHook.conditions.plain.find(cc => cc.variable === 'cds.manual');
-            if (condition) {
-                condition.value = <any>(condition.value !== 'false');
-            }
-        }
-    };
-    get hook(): WNodeHook {
-        return this.editableHook;
-    }
-    @Input() readonly = true;
-    @Input() editMode: boolean;
 
-    @Output() conditionsChange = new EventEmitter<boolean>();
+    project: Project;
+    editMode: boolean;
 
     codeMirrorConfig: any;
     loadingConditions = false;
@@ -95,6 +62,8 @@ export class WorkflowWizardNodeConditionComponent extends Table<WorkflowNodeCond
         private _cd: ChangeDetectorRef
     ) {
         super();
+        this.project = this.store.selectSnapshot(ProjectState.projectSnapshot);
+        this.editMode = this.store.selectSnapshot(WorkflowState).editMode;
     }
 
     getData(): Array<WorkflowNodeCondition> {
@@ -102,6 +71,51 @@ export class WorkflowWizardNodeConditionComponent extends Table<WorkflowNodeCond
     }
 
     ngOnInit(): void {
+        this.nodeSub = this.node$.subscribe(n => {
+            if (n && !this.store.selectSnapshot(WorkflowState).hook) {
+                this.editableNode = cloneDeep(n);
+                delete this.editableHook;
+                if (!this.editableNode.context) {
+                    this.editableNode.context = new WNodeContext();
+                }
+                if (!this.editableNode.context.conditions) {
+                    this.editableNode.context.conditions = new WorkflowNodeConditions();
+                }
+                if (!this.editableNode.context.conditions.plain) {
+                    this.editableNode.context.conditions.plain = new Array<WorkflowNodeCondition>();
+                }
+                this.previousValue = this.editableNode.context.conditions.lua_script;
+                let condition = this.editableNode.context.conditions.plain.find(cc => cc.variable === 'cds.manual');
+                if (condition) {
+                    condition.value = <any>(condition.value !== 'false');
+                }
+            } else {
+                delete this.editableNode;
+            }
+            this._cd.markForCheck();
+        });
+        this.hookSub = this.hook$.subscribe(h => {
+            if (h) {
+                this.editableHook = cloneDeep(h);
+                delete this.editableNode;
+                if (!this.editableHook.conditions) {
+                    this.editableHook.conditions = new WorkflowNodeConditions();
+                }
+                if (!this.editableHook.conditions.plain) {
+                    this.editableHook.conditions.plain = new Array<WorkflowNodeCondition>();
+                }
+
+                this.previousValue = this.editableHook.conditions.lua_script;
+                let condition = this.editableHook.conditions.plain.find(cc => cc.variable === 'cds.manual');
+                if (condition) {
+                    condition.value = <any>(condition.value !== 'false');
+                }
+            } else {
+                delete this.editableHook;
+            }
+            this._cd.markForCheck();
+        });
+
         this.codeMirrorConfig = {
             matchBrackets: true,
             autoCloseBrackets: true,
@@ -119,28 +133,26 @@ export class WorkflowWizardNodeConditionComponent extends Table<WorkflowNodeCond
             }
         });
 
-        if (!this.readonly) {
-            if (this.node) {
-                this._workflowService.getTriggerCondition(this.project.key, this.workflow.name, this.node.id)
-                    .pipe(
-                        first(),
-                        finalize(() => {
-                            this.loadingConditions = false;
-                            this._cd.markForCheck();
-                        })
-                    )
-                    .subscribe(wtc => this.triggerConditions = wtc);
-            } else {
-                this._workflowService.getTriggerHookCondition(this.project.key, this.workflow.name)
-                    .pipe(
-                        first(),
-                        finalize(() => {
-                            this.loadingConditions = false;
-                            this._cd.markForCheck();
-                        })
-                    )
-                    .subscribe(wtc => this.triggerConditions = wtc);
-            }
+        if (this.editableNode) {
+            this._workflowService.getTriggerCondition(this.project.key, this.workflow.name, this.editableNode.id)
+                .pipe(
+                    first(),
+                    finalize(() => {
+                        this.loadingConditions = false;
+                        this._cd.markForCheck();
+                    })
+                )
+                .subscribe(wtc => this.triggerConditions = wtc);
+        } else {
+            this._workflowService.getTriggerHookCondition(this.project.key, this.workflow.name)
+                .pipe(
+                    first(),
+                    finalize(() => {
+                        this.loadingConditions = false;
+                        this._cd.markForCheck();
+                    })
+                )
+                .subscribe(wtc => this.triggerConditions = wtc);
         }
     }
 
@@ -226,7 +238,10 @@ export class WorkflowWizardNodeConditionComponent extends Table<WorkflowNodeCond
             projectKey: this.workflow.project_key,
             workflowName: this.workflow.name,
             changes: clonedWorkflow
-        })).pipe(finalize(() => this.loading = false))
+        })).pipe(finalize(() => {
+            this.loading = false;
+            this._cd.markForCheck();
+        }))
             .subscribe(() => {
                 this.conditionsChange.emit(false);
                 if (this.editMode) {

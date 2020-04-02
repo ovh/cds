@@ -1,11 +1,11 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit } from '@angular/core';
+import { Select } from '@ngxs/store';
 import { Coverage } from 'app/model/coverage.model';
 import { Tests } from 'app/model/pipeline.model';
-import { Select, Store } from '@ngxs/store';
-import { WorkflowState } from 'app/store/workflow.state';
-import { Observable, Subscription } from 'rxjs';
 import { WorkflowNodeRun } from 'app/model/workflow.run.model';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
+import { WorkflowState } from 'app/store/workflow.state';
+import { Observable, Subscription } from 'rxjs';
 
 @Component({
     selector: 'app-workflow-tests-result',
@@ -33,7 +33,6 @@ export class WorkflowRunTestsResultComponent implements OnInit {
     defaultBranchTrendBranches: number;
 
     constructor(
-        private _store: Store,
         private _cd: ChangeDetectorRef
     ) {
     }
@@ -86,12 +85,14 @@ export class WorkflowRunTestsResultComponent implements OnInit {
                 if (this.coverage.report.total_lines && this.coverage.report.total_lines > 0) {
                     this.percentLines =
                         parseFloat((this.coverage.report.covered_lines * 100 / this.coverage.report.total_lines).toFixed(2));
-                    if (this.coverage.trend.current_branch_report.total_lines && this.coverage.trend.current_branch_report.total_lines > 0) {
+                    if (this.coverage.trend.current_branch_report.total_lines &&
+                        this.coverage.trend.current_branch_report.total_lines > 0) {
                         this.currentBranchTrendLines =
                             parseFloat((this.coverage.trend.current_branch_report.covered_lines * 100
                                 / this.coverage.trend.current_branch_report.total_lines).toFixed(2));
                     }
-                    if (this.coverage.trend.default_branch_report.total_lines && this.coverage.trend.default_branch_report.total_lines > 0) {
+                    if (this.coverage.trend.default_branch_report.total_lines &&
+                        this.coverage.trend.default_branch_report.total_lines > 0) {
                         this.defaultBranchTrendLines =
                             parseFloat((this.coverage.trend.default_branch_report.covered_lines * 100
                                 / this.coverage.trend.default_branch_report.total_lines).toFixed(2));

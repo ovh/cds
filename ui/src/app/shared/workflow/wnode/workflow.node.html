@@ -1,37 +1,34 @@
 <div class="node-wrapper" (click)="clickOnNode(popup)" (dblclick)="$event.stopPropagation(); dblClickOnNode()"
     [ngSwitch]="node.type" suiPopup [popupTemplate]="popupNode" popupPlacement="right" popupTrigger="outsideClick"
     #popup="suiPopup">
-    <app-workflow-wnode-pipeline *ngSwitchCase="'pipeline'" [project]="project" [workflow]="workflow" [node]="node"
+    <app-workflow-wnode-pipeline *ngSwitchCase="'pipeline'" [workflow]="workflow" [node]="node"
         [noderun]="currentNodeRun" [warnings]="warnings"></app-workflow-wnode-pipeline>
-    <app-workflow-wnode-join *ngSwitchCase="'join'" [project]="project" [workflow]="workflow" [node]="node"
-        [noderun]="currentNodeRun" [workflowrun]="workflowRun" [editMode]="editMode"></app-workflow-wnode-join>
-    <app-workflow-wnode-fork *ngSwitchCase="'fork'" [project]="project" [workflow]="workflow" [node]="node"
-        [noderun]="currentNodeRun"></app-workflow-wnode-fork>
-    <app-workflow-wnode-outgoing-hook *ngSwitchCase="'outgoinghook'" [project]="project" [workflow]="workflow"
-        [node]="node" [noderun]="currentNodeRun" [workflowrun]="workflowRun"></app-workflow-wnode-outgoing-hook>
+    <app-workflow-wnode-join *ngSwitchCase="'join'" [workflow]="workflow" [node]="node"
+        [noderunStatus]="currentNodeRun?.status"></app-workflow-wnode-join>
+    <app-workflow-wnode-fork *ngSwitchCase="'fork'" [noderunStatus]="currentNodeRun?.status"></app-workflow-wnode-fork>
+    <app-workflow-wnode-outgoing-hook *ngSwitchCase="'outgoinghook'" [workflow]="workflow"
+        [node]="node" [noderun]="currentNodeRun"></app-workflow-wnode-outgoing-hook>
 </div>
 <ng-template let-popup #popupNode>
-    <app-workflow-menu-wnode-edit (event)="receivedEvent($event)" [project]="project"
-        [node]="node" [popup]="popup" [workflowrun]="workflowRun" [noderun]="currentNodeRun" [readonly]="readonly"
-        #menu></app-workflow-menu-wnode-edit>
+    <app-workflow-menu-wnode-edit (event)="receivedEvent($event)" [popup]="popup" #menu></app-workflow-menu-wnode-edit>
 </ng-template>
 
 <!-- MODALS -->
-<ng-container *ngIf="project && node && workflow">
+<ng-container *ngIf="project && node && workflow && !hasWorkflowRun">
 
     <!-- Add trigger -->
-    <app-workflow-trigger [loading]="loading" [project]="project" [workflow]="workflow" [source]="node" [editMode]="editMode"
+    <app-workflow-trigger [loading]="loading" [project]="project" [workflow]="workflow" [source]="node"
         (triggerEvent)="updateWorkflow($event, workflowTrigger.modal)" #workflowTrigger></app-workflow-trigger>
     <!-- Add hook -->
-    <app-hook-modal [loading]="loading" [project]="project" [workflow]="workflow" [node]="node" [editMode]="editMode"
-        (hookEvent)="addHook($event, workflowAddHook.modal)" #workflowAddHook></app-hook-modal>
+    <ng-container *ngIf="node.id === workflow.workflow_data.node.id">
+        <app-hook-modal [loading]="loading" [project]="project" [workflow]="workflow" [node]="node"
+                        (hookEvent)="addHook($event, workflowAddHook.modal)" #workflowAddHook></app-hook-modal>
+    </ng-container>
 
     <!-- Delete Node -->
     <app-workflow-node-delete [loading]="loading" [node]="node" [workflow]="workflow"
         (deleteEvent)="updateWorkflow($event, workflowDeleteNode.modal)" #workflowDeleteNode></app-workflow-node-delete>
-
-    <ng-container *ngIf="project && node && workflowRun">
-        <app-workflow-node-run-param #workflowRunNode></app-workflow-node-run-param>
-    </ng-container>
-
+</ng-container>
+<ng-container *ngIf="project && node && workflow && hasWorkflowRun">
+    <app-workflow-node-run-param #workflowRunNode></app-workflow-node-run-param>
 </ng-container>

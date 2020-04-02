@@ -1,19 +1,18 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
+import { Select, Store } from '@ngxs/store';
 import { Job } from 'app/model/job.model';
 import { PipelineStatus } from 'app/model/pipeline.model';
 import { Project } from 'app/model/project.model';
+import { Stage } from 'app/model/stage.model';
 import { WorkflowNodeJobRun, WorkflowNodeRun } from 'app/model/workflow.run.model';
-import { WorkflowRunService } from 'app/service/workflow/run/workflow.run.service';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { DurationService } from 'app/shared/duration/duration.service';
+import { ProjectState } from 'app/store/project.state';
+import { SelectWorkflowNodeRunJob } from 'app/store/workflow.action';
+import { WorkflowState, WorkflowStateModel } from 'app/store/workflow.state';
 import cloneDeep from 'lodash-es/cloneDeep';
 import { Observable, Subscription } from 'rxjs';
-import { Select, Store } from '@ngxs/store';
-import { WorkflowState, WorkflowStateModel } from 'app/store/workflow.state';
-import { ProjectState } from 'app/store/project.state';
-import { Stage } from 'app/model/stage.model';
-import { SelectWorkflowNodeRunJob } from 'app/store/workflow.action';
 
 @Component({
     selector: 'app-node-run-pipeline',
@@ -37,7 +36,8 @@ export class WorkflowRunNodePipelineComponent implements OnInit, OnDestroy {
     // Pipeline data
     stages: Array<Stage>;
     jobTime: Map<number, string>;
-    mapJobStatus: Map<number, { status: string, warnings: number, start: string, done: string }> = new Map<number, { status: string, warnings: number, start: string, done: string }>();
+    mapJobStatus: Map<number, { status: string, warnings: number, start: string, done: string }>
+        = new Map<number, { status: string, warnings: number, start: string, done: string }>();
 
     queryParamsSub: Subscription;
     pipelineStatusEnum = PipelineStatus;
@@ -53,7 +53,6 @@ export class WorkflowRunNodePipelineComponent implements OnInit, OnDestroy {
         private _durationService: DurationService,
         private _route: ActivatedRoute,
         private _router: Router,
-        private _workflowRunService: WorkflowRunService,
         private _cd: ChangeDetectorRef,
         private _store: Store
     ) {
@@ -148,7 +147,8 @@ export class WorkflowRunNodePipelineComponent implements OnInit, OnDestroy {
                         let jobStatusItem = this.mapJobStatus.get(rj.job.pipeline_action_id);
                         if (!jobStatusItem || jobStatusItem.status !== rj.status) {
                             refresh = true;
-                            this.mapJobStatus.set(rj.job.pipeline_action_id, { status: rj.status, warnings, start: rj.start, done: rj.done });
+                            this.mapJobStatus.set(rj.job.pipeline_action_id,
+                                { status: rj.status, warnings, start: rj.start, done: rj.done });
                         }
 
                         if (!currentNodeJobRun && sIndex === 0 && rjIndex === 0) {

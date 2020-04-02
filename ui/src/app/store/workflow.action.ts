@@ -67,7 +67,7 @@ export class SelectWorkflowNodeRun {
     constructor(public payload: { workflowNodeRun: WorkflowNodeRun, node: WNode }) { }
 }
 
-export class SelectWorkflowNodeRunJob{
+export class SelectWorkflowNodeRunJob {
     static readonly type = '[Workflow] Select Workflow Node Job Run';
     constructor(public payload: { jobID: number}) { }
 }
