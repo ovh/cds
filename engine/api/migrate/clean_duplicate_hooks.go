@@ -50,6 +50,10 @@ func cleanDuplicateHooks(ctx context.Context, db *gorp.DbMap, store cache.Store,
 		return sdk.WithStack(err)
 	}
 
+	if projectID == 0 {
+		return nil
+	}
+
 	proj, err := project.LoadByID(tx, store, projectID,
 		project.LoadOptions.WithApplicationWithDeploymentStrategies,
 		project.LoadOptions.WithPipelines,
