@@ -214,28 +214,25 @@ func (api *API) postResyncPRAsCodeHandler() service.Handler {
 		if errP != nil {
 			return sdk.WrapError(errP, "unable to load project")
 		}
-		var app *sdk.Application
-		if fromRepo != "" {
-			apps, err := application.LoadAsCode(api.mustDB(), api.Cache, key, fromRepo)
+		var app sdk.Application
+		switch {
+		case appName != "":
+			appP, err := application.LoadByName(api.mustDB(), api.Cache, key, appName)
 			if err != nil {
 				return err
 			}
-			if len(apps) == 0 {
-				return sdk.WrapError(sdk.ErrApplicationNotFound, "unable to load application as code key:%s fromRepo:%s", key, fromRepo)
-			}
-			app = &apps[0]
-		} else {
-			var err error
-			app, err = application.LoadByName(api.mustDB(), api.Cache, key, appName)
+			app = *appP
+		case fromRepo != "":
+			wkf, err := workflow.LoadByRepo(ctx, api.Cache, api.mustDB(), *proj, fromRepo)
 			if err != nil {
 				return err
 			}
-			if app == nil {
-				return sdk.WrapError(sdk.ErrApplicationNotFound, "unable to load application %s", appName)
-			}
+			app = wkf.Applications[wkf.WorkflowData.Node.Context.ApplicationID]
+		default:
+			return sdk.WrapError(sdk.ErrWrongRequest, "Missing appName or repo query parameter")
 		}
 
-		if _, _, err := sync.SyncAsCodeEvent(ctx, api.mustDB(), api.Cache, *proj, *app, getAPIConsumer(ctx).AuthentifiedUser); err != nil {
+		if _, _, err := sync.SyncAsCodeEvent(ctx, api.mustDB(), api.Cache, *proj, app, getAPIConsumer(ctx).AuthentifiedUser); err != nil {
 			return err
 		}
 		return nil
