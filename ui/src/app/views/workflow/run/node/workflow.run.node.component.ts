@@ -39,7 +39,7 @@ export class WorkflowNodeRunComponent implements OnInit {
     staticFilesLength = 0;
     historyLength = 0;
     testsTotal = 0;
-    hasVulnerability;
+    hasVulnerability = false;
 
     pipelineName = '';
     pipelineStatus = PipelineStatus;
@@ -137,7 +137,7 @@ export class WorkflowNodeRunComponent implements OnInit {
                     this.testsTotal = nr.tests.total;
                     refresh = true;
                 }
-                if (nr.vulnerabilities_report) {
+                if (nr.vulnerabilities_report && nr.vulnerabilities_report.id !== 0) {
                     this.hasVulnerability = true;
                     let result = this.initVulnerabilitySummary(nr);
                     if (this.nbVuln !== result['nbVuln']) {

@@ -289,10 +289,16 @@ export class WorkflowStepLogComponent implements OnInit, OnDestroy {
 
     toggleLogs() {
         this._force = true;
-        if (!this.showLogs && this.stepStatus && PipelineStatus.neverRun(this.stepStatus.status)) {
+        if (!this.showLogs && (!this.stepStatus || PipelineStatus.neverRun(this.stepStatus.status))) {
             return;
         }
         this.showLogs = !this.showLogs;
+        if (!this.showLogs && this.worker) {
+            this.workerSubscription.unsubscribe();
+            this.worker.stop();
+        } else {
+            this.initWorker();
+        }
     }
 
     getLogs(): string {

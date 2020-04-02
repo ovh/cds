@@ -35,7 +35,7 @@
               [class.disabled]="artifactLength === 0 && staticFilesLength === 0">
                 <span *ngIf="artifactLength + staticFilesLength > 1">{{ 'common_artifacts' | translate }}</span>
                 <span *ngIf="artifactLength + staticFilesLength < 2">{{ 'common_artifact' | translate }}</span>
-                <span *ngIf="artifactLength">{{ ' (' + staticFilesLength + artifactLength + ')'}}</span>
+                <span *ngIf="artifactLength">{{ ' (' + (staticFilesLength + artifactLength) + ')'}}</span>
             </a>
             <a sm-item [class.active]="selectedTab === 'history'" (click)="historyLength !== 0 && showTab('history')" [class.disabled]="historyLength === 0">
                 {{ 'common_history' | translate }}

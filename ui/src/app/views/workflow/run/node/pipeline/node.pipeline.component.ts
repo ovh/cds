@@ -109,6 +109,9 @@ export class WorkflowRunNodePipelineComponent implements OnInit, OnDestroy {
     }
 
     selectedJobManual(jobID: number) {
+        if (!this.mapJobStatus[jobID]) {
+            return;
+        }
         let queryParams = cloneDeep(this._route.snapshot.queryParams);
         queryParams['stageId'] = null;
         queryParams['actionId'] = null;
