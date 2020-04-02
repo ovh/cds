@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { Title } from '@angular/platform-browser';
 import { ActivatedRoute, NavigationExtras, Router } from '@angular/router';
-import { Store } from '@ngxs/store';
+import { Select, Store } from '@ngxs/store';
 import { PipelineStatus } from 'app/model/pipeline.model';
 import { Project } from 'app/model/project.model';
 import { WorkflowNodeRun } from 'app/model/workflow.run.model';
@@ -12,7 +12,7 @@ import { AuthenticationState } from 'app/store/authentication.state';
 import { ProjectState } from 'app/store/project.state';
 import { GetWorkflowNodeRun, GetWorkflowRun } from 'app/store/workflow.action';
 import { WorkflowState, WorkflowStateModel } from 'app/store/workflow.state';
-import { Subscription } from 'rxjs';
+import { Observable, Subscription } from 'rxjs';
 
 @Component({
     selector: 'app-workflow-run-node',
@@ -22,6 +22,10 @@ import { Subscription } from 'rxjs';
 })
 @AutoUnsubscribe()
 export class WorkflowNodeRunComponent implements OnInit {
+
+    @Select(WorkflowState.getSelectedNodeRun()) nodeRun$: Observable<WorkflowNodeRun>;
+    nodeRunSubs: Subscription;
+
     // Context info
     project: Project;
     project$: Subscription;
@@ -37,8 +41,6 @@ export class WorkflowNodeRunComponent implements OnInit {
     historyLength: number = 0;
     testsTotal: number = 0;
     hasVulnerability;
-
-    storeSub: Subscription;
 
     pipelineName = '';
     pipelineStatus = PipelineStatus;
@@ -95,49 +97,51 @@ export class WorkflowNodeRunComponent implements OnInit {
     }
 
     ngOnInit(): void {
-        this.storeSub = this._store.select(WorkflowState.getCurrent()).subscribe((s: WorkflowStateModel) => {
-            if (!s.workflow || this.workflowName !== s.workflow.name) {
+        this.nodeRunSubs = this.nodeRun$.subscribe(nr => {
+            let w = this._store.selectSnapshot(WorkflowState.workflowSnapshot);
+            let wr = (<WorkflowStateModel>this._store.selectSnapshot(WorkflowState)).workflowRun;
+            if (!w || this.workflowName !== w.name) {
                 return;
             }
-            if (!s.workflowNodeRun || !s.workflowRun) {
+            if (!nr || !wr) {
                 return;
             }
 
             let refresh = false;
 
-            if (s.workflowNodeRun && s.workflowRun) {
+            if (nr && wr) {
                 if (!this.currentNodeRunID) {
-                    this.currentNodeRunID = s.workflowNodeRun.id;
-                    this.currentNodeRunNum = s.workflowNodeRun.num;
+                    this.currentNodeRunID = nr.id;
+                    this.currentNodeRunNum = nr.num;
                     refresh = true;
                 }
 
-                if (this.currentNodeRunStatus !== s.workflowNodeRun.status) {
-                    this.currentNodeRunStatus = s.workflowNodeRun.status;
+                if (this.currentNodeRunStatus !== nr.status) {
+                    this.currentNodeRunStatus = nr.status;
                     refresh = true;
                 }
 
-                if (s.workflowRun.nodes[s.workflowNodeRun.workflow_node_id].length !== this.historyLength) {
-                    this.historyLength = s.workflowRun.nodes[s.workflowNodeRun.workflow_node_id].length;
+                if (wr.nodes[nr.workflow_node_id].length !== this.historyLength) {
+                    this.historyLength = wr.nodes[nr.workflow_node_id].length;
                     refresh = true;
                 }
 
 
-                if (s.workflowNodeRun.commits && s.workflowNodeRun.commits.length !== this.commitsLength) {
-                    this.commitsLength = s.workflowNodeRun.commits.length;
+                if (nr.commits && nr.commits.length !== this.commitsLength) {
+                    this.commitsLength = nr.commits.length;
                     refresh = true;
                 }
-                if (s.workflowNodeRun.artifacts && s.workflowNodeRun.artifacts.length !== this.artifactLength) {
-                    this.artifactLength = s.workflowNodeRun.artifacts.length;
+                if (nr.artifacts && nr.artifacts.length !== this.artifactLength) {
+                    this.artifactLength = nr.artifacts.length;
                     refresh = true;
                 }
-                if (s.workflowNodeRun.tests && s.workflowNodeRun.tests.total !== this.testsTotal) {
-                    this.testsTotal = s.workflowNodeRun.tests.total;
+                if (nr.tests && nr.tests.total !== this.testsTotal) {
+                    this.testsTotal = nr.tests.total;
                     refresh = true;
                 }
-                if (s.workflowNodeRun.vulnerabilities_report) {
+                if (nr.vulnerabilities_report) {
                     this.hasVulnerability = true;
-                    let result = this.initVulnerabilitySummary(s.workflowNodeRun);
+                    let result = this.initVulnerabilitySummary(nr);
                     if (this.nbVuln !== result['nbVuln']) {
                         this.nbVuln = result['nbVuln'];
                         refresh = true;
@@ -147,22 +151,18 @@ export class WorkflowNodeRunComponent implements OnInit {
                         refresh = true;
                     }
                 }
-                if (s.workflowRun.tags) {
-                    let branch = s.workflowRun.tags.find((tag) => tag.tag === 'git.branch');
+                if (wr.tags) {
+                    let branch = wr.tags.find((tag) => tag.tag === 'git.branch');
                     if (branch) {
                         this._titleService
-                            .setTitle(`Pipeline ${this.pipelineName} • #${s.workflowRun.num} [${branch.value}] • ${this.workflowName}`);
+                            .setTitle(`Pipeline ${this.pipelineName} • #${nr.num} [${branch.value}] • ${this.workflowName}`);
                     }
                 }
             }
             if (refresh) {
                 this._cd.markForCheck();
-            } else {
-                console.log('run:node:view:norefresh');
             }
-
         });
-
     }
 
     showTab(tab: string): void {

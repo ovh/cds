@@ -65,6 +65,7 @@ export class AppService {
         if (!event || !event.type_event) {
             return
         }
+        console.log(event.type_event, event.status);
         if (event.type_event.indexOf(EventType.MAINTENANCE) === 0) {
             this._store.dispatch(new UpdateMaintenance(event.payload['enable']));
             return;

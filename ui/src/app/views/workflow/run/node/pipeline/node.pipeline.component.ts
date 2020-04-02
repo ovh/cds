@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Job, StepStatus } from 'app/model/job.model';
+import { Job } from 'app/model/job.model';
 import { PipelineStatus } from 'app/model/pipeline.model';
 import { Project } from 'app/model/project.model';
 import { WorkflowNodeJobRun, WorkflowNodeRun } from 'app/model/workflow.run.model';
@@ -9,10 +9,11 @@ import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { DurationService } from 'app/shared/duration/duration.service';
 import cloneDeep from 'lodash-es/cloneDeep';
 import { Observable, Subscription } from 'rxjs';
-import { finalize } from 'rxjs/operators';
 import { Select, Store } from '@ngxs/store';
 import { WorkflowState, WorkflowStateModel } from 'app/store/workflow.state';
 import { ProjectState } from 'app/store/project.state';
+import { Stage } from 'app/model/stage.model';
+import { SelectWorkflowNodeRunJob } from 'app/store/workflow.action';
 
 @Component({
     selector: 'app-node-run-pipeline',
@@ -24,25 +25,28 @@ import { ProjectState } from 'app/store/project.state';
 export class WorkflowRunNodePipelineComponent implements OnInit, OnDestroy {
 
     @Select(WorkflowState.getSelectedNodeRun()) nodeRun$: Observable<WorkflowNodeRun>;
-    nodeRun: WorkflowNodeRun;
     nodeRunSubs: Subscription;
+
+    @Select(WorkflowState.getSelectedWorkflowNodeJobRun()) nodeJobRun$: Observable<WorkflowNodeJobRun>;
+    nodeJobRunSubs: Subscription;
+
 
     workflowName: string;
     project: Project;
 
+    // Pipeline data
+    stages: Array<Stage>;
     jobTime: Map<number, string>;
+    mapJobStatus: Map<number, { status: string, warnings: number, start: string, done: string }> = new Map<number, { status: string, warnings: number, start: string, done: string }>();
 
     queryParamsSub: Subscription;
     pipelineStatusEnum = PipelineStatus;
-    selectedRunJob: WorkflowNodeJobRun;
-    selectedRunJobParameters = {};
-    mapJobStatus: Map<number, { status: string, warnings: number }> = new Map<number, { status: string, warnings: number }>();
-    mapStepStatus: Map<string, StepStatus> = new Map<string, StepStatus>();
 
-    previousStatus: string;
-    manual = false;
+    currentNodeRunID: number;
+    currentNodeRunNum: number;
+    currentJob: Job;
+
     displayServiceLogs = false;
-
     durationIntervalID: number;
 
     constructor(
@@ -58,116 +62,81 @@ export class WorkflowRunNodePipelineComponent implements OnInit, OnDestroy {
     }
 
     ngOnInit() {
-        this.updateSelectedItems(this._route.snapshot.queryParams);
         this.queryParamsSub = this._route.queryParams.subscribe((queryParams) => {
             this.updateSelectedItems(queryParams);
         });
-
+        this.nodeJobRunSubs = this.nodeJobRun$.subscribe(rj => {
+            if (!rj && !this.currentJob) {
+                return;
+            }
+            if (!rj) {
+                delete this.currentJob;
+                this._cd.markForCheck();
+                return;
+            }
+            if (rj && this.currentJob && rj.job.pipeline_action_id === this.currentJob.pipeline_action_id) {
+                return;
+            }
+            this.currentJob = rj.job;
+            this._cd.markForCheck();
+        });
         this.nodeRunSubs = this.nodeRun$.subscribe(nr => {
             if (!nr) {
                 return;
             }
-            this.refreshNodeRun(nr);
-            this.deleteInterval();
-            this.updateTime();
-            this.durationIntervalID = window.setInterval(() => {
+            if (this.currentNodeRunID !== nr.id) {
+                this.currentNodeRunID = nr.id;
+                this.currentNodeRunNum = nr.num;
+                this.stages = nr.stages;
+                this.refreshNodeRun(nr);
+                this.deleteInterval();
                 this.updateTime();
+                this.durationIntervalID = window.setInterval(() => {
+                    this.updateTime();
                 }, 5000);
+                this._cd.markForCheck();
+            } else {
+                if (this.refreshNodeRun(nr)) {
+                    this._cd.markForCheck();
+                }
+            }
         });
     }
 
     updateSelectedItems(queryParams) {
-        if (!queryParams['actionId'] && queryParams['stageId']) {
-            this.selectedStage(parseInt(queryParams['stageId'], 10));
-        } else if (queryParams['actionId']) {
-            let job = new Job();
-            job.pipeline_action_id = parseInt(queryParams['actionId'], 10);
-            this.manual = true;
-            this.selectedJob(job);
+        if (queryParams['actionId']) {
+            this.selectJob(queryParams['actionId']);
         }
     }
 
-    selectedJobManual(j: Job) {
+    selectedJobManual(jobID: number) {
         let queryParams = cloneDeep(this._route.snapshot.queryParams);
         queryParams['stageId'] = null;
         queryParams['actionId'] = null;
         queryParams['stepOrder'] = null;
         queryParams['line'] = null;
-        this.manual = true;
-
         this._router.navigate(['.'], { relativeTo: this._route, queryParams, fragment: null });
-        this.selectedJob(j);
+        this.selectJob(jobID);
     }
 
-    checkJobParameters(): void {
-        if (!this.nodeRun || !this.selectedRunJob) {
-            return;
-        }
-        if (this.selectedRunJobParameters[this.selectedRunJob.id]) {
-            return;
-        }
-
-        if (this.selectedRunJob.parameters) {
-            this.selectedRunJobParameters[this.selectedRunJob.id] = this.selectedRunJob.parameters;
-        }
-        this._workflowRunService.getWorkflowNodeRun(this.project.key, this.workflowName, this.nodeRun.num, this.nodeRun.id)
-            .pipe(finalize(() => this._cd.markForCheck()))
-            .subscribe(nr => {
-                if (nr.stages) {
-                    nr.stages.forEach(s => {
-                        if (s.run_jobs) {
-                            s.run_jobs.forEach(rj => {
-                                this.selectedRunJobParameters[rj.id] = rj.parameters;
-                            })
-                        }
-                    });
-                }
-            })
+    selectJob(jobID: number): void {
+        this._store.dispatch(new SelectWorkflowNodeRunJob({jobID: jobID}));
     }
 
-    selectedStage(stageId: number) {
-        let stage = this.nodeRun.stages.find((st) => st.id === stageId);
+    refreshNodeRun(data: WorkflowNodeRun): boolean {
+        let refresh = false;
+        let currentNodeJobRun = (<WorkflowStateModel>this._store.selectSnapshot(WorkflowState)).workflowNodeJobRun;
 
-        if (stage && Array.isArray(stage.run_jobs) && stage.run_jobs.length) {
-            this.selectedRunJob = stage.run_jobs[0];
-            this.checkJobParameters();
-        }
-    }
-
-    selectedJob(j: Job): void {
-        this.nodeRun.stages.forEach(s => {
-            if (s.run_jobs) {
-                let runJob = s.run_jobs.find(rj => rj.job.pipeline_action_id === j.pipeline_action_id);
-                if (runJob) {
-                    this.selectedRunJob = runJob;
-                    this.checkJobParameters();
-                }
-            }
-        });
-    }
-
-    refreshNodeRun(data: WorkflowNodeRun): void {
-        let previousRun = this.nodeRun;
-        this.nodeRun = data;
-
-        if (this.nodeRun) {
-            this.previousStatus = this.nodeRun.status;
-        }
-        // Set selected job if needed or refresh step_status
-        if (this.nodeRun.stages) {
-            this.nodeRun.stages.forEach((s, sIndex) => {
-                if (!this.manual && previousRun && (!previousRun.stages[sIndex].status ||
-                    previousRun.stages[sIndex].status === PipelineStatus.NEVER_BUILT) &&
-                    (s.status === PipelineStatus.WAITING || s.status === PipelineStatus.BUILDING)) {
-                    this.selectedJob(s.jobs[0]);
-                }
+        if (data.stages) {
+            data.stages.forEach((s, sIndex) => {
+                // Test Job status
                 if (s.run_jobs) {
                     s.run_jobs.forEach((rj, rjIndex) => {
+
                         let warnings = 0;
-                        // Update map step status
+                        // compute warning
                         if (rj.job.step_status) {
                             rj.job.step_status.forEach(ss => {
-                                this.mapStepStatus[rj.job.pipeline_action_id + '-' + ss.step_order] = ss;
                                 if (ss.status === PipelineStatus.FAIL && rj.job.action.actions[ss.step_order] &&
                                     rj.job.action.actions[ss.step_order].optional) {
                                     warnings++;
@@ -176,66 +145,71 @@ export class WorkflowRunNodePipelineComponent implements OnInit, OnDestroy {
                         }
 
                         // Update job status
-                        this.mapJobStatus.set(rj.job.pipeline_action_id, { status: rj.status, warnings });
-
-                        // Select temp job
-                        if (!this.selectedRunJob && sIndex === 0 && rjIndex === 0) {
-                            this.selectedRunJob = rj;
-                            this.checkJobParameters();
+                        let jobStatusItem = this.mapJobStatus.get(rj.job.pipeline_action_id);
+                        if (!jobStatusItem || jobStatusItem.status !== rj.status) {
+                            refresh = true;
+                            this.mapJobStatus.set(rj.job.pipeline_action_id, { status: rj.status, warnings, start: rj.start, done: rj.done });
                         }
 
-                        // Update spawninfo
-                        if (this.selectedRunJob && this.selectedRunJob.id === rj.id) {
-                            this.selectedRunJob.spawninfos = rj.spawninfos;
+                        if (!currentNodeJobRun && sIndex === 0 && rjIndex === 0) {
+                            refresh = true;
+                            this.selectJob(s.jobs[0].pipeline_action_id);
+                        } else if (currentNodeJobRun && currentNodeJobRun.job.pipeline_action_id === this.currentJob.pipeline_action_id) {
+                            this.selectJob(this.currentJob.pipeline_action_id);
                         }
                     });
                 }
             });
         }
+        return refresh;
     }
 
+    /**
+     * Update job time
+     */
     updateTime(): void {
-        this.jobTime = new Map<number, string>();
-        let stillRunning = false;
-        if (this.nodeRun.stages) {
-            this.nodeRun.stages.forEach(s => {
-                if (s.run_jobs) {
-                    s.run_jobs.forEach(rj => {
-                        switch (rj.status) {
-                            case this.pipelineStatusEnum.WAITING:
-                                stillRunning = true;
-                                this.jobTime.set(rj.job.pipeline_action_id,
-                                    this._durationService.duration(new Date(rj.queued), new Date()));
-                                break;
-                            case this.pipelineStatusEnum.BUILDING:
-                                stillRunning = true;
-                                this.jobTime.set(rj.job.pipeline_action_id,
-                                    this._durationService.duration(new Date(rj.start), new Date()));
-                                break;
-                            case this.pipelineStatusEnum.SUCCESS:
-                            case this.pipelineStatusEnum.FAIL:
-                            case this.pipelineStatusEnum.STOPPED:
-                                this.jobTime.set(rj.job.pipeline_action_id,
-                                    this._durationService.duration(new Date(rj.start), new Date(rj.done)));
-                                break;
-                        }
-
-                        if (rj.job.step_status) {
-                            rj.job.step_status.forEach(ss => {
-                                this.mapStepStatus.set(rj.job.pipeline_action_id + '-' + ss.step_order, ss);
-                            });
-                        }
-                    });
-                }
-            });
+        if (!this.mapJobStatus || this.mapJobStatus.size === 0) {
+            return;
         }
+        if (!this.jobTime) {
+            this.jobTime = new Map<number, string>();
+        }
+        let stillRunning = false;
+        let refresh = false;
+        this.mapJobStatus.forEach((v, k) => {
+            switch (v.status) {
+                case this.pipelineStatusEnum.WAITING:
+                case this.pipelineStatusEnum.BUILDING:
+                    refresh = true;
+                    stillRunning = true;
+                    this.jobTime.set(k,
+                        this._durationService.duration(new Date(v.start), new Date()));
+                    break;
+                case this.pipelineStatusEnum.SUCCESS:
+                case this.pipelineStatusEnum.FAIL:
+                case this.pipelineStatusEnum.STOPPED:
+                    let dd = this._durationService.duration(new Date(v.start), new Date(v.done));
+                    let item = this.jobTime.get(k);
+                    if (!item || item !== dd) {
+                        this.jobTime.set(k, dd);
+                    }
+                    refresh = true;
+                    break;
+            }
+        });
+
         if (!stillRunning) {
             this.deleteInterval();
+            this._cd.markForCheck();
+        }
+        if (refresh) {
+            this._cd.markForCheck();
         }
     }
 
     ngOnDestroy(): void {
         this.deleteInterval();
+        this._store.dispatch(new SelectWorkflowNodeRunJob({jobID: 0}));
     }
 
     deleteInterval(): void {

@@ -11,15 +11,17 @@ import {
 import { ActivatedRoute, Router } from '@angular/router';
 import * as AU from 'ansi_up';
 import cloneDeep from 'lodash-es/cloneDeep';
-import { Subscription } from 'rxjs';
-import { Action } from '../../../../../../model/action.model';
-import { Job, StepStatus } from '../../../../../../model/job.model';
-import { BuildResult, Log, PipelineStatus } from '../../../../../../model/pipeline.model';
-import { Project } from '../../../../../../model/project.model';
-import { WorkflowNodeJobRun, WorkflowNodeRun } from '../../../../../../model/workflow.run.model';
-import { AutoUnsubscribe } from '../../../../../../shared/decorator/autoUnsubscribe';
-import { DurationService } from '../../../../../../shared/duration/duration.service';
-import { CDSWebWorker } from '../../../../../../shared/worker/web.worker';
+import { Observable, Subscription } from 'rxjs';
+import { Action } from 'app/model/action.model';
+import { Job, StepStatus } from 'app/model/job.model';
+import { BuildResult, Log, PipelineStatus } from 'app/model/pipeline.model';
+import { WorkflowNodeJobRun } from 'app/model/workflow.run.model';
+import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
+import { DurationService } from 'app/shared/duration/duration.service';
+import { CDSWebWorker } from 'app/shared/worker/web.worker';
+import { WorkflowState, WorkflowStateModel } from 'app/store/workflow.state';
+import { ProjectState } from 'app/store/project.state';
+import { Select, Store } from '@ngxs/store';
 
 @Component({
     selector: 'app-workflow-step-log',
@@ -31,34 +33,19 @@ import { CDSWebWorker } from '../../../../../../shared/worker/web.worker';
 export class WorkflowStepLogComponent implements OnInit, OnDestroy {
 
     // Static
-    @Input() step: Action;
     @Input() stepOrder: number;
-    @Input() job: Job;
-    @Input() project: Project;
-    @Input() workflowName: string;
-    @Input() nodeRun: WorkflowNodeRun;
-    @Input() nodeJobRun: WorkflowNodeJobRun;
 
-    // Dynamic
-    @Input('stepStatus')
-    set stepStatus(data: StepStatus) {
-        if (data && data.status && !this.currentStatus && this.showLog) {
-            this.initWorker();
-        }
-        if (data) {
-            this.currentStatus = data.status;
-            if (!this._force && PipelineStatus.isActive(data.status)) {
-                this.showLog = true;
-            }
-        }
-        this._stepStatus = data;
-        this.computeDuration();
-    }
-    get stepStatus() {
-        return this._stepStatus;
-    }
+    currentNodeJobRunID: number;
+    job: Job;
+    step: Action;
+    stepStatus: StepStatus;
+
+    @Select(WorkflowState.getSelectedWorkflowNodeJobRun()) nodeJobRun$: Observable<WorkflowNodeJobRun>;
+    nodeJobRunSubs: Subscription;
+
     logs: Log;
-    currentStatus: string;
+    showLogs = false;
+    /*
     set showLog(data: boolean) {
         let neverRun = PipelineStatus.neverRun(this.currentStatus);
         if (data && !neverRun) {
@@ -74,6 +61,8 @@ export class WorkflowStepLogComponent implements OnInit, OnDestroy {
     get showLog() {
         return this._showLog;
     }
+
+     */
 
     worker: CDSWebWorker;
     workerSubscription: Subscription;
@@ -107,30 +96,66 @@ export class WorkflowStepLogComponent implements OnInit, OnDestroy {
         private _router: Router,
         private _route: ActivatedRoute,
         private _hostElement: ElementRef,
-        private _cd: ChangeDetectorRef
+        private _cd: ChangeDetectorRef,
+        private _store: Store
     ) {
         this.ansi_up.escape_for_html = !this.htmlViewSelected;
+        this.zone = new NgZone({ enableLongStackTrace: false });
     }
 
     ngOnInit(): void {
-        let nodeRunDone = this.nodeRun.status !== this.pipelineBuildStatusEnum.BUILDING &&
-            this.nodeRun.status !== this.pipelineBuildStatusEnum.WAITING;
-        let isLastStep = this.stepOrder === this.job.action.actions.length - 1;
+        this.nodeJobRunSubs = this.nodeJobRun$.subscribe(nrj => {
+            if (!nrj) {
+                return;
+            }
+            let refresh = false;
+            if (this.currentNodeJobRunID !== nrj.id) {
+                refresh = true;
+                this.currentNodeJobRunID = nrj.id;
+                this.job = nrj.job;
+                if (this.job.action.actions.length >= this.stepOrder+1) {
+                    this.step = this.job.action.actions[this.stepOrder];
+                }
+                if (nrj.job.step_status && nrj.job.step_status.length >= this.stepOrder+1) {
+                    this.stepStatus = nrj.job.step_status[this.stepOrder];
+                }
+                if (this.stepStatus) {
+                    if (this.stepStatus.status === this.pipelineBuildStatusEnum.BUILDING || this.stepStatus.status === this.pipelineBuildStatusEnum.WAITING ||
+                        (this.stepStatus.status === this.pipelineBuildStatusEnum.FAIL && !this.step.optional)) {
+                        this.showLogs = true;
+                    }
+                    if (this.pipelineBuildStatusEnum.isActive(this.stepStatus.status) || this.pipelineBuildStatusEnum.isDone(this.stepStatus.status)) {
+                        this.initWorker();
+                    }
+                }
 
-        this.zone = new NgZone({ enableLongStackTrace: false });
-        if (this.currentStatus === this.pipelineBuildStatusEnum.BUILDING || this.currentStatus === this.pipelineBuildStatusEnum.WAITING ||
-            (this.currentStatus === this.pipelineBuildStatusEnum.FAIL && !this.step.optional) ||
-            (nodeRunDone && isLastStep && !PipelineStatus.neverRun(this.currentStatus))) {
-            this.showLog = true;
-        }
+            } else {
+                // check if step status change
+                if (nrj.job.step_status && nrj.job.step_status.length >= this.stepOrder+1) {
+                    let status = nrj.job.step_status[this.stepOrder].status;
+                    if (!this.stepStatus || status !== this.stepStatus.status) {
+                        if (!this.stepStatus) {
+                            this.initWorker();
+                            this.showLogs = true;
+                        } else if (this.pipelineBuildStatusEnum.isActive(this.stepStatus.status) && this.pipelineBuildStatusEnum.isDone(status)) {
+                            this.showLogs = false;
+                        }
+                        this.stepStatus = nrj.job.step_status[this.stepOrder];
+                        refresh = true;
+                    }
+                }
+            }
+            if (refresh) {
+                this._cd.markForCheck();
+            }
+        });
 
         this.queryParamsSubscription = this._route.queryParams.subscribe((qps) => {
             this._cd.markForCheck();
             let activeStep = parseInt(qps['stageId'], 10) === this.job.pipeline_stage_id &&
                 parseInt(qps['actionId'], 10) === this.job.pipeline_action_id && parseInt(qps['stepOrder'], 10) === this.stepOrder;
-
             if (activeStep) {
-                this.showLog = true;
+                this.showLogs = true;
                 this.selectedLine = parseInt(qps['line'], 10);
             } else {
                 this.selectedLine = null;
@@ -139,6 +164,9 @@ export class WorkflowStepLogComponent implements OnInit, OnDestroy {
     }
 
     ngOnDestroy(): void {
+        if (this.workerSubscription) {
+            this.workerSubscription.unsubscribe();
+        }
         if (this.worker) {
             this.worker.stop();
             this.worker = null;
@@ -159,11 +187,11 @@ export class WorkflowStepLogComponent implements OnInit, OnDestroy {
         if (!this.worker) {
             this.worker = new CDSWebWorker('./assets/worker/web/workflow-log.js');
             this.worker.start({
-                key: this.project.key,
-                workflowName: this.workflowName,
-                number: this.nodeRun.num,
-                nodeRunId: this.nodeRun.id,
-                runJobId: this.nodeJobRun.id,
+                key: this._store.selectSnapshot(ProjectState.projectSnapshot).key,
+                workflowName: this._store.selectSnapshot(WorkflowState.workflowSnapshot).name,
+                number: (<WorkflowStateModel>this._store.selectSnapshot(WorkflowState)).workflowNodeRun.num,
+                nodeRunId: (<WorkflowStateModel>this._store.selectSnapshot(WorkflowState)).workflowNodeRun.id,
+                runJobId: this.currentNodeJobRunID,
                 stepOrder: this.stepOrder
             });
 
@@ -179,6 +207,9 @@ export class WorkflowStepLogComponent implements OnInit, OnDestroy {
                         if (this.loading) {
                             this.loading = false;
                             this.focusToLine();
+                        }
+                        if (!PipelineStatus.isActive(this.stepStatus.status)) {
+                            this.worker.stop();
                         }
                     });
                 }
@@ -233,7 +264,7 @@ export class WorkflowStepLogComponent implements OnInit, OnDestroy {
     }
 
     computeDuration() {
-        if (!this.stepStatus || PipelineStatus.neverRun(this.currentStatus)) {
+        if (!this.stepStatus || PipelineStatus.neverRun(this.stepStatus.status)) {
             return;
         }
 
@@ -255,10 +286,10 @@ export class WorkflowStepLogComponent implements OnInit, OnDestroy {
 
     toggleLogs() {
         this._force = true;
-        if (!this.showLog && PipelineStatus.neverRun(this.currentStatus)) {
+        if (!this.showLogs && this.stepStatus && PipelineStatus.neverRun(this.stepStatus.status)) {
             return;
         }
-        this.showLog = !this.showLog;
+        this.showLogs = !this.showLogs;
     }
 
     getLogs(): string {
@@ -296,13 +327,13 @@ export class WorkflowStepLogComponent implements OnInit, OnDestroy {
         let fragment = 'L' + this.job.pipeline_stage_id + '-' + this.job.pipeline_action_id + '-' + this.stepOrder + '-' + lineNumber;
         this._router.navigate([
             'project',
-            this.project.key,
+            this._store.selectSnapshot(ProjectState.projectSnapshot).key,
             'workflow',
-            this.workflowName,
+            this._store.selectSnapshot(WorkflowState.workflowSnapshot).name,
             'run',
-            this.nodeRun.num,
+            (<WorkflowStateModel>this._store.selectSnapshot(WorkflowState)).workflowNodeRun.num,
             'node',
-            this.nodeRun.id
+            (<WorkflowStateModel>this._store.selectSnapshot(WorkflowState)).workflowNodeRun.id
         ], { queryParams: qps, fragment });
     }
 }
