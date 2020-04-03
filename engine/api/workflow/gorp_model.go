@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
+	"github.com/ovh/cds/sdk/log"
 
 	"github.com/ovh/cds/sdk"
 )
@@ -79,6 +80,8 @@ type JobRun struct {
 	ContainsService           bool           `db:"contains_service"`
 	ModelType                 sql.NullString `db:"model_type"`
 	Header                    sql.NullString `db:"header"`
+	HatcheryName              string         `db:"hatchery_name"`
+	WorkerName                string         `db:"worker_name"`
 }
 
 // ToJobRun transform the JobRun with data of the provided sdk.WorkflowNodeJobRun
@@ -103,6 +106,9 @@ func (j *JobRun) ToJobRun(jr *sdk.WorkflowNodeJobRun) (err error) {
 	j.ModelType = sql.NullString{Valid: true, String: string(jr.ModelType)}
 	j.ContainsService = jr.ContainsService
 	j.ExecGroups, err = gorpmapping.JSONToNullString(jr.ExecGroups)
+	j.WorkerName = jr.WorkerName
+	j.HatcheryName = jr.HatcheryName
+	log.Debug("ToJobRun> %+v", j)
 	if err != nil {
 		return sdk.WrapError(err, "column exec_groups")
 	}
@@ -131,6 +137,9 @@ func (j JobRun) WorkflowNodeRunJob() (sdk.WorkflowNodeJobRun, error) {
 		Done:              j.Done,
 		BookedBy:          j.BookedBy,
 		ContainsService:   j.ContainsService,
+		HatcheryName:      j.HatcheryName,
+		WorkerName:        j.WorkerName,
+		Model:             j.Model,
 	}
 	if err := gorpmapping.JSONNullString(j.Job, &jr.Job); err != nil {
 		return jr, sdk.WrapError(err, "column job")

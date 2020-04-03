@@ -11,6 +11,7 @@ import (
 	"github.com/ovh/venom"
 	"github.com/sguiheux/go-coverage"
 
+	"github.com/ovh/cds/engine/api/authentication"
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/group"
@@ -37,6 +38,21 @@ func (api *API) postTakeWorkflowJobHandler() service.Handler {
 
 		if ok := isWorker(ctx); !ok {
 			return sdk.WithStack(sdk.ErrForbidden)
+		}
+
+		consumer := getAPIConsumer(ctx)
+		// Locking for the parent consumer
+		var hatcheryName string
+		if consumer.ParentID != nil {
+			parentConsumer, err := authentication.LoadConsumerByID(ctx, api.mustDB(), *consumer.ParentID)
+			if err != nil {
+				return err
+			}
+			s, err := services.LoadByConsumerID(ctx, api.mustDB(), parentConsumer.ID)
+			if err != nil {
+				return err
+			}
+			hatcheryName = s.Name
 		}
 
 		wk, err := worker.LoadByID(ctx, api.mustDB(), getAPIConsumer(ctx).Worker.ID)
@@ -77,7 +93,7 @@ func (api *API) postTakeWorkflowJobHandler() service.Handler {
 		}
 
 		pbji := &sdk.WorkflowNodeJobRunData{}
-		report, err := takeJob(ctx, api.mustDB, api.Cache, p, id, workerModelName, pbji, wk)
+		report, err := takeJob(ctx, api.mustDB, api.Cache, p, id, workerModelName, pbji, wk, hatcheryName)
 		if err != nil {
 			return sdk.WrapError(err, "cannot takeJob nodeJobRunID:%d", id)
 		}
@@ -89,7 +105,7 @@ func (api *API) postTakeWorkflowJobHandler() service.Handler {
 	}
 }
 
-func takeJob(ctx context.Context, dbFunc func() *gorp.DbMap, store cache.Store, p *sdk.Project, id int64, workerModel string, wnjri *sdk.WorkflowNodeJobRunData, wk *sdk.Worker) (*workflow.ProcessorReport, error) {
+func takeJob(ctx context.Context, dbFunc func() *gorp.DbMap, store cache.Store, p *sdk.Project, id int64, workerModel string, wnjri *sdk.WorkflowNodeJobRunData, wk *sdk.Worker, hatcheryName string) (*workflow.ProcessorReport, error) {
 	// Start a tx
 	tx, errBegin := dbFunc().Begin()
 	if errBegin != nil {
@@ -110,7 +126,7 @@ func takeJob(ctx context.Context, dbFunc func() *gorp.DbMap, store cache.Store, 
 	}
 
 	// Take node job run
-	job, report, err := workflow.TakeNodeJobRun(ctx, tx, store, *p, id, workerModel, wk.Name, wk.ID, infos)
+	job, report, err := workflow.TakeNodeJobRun(ctx, tx, store, *p, id, workerModel, wk.Name, wk.ID, infos, hatcheryName)
 	if err != nil {
 		return nil, sdk.WrapError(err, "cannot take job %d", id)
 	}

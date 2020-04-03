@@ -129,8 +129,6 @@ func UpdateNodeJobRunStatus(ctx context.Context, db gorp.SqlExecutor, store cach
 
 	report := new(ProcessorReport)
 
-	log.Debug("UpdateNodeJobRunStatus> job.ID=%d status=%s", job.ID, status)
-
 	_, next := observability.Span(ctx, "workflow.LoadRunByID")
 	nodeRun, errLoad := LoadNodeRunByID(db, job.WorkflowNodeRunID, LoadRunOptions{})
 	next()
@@ -238,7 +236,7 @@ func PrepareSpawnInfos(infos []sdk.SpawnInfo) []sdk.SpawnInfo {
 
 // TakeNodeJobRun Take an a job run for update
 func TakeNodeJobRun(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj sdk.Project, jobID int64,
-	workerModel, workerName, workerID string, infos []sdk.SpawnInfo) (*sdk.WorkflowNodeJobRun, *ProcessorReport, error) {
+	workerModel, workerName, workerID string, infos []sdk.SpawnInfo, hatcheryName string) (*sdk.WorkflowNodeJobRun, *ProcessorReport, error) {
 	var end func()
 	ctx, end = observability.Span(ctx, "workflow.TakeNodeJobRun")
 	defer end()
@@ -267,6 +265,8 @@ func TakeNodeJobRun(ctx context.Context, db gorp.SqlExecutor, store cache.Store,
 		return nil, report, err
 	}
 
+	job.HatcheryName = hatcheryName
+	job.WorkerName = workerName
 	job.Model = workerModel
 	job.Job.WorkerName = workerName
 	job.Job.WorkerID = workerID
