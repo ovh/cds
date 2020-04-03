@@ -31,7 +31,7 @@ func Test_doWebHookExecutionBitbucket(t *testing.T) {
 	assert.Equal(t, 1, len(hs))
 	assert.Equal(t, "repo:refs_changed", hs[0].Payload["git.hook"])
 	assert.Equal(t, "name-of-branch", hs[0].Payload["git.branch"])
-	assert.Equal(t, "Steven Guiheux", hs[0].Payload["git.author"])
+	assert.Equal(t, "steven.guiheux", hs[0].Payload["git.author"])
 	assert.Equal(t, "9f4fac7ec5642099982a86f584f2c4a362adb670", hs[0].Payload["git.hash"])
 }
 
@@ -61,7 +61,7 @@ func Test_doWebHookExecutionBitbucketPRReviewerUpdated(t *testing.T) {
 	test.Equal(t, "john.doe", hs[0].Payload[CDS_TRIGGERED_BY_USERNAME])
 	test.Equal(t, "john doe", hs[0].Payload[CDS_TRIGGERED_BY_FULLNAME])
 	test.Equal(t, "john.doe@targate.fr", hs[0].Payload[CDS_TRIGGERED_BY_EMAIL])
-	test.Equal(t, "john doe", hs[0].Payload[GIT_AUTHOR])
+	test.Equal(t, "john.doe", hs[0].Payload[GIT_AUTHOR])
 	test.Equal(t, "john.doe@targate.fr", hs[0].Payload[GIT_AUTHOR_EMAIL])
 
 	test.Equal(t, "dest_branch", hs[0].Payload[GIT_BRANCH])
@@ -104,7 +104,7 @@ func Test_doWebHookExecutionBitbucketPRReviewerApproved(t *testing.T) {
 	test.Equal(t, "john.doe", hs[0].Payload[CDS_TRIGGERED_BY_USERNAME])
 	test.Equal(t, "john doe", hs[0].Payload[CDS_TRIGGERED_BY_FULLNAME])
 	test.Equal(t, "john.doe@targate.fr", hs[0].Payload[CDS_TRIGGERED_BY_EMAIL])
-	test.Equal(t, "john doe", hs[0].Payload[GIT_AUTHOR])
+	test.Equal(t, "john.doe", hs[0].Payload[GIT_AUTHOR])
 	test.Equal(t, "john.doe@targate.fr", hs[0].Payload[GIT_AUTHOR_EMAIL])
 
 	test.Equal(t, "dest_branch", hs[0].Payload[GIT_BRANCH])
@@ -153,7 +153,7 @@ func Test_doWebHookExecutionBitbucketPRReviewerUnapproved(t *testing.T) {
 	test.Equal(t, "john.doe", hs[0].Payload[CDS_TRIGGERED_BY_USERNAME])
 	test.Equal(t, "john doe", hs[0].Payload[CDS_TRIGGERED_BY_FULLNAME])
 	test.Equal(t, "john.doe@targate.fr", hs[0].Payload[CDS_TRIGGERED_BY_EMAIL])
-	test.Equal(t, "john doe", hs[0].Payload[GIT_AUTHOR])
+	test.Equal(t, "john.doe", hs[0].Payload[GIT_AUTHOR])
 	test.Equal(t, "john.doe@targate.fr", hs[0].Payload[GIT_AUTHOR_EMAIL])
 
 	test.Equal(t, "dest_branch", hs[0].Payload[GIT_BRANCH])
@@ -202,7 +202,7 @@ func Test_doWebHookExecutionBitbucketPRReviewerNeedsWork(t *testing.T) {
 	test.Equal(t, "john.doe", hs[0].Payload[CDS_TRIGGERED_BY_USERNAME])
 	test.Equal(t, "john doe", hs[0].Payload[CDS_TRIGGERED_BY_FULLNAME])
 	test.Equal(t, "john.doe@targate.fr", hs[0].Payload[CDS_TRIGGERED_BY_EMAIL])
-	test.Equal(t, "john doe", hs[0].Payload[GIT_AUTHOR])
+	test.Equal(t, "john.doe", hs[0].Payload[GIT_AUTHOR])
 	test.Equal(t, "john.doe@targate.fr", hs[0].Payload[GIT_AUTHOR_EMAIL])
 
 	test.Equal(t, "dest_branch", hs[0].Payload[GIT_BRANCH])
@@ -251,7 +251,7 @@ func Test_doWebHookExecutionBitbucketPRCommentAdded(t *testing.T) {
 	test.Equal(t, "john.doe", hs[0].Payload[CDS_TRIGGERED_BY_USERNAME])
 	test.Equal(t, "john doe", hs[0].Payload[CDS_TRIGGERED_BY_FULLNAME])
 	test.Equal(t, "john.doe@targate.fr", hs[0].Payload[CDS_TRIGGERED_BY_EMAIL])
-	test.Equal(t, "john doe", hs[0].Payload[GIT_AUTHOR])
+	test.Equal(t, "john.doe", hs[0].Payload[GIT_AUTHOR])
 	test.Equal(t, "john.doe@targate.fr", hs[0].Payload[GIT_AUTHOR_EMAIL])
 
 	test.Equal(t, "dest_branch", hs[0].Payload[GIT_BRANCH])
@@ -299,7 +299,7 @@ func Test_doWebHookExecutionBitbucketPRCommentDeleted(t *testing.T) {
 	test.Equal(t, "john.doe", hs[0].Payload[CDS_TRIGGERED_BY_USERNAME])
 	test.Equal(t, "john doe", hs[0].Payload[CDS_TRIGGERED_BY_FULLNAME])
 	test.Equal(t, "john.doe@targate.fr", hs[0].Payload[CDS_TRIGGERED_BY_EMAIL])
-	test.Equal(t, "john doe", hs[0].Payload[GIT_AUTHOR])
+	test.Equal(t, "john.doe", hs[0].Payload[GIT_AUTHOR])
 	test.Equal(t, "john.doe@targate.fr", hs[0].Payload[GIT_AUTHOR_EMAIL])
 
 	test.Equal(t, "dest_branch", hs[0].Payload[GIT_BRANCH])
@@ -347,7 +347,7 @@ func Test_doWebHookExecutionBitbucketPRCommentModified(t *testing.T) {
 	test.Equal(t, "john.doe", hs[0].Payload[CDS_TRIGGERED_BY_USERNAME])
 	test.Equal(t, "john doe", hs[0].Payload[CDS_TRIGGERED_BY_FULLNAME])
 	test.Equal(t, "john.doe@targate.fr", hs[0].Payload[CDS_TRIGGERED_BY_EMAIL])
-	test.Equal(t, "john doe", hs[0].Payload[GIT_AUTHOR])
+	test.Equal(t, "john.doe", hs[0].Payload[GIT_AUTHOR])
 	test.Equal(t, "john.doe@targate.fr", hs[0].Payload[GIT_AUTHOR_EMAIL])
 
 	test.Equal(t, "dest_branch", hs[0].Payload[GIT_BRANCH])
@@ -397,7 +397,7 @@ func Test_doWebHookExecutionBitbucketPROpened(t *testing.T) {
 	test.Equal(t, "john.doe", hs[0].Payload[CDS_TRIGGERED_BY_USERNAME])
 	test.Equal(t, "john doe", hs[0].Payload[CDS_TRIGGERED_BY_FULLNAME])
 	test.Equal(t, "john.doe@targate.fr", hs[0].Payload[CDS_TRIGGERED_BY_EMAIL])
-	test.Equal(t, "john doe", hs[0].Payload[GIT_AUTHOR])
+	test.Equal(t, "john.doe", hs[0].Payload[GIT_AUTHOR])
 	test.Equal(t, "john.doe@targate.fr", hs[0].Payload[GIT_AUTHOR_EMAIL])
 
 	test.Equal(t, "dest_branch", hs[0].Payload[GIT_BRANCH])
@@ -441,7 +441,7 @@ func Test_doWebHookExecutionBitbucketPRModified(t *testing.T) {
 	test.Equal(t, "john.doe", hs[0].Payload[CDS_TRIGGERED_BY_USERNAME])
 	test.Equal(t, "john doe", hs[0].Payload[CDS_TRIGGERED_BY_FULLNAME])
 	test.Equal(t, "john.doe@targate.fr", hs[0].Payload[CDS_TRIGGERED_BY_EMAIL])
-	test.Equal(t, "john doe", hs[0].Payload[GIT_AUTHOR])
+	test.Equal(t, "john.doe", hs[0].Payload[GIT_AUTHOR])
 	test.Equal(t, "john.doe@targate.fr", hs[0].Payload[GIT_AUTHOR_EMAIL])
 
 	test.Equal(t, "dest_branch", hs[0].Payload[GIT_BRANCH])
@@ -488,7 +488,7 @@ func Test_doWebHookExecutionBitbucketPRMerged(t *testing.T) {
 	test.Equal(t, "john.doe", hs[0].Payload[CDS_TRIGGERED_BY_USERNAME])
 	test.Equal(t, "john doe", hs[0].Payload[CDS_TRIGGERED_BY_FULLNAME])
 	test.Equal(t, "john.doe@targate.fr", hs[0].Payload[CDS_TRIGGERED_BY_EMAIL])
-	test.Equal(t, "john doe", hs[0].Payload[GIT_AUTHOR])
+	test.Equal(t, "john.doe", hs[0].Payload[GIT_AUTHOR])
 	test.Equal(t, "john.doe@targate.fr", hs[0].Payload[GIT_AUTHOR_EMAIL])
 
 	test.Equal(t, "dest_branch", hs[0].Payload[GIT_BRANCH])
@@ -532,7 +532,7 @@ func Test_doWebHookExecutionBitbucketPRDeleted(t *testing.T) {
 	test.Equal(t, "john.doe", hs[0].Payload[CDS_TRIGGERED_BY_USERNAME])
 	test.Equal(t, "john doe", hs[0].Payload[CDS_TRIGGERED_BY_FULLNAME])
 	test.Equal(t, "john.doe@targate.fr", hs[0].Payload[CDS_TRIGGERED_BY_EMAIL])
-	test.Equal(t, "john doe", hs[0].Payload[GIT_AUTHOR])
+	test.Equal(t, "john.doe", hs[0].Payload[GIT_AUTHOR])
 	test.Equal(t, "john.doe@targate.fr", hs[0].Payload[GIT_AUTHOR_EMAIL])
 
 	test.Equal(t, "dest_branch", hs[0].Payload[GIT_BRANCH])
@@ -575,7 +575,7 @@ func Test_doWebHookExecutionBitbucketPRDeclined(t *testing.T) {
 	test.Equal(t, "john.doe", hs[0].Payload[CDS_TRIGGERED_BY_USERNAME])
 	test.Equal(t, "john doe", hs[0].Payload[CDS_TRIGGERED_BY_FULLNAME])
 	test.Equal(t, "john.doe@targate.fr", hs[0].Payload[CDS_TRIGGERED_BY_EMAIL])
-	test.Equal(t, "john doe", hs[0].Payload[GIT_AUTHOR])
+	test.Equal(t, "john.doe", hs[0].Payload[GIT_AUTHOR])
 	test.Equal(t, "john.doe@targate.fr", hs[0].Payload[GIT_AUTHOR_EMAIL])
 
 	test.Equal(t, "dest_branch", hs[0].Payload[GIT_BRANCH])
@@ -612,10 +612,10 @@ func Test_doWebHookExecutionBitbucketMultiple(t *testing.T) {
 
 	assert.Equal(t, 2, len(hs))
 	assert.Equal(t, "name-of-branch", hs[0].Payload["git.branch"])
-	assert.Equal(t, "Steven Guiheux", hs[0].Payload["git.author"])
+	assert.Equal(t, "steven.guiheux", hs[0].Payload["git.author"])
 	assert.Equal(t, "9f4fac7ec5642099982a86f584f2c4a362adb670", hs[0].Payload["git.hash"])
 	assert.Equal(t, "name-of-branch-bis", hs[1].Payload["git.branch"])
-	assert.Equal(t, "Steven Guiheux", hs[1].Payload["git.author"])
+	assert.Equal(t, "steven.guiheux", hs[1].Payload["git.author"])
 	assert.Equal(t, "9f4fac7ec5642099982a86f584f2c4a362adb670", hs[0].Payload["git.hash"])
 }
 
