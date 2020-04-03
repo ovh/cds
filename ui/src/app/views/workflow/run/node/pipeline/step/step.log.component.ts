@@ -221,36 +221,54 @@ export class WorkflowStepLogComponent implements OnInit, OnDestroy {
     }
 
     htmlView() {
-        this.htmlViewSelected = !this.htmlViewSelected;
+        this.ansiViewSelected = false;
+        this.htmlViewSelected = true;
         this.basicView = false;
-        this.ansi_up.escape_for_html = !this.htmlViewSelected;
-        this.parseLogs();
+        this._cd.markForCheck();
     }
 
     ansiView() {
-        this.ansiViewSelected = !this.ansiViewSelected;
+        this.ansiViewSelected = true;
+        this.htmlViewSelected = false;
         this.basicView = false;
-        this.ansi_up.escape_for_html = !this.htmlViewSelected;
-        this.parseLogs();
+        this._cd.markForCheck();
+    }
+
+    rawView(){
+        this.htmlViewSelected = false;
+        this.ansiViewSelected = false;
+        this.basicView = true;
+        this._cd.markForCheck();
     }
 
     parseLogs() {
-        this.splittedLogs = this.getLogsSplitted()
-            .map((log, i) => {
+        let tmpLogs = this.getLogsSplitted();
+        if ( (!this.splittedLogs && !tmpLogs) || (this.splittedLogs && tmpLogs && this.splittedLogs.length === tmpLogs.length)) {
+            return;
+        }
+        if (!this.splittedLogs || this.splittedLogs.length > tmpLogs.length) {
+            this.splittedLogs = tmpLogs.map((log, i) => {
                 if (this.ansiViewSelected) {
                     return { lineNumber: i + 1, value: this.ansi_up.ansi_to_html(log) };
                 }
                 return { lineNumber: i + 1, value: log };
             });
-        this.splittedLogsToDisplay = cloneDeep(this.splittedLogs);
-
-        if (!this.allLogsView && this.splittedLogs.length > 1000 && !this._route.snapshot.fragment) {
+        } else {
+            this.splittedLogs.push(...tmpLogs.slice(this.splittedLogs.length).map((log, i) => {
+                if (this.ansiViewSelected) {
+                    return { lineNumber: i + 1, value: this.ansi_up.ansi_to_html(log) };
+                }
+                return { lineNumber: i + 1, value: log };
+            }));
+        }
+        if (!this.allLogsView && this.splittedLogs.length > this.MAX_PRETTY_LOGS_LINES && !this._route.snapshot.fragment) {
             this.limitFrom = 30;
             this.limitTo = this.splittedLogs.length - 40;
             this.splittedLogsToDisplay.splice(this.limitFrom, this.limitTo - this.limitFrom);
         } else {
             this.splittedLogsToDisplay = this.splittedLogs;
         }
+        this._cd.markForCheck();
     }
 
     focusToLine() {
