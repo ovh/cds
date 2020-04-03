@@ -102,6 +102,10 @@ export class WorkflowRunJobSpawnInfoComponent implements OnDestroy, OnInit {
                 } else {
                     this.spawnInfos = this.getSpawnInfos(njr.spawninfos);
                 }
+                if (njr.job.action.requirements) {
+                    this.displayServiceLogsLink = njr.job.action.requirements.find(r => r.type === 'service') != null;
+                }
+
             }
 
             if (refresh) {
