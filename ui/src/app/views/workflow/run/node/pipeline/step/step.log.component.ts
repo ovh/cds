@@ -20,7 +20,6 @@ import { DurationService } from 'app/shared/duration/duration.service';
 import { CDSWebWorker } from 'app/shared/worker/web.worker';
 import { ProjectState } from 'app/store/project.state';
 import { WorkflowState, WorkflowStateModel } from 'app/store/workflow.state';
-import cloneDeep from 'lodash-es/cloneDeep';
 import { Observable, Subscription } from 'rxjs';
 
 @Component({
@@ -234,7 +233,7 @@ export class WorkflowStepLogComponent implements OnInit, OnDestroy {
         this._cd.markForCheck();
     }
 
-    rawView(){
+    rawView() {
         this.htmlViewSelected = false;
         this.ansiViewSelected = false;
         this.basicView = true;
@@ -255,10 +254,10 @@ export class WorkflowStepLogComponent implements OnInit, OnDestroy {
             });
         } else {
             this.splittedLogs.push(...tmpLogs.slice(this.splittedLogs.length).map((log, i) => {
-                if (this.ansiViewSelected) {
-                    return { lineNumber: i + 1, value: this.ansi_up.ansi_to_html(log) };
-                }
-                return { lineNumber: i + 1, value: log };
+                    if (this.ansiViewSelected) {
+                        return { lineNumber: this.splittedLogs.length + i, value: this.ansi_up.ansi_to_html(log) };
+                    }
+                    return { lineNumber: this.splittedLogs.length  + i, value: log };
             }));
         }
         if (!this.allLogsView && this.splittedLogs.length > this.MAX_PRETTY_LOGS_LINES && !this._route.snapshot.fragment) {
@@ -327,7 +326,11 @@ export class WorkflowStepLogComponent implements OnInit, OnDestroy {
     }
 
     getLogsSplitted(): string[] {
-        return this.getLogs().split('\n');
+        let l = this.getLogs();
+        if (l.endsWith('\n')) {
+            l = l.substr(0, l.length - 1);
+        }
+        return l.split('\n');
     }
 
     showAllLogs() {
