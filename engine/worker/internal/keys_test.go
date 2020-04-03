@@ -76,7 +76,7 @@ func TestInstallKey_SSHKeyWithoutDestination(t *testing.T) {
 	priKeyPEM := encodePrivateKeyToPEM(priKey)
 	priKeyVar := sdk.Variable{
 		Name:  "my-ssh-key",
-		Type:  sdk.KeyTypeSSH,
+		Type:  string(sdk.KeyTypeSSH),
 		Value: string(priKeyPEM),
 	}
 
@@ -113,7 +113,7 @@ func TestInstallKey_SSHKeyWithRelativeDestination(t *testing.T) {
 	priKeyPEM := encodePrivateKeyToPEM(priKey)
 	priKeyVar := sdk.Variable{
 		Name:  "my-ssh-key",
-		Type:  sdk.KeyTypeSSH,
+		Type:  string(sdk.KeyTypeSSH),
 		Value: string(priKeyPEM),
 	}
 
@@ -146,7 +146,7 @@ func TestInstallKey_SSHKeyWithAbsoluteDestination(t *testing.T) {
 	priKeyPEM := encodePrivateKeyToPEM(priKey)
 	priKeyVar := sdk.Variable{
 		Name:  "my-ssh-key",
-		Type:  sdk.KeyTypeSSH,
+		Type:  string(sdk.KeyTypeSSH),
 		Value: string(priKeyPEM),
 	}
 

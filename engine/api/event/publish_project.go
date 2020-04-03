@@ -128,9 +128,7 @@ func PublishAddProjectKey(ctx context.Context, p *sdk.Project, k sdk.ProjectKey,
 
 // PublishDeleteProjectKey publishes an event on deleting a project key
 func PublishDeleteProjectKey(ctx context.Context, p *sdk.Project, k sdk.ProjectKey, u sdk.Identifiable) {
-	if sdk.NeedPlaceholder(k.Type) {
-		k.Private = sdk.PasswordPlaceholder
-	}
+	k.Private = sdk.PasswordPlaceholder
 	e := sdk.EventProjectKeyDelete{
 		Key: k,
 	}

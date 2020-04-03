@@ -50,6 +50,10 @@ func cleanDuplicateHooks(ctx context.Context, db *gorp.DbMap, store cache.Store,
 		return sdk.WithStack(err)
 	}
 
+	if projectID == 0 {
+		return nil
+	}
+
 	proj, err := project.LoadByID(tx, store, projectID,
 		project.LoadOptions.WithApplicationWithDeploymentStrategies,
 		project.LoadOptions.WithPipelines,
@@ -128,6 +132,83 @@ func cleanDuplicateHooks(ctx context.Context, db *gorp.DbMap, store cache.Store,
 		}
 		log.Info(ctx, "migrate.cleanDuplicateHooks> workflow %s/%s (%d) has been cleaned", proj.Name, w.Name, w.ID)
 	}
+
+	return nil
+}
+
+func FixEmptyUUIDHooks(ctx context.Context, db *gorp.DbMap, store cache.Store) error {
+	q := "select distinct(workflow.id) from w_node_hook join w_node on w_node.id = w_node_hook.node_id  join workflow on workflow.id = w_node.workflow_id  where uuid = ''"
+	var ids []int64
+
+	if _, err := db.Select(&ids, q); err != nil {
+		return sdk.WrapError(err, "unable to select workflow")
+	}
+
+	var mError = new(sdk.MultiError)
+	for _, id := range ids {
+		if err := fixEmptyUUIDHooks(ctx, db, store, id); err != nil {
+			mError.Append(err)
+			log.Error(ctx, "migrate.FixEmptyUUIDHooks> unable to clean workflow %d: %v", id, err)
+		}
+	}
+
+	if mError.IsEmpty() {
+		return nil
+	}
+	return mError
+}
+
+func fixEmptyUUIDHooks(ctx context.Context, db *gorp.DbMap, store cache.Store, workflowID int64) error {
+	tx, err := db.Begin()
+	if err != nil {
+		return sdk.WithStack(err)
+	}
+
+	defer tx.Rollback() // nolint
+
+	projectID, err := tx.SelectInt("SELECT project_id FROM workflow WHERE id = $1", workflowID)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil
+		}
+		return sdk.WithStack(err)
+	}
+
+	if projectID == 0 {
+		return nil
+	}
+
+	proj, err := project.LoadByID(tx, store, projectID,
+		project.LoadOptions.WithApplicationWithDeploymentStrategies,
+		project.LoadOptions.WithPipelines,
+		project.LoadOptions.WithEnvironments,
+		project.LoadOptions.WithIntegrations)
+	if err != nil {
+		return sdk.WrapError(err, "unable to load project %d", projectID)
+	}
+
+	w, err := workflow.LoadAndLockByID(ctx, tx, store, *proj, workflowID, workflow.LoadOptions{})
+	if err != nil {
+		if sdk.ErrorIs(err, sdk.ErrNotFound) {
+			return nil
+		}
+		return err
+	}
+
+	for i, h := range w.WorkflowData.Node.Hooks {
+		if h.UUID == "" {
+			w.WorkflowData.Node.Hooks[i].UUID = sdk.UUID()
+		}
+	}
+
+	if err := workflow.Update(ctx, tx, store, *proj, w, workflow.UpdateOptions{}); err != nil {
+		return err
+	}
+
+	if err := tx.Commit(); err != nil {
+		return err
+	}
+	log.Info(ctx, "migrate.fixEmptyUUIDHooks> workflow %s/%s (%d) has been cleaned", proj.Name, w.Name, w.ID)
 
 	return nil
 }

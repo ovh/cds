@@ -43,12 +43,12 @@ func Test_keyInstall(t *testing.T) {
 	resp, err := keyInstall(w, filepath.Join(absPath, "myKey"), &sdk.Variable{
 		Name:  "cds.key.proj-ssh-key.priv",
 		Value: string(test.TestKey),
-		Type:  sdk.KeyTypeSSH,
+		Type:  string(sdk.KeyTypeSSH),
 	})
 
 	require.NoError(t, err)
 	require.NotNil(t, resp)
-	assert.Equal(t, "ssh", resp.Type)
+	assert.Equal(t, sdk.KeyTypeSSH, resp.Type)
 	assert.NotEmpty(t, resp.Content)
 
 	expectedAbsolutePath, _ := filepath.Abs(filepath.Join(path, "myKey"))

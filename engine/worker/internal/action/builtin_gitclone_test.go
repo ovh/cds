@@ -278,7 +278,7 @@ func TestRunGitCloneWithSecret(t *testing.T) {
 			{
 				Name:  "cds.key.proj-ssh-key.priv",
 				Value: string(test.TestKey),
-				Type:  sdk.KeyTypeSSH,
+				Type:  string(sdk.KeyTypeSSH),
 			},
 		})
 	assert.NoError(t, err)

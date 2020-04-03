@@ -12,6 +12,7 @@ import (
 
 	"github.com/go-gorp/gorp"
 	"github.com/gorilla/mux"
+	"github.com/sirupsen/logrus"
 
 	ascodesync "github.com/ovh/cds/engine/api/ascode/sync"
 	"github.com/ovh/cds/engine/api/cache"
@@ -995,9 +996,8 @@ func (api *API) initWorkflowRun(ctx context.Context, projKey string, wf *sdk.Wor
 			// Get workflow from repository
 			log.Debug("workflow.CreateFromRepository> %s", wf.Name)
 			oldWf := *wf
-			var errCreate error
-			asCodeInfosMsg, errCreate = workflow.CreateFromRepository(ctx, api.mustDB(), api.Cache, p1, wf, *opts, *u, project.DecryptWithBuiltinKey)
-			if errCreate != nil {
+			asCodeInfosMsg, err := workflow.CreateFromRepository(ctx, api.mustDB(), api.Cache, p1, wf, *opts, *u, project.DecryptWithBuiltinKey)
+			if err != nil {
 				infos := make([]sdk.SpawnMsg, len(asCodeInfosMsg))
 				for i, msg := range asCodeInfosMsg {
 					infos[i] = sdk.SpawnMsg{
@@ -1007,7 +1007,7 @@ func (api *API) initWorkflowRun(ctx context.Context, projKey string, wf *sdk.Wor
 					}
 					workflow.AddWorkflowRunInfo(wfRun, infos...)
 				}
-				r1 := failInitWorkflowRun(ctx, api.mustDB(), wfRun, sdk.WrapError(errCreate, "unable to get workflow from repository."))
+				r1 := failInitWorkflowRun(ctx, api.mustDB(), wfRun, sdk.WrapError(err, "unable to get workflow from repository"))
 				report.Merge(ctx, r1)
 				return
 			}
@@ -1049,11 +1049,17 @@ func failInitWorkflowRun(ctx context.Context, db *gorp.DbMap, wfRun *sdk.Workflo
 			wfRun.Status = sdk.StatusNeverBuilt
 		}
 	} else {
-		log.Error(ctx, "unable to start workflow: %v", err)
+		httpErr := sdk.ExtractHTTPError(err, "")
+		isErrWithStack := sdk.IsErrorWithStack(err)
+		fields := logrus.Fields{}
+		if isErrWithStack {
+			fields["stack_trace"] = fmt.Sprintf("%+v", err)
+		}
+		log.ErrorWithFields(ctx, fields, "%s", err)
 		wfRun.Status = sdk.StatusFail
 		info = sdk.SpawnMsg{
 			ID:   sdk.MsgWorkflowError.ID,
-			Args: []interface{}{sdk.Cause(err).Error()},
+			Args: []interface{}{httpErr.Error()},
 			Type: sdk.MsgWorkflowError.Type,
 		}
 	}
