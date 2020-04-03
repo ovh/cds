@@ -44,8 +44,6 @@ func syncTakeJobInNodeRun(ctx context.Context, db gorp.SqlExecutor, n *sdk.Workf
 	_, end := observability.Span(ctx, "workflow.syncTakeJobInNodeRun")
 	defer end()
 
-	log.Debug("workflow.syncTakeJobInNodeRun> job parameters= %+v", j.Parameters)
-
 	report := new(ProcessorReport)
 
 	//If status is not waiting neither build: nothing to do
@@ -70,6 +68,8 @@ func syncTakeJobInNodeRun(ctx context.Context, db gorp.SqlExecutor, n *sdk.Workf
 			rj.Model = j.Model
 			rj.ModelType = j.ModelType
 			rj.ContainsService = j.ContainsService
+			rj.WorkerName = j.WorkerName
+			rj.HatcheryName = j.HatcheryName
 			rj.Job = j.Job
 			rj.Header = j.Header
 			rj.Parameters = j.Parameters
@@ -635,6 +635,9 @@ func syncStage(ctx context.Context, db gorp.SqlExecutor, store cache.Store, stag
 				runJob.ModelType = runJobDB.ModelType
 				runJob.ContainsService = runJobDB.ContainsService
 				runJob.Job = runJobDB.Job
+				runJob.Model = runJobDB.Model
+				runJob.WorkerName = runJobDB.WorkerName
+				runJob.HatcheryName = runJobDB.HatcheryName
 			}
 		}
 	}
