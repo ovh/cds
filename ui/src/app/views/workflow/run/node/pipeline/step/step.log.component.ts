@@ -44,24 +44,6 @@ export class WorkflowStepLogComponent implements OnInit, OnDestroy {
 
     logs: Log;
     showLogs = false;
-    /*
-    set showLog(data: boolean) {
-        let neverRun = PipelineStatus.neverRun(this.currentStatus);
-        if (data && !neverRun) {
-            this.initWorker();
-        } else {
-            if (this.worker) {
-                this.worker.stop();
-                this.worker = null;
-            }
-        }
-        this._showLog = data;
-    }
-    get showLog() {
-        return this._showLog;
-    }
-
-     */
 
     worker: CDSWebWorker;
     workerSubscription: Subscription;
@@ -117,6 +99,7 @@ export class WorkflowStepLogComponent implements OnInit, OnDestroy {
                 }
                 if (nrj.job.step_status && nrj.job.step_status.length >= this.stepOrder + 1) {
                     this.stepStatus = nrj.job.step_status[this.stepOrder];
+                    this.computeDuration();
                 }
                 if (this.stepStatus) {
                     if (this.stepStatus.status === this.pipelineBuildStatusEnum.BUILDING ||
@@ -124,8 +107,7 @@ export class WorkflowStepLogComponent implements OnInit, OnDestroy {
                         (this.stepStatus.status === this.pipelineBuildStatusEnum.FAIL && !this.step.optional)) {
                         this.showLogs = true;
                     }
-                    if (this.pipelineBuildStatusEnum.isActive(this.stepStatus.status) ||
-                        this.pipelineBuildStatusEnum.isDone(this.stepStatus.status)) {
+                    if (this.pipelineBuildStatusEnum.isActive(this.stepStatus.status)) {
                         this.initWorker();
                     }
                 }
@@ -135,7 +117,7 @@ export class WorkflowStepLogComponent implements OnInit, OnDestroy {
                 if (nrj.job.step_status && nrj.job.step_status.length >= this.stepOrder + 1) {
                     let status = nrj.job.step_status[this.stepOrder].status;
                     if (!this.stepStatus || status !== this.stepStatus.status) {
-                        if (!this.stepStatus) {
+                        if (!this.stepStatus ) {
                             this.initWorker();
                             this.showLogs = true;
                         } else if (this.pipelineBuildStatusEnum.isActive(this.stepStatus.status) &&
@@ -143,6 +125,7 @@ export class WorkflowStepLogComponent implements OnInit, OnDestroy {
                             this.showLogs = false;
                         }
                         this.stepStatus = nrj.job.step_status[this.stepOrder];
+                        this.computeDuration();
                         refresh = true;
                     }
                 }
