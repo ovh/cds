@@ -27,7 +27,6 @@ import { Observable, Subscription } from 'rxjs';
 export class WorkflowServiceLogComponent implements OnDestroy, OnInit {
 
     @Select(WorkflowState.getSelectedWorkflowNodeJobRun()) nodeJobRun$: Observable<WorkflowNodeJobRun>;
-    nodeJobRun: WorkflowNodeJobRun;
     nodeJobRunSubs: Subscription;
 
 
@@ -39,6 +38,9 @@ export class WorkflowServiceLogComponent implements OnDestroy, OnInit {
 
     worker: CDSWebWorker;
     workerSubscription: Subscription;
+
+    currentRunJobID: number;
+    currentRunJobStatus: string;
 
     showLog = {};
     loading = true;
@@ -55,14 +57,19 @@ export class WorkflowServiceLogComponent implements OnDestroy, OnInit {
 
     ngOnInit(): void {
         this.nodeJobRunSubs = this.nodeJobRun$.subscribe(njr => {
-            this.stopWorker();
-            if (njr) {
-                this.nodeJobRun = njr;
-                if (PipelineStatus.isDone(njr.status)) {
-                    this.stopWorker();
-                }
+            if (!njr) {
+                this.stopWorker();
+                return
             }
-            this.initWorker();
+            if (this.currentRunJobID && njr.id === this.currentRunJobID && this.currentRunJobStatus === njr.status) {
+                return;
+            }
+            this.currentRunJobID = njr.id;
+            this.currentRunJobStatus = njr.status;
+            if (!this.worker && (!this.serviceLogs || this.serviceLogs.length === 0)) {
+                this.initWorker();
+            }
+            this._cd.markForCheck();
         });
     }
 
@@ -85,7 +92,7 @@ export class WorkflowServiceLogComponent implements OnDestroy, OnInit {
                 workflowName: this._store.selectSnapshot(WorkflowState.workflowSnapshot).name,
                 number: (<WorkflowStateModel>this._store.selectSnapshot(WorkflowState)).workflowNodeRun.num,
                 nodeRunId: (<WorkflowStateModel>this._store.selectSnapshot(WorkflowState)).workflowNodeRun.id,
-                runJobId: this.nodeJobRun.id,
+                runJobId: this.currentRunJobID,
             });
 
             this.workerSubscription = this.worker.response().subscribe(msg => {
@@ -101,10 +108,11 @@ export class WorkflowServiceLogComponent implements OnDestroy, OnInit {
                         if (this.loading) {
                             this.loading = false;
                         }
-                        if (this.nodeJobRun.status === PipelineStatus.SUCCESS || this.nodeJobRun.status === PipelineStatus.FAIL ||
-                            this.nodeJobRun.status === PipelineStatus.STOPPED) {
+                        if (this.currentRunJobStatus === PipelineStatus.SUCCESS || this.currentRunJobStatus === PipelineStatus.FAIL ||
+                            this.currentRunJobStatus === PipelineStatus.STOPPED) {
                             this.stopWorker();
                         }
+                        this._cd.markForCheck();
                     });
                 }
             });
@@ -116,6 +124,9 @@ export class WorkflowServiceLogComponent implements OnDestroy, OnInit {
     }
 
     stopWorker() {
+        if (this.workerSubscription) {
+            this.workerSubscription.unsubscribe();
+        }
         if (this.worker) {
             this.worker.stop();
             this.worker = null;

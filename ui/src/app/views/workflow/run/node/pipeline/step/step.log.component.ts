@@ -10,7 +10,9 @@ import {
 } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Select, Store } from '@ngxs/store';
-import * as AU from 'ansi_up';
+import {
+    default as AnsiUp
+} from 'ansi_up';
 import { Action } from 'app/model/action.model';
 import { Job, StepStatus } from 'app/model/job.model';
 import { BuildResult, Log, PipelineStatus } from 'app/model/pipeline.model';
@@ -62,7 +64,7 @@ export class WorkflowStepLogComponent implements OnInit, OnDestroy {
     allLogsView = false;
     ansiViewSelected = true;
     htmlViewSelected = true;
-    ansi_up = new AU.default;
+    ansi_up = new AnsiUp();
 
     zone: NgZone;
     _showLog = false;
@@ -203,16 +205,20 @@ export class WorkflowStepLogComponent implements OnInit, OnDestroy {
     }
 
     htmlView() {
-        this.ansiViewSelected = false;
-        this.htmlViewSelected = true;
+        this.ansiViewSelected = this.ansiViewSelected;
+        this.htmlViewSelected = !this.htmlViewSelected;
         this.basicView = false;
+        this.splittedLogs = null;
+        this.parseLogs();
         this._cd.markForCheck();
     }
 
     ansiView() {
-        this.ansiViewSelected = true;
-        this.htmlViewSelected = false;
+        this.ansiViewSelected = !this.ansiViewSelected;
+        this.htmlViewSelected = this.htmlViewSelected;
         this.basicView = false;
+        this.splittedLogs = null;
+        this.parseLogs();
         this._cd.markForCheck();
     }
 
@@ -220,6 +226,8 @@ export class WorkflowStepLogComponent implements OnInit, OnDestroy {
         this.htmlViewSelected = false;
         this.ansiViewSelected = false;
         this.basicView = true;
+        this.splittedLogs = null;
+        this.parseLogs();
         this._cd.markForCheck();
     }
 
