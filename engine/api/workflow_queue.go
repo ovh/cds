@@ -692,8 +692,16 @@ func (api *API) postWorkflowJobStepStatusHandler() service.Handler {
 			log.Warning(ctx, "postWorkflowJobStepStatusHandler> Unable to load workflow for event: %v", err)
 			return nil
 		}
+
+		wr, err := workflow.LoadRunByID(api.mustDB(), nodeRun.WorkflowRunID, workflow.LoadRunOptions{
+			DisableDetailledNodeRun: true,
+		})
+		if err != nil {
+			log.Warning(ctx, "postWorkflowJobStepStatusHandler> Unable to load workflow run for event: %v", err)
+			return nil
+		}
 		nodeRun.Translate(r.Header.Get("Accept-Language"))
-		event.PublishWorkflowNodeRun(context.Background(), nodeRun, work, notification.GetUserWorkflowEvents(ctx, api.mustDB(), api.Cache, work, nil, nodeRun))
+		event.PublishWorkflowNodeRun(context.Background(), nodeRun, wr.Workflow, notification.GetUserWorkflowEvents(ctx, api.mustDB(), api.Cache, work.Name, wr.Workflow, nil, nodeRun))
 		return nil
 	}
 }
