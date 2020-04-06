@@ -102,7 +102,6 @@ For admin:
 }
 
 func workerModelImportRun(c cli.Values) error {
-	force := c.GetBool("force")
 	if c.GetString("path") == "" {
 		return fmt.Errorf("path for worker model is mandatory")
 	}
@@ -113,9 +112,15 @@ func workerModelImportRun(c cli.Values) error {
 		if err != nil {
 			return err
 		}
-		formatStr, _ := exportentities.GetFormatStr(format)
 
-		wm, err := client.WorkerModelImport(contentFile, formatStr, force)
+		mods := []cdsclient.RequestModifier{
+			cdsclient.ContentType(format.ContentType()),
+		}
+		if c.GetBool("force") {
+			mods = append(mods, cdsclient.Force())
+		}
+
+		wm, err := client.WorkerModelImport(contentFile, mods...)
 		if err != nil {
 			_ = contentFile.Close()
 			return err
@@ -197,7 +202,7 @@ func workerModelExportRun(c cli.Values) error {
 		return err
 	}
 
-	btes, err := client.WorkerModelExport(groupName, modelName, c.GetString("format"))
+	btes, err := client.WorkerModelExport(groupName, modelName, cdsclient.Format(c.GetString("format")))
 	if err != nil {
 		return err
 	}

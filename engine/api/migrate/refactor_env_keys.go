@@ -110,7 +110,7 @@ func refactorEnvironmentKeys(ctx context.Context, db *gorp.DbMap, id int64) erro
 	if err != nil {
 		return err
 	}
-	k.Type = s
+	k.Type = sdk.KeyType(s)
 
 	s, err = stringIfValid("public", public)
 	if err != nil {

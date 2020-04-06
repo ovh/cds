@@ -421,7 +421,7 @@ func Test_postApplicationImportHandler_NewAppFromYAMLWithKeysAndSecretsAndReImpo
 	test.Equal(t, "MySecretValue", app.Variables[0].Value)
 	test.Equal(t, 2, len(app.Keys))
 
-	mKeys := make(map[string]sdk.ApplicationKey, 2)
+	mKeys := make(map[sdk.KeyType]sdk.ApplicationKey, 2)
 	mKeys[app.Keys[0].Type] = app.Keys[0]
 	mKeys[app.Keys[1].Type] = app.Keys[1]
 	rssh, ok := mKeys["ssh"]
@@ -493,7 +493,7 @@ func Test_postApplicationImportHandler_NewAppFromYAMLWithKeysAndSecretsAndReImpo
 	test.Equal(t, 1, len(app.Variables))
 	test.Equal(t, "MySecretValue", app.Variables[0].Value)
 	test.Equal(t, 2, len(app.Keys))
-	mKeys = make(map[string]sdk.ApplicationKey, 2)
+	mKeys = make(map[sdk.KeyType]sdk.ApplicationKey, 2)
 	mKeys[app.Keys[0].Type] = app.Keys[0]
 	mKeys[app.Keys[1].Type] = app.Keys[1]
 	rssh, ok = mKeys["ssh"]

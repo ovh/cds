@@ -20,20 +20,6 @@ func publishEvent(ctx context.Context, e sdk.Event) error {
 	if err := store.Enqueue("events", e); err != nil {
 		return err
 	}
-
-	// send to cache for cds repositories manager
-	var toSkipSendReposManager bool
-	// the StatusWaiting is not useful to be sent on repomanager.
-	// the building status (or success / failed) is already sent just after
-	if e.EventType == fmt.Sprintf("%T", sdk.EventRunWorkflowNode{}) && e.Status == sdk.StatusWaiting {
-		toSkipSendReposManager = true
-	}
-	if !toSkipSendReposManager {
-		if err := store.Enqueue("events_repositoriesmanager", e); err != nil {
-			return err
-		}
-	}
-
 	b, err := json.Marshal(e)
 	if err != nil {
 		return sdk.WrapError(err, "Cannot marshal event %+v", e)

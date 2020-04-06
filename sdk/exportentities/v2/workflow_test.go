@@ -10,10 +10,9 @@ import (
 	"github.com/stretchr/testify/assert"
 	"gopkg.in/yaml.v2"
 
+	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/exportentities"
 	v2 "github.com/ovh/cds/sdk/exportentities/v2"
-
-	"github.com/ovh/cds/sdk"
 )
 
 func TestWorkflow_checkDependencies(t *testing.T) {
@@ -916,20 +915,6 @@ hooks:
       method: POST
 `,
 		}, {
-			name: "workflow with template",
-			yaml: `name: test4
-version: v2.0
-template: shared.infra/example
-workflow:
-  1_start:
-    pipeline: test
-  2_webHook:
-    depends_on:
-    - 1_start
-    pipeline: test
-`,
-		},
-		{
 			name: "Join with condition",
 			yaml: `name: joins
 version: v2.0
@@ -990,10 +975,62 @@ workflow:
     one_at_a_time: true
 `,
 		},
+		{
+			name: "Workflow no declared joins",
+			yaml: `name: nojoins
+version: v2.0
+workflow:
+  p1:
+    pipeline: env
+  p5:
+    depends_on:
+    - p21
+    - p31
+    - p41
+    pipeline: env
+  p6:
+    depends_on:
+    - p21
+    - p31
+    - p41
+    - p42
+    pipeline: env
+  p7:
+    depends_on:
+    - p21
+    - p31
+    - p42
+    pipeline: env
+  p21:
+    depends_on:
+    - p1
+    pipeline: env
+  p22:
+    depends_on:
+    - p1
+    pipeline: env
+  p31:
+    depends_on:
+    - p1
+    pipeline: env
+  p32:
+    depends_on:
+    - p1
+    pipeline: env
+  p41:
+    depends_on:
+    - p1
+    pipeline: env
+  p42:
+    depends_on:
+    - p1
+    pipeline: env
+`,
+		},
 	}
 	for _, tst := range tests {
 		t.Run(tst.name, func(t *testing.T) {
-			yamlWorkflow, err := exportentities.UnmarshalWorkflow([]byte(tst.yaml))
+			yamlWorkflow, err := exportentities.UnmarshalWorkflow([]byte(tst.yaml), exportentities.FormatYAML)
 			if err != nil {
 				if !tst.wantErr {
 					t.Error("Unmarshal raised an error", err)

@@ -61,9 +61,9 @@ func (r *ProcessorReport) Add(ctx context.Context, i ...interface{}) {
 		case *sdk.WorkflowNodeJobRun:
 			r.jobs = append(r.jobs, *x)
 		case sdk.WorkflowNodeRun:
-			r.nodes = append(r.nodes, x)
+			r.addWorkflowNodeRun(ctx, x)
 		case *sdk.WorkflowNodeRun:
-			r.nodes = append(r.nodes, *x)
+			r.addWorkflowNodeRun(ctx, *x)
 		case sdk.WorkflowRun:
 			r.workflows = append(r.workflows, x)
 		case *sdk.WorkflowRun:
@@ -72,6 +72,16 @@ func (r *ProcessorReport) Add(ctx context.Context, i ...interface{}) {
 			log.Warning(ctx, "ProcessorReport> unknown type %T", w)
 		}
 	}
+}
+
+func (r *ProcessorReport) addWorkflowNodeRun(ctx context.Context, nr sdk.WorkflowNodeRun) {
+	for i := range r.nodes {
+		if nr.ID == r.nodes[i].ID {
+			r.nodes[i] = nr
+			return
+		}
+	}
+	r.nodes = append(r.nodes, nr)
 }
 
 //All returns all the objects in the reports
@@ -87,16 +97,14 @@ func (r *ProcessorReport) All() []interface{} {
 }
 
 // Merge to the provided report and the current report
-func (r *ProcessorReport) Merge(ctx context.Context, r1 *ProcessorReport, err error) (*ProcessorReport, error) {
-	if r == nil {
-		return r1, err
-	}
+func (r *ProcessorReport) Merge(ctx context.Context, r1 *ProcessorReport) {
 	if r1 == nil {
-		return r, err
+		return
 	}
-	data := r1.All()
-	r.Add(ctx, data...)
-	return r, err
+	if r == nil {
+		*r = ProcessorReport{}
+	}
+	r.Add(ctx, r1.All()...)
 }
 
 // Errors return errors
@@ -120,8 +128,6 @@ func UpdateNodeJobRunStatus(ctx context.Context, db gorp.SqlExecutor, store cach
 	defer end()
 
 	report := new(ProcessorReport)
-
-	log.Debug("UpdateNodeJobRunStatus> job.ID=%d status=%s", job.ID, status)
 
 	_, next := observability.Span(ctx, "workflow.LoadRunByID")
 	nodeRun, errLoad := LoadNodeRunByID(db, job.WorkflowNodeRunID, LoadRunOptions{})
@@ -189,13 +195,15 @@ func UpdateNodeJobRunStatus(ctx context.Context, db gorp.SqlExecutor, store cach
 	if status == sdk.StatusBuilding {
 		// Sync job status in noderun
 		r, err := syncTakeJobInNodeRun(ctx, db, nodeRun, job, stageIndex)
-		return report.Merge(ctx, r, err)
+		report.Merge(ctx, r)
+		return report, err
 	}
 	syncJobInNodeRun(nodeRun, job, stageIndex)
 
 	if job.Status != sdk.StatusStopped {
 		r, err := executeNodeRun(ctx, db, store, proj, nodeRun)
-		return report.Merge(ctx, r, err)
+		report.Merge(ctx, r)
+		return report, err
 	}
 	return nil, nil
 }
@@ -228,7 +236,7 @@ func PrepareSpawnInfos(infos []sdk.SpawnInfo) []sdk.SpawnInfo {
 
 // TakeNodeJobRun Take an a job run for update
 func TakeNodeJobRun(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj sdk.Project, jobID int64,
-	workerModel, workerName, workerID string, infos []sdk.SpawnInfo) (*sdk.WorkflowNodeJobRun, *ProcessorReport, error) {
+	workerModel, workerName, workerID string, infos []sdk.SpawnInfo, hatcheryName string) (*sdk.WorkflowNodeJobRun, *ProcessorReport, error) {
 	var end func()
 	ctx, end = observability.Span(ctx, "workflow.TakeNodeJobRun")
 	defer end()
@@ -257,6 +265,8 @@ func TakeNodeJobRun(ctx context.Context, db gorp.SqlExecutor, store cache.Store,
 		return nil, report, err
 	}
 
+	job.HatcheryName = hatcheryName
+	job.WorkerName = workerName
 	job.Model = workerModel
 	job.Job.WorkerName = workerName
 	job.Job.WorkerID = workerID
@@ -271,10 +281,10 @@ func TakeNodeJobRun(ctx context.Context, db gorp.SqlExecutor, store cache.Store,
 	}
 
 	r, err := UpdateNodeJobRunStatus(ctx, db, store, proj, job, sdk.StatusBuilding)
-	report, err = report.Merge(ctx, r, err)
 	if err != nil {
 		return nil, nil, sdk.WrapError(err, "cannot update node job run %d status from %s to %s", job.ID, job.Status, sdk.StatusBuilding)
 	}
+	report.Merge(ctx, r)
 
 	return job, report, nil
 }
@@ -340,7 +350,7 @@ func LoadNodeJobRunKeys(ctx context.Context, db gorp.SqlExecutor, proj *sdk.Proj
 		})
 		secrets = append(secrets, sdk.Variable{
 			Name:  "cds.key." + k.Name + ".priv",
-			Type:  k.Type,
+			Type:  string(k.Type),
 			Value: k.Private,
 		})
 	}
@@ -361,7 +371,7 @@ func LoadNodeJobRunKeys(ctx context.Context, db gorp.SqlExecutor, proj *sdk.Proj
 
 			secrets = append(secrets, sdk.Variable{
 				Name:  "cds.key." + k.Name + ".priv",
-				Type:  k.Type,
+				Type:  string(k.Type),
 				Value: k.Private,
 			})
 		}
@@ -381,7 +391,7 @@ func LoadNodeJobRunKeys(ctx context.Context, db gorp.SqlExecutor, proj *sdk.Proj
 			})
 			secrets = append(secrets, sdk.Variable{
 				Name:  "cds.key." + k.Name + ".priv",
-				Type:  k.Type,
+				Type:  string(k.Type),
 				Value: k.Private,
 			})
 		}

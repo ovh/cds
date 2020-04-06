@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnInit, ViewChild } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
-import { Store } from '@ngxs/store';
+import { Select, Store } from '@ngxs/store';
 import { ProjectIntegration } from 'app/model/integration.model';
 import { Project } from 'app/model/project.model';
 import { WorkflowHookModel } from 'app/model/workflow.hook.model';
@@ -9,8 +9,11 @@ import { HookService } from 'app/service/hook/hook.service';
 import { ThemeStore } from 'app/service/theme/theme.store';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { ToastService } from 'app/shared/toast/ToastService';
+import { ProjectState } from 'app/store/project.state';
 import { UpdateWorkflow } from 'app/store/workflow.action';
+import { WorkflowState } from 'app/store/workflow.state';
 import cloneDeep from 'lodash-es/cloneDeep';
+import { Observable } from 'rxjs';
 import { finalize, first } from 'rxjs/operators';
 import { Subscription } from 'rxjs/Subscription';
 
@@ -22,34 +25,36 @@ import { Subscription } from 'rxjs/Subscription';
 })
 @AutoUnsubscribe()
 export class WorkflowNodeHookFormComponent implements OnInit {
+<<<<<<< HEAD
     @ViewChild('textareaCodeMirror') codemirror: any;
 
     _hook: WNodeHook = new WNodeHook();
     canDelete = false;
 
     @Input() project: Project;
+=======
+>>>>>>> master
     @Input() workflow: Workflow;
-    @Input() node: WNode;
-    @Input() editMode: boolean;
-    @Input('hook')
-    set hook(data: WNodeHook) {
-        if (data) {
-            this.canDelete = true;
-            this._hook = cloneDeep<WNodeHook>(data);
-            if (this.hooksModel) {
-                this.selectedHookModel = this.hooksModel.find(hm => hm.id === this.hook.hook_model_id);
-                this._hook.model = this.selectedHookModel;
-            }
-            this.displayConfig = Object.keys(this._hook.config).length !== 0;
-        }
-    }
-    get hook() {
-        return this._hook;
-    }
 
     // Enable form button to update hook
     @Input() mode = 'create'; // create  update ro
 
+    @ViewChild('textareaCodeMirror', {static: false}) codemirror: any;
+
+    @Select(WorkflowState.getSelectedNode()) node$: Observable<WNode>;
+    node: WNode;
+    nodeSub: Subscription;
+
+    @Select(WorkflowState.getSelectedHook()) hook$: Observable<WNodeHook>;
+    hook: WNodeHook;
+    hookSub: Subscription;
+
+
+    project: Project;
+    editMode: boolean;
+    isRun: boolean;
+
+    canDelete = false;
     hooksModel: Array<WorkflowHookModel>;
     selectedHookModel: WorkflowHookModel;
     loadingModels = true;
@@ -70,9 +75,29 @@ export class WorkflowNodeHookFormComponent implements OnInit {
         private _translate: TranslateService,
         private _theme: ThemeStore,
         private _cd: ChangeDetectorRef
-    ) { }
+    ) {
+        this.project = this._store.selectSnapshot(ProjectState.projectSnapshot);
+        this.editMode = this._store.selectSnapshot(WorkflowState).editMode;
+    }
 
     ngOnInit(): void {
+        this.nodeSub = this.node$.subscribe(n => {
+            this.node = n;
+            this._cd.markForCheck();
+        });
+        this.hookSub = this.hook$.subscribe(h => {
+            if (!h) {
+                return;
+            }
+            this.hook = cloneDeep(h);
+            this.canDelete = true;
+            if (this.hooksModel) {
+                this.selectedHookModel = this.hooksModel.find(hm => hm.id === this.hook.hook_model_id);
+                this.hook.model = this.selectedHookModel;
+            }
+            this.displayConfig = Object.keys(this.hook.config).length !== 0;
+            this._cd.markForCheck();
+        });
         this.codeMirrorConfig = {
             matchBrackets: true,
             autoCloseBrackets: true,
@@ -97,20 +122,24 @@ export class WorkflowNodeHookFormComponent implements OnInit {
         if (!this.node && this.hook) {
             this.node = Workflow.getNodeByID(this.hook.node_id, this.workflow);
         }
-        this._hookService.getHookModel(this.project, this.workflow, this.node).pipe(
-            first(),
-            finalize(() => {
-                this.loadingModels = false;
-                this._cd.markForCheck();
-            })
-        ).subscribe(mds => {
-            this.hooksModel = mds;
-            if (this.hook && this.hook.hook_model_id) {
-                this.selectedHookModel = this.hooksModel.find(hm => hm.id === this.hook.hook_model_id);
-                this.hook.model = this.selectedHookModel;
-                this.initConfig();
-            }
-        });
+        if (!this._store.selectSnapshot(WorkflowState).workflowRun) {
+            this._hookService.getHookModel(this.project, this.workflow, this.node).pipe(
+                first(),
+                finalize(() => {
+                    this.loadingModels = false;
+                    this._cd.markForCheck();
+                })
+            ).subscribe(mds => {
+                this.hooksModel = mds;
+                if (this.hook && this.hook.hook_model_id) {
+                    this.selectedHookModel = this.hooksModel.find(hm => hm.id === this.hook.hook_model_id);
+                    this.hook.model = this.selectedHookModel;
+                    this.initConfig();
+                }
+            });
+        } else {
+            this.isRun = true;
+        }
     }
 
     updateHook(): void {
@@ -129,7 +158,10 @@ export class WorkflowNodeHookFormComponent implements OnInit {
                 projectKey: this.workflow.project_key,
                 workflowName: this.workflow.name,
                 changes: clonedWorkflow
-            })).pipe(finalize(() => this.loading = false))
+            })).pipe(finalize(() => {
+                this.loading = false;
+                this._cd.markForCheck();
+            }))
                 .subscribe(() => {
                     if (this.editMode) {
                         this._toast.info('', this._translate.instant('workflow_ascode_updated'));
@@ -141,6 +173,9 @@ export class WorkflowNodeHookFormComponent implements OnInit {
     }
 
     updateHookModel(): void {
+        if (!this.hook) {
+            this.hook = new WNodeHook();
+        }
         this.hook.model = this.selectedHookModel;
         this.hook.config = cloneDeep(this.selectedHookModel.default_config);
         this.hook.hook_model_id = this.selectedHookModel.id;

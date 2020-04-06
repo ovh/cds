@@ -1,9 +1,11 @@
 import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output, ViewChild } from '@angular/core';
+import { Store } from '@ngxs/store';
 import { ModalTemplate, SuiActiveModal, SuiModalService, TemplateModalConfig } from '@richardlt/ng2-semantic-ui';
 import { Project } from 'app/model/project.model';
 import { WNode, WNodeHook, Workflow } from 'app/model/workflow.model';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { WorkflowNodeHookFormComponent } from 'app/shared/workflow/wizard/hook/hook.form.component';
+import { WorkflowState } from 'app/store/workflow.state';
 @Component({
     selector: 'app-hook-modal',
     templateUrl: './hook.modal.html',
@@ -17,12 +19,11 @@ export class WorkflowHookModalComponent {
     @Input() workflow: Workflow;
     @Input() node: WNode;
     @Input() loading: boolean;
-    @Input() editMode: boolean;
-
-    @Input() hook: WNodeHook;
 
     @Output() hookEvent = new EventEmitter<WNodeHook>();
     @Output() deleteHookEvent = new EventEmitter<WNodeHook>();
+
+    editMode: boolean;
 
     @ViewChild('hookModalComponent')
     public hookModalComponent: ModalTemplate<boolean, boolean, void>;
@@ -32,7 +33,9 @@ export class WorkflowHookModalComponent {
     @ViewChild('hookFormComponent')
     hookFormComponent: WorkflowNodeHookFormComponent;
 
-    constructor(private _modalService: SuiModalService) {}
+    constructor(private _modalService: SuiModalService, private _store: Store) {
+        this.editMode = this._store.selectSnapshot(WorkflowState).editMode;
+    }
 
     show(): void {
         if (this.hookModalComponent) {

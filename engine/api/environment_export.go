@@ -5,7 +5,6 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
-
 	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/service"
@@ -15,7 +14,6 @@ import (
 
 func (api *API) getEnvironmentExportHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		// Get project name in URL
 		vars := mux.Vars(r)
 		key := vars[permProjectKey]
 		envName := vars["environmentName"]
@@ -24,17 +22,24 @@ func (api *API) getEnvironmentExportHandler() service.Handler {
 		if format == "" {
 			format = "yaml"
 		}
-
-		// Export
 		f, err := exportentities.GetFormat(format)
 		if err != nil {
-			return sdk.WrapError(err, "Format invalid")
-		}
-		if _, err := environment.Export(ctx, api.mustDB(), api.Cache, key, envName, f, project.EncryptWithBuiltinKey, w); err != nil {
-			return sdk.WrapError(err, "getEnvironmentExportHandler")
+			return err
 		}
 
-		w.Header().Add("Content-Type", exportentities.GetContentType(f))
+		env, err := environment.Export(ctx, api.mustDB(), key, envName, project.EncryptWithBuiltinKey)
+		if err != nil {
+			return err
+		}
+		buf, err := exportentities.Marshal(env, f)
+		if err != nil {
+			return err
+		}
+		if _, err := w.Write(buf); err != nil {
+			return sdk.WithStack(err)
+		}
+
+		w.Header().Add("Content-Type", f.ContentType())
 		w.WriteHeader(http.StatusOK)
 		return nil
 	}

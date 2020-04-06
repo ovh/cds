@@ -87,7 +87,7 @@ func Import(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj sd
 			return sdk.WrapError(err, "Unable to insert key %s", k.Name)
 		}
 		if msgChan != nil {
-			msgChan <- sdk.NewMessage(sdk.MsgAppKeyCreated, strings.ToUpper(k.Type), k.Name, app.Name)
+			msgChan <- sdk.NewMessage(sdk.MsgAppKeyCreated, strings.ToUpper(string(k.Type)), k.Name, app.Name)
 		}
 	}
 

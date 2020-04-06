@@ -10,10 +10,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/ovh/cds/engine/api/application"
-
 	"github.com/stretchr/testify/assert"
 
+	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/engine/api/services"
@@ -104,6 +103,7 @@ func TestUpdateAsCodePipelineHandler(t *testing.T) {
 			"secret": "bar",
 		},
 	}))
+	wkf := assets.InsertTestWorkflow(t, db, api.Cache, proj, sdk.RandomString(10))
 
 	pip := sdk.Pipeline{
 		Name:           sdk.RandomString(10),
@@ -154,7 +154,7 @@ func TestUpdateAsCodePipelineHandler(t *testing.T) {
 		// Get operation
 		uriGET := api.Router.GetRoute("GET", api.getWorkflowAsCodeHandler, map[string]string{
 			"key":              proj.Key,
-			"permWorkflowName": pip.Name,
+			"permWorkflowName": wkf.Name,
 			"uuid":             myOpe.UUID,
 		})
 		reqGET, err := http.NewRequest("GET", uriGET, nil)
@@ -176,5 +176,4 @@ func TestUpdateAsCodePipelineHandler(t *testing.T) {
 		assert.Equal(t, "myURL", myOpeGet.Setup.Push.PRLink)
 		break
 	}
-
 }

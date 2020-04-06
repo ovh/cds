@@ -18,7 +18,7 @@ import (
 
 var CacheOperationKey = cache.Key("repositories", "operation", "push")
 
-func PushOperation(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj sdk.Project, app *sdk.Application, wp exportentities.WorkflowPulled, branch, message string, isUpdate bool, u sdk.Identifiable) (*sdk.Operation, error) {
+func PushOperation(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj sdk.Project, app *sdk.Application, wp exportentities.WorkflowComponents, branch, message string, isUpdate bool, u sdk.Identifiable) (*sdk.Operation, error) {
 	var vcsStrategy = app.RepositoryStrategy
 	if vcsStrategy.SSHKey != "" {
 		key := proj.GetSSHKey(vcsStrategy.SSHKey)
@@ -72,7 +72,7 @@ func PushOperation(ctx context.Context, db gorp.SqlExecutor, store cache.Store, 
 	}
 
 	buf := new(bytes.Buffer)
-	if err := wp.Tar(ctx, buf); err != nil {
+	if err := exportentities.TarWorkflowComponents(ctx, wp, buf); err != nil {
 		return nil, sdk.WrapError(err, "cannot tar pulled workflow")
 	}
 

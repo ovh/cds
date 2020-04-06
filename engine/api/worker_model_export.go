@@ -20,6 +20,15 @@ func (api *API) getWorkerModelExportHandler() service.Handler {
 		groupName := vars["permGroupName"]
 		modelName := vars["permModelName"]
 
+		format := FormString(r, "format")
+		if format == "" {
+			format = "yaml"
+		}
+		f, err := exportentities.GetFormat(format)
+		if err != nil {
+			return err
+		}
+
 		g, err := group.LoadByName(ctx, api.mustDB(), groupName)
 		if err != nil {
 			return err
@@ -28,15 +37,6 @@ func (api *API) getWorkerModelExportHandler() service.Handler {
 		wm, err := workermodel.LoadByNameAndGroupID(api.mustDB(), modelName, g.ID)
 		if err != nil {
 			return sdk.WrapError(err, "cannot load worker model")
-		}
-
-		format := FormString(r, "format")
-		if format == "" {
-			format = "yaml"
-		}
-		f, err := exportentities.GetFormat(format)
-		if err != nil {
-			return err
 		}
 
 		opts := []exportentities.WorkerModelOption{}
@@ -48,7 +48,7 @@ func (api *API) getWorkerModelExportHandler() service.Handler {
 			return err
 		}
 
-		w.Header().Add("Content-Type", exportentities.GetContentType(f))
+		w.Header().Add("Content-Type", f.ContentType())
 		w.WriteHeader(http.StatusOK)
 		return nil
 	}

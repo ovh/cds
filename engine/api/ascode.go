@@ -14,8 +14,10 @@ import (
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/engine/api/workflow"
+	"github.com/ovh/cds/engine/api/workflowtemplate"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/exportentities"
 	"github.com/ovh/cds/sdk/log"
 )
 
@@ -149,9 +151,32 @@ func (api *API) postPerformImportAsCodeHandler() service.Handler {
 			IsDefaultBranch:    ope.Setup.Checkout.Branch == ope.RepositoryInfo.DefaultBranch,
 		}
 
-		allMsg, wrkflw, _, err := workflow.Push(ctx, api.mustDB(), api.Cache, proj, tr, opt, getAPIConsumer(ctx), project.DecryptWithBuiltinKey)
+		data, err := exportentities.UntarWorkflowComponents(ctx, tr)
+		if err != nil {
+			return err
+		}
+
+		consumer := getAPIConsumer(ctx)
+
+		mods := []workflowtemplate.TemplateRequestModifierFunc{
+			workflowtemplate.TemplateRequestModifiers.DefaultKeys(*proj),
+		}
+		if !opt.IsDefaultBranch {
+			mods = append(mods, workflowtemplate.TemplateRequestModifiers.Detached)
+		}
+		if opt.FromRepository != "" {
+			mods = append(mods, workflowtemplate.TemplateRequestModifiers.DefaultNameAndRepositories(ctx, api.mustDB(), api.Cache, *proj, opt.FromRepository))
+		}
+		wti, err := workflowtemplate.CheckAndExecuteTemplate(ctx, api.mustDB(), *consumer, *proj, &data, mods...)
+		if err != nil {
+			return err
+		}
+		allMsg, wrkflw, _, err := workflow.Push(ctx, api.mustDB(), api.Cache, proj, data, opt, getAPIConsumer(ctx), project.DecryptWithBuiltinKey)
 		if err != nil {
 			return sdk.WrapError(err, "unable to push workflow")
+		}
+		if err := workflowtemplate.UpdateTemplateInstanceWithWorkflow(ctx, api.mustDB(), *wrkflw, *consumer, wti); err != nil {
+			return err
 		}
 		msgListString := translate(r, allMsg)
 
@@ -194,25 +219,22 @@ func (api *API) postResyncPRAsCodeHandler() service.Handler {
 		if errP != nil {
 			return sdk.WrapError(errP, "unable to load project")
 		}
-		var app *sdk.Application
-		if fromRepo != "" {
-			apps, err := application.LoadAsCode(api.mustDB(), api.Cache, key, fromRepo)
+		var app sdk.Application
+		switch {
+		case appName != "":
+			appP, err := application.LoadByName(api.mustDB(), api.Cache, key, appName)
 			if err != nil {
 				return err
 			}
-			if len(apps) == 0 {
-				return sdk.WrapError(sdk.ErrApplicationNotFound, "unable to load application as code key:%s fromRepo:%s", key, fromRepo)
-			}
-			app = &apps[0]
-		} else {
-			var err error
-			app, err = application.LoadByName(api.mustDB(), api.Cache, key, appName)
+			app = *appP
+		case fromRepo != "":
+			wkf, err := workflow.LoadByRepo(ctx, api.Cache, api.mustDB(), *proj, fromRepo)
 			if err != nil {
 				return err
 			}
-			if app == nil {
-				return sdk.WrapError(sdk.ErrApplicationNotFound, "unable to load application %s", appName)
-			}
+			app = wkf.Applications[wkf.WorkflowData.Node.Context.ApplicationID]
+		default:
+			return sdk.WrapError(sdk.ErrWrongRequest, "Missing appName or repo query parameter")
 		}
 
 		if _, _, err := sync.SyncAsCodeEvent(ctx, api.mustDB(), api.Cache, *proj, app, getAPIConsumer(ctx).AuthentifiedUser); err != nil {

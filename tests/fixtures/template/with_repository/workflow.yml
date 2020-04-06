@@ -1,6 +1,6 @@
 name: [[.name]]
 description: Test example workflow
-version: v1.0
+version: v2.0
 workflow:
   Node-1:
     pipeline: First-pipeline-[[.id]]
@@ -14,3 +14,7 @@ workflow:
     pipeline: Second-pipeline-[[.id]]
     environment: First-environment-[[.id]]
 [[end]]
+notifications:
+- type: vcs
+  settings:
+    on_success: always

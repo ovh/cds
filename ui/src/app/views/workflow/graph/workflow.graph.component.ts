@@ -162,7 +162,6 @@ export class WorkflowGraphComponent implements AfterViewInit {
             }
             componentRef.instance.hook = h;
             componentRef.instance.workflow = this.workflow;
-            componentRef.instance.project = this.project;
             componentRef.instance.node = node;
             this.hooksComponent.set(hookId, componentRef);
 

@@ -4,10 +4,8 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"net/http"
 
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/exportentities"
 )
 
 func (c *client) Requirements() ([]sdk.Requirement, error) {
@@ -54,41 +52,21 @@ func (c *client) ActionList() ([]sdk.Action, error) {
 	return actions, nil
 }
 
-func (c *client) ActionImport(content io.Reader, format string) error {
+func (c *client) ActionImport(content io.Reader, mods ...RequestModifier) error {
 	url := "/action/import"
-	mods := []RequestModifier{}
-	switch format {
-	case "json":
-		mods = []RequestModifier{
-			func(r *http.Request) {
-				r.Header.Set("Content-Type", "application/json")
-			},
-		}
-	case "yaml", "yml":
-		mods = []RequestModifier{
-			func(r *http.Request) {
-				r.Header.Set("Content-Type", "application/x-yaml")
-			},
-		}
-	default:
-		return exportentities.ErrUnsupportedFormat
-	}
-
 	_, _, code, err := c.Request(context.Background(), "POST", url, content, mods...)
 	if err != nil {
 		return err
 	}
-
 	if code > 400 {
 		return fmt.Errorf("HTTP Code %d", code)
 	}
-
 	return nil
 }
 
-func (c *client) ActionExport(groupName, name string, format string) ([]byte, error) {
-	path := fmt.Sprintf("/action/%s/%s/export?format=%s", groupName, name, format)
-	body, _, _, err := c.Request(context.Background(), "GET", path, nil)
+func (c *client) ActionExport(groupName, name string, mods ...RequestModifier) ([]byte, error) {
+	path := fmt.Sprintf("/action/%s/%s/export", groupName, name)
+	body, _, _, err := c.Request(context.Background(), "GET", path, nil, mods...)
 	if err != nil {
 		return nil, err
 	}

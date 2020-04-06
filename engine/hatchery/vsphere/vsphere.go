@@ -80,15 +80,11 @@ func (h *HatcheryVSphere) Status(ctx context.Context) sdk.MonitoringStatus {
 func (h *HatcheryVSphere) CheckConfiguration(cfg interface{}) error {
 	hconfig, ok := cfg.(HatcheryConfiguration)
 	if !ok {
-		return fmt.Errorf("Invalid configuration")
+		return fmt.Errorf("Invalid hatchery vsphere configuration")
 	}
 
-	if hconfig.API.HTTP.URL == "" {
-		return fmt.Errorf("API HTTP(s) URL is mandatory")
-	}
-
-	if hconfig.API.Token == "" {
-		return fmt.Errorf("API Token URL is mandatory")
+	if err := hconfig.Check(); err != nil {
+		return fmt.Errorf("Invalid hatchery vsphere configuration: %v", err)
 	}
 
 	if hconfig.VSphereUser == "" {
@@ -105,10 +101,6 @@ func (h *HatcheryVSphere) CheckConfiguration(cfg interface{}) error {
 
 	if hconfig.VSphereDatacenterString == "" {
 		return fmt.Errorf("vsphere-datacenter is mandatory")
-	}
-
-	if hconfig.Name == "" {
-		return fmt.Errorf("please enter a name in your vsphere hatchery configuration")
 	}
 
 	return nil

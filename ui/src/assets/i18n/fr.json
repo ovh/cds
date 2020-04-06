@@ -928,6 +928,7 @@
   "workflow_template_update_title": "Mise à jour du workflow à partir du modèle",
   "workflow_template": "Modèle de workflow",
   "workflow_templates": "Modèles de workflow",
+  "workflow_template_param_select_key": "Sélectionnez une clé",
   "workflow_update_name_error": "Nom de workflow invalide. Pattern autorisé : ^[a-zA-Z0-9._-]{1,}$",
   "workflow_ascode_updated": "Brouillon mis à jour",
   "workflow_updated": "Workflow mis à jour",

@@ -1,5 +1,5 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Action, createSelector, State, StateContext } from '@ngxs/store';
+import { Action, createSelector, Selector, State, StateContext } from '@ngxs/store';
 import { Environment } from 'app/model/environment.model';
 import { GroupPermission } from 'app/model/group.model';
 import { ProjectIntegration } from 'app/model/integration.model';
@@ -31,6 +31,11 @@ export class ProjectStateModel {
     }
 })
 export class ProjectState {
+
+    @Selector()
+    static projectSnapshot(state: ProjectStateModel) {
+        return state.project;
+    }
 
     static selectEnvironment(name: string) {
         return createSelector(

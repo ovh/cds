@@ -15,8 +15,6 @@ import (
 
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
-
-	vault "github.com/hashicorp/vault/api"
 )
 
 // AES key fetched
@@ -31,49 +29,10 @@ var (
 	prefix = "3DICC3It"
 )
 
-type Secret struct {
-	Token  string
-	Client *vault.Client
-}
-
 // Init secrets: cipherKey
 // cipherKey is set from viper configuration
 func Init(cipherKey string) {
 	key = []byte(cipherKey)
-}
-
-// Create new secret client
-func New(token, addr string) (*Secret, error) {
-	client, err := vault.NewClient(vault.DefaultConfig())
-	if err != nil {
-		return nil, err
-	}
-
-	client.SetToken(token)
-	client.SetAddress(addr)
-	return &Secret{
-		Client: client,
-		Token:  token,
-	}, nil
-}
-
-// GetFromVault Get secret from vault
-func (secret *Secret) GetFromVault(s string) (string, error) {
-	conf, err := secret.Client.Logical().Read(s)
-	if err != nil {
-		return "", err
-	} else if conf == nil {
-		log.Warning(context.Background(), "vault> no value found at %q", s)
-		return "", nil
-	}
-
-	value, exists := conf.Data["data"]
-	if !exists {
-		log.Warning(context.Background(), "vault> no 'data' field found for %q (you must add a field with a key named data)", s)
-		return "", nil
-	}
-
-	return fmt.Sprintf("%v", value), nil
 }
 
 // Encrypt data using aes+hmac algorithm

@@ -3,17 +3,16 @@ package main
 import (
 	"bytes"
 	"context"
-	"encoding/json"
 	"fmt"
 	"sort"
 	"strings"
 	"time"
 
 	survey "gopkg.in/AlecAivazis/survey.v1"
-	yaml "gopkg.in/yaml.v2"
 
 	"github.com/ovh/cds/cli"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/ovh/cds/sdk/exportentities"
 )
 
@@ -147,16 +146,7 @@ func templateExtractAndValidateFileParams(filePath string) (*sdk.WorkflowTemplat
 	}
 
 	var f templateBulkFile
-	var errU error
-	switch format {
-	case exportentities.FormatJSON:
-		errU = json.Unmarshal(buf.Bytes(), &f)
-	case exportentities.FormatYAML:
-		errU = yaml.Unmarshal(buf.Bytes(), &f)
-	default:
-		return nil, nil, exportentities.ErrUnsupportedFormat
-	}
-	if errU != nil {
+	if err := exportentities.Unmarshal(buf.Bytes(), format, &f); err != nil {
 		return nil, nil, fmt.Errorf("cannot unmarshal given file %v", err)
 	}
 
@@ -359,6 +349,15 @@ func templateBulkRun(v cli.Values) error {
 	if err != nil {
 		return err
 	}
+	// filter as code workflow
+	wtisFiltered := make([]sdk.WorkflowTemplateInstance, 0, len(wtis))
+	for i := range wtis {
+		if wtis[i].Workflow == nil || wtis[i].Workflow.FromRepository == "" {
+			wtisFiltered = append(wtisFiltered, wtis[i])
+		}
+	}
+	wtis = wtisFiltered
+
 	mwtis := make(map[string]sdk.WorkflowTemplateInstance, len(wtis))
 	for _, i := range wtis {
 		mwtis[i.Key()] = i
@@ -389,6 +388,8 @@ func templateBulkRun(v cli.Values) error {
 			mprojects[wti.Project.Key] = wti.Project
 		}
 		projectRepositories := make(map[string][]string)
+		projectSSHKeys := make(map[string][]string)
+		projectPGPKeys := make(map[string][]string)
 
 		for operationKey, operation := range moperations {
 			// check if some params are missing for current operation
@@ -402,14 +403,14 @@ func templateBulkRun(v cli.Values) error {
 
 			if paramMissing {
 				// get project from map if exists else from api
-				if _, ok := mprojects[operationKey]; !ok {
-					p, err := client.ProjectGet(operation.Request.ProjectKey)
+				if _, ok := mprojects[operation.Request.ProjectKey]; !ok {
+					p, err := client.ProjectGet(operation.Request.ProjectKey, cdsclient.WithKeys())
 					if err != nil {
 						return err
 					}
 					mprojects[p.Key] = p
 				}
-				project := mprojects[operationKey]
+				project := mprojects[operation.Request.ProjectKey]
 
 				// for each param not already in previous request ask for the value
 				for _, p := range wt.Parameters {
@@ -418,40 +419,62 @@ func templateBulkRun(v cli.Values) error {
 
 						var value string
 						switch p.Type {
-						case sdk.ParameterTypeRepository:
-							// get the project and its repositories if not already loaded
-							if _, ok := projectRepositories[project.Key]; !ok {
-								for _, vcs := range project.VCSServers {
-									rs, err := client.RepositoriesList(project.Key, vcs.Name, false)
-									if err != nil {
-										return err
-									}
-									for _, r := range rs {
-										projectRepositories[project.Key] = append(projectRepositories[project.Key],
-											fmt.Sprintf("%s/%s", vcs.Name, r.Slug))
+						case sdk.ParameterTypeRepository, sdk.ParameterTypeSSHKey, sdk.ParameterTypePGPKey:
+							var options []string
+							if p.Type == sdk.ParameterTypeRepository {
+								// get the project and its repositories if not already loaded
+								if _, ok := projectRepositories[project.Key]; !ok {
+									for _, vcs := range project.VCSServers {
+										rs, err := client.RepositoriesList(project.Key, vcs.Name, false)
+										if err != nil {
+											return err
+										}
+										for _, r := range rs {
+											projectRepositories[project.Key] = append(projectRepositories[project.Key],
+												fmt.Sprintf("%s/%s", vcs.Name, r.Slug))
+										}
 									}
 								}
+								options = projectRepositories[project.Key]
+							} else if p.Type == sdk.ParameterTypeSSHKey {
+								if _, ok := projectSSHKeys[project.Key]; !ok {
+									var sshKeys []string
+									for _, k := range project.Keys {
+										if k.Type == sdk.KeyTypeSSH {
+											sshKeys = append(sshKeys, k.Name)
+										}
+									}
+									projectSSHKeys[project.Key] = sshKeys
+								}
+								options = projectSSHKeys[project.Key]
+							} else if p.Type == sdk.ParameterTypePGPKey {
+								if _, ok := projectPGPKeys[project.Key]; !ok {
+									var pgpKeys []string
+									for _, k := range project.Keys {
+										if k.Type == sdk.KeyTypePGP {
+											pgpKeys = append(pgpKeys, k.Name)
+										}
+									}
+									projectPGPKeys[project.Key] = pgpKeys
+								}
+								options = projectPGPKeys[project.Key]
 							}
 
-							// ask to choose a repository, if only one ask to, if no repo found ask for value
-							lengthRepo := len(projectRepositories[project.Key])
-							if lengthRepo > 1 {
-								if err := survey.AskOne(&survey.Select{
-									Message: label,
-									Options: projectRepositories[project.Key],
-								}, &value, nil); err != nil {
+							// ask to choose an option, if only one ask to, if no options found ask for value
+							if len(options) > 1 {
+								if err := survey.AskOne(&survey.Select{Message: label, Options: options}, &value, nil); err != nil {
 									return err
 								}
-							} else if lengthRepo == 1 {
+							} else if len(options) == 1 {
 								var result bool
 								if err := survey.AskOne(&survey.Confirm{
-									Message: fmt.Sprintf("Set value to '%s' for param '%s' on '%s'", projectRepositories[project.Key][0], p.Key, operationKey),
+									Message: fmt.Sprintf("Set value to '%s' for param '%s' on '%s'", options[0], p.Key, operationKey),
 									Default: true,
 								}, &result, nil); err != nil {
 									return err
 								}
 								if result {
-									value = projectRepositories[project.Key][0]
+									value = options[0]
 								}
 							}
 							if value == "" {
@@ -479,6 +502,11 @@ func templateBulkRun(v cli.Values) error {
 				}
 			}
 		}
+	}
+
+	if len(moperations) == 0 {
+		fmt.Printf("Nothing to do")
+		return nil
 	}
 
 	// send bulk request

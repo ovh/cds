@@ -9,7 +9,7 @@ import {
     ViewChild
 } from '@angular/core';
 import { ModalTemplate, SuiActiveModal, SuiModalService, TemplateModalConfig } from '@richardlt/ng2-semantic-ui';
-import { Project } from 'app/model/project.model';
+import { LoadOpts, Project } from 'app/model/project.model';
 import { WorkflowTemplate, WorkflowTemplateInstance } from 'app/model/workflow-template.model';
 import { Workflow } from 'app/model/workflow.model';
 import { ProjectService } from 'app/service/project/project.service';
@@ -26,7 +26,9 @@ import { finalize } from 'rxjs/operators';
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class WorkflowTemplateApplyModalComponent implements OnChanges {
+
     @ViewChild('workflowTemplateApplyModal') workflowTemplateApplyModal: ModalTemplate<boolean, boolean, void>;
+
     modal: SuiActiveModal<boolean, boolean, void>;
     open: boolean;
 
@@ -79,18 +81,19 @@ export class WorkflowTemplateApplyModalComponent implements OnChanges {
 
     load() {
         if (this.workflowTemplate && this.workflowTemplateInstance) {
-            this._projectService.getProject(this.workflowTemplateInstance.project.key, null)
+            this._projectService.getProject(this.workflowTemplateInstance.project.key, [new LoadOpts('withKeys', 'keys')])
                 .pipe(finalize(() => this._cd.markForCheck()))
                 .subscribe(p => {
-                this.project = p;
-                this.loadAudits()
-            });
+                    this.project = p;
+                    this.loadAudits()
+                });
             return
         } else if (this.workflow) {
-            // retreive workflow template and instance from given workflow
-            let s = this.workflow.from_template.split('/');
+            // retrieve workflow template and instance from given workflow
+            let s = this.workflow.from_template.split('@');
+            s = s[0].split('/');
 
-            forkJoin<WorkflowTemplate, WorkflowTemplateInstance> (
+            forkJoin<WorkflowTemplate, WorkflowTemplateInstance>(
                 this._templateService.get(s[0], s.splice(1, s.length - 1).join('/')),
                 this._templateService.getInstance(this.workflow.project_key, this.workflow.name)
             ).subscribe(res => {

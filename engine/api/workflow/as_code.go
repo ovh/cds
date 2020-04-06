@@ -1,12 +1,11 @@
 package workflow
 
 import (
-	"bytes"
 	"context"
-	"encoding/base64"
 	"fmt"
-	v2 "github.com/ovh/cds/sdk/exportentities/v2"
 	"time"
+
+	v2 "github.com/ovh/cds/sdk/exportentities/v2"
 
 	"github.com/go-gorp/gorp"
 
@@ -16,7 +15,7 @@ import (
 	"github.com/ovh/cds/sdk/exportentities"
 )
 
-// UpdateWorkflowAsCode update an as code workflow
+// UpdateWorkflowAsCode update an as code workflow.
 func UpdateWorkflowAsCode(ctx context.Context, store cache.Store, db gorp.SqlExecutor, proj sdk.Project, wf sdk.Workflow, app sdk.Application, branch string, message string, u *sdk.AuthentifiedUser) (*sdk.Operation, error) {
 	if err := RenameNode(ctx, db, &wf); err != nil {
 		return nil, err
@@ -25,13 +24,12 @@ func UpdateWorkflowAsCode(ctx context.Context, store cache.Store, db gorp.SqlExe
 		return nil, err
 	}
 
-	var wp exportentities.WorkflowPulled
-	buffw := new(bytes.Buffer)
-	if _, err := exportWorkflow(ctx, wf, exportentities.FormatYAML, buffw, v2.WorkflowSkipIfOnlyOneRepoWebhook); err != nil {
+	var wp exportentities.WorkflowComponents
+	var err error
+	wp.Workflow, err = exportentities.NewWorkflow(ctx, wf, v2.WorkflowSkipIfOnlyOneRepoWebhook)
+	if err != nil {
 		return nil, sdk.WrapError(err, "unable to export workflow")
 	}
-	wp.Workflow.Name = wf.Name
-	wp.Workflow.Value = base64.StdEncoding.EncodeToString(buffw.Bytes())
 
 	if wf.WorkflowData.Node.Context == nil || wf.WorkflowData.Node.Context.ApplicationID == 0 {
 		return nil, sdk.WithStack(sdk.ErrApplicationNotFound)
@@ -48,7 +46,7 @@ func MigrateAsCode(ctx context.Context, db *gorp.DbMap, store cache.Store, proj 
 	}
 
 	// Export workflow
-	pull, err := Pull(ctx, db, store, proj, wf.Name, exportentities.FormatYAML, encryptFunc, v2.WorkflowSkipIfOnlyOneRepoWebhook)
+	pull, err := Pull(ctx, db, store, proj, wf.Name, encryptFunc, v2.WorkflowSkipIfOnlyOneRepoWebhook)
 	if err != nil {
 		return nil, sdk.WrapError(err, "cannot pull workflow")
 	}

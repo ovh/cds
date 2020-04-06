@@ -1,7 +1,8 @@
-package workflowtemplate_test 
+package workflowtemplate_test
 
 import (
 	"context"
+	"encoding/base64"
 	"fmt"
 	"testing"
 
@@ -30,6 +31,28 @@ func TestLoadGroup(t *testing.T) {
 		GroupID: grp1.ID,
 		Slug:    "tmpl-2",
 		Name:    "Template 2",
+		Parameters: []sdk.WorkflowTemplateParameter{
+			{Key: "withDeploy", Type: sdk.ParameterTypeBoolean, Required: true},
+			{Key: "deployWhen", Type: sdk.ParameterTypeString},
+			{Key: "repo", Type: sdk.ParameterTypeRepository},
+			{Key: "object", Type: sdk.ParameterTypeJSON},
+			{Key: "list", Type: sdk.ParameterTypeJSON},
+		},
+		Workflow: base64.StdEncoding.EncodeToString([]byte(`
+name: [[.name]]
+description: Test simple workflow
+version: v1.0
+workflow:
+  Node-1:
+    pipeline: Pipeline-[[.id]]
+  [[if .params.withDeploy -]]
+  Node-2:
+    depends_on:
+    - Node-1
+    when:
+    - [[.params.deployWhen]]
+    pipeline: Pipeline-[[.id]]
+  [[- end -]]`)),
 	}
 
 	require.NoError(t, workflowtemplate.Insert(db, &tmpl))
@@ -68,27 +91,15 @@ func TestLoadInstanceTemplate(t *testing.T) {
 
 	assert.Nil(t, workflowtemplate.LoadInstanceOptions.WithTemplate(context.TODO(), db, wtis...))
 
-	if !assert.NotNil(t, wtis[0].Template) {
-		t.FailNow()
-	}
-	if !assert.NotNil(t, wtis[0].Template.Group) {
-		t.FailNow()
-	}
+	require.NotNil(t, wtis[0].Template)
+	require.NotNil(t, wtis[0].Template.Group)
 	assert.Equal(t, "one/one", fmt.Sprintf("%s/%s", wtis[0].Template.Group.Name, wtis[0].Template.Slug))
 
-	if !assert.NotNil(t, wtis[1].Template) {
-		t.FailNow()
-	}
-	if !assert.NotNil(t, wtis[1].Template.Group) {
-		t.FailNow()
-	}
+	require.NotNil(t, wtis[1].Template)
+	require.NotNil(t, wtis[1].Template.Group)
 	assert.Equal(t, "one/one", fmt.Sprintf("%s/%s", wtis[1].Template.Group.Name, wtis[1].Template.Slug))
 
-	if !assert.NotNil(t, wtis[2].Template) {
-		t.FailNow()
-	}
-	if !assert.NotNil(t, wtis[2].Template.Group) {
-		t.FailNow()
-	}
+	require.NotNil(t, wtis[2].Template)
+	require.NotNil(t, wtis[2].Template.Group)
 	assert.Equal(t, "two/two", fmt.Sprintf("%s/%s", wtis[2].Template.Group.Name, wtis[2].Template.Slug))
 }

@@ -10,29 +10,45 @@
                         {{parameter.key}}<span *ngIf="parameter.required">*</span>
                     </div>
                     <div class="eight wide field" [ngSwitch]="parameter.type">
-                        <input *ngSwitchDefault type="text" name="parameter-{{parameter.key}}" [(ngModel)]="parameterValues[parameter.key]"
-                            (change)="changeParam()">
-                        <sm-checkbox *ngSwitchCase="'boolean'" name="parameter-{{parameter.key}}" [control]="parameterValues[parameter.key]"
-                            type="toggle" label=" " (change)="changeParam()"></sm-checkbox>
+                        <input *ngSwitchDefault type="text" name="parameter-{{parameter.key}}"
+                            [(ngModel)]="parameterValues[parameter.key]" (change)="changeParam()">
+                        <sm-checkbox *ngSwitchCase="'boolean'" name="parameter-{{parameter.key}}"
+                            [control]="parameterValues[parameter.key]" type="toggle" label=" " (change)="changeParam()">
+                        </sm-checkbox>
                         <sui-select *ngSwitchCase="'repository'" class="selection" name="parameter-{{parameter.key}}"
                             placeholder="{{'workflow_wizard_select_repo_man' | translate}}" [options]="vcsNames"
-                            isSearchable="true" [(ngModel)]="parameterValues[parameter.key]" (selectedOptionChange)="fetchRepos(parameter.key, $event)"
-                            #select>
+                            isSearchable="true" [(ngModel)]="parameterValues[parameter.key]"
+                            (selectedOptionChange)="fetchRepos(parameter.key, $event)" #select>
                             <sui-select-option *ngFor="let vcs of select.filteredOptions" [value]="vcs">
                             </sui-select-option>
                         </sui-select>
-                        <codemirror *ngSwitchCase="'json'" name="parameter-{{parameter.key}}" [(ngModel)]="parameterValues[parameter.key]"
-                            [config]="codeMirrorConfig" (change)="changeParam()">
+                        <codemirror *ngSwitchCase="'json'" name="parameter-{{parameter.key}}"
+                            [(ngModel)]="parameterValues[parameter.key]" [config]="codeMirrorConfig"
+                            (change)="changeParam()" #codemirror>
                         </codemirror>
+                        <sui-select *ngSwitchCase="'ssh-key'" class="selection" name="parameter-{{parameter.key}}"
+                            placeholder="{{'workflow_template_param_select_key' | translate}}" [options]="sshKeys"
+                            isSearchable="true" [(ngModel)]="parameterValues[parameter.key]" #select>
+                            <sui-select-option *ngFor="let key of select.filteredOptions" [value]="key">
+                            </sui-select-option>
+                        </sui-select>
+                        <sui-select *ngSwitchCase="'pgp-key'" class="selection" name="parameter-{{parameter.key}}"
+                            placeholder="{{'workflow_template_param_select_key' | translate}}" [options]="pgpKeys"
+                            isSearchable="true" [(ngModel)]="parameterValues[parameter.key]" #select>
+                            <sui-select-option *ngFor="let key of select.filteredOptions" [value]="key">
+                            </sui-select-option>
+                        </sui-select>
                     </div>
                 </div>
                 <div class="wide fields" *ngIf="parameter.type === 'repository'">
                     <div class="eight wide field"></div>
                     <div class="four wide field">
-                        <sui-select class="selection" name="parameter-{{parameter.key}}-repo" [(ngModel)]="parameterValues[parameter.key + '-repository']"
+                        <sui-select class="selection" name="parameter-{{parameter.key}}-repo"
+                            [(ngModel)]="parameterValues[parameter.key + '-repository']"
                             [options]="parameterValues[parameter.key + '-repositories']" [isSearchable]="true"
                             [optionsFilter]="filterRepo" (selectedOptionChange)="changeParam()" #repositorySelect>
-                            <sui-select-option *ngFor="let repository of repositorySelect.filteredOptions" [value]="repository">
+                            <sui-select-option *ngFor="let repository of repositorySelect.filteredOptions"
+                                [value]="repository">
                             </sui-select-option>
                         </sui-select>
                     </div>

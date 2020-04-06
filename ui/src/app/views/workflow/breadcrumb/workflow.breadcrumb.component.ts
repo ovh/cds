@@ -1,8 +1,12 @@
-import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
-import { Project } from '../../../model/project.model';
-import { Workflow } from '../../../model/workflow.model';
-import { WorkflowRun } from '../../../model/workflow.run.model';
-import { PathItem } from '../../../shared/breadcrumb/breadcrumb.component';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnInit } from '@angular/core';
+import { Select } from '@ngxs/store';
+import { Project } from 'app/model/project.model';
+import { Workflow } from 'app/model/workflow.model';
+import { WorkflowRun } from 'app/model/workflow.run.model';
+import { PathItem } from 'app/shared/breadcrumb/breadcrumb.component';
+import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
+import { WorkflowState } from 'app/store/workflow.state';
+import { Observable, Subscription } from 'rxjs';
 
 @Component({
     selector: 'app-workflow-breadcrumb',
@@ -10,7 +14,8 @@ import { PathItem } from '../../../shared/breadcrumb/breadcrumb.component';
     styleUrls: ['./workflow.breadcrumb.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class WorkflowBreadCrumbComponent {
+@AutoUnsubscribe()
+export class WorkflowBreadCrumbComponent implements OnInit {
     _project: Project;
     @Input() set project(p: Project) {
         this._project = p;
@@ -25,14 +30,27 @@ export class WorkflowBreadCrumbComponent {
     }
     get workflow() { return this._workflow; }
 
-    _workflowRun: WorkflowRun;
-    @Input() set workflowRun(wr: WorkflowRun) {
-        this._workflowRun = wr;
-        this.updatePath();
-    }
-    get workflowRun() { return this._workflowRun; }
+    @Select(WorkflowState.getSelectedWorkflowRun()) workflowRun$: Observable<WorkflowRun>;
+    workflowRunSub: Subscription;
+    workflowRun: WorkflowRun;
 
     path: Array<PathItem>;
+
+    constructor(private _cd: ChangeDetectorRef) {}
+
+    ngOnInit(): void {
+        this.workflowRunSub = this.workflowRun$.subscribe(wr => {
+            if (!wr && !this.workflowRun) {
+                return;
+            }
+            if (wr && this.workflowRun && wr.id === this.workflowRun.id) {
+                return;
+            }
+            this.workflowRun = wr;
+            this.updatePath();
+            this._cd.detectChanges();
+        });
+    }
 
     updatePath() {
         let path = new Array<PathItem>();
@@ -43,22 +61,22 @@ export class WorkflowBreadCrumbComponent {
                 text: this._project.name,
                 routerLink: ['/project', this._project.key],
                 queryParams: { tab: 'workflows' }
-            })
+            });
 
             if (this._workflow) {
                 path.push(<PathItem>{
                     icon: 'share alternate',
                     text: this._workflow.name,
-                    active: this._workflow && !this._workflowRun,
+                    active: this._workflow && !this.workflowRun,
                     routerLink: ['/project', this._project.key, 'workflow', this._workflow.name],
-                })
+                });
 
-                if (this._workflowRun) {
+                if (this.workflowRun) {
                     path.push(<PathItem>{
                         icon: 'tag',
-                        text: '' + this._workflowRun.num,
-                        active: !!this._workflow.name && !!this._workflowRun.num,
-                        routerLink: ['/project', this._project.key, 'workflow', this._workflow.name, 'run', this._workflowRun.num]
+                        text: '' + this.workflowRun.num,
+                        active: !!this._workflow.name && !!this.workflowRun.num,
+                        routerLink: ['/project', this._project.key, 'workflow', this._workflow.name, 'run', this.workflowRun.num]
                     })
                 }
             }

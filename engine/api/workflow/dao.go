@@ -1,7 +1,6 @@
 package workflow
 
 import (
-	"archive/tar"
 	"context"
 	"database/sql"
 	"encoding/json"
@@ -10,6 +9,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/ovh/cds/sdk/exportentities"
 
 	"github.com/go-gorp/gorp"
 
@@ -51,18 +52,14 @@ func LoadAllByProjectIDs(ctx context.Context, db gorp.SqlExecutor, projectIDs []
 	return getAll(ctx, db, query)
 }
 
-// GetAllByIDs returns all workflows by ids.
-func GetAllByIDs(db gorp.SqlExecutor, ids []int64) (sdk.Workflows, error) {
-	ws := sdk.Workflows{}
-
-	if _, err := db.Select(&ws,
-		`SELECT id, name FROM workflow WHERE id = ANY(string_to_array($1, ',')::int[])`,
-		gorpmapping.IDsToQueryString(ids),
-	); err != nil {
-		return nil, sdk.WrapError(err, "Cannot get workflows")
-	}
-
-	return ws, nil
+// LoadAllByIDs returns all workflows by ids.
+func LoadAllByIDs(ctx context.Context, db gorp.SqlExecutor, ids []int64) (sdk.Workflows, error) {
+	query := gorpmapping.NewQuery(`
+    SELECT *
+    FROM workflow
+    WHERE id = ANY(string_to_array($1, ',')::int[])
+  `).Args(gorpmapping.IDsToQueryString(ids))
+	return getAll(ctx, db, query)
 }
 
 // LoadOptions custom option for loading workflow
@@ -102,26 +99,21 @@ func Exists(db gorp.SqlExecutor, key string, name string) (bool, error) {
 	return count > 0, nil
 }
 
-// CountVariableInWorkflow counts how many time the given variable is used on all workflows of the given project
-func CountVariableInWorkflow(db gorp.SqlExecutor, projectKey string, varName string) ([]CountVarInWorkflowData, error) {
+func LoadByRepo(ctx context.Context, store cache.Store, db gorp.SqlExecutor, proj sdk.Project, repo string) (*sdk.Workflow, error) {
 	query := `
-		SELECT DISTINCT workflow.name as workflow_name, w_node.name as node_name
-		FROM workflow
-		JOIN project ON project.id = workflow.project_id
-		JOIN w_node ON w_node.workflow_id = workflow.id
-		JOIN w_node_context ON w_node_context.node_id = w_node.id
-		WHERE project.projectkey = $1
-		AND (
-			w_node_context.default_pipeline_parameters::TEXT LIKE $2
-			OR
-			w_node_context.default_payload::TEXT LIKE $2
-		);
-	`
-	var datas []CountVarInWorkflowData
-	if _, err := db.Select(&datas, query, projectKey, fmt.Sprintf("%%%s%%", varName)); err != nil {
-		return nil, sdk.WrapError(err, "Unable to count var in workflow")
+    SELECT workflow.*
+    FROM workflow
+	JOIN project ON project.id = workflow.project_id
+    WHERE project.projectkey = $1 AND  workflow.from_repository = $2
+	LIMIT 1`
+	w, err := load(ctx, db, proj, LoadOptions{}, query, proj.Key, repo)
+	if err != nil {
+		return nil, err
 	}
-	return datas, nil
+	if err := IsValid(ctx, store, db, w, proj, LoadOptions{}); err != nil {
+		return nil, sdk.WrapError(err, "Unable to valid workflow")
+	}
+	return w, nil
 }
 
 // UpdateIcon update the icon of a workflow
@@ -266,7 +258,7 @@ func LoadAll(db gorp.SqlExecutor, projectKey string) (sdk.Workflows, error) {
 
 	if _, err := db.Select(&dbRes, query, projectKey); err != nil {
 		if err == sql.ErrNoRows {
-			return nil, sdk.ErrWorkflowNotFound
+			return nil, sdk.WithStack(sdk.ErrNotFound)
 		}
 		return nil, sdk.WrapError(err, "Unable to load workflows project %s", projectKey)
 	}
@@ -365,7 +357,24 @@ func Load(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj sdk.
 	return res, nil
 }
 
-// LoadByID loads a workflow for a given user (ie. checking permissions)
+// LoadAndLockByID loads a workflow
+func LoadAndLockByID(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj sdk.Project, id int64, opts LoadOptions) (*sdk.Workflow, error) {
+	query := `
+		select *
+		from workflow
+		where id = $1 for update skip locked`
+	res, err := load(ctx, db, proj, opts, query, id)
+	if err != nil {
+		return nil, sdk.WrapError(err, "Unable to load workflow %d", id)
+	}
+
+	if err := IsValid(context.TODO(), store, db, res, proj, opts); err != nil {
+		return nil, sdk.WrapError(err, "Unable to valid workflow")
+	}
+	return res, nil
+}
+
+// LoadByID loads a workflow
 func LoadByID(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj sdk.Project, id int64, opts LoadOptions) (*sdk.Workflow, error) {
 	query := `
 		select *
@@ -514,7 +523,7 @@ func load(ctx context.Context, db gorp.SqlExecutor, proj sdk.Project, opts LoadO
 	next()
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return nil, sdk.ErrWorkflowNotFound
+			return nil, sdk.WithStack(sdk.ErrNotFound)
 		}
 		return nil, sdk.WrapError(err, "Unable to load workflow")
 	}
@@ -1359,16 +1368,15 @@ func checkPipeline(ctx context.Context, db gorp.SqlExecutor, proj sdk.Project, w
 }
 
 // Push push a workflow from cds files
-func Push(ctx context.Context, db *gorp.DbMap, store cache.Store, proj *sdk.Project, tr *tar.Reader, opts *PushOption, u sdk.Identifiable, decryptFunc keys.DecryptFunc) ([]sdk.Message, *sdk.Workflow, *sdk.Workflow, error) {
+func Push(ctx context.Context, db *gorp.DbMap, store cache.Store, proj *sdk.Project, data exportentities.WorkflowComponents,
+	opts *PushOption, u sdk.Identifiable, decryptFunc keys.DecryptFunc) ([]sdk.Message, *sdk.Workflow, *sdk.Workflow, error) {
 	ctx, end := observability.Span(ctx, "workflow.Push")
 	defer end()
-	allMsg := []sdk.Message{}
-
-	data, err := extractFromCDSFiles(ctx, tr)
-	if err != nil {
-		return nil, nil, nil, err
+	if data.Workflow == nil {
+		return nil, nil, nil, sdk.NewErrorFrom(sdk.ErrWrongRequest, "invalid given workflow components, missing workflow file")
 	}
 
+	var err error
 	var workflowExists bool
 	var oldWf *sdk.Workflow
 
@@ -1376,15 +1384,14 @@ func Push(ctx context.Context, db *gorp.DbMap, store cache.Store, proj *sdk.Proj
 		oldWf = &opts.OldWorkflow
 	} else {
 		// load the workflow from database if exists
-		workflowExists, err = Exists(db, proj.Key, data.wrkflw.GetName())
+		workflowExists, err = Exists(db, proj.Key, data.Workflow.GetName())
 		if err != nil {
-			return nil, nil, nil, sdk.WrapError(err, "Cannot check if workflow exists")
+			return nil, nil, nil, sdk.WrapError(err, "cannot check if workflow exists")
 		}
 		if workflowExists {
-			oldWf, err = Load(ctx, db, store, *proj, data.wrkflw.GetName(), LoadOptions{WithIcon: true})
-
+			oldWf, err = Load(ctx, db, store, *proj, data.Workflow.GetName(), LoadOptions{WithIcon: true})
 			if err != nil {
-				return nil, nil, nil, sdk.WrapError(err, "Unable to load existing workflow")
+				return nil, nil, nil, sdk.WrapError(err, "unable to load existing workflow")
 			}
 		}
 	}
@@ -1396,53 +1403,48 @@ func Push(ctx context.Context, db *gorp.DbMap, store cache.Store, proj *sdk.Proj
 
 	tx, err := db.Begin()
 	if err != nil {
-		return nil, nil, nil, sdk.WrapError(err, "Unable to start tx")
+		return nil, nil, nil, sdk.WrapError(err, "unable to start tx")
 	}
 	defer tx.Rollback() // nolint
 
-	for filename, app := range data.apps {
-		log.Debug("Push> Parsing %s", filename)
+	var allMsg []sdk.Message
+	for _, app := range data.Applications {
 		var fromRepo string
 		if opts != nil {
 			fromRepo = opts.FromRepository
 		}
 		appDB, msgList, err := application.ParseAndImport(ctx, tx, store, *proj, &app, application.ImportOptions{Force: true, FromRepository: fromRepo}, decryptFunc, u)
-		if err != nil {
-			return nil, nil, nil, sdk.ErrorWithFallback(err, sdk.ErrWrongRequest, "unable to import application %s/%s", proj.Key, app.Name)
-		}
 		allMsg = append(allMsg, msgList...)
+		if err != nil {
+			return allMsg, nil, nil, sdk.ErrorWithFallback(err, sdk.ErrWrongRequest, "unable to import application %s/%s", proj.Key, app.Name)
+		}
 		proj.SetApplication(*appDB)
-		log.Debug("Push> -- %s OK", filename)
 	}
 
-	for filename, env := range data.envs {
-		log.Debug("Push> Parsing %s", filename)
+	for _, env := range data.Environments {
 		var fromRepo string
 		if opts != nil {
 			fromRepo = opts.FromRepository
 		}
-		envDB, msgList, err := environment.ParseAndImport(tx, *proj, &env, environment.ImportOptions{Force: true, FromRepository: fromRepo}, decryptFunc, u)
-		if err != nil {
-			return nil, nil, nil, sdk.ErrorWithFallback(err, sdk.ErrWrongRequest, "unable to import environment %s/%s", proj.Key, env.Name)
+		envDB, msgList, err := environment.ParseAndImport(tx, *proj, env, environment.ImportOptions{Force: true, FromRepository: fromRepo}, decryptFunc, u)
+    allMsg = append(allMsg, msgList...)
+    if err != nil {
+			return allMsg, nil, nil, sdk.ErrorWithFallback(err, sdk.ErrWrongRequest, "unable to import environment %s/%s", proj.Key, env.Name)
 		}
-		allMsg = append(allMsg, msgList...)
 		proj.SetEnvironment(*envDB)
-		log.Debug("Push> -- %s OK", filename)
 	}
 
-	for filename, pip := range data.pips {
-		log.Debug("Push> Parsing %s", filename)
+	for _, pip := range data.Pipelines {
 		var fromRepo string
 		if opts != nil {
 			fromRepo = opts.FromRepository
 		}
 		pipDB, msgList, err := pipeline.ParseAndImport(ctx, tx, store, *proj, &pip, u, pipeline.ImportOptions{Force: true, FromRepository: fromRepo})
-		if err != nil {
-			return nil, nil, nil, sdk.ErrorWithFallback(err, sdk.ErrWrongRequest, "unable to import pipeline %s/%s", proj.Key, pip.Name)
+    allMsg = append(allMsg, msgList...)
+    if err != nil {
+			return allMsg, nil, nil, sdk.ErrorWithFallback(err, sdk.ErrWrongRequest, "unable to import pipeline %s/%s", proj.Key, pip.Name)
 		}
-		allMsg = append(allMsg, msgList...)
 		proj.SetPipeline(*pipDB)
-		log.Debug("Push> -- %s OK", filename)
 	}
 
 	isDefaultBranch := true
@@ -1464,9 +1466,10 @@ func Push(ctx context.Context, db *gorp.DbMap, store cache.Store, proj *sdk.Proj
 		importOptions.HookUUID = opts.HookUUID
 	}
 
-	wf, msgList, err := ParseAndImport(ctx, tx, store, *proj, oldWf, data.wrkflw, u, importOptions)
-	if err != nil {
-		return msgList, nil, nil, sdk.WrapError(err, "unable to import workflow %s", data.wrkflw.GetName())
+	wf, msgList, err := ParseAndImport(ctx, tx, store, *proj, oldWf, data.Workflow, u, importOptions)
+  allMsg = append(allMsg, msgList...)
+  if err != nil {
+		return allMsg, nil, nil, sdk.WrapError(err, "unable to import workflow %s", data.Workflow.GetName())
 	}
 
 	// If the workflow is "as-code", it should always be linked to a git repository
@@ -1488,14 +1491,12 @@ func Push(ctx context.Context, db *gorp.DbMap, store cache.Store, proj *sdk.Proj
 		wf.Applications[wf.WorkflowData.Node.Context.ApplicationID] = app
 	}
 
-	allMsg = append(allMsg, msgList...)
-
 	if !isDefaultBranch {
 		_ = tx.Rollback()
 		log.Debug("workflow %s rollbacked because it's not coming from the default branch", wf.Name)
 	} else {
 		if err := tx.Commit(); err != nil {
-			return nil, nil, nil, sdk.WrapError(err, "Cannot commit transaction")
+			return nil, nil, nil, sdk.WrapError(err, "cannot commit transaction")
 		}
 
 		log.Debug("workflow %s updated", wf.Name)

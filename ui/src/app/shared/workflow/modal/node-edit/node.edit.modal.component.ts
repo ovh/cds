@@ -1,6 +1,6 @@
 import { AfterViewInit, ChangeDetectionStrategy, ChangeDetectorRef, Component, ViewChild } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
-import { Store } from '@ngxs/store';
+import { Select, Store } from '@ngxs/store';
 import {
     ModalSize,
     ModalTemplate,
@@ -10,8 +10,7 @@ import {
 } from '@richardlt/ng2-semantic-ui';
 import { GroupPermission } from 'app/model/group.model';
 import { Project } from 'app/model/project.model';
-import { WNode, WNodeHook, Workflow } from 'app/model/workflow.model';
-import { WorkflowNodeRun } from 'app/model/workflow.run.model';
+import { WNode, Workflow } from 'app/model/workflow.model';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { PermissionEvent } from 'app/shared/permission/permission.event.model';
 import { ToastService } from 'app/shared/toast/ToastService';
@@ -19,7 +18,7 @@ import { ProjectState, ProjectStateModel } from 'app/store/project.state';
 import { CloseEditModal, UpdateWorkflow } from 'app/store/workflow.action';
 import { WorkflowState, WorkflowStateModel } from 'app/store/workflow.state';
 import cloneDeep from 'lodash-es/cloneDeep';
-import { Subscription } from 'rxjs';
+import { Observable, Subscription } from 'rxjs';
 import { finalize } from 'rxjs/operators';
 
 @Component({
@@ -31,13 +30,22 @@ import { finalize } from 'rxjs/operators';
 @AutoUnsubscribe()
 export class WorkflowNodeEditModalComponent implements AfterViewInit {
 
+    @Select(WorkflowState.getEditModal()) editModal$: Observable<boolean>;
+    editModalSub: Subscription;
+
+    @Select(WorkflowState.getSelectedNode()) node$: Observable<WNode>;
+    node: WNode;
+    nodeSub: Subscription;
+
     project: Project;
     workflow: Workflow;
-    node: WNode;
-    beforeNode: WNode;
-    hook: WNodeHook;
     groups: Array<GroupPermission>;
-    editMode: boolean;
+
+    currentNodeName = '';
+    currentNodeType: string;
+    hookSelected: boolean;
+
+
 
 
     @ViewChild('nodeEditModal')
@@ -53,11 +61,9 @@ export class WorkflowNodeEditModalComponent implements AfterViewInit {
     projectSubscriber: Subscription;
     storeSub: Subscription;
     readonly = true;
-    nodeRun: WorkflowNodeRun;
 
     constructor(private _modalService: SuiModalService, private _store: Store, private _cd: ChangeDetectorRef,
                 private _translate: TranslateService, private _toast: ToastService) {
-
         this.projectSubscriber = this._store.select(ProjectState)
             .subscribe((projState: ProjectStateModel) => {
                 this.project = projState.project;
@@ -66,39 +72,53 @@ export class WorkflowNodeEditModalComponent implements AfterViewInit {
     }
 
     ngAfterViewInit(): void {
-        this.storeSub = this._store.select(WorkflowState.getCurrent()).subscribe( (s: WorkflowStateModel) => {
+        this.nodeSub = this.node$.subscribe(n => {
+            if (!n) {
+                return
+            }
+            let stateSnap: WorkflowStateModel = this._store.selectSnapshot(WorkflowState);
+            if (stateSnap.editMode) {
+                this.workflow = stateSnap.editWorkflow;
+            } else {
+                this.workflow = stateSnap.workflow;
+            }
+            this.groups = cloneDeep(stateSnap.node.groups);
             this._cd.markForCheck();
-            this.nodeRun = cloneDeep(s.workflowNodeRun);
-            this.editMode = s.editMode;
-            if (!s.editModal) {
-                this.hook = undefined;
-                this.node = undefined;
+        });
+        this.editModalSub = this.editModal$.subscribe(b => {
+            let stateSnap: WorkflowStateModel = this._store.selectSnapshot(WorkflowState);
+            if (!b) {
+                this.currentNodeName = '';
+                delete this.currentNodeType;
+                delete this.hookSelected;
                 this.readonly = true;
                 delete this.selected;
                 if (this.modal) {
                     this.modal.approve(true);
                 }
+                this._cd.markForCheck();
                 return;
             }
-            if (s.node) {
-                if (s.editMode) {
-                    this.workflow = s.editWorkflow;
+            if (stateSnap.node) {
+                if (stateSnap.editMode) {
+                    this.workflow = stateSnap.editWorkflow;
                 } else {
-                    this.workflow = s.workflow;
+                    this.workflow = stateSnap.workflow;
                 }
-                let open = this.node != null;
-                this.node = cloneDeep(s.node);
-                this.groups = cloneDeep(this.node.groups);
-                this.beforeNode = cloneDeep(s.node);
-                this.readonly = !s.canEdit;
-                if (s.hook) {
-                    this.hook = cloneDeep(s.hook);
+                let open = this.currentNodeName !== '';
+
+                this.currentNodeName = stateSnap.node.name;
+                this.currentNodeType = stateSnap.node.type;
+                this.groups = cloneDeep(stateSnap.node.groups);
+                this.readonly = !stateSnap.canEdit;
+                if (stateSnap.hook) {
+                    this.hookSelected = true;
                 }
                 if (!this.selected) {
-                    if (this.hook) {
+                    if (this.hookSelected) {
                         this.selected = 'hook';
                     } else {
-                        switch (this.node.type) {
+                        switch (this.currentNodeType) {
                             case 'outgoinghook':
                                 this.selected = 'outgoinghook';
                                 break;
@@ -115,6 +135,7 @@ export class WorkflowNodeEditModalComponent implements AfterViewInit {
                     this.show();
                 }
             }
+            this._cd.markForCheck();
         });
     }
 
@@ -143,16 +164,17 @@ export class WorkflowNodeEditModalComponent implements AfterViewInit {
     }
 
     groupManagement(event: PermissionEvent, skip?: boolean): void {
+        let snapNode = cloneDeep(this._store.selectSnapshot(WorkflowState).node);
         this.loading = true;
         switch (event.type) {
             case 'add':
-                if (!this.node.groups) {
-                    this.node.groups = [];
+                if (!snapNode.groups) {
+                    snapNode.groups = [];
                 }
-                this.node.groups.push(event.gp);
+                snapNode.groups.push(event.gp);
                 break;
             case 'update':
-                this.node.groups = this.node.groups.map((group) => {
+                snapNode.groups = snapNode.groups.map((group) => {
                     if (group.group.name === event.gp.group.name) {
                         group = event.gp;
                     }
@@ -160,12 +182,12 @@ export class WorkflowNodeEditModalComponent implements AfterViewInit {
                 });
                 break;
             case 'delete':
-                this.node.groups = this.node.groups.filter((group) => group.group.name !== event.gp.group.name);
+                snapNode.groups = snapNode.groups.filter((group) => group.group.name !== event.gp.group.name);
                 break;
         }
         let workflow = cloneDeep(this.workflow);
-        let node = Workflow.getNodeByID(this.node.id, workflow);
-        node.groups = this.node.groups;
+        let node = Workflow.getNodeByID(snapNode.id, workflow);
+        node.groups = snapNode.groups;
         this._store.dispatch(new UpdateWorkflow({
             projectKey: this.workflow.project_key,
             workflowName: this.workflow.name,
@@ -177,6 +199,7 @@ export class WorkflowNodeEditModalComponent implements AfterViewInit {
         })).subscribe(() => {
             this.hasModification = false;
             this._toast.success('', this._translate.instant('permission_updated'));
+            this._cd.markForCheck();
         });
     }
 
@@ -196,7 +219,8 @@ export class WorkflowNodeEditModalComponent implements AfterViewInit {
             return;
         }
         if (newView === 'permissions') {
-            this.groups = cloneDeep(this.node.groups);
+            let snapNode = cloneDeep(this._store.selectSnapshot(WorkflowState).node);
+            this.groups = cloneDeep(snapNode.groups);
         }
         this.hasModification = false;
         this.selected = newView;

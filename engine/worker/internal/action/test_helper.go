@@ -96,7 +96,7 @@ func (w TestWorker) InstallKey(key sdk.Variable) (*workerruntime.KeyResponse, er
 
 	return &workerruntime.KeyResponse{
 		Content: []byte(key.Value),
-		Type:    key.Type,
+		Type:    sdk.KeyType(key.Type),
 		PKey:    installedKeyPath,
 	}, nil
 }
@@ -113,7 +113,7 @@ func (w TestWorker) InstallKeyTo(key sdk.Variable, destinationPath string) (*wor
 
 	return &workerruntime.KeyResponse{
 		Content: []byte(key.Value),
-		Type:    key.Type,
+		Type:    sdk.KeyType(key.Type),
 		PKey:    installedKeyPath,
 	}, nil
 }

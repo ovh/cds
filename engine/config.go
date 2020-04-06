@@ -19,7 +19,6 @@ import (
 	"github.com/ovh/cds/engine/api/authentication/builtin"
 	"github.com/ovh/cds/engine/api/database"
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
-	"github.com/ovh/cds/engine/api/secret"
 	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/engine/elasticsearch"
 	"github.com/ovh/cds/engine/hatchery/kubernetes"
@@ -207,7 +206,7 @@ func configImport(args []string, cfgFile, remoteCfg, remoteCfgKey, vaultAddr, va
 			fmt.Println("Reading configuration from vault @", vaultAddr)
 		}
 
-		s, err := secret.New(vaultToken, vaultAddr)
+		s, err := VaultNewSecret(vaultToken, vaultAddr)
 		if err != nil {
 			sdk.Exit("Error when getting config from vault: %v", err)
 		}

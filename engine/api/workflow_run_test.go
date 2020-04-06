@@ -2522,14 +2522,16 @@ func Test_deleteWorkflowRunHandler(t *testing.T) {
 func Test_postWorkflowRunHandlerBadResyncOptions(t *testing.T) {
 	api, db, router, end := newTestAPI(t)
 	defer end()
-	u, pass := assets.InsertAdminUser(t, api.mustDB())
+
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, api.Cache, key, key)
+	w := assets.InsertTestWorkflow(t, db, api.Cache, proj, sdk.RandomString(10))
+	u, pass := assets.InsertLambdaUser(t, api.mustDB(), &proj.ProjectGroups[0].Group)
 
 	//Prepare request
 	vars := map[string]string{
 		"key":              proj.Key,
-		"permWorkflowName": "foo",
+		"permWorkflowName": w.Name,
 	}
 	uri := router.GetRoute("POST", api.postWorkflowRunHandler, vars)
 	test.NotEmpty(t, uri)
@@ -2679,7 +2681,7 @@ func Test_postWorkflowRunHandlerRestartOnlyFailed(t *testing.T) {
 		FromNodeIDs: []int64{w1.WorkflowData.Node.ID},
 		Number:      &wrr.Number,
 	}
-	api.initWorkflowRun(context.TODO(), db, api.Cache, proj2, &wrr.Workflow, wrr, opts, &sdk.AuthConsumer{
+	api.initWorkflowRun(context.TODO(), proj2.Key, &wrr.Workflow, wrr, opts, &sdk.AuthConsumer{
 		AuthentifiedUser: u,
 	})
 

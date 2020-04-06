@@ -5,12 +5,6 @@ import (
 	"time"
 )
 
-// These are constant for events about workflow runs
-const (
-	EventSubsWorkflowRuns = "event:workflow:runs"
-	EventSubWorkflowRun   = "event:workflow:run"
-)
-
 // Event represents a event from API
 // Event is "create", "update", "delete"
 // Status is  "Waiting" "Building" "Success" "Fail" "Unknown", optional

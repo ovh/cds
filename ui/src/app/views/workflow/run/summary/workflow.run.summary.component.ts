@@ -1,7 +1,15 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, EventEmitter, Input, Output } from '@angular/core';
+import {
+    ChangeDetectionStrategy,
+    ChangeDetectorRef,
+    Component,
+    EventEmitter,
+    Input,
+    OnInit,
+    Output
+} from '@angular/core';
 import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
-import { Store } from '@ngxs/store';
+import { Select, Store } from '@ngxs/store';
 import * as AU from 'ansi_up';
 import { PipelineStatus } from 'app/model/pipeline.model';
 import { Project } from 'app/model/project.model';
@@ -11,7 +19,8 @@ import { WorkflowRunService } from 'app/service/workflow/run/workflow.run.servic
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { ToastService } from 'app/shared/toast/ToastService';
 import { DeleteWorkflowRun } from 'app/store/workflow.action';
-import { WorkflowState, WorkflowStateModel } from 'app/store/workflow.state';
+import { WorkflowState } from 'app/store/workflow.state';
+import { Observable } from 'rxjs';
 import { finalize } from 'rxjs/operators';
 import { Subscription } from 'rxjs/Subscription';
 
@@ -22,7 +31,7 @@ import { Subscription } from 'rxjs/Subscription';
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 @AutoUnsubscribe()
-export class WorkflowRunSummaryComponent {
+export class WorkflowRunSummaryComponent implements OnInit {
     @Input('direction')
     set direction(val) {
         this._direction = val;
@@ -34,11 +43,18 @@ export class WorkflowRunSummaryComponent {
     }
 
     @Input() project: Project;
-    workflow: Workflow;
-    workflowRun: WorkflowRun;
-    subWR: Subscription;
-    @Input() workflowName: string;
     @Output() directionChange = new EventEmitter();
+
+
+    workflowName: string;
+
+    @Select(WorkflowState.getSelectedWorkflowRun()) workflowRun$: Observable<WorkflowRun>;
+    workflowRun: WorkflowRun;
+    subWorkflowRun: Subscription;
+
+    @Select(WorkflowState.getWorkflow()) workflow$: Observable<Workflow>;
+    subWorkflow: Subscription;
+    canExecute: boolean;
 
     _direction: string;
     author: string;
@@ -56,19 +72,52 @@ export class WorkflowRunSummaryComponent {
         private _store: Store,
         private router: Router,
         private _cd: ChangeDetectorRef
-    ) {
-        this.subWR = this._store.select(WorkflowState.getCurrent()).subscribe((state: WorkflowStateModel) => {
-            this._cd.markForCheck();
-            this.workflow = state.workflow;
-            this.workflowRun = state.workflowRun;
-            if (this.workflowRun) {
-                if (this.workflowRun.tags) {
-                    let tagTriggeredBy = this.workflowRun.tags.find((tag) => tag.tag === 'triggered_by');
-                    if (tagTriggeredBy) {
-                        this.author = tagTriggeredBy.value;
-                    }
+    ) {}
+
+    ngOnInit(): void {
+        this.subWorkflowRun = this.workflowRun$.subscribe(wr => {
+            if (!wr) {
+                return;
+            }
+            // If same run and status doesn't change, lets check spawninfos && tags
+            if (this.workflowRun && this.workflowRun.id === wr.id && this.workflowRun.status === wr.status) {
+                let refreshView = false;
+                if (!this.workflowRun.tags && wr.tags) {
+                    refreshView = true;
+                }
+                if (this.workflowRun.tags && wr.tags && this.workflowRun.tags.length !== wr.tags.length) {
+                    refreshView = true;
+                }
+                if (!this.workflowRun.infos && wr.infos) {
+                    refreshView = true;
+                }
+                if (this.workflowRun.infos && wr.infos && this.workflowRun.infos.length !== wr.infos.length) {
+                    refreshView = true;
+                }
+                if (!refreshView) {
+                    return;
                 }
             }
+            this.workflowRun = wr;
+            if (this.workflowRun.tags) {
+                let tagTriggeredBy = this.workflowRun.tags.find((tag) => tag.tag === 'triggered_by');
+                if (tagTriggeredBy) {
+                    this.author = tagTriggeredBy.value;
+                }
+            }
+            this._cd.markForCheck();
+        });
+
+        this.subWorkflow = this.workflow$.subscribe(w => {
+            if (!w) {
+                return;
+            }
+            if (w.permissions.executable === this.canExecute && this.workflowName) {
+                return;
+            }
+            this.workflowName = w.name;
+            this.canExecute = w.permissions.executable;
+            this._cd.detectChanges();
         });
     }
 
