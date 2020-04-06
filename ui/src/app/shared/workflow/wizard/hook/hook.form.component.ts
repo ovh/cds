@@ -25,21 +25,13 @@ import { Subscription } from 'rxjs/Subscription';
 })
 @AutoUnsubscribe()
 export class WorkflowNodeHookFormComponent implements OnInit {
-<<<<<<< HEAD
-    @ViewChild('textareaCodeMirror') codemirror: any;
 
-    _hook: WNodeHook = new WNodeHook();
-    canDelete = false;
-
-    @Input() project: Project;
-=======
->>>>>>> master
     @Input() workflow: Workflow;
 
     // Enable form button to update hook
     @Input() mode = 'create'; // create  update ro
 
-    @ViewChild('textareaCodeMirror', {static: false}) codemirror: any;
+    @ViewChild('textareaCodeMirror') codemirror: any;
 
     @Select(WorkflowState.getSelectedNode()) node$: Observable<WNode>;
     node: WNode;

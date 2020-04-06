@@ -40,16 +40,12 @@ declare var CodeMirror: any;
 })
 @AutoUnsubscribe()
 export class WorkflowWizardNodeInputComponent implements OnInit {
-<<<<<<< HEAD
-    @ViewChild('textareaCodeMirror') codemirror: any;
-=======
->>>>>>> master
 
     @Input() workflow: Workflow;
     @Input() readonly = true;
     @Output() inputChange = new EventEmitter<boolean>();
 
-    @ViewChild('textareaCodeMirror', {static: false}) codemirror: any;
+    @ViewChild('textareaCodeMirror') codemirror: any;
 
     project: Project;
     editMode: boolean;
