@@ -6,7 +6,7 @@ const (
 	PR_STATE           = "git.pr.state"
 	PR_PREVIOUS_TITLE  = "git.pr.previous.title"
 	PR_PREVIOUS_BRANCH = "git.pr.previous.branch"
-	PR_PREVIOUS_HASH   = "git.pr.previous.has"
+	PR_PREVIOUS_HASH   = "git.pr.previous.hash"
 	PR_PREVIOUS_STATE  = "git.pr.previous.state"
 
 	PR_REVIEWER        = "git.pr.reviewer"
@@ -22,7 +22,6 @@ const (
 	GIT_AUTHOR          = "git.author"
 	GIT_AUTHOR_EMAIL    = "git.author.email"
 	GIT_BRANCH          = "git.branch"
-	GIT_BRANCH_BEFORE   = "git.branch.before"
 	GIT_BRANCH_DEST     = "git.branch.dest"
 	GIT_TAG             = "git.tag"
 	GIT_HASH_BEFORE     = "git.hash.before"

@@ -46,15 +46,15 @@ func (s *Service) generatePayloadFromGitlabRequest(ctx context.Context, t *sdk.T
 		}
 	}
 	if request.Before != "" {
-		payload[GIT_HASH] = request.Before
+		payload[GIT_HASH_BEFORE] = request.Before
+	}
+	if request.After != "" {
+		payload[GIT_HASH] = request.After
 		hashShort := request.Before
 		if len(hashShort) >= 7 {
 			hashShort = hashShort[:7]
 		}
-		payload[GIT_HASH_SHORT] = hashShort
-	}
-	if request.After != "" {
-		payload[GIT_HASH_DEST] = request.After
+		payload[GIT_HASH] = hashShort
 	}
 
 	getPayloadFromGitlabProject(payload, request.Project)

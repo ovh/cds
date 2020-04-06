@@ -68,9 +68,9 @@ func getVariableFromBitbucketCloudChange(ctx context.Context, payload map[string
 		log.Warning(ctx, "Uknown push type: %s", change.New.Type)
 		return
 	}
-	payload[GIT_HASH] = change.Old.Target.Hash
-	payload[GIT_HASH_DEST] = change.New.Target.Hash
-	hashShort := change.Old.Target.Hash
+	payload[GIT_HASH_BEFORE] = change.Old.Target.Hash
+	payload[GIT_HASH] = change.New.Target.Hash
+	hashShort := change.New.Target.Hash
 	if len(hashShort) >= 7 {
 		hashShort = hashShort[:7]
 	}
