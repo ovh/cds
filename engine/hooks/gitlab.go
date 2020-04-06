@@ -54,7 +54,7 @@ func (s *Service) generatePayloadFromGitlabRequest(ctx context.Context, t *sdk.T
 		if len(hashShort) >= 7 {
 			hashShort = hashShort[:7]
 		}
-		payload[GIT_HASH] = hashShort
+		payload[GIT_HASH_SHORT] = hashShort
 	}
 
 	getPayloadFromGitlabProject(payload, request.Project)
