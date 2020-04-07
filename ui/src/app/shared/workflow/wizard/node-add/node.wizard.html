@@ -49,15 +49,23 @@
               <div *ngSwitchCase="'pipeline'">
                 <div class="ui row mb20">
                   <div class="ui sixteen wide column">
-                    <div class="two ui buttons">
+                    <div class="three ui buttons">
+                        <button class="ui button"
+                                type="button"
+                                [class.active]="createFork && !createNewPipeline"
+                                [class.blue]="createFork"
+                                (click)="createFork = true"
+                        >
+                            {{'workflow_start_with_fork' | translate}}
+                        </button>
                       <button class="ui button"
                         type="button"
-                        [class.active]="!createNewPipeline" [class.blue]="!createNewPipeline"
+                        [class.active]="!createNewPipeline && !createFork" [class.blue]="!createNewPipeline && !createFork"
                         [class.disabled]="!project.pipeline_names || !project.pipeline_names.length"
-                        (click)="createNewPipeline = false">
+                        (click)="createNewPipeline = false; createFork = false">
                         {{'common_select' | translate}}
                       </button>
-                      <button class="ui button" type="button" [class.active]="createNewPipeline" [class.blue]="createNewPipeline" (click)="createNewPipeline = true">
+                      <button class="ui button" type="button" [class.active]="createNewPipeline" [class.blue]="createNewPipeline" (click)="createNewPipeline = true; createFork = false">
                         {{'common_create' | translate}}
                       </button>
                     </div>
@@ -68,8 +76,8 @@
                     <ng-container >
                       <div class="fields">
                         <div class="six wide field">
-                            <label>{{'pipeline_name' | translate}}</label>
-                            <ng-container *ngIf="!createNewPipeline">
+                            <ng-container *ngIf="!createNewPipeline && !createFork">
+                               <label>{{'pipeline_name' | translate}}</label>
                               <sm-select
                                   class="search"
                                   placeholder="{{ 'common_pipeline' | translate }}"
@@ -80,13 +88,17 @@
                               </sm-select>
                             </ng-container>
                             <ng-container *ngIf="createNewPipeline">
-                              <input type="text" name="pipname" [(ngModel)]="newPipeline.name" [placeholder]="'pipeline_name_new' | translate">
-                              <div class="ui error message" *ngIf="errorPipelineNamePattern">
-                                  {{ 'pipeline_name_error' | translate }}
-                              </div>
+                                <label>{{'pipeline_name' | translate}}</label>
+                                <input type="text" name="pipname" [(ngModel)]="newPipeline.name" [placeholder]="'pipeline_name_new' | translate">
+                                <div class="ui error message" *ngIf="errorPipelineNamePattern">
+                                    {{ 'pipeline_name_error' | translate }}
+                                </div>
+                            </ng-container>
+                            <ng-container *ngIf="createFork">
+
                             </ng-container>
                         </div>
-                        <div class="ten wide field right aligned">
+                        <div class="ten wide field right aligned" *ngIf="!createFork">
                           <div class="ui toggle checkbox ml10">
                             <input type="checkbox" id="mutex" name="mutex" [(ngModel)]="node.context.mutex">
                             <label for="mutex">
@@ -106,7 +118,7 @@
                     <button class="ui button" type="button" (click)="goToProject()" *ngIf="!hideCancel">{{ 'btn_cancel' | translate }}</button>
                     <button class="ui right floated green button" type="button" (click)="goToNextSection().subscribe()"
                              *ngIf="!hideNext"
-                            [disabled]="!node.context.pipeline_id && !newPipeline.name" [class.loading]="loadingCreatePipeline">
+                            [disabled]="!node.context.pipeline_id && !newPipeline.name && !createFork" [class.loading]="loadingCreatePipeline">
                             {{ 'btn_next' | translate }}
                     </button>
                   </div>
@@ -164,7 +176,7 @@
                     <button class="ui button" type="button" (click)="goToProject()" *ngIf="!hideCancel">{{ 'btn_cancel' | translate }}</button>
                     <button class="ui right floated green button" type="button" (click)="goToNextSection().subscribe()"
                             *ngIf="!hideNext"
-                            [disabled]="!node.context.pipeline_id && !newPipeline.name" [class.loading]="loadingCreatePipeline">
+                            [disabled]="!node.context.pipeline_id && !newPipeline.name && !createFork" [class.loading]="loadingCreatePipeline">
                             {{ 'btn_next' | translate }}
                     </button>
                   </div>
@@ -217,7 +229,7 @@
                   <div class="ui sixteen wide column">
                     <button class="ui button" type="button" (click)="goToProject()" *ngIf="!hideCancel">{{ 'btn_cancel' | translate }}</button>
                     <button class="ui right floated green button" type="button" *ngIf="!hideNext" (click)="goToNextSection().subscribe()"
-                            [disabled]="!node.context.pipeline_id && !newPipeline.name" [class.loading]="loadingCreateEnvironment || loading">
+                            [disabled]="!createFork && !node.context.pipeline_id && !newPipeline.name" [class.loading]="loadingCreateEnvironment || loading">
                             <span *ngIf="node.context.application_id && (loadingIntegrations || (integrations && integrations.length))">{{ 'btn_next' | translate }}</span>
                             <span *ngIf="!node.context.application_id || (!loadingIntegrations && (!integrations || !integrations.length))">{{ 'btn_finish' | translate }}</span>
                     </button>
@@ -249,7 +261,7 @@
                   <div class="ui sixteen wide column">
                     <button class="ui button" type="button" (click)="goToProject()" *ngIf="!hideCancel">{{ 'btn_cancel' | translate }}</button>
                     <button class="ui right floated green button" type="button" *ngIf="!hideNext" (click)="goToNextSection().subscribe()"
-                            [disabled]="!node.context.pipeline_id && !newPipeline.name" [class.loading]="loading">
+                            [disabled]="!createFork && !node.context.pipeline_id && !newPipeline.name" [class.loading]="loading">
                             {{ 'btn_finish' | translate }}
                     </button>
                   </div>
