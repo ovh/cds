@@ -23,9 +23,9 @@ func (api *API) getHookPollingVCSEvents() service.Handler {
 		uuid := vars["uuid"]
 		vcsServerParam := vars["vcsServer"]
 		lastExec := time.Now()
-		workflowID, errV := requestVarInt(r, "workflowID")
-		if errV != nil {
-			return errV
+		workflowID, err := requestVarInt(r, "workflowID")
+		if err != nil {
+			return err
 		}
 
 		if r.Header.Get("X-CDS-Last-Execution") != "" {
@@ -34,21 +34,21 @@ func (api *API) getHookPollingVCSEvents() service.Handler {
 			}
 		}
 
-		h, errL := workflow.LoadHookByUUID(api.mustDB(), uuid)
-		if errL != nil {
-			return errL
+		h, err := workflow.LoadHookByUUID(api.mustDB(), uuid)
+		if err != nil {
+			return err
 		}
 
-		proj, errProj := project.Load(api.mustDB(), api.Cache, h.Config[sdk.HookConfigProject].Value, nil)
-		if errProj != nil {
-			return errProj
+		proj, err := project.Load(api.mustDB(), api.Cache, h.Config[sdk.HookConfigProject].Value, nil)
+		if err != nil {
+			return err
 		}
 
 		//get the client for the repositories manager
-		vcsServer := repositoriesmanager.GetProjectVCSServer(proj, vcsServerParam)
-		client, errR := repositoriesmanager.AuthorizedClient(ctx, api.mustDB(), api.Cache, proj.Key, vcsServer)
-		if errR != nil {
-			return errR
+		vcsServer := repositoriesmanager.GetProjectVCSServer(*proj, vcsServerParam)
+		client, err := repositoriesmanager.AuthorizedClient(ctx, api.mustDB(), api.Cache, proj.Key, vcsServer)
+		if err != nil {
+			return err
 		}
 
 		//Check if the polling if disabled

@@ -1,11 +1,11 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import {
+    AuthConsumerScopeDetail,
     AuthConsumerSigninResponse,
     AuthCurrentConsumerResponse,
     AuthDriverManifests,
-    AuthDriverSigningRedirect,
-    AuthScope
+    AuthDriverSigningRedirect
 } from 'app/model/authentication.model';
 import { Observable } from 'rxjs';
 
@@ -37,10 +37,8 @@ export class AuthenticationService {
         return this._http.get<AuthDriverManifests>('/auth/driver');
     }
 
-    getScopes(): Observable<Array<AuthScope>> {
-        return this._http.get<Array<string>>('/auth/scope').map(ss => {
-            return ss.map(s => new AuthScope(s));
-        });
+    getScopes(): Observable<Array<AuthConsumerScopeDetail>> {
+        return this._http.get<Array<AuthConsumerScopeDetail>>('/auth/scope');
     }
 
     signin(consumerType: string, code: string, state: string, init_token: string): Observable<AuthConsumerSigninResponse> {

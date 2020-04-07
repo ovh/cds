@@ -18,20 +18,16 @@ func (api *API) getWorkflowTriggerConditionHandler() service.Handler {
 		vars := mux.Vars(r)
 		key := vars["key"]
 		name := vars["permWorkflowName"]
+		id, _ := FormInt(r, "nodeID")
 
-		id, errID := requestVarInt(r, "nodeID")
-		if errID != nil {
-			return errID
+		proj, err := project.Load(api.mustDB(), api.Cache, key, project.LoadOptions.WithVariables, project.LoadOptions.WithIntegrations)
+		if err != nil {
+			return sdk.WrapError(err, "unable to load project")
 		}
 
-		proj, errproj := project.Load(api.mustDB(), api.Cache, key, project.LoadOptions.WithVariables, project.LoadOptions.WithIntegrations)
-		if errproj != nil {
-			return sdk.WrapError(errproj, "getWorkflowTriggerConditionHandler> Unable to load project")
-		}
-
-		wf, errw := workflow.Load(ctx, api.mustDB(), api.Cache, proj, name, workflow.LoadOptions{})
-		if errw != nil {
-			return sdk.WrapError(errw, "getWorkflowTriggerConditionHandler> Unable to load workflow")
+		wf, err := workflow.Load(ctx, api.mustDB(), api.Cache, *proj, name, workflow.LoadOptions{})
+		if err != nil {
+			return sdk.WrapError(err, "unable to load workflow")
 		}
 
 		data := struct {
@@ -41,33 +37,40 @@ func (api *API) getWorkflowTriggerConditionHandler() service.Handler {
 			Operators: sdk.WorkflowConditionsOperators,
 		}
 
-		wr, errr := workflow.LoadLastRun(api.mustDB(), key, name, workflow.LoadRunOptions{})
-		if errr != nil {
-			if !sdk.ErrorIs(errr, sdk.ErrWorkflowNotFound) {
-				return sdk.WrapError(errr, "getWorkflowTriggerConditionHandler> Unable to load last run workflow")
+		wr, err := workflow.LoadLastRun(api.mustDB(), key, name, workflow.LoadRunOptions{})
+		if err != nil {
+			if !sdk.ErrorIs(err, sdk.ErrNotFound) {
+				return sdk.WrapError(err, "unable to load last run workflow")
 			}
 		}
 
 		params := []sdk.Parameter{}
 		var refNode *sdk.Node
 		if wr != nil {
-			refNode = wr.Workflow.WorkflowData.NodeByID(id)
+			refNode = wr.Workflow.WorkflowData.NodeByID(int64(id))
 			var errp error
-			params, errp = workflow.NodeBuildParametersFromRun(*wr, id)
-			if errp != nil || len(params) == 0 {
+			params, errp = workflow.NodeBuildParametersFromRun(*wr, int64(id))
+			if errp != nil {
+				return sdk.WrapError(errp, "getWorkflowTriggerConditionHandler> Unable to load build parameters from workflow run")
+			}
+			if len(params) == 0 {
 				refNode = nil
 			}
 		}
 		if refNode == nil {
-			refNode = wf.WorkflowData.NodeByID(id)
-			var errp error
+			refNode = wf.WorkflowData.NodeByID(int64(id))
 			ancestorIds := refNode.Ancestors(wf.WorkflowData)
-			params, errp = workflow.NodeBuildParametersFromWorkflow(ctx, api.mustDB(), api.Cache, proj, wf, refNode, ancestorIds)
-			if errp == nil && params != nil {
-				sdk.AddParameter(&params, "cds.dest.pipeline", sdk.StringParameter, "")
-				sdk.AddParameter(&params, "cds.status", sdk.StringParameter, "")
-				sdk.AddParameter(&params, "cds.manual", sdk.StringParameter, "")
 
+			params, err = workflow.NodeBuildParametersFromWorkflow(ctx, *proj, wf, refNode, ancestorIds)
+			if err != nil {
+				return sdk.WrapError(err, "unable to load build parameters from workflow")
+			}
+
+			sdk.AddParameter(&params, "cds.dest.pipeline", sdk.StringParameter, "")
+			sdk.AddParameter(&params, "cds.status", sdk.StringParameter, "")
+			sdk.AddParameter(&params, "cds.manual", sdk.StringParameter, "")
+
+			if refNode != nil {
 				if refNode.Context != nil && refNode.Context.ApplicationID != 0 {
 					sdk.AddParameter(&params, "cds.dest.application", sdk.StringParameter, "")
 				}
@@ -75,10 +78,6 @@ func (api *API) getWorkflowTriggerConditionHandler() service.Handler {
 					sdk.AddParameter(&params, "cds.dest.environment", sdk.StringParameter, "")
 				}
 			}
-		}
-
-		if refNode == nil {
-			return sdk.WrapError(sdk.ErrWorkflowNodeNotFound, "getWorkflowTriggerConditionHandler> Unable to load workflow node")
 		}
 
 		if sdk.ParameterFind(params, "git.repository") == nil {

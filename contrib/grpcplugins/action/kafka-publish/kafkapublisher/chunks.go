@@ -79,7 +79,7 @@ func ReadBytes(b []byte) (*shredder.Chunk, error) {
 		return nil, err
 	}
 
-	//Read the the header data
+	//Read the header data
 	headerData := b[len(MagicNumber)+4 : len(MagicNumber)+4+int(headerSize)]
 	//Read the UUID size
 	uuidSizeBuffer := headerData[:4]

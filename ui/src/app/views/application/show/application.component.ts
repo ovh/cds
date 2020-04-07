@@ -1,26 +1,27 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit, ViewChild } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
+import { Application } from 'app/model/application.model';
+import { Environment } from 'app/model/environment.model';
+import { Pipeline } from 'app/model/pipeline.model';
+import { Project } from 'app/model/project.model';
+import { AuthentifiedUser } from 'app/model/user.model';
+import { Workflow } from 'app/model/workflow.model';
+import { ApplicationStore } from 'app/service/application/application.store';
+import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
+import { WarningModalComponent } from 'app/shared/modal/warning/warning.component';
+import { ToastService } from 'app/shared/toast/ToastService';
+import { VariableEvent } from 'app/shared/variable/variable.event.model';
+import { CDSWebWorker } from 'app/shared/worker/web.worker';
 import * as applicationsActions from 'app/store/applications.action';
-import { ApplicationsState } from 'app/store/applications.state';
+import { ClearCacheApplication } from 'app/store/applications.action';
+import { ApplicationsState, ApplicationStateModel } from 'app/store/applications.state';
 import { AuthenticationState } from 'app/store/authentication.state';
 import { ProjectState, ProjectStateModel } from 'app/store/project.state';
 import cloneDeep from 'lodash-es/cloneDeep';
 import { Subscription } from 'rxjs';
 import { filter, finalize } from 'rxjs/operators';
-import { Application } from '../../../model/application.model';
-import { Environment } from '../../../model/environment.model';
-import { Pipeline } from '../../../model/pipeline.model';
-import { Project } from '../../../model/project.model';
-import { AuthentifiedUser } from '../../../model/user.model';
-import { Workflow } from '../../../model/workflow.model';
-import { ApplicationStore } from '../../../service/application/application.store';
-import { AutoUnsubscribe } from '../../../shared/decorator/autoUnsubscribe';
-import { WarningModalComponent } from '../../../shared/modal/warning/warning.component';
-import { ToastService } from '../../../shared/toast/ToastService';
-import { VariableEvent } from '../../../shared/variable/variable.event.model';
-import { CDSWebWorker } from '../../../shared/worker/web.worker';
 
 @Component({
     selector: 'app-application-show',
@@ -29,7 +30,7 @@ import { CDSWebWorker } from '../../../shared/worker/web.worker';
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 @AutoUnsubscribe()
-export class ApplicationShowComponent implements OnInit {
+export class ApplicationShowComponent implements OnInit, OnDestroy {
 
     // Flag to show the page or not
     public readyApp = false;
@@ -37,6 +38,7 @@ export class ApplicationShowComponent implements OnInit {
     public permFormLoading = false;
 
     // Project & Application data
+    urlAppName: string;
     project: Project;
     application: Application;
 
@@ -66,9 +68,11 @@ export class ApplicationShowComponent implements OnInit {
     currentUser: AuthentifiedUser;
     usageCount = 0;
 
+    storeSub: Subscription;
+
     constructor(
         private _applicationStore: ApplicationStore,
-        private _route: ActivatedRoute,
+        private _routeActivated: ActivatedRoute,
         private _router: Router,
         private _toast: ToastService,
         public _translate: TranslateService,
@@ -76,66 +80,54 @@ export class ApplicationShowComponent implements OnInit {
         private _cd: ChangeDetectorRef
     ) {
         this.currentUser = this._store.selectSnapshot(AuthenticationState.user);
-        // Update data if route change
-        this._routeDataSub = this._route.data.subscribe(datas => {
-            this.project = datas['project'];
-        });
+        this.project = this._routeActivated.snapshot.data['project'];
+
+        this.workflowName = this._routeActivated.snapshot.queryParams['workflow'];
+        this.workflowNum = this._routeActivated.snapshot.queryParams['run'];
+        this.workflowNodeRun = this._routeActivated.snapshot.queryParams['node'];
+        this.workflowPipeline = this._routeActivated.snapshot.queryParams['wpipeline'];
 
         this.projectSubscription = this._store.select(ProjectState)
             .subscribe((projectState: ProjectStateModel) => this.project = projectState.project);
 
-        if (this._route.snapshot && this._route.queryParams) {
-            this.workflowName = this._route.snapshot.queryParams['workflow'];
-            this.workflowNum = this._route.snapshot.queryParams['run'];
-            this.workflowNodeRun = this._route.snapshot.queryParams['node'];
-        }
-        this.workflowPipeline = this._route.snapshot.queryParams['wpipeline'];
-        this._routeParamsSub = this._route.params.subscribe(params => {
-            let key = params['key'];
-            let appName = params['appName'];
-            if (key && appName) {
-                this._store.dispatch(new applicationsActions.FetchApplication({ projectKey: key, applicationName: appName }))
+        this._routeParamsSub = this._routeActivated.params.subscribe(params => {
+            let projectKey = params['key'];
+            this.urlAppName = params['appName'];
+            if (this.application && this.application.name !== this.urlAppName) {
+                this.application = null;
+            }
+            if (projectKey && this.urlAppName) {
+                this._store.dispatch(new applicationsActions.FetchApplication({ projectKey: projectKey, applicationName: this.urlAppName }))
                     .subscribe(
-                        null,
-                        () => this._router.navigate(['/project', key], { queryParams: { tab: 'applications' } })
+                        () => {},
+                        () => this._router.navigate(['/project', projectKey], { queryParams: { tab: 'applications' } }),
+                        null
                     );
-
-                if (this.application && this.application.name !== appName) {
-                    this.application = null;
-                }
-                if (!this.application) {
-                    if (this.applicationSubscription) {
-                        this.applicationSubscription.unsubscribe();
-                    }
-
-                    this.applicationSubscription = this._store.select(ApplicationsState.selectApplication(key, appName))
-                        .pipe(filter((app) => app != null))
-                        .subscribe((app: Application) => {
-                            this.readyApp = true;
-                            // TODO: to delete when all CDS application will be in store. In fact we make a copy to break the read only rule
-                            this.application = cloneDeep(app);
-                            if (app.usage) {
-                                this.workflows = app.usage.workflows || [];
-                                this.environments = app.usage.environments || [];
-                                this.pipelines = app.usage.pipelines || [];
-                                this.usageCount = this.pipelines.length + this.environments.length + this.workflows.length;
-                            }
-
-                            // Update recent application viewed
-                            this._applicationStore.updateRecentApplication(key, this.application);
-                            this._cd.markForCheck();
-
-                        }, () => {
-                            this._router.navigate(['/project', key], { queryParams: { tab: 'applications' } });
-                        })
-                }
-                this._cd.markForCheck();
             }
         });
+
+        this.storeSub = this._store.select(ApplicationsState.currentState())
+            .pipe(filter((s: ApplicationStateModel) => s.application != null && s.application.name === this.urlAppName))
+            .subscribe((s: ApplicationStateModel) => {
+                this.readyApp = true;
+                this.application = cloneDeep(s.application);
+                if (this.application.usage) {
+                    this.workflows = this.application.usage.workflows || [];
+                    this.environments = this.application.usage.environments || [];
+                    this.pipelines = this.application.usage.pipelines || [];
+                    this.usageCount = this.pipelines.length + this.environments.length + this.workflows.length;
+                }
+
+                // Update recent application viewed
+                this._applicationStore.updateRecentApplication(s.currentProjectKey, this.application);
+                this._cd.markForCheck();
+        }, () => {
+                this._router.navigate(['/project', this.project.key], { queryParams: { tab: 'applications' } });
+            });
     }
 
     ngOnInit() {
-        this._queryParamsSub = this._route.queryParams.subscribe(params => {
+        this._queryParamsSub = this._routeActivated.queryParams.subscribe(params => {
             let tab = params['tab'];
             if (tab) {
                 this.selectedTab = tab;
@@ -192,5 +184,9 @@ export class ApplicationShowComponent implements OnInit {
                     break;
             }
         }
+    }
+
+    ngOnDestroy(): void {
+        this._store.dispatch(new ClearCacheApplication());
     }
 }

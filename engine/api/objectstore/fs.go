@@ -49,7 +49,7 @@ func (fss *FilesystemStore) Status(ctx context.Context) sdk.MonitoringStatusLine
 
 // ServeStaticFiles NOT YET IMPLEMENTED
 func (fss *FilesystemStore) ServeStaticFiles(o Object, entrypoint string, data io.ReadCloser) (string, error) {
-	return "", sdk.ErrNotImplemented
+	return "", sdk.WithStack(sdk.ErrNotImplemented)
 }
 
 // Store store a object on disk

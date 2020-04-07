@@ -12,6 +12,8 @@ import 'rxjs/add/observable/of';
 import { Observable } from 'rxjs/Observable';
 import { SharedModule } from '../../../../../../shared/shared.module';
 import { PipelineModule } from '../../../../pipeline.module';
+import { ApplicationService } from 'app/service/application/application.service';
+import { EnvironmentService } from 'app/service/environment/environment.service';
 
 
 describe('CDS: Stage From component', () => {
@@ -26,6 +28,8 @@ describe('CDS: Stage From component', () => {
                 TranslateLoader,
                 TranslateParser,
                 WorkflowService,
+                ApplicationService,
+                EnvironmentService,
                 WorkflowRunService
             ],
             imports: [

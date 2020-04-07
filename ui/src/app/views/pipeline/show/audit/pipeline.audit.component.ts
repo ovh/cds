@@ -123,6 +123,9 @@ export class PipelineAuditComponent implements OnInit {
                 case 'updateStage':
                     diff = this.getUpdateStageDiff(pathSplitted, pipTo, pipFrom);
                     break;
+                case 'updatePipeline':
+                    diff = this.getUpdateJobDiff(path, pathSplitted, pipTo, pipFrom);
+                    break;
                 case 'deleteStage':
                     diff = this.getDeleteStageDiff(pathSplitted, pipFrom);
                     break;

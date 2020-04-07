@@ -141,9 +141,10 @@ func executeWebHook(t *sdk.TaskExecution) (*sdk.WorkflowNodeRunHookEvent, error)
 		case ct == "application/x-www-form-urlencoded":
 			formValues, err := url.ParseQuery(string(t.WebHook.RequestBody))
 			if err == nil {
-				return nil, sdk.WrapError(err, "Unable webhookto parse body %s", t.WebHook.RequestBody)
+				return nil, sdk.WrapError(err, "Unable webhook to parse body %s", t.WebHook.RequestBody)
 			}
 			copyValues(values, formValues)
+			h.Payload["payload"] = string(t.WebHook.RequestBody)
 		case ct == "application/json":
 			var bodyJSON interface{}
 
@@ -177,6 +178,12 @@ func executeWebHook(t *sdk.TaskExecution) (*sdk.WorkflowNodeRunHookEvent, error)
 				values.Add(k, v)
 			}
 			h.Payload["payload"] = string(t.WebHook.RequestBody)
+		default:
+			h.Payload["payload"] = t.WebHook.RequestURL
+		}
+	} else {
+		if _, ok := h.Payload["payload"]; !ok {
+			h.Payload["payload"] = t.WebHook.RequestURL
 		}
 	}
 

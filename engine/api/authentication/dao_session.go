@@ -11,6 +11,30 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
+// UnsafeLoadCorruptedSessions should not be used
+func UnsafeLoadCorruptedSessions(ctx context.Context, db gorp.SqlExecutor) ([]sdk.AuthSession, error) {
+	ss := []authSession{}
+	q := gorpmapping.NewQuery(`SELECT *
+	FROM auth_session
+	ORDER BY created ASC`)
+	if err := gorpmapping.GetAll(ctx, db, q, &ss); err != nil {
+		return nil, sdk.WrapError(err, "cannot get auth sessions")
+	}
+
+	// Check signature of data, to get only invalid signatures
+	corruptedSessions := make([]sdk.AuthSession, 0, len(ss))
+	for i := range ss {
+		isValid, _ := gorpmapping.CheckSignature(ss[i], ss[i].Signature)
+		// If the signature is valid, to not consider the session as corrupted
+		if isValid || ss[i].ID == "" {
+			continue
+		}
+		corruptedSessions = append(corruptedSessions, ss[i].AuthSession)
+	}
+	log.Info(ctx, "authentication.UnsafeLoadCorruptedSessions> %d corrupted sessions", len(corruptedSessions))
+	return corruptedSessions, nil
+}
+
 func getSessions(ctx context.Context, db gorp.SqlExecutor, q gorpmapping.Query, opts ...LoadSessionOptionFunc) ([]sdk.AuthSession, error) {
 	ss := []authSession{}
 

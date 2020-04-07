@@ -15,11 +15,14 @@ import { ProjectStore } from 'app/service/project/project.store';
 import { WorkflowRunService } from 'app/service/workflow/run/workflow.run.service';
 import { WorkflowService } from 'app/service/workflow/workflow.service';
 import * as ActionApplication from './applications.action';
-import { ApplicationsState } from './applications.state';
+import { ApplicationsState, ApplicationStateModel } from './applications.state';
 import { PipelinesState } from './pipelines.state';
 import { AddProject } from './project.action';
 import { ProjectState, ProjectStateModel } from './project.state';
 import { WorkflowState } from './workflow.state';
+import { PipelineService } from 'app/service/pipeline/pipeline.service';
+import { EnvironmentService } from 'app/service/environment/environment.service';
+import { ApplicationService } from 'app/service/application/application.service';
 
 describe('Applications', () => {
     let store: Store;
@@ -33,7 +36,10 @@ describe('Applications', () => {
                 WorkflowService,
                 WorkflowRunService,
                 ProjectService,
-                ProjectStore
+                ProjectStore,
+                PipelineService,
+                EnvironmentService,
+                ApplicationService
             ],
             imports: [
                 NgxsModule.forRoot([ApplicationsState, ProjectState, PipelinesState, WorkflowState]),
@@ -73,13 +79,10 @@ describe('Applications', () => {
             project_key: testProjectKey,
             vcs_strategy: {}
         });
-        store.selectOnce(ApplicationsState).subscribe(state => {
-            expect(Object.keys(state.applications).length).toEqual(1);
-        });
-        store.selectOnce(ApplicationsState.selectApplication(testProjectKey, 'app1')).subscribe(app => {
-            expect(app).toBeTruthy();
-            expect(app.name).toEqual('app1');
-            expect(app.project_key).toEqual(testProjectKey);
+        store.selectOnce(ApplicationsState.currentState()).subscribe((s: ApplicationStateModel) => {
+            expect(s.application).toBeTruthy();
+            expect(s.application.name).toEqual('app1');
+            expect(s.application.project_key).toEqual(testProjectKey);
         });
     }));
 
@@ -99,26 +102,20 @@ describe('Applications', () => {
             project_key: testProjectKey,
             vcs_strategy: {}
         });
-        store.selectOnce(ApplicationsState).subscribe(state => {
-            expect(Object.keys(state.applications).length).toEqual(1);
-        });
-        store.selectOnce(ApplicationsState.selectApplication(testProjectKey, 'app1')).subscribe(app => {
-            expect(app).toBeTruthy();
-            expect(app.name).toEqual('app1');
-            expect(app.project_key).toEqual(testProjectKey);
+        store.selectOnce(ApplicationsState.currentState()).subscribe(s => {
+            expect(s.application).toBeTruthy();
+            expect(s.application.name).toEqual('app1');
+            expect(s.application.project_key).toEqual(testProjectKey);
         });
 
         store.dispatch(new ActionApplication.FetchApplication({
             projectKey: testProjectKey,
             applicationName: 'app1'
         }));
-        store.selectOnce(ApplicationsState).subscribe(state => {
-            expect(Object.keys(state.applications).length).toEqual(1);
-        });
-        store.selectOnce(ApplicationsState.selectApplication(testProjectKey, 'app1')).subscribe((app: Application) => {
-            expect(app).toBeTruthy();
-            expect(app.name).toEqual('app1');
-            expect(app.project_key).toEqual(testProjectKey);
+        store.selectOnce(ApplicationsState.currentState()).subscribe((s) => {
+            expect(s.application).toBeTruthy();
+            expect(s.application.name).toEqual('app1');
+            expect(s.application.project_key).toEqual(testProjectKey);
         });
 
         store.selectOnce(ProjectState).subscribe((projState: ProjectStateModel) => {
@@ -145,13 +142,10 @@ describe('Applications', () => {
             project_key: testProjectKey,
             vcs_strategy: {}
         });
-        store.selectOnce(ApplicationsState).subscribe(state => {
-            expect(Object.keys(state.applications).length).toEqual(1);
-        });
-        store.selectOnce(ApplicationsState.selectApplication(testProjectKey, 'app1')).subscribe(app => {
-            expect(app).toBeTruthy();
-            expect(app.name).toEqual('app1');
-            expect(app.project_key).toEqual(testProjectKey);
+        store.selectOnce(ApplicationsState.currentState()).subscribe(s => {
+            expect(s.application).toBeTruthy();
+            expect(s.application.name).toEqual('app1');
+            expect(s.application.project_key).toEqual(testProjectKey);
         });
 
         application.name = 'app1bis';
@@ -167,13 +161,10 @@ describe('Applications', () => {
             project_key: testProjectKey,
             vcs_strategy: {}
         });
-        store.selectOnce(ApplicationsState).subscribe(state => {
-            expect(Object.keys(state.applications).length).toEqual(1);
-        });
-        store.selectOnce(ApplicationsState.selectApplication(testProjectKey, 'app1bis')).subscribe(app => {
-            expect(app).toBeTruthy();
-            expect(app.name).toEqual('app1bis');
-            expect(app.project_key).toEqual(testProjectKey);
+        store.selectOnce(ApplicationsState.currentState()).subscribe(s => {
+            expect(s.application).toBeTruthy();
+            expect(s.application.name).toEqual('app1bis');
+            expect(s.application.project_key).toEqual(testProjectKey);
         });
 
         store.selectOnce(ProjectState).subscribe((projState: ProjectStateModel) => {
@@ -200,13 +191,10 @@ describe('Applications', () => {
             project_key: testProjectKey,
             vcs_strategy: {}
         });
-        store.selectOnce(ApplicationsState).subscribe(state => {
-            expect(Object.keys(state.applications).length).toEqual(1);
-        });
-        store.selectOnce(ApplicationsState.selectApplication(testProjectKey, 'app1')).subscribe(app => {
-            expect(app).toBeTruthy();
-            expect(app.name).toEqual('app1');
-            expect(app.project_key).toEqual(testProjectKey);
+        store.selectOnce(ApplicationsState.currentState()).subscribe(s => {
+            expect(s.application).toBeTruthy();
+            expect(s.application.name).toEqual('app1');
+            expect(s.application.project_key).toEqual(testProjectKey);
         });
 
         application.name = 'app1cloned';
@@ -222,18 +210,10 @@ describe('Applications', () => {
             project_key: testProjectKey,
             vcs_strategy: {}
         });
-        store.selectOnce(ApplicationsState).subscribe(state => {
-            expect(Object.keys(state.applications).length).toEqual(2);
-        });
-        store.selectOnce(ApplicationsState.selectApplication(testProjectKey, 'app1')).subscribe(app => {
-            expect(app).toBeTruthy();
-            expect(app.name).toEqual('app1');
-            expect(app.project_key).toEqual(testProjectKey);
-        });
-        store.selectOnce(ApplicationsState.selectApplication(testProjectKey, 'app1cloned')).subscribe(app => {
-            expect(app).toBeTruthy();
-            expect(app.name).toEqual('app1cloned');
-            expect(app.project_key).toEqual(testProjectKey);
+        store.selectOnce(ApplicationsState.currentState()).subscribe(s => {
+            expect(s.application).toBeTruthy();
+            expect(s.application.name).toEqual('app1cloned');
+            expect(s.application.project_key).toEqual(testProjectKey);
         });
 
         store.selectOnce(ProjectState).subscribe((projState: ProjectStateModel) => {
@@ -259,13 +239,10 @@ describe('Applications', () => {
             project_key: testProjectKey,
             vcs_strategy: {}
         });
-        store.selectOnce(ApplicationsState).subscribe(state => {
-            expect(Object.keys(state.applications).length).toEqual(1);
-        });
-        store.selectOnce(ApplicationsState.selectApplication(testProjectKey, 'app1')).subscribe(app => {
-            expect(app).toBeTruthy();
-            expect(app.name).toEqual('app1');
-            expect(app.project_key).toEqual(testProjectKey);
+        store.selectOnce(ApplicationsState.currentState()).subscribe(s => {
+            expect(s.application).toBeTruthy();
+            expect(s.application.name).toEqual('app1');
+            expect(s.application.project_key).toEqual(testProjectKey);
         });
 
         store.dispatch(new ActionApplication.DeleteApplication({
@@ -275,9 +252,6 @@ describe('Applications', () => {
         http.expectOne(((req: HttpRequest<any>) => {
             return req.url === '/project/test1/application/app1';
         })).flush(null);
-        store.selectOnce(ApplicationsState).subscribe(state => {
-            expect(Object.keys(state.applications).length).toEqual(0);
-        });
 
         store.selectOnce(ProjectState).subscribe((projState: ProjectStateModel) => {
             expect(projState.project).toBeTruthy();
@@ -297,10 +271,7 @@ describe('Applications', () => {
         http.expectOne(((req: HttpRequest<any>) => {
             return req.url === '/ui/project/test1/application/app1/overview';
         })).flush(overview);
-        store.selectOnce(ApplicationsState).subscribe(state => {
-            expect(Object.keys(state.overviews).length).toEqual(1);
-        });
-        store.selectOnce(ApplicationsState.selectOverview(testProjectKey, 'app1')).subscribe(o => {
+        store.selectOnce(ApplicationsState.selectOverview()).subscribe(o => {
             expect(o).toBeTruthy();
             expect(o.git_url).toEqual('git+ssh://thisisatest');
         });
@@ -323,14 +294,11 @@ describe('Applications', () => {
             project_key: testProjectKey,
             vcs_strategy: {}
         });
-        store.selectOnce(ApplicationsState).subscribe(state => {
-            expect(Object.keys(state.applications).length).toEqual(1);
-        });
-        store.selectOnce(ApplicationsState.selectApplication(testProjectKey, 'app1')).subscribe(app => {
-            expect(app).toBeTruthy();
-            expect(app.overview).toBeFalsy();
-            expect(app.name).toEqual('app1');
-            expect(app.project_key).toEqual(testProjectKey);
+        store.selectOnce(ApplicationsState.currentState()).subscribe(s => {
+            expect(s.application).toBeTruthy();
+            expect(s.application.overview).toBeFalsy();
+            expect(s.application.name).toEqual('app1');
+            expect(s.application.project_key).toEqual(testProjectKey);
         });
 
         let variable = new Variable();
@@ -346,16 +314,13 @@ describe('Applications', () => {
         http.expectOne(((req: HttpRequest<any>) => {
             return req.url === '/project/test1/application/app1/variable/testvar';
         })).flush(variable);
-        store.selectOnce(ApplicationsState).subscribe(state => {
-            expect(Object.keys(state.applications).length).toEqual(1);
-        });
-        store.selectOnce(ApplicationsState.selectApplication(testProjectKey, 'app1')).subscribe((app: Application) => {
-            expect(app).toBeTruthy();
-            expect(app.name).toEqual('app1');
-            expect(app.project_key).toEqual(testProjectKey);
-            expect(app.variables).toBeTruthy();
-            expect(app.variables.length).toEqual(1);
-            expect(app.variables[0].name).toEqual('testvar');
+        store.selectOnce(ApplicationsState.currentState()).subscribe((s) => {
+            expect(s.application).toBeTruthy();
+            expect(s.application.name).toEqual('app1');
+            expect(s.application.project_key).toEqual(testProjectKey);
+            expect(s.application.variables).toBeTruthy();
+            expect(s.application.variables.length).toEqual(1);
+            expect(s.application.variables[0].name).toEqual('testvar');
         });
     }));
 
@@ -397,16 +362,13 @@ describe('Applications', () => {
             variableName: 'testvar',
             variable
         }));
-        store.selectOnce(ApplicationsState).subscribe(state => {
-            expect(Object.keys(state.applications).length).toEqual(1);
-        });
-        store.selectOnce(ApplicationsState.selectApplication(testProjectKey, 'app1')).subscribe((app: Application) => {
-            expect(app).toBeTruthy();
-            expect(app.name).toEqual('app1');
-            expect(app.project_key).toEqual(testProjectKey);
-            expect(app.variables).toBeTruthy();
-            expect(app.variables.length).toEqual(1);
-            expect(app.variables[0].name).toEqual('testvarrenamed');
+        store.selectOnce(ApplicationsState.currentState()).subscribe((s) => {
+            expect(s.application).toBeTruthy();
+            expect(s.application.name).toEqual('app1');
+            expect(s.application.project_key).toEqual(testProjectKey);
+            expect(s.application.variables).toBeTruthy();
+            expect(s.application.variables.length).toEqual(1);
+            expect(s.application.variables[0].name).toEqual('testvarrenamed');
         });
     }));
 
@@ -453,15 +415,12 @@ describe('Applications', () => {
             project_key: testProjectKey,
             variables: [],
         });
-        store.selectOnce(ApplicationsState).subscribe(state => {
-            expect(Object.keys(state.applications).length).toEqual(1);
-        });
-        store.selectOnce(ApplicationsState.selectApplication(testProjectKey, 'app1')).subscribe((app: Application) => {
-            expect(app).toBeTruthy();
-            expect(app.name).toEqual('app1');
-            expect(app.project_key).toEqual(testProjectKey);
-            expect(app.variables).toBeTruthy();
-            expect(app.variables.length).toEqual(0);
+        store.selectOnce(ApplicationsState.currentState()).subscribe((s) => {
+            expect(s.application).toBeTruthy();
+            expect(s.application.name).toEqual('app1');
+            expect(s.application.project_key).toEqual(testProjectKey);
+            expect(s.application.variables).toBeTruthy();
+            expect(s.application.variables.length).toEqual(0);
         });
     }));
 
@@ -495,16 +454,13 @@ describe('Applications', () => {
         http.expectOne(((req: HttpRequest<any>) => {
             return req.url === '/project/test1/application/app1/keys';
         })).flush(key);
-        store.selectOnce(ApplicationsState).subscribe(state => {
-            expect(Object.keys(state.applications).length).toEqual(1);
-        });
-        store.selectOnce(ApplicationsState.selectApplication(testProjectKey, 'app1')).subscribe((app: Application) => {
-            expect(app).toBeTruthy();
-            expect(app.name).toEqual('app1');
-            expect(app.project_key).toEqual(testProjectKey);
-            expect(app.keys).toBeTruthy();
-            expect(app.keys.length).toEqual(1);
-            expect(app.keys[0].name).toEqual('app-mykey');
+        store.selectOnce(ApplicationsState.currentState()).subscribe((s) => {
+            expect(s.application).toBeTruthy();
+            expect(s.application.name).toEqual('app1');
+            expect(s.application.project_key).toEqual(testProjectKey);
+            expect(s.application.keys).toBeTruthy();
+            expect(s.application.keys.length).toEqual(1);
+            expect(s.application.keys[0].name).toEqual('app-mykey');
         });
     }));
 
@@ -537,16 +493,13 @@ describe('Applications', () => {
         http.expectOne(((req: HttpRequest<any>) => {
             return req.url === '/project/test1/application/app1/keys';
         })).flush(key);
-        store.selectOnce(ApplicationsState).subscribe(state => {
-            expect(Object.keys(state.applications).length).toEqual(1);
-        });
-        store.selectOnce(ApplicationsState.selectApplication(testProjectKey, 'app1')).subscribe((app: Application) => {
-            expect(app).toBeTruthy();
-            expect(app.name).toEqual('app1');
-            expect(app.project_key).toEqual(testProjectKey);
-            expect(app.keys).toBeTruthy();
-            expect(app.keys.length).toEqual(1);
-            expect(app.keys[0].name).toEqual('app-mykey');
+        store.selectOnce(ApplicationsState.currentState()).subscribe((s) => {
+            expect(s.application).toBeTruthy();
+            expect(s.application.name).toEqual('app1');
+            expect(s.application.project_key).toEqual(testProjectKey);
+            expect(s.application.keys).toBeTruthy();
+            expect(s.application.keys.length).toEqual(1);
+            expect(s.application.keys[0].name).toEqual('app-mykey');
         });
 
         store.dispatch(new ActionApplication.DeleteApplicationKey({
@@ -557,15 +510,12 @@ describe('Applications', () => {
         http.expectOne(((req: HttpRequest<any>) => {
             return req.url === '/project/test1/application/app1/keys/app-mykey';
         })).flush(null);
-        store.selectOnce(ApplicationsState).subscribe(state => {
-            expect(Object.keys(state.applications).length).toEqual(1);
-        });
-        store.selectOnce(ApplicationsState.selectApplication(testProjectKey, 'app1')).subscribe((app: Application) => {
-            expect(app).toBeTruthy();
-            expect(app.name).toEqual('app1');
-            expect(app.project_key).toEqual(testProjectKey);
-            expect(app.keys).toBeTruthy();
-            expect(app.keys.length).toEqual(0);
+        store.selectOnce(ApplicationsState.currentState()).subscribe((s) => {
+            expect(s.application).toBeTruthy();
+            expect(s.application.name).toEqual('app1');
+            expect(s.application.project_key).toEqual(testProjectKey);
+            expect(s.application.keys).toBeTruthy();
+            expect(s.application.keys.length).toEqual(0);
         });
     }));
 
@@ -610,14 +560,11 @@ describe('Applications', () => {
             project_key: testProjectKey,
             deployment_strategies: {},
         });
-        store.selectOnce(ApplicationsState).subscribe(state => {
-            expect(Object.keys(state.applications).length).toEqual(1);
-        });
-        store.selectOnce(ApplicationsState.selectApplication(testProjectKey, 'app1')).subscribe((app: Application) => {
-            expect(app).toBeTruthy();
-            expect(app.name).toEqual('app1');
-            expect(app.project_key).toEqual(testProjectKey);
-            expect(app.deployment_strategies).toBeTruthy();
+        store.selectOnce(ApplicationsState.currentState()).subscribe((s) => {
+            expect(s.application).toBeTruthy();
+            expect(s.application.name).toEqual('app1');
+            expect(s.application.project_key).toEqual(testProjectKey);
+            expect(s.application.deployment_strategies).toBeTruthy();
         });
     }));
 
@@ -653,15 +600,12 @@ describe('Applications', () => {
             vcs_server: 'github',
             repository_fullname: 'cds'
         });
-        store.selectOnce(ApplicationsState).subscribe(state => {
-            expect(Object.keys(state.applications).length).toEqual(1);
-        });
-        store.selectOnce(ApplicationsState.selectApplication(testProjectKey, 'app1')).subscribe((app: Application) => {
-            expect(app).toBeTruthy();
-            expect(app.name).toEqual('app1');
-            expect(app.project_key).toEqual(testProjectKey);
-            expect(app.vcs_server).toEqual('github');
-            expect(app.repository_fullname).toEqual('cds');
+        store.selectOnce(ApplicationsState.currentState()).subscribe((s) => {
+            expect(s.application).toBeTruthy();
+            expect(s.application.name).toEqual('app1');
+            expect(s.application.project_key).toEqual(testProjectKey);
+            expect(s.application.vcs_server).toEqual('github');
+            expect(s.application.repository_fullname).toEqual('cds');
         });
     }));
 
@@ -693,15 +637,13 @@ describe('Applications', () => {
             name: 'app1',
             project_key: testProjectKey
         });
-        store.selectOnce(ApplicationsState).subscribe(state => {
-            expect(Object.keys(state.applications).length).toEqual(1);
-        });
-        store.selectOnce(ApplicationsState.selectApplication(testProjectKey, 'app1')).subscribe((app: Application) => {
-            expect(app).toBeTruthy();
-            expect(app.name).toEqual('app1');
-            expect(app.project_key).toEqual(testProjectKey);
-            expect(app.vcs_server).toBeFalsy();
-            expect(app.repository_fullname).toBeFalsy();
+
+        store.selectOnce(ApplicationsState.currentState()).subscribe((s) => {
+            expect(s.application).toBeTruthy();
+            expect(s.application.name).toEqual('app1');
+            expect(s.application.project_key).toEqual(testProjectKey);
+            expect(s.application.vcs_server).toBeFalsy();
+            expect(s.application.repository_fullname).toBeFalsy();
         });
     }));
 
@@ -727,14 +669,11 @@ describe('Applications', () => {
             projectKey: testProjectKey,
             applicationName: 'app1'
         }));
-        store.selectOnce(ApplicationsState).subscribe(state => {
-            expect(Object.keys(state.applications).length).toEqual(1);
-        });
-        store.selectOnce(ApplicationsState.selectApplication(testProjectKey, 'app1')).subscribe((app: Application) => {
-            expect(app).toBeTruthy();
-            expect(app.name).toEqual('app1');
-            expect(app.project_key).toEqual(testProjectKey);
-            expect(app.externalChange).toEqual(true);
+        store.selectOnce(ApplicationsState.currentState()).subscribe((s) => {
+            expect(s.application).toBeTruthy();
+            expect(s.application.name).toEqual('app1');
+            expect(s.application.project_key).toEqual(testProjectKey);
+            expect(s.application.externalChange).toEqual(true);
         });
     }));
 
@@ -754,21 +693,15 @@ describe('Applications', () => {
             project_key: testProjectKey,
             vcs_strategy: {}
         });
-        store.selectOnce(ApplicationsState).subscribe(state => {
-            expect(Object.keys(state.applications).length).toEqual(1);
-        });
-        store.selectOnce(ApplicationsState.selectApplication(testProjectKey, 'app1')).subscribe((app: Application) => {
-            expect(app).toBeTruthy();
-            expect(app.name).toEqual('app1');
-            expect(app.project_key).toEqual(testProjectKey);
+        store.selectOnce(ApplicationsState.currentState()).subscribe((s) => {
+            expect(s.application).toBeTruthy();
+            expect(s.application.name).toEqual('app1');
+            expect(s.application.project_key).toEqual(testProjectKey);
         });
 
-        store.dispatch(new ActionApplication.DeleteFromCacheApplication({
-            projectKey: testProjectKey,
-            applicationName: 'app1'
-        }));
-        store.selectOnce(ApplicationsState).subscribe(state => {
-            expect(Object.keys(state.applications).length).toEqual(0);
+        store.dispatch(new ActionApplication.ClearCacheApplication());
+        store.selectOnce(ApplicationsState.currentState()).subscribe((s) => {
+            expect(s.application).toBeFalsy();
         });
     }));
 
@@ -788,14 +721,11 @@ describe('Applications', () => {
             project_key: testProjectKey,
             vcs_strategy: {}
         });
-        store.selectOnce(ApplicationsState).subscribe(state => {
-            expect(Object.keys(state.applications).length).toEqual(1);
-        });
-        store.selectOnce(ApplicationsState.selectApplication(testProjectKey, 'app1')).subscribe((app: Application) => {
-            expect(app).toBeTruthy();
-            expect(app.name).toEqual('app1');
-            expect(app.project_key).toEqual(testProjectKey);
-            expect(app.vcs_server).toBeFalsy();
+        store.selectOnce(ApplicationsState.currentState()).subscribe((s) => {
+            expect(s.application).toBeTruthy();
+            expect(s.application.name).toEqual('app1');
+            expect(s.application.project_key).toEqual(testProjectKey);
+            expect(s.application.vcs_server).toBeFalsy();
         });
 
         store.dispatch(new ActionApplication.ResyncApplication({
@@ -809,14 +739,11 @@ describe('Applications', () => {
             project_key: testProjectKey,
             vcs_server: 'github'
         });
-        store.selectOnce(ApplicationsState).subscribe(state => {
-            expect(Object.keys(state.applications).length).toEqual(1);
-        });
-        store.selectOnce(ApplicationsState.selectApplication(testProjectKey, 'app1')).subscribe((app: Application) => {
-            expect(app).toBeTruthy();
-            expect(app.name).toEqual('app1');
-            expect(app.project_key).toEqual(testProjectKey);
-            expect(app.vcs_server).toEqual('github');
+        store.selectOnce(ApplicationsState.currentState()).subscribe((s) => {
+            expect(s.application).toBeTruthy();
+            expect(s.application.name).toEqual('app1');
+            expect(s.application.project_key).toEqual(testProjectKey);
+            expect(s.application.vcs_server).toEqual('github');
         });
     }));
 });

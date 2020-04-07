@@ -189,37 +189,38 @@ func (g *githubClient) allCommitBetween(ctx context.Context, repo string, untilD
 	urlValues.Add("sha", branch)
 	urlValues.Add("since", sinceDate.Format(time.RFC3339))
 	urlValues.Add("until", untilDate.Format(time.RFC3339))
+
 	var nextPage = "/repos/" + repo + "/commits"
-
-	for {
-		if nextPage != "" {
-			if strings.Contains(nextPage, "?") {
-				nextPage += "&"
-			} else {
-				nextPage += "?"
-			}
-			status, body, headers, err := g.get(ctx, nextPage+urlValues.Encode(), withoutETag)
-			if err != nil {
-				log.Warning(ctx, "githubClient.Commits> Error %s", err)
-				return nil, err
-			}
-			if status >= 400 {
-				log.Warning(ctx, "githubClient.Commits> Error %s", errorAPI(body))
-				return nil, sdk.NewError(sdk.ErrUnknownError, errorAPI(body))
-			}
-			nextCommits := []Commit{}
-
-			if err := json.Unmarshal(body, &nextCommits); err != nil {
-				log.Warning(ctx, "githubClient.Commits> Unable to parse github commits: %s", err)
-				return nil, err
-			}
-
-			commits = append(commits, nextCommits...)
-			nextPage = getNextPage(headers)
-		} else {
+	for nextPage != "" {
+		if ctx.Err() != nil {
 			break
 		}
+
+		if strings.Contains(nextPage, "?") {
+			nextPage += "&"
+		} else {
+			nextPage += "?"
+		}
+		status, body, headers, err := g.get(ctx, nextPage+urlValues.Encode(), withoutETag)
+		if err != nil {
+			log.Warning(ctx, "githubClient.Commits> Error %s", err)
+			return nil, err
+		}
+		if status >= 400 {
+			log.Warning(ctx, "githubClient.Commits> Error %s", errorAPI(body))
+			return nil, sdk.NewError(sdk.ErrUnknownError, errorAPI(body))
+		}
+		nextCommits := []Commit{}
+
+		if err := json.Unmarshal(body, &nextCommits); err != nil {
+			log.Warning(ctx, "githubClient.Commits> Unable to parse github commits: %s", err)
+			return nil, err
+		}
+
+		commits = append(commits, nextCommits...)
+		nextPage = getNextPage(headers)
 	}
+
 	return commits, nil
 }
 

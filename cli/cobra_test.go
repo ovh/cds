@@ -10,12 +10,10 @@ import (
 
 func TestListItem(t *testing.T) {
 	keyProject := sdk.ProjectKey{
-		Key: sdk.Key{
-			Name:    "myKey",
-			Type:    "ssh",
-			Public:  "pubb",
-			Private: "privv",
-		},
+		Name:      "myKey",
+		Type:      "ssh",
+		Public:    "pubb",
+		Private:   "privv",
 		ProjectID: 1,
 	}
 

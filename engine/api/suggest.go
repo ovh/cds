@@ -25,21 +25,31 @@ func (api *API) getVariablesHandler() service.Handler {
 
 		var allVariables []string
 
-		// Load variable project
-		projectVar, err := project.GetAllVariableNameInProjectByKey(api.mustDB(), projectKey)
+		proj, err := project.Load(api.mustDB(), api.Cache, projectKey, project.LoadOptions.WithVariables)
 		if err != nil {
-			return sdk.WrapError(err, "Cannot Load project variables")
+			return err
 		}
+		var projectVar = make([]string, len(proj.Variables))
 		for i := range projectVar {
-			projectVar[i] = fmt.Sprintf("{{.cds.proj.%s}}", projectVar[i])
+			projectVar[i] = fmt.Sprintf("{{.cds.proj.%s}}", proj.Variables[i].Name)
 		}
 		allVariables = append(allVariables, projectVar...)
 
-		// Load env variable
-		envVarNameArray, err := environment.GetAllVariableNameByProject(api.mustDB(), projectKey)
+		env, err := environment.LoadEnvironmentByName(api.mustDB(), projectKey, appName)
 		if err != nil {
-			return sdk.WrapError(err, "Cannot Load env variables")
+			return err
 		}
+
+		envVars, err := environment.LoadAllVariables(api.mustDB(), env.ID)
+		if err != nil {
+			return err
+		}
+
+		envVarNameArray := make([]string, len(envVars))
+		for i := range envVars {
+			envVarNameArray[i] = envVars[i].Name
+		}
+
 		for i := range envVarNameArray {
 			envVarNameArray[i] = fmt.Sprintf("{{.cds.env.%s}}", envVarNameArray[i])
 		}
@@ -54,7 +64,7 @@ func (api *API) getVariablesHandler() service.Handler {
 				return sdk.WrapError(err, "Cannot Load application")
 			}
 
-			for _, v := range app.Variable {
+			for _, v := range app.Variables {
 				appVar = append(appVar, fmt.Sprintf("{{.cds.app.%s}}", v.Name))
 			}
 

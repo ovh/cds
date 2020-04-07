@@ -32,16 +32,16 @@ func (c *client) MonDBMigrate() ([]sdk.MonDBMigrate, error) {
 	return monDBMigrate, nil
 }
 
-func (c *client) MonErrorsGet(uuid string) (*sdk.Error, error) {
-	res, _, _, err := c.Request(context.Background(), "GET", fmt.Sprintf("/mon/errors/%s", uuid), nil)
+func (c *client) MonErrorsGet(requestID string) ([]sdk.Error, error) {
+	res, _, _, err := c.Request(context.Background(), "GET", fmt.Sprintf("/mon/errors/%s", requestID), nil)
 	if err != nil {
 		return nil, err
 	}
 
-	var sdkError sdk.Error
-	if err := json.Unmarshal(res, &sdkError); err != nil {
+	var errs []sdk.Error
+	if err := json.Unmarshal(res, &errs); err != nil {
 		return nil, err
 	}
 
-	return &sdkError, nil
+	return errs, nil
 }

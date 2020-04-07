@@ -40,8 +40,12 @@ export class WorkflowService {
      * @returns {Observable<boolean>}
      */
     getTriggerCondition(projectKey: string, workflowName: string, nodeID: number): Observable<WorkflowTriggerConditionCache> {
+        let params = new HttpParams();
+        if (nodeID) {
+            params = params.append('nodeID', nodeID.toString());
+        }
         return this._http.get<WorkflowTriggerConditionCache>(
-            `/project/${projectKey}/workflows/${workflowName}/node/${nodeID}/triggers/condition`);
+            `/project/${projectKey}/workflows/${workflowName}/triggers/condition`,  { params });
     }
 
     /**
@@ -56,21 +60,22 @@ export class WorkflowService {
     }
 
     /**
-     * Transform the workflow as  workflow as code
+     * Update the workflow  as code
      * @param projectKey
      * @param workflowName
      */
-    migrateAsCode(projectKey: string, workflowName: string): Observable<Operation> {
-        return this._http.post<Operation>(`/project/${projectKey}/workflows/${workflowName}/ascode`, null);
-    }
-
-    /**
-     * Resync As Code PR
-     * @param projectKey
-     * @param workflowName
-     */
-    resyncPRAsCode(projectKey: string, workflowName: string) {
-        return this._http.post(`/project/${projectKey}/workflows/${workflowName}/ascode/resync/pr`, null)
+    updateAsCode(projectKey: string, workflowName: string,
+                 branch: string, message: string, wf: Workflow): Observable<Operation> {
+        let params = new HttpParams();
+        params = params.append('branch', branch);
+        params = params.append('message', message);
+        if (!wf) {
+            params = params.append('migrate', 'true');
+        }
+        return this._http.post<Operation>(
+            `/project/${projectKey}/workflows/${workflowName}/ascode`,
+            wf,
+            { params });
     }
 
     updateRunNumber(projectKey: string, workflowName: string, runNumber: number): Observable<null> {

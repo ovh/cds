@@ -248,3 +248,15 @@ type PullRequestResponse struct {
 	NextPageStart int                              `json:"nextPageStart"`
 	IsLastPage    bool                             `json:"isLastPage"`
 }
+
+type UsersPermissionResponse struct {
+	Values        []UserPermission `json:"values"`
+	Size          int              `json:"size"`
+	NextPageStart int              `json:"nextPageStart"`
+	IsLastPage    bool             `json:"isLastPage"`
+}
+
+type UserPermission struct {
+	User       sdk.BitbucketServerActor `json:"user"`
+	Permission string                   `json:"permission"`
+}

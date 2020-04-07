@@ -10,7 +10,6 @@ import (
 	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 )
 
 func (api *API) getVariablesAuditInApplicationHandler() service.Handler {
@@ -81,12 +80,12 @@ func (api *API) getVariablesInApplicationHandler() service.Handler {
 		key := vars[permProjectKey]
 		appName := vars["applicationName"]
 
-		variables, err := application.GetAllVariable(api.mustDB(), key, appName)
+		app, err := application.LoadByName(api.mustDB(), api.Cache, key, appName, application.LoadOptions.WithVariables)
 		if err != nil {
-			return sdk.WrapError(err, "Cannot get variables for application %s", appName)
+			return sdk.WrapError(err, "Cannot load application %s", appName)
 		}
 
-		return service.WriteJSON(w, variables, http.StatusOK)
+		return service.WriteJSON(w, app.Variables, http.StatusOK)
 	}
 }
 
@@ -111,19 +110,17 @@ func (api *API) deleteVariableFromApplicationHandler() service.Handler {
 		}
 		defer tx.Rollback() // nolint
 
-		// Clear password for audit
-		varToDelete, errV := application.LoadVariable(api.mustDB(), app.ID, varName, application.WithClearPassword())
+		varToDelete, errV := application.LoadVariable(api.mustDB(), app.ID, varName)
 		if errV != nil {
 			return sdk.WrapError(errV, "deleteVariableFromApplicationHandler> Cannot load variable %s", varName)
 		}
 
-		if err := application.DeleteVariable(tx, api.Cache, app, varToDelete, getAPIConsumer(ctx)); err != nil {
-			log.Warning(ctx, "deleteVariableFromApplicationHandler: Cannot delete %s: %s\n", varName, err)
+		if err := application.DeleteVariable(tx, app.ID, varToDelete, getAPIConsumer(ctx)); err != nil {
 			return sdk.WrapError(err, "Cannot delete %s", varName)
 		}
 
 		if err := tx.Commit(); err != nil {
-			return sdk.WrapError(err, "Cannot commit transaction")
+			return sdk.WithStack(err)
 		}
 
 		event.PublishDeleteVariableApplication(ctx, key, *app, *varToDelete, getAPIConsumer(ctx))
@@ -143,8 +140,8 @@ func (api *API) updateVariableInApplicationHandler() service.Handler {
 		if err := service.UnmarshalBody(r, &newVar); err != nil {
 			return err
 		}
-		if newVar.Name != varName || newVar.Type == sdk.KeyVariable {
-			return sdk.ErrWrongRequest
+		if newVar.Type == sdk.KeyVariable {
+			return sdk.WithStack(sdk.ErrWrongRequest)
 		}
 
 		app, err := application.LoadByName(api.mustDB(), api.Cache, key, appName)
@@ -155,7 +152,7 @@ func (api *API) updateVariableInApplicationHandler() service.Handler {
 			return sdk.WithStack(sdk.ErrForbidden)
 		}
 
-		variableBefore, err := application.LoadVariableByID(api.mustDB(), app.ID, newVar.ID, application.WithClearPassword())
+		variableBefore, err := application.LoadVariableWithDecryption(api.mustDB(), app.ID, newVar.ID, varName)
 		if err != nil {
 			return sdk.WrapError(err, "cannot load variable with id %d", newVar.ID)
 		}
@@ -166,19 +163,15 @@ func (api *API) updateVariableInApplicationHandler() service.Handler {
 		}
 		defer tx.Rollback() // nolint
 
-		if err := application.UpdateVariable(tx, api.Cache, app, &newVar, variableBefore, getAPIConsumer(ctx)); err != nil {
+		if err := application.UpdateVariable(tx, app.ID, &newVar, variableBefore, getAPIConsumer(ctx)); err != nil {
 			return sdk.WrapError(err, "Cannot update variable %s for application %s", varName, appName)
 		}
 
 		if err := tx.Commit(); err != nil {
-			return sdk.WrapError(err, "Cannot commit transaction")
+			return sdk.WithStack(err)
 		}
 
 		event.PublishUpdateVariableApplication(ctx, key, *app, newVar, *variableBefore, getAPIConsumer(ctx))
-
-		if sdk.NeedPlaceholder(newVar.Type) {
-			newVar.Value = sdk.PasswordPlaceholder
-		}
 
 		return service.WriteJSON(w, newVar, http.StatusOK)
 	}
@@ -197,7 +190,7 @@ func (api *API) addVariableInApplicationHandler() service.Handler {
 		}
 
 		if newVar.Name != varName {
-			return sdk.ErrWrongRequest
+			return sdk.WithStack(sdk.ErrWrongRequest)
 		}
 
 		app, err := application.LoadByName(api.mustDB(), api.Cache, key, appName)
@@ -208,33 +201,25 @@ func (api *API) addVariableInApplicationHandler() service.Handler {
 			return sdk.WithStack(sdk.ErrForbidden)
 		}
 
+		if !sdk.IsInArray(newVar.Type, sdk.AvailableVariableType) {
+			return sdk.WithStack(sdk.NewErrorFrom(sdk.ErrWrongRequest, "invalid variable type %s", newVar.Type))
+		}
+
 		tx, err := api.mustDB().Begin()
 		if err != nil {
 			return sdk.WrapError(err, "Cannot start transaction")
 		}
 		defer tx.Rollback() // nolint
 
-		switch newVar.Type {
-		case sdk.KeyVariable:
-			err = application.AddKeyPairToApplication_DEPRECATED(tx, api.Cache, app, newVar.Name, getAPIConsumer(ctx))
-			break
-		default:
-			err = application.InsertVariable(tx, api.Cache, app, newVar, getAPIConsumer(ctx))
-			break
-		}
-		if err != nil {
+		if err = application.InsertVariable(tx, app.ID, &newVar, getAPIConsumer(ctx)); err != nil {
 			return sdk.WrapError(err, "Cannot add variable %s in application %s", varName, appName)
 		}
 
 		if err := tx.Commit(); err != nil {
-			return sdk.WrapError(err, "Cannot commit transaction")
+			return sdk.WithStack(err)
 		}
 
 		event.PublishAddVariableApplication(ctx, key, *app, newVar, getAPIConsumer(ctx))
-
-		if sdk.NeedPlaceholder(newVar.Type) {
-			newVar.Value = sdk.PasswordPlaceholder
-		}
 
 		return service.WriteJSON(w, newVar, http.StatusOK)
 	}

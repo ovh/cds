@@ -85,14 +85,21 @@ type VCSBranch struct {
 
 //VCSPullRequest represents a pull request
 type VCSPullRequest struct {
-	ID     int          `json:"id"`
-	URL    string       `json:"url"`
-	User   VCSAuthor    `json:"user"`
-	Head   VCSPushEvent `json:"head"`
-	Base   VCSPushEvent `json:"base"`
-	Title  string       `json:"title"`
-	Merged bool         `json:"merged"`
-	Closed bool         `json:"closed"`
+	ID       int          `json:"id"`
+	ChangeID string       `json:"change_id"`
+	URL      string       `json:"url"`
+	User     VCSAuthor    `json:"user"`
+	Head     VCSPushEvent `json:"head"`
+	Base     VCSPushEvent `json:"base"`
+	Title    string       `json:"title"`
+	Merged   bool         `json:"merged"`
+	Closed   bool         `json:"closed"`
+	Revision string       `json:"revision"`
+}
+
+type VCSPullRequestCommentRequest struct {
+	VCSPullRequest
+	Message string `json:"message"`
 }
 
 //VCSPushEvent represents a push events for polling

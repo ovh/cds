@@ -26,21 +26,12 @@ Example:
 }
 ```
 
-If you don't need a CDS µService repositories, you can disable monitoring on it by setting `0` on configuration.
-
-```toml
-    [api.status.repositories]
-
-      # if less than minInstance of hooks repositories is running, an alert on Global/hooks will be created on /mon/status
-      minInstance = 0
-```
-
 ## Monitoring with Command Line
 
 ```bash
-./cdsctl monitoring
+# display the current job's queue
+./cdsctl queue
+
+# display the status of all service, except the status OK
+./cdsctl -c prod health status --filter STATUS="[^O].*"
 ```
-
-This will returns Queue status, Workers & Hatheries Status and CDS Engine Status on bottom right.
-
-![cdsctl monitoring](/images/hosting.monitoring.png)

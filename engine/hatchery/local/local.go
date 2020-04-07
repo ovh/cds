@@ -93,23 +93,15 @@ func (h *HatcheryLocal) Status(ctx context.Context) sdk.MonitoringStatus {
 func (h *HatcheryLocal) CheckConfiguration(cfg interface{}) error {
 	hconfig, ok := cfg.(HatcheryConfiguration)
 	if !ok {
-		return fmt.Errorf("Invalid configuration")
+		return fmt.Errorf("Invalid hatchery local configuration")
 	}
 
-	if hconfig.API.HTTP.URL == "" {
-		return fmt.Errorf("API HTTP(s) URL is mandatory")
-	}
-
-	if hconfig.API.Token == "" {
-		return fmt.Errorf("API Token URL is mandatory")
+	if err := hconfig.Check(); err != nil {
+		return fmt.Errorf("Invalid hatchery local configuration: %v", err)
 	}
 
 	if hconfig.Basedir == "" {
 		return fmt.Errorf("Invalid basedir directory")
-	}
-
-	if hconfig.Name == "" {
-		return fmt.Errorf("please enter a name in your local hatchery configuration")
 	}
 
 	if ok, err := sdk.DirectoryExists(hconfig.Basedir); !ok {

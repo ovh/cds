@@ -1,77 +1,44 @@
 package workflow
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
 	"strings"
-	"time"
 
 	"github.com/go-gorp/gorp"
-	"github.com/mitchellh/mapstructure"
+	"gopkg.in/yaml.v2"
 
-	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/exportentities"
 	"github.com/ovh/cds/sdk/log"
 )
 
 var (
-	audits = map[string]sdk.Audit{
+	Audits = map[string]sdk.Audit{
 		fmt.Sprintf("%T", sdk.EventWorkflowAdd{}):              addWorkflowAudit{},
 		fmt.Sprintf("%T", sdk.EventWorkflowUpdate{}):           updateWorkflowAudit{},
-		fmt.Sprintf("%T", sdk.EventWorkflowDelete{}):           deleteWorkflowAudit{},
 		fmt.Sprintf("%T", sdk.EventWorkflowPermissionAdd{}):    addWorkflowPermissionAudit{},
 		fmt.Sprintf("%T", sdk.EventWorkflowPermissionUpdate{}): updateWorkflowPermissionAudit{},
 		fmt.Sprintf("%T", sdk.EventWorkflowPermissionDelete{}): deleteWorkflowPermissionAudit{},
 	}
 )
 
-// ComputeAudit Compute audit on workflow
-func ComputeAudit(ctx context.Context, DBFunc func() *gorp.DbMap) {
-	chanEvent := make(chan sdk.Event)
-	event.Subscribe(chanEvent)
-	deleteTicker := time.NewTicker(15 * time.Minute)
-	defer deleteTicker.Stop()
-
-	db := DBFunc()
-	for {
-		select {
-		case <-ctx.Done():
-			if ctx.Err() != nil {
-				log.Error(ctx, "ComputeWorkflowAudit> Exiting: %v", ctx.Err())
-				return
-			}
-		case <-deleteTicker.C:
-			if err := purgeAudits(ctx, DBFunc()); err != nil {
-				log.Error(ctx, "ComputeWorkflowAudit> Purge error: %v", err)
-			}
-		case e := <-chanEvent:
-			if !strings.HasPrefix(e.EventType, "sdk.EventWorkflow") {
-				continue
-			}
-
-			if audit, ok := audits[e.EventType]; ok {
-				if err := audit.Compute(ctx, db, e); err != nil {
-					log.Warning(ctx, "ComputeAudit> Unable to compute audit on event %s: %v", e.EventType, err)
-				}
-			}
-		}
-	}
-}
-
 type addWorkflowAudit struct{}
 
 func (a addWorkflowAudit) Compute(ctx context.Context, db gorp.SqlExecutor, e sdk.Event) error {
 	var wEvent sdk.EventWorkflowAdd
-	if err := mapstructure.Decode(e.Payload, &wEvent); err != nil {
-		return sdk.WrapError(err, "Unable to decode payload")
+	if err := json.Unmarshal(e.Payload, &wEvent); err != nil {
+		return sdk.WrapError(err, "Unable to unmarshal payload")
 	}
 
-	buffer := bytes.NewBufferString("")
-	if _, err := exportWorkflow(ctx, wEvent.Workflow, exportentities.FormatYAML, buffer); err != nil {
+	w, err := exportentities.NewWorkflow(ctx, wEvent.Workflow)
+	if err != nil {
 		return sdk.WrapError(err, "Unable to export workflow")
+	}
+	buf, err := yaml.Marshal(w)
+	if err != nil {
+		return sdk.WithStack(err)
 	}
 
 	return InsertAudit(db, &sdk.AuditWorkflow{
@@ -83,7 +50,7 @@ func (a addWorkflowAudit) Compute(ctx context.Context, db gorp.SqlExecutor, e sd
 		WorkflowID: wEvent.Workflow.ID,
 		ProjectKey: e.ProjectKey,
 		DataType:   "yaml",
-		DataAfter:  buffer.String(),
+		DataAfter:  string(buf),
 	})
 }
 
@@ -91,18 +58,26 @@ type updateWorkflowAudit struct{}
 
 func (u updateWorkflowAudit) Compute(ctx context.Context, db gorp.SqlExecutor, e sdk.Event) error {
 	var wEvent sdk.EventWorkflowUpdate
-	if err := mapstructure.Decode(e.Payload, &wEvent); err != nil {
-		return sdk.WrapError(err, "Unable to decode payload")
+	if err := json.Unmarshal(e.Payload, &wEvent); err != nil {
+		return sdk.WrapError(err, "Unable to unmarshal payload")
 	}
 
-	oldWorkflowBuffer := bytes.NewBufferString("")
-	if _, err := exportWorkflow(ctx, wEvent.OldWorkflow, exportentities.FormatYAML, oldWorkflowBuffer); err != nil {
+	old, err := exportentities.NewWorkflow(ctx, wEvent.OldWorkflow)
+	if err != nil {
 		return sdk.WrapError(err, "Unable to export workflow")
 	}
+	oldWorkflowBuffer, err := yaml.Marshal(old)
+	if err != nil {
+		return sdk.WithStack(err)
+	}
 
-	newWorkflowBuffer := bytes.NewBufferString("")
-	if _, err := exportWorkflow(ctx, wEvent.NewWorkflow, exportentities.FormatYAML, newWorkflowBuffer); err != nil {
+	newW, err := exportentities.NewWorkflow(ctx, wEvent.NewWorkflow)
+	if err != nil {
 		return sdk.WrapError(err, "Unable to export workflow")
+	}
+	newWorkflowBuffer, err := yaml.Marshal(newW)
+	if err != nil {
+		return sdk.WithStack(err)
 	}
 
 	return InsertAudit(db, &sdk.AuditWorkflow{
@@ -114,34 +89,8 @@ func (u updateWorkflowAudit) Compute(ctx context.Context, db gorp.SqlExecutor, e
 		WorkflowID: wEvent.NewWorkflow.ID,
 		ProjectKey: e.ProjectKey,
 		DataType:   "yaml",
-		DataAfter:  newWorkflowBuffer.String(),
-		DataBefore: oldWorkflowBuffer.String(),
-	})
-}
-
-type deleteWorkflowAudit struct{}
-
-func (d deleteWorkflowAudit) Compute(ctx context.Context, db gorp.SqlExecutor, e sdk.Event) error {
-	var wEvent sdk.EventWorkflowDelete
-	if err := mapstructure.Decode(e.Payload, &wEvent); err != nil {
-		return sdk.WrapError(err, "Unable to decode payload")
-	}
-
-	oldWorkflowBuffer := bytes.NewBufferString("")
-	if _, err := exportWorkflow(ctx, wEvent.Workflow, exportentities.FormatYAML, oldWorkflowBuffer); err != nil {
-		return sdk.WrapError(err, "Unable to export workflow")
-	}
-
-	return InsertAudit(db, &sdk.AuditWorkflow{
-		AuditCommon: sdk.AuditCommon{
-			EventType:   strings.Replace(e.EventType, "sdk.Event", "", -1),
-			Created:     e.Timestamp,
-			TriggeredBy: e.Username,
-		},
-		WorkflowID: wEvent.Workflow.ID,
-		ProjectKey: e.ProjectKey,
-		DataType:   "yaml",
-		DataBefore: oldWorkflowBuffer.String(),
+		DataAfter:  string(newWorkflowBuffer),
+		DataBefore: string(oldWorkflowBuffer),
 	})
 }
 
@@ -149,8 +98,8 @@ type addWorkflowPermissionAudit struct{}
 
 func (a addWorkflowPermissionAudit) Compute(ctx context.Context, db gorp.SqlExecutor, e sdk.Event) error {
 	var wEvent sdk.EventWorkflowPermissionAdd
-	if err := mapstructure.Decode(e.Payload, &wEvent); err != nil {
-		return sdk.WrapError(err, "Unable to decode payload")
+	if err := json.Unmarshal(e.Payload, &wEvent); err != nil {
+		return sdk.WrapError(err, "Unable to unmarshal payload")
 	}
 
 	b, err := json.MarshalIndent(wEvent.Permission, "", "  ")
@@ -175,8 +124,8 @@ type updateWorkflowPermissionAudit struct{}
 
 func (u updateWorkflowPermissionAudit) Compute(ctx context.Context, db gorp.SqlExecutor, e sdk.Event) error {
 	var wEvent sdk.EventWorkflowPermissionUpdate
-	if err := mapstructure.Decode(e.Payload, &wEvent); err != nil {
-		return sdk.WrapError(err, "Unable to decode payload")
+	if err := json.Unmarshal(e.Payload, &wEvent); err != nil {
+		return sdk.WrapError(err, "Unable to unmarshal payload")
 	}
 
 	oldPerm, err := json.MarshalIndent(wEvent.OldPermission, "", "  ")
@@ -207,8 +156,8 @@ type deleteWorkflowPermissionAudit struct{}
 
 func (a deleteWorkflowPermissionAudit) Compute(ctx context.Context, db gorp.SqlExecutor, e sdk.Event) error {
 	var wEvent sdk.EventWorkflowPermissionDelete
-	if err := mapstructure.Decode(e.Payload, &wEvent); err != nil {
-		return sdk.WrapError(err, "Unable to decode payload")
+	if err := json.Unmarshal(e.Payload, &wEvent); err != nil {
+		return sdk.WrapError(err, "Unable to unmarshal payload")
 	}
 
 	b, err := json.MarshalIndent(wEvent.Permission, "", " ")
@@ -231,7 +180,7 @@ func (a deleteWorkflowPermissionAudit) Compute(ctx context.Context, db gorp.SqlE
 
 const keepAudits = 50
 
-func purgeAudits(ctx context.Context, db gorp.SqlExecutor) error {
+func PurgeAudits(ctx context.Context, db gorp.SqlExecutor) error {
 	var nbAuditsPerWorkflowID = []struct {
 		WorkflowID int64 `db:"workflow_id"`
 		NbAudits   int64 `db:"nb_audits"`

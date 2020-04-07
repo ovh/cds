@@ -1,11 +1,12 @@
 <div id="AppComponent">
     <ng-container *ngIf="!isConnected || !maintenance || user?.ring === 'ADMIN'">
-        <div id="navbar" *ngIf="isConnected && !hideNavBar" [class.connected]="isConnected">
+        <ng-container *ngIf="isConnected && !hideNavBar">
             <app-navbar></app-navbar>
-        </div>
-        <div class="maintenance banner" [class.mt50]="isConnected" *ngIf="maintenance && (!isConnected || user?.ring == 'ADMIN')">
+        </ng-container>
+        <div class="maintenance banner" [class.mt50]="isConnected"
+            *ngIf="maintenance && (!isConnected || user?.ring == 'ADMIN')">
             <span>{{ 'maintenance_title' | translate }}</span>
-            <img src="assets/images/maintenance.svg"/>
+            <img src="assets/images/maintenance.svg" />
         </div>
         <div class="banner pointing" (click)="refresh()" *ngIf="showUIUpdatedBanner">
             {{ 'ui_updated' | translate }}
@@ -17,7 +18,8 @@
                     <toaster-container [toasterconfig]="toasterConfig"></toaster-container>
                 </div>
                 <router-outlet></router-outlet>
-                <div class="ui active text loader" *ngIf="displayResolver">{{ 'common_loading_project' | translate }}</div>
+                <div class="ui active text loader" *ngIf="displayResolver">{{ 'common_loading_project' | translate }}
+                </div>
             </div>
         </div>
     </ng-container>

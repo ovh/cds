@@ -22,8 +22,7 @@ type WorkerModel sdk.Model
 
 //PostInsert is a DB Hook on WorkerModel
 func (m *WorkerModel) PostInsert(s gorp.SqlExecutor) error {
-	m.CreatedBy.Groups = nil
-	btes, err := json.Marshal(m.CreatedBy)
+	btes, err := json.Marshal(m.Author)
 	if err != nil {
 		return err
 	}
@@ -112,7 +111,6 @@ func (m *WorkerModel) PostSelect(s gorp.SqlExecutor) error {
 	}
 
 	//Load created_by
-	m.CreatedBy = sdk.User{}
 	var createdBy, model, registeredOS, registeredArch, lastSpawnErr, lastSpawnErrLogs sql.NullString
 	if err := s.QueryRow(`
     SELECT
@@ -151,11 +149,9 @@ func (m *WorkerModel) PostSelect(s gorp.SqlExecutor) error {
 		}
 	}
 
-	if err := gorpmapping.JSONNullString(createdBy, &m.CreatedBy); err != nil {
+	if err := gorpmapping.JSONNullString(createdBy, &m.Author); err != nil {
 		return sdk.WithStack(err)
 	}
-
-	m.CreatedBy.Groups = nil
 
 	if m.GroupID == group.SharedInfraGroup.ID {
 		m.IsOfficial = true

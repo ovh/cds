@@ -44,8 +44,6 @@ func syncTakeJobInNodeRun(ctx context.Context, db gorp.SqlExecutor, n *sdk.Workf
 	_, end := observability.Span(ctx, "workflow.syncTakeJobInNodeRun")
 	defer end()
 
-	log.Debug("workflow.syncTakeJobInNodeRun> job parameters= %+v", j.Parameters)
-
 	report := new(ProcessorReport)
 
 	//If status is not waiting neither build: nothing to do
@@ -70,6 +68,8 @@ func syncTakeJobInNodeRun(ctx context.Context, db gorp.SqlExecutor, n *sdk.Workf
 			rj.Model = j.Model
 			rj.ModelType = j.ModelType
 			rj.ContainsService = j.ContainsService
+			rj.WorkerName = j.WorkerName
+			rj.HatcheryName = j.HatcheryName
 			rj.Job = j.Job
 			rj.Header = j.Header
 			rj.Parameters = j.Parameters
@@ -99,7 +99,7 @@ func syncTakeJobInNodeRun(ctx context.Context, db gorp.SqlExecutor, n *sdk.Workf
 	return report, nil
 }
 
-func executeNodeRun(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, nr *sdk.WorkflowNodeRun) (*ProcessorReport, error) {
+func executeNodeRun(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj sdk.Project, nr *sdk.WorkflowNodeRun) (*ProcessorReport, error) {
 	var end func()
 	ctx, end = observability.Span(ctx, "workflow.executeNodeRun",
 		observability.Tag(observability.TagWorkflowRun, nr.Number),
@@ -131,16 +131,41 @@ func executeNodeRun(ctx context.Context, db gorp.SqlExecutor, store cache.Store,
 	}
 
 	stagesTerminated := 0
+	var previousNodeRun *sdk.WorkflowNodeRun
+	if nr.Manual != nil && nr.Manual.OnlyFailedJobs {
+		var err error
+		previousNodeRun, err = checkRunOnlyFailedJobs(wr, nr)
+		if err != nil {
+			return report, err
+		}
+	}
+
 	//Browse stages
 	for stageIndex := range nr.Stages {
 		stage := &nr.Stages[stageIndex]
-		log.Debug("workflow.executeNodeRun> checking stage %s (status=%s)", stage.Name, stage.Status)
 		//Initialize stage status at waiting
 		if stage.Status == "" {
-			stage.Status = sdk.StatusWaiting
+			var previousStage sdk.Stage
+			// Find previous stage
+			if previousNodeRun != nil {
+				for i := range previousNodeRun.Stages {
+					if previousNodeRun.Stages[i].ID == stage.ID {
+						previousStage = previousNodeRun.Stages[i]
+						break
+					}
+				}
+			}
 
-			if stageIndex == 0 {
-				newStatus = sdk.StatusWaiting
+			if previousNodeRun == nil || previousStage.Status == sdk.StatusFail || !sdk.StatusIsTerminated(previousStage.Status) {
+				stage.Status = sdk.StatusWaiting
+				if stageIndex == 0 {
+					newStatus = sdk.StatusWaiting
+				}
+			} else if sdk.StatusIsTerminated(previousStage.Status) {
+				// If stage terminated, recopy it
+				nr.Stages[stageIndex] = previousStage
+				stagesTerminated++
+				continue
 			}
 
 			if len(stage.Jobs) == 0 {
@@ -149,8 +174,8 @@ func executeNodeRun(ctx context.Context, db gorp.SqlExecutor, store cache.Store,
 				//Add job to Queue
 				//Insert data in workflow_node_run_job
 				log.Debug("workflow.executeNodeRun> stage %s call addJobsToQueue", stage.Name)
-				r, err := addJobsToQueue(ctx, db, stage, wr, nr)
-				report, err = report.Merge(ctx, r, err)
+				r, err := addJobsToQueue(ctx, db, stage, wr, nr, &previousStage)
+				report.Merge(ctx, r)
 				if err != nil {
 					return report, err
 				}
@@ -255,7 +280,7 @@ func executeNodeRun(ctx context.Context, db gorp.SqlExecutor, store cache.Store,
 	//Reload the workflow
 	updatedWorkflowRun, err := LoadRunByID(db, nr.WorkflowRunID, LoadRunOptions{})
 	if err != nil {
-		return nil, sdk.WrapError(err, "Unable to reload workflow run id=%d", nr.WorkflowRunID)
+		return nil, sdk.WrapError(err, "unable to reload workflow run id=%d", nr.WorkflowRunID)
 	}
 
 	// If pipeline build succeed, reprocess the workflow (in the same transaction)
@@ -264,14 +289,14 @@ func executeNodeRun(ctx context.Context, db gorp.SqlExecutor, store cache.Store,
 		if nr.Status != sdk.StatusStopped {
 			r1, _, err := processWorkflowDataRun(ctx, db, store, proj, updatedWorkflowRun, nil, nil, nil)
 			if err != nil {
-				return nil, sdk.WrapError(err, "Unable to reprocess workflow !")
+				return nil, sdk.WrapError(err, "unable to reprocess workflow")
 			}
-			report, _ = report.Merge(ctx, r1, nil)
+			report.Merge(ctx, r1)
 		}
 
 		//Delete the line in workflow_node_run_job
 		if err := DeleteNodeJobRuns(db, nr.ID); err != nil {
-			return nil, sdk.WrapError(err, "Unable to delete node %d job runs ", nr.ID)
+			return nil, sdk.WrapError(err, "unable to delete node %d job runs", nr.ID)
 		}
 
 		var hasMutex bool
@@ -322,20 +347,21 @@ func executeNodeRun(ctx context.Context, db gorp.SqlExecutor, store cache.Store,
 				log.Error(ctx, "workflow.execute> Unable to load mutex-locked workflow rnode un: %v", errWRun)
 				return report, nil
 			}
-			AddWorkflowRunInfo(workflowRun, false, sdk.SpawnMsg{
+			AddWorkflowRunInfo(workflowRun, sdk.SpawnMsg{
 				ID:   sdk.MsgWorkflowNodeMutexRelease.ID,
 				Args: []interface{}{waitingRun.WorkflowNodeName},
+				Type: sdk.MsgWorkflowNodeMutexRelease.Type,
 			})
 
 			if err := UpdateWorkflowRun(ctx, db, workflowRun); err != nil {
-				return nil, sdk.WrapError(err, "Unable to update workflow run %d after mutex release", workflowRun.ID)
+				return nil, sdk.WrapError(err, "unable to update workflow run %d after mutex release", workflowRun.ID)
 			}
 
 			log.Debug("workflow.execute> process the node run %d because mutex has been released", waitingRun.ID)
 			r, err := executeNodeRun(ctx, db, store, proj, waitingRun)
-			report, err = report.Merge(ctx, r, err)
+			report.Merge(ctx, r)
 			if err != nil {
-				return nil, sdk.WrapError(err, "Unable to reprocess workflow")
+				return nil, sdk.WrapError(err, "unable to reprocess workflow")
 			}
 
 			next()
@@ -344,7 +370,36 @@ func executeNodeRun(ctx context.Context, db gorp.SqlExecutor, store cache.Store,
 	return report, nil
 }
 
-func addJobsToQueue(ctx context.Context, db gorp.SqlExecutor, stage *sdk.Stage, wr *sdk.WorkflowRun, nr *sdk.WorkflowNodeRun) (*ProcessorReport, error) {
+func checkRunOnlyFailedJobs(wr *sdk.WorkflowRun, nr *sdk.WorkflowNodeRun) (*sdk.WorkflowNodeRun, error) {
+	var previousNR *sdk.WorkflowNodeRun
+	nrs, ok := wr.WorkflowNodeRuns[nr.WorkflowNodeID]
+	if !ok {
+		return nil, sdk.WrapError(sdk.ErrWorkflowNodeNotFound, "node %d not found in workflow run %d", nr.WorkflowNodeID, wr.ID)
+	}
+	for i := range nrs {
+		if nrs[i].SubNumber < nr.SubNumber {
+			previousNR = &nrs[i]
+			break
+		}
+	}
+
+	if previousNR == nil {
+		return nil, sdk.WrapError(sdk.ErrNotFound, "unable to find a previous execution of this pipeline")
+	}
+
+	if len(previousNR.Stages) != len(nr.Stages) {
+		return nil, sdk.NewErrorFrom(sdk.ErrForbidden, "you cannot rerun a pipeline that have a different number of stages")
+	}
+
+	for i, s := range nr.Stages {
+		if len(s.Jobs) != len(previousNR.Stages[i].Jobs) {
+			return nil, sdk.NewErrorFrom(sdk.ErrForbidden, "you cannot rerun a pipeline that have a different number of jobs")
+		}
+	}
+	return previousNR, nil
+}
+
+func addJobsToQueue(ctx context.Context, db gorp.SqlExecutor, stage *sdk.Stage, wr *sdk.WorkflowRun, nr *sdk.WorkflowNodeRun, previousStage *sdk.Stage) (*ProcessorReport, error) {
 	var end func()
 	ctx, end = observability.Span(ctx, "workflow.addJobsToQueue")
 	defer end()
@@ -378,8 +433,18 @@ func addJobsToQueue(ctx context.Context, db gorp.SqlExecutor, stage *sdk.Stage, 
 	skippedOrDisabledJobs := 0
 	failedJobs := 0
 	//Browse the jobs
+jobLoop:
 	for j := range stage.Jobs {
 		job := &stage.Jobs[j]
+
+		if previousStage != nil {
+			for _, rj := range previousStage.RunJobs {
+				if rj.Job.PipelineActionID == job.PipelineActionID && rj.Status != sdk.StatusFail && sdk.StatusIsTerminated(rj.Status) {
+					stage.RunJobs = append(stage.RunJobs, rj)
+					continue jobLoop
+				}
+			}
+		}
 
 		// errors generated in the loop will be added to job run spawn info
 		spawnErrs := sdk.MultiError{}
@@ -570,6 +635,9 @@ func syncStage(ctx context.Context, db gorp.SqlExecutor, store cache.Store, stag
 				runJob.ModelType = runJobDB.ModelType
 				runJob.ContainsService = runJobDB.ContainsService
 				runJob.Job = runJobDB.Job
+				runJob.Model = runJobDB.Model
+				runJob.WorkerName = runJobDB.WorkerName
+				runJob.HatcheryName = runJobDB.HatcheryName
 			}
 		}
 	}
@@ -626,7 +694,7 @@ func NodeBuildParametersFromRun(wr sdk.WorkflowRun, id int64) ([]sdk.Parameter, 
 }
 
 //NodeBuildParametersFromWorkflow returns build_parameters for a node given its id
-func NodeBuildParametersFromWorkflow(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, wf *sdk.Workflow, refNode *sdk.Node, ancestorsIds []int64) ([]sdk.Parameter, error) {
+func NodeBuildParametersFromWorkflow(ctx context.Context, proj sdk.Project, wf *sdk.Workflow, refNode *sdk.Node, ancestorsIds []int64) ([]sdk.Parameter, error) {
 	runContext := nodeRunContext{}
 	res := []sdk.Parameter{}
 	if refNode != nil && refNode.Context != nil {
@@ -692,7 +760,7 @@ func NodeBuildParametersFromWorkflow(ctx context.Context, db gorp.SqlExecutor, s
 	return res, nil
 }
 
-func stopWorkflowNodePipeline(ctx context.Context, dbFunc func() *gorp.DbMap, store cache.Store, proj *sdk.Project, nodeRun *sdk.WorkflowNodeRun, stopInfos sdk.SpawnInfo) (*ProcessorReport, error) {
+func stopWorkflowNodePipeline(ctx context.Context, dbFunc func() *gorp.DbMap, store cache.Store, proj sdk.Project, nodeRun *sdk.WorkflowNodeRun, stopInfos sdk.SpawnInfo) (*ProcessorReport, error) {
 	var end func()
 	ctx, end = observability.Span(ctx, "workflow.stopWorkflowNodePipeline")
 	defer end()
@@ -712,8 +780,8 @@ func stopWorkflowNodePipeline(ctx context.Context, dbFunc func() *gorp.DbMap, st
 	chanErr := make(chan error, stopWorkflowNodeRunNBWorker)
 	for i := 0; i < stopWorkflowNodeRunNBWorker && i < len(ids); i++ {
 		go func() {
-			//since report is mutable and is a pointer and in this case we can't have any error, we can skip returned values
-			_, _ = report.Merge(ctx, stopWorkflowNodeJobRun(ctx, dbFunc, store, proj, nodeRun, stopInfos, chanNjrID, chanErr, chanNodeJobRunDone, &wg), nil)
+			r := stopWorkflowNodeJobRun(ctx, dbFunc, store, proj, stopInfos, chanNjrID, chanErr, chanNodeJobRunDone, &wg)
+			report.Merge(ctx, r)
 		}()
 	}
 
@@ -770,7 +838,7 @@ func stopWorkflowNodeOutGoingHook(ctx context.Context, dbFunc func() *gorp.DbMap
 
 	if nodeRun.HookExecutionID != "" {
 		path := fmt.Sprintf("/task/%s/execution/%d/stop", nodeRun.HookExecutionID, nodeRun.HookExecutionTimeStamp)
-		if _, _, err := services.DoJSONRequest(ctx, db, srvs, "POST", path, nil, nil); err != nil {
+		if _, _, err := services.NewClient(db, srvs).DoJSONRequest(ctx, "POST", path, nil, nil); err != nil {
 			return fmt.Errorf("unable to stop task execution: %v", err)
 		}
 	}
@@ -784,7 +852,7 @@ func stopWorkflowNodeOutGoingHook(ctx context.Context, dbFunc func() *gorp.DbMap
 }
 
 // StopWorkflowNodeRun to stop a workflow node run with a specific spawn info
-func StopWorkflowNodeRun(ctx context.Context, dbFunc func() *gorp.DbMap, store cache.Store, proj *sdk.Project, nodeRun sdk.WorkflowNodeRun, stopInfos sdk.SpawnInfo) (*ProcessorReport, error) {
+func StopWorkflowNodeRun(ctx context.Context, dbFunc func() *gorp.DbMap, store cache.Store, proj sdk.Project, nodeRun sdk.WorkflowNodeRun, stopInfos sdk.SpawnInfo) (*ProcessorReport, error) {
 	var end func()
 	ctx, end = observability.Span(ctx, "workflow.StopWorkflowNodeRun")
 	defer end()
@@ -799,12 +867,11 @@ func StopWorkflowNodeRun(ctx context.Context, dbFunc func() *gorp.DbMap, store c
 	if nodeRun.OutgoingHook != nil {
 		errS = stopWorkflowNodeOutGoingHook(ctx, dbFunc, &nodeRun)
 	}
-
 	if errS != nil {
-		return report, sdk.WrapError(errS, "Unable to stop workflow node run")
+		return report, sdk.WrapError(errS, "unable to stop workflow node run")
 	}
 
-	report.Merge(ctx, r1, nil) // nolint
+	report.Merge(ctx, r1)
 	report.Add(ctx, nodeRun)
 
 	return report, nil
@@ -842,7 +909,7 @@ func stopWorkflowNodeRunStages(ctx context.Context, db gorp.SqlExecutor, nodeRun
 	}
 }
 
-func stopWorkflowNodeJobRun(ctx context.Context, dbFunc func() *gorp.DbMap, store cache.Store, proj *sdk.Project, nodeRun *sdk.WorkflowNodeRun, stopInfos sdk.SpawnInfo, chanNjrID <-chan int64, chanErr chan<- error, chanDone chan<- bool, wg *sync.WaitGroup) *ProcessorReport {
+func stopWorkflowNodeJobRun(ctx context.Context, dbFunc func() *gorp.DbMap, store cache.Store, proj sdk.Project, stopInfos sdk.SpawnInfo, chanNjrID <-chan int64, chanErr chan<- error, chanDone chan<- bool, wg *sync.WaitGroup) *ProcessorReport {
 	var end func()
 	ctx, end = observability.Span(ctx, "workflow.stopWorkflowNodeJobRun")
 	defer end()
@@ -874,15 +941,16 @@ func stopWorkflowNodeJobRun(ctx context.Context, dbFunc func() *gorp.DbMap, stor
 
 		njr.SpawnInfos = append(njr.SpawnInfos, stopInfos)
 		r, err := UpdateNodeJobRunStatus(ctx, tx, store, proj, njr, sdk.StatusStopped)
-		if _, err := report.Merge(ctx, r, err); err != nil {
-			chanErr <- sdk.WrapError(err, "Cannot update node job run")
+		report.Merge(ctx, r)
+		if err != nil {
+			chanErr <- sdk.WrapError(err, "cannot update node job run")
 			tx.Rollback()
 			wg.Done()
 			return report
 		}
 
 		if err := tx.Commit(); err != nil {
-			chanErr <- sdk.WrapError(err, "Cannot commit transaction")
+			chanErr <- sdk.WrapError(err, "cannot commit transaction")
 			tx.Rollback()
 			wg.Done()
 			return report
@@ -1039,7 +1107,10 @@ func getVCSInfos(ctx context.Context, db gorp.SqlExecutor, store cache.Store, pr
 	if vcsInfos.Hash != "" && (vcsInfos.Author == "" || vcsInfos.Message == "") {
 		commit, errCm := client.Commit(ctx, vcsInfos.Repository, vcsInfos.Hash)
 		if errCm != nil {
-			log.Warning(ctx, "unable to ")
+			// log to debug random 401
+			log.Error(ctx, "cannot get commit infos for %s %s - vcsServer.Name:%s vcsServer.Username:%s vcsServer.len-data:%d vcsServer.len-token:%v vcsServer.len-secret:%d vcsServer.created:%v err: %v",
+				vcsInfos.Repository, vcsInfos.Hash, vcsServer.Name, vcsServer.Username, len(vcsServer.Data), len(vcsServer.Data["token"]), len(vcsServer.Data["secret"]), vcsServer.Data["created"], errCm)
+
 			return nil, sdk.WrapError(errCm, "cannot get commit infos for %s %s", vcsInfos.Repository, vcsInfos.Hash)
 		}
 		vcsInfos.Author = commit.Author.Name

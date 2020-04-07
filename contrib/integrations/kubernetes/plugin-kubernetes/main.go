@@ -14,9 +14,11 @@ import (
 	"os/exec"
 	"path"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"time"
 
+	"github.com/blang/semver"
 	"github.com/golang/protobuf/ptypes/empty"
 	apiv1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -277,24 +279,26 @@ func executeK8s(q *integrationplugin.DeployQuery) error {
 }
 
 func executeHelm(q *integrationplugin.DeployQuery) error {
-	releaseName := q.GetOptions()["cds.integration.release_name"]
-	namespace := q.GetOptions()["cds.integration.namespace"]
-	helmChart := q.GetOptions()["cds.integration.helm_chart"]
-	helmValues := q.GetOptions()["cds.integration.helm_values"]
-	timeoutStr := q.GetOptions()["cds.integration.timeout"]
 	project := q.GetOptions()["cds.project"]
 	workflow := q.GetOptions()["cds.workflow"]
-	application := q.GetOptions()["cds.application"]
-	if namespace == "" {
-		namespace = "default"
-	}
-	if releaseName != "" {
-		application = releaseName
+	helmVersion := q.GetOptions()["cds.integration.helm_version"]
+
+	if helmVersion == "" {
+		helmVersion = "2.12.2"
 	}
 
-	helmFound := false
-	if _, err := exec.LookPath("helm"); err == nil {
-		helmFound = true
+	version, err := semver.Parse(helmVersion)
+	if err != nil {
+		return fmt.Errorf("Invalid Helm Version %s - err: %v", helmVersion, err)
+	}
+	supportedVersion := ">=2.0.0 <4.0.0"
+	expectedRange, err := semver.ParseRange(supportedVersion)
+	if err != nil {
+		return fmt.Errorf("Fail to parse semver range : %v", err)
+	}
+
+	if !expectedRange(version) {
+		return fmt.Errorf("Unsupported helm version, should be : %s", supportedVersion)
 	}
 
 	cwd, err := os.Getwd()
@@ -303,12 +307,38 @@ func executeHelm(q *integrationplugin.DeployQuery) error {
 	}
 
 	binaryName := "helm"
+	kubeCfg := "KUBECONFIG=" + path.Join(cwd, ".kube/config")
+
+	helmFound := false
+	if _, err := exec.LookPath("helm"); err == nil {
+		helmFound = true
+	}
+
+	if helmFound {
+		out, err := exec.Command(binaryName, "version", "--client", "--short").Output()
+		if err != nil {
+			return fmt.Errorf("Cannot check helm version : %v", err)
+		}
+		installedHelm := strings.TrimPrefix(string(out), "Client: ")
+		installedVersion, err := semver.ParseTolerant(installedHelm)
+		if err != nil {
+			return fmt.Errorf("Invalid installed Helm Version %s - err: %v", installedHelm, err)
+		}
+
+		if !version.Equals(installedVersion) {
+			fmt.Println("Helm in path is not at correct version, need installation")
+			fmt.Printf("Path version : %s\n", installedVersion.String())
+			fmt.Printf("Target version : %s\n", version.String())
+			helmFound = false
+		}
+	}
+
 	if !helmFound {
-		fmt.Println("Download helm in progress...")
+		fmt.Printf("Download helm %s in progress...\n", version.String())
 		netClient := &http.Client{
 			Timeout: time.Second * 600,
 		}
-		response, err := netClient.Get("https://storage.googleapis.com/kubernetes-helm/helm-v2.12.2-" + sdk.GOOS + "-" + sdk.GOARCH + ".tar.gz")
+		response, err := netClient.Get(fmt.Sprintf("https://get.helm.sh/helm-v%s-%s-%s.tar.gz", version.String(), sdk.GOOS, sdk.GOARCH))
 		if err != nil {
 			return fmt.Errorf("Cannot download helm : %v", err)
 		}
@@ -334,6 +364,36 @@ func executeHelm(q *integrationplugin.DeployQuery) error {
 		binaryName = path.Join(".", binaryName, sdk.GOOS+"-"+sdk.GOARCH, "helm")
 	}
 
+	switch version.Major {
+	case 2:
+		return executeHelmV2(binaryName, kubeCfg, q)
+	case 3:
+		return executeHelmV3(binaryName, kubeCfg, q)
+	}
+
+	return fmt.Errorf("Unsupported helm version")
+}
+
+func executeHelmV2(binaryName, kubeCfg string, q *integrationplugin.DeployQuery) error {
+	releaseName := q.GetOptions()["cds.integration.release_name"]
+	namespace := q.GetOptions()["cds.integration.namespace"]
+	helmChart := q.GetOptions()["cds.integration.helm_chart"]
+	helmValues := q.GetOptions()["cds.integration.helm_values"]
+	timeoutStr := q.GetOptions()["cds.integration.timeout"]
+	application := q.GetOptions()["cds.application"]
+
+	if namespace == "" {
+		namespace = "default"
+	}
+	if releaseName != "" {
+		application = releaseName
+	}
+
+	if d, err := time.ParseDuration(timeoutStr); err == nil {
+		timeoutStr = strconv.Itoa(int(d.Seconds()))
+		fmt.Println("timeout is a duration, converting timeout in seconds to " + timeoutStr)
+	}
+
 	cmdInit := exec.Command(binaryName, "init", "--client-only")
 	cmdInit.Env = os.Environ()
 	cmdInit.Stderr = os.Stderr
@@ -341,7 +401,6 @@ func executeHelm(q *integrationplugin.DeployQuery) error {
 	if err := cmdInit.Run(); err != nil {
 		return fmt.Errorf("Cannot execute helm init : %v", err)
 	}
-	kubeCfg := "KUBECONFIG=" + path.Join(cwd, ".kube/config")
 
 	if _, err := os.Stat(helmChart); err == nil {
 		fmt.Println("Helm dependency update")
@@ -373,6 +432,93 @@ func executeHelm(q *integrationplugin.DeployQuery) error {
 			args = append(args, "--repo="+helmChartArgs[0], helmChartArgs[1])
 		} else {
 			args = append(args, helmChart)
+		}
+	} else {
+		fmt.Printf("Update helm release '%s' with chart '%s'...\n", application, helmChart)
+		args = []string{"upgrade", "--timeout=" + timeoutStr, "--wait=true", "--namespace=" + namespace}
+		if helmValues != "" {
+			args = append(args, "-f", helmValues)
+		}
+
+		helmChartArgs := strings.Split(helmChart, " ")
+		if len(helmChartArgs) > 1 {
+			args = append(args, "--repo="+helmChartArgs[0], application, helmChartArgs[1])
+		} else {
+			args = append(args, application, helmChart)
+		}
+	}
+
+	fmt.Printf("Execute: helm %s\n", strings.Join(args, " "))
+	cmd := exec.Command(binaryName, args...)
+	cmd.Env = os.Environ()
+	cmd.Env = append(cmd.Env, kubeCfg)
+	cmd.Stderr = os.Stderr
+	cmd.Stdout = os.Stdout
+	if err := cmd.Run(); err != nil {
+		return fmt.Errorf("Cannot execute helm install/update : %v", err)
+	}
+
+	return nil
+}
+
+func executeHelmV3(binaryName, kubeCfg string, q *integrationplugin.DeployQuery) error {
+	releaseName := q.GetOptions()["cds.integration.release_name"]
+	namespace := q.GetOptions()["cds.integration.namespace"]
+	helmChart := q.GetOptions()["cds.integration.helm_chart"]
+	helmValues := q.GetOptions()["cds.integration.helm_values"]
+	timeoutStr := q.GetOptions()["cds.integration.timeout"]
+	application := q.GetOptions()["cds.application"]
+
+	if namespace == "" {
+		namespace = "default"
+	}
+	if releaseName != "" {
+		application = releaseName
+	}
+	if _, err := time.ParseDuration(timeoutStr); err != nil {
+		timeoutStr = timeoutStr + "s"
+		fmt.Println("timeout is not a duration, setting timeout to " + timeoutStr)
+	}
+
+	cmdRepoAdd := exec.Command(binaryName, "repo", "add", "stable", "https://kubernetes-charts.storage.googleapis.com/")
+	cmdRepoAdd.Env = os.Environ()
+	cmdRepoAdd.Stderr = os.Stderr
+	cmdRepoAdd.Stdout = os.Stdout
+	if err := cmdRepoAdd.Run(); err != nil {
+		return fmt.Errorf("Cannot execute helm repo add stable : %v", err)
+	}
+
+	if _, err := os.Stat(helmChart); err == nil {
+		fmt.Println("Helm dependency update")
+		cmdDependency := exec.Command(binaryName, "dependency", "update", helmChart)
+		cmdDependency.Env = os.Environ()
+		cmdDependency.Env = append(cmdDependency.Env, kubeCfg)
+		cmdDependency.Stderr = os.Stderr
+		cmdDependency.Stdout = os.Stdout
+		if errCmd := cmdDependency.Run(); errCmd != nil {
+			return fmt.Errorf("Cannot execute helm dependency update : %v", errCmd)
+		}
+	}
+
+	cmdGet := exec.Command(binaryName, "get", "all", "--namespace="+namespace, application)
+	cmdGet.Env = os.Environ()
+	cmdGet.Env = append(cmdGet.Env, kubeCfg)
+	errCmd := cmdGet.Run()
+
+	var args []string
+	if errCmd != nil { // Install
+		fmt.Printf("Install helm release '%s' with chart '%s'...\n", application, helmChart)
+		args = []string{"install", "--debug", "--timeout=" + timeoutStr, "--wait=true", "--namespace=" + namespace}
+		if helmValues != "" {
+			args = append(args, "-f", helmValues)
+		}
+
+		helmChartArgs := strings.Split(helmChart, " ")
+		if len(helmChartArgs) > 1 {
+			args = append(args, "--repo="+helmChartArgs[0], helmChartArgs[1])
+			args = append(args, application, helmChartArgs[1])
+		} else {
+			args = append(args, application, helmChart)
 		}
 	} else {
 		fmt.Printf("Update helm release '%s' with chart '%s'...\n", application, helmChart)

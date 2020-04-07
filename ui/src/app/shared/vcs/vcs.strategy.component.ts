@@ -78,7 +78,7 @@ export class VCSStrategyComponent implements OnInit {
 
     loadKeys() {
         if (this.projectKeysOnly) {
-            this._keyService.getProjectKeys(this.project.key)
+            this._keyService.getAllKeys(this.project.key)
                 .pipe(finalize(() => this._cd.markForCheck()))
                 .subscribe(k => {
                 this.keys = k;

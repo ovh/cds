@@ -8,7 +8,6 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/ovh/cds/engine/api/bootstrap"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/project"
@@ -25,7 +24,7 @@ import (
 )
 
 func Test_DeleteAllWorkerModels(t *testing.T) {
-	api, _, _, end := newTestAPI(t, bootstrap.InitiliazeDB)
+	api, _, _, end := newTestAPI(t)
 	defer end()
 
 	// Load and delete all worker
@@ -55,7 +54,7 @@ func Test_DeleteAllWorkerModels(t *testing.T) {
 func Test_postWorkerModelAsAdmin(t *testing.T) {
 	Test_DeleteAllWorkerModels(t)
 
-	api, _, _, end := newTestAPI(t, bootstrap.InitiliazeDB)
+	api, _, _, end := newTestAPI(t)
 	defer end()
 
 	_, jwtRaw := assets.InsertAdminUser(t, api.mustDB())
@@ -94,7 +93,7 @@ func Test_postWorkerModelAsAdmin(t *testing.T) {
 }
 
 func Test_addWorkerModelWithPrivateRegistryAsAdmin(t *testing.T) {
-	api, _, _, end := newTestAPI(t, bootstrap.InitiliazeDB)
+	api, _, _, end := newTestAPI(t)
 	defer end()
 
 	//Loading all models
@@ -167,7 +166,7 @@ func Test_addWorkerModelWithPrivateRegistryAsAdmin(t *testing.T) {
 func Test_WorkerModelUsage(t *testing.T) {
 	Test_DeleteAllWorkerModels(t)
 
-	api, db, router, end := newTestAPI(t, bootstrap.InitiliazeDB)
+	api, db, router, end := newTestAPI(t)
 	defer end()
 
 	u, jwt := assets.InsertAdminUser(t, db)
@@ -194,10 +193,10 @@ func Test_WorkerModelUsage(t *testing.T) {
 
 	pkey := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, api.Cache, pkey, pkey)
-	require.NoError(t, group.InsertLinkGroupUser(db, &group.LinkGroupUser{
-		GroupID: proj.ProjectGroups[0].Group.ID,
-		UserID:  u.OldUserStruct.ID,
-		Admin:   true,
+	require.NoError(t, group.InsertLinkGroupUser(context.TODO(), db, &group.LinkGroupUser{
+		GroupID:            proj.ProjectGroups[0].Group.ID,
+		AuthentifiedUserID: u.ID,
+		Admin:              true,
 	}))
 
 	pip := sdk.Pipeline{
@@ -206,7 +205,7 @@ func Test_WorkerModelUsage(t *testing.T) {
 		Name:       "pip1",
 	}
 
-	test.NoError(t, pipeline.InsertPipeline(db, api.Cache, proj, &pip))
+	test.NoError(t, pipeline.InsertPipeline(db, &pip))
 
 	//Insert Stage
 	stage := &sdk.Stage{
@@ -254,7 +253,7 @@ func Test_WorkerModelUsage(t *testing.T) {
 		Name:       "workflow1",
 		ProjectID:  proj.ID,
 		ProjectKey: proj.Key,
-		WorkflowData: &sdk.WorkflowData{
+		WorkflowData: sdk.WorkflowData{
 			Node: sdk.Node{
 				Name: "root",
 				Context: &sdk.NodeContext{
@@ -264,7 +263,7 @@ func Test_WorkerModelUsage(t *testing.T) {
 		},
 	}
 
-	test.NoError(t, workflow.Insert(context.Background(), db, api.Cache, &wf, proj))
+	test.NoError(t, workflow.Insert(context.Background(), db, api.Cache, *proj, &wf))
 
 	//Prepare request
 	vars := map[string]string{
@@ -291,7 +290,7 @@ func Test_WorkerModelUsage(t *testing.T) {
 func Test_postWorkerModelWithWrongRequest(t *testing.T) {
 	Test_DeleteAllWorkerModels(t)
 
-	api, _, router, end := newTestAPI(t, bootstrap.InitiliazeDB)
+	api, _, router, end := newTestAPI(t)
 	defer end()
 
 	//Create admin user
@@ -399,7 +398,7 @@ func Test_postWorkerModelWithWrongRequest(t *testing.T) {
 func Test_postWorkerModelAsAGroupMember(t *testing.T) {
 	Test_DeleteAllWorkerModels(t)
 
-	api, _, router, end := newTestAPI(t, bootstrap.InitiliazeDB)
+	api, _, router, end := newTestAPI(t)
 	defer end()
 
 	//Create group
@@ -441,7 +440,7 @@ func Test_postWorkerModelAsAGroupMember(t *testing.T) {
 func Test_postWorkerModelAsAGroupAdmin(t *testing.T) {
 	Test_DeleteAllWorkerModels(t)
 
-	api, _, router, end := newTestAPI(t, bootstrap.InitiliazeDB)
+	api, _, router, end := newTestAPI(t)
 	defer end()
 
 	//Create group
@@ -451,7 +450,7 @@ func Test_postWorkerModelAsAGroupAdmin(t *testing.T) {
 
 	//Create user
 	u, jwt := assets.InsertLambdaUser(t, api.mustDB(), g)
-	assets.SetUserGroupAdmin(t, api.mustDB(), g.ID, u.OldUserStruct.ID)
+	assets.SetUserGroupAdmin(t, api.mustDB(), g.ID, u.ID)
 
 	model := sdk.Model{
 		Name:    "Test1",
@@ -482,7 +481,7 @@ func Test_postWorkerModelAsAGroupAdmin(t *testing.T) {
 func Test_postWorkerModelAsAGroupAdminWithRestrict(t *testing.T) {
 	Test_DeleteAllWorkerModels(t)
 
-	api, _, router, end := newTestAPI(t, bootstrap.InitiliazeDB)
+	api, _, router, end := newTestAPI(t)
 	defer end()
 
 	//Create group
@@ -492,7 +491,7 @@ func Test_postWorkerModelAsAGroupAdminWithRestrict(t *testing.T) {
 
 	//Create user
 	u, jwt := assets.InsertLambdaUser(t, api.mustDB(), g)
-	assets.SetUserGroupAdmin(t, api.mustDB(), g.ID, u.OldUserStruct.ID)
+	assets.SetUserGroupAdmin(t, api.mustDB(), g.ID, u.ID)
 
 	model := sdk.Model{
 		Name:       "Test1",
@@ -527,7 +526,7 @@ func Test_postWorkerModelAsAGroupAdminWithRestrict(t *testing.T) {
 func Test_postWorkerModelAsAGroupAdminWithoutRestrictWithPattern(t *testing.T) {
 	Test_DeleteAllWorkerModels(t)
 
-	api, _, router, end := newTestAPI(t, bootstrap.InitiliazeDB)
+	api, _, router, end := newTestAPI(t)
 	defer end()
 
 	//Create group
@@ -539,7 +538,7 @@ func Test_postWorkerModelAsAGroupAdminWithoutRestrictWithPattern(t *testing.T) {
 	u, jwt := assets.InsertLambdaUser(t, api.mustDB(), g)
 	assert.NotZero(t, u)
 	assert.NotZero(t, jwt)
-	assets.SetUserGroupAdmin(t, api.mustDB(), g.ID, u.OldUserStruct.ID)
+	assets.SetUserGroupAdmin(t, api.mustDB(), g.ID, u.ID)
 
 	pattern := sdk.ModelPattern{
 		Name: "test",
@@ -586,7 +585,7 @@ func Test_postWorkerModelAsAGroupAdminWithoutRestrictWithPattern(t *testing.T) {
 func Test_postWorkerModelAsAWrongGroupMember(t *testing.T) {
 	Test_DeleteAllWorkerModels(t)
 
-	api, _, router, end := newTestAPI(t, bootstrap.InitiliazeDB)
+	api, _, router, end := newTestAPI(t)
 	defer end()
 
 	//Create group
@@ -599,11 +598,11 @@ func Test_postWorkerModelAsAWrongGroupMember(t *testing.T) {
 		Name: sdk.RandomString(10),
 	}
 
-	require.NoError(t, group.Insert(api.mustDB(), g1))
+	require.NoError(t, group.Insert(context.TODO(), api.mustDB(), g1))
 
 	//Create user
 	u, jwt := assets.InsertLambdaUser(t, api.mustDB(), g)
-	assets.SetUserGroupAdmin(t, api.mustDB(), g.ID, u.OldUserStruct.ID)
+	assets.SetUserGroupAdmin(t, api.mustDB(), g.ID, u.ID)
 
 	model := sdk.Model{
 		Name:    "Test1",
@@ -634,7 +633,7 @@ func Test_postWorkerModelAsAWrongGroupMember(t *testing.T) {
 func Test_putWorkerModel(t *testing.T) {
 	Test_DeleteAllWorkerModels(t)
 
-	api, _, router, end := newTestAPI(t, bootstrap.InitiliazeDB)
+	api, _, router, end := newTestAPI(t)
 	defer end()
 
 	//Create group
@@ -644,7 +643,7 @@ func Test_putWorkerModel(t *testing.T) {
 
 	//Create user
 	u, jwt := assets.InsertLambdaUser(t, api.mustDB(), g)
-	assets.SetUserGroupAdmin(t, api.mustDB(), g.ID, u.OldUserStruct.ID)
+	assets.SetUserGroupAdmin(t, api.mustDB(), g.ID, u.ID)
 
 	model := sdk.Model{
 		Name:       "Test1",
@@ -708,7 +707,7 @@ func Test_putWorkerModel(t *testing.T) {
 func Test_putWorkerModelWithPassword(t *testing.T) {
 	Test_DeleteAllWorkerModels(t)
 
-	api, _, router, end := newTestAPI(t, bootstrap.InitiliazeDB)
+	api, _, router, end := newTestAPI(t)
 	defer end()
 
 	//Create group
@@ -718,7 +717,7 @@ func Test_putWorkerModelWithPassword(t *testing.T) {
 
 	//Create user
 	u, jwt := assets.InsertLambdaUser(t, api.mustDB(), g)
-	assets.SetUserGroupAdmin(t, api.mustDB(), g.ID, u.OldUserStruct.ID)
+	assets.SetUserGroupAdmin(t, api.mustDB(), g.ID, u.ID)
 
 	model := sdk.Model{
 		Name:       "Test1",
@@ -816,7 +815,7 @@ func Test_putWorkerModelWithPassword(t *testing.T) {
 func Test_deleteWorkerModel(t *testing.T) {
 	Test_DeleteAllWorkerModels(t)
 
-	api, _, router, end := newTestAPI(t, bootstrap.InitiliazeDB)
+	api, _, router, end := newTestAPI(t)
 	defer end()
 
 	//Create group
@@ -826,7 +825,7 @@ func Test_deleteWorkerModel(t *testing.T) {
 
 	//Create user
 	u, jwt := assets.InsertLambdaUser(t, api.mustDB(), g)
-	assets.SetUserGroupAdmin(t, api.mustDB(), g.ID, u.OldUserStruct.ID)
+	assets.SetUserGroupAdmin(t, api.mustDB(), g.ID, u.ID)
 
 	model := sdk.Model{
 		Name:       "Test1",
@@ -878,7 +877,7 @@ func Test_deleteWorkerModel(t *testing.T) {
 func Test_getWorkerModel(t *testing.T) {
 	Test_DeleteAllWorkerModels(t)
 
-	api, _, router, end := newTestAPI(t, bootstrap.InitiliazeDB)
+	api, _, router, end := newTestAPI(t)
 	defer end()
 
 	//Create admin user
@@ -934,7 +933,7 @@ func Test_getWorkerModel(t *testing.T) {
 func Test_getWorkerModels(t *testing.T) {
 	Test_DeleteAllWorkerModels(t)
 
-	api, db, router, end := newTestAPI(t, bootstrap.InitiliazeDB)
+	api, db, router, end := newTestAPI(t)
 	defer end()
 
 	_, jwtAdmin := assets.InsertAdminUser(t, api.mustDB())
@@ -1009,7 +1008,7 @@ func Test_getWorkerModels(t *testing.T) {
 func Test_renameWorkerModel(t *testing.T) {
 	Test_DeleteAllWorkerModels(t)
 
-	api, db, router, end := newTestAPI(t, bootstrap.InitiliazeDB)
+	api, db, router, end := newTestAPI(t)
 	defer end()
 
 	// create new group

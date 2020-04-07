@@ -5,7 +5,6 @@
                 <img *ngIf="wf.icon" class="right floated mini ui image" [src]="wf.icon">
                 <div class="header">
                     <span [innerText]="wf.name"></span>
-                    <app-warning-mark-list [warnings]="warnMap?.get(wf.name)"></app-warning-mark-list>
                 </div>
                 <div class="meta" *ngIf="wf.description">
                     <span [innerText]="wf.description.slice(0, 90)"></span><span *ngIf="wf.description.length > 90">...</span>

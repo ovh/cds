@@ -64,34 +64,11 @@ func loadNotification(db gorp.SqlExecutor, w *sdk.Workflow, id int64) (sdk.Workf
 	return n, nil
 }
 
-func loadVCSNotificationWithNodeID(db gorp.SqlExecutor, workflowID, nodeID int64) (sdk.WorkflowNotification, error) {
-	dbnotif := Notification{}
-	query := `SELECT workflow_notification.*
-	FROM workflow_notification
-		JOIN workflow_notification_source ON workflow_notification.id = workflow_notification_source.workflow_notification_id
-	WHERE workflow_notification.workflow_id = $1 AND workflow_notification_source.node_id = $2 AND workflow_notification.type = $3 LIMIT 1`
-	//Load the notification
-	if err := db.SelectOne(&dbnotif, query, workflowID, nodeID, sdk.VCSUserNotification); err != nil {
-		if err == sql.ErrNoRows {
-			return sdk.WorkflowNotification{}, nil
-		}
-		return sdk.WorkflowNotification{}, sdk.WrapError(err, "Unable to load notification for workflow id %d and node id %d", workflowID, nodeID)
-	}
-	dbnotif.WorkflowID = workflowID
-
-	return sdk.WorkflowNotification(dbnotif), nil
-}
-
 func InsertNotification(db gorp.SqlExecutor, w *sdk.Workflow, n *sdk.WorkflowNotification) error {
 	n.WorkflowID = w.ID
 	n.ID = 0
 	n.NodeIDs = nil
 	dbNotif := Notification(*n)
-
-	//Check references to sources
-	if len(n.SourceNodeRefs) == 0 {
-		return sdk.WrapError(sdk.ErrWorkflowNodeRef, "insertNotification> No notification references")
-	}
 
 	for _, s := range n.SourceNodeRefs {
 		nodeFoundRef := w.WorkflowData.NodeByName(s)

@@ -3,7 +3,6 @@ package api
 import (
 	"context"
 	"database/sql"
-	"fmt"
 	"net/http"
 	"regexp"
 	"strings"
@@ -27,22 +26,110 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
+func (api *API) getProjectsHandler_FilterByRepo(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+	withPermissions := r.FormValue("permission")
+	filterByRepo := r.FormValue("repo")
+
+	var projects sdk.Projects
+	var err error
+	var filterByRepoFunc = func(db gorp.SqlExecutor, store cache.Store, p *sdk.Project) error {
+		//Filter the applications by repo
+		apps := []sdk.Application{}
+		for i := range p.Applications {
+			if p.Applications[i].RepositoryFullname == filterByRepo {
+				apps = append(apps, p.Applications[i])
+			}
+		}
+		p.Applications = apps
+		ws := []sdk.Workflow{}
+		//Filter the workflow by applications
+		for i := range p.Workflows {
+			w, err := workflow.LoadByID(ctx, db, store, *p, p.Workflows[i].ID, workflow.LoadOptions{})
+			if err != nil {
+				return err
+			}
+
+			//Checks the workflow use one of the applications
+		wapps:
+			for _, a := range w.Applications {
+				for _, b := range apps {
+					if a.Name == b.Name {
+						ws = append(ws, p.Workflows[i])
+						break wapps
+					}
+				}
+			}
+		}
+		p.Workflows = ws
+		return nil
+	}
+
+	opts := []project.LoadOptionFunc{
+		project.LoadOptions.WithPermission,
+	}
+	opts = append(opts, filterByRepoFunc)
+
+	if isMaintainer(ctx) || isAdmin(ctx) {
+		projects, err = project.LoadAllByRepo(ctx, api.mustDB(), api.Cache, filterByRepo, opts...)
+		if err != nil {
+			return err
+		}
+	} else {
+		projects, err = project.LoadAllByRepoAndGroupIDs(ctx, api.mustDB(), api.Cache, getAPIConsumer(ctx).GetGroupIDs(), filterByRepo, opts...)
+		if err != nil {
+			return err
+		}
+	}
+
+	pKeys := projects.Keys()
+	perms, err := permission.LoadProjectMaxLevelPermission(ctx, api.mustDB(), pKeys, getAPIConsumer(ctx).GetGroupIDs())
+	if err != nil {
+		return err
+	}
+	for i := range projects {
+		if isAdmin(ctx) {
+			projects[i].Permissions = sdk.Permissions{Readable: true, Writable: true, Executable: true}
+			continue
+		}
+		projects[i].Permissions = perms[projects[i].Key]
+		if isMaintainer(ctx) {
+			projects[i].Permissions.Readable = true
+		}
+	}
+
+	if strings.ToUpper(withPermissions) == "W" {
+		res := make([]sdk.Project, 0, len(projects))
+		for _, p := range projects {
+			if p.Permissions.Writable {
+				res = append(res, p)
+			}
+		}
+		projects = res
+	}
+
+	return service.WriteJSON(w, projects, http.StatusOK)
+}
+
 func (api *API) getProjectsHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		withPermissions := r.FormValue("permission")
+		filterByRepo := r.FormValue("repo")
+		if filterByRepo != "" {
+			return api.getProjectsHandler_FilterByRepo(ctx, w, r)
+		}
+
 		withApplications := FormBool(r, "application")
 		withWorkflows := FormBool(r, "workflow")
-		filterByRepo := r.FormValue("repo")
-		withPermissions := r.FormValue("permission")
 		withIcon := FormBool(r, "withIcon")
 
 		requestedUserName := r.Header.Get("X-Cds-Username")
 		var requestedUser *sdk.AuthentifiedUser
 		if requestedUserName != "" {
 			var err error
-			requestedUser, err = user.LoadByUsername(ctx, api.mustDB(), requestedUserName, user.LoadOptions.WithDeprecatedUser)
+			requestedUser, err = user.LoadByUsername(ctx, api.mustDB(), requestedUserName)
 			if err != nil {
 				if sdk.Cause(err) == sql.ErrNoRows {
-					return sdk.ErrUserNotFound
+					return sdk.WithStack(sdk.ErrUserNotFound)
 				}
 				return sdk.WrapError(err, "unable to load user '%s'", requestedUserName)
 			}
@@ -64,16 +151,15 @@ func (api *API) getProjectsHandler() service.Handler {
 
 		var projects sdk.Projects
 		var err error
-
 		switch {
 		case isMaintainer(ctx) && requestedUser == nil:
 			projects, err = project.LoadAll(ctx, api.mustDB(), api.Cache, opts...)
 		case isMaintainer(ctx) && requestedUser != nil:
-			groups, errG := group.LoadAllByDeprecatedUserID(context.TODO(), api.mustDB(), requestedUser.OldUserStruct.ID)
+			groups, errG := group.LoadAllByUserID(context.TODO(), api.mustDB(), requestedUser.ID)
 			if errG != nil {
 				return sdk.WrapError(errG, "unable to load user '%s' groups", requestedUserName)
 			}
-			requestedUser.OldUserStruct.Groups = groups
+			requestedUser.Groups = groups
 			log.Debug("load all projects for user %s", requestedUser.Fullname)
 			projects, err = project.LoadAllByGroupIDs(ctx, api.mustDB(), api.Cache, requestedUser.GetGroupIDs(), opts...)
 		default:
@@ -83,71 +169,32 @@ func (api *API) getProjectsHandler() service.Handler {
 			return err
 		}
 
+		var groupIDs []int64
+		var admin bool
+		var maintainer bool
+		if requestedUser == nil {
+			groupIDs = getAPIConsumer(ctx).GetGroupIDs()
+			admin = isAdmin(ctx)
+			maintainer = isMaintainer(ctx)
+		} else {
+			groupIDs = requestedUser.GetGroupIDs()
+			admin = requestedUser.Ring == sdk.UserRingAdmin
+			maintainer = requestedUser.Ring == sdk.UserRingMaintainer
+		}
+
 		pKeys := projects.Keys()
-		perms, err := permission.LoadProjectMaxLevelPermission(ctx, api.mustDB(), pKeys, getAPIConsumer(ctx).GetGroupIDs())
+		perms, err := permission.LoadProjectMaxLevelPermission(ctx, api.mustDB(), pKeys, groupIDs)
 		if err != nil {
 			return err
 		}
 		for i := range projects {
+			if admin {
+				projects[i].Permissions = sdk.Permissions{Readable: true, Writable: true, Executable: true}
+				continue
+			}
 			projects[i].Permissions = perms[projects[i].Key]
-		}
-
-		if filterByRepo == "" {
-			if strings.ToUpper(withPermissions) == "W" {
-				res := make([]sdk.Project, 0, len(projects))
-				for _, p := range projects {
-					if p.Permissions.Writable {
-						res = append(res, p)
-					}
-				}
-				projects = res
-			}
-
-			return service.WriteJSON(w, projects, http.StatusOK)
-		}
-
-		var filterByRepoFunc = func(db gorp.SqlExecutor, store cache.Store, p *sdk.Project) error {
-			//Filter the applications by repo
-			apps := []sdk.Application{}
-			for i := range p.Applications {
-				if p.Applications[i].RepositoryFullname == filterByRepo {
-					apps = append(apps, p.Applications[i])
-				}
-			}
-			p.Applications = apps
-			ws := []sdk.Workflow{}
-			//Filter the workflow by applications
-			for i := range p.Workflows {
-				w, err := workflow.LoadByID(ctx, db, store, p, p.Workflows[i].ID, workflow.LoadOptions{})
-				if err != nil {
-					return err
-				}
-
-				//Checks the workflow use one of the applications
-			wapps:
-				for _, a := range w.Applications {
-					for _, b := range apps {
-						if a.Name == b.Name {
-							ws = append(ws, p.Workflows[i])
-							break wapps
-						}
-					}
-				}
-			}
-			p.Workflows = ws
-			return nil
-		}
-		opts = append(opts, filterByRepoFunc)
-
-		if isMaintainer(ctx) || isAdmin(ctx) {
-			projects, err = project.LoadAllByRepo(ctx, api.mustDB(), api.Cache, filterByRepo, opts...)
-			if err != nil {
-				return err
-			}
-		} else {
-			projects, err = project.LoadAllByRepoAndGroupIDs(ctx, api.mustDB(), api.Cache, getAPIConsumer(ctx).GetGroupIDs(), filterByRepo, opts...)
-			if err != nil {
-				return err
+			if maintainer {
+				projects[i].Permissions.Readable = true
 			}
 		}
 
@@ -232,7 +279,7 @@ func (api *API) getProjectHandler() service.Handler {
 		withLabels := FormBool(r, "withLabels")
 
 		opts := []project.LoadOptionFunc{
-			project.LoadOptions.WithFavorites(getAPIConsumer(ctx).AuthentifiedUser.OldUserStruct.ID),
+			project.LoadOptions.WithFavorites(getAPIConsumer(ctx).AuthentifiedUser.ID),
 		}
 		if withVariables {
 			opts = append(opts, project.LoadOptions.WithVariables)
@@ -315,12 +362,15 @@ func (api *API) putProjectLabelsHandler() service.Handler {
 		key := vars[permProjectKey]
 		db := api.mustDB()
 
-		var labels []sdk.Label
+		var labels sdk.Labels
 		if err := service.UnmarshalBody(r, &labels); err != nil {
 			return sdk.WrapError(err, "Unmarshall error")
 		}
+		if err := labels.IsValid(); err != nil {
+			return err
+		}
 
-		// Check is project exist
+		// Check if project exist
 		proj, err := project.Load(db, api.Cache, key, project.LoadOptions.WithLabels)
 		if err != nil {
 			return err
@@ -384,7 +434,7 @@ func (api *API) putProjectLabelsHandler() service.Handler {
 
 		p, errP := project.Load(db, api.Cache, key,
 			project.LoadOptions.WithLabels, project.LoadOptions.WithWorkflowNames, project.LoadOptions.WithVariables,
-			project.LoadOptions.WithFavorites(getAPIConsumer(ctx).AuthentifiedUser.OldUserStruct.ID),
+			project.LoadOptions.WithFavorites(getAPIConsumer(ctx).AuthentifiedUser.ID),
 			project.LoadOptions.WithKeys, project.LoadOptions.WithPermission, project.LoadOptions.WithIntegrations)
 		if errP != nil {
 			return sdk.WrapError(errP, "putProjectLabelsHandler> Cannot load project updated from db")
@@ -477,7 +527,7 @@ func (api *API) postProjectHandler() service.Handler {
 			}
 
 			newGroup := sdk.Group{Name: groupSlug}
-			if err := group.Create(tx, &newGroup, consumer.AuthentifiedUser.OldUserStruct.ID); err != nil {
+			if err := group.Create(ctx, tx, &newGroup, consumer.AuthentifiedUser.ID); err != nil {
 				return err
 			}
 
@@ -486,7 +536,7 @@ func (api *API) postProjectHandler() service.Handler {
 
 		// Insert all links between project and group
 		for _, groupID := range groupIDs {
-			if err := group.InsertLinkGroupProject(tx, &group.LinkGroupProject{
+			if err := group.InsertLinkGroupProject(ctx, tx, &group.LinkGroupProject{
 				GroupID:   groupID,
 				ProjectID: p.ID,
 				Role:      sdk.PermissionReadWriteExecute,
@@ -495,52 +545,46 @@ func (api *API) postProjectHandler() service.Handler {
 			}
 		}
 
-		for _, v := range p.Variable {
-			if errVar := project.InsertVariable(tx, &p, &v, consumer); errVar != nil {
+		for _, v := range p.Variables {
+			if errVar := project.InsertVariable(tx, p.ID, &v, consumer); errVar != nil {
 				return sdk.WrapError(errVar, "addProjectHandler> Cannot add variable %s in project %s", v.Name, p.Name)
 			}
 		}
 
-		var sshExists, gpgExists bool
-		for _, k := range p.Keys {
-			switch k.Type {
-			case sdk.KeyTypeSSH:
-				sshExists = true
-			case sdk.KeyTypePGP:
-				gpgExists = true
-			}
-		}
-
-		if !sshExists {
-			p.Keys = append(p.Keys, sdk.ProjectKey{Key: sdk.Key{
+		p.Keys = []sdk.ProjectKey{
+			{
 				Type: sdk.KeyTypeSSH,
-				Name: fmt.Sprintf("proj-%s-%s", sdk.KeyTypeSSH, strings.ToLower(p.Key))},
-			})
-		}
-		if !gpgExists {
-			p.Keys = append(p.Keys, sdk.ProjectKey{Key: sdk.Key{
+				Name: sdk.GenerateProjectDefaultKeyName(p.Key, sdk.KeyTypeSSH),
+			},
+			{
 				Type: sdk.KeyTypePGP,
-				Name: fmt.Sprintf("proj-%s-%s", sdk.KeyTypePGP, strings.ToLower(p.Key))},
-			})
+				Name: sdk.GenerateProjectDefaultKeyName(p.Key, sdk.KeyTypePGP),
+			},
 		}
-		for _, k := range p.Keys {
+		for i := range p.Keys {
+			k := &p.Keys[i]
 			k.ProjectID = p.ID
 			switch k.Type {
 			case sdk.KeyTypeSSH:
-				keyTemp, errK := keys.GenerateSSHKey(k.Name)
-				if errK != nil {
-					return sdk.WrapError(errK, "addProjectHandler> Cannot generate ssh key for project %s", p.Name)
+				keyTemp, err := keys.GenerateSSHKey(k.Name)
+				if err != nil {
+					return sdk.WrapError(err, "cannot generate ssh key for project %s", p.Name)
 				}
-				k.Key = keyTemp
+				k.Private = keyTemp.Private
+				k.Public = keyTemp.Public
+				k.Type = keyTemp.Type
 			case sdk.KeyTypePGP:
-				keyTemp, errK := keys.GeneratePGPKeyPair(k.Name)
-				if errK != nil {
-					return sdk.WrapError(errK, "addProjectHandler> Cannot generate pgp key for project %s", p.Name)
+				keyTemp, err := keys.GeneratePGPKeyPair(k.Name)
+				if err != nil {
+					return sdk.WrapError(err, "cannot generate pgp key for project %s", p.Name)
 				}
-				k.Key = keyTemp
+				k.Private = keyTemp.Private
+				k.Public = keyTemp.Public
+				k.Type = keyTemp.Type
+				k.KeyID = keyTemp.KeyID
 			}
-			if errK := project.InsertKey(tx, &k); errK != nil {
-				return sdk.WrapError(errK, "addProjectHandler> Cannot add key %s in project %s", k.Name, p.Name)
+			if err := project.InsertKey(tx, k); err != nil {
+				return sdk.WrapError(err, "cannot add key %s in project %s", k.Name, p.Name)
 			}
 		}
 
@@ -565,7 +609,7 @@ func (api *API) postProjectHandler() service.Handler {
 		proj, err := project.Load(api.mustDB(), api.Cache, p.Key,
 			project.LoadOptions.WithLabels,
 			project.LoadOptions.WithWorkflowNames,
-			project.LoadOptions.WithFavorites(consumer.AuthentifiedUser.OldUserStruct.ID),
+			project.LoadOptions.WithFavorites(consumer.AuthentifiedUser.ID),
 			project.LoadOptions.WithKeys,
 			project.LoadOptions.WithPermission,
 			project.LoadOptions.WithIntegrations,

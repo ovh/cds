@@ -16,17 +16,22 @@ Also we recommend you to create a VM base that the hatchery will use to linked c
 
 ## Start vSphere hatchery
 
-Generate a token for group:
+Generate a token:
 
 ```bash
-$ cdsctl token generate shared.infra persistent
-expiration  persistent
-created     2019-03-13 18:47:56.715104 +0100 CET
-group_name  shared.infra
-token       xxxxxxxxxe7x4af2d408e5xxxxxxxff2adb333fab7d05c7752xxxxxxx
+$ cdsctl consumer new me \
+--scopes=Hatchery,RunExecution,Service,WorkerModel \
+--name="hatchery.vsphere" \
+--description="Consumer token for vsphere hatchery" \
+--groups="" \
+--no-interactive
+
+Builtin consumer successfully created, use the following token to sign in:
+xxxxxxxx.xxxxxxx.4Bd9XJMIWrfe8Lwb-Au68TKUqflPorY2Fmcuw5vIoUs5gQyCLuxxxxxxxxxxxxxx
 ```
 
-Edit the CDS [configuration]({{< relref "/hosting/configuration.md">}}) or set the dedicated environment variables. To enable the hatchery, just set the API HTTP and GRPC URL, the token freshly generated and the vSphere variables.
+Edit the section `hatchery.vsphere` in the [CDS Configuration]({{< relref "/hosting/configuration.md">}}) file.
+The token have to be set on the key `hatchery.vsphere.commonConfiguration.api.http.token`.
 
 This hatchery will now start worker of model 'vsphere' on vSphere infrastructure.
 

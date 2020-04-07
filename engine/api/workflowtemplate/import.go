@@ -5,7 +5,6 @@ import (
 
 	"github.com/go-gorp/gorp"
 
-	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/sdk"
 )
 
@@ -17,6 +16,8 @@ func Push(ctx context.Context, db gorp.SqlExecutor, wt *sdk.WorkflowTemplate, u 
 		return nil, err
 	}
 	if old == nil {
+		wt.Version = 1
+
 		if err := Insert(db, wt); err != nil {
 			return nil, err
 		}
@@ -26,7 +27,9 @@ func Push(ctx context.Context, db gorp.SqlExecutor, wt *sdk.WorkflowTemplate, u 
 			return nil, err
 		}
 
-		event.PublishWorkflowTemplateAdd(ctx, *newTemplate, u)
+		if err := CreateAuditAdd(db, *newTemplate, u); err != nil {
+			return nil, err
+		}
 
 		return []sdk.Message{sdk.NewMessage(sdk.MsgWorkflowTemplateImportedInserted, newTemplate.Group.Name, newTemplate.Slug)}, nil
 	}
@@ -35,7 +38,7 @@ func Push(ctx context.Context, db gorp.SqlExecutor, wt *sdk.WorkflowTemplate, u 
 	clone.Update(*wt)
 
 	// execute template with no instance only to check if parsing is ok
-	if _, err := Execute(&clone, nil); err != nil {
+	if _, err := Parse(clone); err != nil {
 		return nil, err
 	}
 
@@ -48,7 +51,9 @@ func Push(ctx context.Context, db gorp.SqlExecutor, wt *sdk.WorkflowTemplate, u 
 		return nil, err
 	}
 
-	event.PublishWorkflowTemplateUpdate(ctx, *old, *newTemplate, "", u)
+	if err := CreateAuditUpdate(db, *old, *newTemplate, "", u); err != nil {
+		return nil, err
+	}
 
 	return []sdk.Message{sdk.NewMessage(sdk.MsgWorkflowTemplateImportedUpdated, newTemplate.Group.Name, newTemplate.Slug)}, nil
 }

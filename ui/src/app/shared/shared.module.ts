@@ -8,9 +8,11 @@ import { SuiModule } from '@richardlt/ng2-semantic-ui';
 import { NgxChartsModule } from '@swimlane/ngx-charts';
 import { AuthenticationGuard } from 'app/guard/authentication.guard';
 import { NoAuthenticationGuard } from 'app/guard/no-authentication.guard';
+import { AsCodeEventComponent } from 'app/shared/ascode/events/ascode.event.component';
 import { ConditionsComponent } from 'app/shared/conditions/conditions.component';
 import { GroupFormComponent } from 'app/shared/group/form/group.form.component';
 import { AutoFocusInputComponent } from 'app/shared/input/autofocus/autofocus.input.component';
+import { UpdateAsCodeComponent } from 'app/shared/modal/save-as-code/update.as.code.component';
 import { SelectFilterComponent } from 'app/shared/select/select.component';
 import { WorkflowHookMenuEditComponent } from 'app/shared/workflow/menu/edit-hook/menu.edit.hook.component';
 import { WorkflowWizardNodeConditionComponent } from 'app/shared/workflow/wizard/conditions/wizard.conditions.component';
@@ -80,9 +82,6 @@ import { VariableValueComponent } from './variable/value/variable.value.componen
 import { VCSStrategyComponent } from './vcs/vcs.strategy.component';
 import { VulnerabilitiesListComponent } from './vulnerability/list/vulnerability.list.component';
 import { VulnerabilitiesComponent } from './vulnerability/vulnerabilities.component';
-import { WarningMarkListComponent } from './warning/mark-list/warning.mark.list.component';
-import { WarningMarkComponent } from './warning/mark-single/warning.mark.component';
-import { WarningTabComponent } from './warning/tab/warning.tab.component';
 import { WorkflowTemplateApplyFormComponent } from './workflow-template/apply-form/workflow-template.apply-form.component';
 import { WorkflowTemplateApplyModalComponent } from './workflow-template/apply-modal/workflow-template.apply-modal.component';
 import { WorkflowTemplateBulkModalComponent } from './workflow-template/bulk-modal/workflow-template.bulk-modal.component';
@@ -92,7 +91,6 @@ import { WorkflowDeleteNodeComponent } from './workflow/modal/delete/workflow.no
 import { WorkflowHookModalComponent } from './workflow/modal/hook-add/hook.modal.component';
 import { WorkflowTriggerComponent } from './workflow/modal/node-add/workflow.trigger.component';
 import { WorkflowNodeEditModalComponent } from './workflow/modal/node-edit/node.edit.modal.component';
-import { WorkflowSaveAsCodeComponent } from './workflow/modal/save-as-code/save.as.code.component';
 import { WorkflowNodeHookDetailsComponent } from './workflow/node/hook/details/hook.details.component';
 import { WorkflowNodeRunParamComponent } from './workflow/node/run/node.run.param.component';
 import { WorkflowSidebarHookComponent } from './workflow/sidebar/edit-hook/workflow.sidebar.hook.component';
@@ -139,6 +137,7 @@ import { ZoneComponent } from './zone/zone.component';
         ActionStepComponent,
         ActionStepFormComponent,
         ActionStepSummaryComponent,
+        AsCodeEventComponent,
         AuditListComponent,
         AutoFocusInputComponent,
         BreadcrumbComponent,
@@ -182,6 +181,7 @@ import { ZoneComponent } from './zone/zone.component';
         StatusIconComponent,
         TabsComponent,
         TruncatePipe,
+        UpdateAsCodeComponent,
         UploadButtonComponent,
         UsageApplicationsComponent,
         UsageComponent,
@@ -196,10 +196,7 @@ import { ZoneComponent } from './zone/zone.component';
         VCSStrategyComponent,
         VulnerabilitiesComponent,
         VulnerabilitiesListComponent,
-        WarningMarkComponent,
-        WarningMarkListComponent,
         WarningModalComponent,
-        WarningTabComponent,
         WorkflowDeleteNodeComponent,
         WorkflowHookMenuEditComponent,
         WorkflowHookModalComponent,
@@ -209,7 +206,6 @@ import { ZoneComponent } from './zone/zone.component';
         WorkflowNodeHookDetailsComponent,
         WorkflowNodeHookFormComponent,
         WorkflowNodeRunParamComponent,
-        WorkflowSaveAsCodeComponent,
         WorkflowSidebarHookComponent,
         WorkflowSidebarRunListComponent,
         WorkflowSidebarRunHookComponent,
@@ -249,6 +245,7 @@ import { ZoneComponent } from './zone/zone.component';
         AuditListComponent,
         ActionStepComponent,
         ActionStepFormComponent,
+        AsCodeEventComponent,
         BreadcrumbComponent,
         ProjectBreadcrumbComponent,
         ChartComponentComponent,
@@ -288,14 +285,12 @@ import { ZoneComponent } from './zone/zone.component';
         TranslateModule,
         TruncatePipe,
         SafeHtmlPipe,
+        UpdateAsCodeComponent,
         VariableComponent,
         VariableFormComponent,
         VariableValueComponent,
         VulnerabilitiesComponent,
         VulnerabilitiesListComponent,
-        WarningTabComponent,
-        WarningMarkComponent,
-        WarningMarkListComponent,
         WarningModalComponent,
         DeleteModalComponent,
         ConfirmModalComponent,
@@ -305,7 +300,6 @@ import { ZoneComponent } from './zone/zone.component';
         WorkflowSidebarRunListComponent,
         WorkflowSidebarRunNodeComponent,
         WorkflowSidebarRunHookComponent,
-        WorkflowSaveAsCodeComponent,
         WorkflowWNodeMenuEditComponent,
         WorkflowNodeAddWizardComponent,
         WorkflowDeleteNodeComponent,

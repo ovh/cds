@@ -1,0 +1,25 @@
+<div class="asCodeEvents">
+    <p>
+        <span *ngIf="repo">{{ 'pipeline_from_repository' | translate: {repo: repo} }}</span>
+        <span *ngIf="!repo">{{ 'workflow_from_repository_pending' | translate }}</span>
+    </p>
+    <ul>
+        <li *ngFor="let e of events">
+            <a href="{{e.pullrequest_url}}" target="_blank">PullRequest #{{e.pullrequest_id}}</a>
+            <ul>
+                <ng-container *ngIf="e.data && e.data.workflows">
+                    <li *ngFor="let k of e?.data?.workflows | keys">
+                        <div class="ui blue horizontal mini label">Workflow</div>{{' ' + e.data.workflows[k]}}
+                    </li>
+                </ng-container>
+                <ng-container *ngIf="e.data && e.data.pipelines">
+                    <li *ngFor="let k of e?.data?.pipelines | keys">
+                        <div class="ui green horizontal mini label">Pipeline</div>{{' ' + e.data.pipelines[k]}}
+                    </li>
+                </ng-container>
+            </ul>
+        </li>
+    </ul>
+    <button class="ui right floated mini green button" [disabled]="loadingPopupButton"
+            [class.loading]="loadingPopupButton" (click)="resyncEvents()">{{'btn_resync_repo' | translate }}</button>
+</div>

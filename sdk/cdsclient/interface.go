@@ -5,6 +5,7 @@ import (
 	"context"
 	"io"
 	"net/http"
+	"net/url"
 	"time"
 
 	"github.com/sguiheux/go-coverage"
@@ -58,15 +59,15 @@ type Admin interface {
 
 // ExportImportInterface exposes pipeline and application export and import function
 type ExportImportInterface interface {
-	PipelineExport(projectKey, name string, exportFormat string) ([]byte, error)
-	PipelineImport(projectKey string, content io.Reader, format string, force bool) ([]string, error)
-	ApplicationExport(projectKey, name string, format string) ([]byte, error)
-	ApplicationImport(projectKey string, content io.Reader, format string, force bool) ([]string, error)
+	PipelineExport(projectKey, name string, mods ...RequestModifier) ([]byte, error)
+	PipelineImport(projectKey string, content io.Reader, mods ...RequestModifier) ([]string, error)
+	ApplicationExport(projectKey, name string, mods ...RequestModifier) ([]byte, error)
+	ApplicationImport(projectKey string, content io.Reader, mods ...RequestModifier) ([]string, error)
 	WorkflowExport(projectKey, name string, mods ...RequestModifier) ([]byte, error)
 	WorkflowPull(projectKey, name string, mods ...RequestModifier) (*tar.Reader, error)
-	WorkflowImport(projectKey string, content io.Reader, format string, force bool) ([]string, error)
-	WorkerModelExport(groupName, name, format string) ([]byte, error)
-	WorkerModelImport(content io.Reader, format string, force bool) (*sdk.Model, error)
+	WorkflowImport(projectKey string, content io.Reader, mods ...RequestModifier) ([]string, error)
+	WorkerModelExport(groupName, name string, mods ...RequestModifier) ([]byte, error)
+	WorkerModelImport(content io.Reader, mods ...RequestModifier) (*sdk.Model, error)
 	WorkflowPush(projectKey string, tarContent io.Reader, mods ...RequestModifier) ([]string, *tar.Reader, error)
 	WorkflowAsCodeInterface
 }
@@ -117,8 +118,8 @@ type EnvironmentClient interface {
 	EnvironmentDelete(projectKey string, envName string) error
 	EnvironmentGet(projectKey string, envName string, opts ...RequestModifier) (*sdk.Environment, error)
 	EnvironmentList(projectKey string) ([]sdk.Environment, error)
-	EnvironmentExport(projectKey, name string, format string) ([]byte, error)
-	EnvironmentImport(projectKey string, content io.Reader, format string, force bool) ([]string, error)
+	EnvironmentExport(projectKey, name string, mods ...RequestModifier) ([]byte, error)
+	EnvironmentImport(projectKey string, content io.Reader, mods ...RequestModifier) ([]string, error)
 	EnvironmentVariableClient
 	EnvironmentKeysClient
 }
@@ -156,9 +157,10 @@ type DownloadClient interface {
 type ActionClient interface {
 	ActionDelete(groupName, name string) error
 	ActionGet(groupName, name string, mods ...RequestModifier) (*sdk.Action, error)
+	ActionUsage(groupName, name string, mods ...RequestModifier) (*sdk.ActionUsages, error)
 	ActionList() ([]sdk.Action, error)
-	ActionImport(content io.Reader, format string) error
-	ActionExport(groupName, name string, format string) ([]byte, error)
+	ActionImport(content io.Reader, mods ...RequestModifier) error
+	ActionExport(groupName, name string, mods ...RequestModifier) ([]byte, error)
 	ActionBuiltinList() ([]sdk.Action, error)
 	ActionBuiltinGet(name string, mods ...RequestModifier) (*sdk.Action, error)
 }
@@ -185,6 +187,7 @@ type BroadcastClient interface {
 
 // PipelineClient exposes pipelines related functions
 type PipelineClient interface {
+	PipelineGet(projectKey, name string, mods ...RequestModifier) (*sdk.Pipeline, error)
 	PipelineDelete(projectKey, name string) error
 	PipelineCreate(projectKey string, pip *sdk.Pipeline) error
 	PipelineList(projectKey string) ([]sdk.Pipeline, error)
@@ -206,8 +209,8 @@ type ProjectClient interface {
 	ProjectList(withApplications, withWorkflow bool, filters ...Filter) ([]sdk.Project, error)
 	ProjectKeysClient
 	ProjectVariablesClient
-	ProjectGroupsImport(projectKey string, content io.Reader, format string, force bool) (sdk.Project, error)
-	ProjectIntegrationImport(projectKey string, content io.Reader, format string, force bool) (sdk.ProjectIntegration, error)
+	ProjectGroupsImport(projectKey string, content io.Reader, mods ...RequestModifier) (sdk.Project, error)
+	ProjectIntegrationImport(projectKey string, content io.Reader, mods ...RequestModifier) (sdk.ProjectIntegration, error)
 	ProjectIntegrationGet(projectKey string, integrationName string, clearPassword bool) (sdk.ProjectIntegration, error)
 	ProjectIntegrationList(projectKey string) ([]sdk.ProjectIntegration, error)
 	ProjectIntegrationDelete(projectKey string, integrationName string) error
@@ -261,6 +264,7 @@ type UserClient interface {
 	UserGetMe() (*sdk.AuthentifiedUser, error)
 	UserGetGroups(username string) (map[string][]sdk.Group, error)
 	UpdateFavorite(params sdk.FavoriteParams) (interface{}, error)
+	UserGetSchema() (sdk.SchemaResponse, error)
 }
 
 // WorkerClient exposes workers functions
@@ -292,6 +296,8 @@ type WorkflowClient interface {
 	WorkflowGet(projectKey, name string, opts ...RequestModifier) (*sdk.Workflow, error)
 	WorkflowUpdate(projectKey, name string, wf *sdk.Workflow) error
 	WorkflowDelete(projectKey string, workflowName string) error
+	WorkflowLabelAdd(projectKey, name, labelName string) error
+	WorkflowLabelDelete(projectKey, name string, labelID int64) error
 	WorkflowGroupAdd(projectKey, name, groupName string, permission int) error
 	WorkflowGroupDelete(projectKey, name, groupName string) error
 	WorkflowRunGet(projectKey string, workflowName string, number int64) (*sdk.WorkflowRun, error)
@@ -323,7 +329,7 @@ type MonitoringClient interface {
 	MonStatus() (*sdk.MonitoringStatus, error)
 	MonVersion() (*sdk.Version, error)
 	MonDBMigrate() ([]sdk.MonDBMigrate, error)
-	MonErrorsGet(uuid string) (*sdk.Error, error)
+	MonErrorsGet(requestID string) ([]sdk.Error, error)
 }
 
 // IntegrationClient exposes integration functions
@@ -453,6 +459,64 @@ func WithUsage() RequestModifier {
 		q := r.URL.Query()
 		q.Set("withUsage", "true")
 		r.URL.RawQuery = q.Encode()
+	}
+}
+
+// WithWorkflows allow a provider to retrieve a pipeline with its workflows usage
+func WithWorkflows() RequestModifier {
+	return func(r *http.Request) {
+		q := r.URL.Query()
+		q.Set("withWorkflows", "true")
+		r.URL.RawQuery = q.Encode()
+	}
+}
+
+// WithLabels allow a provider to retrieve a workflow with its labels
+func WithLabels() RequestModifier {
+	return func(r *http.Request) {
+		q := r.URL.Query()
+		q.Set("withLabels", "true")
+		r.URL.RawQuery = q.Encode()
+	}
+}
+
+// WithPermissions allow a provider to retrieve a workflow with its permissions.
+func WithPermissions() RequestModifier {
+	return func(r *http.Request) {
+		q := r.URL.Query()
+		q.Set("withPermissions", "true")
+		r.URL.RawQuery = q.Encode()
+	}
+}
+
+// WithKeys allow a provider to retrieve a project with its keys.
+func WithKeys() RequestModifier {
+	return func(r *http.Request) {
+		q := r.URL.Query()
+		q.Set("withKeys", "true")
+		r.URL.RawQuery = q.Encode()
+	}
+}
+
+func Format(format string) RequestModifier {
+	return func(r *http.Request) {
+		q := r.URL.Query()
+		q.Set("format", url.QueryEscape(format))
+		r.URL.RawQuery = q.Encode()
+	}
+}
+
+func Force() RequestModifier {
+	return func(r *http.Request) {
+		q := r.URL.Query()
+		q.Set("force", "true")
+		r.URL.RawQuery = q.Encode()
+	}
+}
+
+func ContentType(value string) RequestModifier {
+	return func(r *http.Request) {
+		r.Header.Add("Content-Type", value)
 	}
 }
 

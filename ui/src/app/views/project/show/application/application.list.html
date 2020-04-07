@@ -21,7 +21,6 @@
                         <img *ngIf="app.icon" class="right floated mini ui image" [src]="app.icon">
                         <div class="header">
                           <span [innerText]="app.name"></span>
-                          <app-warning-mark-list [warnings]="warnMap?.get(app.name)"></app-warning-mark-list>
                         </div>
                         <div class="meta" *ngIf="app.description">
                             <span [innerText]="app.description.slice(0, 90)"></span><span *ngIf="app.description.length > 90">...</span>

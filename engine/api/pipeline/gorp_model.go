@@ -14,6 +14,16 @@ type PipelineAudit sdk.PipelineAudit
 // Pipeline is a gorp wrapper around sdk.Pipeline
 type Pipeline sdk.Pipeline
 
+type Pipelines []Pipeline
+
+func (dbPipes Pipelines) Cast() []sdk.Pipeline {
+	var res = make([]sdk.Pipeline, len(dbPipes))
+	for i := range dbPipes {
+		res[i] = sdk.Pipeline(dbPipes[i])
+	}
+	return res
+}
+
 type pipelineAction struct {
 	ID              int64     `db:"id"`
 	PipelineStageID int64     `db:"pipeline_stage_id"`

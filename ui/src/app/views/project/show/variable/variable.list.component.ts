@@ -1,19 +1,17 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnInit, ViewChild } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
+import { Project } from 'app/model/project.model';
+import { WarningModalComponent } from 'app/shared/modal/warning/warning.component';
+import { ToastService } from 'app/shared/toast/ToastService';
+import { VariableEvent } from 'app/shared/variable/variable.event.model';
 import {
     AddVariableInProject,
     DeleteVariableInProject,
     FetchVariablesInProject,
     UpdateVariableInProject
 } from 'app/store/project.action';
-import cloneDeep from 'lodash-es/cloneDeep';
 import { finalize } from 'rxjs/operators';
-import { Project } from '../../../../model/project.model';
-import { Warning } from '../../../../model/warning.model';
-import { WarningModalComponent } from '../../../../shared/modal/warning/warning.component';
-import { ToastService } from '../../../../shared/toast/ToastService';
-import { VariableEvent } from '../../../../shared/variable/variable.event.model';
 
 @Component({
     selector: 'app-project-variables',
@@ -24,25 +22,6 @@ import { VariableEvent } from '../../../../shared/variable/variable.event.model'
 export class ProjectVariablesComponent implements OnInit {
 
     @Input() project: Project;
-    @Input('warnings')
-    set warnings(data: Array<Warning>) {
-        if (data) {
-            this.variableWarning = new Map<string, Warning>();
-            this.unusedVariableWarning = new Array<Warning>();
-            data.forEach(v => {
-                let w = cloneDeep(v);
-                w.element = w.element.replace('cds.proj.', '');
-                if (w.type.indexOf('MISSING') !== -1) {
-                    this.unusedVariableWarning.push(w);
-                } else {
-                    this.variableWarning.set(w.element, w);
-                }
-            });
-        }
-    };
-    variableWarning: Map<string, Warning>;
-    unusedVariableWarning: Array<Warning>;
-
     @ViewChild('varWarning', {static: false})
     varWarningModal: WarningModalComponent;
 

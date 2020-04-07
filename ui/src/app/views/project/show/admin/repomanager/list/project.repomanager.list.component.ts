@@ -1,16 +1,15 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, ViewChild } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
+import { Project } from 'app/model/project.model';
+import { RepositoriesManager } from 'app/model/repositories.model';
 import { RepoManagerService } from 'app/service/repomanager/project.repomanager.service';
 import { ConfirmModalComponent } from 'app/shared/modal/confirm/confirm.component';
+import { WarningModalComponent } from 'app/shared/modal/warning/warning.component';
+import { Table } from 'app/shared/table/table';
+import { ToastService } from 'app/shared/toast/ToastService';
 import { DisconnectRepositoryManagerInProject } from 'app/store/project.action';
 import { finalize } from 'rxjs/operators';
-import { Project } from '../../../../../../model/project.model';
-import { RepositoriesManager } from '../../../../../../model/repositories.model';
-import { Warning } from '../../../../../../model/warning.model';
-import { WarningModalComponent } from '../../../../../../shared/modal/warning/warning.component';
-import { Table } from '../../../../../../shared/table/table';
-import { ToastService } from '../../../../../../shared/toast/ToastService';
 
 @Component({
     selector: 'app-project-repomanager-list',
@@ -20,7 +19,6 @@ import { ToastService } from '../../../../../../shared/toast/ToastService';
 })
 export class ProjectRepoManagerComponent extends Table<RepositoriesManager> {
 
-    @Input() warnings: Map<string, Warning>;
     @Input() project: Project;
     @Input() reposmanagers: RepositoriesManager[];
 

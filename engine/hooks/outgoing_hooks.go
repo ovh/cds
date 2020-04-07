@@ -214,9 +214,7 @@ func (s *Service) doOutgoingWorkflowExecution(ctx context.Context, t *sdk.TaskEx
 				log.Error(ctx, "Hooks> doOutgoingWorkflowExecution> Cannot unmarshall payload %s", err)
 			}
 
-			if err := json.Unmarshal([]byte(payloadstr), &payloadValues); err != nil {
-				return sdk.WrapError(handleError(ctx, err), "cannot unmarshall payload")
-			}
+			payloadValues["payload"] = string(payloadstr)
 		}
 	}
 
@@ -262,7 +260,7 @@ func (s *Service) doOutgoingWebHookExecution(ctx context.Context, t *sdk.TaskExe
 		return nil
 	}
 
-	if wr.Status != sdk.StatusDisabled {
+	if wr.Status != sdk.StatusBuilding {
 		log.Error(ctx, "Hooks> workflow %s/%s #%s status: %s", pkey, workflow, run, wr.Status)
 		return nil
 	}

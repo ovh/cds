@@ -1,12 +1,10 @@
 <div class="ui right floated sidebar codebar" [ngClass]="{'visible animated fadeInRight': open}">
-    <div class="ui row fullheight" *ngIf="!loadingGet">
-        <ng-container *ngIf="open">
+    <div class="ui row fullheight">
             <codemirror
                 [(ngModel)]="exportedWf"
                 (keydown)="updated = true; keyEvent($event)"
                 [config]="codeMirrorConfig" #codeMirror>
             </codemirror>
-        </ng-container>
         <div class="ui bottomBtnsWrapper segment">
             <div class="ui grid">
                 <div class="sixteen wide column">

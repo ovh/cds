@@ -18,9 +18,10 @@ import (
 
 func (api *API) getNavbarHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		data, err := navbar.LoadNavbarData(api.mustDB(), api.Cache, *getAPIConsumer(ctx).AuthentifiedUser)
+		consumer := getAPIConsumer(ctx)
+		data, err := navbar.LoadNavbarData(api.mustDB(), api.Cache, *consumer.AuthentifiedUser)
 		if err != nil {
-			return sdk.WrapError(err, "getNavbarHandler")
+			return err
 		}
 		return service.WriteJSON(w, data, http.StatusOK)
 	}
@@ -75,7 +76,7 @@ func (api *API) getApplicationOverviewHandler() service.Handler {
 
 		mCov, errCov := metrics.GetMetrics(ctx, db, key, app.ID, sdk.MetricKeyCoverage)
 		if errCov != nil {
-			return sdk.WrapError(errCov, "getApplicationOverviewHandler> Cannot list coverage metrics")
+			return sdk.WrapError(errCov, "cannot list coverage metrics")
 		}
 		appOverview.Graphs = append(appOverview.Graphs, sdk.ApplicationOverviewGraph{
 			Type:  sdk.MetricKeyCoverage,
@@ -84,19 +85,20 @@ func (api *API) getApplicationOverviewHandler() service.Handler {
 
 		// GET VCS URL
 		// Get vcs info to known if we are on the default branch or not
-		if projectVCSServer := repositoriesmanager.GetProjectVCSServer(p, app.VCSServer); projectVCSServer != nil {
-			client, erra := repositoriesmanager.AuthorizedClient(ctx, db, api.Cache, p.Key, projectVCSServer)
-			if erra != nil {
-				return sdk.WrapError(sdk.ErrNoReposManagerClientAuth, "getApplicationOverviewHandler> Cannot get repo client %s: %v", app.VCSServer, erra)
+		if projectVCSServer := repositoriesmanager.GetProjectVCSServer(*p, app.VCSServer); projectVCSServer != nil {
+			client, err := repositoriesmanager.AuthorizedClient(ctx, db, api.Cache, p.Key, projectVCSServer)
+			if err != nil {
+				return sdk.NewErrorWithStack(err, sdk.NewErrorFrom(sdk.ErrNoReposManagerClientAuth,
+					"cannot get repo client %s", app.VCSServer))
 			}
-			vcsRepo, errRepo := client.RepoByFullname(ctx, app.RepositoryFullname)
-			if errRepo != nil {
-				return sdk.WrapError(errRepo, "getApplicationOverviewHandler> unable to get repo")
+			vcsRepo, err := client.RepoByFullname(ctx, app.RepositoryFullname)
+			if err != nil {
+				return sdk.WrapError(err, "unable to get repo")
 			}
 			appOverview.GitURL = vcsRepo.URL
-			defaultBranch, errB := repositoriesmanager.DefaultBranch(ctx, client, app.RepositoryFullname)
-			if errB != nil {
-				return sdk.WrapError(errB, "getApplicationOverviewHandler> Unable to get default branch")
+			defaultBranch, err := repositoriesmanager.DefaultBranch(ctx, client, app.RepositoryFullname)
+			if err != nil {
+				return sdk.WrapError(err, "unable to get default branch")
 			}
 
 			// GET LAST BUILD

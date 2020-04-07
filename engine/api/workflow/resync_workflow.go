@@ -11,7 +11,7 @@ import (
 )
 
 // Resync a workflow in the given workflow run
-func Resync(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, wr *sdk.WorkflowRun) error {
+func Resync(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj sdk.Project, wr *sdk.WorkflowRun) error {
 	options := LoadOptions{
 		DeepPipeline:     true,
 		Base64Keys:       true,
@@ -61,7 +61,7 @@ func ResyncWorkflowRunStatus(ctx context.Context, db gorp.SqlExecutor, wr *sdk.W
 	var isInError bool
 	var newStatus string
 	for _, info := range wr.Infos {
-		if info.IsError && info.SubNumber == wr.LastSubNumber {
+		if info.Type == sdk.RunInfoTypeError && info.SubNumber == wr.LastSubNumber {
 			isInError = true
 			break
 		}
@@ -82,7 +82,7 @@ func ResyncWorkflowRunStatus(ctx context.Context, db gorp.SqlExecutor, wr *sdk.W
 }
 
 // ResyncNodeRunsWithCommits load commits build in this node run and save it into node run
-func ResyncNodeRunsWithCommits(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, report *ProcessorReport) {
+func ResyncNodeRunsWithCommits(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj sdk.Project, report *ProcessorReport) {
 	if report == nil {
 		return
 	}

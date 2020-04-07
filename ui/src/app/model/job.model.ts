@@ -13,9 +13,12 @@ export class Job {
 
     // UI parameter
     hasChanged: boolean;
+    ref: number;
 
     constructor() {
         this.action = new Action();
+        this.action.enabled = true;
+        this.ref = new Date().getTime();
     }
 }
 

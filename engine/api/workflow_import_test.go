@@ -36,7 +36,7 @@ func Test_postWorkflowImportHandler(t *testing.T) {
 		Name:       "pip1",
 	}
 	sdk.AddParameter(&pip.Parameter, "name", sdk.StringParameter, "value")
-	test.NoError(t, pipeline.InsertPipeline(db, api.Cache, proj, &pip))
+	test.NoError(t, pipeline.InsertPipeline(db, &pip))
 
 	//Prepare request
 	vars := map[string]string{
@@ -70,7 +70,7 @@ metadata:
 	//Check result
 	t.Logf(">>%s", rec.Body.String())
 
-	w, err := workflow.Load(context.TODO(), db, api.Cache, proj, "test_1", workflow.LoadOptions{})
+	w, err := workflow.Load(context.TODO(), db, api.Cache, *proj, "test_1", workflow.LoadOptions{})
 	test.NoError(t, err)
 
 	assert.NotNil(t, w)
@@ -100,7 +100,7 @@ func Test_postWorkflowImportHandlerWithExistingIcon(t *testing.T) {
 		Name:       "pip1",
 	}
 	sdk.AddParameter(&pip.Parameter, "name", sdk.StringParameter, "value")
-	test.NoError(t, pipeline.InsertPipeline(db, api.Cache, proj, &pip))
+	test.NoError(t, pipeline.InsertPipeline(db, &pip))
 
 	//Prepare request
 	vars := map[string]string{
@@ -134,7 +134,7 @@ metadata:
 	//Check result
 	t.Logf(">>%s", rec.Body.String())
 
-	w, err := workflow.Load(context.TODO(), db, api.Cache, proj, "test_1", workflow.LoadOptions{})
+	w, err := workflow.Load(context.TODO(), db, api.Cache, *proj, "test_1", workflow.LoadOptions{})
 	test.NoError(t, err)
 
 	assert.NotNil(t, w)
@@ -152,9 +152,9 @@ metadata:
 
 	w.Icon = "data:image/png;base64,example"
 
-	test.NoError(t, workflow.Update(context.TODO(), db, api.Cache, w, proj, workflow.UpdateOptions{}))
+	test.NoError(t, workflow.Update(context.TODO(), db, api.Cache, *proj, w, workflow.UpdateOptions{}))
 
-	wfLoaded, err := workflow.Load(context.TODO(), db, api.Cache, proj, "test_1", workflow.LoadOptions{WithIcon: true})
+	wfLoaded, err := workflow.Load(context.TODO(), db, api.Cache, *proj, "test_1", workflow.LoadOptions{WithIcon: true})
 	test.NoError(t, err)
 	test.NotEmpty(t, wfLoaded.Icon, "Workflow icon must be the same as before")
 }
@@ -173,7 +173,7 @@ func Test_putWorkflowImportHandler(t *testing.T) {
 		Name:       "pip1",
 	}
 	sdk.AddParameter(&pip.Parameter, "name", sdk.StringParameter, "value")
-	test.NoError(t, pipeline.InsertPipeline(db, api.Cache, proj, pip))
+	test.NoError(t, pipeline.InsertPipeline(db, pip))
 
 	// create the workflow
 	uri := api.Router.GetRoute("POST", api.postWorkflowHandler, map[string]string{
@@ -184,7 +184,7 @@ func Test_putWorkflowImportHandler(t *testing.T) {
 		Name:       "test_1",
 		ProjectID:  proj.ID,
 		ProjectKey: proj.Key,
-		WorkflowData: &sdk.WorkflowData{
+		WorkflowData: sdk.WorkflowData{
 			Node: sdk.Node{
 				Type: sdk.NodeTypePipeline,
 				Name: "pip1",
@@ -236,7 +236,7 @@ func Test_putWorkflowImportHandlerWithJoinAndCondition(t *testing.T) {
 		ProjectKey: proj.Key,
 		Name:       "pip1",
 	}
-	test.NoError(t, pipeline.InsertPipeline(db, api.Cache, proj, pip))
+	test.NoError(t, pipeline.InsertPipeline(db, pip))
 
 	// create the workflow
 	uri := api.Router.GetRoute("POST", api.postWorkflowHandler, map[string]string{
@@ -247,7 +247,7 @@ func Test_putWorkflowImportHandlerWithJoinAndCondition(t *testing.T) {
 		Name:       "test_1",
 		ProjectID:  proj.ID,
 		ProjectKey: proj.Key,
-		WorkflowData: &sdk.WorkflowData{
+		WorkflowData: sdk.WorkflowData{
 			Node: sdk.Node{
 				Type: sdk.NodeTypePipeline,
 				Name: "pip1",
@@ -363,7 +363,7 @@ func Test_putWorkflowImportHandlerWithJoinWithOrWithoutCondition(t *testing.T) {
 		ProjectKey: proj.Key,
 		Name:       "pip1",
 	}
-	test.NoError(t, pipeline.InsertPipeline(db, api.Cache, proj, pip))
+	test.NoError(t, pipeline.InsertPipeline(db, pip))
 
 	// create the workflow
 	uri := api.Router.GetRoute("POST", api.postWorkflowHandler, map[string]string{
@@ -374,7 +374,7 @@ func Test_putWorkflowImportHandlerWithJoinWithOrWithoutCondition(t *testing.T) {
 		Name:       "test_1",
 		ProjectID:  proj.ID,
 		ProjectKey: proj.Key,
-		WorkflowData: &sdk.WorkflowData{
+		WorkflowData: sdk.WorkflowData{
 			Node: sdk.Node{
 				Type: sdk.NodeTypePipeline,
 				Name: "pip1",
@@ -496,7 +496,7 @@ func Test_putWorkflowImportHandlerWithJoinWithoutCondition(t *testing.T) {
 		ProjectKey: proj.Key,
 		Name:       "pip1",
 	}
-	test.NoError(t, pipeline.InsertPipeline(db, api.Cache, proj, pip))
+	test.NoError(t, pipeline.InsertPipeline(db, pip))
 
 	// create the workflow
 	uri := api.Router.GetRoute("POST", api.postWorkflowHandler, map[string]string{
@@ -507,7 +507,7 @@ func Test_putWorkflowImportHandlerWithJoinWithoutCondition(t *testing.T) {
 		Name:       "test_1",
 		ProjectID:  proj.ID,
 		ProjectKey: proj.Key,
-		WorkflowData: &sdk.WorkflowData{
+		WorkflowData: sdk.WorkflowData{
 			Node: sdk.Node{
 				Type: sdk.NodeTypePipeline,
 				Name: "pip1",
@@ -628,12 +628,12 @@ func Test_getWorkflowPushHandler(t *testing.T) {
 	u, pass := assets.InsertAdminUser(t, api.mustDB())
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, api.mustDB(), api.Cache, key, key)
-	require.NoError(t, group.InsertLinkGroupUser(api.mustDB(), &group.LinkGroupUser{
-		GroupID: proj.ProjectGroups[0].Group.ID,
-		UserID:  u.OldUserStruct.ID,
-		Admin:   true,
+	require.NoError(t, group.InsertLinkGroupUser(context.TODO(), api.mustDB(), &group.LinkGroupUser{
+		GroupID:            proj.ProjectGroups[0].Group.ID,
+		AuthentifiedUserID: u.ID,
+		Admin:              true,
 	}))
-	u.OldUserStruct.Groups = append(u.OldUserStruct.Groups, proj.ProjectGroups[0].Group)
+	u.Groups = append(u.Groups, proj.ProjectGroups[0].Group)
 
 	//First pipeline
 	pip := sdk.Pipeline{
@@ -641,7 +641,7 @@ func Test_getWorkflowPushHandler(t *testing.T) {
 		ProjectKey: proj.Key,
 		Name:       "pip1",
 	}
-	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, &pip))
+	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), &pip))
 
 	script := assets.GetBuiltinOrPluginActionByName(t, db, sdk.ScriptAction)
 
@@ -668,7 +668,7 @@ func Test_getWorkflowPushHandler(t *testing.T) {
 	app := &sdk.Application{
 		Name: appName,
 	}
-	if err := application.Insert(api.mustDB(), api.Cache, proj, app); err != nil {
+	if err := application.Insert(api.mustDB(), api.Cache, *proj, app); err != nil {
 		t.Fatal(err)
 	}
 
@@ -678,7 +678,7 @@ func Test_getWorkflowPushHandler(t *testing.T) {
 		Type:  sdk.StringVariable,
 	}
 
-	test.NoError(t, application.InsertVariable(api.mustDB(), api.Cache, app, v1, u))
+	test.NoError(t, application.InsertVariable(api.mustDB(), app.ID, &v1, u))
 
 	v2 := sdk.Variable{
 		Name:  "var2",
@@ -686,14 +686,12 @@ func Test_getWorkflowPushHandler(t *testing.T) {
 		Type:  sdk.SecretVariable,
 	}
 
-	test.NoError(t, application.InsertVariable(api.mustDB(), api.Cache, app, v2, u))
+	test.NoError(t, application.InsertVariable(api.mustDB(), app.ID, &v2, u))
 
 	//Insert ssh and gpg keys
 	k := &sdk.ApplicationKey{
-		Key: sdk.Key{
-			Name: "app-mykey",
-			Type: sdk.KeyTypePGP,
-		},
+		Name:          "app-mykey",
+		Type:          sdk.KeyTypePGP,
 		ApplicationID: app.ID,
 	}
 
@@ -706,10 +704,8 @@ func Test_getWorkflowPushHandler(t *testing.T) {
 	test.NoError(t, application.InsertKey(api.mustDB(), k))
 
 	k2 := &sdk.ApplicationKey{
-		Key: sdk.Key{
-			Name: "app-mykey-ssh",
-			Type: sdk.KeyTypeSSH,
-		},
+		Name:          "app-mykey-ssh",
+		Type:          sdk.KeyTypeSSH,
 		ApplicationID: app.ID,
 	}
 	kssh, errK := keys.GenerateSSHKey(k2.Name)
@@ -724,7 +720,7 @@ func Test_getWorkflowPushHandler(t *testing.T) {
 		Name:       "test_1",
 		ProjectID:  proj.ID,
 		ProjectKey: proj.Key,
-		WorkflowData: &sdk.WorkflowData{
+		WorkflowData: sdk.WorkflowData{
 			Node: sdk.Node{
 				Name: "root",
 				Type: sdk.NodeTypePipeline,
@@ -749,9 +745,9 @@ func Test_getWorkflowPushHandler(t *testing.T) {
 
 	proj, _ = project.Load(api.mustDB(), api.Cache, proj.Key, project.LoadOptions.WithPipelines, project.LoadOptions.WithApplications)
 
-	test.NoError(t, workflow.Insert(context.TODO(), api.mustDB(), api.Cache, &w, proj))
+	test.NoError(t, workflow.Insert(context.TODO(), api.mustDB(), api.Cache, *proj, &w))
 	test.NoError(t, workflow.RenameNode(context.TODO(), api.mustDB(), &w))
-	w1, err := workflow.Load(context.TODO(), api.mustDB(), api.Cache, proj, "test_1", workflow.LoadOptions{DeepPipeline: true})
+	w1, err := workflow.Load(context.TODO(), api.mustDB(), api.Cache, *proj, "test_1", workflow.LoadOptions{DeepPipeline: true})
 	test.NoError(t, err)
 
 	//Prepare request
@@ -806,7 +802,7 @@ func Test_putWorkflowImportHandlerMustNotHave2Joins(t *testing.T) {
 		ProjectKey: proj.Key,
 		Name:       "pip1",
 	}
-	test.NoError(t, pipeline.InsertPipeline(db, api.Cache, proj, pip))
+	test.NoError(t, pipeline.InsertPipeline(db, pip))
 
 	// create the workflow
 	uri := api.Router.GetRoute("POST", api.postWorkflowHandler, map[string]string{
@@ -817,7 +813,7 @@ func Test_putWorkflowImportHandlerMustNotHave2Joins(t *testing.T) {
 		Name:       "test_1",
 		ProjectID:  proj.ID,
 		ProjectKey: proj.Key,
-		WorkflowData: &sdk.WorkflowData{
+		WorkflowData: sdk.WorkflowData{
 			Node: sdk.Node{
 				Type: sdk.NodeTypePipeline,
 				Name: "pip1",
@@ -919,7 +915,7 @@ metadata:
 
 	p, errP := project.Load(db, api.Cache, proj.Key)
 	assert.NoError(t, errP)
-	wUpdated, err := workflow.Load(context.TODO(), db, api.Cache, p, "test_1", workflow.LoadOptions{})
+	wUpdated, err := workflow.Load(context.TODO(), db, api.Cache, *p, "test_1", workflow.LoadOptions{})
 	assert.NoError(t, err)
 
 	t.Logf("%+v", wUpdated.WorkflowData)

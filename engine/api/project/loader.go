@@ -41,7 +41,7 @@ var LoadOptions = struct {
 	WithClearKeys                           LoadOptionFunc
 	WithIntegrations                        LoadOptionFunc
 	WithClearIntegrations                   LoadOptionFunc
-	WithFavorites                           func(uID int64) LoadOptionFunc
+	WithFavorites                           func(uID string) LoadOptionFunc
 	WithFeatures                            LoadOptionFunc
 	WithLabels                              LoadOptionFunc
 }{
@@ -111,11 +111,22 @@ func loadApplicationWithDeploymentStrategies(db gorp.SqlExecutor, store cache.St
 }
 
 func loadVariables(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project) error {
-	return loadAllVariables(db, store, proj)
+	vars, err := LoadAllVariables(db, proj.ID)
+	if err != nil {
+		return err
+	}
+	proj.Variables = vars
+	return nil
 }
 
 func loadVariablesWithClearPassword(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project) error {
-	return loadAllVariables(db, store, proj, WithClearPassword())
+	vars, err := LoadAllVariablesWithDecrytion(db, proj.ID)
+	if err != nil {
+		return err
+	}
+	proj.Variables = vars
+	return nil
+
 }
 
 func loadApplicationVariables(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project) error {
@@ -135,11 +146,21 @@ func loadApplicationVariables(db gorp.SqlExecutor, store cache.Store, proj *sdk.
 }
 
 func loadKeys(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project) error {
-	return LoadAllKeys(db, proj)
+	keys, err := LoadAllKeys(db, proj.ID)
+	if err != nil {
+		return err
+	}
+	proj.Keys = keys
+	return nil
 }
 
 func loadClearKeys(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project) error {
-	return LoadAllDecryptedKeys(db, proj)
+	keys, err := LoadAllKeysWithPrivateContent(db, proj.ID)
+	if err != nil {
+		return err
+	}
+	proj.Keys = keys
+	return nil
 }
 
 func loadIntegrations(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project) error {
@@ -181,15 +202,6 @@ func loadWorkflowNames(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project
 		return sdk.WithStack(err)
 	}
 	proj.WorkflowNames = wfs
-	return nil
-}
-
-func loadAllVariables(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, args ...GetAllVariableFuncArg) error {
-	vars, err := GetAllVariableInProject(db, proj.ID, args...)
-	if err != nil && sdk.Cause(err) != sql.ErrNoRows {
-		return sdk.WithStack(err)
-	}
-	proj.Variable = vars
 	return nil
 }
 
@@ -251,8 +263,8 @@ func loadEnvironmentNames(db gorp.SqlExecutor, store cache.Store, proj *sdk.Proj
 }
 
 func loadGroups(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project) error {
-	if err := group.LoadGroupByProject(db, proj); err != nil && sdk.Cause(err) != sql.ErrNoRows {
-		return sdk.WithStack(err)
+	if err := group.LoadGroupsIntoProject(db, proj); err != nil && sdk.Cause(err) != sql.ErrNoRows {
+		return err
 	}
 	return nil
 }
@@ -266,9 +278,9 @@ func loadLabels(db gorp.SqlExecutor, _ cache.Store, proj *sdk.Project) error {
 	return nil
 }
 
-func loadFavorites(uID int64) LoadOptionFunc {
+func loadFavorites(uID string) LoadOptionFunc {
 	return func(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project) error {
-		count, err := db.SelectInt("SELECT COUNT(1) FROM project_favorite WHERE project_id = $1 AND user_id = $2", proj.ID, uID)
+		count, err := db.SelectInt("SELECT COUNT(1) FROM project_favorite WHERE project_id = $1 AND authentified_user_id = $2", proj.ID, uID)
 		if err != nil {
 			return sdk.WithStack(err)
 		}

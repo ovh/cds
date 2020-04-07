@@ -167,6 +167,7 @@ func templateApplyRun(v cli.Values) error {
 
 	importPush := v.GetBool("import-push")
 	importAsCode := v.GetBool("import-as-code")
+	detached := v.GetBool("detach")
 
 	// try to find existing .git repository
 	var localRepoURL string
@@ -199,15 +200,23 @@ func templateApplyRun(v cli.Values) error {
 		}
 
 		var listRepositories []string
+		var listSSHKeys []string
+		var listPGPKeys []string
 		var localRepoPath string
 
 		// if there are params of type repository in list of params to fill prepare
 		// the list of repositories for project
 		var withRepository bool
+		var withKey bool
 		for _, p := range wt.Parameters {
 			if _, ok := params[p.Key]; !ok {
 				if p.Type == sdk.ParameterTypeRepository {
 					withRepository = true
+				}
+				if p.Type == sdk.ParameterTypeSSHKey || p.Type == sdk.ParameterTypePGPKey {
+					withKey = true
+				}
+				if withRepository && withKey {
 					break
 				}
 			}
@@ -233,6 +242,20 @@ func templateApplyRun(v cli.Values) error {
 				}
 			}
 		}
+		if withKey {
+			pKeys, err := client.ProjectKeysList(projectKey)
+			if err != nil {
+				return err
+			}
+			for _, k := range pKeys {
+				switch k.Type {
+				case sdk.KeyTypeSSH:
+					listSSHKeys = append(listSSHKeys, k.Name)
+				case sdk.KeyTypePGP:
+					listPGPKeys = append(listPGPKeys, k.Name)
+				}
+			}
+		}
 
 		// for each param not already fill ask for the value
 		for _, p := range wt.Parameters {
@@ -248,6 +271,16 @@ func templateApplyRun(v cli.Values) error {
 						selected := cli.AskChoice(label, listRepositories...)
 						choice = listRepositories[selected]
 					}
+				case sdk.ParameterTypeSSHKey:
+					if len(listSSHKeys) > 0 {
+						selected := cli.AskChoice(label, listSSHKeys...)
+						choice = listSSHKeys[selected]
+					}
+				case sdk.ParameterTypePGPKey:
+					if len(listPGPKeys) > 0 {
+						selected := cli.AskChoice(label, listPGPKeys...)
+						choice = listPGPKeys[selected]
+					}
 				case sdk.ParameterTypeBoolean:
 					choice = fmt.Sprintf("%t", cli.AskConfirm(fmt.Sprintf("Set value to 'true' for param '%s'", p.Key)))
 				}
@@ -259,7 +292,7 @@ func templateApplyRun(v cli.Values) error {
 			}
 		}
 
-		if !importAsCode && !importPush {
+		if !importAsCode && !importPush && !detached {
 			if localRepoURL != "" {
 				importAsCode = cli.AskConfirm(fmt.Sprintf("Import the generated workflow as code to the %s project", projectKey))
 			}
@@ -286,7 +319,7 @@ func templateApplyRun(v cli.Values) error {
 		ProjectKey:   projectKey,
 		WorkflowName: workflowName,
 		Parameters:   params,
-		Detached:     v.GetBool("detach"),
+		Detached:     detached,
 	}
 	if err := wt.CheckParams(req); err != nil {
 		return err

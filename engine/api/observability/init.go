@@ -14,8 +14,9 @@ import (
 )
 
 var (
-	traceExporter trace.Exporter
-	statsExporter *prometheus.Exporter
+	traceExporter     trace.Exporter
+	statsExporter     *prometheus.Exporter
+	statsHTTPExporter *HTTPExporter
 )
 
 type service interface {
@@ -29,6 +30,10 @@ func serviceName(s service) string {
 
 func StatsExporter() *prometheus.Exporter {
 	return statsExporter
+}
+
+func StatsHTTPExporter() *HTTPExporter {
+	return statsHTTPExporter
 }
 
 // Init the opencensus exporter
@@ -70,6 +75,10 @@ func Init(ctx context.Context, cfg Configuration, s service) (context.Context, e
 		}
 		view.RegisterExporter(e)
 		statsExporter = e
+
+		he := new(HTTPExporter)
+		view.RegisterExporter(he)
+		statsHTTPExporter = he
 	}
 
 	return ctx, nil

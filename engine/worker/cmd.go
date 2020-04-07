@@ -85,21 +85,6 @@ func FlagString(cmd *cobra.Command, key string) string {
 	return cmd.Flag(key).Value.String()
 }
 
-// FlagInt replaces viper.GetInt
-func FlagInt(cmd *cobra.Command, key string) int {
-	envKey := envFlagPrefix + key
-	envKey = strings.Replace(envKey, "-", "_", -1)
-	envKey = strings.ToUpper(envKey)
-
-	if os.Getenv(envKey) != "" {
-		i, _ := strconv.Atoi(os.Getenv(envKey))
-		return i
-	}
-
-	i, _ := strconv.Atoi(cmd.Flag(key).Value.String())
-	return i
-}
-
 // FlagInt64 replaces viper.GetInt64
 func FlagInt64(cmd *cobra.Command, key string) int64 {
 	envKey := envFlagPrefix + key

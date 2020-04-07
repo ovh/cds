@@ -51,6 +51,10 @@ func (client *bitbucketcloudClient) allCommitBetween(ctx context.Context, repo, 
 	nextPage := 1
 
 	for {
+		if ctx.Err() != nil {
+			break
+		}
+
 		if nextPage != 1 {
 			params.Set("page", fmt.Sprintf("%d", nextPage))
 		}
@@ -122,6 +126,10 @@ func (client *bitbucketcloudClient) CommitsBetweenRefs(ctx context.Context, repo
 	path := fmt.Sprintf("/repositories/%s/commits/%s", repo, head)
 	nextPage := 1
 	for {
+		if ctx.Err() != nil {
+			break
+		}
+
 		if nextPage != 1 {
 			params.Set("page", fmt.Sprintf("%d", nextPage))
 		}

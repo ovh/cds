@@ -1,6 +1,5 @@
 name: python-official-3.5.6-stretch
 group: shared.infra
-communication: http
 image: python:3.5.6-stretch
 description: official from https://hub.docker.com/_/python/
 type: docker

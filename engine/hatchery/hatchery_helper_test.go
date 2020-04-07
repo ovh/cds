@@ -128,12 +128,14 @@ type MockSSERoundTripper struct {
 }
 
 func TestMarshalEvent(t *testing.T) {
+	j := sdk.EventRunWorkflowJob{
+		ID:     1,
+		Status: sdk.StatusWaiting,
+	}
+	bts, _ := json.Marshal(j)
 	msg, err := json.Marshal(sdk.Event{
 		EventType: fmt.Sprintf("%T", sdk.EventRunWorkflowJob{}),
-		Payload: map[string]interface{}{
-			"ID":     float64(1),
-			"Status": sdk.StatusWaiting,
-		},
+		Payload:   bts,
 	})
 
 	require.NoError(t, err)
@@ -155,12 +157,14 @@ func (m *MockSSERoundTripper) RoundTrip(req *http.Request) (*http.Response, erro
 
 		time.Sleep(5 * time.Second)
 
+		j := sdk.EventRunWorkflowJob{
+			ID:     1,
+			Status: sdk.StatusWaiting,
+		}
+		bts, _ := json.Marshal(j)
 		msg, err := json.Marshal(sdk.Event{
 			EventType: fmt.Sprintf("%T", sdk.EventRunWorkflowJob{}),
-			Payload: map[string]interface{}{
-				"ID":     float64(1),
-				"Status": sdk.StatusWaiting,
-			},
+			Payload:   bts,
 		})
 
 		if err != nil {

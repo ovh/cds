@@ -9,7 +9,6 @@ import { finalize } from 'rxjs/operators';
 @Component({
     selector: 'app-labels-edit',
     templateUrl: './labels.edit.component.html',
-    styleUrls: ['./labels.edit.component.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class LabelsEditComponent {
@@ -24,7 +23,7 @@ export class LabelsEditComponent {
         return this._project;
     }
 
-    @ViewChild('labelsEditModal', {static: false})
+    @ViewChild('labelsEditModal', { static: false })
     public labelsEditModal: ModalTemplate<boolean, boolean, void>;
     modal: SuiActiveModal<boolean, boolean, void>;
     modalConfig: TemplateModalConfig<boolean, boolean, void>;
@@ -37,9 +36,7 @@ export class LabelsEditComponent {
         private store: Store,
         private _suiService: SuiModalService,
         private _cd: ChangeDetectorRef
-    ) {
-
-    }
+    ) { }
 
     show() {
         if (!this.project) {

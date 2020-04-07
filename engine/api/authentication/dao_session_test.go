@@ -126,3 +126,14 @@ func TestDeleteSession(t *testing.T) {
 	res, err = authentication.LoadSessionByID(context.TODO(), db, s.ID)
 	test.Error(t, err)
 }
+
+func Test_GetAndDeleteCorruptedSessions(t *testing.T) {
+	db, _, end := test.SetupPG(t)
+	defer end()
+	sessions, err := authentication.UnsafeLoadCorruptedSessions(context.TODO(), db)
+	require.NoError(t, err)
+	for _, s := range sessions {
+		err := authentication.DeleteSessionByID(db, s.ID)
+		require.NoError(t, err)
+	}
+}

@@ -30,26 +30,25 @@ func (api *API) postRegisterWorkerHandler() service.Handler {
 
 		var registrationForm sdk.WorkerRegistrationForm
 		if err := service.UnmarshalBody(r, &registrationForm); err != nil {
-			return sdk.WrapError(err, "Unable to parse registration form")
+			return err
 		}
 
 		// Check that the worker can authentify on CDS API
 		workerTokenFromHatchery, err := workerauth.VerifyToken(ctx, api.mustDB(), jwt)
 		if err != nil {
-			log.Error(ctx, "registerWorkerHandler> unauthorized worker jwt token %s: %v", jwt, err)
-			return sdk.WithStack(sdk.ErrUnauthorized)
+			return sdk.NewErrorWithStack(sdk.WrapError(err, "unauthorized worker jwt token %s", jwt), sdk.ErrUnauthorized)
 		}
 
 		// Check that hatchery exists
 		hatchSrv, err := services.LoadByNameAndType(ctx, api.mustDB(), workerTokenFromHatchery.Worker.HatcheryName, services.TypeHatchery)
 		if err != nil {
-			return sdk.WrapError(err, "registerWorkerHandler> Unable to load hatchery %s", workerTokenFromHatchery.Worker.HatcheryName)
+			return sdk.WrapError(err, "unable to load hatchery %s", workerTokenFromHatchery.Worker.HatcheryName)
 		}
 
 		// Retrieve the authentifed Consumer from the hatchery
 		hatcheryConsumer, err := authentication.LoadConsumerByID(ctx, api.mustDB(), *hatchSrv.ConsumerID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
 		if err != nil {
-			return sdk.WrapError(err, "registerWorkerHandler> Unable to load consumer %v", hatchSrv.ConsumerID)
+			return sdk.WrapError(err, "unable to load consumer %v", hatchSrv.ConsumerID)
 		}
 
 		tx, err := api.mustDB().Begin()
@@ -62,7 +61,7 @@ func (api *API) postRegisterWorkerHandler() service.Handler {
 		if workerTokenFromHatchery.Worker.JobID != 0 {
 			job, err := workflow.LoadNodeJobRun(ctx, tx, api.Cache, workerTokenFromHatchery.Worker.JobID)
 			if err != nil {
-				return sdk.NewError(sdk.ErrForbidden, err)
+				return sdk.NewErrorWithStack(err, sdk.ErrForbidden)
 			}
 			groupIDs = sdk.Groups(job.ExecGroups).ToIDs()
 		} else {
@@ -70,7 +69,7 @@ func (api *API) postRegisterWorkerHandler() service.Handler {
 		}
 
 		// We have to issue a new consumer for the worker
-		workerConsumer, err := authentication.NewConsumerWorker(ctx, api.mustDB(), workerTokenFromHatchery.Subject, hatchSrv, hatcheryConsumer, groupIDs)
+		workerConsumer, err := authentication.NewConsumerWorker(ctx, tx, workerTokenFromHatchery.Subject, hatchSrv, hatcheryConsumer, groupIDs)
 		if err != nil {
 			return err
 		}
@@ -78,16 +77,20 @@ func (api *API) postRegisterWorkerHandler() service.Handler {
 		// Try to register worker
 		wk, err := worker.RegisterWorker(ctx, tx, api.Cache, workerTokenFromHatchery.Worker, hatchSrv.ID, workerConsumer, registrationForm)
 		if err != nil {
-			err = sdk.NewError(sdk.ErrUnauthorized, err)
-			return sdk.WrapError(err, "[%s] Registering failed", workerTokenFromHatchery.Worker.WorkerName)
+			return sdk.NewErrorWithStack(
+				sdk.WrapError(err, "[%s] Registering failed", workerTokenFromHatchery.Worker.WorkerName),
+				sdk.ErrUnauthorized,
+			)
 		}
 
 		log.Debug("New worker: [%s] - %s", wk.ID, wk.Name)
 
 		workerSession, err := authentication.NewSession(ctx, tx, workerConsumer, workerauth.SessionDuration, false)
 		if err != nil {
-			err = sdk.NewError(sdk.ErrUnauthorized, err)
-			return sdk.WrapError(err, "[%s] Registering failed", workerTokenFromHatchery.Worker.WorkerName)
+			return sdk.NewErrorWithStack(
+				sdk.WrapError(err, "[%s] Registering failed", workerTokenFromHatchery.Worker.WorkerName),
+				sdk.ErrUnauthorized,
+			)
 		}
 
 		if err := tx.Commit(); err != nil {
@@ -96,8 +99,10 @@ func (api *API) postRegisterWorkerHandler() service.Handler {
 
 		jwt, err = authentication.NewSessionJWT(workerSession)
 		if err != nil {
-			err = sdk.NewError(sdk.ErrUnauthorized, err)
-			return sdk.WrapError(err, "[%s] Registering failed", workerTokenFromHatchery.Worker.WorkerName)
+			return sdk.NewErrorWithStack(
+				sdk.WrapError(err, "[%s] Registering failed", workerTokenFromHatchery.Worker.WorkerName),
+				sdk.ErrUnauthorized,
+			)
 		}
 
 		// Set the JWT token as a header
@@ -113,19 +118,18 @@ func (api *API) getWorkersHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		var workers []sdk.Worker
 		var err error
-		h, isHatchery := api.isHatchery(ctx)
-		if isHatchery && h != nil {
-			workers, err = worker.LoadByHatcheryID(ctx, api.mustDB(), h.ID)
+		if isHatchery(ctx) {
+			workers, err = worker.LoadByHatcheryID(ctx, api.mustDB(), getAPIConsumer(ctx).Service.ID)
 			if err != nil {
 				return err
 			}
 		} else if isMaintainer(ctx) {
-			// TODO Load worker for users
 			workers, err = worker.LoadAll(ctx, api.mustDB())
 			if err != nil {
 				return err
 			}
 		}
+		// TODO load workers for users
 		return service.WriteJSON(w, workers, http.StatusOK)
 	}
 }

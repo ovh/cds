@@ -31,6 +31,7 @@ func workflow() *cobra.Command {
 		cli.NewCommand(workflowPushCmd, workflowPushRun, nil, withAllCommandModifiers()...),
 		cli.NewCommand(workflowFavoriteCmd, workflowFavoriteRun, nil, withAllCommandModifiers()...),
 		cli.NewGetCommand(workflowTransformAsCodeCmd, workflowTransformAsCodeRun, nil, withAllCommandModifiers()...),
+		workflowLabel(),
 		workflowArtifact(),
 		workflowLog(),
 		workflowAdvanced(),
@@ -56,7 +57,7 @@ func workflowNodeForCurrentRepo(projectKey, workflowName string) (int64, error) 
 		},
 		{
 			Name:  "git.hash",
-			Value: latestCommit.Hash,
+			Value: latestCommit.LongHash,
 		},
 	}
 

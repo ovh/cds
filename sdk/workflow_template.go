@@ -5,6 +5,7 @@ import (
 	json "encoding/json"
 	"fmt"
 	"strings"
+	"text/template"
 
 	"github.com/ovh/cds/sdk/slug"
 )
@@ -35,12 +36,12 @@ func (w *WorkflowTemplateRequest) Scan(src interface{}) error {
 	return WrapError(json.Unmarshal(source, w), "cannot unmarshal WorkflowTemplateRequest")
 }
 
-// WorkflowTemplateResult struct.
-type WorkflowTemplateResult struct {
-	Workflow     string
-	Pipelines    []string
-	Applications []string
-	Environments []string
+// WorkflowTemplateParsed struct.
+type WorkflowTemplateParsed struct {
+	Workflow     *template.Template
+	Pipelines    []*template.Template
+	Applications []*template.Template
+	Environments []*template.Template
 }
 
 // WorkflowTemplate struct.
@@ -187,6 +188,17 @@ func (w *WorkflowTemplate) Update(data WorkflowTemplate) {
 	w.ImportURL = data.ImportURL
 }
 
+func (w WorkflowTemplate) Path() string {
+	return fmt.Sprintf("%s/%s", w.Group.Name, w.Slug)
+}
+
+func (w WorkflowTemplate) PathWithVersion() string {
+	if w.Version < 1 {
+		return w.Path()
+	}
+	return fmt.Sprintf("%s@%d", w.Path(), w.Version)
+}
+
 // WorkflowTemplatesToIDs returns ids of given workflow templates.
 func WorkflowTemplatesToIDs(wts []*WorkflowTemplate) []int64 {
 	ids := make([]int64, len(wts))
@@ -252,13 +264,15 @@ const (
 	ParameterTypeString     TemplateParameterType = "string"
 	ParameterTypeBoolean    TemplateParameterType = "boolean"
 	ParameterTypeRepository TemplateParameterType = "repository"
+	ParameterTypeSSHKey     TemplateParameterType = "ssh-key"
+	ParameterTypePGPKey     TemplateParameterType = "pgp-key"
 	ParameterTypeJSON       TemplateParameterType = "json"
 )
 
 // IsValid returns parameter type validity.
 func (t TemplateParameterType) IsValid() bool {
 	switch t {
-	case ParameterTypeString, ParameterTypeBoolean, ParameterTypeRepository, ParameterTypeJSON:
+	case ParameterTypeString, ParameterTypeBoolean, ParameterTypeRepository, ParameterTypeSSHKey, ParameterTypePGPKey, ParameterTypeJSON:
 		return true
 	}
 	return false
@@ -421,7 +435,7 @@ func WorkflowTemplateInstancesToWorkflowTemplateIDs(wtis []*WorkflowTemplateInst
 // WorkflowTemplateBulk contains info about a template bulk task.
 type WorkflowTemplateBulk struct {
 	ID                 int64                          `json:"id" db:"id"`
-	UserID             int64                          `json:"user_id" db:"user_id"`
+	UserID             string                         `json:"user_id" db:"authentified_user_id"`
 	WorkflowTemplateID int64                          `json:"workflow_template_id" db:"workflow_template_id"`
 	Operations         WorkflowTemplateBulkOperations `json:"operations" db:"operations"`
 }

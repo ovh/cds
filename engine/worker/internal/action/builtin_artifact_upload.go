@@ -79,10 +79,11 @@ func RunArtifactUpload(ctx context.Context, wk workerruntime.Runtime, a sdk.Acti
 	wg.Add(len(filesPath))
 	for _, p := range filesPath {
 		go func(path string) {
-			log.Debug("Uploading %s projectKey:%v integrationName:%v job:%d", path, projectKey, integrationName, jobID)
+			log.Debug("worker.RunArtifactUpload> Uploading %s projectKey:%v integrationName:%v job:%d", path, projectKey, integrationName, jobID)
 			defer wg.Done()
 			throughTempURL, duration, err := wk.Client().QueueArtifactUpload(ctx, projectKey, integrationName, jobID, tag.Value, path)
 			if err != nil {
+				log.Warning(ctx, "worker.RunArtifactUpload> QueueArtifactUpload(%s, %s, %d, %s, %s) failed: %v", projectKey, integrationName, jobID, tag.Value, path, err)
 				chanError <- sdk.WrapError(err, "Error while uploading artifact %s", path)
 				wgErrors.Add(1)
 				return

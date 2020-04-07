@@ -12,11 +12,6 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-type myPayload struct {
-	RandomID string `json:"consumer_id"`
-	Nonce    int64  `json:"nonce"`
-}
-
 func TestResetConsumerToken(t *testing.T) {
 	_, store, end := test.SetupPG(t, bootstrap.InitiliazeDB)
 	defer end()

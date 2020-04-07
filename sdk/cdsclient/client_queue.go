@@ -86,10 +86,13 @@ func (c *client) QueuePolling(ctx context.Context, jobs chan<- sdk.WorkflowNodeJ
 			_ = json.Unmarshal(content, &apiEvent) // ignore errors
 			// filter only EventRunWorkflowJob
 			if apiEvent.EventType == "sdk.EventRunWorkflowJob" {
-				jobRunID, ok := apiEvent.Payload["ID"].(float64)
-				status, okStatus := apiEvent.Payload["Status"].(string)
-				if ok && okStatus && status == sdk.StatusWaiting {
-					job, err := c.QueueJobInfo(ctx, int64(jobRunID))
+				var runJob sdk.EventRunWorkflowJob
+				if err := json.Unmarshal(apiEvent.Payload, &runJob); err != nil {
+					errs <- fmt.Errorf("unable to unmarshal job event: %v", err)
+					continue
+				}
+				if runJob.ID != 0 && runJob.Status == sdk.StatusWaiting {
+					job, err := c.QueueJobInfo(ctx, runJob.ID)
 
 					// Do not log the error if the job does not exist
 					if sdk.ErrorIs(err, sdk.ErrWorkflowNodeRunJobNotFound) {
@@ -97,7 +100,7 @@ func (c *client) QueuePolling(ctx context.Context, jobs chan<- sdk.WorkflowNodeJ
 					}
 
 					if err != nil {
-						errs <- fmt.Errorf("unable to get job %v info: %v", jobRunID, err)
+						errs <- fmt.Errorf("unable to get job %v info: %v", runJob.ID, err)
 						continue
 					}
 
@@ -489,8 +492,11 @@ func (c *client) queueDirectArtifactUpload(projectKey, integrationName string, n
 		_, code, err = c.UploadMultiPart("POST", uri, body,
 			SetHeader("Content-Disposition", "attachment; filename="+name),
 			SetHeader("Content-Type", writer.FormDataContentType()))
-		if err == nil && code < 300 {
-			return nil
+		if err == nil {
+			if code < 400 {
+				return nil
+			}
+			err = fmt.Errorf("Error: HTTP code status %d", code)
 		}
 		time.Sleep(3 * time.Second)
 	}

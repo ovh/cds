@@ -62,7 +62,7 @@ func TestErrorIs(t *testing.T) {
 
 func TestNewError(t *testing.T) {
 	err := NewError(ErrWrongRequest, fmt.Errorf("this is an error generated from vendor"))
-	assert.Equal(t, "TestNewError: wrong request (caused by: this is an error generated from vendor)", err.Error())
+	assert.Equal(t, "TestNewError: wrong request (from: this is an error generated from vendor)", err.Error())
 
 	// print the error call stack
 	t.Log(err)
@@ -115,12 +115,22 @@ func TestCause(t *testing.T) {
 
 func TestNewAdvancedError(t *testing.T) {
 	err := NewErrorFrom(ErrWrongRequest, "this is an error generated from vendor")
+	assert.Equal(t, "TestNewAdvancedError>NewErrorFrom: wrong request (from: this is an error generated from vendor)", err.Error())
 	httpErr := ExtractHTTPError(err, "fr")
 	assert.Equal(t, "la requête est incorrecte (from: this is an error generated from vendor)", httpErr.Error())
 
 	err = WrapError(err, "Something no visible for http error")
+	assert.Equal(t, "TestNewAdvancedError>NewErrorFrom: wrong request (from: this is an error generated from vendor) (caused by: Something no visible for http error: this is an error generated from vendor)", err.Error())
+	httpErr = ExtractHTTPError(err, "fr")
+	assert.Equal(t, "la requête est incorrecte (from: this is an error generated from vendor)", httpErr.Error())
 
 	err = NewError(ErrAlreadyTaken, err)
+	assert.Equal(t, "TestNewAdvancedError>NewErrorFrom: This job is already taken by another worker (from: this is an error generated from vendor) (caused by: Something no visible for http error: this is an error generated from vendor)", err.Error())
 	httpErr = ExtractHTTPError(err, "fr")
 	assert.Equal(t, "Ce job est déjà en cours de traitement par un autre worker (from: this is an error generated from vendor)", httpErr.Error())
+
+	err = NewErrorWithStack(err, NewErrorFrom(ErrNotFound, "can't found this"))
+	assert.Equal(t, "TestNewAdvancedError>NewErrorFrom: resource not found (from: can't found this) (caused by: Something no visible for http error: this is an error generated from vendor)", err.Error())
+	httpErr = ExtractHTTPError(err, "fr")
+	assert.Equal(t, "la ressource n'existe pas (from: can't found this)", httpErr.Error())
 }

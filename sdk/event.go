@@ -1,52 +1,44 @@
 package sdk
 
 import (
+	"encoding/json"
 	"time"
-)
-
-// These are constant for events about workflow runs
-const (
-	EventSubsWorkflowRuns = "event:workflow:runs"
-	EventSubWorkflowRun   = "event:workflow:run"
 )
 
 // Event represents a event from API
 // Event is "create", "update", "delete"
 // Status is  "Waiting" "Building" "Success" "Fail" "Unknown", optional
 // DateEvent is a date (timestamp format)
-//easyjson:json
 type Event struct {
-	Timestamp           time.Time              `json:"timestamp"`
-	Hostname            string                 `json:"hostname"`
-	CDSName             string                 `json:"cdsname"`
-	EventType           string                 `json:"type_event"` // go type of payload
-	Payload             map[string]interface{} `json:"payload"`
-	Attempts            int                    `json:"attempt"`
-	Username            string                 `json:"username,omitempty"`
-	UserMail            string                 `json:"user_mail,omitempty"`
-	ProjectKey          string                 `json:"project_key,omitempty"`
-	ApplicationName     string                 `json:"application_name,omitempty"`
-	PipelineName        string                 `json:"pipeline_name,omitempty"`
-	EnvironmentName     string                 `json:"environment_name,omitempty"`
-	WorkflowName        string                 `json:"workflow_name,omitempty"`
-	WorkflowRunNum      int64                  `json:"workflow_run_num,omitempty"`
-	WorkflowRunNumSub   int64                  `json:"workflow_run_num_sub,omitempty"`
-	WorkflowNodeRunID   int64                  `json:"workflow_node_run_id,omitempty"`
-	OperationUUID       string                 `json:"operation_uuid,omitempty"`
-	Status              string                 `json:"status,omitempty"`
-	Tags                []WorkflowRunTag       `json:"tag,omitempty"`
-	EventIntegrationsID []int64                `json:"event_integrations_id"`
+	Timestamp           time.Time        `json:"timestamp"`
+	Hostname            string           `json:"hostname"`
+	CDSName             string           `json:"cdsname"`
+	EventType           string           `json:"type_event"` // go type of payload
+	Payload             json.RawMessage  `json:"payload"`
+	Attempts            int              `json:"attempt"`
+	Username            string           `json:"username,omitempty"`
+	UserMail            string           `json:"user_mail,omitempty"`
+	ProjectKey          string           `json:"project_key,omitempty"`
+	ApplicationName     string           `json:"application_name,omitempty"`
+	PipelineName        string           `json:"pipeline_name,omitempty"`
+	EnvironmentName     string           `json:"environment_name,omitempty"`
+	WorkflowName        string           `json:"workflow_name,omitempty"`
+	WorkflowRunNum      int64            `json:"workflow_run_num,omitempty"`
+	WorkflowRunNumSub   int64            `json:"workflow_run_num_sub,omitempty"`
+	WorkflowNodeRunID   int64            `json:"workflow_node_run_id,omitempty"`
+	OperationUUID       string           `json:"operation_uuid,omitempty"`
+	Status              string           `json:"status,omitempty"`
+	Tags                []WorkflowRunTag `json:"tag,omitempty"`
+	EventIntegrationsID []int64          `json:"event_integrations_id"`
 }
 
 // EventFilter represents filters when getting events
-//easyjson:json
 type EventFilter struct {
 	CurrentItem int            `json:"current_item"`
 	Filter      TimelineFilter `json:"filter"`
 }
 
 // EventSubscription data send to api to subscribe to an event
-//easyjson:json
 type EventSubscription struct {
 	UUID         string `json:"uuid"`
 	ProjectKey   string `json:"key"`
@@ -57,13 +49,11 @@ type EventSubscription struct {
 }
 
 // EventEngine contains event data for engine
-//easyjson:json
 type EventEngine struct {
 	Message string `json:"message"`
 }
 
 // EventRunWorkflowNode contains event data for a workflow node run
-//easyjson:json
 type EventRunWorkflowNode struct {
 	ID                    int64                     `json:"id,omitempty"`
 	NodeID                int64                     `json:"node_id,omitempty"`
@@ -103,7 +93,6 @@ type GerritChangeEvent struct {
 }
 
 // EventRunWorkflowOutgoingHook contains event data for a workflow outgoing hook run
-//easyjson:json
 type EventRunWorkflowOutgoingHook struct {
 	HookID            int64  `json:"hook_id"`
 	ID                string `json:"id"`
@@ -116,7 +105,6 @@ type EventRunWorkflowOutgoingHook struct {
 }
 
 // EventRunWorkflowJob contains event data for a workflow job node run
-//easyjson:json
 type EventRunWorkflowJob struct {
 	ID           int64         `json:"id,omitempty"`
 	Status       string        `json:"status,omitempty"`
@@ -129,7 +117,6 @@ type EventRunWorkflowJob struct {
 }
 
 // EventRunWorkflow contains event data for a workflow run
-//easyjson:json
 type EventRunWorkflow struct {
 	ID               int64            `json:"id"`
 	Number           int64            `json:"num"`
@@ -141,28 +128,7 @@ type EventRunWorkflow struct {
 	Tags             []WorkflowRunTag `json:"tags"`
 }
 
-// EventJob contains event data for a job
-//easyjson:json
-type EventJob struct {
-	Version         int64  `json:"version,omitempty"`
-	JobName         string `json:"jobName,omitempty"`
-	JobID           int64  `json:"jobID,omitempty"`
-	Status          string `json:"status,omitempty"`
-	Queued          int64  `json:"queued,omitempty"`
-	Start           int64  `json:"start,omitempty"`
-	Done            int64  `json:"done,omitempty"`
-	ModelName       string `json:"modelName,omitempty"`
-	PipelineName    string `json:"pipelineName,omitempty"`
-	PipelineType    string `json:"type,omitempty"`
-	ProjectKey      string `json:"projectKey,omitempty"`
-	ApplicationName string `json:"applicationName,omitempty"`
-	EnvironmentName string `json:"environmentName,omitempty"`
-	BranchName      string `json:"branchName,omitempty"`
-	Hash            string `json:"hash,omitempty"`
-}
-
 // EventNotif contains event data for a job
-//easyjson:json
 type EventNotif struct {
 	Recipients []string `json:"recipients"`
 	Subject    string   `json:"subject,omitempty"`
@@ -170,7 +136,6 @@ type EventNotif struct {
 }
 
 // EventMaintenance contains event data for maintenance event
-//easyjson:json
 type EventMaintenance struct {
 	Enable bool `json:"enable"`
 }

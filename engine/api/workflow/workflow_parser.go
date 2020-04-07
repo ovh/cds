@@ -27,42 +27,35 @@ type ImportOptions struct {
 }
 
 // Parse parse an exportentities.workflow and return the parsed workflow
-func Parse(ctx context.Context, proj *sdk.Project, ew *exportentities.Workflow) (*sdk.Workflow, error) {
-	log.Info(ctx, "Parse>> Parse workflow %s in project %s", ew.Name, proj.Key)
+func Parse(ctx context.Context, proj sdk.Project, ew exportentities.Workflow) (*sdk.Workflow, error) {
+	log.Info(ctx, "Parse>> Parse workflow %s in project %s", ew.GetName(), proj.Key)
 	log.Debug("Parse>> Workflow: %+v", ew)
 
-	//Check valid application name
-	rx := sdk.NamePatternRegex
-	if !rx.MatchString(ew.Name) {
-		return nil, sdk.WrapError(sdk.ErrInvalidApplicationPattern, "Workflow name %s do not respect pattern %s", ew.Name, sdk.NamePattern)
-	}
-
-	//Inherit permissions from project
-	if len(ew.Permissions) == 0 {
-		ew.Permissions = make(map[string]int)
-		for _, p := range proj.ProjectGroups {
-			ew.Permissions[p.Group.Name] = p.Permission
-		}
-	}
-
 	//Parse workflow
-	w, errW := ew.GetWorkflow()
+	w, errW := exportentities.ParseWorkflow(ew)
 	if errW != nil {
 		return nil, sdk.NewError(sdk.ErrWrongRequest, errW)
 	}
 	w.ProjectID = proj.ID
 	w.ProjectKey = proj.Key
 
+	// Get permission from project if needed
+	if len(w.Groups) == 0 {
+		w.Groups = make([]sdk.GroupPermission, 0, len(proj.ProjectGroups))
+		for _, gp := range proj.ProjectGroups {
+			perm := sdk.GroupPermission{Group: sdk.Group{Name: gp.Group.Name}, Permission: gp.Permission}
+			w.Groups = append(w.Groups, perm)
+		}
+	}
 	return w, nil
 }
 
 // ParseAndImport parse an exportentities.workflow and insert or update the workflow in database
-func ParseAndImport(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, oldW *sdk.Workflow, ew *exportentities.Workflow, u sdk.Identifiable, opts ImportOptions) (*sdk.Workflow, []sdk.Message, error) {
+func ParseAndImport(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj sdk.Project, oldW *sdk.Workflow, ew exportentities.Workflow, u sdk.Identifiable, opts ImportOptions) (*sdk.Workflow, []sdk.Message, error) {
 	ctx, end := observability.Span(ctx, "workflow.ParseAndImport")
 	defer end()
 
-	log.Info(ctx, "ParseAndImport>> Import workflow %s in project %s (force=%v)", ew.Name, proj.Key, opts.Force)
-	log.Debug("ParseAndImport>> Workflow: %+v", ew)
+	log.Info(ctx, "ParseAndImport>> Import workflow %s in project %s (force=%v)", ew.GetName(), proj.Key, opts.Force)
 
 	//Parse workflow
 	w, errW := Parse(ctx, proj, ew)
@@ -133,7 +126,6 @@ func ParseAndImport(ctx context.Context, db gorp.SqlExecutor, store cache.Store,
 						UUID:          oldRepoWebHook.UUID,
 						HookModelName: oldRepoWebHook.HookModelName,
 						Config:        oldRepoWebHook.Config.Clone(),
-						Ref:           oldRepoWebHook.Ref,
 						HookModelID:   oldRepoWebHook.HookModelID,
 					}
 					h.Config[sdk.HookConfigWorkflow] = sdk.WorkflowNodeHookConfigValue{Value: w.Name}
@@ -146,11 +138,24 @@ func ParseAndImport(ctx context.Context, db gorp.SqlExecutor, store cache.Store,
 		// we have to create a new repo webhook
 		if oldW == nil || oldRepoWebHook == nil {
 			// Init new repo webhook
-			w.WorkflowData.Node.Hooks = append(w.WorkflowData.Node.Hooks, sdk.NodeHook{
+			var newRepoWebHook = sdk.NodeHook{
 				HookModelName: sdk.RepositoryWebHookModel.Name,
 				HookModelID:   sdk.RepositoryWebHookModel.ID,
 				Config:        sdk.RepositoryWebHookModel.DefaultConfig.Clone(),
-			})
+			}
+
+			// If the new workflow already contains a repowebhook (comparing refs), we dont have to add a new one
+			var hasARepoWebHook bool
+			for _, h := range w.WorkflowData.Node.Hooks {
+				if h.Ref() == newRepoWebHook.Ref() {
+					hasARepoWebHook = true
+					break
+				}
+			}
+			if !hasARepoWebHook {
+				w.WorkflowData.Node.Hooks = append(w.WorkflowData.Node.Hooks, newRepoWebHook)
+			}
+
 			var err error
 			if w.WorkflowData.Node.Context.DefaultPayload, err = DefaultPayload(ctx, db, store, proj, w); err != nil {
 				return nil, nil, sdk.WrapError(err, "Unable to get default payload")
@@ -181,6 +186,10 @@ func ParseAndImport(ctx context.Context, db gorp.SqlExecutor, store cache.Store,
 	globalError := Import(ctx, db, store, proj, oldW, w, u, opts.Force, msgChan)
 	close(msgChan)
 	done.Wait()
+
+	if ew.GetVersion() == exportentities.WorkflowVersion1 {
+		msgList = append(msgList, sdk.NewMessage(sdk.MsgWorkflowDeprecatedVersion, proj.Key, ew.GetName()))
+	}
 
 	return w, msgList, globalError
 }

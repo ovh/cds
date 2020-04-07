@@ -30,6 +30,15 @@ type Node struct {
 	Groups              []GroupPermission `json:"groups,omitempty" db:"-"`
 }
 
+func (n Node) GetHook(UUID string) *NodeHook {
+	for _, h := range n.Hooks {
+		if h.UUID == UUID {
+			return &h
+		}
+	}
+	return nil
+}
+
 // NodeContext represents a node linked to a pipeline
 type NodeContext struct {
 	ID                        int64                  `json:"id" db:"id"`
@@ -197,7 +206,7 @@ func (n *Node) maps(m map[int64]*Node) map[int64]*Node {
 	return m
 }
 
-func (n *Node) Ancestors(w *WorkflowData) []int64 {
+func (n *Node) Ancestors(w WorkflowData) []int64 {
 	if n == nil {
 		return nil
 	}
@@ -257,7 +266,7 @@ func (n *Node) IsLinkedToRepo(w *Workflow) bool {
 }
 
 // CheckApplicationDeploymentStrategies checks application deployment strategies
-func (n Node) CheckApplicationDeploymentStrategies(proj *Project, w *Workflow) error {
+func (n Node) CheckApplicationDeploymentStrategies(proj Project, w *Workflow) error {
 	if n.Context == nil {
 		return nil
 	}

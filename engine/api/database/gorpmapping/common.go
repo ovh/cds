@@ -21,9 +21,6 @@ const (
 	// ViolateUniqueKeyPGCode is the pg code when duplicating unique key
 	ViolateUniqueKeyPGCode = "23505"
 
-	// RowLockedPGCode is the pg code when trying to access to a locked row
-	RowLockedPGCode = "55P03"
-
 	// StringDataRightTruncation is raisedalue is too long for varchar.
 	StringDataRightTruncation = "22001"
 )
@@ -165,16 +162,17 @@ func (a ArgsMap) Merge(other ArgsMap) ArgsMap {
 	return a
 }
 
-func LoadTupleByPrimaryKey(db gorp.SqlExecutor, entity string, pk interface{}) (interface{}, error) {
+func LoadTupleByPrimaryKey(db gorp.SqlExecutor, entity string, pk interface{}, opts ...GetOptionFunc) (interface{}, error) {
 	e, ok := Mapping[entity]
 	if !ok {
-		return nil, sdk.WithStack(errors.New("unknown entity"))
+		fmt.Println(Mapping)
+		return nil, sdk.WithStack(fmt.Errorf("unknown entity %s", entity))
 	}
 
 	newTargetPtr := reflect.New(reflect.TypeOf(e.Target))
 
-	query := NewQuery(fmt.Sprintf("select * from %s where %s::text = $1::text", e.Name, e.Keys[0])).Args(pk)
-	found, err := Get(context.Background(), db, query, newTargetPtr.Interface())
+	query := NewQuery(fmt.Sprintf(`select * from "%s" where %s::text = $1::text`, e.Name, e.Keys[0])).Args(pk)
+	found, err := Get(context.Background(), db, query, newTargetPtr.Interface(), opts...)
 	if err != nil {
 		return nil, err
 	}

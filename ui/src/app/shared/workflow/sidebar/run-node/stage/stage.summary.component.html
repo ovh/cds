@@ -1,16 +1,21 @@
 <a class="step stage" (click)="open = !open" (dblclick)="goToStageLogs()">
   <div>
-    <app-status-icon [status]="stage.status" class="stage"></app-status-icon>
+    <app-status-icon [status]="stageStatus" class="stage"></app-status-icon>
   </div>
   <div>
-    <div class="title stage">{{stage.name}} <i class="warning sign icon orange" *ngIf="warning"></i></div>
+    <div class="title stage">{{stageName}} <i class="warning sign icon orange" *ngIf="stageWarning"></i></div>
   </div>
-  <div class="forceRight" *ngIf="stage.run_jobs && stage.run_jobs.length">
+  <div class="forceRight" *ngIf="jobsIds && jobsIds.length > 0">
     <i class="caret icon" [class.right]="!open" [class.down]="open"></i>
   </div>
 </a>
-<ng-container *ngIf="open">
-  <ng-container *ngFor="let job of stage.run_jobs">
-    <app-job-step-summary [job]="job" [stage]="stage" [workflowRun]="workflowRun" [workflowNode]="workflowNode"></app-job-step-summary>
+<div [hidden]="!open">
+  <ng-container *ngFor="let jid of jobsIds">
+    <app-job-step-summary
+            [jobId]="jid"
+            [runNumber]="runNumber"
+            [stageId]="stageId"
+            [workflowRunNodeId]="workflowNodeRunId"
+            [nodeName]="nodeName"></app-job-step-summary>
   </ng-container>
-</ng-container>
+</div>

@@ -23,6 +23,7 @@ export enum ColumnType {
     LINK = 'link',
     ROUTER_LINK = 'router-link',
     ROUTER_LINK_WITH_ICONS = 'router-link-with-icons',
+    ROUTER_LINK_WITH_LABELS = 'router-link-with-labels',
     MARKDOWN = 'markdown',
     DATE = 'date',
     BUTTON = 'button',
@@ -35,7 +36,8 @@ export enum ColumnType {
 }
 
 export type SelectorType<T> = (d: T) => ColumnType;
-export type Selector<T> = (d: T) => any;
+export type SelectorFlag<T> = (d: T) => boolean;
+export type Selector<T> = (d: T, index?: number) => any;
 export type Filter<T> = (f: string) => (d: T) => boolean;
 export type Select<T> = (d: T) => boolean;
 
@@ -47,11 +49,12 @@ export class Column<T> {
     sortable: boolean;
     sortKey: string;
     disabled: boolean;
+    hidden: SelectorFlag<T>;
 }
 
 @Pipe({ name: 'selector' })
 export class SelectorPipe<T> implements PipeTransform {
-    transform(columns: Array<Column<T>>, data: T): Array<any> {
+    transform(columns: Array<Column<T>>, data: T, index?: number): Array<any> {
         return columns.map(c => {
             let type: ColumnType;
             switch (typeof c.type) {
@@ -63,7 +66,7 @@ export class SelectorPipe<T> implements PipeTransform {
                     break;
             }
 
-            let selector = c.selector(data);
+            let selector = c.selector(data, index);
 
             let translate: boolean;
             if (!type || type === ColumnType.TEXT) {
@@ -74,7 +77,8 @@ export class SelectorPipe<T> implements PipeTransform {
                 ...c,
                 type,
                 selector,
-                translate
+                translate,
+                hidden: c.hidden && c.hidden(data)
             };
         });
     }

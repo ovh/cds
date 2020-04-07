@@ -8,14 +8,13 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/ovh/cds/engine/api/application"
-	"github.com/ovh/cds/engine/api/bootstrap"
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/api/test/assets"
 	"github.com/ovh/cds/sdk"
 )
 
 func Test_getNavbarHandler(t *testing.T) {
-	api, db, _, end := newTestAPI(t, bootstrap.InitiliazeDB)
+	api, db, _, end := newTestAPI(t)
 	defer end()
 
 	u, pass := assets.InsertAdminUser(t, api.mustDB())
@@ -27,8 +26,8 @@ func Test_getNavbarHandler(t *testing.T) {
 	app2 := sdk.Application{
 		Name: "my-app-2",
 	}
-	test.NoError(t, application.Insert(db, api.Cache, proj, &app1))
-	test.NoError(t, application.Insert(db, api.Cache, proj, &app2))
+	test.NoError(t, application.Insert(db, api.Cache, *proj, &app1))
+	test.NoError(t, application.Insert(db, api.Cache, *proj, &app2))
 
 	//Prepare request
 	uri := api.Router.GetRoute("GET", api.getNavbarHandler, nil)

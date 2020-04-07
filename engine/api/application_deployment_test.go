@@ -30,7 +30,7 @@ func Test_getApplicationDeploymentStrategiesConfigHandler(t *testing.T) {
 	app := &sdk.Application{
 		Name: sdk.RandomString(10),
 	}
-	test.NoError(t, application.Insert(api.mustDB(), api.Cache, proj, app))
+	test.NoError(t, application.Insert(api.mustDB(), api.Cache, *proj, app))
 
 	vars := map[string]string{
 		"permProjectKey":  proj.Key,
@@ -57,7 +57,7 @@ func Test_postApplicationDeploymentStrategyConfigHandler(t *testing.T) {
 	app := &sdk.Application{
 		Name: sdk.RandomString(10),
 	}
-	test.NoError(t, application.Insert(api.mustDB(), api.Cache, proj, app))
+	test.NoError(t, application.Insert(api.mustDB(), api.Cache, *proj, app))
 
 	pf := sdk.IntegrationModel{
 		Name:       "test-deploy-post-2" + pkey,
@@ -180,7 +180,7 @@ func Test_postApplicationDeploymentStrategyConfigHandler_InsertTwoDifferentInteg
 	app := &sdk.Application{
 		Name: sdk.RandomString(10),
 	}
-	test.NoError(t, application.Insert(api.mustDB(), api.Cache, proj, app))
+	test.NoError(t, application.Insert(api.mustDB(), api.Cache, *proj, app))
 
 	pf := sdk.IntegrationModel{
 		Name:       "test-deploy-TwoDifferentIntegrations-2" + pkey,
@@ -302,14 +302,15 @@ func Test_postApplicationDeploymentStrategyConfigHandlerAsProvider(t *testing.T)
 	localConsumer, err := authentication.LoadConsumerByTypeAndUserID(context.TODO(), api.mustDB(), sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
 	require.NoError(t, err)
 
-	_, jws, err := builtin.NewConsumer(context.TODO(), api.mustDB(), sdk.RandomString(10), sdk.RandomString(10), localConsumer, u.GetGroupIDs(), Scope(sdk.AuthConsumerScopeProject))
+	_, jws, err := builtin.NewConsumer(context.TODO(), api.mustDB(), sdk.RandomString(10), sdk.RandomString(10), localConsumer, u.GetGroupIDs(),
+		sdk.NewAuthConsumerScopeDetails(sdk.AuthConsumerScopeProject))
 
 	pkey := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, api.mustDB(), api.Cache, pkey, pkey)
 	app := &sdk.Application{
 		Name: sdk.RandomString(10),
 	}
-	test.NoError(t, application.Insert(api.mustDB(), api.Cache, proj, app))
+	test.NoError(t, application.Insert(api.mustDB(), api.Cache, *proj, app))
 
 	pf := sdk.IntegrationModel{
 		Name:       "test-deploy-3" + pkey,

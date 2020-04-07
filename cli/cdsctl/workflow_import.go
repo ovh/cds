@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/ovh/cds/cli"
+	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/ovh/cds/sdk/exportentities"
 )
 
@@ -39,9 +40,15 @@ func workflowImportRun(c cli.Values) error {
 		return err
 	}
 	defer contentFile.Close() //nolint
-	formatStr, _ := exportentities.GetFormatStr(format)
 
-	msgs, err := client.WorkflowImport(c.GetString(_ProjectKey), contentFile, formatStr, c.GetBool("force"))
+	mods := []cdsclient.RequestModifier{
+		cdsclient.ContentType(format.ContentType()),
+	}
+	if c.GetBool("force") {
+		mods = append(mods, cdsclient.Force())
+	}
+
+	msgs, err := client.WorkflowImport(c.GetString(_ProjectKey), contentFile, mods...)
 	for _, s := range msgs {
 		fmt.Println(s)
 	}

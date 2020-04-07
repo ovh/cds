@@ -25,8 +25,8 @@ type DownloadableResource struct {
 
 var (
 	binaries      = []string{"engine", "worker", "cdsctl"}
-	supportedOS   = []string{"windows", "darwin", "linux", "freebsd"}
-	supportedARCH = []string{"amd64", "arm", "386", "arm64"}
+	supportedOS   = []string{"windows", "darwin", "linux", "freebsd", "openbsd"}
+	supportedARCH = []string{"amd64", "arm", "386", "arm64", "ppc64le"}
 	cdsctlVariant = []string{"nokeychain"}
 )
 

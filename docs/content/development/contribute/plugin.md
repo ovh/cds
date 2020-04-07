@@ -19,4 +19,4 @@ In order to communicate with a CDS worker, a plugin MUST fill the following requ
 
 More resources that may help you in developing a CDS plugin are available: [SDK in this directory](https://github.com/ovh/cds/tree/master/sdk/grpcplugin/actionplugin) with some examples [here](https://github.com/ovh/cds/tree/master/contrib/grpcplugins/action/examples).
 
-Contribute on https://github.com/ovh/cds/tree/master/contrib/grpcplugin/action
+Contribute on https://github.com/ovh/cds/tree/master/contrib/grpcplugins/action

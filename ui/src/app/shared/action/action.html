@@ -112,21 +112,23 @@
     </div>
 
     <div class="ui bottomBtnsWrapper segment"
-        *ngIf="edit && !(pipeline && pipeline.previewMode) && !(pipeline && pipeline.from_repository)">
+        *ngIf="edit && !(pipeline && pipeline.previewMode)">
         <div class="ui grid">
-            <div [ngClass]="editableAction.showAddStep ? 'sixteen wide column' : (editableAction.id ? 'seven wide column' : 'eight wide column')"
+            <div [ngClass]="editableAction.showAddStep ? 'sixteen wide column' : ( (editableAction.id || pipeline?.from_repository) ? 'seven wide column' : 'eight wide column')"
                 *ngIf="publicActions.length > 0">
                 <app-action-step-form [actions]="publicActions" (onEvent)="stepManagement($event)">
                 </app-action-step-form>
             </div>
 
-            <ng-container *ngIf="editableAction.id && !editableAction.showAddStep">
+            <ng-container *ngIf="(editableAction.id || pipeline?.from_repository) && !editableAction.showAddStep">
                 <div [ngClass]="publicActions.length > 0 ? 'seven wide column' : 'fourteen wide column'">
-                    <button class="ui fluid green button" name="updatebtn" (click)="sendActionEvent('update')"
+                    <button class="ui fluid green button" name="updatebtn"
+                            (click)="sendActionEvent('update')"
                         [disabled]="!editableAction.hasChanged || editableAction.loading"
                         [class.loading]="editableAction.loading">
                         <i class="save icon"></i>
-                        {{ 'btn_save' | translate }}
+                        <span *ngIf="!editPipelineMode">{{ 'btn_save' | translate }}</span>
+                        <span *ngIf="editPipelineMode">{{ 'btn_apply' | translate }}</span>
                     </button>
                 </div>
                 <div class="two wide column">
@@ -151,7 +153,7 @@
                 </div>
             </ng-container>
 
-            <div class="eight wide column" *ngIf="!editableAction.id && !editableAction.showAddStep">
+            <div class="eight wide column" *ngIf="!editableAction.id && !pipeline?.from_repository && !editableAction.showAddStep">
                 <button class="ui green button" name="addbtn" (click)="sendActionEvent('insert')"
                     [disabled]="editableAction.loading" [class.loading]="editableAction.loading">
                     <i class="save icon"></i>{{ 'btn_create' | translate }}

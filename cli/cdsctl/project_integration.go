@@ -3,11 +3,11 @@ package main
 import (
 	"fmt"
 	"os"
-	"path/filepath"
 
 	"github.com/spf13/cobra"
 
 	"github.com/ovh/cds/cli"
+	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/ovh/cds/sdk/exportentities"
 )
 
@@ -74,7 +74,13 @@ func projectIntegrationImportFunc(v cli.Values) error {
 		return fmt.Errorf("unable to open file %s: %v", v.GetString("filename"), err)
 	}
 	defer f.Close()
-	_, err = client.ProjectIntegrationImport(v.GetString(_ProjectKey), f, filepath.Ext(v.GetString("filename")), v.GetBool("force"))
+
+	var mods []cdsclient.RequestModifier
+	if v.GetBool("force") {
+		mods = append(mods, cdsclient.Force())
+	}
+
+	_, err = client.ProjectIntegrationImport(v.GetString(_ProjectKey), f, mods...)
 	return err
 }
 

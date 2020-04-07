@@ -1,22 +1,24 @@
-package workflow
+package workflow_test
 
 import (
+	"context"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 
 	"github.com/ovh/cds/engine/api/test"
+	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/sdk"
 )
 
 func TestAggregateOnWorkflowTemplateInstance(t *testing.T) {
 	db := &test.SqlExecutorMock{}
 	db.OnSelect = func(i interface{}) {
-		gs := i.(*sdk.Workflows)
-		*gs = append(*gs, sdk.Workflow{
+		gs := i.(*[]workflow.Workflow)
+		*gs = append(*gs, workflow.Workflow{
 			ID:   1,
 			Name: "wkf-1",
-		}, sdk.Workflow{
+		}, workflow.Workflow{
 			ID:   2,
 			Name: "wkf-2",
 		})
@@ -28,7 +30,7 @@ func TestAggregateOnWorkflowTemplateInstance(t *testing.T) {
 		{WorkflowID: &ids[1]},
 	}
 
-	assert.Nil(t, AggregateOnWorkflowTemplateInstance(db, wtis...))
+	assert.Nil(t, workflow.AggregateOnWorkflowTemplateInstance(context.TODO(), db, wtis...))
 
 	assert.NotNil(t, wtis[0].Workflow)
 	assert.Equal(t, "wkf-1", wtis[0].Workflow.Name)

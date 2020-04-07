@@ -24,7 +24,7 @@ func (api *API) getGroupsHandler() service.Handler {
 		if isMaintainer(ctx) {
 			groups, err = group.LoadAll(ctx, api.mustDB())
 		} else {
-			groups, err = group.LoadAllByDeprecatedUserID(ctx, api.mustDB(), getAPIConsumer(ctx).AuthentifiedUser.OldUserStruct.ID)
+			groups, err = group.LoadAllByUserID(ctx, api.mustDB(), getAPIConsumer(ctx).AuthentifiedUser.ID)
 		}
 		if err != nil {
 			return err
@@ -84,7 +84,7 @@ func (api *API) postGroupHandler() service.Handler {
 		}
 
 		consumer := getAPIConsumer(ctx)
-		if err := group.Create(tx, &newGroup, consumer.AuthentifiedUser.OldUserStruct.ID); err != nil {
+		if err := group.Create(ctx, tx, &newGroup, consumer.AuthentifiedUser.ID); err != nil {
 			return err
 		}
 
@@ -138,7 +138,7 @@ func (api *API) putGroupHandler() service.Handler {
 		newGroup := *oldGroup
 		newGroup.Name = data.Name
 
-		if err := group.Update(tx, &newGroup); err != nil {
+		if err := group.Update(ctx, tx, &newGroup); err != nil {
 			return sdk.WrapError(err, "cannot update group with id: %d", newGroup.ID)
 		}
 
@@ -227,16 +227,16 @@ func (api *API) postGroupUserHandler() service.Handler {
 
 		var u *sdk.AuthentifiedUser
 		if data.ID != "" {
-			u, err = user.LoadByID(ctx, tx, data.ID, user.LoadOptions.WithDeprecatedUser)
+			u, err = user.LoadByID(ctx, tx, data.ID)
 		} else {
-			u, err = user.LoadByUsername(ctx, tx, data.Username, user.LoadOptions.WithDeprecatedUser)
+			u, err = user.LoadByUsername(ctx, tx, data.Username)
 		}
 		if err != nil {
 			return err
 		}
 
 		// If the user is already in group return an error
-		link, err := group.LoadLinkGroupUserForGroupIDAndUserID(ctx, tx, g.ID, u.OldUserStruct.ID)
+		link, err := group.LoadLinkGroupUserForGroupIDAndUserID(ctx, tx, g.ID, u.ID)
 		if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
 			return err
 		}
@@ -245,10 +245,10 @@ func (api *API) postGroupUserHandler() service.Handler {
 		}
 
 		// Create the link between group and user with admin flag from request
-		if err := group.InsertLinkGroupUser(tx, &group.LinkGroupUser{
-			GroupID: g.ID,
-			UserID:  u.OldUserStruct.ID,
-			Admin:   data.Admin,
+		if err := group.InsertLinkGroupUser(ctx, tx, &group.LinkGroupUser{
+			GroupID:            g.ID,
+			AuthentifiedUserID: u.ID,
+			Admin:              data.Admin,
 		}); err != nil {
 			return sdk.WrapError(err, "cannot add user %s in group %s", u.Username, g.Name)
 		}
@@ -293,12 +293,12 @@ func (api *API) putGroupUserHandler() service.Handler {
 			return sdk.WrapError(err, "cannot load group with name: %s", groupName)
 		}
 
-		u, err := user.LoadByUsername(ctx, tx, username, user.LoadOptions.WithDeprecatedUser)
+		u, err := user.LoadByUsername(ctx, tx, username)
 		if err != nil {
 			return err
 		}
 
-		link, err := group.LoadLinkGroupUserForGroupIDAndUserID(ctx, tx, g.ID, u.OldUserStruct.ID)
+		link, err := group.LoadLinkGroupUserForGroupIDAndUserID(ctx, tx, g.ID, u.ID)
 		if err != nil {
 			return err
 		}
@@ -312,7 +312,7 @@ func (api *API) putGroupUserHandler() service.Handler {
 
 			var adminFound bool
 			for i := range links {
-				if links[i].UserID != u.OldUserStruct.ID && links[i].Admin {
+				if links[i].AuthentifiedUserID != u.ID && links[i].Admin {
 					adminFound = true
 					break
 				}
@@ -324,7 +324,7 @@ func (api *API) putGroupUserHandler() service.Handler {
 
 		link.Admin = data.Admin
 
-		if err := group.UpdateLinkGroupUser(tx, link); err != nil {
+		if err := group.UpdateLinkGroupUser(ctx, tx, link); err != nil {
 			return err
 		}
 
@@ -358,12 +358,12 @@ func (api *API) deleteGroupUserHandler() service.Handler {
 			return sdk.WrapError(err, "cannot load group with name: %s", groupName)
 		}
 
-		u, err := user.LoadByUsername(ctx, tx, username, user.LoadOptions.WithDeprecatedUser)
+		u, err := user.LoadByUsername(ctx, tx, username)
 		if err != nil {
 			return err
 		}
 
-		link, err := group.LoadLinkGroupUserForGroupIDAndUserID(ctx, tx, g.ID, u.OldUserStruct.ID)
+		link, err := group.LoadLinkGroupUserForGroupIDAndUserID(ctx, tx, g.ID, u.ID)
 		if err != nil {
 			return err
 		}
@@ -377,7 +377,7 @@ func (api *API) deleteGroupUserHandler() service.Handler {
 
 			var adminFound bool
 			for i := range links {
-				if links[i].UserID != u.OldUserStruct.ID && links[i].Admin {
+				if links[i].AuthentifiedUserID != u.ID && links[i].Admin {
 					adminFound = true
 					break
 				}
@@ -401,7 +401,7 @@ func (api *API) deleteGroupUserHandler() service.Handler {
 		}
 
 		// In case where the user remove himself from group, do not return it
-		if link.UserID == getAPIConsumer(ctx).AuthentifiedUser.OldUserStruct.ID {
+		if link.AuthentifiedUserID == getAPIConsumer(ctx).AuthentifiedUser.ID {
 			return service.WriteJSON(w, nil, http.StatusOK)
 		}
 

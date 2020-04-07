@@ -54,7 +54,7 @@ func Test_authMiddleware_WithAuthConsumerDisabled(t *testing.T) {
 	require.NoError(t, err)
 
 	builtinConsumer, _, err := builtin.NewConsumer(context.TODO(), db, "builtin", "", localConsumer, []int64{g.ID},
-		[]sdk.AuthConsumerScope{sdk.AuthConsumerScopeGroup})
+		sdk.NewAuthConsumerScopeDetails(sdk.AuthConsumerScopes...))
 	require.NoError(t, err)
 	builtinSession, err := authentication.NewSession(context.TODO(), db, builtinConsumer, time.Second*5, false)
 	require.NoError(t, err)
@@ -132,4 +132,97 @@ func Test_authMiddleware_NeedAdmin(t *testing.T) {
 	assert.NoError(t, err, "no error should be returned because a jwt was given for an admin user")
 	require.NotNil(t, getAPIConsumer(ctx))
 	assert.Equal(t, admin.ID, getAPIConsumer(ctx).AuthentifiedUserID)
+}
+
+func Test_authMiddleware_WithAuthConsumerScoped(t *testing.T) {
+	api, db, _, end := newTestAPI(t)
+	defer end()
+
+	g := assets.InsertGroup(t, db)
+	u, _ := assets.InsertLambdaUser(t, db, g)
+	localConsumer, err := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
+	require.NoError(t, err)
+
+	builtinConsumer, _, err := builtin.NewConsumer(context.TODO(), db, "builtin", "", localConsumer, []int64{g.ID}, []sdk.AuthConsumerScopeDetail{
+		{
+			Scope: sdk.AuthConsumerScopeAction,
+			Endpoints: sdk.AuthConsumerScopeEndpoints{
+				{
+					Route:   "/my-handler2",
+					Methods: []string{http.MethodGet},
+				},
+				{
+					Route: "/my-handler3",
+				},
+			},
+		},
+		{
+			Scope: sdk.AuthConsumerScopeAdmin,
+		},
+	})
+	require.NoError(t, err)
+	builtinSession, err := authentication.NewSession(context.TODO(), db, builtinConsumer, time.Second*5, false)
+	require.NoError(t, err)
+	jwt, err := authentication.NewSessionJWT(builtinSession)
+	require.NoError(t, err)
+
+	// GET /my-handler1 is forbidden (scope AccessToken required)
+	configHandler1 := &service.HandlerConfig{
+		CleanURL:      "/my-handler1",
+		AllowedScopes: []sdk.AuthConsumerScope{sdk.AuthConsumerScopeAccessToken},
+		Method:        http.MethodGet,
+	}
+	Auth(true)(configHandler1)
+	req := assets.NewJWTAuthentifiedRequest(t, jwt, configHandler1.Method, configHandler1.CleanURL, nil)
+	w := httptest.NewRecorder()
+	_, err = api.authMiddleware(context.TODO(), w, req, configHandler1)
+	assert.Error(t, err, "an error should be returned because consumer can't do GET on /my-handler1 missing scope")
+
+	// GET /my-handler2 is authorized
+	configHandler2 := &service.HandlerConfig{
+		CleanURL:      "/my-handler2",
+		AllowedScopes: []sdk.AuthConsumerScope{sdk.AuthConsumerScopeAction},
+		Method:        http.MethodGet,
+	}
+	Auth(true)(configHandler2)
+	req = assets.NewJWTAuthentifiedRequest(t, jwt, configHandler2.Method, configHandler2.CleanURL, nil)
+	w = httptest.NewRecorder()
+	_, err = api.authMiddleware(context.TODO(), w, req, configHandler2)
+	assert.NoError(t, err, "no error should be returned because consumer can do GET on /my-handler2")
+
+	// POST /my-handler2 is forbidden (missing POST method in scope Action)
+	configHandler3 := &service.HandlerConfig{
+		CleanURL:      "/my-handler2",
+		AllowedScopes: []sdk.AuthConsumerScope{sdk.AuthConsumerScopeAction},
+		Method:        http.MethodPost,
+	}
+	Auth(true)(configHandler3)
+	req = assets.NewJWTAuthentifiedRequest(t, jwt, configHandler3.Method, configHandler3.CleanURL, nil)
+	w = httptest.NewRecorder()
+	_, err = api.authMiddleware(context.TODO(), w, req, configHandler3)
+	assert.Error(t, err, "an error should be returned because consumer can't do POST on /my-handler2")
+
+	// DELETE /my-handler3 is authorized as no method restriction set on route.
+	configHandler4 := &service.HandlerConfig{
+		CleanURL:      "/my-handler3",
+		AllowedScopes: []sdk.AuthConsumerScope{sdk.AuthConsumerScopeAction},
+		Method:        http.MethodDelete,
+	}
+	Auth(true)(configHandler4)
+	req = assets.NewJWTAuthentifiedRequest(t, jwt, configHandler4.Method, configHandler4.CleanURL, nil)
+	w = httptest.NewRecorder()
+	_, err = api.authMiddleware(context.TODO(), w, req, configHandler4)
+	assert.NoError(t, err, "no error should be returned because consumer can do any methods on /my-handler3")
+
+	// PUT /my-handler4 is authorized as no route restriction set on scope.
+	configHandler5 := &service.HandlerConfig{
+		CleanURL:      "/my-handler4",
+		AllowedScopes: []sdk.AuthConsumerScope{sdk.AuthConsumerScopeAdmin},
+		Method:        http.MethodPut,
+	}
+	Auth(true)(configHandler5)
+	req = assets.NewJWTAuthentifiedRequest(t, jwt, configHandler5.Method, configHandler5.CleanURL, nil)
+	w = httptest.NewRecorder()
+	_, err = api.authMiddleware(context.TODO(), w, req, configHandler5)
+	assert.NoError(t, err, "no error should be returned because consumer can access any routes for scope Admin")
 }

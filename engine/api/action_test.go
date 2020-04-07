@@ -15,7 +15,6 @@ import (
 	yaml "gopkg.in/yaml.v2"
 
 	"github.com/ovh/cds/engine/api/action"
-	"github.com/ovh/cds/engine/api/bootstrap"
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/api/test/assets"
 	"github.com/ovh/cds/sdk"
@@ -174,7 +173,7 @@ func Test_postActionAuditRollbackHandler(t *testing.T) {
 }
 
 func Test_getActions(t *testing.T) {
-	api, db, router, end := newTestAPI(t, bootstrap.InitiliazeDB)
+	api, db, router, end := newTestAPI(t)
 	defer end()
 
 	_, jwtAdmin := assets.InsertAdminUser(t, api.mustDB())

@@ -27,4 +27,6 @@ cards:
   title: Infrastructure used by CDS Workers
 - name: events
   title: CDS Events
+- name: authentication
+  title: User Authentication
 ---

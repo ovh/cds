@@ -39,6 +39,10 @@ func (client *bitbucketcloudClient) PullRequests(ctx context.Context, fullname s
 	params.Set("pagelen", "50")
 	nextPage := 1
 	for {
+		if ctx.Err() != nil {
+			break
+		}
+
 		if nextPage != 1 {
 			params.Set("page", fmt.Sprintf("%d", nextPage))
 		}
@@ -69,15 +73,15 @@ func (client *bitbucketcloudClient) PullRequests(ctx context.Context, fullname s
 }
 
 // PullRequestComment push a new comment on a pull request
-func (client *bitbucketcloudClient) PullRequestComment(ctx context.Context, repo string, id int, text string) error {
+func (client *bitbucketcloudClient) PullRequestComment(ctx context.Context, repo string, prRequest sdk.VCSPullRequestCommentRequest) error {
 	if client.DisableStatus {
 		log.Warning(ctx, "bitbucketcloud.PullRequestComment>  ⚠ bitbucketcloud statuses are disabled")
 		return nil
 	}
 
-	path := fmt.Sprintf("/repos/%s/issues/%d/comments", repo, id)
+	path := fmt.Sprintf("/repos/%s/issues/%d/comments", repo, prRequest.ID)
 	payload := map[string]string{
-		"body": text,
+		"body": prRequest.Message,
 	}
 	values, _ := json.Marshal(payload)
 	res, err := client.post(path, "application/json", bytes.NewReader(values), &postOptions{skipDefaultBaseURL: false, asUser: true})

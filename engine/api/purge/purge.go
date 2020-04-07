@@ -99,7 +99,7 @@ func workflows(ctx context.Context, db *gorp.DbMap, store cache.Store, workflowR
 			proj = *p
 		}
 
-		w, err := workflow.LoadByID(ctx, db, store, &proj, r.ID, workflow.LoadOptions{})
+		w, err := workflow.LoadByID(ctx, db, store, proj, r.ID, workflow.LoadOptions{})
 		if err != nil {
 			log.Warning(ctx, "unable to load workflow %d due to error %v, we try to delete it", r.ID, err)
 			if _, err := db.Exec("delete from w_node_trigger where child_node_id IN (SELECT id from w_node where workflow_id = $1)", r.ID); err != nil {
@@ -129,7 +129,7 @@ func workflows(ctx context.Context, db *gorp.DbMap, store cache.Store, workflowR
 			return sdk.WrapError(err, "unable to start tx")
 		}
 
-		if err := workflow.Delete(ctx, tx, store, &proj, &w); err != nil {
+		if err := workflow.Delete(ctx, tx, store, proj, &w); err != nil {
 			log.Error(ctx, "purge.Workflows> unable to delete workflow %d: %v", w.ID, err)
 			_ = tx.Rollback()
 			continue

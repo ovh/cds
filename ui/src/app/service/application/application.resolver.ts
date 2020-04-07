@@ -18,9 +18,7 @@ export class ApplicationResolver implements Resolve<Application> {
             projectKey: route.params['key'],
             applicationName: route.queryParams['application']
         })).pipe(
-            flatMap(() => this.store.selectOnce(ApplicationsState.selectApplication(
-                route.params['key'], route.queryParams['application']
-            )))
+            flatMap(() => this.store.selectOnce(ApplicationsState.currentState()))
         );
     }
 
@@ -36,9 +34,7 @@ export class ApplicationQueryParamResolver implements Resolve<Application> {
                 projectKey: route.params['key'],
                 applicationName: route.queryParams['application']
             })).pipe(
-                flatMap(() => this.store.selectOnce(ApplicationsState.selectApplication(
-                    route.params['key'], route.queryParams['application']
-                ))),
+                flatMap(() => this.store.selectOnce(ApplicationsState.currentState())),
                 catchError(() => {
                     return observableOf(null);
                 })

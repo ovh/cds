@@ -96,7 +96,7 @@ func UpdateParameterInPipeline(db gorp.SqlExecutor, pipelineID int64, oldParamNa
 	_, err := db.Exec(query, param.Value, string(param.Type), param.Description, param.Name, pipelineID, oldParamName)
 	if err != nil {
 		if errPG, ok := err.(*pq.Error); ok && errPG.Code == gorpmapping.ViolateUniqueKeyPGCode {
-			return sdk.ErrParameterExists
+			return sdk.WithStack(sdk.ErrParameterExists)
 		}
 		return err
 	}

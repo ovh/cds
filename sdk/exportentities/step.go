@@ -328,18 +328,18 @@ type Step struct {
 	AlwaysExecuted *bool  `json:"always_executed,omitempty" yaml:"always_executed,omitempty"`
 	// step specific data, only one option should be set
 	StepCustom       `json:"-" yaml:",inline"`
-	Script           interface{}           `json:"script,omitempty" yaml:"script,omitempty" jsonschema:"-" jsonschema_description:"Script.\nhttps://ovh.github.io/cds/docs/actions/builtin-script"`
-	Coverage         *StepCoverage         `json:"coverage,omitempty" yaml:"coverage,omitempty" jsonschema_description:"Parse coverage report.\nhttps://ovh.github.io/cds/docs/actions/builtin-coverage"`
-	ArtifactDownload *StepArtifactDownload `json:"artifactDownload,omitempty" yaml:"artifactDownload,omitempty" jsonschema_description:"Download artifacts in workspace.\nhttps://ovh.github.io/cds/docs/actions/builtin-artifact-download"`
-	ArtifactUpload   *StepArtifactUpload   `json:"artifactUpload,omitempty" yaml:"artifactUpload,omitempty" jsonschema_description:"Upload artifacts from workspace.\nhttps://ovh.github.io/cds/docs/actions/builtin-artifact-upload"`
-	ServeStaticFiles *StepServeStaticFiles `json:"serveStaticFiles,omitempty" yaml:"serveStaticFiles,omitempty" jsonschema_description:"Serve static files.\nhttps://ovh.github.io/cds/docs/actions/builtin-serve-static-files"`
-	GitClone         *StepGitClone         `json:"gitClone,omitempty" yaml:"gitClone,omitempty" jsonschema_description:"Clone a git repository.\nhttps://ovh.github.io/cds/docs/actions/builtin-gitclone"`
-	GitTag           *StepGitTag           `json:"gitTag,omitempty" yaml:"gitTag,omitempty" jsonschema_description:"Create a git tag.\nhttps://ovh.github.io/cds/docs/actions/builtin-gittag"`
-	Release          *StepRelease          `json:"release,omitempty" yaml:"release,omitempty" jsonschema_description:"Release an application.\nhttps://ovh.github.io/cds/docs/actions/builtin-release"`
-	JUnitReport      *StepJUnitReport      `json:"jUnitReport,omitempty" yaml:"jUnitReport,omitempty" jsonschema_description:"Parse JUnit report.\nhttps://ovh.github.io/cds/docs/actions/builtin-junit"`
-	Checkout         *StepCheckout         `json:"checkout,omitempty" yaml:"checkout,omitempty" jsonschema_description:"Checkout repository for an application.\nhttps://ovh.github.io/cds/docs/actions/builtin-checkoutapplication"`
-	InstallKey       *StepInstallKey       `json:"installKey,omitempty" yaml:"installKey,omitempty" jsonschema_description:"Install a key (GPG, SSH) in your current workspace.\nhttps://ovh.github.io/cds/docs/actions/builtin-installkey"`
-	Deploy           *StepDeploy           `json:"deploy,omitempty" yaml:"deploy,omitempty" jsonschema_description:"Deploy an application.\nhttps://ovh.github.io/cds/docs/actions/builtin-deployapplication"`
+	Script           interface{}           `json:"script,omitempty" yaml:"script,omitempty" jsonschema:"oneof_type=string;array,oneof_required=actionScript" jsonschema_description:"Script.\nhttps://ovh.github.io/cds/docs/actions/builtin-script"`
+	Coverage         *StepCoverage         `json:"coverage,omitempty" yaml:"coverage,omitempty" jsonschema:"oneof_required=actionCoverage" jsonschema_description:"Parse coverage report.\nhttps://ovh.github.io/cds/docs/actions/builtin-coverage"`
+	ArtifactDownload *StepArtifactDownload `json:"artifactDownload,omitempty" yaml:"artifactDownload,omitempty" jsonschema:"oneof_required=actionArtifactDownload" jsonschema_description:"Download artifacts in workspace.\nhttps://ovh.github.io/cds/docs/actions/builtin-artifact-download"`
+	ArtifactUpload   *StepArtifactUpload   `json:"artifactUpload,omitempty" yaml:"artifactUpload,omitempty" jsonschema:"oneof_required=actionArtifactUpload" jsonschema_description:"Upload artifacts from workspace.\nhttps://ovh.github.io/cds/docs/actions/builtin-artifact-upload"`
+	ServeStaticFiles *StepServeStaticFiles `json:"serveStaticFiles,omitempty" yaml:"serveStaticFiles,omitempty" jsonschema:"oneof_required=actionServeStaticFiles" jsonschema_description:"Serve static files.\nhttps://ovh.github.io/cds/docs/actions/builtin-serve-static-files"`
+	GitClone         *StepGitClone         `json:"gitClone,omitempty" yaml:"gitClone,omitempty" jsonschema:"oneof_required=actionGitClone" jsonschema_description:"Clone a git repository.\nhttps://ovh.github.io/cds/docs/actions/builtin-gitclone"`
+	GitTag           *StepGitTag           `json:"gitTag,omitempty" yaml:"gitTag,omitempty" jsonschema:"oneof_required=actionGitTag" jsonschema_description:"Create a git tag.\nhttps://ovh.github.io/cds/docs/actions/builtin-gittag"`
+	Release          *StepRelease          `json:"release,omitempty" yaml:"release,omitempty" jsonschema:"oneof_required=actionRelease" jsonschema_description:"Release an application.\nhttps://ovh.github.io/cds/docs/actions/builtin-release"`
+	JUnitReport      *StepJUnitReport      `json:"jUnitReport,omitempty" yaml:"jUnitReport,omitempty" jsonschema:"oneof_required=actionJUNit" jsonschema_description:"Parse JUnit report.\nhttps://ovh.github.io/cds/docs/actions/builtin-junit"`
+	Checkout         *StepCheckout         `json:"checkout,omitempty" yaml:"checkout,omitempty" jsonschema:"oneof_required=actionCheckout" jsonschema_description:"Checkout repository for an application.\nhttps://ovh.github.io/cds/docs/actions/builtin-checkoutapplication"`
+	InstallKey       *StepInstallKey       `json:"installKey,omitempty" yaml:"installKey,omitempty" jsonschema:"oneof_required=actionInstallKey" jsonschema_description:"Install a key (GPG, SSH) in your current workspace.\nhttps://ovh.github.io/cds/docs/actions/builtin-installkey"`
+	Deploy           *StepDeploy           `json:"deploy,omitempty" yaml:"deploy,omitempty" jsonschema:"oneof_required=actionDeploy" jsonschema_description:"Deploy an application.\nhttps://ovh.github.io/cds/docs/actions/builtin-deployapplication"`
 }
 
 // MarshalJSON custom marshal json impl to inline custom step.

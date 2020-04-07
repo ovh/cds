@@ -14,8 +14,8 @@ import { Project } from 'app/model/project.model';
 import { WNode, Workflow } from 'app/model/workflow.model';
 import { WorkflowNodeRun, WorkflowRun } from 'app/model/workflow.run.model';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
+import { ProjectState } from 'app/store/project.state';
 import { WorkflowState, WorkflowStateModel } from 'app/store/workflow.state';
-import { Subscription } from 'rxjs';
 
 @Component({
     selector: 'app-workflow-menu-wnode-edit',
@@ -27,42 +27,34 @@ import { Subscription } from 'rxjs';
 export class WorkflowWNodeMenuEditComponent implements OnInit {
 
     // Project that contains the workflow
-    @Input() project: Project;
-
-    @Input() node: WNode;
-    _noderun: WorkflowNodeRun;
-    @Input('noderun') set noderun(data: WorkflowNodeRun) {
-        this._noderun = data;
-        this.runnable = this.getCanBeRun();
-    }
-    get noderun() { return this._noderun }
-
-    _workflowrun: WorkflowRun;
-    @Input('workflowrun') set workflowrun(data: WorkflowRun) {
-        this._workflowrun = data;
-        this.runnable = this.getCanBeRun();
-    }
-    get workflowrun() { return this._workflowrun }
-
     @Input() popup: IPopup;
-    @Input() readonly = true;
     @Output() event = new EventEmitter<string>();
-    runnable: boolean;
-    storeSubscription: Subscription;
+
+    project: Project;
     workflow: Workflow;
+    workflowrun: WorkflowRun;
+    noderun: WorkflowNodeRun;
+    node: WNode;
+    runnable: boolean;
+    readonly = true;
 
     constructor(
         private _store: Store,
         private _cd: ChangeDetectorRef
-    ) { }
+    ) {}
 
     ngOnInit(): void {
-        this.storeSubscription = this._store.select(WorkflowState.getCurrent())
-            .subscribe((s: WorkflowStateModel) => {
-            this.workflow = s.workflow;
-            this.runnable = this.getCanBeRun();
-            this._cd.markForCheck();
-        });
+        this.project = this._store.selectSnapshot(ProjectState.projectSnapshot);
+
+        let state: WorkflowStateModel = this._store.selectSnapshot(WorkflowState);
+        this.workflow = state.workflow;
+        this.workflowrun = state.workflowRun;
+        this.noderun = state.workflowNodeRun;
+        this.node = state.node;
+        this.readonly = !state.canEdit;
+
+        this.runnable = this.getCanBeRun();
+        this._cd.markForCheck();
     }
 
     sendEvent(e: string): void {
@@ -79,7 +71,7 @@ export class WorkflowWNodeMenuEditComponent implements OnInit {
             return false;
         }
 
-        // If we are in a run, check if current node can be run ( compuite by cds api)
+        // If we are in a run, check if current node can be run ( compute by cds api)
         if (this.noderun && this.workflowrun && this.workflowrun.nodes) {
             let nodesRun = this.workflowrun.nodes[this.noderun.workflow_node_id];
             if (nodesRun) {
@@ -104,7 +96,7 @@ export class WorkflowWNodeMenuEditComponent implements OnInit {
                 return true;
             }
 
-            if (this.workflowrun && this.workflowrun.workflow && this.workflowrun.workflow.workflow_data) {
+            if (this.workflowrun && this.workflowrun.workflow && this.workflowrun.workflow.workflow_data.node.id > 0) {
                 let nbNodeFound = 0;
                 let parentNodes = Workflow.getParentNodeIds(this.workflowrun, this.node.id);
                 for (let parentNodeId of parentNodes) {

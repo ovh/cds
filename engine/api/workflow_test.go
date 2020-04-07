@@ -11,10 +11,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/ovh/cds/engine/api/repositoriesmanager"
-	"github.com/ovh/cds/engine/api/services"
-	"github.com/ovh/cds/engine/service"
-
+	"github.com/go-gorp/gorp"
+	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/yaml.v2"
@@ -22,28 +20,31 @@ import (
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/authentication"
 	"github.com/ovh/cds/engine/api/authentication/builtin"
-	"github.com/ovh/cds/engine/api/bootstrap"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/integration"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/project"
+	"github.com/ovh/cds/engine/api/repositoriesmanager"
+	"github.com/ovh/cds/engine/api/services"
+	"github.com/ovh/cds/engine/api/services/mock_services"
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/api/test/assets"
 	"github.com/ovh/cds/engine/api/workflow"
+	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/ovh/cds/sdk/exportentities"
 )
 
 func Test_getWorkflowsHandler(t *testing.T) {
-	api, db, _, end := newTestAPI(t, bootstrap.InitiliazeDB)
+	api, db, _, end := newTestAPI(t)
 	defer end()
 	u, pass := assets.InsertLambdaUser(t, api.mustDB())
 	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
-	require.NoError(t, group.InsertLinkGroupUser(api.mustDB(), &group.LinkGroupUser{
-		GroupID: proj.ProjectGroups[0].Group.ID,
-		UserID:  u.OldUserStruct.ID,
-		Admin:   true,
+	require.NoError(t, group.InsertLinkGroupUser(context.TODO(), api.mustDB(), &group.LinkGroupUser{
+		GroupID:            proj.ProjectGroups[0].Group.ID,
+		AuthentifiedUserID: u.ID,
+		Admin:              true,
 	}))
 
 	pip := sdk.Pipeline{
@@ -52,13 +53,13 @@ func Test_getWorkflowsHandler(t *testing.T) {
 		Name:       "pip1",
 	}
 
-	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, &pip))
+	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), &pip))
 
 	wf := sdk.Workflow{
 		Name:       "workflow1",
 		ProjectID:  proj.ID,
 		ProjectKey: proj.Key,
-		WorkflowData: &sdk.WorkflowData{
+		WorkflowData: sdk.WorkflowData{
 			Node: sdk.Node{
 				Name: "root",
 				Context: &sdk.NodeContext{
@@ -68,7 +69,7 @@ func Test_getWorkflowsHandler(t *testing.T) {
 		},
 	}
 
-	test.NoError(t, workflow.Insert(context.TODO(), api.mustDB(), api.Cache, &wf, proj))
+	test.NoError(t, workflow.Insert(context.TODO(), api.mustDB(), api.Cache, *proj, &wf))
 
 	vars := map[string]string{
 		"permProjectKey": proj.Key,
@@ -132,7 +133,7 @@ func Test_getWorkflowsHandler(t *testing.T) {
 }
 
 func Test_getWorkflowNotificationsConditionsHandler(t *testing.T) {
-	api, db, router, end := newTestAPI(t, bootstrap.InitiliazeDB)
+	api, db, router, end := newTestAPI(t)
 	defer end()
 	u, pass := assets.InsertAdminUser(t, db)
 	consumer, _ := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
@@ -145,7 +146,7 @@ func Test_getWorkflowNotificationsConditionsHandler(t *testing.T) {
 		ProjectKey: proj.Key,
 		Name:       "pip1",
 	}
-	test.NoError(t, pipeline.InsertPipeline(db, api.Cache, proj, &pip))
+	test.NoError(t, pipeline.InsertPipeline(db, &pip))
 
 	s := sdk.NewStage("stage 1")
 	s.Enabled = true
@@ -168,7 +169,7 @@ func Test_getWorkflowNotificationsConditionsHandler(t *testing.T) {
 		ProjectKey: proj.Key,
 		Name:       "pip2",
 	}
-	test.NoError(t, pipeline.InsertPipeline(db, api.Cache, proj, &pip2))
+	test.NoError(t, pipeline.InsertPipeline(db, &pip2))
 	s = sdk.NewStage("stage 1")
 	s.Enabled = true
 	s.PipelineID = pip2.ID
@@ -186,7 +187,7 @@ func Test_getWorkflowNotificationsConditionsHandler(t *testing.T) {
 		Name:       "test_1",
 		ProjectID:  proj.ID,
 		ProjectKey: proj.Key,
-		WorkflowData: &sdk.WorkflowData{
+		WorkflowData: sdk.WorkflowData{
 			Node: sdk.Node{
 				Name: "root",
 				Type: sdk.NodeTypePipeline,
@@ -211,14 +212,14 @@ func Test_getWorkflowNotificationsConditionsHandler(t *testing.T) {
 	proj2, errP := project.Load(api.mustDB(), api.Cache, proj.Key, project.LoadOptions.WithPipelines, project.LoadOptions.WithGroups, project.LoadOptions.WithIntegrations)
 	test.NoError(t, errP)
 
-	test.NoError(t, workflow.Insert(context.TODO(), db, api.Cache, &w, proj2))
-	w1, err := workflow.Load(context.TODO(), db, api.Cache, proj, "test_1", workflow.LoadOptions{})
+	test.NoError(t, workflow.Insert(context.TODO(), db, api.Cache, *proj2, &w))
+	w1, err := workflow.Load(context.TODO(), db, api.Cache, *proj, "test_1", workflow.LoadOptions{})
 	test.NoError(t, err)
 
 	wrCreate, err := workflow.CreateRun(db, w1, nil, u)
 	assert.NoError(t, err)
 	wrCreate.Workflow = *w1
-	_, errMR := workflow.StartWorkflowRun(context.TODO(), db, api.Cache, proj, wrCreate, &sdk.WorkflowRunPostHandlerOption{
+	_, errMR := workflow.StartWorkflowRun(context.TODO(), db, api.Cache, *proj, wrCreate, &sdk.WorkflowRunPostHandlerOption{
 		Manual: &sdk.WorkflowNodeRunManual{Username: u.GetUsername()},
 	}, consumer, nil)
 	if errMR != nil {
@@ -282,14 +283,14 @@ func Test_getWorkflowHandler(t *testing.T) {
 }
 
 func Test_getWorkflowHandler_CheckPermission(t *testing.T) {
-	api, db, _, end := newTestAPI(t, bootstrap.InitiliazeDB)
+	api, db, _, end := newTestAPI(t)
 	defer end()
 	u, pass := assets.InsertLambdaUser(t, api.mustDB())
 	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
-	require.NoError(t, group.InsertLinkGroupUser(api.mustDB(), &group.LinkGroupUser{
-		GroupID: proj.ProjectGroups[0].Group.ID,
-		UserID:  u.OldUserStruct.ID,
-		Admin:   true,
+	require.NoError(t, group.InsertLinkGroupUser(context.TODO(), api.mustDB(), &group.LinkGroupUser{
+		GroupID:            proj.ProjectGroups[0].Group.ID,
+		AuthentifiedUserID: u.ID,
+		Admin:              true,
 	}))
 
 	pip := sdk.Pipeline{
@@ -298,13 +299,13 @@ func Test_getWorkflowHandler_CheckPermission(t *testing.T) {
 		Name:       "pip1",
 	}
 
-	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, &pip))
+	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), &pip))
 
 	wf := sdk.Workflow{
 		Name:       "workflow1",
 		ProjectID:  proj.ID,
 		ProjectKey: proj.Key,
-		WorkflowData: &sdk.WorkflowData{
+		WorkflowData: sdk.WorkflowData{
 			Node: sdk.Node{
 				Name: "root",
 				Context: &sdk.NodeContext{
@@ -314,7 +315,7 @@ func Test_getWorkflowHandler_CheckPermission(t *testing.T) {
 		},
 	}
 
-	test.NoError(t, workflow.Insert(context.TODO(), api.mustDB(), api.Cache, &wf, proj))
+	test.NoError(t, workflow.Insert(context.TODO(), api.mustDB(), api.Cache, *proj, &wf))
 
 	vars := map[string]string{
 		"key":              proj.Key,
@@ -338,8 +339,8 @@ func Test_getWorkflowHandler_CheckPermission(t *testing.T) {
 	var err error
 
 	userAdmin, passAdmin := assets.InsertAdminUser(t, db)
-	uri = api.Router.GetRoute("GET", api.getWorkflowHandler, vars)
-	req, err = http.NewRequest("GET", uri, nil)
+	uri = api.Router.GetRoute(http.MethodGet, api.getWorkflowHandler, vars)
+	req, err = http.NewRequest(http.MethodGet, uri, nil)
 	test.NoError(t, err)
 	assets.AuthentifyRequest(t, req, userAdmin, passAdmin)
 
@@ -381,16 +382,17 @@ func Test_getWorkflowHandler_AsProvider(t *testing.T) {
 	localConsumer, err := authentication.LoadConsumerByTypeAndUserID(context.TODO(), api.mustDB(), sdk.ConsumerLocal, admin.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
 	require.NoError(t, err)
 
-	_, jws, err := builtin.NewConsumer(context.TODO(), api.mustDB(), sdk.RandomString(10), sdk.RandomString(10), localConsumer, admin.GetGroupIDs(), Scope(sdk.AuthConsumerScopeProject))
+	_, jws, err := builtin.NewConsumer(context.TODO(), api.mustDB(), sdk.RandomString(10), sdk.RandomString(10), localConsumer, admin.GetGroupIDs(),
+		sdk.NewAuthConsumerScopeDetails(sdk.AuthConsumerScopeProject))
 
 	u, _ := assets.InsertLambdaUser(t, api.mustDB())
 
 	pkey := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, api.mustDB(), api.Cache, pkey, pkey)
-	require.NoError(t, group.InsertLinkGroupUser(api.mustDB(), &group.LinkGroupUser{
-		GroupID: proj.ProjectGroups[0].Group.ID,
-		UserID:  u.OldUserStruct.ID,
-		Admin:   true,
+	require.NoError(t, group.InsertLinkGroupUser(context.TODO(), api.mustDB(), &group.LinkGroupUser{
+		GroupID:            proj.ProjectGroups[0].Group.ID,
+		AuthentifiedUserID: u.ID,
+		Admin:              true,
 	}))
 
 	pip := sdk.Pipeline{
@@ -399,7 +401,7 @@ func Test_getWorkflowHandler_AsProvider(t *testing.T) {
 		Name:       "pip1",
 	}
 
-	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, &pip))
+	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), &pip))
 
 	proj, _ = project.LoadByID(api.mustDB(), api.Cache, proj.ID,
 		project.LoadOptions.WithApplications,
@@ -412,7 +414,7 @@ func Test_getWorkflowHandler_AsProvider(t *testing.T) {
 		Name:       "workflow1",
 		ProjectID:  proj.ID,
 		ProjectKey: proj.Key,
-		WorkflowData: &sdk.WorkflowData{
+		WorkflowData: sdk.WorkflowData{
 			Node: sdk.Node{
 				Name: "root",
 				Context: &sdk.NodeContext{
@@ -422,7 +424,7 @@ func Test_getWorkflowHandler_AsProvider(t *testing.T) {
 		},
 	}
 
-	test.NoError(t, workflow.Insert(context.TODO(), api.mustDB(), api.Cache, &wf, proj))
+	test.NoError(t, workflow.Insert(context.TODO(), api.mustDB(), api.Cache, *proj, &wf))
 
 	sdkclient := cdsclient.NewProviderClient(cdsclient.ProviderConfig{
 		Host:  tsURL,
@@ -459,7 +461,7 @@ func Test_getWorkflowHandler_withUsage(t *testing.T) {
 		Name:       "pip1",
 	}
 
-	test.NoError(t, pipeline.InsertPipeline(db, api.Cache, proj, &pip))
+	test.NoError(t, pipeline.InsertPipeline(db, &pip))
 
 	proj, _ = project.LoadByID(db, api.Cache, proj.ID,
 		project.LoadOptions.WithApplications,
@@ -472,7 +474,7 @@ func Test_getWorkflowHandler_withUsage(t *testing.T) {
 		Name:       "workflow1",
 		ProjectID:  proj.ID,
 		ProjectKey: proj.Key,
-		WorkflowData: &sdk.WorkflowData{
+		WorkflowData: sdk.WorkflowData{
 			Node: sdk.Node{
 				Name: "root",
 				Context: &sdk.NodeContext{
@@ -482,7 +484,7 @@ func Test_getWorkflowHandler_withUsage(t *testing.T) {
 		},
 	}
 
-	test.NoError(t, workflow.Insert(context.TODO(), db, api.Cache, &wf, proj))
+	test.NoError(t, workflow.Insert(context.TODO(), db, api.Cache, *proj, &wf))
 
 	req := assets.NewAuthentifiedRequest(t, u, pass, "GET", uri+"?withUsage=true", nil)
 	//Do the request
@@ -538,7 +540,7 @@ func Test_postWorkflowHandlerWithRootShouldSuccess(t *testing.T) {
 		Name:      "pipeline1",
 		ProjectID: proj.ID,
 	}
-	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, &pip))
+	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), &pip))
 
 	//Prepare request
 	vars := map[string]string{
@@ -553,12 +555,12 @@ func Test_postWorkflowHandlerWithRootShouldSuccess(t *testing.T) {
 		RepositoryFullname: "test/app1",
 		VCSServer:          "github",
 	}
-	test.NoError(t, application.Insert(api.mustDB(), api.Cache, proj, &app))
+	test.NoError(t, application.Insert(api.mustDB(), api.Cache, *proj, &app))
 
 	var workflow = &sdk.Workflow{
 		Name:        "Name",
 		Description: "Description",
-		WorkflowData: &sdk.WorkflowData{
+		WorkflowData: sdk.WorkflowData{
 			Node: sdk.Node{
 				Type: sdk.NodeTypePipeline,
 				Context: &sdk.NodeContext{
@@ -601,7 +603,7 @@ func Test_postWorkflowHandlerWithBadPayloadShouldFail(t *testing.T) {
 		Name:      "pipeline1",
 		ProjectID: proj.ID,
 	}
-	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, &pip))
+	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), &pip))
 
 	//Prepare request
 	vars := map[string]string{
@@ -616,12 +618,12 @@ func Test_postWorkflowHandlerWithBadPayloadShouldFail(t *testing.T) {
 		RepositoryFullname: "test/app1",
 		VCSServer:          "github",
 	}
-	test.NoError(t, application.Insert(api.mustDB(), api.Cache, proj, &app))
+	test.NoError(t, application.Insert(api.mustDB(), api.Cache, *proj, &app))
 
 	var workflow = &sdk.Workflow{
 		Name:        "Name",
 		Description: "Description",
-		WorkflowData: &sdk.WorkflowData{
+		WorkflowData: sdk.WorkflowData{
 			Node: sdk.Node{
 				Type: sdk.NodeTypePipeline,
 				Context: &sdk.NodeContext{
@@ -688,6 +690,15 @@ func Test_putWorkflowHandler(t *testing.T) {
 				if err := service.UnmarshalBody(r, &hooks); err != nil {
 					return nil, sdk.WithStack(err)
 				}
+				for k, h := range hooks {
+					if h.HookModelName == sdk.RepositoryWebHookModelName {
+						cfg := hooks[k].Config
+						cfg["webHookURL"] = sdk.WorkflowNodeHookConfigValue{
+							Value:        "http://lolcat.host",
+							Configurable: false,
+						}
+					}
+				}
 				if err := enc.Encode(hooks); err != nil {
 					return writeError(w, err)
 				}
@@ -709,7 +720,7 @@ func Test_putWorkflowHandler(t *testing.T) {
 				if err := enc.Encode(hook); err != nil {
 					return writeError(w, err)
 				}
-			case "/vcs/github/repos/foo/bar/hooks?url=&id=666":
+			case "/vcs/github/repos/foo/bar/hooks?url=http%3A%2F%2Flolcat.host&id=666":
 				updatehookCalled = true
 				hook := sdk.VCSHook{}
 				if err := service.UnmarshalBody(r, &hook); err != nil {
@@ -743,7 +754,7 @@ func Test_putWorkflowHandler(t *testing.T) {
 		Name:      "pipeline1",
 		ProjectID: proj.ID,
 	}
-	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, &pip))
+	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), &pip))
 
 	// Create application
 	app := sdk.Application{
@@ -752,7 +763,7 @@ func Test_putWorkflowHandler(t *testing.T) {
 		RepositoryFullname: "foo/bar",
 		VCSServer:          "github",
 	}
-	assert.NoError(t, application.Insert(db, api.Cache, proj, &app))
+	assert.NoError(t, application.Insert(db, api.Cache, *proj, &app))
 	assert.NoError(t, repositoriesmanager.InsertForApplication(db, &app, proj.Key))
 
 	//Prepare request
@@ -765,7 +776,7 @@ func Test_putWorkflowHandler(t *testing.T) {
 	var workflow = &sdk.Workflow{
 		Name:        "Name",
 		Description: "Description",
-		WorkflowData: &sdk.WorkflowData{
+		WorkflowData: sdk.WorkflowData{
 			Node: sdk.Node{
 				Type: sdk.NodeTypePipeline,
 				Context: &sdk.NodeContext{
@@ -824,7 +835,7 @@ func Test_putWorkflowHandler(t *testing.T) {
 	var workflow1 = &sdk.Workflow{
 		Name:        "Name",
 		Description: "Description 2",
-		WorkflowData: &sdk.WorkflowData{
+		WorkflowData: sdk.WorkflowData{
 			Node: sdk.Node{
 				Type: sdk.NodeTypePipeline,
 				Context: &sdk.NodeContext{
@@ -885,7 +896,7 @@ func Test_deleteWorkflowEventIntegrationHandler(t *testing.T) {
 		Name:      "pipeline1",
 		ProjectID: proj.ID,
 	}
-	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, &pip))
+	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), &pip))
 	//Prepare request
 	vars := map[string]string{
 		"permProjectKey": proj.Key,
@@ -896,7 +907,7 @@ func Test_deleteWorkflowEventIntegrationHandler(t *testing.T) {
 	var wf = &sdk.Workflow{
 		Name:        "Name",
 		Description: "Description",
-		WorkflowData: &sdk.WorkflowData{
+		WorkflowData: sdk.WorkflowData{
 			Node: sdk.Node{
 				Type: sdk.NodeTypePipeline,
 				Context: &sdk.NodeContext{
@@ -928,7 +939,7 @@ func Test_deleteWorkflowEventIntegrationHandler(t *testing.T) {
 		RepositoryFullname: "test/app1",
 		VCSServer:          "github",
 	}
-	test.NoError(t, application.Insert(api.mustDB(), api.Cache, proj, &app))
+	test.NoError(t, application.Insert(api.mustDB(), api.Cache, *proj, &app))
 
 	model := sdk.IntegrationModel{
 		Name:  sdk.RandomString(10),
@@ -954,7 +965,7 @@ func Test_deleteWorkflowEventIntegrationHandler(t *testing.T) {
 	var workflow1 = &sdk.Workflow{
 		Name:        "Name",
 		Description: "Description 2",
-		WorkflowData: &sdk.WorkflowData{
+		WorkflowData: sdk.WorkflowData{
 			Node: sdk.Node{
 				Type: sdk.NodeTypePipeline,
 				Context: &sdk.NodeContext{
@@ -992,7 +1003,7 @@ func Test_deleteWorkflowEventIntegrationHandler(t *testing.T) {
 	router.Mux.ServeHTTP(w, req)
 	assert.Equal(t, 200, w.Code)
 
-	wfUpdated, err := workflow.Load(context.TODO(), api.mustDB(), api.Cache, proj, wf.Name, workflow.LoadOptions{WithIntegrations: true})
+	wfUpdated, err := workflow.Load(context.TODO(), api.mustDB(), api.Cache, *proj, wf.Name, workflow.LoadOptions{WithIntegrations: true})
 	test.NoError(t, err, "cannot load workflow")
 
 	test.Equal(t, 0, len(wfUpdated.EventIntegrations))
@@ -1019,7 +1030,7 @@ func Test_postWorkflowHandlerWithError(t *testing.T) {
 		ProjectID: proj.ID,
 	}
 
-	require.NoError(t, pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, &pip))
+	require.NoError(t, pipeline.InsertPipeline(api.mustDB(), &pip))
 
 	//Prepare request
 	vars := map[string]string{
@@ -1031,7 +1042,7 @@ func Test_postWorkflowHandlerWithError(t *testing.T) {
 	var workflow = &sdk.Workflow{
 		Name:        "Name",
 		Description: "Description",
-		WorkflowData: &sdk.WorkflowData{
+		WorkflowData: sdk.WorkflowData{
 			Node: sdk.Node{
 				Type: sdk.NodeTypePipeline,
 				Context: &sdk.NodeContext{
@@ -1076,7 +1087,7 @@ func Test_postWorkflowRollbackHandler(t *testing.T) {
 		Name:      "pipeline1",
 		ProjectID: proj.ID,
 	}
-	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, &pip))
+	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), &pip))
 
 	// Create WORKFLOW NAME
 
@@ -1090,7 +1101,7 @@ func Test_postWorkflowRollbackHandler(t *testing.T) {
 	var wf = &sdk.Workflow{
 		Name:        "Name",
 		Description: "Description",
-		WorkflowData: &sdk.WorkflowData{
+		WorkflowData: sdk.WorkflowData{
 			Node: sdk.Node{
 				Type: sdk.NodeTypePipeline,
 				Context: &sdk.NodeContext{
@@ -1124,13 +1135,13 @@ func Test_postWorkflowRollbackHandler(t *testing.T) {
 		RepositoryFullname: "test/app1",
 		VCSServer:          "github",
 	}
-	test.NoError(t, application.Insert(api.mustDB(), api.Cache, proj, &app))
+	test.NoError(t, application.Insert(api.mustDB(), api.Cache, *proj, &app))
 
 	var workflow1 = &sdk.Workflow{
 		ID:          wf.ID,
 		Name:        "Name",
 		Description: "Description 2",
-		WorkflowData: &sdk.WorkflowData{
+		WorkflowData: sdk.WorkflowData{
 			Node: sdk.Node{
 				Type: sdk.NodeTypePipeline,
 				Context: &sdk.NodeContext{
@@ -1160,8 +1171,9 @@ func Test_postWorkflowRollbackHandler(t *testing.T) {
 
 	assert.NotEmpty(t, payload["git.branch"], "git.branch should not be empty")
 
-	test.NoError(t, workflow.IsValid(context.Background(), api.Cache, db, wf, proj, workflow.LoadOptions{}))
+	test.NoError(t, workflow.IsValid(context.Background(), api.Cache, db, wf, *proj, workflow.LoadOptions{}))
 	eWf, err := exportentities.NewWorkflow(context.TODO(), *wf)
+
 	test.NoError(t, err)
 	wfBts, err := yaml.Marshal(eWf)
 	test.NoError(t, err)
@@ -1206,10 +1218,6 @@ func Test_postWorkflowRollbackHandler(t *testing.T) {
 	var wfRollback sdk.Workflow
 	test.NoError(t, json.Unmarshal(w.Body.Bytes(), &wfRollback))
 
-	if wfRollback.WorkflowData == nil {
-		t.Fatal(fmt.Errorf("workflow not found"))
-	}
-
 	test.Equal(t, int64(0), wfRollback.WorkflowData.Node.Context.ApplicationID)
 
 	assert.Equal(t, true, wfRollback.Permissions.Readable)
@@ -1239,7 +1247,7 @@ func Test_postAndDeleteWorkflowLabelHandler(t *testing.T) {
 		Name:      "pipeline1",
 		ProjectID: proj.ID,
 	}
-	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, &pip))
+	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), &pip))
 
 	integrationModel, err := integration.LoadModelByName(db, sdk.KafkaIntegration.Name, false)
 	if err != nil {
@@ -1291,7 +1299,7 @@ func Test_postAndDeleteWorkflowLabelHandler(t *testing.T) {
 	var wf = &sdk.Workflow{
 		Name:        name,
 		Description: "Description",
-		WorkflowData: &sdk.WorkflowData{
+		WorkflowData: sdk.WorkflowData{
 			Node: sdk.Node{
 				Type: sdk.NodeTypePipeline,
 				Context: &sdk.NodeContext{
@@ -1330,7 +1338,7 @@ func Test_postAndDeleteWorkflowLabelHandler(t *testing.T) {
 	assert.Equal(t, proj.ID, lbl1.ProjectID)
 	assert.Equal(t, wf.ID, lbl1.WorkflowID)
 
-	wfUpdated, errW := workflow.Load(context.TODO(), db, api.Cache, proj, wf.Name, workflow.LoadOptions{WithLabels: true})
+	wfUpdated, errW := workflow.Load(context.TODO(), db, api.Cache, *proj, wf.Name, workflow.LoadOptions{WithLabels: true})
 	test.NoError(t, errW)
 
 	assert.NotNil(t, wfUpdated.Labels)
@@ -1352,14 +1360,13 @@ func Test_postAndDeleteWorkflowLabelHandler(t *testing.T) {
 	router.Mux.ServeHTTP(w, req)
 	assert.Equal(t, 200, w.Code)
 
-	wfUpdated, errW = workflow.Load(context.TODO(), db, api.Cache, proj, wf.Name, workflow.LoadOptions{WithLabels: true})
+	wfUpdated, errW = workflow.Load(context.TODO(), db, api.Cache, *proj, wf.Name, workflow.LoadOptions{WithLabels: true})
 	test.NoError(t, errW)
 	assert.NotNil(t, wfUpdated.Labels)
 	assert.Equal(t, 0, len(wfUpdated.Labels))
 }
 
 func Test_deleteWorkflowHandler(t *testing.T) {
-
 	api, db, router, end := newTestAPI(t)
 	defer end()
 	test.NoError(t, workflow.CreateBuiltinWorkflowHookModels(db))
@@ -1374,7 +1381,7 @@ func Test_deleteWorkflowHandler(t *testing.T) {
 		Name:      "pipeline1",
 		ProjectID: proj.ID,
 	}
-	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, &pip))
+	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), &pip))
 
 	//Prepare request
 	vars := map[string]string{
@@ -1386,7 +1393,7 @@ func Test_deleteWorkflowHandler(t *testing.T) {
 	var wkf = &sdk.Workflow{
 		Name:        "Name",
 		Description: "Description",
-		WorkflowData: &sdk.WorkflowData{
+		WorkflowData: sdk.WorkflowData{
 			Node: sdk.Node{
 				Type: sdk.NodeTypePipeline,
 				Context: &sdk.NodeContext{
@@ -1431,7 +1438,7 @@ loop:
 		case <-ctx.Done():
 			t.Fatal(ctx.Err())
 		case <-tickCheck.C:
-			wk, _ := workflow.Load(ctx, db, api.Cache, proj, wkf.Name, workflow.LoadOptions{Minimal: true})
+			wk, _ := workflow.Load(ctx, db, api.Cache, *proj, wkf.Name, workflow.LoadOptions{Minimal: true})
 			if wk == nil {
 				break loop
 			}
@@ -1455,13 +1462,13 @@ func TestBenchmarkGetWorkflowsWithoutAPIAsAdmin(t *testing.T) {
 		ProjectID: proj.ID,
 	}
 
-	assert.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip))
+	assert.NoError(t, pipeline.InsertPipeline(db, &pip))
 
 	app := sdk.Application{
 		Name: sdk.RandomString(10),
 	}
 
-	assert.NoError(t, application.Insert(db, cache, proj, &app))
+	assert.NoError(t, application.Insert(db, cache, *proj, &app))
 
 	prj, err := project.Load(db, cache, proj.Key,
 		project.LoadOptions.WithPipelines,
@@ -1475,7 +1482,7 @@ func TestBenchmarkGetWorkflowsWithoutAPIAsAdmin(t *testing.T) {
 			ProjectID:  proj.ID,
 			ProjectKey: proj.Key,
 			Name:       sdk.RandomString(10),
-			WorkflowData: &sdk.WorkflowData{
+			WorkflowData: sdk.WorkflowData{
 				Node: sdk.Node{
 					Name: "root",
 					Context: &sdk.NodeContext{
@@ -1486,7 +1493,7 @@ func TestBenchmarkGetWorkflowsWithoutAPIAsAdmin(t *testing.T) {
 			},
 		}
 
-		assert.NoError(t, workflow.Insert(context.TODO(), db, cache, &wf, prj))
+		assert.NoError(t, workflow.Insert(context.TODO(), db, cache, *prj, &wf))
 	}
 
 	res := testing.Benchmark(func(b *testing.B) {
@@ -1523,13 +1530,13 @@ func TestBenchmarkGetWorkflowsWithAPI(t *testing.T) {
 		Name:      "pipeline1",
 		ProjectID: proj.ID,
 	}
-	assert.NoError(t, pipeline.InsertPipeline(db, api.Cache, proj, &pip))
+	assert.NoError(t, pipeline.InsertPipeline(db, &pip))
 
 	app := sdk.Application{
 		Name: sdk.RandomString(10),
 	}
 
-	assert.NoError(t, application.Insert(db, api.Cache, proj, &app))
+	assert.NoError(t, application.Insert(db, api.Cache, *proj, &app))
 
 	prj, err := project.Load(db, api.Cache, proj.Key,
 		project.LoadOptions.WithPipelines,
@@ -1544,7 +1551,7 @@ func TestBenchmarkGetWorkflowsWithAPI(t *testing.T) {
 			ProjectKey: proj.Key,
 			Name:       sdk.RandomString(10),
 			Groups:     proj.ProjectGroups,
-			WorkflowData: &sdk.WorkflowData{
+			WorkflowData: sdk.WorkflowData{
 				Node: sdk.Node{
 					Name: "root",
 					Context: &sdk.NodeContext{
@@ -1555,7 +1562,7 @@ func TestBenchmarkGetWorkflowsWithAPI(t *testing.T) {
 			},
 		}
 
-		assert.NoError(t, workflow.Insert(context.TODO(), db, api.Cache, &wf, prj))
+		assert.NoError(t, workflow.Insert(context.TODO(), db, api.Cache, *prj, &wf))
 	}
 
 	//Prepare request
@@ -1587,4 +1594,236 @@ func TestBenchmarkGetWorkflowsWithAPI(t *testing.T) {
 	t.Logf("N : %d", res.N)
 	t.Logf("ns/op : %d", res.NsPerOp())
 	assert.False(t, res.NsPerOp() >= 500000000, "Workflows load is too long: GOT %d and EXPECTED lower than 500000000 (500ms)", res.NsPerOp())
+}
+
+func Test_putWorkflowShouldNotCallHOOKSIfHookDoesNotChange(t *testing.T) {
+	api, db, router, end := newTestAPI(t)
+	defer end()
+
+	_, _ = assets.InsertService(t, db, t.Name()+"_HOOKS", services.TypeHooks)
+
+	u, pass := assets.InsertAdminUser(t, api.mustDB())
+	key := sdk.RandomString(10)
+	proj := assets.InsertTestProject(t, db, api.Cache, key, key)
+	pip := sdk.Pipeline{
+		Name:      "pipeline1",
+		ProjectID: proj.ID,
+	}
+	assert.NoError(t, pipeline.InsertPipeline(db, &pip))
+
+	wf := sdk.Workflow{
+		ProjectID:  proj.ID,
+		ProjectKey: proj.Key,
+		Name:       sdk.RandomString(10),
+		Groups:     proj.ProjectGroups,
+		WorkflowData: sdk.WorkflowData{
+			Node: sdk.Node{
+				Name: "root",
+				Context: &sdk.NodeContext{
+					PipelineID: pip.ID,
+				},
+				Hooks: []sdk.NodeHook{
+					{
+						HookModelID: sdk.WebHookModel.ID,
+						Config: sdk.WorkflowNodeHookConfig{
+							"method": sdk.WorkflowNodeHookConfigValue{
+								Value: "POST",
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	// Setup a mock for all services called by the API
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+	// The mock has been geenrated by mockgen: go get github.com/golang/mock/mockgen
+	// If you have to regenerate thi mock you just have to run, from directory $GOPATH/src/github.com/ovh/cds/engine/api/services:
+	// mockgen -source=http.go -destination=mock_services/services_mock.go Client
+	servicesClients := mock_services.NewMockClient(ctrl)
+	services.NewClient = func(_ gorp.SqlExecutor, _ []sdk.Service) services.Client {
+		return servicesClients
+	}
+	defer func() {
+		services.NewClient = services.NewDefaultClient
+	}()
+
+	// Mock the Hooks service
+	servicesClients.EXPECT().
+		DoJSONRequest(gomock.Any(), "POST", "/task/bulk", gomock.Any(), gomock.Any()).
+		DoAndReturn(
+			func(ctx context.Context, method, path string, in interface{}, out interface{}) (http.Header, int, error) {
+				actualHooks, ok := in.(map[string]sdk.NodeHook)
+				require.True(t, ok)
+				require.Len(t, actualHooks, 1)
+				for k, h := range actualHooks {
+					h.Config["method"] = sdk.WorkflowNodeHookConfigValue{
+						Value:        "POST",
+						Configurable: true,
+					}
+					actualHooks[k] = h
+				}
+				out = actualHooks
+				return nil, 200, nil
+			},
+		)
+
+	// Insert the workflow
+	vars := map[string]string{
+		"permProjectKey": proj.Key,
+	}
+	uri := router.GetRoute("POST", api.postWorkflowHandler, vars)
+	test.NotEmpty(t, uri)
+	req := assets.NewAuthentifiedRequest(t, u, pass, "POST", uri, &wf)
+	w := httptest.NewRecorder()
+	router.Mux.ServeHTTP(w, req)
+	assert.Equal(t, 201, w.Code)
+
+	// Load the workflow
+	vars = map[string]string{
+		"key":              proj.Key,
+		"permWorkflowName": wf.Name,
+	}
+	uri = router.GetRoute("GET", api.getWorkflowHandler, vars)
+	test.NotEmpty(t, uri)
+	req = assets.NewAuthentifiedRequest(t, u, pass, "GET", uri, nil)
+	w = httptest.NewRecorder()
+	router.Mux.ServeHTTP(w, req)
+
+	// Unmarshal the workflow
+	require.NoError(t, json.Unmarshal(w.Body.Bytes(), &wf))
+
+	// Then call the PUT handler, it should not trigger /task/bulk on hooks service
+	// Update the workflow
+	uri = router.GetRoute("PUT", api.putWorkflowHandler, vars)
+	test.NotEmpty(t, uri)
+	req = assets.NewAuthentifiedRequest(t, u, pass, "PUT", uri, &wf)
+	w = httptest.NewRecorder()
+	router.Mux.ServeHTTP(w, req)
+	assert.Equal(t, 200, w.Code)
+
+}
+
+func Test_putWorkflowWithDuplicateHooksShouldRaiseAnError(t *testing.T) {
+	api, db, router, end := newTestAPI(t)
+	defer end()
+
+	_, _ = assets.InsertService(t, db, t.Name()+"_HOOKS", services.TypeHooks)
+
+	u, pass := assets.InsertAdminUser(t, api.mustDB())
+	key := sdk.RandomString(10)
+	proj := assets.InsertTestProject(t, db, api.Cache, key, key)
+	pip := sdk.Pipeline{
+		Name:      "pipeline1",
+		ProjectID: proj.ID,
+	}
+	assert.NoError(t, pipeline.InsertPipeline(db, &pip))
+
+	wf := sdk.Workflow{
+		ProjectID:  proj.ID,
+		ProjectKey: proj.Key,
+		Name:       sdk.RandomString(10),
+		Groups:     proj.ProjectGroups,
+		WorkflowData: sdk.WorkflowData{
+			Node: sdk.Node{
+				Name: "root",
+				Context: &sdk.NodeContext{
+					PipelineID: pip.ID,
+				},
+				Hooks: []sdk.NodeHook{
+					{
+						HookModelID: sdk.WebHookModel.ID,
+						Config: sdk.WorkflowNodeHookConfig{
+							"method": sdk.WorkflowNodeHookConfigValue{
+								Value: "POST",
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	// Setup a mock for all services called by the API
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+	// The mock has been geenrated by mockgen: go get github.com/golang/mock/mockgen
+	// If you have to regenerate thi mock you just have to run, from directory $GOPATH/src/github.com/ovh/cds/engine/api/services:
+	// mockgen -source=http.go -destination=mock_services/services_mock.go Client
+	servicesClients := mock_services.NewMockClient(ctrl)
+	services.NewClient = func(_ gorp.SqlExecutor, _ []sdk.Service) services.Client {
+		return servicesClients
+	}
+	defer func() {
+		services.NewClient = services.NewDefaultClient
+	}()
+
+	// Mock the Hooks service
+	servicesClients.EXPECT().
+		DoJSONRequest(gomock.Any(), "POST", "/task/bulk", gomock.Any(), gomock.Any()).
+		DoAndReturn(
+			func(ctx context.Context, method, path string, in interface{}, out interface{}) (http.Header, int, error) {
+				actualHooks, ok := in.(map[string]sdk.NodeHook)
+				require.True(t, ok)
+				require.Len(t, actualHooks, 1)
+				for k, h := range actualHooks {
+					h.Config["method"] = sdk.WorkflowNodeHookConfigValue{
+						Value:        "POST",
+						Configurable: true,
+					}
+					actualHooks[k] = h
+				}
+				out = actualHooks
+				return nil, 200, nil
+			},
+		)
+
+	// Insert the workflow
+	vars := map[string]string{
+		"permProjectKey": proj.Key,
+	}
+	uri := router.GetRoute("POST", api.postWorkflowHandler, vars)
+	test.NotEmpty(t, uri)
+	req := assets.NewAuthentifiedRequest(t, u, pass, "POST", uri, &wf)
+	w := httptest.NewRecorder()
+	router.Mux.ServeHTTP(w, req)
+	assert.Equal(t, 201, w.Code)
+
+	// Load the workflow
+	vars = map[string]string{
+		"key":              proj.Key,
+		"permWorkflowName": wf.Name,
+	}
+	uri = router.GetRoute("GET", api.getWorkflowHandler, vars)
+	test.NotEmpty(t, uri)
+	req = assets.NewAuthentifiedRequest(t, u, pass, "GET", uri, nil)
+	w = httptest.NewRecorder()
+	router.Mux.ServeHTTP(w, req)
+
+	// Unmarshal the workflow
+	require.NoError(t, json.Unmarshal(w.Body.Bytes(), &wf))
+
+	// Then add another hooks with similar properties. It should raise a 400 HTTP Error
+
+	wf.WorkflowData.Node.Hooks = append(wf.WorkflowData.Node.Hooks,
+		sdk.NodeHook{
+			HookModelID: sdk.WebHookModel.ID,
+			Config: sdk.WorkflowNodeHookConfig{
+				"method": sdk.WorkflowNodeHookConfigValue{
+					Value: "POST",
+				},
+			},
+		},
+	)
+
+	// Update the workflow
+	uri = router.GetRoute("PUT", api.putWorkflowHandler, vars)
+	test.NotEmpty(t, uri)
+	req = assets.NewAuthentifiedRequest(t, u, pass, "PUT", uri, &wf)
+	w = httptest.NewRecorder()
+	router.Mux.ServeHTTP(w, req)
+	assert.Equal(t, 400, w.Code)
+
 }

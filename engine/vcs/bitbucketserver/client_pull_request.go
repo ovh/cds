@@ -45,6 +45,10 @@ func (b *bitbucketClient) PullRequests(ctx context.Context, repo string) ([]sdk.
 
 	nextPage := 0
 	for {
+		if ctx.Err() != nil {
+			break
+		}
+
 		if nextPage != 0 {
 			params.Set("start", fmt.Sprintf("%d", nextPage))
 		}
@@ -75,21 +79,31 @@ func (b *bitbucketClient) PullRequests(ctx context.Context, repo string) ([]sdk.
 }
 
 // PullRequestComment push a new comment on a pull request
-func (b *bitbucketClient) PullRequestComment(ctx context.Context, repo string, prID int, text string) error {
+func (b *bitbucketClient) PullRequestComment(ctx context.Context, repo string, prRequest sdk.VCSPullRequestCommentRequest) error {
+
 	project, slug, err := getRepo(repo)
 	if err != nil {
 		return sdk.WithStack(err)
 	}
 	payload := map[string]string{
-		"text": text,
+		"text": prRequest.Message,
 	}
 	values, err := json.Marshal(payload)
 	if err != nil {
 		return sdk.WithStack(err)
 	}
 
-	path := fmt.Sprintf("/projects/%s/repos/%s/pull-requests/%d/comments", project, slug, prID)
+	path := fmt.Sprintf("/projects/%s/repos/%s/pull-requests/%d/comments", project, slug, prRequest.ID)
 
+	canWrite, err := b.UserHasWritePermission(ctx, repo)
+	if err != nil {
+		return err
+	}
+	if !canWrite {
+		if err := b.GrantWritePermission(ctx, repo); err != nil {
+			return err
+		}
+	}
 	return b.do(ctx, "POST", "core", path, nil, values, nil, &options{asUser: true})
 }
 
@@ -99,8 +113,14 @@ func (b *bitbucketClient) PullRequestCreate(ctx context.Context, repo string, pr
 		return pr, sdk.WithStack(err)
 	}
 
-	if err := b.GrantWritePermission(ctx, repo); err != nil {
+	canWrite, err := b.UserHasWritePermission(ctx, repo)
+	if err != nil {
 		return pr, err
+	}
+	if !canWrite {
+		if err := b.GrantWritePermission(ctx, repo); err != nil {
+			return pr, err
+		}
 	}
 
 	request := sdk.BitbucketServerPullRequest{

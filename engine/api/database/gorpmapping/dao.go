@@ -4,6 +4,8 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"reflect"
+	"unsafe"
 
 	"github.com/go-gorp/gorp"
 	"github.com/lib/pq"
@@ -12,8 +14,19 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
+func checkDatabase(db gorp.SqlExecutor) error {
+	if db == nil {
+		return sdk.NewErrorFrom(sdk.ErrServiceUnavailable, "database unavailabe")
+	}
+	return nil
+}
+
 // Insert value in given db.
 func Insert(db gorp.SqlExecutor, i interface{}) error {
+	if err := checkDatabase(db); err != nil {
+		return err
+	}
+
 	err := db.Insert(i)
 	if e, ok := err.(*pq.Error); ok {
 		switch e.Code {
@@ -41,6 +54,56 @@ func Insert(db gorp.SqlExecutor, i interface{}) error {
 
 // Update value in given db.
 func Update(db gorp.SqlExecutor, i interface{}) error {
+	if err := checkDatabase(db); err != nil {
+		return err
+	}
+
+	mapping, has := getTabbleMapping(i)
+	if !has {
+		return sdk.WithStack(fmt.Errorf("unkown entity %T", i))
+	}
+
+	val := reflect.ValueOf(i)
+	if val.Kind() == reflect.Ptr {
+		val = val.Elem()
+	}
+
+	var hasPlaceHolder bool
+	for _, f := range mapping.EncryptedFields {
+		// Reset the field to the decrypted value if the value is set to the placeholder
+		field := val.FieldByName(f.Name)
+		if field.Interface() == sdk.PasswordPlaceholder {
+			hasPlaceHolder = true
+			break
+		}
+	}
+
+	// If the data has encrypted data
+	if mapping.EncryptedEntity && hasPlaceHolder {
+		id := reflectFindValueByTag(i, "db", mapping.Keys[0])
+		entityName := fmt.Sprintf("%T", reflect.ValueOf(i).Elem().Interface())
+
+		// Reload and decrypt the old tuple from the database
+		tuple, err := LoadTupleByPrimaryKey(db, entityName, id, GetOptions.WithDecryption)
+		if err != nil {
+			return err
+		}
+
+		valTuple := reflect.ValueOf(tuple)
+		if valTuple.Kind() == reflect.Ptr {
+			valTuple = valTuple.Elem()
+		}
+
+		for _, f := range mapping.EncryptedFields {
+			// Reset the field to the decrypted value if the value is set to the placeholder
+			field := val.FieldByName(f.Name)
+			if field.Interface() == sdk.PasswordPlaceholder {
+				oldVal := valTuple.FieldByName(f.Name)
+				field.Set(oldVal)
+			}
+		}
+	}
+
 	n, err := db.Update(i)
 	if e, ok := err.(*pq.Error); ok {
 		switch e.Code {
@@ -70,6 +133,10 @@ func Update(db gorp.SqlExecutor, i interface{}) error {
 
 // Delete value in given db.
 func Delete(db gorp.SqlExecutor, i interface{}) error {
+	if err := checkDatabase(db); err != nil {
+		return err
+	}
+
 	_, err := db.Delete(i)
 	return sdk.WithStack(err)
 }
@@ -84,11 +151,36 @@ var GetOptions = struct {
 
 // GetAll values from database.
 func GetAll(ctx context.Context, db gorp.SqlExecutor, q Query, i interface{}, opts ...GetOptionFunc) error {
+	if err := checkDatabase(db); err != nil {
+		return err
+	}
+
 	_, end := observability.Span(ctx, fmt.Sprintf("database.GetAll(%T)", i), observability.Tag("query", q.String()))
 	defer end()
 
 	if _, err := db.Select(i, q.query, q.arguments...); err != nil {
 		return sdk.WithStack(err)
+	}
+
+	v := sdk.ValueFromInterface(i)
+
+	switch reflect.TypeOf(v.Interface()).Kind() {
+	case reflect.Slice:
+		for i := 0; i < v.Len(); i++ {
+			var dest reflect.Value
+			if v.Index(i).Kind() == reflect.Ptr {
+				dest = v.Index(i)
+			} else {
+				dest = reflect.NewAt(reflect.TypeOf(v.Index(i).Interface()), unsafe.Pointer(v.Index(i).UnsafeAddr()))
+			}
+			if err := resetEncryptedData(db, dest.Interface()); err != nil {
+				return err
+			}
+		}
+	default:
+		if err := resetEncryptedData(db, i); err != nil {
+			return err
+		}
 	}
 
 	for _, f := range opts {
@@ -101,6 +193,10 @@ func GetAll(ctx context.Context, db gorp.SqlExecutor, q Query, i interface{}, op
 
 // Get a value from database.
 func Get(ctx context.Context, db gorp.SqlExecutor, q Query, i interface{}, opts ...GetOptionFunc) (bool, error) {
+	if err := checkDatabase(db); err != nil {
+		return false, err
+	}
+
 	_, end := observability.Span(ctx, fmt.Sprintf("database.Get(%T)", i), observability.Tag("query", q.String()))
 	defer end()
 
@@ -125,6 +221,10 @@ func Get(ctx context.Context, db gorp.SqlExecutor, q Query, i interface{}, opts 
 
 // GetInt a value from database.
 func GetInt(db gorp.SqlExecutor, q Query) (int64, error) {
+	if err := checkDatabase(db); err != nil {
+		return 0, err
+	}
+
 	res, err := db.SelectNullInt(q.query, q.arguments...)
 	if err != nil {
 		if err == sql.ErrNoRows {

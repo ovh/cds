@@ -1,3 +1,4 @@
+import { AsCodeEvents } from 'app/model/ascode.model';
 import { Permission } from 'app/model/permission.model';
 import { Application } from './application.model';
 import { AuditWorkflow } from './audit.model';
@@ -319,20 +320,7 @@ export class Workflow {
                     for (let j = 0; j < n.triggers.length; j++) {
                         let t = n.triggers[j];
                         if (t.child_node.id === currentNodeID) {
-                            if (workflowRun.version < 2) {
-                                switch (n.type) {
-                                    case WNodeType.JOIN:
-                                        ancestors.push(...n.parents.map(p => p.parent_id));
-                                        break;
-                                    case WNodeType.FORK:
-                                        ancestors.push(...Workflow.getParentNodeIds(workflowRun, n.id));
-                                        break;
-                                    default:
-                                        ancestors.push(n.id);
-                                }
-                            } else {
-                                ancestors.push(n.id);
-                            }
+                            ancestors.push(n.id);
                             break loop;
                         }
                     }
@@ -348,15 +336,6 @@ export class Workflow {
     constructor() {
         this.workflow_data = new WorkflowData();
     }
-}
-
-export class AsCodeEvents {
-    id: number;
-    workflow_id: number;
-    pullrequest_id: number;
-    pullrequest_url: string;
-    username: string;
-    creation_date: string;
 }
 
 export class WorkflowPipelineNameImpact {
@@ -663,6 +642,8 @@ export class WNodeOutgoingHook {
     hook_model_id: number;
     uuid: string;
     config: Map<string, WorkflowNodeHookConfigValue>;
+
+    model: WorkflowHookModel;
 }
 
 export class WNodeJoin {
@@ -678,6 +659,7 @@ export class WNodeHook {
     ref: string;
     node_id: number;
     hook_model_id: number;
+    hoomodel_name: string;
     config: Map<string, WorkflowNodeHookConfigValue>;
     conditions: WorkflowNodeConditions;
 
@@ -686,15 +668,10 @@ export class WNodeHook {
 }
 
 export class WorkflowPull {
-    workflow: WorkflowPullItem;
-    pipelines: Array<WorkflowPullItem>;
-    applications: Array<WorkflowPullItem>;
-    environments: Array<WorkflowPullItem>;
-}
-
-export class WorkflowPullItem {
-    name: string;
-    value: string;
+    workflow: string;
+    pipelines: Array<string>;
+    applications: Array<string>;
+    environments: Array<string>;
 }
 
 export const notificationTypes = ['jabber', 'email', 'vcs'];
@@ -723,7 +700,7 @@ export class UserNotificationSettings {
     send_to_author: boolean;
     recipients: Array<string>;
     template: UserNotificationTemplate;
-    notifications: WorkflowNodeConditions;
+    conditions: WorkflowNodeConditions;
 
     constructor() {
         this.on_success = notificationOnSuccess[1];
@@ -733,7 +710,7 @@ export class UserNotificationSettings {
         this.send_to_groups = false;
         this.recipients = [];
         this.template = new UserNotificationTemplate();
-        this.notifications = new WorkflowNodeConditions();
+        this.conditions = new WorkflowNodeConditions();
     }
 }
 
@@ -741,4 +718,5 @@ export class UserNotificationTemplate {
     subject: string;
     body: string;
     disable_comment: boolean;
+    disable_status: boolean;
 }

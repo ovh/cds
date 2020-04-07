@@ -16,7 +16,7 @@ func InsertForProject(db gorp.SqlExecutor, proj *sdk.Project, vcsServer *sdk.Pro
 	servers, err := LoadAllForProject(db, proj.Key)
 	for _, server := range servers {
 		if server.Name == vcsServer.Name {
-			return sdk.ErrConflict
+			return sdk.WithStack(sdk.ErrConflict)
 		}
 	}
 	if err != nil {
@@ -72,6 +72,9 @@ func UpdateForProject(db gorp.SqlExecutor, proj *sdk.Project, vcsServers []sdk.P
 //DeleteForProject unlink a project with a repository manager
 func DeleteForProject(db gorp.SqlExecutor, proj *sdk.Project, vcsServer *sdk.ProjectVCSServer) error {
 	servers, err := LoadAllForProject(db, proj.Key)
+	if err != nil {
+		return err
+	}
 	for i := range servers {
 		if servers[i].Name == vcsServer.Name {
 			servers = append(servers[:i], servers[i+1:]...)

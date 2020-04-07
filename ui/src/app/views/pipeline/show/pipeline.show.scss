@@ -4,3 +4,11 @@
   align-content: stretch;
   height: 100%;
 }
+
+sm-menu {
+  .ui.buttons {
+    position: absolute;
+    right: 15px;
+    margin-top: 2px;
+  }
+}

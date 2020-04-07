@@ -9,14 +9,13 @@ import (
 
 	"github.com/ovh/cds/engine/api/action"
 	"github.com/ovh/cds/engine/api/cache"
-	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
 
 //ImportUpdate import and update the pipeline in the project
-func ImportUpdate(ctx context.Context, db gorp.SqlExecutor, proj *sdk.Project, pip *sdk.Pipeline, msgChan chan<- sdk.Message, u sdk.Identifiable) error {
+func ImportUpdate(ctx context.Context, db gorp.SqlExecutor, proj sdk.Project, pip *sdk.Pipeline, msgChan chan<- sdk.Message, u sdk.Identifiable) error {
 	t := time.Now()
 	log.Debug("ImportUpdate> Begin")
 	defer log.Debug("ImportUpdate> End (%d ns)", time.Since(t).Nanoseconds())
@@ -37,7 +36,6 @@ func ImportUpdate(ctx context.Context, db gorp.SqlExecutor, proj *sdk.Project, p
 	groupIDs = append(groupIDs, group.SharedInfraGroup.ID)
 	for i := range proj.ProjectGroups {
 		groupIDs = append(groupIDs, proj.ProjectGroups[i].Group.ID)
-
 	}
 
 	rx := sdk.NamePatternSpaceRegex
@@ -196,15 +194,11 @@ func ImportUpdate(ctx context.Context, db gorp.SqlExecutor, proj *sdk.Project, p
 
 	errU := UpdatePipeline(db, pip)
 
-	if oldPipeline.Name != pip.Name {
-		event.PublishPipelineUpdate(ctx, proj.Key, pip.Name, oldPipeline.Name, u)
-	}
-
 	return sdk.WrapError(errU, "ImportUpdate> cannot update pipeline")
 }
 
 //Import insert the pipeline in the project
-func Import(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, pip *sdk.Pipeline, msgChan chan<- sdk.Message, u sdk.Identifiable) error {
+func Import(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj sdk.Project, pip *sdk.Pipeline, msgChan chan<- sdk.Message, u sdk.Identifiable) error {
 	//Set projectID and Key in pipeline
 	pip.ProjectID = proj.ID
 	pip.ProjectKey = proj.Key
@@ -215,7 +209,7 @@ func Import(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *s
 		return sdk.WrapError(errExist, "Import> Unable to check if pipeline %s %s exists", proj.Name, pip.Name)
 	}
 	if !ok {
-		if err := importNew(ctx, db, store, proj, pip, u); err != nil {
+		if err := importNew(ctx, db, proj, pip, u); err != nil {
 			log.Error(ctx, "pipeline.Import> %s", err)
 			if msgChan != nil {
 				msgChan <- sdk.NewMessage(sdk.MsgPipelineCreationAborted, pip.Name)
@@ -241,7 +235,7 @@ func Import(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *s
 	return nil
 }
 
-func importNew(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, pip *sdk.Pipeline, u sdk.Identifiable) error {
+func importNew(ctx context.Context, db gorp.SqlExecutor, proj sdk.Project, pip *sdk.Pipeline, u sdk.Identifiable) error {
 	// check that action used by job can be used by pipeline's project
 	groupIDs := make([]int64, 0, len(proj.ProjectGroups)+1)
 	groupIDs = append(groupIDs, group.SharedInfraGroup.ID)
@@ -251,7 +245,7 @@ func importNew(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj
 
 	log.Debug("pipeline.importNew> Creating pipeline %s", pip.Name)
 	//Insert pipeline
-	if err := InsertPipeline(db, store, proj, pip); err != nil {
+	if err := InsertPipeline(db, pip); err != nil {
 		return err
 	}
 
@@ -290,8 +284,6 @@ func importNew(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj
 			}
 		}
 	}
-
-	event.PublishPipelineAdd(ctx, proj.Key, *pip, u)
 
 	return nil
 }

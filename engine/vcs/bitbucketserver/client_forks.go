@@ -18,6 +18,10 @@ func (b *bitbucketClient) ListForks(ctx context.Context, repo string) ([]sdk.VCS
 	params := url.Values{}
 	nextPage := 0
 	for {
+		if ctx.Err() != nil {
+			break
+		}
+
 		if nextPage != 0 {
 			params.Set("start", fmt.Sprintf("%d", nextPage))
 		}

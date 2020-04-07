@@ -63,6 +63,14 @@ func (wk *CurrentWorker) Init(name, hatcheryName, apiEndpoint, token string, mod
 	return nil
 }
 
+func (wk *CurrentWorker) GetContext() context.Context {
+	return wk.currentJob.context
+}
+
+func (wk *CurrentWorker) SetContext(c context.Context) {
+	wk.currentJob.context = c
+}
+
 func (wk *CurrentWorker) Parameters() []sdk.Parameter {
 	return wk.currentJob.params
 }

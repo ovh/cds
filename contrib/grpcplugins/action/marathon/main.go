@@ -200,13 +200,6 @@ func (actPlugin *marathonActionPlugin) Run(ctx context.Context, q *actionplugin.
 		for _, deploy := range deployments {
 			wg.Add(1)
 			go func(id string) {
-				go func() {
-					time.Sleep((time.Duration(timeout) + 1) * time.Second)
-					ticker.Stop()
-					successChan <- false
-					wg.Done()
-				}()
-
 				if err := client.WaitOnDeployment(id, time.Duration(timeout)*time.Second); err != nil {
 					fmt.Printf("Error on deployment %s: %s\n", id, err.Error())
 					ticker.Stop()

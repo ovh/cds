@@ -8,11 +8,13 @@ import { Workflow } from 'app/model/workflow.model';
 import { WorkflowCoreService } from 'app/service/workflow/workflow.core.service';
 import { WorkflowStore } from 'app/service/workflow/workflow.store';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
+import { UpdateAsCodeComponent } from 'app/shared/modal/save-as-code/update.as.code.component';
 import { WarningModalComponent } from 'app/shared/modal/warning/warning.component';
 import { PermissionEvent } from 'app/shared/permission/permission.event.model';
 import { ToastService } from 'app/shared/toast/ToastService';
 import { WorkflowNodeRunParamComponent } from 'app/shared/workflow/node/run/node.run.param.component';
 import * as actionsWorkflow from 'app/store/workflow.action';
+import { CancelWorkflowEditMode } from 'app/store/workflow.action';
 import { WorkflowState, WorkflowStateModel } from 'app/store/workflow.state';
 import { WorkflowGraphComponent } from 'app/views/workflow/graph/workflow.graph.component';
 import cloneDeep from 'lodash-es/cloneDeep';
@@ -38,6 +40,8 @@ export class WorkflowShowComponent implements OnInit {
     paramsSubs: Subscription;
     qpsSubs: Subscription;
     direction: string;
+    editMode: boolean;
+    editModeWorkflowChanged: boolean;
 
     @ViewChild('workflowGraph', {static: false})
     workflowGraph: WorkflowGraphComponent;
@@ -45,6 +49,8 @@ export class WorkflowShowComponent implements OnInit {
     runWithParamComponent: WorkflowNodeRunParamComponent;
     @ViewChild('permWarning', {static: false})
     permWarningModal: WarningModalComponent;
+    @ViewChild('updateAsCode', {static: false})
+    updateAsCodeModal: UpdateAsCodeComponent;
 
     selectedHookRef: string;
 
@@ -76,7 +82,13 @@ export class WorkflowShowComponent implements OnInit {
 
         this.workflowSubscription = this._store.select(WorkflowState.getCurrent()).subscribe((s: WorkflowStateModel) => {
             this._cd.markForCheck();
-            this.detailedWorkflow = s.workflow;
+            this.editMode = s.editMode;
+            if (s.editMode) {
+                this.detailedWorkflow = s.editWorkflow;
+                this.editModeWorkflowChanged = s.editModeWorkflowChanged;
+            } else {
+                this.detailedWorkflow = s.workflow;
+            }
             if (this.detailedWorkflow) {
                 let from_repository = this.detailedWorkflow.from_repository;
                 this.previewWorkflow = this.detailedWorkflow.preview;
@@ -103,7 +115,7 @@ export class WorkflowShowComponent implements OnInit {
 
 
         this.paramsSubs = this.activatedRoute.params.subscribe(() => {
-            this._workflowCoreService.toggleAsCodeEditor({ open: false, save: false });
+            this._workflowCoreService.toggleAsCodeEditor({open: false, save: false});
             this._workflowCoreService.setWorkflowPreview(null);
         });
 
@@ -122,13 +134,13 @@ export class WorkflowShowComponent implements OnInit {
         this.workflowPreviewSubscription = this._workflowCoreService.getWorkflowPreview()
             .subscribe((wfPreview) => {
                 if (wfPreview != null) {
-                    this._workflowCoreService.toggleAsCodeEditor({ open: false, save: false });
+                    this._workflowCoreService.toggleAsCodeEditor({open: false, save: false});
                 }
             });
     }
 
     savePreview() {
-        this._workflowCoreService.toggleAsCodeEditor({ open: false, save: true });
+        this._workflowCoreService.toggleAsCodeEditor({open: false, save: true});
     }
 
     changeDirection() {
@@ -140,7 +152,7 @@ export class WorkflowShowComponent implements OnInit {
     }
 
     showAsCodeEditor() {
-        this._workflowCoreService.toggleAsCodeEditor({ open: true, save: false });
+        this._workflowCoreService.toggleAsCodeEditor({open: true, save: false});
     }
 
     groupManagement(event: PermissionEvent, skip?: boolean): void {
@@ -193,5 +205,15 @@ export class WorkflowShowComponent implements OnInit {
                 this._toast.success('', this._translate.instant('workflow_updated'));
                 this._router.navigate(['/project', this.project.key, 'workflow', this.detailedWorkflow.name]);
             });
+    }
+
+    rollbackWorkflow(): void {
+        this._store.dispatch(new CancelWorkflowEditMode());
+    }
+
+    saveWorkflow(): void {
+        if (this.updateAsCodeModal) {
+            this.updateAsCodeModal.show(this.detailedWorkflow, 'workflow');
+        }
     }
 }

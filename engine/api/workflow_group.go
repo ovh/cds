@@ -30,9 +30,9 @@ func (api *API) deleteWorkflowGroupHandler() service.Handler {
 		}
 
 		options := workflow.LoadOptions{}
-		wf, err := workflow.Load(ctx, api.mustDB(), api.Cache, proj, name, options)
+		wf, err := workflow.Load(ctx, api.mustDB(), api.Cache, *proj, name, options)
 		if err != nil {
-			return sdk.WrapError(err, "deleteWorkflowGroupHandler")
+			return sdk.WithStack(err)
 		}
 
 		var groupIndex int
@@ -46,7 +46,7 @@ func (api *API) deleteWorkflowGroupHandler() service.Handler {
 		}
 
 		if oldGp.Permission == 0 {
-			return sdk.ErrNotFound
+			return sdk.WithStack(sdk.ErrNotFound)
 		}
 
 		tx, errT := api.mustDB().Begin()
@@ -94,9 +94,9 @@ func (api *API) putWorkflowGroupHandler() service.Handler {
 		}
 
 		options := workflow.LoadOptions{}
-		wf, err := workflow.Load(ctx, api.mustDB(), api.Cache, proj, name, options)
+		wf, err := workflow.Load(ctx, api.mustDB(), api.Cache, *proj, name, options)
 		if err != nil {
-			return sdk.WrapError(err, "putWorkflowGroupHandler")
+			return sdk.WithStack(err)
 		}
 
 		var oldGp sdk.GroupPermission
@@ -140,7 +140,7 @@ func (api *API) postWorkflowGroupHandler() service.Handler {
 
 		var gp sdk.GroupPermission
 		if err := service.UnmarshalBody(r, &gp); err != nil {
-			return sdk.WrapError(err, "postWorkflowGroupHandler")
+			return sdk.WrapError(err, "cannot unmarshal body")
 		}
 
 		proj, err := project.Load(api.mustDB(), api.Cache, key, project.LoadOptions.WithIntegrations)
@@ -149,21 +149,21 @@ func (api *API) postWorkflowGroupHandler() service.Handler {
 		}
 
 		options := workflow.LoadOptions{}
-		wf, err := workflow.Load(ctx, api.mustDB(), api.Cache, proj, name, options)
+		wf, err := workflow.Load(ctx, api.mustDB(), api.Cache, *proj, name, options)
 		if err != nil {
-			return sdk.WrapError(err, "postWorkflowGroupHandler")
+			return sdk.WrapError(err, "cannot load workflow")
 		}
 
 		for _, gpr := range wf.Groups {
 			if gpr.Group.Name == gp.Group.Name {
-				return sdk.WrapError(sdk.ErrGroupPresent, "postWorkflowGroupHandler")
+				return sdk.WrapError(sdk.ErrGroupPresent, "group is already present")
 			}
 		}
 
 		if gp.Group.ID == 0 {
 			g, errG := group.LoadByName(ctx, api.mustDB(), gp.Group.Name)
 			if errG != nil {
-				return sdk.WrapError(errG, "postWorkflowGroupHandler")
+				return sdk.WrapError(errG, "cannot load group by name")
 			}
 			gp.Group = *g
 		}

@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql/driver"
 	json "encoding/json"
+	"net/http"
 	"time"
 
 	jwt "github.com/dgrijalva/jwt-go"
@@ -69,6 +70,28 @@ type AuthDriverManifest struct {
 // AuthConsumerScope alias type for string.
 type AuthConsumerScope string
 
+type AuthConsumerScopeEndpoints []AuthConsumerScopeEndpoint
+
+func (e AuthConsumerScopeEndpoints) FindEndpoint(route string) (bool, AuthConsumerScopeEndpoint) {
+	for i := range e {
+		if e[i].Route == route {
+			return true, e[i]
+		}
+	}
+	return false, AuthConsumerScopeEndpoint{}
+}
+
+type AuthConsumerScopeEndpoint struct {
+	Route   string      `json:"route"`
+	Methods StringSlice `json:"methods,omitempty"`
+}
+
+// AuthConsumerScopeDetail contains all endpoints for a scope.
+type AuthConsumerScopeDetail struct {
+	Scope     AuthConsumerScope          `json:"scope"`
+	Endpoints AuthConsumerScopeEndpoints `json:"endpoints,omitempty"`
+}
+
 // IsValid returns validity for scope.
 func (s AuthConsumerScope) IsValid() bool {
 	for i := range AuthConsumerScopes {
@@ -113,6 +136,77 @@ var AuthConsumerScopes = []AuthConsumerScope{
 	AuthConsumerScopeWorkerModel,
 	AuthConsumerScopeHatchery,
 	AuthConsumerScopeService,
+}
+
+func NewAuthConsumerScopeDetails(scopes ...AuthConsumerScope) AuthConsumerScopeDetails {
+	ds := make(AuthConsumerScopeDetails, len(scopes))
+	for i := range scopes {
+		ds[i] = AuthConsumerScopeDetail{
+			Scope: scopes[i],
+		}
+	}
+	return ds
+}
+
+// AuthConsumerScopeDetails type used for database json storage.
+type AuthConsumerScopeDetails []AuthConsumerScopeDetail
+
+// IsValid returns an error if current details are invalids.
+func (s AuthConsumerScopeDetails) IsValid() error {
+	// Check that each scope is unique
+	mScope := map[AuthConsumerScope]struct{}{}
+	for _, detail := range s {
+		if _, ok := mScope[detail.Scope]; ok {
+			return NewErrorFrom(ErrWrongRequest, "duplicated scope %s in given details", detail.Scope)
+		}
+		mScope[detail.Scope] = struct{}{}
+
+		// Check that each route is unique for scope
+		mRoute := map[string]struct{}{}
+		for _, endpoint := range detail.Endpoints {
+			if _, ok := mRoute[endpoint.Route]; ok {
+				return NewErrorFrom(ErrWrongRequest, "duplicated route %s for scope %s in given details", endpoint.Route, detail.Scope)
+			}
+			mRoute[endpoint.Route] = struct{}{}
+
+			// Check that each method is unique for scope and match GET, POST, PUT or DELETE
+			mMethod := map[string]struct{}{}
+			for _, method := range endpoint.Methods {
+				if _, ok := mMethod[method]; ok {
+					return NewErrorFrom(ErrWrongRequest, "duplicated method %s for route %s and scope %s in given details", method, endpoint.Route, detail.Scope)
+				}
+				mMethod[method] = struct{}{}
+				if !(method == http.MethodGet || method == http.MethodPost || method == http.MethodPut || method == http.MethodDelete) {
+					return NewErrorFrom(ErrWrongRequest, "invalid method %s for route %s and scope %s in given details", method, endpoint.Route, detail.Scope)
+				}
+			}
+		}
+	}
+
+	return nil
+}
+
+func (s AuthConsumerScopeDetails) ToEndpointsMap() map[AuthConsumerScope]AuthConsumerScopeEndpoints {
+	m := make(map[AuthConsumerScope]AuthConsumerScopeEndpoints, len(s))
+	for i := range s {
+		m[s[i].Scope] = s[i].Endpoints
+	}
+	return m
+}
+
+// Scan scope detail slice.
+func (s *AuthConsumerScopeDetails) Scan(src interface{}) error {
+	source, ok := src.([]byte)
+	if !ok {
+		return WithStack(errors.New("type assertion .([]byte) failed"))
+	}
+	return WrapError(json.Unmarshal(source, s), "cannot unmarshal AuthConsumerScopeDetails")
+}
+
+// Value returns driver.Value from scope detail slice.
+func (s AuthConsumerScopeDetails) Value() (driver.Value, error) {
+	j, err := json.Marshal(s)
+	return j, WrapError(err, "cannot marshal AuthConsumerScopeDetails")
 }
 
 // AuthConsumerScopeSlice type used for database json storage.
@@ -283,32 +377,60 @@ type AuthConsumers []AuthConsumer
 
 // AuthConsumer issues session linked to an authentified user.
 type AuthConsumer struct {
-	ID                 string                 `json:"id" cli:"id,key" db:"id"`
-	Name               string                 `json:"name" cli:"name" db:"name"`
-	Description        string                 `json:"description" cli:"description" db:"description"`
-	ParentID           *string                `json:"parent_id,omitempty" db:"parent_id"`
-	AuthentifiedUserID string                 `json:"user_id,omitempty" db:"user_id"`
-	Type               AuthConsumerType       `json:"type" cli:"type" db:"type"`
-	Data               AuthConsumerData       `json:"-" db:"data"` // NEVER returns auth consumer data in json, TODO this fields should be visible only in auth package
-	Created            time.Time              `json:"created" cli:"created" db:"created"`
-	GroupIDs           Int64Slice             `json:"group_ids,omitempty" cli:"group_ids" db:"group_ids"`
-	InvalidGroupIDs    Int64Slice             `json:"invalid_group_ids,omitempty" db:"invalid_group_ids"`
-	Scopes             AuthConsumerScopeSlice `json:"scopes,omitempty" cli:"scopes" db:"scopes"`
-	IssuedAt           time.Time              `json:"issued_at" cli:"issued_at" db:"issued_at"`
-	Disabled           bool                   `json:"disabled" cli:"disabled" db:"disabled"`
-	Warnings           AuthConsumerWarnings   `json:"warnings,omitempty" db:"warnings"`
+	ID                 string                   `json:"id" cli:"id,key" db:"id"`
+	Name               string                   `json:"name" cli:"name" db:"name"`
+	Description        string                   `json:"description" cli:"description" db:"description"`
+	ParentID           *string                  `json:"parent_id,omitempty" db:"parent_id"`
+	AuthentifiedUserID string                   `json:"user_id,omitempty" db:"user_id"`
+	Type               AuthConsumerType         `json:"type" cli:"type" db:"type"`
+	Data               AuthConsumerData         `json:"-" db:"data"` // NEVER returns auth consumer data in json, TODO this fields should be visible only in auth package
+	Created            time.Time                `json:"created" cli:"created" db:"created"`
+	GroupIDs           Int64Slice               `json:"group_ids,omitempty" cli:"group_ids" db:"group_ids"`
+	InvalidGroupIDs    Int64Slice               `json:"invalid_group_ids,omitempty" db:"invalid_group_ids"`
+	ScopeDetails       AuthConsumerScopeDetails `json:"scope_details,omitempty" cli:"scope_details" db:"scope_details"`
+	IssuedAt           time.Time                `json:"issued_at" cli:"issued_at" db:"issued_at"`
+	Disabled           bool                     `json:"disabled" cli:"disabled" db:"disabled"`
+	Warnings           AuthConsumerWarnings     `json:"warnings,omitempty" db:"warnings"`
 	// aggregates
 	AuthentifiedUser *AuthentifiedUser `json:"user,omitempty" db:"-"`
 	Groups           Groups            `json:"groups,omitempty" db:"-"`
+	Service          *Service          `json:"-" db:"-"`
+	Worker           *Worker           `json:"-" db:"-"`
 }
 
 // IsValid returns validity for auth consumer.
-func (c AuthConsumer) IsValid() error {
-	for _, s := range c.Scopes {
-		if !s.IsValid() {
+func (c AuthConsumer) IsValid(scopeDetails AuthConsumerScopeDetails) error {
+	if c.Name == "" {
+		return NewErrorFrom(ErrWrongRequest, "invalid given name")
+	}
+
+	if err := c.ScopeDetails.IsValid(); err != nil {
+		return err
+	}
+
+	mEndpoints := scopeDetails.ToEndpointsMap()
+
+	for _, s := range c.ScopeDetails {
+		if !s.Scope.IsValid() {
 			return NewErrorFrom(ErrWrongRequest, "invalid given scope value %s", s)
 		}
+
+		// Checks that given route/method restriction match existing routes
+		existingEndpoints := mEndpoints[s.Scope]
+		for _, e := range s.Endpoints {
+			exists, existingEndpoint := existingEndpoints.FindEndpoint(e.Route)
+			if !exists {
+				return NewErrorFrom(ErrWrongRequest, "invalid given route %s for scope %s", e.Route, s)
+			}
+
+			for _, m := range e.Methods {
+				if !existingEndpoint.Methods.Contains(m) {
+					return NewErrorFrom(ErrWrongRequest, "invalid given method %s for route %s with scope %s", m, e.Route, s)
+				}
+			}
+		}
 	}
+
 	return nil
 }
 
@@ -327,32 +449,32 @@ func (c AuthConsumer) GetGroupIDs() []int64 {
 }
 
 func (c AuthConsumer) Admin() bool {
-	admin := c.AuthentifiedUser.Admin()
-	return admin
+	return c.AuthentifiedUser.Ring == UserRingAdmin
 }
 
 func (c AuthConsumer) Maintainer() bool {
-	return c.AuthentifiedUser.Maintainer()
-}
-
-func (c AuthConsumer) GetConsumerName() string {
-	return c.Name
+	return c.AuthentifiedUser.Ring == UserRingMaintainer
 }
 
 func (c AuthConsumer) GetUsername() string {
-	return c.AuthentifiedUser.Username
-}
-
-func (c AuthConsumer) GetFullname() string {
-	return c.AuthentifiedUser.Fullname
+	if c.Service != nil || c.Worker != nil {
+		return c.Name
+	}
+	return c.AuthentifiedUser.GetUsername()
 }
 
 func (c AuthConsumer) GetEmail() string {
+	if c.Service != nil || c.Worker != nil {
+		return ""
+	}
 	return c.AuthentifiedUser.GetEmail()
 }
 
-func (c AuthConsumer) GetDEPRECATEDUserStruct() *User {
-	return c.AuthentifiedUser.OldUserStruct
+func (c AuthConsumer) GetFullname() string {
+	if c.Service != nil || c.Worker != nil {
+		return c.Name
+	}
+	return c.AuthentifiedUser.GetFullname()
 }
 
 // AuthSessions gives functions for auth session slice.

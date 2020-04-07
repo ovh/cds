@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"path"
+	"strings"
 	"time"
 
 	"github.com/spf13/cobra"
@@ -11,6 +12,7 @@ import (
 	"github.com/ovh/cds/cli"
 	"github.com/ovh/cds/sdk"
 	actionSDK "github.com/ovh/cds/sdk/action"
+	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/ovh/cds/sdk/exportentities"
 	"github.com/ovh/cds/sdk/slug"
 )
@@ -28,6 +30,7 @@ var actionBuiltinCmd = cli.Command{
 func action() *cobra.Command {
 	return cli.NewCommand(actionCmd, nil, []*cobra.Command{
 		cli.NewListCommand(actionListCmd, actionListRun, nil),
+		cli.NewListCommand(actionUsageCmd, actionUsageRun, nil),
 		cli.NewGetCommand(actionShowCmd, actionShowRun, nil),
 		cli.NewCommand(actionDeleteCmd, actionDeleteRun, nil),
 		cli.NewCommand(actionDocCmd, actionDocRun, nil),
@@ -64,7 +67,7 @@ func newActionDisplay(a sdk.Action) actionDisplay {
 
 type actionDisplay struct {
 	Created  string `cli:"Created"`
-	Fullname string `cli:"Fullname,Key"`
+	Fullname string `cli:"Fullname,key"`
 	Type     string `cli:"Type"`
 }
 
@@ -85,6 +88,46 @@ func actionListRun(v cli.Values) (cli.ListResult, error) {
 	}
 
 	return cli.AsListResult(ads), nil
+}
+
+var actionUsageCmd = cli.Command{
+	Name:  "usage",
+	Short: "CDS action usage",
+	Args: []cli.Arg{
+		{Name: "action-path"},
+	},
+}
+
+func actionUsageRun(v cli.Values) (cli.ListResult, error) {
+	groupName, actionName, err := cli.ParsePath(v.GetString("action-path"))
+	if err != nil {
+		return nil, err
+	}
+
+	usages, err := client.ActionUsage(groupName, actionName)
+	if err != nil {
+		return nil, err
+	}
+
+	type ActionUsageDisplay struct {
+		Type string `cli:"Type"`
+		Path string `cli:"Path"`
+	}
+
+	au := []ActionUsageDisplay{}
+	for _, v := range usages.Pipelines {
+		au = append(au, ActionUsageDisplay{
+			Type: "pipeline",
+			Path: strings.Replace(fmt.Sprintf("%s - %s - %s", v.ProjectName, v.PipelineName, v.ActionName), " ", " ", -1),
+		})
+	}
+	for _, v := range usages.Actions {
+		au = append(au, ActionUsageDisplay{
+			Type: "action",
+			Path: fmt.Sprintf("%s/%s", v.GroupName, v.ParentActionName),
+		})
+	}
+	return cli.AsListResult(au), nil
 }
 
 var actionShowCmd = cli.Command{
@@ -201,9 +244,8 @@ func actionImportRun(v cli.Values) error {
 		return err
 	}
 	defer contentFile.Close() //nolint
-	formatStr, _ := exportentities.GetFormatStr(format)
 
-	if err := client.ActionImport(contentFile, formatStr); err != nil {
+	if err := client.ActionImport(contentFile, cdsclient.ContentType(format.ContentType())); err != nil {
 		return err
 	}
 
@@ -232,7 +274,7 @@ func actionExportRun(v cli.Values) error {
 		return err
 	}
 
-	b, err := client.ActionExport(groupName, actionName, v.GetString("format"))
+	b, err := client.ActionExport(groupName, actionName, cdsclient.Format(v.GetString("format")))
 	if err != nil {
 		return err
 	}

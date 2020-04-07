@@ -85,15 +85,11 @@ func (h *HatcherySwarm) Status(ctx context.Context) sdk.MonitoringStatus {
 func (h *HatcherySwarm) CheckConfiguration(cfg interface{}) error {
 	hconfig, ok := cfg.(HatcheryConfiguration)
 	if !ok {
-		return fmt.Errorf("Invalid configuration")
+		return fmt.Errorf("Invalid hatchery swarm configuration")
 	}
 
-	if hconfig.API.HTTP.URL == "" {
-		return fmt.Errorf("API HTTP(s) URL is mandatory")
-	}
-
-	if hconfig.API.Token == "" {
-		return fmt.Errorf("API Token URL is mandatory")
+	if err := hconfig.Check(); err != nil {
+		return fmt.Errorf("Invalid hatchery swarm configuration: %v", err)
 	}
 
 	if hconfig.WorkerTTL <= 0 {
@@ -101,10 +97,6 @@ func (h *HatcherySwarm) CheckConfiguration(cfg interface{}) error {
 	}
 	if hconfig.DefaultMemory <= 1 {
 		return fmt.Errorf("worker-memory must be > 1")
-	}
-
-	if hconfig.Name == "" {
-		return fmt.Errorf("please enter a name in your swarm hatchery configuration")
 	}
 
 	return nil

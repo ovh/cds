@@ -52,22 +52,3 @@ func Labels(db gorp.SqlExecutor, workflowID int64) ([]sdk.Label, error) {
 
 	return labels, nil
 }
-
-// LabelsByProjectID return list of labels given a project ID
-func LabelsByProjectID(db gorp.SqlExecutor, projectID int64) ([]sdk.Label, error) {
-	var labels []sdk.Label
-	query := `
-	SELECT project_label.*
-		FROM project_label
-			JOIN project_label_workflow ON project_label.id = project_label_workflow.label_id
-		WHERE project_label.project_id = $1
-	`
-	if _, err := db.Select(&labels, query, projectID); err != nil {
-		if err == sql.ErrNoRows {
-			return labels, nil
-		}
-		return labels, sdk.WrapError(err, "Cannot load labels")
-	}
-
-	return labels, nil
-}

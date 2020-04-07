@@ -42,9 +42,14 @@ export class TaskExecution {
     config: Map<string, WorkflowNodeHookConfigValue>;
     webhook: Webhook;
     rabbitmq: RabbitMQ;
+    gerrit: GerritExecution;
     kafka: Kafka;
     scheduled_task?: any;
     status: HookStatus;
+}
+
+export class GerritExecution {
+    message: string;
 }
 
 export class Webhook {

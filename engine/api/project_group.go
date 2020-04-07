@@ -3,12 +3,10 @@ package api
 import (
 	"context"
 	"database/sql"
-	"encoding/json"
 	"io/ioutil"
 	"net/http"
 
 	"github.com/gorilla/mux"
-	yaml "gopkg.in/yaml.v2"
 
 	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/group"
@@ -197,7 +195,7 @@ func (api *API) postGroupInProjectHandler() service.Handler {
 			ProjectID: proj.ID,
 			Role:      data.Permission,
 		}
-		if err := group.InsertLinkGroupProject(tx, &newLink); err != nil {
+		if err := group.InsertLinkGroupProject(ctx, tx, &newLink); err != nil {
 			return err
 		}
 
@@ -231,33 +229,30 @@ func (api *API) postImportGroupsInProjectHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		key := vars[permProjectKey]
-		format := r.FormValue("format")
-		forceUpdate := FormBool(r, "forceUpdate")
+		force := FormBool(r, "force")
 
 		proj, err := project.Load(api.mustDB(), api.Cache, key)
 		if err != nil {
 			return sdk.WrapError(err, "cannot load project %s", key)
 		}
 
-		var data []sdk.GroupPermission
-		buf, err := ioutil.ReadAll(r.Body)
+		body, err := ioutil.ReadAll(r.Body)
 		if err != nil {
 			return sdk.NewErrorWithStack(err, sdk.NewErrorFrom(sdk.ErrWrongRequest, "unable to read body"))
 		}
-		f, err := exportentities.GetFormat(format)
+
+		contentType := r.Header.Get("Content-Type")
+		if contentType == "" {
+			contentType = http.DetectContentType(body)
+		}
+		format, err := exportentities.GetFormatFromContentType(contentType)
 		if err != nil {
-			return sdk.NewErrorWithStack(err, sdk.NewErrorFrom(sdk.ErrWrongRequest, "unable to get format"))
+			return err
 		}
 
-		var errParse error
-		switch f {
-		case exportentities.FormatJSON:
-			errParse = json.Unmarshal(buf, &data)
-		case exportentities.FormatYAML:
-			errParse = yaml.Unmarshal(buf, &data)
-		}
-		if errParse != nil {
-			return sdk.NewErrorWithStack(err, sdk.NewErrorFrom(sdk.ErrWrongRequest, "cannot parse given data"))
+		var data []sdk.GroupPermission
+		if err := exportentities.Unmarshal(body, format, &data); err != nil {
+			return err
 		}
 		for i := range data {
 			if err := data[i].IsValid(); err != nil {
@@ -280,7 +275,7 @@ func (api *API) postImportGroupsInProjectHandler() service.Handler {
 			data[i].Group = *grp
 		}
 
-		if forceUpdate {
+		if force {
 			if err := group.DeleteLinksGroupProjectForProjectID(tx, proj.ID); err != nil {
 				return sdk.WrapError(err, "cannot delete all groups for project %s", proj.Name)
 			}
@@ -304,7 +299,7 @@ func (api *API) postImportGroupsInProjectHandler() service.Handler {
 		}
 
 		for i := range data {
-			if err := group.InsertLinkGroupProject(tx, &group.LinkGroupProject{
+			if err := group.InsertLinkGroupProject(ctx, tx, &group.LinkGroupProject{
 				GroupID:   data[i].Group.ID,
 				ProjectID: proj.ID,
 				Role:      data[i].Permission,

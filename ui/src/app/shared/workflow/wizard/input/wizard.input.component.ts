@@ -9,23 +9,25 @@ import {
     ViewChild
 } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
-import { Store } from '@ngxs/store';
+import { Select, Store } from '@ngxs/store';
 import { Application } from 'app/model/application.model';
 import { Pipeline } from 'app/model/pipeline.model';
 import { Project } from 'app/model/project.model';
 import { WNode, Workflow } from 'app/model/workflow.model';
 import { WorkflowNodeRun } from 'app/model/workflow.run.model';
 import { ApplicationWorkflowService } from 'app/service/application/application.workflow.service';
+import { PipelineService } from 'app/service/pipeline/pipeline.service';
 import { ThemeStore } from 'app/service/theme/theme.store';
 import { VariableService } from 'app/service/variable/variable.service';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { ParameterEvent } from 'app/shared/parameter/parameter.event.model';
 import { ToastService } from 'app/shared/toast/ToastService';
-import { FetchPipeline } from 'app/store/pipelines.action';
-import { PipelinesState } from 'app/store/pipelines.state';
+import { ProjectState } from 'app/store/project.state';
 import { UpdateWorkflow } from 'app/store/workflow.action';
+import { WorkflowState } from 'app/store/workflow.state';
 import cloneDeep from 'lodash-es/cloneDeep';
-import { finalize, flatMap } from 'rxjs/operators';
+import { Observable } from 'rxjs';
+import { finalize, first } from 'rxjs/operators';
 import { Subscription } from 'rxjs/Subscription';
 
 declare var CodeMirror: any;
@@ -38,25 +40,20 @@ declare var CodeMirror: any;
 })
 @AutoUnsubscribe()
 export class WorkflowWizardNodeInputComponent implements OnInit {
+
+    @Input() workflow: Workflow;
+    @Input() readonly = true;
+    @Output() inputChange = new EventEmitter<boolean>();
+
     @ViewChild('textareaCodeMirror', {static: false}) codemirror: any;
 
-    @Input() project: Project;
-    @Input() workflow: Workflow;
+    project: Project;
+    editMode: boolean;
+    noderun: WorkflowNodeRun;
+
+    @Select(WorkflowState.getSelectedNode()) node$: Observable<WNode>;
     editableNode: WNode;
-
-    @Input('node') set node(data: WNode) {
-        if (data) {
-            this.init(data);
-        }
-    };
-
-    get node(): WNode {
-        return this.editableNode;
-    }
-
-    @Input() readonly = true;
-    @Input() noderun: WorkflowNodeRun;
-    @Output() inputChange = new EventEmitter<boolean>();
+    nodeSub: Subscription;
 
     suggest: string[] = [];
     payloadString: string;
@@ -78,10 +75,27 @@ export class WorkflowWizardNodeInputComponent implements OnInit {
         private _translate: TranslateService,
         private _toast: ToastService,
         private _theme: ThemeStore,
-        private _cd: ChangeDetectorRef
-    ) { }
+        private _cd: ChangeDetectorRef,
+        private _pipelineService: PipelineService
+    ) {
+        this.project = this.store.selectSnapshot(ProjectState.projectSnapshot);
+        this.editMode = this.store.selectSnapshot(WorkflowState).editMode;
+    }
 
     ngOnInit(): void {
+        this.noderun = this.store.selectSnapshot(WorkflowState).workflowNodeRun;
+        this.nodeSub = this.node$.subscribe(n => {
+            this.editableNode = cloneDeep(n);
+            if (this.editableNode) {
+                this.init();
+            } else {
+                this.payloadString = JSON.stringify(this.noderun.payload, undefined, 4);
+            }
+            this._cd.markForCheck();
+        });
+
+
+
         this.codeMirrorConfig = {
             matchBrackets: true,
             autoCloseBrackets: true,
@@ -97,52 +111,43 @@ export class WorkflowWizardNodeInputComponent implements OnInit {
                 this.codemirror.instance.setOption('theme', this.codeMirrorConfig.theme);
             }
         });
-
-        if (!this.node) {
-            this.payloadString = JSON.stringify(this.noderun.payload, undefined, 4);
-        }
     }
 
-    init(data: WNode): void {
-        this.editableNode = cloneDeep(data);
+    init(): void {
         if (!this.editableNode.context.default_payload) {
             this.editableNode.context.default_payload = {};
         }
 
         this.suggest = [];
-        this._variableService.getContextVariable(this.project.key, this.node.context.pipeline_id)
+        this._variableService.getContextVariable(this.project.key, this.editableNode.context.pipeline_id)
             .subscribe((suggest) => this.suggest = suggest);
 
         // TODO delete .repository_fullname condition and update handler to get history branches of node_run (issue: #1815)
-        let app = Workflow.getApplication(this.workflow, this.node);
-        if (this.node.context && app && app.repository_fullname) {
+        let app = Workflow.getApplication(this.workflow, this.editableNode);
+        if (this.editableNode.context && app && app.repository_fullname) {
             this.loadingBranches = true;
             this.refreshVCSInfos(app);
         }
 
         this.payloadString = JSON.stringify(this.editableNode.context.default_payload, undefined, 4);
-        let pipeline = Workflow.getPipeline(this.workflow, this.node);
+        let pipeline = Workflow.getPipeline(this.workflow, this.editableNode);
         if (pipeline) {
-            this.store.dispatch(new FetchPipeline({
-                projectKey: this.project.key,
-                pipelineName: pipeline.name
-            })).pipe(
-                flatMap(() => this.store.selectOnce(PipelinesState.selectPipeline(this.project.key, pipeline.name))),
-                finalize(() => this._cd.markForCheck())
-            ).subscribe((pip) => {
-                this.currentPipeline = pip;
-                this.pipParamsReady = true;
-                this.editableNode.context.default_pipeline_parameters =
-                    cloneDeep(Pipeline.mergeAndKeepOld(pip.parameters, this.editableNode.context.default_pipeline_parameters));
-                try {
-                    this.editableNode.context.default_payload = JSON.parse(this.payloadString);
-                    this.invalidJSON = false;
-                } catch (e) {
-                    this.invalidJSON = true;
-                }
-                if (!this.editableNode.context.default_payload) {
-                    this.editableNode.context.default_payload = {};
-                }
+            this._pipelineService.getPipeline(this.project.key, pipeline.name)
+                .pipe(first()).subscribe(p => {
+                    this.currentPipeline = p;
+                    this.pipParamsReady = true;
+                    this.editableNode.context.default_pipeline_parameters =
+                        cloneDeep(Pipeline.mergeAndKeepOld(p.parameters, this.editableNode.context.default_pipeline_parameters));
+                    try {
+                        this.editableNode.context.default_payload = JSON.parse(this.payloadString);
+                        this.invalidJSON = false;
+                    } catch (e) {
+                        this.invalidJSON = true;
+                    }
+                    if (!this.editableNode.context.default_payload) {
+                        this.editableNode.context.default_payload = {};
+                    }
+                    this._cd.markForCheck();
             });
         }
     }
@@ -237,7 +242,12 @@ export class WorkflowWizardNodeInputComponent implements OnInit {
     updateWorkflow(): void {
         this.loading = true;
         let clonedWorkflow = cloneDeep(this.workflow);
-        let n = Workflow.getNodeByID(this.editableNode.id, clonedWorkflow);
+        let n: WNode;
+        if (this.editMode) {
+            n = Workflow.getNodeByRef(this.editableNode.ref, clonedWorkflow);
+        } else {
+            n = Workflow.getNodeByID(this.editableNode.id, clonedWorkflow);
+        }
 
         n.context.default_payload = this.editableNode.context.default_payload;
         n.context.default_pipeline_parameters = this.editableNode.context.default_pipeline_parameters;
@@ -250,10 +260,17 @@ export class WorkflowWizardNodeInputComponent implements OnInit {
             projectKey: this.workflow.project_key,
             workflowName: this.workflow.name,
             changes: clonedWorkflow
-        })).pipe(finalize(() => this.loading = false))
+        })).pipe(finalize(() => {
+            this.loading = false;
+            this._cd.markForCheck();
+        }))
             .subscribe(() => {
                 this.inputChange.emit(false);
-                this._toast.success('', this._translate.instant('workflow_updated'));
+                if (this.editMode) {
+                    this._toast.info('', this._translate.instant('workflow_ascode_updated'));
+                } else {
+                    this._toast.success('', this._translate.instant('workflow_updated'));
+                }
             });
     }
 }

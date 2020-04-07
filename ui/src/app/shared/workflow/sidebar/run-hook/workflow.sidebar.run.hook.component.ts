@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnInit, ViewChild } from '@angular/core';
-import {Store} from '@ngxs/store';
+import { Select } from '@ngxs/store';
 import { PipelineStatus } from 'app/model/pipeline.model';
 import { Project } from 'app/model/project.model';
 import { HookStatus, TaskExecution, WorkflowHookTask } from 'app/model/workflow.hook.model';
@@ -8,8 +8,8 @@ import { WorkflowNodeRun, WorkflowNodeRunHookEvent, WorkflowRun } from 'app/mode
 import { HookService } from 'app/service/hook/hook.service';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { WorkflowNodeHookDetailsComponent } from 'app/shared/workflow/node/hook/details/hook.details.component';
-import {WorkflowState, WorkflowStateModel} from 'app/store/workflow.state';
-import { Subscription } from 'rxjs';
+import { WorkflowState } from 'app/store/workflow.state';
+import { Observable, Subscription } from 'rxjs';
 import { finalize } from 'rxjs/operators';
 
 @Component({
@@ -25,6 +25,7 @@ export class WorkflowSidebarRunHookComponent implements OnInit {
     workflowDetailsHook: WorkflowNodeHookDetailsComponent;
 
     @Input() project: Project;
+    @Input() wname: string;
 
     loading = false;
     hookStatus = HookStatus;
@@ -36,16 +37,39 @@ export class WorkflowSidebarRunHookComponent implements OnInit {
     pipelineStatusEnum = PipelineStatus;
     subStore: Subscription;
 
+    @Select(WorkflowState.getSelectedHook()) hook$: Observable<WNodeHook>;
+    hookSubs: Subscription;
+    @Select(WorkflowState.getSelectedWorkflowRun()) workflowRun$: Observable<WorkflowRun>;
+    wrSubs: Subscription;
+
     constructor(
         private _hookService: HookService,
-        private _store: Store,
         private _cd: ChangeDetectorRef
-    ) { }
+    ) {}
 
     ngOnInit(): void {
-        this.subStore = this._store.select(WorkflowState.getCurrent()).subscribe((s: WorkflowStateModel) => {
-            this.wr = s.workflowRun;
-            this.hook = s.hook;
+        this.hookSubs = this.hook$.subscribe(h => {
+            // if no hooks, return
+            if (!h && !this.hook) {
+                return;
+            }
+            // if same hooks return
+            if (h && this.hook && h.uuid === this.hook.uuid) {
+                return;
+            }
+            this.hookEvent = null;
+            this.hook = h;
+            this.loadHookDetails();
+            this._cd.markForCheck();
+        });
+        this.wrSubs = this.workflowRun$.subscribe(workRun => {
+            if (!workRun && !this.wr) {
+                return;
+            }
+            if (workRun && this.wr && this.wr.id === workRun.id && this.hookEvent) {
+                return
+            }
+            this.wr = workRun;
             this.loadHookDetails();
             this._cd.markForCheck();
         });
@@ -54,7 +78,7 @@ export class WorkflowSidebarRunHookComponent implements OnInit {
     loadHookDetails() {
         if (this.wr && this.hook) {
             this.loading = true;
-            this._hookService.getHookLogs(this.project.key, this.wr.workflow.name, this.hook.uuid)
+            this._hookService.getHookLogs(this.project.key, this.wname, this.hook.uuid)
                 .pipe(finalize(() => {
                     this.loading = false;
                     this._cd.markForCheck();
@@ -71,7 +95,6 @@ export class WorkflowSidebarRunHookComponent implements OnInit {
                             }
                             return exec;
                         });
-
                         if (found) {
                             hook.executions = hook.executions.filter((h) => h.workflow_run === this.wr.num);
                         }

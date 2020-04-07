@@ -29,10 +29,10 @@ func Test_getWorkflowHookModelsHandlerAsLambdaUser(t *testing.T) {
 	u, passUser := assets.InsertLambdaUser(t, api.mustDB())
 
 	proj := assets.InsertTestProject(t, db, cache, sdk.RandomString(10), sdk.RandomString(10))
-	require.NoError(t, group.InsertLinkGroupUser(db, &group.LinkGroupUser{
-		GroupID: proj.ProjectGroups[0].Group.ID,
-		UserID:  u.OldUserStruct.ID,
-		Admin:   true,
+	require.NoError(t, group.InsertLinkGroupUser(context.TODO(), db, &group.LinkGroupUser{
+		GroupID:            proj.ProjectGroups[0].Group.ID,
+		AuthentifiedUserID: u.ID,
+		Admin:              true,
 	}))
 
 	pip := sdk.Pipeline{
@@ -41,7 +41,7 @@ func Test_getWorkflowHookModelsHandlerAsLambdaUser(t *testing.T) {
 		Name:       sdk.RandomString(10),
 	}
 
-	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip))
+	test.NoError(t, pipeline.InsertPipeline(db, &pip))
 
 	proj, _ = project.LoadByID(db, cache, proj.ID,
 		project.LoadOptions.WithApplications,
@@ -54,7 +54,7 @@ func Test_getWorkflowHookModelsHandlerAsLambdaUser(t *testing.T) {
 		Name:       sdk.RandomString(10),
 		ProjectID:  proj.ID,
 		ProjectKey: proj.Key,
-		WorkflowData: &sdk.WorkflowData{
+		WorkflowData: sdk.WorkflowData{
 			Node: sdk.Node{
 				Name: "root",
 				Type: sdk.NodeTypePipeline,
@@ -65,7 +65,7 @@ func Test_getWorkflowHookModelsHandlerAsLambdaUser(t *testing.T) {
 		},
 	}
 
-	test.NoError(t, workflow.Insert(context.TODO(), db, cache, &w, proj))
+	test.NoError(t, workflow.Insert(context.TODO(), db, cache, *proj, &w))
 
 	//Prepare request
 	vars := map[string]string{}
@@ -104,7 +104,7 @@ func Test_getWorkflowHookModelsHandlerAsAdminUser(t *testing.T) {
 		Name:       sdk.RandomString(10),
 	}
 
-	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip))
+	test.NoError(t, pipeline.InsertPipeline(db, &pip))
 
 	app := sdk.Application{
 		Name:               sdk.RandomString(10),
@@ -112,7 +112,7 @@ func Test_getWorkflowHookModelsHandlerAsAdminUser(t *testing.T) {
 		ProjectID:          proj.ID,
 		RepositoryFullname: "ovh/cds",
 	}
-	test.NoError(t, application.Insert(db, cache, proj, &app))
+	test.NoError(t, application.Insert(db, cache, *proj, &app))
 
 	proj, _ = project.LoadByID(db, cache, proj.ID, project.LoadOptions.WithApplications,
 		project.LoadOptions.WithPipelines, project.LoadOptions.WithEnvironments, project.LoadOptions.WithGroups)
@@ -121,7 +121,7 @@ func Test_getWorkflowHookModelsHandlerAsAdminUser(t *testing.T) {
 		Name:       sdk.RandomString(10),
 		ProjectID:  proj.ID,
 		ProjectKey: proj.Key,
-		WorkflowData: &sdk.WorkflowData{
+		WorkflowData: sdk.WorkflowData{
 			Node: sdk.Node{
 				Name: "root",
 				Type: sdk.NodeTypePipeline,
@@ -133,7 +133,7 @@ func Test_getWorkflowHookModelsHandlerAsAdminUser(t *testing.T) {
 		},
 	}
 
-	test.NoError(t, workflow.Insert(context.TODO(), db, cache, &w, proj))
+	test.NoError(t, workflow.Insert(context.TODO(), db, cache, *proj, &w))
 
 	//Prepare request
 	vars := map[string]string{}

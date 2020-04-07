@@ -131,7 +131,7 @@ func (r *WorkflowRun) Tag(tag, value string) bool {
 	return false
 }
 
-// TagExists return true if tag already exits
+// TagExists returns true if tag already exists
 func (r *WorkflowRun) TagExists(tag string) bool {
 	for i := range r.Tags {
 		if r.Tags[i].Tag == tag {
@@ -182,6 +182,12 @@ func (r *WorkflowRun) GetOutgoingHookRun(uuid string) *WorkflowNodeRun {
 	return nil
 }
 
+const (
+	RunInfoTypInfo     = "Info"
+	RunInfoTypeWarning = "Warning"
+	RunInfoTypeError   = "Error"
+)
+
 //WorkflowRunInfo is an info on workflow run
 type WorkflowRunInfo struct {
 	APITime time.Time `json:"api_time,omitempty" db:"-"`
@@ -189,7 +195,7 @@ type WorkflowRunInfo struct {
 	// UserMessage contains msg translated for end user
 	UserMessage string `json:"user_message,omitempty" db:"-"`
 	SubNumber   int64  `json:"sub_number,omitempty" db:"-"`
-	IsError     bool   `json:"is_error" db:"-"`
+	Type        string `json:"type" db:"-"`
 }
 
 //WorkflowRunTag is a tag on workflow run
@@ -346,8 +352,6 @@ func (w WorkflowNodeRunArtifact) Equal(c WorkflowNodeRunArtifact) bool {
 }
 
 //WorkflowNodeJobRun represents an job to be run
-// /!\ DONT FORGET TO REGENERATE EASYJSON FILES /!\
-//easyjson:json
 type WorkflowNodeJobRun struct {
 	ProjectID                 int64              `json:"project_id"`
 	ID                        int64              `json:"id"`
@@ -368,9 +372,9 @@ type WorkflowNodeJobRun struct {
 	IntegrationPluginBinaries []GRPCPluginBinary `json:"integration_plugin_binaries,omitempty"`
 	Header                    WorkflowRunHeaders `json:"header,omitempty"`
 	ContainsService           bool               `json:"contains_service,omitempty"`
+	HatcheryName              string             `json:"hatchery_name,omitempty"`
+	WorkerName                string             `json:"worker_name,omitempty"`
 }
-
-// /!\ DONT FORGET TO REGENERATE EASYJSON FILES /!\
 
 // WorkflowNodeJobRunSummary is a light representation of WorkflowNodeJobRun for CDS event
 type WorkflowNodeJobRunSummary struct {
@@ -382,6 +386,9 @@ type WorkflowNodeJobRunSummary struct {
 	Done              int64              `json:"done,omitempty"`
 	Job               ExecutedJobSummary `json:"job_summary,omitempty"`
 	SpawnInfos        []SpawnInfo        `json:"spawninfos"`
+	HatcheryName      string             `json:"hatchery_name,omitempty"`
+	WorkerName        string             `json:"worker_name,omitempty"`
+	WorkerModelName   string             `json:"worker_model_name,omitempty"`
 }
 
 // ToSummary transforms a WorkflowNodeJobRun into a WorkflowNodeJobRunSummary
@@ -432,6 +439,8 @@ type WorkflowNodeRunHookEvent struct {
 type WorkflowNodeRunManual struct {
 	Payload            interface{} `json:"payload" db:"-"`
 	PipelineParameters []Parameter `json:"pipeline_parameter" db:"-"`
+	OnlyFailedJobs     bool        `json:"only_failed_jobs" db:"-"`
+	Resync             bool        `json:"resync" db:"-"`
 	Username           string      `json:"username" db:"-"`
 	Fullname           string      `json:"fullname" db:"-"`
 	Email              string      `json:"email" db:"-"`

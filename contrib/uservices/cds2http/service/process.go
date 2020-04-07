@@ -9,7 +9,6 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/mitchellh/mapstructure"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 
@@ -45,8 +44,8 @@ func process(event sdk.Event, client *http.Client) error {
 		return nil
 	}
 
-	if err := mapstructure.Decode(event.Payload, &eventNotif); err != nil {
-		log.Warnf("process> Error during consumption. type:%s err:%s", event.EventType, err)
+	if err := json.Unmarshal(event.Payload, &eventNotif); err != nil {
+		log.Warnf("process> cannot read payload. type:%s err:%s", event.EventType, err)
 		return nil
 	}
 

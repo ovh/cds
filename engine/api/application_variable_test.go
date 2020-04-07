@@ -28,7 +28,7 @@ func Test_getVariableAuditInApplicationHandler(t *testing.T) {
 	app := &sdk.Application{
 		Name: sdk.RandomString(10),
 	}
-	if err := application.Insert(api.mustDB(), api.Cache, proj, app); err != nil {
+	if err := application.Insert(api.mustDB(), api.Cache, *proj, app); err != nil {
 		t.Fatal(err)
 	}
 
@@ -38,7 +38,7 @@ func Test_getVariableAuditInApplicationHandler(t *testing.T) {
 		Type:  "string",
 		Value: "bar",
 	}
-	if err := application.InsertVariable(api.mustDB(), api.Cache, app, v, u); err != nil {
+	if err := application.InsertVariable(api.mustDB(), app.ID, &v, u); err != nil {
 		t.Fatal(err)
 	}
 

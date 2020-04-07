@@ -79,7 +79,7 @@
 </div>
 <ng-template let-context let-modal="modal" #createKey>
     <div class="header">{{ 'keys_add_title' | translate }}</div>
-    <div class="content">
+    <div class="content scrolling">
         <app-keys-form [loading]="loading" (keyEvent)="addKey($event)" [defaultType]="defaultKeyType" prefix="proj-"></app-keys-form>
     </div>
 </ng-template>

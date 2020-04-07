@@ -30,7 +30,7 @@ testcases:
 - name: check workflow
   steps:
   - script:  {{.cdsctl}} -f {{.cdsctl.config}} workflow status 04SCWORKFLOWRUNWORKERCMD 04SCWorkflowRunWorkerCmd-WORKFLOW 1 --format json
-    retry: 10
+    retry: 20
     delay: 10
     assertions:
     - result.code ShouldEqual 0

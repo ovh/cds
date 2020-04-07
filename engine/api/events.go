@@ -15,9 +15,9 @@ import (
 	"github.com/tevino/abool"
 
 	"github.com/ovh/cds/engine/api/cache"
-	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/observability"
 	"github.com/ovh/cds/engine/api/permission"
+	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
@@ -94,10 +94,6 @@ func (b *eventsBroker) cacheSubscribe(c context.Context, cacheMsgChan chan<- sdk
 				continue
 			}
 
-			switch e.EventType {
-			case "sdk.EventJob":
-				continue
-			}
 			observability.Record(b.router.Background, SSEEvents, 1)
 			cacheMsgChan <- e
 		}
@@ -235,51 +231,42 @@ func (client *eventsBrokerSubscribe) manageEvent(db gorp.SqlExecutor, event sdk.
 		return true, nil
 	}
 
-	var isSharedInfra = client.consumer.Groups.HasOneOf(group.SharedInfraGroup.ID)
+	var isHatchery = client.consumer.Service != nil && client.consumer.Service.Type == services.TypeHatchery
+	var isHatcheryWithGroups = isHatchery && len(client.consumer.GroupIDs) > 0
 
 	switch {
-	case strings.HasPrefix(event.EventType, "sdk.EventProject"):
-		if isSharedInfra || client.consumer.Maintainer() {
+	case strings.HasPrefix(event.EventType, "sdk.EventProject") || strings.HasPrefix(event.EventType, "sdk.EventAsCodeEvent"):
+		if client.consumer.Maintainer() && !isHatcheryWithGroups {
 			return true, nil
 		}
-
 		perms, err := permission.LoadProjectMaxLevelPermission(context.Background(), db, []string{event.ProjectKey}, client.consumer.GetGroupIDs())
 		if err != nil {
 			return false, err
 		}
-
 		return perms.Level(event.ProjectKey) >= sdk.PermissionRead, nil
-
 	case strings.HasPrefix(event.EventType, "sdk.EventWorkflow") || strings.HasPrefix(event.EventType, "sdk.EventRunWorkflow"):
-		if isSharedInfra || client.consumer.Maintainer() {
+		if client.consumer.Maintainer() && !isHatcheryWithGroups {
 			return true, nil
 		}
-
 		perms, err := permission.LoadWorkflowMaxLevelPermission(context.Background(), db, event.ProjectKey, []string{event.WorkflowName}, client.consumer.GetGroupIDs())
 		if err != nil {
 			return false, err
 		}
-
 		return perms.Level(event.WorkflowName) >= sdk.PermissionRead, nil
-
 	case strings.HasPrefix(event.EventType, "sdk.EventBroadcast"):
+		if client.consumer.Maintainer() && !isHatcheryWithGroups {
+			return true, nil
+		}
 		if event.ProjectKey == "" {
 			return true, nil
 		}
-
-		if isSharedInfra || client.consumer.Maintainer() {
-			return true, nil
-		}
-
 		perms, err := permission.LoadProjectMaxLevelPermission(context.Background(), db, []string{event.ProjectKey}, client.consumer.GetGroupIDs())
 		if err != nil {
 			return false, err
 		}
-
 		return perms.Level(event.ProjectKey) >= sdk.PermissionRead, nil
 	default:
 		return false, nil
-
 	}
 }
 

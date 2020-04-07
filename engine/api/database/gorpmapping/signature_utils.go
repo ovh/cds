@@ -28,11 +28,10 @@ func ListCanonicalFormsByEntity(db gorp.SqlExecutor, entity string) ([]sdk.Canon
 	if !e.SignedEntity {
 		return nil, sdk.WithStack(errors.New("entity is not signed"))
 	}
-	q := NewQuery(fmt.Sprintf("select signer, count(sig) as number from %s group by signer", e.Name))
 
 	var res []sdk.CanonicalFormUsage
-	if err := GetAll(context.Background(), db, q, &res); err != nil {
-		return nil, err
+	if _, err := db.Select(&res, fmt.Sprintf(`select signer, count(sig) as number from "%s" group by signer`, e.Name)); err != nil {
+		return nil, sdk.WithStack(err)
 	}
 
 	x := e.Target.(Canonicaller)
@@ -54,10 +53,9 @@ func ListTuplesByEntity(db gorp.SqlExecutor, entity string) ([]string, error) {
 		return nil, sdk.WithStack(errors.New("unknown entity"))
 	}
 
-	query := NewQuery(fmt.Sprintf("select %s::text from %s", e.Keys[0], e.Name))
 	var res []string
-	if err := GetAll(context.Background(), db, query, &res); err != nil {
-		return nil, err
+	if _, err := db.Select(&res, fmt.Sprintf(`select %s::text from "%s"`, e.Keys[0], e.Name)); err != nil {
+		return nil, sdk.WithStack(err)
 	}
 
 	return res, nil
@@ -72,10 +70,10 @@ func ListTupleByCanonicalForm(db gorp.SqlExecutor, entity, signer string) ([]str
 		return nil, sdk.WithStack(errors.New("entity is not signed"))
 	}
 
-	query := NewQuery(fmt.Sprintf("select %s::text from %s where signer = $1", e.Keys[0], e.Name)).Args(signer)
+	query := fmt.Sprintf(`select %s::text from "%s" where signer = $1`, e.Keys[0], e.Name)
 	var res []string
-	if err := GetAll(context.Background(), db, query, &res); err != nil {
-		return nil, err
+	if _, err := db.Select(&res, query, signer); err != nil {
+		return nil, sdk.WithStack(err)
 	}
 
 	return res, nil

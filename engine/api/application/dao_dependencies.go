@@ -18,29 +18,39 @@ var (
 	}
 
 	loadVariables = func(db gorp.SqlExecutor, store cache.Store, app *sdk.Application) error {
-		variables, err := GetAllVariableByID(db, app.ID)
+		variables, err := LoadAllVariables(db, app.ID)
 		if err != nil && sdk.Cause(err) != sql.ErrNoRows {
 			return sdk.WrapError(err, "Unable to load variables for application %d", app.ID)
 		}
-		app.Variable = variables
+		app.Variables = variables
 		return nil
 	}
 
 	loadVariablesWithClearPassword = func(db gorp.SqlExecutor, store cache.Store, app *sdk.Application) error {
-		variables, err := GetAllVariableByID(db, app.ID, WithClearPassword())
+		variables, err := LoadAllVariablesWithDecrytion(db, app.ID)
 		if err != nil && sdk.Cause(err) != sql.ErrNoRows {
 			return sdk.WrapError(err, "Unable to load variables for application %d", app.ID)
 		}
-		app.Variable = variables
+		app.Variables = variables
 		return nil
 	}
 
 	loadKeys = func(db gorp.SqlExecutor, store cache.Store, app *sdk.Application) error {
-		return LoadAllKeys(db, app)
+		keys, err := LoadAllKeys(db, app.ID)
+		if err != nil {
+			return err
+		}
+		app.Keys = keys
+		return nil
 	}
 
 	loadClearKeys = func(db gorp.SqlExecutor, store cache.Store, app *sdk.Application) error {
-		return LoadAllDecryptedKeys(db, app)
+		keys, err := LoadAllKeysWithPrivateContent(db, app.ID)
+		if err != nil {
+			return err
+		}
+		app.Keys = keys
+		return nil
 	}
 
 	loadDeploymentStrategies = func(db gorp.SqlExecutor, store cache.Store, app *sdk.Application) error {

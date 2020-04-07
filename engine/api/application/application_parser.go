@@ -21,7 +21,7 @@ type ImportOptions struct {
 }
 
 // ParseAndImport parse an exportentities.Application and insert or update the application in database
-func ParseAndImport(ctx context.Context, db gorp.SqlExecutor, cache cache.Store, proj *sdk.Project, eapp *exportentities.Application, opts ImportOptions, decryptFunc keys.DecryptFunc, u sdk.Identifiable) (*sdk.Application, []sdk.Message, error) {
+func ParseAndImport(ctx context.Context, db gorp.SqlExecutor, cache cache.Store, proj sdk.Project, eapp *exportentities.Application, opts ImportOptions, decryptFunc keys.DecryptFunc, u sdk.Identifiable) (*sdk.Application, []sdk.Message, error) {
 	log.Info(ctx, "ParseAndImport>> Import application %s in project %s (force=%v)", eapp.Name, proj.Key, opts.Force)
 	msgList := []sdk.Message{}
 
@@ -44,7 +44,7 @@ func ParseAndImport(ctx context.Context, db gorp.SqlExecutor, cache cache.Store,
 
 	//If the application exist and we don't want to force, raise an error
 	if oldApp != nil && !opts.Force {
-		return nil, msgList, sdk.ErrApplicationExist
+		return nil, msgList, sdk.WithStack(sdk.ErrApplicationExist)
 	}
 
 	if oldApp != nil && oldApp.FromRepository != "" && opts.FromRepository != oldApp.FromRepository {
@@ -72,7 +72,7 @@ func ParseAndImport(ctx context.Context, db gorp.SqlExecutor, cache cache.Store,
 		}
 
 		vv := sdk.Variable{Name: p, Type: v.Type, Value: v.Value}
-		app.Variable = append(app.Variable, vv)
+		app.Variables = append(app.Variables, vv)
 	}
 
 	//Compute keys
@@ -108,12 +108,21 @@ func ParseAndImport(ctx context.Context, db gorp.SqlExecutor, cache cache.Store,
 		}
 
 		k := sdk.ApplicationKey{
-			Key:           *kk,
+			Name:          kk.Name,
+			Public:        kk.Public,
+			Private:       kk.Private,
+			KeyID:         kk.KeyID,
+			Type:          kk.Type,
 			ApplicationID: app.ID,
 		}
 
 		if keepOldValue && oldKey != nil {
-			k.Key = oldKey.Key
+			k.Name = oldKey.Name
+			k.Public = oldKey.Public
+			k.Private = oldKey.Private
+			k.KeyID = oldKey.KeyID
+			k.Type = oldKey.Type
+			k.ApplicationID = oldKey.ApplicationID
 		}
 
 		app.Keys = append(app.Keys, k)

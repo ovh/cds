@@ -23,6 +23,7 @@ export class WorkflowNodeHookDetailsComponent implements OnInit {
   task: TaskExecution;
   codeMirrorConfig: any;
   themeSubscription: Subscription;
+  body: string;
 
   constructor(
     private _modalService: SuiModalService,
@@ -51,16 +52,21 @@ export class WorkflowNodeHookDetailsComponent implements OnInit {
   }
 
   show(taskExec: TaskExecution): void {
-    this.task = cloneDeep(taskExec);
-    if (this.task.webhook && this.task.webhook.request_body) {
-      let body = atob(this.task.webhook.request_body);
-      try {
-        this.task.webhook.request_body = JSON.stringify(JSON.parse(body), null, 4);
-      } catch (e) {
-        this.task.webhook.request_body = body;
+      this.task = cloneDeep(taskExec);
+      let jsonBody;
+      if (this.task.webhook) {
+            jsonBody = atob(this.task.webhook.request_body);
+      } else if (this.task.gerrit) {
+          jsonBody = atob(this.task.gerrit.message);
       }
-    }
+      try {
+          this.body = JSON.stringify(JSON.parse(jsonBody), null, 4);
+      } catch (e) {
+          this.body = jsonBody;
+      }
+
     this.modalConfig = new TemplateModalConfig<boolean, boolean, void>(this.nodeHookDetailsModal);
+      this.modalConfig.size = 'large';
     this.modal = this._modalService.open(this.modalConfig);
   }
 }

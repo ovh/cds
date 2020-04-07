@@ -43,7 +43,7 @@ func (w *WorkflowData) GetHooksMapRef() map[string]NodeHook {
 	res := make(map[string]NodeHook)
 	for _, n := range w.Array() {
 		for _, h := range n.Hooks {
-			res[h.Ref] = h
+			res[h.Ref()] = h
 		}
 	}
 	return res

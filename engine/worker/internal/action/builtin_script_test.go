@@ -72,7 +72,7 @@ echo "lol"`,
 
 	for _, tst := range tests {
 		t.Run(tst.name, func(t *testing.T) {
-			wk, _ := setupTest(t)
+			wk, _ := SetupTest(t)
 			script, err := prepareScriptContent(tst.parameters, wk.BaseDir(), wk.workingDirectory)
 			if tst.shouldHaveError {
 				assert.Error(t, err)
@@ -87,7 +87,7 @@ echo "lol"`,
 }
 
 func TestRunScriptAction(t *testing.T) {
-	wk, ctx := setupTest(t)
+	wk, ctx := SetupTest(t)
 	res, err := RunScriptAction(ctx, wk,
 		sdk.Action{
 			Parameters: []sdk.Parameter{
@@ -113,7 +113,7 @@ func Test_writeScriptContent_windows(t *testing.T) {
 		sdk.GOOS = ""
 	}()
 
-	wk, ctx := setupTest(t)
+	wk, ctx := SetupTest(t)
 
 	script, err := prepareScriptContent([]sdk.Parameter{
 		{

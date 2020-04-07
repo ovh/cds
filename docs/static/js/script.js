@@ -29,9 +29,8 @@ var getUrlParameter = function getUrlParameter(sPageURL) {
             obj[sParameterName[0]] = sParameterName[1];
         }
         return obj;
-    } else {
-        return undefined;
     }
+    return undefined;
 };
 
 jQuery(document).ready(function () {

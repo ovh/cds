@@ -34,6 +34,10 @@ func (c *gitlabClient) ListForks(ctx context.Context, repo string) ([]sdk.VCSRep
 	}
 
 	for resp.NextPage != 0 {
+		if ctx.Err() != nil {
+			break
+		}
+
 		opts.Page = resp.NextPage
 
 		projects, resp, err = c.client.Projects.ListProjectForks(repo, opts)

@@ -34,7 +34,7 @@ func TestInsertStaticFiles(t *testing.T) {
 		ProjectKey: proj.Key,
 		Name:       "pip1",
 	}
-	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip))
+	test.NoError(t, pipeline.InsertPipeline(db, &pip))
 
 	s := sdk.NewStage("stage 1")
 	s.Enabled = true
@@ -47,7 +47,7 @@ func TestInsertStaticFiles(t *testing.T) {
 		Name:       "test_staticfiles_1",
 		ProjectID:  proj.ID,
 		ProjectKey: proj.Key,
-		WorkflowData: &sdk.WorkflowData{
+		WorkflowData: sdk.WorkflowData{
 			Node: sdk.Node{
 				Name: "node1",
 				Ref:  "node1",
@@ -74,9 +74,9 @@ func TestInsertStaticFiles(t *testing.T) {
 		PurgeTags:     []string{"git.branch"},
 	}
 
-	test.NoError(t, workflow.Insert(context.TODO(), db, cache, &w, proj))
+	test.NoError(t, workflow.Insert(context.TODO(), db, cache, *proj, &w))
 
-	w1, err := workflow.Load(context.TODO(), db, cache, proj, "test_staticfiles_1", workflow.LoadOptions{
+	w1, err := workflow.Load(context.TODO(), db, cache, *proj, "test_staticfiles_1", workflow.LoadOptions{
 		DeepPipeline: true,
 	})
 	test.NoError(t, err)
@@ -84,7 +84,7 @@ func TestInsertStaticFiles(t *testing.T) {
 	wfr, errWR := workflow.CreateRun(db, w1, nil, u)
 	assert.NoError(t, errWR)
 	wfr.Workflow = *w1
-	_, errWr := workflow.StartWorkflowRun(context.TODO(), db, cache, proj, wfr, &sdk.WorkflowRunPostHandlerOption{
+	_, errWr := workflow.StartWorkflowRun(context.TODO(), db, cache, *proj, wfr, &sdk.WorkflowRunPostHandlerOption{
 		Manual: &sdk.WorkflowNodeRunManual{Username: u.Username},
 	}, consumer, nil)
 	test.NoError(t, errWr)
