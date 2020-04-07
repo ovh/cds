@@ -26,13 +26,20 @@ workflow:
 hooks:
   build:
   - type: RepositoryWebHook
+notifications:
+- type: email
+  pipelines:
+  - deploy
+  settings:
+    on_success: never
+    recipients:
+    - me@foo.bar
 ```
 
 There are two major things to understand: `workflow` and `hooks`. A workflow is a kind of graph starting from a root pipeline, and other pipelines with dependencies. In this example, the `deploy` pipeline will be triggered after the `build` pipeline.
 
 ## Run Conditions
-
-[Run Conditions documentation]({{ <relref "/docs/concepts/workflow/run-conditions.md">}})
+[Run Conditions documentation]({{<relref "/docs/concepts/workflow/run-conditions.md">}})
 
 Example of basic condition. Notice that the `when` attribute is optional, it's just a shortcut on condition `cds.status == Success`.
 
@@ -70,4 +77,52 @@ Example with using LUA syntax as advanced condition:
   conditions:
     script: return cds_manual == "true" or (cds_status == "Success" and git_branch
       == "master" and git_repository == "ovh/cds")
+```
+
+## Notifications
+
+[Notifications documentation]({{<relref "/docs/concepts/workflow/notifications.md">}})
+
+Example of email notification.
+
+```yml
+- type: email
+  pipelines:
+  - deploy
+  settings:
+    on_success: never
+    recipients:
+    - me@foo.bar
+```
+
+Example of jabber notification. Note that you can add `conditions` on every notifications
+
+```yml
+- type: jabber
+  pipelines:
+  - deploy
+  settings:
+    on_start: true
+    send_to_groups: true
+    recipients:
+    - me@jabber.com
+    conditions:
+      check:
+      - variable: cds.triggered_by.email
+        operator: eq
+        value: me@localhost.local
+```
+
+Example of vcs notification. Note that `pipelines` list is optional on every notifications. When it's not specified, notification will be triggered for each pipeline
+
+```yml
+- type: vcs
+  settings:
+    template:
+      body: |+
+        [[- if .Stages ]]
+        CDS Report [[.WorkflowNodeName]]#[[.Number]].[[.SubNumber]] [[ if eq .Status "Success" -]] ✔ [[ else ]][[ if eq .Status "Fail" -]] ✘ [[ else ]][[ if eq .Status "Stopped" -]] ■ [[ else ]]- [[ end ]] [[ end ]] [[ end ]]
+        [[- end]]
+      disable_comment: false
+      disable_status: false
 ```
