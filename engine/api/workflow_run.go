@@ -1005,8 +1005,9 @@ func (api *API) initWorkflowRun(ctx context.Context, projKey string, wf *sdk.Wor
 						Args: msg.Args,
 						Type: msg.Type,
 					}
-					workflow.AddWorkflowRunInfo(wfRun, infos...)
+
 				}
+				workflow.AddWorkflowRunInfo(wfRun, infos...)
 				r1 := failInitWorkflowRun(ctx, api.mustDB(), wfRun, sdk.WrapError(err, "unable to get workflow from repository"))
 				report.Merge(ctx, r1)
 				return
