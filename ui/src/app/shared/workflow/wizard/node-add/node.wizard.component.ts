@@ -44,6 +44,7 @@ export class WorkflowNodeAddWizardComponent implements OnInit {
   @Input() hideCancel: boolean;
   @Input() hideNext: boolean;
   @Input() loading: boolean;
+  @Input() canCreateFork: boolean;
   @Output() nodeCreated: EventEmitter<WNode> = new EventEmitter<WNode>();
   @Output() pipelineSectionChanged: EventEmitter<string> = new EventEmitter<string>();
 

@@ -1183,6 +1183,9 @@ func checkHooks(db gorp.SqlExecutor, w *sdk.Workflow, n *sdk.Node) error {
 			w.HookModels[hm.ID] = *hm
 			h.HookModelID = hm.ID
 		}
+		if h.HookModelName == sdk.RepositoryWebHookModelName && (n.Context == nil || n.Context.ApplicationID == 0) {
+			return sdk.WrapError(sdk.ErrApplicationNotFound, "unable to find application for the repository web hook: %d: %s/%s", w.ID, w.Name, n.Name)
+		}
 
 		// Add missing default value for hook
 		model := w.HookModels[h.HookModelID]
@@ -1427,8 +1430,8 @@ func Push(ctx context.Context, db *gorp.DbMap, store cache.Store, proj *sdk.Proj
 			fromRepo = opts.FromRepository
 		}
 		envDB, msgList, err := environment.ParseAndImport(tx, *proj, env, environment.ImportOptions{Force: true, FromRepository: fromRepo}, decryptFunc, u)
-    allMsg = append(allMsg, msgList...)
-    if err != nil {
+		allMsg = append(allMsg, msgList...)
+		if err != nil {
 			return allMsg, nil, nil, sdk.ErrorWithFallback(err, sdk.ErrWrongRequest, "unable to import environment %s/%s", proj.Key, env.Name)
 		}
 		proj.SetEnvironment(*envDB)
@@ -1440,8 +1443,8 @@ func Push(ctx context.Context, db *gorp.DbMap, store cache.Store, proj *sdk.Proj
 			fromRepo = opts.FromRepository
 		}
 		pipDB, msgList, err := pipeline.ParseAndImport(ctx, tx, store, *proj, &pip, u, pipeline.ImportOptions{Force: true, FromRepository: fromRepo})
-    allMsg = append(allMsg, msgList...)
-    if err != nil {
+		allMsg = append(allMsg, msgList...)
+		if err != nil {
 			return allMsg, nil, nil, sdk.ErrorWithFallback(err, sdk.ErrWrongRequest, "unable to import pipeline %s/%s", proj.Key, pip.Name)
 		}
 		proj.SetPipeline(*pipDB)
@@ -1467,8 +1470,8 @@ func Push(ctx context.Context, db *gorp.DbMap, store cache.Store, proj *sdk.Proj
 	}
 
 	wf, msgList, err := ParseAndImport(ctx, tx, store, *proj, oldWf, data.Workflow, u, importOptions)
-  allMsg = append(allMsg, msgList...)
-  if err != nil {
+	allMsg = append(allMsg, msgList...)
+	if err != nil {
 		return allMsg, nil, nil, sdk.WrapError(err, "unable to import workflow %s", data.Workflow.GetName())
 	}
 

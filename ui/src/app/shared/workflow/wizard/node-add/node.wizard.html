@@ -49,14 +49,15 @@
               <div *ngSwitchCase="'pipeline'">
                 <div class="ui row mb20">
                   <div class="ui sixteen wide column">
-                    <div class="three ui buttons">
-                        <button class="ui button"
+                    <div class="ui buttons" [class.three]="canCreateFork" [class.two]="!canCreateFork">
+                        <button *ngIf="canCreateFork"
+                                class="ui button"
                                 type="button"
                                 [class.active]="createFork && !createNewPipeline"
                                 [class.blue]="createFork"
                                 (click)="createFork = true"
                         >
-                            {{'workflow_start_with_fork' | translate}}
+                            {{ 'workflow_start_with_fork' | translate}}
                         </button>
                       <button class="ui button"
                         type="button"
