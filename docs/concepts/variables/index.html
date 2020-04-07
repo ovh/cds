@@ -642,15 +642,52 @@ echo $CDS_PARENT_APPLICATION
 <p>Here is the list of git variables:</p>
 
 <ul>
-<li><code>{{.git.hash}}</code></li>
-<li><code>{{.git.hash.short}}</code></li>
-<li><code>{{.git.url}}</code></li>
-<li><code>{{.git.http_url}}</code></li>
-<li><code>{{.git.branch}}</code></li>
-<li><code>{{.git.tag}}</code></li>
-<li><code>{{.git.author}}</code></li>
-<li><code>{{.git.message}}</code></li>
-<li><code>{{.git.server}}</code></li>
+<li><code>{{.git.hash.before}}</code>: SHA of the most recent commit before the push</li>
+<li><code>{{.git.hash}}</code>: SHA of the most recent commit after the push</li>
+<li><code>{{.git.hash.short}}</code>: Short version of git.hash</li>
+<li><code>{{.git.hook}}</code>: Name of the event that trigger the run</li>
+<li><code>{{.git.url}}</code>:  Git ssh URL used to clone</li>
+<li><code>{{.git.http_url}}</code>: Git http url used to clone</li>
+<li><code>{{.git.branch}}</code>:
+
+<ul>
+<li>Push event: Name of the branch where the push occured</li>
+<li>PullRequest event: Name of the source branch</li>
+</ul></li>
+<li><code>{{.git.tag}}</code>: Name of the tag that triggered the run</li>
+<li><code>{{.git.author}}</code>: Name of the most recent commit author</li>
+<li><code>{{.git.author.email}}</code>: Email of the most recent commit author</li>
+<li><code>{{.git.message}}</code>: Git message of the most recent commit</li>
+<li><code>{{.git.server}}</code>: Name of the repository manager</li>
+<li><code>{{.git.repository}}</code>:
+
+<ul>
+<li>Push event:  Name of the repository</li>
+<li>PullRequest event: Name of the source repository</li>
+</ul></li>
+</ul>
+
+<p>Here is the list of git variables available only for Bitbucket server</p>
+
+<ul>
+<li><code>{{.git.hash.dest}}</code>: SHA of the most rcent commit on destination branch ( PullRequest event )</li>
+<li><code>{{.git.branch.dest}}</code>: Name of the destination branch on a pull request event</li>
+<li><code>{{.git.repository.dest}}</code>: Name of the target repository on a pull request event</li>
+<li><code>{{.git.pr.id}}</code>: Identifier of the pullrequest</li>
+<li><code>{{.git.pr.title}}</code>: Title of the pullrequest</li>
+<li><code>{{.git.pr.state}}</code>: Status of the pullrequest</li>
+<li><code>{{.git.pr.previous.title}}</code>: Previous title of the pullrequest</li>
+<li><code>{{.git.pr.previous.branch}}</code>: Previous target branch of the pullrequest</li>
+<li><code>{{.git.pr.previous.hash}}</code>: Previous target hash of the pullrequest</li>
+<li><code>{{.git.pr.previous.state}}</code>: Previous status of the pullrequest</li>
+<li><code>{{.git.pr.reviewer}}</code>: Name of the reviewer</li>
+<li><code>{{.git.pr.reviewer.email}}</code>: Email of the reviewer</li>
+<li><code>{{.git.pr.reviewer.status}}</code>: Status of the review</li>
+<li><code>{{.git.pr.reviewer.role}}</code>: Role of the reviewer</li>
+<li><code>{{.git.pr.comment}}</code>: Comment written by the reviewer</li>
+<li><code>{{.git.pr.comment.before}}</code>: Previous comment</li>
+<li><code>{{.git.pr.comment.author}}</code>: Author name of the comment</li>
+<li><code>{{.git.pr.comment.author.email}}</code> Author email of the comment</li>
 </ul>
 
 <h2 id="pipeline-parameters">Pipeline parameters</h2>
