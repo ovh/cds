@@ -174,21 +174,6 @@ func (b *websocketBroker) ServeHTTP() service.Handler {
 			client.readUpdateFilterChan(ctx, b.dbFunc())
 		})
 
-		if err := c.WriteJSON(sdk.Event{
-			EventType:    "sdk.EventProject",
-			ProjectKey:   "foo",
-			WorkflowName: "bar",
-		}); err != nil {
-			log.Error(ctx, "websocketClient.Send > unable to write json: %v", err)
-		}
-		if err := c.WriteJSON(sdk.Event{
-			EventType:    "sdk.EventProject",
-			ProjectKey:   "foo",
-			WorkflowName: "bar",
-		}); err != nil {
-			log.Error(ctx, "websocketClient.Send > unable to write json: %v", err)
-		}
-
 		for {
 			if ctx.Err() != nil {
 				return ctx.Err()
@@ -223,7 +208,7 @@ func (c *websocketClient) readUpdateFilterChan(ctx context.Context, db *gorp.DbM
 			return
 		case m := <-c.updateFilterChan:
 			if err := c.updateEventFilter(ctx, db, m); err != nil {
-				log.Error(ctx, "websocketClient.read: unable to update event filter: %v", err)
+				log.Error(ctx, "websocketClient.readUpdateFilterChan: unable to update event filter: %v", err)
 				msg := sdk.WebsocketEvent{
 					Status: "KO",
 					Error:  sdk.Cause(err).Error(),
