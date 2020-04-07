@@ -701,7 +701,8 @@ func (api *API) postWorkflowJobStepStatusHandler() service.Handler {
 			return nil
 		}
 		nodeRun.Translate(r.Header.Get("Accept-Language"))
-		event.PublishWorkflowNodeRun(context.Background(), nodeRun, wr.Workflow, notification.GetUserWorkflowEvents(ctx, api.mustDB(), api.Cache, work.Name, wr.Workflow, nil, nodeRun))
+		eventsNotifs := notification.GetUserWorkflowEvents(ctx, api.mustDB(), api.Cache, wr.Workflow.ProjectID, wr.Workflow.ProjectKey, work.Name, wr.Workflow.Notifications, nil, nodeRun)
+		event.PublishWorkflowNodeRun(context.Background(), nodeRun, wr.Workflow, eventsNotifs)
 		return nil
 	}
 }
