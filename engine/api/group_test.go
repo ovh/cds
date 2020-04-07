@@ -282,7 +282,7 @@ func Test_deleteGroupUserHandler(t *testing.T) {
 	api.Router.Mux.ServeHTTP(rec, req)
 	require.Equal(t, http.StatusBadRequest, rec.Code)
 
-	assets.SetUserGroupAdmin(t, db, g.ID, u2.OldUserStruct.ID)
+	assets.SetUserGroupAdmin(t, db, g.ID, u2.ID)
 
 	// A group admin should be able to remove himself if another admin exist
 	uri = api.Router.GetRoute(http.MethodDelete, api.deleteGroupUserHandler, map[string]string{

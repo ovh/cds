@@ -37,8 +37,8 @@ func getNodeJobRunParameters(db gorp.SqlExecutor, j sdk.Job, run *sdk.WorkflowNo
 }
 
 // getBuildParameterFromNodeContext returns the parameters compute from  node context (project, application,  pipeline, pyaload)
-func getBuildParameterFromNodeContext(proj *sdk.Project, w *sdk.Workflow, runContext nodeRunContext, pipelineParameters []sdk.Parameter, payload interface{}, hookEvent *sdk.WorkflowNodeRunHookEvent) ([]sdk.Parameter, error) {
-	tmpProj := sdk.ParametersFromProjectVariables(*proj)
+func getBuildParameterFromNodeContext(proj sdk.Project, w *sdk.Workflow, runContext nodeRunContext, pipelineParameters []sdk.Parameter, payload interface{}, hookEvent *sdk.WorkflowNodeRunHookEvent) ([]sdk.Parameter, error) {
+	tmpProj := sdk.ParametersFromProjectVariables(proj)
 	vars := make(map[string]string, len(tmpProj))
 	for k, v := range tmpProj {
 		vars[k] = v
@@ -198,7 +198,7 @@ func getParentParameters(w *sdk.WorkflowRun, nodeRuns []*sdk.WorkflowNodeRun) ([
 	return params, nil
 }
 
-func getNodeRunBuildParameters(ctx context.Context, proj *sdk.Project, wr *sdk.WorkflowRun, run *sdk.WorkflowNodeRun, runContext nodeRunContext) ([]sdk.Parameter, error) {
+func getNodeRunBuildParameters(ctx context.Context, proj sdk.Project, wr *sdk.WorkflowRun, run *sdk.WorkflowNodeRun, runContext nodeRunContext) ([]sdk.Parameter, error) {
 	ctx, end := observability.Span(ctx, "workflow.getNodeRunBuildParameters",
 		observability.Tag(observability.TagWorkflow, wr.Workflow.Name),
 		observability.Tag(observability.TagWorkflowRun, wr.Number),
@@ -219,6 +219,10 @@ func getNodeRunBuildParameters(ctx context.Context, proj *sdk.Project, wr *sdk.W
 	tmp["cds.run"] = fmt.Sprintf("%d.%d", run.Number, run.SubNumber)
 	tmp["cds.run.number"] = fmt.Sprintf("%d", run.Number)
 	tmp["cds.run.subnumber"] = fmt.Sprintf("%d", run.SubNumber)
+
+	if wr.Workflow.TemplateInstance != nil {
+		tmp["cds.template.version"] = fmt.Sprintf("%d", wr.Workflow.TemplateInstance.WorkflowTemplateVersion)
+	}
 
 	_, next := observability.Span(ctx, "workflow.interpolate")
 	params = make([]sdk.Parameter, 0, len(tmp))

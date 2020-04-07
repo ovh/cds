@@ -1,0 +1,43 @@
+name: Template apply detached command TestSuite with cdsctl
+version: "2"
+testcases:
+- name: delete template if exists
+  steps:
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} template delete shared.infra/example-simple --force
+    assertions:
+      - result.code ShouldEqual 0
+
+- name: push example simple
+  steps:
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} template push ./fixtures/template/simple/*.yml --skip-update-files
+    assertions:
+      - result.code ShouldEqual 0
+      - result.systemout ShouldContainSubstring Template successfully pushed
+
+- name: prepare test
+  steps:
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} project delete --force ITCLIPRJ
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} group delete --force test-project
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} project add ITCLIPRJ "Test Project"
+
+- name: apply example simple template
+  steps:
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} template apply ITCLIPRJ ITCLIWKF shared.infra/example-simple -p withDeploy=true -p deployWhen=success -p data='["one", "two"]' --import-push --detach --output-dir ./fixtures/template/simple/export-detached --force --no-interactive
+
+- name: readWorkflowSourceFiles
+  steps:
+  - type: readfile
+    path: ./fixtures/template/simple/workflow-detached/*.yml
+    assertions:
+    - result.err ShouldEqual ""
+
+- name: compare generated files with source
+  steps:
+  - type: readfile
+    path: ./fixtures/template/simple/export-detached/*.yml
+    assertions:
+    - result.err ShouldEqual ""
+    - result.md5sum.fixtures_template_simple_export-detached_first-environment.env.yml ShouldEqual "{{.readWorkflowSourceFiles.result.md5sum.fixtures_template_simple_workflow-detached_first-environment.env.yml}}"
+    - result.md5sum.fixtures_template_simple_export-detached_first-pipeline.pip.yml ShouldEqual "{{.readWorkflowSourceFiles.result.md5sum.fixtures_template_simple_workflow-detached_first-pipeline.pip.yml}}"
+    - result.md5sum.fixtures_template_simple_export-detached_second-pipeline.pip.yml ShouldEqual "{{.readWorkflowSourceFiles.result.md5sum.fixtures_template_simple_workflow-detached_second-pipeline.pip.yml}}"
+    - result.md5sum.fixtures_template_simple_export-detached_itcliwkf.yml ShouldEqual "{{.readWorkflowSourceFiles.result.md5sum.fixtures_template_simple_workflow-detached_itcliwkf.yml}}"

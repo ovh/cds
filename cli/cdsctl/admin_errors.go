@@ -22,21 +22,23 @@ func adminErrors() *cobra.Command {
 
 var adminErrorsGetCmd = cli.Command{
 	Name:  "get",
-	Short: "Get CDS error",
+	Short: "Get CDS errors for given request id",
 	Args: []cli.Arg{
-		{Name: "uuid"},
+		{Name: "request-id"},
 	},
 }
 
 func adminErrorsGetFunc(v cli.Values) error {
-	res, err := client.MonErrorsGet(v.GetString("uuid"))
+	res, err := client.MonErrorsGet(v.GetString("request-id"))
 	if err != nil {
 		return err
 	}
 
-	fmt.Printf("Message: %s\n", res.Message)
-	if res.StackTrace != "" {
-		fmt.Printf("Stack trace:\n%s", res.StackTrace)
+	for i := range res {
+		fmt.Printf("Message[%d]: %s\n", i, res[i].Message)
+		if res[i].StackTrace != "" {
+			fmt.Printf("Stack trace[%d]:\n%s", i, res[i].StackTrace)
+		}
 	}
 
 	return nil

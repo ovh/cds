@@ -20,8 +20,6 @@ testcases:
 - name: push workflow
   steps:
   - script: {{.cdsctl}} -f {{.cdsctl.config}} workflow push ITSCWRKFLW7 ./fixtures/ITSCWRKFLW7/*.yml --skip-update-files
-    assertions:
-    - result.code ShouldEqual 0
 
 - name: export pipeline
   steps:
@@ -31,3 +29,20 @@ testcases:
     - result.systemoutjson.jobs.jobs0.steps.steps1.servestaticfiles.path ShouldContainSubstring website
     - result.systemoutjson.jobs.jobs0.steps.steps1.servestaticfiles.entrypoint ShouldContainSubstring index.html
     - result.systemoutjson.jobs.jobs0.steps.steps1.servestaticfiles.path ShouldContainSubstring website
+
+- name: manage label
+  steps:
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} workflow label list ITSCWRKFLW7 ITSCWRKFLW7-WORKFLOW
+    assertions:
+    - result.code ShouldEqual 0
+    - result.systemout ShouldContainSubstring 'nothing to display...'
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} workflow label add ITSCWRKFLW7 ITSCWRKFLW7-WORKFLOW myLabel
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} workflow label list ITSCWRKFLW7 ITSCWRKFLW7-WORKFLOW --format json
+    assertions:
+    - result.code ShouldEqual 0
+    - result.systemoutjson.systemoutjson0.label ShouldContainSubstring myLabel
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} workflow label rm ITSCWRKFLW7 ITSCWRKFLW7-WORKFLOW myLabel
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} workflow label list ITSCWRKFLW7 ITSCWRKFLW7-WORKFLOW
+    assertions:
+    - result.code ShouldEqual 0
+    - result.systemout ShouldContainSubstring 'nothing to display...'

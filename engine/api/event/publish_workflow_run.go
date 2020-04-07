@@ -2,13 +2,10 @@ package event
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"time"
 
-	"github.com/fatih/structs"
-	"github.com/go-gorp/gorp"
-
-	"github.com/ovh/cds/engine/api/notification"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
@@ -33,12 +30,13 @@ func publishRunWorkflow(ctx context.Context, payload interface{}, data publishWo
 		eventIntegrationsID[i] = eventIntegration.ID
 	}
 
+	bts, _ := json.Marshal(payload)
 	event := sdk.Event{
 		Timestamp:           time.Now(),
 		Hostname:            hostname,
 		CDSName:             cdsname,
 		EventType:           fmt.Sprintf("%T", payload),
-		Payload:             structs.Map(payload),
+		Payload:             bts,
 		ProjectKey:          data.projectKey,
 		ApplicationName:     data.applicationName,
 		PipelineName:        data.pipelineName,
@@ -50,7 +48,7 @@ func publishRunWorkflow(ctx context.Context, payload interface{}, data publishWo
 		Tags:                data.workflowRunTags,
 		EventIntegrationsID: eventIntegrationsID,
 	}
-	publishEvent(ctx, event)
+	_ = publishEvent(ctx, event)
 }
 
 // PublishWorkflowRun publish event on a workflow run
@@ -78,9 +76,9 @@ func PublishWorkflowRun(ctx context.Context, wr sdk.WorkflowRun, projectKey stri
 }
 
 // PublishWorkflowNodeRun publish event on a workflow node run
-func PublishWorkflowNodeRun(ctx context.Context, db gorp.SqlExecutor, nr sdk.WorkflowNodeRun, w sdk.Workflow, previousWR *sdk.WorkflowNodeRun) {
+func PublishWorkflowNodeRun(ctx context.Context, nr sdk.WorkflowNodeRun, w sdk.Workflow, userWorkflowEvent []sdk.EventNotif) {
 	// get and send all user notifications
-	for _, event := range notification.GetUserWorkflowEvents(ctx, db, w, previousWR, nr) {
+	for _, event := range userWorkflowEvent {
 		Publish(ctx, event, nil)
 	}
 

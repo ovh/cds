@@ -28,7 +28,7 @@ const (
 )
 
 //RunFromHook is the entry point to trigger a workflow from a hook
-func runFromHook(ctx context.Context, db gorp.SqlExecutor, store cache.Store, p *sdk.Project, wr *sdk.WorkflowRun, e *sdk.WorkflowNodeRunHookEvent, asCodeMsg []sdk.Message) (*ProcessorReport, error) {
+func runFromHook(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj sdk.Project, wr *sdk.WorkflowRun, e *sdk.WorkflowNodeRunHookEvent, asCodeMsg []sdk.Message) (*ProcessorReport, error) {
 	var end func()
 	ctx, end = observability.Span(ctx, "workflow.RunFromHook")
 	defer end()
@@ -53,17 +53,17 @@ func runFromHook(ctx context.Context, db gorp.SqlExecutor, store cache.Store, p 
 	//If the hook is on the root, it will trigger a new workflow run
 	//Else if will trigger a new subnumber of the last workflow run
 	if h.NodeID == wr.Workflow.WorkflowData.Node.ID {
-		if err := IsValid(ctx, store, db, &wr.Workflow, p, LoadOptions{DeepPipeline: true}); err != nil {
+		if err := IsValid(ctx, store, db, &wr.Workflow, proj, LoadOptions{DeepPipeline: true}); err != nil {
 			return nil, sdk.WrapError(err, "Unable to valid workflow")
 		}
 
 		// Add add code spawn info
 		for _, msg := range asCodeMsg {
-			AddWorkflowRunInfo(wr, false, sdk.SpawnMsg{ID: msg.ID, Args: msg.Args})
+			AddWorkflowRunInfo(wr, sdk.SpawnMsg{ID: msg.ID, Args: msg.Args, Type: msg.Type})
 		}
 
 		//Process it
-		r1, hasRun, errWR := processWorkflowDataRun(ctx, db, store, p, wr, e, nil, nil)
+		r1, hasRun, errWR := processWorkflowDataRun(ctx, db, store, proj, wr, e, nil, nil)
 		if errWR != nil {
 			return nil, sdk.WrapError(errWR, "RunFromHook> Unable to process workflow run")
 		}
@@ -73,27 +73,27 @@ func runFromHook(ctx context.Context, db gorp.SqlExecutor, store cache.Store, p 
 			report.Add(ctx, wr)
 			return report, sdk.WithStack(sdk.ErrConditionsNotOk)
 		}
-		report.Merge(ctx, r1, nil) // nolint
+		report.Merge(ctx, r1)
 	}
 	return report, nil
 }
 
 //ManualRunFromNode is the entry point to trigger manually a piece of an existing run workflow
-func manualRunFromNode(ctx context.Context, db gorp.SqlExecutor, store cache.Store, p *sdk.Project, wr *sdk.WorkflowRun, e *sdk.WorkflowNodeRunManual, nodeID int64) (*ProcessorReport, error) {
+func manualRunFromNode(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj sdk.Project, wr *sdk.WorkflowRun, e *sdk.WorkflowNodeRunManual, nodeID int64) (*ProcessorReport, error) {
 	report := new(ProcessorReport)
 
-	r1, condOk, err := processWorkflowDataRun(ctx, db, store, p, wr, nil, e, &nodeID)
+	r1, condOk, err := processWorkflowDataRun(ctx, db, store, proj, wr, nil, e, &nodeID)
 	if err != nil {
-		return report, sdk.WrapError(err, "Unable to process workflow run")
+		return report, sdk.WrapError(err, "unable to process workflow run")
 	}
-	_, _ = report.Merge(ctx, r1, nil)
+	report.Merge(ctx, r1)
 	if !condOk {
 		return report, sdk.WithStack(sdk.ErrConditionsNotOk)
 	}
 	return report, nil
 }
 
-func StartWorkflowRun(ctx context.Context, db *gorp.DbMap, store cache.Store, p *sdk.Project, wr *sdk.WorkflowRun,
+func StartWorkflowRun(ctx context.Context, db *gorp.DbMap, store cache.Store, proj sdk.Project, wr *sdk.WorkflowRun,
 	opts *sdk.WorkflowRunPostHandlerOption, u *sdk.AuthConsumer, asCodeInfos []sdk.Message) (*ProcessorReport, error) {
 	ctx, end := observability.Span(ctx, "api.startWorkflowRun")
 	defer end()
@@ -107,7 +107,7 @@ func StartWorkflowRun(ctx context.Context, db *gorp.DbMap, store cache.Store, p 
 	defer tx.Rollback() // nolint
 
 	for _, msg := range asCodeInfos {
-		AddWorkflowRunInfo(wr, false, sdk.SpawnMsg{ID: msg.ID, Args: msg.Args})
+		AddWorkflowRunInfo(wr, sdk.SpawnMsg{ID: msg.ID, Args: msg.Args, Type: msg.Type})
 	}
 
 	wr.Status = sdk.StatusWaiting
@@ -117,11 +117,11 @@ func StartWorkflowRun(ctx context.Context, db *gorp.DbMap, store cache.Store, p 
 
 	if opts.Hook != nil {
 		// Run from HOOK
-		r1, err := runFromHook(ctx, tx, store, p, wr, opts.Hook, asCodeInfos)
+		r1, err := runFromHook(ctx, tx, store, proj, wr, opts.Hook, asCodeInfos)
 		if err != nil {
 			return nil, err
 		}
-		report.Merge(ctx, r1, nil) // nolint
+		report.Merge(ctx, r1)
 	} else {
 		// Manual RUN
 		if opts.Manual == nil {
@@ -145,11 +145,11 @@ func StartWorkflowRun(ctx context.Context, db *gorp.DbMap, store cache.Store, p 
 			}
 
 			// Continue  the current workflow run
-			r1, errmr := manualRunFromNode(ctx, tx, store, p, wr, opts.Manual, fromNode.ID)
+			r1, errmr := manualRunFromNode(ctx, tx, store, proj, wr, opts.Manual, fromNode.ID)
 			if errmr != nil {
 				return report, errmr
 			}
-			report.Merge(ctx, r1, nil) // nolint
+			report.Merge(ctx, r1)
 		} else {
 			// heck permission fo workflow node on handler layer
 			// MANUAL RUN FROM ROOT NODE
@@ -157,11 +157,11 @@ func StartWorkflowRun(ctx context.Context, db *gorp.DbMap, store cache.Store, p 
 				return nil, sdk.WrapError(sdk.ErrNoPermExecution, "not enough right on node %d", wr.Workflow.WorkflowData.Node.ID)
 			}
 			// Start new workflow
-			r1, errmr := manualRun(ctx, tx, store, p, wr, opts.Manual)
+			r1, errmr := manualRun(ctx, tx, store, proj, wr, opts.Manual)
 			if errmr != nil {
 				return nil, errmr
 			}
-			report.Merge(ctx, r1, nil) // nolint
+			report.Merge(ctx, r1)
 		}
 	}
 
@@ -173,26 +173,26 @@ func StartWorkflowRun(ctx context.Context, db *gorp.DbMap, store cache.Store, p 
 }
 
 //ManualRun is the entry point to trigger a workflow manually
-func manualRun(ctx context.Context, db gorp.SqlExecutor, store cache.Store, p *sdk.Project, wr *sdk.WorkflowRun, e *sdk.WorkflowNodeRunManual) (*ProcessorReport, error) {
+func manualRun(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj sdk.Project, wr *sdk.WorkflowRun, e *sdk.WorkflowNodeRunManual) (*ProcessorReport, error) {
 	report := new(ProcessorReport)
 	ctx, end := observability.Span(ctx, "workflow.ManualRun", observability.Tag(observability.TagWorkflowRun, wr.Number))
 	defer end()
 
-	if err := IsValid(ctx, store, db, &wr.Workflow, p, LoadOptions{DeepPipeline: true}); err != nil {
-		return nil, sdk.WrapError(err, "Unable to valid workflow")
+	if err := IsValid(ctx, store, db, &wr.Workflow, proj, LoadOptions{DeepPipeline: true}); err != nil {
+		return nil, sdk.WrapError(err, "unable to valid workflow")
 	}
 
 	if err := UpdateWorkflowRun(ctx, db, wr); err != nil {
 		return nil, err
 	}
 
-	r1, hasRun, errWR := processWorkflowDataRun(ctx, db, store, p, wr, nil, e, nil)
+	r1, hasRun, errWR := processWorkflowDataRun(ctx, db, store, proj, wr, nil, e, nil)
 	if errWR != nil {
 		return report, errWR
 	}
-	_, _ = report.Merge(ctx, r1, nil)
+	report.Merge(ctx, r1)
 	if !hasRun {
-		return report, sdk.ErrConditionsNotOk
+		return report, sdk.WithStack(sdk.ErrConditionsNotOk)
 	}
 	return report, nil
 }

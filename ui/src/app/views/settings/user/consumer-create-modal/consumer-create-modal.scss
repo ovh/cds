@@ -1,1 +1,7 @@
-@import '../../../../../common';
+@import "../../../../../common";
+
+.scope-list {
+    td {
+        border: none !important;
+    }
+}

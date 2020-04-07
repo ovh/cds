@@ -193,7 +193,7 @@ func (api *API) getApplicationDeploymentStrategyConfigHandler() service.Handler 
 
 		cfg, ok := app.DeploymentStrategies[pfName]
 		if !ok {
-			return sdk.ErrNotFound
+			return sdk.WithStack(sdk.ErrNotFound)
 		}
 
 		return service.WriteJSON(w, cfg, http.StatusOK)

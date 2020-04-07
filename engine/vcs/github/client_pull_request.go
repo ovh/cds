@@ -77,49 +77,49 @@ func (g *githubClient) PullRequest(ctx context.Context, fullname string, id int)
 // PullRequests fetch all the pull request for a repository
 func (g *githubClient) PullRequests(ctx context.Context, fullname string) ([]sdk.VCSPullRequest, error) {
 	var pullRequests = []PullRequest{}
-	var nextPage = "/repos/" + fullname + "/pulls"
 	cacheKey := cache.Key("vcs", "github", "pullrequests", g.OAuthToken, "/repos/"+fullname+"/pulls")
 	opts := []getArgFunc{withETag}
 
-	for {
-		if nextPage != "" {
-			status, body, headers, err := g.get(ctx, nextPage, opts...)
-			if err != nil {
-				log.Warning(ctx, "githubClient.PullRequests> Error %s", err)
-				return nil, err
-			}
-			if status >= 400 {
-				return nil, sdk.NewError(sdk.ErrUnknownError, errorAPI(body))
-			}
-			opts[0] = withETag
-			nextPullRequests := []PullRequest{}
-
-			//Github may return 304 status because we are using conditional request with ETag based headers
-			if status == http.StatusNotModified {
-				//If repos aren't updated, lets get them from cache
-				find, err := g.Cache.Get(cacheKey, &pullRequests)
-				if err != nil {
-					log.Error(ctx, "cannot get from cache %s: %v", cacheKey, err)
-				}
-				if !find {
-					opts[0] = withoutETag
-					log.Error(ctx, "Unable to get pullrequest (%s) from the cache", strings.ReplaceAll(cacheKey, g.OAuthToken, ""))
-					continue
-				}
-				break
-			} else {
-				if err := json.Unmarshal(body, &nextPullRequests); err != nil {
-					log.Warning(ctx, "githubClient.Branches> Unable to parse github branches: %s", err)
-					return nil, err
-				}
-			}
-
-			pullRequests = append(pullRequests, nextPullRequests...)
-
-			nextPage = getNextPage(headers)
-		} else {
+	var nextPage = "/repos/" + fullname + "/pulls"
+	for nextPage != "" {
+		if ctx.Err() != nil {
 			break
 		}
+
+		status, body, headers, err := g.get(ctx, nextPage, opts...)
+		if err != nil {
+			log.Warning(ctx, "githubClient.PullRequests> Error %s", err)
+			return nil, err
+		}
+		if status >= 400 {
+			return nil, sdk.NewError(sdk.ErrUnknownError, errorAPI(body))
+		}
+		opts[0] = withETag
+		nextPullRequests := []PullRequest{}
+
+		//Github may return 304 status because we are using conditional request with ETag based headers
+		if status == http.StatusNotModified {
+			//If repos aren't updated, lets get them from cache
+			find, err := g.Cache.Get(cacheKey, &pullRequests)
+			if err != nil {
+				log.Error(ctx, "cannot get from cache %s: %v", cacheKey, err)
+			}
+			if !find {
+				opts[0] = withoutETag
+				log.Error(ctx, "Unable to get pullrequest (%s) from the cache", strings.ReplaceAll(cacheKey, g.OAuthToken, ""))
+				continue
+			}
+			break
+		} else {
+			if err := json.Unmarshal(body, &nextPullRequests); err != nil {
+				log.Warning(ctx, "githubClient.Branches> Unable to parse github branches: %s", err)
+				return nil, err
+			}
+		}
+
+		pullRequests = append(pullRequests, nextPullRequests...)
+
+		nextPage = getNextPage(headers)
 	}
 
 	//Put the body on cache for one hour and one minute
@@ -138,15 +138,25 @@ func (g *githubClient) PullRequests(ctx context.Context, fullname string) ([]sdk
 }
 
 // PullRequestComment push a new comment on a pull request
-func (g *githubClient) PullRequestComment(ctx context.Context, repo string, id int, text string) error {
+func (g *githubClient) PullRequestComment(ctx context.Context, repo string, prReq sdk.VCSPullRequestCommentRequest) error {
 	if g.DisableStatus {
 		log.Warning(ctx, "github.PullRequestComment>  ⚠ Github statuses are disabled")
 		return nil
 	}
 
-	path := fmt.Sprintf("/repos/%s/issues/%d/comments", repo, id)
+	canWrite, err := g.UserHasWritePermission(ctx, repo)
+	if err != nil {
+		return err
+	}
+	if !canWrite {
+		if err := g.GrantWritePermission(ctx, repo); err != nil {
+			return err
+		}
+	}
+
+	path := fmt.Sprintf("/repos/%s/issues/%d/comments", repo, prReq.ID)
 	payload := map[string]string{
-		"body": text,
+		"body": prReq.Message,
 	}
 	values, _ := json.Marshal(payload)
 	res, err := g.post(path, "application/json", bytes.NewReader(values), &postOptions{skipDefaultBaseURL: false, asUser: true})
@@ -171,6 +181,16 @@ func (g *githubClient) PullRequestComment(ctx context.Context, repo string, id i
 }
 
 func (g *githubClient) PullRequestCreate(ctx context.Context, repo string, pr sdk.VCSPullRequest) (sdk.VCSPullRequest, error) {
+	canWrite, err := g.UserHasWritePermission(ctx, repo)
+	if err != nil {
+		return sdk.VCSPullRequest{}, nil
+	}
+	if !canWrite {
+		if err := g.GrantWritePermission(ctx, repo); err != nil {
+			return sdk.VCSPullRequest{}, nil
+		}
+	}
+
 	path := fmt.Sprintf("/repos/%s/pulls", repo)
 	payload := map[string]string{
 		"title": pr.Title,

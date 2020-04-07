@@ -61,7 +61,7 @@ type VCSAuthorizedClient interface {
 	// PullRequests
 	PullRequest(context.Context, string, int) (VCSPullRequest, error)
 	PullRequests(context.Context, string) ([]VCSPullRequest, error)
-	PullRequestComment(context.Context, string, int, string) error
+	PullRequestComment(context.Context, string, VCSPullRequestCommentRequest) error
 	PullRequestCreate(context.Context, string, VCSPullRequest) (VCSPullRequest, error)
 
 	//Hooks

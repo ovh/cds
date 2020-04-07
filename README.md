@@ -36,7 +36,7 @@ cdsctl is the CDS Command Line - you can script everything with it, cdsctl also 
 
 ## Want a try?
 
-Docker-Compose or Helm are your friends, see [Ready To Run Tutorials](https://ovh.github.io/cds/hosting/ready-to-run/)
+Docker-Compose is your friend, see [Ready To Run Tutorials](https://ovh.github.io/cds/hosting/ready-to-run/)
 
 ## Blog posts and talks
 
@@ -149,14 +149,14 @@ Ability to launch builds based on a branch pattern. This allows, for example, to
 
 Note that CDS's default behavior is to launch the whole workflow on every git commit. This behavior can be altered using "run conditions".
 
-#### Native Github / Bitbucket Server / Gitlab / Gerrit integration
+#### Native GitHub / Bitbucket Server / GitLab / Gerrit integration
 
 2-way integration with most popular git-based products.
 
 1. Ability to get notified and start a build when a change is pushed .
 2. Ability to notify the git-based tool of the success/failure of the build.
 
-CDS natively supports Github, Gitlab, Bitbucket Server and Gerrit.
+CDS natively supports GitHub, GitLab, Bitbucket Server and Gerrit.
 The link between your repo git and CDS is via a CDS application: 1 Git repository == a CDS application.
 Through this integration, CDS will push build status of your commits : Building, Success or Failed.
 
@@ -246,7 +246,7 @@ Do you have even more advanced automation needs, or the desire to develop an app
 
 #### Self-Hosting
 
-CDS is open-source since October 2016. You can install it freely in your company or at home. Some tutorials are available to help you start a CDS, [docker-compose](https://ovh.github.io/cds/hosting/ready-to-run/docker-compose/), [Kubernetes with Helm](https://ovh.github.io/cds/hosting/ready-to-run/helm/), [Install with binaries](https://ovh.github.io/cds/hosting/ready-to-run/from-binaries/).
+CDS is open-source since October 2016. You can install it freely in your company or at home. Some tutorials are available to help you start a CDS, [docker-compose](https://ovh.github.io/cds/hosting/ready-to-run/docker-compose/), [Install with binaries](https://ovh.github.io/cds/hosting/ready-to-run/from-binaries/).
 
 #### High Availability / Scalability / Upgrade without User Downtime
 

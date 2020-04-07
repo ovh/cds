@@ -105,7 +105,6 @@ var (
 	ErrJobAlreadyBooked                              = Error{ID: 89, Status: http.StatusConflict}
 	ErrPipelineBuildNotFound                         = Error{ID: 90, Status: http.StatusNotFound}
 	ErrAlreadyTaken                                  = Error{ID: 91, Status: http.StatusGone}
-	ErrWorkflowNotFound                              = Error{ID: 92, Status: http.StatusNotFound}
 	ErrWorkflowNodeNotFound                          = Error{ID: 93, Status: http.StatusNotFound}
 	ErrWorkflowInvalidRoot                           = Error{ID: 94, Status: http.StatusBadRequest}
 	ErrWorkflowNodeRef                               = Error{ID: 95, Status: http.StatusBadRequest}
@@ -200,6 +199,8 @@ var (
 	ErrInvalidJobRequirementNetworkAccess            = Error{ID: 184, Status: http.StatusBadRequest}
 	ErrInvalidWorkerModelNamePattern                 = Error{ID: 185, Status: http.StatusBadRequest}
 	ErrWorkflowAsCodeResync                          = Error{ID: 186, Status: http.StatusForbidden}
+	ErrWorkflowNodeNameDuplicate                     = Error{ID: 187, Status: http.StatusBadRequest}
+	ErrUnsupportedMediaType                          = Error{ID: 188, Status: http.StatusUnsupportedMediaType}
 )
 
 var errorsAmericanEnglish = map[int]string{
@@ -294,7 +295,6 @@ var errorsAmericanEnglish = map[int]string{
 	ErrJobAlreadyBooked.ID:                              "Job already booked",
 	ErrPipelineBuildNotFound.ID:                         "Pipeline build not found",
 	ErrAlreadyTaken.ID:                                  "This job is already taken by another worker",
-	ErrWorkflowNotFound.ID:                              "Workflow not found",
 	ErrWorkflowNodeNotFound.ID:                          "Workflow node not found",
 	ErrWorkflowInvalidRoot.ID:                           "Invalid workflow root",
 	ErrWorkflowNodeRef.ID:                               "Invalid workflow node reference",
@@ -382,6 +382,8 @@ var errorsAmericanEnglish = map[int]string{
 	ErrBadBrokerConfiguration.ID:                        "Cannot connect to the broker of your event integration. Check your configuration",
 	ErrInvalidJobRequirementNetworkAccess.ID:            "Invalid job requirement: network requirement must contains ':'. Example: golang.org:http, golang.org:443",
 	ErrWorkflowAsCodeResync.ID:                          "You cannot resynchronize an as-code workflow",
+	ErrWorkflowNodeNameDuplicate.ID:                     "You cannot have same name for different pipelines in your workflow",
+	ErrUnsupportedMediaType.ID:                          "Request format invalid",
 }
 
 var errorsFrench = map[int]string{
@@ -476,7 +478,6 @@ var errorsFrench = map[int]string{
 	ErrJobAlreadyBooked.ID:                              "Le job est déjà réservé",
 	ErrPipelineBuildNotFound.ID:                         "Le pipeline build n'a pu être trouvé",
 	ErrAlreadyTaken.ID:                                  "Ce job est déjà en cours de traitement par un autre worker",
-	ErrWorkflowNotFound.ID:                              "Workflow introuvable",
 	ErrWorkflowNodeNotFound.ID:                          "Noeud de Workflow introuvable",
 	ErrWorkflowInvalidRoot.ID:                           "Racine de Workflow invalide",
 	ErrWorkflowNodeRef.ID:                               "Référence de noeud de workflow invalide",
@@ -563,6 +564,8 @@ var errorsFrench = map[int]string{
 	ErrBadBrokerConfiguration.ID:                        "Impossible de se connecter à votre intégration de type évènement. Veuillez vérifier votre configuration",
 	ErrInvalidJobRequirementNetworkAccess.ID:            "Pré-requis de job invalide: Le pré-requis network doit contenir un ':'. Exemple: golang.org:http, golang.org:443",
 	ErrWorkflowAsCodeResync.ID:                          "Impossible de resynchroniser un workflow en mode as-code",
+	ErrWorkflowNodeNameDuplicate.ID:                     "Vous ne pouvez pas avoir plusieurs fois le même nom de pipeline dans votre workflow",
+	ErrUnsupportedMediaType.ID:                          "Le format de la requête est invalide",
 }
 
 var errorsLanguages = []map[int]string{
@@ -575,22 +578,25 @@ type Error struct {
 	ID         int         `json:"id"`
 	Status     int         `json:"-"`
 	Message    string      `json:"message"`
-	Data       interface{} `json:"data"`
-	UUID       string      `json:"uuid,omitempty"`
+	Data       interface{} `json:"data,omitempty"`
+	RequestID  string      `json:"request_id,omitempty"`
 	StackTrace string      `json:"stack_trace,omitempty"`
-	from       string
+	From       string      `json:"from,omitempty"`
 }
 
 func (e Error) Error() string {
+	var message string
 	if e.Message != "" {
-		return e.Message
+		message = e.Message
+	} else if en, ok := errorsAmericanEnglish[e.ID]; ok {
+		message = en
+	} else {
+		message = errorsAmericanEnglish[ErrUnknownError.ID]
 	}
-
-	if en, ok := errorsAmericanEnglish[e.ID]; ok {
-		return en
+	if e.From != "" {
+		message = fmt.Sprintf("%s (from: %s)", message, e.From)
 	}
-
-	return errorsAmericanEnglish[ErrUnknownError.ID]
+	return message
 }
 
 func (e Error) Translate(al string) string {
@@ -621,7 +627,7 @@ func (e Error) Translate(al string) string {
 	return msg
 }
 
-// NewErrorWithStack returns an error with stack.
+// NewErrorWithStack wraps given root error and override its http error with given error.
 func NewErrorWithStack(root error, err error) error {
 	errWithStack := WithStack(root).(errorWithStack)
 
@@ -646,7 +652,8 @@ type errorWithStack struct {
 
 func (w errorWithStack) Error() string {
 	var cause string
-	if w.root.Error() != "" {
+	root := w.root.Error()
+	if root != "" && root != w.httpError.From {
 		cause = fmt.Sprintf(" (caused by: %s)", w.root)
 	}
 	return fmt.Sprintf("%s: %s%s", w.stack.String(), w.httpError, cause)
@@ -728,13 +735,13 @@ func NewError(httpError Error, err error) error {
 
 	// if it's already an error with stack, override the http error and set from value with err cause
 	if e, ok := err.(errorWithStack); ok {
-		httpError.from = Cause(e).Error()
+		httpError.From = e.httpError.From
 		e.httpError = httpError
 		return e
 	}
 
 	// if it's a library error create a new error with stack
-	httpError.from = err.Error()
+	httpError.From = err.Error()
 	return errorWithStack{
 		root:      errors.WithStack(err),
 		stack:     callers(),
@@ -742,9 +749,20 @@ func NewError(httpError Error, err error) error {
 	}
 }
 
-// NewErrorFrom returns the given http error with from details.
-func NewErrorFrom(httpError Error, from string, args ...interface{}) error {
-	return NewError(httpError, fmt.Errorf(from, args...))
+// NewErrorFrom returns the given error with given from details.
+func NewErrorFrom(err error, from string, args ...interface{}) error {
+	if err == nil {
+		return nil
+	}
+
+	switch e := err.(type) {
+	case errorWithStack:
+		e.httpError.From = fmt.Errorf(from, args...).Error()
+		return e
+	case Error:
+		return NewError(e, fmt.Errorf(from, args...))
+	}
+	return NewErrorWithStack(err, NewErrorFrom(ErrUnknownError, from, args...))
 }
 
 // WrapError returns an error with stack and message.
@@ -793,7 +811,7 @@ func WithStack(err error) error {
 	// if it's a Error wrap it in error with stack
 	if e, ok := err.(Error); ok {
 		return errorWithStack{
-			root:      errors.New(e.Error()),
+			root:      errors.New(""),
 			stack:     callers(),
 			httpError: e,
 		}
@@ -836,10 +854,6 @@ func ExtractHTTPError(source error, al string) Error {
 	// else set message for given accepted languages.
 	if httpError.Message == "" {
 		httpError.Message = httpError.Translate(al)
-	}
-
-	if httpError.from != "" {
-		httpError.Message = fmt.Sprintf("%s (from: %s)", httpError.Message, httpError.from)
 	}
 
 	return httpError

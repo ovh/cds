@@ -140,7 +140,7 @@ func Test_postAuthSigninHandler_ShouldSuccessWithAKnownUserAndAnotherConsumerTyp
 	api.Router.Mux.ServeHTTP(rec, req)
 	require.Equal(t, 200, rec.Code)
 
-	u, err := user.LoadByUsername(context.TODO(), db, "fry", user.LoadOptions.WithContacts, user.LoadOptions.WithDeprecatedUser)
+	u, err := user.LoadByUsername(context.TODO(), db, "fry", user.LoadOptions.WithContacts)
 	require.NoError(t, err)
 	require.NotNil(t, u)
 
@@ -190,7 +190,7 @@ func Test_postAuthSigninHandler_ShouldSuccessWithAKnownUserAnotherConsumerTypeAn
 	api.Router.Mux.ServeHTTP(rec, req)
 	require.Equal(t, 200, rec.Code)
 
-	u, err := user.LoadByUsername(context.TODO(), db, "fry", user.LoadOptions.WithContacts, user.LoadOptions.WithDeprecatedUser)
+	u, err := user.LoadByUsername(context.TODO(), db, "fry", user.LoadOptions.WithContacts)
 	require.NoError(t, err)
 	require.NotNil(t, u)
 
@@ -378,7 +378,7 @@ func Test_postAuthSigninHandler_WithCorporateSSO(t *testing.T) {
 		assert.Equal(t, "mattgroening", response.User.GetUsername())
 		assert.NotEmpty(t, response.Token)
 
-		u, err := user.LoadByUsername(context.TODO(), api.mustDB(), "mattgroening", user.LoadOptions.WithContacts, user.LoadOptions.WithDeprecatedUser)
+		u, err := user.LoadByUsername(context.TODO(), api.mustDB(), "mattgroening", user.LoadOptions.WithContacts)
 		require.NoError(t, err)
 		require.NotNil(t, u)
 

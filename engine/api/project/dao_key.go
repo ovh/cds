@@ -2,98 +2,114 @@ package project
 
 import (
 	"context"
-	"database/sql"
 
 	"github.com/go-gorp/gorp"
-	"github.com/lib/pq"
 
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
-	"github.com/ovh/cds/engine/api/secret"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
 
 // InsertKey a new project key in database
 func InsertKey(db gorp.SqlExecutor, key *sdk.ProjectKey) error {
-	dbProjKey := dbProjectKey(*key)
-
-	s, errE := secret.Encrypt([]byte(key.Private))
-	if errE != nil {
-		return sdk.WrapError(errE, "InsertKey> Cannot encrypt private key")
+	var dbProjKey = dbProjectKey{ProjectKey: *key}
+	if err := gorpmapping.InsertAndSign(context.Background(), db, &dbProjKey); err != nil {
+		return err
 	}
-	dbProjKey.Private = string(s)
-
-	if err := db.Insert(&dbProjKey); err != nil {
-		if errPG, ok := err.(*pq.Error); ok && errPG.Code == gorpmapping.ViolateUniqueKeyPGCode {
-			err = sdk.ErrKeyAlreadyExist
-		}
-		return sdk.WrapError(err, "Cannot insert project key")
-	}
-	*key = sdk.ProjectKey(dbProjKey)
+	*key = dbProjKey.ProjectKey
 	return nil
 }
 
-// LoadAllKeysByID Load all project key for the given project
-func LoadAllKeysByID(db gorp.SqlExecutor, ID int64) ([]sdk.ProjectKey, error) {
+// UpdateKey a new project key in database.
+// This function should be use only for migration purpose and should be removed
+func UpdateKey(ctx context.Context, db gorp.SqlExecutor, key *sdk.ProjectKey) error {
+	var dbProjKey = dbProjectKey{ProjectKey: *key}
+	if err := gorpmapping.UpdateAndSign(ctx, db, &dbProjKey); err != nil {
+		return err
+	}
+	*key = dbProjKey.ProjectKey
+	return nil
+}
+
+func getAllKeys(db gorp.SqlExecutor, query gorpmapping.Query) ([]sdk.ProjectKey, error) {
+	var ctx = context.Background()
 	var res []dbProjectKey
-	if _, err := db.Select(&res, "SELECT * FROM project_key WHERE project_id = $1 and builtin = false", ID); err != nil {
-		if err == sql.ErrNoRows {
-			return nil, nil
-		}
-		return nil, sdk.WrapError(err, "Cannot load keys")
+	keys := make([]sdk.ProjectKey, 0, len(res))
+
+	if err := gorpmapping.GetAll(ctx, db, query, &res); err != nil {
+		return nil, err
 	}
 
-	keys := make([]sdk.ProjectKey, len(res))
 	for i := range res {
-		p := res[i]
-		p.Private = sdk.PasswordPlaceholder
-		keys[i] = sdk.ProjectKey(p)
+		isValid, err := gorpmapping.CheckSignature(res[i], res[i].Signature)
+		if err != nil {
+			return nil, err
+		}
+		if !isValid {
+			log.Error(ctx, "project.getAllKeys> project key %d data corrupted", res[i].ID)
+			continue
+		}
+		keys = append(keys, res[i].ProjectKey)
 	}
 	return keys, nil
 }
 
 // LoadAllKeys load all keys for the given project
-func LoadAllKeys(db gorp.SqlExecutor, proj *sdk.Project) error {
-	var res []dbProjectKey
-	if _, err := db.Select(&res, "SELECT * FROM project_key WHERE project_id = $1 and builtin = false", proj.ID); err != nil {
-		if err == sql.ErrNoRows {
-			return nil
-		}
-		return sdk.WrapError(err, "Cannot load keys")
-	}
+func LoadAllKeys(db gorp.SqlExecutor, projectID int64) ([]sdk.ProjectKey, error) {
+	query := gorpmapping.NewQuery(`
+		SELECT * 
+		FROM project_key 
+		WHERE project_id = $1 
+		AND builtin = false
+	`).Args(projectID)
 
-	keys := make([]sdk.ProjectKey, len(res))
-	for i := range res {
-		p := res[i]
-		keys[i] = sdk.ProjectKey(p)
-		keys[i].Private = sdk.PasswordPlaceholder
-	}
-	proj.Keys = keys
-	return nil
+	return getAllKeys(db, query)
 }
 
-// LoadAllDecryptedKeys load all keys for the given project
-func LoadAllDecryptedKeys(db gorp.SqlExecutor, proj *sdk.Project) error {
-	var res []dbProjectKey
-	if _, err := db.Select(&res, "SELECT * FROM project_key WHERE project_id = $1 and builtin = false", proj.ID); err != nil {
-		if err == sql.ErrNoRows {
-			return nil
-		}
-		return sdk.WrapError(err, "Cannot load keys")
+// LoadAllKeysWithPrivateContent load all keys for the given project
+func LoadAllKeysWithPrivateContent(db gorp.SqlExecutor, appID int64) ([]sdk.ProjectKey, error) {
+	keys, err := LoadAllKeys(db, appID)
+	if err != nil {
+		return nil, err
 	}
 
-	keys := make([]sdk.ProjectKey, len(res))
-	for i := range res {
-		p := res[i]
-		keys[i] = sdk.ProjectKey(p)
-		decrypted, err := secret.Decrypt([]byte(keys[i].Private))
+	res := make([]sdk.ProjectKey, 0, len(keys))
+	for _, k := range keys {
+		x, err := LoadKey(db, k.ID, k.Name)
 		if err != nil {
-			log.Error(context.TODO(), "LoadAllDecryptedKeys> Unable to decrypt private key %s/%s: %v", proj.Key, keys[i].Name, err)
+			return nil, err
 		}
-		keys[i].Private = string(decrypted)
+		res = append(res, *x)
 	}
-	proj.Keys = keys
-	return nil
+
+	return res, nil
+}
+
+func LoadKey(db gorp.SqlExecutor, id int64, keyName string) (*sdk.ProjectKey, error) {
+	query := gorpmapping.NewQuery(`
+	SELECT * 
+	FROM project_key
+	WHERE id = $1 
+	AND name = $2
+	AND builtin = false 
+	`).Args(id, keyName)
+	var k dbProjectKey
+	found, err := gorpmapping.Get(context.Background(), db, query, &k, gorpmapping.GetOptions.WithDecryption)
+	if err != nil {
+		return nil, err
+	}
+	if !found {
+		return nil, sdk.WithStack(sdk.ErrNotFound)
+	}
+	isValid, err := gorpmapping.CheckSignature(k, k.Signature)
+	if err != nil {
+		return nil, err
+	}
+	if !isValid {
+		log.Error(context.Background(), "project.LoadKey> project key %d data corrupted", k.ID)
+		return nil, sdk.WithStack(sdk.ErrNotFound)
+	}
+	return &k.ProjectKey, nil
 }
 
 // DeleteProjectKey Delete the given key from the given project
@@ -102,22 +118,29 @@ func DeleteProjectKey(db gorp.SqlExecutor, projectID int64, keyName string) erro
 	return sdk.WrapError(err, "Cannot delete key %s", keyName)
 }
 
-func loadBuildinKey(db gorp.SqlExecutor, projectID int64) (sdk.ProjectKey, error) {
-	var k sdk.ProjectKey
-	var res dbProjectKey
-	if err := db.SelectOne(&res, "SELECT * FROM project_key WHERE project_id = $1 and builtin = true and name = 'builtin'", projectID); err != nil {
-		if err == sql.ErrNoRows {
-			return k, sdk.ErrBuiltinKeyNotFound
-		}
-		return k, sdk.WrapError(err, "Cannot load keys")
-	}
-
-	k = sdk.ProjectKey(res)
-	decrypted, err := secret.Decrypt([]byte(k.Private))
+func loadBuiltinKey(db gorp.SqlExecutor, projectID int64) (*sdk.ProjectKey, error) {
+	query := gorpmapping.NewQuery(`
+	SELECT * 
+	FROM project_key
+	WHERE project_id = $1 
+	AND builtin = true 
+	AND name = 'builtin'
+	`).Args(projectID)
+	var k dbProjectKey
+	found, err := gorpmapping.Get(context.Background(), db, query, &k, gorpmapping.GetOptions.WithDecryption)
 	if err != nil {
-		return k, sdk.WrapError(err, "Unable to decrypt key")
+		return nil, err
 	}
-	k.Private = string(decrypted)
-
-	return k, nil
+	if !found {
+		return nil, sdk.WithStack(sdk.ErrNotFound)
+	}
+	isValid, err := gorpmapping.CheckSignature(k, k.Signature)
+	if err != nil {
+		return nil, err
+	}
+	if !isValid {
+		log.Error(context.Background(), "project.LoadKey> project key %d data corrupted", k.ID)
+		return nil, sdk.WithStack(sdk.ErrNotFound)
+	}
+	return &k.ProjectKey, nil
 }

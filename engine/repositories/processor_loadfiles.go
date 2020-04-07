@@ -38,15 +38,14 @@ func (s *Service) processLoadFiles(ctx context.Context, op *sdk.Operation) error
 			log.Debug("Repositories> processLoadFiles> Open > [%s] Error: %v", op.UUID, err)
 			return err
 		}
-		defer fi.Close()
-
 		btes, err := ioutil.ReadAll(fi)
 		if err != nil {
+			fi.Close()
 			log.Debug("Repositories> processLoadFiles> ReadAll> [%s] Error: %v", op.UUID, err)
 			return err
 		}
-
 		op.LoadFiles.Results[f] = btes
+		fi.Close()
 	}
 
 	return nil

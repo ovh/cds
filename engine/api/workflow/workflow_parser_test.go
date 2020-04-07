@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	v2 "github.com/ovh/cds/sdk/exportentities/v2"
 	"io/ioutil"
 	"net/http"
 	"testing"
@@ -43,13 +44,13 @@ func TestParseAndImport(t *testing.T) {
 		ProjectKey: proj.Key,
 		Name:       pipelineName,
 	}
-	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip))
+	test.NoError(t, pipeline.InsertPipeline(db, &pip))
 
 	//Application
 	app := &sdk.Application{
 		Name: sdk.RandomString(10),
 	}
-	test.NoError(t, application.Insert(db, cache, proj, app))
+	test.NoError(t, application.Insert(db, cache, *proj, app))
 
 	//Environment
 	envName := sdk.RandomString(10)
@@ -62,9 +63,10 @@ func TestParseAndImport(t *testing.T) {
 	//Reload project
 	proj, _ = project.Load(db, cache, proj.Key, project.LoadOptions.WithApplications, project.LoadOptions.WithEnvironments, project.LoadOptions.WithPipelines)
 
-	input := &exportentities.Workflow{
-		Name: sdk.RandomString(10),
-		Workflow: map[string]exportentities.NodeEntry{
+	input := v2.Workflow{
+		Name:    sdk.RandomString(10),
+		Version: exportentities.WorkflowVersion2,
+		Workflow: map[string]v2.NodeEntry{
 			"root": {
 				PipelineName:    pipelineName,
 				ApplicationName: app.Name,
@@ -87,10 +89,10 @@ func TestParseAndImport(t *testing.T) {
 		},
 	}
 
-	_, _, err = workflow.ParseAndImport(context.TODO(), db, cache, proj, nil, input, localConsumer, workflow.ImportOptions{Force: true})
+	_, _, err = workflow.ParseAndImport(context.TODO(), db, cache, *proj, nil, input, localConsumer, workflow.ImportOptions{Force: true})
 	assert.NoError(t, err)
 
-	w, errW := workflow.Load(context.TODO(), db, cache, proj, input.Name, workflow.LoadOptions{})
+	w, errW := workflow.Load(context.TODO(), db, cache, *proj, input.Name, workflow.LoadOptions{})
 	assert.NoError(t, errW)
 	assert.NotNil(t, w)
 
@@ -197,6 +199,15 @@ func TestParseAndImportFromRepository(t *testing.T) {
 				if err := json.Unmarshal(bts, &hooks); err != nil {
 					return writeError(w, err)
 				}
+				for k, h := range hooks {
+					if h.HookModelName == sdk.RepositoryWebHookModelName {
+						cfg := hooks[k].Config
+						cfg["webHookURL"] = sdk.WorkflowNodeHookConfigValue{
+							Value:        "http://lolcat.host",
+							Configurable: false,
+						}
+					}
+				}
 				if err := enc.Encode(hooks); err != nil {
 					return writeError(w, err)
 				}
@@ -216,7 +227,7 @@ func TestParseAndImportFromRepository(t *testing.T) {
 		ProjectKey: proj.Key,
 		Name:       pipelineName,
 	}
-	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip))
+	test.NoError(t, pipeline.InsertPipeline(db, &pip))
 
 	//Application
 	app := &sdk.Application{
@@ -224,7 +235,7 @@ func TestParseAndImportFromRepository(t *testing.T) {
 		RepositoryFullname: "foo/myrepo",
 		VCSServer:          "github",
 	}
-	test.NoError(t, application.Insert(db, cache, proj, app))
+	test.NoError(t, application.Insert(db, cache, *proj, app))
 
 	//Environment
 	envName := sdk.RandomString(10)
@@ -237,9 +248,10 @@ func TestParseAndImportFromRepository(t *testing.T) {
 	//Reload project
 	proj, _ = project.Load(db, cache, proj.Key, project.LoadOptions.WithApplications, project.LoadOptions.WithEnvironments, project.LoadOptions.WithPipelines)
 
-	input := &exportentities.Workflow{
-		Name: sdk.RandomString(10),
-		Workflow: map[string]exportentities.NodeEntry{
+	input := v2.Workflow{
+		Name:    sdk.RandomString(10),
+		Version: exportentities.WorkflowVersion2,
+		Workflow: map[string]v2.NodeEntry{
 			"root": {
 				PipelineName:    pipelineName,
 				ApplicationName: app.Name,
@@ -247,10 +259,10 @@ func TestParseAndImportFromRepository(t *testing.T) {
 		},
 	}
 
-	_, _, err := workflow.ParseAndImport(context.TODO(), db, cache, proj, nil, input, u, workflow.ImportOptions{Force: true, FromRepository: "foo/myrepo"})
+	_, _, err := workflow.ParseAndImport(context.TODO(), db, cache, *proj, nil, input, u, workflow.ImportOptions{Force: true, FromRepository: "foo/myrepo"})
 	assert.NoError(t, err)
 
-	w, errW := workflow.Load(context.TODO(), db, cache, proj, input.Name, workflow.LoadOptions{})
+	w, errW := workflow.Load(context.TODO(), db, cache, *proj, input.Name, workflow.LoadOptions{})
 	assert.NoError(t, errW)
 	assert.NotNil(t, w)
 

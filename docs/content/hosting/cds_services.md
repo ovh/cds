@@ -25,7 +25,7 @@ A CDS µService is a process that can be launch by the `engine` binary.
 - **hooks**: this service manages [Hooks]({{< relref "/docs/concepts/workflow/hooks/_index.md">}}). 
   - You can multi-instanciate this service, it uses a redis to synchronize all tasks over all instances.
   - Users and some integrations need to send HTTP requests to this service, you can use the proxypass `/cdshooks` on the CDS UI to reach this service.
-- **vcs**: The aim of this µService is to communicate with Repository Manager as [GitHub]({{< relref "/docs/integrations/github.md" >}}), [GitLab]({{< relref "/docs/integrations/gitlab.md" >}}), [Bitbucket]({{< relref "/docs/integrations/bitbucket.md" >}})... 
+- **vcs**: The aim of this µService is to communicate with Repository Manager as [GitHub]({{< relref "/docs/integrations/github/_index.md" >}}), [GitLab]({{< relref "/docs/integrations/gitlab/_index.md" >}}), [Bitbucket]({{< relref "/docs/integrations/bitbucket.md" >}})... 
   - You can multi-instanciate this service, a redis is used to synchronize tasks over all instances.
 - **repositories**: this µService is used to enable the as-code feature. 
   - Users can store CDS Files on their repositories. This service clones user repositories on local filesystem. 
@@ -65,6 +65,7 @@ The binary engine can be used to launch in different processes each µService. T
 Each µService can be multi-instanciated, example:
 
 - 6x `$engine start api`, each api shared the same PostgreSQL and redis.
+- 3x `$engine start ui`.
 - 3x `$engine start hooks`, each hooks shared the same redis.
 - 3x `$engine start vcs`, each hooks shared the same redis.
 - 3x `$engine start elasticsearch`.
@@ -81,6 +82,8 @@ Example of an installation for a production with 18.000 jobs launched per day:
 - 6x `$engine start api`
   - RAM: 3Go per instance
   - Redis: 128Mo
+- 3x `$engine start ui`
+  - RAM: 128Mo per instance
 - 3x `$engine start hooks`
   - RAM: 256Mo per instance
   - Redis: 256Mo
@@ -91,8 +94,6 @@ Example of an installation for a production with 18.000 jobs launched per day:
   - RAM: 256Mo per instance
 - 1x `$engine start repositories`
   - RAM: 256Mo per instance
-- 3x `$engine start ui`
-  - RAM: 128Mo per instance
-- 3x `$engine start migrate`
+- 1x `$engine start migrate`
   - RAM: 128Mo per instance
 - hatcheries: 256Mo per instance

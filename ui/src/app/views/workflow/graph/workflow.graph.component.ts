@@ -89,7 +89,7 @@ export class WorkflowGraphComponent implements AfterViewInit {
         // https://github.com/cpettitt/dagre/wiki#configuring-the-layout
         this.g = new dagreD3.graphlib.Graph().setGraph({ rankdir: this.direction, nodesep: 10, ranksep: 15, edgesep: 5 });
         // Create all nodes
-        if (this.workflow.workflow_data && this.workflow.workflow_data.node) {
+        if (this.workflow.workflow_data && this.workflow.workflow_data.node && this.workflow.workflow_data.node.id > 0) {
             this.createNode(this.workflow.workflow_data.node);
         }
         if (this.workflow.workflow_data && this.workflow.workflow_data.joins) {
@@ -162,7 +162,6 @@ export class WorkflowGraphComponent implements AfterViewInit {
             }
             componentRef.instance.hook = h;
             componentRef.instance.workflow = this.workflow;
-            componentRef.instance.project = this.project;
             componentRef.instance.node = node;
             this.hooksComponent.set(hookId, componentRef);
 

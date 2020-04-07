@@ -11,7 +11,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/ovh/cds/engine/api/bootstrap"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/api/test/assets"
@@ -28,7 +27,7 @@ func generateTemplate(groupID int64, pipelineName string) *sdk.WorkflowTemplate 
 		Slug:    slug.Convert(name),
 		Workflow: base64.StdEncoding.EncodeToString([]byte(
 			`name: [[.name]]
-version: v1.0
+version: v2.0
 workflow:
   Node-1:
     pipeline: ` + pipelineName,
@@ -51,7 +50,7 @@ jobs:
 }
 
 func Test_postTemplateApplyHandler(t *testing.T) {
-	api, db, _, end := newTestAPI(t, bootstrap.InitiliazeDB)
+	api, db, _, end := newTestAPI(t)
 	defer end()
 
 	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
@@ -136,7 +135,7 @@ func Test_postTemplateApplyHandler(t *testing.T) {
 }
 
 func Test_postTemplateBulkHandler(t *testing.T) {
-	api, db, _, end := newTestAPI(t, bootstrap.InitiliazeDB)
+	api, db, _, end := newTestAPI(t)
 	defer end()
 
 	_, jwt := assets.InsertAdminUser(t, api.mustDB())
@@ -151,7 +150,7 @@ func Test_postTemplateBulkHandler(t *testing.T) {
 		Slug:    slug.Convert(name),
 		Workflow: base64.StdEncoding.EncodeToString([]byte(
 			`name: [[.name]]
-version: v1.0
+version: v2.0
 workflow:
   Node-1:
     pipeline: ` + pipelineName,
@@ -211,7 +210,7 @@ jobs:
 }
 
 func Test_getTemplateInstancesHandler(t *testing.T) {
-	api, db, _, end := newTestAPI(t, bootstrap.InitiliazeDB)
+	api, db, _, end := newTestAPI(t)
 	defer end()
 
 	projectOne := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))

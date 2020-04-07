@@ -13,7 +13,6 @@ import { Store } from '@ngxs/store';
 import { Project } from 'app/model/project.model';
 import { Workflow } from 'app/model/workflow.model';
 import { WorkflowRunService } from 'app/service/workflow/run/workflow.run.service';
-import { WorkflowService } from 'app/service/workflow/workflow.service';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { WarningModalComponent } from 'app/shared/modal/warning/warning.component';
 import { ToastService } from 'app/shared/toast/ToastService';
@@ -47,6 +46,8 @@ export class WorkflowAdminComponent implements OnInit, OnDestroy {
     };
     get workflow() { return this._workflow };
 
+    @Input() editMode: boolean;
+
     oldName: string;
 
     runnumber: number;
@@ -72,7 +73,6 @@ export class WorkflowAdminComponent implements OnInit, OnDestroy {
         private _toast: ToastService,
         private _router: Router,
         private _workflowRunService: WorkflowRunService,
-        private _workflowService: WorkflowService,
         private _cd: ChangeDetectorRef,
         private _dragularService: DragulaService,
     ) {
@@ -188,7 +188,13 @@ export class WorkflowAdminComponent implements OnInit, OnDestroy {
             if (this.runnumber !== this.originalRunNumber) {
                 actions.push(this._workflowRunService.updateRunNumber(this.project.key, this.workflow, this.runnumber));
             }
-            this._workflow.purge_tags = [this.purgeTag];
+            if (this.purgeTag) {
+                this._workflow.purge_tags = [this.purgeTag];
+            }
+
+            if (!this._workflow.purge_tags || this._workflow.purge_tags.length === 0) {
+                delete this._workflow.purge_tags;
+            }
 
             actions.push(this.store.dispatch(new UpdateWorkflow({
                 projectKey: this.project.key,
@@ -202,25 +208,16 @@ export class WorkflowAdminComponent implements OnInit, OnDestroy {
                     this._cd.markForCheck();
                 }))
                 .subscribe(() => {
-                    this._toast.success('', this._translate.instant('workflow_updated'));
+                    if (this.editMode) {
+                        this._toast.info('', this._translate.instant('workflow_ascode_updated'));
+                    } else {
+                        this._toast.success('', this._translate.instant('workflow_updated'));
+                    }
                     this._router.navigate([
                         '/project', this.project.key, 'workflow', this.workflow.name
                     ], { queryParams: { tab: 'advanced' } });
                 });
         }
-    }
-
-    updateRunNumber() {
-        this._workflowService.updateRunNumber(this.project.key, this.workflow.name, this.runnumber)
-            .pipe(finalize(() => {
-                this.loading = false;
-                this._cd.markForCheck();
-            })).subscribe(() => {
-                this._toast.success('', this._translate.instant('workflow_updated'));
-                this._router.navigate([
-                    '/project', this.project.key, 'workflow', this.workflow.name
-                ], { queryParams: { tab: 'advanced' } });
-            })
     }
 
     deleteWorkflow(): void {

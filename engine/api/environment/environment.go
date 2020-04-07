@@ -3,14 +3,12 @@ package environment
 import (
 	"database/sql"
 	"fmt"
-	"strings"
 	"time"
 
 	"github.com/go-gorp/gorp"
 	"github.com/lib/pq"
 
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
-	"github.com/ovh/cds/engine/api/keys"
 	"github.com/ovh/cds/sdk"
 )
 
@@ -52,19 +50,6 @@ func LoadEnvironments(db gorp.SqlExecutor, projectKey string) ([]sdk.Environment
 	return envs, nil
 }
 
-// LockByID locks an environment given its ID
-func LockByID(db gorp.SqlExecutor, envID int64) error {
-	_, err := db.Exec(`
-	SELECT *
-	FROM environment
-	WHERE id = $1 FOR UPDATE SKIP LOCKED
-	`, envID)
-	if err == sql.ErrNoRows {
-		return sdk.ErrLocked
-	}
-	return err
-}
-
 // Lock locks an environment given its ID
 func Lock(db gorp.SqlExecutor, projectKey, envName string) error {
 	_, err := db.Exec(`
@@ -77,7 +62,7 @@ func Lock(db gorp.SqlExecutor, projectKey, envName string) error {
 	) FOR UPDATE SKIP LOCKED
 	`, projectKey, envName)
 	if err == sql.ErrNoRows {
-		return sdk.ErrEnvironmentNotFound
+		return sdk.WithStack(sdk.ErrEnvironmentNotFound)
 	}
 	return err
 }
@@ -116,11 +101,11 @@ func LoadEnvironmentByName(db gorp.SqlExecutor, projectKey, envName string) (*sd
 		if err == sql.ErrNoRows {
 			return nil, sdk.ErrorWithData(sdk.ErrEnvironmentNotFound, envName)
 		}
-		return nil, err
+		return nil, sdk.WithStack(err)
 	}
 	env.LastModified = lastModified.Unix()
 	env.ProjectKey = projectKey
-	return &env, loadDependencies(db, &env)
+	return &env, sdk.WithStack(loadDependencies(db, &env))
 }
 
 // LoadByWorkflowID loads environments from database for a given workflow id
@@ -178,15 +163,18 @@ func CheckDefaultEnv(db gorp.SqlExecutor) error {
 }
 
 func loadDependencies(db gorp.SqlExecutor, env *sdk.Environment) error {
-	variables, err := GetAllVariableByID(db, env.ID)
+	variables, err := LoadAllVariables(db, env.ID)
 	if err != nil {
 		return sdk.WrapError(err, "Cannot load environment variables")
 	}
-	env.Variable = variables
+	env.Variables = variables
 
-	if errK := LoadAllKeys(db, env); errK != nil {
-		return sdk.WrapError(errK, "loadDependencies> Cannot load environment dependencies")
+	keys, err := LoadAllKeys(db, env.ID)
+	if err != nil {
+		return sdk.WrapError(err, "loadDependencies> Cannot load environment dependencies")
 	}
+
+	env.Keys = keys
 
 	return nil
 }
@@ -206,7 +194,7 @@ func InsertEnvironment(db gorp.SqlExecutor, env *sdk.Environment) error {
 		pqerr, ok := err.(*pq.Error)
 		if ok {
 			if pqerr.Code == "23000" || pqerr.Code == gorpmapping.ViolateUniqueKeyPGCode || pqerr.Code == "23514" {
-				return sdk.ErrEnvironmentExist
+				return sdk.WithStack(sdk.ErrEnvironmentExist)
 			}
 		}
 		return err
@@ -232,7 +220,7 @@ func UpdateEnvironment(db gorp.SqlExecutor, environment *sdk.Environment) error 
 // DeleteEnvironment Delete the given environment
 func DeleteEnvironment(db gorp.SqlExecutor, environmentID int64) error {
 	// Delete variables
-	if err := DeleteAllVariable(db, environmentID); err != nil {
+	if err := DeleteAllVariables(db, environmentID); err != nil {
 		return sdk.WrapError(err, "Cannot delete environment variable")
 	}
 
@@ -261,53 +249,6 @@ func DeleteAllEnvironment(db gorp.SqlExecutor, projectID int64) error {
 		return sdk.WrapError(err, "Cannot delete environment")
 	}
 	return nil
-}
-
-// CountEnvironmentByVarValue counts how many time a pattern is in variable value for the given project
-func CountEnvironmentByVarValue(db gorp.SqlExecutor, projectKey string, value string) ([]string, error) {
-	query := `
-		SELECT DISTINCT environment.name
-		FROM environment_variable
-		JOIN environment ON environment.id = environment_variable.environment_id
-		JOIN project ON project.id = environment.project_id
-		WHERE value like $2 AND project.projectkey = $1;
-	`
-
-	var envsName []string
-	if _, err := db.Select(&envsName, query, projectKey, fmt.Sprintf("%%%s%%", value)); err != nil {
-		return nil, sdk.WrapError(err, "Unable to count usage")
-	}
-	return envsName, nil
-}
-
-// AddKeyPairToEnvironment generate a ssh key pair and add them as env variables
-func AddKeyPairToEnvironment(db gorp.SqlExecutor, envID int64, keyname string, u sdk.Identifiable) error {
-	if !strings.HasPrefix(keyname, "env-") {
-		keyname = "env-" + keyname
-	}
-
-	k, errGenerate := keys.GenerateSSHKey(keyname)
-	if errGenerate != nil {
-		return errGenerate
-	}
-
-	v := &sdk.Variable{
-		Name:  keyname,
-		Type:  sdk.KeyVariable,
-		Value: k.Private,
-	}
-
-	if err := InsertVariable(db, envID, v, u); err != nil {
-		return err
-	}
-
-	p := &sdk.Variable{
-		Name:  keyname + ".pub",
-		Type:  sdk.TextVariable,
-		Value: k.Public,
-	}
-
-	return InsertVariable(db, envID, p, u)
 }
 
 // LoadAllNames returns all environment names

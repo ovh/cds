@@ -19,17 +19,15 @@ func (api *API) getKeysInEnvironmentHandler() service.Handler {
 		vars := mux.Vars(r)
 		key := vars[permProjectKey]
 		envName := vars["environmentName"]
-
-		env, errE := environment.LoadEnvironmentByName(api.mustDB(), key, envName)
-		if errE != nil {
-			return sdk.WrapError(errE, "getKeysInEnvironmentHandler> Cannot load environment")
+		env, err := environment.LoadEnvironmentByName(api.mustDB(), key, envName)
+		if err != nil {
+			return err
 		}
-
-		if errK := environment.LoadAllKeys(api.mustDB(), env); errK != nil {
-			return sdk.WrapError(errK, "getKeysInEnvironmentHandler> Cannot load environment keys")
+		keys, err := environment.LoadAllKeys(api.mustDB(), env.ID)
+		if err != nil {
+			return err
 		}
-
-		return service.WriteJSON(w, env.Keys, http.StatusOK)
+		return service.WriteJSON(w, keys, http.StatusOK)
 	}
 }
 
@@ -106,17 +104,23 @@ func (api *API) addKeyInEnvironmentHandler() service.Handler {
 
 		switch newKey.Type {
 		case sdk.KeyTypeSSH:
-			k, errK := keys.GenerateSSHKey(newKey.Name)
-			if errK != nil {
-				return sdk.WrapError(errK, "addKeyInEnvironmentHandler> Cannot generate ssh key")
+			k, err := keys.GenerateSSHKey(newKey.Name)
+			if err != nil {
+				return sdk.WrapError(err, "addKeyInEnvironmentHandler> Cannot generate ssh key")
 			}
-			newKey.Key = k
+			newKey.KeyID = k.KeyID
+			newKey.Public = k.Public
+			newKey.Private = k.Private
+			newKey.Type = k.Type
 		case sdk.KeyTypePGP:
-			k, errGenerate := keys.GeneratePGPKeyPair(newKey.Name)
-			if errGenerate != nil {
-				return sdk.WrapError(errGenerate, "addKeyInEnvironmentHandler> Cannot generate pgpKey")
+			k, err := keys.GeneratePGPKeyPair(newKey.Name)
+			if err != nil {
+				return sdk.WrapError(err, "addKeyInEnvironmentHandler> Cannot generate pgpKey")
 			}
-			newKey.Key = k
+			newKey.KeyID = k.KeyID
+			newKey.Public = k.Public
+			newKey.Private = k.Private
+			newKey.Type = k.Type
 		default:
 			return sdk.WrapError(sdk.ErrUnknownKeyType, "addKeyInEnvironmentHandler> unknown key of type: %s", newKey.Type)
 		}

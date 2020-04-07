@@ -1,11 +1,13 @@
 import { Injectable } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
+import { WorkflowNodeRun, WorkflowRun } from 'app/model/workflow.run.model';
+import { AsCodeEvent } from 'app/store/ascode.action';
 import { UpdateMaintenance } from 'app/store/cds.action';
 import cloneDeep from 'lodash-es/cloneDeep';
 import { filter, first } from 'rxjs/operators';
-import { Broadcast, BroadcastEvent } from './model/broadcast.model';
+import { Broadcast } from './model/broadcast.model';
 import { Event, EventType } from './model/event.model';
 import { LoadOpts } from './model/project.model';
 import { TimelineFilter } from './model/timeline.model';
@@ -14,8 +16,12 @@ import { NavbarService } from './service/navbar/navbar.service';
 import { RouterService, TimelineStore } from './service/services.module';
 import { WorkflowRunService } from './service/workflow/run/workflow.run.service';
 import { ToastService } from './shared/toast/ToastService';
-import { DeleteFromCacheApplication, ExternalChangeApplication, ResyncApplication } from './store/applications.action';
-import { ApplicationsState, ApplicationsStateModel } from './store/applications.state';
+import {
+    ClearCacheApplication,
+    ExternalChangeApplication,
+    ResyncApplication
+} from './store/applications.action';
+import { ApplicationsState, ApplicationStateModel } from './store/applications.state';
 import { AuthenticationState } from './store/authentication.state';
 import { DeleteFromCachePipeline, ExternalChangePipeline, ResyncPipeline } from './store/pipelines.action';
 import { PipelinesState, PipelinesStateModel } from './store/pipelines.state';
@@ -35,6 +41,7 @@ export class AppService {
     constructor(
         private _routerService: RouterService,
         private _routeActivated: ActivatedRoute,
+        private _router: Router,
         private _translate: TranslateService,
         private _broadcastStore: BroadcastStore,
         private _timelineStore: TimelineStore,
@@ -59,7 +66,14 @@ export class AppService {
             return
         }
         if (event.type_event.indexOf(EventType.MAINTENANCE) === 0) {
-            this._store.dispatch(new UpdateMaintenance(event.payload['Enable']));
+            this._store.dispatch(new UpdateMaintenance(event.payload['enable']));
+            return;
+        }
+        if (event.type_event.indexOf(EventType.ASCODE) === 0) {
+            if (event.username === this._store.selectSnapshot(AuthenticationState.user).username) {
+                let e: AsCodeEvent = <AsCodeEvent>event.payload['as_code_event'];
+                this._store.dispatch(e);
+            }
             return;
         }
         if (event.type_event.indexOf(EventType.PROJECT_PREFIX) === 0 || event.type_event.indexOf(EventType.ENVIRONMENT_PREFIX) === 0 ||
@@ -175,19 +189,24 @@ export class AppService {
             return
         }
         const payload = { projectKey: event.project_key, applicationName: event.application_name };
-        const appKey = event.project_key + '/' + event.application_name;
 
-        this._store.selectOnce(ApplicationsState).subscribe((appState: ApplicationsStateModel) => {
-            if (!appState.applications || !Object.keys(appState.applications).length) {
-                return;
-            }
-
-            if (!appState.applications[appKey]) {
+        this._store.selectOnce(ApplicationsState).subscribe((appState: ApplicationStateModel) => {
+            if (!appState.application ||
+                !(appState.application.name === event.application_name &&
+                    appState.currentProjectKey === event.project_key)) {
                 return;
             }
 
             if (event.type_event === EventType.APPLICATION_DELETE) {
-                this._store.dispatch(new DeleteFromCacheApplication(payload));
+                // If user is on an application that has been deleted by an other user
+                if (this.routeParams['key'] && this.routeParams['key'] === event.project_key &&
+                    this.routeParams['appName'] && this.routeParams['appName'] === event.application_name &&
+                    event.username !== this._store.selectSnapshot(AuthenticationState.user).username) {
+                    this._toast.info('', this._translate.instant('application_deleted_by',
+                        {appName: this.routeParams['appName'], username: event.username}));
+                    this._router.navigate(['/project'], this.routeParams['key']);
+                }
+                this._store.dispatch(new ClearCacheApplication());
                 this._store.dispatch(new projectActions.DeleteApplicationInProject({ applicationName: event.application_name }));
                 return;
             }
@@ -202,7 +221,7 @@ export class AppService {
                     return;
                 }
             } else {
-                this._store.dispatch(new DeleteFromCacheApplication(payload));
+                this._store.dispatch(new ClearCacheApplication());
                 return;
             }
 
@@ -210,7 +229,6 @@ export class AppService {
                 this._store.dispatch(new ResyncApplication(payload));
             }
         });
-
     }
 
     updatePipelineCache(event: Event): void {
@@ -218,9 +236,8 @@ export class AppService {
             return
         }
 
-        const pipKey = event.project_key + '-' + event.pipeline_name;
         this._store.selectOnce(PipelinesState).subscribe((pips: PipelinesStateModel) => {
-            if (!pips || !pips.pipelines || !pips.pipelines[pipKey]) {
+            if (!pips || !pips.pipeline || pips.pipeline.name !== event.pipeline_name || pips.currentProjectKey !== event.project_key) {
                 return;
             }
 
@@ -316,25 +333,34 @@ export class AppService {
                     this._workflowRunService
                         .getWorkflowRun(event.project_key, event.workflow_name, event.workflow_run_num)
                         .pipe(first())
-                        .subscribe(wr => this._store.dispatch(new UpdateWorkflowRunList({ workflowRun: wr })));
+                        .subscribe(wrkRun => this._store.dispatch(new UpdateWorkflowRunList({ workflowRun: wrkRun })));
                 }
                 break;
             case EventType.RUN_WORKFLOW_NODE:
-                if (this.routeParams['number'] === event.workflow_run_num.toString()) {
+                // Refresh node run if user is listening on it
+                const wnr = this._store.selectSnapshot<WorkflowNodeRun>((state) => {
+                    return state.workflow.workflowNodeRun;
+                });
+                let wnrEvent = <WorkflowNodeRun>event.payload;
+                if (wnr && wnr.id === wnrEvent.id) {
+                    this._store.dispatch(
+                        new GetWorkflowNodeRun({
+                            projectKey: event.project_key,
+                            workflowName: event.workflow_name,
+                            num: event.workflow_run_num,
+                            nodeRunID: wnr.id
+                        }));
+                }
+
+                // Refresh workflow run if user is listening on it
+                const wr = this._store.selectSnapshot<WorkflowRun>((state) => state.workflow.workflowRun);
+                if (wr && wr.num === event.workflow_run_num) {
                     this._store.dispatch(new GetWorkflowRun(
                         {
-                            projectKey: event.project_key, workflowName: event.workflow_name,
+                            projectKey: event.project_key,
+                            workflowName: event.workflow_name,
                             num: event.workflow_run_num
                         }));
-                    if (this.routeParams['nodeId']) {
-                        this._store.dispatch(
-                            new GetWorkflowNodeRun({
-                                projectKey: event.project_key,
-                                workflowName: event.workflow_name,
-                                num: event.workflow_run_num,
-                                nodeRunID: this.routeParams['nodeId']
-                            }));
-                    }
                 }
                 break;
         }
@@ -346,15 +372,15 @@ export class AppService {
         }
         switch (event.type_event) {
             case EventType.BROADCAST_ADD:
-                let bEvent: BroadcastEvent = <BroadcastEvent>event.payload['Broadcast'];
+                let bEvent: Broadcast = <Broadcast>event.payload;
                 if (bEvent) {
-                    this._broadcastStore.addBroadcastInCache(Broadcast.fromEvent(bEvent));
+                    this._broadcastStore.addBroadcastInCache(bEvent);
                 }
                 break;
             case EventType.BROADCAST_UPDATE:
-                let bUpEvent: BroadcastEvent = <BroadcastEvent>event.payload['NewBroadcast'];
+                let bUpEvent: Broadcast = <Broadcast>event.payload['NewBroadcast'];
                 if (bUpEvent) {
-                    this._broadcastStore.addBroadcastInCache(Broadcast.fromEvent(bUpEvent));
+                    this._broadcastStore.addBroadcastInCache(bUpEvent);
                 }
                 break;
             case EventType.BROADCAST_DELETE:

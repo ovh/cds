@@ -63,6 +63,10 @@ func (client *bitbucketcloudClient) reposForUser(ctx context.Context, username s
 	params.Set("role", "member")
 	nextPage := 1
 	for {
+		if ctx.Err() != nil {
+			break
+		}
+
 		if nextPage != 1 {
 			params.Set("page", fmt.Sprintf("%d", nextPage))
 		}
@@ -130,5 +134,5 @@ func (client *bitbucketcloudClient) repoByFullname(ctx context.Context, fullname
 }
 
 func (client *bitbucketcloudClient) GrantWritePermission(ctx context.Context, fullname string) error {
-	return sdk.ErrNotImplemented
+	return sdk.WithStack(sdk.ErrNotImplemented)
 }

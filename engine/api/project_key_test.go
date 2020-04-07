@@ -7,8 +7,6 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/ovh/cds/engine/api/application"
-	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/keys"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/test"
@@ -16,152 +14,6 @@ import (
 	"github.com/ovh/cds/sdk"
 	"github.com/stretchr/testify/assert"
 )
-
-func Test_getAllKeysProjectHandler(t *testing.T) {
-	api, db, router, end := newTestAPI(t)
-	defer end()
-
-	//Create admin user
-	u, pass := assets.InsertAdminUser(t, api.mustDB())
-
-	//Insert Project
-	pkey := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, db, api.Cache, pkey, pkey)
-
-	k := &sdk.ProjectKey{
-		Key: sdk.Key{
-			Name: "mykey",
-			Type: "pgp",
-		},
-		ProjectID: proj.ID,
-	}
-	test.NoError(t, project.InsertKey(api.mustDB(), k))
-
-	app := sdk.Application{
-		ProjectID:  proj.ID,
-		ProjectKey: proj.Key,
-		Name:       sdk.RandomString(10),
-	}
-
-	test.NoError(t, application.Insert(db, api.Cache, proj, &app))
-
-	appk1 := &sdk.ApplicationKey{
-		Key: sdk.Key{
-			Name: "appK1",
-			Type: "ssh",
-		},
-		ApplicationID: app.ID,
-	}
-	appk2 := &sdk.ApplicationKey{
-		Key: sdk.Key{
-			Name: "appK2",
-			Type: "ssh",
-		},
-		ApplicationID: app.ID,
-	}
-	test.NoError(t, application.InsertKey(db, appk1))
-	test.NoError(t, application.InsertKey(db, appk2))
-
-	app2 := sdk.Application{
-		ProjectID:  proj.ID,
-		ProjectKey: proj.Key,
-		Name:       sdk.RandomString(10),
-	}
-
-	test.NoError(t, application.Insert(db, api.Cache, proj, &app2))
-
-	app2k1 := &sdk.ApplicationKey{
-		Key: sdk.Key{
-			Name: "appK1",
-			Type: "ssh",
-		},
-		ApplicationID: app2.ID,
-	}
-	app2k2 := &sdk.ApplicationKey{
-		Key: sdk.Key{
-			Name: "appK2",
-			Type: "pgp",
-		},
-		ApplicationID: app2.ID,
-	}
-	test.NoError(t, application.InsertKey(db, app2k1))
-	test.NoError(t, application.InsertKey(db, app2k2))
-
-	vars := map[string]string{
-		"permProjectKey": proj.Key,
-		"name":           k.Name,
-	}
-
-	env := sdk.Environment{
-		ProjectID:  proj.ID,
-		ProjectKey: proj.Key,
-		Name:       sdk.RandomString(10),
-	}
-	test.NoError(t, environment.InsertEnvironment(db, &env))
-
-	envk1 := &sdk.EnvironmentKey{
-		Key: sdk.Key{
-			Name: "envK1",
-			Type: "ssh",
-		},
-		EnvironmentID: env.ID,
-	}
-	envk2 := &sdk.EnvironmentKey{
-		Key: sdk.Key{
-			Name: "envK2",
-			Type: "ssh",
-		},
-		EnvironmentID: env.ID,
-	}
-	test.NoError(t, environment.InsertKey(db, envk1))
-	test.NoError(t, environment.InsertKey(db, envk2))
-
-	env2 := sdk.Environment{
-		ProjectID:  proj.ID,
-		ProjectKey: proj.Key,
-		Name:       sdk.RandomString(10),
-	}
-	test.NoError(t, environment.InsertEnvironment(db, &env2))
-
-	env2k1 := &sdk.EnvironmentKey{
-		Key: sdk.Key{
-			Name: "envK1",
-			Type: "ssh",
-		},
-		EnvironmentID: env2.ID,
-	}
-	env2k2 := &sdk.EnvironmentKey{
-		Key: sdk.Key{
-			Name: "envK2",
-			Type: "spgpsh",
-		},
-		EnvironmentID: env2.ID,
-	}
-	test.NoError(t, environment.InsertKey(db, env2k1))
-	test.NoError(t, environment.InsertKey(db, env2k2))
-
-	allkeys := struct {
-		ProjectKeys     []sdk.ProjectKey     `json:"project_key"`
-		ApplicationKeys []sdk.ApplicationKey `json:"application_key"`
-		EnvironmentKeys []sdk.EnvironmentKey `json:"environment_key"`
-	}{}
-
-	uri := router.GetRoute("GET", api.getAllKeysProjectHandler, vars)
-	req, err := http.NewRequest("GET", uri, nil)
-	test.NoError(t, err)
-	assets.AuthentifyRequest(t, req, u, pass)
-
-	// Do the request
-	w := httptest.NewRecorder()
-	router.Mux.ServeHTTP(w, req)
-	assert.Equal(t, 200, w.Code)
-
-	test.NoError(t, json.Unmarshal(w.Body.Bytes(), &allkeys))
-
-	assert.Equal(t, 1, len(allkeys.ProjectKeys))
-	assert.Equal(t, 3, len(allkeys.ApplicationKeys))
-	assert.Equal(t, 3, len(allkeys.EnvironmentKeys))
-}
 
 func Test_getKeysInProjectHandler(t *testing.T) {
 	api, db, router, end := newTestAPI(t)
@@ -175,10 +27,8 @@ func Test_getKeysInProjectHandler(t *testing.T) {
 	proj := assets.InsertTestProject(t, db, api.Cache, pkey, pkey)
 
 	k := &sdk.ProjectKey{
-		Key: sdk.Key{
-			Name: "mykey",
-			Type: "pgp",
-		},
+		Name:      "mykey",
+		Type:      "pgp",
 		ProjectID: proj.ID,
 	}
 
@@ -186,7 +36,10 @@ func Test_getKeysInProjectHandler(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	k.Key = kpgp
+	k.KeyID = kpgp.KeyID
+	k.Public = kpgp.Public
+	k.Private = kpgp.Private
+	k.Type = kpgp.Type
 
 	if err := project.InsertKey(api.mustDB(), k); err != nil {
 		t.Fatal(err)
@@ -224,12 +77,10 @@ func Test_deleteKeyInProjectHandler(t *testing.T) {
 	proj := assets.InsertTestProject(t, db, api.Cache, pkey, pkey)
 
 	k := &sdk.ProjectKey{
-		Key: sdk.Key{
-			Name:    "mykey",
-			Type:    "pgp",
-			Public:  "pub",
-			Private: "priv",
-		},
+		Name:      "mykey",
+		Type:      "pgp",
+		Public:    "pub",
+		Private:   "priv",
 		ProjectID: proj.ID,
 	}
 
@@ -269,10 +120,8 @@ func Test_addKeyInProjectHandler(t *testing.T) {
 	proj := assets.InsertTestProject(t, db, api.Cache, pkey, pkey)
 
 	k := &sdk.ProjectKey{
-		Key: sdk.Key{
-			Name: "mykey",
-			Type: "pgp",
-		},
+		Name: "mykey",
+		Type: "pgp",
 	}
 
 	vars := map[string]string{

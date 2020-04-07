@@ -16,7 +16,7 @@ import (
 func TestRunArtifactDownload(t *testing.T) {
 	defer gock.Off()
 
-	wk, ctx := setupTest(t)
+	wk, ctx := SetupTest(t)
 
 	as := []sdk.WorkflowNodeRunArtifact{
 		sdk.WorkflowNodeRunArtifact{
@@ -85,7 +85,7 @@ func TestRunArtifactDownload(t *testing.T) {
 func TestRunArtifactDownloadOutsideWorkspace(t *testing.T) {
 	defer gock.Off()
 
-	wk, ctx := setupTest(t)
+	wk, ctx := SetupTest(t)
 
 	fileName := sdk.RandomString(10)
 

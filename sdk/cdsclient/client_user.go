@@ -62,3 +62,11 @@ func (c *client) UpdateFavorite(params sdk.FavoriteParams) (interface{}, error) 
 	}
 	return res, nil
 }
+
+func (c *client) UserGetSchema() (sdk.SchemaResponse, error) {
+	var res sdk.SchemaResponse
+	if _, err := c.GetJSON(context.Background(), "/user/schema", &res); err != nil {
+		return res, err
+	}
+	return res, nil
+}

@@ -216,7 +216,6 @@ pub struct Key {
     pub name: String,
     pub public: String,
     pub private: String,
-    #[serde(rename = "keyID")]
     pub key_id: String,
     #[serde(rename = "type")]
     pub _type: String,
@@ -394,7 +393,7 @@ pub struct Action {
     pub description: String,
     // requirements: string,
     pub parameters: Option<Vec<Parameter>>,
-    pub action: Option<Vec<Box<Action>>>,
+    pub action: Option<Vec<Action>>,
     pub enabled: bool,
     pub deprecated: bool,
     pub optional: bool,

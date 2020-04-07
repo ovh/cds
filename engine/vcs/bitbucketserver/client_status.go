@@ -8,8 +8,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/mitchellh/mapstructure"
-
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
@@ -69,12 +67,16 @@ func (b *bitbucketClient) ListStatuses(ctx context.Context, repo string, ref str
 	params := url.Values{}
 	nextPage := 0
 	for {
+		if ctx.Err() != nil {
+			break
+		}
+
 		if nextPage != 0 {
 			params.Set("start", fmt.Sprintf("%d", nextPage))
 		}
 
 		var response ResponseStatus
-		if err := b.do(ctx, "GET", "build-status", path, nil, nil, &response, nil); err != nil {
+		if err := b.do(ctx, "GET", "build-status", path, params, nil, &response, nil); err != nil {
 			return nil, sdk.WrapError(err, "Unable to get statuses")
 		}
 
@@ -125,8 +127,8 @@ const (
 func processWorkflowNodeRunEvent(event sdk.Event, uiURL string) (statusData, error) {
 	data := statusData{}
 	var eventNR sdk.EventRunWorkflowNode
-	if err := mapstructure.Decode(event.Payload, &eventNR); err != nil {
-		return data, sdk.WrapError(err, "Error during consumption")
+	if err := json.Unmarshal(event.Payload, &eventNR); err != nil {
+		return data, sdk.WrapError(err, "cannot unmarshal payload")
 	}
 	data.key = fmt.Sprintf("%s-%s-%s",
 		event.ProjectKey,

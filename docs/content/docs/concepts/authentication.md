@@ -9,11 +9,9 @@ card:
 
 # Consumer
 
-## Description:
-
 Two type of consumer: 
 
-- first level: Gitlab, Github, CorporateSSO, LDAP, Local.
+- first level: GitLab, GitHub, CorporateSSO, LDAP, Local.
 - n level: Builtin.
 
 A builtin consumer can be created by a user. 

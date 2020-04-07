@@ -40,7 +40,6 @@ export class WorkflowRun {
     tags: Array<WorkflowRunTags>;
     commits: Array<Commit>;
     infos: Array<SpawnInfo>;
-    version: number;
 
     // Useful for UI
     duration: string;
@@ -175,6 +174,8 @@ export class WorkflowNodeRunManual {
     payload: {};
     pipeline_parameter: Array<Parameter>;
     user: User;
+    resync: boolean;
+    only_failed_jobs: boolean;
 }
 
 export class WorkflowNodeRunVulnerabilityReport {

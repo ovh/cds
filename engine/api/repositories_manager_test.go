@@ -12,7 +12,6 @@ import (
 
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/authentication"
-	"github.com/ovh/cds/engine/api/bootstrap"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
@@ -28,7 +27,7 @@ import (
 )
 
 func TestAPI_detachRepositoriesManagerHandler(t *testing.T) {
-	api, db, router, end := newTestAPI(t, bootstrap.InitiliazeDB)
+	api, db, router, end := newTestAPI(t)
 	defer end()
 
 	srvs, err := services.LoadAll(context.TODO(), db)
@@ -113,6 +112,15 @@ func TestAPI_detachRepositoriesManagerHandler(t *testing.T) {
 				if err := json.Unmarshal(bts, &hooks); err != nil {
 					return writeError(w, err)
 				}
+				for k, h := range hooks {
+					if h.HookModelName == sdk.RepositoryWebHookModelName {
+						cfg := hooks[k].Config
+						cfg["webHookURL"] = sdk.WorkflowNodeHookConfigValue{
+							Value:        "http://lolcat.host",
+							Configurable: false,
+						}
+					}
+				}
 				if err := enc.Encode(hooks); err != nil {
 					return writeError(w, err)
 				}
@@ -131,6 +139,8 @@ func TestAPI_detachRepositoriesManagerHandler(t *testing.T) {
 				if err := enc.Encode(pr); err != nil {
 					return writeError(w, err)
 				}
+			case "/vcs/github/repos/sguiheux/demo/hooks?url=http%3A%2F%2Flolcat.host&id=666":
+				// do nothing
 			default:
 				t.Fatalf("UNKNOWN ROUTE: %s", r.URL.String())
 			}
@@ -158,7 +168,7 @@ func TestAPI_detachRepositoriesManagerHandler(t *testing.T) {
 		ProjectKey: proj.Key,
 		Name:       "pip1",
 	}
-	test.NoError(t, pipeline.InsertPipeline(db, api.Cache, proj, &pip))
+	test.NoError(t, pipeline.InsertPipeline(db, &pip))
 
 	s := sdk.NewStage("stage 1")
 	s.Enabled = true
@@ -174,7 +184,7 @@ vcs_ssh_key: proj-blabla
 `
 	var eapp = new(exportentities.Application)
 	assert.NoError(t, yaml.Unmarshal([]byte(appS), eapp))
-	app, _, globalError := application.ParseAndImport(context.Background(), db, api.Cache, proj, eapp, application.ImportOptions{Force: true}, nil, u)
+	app, _, globalError := application.ParseAndImport(context.Background(), db, api.Cache, *proj, eapp, application.ImportOptions{Force: true}, nil, u)
 	assert.NoError(t, globalError)
 
 	proj, _ = project.LoadByID(db, api.Cache, proj.ID, project.LoadOptions.WithApplications, project.LoadOptions.WithPipelines, project.LoadOptions.WithEnvironments, project.LoadOptions.WithGroups)
@@ -186,7 +196,7 @@ vcs_ssh_key: proj-blabla
 		Name:       "test_1",
 		ProjectID:  proj.ID,
 		ProjectKey: proj.Key,
-		WorkflowData: &sdk.WorkflowData{
+		WorkflowData: sdk.WorkflowData{
 			Node: sdk.Node{
 				Name: "node1",
 				Ref:  "node1",
@@ -209,8 +219,8 @@ vcs_ssh_key: proj-blabla
 		PurgeTags:     []string{"git.branch"},
 	}
 
-	test.NoError(t, workflow.Insert(context.TODO(), db, api.Cache, &w, proj))
-	w1, err := workflow.Load(context.TODO(), db, api.Cache, proj, "test_1", workflow.LoadOptions{
+	test.NoError(t, workflow.Insert(context.TODO(), db, api.Cache, *proj, &w))
+	w1, err := workflow.Load(context.TODO(), db, api.Cache, *proj, "test_1", workflow.LoadOptions{
 		DeepPipeline: true,
 	})
 	test.NoError(t, err)
@@ -219,7 +229,7 @@ vcs_ssh_key: proj-blabla
 	wr, errWR := workflow.CreateRun(db, w1, nil, u)
 	assert.NoError(t, errWR)
 	wr.Workflow = *w1
-	_, errWr := workflow.StartWorkflowRun(context.TODO(), db, api.Cache, proj, wr, &sdk.WorkflowRunPostHandlerOption{
+	_, errWr := workflow.StartWorkflowRun(context.TODO(), db, api.Cache, *proj, wr, &sdk.WorkflowRunPostHandlerOption{
 		Manual: &sdk.WorkflowNodeRunManual{
 			Username: u.Username,
 			Payload: map[string]string{
@@ -247,7 +257,7 @@ vcs_ssh_key: proj-blabla
 	// as there is one repository webhook attached, 403 is expected
 	assert.Equal(t, 403, rw.Code)
 
-	w2, err := workflow.Load(context.TODO(), db, api.Cache, proj, "test_1", workflow.LoadOptions{})
+	w2, err := workflow.Load(context.TODO(), db, api.Cache, *proj, "test_1", workflow.LoadOptions{})
 	test.NoError(t, err)
 
 	// Delete repository webhook
@@ -260,7 +270,7 @@ vcs_ssh_key: proj-blabla
 	w2.WorkflowData.Node.Hooks = append(w2.WorkflowData.Node.Hooks[:index], w2.WorkflowData.Node.Hooks[index+1:]...)
 
 	// save the workflow with the repositorywebhok deleted
-	test.NoError(t, workflow.Update(context.TODO(), db, api.Cache, w2, proj, workflow.UpdateOptions{}))
+	test.NoError(t, workflow.Update(context.TODO(), db, api.Cache, *proj, w2, workflow.UpdateOptions{}))
 
 	req, err = http.NewRequest("POST", uri, nil)
 	test.NoError(t, err)

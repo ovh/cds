@@ -11,7 +11,9 @@ import (
 
 	"github.com/ovh/cds/engine/api/authentication"
 	"github.com/ovh/cds/engine/api/observability"
+	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/engine/api/user"
+	"github.com/ovh/cds/engine/api/worker"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
@@ -76,9 +78,25 @@ func (api *API) authMiddleware(ctx context.Context, w http.ResponseWriter, req *
 		}
 		// If the driver was disabled for the consumer that was found, ignore it
 		if _, ok := api.AuthenticationDrivers[c.Type]; ok {
+			// Add contacts for consumer's user
 			if err := user.LoadOptions.WithContacts(ctx, api.mustDB(), c.AuthentifiedUser); err != nil {
 				return ctx, err
 			}
+
+			// Add service for consumer if exists
+			s, err := services.LoadByConsumerID(ctx, api.mustDB(), c.ID)
+			if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
+				return ctx, err
+			}
+			c.Service = s
+
+			// Add worker for consumer if exists
+			w, err := worker.LoadByConsumerID(ctx, api.mustDB(), c.ID)
+			if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
+				return ctx, err
+			}
+			c.Worker = w
+
 			consumer = c
 		}
 	}
@@ -88,22 +106,32 @@ func (api *API) authMiddleware(ctx context.Context, w http.ResponseWriter, req *
 
 		ctx = context.WithValue(ctx, contextAPIConsumer, consumer)
 
-		// Checks scopes, all expected scopes should be in actual scopes
+		// Checks scopes, one of expected scopes should be in actual scopes
 		// Actual scope empty list means wildcard scope, we don't need to check scopes
-		expectedScopes, actualScopes := rc.AllowedScopes, consumer.Scopes
+		expectedScopes, actualScopes := rc.AllowedScopes, consumer.ScopeDetails
 		if len(expectedScopes) > 0 && len(actualScopes) > 0 {
 			var found bool
 		findScope:
 			for i := range expectedScopes {
 				for j := range actualScopes {
-					if actualScopes[j] == expectedScopes[i] {
-						found = true
-						break findScope
+					if actualScopes[j].Scope == expectedScopes[i] {
+						// Check if there are scope details, if yes we should check if current route/method is allowed in restrictions
+						if len(actualScopes[j].Endpoints) == 0 {
+							found = true
+							break findScope
+						}
+
+						// if the route is not in current consumer allowed endpoints we should not validate the scope
+						if exists, endpoint := actualScopes[j].Endpoints.FindEndpoint(rc.CleanURL); exists &&
+							len(endpoint.Methods) == 0 || endpoint.Methods.Contains(rc.Method) {
+							found = true
+							break findScope
+						}
 					}
 				}
 			}
 			if !found {
-				return ctx, sdk.WrapError(sdk.ErrUnauthorized, "token scope (%v) doesn't match (%v)", actualScopes, expectedScopes)
+				return ctx, sdk.WrapError(sdk.ErrUnauthorized, "token scopes doesn't match expected: %v", expectedScopes)
 			}
 		}
 
@@ -124,7 +152,7 @@ func (api *API) authMiddleware(ctx context.Context, w http.ResponseWriter, req *
 
 	// If we set Auth(false) on a handler, with should have a consumer in the context if a valid JWT is given
 	if rc.NeedAuth && getAPIConsumer(ctx) == nil {
-		return nil, sdk.WithStack(sdk.ErrUnauthorized)
+		return ctx, sdk.WithStack(sdk.ErrUnauthorized)
 	}
 
 	if rc.NeedAdmin && !isAdmin(ctx) {

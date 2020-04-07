@@ -15,7 +15,6 @@ $sidebarWidth: 255px;
   &.expanded {
     width: $sidebarWidth;
     position: fixed;
-    z-index: 4;
   }
   .closeButton {
     position: absolute;
@@ -49,7 +48,6 @@ $sidebarWidth: 255px;
     border-bottom-left-radius: 0px;
     border-top-right-radius: 0px;
     position: absolute;
-    z-index: 10;
   }
 }
 

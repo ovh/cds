@@ -20,7 +20,7 @@
                 </sui-select-option>
             </sui-select>
         </ng-container>
-        <ng-container *ngIf="keys && keys.ssh && editableValue && !keyExist(editableValue)">
+        <ng-container *ngIf="!keys || (editableValue && keys && keys.ssh && !keyExist(editableValue))">
             <input type="text" [(ngModel)]="editableValue" (change)="valueChanged()" (keydown)="sendValueChanged()"
                 name="value">
         </ng-container>

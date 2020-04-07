@@ -29,6 +29,8 @@ import { SharedModule } from '../../../shared/shared.module';
 import { ToastService } from '../../../shared/toast/ToastService';
 import { PipelineModule } from '../pipeline.module';
 import { PipelineAddComponent } from './pipeline.add.component';
+import { ApplicationService } from 'app/service/application/application.service';
+
 describe('CDS: Pipeline Add Component', () => {
 
     let injector: Injector;
@@ -43,6 +45,8 @@ describe('CDS: Pipeline Add Component', () => {
             providers: [
                 MockBackend,
                 { provide: XHRBackend, useClass: MockBackend },
+                ApplicationService,
+                EnvironmentService,
                 ProjectStore,
                 ProjectService,
                 MonitoringService,

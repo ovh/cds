@@ -26,6 +26,8 @@ export class WorkflowNotificationListComponent {
     selectedNotification: number;
     mapNodesNotif: Map<number, Array<string>>;
     _workflow: Workflow;
+
+    @Input() editMode: boolean;
     @Input('workflow')
     set workflow(data: Workflow) {
         if (data) {
@@ -74,7 +76,13 @@ export class WorkflowNotificationListComponent {
             delete this.selectedNotification;
             delete this.newNotification;
             this._cd.markForCheck();
-        })).subscribe(() => this._toast.success('', this._translate.instant('workflow_updated')));
+        })).subscribe(() => {
+            if (this.editMode) {
+                this._toast.info('', this._translate.instant('workflow_ascode_updated'));
+            } else {
+                this._toast.success('', this._translate.instant('workflow_updated'));
+            }
+        });
     }
 
     copy(index: number) {
@@ -122,7 +130,13 @@ export class WorkflowNotificationListComponent {
             delete this.selectedNotification;
             delete this.newNotification;
             this._cd.markForCheck();
-        })).subscribe(() => this._toast.success('', this._translate.instant('workflow_updated')));
+        })).subscribe(() => {
+            if (this.editMode) {
+                this._toast.info('', this._translate.instant('workflow_ascode_updated'));
+            } else {
+                this._toast.success('', this._translate.instant('workflow_updated'));
+            }
+        });
     }
 
     deleteNotification(n: WorkflowNotification): void {
@@ -136,7 +150,13 @@ export class WorkflowNotificationListComponent {
             delete this.selectedNotification;
             delete this.newNotification;
             this._cd.markForCheck();
-        })).subscribe(() => this._toast.success('', this._translate.instant('workflow_updated')));
+        })).subscribe(() => {
+            if (this.editMode) {
+                this._toast.info('', this._translate.instant('workflow_ascode_updated'));
+            } else {
+                this._toast.success('', this._translate.instant('workflow_updated'));
+            }
+        });
     }
 
     refreshNotif(): void {
@@ -145,13 +165,15 @@ export class WorkflowNotificationListComponent {
         if (this.workflow.notifications) {
             this.workflow.notifications.forEach(n => {
                 let listNodes = new Array<string>();
-                n.node_id.forEach(id => {
-                    let node = mapNodes.get(id);
-                    if (node) {
-                        listNodes.push(node.name);
-                    }
-                });
-                this.mapNodesNotif.set(n.id, listNodes);
+                if (n.node_id) {
+                    n.node_id.forEach(id => {
+                        let node = mapNodes.get(id);
+                        if (node) {
+                            listNodes.push(node.name);
+                        }
+                    });
+                    this.mapNodesNotif.set(n.id, listNodes);
+                }
             });
         }
     }

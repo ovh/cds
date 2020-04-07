@@ -131,14 +131,14 @@ func (d *AuthDriver) openLDAP(ctx context.Context, conf Config) error {
 		d.conn, err = ldap.Dial("tcp", address)
 		if err != nil {
 			log.Error(ctx, "Auth> Cannot dial %s : %s", address, err)
-			return sdk.ErrLDAPConn
+			return sdk.WithStack(sdk.ErrLDAPConn)
 		}
 
 		//Reconnect with TLS
 		err = d.conn.StartTLS(&tls.Config{InsecureSkipVerify: true})
 		if err != nil {
 			log.Error(ctx, "Auth> Cannot start TLS %s : %s", address, err)
-			return sdk.ErrLDAPConn
+			return sdk.WithStack(sdk.ErrLDAPConn)
 		}
 	} else {
 		log.Info(ctx, "Auth> Connecting to LDAP server")
@@ -148,7 +148,7 @@ func (d *AuthDriver) openLDAP(ctx context.Context, conf Config) error {
 		})
 		if err != nil {
 			log.Error(ctx, "Auth> Cannot dial TLS (InsecureSkipVerify=false) %s : %s", address, err)
-			return sdk.ErrLDAPConn
+			return sdk.WithStack(sdk.ErrLDAPConn)
 		}
 	}
 
@@ -160,7 +160,7 @@ func (d *AuthDriver) openLDAP(ctx context.Context, conf Config) error {
 					return err
 				}
 				if err := d.conn.Bind(d.conf.ManagerDN, d.conf.ManagerPassword); err != nil {
-					return err
+					return sdk.WithStack(err)
 				}
 			} else {
 				return err
@@ -178,13 +178,13 @@ func (d *AuthDriver) bind(ctx context.Context, term, password string) error {
 
 	if err := d.conn.Bind(bindRequest, password); err != nil {
 		if !shoudRetry(ctx, err) {
-			return err
+			return sdk.WithStack(err)
 		}
 		if err := d.openLDAP(ctx, d.conf); err != nil {
 			return err
 		}
 		if err := d.conn.Bind(bindRequest, password); err != nil {
-			return err
+			return sdk.WithStack(err)
 		}
 	}
 	return nil
@@ -219,7 +219,7 @@ func (d *AuthDriver) search(ctx context.Context, term string, attributes ...stri
 		}
 		sr, err = d.conn.Search(searchRequest)
 		if err != nil {
-			return nil, err
+			return nil, sdk.WithStack(err)
 		}
 	}
 

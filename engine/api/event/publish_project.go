@@ -2,22 +2,22 @@ package event
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"time"
-
-	"github.com/fatih/structs"
 
 	"github.com/ovh/cds/sdk"
 )
 
 // PublishProjectEvent publish application event
 func PublishProjectEvent(ctx context.Context, payload interface{}, key string, u sdk.Identifiable) {
+	bts, _ := json.Marshal(payload)
 	event := sdk.Event{
 		Timestamp:  time.Now(),
 		Hostname:   hostname,
 		CDSName:    cdsname,
 		EventType:  fmt.Sprintf("%T", payload),
-		Payload:    structs.Map(payload),
+		Payload:    bts,
 		ProjectKey: key,
 	}
 	if u != nil {
@@ -30,7 +30,7 @@ func PublishProjectEvent(ctx context.Context, payload interface{}, key string, u
 // PublishAddProject publishes an event for the creation of the given project
 func PublishAddProject(ctx context.Context, p *sdk.Project, u sdk.Identifiable) {
 	e := sdk.EventProjectAdd{
-		Variables:   p.Variable,
+		Variables:   p.Variables,
 		Permissions: p.ProjectGroups,
 		Keys:        p.Keys,
 		Metadata:    p.Metadata,
@@ -128,9 +128,7 @@ func PublishAddProjectKey(ctx context.Context, p *sdk.Project, k sdk.ProjectKey,
 
 // PublishDeleteProjectKey publishes an event on deleting a project key
 func PublishDeleteProjectKey(ctx context.Context, p *sdk.Project, k sdk.ProjectKey, u sdk.Identifiable) {
-	if sdk.NeedPlaceholder(k.Type) {
-		k.Private = sdk.PasswordPlaceholder
-	}
+	k.Private = sdk.PasswordPlaceholder
 	e := sdk.EventProjectKeyDelete{
 		Key: k,
 	}

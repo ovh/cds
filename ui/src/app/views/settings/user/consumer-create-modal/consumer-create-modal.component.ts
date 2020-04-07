@@ -9,7 +9,7 @@ import {
 } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { ModalTemplate, SuiActiveModal, SuiModalService, TemplateModalConfig } from '@richardlt/ng2-semantic-ui';
-import { AuthConsumer, AuthScope } from 'app/model/authentication.model';
+import { AuthConsumer, AuthConsumerScopeDetail } from 'app/model/authentication.model';
 import { Group } from 'app/model/group.model';
 import { AuthentifiedUser } from 'app/model/user.model';
 import { AuthenticationService } from 'app/service/authentication/authentication.service';
@@ -22,6 +22,13 @@ import { finalize } from 'rxjs/operators/finalize';
 export enum CloseEventType {
     CREATED = 'CREATED',
     CLOSED = 'CLOSED'
+}
+
+export enum FormStepName {
+    INFORMATIONS = 0,
+    GROUPS = 1,
+    SCOPES = 2,
+    TOKEN = 3
 }
 
 @Component({
@@ -46,9 +53,12 @@ export class ConsumerCreateModalComponent {
     columnsGroups: Array<Column<Group>>;
     selectedGroupKeys: Array<string>;
     loadingScopes: boolean;
-    scopes: Array<AuthScope>;
-    columnsScopes: Array<Column<AuthScope>>;
-    selectedScopeKeys: Array<string>;
+    scopes: Array<AuthConsumerScopeDetail>;
+    selectedScopeDetails: Array<AuthConsumerScopeDetail>;
+
+    formStepName = FormStepName;
+    activeStep: FormStepName;
+    maxActivedStep: FormStepName;
 
     constructor(
         private _modalService: SuiModalService,
@@ -64,14 +74,6 @@ export class ConsumerCreateModalComponent {
                 name: 'common_name',
                 class: 'fourteen',
                 selector: (g: Group) => g.name
-            }
-        ];
-
-        this.columnsScopes = [
-            <Column<AuthScope>>{
-                name: 'common_name',
-                class: 'fourteen',
-                selector: (s: AuthScope) => s.value
             }
         ];
     }
@@ -105,7 +107,10 @@ export class ConsumerCreateModalComponent {
         this.newConsumer = new AuthConsumer();
         this.signinToken = null;
         this.selectedGroupKeys = null;
-        this.selectedScopeKeys = null;
+        this.selectedScopeDetails = [];
+
+        this.activeStep = FormStepName.INFORMATIONS;
+        this.maxActivedStep = this.activeStep;
 
         this.loadingGroups = true;
         this.loadingScopes = true;
@@ -126,7 +131,7 @@ export class ConsumerCreateModalComponent {
                 this._cd.markForCheck();
             }))
             .subscribe((ss) => {
-                this.scopes = ss.sort((a, b) => a.value < b.value ? -1 : 1);
+                this.scopes = ss.sort((a, b) => a.scope < b.scope ? -1 : 1);
             });
     }
 
@@ -141,20 +146,9 @@ export class ConsumerCreateModalComponent {
         this.selectedGroupKeys = e;
     }
 
-    selectScopeFunc: Select<AuthScope> = (s: AuthScope): boolean => {
-        if (!this.selectedScopeKeys || this.selectedScopeKeys.length === 0) {
-            return false;
-        }
-        return !!this.selectedScopeKeys.find(k => k === s.key());
-    }
-
-    selectScopeChange(e: Array<string>) {
-        this.selectedScopeKeys = e;
-    }
-
-    clickSave(): void {
+    save(): void {
         this.newConsumer.group_ids = this.groups.filter(g => this.selectedGroupKeys.find(k => k === g.key())).map(g => g.id);
-        this.newConsumer.scopes = this.selectedScopeKeys;
+        this.newConsumer.scope_details = this.selectedScopeDetails;
 
         this.loading = true;
         this._cd.markForCheck();
@@ -166,6 +160,8 @@ export class ConsumerCreateModalComponent {
             .subscribe(res => {
                 this.newConsumer = res.consumer;
                 this.signinToken = res.token;
+
+                this.activeStep = FormStepName.TOKEN;
             });
     }
 
@@ -180,10 +176,78 @@ export class ConsumerCreateModalComponent {
         }
     }
 
-    filterScopes(f: string) {
-        const lowerFilter = f.toLowerCase();
-        return (s: AuthScope) => {
-            return s.value.toLowerCase().indexOf(lowerFilter) !== -1;
+    clickBack() {
+        switch (this.activeStep) {
+            case FormStepName.GROUPS:
+                this.activeStep = FormStepName.INFORMATIONS;
+                break;
+            case FormStepName.SCOPES:
+                this.activeStep = FormStepName.GROUPS;
+                break;
+            default:
+                return;
         }
+        this._cd.markForCheck();
+    }
+
+    clickNext() {
+        if (!this.isValidStep(this.activeStep)) {
+            return;
+        }
+
+        switch (this.activeStep) {
+            case FormStepName.INFORMATIONS:
+                this.activeStep = FormStepName.GROUPS;
+                break;
+            case FormStepName.GROUPS:
+                this.activeStep = FormStepName.SCOPES;
+                break;
+            case FormStepName.SCOPES:
+                this.save();
+                return;
+            default:
+                return;
+        }
+        if (this.maxActivedStep < this.activeStep) {
+            this.maxActivedStep = this.activeStep;
+        }
+
+        this._cd.markForCheck();
+    }
+
+    clickOpenStep(step: FormStepName) {
+        if (step > this.activeStep && !this.isValidStep(this.activeStep)) {
+            return;
+        }
+        if (step === this.activeStep) {
+            return;
+        }
+        if (step <= this.maxActivedStep) {
+            this.activeStep = step;
+        }
+        this._cd.markForCheck();
+    }
+
+    isValidStep(step: FormStepName): boolean {
+        switch (step) {
+            case FormStepName.INFORMATIONS:
+                return this.newConsumer.name && this.newConsumer.name !== '';
+            case FormStepName.GROUPS:
+                return true;
+            case FormStepName.SCOPES:
+                return this.selectedScopeDetails.length > 0;
+            default:
+                return false;
+        }
+    }
+
+    onScopeDetailChange(detail: AuthConsumerScopeDetail) {
+        for (let i = 0; i < this.selectedScopeDetails.length; i++) {
+            if (this.selectedScopeDetails[i].scope === detail.scope) {
+                this.selectedScopeDetails[i] = detail;
+                return
+            }
+        }
+        this.selectedScopeDetails.push(detail);
     }
 }

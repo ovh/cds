@@ -16,7 +16,7 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
-func processNodeOutGoingHook(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, wr *sdk.WorkflowRun, mapNodes map[int64]*sdk.Node, parentNodeRun []*sdk.WorkflowNodeRun, node *sdk.Node, subNumber int, manual *sdk.WorkflowNodeRunManual) (*ProcessorReport, bool, error) {
+func processNodeOutGoingHook(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj sdk.Project, wr *sdk.WorkflowRun, mapNodes map[int64]*sdk.Node, parentNodeRun []*sdk.WorkflowNodeRun, node *sdk.Node, subNumber int, manual *sdk.WorkflowNodeRunManual) (*ProcessorReport, bool, error) {
 	ctx, end := observability.Span(ctx, "workflow.processNodeOutGoingHook")
 	defer end()
 
@@ -40,9 +40,9 @@ func processNodeOutGoingHook(ctx context.Context, db gorp.SqlExecutor, store cac
 			log.Debug("hook %d is over, we have to reprocess al the things", node.ID)
 			r1, _, err := processWorkflowDataRun(ctx, db, store, proj, wr, nil, nil, nil)
 			if err != nil {
-				return nil, false, sdk.WrapError(err, "Unable to process workflow run after outgoing hooks")
+				return nil, false, sdk.WrapError(err, "unable to process workflow run after outgoing hooks")
 			}
-			report.Merge(ctx, r1, nil) // nolint
+			report.Merge(ctx, r1)
 			return report, false, nil
 		} else if exitingNodeRun != nil && exitingNodeRun.Status == sdk.StatusStopped {
 			return report, false, nil
@@ -51,7 +51,7 @@ func processNodeOutGoingHook(ctx context.Context, db gorp.SqlExecutor, store cac
 
 	srvs, err := services.LoadAllByType(ctx, db, services.TypeHooks)
 	if err != nil {
-		return nil, false, sdk.WrapError(err, "Cannot get hooks service")
+		return nil, false, sdk.WrapError(err, "cannot get hooks service")
 	}
 
 	node.OutGoingHookContext.Config[sdk.HookConfigModelName] = sdk.WorkflowNodeHookConfigValue{
@@ -135,7 +135,7 @@ func processNodeOutGoingHook(ctx context.Context, db gorp.SqlExecutor, store cac
 	}
 
 	var task sdk.Task
-	if _, _, err := services.DoJSONRequest(ctx, db, srvs, "POST", "/task/execute", hookRun, &task); err != nil {
+	if _, _, err := services.NewClient(db, srvs).DoJSONRequest(ctx, "POST", "/task/execute", hookRun, &task); err != nil {
 		log.Warning(ctx, "outgoing hook execution failed: %v", err)
 		hookRun.Status = sdk.StatusFail
 	}

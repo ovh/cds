@@ -17,7 +17,7 @@ func (c *gitlabClient) PullRequests(context.Context, string) ([]sdk.VCSPullReque
 }
 
 // PullRequestComment push a new comment on a pull request
-func (c *gitlabClient) PullRequestComment(context.Context, string, int, string) error {
+func (c *gitlabClient) PullRequestComment(context.Context, string, sdk.VCSPullRequestCommentRequest) error {
 	return nil
 }
 

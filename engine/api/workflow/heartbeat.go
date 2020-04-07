@@ -29,7 +29,7 @@ func manageDeadJob(ctx context.Context, DBFunc func() *gorp.DbMap, store cache.S
 
 		if deadJob.Status == sdk.StatusBuilding {
 			if deadJob.Retry >= maxRetry {
-				if _, err := UpdateNodeJobRunStatus(ctx, tx, store, nil, &deadJob, sdk.StatusStopped); err != nil {
+				if _, err := UpdateNodeJobRunStatus(ctx, tx, store, sdk.Project{}, &deadJob, sdk.StatusStopped); err != nil {
 					log.Error(ctx, "manageDeadJob> Cannot update node run job %d : %v", deadJob.ID, err)
 					_ = tx.Rollback()
 					continue

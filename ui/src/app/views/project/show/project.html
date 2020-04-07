@@ -9,48 +9,43 @@
                     [class.unfavorite]="!project.favorite" (click)="updateFav()"></i>
             </div>
         </app-project-breadcrumb>
-
-        <app-tabs [tabs]="tabs" [warnings]="warnings" (onSelect)="selectTab($event)"></app-tabs>
-
+        <app-tabs [tabs]="tabs" (onSelect)="selectTab($event)"></app-tabs>
         <div class="scrollingContent">
             <div class="paddingContent">
                 <div class="viewContent" *ngIf="selectedTab" [ngSwitch]="selectedTab.key">
                     <div *ngSwitchCase="'workflows'">
-                        <app-project-workflows [project]="project" [warnings]="warnings['workflows']">
+                        <app-project-workflows [project]="project">
                         </app-project-workflows>
                     </div>
                     <div *ngSwitchCase="'applications'">
-                        <app-project-applications [project]="project" [warnings]="warnings['applications']">
+                        <app-project-applications [project]="project">
                         </app-project-applications>
                     </div>
                     <div *ngSwitchCase="'pipelines'">
-                        <app-project-pipelines [project]="project" [warnings]="warnings['pipelines']">
+                        <app-project-pipelines [project]="project">
                         </app-project-pipelines>
                     </div>
                     <div *ngSwitchCase="'environments'">
-                        <app-project-environments [project]="project" [warnings]="warnings['environments']">
+                        <app-project-environments [project]="project">
                         </app-project-environments>
                     </div>
                     <div *ngSwitchCase="'variables'">
-                        <app-project-variables [project]="project" [warnings]="warnings['variables']">
+                        <app-project-variables [project]="project">
                         </app-project-variables>
                     </div>
                     <div *ngSwitchCase="'permissions'">
-                        <app-project-permissions [project]="project" [warnings]="warnings['permissions']">
+                        <app-project-permissions [project]="project">
                         </app-project-permissions>
                     </div>
                     <div *ngSwitchCase="'keys'">
-                        <app-project-keys [project]="project" [warnings]="warnings['keys']"></app-project-keys>
+                        <app-project-keys [project]="project"></app-project-keys>
                     </div>
                     <div *ngSwitchCase="'integrations'">
                         <app-project-integrations [project]="project"></app-project-integrations>
                     </div>
-                    <div *ngSwitchCase="'warnings'">
-                        <app-project-warnings [project]="project" [warnings]="allWarnings"></app-project-warnings>
-                    </div>
                     <div *ngSwitchCase="'advanced'">
                         <h3>{{ 'project_advanced_title' | translate }}</h3>
-                        <app-project-admin [project]="project" [warnings]="warnings['advanced']"></app-project-admin>
+                        <app-project-admin [project]="project"></app-project-admin>
                     </div>
                 </div>
             </div>

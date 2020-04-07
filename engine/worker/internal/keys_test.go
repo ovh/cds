@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"path/filepath"
 	"testing"
 	"time"
 
@@ -51,7 +52,7 @@ func encodePrivateKeyToPEM(privateKey *rsa.PrivateKey) []byte {
 	return privatePEM
 }
 
-func TestInstallKey_SSHKeyWithoutDesination(t *testing.T) {
+func TestInstallKey_SSHKeyWithoutDestination(t *testing.T) {
 	var w = new(CurrentWorker)
 	fs := afero.NewOsFs()
 	basedir := "test-" + test.GetTestName(t) + "-" + sdk.RandomString(10) + "-" + fmt.Sprintf("%d", time.Now().Unix())
@@ -62,8 +63,12 @@ func TestInstallKey_SSHKeyWithoutDesination(t *testing.T) {
 	}
 
 	require.NoError(t, w.BaseDir().Mkdir("keys", os.FileMode(0700)))
+	_, err := w.BaseDir().Stat("keys")
+	require.NoError(t, err)
+
 	keyDir, err := w.BaseDir().Open("keys")
 	require.NoError(t, err)
+	keyDir.Close()
 
 	w.currentJob.context = workerruntime.SetKeysDirectory(context.TODO(), keyDir)
 
@@ -71,19 +76,24 @@ func TestInstallKey_SSHKeyWithoutDesination(t *testing.T) {
 	priKeyPEM := encodePrivateKeyToPEM(priKey)
 	priKeyVar := sdk.Variable{
 		Name:  "my-ssh-key",
-		Type:  sdk.KeyTypeSSH,
+		Type:  string(sdk.KeyTypeSSH),
 		Value: string(priKeyPEM),
 	}
 
-	resp, err := w.InstallKey(priKeyVar, "")
+	resp, err := w.InstallKey(priKeyVar)
 	require.NoError(t, err)
 
 	content, err := ioutil.ReadFile(resp.PKey)
 	require.NoError(t, err)
 	assert.Equal(t, string(priKeyPEM), string(content))
+
+	kPath := filepath.Join(keyDir.Name(), "my-ssh-key")
+	t.Logf("expecting the key to be written at: %s", kPath)
+	_, err = w.BaseDir().Stat(kPath)
+	require.NoError(t, err)
 }
 
-func TestInstallKey_SSHKeyWithDesination(t *testing.T) {
+func TestInstallKey_SSHKeyWithRelativeDestination(t *testing.T) {
 	var w = new(CurrentWorker)
 	fs := afero.NewOsFs()
 	basedir := "test-" + test.GetTestName(t) + "-" + sdk.RandomString(10) + "-" + fmt.Sprintf("%d", time.Now().Unix())
@@ -103,14 +113,53 @@ func TestInstallKey_SSHKeyWithDesination(t *testing.T) {
 	priKeyPEM := encodePrivateKeyToPEM(priKey)
 	priKeyVar := sdk.Variable{
 		Name:  "my-ssh-key",
-		Type:  sdk.KeyTypeSSH,
+		Type:  string(sdk.KeyTypeSSH),
 		Value: string(priKeyPEM),
 	}
 
-	resp, err := w.InstallKey(priKeyVar, "id_rsa")
+	resp, err := w.InstallKeyTo(priKeyVar, "ssh/id_rsa")
 	require.NoError(t, err)
 
 	content, err := ioutil.ReadFile(resp.PKey)
 	require.NoError(t, err)
 	assert.Equal(t, string(priKeyPEM), string(content))
+	t.Logf("the path to the key is %s", resp.PKey)
+
+	keyDirPath, _ := w.BaseDir().(*afero.BasePathFs).RealPath(".")
+	absKeyDirPath, _ := filepath.Abs(keyDirPath)
+	assert.Equal(t, filepath.Join(absKeyDirPath, "ssh/id_rsa"), resp.PKey)
+
+	kPath := "ssh/id_rsa"
+	t.Logf("expecting the key to be written at: %s", kPath)
+	_, err = w.BaseDir().Stat(kPath)
+	require.NoError(t, err)
+}
+
+func TestInstallKey_SSHKeyWithAbsoluteDestination(t *testing.T) {
+	var w = new(CurrentWorker)
+
+	if err := w.Init("test-worker", "test-hatchery", "http://lolcat.host", "xxx-my-token", "", true, nil); err != nil {
+		t.Fatalf("worker init failed: %v", err)
+	}
+
+	priKey := generatePrivateKey(t, 2048)
+	priKeyPEM := encodePrivateKeyToPEM(priKey)
+	priKeyVar := sdk.Variable{
+		Name:  "my-ssh-key",
+		Type:  string(sdk.KeyTypeSSH),
+		Value: string(priKeyPEM),
+	}
+
+	resp, err := w.InstallKeyTo(priKeyVar, "/tmp/fake_id_rsa")
+	require.NoError(t, err)
+
+	content, err := ioutil.ReadFile(resp.PKey)
+	require.NoError(t, err)
+	assert.Equal(t, string(priKeyPEM), string(content))
+	assert.Equal(t, "/tmp/fake_id_rsa", resp.PKey)
+
+	t.Logf("expecting the key to be written at /tmp/fake_id_rsa")
+	_, err = os.Stat("/tmp/fake_id_rsa")
+	require.NoError(t, err)
+	os.RemoveAll("/tmp/fake_id_rsa")
 }

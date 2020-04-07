@@ -1,8 +1,7 @@
 import { ChangeDetectionStrategy, Component, Input, OnInit, ViewChild } from '@angular/core';
-import { IdName, Label, Project } from '../../../../model/project.model';
-import { Warning } from '../../../../model/warning.model';
-import { ProjectStore } from '../../../../service/project/project.store';
-import { LabelsEditComponent } from '../../../../shared/labels/edit/labels.edit.component';
+import { IdName, Label, Project } from 'app/model/project.model';
+import { ProjectStore } from 'app/service/project/project.store';
+import { LabelsEditComponent } from 'app/shared/labels/edit/labels.edit.component';
 
 @Component({
     selector: 'app-project-workflows',
@@ -11,22 +10,6 @@ import { LabelsEditComponent } from '../../../../shared/labels/edit/labels.edit.
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ProjectWorkflowListComponent implements OnInit {
-
-  warnMap: Map<string, Array<Warning>>;
-  @Input('warnings')
-  set warnings(data: Array<Warning>) {
-      if (data) {
-          this.warnMap = new Map<string, Array<Warning>>();
-          data.forEach(w => {
-              let arr = this.warnMap.get(w.workflow_name);
-              if (!arr) {
-                  arr = new Array<Warning>();
-              }
-              arr.push(w);
-              this.warnMap.set(w.workflow_name, arr);
-          });
-      }
-  }
 
   @Input()
   set project(project: Project) {

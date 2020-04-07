@@ -4,12 +4,12 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"strings"
 
 	"github.com/spf13/cobra"
 
 	"github.com/ovh/cds/cli"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/ovh/cds/sdk/exportentities"
 )
 
@@ -21,6 +21,7 @@ var pipelineCmd = cli.Command{
 func pipeline() *cobra.Command {
 	return cli.NewCommand(pipelineCmd, nil, []*cobra.Command{
 		cli.NewListCommand(pipelineListCmd, pipelineListRun, nil, withAllCommandModifiers()...),
+		cli.NewListCommand(pipelineUsageCmd, pipelineUsageRun, nil, withAllCommandModifiers()...),
 		cli.NewDeleteCommand(pipelineDeleteCmd, pipelineDeleteRun, nil, withAllCommandModifiers()...),
 		cli.NewCommand(pipelineExportCmd, pipelineExportRun, nil, withAllCommandModifiers()...),
 		cli.NewCommand(pipelineImportCmd, pipelineImportRun, nil, withAllCommandModifiers()...),
@@ -43,6 +44,26 @@ func pipelineListRun(v cli.Values) (cli.ListResult, error) {
 	return cli.AsListResult(pipelines), nil
 }
 
+var pipelineUsageCmd = cli.Command{
+	Name:  "usage",
+	Short: "CDS pipeline usage",
+	Long:  "PATH: Path or URL of pipeline",
+	Ctx: []cli.Arg{
+		{Name: _ProjectKey},
+	},
+	Args: []cli.Arg{
+		{Name: "pipeline-name"},
+	},
+}
+
+func pipelineUsageRun(v cli.Values) (cli.ListResult, error) {
+	pipeline, err := client.PipelineGet(v.GetString(_ProjectKey), v.GetString("pipeline-name"), cdsclient.WithWorkflows())
+	if err != nil {
+		return nil, err
+	}
+	return cli.AsListResult(pipeline.Usage.Workflows), nil
+}
+
 var pipelineExportCmd = cli.Command{
 	Name:  "export",
 	Short: "Export CDS pipeline",
@@ -54,21 +75,17 @@ var pipelineExportCmd = cli.Command{
 	},
 	Flags: []cli.Flag{
 		{
-			Name:  "format",
-			Usage: "yml or json",
-			IsValid: func(s string) bool {
-				if s != "json" && s != "yml" {
-					return false
-				}
-				return true
-			},
-			Default: "yml",
+			Type:    cli.FlagString,
+			Name:    "format",
+			Usage:   "Specify export format (json or yaml)",
+			Default: "yaml",
 		},
 	},
 }
 
 func pipelineExportRun(v cli.Values) error {
-	btes, err := client.PipelineExport(v.GetString(_ProjectKey), v.GetString("pipeline-name"), v.GetString("format"))
+	btes, err := client.PipelineExport(v.GetString(_ProjectKey), v.GetString("pipeline-name"),
+		cdsclient.Format(v.GetString("format")))
 	if err != nil {
 		return err
 	}
@@ -103,33 +120,33 @@ var pipelineImportCmd = cli.Command{
 }
 
 func pipelineImportRun(v cli.Values) error {
+	path := v.GetString("path")
+
 	var reader io.ReadCloser
-	defer func() {
-		if reader != nil {
-			reader.Close()
-		}
-	}()
-	var format = "yaml"
-
-	if strings.HasSuffix(v.GetString("path"), ".json") {
-		format = "json"
-	}
-
-	if sdk.IsURL(v.GetString("path")) {
-		var err error
-		reader, _, err = exportentities.OpenURL(v.GetString("path"), format)
-		if err != nil {
-			return err
-		}
+	var err error
+	if sdk.IsURL(path) {
+		reader, err = exportentities.OpenURL(path)
 	} else {
-		var err error
-		reader, _, err = exportentities.OpenFile(v.GetString("path"))
-		if err != nil {
-			return err
-		}
+		reader, err = exportentities.OpenFile(path)
+	}
+	if err != nil {
+		return err
+	}
+	defer reader.Close() // nolint
+
+	format, err := exportentities.GetFormatFromPath(path)
+	if err != nil {
+		return err
 	}
 
-	msgs, err := client.PipelineImport(v.GetString(_ProjectKey), reader, format, v.GetBool("force"))
+	mods := []cdsclient.RequestModifier{
+		cdsclient.ContentType(format.ContentType()),
+	}
+	if v.GetBool("force") {
+		mods = append(mods, cdsclient.Force())
+	}
+
+	msgs, err := client.PipelineImport(v.GetString(_ProjectKey), reader, mods...)
 	for _, m := range msgs {
 		fmt.Println(m)
 	}
@@ -153,6 +170,5 @@ func pipelineDeleteRun(v cli.Values) error {
 		fmt.Println(err.Error())
 		os.Exit(0)
 	}
-
 	return err
 }

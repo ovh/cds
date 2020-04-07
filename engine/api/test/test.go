@@ -166,7 +166,12 @@ func SetupPG(t log.Logger, bootstrapFunc ...Bootstrapf) (*gorp.DbMap, cache.Stor
 		store.Client = nil
 	}
 
-	return DBConnectionFactory.GetDBMap(), store, cancel
+	dbMap := DBConnectionFactory.GetDBMap()
+	if dbMap == nil {
+		t.Fatalf("unable to init database connection")
+	}
+
+	return dbMap, store, cancel
 }
 
 // LoadTestingConf loads test configuration tests.cfg.json
@@ -196,7 +201,7 @@ func LoadTestingConf(t log.Logger) map[string]string {
 	return nil
 }
 
-//GetTestName returns the name the the test
+//GetTestName returns the name the test
 func GetTestName(t *testing.T) string {
 	return t.Name()
 }

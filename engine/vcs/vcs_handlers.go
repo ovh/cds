@@ -57,7 +57,7 @@ func (s *Service) getVCSServersHandler() service.Handler {
 		name := muxVar(r, "name")
 		cfg, ok := s.Cfg.Servers[name]
 		if !ok {
-			return sdk.ErrNotFound
+			return sdk.WithStack(sdk.ErrNotFound)
 		}
 		s := sdk.VCSConfiguration{
 			URL: cfg.URL,
@@ -80,7 +80,7 @@ func (s *Service) getVCSServersHooksHandler() service.Handler {
 		name := muxVar(r, "name")
 		cfg, ok := s.Cfg.Servers[name]
 		if !ok {
-			return sdk.ErrNotFound
+			return sdk.WithStack(sdk.ErrNotFound)
 		}
 		res := struct {
 			WebhooksSupported  bool     `json:"webhooks_supported"`
@@ -122,6 +122,7 @@ func (s *Service) getVCSServersHooksHandler() service.Handler {
 			res.WebhooksIcon = sdk.BitbucketIcon
 			// https://developer.atlassian.com/bitbucket/api/2/reference/resource/hook_events/%7Bsubject_type%7D
 			res.Events = []string{
+				"repo:push",
 				"pullrequest:unapproved",
 				"issue:comment_created",
 				"pullrequest:approved",
@@ -141,7 +142,6 @@ func (s *Service) getVCSServersHooksHandler() service.Handler {
 				"repo:updated",
 				"pullrequest:rejected",
 				"pullrequest:fulfilled",
-				"repo:push",
 				"pullrequest:created",
 				"repo:transfer",
 				"repo:commit_comment_created",
@@ -243,7 +243,7 @@ func (s *Service) getVCSServersPollingHandler() service.Handler {
 		name := muxVar(r, "name")
 		cfg, ok := s.Cfg.Servers[name]
 		if !ok {
-			return sdk.ErrNotFound
+			return sdk.WithStack(sdk.ErrNotFound)
 		}
 		res := struct {
 			PollingSupported bool `json:"polling_supported"`
@@ -633,7 +633,7 @@ func (s *Service) getPullRequestHandler() service.Handler {
 		sid := muxVar(r, "id")
 		id, err := strconv.Atoi(sid)
 		if err != nil {
-			return sdk.ErrWrongRequest
+			return sdk.WithStack(sdk.ErrWrongRequest)
 		}
 
 		accessToken, accessTokenSecret, created, ok := getAccessTokens(ctx)
@@ -739,13 +739,8 @@ func (s *Service) postPullRequestCommentHandler() service.Handler {
 		name := muxVar(r, "name")
 		owner := muxVar(r, "owner")
 		repo := muxVar(r, "repo")
-		sid := muxVar(r, "id")
-		id, err := strconv.Atoi(sid)
-		if err != nil {
-			return sdk.ErrWrongRequest
-		}
 
-		var body string
+		var body sdk.VCSPullRequestCommentRequest
 		if err := service.UnmarshalBody(r, &body); err != nil {
 			return sdk.WithStack(err)
 		}
@@ -769,7 +764,7 @@ func (s *Service) postPullRequestCommentHandler() service.Handler {
 			w.Header().Set(sdk.HeaderXAccessToken, client.GetAccessToken(ctx))
 		}
 
-		if err := client.PullRequestComment(ctx, fmt.Sprintf("%s/%s", owner, repo), id, body); err != nil {
+		if err := client.PullRequestComment(ctx, fmt.Sprintf("%s/%s", owner, repo), body); err != nil {
 			return sdk.WrapError(err, "Unable to create new PR comment %s %s/%s", name, owner, repo)
 		}
 

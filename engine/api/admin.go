@@ -27,7 +27,7 @@ func (api *API) postMaintenanceHandler() service.Handler {
 				return err
 			}
 			url := fmt.Sprintf("/admin/maintenance?enable=%v", enable)
-			_, code, errHooks := services.DoJSONRequest(ctx, api.mustDB(), srvs, http.MethodPost, url, nil, nil)
+			_, code, errHooks := services.NewClient(api.mustDB(), srvs).DoJSONRequest(ctx, http.MethodPost, url, nil, nil)
 			if errHooks != nil || code >= 400 {
 				return fmt.Errorf("unable to change hook maintenant state to %v. Code result %d: %v", enable, code, errHooks)
 			}
@@ -37,15 +37,6 @@ func (api *API) postMaintenanceHandler() service.Handler {
 			return err
 		}
 		return api.Cache.Publish(ctx, sdk.MaintenanceQueueName, fmt.Sprintf("%v", enable))
-	}
-}
-
-func (api *API) adminTruncateWarningsHandler() service.Handler {
-	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		if _, err := api.mustDB().Exec("delete from warning"); err != nil {
-			return sdk.WrapError(err, "Unable to truncate warning ")
-		}
-		return nil
 	}
 }
 

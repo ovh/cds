@@ -70,7 +70,7 @@ export GIT_SSH="/tmp/5/0/2569/655/bd925028e70aea34/cds.key.proj-mykey.priv.gitss
 export PKEY="/tmp/5/0/2569/655/bd925028e70aea34/cds.key.proj-mykey.priv";
 ` + "```" + `
 
-So that, you can use custom git commands the the previous installed SSH key.
+So that, you can use custom git commands the previous installed SSH key.
 
 `,
 		Example: "worker key install proj-test",

@@ -1,5 +1,11 @@
 package sdk
 
+import (
+	"context"
+	"net"
+	"time"
+)
+
 const (
 	//BinaryRequirement refers to the need to a specific binary on host running the action
 	BinaryRequirement = "binary"
@@ -31,6 +37,21 @@ func (l RequirementList) Values() []string {
 		values[i] = l[i].Value
 	}
 	return values
+}
+
+// RequirementListDeduplicate returns requirements list without duplicate values.
+func RequirementListDeduplicate(l RequirementList) RequirementList {
+	m := map[string]Requirement{}
+
+	for i := range l {
+		m[l[i].Name+l[i].Type+l[i].Value] = l[i]
+	}
+
+	newList := make([]Requirement, 0, len(m))
+	for i := range m {
+		newList = append(newList, m[i])
+	}
+	return newList
 }
 
 // IsValid returns requirement list validity.
@@ -124,7 +145,6 @@ var (
 // Requirement can be :
 // - a binary "which /usr/bin/docker"
 // - a network access "telnet google.com 443"
-//easyjson:json
 type Requirement struct {
 	ID       int64  `json:"id" db:"id"`
 	ActionID int64  `json:"action_id" db:"action_id"`
@@ -154,4 +174,19 @@ func (a *Action) Requirement(name string, t string, value string) *Action {
 
 	a.Requirements = append(a.Requirements, r)
 	return a
+}
+
+// CheckNetworkAccessRequirement returns true if req.Value can Dial
+func CheckNetworkAccessRequirement(req Requirement) bool {
+	d := net.Dialer{Timeout: 10 * time.Second}
+	ctx, cancel := context.WithTimeout(context.Background(), d.Timeout)
+	defer cancel()
+
+	conn, err := d.DialContext(ctx, "tcp", req.Value)
+	if err != nil {
+		return false
+	}
+	conn.Close()
+
+	return true
 }

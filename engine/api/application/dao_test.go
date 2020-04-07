@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/bootstrap"
@@ -27,7 +28,7 @@ func TestLoadByNameAsAdmin(t *testing.T) {
 		Name: "my-app",
 	}
 
-	test.NoError(t, application.Insert(db, cache, proj, &app))
+	test.NoError(t, application.Insert(db, cache, *proj, &app))
 
 	actual, err := application.LoadByName(db, cache, key, "my-app")
 	test.NoError(t, err)
@@ -46,7 +47,7 @@ func TestLoadByNameAsUser(t *testing.T) {
 		Name: "my-app",
 	}
 
-	test.NoError(t, application.Insert(db, cache, proj, &app))
+	require.NoError(t, application.Insert(db, cache, *proj, &app))
 
 	_, _ = assets.InsertLambdaUser(t, db, &proj.ProjectGroups[0].Group)
 
@@ -67,10 +68,10 @@ func TestLoadByIDAsAdmin(t *testing.T) {
 		Name: "my-app",
 	}
 
-	test.NoError(t, application.Insert(db, cache, proj, &app))
+	require.NoError(t, application.Insert(db, cache, *proj, &app))
 
 	actual, err := application.LoadByID(db, cache, app.ID)
-	test.NoError(t, err)
+	require.NoError(t, err)
 
 	assert.Equal(t, app.Name, actual.Name)
 	assert.Equal(t, proj.ID, actual.ProjectID)
@@ -87,7 +88,7 @@ func TestLoadByIDAsUser(t *testing.T) {
 		Name: "my-app",
 	}
 
-	test.NoError(t, application.Insert(db, cache, proj, &app))
+	require.NoError(t, application.Insert(db, cache, *proj, &app))
 
 	_, _ = assets.InsertLambdaUser(t, db, &proj.ProjectGroups[0].Group)
 
@@ -118,11 +119,11 @@ func TestLoadAllAsAdmin(t *testing.T) {
 		},
 	}
 
-	test.NoError(t, application.Insert(db, cache, proj, &app))
-	test.NoError(t, application.Insert(db, cache, proj, &app2))
+	require.NoError(t, application.Insert(db, cache, *proj, &app))
+	require.NoError(t, application.Insert(db, cache, *proj, &app2))
 
 	actual, err := application.LoadAll(db, cache, proj.Key)
-	test.NoError(t, err)
+	require.NoError(t, err)
 
 	assert.Equal(t, 2, len(actual))
 
@@ -145,8 +146,8 @@ func TestLoadAllAsUser(t *testing.T) {
 		Name: "my-app2",
 	}
 
-	test.NoError(t, application.Insert(db, cache, proj, &app))
-	test.NoError(t, application.Insert(db, cache, proj, &app2))
+	require.NoError(t, application.Insert(db, cache, *proj, &app))
+	require.NoError(t, application.Insert(db, cache, *proj, &app2))
 
 	_, _ = assets.InsertLambdaUser(t, db, &proj.ProjectGroups[0].Group)
 
@@ -167,7 +168,7 @@ func TestLoadByWorkflowID(t *testing.T) {
 		ProjectKey: proj.Key,
 		ProjectID:  proj.ID,
 	}
-	test.NoError(t, application.Insert(db, cache, proj, &app))
+	require.NoError(t, application.Insert(db, cache, *proj, &app))
 
 	pip := sdk.Pipeline{
 		ProjectID:  proj.ID,
@@ -175,13 +176,13 @@ func TestLoadByWorkflowID(t *testing.T) {
 		Name:       "pip1",
 	}
 
-	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip))
+	require.NoError(t, pipeline.InsertPipeline(db, &pip))
 
 	w := sdk.Workflow{
 		Name:       "test_1",
 		ProjectID:  proj.ID,
 		ProjectKey: proj.Key,
-		WorkflowData: &sdk.WorkflowData{
+		WorkflowData: sdk.WorkflowData{
 			Node: sdk.Node{
 				Type: sdk.NodeTypePipeline,
 				Context: &sdk.NodeContext{
@@ -196,7 +197,7 @@ func TestLoadByWorkflowID(t *testing.T) {
 
 	proj, _ = project.LoadByID(db, cache, proj.ID, project.LoadOptions.WithApplications, project.LoadOptions.WithPipelines, project.LoadOptions.WithEnvironments, project.LoadOptions.WithGroups)
 
-	test.NoError(t, workflow.Insert(context.TODO(), db, cache, &w, proj))
+	require.NoError(t, workflow.Insert(context.TODO(), db, cache, *proj, &w))
 
 	actuals, err := application.LoadByWorkflowID(db, w.ID)
 	assert.NoError(t, err)

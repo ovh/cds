@@ -24,11 +24,8 @@ import (
 func TestPull(t *testing.T) {
 	db, cache, end := test.SetupPG(t, bootstrap.InitiliazeDB)
 	defer end()
-	u, _ := assets.InsertAdminUser(t, db)
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, cache, key, key)
-
-	test.NoError(t, project.AddKeyPair(db, proj, "key", u))
 
 	//First pipeline
 	pip := sdk.Pipeline{
@@ -36,7 +33,7 @@ func TestPull(t *testing.T) {
 		ProjectKey: proj.Key,
 		Name:       "pip1",
 	}
-	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip))
+	test.NoError(t, pipeline.InsertPipeline(db, &pip))
 
 	s := sdk.NewStage("stage 1")
 	s.Enabled = true
@@ -59,7 +56,7 @@ func TestPull(t *testing.T) {
 		ProjectKey: proj.Key,
 		Name:       "pip2",
 	}
-	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip2))
+	test.NoError(t, pipeline.InsertPipeline(db, &pip2))
 	s = sdk.NewStage("stage 1")
 	s.Enabled = true
 	s.PipelineID = pip2.ID
@@ -78,7 +75,7 @@ func TestPull(t *testing.T) {
 	app := &sdk.Application{
 		Name: sdk.RandomString(10),
 	}
-	test.NoError(t, application.Insert(db, cache, proj, app))
+	test.NoError(t, application.Insert(db, cache, *proj, app))
 
 	//Environment
 	envName := sdk.RandomString(10)
@@ -94,7 +91,7 @@ func TestPull(t *testing.T) {
 		ProjectKey: proj.Key,
 		Metadata:   sdk.Metadata{"triggered_by": "bla"},
 		PurgeTags:  []string{"aa", "bb"},
-		WorkflowData: &sdk.WorkflowData{
+		WorkflowData: sdk.WorkflowData{
 			Node: sdk.Node{
 				Name: "node1",
 				Ref:  "node1",
@@ -122,18 +119,18 @@ func TestPull(t *testing.T) {
 
 	proj, _ = project.Load(db, cache, proj.Key, project.LoadOptions.WithApplications, project.LoadOptions.WithEnvironments, project.LoadOptions.WithPipelines)
 
-	test.NoError(t, workflow.Insert(context.TODO(), db, cache, &w, proj))
+	test.NoError(t, workflow.Insert(context.TODO(), db, cache, *proj, &w))
 
-	w1, err := workflow.Load(context.TODO(), db, cache, proj, "test_1", workflow.LoadOptions{})
+	w1, err := workflow.Load(context.TODO(), db, cache, *proj, "test_1", workflow.LoadOptions{})
 	test.NoError(t, err)
 	test.Equal(t, w.Metadata, w1.Metadata)
 	test.Equal(t, w.PurgeTags, w1.PurgeTags)
 
-	pull, err := workflow.Pull(context.TODO(), db, cache, proj, w1.Name, exportentities.FormatYAML, project.EncryptWithBuiltinKey)
+	pull, err := workflow.Pull(context.TODO(), db, cache, *proj, w1.Name, project.EncryptWithBuiltinKey)
 	test.NoError(t, err)
 
 	buff := new(bytes.Buffer)
-	test.NoError(t, pull.Tar(context.TODO(), buff))
+	test.NoError(t, exportentities.TarWorkflowComponents(context.TODO(), pull, buff))
 
 	// Open the tar archive for reading.
 	r := bytes.NewReader(buff.Bytes())
@@ -153,6 +150,5 @@ func TestPull(t *testing.T) {
 		test.NoError(t, err, "Unable to read the tar buffer")
 
 		t.Logf("%s", string(btes))
-
 	}
 }

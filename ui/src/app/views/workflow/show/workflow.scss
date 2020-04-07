@@ -11,9 +11,6 @@
     flex: 1;
     display: flex;
     flex-direction: column;
-    .winfo {
-      z-index: 1;
-    }
     .cardinfo {
       margin-top: 1px;
       border-radius: 0 0 0.28571429rem 0.28571429rem;
@@ -37,6 +34,14 @@
           padding: 0 100px 0 100px;
         }
       }
+    }
+  }
+
+  sm-menu {
+    .ui.buttons {
+      position: absolute;
+      right: 55px;
+      margin-top: 2px;
     }
   }
 }

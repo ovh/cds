@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"compress/gzip"
 	"context"
-	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -18,6 +17,9 @@ import (
 
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
+	"github.com/pkg/errors"
+	uuid "github.com/satori/go.uuid"
+	"github.com/sirupsen/logrus"
 	"go.opencensus.io/stats"
 	"go.opencensus.io/tag"
 
@@ -25,6 +27,8 @@ import (
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
+	"github.com/ovh/cds/sdk/doc"
+	docSDK "github.com/ovh/cds/sdk/doc"
 	"github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk/tracingutils"
 )
@@ -47,8 +51,7 @@ var (
 
 // Router is a wrapper around mux.Router
 type Router struct {
-	Background context.Context
-	//	AuthDriver             auth.Driver
+	Background             context.Context
 	Mux                    *mux.Router
 	SetHeaderFunc          func() map[string]string
 	Prefix                 string
@@ -60,6 +63,7 @@ type Router struct {
 	panicked               bool
 	nbPanic                int
 	lastPanic              *time.Time
+	scopeDetails           []sdk.AuthConsumerScopeDetail
 }
 
 // HandlerConfigParam is a type used in handler configuration, to set specific config on a route given a method
@@ -69,9 +73,9 @@ type HandlerConfigParam func(*service.HandlerConfig)
 type HandlerConfigFunc func(service.Handler, ...HandlerConfigParam) *service.HandlerConfig
 
 func (r *Router) pprofLabel(config map[string]*service.HandlerConfig, fn http.HandlerFunc) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, req *http.Request) {
 		var name = sdk.RandomString(12)
-		rc := config[r.Method]
+		rc := config[req.Method]
 		if rc != nil && rc.Handler != nil {
 			name = runtime.FuncForPC(reflect.ValueOf(rc.Handler).Pointer()).Name()
 			name = strings.Replace(name, ".func1", "", 1)
@@ -80,14 +84,14 @@ func (r *Router) pprofLabel(config map[string]*service.HandlerConfig, fn http.Ha
 		id := fmt.Sprintf("%d", sdk.GoroutineID())
 
 		labels := pprof.Labels(
-			"http-path", r.URL.Path,
+			"http-path", req.URL.Path,
 			"goroutine-id", id,
 			"goroutine-name", name+"-"+id,
 		)
-		ctx := pprof.WithLabels(r.Context(), labels)
+		ctx := pprof.WithLabels(req.Context(), labels)
 		pprof.SetGoroutineLabels(ctx)
-		r = r.WithContext(ctx)
-		fn(w, r)
+		req = req.WithContext(ctx)
+		fn(w, req)
 	}
 }
 
@@ -110,10 +114,10 @@ func (r *Router) recoverWrap(h http.HandlerFunc) http.HandlerFunc {
 				switch t := re.(type) {
 				case string:
 					err = errors.New(t)
-				case error:
-					err = re.(error)
 				case sdk.Error:
 					err = re.(sdk.Error)
+				case error:
+					err = re.(error)
 				default:
 					err = sdk.ErrUnknownError
 				}
@@ -154,7 +158,7 @@ func (r *Router) recoverWrap(h http.HandlerFunc) http.HandlerFunc {
 					log.Error(context.TODO(), "[PANIC_RECOVERY] RESTART NEEDED")
 				}
 
-				service.WriteError(w, req, err)
+				service.WriteError(context.TODO(), w, req, err)
 			}
 		}()
 		h.ServeHTTP(w, req)
@@ -184,9 +188,82 @@ func DefaultHeaders() map[string]string {
 	}
 }
 
+// computeScopeDetails iterate over declared handlers for routers and populate router scope details.
+func (r *Router) computeScopeDetails() {
+	// create temporary map of scopes, for each scope we will create a map of routes with methods.
+	m := make(map[sdk.AuthConsumerScope]map[string]map[string]struct{})
+
+	for uri, cfg := range r.mapRouterConfigs {
+		var err error
+		uri, err = docSDK.CleanAndCheckURL(uri)
+		if err != nil {
+			panic(errors.Wrap(err, "error computing scope detail"))
+		}
+
+		if len(cfg.Config) == 0 {
+			continue
+		}
+
+		methods := make([]string, 0, len(cfg.Config))
+		var scopes []sdk.AuthConsumerScope
+		for method, handler := range cfg.Config {
+			// Take scopes from the first handler as every handlers should have the same scopes
+			if scopes == nil {
+				scopes = handler.AllowedScopes
+			}
+			methods = append(methods, method)
+		}
+
+		for i := range scopes {
+			if _, ok := m[scopes[i]]; !ok {
+				m[scopes[i]] = make(map[string]map[string]struct{})
+			}
+			if _, ok := m[scopes[i]][uri]; !ok {
+				m[scopes[i]][uri] = make(map[string]struct{})
+			}
+			for j := range methods {
+				m[scopes[i]][uri][methods[j]] = struct{}{}
+			}
+		}
+	}
+
+	// return scope details
+	details := make([]sdk.AuthConsumerScopeDetail, len(sdk.AuthConsumerScopes))
+	for i, scope := range sdk.AuthConsumerScopes {
+		endpoints := make([]sdk.AuthConsumerScopeEndpoint, 0, len(m[scope]))
+		for uri, mMethods := range m[scope] {
+			methods := make([]string, 0, len(mMethods))
+			for k := range mMethods {
+				methods = append(methods, k)
+			}
+			endpoints = append(endpoints, sdk.AuthConsumerScopeEndpoint{
+				Route:   uri,
+				Methods: methods,
+			})
+		}
+
+		details[i].Scope = scope
+		details[i].Endpoints = endpoints
+	}
+
+	r.scopeDetails = details
+}
+
 // Handle adds all handler for their specific verb in gorilla router for given uri
 func (r *Router) Handle(uri string, scope HandlerScope, handlers ...*service.HandlerConfig) {
 	uri = r.Prefix + uri
+	config, f := r.handle(uri, scope, handlers...)
+	r.Mux.Handle(uri, r.pprofLabel(config, r.compress(r.recoverWrap(f))))
+}
+
+func (r *Router) HandlePrefix(uri string, scope HandlerScope, handlers ...*service.HandlerConfig) {
+	uri = r.Prefix + uri
+	config, f := r.handle(uri, scope, handlers...)
+	r.Mux.PathPrefix(uri).HandlerFunc(r.pprofLabel(config, r.compress(r.recoverWrap(f))))
+}
+
+// Handle adds all handler for their specific verb in gorilla router for given uri
+func (r *Router) handle(uri string, scope HandlerScope, handlers ...*service.HandlerConfig) (map[string]*service.HandlerConfig, http.HandlerFunc) {
 	cfg := &service.RouterConfig{
 		Config: map[string]*service.HandlerConfig{},
 	}
@@ -195,20 +272,33 @@ func (r *Router) Handle(uri string, scope HandlerScope, handlers ...*service.Han
 	}
 	r.mapRouterConfigs[uri] = cfg
 
+	cleanURL := doc.CleanURL(uri)
 	for i := range handlers {
+		handlers[i].CleanURL = cleanURL
 		handlers[i].AllowedScopes = scope
-		cfg.Config[handlers[i].Method] = handlers[i]
 		name := runtime.FuncForPC(reflect.ValueOf(handlers[i].Handler).Pointer()).Name()
 		name = strings.Replace(name, ".func1", "", 1)
 		name = strings.Replace(name, ".1", "", 1)
 		name = strings.Replace(name, "github.com/ovh/cds/engine/", "", 1)
 		log.Debug("Registering handler %s on %s %s", name, handlers[i].Method, uri)
 		handlers[i].Name = name
+		cfg.Config[handlers[i].Method] = handlers[i]
 	}
 
 	f := func(w http.ResponseWriter, req *http.Request) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
+
+		var requestID string
+		if existingRequestID := req.Header.Get("Request-ID"); existingRequestID != "" {
+			if _, err := uuid.FromString(existingRequestID); err == nil {
+				requestID = existingRequestID
+			}
+		}
+		if requestID == "" {
+			requestID = uuid.NewV4().String()
+		}
+		ctx = context.WithValue(ctx, log.ContextLoggingRequestIDKey, requestID)
 
 		dateRFC5322 := req.Header.Get("Date")
 		dateReq, err := sdk.ParseDateRFC5322(dateRFC5322)
@@ -246,7 +336,7 @@ func (r *Router) Handle(uri string, scope HandlerScope, handlers ...*service.Han
 		rc := cfg.Config[req.Method]
 		if rc == nil || rc.Handler == nil {
 			observability.Record(ctx, Errors, 1)
-			service.WriteError(w, req, sdk.ErrNotFound)
+			service.WriteError(ctx, w, req, sdk.ErrNotFound)
 			return
 		}
 
@@ -257,14 +347,42 @@ func (r *Router) Handle(uri string, scope HandlerScope, handlers ...*service.Han
 			log.Error(ctx, "observability.ContextGetTags> %v", err)
 		}
 		ctx = observability.ContextWithTag(ctx,
+			observability.RequestID, requestID,
 			observability.Handler, rc.Name,
 			observability.Host, req.Host,
 			observability.Path, req.URL.Path,
 			observability.Method, req.Method)
 
-		//Log request
+		// Prepare logging fields
+		ctx = context.WithValue(ctx, log.ContextLoggingFuncKey, func(ctx context.Context) logrus.Fields {
+			fields := make(logrus.Fields)
+
+			// Add consumer info if exists
+			iConsumer := ctx.Value(contextAPIConsumer)
+			if iConsumer != nil {
+				if consumer, ok := iConsumer.(*sdk.AuthConsumer); ok {
+					fields["auth_user_id"] = consumer.AuthentifiedUserID
+					fields["auth_consumer_id"] = consumer.ID
+				}
+			}
+
+			// Add session info if exists
+			iSession := ctx.Value(contextSession)
+			if iSession != nil {
+				if session, ok := iSession.(*sdk.AuthSession); ok {
+					fields["auth_session_id"] = session.ID
+				}
+			}
+
+			return fields
+		})
+
+		// Log request start
 		start := time.Now()
-		defer func(ctx context.Context) {
+		log.Info(ctx, "%s | BEGIN | %s [%s]", req.Method, req.URL, rc.Name)
+
+		// Defer log request end
+		deferFunc := func(ctx context.Context) {
 			if responseWriter.statusCode == 0 {
 				responseWriter.statusCode = 200
 			}
@@ -272,16 +390,21 @@ func (r *Router) Handle(uri string, scope HandlerScope, handlers ...*service.Han
 
 			end := time.Now()
 			latency := end.Sub(start)
-			if rc.IsDeprecated {
-				log.Error(ctx, "[%-3d] | %-7s | %13v | DEPRECATED ROUTE | %v [%s]", responseWriter.statusCode, req.Method, latency, req.URL, rc.Name)
-			} else {
-				log.Info(ctx, "[%-3d] | %-7s | %13v | %v [%s]", responseWriter.statusCode, req.Method, latency, req.URL, rc.Name)
-			}
+
+			log.InfoWithFields(ctx, logrus.Fields{
+				"method":        req.Method,
+				"latency":       latency.Milliseconds(),
+				"latency_human": latency,
+				"status":        responseWriter.statusCode,
+				"route":         cleanURL,
+				"request_uri":   req.RequestURI,
+				"deprecated":    rc.IsDeprecated,
+			}, "%s | END   | %s [%s] | [%d]", req.Method, req.URL, rc.Name, responseWriter.statusCode)
 
 			observability.RecordFloat64(ctx, ServerLatency, float64(latency)/float64(time.Millisecond))
 			observability.Record(ctx, ServerRequestBytes, responseWriter.reqSize)
 			observability.Record(ctx, ServerResponseBytes, responseWriter.respSize)
-		}(ctx)
+		}
 
 		observability.Record(r.Background, Hits, 1)
 		observability.Record(ctx, ServerRequestCount, 1)
@@ -291,7 +414,8 @@ func (r *Router) Handle(uri string, scope HandlerScope, handlers ...*service.Han
 			ctx, err = m(ctx, responseWriter, req, rc)
 			if err != nil {
 				observability.Record(r.Background, Errors, 1)
-				service.WriteError(w, req, err)
+				service.WriteError(ctx, w, req, err)
+				deferFunc(ctx)
 				return
 			}
 		}
@@ -299,7 +423,8 @@ func (r *Router) Handle(uri string, scope HandlerScope, handlers ...*service.Han
 		if err := rc.Handler(ctx, responseWriter.wrappedResponseWriter(), req); err != nil {
 			observability.Record(r.Background, Errors, 1)
 			observability.End(ctx, responseWriter, req)
-			service.WriteError(responseWriter, req, err)
+			service.WriteError(ctx, responseWriter, req, err)
+			deferFunc(ctx)
 			return
 		}
 
@@ -314,10 +439,11 @@ func (r *Router) Handle(uri string, scope HandlerScope, handlers ...*service.Han
 				log.Error(ctx, "PostMiddlewares > %s", err)
 			}
 		}
+
+		deferFunc(ctx)
 	}
 
-	// The chain is http -> mux -> f -> recover -> wrap -> pprof -> opencensus -> http
-	r.Mux.Handle(uri, r.pprofLabel(cfg.Config, r.compress(r.recoverWrap(f))))
+	return cfg.Config, f
 }
 
 type asynchronousRequest struct {
@@ -514,7 +640,7 @@ func EnableTracing() HandlerConfigParam {
 
 // NotFoundHandler is called by default by Mux is any matching handler has been found
 func NotFoundHandler(w http.ResponseWriter, req *http.Request) {
-	service.WriteError(w, req, sdk.WithStack(sdk.ErrNotFound))
+	service.WriteError(context.Background(), w, req, sdk.NewError(sdk.ErrNotFound, fmt.Errorf("%s not found", req.URL.Path)))
 }
 
 // StatusPanic returns router status. If nbPanic > 30 -> Alert, if nbPanic > 0 -> Warn

@@ -16,7 +16,7 @@ func LoadNavbarData(db gorp.SqlExecutor, store cache.Store, u sdk.AuthentifiedUs
 	// Admin can gets all project
 	// Users can gets only their projects
 
-	if u.Admin() {
+	if u.Ring == sdk.UserRingMaintainer || u.Ring == sdk.UserRingAdmin {
 		return loadNavbarAsAdmin(db, store, u)
 	}
 
@@ -29,7 +29,7 @@ func loadNavbarAsAdmin(db gorp.SqlExecutor, store cache.Store, u sdk.Authentifie
 		SELECT DISTINCT
 			project.projectkey, project.name AS project_name, project.description, NULL AS name,
 			CASE
-				WHEN (SELECT project_id FROM project_favorite WHERE user_id = $1 AND project_id = project.id) IS NOT NULL THEN true
+				WHEN (SELECT project_id FROM project_favorite WHERE authentified_user_id = $1 AND project_id = project.id) IS NOT NULL THEN true
 				ELSE false
 			END AS favorite,
 			'project' AS type
@@ -51,7 +51,7 @@ func loadNavbarAsAdmin(db gorp.SqlExecutor, store cache.Store, u sdk.Authentifie
 		SELECT DISTINCT
 			project.projectkey, project.name AS project_name, workflow.description, workflow.name,
 			CASE
-				WHEN (SELECT workflow_id FROM workflow_favorite WHERE user_id = $1 AND workflow_id = workflow.id) IS NOT NULL THEN true
+				WHEN (SELECT workflow_id FROM workflow_favorite WHERE authentified_user_id = $1 AND workflow_id = workflow.id) IS NOT NULL THEN true
 				ELSE false
 			END AS favorite,
 			'workflow' AS type
@@ -61,9 +61,9 @@ func loadNavbarAsAdmin(db gorp.SqlExecutor, store cache.Store, u sdk.Authentifie
 	)
 	`
 
-	rows, err := db.Query(query, u.OldUserStruct.ID)
+	rows, err := db.Query(query, u.ID)
 	if err != nil {
-		return data, err
+		return data, sdk.WithStack(err)
 	}
 	defer rows.Close()
 
@@ -72,7 +72,7 @@ func loadNavbarAsAdmin(db gorp.SqlExecutor, store cache.Store, u sdk.Authentifie
 		var favorite bool
 		var name sql.NullString
 		if err := rows.Scan(&key, &projectName, &projectDescription, &name, &favorite, &eltType); err != nil {
-			return data, err
+			return data, sdk.WithStack(err)
 		}
 
 		projData := sdk.NavbarProjectData{
@@ -104,7 +104,7 @@ func loadNavbarAsUser(db gorp.SqlExecutor, store cache.Store, u sdk.Authentified
 		SELECT DISTINCT
 			project.projectkey, project.name AS project_name, project.description, NULL AS name,
 			CASE
-				WHEN (SELECT project_id FROM project_favorite WHERE user_id = $1 AND project_id = project.id) IS NOT NULL THEN true
+				WHEN (SELECT project_id FROM project_favorite WHERE authentified_user_id = $1 AND project_id = project.id) IS NOT NULL THEN true
 				ELSE false
 			END AS favorite,
 			'project' AS type
@@ -142,7 +142,7 @@ func loadNavbarAsUser(db gorp.SqlExecutor, store cache.Store, u sdk.Authentified
 		SELECT DISTINCT
 			project.projectkey, project.name AS project_name, workflow.description, workflow.name,
 			CASE
-				WHEN (SELECT workflow_id FROM workflow_favorite WHERE user_id = $1 AND workflow_id = workflow.id) IS NOT NULL THEN true
+				WHEN (SELECT workflow_id FROM workflow_favorite WHERE authentified_user_id = $1 AND workflow_id = workflow.id) IS NOT NULL THEN true
 				ELSE false
 			END AS favorite,
 			'workflow' AS type
@@ -160,7 +160,7 @@ func loadNavbarAsUser(db gorp.SqlExecutor, store cache.Store, u sdk.Authentified
 	)
   `
 
-	rows, err := db.Query(query, u.OldUserStruct.ID, gorpmapping.IDsToQueryString(u.OldUserStruct.Groups.ToIDs()), group.SharedInfraGroup.ID)
+	rows, err := db.Query(query, u.ID, gorpmapping.IDsToQueryString(u.Groups.ToIDs()), group.SharedInfraGroup.ID)
 	if err != nil {
 		return data, sdk.WithStack(err)
 	}
@@ -171,7 +171,7 @@ func loadNavbarAsUser(db gorp.SqlExecutor, store cache.Store, u sdk.Authentified
 		var favorite bool
 		var name sql.NullString
 		if err := rows.Scan(&key, &projectName, &projectDescription, &name, &favorite, &eltType); err != nil {
-			return data, err
+			return data, sdk.WithStack(err)
 		}
 
 		projData := sdk.NavbarProjectData{

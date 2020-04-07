@@ -149,14 +149,14 @@ func (c *bitbucketClient) do(ctx context.Context, method, api, path string, para
 	// Check for an http error status (ie not 200 StatusOK)
 	switch resp.StatusCode {
 	case 404:
-		return sdk.ErrNotFound
+		return sdk.WithStack(sdk.ErrNotFound)
 	case 403:
-		return sdk.ErrForbidden
+		return sdk.WithStack(sdk.ErrForbidden)
 	case 401:
-		return sdk.ErrUnauthorized
+		return sdk.WithStack(sdk.ErrUnauthorized)
 	case 400:
 		log.Warning(ctx, "bitbucketClient.do> %s", string(body))
-		return sdk.ErrWrongRequest
+		return sdk.WithStack(sdk.ErrWrongRequest)
 	}
 
 	if method != "GET" {

@@ -22,7 +22,6 @@ import (
 var brokersConnectionCache = gocache.New(10*time.Minute, 6*time.Hour)
 var publicBrokersConnectionCache = []Broker{}
 var hostname, cdsname string
-var kafkaBroker Broker
 var brokers []Broker
 var subscribers []chan<- sdk.Event
 

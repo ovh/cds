@@ -15,7 +15,7 @@ import (
 
 const appRows = `
 application.id,
-application.name, 
+application.name,
 application.project_id,
 application.repo_fullname,
 application.repositories_manager_id,
@@ -62,6 +62,18 @@ func Exists(db gorp.SqlExecutor, projectKey, appName string) (bool, error) {
 	return count == 1, nil
 }
 
+// LoadAsCode load an ascode application from DB
+func LoadAsCode(db gorp.SqlExecutor, store cache.Store, projectKey, fromRepo string) ([]sdk.Application, error) {
+	query := fmt.Sprintf(`
+                SELECT %s
+                FROM application
+                	JOIN project ON project.id = application.project_id
+                WHERE project.projectkey = $1
+                AND application.from_repository = $2`, appRows)
+	args := []interface{}{projectKey, fromRepo}
+	return loadapplications(db, store, nil, query, args...)
+}
+
 // LoadByName load an application from DB
 func LoadByName(db gorp.SqlExecutor, store cache.Store, projectKey, appName string, opts ...LoadOptionFunc) (*sdk.Application, error) {
 	query := fmt.Sprintf(`
@@ -73,20 +85,6 @@ func LoadByName(db gorp.SqlExecutor, store cache.Store, projectKey, appName stri
 	args := []interface{}{projectKey, appName}
 
 	return load(db, store, projectKey, opts, query, args...)
-}
-
-// LoadAndLockByID load and lock given application
-func LoadAndLockByID(db gorp.SqlExecutor, store cache.Store, id int64, opts ...LoadOptionFunc) (*sdk.Application, error) {
-	query := fmt.Sprintf(`
-		SELECT %s
-		FROM application
-		WHERE application.id = $1 FOR UPDATE SKIP LOCKED`, appRows)
-	args := []interface{}{id}
-	app, err := load(db, store, "", opts, query, args...)
-	if err != nil && sdk.ErrorIs(err, sdk.ErrApplicationNotFound) {
-		err = sdk.ErrLocked
-	}
-	return app, sdk.WithStack(err)
 }
 
 // LoadByID load an application from DB
@@ -152,7 +150,7 @@ func unwrap(db gorp.SqlExecutor, store cache.Store, opts []LoadOptionFunc, dbApp
 }
 
 // Insert add an application id database
-func Insert(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, app *sdk.Application) error {
+func Insert(db gorp.SqlExecutor, store cache.Store, proj sdk.Project, app *sdk.Application) error {
 	if err := app.IsValid(); err != nil {
 		return sdk.WrapError(err, "application is not valid")
 	}

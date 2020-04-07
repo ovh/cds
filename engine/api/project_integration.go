@@ -58,7 +58,7 @@ func (api *API) putProjectIntegrationHandler() service.Handler {
 
 		//If the integration model is public, it's forbidden to update the integration
 		if ppDB.Model.Public {
-			return sdk.ErrForbidden
+			return sdk.WithStack(sdk.ErrForbidden)
 		}
 
 		projectIntegration.ID = ppDB.ID
@@ -74,6 +74,7 @@ func (api *API) putProjectIntegrationHandler() service.Handler {
 					}
 				}
 			}
+			projectIntegration.Config[kkBody] = c
 		}
 
 		tx, errT := api.mustDB().Begin()
@@ -144,7 +145,7 @@ func (api *API) deleteProjectIntegrationHandler() service.Handler {
 			if plat.Name == integrationName {
 				//If the integration model is public, it's forbidden to delete the integration
 				if plat.Model.Public {
-					return sdk.ErrForbidden
+					return sdk.WithStack(sdk.ErrForbidden)
 				}
 
 				deletedIntegration = plat
@@ -219,7 +220,7 @@ func (api *API) postProjectIntegrationHandler() service.Handler {
 		for _, pprojPlat := range p.Integrations {
 			if pprojPlat.Name == pp.Name {
 				if pprojPlat.Model.Public {
-					return sdk.ErrForbidden
+					return sdk.WithStack(sdk.ErrForbidden)
 				}
 				return sdk.WrapError(sdk.ErrWrongRequest, "postProjectIntegrationHandler> integration already exist")
 			}

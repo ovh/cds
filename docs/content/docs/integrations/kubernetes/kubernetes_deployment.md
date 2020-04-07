@@ -29,7 +29,7 @@ deployment_default_config:
   timeout:
     type: string
     value: 180
-    description: timeout in seconds
+    description: timeout in seconds for v2 or duration for v3 (ex: 3m)
   namespace:
     type: string
     value: default
@@ -43,6 +43,9 @@ deployment_default_config:
   helm_values:
     type: string
     description: specify helm values in a YAML file or a URL to configure/override your helm chart
+  helm_version:
+    type: string
+    description: specify helm version to use (default: v2.12.2)
 ```
 
 Import the integration with :
@@ -126,6 +129,10 @@ model:
       type: string
       description: specify helm values in a YAML file or a URL to configure/override
         your helm chart
+    helm_version:
+      value: ""
+      type: string
+      description: specify helm version to use (default: v2.12.2)
     namespace:
       value: default
       type: string
@@ -184,13 +191,15 @@ deployment_default_config:
   helm_values:
     value: ""
     type: string
-    description: specify helm values in a YAML file or a URL to configure/override
-      your helm chart
+    description: specify helm values in a YAML file or a URL to configure/override your helm chart
+  helm_version:
+    value: ""
+    type: string
+    description: specify helm version to use (default: v2.12.2)
   namespace:
     value: default
     type: string
-    description: Kubernetes namespace in which you want to deploy your components
-      (OPTIONAL)
+    description: Kubernetes namespace in which you want to deploy your components (OPTIONAL)
   timeout:
     value: "180"
     type: string
@@ -198,18 +207,18 @@ deployment_default_config:
 public_configurations:
   your-public-myk8s-integration:
     "api_url":
-        value: https://your-k8s.localhost.local
-        type: string
+      value: https://your-k8s.localhost.local
+      type: string
     "ca_certificate":
-        value: |-
-          -----BEGIN CERTIFICATE-----
-          XXX
-          -----END CERTIFICATE-----
-        type: text
-        description: Certificate Authority bundle (PEM format)
+      value: |-
+        -----BEGIN CERTIFICATE-----
+        XXX
+        -----END CERTIFICATE-----
+      type: text
+      description: Certificate Authority bundle (PEM format)
     "token":
-        value: XXX
-        type: string
+      value: XXX
+      type: string
 ```
 
 Import the integration with :

@@ -147,6 +147,17 @@ func FileMd5sum(filePath string) (string, error) {
 	return sum, nil
 }
 
+func SHA512sum(s string) (string, error) {
+	hash := sha512.New()
+	if _, err := io.Copy(hash, strings.NewReader((s))); err != nil {
+		return "", fmt.Errorf("error computing sha512: %v", err)
+	}
+
+	hashInBytes := hash.Sum(nil)[:64]
+	sum := hex.EncodeToString(hashInBytes)
+	return sum, nil
+}
+
 // FileSHA512sum returns the sha512sum of a file
 func FileSHA512sum(filePath string) (string, error) {
 	file, errop := os.Open(filePath)
@@ -201,6 +212,15 @@ func (s *StringSlice) Scan(src interface{}) error {
 func (s StringSlice) Value() (driver.Value, error) {
 	j, err := json.Marshal(s)
 	return j, WrapError(err, "cannot marshal StringSlice")
+}
+
+func (s StringSlice) Contains(value string) bool {
+	for i := range s {
+		if s[i] == value {
+			return true
+		}
+	}
+	return false
 }
 
 // Int64Slice type used for database json storage.

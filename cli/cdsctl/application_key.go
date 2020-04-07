@@ -37,10 +37,8 @@ var applicationKeyCreateCmd = cli.Command{
 
 func applicationCreateKeyRun(v cli.Values) error {
 	key := &sdk.ApplicationKey{
-		Key: sdk.Key{
-			Name: v.GetString("key-name"),
-			Type: v.GetString("key-type"),
-		},
+		Name: v.GetString("key-name"),
+		Type: sdk.KeyType(v.GetString("key-type")),
 	}
 	if err := client.ApplicationKeyCreate(v.GetString(_ProjectKey), v.GetString(_ApplicationName), key); err != nil {
 		return err

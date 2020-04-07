@@ -24,6 +24,10 @@ func (client *bitbucketcloudClient) Branches(ctx context.Context, fullname strin
 	params.Set("sort", "-target.date")
 	nextPage := 1
 	for {
+		if ctx.Err() != nil {
+			break
+		}
+
 		if nextPage != 1 {
 			params.Set("page", fmt.Sprintf("%d", nextPage))
 		}

@@ -10,6 +10,10 @@ import (
 )
 
 func (wk *CurrentWorker) sendLog(buildID int64, value string, stepOrder int, final bool) error {
+	if wk.currentJob.wJob == nil {
+		log.Error(wk.GetContext(), "unable to send log: %s", value)
+		return nil
+	}
 	if err := wk.Blur(&value); err != nil {
 		return err
 	}

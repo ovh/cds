@@ -7,12 +7,12 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-func (c *client) PipelineGet(projectKey, name string) (*sdk.Pipeline, error) {
-	pipeline := sdk.Pipeline{}
-	if _, err := c.GetJSON(context.Background(), "/project/"+projectKey+"/pipeline/"+name, &pipeline); err != nil {
+func (c *client) PipelineGet(projectKey, name string, mods ...RequestModifier) (*sdk.Pipeline, error) {
+	pipeline := &sdk.Pipeline{}
+	if _, err := c.GetJSON(context.Background(), "/project/"+projectKey+"/pipeline/"+name, pipeline, mods...); err != nil {
 		return nil, err
 	}
-	return &pipeline, nil
+	return pipeline, nil
 }
 
 func (c *client) PipelineCreate(projectKey string, pip *sdk.Pipeline) error {

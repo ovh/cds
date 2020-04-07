@@ -19,7 +19,7 @@ var workflowDeleteCmd = cli.Command{
 
 func workflowDeleteRun(v cli.Values) error {
 	err := client.WorkflowDelete(v.GetString(_ProjectKey), v.GetString(_WorkflowName))
-	if err != nil && v.GetBool("force") && sdk.ErrorIs(err, sdk.ErrWorkflowNotFound) {
+	if err != nil && v.GetBool("force") && sdk.ErrorIs(err, sdk.ErrNotFound) {
 		fmt.Println(err.Error())
 		os.Exit(0)
 	}

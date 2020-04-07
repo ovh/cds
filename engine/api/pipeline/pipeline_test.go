@@ -67,7 +67,7 @@ func TestInsertPipeline(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		if err := pipeline.InsertPipeline(db, cache, &p, tt.p); (err != nil) != tt.wantErr {
+		if err := pipeline.InsertPipeline(db, tt.p); (err != nil) != tt.wantErr {
 			t.Errorf("%q. InsertPipeline() error = %v, wantErr %v", tt.name, err, tt.wantErr)
 		}
 	}
@@ -103,7 +103,7 @@ func TestInsertPipelineWithParemeters(t *testing.T) {
 		},
 	}
 
-	test.NoError(t, pipeline.InsertPipeline(db, cache, &p, pip))
+	test.NoError(t, pipeline.InsertPipeline(db, pip))
 
 	pip1, err := pipeline.LoadPipeline(context.TODO(), db, p.Key, "Name", true)
 	test.NoError(t, err)
@@ -139,7 +139,7 @@ func TestInsertPipelineWithWithWrongParemeters(t *testing.T) {
 			},
 		},
 	}
-	assert.Error(t, pipeline.InsertPipeline(db, cache, &p, pip))
+	assert.Error(t, pipeline.InsertPipeline(db, pip))
 }
 
 func TestLoadByWorkflowID(t *testing.T) {
@@ -153,7 +153,7 @@ func TestLoadByWorkflowID(t *testing.T) {
 		ProjectKey: proj.Key,
 		ProjectID:  proj.ID,
 	}
-	test.NoError(t, application.Insert(db, cache, proj, &app))
+	test.NoError(t, application.Insert(db, cache, *proj, &app))
 
 	pip := sdk.Pipeline{
 		ProjectID:  proj.ID,
@@ -161,13 +161,13 @@ func TestLoadByWorkflowID(t *testing.T) {
 		Name:       "pip1",
 	}
 
-	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip))
+	test.NoError(t, pipeline.InsertPipeline(db, &pip))
 
 	w := sdk.Workflow{
 		Name:       "test_1",
 		ProjectID:  proj.ID,
 		ProjectKey: proj.Key,
-		WorkflowData: &sdk.WorkflowData{
+		WorkflowData: sdk.WorkflowData{
 			Node: sdk.Node{
 				Type: sdk.NodeTypePipeline,
 				Context: &sdk.NodeContext{
@@ -182,7 +182,7 @@ func TestLoadByWorkflowID(t *testing.T) {
 
 	proj, _ = project.LoadByID(db, cache, proj.ID, project.LoadOptions.WithApplications, project.LoadOptions.WithPipelines, project.LoadOptions.WithEnvironments, project.LoadOptions.WithGroups)
 
-	test.NoError(t, workflow.Insert(context.TODO(), db, cache, &w, proj))
+	test.NoError(t, workflow.Insert(context.TODO(), db, cache, *proj, &w))
 
 	actuals, err := pipeline.LoadByWorkflowID(db, w.ID)
 	assert.NoError(t, err)
@@ -204,7 +204,7 @@ func TestLoadByWorkerModel(t *testing.T) {
 	projectKey := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, cache, projectKey, projectKey)
 
-	require.NoError(t, group.InsertLinkGroupProject(db, &group.LinkGroupProject{
+	require.NoError(t, group.InsertLinkGroupProject(context.TODO(), db, &group.LinkGroupProject{
 		GroupID:   g2.ID,
 		ProjectID: proj.ID,
 		Role:      sdk.PermissionReadWriteExecute,
@@ -212,7 +212,7 @@ func TestLoadByWorkerModel(t *testing.T) {
 
 	// first pipeline with requirement shared.infra/model
 	pip1 := sdk.Pipeline{ProjectID: proj.ID, ProjectKey: proj.Key, Name: sdk.RandomString(10)}
-	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip1))
+	test.NoError(t, pipeline.InsertPipeline(db, &pip1))
 	job1 := sdk.Job{
 		Enabled: true,
 		Action: sdk.Action{
@@ -228,7 +228,7 @@ func TestLoadByWorkerModel(t *testing.T) {
 
 	// second pipeline with requirement model
 	pip2 := sdk.Pipeline{ProjectID: proj.ID, ProjectKey: proj.Key, Name: sdk.RandomString(10)}
-	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip2))
+	test.NoError(t, pipeline.InsertPipeline(db, &pip2))
 	job2 := sdk.Job{
 		Enabled: true,
 		Action: sdk.Action{
@@ -244,7 +244,7 @@ func TestLoadByWorkerModel(t *testing.T) {
 
 	// third pipeline with requirement group/model
 	pip3 := sdk.Pipeline{ProjectID: proj.ID, ProjectKey: proj.Key, Name: sdk.RandomString(10)}
-	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip3))
+	test.NoError(t, pipeline.InsertPipeline(db, &pip3))
 	job3 := sdk.Job{
 		Enabled: true,
 		Action: sdk.Action{

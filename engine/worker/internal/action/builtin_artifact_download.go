@@ -104,7 +104,7 @@ func RunArtifactDownload(ctx context.Context, wk workerruntime.Runtime, a sdk.Ac
 				wk.SendLog(ctx, workerruntime.LevelError, res.Reason)
 				return
 			}
-			wk.SendLog(ctx, workerruntime.LevelInfo, fmt.Sprintf("downloading artifact %s from workflow %s/%s on run %d...", destFile, project, workflow, n))
+			wk.SendLog(ctx, workerruntime.LevelInfo, fmt.Sprintf("Downloading artifact %s from workflow %s/%s on run %d...", destFile, project, workflow, n))
 			if err := wk.Client().WorkflowNodeRunArtifactDownload(project, workflow, *a, f); err != nil {
 				res.Status = sdk.StatusFail
 				res.Reason = err.Error()

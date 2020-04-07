@@ -1,25 +1,23 @@
 import {
     ChangeDetectionStrategy,
     ChangeDetectorRef,
-    Component,
+    Component, OnInit,
     QueryList,
     ViewChild,
     ViewChildren
 } from '@angular/core';
 import { ActivatedRoute, NavigationStart, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
-import { Store } from '@ngxs/store';
+import { Select, Store } from '@ngxs/store';
 import { SuiPopup, SuiPopupController, SuiPopupTemplateController } from '@richardlt/ng2-semantic-ui';
 import { Project } from 'app/model/project.model';
 import { Workflow } from 'app/model/workflow.model';
-import { WorkflowRun } from 'app/model/workflow.run.model';
 import { WorkflowCoreService } from 'app/service/workflow/workflow.core.service';
-import { WorkflowService } from 'app/service/workflow/workflow.service';
 import { WorkflowSidebarMode } from 'app/service/workflow/workflow.sidebar.store';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
+import { UpdateAsCodeComponent } from 'app/shared/modal/save-as-code/update.as.code.component';
 import { ToastService } from 'app/shared/toast/ToastService';
 import { WorkflowTemplateApplyModalComponent } from 'app/shared/workflow-template/apply-modal/workflow-template.apply-modal.component';
-import { WorkflowSaveAsCodeComponent } from 'app/shared/workflow/modal/save-as-code/save.as.code.component';
 import { ProjectState, ProjectStateModel } from 'app/store/project.state';
 import {
     CleanWorkflowRun,
@@ -30,9 +28,9 @@ import {
     SidebarRunsMode,
     UpdateFavoriteWorkflow
 } from 'app/store/workflow.action';
-import { WorkflowState, WorkflowStateModel } from 'app/store/workflow.state';
-import { Subscription } from 'rxjs';
-import { filter, finalize } from 'rxjs/operators';
+import { WorkflowState } from 'app/store/workflow.state';
+import { Observable, Subscription } from 'rxjs';
+import { finalize } from 'rxjs/operators';
 
 
 @Component({
@@ -42,13 +40,16 @@ import { filter, finalize } from 'rxjs/operators';
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 @AutoUnsubscribe()
-export class WorkflowComponent {
+export class WorkflowComponent implements OnInit {
     @ViewChild('templateApplyModal', { static: false })
     templateApplyModal: WorkflowTemplateApplyModalComponent;
 
     project: Project;
+
+    @Select(WorkflowState.getWorkflow()) workflow$: Observable<Workflow>;
     workflow: Workflow;
     workflowSubscription: Subscription;
+
     projectSubscription: Subscription;
     dataRouteSubscription: Subscription;
     qpRouteSubscription: Subscription;
@@ -59,14 +60,16 @@ export class WorkflowComponent {
     loadingFav = false;
 
     // Sidebar data
+    @Select(WorkflowState.getSidebarMode()) sibebar$: Observable<string>;
+    sidebarSubs: Subscription;
     sidebarMode = WorkflowSidebarMode.RUNS;
     sidebarModes = WorkflowSidebarMode;
 
     asCodeEditorSubscription: Subscription;
     asCodeEditorOpen = false;
 
-    @ViewChild('saveAsCode', {static: false})
-    saveAsCode: WorkflowSaveAsCodeComponent;
+    @ViewChild('updateAsCode', {static: false})
+    saveAsCode: UpdateAsCodeComponent;
     @ViewChild('popup', {static: false})
     popupFromlRepository: SuiPopup;
     @ViewChildren(SuiPopupController) popups: QueryList<SuiPopupController>;
@@ -76,14 +79,11 @@ export class WorkflowComponent {
     selectedNodeRef: string;
     selectecHookRef: string;
 
-    workflowRun: WorkflowRun;
-
     showButtons = false;
     loadingPopupButton = false;
 
     constructor(
         private _activatedRoute: ActivatedRoute,
-        private _workflowService: WorkflowService,
         private _router: Router,
         private _workflowCore: WorkflowCoreService,
         private _toast: ToastService,
@@ -91,16 +91,23 @@ export class WorkflowComponent {
         private _store: Store,
         private _cd: ChangeDetectorRef
     ) {
-        this.dataRouteSubscription = this._activatedRoute.data.subscribe(datas => {
-            this.project = datas['project'];
-        });
 
+    }
+
+    ngOnInit(): void {
         this.projectSubscription = this._store.select(ProjectState)
-            .pipe(filter((projState) => projState.project && projState.project.key))
             .subscribe((projectState: ProjectStateModel) => {
                 this.project = projectState.project;
-                this._cd.markForCheck();
+                this._cd.detectChanges();
             });
+
+        this.sidebarSubs = this.sibebar$.subscribe( m => {
+            if (m === this.sidebarMode) {
+                return;
+            }
+            this.sidebarMode = m;
+            this._cd.detectChanges();
+        });
 
         this.asCodeEditorSubscription = this._workflowCore.getAsCodeEditor()
             .subscribe((state) => {
@@ -128,30 +135,22 @@ export class WorkflowComponent {
         });
 
         this._store.dispatch(new CleanWorkflowState());
-        this.workflowSubscription = this._store.select(WorkflowState.getCurrent()).subscribe( (s: WorkflowStateModel) => {
-            this.sidebarMode = s.sidebar;
-
-            if (s.workflow && (!this.workflow || (this.workflow && s.workflow.id !== this.workflow.id))) {
-                this.workflow = s.workflow;
-                this.initRuns(s.projectKey, s.workflow.name, s.filters);
+        this.workflowSubscription = this.workflow$.subscribe(w => {
+            if (!w) {
+                return;
             }
-            if (s.workflow) {
-                this.workflow = s.workflow;
-                if (this.selectecHookRef) {
-                    let h = Workflow.getHookByRef(this.selectecHookRef, this.workflow);
-                    if (h) {
-                        this._store.dispatch(new SelectHook({hook: h, node: this.workflow.workflow_data.node}));
-                    }
+            if (!this.workflow || (this.workflow && w.id !== this.workflow.id)) {
+                this.initRuns(this.project.key, w.name, this._store.selectSnapshot(WorkflowState).filters);
+            }
+            this.workflow = w;
+            if (this.selectecHookRef) {
+                let h = Workflow.getHookByRef(this.selectecHookRef, this.workflow);
+                if (h) {
+                    this._store.dispatch(new SelectHook({hook: h, node: this.workflow.workflow_data.node}));
                 }
-            }
-            if (s.workflowRun) {
-                this.workflowRun = s.workflowRun;
-            } else {
-                delete this.workflowRun;
             }
             this._cd.markForCheck();
         });
-
 
         // Workflow subscription
         this.paramsRouteSubscription = this._activatedRoute.params.subscribe(params => {
@@ -212,26 +211,26 @@ export class WorkflowComponent {
         });
     }
 
-    migrateAsCode(): void {
-        this.loadingPopupButton = true;
-        this._workflowService.migrateAsCode(this.project.key, this.workflow.name)
-            .pipe(finalize(() => {
-                this.loadingPopupButton = false;
-                this._cd.markForCheck();
-            }))
-            .subscribe((ope) => {
-                this.showButtons = false;
-                this.popupFromlRepository.close();
-                this.saveAsCode.show(ope);
-            });
-    }
+    openSaveAsCodeModal(): void {
+        if (!this.project.vcs_servers) {
+            this._toast.error('', this._translate.instant('project_vcs_no'));
+            return;
+        }
+        if (!this.workflow.workflow_data || !this.workflow.workflow_data.node ||
+            !this.workflow.workflow_data.node.context ||
+            !this.workflow.workflow_data.node.context.application_id
+        ) {
+            this._toast.error('', this._translate.instant('common_no_application'));
+            return;
+        }
+        let app = this.workflow.applications[this.workflow.workflow_data.node.context.application_id];
+        if (!app || !app.repository_fullname) {
+            this._toast.error('', this._translate.instant('application_repo_no'));
+            return;
+        }
 
-    resyncPR(): void {
-        this.loadingPopupButton = true;
-        this._workflowService.resyncPRAsCode(this.project.key, this.workflow.name)
-            .pipe(finalize(() => this.loadingPopupButton = false))
-            .subscribe(() => {
-                this.popupFromlRepository.close();
-            });
+        if (this.saveAsCode) {
+            this.saveAsCode.show(null, 'workflow');
+        }
     }
 }

@@ -31,15 +31,13 @@ func Test_getKeysInApplicationHandler(t *testing.T) {
 	app := &sdk.Application{
 		Name: sdk.RandomString(10),
 	}
-	if err := application.Insert(api.mustDB(), api.Cache, proj, app); err != nil {
+	if err := application.Insert(api.mustDB(), api.Cache, *proj, app); err != nil {
 		t.Fatal(err)
 	}
 
 	k := &sdk.ApplicationKey{
-		Key: sdk.Key{
-			Name: "mykey",
-			Type: "pgp",
-		},
+		Name:          "mykey",
+		Type:          "pgp",
 		ApplicationID: app.ID,
 	}
 
@@ -48,7 +46,9 @@ func Test_getKeysInApplicationHandler(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	k.Key = pgpK
+	k.Public = pgpK.Public
+	k.Private = pgpK.Private
+	k.KeyID = pgpK.KeyID
 
 	if err := application.InsertKey(api.mustDB(), k); err != nil {
 		t.Fatal(err)
@@ -90,17 +90,15 @@ func Test_deleteKeyInApplicationHandler(t *testing.T) {
 	app := &sdk.Application{
 		Name: sdk.RandomString(10),
 	}
-	if err := application.Insert(api.mustDB(), api.Cache, proj, app); err != nil {
+	if err := application.Insert(api.mustDB(), api.Cache, *proj, app); err != nil {
 		t.Fatal(err)
 	}
 
 	k := &sdk.ApplicationKey{
-		Key: sdk.Key{
-			Name:    "mykey",
-			Type:    "pgp",
-			Public:  "pub",
-			Private: "priv",
-		},
+		Name:          "mykey",
+		Type:          "pgp",
+		Public:        "pub",
+		Private:       "priv",
 		ApplicationID: app.ID,
 	}
 
@@ -145,15 +143,13 @@ func Test_addKeyInApplicationHandler(t *testing.T) {
 	app := &sdk.Application{
 		Name: sdk.RandomString(10),
 	}
-	if err := application.Insert(api.mustDB(), api.Cache, proj, app); err != nil {
+	if err := application.Insert(api.mustDB(), api.Cache, *proj, app); err != nil {
 		t.Fatal(err)
 	}
 
 	k := &sdk.ApplicationKey{
-		Key: sdk.Key{
-			Name: "mykey",
-			Type: "pgp",
-		},
+		Name: "mykey",
+		Type: "pgp",
 	}
 
 	vars := map[string]string{

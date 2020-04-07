@@ -17,6 +17,7 @@ type SpawnInfo struct {
 type SpawnMsg struct {
 	ID   string        `json:"id" db:"-"`
 	Args []interface{} `json:"args" db:"-"`
+	Type string        `json:"type" db:"-"`
 }
 
 // ExecutedJob represents a running job
@@ -116,7 +117,7 @@ const (
 // StatusIsTerminated returns if status is terminated (nothing related to building or waiting, ...)
 func StatusIsTerminated(status string) bool {
 	switch status {
-	case StatusBuilding, StatusWaiting:
+	case StatusPending, StatusBuilding, StatusWaiting, "": // A stage does not have status when he's waiting a previous stage
 		return false
 	default:
 		return true

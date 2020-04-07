@@ -159,18 +159,6 @@ func SendMailAskResetToken(ctx context.Context, userMail, username, token, callb
 	return SendEmail(ctx, "[CDS] Reset your password", &mailContent, userMail, false)
 }
 
-// SendMailResetToken send mail to reset a user account.
-func SendMailResetToken(ctx context.Context, userMail, username, token, callback string) error {
-	callbackURL := fmt.Sprintf(callback, token)
-
-	mailContent, err := createTemplate(templateReset, callbackURL, "", username, "")
-	if err != nil {
-		return err
-	}
-
-	return SendEmail(ctx, "[CDS] Your password was reset", &mailContent, userMail, false)
-}
-
 func createTemplate(templ, callbackURL, callbackAPIURL, username, token string) (bytes.Buffer, error) {
 	var b bytes.Buffer
 

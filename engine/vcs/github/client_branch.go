@@ -15,64 +15,61 @@ import (
 // https://developer.github.com/v3/repos/branches/#list-branches
 func (g *githubClient) Branches(ctx context.Context, fullname string) ([]sdk.VCSBranch, error) {
 	var branches = []Branch{}
-	var nextPage = "/repos/" + fullname + "/branches"
-
 	repo, err := g.repoByFullname(ctx, fullname)
 	if err != nil {
 		return nil, err
 	}
-
 	var noEtag bool
 	var attempt int
 
-	for {
-		if nextPage != "" {
-
-			var opt getArgFunc
-			if noEtag {
-				opt = withoutETag
-			} else {
-				opt = withETag
-			}
-
-			attempt++
-			status, body, headers, err := g.get(ctx, nextPage, opt)
-			if err != nil {
-				log.Warning(ctx, "githubClient.Branches> Error %s", err)
-				return nil, err
-			}
-			if status >= 400 {
-				return nil, sdk.NewError(sdk.ErrUnknownError, errorAPI(body))
-			}
-			nextBranches := []Branch{}
-
-			//Github may return 304 status because we are using conditional request with ETag based headers
-			if status == http.StatusNotModified {
-				//If repos aren't updated, lets get them from cache
-				k := cache.Key("vcs", "github", "branches", g.OAuthToken, "/repos/"+fullname+"/branches")
-				_, err := g.Cache.Get(k, &branches)
-				if err != nil {
-					log.Error(ctx, "cannot get from cache %s: %v", k, err)
-				}
-				if len(branches) != 0 || attempt > 5 {
-					//We found branches, let's exit the loop
-					break
-				}
-				//If we did not found any branch in cache, let's retry (same nextPage) without etag
-				noEtag = true
-				continue
-			} else {
-				if err := json.Unmarshal(body, &nextBranches); err != nil {
-					log.Warning(ctx, "githubClient.Branches> Unable to parse github branches: %s", err)
-					return nil, err
-				}
-			}
-
-			branches = append(branches, nextBranches...)
-			nextPage = getNextPage(headers)
-		} else {
+	var nextPage = "/repos/" + fullname + "/branches"
+	for nextPage != "" {
+		if ctx.Err() != nil {
 			break
 		}
+
+		var opt getArgFunc
+		if noEtag {
+			opt = withoutETag
+		} else {
+			opt = withETag
+		}
+
+		attempt++
+		status, body, headers, err := g.get(ctx, nextPage, opt)
+		if err != nil {
+			log.Warning(ctx, "githubClient.Branches> Error %s", err)
+			return nil, err
+		}
+		if status >= 400 {
+			return nil, sdk.NewError(sdk.ErrUnknownError, errorAPI(body))
+		}
+		nextBranches := []Branch{}
+
+		//Github may return 304 status because we are using conditional request with ETag based headers
+		if status == http.StatusNotModified {
+			//If repos aren't updated, lets get them from cache
+			k := cache.Key("vcs", "github", "branches", g.OAuthToken, "/repos/"+fullname+"/branches")
+			_, err := g.Cache.Get(k, &branches)
+			if err != nil {
+				log.Error(ctx, "cannot get from cache %s: %v", k, err)
+			}
+			if len(branches) != 0 || attempt > 5 {
+				//We found branches, let's exit the loop
+				break
+			}
+			//If we did not found any branch in cache, let's retry (same nextPage) without etag
+			noEtag = true
+			continue
+		} else {
+			if err := json.Unmarshal(body, &nextBranches); err != nil {
+				log.Warning(ctx, "githubClient.Branches> Unable to parse github branches: %s", err)
+				return nil, err
+			}
+		}
+
+		branches = append(branches, nextBranches...)
+		nextPage = getNextPage(headers)
 	}
 
 	//Put the body on cache for one hour and one minute

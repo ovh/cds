@@ -70,7 +70,7 @@ func insertGroupInNode(db gorp.SqlExecutor, nodeID, groupID int64, role int) err
 		)`
 	if _, err := db.Exec(query, nodeID, groupID, role); err != nil {
 		if strings.Contains(err.Error(), `null value in column "workflow_group_id"`) {
-			return sdk.WrapError(sdk.ErrNotFound, "cannot add this group on workflow node because there isn't in the workflow groups : %v", err)
+			return sdk.NewErrorFrom(sdk.ErrNotFound, "cannot add this group on workflow node because it isn't in the workflow groups : %v", err)
 		}
 		return sdk.WithStack(err)
 	}

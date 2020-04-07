@@ -38,6 +38,7 @@ func DeleteDeadWorkers(ctx context.Context, db *gorp.DbMap) error {
 		tx, err := db.Begin()
 		if err != nil {
 			log.Error(ctx, "deleteDeadWorkers> Cannot create transaction")
+			continue
 		}
 
 		if errD := Delete(tx, workers[i].ID); errD != nil {

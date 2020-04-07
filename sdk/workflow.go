@@ -30,7 +30,7 @@ type Workflow struct {
 	ProjectKey              string                       `json:"project_key" db:"-" cli:"-"`
 	Groups                  []GroupPermission            `json:"groups,omitempty" db:"-" cli:"-"`
 	Permissions             Permissions                  `json:"permissions" db:"-" cli:"-"`
-	Metadata                Metadata                     `json:"metadata" yaml:"metadata" db:"-"`
+	Metadata                Metadata                     `json:"metadata,omitempty" yaml:"metadata" db:"-"`
 	Usage                   *Usage                       `json:"usage,omitempty" db:"-" cli:"-"`
 	HistoryLength           int64                        `json:"history_length" db:"history_length" cli:"-"`
 	PurgeTags               []string                     `json:"purge_tags,omitempty" db:"-" cli:"-"`
@@ -39,19 +39,19 @@ type Workflow struct {
 	DerivedFromWorkflowID   int64                        `json:"derived_from_workflow_id,omitempty" db:"derived_from_workflow_id" cli:"-"`
 	DerivedFromWorkflowName string                       `json:"derived_from_workflow_name,omitempty" db:"derived_from_workflow_name" cli:"-"`
 	DerivationBranch        string                       `json:"derivation_branch,omitempty" db:"derivation_branch" cli:"-"`
-	Audits                  []AuditWorkflow              `json:"audits" db:"-"`
-	Pipelines               map[int64]Pipeline           `json:"pipelines" db:"-" cli:"-"  mapstructure:"-"`
-	Applications            map[int64]Application        `json:"applications" db:"-" cli:"-"  mapstructure:"-"`
-	Environments            map[int64]Environment        `json:"environments" db:"-" cli:"-"  mapstructure:"-"`
-	ProjectIntegrations     map[int64]ProjectIntegration `json:"project_integrations" db:"-" cli:"-"  mapstructure:"-"`
-	HookModels              map[int64]WorkflowHookModel  `json:"hook_models" db:"-" cli:"-"  mapstructure:"-"`
-	OutGoingHookModels      map[int64]WorkflowHookModel  `json:"outgoing_hook_models" db:"-" cli:"-"  mapstructure:"-"`
-	Labels                  []Label                      `json:"labels" db:"-" cli:"labels"`
+	Audits                  []AuditWorkflow              `json:"audits,omitempty" db:"-"`
+	Pipelines               map[int64]Pipeline           `json:"pipelines,omitempty" db:"-" cli:"-"  mapstructure:"-"`
+	Applications            map[int64]Application        `json:"applications,omitempty" db:"-" cli:"-"  mapstructure:"-"`
+	Environments            map[int64]Environment        `json:"environments,omitempty" db:"-" cli:"-"  mapstructure:"-"`
+	ProjectIntegrations     map[int64]ProjectIntegration `json:"project_integrations,omitempty" db:"-" cli:"-"  mapstructure:"-"`
+	HookModels              map[int64]WorkflowHookModel  `json:"hook_models,omitempty" db:"-" cli:"-"  mapstructure:"-"`
+	OutGoingHookModels      map[int64]WorkflowHookModel  `json:"outgoing_hook_models,omitempty" db:"-" cli:"-"  mapstructure:"-"`
+	Labels                  []Label                      `json:"labels,omitempty" db:"-" cli:"labels"`
 	ToDelete                bool                         `json:"to_delete" db:"to_delete" cli:"-"`
 	Favorite                bool                         `json:"favorite" db:"-" cli:"favorite"`
-	WorkflowData            *WorkflowData                `json:"workflow_data" db:"-" cli:"-"`
-	EventIntegrations       []ProjectIntegration         `json:"event_integrations" db:"-" cli:"-"`
-	AsCodeEvent             []AsCodeEvent                `json:"as_code_events" db:"-" cli:"-"`
+	WorkflowData            WorkflowData                 `json:"workflow_data" db:"-" cli:"-"`
+	EventIntegrations       []ProjectIntegration         `json:"event_integrations,omitempty" db:"-" cli:"-"`
+	AsCodeEvent             []AsCodeEvent                `json:"as_code_events,omitempty" db:"-" cli:"-"`
 	// aggregates
 	Template         *WorkflowTemplate         `json:"-" db:"-" cli:"-"`
 	TemplateInstance *WorkflowTemplateInstance `json:"-" db:"-" cli:"-"`
@@ -68,16 +68,6 @@ func (workflows Workflows) Names() []string {
 		res[i] = workflows[i].Name
 	}
 	return res
-}
-
-// AsCodeEvent represents all pending modifications on a workflow
-type AsCodeEvent struct {
-	ID             int64     `json:"id" db:"id" cli:"-"`
-	WorkflowID     int64     `json:"workflow_id" db:"workflow_id" cli:"-"`
-	PullRequestID  int64     `json:"pullrequest_id" db:"pullrequest_id" cli:"-"`
-	PullRequestURL string    `json:"pullrequest_url" db:"pullrequest_url" cli:"-"`
-	Username       string    `json:"username" db:"username" cli:"-"`
-	CreationDate   time.Time `json:"creation_date" db:"creation_date" cli:"-"`
 }
 
 // GetApplication retrieve application from workflow
@@ -104,7 +94,7 @@ func (w *Workflow) ResetIDs() {
 
 //AddTrigger adds a trigger to the destination node from the node found by its name
 func (w *Workflow) AddTrigger(name string, dest Node) {
-	if w.WorkflowData == nil || w.WorkflowData.Node.Name == "" {
+	if w.WorkflowData.Node.Name == "" {
 		return
 	}
 
@@ -263,29 +253,42 @@ type WorkflowNodeJobRunCount struct {
 // Label represent a label linked to a workflow
 type Label struct {
 	ID         int64  `json:"id" db:"id"`
-	Name       string `json:"name" db:"name"`
+	Name       string `json:"name" db:"name" cli:"label,key"`
 	Color      string `json:"color" db:"color"`
 	ProjectID  int64  `json:"project_id" db:"project_id"`
 	WorkflowID int64  `json:"workflow_id,omitempty" db:"-"`
 }
 
-//Validate return error or update label if it is not valid
-func (label *Label) Validate() error {
+// IsValid return an error or update label if it is not valid.
+func (label *Label) IsValid() error {
 	if label.Name == "" {
-		return WrapError(fmt.Errorf("Label must have a name"), "IsValid>")
+		return NewErrorFrom(ErrWrongRequest, "label must have a name")
 	}
 	if label.Color == "" {
 		bytes := make([]byte, 3)
 		if _, err := rand.Read(bytes); err != nil {
-			return WrapError(err, "IsValid> Cannot create random color")
+			return WrapError(err, "cannot create random color")
 		}
 		label.Color = "#" + hex.EncodeToString(bytes)
 	} else {
 		if !ColorRegexp.Match([]byte(label.Color)) {
-			return ErrIconBadFormat
+			return WithStack(ErrIconBadFormat)
 		}
 	}
 
+	return nil
+}
+
+// Labels slice.
+type Labels []Label
+
+// IsValid returns an error if a label is not valid.
+func (l Labels) IsValid() error {
+	for i := range l {
+		if err := l[i].IsValid(); err != nil {
+			return err
+		}
+	}
 	return nil
 }
 

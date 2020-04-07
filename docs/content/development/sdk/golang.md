@@ -56,12 +56,11 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-var host, token, username string
+var host, token string
 
 func init() {
 	flag.StringVar(&host, "api", "http://localhost:8081", "CDS API URL, ex: http://localhost:8081")
 	flag.StringVar(&token, "token", "", "CDS signin token")
-	flag.StringVar(&username, "username", "", "CDS Username")
 }
 
 func main() {
@@ -74,7 +73,7 @@ func main() {
 		"token": token,
 	})
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error while signin:%s", err)
+		fmt.Fprintf(os.Stderr, "Error while signin: %v", err)
 		os.Exit(1)
 	}
 	client = cdsclient.New(cdsclient.Config{
@@ -84,7 +83,7 @@ func main() {
 
 	workers, err := client.WorkerList()
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error while getting workers:%s", err)
+		fmt.Fprintf(os.Stderr, "Error while getting workers: %v", err)
 		os.Exit(1)
 	}
 
@@ -103,5 +102,5 @@ func main() {
 + Build & run it: 
 
 ```bash
-go run main.go --username admin --token xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx --api http://localhost:8081
+go run main.go --token xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx --api http://localhost:8081
 ```

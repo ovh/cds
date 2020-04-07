@@ -193,25 +193,6 @@ func GetRequirementsDistinctBinary(db gorp.SqlExecutor) (sdk.RequirementList, er
 	return rs, nil
 }
 
-// GetRequirementsTypeModelAndValueStartByWithLock returns action requirements from database for given criteria.
-// This func is used for migration purpose and needs to lock selected rows.
-func GetRequirementsTypeModelAndValueStartByWithLock(ctx context.Context, db gorp.SqlExecutor, value string) ([]sdk.Requirement, error) {
-	rs := []sdk.Requirement{}
-
-	query := gorpmapping.NewQuery(`
-    SELECT *
-    FROM action_requirement
-    WHERE type = 'model' AND value LIKE $1
-    FOR UPDATE SKIP LOCKED
-  `).Args(value + "%")
-
-	if err := gorpmapping.GetAll(ctx, db, query, &rs); err != nil {
-		return nil, sdk.WrapError(err, "cannot get requirements")
-	}
-
-	return rs, nil
-}
-
 // GetRequirementsTypeModelAndValueStartBy returns action requirements from database for given criteria.
 func GetRequirementsTypeModelAndValueStartBy(ctx context.Context, db gorp.SqlExecutor, value string) ([]sdk.Requirement, error) {
 	rs := []sdk.Requirement{}

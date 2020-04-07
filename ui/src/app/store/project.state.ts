@@ -1,5 +1,5 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Action, createSelector, State, StateContext } from '@ngxs/store';
+import { Action, createSelector, Selector, State, StateContext } from '@ngxs/store';
 import { Environment } from 'app/model/environment.model';
 import { GroupPermission } from 'app/model/group.model';
 import { ProjectIntegration } from 'app/model/integration.model';
@@ -7,6 +7,7 @@ import { Key } from 'app/model/keys.model';
 import { IdName, Label, LoadOpts, Project } from 'app/model/project.model';
 import { Usage } from 'app/model/usage.model';
 import { Variable } from 'app/model/variable.model';
+import { EnvironmentService } from 'app/service/environment/environment.service';
 import { NavbarService } from 'app/service/navbar/navbar.service';
 import { ProjectStore } from 'app/service/project/project.store';
 import { cloneDeep } from 'lodash-es';
@@ -31,6 +32,11 @@ export class ProjectStateModel {
 })
 export class ProjectState {
 
+    @Selector()
+    static projectSnapshot(state: ProjectStateModel) {
+        return state.project;
+    }
+
     static selectEnvironment(name: string) {
         return createSelector(
             [ProjectState],
@@ -46,7 +52,8 @@ export class ProjectState {
     constructor(
         private _http: HttpClient,
         private _navbarService: NavbarService,
-        private _projectStore: ProjectStore
+        private _projectStore: ProjectStore,
+        private _envService: EnvironmentService
     ) { }
 
 
@@ -851,11 +858,7 @@ export class ProjectState {
         if (state.currentProjectKey && state.currentProjectKey !== action.payload.projectKey) {
             ctx.dispatch(new ProjectAction.FetchProject({ projectKey: action.payload.projectKey, opts: [] }));
         }
-        let params = new HttpParams();
-        params = params.append('withUsage', 'true');
-
-        return this._http
-            .get<Environment>(`/project/${action.payload.projectKey}/environment/${action.payload.envName}`, { params })
+        return this._envService.getEnvironment(action.payload.projectKey, action.payload.envName)
             .pipe(tap((environment: Environment) => {
                 let envs = state.project.environments;
                 if (Array.isArray(envs)) {

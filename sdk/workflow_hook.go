@@ -2,8 +2,11 @@ package sdk
 
 import (
 	"database/sql/driver"
-	json "encoding/json"
+	"encoding/base64"
+	"encoding/json"
 	"fmt"
+	"reflect"
+	"sort"
 )
 
 // Those are icon for hooks
@@ -18,12 +21,28 @@ const (
 type NodeHook struct {
 	ID            int64                  `json:"id" db:"id"`
 	UUID          string                 `json:"uuid" db:"uuid"`
-	Ref           string                 `json:"ref" db:"ref"`
 	NodeID        int64                  `json:"node_id" db:"node_id"`
 	HookModelID   int64                  `json:"hook_model_id" db:"hook_model_id"`
 	HookModelName string                 `json:"hook_model_name" db:"-"`
 	Config        WorkflowNodeHookConfig `json:"config" db:"config"`
 	Conditions    WorkflowNodeConditions `json:"conditions" db:"conditions"`
+}
+
+func (h NodeHook) Ref() string {
+	s := "model:" + h.HookModelName + ";"
+
+	var mapKeys = reflect.ValueOf(h.Config).MapKeys()
+	sort.Slice(mapKeys, func(i, j int) bool {
+		return mapKeys[i].String() < mapKeys[j].String()
+	})
+	for _, k := range mapKeys {
+		cfg := h.Config[k.String()]
+		if cfg.Configurable {
+			s += k.String() + ":" + cfg.Value + ";"
+		}
+	}
+
+	return base64.StdEncoding.EncodeToString([]byte(s))
 }
 
 //Equals checks functional equality between two hooks
@@ -57,10 +76,6 @@ func (h NodeHook) Equals(h1 NodeHook) bool {
 
 // FilterHooksConfig filter all hooks configuration and remove some configuration key
 func (w *Workflow) FilterHooksConfig(s ...string) {
-	if w.WorkflowData == nil {
-		return
-	}
-
 	w.WorkflowData.Node.FilterHooksConfig(s...)
 	for i := range w.WorkflowData.Joins {
 		w.WorkflowData.Joins[i].FilterHooksConfig(s...)

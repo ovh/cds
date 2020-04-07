@@ -154,10 +154,10 @@ func Insert(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project) error {
 	}
 
 	pk := sdk.ProjectKey{}
-	pk.Key.KeyID = k.KeyID
-	pk.Key.Name = BuiltinGPGKey
-	pk.Key.Private = k.Private
-	pk.Key.Public = k.Public
+	pk.KeyID = k.KeyID
+	pk.Name = BuiltinGPGKey
+	pk.Private = k.Private
+	pk.Public = k.Public
 	pk.Type = sdk.KeyTypePGP
 	pk.ProjectID = proj.ID
 	pk.Builtin = true
@@ -182,7 +182,7 @@ func Update(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project) error {
 		return err
 	}
 	if n == 0 {
-		return sdk.ErrNoProject
+		return sdk.WithStack(sdk.ErrNoProject)
 	}
 	*proj = sdk.Project(dbProj)
 	return nil
@@ -191,7 +191,7 @@ func Update(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project) error {
 // DeleteByID removes given project from database (project and project_group table)
 // DeleteByID also removes all pipelines inside project (pipeline and pipeline_group table).
 func DeleteByID(db gorp.SqlExecutor, id int64) error {
-	if err := deleteAllVariable(db, id); err != nil {
+	if err := DeleteAllVariables(db, id); err != nil {
 		return err
 	}
 
@@ -221,17 +221,6 @@ func LoadProjectByNodeJobRunID(ctx context.Context, db gorp.SqlExecutor, store c
 	return load(ctx, db, store, opts, query, nodeJobRunID)
 }
 
-// LoadProjectByNodeRunID return a project from node run id
-func LoadProjectByNodeRunID(ctx context.Context, db gorp.SqlExecutor, store cache.Store, nodeRunID int64, opts ...LoadOptionFunc) (*sdk.Project, error) {
-	query := `
-		SELECT project.* FROM project
-		JOIN workflow_run ON workflow_run.project_id = project.id
-		JOIN workflow_node_run ON workflow_node_run.workflow_run_id = workflow_run.id
-		WHERE workflow_node_run.id = $1
-	`
-	return load(ctx, db, store, opts, query, nodeRunID)
-}
-
 // LoadByID returns a project with all its variables and applications given a user. It can also returns pipelines, environments, groups, permission, and repositorires manager. See LoadOptions
 func LoadByID(db gorp.SqlExecutor, store cache.Store, id int64, opts ...LoadOptionFunc) (*sdk.Project, error) {
 	return load(context.TODO(), db, store, opts, "select project.* from project where id = $1", id)
@@ -249,15 +238,6 @@ func LoadProjectByWorkflowID(db gorp.SqlExecutor, store cache.Store, workflowID 
 	          JOIN workflow ON workflow.project_id = project.id
 	          WHERE workflow.id = $1 `
 	return load(context.TODO(), db, store, opts, query, workflowID)
-}
-
-// LoadByPipelineID loads an project from pipeline iD
-func LoadByPipelineID(db gorp.SqlExecutor, store cache.Store, groupIDs []int64, pipelineID int64, opts ...LoadOptionFunc) (*sdk.Project, error) {
-	query := `SELECT project.id, project.name, project.projectKey, project.last_modified
-	          FROM project
-	          JOIN pipeline ON pipeline.project_id = project.id
-	          WHERE pipeline.id = $1 `
-	return load(context.TODO(), db, store, opts, query, pipelineID)
 }
 
 func loadprojects(ctx context.Context, db gorp.SqlExecutor, store cache.Store, opts []LoadOptionFunc, query string, args ...interface{}) ([]sdk.Project, error) {
@@ -361,8 +341,8 @@ func DeleteLabel(db gorp.SqlExecutor, labelID int64) error {
 
 // InsertLabel insert a label
 func InsertLabel(db gorp.SqlExecutor, label *sdk.Label) error {
-	if err := label.Validate(); err != nil {
-		return sdk.WithStack(err)
+	if err := label.IsValid(); err != nil {
+		return err
 	}
 
 	lbl := dbLabel(*label)
@@ -376,8 +356,8 @@ func InsertLabel(db gorp.SqlExecutor, label *sdk.Label) error {
 
 // UpdateLabel update a label
 func UpdateLabel(db gorp.SqlExecutor, label *sdk.Label) error {
-	if err := label.Validate(); err != nil {
-		return sdk.WithStack(err)
+	if err := label.IsValid(); err != nil {
+		return err
 	}
 
 	lbl := dbLabel(*label)
@@ -390,12 +370,12 @@ func UpdateLabel(db gorp.SqlExecutor, label *sdk.Label) error {
 }
 
 // UpdateFavorite add or delete project from user favorites
-func UpdateFavorite(db gorp.SqlExecutor, projectID int64, userID int64, add bool) error {
+func UpdateFavorite(db gorp.SqlExecutor, projectID int64, userID string, add bool) error {
 	var query string
 	if add {
-		query = "INSERT INTO project_favorite (user_id, project_id) VALUES ($1, $2)"
+		query = "INSERT INTO project_favorite (authentified_user_id, project_id) VALUES ($1, $2)"
 	} else {
-		query = "DELETE FROM project_favorite WHERE user_id = $1 AND project_id = $2"
+		query = "DELETE FROM project_favorite WHERE authentified_user_id = $1 AND project_id = $2"
 	}
 
 	_, err := db.Exec(query, userID, projectID)

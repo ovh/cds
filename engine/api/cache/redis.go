@@ -213,6 +213,9 @@ func (s *RedisStore) DequeueWithContext(c context.Context, queueName string, val
 	for elem == "" {
 		select {
 		case <-ticker:
+			if c.Err() != nil {
+				return c.Err()
+			}
 			res, err := s.Client.BRPop(time.Second, queueName).Result()
 			if err == redis.Nil {
 				continue

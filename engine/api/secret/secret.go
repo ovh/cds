@@ -15,8 +15,6 @@ import (
 
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
-
-	vault "github.com/hashicorp/vault/api"
 )
 
 // AES key fetched
@@ -31,49 +29,10 @@ var (
 	prefix = "3DICC3It"
 )
 
-type Secret struct {
-	Token  string
-	Client *vault.Client
-}
-
 // Init secrets: cipherKey
 // cipherKey is set from viper configuration
 func Init(cipherKey string) {
 	key = []byte(cipherKey)
-}
-
-// Create new secret client
-func New(token, addr string) (*Secret, error) {
-	client, err := vault.NewClient(vault.DefaultConfig())
-	if err != nil {
-		return nil, err
-	}
-
-	client.SetToken(token)
-	client.SetAddress(addr)
-	return &Secret{
-		Client: client,
-		Token:  token,
-	}, nil
-}
-
-// GetFromVault Get secret from vault
-func (secret *Secret) GetFromVault(s string) (string, error) {
-	conf, err := secret.Client.Logical().Read(s)
-	if err != nil {
-		return "", err
-	} else if conf == nil {
-		log.Warning(context.Background(), "vault> no value found at %q", s)
-		return "", nil
-	}
-
-	value, exists := conf.Data["data"]
-	if !exists {
-		log.Warning(context.Background(), "vault> no 'data' field found for %q (you must add a field with a key named data)", s)
-		return "", nil
-	}
-
-	return fmt.Sprintf("%v", value), nil
 }
 
 // Encrypt data using aes+hmac algorithm
@@ -117,12 +76,12 @@ func Decrypt(data []byte) ([]byte, error) {
 
 	if key == nil {
 		log.Error(context.TODO(), "Missing key, init failed?")
-		return nil, sdk.ErrSecretKeyFetchFailed
+		return nil, sdk.WithStack(sdk.ErrSecretKeyFetchFailed)
 	}
 
 	if len(data) < (nonceSize + macSize) {
 		log.Error(context.TODO(), "cannot decrypt secret, got invalid data")
-		return nil, sdk.ErrInvalidSecretFormat
+		return nil, sdk.WithStack(sdk.ErrInvalidSecretFormat)
 	}
 
 	// Split actual data, hmac and nonce
@@ -135,12 +94,12 @@ func Decrypt(data []byte) ([]byte, error) {
 	h.Write(data)
 	mac := h.Sum(nil)
 	if !hmac.Equal(mac, tag) {
-		return nil, fmt.Errorf("invalid hmac")
+		return nil, sdk.WithStack(fmt.Errorf("invalid hmac"))
 	}
 	// uncipher data
 	c, err := aes.NewCipher(key[:ckeySize])
 	if err != nil {
-		return nil, err
+		return nil, sdk.WithStack(fmt.Errorf("unable to create cypher block: %v", err))
 	}
 	ctr := cipher.NewCTR(c, data[:nonceSize])
 	ctr.XORKeyStream(out, data[nonceSize:])

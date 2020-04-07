@@ -85,7 +85,7 @@ func (api *API) getActionsForGroupHandler() service.Handler {
 
 		groupName := vars["permGroupName"]
 
-		g, err := group.LoadByName(ctx, api.mustDB(), groupName)
+		g, err := group.LoadByName(ctx, api.mustDB(), groupName, group.LoadOptions.WithMembers)
 		if err != nil {
 			return err
 		}
@@ -583,6 +583,15 @@ func (api *API) getActionExportHandler() service.Handler {
 		groupName := vars["permGroupName"]
 		actionName := vars["permActionName"]
 
+		format := FormString(r, "format")
+		if format == "" {
+			format = "yaml"
+		}
+		f, err := exportentities.GetFormat(format)
+		if err != nil {
+			return err
+		}
+
 		g, err := group.LoadByName(ctx, api.mustDB(), groupName)
 		if err != nil {
 			return err
@@ -596,21 +605,11 @@ func (api *API) getActionExportHandler() service.Handler {
 			return sdk.WithStack(sdk.ErrNoAction)
 		}
 
-		format := FormString(r, "format")
-		if format == "" {
-			format = "yaml"
-		}
-
-		f, err := exportentities.GetFormat(format)
-		if err != nil {
-			return err
-		}
-
 		if err := action.Export(*a, f, w); err != nil {
 			return err
 		}
 
-		w.Header().Add("Content-Type", exportentities.GetContentType(f))
+		w.Header().Add("Content-Type", f.ContentType())
 		return nil
 	}
 }
@@ -628,18 +627,14 @@ func (api *API) importActionHandler() service.Handler {
 		if contentType == "" {
 			contentType = http.DetectContentType(body)
 		}
+		format, err := exportentities.GetFormatFromContentType(contentType)
+		if err != nil {
+			return err
+		}
 
 		var ea exportentities.Action
-		switch contentType {
-		case "application/json":
-			err = json.Unmarshal(body, &ea)
-		case "application/x-yaml", "text/x-yam":
-			err = yaml.Unmarshal(body, &ea)
-		default:
-			return sdk.NewErrorFrom(sdk.ErrWrongRequest, "unsupported content-type: %s", contentType)
-		}
-		if err != nil {
-			return sdk.NewError(sdk.ErrWrongRequest, err)
+		if err := exportentities.Unmarshal(body, format, &ea); err != nil {
+			return err
 		}
 
 		tx, err := api.mustDB().Begin()
@@ -654,7 +649,7 @@ func (api *API) importActionHandler() service.Handler {
 		if ea.Group == sdk.SharedInfraGroupName || ea.Group == "" {
 			grp = group.SharedInfraGroup
 		} else {
-			grp, err = group.LoadByName(ctx, tx, ea.Group)
+			grp, err = group.LoadByName(ctx, tx, ea.Group, group.LoadOptions.WithMembers)
 			if err != nil {
 				return err
 			}
@@ -823,8 +818,8 @@ func (api *API) getActionBuiltinUsageHandler() service.Handler {
 	}
 }
 
-func getActionUsage(ctx context.Context, db gorp.SqlExecutor, store cache.Store, a *sdk.Action) (action.Usage, error) {
-	var usage action.Usage
+func getActionUsage(ctx context.Context, db gorp.SqlExecutor, store cache.Store, a *sdk.Action) (sdk.ActionUsages, error) {
+	var usage sdk.ActionUsages
 	var err error
 	usage.Pipelines, err = action.GetPipelineUsages(db, group.SharedInfraGroup.ID, a.ID)
 	if err != nil {
@@ -848,9 +843,9 @@ func getActionUsage(ctx context.Context, db gorp.SqlExecutor, store cache.Store,
 			mProjectIDs[ps[i].ID] = struct{}{}
 		}
 
-		filteredPipelines := make([]action.UsagePipeline, 0, len(usage.Pipelines))
+		filteredPipelines := make([]sdk.UsagePipeline, 0, len(usage.Pipelines))
 		for i := range usage.Pipelines {
-			if _, ok := mProjectIDs[usage.Pipelines[i].PipelineID]; ok {
+			if _, ok := mProjectIDs[usage.Pipelines[i].ProjectID]; ok {
 				filteredPipelines = append(filteredPipelines, usage.Pipelines[i])
 			}
 		}
@@ -863,7 +858,7 @@ func getActionUsage(ctx context.Context, db gorp.SqlExecutor, store cache.Store,
 			mGroupIDs[groupIDs[i]] = struct{}{}
 		}
 
-		filteredActions := make([]action.UsageAction, 0, len(usage.Actions))
+		filteredActions := make([]sdk.UsageAction, 0, len(usage.Actions))
 		for i := range usage.Actions {
 			if _, ok := mGroupIDs[usage.Actions[i].GroupID]; ok {
 				filteredActions = append(filteredActions, usage.Actions[i])

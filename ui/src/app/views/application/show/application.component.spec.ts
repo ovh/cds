@@ -32,6 +32,7 @@ import { SharedModule } from '../../../shared/shared.module';
 import { ToastService } from '../../../shared/toast/ToastService';
 import { ApplicationModule } from '../application.module';
 import { ApplicationShowComponent } from './application.component';
+import { ApplicationStateModel } from 'app/store/applications.state';
 
 describe('CDS: Application', () => {
 
@@ -100,10 +101,12 @@ describe('CDS: Application', () => {
         spyOn(appStore, 'updateRecentApplication');
 
         spyOn(store, 'select').and.callFake(() => {
+            let state = new ApplicationStateModel();
             let app: Application = new Application();
             app.name = 'app1';
             app.usage = new Usage();
-            return of(app);
+            state.application = app;
+            return of(state);
         });
 
         // Create component
@@ -141,10 +144,12 @@ describe('CDS: Application', () => {
         let call = 0;
 
         spyOn(store, 'select').and.callFake(() => {
+            let state = new ApplicationStateModel();
             let app: Application = new Application();
             app.name = 'app1';
             app.usage = new Usage();
-            return of(app);
+            state.application = app;
+            return of(state);
         });
 
         // Create component
@@ -174,10 +179,12 @@ describe('CDS: Application', () => {
 
     it('should run update variable', fakeAsync(() => {
         spyOn(store, 'select').and.callFake(() => {
+            let state = new ApplicationStateModel();
             let app: Application = new Application();
             app.name = 'app1';
             app.usage = new Usage();
-            return of(app);
+            state.application = app;
+            return of(state);
         });
 
         // Create component
@@ -208,10 +215,12 @@ describe('CDS: Application', () => {
 
     it('should run remove variable', fakeAsync(() => {
         spyOn(store, 'select').and.callFake(() => {
+            let state = new ApplicationStateModel();
             let app: Application = new Application();
             app.name = 'app1';
             app.usage = new Usage();
-            return of(app);
+            state.application = app;
+            return of(state);
         });
         // Create component
         let fixture = TestBed.createComponent(ApplicationShowComponent);

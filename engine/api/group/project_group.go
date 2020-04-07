@@ -1,6 +1,8 @@
 package group
 
 import (
+	"context"
+
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/sdk"
@@ -22,7 +24,7 @@ func DeleteLinkGroupProject(db gorp.SqlExecutor, l *LinkGroupProject) error {
 		return sdk.NewErrorFrom(sdk.ErrForbidden, "cannot remove group from project as it's the last group with write permission on project")
 	}
 
-	return deleteDBLinkGroupProject(db, l)
+	return deleteDBLinkGroupProject(context.TODO(), db, l)
 }
 
 // UpdateLinkGroupProject updates group role for the given project.
@@ -43,11 +45,45 @@ func UpdateLinkGroupProject(db gorp.SqlExecutor, l *LinkGroupProject) error {
 		}
 	}
 
-	return updateDBLinkGroupProject(db, l)
+	return updateDBLinkGroupProject(context.TODO(), db, l)
 }
 
 // DeleteLinksGroupProjectForProjectID removes all links between group and project from database for given project id.
 func DeleteLinksGroupProjectForProjectID(db gorp.SqlExecutor, projectID int64) error {
 	_, err := db.Exec("DELETE FROM project_group WHERE project_id = $1", projectID)
 	return sdk.WithStack(err)
+}
+
+// LoadGroupsIntoProject retrieves all groups related to project
+func LoadGroupsIntoProject(db gorp.SqlExecutor, proj *sdk.Project) error {
+	links, err := LoadLinksGroupProjectForProjectIDs(context.Background(), db, []int64{proj.ID})
+	if err != nil {
+		return err
+	}
+
+	var groupIDs = make([]int64, len(links))
+	var groupIDsMap = make(map[int64]int, len(links))
+	for i, l := range links {
+		groupIDs[i] = l.GroupID
+		groupIDsMap[l.GroupID] = l.Role
+	}
+
+	groups, err := LoadAllByIDs(context.Background(), db, groupIDs)
+	if err != nil {
+		return err
+	}
+
+	for _, g := range groups {
+		p, has := groupIDsMap[g.ID]
+		if !has {
+			continue
+		}
+		perm := sdk.GroupPermission{
+			Group:      g,
+			Permission: p,
+		}
+		proj.ProjectGroups = append(proj.ProjectGroups, perm)
+	}
+
+	return nil
 }

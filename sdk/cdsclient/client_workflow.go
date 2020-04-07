@@ -41,6 +41,25 @@ func (c *client) WorkflowUpdate(projectKey, name string, wf *sdk.Workflow) error
 	return nil
 }
 
+func (c *client) WorkflowLabelAdd(projectKey, name, labelName string) error {
+	lbl := sdk.Label{
+		Name: labelName,
+	}
+	url := fmt.Sprintf("/project/%s/workflows/%s/label", projectKey, name)
+	if _, err := c.PostJSON(context.Background(), url, lbl, nil); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (c *client) WorkflowLabelDelete(projectKey, name string, labelID int64) error {
+	url := fmt.Sprintf("/project/%s/workflows/%s/label/%d", projectKey, name, labelID)
+	if _, err := c.DeleteJSON(context.Background(), url, nil); err != nil {
+		return err
+	}
+	return nil
+}
+
 func (c *client) WorkflowGroupAdd(projectKey, name, groupName string, permission int) error {
 	gp := sdk.GroupPermission{
 		Group:      sdk.Group{Name: groupName},
@@ -210,6 +229,18 @@ func (c *client) WorkflowNodeRunRelease(projectKey string, workflowName string, 
 }
 
 func (c *client) WorkflowRunFromHook(projectKey string, workflowName string, hook sdk.WorkflowNodeRunHookEvent) (*sdk.WorkflowRun, error) {
+	// Check that the hook exists before run it
+	w, err := c.WorkflowGet(projectKey, workflowName)
+	if err != nil {
+		return nil, err
+	}
+
+	hooks := w.WorkflowData.GetHooks()
+	if _, has := hooks[hook.WorkflowNodeHookUUID]; !has {
+		// If the hook doesn't exist, raise an error
+		return nil, sdk.WithStack(sdk.ErrHookNotFound)
+	}
+
 	if c.config.Verbose {
 		log.Println("Payload: ", hook.Payload)
 	}

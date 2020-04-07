@@ -145,10 +145,6 @@ func (b *websocketBroker) cacheSubscribe(ctx context.Context, cacheMsgChan chan<
 				continue
 			}
 
-			switch e.EventType {
-			case "sdk.EventJob":
-				continue
-			}
 			observability.Record(b.router.Background, WebSocketEvents, 1)
 			cacheMsgChan <- e
 		}

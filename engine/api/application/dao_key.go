@@ -2,129 +2,112 @@ package application
 
 import (
 	"context"
-	"database/sql"
-	"encoding/base64"
 
 	"github.com/go-gorp/gorp"
-	"github.com/lib/pq"
 
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
-	"github.com/ovh/cds/engine/api/secret"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
 
 // InsertKey a new application key in database
 func InsertKey(db gorp.SqlExecutor, key *sdk.ApplicationKey) error {
-	dbAppKey := dbApplicationKey(*key)
-
-	s, errE := secret.Encrypt([]byte(key.Private))
-	if errE != nil {
-		return sdk.WrapError(errE, "InsertKey> Cannot encrypt private key")
+	var dbAppKey = dbApplicationKey{ApplicationKey: *key}
+	if err := gorpmapping.InsertAndSign(context.Background(), db, &dbAppKey); err != nil {
+		return err
 	}
-	dbAppKey.Private = string(s)
-
-	if err := db.Insert(&dbAppKey); err != nil {
-		if errPG, ok := err.(*pq.Error); ok && errPG.Code == gorpmapping.ViolateUniqueKeyPGCode {
-			err = sdk.ErrKeyAlreadyExist
-		}
-		return sdk.WrapError(err, "Cannot insert application key")
-	}
-	*key = sdk.ApplicationKey(dbAppKey)
+	*key = dbAppKey.ApplicationKey
 	return nil
 }
 
-// LoadAllApplicationKeysByProject load all keys for the given application
-func LoadAllApplicationKeysByProject(db gorp.SqlExecutor, projID int64) ([]sdk.ApplicationKey, error) {
+// UpdateKey a new application key in database.
+// This function should be use only for migration purpose and should be removed
+func UpdateKey(ctx context.Context, db gorp.SqlExecutor, key *sdk.ApplicationKey) error {
+	var dbAppKey = dbApplicationKey{ApplicationKey: *key}
+	if err := gorpmapping.UpdateAndSign(ctx, db, &dbAppKey); err != nil {
+		return err
+	}
+	*key = dbAppKey.ApplicationKey
+	return nil
+}
+
+func getAllKeys(db gorp.SqlExecutor, query gorpmapping.Query) ([]sdk.ApplicationKey, error) {
+	var ctx = context.Background()
 	var res []dbApplicationKey
-	query := `
-	SELECT DISTINCT ON (application_key.name, application_key.type) application_key.name as d, application_key.* FROM application_key
-	JOIN application ON application.id = application_key.application_id
-	JOIN project ON project.id = application.project_id
-	WHERE project.id = $1;
-	`
-	if _, err := db.Select(&res, query, projID); err != nil {
-		if err == sql.ErrNoRows {
-			return nil, nil
-		}
-		return nil, sdk.WrapError(err, "Cannot load keys")
+	keys := make([]sdk.ApplicationKey, 0, len(res))
+
+	if err := gorpmapping.GetAll(ctx, db, query, &res); err != nil {
+		return nil, err
 	}
 
-	keys := make([]sdk.ApplicationKey, len(res))
 	for i := range res {
-		p := res[i]
-		p.Private = sdk.PasswordPlaceholder
-		keys[i] = sdk.ApplicationKey(p)
+		isValid, err := gorpmapping.CheckSignature(res[i], res[i].Signature)
+		if err != nil {
+			return nil, err
+		}
+		if !isValid {
+			log.Error(ctx, "application.getAllKeys> application key %d data corrupted", res[i].ID)
+			continue
+		}
+		keys = append(keys, res[i].ApplicationKey)
 	}
 	return keys, nil
 }
 
-// LoadAllBase64Keys Load application key with encrypted secret
-func LoadAllBase64Keys(db gorp.SqlExecutor, app *sdk.Application) error {
-	var res []dbApplicationKey
-	if _, err := db.Select(&res, "SELECT * FROM application_key WHERE application_id = $1", app.ID); err != nil {
-		if err == sql.ErrNoRows {
-			return nil
-		}
-		return sdk.WrapError(err, "Cannot load keys")
-	}
-
-	keys := make([]sdk.ApplicationKey, len(res))
-	for i := range res {
-		p := res[i]
-		keys[i] = sdk.ApplicationKey(p)
-		keys[i].Private = base64.StdEncoding.EncodeToString([]byte(keys[i].Private))
-	}
-	app.Keys = keys
-	return nil
-}
-
 // LoadAllKeys load all keys for the given application
-func LoadAllKeys(db gorp.SqlExecutor, app *sdk.Application) error {
-	var res []dbApplicationKey
-	if _, err := db.Select(&res, "SELECT * FROM application_key WHERE application_id = $1", app.ID); err != nil {
-		if err == sql.ErrNoRows {
-			return nil
-		}
-		return sdk.WrapError(err, "Cannot load keys")
-	}
-
-	keys := make([]sdk.ApplicationKey, len(res))
-	for i := range res {
-		p := res[i]
-		keys[i] = sdk.ApplicationKey(p)
-		keys[i].Private = sdk.PasswordPlaceholder
-	}
-	app.Keys = keys
-	return nil
+func LoadAllKeys(db gorp.SqlExecutor, appID int64) ([]sdk.ApplicationKey, error) {
+	query := gorpmapping.NewQuery(`
+	SELECT * 
+	FROM application_key
+	WHERE application_id = $1`).Args(appID)
+	return getAllKeys(db, query)
 }
 
-// LoadAllDecryptedKeys load all keys for the given application
-func LoadAllDecryptedKeys(db gorp.SqlExecutor, app *sdk.Application) error {
-	var res []dbApplicationKey
-	if _, err := db.Select(&res, "SELECT * FROM application_key WHERE application_id = $1", app.ID); err != nil {
-		if err == sql.ErrNoRows {
-			return nil
-		}
-		return sdk.WrapError(err, "Cannot load keys")
+// LoadAllKeysWithPrivateContent load all keys for the given application
+func LoadAllKeysWithPrivateContent(db gorp.SqlExecutor, appID int64) ([]sdk.ApplicationKey, error) {
+	keys, err := LoadAllKeys(db, appID)
+	if err != nil {
+		return nil, err
 	}
 
-	keys := make([]sdk.ApplicationKey, len(res))
-	for i := range res {
-		p := res[i]
-		keys[i] = sdk.ApplicationKey(p)
-		decrypted, err := secret.Decrypt([]byte(keys[i].Private))
+	res := make([]sdk.ApplicationKey, 0, len(keys))
+	for _, k := range keys {
+		x, err := loadKey(db, k.ID, k.Name)
 		if err != nil {
-			log.Error(context.TODO(), "LoadAllDecryptedKeys> Unable to decrypt private key %s/%s: %v", app.Name, keys[i].Name, err)
+			return nil, err
 		}
-		keys[i].Private = string(decrypted)
+		res = append(res, *x)
 	}
-	app.Keys = keys
-	return nil
+
+	return res, nil
 }
 
-// DeleteApplicationKey Delete the given key from the given application
-func DeleteApplicationKey(db gorp.SqlExecutor, appID int64, keyName string) error {
+func loadKey(db gorp.SqlExecutor, id int64, keyName string) (*sdk.ApplicationKey, error) {
+	query := gorpmapping.NewQuery(`
+	SELECT * 
+	FROM application_key
+	WHERE id = $1 AND name = $2`).Args(id, keyName)
+	var k dbApplicationKey
+	found, err := gorpmapping.Get(context.Background(), db, query, &k, gorpmapping.GetOptions.WithDecryption)
+	if err != nil {
+		return nil, err
+	}
+	if !found {
+		return nil, sdk.WithStack(sdk.ErrNotFound)
+	}
+	isValid, err := gorpmapping.CheckSignature(k, k.Signature)
+	if err != nil {
+		return nil, err
+	}
+	if !isValid {
+		log.Error(context.Background(), "application.LoadKey> application key %d data corrupted", k.ID)
+		return nil, sdk.WithStack(sdk.ErrNotFound)
+	}
+	return &k.ApplicationKey, nil
+}
+
+// DeleteKey Delete the given key from the given application
+func DeleteKey(db gorp.SqlExecutor, appID int64, keyName string) error {
 	_, err := db.Exec("DELETE FROM application_key WHERE application_id = $1 AND name = $2", appID, keyName)
 	return sdk.WrapError(err, "Cannot delete key %s", keyName)
 }

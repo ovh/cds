@@ -1,0 +1,48 @@
+name: Push a template and run this template
+version: "2"
+testcases:
+- name: prepare test
+  steps:
+  - script: "{{.cdsctl}} -f {{.cdsctl.config}} template delete shared.infra/demo-workflow-hello-world --force"
+  - script: "{{.cdsctl}} -f {{.cdsctl.config}} project remove --force 04SCWORKFLOWTEMPLATERUN"
+  - script: "{{.cdsctl}} -f {{.cdsctl.config}} group remove --force 04scworkflowtemplaterun"
+  - script: "{{.cdsctl}} -f {{.cdsctl.config}} project add 04SCWORKFLOWTEMPLATERUN 04scworkflowtemplaterun"
+
+- name: template push
+  steps:
+  - script: "{{.cdsctl}} -f {{.cdsctl.config}} template push https://raw.githubusercontent.com/ovh/cds/master/contrib/workflow-templates/demo-workflow-hello-world/demo-workflow-hello-world.yml"
+    assertions:
+    - result.code ShouldEqual 0
+    - "result.systemout ShouldContainSubstring successfully pushed"
+
+- name: create workflow from template
+  steps:
+  - script: "{{.cdsctl}} -f {{.cdsctl.config}} workflow applyTemplate 04SCWORKFLOWTEMPLATERUN testtemplate shared.infra/demo-workflow-hello-world --import-push -n"
+    assertions:
+    - result.code ShouldEqual 0
+    - "result.systemout ShouldContainSubstring has been created"
+
+- name: run workflow
+  steps:
+  - script:  {{.cdsctl}} -f {{.cdsctl.config}} workflow run 04SCWORKFLOWTEMPLATERUN testtemplate
+    assertions:
+    - result.code ShouldEqual 0
+    - "result.systemout ShouldContainSubstring has been launched"
+
+- name: check workflow
+  steps:
+  - script:  {{.cdsctl}} -f {{.cdsctl.config}} workflow status 04SCWORKFLOWTEMPLATERUN testtemplate 1 --format json
+    retry: 20
+    delay: 10
+    assertions:
+    - result.code ShouldEqual 0
+    - result.systemoutjson.last_execution ShouldNotBeEmpty
+    - result.systemoutjson.start ShouldNotBeEmpty
+    - result.systemoutjson.num ShouldContainSubstring 1
+    - result.systemoutjson.status ShouldEqual Success
+    - result.systemoutjson.tags ShouldContainSubstring triggered_by
+
+- name: check workflow log
+  steps:
+    - script: {{.cdsctl}} -f {{.cdsctl.config}} workflow logs download 04SCWORKFLOWTEMPLATERUN testtemplate 1 --pattern build
+    - script: grep "CDS_TEMPLATE_VERSION=1" *.log

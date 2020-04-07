@@ -54,9 +54,15 @@
     </ng-container>
     <ng-container *ngIf="!readonly">
         <button class="ui right floated green button"
-                [disabled]="loadingBranches || loading || (workflow.from_repository && workflow.from_repository.length > 0)"
+                [disabled]="loadingBranches || loading"
                 [class.loading]="loading" (click)="updateWorkflow()">
-            {{ 'btn_save' | translate }}
+            <span *ngIf="editMode">
+                {{ 'btn_apply' | translate }}
+            </span>
+            <span *ngIf="!editMode">
+                {{ 'btn_save' | translate }}
+            </span>
+
         </button>
     </ng-container>
 </div>

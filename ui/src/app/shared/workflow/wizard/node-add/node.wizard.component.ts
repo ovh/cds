@@ -17,14 +17,14 @@ import { WNode, WNodeType } from 'app/model/workflow.model';
 import { ApplicationService } from 'app/service/application/application.service';
 import { ToastService } from 'app/shared/toast/ToastService';
 import { AddApplication } from 'app/store/applications.action';
-import { ApplicationsState } from 'app/store/applications.state';
+import { ApplicationsState, ApplicationStateModel } from 'app/store/applications.state';
 import { AddPipeline } from 'app/store/pipelines.action';
-import { PipelinesState } from 'app/store/pipelines.state';
+import { PipelinesState, PipelinesStateModel } from 'app/store/pipelines.state';
 import { AddEnvironmentInProject } from 'app/store/project.action';
 import { ProjectState, ProjectStateModel } from 'app/store/project.state';
 import cloneDeep from 'lodash-es/cloneDeep';
-import { Observable, of as observableOf } from 'rxjs';
-import { finalize, first, flatMap, map } from 'rxjs/operators';
+import { Observable, of as observableOf, Subscription } from 'rxjs';
+import { filter, finalize, first, flatMap, map } from 'rxjs/operators';
 
 @Component({
     selector: 'app-workflow-node-add-wizard',
@@ -109,6 +109,7 @@ export class WorkflowNodeAddWizardComponent implements OnInit {
   _createNewEnvironment = false;
   integrations: IdName[] = [];
   loadingIntegrations = false;
+  pipSubscription: Subscription;
 
   constructor(
     private _router: Router,
@@ -181,17 +182,17 @@ export class WorkflowNodeAddWizardComponent implements OnInit {
       projectKey: this.project.key,
       pipeline: this.newPipeline
     })).pipe(
-      finalize(() => {
+        finalize(() => {
           this.loadingCreatePipeline = false;
           this._cd.markForCheck();
-      }),
-      flatMap(() => this.store.selectOnce(PipelinesState.selectPipeline(this.project.key, this.newPipeline.name))),
-      map((pip) => {
-        this._toast.success('', this._translate.instant('pipeline_added'));
-        this.node.context.pipeline_id = pip.id;
-        this.pipelineSection = 'application';
-        return pip
-      }));
+        }),
+        flatMap(() => this.store.selectOnce(PipelinesState.getCurrent())),
+        map((pip: PipelinesStateModel) => {
+          this._toast.success('', this._translate.instant('pipeline_added'));
+          this.node.context.pipeline_id = pip.pipeline.id;
+          this.pipelineSection = 'application';
+          return pip.pipeline;
+        }));
   }
 
   selectOrCreatePipeline(): Observable<string> {
@@ -219,12 +220,13 @@ export class WorkflowNodeAddWizardComponent implements OnInit {
           this.loadingCreateApplication = false;
           this._cd.markForCheck();
       }),
-      flatMap(() => this.store.selectOnce(ApplicationsState.selectApplication(this.project.key, this.newApplication.name))),
-      map((app) => {
+      flatMap(() => this.store.selectOnce(ApplicationsState.currentState())),
+      filter((s: ApplicationStateModel) => s.application != null && s.application.name === this.newApplication.name),
+      map((s: ApplicationStateModel) => {
         this._toast.success('', this._translate.instant('application_created'));
-        this.node.context.application_id = app.id;
+        this.node.context.application_id = s.application.id;
         this.pipelineSection = 'environment';
-        return app;
+        return s.application;
       })
     );
   }

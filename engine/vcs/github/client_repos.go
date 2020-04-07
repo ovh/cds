@@ -18,56 +18,56 @@ import (
 // https://developer.github.com/v3/repos/#list-your-repositories
 func (g *githubClient) Repos(ctx context.Context) ([]sdk.VCSRepo, error) {
 	var repos = []Repository{}
-	var nextPage = "/user/repos"
-
 	var noEtag bool
 	var attempt int
-	for {
-		if nextPage != "" {
-			var opt getArgFunc
-			if noEtag {
-				opt = withoutETag
-			} else {
-				opt = withETag
-			}
 
-			attempt++
-			status, body, headers, err := g.get(ctx, nextPage, opt)
-			if err != nil {
-				log.Warning(ctx, "githubClient.Repos> Error %s", err)
-				return nil, err
-			}
-			if status >= 400 {
-				return nil, sdk.NewError(sdk.ErrUnknownError, errorAPI(body))
-			}
-			nextRepos := []Repository{}
-
-			//Github may return 304 status because we are using conditional request with ETag based headers
-			if status == http.StatusNotModified {
-				//If repos aren't updated, lets get them from cache
-				k := cache.Key("vcs", "github", "repos", g.OAuthToken, "/user/repos")
-				if _, err := g.Cache.Get(k, &repos); err != nil {
-					log.Error(ctx, "cannot get from cache %s: %v", k, err)
-				}
-				if len(repos) != 0 || attempt > 5 {
-					//We found repos, let's exit the loop
-					break
-				}
-				//If we did not found any repos in cache, let's retry (same nextPage) without etag
-				noEtag = true
-				continue
-			} else {
-				if err := json.Unmarshal(body, &nextRepos); err != nil {
-					log.Warning(ctx, "githubClient.Repos> Unable to parse github repositories: %s", err)
-					return nil, err
-				}
-			}
-
-			repos = append(repos, nextRepos...)
-			nextPage = getNextPage(headers)
-		} else {
+	var nextPage = "/user/repos"
+	for nextPage != "" {
+		if ctx.Err() != nil {
 			break
 		}
+
+		var opt getArgFunc
+		if noEtag {
+			opt = withoutETag
+		} else {
+			opt = withETag
+		}
+
+		attempt++
+		status, body, headers, err := g.get(ctx, nextPage, opt)
+		if err != nil {
+			log.Warning(ctx, "githubClient.Repos> Error %s", err)
+			return nil, err
+		}
+		if status >= 400 {
+			return nil, sdk.NewError(sdk.ErrUnknownError, errorAPI(body))
+		}
+		nextRepos := []Repository{}
+
+		//Github may return 304 status because we are using conditional request with ETag based headers
+		if status == http.StatusNotModified {
+			//If repos aren't updated, lets get them from cache
+			k := cache.Key("vcs", "github", "repos", g.OAuthToken, "/user/repos")
+			if _, err := g.Cache.Get(k, &repos); err != nil {
+				log.Error(ctx, "cannot get from cache %s: %v", k, err)
+			}
+			if len(repos) != 0 || attempt > 5 {
+				//We found repos, let's exit the loop
+				break
+			}
+			//If we did not found any repos in cache, let's retry (same nextPage) without etag
+			noEtag = true
+			continue
+		} else {
+			if err := json.Unmarshal(body, &nextRepos); err != nil {
+				log.Warning(ctx, "githubClient.Repos> Unable to parse github repositories: %s", err)
+				return nil, err
+			}
+		}
+
+		repos = append(repos, nextRepos...)
+		nextPage = getNextPage(headers)
 	}
 
 	//Put the body on cache for one hour and one minute
@@ -149,6 +149,37 @@ func (g *githubClient) repoByFullname(ctx context.Context, fullname string) (Rep
 	}
 
 	return repo, nil
+}
+
+func (g *githubClient) UserHasWritePermission(ctx context.Context, fullname string) (bool, error) {
+	owner := strings.SplitN(fullname, "/", 2)[0]
+	if g.username == "" || owner == g.username {
+		return false, sdk.WrapError(sdk.ErrUserNotFound, "No user found in configuration")
+	}
+	url := "/repos/" + fullname + "/collaborators/" + g.username + "/permission"
+	k := cache.Key("vcs", "github", "user-write", g.OAuthToken, url)
+
+	status, resp, _, err := g.get(ctx, url)
+	if err != nil {
+		return false, err
+	}
+	if status >= 400 {
+		return false, sdk.NewError(sdk.ErrUnknownError, errorAPI(resp))
+	}
+	var permResp UserPermissionResponse
+	if status == http.StatusNotModified {
+		if _, err := g.Cache.Get(k, &permResp); err != nil {
+			log.Error(ctx, "cannot get from cache %s: %v", k, err)
+		}
+	} else {
+		if err := json.Unmarshal(resp, &permResp); err != nil {
+			return false, sdk.WrapError(err, "unable to unmarshal: %s", string(resp))
+		}
+		if err := g.Cache.SetWithTTL(k, permResp, 61*60); err != nil {
+			log.Error(ctx, "cannot SetWithTTL: %s: %v", k, err)
+		}
+	}
+	return permResp.Permission == "write" || permResp.Permission == "admin", nil
 }
 
 func (g *githubClient) GrantWritePermission(ctx context.Context, fullname string) error {

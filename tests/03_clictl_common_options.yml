@@ -4,9 +4,9 @@ testcases:
 - name: prepare test data
   steps:
   - script: {{.cdsctl}} -f {{.cdsctl.config}} project remove --force ITCLIAPPPRJ
-  - script: {{.cdsctl}} -f {{.cdsctl.config}} group remove ITCLIAPP_GRP --force
-  - script: {{.cdsctl}} -f {{.cdsctl.config}} group add ITCLIAPP_GRP
-  - script: {{.cdsctl}} -f {{.cdsctl.config}} project create ITCLIAPPPRJ "Test project" ITCLIAPP_GRP
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} group remove itcliapp-grp --force
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} group add itcliapp-grp
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} project create ITCLIAPPPRJ "Test project" itcliapp-grp
   - script: {{.cdsctl}} -f {{.cdsctl.config}} application create ITCLIAPPPRJ ITCLIAPPPRJ-APP1
   - script: {{.cdsctl}} -f {{.cdsctl.config}} application create ITCLIAPPPRJ ITCLIAPPPRJ-APP2
   - script: {{.cdsctl}} -f {{.cdsctl.config}} application create ITCLIAPPPRJ ITCLIAPPPRJ-APP3

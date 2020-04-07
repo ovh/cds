@@ -5,14 +5,14 @@ import (
 	"sort"
 	"testing"
 
-	"github.com/ovh/cds/engine/api/authentication/builtin"
-	"github.com/ovh/cds/engine/api/test/assets"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/ovh/cds/engine/api/authentication"
+	"github.com/ovh/cds/engine/api/authentication/builtin"
 	"github.com/ovh/cds/engine/api/bootstrap"
 	"github.com/ovh/cds/engine/api/test"
+	"github.com/ovh/cds/engine/api/test/assets"
 	"github.com/ovh/cds/sdk"
 )
 
@@ -29,9 +29,8 @@ func TestWithAuthentifiedUser(t *testing.T) {
 	require.NotNil(t, res.AuthentifiedUser)
 	assert.Equal(t, u.Username, res.AuthentifiedUser.Username)
 
-	require.NotNil(t, res.AuthentifiedUser.OldUserStruct)
-	require.Equal(t, 1, len(res.AuthentifiedUser.OldUserStruct.Groups))
-	assert.Equal(t, g.ID, res.AuthentifiedUser.OldUserStruct.Groups[0].ID)
+	require.Equal(t, 1, len(res.AuthentifiedUser.Groups))
+	assert.Equal(t, g.ID, res.AuthentifiedUser.Groups[0].ID)
 }
 
 func TestWithConsumerGroups(t *testing.T) {
@@ -48,7 +47,7 @@ func TestWithConsumerGroups(t *testing.T) {
 	assert.NotNil(t, 0, len(localConsumer.Groups), "no group ids on local consumer so no groups are expected")
 
 	newConsumer, _, err := builtin.NewConsumer(context.TODO(), db, sdk.RandomString(10), sdk.RandomString(10), localConsumer,
-		[]int64{g1.ID, g2.ID}, []sdk.AuthConsumerScope{sdk.AuthConsumerScopeAccessToken})
+		[]int64{g1.ID, g2.ID}, sdk.NewAuthConsumerScopeDetails(sdk.AuthConsumerScopeAccessToken))
 	require.NoError(t, err)
 	builtinConsumer, err := authentication.LoadConsumerByID(context.TODO(), db, newConsumer.ID,
 		authentication.LoadConsumerOptions.WithConsumerGroups)

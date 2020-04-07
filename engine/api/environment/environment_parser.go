@@ -19,23 +19,23 @@ type ImportOptions struct {
 }
 
 // ParseAndImport parse an exportentities.Environment and insert or update the environment in database
-func ParseAndImport(db gorp.SqlExecutor, proj *sdk.Project, eenv *exportentities.Environment, opts ImportOptions, decryptFunc keys.DecryptFunc, u sdk.Identifiable) (*sdk.Environment, []sdk.Message, error) {
+func ParseAndImport(db gorp.SqlExecutor, proj sdk.Project, eenv exportentities.Environment, opts ImportOptions, decryptFunc keys.DecryptFunc, u sdk.Identifiable) (*sdk.Environment, []sdk.Message, error) {
 	log.Debug("ParseAndImport>> Import environment %s in project %s (force=%v)", eenv.Name, proj.Key, opts.Force)
 	log.Debug("ParseAndImport>> Env: %+v", eenv)
 
-	//Check valid application name
+	// Check valid application name
 	rx := sdk.NamePatternRegex
 	if !rx.MatchString(eenv.Name) {
-		return nil, nil, sdk.WrapError(sdk.ErrInvalidName, "ParseAndImport>> Environment name %s do not respect pattern %s", eenv.Name, sdk.NamePattern)
+		return nil, nil, sdk.NewErrorFrom(sdk.ErrInvalidName, "environment name %s do not respect pattern %s", eenv.Name, sdk.NamePattern)
 	}
 
-	//Check if env exist
-	oldEnv, errl := LoadEnvironmentByName(db, proj.Key, eenv.Name)
-	if errl != nil && !sdk.ErrorIs(errl, sdk.ErrEnvironmentNotFound) {
-		return nil, nil, sdk.WrapError(errl, "ParseAndImport>> Unable to load environment")
+	// Check if env exist
+	oldEnv, err := LoadEnvironmentByName(db, proj.Key, eenv.Name)
+	if err != nil && !sdk.ErrorIs(err, sdk.ErrEnvironmentNotFound) {
+		return nil, nil, sdk.WrapError(err, "unable to load environment")
 	}
 
-	//If the environment exists and we don't want to force, raise an error
+	// If the environment exists and we don't want to force, raise an error
 	var exist bool
 	if oldEnv != nil && !opts.Force {
 		return nil, nil, sdk.ErrEnvironmentExist
@@ -69,7 +69,7 @@ func ParseAndImport(db gorp.SqlExecutor, proj *sdk.Project, eenv *exportentities
 		}
 
 		vv := sdk.Variable{Name: p, Type: v.Type, Value: v.Value}
-		env.Variable = append(env.Variable, vv)
+		env.Variables = append(env.Variables, vv)
 	}
 
 	//Compute keys
@@ -102,12 +102,22 @@ func ParseAndImport(db gorp.SqlExecutor, proj *sdk.Project, eenv *exportentities
 		}
 
 		k := sdk.EnvironmentKey{
-			Key:           *kk,
 			EnvironmentID: env.ID,
+			Name:          kname,
 		}
 
+		k.KeyID = kk.KeyID
+		k.Public = kk.Public
+		k.Private = kk.Private
+		k.Type = kk.Type
+
 		if keepOldValue && oldKey != nil {
-			k.Key = oldKey.Key
+			k.ID = oldKey.ID
+			k.EnvironmentID = oldKey.EnvironmentID
+			k.KeyID = oldKey.KeyID
+			k.Public = oldKey.Public
+			k.Private = oldKey.Private
+			k.Type = oldKey.Type
 		}
 
 		env.Keys = append(env.Keys, k)
@@ -127,7 +137,7 @@ func ParseAndImport(db gorp.SqlExecutor, proj *sdk.Project, eenv *exportentities
 	var globalError error
 
 	if exist {
-		globalError = ImportInto(db, proj, env, oldEnv, msgChan, u)
+		globalError = ImportInto(db, env, oldEnv, msgChan, u)
 	} else {
 		globalError = Import(db, proj, env, msgChan, u)
 	}

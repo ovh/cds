@@ -13,6 +13,14 @@ export class EnvironmentService {
     constructor(private _http: HttpClient) {
     }
 
+    getEnvironment(key: string, envName: string): Observable<Environment> {
+        let params = new HttpParams();
+        params = params.append('withUsage', 'true');
+
+        return this._http
+            .get<Environment>(`/project/${key}/environment/${envName}`, { params })
+    }
+
     get(key: string): Observable<Array<Environment>> {
         let params = new HttpParams();
         params = params.append('withUsage', 'true');

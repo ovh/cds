@@ -154,7 +154,8 @@ export class WorkflowTemplateBulkModalComponent {
                 this.loadingInstances = false;
                 this._cd.markForCheck();
             }))
-            .subscribe(is => this.instances = is.sort((a, b) => a.key() < b.key() ? -1 : 1));
+            .subscribe(is => this.instances = is.filter(i => !i.workflow || !i.workflow.from_repository)
+                .sort((a, b) => a.key() < b.key() ? -1 : 1));
 
         this.selectedInstanceKeys = [];
 
@@ -182,9 +183,9 @@ export class WorkflowTemplateBulkModalComponent {
         this._workflowTemplateService.bulk(this.workflowTemplate.group.name, this.workflowTemplate.slug, req)
             .pipe(finalize(() => this._cd.markForCheck()))
             .subscribe(b => {
-            this.response = b;
-            this.startPollingStatus();
-        });
+                this.response = b;
+                this.startPollingStatus();
+            });
 
         this.moveToStep(2);
     }
@@ -202,7 +203,7 @@ export class WorkflowTemplateBulkModalComponent {
     }
 
     startPollingStatus() {
-        this.pollingStatusSub = Observable.interval(500).subscribe(() => {
+        this.pollingStatusSub = Observable.interval(1000).subscribe(() => {
             this._workflowTemplateService.getBulk(this.workflowTemplate.group.name,
                 this.workflowTemplate.slug, this.response.id)
                 .pipe(finalize(() => this._cd.markForCheck()))

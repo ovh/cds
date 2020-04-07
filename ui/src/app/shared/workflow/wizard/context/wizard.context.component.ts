@@ -8,8 +8,7 @@ import {
     Output
 } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
-import { Store } from '@ngxs/store';
-import { Application } from 'app/model/application.model';
+import { Select, Store } from '@ngxs/store';
 import { Environment } from 'app/model/environment.model';
 import { IdName, Project } from 'app/model/project.model';
 import { WNode, Workflow } from 'app/model/workflow.model';
@@ -17,10 +16,13 @@ import { ApplicationService } from 'app/service/application/application.service'
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { ToastService } from 'app/shared/toast/ToastService';
 import { FetchApplication } from 'app/store/applications.action';
-import { ApplicationsState } from 'app/store/applications.state';
+import { ApplicationsState, ApplicationStateModel } from 'app/store/applications.state';
+import { ProjectState } from 'app/store/project.state';
 import { UpdateWorkflow } from 'app/store/workflow.action';
+import { WorkflowState } from 'app/store/workflow.state';
 import cloneDeep from 'lodash-es/cloneDeep';
-import { filter, finalize, first } from 'rxjs/operators';
+import { Observable, Subscription } from 'rxjs';
+import { filter, finalize, first, flatMap } from 'rxjs/operators';
 
 @Component({
     selector: 'app-workflow-node-context',
@@ -31,24 +33,17 @@ import { filter, finalize, first } from 'rxjs/operators';
 @AutoUnsubscribe()
 export class WorkflowWizardNodeContextComponent implements OnInit {
 
-    @Input() project: Project;
-    @Input() workflow: Workflow;
-    editableNode: WNode;
-    @Input('node') set node(data: WNode) {
-        if (data) {
-            this.editableNode = cloneDeep(data);
-            if (this.editableNode.context.application_id !== 0 && this.applications) {
-                this.change();
-            }
-            this.updateVCSStatusCheck();
-        }
-    };
-    get node(): WNode {
-        return this.editableNode;
-    }
-    @Input() readonly = true;
 
+    @Input() workflow: Workflow;
+    @Input() readonly = true;
     @Output() contextChange = new EventEmitter<boolean>();
+
+    project: Project;
+    editMode: boolean;
+
+    @Select(WorkflowState.getSelectedNode()) node$: Observable<WNode>;
+    node: WNode;
+    nodeSub: Subscription;
 
     environments: Environment[];
     applications: IdName[];
@@ -56,11 +51,24 @@ export class WorkflowWizardNodeContextComponent implements OnInit {
     loading: boolean;
     showCheckStatus = false;
 
+
     constructor(private _store: Store, private _appService: ApplicationService, private _translate: TranslateService,
         private _toast: ToastService, private _cd: ChangeDetectorRef) {
+        this.project = this._store.selectSnapshot(ProjectState.projectSnapshot);
+        this.editMode = this._store.selectSnapshot(WorkflowState).editMode;
+
     }
 
     ngOnInit() {
+        this.nodeSub = this.node$.subscribe(n => {
+           this.node = cloneDeep(n);
+            if (this.node.context.application_id !== 0 && this.applications) {
+                this.change();
+            }
+            this.updateVCSStatusCheck();
+            this._cd.markForCheck();
+        });
+
         let voidEnv = new Environment();
         voidEnv.id = 0;
         voidEnv.name = ' ';
@@ -73,7 +81,7 @@ export class WorkflowWizardNodeContextComponent implements OnInit {
         this.applications = cloneDeep(this.project.application_names) || [];
         this.applications.unshift(voidApp);
         this.updateVCSStatusCheck();
-        if (this.editableNode.context.application_id !== 0) {
+        if (this.node.context.application_id !== 0) {
             this.change();
         }
     }
@@ -98,12 +106,14 @@ export class WorkflowWizardNodeContextComponent implements OnInit {
             this.showCheckStatus = false;
             return;
         }
-        this._store.dispatch(new FetchApplication({ projectKey: this.project.key, applicationName: this.applications[i].name }));
-        this._store.selectOnce(ApplicationsState.selectApplication(this.project.key, this.applications[i].name))
-            .pipe(filter((app) => app != null), first())
-            .subscribe((app: Application) => {
-                this.showCheckStatus = app.repository_fullname && app.repository_fullname !== '';
-            })
+        this._store.dispatch(new FetchApplication({ projectKey: this.project.key, applicationName: this.applications[i].name }))
+            .pipe(
+                flatMap(() => this._store.selectOnce(ApplicationsState.currentState())),
+                filter((s: ApplicationStateModel) => s.application != null && s.application.name === this.applications[i].name),
+                first())
+            .subscribe(app => {
+                this.showCheckStatus = app.application.repository_fullname && app.application.repository_fullname !== '';
+            });
     }
 
     initIntegrationList(): void {
@@ -114,11 +124,14 @@ export class WorkflowWizardNodeContextComponent implements OnInit {
     }
 
     change(): void {
-        this.node.context.application_id = Number(this.node.context.application_id);
-        this.node.context.environment_id = Number(this.node.context.environment_id);
-        this.node.context.pipeline_id = Number(this.node.context.pipeline_id);
+        this.node.context.application_id = Number(this.node.context.application_id) || 0;
+        this.node.context.environment_id = Number(this.node.context.environment_id) || 0;
+        this.node.context.pipeline_id = Number(this.node.context.pipeline_id) || 0;
 
-        let appName = this.applications.find(k => Number(k.id) === this.node.context.application_id).name;
+        let appName = '';
+        if (this.node.context.application_id !== 0) {
+            appName = this.applications.find(k => Number(k.id) === this.node.context.application_id).name;
+        }
         if (appName && appName !== ' ') {
             this._appService.getDeploymentStrategies(this.project.key, appName).pipe(
                 first(),
@@ -154,14 +167,19 @@ export class WorkflowWizardNodeContextComponent implements OnInit {
     updateWorkflow(): void {
         this.loading = true;
         let clonedWorkflow = cloneDeep(this.workflow);
-        let n = Workflow.getNodeByID(this.editableNode.id, clonedWorkflow);
-        n.context.application_id = this.editableNode.context.application_id;
-        n.context.environment_id = this.editableNode.context.environment_id;
-        n.context.project_integration_id = this.editableNode.context.project_integration_id;
-        n.context.mutex = this.editableNode.context.mutex;
+        let n: WNode;
+        if (this.editMode) {
+            n = Workflow.getNodeByRef(this.node.ref, clonedWorkflow);
+        } else {
+            n = Workflow.getNodeByID(this.node.id, clonedWorkflow);
+        }
+        n.context.application_id = this.node.context.application_id;
+        n.context.environment_id = this.node.context.environment_id;
+        n.context.project_integration_id = this.node.context.project_integration_id;
+        n.context.mutex = this.node.context.mutex;
 
         let previousName = n.name;
-        n.name = this.editableNode.name;
+        n.name = this.node.name;
 
         if (previousName !== n.name) {
             if (clonedWorkflow.notifications) {
@@ -183,10 +201,17 @@ export class WorkflowWizardNodeContextComponent implements OnInit {
             projectKey: this.workflow.project_key,
             workflowName: this.workflow.name,
             changes: clonedWorkflow
-        })).pipe(finalize(() => this.loading = false))
+        })).pipe(finalize(() => {
+            this.loading = false;
+            this._cd.markForCheck();
+        }))
             .subscribe(() => {
                 this.contextChange.emit(false);
-                this._toast.success('', this._translate.instant('workflow_updated'));
+                if (this.editMode) {
+                    this._toast.info('', this._translate.instant('workflow_ascode_updated'));
+                } else {
+                    this._toast.success('', this._translate.instant('workflow_updated'));
+                }
             });
     }
 }

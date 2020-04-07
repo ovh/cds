@@ -7,40 +7,66 @@ import (
 
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/log"
 )
 
 func getAll(ctx context.Context, db gorp.SqlExecutor, q gorpmapping.Query, opts ...LoadOptionFunc) ([]sdk.Group, error) {
-	pgs := []*sdk.Group{}
+	pgs := []*group{}
 
 	if err := gorpmapping.GetAll(ctx, db, q, &pgs); err != nil {
 		return nil, sdk.WrapError(err, "cannot get groups")
 	}
+
+	var gs []*sdk.Group
+	for i := range pgs {
+		isValid, err := gorpmapping.CheckSignature(pgs[i], pgs[i].Signature)
+		if err != nil {
+			return nil, err
+		}
+		if !isValid {
+			log.Error(ctx, "group.get> group %d data corrupted", pgs[i].ID)
+			continue
+		}
+
+		gs = append(gs, &pgs[i].Group)
+	}
+
 	if len(pgs) > 0 {
 		for i := range opts {
-			if err := opts[i](ctx, db, pgs...); err != nil {
+			if err := opts[i](ctx, db, gs...); err != nil {
 				return nil, err
 			}
 		}
 	}
 
-	gs := make([]sdk.Group, len(pgs))
+	var result = make([]sdk.Group, len(gs))
 	for i := range gs {
-		gs[i] = *pgs[i]
+		result[i] = *gs[i]
 	}
 
-	return gs, nil
+	return result, nil
 }
 
 func get(ctx context.Context, db gorp.SqlExecutor, q gorpmapping.Query, opts ...LoadOptionFunc) (*sdk.Group, error) {
-	var g sdk.Group
-
-	found, err := gorpmapping.Get(ctx, db, q, &g)
+	var groupDB = group{}
+	found, err := gorpmapping.Get(ctx, db, q, &groupDB)
 	if err != nil {
 		return nil, sdk.WrapError(err, "cannot get group")
 	}
 	if !found {
 		return nil, sdk.WithStack(sdk.ErrNotFound)
 	}
+
+	isValid, err := gorpmapping.CheckSignature(groupDB, groupDB.Signature)
+	if err != nil {
+		return nil, err
+	}
+	if !isValid {
+		log.Error(ctx, "group.get> group %d data corrupted", groupDB.ID)
+		return nil, sdk.WithStack(sdk.ErrNotFound)
+	}
+
+	g := groupDB.Group
 
 	for i := range opts {
 		if err := opts[i](ctx, db, &g); err != nil {
@@ -71,15 +97,15 @@ func LoadAllByIDs(ctx context.Context, db gorp.SqlExecutor, ids []int64, opts ..
 	return getAll(ctx, db, query, opts...)
 }
 
-// LoadAllByDeprecatedUserID returns all groups from database for given user id.
-func LoadAllByDeprecatedUserID(ctx context.Context, db gorp.SqlExecutor, deprecatedUserID int64, opts ...LoadOptionFunc) (sdk.Groups, error) {
+// LoadAllByUserID returns all groups from database for given user id.
+func LoadAllByUserID(ctx context.Context, db gorp.SqlExecutor, userID string, opts ...LoadOptionFunc) (sdk.Groups, error) {
 	query := gorpmapping.NewQuery(`
     SELECT "group".*
     FROM "group"
-		JOIN "group_user" ON "group".id = "group_user".group_id
-    WHERE "group_user".user_id = $1
+	JOIN "group_authentified_user" ON "group".id = "group_authentified_user".group_id
+    WHERE "group_authentified_user".authentified_user_id = $1
     ORDER BY "group".name
-  `).Args(deprecatedUserID)
+  `).Args(userID)
 	return getAll(ctx, db, query, opts...)
 }
 
@@ -104,16 +130,32 @@ func LoadByID(ctx context.Context, db gorp.SqlExecutor, id int64, opts ...LoadOp
 }
 
 // Insert given group into database.
-func Insert(db gorp.SqlExecutor, g *sdk.Group) error {
-	return sdk.WrapError(gorpmapping.Insert(db, g), "unable to insert group %s", g.Name)
+func Insert(ctx context.Context, db gorp.SqlExecutor, g *sdk.Group) error {
+	grp := *g
+	var groupDB = group{
+		Group: grp,
+	}
+	if err := gorpmapping.InsertAndSign(ctx, db, &groupDB); err != nil {
+		return err
+	}
+	g.ID = groupDB.ID
+	return nil
 }
 
 // Update given group into database.
-func Update(db gorp.SqlExecutor, g *sdk.Group) error {
-	return sdk.WrapError(gorpmapping.Update(db, g), "unable to update group %s", g.Name)
+func Update(ctx context.Context, db gorp.SqlExecutor, g *sdk.Group) error {
+	grp := *g
+	var groupDB = group{
+		Group: grp,
+	}
+	return sdk.WrapError(gorpmapping.UpdateAndSign(ctx, db, &groupDB), "unable to update group %s", g.Name)
 }
 
 // delete given group from database.
 func deleteDB(db gorp.SqlExecutor, g *sdk.Group) error {
-	return sdk.WrapError(gorpmapping.Delete(db, g), "unable to delete group %s", g.Name)
+	grp := *g
+	var groupDB = group{
+		Group: grp,
+	}
+	return sdk.WrapError(gorpmapping.Delete(db, &groupDB), "unable to delete group %s", g.Name)
 }

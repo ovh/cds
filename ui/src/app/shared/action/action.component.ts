@@ -45,6 +45,7 @@ export class ActionComponent implements OnDestroy, OnInit {
     @Input() stage: Stage;
     @Input() edit = false;
     @Input() suggest: Array<string>;
+    @Input() editPipelineMode: boolean;
 
     @Input()
     set action(data: Action) {

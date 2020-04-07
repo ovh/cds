@@ -152,10 +152,10 @@ func authConsumerNewRun(v cli.Values) error {
 	}
 
 	res, err := client.AuthConsumerCreateForUser(username, sdk.AuthConsumer{
-		Name:        name,
-		Description: description,
-		GroupIDs:    groupIDs,
-		Scopes:      scopes,
+		Name:         name,
+		Description:  description,
+		GroupIDs:     groupIDs,
+		ScopeDetails: sdk.NewAuthConsumerScopeDetails(scopes...),
 	})
 	if err != nil {
 		return err

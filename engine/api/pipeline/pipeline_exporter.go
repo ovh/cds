@@ -2,34 +2,18 @@ package pipeline
 
 import (
 	"context"
-	"io"
 
 	"github.com/go-gorp/gorp"
 
-	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/exportentities"
 )
 
 // Export a pipeline
-func Export(ctx context.Context, db gorp.SqlExecutor, cache cache.Store, key string, name string, f exportentities.Format, w io.Writer) (int, error) {
+func Export(ctx context.Context, db gorp.SqlExecutor, key string, name string) (exportentities.PipelineV1, error) {
 	p, err := LoadPipeline(ctx, db, key, name, true)
 	if err != nil {
-		return 0, sdk.WrapError(err, "Cannot load workflow %s", name)
+		return exportentities.PipelineV1{}, sdk.WrapError(err, "cannot load workflow %s", name)
 	}
-
-	return ExportPipeline(*p, f, w)
-}
-
-// ExportPipeline a pipeline
-func ExportPipeline(p sdk.Pipeline, f exportentities.Format, w io.Writer) (int, error) {
-	e := exportentities.NewPipelineV1(p)
-
-	// Marshal to the desired format
-	b, err := exportentities.Marshal(e, f)
-	if err != nil {
-		return 0, err
-	}
-
-	return w.Write(b)
+	return exportentities.NewPipelineV1(*p), nil
 }

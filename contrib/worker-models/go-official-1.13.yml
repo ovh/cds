@@ -1,0 +1,6 @@
+name: go-official-1.13
+group: shared.infra
+image: golang:1.13
+description: official from https://hub.docker.com/_/golang/
+type: docker
+pattern_name: basic_unix

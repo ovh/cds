@@ -1,3 +1,4 @@
+import { AsCodeEvents } from './ascode.model';
 import { Environment } from './environment.model';
 import { Parameter } from './parameter.model';
 import { Stage } from './stage.model';
@@ -25,7 +26,8 @@ export class PipelineStatus {
     }
 
     static isDone(status: string) {
-        return status === this.SUCCESS || status === this.STOPPED || status === this.FAIL;
+        return status === this.SUCCESS || status === this.STOPPED || status === this.FAIL ||
+            status === this.SKIPPED || status === this.DISABLED;
     }
 }
 
@@ -58,6 +60,7 @@ export class Pipeline {
     preview: Pipeline;
     asCode: string;
     from_repository: string;
+    ascode_events: Array<AsCodeEvents>;
 
     // true if someone has updated the pipeline ( used for warnings )
     externalChange: boolean;
@@ -65,6 +68,7 @@ export class Pipeline {
     // UI Params
     forceRefresh: boolean;
     previewMode: boolean;
+    editModeChanged: boolean;
 
     // Return true if pattern is good
     public static checkName(name: string): boolean {
@@ -148,8 +152,14 @@ export class PipelineRunRequest {
 export class SpawnInfo {
     api_time: Date;
     remote_time: Date;
-    is_error: boolean;
+    type: string;
+    message: SpawnInfoMessage;
     user_message: string;
+}
+
+export class SpawnInfoMessage {
+    args: Array<string>;
+    id: string;
 }
 
 export class BuildResult {

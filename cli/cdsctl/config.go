@@ -369,8 +369,8 @@ func discoverConf(ctx []cli.Arg) ([]string, error) {
 			}
 
 			// set application name and override repository config if exists
-			applicationName = application.Name
 			if application != nil {
+				applicationName = application.Name
 				if repoExists {
 					if err := r.LocalConfigSet("cds", "application", applicationName); err != nil {
 						return nil, errors.Wrap(err, "cannot set local git configuration")
