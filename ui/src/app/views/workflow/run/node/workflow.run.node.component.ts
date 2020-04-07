@@ -1,22 +1,17 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { Title } from '@angular/platform-browser';
 import { ActivatedRoute, NavigationExtras, Router } from '@angular/router';
-import { Store } from '@ngxs/store';
+import { Select, Store } from '@ngxs/store';
 import { PipelineStatus } from 'app/model/pipeline.model';
 import { Project } from 'app/model/project.model';
-import { WNode, Workflow } from 'app/model/workflow.model';
-import { WorkflowNodeRun, WorkflowRun } from 'app/model/workflow.run.model';
+import { WorkflowNodeRun } from 'app/model/workflow.run.model';
 import { RouterService } from 'app/service/router/router.service';
-import { WorkflowRunService } from 'app/service/workflow/run/workflow.run.service';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
-import { DurationService } from 'app/shared/duration/duration.service';
 import { AuthenticationState } from 'app/store/authentication.state';
-import { ProjectState, ProjectStateModel } from 'app/store/project.state';
+import { ProjectState } from 'app/store/project.state';
 import { GetWorkflowNodeRun, GetWorkflowRun } from 'app/store/workflow.action';
 import { WorkflowState, WorkflowStateModel } from 'app/store/workflow.state';
-import cloneDeep from 'lodash-es/cloneDeep';
-import { Subscription } from 'rxjs';
-import { filter, finalize, first } from 'rxjs/operators';
+import { Observable, Subscription } from 'rxjs';
 
 @Component({
     selector: 'app-workflow-run-node',
@@ -25,20 +20,27 @@ import { filter, finalize, first } from 'rxjs/operators';
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 @AutoUnsubscribe()
-export class WorkflowNodeRunComponent {
-    node: WNode;
-    nodeRun: WorkflowNodeRun;
+export class WorkflowNodeRunComponent implements OnInit {
+
+    @Select(WorkflowState.getSelectedNodeRun()) nodeRun$: Observable<WorkflowNodeRun>;
+    nodeRunSubs: Subscription;
 
     // Context info
     project: Project;
     project$: Subscription;
     workflowName: string;
 
-    storeSub: Subscription;
+    // data of the view
+    currentNodeRunID: number;
+    currentNodeRunStatus: string;
+    currentNodeRunNum: number;
+    commitsLength = 0;
+    artifactLength = 0;
+    staticFilesLength = 0;
+    historyLength = 0;
+    testsTotal = 0;
+    hasVulnerability = false;
 
-    duration: string;
-
-    workflowRun: WorkflowRun;
     pipelineName = '';
     pipelineStatus = PipelineStatus;
 
@@ -56,21 +58,10 @@ export class WorkflowNodeRunComponent {
         private _activatedRoute: ActivatedRoute,
         private _router: Router,
         private _routerService: RouterService,
-        private _workflowRunService: WorkflowRunService,
-        private _durationService: DurationService,
         private _titleService: Title,
         private _cd: ChangeDetectorRef
     ) {
-        this._activatedRoute.data.subscribe(datas => {
-            this.project = datas['project'];
-        });
-
-        this.project$ = this._store.select(ProjectState)
-            .pipe(filter((prj) => prj != null))
-            .subscribe((projState: ProjectStateModel) => {
-                this.project = projState.project;
-            });
-
+        this.project = this._store.selectSnapshot(ProjectState.projectSnapshot);
         this.isAdmin = this._store.selectSnapshot(AuthenticationState.user).ring === 'ADMIN';
 
         // Tab selection
@@ -81,59 +72,93 @@ export class WorkflowNodeRunComponent {
                 this.selectedTab = 'pipeline';
             }
             this.pipelineName = q['name'] || '';
+            this._cd.markForCheck();
         });
 
         // Get workflow name
-        this.workflowName = this._routerService.getRouteSnapshotParams({}, this._router.routerState.snapshot.root)['workflowName'];
-        let historyChecked = false;
-        this.storeSub = this._store.select(WorkflowState.getCurrent()).subscribe((s: WorkflowStateModel) => {
-            if (!s.workflow || this.workflowName !== s.workflow.name) {
+        let params = this._routerService.getRouteSnapshotParams({}, this._router.routerState.snapshot.root);
+        this.workflowName = params['workflowName'];
+
+        let number = params['number'];
+        let nodeRunId = params['nodeId'];
+
+        this._store.dispatch(new GetWorkflowRun({ projectKey: this.project.key, workflowName: this.workflowName, num: number }))
+            .subscribe(() => {
+                this._store.dispatch(
+                    new GetWorkflowNodeRun({
+                        projectKey: this.project.key,
+                        workflowName: this.workflowName,
+                        num: number,
+                        nodeRunID: nodeRunId
+                    }));
+            });
+    }
+
+    ngOnInit(): void {
+        this.nodeRunSubs = this.nodeRun$.subscribe(nr => {
+            let w = this._store.selectSnapshot(WorkflowState.workflowSnapshot);
+            let wr = (<WorkflowStateModel>this._store.selectSnapshot(WorkflowState)).workflowRun;
+            if (!w || this.workflowName !== w.name) {
                 return;
             }
-            this.workflowRun = s.workflowRun;
-            this.nodeRun = cloneDeep(s.workflowNodeRun);
-            if (this.workflowRun && this.workflowRun.workflow && this.nodeRun) {
-                this.node = Workflow.getNodeByID(this.nodeRun.workflow_node_id, this.workflowRun.workflow);
+            if (!nr || !wr) {
+                return;
             }
 
-            if (this.nodeRun) {
-                if (!historyChecked) {
-                    historyChecked = true;
-                    this._workflowRunService.nodeRunHistory(
-                        this.project.key, this.workflowName,
-                        this.nodeRun.num, this.nodeRun.workflow_node_id)
-                        .pipe(first(), finalize(() => {
-                            this._cd.markForCheck();
-                        }))
-                        .subscribe(nrs => this.nodeRunsHistory = nrs);
+            let refresh = false;
+
+            if (nr && wr) {
+                if (!this.currentNodeRunID) {
+                    this.currentNodeRunID = nr.id;
+                    this.currentNodeRunNum = nr.num;
+                    refresh = true;
                 }
-                this.initVulnerabilitySummary();
-                if (this.nodeRun && !PipelineStatus.isActive(this.nodeRun.status)) {
-                    this.duration = this._durationService.duration(new Date(this.nodeRun.start), new Date(this.nodeRun.done));
+
+                if (this.currentNodeRunStatus !== nr.status) {
+                    this.currentNodeRunStatus = nr.status;
+                    refresh = true;
                 }
-                this.updateTitle();
+
+                if (wr.nodes[nr.workflow_node_id].length !== this.historyLength) {
+                    this.historyLength = wr.nodes[nr.workflow_node_id].length;
+                    refresh = true;
+                }
+
+
+                if (nr.commits && nr.commits.length !== this.commitsLength) {
+                    this.commitsLength = nr.commits.length;
+                    refresh = true;
+                }
+                if (nr.artifacts && nr.artifacts.length !== this.artifactLength) {
+                    this.artifactLength = nr.artifacts.length;
+                    refresh = true;
+                }
+                if (nr.tests && nr.tests.total !== this.testsTotal) {
+                    this.testsTotal = nr.tests.total;
+                    refresh = true;
+                }
+                if (nr.vulnerabilities_report && nr.vulnerabilities_report.id !== 0) {
+                    this.hasVulnerability = true;
+                    let result = this.initVulnerabilitySummary(nr);
+                    if (this.nbVuln !== result['nbVuln']) {
+                        this.nbVuln = result['nbVuln'];
+                        refresh = true;
+                    }
+                    if (this.deltaVul !== result['deltaVuln']) {
+                        this.deltaVul = result['deltaVuln'];
+                        refresh = true;
+                    }
+                }
+                if (wr.tags) {
+                    let branch = wr.tags.find((tag) => tag.tag === 'git.branch');
+                    if (branch) {
+                        this._titleService
+                            .setTitle(`Pipeline ${this.pipelineName} • #${nr.num} [${branch.value}] • ${this.workflowName}`);
+                    }
+                }
             }
-            this._cd.markForCheck();
-        });
-
-        this._activatedRoute.params.subscribe(params => {
-            this._cd.markForCheck();
-            this.nodeRun = null;
-            let number = params['number'];
-            let nodeRunId = params['nodeId'];
-
-            if (this.project && this.project.key && this.workflowName && number && nodeRunId) {
-                this._store.dispatch(new GetWorkflowRun({ projectKey: this.project.key, workflowName: this.workflowName, num: number }))
-                    .subscribe(() => {
-                        this._store.dispatch(
-                            new GetWorkflowNodeRun({
-                                projectKey: this.project.key,
-                                workflowName: this.workflowName,
-                                num: number,
-                                nodeRunID: nodeRunId
-                            }));
-                    });
-
+            if (refresh) {
+                this._cd.markForCheck();
             }
         });
     }
@@ -143,39 +168,32 @@ export class WorkflowNodeRunComponent {
         let navExtras: NavigationExtras = { queryParams };
         this._router.navigate(['project', this.project.key,
             'workflow', this.workflowName,
-            'run', this.nodeRun.num,
-            'node', this.nodeRun.id], navExtras);
+            'run', this.currentNodeRunNum,
+            'node', this.currentNodeRunID], navExtras);
     }
 
-    updateTitle() {
-        if (!this.workflowRun || !Array.isArray(this.workflowRun.tags)) {
-            return;
-        }
-        let branch = this.workflowRun.tags.find((tag) => tag.tag === 'git.branch');
-        if (branch) {
-            this._titleService
-                .setTitle(`Pipeline ${this.pipelineName} • #${this.workflowRun.num} [${branch.value}] • ${this.workflowName}`);
-        }
-    }
-
-    initVulnerabilitySummary(): void {
-        if (this.nodeRun && this.nodeRun.vulnerabilities_report && this.nodeRun.vulnerabilities_report.report) {
-            if (this.nodeRun.vulnerabilities_report.report.summary) {
-                Object.keys(this.nodeRun.vulnerabilities_report.report.summary).forEach(k => {
-                    this.nbVuln += this.nodeRun.vulnerabilities_report.report.summary[k];
+    initVulnerabilitySummary(nodeRun: WorkflowNodeRun): any[] {
+        let result = [];
+        result['nbVuln'] = 0;
+        result['deltaVuln'] = 0;
+        if (nodeRun && nodeRun.vulnerabilities_report && nodeRun.vulnerabilities_report.report) {
+            if (nodeRun.vulnerabilities_report.report.summary) {
+                Object.keys(nodeRun.vulnerabilities_report.report.summary).forEach(k => {
+                    result['nbVuln'] += nodeRun.vulnerabilities_report.report.summary[k];
                 });
             }
             let previousNb = 0;
-            if (this.nodeRun.vulnerabilities_report.report.previous_run_summary) {
-                Object.keys(this.nodeRun.vulnerabilities_report.report.previous_run_summary).forEach(k => {
-                    previousNb += this.nodeRun.vulnerabilities_report.report.previous_run_summary[k];
+            if (nodeRun.vulnerabilities_report.report.previous_run_summary) {
+                Object.keys(nodeRun.vulnerabilities_report.report.previous_run_summary).forEach(k => {
+                    previousNb += nodeRun.vulnerabilities_report.report.previous_run_summary[k];
                 });
-            } else if (this.nodeRun.vulnerabilities_report.report.default_branch_summary) {
-                Object.keys(this.nodeRun.vulnerabilities_report.report.default_branch_summary).forEach(k => {
-                    previousNb += this.nodeRun.vulnerabilities_report.report.default_branch_summary[k];
+            } else if (nodeRun.vulnerabilities_report.report.default_branch_summary) {
+                Object.keys(nodeRun.vulnerabilities_report.report.default_branch_summary).forEach(k => {
+                    previousNb += nodeRun.vulnerabilities_report.report.default_branch_summary[k];
                 });
             }
-            this.deltaVul = this.nbVuln - previousNb;
+            result['deltaVuln'] = this.nbVuln - previousNb;
         }
+        return result;
     }
 }

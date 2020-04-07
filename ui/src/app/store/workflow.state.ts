@@ -1,7 +1,7 @@
 import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Action, createSelector, Selector, State, StateContext } from '@ngxs/store';
 import { WNode, WNodeHook, WNodeTrigger, Workflow } from 'app/model/workflow.model';
-import { WorkflowNodeRun, WorkflowRun } from 'app/model/workflow.run.model';
+import { WorkflowNodeJobRun, WorkflowNodeRun, WorkflowRun } from 'app/model/workflow.run.model';
 import { NavbarService } from 'app/service/navbar/navbar.service';
 import { WorkflowRunService } from 'app/service/workflow/run/workflow.run.service';
 import { WorkflowService } from 'app/service/workflow/workflow.service';
@@ -28,6 +28,7 @@ export class WorkflowStateModel {
     sidebar: string;
     workflowRun: WorkflowRun;
     workflowNodeRun: WorkflowNodeRun;
+    workflowNodeJobRun: WorkflowNodeJobRun;
     listRuns: Array<WorkflowRun>;
     filters?: {};
     editWorkflow: Workflow;
@@ -50,6 +51,7 @@ export function getInitialWorkflowState(): WorkflowStateModel {
         canEdit: false,
         workflowRun: null,
         workflowNodeRun: null,
+        workflowNodeJobRun: null,
         listRuns: new Array<WorkflowRun>(),
         sidebar: WorkflowSidebarMode.RUNS,
         filters: {},
@@ -107,6 +109,13 @@ export class WorkflowState {
         return createSelector(
             [WorkflowState],
             (state: WorkflowStateModel): WorkflowRun => state.workflowRun
+        );
+    }
+
+    static getSelectedWorkflowNodeJobRun() {
+        return createSelector(
+            [WorkflowState],
+            (state: WorkflowStateModel): WorkflowNodeJobRun => state.workflowNodeJobRun
         );
     }
 
@@ -1217,6 +1226,7 @@ export class WorkflowState {
             ...state,
             workflowRun: null,
             workflowNodeRun: null,
+            workflowNodeJobRun: null,
             node: null,
             canEdit: state.workflow.permissions.writable,
             sidebar: WorkflowSidebarMode.RUNS
@@ -1273,6 +1283,41 @@ export class WorkflowState {
             node: action.payload.node,
             sidebar: WorkflowSidebarMode.RUN_NODE
         });
+    }
+
+    @Action(actionWorkflow.SelectWorkflowNodeRunJob)
+    selectWorkflowNodeRunJob(ctx: StateContext<WorkflowStateModel>, action: actionWorkflow.SelectWorkflowNodeRunJob) {
+        const state = ctx.getState();
+        if (!state.workflowNodeJobRun && !action.payload.jobID) {
+            return;
+        }
+        if (state.workflowNodeJobRun && !action.payload.jobID) {
+            ctx.setState({
+                ...state,
+                workflowNodeJobRun: null
+            });
+            return;
+        }
+        if (!state.workflowNodeRun) {
+            return;
+        }
+        if (state.workflowNodeRun.stages) {
+            for (let i = 0; i < state.workflowNodeRun.stages.length; i++) {
+                let s = state.workflowNodeRun.stages[i];
+                if (s.run_jobs) {
+                    for (let j = 0; j < s.run_jobs.length; j++) {
+                        let rj = s.run_jobs[j];
+                        if (rj.job.pipeline_action_id === action.payload.jobID) {
+                            ctx.setState({
+                                ...state,
+                                workflowNodeJobRun: rj
+                            });
+                            return;
+                        }
+                    }
+                }
+            }
+        }
     }
 
     @Action(actionWorkflow.SidebarRunsMode)

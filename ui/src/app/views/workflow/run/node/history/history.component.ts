@@ -1,11 +1,14 @@
-import { ChangeDetectionStrategy, Component, Input, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
+import { Store } from '@ngxs/store';
 import { Parameter } from 'app/model/parameter.model';
 import { PipelineStatus } from 'app/model/pipeline.model';
 import { Project } from 'app/model/project.model';
 import { Workflow } from 'app/model/workflow.model';
 import { WorkflowNodeRun, WorkflowRun } from 'app/model/workflow.run.model';
 import { Column, ColumnType } from 'app/shared/table/data-table.component';
+import { ProjectState } from 'app/store/project.state';
+import { WorkflowState, WorkflowStateModel } from 'app/store/workflow.state';
 
 @Component({
     selector: 'app-workflow-node-run-history',
@@ -14,17 +17,22 @@ import { Column, ColumnType } from 'app/shared/table/data-table.component';
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class WorkflowNodeRunHistoryComponent implements OnInit {
-    @Input() project: Project;
-    @Input() run: WorkflowRun;
-    @Input() history: Array<WorkflowNodeRun>;
-    @Input() currentBuild: WorkflowNodeRun;
-    @Input() workflowName: string;
+    history: Array<WorkflowNodeRun>;
+    project: Project;
+    run: WorkflowRun;
+    currentBuild: WorkflowNodeRun;
+    workflowName: string;
 
     loading: boolean;
     columns: Array<Column<WorkflowNodeRun>>;
 
-    constructor(private _router: Router) {
-
+    constructor(private _router: Router, private _store: Store) {
+        this.project = this._store.selectSnapshot(ProjectState.projectSnapshot);
+        this.run = (<WorkflowStateModel>this._store.selectSnapshot(WorkflowState)).workflowRun;
+        this.currentBuild = (<WorkflowStateModel>this._store.selectSnapshot(WorkflowState)).workflowNodeRun;
+        this.workflowName = this.run.workflow.name;
+        let nodeRun = (<WorkflowStateModel>this._store.selectSnapshot(WorkflowState)).workflowNodeRun;
+        this.history = this.run.nodes[nodeRun.workflow_node_id];
     }
 
     ngOnInit() {
