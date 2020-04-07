@@ -58,7 +58,7 @@ export class WorkflowRunComponent implements OnInit {
         private _cd: ChangeDetectorRef
     ) {
         this.project = this._store.selectSnapshot(ProjectState.projectSnapshot);
-        this.workflowName = this._activatedRoute.snapshot.parent.params['workflowName'];
+        this.workflowName = this._store.selectSnapshot(WorkflowState.workflowSnapshot).name;
         this._store.dispatch(new ChangeToRunView({}));
 
         this.paramsSub = this._activatedRoute.params.subscribe(p => {
@@ -80,7 +80,7 @@ export class WorkflowRunComponent implements OnInit {
             }
 
             if (wr && this.workflowRunData && this.workflowRunData['id'] === wr.id && this.workflowRunData['status'] === wr.status) {
-               return;
+                return;
             }
 
             if (!this.workflowRunData) {
@@ -89,8 +89,8 @@ export class WorkflowRunComponent implements OnInit {
 
             // If workflow run change, refresh workflow
             if (wr && this.workflowRunData['id'] !== wr.id) {
-               this.workflowRunData['workflow'] = wr.workflow;
-               this.workflowName = wr.workflow.name;
+                this.workflowRunData['workflow'] = wr.workflow;
+                this.workflowName = this._store.selectSnapshot(WorkflowState.workflowSnapshot).name;
             }
 
             if (wr && this.workflowRunData['id'] && this.workflowRunData['id'] === wr.id
@@ -101,7 +101,7 @@ export class WorkflowRunComponent implements OnInit {
             if (wr && wr.infos && wr.infos.length > 0 && (
                 (!this.workflowRunData['infos']) ||
                 (this.workflowRunData['infos'] && this.workflowRunData['infos'].length === wr.infos.length)
-                )) {
+            )) {
                 this.displayError = wr.infos.some((info) => info.type === 'Error');
                 this.warnings = wr.infos.filter(i => i.type === 'Warning');
             }

@@ -34,7 +34,7 @@ const (
 	defaultLimit = 10
 )
 
-func (api *API) searchWorkflowRun(ctx context.Context, w http.ResponseWriter, r *http.Request, vars map[string]string, route, key, name string) error {
+func (api *API) searchWorkflowRun(w http.ResponseWriter, r *http.Request, route, key, name string) error {
 	// About pagination: [FR] http://blog.octo.com/designer-une-api-rest/#pagination
 	var limit, offset int
 
@@ -148,7 +148,7 @@ func (api *API) getWorkflowAllRunsHandler() service.Handler {
 		route := api.Router.GetRoute("GET", api.getWorkflowAllRunsHandler, map[string]string{
 			"permProjectKey": key,
 		})
-		return api.searchWorkflowRun(ctx, w, r, vars, route, key, name)
+		return api.searchWorkflowRun(w, r, route, key, name)
 	}
 }
 
@@ -161,7 +161,7 @@ func (api *API) getWorkflowRunsHandler() service.Handler {
 			"key":          key,
 			"workflowName": name,
 		})
-		return api.searchWorkflowRun(ctx, w, r, vars, route, key, name)
+		return api.searchWorkflowRun(w, r, route, key, name)
 	}
 }
 
