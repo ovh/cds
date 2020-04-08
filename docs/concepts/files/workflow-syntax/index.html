@@ -18,13 +18,13 @@
 
 <meta name="description"
     content="A CDS workflow file only contains the description of pipelines orchestration, hooks, run conditions, etc. Consider the following workflow wich implements a basic two-stage workflow:
-name: my-workflow workflow: build: pipeline: build application: my-application deploy: depends_on: - build when: - success pipeline: deploy application: my-application environment: my-production hooks: build: - type: RepositoryWebHook notifications: - type: email pipelines: - deploy settings: on_success: never recipients: - me@foo.bar  There are two major things to understand: workflow and hooks.">
+name: my-workflow workflow: build: pipeline: build application: my-application deploy: depends_on: - build when: - success pipeline: deploy application: my-application environment: my-production hooks: build: - type: RepositoryWebHook  There are two major things to understand: workflow and hooks. A workflow is a kind of graph starting from a root pipeline, and other pipelines with dependencies.">
 <meta property="og:description"
     content="A CDS workflow file only contains the description of pipelines orchestration, hooks, run conditions, etc. Consider the following workflow wich implements a basic two-stage workflow:
-name: my-workflow workflow: build: pipeline: build application: my-application deploy: depends_on: - build when: - success pipeline: deploy application: my-application environment: my-production hooks: build: - type: RepositoryWebHook notifications: - type: email pipelines: - deploy settings: on_success: never recipients: - me@foo.bar  There are two major things to understand: workflow and hooks.">
+name: my-workflow workflow: build: pipeline: build application: my-application deploy: depends_on: - build when: - success pipeline: deploy application: my-application environment: my-production hooks: build: - type: RepositoryWebHook  There are two major things to understand: workflow and hooks. A workflow is a kind of graph starting from a root pipeline, and other pipelines with dependencies.">
 <meta name="twitter:description"
     content="A CDS workflow file only contains the description of pipelines orchestration, hooks, run conditions, etc. Consider the following workflow wich implements a basic two-stage workflow:
-name: my-workflow workflow: build: pipeline: build application: my-application deploy: depends_on: - build when: - success pipeline: deploy application: my-application environment: my-production hooks: build: - type: RepositoryWebHook notifications: - type: email pipelines: - deploy settings: on_success: never recipients: - me@foo.bar  There are two major things to understand: workflow and hooks.">
+name: my-workflow workflow: build: pipeline: build application: my-application deploy: depends_on: - build when: - success pipeline: deploy application: my-application environment: my-production hooks: build: - type: RepositoryWebHook  There are two major things to understand: workflow and hooks. A workflow is a kind of graph starting from a root pipeline, and other pipelines with dependencies.">
 <meta property="og:url" content="https://ovh.github.io/cds/docs/concepts/files/workflow-syntax/">
 <meta property="og:title" content="Workflow configuration file">
 <meta name="twitter:title" content="Workflow configuration file">
@@ -519,7 +519,6 @@ name: my-workflow workflow: build: pipeline: build application: my-application d
 <li>
 <ul>
 <li><a href="#run-conditions">Run Conditions</a></li>
-<li><a href="#notifications">Notifications</a></li>
 </ul></li>
 </ul>
 </nav>
@@ -545,21 +544,13 @@ workflow:
 hooks:
   build:
   - type: RepositoryWebHook
-notifications:
-- type: email
-  pipelines:
-  - deploy
-  settings:
-    on_success: never
-    recipients:
-    - me@foo.bar
 </code></pre>
 
 <p>There are two major things to understand: <code>workflow</code> and <code>hooks</code>. A workflow is a kind of graph starting from a root pipeline, and other pipelines with dependencies. In this example, the <code>deploy</code> pipeline will be triggered after the <code>build</code> pipeline.</p>
 
 <h2 id="run-conditions">Run Conditions</h2>
 
-<p><a href="https://ovh.github.io/cds/docs/concepts/workflow/run-conditions/">Run Conditions documentation</a></p>
+<p><a href="{{ &lt;relref &quot;/docs/concepts/workflow/run-conditions.md&quot;&gt;}}">Run Conditions documentation</a></p>
 
 <p>Example of basic condition. Notice that the <code>when</code> attribute is optional, it&rsquo;s just a shortcut on condition <code>cds.status == Success</code>.</p>
 
@@ -594,51 +585,6 @@ notifications:
 <pre><code class="language-lua">  conditions:
     script: return cds_manual == &quot;true&quot; or (cds_status == &quot;Success&quot; and git_branch
       == &quot;master&quot; and git_repository == &quot;ovh/cds&quot;)
-</code></pre>
-
-<h2 id="notifications">Notifications</h2>
-
-<p><a href="https://ovh.github.io/cds/docs/concepts/workflow/notifications/">Notifications documentation</a></p>
-
-<p>Example of email notification.</p>
-
-<pre><code class="language-yml">- type: email
-  pipelines:
-  - deploy
-  settings:
-    on_success: never
-    recipients:
-    - me@foo.bar
-</code></pre>
-
-<p>Example of jabber notification. Note that you can add <code>conditions</code> on every notifications</p>
-
-<pre><code class="language-yml">- type: jabber
-  pipelines:
-  - deploy
-  settings:
-    on_start: true
-    send_to_groups: true
-    recipients:
-    - me@jabber.com
-    conditions:
-      check:
-      - variable: cds.triggered_by.email
-        operator: eq
-        value: me@localhost.local
-</code></pre>
-
-<p>Example of vcs notification. Note that <code>pipelines</code> list is optional on every notifications. When it&rsquo;s not specified, notification will be triggered for each pipeline</p>
-
-<pre><code class="language-yml">- type: vcs
-  settings:
-    template:
-      body: |+
-        [[- if .Stages ]]
-        CDS Report [[.WorkflowNodeName]]#[[.Number]].[[.SubNumber]] [[ if eq .Status &quot;Success&quot; -]] ✔ [[ else ]][[ if eq .Status &quot;Fail&quot; -]] ✘ [[ else ]][[ if eq .Status &quot;Stopped&quot; -]] ■ [[ else ]]- [[ end ]] [[ end ]] [[ end ]]
-        [[- end]]
-      disable_comment: false
-      disable_status: false
 </code></pre>
 
 

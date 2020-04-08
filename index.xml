@@ -113,7 +113,7 @@ In order to trigger this one you just have to make a HTTP call on the given URL 
       
       <guid>https://ovh.github.io/cds/docs/concepts/files/workflow-syntax/</guid>
       <description>A CDS workflow file only contains the description of pipelines orchestration, hooks, run conditions, etc. Consider the following workflow wich implements a basic two-stage workflow:
-name: my-workflow workflow: build: pipeline: build application: my-application deploy: depends_on: - build when: - success pipeline: deploy application: my-application environment: my-production hooks: build: - type: RepositoryWebHook notifications: - type: email pipelines: - deploy settings: on_success: never recipients: - me@foo.bar  There are two major things to understand: workflow and hooks.</description>
+name: my-workflow workflow: build: pipeline: build application: my-application deploy: depends_on: - build when: - success pipeline: deploy application: my-application environment: my-production hooks: build: - type: RepositoryWebHook  There are two major things to understand: workflow and hooks. A workflow is a kind of graph starting from a root pipeline, and other pipelines with dependencies.</description>
     </item>
     
     <item>
