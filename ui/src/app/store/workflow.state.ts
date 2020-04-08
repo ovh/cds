@@ -1,8 +1,10 @@
 import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
+import { Router } from '@angular/router';
 import { Action, createSelector, Selector, State, StateContext } from '@ngxs/store';
 import { WNode, WNodeHook, WNodeTrigger, Workflow } from 'app/model/workflow.model';
 import { WorkflowNodeJobRun, WorkflowNodeRun, WorkflowRun } from 'app/model/workflow.run.model';
 import { NavbarService } from 'app/service/navbar/navbar.service';
+import { RouterService } from 'app/service/router/router.service';
 import { WorkflowRunService } from 'app/service/workflow/run/workflow.run.service';
 import { WorkflowService } from 'app/service/workflow/workflow.service';
 import { WorkflowSidebarMode } from 'app/service/workflow/workflow.sidebar.store';
@@ -224,8 +226,8 @@ export class WorkflowState {
         };
     }
 
-    constructor(private _http: HttpClient, private _navbarService: NavbarService,
-        private _workflowService: WorkflowService, private _workflowRunService: WorkflowRunService) {
+    constructor(private _http: HttpClient, private _navbarService: NavbarService, private _routerService: RouterService,
+        private _workflowService: WorkflowService, private _workflowRunService: WorkflowRunService, private _router: Router) {
     }
 
     @Action(actionWorkflow.OpenEditModal)
@@ -1016,6 +1018,11 @@ export class WorkflowState {
     resync(ctx: StateContext<WorkflowStateModel>, action: actionWorkflow.GetWorkflow) {
         return this._workflowService.getWorkflow(action.payload.projectKey, action.payload.workflowName).pipe(first(),
             tap(wf => {
+                let routeParams = this._routerService.getRouteSnapshotParams({}, this._router.routerState.snapshot.root);
+                if (wf.project_key !== routeParams['key'] || wf.name !== routeParams['workflowName']) {
+                    return;
+                }
+
                 const state = ctx.getState();
                 let canEdit = wf.permissions.writable;
                 let editWorkflow: Workflow;
@@ -1131,12 +1138,18 @@ export class WorkflowState {
                     });
                 }),
                 tap((wr: WorkflowRun) => {
-                    const stateRun = ctx.getState();
-                    ctx.setState({
-                        ...stateRun,
-                        projectKey: action.payload.projectKey,
-                        workflowRun: wr
-                    });
+                    let routeParams = this._routerService.getRouteSnapshotParams({}, this._router.routerState.snapshot.root);
+                    if (wr.workflow.project_key !== routeParams['key'] || wr.workflow.name !== routeParams['workflowName']) {
+                        return;
+                    }
+                    if (routeParams['number'] && routeParams['number'] === wr.num.toString()) {
+                        const stateRun = ctx.getState();
+                        ctx.setState({
+                            ...stateRun,
+                            projectKey: action.payload.projectKey,
+                            workflowRun: wr
+                        });
+                    }
                     ctx.dispatch(new UpdateWorkflowRunList({ workflowRun: wr }));
                     return wr;
                 }));
@@ -1180,6 +1193,10 @@ export class WorkflowState {
                     });
                 }),
                 tap((wrs: Array<WorkflowRun>) => {
+                    let routeParams = this._routerService.getRouteSnapshotParams({}, this._router.routerState.snapshot.root);
+                    if (action.payload.projectKey !== routeParams['key'] || action.payload.workflowName !== routeParams['workflowName']) {
+                        return;
+                    }
                     const stateRun = ctx.getState();
                     ctx.setState({
                         ...stateRun,
@@ -1207,6 +1224,17 @@ export class WorkflowState {
                     loadingWorkflowNodeRun: false
                 });
             }), tap((wnr: WorkflowNodeRun) => {
+                let routeParams = this._routerService.getRouteSnapshotParams({}, this._router.routerState.snapshot.root);
+                if (action.payload.projectKey !== routeParams['key'] || action.payload.workflowName !== routeParams['workflowName']) {
+                    return;
+                }
+                if (!routeParams['number'] || routeParams['number'] !== action.payload.num.toString()) {
+                    return;
+                }
+                if (!routeParams['nodeId'] || routeParams['nodeId'] !== action.payload.nodeRunID.toString()) {
+                    return;
+                }
+
                 const stateNR = ctx.getState();
                 let node = Workflow.getNodeByID(wnr.workflow_node_id, stateNR.workflowRun.workflow);
                 ctx.setState({
