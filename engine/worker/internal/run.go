@@ -37,9 +37,9 @@ func processJobParameter(parameters []sdk.Parameter, secrets []sdk.Variable) err
 	for i := range parameters {
 		var err error
 		var oldValue = parameters[i].Value
-		var i int
+		var x int
 		var keepReplacing = true
-		for keepReplacing && i < 10 {
+		for keepReplacing && x < 10 {
 			var paramMap = sdk.ParametersToMap(parameters)
 			parameters[i].Value, err = interpolate.Do(parameters[i].Value, paramMap)
 			if err != nil {
@@ -55,7 +55,7 @@ func processJobParameter(parameters []sdk.Parameter, secrets []sdk.Variable) err
 			if parameters[i].Value == oldValue {
 				keepReplacing = false
 			}
-			i++
+			x++
 		}
 	}
 	return nil
