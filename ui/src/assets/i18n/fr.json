@@ -893,6 +893,7 @@
   "workflow_run_with_parameters": "Lancer le workflow",
   "workflow_runnumber_title": "Numéro de run courant",
   "workflow_sidebar_tag_zone": "Tags à afficher dans la sidebar (ordonnés par priorité)",
+  "workflow_start_with_fork": "Commencer avec un embranchement",
   "workflow_stopped": "Workflow arrêté",
   "workflow_tag_dragdrop": "Drag & drop sur les tags pour modifier l'ordre",
   "workflow_template_apply_detach": "Détacher le workflow généré du template.",

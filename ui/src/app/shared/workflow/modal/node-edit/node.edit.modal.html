@@ -11,7 +11,7 @@
                 <div class="four wide column">
                     <div class="ui secondary vertical pointing menu">
                         <ng-container *ngIf="!hookSelected">
-                            <ng-container *ngIf="currentNodeType === 'pipeline'">
+                            <ng-container *ngIf="currentNodeType === 'pipeline' || currentNodeType === 'fork'">
                                 <a class="item" [class.active]="selected === 'context'" (click)="changeView('context')">
                                     {{ 'workflow_node_context_label' | translate }}
                                 </a>
