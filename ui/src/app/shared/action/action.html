@@ -82,7 +82,7 @@
     </div>
 
     <div class="subtitle normalStep">
-        <h3 class="inline">{{ 'action_step_title' | translate }}</h3>
+        <h3 class="inline">{{ 'action_step_title' | translate }}<span *ngIf="steps">{{ ' (' + steps.length + ')'}}</span></h3>
         <div class="right floated" *ngIf="steps && steps.length > 0">
             <button class="ui blue button" (click)="collapsed = !collapsed">
                 <ng-container *ngIf="collapsed">

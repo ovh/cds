@@ -108,8 +108,6 @@ export class WorkflowStepLogComponent implements OnInit, OnDestroy {
                         this.stepStatus.status === this.pipelineBuildStatusEnum.WAITING ||
                         (this.stepStatus.status === this.pipelineBuildStatusEnum.FAIL && !this.step.optional)) {
                         this.showLogs = true;
-                    }
-                    if (this.pipelineBuildStatusEnum.isActive(this.stepStatus.status)) {
                         this.initWorker();
                     }
                 }
