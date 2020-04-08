@@ -30,6 +30,7 @@ import { PipelineModule } from '../pipeline.module';
 import { PipelineShowComponent } from './pipeline.show.component';
 import { ApplicationService } from 'app/service/application/application.service';
 import { EnvironmentService } from 'app/service/environment/environment.service';
+import { RouterService } from 'app/service/router/router.service';
 
 describe('CDS: Pipeline Show', () => {
 
@@ -54,6 +55,7 @@ describe('CDS: Pipeline Show', () => {
                 WorkflowService,
                 WorkflowRunService,
                 UserService,
+                RouterService,
                 AuthenticationService
             ],
             imports: [
