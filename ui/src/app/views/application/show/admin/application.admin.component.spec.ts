@@ -22,7 +22,7 @@ import { ProjectService } from '../../../../service/project/project.service';
 import { ProjectStore } from '../../../../service/project/project.store';
 import { RepoManagerService } from '../../../../service/repomanager/project.repomanager.service';
 import {
-    MonitoringService,
+    MonitoringService, RouterService,
     ServicesModule,
     WorkflowRunService,
     WorkflowStore
@@ -72,6 +72,7 @@ describe('CDS: Application Admin Component', () => {
                 { provide: APP_BASE_HREF, useValue: '/' },
                 Store,
                 UserService,
+                RouterService,
                 AuthenticationService
             ],
             imports: [
