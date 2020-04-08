@@ -10,9 +10,8 @@ import { GetCDSStatus } from 'app/store/cds.action';
 import { CDSState } from 'app/store/cds.state';
 import { Observable } from 'rxjs';
 import { WebSocketSubject } from 'rxjs/internal-compatibility';
-import { bufferTime, delay, filter, map, mergeMap, retryWhen } from 'rxjs/operators';
+import { bufferTime, filter, map, mergeMap } from 'rxjs/operators';
 import { Subscription } from 'rxjs/Subscription';
-import { webSocket } from 'rxjs/webSocket';
 import * as format from 'string-format-obj';
 import { AppService } from './app.service';
 import { Event, EventType } from './model/event.model';
@@ -26,6 +25,7 @@ import { CDSSharedWorker } from './shared/worker/shared.worker';
 import { CDSWebWorker } from './shared/worker/web.worker';
 import { CDSWorker } from './shared/worker/worker';
 import { AuthenticationState } from './store/authentication.state';
+import { EventService } from 'app/event.service';
 
 declare var PACMAN: any;
 
@@ -58,6 +58,7 @@ export class AppComponent implements OnInit {
     maintenance: boolean;
     cdsstateSub: Subscription;
     user: AuthentifiedUser;
+    previousURL: string
 
     @ViewChild('gamification', { static: false })
     eltGamification: ElementRef;
@@ -74,7 +75,8 @@ export class AppComponent implements OnInit {
         private _notification: NotificationService,
         private _appService: AppService,
         private _toastService: ToastService,
-        private _store: Store
+        private _store: Store,
+        private _eventService: EventService
     ) {
         this.zone = new NgZone({ enableLongStackTrace: false });
         this.toasterConfig = this._toastService.getConfig();
@@ -122,7 +124,7 @@ export class AppComponent implements OnInit {
                 this.user = user;
                 this.isConnected = true;
                 this.startSSE();
-                this.startWebsocket();
+                this._eventService.startWebsocket(this.user);
             }
         });
         this.startVersionWorker();
@@ -140,6 +142,14 @@ export class AppComponent implements OnInit {
 
         this._routerNavEndSubscription = this._router.events
             .pipe(filter((event) => event instanceof NavigationEnd))
+            .pipe(map((e: NavigationEnd) => {
+                if ((!this.previousURL || this.previousURL.split('?')[0] !== e.url.split('?')[0])) {
+                    this.previousURL = e.url;
+                    this._eventService.manageWebsocketFilterByUrl(e.url);
+                    return;
+                }
+
+            }))
             .pipe(map(() => this._activatedRoute))
             .pipe(map((route) => {
                 let params = {};
@@ -185,33 +195,10 @@ export class AppComponent implements OnInit {
         }
     }
 
-    startWebsocket() {
-        const protocol = window.location.protocol.replace('http', 'ws');
-        const host = window.location.host;
-        const href = this._router['location']._baseHref;
-
-        this.websocket = webSocket({
-            url: `${protocol}//${host}${href}/cdsapi/ws`,
-            openObserver: {
-                next: value => {
-                    if (value.type === 'open') {
-                        console.log('connected');
-                    }
-                }
-            }});
-
-        this.websocket
-            .pipe(retryWhen(errors => errors.pipe(delay(5000))))
-            .subscribe((message: any) => {
-                console.log(message);
-            }, (err) => {
-                console.error('Error: ', err)
-            }, () => {
-                console.warn('Websocket Completed');
-            });
-    }
-
     startSSE(): void {
+        if (this.user.isAdmin() && localStorage.getItem("WS-EVENT")) {
+            return
+        }
         if (this.sseWorker) {
             this.stopWorker(this.sseWorker, null);
         }

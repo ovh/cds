@@ -13,6 +13,7 @@ import { AppService } from './app.service';
 import { ServicesModule } from './service/services.module';
 import { SharedModule } from './shared/shared.module';
 import { NavbarModule } from './views/navbar/navbar.module';
+import { EventService } from 'app/event.service';
 
 let ngModule: NgModule = {
     declarations: [
@@ -41,6 +42,7 @@ let ngModule: NgModule = {
     ],
     providers: [
         AppService,
+        EventService,
         { provide: LOCALE_ID, useValue: navigator.language.match(/fr/) ? 'fr' : 'en' }
     ],
     bootstrap: [AppComponent]
