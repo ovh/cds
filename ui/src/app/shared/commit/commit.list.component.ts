@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnInit } from '@angular/core';
 import { Select } from '@ngxs/store';
 import { Commit } from 'app/model/repositories.model';
 import { WorkflowNodeRun } from 'app/model/workflow.run.model';
@@ -19,7 +19,7 @@ export class CommitListComponent implements OnInit {
     @Select(WorkflowState.getSelectedNodeRun()) nodeRun$: Observable<WorkflowNodeRun>;
     nodeRunSubs: Subscription;
 
-    commits: Array<Commit>;
+    @Input() commits: Array<Commit>;
     columns: Column<Commit>[];
 
     constructor(private _cd: ChangeDetectorRef) {
@@ -64,10 +64,15 @@ export class CommitListComponent implements OnInit {
     }
 
     ngOnInit(): void {
+        // if commits are provided by input, do not look at the noderun
+        if (this.commits && this.commits.length) {
+            return;
+        }
         this.nodeRunSubs = this.nodeRun$.subscribe(nr => {
            if (!nr) {
                return;
            }
+
            if (this.commits && nr.commits && this.commits.length === nr.commits.length) {
                return;
            }

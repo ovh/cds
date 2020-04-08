@@ -53,6 +53,8 @@ export class WorkflowNodeRunComponent implements OnInit {
     nbVuln = 0;
     deltaVul = 0;
 
+    paramsSub: Subscription;
+
     constructor(
         private _store: Store,
         private _activatedRoute: ActivatedRoute,
@@ -79,19 +81,21 @@ export class WorkflowNodeRunComponent implements OnInit {
         let params = this._routerService.getRouteSnapshotParams({}, this._router.routerState.snapshot.root);
         this.workflowName = params['workflowName'];
 
-        let number = params['number'];
-        let nodeRunId = params['nodeId'];
-
-        this._store.dispatch(new GetWorkflowRun({ projectKey: this.project.key, workflowName: this.workflowName, num: number }))
-            .subscribe(() => {
-                this._store.dispatch(
-                    new GetWorkflowNodeRun({
-                        projectKey: this.project.key,
-                        workflowName: this.workflowName,
-                        num: number,
-                        nodeRunID: nodeRunId
-                    }));
-            });
+        this.paramsSub = this._activatedRoute.params.subscribe(p => {
+            if (p['nodeId'] === this.currentNodeRunID && p['number'] === this.currentNodeRunNum) {
+                return;
+            }
+            this._store.dispatch(new GetWorkflowRun({ projectKey: this.project.key, workflowName: this.workflowName, num: p['number'] }))
+                .subscribe(() => {
+                    this._store.dispatch(
+                        new GetWorkflowNodeRun({
+                            projectKey: this.project.key,
+                            workflowName: this.workflowName,
+                            num: p['number'],
+                            nodeRunID: p['nodeId']
+                        }));
+                });
+        });
     }
 
     ngOnInit(): void {
