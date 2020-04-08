@@ -14,32 +14,51 @@ import (
 	"github.com/spf13/afero"
 
 	"github.com/ovh/cds/engine/worker/pkg/workerruntime"
-
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/interpolate"
 	"github.com/ovh/cds/sdk/log"
 )
 
-func processJobParameter(parameters []sdk.Parameter, secrets []sdk.Variable) {
-	for i := range parameters {
-		keepReplacing := true
-		for keepReplacing {
-			t := parameters[i].Value
+func processVariablesAndParameters(action *sdk.Action, jobParameters []sdk.Parameter, jobSecrets []sdk.Variable) error {
+	if err := processJobParameter(jobParameters, jobSecrets); err != nil {
+		return err
+	}
 
-			for _, p := range parameters {
-				parameters[i].Value = strings.Replace(parameters[i].Value, "{{."+p.Name+"}}", p.Value, -1)
+	if err := processActionVariables(action, nil, jobParameters, jobSecrets); err != nil {
+		return err
+	}
+	return nil
+}
+
+func processJobParameter(parameters []sdk.Parameter, secrets []sdk.Variable) error {
+	secretParam := sdk.VariablesToParameters("", secrets)
+	secretMap := sdk.ParametersToMap(secretParam)
+
+	for i := range parameters {
+		var err error
+		var oldValue = parameters[i].Value
+		var i int
+		var keepReplacing = true
+		for keepReplacing && i < 10 {
+			var paramMap = sdk.ParametersToMap(parameters)
+			parameters[i].Value, err = interpolate.Do(parameters[i].Value, paramMap)
+			if err != nil {
+				return sdk.WrapError(err, "Unable to interpolate job parameters")
 			}
 
-			for _, p := range secrets {
-				parameters[i].Value = strings.Replace(parameters[i].Value, "{{."+p.Name+"}}", p.Value, -1)
+			parameters[i].Value, err = interpolate.Do(parameters[i].Value, secretMap)
+			if err != nil {
+				return sdk.WrapError(err, "Unable to interpolate job parameters")
 			}
 
 			// If parameters wasn't updated, consider it done
-			if parameters[i].Value == t {
+			if parameters[i].Value == oldValue {
 				keepReplacing = false
 			}
+			i++
 		}
 	}
+	return nil
 }
 
 // ProcessActionVariables replaces all placeholders inside action recursively using
@@ -48,38 +67,29 @@ func processJobParameter(parameters []sdk.Parameter, secrets []sdk.Variable) {
 // - Secrets from project, application and environment
 //
 // This function should be called ONLY from worker
-func (w *CurrentWorker) processActionVariables(a *sdk.Action, parent *sdk.Action, jobParameters []sdk.Parameter, secrets []sdk.Variable) error {
+func processActionVariables(a *sdk.Action, parent *sdk.Action, jobParameters []sdk.Parameter, secrets []sdk.Variable) error {
 	// replaces placeholder in parameters with ActionBuild variables
 	// replaces placeholder in parameters with Parent params
+	secretParam := sdk.VariablesToParameters("", secrets)
+	secretMap := sdk.ParametersToMap(secretParam)
+	var parentParamMap = map[string]string{}
+	if parent != nil {
+		parentParamMap = sdk.ParametersToMap(parent.Parameters)
+	}
+	jobParamMap := sdk.ParametersToMap(jobParameters)
+	allParams := sdk.ParametersMapMerge(parentParamMap, jobParamMap)
+	allParams = sdk.ParametersMapMerge(allParams, secretMap)
 	for i := range a.Parameters {
-		keepReplacing := true
-		for keepReplacing {
-			t := a.Parameters[i].Value
-
-			if parent != nil {
-				for _, p := range parent.Parameters {
-					a.Parameters[i].Value = strings.Replace(a.Parameters[i].Value, "{{."+p.Name+"}}", p.Value, -1)
-				}
-			}
-
-			for _, p := range jobParameters {
-				a.Parameters[i].Value = strings.Replace(a.Parameters[i].Value, "{{."+p.Name+"}}", p.Value, -1)
-			}
-
-			for _, p := range secrets {
-				a.Parameters[i].Value = strings.Replace(a.Parameters[i].Value, "{{."+p.Name+"}}", p.Value, -1)
-			}
-
-			// If parameters wasn't updated, consider it done
-			if a.Parameters[i].Value == t {
-				keepReplacing = false
-			}
+		var err error
+		a.Parameters[i].Value, err = interpolate.Do(a.Parameters[i].Value, allParams)
+		if err != nil {
+			return err
 		}
 	}
 
 	// replaces placeholder in all children recursively
 	for i := range a.Actions {
-		if err := w.processActionVariables(&a.Actions[i], a, jobParameters, secrets); err != nil {
+		if err := processActionVariables(&a.Actions[i], a, jobParameters, secrets); err != nil {
 			return nil
 		}
 	}
@@ -514,12 +524,10 @@ func (w *CurrentWorker) ProcessJob(jobInfo sdk.WorkflowNodeJobRunData) (sdk.Resu
 	})
 
 	// REPLACE ALL VARIABLE EVEN SECRETS HERE
-	processJobParameter(jobParameters, jobInfo.Secrets)
-	if err := w.processActionVariables(&jobInfo.NodeJobRun.Job.Action, nil, jobParameters, jobInfo.Secrets); err != nil {
-		log.Warning(ctx, "processJob> Cannot process action %s parameters: %s", jobInfo.NodeJobRun.Job.Action.Name, err)
+	if err := processVariablesAndParameters(&jobInfo.NodeJobRun.Job.Action, jobParameters, jobInfo.Secrets); err != nil {
 		return sdk.Result{
 			Status: sdk.StatusFail,
-			Reason: fmt.Sprintf("Error: cannot process action %s parameters", jobInfo.NodeJobRun.Job.Action.Name),
+			Reason: fmt.Sprintf("Error: cannot process job %s parameters", jobInfo.NodeJobRun.Job.Action.Name),
 		}, err
 	}
 
