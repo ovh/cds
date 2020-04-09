@@ -122,6 +122,9 @@ export class WorkflowRunNodePipelineComponent implements OnInit, OnDestroy {
     }
 
     selectJob(jobID: number): void {
+        if (this.currentJob && jobID === this.currentJob.pipeline_action_id) {
+            return;
+        }
         this._store.dispatch(new SelectWorkflowNodeRunJob({jobID: jobID}));
     }
 
