@@ -57,24 +57,10 @@ export class WorkflowNodeRunHistoryComponent implements OnInit {
                 }
             },
             <Column<WorkflowNodeRun>>{
-                type: ColumnType.ROUTER_LINK,
+                type: ColumnType.TEXT,
                 name: 'common_version',
                 selector: (nodeRun: WorkflowNodeRun) => {
-                    let node = Workflow.getNodeByID(nodeRun.workflow_node_id, this.run.workflow);
-                    let url = this._router.createUrlTree([
-                        '/project',
-                        this.project.key,
-                        'workflow',
-                        this.workflowName,
-                        'run',
-                        nodeRun.num,
-                        'node',
-                        nodeRun.id
-                    ], { queryParams: { sub: nodeRun.subnumber, name: Workflow.getPipeline(this.run.workflow, node).name } });
-                    return {
-                        link: url.toString(),
-                        value: `${nodeRun.num}.${nodeRun.subnumber}`
-                    };
+                    return `${nodeRun.num}.${nodeRun.subnumber}`;
                 }
             },
             <Column<WorkflowNodeRun>>{
@@ -118,7 +104,10 @@ export class WorkflowNodeRunHistoryComponent implements OnInit {
 
     goToSubNumber(nodeRun: WorkflowNodeRun): void {
         let node = Workflow.getNodeByID(nodeRun.workflow_node_id, this.run.workflow);
-        this._router.navigate(['/project', this.project.key, 'workflow', this.workflowName, 'run', nodeRun.num, 'node',
-            nodeRun.id], { queryParams: { sub: nodeRun.subnumber, name: Workflow.getPipeline(this.run.workflow, node).name } });
+        this._router.navigate([
+            '/project', this.project.key,
+            'workflow', this.workflowName,
+            'run', nodeRun.num,
+            'node', nodeRun.id], { queryParams: { sub: nodeRun.subnumber, name: node.name } });
     }
 }
