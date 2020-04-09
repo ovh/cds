@@ -1183,7 +1183,7 @@ func checkHooks(db gorp.SqlExecutor, w *sdk.Workflow, n *sdk.Node) error {
 			h.HookModelID = hm.ID
 		}
 		if h.HookModelName == sdk.RepositoryWebHookModelName && (n.Context == nil || n.Context.ApplicationID == 0) {
-			return sdk.WrapError(sdk.ErrApplicationNotFound, "unable to find application for the repository web hook: %d: %s/%s", w.ID, w.Name, n.Name)
+			return sdk.WrapError(sdk.ErrNotFound, "unable to find application for the repository web hook: %d: %s/%s", w.ID, w.Name, n.Name)
 		}
 
 		// Add missing default value for hook
