@@ -27,7 +27,7 @@ func (api *API) postEnvironmentImportHandler() service.Handler {
 		key := vars[permProjectKey]
 		force := FormBool(r, "force")
 
-		proj, err := project.Load(api.mustDB(), api.Cache, key, project.LoadOptions.WithGroups)
+		proj, err := project.Load(api.mustDB(), key, project.LoadOptions.WithGroups)
 		if err != nil {
 			return sdk.WrapError(err, "unable load project")
 		}
@@ -70,7 +70,7 @@ func (api *API) postEnvironmentImportHandler() service.Handler {
 		}
 
 		if err := tx.Commit(); err != nil {
-			return sdk.WrapError(err, "Cannot commit transaction")
+			return sdk.WithStack(err)
 		}
 
 		return service.WriteJSON(w, msgListString, http.StatusOK)
@@ -82,7 +82,7 @@ func (api *API) importNewEnvironmentHandler() service.Handler {
 		vars := mux.Vars(r)
 		key := vars[permProjectKey]
 
-		proj, err := project.Load(api.mustDB(), api.Cache, key, project.LoadOptions.Default,
+		proj, err := project.Load(api.mustDB(), key, project.LoadOptions.Default,
 			project.LoadOptions.WithGroups, project.LoadOptions.WithPermission)
 		if err != nil {
 			return sdk.WrapError(err, "cannot load %s", key)
@@ -139,7 +139,7 @@ func (api *API) importNewEnvironmentHandler() service.Handler {
 		msgListString := translate(r, allMsg)
 
 		if err := tx.Commit(); err != nil {
-			return sdk.WrapError(err, "cannot commit transaction")
+			return sdk.WithStack(err)
 		}
 
 		return service.WriteJSON(w, msgListString, http.StatusOK)
@@ -212,7 +212,7 @@ func (api *API) importIntoEnvironmentHandler() service.Handler {
 		msgListString := translate(r, allMsg)
 
 		if err := tx.Commit(); err != nil {
-			return sdk.WrapError(err, "cannot commit transaction")
+			return sdk.WithStack(err)
 		}
 
 		return service.WriteJSON(w, msgListString, http.StatusOK)

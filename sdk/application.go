@@ -25,8 +25,8 @@ type Application struct {
 	LastModified         time.Time                    `json:"last_modified" db:"last_modified" mapstructure:"-"`
 	VCSServer            string                       `json:"vcs_server,omitempty" db:"vcs_server"`
 	RepositoryFullname   string                       `json:"repository_fullname,omitempty" db:"repo_fullname" cli:"repository_fullname"`
-	RepositoryStrategy   RepositoryStrategy           `json:"vcs_strategy,omitempty" db:"-"`
-	Metadata             Metadata                     `json:"metadata" yaml:"metadata" db:"-"`
+	RepositoryStrategy   RepositoryStrategy           `json:"vcs_strategy,omitempty" db:"cipher_vcs_strategy" gorpmapping:"encrypted,ProjectID,Name"`
+	Metadata             Metadata                     `json:"metadata" yaml:"metadata" db:"metadata"`
 	Keys                 []ApplicationKey             `json:"keys" yaml:"keys" db:"-"`
 	Usage                *Usage                       `json:"usage,omitempty" db:"-" cli:"-"`
 	DeploymentStrategies map[string]IntegrationConfig `json:"deployment_strategies,omitempty" db:"-" cli:"-"`

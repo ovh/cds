@@ -110,7 +110,7 @@ var applicationDeleteCmd = cli.Command{
 
 func applicationDeleteRun(v cli.Values) error {
 	err := client.ApplicationDelete(v.GetString(_ProjectKey), v.GetString(_ApplicationName))
-	if err != nil && v.GetBool("force") && sdk.ErrorIs(err, sdk.ErrApplicationNotFound) {
+	if err != nil && v.GetBool("force") && sdk.ErrorIs(err, sdk.ErrNotFound) {
 		fmt.Println(err.Error())
 		os.Exit(0)
 	}

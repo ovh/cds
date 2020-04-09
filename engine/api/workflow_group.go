@@ -24,7 +24,7 @@ func (api *API) deleteWorkflowGroupHandler() service.Handler {
 		groupName := vars["groupName"]
 		u := getAPIConsumer(ctx)
 
-		proj, err := project.Load(api.mustDB(), api.Cache, key, project.LoadOptions.WithIntegrations)
+		proj, err := project.Load(api.mustDB(),  key, project.LoadOptions.WithIntegrations)
 		if err != nil {
 			return sdk.WrapError(err, "unable to load projet")
 		}
@@ -60,7 +60,7 @@ func (api *API) deleteWorkflowGroupHandler() service.Handler {
 		}
 
 		if err := tx.Commit(); err != nil {
-			return sdk.WrapError(err, "cannot commit transaction")
+			return sdk.WithStack(err)
 		}
 
 		event.PublishWorkflowPermissionDelete(ctx, key, *wf, oldGp, u)
@@ -88,7 +88,7 @@ func (api *API) putWorkflowGroupHandler() service.Handler {
 			return sdk.WrapError(sdk.ErrInvalidName, "putWorkflowGroupHandler")
 		}
 
-		proj, err := project.Load(api.mustDB(), api.Cache, key, project.LoadOptions.WithIntegrations)
+		proj, err := project.Load(api.mustDB(),  key, project.LoadOptions.WithIntegrations)
 		if err != nil {
 			return sdk.WrapError(err, "unable to load projet")
 		}
@@ -122,7 +122,7 @@ func (api *API) putWorkflowGroupHandler() service.Handler {
 		}
 
 		if err := tx.Commit(); err != nil {
-			return sdk.WrapError(err, "Cannot commit transaction")
+			return sdk.WithStack(err)
 		}
 
 		event.PublishWorkflowPermissionUpdate(ctx, key, *wf, gp, oldGp, getAPIConsumer(ctx))
@@ -143,7 +143,7 @@ func (api *API) postWorkflowGroupHandler() service.Handler {
 			return sdk.WrapError(err, "cannot unmarshal body")
 		}
 
-		proj, err := project.Load(api.mustDB(), api.Cache, key, project.LoadOptions.WithIntegrations)
+		proj, err := project.Load(api.mustDB(),  key, project.LoadOptions.WithIntegrations)
 		if err != nil {
 			return sdk.WrapError(err, "unable to load projet")
 		}
@@ -179,7 +179,7 @@ func (api *API) postWorkflowGroupHandler() service.Handler {
 		}
 
 		if err := tx.Commit(); err != nil {
-			return sdk.WrapError(err, "cannot commit transaction")
+			return sdk.WithStack(err)
 		}
 
 		event.PublishWorkflowPermissionAdd(ctx, key, *wf, gp, getAPIConsumer(ctx))

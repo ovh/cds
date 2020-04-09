@@ -55,7 +55,7 @@ func (api *API) getActionsForProjectHandler() service.Handler {
 		vars := mux.Vars(r)
 		key := vars[permProjectKey]
 
-		proj, err := project.Load(api.mustDB(), api.Cache, key, project.LoadOptions.WithGroups)
+		proj, err := project.Load(api.mustDB(), key, project.LoadOptions.WithGroups)
 		if err != nil {
 			return sdk.WrapError(err, "unable to load projet %s", key)
 		}
@@ -277,7 +277,7 @@ func (api *API) putActionHandler() service.Handler {
 		}
 
 		if err = tx.Commit(); err != nil {
-			return sdk.WrapError(err, "cannot commit transaction")
+			return sdk.WithStack(err)
 		}
 
 		newAction, err := action.LoadByID(ctx, api.mustDB(), data.ID, action.LoadOptions.Default)
@@ -337,7 +337,7 @@ func (api *API) deleteActionHandler() service.Handler {
 		}
 
 		if err := tx.Commit(); err != nil {
-			return sdk.WrapError(err, "cannot commit transaction")
+			return sdk.WithStack(err)
 		}
 
 		return nil

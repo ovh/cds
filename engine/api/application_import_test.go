@@ -60,7 +60,7 @@ variables:
 	//Check result
 	t.Logf(">>%s", rec.Body.String())
 
-	app, err := application.LoadByName(db, api.Cache, proj.Key, "myNewApp", application.LoadOptions.WithVariables)
+	app, err := application.LoadByName(db, proj.Key, "myNewApp", application.LoadOptions.WithVariables)
 	test.NoError(t, err)
 
 	assert.NotNil(t, app)
@@ -102,7 +102,7 @@ func Test_postApplicationImportHandler_NewAppFromYAMLWithKeysAndSecrets(t *testi
 	app := &sdk.Application{
 		Name: "myNewApp",
 	}
-	test.NoError(t, application.Insert(db, api.Cache, *proj, app))
+	test.NoError(t, application.Insert(db, *proj, app))
 
 	k := &sdk.ApplicationKey{
 		Name:          "app-mykey",
@@ -164,11 +164,11 @@ func Test_postApplicationImportHandler_NewAppFromYAMLWithKeysAndSecrets(t *testi
 	//Check result
 	t.Logf(">>%s", rec.Body.String())
 
-	app, err = application.LoadByName(db, api.Cache, proj.Key, "myNewApp", application.LoadOptions.WithKeys, application.LoadOptions.WithVariablesWithClearPassword)
+	app, err = application.LoadByName(db, proj.Key, "myNewApp", application.LoadOptions.WithKeys, application.LoadOptions.WithVariablesWithClearPassword)
 	test.NoError(t, err)
 
 	//Reload the application to check the keys
-	app1, err := application.LoadByName(db, api.Cache, proj.Key, "myNewApp-1", application.LoadOptions.WithKeys, application.LoadOptions.WithVariablesWithClearPassword)
+	app1, err := application.LoadByName(db, proj.Key, "myNewApp-1", application.LoadOptions.WithKeys, application.LoadOptions.WithVariablesWithClearPassword)
 	test.NoError(t, err)
 
 	assert.NotNil(t, app1)
@@ -211,7 +211,7 @@ func Test_postApplicationImportHandler_NewAppFromYAMLWithKeysAndSecretsAndReImpo
 	app := &sdk.Application{
 		Name: "myNewApp",
 	}
-	test.NoError(t, application.Insert(db, api.Cache, *proj, app))
+	test.NoError(t, application.Insert(db, *proj, app))
 
 	k := &sdk.ApplicationKey{
 		Name:          "app-mykey",
@@ -273,11 +273,11 @@ func Test_postApplicationImportHandler_NewAppFromYAMLWithKeysAndSecretsAndReImpo
 	//Check result
 	t.Logf(">>%s", rec.Body.String())
 
-	app, err = application.LoadByName(db, api.Cache, proj.Key, "myNewApp", application.LoadOptions.WithKeys, application.LoadOptions.WithVariablesWithClearPassword)
+	app, err = application.LoadByName(db, proj.Key, "myNewApp", application.LoadOptions.WithKeys, application.LoadOptions.WithVariablesWithClearPassword)
 	test.NoError(t, err)
 
 	//Reload the application to check the keys
-	app1, err := application.LoadByName(db, api.Cache, proj.Key, "myNewApp-1", application.LoadOptions.WithKeys, application.LoadOptions.WithVariablesWithClearPassword)
+	app1, err := application.LoadByName(db, proj.Key, "myNewApp-1", application.LoadOptions.WithKeys, application.LoadOptions.WithVariablesWithClearPassword)
 	test.NoError(t, err)
 
 	assert.NotNil(t, app1)
@@ -327,11 +327,11 @@ func Test_postApplicationImportHandler_NewAppFromYAMLWithKeysAndSecretsAndReImpo
 	//Check result
 	t.Logf(">>%s", rec.Body.String())
 
-	app, err = application.LoadByName(db, api.Cache, proj.Key, "myNewApp", application.LoadOptions.WithKeys, application.LoadOptions.WithVariablesWithClearPassword)
+	app, err = application.LoadByName(db, proj.Key, "myNewApp", application.LoadOptions.WithKeys, application.LoadOptions.WithVariablesWithClearPassword)
 	test.NoError(t, err)
 
 	//Reload the application to check the keys
-	app1, err = application.LoadByName(db, api.Cache, proj.Key, "myNewApp-1", application.LoadOptions.WithKeys, application.LoadOptions.WithVariablesWithClearPassword)
+	app1, err = application.LoadByName(db, proj.Key, "myNewApp-1", application.LoadOptions.WithKeys, application.LoadOptions.WithVariablesWithClearPassword)
 	test.NoError(t, err)
 
 	assert.NotNil(t, app1)
@@ -375,7 +375,7 @@ func Test_postApplicationImportHandler_NewAppFromYAMLWithKeysAndSecretsAndReImpo
 	app := &sdk.Application{
 		Name: "myNewApp",
 	}
-	test.NoError(t, application.Insert(db, api.Cache, *proj, app))
+	test.NoError(t, application.Insert(db, *proj, app))
 
 	// create password, pgp and ssh keys
 	k1 := &sdk.ApplicationKey{
@@ -412,7 +412,7 @@ func Test_postApplicationImportHandler_NewAppFromYAMLWithKeysAndSecretsAndReImpo
 	}, u))
 
 	// check that keys secrets are well stored
-	app, err = application.LoadByName(db, api.Cache, proj.Key, "myNewApp",
+	app, err = application.LoadByName(db, proj.Key, "myNewApp",
 		application.LoadOptions.WithClearKeys,
 		application.LoadOptions.WithVariablesWithClearPassword,
 	)
@@ -485,7 +485,7 @@ func Test_postApplicationImportHandler_NewAppFromYAMLWithKeysAndSecretsAndReImpo
 
 	t.Logf(">>%s", rec.Body.String())
 
-	app, err = application.LoadByName(db, api.Cache, proj.Key, "myNewApp",
+	app, err = application.LoadByName(db, proj.Key, "myNewApp",
 		application.LoadOptions.WithClearKeys,
 		application.LoadOptions.WithVariablesWithClearPassword,
 	)
@@ -539,7 +539,7 @@ keys:
 	//Check result
 	t.Logf(">>%s", rec.Body.String())
 
-	app, err := application.LoadByName(db, api.Cache, proj.Key, "myNewApp", application.LoadOptions.WithKeys)
+	app, err := application.LoadByName(db, proj.Key, "myNewApp", application.LoadOptions.WithKeys)
 	test.NoError(t, err)
 
 	assert.NotNil(t, app)
@@ -579,7 +579,7 @@ func Test_postApplicationImportHandler_ExistingAppFromYAMLWithoutForce(t *testin
 	app := sdk.Application{
 		Name: "myNewApp",
 	}
-	test.NoError(t, application.Insert(db, api.Cache, *proj, &app))
+	test.NoError(t, application.Insert(db, *proj, &app))
 
 	//Prepare request
 	vars := map[string]string{
@@ -614,7 +614,7 @@ func Test_postApplicationImportHandler_ExistingAppFromYAMLInheritPermissions(t *
 	app := sdk.Application{
 		Name: "myNewApp",
 	}
-	test.NoError(t, application.Insert(db, api.Cache, *proj, &app))
+	test.NoError(t, application.Insert(db, *proj, &app))
 
 	//Prepare request
 	vars := map[string]string{
@@ -675,7 +675,7 @@ func Test_postApplicationImportHandler_ExistingAppWithDeploymentStrategy(t *test
 	app := sdk.Application{
 		Name: "myNewApp",
 	}
-	test.NoError(t, application.Insert(db, api.Cache, *proj, &app))
+	test.NoError(t, application.Insert(db, *proj, &app))
 
 	test.NoError(t, application.SetDeploymentStrategy(db, proj.ID, app.ID, pf.ID, pp.Name, sdk.IntegrationConfig{
 		"token": sdk.IntegrationConfigValue{
@@ -743,7 +743,7 @@ func Test_postApplicationImportHandler_ExistingAppWithDeploymentStrategy(t *test
 	//Check result
 	t.Logf(">>%s", rec.Body.String())
 
-	actualApp, err := application.LoadByName(api.mustDB(), api.Cache, proj.Key, app.Name, application.LoadOptions.WithClearDeploymentStrategies)
+	actualApp, err := application.LoadByName(api.mustDB(), proj.Key, app.Name, application.LoadOptions.WithClearDeploymentStrategies)
 	test.NoError(t, err)
 	assert.Equal(t, "my-secret-token-2", actualApp.DeploymentStrategies[pfname]["token"].Value)
 	assert.Equal(t, "my-url-3", actualApp.DeploymentStrategies[pfname]["url"].Value)
@@ -787,7 +787,7 @@ func Test_postApplicationImportHandler_DontOverrideDeploymentPasswordIfNotGiven(
 	app := sdk.Application{
 		Name: "myNewApp",
 	}
-	test.NoError(t, application.Insert(db, api.Cache, *proj, &app))
+	test.NoError(t, application.Insert(db, *proj, &app))
 
 	test.NoError(t, application.SetDeploymentStrategy(db, proj.ID, app.ID, pf.ID, pp.Name, sdk.IntegrationConfig{
 		"token": sdk.IntegrationConfigValue{
@@ -846,7 +846,7 @@ func Test_postApplicationImportHandler_DontOverrideDeploymentPasswordIfNotGiven(
 
 	t.Logf(">>%s", rec.Body.String())
 
-	actualApp, err := application.LoadByName(api.mustDB(), api.Cache, proj.Key, app.Name, application.LoadOptions.WithClearDeploymentStrategies)
+	actualApp, err := application.LoadByName(api.mustDB(), proj.Key, app.Name, application.LoadOptions.WithClearDeploymentStrategies)
 	test.NoError(t, err)
 	assert.Equal(t, "my-secret-token-2", actualApp.DeploymentStrategies[pfname]["token"].Value)
 	assert.Equal(t, "my-url-2", actualApp.DeploymentStrategies[pfname]["url"].Value)

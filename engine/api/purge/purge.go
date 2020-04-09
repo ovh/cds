@@ -90,7 +90,7 @@ func workflows(ctx context.Context, db *gorp.DbMap, store cache.Store, workflowR
 
 		proj, has := projects[r.ProjectID]
 		if !has {
-			p, err := project.LoadByID(db, store, r.ProjectID)
+			p, err := project.LoadByID(db, r.ProjectID)
 			if err != nil {
 				log.Error(ctx, "purge.Workflows> unable to load project %d: %v", r.ProjectID, err)
 				continue
@@ -179,7 +179,7 @@ func DeleteArtifacts(ctx context.Context, db gorp.SqlExecutor, store cache.Store
 		return sdk.WrapError(err, "error on load LoadRunByID:%d", workflowRunID)
 	}
 
-	proj, errprj := project.LoadProjectByWorkflowID(db, store, wr.WorkflowID)
+	proj, errprj := project.LoadProjectByWorkflowID(db, wr.WorkflowID)
 	if errprj != nil {
 		return sdk.WrapError(errprj, "error while load project for workflow %d", wr.WorkflowID)
 	}

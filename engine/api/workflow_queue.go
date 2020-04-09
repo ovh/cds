@@ -181,7 +181,7 @@ func takeJob(ctx context.Context, dbFunc func() *gorp.DbMap, store cache.Store, 
 	wnjri.NodeJobRun.Parameters = append(wnjri.NodeJobRun.Parameters, params...)
 
 	if err := tx.Commit(); err != nil {
-		return nil, sdk.WrapError(err, "Cannot commit transaction")
+		return nil, sdk.WithStack(err)
 	}
 
 	return report, nil
@@ -263,7 +263,7 @@ func (api *API) postVulnerabilityReportHandler() service.Handler {
 			return sdk.WrapError(err, "unable to save vulnerability report")
 		}
 		if nr.ApplicationID == 0 {
-			return sdk.WrapError(sdk.ErrApplicationNotFound, "there is no application linked")
+			return sdk.WrapError(sdk.ErrNotFound, "there is no application linked")
 		}
 
 		var report sdk.VulnerabilityWorkerReport
@@ -674,7 +674,7 @@ func (api *API) postWorkflowJobStepStatusHandler() service.Handler {
 		}
 
 		if err := tx.Commit(); err != nil {
-			return sdk.WrapError(err, "cannot commit transaction")
+			return sdk.WithStack(err)
 		}
 
 		if nodeRun.ID == 0 {

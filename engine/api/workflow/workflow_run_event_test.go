@@ -49,7 +49,7 @@ func TestResyncCommitStatusNotifDisabled(t *testing.T) {
 			ConnectionType: "ssh",
 		},
 	}
-	assert.NoError(t, application.Insert(db, cache, *proj, &app))
+	assert.NoError(t, application.Insert(db, *proj, &app))
 	assert.NoError(t, repositoriesmanager.InsertForApplication(db, &app, proj.Key))
 
 	tr := true
@@ -147,7 +147,7 @@ func TestResyncCommitStatusSetStatus(t *testing.T) {
 			ConnectionType: "ssh",
 		},
 	}
-	assert.NoError(t, application.Insert(db, cache, *proj, &app))
+	assert.NoError(t, application.Insert(db, *proj, &app))
 	assert.NoError(t, repositoriesmanager.InsertForApplication(db, &app, proj.Key))
 
 	tr := true
@@ -251,7 +251,7 @@ func TestResyncCommitStatusCommentPR(t *testing.T) {
 			ConnectionType: "ssh",
 		},
 	}
-	assert.NoError(t, application.Insert(db, cache, *proj, &app))
+	assert.NoError(t, application.Insert(db, *proj, &app))
 	assert.NoError(t, repositoriesmanager.InsertForApplication(db, &app, proj.Key))
 
 	tr := true
@@ -369,7 +369,7 @@ func TestResyncCommitStatusCommentPRNotTerminated(t *testing.T) {
 			ConnectionType: "ssh",
 		},
 	}
-	assert.NoError(t, application.Insert(db, cache, *proj, &app))
+	assert.NoError(t, application.Insert(db, *proj, &app))
 	assert.NoError(t, repositoriesmanager.InsertForApplication(db, &app, proj.Key))
 
 	tr := true
@@ -478,7 +478,7 @@ func TestResyncCommitStatusCommitCache(t *testing.T) {
 			ConnectionType: "ssh",
 		},
 	}
-	assert.NoError(t, application.Insert(db, cache, *proj, &app))
+	assert.NoError(t, application.Insert(db, *proj, &app))
 	assert.NoError(t, repositoriesmanager.InsertForApplication(db, &app, proj.Key))
 
 	tr := true

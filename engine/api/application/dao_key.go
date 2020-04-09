@@ -10,6 +10,18 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
+type dbApplicationKey struct {
+	gorpmapping.SignedEntity
+	sdk.ApplicationKey
+}
+
+func (e dbApplicationKey) Canonical() gorpmapping.CanonicalForms {
+	var _ = []interface{}{e.ApplicationID, e.ID, e.Name}
+	return gorpmapping.CanonicalForms{
+		"{{print .ApplicationID}}{{print .ID}}{{.Name}}",
+	}
+}
+
 // InsertKey a new application key in database
 func InsertKey(db gorp.SqlExecutor, key *sdk.ApplicationKey) error {
 	var dbAppKey = dbApplicationKey{ApplicationKey: *key}

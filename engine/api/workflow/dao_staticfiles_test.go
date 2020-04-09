@@ -41,7 +41,7 @@ func TestInsertStaticFiles(t *testing.T) {
 	s.PipelineID = pip.ID
 	test.NoError(t, pipeline.InsertStage(db, s))
 
-	proj, _ = project.LoadByID(db, cache, proj.ID, project.LoadOptions.WithApplications, project.LoadOptions.WithPipelines, project.LoadOptions.WithEnvironments, project.LoadOptions.WithGroups)
+	proj, _ = project.LoadByID(db, proj.ID, project.LoadOptions.WithApplications, project.LoadOptions.WithPipelines, project.LoadOptions.WithEnvironments, project.LoadOptions.WithGroups)
 
 	w := sdk.Workflow{
 		Name:       "test_staticfiles_1",

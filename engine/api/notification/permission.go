@@ -12,7 +12,7 @@ import (
 
 // projectPermissionUsers Get users that access to given project, without default group
 func projectPermissionUserIDs(ctx context.Context, db gorp.SqlExecutor, store cache.Store, projectID int64, access int) ([]string, error) {
-	proj, err := project.LoadByID(db, store, projectID, project.LoadOptions.WithGroups)
+	proj, err := project.LoadByID(db, projectID, project.LoadOptions.WithGroups)
 	if err != nil {
 		return nil, err
 	}

@@ -12,7 +12,6 @@ import (
 	"github.com/go-gorp/gorp"
 	"github.com/gorilla/mux"
 
-	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/integration"
@@ -32,7 +31,7 @@ func (api *API) getProjectsHandler_FilterByRepo(ctx context.Context, w http.Resp
 
 	var projects sdk.Projects
 	var err error
-	var filterByRepoFunc = func(db gorp.SqlExecutor, store cache.Store, p *sdk.Project) error {
+	var filterByRepoFunc = func(db gorp.SqlExecutor, p *sdk.Project) error {
 		//Filter the applications by repo
 		apps := []sdk.Application{}
 		for i := range p.Applications {
@@ -44,7 +43,7 @@ func (api *API) getProjectsHandler_FilterByRepo(ctx context.Context, w http.Resp
 		ws := []sdk.Workflow{}
 		//Filter the workflow by applications
 		for i := range p.Workflows {
-			w, err := workflow.LoadByID(ctx, db, store, *p, p.Workflows[i].ID, workflow.LoadOptions{})
+			w, err := workflow.LoadByID(ctx, db, api.Cache, *p, p.Workflows[i].ID, workflow.LoadOptions{})
 			if err != nil {
 				return err
 			}
@@ -75,7 +74,7 @@ func (api *API) getProjectsHandler_FilterByRepo(ctx context.Context, w http.Resp
 			return err
 		}
 	} else {
-		projects, err = project.LoadAllByRepoAndGroupIDs(ctx, api.mustDB(), api.Cache, getAPIConsumer(ctx).GetGroupIDs(), filterByRepo, opts...)
+		projects, err = project.LoadAllByRepoAndGroupIDs(ctx, api.mustDB(), getAPIConsumer(ctx).GetGroupIDs(), filterByRepo, opts...)
 		if err != nil {
 			return err
 		}
@@ -233,7 +232,7 @@ func (api *API) updateProjectHandler() service.Handler {
 		}
 
 		// Check is project exist
-		p, errProj := project.Load(api.mustDB(), api.Cache, key, project.LoadOptions.WithIcon)
+		p, errProj := project.Load(api.mustDB(), key, project.LoadOptions.WithIcon)
 		if errProj != nil {
 			return sdk.WrapError(errProj, "updateProject> Cannot load project from db")
 		}
@@ -243,7 +242,7 @@ func (api *API) updateProjectHandler() service.Handler {
 		if proj.Icon == "" {
 			p.Icon = proj.Icon
 		}
-		if errUp := project.Update(api.mustDB(), api.Cache, proj); errUp != nil {
+		if errUp := project.Update(api.mustDB(), proj); errUp != nil {
 			return sdk.WrapError(errUp, "updateProject> Cannot update project %s", key)
 		}
 		event.PublishUpdateProject(ctx, proj, p, getAPIConsumer(ctx))
@@ -321,7 +320,7 @@ func (api *API) getProjectHandler() service.Handler {
 			opts = append(opts, project.LoadOptions.WithIntegrations)
 		}
 		if withFeatures {
-			opts = append(opts, project.LoadOptions.WithFeatures)
+			opts = append(opts, project.LoadOptions.WithFeatures(api.Cache))
 		}
 		if withIcon {
 			opts = append(opts, project.LoadOptions.WithIcon)
@@ -330,7 +329,7 @@ func (api *API) getProjectHandler() service.Handler {
 			opts = append(opts, project.LoadOptions.WithLabels)
 		}
 
-		p, errProj := project.Load(api.mustDB(), api.Cache, key, opts...)
+		p, errProj := project.Load(api.mustDB(), key, opts...)
 		if errProj != nil {
 			return sdk.WrapError(errProj, "getProjectHandler (%s)", key)
 		}
@@ -371,7 +370,7 @@ func (api *API) putProjectLabelsHandler() service.Handler {
 		}
 
 		// Check if project exist
-		proj, err := project.Load(db, api.Cache, key, project.LoadOptions.WithLabels)
+		proj, err := project.Load(db, key, project.LoadOptions.WithLabels)
 		if err != nil {
 			return err
 		}
@@ -429,10 +428,10 @@ func (api *API) putProjectLabelsHandler() service.Handler {
 		}
 
 		if err := tx.Commit(); err != nil {
-			return sdk.WrapError(err, "cannot commit transaction")
+			return sdk.WithStack(err)
 		}
 
-		p, errP := project.Load(db, api.Cache, key,
+		p, errP := project.Load(db, key,
 			project.LoadOptions.WithLabels, project.LoadOptions.WithWorkflowNames, project.LoadOptions.WithVariables,
 			project.LoadOptions.WithFavorites(getAPIConsumer(ctx).AuthentifiedUser.ID),
 			project.LoadOptions.WithKeys, project.LoadOptions.WithPermission, project.LoadOptions.WithIntegrations)
@@ -484,8 +483,8 @@ func (api *API) postProjectHandler() service.Handler {
 			return sdk.WrapError(sdk.ErrConflict, "project %s already exists", p.Key)
 		}
 
-		if err := project.Insert(tx, api.Cache, &p); err != nil {
-			return sdk.WrapError(err, "cannot insert project")
+		if err := project.Insert(tx, &p); err != nil {
+			return err
 		}
 
 		// Check that given project groups are valid
@@ -601,12 +600,12 @@ func (api *API) postProjectHandler() service.Handler {
 		}
 
 		if err := tx.Commit(); err != nil {
-			return sdk.WrapError(err, "cannot commit transaction")
+			return sdk.WithStack(err)
 		}
 
 		event.PublishAddProject(ctx, &p, consumer)
 
-		proj, err := project.Load(api.mustDB(), api.Cache, p.Key,
+		proj, err := project.Load(api.mustDB(), p.Key,
 			project.LoadOptions.WithLabels,
 			project.LoadOptions.WithWorkflowNames,
 			project.LoadOptions.WithFavorites(consumer.AuthentifiedUser.ID),
@@ -631,12 +630,12 @@ func (api *API) deleteProjectHandler() service.Handler {
 		vars := mux.Vars(r)
 		key := vars[permProjectKey]
 
-		p, errProj := project.Load(api.mustDB(), api.Cache, key, project.LoadOptions.WithPipelines, project.LoadOptions.WithApplications)
-		if errProj != nil {
-			if !sdk.ErrorIs(errProj, sdk.ErrNoProject) {
-				return sdk.WrapError(errProj, "deleteProject> load project '%s' from db", key)
+		p, err := project.Load(api.mustDB(), key, project.LoadOptions.WithPipelines, project.LoadOptions.WithApplications)
+		if err != nil {
+			if !sdk.ErrorIs(err, sdk.ErrNoProject) {
+				return sdk.WrapError(err, "deleteProject> load project '%s' from db", key)
 			}
-			return sdk.WrapError(errProj, "deleteProject> cannot load project %s", key)
+			return sdk.WrapError(err, "deleteProject> cannot load project %s", key)
 		}
 
 		if len(p.Pipelines) > 0 {
@@ -653,17 +652,14 @@ func (api *API) deleteProjectHandler() service.Handler {
 		}
 		defer tx.Rollback() // nolint
 
-		if err := project.Delete(tx, api.Cache, p.Key); err != nil {
-			return sdk.WrapError(err, "cannot delete project %s", key)
+		if err := project.Delete(tx, p.Key); err != nil {
+			return err
 		}
 		if err := tx.Commit(); err != nil {
-			return sdk.WrapError(err, "Cannot commit transaction")
+			return sdk.WithStack(err)
 		}
 
 		event.PublishDeleteProject(ctx, p, getAPIConsumer(ctx))
-
-		log.Info(ctx, "Project %s deleted.", p.Name)
-
 		return nil
 	}
 }

@@ -22,7 +22,7 @@ func Test_DAOKey(t *testing.T) {
 		Name: "my-app",
 	}
 
-	require.NoError(t, application.Insert(db, cache, *proj, &app))
+	require.NoError(t, application.Insert(db, *proj, &app))
 
 	k := &sdk.ApplicationKey{
 		Name:          "mykey-ssh",

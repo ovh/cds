@@ -209,7 +209,7 @@ func Test_getWorkflowNotificationsConditionsHandler(t *testing.T) {
 		},
 	}
 
-	proj2, errP := project.Load(api.mustDB(), api.Cache, proj.Key, project.LoadOptions.WithPipelines, project.LoadOptions.WithGroups, project.LoadOptions.WithIntegrations)
+	proj2, errP := project.Load(api.mustDB(), proj.Key, project.LoadOptions.WithPipelines, project.LoadOptions.WithGroups, project.LoadOptions.WithIntegrations)
 	test.NoError(t, errP)
 
 	test.NoError(t, workflow.Insert(context.TODO(), db, api.Cache, *proj2, &w))
@@ -403,7 +403,7 @@ func Test_getWorkflowHandler_AsProvider(t *testing.T) {
 
 	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), &pip))
 
-	proj, _ = project.LoadByID(api.mustDB(), api.Cache, proj.ID,
+	proj, _ = project.LoadByID(api.mustDB(), proj.ID,
 		project.LoadOptions.WithApplications,
 		project.LoadOptions.WithPipelines,
 		project.LoadOptions.WithEnvironments,
@@ -463,7 +463,7 @@ func Test_getWorkflowHandler_withUsage(t *testing.T) {
 
 	test.NoError(t, pipeline.InsertPipeline(db, &pip))
 
-	proj, _ = project.LoadByID(db, api.Cache, proj.ID,
+	proj, _ = project.LoadByID(db, proj.ID,
 		project.LoadOptions.WithApplications,
 		project.LoadOptions.WithPipelines,
 		project.LoadOptions.WithEnvironments,
@@ -555,7 +555,7 @@ func Test_postWorkflowHandlerWithRootShouldSuccess(t *testing.T) {
 		RepositoryFullname: "test/app1",
 		VCSServer:          "github",
 	}
-	test.NoError(t, application.Insert(api.mustDB(), api.Cache, *proj, &app))
+	test.NoError(t, application.Insert(api.mustDB(), *proj, &app))
 
 	var workflow = &sdk.Workflow{
 		Name:        "Name",
@@ -618,7 +618,7 @@ func Test_postWorkflowHandlerWithBadPayloadShouldFail(t *testing.T) {
 		RepositoryFullname: "test/app1",
 		VCSServer:          "github",
 	}
-	test.NoError(t, application.Insert(api.mustDB(), api.Cache, *proj, &app))
+	test.NoError(t, application.Insert(api.mustDB(), *proj, &app))
 
 	var workflow = &sdk.Workflow{
 		Name:        "Name",
@@ -763,7 +763,7 @@ func Test_putWorkflowHandler(t *testing.T) {
 		RepositoryFullname: "foo/bar",
 		VCSServer:          "github",
 	}
-	assert.NoError(t, application.Insert(db, api.Cache, *proj, &app))
+	assert.NoError(t, application.Insert(db, *proj, &app))
 	assert.NoError(t, repositoriesmanager.InsertForApplication(db, &app, proj.Key))
 
 	//Prepare request
@@ -939,7 +939,7 @@ func Test_deleteWorkflowEventIntegrationHandler(t *testing.T) {
 		RepositoryFullname: "test/app1",
 		VCSServer:          "github",
 	}
-	test.NoError(t, application.Insert(api.mustDB(), api.Cache, *proj, &app))
+	test.NoError(t, application.Insert(api.mustDB(), *proj, &app))
 
 	model := sdk.IntegrationModel{
 		Name:  sdk.RandomString(10),
@@ -1135,7 +1135,7 @@ func Test_postWorkflowRollbackHandler(t *testing.T) {
 		RepositoryFullname: "test/app1",
 		VCSServer:          "github",
 	}
-	test.NoError(t, application.Insert(api.mustDB(), api.Cache, *proj, &app))
+	test.NoError(t, application.Insert(api.mustDB(), *proj, &app))
 
 	var workflow1 = &sdk.Workflow{
 		ID:          wf.ID,
@@ -1279,7 +1279,7 @@ func Test_postAndDeleteWorkflowLabelHandler(t *testing.T) {
 	test.NoError(t, json.Unmarshal(w.Body.Bytes(), &pi))
 	assert.Equal(t, pname, pi.Name)
 
-	proj, err = project.Load(api.mustDB(), api.Cache, proj.Key,
+	proj, err = project.Load(api.mustDB(), proj.Key,
 		project.LoadOptions.WithApplicationWithDeploymentStrategies,
 		project.LoadOptions.WithPipelines,
 		project.LoadOptions.WithEnvironments,
@@ -1468,9 +1468,9 @@ func TestBenchmarkGetWorkflowsWithoutAPIAsAdmin(t *testing.T) {
 		Name: sdk.RandomString(10),
 	}
 
-	assert.NoError(t, application.Insert(db, cache, *proj, &app))
+	assert.NoError(t, application.Insert(db, *proj, &app))
 
-	prj, err := project.Load(db, cache, proj.Key,
+	prj, err := project.Load(db, proj.Key,
 		project.LoadOptions.WithPipelines,
 		project.LoadOptions.WithApplications,
 		project.LoadOptions.WithWorkflows,
@@ -1536,9 +1536,9 @@ func TestBenchmarkGetWorkflowsWithAPI(t *testing.T) {
 		Name: sdk.RandomString(10),
 	}
 
-	assert.NoError(t, application.Insert(db, api.Cache, *proj, &app))
+	assert.NoError(t, application.Insert(db, *proj, &app))
 
-	prj, err := project.Load(db, api.Cache, proj.Key,
+	prj, err := project.Load(db, proj.Key,
 		project.LoadOptions.WithPipelines,
 		project.LoadOptions.WithApplications,
 		project.LoadOptions.WithWorkflows,

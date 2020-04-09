@@ -7,6 +7,10 @@ import (
 
 type KeyType string
 
+func (k KeyType) String() string {
+	return string(k)
+}
+
 // Those are types if key managed in CDS
 const (
 	KeyTypeSSH KeyType = "ssh"

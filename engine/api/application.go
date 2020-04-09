@@ -67,7 +67,7 @@ func (api *API) getApplicationsHandler() service.Handler {
 			}
 		}
 
-		applications, err := application.LoadAll(api.mustDB(), api.Cache, projectKey, loadOpts...)
+		applications, err := application.LoadAll(api.mustDB(), projectKey, loadOpts...)
 		if err != nil {
 			return sdk.WrapError(err, "Cannot load applications from db")
 		}
@@ -113,7 +113,7 @@ func (api *API) getAsCodeApplicationHandler() service.Handler {
 		projectKey := vars[permProjectKey]
 		fromRepo := FormString(r, "repo")
 
-		apps, err := application.LoadAsCode(api.mustDB(), api.Cache, projectKey, fromRepo)
+		apps, err := application.LoadAsCode(api.mustDB(), projectKey, fromRepo)
 		if err != nil {
 			return sdk.WrapError(err, "cannot load application from repo %s for project %s from db", fromRepo, projectKey)
 		}
@@ -149,7 +149,7 @@ func (api *API) getApplicationHandler() service.Handler {
 			loadOptions = append(loadOptions, application.LoadOptions.WithIcon)
 		}
 
-		app, errApp := application.LoadByName(api.mustDB(), api.Cache, projectKey, applicationName, loadOptions...)
+		app, errApp := application.LoadByName(api.mustDB(), projectKey, applicationName, loadOptions...)
 		if errApp != nil {
 			return sdk.WrapError(errApp, "getApplicationHandler: Cannot load application %s for project %s from db", applicationName, projectKey)
 		}
@@ -188,12 +188,12 @@ func (api *API) getApplicationVCSInfosHandler() service.Handler {
 		applicationName := vars["applicationName"]
 		remote := r.FormValue("remote")
 
-		proj, err := project.Load(api.mustDB(), api.Cache, projectKey)
+		proj, err := project.Load(api.mustDB(), projectKey)
 		if err != nil {
 			return sdk.WrapError(err, "Cannot load project %s from db", projectKey)
 		}
 
-		app, err := application.LoadByName(api.mustDB(), api.Cache, projectKey, applicationName, application.LoadOptions.Default)
+		app, err := application.LoadByName(api.mustDB(), projectKey, applicationName, application.LoadOptions.Default)
 		if err != nil {
 			return sdk.WrapError(err, "Cannot load application %s for project %s from db", applicationName, projectKey)
 		}
@@ -246,7 +246,7 @@ func (api *API) addApplicationHandler() service.Handler {
 		vars := mux.Vars(r)
 		key := vars[permProjectKey]
 
-		proj, errl := project.Load(api.mustDB(), api.Cache, key)
+		proj, errl := project.Load(api.mustDB(), key)
 		if errl != nil {
 			return sdk.WrapError(errl, "addApplicationHandler> Cannot load %s", key)
 		}
@@ -269,12 +269,12 @@ func (api *API) addApplicationHandler() service.Handler {
 
 		defer tx.Rollback() // nolint
 
-		if err := application.Insert(tx, api.Cache, *proj, &app); err != nil {
+		if err := application.Insert(tx, *proj, &app); err != nil {
 			return sdk.WrapError(err, "Cannot insert pipeline")
 		}
 
 		if err := tx.Commit(); err != nil {
-			return sdk.WrapError(err, "Cannot commit transaction")
+			return sdk.WithStack(err)
 		}
 
 		event.PublishAddApplication(ctx, proj.Key, app, getAPIConsumer(ctx))
@@ -290,14 +290,14 @@ func (api *API) deleteApplicationHandler() service.Handler {
 		projectKey := vars[permProjectKey]
 		applicationName := vars["applicationName"]
 
-		proj, errP := project.Load(api.mustDB(), api.Cache, projectKey)
+		proj, errP := project.Load(api.mustDB(), projectKey)
 		if errP != nil {
 			return sdk.WrapError(errP, "deleteApplicationHandler> Cannot laod project")
 		}
 
-		app, err := application.LoadByName(api.mustDB(), api.Cache, projectKey, applicationName)
+		app, err := application.LoadByName(api.mustDB(), projectKey, applicationName)
 		if err != nil {
-			if !sdk.ErrorIs(err, sdk.ErrApplicationNotFound) {
+			if !sdk.ErrorIs(err, sdk.ErrNotFound) {
 				log.Warning(ctx, "deleteApplicationHandler> Cannot load application %s: %s\n", applicationName, err)
 			}
 			return err
@@ -315,7 +315,7 @@ func (api *API) deleteApplicationHandler() service.Handler {
 		}
 
 		if err := tx.Commit(); err != nil {
-			return sdk.WrapError(err, "Cannot commit transaction")
+			return sdk.WithStack(err)
 		}
 
 		event.PublishDeleteApplication(ctx, proj.Key, *app, getAPIConsumer(ctx))
@@ -331,7 +331,7 @@ func (api *API) cloneApplicationHandler() service.Handler {
 		projectKey := vars[permProjectKey]
 		applicationName := vars["applicationName"]
 
-		proj, errProj := project.Load(api.mustDB(), api.Cache, projectKey)
+		proj, errProj := project.Load(api.mustDB(), projectKey)
 		if errProj != nil {
 			return sdk.WrapError(sdk.ErrNoProject, "cloneApplicationHandler> Cannot load %s", projectKey)
 		}
@@ -348,7 +348,7 @@ func (api *API) cloneApplicationHandler() service.Handler {
 			return err
 		}
 
-		appToClone, errApp := application.LoadByName(api.mustDB(), api.Cache, projectKey, applicationName, application.LoadOptions.Default)
+		appToClone, errApp := application.LoadByName(api.mustDB(), projectKey, applicationName, application.LoadOptions.Default)
 		if errApp != nil {
 			return sdk.WrapError(errApp, "cloneApplicationHandler> Cannot load application %s", applicationName)
 		}
@@ -364,7 +364,7 @@ func (api *API) cloneApplicationHandler() service.Handler {
 		}
 
 		if err := tx.Commit(); err != nil {
-			return sdk.WrapError(err, "Cannot commit transaction")
+			return sdk.WithStack(err)
 		}
 
 		return service.WriteJSON(w, newApp, http.StatusOK)
@@ -374,7 +374,7 @@ func (api *API) cloneApplicationHandler() service.Handler {
 // cloneApplication Clone an application with all her dependencies: pipelines, permissions, triggers
 func cloneApplication(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj sdk.Project, newApp *sdk.Application, appToClone *sdk.Application) error {
 	// Create Application
-	if err := application.Insert(db, store, proj, newApp); err != nil {
+	if err := application.Insert(db, proj, newApp); err != nil {
 		return err
 	}
 
@@ -413,19 +413,18 @@ func cloneApplication(ctx context.Context, db gorp.SqlExecutor, store cache.Stor
 
 func (api *API) updateApplicationHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		// Get pipeline and action name in URL
 		vars := mux.Vars(r)
 		projectKey := vars[permProjectKey]
 		applicationName := vars["applicationName"]
 
-		p, errload := project.Load(api.mustDB(), api.Cache, projectKey, project.LoadOptions.Default)
-		if errload != nil {
-			return sdk.WrapError(errload, "updateApplicationHandler> Cannot load project %s", projectKey)
+		p, err := project.Load(api.mustDB(), projectKey, project.LoadOptions.Default)
+		if err != nil {
+			return sdk.WrapError(err, "updateApplicationHandler> Cannot load project %s", projectKey)
 		}
 
-		app, errloadbyname := application.LoadByName(api.mustDB(), api.Cache, projectKey, applicationName, application.LoadOptions.Default)
-		if errloadbyname != nil {
-			return sdk.WrapError(errloadbyname, "updateApplicationHandler> Cannot load application %s", applicationName)
+		app, err := application.LoadByNameWithClearVCSStrategyPassword(api.mustDB(), projectKey, applicationName, application.LoadOptions.Default)
+		if err != nil {
+			return sdk.WrapError(err, "updateApplicationHandler> Cannot load application %s", applicationName)
 		}
 
 		if app.FromRepository != "" {
@@ -443,11 +442,6 @@ func (api *API) updateApplicationHandler() service.Handler {
 			return sdk.WrapError(sdk.ErrInvalidApplicationPattern, "updateApplicationHandler> Application name %s do not respect pattern %s", appPost.Name, sdk.NamePattern)
 		}
 
-		if appPost.RepositoryStrategy.Password != sdk.PasswordPlaceholder && appPost.RepositoryStrategy.Password != "" {
-			if errP := application.EncryptVCSStrategyPassword(&appPost); errP != nil {
-				return sdk.WrapError(errP, "updateApplicationHandler> Cannot encrypt password")
-			}
-		}
 		if appPost.RepositoryStrategy.Password == sdk.PasswordPlaceholder {
 			appPost.RepositoryStrategy.Password = app.RepositoryStrategy.Password
 		}
@@ -469,12 +463,12 @@ func (api *API) updateApplicationHandler() service.Handler {
 			return sdk.WrapError(err, "Cannot start transaction")
 		}
 		defer tx.Rollback() // nolint
-		if err := application.Update(tx, api.Cache, app); err != nil {
+		if err := application.Update(tx, app); err != nil {
 			return sdk.WrapError(err, "Cannot delete application %s", applicationName)
 		}
 
 		if err := tx.Commit(); err != nil {
-			return sdk.WrapError(err, "Cannot commit transaction")
+			return sdk.WithStack(err)
 		}
 
 		event.PublishUpdateApplication(ctx, p.Key, *app, old, getAPIConsumer(ctx))
@@ -491,7 +485,7 @@ func (api *API) postApplicationMetadataHandler() service.Handler {
 		projectKey := vars[permProjectKey]
 		applicationName := vars["applicationName"]
 
-		app, err := application.LoadByName(api.mustDB(), api.Cache, projectKey, applicationName)
+		app, err := application.LoadByName(api.mustDB(), projectKey, applicationName)
 		if err != nil {
 			return sdk.WrapError(err, "postApplicationMetadataHandler")
 		}
@@ -514,7 +508,7 @@ func (api *API) postApplicationMetadataHandler() service.Handler {
 		}
 		defer tx.Rollback() // nolint
 
-		if err := application.Update(tx, api.Cache, app); err != nil {
+		if err := application.Update(tx, app); err != nil {
 			return sdk.WrapError(err, "unable to update application")
 		}
 

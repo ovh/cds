@@ -29,7 +29,7 @@ func (api *API) deleteGroupFromProjectHandler() service.Handler {
 		}
 		defer tx.Rollback() // nolint
 
-		proj, err := project.Load(tx, api.Cache, key)
+		proj, err := project.Load(tx, key)
 		if err != nil {
 			return sdk.WrapError(err, "cannot load %s", key)
 		}
@@ -49,7 +49,7 @@ func (api *API) deleteGroupFromProjectHandler() service.Handler {
 		}
 
 		if err := tx.Commit(); err != nil {
-			return sdk.WrapError(err, "cannot commit transaction")
+			return sdk.WithStack(err)
 		}
 
 		event.PublishDeleteProjectPermission(ctx, proj, sdk.GroupPermission{
@@ -82,7 +82,7 @@ func (api *API) putGroupRoleOnProjectHandler() service.Handler {
 		}
 		defer tx.Rollback() // nolint
 
-		proj, err := project.Load(tx, api.Cache, key)
+		proj, err := project.Load(tx, key)
 		if err != nil {
 			return sdk.WrapError(err, "cannot load project %s", key)
 		}
@@ -168,7 +168,7 @@ func (api *API) postGroupInProjectHandler() service.Handler {
 		}
 		defer tx.Rollback() // nolint
 
-		proj, err := project.Load(tx, api.Cache, key)
+		proj, err := project.Load(tx, key)
 		if err != nil {
 			return sdk.WrapError(err, "cannot load %s", key)
 		}
@@ -215,7 +215,7 @@ func (api *API) postGroupInProjectHandler() service.Handler {
 		}
 
 		if err := tx.Commit(); err != nil {
-			return sdk.WrapError(err, "cannot commit transaction")
+			return sdk.WithStack(err)
 		}
 
 		newGroupPermission := sdk.GroupPermission{Permission: newLink.Role, Group: *grp}
@@ -231,7 +231,7 @@ func (api *API) postImportGroupsInProjectHandler() service.Handler {
 		key := vars[permProjectKey]
 		force := FormBool(r, "force")
 
-		proj, err := project.Load(api.mustDB(), api.Cache, key)
+		proj, err := project.Load(api.mustDB(), key)
 		if err != nil {
 			return sdk.WrapError(err, "cannot load project %s", key)
 		}
@@ -309,10 +309,10 @@ func (api *API) postImportGroupsInProjectHandler() service.Handler {
 		}
 
 		if err := tx.Commit(); err != nil {
-			return sdk.WrapError(err, "cannot commit transaction")
+			return sdk.WithStack(err)
 		}
 
-		if err := project.LoadOptions.WithGroups(api.mustDB(), api.Cache, proj); err != nil {
+		if err := project.LoadOptions.WithGroups(api.mustDB(), proj); err != nil {
 			return err
 		}
 

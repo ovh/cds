@@ -36,7 +36,7 @@ func (api *API) releaseApplicationWorkflowHandler() service.Handler {
 			return errU
 		}
 
-		proj, errprod := project.Load(api.mustDB(), api.Cache, key)
+		proj, errprod := project.Load(api.mustDB(),  key)
 		if errprod != nil {
 			return sdk.WrapError(errprod, "releaseApplicationWorkflowHandler")
 		}
@@ -64,7 +64,7 @@ func (api *API) releaseApplicationWorkflowHandler() service.Handler {
 
 		node := workflowRun.Workflow.WorkflowData.NodeByID(wNodeRun.WorkflowNodeID)
 		if node.Context == nil || node.Context.ApplicationID == 0 {
-			return sdk.WithStack(sdk.ErrApplicationNotFound)
+			return sdk.WithStack(sdk.ErrNotFound)
 		}
 		app := workflowRun.Workflow.Applications[node.Context.ApplicationID]
 
