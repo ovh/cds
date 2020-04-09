@@ -36,6 +36,7 @@ func syncJobInNodeRun(n *sdk.WorkflowNodeRun, j *sdk.WorkflowNodeJobRun, stageIn
 			rj.Job = j.Job
 			rj.Header = j.Header
 			rj.Parameters = j.Parameters
+			rj.SpawnInfos = j.SpawnInfos
 		}
 	}
 }
@@ -535,7 +536,7 @@ jobLoop:
 		}
 		next()
 
-		if err := AddSpawnInfosNodeJobRun(db, wjob.ID, PrepareSpawnInfos(wjob.SpawnInfos)); err != nil {
+		if err := AddSpawnInfosNodeJobRun(db, wjob.WorkflowNodeRunID, wjob.ID, PrepareSpawnInfos(wjob.SpawnInfos)); err != nil {
 			return nil, sdk.WrapError(err, "cannot save spawn info job %d", wjob.ID)
 		}
 
@@ -932,7 +933,7 @@ func stopWorkflowNodeJobRun(ctx context.Context, dbFunc func() *gorp.DbMap, stor
 			return report
 		}
 
-		if err := AddSpawnInfosNodeJobRun(tx, njr.ID, []sdk.SpawnInfo{stopInfos}); err != nil {
+		if err := AddSpawnInfosNodeJobRun(tx, njr.WorkflowNodeRunID, njr.ID, []sdk.SpawnInfo{stopInfos}); err != nil {
 			chanErr <- sdk.WrapError(err, "Cannot save spawn info job %d", njr.ID)
 			tx.Rollback()
 			wg.Done()

@@ -198,6 +198,13 @@ func UpdateNodeJobRunStatus(ctx context.Context, db gorp.SqlExecutor, store cach
 		report.Merge(ctx, r)
 		return report, err
 	}
+
+	spawnInfos, err := LoadNodeRunJobInfo(ctx, db, job.ID)
+	if err != nil {
+		return report, sdk.WrapError(err, "unable to load spawn infos for runJob: %d", job.ID)
+	}
+	job.SpawnInfos = spawnInfos
+
 	syncJobInNodeRun(nodeRun, job, stageIndex)
 
 	if job.Status != sdk.StatusStopped {
@@ -209,8 +216,10 @@ func UpdateNodeJobRunStatus(ctx context.Context, db gorp.SqlExecutor, store cach
 }
 
 // AddSpawnInfosNodeJobRun saves spawn info before starting worker
-func AddSpawnInfosNodeJobRun(db gorp.SqlExecutor, jobID int64, infos []sdk.SpawnInfo) error {
+func AddSpawnInfosNodeJobRun(db gorp.SqlExecutor, nodeID, jobID int64, infos []sdk.SpawnInfo) error {
+
 	wnjri := &sdk.WorkflowNodeJobRunInfo{
+		WorkflowNodeRunID:    nodeID,
 		WorkflowNodeJobRunID: jobID,
 		SpawnInfos:           PrepareSpawnInfos(infos),
 	}
@@ -276,7 +285,7 @@ func TakeNodeJobRun(ctx context.Context, db gorp.SqlExecutor, store cache.Store,
 		return nil, nil, sdk.WrapError(err, "cannot update worker_id in node job run %d", jobID)
 	}
 
-	if err := AddSpawnInfosNodeJobRun(db, jobID, PrepareSpawnInfos(infos)); err != nil {
+	if err := AddSpawnInfosNodeJobRun(db, job.WorkflowNodeRunID, jobID, PrepareSpawnInfos(infos)); err != nil {
 		return nil, nil, sdk.WrapError(err, "cannot save spawn info on node job run %d", jobID)
 	}
 

@@ -294,14 +294,14 @@ func (api *API) postVulnerabilityReportHandler() service.Handler {
 	}
 }
 
-func (api *API) postSpawnInfosWorkflowJobHandler() service.AsynchronousHandler {
-	return func(ctx context.Context, r *http.Request) error {
+func (api *API) postSpawnInfosWorkflowJobHandler() service.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		id, err := requestVarInt(r, "permJobID")
 		if err != nil {
 			return sdk.WrapError(err, "invalid id")
 		}
 
-		if ok := isHatchery(ctx); !ok {
+		if ok := isHatchery(ctx) || isWorker(ctx); !ok {
 			return sdk.WithStack(sdk.ErrForbidden)
 		}
 
@@ -318,13 +318,12 @@ func (api *API) postSpawnInfosWorkflowJobHandler() service.AsynchronousHandler {
 		}
 		defer tx.Rollback() // nolint
 
-		if _, err := workflow.LoadNodeJobRun(ctx, tx, api.Cache, id); err != nil {
-			if !sdk.ErrorIs(err, sdk.ErrWorkflowNodeRunJobNotFound) {
-				return err
-			}
-			return nil
+		jobRun, err := workflow.LoadNodeJobRun(ctx, tx, api.Cache, id)
+		if err != nil {
+			return err
 		}
-		if err := workflow.AddSpawnInfosNodeJobRun(tx, id, s); err != nil {
+
+		if err := workflow.AddSpawnInfosNodeJobRun(tx, jobRun.WorkflowNodeRunID, jobRun.ID, s); err != nil {
 			return err
 		}
 
@@ -435,7 +434,7 @@ func postJobResult(ctx context.Context, dbFunc func(context.Context) *gorp.DbMap
 		Message:    sdk.SpawnMsg{ID: sdk.MsgSpawnInfoWorkerEnd.ID, Args: []interface{}{wr.Name, res.Duration}},
 	}}
 
-	if err := workflow.AddSpawnInfosNodeJobRun(tx, job.ID, workflow.PrepareSpawnInfos(infos)); err != nil {
+	if err := workflow.AddSpawnInfosNodeJobRun(tx, job.WorkflowNodeRunID, job.ID, workflow.PrepareSpawnInfos(infos)); err != nil {
 		return nil, sdk.WrapError(err, "Cannot save spawn info job %d", job.ID)
 	}
 

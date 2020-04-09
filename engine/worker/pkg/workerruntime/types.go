@@ -62,7 +62,7 @@ type Runtime interface {
 	Name() string
 	Register(ctx context.Context) error
 	Take(ctx context.Context, job sdk.WorkflowNodeJobRun) error
-	ProcessJob(job sdk.WorkflowNodeJobRunData) (sdk.Result, error)
+	ProcessJob(job sdk.WorkflowNodeJobRunData) sdk.Result
 	SendLog(ctx context.Context, level Level, format string)
 	InstallKey(key sdk.Variable) (*KeyResponse, error)
 	InstallKeyTo(key sdk.Variable, destinationPath string) (*KeyResponse, error)
