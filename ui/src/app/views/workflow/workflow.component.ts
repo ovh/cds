@@ -98,6 +98,9 @@ export class WorkflowComponent implements OnInit {
         this.projectSubscription = this._store.select(ProjectState)
             .subscribe((projectState: ProjectStateModel) => {
                 this.project = projectState.project;
+                if (this.project && this.workflow && this.project.key !== this.workflow.project_key) {
+                    delete this.workflow;
+                }
                 this._cd.detectChanges();
             });
 

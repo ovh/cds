@@ -14,6 +14,7 @@ import { ParameterService } from 'app/service/parameter/parameter.service';
 import { ParameterEvent } from 'app/shared/parameter/parameter.event.model';
 import { SharedService } from 'app/shared/shared.service';
 import { Table } from 'app/shared/table/table';
+import { cloneDeep } from 'lodash-es';
 import { finalize } from 'rxjs/operators';
 
 @Component({
@@ -27,6 +28,7 @@ export class ParameterListComponent extends Table<Parameter> implements OnInit {
     set parameters(newP: Array<Parameter>) {
         if (Array.isArray(newP)) {
             this._parameters = newP.map((d) => {
+                d = cloneDeep(d);
                 d.previousName = d.name;
                 return d;
             });
