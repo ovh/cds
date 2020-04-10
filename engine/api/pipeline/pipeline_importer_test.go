@@ -493,6 +493,7 @@ func TestImportUpdate(t *testing.T) {
 
 			test.NoError(t, pipeline.InsertStage(db, &args.pip.Stages[0]))
 			test.NoError(t, pipeline.InsertStage(db, &args.pip.Stages[1]))
+			test.NoError(t, pipeline.InsertParameterInPipeline(db, args.pip.ID, &sdk.Parameter{Name: "oldparam", Type: string(sdk.ParameterTypeString), Value: "foo"}))
 
 			args.pip.Stages[1].Jobs = args.pip.Stages[1].Jobs[1:]
 
@@ -646,8 +647,7 @@ func TestImportUpdate(t *testing.T) {
 		},
 		asserts: func(t *testing.T, pip sdk.Pipeline) {
 			t.Logf("Asserts on %+v", pip)
-			assert.Equal(t, 1, len(pip.Stages))
-			assert.Equal(t, 1, pip.Stages[0].BuildOrder)
+			assert.Equal(t, 0, len(pip.Stages))
 		},
 	}
 
