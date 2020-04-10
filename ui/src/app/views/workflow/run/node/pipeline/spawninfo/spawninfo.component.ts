@@ -82,7 +82,6 @@ export class WorkflowRunJobSpawnInfoComponent implements OnDestroy, OnInit {
                 return;
             }
             let refresh = false;
-
             // Just update data if we are on the job
             if (njr.id === this.currentJobID) {
                 if (this.jobStatus !== njr.status) {
@@ -90,6 +89,10 @@ export class WorkflowRunJobSpawnInfoComponent implements OnDestroy, OnInit {
                     if (PipelineStatus.isDone(njr.status)) {
                         this.stopWorker();
                     }
+                    refresh = true;
+                }
+                if ( (!this.variables || this.variables.length) && njr.parameters) {
+                    this.variables = njr.parameters;
                     refresh = true;
                 }
             } else {

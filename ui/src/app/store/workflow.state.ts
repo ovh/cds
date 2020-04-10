@@ -13,7 +13,7 @@ import cloneDeep from 'lodash-es/cloneDeep';
 import { finalize, first, tap } from 'rxjs/operators';
 import * as ActionProject from './project.action';
 import * as actionWorkflow from './workflow.action';
-import { UpdateModal, UpdateWorkflowRunList } from './workflow.action';
+import { SelectWorkflowNodeRunJob, UpdateModal, UpdateWorkflowRunList } from './workflow.action';
 
 export class WorkflowStateModel {
     workflow: Workflow; // selected workflow
@@ -1124,6 +1124,12 @@ export class WorkflowState {
     @Action(actionWorkflow.GetWorkflowRun)
     getWorkflowRun(ctx: StateContext<WorkflowStateModel>, action: actionWorkflow.GetWorkflowRun) {
         const state = ctx.getState();
+        if (state.workflowRun &&
+            action.payload.num.toString() === state.workflowRun.num.toString() &&
+            action.payload.workflowName === state.workflow.name &&
+            action.payload.projectKey === state.projectKey) {
+            return;
+        }
         ctx.setState({
             ...state,
             loadingWorkflowRun: true,
@@ -1244,6 +1250,9 @@ export class WorkflowState {
                     node: node,
                     sidebar: WorkflowSidebarMode.RUN_NODE
                 });
+                if (stateNR.workflowNodeJobRun) {
+                    ctx.dispatch(new SelectWorkflowNodeRunJob({jobID: stateNR.workflowNodeJobRun.job.pipeline_action_id}));
+                }
             }));
     }
 
