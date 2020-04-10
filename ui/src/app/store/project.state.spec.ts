@@ -25,16 +25,19 @@ import { WorkflowState } from './workflow.state';
 import { PipelineService } from 'app/service/pipeline/pipeline.service';
 import { EnvironmentService } from 'app/service/environment/environment.service';
 import { ApplicationService } from 'app/service/application/application.service';
+import { RouterService } from 'app/service/router/router.service';
+import { Router } from '@angular/router';
+import { RouterTestingModule } from '@angular/router/testing';
 
 describe('Project', () => {
     let store: Store;
 
     beforeEach(async(() => {
         TestBed.configureTestingModule({
-            providers: [NavbarService, WorkflowService, WorkflowRunService, ProjectStore,
+            providers: [NavbarService, WorkflowService, WorkflowRunService, ProjectStore, RouterService,
                 ProjectService, PipelineService, EnvironmentService, ApplicationService],
             imports: [
-                HttpClientTestingModule,
+                HttpClientTestingModule, RouterTestingModule.withRoutes([]),
                 NgxsModule.forRoot([ProjectState, ApplicationsState, PipelinesState, WorkflowState])
             ],
         }).compileComponents();

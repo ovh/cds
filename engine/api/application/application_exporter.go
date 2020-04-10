@@ -56,7 +56,7 @@ func ExportApplication(db gorp.SqlExecutor, app sdk.Application, encryptFunc sdk
 			return exportentities.Application{}, sdk.WrapError(err, "unable to encrypt key")
 		}
 		ek := exportentities.EncryptedKey{
-			Type:    k.Type,
+			Type:    string(k.Type),
 			Name:    k.Name,
 			Content: content,
 		}

@@ -58,7 +58,7 @@ func TestRunInstallKeyAction_Relative(t *testing.T) {
 			ID:    1,
 			Name:  "cds.key.proj-mykey.priv",
 			Value: "test",
-			Type:  sdk.KeyTypeSSH,
+			Type:  string(sdk.KeyTypeSSH),
 		},
 	}
 	res, err := action.RunInstallKey(w.GetContext(), w, keyInstallAction, secrets)
@@ -113,7 +113,7 @@ func TestRunInstallKeyAction_Absolute(t *testing.T) {
 			ID:    1,
 			Name:  "cds.key.proj-mykey.priv",
 			Value: "test",
-			Type:  sdk.KeyTypeSSH,
+			Type:  string(sdk.KeyTypeSSH),
 		},
 	}
 	res, err := action.RunInstallKey(w.GetContext(), w, keyInstallAction, secrets)

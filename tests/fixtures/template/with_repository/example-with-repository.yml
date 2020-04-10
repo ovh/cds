@@ -12,6 +12,9 @@ parameters:
 - key: repo
   type: repository
   required: true
+- key: ssh_key_name
+  type: string
+  required: true
 workflow: workflow.yml
 pipelines:
 - 1.pipeline.yml

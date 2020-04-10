@@ -32,6 +32,7 @@ import { ToastService } from '../../../shared/toast/ToastService';
 import { ProjectModule } from '../project.module';
 import { ProjectAddComponent } from './project.add.component';
 import { ApplicationService } from 'app/service/application/application.service';
+import { RouterService } from 'app/service/router/router.service';
 
 describe('CDS: Project Show Component', () => {
 
@@ -61,6 +62,7 @@ describe('CDS: Project Show Component', () => {
                 TranslateParser,
                 GroupService,
                 UserService,
+                RouterService,
                 WorkflowService,
                 { provide: ToastService, useClass: MockToast }
             ],

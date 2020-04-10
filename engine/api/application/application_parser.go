@@ -44,7 +44,7 @@ func ParseAndImport(ctx context.Context, db gorp.SqlExecutor, cache cache.Store,
 
 	//If the application exist and we don't want to force, raise an error
 	if oldApp != nil && !opts.Force {
-		return nil, msgList, sdk.ErrApplicationExist
+		return nil, msgList, sdk.WithStack(sdk.ErrApplicationExist)
 	}
 
 	if oldApp != nil && oldApp.FromRepository != "" && opts.FromRepository != oldApp.FromRepository {

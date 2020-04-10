@@ -12,6 +12,7 @@ import (
 
 	"github.com/go-gorp/gorp"
 	"github.com/gorilla/mux"
+	"github.com/sirupsen/logrus"
 
 	ascodesync "github.com/ovh/cds/engine/api/ascode/sync"
 	"github.com/ovh/cds/engine/api/cache"
@@ -33,7 +34,7 @@ const (
 	defaultLimit = 10
 )
 
-func (api *API) searchWorkflowRun(ctx context.Context, w http.ResponseWriter, r *http.Request, vars map[string]string, route, key, name string) error {
+func (api *API) searchWorkflowRun(w http.ResponseWriter, r *http.Request, route, key, name string) error {
 	// About pagination: [FR] http://blog.octo.com/designer-une-api-rest/#pagination
 	var limit, offset int
 
@@ -147,7 +148,7 @@ func (api *API) getWorkflowAllRunsHandler() service.Handler {
 		route := api.Router.GetRoute("GET", api.getWorkflowAllRunsHandler, map[string]string{
 			"permProjectKey": key,
 		})
-		return api.searchWorkflowRun(ctx, w, r, vars, route, key, name)
+		return api.searchWorkflowRun(w, r, route, key, name)
 	}
 }
 
@@ -160,7 +161,7 @@ func (api *API) getWorkflowRunsHandler() service.Handler {
 			"key":          key,
 			"workflowName": name,
 		})
-		return api.searchWorkflowRun(ctx, w, r, vars, route, key, name)
+		return api.searchWorkflowRun(w, r, route, key, name)
 	}
 }
 
@@ -610,9 +611,6 @@ func (api *API) getWorkflowCommitsHandler() service.Handler {
 			}
 		}
 
-		if wfRun == nil {
-			wfRun = &sdk.WorkflowRun{Number: number, Workflow: *wf}
-		}
 		wfNodeRun := &sdk.WorkflowNodeRun{}
 		if branch != "" {
 			wfNodeRun.VCSBranch = branch
@@ -626,20 +624,26 @@ func (api *API) getWorkflowCommitsHandler() service.Handler {
 			// Find hash and branch of ancestor node run
 			var nodeIDsAncestors []int64
 			if node != nil {
-				nodeIDsAncestors = node.Ancestors(wfRun.Workflow.WorkflowData)
+				nodeIDsAncestors = node.Ancestors(wf.WorkflowData)
 			}
 
-			for _, ancestorID := range nodeIDsAncestors {
-				if wfRun.WorkflowNodeRuns != nil && wfRun.WorkflowNodeRuns[ancestorID][0].VCSRepository == app.RepositoryFullname {
-					wfNodeRun.VCSHash = wfRun.WorkflowNodeRuns[ancestorID][0].VCSHash
-					wfNodeRun.VCSBranch = wfRun.WorkflowNodeRuns[ancestorID][0].VCSBranch
-					break
+			if wfRun != nil && wfRun.WorkflowNodeRuns != nil {
+				for _, ancestorID := range nodeIDsAncestors {
+					nodeRuns, ok := wfRun.WorkflowNodeRuns[ancestorID]
+					if !ok || len(nodeRuns) == 0 {
+						continue
+					}
+					if nodeRuns[0].VCSRepository == app.RepositoryFullname {
+						wfNodeRun.VCSHash = nodeRuns[0].VCSHash
+						wfNodeRun.VCSBranch = nodeRuns[0].VCSBranch
+						break
+					}
 				}
 			}
 		}
 
 		log.Debug("getWorkflowCommitsHandler> VCSHash: %s VCSBranch: %s", wfNodeRun.VCSHash, wfNodeRun.VCSBranch)
-		commits, _, err := workflow.GetNodeRunBuildCommits(ctx, api.mustDB(), api.Cache, *proj, wf, nodeName, wfRun.Number, wfNodeRun, &app, &env)
+		commits, _, err := workflow.GetNodeRunBuildCommits(ctx, api.mustDB(), api.Cache, *proj, wf, nodeName, number, wfNodeRun, &app, &env)
 		if err != nil {
 			return sdk.WrapError(err, "unable to load commits")
 		}
@@ -992,9 +996,8 @@ func (api *API) initWorkflowRun(ctx context.Context, projKey string, wf *sdk.Wor
 			// Get workflow from repository
 			log.Debug("workflow.CreateFromRepository> %s", wf.Name)
 			oldWf := *wf
-			var errCreate error
-			asCodeInfosMsg, errCreate = workflow.CreateFromRepository(ctx, api.mustDB(), api.Cache, p1, wf, *opts, *u, project.DecryptWithBuiltinKey)
-			if errCreate != nil {
+			asCodeInfosMsg, err := workflow.CreateFromRepository(ctx, api.mustDB(), api.Cache, p1, wf, *opts, *u, project.DecryptWithBuiltinKey)
+			if err != nil {
 				infos := make([]sdk.SpawnMsg, len(asCodeInfosMsg))
 				for i, msg := range asCodeInfosMsg {
 					infos[i] = sdk.SpawnMsg{
@@ -1002,9 +1005,10 @@ func (api *API) initWorkflowRun(ctx context.Context, projKey string, wf *sdk.Wor
 						Args: msg.Args,
 						Type: msg.Type,
 					}
-					workflow.AddWorkflowRunInfo(wfRun, infos...)
+
 				}
-				r1 := failInitWorkflowRun(ctx, api.mustDB(), wfRun, sdk.WrapError(errCreate, "unable to get workflow from repository."))
+				workflow.AddWorkflowRunInfo(wfRun, infos...)
+				r1 := failInitWorkflowRun(ctx, api.mustDB(), wfRun, sdk.WrapError(err, "unable to get workflow from repository"))
 				report.Merge(ctx, r1)
 				return
 			}
@@ -1046,11 +1050,17 @@ func failInitWorkflowRun(ctx context.Context, db *gorp.DbMap, wfRun *sdk.Workflo
 			wfRun.Status = sdk.StatusNeverBuilt
 		}
 	} else {
-		log.Error(ctx, "unable to start workflow: %v", err)
+		httpErr := sdk.ExtractHTTPError(err, "")
+		isErrWithStack := sdk.IsErrorWithStack(err)
+		fields := logrus.Fields{}
+		if isErrWithStack {
+			fields["stack_trace"] = fmt.Sprintf("%+v", err)
+		}
+		log.ErrorWithFields(ctx, fields, "%s", err)
 		wfRun.Status = sdk.StatusFail
 		info = sdk.SpawnMsg{
 			ID:   sdk.MsgWorkflowError.ID,
-			Args: []interface{}{sdk.Cause(err).Error()},
+			Args: []interface{}{httpErr.Error()},
 			Type: sdk.MsgWorkflowError.Type,
 		}
 	}

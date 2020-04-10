@@ -310,12 +310,14 @@ func Test_postResyncPRAsCodeHandler(t *testing.T) {
 	api, db, _, end := newTestAPI(t)
 	defer end()
 
+	repoURL := sdk.RandomString(10)
+
 	u, pass := assets.InsertAdminUser(t, db)
 	pkey := sdk.RandomString(10)
 	p := assets.InsertTestProject(t, db, api.Cache, pkey, pkey)
 
 	// Clean as code event
-	as, err := ascode.LoadAsCodeEventByRepo(context.TODO(), db, "urltomyrepo")
+	as, err := ascode.LoadAsCodeEventByRepo(context.TODO(), db, repoURL)
 	assert.NoError(t, err)
 	for _, a := range as {
 		assert.NoError(t, ascode.DeleteAsCodeEvent(db, a))
@@ -341,7 +343,7 @@ vcs_ssh_key: proj-blabla
 	app, _, globalError := application.ParseAndImport(context.Background(), db, api.Cache, *p, eapp, application.ImportOptions{Force: true}, nil, u)
 	assert.NoError(t, globalError)
 
-	app.FromRepository = "urltomyrepo"
+	app.FromRepository = repoURL
 	assert.NoError(t, application.Update(db, api.Cache, app))
 
 	//First pipeline
@@ -353,20 +355,21 @@ vcs_ssh_key: proj-blabla
 	test.NoError(t, pipeline.InsertPipeline(db, &pip))
 
 	wf := sdk.Workflow{
-		Name:       sdk.RandomString(10),
-		ProjectID:  p.ID,
-		ProjectKey: p.Key,
+		Name:           sdk.RandomString(10),
+		ProjectID:      p.ID,
+		ProjectKey:     p.Key,
+		FromRepository: repoURL,
 		WorkflowData: sdk.WorkflowData{
 			Node: sdk.Node{
 				Name: "root",
 				Type: sdk.NodeTypePipeline,
 				Context: &sdk.NodeContext{
-					PipelineID: pip.ID,
+					PipelineID:    pip.ID,
+					ApplicationID: app.ID,
 				},
 			},
 		},
 	}
-
 	proj2, errP := project.Load(api.mustDB(), api.Cache, p.Key, project.LoadOptions.WithPipelines, project.LoadOptions.WithGroups, project.LoadOptions.WithIntegrations)
 	require.NoError(t, errP)
 	require.NoError(t, workflow.Insert(context.TODO(), db, api.Cache, *proj2, &wf))
@@ -416,7 +419,7 @@ vcs_ssh_key: proj-blabla
 	asCodeEvent := sdk.AsCodeEvent{
 		Username:       u.GetUsername(),
 		CreateDate:     time.Now(),
-		FromRepo:       "urltomyrepo",
+		FromRepo:       repoURL,
 		Migrate:        true,
 		PullRequestID:  666,
 		PullRequestURL: "urltomypr",
@@ -438,7 +441,7 @@ vcs_ssh_key: proj-blabla
 		"key": pkey,
 	})
 
-	uri = fmt.Sprintf("%s?appName=blabla&repo=urltomyrepo", uri)
+	uri = fmt.Sprintf("%s?repo=%s", uri, repoURL)
 	req, err := http.NewRequest("POST", uri, nil)
 	test.NoError(t, err)
 	assets.AuthentifyRequest(t, req, u, pass)
@@ -450,12 +453,12 @@ vcs_ssh_key: proj-blabla
 	t.Logf(w.Body.String())
 
 	// Check there is no more events in db
-	assDB, err := ascode.LoadAsCodeEventByRepo(context.TODO(), db, "urltomyrepo")
+	assDB, err := ascode.LoadAsCodeEventByRepo(context.TODO(), db, repoURL)
 	assert.NoError(t, err)
 	assert.Equal(t, 0, len(assDB))
 
 	// Check workflow has been migrated
 	wUpdated, err := workflow.Load(context.TODO(), db, api.Cache, *p, wf.Name, workflow.LoadOptions{})
 	assert.NoError(t, err)
-	assert.Equal(t, "urltomyrepo", wUpdated.FromRepository)
+	assert.Equal(t, repoURL, wUpdated.FromRepository)
 }

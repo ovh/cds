@@ -19,7 +19,6 @@ require (
 	github.com/Shopify/sarama v1.19.0
 	github.com/alecthomas/jsonschema v0.0.0-20200123075451-43663a393755
 	github.com/andygrunwald/go-gerrit v0.0.0-20181207071854-19ef3e9332a4
-	github.com/apoydence/onpar v0.0.0-20190519213022-ee068f8ea4d1 // indirect
 	github.com/araddon/gou v0.0.0-20180315155215-820e9f87cd05 // indirect
 	github.com/armon/go-metrics v0.0.0-20180917152333-f0300d1749da // indirect
 	github.com/armon/go-radix v1.0.0 // indirect
@@ -222,7 +221,7 @@ require (
 
 replace github.com/alecthomas/jsonschema => github.com/sguiheux/jsonschema v0.2.0
 
-replace github.com/go-gorp/gorp => github.com/yesnault/gorp v2.0.1-0.20190906143353-6210446a0d92+incompatible
+replace github.com/go-gorp/gorp => github.com/yesnault/gorp v2.0.1-0.20200325154225-2dc6d8c2da37+incompatible
 
 replace github.com/docker/docker => github.com/docker/engine v0.0.0-20180816081446-320063a2ad06
 

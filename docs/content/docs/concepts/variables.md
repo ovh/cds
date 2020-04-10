@@ -97,15 +97,46 @@ echo $CDS_PARENT_APPLICATION
 
 Here is the list of git variables:
 
-- `{{.git.hash}}`
-- `{{.git.hash.short}}`
-- `{{.git.url}}`
-- `{{.git.http_url}}`
-- `{{.git.branch}}`
-- `{{.git.tag}}`
-- `{{.git.author}}`
-- `{{.git.message}}`
-- `{{.git.server}}`
+- `{{.git.hash.before}}`: SHA of the most recent commit before the push
+- `{{.git.hash}}`: SHA of the most recent commit after the push
+- `{{.git.hash.short}}`: Short version of git.hash
+- `{{.git.hook}}`: Name of the event that trigger the run
+- `{{.git.url}}`:  Git ssh URL used to clone
+- `{{.git.http_url}}`: Git http url used to clone
+- `{{.git.branch}}`: 
+  - Push event: Name of the branch where the push occured
+  - PullRequest event: Name of the source branch
+- `{{.git.tag}}`: Name of the tag that triggered the run
+- `{{.git.author}}`: Name of the most recent commit author
+- `{{.git.author.email}}`: Email of the most recent commit author
+- `{{.git.message}}`: Git message of the most recent commit
+- `{{.git.server}}`: Name of the repository manager
+- `{{.git.repository}}`: 
+  - Push event:  Name of the repository
+  - PullRequest event: Name of the source repository
+
+Here is the list of git variables available only for Bitbucket server
+
+- `{{.git.hash.dest}}`: SHA of the most rcent commit on destination branch ( PullRequest event )
+- `{{.git.branch.dest}}`: Name of the destination branch on a pull request event
+- `{{.git.repository.dest}}`: Name of the target repository on a pull request event
+- `{{.git.pr.id}}`: Identifier of the pullrequest
+- `{{.git.pr.title}}`: Title of the pullrequest
+- `{{.git.pr.state}}`: Status of the pullrequest
+- `{{.git.pr.previous.title}}`: Previous title of the pullrequest
+- `{{.git.pr.previous.branch}}`: Previous target branch of the pullrequest
+- `{{.git.pr.previous.hash}}`: Previous target hash of the pullrequest
+- `{{.git.pr.previous.state}}`: Previous status of the pullrequest
+- `{{.git.pr.reviewer}}`: Name of the reviewer
+- `{{.git.pr.reviewer.email}}`: Email of the reviewer
+- `{{.git.pr.reviewer.status}}`: Status of the review
+- `{{.git.pr.reviewer.role}}`: Role of the reviewer
+- `{{.git.pr.comment}}`: Comment written by the reviewer
+- `{{.git.pr.comment.before}}`: Previous comment
+- `{{.git.pr.comment.author}}`: Author name of the comment
+- `{{.git.pr.comment.author.email}}` Author email of the comment
+
+
 
 ## Pipeline parameters
 

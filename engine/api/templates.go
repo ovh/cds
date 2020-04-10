@@ -381,7 +381,9 @@ func (api *API) postTemplateApplyHandler() service.Handler {
 			return service.Write(w, buf.Bytes(), http.StatusOK, "application/tar")
 		}
 
-		var mods []workflowtemplate.TemplateRequestModifierFunc
+		mods := []workflowtemplate.TemplateRequestModifierFunc{
+			workflowtemplate.TemplateRequestModifiers.DefaultKeys(*p),
+		}
 		if req.Detached {
 			mods = append(mods, workflowtemplate.TemplateRequestModifiers.Detached)
 		}
@@ -540,7 +542,10 @@ func (api *API) postTemplateBulkHandler() service.Handler {
 						},
 					}
 
-					wti, err := workflowtemplate.CheckAndExecuteTemplate(ctx, api.mustDB(), *consumer, *p, &data)
+					mods := []workflowtemplate.TemplateRequestModifierFunc{
+						workflowtemplate.TemplateRequestModifiers.DefaultKeys(*p),
+					}
+					wti, err := workflowtemplate.CheckAndExecuteTemplate(ctx, api.mustDB(), *consumer, *p, &data, mods...)
 					if err != nil {
 						if errD := errorDefer(err); errD != nil {
 							log.Error(ctx, "%v", errD)
@@ -642,9 +647,9 @@ func (api *API) getTemplateInstancesHandler() service.Handler {
 
 		var ps sdk.Projects
 		if isMaintainer(ctx) {
-			ps, err = project.LoadAll(ctx, api.mustDB(), api.Cache)
+			ps, err = project.LoadAll(ctx, api.mustDB(), api.Cache, project.LoadOptions.WithKeys)
 		} else {
-			ps, err = project.LoadAllByGroupIDs(ctx, api.mustDB(), api.Cache, getAPIConsumer(ctx).GetGroupIDs())
+			ps, err = project.LoadAllByGroupIDs(ctx, api.mustDB(), api.Cache, getAPIConsumer(ctx).GetGroupIDs(), project.LoadOptions.WithKeys)
 		}
 		if err != nil {
 			return err

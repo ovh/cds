@@ -1,5 +1,10 @@
-import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnInit } from '@angular/core';
+import { Select } from '@ngxs/store';
 import { Commit } from 'app/model/repositories.model';
+import { WorkflowNodeRun } from 'app/model/workflow.run.model';
+import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
+import { WorkflowState } from 'app/store/workflow.state';
+import { Observable, Subscription } from 'rxjs';
 import { Column, ColumnType } from '../table/data-table.component';
 
 @Component({
@@ -8,11 +13,16 @@ import { Column, ColumnType } from '../table/data-table.component';
     styleUrls: ['./commit.list.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class CommitListComponent {
+@AutoUnsubscribe()
+export class CommitListComponent implements OnInit {
+
+    @Select(WorkflowState.getSelectedNodeRun()) nodeRun$: Observable<WorkflowNodeRun>;
+    nodeRunSubs: Subscription;
+
     @Input() commits: Array<Commit>;
     columns: Column<Commit>[];
 
-    constructor() {
+    constructor(private _cd: ChangeDetectorRef) {
         this.columns = [
             <Column<Commit>>{
                 type: ColumnType.IMG_TEXT,
@@ -51,5 +61,23 @@ export class CommitListComponent {
                 selector: (commit: Commit) => commit.authorTimestamp,
             },
         ];
+    }
+
+    ngOnInit(): void {
+        // if commits are provided by input, do not look at the noderun
+        if (this.commits && this.commits.length) {
+            return;
+        }
+        this.nodeRunSubs = this.nodeRun$.subscribe(nr => {
+           if (!nr) {
+               return;
+           }
+
+           if (this.commits && nr.commits && this.commits.length === nr.commits.length) {
+               return;
+           }
+           this.commits = nr.commits;
+           this._cd.markForCheck();
+        });
     }
 }

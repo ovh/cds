@@ -114,6 +114,32 @@ func (b *bitbucketClient) RepoByFullname(ctx context.Context, fullname string) (
 	return repo, nil
 }
 
+func (b *bitbucketClient) UserHasWritePermission(ctx context.Context, repo string) (bool, error) {
+	if b.username == "" {
+		return false, sdk.WrapError(sdk.ErrUserNotFound, "No user found in configuration")
+	}
+
+	project, slug, err := getRepo(repo)
+	if err != nil {
+		return false, sdk.WithStack(err)
+	}
+	path := fmt.Sprintf("/projects/%s/repos/%s/permissions/users", project, slug)
+	params := url.Values{}
+	params.Add("filter", b.username)
+
+	var reponse UsersPermissionResponse
+	if err := b.do(ctx, "GET", "core", path, params, nil, &reponse, nil); err != nil {
+		return false, sdk.WithStack(err)
+	}
+
+	for _, v := range reponse.Values {
+		if v.User.Slug == b.username {
+			return v.Permission == "REPO_WRITE" || v.Permission == "REPO_ADMIN", nil
+		}
+	}
+	return false, nil
+}
+
 func (b *bitbucketClient) GrantWritePermission(ctx context.Context, repo string) error {
 	if b.username == "" {
 		return nil

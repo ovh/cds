@@ -3,6 +3,7 @@ package api
 import (
 	"net/http"
 
+	"github.com/ovh/cds/engine/api/observability"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
@@ -136,6 +137,7 @@ func (api *API) InitRouter() {
 	r.Handle("/mon/db/migrate", ScopeNone(), r.GET(api.getMonDBStatusMigrateHandler, NeedAdmin(true)))
 	r.Handle("/mon/metrics", ScopeNone(), r.GET(service.GetPrometheustMetricsHandler(api), Auth(false)))
 	r.Handle("/mon/metrics/all", ScopeNone(), r.GET(service.GetMetricsHandler, Auth(false)))
+	r.HandlePrefix("/mon/metrics/detail/", ScopeNone(), r.GET(service.GetMetricHandler(observability.StatsHTTPExporter(), "/mon/metrics/detail/"), Auth(false)))
 	r.Handle("/mon/errors/{uuid}", ScopeNone(), r.GET(api.getErrorHandler, NeedAdmin(true)))
 	r.Handle("/mon/panic/{uuid}", ScopeNone(), r.GET(api.getPanicDumpHandler, Auth(false)))
 
@@ -316,7 +318,7 @@ func (api *API) InitRouter() {
 	r.Handle("/queue/workflows/{permJobID}/book", Scope(sdk.AuthConsumerScopeRunExecution), r.POST(api.postBookWorkflowJobHandler, EnableTracing(), MaintenanceAware()), r.DELETE(api.deleteBookWorkflowJobHandler, EnableTracing(), MaintenanceAware()))
 	r.Handle("/queue/workflows/{permJobID}/infos", Scope(sdk.AuthConsumerScopeRunExecution), r.GET(api.getWorkflowJobHandler, EnableTracing(), MaintenanceAware()))
 	r.Handle("/queue/workflows/{permJobID}/vulnerability", Scope(sdk.AuthConsumerScopeRunExecution), r.POSTEXECUTE(api.postVulnerabilityReportHandler, EnableTracing(), MaintenanceAware()))
-	r.Handle("/queue/workflows/{permJobID}/spawn/infos", Scope(sdk.AuthConsumerScopeRunExecution), r.POST(r.Asynchronous(api.postSpawnInfosWorkflowJobHandler, 1), EnableTracing(), MaintenanceAware()))
+	r.Handle("/queue/workflows/{permJobID}/spawn/infos", Scope(sdk.AuthConsumerScopeRunExecution), r.POST(api.postSpawnInfosWorkflowJobHandler, EnableTracing(), MaintenanceAware()))
 	r.Handle("/queue/workflows/{permJobID}/result", Scope(sdk.AuthConsumerScopeRunExecution), r.POSTEXECUTE(api.postWorkflowJobResultHandler, EnableTracing(), MaintenanceAware()))
 	r.Handle("/queue/workflows/{permJobID}/log", Scope(sdk.AuthConsumerScopeRunExecution), r.POSTEXECUTE(api.postWorkflowJobLogsHandler, MaintenanceAware()))
 	r.Handle("/queue/workflows/log/service", Scope(sdk.AuthConsumerScopeRunExecution), r.POSTEXECUTE(r.Asynchronous(api.postWorkflowJobServiceLogsHandler, 1), MaintenanceAware()))

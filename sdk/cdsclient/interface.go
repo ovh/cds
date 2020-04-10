@@ -489,6 +489,15 @@ func WithPermissions() RequestModifier {
 	}
 }
 
+// WithKeys allow a provider to retrieve a project with its keys.
+func WithKeys() RequestModifier {
+	return func(r *http.Request) {
+		q := r.URL.Query()
+		q.Set("withKeys", "true")
+		r.URL.RawQuery = q.Encode()
+	}
+}
+
 func Format(format string) RequestModifier {
 	return func(r *http.Request) {
 		q := r.URL.Query()

@@ -2,18 +2,17 @@ import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit } from '@
 import { Title } from '@angular/platform-browser';
 import { ActivatedRoute } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
-import { Store } from '@ngxs/store';
+import { Select, Store } from '@ngxs/store';
 import { PipelineStatus, SpawnInfo } from 'app/model/pipeline.model';
 import { Project } from 'app/model/project.model';
 import { WorkflowRun } from 'app/model/workflow.run.model';
 import { NotificationService } from 'app/service/notification/notification.service';
 import { WorkflowStore } from 'app/service/workflow/workflow.store';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
-import { ProjectState, ProjectStateModel } from 'app/store/project.state';
+import { ProjectState } from 'app/store/project.state';
 import { ChangeToRunView, GetWorkflowRun } from 'app/store/workflow.action';
-import { WorkflowState, WorkflowStateModel } from 'app/store/workflow.state';
-import { Subscription } from 'rxjs';
-import { filter } from 'rxjs/operators';
+import { WorkflowState } from 'app/store/workflow.state';
+import { Observable, Subscription } from 'rxjs';
 import { ErrorMessageMap, WarningMessageMap } from './errors';
 
 @Component({
@@ -25,14 +24,16 @@ import { ErrorMessageMap, WarningMessageMap } from './errors';
 @AutoUnsubscribe()
 export class WorkflowRunComponent implements OnInit {
 
-    subWorkflow: Subscription;
-
     project: Project;
-    project$: Subscription;
+
+    @Select(WorkflowState.getSelectedWorkflowRun()) workflowRun$: Observable<WorkflowRun>;
+    subWorkflowRun: Subscription;
 
     workflowName: string;
     version: string;
     direction: string;
+
+    paramsSub: Subscription;
 
     pipelineStatusEnum = PipelineStatus;
     notificationSubscription: Subscription;
@@ -56,77 +57,62 @@ export class WorkflowRunComponent implements OnInit {
         private _titleService: Title,
         private _cd: ChangeDetectorRef
     ) {
-        // Get project
-        this.dataSubs = this._activatedRoute.data.subscribe(datas => {
-            if (!this.project || (<Project>datas['project']).key !== this.project.key) {
-                this.project = datas['project'];
-                this.workflowRunData = null;
-                this.workflowName = '';
-            }
-        });
-
-        this.project$ = this._store.select(ProjectState)
-            .pipe(filter((prj) => prj != null))
-            .subscribe((projState: ProjectStateModel) => this.project = projState.project);
-
-        this.workflowName = this._activatedRoute.snapshot.parent.params['workflowName'];
+        this.project = this._store.selectSnapshot(ProjectState.projectSnapshot);
+        this.workflowName = this._store.selectSnapshot(WorkflowState.workflowSnapshot).name;
         this._store.dispatch(new ChangeToRunView({}));
 
-        // Subscribe to route event
-        this.paramsSubs = this._activatedRoute.params.subscribe(ps => {
+        this.paramsSub = this._activatedRoute.params.subscribe(p => {
+            this.workflowRunData = {};
             this._cd.markForCheck();
-            // if there is no current workflow run
-            if (!this.workflowRunData) {
-                this._store.dispatch(
-                    new GetWorkflowRun({
-                        projectKey: this.project.key,
-                        workflowName: this.workflowName,
-                        num: ps['number']
-                    }));
-            } else {
-                if (this.workflowRunData['workflow'].name !== this.workflowName || this.workflowRunData['num'] !== ps['number']) {
-                    this._store.dispatch(
-                        new GetWorkflowRun({
-                            projectKey: this.project.key,
-                            workflowName: this.workflowName,
-                            num: ps['number']
-                        }));
-                }
-            }
+            this._store.dispatch(
+                new GetWorkflowRun({
+                    projectKey: this.project.key,
+                    workflowName: this.workflowName,
+                    num: p['number']
+                }));
         });
 
-        this.subWorkflow = this._store.select(WorkflowState.getCurrent()).subscribe((s: WorkflowStateModel) => {
-            this.loadingRun = s.loadingWorkflowRun;
-            if (s.workflowRun) {
-                if (!this.workflowRunData) {
-                    this.workflowRunData = {};
-                }
-                if (!this.workflowRunData['workflow'] || !this.workflowRunData['workflow'].workflow_data
-                || this.workflowRunData['workflow'].workflow_data.node.id === 0) {
-                    this.workflowRunData['workflow'] = s.workflowRun.workflow;
-                    this.workflowName = s.workflowRun.workflow.name;
-                }
 
-                if (this.workflowRunData['id'] && this.workflowRunData['id'] === s.workflowRun.id
-                    && this.workflowRunData['status'] !== s.workflowRun.status &&
-                    PipelineStatus.isDone(s.workflowRun.status)) {
-                    this.handleNotification(s.workflowRun);
-                }
-                this.workflowRunData['id'] = s.workflowRun.id;
-                this.workflowRunData['status'] = s.workflowRun.status;
-                this.workflowRunData['infos'] = s.workflowRun.infos;
-                this.workflowRunData['num'] = s.workflowRun.num;
-
-                if (s.workflowRun.infos && s.workflowRun.infos.length > 0) {
-                    this.displayError = s.workflowRun.infos.some((info) => info.type === 'Error');
-                    this.warnings = s.workflowRun.infos.filter(i => i.type === 'Warning');
-                }
-
-                this.updateTitle(s.workflowRun);
-                this._cd.markForCheck();
-            } else {
-                delete this.workflowRunData;
+        // Subscribe to workflow Run
+        this.subWorkflowRun = this.workflowRun$.subscribe(wr => {
+            if (!wr || wr.status === 'Pending') {
+                return;
             }
+
+            if (wr && this.workflowRunData && this.workflowRunData['id'] === wr.id && this.workflowRunData['status'] === wr.status) {
+                return;
+            }
+
+            if (!this.workflowRunData) {
+                this.workflowRunData = {};
+            }
+
+            // If workflow run change, refresh workflow
+            if (wr && this.workflowRunData['id'] !== wr.id) {
+                this.workflowRunData['workflow'] = wr.workflow;
+                this.workflowName = this._store.selectSnapshot(WorkflowState.workflowSnapshot).name;
+            }
+
+            if (wr && this.workflowRunData['id'] && this.workflowRunData['id'] === wr.id
+                && this.workflowRunData['status'] !== wr.status && PipelineStatus.isDone(wr.status)) {
+                this.handleNotification(wr);
+            }
+
+            if (wr && wr.infos && wr.infos.length > 0 && (
+                (!this.workflowRunData['infos']) ||
+                (this.workflowRunData['infos'] && this.workflowRunData['infos'].length === wr.infos.length)
+            )) {
+                this.displayError = wr.infos.some((info) => info.type === 'Error');
+                this.warnings = wr.infos.filter(i => i.type === 'Warning');
+            }
+
+            this.workflowRunData['id'] = wr.id;
+            this.workflowRunData['infos'] = wr.infos;
+            this.workflowRunData['num'] = wr.num;
+            this.workflowRunData['status'] = wr.status;
+
+            this.updateTitle(wr);
+            this._cd.markForCheck();
         });
     }
 

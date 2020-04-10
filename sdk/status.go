@@ -50,7 +50,7 @@ type MonitoringStatusLine struct {
 // HTTPStatusCode return the http status code
 func (m MonitoringStatus) HTTPStatusCode() int {
 	for _, l := range m.Lines {
-		if l.Status != MonitoringStatusOK {
+		if l.Status == MonitoringStatusAlert {
 			return http.StatusServiceUnavailable
 		}
 	}

@@ -4,11 +4,12 @@ import { Store } from '@ngxs/store';
 import { PipelineStatus } from 'app/model/pipeline.model';
 import { Project } from 'app/model/project.model';
 import { WNode, WNodeJoin, Workflow } from 'app/model/workflow.model';
-import { WorkflowNodeRun, WorkflowRun } from 'app/model/workflow.run.model';
 import { WorkflowCoreService } from 'app/service/workflow/workflow.core.service';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { ToastService } from 'app/shared/toast/ToastService';
+import { ProjectState } from 'app/store/project.state';
 import { UpdateWorkflow } from 'app/store/workflow.action';
+import { WorkflowState } from 'app/store/workflow.state';
 import cloneDeep from 'lodash-es/cloneDeep';
 import { Subscription } from 'rxjs';
 
@@ -20,14 +21,12 @@ import { Subscription } from 'rxjs';
 })
 @AutoUnsubscribe()
 export class WorkflowWNodeJoinComponent {
-    @Input() public project: Project;
     @Input() public node: WNode;
     @Input() public workflow: Workflow;
-    @Input() public noderun: WorkflowNodeRun;
-    @Input() public workflowrun: WorkflowRun;
-    @Input() public selected: boolean;
+    @Input() noderunStatus: string;
     @Input() public editMode: boolean;
 
+    project: Project;
     pipelineStatus = PipelineStatus;
     linkJoinSubscription: Subscription;
     nodeToLink: WNode;
@@ -40,6 +39,7 @@ export class WorkflowWNodeJoinComponent {
         private _translate: TranslateService,
         private _cd: ChangeDetectorRef
     ) {
+        this.project = this.store.selectSnapshot(ProjectState.projectSnapshot);
         this.linkJoinSubscription = _workflowCore.getLinkJoinEvent().subscribe(n => {
             this.nodeToLink = n;
             this._cd.markForCheck();
@@ -49,7 +49,7 @@ export class WorkflowWNodeJoinComponent {
     selectJoinToLink(): void {
         let cloneWorkflow = cloneDeep(this.workflow);
         let currentJoin: WNode;
-        if (this.editMode) {
+        if (this.store.selectSnapshot(WorkflowState).editMode) {
             currentJoin = Workflow.getNodeByRef(this.node.ref, cloneWorkflow);
         } else {
             currentJoin = Workflow.getNodeByID(this.node.id, cloneWorkflow);
@@ -64,12 +64,13 @@ export class WorkflowWNodeJoinComponent {
     }
 
     updateWorkflow(w: Workflow): void {
+        let editMode = this.store.selectSnapshot(WorkflowState).editMode;
         this.store.dispatch(new UpdateWorkflow({
             projectKey: this.project.key,
             workflowName: w.name,
             changes: w
         })).subscribe(() => {
-            if (!this.editMode) {
+            if (!editMode) {
                 this._toast.success('', this._translate.instant('workflow_updated'));
             } else {
                 this._toast.info('', this._translate.instant('workflow_ascode_updated'));

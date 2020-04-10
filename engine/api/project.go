@@ -3,7 +3,6 @@ package api
 import (
 	"context"
 	"database/sql"
-	"fmt"
 	"net/http"
 	"regexp"
 	"strings"
@@ -552,52 +551,40 @@ func (api *API) postProjectHandler() service.Handler {
 			}
 		}
 
-		var sshExists, gpgExists bool
-		for _, k := range p.Keys {
-			switch k.Type {
-			case sdk.KeyTypeSSH:
-				sshExists = true
-			case sdk.KeyTypePGP:
-				gpgExists = true
-			}
-		}
-
-		if !sshExists {
-			p.Keys = append(p.Keys, sdk.ProjectKey{
+		p.Keys = []sdk.ProjectKey{
+			{
 				Type: sdk.KeyTypeSSH,
-				Name: fmt.Sprintf("proj-%s-%s", sdk.KeyTypeSSH, strings.ToLower(p.Key))},
-			)
-		}
-		if !gpgExists {
-			p.Keys = append(p.Keys, sdk.ProjectKey{
+				Name: sdk.GenerateProjectDefaultKeyName(p.Key, sdk.KeyTypeSSH),
+			},
+			{
 				Type: sdk.KeyTypePGP,
-				Name: fmt.Sprintf("proj-%s-%s", sdk.KeyTypePGP, strings.ToLower(p.Key))},
-			)
+				Name: sdk.GenerateProjectDefaultKeyName(p.Key, sdk.KeyTypePGP),
+			},
 		}
 		for i := range p.Keys {
 			k := &p.Keys[i]
 			k.ProjectID = p.ID
 			switch k.Type {
 			case sdk.KeyTypeSSH:
-				keyTemp, errK := keys.GenerateSSHKey(k.Name)
-				if errK != nil {
-					return sdk.WrapError(errK, "addProjectHandler> Cannot generate ssh key for project %s", p.Name)
+				keyTemp, err := keys.GenerateSSHKey(k.Name)
+				if err != nil {
+					return sdk.WrapError(err, "cannot generate ssh key for project %s", p.Name)
 				}
 				k.Private = keyTemp.Private
 				k.Public = keyTemp.Public
 				k.Type = keyTemp.Type
 			case sdk.KeyTypePGP:
-				keyTemp, errK := keys.GeneratePGPKeyPair(k.Name)
-				if errK != nil {
-					return sdk.WrapError(errK, "addProjectHandler> Cannot generate pgp key for project %s", p.Name)
+				keyTemp, err := keys.GeneratePGPKeyPair(k.Name)
+				if err != nil {
+					return sdk.WrapError(err, "cannot generate pgp key for project %s", p.Name)
 				}
 				k.Private = keyTemp.Private
 				k.Public = keyTemp.Public
 				k.Type = keyTemp.Type
 				k.KeyID = keyTemp.KeyID
 			}
-			if errK := project.InsertKey(tx, k); errK != nil {
-				return sdk.WrapError(errK, "addProjectHandler> Cannot add key %s in project %s", k.Name, p.Name)
+			if err := project.InsertKey(tx, k); err != nil {
+				return sdk.WrapError(err, "cannot add key %s in project %s", k.Name, p.Name)
 			}
 		}
 

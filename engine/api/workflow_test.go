@@ -11,10 +11,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/ovh/cds/engine/api/repositoriesmanager"
-	"github.com/ovh/cds/engine/api/services"
-	"github.com/ovh/cds/engine/service"
-
+	"github.com/go-gorp/gorp"
+	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/yaml.v2"
@@ -26,9 +24,13 @@ import (
 	"github.com/ovh/cds/engine/api/integration"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/project"
+	"github.com/ovh/cds/engine/api/repositoriesmanager"
+	"github.com/ovh/cds/engine/api/services"
+	"github.com/ovh/cds/engine/api/services/mock_services"
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/api/test/assets"
 	"github.com/ovh/cds/engine/api/workflow"
+	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/ovh/cds/sdk/exportentities"
@@ -1592,4 +1594,236 @@ func TestBenchmarkGetWorkflowsWithAPI(t *testing.T) {
 	t.Logf("N : %d", res.N)
 	t.Logf("ns/op : %d", res.NsPerOp())
 	assert.False(t, res.NsPerOp() >= 500000000, "Workflows load is too long: GOT %d and EXPECTED lower than 500000000 (500ms)", res.NsPerOp())
+}
+
+func Test_putWorkflowShouldNotCallHOOKSIfHookDoesNotChange(t *testing.T) {
+	api, db, router, end := newTestAPI(t)
+	defer end()
+
+	_, _ = assets.InsertService(t, db, t.Name()+"_HOOKS", services.TypeHooks)
+
+	u, pass := assets.InsertAdminUser(t, api.mustDB())
+	key := sdk.RandomString(10)
+	proj := assets.InsertTestProject(t, db, api.Cache, key, key)
+	pip := sdk.Pipeline{
+		Name:      "pipeline1",
+		ProjectID: proj.ID,
+	}
+	assert.NoError(t, pipeline.InsertPipeline(db, &pip))
+
+	wf := sdk.Workflow{
+		ProjectID:  proj.ID,
+		ProjectKey: proj.Key,
+		Name:       sdk.RandomString(10),
+		Groups:     proj.ProjectGroups,
+		WorkflowData: sdk.WorkflowData{
+			Node: sdk.Node{
+				Name: "root",
+				Context: &sdk.NodeContext{
+					PipelineID: pip.ID,
+				},
+				Hooks: []sdk.NodeHook{
+					{
+						HookModelID: sdk.WebHookModel.ID,
+						Config: sdk.WorkflowNodeHookConfig{
+							"method": sdk.WorkflowNodeHookConfigValue{
+								Value: "POST",
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	// Setup a mock for all services called by the API
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+	// The mock has been geenrated by mockgen: go get github.com/golang/mock/mockgen
+	// If you have to regenerate thi mock you just have to run, from directory $GOPATH/src/github.com/ovh/cds/engine/api/services:
+	// mockgen -source=http.go -destination=mock_services/services_mock.go Client
+	servicesClients := mock_services.NewMockClient(ctrl)
+	services.NewClient = func(_ gorp.SqlExecutor, _ []sdk.Service) services.Client {
+		return servicesClients
+	}
+	defer func() {
+		services.NewClient = services.NewDefaultClient
+	}()
+
+	// Mock the Hooks service
+	servicesClients.EXPECT().
+		DoJSONRequest(gomock.Any(), "POST", "/task/bulk", gomock.Any(), gomock.Any()).
+		DoAndReturn(
+			func(ctx context.Context, method, path string, in interface{}, out interface{}) (http.Header, int, error) {
+				actualHooks, ok := in.(map[string]sdk.NodeHook)
+				require.True(t, ok)
+				require.Len(t, actualHooks, 1)
+				for k, h := range actualHooks {
+					h.Config["method"] = sdk.WorkflowNodeHookConfigValue{
+						Value:        "POST",
+						Configurable: true,
+					}
+					actualHooks[k] = h
+				}
+				out = actualHooks
+				return nil, 200, nil
+			},
+		)
+
+	// Insert the workflow
+	vars := map[string]string{
+		"permProjectKey": proj.Key,
+	}
+	uri := router.GetRoute("POST", api.postWorkflowHandler, vars)
+	test.NotEmpty(t, uri)
+	req := assets.NewAuthentifiedRequest(t, u, pass, "POST", uri, &wf)
+	w := httptest.NewRecorder()
+	router.Mux.ServeHTTP(w, req)
+	assert.Equal(t, 201, w.Code)
+
+	// Load the workflow
+	vars = map[string]string{
+		"key":              proj.Key,
+		"permWorkflowName": wf.Name,
+	}
+	uri = router.GetRoute("GET", api.getWorkflowHandler, vars)
+	test.NotEmpty(t, uri)
+	req = assets.NewAuthentifiedRequest(t, u, pass, "GET", uri, nil)
+	w = httptest.NewRecorder()
+	router.Mux.ServeHTTP(w, req)
+
+	// Unmarshal the workflow
+	require.NoError(t, json.Unmarshal(w.Body.Bytes(), &wf))
+
+	// Then call the PUT handler, it should not trigger /task/bulk on hooks service
+	// Update the workflow
+	uri = router.GetRoute("PUT", api.putWorkflowHandler, vars)
+	test.NotEmpty(t, uri)
+	req = assets.NewAuthentifiedRequest(t, u, pass, "PUT", uri, &wf)
+	w = httptest.NewRecorder()
+	router.Mux.ServeHTTP(w, req)
+	assert.Equal(t, 200, w.Code)
+
+}
+
+func Test_putWorkflowWithDuplicateHooksShouldRaiseAnError(t *testing.T) {
+	api, db, router, end := newTestAPI(t)
+	defer end()
+
+	_, _ = assets.InsertService(t, db, t.Name()+"_HOOKS", services.TypeHooks)
+
+	u, pass := assets.InsertAdminUser(t, api.mustDB())
+	key := sdk.RandomString(10)
+	proj := assets.InsertTestProject(t, db, api.Cache, key, key)
+	pip := sdk.Pipeline{
+		Name:      "pipeline1",
+		ProjectID: proj.ID,
+	}
+	assert.NoError(t, pipeline.InsertPipeline(db, &pip))
+
+	wf := sdk.Workflow{
+		ProjectID:  proj.ID,
+		ProjectKey: proj.Key,
+		Name:       sdk.RandomString(10),
+		Groups:     proj.ProjectGroups,
+		WorkflowData: sdk.WorkflowData{
+			Node: sdk.Node{
+				Name: "root",
+				Context: &sdk.NodeContext{
+					PipelineID: pip.ID,
+				},
+				Hooks: []sdk.NodeHook{
+					{
+						HookModelID: sdk.WebHookModel.ID,
+						Config: sdk.WorkflowNodeHookConfig{
+							"method": sdk.WorkflowNodeHookConfigValue{
+								Value: "POST",
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	// Setup a mock for all services called by the API
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+	// The mock has been geenrated by mockgen: go get github.com/golang/mock/mockgen
+	// If you have to regenerate thi mock you just have to run, from directory $GOPATH/src/github.com/ovh/cds/engine/api/services:
+	// mockgen -source=http.go -destination=mock_services/services_mock.go Client
+	servicesClients := mock_services.NewMockClient(ctrl)
+	services.NewClient = func(_ gorp.SqlExecutor, _ []sdk.Service) services.Client {
+		return servicesClients
+	}
+	defer func() {
+		services.NewClient = services.NewDefaultClient
+	}()
+
+	// Mock the Hooks service
+	servicesClients.EXPECT().
+		DoJSONRequest(gomock.Any(), "POST", "/task/bulk", gomock.Any(), gomock.Any()).
+		DoAndReturn(
+			func(ctx context.Context, method, path string, in interface{}, out interface{}) (http.Header, int, error) {
+				actualHooks, ok := in.(map[string]sdk.NodeHook)
+				require.True(t, ok)
+				require.Len(t, actualHooks, 1)
+				for k, h := range actualHooks {
+					h.Config["method"] = sdk.WorkflowNodeHookConfigValue{
+						Value:        "POST",
+						Configurable: true,
+					}
+					actualHooks[k] = h
+				}
+				out = actualHooks
+				return nil, 200, nil
+			},
+		)
+
+	// Insert the workflow
+	vars := map[string]string{
+		"permProjectKey": proj.Key,
+	}
+	uri := router.GetRoute("POST", api.postWorkflowHandler, vars)
+	test.NotEmpty(t, uri)
+	req := assets.NewAuthentifiedRequest(t, u, pass, "POST", uri, &wf)
+	w := httptest.NewRecorder()
+	router.Mux.ServeHTTP(w, req)
+	assert.Equal(t, 201, w.Code)
+
+	// Load the workflow
+	vars = map[string]string{
+		"key":              proj.Key,
+		"permWorkflowName": wf.Name,
+	}
+	uri = router.GetRoute("GET", api.getWorkflowHandler, vars)
+	test.NotEmpty(t, uri)
+	req = assets.NewAuthentifiedRequest(t, u, pass, "GET", uri, nil)
+	w = httptest.NewRecorder()
+	router.Mux.ServeHTTP(w, req)
+
+	// Unmarshal the workflow
+	require.NoError(t, json.Unmarshal(w.Body.Bytes(), &wf))
+
+	// Then add another hooks with similar properties. It should raise a 400 HTTP Error
+
+	wf.WorkflowData.Node.Hooks = append(wf.WorkflowData.Node.Hooks,
+		sdk.NodeHook{
+			HookModelID: sdk.WebHookModel.ID,
+			Config: sdk.WorkflowNodeHookConfig{
+				"method": sdk.WorkflowNodeHookConfigValue{
+					Value: "POST",
+				},
+			},
+		},
+	)
+
+	// Update the workflow
+	uri = router.GetRoute("PUT", api.putWorkflowHandler, vars)
+	test.NotEmpty(t, uri)
+	req = assets.NewAuthentifiedRequest(t, u, pass, "PUT", uri, &wf)
+	w = httptest.NewRecorder()
+	router.Mux.ServeHTTP(w, req)
+	assert.Equal(t, 400, w.Code)
+
 }
