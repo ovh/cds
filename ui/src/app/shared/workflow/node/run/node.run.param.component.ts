@@ -326,7 +326,7 @@ export class WorkflowNodeRunParamComponent implements AfterViewInit {
             if (this.nodeToRun.context) {
                 this.parameters = Pipeline.mergeParams(
                     cloneDeep(pipToRun.parameters),
-                    this.nodeToRun.context.default_pipeline_parameters
+                    cloneDeep(this.nodeToRun.context.default_pipeline_parameters)
                 );
             } else {
                 this.nodeToRun.context = new WNodeContext();
