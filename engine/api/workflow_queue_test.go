@@ -591,7 +591,7 @@ func Test_postWorkflowJobTestsResultsHandler(t *testing.T) {
 	req := assets.NewJWTAuthentifiedRequest(t, ctx.hatcheryToken, "POST", uri, info)
 	rec := httptest.NewRecorder()
 	router.Mux.ServeHTTP(rec, req)
-	require.Equal(t, 202, rec.Code)
+	require.Equal(t, 204, rec.Code)
 
 	//spawn
 	uri = router.GetRoute("POST", api.postTakeWorkflowJobHandler, map[string]string{

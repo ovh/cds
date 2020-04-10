@@ -159,12 +159,12 @@ func Do(input string, vars map[string]string) (string, error) {
 
 	t, err := template.New("input").Funcs(InterpolateHelperFuncs).Parse(input)
 	if err != nil {
-		return "", fmt.Errorf("Invalid template format: %s", err.Error())
+		return "", fmt.Errorf("invalid template format \"%s\": %s", input, err.Error())
 	}
 
 	var buff bytes.Buffer
 	if err := t.Execute(&buff, data); err != nil {
-		return "", fmt.Errorf("Failed to execute template: %s", err.Error())
+		return "", fmt.Errorf("failed to execute template: %s", err.Error())
 	}
 
 	return buff.String(), nil

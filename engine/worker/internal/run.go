@@ -90,7 +90,7 @@ func processActionVariables(a *sdk.Action, parent *sdk.Action, jobParameters []s
 	// replaces placeholder in all children recursively
 	for i := range a.Actions {
 		if err := processActionVariables(&a.Actions[i], a, jobParameters, secrets); err != nil {
-			return nil
+			return err
 		}
 	}
 
@@ -109,7 +109,7 @@ func (w *CurrentWorker) replaceVariablesPlaceholder(a *sdk.Action, params []sdk.
 	return nil
 }
 
-func (w *CurrentWorker) runJob(ctx context.Context, a *sdk.Action, jobID int64, secrets []sdk.Variable) (sdk.Result, error) {
+func (w *CurrentWorker) runJob(ctx context.Context, a *sdk.Action, jobID int64, secrets []sdk.Variable) sdk.Result {
 	log.Info(ctx, "runJob> start job %s (%d)", a.Name, jobID)
 	defer func() { log.Info(ctx, "runJob> job %s (%d)", a.Name, jobID) }()
 
@@ -124,7 +124,7 @@ func (w *CurrentWorker) runJob(ctx context.Context, a *sdk.Action, jobID int64, 
 		if err := w.updateStepStatus(ctx, jobID, jobStepIndex, sdk.StatusBuilding); err != nil {
 			jobResult.Status = sdk.StatusFail
 			jobResult.Reason = fmt.Sprintf("Cannot update step (%d) status (%s): %v", jobStepIndex, sdk.StatusBuilding, err)
-			return jobResult, err
+			return jobResult
 		}
 		var stepResult = sdk.Result{
 			Status:  sdk.StatusNeverBuilt,
@@ -163,7 +163,7 @@ func (w *CurrentWorker) runJob(ctx context.Context, a *sdk.Action, jobID int64, 
 		if err := w.updateStepStatus(ctx, jobID, jobStepIndex, stepResult.Status); err != nil {
 			jobResult.Status = sdk.StatusFail
 			jobResult.Reason = fmt.Sprintf("Cannot update step (%d) status (%s): %v", jobStepIndex, sdk.StatusBuilding, err)
-			return jobResult, err
+			return jobResult
 		}
 	}
 
@@ -178,7 +178,7 @@ func (w *CurrentWorker) runJob(ctx context.Context, a *sdk.Action, jobID int64, 
 	if nCriticalFailed > 0 {
 		jobResult.Status = sdk.StatusFail
 	}
-	return jobResult, nil
+	return jobResult
 }
 
 func (w *CurrentWorker) runAction(ctx context.Context, a sdk.Action, jobID int64, secrets []sdk.Variable, actionName string) sdk.Result {
@@ -459,7 +459,7 @@ func (w *CurrentWorker) setupKeysDirectory(ctx context.Context, jobInfo sdk.Work
 	return kdFile, kdAbs, nil
 }
 
-func (w *CurrentWorker) ProcessJob(jobInfo sdk.WorkflowNodeJobRunData) (sdk.Result, error) {
+func (w *CurrentWorker) ProcessJob(jobInfo sdk.WorkflowNodeJobRunData) (res sdk.Result) {
 	ctx := w.currentJob.context
 	t0 := time.Now()
 
@@ -472,6 +472,8 @@ func (w *CurrentWorker) ProcessJob(jobInfo sdk.WorkflowNodeJobRunData) (sdk.Resu
 	defer cancel()
 
 	ctx = workerruntime.SetJobID(ctx, jobInfo.NodeJobRun.ID)
+	ctx = workerruntime.SetStepOrder(ctx, 0)
+
 	// start logger routine with a large buffer
 	w.logger.logChan = make(chan sdk.Log, 100000)
 	go func() {
@@ -484,13 +486,16 @@ func (w *CurrentWorker) ProcessJob(jobInfo sdk.WorkflowNodeJobRunData) (sdk.Resu
 			log.Error(ctx, "processJob> Drain logs error: %v", err)
 		}
 	}()
+	defer func() {
+		log.Error(ctx, "processJob> Status: %s | Reason: %s", res.Status, res.Reason)
+	}()
 
 	wdFile, wdAbs, err := w.setupWorkingDirectory(ctx, jobInfo)
 	if err != nil {
 		return sdk.Result{
 			Status: sdk.StatusFail,
 			Reason: fmt.Sprintf("Error: unable to setup workfing directory: %v", err),
-		}, err
+		}
 	}
 	ctx = workerruntime.SetWorkingDirectory(ctx, wdFile)
 	log.Debug("processJob> Setup workspace - %s", wdFile.Name())
@@ -500,7 +505,7 @@ func (w *CurrentWorker) ProcessJob(jobInfo sdk.WorkflowNodeJobRunData) (sdk.Resu
 		return sdk.Result{
 			Status: sdk.StatusFail,
 			Reason: fmt.Sprintf("Error: unable to setup keys directory: %v", err),
-		}, err
+		}
 	}
 	ctx = workerruntime.SetKeysDirectory(ctx, kdFile)
 	log.Debug("processJob> Setup key directory - %s", kdFile.Name())
@@ -527,8 +532,8 @@ func (w *CurrentWorker) ProcessJob(jobInfo sdk.WorkflowNodeJobRunData) (sdk.Resu
 	if err := processVariablesAndParameters(&jobInfo.NodeJobRun.Job.Action, jobParameters, jobInfo.Secrets); err != nil {
 		return sdk.Result{
 			Status: sdk.StatusFail,
-			Reason: fmt.Sprintf("Error: cannot process job %s parameters", jobInfo.NodeJobRun.Job.Action.Name),
-		}, err
+			Reason: fmt.Sprintf("unable to process job %s: %v", jobInfo.NodeJobRun.Job.Action.Name, err),
+		}
 	}
 
 	// Add secrets as string or password in ActionBuild.Args
@@ -544,7 +549,7 @@ func (w *CurrentWorker) ProcessJob(jobInfo sdk.WorkflowNodeJobRunData) (sdk.Resu
 
 	w.currentJob.params = jobParameters
 
-	res, err := w.runJob(ctx, &jobInfo.NodeJobRun.Job.Action, jobInfo.NodeJobRun.ID, jobInfo.Secrets)
+	res = w.runJob(ctx, &jobInfo.NodeJobRun.Job.Action, jobInfo.NodeJobRun.ID, jobInfo.Secrets)
 
 	if len(res.NewVariables) > 0 {
 		log.Debug("processJob> new variables: %v", res.NewVariables)
@@ -563,5 +568,5 @@ func (w *CurrentWorker) ProcessJob(jobInfo sdk.WorkflowNodeJobRunData) (sdk.Resu
 		log.Error(ctx, "Cannot remove basedir content: %s", err)
 	}
 
-	return res, err
+	return res
 }

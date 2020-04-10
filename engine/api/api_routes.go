@@ -318,7 +318,7 @@ func (api *API) InitRouter() {
 	r.Handle("/queue/workflows/{permJobID}/book", Scope(sdk.AuthConsumerScopeRunExecution), r.POST(api.postBookWorkflowJobHandler, EnableTracing(), MaintenanceAware()), r.DELETE(api.deleteBookWorkflowJobHandler, EnableTracing(), MaintenanceAware()))
 	r.Handle("/queue/workflows/{permJobID}/infos", Scope(sdk.AuthConsumerScopeRunExecution), r.GET(api.getWorkflowJobHandler, EnableTracing(), MaintenanceAware()))
 	r.Handle("/queue/workflows/{permJobID}/vulnerability", Scope(sdk.AuthConsumerScopeRunExecution), r.POSTEXECUTE(api.postVulnerabilityReportHandler, EnableTracing(), MaintenanceAware()))
-	r.Handle("/queue/workflows/{permJobID}/spawn/infos", Scope(sdk.AuthConsumerScopeRunExecution), r.POST(r.Asynchronous(api.postSpawnInfosWorkflowJobHandler, 1), EnableTracing(), MaintenanceAware()))
+	r.Handle("/queue/workflows/{permJobID}/spawn/infos", Scope(sdk.AuthConsumerScopeRunExecution), r.POST(api.postSpawnInfosWorkflowJobHandler, EnableTracing(), MaintenanceAware()))
 	r.Handle("/queue/workflows/{permJobID}/result", Scope(sdk.AuthConsumerScopeRunExecution), r.POSTEXECUTE(api.postWorkflowJobResultHandler, EnableTracing(), MaintenanceAware()))
 	r.Handle("/queue/workflows/{permJobID}/log", Scope(sdk.AuthConsumerScopeRunExecution), r.POSTEXECUTE(api.postWorkflowJobLogsHandler, MaintenanceAware()))
 	r.Handle("/queue/workflows/log/service", Scope(sdk.AuthConsumerScopeRunExecution), r.POSTEXECUTE(r.Asynchronous(api.postWorkflowJobServiceLogsHandler, 1), MaintenanceAware()))

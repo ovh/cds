@@ -589,7 +589,7 @@ queueRun:
 		}
 
 		//AddSpawnInfosNodeJobRun
-		err := workflow.AddSpawnInfosNodeJobRun(db, j.ID, []sdk.SpawnInfo{
+		err := workflow.AddSpawnInfosNodeJobRun(db, j.WorkflowNodeRunID, j.ID, []sdk.SpawnInfo{
 			{
 				APITime:    time.Now(),
 				RemoteTime: time.Now(),
