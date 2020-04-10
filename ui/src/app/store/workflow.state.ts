@@ -1124,12 +1124,6 @@ export class WorkflowState {
     @Action(actionWorkflow.GetWorkflowRun)
     getWorkflowRun(ctx: StateContext<WorkflowStateModel>, action: actionWorkflow.GetWorkflowRun) {
         const state = ctx.getState();
-        if (state.workflowRun &&
-            action.payload.num.toString() === state.workflowRun.num.toString() &&
-            action.payload.workflowName === state.workflow.name &&
-            action.payload.projectKey === state.projectKey) {
-            return;
-        }
         ctx.setState({
             ...state,
             loadingWorkflowRun: true,
