@@ -190,6 +190,7 @@ export class WorkflowWNodeComponent implements OnInit {
             case 'logs':
                 this._router.navigate(['node', this.currentNodeRun.id], {
                     relativeTo: this._activatedRoute,
+                    queryParams: { name: this.node.name }
                 });
                 break;
         }
