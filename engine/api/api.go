@@ -711,6 +711,10 @@ func (a *API) Serve(ctx context.Context) error {
 		return migrate.FixEmptyUUIDHooks(ctx, a.DBConnectionFactory.GetDBMap(), a.Cache)
 	}})
 
+	migrate.Add(ctx, sdk.Migration{Name: "RefactorApplicationCrypto", Release: "0.44.0", Blocker: true, Automatic: false, ExecFunc: func(ctx context.Context) error {
+		return migrate.RefactorApplicationCrypto(ctx, a.DBConnectionFactory.GetDBMap())
+	}})
+
 	isFreshInstall, errF := version.IsFreshInstall(a.mustDB())
 	if errF != nil {
 		return sdk.WrapError(errF, "Unable to check if it's a fresh installation of CDS")
