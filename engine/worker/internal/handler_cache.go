@@ -22,16 +22,14 @@ import (
 
 func cachePushHandler(ctx context.Context, wk *CurrentWorker) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		vars := mux.Vars(r)
-		// Get body
-		data, errRead := ioutil.ReadAll(r.Body)
-		if errRead != nil {
-			errRead = sdk.Error{
-				Message: "worker cache push > Cannot read body : " + errRead.Error(),
+		data, err := ioutil.ReadAll(r.Body)
+		if err != nil {
+			err = sdk.Error{
+				Message: "worker cache push > Cannot read body : " + err.Error(),
 				Status:  http.StatusInternalServerError,
 			}
-			log.Error(ctx, "%v", errRead)
-			writeError(w, r, errRead)
+			log.Error(ctx, "%v", err)
+			writeError(w, r, err)
 			return
 		}
 
@@ -104,18 +102,18 @@ func cachePushHandler(ctx context.Context, wk *CurrentWorker) http.HandlerFunc {
 		params := wk.currentJob.wJob.Parameters
 		projectKey := sdk.ParameterValue(params, "cds.project")
 		if projectKey == "" {
-			errP := sdk.Error{
+			err := sdk.Error{
 				Message: "worker cache push > Cannot find project",
 				Status:  http.StatusInternalServerError,
 			}
-			log.Error(ctx, "%v", errP)
-			writeError(w, r, errP)
+			log.Error(ctx, "%v", err)
+			writeError(w, r, err)
 			return
 		}
 
 		var errPush error
 		for i := 0; i < 10; i++ {
-			if errPush = wk.client.WorkflowCachePush(projectKey, sdk.DefaultIfEmptyStorage(c.IntegrationName), vars["ref"], tarF, int(tarInfo.Size())); errPush == nil {
+			if errPush = wk.client.WorkflowCachePush(projectKey, sdk.DefaultIfEmptyStorage(c.IntegrationName), c.Tag, tarF, int(tarInfo.Size())); errPush == nil {
 				return
 			}
 			time.Sleep(3 * time.Second)
@@ -132,23 +130,23 @@ func cachePushHandler(ctx context.Context, wk *CurrentWorker) http.HandlerFunc {
 }
 
 func cachePullHandler(ctx context.Context, wk *CurrentWorker) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		vars := mux.Vars(r)
-		path := r.FormValue("path")
-		integrationName := sdk.DefaultIfEmptyStorage(r.FormValue("integration"))
+	return func(w http.ResponseWriter, req *http.Request) {
+		vars := mux.Vars(req)
+		path := req.FormValue("path")
+		integrationName := sdk.DefaultIfEmptyStorage(req.FormValue("integration"))
 		params := wk.currentJob.wJob.Parameters
 		projectKey := sdk.ParameterValue(params, "cds.project")
-		bts, err := wk.client.WorkflowCachePull(projectKey, integrationName, vars["ref"])
+		r, err := wk.client.WorkflowCachePull(projectKey, integrationName, vars["ref"])
 		if err != nil {
 			err = sdk.Error{
 				Message: "worker cache pull > Cannot pull cache: " + err.Error(),
 				Status:  http.StatusNotFound,
 			}
-			writeError(w, r, err)
+			writeError(w, req, err)
 			return
 		}
 
-		tr := tar.NewReader(bts)
+		tr := tar.NewReader(r)
 		for {
 			header, errH := tr.Next()
 			if errH == io.EOF {
