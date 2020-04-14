@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output, ViewChild } from '@angular/core';
+import { Store } from '@ngxs/store';
 import { ModalTemplate, SuiActiveModal, SuiModalService, TemplateModalConfig } from '@richardlt/ng2-semantic-ui';
 import { Application } from 'app/model/application.model';
 import { Environment } from 'app/model/environment.model';
@@ -18,6 +19,7 @@ import { EnvironmentService } from 'app/service/environment/environment.service'
 import { PipelineService } from 'app/service/pipeline/pipeline.service';
 import { WorkflowNodeAddWizardComponent } from 'app/shared/workflow/wizard/node-add/node.wizard.component';
 import { WorkflowWizardOutgoingHookComponent } from 'app/shared/workflow/wizard/outgoinghook/wizard.outgoinghook.component';
+import { WorkflowState } from 'app/store/workflow.state';
 import cloneDeep from 'lodash-es/cloneDeep';
 import { forkJoin, Observable } from 'rxjs';
 
@@ -42,14 +44,13 @@ export class WorkflowTriggerComponent {
     @Input() project: Project;
     @Input() loading: boolean;
     @Input() destination: string;
-    @Input() editMode: boolean;
 
     destNode: WNode;
     currentSection = 'pipeline';
     selectedType: string;
     isParent: boolean;
 
-    constructor(private _modalService: SuiModalService, private _pipService: PipelineService,
+    constructor(private _modalService: SuiModalService, private _pipService: PipelineService, private _store: Store,
                 private _envService: EnvironmentService, private _appService: ApplicationService) { }
 
     show(t: string, isP: boolean): void {
@@ -73,7 +74,7 @@ export class WorkflowTriggerComponent {
     }
 
     addOutgoingHook(): void {
-        this.destNode = this.worklflowAddOutgoingHook.hook;
+        this.destNode = this.worklflowAddOutgoingHook.outgoingHook;
         this.saveTrigger();
     }
 
@@ -84,8 +85,9 @@ export class WorkflowTriggerComponent {
         c.variable = 'cds.status';
         c.value = PipelineStatus.SUCCESS;
         c.operator = 'eq';
+        let editMode = this._store.selectSnapshot(WorkflowState).editMode
         this.destNode.context.conditions.plain.push(c);
-        if (this.editMode) {
+        if (editMode) {
             let allNodes = Workflow.getAllNodes(this.workflow);
             this.destNode.ref = new Date().getTime().toString();
 
@@ -111,7 +113,7 @@ export class WorkflowTriggerComponent {
 
         if (this.source && !this.isParent) {
             let sourceNode: WNode;
-            if (!this.editMode) {
+            if (!editMode) {
                 sourceNode = Workflow.getNodeByID(this.source.id, clonedWorkflow);
             } else {
                 sourceNode = Workflow.getNodeByRef(this.source.ref, clonedWorkflow);
@@ -136,7 +138,7 @@ export class WorkflowTriggerComponent {
         } else {
             return
         }
-        if (this.editMode) {
+        if (editMode) {
             forkJoin([
                 this.getApplication(clonedWorkflow),
                 this.getPipeline(clonedWorkflow),

@@ -372,6 +372,8 @@ type WorkflowNodeJobRun struct {
 	IntegrationPluginBinaries []GRPCPluginBinary `json:"integration_plugin_binaries,omitempty"`
 	Header                    WorkflowRunHeaders `json:"header,omitempty"`
 	ContainsService           bool               `json:"contains_service,omitempty"`
+	HatcheryName              string             `json:"hatchery_name,omitempty"`
+	WorkerName                string             `json:"worker_name,omitempty"`
 }
 
 // WorkflowNodeJobRunSummary is a light representation of WorkflowNodeJobRun for CDS event
@@ -384,6 +386,9 @@ type WorkflowNodeJobRunSummary struct {
 	Done              int64              `json:"done,omitempty"`
 	Job               ExecutedJobSummary `json:"job_summary,omitempty"`
 	SpawnInfos        []SpawnInfo        `json:"spawninfos"`
+	HatcheryName      string             `json:"hatchery_name,omitempty"`
+	WorkerName        string             `json:"worker_name,omitempty"`
+	WorkerModelName   string             `json:"worker_model_name,omitempty"`
 }
 
 // ToSummary transforms a WorkflowNodeJobRun into a WorkflowNodeJobRunSummary

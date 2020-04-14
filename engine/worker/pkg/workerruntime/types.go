@@ -31,9 +31,9 @@ type FilePath struct {
 }
 
 type KeyResponse struct {
-	PKey    string `json:"pkey"`
-	Type    string `json:"type"`
-	Content []byte `json:"-"`
+	PKey    string      `json:"pkey"`
+	Type    sdk.KeyType `json:"type"`
+	Content []byte      `json:"-"`
 }
 
 type TmplPath struct {
@@ -63,7 +63,7 @@ type Runtime interface {
 	Name() string
 	Register(ctx context.Context) error
 	Take(ctx context.Context, job sdk.WorkflowNodeJobRun) error
-	ProcessJob(job sdk.WorkflowNodeJobRunData) (sdk.Result, error)
+	ProcessJob(job sdk.WorkflowNodeJobRunData) sdk.Result
 	SendLog(ctx context.Context, level Level, format string)
 	InstallKey(key sdk.Variable) (*KeyResponse, error)
 	InstallKeyTo(key sdk.Variable, destinationPath string) (*KeyResponse, error)

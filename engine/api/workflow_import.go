@@ -297,7 +297,9 @@ func (api *API) postWorkflowPushHandler() service.Handler {
 			project.LoadOptions.WithEnvironments,
 			project.LoadOptions.WithPipelines,
 			project.LoadOptions.WithApplicationWithDeploymentStrategies,
-			project.LoadOptions.WithIntegrations)
+			project.LoadOptions.WithIntegrations,
+			project.LoadOptions.WithKeys,
+		)
 		if err != nil {
 			return sdk.WrapError(err, "cannot load project %s", key)
 		}
@@ -309,7 +311,13 @@ func (api *API) postWorkflowPushHandler() service.Handler {
 
 		consumer := getAPIConsumer(ctx)
 
-		wti, err := workflowtemplate.CheckAndExecuteTemplate(ctx, api.mustDB(), *consumer, *proj, &data)
+		mods := []workflowtemplate.TemplateRequestModifierFunc{
+			workflowtemplate.TemplateRequestModifiers.DefaultKeys(*proj),
+		}
+		if pushOptions != nil && pushOptions.FromRepository != "" {
+			mods = append(mods, workflowtemplate.TemplateRequestModifiers.DefaultNameAndRepositories(ctx, api.mustDB(), api.Cache, *proj, pushOptions.FromRepository))
+		}
+		wti, err := workflowtemplate.CheckAndExecuteTemplate(ctx, api.mustDB(), *consumer, *proj, &data, mods...)
 		if err != nil {
 			return err
 		}

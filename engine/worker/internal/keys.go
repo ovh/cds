@@ -19,7 +19,7 @@ import (
 
 func (wk *CurrentWorker) InstallKey(key sdk.Variable) (*workerruntime.KeyResponse, error) {
 	switch key.Type {
-	case sdk.KeyTypeSSH:
+	case string(sdk.KeyTypeSSH):
 		keysDirectory, err := workerruntime.KeysDirectory(wk.currentJob.context)
 		if err != nil {
 			return nil, sdk.WithStack(err)
@@ -52,7 +52,7 @@ func (wk *CurrentWorker) InstallKey(key sdk.Variable) (*workerruntime.KeyRespons
 			Content: []byte(key.Value),
 		}, nil
 
-	case sdk.KeyTypePGP:
+	case string(sdk.KeyTypePGP):
 		gpg2Found := false
 
 		if _, err := exec.LookPath("gpg2"); err == nil {
@@ -66,7 +66,6 @@ func (wk *CurrentWorker) InstallKey(key sdk.Variable) (*workerruntime.KeyRespons
 					Status:  http.StatusBadRequest,
 				}
 				return nil, sdk.WithStack(errBinary)
-
 			}
 		}
 		content := []byte(key.Value)
@@ -77,7 +76,6 @@ func (wk *CurrentWorker) InstallKey(key sdk.Variable) (*workerruntime.KeyRespons
 				Status:  http.StatusInternalServerError,
 			}
 			return nil, sdk.WithStack(errFile)
-
 		}
 		defer func() {
 			_ = os.Remove(tmpfile.Name())
@@ -89,7 +87,6 @@ func (wk *CurrentWorker) InstallKey(key sdk.Variable) (*workerruntime.KeyRespons
 				Status:  http.StatusInternalServerError,
 			}
 			return nil, sdk.WithStack(errW)
-
 		}
 
 		if err := tmpfile.Close(); err != nil {
@@ -98,7 +95,6 @@ func (wk *CurrentWorker) InstallKey(key sdk.Variable) (*workerruntime.KeyRespons
 				Status:  http.StatusInternalServerError,
 			}
 			return nil, sdk.WithStack(errC)
-
 		}
 
 		gpgBin := "gpg"
@@ -114,7 +110,6 @@ func (wk *CurrentWorker) InstallKey(key sdk.Variable) (*workerruntime.KeyRespons
 				Status:  http.StatusInternalServerError,
 			}
 			return nil, sdk.WithStack(errR)
-
 		}
 		return &workerruntime.KeyResponse{
 			Type:    sdk.KeyTypePGP,
@@ -128,13 +123,12 @@ func (wk *CurrentWorker) InstallKey(key sdk.Variable) (*workerruntime.KeyRespons
 			Status:  http.StatusNotImplemented,
 		}
 		return nil, sdk.WithStack(err)
-
 	}
 }
 
 func (wk *CurrentWorker) InstallKeyTo(key sdk.Variable, destinationPath string) (*workerruntime.KeyResponse, error) {
 	switch key.Type {
-	case sdk.KeyTypeSSH:
+	case string(sdk.KeyTypeSSH):
 		var absPath string
 		if x, ok := wk.BaseDir().(*afero.BasePathFs); ok {
 			absPath, _ = x.RealPath(destinationPath)
@@ -164,7 +158,7 @@ func (wk *CurrentWorker) InstallKeyTo(key sdk.Variable, destinationPath string) 
 			Content: []byte(key.Value),
 		}, nil
 
-	case sdk.KeyTypePGP:
+	case string(sdk.KeyTypePGP):
 		gpg2Found := false
 
 		if _, err := exec.LookPath("gpg2"); err == nil {
@@ -178,7 +172,6 @@ func (wk *CurrentWorker) InstallKeyTo(key sdk.Variable, destinationPath string) 
 					Status:  http.StatusBadRequest,
 				}
 				return nil, sdk.WithStack(errBinary)
-
 			}
 		}
 		content := []byte(key.Value)
@@ -189,7 +182,6 @@ func (wk *CurrentWorker) InstallKeyTo(key sdk.Variable, destinationPath string) 
 				Status:  http.StatusInternalServerError,
 			}
 			return nil, sdk.WithStack(errFile)
-
 		}
 		defer func() {
 			_ = os.Remove(tmpfile.Name())
@@ -201,7 +193,6 @@ func (wk *CurrentWorker) InstallKeyTo(key sdk.Variable, destinationPath string) 
 				Status:  http.StatusInternalServerError,
 			}
 			return nil, sdk.WithStack(errW)
-
 		}
 
 		if err := tmpfile.Close(); err != nil {
@@ -210,7 +201,6 @@ func (wk *CurrentWorker) InstallKeyTo(key sdk.Variable, destinationPath string) 
 				Status:  http.StatusInternalServerError,
 			}
 			return nil, sdk.WithStack(errC)
-
 		}
 
 		gpgBin := "gpg"
@@ -226,7 +216,6 @@ func (wk *CurrentWorker) InstallKeyTo(key sdk.Variable, destinationPath string) 
 				Status:  http.StatusInternalServerError,
 			}
 			return nil, sdk.WithStack(errR)
-
 		}
 		return &workerruntime.KeyResponse{
 			Type:    sdk.KeyTypePGP,
@@ -240,6 +229,5 @@ func (wk *CurrentWorker) InstallKeyTo(key sdk.Variable, destinationPath string) 
 			Status:  http.StatusNotImplemented,
 		}
 		return nil, sdk.WithStack(err)
-
 	}
 }

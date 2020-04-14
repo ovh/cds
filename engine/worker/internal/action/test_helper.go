@@ -71,8 +71,8 @@ func (_ TestWorker) Register(ctx context.Context) error {
 func (_ TestWorker) Take(ctx context.Context, job sdk.WorkflowNodeJobRun) error {
 	return nil
 }
-func (_ TestWorker) ProcessJob(job sdk.WorkflowNodeJobRunData) (sdk.Result, error) {
-	return sdk.Result{}, nil
+func (_ TestWorker) ProcessJob(job sdk.WorkflowNodeJobRunData) sdk.Result {
+	return sdk.Result{}
 }
 func (w TestWorker) SendLog(ctx context.Context, level workerruntime.Level, format string) {
 	w.t.Log("SendLog> [" + string(level) + "] " + format)
@@ -96,7 +96,7 @@ func (w TestWorker) InstallKey(key sdk.Variable) (*workerruntime.KeyResponse, er
 
 	return &workerruntime.KeyResponse{
 		Content: []byte(key.Value),
-		Type:    key.Type,
+		Type:    sdk.KeyType(key.Type),
 		PKey:    installedKeyPath,
 	}, nil
 }
@@ -113,7 +113,7 @@ func (w TestWorker) InstallKeyTo(key sdk.Variable, destinationPath string) (*wor
 
 	return &workerruntime.KeyResponse{
 		Content: []byte(key.Value),
-		Type:    key.Type,
+		Type:    sdk.KeyType(key.Type),
 		PKey:    installedKeyPath,
 	}, nil
 }

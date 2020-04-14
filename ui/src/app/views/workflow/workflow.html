@@ -19,7 +19,7 @@
                 <ng-container
                         *ngIf="workflow && (workflow.from_repository || (workflow.as_code_events && workflow.as_code_events.length > 0))">
                     <app-ascode-event [events]="workflow.as_code_events" [repo]="workflow.from_repository"
-                                      [appName]="workflow.applications[workflow.workflow_data.node.context.application_id].name"
+                                      [appName]="workflow.applications[workflow.workflow_data.node.context.application_id]?.name"
                                       [project]="project"></app-ascode-event>
                 </ng-container>
                 <ng-container
@@ -97,12 +97,10 @@
                 </app-workflow-sidebar-hook>
             </ng-container>
             <ng-container *ngIf="sidebarMode === sidebarModes.RUNS">
-                <app-workflow-sidebar-run-list [project]="project" [workflow]="workflow">
-                </app-workflow-sidebar-run-list>
+                <app-workflow-sidebar-run-list [workflow]="workflow"></app-workflow-sidebar-run-list>
             </ng-container>
             <ng-container *ngIf="sidebarMode === sidebarModes.RUN_HOOK" >
-                <app-workflow-sidebar-run-hook [project]="project" [wname]="workflow.name">
-                </app-workflow-sidebar-run-hook>
+                <app-workflow-sidebar-run-hook [project]="project" [wname]="workflow.name"></app-workflow-sidebar-run-hook>
             </ng-container>
             <ng-container *ngIf="sidebarMode === sidebarModes.RUN_NODE" >
                 <app-workflow-sidebar-run-node></app-workflow-sidebar-run-node>

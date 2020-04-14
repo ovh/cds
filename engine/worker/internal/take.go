@@ -82,8 +82,7 @@ func (w *CurrentWorker) Take(ctx context.Context, job sdk.WorkflowNodeJobRun) er
 	}(cancel, job.ID, tick)
 
 	//Run !
-	res, err := w.ProcessJob(*info)
-	// We keep the err for later usage
+	res := w.ProcessJob(*info)
 	tick.Stop()
 
 	res.RemoteTime = time.Now()
@@ -91,6 +90,17 @@ func (w *CurrentWorker) Take(ctx context.Context, job sdk.WorkflowNodeJobRun) er
 
 	//Wait until the logchannel is empty
 	res.BuildID = job.ID
+
+	// Send the reason as a spawninfo
+	if res.Status != sdk.StatusSuccess && res.Reason != "" {
+		infos := []sdk.SpawnInfo{{
+			RemoteTime: time.Now(),
+			Message:    sdk.SpawnMsg{ID: sdk.MsgWorkflowError.ID, Args: []interface{}{res.Reason}},
+		}}
+		if err := w.Client().QueueJobSendSpawnInfo(ctx, job.ID, infos); err != nil {
+			log.Error(ctx, "processJob> Unable to send spawn info: %v", err)
+		}
+	}
 
 	var lasterr error
 	for try := 1; try <= 10; try++ {

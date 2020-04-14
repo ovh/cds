@@ -136,10 +136,15 @@ func resetEncryptedData(db gorp.SqlExecutor, i interface{}) error {
 	}
 
 	for _, f := range mapping.EncryptedFields {
-		// Reset the field to the zero value
+		// Reset the field to the zero value of the placeholder
 		field := val.FieldByName(f.Name)
-		placeholder := reflect.ValueOf(sdk.PasswordPlaceholder)
-		field.Set(placeholder)
+		if field.Kind() == reflect.String {
+			placeholder := reflect.ValueOf(sdk.PasswordPlaceholder)
+			field.Set(placeholder)
+		} else {
+			placeholder := reflect.Zero(field.Type())
+			field.Set(placeholder)
+		}
 	}
 	return nil
 }
@@ -171,7 +176,6 @@ func getEncryptedData(db gorp.SqlExecutor, i interface{}) error {
 
 	var encryptedColumnsSlice = make([]string, len(mapping.EncryptedFields))
 	var fieldsValue = make(map[int]*reflect.Value, len(mapping.EncryptedFields))
-	var encryptedFieldsSlice = make([]interface{}, len(mapping.EncryptedFields))
 	var encryptedContents = make([]interface{}, len(mapping.EncryptedFields))
 	var extrasFieldsNames = make(map[int][]string, len(mapping.EncryptedFields))
 
@@ -190,9 +194,6 @@ func getEncryptedData(db gorp.SqlExecutor, i interface{}) error {
 
 		field := val.FieldByName(f.Name)
 		fieldsValue[idx] = &field
-		fi := field.Interface()
-
-		encryptedFieldsSlice[idx] = &fi
 		extrasFieldsNames[idx] = f.Extras
 	}
 
@@ -211,10 +212,13 @@ func getEncryptedData(db gorp.SqlExecutor, i interface{}) error {
 		}
 
 		var encryptedContent = encryptedContent.(*[]byte)
-		if err := Decrypt(*encryptedContent, encryptedFieldsSlice[idx], extras); err != nil {
+		var targetField = val.FieldByName(mapping.EncryptedFields[idx].Name)
+		var targetHolder = reflect.New(reflect.TypeOf(targetField.Interface())).Interface()
+
+		if err := Decrypt(*encryptedContent, targetHolder, extras); err != nil {
 			return err
 		}
-		fieldsValue[idx].Set(reflect.ValueOf(*encryptedFieldsSlice[idx].(*interface{})))
+		fieldsValue[idx].Set(reflect.ValueOf(targetHolder).Elem())
 	}
 
 	return nil

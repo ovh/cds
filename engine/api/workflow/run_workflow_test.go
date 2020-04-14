@@ -589,7 +589,7 @@ queueRun:
 		}
 
 		//AddSpawnInfosNodeJobRun
-		err := workflow.AddSpawnInfosNodeJobRun(db, j.ID, []sdk.SpawnInfo{
+		err := workflow.AddSpawnInfosNodeJobRun(db, j.WorkflowNodeRunID, j.ID, []sdk.SpawnInfo{
 			{
 				APITime:    time.Now(),
 				RemoteTime: time.Now(),
@@ -605,7 +605,8 @@ queueRun:
 		}
 
 		//TakeNodeJobRun
-		takenJob, _, _ := workflow.TakeNodeJobRun(context.TODO(), db, cache, *proj, j.ID, "model", "worker", "1", []sdk.SpawnInfo{
+		takenJobID := j.ID
+		takenJob, _, _ := workflow.TakeNodeJobRun(context.TODO(), db, cache, *proj, takenJobID, "model", "worker", "1", []sdk.SpawnInfo{
 			{
 				APITime:    time.Now(),
 				RemoteTime: time.Now(),
@@ -613,7 +614,7 @@ queueRun:
 					ID: sdk.MsgSpawnInfoJobTaken.ID,
 				},
 			},
-		})
+		}, "hatchery_name")
 
 		//Load workflow node run
 		nodeRun, err := workflow.LoadNodeRunByID(db, takenJob.WorkflowNodeRunID, workflow.LoadRunOptions{})
@@ -647,12 +648,42 @@ queueRun:
 			t.FailNow()
 		}
 
+		j, err = workflow.LoadNodeJobRun(context.TODO(), db, cache, j.ID)
+		require.NoError(t, err)
+		assert.Equal(t, "hatchery_name", j.HatcheryName)
+		assert.NotEmpty(t, j.WorkerName)
+		assert.NotEmpty(t, j.Model)
+
 		//TestUpdateNodeJobRunStatus
 		_, err = workflow.UpdateNodeJobRunStatus(context.TODO(), db, cache, *proj, j, sdk.StatusSuccess)
 		assert.NoError(t, err)
 		if t.Failed() {
 			tx.Rollback()
 			t.FailNow()
+		}
+
+		workflowRun, err = workflow.LoadRunByID(db, wr.ID, workflow.LoadRunOptions{})
+		require.NoError(t, err)
+		var jobRunFound bool
+	checkJobRun:
+		for _, noderuns := range workflowRun.WorkflowNodeRuns {
+			for _, noderun := range noderuns {
+				for _, stage := range noderun.Stages {
+					for _, jobrun := range stage.RunJobs {
+						t.Logf("checking job %d with %d", jobrun.ID, takenJobID)
+						if jobrun.ID == j.ID {
+							assert.Equal(t, "hatchery_name", jobrun.HatcheryName)
+							assert.NotEmpty(t, jobrun.WorkerName)
+							assert.NotEmpty(t, jobrun.Model)
+							jobRunFound = true
+							break checkJobRun
+						}
+					}
+				}
+			}
+		}
+		if !jobRunFound {
+			t.Fatalf("unable to retrieve job run in the workflow run")
 		}
 
 		logs, err := workflow.LoadLogs(db, takenJob.ID)

@@ -38,6 +38,24 @@ To generate or update multiple workflows from a same template in one time you ca
 ```sh
 cdsctl template bulk
 ```
+
+You can also use a file to list all test instances that you want to generate and the values for all the required parameters.
+```yaml
+template_path: shared.infra/example-simple                                                          
+instances:                                                                                          
+- workflow_path: DEMO/demo1                                                                         
+  parameters:                                                                                       
+  - withDeploy=true                                                                                 
+  - deployWhen=success                                                                              
+- workflow_path: DEMO/demo2                                                                         
+  parameters:                                                                                       
+  - withDeploy=false                                                                                
+  - data=["one", "two"] 
+```
+```sh
+cdsctl template bulk -f instances.yml
+```
+
 <asciinema-player src="/images/workflow_template_bulk.cast" cols="100" rows="25" autoplay="true" loop="true"></asciinema-player>
 
 ![Bulk](/images/workflow_template_bulk_ui.gif)
@@ -55,3 +73,23 @@ cdsctl template pull shared.infra/my-template --output-dir ./my-template
 ## Delete/Change template group
 When removing a template, all info about the template and its instances are removed but all generated stuff will not be deleted.
 With the CDS UI you can change the template name or group, this will not affect template instances or generated workflow but no group members will be able to re-apply the template anymore. 
+
+## Template and workflow ascode
+You can both use a template and a workflow ascode. When using a template your repository will only contains one yaml file with the name of the template that you want to use and the values for all the required template parameters.
+You can create this file manually or directly with the CDS command line.
+
+```yaml                                                       
+name: demo
+from: shared.infra/example-with-repository@1
+parameters:
+  deployWhen: manual
+  repo: gitlab/richardlt/demo
+  ssh_key_name: proj-ssh-key
+  withDeploy: "true"
+```
+
+<asciinema-player src="/images/workflow_template_apply_ascode.cast" cols="100" rows="25" autoplay="true" loop="true"></asciinema-player>
+
+You can ask for a specific revision of the template or remove the version number to always get the its latest version. 
+This means that you can use different template versions for different branches of your repository.
+Also you can change the template reference to use another template on a specific branch.

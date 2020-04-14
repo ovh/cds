@@ -121,29 +121,3 @@ func DeleteAllParameterFromPipeline(db gorp.SqlExecutor, pipelineID int64) error
 	_, err := db.Exec(query, pipelineID)
 	return sdk.WrapError(err, "Unable to delete all parameters")
 }
-
-// CountInParamValue counts how many time a pattern is in parameter value for the given project
-func CountInParamValue(db gorp.SqlExecutor, key string, value string) ([]string, error) {
-	query := `
-		SELECT DISTINCT pipeline.name
-		FROM pipeline_parameter
-		JOIN pipeline ON pipeline.id = pipeline_parameter.pipeline_id
-		JOIN project ON project.id = pipeline.project_id
-		WHERE value like $2 AND project.projectkey = $1;
-	`
-	rows, err := db.Query(query, key, fmt.Sprintf("%%%s%%", value))
-	if err != nil {
-		return nil, sdk.WrapError(err, "Unable to count usage")
-	}
-	defer rows.Close()
-
-	var results []string
-	for rows.Next() {
-		var pipName string
-		if err := rows.Scan(&pipName); err != nil {
-			return nil, sdk.WrapError(err, "Unable to scan")
-		}
-		results = append(results, pipName)
-	}
-	return results, nil
-}

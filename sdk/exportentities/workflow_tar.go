@@ -66,10 +66,10 @@ func (w WorkflowComponents) ToRaw() (WorkflowComponentsRaw, error) {
 }
 
 type WorkflowComponentsRaw struct {
-	Workflow     string
-	Applications []string
-	Pipelines    []string
-	Environments []string
+	Workflow     string   `json:"workflow,omitempty"`
+	Applications []string `json:"applications,omitempty"`
+	Pipelines    []string `json:"pipelines,omitempty"`
+	Environments []string `json:"environments,omitempty"`
 }
 
 // TarWorkflowComponents returns a tar containing all files for a workflow.

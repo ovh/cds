@@ -190,7 +190,7 @@ func (api *API) postPipelineRollbackHandler() service.Handler {
 			}
 		}(&msgList)
 
-		if err := pipeline.ImportUpdate(ctx, tx, *proj, audit.Pipeline, msgChan, u); err != nil {
+		if err := pipeline.ImportUpdate(ctx, tx, *proj, audit.Pipeline, msgChan); err != nil {
 			return sdk.WrapError(err, "cannot import pipeline")
 		}
 

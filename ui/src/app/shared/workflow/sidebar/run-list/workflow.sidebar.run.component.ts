@@ -16,6 +16,7 @@ import { WorkflowRun, WorkflowRunTags } from 'app/model/workflow.run.model';
 import { WorkflowRunService } from 'app/service/workflow/run/workflow.run.service';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { DurationService } from 'app/shared/duration/duration.service';
+import { ProjectState } from 'app/store/project.state';
 import { CleanWorkflowRun, GetWorkflowRuns } from 'app/store/workflow.action';
 import { WorkflowState } from 'app/store/workflow.state';
 import { Observable, Subscription } from 'rxjs';
@@ -31,15 +32,15 @@ import { finalize, first } from 'rxjs/operators';
 export class WorkflowSidebarRunListComponent implements OnDestroy {
     @ViewChild('tagsList', {static: false}) tagsList: ElementRef;
 
-    @Input() project: Project;
-
     workflowRuns = new Array<WorkflowRun>();
     _workflow: Workflow;
     @Input('workflow')
     set workflow(data: Workflow) {
         if (data) {
             if (!this._workflow || this._workflow.id !== data.id) {
+                this.filteredTags = {};
                 this._workflow = data;
+                this.deleteInterval();
                 this.initSelectableTags();
             }
             this._workflow = data;
@@ -54,6 +55,8 @@ export class WorkflowSidebarRunListComponent implements OnDestroy {
     loadingSubs: Subscription;
     @Select(WorkflowState.getRunSidebarFilters()) filters$: Observable<{}>;
     filtersSubs: Subscription;
+
+    project: Project;
 
     // search part
     selectedTags: Array<string>;
@@ -77,6 +80,7 @@ export class WorkflowSidebarRunListComponent implements OnDestroy {
         private _store: Store,
         private _cd: ChangeDetectorRef
     ) {
+        this.project = this._store.selectSnapshot(ProjectState.projectSnapshot);
         this._routerActivated.params.subscribe(p => {
             if (p['number']) {
                 this.currentWorkflowRunNumber = p['number'];
@@ -88,7 +92,7 @@ export class WorkflowSidebarRunListComponent implements OnDestroy {
                 return;
             }
             this.workflowRuns = runs;
-            if (!this.durationIntervalID && this.workflowRuns && this.workflow && this.workflowRuns.length > 0) {
+            if (this.workflowRuns && this.workflow && this.workflowRuns.length > 0) {
                 this.refreshRun();
             }
             this._cd.markForCheck();

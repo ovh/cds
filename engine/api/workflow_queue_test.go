@@ -51,6 +51,7 @@ type testRunWorkflowCtx struct {
 	workerToken   string
 	hatchery      *sdk.Service
 	hatcheryToken string
+	model         *sdk.Model
 }
 
 func testRunWorkflow(t *testing.T, api *API, router *Router) testRunWorkflowCtx {
@@ -329,6 +330,7 @@ func testRegisterWorker(t *testing.T, api *API, router *Router, ctx *testRunWork
 	w, workerJWT := RegisterWorker(t, api, g.ID, model.Name)
 	ctx.workerToken = workerJWT
 	ctx.worker = w
+	ctx.model = model
 }
 
 func testRegisterHatchery(t *testing.T, api *API, router *Router, ctx *testRunWorkflowCtx) {
@@ -451,7 +453,10 @@ func Test_postTakeWorkflowJobHandler(t *testing.T) {
 
 	run, err := workflow.LoadNodeJobRun(context.TODO(), api.mustDB(), api.Cache, ctx.job.ID)
 	require.NoError(t, err)
-	require.Equal(t, "Building", run.Status)
+	assert.Equal(t, "Building", run.Status)
+	assert.Equal(t, ctx.model.Name, run.Model)
+	assert.Equal(t, ctx.worker.Name, run.WorkerName)
+	assert.NotEmpty(t, run.HatcheryName)
 }
 
 func Test_postBookWorkflowJobHandler(t *testing.T) {
@@ -586,7 +591,7 @@ func Test_postWorkflowJobTestsResultsHandler(t *testing.T) {
 	req := assets.NewJWTAuthentifiedRequest(t, ctx.hatcheryToken, "POST", uri, info)
 	rec := httptest.NewRecorder()
 	router.Mux.ServeHTTP(rec, req)
-	require.Equal(t, 202, rec.Code)
+	require.Equal(t, 204, rec.Code)
 
 	//spawn
 	uri = router.GetRoute("POST", api.postTakeWorkflowJobHandler, map[string]string{

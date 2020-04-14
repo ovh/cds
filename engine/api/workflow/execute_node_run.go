@@ -36,6 +36,7 @@ func syncJobInNodeRun(n *sdk.WorkflowNodeRun, j *sdk.WorkflowNodeJobRun, stageIn
 			rj.Job = j.Job
 			rj.Header = j.Header
 			rj.Parameters = j.Parameters
+			rj.SpawnInfos = j.SpawnInfos
 		}
 	}
 }
@@ -43,8 +44,6 @@ func syncJobInNodeRun(n *sdk.WorkflowNodeRun, j *sdk.WorkflowNodeJobRun, stageIn
 func syncTakeJobInNodeRun(ctx context.Context, db gorp.SqlExecutor, n *sdk.WorkflowNodeRun, j *sdk.WorkflowNodeJobRun, stageIndex int) (*ProcessorReport, error) {
 	_, end := observability.Span(ctx, "workflow.syncTakeJobInNodeRun")
 	defer end()
-
-	log.Debug("workflow.syncTakeJobInNodeRun> job parameters= %+v", j.Parameters)
 
 	report := new(ProcessorReport)
 
@@ -70,6 +69,8 @@ func syncTakeJobInNodeRun(ctx context.Context, db gorp.SqlExecutor, n *sdk.Workf
 			rj.Model = j.Model
 			rj.ModelType = j.ModelType
 			rj.ContainsService = j.ContainsService
+			rj.WorkerName = j.WorkerName
+			rj.HatcheryName = j.HatcheryName
 			rj.Job = j.Job
 			rj.Header = j.Header
 			rj.Parameters = j.Parameters
@@ -535,7 +536,7 @@ jobLoop:
 		}
 		next()
 
-		if err := AddSpawnInfosNodeJobRun(db, wjob.ID, PrepareSpawnInfos(wjob.SpawnInfos)); err != nil {
+		if err := AddSpawnInfosNodeJobRun(db, wjob.WorkflowNodeRunID, wjob.ID, PrepareSpawnInfos(wjob.SpawnInfos)); err != nil {
 			return nil, sdk.WrapError(err, "cannot save spawn info job %d", wjob.ID)
 		}
 
@@ -635,6 +636,9 @@ func syncStage(ctx context.Context, db gorp.SqlExecutor, store cache.Store, stag
 				runJob.ModelType = runJobDB.ModelType
 				runJob.ContainsService = runJobDB.ContainsService
 				runJob.Job = runJobDB.Job
+				runJob.Model = runJobDB.Model
+				runJob.WorkerName = runJobDB.WorkerName
+				runJob.HatcheryName = runJobDB.HatcheryName
 			}
 		}
 	}
@@ -929,7 +933,7 @@ func stopWorkflowNodeJobRun(ctx context.Context, dbFunc func() *gorp.DbMap, stor
 			return report
 		}
 
-		if err := AddSpawnInfosNodeJobRun(tx, njr.ID, []sdk.SpawnInfo{stopInfos}); err != nil {
+		if err := AddSpawnInfosNodeJobRun(tx, njr.WorkflowNodeRunID, njr.ID, []sdk.SpawnInfo{stopInfos}); err != nil {
 			chanErr <- sdk.WrapError(err, "Cannot save spawn info job %d", njr.ID)
 			tx.Rollback()
 			wg.Done()

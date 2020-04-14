@@ -38,9 +38,14 @@ func deepFields(iface interface{}) []reflect.StructField {
 
 	for i := 0; i < ift.NumField(); i++ {
 		v := ifv.Field(i)
+		dbTag, hasDBTag := ift.Field(i).Tag.Lookup("db")
+		tagValues := strings.Split(dbTag, ",")
+		if len(tagValues) >= 0 && tagValues[0] == "-" {
+			continue
+		}
 
-		switch v.Kind() {
-		case reflect.Struct:
+		switch {
+		case v.Kind() == reflect.Struct && !hasDBTag:
 			fields = append(fields, deepFields(v.Interface())...)
 		default:
 			fields = append(fields, ift.Field(i))
@@ -67,15 +72,20 @@ func New(target interface{}, name string, autoIncrement bool, keys ...string) Ta
 
 	fields := deepFields(target)
 	for i := 0; i < len(fields); i++ {
-		gmTag, ok := fields[i].Tag.Lookup("gorpmapping")
-		if ok {
+		dbTag, okDBTag := fields[i].Tag.Lookup("db")
+		if !okDBTag {
+			continue
+		}
+
+		tagValues := strings.Split(dbTag, ",")
+		if len(tagValues) == 0 {
+			continue
+		}
+
+		gmTag, okGMTag := fields[i].Tag.Lookup("gorpmapping")
+		if okGMTag {
 			tagValues := strings.Split(gmTag, ",")
 			if len(tagValues) == 0 {
-				continue
-			}
-
-			dbTag, ok := fields[i].Tag.Lookup("db")
-			if !ok {
 				continue
 			}
 			column := strings.SplitN(dbTag, ",", 2)[0]

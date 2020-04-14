@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, NgZone, OnInit, ViewChild } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
@@ -6,7 +6,7 @@ import { IPopup, SuiActiveModal } from '@richardlt/ng2-semantic-ui';
 import { PipelineStatus } from 'app/model/pipeline.model';
 import { Project } from 'app/model/project.model';
 import { WNode, WNodeHook, WNodeJoin, WNodeTrigger, WNodeType, Workflow } from 'app/model/workflow.model';
-import { WorkflowNodeRun, WorkflowRun } from 'app/model/workflow.run.model';
+import { WorkflowNodeRun } from 'app/model/workflow.run.model';
 import { WorkflowCoreService } from 'app/service/workflow/workflow.core.service';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { ToastService } from 'app/shared/toast/ToastService';
@@ -16,6 +16,7 @@ import { WorkflowHookModalComponent } from 'app/shared/workflow/modal/hook-add/h
 import { WorkflowTriggerComponent } from 'app/shared/workflow/modal/node-add/workflow.trigger.component';
 import { WorkflowNodeEditModalComponent } from 'app/shared/workflow/modal/node-edit/node.edit.modal.component';
 import { WorkflowNodeRunParamComponent } from 'app/shared/workflow/node/run/node.run.param.component';
+import { ProjectState } from 'app/store/project.state';
 import {
     AddHookWorkflow,
     AddJoinWorkflow,
@@ -24,9 +25,9 @@ import {
     SelectWorkflowNodeRun,
     UpdateWorkflow
 } from 'app/store/workflow.action';
-import { WorkflowState, WorkflowStateModel } from 'app/store/workflow.state';
+import { WorkflowState } from 'app/store/workflow.state';
 import { Subscription } from 'rxjs';
-import { finalize, tap } from 'rxjs/operators';
+import { finalize, map, tap } from 'rxjs/operators';
 
 @Component({
     selector: 'app-workflow-wnode',
@@ -37,28 +38,24 @@ import { finalize, tap } from 'rxjs/operators';
 @AutoUnsubscribe()
 export class WorkflowWNodeComponent implements OnInit {
 
+    // Data set by workflow graph
     @Input() node: WNode;
     @Input() workflow: Workflow;
-    @Input() project: Project;
 
     @ViewChild('menu', { static: false })
     menu: WorkflowWNodeMenuEditComponent;
     @ViewChild('workflowRunNode', { static: false })
     workflowRunNode: WorkflowNodeRunParamComponent;
 
-    // Selected workflow run
-    workflowRun: WorkflowRun;
-    currentNodeRun: WorkflowNodeRun;
+    project: Project;
+
     warnings = 0;
     loading: boolean;
 
-    editMode = false;
-    readonly = true;
+    hasWorkflowRun: boolean;
 
-    // Subscription
-    sub: Subscription;
-
-    zone = new NgZone({});
+    currentNodeRun: WorkflowNodeRun;
+    nodeRunSub: Subscription;
 
     // Modal
     @ViewChild('workflowDeleteNode', { static: false })
@@ -73,33 +70,34 @@ export class WorkflowWNodeComponent implements OnInit {
     constructor(
         private _activatedRoute: ActivatedRoute,
         private _router: Router,
+        private _routerActivated: ActivatedRoute,
         private _store: Store,
         private _workflowCoreService: WorkflowCoreService,
         private _toast: ToastService,
         private _translate: TranslateService,
         private _cd: ChangeDetectorRef
-    ) { }
+    ) {
+        this.project = this._store.selectSnapshot(ProjectState.projectSnapshot);
+        let paramSnamp = this._routerActivated.snapshot.params;
+        if (paramSnamp['number']) {
+            this.hasWorkflowRun = true;
+        }
+    }
 
     ngOnInit(): void {
-        this.sub = this._store.select(WorkflowState.getCurrent()).subscribe((s: WorkflowStateModel) => {
-            this.readonly = !s.canEdit;
-            this.editMode = s.editMode;
-            this._cd.markForCheck();
-            if (s.workflowRun) {
-                if (this.workflowRun && this.workflowRun.id !== s.workflowRun.id) {
-                    this.currentNodeRun = null;
-                }
-                this.workflowRun = s.workflowRun;
-
-                if (this.workflowRun.nodes && this.workflowRun.nodes[this.node.id] && this.workflowRun.nodes[this.node.id].length > 0) {
-                    this.currentNodeRun = this.workflowRun.nodes[this.node.id][0];
-                }
-                if (this.currentNodeRun && this.currentNodeRun.status === PipelineStatus.SUCCESS) {
-                    this.computeWarnings();
-                }
-            } else {
-                this.workflowRun = null;
+        this.nodeRunSub = this._store.select(WorkflowState.nodeRunByNodeID)
+            .pipe(map(filterFn => filterFn(this.node.id))).subscribe( nodeRun => {
+            if (!nodeRun) {
+                return;
             }
+            if (this.currentNodeRun && this.currentNodeRun.id === nodeRun.id && this.currentNodeRun.status === nodeRun.status) {
+                return;
+            }
+            this.currentNodeRun = nodeRun;
+            if (this.currentNodeRun.status === PipelineStatus.SUCCESS) {
+                this.computeWarnings();
+            }
+            this._cd.markForCheck();
         });
     }
 
@@ -123,7 +121,7 @@ export class WorkflowWNodeComponent implements OnInit {
     dblClickOnNode() {
         switch (this.node.type) {
             case WNodeType.PIPELINE:
-                if (this.workflowRun && this.currentNodeRun) {
+                if (this.hasWorkflowRun && this.currentNodeRun) {
                     this._router.navigate([
                         'node', this.currentNodeRun.id
                     ], {
@@ -140,7 +138,7 @@ export class WorkflowWNodeComponent implements OnInit {
                 }
                 break;
             case WNodeType.OUTGOINGHOOK:
-                if (this.workflowRun
+                if (this.hasWorkflowRun
                     && this.currentNodeRun
                     && this.node.outgoing_hook.config['target_workflow']
                     && this.currentNodeRun.callback) {
@@ -257,22 +255,27 @@ export class WorkflowWNodeComponent implements OnInit {
             hook
         });
 
-        this._store.dispatch(action).pipe(finalize(() => this.loading = false))
-            .subscribe(() => {
-                if (!this.editMode) {
-                    this._toast.success('', this._translate.instant('workflow_updated'));
-                } else {
-                    this._toast.info('', this._translate.instant('workflow_ascode_updated'))
-                }
-                if (modal) {
-                    modal.approve(null);
-                }
-            });
+        let editMode = this._store.selectSnapshot(WorkflowState).editMode;
+        this._store.dispatch(action).pipe(finalize(() => {
+            this.loading = false;
+            this._cd.markForCheck();
+        })).subscribe(() => {
+            if (!editMode) {
+                this._toast.success('', this._translate.instant('workflow_updated'));
+            } else {
+                   this._toast.info('', this._translate.instant('workflow_ascode_updated'))
+            }
+            if (modal) {
+                modal.approve(null);
+            }
+            this._cd.markForCheck();
+        });
     }
 
     createFork(): void {
+        let editMode = this._store.selectSnapshot(WorkflowState).editMode;
         let n: WNode;
-        if (this.editMode) {
+        if (editMode) {
             n = Workflow.getNodeByRef(this.node.ref, this.workflow);
         } else {
             n = Workflow.getNodeByID(this.node.id, this.workflow);
@@ -286,13 +289,12 @@ export class WorkflowWNodeComponent implements OnInit {
         t.parent_node_id = n.id;
         t.parent_node_name = n.ref;
 
-        this.loading = true;
         this._store.dispatch(new AddNodeTriggerWorkflow({
             projectKey: this.project.key,
             workflowName: this.workflow.name,
             parentId: this.node.id,
             trigger: t
-        })).pipe(finalize(() => this.loading = false));
+        }));
     }
 
     createJoin(): void {
@@ -306,33 +308,35 @@ export class WorkflowWNodeComponent implements OnInit {
         p.parent_name = this.node.ref;
         join.parents.push(p);
 
-        this.loading = true;
         this._store.dispatch(new AddJoinWorkflow({
             projectKey: this.project.key,
             workflowName: this.workflow.name,
             join
-        })).pipe(finalize(() => this.loading = false));
+        }));
     }
 
     updateWorkflow(w: Workflow, modal: SuiActiveModal<boolean, boolean, void>): void {
         this.loading = true;
+        let editMode = this._store.selectSnapshot(WorkflowState).editMode;
         this._store.dispatch(new UpdateWorkflow({
             projectKey: this.project.key,
             workflowName: this.workflow.name,
             changes: w
-        })).pipe(finalize(() => this.loading = false))
-            .subscribe(() => {
-                if (!this.editMode) {
-                    this._toast.success('', this._translate.instant('workflow_updated'));
-                }
-                if (modal) {
-                    modal.approve(null);
-                }
-            }, () => {
-                if (Array.isArray(this.node.hooks) && this.node.hooks.length) {
-                    this.node.hooks.pop();
-                }
-            });
+        })).pipe(finalize(() => {
+            this.loading = false;
+            this._cd.markForCheck();
+        })).subscribe(() => {
+            if (!editMode) {
+                this._toast.success('', this._translate.instant('workflow_updated'));
+            }
+            if (modal) {
+                modal.approve(null);
+            }
+        }, () => {
+            if (Array.isArray(this.node.hooks) && this.node.hooks.length) {
+                this.node.hooks.pop();
+            }
+        });
     }
 
     linkJoin(): void {

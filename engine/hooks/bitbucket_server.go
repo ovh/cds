@@ -91,14 +91,14 @@ func getVariableFromBitbucketServerRepository(payload map[string]interface{}, re
 	if repo == nil {
 		return
 	}
-	payload[GIT_REPOSITORY] = fmt.Sprintf("%s/%s", repo.Project.Key, repo.Slug)
+	payload[GIT_REPOSITORY_DEST] = fmt.Sprintf("%s/%s", repo.Project.Key, repo.Slug)
 }
 
 func getVariableFromBitbucketServerSrcRepository(payload map[string]interface{}, repo *sdk.BitbucketServerRepository) {
 	if repo == nil {
 		return
 	}
-	payload[GIT_REPOSITORY_BEFORE] = fmt.Sprintf("%s/%s", repo.Project.Key, repo.Slug)
+	payload[GIT_REPOSITORY] = fmt.Sprintf("%s/%s", repo.Project.Key, repo.Slug)
 }
 
 func getVariableFromBitbucketServerAuthor(payload map[string]interface{}, actor *sdk.BitbucketServerActor) {
@@ -119,11 +119,11 @@ func getVariableFromBitbucketServerPullRequest(payload map[string]interface{}, p
 	payload[PR_ID] = pr.ID
 	payload[PR_STATE] = pr.State
 	payload[PR_TITLE] = pr.Title
-	payload[GIT_BRANCH_BEFORE] = pr.FromRef.DisplayID
-	payload[GIT_HASH_BEFORE] = pr.FromRef.LatestCommit
-	payload[GIT_BRANCH] = pr.ToRef.DisplayID
-	payload[GIT_HASH] = pr.ToRef.LatestCommit
-	hashShort := pr.ToRef.LatestCommit
+	payload[GIT_BRANCH] = pr.FromRef.DisplayID
+	payload[GIT_HASH] = pr.FromRef.LatestCommit
+	payload[GIT_BRANCH_DEST] = pr.ToRef.DisplayID
+	payload[GIT_HASH_DEST] = pr.ToRef.LatestCommit
+	hashShort := pr.FromRef.LatestCommit
 	if len(hashShort) >= 7 {
 		hashShort = hashShort[:7]
 	}

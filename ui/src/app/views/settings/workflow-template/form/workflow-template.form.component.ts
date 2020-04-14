@@ -129,7 +129,7 @@ export class WorkflowTemplateFormComponent {
     importFromURL: boolean;
 
     constructor(private _sharedService: SharedService) {
-        this.templateParameterTypes = ['boolean', 'string', 'repository', 'json'];
+        this.templateParameterTypes = ['boolean', 'string', 'repository', 'json', 'ssh-key', 'pgp-key'];
 
         this.resetParameterValue();
     }

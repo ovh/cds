@@ -326,7 +326,7 @@ export class WorkflowNodeRunParamComponent implements AfterViewInit {
             if (this.nodeToRun.context) {
                 this.parameters = Pipeline.mergeParams(
                     cloneDeep(pipToRun.parameters),
-                    this.nodeToRun.context.default_pipeline_parameters
+                    cloneDeep(this.nodeToRun.context.default_pipeline_parameters)
                 );
             } else {
                 this.nodeToRun.context = new WNodeContext();
@@ -342,6 +342,8 @@ export class WorkflowNodeRunParamComponent implements AfterViewInit {
                 return;
             }
         }
+        this.loading = true;
+        this._cd.detectChanges();
         let request = new WorkflowRunRequest();
         request.manual = new WorkflowNodeRunManual();
         request.manual.resync = resync;
@@ -358,9 +360,10 @@ export class WorkflowNodeRunParamComponent implements AfterViewInit {
             request.number = this.num;
         }
 
-        this.loading = true;
+
         this._workflowRunService.runWorkflow(this.projectKey, this.workflow.name, request).pipe(finalize(() => {
             this.loading = false;
+            this._cd.markForCheck();
         })).subscribe(wr => {
             this.modal.approve(true);
             this._router.navigate(['/project', this.projectKey, 'workflow', this.workflow.name, 'run', wr.num],

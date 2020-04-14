@@ -41,7 +41,8 @@ export function calculateWorkflowTemplateDiff(before: WorkflowTemplate, after: W
         }
     ];
 
-    let pipelinesLength = Math.max(before && before.pipelines ? before.pipelines.length : 0, after && after.pipelines ? after.pipelines.length : 0);
+    let pipelinesLength = Math.max(before && before.pipelines ? before.pipelines.length : 0,
+        after && after.pipelines ? after.pipelines.length : 0);
     for (let i = 0; i < pipelinesLength; i++) {
         diffItems.push(
             <Item>{
@@ -62,8 +63,10 @@ export function calculateWorkflowTemplateDiff(before: WorkflowTemplate, after: W
             <Item>{
                 translate: 'workflow_template_diff_application',
                 translateData: { number: applicationsLength > 1 ? i : '' },
-                before: before && before.applications && before.applications[i] ? Base64.b64DecodeUnicode(before.applications[i].value) : null,
-                after: after && after.applications && after.applications[i] ? Base64.b64DecodeUnicode(after.applications[i].value) : null,
+                before: before && before.applications && before.applications[i] ?
+                    Base64.b64DecodeUnicode(before.applications[i].value) : null,
+                after: after && after.applications && after.applications[i] ?
+                    Base64.b64DecodeUnicode(after.applications[i].value) : null,
                 type: 'text/x-yaml'
             })
     }
@@ -77,8 +80,10 @@ export function calculateWorkflowTemplateDiff(before: WorkflowTemplate, after: W
             <Item>{
                 translate: 'workflow_template_diff_environment',
                 translateData: { number: environmentsLength > 1 ? i : '' },
-                before: before && before.environments && before.environments[i] ? Base64.b64DecodeUnicode(before.environments[i].value) : null,
-                after: after && after.environments && after.environments[i] ? Base64.b64DecodeUnicode(after.environments[i].value) : null,
+                before: before && before.environments && before.environments[i] ?
+                    Base64.b64DecodeUnicode(before.environments[i].value) : null,
+                after: after && after.environments && after.environments[i] ?
+                    Base64.b64DecodeUnicode(after.environments[i].value) : null,
                 type: 'text/x-yaml'
             })
     }

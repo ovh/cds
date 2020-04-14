@@ -264,13 +264,15 @@ const (
 	ParameterTypeString     TemplateParameterType = "string"
 	ParameterTypeBoolean    TemplateParameterType = "boolean"
 	ParameterTypeRepository TemplateParameterType = "repository"
+	ParameterTypeSSHKey     TemplateParameterType = "ssh-key"
+	ParameterTypePGPKey     TemplateParameterType = "pgp-key"
 	ParameterTypeJSON       TemplateParameterType = "json"
 )
 
 // IsValid returns parameter type validity.
 func (t TemplateParameterType) IsValid() bool {
 	switch t {
-	case ParameterTypeString, ParameterTypeBoolean, ParameterTypeRepository, ParameterTypeJSON:
+	case ParameterTypeString, ParameterTypeBoolean, ParameterTypeRepository, ParameterTypeSSHKey, ParameterTypePGPKey, ParameterTypeJSON:
 		return true
 	}
 	return false
