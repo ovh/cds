@@ -74,7 +74,7 @@ func cmdCachePush() *cobra.Command {
 Inside a project, you can create a cache from your worker with a tag (useful for vendors for example)
 	worker cache push <tagValue> dir/file
 
-You can use you storage integration: 
+You can use you storage integration:
 	worker cache push --destination=MyStorageIntegration  <tagValue> dir/file
 		`,
 		Example: "worker cache push {{.cds.workflow}}-{{.cds.version}} ./pathToUpload",
@@ -111,7 +111,7 @@ func cachePushCmd() func(cmd *cobra.Command, args []string) {
 		}
 
 		c := sdk.Cache{
-			Tag:              args[0],
+			Tag:              base64.RawURLEncoding.EncodeToString([]byte(args[0])),
 			Files:            files,
 			WorkingDirectory: cwd,
 			IntegrationName:  cmdStorageIntegrationName,
@@ -125,7 +125,7 @@ func cachePushCmd() func(cmd *cobra.Command, args []string) {
 		fmt.Printf("Worker cache push in progress... (tag: %s)\n", args[0])
 		req, errRequest := http.NewRequest(
 			"POST",
-			fmt.Sprintf("http://127.0.0.1:%d/cache/%s/push", port, base64.RawURLEncoding.EncodeToString([]byte(args[0]))),
+			fmt.Sprintf("http://127.0.0.1:%d/cache/push", port),
 			bytes.NewReader(data),
 		)
 		if errRequest != nil {
@@ -209,7 +209,10 @@ func cachePullCmd() func(cmd *cobra.Command, args []string) {
 		fmt.Printf("Worker cache pull in progress... (tag: %s)\n", args[0])
 		req, errRequest := http.NewRequest(
 			"GET",
-			fmt.Sprintf("http://127.0.0.1:%d/cache/%s/pull?path=%s&integration=%s", port, base64.RawURLEncoding.EncodeToString([]byte(args[0])), url.QueryEscape(dir), url.QueryEscape(cmdStorageIntegrationName)),
+			fmt.Sprintf("http://127.0.0.1:%d/cache/%s/pull?path=%s&integration=%s", port,
+				base64.RawURLEncoding.EncodeToString([]byte(args[0])),
+				url.QueryEscape(dir),
+				url.QueryEscape(cmdStorageIntegrationName)),
 			nil,
 		)
 		if errRequest != nil {

@@ -146,6 +146,8 @@ func cachePullHandler(ctx context.Context, wk *CurrentWorker) http.HandlerFunc {
 			return
 		}
 
+		log.Debug("cachePullHandler> Start read cache tar")
+
 		tr := tar.NewReader(r)
 		for {
 			header, errH := tr.Next()
@@ -165,6 +167,8 @@ func cachePullHandler(ctx context.Context, wk *CurrentWorker) http.HandlerFunc {
 			if header == nil {
 				continue
 			}
+
+			log.Debug("cachePullHandler> Tar contains file %s", header.Name)
 
 			// the target location where the dir/file should be created
 			target := filepath.Join(path, header.Name)
@@ -206,6 +210,8 @@ func cachePullHandler(ctx context.Context, wk *CurrentWorker) http.HandlerFunc {
 						return
 					}
 				}
+
+				log.Debug("cachePullHandler> Create file at %s", target)
 
 				f, err := os.OpenFile(target, os.O_CREATE|os.O_WRONLY, os.FileMode(header.Mode))
 				if err != nil {
