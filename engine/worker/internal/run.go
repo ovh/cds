@@ -610,6 +610,10 @@ func (w *CurrentWorker) ProcessJob(jobInfo sdk.WorkflowNodeJobRunData) (res sdk.
 	if err := teardownDirectory(w.basedir, kdFile.Name()); err != nil {
 		log.Error(ctx, "Cannot remove keys directory: %s", err)
 	}
+	// Delelete tmp directory
+	if err := teardownDirectory(w.basedir, tdFile.Name()); err != nil {
+		log.Error(ctx, "Cannot remove tmp directory: %s", err)
+	}
 	// Delete all plugins
 	if err := teardownDirectory(w.basedir, ""); err != nil {
 		log.Error(ctx, "Cannot remove basedir content: %s", err)
