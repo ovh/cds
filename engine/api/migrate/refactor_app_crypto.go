@@ -6,12 +6,11 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"errors"
-
-	"github.com/ovh/cds/engine/api/database/gorpmapping"
-	"github.com/ovh/cds/engine/api/project"
+	"reflect"
 
 	"github.com/ovh/cds/engine/api/application"
-
+	"github.com/ovh/cds/engine/api/database/gorpmapping"
+	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/secret"
 
 	"github.com/go-gorp/gorp"
@@ -69,10 +68,11 @@ func refactorApplicationCrypto(ctx context.Context, db *gorp.DbMap, id int64) er
 	defer tx.Rollback() // nolint
 
 	// First part is application encryption and signature for vcs_strategy
-	query := "SELECT project_id, vcs_strategy FROM application WHERE id = $1 AND sig IS NULL FOR UPDATE SKIP LOCKED"
+	query := "SELECT project_id, name, vcs_strategy FROM application WHERE id = $1 AND sig IS NULL FOR UPDATE SKIP LOCKED"
 	var projectID int64
 	var btes []byte
-	if err := tx.QueryRow(query, id).Scan(&projectID, &btes); err != nil {
+	var name string
+	if err := tx.QueryRow(query, id).Scan(&projectID, &name, &btes); err != nil {
 		if err == sql.ErrNoRows {
 			return nil
 		}
@@ -102,19 +102,17 @@ func refactorApplicationCrypto(ctx context.Context, db *gorp.DbMap, id int64) er
 
 	var tmpApp = sdk.Application{
 		ID:                 id,
+		Name:               name,
 		ProjectID:          projectID,
 		RepositoryStrategy: vcsStrategy,
 	}
+	// We are faking the DAO layer with updating only the name to perform updating of the encrypted columns and signature
 	var vcsStrategyColFilter = func(col *gorp.ColumnMap) bool {
-		return col.ColumnName == "cipher_vcs_strategy"
+		return col.ColumnName == "name"
 	}
 
-	n, err := tx.UpdateColumns(vcsStrategyColFilter, &tmpApp)
-	if err != nil {
+	if err := application.UpdateColumns(tx, &tmpApp, vcsStrategyColFilter); err != nil {
 		return sdk.WrapError(err, "Unable to update application %d", id)
-	}
-	if n == 0 {
-		return sdk.WrapError(errors.New("no row updated"), "Unable to update application %d", id)
 	}
 
 	// No it is time to validate by loading from the DAO
@@ -147,8 +145,20 @@ func refactorApplicationCrypto(ctx context.Context, db *gorp.DbMap, id int64) er
 			}
 		}
 		if err := application.SetDeploymentStrategy(tx, proj.ID, id, pf.Model.ID, pfName, deploymentStragegies[pfName]); err != nil {
-			return sdk.WrapError(err, "postApplicationDeploymentStrategyConfigHandler")
+			return sdk.WrapError(err, "unable to set deployment strategy")
 		}
+	}
+
+	// Reload all the things to check all deployments strategies
+	app, err = application.LoadByID(tx, id, application.LoadOptions.WithClearDeploymentStrategies)
+	if err != nil {
+		return err
+	}
+
+	if !reflect.DeepEqual(deploymentStragegies, app.DeploymentStrategies) {
+		log.Debug("expected: %+v", deploymentStragegies)
+		log.Debug("actual: %+v", app.DeploymentStrategies)
+		return sdk.WrapError(err, "deployment strategies are not equals...")
 	}
 
 	log.Info(ctx, "migrate.refactorApplicationCrypto> application %d migration end", id)

@@ -7,6 +7,7 @@ import (
 
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/log"
 )
 
 type dbIntegration sdk.IntegrationConfig
@@ -55,6 +56,15 @@ func LoadDeploymentStrategies(db gorp.SqlExecutor, appID int64, withClearPasswor
 
 	deps := make(map[string]sdk.IntegrationConfig, len(res))
 	for _, r := range res {
+		isValid, err := gorpmapping.CheckSignature(r, r.Signature)
+		if err != nil {
+			return nil, err
+		}
+		if !isValid {
+			log.Error(context.Background(), "application.LoadDeploymentStrategies> application_deployment_strategy %d data corrupted", appID)
+			continue
+		}
+
 		//Parse the config and replace password values by place holder if !withClearPassword
 		newCfg := sdk.IntegrationConfig{}
 		for k, v := range r.IntegrationConfig() {
@@ -110,7 +120,7 @@ func findDeploymentStrategy(db gorp.SqlExecutor, projectIntegrationID, applicati
 	AND application_deployment_strategy.application_id = $2`).Args(projectIntegrationID, applicationID)
 
 	var i dbApplicationDeploymentStrategy
-	found, err := gorpmapping.Get(context.Background(), db, query, &i, gorpmapping.GetOptions.WithDecryption)
+	found, err := gorpmapping.Get(context.Background(), db, query, &i)
 	if err != nil {
 		return nil, sdk.WrapError(err, "unable to check if deployment strategy exist")
 	}
@@ -149,10 +159,10 @@ func SetDeploymentStrategy(db gorp.SqlExecutor, projID, appID, pfID int64, ppfNa
 
 	if dbCfg == nil {
 		dbCfg = newDBApplicationDeploymentStrategy(projectIntegrationID, appID)
-		dbCfg.SetConfig(cfg)
+		dbCfg.SetConfig(cfg.Clone())
 		return gorpmapping.InsertAndSign(context.Background(), db, dbCfg)
 	}
 
-	dbCfg.SetConfig(cfg)
+	dbCfg.SetConfig(cfg.Clone())
 	return gorpmapping.UpdateAndSign(context.Background(), db, dbCfg)
 }

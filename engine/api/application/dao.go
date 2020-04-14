@@ -206,6 +206,18 @@ func Insert(db gorp.SqlExecutor, proj sdk.Project, app *sdk.Application) error {
 	return nil
 }
 
+// UpdateColumbs is only available for migration, it should ne removed in a further release
+func UpdateColumns(db gorp.SqlExecutor, app *sdk.Application, columnFilter gorp.ColumnFilter) error {
+	app.LastModified = time.Now()
+	dbApp := dbApplication{Application: *app}
+	if err := gorpmapping.UpdateColumnsAndSign(context.Background(), db, &dbApp, columnFilter); err != nil {
+		return sdk.WrapError(err, "application.Update %s(%d)", app.Name, app.ID)
+	}
+	app.RepositoryStrategy.Password = sdk.PasswordPlaceholder
+	app.RepositoryStrategy.SSHKeyContent = ""
+	return nil
+}
+
 // Update updates application id database
 func Update(db gorp.SqlExecutor, app *sdk.Application) error {
 

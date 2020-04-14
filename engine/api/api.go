@@ -711,7 +711,7 @@ func (a *API) Serve(ctx context.Context) error {
 		return migrate.FixEmptyUUIDHooks(ctx, a.DBConnectionFactory.GetDBMap(), a.Cache)
 	}})
 
-	migrate.Add(ctx, sdk.Migration{Name: "RefactorApplicationCrypto", Release: "0.44.0", Blocker: true, Automatic: false, ExecFunc: func(ctx context.Context) error {
+	migrate.Add(ctx, sdk.Migration{Name: "RefactorApplicationCrypto", Release: "0.44.0", Blocker: true, Automatic: true, ExecFunc: func(ctx context.Context) error {
 		return migrate.RefactorApplicationCrypto(ctx, a.DBConnectionFactory.GetDBMap())
 	}})
 
