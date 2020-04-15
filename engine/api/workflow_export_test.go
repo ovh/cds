@@ -346,7 +346,7 @@ func Test_getWorkflowPullHandler(t *testing.T) {
 
 	test.NoError(t, workflow.RenameNode(context.TODO(), db, &w))
 
-	proj, _ = project.Load(api.mustDB(),  proj.Key,
+	proj, _ = project.Load(api.mustDB(), proj.Key,
 		project.LoadOptions.WithPipelines,
 		project.LoadOptions.WithGroups,
 	)
