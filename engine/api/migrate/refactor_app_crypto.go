@@ -8,12 +8,12 @@ import (
 	"errors"
 	"reflect"
 
+	"github.com/go-gorp/gorp"
+
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/secret"
-
-	"github.com/go-gorp/gorp"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
@@ -164,7 +164,7 @@ func refactorApplicationCrypto(ctx context.Context, db *gorp.DbMap, id int64) er
 	log.Info(ctx, "migrate.refactorApplicationCrypto> application %d migration end", id)
 
 	if err := tx.Commit(); err != nil {
-		return err
+		return sdk.WithStack(err)
 	}
 
 	return nil
