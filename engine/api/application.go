@@ -424,7 +424,7 @@ func (api *API) updateApplicationHandler() service.Handler {
 
 		app, err := application.LoadByNameWithClearVCSStrategyPassword(api.mustDB(), projectKey, applicationName, application.LoadOptions.Default)
 		if err != nil {
-			return sdk.WrapError(err, "updateApplicationHandler> Cannot load application %s", applicationName)
+			return sdk.WrapError(err, "cannot load application %s", applicationName)
 		}
 
 		if app.FromRepository != "" {
