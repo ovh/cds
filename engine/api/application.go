@@ -419,7 +419,7 @@ func (api *API) updateApplicationHandler() service.Handler {
 
 		p, err := project.Load(api.mustDB(), projectKey, project.LoadOptions.Default)
 		if err != nil {
-			return sdk.WrapError(err, "updateApplicationHandler> Cannot load project %s", projectKey)
+			return sdk.WrapError(err, "cannot load project %s", projectKey)
 		}
 
 		app, err := application.LoadByNameWithClearVCSStrategyPassword(api.mustDB(), projectKey, applicationName, application.LoadOptions.Default)
