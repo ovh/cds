@@ -24,7 +24,6 @@ import (
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 )
 
 func (api *API) getApplicationsHandler() service.Handler {
@@ -297,9 +296,6 @@ func (api *API) deleteApplicationHandler() service.Handler {
 
 		app, err := application.LoadByName(api.mustDB(), projectKey, applicationName)
 		if err != nil {
-			if !sdk.ErrorIs(err, sdk.ErrNotFound) {
-				log.Warning(ctx, "deleteApplicationHandler> Cannot load application %s: %s\n", applicationName, err)
-			}
 			return err
 		}
 
