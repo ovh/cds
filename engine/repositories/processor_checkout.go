@@ -22,14 +22,16 @@ func (s *Service) processCheckout(ctx context.Context, op *sdk.Operation) error 
 		if err := gitRepo.FetchRemoteTag("origin", op.Setup.Checkout.Tag); err != nil {
 			return sdk.WithStack(err)
 		}
-	} else {
-		if op.Setup.Checkout.Branch == "" {
-			op.Setup.Checkout.Branch = op.RepositoryInfo.DefaultBranch
-		}
-		log.Debug("processCheckout> fetching branch %s from %s", op.Setup.Checkout.Branch, op.URL)
-		if err := gitRepo.FetchRemoteBranch("origin", op.Setup.Checkout.Branch); err != nil {
-			return sdk.WithStack(err)
-		}
+		log.Info(ctx, "processCheckout> repository %s ready on tag '%s'", op.URL, op.Setup.Checkout.Tag)
+		return nil
+	}
+
+	if op.Setup.Checkout.Branch == "" {
+		op.Setup.Checkout.Branch = op.RepositoryInfo.DefaultBranch
+	}
+	log.Debug("processCheckout> fetching branch %s from %s", op.Setup.Checkout.Branch, op.URL)
+	if err := gitRepo.FetchRemoteBranch("origin", op.Setup.Checkout.Branch); err != nil {
+		return sdk.WithStack(err)
 	}
 
 	// Check commit
