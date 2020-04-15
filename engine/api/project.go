@@ -635,7 +635,7 @@ func (api *API) deleteProjectHandler() service.Handler {
 			if !sdk.ErrorIs(err, sdk.ErrNoProject) {
 				return sdk.WrapError(err, "deleteProject> load project '%s' from db", key)
 			}
-			return sdk.WrapError(err, "deleteProject> cannot load project %s", key)
+			return sdk.WrapError(err, "cannot load project %s", key)
 		}
 
 		if len(p.Pipelines) > 0 {
