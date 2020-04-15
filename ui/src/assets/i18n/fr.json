@@ -147,6 +147,7 @@
   "btn_next": "Suivant",
   "btn_rename": "Renommer",
   "btn_resync_repo": "Resynchroniser",
+  "btn_resync_ascode_event": "Synchroniser les modifications du dépôt",
   "btn_run_workflow": "Lancer le workflow",
   "btn_run": "Lancer le pipeline",
   "btn_save": "Sauvegarder",
