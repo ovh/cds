@@ -87,7 +87,7 @@ func (s *Service) Serve(c context.Context) error {
 	}
 
 	//Init the DAO
-	s.Dao = dao{s.Cache}
+	s.Dao = dao{store: s.Cache}
 
 	// Get current maintenance state
 	var b bool
