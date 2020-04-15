@@ -24,7 +24,7 @@ func (api *API) deleteWorkflowGroupHandler() service.Handler {
 		groupName := vars["groupName"]
 		u := getAPIConsumer(ctx)
 
-		proj, err := project.Load(api.mustDB(),  key, project.LoadOptions.WithIntegrations)
+		proj, err := project.Load(api.mustDB(), key, project.LoadOptions.WithIntegrations)
 		if err != nil {
 			return sdk.WrapError(err, "unable to load projet")
 		}
