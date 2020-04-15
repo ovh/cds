@@ -342,7 +342,7 @@ func (s *Service) dequeueTaskExecutions(ctx context.Context) error {
 		if restartTask {
 			_, err := s.startTask(ctx, task)
 			if err != nil {
-				log.Error(ctx, "dequeueTaskExecutions> unable to restart the task %+v after execution: %v", err)
+				log.Error(ctx, "dequeueTaskExecutions> unable to restart the task %+v after execution: %v", task, err)
 			}
 		}
 	}
