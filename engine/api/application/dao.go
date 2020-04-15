@@ -70,8 +70,8 @@ func LoadAsCode(db gorp.SqlExecutor, projectKey, fromRepo string) ([]sdk.Applica
 	return getAll(context.Background(), db, nil, query)
 }
 
-// LoadByNameWithClearVCSStrategyPassword load an application from DB
-func LoadByNameWithClearVCSStrategyPassword(db gorp.SqlExecutor, projectKey, appName string, opts ...LoadOptionFunc) (*sdk.Application, error) {
+// LoadByName load an application from DB
+func LoadByName(db gorp.SqlExecutor, projectKey, appName string, opts ...LoadOptionFunc) (*sdk.Application, error) {
 	query := gorpmapping.NewQuery(`
 		SELECT application.*
 		FROM application
@@ -81,21 +81,15 @@ func LoadByNameWithClearVCSStrategyPassword(db gorp.SqlExecutor, projectKey, app
 	return get(context.Background(), db, projectKey, opts, query)
 }
 
-// LoadByName load an application from DB
-func LoadByName(db gorp.SqlExecutor, projectKey, appName string, opts ...LoadOptionFunc) (*sdk.Application, error) {
+// LoadByNameWithClearVCSStrategyPassword load an application from DB
+func LoadByNameWithClearVCSStrategyPassword(db gorp.SqlExecutor, projectKey, appName string, opts ...LoadOptionFunc) (*sdk.Application, error) {
 	query := gorpmapping.NewQuery(`
 		SELECT application.*
 		FROM application
 		JOIN project ON project.id = application.project_id
 		WHERE project.projectkey = $1
 		AND application.name = $2`).Args(projectKey, appName)
-	app, err := get(context.Background(), db, projectKey, opts, query)
-	if err != nil {
-		return nil, err
-	}
-	app.RepositoryStrategy.Password = sdk.PasswordPlaceholder
-	app.RepositoryStrategy.SSHKeyContent = ""
-	return app, nil
+	return getWithClearVCSStrategyPassword(context.Background(), db, projectKey, opts, query)
 }
 
 func LoadByIDWithClearVCSStrategyPassword(db gorp.SqlExecutor, id int64, opts ...LoadOptionFunc) (*sdk.Application, error) {
@@ -103,11 +97,7 @@ func LoadByIDWithClearVCSStrategyPassword(db gorp.SqlExecutor, id int64, opts ..
                 SELECT application.*
                 FROM application
                 WHERE application.id = $1`).Args(id)
-	app, err := get(context.Background(), db, "", opts, query)
-	if err != nil {
-		return nil, err
-	}
-	return app, nil
+	return getWithClearVCSStrategyPassword(context.Background(), db, "", opts, query)
 }
 
 // LoadByID load an application from DB
@@ -116,13 +106,7 @@ func LoadByID(db gorp.SqlExecutor, id int64, opts ...LoadOptionFunc) (*sdk.Appli
                 SELECT application.*
                 FROM application
                 WHERE application.id = $1`).Args(id)
-	app, err := get(context.Background(), db, "", opts, query)
-	if err != nil {
-		return nil, err
-	}
-	app.RepositoryStrategy.Password = sdk.PasswordPlaceholder
-	app.RepositoryStrategy.SSHKeyContent = ""
-	return app, nil
+	return get(context.Background(), db, "", opts, query)
 }
 
 // LoadByWorkflowID loads applications from database for a given workflow id
@@ -138,6 +122,16 @@ func LoadByWorkflowID(db gorp.SqlExecutor, workflowID int64) ([]sdk.Application,
 }
 
 func get(ctx context.Context, db gorp.SqlExecutor, key string, opts []LoadOptionFunc, query gorpmapping.Query) (*sdk.Application, error) {
+	app, err := getWithClearVCSStrategyPassword(ctx, db, key, opts, query)
+	if err != nil {
+		return nil, err
+	}
+	app.RepositoryStrategy.Password = sdk.PasswordPlaceholder
+	app.RepositoryStrategy.SSHKeyContent = ""
+	return app, nil
+}
+
+func getWithClearVCSStrategyPassword(ctx context.Context, db gorp.SqlExecutor, key string, opts []LoadOptionFunc, query gorpmapping.Query) (*sdk.Application, error) {
 	dbApp := dbApplication{}
 	// Allways load with decryption to get all the data for vcs_strategy
 	found, err := gorpmapping.Get(ctx, db, query, &dbApp, gorpmapping.GetOptions.WithDecryption)
@@ -152,7 +146,7 @@ func get(ctx context.Context, db gorp.SqlExecutor, key string, opts []LoadOption
 		return nil, err
 	}
 	if !isValid {
-		log.Error(context.Background(), "application.load> application %d data corrupted", dbApp.ID)
+		log.Error(context.Background(), "application.get> application %d data corrupted", dbApp.ID)
 		return nil, sdk.WithStack(sdk.ErrNotFound)
 	}
 	dbApp.ProjectKey = key
@@ -161,7 +155,6 @@ func get(ctx context.Context, db gorp.SqlExecutor, key string, opts []LoadOption
 
 func unwrap(db gorp.SqlExecutor, opts []LoadOptionFunc, dbApp *dbApplication) (*sdk.Application, error) {
 	app := &dbApp.Application
-
 	if app.ProjectKey == "" {
 		pkey, errP := db.SelectStr("SELECT projectkey FROM project WHERE id = $1", app.ProjectID)
 		if errP != nil {
