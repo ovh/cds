@@ -48,7 +48,7 @@ func Test_postWorkflowGroupHandler(t *testing.T) {
 		ProjectKey: proj.Key,
 	}
 
-	proj2, errP := project.Load(api.mustDB(),  proj.Key,
+	proj2, errP := project.Load(api.mustDB(), proj.Key,
 		project.LoadOptions.WithPipelines,
 		project.LoadOptions.WithGroups,
 	)
@@ -120,7 +120,7 @@ func Test_postWorkflowGroupWithLessThanRWXProjectHandler(t *testing.T) {
 		ProjectKey: proj.Key,
 	}
 
-	proj2, errP := project.Load(api.mustDB(),  proj.Key,
+	proj2, errP := project.Load(api.mustDB(), proj.Key,
 		project.LoadOptions.WithPipelines,
 		project.LoadOptions.WithGroups,
 	)
@@ -186,7 +186,7 @@ func Test_putWorkflowGroupHandler(t *testing.T) {
 		ProjectKey: proj.Key,
 	}
 
-	proj2, errP := project.Load(api.mustDB(),  proj.Key,
+	proj2, errP := project.Load(api.mustDB(), proj.Key,
 		project.LoadOptions.WithPipelines,
 		project.LoadOptions.WithGroups,
 	)
@@ -291,7 +291,7 @@ func Test_deleteWorkflowGroupHandler(t *testing.T) {
 		ProjectKey: proj.Key,
 	}
 
-	proj2, errP := project.Load(api.mustDB(),  proj.Key,
+	proj2, errP := project.Load(api.mustDB(), proj.Key,
 		project.LoadOptions.WithPipelines,
 		project.LoadOptions.WithGroups,
 	)
@@ -401,7 +401,7 @@ func Test_UpdateProjectPermsWithWorkflow(t *testing.T) {
 	router.Mux.ServeHTTP(w, req)
 	assert.Equal(t, 200, w.Code)
 
-	proj2, errP := project.Load(api.mustDB(),  proj.Key,
+	proj2, errP := project.Load(api.mustDB(), proj.Key,
 		project.LoadOptions.WithPipelines,
 		project.LoadOptions.WithGroups,
 	)
@@ -508,7 +508,7 @@ func Test_PermissionOnWorkflowInferiorOfProject(t *testing.T) {
 
 	require.NoError(t, group.DeleteUserFromGroup(context.TODO(), db, proj.ProjectGroups[0].Group.ID, u.ID))
 
-	proj2, errP := project.Load(api.mustDB(),  proj.Key, project.LoadOptions.WithPipelines, project.LoadOptions.WithGroups)
+	proj2, errP := project.Load(api.mustDB(), proj.Key, project.LoadOptions.WithPipelines, project.LoadOptions.WithGroups)
 	require.NoError(t, errP)
 	wfLoaded, errL := workflow.Load(context.Background(), db, api.Cache, *proj2, newWf.Name, workflow.LoadOptions{DeepPipeline: true})
 	require.NoError(t, errL)
@@ -676,7 +676,7 @@ func Test_PermissionOnWorkflowWithRestrictionOnNode(t *testing.T) {
 
 	test.NoError(t, group.DeleteUserFromGroup(context.TODO(), db, proj.ProjectGroups[0].Group.ID, u.ID))
 
-	proj2, errP := project.Load(api.mustDB(),  proj.Key, project.LoadOptions.WithPipelines, project.LoadOptions.WithGroups)
+	proj2, errP := project.Load(api.mustDB(), proj.Key, project.LoadOptions.WithPipelines, project.LoadOptions.WithGroups)
 	test.NoError(t, errP)
 	wfLoaded, errL := workflow.Load(context.Background(), db, api.Cache, *proj2, newWf.Name, workflow.LoadOptions{DeepPipeline: true})
 	test.NoError(t, errL)
