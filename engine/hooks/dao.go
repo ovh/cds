@@ -3,6 +3,7 @@ package hooks
 import (
 	"context"
 	"fmt"
+	"sync/atomic"
 
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/sdk"
@@ -15,7 +16,21 @@ const (
 )
 
 type dao struct {
-	store cache.Store
+	store                  cache.Store
+	enqueuedTaskExecutions int64
+	dequeuedTaskExecutions int64
+}
+
+func (d *dao) enqueuedIncr() {
+	atomic.AddInt64(&d.enqueuedTaskExecutions, 1)
+}
+
+func (d *dao) dequeuedIncr() {
+	atomic.AddInt64(&d.dequeuedTaskExecutions, 1)
+}
+
+func (d *dao) TaskExecutionsBalance() (int64, int64) {
+	return d.enqueuedTaskExecutions, d.dequeuedTaskExecutions
 }
 
 func (d *dao) FindAllTasks(ctx context.Context) ([]sdk.Task, error) {
@@ -91,7 +106,13 @@ func (d *dao) EnqueueTaskExecution(ctx context.Context, r *sdk.TaskExecution) er
 	if err := d.store.RemoveFromQueue(schedulerQueueKey, k); err != nil {
 		log.Error(ctx, "error on cache RemoveFromQueue %s: %v", schedulerQueueKey, err)
 	}
-	return d.store.Enqueue(schedulerQueueKey, k)
+
+	if err := d.store.Enqueue(schedulerQueueKey, k); err != nil {
+		return err
+	}
+	d.enqueuedIncr()
+
+	return nil
 }
 
 func (d *dao) QueueLen() (int, error) {

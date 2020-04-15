@@ -517,6 +517,14 @@ func (s *Service) Status(ctx context.Context) sdk.MonitoringStatus {
 	}
 	m.Lines = append(m.Lines, sdk.MonitoringStatusLine{Component: "Queue", Value: fmt.Sprintf("%d", size), Status: status})
 
+	// hook balance in status
+	in, out := s.Dao.TaskExecutionsBalance()
+	status = sdk.MonitoringStatusOK
+	if float64(in) > float64(out) {
+		status = sdk.MonitoringStatusWarn
+	}
+	m.Lines = append(m.Lines, sdk.MonitoringStatusLine{Component: "Balance", Value: fmt.Sprintf("%d/%d", in, out), Status: status})
+
 	var nbHooksKafkaTotal int64
 
 	tasks, err := s.Dao.FindAllTasks(ctx)
