@@ -67,7 +67,7 @@ func LoadAsCode(db gorp.SqlExecutor, projectKey, fromRepo string) ([]sdk.Applica
 		JOIN project ON project.id = application.project_id
 		WHERE project.projectkey = $1
 		AND application.from_repository = $2`).Args(projectKey, fromRepo)
-	return loadAll(context.Background(), db, nil, query)
+	return getAll(context.Background(), db, nil, query)
 }
 
 // LoadByNameWithClearVCSStrategyPassword load an application from DB
@@ -78,11 +78,7 @@ func LoadByNameWithClearVCSStrategyPassword(db gorp.SqlExecutor, projectKey, app
 		JOIN project ON project.id = application.project_id
 		WHERE project.projectkey = $1
 		AND application.name = $2`).Args(projectKey, appName)
-	app, err := load(context.Background(), db, projectKey, opts, query)
-	if err != nil {
-		return nil, err
-	}
-	return app, nil
+	return get(context.Background(), db, projectKey, opts, query)
 }
 
 // LoadByName load an application from DB
@@ -93,7 +89,7 @@ func LoadByName(db gorp.SqlExecutor, projectKey, appName string, opts ...LoadOpt
 		JOIN project ON project.id = application.project_id
 		WHERE project.projectkey = $1
 		AND application.name = $2`).Args(projectKey, appName)
-	app, err := load(context.Background(), db, projectKey, opts, query)
+	app, err := get(context.Background(), db, projectKey, opts, query)
 	if err != nil {
 		return nil, err
 	}
@@ -107,7 +103,7 @@ func LoadByIDWithClearVCSStrategyPassword(db gorp.SqlExecutor, id int64, opts ..
                 SELECT application.*
                 FROM application
                 WHERE application.id = $1`).Args(id)
-	app, err := load(context.Background(), db, "", opts, query)
+	app, err := get(context.Background(), db, "", opts, query)
 	if err != nil {
 		return nil, err
 	}
@@ -120,7 +116,7 @@ func LoadByID(db gorp.SqlExecutor, id int64, opts ...LoadOptionFunc) (*sdk.Appli
                 SELECT application.*
                 FROM application
                 WHERE application.id = $1`).Args(id)
-	app, err := load(context.Background(), db, "", opts, query)
+	app, err := get(context.Background(), db, "", opts, query)
 	if err != nil {
 		return nil, err
 	}
@@ -138,10 +134,10 @@ func LoadByWorkflowID(db gorp.SqlExecutor, workflowID int64) ([]sdk.Application,
 	JOIN w_node ON w_node.id = w_node_context.node_id
 	JOIN workflow ON workflow.id = w_node.workflow_id
 	WHERE workflow.id = $1`).Args(workflowID)
-	return loadAll(context.Background(), db, nil, query)
+	return getAll(context.Background(), db, nil, query)
 }
 
-func load(ctx context.Context, db gorp.SqlExecutor, key string, opts []LoadOptionFunc, query gorpmapping.Query) (*sdk.Application, error) {
+func get(ctx context.Context, db gorp.SqlExecutor, key string, opts []LoadOptionFunc, query gorpmapping.Query) (*sdk.Application, error) {
 	dbApp := dbApplication{}
 	// Allways load with decryption to get all the data for vcs_strategy
 	found, err := gorpmapping.Get(ctx, db, query, &dbApp, gorpmapping.GetOptions.WithDecryption)
@@ -220,7 +216,6 @@ func UpdateColumns(db gorp.SqlExecutor, app *sdk.Application, columnFilter gorp.
 
 // Update updates application id database
 func Update(db gorp.SqlExecutor, app *sdk.Application) error {
-
 	if app.RepositoryStrategy.Password == sdk.PasswordPlaceholder {
 		appTmp, err := LoadByIDWithClearVCSStrategyPassword(db, app.ID)
 		if err != nil {
@@ -258,7 +253,7 @@ func LoadAll(db gorp.SqlExecutor, key string, opts ...LoadOptionFunc) ([]sdk.App
 	WHERE project.projectkey = $1
 	ORDER BY application.name ASC`).Args(key)
 
-	return loadAll(context.Background(), db, opts, query)
+	return getAll(context.Background(), db, opts, query)
 }
 
 // LoadAllNames returns all application names
@@ -280,7 +275,7 @@ func LoadAllNames(db gorp.SqlExecutor, projID int64) (sdk.IDNames, error) {
 	return res, nil
 }
 
-func loadAll(ctx context.Context, db gorp.SqlExecutor, opts []LoadOptionFunc, query gorpmapping.Query) ([]sdk.Application, error) {
+func getAll(ctx context.Context, db gorp.SqlExecutor, opts []LoadOptionFunc, query gorpmapping.Query) ([]sdk.Application, error) {
 	var res []dbApplication
 	if err := gorpmapping.GetAll(ctx, db, query, &res, gorpmapping.GetOptions.WithDecryption); err != nil {
 		return nil, err
