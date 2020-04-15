@@ -88,7 +88,7 @@ func (api *API) putWorkflowGroupHandler() service.Handler {
 			return sdk.WrapError(sdk.ErrInvalidName, "putWorkflowGroupHandler")
 		}
 
-		proj, err := project.Load(api.mustDB(),  key, project.LoadOptions.WithIntegrations)
+		proj, err := project.Load(api.mustDB(), key, project.LoadOptions.WithIntegrations)
 		if err != nil {
 			return sdk.WrapError(err, "unable to load projet")
 		}
