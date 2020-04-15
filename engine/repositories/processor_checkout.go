@@ -52,7 +52,7 @@ func (s *Service) processCheckout(ctx context.Context, op *sdk.Operation) error 
 				return sdk.WithStack(err)
 			}
 
-			log.Debug("Repositories> processCheckout> reseting commit %s", op.Setup.Checkout.Commit)
+			log.Debug("Repositories> processCheckout> resetting commit %s", op.Setup.Checkout.Commit)
 			if err := gitRepo.ResetHard(op.Setup.Checkout.Commit); err != nil {
 				return sdk.WithStack(err)
 			}
