@@ -206,7 +206,7 @@ func Insert(db gorp.SqlExecutor, proj sdk.Project, app *sdk.Application) error {
 	return nil
 }
 
-// UpdateColumbs is only available for migration, it should ne removed in a further release
+// UpdateColumns is only available for migration, it should be removed in a further release
 func UpdateColumns(db gorp.SqlExecutor, app *sdk.Application, columnFilter gorp.ColumnFilter) error {
 	app.LastModified = time.Now()
 	dbApp := dbApplication{Application: *app}
