@@ -1,7 +1,7 @@
 -- +migrate Up
 
 -- RefactorAppDeploymentStrategies
-ALTER TABLE "application_deployment_strategy" ADD COLUMN IF NOT EXISTS id SERIAL;
+ALTER TABLE "application_deployment_strategy" ADD COLUMN IF NOT EXISTS id BIGSERIAL;
 ALTER TABLE "application_deployment_strategy" ALTER COLUMN id SET NOT NULL;
 ALTER TABLE "application_deployment_strategy" DROP CONSTRAINT application_deployment_strategy_pkey;
 ALTER TABLE "application_deployment_strategy" ADD PRIMARY KEY (id);
