@@ -165,7 +165,7 @@ export class WorkflowState {
     static nodeRunByNodeID(state: WorkflowStateModel) {
         return (id: number) => {
             if (!state.workflowRun || !state.workflowRun.nodes || !state.workflowRun.nodes[id]
-                || state.workflowRun.nodes[id].length === 0) {
+                || state.workflowRun.nodes[id].length === 0) {
                 return null;
             }
             return state.workflowRun.nodes[id][0];
@@ -1065,13 +1065,11 @@ export class WorkflowState {
     updateFavorite(ctx: StateContext<WorkflowStateModel>, action: actionWorkflow.UpdateFavoriteWorkflow) {
         const state = ctx.getState();
 
-        return this._http.post(
-            '/user/favorite', {
-                type: 'workflow',
-                project_key: action.payload.projectKey,
-                workflow_name: action.payload.workflowName,
-            }
-        ).pipe(tap(() => {
+        return this._http.post('/user/favorite', {
+            type: 'workflow',
+            project_key: action.payload.projectKey,
+            workflow_name: action.payload.workflowName,
+        }).pipe(tap(() => {
             this._navbarService.refreshData();
             if (state.workflow) {
                 ctx.setState({
@@ -1138,12 +1136,12 @@ export class WorkflowState {
                     });
                 }),
                 tap((wr: WorkflowRun) => {
+                    const stateRun = ctx.getState();
                     let routeParams = this._routerService.getRouteSnapshotParams({}, this._router.routerState.snapshot.root);
-                    if (wr.workflow.project_key !== routeParams['key'] || wr.workflow.name !== routeParams['workflowName']) {
+                    if (wr.project_id !== stateRun.workflow.project_id || wr.workflow_id !== stateRun.workflow.id) {
                         return;
                     }
                     if (routeParams['number'] && routeParams['number'] === wr.num.toString()) {
-                        const stateRun = ctx.getState();
                         ctx.setState({
                             ...stateRun,
                             projectKey: action.payload.projectKey,
@@ -1185,25 +1183,26 @@ export class WorkflowState {
                 action.payload.limit,
                 action.payload.offset,
                 action.payload.filters).pipe(first(),
-                finalize(() => {
-                    const stateFin = ctx.getState();
-                    ctx.setState({
-                        ...stateFin,
-                        loadingWorkflowRuns: false
-                    });
-                }),
-                tap((wrs: Array<WorkflowRun>) => {
-                    let routeParams = this._routerService.getRouteSnapshotParams({}, this._router.routerState.snapshot.root);
-                    if (action.payload.projectKey !== routeParams['key'] || action.payload.workflowName !== routeParams['workflowName']) {
-                        return;
-                    }
-                    const stateRun = ctx.getState();
-                    ctx.setState({
-                        ...stateRun,
-                        projectKey: action.payload.projectKey,
-                        listRuns: wrs,
-                    });
-                }));
+                    finalize(() => {
+                        const stateFin = ctx.getState();
+                        ctx.setState({
+                            ...stateFin,
+                            loadingWorkflowRuns: false
+                        });
+                    }),
+                    tap((wrs: Array<WorkflowRun>) => {
+                        let routeParams = this._routerService.getRouteSnapshotParams({}, this._router.routerState.snapshot.root);
+                        if (action.payload.projectKey !== routeParams['key'] ||
+                            action.payload.workflowName !== routeParams['workflowName']) {
+                            return;
+                        }
+                        const stateRun = ctx.getState();
+                        ctx.setState({
+                            ...stateRun,
+                            projectKey: action.payload.projectKey,
+                            listRuns: wrs,
+                        });
+                    }));
 
     }
 
@@ -1245,7 +1244,7 @@ export class WorkflowState {
                     sidebar: WorkflowSidebarMode.RUN_NODE
                 });
                 if (stateNR.workflowNodeJobRun) {
-                    ctx.dispatch(new SelectWorkflowNodeRunJob({jobID: stateNR.workflowNodeJobRun.job.pipeline_action_id}));
+                    ctx.dispatch(new SelectWorkflowNodeRunJob({ jobID: stateNR.workflowNodeJobRun.job.pipeline_action_id }));
                 }
             }));
     }
@@ -1274,7 +1273,7 @@ export class WorkflowState {
             runs.push(action.payload.workflowRun);
             ctx.setState({
                 ...state,
-                listRuns: runs.sort( (a, b) => b.num - a.num)
+                listRuns: runs.sort((a, b) => b.num - a.num)
             });
             return
 
@@ -1387,7 +1386,7 @@ export class WorkflowState {
         const state = ctx.getState();
         if (state.workflow) {
             ctx.dispatch(new actionWorkflow
-                .GetWorkflow({projectKey: state.projectKey, workflowName: state.workflow.name}));
+                .GetWorkflow({ projectKey: state.projectKey, workflowName: state.workflow.name }));
         }
     }
 
@@ -1404,9 +1403,8 @@ export class WorkflowState {
         }
         if (!action.payload.data.workflows[state.workflow.id]) {
             // Not the same workflow
-            return
+            return;
         }
-        ctx.dispatch(new actionWorkflow.GetWorkflow({projectKey: state.projectKey, workflowName: state.workflow.name}));
-
+        ctx.dispatch(new actionWorkflow.GetWorkflow({ projectKey: state.projectKey, workflowName: state.workflow.name }));
     }
 }
