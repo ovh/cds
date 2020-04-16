@@ -18,7 +18,7 @@ func (s *Service) processGitClone(ctx context.Context, op *sdk.Operation) (repo.
 	}
 
 	// Get the git repository
-	opts := []repo.Option{repo.WithVerbose()}
+	opts := []repo.Option{repo.WithVerbose(log.InfoWithoutCtx)}
 
 	if op.RepositoryStrategy.ConnectionType == "ssh" {
 		log.Debug("processGitClone> using ssh key %s", op.RepositoryStrategy.SSHKey)
