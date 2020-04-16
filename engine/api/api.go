@@ -715,6 +715,13 @@ func (a *API) Serve(ctx context.Context) error {
 		return migrate.RefactorApplicationCrypto(ctx, a.DBConnectionFactory.GetDBMap())
 	}})
 
+	migrate.Add(ctx, sdk.Migration{Name: "RefactorIntegrationCrypto", Release: "0.44.0", Blocker: true, Automatic: true, ExecFunc: func(ctx context.Context) error {
+		if err := migrate.RefactorIntegrationModelCrypto(ctx, a.DBConnectionFactory.GetDBMap()); err != nil {
+			return err
+		}
+		return migrate.RefactorProjectIntegrationCrypto(ctx, a.DBConnectionFactory.GetDBMap())
+	}})
+
 	isFreshInstall, errF := version.IsFreshInstall(a.mustDB())
 	if errF != nil {
 		return sdk.WrapError(errF, "Unable to check if it's a fresh installation of CDS")

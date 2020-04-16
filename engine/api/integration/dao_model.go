@@ -1,136 +1,120 @@
 package integration
 
 import (
+	"context"
 	"database/sql"
 
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
-	"github.com/ovh/cds/engine/api/secret"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/log"
 )
 
 // LoadModels load integration models
 func LoadModels(db gorp.SqlExecutor) ([]sdk.IntegrationModel, error) {
-	var pm []integrationModel
-	if _, err := db.Select(&pm, "SELECT * from integration_model"); err != nil {
-		return nil, sdk.WrapError(err, "Cannot select all integration model")
+	var pms integrationModelSlice
+
+	query := gorpmapping.NewQuery(`SELECT * FROM integration_model`)
+	if err := gorpmapping.GetAll(context.Background(), db, query, &pms, gorpmapping.GetOptions.WithDecryption); err != nil {
+		return nil, err
 	}
 
-	var integrations = make([]sdk.IntegrationModel, len(pm))
-	for i, p := range pm {
-		if err := p.PostGet(db); err != nil {
-			return nil, sdk.WrapError(err, "Cannot postGet integration model")
+	var res []sdk.IntegrationModel
+	for _, pm := range pms {
+		isValid, err := gorpmapping.CheckSignature(pm, pm.Signature)
+		if err != nil {
+			return nil, err
 		}
-		integrations[i] = sdk.IntegrationModel(p)
+		if !isValid {
+			log.Error(context.Background(), "integration.LoadModel> model  %d data corrupted", pm.ID)
+			continue
+		}
+		x := pm.IntegrationModel
+		x.Blur()
+		res = append(res, x)
 	}
-	return integrations, nil
+
+	return res, nil
 }
 
-// LoadPublicModelsByType load integration models which are public
-func LoadPublicModelsByType(db gorp.SqlExecutor, integrationType *sdk.IntegrationType, clearPassword bool) ([]sdk.IntegrationModel, error) {
-	var pm []integrationModel
-	query := "SELECT * from integration_model WHERE public = true"
+func LoadPublicModelsByTypeWithDecryption(db gorp.SqlExecutor, integrationType *sdk.IntegrationType) ([]sdk.IntegrationModel, error) {
+	q := "SELECT * from integration_model WHERE public = true"
 	if integrationType != nil {
 		switch *integrationType {
 		case sdk.IntegrationTypeEvent:
-			query += " AND integration_model.event = true"
+			q += " AND integration_model.event = true"
 		case sdk.IntegrationTypeCompute:
-			query += " AND integration_model.compute = true"
+			q += " AND integration_model.compute = true"
 		case sdk.IntegrationTypeStorage:
-			query += " AND integration_model.storage = true"
+			q += " AND integration_model.storage = true"
 		case sdk.IntegrationTypeHook:
-			query += " AND integration_model.hook = true"
+			q += " AND integration_model.hook = true"
 		case sdk.IntegrationTypeDeployment:
-			query += " AND integration_model.deployment = true"
+			q += " AND integration_model.deployment = true"
 		}
 	}
 
-	if _, err := db.Select(&pm, query); err != nil {
-		if err == sql.ErrNoRows {
-			return nil, nil
-		}
-		return nil, sdk.WrapError(err, "Cannot select all public integration model")
+	query := gorpmapping.NewQuery(q)
+	var pms integrationModelSlice
+
+	if err := gorpmapping.GetAll(context.Background(), db, query, &pms, gorpmapping.GetOptions.WithDecryption); err != nil {
+		return nil, err
 	}
 
-	var integrations = make([]sdk.IntegrationModel, len(pm))
-	for i, p := range pm {
-		if err := p.PostGet(db); err != nil {
-			return nil, sdk.WrapError(err, "Cannot postGet integration model")
+	var res []sdk.IntegrationModel
+	for _, pm := range pms {
+		isValid, err := gorpmapping.CheckSignature(pm, pm.Signature)
+		if err != nil {
+			return nil, err
 		}
-		integration := sdk.IntegrationModel(p)
-		if clearPassword {
-			for pfName, pfCfg := range integration.PublicConfigurations {
-				newCfg := pfCfg.Clone()
-				if err := newCfg.DecryptSecrets(secret.DecryptValue); err != nil {
-					return nil, sdk.WrapError(err, "unable to encrypt config")
-				}
-				integration.PublicConfigurations[pfName] = newCfg
-			}
-		} else {
-			for pfName, pfCfg := range integration.PublicConfigurations {
-				newCfg := pfCfg.Clone()
-				newCfg.HideSecrets()
-				integration.PublicConfigurations[pfName] = newCfg
-			}
+		if !isValid {
+			log.Error(context.Background(), "integration.LoadModel> model  %d data corrupted", pm.ID)
+			continue
 		}
-		integrations[i] = integration
+		res = append(res, pm.IntegrationModel)
 	}
-	return integrations, nil
+
+	return res, nil
 }
 
 // LoadModel Load a integration model by its ID
 func LoadModel(db gorp.SqlExecutor, modelID int64, clearPassword bool) (sdk.IntegrationModel, error) {
-	var pm integrationModel
-	if err := db.SelectOne(&pm, "SELECT * from integration_model where id = $1", modelID); err != nil {
-		if err == sql.ErrNoRows {
-			return sdk.IntegrationModel{}, sdk.NewErrorFrom(sdk.ErrNotFound, "Cannot select integration model %d", modelID)
-		}
-		return sdk.IntegrationModel{}, sdk.WrapError(err, "Cannot select integration model %d", modelID)
-	}
-	if clearPassword {
-		for pfName, pfCfg := range pm.PublicConfigurations {
-			newCfg := pfCfg.Clone()
-			if err := newCfg.DecryptSecrets(secret.DecryptValue); err != nil {
-				return sdk.IntegrationModel{}, sdk.WrapError(err, "unable to encrypt config")
-			}
-			pm.PublicConfigurations[pfName] = newCfg
-		}
-	} else {
-		for pfName, pfCfg := range pm.PublicConfigurations {
-			newCfg := pfCfg.Clone()
-			newCfg.HideSecrets()
-			pm.PublicConfigurations[pfName] = newCfg
-		}
-	}
-	return sdk.IntegrationModel(pm), nil
+	query := gorpmapping.NewQuery("SELECT * from integration_model where id = $1").Args(modelID)
+	return getModel(db, query, clearPassword)
 }
 
 // LoadModelByName Load a integration model by its name
 func LoadModelByName(db gorp.SqlExecutor, name string, clearPassword bool) (sdk.IntegrationModel, error) {
+	query := gorpmapping.NewQuery("SELECT * from integration_model where name = $1").Args(name)
+	return getModel(db, query, clearPassword)
+}
+
+func getModel(db gorp.SqlExecutor, query gorpmapping.Query, clearPassword bool) (sdk.IntegrationModel, error) {
 	var pm integrationModel
-	if err := db.SelectOne(&pm, "SELECT * from integration_model where name = $1", name); err != nil {
-		if err == sql.ErrNoRows {
-			return sdk.IntegrationModel{}, sdk.NewErrorFrom(sdk.ErrNotFound, "integration model %s not found", name)
-		}
-		return sdk.IntegrationModel{}, sdk.WrapError(err, "Cannot select integration model %s", name)
+
+	found, err := gorpmapping.Get(context.Background(), db, query, &pm, gorpmapping.GetOptions.WithDecryption)
+	if err != nil {
+		return sdk.IntegrationModel{}, err
 	}
-	if clearPassword {
-		for pfName, pfCfg := range pm.PublicConfigurations {
-			newCfg := pfCfg.Clone()
-			if err := newCfg.DecryptSecrets(secret.DecryptValue); err != nil {
-				return sdk.IntegrationModel{}, sdk.WrapError(err, "unable to encrypt config")
-			}
-			pm.PublicConfigurations[pfName] = newCfg
-		}
-	} else {
-		for pfName, pfCfg := range pm.PublicConfigurations {
-			newCfg := pfCfg.Clone()
-			newCfg.HideSecrets()
-			pm.PublicConfigurations[pfName] = newCfg
-		}
+	if !found {
+		return sdk.IntegrationModel{}, sdk.WithStack(sdk.ErrNotFound)
 	}
-	return sdk.IntegrationModel(pm), nil
+
+	isValid, err := gorpmapping.CheckSignature(pm, pm.Signature)
+	if err != nil {
+		return sdk.IntegrationModel{}, err
+	}
+	if !isValid {
+		log.Error(context.Background(), "integration.LoadModelByName> model  %d data corrupted", pm.ID)
+		return sdk.IntegrationModel{}, sdk.WithStack(sdk.ErrNotFound)
+	}
+
+	if !clearPassword {
+		pm.Blur()
+	}
+
+	return pm.IntegrationModel, nil
 }
 
 // ModelExists tests if the given model exists
@@ -147,22 +131,46 @@ func ModelExists(db gorp.SqlExecutor, name string) (bool, error) {
 
 // InsertModel inserts a integration model in database
 func InsertModel(db gorp.SqlExecutor, m *sdk.IntegrationModel) error {
-	dbm := integrationModel(*m)
-	if err := db.Insert(&dbm); err != nil {
+	givenPublicConfig := m.PublicConfigurations.Clone()
+	dbm := integrationModel{IntegrationModel: *m}
+	if err := gorpmapping.InsertAndSign(context.Background(), db, &dbm); err != nil {
 		return sdk.WrapError(err, "Unable to insert integration model %s", m.Name)
 	}
-	*m = sdk.IntegrationModel(dbm)
+	*m = dbm.IntegrationModel
+	m.PublicConfigurations = givenPublicConfig
+	m.PublicConfigurations.Blur()
 	return nil
 }
 
 // UpdateModel updates a integration model in database
 func UpdateModel(db gorp.SqlExecutor, m *sdk.IntegrationModel) error {
-	dbm := integrationModel(*m)
-	if n, err := db.Update(&dbm); err != nil {
-		return sdk.WrapError(err, "Unable to update integration model %s", m.Name)
-	} else if n == 0 {
-		return sdk.NewErrorFrom(sdk.ErrNotFound, "Unable to update integration model %s", m.Name)
+	// reload the previous config to encuse we don't store placeholder
+	var oldModel sdk.IntegrationModel
+
+	givenPublicConfig := m.PublicConfigurations.Clone()
+	for k := range givenPublicConfig {
+		for kk, cfg := range givenPublicConfig[k] {
+			if cfg.Type == sdk.IntegrationConfigTypePassword && cfg.Value == sdk.PasswordPlaceholder {
+				if oldModel.ID == 0 {
+					var err error
+					oldModel, err = LoadModel(db, m.ID, true)
+					if err != nil {
+						return err
+					}
+				}
+				cfg.Value = oldModel.PublicConfigurations[k][kk].Value
+			}
+			givenPublicConfig[k][kk] = cfg
+		}
 	}
+
+	m.PublicConfigurations = givenPublicConfig
+
+	dbm := integrationModel{IntegrationModel: *m}
+	if err := gorpmapping.UpdateAndSign(context.Background(), db, &dbm); err != nil {
+		return sdk.WrapError(err, "Unable to update integration model %s", m.Name)
+	}
+	m.PublicConfigurations.Blur()
 	return nil
 }
 
@@ -173,68 +181,10 @@ func DeleteModel(db gorp.SqlExecutor, id int64) error {
 		return sdk.WrapError(err, "DeleteModel")
 	}
 
-	dbm := integrationModel(m)
+	dbm := integrationModel{IntegrationModel: m}
 	if _, err := db.Delete(&dbm); err != nil {
 		return sdk.WrapError(err, "unable to delete model %s", m.Name)
 	}
 
 	return nil
-}
-
-// PostGet is a db hook
-func (pm *integrationModel) PostGet(db gorp.SqlExecutor) error {
-	var res = struct {
-		DefaultConfig           sql.NullString `db:"default_config"`
-		DeploymentDefaultConfig sql.NullString `db:"deployment_default_config"`
-		PluginName              sql.NullString `db:"plugin_name"`
-		PublicConfigurations    sql.NullString `db:"public_configurations"`
-	}{}
-
-	query := `SELECT default_config, grpc_plugin.name as "plugin_name", deployment_default_config, public_configurations
-	FROM integration_model
-	LEFT OUTER JOIN grpc_plugin ON grpc_plugin.integration_model_id = integration_model.id
-	WHERE integration_model.id = $1`
-	if err := db.SelectOne(&res, query, pm.ID); err != nil {
-		return sdk.WrapError(err, "Cannot get default_config, integration_model_plugin, deployment_default_config for integrationModel: %v", pm.ID)
-	}
-
-	if err := gorpmapping.JSONNullString(res.DefaultConfig, &pm.DefaultConfig); err != nil {
-		return sdk.WrapError(err, "Unable to load default_config")
-	}
-
-	if err := gorpmapping.JSONNullString(res.DeploymentDefaultConfig, &pm.DeploymentDefaultConfig); err != nil {
-		return sdk.WrapError(err, "Unable to load deployment_default_config")
-	}
-
-	if err := gorpmapping.JSONNullString(res.PublicConfigurations, &pm.PublicConfigurations); err != nil {
-		return sdk.WrapError(err, "Unable to load public_configurations")
-	}
-	return nil
-}
-
-// PostInsert is a db hook
-func (pm *integrationModel) PostInsert(db gorp.SqlExecutor) error {
-	return pm.PostUpdate(db)
-}
-
-// PostUpdate is a db hook
-func (pm *integrationModel) PostUpdate(db gorp.SqlExecutor) error {
-	if pm.DefaultConfig == nil {
-		pm.DefaultConfig = sdk.IntegrationConfig{}
-	}
-
-	defaultConfig, _ := gorpmapping.JSONToNullString(pm.DefaultConfig)
-	deploymentDefaultConfig, _ := gorpmapping.JSONToNullString(pm.DeploymentDefaultConfig)
-	cfg := make(map[string]sdk.IntegrationConfig, len(pm.PublicConfigurations))
-	for pfName, pfCfg := range pm.PublicConfigurations {
-		newCfg := pfCfg.Clone()
-		if err := newCfg.EncryptSecrets(secret.EncryptValue); err != nil {
-			return sdk.WrapError(err, "unable to encrypt config")
-		}
-		cfg[pfName] = newCfg
-	}
-	publicConfig, _ := gorpmapping.JSONToNullString(cfg)
-
-	_, err := db.Exec("update integration_model set default_config = $2, deployment_default_config = $3, public_configurations = $4 where id = $1", pm.ID, defaultConfig, deploymentDefaultConfig, publicConfig)
-	return sdk.WrapError(err, "Unable to update integration_model")
 }

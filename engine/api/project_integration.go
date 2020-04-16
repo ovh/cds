@@ -20,9 +20,7 @@ func (api *API) getProjectIntegrationHandler() service.Handler {
 		projectKey := vars[permProjectKey]
 		integrationName := vars["integrationName"]
 
-		clearPassword := FormBool(r, "clearPassword")
-
-		integration, err := integration.LoadProjectIntegrationByName(api.mustDB(), projectKey, integrationName, clearPassword)
+		integration, err := integration.LoadProjectIntegrationByName(api.mustDB(), projectKey, integrationName, false)
 		if err != nil {
 			return sdk.WrapError(err, "Cannot load integration %s/%s", projectKey, integrationName)
 		}
