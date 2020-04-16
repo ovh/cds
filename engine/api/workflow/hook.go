@@ -297,25 +297,18 @@ func createVCSConfiguration(ctx context.Context, db gorp.SqlExecutor, store cach
 		return sdk.WrapError(sdk.ErrInvalidHookConfiguration, "wrong webHookURL value (project: %s, repository: %s)", proj.Key, h.Config["repoFullName"].Value)
 	}
 
-	// If empty, take the first event
-	var valueSplitted = strings.Split(h.Config[sdk.HookConfigEventFilter].Value, ";")
-	if valueSplitted[0] == "" && webHookInfo.Events != nil {
-		h.Config[sdk.HookConfigEventFilter] = sdk.WorkflowNodeHookConfigValue{
-			Value:        webHookInfo.Events[0],
-			Configurable: true,
-			Type:         sdk.HookConfigTypeString,
-		}
-		valueSplitted = []string{h.Config[sdk.HookConfigEventFilter].Value}
-
-	}
-
 	// Prepare the hook that will be send to VCS
 	vcsHook := sdk.VCSHook{
 		Method:   "POST",
 		URL:      h.Config["webHookURL"].Value,
-		Events:   valueSplitted,
 		Workflow: true,
 	}
+
+	// Set given event filters if exists, else default values will be set by CreateHook func.
+	if c, ok := h.Config[sdk.HookConfigEventFilter]; ok && c.Value != "" {
+		vcsHook.Events = strings.Split(c.Value, ";")
+	}
+
 	if err := client.CreateHook(ctx, h.Config["repoFullName"].Value, &vcsHook); err != nil {
 		return sdk.WrapError(err, "Cannot create hook on repository: %+v", vcsHook)
 	}
@@ -355,19 +348,18 @@ func updateVCSConfiguration(ctx context.Context, db gorp.SqlExecutor, store cach
 		return sdk.WrapError(errWH, "cannot get vcs web hook info")
 	}
 
-	var valueSlitted []string
-	if _, ok := h.Config[sdk.HookConfigEventFilter]; ok {
-		valueEvent := h.Config[sdk.HookConfigEventFilter].Value
-		valueSlitted = strings.Split(valueEvent, ";")
-	}
-
 	vcsHook := sdk.VCSHook{
 		ID:       h.Config[sdk.HookConfigWebHookID].Value,
 		Method:   "POST",
 		URL:      h.Config["webHookURL"].Value,
-		Events:   valueSlitted,
 		Workflow: true,
 	}
+
+	// Set given event filters if exists, else default values will be set by CreateHook func.
+	if c, ok := h.Config[sdk.HookConfigEventFilter]; ok && c.Value != "" {
+		vcsHook.Events = strings.Split(c.Value, ";")
+	}
+
 	if err := client.UpdateHook(ctx, h.Config["repoFullName"].Value, &vcsHook); err != nil {
 		return sdk.WrapError(err, "Cannot update hook on repository: %+v", vcsHook)
 	}

@@ -12,24 +12,28 @@ func (s *Service) processCheckout(ctx context.Context, op *sdk.Operation) error 
 	if err != nil {
 		return sdk.WrapError(err, "unable to process gitclone")
 	}
+	log.Debug("processCheckout> repo cloned with current branch: %s", currentBranch)
 
 	if err := gitRepo.ResetHard("origin/" + currentBranch); err != nil {
 		return sdk.WithStack(err)
 	}
+	log.Debug("processCheckout> repo reset to origin/%s", currentBranch)
 
 	if op.Setup.Checkout.Tag != "" {
 		log.Debug("processCheckout> fetching tag %s from %s", op.Setup.Checkout.Tag, op.URL)
 		if err := gitRepo.FetchRemoteTag("origin", op.Setup.Checkout.Tag); err != nil {
 			return sdk.WithStack(err)
 		}
-	} else {
-		if op.Setup.Checkout.Branch == "" {
-			op.Setup.Checkout.Branch = op.RepositoryInfo.DefaultBranch
-		}
-		log.Debug("processCheckout> fetching branch %s from %s", op.Setup.Checkout.Branch, op.URL)
-		if err := gitRepo.FetchRemoteBranch("origin", op.Setup.Checkout.Branch); err != nil {
-			return sdk.WithStack(err)
-		}
+		log.Info(ctx, "processCheckout> repository %s ready on tag '%s'", op.URL, op.Setup.Checkout.Tag)
+		return nil
+	}
+
+	if op.Setup.Checkout.Branch == "" {
+		op.Setup.Checkout.Branch = op.RepositoryInfo.DefaultBranch
+	}
+	log.Debug("processCheckout> fetching branch %s from %s", op.Setup.Checkout.Branch, op.URL)
+	if err := gitRepo.FetchRemoteBranch("origin", op.Setup.Checkout.Branch); err != nil {
+		return sdk.WithStack(err)
 	}
 
 	// Check commit
@@ -50,7 +54,7 @@ func (s *Service) processCheckout(ctx context.Context, op *sdk.Operation) error 
 				return sdk.WithStack(err)
 			}
 
-			log.Debug("Repositories> processCheckout> reseting commit %s", op.Setup.Checkout.Commit)
+			log.Debug("Repositories> processCheckout> resetting commit %s", op.Setup.Checkout.Commit)
 			if err := gitRepo.ResetHard(op.Setup.Checkout.Commit); err != nil {
 				return sdk.WithStack(err)
 			}
