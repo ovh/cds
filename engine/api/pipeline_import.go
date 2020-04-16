@@ -66,7 +66,7 @@ func (api *API) importPipelineHandler() service.Handler {
 		}
 
 		// Load project
-		proj, err := project.Load(api.mustDB(), api.Cache, key,
+		proj, err := project.Load(api.mustDB(), key,
 			project.LoadOptions.Default,
 			project.LoadOptions.WithGroups,
 		)
@@ -98,7 +98,7 @@ func (api *API) importPipelineHandler() service.Handler {
 		}
 
 		if err := tx.Commit(); err != nil {
-			return sdk.WrapError(err, "cannot commit transaction")
+			return sdk.WithStack(err)
 		}
 
 		event.PublishPipelineAdd(ctx, proj.Key, *pip, getAPIConsumer(ctx))
@@ -127,7 +127,7 @@ func (api *API) putImportPipelineHandler() service.Handler {
 			return err
 		}
 
-		proj, err := project.Load(api.mustDB(), api.Cache, key,
+		proj, err := project.Load(api.mustDB(), key,
 			project.LoadOptions.Default,
 			project.LoadOptions.WithGroups,
 		)
@@ -153,7 +153,7 @@ func (api *API) putImportPipelineHandler() service.Handler {
 		}
 
 		if err := tx.Commit(); err != nil {
-			return sdk.WrapError(err, "cannot commit transaction")
+			return sdk.WithStack(err)
 		}
 
 		event.PublishPipelineAdd(ctx, proj.Key, *pip, getAPIConsumer(ctx))

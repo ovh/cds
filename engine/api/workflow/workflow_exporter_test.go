@@ -8,8 +8,6 @@ import (
 	"io/ioutil"
 	"testing"
 
-	"github.com/ovh/cds/sdk/exportentities"
-
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/bootstrap"
 	"github.com/ovh/cds/engine/api/environment"
@@ -19,6 +17,7 @@ import (
 	"github.com/ovh/cds/engine/api/test/assets"
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/exportentities"
 )
 
 func TestPull(t *testing.T) {
@@ -75,7 +74,7 @@ func TestPull(t *testing.T) {
 	app := &sdk.Application{
 		Name: sdk.RandomString(10),
 	}
-	test.NoError(t, application.Insert(db, cache, *proj, app))
+	test.NoError(t, application.Insert(db, *proj, app))
 
 	//Environment
 	envName := sdk.RandomString(10)
@@ -117,7 +116,7 @@ func TestPull(t *testing.T) {
 		},
 	}
 
-	proj, _ = project.Load(db, cache, proj.Key, project.LoadOptions.WithApplications, project.LoadOptions.WithEnvironments, project.LoadOptions.WithPipelines)
+	proj, _ = project.Load(db, proj.Key, project.LoadOptions.WithApplications, project.LoadOptions.WithEnvironments, project.LoadOptions.WithPipelines)
 
 	test.NoError(t, workflow.Insert(context.TODO(), db, cache, *proj, &w))
 

@@ -442,6 +442,12 @@ func LoadSecrets(db gorp.SqlExecutor, store cache.Store, nodeRun *sdk.WorkflowNo
 		// Application variables
 		av := []sdk.Variable{}
 		if app != nil {
+			tempApp, err := application.LoadByIDWithClearVCSStrategyPassword(db, app.ID)
+			if err != nil {
+				return nil, err
+			}
+			app.RepositoryStrategy = tempApp.RepositoryStrategy
+
 			appVariables, err := application.LoadAllVariablesWithDecrytion(db, app.ID)
 			if err != nil {
 				return nil, sdk.WrapError(err, "LoadSecrets> Cannot load application variables")
@@ -449,9 +455,6 @@ func LoadSecrets(db gorp.SqlExecutor, store cache.Store, nodeRun *sdk.WorkflowNo
 			av = sdk.VariablesFilter(appVariables, sdk.SecretVariable)
 			av = sdk.VariablesPrefix(av, "cds.app.")
 
-			if err := application.DecryptVCSStrategyPassword(app); err != nil {
-				return nil, sdk.WrapError(err, "LoadSecrets> Cannot decrypt vcs configuration")
-			}
 			av = append(av, sdk.Variable{
 				Name:  "git.http.password",
 				Type:  sdk.SecretVariable,

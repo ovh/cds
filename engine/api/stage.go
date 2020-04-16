@@ -57,7 +57,7 @@ func (api *API) addStageHandler() service.Handler {
 		}
 
 		if err := tx.Commit(); err != nil {
-			return sdk.WrapError(err, "Cannot commit transaction")
+			return sdk.WithStack(err)
 		}
 
 		if err := pipeline.LoadPipelineStage(ctx, api.mustDB(), pipelineData); err != nil {
@@ -162,7 +162,7 @@ func (api *API) moveStageHandler() service.Handler {
 		}
 
 		if err := tx.Commit(); err != nil {
-			return sdk.WrapError(err, "Cannot commit transaction")
+			return sdk.WithStack(err)
 		}
 
 		event.PublishPipelineStageMove(ctx, projectKey, pipelineKey, *stageData, oldStage.BuildOrder, getAPIConsumer(ctx))
@@ -227,7 +227,7 @@ func (api *API) updateStageHandler() service.Handler {
 
 		err = tx.Commit()
 		if err != nil {
-			return sdk.WrapError(err, "Cannot commit transaction")
+			return sdk.WithStack(err)
 		}
 
 		if err := pipeline.LoadPipelineStage(ctx, api.mustDB(), pipelineData); err != nil {
@@ -286,7 +286,7 @@ func (api *API) deleteStageHandler() service.Handler {
 		}
 
 		if err := tx.Commit(); err != nil {
-			return sdk.WrapError(err, "Cannot commit transaction")
+			return sdk.WithStack(err)
 		}
 
 		if err := pipeline.LoadPipelineStage(ctx, api.mustDB(), pipelineData); err != nil {

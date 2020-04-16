@@ -27,7 +27,7 @@ func (api *API) addBroadcastHandler() service.Handler {
 		bc.Updated = now
 
 		if bc.ProjectKey != "" {
-			proj, errProj := project.Load(api.mustDB(), api.Cache, bc.ProjectKey)
+			proj, errProj := project.Load(api.mustDB(), bc.ProjectKey)
 			if errProj != nil {
 				return sdk.WrapError(sdk.ErrNoProject, "Cannot load %s", bc.ProjectKey)
 			}
@@ -63,7 +63,7 @@ func (api *API) updateBroadcastHandler() service.Handler {
 		}
 
 		if bc.ProjectKey != "" {
-			proj, errProj := project.Load(api.mustDB(), api.Cache, bc.ProjectKey)
+			proj, errProj := project.Load(api.mustDB(), bc.ProjectKey)
 			if errProj != nil {
 				return sdk.WrapError(sdk.ErrNoProject, "Cannot load %s", bc.ProjectKey)
 			}
@@ -135,7 +135,7 @@ func (api *API) deleteBroadcastHandler() service.Handler {
 		}
 
 		if err := tx.Commit(); err != nil {
-			return sdk.WrapError(err, "Cannot commit transaction")
+			return sdk.WithStack(err)
 		}
 
 		event.PublishBroadcastDelete(ctx, broadcastID, getAPIConsumer(ctx))

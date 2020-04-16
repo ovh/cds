@@ -18,12 +18,12 @@ import (
 func deleteAll(t *testing.T, api *API, key string) error {
 	// Delete all apps
 	t.Logf("start deleted : %s", key)
-	proj, errl := project.Load(api.mustDB(), api.Cache, key, project.LoadOptions.WithGroups)
+	proj, errl := project.Load(api.mustDB(), key, project.LoadOptions.WithGroups)
 	if errl != nil {
 		return errl
 	}
 
-	apps, errloadall := application.LoadAll(api.mustDB(), api.Cache, key)
+	apps, errloadall := application.LoadAll(api.mustDB(), key)
 	if errloadall != nil {
 		t.Logf("Cannot list app: %s", errloadall)
 		return errloadall
@@ -57,7 +57,7 @@ func deleteAll(t *testing.T, api *API, key string) error {
 	}
 
 	// Delete project
-	if err := project.Delete(api.mustDB(), api.Cache, key); err != nil {
+	if err := project.Delete(api.mustDB(), key); err != nil {
 		t.Logf("RemoveProject: %s", err)
 		return err
 	}

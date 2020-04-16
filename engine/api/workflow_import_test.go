@@ -668,7 +668,7 @@ func Test_getWorkflowPushHandler(t *testing.T) {
 	app := &sdk.Application{
 		Name: appName,
 	}
-	if err := application.Insert(api.mustDB(), api.Cache, *proj, app); err != nil {
+	if err := application.Insert(api.mustDB(), *proj, app); err != nil {
 		t.Fatal(err)
 	}
 
@@ -743,7 +743,7 @@ func Test_getWorkflowPushHandler(t *testing.T) {
 		},
 	}
 
-	proj, _ = project.Load(api.mustDB(), api.Cache, proj.Key, project.LoadOptions.WithPipelines, project.LoadOptions.WithApplications)
+	proj, _ = project.Load(api.mustDB(), proj.Key, project.LoadOptions.WithPipelines, project.LoadOptions.WithApplications)
 
 	test.NoError(t, workflow.Insert(context.TODO(), api.mustDB(), api.Cache, *proj, &w))
 	test.NoError(t, workflow.RenameNode(context.TODO(), api.mustDB(), &w))
@@ -913,7 +913,7 @@ metadata:
 	api.Router.Mux.ServeHTTP(rec, req)
 	assert.Equal(t, 200, rec.Code)
 
-	p, errP := project.Load(db, api.Cache, proj.Key)
+	p, errP := project.Load(db, proj.Key)
 	assert.NoError(t, errP)
 	wUpdated, err := workflow.Load(context.TODO(), db, api.Cache, *p, "test_1", workflow.LoadOptions{})
 	assert.NoError(t, err)

@@ -50,7 +50,7 @@ func Test_postApplicationMetadataHandler_AsProvider(t *testing.T) {
 			"a1": "a1",
 		},
 	}
-	if err := application.Insert(api.mustDB(), api.Cache, *proj, app); err != nil {
+	if err := application.Insert(api.mustDB(), *proj, app); err != nil {
 		t.Fatal(err)
 	}
 
@@ -60,7 +60,7 @@ func Test_postApplicationMetadataHandler_AsProvider(t *testing.T) {
 	})
 
 	test.NoError(t, sdkclient.ApplicationMetadataUpdate(pkey, app.Name, "b1", "b1"))
-	app, err = application.LoadByName(api.mustDB(), api.Cache, pkey, app.Name)
+	app, err = application.LoadByName(api.mustDB(), pkey, app.Name)
 	test.NoError(t, err)
 	assert.Equal(t, "a1", app.Metadata["a1"])
 	assert.Equal(t, "b1", app.Metadata["b1"])
@@ -99,7 +99,7 @@ vcs_ssh_key: proj-blabla
 	assert.NoError(t, globalError)
 
 	app.FromRepository = "myrepository"
-	assert.NoError(t, application.Update(db, api.Cache, app))
+	assert.NoError(t, application.Update(db, app))
 
 	uri := api.Router.GetRoute("GET", api.getAsCodeApplicationHandler, map[string]string{
 		"permProjectKey": pkey,

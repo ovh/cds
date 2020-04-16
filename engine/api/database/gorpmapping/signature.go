@@ -75,6 +75,14 @@ func UpdateAndSign(ctx context.Context, db gorp.SqlExecutor, i Canonicaller) err
 	return sdk.WithStack(dbSign(ctx, db, i))
 }
 
+// UpdateColumnsAndSign a data in database, given data should implement canonicaller interface.
+func UpdateColumnsAndSign(ctx context.Context, db gorp.SqlExecutor, i Canonicaller, colFilter gorp.ColumnFilter) error {
+	if err := UpdateColumns(db, i, colFilter); err != nil {
+		return err
+	}
+	return sdk.WithStack(dbSign(ctx, db, i))
+}
+
 var CanonicalFormTemplates = struct {
 	m map[string]*template.Template
 	l sync.RWMutex

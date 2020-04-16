@@ -35,7 +35,7 @@ func (api *API) getVariableAuditInApplicationHandler() service.Handler {
 		appName := vars["applicationName"]
 		varName := vars["name"]
 
-		app, errA := application.LoadByName(api.mustDB(), api.Cache, key, appName)
+		app, errA := application.LoadByName(api.mustDB(), key, appName)
 		if errA != nil {
 			return sdk.WrapError(errA, "getVariableAuditInApplicationHandler> Cannot load application %s on project %s", appName, key)
 		}
@@ -60,7 +60,7 @@ func (api *API) getVariableInApplicationHandler() service.Handler {
 		appName := vars["applicationName"]
 		varName := vars["name"]
 
-		app, err := application.LoadByName(api.mustDB(), api.Cache, key, appName)
+		app, err := application.LoadByName(api.mustDB(), key, appName)
 		if err != nil {
 			return sdk.WrapError(err, "Cannot load application %s", appName)
 		}
@@ -80,7 +80,7 @@ func (api *API) getVariablesInApplicationHandler() service.Handler {
 		key := vars[permProjectKey]
 		appName := vars["applicationName"]
 
-		app, err := application.LoadByName(api.mustDB(), api.Cache, key, appName, application.LoadOptions.WithVariables)
+		app, err := application.LoadByName(api.mustDB(), key, appName, application.LoadOptions.WithVariables)
 		if err != nil {
 			return sdk.WrapError(err, "Cannot load application %s", appName)
 		}
@@ -96,7 +96,7 @@ func (api *API) deleteVariableFromApplicationHandler() service.Handler {
 		appName := vars["applicationName"]
 		varName := vars["name"]
 
-		app, err := application.LoadByName(api.mustDB(), api.Cache, key, appName)
+		app, err := application.LoadByName(api.mustDB(), key, appName)
 		if err != nil {
 			return sdk.WrapError(err, "Cannot load application: %s", appName)
 		}
@@ -144,7 +144,7 @@ func (api *API) updateVariableInApplicationHandler() service.Handler {
 			return sdk.WithStack(sdk.ErrWrongRequest)
 		}
 
-		app, err := application.LoadByName(api.mustDB(), api.Cache, key, appName)
+		app, err := application.LoadByName(api.mustDB(), key, appName)
 		if err != nil {
 			return sdk.WrapError(err, "Cannot load application: %s", appName)
 		}
@@ -193,7 +193,7 @@ func (api *API) addVariableInApplicationHandler() service.Handler {
 			return sdk.WithStack(sdk.ErrWrongRequest)
 		}
 
-		app, err := application.LoadByName(api.mustDB(), api.Cache, key, appName)
+		app, err := application.LoadByName(api.mustDB(), key, appName)
 		if err != nil {
 			return sdk.WrapError(err, "Cannot load application %s ", appName)
 		}

@@ -43,7 +43,7 @@ func Test_getWorkflowHookModelsHandlerAsLambdaUser(t *testing.T) {
 
 	test.NoError(t, pipeline.InsertPipeline(db, &pip))
 
-	proj, _ = project.LoadByID(db, cache, proj.ID,
+	proj, _ = project.LoadByID(db, proj.ID,
 		project.LoadOptions.WithApplications,
 		project.LoadOptions.WithPipelines,
 		project.LoadOptions.WithEnvironments,
@@ -112,9 +112,9 @@ func Test_getWorkflowHookModelsHandlerAsAdminUser(t *testing.T) {
 		ProjectID:          proj.ID,
 		RepositoryFullname: "ovh/cds",
 	}
-	test.NoError(t, application.Insert(db, cache, *proj, &app))
+	test.NoError(t, application.Insert(db, *proj, &app))
 
-	proj, _ = project.LoadByID(db, cache, proj.ID, project.LoadOptions.WithApplications,
+	proj, _ = project.LoadByID(db, proj.ID, project.LoadOptions.WithApplications,
 		project.LoadOptions.WithPipelines, project.LoadOptions.WithEnvironments, project.LoadOptions.WithGroups)
 
 	w := sdk.Workflow{

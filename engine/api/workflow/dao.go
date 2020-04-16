@@ -1183,7 +1183,7 @@ func checkHooks(db gorp.SqlExecutor, w *sdk.Workflow, n *sdk.Node) error {
 			h.HookModelID = hm.ID
 		}
 		if h.HookModelName == sdk.RepositoryWebHookModelName && (n.Context == nil || n.Context.ApplicationID == 0) {
-			return sdk.WrapError(sdk.ErrApplicationNotFound, "unable to find application for the repository web hook: %d: %s/%s", w.ID, w.Name, n.Name)
+			return sdk.WrapError(sdk.ErrNotFound, "unable to find application for the repository web hook: %d: %s/%s", w.ID, w.Name, n.Name)
 		}
 
 		// Add missing default value for hook
@@ -1320,7 +1320,7 @@ func checkApplication(store cache.Store, db gorp.SqlExecutor, proj sdk.Project, 
 	if n.Context.ApplicationID != 0 {
 		app, ok := w.Applications[n.Context.ApplicationID]
 		if !ok {
-			appDB, errA := application.LoadByID(db, store, n.Context.ApplicationID, application.LoadOptions.WithDeploymentStrategies, application.LoadOptions.WithVariables)
+			appDB, errA := application.LoadByID(db, n.Context.ApplicationID, application.LoadOptions.WithDeploymentStrategies, application.LoadOptions.WithVariables)
 			if errA != nil {
 				return errA
 			}
@@ -1335,10 +1335,10 @@ func checkApplication(store cache.Store, db gorp.SqlExecutor, proj sdk.Project, 
 		return nil
 	}
 	if n.Context.ApplicationName != "" {
-		appDB, err := application.LoadByName(db, store, proj.Key, n.Context.ApplicationName, application.LoadOptions.WithDeploymentStrategies, application.LoadOptions.WithVariables)
+		appDB, err := application.LoadByName(db, proj.Key, n.Context.ApplicationName, application.LoadOptions.WithDeploymentStrategies, application.LoadOptions.WithVariables)
 		if err != nil {
-			if sdk.ErrorIs(err, sdk.ErrApplicationNotFound) {
-				return sdk.WithStack(sdk.ErrorWithData(sdk.ErrApplicationNotFound, n.Context.ApplicationName))
+			if sdk.ErrorIs(err, sdk.ErrNotFound) {
+				return sdk.WithStack(sdk.ErrorWithData(sdk.ErrNotFound, n.Context.ApplicationName))
 			}
 			return sdk.WrapError(err, "unable to load application %s", n.Context.ApplicationName)
 		}
@@ -1498,7 +1498,7 @@ func Push(ctx context.Context, db *gorp.DbMap, store cache.Store, proj *sdk.Proj
 
 	if wf.WorkflowData.Node.Context.ApplicationID != 0 {
 		app := wf.Applications[wf.WorkflowData.Node.Context.ApplicationID]
-		if err := application.Update(tx, store, &app); err != nil {
+		if err := application.Update(tx, &app); err != nil {
 			return nil, nil, nil, sdk.WrapError(err, "Unable to update application vcs datas")
 		}
 		wf.Applications[wf.WorkflowData.Node.Context.ApplicationID] = app
@@ -1509,7 +1509,7 @@ func Push(ctx context.Context, db *gorp.DbMap, store cache.Store, proj *sdk.Proj
 		log.Debug("workflow %s rollbacked because it's not coming from the default branch", wf.Name)
 	} else {
 		if err := tx.Commit(); err != nil {
-			return nil, nil, nil, sdk.WrapError(err, "cannot commit transaction")
+			return nil, nil, nil, sdk.WithStack(err)
 		}
 
 		log.Debug("workflow %s updated", wf.Name)

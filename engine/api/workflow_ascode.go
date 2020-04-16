@@ -50,7 +50,7 @@ func (api *API) postWorkflowAsCodeHandler() service.Handler {
 		message := FormString(r, "message")
 
 		u := getAPIConsumer(ctx)
-		p, err := project.Load(api.mustDB(), api.Cache, key,
+		p, err := project.Load(api.mustDB(), key,
 			project.LoadOptions.WithApplicationWithDeploymentStrategies,
 			project.LoadOptions.WithPipelines,
 			project.LoadOptions.WithEnvironments,
@@ -70,7 +70,7 @@ func (api *API) postWorkflowAsCodeHandler() service.Handler {
 		}
 
 		if wfDB.WorkflowData.Node.Context.ApplicationID == 0 {
-			return sdk.WrapError(sdk.ErrApplicationNotFound, "root node does not have application context")
+			return sdk.WrapError(sdk.ErrNotFound, "root node does not have application context")
 		}
 		app := wfDB.Applications[wfDB.WorkflowData.Node.Context.ApplicationID]
 		if app.VCSServer == "" || app.RepositoryFullname == "" {
@@ -93,7 +93,7 @@ func (api *API) postWorkflowAsCodeHandler() service.Handler {
 			return err
 		}
 
-		ope, err := workflow.UpdateWorkflowAsCode(ctx, api.Cache, api.mustDB(), *p, wk, app, branch, message, u.AuthentifiedUser)
+		ope, err := workflow.UpdateWorkflowAsCode(ctx, api.Cache, api.mustDB(), *p, wk, app.VCSServer, app.RepositoryFullname, branch, message, app.RepositoryStrategy, u.AuthentifiedUser)
 		if err != nil {
 			return err
 		}
@@ -154,7 +154,7 @@ func (api *API) migrateWorkflowAsCode(ctx context.Context, w http.ResponseWriter
 	}
 
 	// Export workflow + push + create pull request
-	ope, err := workflow.MigrateAsCode(ctx, api.mustDB(), api.Cache, *proj, wf, *app, u, project.EncryptWithBuiltinKey, branch, message)
+	ope, err := workflow.MigrateAsCode(ctx, api.mustDB(), api.Cache, *proj, wf, u, project.EncryptWithBuiltinKey, app.VCSServer, app.RepositoryFullname, branch, message, app.RepositoryStrategy)
 	if err != nil {
 		return sdk.WrapError(err, "unable to migrate workflow as code")
 	}

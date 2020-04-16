@@ -16,7 +16,7 @@ import (
 )
 
 // UpdateWorkflowAsCode update an as code workflow.
-func UpdateWorkflowAsCode(ctx context.Context, store cache.Store, db gorp.SqlExecutor, proj sdk.Project, wf sdk.Workflow, app sdk.Application, branch string, message string, u *sdk.AuthentifiedUser) (*sdk.Operation, error) {
+func UpdateWorkflowAsCode(ctx context.Context, store cache.Store, db gorp.SqlExecutor, proj sdk.Project, wf sdk.Workflow, vcsServerName, repoFullname, branch, message string, vcsStrategy sdk.RepositoryStrategy, u *sdk.AuthentifiedUser) (*sdk.Operation, error) {
 	if err := RenameNode(ctx, db, &wf); err != nil {
 		return nil, err
 	}
@@ -32,17 +32,17 @@ func UpdateWorkflowAsCode(ctx context.Context, store cache.Store, db gorp.SqlExe
 	}
 
 	if wf.WorkflowData.Node.Context == nil || wf.WorkflowData.Node.Context.ApplicationID == 0 {
-		return nil, sdk.WithStack(sdk.ErrApplicationNotFound)
+		return nil, sdk.WithStack(sdk.ErrNotFound)
 	}
 
-	return operation.PushOperation(ctx, db, store, proj, &app, wp, branch, message, true, u)
+	return operation.PushOperation(ctx, db, store, proj, wp, vcsServerName, repoFullname, branch, message, vcsStrategy, true, u)
 }
 
 // MigrateAsCode does a workflow pull and start an operation to push cds files into the git repository
-func MigrateAsCode(ctx context.Context, db *gorp.DbMap, store cache.Store, proj sdk.Project, wf *sdk.Workflow, app sdk.Application, u sdk.Identifiable, encryptFunc sdk.EncryptFunc, branch, message string) (*sdk.Operation, error) {
+func MigrateAsCode(ctx context.Context, db *gorp.DbMap, store cache.Store, proj sdk.Project, wf *sdk.Workflow, u sdk.Identifiable, encryptFunc sdk.EncryptFunc, vcsServerName, repoFullname, branch, message string, vcsStrategy sdk.RepositoryStrategy) (*sdk.Operation, error) {
 	// Get repository
 	if wf.WorkflowData.Node.Context == nil || wf.WorkflowData.Node.Context.ApplicationID == 0 {
-		return nil, sdk.WithStack(sdk.ErrApplicationNotFound)
+		return nil, sdk.WithStack(sdk.ErrNotFound)
 	}
 
 	// Export workflow
@@ -61,5 +61,5 @@ func MigrateAsCode(ctx context.Context, db *gorp.DbMap, store cache.Store, proj 
 	if branch == "" {
 		branch = fmt.Sprintf("cdsAsCode-%d", time.Now().Unix())
 	}
-	return operation.PushOperation(ctx, db, store, proj, &app, pull, branch, message, false, u)
+	return operation.PushOperation(ctx, db, store, proj, pull, vcsServerName, repoFullname, branch, message, vcsStrategy, false, u)
 }

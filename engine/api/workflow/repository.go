@@ -193,7 +193,7 @@ func pollRepositoryOperation(c context.Context, db gorp.SqlExecutor, store cache
 func createOperationRequest(w sdk.Workflow, opts sdk.WorkflowRunPostHandlerOption) (sdk.Operation, error) {
 	ope := sdk.Operation{}
 	if w.WorkflowData.Node.Context.ApplicationID == 0 {
-		return ope, sdk.WrapError(sdk.ErrApplicationNotFound, "CreateFromRepository> Workflow node root does not have a application context")
+		return ope, sdk.WrapError(sdk.ErrNotFound, "workflow node root does not have a application context")
 	}
 	app := w.Applications[w.WorkflowData.Node.Context.ApplicationID]
 	ope = sdk.Operation{

@@ -39,7 +39,7 @@ func (api *API) getHookPollingVCSEvents() service.Handler {
 			return err
 		}
 
-		proj, err := project.Load(api.mustDB(), api.Cache, h.Config[sdk.HookConfigProject].Value, nil)
+		proj, err := project.Load(api.mustDB(), h.Config[sdk.HookConfigProject].Value, nil)
 		if err != nil {
 			return err
 		}
