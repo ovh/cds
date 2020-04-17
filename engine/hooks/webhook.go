@@ -10,6 +10,8 @@ import (
 	"strings"
 
 	dump "github.com/fsamin/go-dump"
+	"github.com/xanzy/go-gitlab"
+
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
@@ -30,7 +32,7 @@ func (s *Service) doWebHookExecution(ctx context.Context, e *sdk.TaskExecution) 
 func getRepositoryHeader(whe *sdk.WebHookExecution, events []string) string {
 	if v, ok := whe.RequestHeader[GithubHeader]; ok && ((len(events) == 0 && v[0] == "push") || sdk.IsInArray(v[0], events)) {
 		return GithubHeader
-	} else if v, ok := whe.RequestHeader[GitlabHeader]; ok && ((len(events) == 0 && v[0] == "Push Hook") || sdk.IsInArray(v[0], events)) {
+	} else if v, ok := whe.RequestHeader[GitlabHeader]; ok && ((len(events) == 0 && (v[0] == string(gitlab.EventTypePush) || v[0] == string(gitlab.EventTypeTagPush))) || sdk.IsInArray(v[0], events)) {
 		return GitlabHeader
 	} else if v, ok := whe.RequestHeader[BitbucketHeader]; ok && ((len(events) == 0 && v[0] == "repo:refs_changed") || sdk.IsInArray(v[0], events)) {
 		return BitbucketHeader

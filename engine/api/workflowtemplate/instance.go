@@ -170,6 +170,10 @@ func CheckAndExecuteTemplate(ctx context.Context, db *gorp.DbMap, consumer sdk.A
 		}
 	}
 
+	if err := wt.CheckParams(req); err != nil {
+		return nil, err
+	}
+
 	var result exportentities.WorkflowComponents
 
 	if req.Detached {

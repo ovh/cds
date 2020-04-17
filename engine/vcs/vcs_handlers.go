@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
+	"github.com/xanzy/go-gitlab"
 
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/engine/vcs/github"
@@ -198,14 +199,14 @@ func (s *Service) getVCSServersHooksHandler() service.Handler {
 			res.WebhooksIcon = sdk.GitlabIcon
 			// https://docs.gitlab.com/ee/user/project/integrations/webhooks.html
 			res.Events = []string{
-				"Push Hook",
-				"Tag Push Hook",
-				"Issue Hook",
-				"Note Hook",
-				"Merge Request Hook",
-				"Wiki Page Hook",
-				"Pipeline Hook",
-				"Job Hook",
+				string(gitlab.EventTypePush),
+				string(gitlab.EventTypeTagPush),
+				string(gitlab.EventTypeIssue),
+				string(gitlab.EventTypeNote),
+				string(gitlab.EventTypeMergeRequest),
+				string(gitlab.EventTypeWikiPage),
+				string(gitlab.EventTypePipeline),
+				"Job Hook", // TODO update gitlab sdk
 			}
 		case cfg.Gerrit != nil:
 			res.WebhooksSupported = false
