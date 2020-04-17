@@ -40,7 +40,7 @@ func (api *API) postWorkflowPreviewHandler() service.Handler {
 			return err
 		}
 
-		proj, err := project.Load(api.mustDB(), api.Cache, key,
+		proj, err := project.Load(api.mustDB(), key,
 			project.LoadOptions.WithGroups,
 			project.LoadOptions.WithApplications,
 			project.LoadOptions.WithEnvironments,
@@ -101,7 +101,7 @@ func (api *API) postWorkflowImportHandler() service.Handler {
 			return err
 		}
 
-		proj, err := project.Load(api.mustDB(), api.Cache, key,
+		proj, err := project.Load(api.mustDB(), key,
 			project.LoadOptions.WithGroups,
 			project.LoadOptions.WithApplications,
 			project.LoadOptions.WithEnvironments,
@@ -149,7 +149,7 @@ func (api *API) postWorkflowImportHandler() service.Handler {
 		}
 
 		if err := tx.Commit(); err != nil {
-			return sdk.WrapError(err, "Cannot commit transaction")
+			return sdk.WithStack(err)
 		}
 
 		if wf != nil {
@@ -196,7 +196,7 @@ func (api *API) putWorkflowImportHandler() service.Handler {
 		}
 
 		// Load project
-		proj, err := project.Load(api.mustDB(), api.Cache, key,
+		proj, err := project.Load(api.mustDB(), key,
 			project.LoadOptions.WithGroups,
 			project.LoadOptions.WithApplications,
 			project.LoadOptions.WithEnvironments,
@@ -239,7 +239,7 @@ func (api *API) putWorkflowImportHandler() service.Handler {
 		}
 
 		if err := tx.Commit(); err != nil {
-			return sdk.WrapError(err, "Cannot commit transaction")
+			return sdk.WithStack(err)
 		}
 
 		if wf != nil {
@@ -291,7 +291,7 @@ func (api *API) postWorkflowPushHandler() service.Handler {
 		u := getAPIConsumer(ctx)
 
 		//Load project
-		proj, err := project.Load(db, api.Cache, key,
+		proj, err := project.Load(db, key,
 			project.LoadOptions.WithGroups,
 			project.LoadOptions.WithApplications,
 			project.LoadOptions.WithEnvironments,

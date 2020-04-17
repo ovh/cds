@@ -951,7 +951,7 @@ func stopWorkflowNodeJobRun(ctx context.Context, dbFunc func() *gorp.DbMap, stor
 		}
 
 		if err := tx.Commit(); err != nil {
-			chanErr <- sdk.WrapError(err, "cannot commit transaction")
+			chanErr <- sdk.WithStack(err)
 			tx.Rollback()
 			wg.Done()
 			return report

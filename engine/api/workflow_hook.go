@@ -52,7 +52,7 @@ func (api *API) getWorkflowHookModelsHandler() service.Handler {
 			return err
 		}
 
-		p, err := project.Load(api.mustDB(), api.Cache, key, project.LoadOptions.WithIntegrations)
+		p, err := project.Load(api.mustDB(), key, project.LoadOptions.WithIntegrations)
 		if err != nil {
 			return sdk.WithStack(err)
 		}
@@ -241,9 +241,9 @@ func (api *API) postWorkflowJobHookCallbackHandler() service.Handler {
 		defer tx.Rollback() // nolint
 
 		_, next := observability.Span(ctx, "project.Load")
-		proj, err := project.Load(tx, api.Cache, key,
+		proj, err := project.Load(tx, key,
 			project.LoadOptions.WithVariables,
-			project.LoadOptions.WithFeatures,
+			project.LoadOptions.WithFeatures(api.Cache),
 			project.LoadOptions.WithIntegrations,
 			project.LoadOptions.WithApplicationVariables,
 			project.LoadOptions.WithApplicationWithDeploymentStrategies,

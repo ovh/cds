@@ -40,7 +40,7 @@ func (api *API) updateAsCodePipelineHandler() service.Handler {
 			return sdk.WrapError(sdk.ErrInvalidPipelinePattern, "updateAsCodePipelineHandler: Pipeline name %s do not respect pattern", p.Name)
 		}
 
-		proj, err := project.Load(api.mustDB(), api.Cache, key, project.LoadOptions.WithClearKeys)
+		proj, err := project.Load(api.mustDB(), key, project.LoadOptions.WithClearKeys)
 		if err != nil {
 			return err
 		}
@@ -54,14 +54,18 @@ func (api *API) updateAsCodePipelineHandler() service.Handler {
 			return sdk.WithStack(sdk.ErrForbidden)
 		}
 
-		apps, err := application.LoadAsCode(api.mustDB(), api.Cache, key, fromRepo)
+		apps, err := application.LoadAsCode(api.mustDB(), key, fromRepo)
+		if err != nil {
+			return err
+		}
+
+		app, err := application.LoadByIDWithClearVCSStrategyPassword(api.mustDB(), apps[0].ID)
 		if err != nil {
 			return err
 		}
 
 		u := getAPIConsumer(ctx)
-
-		ope, err := pipeline.UpdatePipelineAsCode(ctx, api.Cache, api.mustDB(), *proj, p, branch, message, &apps[0], u)
+		ope, err := pipeline.UpdatePipelineAsCode(ctx, api.Cache, api.mustDB(), *proj, p, app.VCSServer, app.RepositoryFullname, branch, message, app.RepositoryStrategy, u)
 		if err != nil {
 			return err
 		}
@@ -129,7 +133,7 @@ func (api *API) updatePipelineHandler() service.Handler {
 		}
 
 		if err := tx.Commit(); err != nil {
-			return sdk.WrapError(err, "Cannot commit transaction")
+			return sdk.WithStack(err)
 		}
 
 		event.PublishPipelineUpdate(ctx, key, p.Name, oldName, getAPIConsumer(ctx))
@@ -160,7 +164,7 @@ func (api *API) postPipelineRollbackHandler() service.Handler {
 			return sdk.WithStack(sdk.ErrForbidden)
 		}
 
-		proj, errP := project.Load(db, api.Cache, key, project.LoadOptions.WithGroups)
+		proj, errP := project.Load(db, key, project.LoadOptions.WithGroups)
 		if errP != nil {
 			return sdk.WrapError(errP, "postPipelineRollbackHandler> Cannot load project")
 		}
@@ -197,7 +201,7 @@ func (api *API) postPipelineRollbackHandler() service.Handler {
 		done.Wait()
 
 		if err := tx.Commit(); err != nil {
-			return sdk.WrapError(err, "cannot commit transaction")
+			return sdk.WithStack(err)
 		}
 
 		event.PublishPipelineUpdate(ctx, key, audit.Pipeline.Name, name, u)
@@ -212,7 +216,7 @@ func (api *API) addPipelineHandler() service.Handler {
 		vars := mux.Vars(r)
 		key := vars[permProjectKey]
 
-		proj, err := project.Load(api.mustDB(), api.Cache, key, project.LoadOptions.Default)
+		proj, err := project.Load(api.mustDB(), key, project.LoadOptions.Default)
 		if err != nil {
 			return sdk.WrapError(err, "cannot load %s", key)
 		}
@@ -248,7 +252,7 @@ func (api *API) addPipelineHandler() service.Handler {
 		}
 
 		if err := tx.Commit(); err != nil {
-			return sdk.WrapError(err, "cannot commit transaction")
+			return sdk.WithStack(err)
 		}
 
 		event.PublishPipelineAdd(ctx, key, p, getAPIConsumer(ctx))
@@ -312,7 +316,7 @@ func (api *API) getPipelinesHandler() service.Handler {
 		vars := mux.Vars(r)
 		key := vars[permProjectKey]
 
-		project, err := project.Load(api.mustDB(), api.Cache, key, project.LoadOptions.Default)
+		project, err := project.Load(api.mustDB(), key, project.LoadOptions.Default)
 		if err != nil {
 			if !sdk.ErrorIs(err, sdk.ErrNoProject) {
 				log.Warning(ctx, "getPipelinesHandler: Cannot load %s: %s\n", key, err)
@@ -339,7 +343,7 @@ func (api *API) deletePipelineHandler() service.Handler {
 		key := vars[permProjectKey]
 		pipelineName := vars["pipelineKey"]
 
-		proj, errP := project.Load(api.mustDB(), api.Cache, key)
+		proj, errP := project.Load(api.mustDB(), key)
 		if errP != nil {
 			return sdk.WrapError(errP, "Cannot load project")
 		}
@@ -373,7 +377,7 @@ func (api *API) deletePipelineHandler() service.Handler {
 		}
 
 		if err := tx.Commit(); err != nil {
-			return sdk.WrapError(err, "Cannot commit transaction")
+			return sdk.WithStack(err)
 		}
 
 		event.PublishPipelineDelete(ctx, key, *p, getAPIConsumer(ctx))

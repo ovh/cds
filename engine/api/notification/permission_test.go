@@ -47,7 +47,7 @@ func Test_projectPermissionUserIDs(t *testing.T) {
 		Admin:              false,
 	}), "unable to insert user in group")
 
-	assert.NoError(t, project.Update(db, cache, proj))
+	assert.NoError(t, project.Update(db, proj))
 
 	group.DefaultGroup = g1
 

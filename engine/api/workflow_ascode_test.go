@@ -12,7 +12,6 @@ import (
 	"time"
 
 	"github.com/go-gorp/gorp"
-
 	"github.com/stretchr/testify/assert"
 
 	"github.com/ovh/cds/engine/api/application"
@@ -151,7 +150,7 @@ func TestPostUpdateWorkflowAsCodeHandler(t *testing.T) {
 	w.FromRepository = "myfromrepositoryurl"
 
 	var errP error
-	proj, errP = project.Load(api.mustDB(), api.Cache, proj.Key,
+	proj, errP = project.Load(api.mustDB(), proj.Key,
 		project.LoadOptions.WithApplicationWithDeploymentStrategies,
 		project.LoadOptions.WithPipelines,
 		project.LoadOptions.WithEnvironments,
@@ -349,7 +348,7 @@ func TestPostMigrateWorkflowAsCodeHandler(t *testing.T) {
 	w := initWorkflow(t, db, proj, app, pip, repoModel)
 
 	var errP error
-	proj, errP = project.Load(api.mustDB(), api.Cache, proj.Key,
+	proj, errP = project.Load(api.mustDB(), proj.Key,
 		project.LoadOptions.WithApplicationWithDeploymentStrategies,
 		project.LoadOptions.WithPipelines,
 		project.LoadOptions.WithEnvironments,
@@ -439,7 +438,7 @@ func createApplication(t *testing.T, db gorp.SqlExecutor, api *API, proj *sdk.Pr
 		RepositoryFullname: "foo/myrepo",
 		VCSServer:          "github",
 	}
-	assert.NoError(t, application.Insert(db, api.Cache, *proj, &app))
+	assert.NoError(t, application.Insert(db, *proj, &app))
 	assert.NoError(t, repositoriesmanager.InsertForApplication(db, &app, proj.Key))
 	return &app
 }

@@ -223,8 +223,6 @@ func ErrorToMessage(err error) (Message, bool) {
 	switch cdsError.ID {
 	case ErrPipelineNotFound.ID:
 		return NewMessage(MsgWorkflowErrorBadPipelineName, cdsError.Data), true
-	case ErrApplicationNotFound.ID:
-		return NewMessage(MsgWorkflowErrorBadApplicationName, cdsError.Data), true
 	case ErrEnvironmentNotFound.ID:
 		return NewMessage(MsgWorkflowErrorBadEnvironmentName, cdsError.Data), true
 	case ErrIntegrationtNotFound.ID:

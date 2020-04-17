@@ -82,7 +82,7 @@ func Test_getProjectsHandler(t *testing.T) {
 		RepositoryFullname: repofullname,
 	}
 	u, pass := assets.InsertAdminUser(t, api.mustDB())
-	test.NoError(t, application.Insert(db, api.Cache, *proj, app))
+	test.NoError(t, application.Insert(db, *proj, app))
 
 	vars := map[string]string{}
 	uri := api.Router.GetRoute("GET", api.getProjectsHandler, vars)
@@ -340,7 +340,7 @@ func Test_getprojectsHandler_AsProviderWithRequestedUsername(t *testing.T) {
 	app := &sdk.Application{
 		Name: sdk.RandomString(10),
 	}
-	require.NoError(t, application.Insert(api.mustDB(), api.Cache, *proj, app))
+	require.NoError(t, application.Insert(api.mustDB(), *proj, app))
 
 	// Call with an admin
 	sdkclientAdmin := cdsclient.NewProviderClient(cdsclient.ProviderConfig{

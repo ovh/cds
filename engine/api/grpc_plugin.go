@@ -64,7 +64,7 @@ func (api *API) postGRPCluginHandler() service.Handler {
 		}
 
 		if err := tx.Commit(); err != nil {
-			return sdk.WrapError(err, "cannot commit transaction")
+			return sdk.WithStack(err)
 		}
 
 		return service.WriteJSON(w, p, http.StatusOK)
@@ -139,7 +139,7 @@ func (api *API) putGRPCluginHandler() service.Handler {
 		}
 
 		if err := tx.Commit(); err != nil {
-			return sdk.WrapError(err, "Cannot commit transaction")
+			return sdk.WithStack(err)
 		}
 
 		return service.WriteJSON(w, p, http.StatusOK)

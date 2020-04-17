@@ -8,7 +8,6 @@ import (
 
 	"github.com/go-gorp/gorp"
 
-	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/observability"
@@ -264,7 +263,7 @@ func LoadPipelines(db gorp.SqlExecutor, projectID int64, loadDependencies bool) 
 }
 
 // LoadAllNames returns all pipeline names
-func LoadAllNames(db gorp.SqlExecutor, store cache.Store, projID int64) (sdk.IDNames, error) {
+func LoadAllNames(db gorp.SqlExecutor, projID int64) (sdk.IDNames, error) {
 	query := `SELECT pipeline.id, pipeline.name, pipeline.description
 			  FROM pipeline
 			  WHERE project_id = $1

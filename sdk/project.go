@@ -1,6 +1,8 @@
 package sdk
 
 import (
+	"database/sql/driver"
+	json "encoding/json"
 	"fmt"
 	"strings"
 	"time"
@@ -221,6 +223,24 @@ type ProjectVariableAudit struct {
 
 // Metadata represents metadata
 type Metadata map[string]string
+
+// Value returns driver.Value from Metadata.
+func (a Metadata) Value() (driver.Value, error) {
+	j, err := json.Marshal(a)
+	return j, WrapError(err, "cannot marshal Metadata")
+}
+
+// Scan Metadata.
+func (a *Metadata) Scan(src interface{}) error {
+	if src == nil {
+		return nil
+	}
+	source, ok := src.([]byte)
+	if !ok {
+		return WithStack(fmt.Errorf("type assertion .([]byte) failed (%T)", src))
+	}
+	return WrapError(json.Unmarshal(source, a), "cannot unmarshal Metadata")
+}
 
 //LastModification is stored in cache and used for ProjectLastUpdates computing
 type LastModification struct {

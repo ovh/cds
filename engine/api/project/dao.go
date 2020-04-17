@@ -17,12 +17,12 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
-func loadAllByRepo(ctx context.Context, db gorp.SqlExecutor, store cache.Store, query string, args []interface{}, opts ...LoadOptionFunc) (sdk.Projects, error) {
-	return loadprojects(ctx, db, store, opts, query, args...)
+func loadAllByRepo(ctx context.Context, db gorp.SqlExecutor, query string, args []interface{}, opts ...LoadOptionFunc) (sdk.Projects, error) {
+	return loadprojects(ctx, db, opts, query, args...)
 }
 
 // LoadAllByRepoAndGroupIDs returns all projects with an application linked to the repo against the groups
-func LoadAllByRepoAndGroupIDs(ctx context.Context, db gorp.SqlExecutor, store cache.Store, groupIDs []int64, repo string, opts ...LoadOptionFunc) (sdk.Projects, error) {
+func LoadAllByRepoAndGroupIDs(ctx context.Context, db gorp.SqlExecutor, groupIDs []int64, repo string, opts ...LoadOptionFunc) (sdk.Projects, error) {
 	query := `SELECT DISTINCT project.*
 		FROM  project
 		JOIN  application on project.id = application.project_id
@@ -36,7 +36,7 @@ func LoadAllByRepoAndGroupIDs(ctx context.Context, db gorp.SqlExecutor, store ca
 				$2 = ANY(string_to_array($1, ',')::int[])
 		)`
 	args := []interface{}{gorpmapping.IDsToQueryString(groupIDs), group.SharedInfraGroup.ID, repo}
-	return loadAllByRepo(ctx, db, store, query, args, opts...)
+	return loadAllByRepo(ctx, db, query, args, opts...)
 }
 
 // LoadAllByRepo returns all projects with an application linked to the repo
@@ -47,7 +47,7 @@ func LoadAllByRepo(ctx context.Context, db gorp.SqlExecutor, store cache.Store, 
 	WHERE application.repo_fullname = $1
 	ORDER by project.name, project.projectkey ASC`
 	args := []interface{}{repo}
-	return loadAllByRepo(ctx, db, store, query, args, opts...)
+	return loadAllByRepo(ctx, db, query, args, opts...)
 }
 
 // LoadAllByGroupIDs returns all projects given groups
@@ -64,13 +64,13 @@ func LoadAllByGroupIDs(ctx context.Context, db gorp.SqlExecutor, store cache.Sto
 	)
 	ORDER by project.name, project.projectkey ASC`
 	args := []interface{}{gorpmapping.IDsToQueryString(IDs), group.SharedInfraGroup.ID}
-	return loadprojects(ctx, db, store, opts, query, args...)
+	return loadprojects(ctx, db, opts, query, args...)
 }
 
 // LoadAll returns all projects
 func LoadAll(ctx context.Context, db gorp.SqlExecutor, store cache.Store, opts ...LoadOptionFunc) (sdk.Projects, error) {
 	query := "select project.* from project ORDER by project.name, project.projectkey ASC"
-	return loadprojects(ctx, db, store, opts, query)
+	return loadprojects(ctx, db, opts, query)
 }
 
 // LoadPermissions loads all projects where group has access
@@ -123,8 +123,8 @@ func Exist(db gorp.SqlExecutor, projectKey string) (bool, error) {
 }
 
 // Delete delete one or more projects given the key
-func Delete(db gorp.SqlExecutor, store cache.Store, key string) error {
-	proj, err := Load(db, store, key, nil)
+func Delete(db gorp.SqlExecutor, key string) error {
+	proj, err := Load(db, key, nil)
 	if err != nil {
 		return err
 	}
@@ -136,7 +136,7 @@ func Delete(db gorp.SqlExecutor, store cache.Store, key string) error {
 const BuiltinGPGKey = "builtin"
 
 // Insert a new project in database
-func Insert(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project) error {
+func Insert(db gorp.SqlExecutor, proj *sdk.Project) error {
 	if err := proj.IsValid(); err != nil {
 		return sdk.WrapError(err, "project is not valid")
 	}
@@ -170,7 +170,7 @@ func Insert(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project) error {
 }
 
 // Update a new project in database
-func Update(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project) error {
+func Update(db gorp.SqlExecutor, proj *sdk.Project) error {
 	if err := proj.IsValid(); err != nil {
 		return sdk.WrapError(err, "project is not valid")
 	}
@@ -218,29 +218,29 @@ func LoadProjectByNodeJobRunID(ctx context.Context, db gorp.SqlExecutor, store c
 		JOIN workflow_node_run_job ON workflow_node_run_job.workflow_node_run_id = workflow_node_run.id
 		WHERE workflow_node_run_job.id = $1
 	`
-	return load(ctx, db, store, opts, query, nodeJobRunID)
+	return load(ctx, db, opts, query, nodeJobRunID)
 }
 
 // LoadByID returns a project with all its variables and applications given a user. It can also returns pipelines, environments, groups, permission, and repositorires manager. See LoadOptions
-func LoadByID(db gorp.SqlExecutor, store cache.Store, id int64, opts ...LoadOptionFunc) (*sdk.Project, error) {
-	return load(context.TODO(), db, store, opts, "select project.* from project where id = $1", id)
+func LoadByID(db gorp.SqlExecutor, id int64, opts ...LoadOptionFunc) (*sdk.Project, error) {
+	return load(context.Background(), db, opts, "select project.* from project where id = $1", id)
 }
 
 // Load  returns a project with all its variables and applications given a user. It can also returns pipelines, environments, groups, permission, and repositorires manager. See LoadOptions
-func Load(db gorp.SqlExecutor, store cache.Store, key string, opts ...LoadOptionFunc) (*sdk.Project, error) {
-	return load(nil, db, store, opts, "select project.* from project where projectkey = $1", key)
+func Load(db gorp.SqlExecutor, key string, opts ...LoadOptionFunc) (*sdk.Project, error) {
+	return load(context.Background(), db, opts, "select project.* from project where projectkey = $1", key)
 }
 
 // LoadProjectByWorkflowID loads a project from workflow iD
-func LoadProjectByWorkflowID(db gorp.SqlExecutor, store cache.Store, workflowID int64, opts ...LoadOptionFunc) (*sdk.Project, error) {
+func LoadProjectByWorkflowID(db gorp.SqlExecutor, workflowID int64, opts ...LoadOptionFunc) (*sdk.Project, error) {
 	query := `SELECT project.id, project.name, project.projectKey, project.last_modified
 	          FROM project
 	          JOIN workflow ON workflow.project_id = project.id
 	          WHERE workflow.id = $1 `
-	return load(context.TODO(), db, store, opts, query, workflowID)
+	return load(context.Background(), db, opts, query, workflowID)
 }
 
-func loadprojects(ctx context.Context, db gorp.SqlExecutor, store cache.Store, opts []LoadOptionFunc, query string, args ...interface{}) ([]sdk.Project, error) {
+func loadprojects(ctx context.Context, db gorp.SqlExecutor, opts []LoadOptionFunc, query string, args ...interface{}) ([]sdk.Project, error) {
 	var res []dbProject
 	if _, err := db.Select(&res, query, args...); err != nil {
 		if err == sql.ErrNoRows {
@@ -256,7 +256,7 @@ func loadprojects(ctx context.Context, db gorp.SqlExecutor, store cache.Store, o
 			log.Error(ctx, "loadprojects> PostGet error (ID=%d, Key:%s): %v", p.ID, p.Key, err)
 			continue
 		}
-		proj, err := unwrap(db, store, p, opts)
+		proj, err := unwrap(db, p, opts)
 		if err != nil {
 			log.Error(ctx, "loadprojects> unwrap error (ID=%d, Key:%s): %v", p.ID, p.Key, err)
 			continue
@@ -267,7 +267,7 @@ func loadprojects(ctx context.Context, db gorp.SqlExecutor, store cache.Store, o
 	return projs, nil
 }
 
-func load(ctx context.Context, db gorp.SqlExecutor, store cache.Store, opts []LoadOptionFunc, query string, args ...interface{}) (*sdk.Project, error) {
+func load(ctx context.Context, db gorp.SqlExecutor, opts []LoadOptionFunc, query string, args ...interface{}) (*sdk.Project, error) {
 	var end func()
 	_, end = observability.Span(ctx, "project.load")
 	defer end()
@@ -281,17 +281,17 @@ func load(ctx context.Context, db gorp.SqlExecutor, store cache.Store, opts []Lo
 		return nil, sdk.WithStack(err)
 	}
 
-	return unwrap(db, store, dbProj, opts)
+	return unwrap(db, dbProj, opts)
 }
 
-func unwrap(db gorp.SqlExecutor, store cache.Store, p *dbProject, opts []LoadOptionFunc) (*sdk.Project, error) {
+func unwrap(db gorp.SqlExecutor, p *dbProject, opts []LoadOptionFunc) (*sdk.Project, error) {
 	proj := sdk.Project(*p)
 
 	for _, f := range opts {
 		if f == nil {
 			continue
 		}
-		if err := f(db, store, &proj); err != nil && sdk.Cause(err) != sql.ErrNoRows {
+		if err := f(db, &proj); err != nil && sdk.Cause(err) != sql.ErrNoRows {
 			return nil, err
 		}
 	}

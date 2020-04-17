@@ -33,13 +33,13 @@ func ParseAndImport(ctx context.Context, db gorp.SqlExecutor, cache cache.Store,
 	}
 
 	//Check if app exist
-	oldApp, errl := LoadByName(db, cache, proj.Key, eapp.Name,
+	oldApp, err := LoadByName(db, proj.Key, eapp.Name,
 		LoadOptions.WithVariablesWithClearPassword,
 		LoadOptions.WithClearKeys,
 		LoadOptions.WithClearDeploymentStrategies,
 	)
-	if errl != nil && !sdk.ErrorIs(errl, sdk.ErrApplicationNotFound) {
-		return nil, msgList, sdk.WrapError(errl, "unable to load application")
+	if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
+		return nil, msgList, sdk.WrapError(err, "unable to load application")
 	}
 
 	//If the application exist and we don't want to force, raise an error
@@ -148,9 +148,6 @@ func ParseAndImport(ctx context.Context, db gorp.SqlExecutor, cache cache.Store,
 			return app, msgList, sdk.WrapError(sdk.NewError(sdk.ErrWrongRequest, err), "unable to decrypt vcs password")
 		}
 		app.RepositoryStrategy.Password = clearPWD
-		if errE := EncryptVCSStrategyPassword(app); errE != nil {
-			return app, msgList, sdk.WrapError(errE, "cannot encrypt vcs password")
-		}
 	}
 
 	// deployment strategies
@@ -204,7 +201,7 @@ func ParseAndImport(ctx context.Context, db gorp.SqlExecutor, cache cache.Store,
 		}
 	}(&msgList)
 
-	globalError := Import(ctx, db, cache, proj, app, eapp.VCSServer, u, msgChan)
+	globalError := Import(ctx, db, proj, app, eapp.VCSServer, u, msgChan)
 	close(msgChan)
 	done.Wait()
 

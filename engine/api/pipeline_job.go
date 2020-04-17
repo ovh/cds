@@ -71,7 +71,7 @@ func (api *API) addJobToStageHandler() service.Handler {
 		defer tx.Rollback() // nolint
 
 		// check that action used by job can be used by pipeline's project
-		project, err := project.Load(tx, api.Cache, pip.ProjectKey, project.LoadOptions.WithGroups)
+		project, err := project.Load(tx, pip.ProjectKey, project.LoadOptions.WithGroups)
 		if err != nil {
 			return sdk.WithStack(err)
 		}
@@ -195,7 +195,7 @@ func (api *API) updateJobHandler() service.Handler {
 		defer tx.Rollback() // nolint
 
 		// check that action used by job can be used by pipeline's project
-		project, err := project.Load(tx, api.Cache, pipelineData.ProjectKey, project.LoadOptions.WithGroups)
+		project, err := project.Load(tx, pipelineData.ProjectKey, project.LoadOptions.WithGroups)
 		if err != nil {
 			return sdk.WithStack(err)
 		}
@@ -230,7 +230,7 @@ func (api *API) updateJobHandler() service.Handler {
 		}
 
 		if err := tx.Commit(); err != nil {
-			return sdk.WrapError(err, "cannot commit transaction")
+			return sdk.WithStack(err)
 		}
 
 		if err := pipeline.LoadPipelineStage(ctx, api.mustDB(), pipelineData); err != nil {
@@ -306,7 +306,7 @@ func (api *API) deleteJobHandler() service.Handler {
 		}
 
 		if err := tx.Commit(); err != nil {
-			return sdk.WrapError(err, "Cannot commit transaction")
+			return sdk.WithStack(err)
 		}
 
 		if err := pipeline.LoadPipelineStage(ctx, api.mustDB(), pipelineData); err != nil {

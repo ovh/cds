@@ -111,7 +111,7 @@ func (api *API) addEnvironmentHandler() service.Handler {
 		vars := mux.Vars(r)
 		key := vars[permProjectKey]
 
-		proj, errProj := project.Load(api.mustDB(), api.Cache, key, project.LoadOptions.Default)
+		proj, errProj := project.Load(api.mustDB(), key, project.LoadOptions.Default)
 		if errProj != nil {
 			return sdk.WrapError(errProj, "addEnvironmentHandler> Cannot load %s", key)
 		}
@@ -134,7 +134,7 @@ func (api *API) addEnvironmentHandler() service.Handler {
 		}
 
 		if err := tx.Commit(); err != nil {
-			return sdk.WrapError(err, "Cannot commit transaction")
+			return sdk.WithStack(err)
 		}
 
 		var errEnvs error
@@ -156,7 +156,7 @@ func (api *API) deleteEnvironmentHandler() service.Handler {
 		projectKey := vars[permProjectKey]
 		environmentName := vars["environmentName"]
 
-		p, errProj := project.Load(api.mustDB(), api.Cache, projectKey, project.LoadOptions.Default)
+		p, errProj := project.Load(api.mustDB(), projectKey, project.LoadOptions.Default)
 		if errProj != nil {
 			return sdk.WrapError(errProj, "deleteEnvironmentHandler> Cannot load project %s", projectKey)
 		}
@@ -180,7 +180,7 @@ func (api *API) deleteEnvironmentHandler() service.Handler {
 		}
 
 		if err := tx.Commit(); err != nil {
-			return sdk.WrapError(err, "Cannot commit transaction")
+			return sdk.WithStack(err)
 		}
 
 		event.PublishEnvironmentDelete(ctx, p.Key, *env, getAPIConsumer(ctx))
@@ -210,7 +210,7 @@ func (api *API) updateEnvironmentHandler() service.Handler {
 			return sdk.WithStack(sdk.ErrForbidden)
 		}
 
-		p, errProj := project.Load(api.mustDB(), api.Cache, projectKey)
+		p, errProj := project.Load(api.mustDB(), projectKey)
 		if errProj != nil {
 			return sdk.WrapError(errProj, "updateEnvironmentHandler> Cannot load project %s", projectKey)
 		}
@@ -234,7 +234,7 @@ func (api *API) updateEnvironmentHandler() service.Handler {
 		}
 
 		if err := tx.Commit(); err != nil {
-			return sdk.WrapError(err, "Cannot commit transaction")
+			return sdk.WithStack(err)
 		}
 
 		event.PublishEnvironmentUpdate(ctx, p.Key, *env, *oldEnv, getAPIConsumer(ctx))
@@ -261,7 +261,7 @@ func (api *API) cloneEnvironmentHandler() service.Handler {
 			return sdk.WrapError(errEnv, "cloneEnvironmentHandler> Cannot load environment %s: %s", environmentName, errEnv)
 		}
 
-		p, errProj := project.Load(api.mustDB(), api.Cache, projectKey)
+		p, errProj := project.Load(api.mustDB(), projectKey)
 		if errProj != nil {
 			return sdk.WrapError(errProj, "cloneEnvironmentHandler> Cannot load project %s: %s", projectKey, errProj)
 		}
