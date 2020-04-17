@@ -69,9 +69,9 @@ func ParseAndImport(ctx context.Context, db gorp.SqlExecutor, store cache.Store,
 		// Get spawn infos from error
 		msg, ok := sdk.ErrorToMessage(err)
 		if ok {
-			return nil, []sdk.Message{msg}, sdk.WrapError(err, "Workflow is not valid")
+			return nil, []sdk.Message{msg}, sdk.WrapError(err, "workflow is not valid")
 		}
-		return nil, nil, sdk.WrapError(err, "Workflow is not valid")
+		return nil, nil, sdk.WrapError(err, "workflow is not valid")
 	}
 
 	if err := RenameNode(ctx, db, w); err != nil {

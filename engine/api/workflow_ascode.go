@@ -37,14 +37,13 @@ func (api *API) getWorkflowAsCodeHandler() service.Handler {
 	}
 }
 
-// postWorkflowAsCodeHandler Update an as code workflow
-// @title Make the workflow as code
-// @title Update an as code workflow
+// postWorkflowAsCodeHandler update an ascode workflow, this will create a pull request to target repository.
 func (api *API) postWorkflowAsCodeHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		key := vars["key"]
 		workflowName := vars["permWorkflowName"]
+
 		migrate := FormBool(r, "migrate")
 		branch := FormString(r, "branch")
 		message := FormString(r, "message")

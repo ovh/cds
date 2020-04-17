@@ -33,18 +33,18 @@ func (s *Service) processGitClone(ctx context.Context, op *sdk.Operation) (repo.
 		log.Info(ctx, "processGitClone> cloning %s into %s", r.URL, r.Basedir)
 		gitRepo, err = repo.Clone(r.Basedir, r.URL, opts...)
 		if err != nil {
-			return gitRepo, "", "", err
+			return gitRepo, "", "", sdk.NewErrorFrom(err, "cannot clone repository at given url: %s", r.URL)
 		}
 	}
 
 	f, err := gitRepo.FetchURL()
 	if err != nil {
-		return gitRepo, "", "", err
+		return gitRepo, "", "", sdk.WithStack(err)
 	}
 
 	d, err := gitRepo.DefaultBranch()
 	if err != nil {
-		return gitRepo, "", "", err
+		return gitRepo, "", "", sdk.WithStack(err)
 	}
 
 	op.RepositoryInfo = &sdk.OperationRepositoryInfo{
@@ -56,7 +56,7 @@ func (s *Service) processGitClone(ctx context.Context, op *sdk.Operation) (repo.
 	//Check branch
 	currentBranch, err := gitRepo.CurrentBranch()
 	if err != nil {
-		return gitRepo, "", "", err
+		return gitRepo, "", "", sdk.WithStack(err)
 	}
 	return gitRepo, r.Basedir, currentBranch, nil
 }
