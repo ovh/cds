@@ -2,6 +2,7 @@ package workflow
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/go-gorp/gorp"
 
@@ -48,9 +49,20 @@ func Pull(ctx context.Context, db gorp.SqlExecutor, cache cache.Store, proj sdk.
 
 	wf, err := Load(ctx, db, cache, proj, name, LoadOptions{
 		DeepPipeline: true,
+		WithTemplate: true,
 	})
 	if err != nil {
 		return wp, sdk.WrapError(err, "cannot load workflow %s", name)
+	}
+
+	if wf.TemplateInstance != nil {
+		return exportentities.WorkflowComponents{
+			Template: exportentities.TemplateInstance{
+				Name:       wf.Name,
+				From:       fmt.Sprintf("%s@%d", wf.TemplateInstance.Template.Path(), wf.TemplateInstance.WorkflowTemplateVersion),
+				Parameters: wf.TemplateInstance.Request.Parameters,
+			},
+		}, nil
 	}
 
 	// Reload app to retrieve secrets

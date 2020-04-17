@@ -53,7 +53,6 @@ type Workflow struct {
 	EventIntegrations       []ProjectIntegration         `json:"event_integrations,omitempty" db:"-" cli:"-"`
 	AsCodeEvent             []AsCodeEvent                `json:"as_code_events,omitempty" db:"-" cli:"-"`
 	// aggregates
-	Template         *WorkflowTemplate         `json:"-" db:"-" cli:"-"`
 	TemplateInstance *WorkflowTemplateInstance `json:"-" db:"-" cli:"-"`
 	FromTemplate     string                    `json:"from_template,omitempty" db:"-" cli:"-"`
 	TemplateUpToDate bool                      `json:"template_up_to_date,omitempty" db:"-" cli:"-"`

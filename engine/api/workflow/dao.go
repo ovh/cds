@@ -24,6 +24,7 @@ import (
 	"github.com/ovh/cds/engine/api/keys"
 	"github.com/ovh/cds/engine/api/observability"
 	"github.com/ovh/cds/engine/api/pipeline"
+	"github.com/ovh/cds/engine/api/workflowtemplate"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
@@ -71,6 +72,7 @@ type LoadOptions struct {
 	WithIcon              bool
 	WithAsCodeUpdateEvent bool
 	WithIntegrations      bool
+	WithTemplate          bool
 }
 
 // UpdateOptions is option to parse a workflow
@@ -585,6 +587,18 @@ func load(ctx context.Context, db gorp.SqlExecutor, proj sdk.Project, opts LoadO
 			return nil, sdk.WrapError(errInt, "Load> unable to load workflow integrations")
 		}
 		res.EventIntegrations = integrations
+	}
+
+	if opts.WithTemplate {
+		wti, err := workflowtemplate.LoadInstanceByWorkflowID(ctx, db, res.ID, workflowtemplate.LoadInstanceOptions.WithTemplate)
+		if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
+			return nil, err
+		}
+		if wti != nil {
+			res.TemplateInstance = wti
+			res.FromTemplate = fmt.Sprintf("%s@%d", wti.Template.Path(), wti.WorkflowTemplateVersion)
+			res.TemplateUpToDate = wti.Template.Version == wti.WorkflowTemplateVersion
+		}
 	}
 
 	_, next = observability.Span(ctx, "workflow.load.loadNotifications")
