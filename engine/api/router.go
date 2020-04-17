@@ -411,7 +411,7 @@ func (r *Router) handle(uri string, scope HandlerScope, handlers ...*service.Han
 			ctx, err = m(ctx, responseWriter, req, rc)
 			if err != nil {
 				observability.Record(r.Background, Errors, 1)
-				service.WriteError(ctx, w, req, err)
+				service.WriteError(ctx, responseWriter, req, err)
 				deferFunc(ctx)
 				return
 			}

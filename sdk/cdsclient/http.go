@@ -188,10 +188,15 @@ func (c *client) Stream(ctx context.Context, method string, path string, body io
 	labels := pprof.Labels("path", path, "method", method)
 	ctx = pprof.WithLabels(ctx, labels)
 	pprof.SetGoroutineLabels(ctx)
-	var savederror error
 
-	if body == nil {
-		body = bytes.NewBuffer(nil)
+	// In case where the given reader is not a ReadSeeker we should store the body in ram to retry http request
+	var bodyBytes []byte
+	var err error
+	if _, ok := body.(io.ReadSeeker); !ok && body != nil {
+		bodyBytes, err = ioutil.ReadAll(body)
+		if err != nil {
+			return nil, nil, 0, sdk.WithStack(err)
+		}
 	}
 
 	var url string
@@ -201,8 +206,19 @@ func (c *client) Stream(ctx context.Context, method string, path string, body io
 		url = c.config.Host + path
 	}
 
+	var savederror error
 	for i := 0; i <= c.config.Retry; i++ {
-		req, requestError := http.NewRequest(method, url, body)
+		var req *http.Request
+		var requestError error
+		if rs, ok := body.(io.ReadSeeker); ok {
+			if _, err := rs.Seek(0, 0); err != nil {
+				savederror = err
+				continue
+			}
+			req, requestError = http.NewRequest(method, url, body)
+		} else {
+			req, requestError = http.NewRequest(method, url, bytes.NewBuffer(bodyBytes))
+		}
 		if requestError != nil {
 			savederror = requestError
 			continue

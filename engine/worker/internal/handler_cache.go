@@ -77,17 +77,6 @@ func cachePushHandler(ctx context.Context, wk *CurrentWorker) http.HandlerFunc {
 			return
 		}
 
-		// Seek to be able to read the content of the file just after it had been written
-		if _, err := tarF.Seek(0, 0); err != nil {
-			err = sdk.Error{
-				Message: "worker cache push > Cannot seek tmp tar : " + err.Error(),
-				Status:  http.StatusInternalServerError,
-			}
-			log.Error(ctx, "%v", err)
-			writeError(w, r, err)
-			return
-		}
-
 		tarInfo, err := tarF.Stat()
 		if err != nil {
 			err = sdk.Error{
@@ -113,8 +102,13 @@ func cachePushHandler(ctx context.Context, wk *CurrentWorker) http.HandlerFunc {
 
 		var errPush error
 		for i := 0; i < 10; i++ {
-			if errPush = wk.client.WorkflowCachePush(projectKey, sdk.DefaultIfEmptyStorage(c.IntegrationName), c.Tag, tarF, int(tarInfo.Size())); errPush == nil {
-				return
+			// Seek to be able to read the content of the file from beginning just after it had been written or in case of retry
+			if _, err := tarF.Seek(0, 0); err != nil {
+				errPush = err
+			} else {
+				if errPush = wk.client.WorkflowCachePush(projectKey, sdk.DefaultIfEmptyStorage(c.IntegrationName), c.Tag, tarF, int(tarInfo.Size())); errPush == nil {
+					return
+				}
 			}
 			time.Sleep(3 * time.Second)
 			log.Error(ctx, "worker cache push > cannot push cache (retry x%d) : %v", i, errPush)

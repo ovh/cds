@@ -92,13 +92,22 @@ func Test_cachePushPullHandler(t *testing.T) {
 	wkPull.client = m
 
 	var generatedTar bytes.Buffer
+	var retryPush int
 	m.EXPECT().WorkflowCachePush("myProject", "shared.infra", "myTag", gomock.Any(), gomock.Any()).DoAndReturn(
 		func(projectKey, integrationName, ref string, tarContent io.Reader, size int) error {
+			retryPush++
+			if retryPush == 1 {
+				partialRead := make([]byte, 10)
+				l, err := tarContent.Read(partialRead)
+				require.NoError(t, err)
+				require.Equal(t, 10, l, "we should have read only 10 bytes of the tar")
+				return fmt.Errorf("a fake error occured with http request")
+			}
 			_, err := io.Copy(&generatedTar, tarContent)
 			require.NoError(t, err)
 			return nil
 		},
-	).Times(1)
+	).Times(2)
 	m.EXPECT().WorkflowCachePull("myProject", "shared.infra", "myTag").DoAndReturn(
 		func(projectKey, integrationName, ref string) (io.Reader, error) {
 			return bytes.NewBuffer(generatedTar.Bytes()), nil
