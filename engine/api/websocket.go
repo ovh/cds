@@ -223,21 +223,74 @@ func (c *websocketClient) readUpdateFilterChan(ctx context.Context, db *gorp.DbM
 func (c *websocketClient) updateEventFilter(ctx context.Context, db gorp.SqlExecutor, m sdk.WebsocketFilter) error {
 	c.mutex.Lock()
 	defer c.mutex.Unlock()
-	// Subscribe to project
-	if (m.ProjectKey != "" && m.WorkflowName == "") || (m.ProjectKey != "" && m.Operation != "") {
-		perms, err := permission.LoadProjectMaxLevelPermission(ctx, db, []string{m.ProjectKey}, getAPIConsumer(ctx).GetGroupIDs())
+	switch m.Type {
+	case sdk.WebsocketFilterTypeProject:
+		if m.ProjectKey == "" {
+			return sdk.ErrWrongRequest
+		}
+		b, err := c.hasProjectPermission(ctx, db, m)
 		if err != nil {
 			return err
 		}
-		maxLevelPermission := perms.Level(m.ProjectKey)
-		if maxLevelPermission < sdk.PermissionRead && !isMaintainer(ctx) && !isAdmin(ctx) {
-			return sdk.WithStack(sdk.ErrForbidden)
+		if b {
+			c.filter = sdk.WebsocketFilter{
+				ProjectKey: m.ProjectKey,
+				Type:       m.Type,
+				Operation:  m.Operation,
+			}
 		}
-		c.filter = m
-	}
-
-	// Subscribe to workflow
-	if m.ProjectKey != "" && m.WorkflowName != "" {
+	case sdk.WebsocketFilterTypeApplication:
+		if m.ProjectKey == "" || m.ApplicationName == "" {
+			return sdk.ErrWrongRequest
+		}
+		b, err := c.hasProjectPermission(ctx, db, m)
+		if err != nil {
+			return err
+		}
+		if b {
+			c.filter = sdk.WebsocketFilter{
+				ProjectKey:      m.ProjectKey,
+				Type:            m.Type,
+				ApplicationName: m.ApplicationName,
+				Operation:       m.Operation,
+			}
+		}
+	case sdk.WebsocketFilterTypePipeline:
+		if m.ProjectKey == "" || m.PipelineName == "" {
+			return sdk.ErrWrongRequest
+		}
+		b, err := c.hasProjectPermission(ctx, db, m)
+		if err != nil {
+			return err
+		}
+		if b {
+			c.filter = sdk.WebsocketFilter{
+				ProjectKey:   m.ProjectKey,
+				Type:         m.Type,
+				PipelineName: m.PipelineName,
+				Operation:    m.Operation,
+			}
+		}
+	case sdk.WebsocketFilterTypeEnvironment:
+		if m.ProjectKey == "" || m.EnvironmentName == "" {
+			return sdk.ErrWrongRequest
+		}
+		b, err := c.hasProjectPermission(ctx, db, m)
+		if err != nil {
+			return err
+		}
+		if b {
+			c.filter = sdk.WebsocketFilter{
+				ProjectKey:      m.ProjectKey,
+				Type:            m.Type,
+				EnvironmentName: m.EnvironmentName,
+				Operation:       m.Operation,
+			}
+		}
+	case sdk.WebsocketFilterTypeWorkflow:
+		if m.ProjectKey == "" || m.WorkflowName == "" {
+			return sdk.ErrWrongRequest
+		}
 		perms, err := permission.LoadWorkflowMaxLevelPermission(ctx, db, m.ProjectKey, []string{m.WorkflowName}, getAPIConsumer(ctx).GetGroupIDs())
 		if err != nil {
 			return err
@@ -246,12 +299,35 @@ func (c *websocketClient) updateEventFilter(ctx context.Context, db gorp.SqlExec
 		if maxLevelPermission < sdk.PermissionRead && !isMaintainer(ctx) && !isAdmin(ctx) {
 			return sdk.WithStack(sdk.ErrForbidden)
 		}
-		c.filter = m
+
+		c.filter = sdk.WebsocketFilter{
+			ProjectKey:        m.ProjectKey,
+			Type:              m.Type,
+			WorkflowName:      m.WorkflowName,
+			WorkflowNodeRunID: m.WorkflowNodeRunID,
+			WorkflowRunNumber: m.WorkflowRunNumber,
+			Operation:         m.Operation,
+		}
+	case sdk.WebsocketFilterTypeQueue:
+		c.filter = sdk.WebsocketFilter{
+			Queue: true,
+			Type:  m.Type,
+		}
 	}
 
-	c.filter.Queue = m.Queue
-
 	return nil
+}
+
+func (c *websocketClient) hasProjectPermission(ctx context.Context, db gorp.SqlExecutor, m sdk.WebsocketFilter) (bool, error) {
+	perms, err := permission.LoadProjectMaxLevelPermission(ctx, db, []string{m.ProjectKey}, getAPIConsumer(ctx).GetGroupIDs())
+	if err != nil {
+		return false, err
+	}
+	maxLevelPermission := perms.Level(m.ProjectKey)
+	if maxLevelPermission < sdk.PermissionRead && !isMaintainer(ctx) && !isAdmin(ctx) {
+		return false, sdk.WithStack(sdk.ErrForbidden)
+	}
+	return true, nil
 }
 
 // Send an event to a client
@@ -268,55 +344,48 @@ func (c *websocketClient) send(ctx context.Context, event sdk.Event) (err error)
 		return nil
 	}
 
-	if event.EventType == fmt.Sprintf("%T", sdk.EventRunWorkflowJob{}) && c.filter.Queue {
-		// Do not check anything else
-
-		// OPERATION EVENT
-	} else if event.EventType == fmt.Sprintf("%T", sdk.Operation{}) && c.filter.Operation == event.OperationUUID && c.filter.ProjectKey == event.ProjectKey {
-		// Do not check anything else
-	} else {
-		switch {
-		// PROJECT EVENT
-		case strings.HasPrefix(event.EventType, "sdk.EventProject"):
-			if event.ProjectKey != c.filter.ProjectKey {
-				return nil
-			}
-			// APPLICATION EVENT
-		case strings.HasPrefix(event.EventType, "sdk.EventApplication"):
-			if event.ProjectKey != c.filter.ProjectKey || event.ApplicationName != c.filter.ApplicationName {
-				return nil
-			}
-			// PIPELINE EVENT
-		case strings.HasPrefix(event.EventType, "sdk.EventPipeline"):
-			if event.ProjectKey != c.filter.ProjectKey || event.PipelineName != c.filter.PipelineName {
-				return nil
-			}
-			// ENVIRONMENT EVENT
-		case strings.HasPrefix(event.EventType, "sdk.EventEnvironment"):
-			if event.ProjectKey != c.filter.ProjectKey || event.EnvironmentName != c.filter.EnvironmentName {
-				return nil
-			}
-			// WORKFLOW EVENT
-		case strings.HasPrefix(event.EventType, "sdk.EventWorkflow"):
-			if event.ProjectKey != c.filter.ProjectKey || event.WorkflowName != c.filter.WorkflowName {
-				return nil
-			}
-		case strings.HasPrefix(event.EventType, "sdk.EventRunWorkflow"):
-			// WORKFLOW RUN EVENT
-			if event.ProjectKey != c.filter.ProjectKey || event.WorkflowName != c.filter.WorkflowName {
-				return nil
-			}
-
-			if c.filter.WorkflowRunNumber != 0 && event.WorkflowRunNum != c.filter.WorkflowRunNumber {
-				return nil
-			}
-			// WORKFLOW NODE RUN EVENT
-			if c.filter.WorkflowNodeRunID != 0 && event.WorkflowNodeRunID != c.filter.WorkflowNodeRunID {
-				return nil
-			}
-		default:
-			return nil
+	sendEvent := false
+	switch {
+	// Event on Job
+	case event.EventType == fmt.Sprintf("%T", sdk.EventRunWorkflowJob{}) && c.filter.Queue && c.filter.Type == sdk.WebsocketFilterTypeQueue:
+		sendEvent = true
+	// Event on Operation
+	case event.EventType == fmt.Sprintf("%T", sdk.Operation{}) && c.filter.Operation == event.OperationUUID && c.filter.ProjectKey == event.ProjectKey:
+		sendEvent = true
+	// Event on project
+	case strings.HasPrefix(event.EventType, "sdk.EventProject") && event.ProjectKey == c.filter.ProjectKey && c.filter.Type == sdk.WebsocketFilterTypeProject:
+		sendEvent = true
+	// Event on application
+	case strings.HasPrefix(event.EventType, "sdk.EventApplication") && event.ProjectKey == c.filter.ProjectKey && event.ApplicationName == c.filter.ApplicationName && c.filter.Type == sdk.WebsocketFilterTypeApplication:
+		sendEvent = true
+	// Event on pipeline
+	case strings.HasPrefix(event.EventType, "sdk.EventPipeline") && event.ProjectKey == c.filter.ProjectKey && event.PipelineName == c.filter.PipelineName && c.filter.Type == sdk.WebsocketFilterTypePipeline:
+		sendEvent = true
+	// Event on environment
+	case strings.HasPrefix(event.EventType, "sdk.EventEnvironment") && event.ProjectKey == c.filter.ProjectKey && event.EnvironmentName == c.filter.EnvironmentName && c.filter.Type == sdk.WebsocketFilterTypeEnvironment:
+		sendEvent = true
+	// Event on workflow
+	case strings.HasPrefix(event.EventType, "sdk.EventWorkflow") && event.ProjectKey == c.filter.ProjectKey && event.WorkflowName == c.filter.WorkflowName && c.filter.Type == sdk.WebsocketFilterTypeWorkflow:
+		sendEvent = true
+	// Event on runworkflow*
+	case strings.HasPrefix(event.EventType, "sdk.EventRunWorkflow") && c.filter.Type == sdk.WebsocketFilterTypeWorkflow:
+		if event.ProjectKey != c.filter.ProjectKey || event.WorkflowName != c.filter.WorkflowName {
+			sendEvent = false
 		}
+		if c.filter.WorkflowRunNumber != 0 && event.WorkflowRunNum != c.filter.WorkflowRunNumber {
+			sendEvent = false
+		}
+		// WORKFLOW NODE RUN EVENT
+		if c.filter.WorkflowNodeRunID != 0 && event.WorkflowNodeRunID != c.filter.WorkflowNodeRunID {
+			sendEvent = false
+		}
+		sendEvent = true
+	default:
+		sendEvent = false
+	}
+
+	if !sendEvent {
+		return nil
 	}
 
 	msg := sdk.WebsocketEvent{

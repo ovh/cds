@@ -1,12 +1,12 @@
 import { Injectable } from '@angular/core';
+import { Router } from '@angular/router';
+import { AppService } from 'app/app.service';
+import { AuthentifiedUser } from 'app/model/user.model';
+import { WebSocketEvent, WebSocketMessage } from 'app/model/websocket.model';
+import { ToastService } from 'app/shared/toast/ToastService';
 import { WebSocketSubject } from 'rxjs/internal-compatibility';
 import { delay, retryWhen } from 'rxjs/operators';
-import { WebSocketEvent, WebSocketMessage } from 'app/model/websocket.model';
-import { Router } from '@angular/router';
-import { ToastService } from 'app/shared/toast/ToastService';
-import { AppService } from 'app/app.service';
 import { webSocket } from 'rxjs/webSocket';
-import { AuthentifiedUser } from 'app/model/user.model';
 
 @Injectable()
 export class EventService {
@@ -25,7 +25,7 @@ export class EventService {
         if (!user.isAdmin()) {
             return
         }
-        if (!localStorage.getItem("WS-EVENT")) {
+        if (!localStorage.getItem('WS-EVENT')) {
             return
         }
         console.log('Starting websocket');
@@ -87,6 +87,7 @@ export class EventService {
                         break;
                     case 2: // project view
                         msg.project_key = urlSplitted[1].split('?')[0];
+                        msg.type = 'project';
                         break;
                     default: // App/pipeline/env/workflow view
                         msg.project_key = urlSplitted[1].split('?')[0];
@@ -107,27 +108,33 @@ export class EventService {
             case 'pipeline':
                 if (urlSplitted.length >= 4) {
                     msg.pipeline_name = urlSplitted[3].split('?')[0];
+                    msg.type = 'pipeline';
                 }
                 break;
             case 'application':
                 if (urlSplitted.length >= 4) {
                     msg.application_name = urlSplitted[3].split('?')[0];
+                    msg.type = 'application';
                 }
                 break;
             case 'environment':
                 if (urlSplitted.length >= 4) {
                     msg.environment_name = urlSplitted[3].split('?')[0];
+                    msg.type = 'environment';
                 }
                 break;
             case 'workflow':
                 if (urlSplitted.length >= 4) {
                     msg.workflow_name = urlSplitted[3].split('?')[0];
+                    msg.type = 'workflow';
                 }
                 if (urlSplitted.length >= 6) {
                     msg.workflow_run_num = Number(urlSplitted[5].split('?')[0]);
+                    msg.type = 'workflow';
                 }
                 if (urlSplitted.length >= 8) {
                     msg.workflow_node_run_id = Number(urlSplitted[7].split('?')[0]);
+                    msg.type = 'workflow';
                 }
                 break;
         }

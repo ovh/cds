@@ -11,6 +11,7 @@ export class WebSocketMessage {
     favorites: boolean;
     queue: boolean;
     operation: string;
+    type: string;
 }
 
 export class WebSocketEvent {

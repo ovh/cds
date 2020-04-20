@@ -1,6 +1,16 @@
 package sdk
 
+const (
+	WebsocketFilterTypeProject     = "project"
+	WebsocketFilterTypeApplication = "application"
+	WebsocketFilterTypePipeline    = "pipeline"
+	WebsocketFilterTypeEnvironment = "environment"
+	WebsocketFilterTypeWorkflow    = "workflow"
+	WebsocketFilterTypeQueue       = "queue"
+)
+
 type WebsocketFilter struct {
+	Type              string `json:"type"`
 	ProjectKey        string `json:"project_key"`
 	ApplicationName   string `json:"application_name"`
 	PipelineName      string `json:"pipeline_name"`

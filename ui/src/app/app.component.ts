@@ -6,6 +6,7 @@ import { Title } from '@angular/platform-browser';
 import { ActivatedRoute, NavigationEnd, NavigationStart, ResolveEnd, ResolveStart, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
+import { EventService } from 'app/event.service';
 import { WorkflowNodeRun } from 'app/model/workflow.run.model';
 import { GetCDSStatus } from 'app/store/cds.action';
 import { CDSState } from 'app/store/cds.state';
@@ -26,7 +27,6 @@ import { CDSSharedWorker } from './shared/worker/shared.worker';
 import { CDSWebWorker } from './shared/worker/web.worker';
 import { CDSWorker } from './shared/worker/worker';
 import { AuthenticationState } from './store/authentication.state';
-import { EventService } from 'app/event.service';
 
 declare var PACMAN: any;
 
@@ -197,7 +197,7 @@ export class AppComponent implements OnInit {
     }
 
     startSSE(): void {
-        if (this.user.isAdmin() && localStorage.getItem("WS-EVENT")) {
+        if (this.user.isAdmin() && localStorage.getItem('WS-EVENT')) {
             return
         }
         if (this.sseWorker) {

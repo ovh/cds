@@ -5,6 +5,7 @@ import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
 import { TranslateHttpLoader } from '@ngx-translate/http-loader';
 import { ToasterModule } from 'angular2-toaster/angular2-toaster';
+import { EventService } from 'app/event.service';
 import { NgxsStoreModule } from 'app/store/store.module';
 import * as Raven from 'raven-js';
 import { AppComponent } from './app.component';
@@ -13,7 +14,6 @@ import { AppService } from './app.service';
 import { ServicesModule } from './service/services.module';
 import { SharedModule } from './shared/shared.module';
 import { NavbarModule } from './views/navbar/navbar.module';
-import { EventService } from 'app/event.service';
 
 let ngModule: NgModule = {
     declarations: [
