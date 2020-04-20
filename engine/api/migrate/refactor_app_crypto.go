@@ -86,12 +86,12 @@ func refactorApplicationCrypto(ctx context.Context, db *gorp.DbMap, id int64) er
 			return sdk.WrapError(err, "unable to unmarshal application RepositoryStrategy %d", id)
 		}
 
-		encryptedPassword, err64 := base64.StdEncoding.DecodeString(vcsStrategy.Password)
-		if err64 != nil {
-			return sdk.WrapError(err64, "unable to decode password for application %d", id)
+		encryptedPassword, err := base64.StdEncoding.DecodeString(vcsStrategy.Password)
+		if err != nil {
+			return sdk.WrapError(err, "unable to decode password for application %d", id)
 		}
 
-		clearPWD, err := secret.Decrypt([]byte(encryptedPassword))
+		clearPWD, err = secret.Decrypt([]byte(encryptedPassword))
 		if err != nil {
 			return sdk.WrapError(err, "Unable to decrypt password for application %d", id)
 		}
