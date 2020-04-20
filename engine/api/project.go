@@ -65,6 +65,8 @@ func (api *API) getProjectsHandler_FilterByRepo(ctx context.Context, w http.Resp
 
 	opts := []project.LoadOptionFunc{
 		project.LoadOptions.WithPermission,
+		project.LoadOptions.WithApplications,
+		project.LoadOptions.WithWorkflows,
 	}
 	opts = append(opts, filterByRepoFunc)
 
