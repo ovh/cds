@@ -83,10 +83,7 @@
                                 #varWarning></app-warning-modal>
                         </div>
                         <div *ngSwitchCase="'vuln'">
-                            <app-vulnerabilities [project]="project" [application]="application"
-                                [vulnerabilities]="application.vulnerabilities"
-                                [edit]="project.permissions.writable">
-                            </app-vulnerabilities>
+                            <app-vulnerabilities [edit]="project.permissions.writable"></app-vulnerabilities>
                         </div>
 
                         <div *ngSwitchCase="'usage'">

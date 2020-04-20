@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
-	"github.com/ovh/cds/sdk/log"
 
 	"github.com/ovh/cds/sdk"
 )
@@ -108,7 +107,6 @@ func (j *JobRun) ToJobRun(jr *sdk.WorkflowNodeJobRun) (err error) {
 	j.ExecGroups, err = gorpmapping.JSONToNullString(jr.ExecGroups)
 	j.WorkerName = jr.WorkerName
 	j.HatcheryName = jr.HatcheryName
-	log.Debug("ToJobRun> %+v", j)
 	if err != nil {
 		return sdk.WrapError(err, "column exec_groups")
 	}

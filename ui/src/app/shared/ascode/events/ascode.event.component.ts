@@ -11,7 +11,6 @@ import { finalize } from 'rxjs/operators';
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class AsCodeEventComponent {
-
     @Input() events: Array<AsCodeEvents>;
     @Input() repo: string;
     @Input() appName: string;
@@ -19,8 +18,10 @@ export class AsCodeEventComponent {
 
     loadingPopupButton = false;
 
-    constructor(private _ascodeService: AscodeService, private _cd: ChangeDetectorRef) {
-    }
+    constructor(
+        private _ascodeService: AscodeService,
+        private _cd: ChangeDetectorRef
+    ) { }
 
     resyncEvents(): void {
         this.loadingPopupButton = true;

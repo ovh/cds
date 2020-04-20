@@ -34,7 +34,6 @@ var (
 	ErrUnknownEnv                                    = Error{ID: 16, Status: http.StatusBadRequest}
 	ErrEnvironmentExist                              = Error{ID: 17, Status: http.StatusConflict}
 	ErrNoPipelineBuild                               = Error{ID: 18, Status: http.StatusNotFound}
-	ErrApplicationNotFound                           = Error{ID: 19, Status: http.StatusNotFound}
 	ErrInvalidUsername                               = Error{ID: 21, Status: http.StatusBadRequest}
 	ErrInvalidEmail                                  = Error{ID: 22, Status: http.StatusBadRequest}
 	ErrGroupPresent                                  = Error{ID: 23, Status: http.StatusBadRequest}
@@ -222,7 +221,6 @@ var errorsAmericanEnglish = map[int]string{
 	ErrUnknownEnv.ID:                                    "unknown environment",
 	ErrEnvironmentExist.ID:                              "environment already exists",
 	ErrNoPipelineBuild.ID:                               "this pipeline build does not exist",
-	ErrApplicationNotFound.ID:                           "application does not exist",
 	ErrInvalidUsername.ID:                               "invalid username",
 	ErrUsernamePresent.ID:                               "username already present",
 	ErrInvalidEmail.ID:                                  "invalid email",
@@ -405,7 +403,6 @@ var errorsFrench = map[int]string{
 	ErrUnknownEnv.ID:                                    "environnement inconnu",
 	ErrEnvironmentExist.ID:                              "l'environnement existe",
 	ErrNoPipelineBuild.ID:                               "ce build n'existe pas",
-	ErrApplicationNotFound.ID:                           "l'application n'existe pas",
 	ErrInvalidUsername.ID:                               "nom d'utilisateur invalide",
 	ErrUsernamePresent.ID:                               "le nom d'utilisateur est déjà présent",
 	ErrInvalidEmail.ID:                                  "addresse email invalide",

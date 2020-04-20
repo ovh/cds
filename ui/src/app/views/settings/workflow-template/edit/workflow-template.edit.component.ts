@@ -140,7 +140,6 @@ export class WorkflowTemplateEditComponent implements OnInit {
                 name: 'common_workflow',
                 class: 'seven',
                 selector: (i: WorkflowTemplateInstance) => {
-                    console.log(i)
                     let value = i.project.key + '/' + (i.workflow ? i.workflow.name : i.workflow_name);
                     let status = i.status(this.workflowTemplate);
 

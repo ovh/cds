@@ -1,6 +1,6 @@
 @import "../../../../../../../common";
 
-$squareSize: 32px;
+$squareSize: 30px;
 
 .header {
   display:  flex;
@@ -41,12 +41,14 @@ $squareSize: 32px;
   background-color: #222;
   color: white;
   clear: both;
-  padding: 10px $squareSize 10px $squareSize;
+  padding: 10px 20px 10px 20px;
 
   pre {
     font-size: 0.8em;
     line-height: 1.1em;
     max-height: 300px;
     overflow-y: auto;
+    margin-top: 0px;
+    margin-bottom: 0px;
   }
 }

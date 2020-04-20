@@ -10,7 +10,7 @@ import { ProjectService } from 'app/service/project/project.service';
 import { ProjectStore } from 'app/service/project/project.store';
 import { WorkflowRunService } from 'app/service/workflow/run/workflow.run.service';
 import { WorkflowService } from 'app/service/workflow/workflow.service';
-import { ApplicationsState } from './applications.state';
+import { ApplicationsState, ApplicationStateModel } from './applications.state';
 import { PipelinesState } from './pipelines.state';
 import { AddProject } from './project.action';
 import { ProjectState, ProjectStateModel } from './project.state';
@@ -19,14 +19,21 @@ import { WorkflowState, WorkflowStateModel } from './workflow.state';
 import { PipelineService } from 'app/service/pipeline/pipeline.service';
 import { EnvironmentService } from 'app/service/environment/environment.service';
 import { ApplicationService } from 'app/service/application/application.service';
+import { RouterService } from 'app/service/router/router.service';
+import { RouterTestingModule } from '@angular/router/testing';
+import { Router } from '@angular/router';
+import { Application } from 'app/model/application.model';
+import { Usage } from 'app/model/usage.model';
+import { of } from 'rxjs';
 
 describe('Workflows', () => {
     let store: Store;
     let testProjectKey = 'test1';
-
+    let routerService: RouterService;
     beforeEach(async(() => {
         TestBed.configureTestingModule({
             providers: [
+                RouterService,
                 NavbarService,
                 WorkflowService,
                 WorkflowRunService,
@@ -34,14 +41,15 @@ describe('Workflows', () => {
                 ProjectService,
                 PipelineService,
                 EnvironmentService,
-                ApplicationService
+                ApplicationService,
             ],
             imports: [
                 NgxsModule.forRoot([ApplicationsState, ProjectState, PipelinesState, WorkflowState]),
-                HttpClientTestingModule
+                HttpClientTestingModule, RouterTestingModule.withRoutes([]),
             ],
         }).compileComponents();
 
+        routerService = TestBed.get(RouterService);
         store = TestBed.get(Store);
         let project = <Project>{
             key: testProjectKey,
@@ -62,6 +70,9 @@ describe('Workflows', () => {
     }));
 
     it('fetch workflow', async(() => {
+        spyOn(routerService, 'getRouteSnapshotParams').and.callFake(() => {
+            return {'key': testProjectKey, 'workflowName': 'wf1'};
+        });
         const http = TestBed.get(HttpTestingController);
         store.dispatch(new workflowsActions.GetWorkflow({
             projectKey: testProjectKey,
@@ -277,6 +288,9 @@ describe('Workflows', () => {
     }));
 
     it('fetch audits', async(() => {
+        spyOn(routerService, 'getRouteSnapshotParams').and.callFake(() => {
+            return {'key': testProjectKey, 'workflowName': 'wf1'};
+        });
         const http = TestBed.get(HttpTestingController);
         let workflow = new Workflow();
         workflow.name = 'wf1';

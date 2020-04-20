@@ -127,7 +127,7 @@ func TestUpdateAsCodePipelineHandler(t *testing.T) {
 		VCSServer:          "github",
 		FromRepository:     "myrepofrom",
 	}
-	assert.NoError(t, application.Insert(db, api.Cache, *proj, &app))
+	assert.NoError(t, application.Insert(db, *proj, &app))
 	assert.NoError(t, repositoriesmanager.InsertForApplication(db, &app, proj.Key))
 
 	uri := api.Router.GetRoute("PUT", api.updateAsCodePipelineHandler, map[string]string{

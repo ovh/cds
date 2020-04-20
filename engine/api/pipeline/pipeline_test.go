@@ -21,7 +21,7 @@ import (
 )
 
 func TestInsertPipeline(t *testing.T) {
-	db, cache, end := test.SetupPG(t)
+	db, _, end := test.SetupPG(t)
 	defer end()
 	pk := sdk.RandomString(8)
 
@@ -29,7 +29,7 @@ func TestInsertPipeline(t *testing.T) {
 		Key:  pk,
 		Name: pk,
 	}
-	if err := project.Insert(db, cache, &p); err != nil {
+	if err := project.Insert(db, &p); err != nil {
 		t.Fatalf("Cannot insert project : %s", err)
 	}
 
@@ -74,7 +74,7 @@ func TestInsertPipeline(t *testing.T) {
 }
 
 func TestInsertPipelineWithParemeters(t *testing.T) {
-	db, cache, end := test.SetupPG(t)
+	db, _, end := test.SetupPG(t)
 	defer end()
 	pk := sdk.RandomString(8)
 
@@ -82,7 +82,7 @@ func TestInsertPipelineWithParemeters(t *testing.T) {
 		Key:  pk,
 		Name: pk,
 	}
-	if err := project.Insert(db, cache, &p); err != nil {
+	if err := project.Insert(db, &p); err != nil {
 		t.Fatalf("Cannot insert project : %s", err)
 	}
 
@@ -112,7 +112,7 @@ func TestInsertPipelineWithParemeters(t *testing.T) {
 }
 
 func TestInsertPipelineWithWithWrongParemeters(t *testing.T) {
-	db, cache, end := test.SetupPG(t)
+	db, _, end := test.SetupPG(t)
 	defer end()
 	pk := sdk.RandomString(8)
 
@@ -120,7 +120,7 @@ func TestInsertPipelineWithWithWrongParemeters(t *testing.T) {
 		Key:  pk,
 		Name: pk,
 	}
-	if err := project.Insert(db, cache, &p); err != nil {
+	if err := project.Insert(db, &p); err != nil {
 		t.Fatalf("Cannot insert project : %s", err)
 	}
 
@@ -153,7 +153,7 @@ func TestLoadByWorkflowID(t *testing.T) {
 		ProjectKey: proj.Key,
 		ProjectID:  proj.ID,
 	}
-	test.NoError(t, application.Insert(db, cache, *proj, &app))
+	test.NoError(t, application.Insert(db, *proj, &app))
 
 	pip := sdk.Pipeline{
 		ProjectID:  proj.ID,
@@ -180,7 +180,7 @@ func TestLoadByWorkflowID(t *testing.T) {
 
 	test.NoError(t, workflow.RenameNode(context.TODO(), db, &w))
 
-	proj, _ = project.LoadByID(db, cache, proj.ID, project.LoadOptions.WithApplications, project.LoadOptions.WithPipelines, project.LoadOptions.WithEnvironments, project.LoadOptions.WithGroups)
+	proj, _ = project.LoadByID(db, proj.ID, project.LoadOptions.WithApplications, project.LoadOptions.WithPipelines, project.LoadOptions.WithEnvironments, project.LoadOptions.WithGroups)
 
 	test.NoError(t, workflow.Insert(context.TODO(), db, cache, *proj, &w))
 

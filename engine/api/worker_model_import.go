@@ -120,7 +120,7 @@ func (api *API) postWorkerModelImportHandler() service.Handler {
 		}
 
 		if err := tx.Commit(); err != nil {
-			return sdk.WrapError(err, "Cannot commit transaction")
+			return sdk.WithStack(err)
 		}
 
 		newModel, err = workermodel.LoadByID(api.mustDB(), newModel.ID)

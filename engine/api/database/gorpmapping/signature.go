@@ -75,6 +75,14 @@ func UpdateAndSign(ctx context.Context, db gorp.SqlExecutor, i Canonicaller) err
 	return sdk.WithStack(dbSign(ctx, db, i))
 }
 
+// UpdateColumnsAndSign a data in database, given data should implement canonicaller interface.
+func UpdateColumnsAndSign(ctx context.Context, db gorp.SqlExecutor, i Canonicaller, colFilter gorp.ColumnFilter) error {
+	if err := UpdateColumns(db, i, colFilter); err != nil {
+		return err
+	}
+	return sdk.WithStack(dbSign(ctx, db, i))
+}
+
 var CanonicalFormTemplates = struct {
 	m map[string]*template.Template
 	l sync.RWMutex
@@ -179,7 +187,7 @@ func checkSignature(i Canonicaller, k symmecrypt.Key, f *CanonicalForm, sig []by
 
 	decryptedSig, err := k.Decrypt(sig)
 	if err != nil {
-		return false, sdk.WrapError(err, "unable to decrypt content")
+		return false, sdk.WrapError(err, "unable to decrypt content (%s)", string(sig))
 	}
 
 	res := clearContent.String() == string(decryptedSig)

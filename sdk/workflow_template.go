@@ -135,9 +135,12 @@ func (w *WorkflowTemplate) CheckParams(r WorkflowTemplateRequest) error {
 	if r.ProjectKey == "" {
 		return NewErrorFrom(ErrInvalidData, "Project key is required")
 	}
+	if r.WorkflowName == "" {
+		return NewErrorFrom(ErrInvalidData, "Missing workflow name")
+	}
 	regexp := NamePatternRegex
 	if !regexp.MatchString(r.WorkflowName) {
-		return NewErrorFrom(ErrInvalidData, "Invalid given workflow name, should match %s pattern", NamePattern)
+		return NewErrorFrom(ErrInvalidData, "Invalid given workflow name '%s', should match %s pattern", r.WorkflowName, NamePattern)
 	}
 
 	for _, p := range w.Parameters {

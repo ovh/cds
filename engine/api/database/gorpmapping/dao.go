@@ -27,6 +27,11 @@ func Insert(db gorp.SqlExecutor, i interface{}) error {
 		return err
 	}
 
+	_, has := getTabbleMapping(i)
+	if !has {
+		return sdk.WithStack(fmt.Errorf("unkown entity %T", i))
+	}
+
 	err := db.Insert(i)
 	if e, ok := err.(*pq.Error); ok {
 		switch e.Code {
@@ -52,12 +57,10 @@ func Insert(db gorp.SqlExecutor, i interface{}) error {
 	return nil
 }
 
-// Update value in given db.
-func Update(db gorp.SqlExecutor, i interface{}) error {
+func UpdateColumns(db gorp.SqlExecutor, i interface{}, columnFilter gorp.ColumnFilter) error {
 	if err := checkDatabase(db); err != nil {
 		return err
 	}
-
 	mapping, has := getTabbleMapping(i)
 	if !has {
 		return sdk.WithStack(fmt.Errorf("unkown entity %T", i))
@@ -104,7 +107,7 @@ func Update(db gorp.SqlExecutor, i interface{}) error {
 		}
 	}
 
-	n, err := db.Update(i)
+	n, err := db.UpdateColumns(columnFilter, i)
 	if e, ok := err.(*pq.Error); ok {
 		switch e.Code {
 		case ViolateUniqueKeyPGCode:
@@ -129,6 +132,18 @@ func Update(db gorp.SqlExecutor, i interface{}) error {
 	}
 
 	return nil
+}
+
+func acceptAllFilter(col *gorp.ColumnMap) bool {
+	return true
+}
+
+// Update value in given db.
+func Update(db gorp.SqlExecutor, i interface{}) error {
+	if err := checkDatabase(db); err != nil {
+		return err
+	}
+	return UpdateColumns(db, i, acceptAllFilter)
 }
 
 // Delete value in given db.

@@ -34,12 +34,12 @@ func (api *API) getApplicationOverviewHandler() service.Handler {
 		appName := vars["applicationName"]
 		db := api.mustDB()
 
-		p, errP := project.Load(db, api.Cache, key)
+		p, errP := project.Load(db, key)
 		if errP != nil {
 			return sdk.WrapError(errP, "getApplicationOverviewHandler> unable to load project")
 		}
 
-		app, errA := application.LoadByName(db, api.Cache, key, appName)
+		app, errA := application.LoadByName(db, key, appName)
 		if errA != nil {
 			return sdk.WrapError(errA, "getApplicationOverviewHandler> unable to load application")
 		}

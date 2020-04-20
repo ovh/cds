@@ -170,6 +170,10 @@ func CheckAndExecuteTemplate(ctx context.Context, db *gorp.DbMap, consumer sdk.A
 		}
 	}
 
+	if err := wt.CheckParams(req); err != nil {
+		return nil, err
+	}
+
 	var result exportentities.WorkflowComponents
 
 	if req.Detached {
@@ -263,7 +267,7 @@ func CheckAndExecuteTemplate(ctx context.Context, db *gorp.DbMap, consumer sdk.A
 	}
 
 	if err := tx.Commit(); err != nil {
-		return nil, sdk.WrapError(err, "cannot commit transaction")
+		return nil, sdk.WithStack(err)
 	}
 
 	// if the template was successfully executed we want to return only the a file with template instance data

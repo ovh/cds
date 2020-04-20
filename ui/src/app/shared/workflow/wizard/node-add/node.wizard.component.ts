@@ -23,7 +23,7 @@ import { PipelinesState, PipelinesStateModel } from 'app/store/pipelines.state';
 import { AddEnvironmentInProject } from 'app/store/project.action';
 import { ProjectState, ProjectStateModel } from 'app/store/project.state';
 import cloneDeep from 'lodash-es/cloneDeep';
-import { Observable, of as observableOf, Subscription } from 'rxjs';
+import { Observable, of as observableOf } from 'rxjs';
 import { filter, finalize, first, flatMap, map } from 'rxjs/operators';
 
 @Component({
@@ -44,6 +44,7 @@ export class WorkflowNodeAddWizardComponent implements OnInit {
   @Input() hideCancel: boolean;
   @Input() hideNext: boolean;
   @Input() loading: boolean;
+  @Input() canCreateFork: boolean;
   @Output() nodeCreated: EventEmitter<WNode> = new EventEmitter<WNode>();
   @Output() pipelineSectionChanged: EventEmitter<string> = new EventEmitter<string>();
 
@@ -109,7 +110,7 @@ export class WorkflowNodeAddWizardComponent implements OnInit {
   _createNewEnvironment = false;
   integrations: IdName[] = [];
   loadingIntegrations = false;
-  pipSubscription: Subscription;
+  createFork = false;
 
   constructor(
     private _router: Router,
@@ -155,6 +156,8 @@ export class WorkflowNodeAddWizardComponent implements OnInit {
     if (this.node.context.pipeline_id) {
       this.node.type = WNodeType.PIPELINE;
       this.node.context.pipeline_id = Number(this.node.context.pipeline_id);
+    } else {
+        this.node.type = WNodeType.FORK;
     }
     if (this.node.context.application_id) {
       this.node.context.application_id = Number(this.node.context.application_id);

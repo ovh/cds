@@ -54,7 +54,7 @@ func cleanDuplicateHooks(ctx context.Context, db *gorp.DbMap, store cache.Store,
 		return nil
 	}
 
-	proj, err := project.LoadByID(tx, store, projectID,
+	proj, err := project.LoadByID(tx, projectID,
 		project.LoadOptions.WithApplicationWithDeploymentStrategies,
 		project.LoadOptions.WithPipelines,
 		project.LoadOptions.WithEnvironments,
@@ -178,7 +178,7 @@ func fixEmptyUUIDHooks(ctx context.Context, db *gorp.DbMap, store cache.Store, w
 		return nil
 	}
 
-	proj, err := project.LoadByID(tx, store, projectID,
+	proj, err := project.LoadByID(tx, projectID,
 		project.LoadOptions.WithApplicationWithDeploymentStrategies,
 		project.LoadOptions.WithPipelines,
 		project.LoadOptions.WithEnvironments,

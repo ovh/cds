@@ -104,7 +104,7 @@ func (api *API) checkProjectPermissions(ctx context.Context, projectKey string, 
 	ctx, end := observability.Span(ctx, "api.checkProjectPermissions")
 	defer end()
 
-	if _, err := project.Load(api.mustDB(), api.Cache, projectKey); err != nil {
+	if _, err := project.Load(api.mustDB(),  projectKey); err != nil {
 		return err
 	}
 

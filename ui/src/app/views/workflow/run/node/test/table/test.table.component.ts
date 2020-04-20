@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnInit, V
 import { Failure, TestCase, Tests } from 'app/model/pipeline.model';
 import { ThemeStore } from 'app/service/services.module';
 import { Column, ColumnType, Filter } from 'app/shared/table/data-table.component';
+import { cloneDeep } from 'lodash-es';
 import { Subscription } from 'rxjs';
 import { finalize } from 'rxjs/operators';
 
@@ -33,11 +34,11 @@ export class WorkflowRunTestTableComponent implements OnInit {
     testcases: Array<TestCase>;
     @Input('tests')
     set tests(data: Tests) {
-        this._tests = data;
+        this._tests = cloneDeep(data);
         if (this._tests && this._tests.ko > 0 && (!this.filterInput || this.filterInput === '')) {
             this.statusFilter('failed');
         }
-        this.initTestCases(data);
+        this.initTestCases(this._tests);
     }
     get tests() {
         return this._tests;

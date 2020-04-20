@@ -12,6 +12,60 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
+type dbApplicationVariable struct {
+	gorpmapping.SignedEntity
+	ID            int64  `db:"id"`
+	ApplicationID int64  `db:"application_id"`
+	Name          string `db:"var_name"`
+	ClearValue    string `db:"var_value"`
+	CipherValue   string `db:"cipher_value" gorpmapping:"encrypted,ID,Name"`
+	Type          string `db:"var_type"`
+}
+
+func (e dbApplicationVariable) Canonical() gorpmapping.CanonicalForms {
+	var _ = []interface{}{e.ApplicationID, e.ID, e.Name, e.Type}
+	return gorpmapping.CanonicalForms{
+		"{{print .ApplicationID}}{{print .ID}}{{.Name}}{{.Type}}",
+	}
+}
+
+func newDBApplicationVariable(v sdk.Variable, appID int64) dbApplicationVariable {
+	if sdk.NeedPlaceholder(v.Type) {
+		return dbApplicationVariable{
+			ID:            v.ID,
+			Name:          v.Name,
+			CipherValue:   v.Value,
+			Type:          v.Type,
+			ApplicationID: appID,
+		}
+	}
+	return dbApplicationVariable{
+		ID:            v.ID,
+		Name:          v.Name,
+		ClearValue:    v.Value,
+		Type:          v.Type,
+		ApplicationID: appID,
+	}
+}
+
+func (e dbApplicationVariable) Variable() sdk.Variable {
+	if sdk.NeedPlaceholder(e.Type) {
+		return sdk.Variable{
+			ID:    e.ID,
+			Name:  e.Name,
+			Value: e.CipherValue,
+			Type:  e.Type,
+		}
+	}
+
+	return sdk.Variable{
+		ID:    e.ID,
+		Name:  e.Name,
+		Value: e.ClearValue,
+		Type:  e.Type,
+	}
+}
+
 func loadAllVariables(db gorp.SqlExecutor, query gorpmapping.Query, opts ...gorpmapping.GetOptionFunc) ([]sdk.Variable, error) {
 	var ctx = context.Background()
 	var res []dbApplicationVariable

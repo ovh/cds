@@ -58,26 +58,26 @@ func (c *gitlabClient) CreateHook(ctx context.Context, repo string, hook *sdk.VC
 
 	var pushEvent, mergeRequestEvent, TagPushEvent, issueEvent, noteEvent, wikiPageEvent, pipelineEvent, jobEvent bool
 	if len(hook.Events) == 0 {
-		hook.Events = []string{"Push Hook"}
+		hook.Events = []string{string(gitlab.EventTypePush), string(gitlab.EventTypeTagPush)}
 	}
 
 	for _, e := range hook.Events {
-		switch e {
-		case "Push Hook":
+		switch gitlab.EventType(e) {
+		case gitlab.EventTypePush:
 			pushEvent = true
-		case "Tag Push Hook":
+		case gitlab.EventTypeTagPush:
 			TagPushEvent = true
-		case "Issue Hook":
+		case gitlab.EventTypeIssue:
 			issueEvent = true
-		case "Note Hook":
+		case gitlab.EventTypeNote:
 			noteEvent = true
-		case "Merge Request Hook":
+		case gitlab.EventTypeMergeRequest:
 			mergeRequestEvent = true
-		case "Wiki Page Hook":
+		case gitlab.EventTypeWikiPage:
 			wikiPageEvent = true
-		case "Pipeline Hook":
+		case gitlab.EventTypePipeline:
 			pipelineEvent = true
-		case "Job Hook":
+		case "Job Hook": // TODO update gitlab sdk
 			jobEvent = true
 		}
 	}
@@ -117,26 +117,26 @@ func (c *gitlabClient) UpdateHook(ctx context.Context, repo string, hook *sdk.VC
 
 	var pushEvent, mergeRequestEvent, TagPushEvent, issueEvent, noteEvent, wikiPageEvent, pipelineEvent, jobEvent bool
 	if len(hook.Events) == 0 {
-		hook.Events = []string{"Push Hook"}
+		hook.Events = []string{string(gitlab.EventTypePush), string(gitlab.EventTypeTagPush)}
 	}
 
 	for _, e := range hook.Events {
-		switch e {
-		case "Push Hook":
+		switch gitlab.EventType(e) {
+		case gitlab.EventTypePush:
 			pushEvent = true
-		case "Tag Push Hook":
+		case gitlab.EventTypeTagPush:
 			TagPushEvent = true
-		case "Issue Hook":
+		case gitlab.EventTypeIssue:
 			issueEvent = true
-		case "Note Hook":
+		case gitlab.EventTypeNote:
 			noteEvent = true
-		case "Merge Request Hook":
+		case gitlab.EventTypeMergeRequest:
 			mergeRequestEvent = true
-		case "Wiki Page Hook":
+		case gitlab.EventTypeWikiPage:
 			wikiPageEvent = true
-		case "Pipeline Hook":
+		case gitlab.EventTypePipeline:
 			pipelineEvent = true
-		case "Job Hook":
+		case "Job Hook": // TODO update gitlab sdk
 			jobEvent = true
 		}
 	}

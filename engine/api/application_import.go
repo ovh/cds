@@ -25,7 +25,7 @@ func (api *API) postApplicationImportHandler() service.Handler {
 		key := vars[permProjectKey]
 		force := FormBool(r, "force")
 
-		proj, err := project.Load(api.mustDB(), api.Cache, key, project.LoadOptions.WithGroups, project.LoadOptions.WithIntegrations)
+		proj, err := project.Load(api.mustDB(), key, project.LoadOptions.WithGroups, project.LoadOptions.WithIntegrations)
 		if err != nil {
 			return sdk.WrapError(err, "unable load project")
 		}
@@ -74,7 +74,7 @@ func (api *API) postApplicationImportHandler() service.Handler {
 		}
 
 		if err := tx.Commit(); err != nil {
-			return sdk.WrapError(err, "Cannot commit transaction")
+			return sdk.WithStack(err)
 		}
 		event.PublishAddApplication(ctx, proj.Key, *newApp, getAPIConsumer(ctx))
 

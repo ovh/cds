@@ -62,6 +62,17 @@ func SyncAsCodeEvent(ctx context.Context, db *gorp.DbMap, store cache.Store, pro
 			log.Debug("Pull request %s #%d not found", app.RepositoryFullname, int(ascodeEvt.PullRequestID))
 		}
 
+		// If the PR was merged we want to set the repo url on the workflow
+		if ascodeEvt.Migrate && len(ascodeEvt.Data.Workflows) == 1 {
+			for id := range ascodeEvt.Data.Workflows {
+				if pr.Merged {
+					if err := workflow.UpdateFromRepository(tx, id, fromRepo); err != nil {
+						return nil, fromRepo, err
+					}
+				}
+			}
+		}
+
 		// If event ended, delete it from db
 		if prNotFound || pr.Merged || pr.Closed {
 			eventToDelete = append(eventToDelete, ascodeEvt)
@@ -73,13 +84,6 @@ func SyncAsCodeEvent(ctx context.Context, db *gorp.DbMap, store cache.Store, pro
 	for _, ascodeEvt := range eventToDelete {
 		if err := ascode.DeleteAsCodeEvent(tx, ascodeEvt); err != nil {
 			return nil, fromRepo, err
-		}
-		if ascodeEvt.Migrate && len(ascodeEvt.Data.Workflows) == 1 {
-			for id := range ascodeEvt.Data.Workflows {
-				if err := workflow.UpdateFromRepository(tx, id, fromRepo); err != nil {
-					return nil, fromRepo, err
-				}
-			}
 		}
 	}
 

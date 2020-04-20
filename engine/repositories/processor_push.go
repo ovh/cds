@@ -15,6 +15,16 @@ import (
 )
 
 func (s *Service) processPush(ctx context.Context, op *sdk.Operation) error {
+	var missingAuth bool
+	if op.RepositoryStrategy.ConnectionType == "ssh" {
+		missingAuth = op.RepositoryStrategy.SSHKey == "" || op.RepositoryStrategy.SSHKeyContent == ""
+	} else {
+		missingAuth = op.RepositoryStrategy.User == "" || op.RepositoryStrategy.Password == ""
+	}
+	if missingAuth {
+		return sdk.NewErrorFrom(sdk.ErrWrongRequest, "authentication data required to push on repository %s", op.URL)
+	}
+
 	gitRepo, path, currentBranch, err := s.processGitClone(ctx, op)
 	if err != nil {
 		return sdk.WrapError(err, "unable to process gitclone")
@@ -24,29 +34,28 @@ func (s *Service) processPush(ctx context.Context, op *sdk.Operation) error {
 		op.Setup.Push.ToBranch = op.RepositoryInfo.DefaultBranch
 	}
 
-	// Switch to default branch
-	if currentBranch != op.RepositoryInfo.DefaultBranch {
-		if err := gitRepo.FetchRemoteBranch("origin", op.RepositoryInfo.DefaultBranch); err != nil {
-			log.Error(ctx, "Repositories> processPush> Checkout to default branch> [%s] error %v", op.UUID, err)
-			return sdk.WrapError(err, "Checkout to default branch> [%s] error %v", op.UUID, err)
+	// Switch to target branch
+	if currentBranch != op.Setup.Push.FromBranch {
+		if err := gitRepo.CheckoutNewBranch(op.Setup.Push.FromBranch); err != nil {
+			if !strings.Contains(err.Error(), "already exists") {
+				return sdk.WrapError(err, "cannot checkout new branch %s", op.Setup.Push.FromBranch)
+			}
+			if err := gitRepo.Checkout(op.Setup.Push.FromBranch); err != nil {
+				return sdk.WrapError(err, "cannot checkout existing branch %s", op.Setup.Push.FromBranch)
+			}
 		}
 	}
 
-	// Reset hard default branch
-	if err := gitRepo.ResetHard("origin/" + op.RepositoryInfo.DefaultBranch); err != nil {
-		log.Error(ctx, "Repositories> processPush> ResetHard> [%s] Error: %v", op.UUID, err)
-		return err
-	}
-
-	// Create new branch
-	if err := gitRepo.CheckoutNewBranch(op.Setup.Push.FromBranch); err != nil {
-		if !op.Setup.Push.Update || !strings.Contains(err.Error(), "already exists") {
-			return sdk.WrapError(err, "Create new branch %s> [%s] error %v", op.Setup.Push.FromBranch, op.UUID, err)
-		} else {
-			if err := gitRepo.Checkout(op.Setup.Push.FromBranch); err != nil {
-				log.Error(ctx, "Repositories> processPush> Checkout branch %s> [%s] error %v", op.Setup.Push.FromBranch, op.UUID, err)
-				return sdk.WrapError(err, "Cannot checkout on branch %s: %v", op.Setup.Push.FromBranch, err)
-			}
+	// Reset hard to remote branch or default if no remote exists
+	_, hasUpstream := gitRepo.LocalBranchExists(op.Setup.Push.FromBranch)
+	if hasUpstream {
+		if err := gitRepo.ResetHard("origin/" + op.Setup.Push.FromBranch); err != nil {
+			return sdk.WithStack(err)
+		}
+	} else {
+		// Reset hard default branch
+		if err := gitRepo.ResetHard("origin/" + op.RepositoryInfo.DefaultBranch); err != nil {
+			return sdk.WithStack(err)
 		}
 	}
 
@@ -55,14 +64,12 @@ func (s *Service) processPush(ctx context.Context, op *sdk.Operation) error {
 		_, errStat := os.Stat(path + "/.cds")
 		if errStat == nil {
 			if err := os.RemoveAll(path + "/.cds"); err != nil {
-				log.Error(ctx, "Repositories> processPush> Remove old .cds directory> [%s] error %v", op.UUID, err)
-				return sdk.WrapError(err, "Remove old .cds directory> [%s] error %v", op.UUID, err)
+				return sdk.WrapError(err, "error removing old .cds directory")
 			}
 		}
 		// Create files
 		if err := os.Mkdir(filepath.Join(path, ".cds"), os.ModePerm); err != nil {
-			log.Error(ctx, "Repositories> processPush> Creating cds directory> [%s] error %v", op.UUID, err)
-			return sdk.WrapError(err, "Creating cds directory> [%s] error %v", op.UUID, err)
+			return sdk.WrapError(err, "error creating cds directory")
 		}
 	}
 
@@ -72,23 +79,25 @@ func (s *Service) processPush(ctx context.Context, op *sdk.Operation) error {
 		_ = os.Remove(fname)
 		fi, err := os.Create(fname)
 		if err != nil {
-			log.Error(ctx, "Repositories> processPush> Create file %s> [%s] error %v", fname, op.UUID, err)
-			return sdk.WrapError(err, "Create file %s> [%s] error %v", fname, op.UUID, err)
+			return sdk.WrapError(err, "cannot create file %s", fname)
 		}
 
 		if _, err := io.Copy(fi, bytes.NewReader(v)); err != nil {
-			log.Error(ctx, "Repositories> processPush> Writing file %s> [%s] error %v", fname, op.UUID, err)
 			fi.Close() // nolint
-			return sdk.WrapError(err, "Writing file %s> [%s] error %v", fname, op.UUID, err)
+			return sdk.WrapError(err, "writing file %s", fname)
 		}
 		if err := fi.Close(); err != nil {
-			log.Error(ctx, "Repositories> processPush> Closing file %s> [%s] error %v", fname, op.UUID, err)
-			return sdk.WrapError(err, "Closing file %s> [%s] error %v", fname, op.UUID, err)
+			return sdk.WrapError(err, "closing file %s", fname)
 		}
 	}
 	if err := gitRepo.Add(path + "/.cds/*"); err != nil {
-		log.Error(ctx, "Repositories> processPush> Git add file %s> [%s] error %v", path+"/.cds/*", op.UUID, err)
-		return sdk.WrapError(err, "Git add file %s> [%s] error %v", path+"/.cds/*", op.UUID, err)
+		return sdk.WrapError(err, "git add file %s", path+"/.cds/*")
+	}
+
+	// In case that there are no changes (ex: push changes on an existing branch that was not merged)
+	if !gitRepo.ExistsDiff() {
+		log.Debug("processPush> no files changes")
+		return nil
 	}
 
 	// Commit files
@@ -97,16 +106,14 @@ func (s *Service) processPush(ctx context.Context, op *sdk.Operation) error {
 		opts = append(opts, repo.WithUser(op.User.Email, op.User.Username))
 	}
 	if err := gitRepo.Commit(op.Setup.Push.Message, opts...); err != nil {
-		log.Error(ctx, "Repositories> processPush> Commit> [%s] error %v", op.UUID, err)
-		return sdk.WrapError(err, "Commit> [%s] error %v", op.UUID, err)
+		return sdk.WithStack(err)
 	}
 
 	// Push branch
 	if err := gitRepo.Push("origin", op.Setup.Push.FromBranch); err != nil {
-		log.Error(ctx, "Repositories> processPush> push %s> [%s] error %v", op.Setup.Push.FromBranch, op.UUID, err)
-		return sdk.WrapError(err, "push %s> [%s] error %v", op.Setup.Push.FromBranch, op.UUID, err)
+		return sdk.WrapError(err, "push %s", op.Setup.Push.FromBranch)
 	}
 
-	log.Debug("Repositories> processPush> files pushed")
+	log.Debug("processPush> files pushed")
 	return nil
 }

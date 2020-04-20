@@ -1,5 +1,11 @@
 package sdk
 
+import (
+	"database/sql/driver"
+	json "encoding/json"
+	"fmt"
+)
+
 // This is the buitin integration model
 const (
 	KafkaIntegrationModel         = "Kafka"
@@ -158,6 +164,18 @@ func DefaultIfEmptyStorage(integrationName string) string {
 // IntegrationConfig represent the configuration of an integration
 type IntegrationConfig map[string]IntegrationConfigValue
 
+func (config IntegrationConfig) Blur() {
+	for k, v := range config {
+		if v.Type == IntegrationConfigTypePassword {
+			config[k] = IntegrationConfigValue{
+				Type:        v.Type,
+				Description: v.Description,
+				Value:       PasswordPlaceholder,
+			}
+		}
+	}
+}
+
 // Clone return a copy of the config (with a copy of the underlying data structure)
 func (config IntegrationConfig) Clone() IntegrationConfig {
 	new := make(IntegrationConfig, len(config))
@@ -165,6 +183,24 @@ func (config IntegrationConfig) Clone() IntegrationConfig {
 		new[k] = v
 	}
 	return new
+}
+
+// Value returns driver.Value from IntegrationConfig.
+func (config IntegrationConfig) Value() (driver.Value, error) {
+	j, err := json.Marshal(config)
+	return j, WrapError(err, "cannot marshal IntegrationConfig")
+}
+
+// Scan IntegrationConfig.
+func (config *IntegrationConfig) Scan(src interface{}) error {
+	if src == nil {
+		return nil
+	}
+	source, ok := src.([]byte)
+	if !ok {
+		return WithStack(fmt.Errorf("type assertion .([]byte) failed (%T)", src))
+	}
+	return WrapError(json.Unmarshal(source, config), "cannot unmarshal IntegrationConfig")
 }
 
 // EncryptSecrets encrypt secrets given a cypher func

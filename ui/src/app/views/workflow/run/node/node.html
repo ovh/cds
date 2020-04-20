@@ -1,6 +1,6 @@
-<div id="WorkflowNodeRun" *ngIf="nodeRun">
-    <ng-container *ngIf="nodeRun && workflowRun">
-        <app-workflow-node-run-summary [project]="project" [nodeRun]="nodeRun" [workflow]="workflowRun.workflow" [duration]="duration"></app-workflow-node-run-summary>
+<div id="WorkflowNodeRun" *ngIf="currentNodeRunNum">
+    <ng-container>
+        <app-workflow-node-run-summary></app-workflow-node-run-summary>
     </ng-container>
     <div class="CDSmenu">
         <sm-menu title="" class="pointing secondary">
@@ -8,12 +8,12 @@
                 <i class="sitemap icon"></i>
                 {{ 'common_pipeline' | translate }}
             </a>
-            <a sm-item [class.active]="selectedTab === 'commit'" [class.disabled]="!nodeRun || !nodeRun.commits || nodeRun.commits.length === 0" (click)="nodeRun.commits && nodeRun.commits.length !== 0 && showTab('commit')">
-                <span *ngIf="nodeRun.commits">{{ nodeRun.commits.length + ' '}}</span>
-                <span *ngIf="nodeRun.commits && nodeRun.commits.length > 1">{{ 'common_commits' | translate }}</span>
-                <span *ngIf="!nodeRun.commits || (nodeRun.commits && nodeRun.commits.length < 2)">{{ 'common_commit' | translate }}</span>
+            <a sm-item [class.active]="selectedTab === 'commit'" [class.disabled]="commitsLength === 0" (click)="commitsLength !== 0 && showTab('commit')">
+                {{ commitsLength + ' '}}
+                <span *ngIf="commitsLength > 1">{{ 'common_commits' | translate }}</span>
+                <span *ngIf="commitsLength < 2">{{ 'common_commit' | translate }}</span>
             </a>
-            <a sm-item [class.active]="selectedTab === 'vuln'" [class.disabled]="!nodeRun || !nodeRun.vulnerabilities_report" (click)="showTab('vuln')">
+            <a sm-item [class.active]="selectedTab === 'vuln'" [class.disabled]="!hasVulnerability" (click)="showTab('vuln')">
                 <span  *ngIf="nbVuln > 0 || deltaVul !== 0">{{nbVuln + ' '}}</span>
                 <span>{{ 'common_vulnerabilities' | translate }}</span>
                 <span *ngIf="deltaVul !== 0">
@@ -24,31 +24,31 @@
                     )
                 </span>
             </a>
-            <a sm-item [class.active]="selectedTab === 'test'" (click)="nodeRun.tests && nodeRun.tests.total !== 0 && showTab('test')" [class.disabled]="!nodeRun.tests || nodeRun.tests.total === 0">
-                <span *ngIf="nodeRun && nodeRun.tests && nodeRun.tests.total > 1">{{ 'common_tests' | translate }}</span>
-                <span *ngIf="!nodeRun || !nodeRun.tests || nodeRun.tests.total < 2">{{ 'common_test' | translate }}</span>
-                <span *ngIf="nodeRun && nodeRun.tests ">{{ ' (' +nodeRun.tests.total + ')'}}</span>
+            <a sm-item [class.active]="selectedTab === 'test'" (click)="testsTotal !== 0 && showTab('test')" [class.disabled]="testsTotal === 0">
+                <span *ngIf="testsTotal > 1">{{ 'common_tests' | translate }}</span>
+                <span *ngIf="testsTotal < 2">{{ 'common_test' | translate }}</span>
+                <span *ngIf="testsTotal">{{ ' (' +testsTotal + ')'}}</span>
             </a>
             <a sm-item
               [class.active]="selectedTab === 'artifact'"
-              (click)="((nodeRun.artifacts && nodeRun.artifacts.length !== 0) || (nodeRun.static_files && nodeRun.static_files.length !== 0)) && showTab('artifact')"
-              [class.disabled]="(!nodeRun || !nodeRun.artifacts || nodeRun.artifacts.length === 0) && (!nodeRun.static_files || nodeRun.static_files.length === 0)">
-                <span *ngIf="nodeRun && nodeRun.artifacts && nodeRun.artifacts.length > 1">{{ 'common_artifacts' | translate }}</span>
-                <span *ngIf="!nodeRun || !nodeRun.artifacts || nodeRun.artifacts.length < 2">{{ 'common_artifact' | translate }}</span>
-                <span *ngIf="nodeRun && nodeRun.artifacts ">{{ ' (' + nodeRun.artifacts.length + ')'}}</span>
+              (click)="(artifactLength !== 0 || staticFilesLength !== 0) && showTab('artifact')"
+              [class.disabled]="artifactLength === 0 && staticFilesLength === 0">
+                <span *ngIf="artifactLength + staticFilesLength > 1">{{ 'common_artifacts' | translate }}</span>
+                <span *ngIf="artifactLength + staticFilesLength < 2">{{ 'common_artifact' | translate }}</span>
+                <span *ngIf="artifactLength">{{ ' (' + (staticFilesLength + artifactLength) + ')'}}</span>
             </a>
-            <a sm-item [class.active]="selectedTab === 'history'" (click)="nodeRunsHistory.length !== 0 && showTab('history')" [class.disabled]="nodeRunsHistory.length === 0">
+            <a sm-item [class.active]="selectedTab === 'history'" (click)="historyLength !== 0 && showTab('history')" [class.disabled]="historyLength === 0">
                 {{ 'common_history' | translate }}
-                {{ ' (' + nodeRunsHistory.length + ')'}}
+                {{ ' (' + historyLength + ')'}}
             </a>
         </sm-menu>
     </div>
     <!-- we want to autoscroll page only for building pipeline -->
-    <div *ngIf="selectedTab === 'pipeline' && nodeRun.status === pipelineStatus.BUILDING; else notBuilding;" class="scrollingContent" ngx-auto-scroll>
+    <div *ngIf="selectedTab === 'pipeline' && this.currentNodeRunStatus === pipelineStatus.BUILDING; else notBuilding;" class="scrollingContent" ngx-auto-scroll>
         <div class="paddingContent">
             <div class="viewContent">
                 <div>
-                    <app-node-run-pipeline [run]="nodeRun" [project]="project" [workflowName]="workflowName"></app-node-run-pipeline>
+                    <app-node-run-pipeline></app-node-run-pipeline>
                 </div>
             </div>
         </div>
@@ -58,7 +58,7 @@
             <div class="paddingContent">
                 <div class="viewContent">
                     <div>
-                        <app-node-run-pipeline [run]="nodeRun" [project]="project" [workflowName]="workflowName"></app-node-run-pipeline>
+                        <app-node-run-pipeline></app-node-run-pipeline>
                     </div>
                 </div>
             </div>
@@ -68,22 +68,22 @@
         <div class="paddingContent">
             <div class="viewContent" [ngSwitch]="selectedTab">
                 <div *ngSwitchCase="'artifact'">
-                    <app-workflow-artifact-list [artifacts]="nodeRun.artifacts" [staticFiles]="nodeRun.static_files"></app-workflow-artifact-list>
+                    <app-workflow-artifact-list></app-workflow-artifact-list>
                 </div>
                 <div *ngSwitchCase="'vuln'">
-                    <app-vulnerabilities [report]="nodeRun.vulnerabilities_report"></app-vulnerabilities>
+                    <app-vulnerabilities></app-vulnerabilities>
                 </div>
                 <div *ngSwitchCase="'commit'">
-                    <app-commit-list [commits]="nodeRun.commits"></app-commit-list>
+                    <app-commit-list></app-commit-list>
                 </div>
                 <div *ngSwitchCase="'test'">
-                    <app-workflow-tests-result [tests]="nodeRun.tests" [coverage]="nodeRun.coverage"></app-workflow-tests-result>
+                    <app-workflow-tests-result></app-workflow-tests-result>
                 </div>
                 <div *ngSwitchCase="'history'">
-                    <app-workflow-node-run-history [run]="workflowRun" [project]="project" [currentBuild]="nodeRun" [history]="nodeRunsHistory" [workflowName]="workflowName"></app-workflow-node-run-history>
+                    <app-workflow-node-run-history></app-workflow-node-run-history>
                 </div>
             </div>
         </div>
     </div>
 </div>
-<div class="ui text active loader" *ngIf="!nodeRun">{{ 'pipeline_loading' | translate }}</div>
+<div class="ui text active loader" *ngIf="!currentNodeRunID">{{ 'pipeline_loading' | translate }}</div>

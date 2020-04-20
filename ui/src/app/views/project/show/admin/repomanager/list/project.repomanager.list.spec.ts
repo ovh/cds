@@ -29,6 +29,7 @@ import { ProjectModule } from 'app/views/project/project.module';
 import { of } from 'rxjs';
 import { ProjectRepoManagerComponent } from './project.repomanager.list.component';
 import { ApplicationService } from 'app/service/application/application.service';
+import { RouterService } from 'app/service/router/router.service';
 
 describe('CDS: Project RepoManager List Component', () => {
 
@@ -58,6 +59,7 @@ describe('CDS: Project RepoManager List Component', () => {
                 NavbarService,
                 WorkflowService,
                 WorkflowRunService,
+                RouterService,
                 { provide: ToastService, useClass: MockToast },
                 UserService,
                 AuthenticationService

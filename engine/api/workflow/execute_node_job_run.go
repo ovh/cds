@@ -61,9 +61,9 @@ func (r *ProcessorReport) Add(ctx context.Context, i ...interface{}) {
 		case *sdk.WorkflowNodeJobRun:
 			r.jobs = append(r.jobs, *x)
 		case sdk.WorkflowNodeRun:
-			r.addWorkflowNodeRun(ctx, x)
+			r.addWorkflowNodeRun(x)
 		case *sdk.WorkflowNodeRun:
-			r.addWorkflowNodeRun(ctx, *x)
+			r.addWorkflowNodeRun(*x)
 		case sdk.WorkflowRun:
 			r.workflows = append(r.workflows, x)
 		case *sdk.WorkflowRun:
@@ -74,7 +74,7 @@ func (r *ProcessorReport) Add(ctx context.Context, i ...interface{}) {
 	}
 }
 
-func (r *ProcessorReport) addWorkflowNodeRun(ctx context.Context, nr sdk.WorkflowNodeRun) {
+func (r *ProcessorReport) addWorkflowNodeRun(nr sdk.WorkflowNodeRun) {
 	for i := range r.nodes {
 		if nr.ID == r.nodes[i].ID {
 			r.nodes[i] = nr
@@ -198,6 +198,13 @@ func UpdateNodeJobRunStatus(ctx context.Context, db gorp.SqlExecutor, store cach
 		report.Merge(ctx, r)
 		return report, err
 	}
+
+	spawnInfos, err := LoadNodeRunJobInfo(ctx, db, job.ID)
+	if err != nil {
+		return report, sdk.WrapError(err, "unable to load spawn infos for runJob: %d", job.ID)
+	}
+	job.SpawnInfos = spawnInfos
+
 	syncJobInNodeRun(nodeRun, job, stageIndex)
 
 	if job.Status != sdk.StatusStopped {
@@ -209,8 +216,10 @@ func UpdateNodeJobRunStatus(ctx context.Context, db gorp.SqlExecutor, store cach
 }
 
 // AddSpawnInfosNodeJobRun saves spawn info before starting worker
-func AddSpawnInfosNodeJobRun(db gorp.SqlExecutor, jobID int64, infos []sdk.SpawnInfo) error {
+func AddSpawnInfosNodeJobRun(db gorp.SqlExecutor, nodeID, jobID int64, infos []sdk.SpawnInfo) error {
+
 	wnjri := &sdk.WorkflowNodeJobRunInfo{
+		WorkflowNodeRunID:    nodeID,
 		WorkflowNodeJobRunID: jobID,
 		SpawnInfos:           PrepareSpawnInfos(infos),
 	}
@@ -276,7 +285,7 @@ func TakeNodeJobRun(ctx context.Context, db gorp.SqlExecutor, store cache.Store,
 		return nil, nil, sdk.WrapError(err, "cannot update worker_id in node job run %d", jobID)
 	}
 
-	if err := AddSpawnInfosNodeJobRun(db, jobID, PrepareSpawnInfos(infos)); err != nil {
+	if err := AddSpawnInfosNodeJobRun(db, job.WorkflowNodeRunID, jobID, PrepareSpawnInfos(infos)); err != nil {
 		return nil, nil, sdk.WrapError(err, "cannot save spawn info on node job run %d", jobID)
 	}
 
@@ -433,6 +442,12 @@ func LoadSecrets(db gorp.SqlExecutor, store cache.Store, nodeRun *sdk.WorkflowNo
 		// Application variables
 		av := []sdk.Variable{}
 		if app != nil {
+			tempApp, err := application.LoadByIDWithClearVCSStrategyPassword(db, app.ID)
+			if err != nil {
+				return nil, err
+			}
+			app.RepositoryStrategy = tempApp.RepositoryStrategy
+
 			appVariables, err := application.LoadAllVariablesWithDecrytion(db, app.ID)
 			if err != nil {
 				return nil, sdk.WrapError(err, "LoadSecrets> Cannot load application variables")
@@ -440,9 +455,6 @@ func LoadSecrets(db gorp.SqlExecutor, store cache.Store, nodeRun *sdk.WorkflowNo
 			av = sdk.VariablesFilter(appVariables, sdk.SecretVariable)
 			av = sdk.VariablesPrefix(av, "cds.app.")
 
-			if err := application.DecryptVCSStrategyPassword(app); err != nil {
-				return nil, sdk.WrapError(err, "LoadSecrets> Cannot decrypt vcs configuration")
-			}
 			av = append(av, sdk.Variable{
 				Name:  "git.http.password",
 				Type:  sdk.SecretVariable,

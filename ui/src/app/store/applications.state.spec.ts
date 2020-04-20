@@ -23,6 +23,8 @@ import { WorkflowState } from './workflow.state';
 import { PipelineService } from 'app/service/pipeline/pipeline.service';
 import { EnvironmentService } from 'app/service/environment/environment.service';
 import { ApplicationService } from 'app/service/application/application.service';
+import { RouterService } from 'app/service/router/router.service';
+import { RouterTestingModule } from '@angular/router/testing';
 
 describe('Applications', () => {
     let store: Store;
@@ -32,6 +34,7 @@ describe('Applications', () => {
         TestBed.configureTestingModule({
             providers: [
                 { provide: XHRBackend, useClass: MockBackend },
+                RouterService,
                 NavbarService,
                 WorkflowService,
                 WorkflowRunService,
@@ -43,7 +46,7 @@ describe('Applications', () => {
             ],
             imports: [
                 NgxsModule.forRoot([ApplicationsState, ProjectState, PipelinesState, WorkflowState]),
-                HttpClientTestingModule
+                HttpClientTestingModule, RouterTestingModule.withRoutes([]),
             ],
         }).compileComponents();
 

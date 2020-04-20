@@ -5,9 +5,6 @@ $yellowLogs: #FFFF91;
 .mb25 {
   margin-bottom: 25px;
 }
-.ml50 {
-  margin-left: 50px;
-}
 
 .logHeader {
   display:  flex;
@@ -49,8 +46,7 @@ $yellowLogs: #FFFF91;
   background-color: #222;
   color: white;
   clear: both;
-  padding: 10px $squareSize 10px $squareSize;
-  padding-left: 0px;
+  padding: 10px;
   position: relative;
 
   .toolbar {

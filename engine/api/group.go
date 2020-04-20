@@ -145,7 +145,7 @@ func (api *API) putGroupHandler() service.Handler {
 		// TODO Update all requirements that was using the group name
 
 		if err := tx.Commit(); err != nil {
-			return sdk.WrapError(err, "cannot commit transaction")
+			return sdk.WithStack(err)
 		}
 
 		// Load extra data for group
@@ -189,7 +189,7 @@ func (api *API) deleteGroupHandler() service.Handler {
 		}
 
 		if err := tx.Commit(); err != nil {
-			return sdk.WrapError(err, "cannot commit transaction")
+			return sdk.WithStack(err)
 		}
 
 		// Send project permission changes
@@ -259,7 +259,7 @@ func (api *API) postGroupUserHandler() service.Handler {
 		}
 
 		if err := tx.Commit(); err != nil {
-			return sdk.WrapError(err, "cannot commit transaction")
+			return sdk.WithStack(err)
 		}
 
 		// Load extra data for group
@@ -329,7 +329,7 @@ func (api *API) putGroupUserHandler() service.Handler {
 		}
 
 		if err := tx.Commit(); err != nil {
-			return sdk.WrapError(err, "cannot commit transaction")
+			return sdk.WithStack(err)
 		}
 
 		// Load extra data for group
@@ -397,7 +397,7 @@ func (api *API) deleteGroupUserHandler() service.Handler {
 		}
 
 		if err := tx.Commit(); err != nil {
-			return sdk.WrapError(err, "cannot commit transaction")
+			return sdk.WithStack(err)
 		}
 
 		// In case where the user remove himself from group, do not return it

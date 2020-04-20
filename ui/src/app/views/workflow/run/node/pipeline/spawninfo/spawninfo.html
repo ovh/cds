@@ -7,10 +7,10 @@
             {{ 'job_spawn_title' | translate }}
         </div>
         <div class="variables" *ngIf="displayServiceLogsLink">
-            <a class="pointing" *ngIf="!displayServiceLogs" (click)="displayServiceLogs = true; $event.stopPropagation()">
+            <a class="pointing" *ngIf="!displayServicesLogs" (click)="displayServicesLogs = true; $event.stopPropagation()">
                 Display services logs
             </a>
-            <a class="pointing" *ngIf="displayServiceLogs" (click)="displayServiceLogs = false; $event.stopPropagation()">
+            <a class="pointing" *ngIf="displayServicesLogs" (click)="displayServicesLogs = false; $event.stopPropagation()">
                 Display job logs
             </a>
         </div>
