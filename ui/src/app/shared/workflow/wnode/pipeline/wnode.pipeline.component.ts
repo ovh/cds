@@ -36,7 +36,7 @@ export class WorkflowWNodePipelineComponent {
     displayLogs() {
         if (this.noderun) {
             this._router.navigate(['node', this.noderun.id], {
-                relativeTo: this._activatedRoute,
+                relativeTo: this._activatedRoute, queryParams: { name: this.node.name }
             });
         } else {
             this._router.navigate([
