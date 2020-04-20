@@ -60,6 +60,7 @@ export class Pipeline {
     preview: Pipeline;
     asCode: string;
     from_repository: string;
+    from_template: string;
     ascode_events: Array<AsCodeEvents>;
 
     // true if someone has updated the pipeline ( used for warnings )

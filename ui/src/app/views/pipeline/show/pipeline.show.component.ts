@@ -70,7 +70,7 @@ export class PipelineShowComponent implements OnInit {
     queryParams: Params;
     @ViewChild('paramWarning', { static: false })
     parameterModalWarning: WarningModalComponent;
-    @ViewChild('updateEditMode', { static: false})
+    @ViewChild('updateEditMode', { static: false })
     asCodeSaveModal: UpdateAsCodeComponent;
 
     keys: AllKeys;
@@ -78,6 +78,8 @@ export class PipelineShowComponent implements OnInit {
 
     // Selected tab
     selectedTab = 'pipeline';
+
+    readOnly: boolean;
 
     constructor(
         private _store: Store,
@@ -165,7 +167,6 @@ export class PipelineShowComponent implements OnInit {
             finalize(() => this._cd.markForCheck()))
             .subscribe(k => {
                 this.keys = k;
-
             });
     }
 
@@ -183,6 +184,7 @@ export class PipelineShowComponent implements OnInit {
                     return;
                 }
                 this.editMode = pip.editMode;
+                this.readOnly = !!pip.pipeline.from_template || !this.project.permissions.writable;
                 if (pip.editMode) {
                     this.pipeline = cloneDeep(pip.editPipeline);
                     if (this.pipeline.from_repository) {
@@ -190,7 +192,7 @@ export class PipelineShowComponent implements OnInit {
                         this._appService.getAsCodeApplication(this.projectKey, this.pipeline.from_repository)
                             .pipe(first()).subscribe(apps => {
                                 this.appAsCode = apps[0];
-                        });
+                            });
                     }
                 } else {
                     this.pipeline = cloneDeep(pip.pipeline);
@@ -230,8 +232,7 @@ export class PipelineShowComponent implements OnInit {
                     })).pipe(finalize(() => {
                         this.paramFormLoading = false;
                         this._cd.markForCheck();
-                    }))
-                        .subscribe(() => this._toast.success('', this._translate.instant('parameter_added')));
+                    })).subscribe(() => this._toast.success('', this._translate.instant('parameter_added')));
                     break;
                 case 'update':
                     this._store.dispatch(new UpdatePipelineParameter({

@@ -2,7 +2,8 @@
     <div class="ui two column grid">
         <div class="four wide column">
             <div class="ui fluid vertical steps">
-                <div class="step pointing" [class.active]="tab === 'newNotification'" (click)="openNewNotifArea()">
+                <div class="step pointing" [class.disabled]="readOnly" [class.active]="tab === 'newNotification'"
+                    (click)="openNewNotifArea()">
                     <div class="title">
                         {{'workflow_notification_form' | translate }}
                     </div>
@@ -28,7 +29,8 @@
                 </ng-container>
             </div>
             <div class="ui fluid vertical steps">
-                <div class="step pointing" [class.active]="tab === 'newEvent'" (click)="openNewEventArea()">
+                <div class="step pointing" [class.disabled]="readOnly" [class.active]="tab === 'newEvent'"
+                    (click)="openNewEventArea()">
                     <div class="title">
                         {{'workflow_event_form' | translate }}
                     </div>
@@ -39,8 +41,7 @@
             <ng-container *ngIf="selectedNotification != null">
                 <app-workflow-notifications-form [project]="project" [workflow]="workflow"
                     [notification]="workflow.notifications[selectedNotification]" [loading]="loading"
-                    [editMode]="editMode"
-                    (updatedNotification)="updateNotification($event)"
+                    [editMode]="editMode" (updatedNotification)="updateNotification($event)" [readOnly]="readOnly"
                     (deleteNotificationEvent)="deleteNotification($event)" [canDelete]="true">
                 </app-workflow-notifications-form>
             </ng-container>
@@ -70,7 +71,8 @@
                         </div>
                         <div class="one wide field" *ngIf="eventIntegrations && eventIntegrations.length > 0">
                             <button class="ui blue icon button right floated" [class.loading]="loading"
-                                [class.disabled]="!selectedIntegration || loading" (click)="addEvent(selectedIntegration)">
+                                [class.disabled]="!selectedIntegration || loading"
+                                (click)="addEvent(selectedIntegration)">
                                 <i class="plus icon"></i>
                             </button>
                         </div>

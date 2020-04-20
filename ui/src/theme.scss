@@ -398,6 +398,12 @@ a.ui.basic.grey.label:hover {
     }
 }
 
+.ui.steps .disabled.step {
+    .night & {
+        color: $darkTheme_grey_inactive;
+    }
+}
+
 .ui.steps .disabled.step .title {
     .night & {
         color: inherit;
