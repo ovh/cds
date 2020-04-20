@@ -93,7 +93,6 @@ func (b *websocketBroker) Start(ctx context.Context, panicCallback func(s string
 							log.Debug("send data to %s", c.AuthConsumer.GetUsername())
 							if err := c.send(ctx, receivedEvent); err != nil {
 								b.chanRemoveClient <- c.UUID
-								log.Error(ctx, "websocketBroker.Start> unable to send event to %s: %v", c.AuthConsumer.GetUsername(), err)
 							}
 						}
 					}, panicCallback,
@@ -108,7 +107,6 @@ func (b *websocketBroker) Start(ctx context.Context, panicCallback func(s string
 			if !has {
 				continue
 			}
-
 			client.isAlive.UnSet()
 			delete(b.clients, uuid)
 		}
@@ -153,7 +151,6 @@ func (b *websocketBroker) cacheSubscribe(ctx context.Context, cacheMsgChan chan<
 
 func (b *websocketBroker) ServeHTTP() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) (err error) {
-
 		c, err := upgrader.Upgrade(w, r, nil)
 		if err != nil {
 			log.Warning(ctx, "websocket> upgrade: %v", err)
@@ -336,12 +333,12 @@ func (c *websocketClient) send(ctx context.Context, event sdk.Event) (err error)
 	defer c.mutex.Unlock()
 	defer func() {
 		if r := recover(); r != nil {
-			err = fmt.Errorf("websocketClient.Send recovered %v", r)
+			err = sdk.WithStack(fmt.Errorf("websocketClient.Send recovered %v", r))
 		}
 	}()
 
 	if c == nil || c.con == nil || !c.isAlive.IsSet() {
-		return nil
+		return sdk.WithStack(fmt.Errorf("client deconnected"))
 	}
 
 	sendEvent := false
@@ -393,6 +390,9 @@ func (c *websocketClient) send(ctx context.Context, event sdk.Event) (err error)
 		Event:  event,
 	}
 	if err := c.con.WriteJSON(msg); err != nil {
+		if strings.Contains(err.Error(), "use of closed network connection") {
+			return sdk.WithStack(err)
+		}
 		log.Error(ctx, "websocketClient.Send > unable to write json: %v", err)
 	}
 	return nil
