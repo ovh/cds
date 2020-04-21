@@ -18,7 +18,7 @@ type Pipeline struct {
 	FromRepository string        `json:"from_repository" cli:"from_repository" db:"from_repository"`
 	AsCodeEvents   []AsCodeEvent `json:"ascode_events" cli:"-" db:"-"`
 	// aggregate
-	FromTemplate string `json:"from_template,omitempty" cli:"from_template" db:"-"`
+	WorkflowAscodeHolder *Workflow `json:"workflow_ascode_holder,omitempty" cli:"-" db:"-"`
 }
 
 // PipelineAudit represents pipeline audit

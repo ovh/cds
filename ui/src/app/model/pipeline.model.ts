@@ -3,6 +3,7 @@ import { Environment } from './environment.model';
 import { Parameter } from './parameter.model';
 import { Stage } from './stage.model';
 import { Usage } from './usage.model';
+import { Workflow } from './workflow.model';
 
 export const pipelineNamePattern: RegExp = new RegExp('^[a-zA-Z0-9._-]+$');
 
@@ -60,7 +61,7 @@ export class Pipeline {
     preview: Pipeline;
     asCode: string;
     from_repository: string;
-    from_template: string;
+    workflow_ascode_holder: Workflow;
     ascode_events: Array<AsCodeEvents>;
 
     // true if someone has updated the pipeline ( used for warnings )

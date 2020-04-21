@@ -4,6 +4,7 @@ import { ModalTemplate, SuiActiveModal, SuiModalService, TemplateModalConfig } f
 import { Operation } from 'app/model/operation.model';
 import { Pipeline } from 'app/model/pipeline.model';
 import { Project } from 'app/model/project.model';
+import { Workflow } from 'app/model/workflow.model';
 import { PipelineService } from 'app/service/pipeline/pipeline.service';
 import { ApplicationWorkflowService } from 'app/service/services.module';
 import { WorkflowService } from 'app/service/workflow/workflow.service';
@@ -88,7 +89,7 @@ export class UpdateAsCodeComponent {
                 this._workflowService.updateAsCode(this.project.key, this.name, this.selectedBranch,
                     this.commitMessage, this.dataToSave).subscribe(o => {
                         this.ope = o;
-                        this.startPollingOperation();
+                        this.startPollingOperation((<Workflow>this.dataToSave).name);
                     });
                 break;
             case 'pipeline':
@@ -96,7 +97,7 @@ export class UpdateAsCodeComponent {
                 this._pipService.updateAsCode(this.project.key, <Pipeline>this.dataToSave,
                     this.selectedBranch, this.commitMessage).subscribe(o => {
                         this.ope = o;
-                        this.startPollingOperation();
+                        this.startPollingOperation((<Pipeline>this.dataToSave).workflow_ascode_holder.name);
                     });
                 break;
             default:
@@ -104,9 +105,9 @@ export class UpdateAsCodeComponent {
         }
     }
 
-    startPollingOperation() {
+    startPollingOperation(workflowName: string) {
         this.pollingOperationSub = Observable.interval(1000)
-            .mergeMap(_ => this._workflowService.getAsCodeOperation(this.project.key, this.name, this.ope.uuid))
+            .mergeMap(_ => this._workflowService.getAsCodeOperation(this.project.key, workflowName, this.ope.uuid))
             .first(o => o.status > 1)
             .pipe(finalize(() => {
                 this.loading = false;

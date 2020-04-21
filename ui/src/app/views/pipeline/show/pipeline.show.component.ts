@@ -9,7 +9,6 @@ import { Pipeline } from 'app/model/pipeline.model';
 import { Project } from 'app/model/project.model';
 import { AuthentifiedUser } from 'app/model/user.model';
 import { Workflow } from 'app/model/workflow.model';
-import { ApplicationService } from 'app/service/application/application.service';
 import { KeyService } from 'app/service/keys/keys.service';
 import { PipelineCoreService } from 'app/service/pipeline/pipeline.core.service';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
@@ -89,8 +88,7 @@ export class PipelineShowComponent implements OnInit {
         public _translate: TranslateService,
         private _keyService: KeyService,
         private _pipCoreService: PipelineCoreService,
-        private _cd: ChangeDetectorRef,
-        private _appService: ApplicationService
+        private _cd: ChangeDetectorRef
     ) {
         this.currentUser = this._store.selectSnapshot(AuthenticationState.user);
         this.project = this._routeActivated.snapshot.data['project'];
@@ -184,15 +182,13 @@ export class PipelineShowComponent implements OnInit {
                     return;
                 }
                 this.editMode = pip.editMode;
-                this.readOnly = !!pip.pipeline.from_template || !this.project.permissions.writable;
+                this.readOnly = (pip.pipeline.workflow_ascode_holder && !!pip.pipeline.workflow_ascode_holder.from_template) ||
+                    !this.project.permissions.writable;
                 if (pip.editMode) {
                     this.pipeline = cloneDeep(pip.editPipeline);
-                    if (this.pipeline.from_repository) {
-                        // get application
-                        this._appService.getAsCodeApplication(this.projectKey, this.pipeline.from_repository)
-                            .pipe(first()).subscribe(apps => {
-                                this.appAsCode = apps[0];
-                            });
+                    if (this.pipeline.workflow_ascode_holder) {
+                        let rootAppId = this.pipeline.workflow_ascode_holder.workflow_data.node.context.application_id;
+                        this.appAsCode = this.pipeline.workflow_ascode_holder.applications[rootAppId];
                     }
                 } else {
                     this.pipeline = cloneDeep(pip.pipeline);
@@ -212,7 +208,7 @@ export class PipelineShowComponent implements OnInit {
     }
 
     showTab(tab: string): void {
-        this._router.navigateByUrl('/project/' + this.project.key + '/pipeline/' + this.pipeline.name + '?tab=' + tab);
+        this._router.navigateByUrl(`/project/${this.project.key}/pipeline/${this.pipeline.name}?tab=${tab}`);
     }
 
     parameterEvent(event: ParameterEvent, skip?: boolean): void {
