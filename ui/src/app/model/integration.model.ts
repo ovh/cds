@@ -26,6 +26,10 @@ export class ProjectIntegration {
     // UI attributes
     hasChanged = false;
 
+    constructor() {
+        this.config = {};
+    }
+
     static mergeConfig(default_config: {}, config: {}) {
         if (!default_config) {
             return;
@@ -44,9 +48,5 @@ export class ProjectIntegration {
                 config[k] = default_config[k];
             }
         }
-    }
-
-    constructor() {
-        this.config = {};
     }
 }

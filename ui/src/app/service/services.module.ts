@@ -66,6 +66,13 @@ import { WorkflowStore } from './workflow/workflow.store';
 @NgModule({})
 export class ServicesModule {
 
+    constructor(@Optional() @SkipSelf() parentModule: ServicesModule) {
+        if (parentModule) {
+            throw new Error(
+                'ServicesModule is already loaded. Import it in the AppModule only');
+        }
+    }
+
     static forRoot(): ModuleWithProviders<ServicesModule> {
         return {
             ngModule: ServicesModule,
@@ -135,13 +142,6 @@ export class ServicesModule {
                 }
             ]
         };
-    }
-
-    constructor(@Optional() @SkipSelf() parentModule: ServicesModule) {
-        if (parentModule) {
-            throw new Error(
-                'ServicesModule is already loaded. Import it in the AppModule only');
-        }
     }
 }
 

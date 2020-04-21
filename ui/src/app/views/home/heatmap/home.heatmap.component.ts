@@ -19,6 +19,7 @@ import { ToolbarComponent } from './toolbar/toolbar.component';
 })
 @AutoUnsubscribe()
 export class HomeHeatmapComponent implements AfterViewInit {
+;
 
     loading = true;
     events: Array<Event>;
@@ -43,10 +44,6 @@ export class HomeHeatmapComponent implements AfterViewInit {
 
     @ViewChild('toolbar', { read: ToolbarComponent }) toolbar: ToolbarComponent;
 
-    static clone(objectToCopy) {
-        return (JSON.parse(JSON.stringify(objectToCopy)));
-    }
-
     constructor(
         private _timelineStore: TimelineStore,
         private _toast: ToastService,
@@ -55,6 +52,10 @@ export class HomeHeatmapComponent implements AfterViewInit {
         private _cd: ChangeDetectorRef
     ) {
         this.filter = new TimelineFilter();
+    }
+
+    static clone(objectToCopy) {
+        return (JSON.parse(JSON.stringify(objectToCopy)));
     }
 
     ngAfterViewInit() {
@@ -208,8 +209,7 @@ export class HomeHeatmapComponent implements AfterViewInit {
                 }).sort();
             }
         }
-    };
-
+    }
     addFilter(project_key: string): void {
         if (!this.filter.projects) {
             this.filter.projects = new Array<ProjectFilter>();

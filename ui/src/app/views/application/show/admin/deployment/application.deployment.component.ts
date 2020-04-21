@@ -20,6 +20,16 @@ import { ToastService } from '../../../../../shared/toast/ToastService';
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ApplicationDeploymentComponent {
+    @Input('project')
+    set project(project: Project) {
+        this._project = project;
+        if (project.integrations) {
+            this.filteredIntegrations = project.integrations.filter(p => p.model.deployment);
+        }
+    }
+    get project(): Project {
+        return this._project;
+    }
 
     filteredIntegrations: Array<ProjectIntegration>;
     selectedIntegration: ProjectIntegration;
@@ -32,23 +42,6 @@ export class ApplicationDeploymentComponent {
     @ViewChild('linkWarning') linkWarningModal: WarningModalComponent;
 
     @Input() application: Application;
-    @Input('project')
-    set project(project: Project) {
-        this._project = project;
-        if (project.integrations) {
-            this.filteredIntegrations = project.integrations.filter(p => p.model.deployment);
-        }
-    }
-    get project(): Project {
-        return this._project;
-    }
-
-    getIntegrationNames(): Array<string> {
-        if (this.application.deployment_strategies) {
-            return Object.keys(this.application.deployment_strategies);
-        }
-        return null;
-    }
 
     constructor(
         private _toast: ToastService,
@@ -57,6 +50,13 @@ export class ApplicationDeploymentComponent {
         private _cd: ChangeDetectorRef
     ) {
 
+    }
+
+    getIntegrationNames(): Array<string> {
+        if (this.application.deployment_strategies) {
+            return Object.keys(this.application.deployment_strategies);
+        }
+        return null;
     }
 
     clickDeleteIntegration(pfName: string) {
