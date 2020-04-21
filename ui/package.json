@@ -49,7 +49,7 @@
     "@ngx-translate/http-loader": "4.0.0",
     "@ngxs/devtools-plugin": "3.3.4",
     "@ngxs/logger-plugin": "3.3.4",
-    "@ngxs/store": "3.3.4",
+    "@ngxs/store": "3.6.2",
     "@richardlt/ng2-semantic-ui": "0.10.0-alpha.6-fork-4",
     "@swimlane/ngx-charts": "14.0.0",
     "@types/dagre-d3": "0.4.38",

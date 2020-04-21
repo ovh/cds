@@ -1,4 +1,5 @@
 import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
+import { Injectable } from '@angular/core';
 import { Action, createSelector, State, StateContext } from '@ngxs/store';
 import { Job } from 'app/model/job.model';
 import { Parameter } from 'app/model/parameter.model';
@@ -32,7 +33,10 @@ export function getInitialPipelinesState(): PipelinesStateModel {
     name: 'pipelines',
     defaults: getInitialPipelinesState()
 })
+@Injectable()
 export class PipelinesState {
+
+    constructor(private _http: HttpClient, private _pipelineService: PipelineService) { }
 
     static getCurrent() {
         return createSelector(
@@ -40,8 +44,6 @@ export class PipelinesState {
             (state: PipelinesStateModel): PipelinesStateModel => state
         );
     }
-
-    constructor(private _http: HttpClient, private _pipelineService: PipelineService) { }
 
     @Action(actionPipeline.AddPipeline)
     add(ctx: StateContext<PipelinesStateModel>, action: actionPipeline.AddPipeline) {
