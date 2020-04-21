@@ -8,6 +8,7 @@ import (
 	tar "archive/tar"
 	context "context"
 	gomock "github.com/golang/mock/gomock"
+	websocket "github.com/gorilla/websocket"
 	sdk "github.com/ovh/cds/sdk"
 	cdsclient "github.com/ovh/cds/sdk/cdsclient"
 	venom "github.com/ovh/venom"
@@ -1718,6 +1719,18 @@ func (m *MockEventsClient) EventsListen(ctx context.Context, chanSSEvt chan<- cd
 func (mr *MockEventsClientMockRecorder) EventsListen(ctx, chanSSEvt interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "EventsListen", reflect.TypeOf((*MockEventsClient)(nil).EventsListen), ctx, chanSSEvt)
+}
+
+// WebsocketEventsListen mocks base method
+func (m *MockEventsClient) WebsocketEventsListen(ctx context.Context, chanMsgToSend <-chan sdk.WebsocketFilter, chanMsgReceived chan<- sdk.WebsocketEvent) {
+	m.ctrl.T.Helper()
+	m.ctrl.Call(m, "WebsocketEventsListen", ctx, chanMsgToSend, chanMsgReceived)
+}
+
+// WebsocketEventsListen indicates an expected call of WebsocketEventsListen
+func (mr *MockEventsClientMockRecorder) WebsocketEventsListen(ctx, chanMsgToSend, chanMsgReceived interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WebsocketEventsListen", reflect.TypeOf((*MockEventsClient)(nil).WebsocketEventsListen), ctx, chanMsgToSend, chanMsgReceived)
 }
 
 // MockDownloadClient is a mock of DownloadClient interface
@@ -4344,6 +4357,20 @@ func (mr *MockInterfaceMockRecorder) HTTPSSEClient() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "HTTPSSEClient", reflect.TypeOf((*MockInterface)(nil).HTTPSSEClient))
 }
 
+// HTTPWebsocketClient mocks base method
+func (m *MockInterface) HTTPWebsocketClient() *websocket.Dialer {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "HTTPWebsocketClient")
+	ret0, _ := ret[0].(*websocket.Dialer)
+	return ret0
+}
+
+// HTTPWebsocketClient indicates an expected call of HTTPWebsocketClient
+func (mr *MockInterfaceMockRecorder) HTTPWebsocketClient() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "HTTPWebsocketClient", reflect.TypeOf((*MockInterface)(nil).HTTPWebsocketClient))
+}
+
 // AuthDriverList mocks base method
 func (m *MockInterface) AuthDriverList() (sdk.AuthDriverResponse, error) {
 	m.ctrl.T.Helper()
@@ -5504,6 +5531,18 @@ func (m *MockInterface) EventsListen(ctx context.Context, chanSSEvt chan<- cdscl
 func (mr *MockInterfaceMockRecorder) EventsListen(ctx, chanSSEvt interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "EventsListen", reflect.TypeOf((*MockInterface)(nil).EventsListen), ctx, chanSSEvt)
+}
+
+// WebsocketEventsListen mocks base method
+func (m *MockInterface) WebsocketEventsListen(ctx context.Context, chanMsgToSend <-chan sdk.WebsocketFilter, chanMsgReceived chan<- sdk.WebsocketEvent) {
+	m.ctrl.T.Helper()
+	m.ctrl.Call(m, "WebsocketEventsListen", ctx, chanMsgToSend, chanMsgReceived)
+}
+
+// WebsocketEventsListen indicates an expected call of WebsocketEventsListen
+func (mr *MockInterfaceMockRecorder) WebsocketEventsListen(ctx, chanMsgToSend, chanMsgReceived interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WebsocketEventsListen", reflect.TypeOf((*MockInterface)(nil).WebsocketEventsListen), ctx, chanMsgToSend, chanMsgReceived)
 }
 
 // PipelineExport mocks base method
@@ -8784,6 +8823,20 @@ func (m *MockRaw) HTTPSSEClient() *http.Client {
 func (mr *MockRawMockRecorder) HTTPSSEClient() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "HTTPSSEClient", reflect.TypeOf((*MockRaw)(nil).HTTPSSEClient))
+}
+
+// HTTPWebsocketClient mocks base method
+func (m *MockRaw) HTTPWebsocketClient() *websocket.Dialer {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "HTTPWebsocketClient")
+	ret0, _ := ret[0].(*websocket.Dialer)
+	return ret0
+}
+
+// HTTPWebsocketClient indicates an expected call of HTTPWebsocketClient
+func (mr *MockRawMockRecorder) HTTPWebsocketClient() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "HTTPWebsocketClient", reflect.TypeOf((*MockRaw)(nil).HTTPWebsocketClient))
 }
 
 // MockGRPCPluginsClient is a mock of GRPCPluginsClient interface
