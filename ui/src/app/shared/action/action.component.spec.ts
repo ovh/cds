@@ -2,8 +2,6 @@ import { APP_BASE_HREF } from '@angular/common';
 import { HttpRequest } from '@angular/common/http';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { fakeAsync, TestBed, tick } from '@angular/core/testing';
-import { XHRBackend } from '@angular/http';
-import { MockBackend } from '@angular/http/testing';
 import { RouterTestingModule } from '@angular/router/testing';
 import { TranslateLoader, TranslateModule, TranslateParser, TranslateService } from '@ngx-translate/core';
 import { Action } from 'app/model/action.model';
@@ -40,7 +38,6 @@ describe('CDS: Action Component', () => {
                 RepoManagerService,
                 ActionService,
                 WorkerModelService,
-                { provide: XHRBackend, useClass: MockBackend },
                 TranslateLoader,
                 TranslateParser,
                 { provide: APP_BASE_HREF, useValue: '/' },
