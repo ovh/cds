@@ -6,6 +6,7 @@ import { Title } from '@angular/platform-browser';
 import { ActivatedRoute, NavigationEnd, NavigationStart, ResolveEnd, ResolveStart, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
+import { WorkflowNodeRun } from 'app/model/workflow.run.model';
 import { GetCDSStatus } from 'app/store/cds.action';
 import { CDSState } from 'app/store/cds.state';
 import { Observable } from 'rxjs';
@@ -229,8 +230,21 @@ export class AppComponent implements OnInit {
                         if (!e.type_event || e.type_event.indexOf(EventType.RUN_WORKFLOW_PREFIX) !== 0) {
                             results.push(e);
                         } else {
-                            let wr = results.find(re => re.project_key === e.project_key
-                                && re.workflow_name === e.workflow_name && re.type_event === e.type_event);
+                            let wr = results.find(re => {
+                                if (re.project_key === e.project_key && re.workflow_name === e.workflow_name
+                                    && re.type_event === e.type_event) {
+                                    switch (e.type_event) {
+                                        case EventType.RUN_WORKFLOW_NODE:
+                                            let wnrEvent = <WorkflowNodeRun>e.payload;
+                                            let otherEvent = <WorkflowNodeRun>re.payload;
+                                            return wnrEvent.id === otherEvent.id;
+                                        case EventType.RUN_WORKFLOW_PREFIX:
+                                            return e.workflow_run_num === re.workflow_run_num;
+                                        default: return true
+                                    }
+                                }
+                                return false;
+                            });
                             if (!wr) {
                                 results.push(e);
                             }

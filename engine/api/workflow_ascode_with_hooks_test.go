@@ -154,24 +154,7 @@ version: v1.0`),
 					WebhooksDisabled:  false,
 					Icon:              sdk.GitHubIcon,
 					Events: []string{
-						"repo:refs_changed",
-						"repo:modified",
-						"repo:forked",
-						"repo:comment:added",
-						"repo:comment:edited",
-						"repo:comment:deleted",
-						"pr:opened",
-						"pr:modified",
-						"pr:reviewer:updated",
-						"pr:reviewer:approved",
-						"pr:reviewer:unapproved",
-						"pr:reviewer:needs_work",
-						"pr:merged",
-						"pr:declined",
-						"pr:deleted",
-						"pr:comment:added",
-						"pr:comment:edited",
-						"pr:comment:deleted",
+						"push",
 					},
 				}
 
@@ -190,8 +173,10 @@ version: v1.0`),
 
 				vcsHooks, ok := in.(*sdk.VCSHook)
 				require.True(t, ok)
-				assert.Equal(t, 1, len(vcsHooks.Events))
-				assert.Equal(t, "repo:refs_changed", vcsHooks.Events[0])
+
+				require.Len(t, vcsHooks.Events, 0, "events list should be empty, default value is set by vcs")
+				vcsHooks.Events = []string{"push"}
+
 				assert.Equal(t, "POST", vcsHooks.Method)
 				assert.Equal(t, "http://lolcat.host", vcsHooks.URL)
 				vcsHooks.ID = sdk.UUID()
@@ -233,7 +218,7 @@ version: v1.0`),
 	for _, h := range wk.WorkflowData.GetHooks() {
 		log.Debug("--> %T %+v", h, h)
 		assert.Equal(t, "RepositoryWebHook", h.HookModelName)
-		assert.Equal(t, "repo:refs_changed", h.Config["eventFilter"].Value)
+		assert.Equal(t, "push", h.Config["eventFilter"].Value)
 		assert.Equal(t, "Github", h.Config["hookIcon"].Value)
 		assert.Equal(t, "POST", h.Config["method"].Value)
 		assert.Equal(t, proj.Key, h.Config["project"].Value)
@@ -400,24 +385,7 @@ version: v1.0`),
 					WebhooksDisabled:  false,
 					Icon:              sdk.GitHubIcon,
 					Events: []string{
-						"repo:refs_changed",
-						"repo:modified",
-						"repo:forked",
-						"repo:comment:added",
-						"repo:comment:edited",
-						"repo:comment:deleted",
-						"pr:opened",
-						"pr:modified",
-						"pr:reviewer:updated",
-						"pr:reviewer:approved",
-						"pr:reviewer:unapproved",
-						"pr:reviewer:needs_work",
-						"pr:merged",
-						"pr:declined",
-						"pr:deleted",
-						"pr:comment:added",
-						"pr:comment:edited",
-						"pr:comment:deleted",
+						"push",
 					},
 				}
 
@@ -436,8 +404,10 @@ version: v1.0`),
 
 				vcsHooks, ok := in.(*sdk.VCSHook)
 				require.True(t, ok)
-				assert.Equal(t, 1, len(vcsHooks.Events))
-				assert.Equal(t, "repo:refs_changed", vcsHooks.Events[0])
+
+				require.Len(t, vcsHooks.Events, 0, "events list should be empty, default value is set by vcs")
+				vcsHooks.Events = []string{"push"}
+
 				assert.Equal(t, "POST", vcsHooks.Method)
 				assert.Equal(t, "http://lolcat.host", vcsHooks.URL)
 
@@ -477,7 +447,7 @@ version: v1.0`),
 	for _, h := range wk.WorkflowData.GetHooks() {
 		log.Debug("--> %T %+v", h, h)
 		assert.Equal(t, "RepositoryWebHook", h.HookModelName)
-		assert.Equal(t, "repo:refs_changed", h.Config["eventFilter"].Value)
+		assert.Equal(t, "push", h.Config["eventFilter"].Value)
 		assert.Equal(t, "Github", h.Config["hookIcon"].Value)
 		assert.Equal(t, "POST", h.Config["method"].Value)
 		assert.Equal(t, proj.Key, h.Config["project"].Value)
@@ -531,7 +501,7 @@ version: v1.0`),
 	for _, h := range wk.WorkflowData.GetHooks() {
 		log.Debug("--> %T %+v", h, h)
 		assert.Equal(t, "RepositoryWebHook", h.HookModelName)
-		assert.Equal(t, "repo:refs_changed", h.Config["eventFilter"].Value)
+		assert.Equal(t, "push", h.Config["eventFilter"].Value)
 		assert.Equal(t, "Github", h.Config["hookIcon"].Value)
 		assert.Equal(t, "POST", h.Config["method"].Value)
 		assert.Equal(t, proj.Key, h.Config["project"].Value)
@@ -539,7 +509,6 @@ version: v1.0`),
 		assert.Equal(t, "github", h.Config["vcsServer"].Value)
 		assert.Equal(t, wk.Name, h.Config["workflow"].Value)
 	}
-
 }
 
 func Test_WorkflowAsCodeWithDefaultHookAndAScheduler_ShouldGive_TheSameRepoWebHookAndTheScheduler(t *testing.T) {
@@ -734,24 +703,7 @@ version: v1.0`),
 					WebhooksDisabled:  false,
 					Icon:              sdk.GitHubIcon,
 					Events: []string{
-						"repo:refs_changed",
-						"repo:modified",
-						"repo:forked",
-						"repo:comment:added",
-						"repo:comment:edited",
-						"repo:comment:deleted",
-						"pr:opened",
-						"pr:modified",
-						"pr:reviewer:updated",
-						"pr:reviewer:approved",
-						"pr:reviewer:unapproved",
-						"pr:reviewer:needs_work",
-						"pr:merged",
-						"pr:declined",
-						"pr:deleted",
-						"pr:comment:added",
-						"pr:comment:edited",
-						"pr:comment:deleted",
+						"push",
 					},
 				}
 
@@ -770,9 +722,10 @@ version: v1.0`),
 
 				vcsHooks, ok := in.(*sdk.VCSHook)
 				require.True(t, ok)
-				assert.Equal(t, 1, len(vcsHooks.Events))
-				assert.Equal(t, "repo:refs_changed", vcsHooks.Events[0])
-				assert.Equal(t, "POST", vcsHooks.Method)
+
+				require.Len(t, vcsHooks.Events, 0, "events list should be empty, default value is set by vcs")
+				vcsHooks.Events = []string{"push"}
+
 				assert.Equal(t, "http://lolcat.host", vcsHooks.URL)
 				vcsHooks.ID = sdk.UUID()
 				*(out.(*sdk.VCSHook)) = *vcsHooks
@@ -815,7 +768,7 @@ version: v1.0`),
 
 		switch h.HookModelName {
 		case "RepositoryWebHook":
-			assert.Equal(t, "repo:refs_changed", h.Config["eventFilter"].Value)
+			assert.Equal(t, "push", h.Config["eventFilter"].Value)
 			assert.Equal(t, "Github", h.Config["hookIcon"].Value)
 			assert.Equal(t, "POST", h.Config["method"].Value)
 			assert.Equal(t, proj.Key, h.Config["project"].Value)
@@ -887,7 +840,7 @@ version: v1.0`),
 	for _, h := range wk.WorkflowData.GetHooks() {
 		switch h.HookModelName {
 		case "RepositoryWebHook":
-			assert.Equal(t, "repo:refs_changed", h.Config["eventFilter"].Value)
+			assert.Equal(t, "push", h.Config["eventFilter"].Value)
 			assert.Equal(t, "Github", h.Config["hookIcon"].Value)
 			assert.Equal(t, "POST", h.Config["method"].Value)
 			assert.Equal(t, proj.Key, h.Config["project"].Value)
@@ -913,7 +866,6 @@ version: v1.0`),
 			t.Fatalf("unexpected hook: %T %+v", h, h)
 		}
 	}
-
 }
 
 func Test_WorkflowAsCodeWithJustAcheduler_ShouldGive_ARepoWebHookAndTheScheduler_ThenWeUpdateIt_ThenWheDeleteIt(t *testing.T) {
@@ -1278,24 +1230,7 @@ version: v1.0`),
 					WebhooksDisabled:  false,
 					Icon:              sdk.GitHubIcon,
 					Events: []string{
-						"repo:refs_changed",
-						"repo:modified",
-						"repo:forked",
-						"repo:comment:added",
-						"repo:comment:edited",
-						"repo:comment:deleted",
-						"pr:opened",
-						"pr:modified",
-						"pr:reviewer:updated",
-						"pr:reviewer:approved",
-						"pr:reviewer:unapproved",
-						"pr:reviewer:needs_work",
-						"pr:merged",
-						"pr:declined",
-						"pr:deleted",
-						"pr:comment:added",
-						"pr:comment:edited",
-						"pr:comment:deleted",
+						"push",
 					},
 				}
 
@@ -1314,8 +1249,10 @@ version: v1.0`),
 
 				vcsHooks, ok := in.(*sdk.VCSHook)
 				require.True(t, ok)
-				assert.Equal(t, 1, len(vcsHooks.Events))
-				assert.Equal(t, "repo:refs_changed", vcsHooks.Events[0])
+
+				require.Len(t, vcsHooks.Events, 0, "events list should be empty, default value is set by vcs")
+				vcsHooks.Events = []string{"push"}
+
 				assert.Equal(t, "POST", vcsHooks.Method)
 				assert.Equal(t, "http://lolcat.host", vcsHooks.URL)
 				vcsHooks.ID = sdk.UUID()
@@ -1367,7 +1304,7 @@ version: v1.0`),
 
 		switch h.HookModelName {
 		case "RepositoryWebHook":
-			assert.Equal(t, "repo:refs_changed", h.Config["eventFilter"].Value)
+			assert.Equal(t, "push", h.Config["eventFilter"].Value)
 			assert.Equal(t, "Github", h.Config["hookIcon"].Value)
 			assert.Equal(t, "POST", h.Config["method"].Value)
 			assert.Equal(t, proj.Key, h.Config["project"].Value)
@@ -1447,7 +1384,7 @@ version: v1.0`),
 	for _, h := range wk.WorkflowData.GetHooks() {
 		switch h.HookModelName {
 		case "RepositoryWebHook":
-			assert.Equal(t, "repo:refs_changed", h.Config["eventFilter"].Value)
+			assert.Equal(t, "push", h.Config["eventFilter"].Value)
 			assert.Equal(t, "Github", h.Config["hookIcon"].Value)
 			assert.Equal(t, "POST", h.Config["method"].Value)
 			assert.Equal(t, proj.Key, h.Config["project"].Value)
@@ -1519,7 +1456,7 @@ version: v1.0`),
 	for _, h := range wk.WorkflowData.GetHooks() {
 		switch h.HookModelName {
 		case "RepositoryWebHook":
-			assert.Equal(t, "repo:refs_changed", h.Config["eventFilter"].Value)
+			assert.Equal(t, "push", h.Config["eventFilter"].Value)
 			assert.Equal(t, "Github", h.Config["hookIcon"].Value)
 			assert.Equal(t, "POST", h.Config["method"].Value)
 			assert.Equal(t, proj.Key, h.Config["project"].Value)

@@ -11,10 +11,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/ovh/cds/engine/api/repositoriesmanager"
-	"github.com/ovh/cds/engine/api/services"
-	"github.com/ovh/cds/engine/service"
-
+	"github.com/go-gorp/gorp"
+	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/yaml.v2"
@@ -26,9 +24,13 @@ import (
 	"github.com/ovh/cds/engine/api/integration"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/project"
+	"github.com/ovh/cds/engine/api/repositoriesmanager"
+	"github.com/ovh/cds/engine/api/services"
+	"github.com/ovh/cds/engine/api/services/mock_services"
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/api/test/assets"
 	"github.com/ovh/cds/engine/api/workflow"
+	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/ovh/cds/sdk/exportentities"
@@ -207,7 +209,7 @@ func Test_getWorkflowNotificationsConditionsHandler(t *testing.T) {
 		},
 	}
 
-	proj2, errP := project.Load(api.mustDB(), api.Cache, proj.Key, project.LoadOptions.WithPipelines, project.LoadOptions.WithGroups, project.LoadOptions.WithIntegrations)
+	proj2, errP := project.Load(api.mustDB(), proj.Key, project.LoadOptions.WithPipelines, project.LoadOptions.WithGroups, project.LoadOptions.WithIntegrations)
 	test.NoError(t, errP)
 
 	test.NoError(t, workflow.Insert(context.TODO(), db, api.Cache, *proj2, &w))
@@ -401,7 +403,7 @@ func Test_getWorkflowHandler_AsProvider(t *testing.T) {
 
 	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), &pip))
 
-	proj, _ = project.LoadByID(api.mustDB(), api.Cache, proj.ID,
+	proj, _ = project.LoadByID(api.mustDB(), proj.ID,
 		project.LoadOptions.WithApplications,
 		project.LoadOptions.WithPipelines,
 		project.LoadOptions.WithEnvironments,
@@ -461,7 +463,7 @@ func Test_getWorkflowHandler_withUsage(t *testing.T) {
 
 	test.NoError(t, pipeline.InsertPipeline(db, &pip))
 
-	proj, _ = project.LoadByID(db, api.Cache, proj.ID,
+	proj, _ = project.LoadByID(db, proj.ID,
 		project.LoadOptions.WithApplications,
 		project.LoadOptions.WithPipelines,
 		project.LoadOptions.WithEnvironments,
@@ -553,7 +555,7 @@ func Test_postWorkflowHandlerWithRootShouldSuccess(t *testing.T) {
 		RepositoryFullname: "test/app1",
 		VCSServer:          "github",
 	}
-	test.NoError(t, application.Insert(api.mustDB(), api.Cache, *proj, &app))
+	test.NoError(t, application.Insert(api.mustDB(), *proj, &app))
 
 	var workflow = &sdk.Workflow{
 		Name:        "Name",
@@ -616,7 +618,7 @@ func Test_postWorkflowHandlerWithBadPayloadShouldFail(t *testing.T) {
 		RepositoryFullname: "test/app1",
 		VCSServer:          "github",
 	}
-	test.NoError(t, application.Insert(api.mustDB(), api.Cache, *proj, &app))
+	test.NoError(t, application.Insert(api.mustDB(), *proj, &app))
 
 	var workflow = &sdk.Workflow{
 		Name:        "Name",
@@ -761,7 +763,7 @@ func Test_putWorkflowHandler(t *testing.T) {
 		RepositoryFullname: "foo/bar",
 		VCSServer:          "github",
 	}
-	assert.NoError(t, application.Insert(db, api.Cache, *proj, &app))
+	assert.NoError(t, application.Insert(db, *proj, &app))
 	assert.NoError(t, repositoriesmanager.InsertForApplication(db, &app, proj.Key))
 
 	//Prepare request
@@ -937,7 +939,7 @@ func Test_deleteWorkflowEventIntegrationHandler(t *testing.T) {
 		RepositoryFullname: "test/app1",
 		VCSServer:          "github",
 	}
-	test.NoError(t, application.Insert(api.mustDB(), api.Cache, *proj, &app))
+	test.NoError(t, application.Insert(api.mustDB(), *proj, &app))
 
 	model := sdk.IntegrationModel{
 		Name:  sdk.RandomString(10),
@@ -1133,7 +1135,7 @@ func Test_postWorkflowRollbackHandler(t *testing.T) {
 		RepositoryFullname: "test/app1",
 		VCSServer:          "github",
 	}
-	test.NoError(t, application.Insert(api.mustDB(), api.Cache, *proj, &app))
+	test.NoError(t, application.Insert(api.mustDB(), *proj, &app))
 
 	var workflow1 = &sdk.Workflow{
 		ID:          wf.ID,
@@ -1277,7 +1279,7 @@ func Test_postAndDeleteWorkflowLabelHandler(t *testing.T) {
 	test.NoError(t, json.Unmarshal(w.Body.Bytes(), &pi))
 	assert.Equal(t, pname, pi.Name)
 
-	proj, err = project.Load(api.mustDB(), api.Cache, proj.Key,
+	proj, err = project.Load(api.mustDB(), proj.Key,
 		project.LoadOptions.WithApplicationWithDeploymentStrategies,
 		project.LoadOptions.WithPipelines,
 		project.LoadOptions.WithEnvironments,
@@ -1466,9 +1468,9 @@ func TestBenchmarkGetWorkflowsWithoutAPIAsAdmin(t *testing.T) {
 		Name: sdk.RandomString(10),
 	}
 
-	assert.NoError(t, application.Insert(db, cache, *proj, &app))
+	assert.NoError(t, application.Insert(db, *proj, &app))
 
-	prj, err := project.Load(db, cache, proj.Key,
+	prj, err := project.Load(db, proj.Key,
 		project.LoadOptions.WithPipelines,
 		project.LoadOptions.WithApplications,
 		project.LoadOptions.WithWorkflows,
@@ -1534,9 +1536,9 @@ func TestBenchmarkGetWorkflowsWithAPI(t *testing.T) {
 		Name: sdk.RandomString(10),
 	}
 
-	assert.NoError(t, application.Insert(db, api.Cache, *proj, &app))
+	assert.NoError(t, application.Insert(db, *proj, &app))
 
-	prj, err := project.Load(db, api.Cache, proj.Key,
+	prj, err := project.Load(db, proj.Key,
 		project.LoadOptions.WithPipelines,
 		project.LoadOptions.WithApplications,
 		project.LoadOptions.WithWorkflows,
@@ -1592,4 +1594,236 @@ func TestBenchmarkGetWorkflowsWithAPI(t *testing.T) {
 	t.Logf("N : %d", res.N)
 	t.Logf("ns/op : %d", res.NsPerOp())
 	assert.False(t, res.NsPerOp() >= 500000000, "Workflows load is too long: GOT %d and EXPECTED lower than 500000000 (500ms)", res.NsPerOp())
+}
+
+func Test_putWorkflowShouldNotCallHOOKSIfHookDoesNotChange(t *testing.T) {
+	api, db, router, end := newTestAPI(t)
+	defer end()
+
+	_, _ = assets.InsertService(t, db, t.Name()+"_HOOKS", services.TypeHooks)
+
+	u, pass := assets.InsertAdminUser(t, api.mustDB())
+	key := sdk.RandomString(10)
+	proj := assets.InsertTestProject(t, db, api.Cache, key, key)
+	pip := sdk.Pipeline{
+		Name:      "pipeline1",
+		ProjectID: proj.ID,
+	}
+	assert.NoError(t, pipeline.InsertPipeline(db, &pip))
+
+	wf := sdk.Workflow{
+		ProjectID:  proj.ID,
+		ProjectKey: proj.Key,
+		Name:       sdk.RandomString(10),
+		Groups:     proj.ProjectGroups,
+		WorkflowData: sdk.WorkflowData{
+			Node: sdk.Node{
+				Name: "root",
+				Context: &sdk.NodeContext{
+					PipelineID: pip.ID,
+				},
+				Hooks: []sdk.NodeHook{
+					{
+						HookModelID: sdk.WebHookModel.ID,
+						Config: sdk.WorkflowNodeHookConfig{
+							"method": sdk.WorkflowNodeHookConfigValue{
+								Value: "POST",
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	// Setup a mock for all services called by the API
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+	// The mock has been geenrated by mockgen: go get github.com/golang/mock/mockgen
+	// If you have to regenerate thi mock you just have to run, from directory $GOPATH/src/github.com/ovh/cds/engine/api/services:
+	// mockgen -source=http.go -destination=mock_services/services_mock.go Client
+	servicesClients := mock_services.NewMockClient(ctrl)
+	services.NewClient = func(_ gorp.SqlExecutor, _ []sdk.Service) services.Client {
+		return servicesClients
+	}
+	defer func() {
+		services.NewClient = services.NewDefaultClient
+	}()
+
+	// Mock the Hooks service
+	servicesClients.EXPECT().
+		DoJSONRequest(gomock.Any(), "POST", "/task/bulk", gomock.Any(), gomock.Any()).
+		DoAndReturn(
+			func(ctx context.Context, method, path string, in interface{}, out interface{}) (http.Header, int, error) {
+				actualHooks, ok := in.(map[string]sdk.NodeHook)
+				require.True(t, ok)
+				require.Len(t, actualHooks, 1)
+				for k, h := range actualHooks {
+					h.Config["method"] = sdk.WorkflowNodeHookConfigValue{
+						Value:        "POST",
+						Configurable: true,
+					}
+					actualHooks[k] = h
+				}
+				out = actualHooks
+				return nil, 200, nil
+			},
+		)
+
+	// Insert the workflow
+	vars := map[string]string{
+		"permProjectKey": proj.Key,
+	}
+	uri := router.GetRoute("POST", api.postWorkflowHandler, vars)
+	test.NotEmpty(t, uri)
+	req := assets.NewAuthentifiedRequest(t, u, pass, "POST", uri, &wf)
+	w := httptest.NewRecorder()
+	router.Mux.ServeHTTP(w, req)
+	assert.Equal(t, 201, w.Code)
+
+	// Load the workflow
+	vars = map[string]string{
+		"key":              proj.Key,
+		"permWorkflowName": wf.Name,
+	}
+	uri = router.GetRoute("GET", api.getWorkflowHandler, vars)
+	test.NotEmpty(t, uri)
+	req = assets.NewAuthentifiedRequest(t, u, pass, "GET", uri, nil)
+	w = httptest.NewRecorder()
+	router.Mux.ServeHTTP(w, req)
+
+	// Unmarshal the workflow
+	require.NoError(t, json.Unmarshal(w.Body.Bytes(), &wf))
+
+	// Then call the PUT handler, it should not trigger /task/bulk on hooks service
+	// Update the workflow
+	uri = router.GetRoute("PUT", api.putWorkflowHandler, vars)
+	test.NotEmpty(t, uri)
+	req = assets.NewAuthentifiedRequest(t, u, pass, "PUT", uri, &wf)
+	w = httptest.NewRecorder()
+	router.Mux.ServeHTTP(w, req)
+	assert.Equal(t, 200, w.Code)
+
+}
+
+func Test_putWorkflowWithDuplicateHooksShouldRaiseAnError(t *testing.T) {
+	api, db, router, end := newTestAPI(t)
+	defer end()
+
+	_, _ = assets.InsertService(t, db, t.Name()+"_HOOKS", services.TypeHooks)
+
+	u, pass := assets.InsertAdminUser(t, api.mustDB())
+	key := sdk.RandomString(10)
+	proj := assets.InsertTestProject(t, db, api.Cache, key, key)
+	pip := sdk.Pipeline{
+		Name:      "pipeline1",
+		ProjectID: proj.ID,
+	}
+	assert.NoError(t, pipeline.InsertPipeline(db, &pip))
+
+	wf := sdk.Workflow{
+		ProjectID:  proj.ID,
+		ProjectKey: proj.Key,
+		Name:       sdk.RandomString(10),
+		Groups:     proj.ProjectGroups,
+		WorkflowData: sdk.WorkflowData{
+			Node: sdk.Node{
+				Name: "root",
+				Context: &sdk.NodeContext{
+					PipelineID: pip.ID,
+				},
+				Hooks: []sdk.NodeHook{
+					{
+						HookModelID: sdk.WebHookModel.ID,
+						Config: sdk.WorkflowNodeHookConfig{
+							"method": sdk.WorkflowNodeHookConfigValue{
+								Value: "POST",
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	// Setup a mock for all services called by the API
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+	// The mock has been geenrated by mockgen: go get github.com/golang/mock/mockgen
+	// If you have to regenerate thi mock you just have to run, from directory $GOPATH/src/github.com/ovh/cds/engine/api/services:
+	// mockgen -source=http.go -destination=mock_services/services_mock.go Client
+	servicesClients := mock_services.NewMockClient(ctrl)
+	services.NewClient = func(_ gorp.SqlExecutor, _ []sdk.Service) services.Client {
+		return servicesClients
+	}
+	defer func() {
+		services.NewClient = services.NewDefaultClient
+	}()
+
+	// Mock the Hooks service
+	servicesClients.EXPECT().
+		DoJSONRequest(gomock.Any(), "POST", "/task/bulk", gomock.Any(), gomock.Any()).
+		DoAndReturn(
+			func(ctx context.Context, method, path string, in interface{}, out interface{}) (http.Header, int, error) {
+				actualHooks, ok := in.(map[string]sdk.NodeHook)
+				require.True(t, ok)
+				require.Len(t, actualHooks, 1)
+				for k, h := range actualHooks {
+					h.Config["method"] = sdk.WorkflowNodeHookConfigValue{
+						Value:        "POST",
+						Configurable: true,
+					}
+					actualHooks[k] = h
+				}
+				out = actualHooks
+				return nil, 200, nil
+			},
+		)
+
+	// Insert the workflow
+	vars := map[string]string{
+		"permProjectKey": proj.Key,
+	}
+	uri := router.GetRoute("POST", api.postWorkflowHandler, vars)
+	test.NotEmpty(t, uri)
+	req := assets.NewAuthentifiedRequest(t, u, pass, "POST", uri, &wf)
+	w := httptest.NewRecorder()
+	router.Mux.ServeHTTP(w, req)
+	assert.Equal(t, 201, w.Code)
+
+	// Load the workflow
+	vars = map[string]string{
+		"key":              proj.Key,
+		"permWorkflowName": wf.Name,
+	}
+	uri = router.GetRoute("GET", api.getWorkflowHandler, vars)
+	test.NotEmpty(t, uri)
+	req = assets.NewAuthentifiedRequest(t, u, pass, "GET", uri, nil)
+	w = httptest.NewRecorder()
+	router.Mux.ServeHTTP(w, req)
+
+	// Unmarshal the workflow
+	require.NoError(t, json.Unmarshal(w.Body.Bytes(), &wf))
+
+	// Then add another hooks with similar properties. It should raise a 400 HTTP Error
+
+	wf.WorkflowData.Node.Hooks = append(wf.WorkflowData.Node.Hooks,
+		sdk.NodeHook{
+			HookModelID: sdk.WebHookModel.ID,
+			Config: sdk.WorkflowNodeHookConfig{
+				"method": sdk.WorkflowNodeHookConfigValue{
+					Value: "POST",
+				},
+			},
+		},
+	)
+
+	// Update the workflow
+	uri = router.GetRoute("PUT", api.putWorkflowHandler, vars)
+	test.NotEmpty(t, uri)
+	req = assets.NewAuthentifiedRequest(t, u, pass, "PUT", uri, &wf)
+	w = httptest.NewRecorder()
+	router.Mux.ServeHTTP(w, req)
+	assert.Equal(t, 400, w.Code)
+
 }

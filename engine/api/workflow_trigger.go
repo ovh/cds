@@ -20,7 +20,7 @@ func (api *API) getWorkflowTriggerConditionHandler() service.Handler {
 		name := vars["permWorkflowName"]
 		id, _ := FormInt(r, "nodeID")
 
-		proj, err := project.Load(api.mustDB(), api.Cache, key, project.LoadOptions.WithVariables, project.LoadOptions.WithIntegrations)
+		proj, err := project.Load(api.mustDB(), key, project.LoadOptions.WithVariables, project.LoadOptions.WithIntegrations)
 		if err != nil {
 			return sdk.WrapError(err, "unable to load project")
 		}

@@ -62,7 +62,7 @@ func (api *API) deleteKeyInEnvironmentHandler() service.Handler {
 		}
 
 		if err := tx.Commit(); err != nil {
-			return sdk.WrapError(err, "Cannot commit transaction")
+			return sdk.WithStack(err)
 		}
 
 		event.PublishEnvironmentKeyDelete(ctx, key, *env, envKey, getAPIConsumer(ctx))
@@ -136,7 +136,7 @@ func (api *API) addKeyInEnvironmentHandler() service.Handler {
 		}
 
 		if err := tx.Commit(); err != nil {
-			return sdk.WrapError(err, "Cannot commit transaction")
+			return sdk.WithStack(err)
 		}
 
 		event.PublishEnvironmentKeyAdd(ctx, key, *env, newKey, getAPIConsumer(ctx))

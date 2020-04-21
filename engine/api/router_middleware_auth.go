@@ -55,7 +55,6 @@ func (api *API) authMiddleware(ctx context.Context, w http.ResponseWriter, req *
 	if ok {
 		claims := jwt.Claims.(*sdk.AuthSessionJWTClaims)
 		sessionID := claims.StandardClaims.Id
-		log.Debug("authMiddleware> try to retrieve session for given jwt with id: %s", sessionID)
 		// Check for session based on jwt from context
 		session, err = authentication.CheckSession(ctx, api.mustDB(), sessionID)
 		if err != nil {
@@ -65,7 +64,6 @@ func (api *API) authMiddleware(ctx context.Context, w http.ResponseWriter, req *
 
 	if session != nil {
 		ctx = context.WithValue(ctxWithJWT, contextSession, session)
-		log.Debug("authMiddleware> try to retrieve consumer for given session with id: %s", session.ConsumerID)
 		// Load auth consumer for current session in database with authentified user and contacts
 		c, err := authentication.LoadConsumerByID(ctx, api.mustDB(), session.ConsumerID,
 			authentication.LoadConsumerOptions.WithAuthentifiedUser)
@@ -102,8 +100,6 @@ func (api *API) authMiddleware(ctx context.Context, w http.ResponseWriter, req *
 	}
 
 	if consumer != nil {
-		log.Debug("authMiddleware> check scope for current consumer")
-
 		ctx = context.WithValue(ctx, contextAPIConsumer, consumer)
 
 		// Checks scopes, one of expected scopes should be in actual scopes

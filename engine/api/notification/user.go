@@ -24,7 +24,7 @@ func Init(uiurl string) {
 }
 
 // GetUserWorkflowEvents return events to send for the given workflow run
-func GetUserWorkflowEvents(ctx context.Context, db gorp.SqlExecutor, store cache.Store, w sdk.Workflow, previousWR *sdk.WorkflowNodeRun, nr sdk.WorkflowNodeRun) []sdk.EventNotif {
+func GetUserWorkflowEvents(ctx context.Context, db gorp.SqlExecutor, store cache.Store, projectID int64, projectKey, workflowName string, notifs []sdk.WorkflowNotification, previousWR *sdk.WorkflowNodeRun, nr sdk.WorkflowNodeRun) []sdk.EventNotif {
 	events := []sdk.EventNotif{}
 
 	//Compute notification
@@ -33,7 +33,7 @@ func GetUserWorkflowEvents(ctx context.Context, db gorp.SqlExecutor, store cache
 		params[p.Name] = p.Value
 	}
 	//Set PipelineBuild UI URL
-	params["cds.buildURL"] = fmt.Sprintf("%s/project/%s/workflow/%s/run/%d", uiURL, w.ProjectKey, w.Name, nr.Number)
+	params["cds.buildURL"] = fmt.Sprintf("%s/project/%s/workflow/%s/run/%d", uiURL, projectKey, workflowName, nr.Number)
 	if p, ok := params["cds.triggered_by.email"]; ok {
 		params["cds.author.email"] = p
 	} else if p, ok := params["git.author.email"]; ok {
@@ -46,14 +46,14 @@ func GetUserWorkflowEvents(ctx context.Context, db gorp.SqlExecutor, store cache
 	}
 	params["cds.status"] = nr.Status
 
-	for _, notif := range w.Notifications {
+	for _, notif := range notifs {
 		if ShouldSendUserWorkflowNotification(ctx, notif, nr, previousWR) {
 			switch notif.Type {
 			case sdk.JabberUserNotification:
 				jn := &notif.Settings
 				//Get recipents from groups
 				if jn.SendToGroups != nil && *jn.SendToGroups {
-					u, err := projectPermissionUserIDs(ctx, db, store, w.ProjectID, sdk.PermissionRead)
+					u, err := projectPermissionUserIDs(ctx, db, store, projectID, sdk.PermissionRead)
 					if err != nil {
 						log.Error(ctx, "notification[Jabber]. error while loading permission: %v", err)
 						break
@@ -85,7 +85,7 @@ func GetUserWorkflowEvents(ctx context.Context, db gorp.SqlExecutor, store cache
 				jn := &notif.Settings
 				//Get recipents from groups
 				if jn.SendToGroups != nil && *jn.SendToGroups {
-					u, err := projectPermissionUserIDs(ctx, db, store, w.ProjectID, sdk.PermissionRead)
+					u, err := projectPermissionUserIDs(ctx, db, store, projectID, sdk.PermissionRead)
 					if err != nil {
 						log.Error(ctx, "notification[Email].GetUserWorkflowEvents> error while loading permission: %v", err)
 						return nil

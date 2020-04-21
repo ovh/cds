@@ -63,7 +63,7 @@ func ParseAndImport(ctx context.Context, db gorp.SqlExecutor, cache cache.Store,
 	if exist && !opts.Force {
 		return pip, nil, sdk.ErrPipelineAlreadyExists
 	} else if exist {
-		globalError = ImportUpdate(ctx, db, proj, pip, msgChan, u)
+		globalError = ImportUpdate(ctx, db, proj, pip, msgChan)
 	} else {
 		globalError = Import(ctx, db, cache, proj, pip, msgChan, u)
 	}

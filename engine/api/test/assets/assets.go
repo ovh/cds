@@ -38,7 +38,7 @@ import (
 
 // InsertTestProject create a test project.
 func InsertTestProject(t *testing.T, db *gorp.DbMap, store cache.Store, key, name string) *sdk.Project {
-	oldProj, _ := project.Load(db, store, key,
+	oldProj, _ := project.Load(db, key,
 		project.LoadOptions.WithApplications,
 		project.LoadOptions.WithPipelines,
 		project.LoadOptions.WithWorkflows,
@@ -53,14 +53,14 @@ func InsertTestProject(t *testing.T, db *gorp.DbMap, store cache.Store, key, nam
 		for _, pip := range oldProj.Pipelines {
 			require.NoError(t, pipeline.DeletePipeline(context.TODO(), db, pip.ID))
 		}
-		require.NoError(t, project.Delete(db, store, key))
+		require.NoError(t, project.Delete(db, key))
 	}
 
 	proj := &sdk.Project{Key: key, Name: name}
 
 	g := InsertTestGroup(t, db, name+"-group")
 
-	require.NoError(t, project.Insert(db, store, proj))
+	require.NoError(t, project.Insert(db, proj))
 
 	require.NoError(t, group.InsertLinkGroupProject(context.TODO(), db, &group.LinkGroupProject{
 		GroupID:   g.ID,
@@ -69,7 +69,7 @@ func InsertTestProject(t *testing.T, db *gorp.DbMap, store cache.Store, key, nam
 	}))
 
 	var err error
-	proj, err = project.LoadByID(db, store, proj.ID, project.LoadOptions.WithGroups)
+	proj, err = project.LoadByID(db, proj.ID, project.LoadOptions.WithGroups)
 	require.NoError(t, err)
 
 	return proj
@@ -78,7 +78,7 @@ func InsertTestProject(t *testing.T, db *gorp.DbMap, store cache.Store, key, nam
 // DeleteTestProject delete a test project
 func DeleteTestProject(t *testing.T, db gorp.SqlExecutor, store cache.Store, key string) error {
 	t.Logf("Delete Project %s", key)
-	return project.Delete(db, store, key)
+	return project.Delete(db, key)
 }
 
 // InsertTestGroup create a test group

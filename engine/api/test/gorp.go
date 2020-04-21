@@ -28,8 +28,11 @@ func (s *SqlExecutorMock) WithContext(ctx context.Context) gorp.SqlExecutor { re
 func (s *SqlExecutorMock) Get(i interface{}, keys ...interface{}) (interface{}, error) {
 	return nil, nil
 }
-func (s *SqlExecutorMock) Insert(list ...interface{}) error                           { return nil }
-func (s *SqlExecutorMock) Update(list ...interface{}) (int64, error)                  { return 0, nil }
+func (s *SqlExecutorMock) Insert(list ...interface{}) error          { return nil }
+func (s *SqlExecutorMock) Update(list ...interface{}) (int64, error) { return 0, nil }
+func (s *SqlExecutorMock) UpdateColumns(columnFilter gorp.ColumnFilter, list ...interface{}) (int64, error) {
+	return 0, nil
+}
 func (s *SqlExecutorMock) Delete(list ...interface{}) (int64, error)                  { return 0, nil }
 func (s *SqlExecutorMock) Exec(query string, args ...interface{}) (sql.Result, error) { return nil, nil }
 func (s *SqlExecutorMock) Select(i interface{}, query string, args ...interface{}) ([]interface{}, error) {

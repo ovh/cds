@@ -17,9 +17,11 @@ import (
 	"github.com/ovh/cds/engine/api/authentication"
 	"github.com/ovh/cds/engine/api/authentication/builtin"
 	"github.com/ovh/cds/engine/api/group"
+	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/api/test/assets"
+	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
 )
@@ -82,7 +84,7 @@ func Test_getProjectsHandler(t *testing.T) {
 		RepositoryFullname: repofullname,
 	}
 	u, pass := assets.InsertAdminUser(t, api.mustDB())
-	test.NoError(t, application.Insert(db, api.Cache, *proj, app))
+	test.NoError(t, application.Insert(db, *proj, app))
 
 	vars := map[string]string{}
 	uri := api.Router.GetRoute("GET", api.getProjectsHandler, vars)
@@ -340,7 +342,7 @@ func Test_getprojectsHandler_AsProviderWithRequestedUsername(t *testing.T) {
 	app := &sdk.Application{
 		Name: sdk.RandomString(10),
 	}
-	require.NoError(t, application.Insert(api.mustDB(), api.Cache, *proj, app))
+	require.NoError(t, application.Insert(api.mustDB(), *proj, app))
 
 	// Call with an admin
 	sdkclientAdmin := cdsclient.NewProviderClient(cdsclient.ProviderConfig{
@@ -427,4 +429,72 @@ func Test_putProjectLabelsHandler(t *testing.T) {
 	assert.Equal(t, "#FF0000", projReturned.Labels[1].Color)
 	assert.Equal(t, "this is a test", projReturned.Labels[2].Name)
 	assert.NotZero(t, projReturned.Labels[2].Color)
+}
+
+func Test_getProjectsHandler_FilterByRepo(t *testing.T) {
+	api, tsURL, tsClose := newTestServer(t)
+	defer tsClose()
+
+	admin, _ := assets.InsertAdminUser(t, api.mustDB())
+	localConsumer, err := authentication.LoadConsumerByTypeAndUserID(context.TODO(), api.mustDB(), sdk.ConsumerLocal, admin.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
+	require.NoError(t, err)
+
+	_, jws, err := builtin.NewConsumer(context.TODO(), api.mustDB(), sdk.RandomString(10), sdk.RandomString(10), localConsumer, admin.GetGroupIDs(),
+		sdk.NewAuthConsumerScopeDetails(sdk.AuthConsumerScopeProject))
+
+	u, _ := assets.InsertLambdaUser(t, api.mustDB())
+
+	pkey := sdk.RandomString(10)
+	proj := assets.InsertTestProject(t, api.mustDB(), api.Cache, pkey, pkey)
+	require.NoError(t, group.InsertLinkGroupUser(context.TODO(), api.mustDB(), &group.LinkGroupUser{
+		GroupID:            proj.ProjectGroups[0].Group.ID,
+		AuthentifiedUserID: u.ID,
+		Admin:              true,
+	}))
+
+	repofullName := sdk.RandomString(10)
+
+	app := &sdk.Application{
+		Name:               sdk.RandomString(10),
+		RepositoryFullname: "ovh/" + repofullName,
+	}
+	require.NoError(t, application.Insert(api.mustDB(), *proj, app))
+
+	pip := sdk.Pipeline{
+		ProjectID:  proj.ID,
+		ProjectKey: proj.Key,
+		Name:       "pip1",
+	}
+	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), &pip))
+
+	wf := sdk.Workflow{
+		Name:       "workflow1",
+		ProjectID:  proj.ID,
+		ProjectKey: proj.Key,
+		WorkflowData: sdk.WorkflowData{
+			Node: sdk.Node{
+				Name: "root",
+				Context: &sdk.NodeContext{
+					PipelineID:    pip.ID,
+					ApplicationID: app.ID,
+				},
+			},
+		},
+	}
+	test.NoError(t, workflow.Insert(context.TODO(), api.mustDB(), api.Cache, *proj, &wf))
+
+	// Call with an admin
+	sdkclientAdmin := cdsclient.New(cdsclient.Config{
+		Host:                              tsURL,
+		BuitinConsumerAuthenticationToken: jws,
+	})
+
+	projs, err := sdkclientAdmin.ProjectList(true, true, cdsclient.Filter{Name: "repo", Value: "ovh/" + repofullName})
+	require.NoError(t, err)
+	require.True(t, len(projs) == 1)
+	require.True(t, len(projs[0].Workflows) == 1)
+	require.Equal(t, wf.Name, projs[0].Workflows[0].Name)
+	require.Equal(t, app.ID, projs[0].Workflows[0].WorkflowData.Node.Context.ApplicationID)
+	require.Equal(t, pip.ID, projs[0].Workflows[0].WorkflowData.Node.Context.PipelineID)
+
 }

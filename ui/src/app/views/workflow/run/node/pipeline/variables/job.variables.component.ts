@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, Input, ViewChild } from '@angular/core';
 import { ModalTemplate, SuiActiveModal, SuiModalService, TemplateModalConfig } from '@richardlt/ng2-semantic-ui';
 import { Parameter } from 'app/model/parameter.model';
+import { cloneDeep } from 'lodash-es';
 
 @Component({
     selector: 'app-workflow-run-job-variable',
@@ -17,7 +18,7 @@ export class WorkflowRunJobVariableComponent {
     set variables(data: Array<Parameter>) {
         this.init();
         if (data) {
-            data.forEach(p => {
+            cloneDeep(data).forEach(p => {
                 if (p.name.indexOf('cds.proj.', 0) === 0) {
                     this.varProject.push(p);
                 } else if (p.name.indexOf('cds.app.', 0) === 0) {

@@ -20,7 +20,7 @@ func (api *API) getApplicationDeploymentStrategiesConfigHandler() service.Handle
 		key := vars[permProjectKey]
 		appName := vars["applicationName"]
 
-		app, err := application.LoadByName(api.mustDB(), api.Cache, key, appName, application.LoadOptions.WithDeploymentStrategies)
+		app, err := application.LoadByName(api.mustDB(), key, appName, application.LoadOptions.WithDeploymentStrategies)
 		if err != nil {
 			return sdk.WrapError(err, "getApplicationDeploymentStrategiesConfigHandler")
 		}
@@ -47,7 +47,7 @@ func (api *API) postApplicationDeploymentStrategyConfigHandler() service.Handler
 		}
 		defer tx.Rollback() // nolint
 
-		proj, err := project.Load(tx, api.Cache, key, project.LoadOptions.WithIntegrations)
+		proj, err := project.Load(tx, key, project.LoadOptions.WithIntegrations)
 		if err != nil {
 			return sdk.WrapError(err, "unable to load project")
 		}
@@ -68,7 +68,7 @@ func (api *API) postApplicationDeploymentStrategyConfigHandler() service.Handler
 			return sdk.WrapError(sdk.ErrForbidden, "postApplicationDeploymentStrategyConfigHandler> integration doesn't support deployment")
 		}
 
-		app, err := application.LoadByName(tx, api.Cache, key, appName, application.LoadOptions.WithClearDeploymentStrategies)
+		app, err := application.LoadByName(tx, key, appName, application.LoadOptions.WithClearDeploymentStrategies)
 		if err != nil {
 			return sdk.WrapError(err, "unable to load application")
 		}
@@ -90,7 +90,7 @@ func (api *API) postApplicationDeploymentStrategyConfigHandler() service.Handler
 			return sdk.WrapError(err, "postApplicationDeploymentStrategyConfigHandler")
 		}
 
-		app, err = application.LoadByName(tx, api.Cache, key, appName, application.LoadOptions.WithDeploymentStrategies)
+		app, err = application.LoadByName(tx, key, appName, application.LoadOptions.WithDeploymentStrategies)
 		if err != nil {
 			return sdk.WrapError(err, "unable to load application")
 		}
@@ -116,7 +116,7 @@ func (api *API) deleteApplicationDeploymentStrategyConfigHandler() service.Handl
 		}
 		defer tx.Rollback() // nolint
 
-		proj, err := project.Load(tx, api.Cache, key, project.LoadOptions.WithIntegrations)
+		proj, err := project.Load(tx, key, project.LoadOptions.WithIntegrations)
 		if err != nil {
 			return sdk.WrapError(err, "unable to load project")
 		}
@@ -137,7 +137,7 @@ func (api *API) deleteApplicationDeploymentStrategyConfigHandler() service.Handl
 			return sdk.WrapError(sdk.ErrForbidden, "deleteApplicationDeploymentStrategyConfigHandler> integration doesn't support deployment")
 		}
 
-		app, err := application.LoadByName(tx, api.Cache, key, appName, application.LoadOptions.WithDeploymentStrategies)
+		app, err := application.LoadByName(tx, key, appName, application.LoadOptions.WithDeploymentStrategies)
 		if err != nil {
 			return sdk.WrapError(err, "unable to load application")
 		}
@@ -186,7 +186,7 @@ func (api *API) getApplicationDeploymentStrategyConfigHandler() service.Handler 
 			opts = []application.LoadOptionFunc{application.LoadOptions.WithClearDeploymentStrategies}
 		}
 
-		app, err := application.LoadByName(api.mustDB(), api.Cache, key, appName, opts...)
+		app, err := application.LoadByName(api.mustDB(), key, appName, opts...)
 		if err != nil {
 			return sdk.WrapError(err, "getApplicationDeploymentStrategyConfigHandler")
 		}

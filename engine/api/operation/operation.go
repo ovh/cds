@@ -8,7 +8,6 @@ import (
 
 	"github.com/go-gorp/gorp"
 
-	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/engine/api/services"
@@ -18,25 +17,19 @@ import (
 
 var CacheOperationKey = cache.Key("repositories", "operation", "push")
 
-func PushOperation(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj sdk.Project, app *sdk.Application, wp exportentities.WorkflowComponents, branch, message string, isUpdate bool, u sdk.Identifiable) (*sdk.Operation, error) {
-	var vcsStrategy = app.RepositoryStrategy
+func PushOperation(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj sdk.Project, wp exportentities.WorkflowComponents, vcsServerName, repoFullname, branch, message string, vcsStrategy sdk.RepositoryStrategy, isUpdate bool, u sdk.Identifiable) (*sdk.Operation, error) {
 	if vcsStrategy.SSHKey != "" {
 		key := proj.GetSSHKey(vcsStrategy.SSHKey)
 		if key == nil {
 			return nil, sdk.WithStack(fmt.Errorf("unable to find key %s on project %s", vcsStrategy.SSHKey, proj.Key))
 		}
 		vcsStrategy.SSHKeyContent = key.Private
-	} else {
-		if err := application.DecryptVCSStrategyPassword(app); err != nil {
-			return nil, sdk.WrapError(err, "unable to decrypt vcs strategy")
-		}
-		vcsStrategy = app.RepositoryStrategy
 	}
 
 	// Create VCS Operation
 	ope := sdk.Operation{
-		VCSServer:          app.VCSServer,
-		RepoFullName:       app.RepositoryFullname,
+		VCSServer:          vcsServerName,
+		RepoFullName:       repoFullname,
 		URL:                "",
 		RepositoryStrategy: vcsStrategy,
 		Setup: sdk.OperationSetup{
@@ -51,7 +44,7 @@ func PushOperation(ctx context.Context, db gorp.SqlExecutor, store cache.Store, 
 	ope.User.Username = u.GetFullname()
 	ope.User.Username = u.GetUsername()
 
-	vcsServer := repositoriesmanager.GetProjectVCSServer(proj, app.VCSServer)
+	vcsServer := repositoriesmanager.GetProjectVCSServer(proj, vcsServerName)
 	if vcsServer == nil {
 		return nil, sdk.WithStack(fmt.Errorf("no vcsServer found"))
 	}
@@ -60,12 +53,12 @@ func PushOperation(ctx context.Context, db gorp.SqlExecutor, store cache.Store, 
 		return nil, errC
 	}
 
-	repo, errR := client.RepoByFullname(ctx, app.RepositoryFullname)
+	repo, errR := client.RepoByFullname(ctx, repoFullname)
 	if errR != nil {
-		return nil, sdk.WrapError(errR, "cannot get repo %s", app.RepositoryFullname)
+		return nil, sdk.WrapError(errR, "cannot get repo %s", repoFullname)
 	}
 
-	if app.RepositoryStrategy.ConnectionType == "ssh" {
+	if vcsStrategy.ConnectionType == "ssh" {
 		ope.URL = repo.SSHCloneURL
 	} else {
 		ope.URL = repo.HTTPCloneURL

@@ -17,7 +17,7 @@ func (api *API) postEncryptVariableHandler() service.Handler {
 		vars := mux.Vars(r)
 		key := vars[permProjectKey]
 
-		p, errp := project.Load(api.mustDB(), api.Cache, key)
+		p, errp := project.Load(api.mustDB(), key)
 		if errp != nil {
 			return sdk.WrapError(errp, "unable to load project")
 		}
@@ -58,7 +58,7 @@ func (api *API) getVariablesInProjectHandler() service.Handler {
 		vars := mux.Vars(r)
 		key := vars[permProjectKey]
 
-		p, err := project.Load(api.mustDB(), api.Cache, key, project.LoadOptions.WithVariables)
+		p, err := project.Load(api.mustDB(), key, project.LoadOptions.WithVariables)
 		if err != nil {
 			return sdk.WrapError(err, "cannot load %s", key)
 		}
@@ -74,7 +74,7 @@ func (api *API) deleteVariableFromProjectHandler() service.Handler {
 		key := vars[permProjectKey]
 		varName := vars["name"]
 
-		p, err := project.Load(api.mustDB(), api.Cache, key, project.LoadOptions.Default)
+		p, err := project.Load(api.mustDB(), key, project.LoadOptions.Default)
 		if err != nil {
 			return sdk.WrapError(err, "deleteVariableFromProject: Cannot load %s", key)
 		}
@@ -116,7 +116,7 @@ func (api *API) updateVariableInProjectHandler() service.Handler {
 			return err
 		}
 
-		p, err := project.Load(api.mustDB(), api.Cache, key, project.LoadOptions.Default)
+		p, err := project.Load(api.mustDB(), key, project.LoadOptions.Default)
 		if err != nil {
 			return sdk.WrapError(err, "updateVariableInProject: Cannot load %s", key)
 		}
@@ -162,7 +162,7 @@ func (api *API) addVariableInProjectHandler() service.Handler {
 
 		}
 
-		p, err := project.Load(api.mustDB(), api.Cache, key, project.LoadOptions.Default)
+		p, err := project.Load(api.mustDB(), key, project.LoadOptions.Default)
 		if err != nil {
 			return err
 		}
@@ -200,7 +200,7 @@ func (api *API) getVariableInProjectHandler() service.Handler {
 		key := vars[permProjectKey]
 		varName := vars["name"]
 
-		p, err := project.Load(api.mustDB(), api.Cache, key, project.LoadOptions.WithVariables)
+		p, err := project.Load(api.mustDB(), key, project.LoadOptions.WithVariables)
 		if err != nil {
 			return sdk.WrapError(err, "getVariableInProjectHandler: Cannot load %s", key)
 		}
@@ -220,7 +220,7 @@ func (api *API) getVariableAuditInProjectHandler() service.Handler {
 		key := vars[permProjectKey]
 		varName := vars["name"]
 
-		p, err := project.Load(api.mustDB(), api.Cache, key)
+		p, err := project.Load(api.mustDB(), key)
 		if err != nil {
 			return err
 		}

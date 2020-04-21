@@ -143,7 +143,6 @@ func UpdateFromRepository(db gorp.SqlExecutor, workflowID int64, fromRepository 
 	if _, err := db.Exec("UPDATE workflow SET from_repository = $1, last_modified = current_timestamp WHERE id = $2", fromRepository, workflowID); err != nil {
 		return sdk.WithStack(err)
 	}
-
 	return nil
 }
 
@@ -1183,9 +1182,13 @@ func checkHooks(db gorp.SqlExecutor, w *sdk.Workflow, n *sdk.Node) error {
 			w.HookModels[hm.ID] = *hm
 			h.HookModelID = hm.ID
 		}
+		if h.HookModelName == sdk.RepositoryWebHookModelName && (n.Context == nil || n.Context.ApplicationID == 0) {
+			return sdk.WrapError(sdk.ErrNotFound, "unable to find application for the repository web hook: %d: %s/%s", w.ID, w.Name, n.Name)
+		}
 
 		// Add missing default value for hook
 		model := w.HookModels[h.HookModelID]
+		h.HookModelName = model.Name
 		for k := range model.DefaultConfig {
 			if _, ok := h.Config[k]; !ok {
 				h.Config[k] = model.DefaultConfig[k]
@@ -1208,6 +1211,16 @@ func checkHooks(db gorp.SqlExecutor, w *sdk.Workflow, n *sdk.Node) error {
 				if !found {
 					return sdk.NewErrorFrom(sdk.ErrWrongRequest, "invalid given value for hook config '%s', given value not in choices list", k)
 				}
+			}
+			v := h.Config[k]
+			v.Configurable = d.Configurable
+			h.Config[k] = v
+		}
+		// Check hooks duplication
+		for j := range n.Hooks {
+			h2 := n.Hooks[j]
+			if i != j && h.Ref() == h2.Ref() {
+				return sdk.NewErrorFrom(sdk.ErrWrongRequest, "invalid workflow: duplicate hook %s", model.Name)
 			}
 		}
 	}
@@ -1307,7 +1320,7 @@ func checkApplication(store cache.Store, db gorp.SqlExecutor, proj sdk.Project, 
 	if n.Context.ApplicationID != 0 {
 		app, ok := w.Applications[n.Context.ApplicationID]
 		if !ok {
-			appDB, errA := application.LoadByID(db, store, n.Context.ApplicationID, application.LoadOptions.WithDeploymentStrategies, application.LoadOptions.WithVariables)
+			appDB, errA := application.LoadByID(db, n.Context.ApplicationID, application.LoadOptions.WithDeploymentStrategies, application.LoadOptions.WithVariables)
 			if errA != nil {
 				return errA
 			}
@@ -1322,10 +1335,10 @@ func checkApplication(store cache.Store, db gorp.SqlExecutor, proj sdk.Project, 
 		return nil
 	}
 	if n.Context.ApplicationName != "" {
-		appDB, err := application.LoadByName(db, store, proj.Key, n.Context.ApplicationName, application.LoadOptions.WithDeploymentStrategies, application.LoadOptions.WithVariables)
+		appDB, err := application.LoadByName(db, proj.Key, n.Context.ApplicationName, application.LoadOptions.WithDeploymentStrategies, application.LoadOptions.WithVariables)
 		if err != nil {
-			if sdk.ErrorIs(err, sdk.ErrApplicationNotFound) {
-				return sdk.WithStack(sdk.ErrorWithData(sdk.ErrApplicationNotFound, n.Context.ApplicationName))
+			if sdk.ErrorIs(err, sdk.ErrNotFound) {
+				return sdk.WithStack(sdk.ErrorWithData(sdk.ErrNotFound, n.Context.ApplicationName))
 			}
 			return sdk.WrapError(err, "unable to load application %s", n.Context.ApplicationName)
 		}
@@ -1427,8 +1440,8 @@ func Push(ctx context.Context, db *gorp.DbMap, store cache.Store, proj *sdk.Proj
 			fromRepo = opts.FromRepository
 		}
 		envDB, msgList, err := environment.ParseAndImport(tx, *proj, env, environment.ImportOptions{Force: true, FromRepository: fromRepo}, decryptFunc, u)
-    allMsg = append(allMsg, msgList...)
-    if err != nil {
+		allMsg = append(allMsg, msgList...)
+		if err != nil {
 			return allMsg, nil, nil, sdk.ErrorWithFallback(err, sdk.ErrWrongRequest, "unable to import environment %s/%s", proj.Key, env.Name)
 		}
 		proj.SetEnvironment(*envDB)
@@ -1440,8 +1453,8 @@ func Push(ctx context.Context, db *gorp.DbMap, store cache.Store, proj *sdk.Proj
 			fromRepo = opts.FromRepository
 		}
 		pipDB, msgList, err := pipeline.ParseAndImport(ctx, tx, store, *proj, &pip, u, pipeline.ImportOptions{Force: true, FromRepository: fromRepo})
-    allMsg = append(allMsg, msgList...)
-    if err != nil {
+		allMsg = append(allMsg, msgList...)
+		if err != nil {
 			return allMsg, nil, nil, sdk.ErrorWithFallback(err, sdk.ErrWrongRequest, "unable to import pipeline %s/%s", proj.Key, pip.Name)
 		}
 		proj.SetPipeline(*pipDB)
@@ -1467,8 +1480,8 @@ func Push(ctx context.Context, db *gorp.DbMap, store cache.Store, proj *sdk.Proj
 	}
 
 	wf, msgList, err := ParseAndImport(ctx, tx, store, *proj, oldWf, data.Workflow, u, importOptions)
-  allMsg = append(allMsg, msgList...)
-  if err != nil {
+	allMsg = append(allMsg, msgList...)
+	if err != nil {
 		return allMsg, nil, nil, sdk.WrapError(err, "unable to import workflow %s", data.Workflow.GetName())
 	}
 
@@ -1485,7 +1498,7 @@ func Push(ctx context.Context, db *gorp.DbMap, store cache.Store, proj *sdk.Proj
 
 	if wf.WorkflowData.Node.Context.ApplicationID != 0 {
 		app := wf.Applications[wf.WorkflowData.Node.Context.ApplicationID]
-		if err := application.Update(tx, store, &app); err != nil {
+		if err := application.Update(tx, &app); err != nil {
 			return nil, nil, nil, sdk.WrapError(err, "Unable to update application vcs datas")
 		}
 		wf.Applications[wf.WorkflowData.Node.Context.ApplicationID] = app
@@ -1496,7 +1509,7 @@ func Push(ctx context.Context, db *gorp.DbMap, store cache.Store, proj *sdk.Proj
 		log.Debug("workflow %s rollbacked because it's not coming from the default branch", wf.Name)
 	} else {
 		if err := tx.Commit(); err != nil {
-			return nil, nil, nil, sdk.WrapError(err, "cannot commit transaction")
+			return nil, nil, nil, sdk.WithStack(err)
 		}
 
 		log.Debug("workflow %s updated", wf.Name)

@@ -13,11 +13,17 @@ func (c *gerritClient) GetHook(ctx context.Context, repo, id string) (sdk.VCSHoo
 
 //CreateHook enables the default HTTP POST Hook in Gerrit
 func (c *gerritClient) CreateHook(ctx context.Context, repo string, hook *sdk.VCSHook) error {
+	if len(hook.Events) == 0 {
+		hook.Events = []string{"patchset-created"}
+	}
 	return nil
 }
 
 //UpdateHook enables the default HTTP POST Hook in Gerrit
 func (c *gerritClient) UpdateHook(ctx context.Context, repo string, hook *sdk.VCSHook) error {
+	if len(hook.Events) == 0 {
+		hook.Events = []string{"patchset-created"}
+	}
 	return nil
 }
 

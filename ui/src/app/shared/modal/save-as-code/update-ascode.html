@@ -5,15 +5,9 @@
             <div class="two fields">
                 <div class="field">
                     <label>{{ 'ascode_modal_label_branch' | translate }}</label>
-                    <sui-select class="selection"
-                                name="branch"
-                                [(ngModel)]="selectedBranch"
-                                [options]="branches"
-                                [optionsFilter]="optionsFilter"
-                                [isSearchable]="true"
-                                #select>
-                        <sui-select-option *ngFor="let option of select.filteredOptions"
-                                           [value]="option">
+                    <sui-select class="selection" name="branch" [(ngModel)]="selectedBranch" [options]="branches"
+                        [optionsFilter]="optionsFilter" [isSearchable]="true" #select>
+                        <sui-select-option *ngFor="let option of select.filteredOptions" [value]="option">
                         </sui-select-option>
                     </sui-select>
                 </div>
@@ -33,7 +27,9 @@
         </div>
     </div>
     <div class="actions">
-        <div class="ui blue button" [class.loading]="loading" [class.disabled]="loading">{{'common_cancel' | translate}}</div>
-        <div class="ui green button" [class.loading]="loading" [class.disabled]="loading" (click)="save()">{{'btn_save' | translate}}</div>
+        <div class="ui blue button" [class.loading]="loading" [class.disabled]="loading" (click)="close()">{{'common_cancel' | translate}}
+        </div>
+        <div class="ui green button" [class.loading]="loading" [class.disabled]="loading" (click)="save()">
+            {{'btn_save' | translate}}</div>
     </div>
 </ng-template>

@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/xanzy/go-gitlab"
 
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/sdk"
@@ -25,7 +26,7 @@ func Test_doWebHookExecutionGitlab(t *testing.T) {
 		WebHook: &sdk.WebHookExecution{
 			RequestBody: []byte(gitlabPushEvent),
 			RequestHeader: map[string][]string{
-				GitlabHeader: {"Push Hook"},
+				GitlabHeader: {string(gitlab.EventTypePush)},
 			},
 			RequestURL: "",
 		},

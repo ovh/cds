@@ -37,7 +37,7 @@ export class WorkflowAddComponent implements OnInit {
     codeMirrorConfig: any;
     wfToImport = `# Example of workflow
 name: myWorkflow
-version: v1.0
+version: v2.0
 workflow:
   myBuild:
     pipeline: build
