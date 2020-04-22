@@ -72,6 +72,7 @@ func (api *API) getWorkflowHandler() service.Handler {
 		withTemplate := FormBool(r, "withTemplate")
 		withAsCodeEvents := FormBool(r, "withAsCodeEvents")
 		minimal := FormBool(r, "minimal")
+		withoutIcons := FormBool(r, "withoutIcons")
 
 		proj, err := project.Load(api.mustDB(), key, project.LoadOptions.WithIntegrations)
 		if err != nil {
@@ -81,7 +82,7 @@ func (api *API) getWorkflowHandler() service.Handler {
 		opts := workflow.LoadOptions{
 			Minimal:               minimal, // if true, load only data from table workflow, not pipelines, app, env...
 			DeepPipeline:          withDeepPipelines,
-			WithIcon:              true,
+			WithIcon:              !withoutIcons,
 			WithLabels:            withLabels,
 			WithAsCodeUpdateEvent: withAsCodeEvents,
 			WithIntegrations:      true,
