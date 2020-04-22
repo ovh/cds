@@ -9,27 +9,27 @@ testcases:
 
 - name: prepare test
   steps:
-  - script: "{{.cdsctl}} -f {{.cdsctl.config}} project remove --force 04SCWORKFLOWRUNWORKERCMD"
-  - script: "{{.cdsctl}} -f {{.cdsctl.config}} group remove --force 04scworkflowrunworkercmd "
-  - script: "{{.cdsctl}} -f {{.cdsctl.config}} project add 04SCWORKFLOWRUNWORKERCMD 04SCWorkflowRunWorkerCmd"
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} project remove --force 04SCWORKFLOWRUNWORKERCMD
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} group remove --force 04scworkflowrunworkercmd
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} project add 04SCWORKFLOWRUNWORKERCMD 04SCWorkflowRunWorkerCmd
 
 - name: import pipeline and workflow
   steps:
-  - script:  {{.cdsctl}} -f {{.cdsctl.config}} pipeline import --force 04SCWORKFLOWRUNWORKERCMD ./fixtures/04SCWorkflowRunWorkerCmd/pipeline.yml
-  - script:  {{.cdsctl}} -f {{.cdsctl.config}} application import --force 04SCWORKFLOWRUNWORKERCMD ./fixtures/04SCWorkflowRunWorkerCmd/application.yml
-  - script:  {{.cdsctl}} -f {{.cdsctl.config}} application variable add 04SCWORKFLOWRUNWORKERCMD 04SCWorkflowRunWorkerCmd-APPLICATION password password mysuperpassword
-  - script:  {{.cdsctl}} -f {{.cdsctl.config}} workflow import --force 04SCWORKFLOWRUNWORKERCMD ./fixtures/04SCWorkflowRunWorkerCmd/workflow.yml
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} pipeline import --force 04SCWORKFLOWRUNWORKERCMD ./fixtures/04SCWorkflowRunWorkerCmd/pipeline.yml
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} application import --force 04SCWORKFLOWRUNWORKERCMD ./fixtures/04SCWorkflowRunWorkerCmd/application.yml
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} application variable add 04SCWORKFLOWRUNWORKERCMD 04SCWorkflowRunWorkerCmd-APPLICATION password password mysuperpassword
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} workflow import --force 04SCWORKFLOWRUNWORKERCMD ./fixtures/04SCWorkflowRunWorkerCmd/workflow.yml
 
 - name: run workflow
   steps:
-  - script:  {{.cdsctl}} -f {{.cdsctl.config}} workflow run 04SCWORKFLOWRUNWORKERCMD 04SCWorkflowRunWorkerCmd-WORKFLOW
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} workflow run 04SCWORKFLOWRUNWORKERCMD 04SCWorkflowRunWorkerCmd-WORKFLOW
     assertions:
     - result.code ShouldEqual 0
     - "result.systemout ShouldContainSubstring Workflow 04SCWorkflowRunWorkerCmd-WORKFLOW #1 has been launched"
 
 - name: check workflow
   steps:
-  - script:  {{.cdsctl}} -f {{.cdsctl.config}} workflow status 04SCWORKFLOWRUNWORKERCMD 04SCWorkflowRunWorkerCmd-WORKFLOW 1 --format json
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} workflow status 04SCWORKFLOWRUNWORKERCMD 04SCWorkflowRunWorkerCmd-WORKFLOW 1 --format json
     retry: 20
     delay: 10
     assertions:
@@ -44,17 +44,17 @@ testcases:
 
 - name: check result
   steps:
-    - script:  {{.cdsctl}} -f {{.cdsctl.config}} workflow logs download 04SCWORKFLOWRUNWORKERCMD 04SCWorkflowRunWorkerCmd-WORKFLOW 1 --pattern CHECKSECRET
+    - script: {{.cdsctl}} -f {{.cdsctl.config}} workflow logs download 04SCWORKFLOWRUNWORKERCMD 04SCWorkflowRunWorkerCmd-WORKFLOW 1 --pattern CHECKSECRET
     - script: grep "secret variable cds.app.password is used in file" *.log
-    - script:  {{.cdsctl}} -f {{.cdsctl.config}} workflow logs download 04SCWORKFLOWRUNWORKERCMD 04SCWorkflowRunWorkerCmd-WORKFLOW 1 --pattern TMPL
+    - script: {{.cdsctl}} -f {{.cdsctl.config}} workflow logs download 04SCWORKFLOWRUNWORKERCMD 04SCWorkflowRunWorkerCmd-WORKFLOW 1 --pattern TMPL
     - script: grep "this a a line in the file, with a CDS variable 1" *.log
-    - script:  {{.cdsctl}} -f {{.cdsctl.config}} workflow logs download 04SCWORKFLOWRUNWORKERCMD 04SCWorkflowRunWorkerCmd-WORKFLOW 1 --pattern KEY
+    - script: {{.cdsctl}} -f {{.cdsctl.config}} workflow logs download 04SCWORKFLOWRUNWORKERCMD 04SCWorkflowRunWorkerCmd-WORKFLOW 1 --pattern KEY
     - script: grep "BEGIN RSA PRIVATE KEY" *.log
-    - script:  {{.cdsctl}} -f {{.cdsctl.config}} workflow logs download 04SCWORKFLOWRUNWORKERCMD 04SCWorkflowRunWorkerCmd-WORKFLOW 1 --pattern ARTIFACTLIST
+    - script: {{.cdsctl}} -f {{.cdsctl.config}} workflow logs download 04SCWORKFLOWRUNWORKERCMD 04SCWorkflowRunWorkerCmd-WORKFLOW 1 --pattern ARTIFACTLIST
     - script: grep "\"name\":\"myFileUploaded\"" *.log
-    - script:  {{.cdsctl}} -f {{.cdsctl.config}} workflow logs download 04SCWORKFLOWRUNWORKERCMD 04SCWorkflowRunWorkerCmd-WORKFLOW 1 --pattern DOWNLOAD
+    - script: {{.cdsctl}} -f {{.cdsctl.config}} workflow logs download 04SCWORKFLOWRUNWORKERCMD 04SCWorkflowRunWorkerCmd-WORKFLOW 1 --pattern DOWNLOAD
     - script: grep "Je suis un artifact" *.log
-    - script:  {{.cdsctl}} -f {{.cdsctl.config}} workflow logs download 04SCWORKFLOWRUNWORKERCMD 04SCWorkflowRunWorkerCmd-WORKFLOW 1 --pattern EXPORTECHO
+    - script: {{.cdsctl}} -f {{.cdsctl.config}} workflow logs download 04SCWORKFLOWRUNWORKERCMD 04SCWorkflowRunWorkerCmd-WORKFLOW 1 --pattern EXPORTECHO
     - script: grep "Export value bar" *.log
-    - script:  {{.cdsctl}} -f {{.cdsctl.config}} workflow logs download 04SCWORKFLOWRUNWORKERCMD 04SCWorkflowRunWorkerCmd-WORKFLOW 1 --pattern CACHEPULL
+    - script: {{.cdsctl}} -f {{.cdsctl.config}} workflow logs download 04SCWORKFLOWRUNWORKERCMD 04SCWorkflowRunWorkerCmd-WORKFLOW 1 --pattern CACHEPULL
     - script: grep "cache push file content" *.log
