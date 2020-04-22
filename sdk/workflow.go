@@ -69,6 +69,16 @@ func (workflows Workflows) Names() []string {
 	return res
 }
 
+func (workflows Workflows) Filter(f func(w Workflow) bool) Workflows {
+	var res = make(Workflows, 0, len(workflows))
+	for i := range workflows {
+		if f(workflows[i]) {
+			res = append(res, workflows[i])
+		}
+	}
+	return res
+}
+
 // GetApplication retrieve application from workflow
 func (w *Workflow) GetApplication(ID int64) Application {
 	return w.Applications[ID]
