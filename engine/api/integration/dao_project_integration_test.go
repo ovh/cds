@@ -39,13 +39,13 @@ func TestCRUDIntegration(t *testing.T) {
 	require.NoError(t, integration.InsertIntegration(db, &integ))
 	assert.Equal(t, sdk.PasswordPlaceholder, integ.Config["password"].Value)
 
-	reloadedInteg, err := integration.LoadIntegrationsByProjectID(db, proj.ID, false)
+	reloadedInteg, err := integration.LoadIntegrationsByProjectID(db, proj.ID)
 	t.Logf("%+v", reloadedInteg)
 	require.NoError(t, err)
 	require.Len(t, reloadedInteg, 1)
 	assert.Equal(t, sdk.PasswordPlaceholder, reloadedInteg[0].Config["password"].Value)
 
-	reloadedInteg, err = integration.LoadIntegrationsByProjectID(db, proj.ID, true)
+	reloadedInteg, err = integration.LoadIntegrationsByProjectIDWithClearPassword(db, proj.ID)
 	require.NoError(t, err)
 	require.Len(t, reloadedInteg, 1)
 	assert.Equal(t, "mypassword", reloadedInteg[0].Config["password"].Value)
