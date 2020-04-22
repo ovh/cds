@@ -33,13 +33,19 @@ export class LogoutInterceptor implements HttpInterceptor {
 
                         this._router.navigate(['/auth/signin'], navigationExtras);
                     } else if (req.url.indexOf('auth/me') === -1) { // ignore error on auth/me used for auth pages
+                        console.log(e)
                         // error formatted from CDS API
-                        if (e.error && e.error.message) {
-                            this._toast.error(e.statusText, e.error.message);
-                        } else {
-                            try {
-                                this._toast.error(e.statusText, JSON.parse(e.message));
-                            } catch (e) {
+                        if (e.error) {
+                            if (e.error.message) {
+                                this._toast.error(e.statusText, e.error.message);
+                            } else if (Array.isArray(e.error)) {
+                                try {
+                                    let messages = e.error as Array<string>;
+                                    this._toast.error(e.statusText, messages.join(', '));
+                                } catch (e) {
+                                    this._toast.error(e.statusText, this._translate.instant('common_error'));
+                                }
+                            } else {
                                 this._toast.error(e.statusText, this._translate.instant('common_error'));
                             }
                         }

@@ -21,7 +21,6 @@ import (
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/engine/api/workflow"
-	"github.com/ovh/cds/engine/api/workflowtemplate"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/exportentities"
@@ -86,6 +85,7 @@ func (api *API) getWorkflowHandler() service.Handler {
 			WithLabels:            withLabels,
 			WithAsCodeUpdateEvent: withAsCodeEvents,
 			WithIntegrations:      true,
+			WithTemplate:          withTemplate,
 		}
 		w1, err := workflow.Load(ctx, api.mustDB(), api.Cache, *proj, name, opts)
 		if err != nil {
@@ -111,21 +111,6 @@ func (api *API) getWorkflowHandler() service.Handler {
 				return sdk.WrapError(err, "cannot load audits for workflow %s", name)
 			}
 			w1.Audits = audits
-		}
-
-		if withTemplate {
-			if err := workflowtemplate.AggregateTemplateInstanceOnWorkflow(ctx, api.mustDB(), w1); err != nil {
-				return err
-			}
-			if w1.TemplateInstance != nil {
-				if err := workflowtemplate.LoadInstanceOptions.WithTemplate(ctx, api.mustDB(), w1.TemplateInstance); err != nil {
-					return err
-				}
-				if w1.TemplateInstance.Template != nil {
-					w1.FromTemplate = fmt.Sprintf("%s@%d", w1.TemplateInstance.Template.Path(), w1.TemplateInstance.WorkflowTemplateVersion)
-					w1.TemplateUpToDate = w1.TemplateInstance.Template.Version == w1.TemplateInstance.WorkflowTemplateVersion
-				}
-			}
 		}
 
 		if isAdmin(ctx) {

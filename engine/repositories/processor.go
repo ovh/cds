@@ -55,7 +55,7 @@ func (s *Service) do(ctx context.Context, op sdk.Operation) error {
 			}
 			log.ErrorWithFields(ctx, fields, "%s", err)
 
-			op.Error = sdk.Cause(err).Error()
+			op.Error = sdk.ExtractHTTPError(err, "").Error()
 			op.Status = sdk.OperationStatusError
 		} else {
 			op.Error = ""
@@ -70,7 +70,7 @@ func (s *Service) do(ctx context.Context, op sdk.Operation) error {
 					}
 					log.ErrorWithFields(ctx, fields, "%s", err)
 
-					op.Error = sdk.Cause(err).Error()
+					op.Error = sdk.ExtractHTTPError(err, "").Error()
 					op.Status = sdk.OperationStatusError
 				} else {
 					op.Error = ""
@@ -91,7 +91,7 @@ func (s *Service) do(ctx context.Context, op sdk.Operation) error {
 			}
 			log.ErrorWithFields(ctx, fields, "%s", err)
 
-			op.Error = sdk.Cause(err).Error()
+			op.Error = sdk.ExtractHTTPError(err, "").Error()
 			op.Status = sdk.OperationStatusError
 		} else {
 			op.Error = ""

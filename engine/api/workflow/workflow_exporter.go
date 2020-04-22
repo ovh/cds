@@ -2,6 +2,7 @@ package workflow
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/go-gorp/gorp"
 
@@ -19,9 +20,9 @@ func Export(ctx context.Context, db gorp.SqlExecutor, cache cache.Store, proj sd
 	ctx, end := observability.Span(ctx, "workflow.Export")
 	defer end()
 
-	wf, errload := Load(ctx, db, cache, proj, name, LoadOptions{})
-	if errload != nil {
-		return v2.Workflow{}, sdk.WrapError(errload, "workflow.Export> Cannot load workflow %s", name)
+	wf, err := Load(ctx, db, cache, proj, name, LoadOptions{})
+	if err != nil {
+		return v2.Workflow{}, sdk.WrapError(err, "cannot load workflow %s", name)
 	}
 
 	// If repo is from as-code do not export WorkflowSkipIfOnlyOneRepoWebhook
@@ -48,9 +49,20 @@ func Pull(ctx context.Context, db gorp.SqlExecutor, cache cache.Store, proj sdk.
 
 	wf, err := Load(ctx, db, cache, proj, name, LoadOptions{
 		DeepPipeline: true,
+		WithTemplate: true,
 	})
 	if err != nil {
 		return wp, sdk.WrapError(err, "cannot load workflow %s", name)
+	}
+
+	if wf.TemplateInstance != nil {
+		return exportentities.WorkflowComponents{
+			Template: exportentities.TemplateInstance{
+				Name:       wf.Name,
+				From:       fmt.Sprintf("%s@%d", wf.TemplateInstance.Template.Path(), wf.TemplateInstance.WorkflowTemplateVersion),
+				Parameters: wf.TemplateInstance.Request.Parameters,
+			},
+		}, nil
 	}
 
 	// Reload app to retrieve secrets

@@ -23,7 +23,6 @@ import (
 	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/workflow"
-	"github.com/ovh/cds/engine/api/workflowtemplate"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
@@ -894,13 +893,10 @@ func (api *API) postWorkflowRunHandler() service.Handler {
 				WithAsCodeUpdateEvent: true,
 				WithIcon:              true,
 				WithIntegrations:      true,
+				WithTemplate:          true,
 			})
 			if errWf != nil {
 				return sdk.WrapError(errWf, "unable to load workflow %s", name)
-			}
-
-			if err := workflowtemplate.AggregateTemplateInstanceOnWorkflow(ctx, api.mustDB(), wf); err != nil {
-				return sdk.WrapError(err, "cannot load workflow template")
 			}
 
 			// Check node permission
