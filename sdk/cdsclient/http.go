@@ -51,6 +51,15 @@ func SetHeader(key, value string) RequestModifier {
 	}
 }
 
+// WithQueryParameter add query parameters to your http.Request
+func WithQueryParameter(key, value string) RequestModifier {
+	return func(req *http.Request) {
+		q := req.URL.Query()
+		q.Set(key, value)
+		req.URL.RawQuery = q.Encode()
+	}
+}
+
 // PostJSON post the *in* struct as json. If set, it unmarshalls the response to *out*
 func (c *client) PostJSON(ctx context.Context, path string, in interface{}, out interface{}, mods ...RequestModifier) (int, error) {
 	_, _, code, err := c.RequestJSON(ctx, http.MethodPost, path, in, out, mods...)
