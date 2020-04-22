@@ -20,7 +20,7 @@ func (api *API) getProjectIntegrationHandler() service.Handler {
 		projectKey := vars[permProjectKey]
 		integrationName := vars["integrationName"]
 
-		integration, err := integration.LoadProjectIntegrationByName(api.mustDB(), projectKey, integrationName, false)
+		integration, err := integration.LoadProjectIntegrationByName(api.mustDB(), projectKey, integrationName)
 		if err != nil {
 			return sdk.WrapError(err, "Cannot load integration %s/%s", projectKey, integrationName)
 		}
@@ -49,7 +49,7 @@ func (api *API) putProjectIntegrationHandler() service.Handler {
 			return sdk.WrapError(err, "Cannot load project")
 		}
 
-		ppDB, errP := integration.LoadProjectIntegrationByName(api.mustDB(), projectKey, integrationName, true)
+		ppDB, errP := integration.LoadProjectIntegrationByNameWithClearPassword(api.mustDB(), projectKey, integrationName)
 		if errP != nil {
 			return sdk.WrapError(errP, "putProjectIntegrationHandler> Cannot load integration %s for project %s", integrationName, projectKey)
 		}

@@ -24,7 +24,7 @@ func TestCRUDIntegration(t *testing.T) {
 	}
 	assert.NoError(t, project.Insert(db, &proj))
 
-	model, err := integration.LoadModelByName(db, sdk.KafkaIntegration.Name, false)
+	model, err := integration.LoadModelByNameWithClearPassword(db, sdk.KafkaIntegration.Name)
 	require.NoError(t, err)
 
 	integ := sdk.ProjectIntegration{

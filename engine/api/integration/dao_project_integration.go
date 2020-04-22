@@ -19,7 +19,14 @@ func DeleteIntegration(db gorp.SqlExecutor, integration sdk.ProjectIntegration) 
 	return nil
 }
 
-func load(db gorp.SqlExecutor, query gorpmapping.Query, clearPassword bool) (sdk.ProjectIntegration, error) {
+func load(db gorp.SqlExecutor, query gorpmapping.Query) (sdk.ProjectIntegration, error) {
+	pi, err := loadWithClearPassword(db, query)
+	pi.Blur()
+	pi.Model.Blur()
+	return pi, err
+}
+
+func loadWithClearPassword(db gorp.SqlExecutor, query gorpmapping.Query) (sdk.ProjectIntegration, error) {
 	var pp dbProjectIntegration
 	found, err := gorpmapping.Get(context.Background(), db, query, &pp, gorpmapping.GetOptions.WithDecryption)
 	if err != nil {
@@ -37,38 +44,50 @@ func load(db gorp.SqlExecutor, query gorpmapping.Query, clearPassword bool) (sdk
 		return sdk.ProjectIntegration{}, sdk.WithStack(sdk.ErrNotFound)
 	}
 
-	imodel, err := LoadModel(db, pp.IntegrationModelID, clearPassword)
+	imodel, err := LoadModelWithClearPassword(db, pp.IntegrationModelID)
 	if err != nil {
 		return sdk.ProjectIntegration{}, err
 	}
 	pp.Model = imodel
 
-	if !clearPassword {
-		pp.Blur()
-	}
 	return pp.ProjectIntegration, nil
 }
 
 // LoadProjectIntegrationByName Load a integration by project key and its name
-func LoadProjectIntegrationByName(db gorp.SqlExecutor, key string, name string, clearPassword bool) (sdk.ProjectIntegration, error) {
+func LoadProjectIntegrationByName(db gorp.SqlExecutor, key string, name string) (sdk.ProjectIntegration, error) {
 	query := gorpmapping.NewQuery(`
 		SELECT project_integration.*
 		FROM project_integration
 		JOIN project ON project.id = project_integration.project_id
 		WHERE project.projectkey = $1 AND project_integration.name = $2`).Args(key, name)
 
-	pp, err := load(db, query, clearPassword)
-	return pp, sdk.WithStack(err)
+	return load(db, query)
+}
+
+func LoadProjectIntegrationByNameWithClearPassword(db gorp.SqlExecutor, key string, name string) (sdk.ProjectIntegration, error) {
+	query := gorpmapping.NewQuery(`
+	SELECT project_integration.*
+	FROM project_integration
+	JOIN project ON project.id = project_integration.project_id
+	WHERE project.projectkey = $1 AND project_integration.name = $2`).Args(key, name)
+
+	return loadWithClearPassword(db, query)
 }
 
 // LoadProjectIntegrationByID returns integration, selecting by its id
 func LoadProjectIntegrationByID(db gorp.SqlExecutor, id int64, clearPassword bool) (*sdk.ProjectIntegration, error) {
 	query := gorpmapping.NewQuery("SELECT * from project_integration WHERE id = $1").Args(id)
-	pp, err := load(db, query, clearPassword)
-	return &pp, sdk.WithStack(err)
+	pp, err := load(db, query)
+	return &pp, err
 }
 
-func loadAll(db gorp.SqlExecutor, query gorpmapping.Query, clearPassword bool) ([]sdk.ProjectIntegration, error) {
+func LoadProjectIntegrationByIDWithClearPassword(db gorp.SqlExecutor, id int64, clearPassword bool) (*sdk.ProjectIntegration, error) {
+	query := gorpmapping.NewQuery("SELECT * from project_integration WHERE id = $1").Args(id)
+	pp, err := loadWithClearPassword(db, query)
+	return &pp, err
+}
+
+func loadAllWithClearPassword(db gorp.SqlExecutor, query gorpmapping.Query) ([]sdk.ProjectIntegration, error) {
 	var pp []dbProjectIntegration
 	if err := gorpmapping.GetAll(context.Background(), db, query, &pp, gorpmapping.GetOptions.WithDecryption); err != nil {
 		return nil, err
@@ -85,25 +104,53 @@ func loadAll(db gorp.SqlExecutor, query gorpmapping.Query, clearPassword bool) (
 			continue
 		}
 
-		imodel, err := LoadModel(db, p.IntegrationModelID, clearPassword)
+		imodel, err := LoadModelWithClearPassword(db, p.IntegrationModelID)
 		if err != nil {
 			return nil, err
 		}
 		p.Model = imodel
 		integrations[i] = p.ProjectIntegration
+	}
+	return integrations, nil
 
-		if !clearPassword {
-			integrations[i].Blur()
+}
+func loadAll(db gorp.SqlExecutor, query gorpmapping.Query) ([]sdk.ProjectIntegration, error) {
+	var pp []dbProjectIntegration
+	if err := gorpmapping.GetAll(context.Background(), db, query, &pp, gorpmapping.GetOptions.WithDecryption); err != nil {
+		return nil, err
+	}
+	var integrations = make([]sdk.ProjectIntegration, len(pp))
+	for i, p := range pp {
+		isValid, err := gorpmapping.CheckSignature(p, p.Signature)
+		if err != nil {
+			return nil, err
 		}
+		if !isValid {
+			log.Error(context.Background(), "integration.loadAll> model %d data corrupted", p.ID)
+			continue
+		}
+
+		imodel, err := LoadModel(db, p.IntegrationModelID)
+		if err != nil {
+			return nil, err
+		}
+		p.Model = imodel
+		integrations[i] = p.ProjectIntegration
+		integrations[i].Blur()
 	}
 	return integrations, nil
 }
 
-// LoadIntegrationsByProjectID load integration integrations by project id
-func LoadIntegrationsByProjectID(db gorp.SqlExecutor, id int64, clearPassword bool) ([]sdk.ProjectIntegration, error) {
+// LoadIntegrationsByProjectIDWithClearPassword load integration integrations by project id
+func LoadIntegrationsByProjectIDWithClearPassword(db gorp.SqlExecutor, id int64) ([]sdk.ProjectIntegration, error) {
 	query := gorpmapping.NewQuery("SELECT * from project_integration WHERE project_id = $1").Args(id)
-	integrations, err := loadAll(db, query, clearPassword)
-	return integrations, sdk.WithStack(err)
+	return loadAllWithClearPassword(db, query)
+}
+
+// LoadIntegrationsByProjectID load integration integrations by project id
+func LoadIntegrationsByProjectID(db gorp.SqlExecutor, id int64) ([]sdk.ProjectIntegration, error) {
+	query := gorpmapping.NewQuery("SELECT * from project_integration WHERE project_id = $1").Args(id)
+	return loadAll(db, query)
 }
 
 // InsertIntegration inserts a integration
@@ -155,8 +202,7 @@ func LoadIntegrationsByWorkflowID(db gorp.SqlExecutor, id int64, clearPassword b
 	FROM project_integration
 		JOIN workflow_project_integration ON workflow_project_integration.project_integration_id = project_integration.id
 	WHERE workflow_project_integration.workflow_id = $1`).Args(id)
-	integrations, err := loadAll(db, query, clearPassword)
-	return integrations, sdk.WithStack(err)
+	return loadAll(db, query)
 }
 
 // AddOnWorkflow link a project integration on a workflow

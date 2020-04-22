@@ -79,18 +79,34 @@ func LoadPublicModelsByTypeWithDecryption(db gorp.SqlExecutor, integrationType *
 }
 
 // LoadModel Load a integration model by its ID
-func LoadModel(db gorp.SqlExecutor, modelID int64, clearPassword bool) (sdk.IntegrationModel, error) {
+func LoadModel(db gorp.SqlExecutor, modelID int64) (sdk.IntegrationModel, error) {
 	query := gorpmapping.NewQuery("SELECT * from integration_model where id = $1").Args(modelID)
-	return getModel(db, query, clearPassword)
+	return getModel(db, query)
+}
+
+func LoadModelWithClearPassword(db gorp.SqlExecutor, modelID int64) (sdk.IntegrationModel, error) {
+	query := gorpmapping.NewQuery("SELECT * from integration_model where id = $1").Args(modelID)
+	return getModelWithClearPassword(db, query)
 }
 
 // LoadModelByName Load a integration model by its name
-func LoadModelByName(db gorp.SqlExecutor, name string, clearPassword bool) (sdk.IntegrationModel, error) {
+func LoadModelByName(db gorp.SqlExecutor, name string) (sdk.IntegrationModel, error) {
 	query := gorpmapping.NewQuery("SELECT * from integration_model where name = $1").Args(name)
-	return getModel(db, query, clearPassword)
+	return getModel(db, query)
 }
 
-func getModel(db gorp.SqlExecutor, query gorpmapping.Query, clearPassword bool) (sdk.IntegrationModel, error) {
+func LoadModelByNameWithClearPassword(db gorp.SqlExecutor, name string) (sdk.IntegrationModel, error) {
+	query := gorpmapping.NewQuery("SELECT * from integration_model where name = $1").Args(name)
+	return getModelWithClearPassword(db, query)
+}
+
+func getModel(db gorp.SqlExecutor, query gorpmapping.Query) (sdk.IntegrationModel, error) {
+	m, err := getModelWithClearPassword(db, query)
+	m.Blur()
+	return m, err
+}
+
+func getModelWithClearPassword(db gorp.SqlExecutor, query gorpmapping.Query) (sdk.IntegrationModel, error) {
 	var pm integrationModel
 
 	found, err := gorpmapping.Get(context.Background(), db, query, &pm, gorpmapping.GetOptions.WithDecryption)
@@ -108,10 +124,6 @@ func getModel(db gorp.SqlExecutor, query gorpmapping.Query, clearPassword bool) 
 	if !isValid {
 		log.Error(context.Background(), "integration.LoadModelByName> model  %d data corrupted", pm.ID)
 		return sdk.IntegrationModel{}, sdk.WithStack(sdk.ErrNotFound)
-	}
-
-	if !clearPassword {
-		pm.Blur()
 	}
 
 	return pm.IntegrationModel, nil
@@ -153,12 +165,17 @@ func UpdateModel(db gorp.SqlExecutor, m *sdk.IntegrationModel) error {
 			if cfg.Type == sdk.IntegrationConfigTypePassword && cfg.Value == sdk.PasswordPlaceholder {
 				if oldModel.ID == 0 {
 					var err error
-					oldModel, err = LoadModel(db, m.ID, true)
+					oldModel, err = LoadModelWithClearPassword(db, m.ID)
 					if err != nil {
 						return err
 					}
 				}
-				cfg.Value = oldModel.PublicConfigurations[k][kk].Value
+				cfg.Value = ""
+				if _, hasPublicConfig := oldModel.PublicConfigurations[k]; hasPublicConfig {
+					if _, hasPublicConfigKey := oldModel.PublicConfigurations[k][kk]; hasPublicConfigKey {
+						cfg.Value = oldModel.PublicConfigurations[k][kk].Value
+					}
+				}
 			}
 			givenPublicConfig[k][kk] = cfg
 		}
@@ -176,7 +193,7 @@ func UpdateModel(db gorp.SqlExecutor, m *sdk.IntegrationModel) error {
 
 // DeleteModel deletes a integration model in database
 func DeleteModel(db gorp.SqlExecutor, id int64) error {
-	m, err := LoadModel(db, id, false)
+	m, err := LoadModel(db, id)
 	if err != nil {
 		return sdk.WrapError(err, "DeleteModel")
 	}

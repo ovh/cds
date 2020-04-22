@@ -43,7 +43,7 @@ func CreateBuiltinModels(db *gorp.DbMap) error {
 			}
 		} else {
 			log.Debug("CreateBuiltinModels> updating integration config: %s", p.Name)
-			oldM, err := LoadModelByName(tx, p.Name, true)
+			oldM, err := LoadModelByName(tx, p.Name)
 			if err != nil {
 				return sdk.WrapError(err, "error on load")
 			}

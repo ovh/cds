@@ -108,7 +108,7 @@ func refactorIntegrationModelCrypto(ctx context.Context, db *gorp.DbMap, id int6
 		return sdk.WrapError(err, "unable to update integration_model %d", id)
 	}
 
-	newIntegrationModel, err := integration.LoadModel(tx, id, true)
+	newIntegrationModel, err := integration.LoadModelWithClearPassword(tx, id)
 	if err != nil {
 		return err
 	}

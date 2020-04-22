@@ -20,7 +20,7 @@ func TestCRUDModel(t *testing.T) {
 	require.NoError(t, err)
 
 	if ok {
-		p, err := LoadModelByName(db, p.Name, false)
+		p, err := LoadModelByName(db, p.Name)
 		require.NoError(t, err)
 		// Eventually we have to clean all project_integration linked
 		_, err = db.Exec("delete from project_integration where integration_model_id = $1", p.ID)
@@ -31,7 +31,7 @@ func TestCRUDModel(t *testing.T) {
 	err = InsertModel(db, p)
 	require.NoError(t, err)
 
-	model, err := LoadModelByName(db, p.Name, true)
+	model, err := LoadModelByNameWithClearPassword(db, p.Name)
 	require.NoError(t, err)
 
 	model.PublicConfigurations = sdk.IntegrationConfigMap{
