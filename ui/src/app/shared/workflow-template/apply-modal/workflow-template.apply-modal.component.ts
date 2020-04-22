@@ -14,9 +14,9 @@ import { WorkflowTemplate, WorkflowTemplateInstance } from 'app/model/workflow-t
 import { Workflow } from 'app/model/workflow.model';
 import { ProjectService } from 'app/service/project/project.service';
 import { WorkflowTemplateService } from 'app/service/workflow-template/workflow-template.service';
+import { WorkflowService } from 'app/service/workflow/workflow.service';
 import { calculateWorkflowTemplateDiff } from 'app/shared/diff/diff';
 import { Item } from 'app/shared/diff/list/diff.list.component';
-import { forkJoin } from 'rxjs';
 import { finalize } from 'rxjs/operators';
 
 @Component({
@@ -43,6 +43,7 @@ export class WorkflowTemplateApplyModalComponent implements OnChanges {
     constructor(
         private _modalService: SuiModalService,
         private _projectService: ProjectService,
+        private _workflowService: WorkflowService,
         private _templateService: WorkflowTemplateService,
         private _cd: ChangeDetectorRef
     ) { }
@@ -83,30 +84,27 @@ export class WorkflowTemplateApplyModalComponent implements OnChanges {
                 .pipe(finalize(() => this._cd.markForCheck()))
                 .subscribe(p => {
                     this.project = p;
-                    this.loadAudits()
+                    this.loadAudits();
                 });
             return
         } else if (this.workflow) {
             // retrieve workflow template and instance from given workflow
             let s = this.workflow.from_template.split('@');
             s = s[0].split('/');
+            this.workflowTemplateInstance = this.workflow.template_instance;
 
-            forkJoin<WorkflowTemplate, WorkflowTemplateInstance>(
-                this._templateService.get(s[0], s.splice(1, s.length - 1).join('/')),
-                this._templateService.getInstance(this.workflow.project_key, this.workflow.name)
-            ).subscribe(res => {
-                this.workflowTemplate = res[0];
-                this.workflowTemplateInstance = res[1];
+            this._templateService.get(s[0], s.splice(1, s.length - 1).join('/')).subscribe(wt => {
+                this.workflowTemplate = wt;
                 this.loadAudits();
                 this._cd.markForCheck();
             });
         }
     }
 
-    apply() {
-        this._templateService.getInstance(this.workflowTemplateInstance.project.key,
-            this.workflowTemplateInstance.workflow_name).subscribe(i => {
-                this.workflowTemplateInstance = i;
+    onApply() {
+        this._workflowService.getWorkflow(this.workflowTemplateInstance.project.key,
+            this.workflowTemplateInstance.workflow_name).subscribe(w => {
+                this.workflowTemplateInstance = w.template_instance;
             });
     }
 

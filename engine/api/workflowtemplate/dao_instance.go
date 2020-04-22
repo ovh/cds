@@ -84,16 +84,6 @@ func LoadInstancesByTemplateIDAndProjectIDs(ctx context.Context, db gorp.SqlExec
 	return getInstances(ctx, db, query, opts...)
 }
 
-// LoadInstancesByTemplateIDAndProjectIDAndRequestWorkflowName returns all workflow template instances by template id, project id and request workflow name.
-func LoadInstancesByTemplateIDAndProjectIDAndRequestWorkflowName(ctx context.Context, db gorp.SqlExecutor, templateID, projectID int64, workflowName string, opts ...LoadInstanceOptionFunc) ([]sdk.WorkflowTemplateInstance, error) {
-	query := gorpmapping.NewQuery(`
-    SELECT *
-    FROM workflow_template_instance
-    WHERE workflow_template_id = $1 AND project_id = $2 AND (request->>'workflow_name')::text = $3
-  `).Args(templateID, projectID, workflowName)
-	return getInstances(ctx, db, query, opts...)
-}
-
 // LoadInstancesByWorkflowIDs returns all workflow template instances by workflow ids.
 func LoadInstancesByWorkflowIDs(ctx context.Context, db gorp.SqlExecutor, workflowIDs []int64, opts ...LoadInstanceOptionFunc) ([]sdk.WorkflowTemplateInstance, error) {
 	query := gorpmapping.NewQuery(`
@@ -121,6 +111,16 @@ func LoadInstanceByIDForTemplateIDAndProjectIDs(ctx context.Context, db gorp.Sql
     FROM workflow_template_instance
     WHERE id = $1 AND workflow_template_id = $2 AND project_id = ANY(string_to_array($3, ',')::int[])
   `).Args(id, templateID, gorpmapping.IDsToQueryString(projectIDs))
+	return getInstance(ctx, db, query, opts...)
+}
+
+// LoadInstanceByTemplateIDAndProjectIDAndRequestWorkflowName return a workflow template instance by template id, project id and request workflow name.
+func LoadInstanceByTemplateIDAndProjectIDAndRequestWorkflowName(ctx context.Context, db gorp.SqlExecutor, templateID, projectID int64, workflowName string, opts ...LoadInstanceOptionFunc) (*sdk.WorkflowTemplateInstance, error) {
+	query := gorpmapping.NewQuery(`
+    SELECT *
+    FROM workflow_template_instance
+    WHERE workflow_template_id = $1 AND project_id = $2 AND (request->>'workflow_name')::text = $3
+  `).Args(templateID, projectID, workflowName)
 	return getInstance(ctx, db, query, opts...)
 }
 

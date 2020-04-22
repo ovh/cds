@@ -47,10 +47,6 @@ export class WorkflowTemplateService {
             });
     }
 
-    getInstance(projectKey: string, workflowName: string): Observable<WorkflowTemplateInstance> {
-        return this._http.get<WorkflowTemplateInstance>(`/project/${projectKey}/workflow/${workflowName}/templateInstance`);
-    }
-
     deleteInstance(wt: WorkflowTemplate, wti: WorkflowTemplateInstance): Observable<any> {
         return this._http.delete<any>(`/template/${wt.group.name}/${wt.slug}/instance/${wti.id}`);
     }
