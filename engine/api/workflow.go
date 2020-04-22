@@ -32,10 +32,33 @@ func (api *API) getWorkflowsHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		key := vars[permProjectKey]
+		filterByRepo := r.FormValue("repo")
 
 		ws, err := workflow.LoadAll(api.mustDB(), key)
 		if err != nil {
 			return err
+		}
+
+		if filterByRepo != "" {
+			mapApps := make(map[int64]sdk.Application)
+			apps, err := application.LoadAll(api.mustDB(), key)
+			if err != nil {
+				return err
+			}
+
+			for _, app := range apps {
+				mapApps[app.ID] = app
+			}
+
+			ws = ws.Filter(
+				func(w sdk.Workflow) bool {
+					if w.WorkflowData.Node.Context != nil {
+						app, _ := mapApps[w.WorkflowData.Node.Context.ApplicationID]
+						return app.RepositoryFullname == filterByRepo
+					}
+					return false
+				},
+			)
 		}
 
 		names := ws.Names()
