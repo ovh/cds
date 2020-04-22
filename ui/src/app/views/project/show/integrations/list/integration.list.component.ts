@@ -19,7 +19,7 @@ import { finalize, first } from 'rxjs/operators';
 })
 @AutoUnsubscribe()
 export class ProjectIntegrationListComponent extends Table<ProjectIntegration> implements OnInit {
-    @ViewChild('codeMirror', {static: false}) codemirror: any;
+    @ViewChild('codeMirror') codemirror: any;
 
     @Input() project: Project;
 

@@ -1,8 +1,6 @@
 import { HttpRequest } from '@angular/common/http';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { async, TestBed } from '@angular/core/testing';
-import { XHRBackend } from '@angular/http';
-import { MockBackend } from '@angular/http/testing';
 import { NgxsModule, Store } from '@ngxs/store';
 import { Application, Overview } from 'app/model/application.model';
 import { IntegrationModel, ProjectIntegration } from 'app/model/integration.model';
@@ -33,7 +31,6 @@ describe('Applications', () => {
     beforeEach(async(() => {
         TestBed.configureTestingModule({
             providers: [
-                { provide: XHRBackend, useClass: MockBackend },
                 RouterService,
                 NavbarService,
                 WorkflowService,

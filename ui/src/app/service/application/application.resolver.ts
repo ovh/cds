@@ -13,6 +13,8 @@ import { catchError, flatMap } from 'rxjs/operators';
 @Injectable()
 export class ApplicationResolver implements Resolve<Application> {
 
+    constructor(private store: Store) { }
+
     resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<any> | Promise<any> | any {
         return this.store.dispatch(new FetchApplication({
             projectKey: route.params['key'],
@@ -21,12 +23,12 @@ export class ApplicationResolver implements Resolve<Application> {
             flatMap(() => this.store.selectOnce(ApplicationsState.currentState()))
         );
     }
-
-    constructor(private store: Store) { }
 }
 
 @Injectable()
 export class ApplicationQueryParamResolver implements Resolve<Application> {
+
+    constructor(private store: Store) { }
 
     resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<any> | Promise<any> | any {
         if (route.queryParams['application']) {
@@ -43,6 +45,4 @@ export class ApplicationQueryParamResolver implements Resolve<Application> {
             return observableOf(null);
         }
     }
-
-    constructor(private store: Store) { }
 }

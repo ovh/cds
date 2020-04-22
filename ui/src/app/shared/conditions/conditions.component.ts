@@ -59,7 +59,7 @@ export class ConditionsComponent extends Table<WorkflowNodeCondition> implements
 
     @Output() conditionsChange = new EventEmitter<WorkflowNodeConditions>();
 
-    @ViewChild('textareaCodeMirror', { static: false }) codemirror: CodemirrorComponent;
+    @ViewChild('textareaCodeMirror') codemirror: CodemirrorComponent;
     codeMirrorConfig: any;
     isAdvanced = false;
     suggest: Array<string> = [];

@@ -18,9 +18,9 @@ export class ProjectPermissionsComponent {
 
     @Input() project: Project;
 
-    @ViewChild('permWarning', {static: false})
+    @ViewChild('permWarning')
     permWarningModal: WarningModalComponent;
-    @ViewChild('confirmPropagationModal', {static: false})
+    @ViewChild('confirmPropagationModal')
     confirmPropagationModal: ConfirmModalComponent;
 
     loading = false;

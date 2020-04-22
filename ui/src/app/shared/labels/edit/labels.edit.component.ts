@@ -23,7 +23,7 @@ export class LabelsEditComponent {
         return this._project;
     }
 
-    @ViewChild('labelsEditModal', { static: false })
+    @ViewChild('labelsEditModal')
     public labelsEditModal: ModalTemplate<boolean, boolean, void>;
     modal: SuiActiveModal<boolean, boolean, void>;
     modalConfig: TemplateModalConfig<boolean, boolean, void>;

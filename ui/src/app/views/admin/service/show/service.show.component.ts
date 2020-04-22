@@ -16,7 +16,7 @@ import { Subscription } from 'rxjs/Subscription';
 })
 @AutoUnsubscribe()
 export class ServiceShowComponent implements OnInit {
-    @ViewChild('textareaCodeMirror', {static: false}) codemirror: any;
+    @ViewChild('textareaCodeMirror') codemirror: any;
 
     loading: boolean;
     service: Service;

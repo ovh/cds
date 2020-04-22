@@ -21,7 +21,7 @@ import { Subscription } from 'rxjs';
 })
 @AutoUnsubscribe()
 export class WorkflowTemplateEditorComponent implements OnInit, OnChanges {
-    @ViewChild('code', { static: false }) codemirror: any;
+    @ViewChild('code') codemirror: any;
 
     @Input() editable: boolean;
     @Input() removable: boolean;

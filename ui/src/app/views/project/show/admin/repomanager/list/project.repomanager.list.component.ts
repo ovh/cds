@@ -22,9 +22,9 @@ export class ProjectRepoManagerComponent extends Table<RepositoriesManager> {
     @Input() project: Project;
     @Input() reposmanagers: RepositoriesManager[];
 
-    @ViewChild('deleteRepoWarning', { static: false })
+    @ViewChild('deleteRepoWarning')
     private deleteRepoWarning: WarningModalComponent;
-    @ViewChild('confirmDeletionModal', { static: false })
+    @ViewChild('confirmDeletionModal')
     confirmDeletionModal: ConfirmModalComponent;
 
     public deleteLoading = false;

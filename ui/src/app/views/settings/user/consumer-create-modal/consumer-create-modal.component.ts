@@ -38,7 +38,7 @@ export enum FormStepName {
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ConsumerCreateModalComponent {
-    @ViewChild('consumerCreateModal', { static: false }) consumerDetailsModal: ModalTemplate<boolean, boolean, void>;
+    @ViewChild('consumerCreateModal') consumerDetailsModal: ModalTemplate<boolean, boolean, void>;
     modal: SuiActiveModal<boolean, boolean, void>;
     open: boolean;
 

@@ -15,8 +15,8 @@ import { finalize } from 'rxjs/operators';
 })
 @AutoUnsubscribe()
 export class WorkflowNodeHookDetailsComponent implements OnInit {
-  @ViewChild('code', {static: false}) codemirror: any;
-  @ViewChild('nodeHookDetailsModal', {static: false}) nodeHookDetailsModal: ModalTemplate<boolean, boolean, void>;
+  @ViewChild('code') codemirror: any;
+  @ViewChild('nodeHookDetailsModal') nodeHookDetailsModal: ModalTemplate<boolean, boolean, void>;
 
   modal: SuiActiveModal<boolean, boolean, void>;
   modalConfig: TemplateModalConfig<boolean, boolean, void>;

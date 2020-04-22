@@ -127,6 +127,10 @@ export class DataTableComponent<T extends WithKey> extends Table<T> implements O
     indexSelected: number;
     columnsCount: number;
 
+    constructor() {
+        super();
+    }
+
     ngOnChanges() {
         this.allData = this.data;
 
@@ -169,10 +173,6 @@ export class DataTableComponent<T extends WithKey> extends Table<T> implements O
         }
 
         this.sortChange.emit(this.sortedColumn.sortKey + ':' + this.sortedColumnDirection);
-    }
-
-    constructor() {
-        super();
     }
 
     getData(): Array<T> {

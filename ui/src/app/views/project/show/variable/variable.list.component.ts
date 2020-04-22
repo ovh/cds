@@ -22,7 +22,7 @@ import { finalize } from 'rxjs/operators';
 export class ProjectVariablesComponent implements OnInit {
 
     @Input() project: Project;
-    @ViewChild('varWarning', {static: false})
+    @ViewChild('varWarning')
     varWarningModal: WarningModalComponent;
 
     loading = true;

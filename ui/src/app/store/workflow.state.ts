@@ -1,4 +1,5 @@
 import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
+import { Injectable } from '@angular/core';
 import { Router } from '@angular/router';
 import { Action, createSelector, Selector, State, StateContext } from '@ngxs/store';
 import { WNode, WNodeHook, WNodeTrigger, Workflow } from 'app/model/workflow.model';
@@ -66,7 +67,12 @@ export function getInitialWorkflowState(): WorkflowStateModel {
     name: 'workflow',
     defaults: getInitialWorkflowState()
 })
+@Injectable()
 export class WorkflowState {
+
+    constructor(private _http: HttpClient, private _navbarService: NavbarService, private _routerService: RouterService,
+        private _workflowService: WorkflowService, private _workflowRunService: WorkflowRunService, private _router: Router) {
+    }
 
     static getEditModal() {
         return createSelector(
@@ -224,10 +230,6 @@ export class WorkflowState {
             }
             return j.job.step_status[stepNum];
         };
-    }
-
-    constructor(private _http: HttpClient, private _navbarService: NavbarService, private _routerService: RouterService,
-        private _workflowService: WorkflowService, private _workflowRunService: WorkflowRunService, private _router: Router) {
     }
 
     @Action(actionWorkflow.OpenEditModal)

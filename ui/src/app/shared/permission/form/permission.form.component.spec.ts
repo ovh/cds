@@ -1,8 +1,6 @@
 import { HttpRequest } from '@angular/common/http';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { fakeAsync, inject, TestBed, tick } from '@angular/core/testing';
-import { XHRBackend } from '@angular/http';
-import { MockBackend } from '@angular/http/testing';
 import { RouterTestingModule } from '@angular/router/testing';
 import { TranslateLoader, TranslateModule, TranslateParser, TranslateService } from '@ngx-translate/core';
 import { Group, GroupPermission } from '../../../model/group.model';
@@ -22,7 +20,6 @@ describe('CDS: Permission From Component', () => {
                 GroupService,
                 PermissionService,
                 TranslateService,
-                { provide: XHRBackend, useClass: MockBackend },
                 TranslateLoader,
                 TranslateParser
             ],
@@ -37,7 +34,7 @@ describe('CDS: Permission From Component', () => {
     });
 
 
-    it('should create new permission', fakeAsync(inject([XHRBackend], (backend: MockBackend) => {
+    it('should create new permission', fakeAsync(() => {
         const http = TestBed.get(HttpTestingController);
 
         let groupsMock = new Array<Group>();
@@ -83,6 +80,6 @@ describe('CDS: Permission From Component', () => {
         // Check if creation evant has been emitted
         expect(fixture.componentInstance.createGroupPermissionEvent.emit).toHaveBeenCalledWith(new PermissionEvent('add', gp));
 
-    })));
+    }));
 });
 

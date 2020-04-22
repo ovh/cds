@@ -14,9 +14,9 @@ import { finalize } from 'rxjs/operators';
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class WorkflowRunTestTableComponent implements OnInit {
-    @ViewChild('codemirror1', { static: false }) codemirror1: any;
-    @ViewChild('codemirror2', { static: false }) codemirror2: any;
-    @ViewChild('codemirror3', { static: false }) codemirror3: any;
+    @ViewChild('codemirror1') codemirror1: any;
+    @ViewChild('codemirror2') codemirror2: any;
+    @ViewChild('codemirror3') codemirror3: any;
 
     codeMirrorConfig: any;
     columns: Array<Column<TestCase>>;

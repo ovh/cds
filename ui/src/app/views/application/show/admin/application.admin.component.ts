@@ -21,7 +21,7 @@ import { ToastService } from '../../../../shared/toast/ToastService';
 export class ApplicationAdminComponent implements OnInit {
     @Input() application: Application;
     @Input() project: Project;
-    @ViewChild('updateWarning', { static: false })
+    @ViewChild('updateWarning')
     private updateWarningModal: WarningModalComponent;
 
     user: AuthentifiedUser;

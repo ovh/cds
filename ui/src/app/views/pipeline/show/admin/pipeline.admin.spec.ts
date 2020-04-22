@@ -1,8 +1,6 @@
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { Injector } from '@angular/core';
 import { fakeAsync, getTestBed, TestBed, tick } from '@angular/core/testing';
-import { XHRBackend } from '@angular/http';
-import { MockBackend } from '@angular/http/testing';
 import { ActivatedRoute, Router } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
 import { TranslateLoader, TranslateModule, TranslateParser, TranslateService } from '@ngx-translate/core';
@@ -31,14 +29,11 @@ import { of } from 'rxjs';
 describe('CDS: Pipeline Admin Component', () => {
 
     let injector: Injector;
-    let backend: MockBackend;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
             declarations: [],
             providers: [
-                MockBackend,
-                { provide: XHRBackend, useClass: MockBackend },
                 PipelineService,
                 { provide: ActivatedRoute, useClass: MockActivatedRoutes },
                 { provide: ToastService, useClass: MockToast },
@@ -69,12 +64,10 @@ describe('CDS: Pipeline Admin Component', () => {
         });
 
         injector = getTestBed();
-        backend = injector.get(MockBackend);
     });
 
     afterEach(() => {
         injector = undefined;
-        backend = undefined;
     });
 
     it('should update pipeline', fakeAsync(() => {
