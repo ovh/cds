@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/sirupsen/logrus"
 	"os"
 	"strings"
 	"time"
@@ -27,8 +28,9 @@ type CurrentWorker struct {
 	basedir    afero.Fs
 	manualExit bool
 	logger     struct {
-		logChan chan sdk.Log
-		llist   *list.List
+		logChan    chan sdk.Log
+		llist      *list.List
+		stepLogger *logrus.Logger
 	}
 	httpPort int32
 	register struct {
@@ -42,6 +44,7 @@ type CurrentWorker struct {
 		params       []sdk.Parameter
 		secrets      []sdk.Variable
 		context      context.Context
+		signingKey   string
 	}
 	status struct {
 		Name   string `json:"name"`

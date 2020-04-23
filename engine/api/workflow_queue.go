@@ -26,6 +26,7 @@ import (
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/jws"
 	"github.com/ovh/cds/sdk/log"
 )
 
@@ -180,6 +181,13 @@ func takeJob(ctx context.Context, dbFunc func() *gorp.DbMap, store cache.Store, 
 	wnjri.Secrets = append(wnjri.Secrets, secretsKeys...)
 	wnjri.NodeJobRun.Parameters = append(wnjri.NodeJobRun.Parameters, params...)
 
+	wnjri.SigningKey, err = jws.NewRandomSymmetricKey(32)
+	// get cdn url
+	wnjri.GelfServiceAddr = "http://localhost:8089/logs"
+
+	if err != nil {
+		return nil, err
+	}
 	if err := tx.Commit(); err != nil {
 		return nil, sdk.WithStack(err)
 	}

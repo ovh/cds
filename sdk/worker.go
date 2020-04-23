@@ -75,8 +75,10 @@ func TemplateEnvs(args WorkerArgs, envs map[string]string) (map[string]string, e
 
 // WorkflowNodeJobRunData is returned to worker in answer to postTakeWorkflowJobHandler
 type WorkflowNodeJobRunData struct {
-	NodeJobRun WorkflowNodeJobRun
-	Secrets    []Variable
-	Number     int64
-	SubNumber  int64
+	NodeJobRun      WorkflowNodeJobRun
+	Secrets         []Variable
+	Number          int64
+	SubNumber       int64
+	SigningKey      string
+	GelfServiceAddr string
 }

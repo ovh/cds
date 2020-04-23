@@ -8,11 +8,24 @@ import (
 	"encoding/json"
 	"encoding/pem"
 	"errors"
+	"fmt"
 
 	"gopkg.in/square/go-jose.v2"
 
 	"github.com/ovh/cds/sdk"
 )
+
+func NewRandomSymmetricKey(size int) (string, error) {
+	if size <= 0 || size%8 != 0 {
+		return "", sdk.WithStack(fmt.Errorf("invalid key size"))
+	}
+
+	k := make([]byte, size)
+	if _, err := rand.Read(k); err != nil {
+		return "", sdk.WithStack(err)
+	}
+	return string(k), nil
+}
 
 // NewRandomRSAKey generates a public/private key pair
 func NewRandomRSAKey() (*rsa.PrivateKey, error) {
@@ -63,6 +76,11 @@ func NewSigner(privateKey *rsa.PrivateKey) (jose.Signer, error) {
 	return jose.NewSigner(jose.SigningKey{Algorithm: jose.PS512, Key: privateKey}, nil)
 }
 
+// NewSigner instantiate a signer using HMAC using SHA-512 with the given private key.
+func NewHMacSigner(secret string) (jose.Signer, error) {
+	return jose.NewSigner(jose.SigningKey{Algorithm: jose.HS512, Key: secret}, nil)
+}
+
 // Sign a json marshalled content and returns a protected JWS object using the full serialization format.
 func Sign(signer jose.Signer, content interface{}) (string, error) {
 	btes, err := json.Marshal(content)
@@ -82,12 +100,12 @@ func Sign(signer jose.Signer, content interface{}) (string, error) {
 
 // Verify parses the serialized, protected JWS object, than verifying the signature on the payload
 // and unmarshal the payload into i
-func Verify(publicKey *rsa.PublicKey, s string, i interface{}) error {
+func Verify(key interface{}, s string, i interface{}) error {
 	object, err := jose.ParseSigned(s)
 	if err != nil {
 		return sdk.WithStack(err)
 	}
-	output, err := object.Verify(publicKey)
+	output, err := object.Verify(key)
 	if err != nil {
 		return sdk.WithStack(err)
 	}

@@ -85,6 +85,8 @@ func (s *Service) Serve(c context.Context) error {
 		MaxHeaderBytes: 1 << 20,
 	}
 
+	s.initGelfServer()
+
 	//Gracefully shutdown the http server
 	go func() {
 		select {

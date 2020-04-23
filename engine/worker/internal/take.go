@@ -5,6 +5,9 @@ import (
 	"strings"
 	"time"
 
+	"github.com/sirupsen/logrus"
+	"gopkg.in/Graylog2/go-gelf.v2/gelf"
+
 	"github.com/ovh/cds/engine/worker/pkg/workerruntime"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
@@ -30,6 +33,16 @@ func (w *CurrentWorker) Take(ctx context.Context, job sdk.WorkflowNodeJobRun) er
 	w.currentJob.secrets = info.Secrets
 	// Reset build variables
 	w.currentJob.newVariables = nil
+	w.currentJob.signingKey = info.SigningKey
+
+	log.Info(ctx, "Setup step logger")
+	w.logger.stepLogger = logrus.New()
+	gelfWriter, err := gelf.NewTCPWriter(info.GelfServiceAddr)
+	if err != nil {
+		return sdk.WithStack(err)
+	}
+	w.logger.stepLogger.SetOutput(gelfWriter)
+	log.Info(ctx, "Setup step logger done")
 
 	start := time.Now()
 
