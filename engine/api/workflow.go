@@ -759,3 +759,16 @@ func (api *API) getWorkflowNotificationsConditionsHandler() service.Handler {
 		return service.WriteJSON(w, data, http.StatusOK)
 	}
 }
+
+func (api *API) getAllWorkflowsHandler() service.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		vars := mux.Vars(r)
+
+		for _, v := range vars {
+			switch v {
+			}
+		}
+
+		return nil
+	}
+}

@@ -30,10 +30,10 @@ type Workflow struct {
 	ProjectKey              string                       `json:"project_key" db:"-" cli:"-"`
 	Groups                  []GroupPermission            `json:"groups,omitempty" db:"-" cli:"-"`
 	Permissions             Permissions                  `json:"permissions" db:"-" cli:"-"`
-	Metadata                Metadata                     `json:"metadata,omitempty" yaml:"metadata" db:"-"`
+	Metadata                Metadata                     `json:"metadata,omitempty" yaml:"metadata" db:"metadata"`
 	Usage                   *Usage                       `json:"usage,omitempty" db:"-" cli:"-"`
 	HistoryLength           int64                        `json:"history_length" db:"history_length" cli:"-"`
-	PurgeTags               []string                     `json:"purge_tags,omitempty" db:"-" cli:"-"`
+	PurgeTags               PurgeTags                    `json:"purge_tags,omitempty" db:"purge_tags" cli:"-"`
 	Notifications           []WorkflowNotification       `json:"notifications,omitempty" db:"-" cli:"-"`
 	FromRepository          string                       `json:"from_repository,omitempty" db:"from_repository" cli:"from"`
 	DerivedFromWorkflowID   int64                        `json:"derived_from_workflow_id,omitempty" db:"derived_from_workflow_id" cli:"-"`
@@ -49,7 +49,7 @@ type Workflow struct {
 	Labels                  []Label                      `json:"labels,omitempty" db:"-" cli:"labels"`
 	ToDelete                bool                         `json:"to_delete" db:"to_delete" cli:"-"`
 	Favorite                bool                         `json:"favorite" db:"-" cli:"favorite"`
-	WorkflowData            WorkflowData                 `json:"workflow_data" db:"-" cli:"-"`
+	WorkflowData            WorkflowData                 `json:"workflow_data" db:"workflow_data" cli:"-"`
 	EventIntegrations       []ProjectIntegration         `json:"event_integrations,omitempty" db:"-" cli:"-"`
 	AsCodeEvent             []AsCodeEvent                `json:"as_code_events,omitempty" db:"-" cli:"-"`
 	// aggregates
@@ -57,6 +57,44 @@ type Workflow struct {
 	FromTemplate     string                    `json:"from_template,omitempty" db:"-" cli:"-"`
 	TemplateUpToDate bool                      `json:"template_up_to_date,omitempty" db:"-" cli:"-"`
 	URLs             URL                       `json:"urls" yaml:"-" db:"-" cli:"-"`
+}
+
+type PurgeTags []string
+
+// Value returns driver.Value from PurgeTags.
+func (a PurgeTags) Value() (driver.Value, error) {
+	j, err := json.Marshal(a)
+	return j, WrapError(err, "cannot marshal Metadata")
+}
+
+// Scan PurgeTags.
+func (a *PurgeTags) Scan(src interface{}) error {
+	if src == nil {
+		return nil
+	}
+	source, ok := src.([]byte)
+	if !ok {
+		return WithStack(fmt.Errorf("type assertion .([]byte) failed (%T)", src))
+	}
+	return WrapError(json.Unmarshal(source, a), "cannot unmarshal PurgeTags")
+}
+
+// Value returns driver.Value from WorkflowData.
+func (a WorkflowData) Value() (driver.Value, error) {
+	j, err := json.Marshal(a)
+	return j, WrapError(err, "cannot marshal WorkflowData")
+}
+
+// Scan WorkflowData.
+func (a *WorkflowData) Scan(src interface{}) error {
+	if src == nil {
+		return nil
+	}
+	source, ok := src.([]byte)
+	if !ok {
+		return WithStack(fmt.Errorf("type assertion .([]byte) failed (%T)", src))
+	}
+	return WrapError(json.Unmarshal(source, a), "cannot unmarshal WorkflowData")
 }
 
 type Workflows []Workflow

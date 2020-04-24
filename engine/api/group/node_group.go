@@ -5,20 +5,22 @@ import (
 	"strings"
 
 	"github.com/go-gorp/gorp"
+
+	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/sdk"
 )
 
 // LoadGroupsByNode retrieves all groups related to a node
-func LoadGroupsByNode(db gorp.SqlExecutor, nodeID int64) ([]sdk.GroupPermission, error) {
-	query := `SELECT "group".id,"group".name,workflow_node_group.role
+func LoadGroupsByNode(db gorp.SqlExecutor, nodeID []int64) (map[int64][]sdk.GroupPermission, error) {
+	query := `SELECT workflow_node_id, "group".id,"group".name,workflow_node_group.role
 		FROM "group"
 			JOIN project_group ON "group".id = project_group.group_id
 			JOIN workflow_perm ON workflow_perm.project_group_id = project_group.id
 	 		JOIN workflow_node_group ON workflow_node_group.workflow_group_id = workflow_perm.id
-		WHERE workflow_node_group.workflow_node_id = $1
+		WHERE workflow_node_group.workflow_node_id = ANY(string_to_array($1, ',')::int[])
 		ORDER BY "group".name ASC`
 
-	rows, err := db.Query(query, nodeID)
+	rows, err := db.Query(query, gorpmapping.IDStringsToQueryString(nodeID))
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, nil
@@ -27,19 +29,23 @@ func LoadGroupsByNode(db gorp.SqlExecutor, nodeID int64) ([]sdk.GroupPermission,
 	}
 	defer rows.Close()
 
-	var groups []sdk.GroupPermission
+	var mapGroups = make(map[int64][]sdk.GroupPermission)
 	for rows.Next() {
 		var group sdk.Group
 		var perm int
-		if err := rows.Scan(&group.ID, &group.Name, &perm); err != nil {
-			return groups, sdk.WithStack(err)
+		var nodeID int64
+		if err := rows.Scan(&nodeID, &group.ID, &group.Name, &perm); err != nil {
+			return nil, sdk.WithStack(err)
 		}
+
+		var groups = mapGroups[nodeID]
 		groups = append(groups, sdk.GroupPermission{
 			Group:      group,
 			Permission: perm,
 		})
+		mapGroups[nodeID] = groups
 	}
-	return groups, nil
+	return mapGroups, nil
 }
 
 // InsertGroupsInNode Link the given groups and the given environment

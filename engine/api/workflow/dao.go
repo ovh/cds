@@ -160,43 +160,20 @@ func (w *Workflow) PostInsert(db gorp.SqlExecutor) error {
 
 // PostGet is a db hook
 func (w *Workflow) PostGet(db gorp.SqlExecutor) error {
-	var res = struct {
-		Metadata     sql.NullString `db:"metadata"`
-		PurgeTags    sql.NullString `db:"purge_tags"`
-		WorkflowData sql.NullString `db:"workflow_data"`
-	}{}
-
-	if err := db.SelectOne(&res, "SELECT metadata, purge_tags, workflow_data FROM workflow WHERE id = $1", w.ID); err != nil {
-		return sdk.WrapError(err, "PostGet> Unable to load marshalled workflow")
-	}
-
-	metadata := sdk.Metadata{}
-	if err := gorpmapping.JSONNullString(res.Metadata, &metadata); err != nil {
-		return err
-	}
-	w.Metadata = metadata
-
-	purgeTags := []string{}
-	if err := gorpmapping.JSONNullString(res.PurgeTags, &purgeTags); err != nil {
-		return err
-	}
-	w.PurgeTags = purgeTags
-
-	data := sdk.WorkflowData{}
-	if err := gorpmapping.JSONNullString(res.WorkflowData, &data); err != nil {
-		return sdk.WrapError(err, "Unable to unmarshall workflow data")
-	}
-	if data.Node.ID != 0 {
-		w.WorkflowData = data
-	}
-
 	nodes := w.WorkflowData.Array()
+	nodesID := make([]int64, len(nodes))
+
 	for i := range nodes {
-		var err error
-		nodes[i].Groups, err = group.LoadGroupsByNode(db, nodes[i].ID)
-		if err != nil {
-			return sdk.WrapError(err, "cannot load node groups")
-		}
+		nodesID[i] = nodes[i].ID
+	}
+
+	mapGroups, err := group.LoadGroupsByNode(db, nodesID)
+	if err != nil {
+		return sdk.WrapError(err, "cannot load node groups")
+	}
+
+	for i := range nodes {
+		nodes[i].Groups = mapGroups[nodes[i].ID]
 	}
 
 	return nil
@@ -212,35 +189,16 @@ func (w *Workflow) PreUpdate(db gorp.SqlExecutor) error {
 		fromRepoURL.User = nil
 		w.FromRepository = fromRepoURL.String()
 	}
-
 	return nil
 }
 
 // PostUpdate is a db hook
 func (w *Workflow) PostUpdate(db gorp.SqlExecutor) error {
-	if err := UpdateMetadata(db, w.ID, w.Metadata); err != nil {
-		return err
-	}
-
-	pt, errPt := json.Marshal(w.PurgeTags)
-	if errPt != nil {
-		return errPt
-	}
-
-	data, errD := gorpmapping.JSONToNullString(w.WorkflowData)
-	if errD != nil {
-		return sdk.WrapError(errD, "Workflow.PostUpdate> Unable to marshall workflow data")
-	}
-	if _, err := db.Exec("update workflow set purge_tags = $1, workflow_data = $3 where id = $2", pt, w.ID, data); err != nil {
-		return err
-	}
-
 	for _, integ := range w.EventIntegrations {
 		if err := integration.AddOnWorkflow(db, w.ID, integ.ID); err != nil {
 			return sdk.WrapError(err, "cannot add project event integration on workflow")
 		}
 	}
-
 	return nil
 }
 
