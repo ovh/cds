@@ -15,16 +15,16 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-func NewRandomSymmetricKey(size int) (string, error) {
+func NewRandomSymmetricKey(size int) ([]byte, error) {
 	if size <= 0 || size%8 != 0 {
-		return "", sdk.WithStack(fmt.Errorf("invalid key size"))
+		return nil, sdk.WithStack(fmt.Errorf("invalid key size"))
 	}
 
 	k := make([]byte, size)
 	if _, err := rand.Read(k); err != nil {
-		return "", sdk.WithStack(err)
+		return nil, sdk.WithStack(err)
 	}
-	return string(k), nil
+	return k, nil
 }
 
 // NewRandomRSAKey generates a public/private key pair

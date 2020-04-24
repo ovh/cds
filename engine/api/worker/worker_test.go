@@ -38,7 +38,7 @@ func TestDAO(t *testing.T) {
 		Status:     sdk.StatusWaiting,
 	}
 
-	if err := worker.Insert(db, w); err != nil {
+	if err := worker.Insert(context.TODO(), db, w); err != nil {
 		t.Fatalf("Cannot insert worker %+v: %v", w, err)
 	}
 
@@ -57,7 +57,7 @@ func TestDAO(t *testing.T) {
 		assert.Equal(t, "foofoo", wk.ID)
 	}
 
-	test.NoError(t, worker.SetStatus(db, wk.ID, sdk.StatusBuilding))
+	test.NoError(t, worker.SetStatus(context.TODO(), db, wk.ID, sdk.StatusBuilding))
 	test.NoError(t, worker.RefreshWorker(db, wk.ID))
 }
 

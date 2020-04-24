@@ -5,17 +5,18 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/sirupsen/logrus"
 	"os"
 	"strings"
 	"time"
 
 	"github.com/ovh/cds/engine/worker/pkg/workerruntime"
-
+	"github.com/sirupsen/logrus"
 	"github.com/spf13/afero"
+	"gopkg.in/square/go-jose.v2"
 
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
+	"github.com/ovh/cds/sdk/jws"
 	"github.com/ovh/cds/sdk/log"
 )
 
@@ -44,7 +45,7 @@ type CurrentWorker struct {
 		params       []sdk.Parameter
 		secrets      []sdk.Variable
 		context      context.Context
-		signingKey   string
+		signer       jose.Signer
 	}
 	status struct {
 		Name   string `json:"name"`
@@ -81,15 +82,42 @@ func (wk *CurrentWorker) Parameters() []sdk.Parameter {
 func (wk *CurrentWorker) SendLog(ctx context.Context, level workerruntime.Level, s string) {
 	jobID, _ := workerruntime.JobID(ctx)
 	stepOrder, err := workerruntime.StepOrder(ctx)
-	if !strings.HasSuffix(s, "\n") {
-		s += "\n"
+	if wk.logger.stepLogger != nil {
+		if !strings.HasSuffix(s, "\n") {
+			s += "\n"
+		}
+		if err != nil {
+			log.Error(ctx, "SendLog> %v", err)
+		}
+		if err := wk.sendLog(jobID, fmt.Sprintf("[%s] ", level)+s, stepOrder, false); err != nil {
+			log.Error(ctx, "SendLog> %v", err)
+		}
+		return
 	}
+	var logLevel logrus.Level
+	switch level {
+	case workerruntime.LevelDebug:
+		logLevel = logrus.DebugLevel
+	case workerruntime.LevelInfo:
+		logLevel = logrus.InfoLevel
+	case workerruntime.LevelWarn:
+		logLevel = logrus.WarnLevel
+	case workerruntime.LevelError:
+		logLevel = logrus.ErrorLevel
+	default:
+	}
+
+	dataToSign := sdk.WorkerSignature{
+		WorkerID:  wk.id,
+		JobID:     wk.currentJob.wJob.ID,
+		Timestamp: time.Now().UnixNano(),
+	}
+	signature, err := jws.Sign(wk.currentJob.signer, dataToSign)
 	if err != nil {
-		log.Error(ctx, "SendLog> %v", err)
+		log.Error(ctx, "unable to sign logs: %v", err)
 	}
-	if err := wk.sendLog(jobID, fmt.Sprintf("[%s] ", level)+s, stepOrder, false); err != nil {
-		log.Error(ctx, "SendLog> %v", err)
-	}
+	wk.logger.stepLogger.WithField("Signature", signature).WithField("StepOrder", stepOrder).Log(logLevel, s)
+
 }
 
 func (wk *CurrentWorker) Name() string {

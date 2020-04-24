@@ -1004,7 +1004,7 @@ func TestPostVulnerabilityReportHandler(t *testing.T) {
 	}
 	testRegisterWorker(t, api, router, &ctx)
 	ctx.worker.JobRunID = &wrDB.WorkflowNodeRuns[w.WorkflowData.Node.ID][0].Stages[0].RunJobs[0].ID
-	assert.NoError(t, worker.SetToBuilding(db, ctx.worker.ID, *ctx.worker.JobRunID))
+	assert.NoError(t, worker.SetToBuilding(context.TODO(), db, ctx.worker.ID, *ctx.worker.JobRunID, nil))
 
 	request := sdk.VulnerabilityWorkerReport{
 		Vulnerabilities: []sdk.Vulnerability{
@@ -1326,7 +1326,7 @@ func TestInsertNewCodeCoverageReport(t *testing.T) {
 	}
 	testRegisterWorker(t, api, router, &ctx)
 	ctx.worker.JobRunID = &wrr.WorkflowNodeRuns[w.WorkflowData.Node.ID][0].Stages[0].RunJobs[0].ID
-	assert.NoError(t, worker.SetToBuilding(db, ctx.worker.ID, *ctx.worker.JobRunID))
+	assert.NoError(t, worker.SetToBuilding(context.TODO(), db, ctx.worker.ID, *ctx.worker.JobRunID, nil))
 
 	uri := router.GetRoute("POST", api.postWorkflowJobCoverageResultsHandler, vars)
 	test.NotEmpty(t, uri)

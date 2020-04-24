@@ -11,8 +11,13 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-func Insert(db gorp.SqlExecutor, w *sdk.Worker) error {
-	return gorpmapping.Insert(db, w)
+func Insert(ctx context.Context, db gorp.SqlExecutor, w *sdk.Worker) error {
+	dbData := &dbWorker{Worker: *w}
+	if err := gorpmapping.InsertAndSign(ctx, db, dbData); err != nil {
+		return err
+	}
+	*w = dbData.Worker
+	return nil
 }
 
 // Delete remove worker from database, it also removes the associated access_token
@@ -93,27 +98,56 @@ func LoadDeadWorkers(ctx context.Context, db gorp.SqlExecutor, timeout float64, 
 }
 
 // SetStatus sets job_run_id and status to building on given worker
-func SetStatus(db gorp.SqlExecutor, workerID string, status string) error {
-	query := `UPDATE worker SET status = $1 WHERE id = $2`
-	if status == sdk.StatusBuilding || status == sdk.StatusWaiting {
-		query = `UPDATE worker SET status = $1, job_run_id = NULL WHERE id = $2`
+func SetStatus(ctx context.Context, db gorp.SqlExecutor, workerID string, status string) error {
+	w, err := LoadByID(ctx, db, workerID)
+	if err != nil {
+		return err
 	}
-
-	if _, err := db.Exec(query, status, workerID); err != nil {
-		return sdk.WithStack(err)
+	w.Status = status
+	if status == sdk.StatusBuilding || status == sdk.StatusWaiting {
+		w.JobRunID = nil
+	}
+	dbData := &dbWorker{Worker: *w}
+	if err := gorpmapping.UpdateAndSign(ctx, db, dbData); err != nil {
+		return err
 	}
 	return nil
 }
 
 // SetToBuilding sets job_run_id and status to building on given worker
-func SetToBuilding(db gorp.SqlExecutor, workerID string, jobRunID int64) error {
-	query := `UPDATE worker SET status = $1, job_run_id = $2 WHERE id = $3`
-
-	res, errE := db.Exec(query, sdk.StatusBuilding, jobRunID, workerID)
-	if errE != nil {
-		return sdk.WithStack(errE)
+func SetToBuilding(ctx context.Context, db gorp.SqlExecutor, workerID string, jobRunID int64, key []byte) error {
+	w, err := LoadByID(ctx, db, workerID)
+	if err != nil {
+		return err
 	}
+	w.Status = sdk.StatusBuilding
+	w.JobRunID = &jobRunID
+	w.PrivateKey = key
 
-	_, err := res.RowsAffected()
+	dbData := &dbWorker{Worker: *w}
+	if err := gorpmapping.UpdateAndSign(ctx, db, dbData); err != nil {
+		return err
+	}
 	return err
+}
+
+// LoadWorkerWithDecryptKey load worker with decrypted private key
+func LoadWorkerWithDecryptKey(ctx context.Context, db gorp.SqlExecutor, workerID string) (sdk.Worker, error) {
+	var work dbWorker
+	query := gorpmapping.NewQuery(`SELECT * FROM worker WHERE id = $1`).Args(workerID)
+	found, err := gorpmapping.Get(ctx, db, query, &work, gorpmapping.GetOptions.WithDecryption)
+	if err != nil {
+		return sdk.Worker{}, err
+	}
+	if !found {
+		return sdk.Worker{}, sdk.ErrNotFound
+	}
+	isValid, err := gorpmapping.CheckSignature(work, work.Signature)
+	if err != nil {
+		return sdk.Worker{}, err
+	}
+	if !isValid {
+		return sdk.Worker{}, sdk.ErrInvalidData
+	}
+	return work.Worker, err
 }

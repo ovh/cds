@@ -5,9 +5,6 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/gorilla/mux"
-
-	"github.com/ovh/cds/engine/api"
 	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
@@ -17,9 +14,11 @@ import (
 // New returns a new service
 func New() *Service {
 	s := new(Service)
-	s.Router = &api.Router{
-		Mux: mux.NewRouter(),
-	}
+	/*
+		s.Router = &api.Router{
+			Mux: mux.NewRouter(),
+		}
+	*/
 	return s
 }
 
@@ -77,15 +76,15 @@ func (s *Service) Serve(c context.Context) error {
 	ctx, cancel := context.WithCancel(c)
 	defer cancel()
 
+	s.RunTcpLogServer(ctx)
+
 	//Init the http server
 	s.initRouter(ctx)
 	server := &http.Server{
-		Addr:           fmt.Sprintf("%s:%d", s.Cfg.HTTP.Addr, s.Cfg.HTTP.Port),
-		Handler:        s.Router.Mux,
+		Addr: fmt.Sprintf("%s:%d", s.Cfg.HTTP.Addr, s.Cfg.HTTP.Port),
+		//Handler:        s.Router.Mux,
 		MaxHeaderBytes: 1 << 20,
 	}
-
-	s.initGelfServer()
 
 	//Gracefully shutdown the http server
 	go func() {
@@ -101,6 +100,5 @@ func (s *Service) Serve(c context.Context) error {
 	if err := server.ListenAndServe(); err != nil {
 		log.Fatalf("CDN> Cannot start cds-cdn: %s", err)
 	}
-
 	return ctx.Err()
 }

@@ -20,6 +20,13 @@ type Worker struct {
 	Version    string    `json:"version" cli:"version"  db:"version"`
 	OS         string    `json:"os" cli:"os"  db:"os"`
 	Arch       string    `json:"arch" cli:"arch"  db:"arch"`
+	PrivateKey []byte    `json:"-" cli:"-" db:"cypher_private_key" gorpmapping:"encrypted,ID,Name"`
+}
+
+type WorkerSignature struct {
+	WorkerID  string
+	JobID     int64
+	Timestamp int64
 }
 
 // WorkerRegistrationForm represents the arguments needed to register a worker

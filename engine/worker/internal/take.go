@@ -6,11 +6,12 @@ import (
 	"time"
 
 	"github.com/sirupsen/logrus"
-	"gopkg.in/Graylog2/go-gelf.v2/gelf"
 
 	"github.com/ovh/cds/engine/worker/pkg/workerruntime"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/jws"
 	"github.com/ovh/cds/sdk/log"
+	loghook "github.com/ovh/cds/sdk/log/hook"
 )
 
 func (w *CurrentWorker) Take(ctx context.Context, job sdk.WorkflowNodeJobRun) error {
@@ -33,16 +34,29 @@ func (w *CurrentWorker) Take(ctx context.Context, job sdk.WorkflowNodeJobRun) er
 	w.currentJob.secrets = info.Secrets
 	// Reset build variables
 	w.currentJob.newVariables = nil
-	w.currentJob.signingKey = info.SigningKey
 
-	log.Info(ctx, "Setup step logger")
-	w.logger.stepLogger = logrus.New()
-	gelfWriter, err := gelf.NewTCPWriter(info.GelfServiceAddr)
-	if err != nil {
-		return sdk.WithStack(err)
+	if info.SigningKey != "" {
+		signer, err := jws.NewHMacSigner(info.SigningKey)
+		if err != nil {
+			return sdk.WithStack(err)
+		}
+		w.currentJob.signer = signer
 	}
-	w.logger.stepLogger.SetOutput(gelfWriter)
-	log.Info(ctx, "Setup step logger done")
+
+	if info.GelfServiceAddr != "" {
+		log.Info(ctx, "Setup step logger")
+		w.logger.stepLogger = logrus.New()
+		graylogcfg := &loghook.Config{
+			Addr:     info.GelfServiceAddr,
+			Protocol: "tcp",
+		}
+		extra := map[string]interface{}{}
+		hook, err := loghook.NewHook(graylogcfg, extra)
+		if err != nil {
+			return sdk.WithStack(err)
+		}
+		w.logger.stepLogger.AddHook(hook)
+	}
 
 	start := time.Now()
 

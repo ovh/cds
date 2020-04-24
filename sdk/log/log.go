@@ -33,6 +33,9 @@ const (
 	HeaderRequestID            = "Request-ID"
 	ContextLoggingRequestIDKey = "ctx-logging-request-id"
 	ContextLoggingFuncKey      = "ctx-logging-func"
+
+	ExtraFieldSignature = "Signature"
+	ExtraFieldStepOrder = "StepOrder"
 )
 
 var (
