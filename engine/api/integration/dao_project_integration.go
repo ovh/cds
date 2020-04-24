@@ -75,13 +75,13 @@ func LoadProjectIntegrationByNameWithClearPassword(db gorp.SqlExecutor, key stri
 }
 
 // LoadProjectIntegrationByID returns integration, selecting by its id
-func LoadProjectIntegrationByID(db gorp.SqlExecutor, id int64, clearPassword bool) (*sdk.ProjectIntegration, error) {
+func LoadProjectIntegrationByID(db gorp.SqlExecutor, id int64) (*sdk.ProjectIntegration, error) {
 	query := gorpmapping.NewQuery("SELECT * from project_integration WHERE id = $1").Args(id)
 	pp, err := load(db, query)
 	return &pp, err
 }
 
-func LoadProjectIntegrationByIDWithClearPassword(db gorp.SqlExecutor, id int64, clearPassword bool) (*sdk.ProjectIntegration, error) {
+func LoadProjectIntegrationByIDWithClearPassword(db gorp.SqlExecutor, id int64) (*sdk.ProjectIntegration, error) {
 	query := gorpmapping.NewQuery("SELECT * from project_integration WHERE id = $1").Args(id)
 	pp, err := loadWithClearPassword(db, query)
 	return &pp, err
@@ -174,9 +174,9 @@ func UpdateIntegration(db gorp.SqlExecutor, pp sdk.ProjectIntegration) error {
 	for k, cfg := range givenConfig {
 		if cfg.Type == sdk.IntegrationConfigTypePassword && cfg.Value == sdk.PasswordPlaceholder {
 			if oldConfig == nil {
-				// reload the previous config to encuse we don't store placeholder
+				// reload the previous config to ensuse we don't store placeholder
 				var err error
-				oldConfig, err = LoadProjectIntegrationByID(db, pp.ID, true)
+				oldConfig, err = LoadProjectIntegrationByIDWithClearPassword(db, pp.ID)
 				if err != nil {
 					return err
 				}

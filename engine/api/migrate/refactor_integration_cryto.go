@@ -204,7 +204,7 @@ func refactorProjectIntegrationCrypto(ctx context.Context, db *gorp.DbMap, id in
 		return sdk.WithStack(err)
 	}
 
-	newProjectIntegration, err := integration.LoadProjectIntegrationByID(tx, id, true)
+	newProjectIntegration, err := integration.LoadProjectIntegrationByIDWithClearPassword(tx, id)
 	if err != nil {
 		return err
 	}
