@@ -18,14 +18,14 @@ func TestAddUpdateAndDeleteProjectIntegration(t *testing.T) {
 	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
 	u, pass := assets.InsertAdminUser(t, api.mustDB())
 
-	integrationModel, err := integration.LoadModelByName(db, sdk.KafkaIntegration.Name, false)
+	integrationModel, err := integration.LoadModelByName(db, sdk.KafkaIntegration.Name)
 	if err != nil {
 		assert.NoError(t, integration.CreateBuiltinModels(db))
 		models, _ := integration.LoadModels(db)
 		assert.True(t, len(models) > 0)
 	}
 
-	integrationModel, err = integration.LoadModelByName(db, sdk.KafkaIntegration.Name, false)
+	integrationModel, err = integration.LoadModelByName(db, sdk.KafkaIntegration.Name)
 	test.NoError(t, err)
 
 	pp := sdk.ProjectIntegration{
