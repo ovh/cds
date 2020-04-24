@@ -1,0 +1,83 @@
+version: v1.0
+name: 04SCWorkflowRunWorkerCmdCache-PIPELINE
+stages:
+- Stage1
+- Stage2
+jobs:
+- job: PUSHRELATIVEFROMWORKSPACE
+  stage: Stage1
+  steps:
+    - script:
+      - '#!/bin/bash'
+      - set -ex
+      - cat << EOF > file1.txt
+      - my file content
+      - EOF
+      - worker cache push relative-from-workspace file1.txt
+- job: PUSHABSOLUTEFROMWORKSPACE
+  stage: Stage1
+  steps:
+    - script:
+      - '#!/bin/bash'
+      - set -ex
+      - mkdir -p /tmp/04SCWorkflowRunWorkerCmdCache
+      - cat << EOF > /tmp/04SCWorkflowRunWorkerCmdCache/file2.txt
+      - my file content
+      - EOF
+      - worker cache push absolute-from-workspace /tmp/04SCWorkflowRunWorkerCmdCache/file2.txt
+- job: PUSHRELATIVEFROMTMP
+  stage: Stage1
+  steps:
+    - script:
+      - '#!/bin/bash'
+      - set -ex
+      - mkdir -p /tmp/04SCWorkflowRunWorkerCmdCache
+      - cd /tmp/04SCWorkflowRunWorkerCmdCache
+      - cat << EOF > file3.txt
+      - my file content
+      - EOF
+      - worker cache push relative-from-tmp file3.txt
+- job: PUSHABSOLUTEFROMTMP
+  stage: Stage1
+  steps:
+    - script:
+      - '#!/bin/bash'
+      - set -ex
+      - mkdir -p /tmp/04SCWorkflowRunWorkerCmdCache
+      - cd /tmp/04SCWorkflowRunWorkerCmdCache
+      - cat << EOF > /tmp/04SCWorkflowRunWorkerCmdCache/file4.txt
+      - my file content
+      - EOF
+      - worker cache push absolute-from-tmp /tmp/04SCWorkflowRunWorkerCmdCache/file4.txt
+- job: PULLRELATIVEFROMWORKSPACE
+  stage: Stage2
+  steps:
+    - script:
+      - set -ex
+      - worker cache pull relative-from-workspace
+      - ls -la
+      - cat file1.txt
+- job: PULLABSOLUTEFROMWORKSPACE
+  stage: Stage2
+  steps:
+    - script:
+      - set -ex
+      - worker cache pull absolute-from-workspace
+      - ls -la
+      - cat ./tmp/04SCWorkflowRunWorkerCmdCache/file2.txt
+- job: PULLRELATIVEFROMTMP
+  stage: Stage2
+  steps:
+    - script:
+      - set -ex
+      - worker cache pull relative-from-tmp
+      - ls -la
+      - cat file3.txt
+- job: PULLABSOLUTEFROMTMP
+  stage: Stage2
+  steps:
+    - script:
+      - set -ex
+      - worker cache pull absolute-from-tmp
+      - ls -la
+      - cat file4.txt

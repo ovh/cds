@@ -26,8 +26,8 @@ export class Mode {
 })
 @AutoUnsubscribe()
 export class DiffItemComponent implements OnInit, OnChanges {
-    @ViewChild('codeLeft', {static: false}) codeLeft: any;
-    @ViewChild('codeRight', {static: false}) codeRight: any;
+    @ViewChild('codeLeft') codeLeft: any;
+    @ViewChild('codeRight') codeRight: any;
 
     @Input() original: string;
     @Input() updated: string;

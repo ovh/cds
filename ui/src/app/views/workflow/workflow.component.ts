@@ -41,7 +41,7 @@ import { finalize } from 'rxjs/operators';
 })
 @AutoUnsubscribe()
 export class WorkflowComponent implements OnInit {
-    @ViewChild('templateApplyModal', { static: false })
+    @ViewChild('templateApplyModal')
     templateApplyModal: WorkflowTemplateApplyModalComponent;
 
     project: Project;
@@ -68,9 +68,9 @@ export class WorkflowComponent implements OnInit {
     asCodeEditorSubscription: Subscription;
     asCodeEditorOpen = false;
 
-    @ViewChild('updateAsCode', {static: false})
+    @ViewChild('updateAsCode')
     saveAsCode: UpdateAsCodeComponent;
-    @ViewChild('popup', {static: false})
+    @ViewChild('popup')
     popupFromlRepository: SuiPopup;
     @ViewChildren(SuiPopupController) popups: QueryList<SuiPopupController>;
     @ViewChildren(SuiPopupTemplateController) popups2: QueryList<SuiPopupTemplateController<SuiPopup>>;

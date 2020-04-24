@@ -52,6 +52,7 @@ const (
 	stepOrder
 	workDir
 	keysDir
+	tmpDir
 	LevelDebug Level = "DEBUG"
 	LevelInfo  Level = "INFO"
 	LevelWarn  Level = "WARN"
@@ -129,4 +130,19 @@ func KeysDirectory(ctx context.Context) (afero.File, error) {
 func SetKeysDirectory(ctx context.Context, s afero.File) context.Context {
 	log.Debug("SetKeysDirectory> working directory is: %s", s.Name())
 	return context.WithValue(ctx, keysDir, s)
+}
+
+func TmpDirectory(ctx context.Context) (afero.File, error) {
+	wdi := ctx.Value(tmpDir)
+	wd, ok := wdi.(afero.File)
+	if !ok {
+		return nil, fmt.Errorf("unable to get tmp directory (%T) %v", wdi, wdi)
+	}
+	log.Debug("TmpDirectory> working directory is : %s", wd.Name())
+	return wd, nil
+}
+
+func SetTmpDirectory(ctx context.Context, s afero.File) context.Context {
+	log.Debug("SetTmpDirectory> working directory is: %s", s.Name())
+	return context.WithValue(ctx, tmpDir, s)
 }

@@ -217,25 +217,23 @@ func (api *API) putWorkflowImportHandler() service.Handler {
 
 		// if workflow is as-code, we can't save it from edit as yml
 		if wf.FromRepository != "" {
-			return sdk.WithStack(sdk.ErrForbidden)
+			return sdk.NewErrorFrom(sdk.ErrForbidden, "can't edit a workflow that is ascode")
 		}
 
-		tx, errtx := api.mustDB().Begin()
-		if errtx != nil {
-			return sdk.WrapError(errtx, "Unable to start transaction")
+		tx, err := api.mustDB().Begin()
+		if err != nil {
+			return sdk.WrapError(err, "unable to start transaction")
 		}
-		defer func() {
-			_ = tx.Rollback()
-		}()
+		defer tx.Rollback() //nolint
 
 		wrkflw, msgList, globalError := workflow.ParseAndImport(ctx, tx, api.Cache, *proj, wf, ew, u, workflow.ImportOptions{Force: true, WorkflowName: wfName})
 		msgListString := translate(r, msgList)
 		if globalError != nil {
 			if len(msgListString) != 0 {
 				sdkErr := sdk.ExtractHTTPError(globalError, r.Header.Get("Accept-Language"))
-				return service.WriteJSON(w, append(msgListString, sdkErr.Message), sdkErr.Status)
+				return service.WriteJSON(w, append(msgListString, sdkErr.Error()), sdkErr.Status)
 			}
-			return sdk.WrapError(globalError, "Unable to import workflow %s", ew.GetName())
+			return sdk.WrapError(globalError, "unable to import workflow %s", ew.GetName())
 		}
 
 		if err := tx.Commit(); err != nil {

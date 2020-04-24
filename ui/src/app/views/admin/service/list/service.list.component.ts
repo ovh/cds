@@ -26,47 +26,6 @@ export class ServiceListComponent {
     globalVersion: Global;
     path: Array<PathItem>;
 
-    refreshStatus(): Observable<any> {
-        return this._monitoringService.getStatus().pipe(tap(r => {
-            this.status = r;
-            this.filterChange();
-        }));
-    }
-
-    refreshServices(): Observable<any> {
-        return this._serviceService.getServices().pipe(tap(services => {
-            if (services) {
-                this.services = services;
-                services.forEach(s => {
-                    s.status = 'OK';
-                    if (s.monitoring_status.lines) {
-                        for (let index = 0; index < s.monitoring_status.lines.length; index++) {
-                            const element = s.monitoring_status.lines[index];
-                            if (element.status === 'AL') {
-                                s.status = element.status;
-                                break
-                            } else if (element.status === 'WARN') {
-                                s.status = element.status;
-                            }
-                        }
-                    }
-                })
-            }
-        }));
-    }
-
-    refreshProfiles(): Observable<any> {
-        return this._monitoringService.getDebugProfiles().pipe(tap(data => {
-            this.profiles = data;
-        }));
-    }
-
-    refreshGoroutines(): Observable<any> {
-        return this._monitoringService.getGoroutines().pipe(tap(data => {
-            this.goroutines = data;
-        }));
-    }
-
     constructor(
         private _monitoringService: MonitoringService,
         private _serviceService: ServiceService,
@@ -117,6 +76,47 @@ export class ServiceListComponent {
                 routerLink: ['/', 'admin', 'services']
             }];
         })
+    }
+
+    refreshStatus(): Observable<any> {
+        return this._monitoringService.getStatus().pipe(tap(r => {
+            this.status = r;
+            this.filterChange();
+        }));
+    }
+
+    refreshServices(): Observable<any> {
+        return this._serviceService.getServices().pipe(tap(services => {
+            if (services) {
+                this.services = services;
+                services.forEach(s => {
+                    s.status = 'OK';
+                    if (s.monitoring_status.lines) {
+                        for (let index = 0; index < s.monitoring_status.lines.length; index++) {
+                            const element = s.monitoring_status.lines[index];
+                            if (element.status === 'AL') {
+                                s.status = element.status;
+                                break
+                            } else if (element.status === 'WARN') {
+                                s.status = element.status;
+                            }
+                        }
+                    }
+                })
+            }
+        }));
+    }
+
+    refreshProfiles(): Observable<any> {
+        return this._monitoringService.getDebugProfiles().pipe(tap(data => {
+            this.profiles = data;
+        }));
+    }
+
+    refreshGoroutines(): Observable<any> {
+        return this._monitoringService.getGoroutines().pipe(tap(data => {
+            this.goroutines = data;
+        }));
     }
 
     filterChange(): void {

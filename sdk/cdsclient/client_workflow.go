@@ -15,10 +15,10 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-func (c *client) WorkflowList(projectKey string) ([]sdk.Workflow, error) {
+func (c *client) WorkflowList(projectKey string, opts ...RequestModifier) ([]sdk.Workflow, error) {
 	url := fmt.Sprintf("/project/%s/workflows", projectKey)
 	w := []sdk.Workflow{}
-	if _, err := c.GetJSON(context.Background(), url, &w); err != nil {
+	if _, err := c.GetJSON(context.Background(), url, &w, opts...); err != nil {
 		return nil, err
 	}
 	return w, nil
@@ -318,8 +318,7 @@ func (c *client) WorkflowCachePush(projectKey, integrationName, ref string, tarC
 	uri := fmt.Sprintf("/project/%s/storage/%s", projectKey, integrationName)
 	_, _ = c.GetJSON(context.Background(), uri, store)
 	if store.TemporaryURLSupported {
-		err := c.workflowCachePushIndirectUpload(projectKey, integrationName, ref, tarContent, size)
-		return err
+		return c.workflowCachePushIndirectUpload(projectKey, integrationName, ref, tarContent, size)
 	}
 	return c.workflowCachePushDirectUpload(projectKey, integrationName, ref, tarContent)
 }
@@ -438,12 +437,7 @@ func (c *client) WorkflowCachePull(projectKey, integrationName, ref string) (io.
 		return nil, fmt.Errorf("HTTP Code %d", code)
 	}
 
-	body, err := ioutil.ReadAll(res)
-	if err != nil {
-		return nil, err
-	}
-
-	return bytes.NewBuffer(body), nil
+	return res, nil
 }
 
 func (c *client) WorkflowTemplateInstanceGet(projectKey, workflowName string) (*sdk.WorkflowTemplateInstance, error) {

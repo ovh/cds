@@ -60,6 +60,10 @@ export class Workflow {
     forceRefresh: boolean;
     previewMode: boolean;
 
+    constructor() {
+        this.workflow_data = new WorkflowData();
+    }
+
     static getAllNodes(data: Workflow): Array<WNode> {
         let nodes = WNode.getAllNodes(data.workflow_data.node);
 
@@ -332,10 +336,6 @@ export class Workflow {
         }
         return ancestors;
     }
-
-    constructor() {
-        this.workflow_data = new WorkflowData();
-    }
 }
 
 export class WorkflowPipelineNameImpact {
@@ -403,6 +403,10 @@ export class WNode {
     parents: Array<WNodeJoin>;
     hooks: Array<WNodeHook>;
     groups: Array<GroupPermission>;
+
+    constructor() {
+        this.context = new WNodeContext();
+    }
 
     static getMapNodes(nodes: Map<number, WNode>, node: WNode): Map<number, WNode> {
         nodes.set(node.id, node);
@@ -607,10 +611,6 @@ export class WNode {
         }
         let app = w.applications[n.context.application_id];
         return app.repository_fullname != null;
-    }
-
-    constructor() {
-        this.context = new WNodeContext();
     }
 }
 

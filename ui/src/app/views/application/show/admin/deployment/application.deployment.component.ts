@@ -20,18 +20,6 @@ import { ToastService } from '../../../../../shared/toast/ToastService';
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ApplicationDeploymentComponent {
-
-    filteredIntegrations: Array<ProjectIntegration>;
-    selectedIntegration: ProjectIntegration;
-
-    public loadingBtn = false;
-
-    _project: Project;
-
-    @ViewChild('removeWarning', {static: false}) removeWarningModal: WarningModalComponent;
-    @ViewChild('linkWarning', {static: false}) linkWarningModal: WarningModalComponent;
-
-    @Input() application: Application;
     @Input('project')
     set project(project: Project) {
         this._project = project;
@@ -43,12 +31,17 @@ export class ApplicationDeploymentComponent {
         return this._project;
     }
 
-    getIntegrationNames(): Array<string> {
-        if (this.application.deployment_strategies) {
-            return Object.keys(this.application.deployment_strategies);
-        }
-        return null;
-    }
+    filteredIntegrations: Array<ProjectIntegration>;
+    selectedIntegration: ProjectIntegration;
+
+    public loadingBtn = false;
+
+    _project: Project;
+
+    @ViewChild('removeWarning') removeWarningModal: WarningModalComponent;
+    @ViewChild('linkWarning') linkWarningModal: WarningModalComponent;
+
+    @Input() application: Application;
 
     constructor(
         private _toast: ToastService,
@@ -57,6 +50,13 @@ export class ApplicationDeploymentComponent {
         private _cd: ChangeDetectorRef
     ) {
 
+    }
+
+    getIntegrationNames(): Array<string> {
+        if (this.application.deployment_strategies) {
+            return Object.keys(this.application.deployment_strategies);
+        }
+        return null;
     }
 
     clickDeleteIntegration(pfName: string) {

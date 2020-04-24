@@ -1,4 +1,5 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
+import { Injectable } from '@angular/core';
 import { Action, createSelector, Selector, State, StateContext } from '@ngxs/store';
 import { Environment } from 'app/model/environment.model';
 import { GroupPermission } from 'app/model/group.model';
@@ -30,7 +31,15 @@ export class ProjectStateModel {
         currentProjectKey: null
     }
 })
+@Injectable()
 export class ProjectState {
+
+    constructor(
+        private _http: HttpClient,
+        private _navbarService: NavbarService,
+        private _projectStore: ProjectStore,
+        private _envService: EnvironmentService
+    ) { }
 
     @Selector()
     static projectSnapshot(state: ProjectStateModel) {
@@ -48,14 +57,6 @@ export class ProjectState {
             }
         );
     }
-
-    constructor(
-        private _http: HttpClient,
-        private _navbarService: NavbarService,
-        private _projectStore: ProjectStore,
-        private _envService: EnvironmentService
-    ) { }
-
 
     @Action(ProjectAction.LoadProject)
     load(ctx: StateContext<ProjectStateModel>, action: ProjectAction.LoadProject) {

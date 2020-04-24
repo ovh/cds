@@ -251,23 +251,61 @@ type IntegrationConfigValue struct {
 	Description string `json:"description,omitempty" yaml:"description,omitempty"`
 }
 
+type IntegrationConfigMap map[string]IntegrationConfig
+
+func (config IntegrationConfigMap) Clone() IntegrationConfigMap {
+	new := make(IntegrationConfigMap, len(config))
+	for k, v := range config {
+		new[k] = v.Clone()
+	}
+	return new
+}
+
+func (config IntegrationConfigMap) Blur() {
+	for _, v := range config {
+		v.Blur()
+	}
+}
+
+// Value returns driver.Value from IntegrationConfig.
+func (config IntegrationConfigMap) Value() (driver.Value, error) {
+	j, err := json.Marshal(config)
+	return j, WrapError(err, "cannot marshal IntegrationConfigMap")
+}
+
+// Scan IntegrationConfig.
+func (config *IntegrationConfigMap) Scan(src interface{}) error {
+	if src == nil {
+		return nil
+	}
+	source, ok := src.([]byte)
+	if !ok {
+		return WithStack(fmt.Errorf("type assertion .([]byte) failed (%T)", src))
+	}
+	return WrapError(json.Unmarshal(source, config), "cannot unmarshal IntegrationConfigMap")
+}
+
 // IntegrationModel represent a integration model with its default configuration
 type IntegrationModel struct {
-	ID                      int64                        `json:"id" db:"id" yaml:"-" cli:"-"`
-	Name                    string                       `json:"name" db:"name" yaml:"name" cli:"name,key"`
-	Author                  string                       `json:"author" db:"author" yaml:"author" cli:"author"`
-	Identifier              string                       `json:"identifier" db:"identifier" yaml:"identifier,omitempty"`
-	Icon                    string                       `json:"icon" db:"icon" yaml:"icon"`
-	DefaultConfig           IntegrationConfig            `json:"default_config" db:"-" yaml:"default_config"`
-	DeploymentDefaultConfig IntegrationConfig            `json:"deployment_default_config" db:"-" yaml:"deployment_default_config"`
-	PublicConfigurations    map[string]IntegrationConfig `json:"public_configurations,omitempty" db:"-" yaml:"public_configurations"`
-	Disabled                bool                         `json:"disabled" db:"disabled" yaml:"disabled"`
-	Hook                    bool                         `json:"hook" db:"hook" yaml:"hook" cli:"hooks_supported"`
-	Storage                 bool                         `json:"storage" db:"storage" yaml:"storage" cli:"storage supported"`
-	Deployment              bool                         `json:"deployment" db:"deployment" yaml:"deployment" cli:"deployment_supported"`
-	Compute                 bool                         `json:"compute" db:"compute" yaml:"compute" cli:"compute_supported"`
-	Event                   bool                         `json:"event" db:"event" yaml:"event" cli:"event_supported"`
-	Public                  bool                         `json:"public,omitempty" db:"public" yaml:"public,omitempty"`
+	ID                      int64                `json:"id" db:"id" yaml:"-" cli:"-"`
+	Name                    string               `json:"name" db:"name" yaml:"name" cli:"name,key"`
+	Author                  string               `json:"author" db:"author" yaml:"author" cli:"author"`
+	Identifier              string               `json:"identifier" db:"identifier" yaml:"identifier,omitempty"`
+	Icon                    string               `json:"icon" db:"icon" yaml:"icon"`
+	DefaultConfig           IntegrationConfig    `json:"default_config" db:"default_config" yaml:"default_config"`
+	DeploymentDefaultConfig IntegrationConfig    `json:"deployment_default_config" db:"deployment_default_config" yaml:"deployment_default_config"`
+	PublicConfigurations    IntegrationConfigMap `json:"public_configurations,omitempty" db:"cipher_public_configurations" yaml:"public_configurations"`
+	Disabled                bool                 `json:"disabled" db:"disabled" yaml:"disabled"`
+	Hook                    bool                 `json:"hook" db:"hook" yaml:"hook" cli:"hooks_supported"`
+	Storage                 bool                 `json:"storage" db:"storage" yaml:"storage" cli:"storage supported"`
+	Deployment              bool                 `json:"deployment" db:"deployment" yaml:"deployment" cli:"deployment_supported"`
+	Compute                 bool                 `json:"compute" db:"compute" yaml:"compute" cli:"compute_supported"`
+	Event                   bool                 `json:"event" db:"event" yaml:"event" cli:"event_supported"`
+	Public                  bool                 `json:"public,omitempty" db:"public" yaml:"public,omitempty"`
+}
+
+func (p *IntegrationModel) Blur() {
+	p.PublicConfigurations.Blur()
 }
 
 //IsBuiltin checks is the model is builtin or not
@@ -287,21 +325,18 @@ type ProjectIntegration struct {
 	Name               string            `json:"name" db:"name" cli:"name,key" yaml:"name"`
 	IntegrationModelID int64             `json:"integration_model_id" db:"integration_model_id" yaml:"-"`
 	Model              IntegrationModel  `json:"model" db:"-" yaml:"model"`
-	Config             IntegrationConfig `json:"config" db:"-" yaml:"config"`
+	Config             IntegrationConfig `json:"config" db:"cipher_config" yaml:"config" gorpmapping:"encrypted,ProjectID,IntegrationModelID"`
 	// GRPCPlugin field is used to get all plugins associatied to an integration
 	// when we GET /project/{permProjectKey}/integrations/{integrationName}
 	GRPCPlugins []GRPCPlugin `json:"integration_plugins,omitempty" db:"-" yaml:"-"`
 }
 
-// HideSecrets replaces password with a placeholder
-func (pf *ProjectIntegration) HideSecrets() {
-	pf.Config.HideSecrets()
-	pf.Model.DefaultConfig.HideSecrets()
-	for k, cfg := range pf.Model.PublicConfigurations {
-		cfg.HideSecrets()
-		pf.Model.PublicConfigurations[k] = cfg
-	}
-	pf.Model.DeploymentDefaultConfig.HideSecrets()
+// Blur replaces password with a placeholder
+func (pf *ProjectIntegration) Blur() {
+	pf.Config.Blur()
+	pf.Model.DefaultConfig.Blur()
+	pf.Model.PublicConfigurations.Blur()
+	pf.Model.DeploymentDefaultConfig.Blur()
 }
 
 // MergeWith set new values from new config and update existing values if not default.

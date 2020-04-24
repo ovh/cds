@@ -21,7 +21,7 @@ import { finalize } from 'rxjs/operators';
 @AutoUnsubscribe()
 export class WorkflowSidebarRunHookComponent implements OnInit {
 
-    @ViewChild('workflowDetailsHook', {static: false})
+    @ViewChild('workflowDetailsHook')
     workflowDetailsHook: WorkflowNodeHookDetailsComponent;
 
     @Input() project: Project;

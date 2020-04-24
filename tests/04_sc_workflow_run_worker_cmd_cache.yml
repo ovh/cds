@@ -1,0 +1,49 @@
+name: Create a simple workflow (04SCWorkflowRunWorkerCmdCache) that use worker cache command and run it to test absolute and relative path
+version: "2"
+testcases:
+- name: assert filepath, your current directory must be at the root of this project
+  steps:
+  - script: '[ -f ./fixtures/04SCWorkflowRunWorkerCmdCache/pipeline.yml ]'
+  - script: '[ -f ./fixtures/04SCWorkflowRunWorkerCmdCache/workflow.yml ]'
+
+- name: prepare test
+  steps:
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} project remove --force 04SCWORKFLOWRUNWORKERCMDCACHE
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} group remove --force 04scworkflowrunworkercmdcache
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} project add 04SCWORKFLOWRUNWORKERCMDCACHE 04SCWorkflowRunWorkerCmdCache
+
+- name: import pipeline and workflow
+  steps:
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} pipeline import --force 04SCWORKFLOWRUNWORKERCMDCACHE ./fixtures/04SCWorkflowRunWorkerCmdCache/pipeline.yml
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} workflow import --force 04SCWORKFLOWRUNWORKERCMDCACHE ./fixtures/04SCWorkflowRunWorkerCmdCache/workflow.yml
+
+- name: run workflow
+  steps:
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} workflow run 04SCWORKFLOWRUNWORKERCMDCACHE 04SCWorkflowRunWorkerCmdCache-WORKFLOW
+    assertions:
+    - result.code ShouldEqual 0
+    - "result.systemout ShouldContainSubstring Workflow 04SCWorkflowRunWorkerCmdCache-WORKFLOW #1 has been launched"
+
+- name: check workflow
+  steps:
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} workflow status 04SCWORKFLOWRUNWORKERCMDCACHE 04SCWorkflowRunWorkerCmdCache-WORKFLOW 1 --format json
+    retry: 20
+    delay: 10
+    assertions:
+    - result.code ShouldEqual 0
+    - result.systemoutjson.last_execution ShouldNotBeEmpty
+    - result.systemoutjson.start ShouldNotBeEmpty
+    - result.systemoutjson.num ShouldContainSubstring 1
+    - result.systemoutjson.status ShouldEqual Success
+
+- name: check result
+  steps:
+    - script: {{.cdsctl}} -f {{.cdsctl.config}} workflow logs download 04SCWORKFLOWRUNWORKERCMDCACHE 04SCWorkflowRunWorkerCmdCache-WORKFLOW 1 --pattern PULLRELATIVEFROMWORKSPACE
+    - script: grep "my file content" *.log
+    - script: {{.cdsctl}} -f {{.cdsctl.config}} workflow logs download 04SCWORKFLOWRUNWORKERCMDCACHE 04SCWorkflowRunWorkerCmdCache-WORKFLOW 1 --pattern PULLABSOLUTEFROMWORKSPACE
+    - script: grep "my file content" *.log
+    - script: {{.cdsctl}} -f {{.cdsctl.config}} workflow logs download 04SCWORKFLOWRUNWORKERCMDCACHE 04SCWorkflowRunWorkerCmdCache-WORKFLOW 1 --pattern PULLRELATIVEFROMTMP
+    - script: grep "my file content" *.log
+    - script: {{.cdsctl}} -f {{.cdsctl.config}} workflow logs download 04SCWORKFLOWRUNWORKERCMDCACHE 04SCWorkflowRunWorkerCmdCache-WORKFLOW 1 --pattern PULLABSOLUTEFROMTMP
+    - script: grep "my file content" *.log
+

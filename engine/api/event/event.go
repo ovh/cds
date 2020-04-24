@@ -48,7 +48,7 @@ func getBroker(ctx context.Context, t string, option interface{}) (Broker, error
 
 func ResetPublicIntegrations(ctx context.Context, db *gorp.DbMap) error {
 	filterType := sdk.IntegrationTypeEvent
-	integrations, err := integration.LoadPublicModelsByType(db, &filterType, true)
+	integrations, err := integration.LoadPublicModelsByTypeWithDecryption(db, &filterType)
 	if err != nil {
 		return sdk.WrapError(err, "cannot load public models for event type")
 	}

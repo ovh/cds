@@ -100,7 +100,7 @@ export class PipelineWorkflowComponent implements OnInit, OnDestroy {
     }
     @Input() queryParams: {};
 
-    @ViewChild('editStageModal', { static: false })
+    @ViewChild('editStageModal')
     editStageModal: SemanticModalComponent;
 
     pipeline: Pipeline;

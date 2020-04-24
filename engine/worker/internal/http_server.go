@@ -48,7 +48,7 @@ func (w *CurrentWorker) Serve(c context.Context) error {
 
 	r.HandleFunc("/artifacts", LogMiddleware(artifactsHandler(c, w)))
 	r.HandleFunc("/cache/{ref}/pull", LogMiddleware(cachePullHandler(c, w)))
-	r.HandleFunc("/cache/{ref}/push", LogMiddleware(cachePushHandler(c, w)))
+	r.HandleFunc("/cache/push", LogMiddleware(cachePushHandler(c, w)))
 	r.HandleFunc("/download", LogMiddleware(downloadHandler(c, w)))
 	r.HandleFunc("/exit", LogMiddleware(exitHandler(c, w)))
 	r.HandleFunc("/key/{key}/install", LogMiddleware(keyInstallHandler(c, w)))

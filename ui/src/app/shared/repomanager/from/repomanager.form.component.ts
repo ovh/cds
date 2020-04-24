@@ -25,7 +25,7 @@ export class RepoManagerFormComponent {
     @Input() project: Project;
 
     // Warning modal
-    @ViewChild('linkRepoWarning', {static: false})
+    @ViewChild('linkRepoWarning')
     linkRepoWarningModal: WarningModalComponent;
 
     public ready = false;

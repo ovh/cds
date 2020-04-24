@@ -31,7 +31,8 @@ export class WorkflowWizardNodeConditionComponent extends Table<WorkflowNodeCond
     @Input() readonly = true;
     @Output() conditionsChange = new EventEmitter<boolean>();
 
-    @ViewChild('textareaCodeMirror', { static: false }) codemirror: any;
+
+    @ViewChild('textareaCodeMirror') codemirror: any;
 
     @Select(WorkflowState.getSelectedNode()) node$: Observable<WNode>;
     editableNode: WNode;

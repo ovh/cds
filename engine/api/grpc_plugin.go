@@ -36,7 +36,7 @@ func (api *API) postGRPCluginHandler() service.Handler {
 
 		// a plugin can be attached to a integration model OR not, for "action plugin"
 		if p.Integration != "" {
-			integrationModel, err := integration.LoadModelByName(api.mustDB(), p.Integration, false)
+			integrationModel, err := integration.LoadModelByName(api.mustDB(), p.Integration)
 			if err != nil {
 				return err
 			}
@@ -121,7 +121,7 @@ func (api *API) putGRPCluginHandler() service.Handler {
 
 		// a plugin can be attached to a integration model OR not, for "action plugin"
 		if p.Integration != "" {
-			integrationModel, err := integration.LoadModelByName(api.mustDB(), p.Integration, false)
+			integrationModel, err := integration.LoadModelByName(api.mustDB(), p.Integration)
 			if err != nil {
 				return err
 			}

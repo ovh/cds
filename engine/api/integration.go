@@ -31,9 +31,8 @@ func (api *API) getIntegrationModelHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		name := vars["name"]
-		clearPassword := FormBool(r, "clearPassword")
 
-		p, err := integration.LoadModelByName(api.mustDB(), name, clearPassword)
+		p, err := integration.LoadModelByName(api.mustDB(), name)
 		if err != nil {
 			return sdk.WrapError(err, "Cannot get integration model")
 		}
@@ -97,7 +96,7 @@ func (api *API) putIntegrationModelHandler() service.Handler {
 		}
 		defer tx.Rollback() // nolint
 
-		old, err := integration.LoadModelByName(tx, name, true)
+		old, err := integration.LoadModelByName(tx, name)
 		if err != nil {
 			return sdk.WrapError(err, "Unable to load model")
 		}
@@ -162,7 +161,7 @@ func propagatePublicIntegrationModelOnProject(ctx context.Context, db gorp.SqlEx
 
 	for pfName, immutableCfg := range m.PublicConfigurations {
 		cfg := immutableCfg.Clone()
-		oldPP, _ := integration.LoadProjectIntegrationByName(db, p.Key, pfName, true)
+		oldPP, _ := integration.LoadProjectIntegrationByNameWithClearPassword(db, p.Key, pfName)
 		if oldPP.ID == 0 {
 			pp := sdk.ProjectIntegration{
 				Model:              m,
@@ -206,7 +205,7 @@ func (api *API) deleteIntegrationModelHandler() service.Handler {
 		}
 		defer tx.Rollback() // nolint
 
-		old, err := integration.LoadModelByName(tx, name, false)
+		old, err := integration.LoadModelByName(tx, name)
 		if err != nil {
 			return err
 		}

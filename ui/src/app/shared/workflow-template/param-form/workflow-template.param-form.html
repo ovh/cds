@@ -28,13 +28,15 @@
                         </codemirror>
                         <sui-select *ngSwitchCase="'ssh-key'" class="selection" name="parameter-{{parameter.key}}"
                             placeholder="{{'workflow_template_param_select_key' | translate}}" [options]="sshKeys"
-                            isSearchable="true" [(ngModel)]="parameterValues[parameter.key]" #select>
+                            (selectedOptionChange)="changeParam()" isSearchable="true"
+                            [(ngModel)]="parameterValues[parameter.key]" #select>
                             <sui-select-option *ngFor="let key of select.filteredOptions" [value]="key">
                             </sui-select-option>
                         </sui-select>
                         <sui-select *ngSwitchCase="'pgp-key'" class="selection" name="parameter-{{parameter.key}}"
                             placeholder="{{'workflow_template_param_select_key' | translate}}" [options]="pgpKeys"
-                            isSearchable="true" [(ngModel)]="parameterValues[parameter.key]" #select>
+                            (selectedOptionChange)="changeParam()" isSearchable="true"
+                            [(ngModel)]="parameterValues[parameter.key]" #select>
                             <sui-select-option *ngFor="let key of select.filteredOptions" [value]="key">
                             </sui-select-option>
                         </sui-select>

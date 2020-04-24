@@ -1,8 +1,6 @@
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { Injector } from '@angular/core';
 import { fakeAsync, getTestBed, TestBed, tick } from '@angular/core/testing';
-import { Response, ResponseOptions, XHRBackend } from '@angular/http';
-import { MockBackend } from '@angular/http/testing';
 import { RouterTestingModule } from '@angular/router/testing';
 import { TranslateLoader, TranslateModule, TranslateParser, TranslateService } from '@ngx-translate/core';
 import { Parameter } from 'app/model/parameter.model';
@@ -12,20 +10,19 @@ import { ThemeStore } from 'app/service/theme/theme.store';
 import { SharedModule } from '../../shared.module';
 import { ParameterEvent } from '../parameter.event.model';
 import { ParameterFormComponent } from './parameter.form';
+import { Observable, of } from 'rxjs';
 
 describe('CDS: parameter From Component', () => {
     let injector: Injector;
-    let backend: MockBackend;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
             declarations: [
             ],
             providers: [
+                { provide: ParameterService, useClass: MockParameterService },
                 ParameterService,
                 TranslateService,
-                MockBackend,
-                { provide: XHRBackend, useClass: MockBackend },
                 TranslateLoader,
                 TranslateParser,
                 RepoManagerService,
@@ -38,26 +35,15 @@ describe('CDS: parameter From Component', () => {
                 HttpClientTestingModule
             ]
         });
-
         injector = getTestBed();
-        backend = injector.get(MockBackend);
-
     });
 
     afterEach(() => {
         injector = undefined;
-        backend = undefined;
     });
 
 
     it('should create a new parameter', fakeAsync(() => {
-        let call = 0;
-        // Mock Http request
-        backend.connections.subscribe(connection => {
-            connection.mockRespond(new Response(new ResponseOptions({ body: '["string", "password"]' })));
-        });
-
-
         // Create component
         let fixture = TestBed.createComponent(ParameterFormComponent);
         let component = fixture.debugElement.componentInstance;
@@ -95,3 +81,15 @@ describe('CDS: parameter From Component', () => {
         expect(fixture.componentInstance.createParameterEvent.emit).toHaveBeenCalledWith(new ParameterEvent('add', parameter));
     }));
 });
+
+class MockParameterService {
+    constructor() { }
+
+    getTypesFromCache(): string[] {
+        return [];
+    }
+
+    getTypesFromAPI(): Observable<string[]> {
+        return of(["string", "password"])
+    }
+}

@@ -53,7 +53,6 @@ type Workflow struct {
 	EventIntegrations       []ProjectIntegration         `json:"event_integrations,omitempty" db:"-" cli:"-"`
 	AsCodeEvent             []AsCodeEvent                `json:"as_code_events,omitempty" db:"-" cli:"-"`
 	// aggregates
-	Template         *WorkflowTemplate         `json:"-" db:"-" cli:"-"`
 	TemplateInstance *WorkflowTemplateInstance `json:"-" db:"-" cli:"-"`
 	FromTemplate     string                    `json:"from_template,omitempty" db:"-" cli:"-"`
 	TemplateUpToDate bool                      `json:"template_up_to_date,omitempty" db:"-" cli:"-"`
@@ -66,6 +65,16 @@ func (workflows Workflows) Names() []string {
 	var res = make([]string, len(workflows))
 	for i := range workflows {
 		res[i] = workflows[i].Name
+	}
+	return res
+}
+
+func (workflows Workflows) Filter(f func(w Workflow) bool) Workflows {
+	var res = make(Workflows, 0, len(workflows))
+	for i := range workflows {
+		if f(workflows[i]) {
+			res = append(res, workflows[i])
+		}
 	}
 	return res
 }

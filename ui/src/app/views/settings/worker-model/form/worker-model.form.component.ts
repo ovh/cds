@@ -18,7 +18,7 @@ import { Subscription } from 'rxjs/Subscription';
 })
 @AutoUnsubscribe()
 export class WorkerModelFormComponent implements OnInit {
-    @ViewChild('codeMirror', { static: false }) codemirror: any;
+    @ViewChild('codeMirror') codemirror: any;
 
     _workerModel: WorkerModel;
     @Input() set workerModel(wm: WorkerModel) {

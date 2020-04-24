@@ -164,7 +164,7 @@ func loadClearKeys(db gorp.SqlExecutor, proj *sdk.Project) error {
 }
 
 func loadIntegrations(db gorp.SqlExecutor, proj *sdk.Project) error {
-	pf, err := integration.LoadIntegrationsByProjectID(db, proj.ID, false)
+	pf, err := integration.LoadIntegrationsByProjectID(db, proj.ID)
 	if err != nil {
 		return sdk.WrapError(err, "cannot load integrations")
 	}
@@ -181,7 +181,7 @@ func loadFeatures(store cache.Store) LoadOptionFunc {
 }
 
 func loadClearIntegrations(db gorp.SqlExecutor, proj *sdk.Project) error {
-	pf, err := integration.LoadIntegrationsByProjectID(db, proj.ID, true)
+	pf, err := integration.LoadIntegrationsByProjectIDWithClearPassword(db, proj.ID)
 	if err != nil {
 		return sdk.WrapError(err, "cannot load integrations")
 	}

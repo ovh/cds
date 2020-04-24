@@ -53,7 +53,7 @@ export class ApplicationShowComponent implements OnInit, OnDestroy {
     // Selected tab
     selectedTab = 'home';
 
-    @ViewChild('varWarning', { static: false })
+    @ViewChild('varWarning')
     private varWarningModal: WarningModalComponent;
 
     // queryparam for breadcrum

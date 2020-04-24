@@ -51,6 +51,15 @@ func SetHeader(key, value string) RequestModifier {
 	}
 }
 
+// WithQueryParameter add query parameters to your http.Request
+func WithQueryParameter(key, value string) RequestModifier {
+	return func(req *http.Request) {
+		q := req.URL.Query()
+		q.Set(key, value)
+		req.URL.RawQuery = q.Encode()
+	}
+}
+
 // PostJSON post the *in* struct as json. If set, it unmarshalls the response to *out*
 func (c *client) PostJSON(ctx context.Context, path string, in interface{}, out interface{}, mods ...RequestModifier) (int, error) {
 	_, _, code, err := c.RequestJSON(ctx, http.MethodPost, path, in, out, mods...)
@@ -188,12 +197,12 @@ func (c *client) Stream(ctx context.Context, method string, path string, body io
 	labels := pprof.Labels("path", path, "method", method)
 	ctx = pprof.WithLabels(ctx, labels)
 	pprof.SetGoroutineLabels(ctx)
-	var savederror error
 
-	var bodyContent []byte
+	// In case where the given reader is not a ReadSeeker we should store the body in ram to retry http request
+	var bodyBytes []byte
 	var err error
-	if body != nil {
-		bodyContent, err = ioutil.ReadAll(body)
+	if _, ok := body.(io.ReadSeeker); !ok && body != nil {
+		bodyBytes, err = ioutil.ReadAll(body)
 		if err != nil {
 			return nil, nil, 0, sdk.WithStack(err)
 		}
@@ -206,8 +215,19 @@ func (c *client) Stream(ctx context.Context, method string, path string, body io
 		url = c.config.Host + path
 	}
 
+	var savederror error
 	for i := 0; i <= c.config.Retry; i++ {
-		req, requestError := http.NewRequest(method, url, bytes.NewBuffer(bodyContent))
+		var req *http.Request
+		var requestError error
+		if rs, ok := body.(io.ReadSeeker); ok {
+			if _, err := rs.Seek(0, 0); err != nil {
+				savederror = err
+				continue
+			}
+			req, requestError = http.NewRequest(method, url, body)
+		} else {
+			req, requestError = http.NewRequest(method, url, bytes.NewBuffer(bodyBytes))
+		}
 		if requestError != nil {
 			savederror = requestError
 			continue

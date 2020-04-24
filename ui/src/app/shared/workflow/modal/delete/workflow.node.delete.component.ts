@@ -11,7 +11,7 @@ import cloneDeep from 'lodash-es/cloneDeep';
 })
 export class WorkflowDeleteNodeComponent {
 
-    @ViewChild('deleteModal', { static: false })
+    @ViewChild('deleteModal')
     deleteModalTemplate: ModalTemplate<boolean, boolean, void>;
     modal: SuiActiveModal<boolean, boolean, void>;
 

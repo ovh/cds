@@ -35,8 +35,8 @@ export class ApplicationRepositoryComponent implements OnInit {
     model: string;
     displayVCSStrategy = false;
 
-    @ViewChild('removeWarning', {static: false}) removeWarningModal: WarningModalComponent;
-    @ViewChild('linkWarning', {static: false}) linkWarningModal: WarningModalComponent;
+    @ViewChild('removeWarning') removeWarningModal: WarningModalComponent;
+    @ViewChild('linkWarning') linkWarningModal: WarningModalComponent;
 
     constructor(
         private _repoManagerService: RepoManagerService,

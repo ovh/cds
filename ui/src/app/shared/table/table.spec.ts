@@ -2,13 +2,11 @@
 
 import { Injector } from '@angular/core';
 import { fakeAsync, TestBed } from '@angular/core/testing';
-import { MockBackend } from '@angular/http/testing';
 import { Table } from './table';
 
 describe('CDS: Table component', () => {
 
     let injector: Injector;
-    let backend: MockBackend;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -24,7 +22,6 @@ describe('CDS: Table component', () => {
 
     afterEach(() => {
         injector = undefined;
-        backend = undefined;
     });
 
 
