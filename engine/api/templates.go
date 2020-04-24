@@ -13,8 +13,11 @@ import (
 
 	"github.com/gorilla/mux"
 
+	"github.com/ovh/cds/engine/api/application"
+	"github.com/ovh/cds/engine/api/ascode"
 	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/group"
+	"github.com/ovh/cds/engine/api/operation"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/engine/api/workflowtemplate"
@@ -322,6 +325,8 @@ func (api *API) postTemplateApplyHandler() service.Handler {
 		}
 
 		withImport := FormBool(r, "import")
+		branch := FormString(r, "branch")
+		message := FormString(r, "message")
 
 		// parse and check request
 		var req sdk.WorkflowTemplateRequest
@@ -360,7 +365,9 @@ func (api *API) postTemplateApplyHandler() service.Handler {
 			project.LoadOptions.WithEnvironments,
 			project.LoadOptions.WithPipelines,
 			project.LoadOptions.WithApplicationWithDeploymentStrategies,
-			project.LoadOptions.WithIntegrations)
+			project.LoadOptions.WithIntegrations,
+			project.LoadOptions.WithClearKeys,
+		)
 		if err != nil {
 			return err
 		}
@@ -395,8 +402,37 @@ func (api *API) postTemplateApplyHandler() service.Handler {
 					return err
 				}
 				if existingWorkflow.FromRepository != "" {
-					// TODO we need to create a PR
-					return sdk.NewErrorFrom(sdk.ErrNotImplemented, "update a workflow ascode with template not yet available")
+					var rootApp *sdk.Application
+					if existingWorkflow.WorkflowData.Node.Context != nil && existingWorkflow.WorkflowData.Node.Context.ApplicationID != 0 {
+						rootApp, err = application.LoadByIDWithClearVCSStrategyPassword(api.mustDB(), existingWorkflow.WorkflowData.Node.Context.ApplicationID)
+						if err != nil {
+							return err
+						}
+					}
+					if rootApp == nil {
+						return sdk.NewErrorFrom(sdk.ErrWrongRequest, "cannot find the root application of the workflow")
+					}
+
+					ope, err := operation.PushOperationUpdate(ctx, api.mustDB(), api.Cache, *p, data, rootApp.VCSServer, rootApp.RepositoryFullname, branch, message, rootApp.RepositoryStrategy, consumer)
+					if err != nil {
+						return err
+					}
+
+					sdk.GoRoutine(context.Background(), fmt.Sprintf("UpdateAsCodeResult-%s", ope.UUID), func(ctx context.Context) {
+						ed := ascode.EntityData{
+							Operation: ope,
+							Name:      existingWorkflow.Name,
+							ID:        existingWorkflow.ID,
+							Type:      ascode.WorkflowEvent,
+							FromRepo:  existingWorkflow.FromRepository,
+						}
+						asCodeEvent := ascode.UpdateAsCodeResult(ctx, api.mustDB(), api.Cache, *p, *rootApp, ed, consumer)
+						if asCodeEvent != nil {
+							event.PublishAsCodeEvent(ctx, p.Key, *asCodeEvent, consumer)
+						}
+					}, api.PanicDump())
+
+					return service.WriteJSON(w, ope, http.StatusOK)
 				}
 			}
 		}
@@ -469,6 +505,9 @@ func (api *API) postTemplateBulkHandler() service.Handler {
 			return err
 		}
 
+		branch := FormString(r, "branch")
+		message := FormString(r, "message")
+
 		// check all requests
 		var req sdk.WorkflowTemplateBulk
 		if err := service.UnmarshalBody(r, &req); err != nil {
@@ -526,7 +565,7 @@ func (api *API) postTemplateBulkHandler() service.Handler {
 
 					errorDefer := func(err error) error {
 						if err != nil {
-							log.Error(ctx, "%v", err)
+							log.Error(ctx, "%+v", err)
 							bulk.Operations[i].Status = sdk.OperationStatusError
 							bulk.Operations[i].Error = fmt.Sprintf("%s", sdk.Cause(err))
 							if err := workflowtemplate.UpdateBulk(api.mustDB(), &bulk); err != nil {
@@ -544,7 +583,9 @@ func (api *API) postTemplateBulkHandler() service.Handler {
 						project.LoadOptions.WithEnvironments,
 						project.LoadOptions.WithPipelines,
 						project.LoadOptions.WithApplicationWithDeploymentStrategies,
-						project.LoadOptions.WithIntegrations)
+						project.LoadOptions.WithIntegrations,
+						project.LoadOptions.WithClearKeys,
+					)
 					if err != nil {
 						if errD := errorDefer(err); errD != nil {
 							log.Error(ctx, "%v", errD)
@@ -581,11 +622,52 @@ func (api *API) postTemplateBulkHandler() service.Handler {
 							continue
 						}
 						if existingWorkflow.FromRepository != "" {
-							// TODO we need to create a PR
-							if errD := errorDefer(sdk.NewErrorFrom(sdk.ErrNotImplemented, "update a workflow ascode with template not yet available")); errD != nil {
-								log.Error(ctx, "%v", errD)
+							var rootApp *sdk.Application
+							if existingWorkflow.WorkflowData.Node.Context != nil && existingWorkflow.WorkflowData.Node.Context.ApplicationID != 0 {
+								rootApp, err = application.LoadByIDWithClearVCSStrategyPassword(api.mustDB(), existingWorkflow.WorkflowData.Node.Context.ApplicationID)
+								if err != nil {
+									if errD := errorDefer(err); errD != nil {
+										log.Error(ctx, "%v", errD)
+										return
+									}
+									continue
+								}
+							}
+							if rootApp == nil {
+								if errD := errorDefer(sdk.NewErrorFrom(sdk.ErrWrongRequest, "cannot find the root application of the workflow")); errD != nil {
+									log.Error(ctx, "%v", errD)
+									return
+								}
+								continue
+							}
+
+							ope, err := operation.PushOperationUpdate(ctx, api.mustDB(), api.Cache, *p, data, rootApp.VCSServer, rootApp.RepositoryFullname, branch, message, rootApp.RepositoryStrategy, consumer)
+							if err != nil {
+								if errD := errorDefer(err); errD != nil {
+									log.Error(ctx, "%v", errD)
+									return
+								}
+								continue
+							}
+
+							ed := ascode.EntityData{
+								Operation: ope,
+								Name:      existingWorkflow.Name,
+								ID:        existingWorkflow.ID,
+								Type:      ascode.WorkflowEvent,
+								FromRepo:  existingWorkflow.FromRepository,
+							}
+							asCodeEvent := ascode.UpdateAsCodeResult(ctx, api.mustDB(), api.Cache, *p, *rootApp, ed, consumer)
+							if asCodeEvent != nil {
+								event.PublishAsCodeEvent(ctx, p.Key, *asCodeEvent, consumer)
+							}
+
+							bulk.Operations[i].Status = sdk.OperationStatusDone
+							if err := workflowtemplate.UpdateBulk(api.mustDB(), &bulk); err != nil {
+								log.Error(ctx, "%v", err)
 								return
 							}
+
 							continue
 						}
 					}

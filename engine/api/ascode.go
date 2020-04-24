@@ -8,7 +8,7 @@ import (
 	"github.com/gorilla/mux"
 
 	"github.com/ovh/cds/engine/api/application"
-	"github.com/ovh/cds/engine/api/ascode/sync"
+	"github.com/ovh/cds/engine/api/ascode"
 	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/operation"
 	"github.com/ovh/cds/engine/api/project"
@@ -237,9 +237,16 @@ func (api *API) postResyncPRAsCodeHandler() service.Handler {
 			return sdk.WrapError(sdk.ErrWrongRequest, "Missing appName or repo query parameter")
 		}
 
-		if _, _, err := sync.SyncAsCodeEvent(ctx, api.mustDB(), api.Cache, *proj, app, getAPIConsumer(ctx).AuthentifiedUser); err != nil {
+		res, err := ascode.SyncEvents(ctx, api.mustDB(), api.Cache, *proj, app, getAPIConsumer(ctx).AuthentifiedUser)
+		if err != nil {
 			return err
 		}
+		for _, id := range res.MergedWorkflow {
+			if err := workflow.UpdateFromRepository(api.mustDB(), id, res.FromRepository); err != nil {
+				return err
+			}
+		}
+
 		return nil
 	}
 }

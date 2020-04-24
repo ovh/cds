@@ -1172,7 +1172,7 @@ func Test_postWorkflowRunAsyncFailedHandler(t *testing.T) {
 		Operation: &ope,
 		Name:      w1.Name,
 		ID:        w1.ID,
-		Type:      ascode.AsCodeWorkflow,
+		Type:      ascode.WorkflowEvent,
 	}
 
 	x := ascode.UpdateAsCodeResult(context.TODO(), api.mustDB(), api.Cache, *proj, app, ed, u)

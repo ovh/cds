@@ -45,7 +45,6 @@ export class PipelineService {
     updateAsCode(key: string, pipeline: Pipeline, branch, message: string): Observable<Operation> {
         let params = new HttpParams();
         params = params.append('branch', branch);
-        params = params.append('repo', pipeline.from_repository);
         params = params.append('message', message)
         return this._http.put<Operation>(`/project/${key}/pipeline/${pipeline.name}/ascode`, pipeline, { params });
     }

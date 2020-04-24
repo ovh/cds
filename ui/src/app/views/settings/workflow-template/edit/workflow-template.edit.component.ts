@@ -171,7 +171,6 @@ export class WorkflowTemplateEditComponent implements OnInit {
                 }
             }, <Column<WorkflowTemplateInstance>>{
                 type: ColumnType.BUTTON,
-                hidden: (i: WorkflowTemplateInstance) => i.workflow && !!i.workflow.from_repository,
                 name: 'common_action',
                 class: 'two right aligned',
                 selector: (i: WorkflowTemplateInstance) => {
@@ -179,7 +178,7 @@ export class WorkflowTemplateEditComponent implements OnInit {
                         title: 'common_update',
                         class: 'primary small',
                         click: () => {
-                            this.clickUpdate(i)
+                            this.clickUpdate(i);
                         }
                     };
                 }

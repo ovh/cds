@@ -1,0 +1,34 @@
+<form class="ui form">
+    <div class="ui grid">
+        <div class="sixteen wide column">
+            <div *ngIf="this.branches" class="field">
+                <label>{{ 'ascode_modal_label_branch' | translate }}</label>
+                <sui-select class="selection" name="branch" [(ngModel)]="selectedBranch" [options]="branches"
+                    [optionsFilter]="optionsFilter" [isSearchable]="true" (selectedOptionChange)="changeParam()"
+                    #select>
+                    <sui-select-option *ngFor="let option of select.filteredOptions" [value]="option">
+                    </sui-select-option>
+                </sui-select>
+            </div>
+            <div *ngIf="!this.branches" class="field">
+                <label>{{ 'ascode_modal_label_branch_new' | translate }}</label>
+                <input type="text" [(ngModel)]="selectedBranch" (change)="changeParam()" name="branch" />
+            </div>
+            <div class="field">
+                <label>{{ 'ascode_modal_label_message' | translate }}</label>
+                <textarea rows="2" [(ngModel)]="commitMessage" (change)="changeParam()" name="commitMessage"></textarea>
+            </div>
+        </div>
+        <div class="sixteen wide column">
+            <div class="wide field">
+                <div class="ui message red" *ngIf="operation?.status > 2">
+                    {{operation.error}}
+                </div>
+                <div class="ui message green" *ngIf="operation?.status === 2">
+                    {{ 'workflow_as_code_pr_success' | translate }}
+                    <a href="{{operation.setup.push.pr_link}}" target="_blank">{{ operation.setup.push.pr_link }}</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>

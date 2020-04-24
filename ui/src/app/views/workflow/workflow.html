@@ -2,41 +2,40 @@
     <div class="right floated" [title]="'favorite_add_btn' | translate">
         <div class="ui active small inline loader" *ngIf="loadingFav"></div>
         <i class="pointing star icon" *ngIf="!loadingFav" [class.pointing]="!loading"
-           [ngClass]="{'animated infinite pulse' : loadingFav}" [class.favorite]="workflow?.favorite"
-           [class.unfavorite]="!workflow?.favorite" (click)="updateFav()"></i>
+            [ngClass]="{'animated infinite pulse' : loadingFav}" [class.favorite]="workflow?.favorite"
+            [class.unfavorite]="!workflow?.favorite" (click)="updateFav()"></i>
     </div>
     <div class="right floated labelFeature" [title]="'workflow_from_repository_btn' | translate">
         <a class="ui label small basic"
-           [class.green]="workflow && workflow.from_repository && (!workflow.as_code_events || workflow.as_code_events.length === 0)"
-           [class.orange]="workflow && workflow.as_code_events && workflow.as_code_events.length > 0"
-           [class.grey]="workflow && !workflow.from_repository && (!workflow.as_code_events || workflow.as_code_events.length === 0)"
-           suiPopup [popupTemplate]="popupFromRepository" popupPlacement="bottom right" popupTrigger="outsideClick"
-           #popup="suiPopup">
+            [class.green]="workflow && workflow.from_repository && (!workflow.as_code_events || workflow.as_code_events.length === 0)"
+            [class.orange]="workflow && workflow.as_code_events && workflow.as_code_events.length > 0"
+            [class.grey]="workflow && !workflow.from_repository && (!workflow.as_code_events || workflow.as_code_events.length === 0)"
+            suiPopup [popupTemplate]="popupFromRepository" popupPlacement="bottom right" popupTrigger="outsideClick"
+            #popupFromRepo="suiPopup">
             <i class="code icon"></i>as code
         </a>
         <ng-template let-popup #popupFromRepository>
             <div class="content infoPopup">
                 <ng-container
-                        *ngIf="workflow && (workflow.from_repository || (workflow.as_code_events && workflow.as_code_events.length > 0))">
+                    *ngIf="workflow && (workflow.from_repository || (workflow.as_code_events && workflow.as_code_events.length > 0))">
                     <app-ascode-event [events]="workflow.as_code_events" [repo]="workflow.from_repository"
-                                      [appName]="workflow.applications[workflow.workflow_data.node.context.application_id]?.name"
-                                      [project]="project"></app-ascode-event>
+                        [appName]="workflow.applications[workflow.workflow_data.node.context.application_id]?.name"
+                        [project]="project"></app-ascode-event>
                 </ng-container>
                 <ng-container
-                        *ngIf="workflow && !workflow.from_repository && (!workflow.as_code_events || workflow.as_code_events.length === 0)">
+                    *ngIf="workflow && !workflow.from_repository && (!workflow.as_code_events || workflow.as_code_events.length === 0)">
                     <p>{{'workflow_repository_help_line_1' | translate}}</p>
                     <p>{{'workflow_repository_help_line_2' | translate}}</p>
                     <div class="footer">
                         <div>
                             <div class="ui list">
                                 <a class="item" target="_blank"
-                                   href="https://ovh.github.io/cds/docs/tutorials/init_workflow_with_cdsctl/">{{'common_read_more'
+                                    href="https://ovh.github.io/cds/docs/tutorials/init_workflow_with_cdsctl/">{{'common_read_more'
                                     | translate}}</a>
                             </div>
                         </div>
                         <div class="migrate">
-                            <button class="ui right floated green mini button"
-                                    (click)="openSaveAsCodeModal()">{{'common_migrate'
+                            <button class="ui right floated green mini button" (click)="openSaveAsCodeModal();popup.close()">{{'common_migrate'
                                 | translate}}</button>
                         </div>
                     </div>
@@ -46,9 +45,9 @@
     </div>
     <div class="right floated labelFeature" [title]="'workflow_from_template_btn' | translate">
         <a class="ui label small basic"
-           [ngClass]="workflow && workflow.from_template ? (workflow.template_up_to_date ? 'green' : 'orange') : 'grey'"
-           suiPopup [popupTemplate]="popupFromTemplate" popupPlacement="bottom right" popupTrigger="outsideClick"
-           #popup="suiPopup">
+            [ngClass]="workflow && workflow.from_template ? (workflow.template_up_to_date ? 'green' : 'orange') : 'grey'"
+            suiPopup [popupTemplate]="popupFromTemplate" popupPlacement="bottom right" popupTrigger="outsideClick"
+            #popupFromTemp="suiPopup">
             <i class="paste icon"></i>template
         </a>
         <ng-template let-popup #popupFromTemplate>
@@ -56,12 +55,12 @@
                 <div *ngIf="workflow && workflow.from_template;then fromTemplateInfo;else fromTemplateHelp"></div>
                 <ng-template #fromTemplateInfo>
                     <p>{{ 'workflow_from_template' | translate}}
-                        <a [routerLink]="['/settings/workflow-template/' + workflow.from_template.split('@')[0]]">{{workflow.from_template}}</a>
-                        <span *ngIf="!workflow.template_up_to_date"
-                              class="ui orange label mini">{{'common_not_up_to_date'
+                        <a
+                            [routerLink]="['/settings/workflow-template/' + workflow.from_template.split('@')[0]]">{{workflow.from_template}}</a>
+                        <span *ngIf="!workflow.template_up_to_date" class="ui orange label mini">{{'common_not_up_to_date'
                             | translate }}</span>
                     </p>
-                    <div class="ui compact menu" *ngIf="!workflow.from_repository">
+                    <div class="ui compact menu">
                         <a class="item small" (click)="showTemplateFrom();popup.close()">
                             {{'common_update' | translate}}
                         </a>
@@ -71,8 +70,7 @@
                     <p>{{'workflow_template_help_line_1' | translate}}</p>
                     <p>{{'workflow_template_help_line_2' | translate}}</p>
                     <div class="ui list">
-                        <a class="item" target="_blank"
-                           href="https://ovh.github.io/cds/docs/concepts/template">{{'common_read_more'
+                        <a class="item" target="_blank" href="https://ovh.github.io/cds/docs/concepts/template">{{'common_read_more'
                             | translate}}</a>
                     </div>
                     <p>{{'workflow_template_help_line_3' | translate}}</p>
@@ -85,24 +83,24 @@
             </div>
         </ng-template>
     </div>
-
 </app-workflow-breadcrumb>
 <aside class="sidebar expanded">
     <i *ngIf="sidebarMode !== sidebarModes.RUNS" class="ui icon black close closeButton"
-       (click)="changeToRunsMode()"></i>
+        (click)="changeToRunsMode()"></i>
     <div class="sidebar-toggle">
         <ng-container *ngIf="project && workflow">
-            <ng-container *ngIf="sidebarMode === sidebarModes.EDIT_HOOK" >
+            <ng-container *ngIf="sidebarMode === sidebarModes.EDIT_HOOK">
                 <app-workflow-sidebar-hook [project]="project" [workflow]="workflow">
                 </app-workflow-sidebar-hook>
             </ng-container>
             <ng-container *ngIf="sidebarMode === sidebarModes.RUNS">
                 <app-workflow-sidebar-run-list [workflow]="workflow"></app-workflow-sidebar-run-list>
             </ng-container>
-            <ng-container *ngIf="sidebarMode === sidebarModes.RUN_HOOK" >
-                <app-workflow-sidebar-run-hook [project]="project" [wname]="workflow.name"></app-workflow-sidebar-run-hook>
+            <ng-container *ngIf="sidebarMode === sidebarModes.RUN_HOOK">
+                <app-workflow-sidebar-run-hook [project]="project" [wname]="workflow.name">
+                </app-workflow-sidebar-run-hook>
             </ng-container>
-            <ng-container *ngIf="sidebarMode === sidebarModes.RUN_NODE" >
+            <ng-container *ngIf="sidebarMode === sidebarModes.RUN_NODE">
                 <app-workflow-sidebar-run-node></app-workflow-sidebar-run-node>
             </ng-container>
         </ng-container>
@@ -118,10 +116,5 @@
     </ng-container>
 </section>
 <!-- Migrate as code -->
-<ng-container *ngIf="workflow?.workflow_data?.node?.context?.application_id">
-    <app-update-ascode
-            [project]="project"
-            [appName]="workflow.applications[workflow.workflow_data.node.context.application_id].name"
-            [name]="workflow.name"
-            #updateAsCode></app-update-ascode>
-</ng-container>
+<app-ascode-save-modal [project]="project" [workflow]="workflow" [name]="workflow?.name" #updateAsCode>
+</app-ascode-save-modal>

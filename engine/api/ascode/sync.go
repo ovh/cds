@@ -1,35 +1,40 @@
-package sync
+package ascode
 
 import (
 	"context"
 
 	"github.com/go-gorp/gorp"
 
-	"github.com/ovh/cds/engine/api/ascode"
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
-	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
 
-// SyncAsCodeEvent checks if workflow as to become ascode
-func SyncAsCodeEvent(ctx context.Context, db *gorp.DbMap, store cache.Store, proj sdk.Project, app sdk.Application, u sdk.Identifiable) ([]sdk.AsCodeEvent, string, error) {
+type SyncResult struct {
+	FromRepository string
+	MergedWorkflow []int64
+}
+
+// SyncEvents checks if workflow as to become ascode.
+func SyncEvents(ctx context.Context, db *gorp.DbMap, store cache.Store, proj sdk.Project, app sdk.Application, u sdk.Identifiable) (SyncResult, error) {
+	var res SyncResult
+
 	vcsServer := repositoriesmanager.GetProjectVCSServer(proj, app.VCSServer)
 	if vcsServer == nil {
-		return nil, "", sdk.NewErrorFrom(sdk.ErrNotFound, "no vcs server found on application %s", app.Name)
+		return res, sdk.NewErrorFrom(sdk.ErrNotFound, "no vcs server found on application %s", app.Name)
 	}
 	client, err := repositoriesmanager.AuthorizedClient(ctx, db, store, proj.Key, vcsServer)
 	if err != nil {
-		return nil, "", err
+		return res, err
 	}
 
 	fromRepo := app.FromRepository
 	if fromRepo == "" {
 		repo, err := client.RepoByFullname(ctx, app.RepositoryFullname)
 		if err != nil {
-			return nil, fromRepo, sdk.WrapError(err, "cannot get repo %s", app.RepositoryFullname)
+			return res, sdk.WrapError(err, "cannot get repo %s", app.RepositoryFullname)
 		}
 		if app.RepositoryStrategy.ConnectionType == "ssh" {
 			fromRepo = repo.SSHCloneURL
@@ -37,16 +42,17 @@ func SyncAsCodeEvent(ctx context.Context, db *gorp.DbMap, store cache.Store, pro
 			fromRepo = repo.HTTPCloneURL
 		}
 	}
+	res.FromRepository = fromRepo
 
 	tx, err := db.Begin()
 	if err != nil {
-		return nil, fromRepo, sdk.WithStack(err)
+		return res, sdk.WithStack(err)
 	}
 	defer tx.Rollback() //nolint
 
-	asCodeEvents, err := ascode.LoadAsCodeEventByRepo(ctx, tx, fromRepo)
+	asCodeEvents, err := LoadAsCodeEventByRepo(ctx, tx, fromRepo)
 	if err != nil {
-		return nil, fromRepo, err
+		return res, err
 	}
 
 	eventLeft := make([]sdk.AsCodeEvent, 0)
@@ -54,7 +60,7 @@ func SyncAsCodeEvent(ctx context.Context, db *gorp.DbMap, store cache.Store, pro
 	for _, ascodeEvt := range asCodeEvents {
 		pr, err := client.PullRequest(ctx, app.RepositoryFullname, int(ascodeEvt.PullRequestID))
 		if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
-			return nil, fromRepo, sdk.WrapError(err, "unable to check pull request status")
+			return res, sdk.WrapError(err, "unable to check pull request status")
 		}
 		prNotFound := sdk.ErrorIs(err, sdk.ErrNotFound)
 
@@ -66,9 +72,7 @@ func SyncAsCodeEvent(ctx context.Context, db *gorp.DbMap, store cache.Store, pro
 		if ascodeEvt.Migrate && len(ascodeEvt.Data.Workflows) == 1 {
 			for id := range ascodeEvt.Data.Workflows {
 				if pr.Merged {
-					if err := workflow.UpdateFromRepository(tx, id, fromRepo); err != nil {
-						return nil, fromRepo, err
-					}
+					res.MergedWorkflow = append(res.MergedWorkflow, id)
 				}
 			}
 		}
@@ -82,18 +86,18 @@ func SyncAsCodeEvent(ctx context.Context, db *gorp.DbMap, store cache.Store, pro
 	}
 
 	for _, ascodeEvt := range eventToDelete {
-		if err := ascode.DeleteAsCodeEvent(tx, ascodeEvt); err != nil {
-			return nil, fromRepo, err
+		if err := DeleteAsCodeEvent(tx, ascodeEvt); err != nil {
+			return res, err
 		}
 	}
 
 	if err := tx.Commit(); err != nil {
-		return nil, fromRepo, sdk.WithStack(err)
+		return res, sdk.WithStack(err)
 	}
 
 	for _, ed := range eventToDelete {
 		event.PublishAsCodeEvent(ctx, proj.Key, ed, u)
 	}
 
-	return eventLeft, fromRepo, nil
+	return res, nil
 }

@@ -111,7 +111,8 @@
 <ng-template #loadPipeline>
     <div class="ui text active loader">Loading pipeline...</div>
 </ng-template>
-<ng-container *ngIf="appAsCode">
-    <app-update-ascode [project]="project" [appName]="appAsCode.name" [name]="pipeline.name" #updateEditMode>
-    </app-update-ascode>
+<ng-container *ngIf="pipeline?.workflow_ascode_holder">
+    <app-ascode-save-modal [project]="project" [workflow]="pipeline.workflow_ascode_holder" [name]="pipeline.name"
+        #updateEditMode>
+    </app-ascode-save-modal>
 </ng-container>

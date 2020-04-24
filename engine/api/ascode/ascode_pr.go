@@ -13,13 +13,17 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
+// EventType type for as code events.
+type EventType string
+
+// AsCodeEventType values.
 const (
-	AsCodePipeline = "pipeline"
-	AsCodeWorkflow = "workflow"
+	PipelineEvent EventType = "pipeline"
+	WorkflowEvent EventType = "workflow"
 )
 
 type EntityData struct {
-	Type      string
+	Type      EventType
 	ID        int64
 	Name      string
 	FromRepo  string
@@ -109,8 +113,10 @@ forLoop:
 
 				// Find existing ascode event with this pullrequest
 				asCodeEvent, err := LoadAsCodeByPRID(ctx, db, int64(pr.ID))
-				if err != nil && err != sdk.ErrNotFound {
+				if err != nil && sdk.ErrorIs(err, sdk.ErrNotFound) {
 					log.Error(ctx, "UpdateAsCodeResult> unable to save pull request: %v", err)
+					ed.Operation.Status = sdk.OperationStatusError
+					ed.Operation.Error = "unable to load pull request"
 					return nil
 				}
 				if asCodeEvent.ID == 0 {
@@ -125,7 +131,7 @@ forLoop:
 				}
 
 				switch ed.Type {
-				case AsCodeWorkflow:
+				case WorkflowEvent:
 					if asCodeEvent.Data.Workflows == nil {
 						asCodeEvent.Data.Workflows = make(map[int64]string)
 					}
@@ -139,7 +145,7 @@ forLoop:
 					if !found {
 						asCodeEvent.Data.Workflows[ed.ID] = ed.Name
 					}
-				case AsCodePipeline:
+				case PipelineEvent:
 					if asCodeEvent.Data.Pipelines == nil {
 						asCodeEvent.Data.Pipelines = make(map[int64]string)
 					}

@@ -12,11 +12,13 @@ import (
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/ascode"
 	"github.com/ovh/cds/engine/api/event"
+	"github.com/ovh/cds/engine/api/operation"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/exportentities"
 	"github.com/ovh/cds/sdk/log"
 )
 
@@ -76,7 +78,13 @@ func (api *API) updateAsCodePipelineHandler() service.Handler {
 		}
 
 		u := getAPIConsumer(ctx)
-		ope, err := pipeline.UpdatePipelineAsCode(ctx, api.Cache, api.mustDB(), *proj, p, rootApp.VCSServer, rootApp.RepositoryFullname, branch, message, rootApp.RepositoryStrategy, u)
+
+		wpi := exportentities.NewPipelineV1(p)
+		wp := exportentities.WorkflowComponents{
+			Pipelines: []exportentities.PipelineV1{wpi},
+		}
+
+		ope, err := operation.PushOperationUpdate(ctx, api.mustDB(), api.Cache, *proj, wp, rootApp.VCSServer, rootApp.RepositoryFullname, branch, message, rootApp.RepositoryStrategy, u)
 		if err != nil {
 			return err
 		}
@@ -84,7 +92,7 @@ func (api *API) updateAsCodePipelineHandler() service.Handler {
 		sdk.GoRoutine(context.Background(), fmt.Sprintf("UpdateAsCodePipelineHandler-%s", ope.UUID), func(ctx context.Context) {
 			ed := ascode.EntityData{
 				FromRepo:  pipelineDB.FromRepository,
-				Type:      ascode.AsCodePipeline,
+				Type:      ascode.PipelineEvent,
 				ID:        pipelineDB.ID,
 				Name:      pipelineDB.Name,
 				Operation: ope,
@@ -306,17 +314,17 @@ func (api *API) getPipelineHandler() service.Handler {
 		}
 
 		if withAsCodeEvent {
-			events, errE := ascode.LoadAsCodeEventByRepo(ctx, api.mustDB(), p.FromRepository)
-			if errE != nil {
-				return errE
+			events, err := ascode.LoadAsCodeEventByRepo(ctx, api.mustDB(), p.FromRepository)
+			if err != nil {
+				return err
 			}
 			p.AsCodeEvents = events
 		}
 
 		if withWorkflows {
-			wf, errW := workflow.LoadByPipelineName(ctx, api.mustDB(), projectKey, pipelineName)
-			if errW != nil {
-				return sdk.WrapError(errW, "getPipelineHandler> Cannot load workflows using pipeline %s", p.Name)
+			wf, err := workflow.LoadByPipelineName(ctx, api.mustDB(), projectKey, pipelineName)
+			if err != nil {
+				return sdk.WrapError(err, "cannot load workflows using pipeline %s", p.Name)
 			}
 			p.Usage = &sdk.Usage{}
 			p.Usage.Workflows = wf
@@ -326,8 +334,8 @@ func (api *API) getPipelineHandler() service.Handler {
 			wkAscodeHolder, err := workflow.LoadByRepo(ctx, api.Cache, api.mustDB(), *proj, p.FromRepository, workflow.LoadOptions{
 				WithTemplate: true,
 			})
-			if err != nil {
-				return sdk.NewErrorFrom(err, "cannot found workflow holder of the pipeline")
+			if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
+				return err
 			}
 			p.WorkflowAscodeHolder = wkAscodeHolder
 		}
