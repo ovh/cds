@@ -27,27 +27,27 @@ func (h *HatcheryOpenstack) InitHatchery(ctx context.Context) error {
 		DomainName:       h.Config.Domain,
 	}
 
-	provider, errac := openstack.AuthenticatedClient(authOpts)
-	if errac != nil {
-		return fmt.Errorf("Unable to openstack.AuthenticatedClient: %v", errac)
+	provider, err := openstack.AuthenticatedClient(authOpts)
+	if err != nil {
+		return fmt.Errorf("Unable to openstack.AuthenticatedClient: %v", err)
 	}
 
-	openstackClient, errn := openstack.NewComputeV2(provider, gophercloud.EndpointOpts{Region: h.Config.Region})
-	if errn != nil {
-		return fmt.Errorf("Unable to openstack.NewComputeV2: %s", errn)
+	openstackClient, err := openstack.NewComputeV2(provider, gophercloud.EndpointOpts{Region: h.Config.Region})
+	if err != nil {
+		return fmt.Errorf("Unable to openstack.NewComputeV2: %v", err)
 	}
 	h.openstackClient = openstackClient
 
 	if err := h.initFlavors(); err != nil {
-		log.Warning(ctx, "Error getting flavors: %s", err)
+		log.Warning(ctx, "Error getting flavors: %v", err)
 	}
 
 	if err := h.initNetworks(); err != nil {
-		log.Warning(ctx, "Error getting networks: %s", err)
+		log.Warning(ctx, "Error getting networks: %v", err)
 	}
 
 	if err := h.initIPStatus(ctx); err != nil {
-		log.Warning(ctx, "Error on initIPStatus(): %s", err)
+		log.Warning(ctx, "Error on initIPStatus(): %v", err)
 	}
 
 	go h.main(ctx)
@@ -58,11 +58,11 @@ func (h *HatcheryOpenstack) InitHatchery(ctx context.Context) error {
 func (h *HatcheryOpenstack) initFlavors() error {
 	all, err := flavors.ListDetail(h.openstackClient, nil).AllPages()
 	if err != nil {
-		return fmt.Errorf("initFlavors> error on flavors.ListDetail: %s", err)
+		return fmt.Errorf("initFlavors> error on flavors.ListDetail: %v", err)
 	}
 	lflavors, err := flavors.ExtractFlavors(all)
 	if err != nil {
-		return fmt.Errorf("initFlavors> error on flavors.ExtractFlavors: %s", err)
+		return fmt.Errorf("initFlavors> error on flavors.ExtractFlavors: %v", err)
 	}
 	h.flavors = lflavors
 	return nil
@@ -71,11 +71,11 @@ func (h *HatcheryOpenstack) initFlavors() error {
 func (h *HatcheryOpenstack) initNetworks() error {
 	all, err := tenantnetworks.List(h.openstackClient).AllPages()
 	if err != nil {
-		return fmt.Errorf("initNetworks> Unable to get Network: %s", err)
+		return fmt.Errorf("initNetworks> Unable to get Network: %v", err)
 	}
 	nets, err := tenantnetworks.ExtractNetworks(all)
 	if err != nil {
-		return fmt.Errorf("initNetworks> Unable to get Network: %s", err)
+		return fmt.Errorf("initNetworks> Unable to get Network: %v", err)
 	}
 	for _, n := range nets {
 		if n.Name == h.Config.NetworkString {
