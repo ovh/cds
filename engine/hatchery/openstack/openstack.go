@@ -157,6 +157,15 @@ func (h *HatcheryOpenstack) WorkerModelsEnabled() ([]sdk.Model, error) {
 // CanSpawn return wether or not hatchery can spawn model
 // requirements are not supported
 func (h *HatcheryOpenstack) CanSpawn(ctx context.Context, model *sdk.Model, jobID int64, requirements []sdk.Requirement) bool {
+	// if there is a model, we have to check if the flavor attached to model is knowned by this hatchery
+	if model != nil {
+		if _, err := h.flavorID(model.ModelVirtualMachine.Flavor); err != nil {
+			log.Debug("CanSpawn> flavor '%s' not found", model.ModelVirtualMachine.Flavor)
+			return false
+		}
+		log.Debug("CanSpawn> flavor '%s' found", model.ModelVirtualMachine.Flavor)
+	}
+
 	for _, r := range requirements {
 		if r.Type == sdk.ServiceRequirement || r.Type == sdk.MemoryRequirement || r.Type == sdk.HostnameRequirement {
 			return false
