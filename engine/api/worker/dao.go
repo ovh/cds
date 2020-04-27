@@ -9,6 +9,7 @@ import (
 	"github.com/ovh/cds/engine/api/authentication"
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/log"
 )
 
 func Insert(ctx context.Context, db gorp.SqlExecutor, w *sdk.Worker) error {
@@ -42,7 +43,7 @@ func Delete(db gorp.SqlExecutor, id string) error {
 
 func LoadByConsumerID(ctx context.Context, db gorp.SqlExecutor, id string) (*sdk.Worker, error) {
 	query := gorpmapping.NewQuery("SELECT * FROM worker WHERE auth_consumer_id = $1").Args(id)
-	var w sdk.Worker
+	var w dbWorker
 	found, err := gorpmapping.Get(ctx, db, query, &w)
 	if err != nil {
 		return nil, err
@@ -50,12 +51,12 @@ func LoadByConsumerID(ctx context.Context, db gorp.SqlExecutor, id string) (*sdk
 	if !found {
 		return nil, sdk.WithStack(sdk.ErrNotFound)
 	}
-	return &w, nil
+	return &w.Worker, nil
 }
 
 func LoadByID(ctx context.Context, db gorp.SqlExecutor, id string) (*sdk.Worker, error) {
 	query := gorpmapping.NewQuery("SELECT * FROM worker WHERE id = $1").Args(id)
-	var w sdk.Worker
+	var w dbWorker
 	found, err := gorpmapping.Get(ctx, db, query, &w)
 	if err != nil {
 		return nil, err
@@ -63,36 +64,48 @@ func LoadByID(ctx context.Context, db gorp.SqlExecutor, id string) (*sdk.Worker,
 	if !found {
 		return nil, sdk.WithStack(sdk.ErrNotFound)
 	}
-	return &w, nil
+	return &w.Worker, nil
 }
 
 func LoadAll(ctx context.Context, db gorp.SqlExecutor) ([]sdk.Worker, error) {
-	var workers []sdk.Worker
+	var wks []dbWorker
 	query := gorpmapping.NewQuery(`SELECT * FROM worker ORDER BY name ASC`)
-	if err := gorpmapping.GetAll(ctx, db, query, &workers); err != nil {
+	if err := gorpmapping.GetAll(ctx, db, query, &wks); err != nil {
 		return nil, err
+	}
+	workers := make([]sdk.Worker, len(wks))
+	for i := range wks {
+		workers[i] = wks[i].Worker
 	}
 	return workers, nil
 }
 
 func LoadByHatcheryID(ctx context.Context, db gorp.SqlExecutor, hatcheryID int64) ([]sdk.Worker, error) {
-	var workers []sdk.Worker
+	var wks []dbWorker
 	query := gorpmapping.NewQuery(`SELECT * FROM worker WHERE hatchery_id = $1 ORDER BY name ASC`).Args(hatcheryID)
-	if err := gorpmapping.GetAll(ctx, db, query, &workers); err != nil {
+	if err := gorpmapping.GetAll(ctx, db, query, &wks); err != nil {
 		return nil, err
+	}
+	workers := make([]sdk.Worker, len(wks))
+	for i := range wks {
+		workers[i] = wks[i].Worker
 	}
 	return workers, nil
 }
 
 func LoadDeadWorkers(ctx context.Context, db gorp.SqlExecutor, timeout float64, status []string) ([]sdk.Worker, error) {
-	var workers []sdk.Worker
+	var wks []dbWorker
 	query := gorpmapping.NewQuery(`SELECT *
 				FROM worker
 				WHERE status = ANY(string_to_array($1, ',')::text[])
 				AND now() - last_beat > $2 * INTERVAL '1' SECOND
 				ORDER BY last_beat ASC`).Args(strings.Join(status, ","), timeout)
-	if err := gorpmapping.GetAll(ctx, db, query, &workers); err != nil {
+	if err := gorpmapping.GetAll(ctx, db, query, &wks); err != nil {
 		return nil, err
+	}
+	workers := make([]sdk.Worker, len(wks))
+	for i := range wks {
+		workers[i] = wks[i].Worker
 	}
 	return workers, nil
 }
@@ -149,5 +162,6 @@ func LoadWorkerWithDecryptKey(ctx context.Context, db gorp.SqlExecutor, workerID
 	if !isValid {
 		return sdk.Worker{}, sdk.ErrInvalidData
 	}
+	log.Warning(ctx, "My WORKER: %+v", work.Worker)
 	return work.Worker, err
 }

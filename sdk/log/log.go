@@ -34,8 +34,8 @@ const (
 	ContextLoggingRequestIDKey = "ctx-logging-request-id"
 	ContextLoggingFuncKey      = "ctx-logging-func"
 
-	ExtraFieldSignature = "Signature"
-	ExtraFieldStepOrder = "StepOrder"
+	ExtraFieldSignature = "_Signature"
+	ExtraFieldStepOrder = "_StepOrder"
 )
 
 var (

@@ -110,8 +110,8 @@ func updateEncryptedData(db gorp.SqlExecutor, i interface{}) error {
 		updateSlice = append(updateSlice, encryptedColumns[f]+" = $"+strconv.Itoa(c))
 		c++
 	}
-
-	query := fmt.Sprintf("UPDATE %s SET %s WHERE %s = %v", table, strings.Join(updateSlice, ","), key, id)
+	encryptedContentArgs = append(encryptedContentArgs, id)
+	query := fmt.Sprintf("UPDATE %s SET %s WHERE %s = $%d", table, strings.Join(updateSlice, ","), key, c)
 	log.Warning(context.TODO(), ">>>>%s", query)
 	res, err := db.Exec(query, encryptedContentArgs...)
 	if err != nil {

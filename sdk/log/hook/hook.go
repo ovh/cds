@@ -244,7 +244,7 @@ func (hook *Hook) messageFromEntry(entry *logrus.Entry, file string, line int) *
 	// original input.  If the input has no newlines, stick the
 	// whole thing in Short.
 	short := p
-	full := ""
+	full := p
 	if i := strings.IndexRune(p, '\n'); i > 0 {
 		short = p[:i]
 		full = p
@@ -252,7 +252,6 @@ func (hook *Hook) messageFromEntry(entry *logrus.Entry, file string, line int) *
 
 	// Merge hook extra fields and entry fields
 	extra := hook.merge(hook.Extra, entry.Data)
-
 	return &Message{
 		Version:  "1.1",
 		Host:     hook.Hostname,

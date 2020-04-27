@@ -204,7 +204,6 @@ export class WorkflowStepLogComponent implements OnInit, OnDestroy {
     }
 
     htmlView() {
-        this.ansiViewSelected = this.ansiViewSelected;
         this.htmlViewSelected = !this.htmlViewSelected;
         this.basicView = false;
         this.splittedLogs = null;
@@ -214,7 +213,6 @@ export class WorkflowStepLogComponent implements OnInit, OnDestroy {
 
     ansiView() {
         this.ansiViewSelected = !this.ansiViewSelected;
-        this.htmlViewSelected = this.htmlViewSelected;
         this.basicView = false;
         this.splittedLogs = null;
         this.parseLogs();
@@ -257,7 +255,7 @@ export class WorkflowStepLogComponent implements OnInit, OnDestroy {
             this.limitTo = this.splittedLogs.length - 40;
             this.splittedLogsToDisplay.splice(this.limitFrom, this.limitTo - this.limitFrom);
         }
-
+        console.log(this.splittedLogsToDisplay);
         this._cd.markForCheck();
     }
 

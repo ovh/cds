@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"net"
+	"strings"
 	"time"
 
 	"github.com/ovh/cds/engine/api/worker"
@@ -66,10 +67,15 @@ func (s *Service) handleConnection(ctx context.Context, conn net.Conn) {
 			log.Info(ctx, "client left")
 			return
 		}
-		log.Warning(ctx, "Message IN CDNNNNNNNNNN")
-		var m *hook.Message
-		if err := m.UnmarshalJSON(bytes); err != nil {
-			log.Error(ctx, "cdn.log > unable to unmarshal log message: %v", err)
+		if len(bytes) == 0 {
+			continue
+		}
+		if bytes[len(bytes)-1] == byte(0) {
+			bytes = bytes[:len(bytes)-1]
+		}
+		m := hook.Message{}
+		if err := (&m).UnmarshalJSON(bytes); err != nil {
+			log.Error(ctx, "cdn.log > unable to unmarshal log message: %s %v", string(bytes), err)
 			continue
 		}
 
@@ -84,11 +90,7 @@ func (s *Service) handleConnection(ctx context.Context, conn net.Conn) {
 			log.Error(ctx, "cdn.log > missing step order extra field")
 			continue
 		}
-		stepOrder, ok := stepOrderI.(int64)
-		if !ok {
-			log.Error(ctx, "cdn.log > unable to read step order extra field")
-			continue
-		}
+		stepOrder := int64(stepOrderI.(float64))
 
 		// Get worker datas
 		var workerSign sdk.WorkerSignature
@@ -106,7 +108,7 @@ func (s *Service) handleConnection(ctx context.Context, conn net.Conn) {
 			}
 		}
 		if err := jws.Verify(workerData.PrivateKey, sig.(string), &workerSign); err != nil {
-			log.Error(ctx, "cdn.log > unable to verify signature")
+			log.Error(ctx, "cdn.log > unable to verify signature: %v", err)
 			continue
 		}
 
@@ -125,10 +127,19 @@ func (s *Service) handleConnection(ctx context.Context, conn net.Conn) {
 			StepOrder:    stepOrder,
 			Val:          m.Full,
 		}
-		if err := workflow.AddLog(s.Db, pbJob, &logs, s.Cfg.Log.StepMaxSize); err != nil {
+		tx, err := s.Db.Begin()
+		if err != nil {
+
+		}
+		if !strings.HasSuffix(logs.Val, "\n") {
+			logs.Val += "\n"
+		}
+		if err := workflow.AddLog(tx, pbJob, &logs, s.Cfg.Log.StepMaxSize); err != nil {
 			log.Error(ctx, "cdn.log > unable to insert log")
+			_ = tx.Rollback()
 			continue
 		}
+		_ = tx.Commit()
 	}
 }
 

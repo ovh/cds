@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"encoding/base64"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -142,7 +143,7 @@ func takeJob(ctx context.Context, dbFunc func() *gorp.DbMap, store cache.Store, 
 	if err := worker.SetToBuilding(ctx, tx, wk.ID, job.ID, workerKey); err != nil {
 		return nil, sdk.WrapError(err, "cannot update worker %s status", wk.Name)
 	}
-	wnjri.SigningKey = string(workerKey)
+	wnjri.SigningKey = base64.StdEncoding.EncodeToString(workerKey)
 
 	// Load the node run
 	noderun, err := workflow.LoadNodeRunByID(tx, job.WorkflowNodeRunID, workflow.LoadRunOptions{})

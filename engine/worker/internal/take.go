@@ -2,6 +2,7 @@ package internal
 
 import (
 	"context"
+	"encoding/base64"
 	"strings"
 	"time"
 
@@ -36,7 +37,11 @@ func (w *CurrentWorker) Take(ctx context.Context, job sdk.WorkflowNodeJobRun) er
 	w.currentJob.newVariables = nil
 
 	if info.SigningKey != "" {
-		signer, err := jws.NewHMacSigner(info.SigningKey)
+		secretKey := make([]byte, 32)
+		if _, err := base64.StdEncoding.Decode(secretKey, []byte(info.SigningKey)); err != nil {
+			return sdk.WithStack(err)
+		}
+		signer, err := jws.NewHMacSigner(secretKey)
 		if err != nil {
 			return sdk.WithStack(err)
 		}

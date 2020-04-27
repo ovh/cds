@@ -77,8 +77,12 @@ func NewSigner(privateKey *rsa.PrivateKey) (jose.Signer, error) {
 }
 
 // NewSigner instantiate a signer using HMAC using SHA-512 with the given private key.
-func NewHMacSigner(secret string) (jose.Signer, error) {
-	return jose.NewSigner(jose.SigningKey{Algorithm: jose.HS512, Key: secret}, nil)
+func NewHMacSigner(secret []byte) (jose.Signer, error) {
+	sign, err := jose.NewSigner(jose.SigningKey{Algorithm: jose.HS512, Key: secret}, nil)
+	if err != nil {
+		return nil, sdk.WithStack(err)
+	}
+	return sign, nil
 }
 
 // Sign a json marshalled content and returns a protected JWS object using the full serialization format.

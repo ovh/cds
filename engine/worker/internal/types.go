@@ -82,7 +82,7 @@ func (wk *CurrentWorker) Parameters() []sdk.Parameter {
 func (wk *CurrentWorker) SendLog(ctx context.Context, level workerruntime.Level, s string) {
 	jobID, _ := workerruntime.JobID(ctx)
 	stepOrder, err := workerruntime.StepOrder(ctx)
-	if wk.logger.stepLogger != nil {
+	if wk.logger.stepLogger == nil {
 		if !strings.HasSuffix(s, "\n") {
 			s += "\n"
 		}
