@@ -9,6 +9,7 @@ import (
 	"github.com/gophercloud/gophercloud/openstack/compute/v2/extensions/tenantnetworks"
 	"github.com/gophercloud/gophercloud/openstack/compute/v2/flavors"
 
+	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
 
@@ -58,8 +59,7 @@ func (h *HatcheryOpenstack) InitHatchery(ctx context.Context) error {
 func (h *HatcheryOpenstack) initFlavors() error {
 	all, err := flavors.ListDetail(h.openstackClient, nil).AllPages()
 	if err != nil {
-		return sdk.WithStack(fmt.Errorf("initFlavors> error on flavors.ListDetail: %v", err)
-```)
+		return sdk.WithStack(fmt.Errorf("initFlavors> error on flavors.ListDetail: %v", err))
 	}
 	lflavors, err := flavors.ExtractFlavors(all)
 	if err != nil {
