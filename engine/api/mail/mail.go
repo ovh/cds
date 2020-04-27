@@ -9,6 +9,7 @@ import (
 	"net/mail"
 	"net/smtp"
 	"text/template"
+	"time"
 
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
@@ -192,6 +193,8 @@ func SendEmail(ctx context.Context, subject string, mailContent *bytes.Buffer, u
 	headers["From"] = smtpFrom
 	headers["To"] = to.String()
 	headers["Subject"] = subject
+	// https://tools.ietf.org/html/rfc2392
+	headers["Message-ID"] = fmt.Sprintf("<%d.%s>", time.Now().UnixNano(), smtpFrom)
 
 	if isHTML {
 		headers["Content-Type"] = `text/html; charset="utf-8"`
