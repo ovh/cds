@@ -14,13 +14,13 @@ import (
 func LoadGroupsByNode(db gorp.SqlExecutor, nodeID []int64) (map[int64][]sdk.GroupPermission, error) {
 	query := `SELECT workflow_node_id, "group".id,"group".name,workflow_node_group.role
 		FROM "group"
-			JOIN project_group ON "group".id = project_group.group_id
-			JOIN workflow_perm ON workflow_perm.project_group_id = project_group.id
-	 		JOIN workflow_node_group ON workflow_node_group.workflow_group_id = workflow_perm.id
+		JOIN project_group ON "group".id = project_group.group_id
+		JOIN workflow_perm ON workflow_perm.project_group_id = project_group.id
+	 	JOIN workflow_node_group ON workflow_node_group.workflow_group_id = workflow_perm.id
 		WHERE workflow_node_group.workflow_node_id = ANY(string_to_array($1, ',')::int[])
 		ORDER BY "group".name ASC`
 
-	rows, err := db.Query(query, gorpmapping.IDStringsToQueryString(nodeID))
+	rows, err := db.Query(query, gorpmapping.IDsToQueryString(nodeID))
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, nil

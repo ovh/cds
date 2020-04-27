@@ -17,7 +17,7 @@ type LoadAllWorkflowsOptions struct {
 		WorkflowName string
 		VCSServer    string
 		Repository   string
-		GroupIDs     gorpmapping.IDs
+		GroupIDs     []int64
 	}
 	Options struct {
 		WithApplications       bool
@@ -35,7 +35,7 @@ type LoadAllWorkflowsOptions struct {
 
 func (opt LoadAllWorkflowsOptions) Query() gorpmapping.Query {
 	var queryString = `
-	WITH 
+    WITH 
     workflow_root_application_id AS (
         SELECT 
             id as "workflow_id", 
@@ -50,27 +50,27 @@ func (opt LoadAllWorkflowsOptions) Query() gorpmapping.Query {
             ARRAY_AGG(group_id) as "groups"
         FROM project_group
         GROUP BY project_id
-	),
-	selected_workflow AS (
-		SELECT 
-			project.id, 
-			workflow_root_application_id.workflow_id, 
-			project.projectkey, 
-			workflow_name, 
-			application.id, 
-			application.name, 
-			application.vcs_server, 
-			application.repo_fullname, 
-			project_permission.groups
-		FROM workflow_root_application_id
-		LEFT OUTER JOIN application ON application.id = root_application_id
-		JOIN project ON project.id = workflow_root_application_id.project_id
-		JOIN project_permission ON project_permission.project_id = project.id	
-	)
-	SELECT * 
-	FROM workflow 
-	JOIN selected_workflow ON selected_workflow.workflow_id = workflow.id
-	`
+    ),
+    selected_workflow AS (
+        SELECT 
+        project.id, 
+            workflow_root_application_id.workflow_id, 
+            project.projectkey, 
+            workflow_name, 
+            application.id, 
+            application.name, 
+            application.vcs_server, 
+            application.repo_fullname, 
+            project_permission.groups
+            FROM workflow_root_application_id
+        LEFT OUTER JOIN application ON application.id = root_application_id
+        JOIN project ON project.id = workflow_root_application_id.project_id
+        JOIN project_permission ON project_permission.project_id = project.id	
+    )
+    SELECT workflow.* 
+    FROM workflow 
+    JOIN selected_workflow ON selected_workflow.workflow_id = workflow.id
+    `
 
 	var filters []string
 	var args []interface{}
@@ -132,9 +132,16 @@ func (opt LoadAllWorkflowsOptions) Loaders() []gorpmapping.GetOptionFunc {
 }
 
 func LoadAllWorkflows(ctx context.Context, db gorp.SqlExecutor, opts LoadAllWorkflowsOptions) ([]sdk.Workflow, error) {
-	var workflows []sdk.Workflow
+	var workflows []Workflow
 	if err := gorpmapping.GetAll(ctx, db, opts.Query(), &workflows, opts.Loaders()...); err != nil {
 		return nil, err
 	}
-	return workflows, nil
+	ws := make([]sdk.Workflow, 0, len(workflows))
+	for i := range workflows {
+		if err := workflows[i].PostGet(db); err != nil {
+			return nil, err
+		}
+		ws = append(ws, sdk.Workflow(workflows[i]))
+	}
+	return ws, nil
 }
