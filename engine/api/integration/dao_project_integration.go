@@ -174,7 +174,7 @@ func UpdateIntegration(db gorp.SqlExecutor, pp sdk.ProjectIntegration) error {
 	for k, cfg := range givenConfig {
 		if cfg.Type == sdk.IntegrationConfigTypePassword && cfg.Value == sdk.PasswordPlaceholder {
 			if oldConfig == nil {
-				// reload the previous config to ensuse we don't store placeholder
+				// reload the previous config to ensure we don't store placeholder
 				var err error
 				oldConfig, err = LoadProjectIntegrationByIDWithClearPassword(db, pp.ID)
 				if err != nil {
