@@ -29,12 +29,12 @@ func (h *HatcheryOpenstack) InitHatchery(ctx context.Context) error {
 
 	provider, err := openstack.AuthenticatedClient(authOpts)
 	if err != nil {
-		return fmt.Errorf("Unable to openstack.AuthenticatedClient: %v", err)
+		return sdk.WithStack(fmt.Errorf("unable to openstack.AuthenticatedClient: %v", err))
 	}
 
 	openstackClient, err := openstack.NewComputeV2(provider, gophercloud.EndpointOpts{Region: h.Config.Region})
 	if err != nil {
-		return fmt.Errorf("Unable to openstack.NewComputeV2: %v", err)
+		return sdk.WithStack(fmt.Errorf("unable to openstack.NewComputeV2: %v", err))
 	}
 	h.openstackClient = openstackClient
 
@@ -58,11 +58,12 @@ func (h *HatcheryOpenstack) InitHatchery(ctx context.Context) error {
 func (h *HatcheryOpenstack) initFlavors() error {
 	all, err := flavors.ListDetail(h.openstackClient, nil).AllPages()
 	if err != nil {
-		return fmt.Errorf("initFlavors> error on flavors.ListDetail: %v", err)
+		return sdk.WithStack(fmt.Errorf("initFlavors> error on flavors.ListDetail: %v", err)
+```)
 	}
 	lflavors, err := flavors.ExtractFlavors(all)
 	if err != nil {
-		return fmt.Errorf("initFlavors> error on flavors.ExtractFlavors: %v", err)
+		return sdk.WithStack(fmt.Errorf("initFlavors> error on flavors.ExtractFlavors: %v", err))
 	}
 	h.flavors = lflavors
 	return nil
@@ -71,11 +72,11 @@ func (h *HatcheryOpenstack) initFlavors() error {
 func (h *HatcheryOpenstack) initNetworks() error {
 	all, err := tenantnetworks.List(h.openstackClient).AllPages()
 	if err != nil {
-		return fmt.Errorf("initNetworks> Unable to get Network: %v", err)
+		return sdk.WithStack(fmt.Errorf("initNetworks> Unable to get Network: %v", err))
 	}
 	nets, err := tenantnetworks.ExtractNetworks(all)
 	if err != nil {
-		return fmt.Errorf("initNetworks> Unable to get Network: %v", err)
+		return sdk.WithStack(fmt.Errorf("initNetworks> Unable to get Network: %v", err))
 	}
 	for _, n := range nets {
 		if n.Name == h.Config.NetworkString {
