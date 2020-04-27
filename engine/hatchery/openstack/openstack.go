@@ -160,7 +160,7 @@ func (h *HatcheryOpenstack) CanSpawn(ctx context.Context, model *sdk.Model, jobI
 	// if there is a model, we have to check if the flavor attached to model is knowned by this hatchery
 	if model != nil {
 		if _, err := h.flavorID(model.ModelVirtualMachine.Flavor); err != nil {
-			log.Debug("CanSpawn> flavor '%s' not found", model.ModelVirtualMachine.Flavor)
+			log.Debug("CanSpawn> h.flavorID on %s err:%v", model.ModelVirtualMachine.Flavor, err)
 			return false
 		}
 		log.Debug("CanSpawn> flavor '%s' found", model.ModelVirtualMachine.Flavor)
