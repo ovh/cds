@@ -24,9 +24,7 @@ const (
 // setting flag need_registration to true in DB.
 func ComputeRegistrationNeeds(db gorp.SqlExecutor, allBinaryReqs sdk.RequirementList, reqs sdk.RequirementList) error {
 	log.Debug("ComputeRegistrationNeeds>")
-	var nbModelReq int
-	var nbOSArchReq int
-	var nbHostnameReq int
+	var nbModelReq, nbOSArchReq, nbHostnameReq, nbRegionReq int
 
 	for _, r := range reqs {
 		switch r.Type {
@@ -47,6 +45,8 @@ func ComputeRegistrationNeeds(db gorp.SqlExecutor, allBinaryReqs sdk.Requirement
 			nbModelReq++
 		case sdk.HostnameRequirement:
 			nbHostnameReq++
+		case sdk.RegionRequirement:
+			nbRegionReq++
 		}
 	}
 
@@ -58,6 +58,9 @@ func ComputeRegistrationNeeds(db gorp.SqlExecutor, allBinaryReqs sdk.Requirement
 	}
 	if nbHostnameReq > 1 {
 		return sdk.NewError(sdk.ErrWrongRequest, errors.New("invalid hostname requirement usage"))
+	}
+	if nbRegionReq > 1 {
+		return sdk.NewError(sdk.ErrWrongRequest, errors.New("invalid region requirement usage"))
 	}
 
 	return nil

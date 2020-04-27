@@ -34,6 +34,10 @@ func checkRequirements(ctx context.Context, w *CurrentWorker, a *sdk.Action) (bo
 
 	log.Debug("requirements for %s >>> %+v\n", a.Name, a.Requirements)
 	for _, r := range a.Requirements {
+		if r.Type == sdk.RegionRequirement {
+			// region is checked by hatchery only
+			continue
+		}
 		ok, err := checkRequirement(w, r)
 		if err != nil {
 			log.Warning(ctx, "checkQueue> error on checkRequirement %s", err)
