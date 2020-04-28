@@ -75,9 +75,9 @@ export class AuthenticationService {
         });
     }
 
-    ldapSignin(bind: string, password: string, init_token?: string): Observable<AuthConsumerSigninResponse> {
+    ldapSignin(user: string, password: string, init_token?: string): Observable<AuthConsumerSigninResponse> {
         return this._http.post<AuthConsumerSigninResponse>('/auth/consumer/ldap/signin', {
-            bind,
+            user,
             password,
             init_token
         });

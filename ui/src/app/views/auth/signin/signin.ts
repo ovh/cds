@@ -129,7 +129,7 @@ export class SigninComponent implements OnInit {
     }
 
     ldapSignin(f: NgForm) {
-        this._authenticationService.ldapSignin(f.value.bind, f.value.password, f.value.init_token).subscribe(() => {
+        this._authenticationService.ldapSignin(f.value.user, f.value.password, f.value.init_token).subscribe(() => {
             if (this.redirect) {
                 this._router.navigateByUrl(decodeURIComponent(this.redirect));
             } else {
