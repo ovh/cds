@@ -76,7 +76,7 @@ func NewSigner(privateKey *rsa.PrivateKey) (jose.Signer, error) {
 	return jose.NewSigner(jose.SigningKey{Algorithm: jose.PS512, Key: privateKey}, nil)
 }
 
-// NewSigner instantiate a signer using HMAC using SHA-512 with the given private key.
+// NewHMacSigner instantiates a signer using HMAC using SHA-512 with the given private key.
 func NewHMacSigner(secret []byte) (jose.Signer, error) {
 	sign, err := jose.NewSigner(jose.SigningKey{Algorithm: jose.HS512, Key: secret}, nil)
 	if err != nil {
