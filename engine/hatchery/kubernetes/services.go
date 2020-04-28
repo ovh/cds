@@ -14,6 +14,10 @@ import (
 )
 
 func (h *HatcheryKubernetes) getServicesLogs(ctx context.Context) error {
+	if err := h.Common.InitServiceLogger(); err != nil {
+		return err
+	}
+
 	pods, err := h.k8sClient.CoreV1().Pods(h.Config.Namespace).List(metav1.ListOptions{LabelSelector: LABEL_SERVICE_JOB_ID})
 	if err != nil {
 		return err
@@ -64,13 +68,15 @@ func (h *HatcheryKubernetes) getServicesLogs(ctx context.Context) error {
 	}
 
 	if len(servicesLogs) > 0 {
-		// Do call api
 		ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
-		if err := h.Client.QueueServiceLogs(ctx, servicesLogs); err != nil {
-			cancel()
-			return fmt.Errorf("Hatchery> Swarm> Cannot send service logs : %v", err)
+		defer cancel()
+		if h.Common.ServiceLogger == nil {
+			if err := h.Client.QueueServiceLogs(ctx, servicesLogs); err != nil {
+				return sdk.WithStack(fmt.Errorf("hatchery> Swarm> Cannot send service logs : %v", err))
+			}
+		} else {
+			h.Common.SendServiceLog(ctx, servicesLogs)
 		}
-		cancel()
 	}
 
 	return nil

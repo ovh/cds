@@ -8,9 +8,9 @@ import (
 	"os"
 	"strings"
 
-	log "github.com/sirupsen/logrus"
-
+	"github.com/ovh/cds/sdk"
 	loghook "github.com/ovh/cds/sdk/log/hook"
+	log "github.com/sirupsen/logrus"
 )
 
 // Conf contains log configuration
@@ -241,4 +241,37 @@ func newEntry(ctx context.Context, fields log.Fields) *log.Entry {
 	}
 
 	return entry
+}
+
+type Signature struct {
+	Worker    *SignatureWorker
+	Service   *SignatureService
+	JobID     int64
+	Timestamp int64
+}
+
+type SignatureWorker struct {
+	WorkerID  string
+	StepOrder int64
+}
+
+type SignatureService struct {
+	HatcheryName    string
+	RequirementID   int64
+	RequirementName string
+}
+
+func New(logServerAddr string) (*log.Logger, error) {
+	newLogger := log.New()
+	graylogcfg := &loghook.Config{
+		Addr:     logServerAddr,
+		Protocol: "tcp",
+	}
+	extra := map[string]interface{}{}
+	hook, err := loghook.NewHook(graylogcfg, extra)
+	if err != nil {
+		return nil, sdk.WithStack(err)
+	}
+	newLogger.AddHook(hook)
+	return newLogger, nil
 }

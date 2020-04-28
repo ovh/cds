@@ -4,6 +4,7 @@ import (
 	"github.com/go-gorp/gorp"
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/service"
+	"github.com/ovh/cds/sdk"
 )
 
 // Service is the stuct representing a hooks µService
@@ -17,11 +18,8 @@ type Service struct {
 
 // Configuration is the hooks configuration structure
 type Configuration struct {
-	Name string `toml:"name" default:"cds-cdn" comment:"Name of this CDS CDN Service\n Enter a name to enable this service" json:"name"`
-	TCP  struct {
-		Addr string `toml:"addr" default:"" commented:"true" comment:"Listen address without port, example: 127.0.0.1" json:"addr"`
-		Port int    `toml:"port" default:"8089" json:"port"`
-	} `toml:"tcp" comment:"######################\n CDS CDN TCP Configuration \n######################" json:"tcp"`
+	Name string        `toml:"name" default:"cds-cdn" comment:"Name of this CDS CDN Service\n Enter a name to enable this service" json:"name"`
+	TCP  sdk.TCPServer `toml:"tcp" comment:"######################\n CDS CDN TCP Configuration \n######################" json:"tcp"`
 	HTTP struct {
 		Addr string `toml:"addr" default:"" commented:"true" comment:"Listen address without port, example: 127.0.0.1" json:"addr"`
 		Port int    `toml:"port" default:"8089" json:"port"`

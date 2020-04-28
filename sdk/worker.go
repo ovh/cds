@@ -23,12 +23,6 @@ type Worker struct {
 	PrivateKey []byte    `json:"-" cli:"-" db:"cypher_private_key" gorpmapping:"encrypted,ID,Name"`
 }
 
-type WorkerSignature struct {
-	WorkerID  string
-	JobID     int64
-	Timestamp int64
-}
-
 // WorkerRegistrationForm represents the arguments needed to register a worker
 type WorkerRegistrationForm struct {
 	BinaryCapabilities []string

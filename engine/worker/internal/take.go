@@ -6,13 +6,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/sirupsen/logrus"
-
 	"github.com/ovh/cds/engine/worker/pkg/workerruntime"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/jws"
 	"github.com/ovh/cds/sdk/log"
-	loghook "github.com/ovh/cds/sdk/log/hook"
 )
 
 func (w *CurrentWorker) Take(ctx context.Context, job sdk.WorkflowNodeJobRun) error {
@@ -50,17 +47,11 @@ func (w *CurrentWorker) Take(ctx context.Context, job sdk.WorkflowNodeJobRun) er
 
 	if info.GelfServiceAddr != "" {
 		log.Info(ctx, "Setup step logger")
-		w.logger.stepLogger = logrus.New()
-		graylogcfg := &loghook.Config{
-			Addr:     info.GelfServiceAddr,
-			Protocol: "tcp",
-		}
-		extra := map[string]interface{}{}
-		hook, err := loghook.NewHook(graylogcfg, extra)
+		logger, err := log.New(info.GelfServiceAddr)
 		if err != nil {
-			return sdk.WithStack(err)
+			return err
 		}
-		w.logger.stepLogger.AddHook(hook)
+		w.logger.stepLogger = logger
 	}
 
 	start := time.Now()

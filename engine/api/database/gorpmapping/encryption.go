@@ -1,10 +1,8 @@
 package gorpmapping
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/ovh/cds/sdk/log"
 	"reflect"
 	"strconv"
 	"strings"
@@ -112,7 +110,6 @@ func updateEncryptedData(db gorp.SqlExecutor, i interface{}) error {
 	}
 	encryptedContentArgs = append(encryptedContentArgs, id)
 	query := fmt.Sprintf("UPDATE %s SET %s WHERE %s = $%d", table, strings.Join(updateSlice, ","), key, c)
-	log.Warning(context.TODO(), ">>>>%s", query)
 	res, err := db.Exec(query, encryptedContentArgs...)
 	if err != nil {
 		return sdk.WithStack(err)

@@ -7,11 +7,16 @@ import (
 	"time"
 
 	"github.com/docker/docker/api/types"
+
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
 
 func (h *HatcherySwarm) getServicesLogs() error {
+	if err := h.Common.InitServiceLogger(); err != nil {
+		return err
+	}
+
 	for _, dockerClient := range h.dockerClients {
 		containers, err := h.getContainers(dockerClient, types.ContainerListOptions{All: true})
 		if err != nil {
@@ -74,15 +79,18 @@ func (h *HatcherySwarm) getServicesLogs() error {
 					Val:                    string(logs),
 				})
 			}
-
-			if len(servicesLogs) > 0 {
+		}
+		if len(servicesLogs) > 0 {
+			ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+			if h.Common.ServiceLogger == nil {
 				// Do call api
-				ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 				if err := h.Client.QueueServiceLogs(ctx, servicesLogs); err != nil {
 					log.Error(ctx, "Hatchery> Swarm> Cannot send service logs : %v", err)
 				}
-				cancel()
+			} else {
+				h.Common.SendServiceLog(ctx, servicesLogs)
 			}
+			cancel()
 		}
 	}
 	return nil

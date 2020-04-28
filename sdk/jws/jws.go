@@ -113,14 +113,14 @@ func Verify(key interface{}, s string, i interface{}) error {
 	if err != nil {
 		return sdk.WithStack(err)
 	}
-	return json.Unmarshal(output, i)
+	return sdk.WithStack(json.Unmarshal(output, i))
 }
 
 func UnsafeParse(s string, i interface{}) error {
 	object, err := jose.ParseSigned(s)
 	if err != nil {
-		return err
+		return sdk.WithStack(err)
 	}
 	output := object.UnsafePayloadWithoutVerification()
-	return json.Unmarshal(output, i)
+	return sdk.WithStack(json.Unmarshal(output, i))
 }

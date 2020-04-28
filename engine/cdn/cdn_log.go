@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/engine/api/worker"
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/sdk"
@@ -17,7 +18,8 @@ import (
 )
 
 var (
-	workers = make(map[string]sdk.Worker)
+	workers    = make(map[string]sdk.Worker)
+	hatcheries = make(map[string][]byte)
 )
 
 func (s *Service) RunTcpLogServer(ctx context.Context) {
@@ -52,95 +54,128 @@ func (s *Service) handleConnection(ctx context.Context, conn net.Conn) {
 	defer func() {
 		_ = conn.Close()
 	}()
-
-	timeoutDuration := 5 * time.Second
 	bufReader := bufio.NewReader(conn)
-
 	for {
-		// Set a deadline for reading. Read operation will fail if no data is received after deadline.
-		if err := conn.SetReadDeadline(time.Now().Add(timeoutDuration)); err != nil {
-			log.Error(ctx, "unable to set read deadline on connection")
-			return
-		}
 		bytes, err := bufReader.ReadBytes(byte(0))
 		if err != nil {
 			log.Info(ctx, "client left")
 			return
 		}
-		if len(bytes) == 0 {
-			continue
-		}
-		if bytes[len(bytes)-1] == byte(0) {
-			bytes = bytes[:len(bytes)-1]
-		}
-		m := hook.Message{}
-		if err := (&m).UnmarshalJSON(bytes); err != nil {
-			log.Error(ctx, "cdn.log > unable to unmarshal log message: %s %v", string(bytes), err)
-			continue
-		}
+		// remove byte(0)
+		bytes = bytes[:len(bytes)-1]
 
-		sig, ok := m.Extra[log.ExtraFieldSignature]
-		if !ok || sig == "" {
-			log.Error(ctx, "cdn.log > signature not found on log message %+v", m)
+		if err := s.handleLogMessage(ctx, bytes); err != nil {
+			log.Error(ctx, "cdn.log> :%v", err)
 			continue
 		}
-
-		stepOrderI, ok := m.Extra[log.ExtraFieldStepOrder]
-		if !ok {
-			log.Error(ctx, "cdn.log > missing step order extra field")
-			continue
-		}
-		stepOrder := int64(stepOrderI.(float64))
-
-		// Get worker datas
-		var workerSign sdk.WorkerSignature
-		if err := jws.UnsafeParse(sig.(string), &workerSign); err != nil {
-			log.Error(ctx, "cdn.log > unable to unsafe parse log signature: %v", err)
-			continue
-		}
-		workerData, ok := workers[workerSign.WorkerID]
-		if !ok {
-			var err error
-			workerData, err = s.getWorker(ctx, workerSign.WorkerID)
-			if err != nil {
-				log.Error(ctx, "cdn.log > unable to retrieve worker data from api: %v", err)
-				continue
-			}
-		}
-		if err := jws.Verify(workerData.PrivateKey, sig.(string), &workerSign); err != nil {
-			log.Error(ctx, "cdn.log > unable to verify signature: %v", err)
-			continue
-		}
-
-		pbJob, err := workflow.LoadNodeJobRun(ctx, s.Db, s.Cache, workerSign.JobID)
-		if err != nil {
-			log.Error(ctx, "cdn.log > unable to verify signature")
-			continue
-		}
-
-		logDate := time.Unix(0, int64(m.Time*1e9))
-		logs := sdk.Log{
-			JobID:        pbJob.ID,
-			LastModified: &logDate,
-			NodeRunID:    pbJob.WorkflowNodeRunID,
-			Start:        &logDate,
-			StepOrder:    stepOrder,
-			Val:          m.Full,
-		}
-		tx, err := s.Db.Begin()
-		if err != nil {
-
-		}
-		if !strings.HasSuffix(logs.Val, "\n") {
-			logs.Val += "\n"
-		}
-		if err := workflow.AddLog(tx, pbJob, &logs, s.Cfg.Log.StepMaxSize); err != nil {
-			log.Error(ctx, "cdn.log > unable to insert log")
-			_ = tx.Rollback()
-			continue
-		}
-		_ = tx.Commit()
 	}
+}
+
+func (s *Service) handleLogMessage(ctx context.Context, messageReceived []byte) error {
+	m := hook.Message{}
+	if err := (&m).UnmarshalJSON(messageReceived); err != nil {
+		return sdk.WrapError(err, "unable to unmarshall gelf message: %s", string(messageReceived))
+	}
+
+	sig, ok := m.Extra[log.ExtraFieldSignature]
+	if !ok || sig == "" {
+		return sdk.WithStack(fmt.Errorf("signature not found on log message"))
+	}
+
+	// Get worker datas
+	var signature log.Signature
+	if err := jws.UnsafeParse(sig.(string), &signature); err != nil {
+		return err
+	}
+
+	switch {
+	case signature.Worker != nil:
+		return s.handleWorkerLog(ctx, signature.Worker.WorkerID, sig, m)
+	case signature.Service != nil:
+		return s.handleServiceLog(ctx, signature.Service.HatcheryName, sig, m)
+	default:
+		return sdk.WithStack(sdk.ErrWrongRequest)
+	}
+}
+
+func (s *Service) handleWorkerLog(ctx context.Context, workerID string, sig interface{}, m hook.Message) error {
+	var signature log.Signature
+	workerData, ok := workers[workerID]
+	if !ok {
+		var err error
+		workerData, err = s.getWorker(ctx, workerID)
+		if err != nil {
+			return err
+		}
+	}
+	if err := jws.Verify(workerData.PrivateKey, sig.(string), &signature); err != nil {
+		return err
+	}
+	if workerData.JobRunID == nil || *workerData.JobRunID != signature.JobID {
+		return sdk.WithStack(sdk.ErrForbidden)
+	}
+
+	pbJob, err := workflow.LoadNodeJobRun(ctx, s.Db, s.Cache, signature.JobID)
+	if err != nil {
+		return err
+	}
+
+	logDate := time.Unix(0, int64(m.Time*1e9))
+	logs := sdk.Log{
+		JobID:        pbJob.ID,
+		LastModified: &logDate,
+		NodeRunID:    pbJob.WorkflowNodeRunID,
+		Start:        &logDate,
+		StepOrder:    signature.Worker.StepOrder,
+		Val:          m.Full,
+	}
+	if !strings.HasSuffix(logs.Val, "\n") {
+		logs.Val += "\n"
+	}
+
+	tx, err := s.Db.Begin()
+	if err != nil {
+		return sdk.WithStack(err)
+	}
+	defer tx.Rollback() // nolint
+
+	if err := workflow.AddLog(tx, pbJob, &logs, s.Cfg.Log.StepMaxSize); err != nil {
+		return err
+	}
+	return sdk.WithStack(tx.Commit())
+}
+
+func (s *Service) handleServiceLog(ctx context.Context, hatcheryName string, sig interface{}, m hook.Message) error {
+	var signature log.Signature
+	hatcheryPublicKey, ok := hatcheries[hatcheryName]
+	if !ok {
+		var err error
+		hatcheryPublicKey, err = s.getHatcheryPublicKey(ctx, hatcheryName)
+		if err != nil {
+			return err
+		}
+	}
+	if err := jws.Verify(hatcheryPublicKey, sig.(string), &signature); err != nil {
+		return err
+	}
+
+	nodeRunJob, err := workflow.LoadNodeJobRun(ctx, s.Db, s.Cache, signature.JobID)
+	if err != nil {
+		return err
+	}
+
+	logs := sdk.ServiceLog{
+		ServiceRequirementName: signature.Service.RequirementName,
+		ServiceRequirementID:   signature.Service.RequirementID,
+		WorkflowNodeJobRunID:   signature.JobID,
+		WorkflowNodeRunID:      nodeRunJob.WorkflowNodeRunID,
+		Val:                    m.Full,
+	}
+
+	if err := workflow.AddServiceLog(s.Db, nodeRunJob, &logs, s.Cfg.Log.ServiceMaxSize); err != nil {
+		return err
+	}
+	return nil
 }
 
 func (s *Service) getWorker(ctx context.Context, workerID string) (sdk.Worker, error) {
@@ -150,4 +185,13 @@ func (s *Service) getWorker(ctx context.Context, workerID string) (sdk.Worker, e
 	}
 	workers[w.ID] = w
 	return w, nil
+}
+
+func (s *Service) getHatcheryPublicKey(ctx context.Context, hatcheryName string) ([]byte, error) {
+	h, err := services.LoadByNameAndType(ctx, s.Db, hatcheryName, services.TypeHatchery)
+	if err != nil {
+		return nil, err
+	}
+	hatcheries[hatcheryName] = h.PublicKey
+	return h.PublicKey, nil
 }

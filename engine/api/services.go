@@ -60,9 +60,9 @@ func (api *API) postServiceRegisterHandler() service.Handler {
 		}
 		if srv != nil && !(srv.Type == data.Type) {
 			return sdk.WrapError(sdk.ErrForbidden, "cannot register service %s of type %s for consumer %s while existing service type is different", data.Name, data.Type, consumer.ID)
-    }
-    
-    // Update or create the service
+		}
+
+		// Update or create the service
 		if srv != nil {
 			srv.Update(data)
 			if err := services.Update(ctx, tx, srv); err != nil {
@@ -87,6 +87,7 @@ func (api *API) postServiceRegisterHandler() service.Handler {
 		}
 
 		srv.Uptodate = data.Version == sdk.VERSION
+		srv.LogServer = api.Config.CDN.TCP
 
 		return service.WriteJSON(w, srv, http.StatusOK)
 	}

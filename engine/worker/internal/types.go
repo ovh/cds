@@ -107,8 +107,11 @@ func (wk *CurrentWorker) SendLog(ctx context.Context, level workerruntime.Level,
 	default:
 	}
 
-	dataToSign := sdk.WorkerSignature{
-		WorkerID:  wk.id,
+	dataToSign := log.Signature{
+		Worker: &log.SignatureWorker{
+			WorkerID:  wk.id,
+			StepOrder: int64(stepOrder),
+		},
 		JobID:     wk.currentJob.wJob.ID,
 		Timestamp: time.Now().UnixNano(),
 	}
@@ -116,7 +119,7 @@ func (wk *CurrentWorker) SendLog(ctx context.Context, level workerruntime.Level,
 	if err != nil {
 		log.Error(ctx, "unable to sign logs: %v", err)
 	}
-	wk.logger.stepLogger.WithField("Signature", signature).WithField("StepOrder", stepOrder).Log(logLevel, s)
+	wk.logger.stepLogger.WithField(log.ExtraFieldSignature, signature).Log(logLevel, s)
 
 }
 
