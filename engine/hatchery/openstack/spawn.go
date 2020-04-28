@@ -25,6 +25,10 @@ func (h *HatcheryOpenstack) SpawnWorker(ctx context.Context, spawnArgs hatchery.
 		log.Debug("spawnWorker> spawning worker %s model:%s", spawnArgs.WorkerName, spawnArgs.Model.Name)
 	}
 
+	if spawnArgs.JobID == 0 && !spawnArgs.RegisterOnly {
+		return sdk.WithStack(fmt.Errorf("no job ID and no register"))
+	}
+
 	if len(h.getServers(ctx)) == h.Configuration().Provision.MaxWorker {
 		log.Debug("MaxWorker limit (%d) reached", h.Configuration().Provision.MaxWorker)
 		return nil
