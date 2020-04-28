@@ -9,7 +9,6 @@ import (
 	"github.com/ovh/cds/engine/api/authentication"
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 )
 
 func Insert(ctx context.Context, db gorp.SqlExecutor, w *sdk.Worker) error {
@@ -162,7 +161,6 @@ func LoadWorkerByIDWithDecryptKey(ctx context.Context, db gorp.SqlExecutor, work
 	if !isValid {
 		return sdk.Worker{}, sdk.ErrInvalidData
 	}
-	log.Warning(ctx, "My WORKER: %+v", work.Worker)
 	return work.Worker, err
 }
 

@@ -193,7 +193,6 @@ require (
 	google.golang.org/genproto v0.0.0-20190817000702-55e96fffbd48 // indirect
 	google.golang.org/grpc v1.23.0
 	gopkg.in/AlecAivazis/survey.v1 v1.7.1
-	gopkg.in/Graylog2/go-gelf.v2 v2.0.0-20191017102106-1550ee647df0
 	gopkg.in/asn1-ber.v1 v1.0.0-20181015200546-f715ec2f112d // indirect
 	gopkg.in/bsm/sarama-cluster.v2 v2.1.4
 	gopkg.in/go-playground/assert.v1 v1.2.1 // indirect

@@ -14,10 +14,6 @@ import (
 )
 
 func (h *HatcheryKubernetes) getServicesLogs(ctx context.Context) error {
-	if err := h.Common.InitServiceLogger(); err != nil {
-		return err
-	}
-
 	pods, err := h.k8sClient.CoreV1().Pods(h.Config.Namespace).List(metav1.ListOptions{LabelSelector: LABEL_SERVICE_JOB_ID})
 	if err != nil {
 		return err

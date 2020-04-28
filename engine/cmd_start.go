@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/ovh/cds/engine/cdn"
 	"os"
 	"os/signal"
 	"sort"
@@ -15,6 +14,7 @@ import (
 	"github.com/ovh/cds/engine/api"
 	"github.com/ovh/cds/engine/api/observability"
 	"github.com/ovh/cds/engine/api/services"
+	"github.com/ovh/cds/engine/cdn"
 	"github.com/ovh/cds/engine/elasticsearch"
 	"github.com/ovh/cds/engine/hatchery/kubernetes"
 	"github.com/ovh/cds/engine/hatchery/local"
@@ -222,7 +222,7 @@ See $ engine config command for more details.
 					sdk.Exit("Unable to start: missing service %s configuration", a)
 				}
 				serviceConfs = append(serviceConfs, serviceConf{arg: a, service: cdn.New(), cfg: *conf.CDN})
-				names = append(names, conf.Hooks.Name)
+				names = append(names, conf.CDN.Name)
 				types = append(types, services.TypeCDN)
 
 			case services.TypeVCS:

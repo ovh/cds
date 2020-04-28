@@ -255,7 +255,6 @@ export class WorkflowStepLogComponent implements OnInit, OnDestroy {
             this.limitTo = this.splittedLogs.length - 40;
             this.splittedLogsToDisplay.splice(this.limitFrom, this.limitTo - this.limitFrom);
         }
-        console.log(this.splittedLogsToDisplay);
         this._cd.markForCheck();
     }
 

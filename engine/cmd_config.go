@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"github.com/ovh/cds/engine/cdn"
 	"io/ioutil"
 	"os"
 	"strconv"
@@ -12,6 +11,7 @@ import (
 	toml "github.com/yesnault/go-toml"
 
 	"github.com/ovh/cds/engine/api"
+	"github.com/ovh/cds/engine/cdn"
 	"github.com/ovh/cds/engine/hatchery/kubernetes"
 	"github.com/ovh/cds/engine/hatchery/local"
 	"github.com/ovh/cds/engine/hatchery/marathon"
