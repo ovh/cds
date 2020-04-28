@@ -285,7 +285,7 @@ func canRunJob(ctx context.Context, h Interface, j workerStarterRequest) bool {
 
 		// Skip others requirement as we can't check it
 		if r.Type == sdk.PluginRequirement || r.Type == sdk.ServiceRequirement || r.Type == sdk.MemoryRequirement {
-			log.Debug("canRunJob> %d - job %d - job with service, plugin, network or memory requirement. Skip these check as we can't checkt it on hatchery routine", j.timestamp, j.id)
+			log.Debug("canRunJob> %d - job %d - job with service, plugin, network or memory requirement. Skip these check as we can't check it on hatchery routine", j.timestamp, j.id)
 			continue
 		}
 

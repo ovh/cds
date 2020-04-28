@@ -1,10 +1,12 @@
 package marathon
 
 import (
-	"github.com/gambol99/go-marathon"
-	"github.com/ovh/cds/sdk/cdsclient"
-	"gopkg.in/h2non/gock.v1"
 	"time"
+
+	"github.com/gambol99/go-marathon"
+	"gopkg.in/h2non/gock.v1"
+
+	"github.com/ovh/cds/sdk/cdsclient"
 )
 
 type marathonJDD struct {

@@ -13,14 +13,13 @@ import (
 	"time"
 
 	"github.com/dgrijalva/jwt-go"
-	"github.com/ovh/cds/engine/service"
-
 	"github.com/gambol99/go-marathon"
 	"github.com/gorilla/mux"
 
 	"github.com/ovh/cds/engine/api"
 	"github.com/ovh/cds/engine/api/observability"
 	"github.com/ovh/cds/engine/api/services"
+	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/ovh/cds/sdk/hatchery"
