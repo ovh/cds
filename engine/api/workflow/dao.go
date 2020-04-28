@@ -296,7 +296,10 @@ func Load(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj sdk.
 		workflow.derived_from_workflow_id,
 		workflow.derived_from_workflow_name,
 		workflow.derivation_branch,
-		workflow.to_delete
+		workflow.to_delete,
+		workflow.metadata,
+		workflow.workflow_data,
+		workflow.purge_tags
 		from workflow
 		join project on project.id = workflow.project_id
 		where project.projectkey = $1
@@ -601,7 +604,12 @@ func Insert(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj sd
 	}
 
 	w.LastModified = time.Now()
-	if err := db.QueryRow("INSERT INTO workflow (name, description, icon, project_id, history_length, from_repository) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id", w.Name, w.Description, w.Icon, w.ProjectID, w.HistoryLength, w.FromRepository).Scan(&w.ID); err != nil {
+	if err := db.QueryRow(`INSERT INTO workflow (
+		name, description, icon, project_id, history_length, from_repository, purge_tags, workflow_data, metadata
+	) 
+	VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) 
+	RETURNING id`,
+		w.Name, w.Description, w.Icon, w.ProjectID, w.HistoryLength, w.FromRepository, w.PurgeTags, w.WorkflowData, w.Metadata).Scan(&w.ID); err != nil {
 		return sdk.WrapError(err, "Unable to insert workflow %s/%s", w.ProjectKey, w.Name)
 	}
 

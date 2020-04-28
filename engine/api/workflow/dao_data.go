@@ -68,7 +68,7 @@ func InsertWorkflowData(db gorp.SqlExecutor, w *sdk.Workflow) error {
 	}
 
 	dbWorkflow := Workflow(*w)
-	if err := dbWorkflow.PostUpdate(db); err != nil {
+	if _, err := db.Update(&dbWorkflow); err != nil {
 		return sdk.WrapError(err, "InsertWorkflowData> unable to update workflow data")
 	}
 
