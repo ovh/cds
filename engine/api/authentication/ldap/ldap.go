@@ -28,15 +28,18 @@ type AuthDriver struct {
 
 // Config handles all config to connect to the LDAP.
 type Config struct {
-	Host            string // 192.168.1.32
-	Port            int    // 636
-	SSL             bool   // true
-	RootDN          string // dc=ejnserver,dc=fr
-	UserSearchBase  string // ou=people
-	UserSearch      string // uid={{.search}}
-	UserFullname    string // {{.givenName}} {{.sn}}
-	ManagerDN       string // cn=admin,dc=ejnserver,dc=fr
-	ManagerPassword string // SECRET_PASSWORD_MANAGER
+	Host           string // 192.168.1.32
+	Port           int    // 636
+	SSL            bool   // true
+	UserSearchBase string // ou=people,dc=ejnserver,dc=fr
+	UserSearch     string // uid={{.search}}
+	UserDN         string // cn={0},ou=people,dc=ejnserver,dc=fr
+	UserFullname   string // {{.givenName}} {{.sn}}
+	UserEmail      string // {{.email}}
+	UserExternalID string // {{.uid}}
+	Attributes     string // uid,dn,cn,ou,givenName,sn,displayName,mail,memberOf
+	BindDN         string // cn=admin,dc=ejnserver,dc=fr
+	BindPW         string // BIND_PASSWORD
 }
 
 // NewDriver returns a new ldap auth driver.
@@ -65,8 +68,8 @@ func (d AuthDriver) GetSessionDuration() time.Duration {
 }
 
 func (d AuthDriver) CheckSigninRequest(req sdk.AuthConsumerSigninRequest) error {
-	if bind, ok := req["bind"]; !ok || bind == "" {
-		return sdk.NewErrorFrom(sdk.ErrWrongRequest, "missing or invalid bind term for ldap signin")
+	if user, ok := req["user"]; !ok || user == "" {
+		return sdk.NewErrorFrom(sdk.ErrWrongRequest, "missing or invalid user term for ldap signin")
 	}
 	if password, ok := req["password"]; !ok || password == "" {
 		return sdk.NewErrorFrom(sdk.ErrWrongRequest, "missing or invalid password for ldap signin")
@@ -76,14 +79,23 @@ func (d AuthDriver) CheckSigninRequest(req sdk.AuthConsumerSigninRequest) error 
 
 func (d AuthDriver) GetUserInfo(ctx context.Context, req sdk.AuthConsumerSigninRequest) (sdk.AuthDriverUserInfo, error) {
 	var userInfo sdk.AuthDriverUserInfo
-	var bind = req["bind"]
+	var user = req["user"]
 	var password = req["password"]
 
-	if err := d.bind(ctx, bind, password); err != nil {
-		return userInfo, sdk.NewError(sdk.ErrUnauthorized, err)
+	if d.conf.BindDN != "" {
+		if err := d.bindDN(ctx, d.conf.BindDN, d.conf.BindPW); err != nil {
+			return userInfo, sdk.NewError(sdk.ErrUnauthorized, err)
+		}
+	} else {
+		userDN := strings.Replace(d.conf.UserDN, "{0}", ldap.EscapeFilter(user), 1)
+
+		if err := d.bindDN(ctx, userDN, password); err != nil {
+			return userInfo, sdk.NewError(sdk.ErrUnauthorized, err)
+		}
 	}
 
-	entry, err := d.search(ctx, bind, "uid", "dn", "cn", "ou", "givenName", "sn", "mail", "memberOf")
+	attributes := strings.Split(d.conf.Attributes, ",")
+	entry, err := d.search(ctx, user, attributes...)
 	if err != nil && err.Error() != errUserNotFound {
 		return userInfo, sdk.NewError(sdk.ErrUnauthorized, err)
 	}
@@ -92,29 +104,44 @@ func (d AuthDriver) GetUserInfo(ctx context.Context, req sdk.AuthConsumerSigninR
 		return userInfo, fmt.Errorf("LDAP Search error multiple values")
 	}
 
+	if d.conf.BindDN != "" {
+		if err := d.bindDN(ctx, entry[0].DN, password); err != nil {
+			return userInfo, sdk.NewError(sdk.ErrUnauthorized, err)
+		}
+	}
+
 	//If user doesn't exist and search was'nt successful => exist
 	if err != nil {
 		log.Warning(ctx, "LDAP> Search error %s", err)
 		return userInfo, sdk.NewError(sdk.ErrUnauthorized, err)
 	}
 
-	//Execute template to compute fullname
-	tmpl, err := template.New("userfullname").Parse(d.conf.UserFullname)
-	if err != nil {
-		log.Error(ctx, "LDAP> Error with user fullname template %s : %s", d.conf.UserFullname, err)
-		tmpl, _ = template.New("userfullname").Parse("{{.givenName}}")
-	}
-	bufFullname := new(bytes.Buffer)
-	if err := tmpl.Execute(bufFullname, entry[0].Attributes); err != nil {
-		return userInfo, sdk.WithStack(err)
-	}
+	//Execute templates to compute user info
+	fullname, err := d.computeTemplate(ctx, "fullname", d.conf.UserFullname, "{{.givenName}}", entry[0].Attributes)
+	email, err := d.computeTemplate(ctx, "email", d.conf.UserEmail, "{{.mail}}", entry[0].Attributes)
+	externalID, err := d.computeTemplate(ctx, "externalid", d.conf.UserExternalID, "{{.uid}}", entry[0].Attributes)
 
-	userInfo.Fullname = bufFullname.String()
-	userInfo.Email = entry[0].Attributes["mail"]
-	userInfo.ExternalID = entry[0].Attributes["uid"]
-	userInfo.Username = req["bind"]
+	userInfo.Fullname = fullname
+	userInfo.Email = email
+	userInfo.ExternalID = externalID
+	userInfo.Username = req["user"]
 
 	return userInfo, nil
+}
+
+func (d *AuthDriver) computeTemplate(ctx context.Context, name string, parse string, backup string, data map[string]string) (string, error) {
+	tmpl, err := template.New(name).Parse(parse)
+	if err != nil {
+		log.Error(ctx, "LDAP> Error with user %s template %s : %s", name, parse, err)
+		tmpl, _ = template.New(name).Parse(backup)
+	}
+	buf := new(bytes.Buffer)
+	if err := tmpl.Execute(buf, data); err != nil {
+		return "", err
+	}
+
+	log.Debug("LDAP> User %s template %s = %s", name, parse, buf.String())
+	return buf.String(), err
 }
 
 func (d *AuthDriver) openLDAP(ctx context.Context, conf Config) error {
@@ -152,38 +179,27 @@ func (d *AuthDriver) openLDAP(ctx context.Context, conf Config) error {
 		}
 	}
 
-	if d.conf.ManagerDN != "" {
-		log.Info(ctx, "LDAP> bind manager %s", d.conf.ManagerDN)
-		if err := d.conn.Bind(d.conf.ManagerDN, d.conf.ManagerPassword); err != nil {
-			if shoudRetry(ctx, err) {
-				if err := d.openLDAP(ctx, d.conf); err != nil {
-					return err
-				}
-				if err := d.conn.Bind(d.conf.ManagerDN, d.conf.ManagerPassword); err != nil {
-					return sdk.WithStack(err)
-				}
-			} else {
-				return err
-			}
+	if d.conf.BindDN != "" {
+		if err := d.bindDN(ctx, d.conf.BindDN, d.conf.BindPW); err != nil {
+			return err
 		}
 	}
 
 	return nil
 }
 
-// bind binds
-func (d *AuthDriver) bind(ctx context.Context, term, password string) error {
-	bindRequest := strings.Replace(d.conf.UserSearch, "{0}", ldap.EscapeFilter(term), 1) + "," + d.conf.UserSearchBase + "," + d.conf.RootDN
-	log.Debug("LDAP> bind user %s", bindRequest)
+// bindDN binds
+func (d *AuthDriver) bindDN(ctx context.Context, dn, password string) error {
+	log.Info(ctx, "LDAP> Bind DN %s", dn)
 
-	if err := d.conn.Bind(bindRequest, password); err != nil {
+	if err := d.conn.Bind(dn, password); err != nil {
 		if !shoudRetry(ctx, err) {
 			return sdk.WithStack(err)
 		}
 		if err := d.openLDAP(ctx, d.conf); err != nil {
 			return err
 		}
-		if err := d.conn.Bind(bindRequest, password); err != nil {
+		if err := d.conn.Bind(dn, password); err != nil {
 			return sdk.WithStack(err)
 		}
 	}
@@ -198,7 +214,7 @@ func (d *AuthDriver) search(ctx context.Context, term string, attributes ...stri
 	log.Debug("LDAP> Search user %s", filter)
 	// Search for the given username
 	searchRequest := ldap.NewSearchRequest(
-		d.conf.RootDN,
+		d.conf.UserSearchBase,
 		ldap.ScopeWholeSubtree,
 		ldap.NeverDerefAliases,
 		1,

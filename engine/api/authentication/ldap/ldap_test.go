@@ -34,13 +34,16 @@ func TestGetUserInfo(t *testing.T) {
 	log.SetLogger(t)
 	cfg := test.LoadTestingConf(t)
 	ldapConfig := Config{
-		RootDN:          cfg["ldapRootDN"],
-		UserSearchBase:  cfg["ldapUserSearchBase"],
-		UserSearch:      cfg["ldapUserSearch"],
-		UserFullname:    cfg["ldapFullname"],
-		Host:            cfg["ldapHost"],
-		ManagerDN:       cfg["ldapManagerDN"],
-		ManagerPassword: cfg["ldapManagerPassword"],
+		UserSearchBase: cfg["ldapUserSearchBase"],
+		UserSearch:     cfg["ldapUserSearch"],
+		UserDN:         cfg["ldapUserDN"],
+		UserFullname:   cfg["ldapFullname"],
+		UserEmail:      cfg["ldapEmail"],
+		UserExternalID: cfg["ldapExternalID"],
+		Host:           cfg["ldapHost"],
+		BindDN:         cfg["ldapManagerDN"],
+		BindPW:         cfg["ldapManagerPassword"],
+		Attributes:     cfg["ldapAttributes"],
 	}
 
 	if ldapConfig.Host == "" {
@@ -53,7 +56,7 @@ func TestGetUserInfo(t *testing.T) {
 	driver, err := NewDriver(context.TODO(), false, ldapConfig)
 	require.NoError(t, err)
 	info, err := driver.GetUserInfo(context.TODO(), sdk.AuthConsumerSigninRequest{
-		"bind":     cfg["ldapTestUsername"],
+		"user":     cfg["ldapTestUsername"],
 		"password": cfg["ldapTestPassword"],
 	})
 

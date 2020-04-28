@@ -645,6 +645,7 @@
   "ui_updated": "UI has just been updated. Please click here to refresh your page.",
   "user_label_fullname": "Fullname",
   "user_label_username": "Username",
+  "user_label_user_ldap": "LDAP Login",
   "user_label_new_password": "New password",
   "user_label_password": "Password",
   "user_label_email": "Mail address",

@@ -86,17 +86,20 @@ type Configuration struct {
 		DefaultGroup  string `toml:"defaultGroup" default:"" comment:"The default group is the group in which every new user will be granted at signup" json:"defaultGroup"`
 		RSAPrivateKey string `toml:"rsaPrivateKey" default:"" comment:"The RSA Private Key used to sign and verify the JWT Tokens issued by the API \nThis is mandatory." json:"-"`
 		LDAP          struct {
-			Enabled         bool   `toml:"enabled" default:"false" json:"enabled"`
-			SignupDisabled  bool   `toml:"signupDisabled" default:"false" json:"signupDisabled"`
-			Host            string `toml:"host" json:"host"`
-			Port            int    `toml:"port" default:"636" json:"port"`
-			SSL             bool   `toml:"ssl" default:"true" json:"ssl"`
-			RootDN          string `toml:"rootDN" default:"dc=myorganization,dc=com" json:"rootDN"`
-			UserSearchBase  string `toml:"userSearchBase" default:"ou=people" json:"userSearchBase"`
-			UserSearch      string `toml:"userSearch" default:"uid={0}" json:"userSearch"`
-			UserFullname    string `toml:"userFullname" default:"{{.givenName}} {{.sn}}" json:"userFullname"`
-			ManagerDN       string `toml:"managerDN" default:"cn=admin,dc=myorganization,dc=com" comment:"Define it if ldapsearch need to be authenticated" json:"managerDN"`
-			ManagerPassword string `toml:"managerPassword" default:"SECRET_PASSWORD_MANAGER" comment:"Define it if ldapsearch need to be authenticated" json:"-"`
+			Enabled        bool   `toml:"enabled" default:"false" json:"enabled"`
+			SignupDisabled bool   `toml:"signupDisabled" default:"false" json:"signupDisabled"`
+			Host           string `toml:"host" json:"host"`
+			Port           int    `toml:"port" default:"636" json:"port"`
+			SSL            bool   `toml:"ssl" default:"true" json:"ssl"`
+			UserSearchBase string `toml:"userSearchBase" default:"ou=people,dc=myorganization,dc=com" json:"userSearchBase"`
+			UserSearch     string `toml:"userSearch" default:"uid={0}" json:"userSearch"`
+			UserDN         string `toml:"userDN" default:"cn={0},ou=people,dc=ejnserver,dc=fr" json:"userDN"`
+			UserFullname   string `toml:"userFullname" default:"{{.givenName}} {{.sn}}" json:"userFullname"`
+			UserEmail      string `toml:"userEmail" default:"{{.mail}}" json:"userEmail"`
+			UserExternalID string `toml:"userExternalID" default:"{{.uid}}" json:"userExternalID"`
+			Attributes     string `toml:"attributes" default:"uid,dn,cn,ou,givenName,sn,displayName,mail,memberOf" json:"attributes"`
+			BindDN         string `toml:"bindDN" default:"cn=admin,dc=myorganization,dc=com" comment:"Define it if ldapsearch need to be authenticated" json:"bindDn"`
+			BindPW         string `toml:"bindPW" default:"BIND_PASSWORD" comment:"Define it if ldapsearch need to be authenticated" json:"-"`
 		} `toml:"ldap" json:"ldap"`
 		Local struct {
 			Enabled              bool   `toml:"enabled" default:"true" json:"enabled"`
@@ -555,15 +558,17 @@ func (a *API) Serve(ctx context.Context) error {
 			ctx,
 			a.Config.Auth.LDAP.SignupDisabled,
 			ldap.Config{
-				Host:            a.Config.Auth.LDAP.Host,
-				Port:            a.Config.Auth.LDAP.Port,
-				SSL:             a.Config.Auth.LDAP.SSL,
-				RootDN:          a.Config.Auth.LDAP.RootDN,
-				UserSearchBase:  a.Config.Auth.LDAP.UserSearchBase,
-				UserSearch:      a.Config.Auth.LDAP.UserSearch,
-				UserFullname:    a.Config.Auth.LDAP.UserFullname,
-				ManagerDN:       a.Config.Auth.LDAP.ManagerDN,
-				ManagerPassword: a.Config.Auth.LDAP.ManagerPassword,
+				Host:           a.Config.Auth.LDAP.Host,
+				Port:           a.Config.Auth.LDAP.Port,
+				SSL:            a.Config.Auth.LDAP.SSL,
+				UserSearchBase: a.Config.Auth.LDAP.UserSearchBase,
+				UserSearch:     a.Config.Auth.LDAP.UserSearch,
+				UserFullname:   a.Config.Auth.LDAP.UserFullname,
+				UserEmail:      a.Config.Auth.LDAP.UserEmail,
+				UserExternalID: a.Config.Auth.LDAP.UserExternalID,
+				Attributes:     a.Config.Auth.LDAP.Attributes,
+				BindDN:         a.Config.Auth.LDAP.BindDN,
+				BindPW:         a.Config.Auth.LDAP.BindPW,
 			},
 		)
 		if err != nil {
