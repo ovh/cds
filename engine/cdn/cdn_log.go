@@ -67,7 +67,7 @@ func (s *Service) handleConnection(ctx context.Context, conn net.Conn) {
 		bytes = bytes[:len(bytes)-1]
 
 		if err := s.handleLogMessage(ctx, bytes); err != nil {
-			log.Error(ctx, "cdn.log> :%v", err)
+			log.Error(ctx, "cdn.log> %v", err)
 			continue
 		}
 	}
@@ -217,6 +217,7 @@ func (s *Service) getHatchery(ctx context.Context, hatcheryID int64, hatcheryNam
 	if err != nil {
 		return nil, err
 	}
+
 	if h.ID != hatcheryID {
 		return nil, sdk.WithStack(sdk.ErrWrongRequest)
 	}

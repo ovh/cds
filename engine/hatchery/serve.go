@@ -212,6 +212,7 @@ func (c *Common) SendServiceLog(ctx context.Context, servicesLogs []sdk.ServiceL
 	for _, s := range servicesLogs {
 		dataToSign := log.Signature{
 			Service: &log.SignatureService{
+				HatcheryID:      c.Service().ID,
 				HatcheryName:    c.ServiceName(),
 				RequirementID:   s.ServiceRequirementID,
 				RequirementName: s.ServiceRequirementName,

@@ -63,6 +63,7 @@ func (h *HatcheryKubernetes) getServicesLogs(ctx context.Context) error {
 				ServiceRequirementID:   reqServiceID,
 				ServiceRequirementName: subsStr[0][2],
 				Val:                    string(logs),
+				WorkerName:             pod.ObjectMeta.Name,
 			})
 		}
 	}

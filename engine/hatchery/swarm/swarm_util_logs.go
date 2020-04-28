@@ -75,7 +75,6 @@ func (h *HatcherySwarm) getServicesLogs() error {
 					ServiceRequirementName: cnt.Labels["service_req_name"],
 					Val:                    string(logs),
 					WorkerName:             workerName,
-					HatcheryID:             h.Service().ID,
 				})
 			}
 		}
