@@ -181,9 +181,7 @@ func (h *HatcheryLocal) getWorkerBinaryName() string {
 // checkCapabilities checks all requirements, foreach type binary, check if binary is on current host
 // returns an error "Exit status X" if current host misses one requirement
 func (h *HatcheryLocal) checkCapabilities(req []sdk.Requirement) ([]sdk.Requirement, error) {
-	var tmp map[string]sdk.Requirement
-
-	tmp = make(map[string]sdk.Requirement)
+	tmp := make(map[string]sdk.Requirement)
 	for _, r := range req {
 		ok, err := h.checkRequirement(r)
 		if err != nil {
@@ -348,7 +346,7 @@ func (h *HatcheryLocal) checkRequirement(r sdk.Requirement) (bool, error) {
 			return false, nil
 		}
 		return true, nil
-	case sdk.PluginRequirement:
+	case sdk.PluginRequirement, sdk.RegionRequirement:
 		return true, nil
 	case sdk.OSArchRequirement:
 		osarch := strings.Split(r.Value, "/")

@@ -91,14 +91,15 @@ var (
 	// AvailableRequirementsType List of all requirements
 	AvailableRequirementsType = []string{
 		BinaryRequirement,
-		NetworkAccessRequirement,
-		ModelRequirement,
 		HostnameRequirement,
-		PluginRequirement,
-		ServiceRequirement,
 		MemoryRequirement,
-		VolumeRequirement,
+		ModelRequirement,
+		NetworkAccessRequirement,
 		OSArchRequirement,
+		PluginRequirement,
+		RegionRequirement,
+		ServiceRequirement,
+		VolumeRequirement,
 	}
 
 	// OSArchRequirementValues comes from go tool dist list
