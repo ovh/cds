@@ -25,8 +25,8 @@ func (api *API) getProjectIntegrationHandler() service.Handler {
 
 		clearPassword := FormBool(r, "clearPassword")
 		if clearPassword {
-			if !isService(ctx) {
-				return sdk.ErrForbidden
+			if !isService(ctx) && !isWorker(ctx) {
+				return sdk.WithStack(sdk.ErrForbidden)
 			}
 			integ, err = integration.LoadProjectIntegrationByNameWithClearPassword(api.mustDB(), projectKey, integrationName)
 			if err != nil {
