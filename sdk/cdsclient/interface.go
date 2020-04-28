@@ -292,7 +292,7 @@ type HookClient interface {
 
 // WorkflowClient exposes workflows functions
 type WorkflowClient interface {
-	WorkflowList(projectKey string) ([]sdk.Workflow, error)
+	WorkflowList(projectKey string, opts ...RequestModifier) ([]sdk.Workflow, error)
 	WorkflowGet(projectKey, name string, opts ...RequestModifier) (*sdk.Workflow, error)
 	WorkflowUpdate(projectKey, name string, wf *sdk.Workflow) error
 	WorkflowDelete(projectKey string, workflowName string) error
@@ -341,6 +341,7 @@ type IntegrationClient interface {
 }
 
 // Interface is the main interface for cdsclient package
+// generate mock with "mockgen -source=interface.go -destination=mock_cdsclient/interface_mock.go Interface" from directory ${GOPATH}/src/github.com/ovh/cds/sdk/cdsclient
 type Interface interface {
 	Raw
 	AuthClient

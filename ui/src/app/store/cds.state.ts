@@ -1,7 +1,7 @@
+import { Injectable } from '@angular/core';
 import { Action, createSelector, State, StateContext } from '@ngxs/store';
 import { MonitoringService } from 'app/service/monitoring/monitoring.service';
 import { GetCDSStatus, UpdateMaintenance } from 'app/store/cds.action';
-
 
 export class CDSStateModel {
     public maintenance: boolean;
@@ -17,7 +17,10 @@ export function getInitialCDSState(): CDSStateModel {
     name: 'cds',
     defaults: getInitialCDSState()
 })
+@Injectable()
 export class CDSState {
+
+    constructor(private _monitoringService: MonitoringService) { }
 
     static getCurrentState() {
         return createSelector(
@@ -25,9 +28,6 @@ export class CDSState {
             (state: CDSStateModel): CDSStateModel => state
         );
     }
-
-    constructor(private _monitoringService: MonitoringService) { }
-
 
     @Action(UpdateMaintenance)
     updateMaintenance(ctx: StateContext<CDSStateModel>, action: UpdateMaintenance) {

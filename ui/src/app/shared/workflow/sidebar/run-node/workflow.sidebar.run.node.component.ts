@@ -51,7 +51,7 @@ export class WorkflowSidebarRunNodeComponent implements OnDestroy, OnInit {
     wNodeType = WNodeType;
 
     // Modal
-    @ViewChild('workflowRunNode', {static: false})
+    @ViewChild('workflowRunNode')
     workflowRunNode: WorkflowNodeRunParamComponent;
 
     duration: string;

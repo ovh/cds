@@ -52,7 +52,7 @@ export class WorkflowGraphComponent implements AfterViewInit {
     _direction: string;
 
     // workflow graph
-    @ViewChild('svgGraph', { read: ViewContainerRef, static: false }) svgContainer: any;
+    @ViewChild('svgGraph', { read: ViewContainerRef }) svgContainer: any;
     g: dagreD3.graphlib.Graph;
     render = new dagreD3.render();
 

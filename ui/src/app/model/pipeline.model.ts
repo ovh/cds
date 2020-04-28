@@ -72,6 +72,10 @@ export class Pipeline {
     previewMode: boolean;
     editModeChanged: boolean;
 
+    constructor() {
+        this.usage = new Usage();
+    }
+
     // Return true if pattern is good
     public static checkName(name: string): boolean {
         if (!name) {
@@ -130,10 +134,6 @@ export class Pipeline {
 
             return idFound === -1 ? p : current[idFound];
         });
-    }
-
-    constructor() {
-        this.usage = new Usage();
     }
 }
 

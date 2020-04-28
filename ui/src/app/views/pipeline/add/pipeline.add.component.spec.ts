@@ -1,8 +1,6 @@
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { Injector } from '@angular/core';
 import { fakeAsync, getTestBed, TestBed } from '@angular/core/testing';
-import { XHRBackend } from '@angular/http';
-import { MockBackend } from '@angular/http/testing';
 import { ActivatedRoute, ActivatedRouteSnapshot, Router } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
 import { TranslateLoader, TranslateModule, TranslateParser, TranslateService } from '@ngx-translate/core';
@@ -36,7 +34,6 @@ describe('CDS: Pipeline Add Component', () => {
 
     let injector: Injector;
     let store: Store;
-    let backend: MockBackend;
     let router: Router;
 
     beforeEach(() => {
@@ -44,8 +41,6 @@ describe('CDS: Pipeline Add Component', () => {
             declarations: [
             ],
             providers: [
-                MockBackend,
-                { provide: XHRBackend, useClass: MockBackend },
                 ApplicationService,
                 EnvironmentService,
                 ProjectStore,
@@ -78,7 +73,6 @@ describe('CDS: Pipeline Add Component', () => {
         });
 
         injector = getTestBed();
-        backend = injector.get(MockBackend);
         store = injector.get(Store);
         router = injector.get(Router);
     });
@@ -86,7 +80,6 @@ describe('CDS: Pipeline Add Component', () => {
     afterEach(() => {
         injector = undefined;
         store = undefined;
-        backend = undefined;
         router = undefined;
     });
 

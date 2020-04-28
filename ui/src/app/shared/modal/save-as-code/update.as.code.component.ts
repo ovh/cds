@@ -20,17 +20,17 @@ import { finalize, first } from 'rxjs/operators';
 })
 @AutoUnsubscribe()
 export class UpdateAsCodeComponent {
-    @ViewChild('updateAsCodeModal', { static: false })
-    public myModalTemplate: ModalTemplate<boolean, boolean, void>;
-    modal: SuiActiveModal<boolean, boolean, void>;
-    modalConfig: TemplateModalConfig<boolean, boolean, void>;
-
     @Input() project: Project;
     @Input() appName: string;
     @Input() name: string;
 
     dataToSave: any;
     dataType: string;
+
+    @ViewChild('updateAsCodeModal')
+    public myModalTemplate: ModalTemplate<boolean, boolean, void>;
+    modal: SuiActiveModal<boolean, boolean, void>;
+    modalConfig: TemplateModalConfig<boolean, boolean, void>;
     branches: Array<string>;
     selectedBranch: string;
     commitMessage: string;

@@ -46,7 +46,7 @@ func Test_postIntegrationModelHandler(t *testing.T) {
 	router.Mux.ServeHTTP(w, req)
 	assert.Equal(t, 201, w.Code)
 
-	model, _ = integration.LoadModelByName(db, model.Name, false)
+	model, _ = integration.LoadModelByName(db, model.Name)
 	test.NoError(t, integration.DeleteModel(db, model.ID))
 }
 

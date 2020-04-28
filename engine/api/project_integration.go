@@ -20,18 +20,32 @@ func (api *API) getProjectIntegrationHandler() service.Handler {
 		projectKey := vars[permProjectKey]
 		integrationName := vars["integrationName"]
 
-		clearPassword := FormBool(r, "clearPassword")
+		var integ sdk.ProjectIntegration
+		var err error
 
-		integration, err := integration.LoadProjectIntegrationByName(api.mustDB(), projectKey, integrationName, clearPassword)
-		if err != nil {
-			return sdk.WrapError(err, "Cannot load integration %s/%s", projectKey, integrationName)
+		clearPassword := FormBool(r, "clearPassword")
+		if clearPassword {
+			if !isService(ctx) && !isWorker(ctx) {
+				return sdk.WithStack(sdk.ErrForbidden)
+			}
+			integ, err = integration.LoadProjectIntegrationByNameWithClearPassword(api.mustDB(), projectKey, integrationName)
+			if err != nil {
+				return sdk.WrapError(err, "Cannot load integration %s/%s", projectKey, integrationName)
+			}
+		} else {
+			integ, err = integration.LoadProjectIntegrationByName(api.mustDB(), projectKey, integrationName)
+			if err != nil {
+				return sdk.WrapError(err, "Cannot load integration %s/%s", projectKey, integrationName)
+			}
 		}
-		plugins, err := plugin.LoadAllByIntegrationModelID(api.mustDB(), integration.IntegrationModelID)
+
+		plugins, err := plugin.LoadAllByIntegrationModelID(api.mustDB(), integ.IntegrationModelID)
 		if err != nil {
-			return sdk.WrapError(err, "Cannot load integration %s/%s", projectKey, integrationName)
+			return sdk.WrapError(err, "Cannot load integration plugin %s/%s", projectKey, integrationName)
 		}
-		integration.GRPCPlugins = plugins
-		return service.WriteJSON(w, integration, http.StatusOK)
+		integ.GRPCPlugins = plugins
+
+		return service.WriteJSON(w, integ, http.StatusOK)
 	}
 }
 
@@ -51,7 +65,7 @@ func (api *API) putProjectIntegrationHandler() service.Handler {
 			return sdk.WrapError(err, "Cannot load project")
 		}
 
-		ppDB, errP := integration.LoadProjectIntegrationByName(api.mustDB(), projectKey, integrationName, true)
+		ppDB, errP := integration.LoadProjectIntegrationByNameWithClearPassword(api.mustDB(), projectKey, integrationName)
 		if errP != nil {
 			return sdk.WrapError(errP, "putProjectIntegrationHandler> Cannot load integration %s for project %s", integrationName, projectKey)
 		}

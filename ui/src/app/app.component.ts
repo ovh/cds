@@ -58,7 +58,7 @@ export class AppComponent implements OnInit {
     cdsstateSub: Subscription;
     user: AuthentifiedUser;
 
-    @ViewChild('gamification', { static: false })
+    @ViewChild('gamification')
     eltGamification: ElementRef;
     gameInit: boolean;
 

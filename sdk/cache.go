@@ -2,7 +2,6 @@ package sdk
 
 import (
 	"archive/tar"
-	"bytes"
 	"fmt"
 	"io"
 	"net/url"
@@ -46,12 +45,9 @@ type TarOptions struct {
 }
 
 // CreateTarFromPaths returns a tar formatted reader of a tar made of several path
-func CreateTarFromPaths(fs afero.Fs, cwd string, paths []string, opts *TarOptions) (io.Reader, int, error) {
-	// Create a buffer to write our archive to.
-	buf := new(bytes.Buffer)
-
+func CreateTarFromPaths(fs afero.Fs, cwd string, paths []string, w io.Writer, opts *TarOptions) error {
 	// Create a new tar archive.
-	tw := tar.NewWriter(buf)
+	tw := tar.NewWriter(w)
 
 	for _, p := range paths {
 		// ensure the src actually exists before trying to tar it
@@ -62,7 +58,7 @@ func CreateTarFromPaths(fs afero.Fs, cwd string, paths []string, opts *TarOption
 		}
 
 		if _, err := fs.Stat(completePath); err != nil {
-			return nil, 0, fmt.Errorf("unable to tar files - %v", err.Error())
+			return fmt.Errorf("unable to tar files - %v", err.Error())
 		}
 
 		// walk path
@@ -126,18 +122,13 @@ func CreateTarFromPaths(fs afero.Fs, cwd string, paths []string, opts *TarOption
 
 		if errWalk != nil {
 			_ = tw.Close()
-			return nil, 0, WrapError(errWalk, "CreateTarFromPaths> Cannot walk file")
+			return WrapError(errWalk, "cannot walk file")
 		}
 	}
 
 	if err := tw.Close(); err != nil {
-		return nil, 0, err
+		return err
 	}
 
-	// Open the tar archive for reading.
-	btes := buf.Bytes()
-	size := buf.Len()
-	res := bytes.NewBuffer(btes)
-
-	return res, size, nil
+	return nil
 }

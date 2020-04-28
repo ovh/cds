@@ -19,7 +19,7 @@ import { finalize } from 'rxjs/operators';
 export class ProjectAdminComponent implements OnInit {
 
     @Input() project: Project;
-    @ViewChild('updateWarning', { static: false })
+    @ViewChild('updateWarning')
     private warningUpdateModal: WarningModalComponent;
 
     loading = false;

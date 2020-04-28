@@ -1,8 +1,6 @@
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { CUSTOM_ELEMENTS_SCHEMA, Injector } from '@angular/core';
 import { getTestBed, TestBed } from '@angular/core/testing';
-import { XHRBackend } from '@angular/http';
-import { MockBackend } from '@angular/http/testing';
 import { RouterTestingModule } from '@angular/router/testing';
 import { TranslateLoader, TranslateModule, TranslateParser, TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
@@ -34,7 +32,6 @@ import { RouterService } from 'app/service/router/router.service';
 describe('CDS: Project RepoManager List Component', () => {
 
     let injector: Injector;
-    let backend: MockBackend;
     let projectStore: ProjectStore;
 
     beforeEach(() => {
@@ -42,8 +39,6 @@ describe('CDS: Project RepoManager List Component', () => {
             declarations: [
             ],
             providers: [
-                MockBackend,
-                { provide: XHRBackend, useClass: MockBackend },
                 TranslateLoader,
                 RepoManagerService,
                 ProjectStore,
@@ -77,14 +72,12 @@ describe('CDS: Project RepoManager List Component', () => {
             ]
         });
         injector = getTestBed();
-        backend = injector.get(MockBackend);
         projectStore = injector.get(ProjectStore);
 
     });
 
     afterEach(() => {
         injector = undefined;
-        backend = undefined;
         projectStore = undefined;
     });
 

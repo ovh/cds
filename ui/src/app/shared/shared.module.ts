@@ -2,7 +2,7 @@ import { CommonModule } from '@angular/common';
 import { CUSTOM_ELEMENTS_SCHEMA, NgModule } from '@angular/core';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
-import { NguiAutoCompleteModule } from '@ngui/auto-complete';
+import { NguiAutoCompleteComponent, NguiAutoCompleteModule } from '@ngui/auto-complete';
 import { TranslateModule } from '@ngx-translate/core';
 import { SuiModule } from '@richardlt/ng2-semantic-ui';
 import { NgxChartsModule } from '@swimlane/ngx-charts';
@@ -228,7 +228,9 @@ import { ZoneComponent } from './zone/zone.component';
         ZoneComponent,
         ZoneContentComponent
     ],
-    entryComponents: [],
+    entryComponents: [
+        NguiAutoCompleteComponent
+    ],
     providers: [
         DurationService,
         PermissionService,

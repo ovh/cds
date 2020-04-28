@@ -18,8 +18,13 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
-// WorkerServerPort is name of environment variable set to local worker HTTP server port
-const WorkerServerPort = "CDS_EXPORT_PORT"
+const (
+	// WorkerServerPort is name of environment variable set to local worker HTTP server port
+	WorkerServerPort = "CDS_EXPORT_PORT"
+
+	// CDS API URL
+	CDSApiUrl = "CDS_API_URL"
+)
 
 type CurrentWorker struct {
 	id         string
@@ -101,7 +106,7 @@ func (wk *CurrentWorker) BaseDir() afero.Fs {
 	return wk.basedir
 }
 
-func (w *CurrentWorker) Environ() []string {
+func (wk *CurrentWorker) Environ() []string {
 	env := os.Environ()
 	newEnv := []string{"CI=1"}
 	// filter technical env variables
@@ -116,10 +121,13 @@ func (w *CurrentWorker) Environ() []string {
 	newEnv = append(newEnv, "CDS_KEY=********")
 
 	// worker export http port
-	newEnv = append(newEnv, fmt.Sprintf("%s=%d", WorkerServerPort, w.HTTPPort()))
+	newEnv = append(newEnv, fmt.Sprintf("%s=%d", WorkerServerPort, wk.HTTPPort()))
+
+	// Api Endpoint in CDS_API_URL var
+	newEnv = append(newEnv, fmt.Sprintf("%s=%s", CDSApiUrl, wk.register.apiEndpoint))
 
 	//set up environment variables from pipeline build job parameters
-	for _, p := range w.currentJob.params {
+	for _, p := range wk.currentJob.params {
 		// avoid put private key in environment var as it's a binary value
 		if strings.HasPrefix(p.Name, "cds.key.") && strings.HasSuffix(p.Name, ".priv") {
 			continue
@@ -136,7 +144,7 @@ func (w *CurrentWorker) Environ() []string {
 		newEnv = append(newEnv, fmt.Sprintf("%s=%s", envName, p.Value))
 	}
 
-	for _, p := range w.currentJob.newVariables {
+	for _, p := range wk.currentJob.newVariables {
 		envName := strings.Replace(p.Name, ".", "_", -1)
 		envName = strings.Replace(envName, "-", "_", -1)
 		envName = strings.ToUpper(envName)

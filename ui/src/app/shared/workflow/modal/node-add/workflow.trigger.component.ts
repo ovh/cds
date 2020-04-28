@@ -30,12 +30,12 @@ import { forkJoin, Observable } from 'rxjs';
 })
 export class WorkflowTriggerComponent {
 
-    @ViewChild('triggerModal', { static: false })
+    @ViewChild('triggerModal')
     triggerModal: ModalTemplate<boolean, boolean, void>;
     modal: SuiActiveModal<boolean, boolean, void>;
-    @ViewChild('nodeWizard', { static: false })
+    @ViewChild('nodeWizard')
     nodeWizard: WorkflowNodeAddWizardComponent;
-    @ViewChild('worklflowAddOutgoingHook', { static: false })
+    @ViewChild('worklflowAddOutgoingHook')
     worklflowAddOutgoingHook: WorkflowWizardOutgoingHookComponent;
 
     @Output() triggerEvent = new EventEmitter<Workflow>();

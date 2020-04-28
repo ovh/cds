@@ -25,12 +25,12 @@ export class WorkflowHookModalComponent {
 
     editMode: boolean;
 
-    @ViewChild('hookModalComponent', {static: false})
+    @ViewChild('hookModalComponent')
     public hookModalComponent: ModalTemplate<boolean, boolean, void>;
     modalConfig: TemplateModalConfig<boolean, boolean, void>;
     modal: SuiActiveModal<boolean, boolean, void>;
 
-    @ViewChild('hookFormComponent', {static: false})
+    @ViewChild('hookFormComponent')
     hookFormComponent: WorkflowNodeHookFormComponent;
 
     constructor(private _modalService: SuiModalService, private _store: Store) {

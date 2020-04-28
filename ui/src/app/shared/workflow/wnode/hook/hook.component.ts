@@ -32,7 +32,7 @@ export class WorkflowNodeHookComponent implements OnInit {
     @Select(WorkflowState.getWorkflow()) workflow$: Observable<Workflow>;
     workflowSub: Subscription;
 
-    @ViewChild('deleteHookModal', { static: false })
+    @ViewChild('deleteHookModal')
     deleteHookModal: DeleteModalComponent;
 
     projectKey: string;

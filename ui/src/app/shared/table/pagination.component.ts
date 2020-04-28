@@ -19,7 +19,7 @@ import {
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class PaginationComponent implements OnChanges, AfterViewInit {
-    @ViewChild('paginationWrapper', { static: false }) paginationWrapper: ElementRef;
+    @ViewChild('paginationWrapper') paginationWrapper: ElementRef;
     @Input() collectionSize: number;
     @Input() pageSize: number;
     @Input() page: number;

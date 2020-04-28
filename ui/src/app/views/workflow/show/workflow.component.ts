@@ -44,13 +44,13 @@ export class WorkflowShowComponent implements OnInit {
     editModeWorkflowChanged: boolean;
     isReadOnly: boolean;
 
-    @ViewChild('workflowGraph', { static: false })
+    @ViewChild('workflowGraph')
     workflowGraph: WorkflowGraphComponent;
-    @ViewChild('workflowStartParam', { static: false })
+    @ViewChild('workflowStartParam')
     runWithParamComponent: WorkflowNodeRunParamComponent;
-    @ViewChild('permWarning', { static: false })
+    @ViewChild('permWarning')
     permWarningModal: WarningModalComponent;
-    @ViewChild('updateAsCode', { static: false })
+    @ViewChild('updateAsCode')
     updateAsCodeModal: UpdateAsCodeComponent;
 
     selectedHookRef: string;

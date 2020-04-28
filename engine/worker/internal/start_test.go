@@ -333,6 +333,7 @@ func TestStartWorkerWithABookedJob(t *testing.T) {
 	assert.Equal(t, 2, strings.Count(logBuffer.String(), "my password should not be displayed here: **********\n"))
 	assert.Equal(t, 1, strings.Count(logBuffer.String(), "[INFO] CDS_BUILD_NEWVAR=newval"))
 	assert.Equal(t, 1, strings.Count(logBuffer.String(), "[INFO] CDS_KEY=********"))
+	assert.Equal(t, 1, strings.Count(logBuffer.String(), "[INFO] CDS_API_URL=http://lolcat.host"))
 	assert.Equal(t, 1, strings.Count(logBuffer.String(), "[INFO] CDS_SEMVER=0.1.0+cds.1"))
 	assert.Equal(t, 1, strings.Count(logBuffer.String(), "[INFO] GIT_DESCRIBE=0.1.0"))
 	assert.Equal(t, 0, strings.Count(logBuffer.String(), "[INFO] CDS_BUILD_CDS_BUILD"))

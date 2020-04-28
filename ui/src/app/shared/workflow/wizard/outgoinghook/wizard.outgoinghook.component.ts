@@ -33,7 +33,7 @@ import { finalize, first } from 'rxjs/operators';
 })
 @AutoUnsubscribe()
 export class WorkflowWizardOutgoingHookComponent implements OnInit {
-    @ViewChild('textareaCodeMirror', {static: false}) codemirror: any;
+    @ViewChild('textareaCodeMirror') codemirror: any;
 
     @Input() workflow: Workflow;
     @Input() mode = 'create'; // create / edit / ro

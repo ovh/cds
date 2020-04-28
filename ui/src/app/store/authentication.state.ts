@@ -1,3 +1,4 @@
+import { Injectable } from '@angular/core';
 import { Action, Selector, State, StateContext } from '@ngxs/store';
 import { AuthConsumer, AuthCurrentConsumerResponse, AuthSession } from 'app/model/authentication.model';
 import { AuthentifiedUser } from 'app/model/user.model';
@@ -23,7 +24,14 @@ export function getInitialApplicationsState(): AuthenticationStateModel {
     name: 'authentication',
     defaults: getInitialApplicationsState()
 })
+@Injectable()
 export class AuthenticationState {
+
+    constructor(
+        private _userService: UserService,
+        private _authenticationService: AuthenticationService
+    ) { }
+
     @Selector()
     static user(state: AuthenticationStateModel) {
         return state.user;
@@ -38,11 +46,6 @@ export class AuthenticationState {
     static consumer(state: AuthenticationStateModel) {
         return state.consumer;
     }
-
-    constructor(
-        private _userService: UserService,
-        private _authenticationService: AuthenticationService
-    ) { }
 
     @Action(ActionAuthentication.FetchCurrentUser)
     fetchCurrentUser(ctx: StateContext<AuthenticationStateModel>, action: ActionAuthentication.FetchCurrentUser) {

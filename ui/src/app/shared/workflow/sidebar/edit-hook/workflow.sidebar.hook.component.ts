@@ -31,7 +31,7 @@ export class WorkflowSidebarHookComponent implements OnInit {
     loading = false;
     hookDetails: WorkflowHookTask;
 
-    @ViewChild('workflowDetailsHook', {static: false})
+    @ViewChild('workflowDetailsHook')
     workflowDetailsHook: WorkflowNodeHookDetailsComponent;
 
     hookStatus = HookStatus;

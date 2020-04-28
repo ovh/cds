@@ -45,7 +45,7 @@ const defaultMenuItems = [<Item>{
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ConsumerDetailsModalComponent {
-    @ViewChild('consumerDetailsModal', { static: false }) consumerDetailsModal: ModalTemplate<boolean, boolean, void>;
+    @ViewChild('consumerDetailsModal') consumerDetailsModal: ModalTemplate<boolean, boolean, void>;
     modal: SuiActiveModal<boolean, boolean, void>;
     open: boolean;
 

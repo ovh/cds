@@ -18,7 +18,7 @@ export class AutoFocusInputComponent implements AfterViewInit {
     @Input() model: string;
     @Output() modelChange = new EventEmitter<string>();
 
-    @ViewChild('searchinput', {static: false}) inp: ElementRef;
+    @ViewChild('searchinput') inp: ElementRef;
 
     ngAfterViewInit(): void {
         if (this.inp) {

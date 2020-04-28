@@ -42,9 +42,9 @@ export class WorkflowWNodeComponent implements OnInit {
     @Input() node: WNode;
     @Input() workflow: Workflow;
 
-    @ViewChild('menu', { static: false })
+    @ViewChild('menu')
     menu: WorkflowWNodeMenuEditComponent;
-    @ViewChild('workflowRunNode', { static: false })
+    @ViewChild('workflowRunNode')
     workflowRunNode: WorkflowNodeRunParamComponent;
 
     project: Project;
@@ -58,13 +58,13 @@ export class WorkflowWNodeComponent implements OnInit {
     nodeRunSub: Subscription;
 
     // Modal
-    @ViewChild('workflowDeleteNode', { static: false })
+    @ViewChild('workflowDeleteNode')
     workflowDeleteNode: WorkflowDeleteNodeComponent;
-    @ViewChild('workflowTrigger', { static: false })
+    @ViewChild('workflowTrigger')
     workflowTrigger: WorkflowTriggerComponent;
-    @ViewChild('workflowAddHook', { static: false })
+    @ViewChild('workflowAddHook')
     workflowAddHook: WorkflowHookModalComponent;
-    @ViewChild('nodeEditModal', { static: false })
+    @ViewChild('nodeEditModal')
     nodeEditModal: WorkflowNodeEditModalComponent;
 
     constructor(
@@ -190,6 +190,7 @@ export class WorkflowWNodeComponent implements OnInit {
             case 'logs':
                 this._router.navigate(['node', this.currentNodeRun.id], {
                     relativeTo: this._activatedRoute,
+                    queryParams: { name: this.node.name }
                 });
                 break;
         }

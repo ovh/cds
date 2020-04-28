@@ -34,7 +34,7 @@ declare var CodeMirror: any;
 })
 @AutoUnsubscribe()
 export class PipelineAsCodeEditorComponent implements OnInit, AfterViewInit {
-    @ViewChild('codeMirror', {static: false}) codemirror: any;
+    @ViewChild('codeMirror') codemirror: any;
 
     // Project that contains the pipeline
     @Input() project: Project;

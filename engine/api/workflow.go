@@ -32,10 +32,33 @@ func (api *API) getWorkflowsHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		key := vars[permProjectKey]
+		filterByRepo := r.FormValue("repo")
 
 		ws, err := workflow.LoadAll(api.mustDB(), key)
 		if err != nil {
 			return err
+		}
+
+		if filterByRepo != "" {
+			mapApps := make(map[int64]sdk.Application)
+			apps, err := application.LoadAll(api.mustDB(), key)
+			if err != nil {
+				return err
+			}
+
+			for _, app := range apps {
+				mapApps[app.ID] = app
+			}
+
+			ws = ws.Filter(
+				func(w sdk.Workflow) bool {
+					if w.WorkflowData.Node.Context != nil {
+						app, _ := mapApps[w.WorkflowData.Node.Context.ApplicationID]
+						return app.RepositoryFullname == filterByRepo
+					}
+					return false
+				},
+			)
 		}
 
 		names := ws.Names()
@@ -72,6 +95,7 @@ func (api *API) getWorkflowHandler() service.Handler {
 		withTemplate := FormBool(r, "withTemplate")
 		withAsCodeEvents := FormBool(r, "withAsCodeEvents")
 		minimal := FormBool(r, "minimal")
+		withoutIcons := FormBool(r, "withoutIcons")
 
 		proj, err := project.Load(api.mustDB(), key, project.LoadOptions.WithIntegrations)
 		if err != nil {
@@ -81,7 +105,7 @@ func (api *API) getWorkflowHandler() service.Handler {
 		opts := workflow.LoadOptions{
 			Minimal:               minimal, // if true, load only data from table workflow, not pipelines, app, env...
 			DeepPipeline:          withDeepPipelines,
-			WithIcon:              true,
+			WithIcon:              !withoutIcons,
 			WithLabels:            withLabels,
 			WithAsCodeUpdateEvent: withAsCodeEvents,
 			WithIntegrations:      true,

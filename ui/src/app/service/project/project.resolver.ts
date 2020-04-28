@@ -11,6 +11,8 @@ import { flatMap, map } from 'rxjs/operators';
 @Injectable()
 export class ProjectResolver implements Resolve<Project> {
 
+    constructor(private store: Store, private routerService: RouterService) { }
+
     resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<any> | Promise<any> | any {
         let params = this.routerService.getRouteSnapshotParams({}, state.root);
         let opts = [
@@ -29,12 +31,12 @@ export class ProjectResolver implements Resolve<Project> {
             map((projectState: ProjectStateModel) => projectState.project)
         );
     }
-
-    constructor(private store: Store, private routerService: RouterService) { }
 }
 
 @Injectable()
 export class ProjectForWorkflowResolver implements Resolve<Project> {
+
+    constructor(private store: Store, private routerService: RouterService) { }
 
     resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<any> | Promise<any> | any {
         let params = this.routerService.getRouteSnapshotParams({}, state.root);
@@ -58,12 +60,12 @@ export class ProjectForWorkflowResolver implements Resolve<Project> {
             map((projectState: ProjectStateModel) => projectState.project)
         );
     }
-
-    constructor(private store: Store, private routerService: RouterService) { }
 }
 
 @Injectable()
 export class ProjectForApplicationResolver implements Resolve<Project> {
+
+    constructor(private store: Store, private routerService: RouterService) { }
 
     resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<any> | Promise<any> | any {
         let params = this.routerService.getRouteSnapshotParams({}, state.root);
@@ -82,6 +84,4 @@ export class ProjectForApplicationResolver implements Resolve<Project> {
             map((projectState: ProjectStateModel) => projectState.project)
         );
     }
-
-    constructor(private store: Store, private routerService: RouterService) { }
 }

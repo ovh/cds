@@ -1,6 +1,7 @@
 package action
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
@@ -79,8 +80,9 @@ func RunServeStaticFiles(ctx context.Context, wk workerruntime.Runtime, a sdk.Ac
 	}
 
 	wk.SendLog(ctx, workerruntime.LevelInfo, "Fetching files in progress...")
-	file, _, err := sdk.CreateTarFromPaths(aferoFS, path, filesPath, &sdk.TarOptions{TrimDirName: filepath.Dir(path)})
-	if err != nil {
+
+	buf := new(bytes.Buffer)
+	if err := sdk.CreateTarFromPaths(aferoFS, path, filesPath, buf, &sdk.TarOptions{TrimDirName: filepath.Dir(path)}); err != nil {
 		return res, fmt.Errorf("cannot tar files: %v", err)
 	}
 
@@ -88,7 +90,7 @@ func RunServeStaticFiles(ctx context.Context, wk workerruntime.Runtime, a sdk.Ac
 	projectKey := sdk.ParameterValue(wk.Parameters(), "cds.project")
 
 	wk.SendLog(ctx, workerruntime.LevelInfo, fmt.Sprintf(`Upload and serving files in progress... with entrypoint "%s"`, entrypoint.Value))
-	publicURL, _, _, err := wk.Client().QueueStaticFilesUpload(ctx, projectKey, integrationName, jobID, name.Value, entrypoint.Value, staticKey, file)
+	publicURL, _, _, err := wk.Client().QueueStaticFilesUpload(ctx, projectKey, integrationName, jobID, name.Value, entrypoint.Value, staticKey, buf)
 	if err != nil {
 		return res, fmt.Errorf("Cannot upload static files: %v", err)
 	}

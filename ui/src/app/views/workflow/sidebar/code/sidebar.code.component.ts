@@ -35,7 +35,7 @@ declare var CodeMirror: any;
 })
 @AutoUnsubscribe()
 export class WorkflowSidebarCodeComponent implements OnInit, AfterViewInit {
-    @ViewChild('codeMirror', {static: false}) codemirror: any;
+    @ViewChild('codeMirror') codemirror: any;
 
     // Project that contains the workflow
     @Input() project: Project;

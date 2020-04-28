@@ -1,4 +1,5 @@
 import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
+import { Injectable } from '@angular/core';
 import { Action, createSelector, State, StateContext } from '@ngxs/store';
 import { Application, Overview } from 'app/model/application.model';
 import { IntegrationModel, ProjectIntegration } from 'app/model/integration.model';
@@ -31,7 +32,10 @@ export function getInitialApplicationsState(): ApplicationStateModel {
     name: 'application',
     defaults: getInitialApplicationsState()
 })
+@Injectable()
 export class ApplicationsState {
+
+    constructor(private _http: HttpClient, private _appService: ApplicationService) { }
 
     static currentState() {
         return createSelector(
@@ -46,8 +50,6 @@ export class ApplicationsState {
             (state: ApplicationStateModel) => state.overview
         );
     }
-
-    constructor(private _http: HttpClient, private _appService: ApplicationService) { }
 
     @Action(ActionApplication.AddApplication)
     add(ctx: StateContext<ApplicationStateModel>, action: ActionApplication.AddApplication) {

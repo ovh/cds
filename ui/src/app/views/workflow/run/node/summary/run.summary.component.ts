@@ -26,7 +26,7 @@ export class WorkflowNodeRunSummaryComponent implements OnInit {
 
     duration: string;
 
-    @ViewChild('workflowNodeRunParam', {static: false})
+    @ViewChild('workflowNodeRunParam')
     runWithParamComponent: WorkflowNodeRunParamComponent;
 
     @Select(WorkflowState.getSelectedNodeRun()) nodeRun$: Observable<WorkflowNodeRun>;

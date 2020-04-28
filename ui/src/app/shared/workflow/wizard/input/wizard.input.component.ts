@@ -45,7 +45,7 @@ export class WorkflowWizardNodeInputComponent implements OnInit {
     @Input() readonly = true;
     @Output() inputChange = new EventEmitter<boolean>();
 
-    @ViewChild('textareaCodeMirror', {static: false}) codemirror: any;
+    @ViewChild('textareaCodeMirror') codemirror: any;
 
     project: Project;
     editMode: boolean;

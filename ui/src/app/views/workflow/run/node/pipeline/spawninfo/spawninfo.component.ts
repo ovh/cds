@@ -30,15 +30,6 @@ import { WorkflowRunJobVariableComponent } from '../variables/job.variables.comp
 @AutoUnsubscribe()
 export class WorkflowRunJobSpawnInfoComponent implements OnDestroy, OnInit {
 
-    @Select(WorkflowState.getSelectedWorkflowNodeJobRun()) nodeJobRun$: Observable<WorkflowNodeJobRun>;
-    nodeJobRunSubs: Subscription;
-
-    currentNodeJobRunID: number;
-    currentJobID: number;
-    jobStatus: string;
-    spawnInfos: String;
-    variables: Array<Parameter>;
-
     @Input('displayServicesLogs')
     set displayServicesLogs(data: boolean) {
         this._displayServiceLogs = data;
@@ -47,9 +38,18 @@ export class WorkflowRunJobSpawnInfoComponent implements OnDestroy, OnInit {
     get displayServicesLogs(): boolean {
         return this._displayServiceLogs;
     }
+
+    @Select(WorkflowState.getSelectedWorkflowNodeJobRun()) nodeJobRun$: Observable<WorkflowNodeJobRun>;
+    nodeJobRunSubs: Subscription;
+
+    currentNodeJobRunID: number;
+    currentJobID: number;
+    jobStatus: string;
+    spawnInfos: String;
+    variables: Array<Parameter>;
     @Output() displayServicesLogsChange = new EventEmitter<boolean>();
 
-    @ViewChild('jobVariable', { static: false })
+    @ViewChild('jobVariable')
     jobVariable: WorkflowRunJobVariableComponent;
 
     worker: CDSWebWorker;
@@ -64,16 +64,16 @@ export class WorkflowRunJobSpawnInfoComponent implements OnDestroy, OnInit {
     _displayServiceLogs: boolean;
     ansi_up = new AU.default;
 
-    ngOnDestroy(): void {
-        this.stopWorker();
-    }
-
     constructor(
         private _translate: TranslateService,
         private _cd: ChangeDetectorRef,
         private _store: Store
     ) {
         this.zone = new NgZone({ enableLongStackTrace: false });
+    }
+
+    ngOnDestroy(): void {
+        this.stopWorker();
     }
 
     ngOnInit(): void {

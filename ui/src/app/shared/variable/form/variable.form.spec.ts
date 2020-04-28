@@ -5,8 +5,6 @@ import {VariableService} from '../../../service/variable/variable.service';
 import {TranslateService, TranslateLoader, TranslateParser, TranslateModule} from '@ngx-translate/core';
 import {SharedService} from '../../shared.service';
 import {RouterTestingModule} from '@angular/router/testing';
-import {MockBackend} from '@angular/http/testing';
-import {XHRBackend, Response, ResponseOptions} from '@angular/http';
 import {Injector} from '@angular/core';
 import {VariableFormComponent} from './variable.form';
 import {GroupService} from '../../../service/group/group.service';
@@ -14,23 +12,22 @@ import {Variable} from '../../../model/variable.model';
 import {VariableEvent} from '../variable.event.model';
 import {SharedModule} from '../../shared.module';
 import {HttpClientTestingModule} from '@angular/common/http/testing';
+import { ParameterService } from 'app/service/parameter/parameter.service';
+import { Observable, of } from 'rxjs';
 
 describe('CDS: Variable From Component', () => {
 
     let injector: Injector;
-    let backend: MockBackend;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
             declarations: [
             ],
             providers: [
-                VariableService,
+                { provide: VariableService, useClass: MockApplicationService },
                 GroupService,
                 SharedService,
                 TranslateService,
-                MockBackend,
-                { provide: XHRBackend, useClass: MockBackend },
                 TranslateLoader,
                 TranslateParser
             ],
@@ -41,25 +38,15 @@ describe('CDS: Variable From Component', () => {
                 HttpClientTestingModule
             ]
         });
-
         injector = getTestBed();
-        backend = injector.get(MockBackend);
-
     });
 
     afterEach(() => {
         injector = undefined;
-        backend = undefined;
     });
 
 
     it('Create new variable', fakeAsync( () => {
-        let call = 0;
-        // Mock Http request
-        backend.connections.subscribe(connection => {
-            connection.mockRespond(new Response(new ResponseOptions({ body : '["string", "password"]'})));
-        });
-
 
         // Create component
         let fixture = TestBed.createComponent(VariableFormComponent);
@@ -103,3 +90,14 @@ describe('CDS: Variable From Component', () => {
     }));
 });
 
+class MockApplicationService {
+    constructor() { }
+
+    getTypesFromCache(): string[] {
+        return [];
+    }
+
+    getTypesFromAPI(): Observable<string[]> {
+        return of(["string", "password"])
+    }
+}
