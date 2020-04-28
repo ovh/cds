@@ -442,11 +442,15 @@ func LoadSecrets(db gorp.SqlExecutor, store cache.Store, nodeRun *sdk.WorkflowNo
 		// Application variables
 		av := []sdk.Variable{}
 		if app != nil {
+			// FIXME manage secret ascode
+			// try to retreive application from database, application can be not found for ascode run
 			tempApp, err := application.LoadByIDWithClearVCSStrategyPassword(db, app.ID)
-			if err != nil {
+			if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
 				return nil, err
 			}
-			app.RepositoryStrategy = tempApp.RepositoryStrategy
+			if tempApp != nil {
+				app.RepositoryStrategy.Password = tempApp.RepositoryStrategy.Password
+			}
 
 			appVariables, err := application.LoadAllVariablesWithDecrytion(db, app.ID)
 			if err != nil {
