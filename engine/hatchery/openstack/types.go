@@ -6,9 +6,7 @@ import (
 	"github.com/ovh/cds/engine/service"
 
 	"github.com/gophercloud/gophercloud"
-	"github.com/gophercloud/gophercloud/openstack/compute/v2/extensions/tenantnetworks"
 	"github.com/gophercloud/gophercloud/openstack/compute/v2/flavors"
-	"github.com/gophercloud/gophercloud/openstack/compute/v2/images"
 
 	hatcheryCommon "github.com/ovh/cds/engine/hatchery"
 )
@@ -57,8 +55,6 @@ type HatcheryOpenstack struct {
 	hatcheryCommon.Common
 	Config          HatcheryConfiguration
 	flavors         []flavors.Flavor
-	networks        []tenantnetworks.Network
-	images          []images.Image
 	openstackClient *gophercloud.ServiceClient
 
 	networkID string // computed from networkString
