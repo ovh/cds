@@ -20,16 +20,32 @@ func (api *API) getProjectIntegrationHandler() service.Handler {
 		projectKey := vars[permProjectKey]
 		integrationName := vars["integrationName"]
 
-		integration, err := integration.LoadProjectIntegrationByName(api.mustDB(), projectKey, integrationName)
-		if err != nil {
-			return sdk.WrapError(err, "Cannot load integration %s/%s", projectKey, integrationName)
+		var integ sdk.ProjectIntegration
+		var err error
+
+		clearPassword := FormBool(r, "clearPassword")
+		if clearPassword {
+			if !isService(ctx) {
+				return sdk.ErrForbidden
+			}
+			integ, err = integration.LoadProjectIntegrationByNameWithClearPassword(api.mustDB(), projectKey, integrationName)
+			if err != nil {
+				return sdk.WrapError(err, "Cannot load integration %s/%s", projectKey, integrationName)
+			}
+		} else {
+			integ, err = integration.LoadProjectIntegrationByName(api.mustDB(), projectKey, integrationName)
+			if err != nil {
+				return sdk.WrapError(err, "Cannot load integration %s/%s", projectKey, integrationName)
+			}
 		}
-		plugins, err := plugin.LoadAllByIntegrationModelID(api.mustDB(), integration.IntegrationModelID)
+
+		plugins, err := plugin.LoadAllByIntegrationModelID(api.mustDB(), integ.IntegrationModelID)
 		if err != nil {
-			return sdk.WrapError(err, "Cannot load integration %s/%s", projectKey, integrationName)
+			return sdk.WrapError(err, "Cannot load integration plugin %s/%s", projectKey, integrationName)
 		}
-		integration.GRPCPlugins = plugins
-		return service.WriteJSON(w, integration, http.StatusOK)
+		integ.GRPCPlugins = plugins
+
+		return service.WriteJSON(w, integ, http.StatusOK)
 	}
 }
 
