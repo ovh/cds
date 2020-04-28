@@ -13,10 +13,6 @@ import (
 )
 
 func (h *HatcherySwarm) getServicesLogs() error {
-	if err := h.Common.InitServiceLogger(); err != nil {
-		return err
-	}
-
 	for _, dockerClient := range h.dockerClients {
 		containers, err := h.getContainers(dockerClient, types.ContainerListOptions{All: true})
 		if err != nil {

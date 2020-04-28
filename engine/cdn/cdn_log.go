@@ -3,6 +3,7 @@ package cdn
 import (
 	"bufio"
 	"context"
+	"crypto/rsa"
 	"fmt"
 	"net"
 	"strings"
@@ -19,7 +20,7 @@ import (
 
 var (
 	workers    = make(map[string]sdk.Worker)
-	hatcheries = make(map[string][]byte)
+	hatcheries = make(map[string]*rsa.PublicKey)
 )
 
 func (s *Service) RunTcpLogServer(ctx context.Context) {
@@ -77,9 +78,9 @@ func (s *Service) handleLogMessage(ctx context.Context, messageReceived []byte) 
 		return sdk.WrapError(err, "unable to unmarshall gelf message: %s", string(messageReceived))
 	}
 
-	sig, ok := m.Extra[log.ExtraFieldSignature]
+	sig, ok := m.Extra["_"+log.ExtraFieldSignature]
 	if !ok || sig == "" {
-		return sdk.WithStack(fmt.Errorf("signature not found on log message"))
+		return sdk.WithStack(fmt.Errorf("signature not found on log message: %+v", m))
 	}
 
 	// Get worker datas
@@ -187,11 +188,15 @@ func (s *Service) getWorker(ctx context.Context, workerID string) (sdk.Worker, e
 	return w, nil
 }
 
-func (s *Service) getHatcheryPublicKey(ctx context.Context, hatcheryName string) ([]byte, error) {
+func (s *Service) getHatcheryPublicKey(ctx context.Context, hatcheryName string) (*rsa.PublicKey, error) {
 	h, err := services.LoadByNameAndType(ctx, s.Db, hatcheryName, services.TypeHatchery)
 	if err != nil {
 		return nil, err
 	}
-	hatcheries[hatcheryName] = h.PublicKey
-	return h.PublicKey, nil
+	publicKey, err := jws.NewPublicKeyFromPEM(h.PublicKey)
+	if err != nil {
+		return nil, sdk.WithStack(err)
+	}
+	hatcheries[hatcheryName] = publicKey
+	return publicKey, nil
 }
