@@ -25,6 +25,7 @@ func (h *HatcherySwarm) getServicesLogs() error {
 			if !isWorkflowService {
 				continue
 			}
+			workerName := cnt.Labels["service_worker"]
 			ctx, cancel := context.WithTimeout(context.Background(), time.Minute*2)
 			logsOpts := types.ContainerLogsOptions{
 				Details:    true,
@@ -73,6 +74,8 @@ func (h *HatcherySwarm) getServicesLogs() error {
 					ServiceRequirementID:   reqServiceID,
 					ServiceRequirementName: cnt.Labels["service_req_name"],
 					Val:                    string(logs),
+					WorkerName:             workerName,
+					HatcheryID:             h.Service().ID,
 				})
 			}
 		}

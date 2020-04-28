@@ -215,6 +215,7 @@ func (c *Common) SendServiceLog(ctx context.Context, servicesLogs []sdk.ServiceL
 				HatcheryName:    c.ServiceName(),
 				RequirementID:   s.ServiceRequirementID,
 				RequirementName: s.ServiceRequirementName,
+				WorkerName:      s.WorkerName,
 			},
 			JobID:     s.WorkflowNodeJobRunID,
 			Timestamp: time.Now().UnixNano(),

@@ -254,9 +254,11 @@ type SignatureWorker struct {
 }
 
 type SignatureService struct {
+	HatcheryID      int64
 	HatcheryName    string
 	RequirementID   int64
 	RequirementName string
+	WorkerName      string
 }
 
 func New(logServerAddr string) (*log.Logger, error) {

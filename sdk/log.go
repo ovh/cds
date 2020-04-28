@@ -40,4 +40,6 @@ type ServiceLog struct {
 	ServiceRequirementID   int64      `json:"requirement_id" db:"-"`
 	ServiceRequirementName string     `json:"requirement_service_name" db:"requirement_service_name"`
 	Val                    string     `json:"val,omitempty" db:"value"`
+	WorkerName             string     `json:"worker_name"`
+	HatcheryID             int64      `json:"hatchery_id"`
 }

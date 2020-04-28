@@ -9,6 +9,8 @@ import (
 	"strings"
 	"time"
 
+	gocache "github.com/patrickmn/go-cache"
+
 	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/engine/api/worker"
 	"github.com/ovh/cds/engine/api/workflow"
@@ -19,8 +21,7 @@ import (
 )
 
 var (
-	workers    = make(map[string]sdk.Worker)
-	hatcheries = make(map[string]*rsa.PublicKey)
+	logCache = gocache.New(20*time.Minute, 30*time.Minute)
 )
 
 func (s *Service) RunTcpLogServer(ctx context.Context) {
@@ -93,7 +94,7 @@ func (s *Service) handleLogMessage(ctx context.Context, messageReceived []byte) 
 	case signature.Worker != nil:
 		return s.handleWorkerLog(ctx, signature.Worker.WorkerID, sig, m)
 	case signature.Service != nil:
-		return s.handleServiceLog(ctx, signature.Service.HatcheryName, sig, m)
+		return s.handleServiceLog(ctx, signature.Service.HatcheryID, signature.Service.HatcheryName, signature.Service.WorkerName, sig, m)
 	default:
 		return sdk.WithStack(sdk.ErrWrongRequest)
 	}
@@ -101,13 +102,16 @@ func (s *Service) handleLogMessage(ctx context.Context, messageReceived []byte) 
 
 func (s *Service) handleWorkerLog(ctx context.Context, workerID string, sig interface{}, m hook.Message) error {
 	var signature log.Signature
-	workerData, ok := workers[workerID]
+	var workerData sdk.Worker
+	cacheData, ok := logCache.Get(fmt.Sprintf("worker-%s", workerID))
 	if !ok {
 		var err error
 		workerData, err = s.getWorker(ctx, workerID)
 		if err != nil {
 			return err
 		}
+	} else {
+		workerData = cacheData.(sdk.Worker)
 	}
 	if err := jws.Verify(workerData.PrivateKey, sig.(string), &signature); err != nil {
 		return err
@@ -146,18 +150,38 @@ func (s *Service) handleWorkerLog(ctx context.Context, workerID string, sig inte
 	return sdk.WithStack(tx.Commit())
 }
 
-func (s *Service) handleServiceLog(ctx context.Context, hatcheryName string, sig interface{}, m hook.Message) error {
+func (s *Service) handleServiceLog(ctx context.Context, hatcheryID int64, hatcheryName string, workerName string, sig interface{}, m hook.Message) error {
 	var signature log.Signature
-	hatcheryPublicKey, ok := hatcheries[hatcheryName]
+
+	var pk *rsa.PublicKey
+	cacheData, ok := logCache.Get(fmt.Sprintf("hatchery-key-%d", hatcheryID))
 	if !ok {
 		var err error
-		hatcheryPublicKey, err = s.getHatcheryPublicKey(ctx, hatcheryName)
+		pk, err = s.getHatchery(ctx, hatcheryID, hatcheryName)
 		if err != nil {
 			return err
 		}
+	} else {
+		pk = cacheData.(*rsa.PublicKey)
 	}
-	if err := jws.Verify(hatcheryPublicKey, sig.(string), &signature); err != nil {
+
+	if err := jws.Verify(pk, sig.(string), &signature); err != nil {
 		return err
+	}
+
+	// Verified that worker has been spawn by this hatchery
+	workerCacheKey := fmt.Sprintf("service-worker-%s", workerName)
+	_, ok = logCache.Get(workerCacheKey)
+	if !ok {
+		// Verify that the worker has been spawn by this hatchery
+		w, err := worker.LoadWorkerByName(ctx, s.Db, workerName)
+		if err != nil {
+			return err
+		}
+		if w.HatcheryID != signature.Service.HatcheryID {
+			return sdk.WrapError(sdk.ErrWrongRequest, "hatchery and worker does not match")
+		}
+		logCache.Set(workerCacheKey, true, gocache.DefaultExpiration)
 	}
 
 	nodeRunJob, err := workflow.LoadNodeJobRun(ctx, s.Db, s.Cache, signature.JobID)
@@ -180,23 +204,28 @@ func (s *Service) handleServiceLog(ctx context.Context, hatcheryName string, sig
 }
 
 func (s *Service) getWorker(ctx context.Context, workerID string) (sdk.Worker, error) {
-	w, err := worker.LoadWorkerWithDecryptKey(ctx, s.Db, workerID)
+	w, err := worker.LoadWorkerByIDWithDecryptKey(ctx, s.Db, workerID)
 	if err != nil {
 		return sdk.Worker{}, err
 	}
-	workers[w.ID] = w
+	logCache.Set(fmt.Sprintf("worker-%s", w.ID), w, gocache.DefaultExpiration)
 	return w, nil
 }
 
-func (s *Service) getHatcheryPublicKey(ctx context.Context, hatcheryName string) (*rsa.PublicKey, error) {
+func (s *Service) getHatchery(ctx context.Context, hatcheryID int64, hatcheryName string) (*rsa.PublicKey, error) {
 	h, err := services.LoadByNameAndType(ctx, s.Db, hatcheryName, services.TypeHatchery)
 	if err != nil {
 		return nil, err
 	}
-	publicKey, err := jws.NewPublicKeyFromPEM(h.PublicKey)
+	if h.ID != hatcheryID {
+		return nil, sdk.WithStack(sdk.ErrWrongRequest)
+	}
+
+	// Verify signature
+	pk, err := jws.NewPublicKeyFromPEM(h.PublicKey)
 	if err != nil {
 		return nil, sdk.WithStack(err)
 	}
-	hatcheries[hatcheryName] = publicKey
-	return publicKey, nil
+	logCache.Set(fmt.Sprintf("hatchery-key-%d", hatcheryID), pk, gocache.DefaultExpiration)
+	return pk, nil
 }
