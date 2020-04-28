@@ -196,7 +196,7 @@ func (c *Common) InitServiceLogger() error {
 	if tcpServer.Addr != "" && tcpServer.Port != 0 {
 		logger, err := log.New(fmt.Sprintf("%s:%d", tcpServer.Addr, tcpServer.Port))
 		if err != nil {
-			return err
+			return sdk.WithStack(err)
 		}
 		signer, err = jws.NewSigner(c.Common.PrivateKey)
 		if err != nil {

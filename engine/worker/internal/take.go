@@ -49,7 +49,7 @@ func (w *CurrentWorker) Take(ctx context.Context, job sdk.WorkflowNodeJobRun) er
 		log.Info(ctx, "Setup step logger")
 		logger, err := log.New(info.GelfServiceAddr)
 		if err != nil {
-			return err
+			return sdk.WithStack(err)
 		}
 		w.logger.stepLogger = logger
 	}

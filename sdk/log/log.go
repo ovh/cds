@@ -8,7 +8,6 @@ import (
 	"os"
 	"strings"
 
-	"github.com/ovh/cds/sdk"
 	loghook "github.com/ovh/cds/sdk/log/hook"
 	log "github.com/sirupsen/logrus"
 )
@@ -270,7 +269,7 @@ func New(logServerAddr string) (*log.Logger, error) {
 	extra := map[string]interface{}{}
 	hook, err := loghook.NewHook(graylogcfg, extra)
 	if err != nil {
-		return nil, sdk.WithStack(err)
+		return nil, fmt.Errorf("unable to add hook: %v", err)
 	}
 	newLogger.AddHook(hook)
 	return newLogger, nil
