@@ -2,7 +2,6 @@ package workermodel
 
 import (
 	"context"
-	"errors"
 	"strconv"
 	"strings"
 	"time"
@@ -51,16 +50,16 @@ func ComputeRegistrationNeeds(db gorp.SqlExecutor, allBinaryReqs sdk.Requirement
 	}
 
 	if nbOSArchReq > 1 {
-		return sdk.NewError(sdk.ErrWrongRequest, errors.New("invalid os-architecture requirement usage"))
+		return sdk.NewErrorFrom(sdk.ErrWrongRequest, "invalid os-architecture requirement usage")
 	}
 	if nbModelReq > 1 {
-		return sdk.NewError(sdk.ErrWrongRequest, errors.New("invalid model requirement usage"))
+		return sdk.NewErrorFrom(sdk.ErrWrongRequest, "invalid model requirement usage")
 	}
 	if nbHostnameReq > 1 {
-		return sdk.NewError(sdk.ErrWrongRequest, errors.New("invalid hostname requirement usage"))
+		return sdk.NewErrorFrom(sdk.ErrWrongRequest, "invalid hostname requirement usage")
 	}
 	if nbRegionReq > 1 {
-		return sdk.NewError(sdk.ErrWrongRequest, errors.New("invalid region requirement usage"))
+		return sdk.NewErrorFrom(sdk.ErrWrongRequest, "invalid region requirement usage")
 	}
 
 	return nil
