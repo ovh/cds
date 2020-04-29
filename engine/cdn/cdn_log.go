@@ -47,7 +47,9 @@ func (s *Service) RunTcpLogServer(ctx context.Context) {
 				log.Error(ctx, "unable to accept connection: %v", err)
 				return
 			}
-			go s.handleConnection(ctx, conn)
+			sdk.GoRoutine(ctx, "cdn-logServer", func(ctx context.Context) {
+				s.handleConnection(ctx, conn)
+			})
 		}
 	}()
 }
@@ -75,7 +77,7 @@ func (s *Service) handleConnection(ctx context.Context, conn net.Conn) {
 
 func (s *Service) handleLogMessage(ctx context.Context, messageReceived []byte) error {
 	m := hook.Message{}
-	if err := (&m).UnmarshalJSON(messageReceived); err != nil {
+	if err := m.UnmarshalJSON(messageReceived); err != nil {
 		return sdk.WrapError(err, "unable to unmarshall gelf message: %s", string(messageReceived))
 	}
 
