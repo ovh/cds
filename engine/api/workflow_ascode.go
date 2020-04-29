@@ -122,11 +122,11 @@ func (api *API) postWorkflowAsCodeHandler() service.Handler {
 
 		sdk.GoRoutine(context.Background(), fmt.Sprintf("UpdateAsCodeResult-%s", ope.UUID), func(ctx context.Context) {
 			ed := ascode.EntityData{
-				Operation: ope,
-				Name:      wfDB.Name,
-				ID:        wfDB.ID,
-				Type:      ascode.WorkflowEvent,
-				FromRepo:  wfDB.FromRepository,
+				Name:          wfDB.Name,
+				ID:            wfDB.ID,
+				Type:          ascode.WorkflowEvent,
+				FromRepo:      wfDB.FromRepository,
+				OperationUUID: ope.UUID,
 			}
 			asCodeEvent := ascode.UpdateAsCodeResult(ctx, api.mustDB(), api.Cache, *p, *rootApp, ed, u)
 			if asCodeEvent != nil {
@@ -177,11 +177,11 @@ func (api *API) migrateWorkflowAsCode(ctx context.Context, w http.ResponseWriter
 
 	sdk.GoRoutine(context.Background(), fmt.Sprintf("MigrateWorkflowAsCodeResult-%s", ope.UUID), func(ctx context.Context) {
 		ed := ascode.EntityData{
-			FromRepo:  ope.URL,
-			Type:      ascode.WorkflowEvent,
-			ID:        wf.ID,
-			Name:      wf.Name,
-			Operation: ope,
+			FromRepo:      ope.URL,
+			Type:          ascode.WorkflowEvent,
+			ID:            wf.ID,
+			Name:          wf.Name,
+			OperationUUID: ope.UUID,
 		}
 		asCodeEvent := ascode.UpdateAsCodeResult(ctx, api.mustDB(), api.Cache, proj, app, ed, u)
 		if asCodeEvent != nil {

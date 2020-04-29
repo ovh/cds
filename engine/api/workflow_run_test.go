@@ -1175,11 +1175,11 @@ func Test_postWorkflowRunAsyncFailedHandler(t *testing.T) {
 		},
 	}
 	ed := ascode.EntityData{
-		FromRepo:  "ssh:/cloneurl",
-		Operation: &ope,
-		Name:      w1.Name,
-		ID:        w1.ID,
-		Type:      ascode.WorkflowEvent,
+		FromRepo:      "ssh:/cloneurl",
+		Name:          w1.Name,
+		ID:            w1.ID,
+		Type:          ascode.WorkflowEvent,
+		OperationUUID: ope.UUID,
 	}
 
 	x := ascode.UpdateAsCodeResult(context.TODO(), api.mustDB(), api.Cache, *proj, app, ed, u)

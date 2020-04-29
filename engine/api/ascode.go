@@ -88,12 +88,9 @@ func (api *API) postImportAsCodeHandler() service.Handler {
 func (api *API) getImportAsCodeHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
-		uuid := vars["uuid"]
-
-		var ope = new(sdk.Operation)
-		ope.UUID = uuid
-		if err := operation.GetRepositoryOperation(ctx, api.mustDB(), ope); err != nil {
-			return sdk.WrapError(err, "Cannot get repository operation status")
+		ope, err := operation.GetRepositoryOperation(ctx, api.mustDB(), vars["uuid"])
+		if err != nil {
+			return sdk.WrapError(err, "cannot get repository operation status")
 		}
 		return service.WriteJSON(w, ope, http.StatusOK)
 	}
@@ -123,11 +120,9 @@ func (api *API) postPerformImportAsCodeHandler() service.Handler {
 			return sdk.WrapError(errp, "postPerformImportAsCodeHandler> Cannot load project %s", key)
 		}
 
-		var ope = new(sdk.Operation)
-		ope.UUID = uuid
-
-		if err := operation.GetRepositoryOperation(ctx, api.mustDB(), ope); err != nil {
-			return sdk.WrapError(err, "Unable to get repository operation")
+		ope, err := operation.GetRepositoryOperation(ctx, api.mustDB(), uuid)
+		if err != nil {
+			return sdk.WrapError(err, "unable to get repository operation")
 		}
 
 		if ope.Status != sdk.OperationStatusDone {
@@ -173,8 +168,8 @@ func (api *API) postPerformImportAsCodeHandler() service.Handler {
 		if err != nil {
 			return err
 		}
-    msgPush, wrkflw, _, err := workflow.Push(ctx, api.mustDB(), api.Cache, proj, data, opt, getAPIConsumer(ctx), project.DecryptWithBuiltinKey)
-    allMsg = append(allMsg, msgPush...)
+		msgPush, wrkflw, _, err := workflow.Push(ctx, api.mustDB(), api.Cache, proj, data, opt, getAPIConsumer(ctx), project.DecryptWithBuiltinKey)
+		allMsg = append(allMsg, msgPush...)
 		if err != nil {
 			return sdk.WrapError(err, "unable to push workflow")
 		}

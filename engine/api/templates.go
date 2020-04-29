@@ -420,11 +420,11 @@ func (api *API) postTemplateApplyHandler() service.Handler {
 
 					sdk.GoRoutine(context.Background(), fmt.Sprintf("UpdateAsCodeResult-%s", ope.UUID), func(ctx context.Context) {
 						ed := ascode.EntityData{
-							Operation: ope,
-							Name:      existingWorkflow.Name,
-							ID:        existingWorkflow.ID,
-							Type:      ascode.WorkflowEvent,
-							FromRepo:  existingWorkflow.FromRepository,
+							Name:          existingWorkflow.Name,
+							ID:            existingWorkflow.ID,
+							Type:          ascode.WorkflowEvent,
+							FromRepo:      existingWorkflow.FromRepository,
+							OperationUUID: ope.UUID,
 						}
 						asCodeEvent := ascode.UpdateAsCodeResult(ctx, api.mustDB(), api.Cache, *p, *rootApp, ed, consumer)
 						if asCodeEvent != nil {
@@ -651,11 +651,11 @@ func (api *API) postTemplateBulkHandler() service.Handler {
 							}
 
 							ed := ascode.EntityData{
-								Operation: ope,
-								Name:      existingWorkflow.Name,
+																Name:      existingWorkflow.Name,
 								ID:        existingWorkflow.ID,
 								Type:      ascode.WorkflowEvent,
-								FromRepo:  existingWorkflow.FromRepository,
+                FromRepo:  existingWorkflow.FromRepository,
+                OperationUUID: ope.UUID,
 							}
 							asCodeEvent := ascode.UpdateAsCodeResult(ctx, api.mustDB(), api.Cache, *p, *rootApp, ed, consumer)
 							if asCodeEvent != nil {

@@ -114,8 +114,8 @@ func extractWorkflow(ctx context.Context, db *gorp.DbMap, store cache.Store, p *
 		return allMsgs, err
 	}
 	msgPush, workflowPushed, _, err := Push(ctx, db, store, p, data, opt, consumer, decryptFunc)
-  // Filter workflow push message if generated from template
-  for i := range msgPush {
+	// Filter workflow push message if generated from template
+	for i := range msgPush {
 		if wti != nil && msgPush[i].ID == sdk.MsgWorkflowDeprecatedVersion.ID {
 			continue
 		}
@@ -168,6 +168,7 @@ func ReadCDSFiles(files map[string][]byte) (*tar.Reader, error) {
 }
 
 func pollRepositoryOperation(c context.Context, db gorp.SqlExecutor, store cache.Store, ope *sdk.Operation) error {
+	var err error
 	tickTimeout := time.NewTicker(10 * time.Minute)
 	tickPoll := time.NewTicker(2 * time.Second)
 	defer tickTimeout.Stop()
@@ -180,7 +181,8 @@ func pollRepositoryOperation(c context.Context, db gorp.SqlExecutor, store cache
 		case <-tickTimeout.C:
 			return sdk.WrapError(sdk.ErrRepoOperationTimeout, "timeout analyzing repository")
 		case <-tickPoll.C:
-			if err := operation.GetRepositoryOperation(c, db, ope); err != nil {
+			ope, err = operation.GetRepositoryOperation(c, db, ope.UUID)
+			if err != nil {
 				return sdk.WrapError(err, "cannot get repository operation status")
 			}
 			switch ope.Status {

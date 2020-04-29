@@ -91,11 +91,11 @@ func (api *API) updateAsCodePipelineHandler() service.Handler {
 
 		sdk.GoRoutine(context.Background(), fmt.Sprintf("UpdateAsCodePipelineHandler-%s", ope.UUID), func(ctx context.Context) {
 			ed := ascode.EntityData{
-				FromRepo:  pipelineDB.FromRepository,
-				Type:      ascode.PipelineEvent,
-				ID:        pipelineDB.ID,
-				Name:      pipelineDB.Name,
-				Operation: ope,
+				FromRepo:      pipelineDB.FromRepository,
+				Type:          ascode.PipelineEvent,
+				ID:            pipelineDB.ID,
+				Name:          pipelineDB.Name,
+				OperationUUID: ope.UUID,
 			}
 			asCodeEvent := ascode.UpdateAsCodeResult(ctx, api.mustDB(), api.Cache, *proj, *rootApp, ed, u)
 			if asCodeEvent != nil {
