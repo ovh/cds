@@ -167,11 +167,14 @@ func (api *API) postPerformImportAsCodeHandler() service.Handler {
 		if opt.FromRepository != "" {
 			mods = append(mods, workflowtemplate.TemplateRequestModifiers.DefaultNameAndRepositories(ctx, api.mustDB(), api.Cache, *proj, opt.FromRepository))
 		}
-		wti, err := workflowtemplate.CheckAndExecuteTemplate(ctx, api.mustDB(), *consumer, *proj, &data, mods...)
+		var allMsg []sdk.Message
+		msgTemplate, wti, err := workflowtemplate.CheckAndExecuteTemplate(ctx, api.mustDB(), *consumer, *proj, &data, mods...)
+		allMsg = append(allMsg, msgTemplate...)
 		if err != nil {
 			return err
 		}
-		allMsg, wrkflw, _, err := workflow.Push(ctx, api.mustDB(), api.Cache, proj, data, opt, getAPIConsumer(ctx), project.DecryptWithBuiltinKey)
+    msgPush, wrkflw, _, err := workflow.Push(ctx, api.mustDB(), api.Cache, proj, data, opt, getAPIConsumer(ctx), project.DecryptWithBuiltinKey)
+    allMsg = append(allMsg, msgPush...)
 		if err != nil {
 			return sdk.WrapError(err, "unable to push workflow")
 		}

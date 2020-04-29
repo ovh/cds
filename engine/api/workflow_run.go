@@ -1001,17 +1001,16 @@ func (api *API) initWorkflowRun(ctx context.Context, projKey string, wf *sdk.Wor
 			log.Debug("workflow.CreateFromRepository> %s", wf.Name)
 			oldWf := *wf
 			asCodeInfosMsg, err := workflow.CreateFromRepository(ctx, api.mustDB(), api.Cache, p1, wf, *opts, *u, project.DecryptWithBuiltinKey)
-			if err != nil {
-				infos := make([]sdk.SpawnMsg, len(asCodeInfosMsg))
-				for i, msg := range asCodeInfosMsg {
-					infos[i] = sdk.SpawnMsg{
-						ID:   msg.ID,
-						Args: msg.Args,
-						Type: msg.Type,
-					}
-
+			infos := make([]sdk.SpawnMsg, len(asCodeInfosMsg))
+			for i, msg := range asCodeInfosMsg {
+				infos[i] = sdk.SpawnMsg{
+					ID:   msg.ID,
+					Args: msg.Args,
+					Type: msg.Type,
 				}
-				workflow.AddWorkflowRunInfo(wfRun, infos...)
+			}
+			workflow.AddWorkflowRunInfo(wfRun, infos...)
+			if err != nil {
 				r1 := failInitWorkflowRun(ctx, api.mustDB(), wfRun, sdk.WrapError(err, "unable to get workflow from repository"))
 				report.Merge(ctx, r1)
 				return

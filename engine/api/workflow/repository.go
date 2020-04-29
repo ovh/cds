@@ -108,12 +108,19 @@ func extractWorkflow(ctx context.Context, db *gorp.DbMap, store cache.Store, p *
 	if opt.FromRepository != "" {
 		mods = append(mods, workflowtemplate.TemplateRequestModifiers.DefaultNameAndRepositories(ctx, db, store, *p, opt.FromRepository))
 	}
-	wti, err := workflowtemplate.CheckAndExecuteTemplate(ctx, db, consumer, *p, &data, mods...)
+	msgTemplate, wti, err := workflowtemplate.CheckAndExecuteTemplate(ctx, db, consumer, *p, &data, mods...)
+	allMsgs = append(allMsgs, msgTemplate...)
 	if err != nil {
 		return allMsgs, err
 	}
-	msgList, workflowPushed, _, err := Push(ctx, db, store, p, data, opt, consumer, decryptFunc)
-	allMsgs = append(allMsgs, msgList...)
+	msgPush, workflowPushed, _, err := Push(ctx, db, store, p, data, opt, consumer, decryptFunc)
+  // Filter workflow push message if generated from template
+  for i := range msgPush {
+		if wti != nil && msgPush[i].ID == sdk.MsgWorkflowDeprecatedVersion.ID {
+			continue
+		}
+		allMsgs = append(allMsgs, msgPush[i])
+	}
 	if err != nil {
 		return allMsgs, sdk.WrapError(err, "unable to get workflow from file")
 	}

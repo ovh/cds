@@ -87,28 +87,33 @@ forLoop:
 						Repo: app.RepositoryFullname,
 					},
 				}
-				pr, err := client.PullRequestCreate(ctx, app.RepositoryFullname, request)
+
+				// Try to reuse a PR for the branche if exists else create a new one
+				var pr *sdk.VCSPullRequest
+				prs, err := client.PullRequests(ctx, app.RepositoryFullname)
 				if err != nil {
-					log.Error(ctx, "postWorkflowAsCodeHandler> unable to create pull request: %v", err)
+					log.Error(ctx, "postWorkflowAsCodeHandler> unable to list pull request: %v", err)
 					ed.Operation.Status = sdk.OperationStatusError
-					ed.Operation.Error = "unable to create pull request"
+					ed.Operation.Error = "unable to list pull request"
 					return nil
 				}
-				if pr.URL == "" {
-					prs, err := client.PullRequests(ctx, app.RepositoryFullname)
-					if err != nil {
-						log.Error(ctx, "postWorkflowAsCodeHandler> unable to list pull request: %v", err)
-						ed.Operation.Status = sdk.OperationStatusError
-						ed.Operation.Error = "unable to list pull request"
-						return nil
-					}
-					for _, prItem := range prs {
-						if prItem.Base.Branch.DisplayID == ed.Operation.Setup.Push.ToBranch && prItem.Head.Branch.DisplayID == ed.Operation.Setup.Push.FromBranch {
-							pr = prItem
-							break
-						}
+				for _, prItem := range prs {
+					if prItem.Base.Branch.DisplayID == ed.Operation.Setup.Push.ToBranch && prItem.Head.Branch.DisplayID == ed.Operation.Setup.Push.FromBranch {
+						pr = &prItem
+						break
 					}
 				}
+				if pr == nil {
+					newPR, err := client.PullRequestCreate(ctx, app.RepositoryFullname, request)
+					if err != nil {
+						log.Error(ctx, "postWorkflowAsCodeHandler> unable to create pull request: %v", err)
+						ed.Operation.Status = sdk.OperationStatusError
+						ed.Operation.Error = "unable to create pull request"
+						return nil
+					}
+					pr = &newPR
+				}
+
 				ed.Operation.Setup.Push.PRLink = pr.URL
 
 				// Find existing ascode event with this pullrequest

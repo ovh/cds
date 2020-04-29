@@ -1123,13 +1123,20 @@ func Test_postWorkflowRunAsyncFailedHandler(t *testing.T) {
 					return writeError(w, err)
 				}
 			case "/vcs/github/repos/foo/myrepo/pullrequests":
-				pr := sdk.VCSPullRequest{
-					Title: "blabla",
-					URL:   "myurl",
-					ID:    1,
-				}
-				if err := enc.Encode(pr); err != nil {
-					return writeError(w, err)
+				if r.Method == http.MethodGet {
+					vcsPRs := []sdk.VCSPullRequest{}
+					if err := enc.Encode(vcsPRs); err != nil {
+						return writeError(w, err)
+					}
+				} else {
+					pr := sdk.VCSPullRequest{
+						Title: "blabla",
+						URL:   "myurl",
+						ID:    1,
+					}
+					if err := enc.Encode(pr); err != nil {
+						return writeError(w, err)
+					}
 				}
 			case "/vcs/github/repos/foo/myrepo/pullrequests/1":
 				return writeError(w, fmt.Errorf("error for test"))

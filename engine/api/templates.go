@@ -443,7 +443,7 @@ func (api *API) postTemplateApplyHandler() service.Handler {
 		if req.Detached {
 			mods = append(mods, workflowtemplate.TemplateRequestModifiers.Detached)
 		}
-		wti, err := workflowtemplate.CheckAndExecuteTemplate(ctx, api.mustDB(), *consumer, *p, &data, mods...)
+		_, wti, err := workflowtemplate.CheckAndExecuteTemplate(ctx, api.mustDB(), *consumer, *p, &data, mods...)
 		if err != nil {
 			return err
 		}
@@ -675,7 +675,7 @@ func (api *API) postTemplateBulkHandler() service.Handler {
 					mods := []workflowtemplate.TemplateRequestModifierFunc{
 						workflowtemplate.TemplateRequestModifiers.DefaultKeys(*p),
 					}
-					wti, err = workflowtemplate.CheckAndExecuteTemplate(ctx, api.mustDB(), *consumer, *p, &data, mods...)
+					_, wti, err = workflowtemplate.CheckAndExecuteTemplate(ctx, api.mustDB(), *consumer, *p, &data, mods...)
 					if err != nil {
 						if errD := errorDefer(err); errD != nil {
 							log.Error(ctx, "%v", errD)
