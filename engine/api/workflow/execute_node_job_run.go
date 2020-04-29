@@ -476,7 +476,7 @@ func LoadSecrets(db gorp.SqlExecutor, store cache.Store, nodeRun *sdk.WorkflowNo
 		secrets = append(secrets, ev...)
 
 		if pp != nil {
-			projectIntegration, err := integration.LoadProjectIntegrationByID(db, pp.ID, true)
+			projectIntegration, err := integration.LoadProjectIntegrationByIDWithClearPassword(db, pp.ID)
 			if err != nil {
 				return nil, sdk.WrapError(err, "LoadSecrets> Cannot load integration %d", pp.ID)
 			}

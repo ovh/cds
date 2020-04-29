@@ -157,6 +157,15 @@ func (h *HatcheryOpenstack) WorkerModelsEnabled() ([]sdk.Model, error) {
 // CanSpawn return wether or not hatchery can spawn model
 // requirements are not supported
 func (h *HatcheryOpenstack) CanSpawn(ctx context.Context, model *sdk.Model, jobID int64, requirements []sdk.Requirement) bool {
+	// if there is a model, we have to check if the flavor attached to model is knowned by this hatchery
+	if model != nil {
+		if _, err := h.flavorID(model.ModelVirtualMachine.Flavor); err != nil {
+			log.Debug("CanSpawn> h.flavorID on %s err:%v", model.ModelVirtualMachine.Flavor, err)
+			return false
+		}
+		log.Debug("CanSpawn> flavor '%s' found", model.ModelVirtualMachine.Flavor)
+	}
+
 	for _, r := range requirements {
 		if r.Type == sdk.ServiceRequirement || r.Type == sdk.MemoryRequirement || r.Type == sdk.HostnameRequirement {
 			return false
@@ -297,7 +306,7 @@ func (h *HatcheryOpenstack) killAwolServers(ctx context.Context) {
 func (h *HatcheryOpenstack) killAwolServersComputeImage(ctx context.Context, workerModelName, workerModelNameLastModified, serverID, model, flavor string) {
 	oldImagesID := []string{}
 	for _, img := range h.getImages(ctx) {
-		if w, _ := img.Metadata["worker_model_name"]; w == workerModelName {
+		if w := img.Metadata["worker_model_name"]; w == workerModelName {
 			oldImagesID = append(oldImagesID, img.ID)
 			if d, ok := img.Metadata["worker_model_last_modified"]; ok && d.(string) == workerModelNameLastModified {
 				// no need to recreate an image
@@ -460,8 +469,7 @@ func (h *HatcheryOpenstack) NeedRegistration(ctx context.Context, m *sdk.Model) 
 		return true
 	}
 	for _, img := range h.getImages(ctx) {
-		w, _ := img.Metadata["worker_model_name"]
-		if w == m.Name {
+		if w := img.Metadata["worker_model_name"]; w == m.Name {
 			if d, ok := img.Metadata["worker_model_last_modified"]; ok {
 				if fmt.Sprintf("%d", m.UserLastModified.Unix()) == d.(string) {
 					log.Debug("NeedRegistration> false. An image is already available for this worker model %s workerModel.UserLastModified", m.Name)

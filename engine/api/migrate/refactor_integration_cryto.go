@@ -198,13 +198,23 @@ func refactorProjectIntegrationCrypto(ctx context.Context, db *gorp.DbMap, id in
 		return sdk.WrapError(err, "unable to encrypt config PublicConfigurations")
 	}
 	projectIntegration.Config = newCfg
+
+	// If the existing configuration contains password placeholder as encryptted value,
+	// let's overdire id because it will fail
+	for k, v := range projectIntegration.Config {
+		if v.Type == sdk.IntegrationConfigTypePassword && v.Value == sdk.PasswordPlaceholder {
+			log.Warning(ctx, "refactorProjectIntegrationCrypto > overriding wrong passwork: project: %d, integration: %s, value: %s", projectIntegration.ProjectID, projectIntegration.Name, k)
+			v.Value = k
+		}
+		projectIntegration.Config[k] = v
+	}
 	oldCfg := projectIntegration.Config.Clone()
 
 	if err := integration.UpdateIntegration(tx, projectIntegration); err != nil {
 		return sdk.WithStack(err)
 	}
 
-	newProjectIntegration, err := integration.LoadProjectIntegrationByID(tx, id, true)
+	newProjectIntegration, err := integration.LoadProjectIntegrationByIDWithClearPassword(tx, id)
 	if err != nil {
 		return err
 	}
