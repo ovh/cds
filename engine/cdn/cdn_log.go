@@ -198,6 +198,9 @@ func (s *Service) handleServiceLog(ctx context.Context, hatcheryID int64, hatche
 		WorkflowNodeRunID:      nodeRunJob.WorkflowNodeRunID,
 		Val:                    m.Full,
 	}
+	if !strings.HasSuffix(logs.Val, "\n") {
+		logs.Val += "\n"
+	}
 
 	if err := workflow.AddServiceLog(s.Db, nodeRunJob, &logs, s.Cfg.Log.ServiceMaxSize); err != nil {
 		return err
