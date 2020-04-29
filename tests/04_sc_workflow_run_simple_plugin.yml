@@ -52,4 +52,5 @@ testcases:
 - name: check workflow log
   steps:
     - script: {{.cdsctl}} -f {{.cdsctl.config}} workflow logs download 04SCWORKFLOWRUNSIMPLEPLUGIN 04SCWorkflowRunSimplePlugin-WORKFLOW 1 --pattern Build
+    - script: cat *.log
     - script: grep "Hello, I'm the simple plugin" *.log
