@@ -32,7 +32,7 @@ func (b *bitbucketClient) PullRequest(ctx context.Context, repo string, id int) 
 	return pr, nil
 }
 
-func (b *bitbucketClient) PullRequests(ctx context.Context, repo string) ([]sdk.VCSPullRequest, error) {
+func (b *bitbucketClient) PullRequests(ctx context.Context, repo string, opts sdk.VCSPullRequestOptions) ([]sdk.VCSPullRequest, error) {
 	project, slug, err := getRepo(repo)
 	if err != nil {
 		return nil, sdk.WithStack(err)
@@ -42,6 +42,15 @@ func (b *bitbucketClient) PullRequests(ctx context.Context, repo string) ([]sdk.
 
 	path := fmt.Sprintf("/projects/%s/repos/%s/pull-requests", project, slug)
 	params := url.Values{}
+
+	switch opts.State {
+	case sdk.VCSPullRequestStateOpen:
+		params.Set("state", "OPEN")
+	case sdk.VCSPullRequestStateMerged:
+		params.Set("state", "MERGED")
+	case sdk.VCSPullRequestStateClosed:
+		params.Set("state", "DECLINED")
+	}
 
 	nextPage := 0
 	for {

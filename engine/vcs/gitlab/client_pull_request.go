@@ -18,8 +18,19 @@ func (c *gitlabClient) PullRequest(ctx context.Context, repo string, id int) (sd
 }
 
 // PullRequests fetch all the pull request for a repository
-func (c *gitlabClient) PullRequests(ctx context.Context, repo string) ([]sdk.VCSPullRequest, error) {
-	mrs, _, err := c.client.MergeRequests.ListProjectMergeRequests(repo, nil)
+func (c *gitlabClient) PullRequests(ctx context.Context, repo string, opts sdk.VCSPullRequestOptions) ([]sdk.VCSPullRequest, error) {
+	var gitlabOpts gitlab.ListProjectMergeRequestsOptions
+
+	switch opts.State {
+	case sdk.VCSPullRequestStateOpen:
+		gitlabOpts.State = gitlab.String("opened")
+	case sdk.VCSPullRequestStateMerged:
+		gitlabOpts.State = gitlab.String("merged")
+	case sdk.VCSPullRequestStateClosed:
+		gitlabOpts.State = gitlab.String("closed")
+	}
+
+	mrs, _, err := c.client.MergeRequests.ListProjectMergeRequests(repo, &gitlabOpts)
 	if err != nil {
 		return nil, sdk.WithStack(err)
 	}

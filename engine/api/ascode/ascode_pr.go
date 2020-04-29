@@ -90,7 +90,7 @@ forLoop:
 
 				// Try to reuse a PR for the branche if exists else create a new one
 				var pr *sdk.VCSPullRequest
-				prs, err := client.PullRequests(ctx, app.RepositoryFullname)
+				prs, err := client.PullRequests(ctx, app.RepositoryFullname, sdk.VCSRequestModifierWithState(sdk.VCSPullRequestStateOpen))
 				if err != nil {
 					log.Error(ctx, "postWorkflowAsCodeHandler> unable to list pull request: %v", err)
 					ed.Operation.Status = sdk.OperationStatusError
