@@ -59,8 +59,13 @@ type TakeForm struct {
 // RegisterWorker  Register new worker
 func RegisterWorker(ctx context.Context, db gorp.SqlExecutor, store cache.Store, spawnArgs hatchery.SpawnArguments, hatcheryID int64, consumer *sdk.AuthConsumer, registrationForm sdk.WorkerRegistrationForm) (*sdk.Worker, error) {
 	if spawnArgs.WorkerName == "" {
-		return nil, sdk.WithStack(sdk.ErrWrongRequest)
+		return nil, sdk.NewErrorFrom(sdk.ErrWrongRequest, "unauthorized to register a worker without a name")
 	}
+
+	if !spawnArgs.RegisterOnly && spawnArgs.JobID == 0 {
+		return nil, sdk.NewErrorFrom(sdk.ErrWrongRequest, "unauthorized to register a worker for a job without a JobID")
+	}
+
 	var model *sdk.Model
 	if spawnArgs.Model != nil {
 		// Load Model
@@ -94,6 +99,9 @@ func RegisterWorker(ctx context.Context, db gorp.SqlExecutor, store cache.Store,
 	}
 	if model != nil {
 		w.ModelID = &spawnArgs.Model.ID
+	}
+	if spawnArgs.JobID > 0 {
+		w.JobRunID = &spawnArgs.JobID
 	}
 
 	w.Uptodate = registrationForm.Version == sdk.VERSION
