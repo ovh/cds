@@ -27,6 +27,8 @@ testcases:
   - type: http
     method: POST
     url: '{{.api.url}}/auth/consumer/local/signup'
+    assertions:
+    - result.statuscode ShouldEqual 201
     headers: 
       "Content-Type": "application/json"
     body: |-
