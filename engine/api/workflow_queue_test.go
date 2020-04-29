@@ -268,13 +268,13 @@ func testGetWorkflowJobAsRegularUser(t *testing.T, api *API, router *Router, jwt
 
 	jobs := []sdk.WorkflowNodeJobRun{}
 	require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &jobs))
-	assert.True(t, len(jobs) >= 1)
+	require.True(t, len(jobs) >= 1)
 
 	if t.Failed() {
 		t.FailNow()
 	}
 
-	ctx.job = &jobs[0]
+	ctx.job = &jobs[len(jobs)-1]
 }
 
 func testGetWorkflowJobAsWorker(t *testing.T, api *API, router *Router, ctx *testRunWorkflowCtx) {
@@ -290,7 +290,7 @@ func testGetWorkflowJobAsWorker(t *testing.T, api *API, router *Router, ctx *tes
 
 	jobs := []sdk.WorkflowNodeJobRun{}
 	require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &jobs))
-	assert.Len(t, jobs, 1)
+	require.Len(t, jobs, 1)
 
 	if t.Failed() {
 		t.FailNow()
@@ -312,7 +312,7 @@ func testGetWorkflowJobAsHatchery(t *testing.T, api *API, router *Router, ctx *t
 
 	jobs := []sdk.WorkflowNodeJobRun{}
 	require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &jobs))
-	assert.Len(t, jobs, 1)
+	require.Len(t, jobs, 1)
 
 	if t.Failed() {
 		t.FailNow()
@@ -344,8 +344,22 @@ func testRegisterHatchery(t *testing.T, api *API, router *Router, ctx *testRunWo
 }
 
 func TestGetWorkflowJobQueueHandler(t *testing.T) {
-	api, _, router, end := newTestAPI(t)
+	api, db, router, end := newTestAPI(t)
 	defer end()
+
+	// delete all existing workers
+	workers, err := worker.LoadAll(context.TODO(), db)
+	test.NoError(t, err)
+	for _, w := range workers {
+		worker.Delete(db, w.ID)
+	}
+
+	// remove all jobs in queue
+	filterClean := workflow.NewQueueFilter()
+	nrj, _ := workflow.LoadNodeJobRunQueue(context.TODO(), db, api.Cache, filterClean)
+	for _, j := range nrj {
+		_ = workflow.DeleteNodeJobRuns(db, j.WorkflowNodeRunID)
+	}
 
 	_, jwt := assets.InsertAdminUser(t, api.mustDB())
 	t.Log("checkin as a user")
@@ -354,7 +368,7 @@ func TestGetWorkflowJobQueueHandler(t *testing.T) {
 	testGetWorkflowJobAsRegularUser(t, api, router, jwt, &ctx)
 	assert.NotNil(t, ctx.job)
 
-	t.Log("checkin as a worker")
+	t.Logf("checkin as a worker jobId:%d", ctx.job.ID)
 
 	testGetWorkflowJobAsWorker(t, api, router, &ctx)
 	assert.NotNil(t, ctx.job)
