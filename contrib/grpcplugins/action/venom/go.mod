@@ -12,7 +12,7 @@ require (
 	github.com/ovh/go-ovh v0.0.0-20181109152953-ba5adb4cf014 // indirect
 	github.com/ovh/venom v0.26.0
 	github.com/sclevine/agouti v3.0.0+incompatible // indirect
-	github.com/stretchr/testify v1.4.0
+	github.com/stretchr/testify v1.5.1
 	github.com/yesnault/go-imap v0.0.0-20160710142244-eb9bbb66bd7b // indirect
 	gopkg.in/ini.v1 v1.51.0 // indirect
 	gopkg.in/testfixtures.v2 v2.6.0 // indirect
