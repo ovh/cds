@@ -193,7 +193,7 @@ func (c *Common) getPanicDumpListHandler() service.Handler {
 func (c *Common) InitServiceLogger() error {
 	tcpServer := c.Common.ServiceInstance.LogServer
 	var signer jose.Signer
-	if tcpServer.Addr != "" && tcpServer.Port != 0 {
+	if tcpServer.Addr != "" && tcpServer.Port > 0 {
 		logger, err := log.New(fmt.Sprintf("%s:%d", tcpServer.Addr, tcpServer.Port))
 		if err != nil {
 			return sdk.WithStack(err)
