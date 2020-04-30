@@ -268,13 +268,13 @@ func testGetWorkflowJobAsRegularUser(t *testing.T, api *API, router *Router, jwt
 
 	jobs := []sdk.WorkflowNodeJobRun{}
 	require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &jobs))
-	assert.True(t, len(jobs) >= 1)
+	require.True(t, len(jobs) >= 1)
 
 	if t.Failed() {
 		t.FailNow()
 	}
 
-	ctx.job = &jobs[0]
+	ctx.job = &jobs[len(jobs)-1]
 }
 
 func testGetWorkflowJobAsWorker(t *testing.T, api *API, router *Router, ctx *testRunWorkflowCtx) {
@@ -290,7 +290,7 @@ func testGetWorkflowJobAsWorker(t *testing.T, api *API, router *Router, ctx *tes
 
 	jobs := []sdk.WorkflowNodeJobRun{}
 	require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &jobs))
-	assert.Len(t, jobs, 1)
+	require.Len(t, jobs, 1)
 
 	if t.Failed() {
 		t.FailNow()
@@ -312,7 +312,7 @@ func testGetWorkflowJobAsHatchery(t *testing.T, api *API, router *Router, ctx *t
 
 	jobs := []sdk.WorkflowNodeJobRun{}
 	require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &jobs))
-	assert.Len(t, jobs, 1)
+	require.Len(t, jobs, 1)
 
 	if t.Failed() {
 		t.FailNow()
@@ -327,7 +327,11 @@ func testRegisterWorker(t *testing.T, api *API, router *Router, ctx *testRunWork
 		t.Fatalf("Error getting group: %+v", err)
 	}
 	model := LoadOrCreateWorkerModel(t, api, g.ID, "Test1")
-	w, workerJWT := RegisterWorker(t, api, g.ID, model.Name)
+	var jobID int64
+	if ctx.job != nil {
+		jobID = ctx.job.ID
+	}
+	w, workerJWT := RegisterWorker(t, api, g.ID, model.Name, jobID, jobID == 0)
 	ctx.workerToken = workerJWT
 	ctx.worker = w
 	ctx.model = model
@@ -340,8 +344,22 @@ func testRegisterHatchery(t *testing.T, api *API, router *Router, ctx *testRunWo
 }
 
 func TestGetWorkflowJobQueueHandler(t *testing.T) {
-	api, _, router, end := newTestAPI(t)
+	api, db, router, end := newTestAPI(t)
 	defer end()
+
+	// delete all existing workers
+	workers, err := worker.LoadAll(context.TODO(), db)
+	test.NoError(t, err)
+	for _, w := range workers {
+		worker.Delete(db, w.ID)
+	}
+
+	// remove all jobs in queue
+	filterClean := workflow.NewQueueFilter()
+	nrj, _ := workflow.LoadNodeJobRunQueue(context.TODO(), db, api.Cache, filterClean)
+	for _, j := range nrj {
+		_ = workflow.DeleteNodeJobRuns(db, j.WorkflowNodeRunID)
+	}
 
 	_, jwt := assets.InsertAdminUser(t, api.mustDB())
 	t.Log("checkin as a user")
@@ -350,7 +368,7 @@ func TestGetWorkflowJobQueueHandler(t *testing.T) {
 	testGetWorkflowJobAsRegularUser(t, api, router, jwt, &ctx)
 	assert.NotNil(t, ctx.job)
 
-	t.Log("checkin as a worker")
+	t.Logf("checkin as a worker jobId:%d", ctx.job.ID)
 
 	testGetWorkflowJobAsWorker(t, api, router, &ctx)
 	assert.NotNil(t, ctx.job)
@@ -457,6 +475,46 @@ func Test_postTakeWorkflowJobHandler(t *testing.T) {
 	assert.Equal(t, ctx.model.Name, run.Model)
 	assert.Equal(t, ctx.worker.Name, run.WorkerName)
 	assert.NotEmpty(t, run.HatcheryName)
+}
+
+func Test_postTakeWorkflowInvalidJobHandler(t *testing.T) {
+	api, _, router, end := newTestAPI(t)
+	defer end()
+	ctx := testRunWorkflow(t, api, router)
+	testGetWorkflowJobAsWorker(t, api, router, &ctx)
+	require.NotNil(t, ctx.job)
+
+	//Prepare request
+	vars := map[string]string{
+		"key":              ctx.project.Key,
+		"permWorkflowName": ctx.workflow.Name,
+		"id":               fmt.Sprintf("%d", ctx.job.ID+1), // invalid job
+	}
+
+	//Register the worker
+	testRegisterWorker(t, api, router, &ctx)
+
+	uri := router.GetRoute("POST", api.postTakeWorkflowJobHandler, vars)
+	require.NotEmpty(t, uri)
+
+	//this call must failed, we try to take a jobID not reserved at worker's registration
+	req := assets.NewJWTAuthentifiedRequest(t, ctx.workerToken, "POST", uri, nil)
+	rec := httptest.NewRecorder()
+	router.Mux.ServeHTTP(rec, req)
+	require.Equal(t, 403, rec.Code)
+
+	//This must be ok, take the jobID reserved
+	vars2 := map[string]string{
+		"key":              ctx.project.Key,
+		"permWorkflowName": ctx.workflow.Name,
+		"id":               fmt.Sprintf("%d", ctx.job.ID),
+	}
+	uri2 := router.GetRoute("POST", api.postTakeWorkflowJobHandler, vars2)
+	require.NotEmpty(t, uri2)
+	req2 := assets.NewJWTAuthentifiedRequest(t, ctx.workerToken, "POST", uri2, nil)
+	rec2 := httptest.NewRecorder()
+	router.Mux.ServeHTTP(rec2, req2)
+	require.Equal(t, 200, rec2.Code)
 }
 
 func Test_postBookWorkflowJobHandler(t *testing.T) {
