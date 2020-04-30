@@ -501,7 +501,7 @@ func Test_postTakeWorkflowInvalidJobHandler(t *testing.T) {
 	req := assets.NewJWTAuthentifiedRequest(t, ctx.workerToken, "POST", uri, nil)
 	rec := httptest.NewRecorder()
 	router.Mux.ServeHTTP(rec, req)
-	require.Equal(t, 400, rec.Code)
+	require.Equal(t, 403, rec.Code)
 
 	//This must be ok, take the jobID reserved
 	vars2 := map[string]string{
