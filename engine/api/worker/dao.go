@@ -50,6 +50,13 @@ func LoadByConsumerID(ctx context.Context, db gorp.SqlExecutor, id string) (*sdk
 	if !found {
 		return nil, sdk.WithStack(sdk.ErrNotFound)
 	}
+	isValid, err := gorpmapping.CheckSignature(w, w.Signature)
+	if err != nil {
+		return nil, err
+	}
+	if !isValid {
+		return nil, sdk.WithStack(sdk.ErrInvalidData)
+	}
 	return &w.Worker, nil
 }
 
@@ -63,6 +70,13 @@ func LoadByID(ctx context.Context, db gorp.SqlExecutor, id string) (*sdk.Worker,
 	if !found {
 		return nil, sdk.WithStack(sdk.ErrNotFound)
 	}
+	isValid, err := gorpmapping.CheckSignature(w, w.Signature)
+	if err != nil {
+		return nil, err
+	}
+	if !isValid {
+		return nil, sdk.WithStack(sdk.ErrInvalidData)
+	}
 	return &w.Worker, nil
 }
 
@@ -74,6 +88,13 @@ func LoadAll(ctx context.Context, db gorp.SqlExecutor) ([]sdk.Worker, error) {
 	}
 	workers := make([]sdk.Worker, len(wks))
 	for i := range wks {
+		isValid, err := gorpmapping.CheckSignature(wks[i], wks[i].Signature)
+		if err != nil {
+			return nil, err
+		}
+		if !isValid {
+			return nil, sdk.WithStack(sdk.ErrInvalidData)
+		}
 		workers[i] = wks[i].Worker
 	}
 	return workers, nil
@@ -87,6 +108,13 @@ func LoadByHatcheryID(ctx context.Context, db gorp.SqlExecutor, hatcheryID int64
 	}
 	workers := make([]sdk.Worker, len(wks))
 	for i := range wks {
+		isValid, err := gorpmapping.CheckSignature(wks[i], wks[i].Signature)
+		if err != nil {
+			return nil, err
+		}
+		if !isValid {
+			return nil, sdk.WithStack(sdk.ErrInvalidData)
+		}
 		workers[i] = wks[i].Worker
 	}
 	return workers, nil
@@ -104,6 +132,13 @@ func LoadDeadWorkers(ctx context.Context, db gorp.SqlExecutor, timeout float64, 
 	}
 	workers := make([]sdk.Worker, len(wks))
 	for i := range wks {
+		isValid, err := gorpmapping.CheckSignature(wks[i], wks[i].Signature)
+		if err != nil {
+			return nil, err
+		}
+		if !isValid {
+			return nil, sdk.WithStack(sdk.ErrInvalidData)
+		}
 		workers[i] = wks[i].Worker
 	}
 	return workers, nil
@@ -144,36 +179,43 @@ func SetToBuilding(ctx context.Context, db gorp.SqlExecutor, workerID string, jo
 }
 
 // LoadWorkerByIDWithDecryptKey load worker with decrypted private key
-func LoadWorkerByIDWithDecryptKey(ctx context.Context, db gorp.SqlExecutor, workerID string) (sdk.Worker, error) {
+func LoadWorkerByIDWithDecryptKey(ctx context.Context, db gorp.SqlExecutor, workerID string) (*sdk.Worker, error) {
 	var work dbWorker
 	query := gorpmapping.NewQuery(`SELECT * FROM worker WHERE id = $1`).Args(workerID)
 	found, err := gorpmapping.Get(ctx, db, query, &work, gorpmapping.GetOptions.WithDecryption)
 	if err != nil {
-		return sdk.Worker{}, err
+		return nil, err
 	}
 	if !found {
-		return sdk.Worker{}, sdk.WithStack(sdk.ErrNotFound)
+		return nil, sdk.WithStack(sdk.ErrNotFound)
 	}
 	isValid, err := gorpmapping.CheckSignature(work, work.Signature)
 	if err != nil {
-		return sdk.Worker{}, err
+		return nil, err
 	}
 	if !isValid {
-		return sdk.Worker{}, sdk.WithStack(sdk.ErrInvalidData)
+		return nil, sdk.WithStack(sdk.ErrInvalidData)
 	}
-	return work.Worker, err
+	return &work.Worker, err
 }
 
 // LoadWorkerByName load worker by name
-func LoadWorkerByName(ctx context.Context, db gorp.SqlExecutor, workerName string) (sdk.Worker, error) {
+func LoadWorkerByName(ctx context.Context, db gorp.SqlExecutor, workerName string) (*sdk.Worker, error) {
 	var work dbWorker
 	query := gorpmapping.NewQuery(`SELECT * FROM worker WHERE name = $1`).Args(workerName)
 	found, err := gorpmapping.Get(ctx, db, query, &work)
 	if err != nil {
-		return sdk.Worker{}, err
+		return nil, err
 	}
 	if !found {
-		return sdk.Worker{}, sdk.WithStack(sdk.ErrNotFound)
+		return nil, sdk.WithStack(sdk.ErrNotFound)
 	}
-	return work.Worker, err
+	isValid, err := gorpmapping.CheckSignature(work, work.Signature)
+	if err != nil {
+		return nil, err
+	}
+	if !isValid {
+		return nil, sdk.WithStack(sdk.ErrInvalidData)
+	}
+	return &work.Worker, err
 }

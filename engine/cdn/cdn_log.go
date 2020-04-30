@@ -213,8 +213,8 @@ func (s *Service) getWorker(ctx context.Context, workerID string) (sdk.Worker, e
 	if err != nil {
 		return sdk.Worker{}, err
 	}
-	logCache.Set(fmt.Sprintf("worker-%s", w.ID), w, gocache.DefaultExpiration)
-	return w, nil
+	logCache.Set(fmt.Sprintf("worker-%s", w.ID), *w, gocache.DefaultExpiration)
+	return *w, nil
 }
 
 func (s *Service) getHatchery(ctx context.Context, hatcheryID int64, hatcheryName string) (*rsa.PublicKey, error) {
