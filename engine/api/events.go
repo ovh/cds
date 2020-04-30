@@ -94,10 +94,6 @@ func (b *eventsBroker) cacheSubscribe(c context.Context, cacheMsgChan chan<- sdk
 				continue
 			}
 
-			switch e.EventType {
-			case "sdk.EventJob":
-				continue
-			}
 			observability.Record(b.router.Background, SSEEvents, 1)
 			cacheMsgChan <- e
 		}
@@ -239,7 +235,7 @@ func (client *eventsBrokerSubscribe) manageEvent(db gorp.SqlExecutor, event sdk.
 	var isHatcheryWithGroups = isHatchery && len(client.consumer.GroupIDs) > 0
 
 	switch {
-    case strings.HasPrefix(event.EventType, "sdk.EventProject") || strings.HasPrefix(event.EventType, "sdk.EventAsCodeEvent"):
+	case strings.HasPrefix(event.EventType, "sdk.EventProject") || strings.HasPrefix(event.EventType, "sdk.EventAsCodeEvent"):
 		if client.consumer.Maintainer() && !isHatcheryWithGroups {
 			return true, nil
 		}

@@ -8,6 +8,7 @@ import (
 	"net/url"
 	"time"
 
+	"github.com/gorilla/websocket"
 	"github.com/sguiheux/go-coverage"
 
 	"github.com/ovh/cds/sdk"
@@ -144,6 +145,7 @@ type EnvironmentVariableClient interface {
 type EventsClient interface {
 	// Must be  run in a go routine
 	EventsListen(ctx context.Context, chanSSEvt chan<- SSEvent)
+	WebsocketEventsListen(ctx context.Context, chanMsgToSend <-chan sdk.WebsocketFilter, chanMsgReceived chan<- sdk.WebsocketEvent)
 }
 
 // DownloadClient exposes download related functions
@@ -401,6 +403,7 @@ type Raw interface {
 	Request(ctx context.Context, method string, path string, body io.Reader, mods ...RequestModifier) ([]byte, http.Header, int, error)
 	HTTPClient() *http.Client
 	HTTPSSEClient() *http.Client
+	HTTPWebsocketClient() *websocket.Dialer
 }
 
 // GRPCPluginsClient exposes plugins API
