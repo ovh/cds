@@ -373,7 +373,6 @@ func (api *API) postTemplateApplyHandler() service.Handler {
 			},
 		}
 
-		//
 		if !withImport && !req.Detached {
 			buf := new(bytes.Buffer)
 			if err := exportentities.TarWorkflowComponents(ctx, data, buf); err != nil {
