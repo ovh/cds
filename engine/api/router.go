@@ -41,6 +41,8 @@ var (
 	Hits                *stats.Int64Measure
 	SSEClients          *stats.Int64Measure
 	SSEEvents           *stats.Int64Measure
+	WebSocketClients    *stats.Int64Measure
+	WebSocketEvents     *stats.Int64Measure
 	ServerRequestCount  *stats.Int64Measure
 	ServerRequestBytes  *stats.Int64Measure
 	ServerResponseBytes *stats.Int64Measure

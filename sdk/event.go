@@ -25,6 +25,8 @@ type Event struct {
 	WorkflowName        string           `json:"workflow_name,omitempty"`
 	WorkflowRunNum      int64            `json:"workflow_run_num,omitempty"`
 	WorkflowRunNumSub   int64            `json:"workflow_run_num_sub,omitempty"`
+	WorkflowNodeRunID   int64            `json:"workflow_node_run_id,omitempty"`
+	OperationUUID       string           `json:"operation_uuid,omitempty"`
 	Status              string           `json:"status,omitempty"`
 	Tags                []WorkflowRunTag `json:"tag,omitempty"`
 	EventIntegrationsID []int64          `json:"event_integrations_id"`
@@ -104,10 +106,14 @@ type EventRunWorkflowOutgoingHook struct {
 
 // EventRunWorkflowJob contains event data for a workflow job node run
 type EventRunWorkflowJob struct {
-	ID     int64  `json:"id,omitempty"`
-	Status string `json:"status,omitempty"`
-	Start  int64  `json:"start,omitempty"`
-	Done   int64  `json:"done,omitempty"`
+	ID           int64         `json:"id,omitempty"`
+	Status       string        `json:"status,omitempty"`
+	Start        int64         `json:"start,omitempty"`
+	Done         int64         `json:"done,omitempty"`
+	Requirements []Requirement `json:"requirements,omitempty"`
+	WorkerName   string        `json:"worker_name,omitempty"`
+	BookByName   string        `json:"book_by_name,omitempty"`
+	Parameters   []Parameter   `json:"parameters,omitempty"`
 }
 
 // EventRunWorkflow contains event data for a workflow run
@@ -120,25 +126,6 @@ type EventRunWorkflow struct {
 	LastModified     int64            `json:"last_modified"`
 	LastModifiedNano int64            `json:"last_modified_nano"`
 	Tags             []WorkflowRunTag `json:"tags"`
-}
-
-// EventJob contains event data for a job
-type EventJob struct {
-	Version         int64  `json:"version,omitempty"`
-	JobName         string `json:"jobName,omitempty"`
-	JobID           int64  `json:"jobID,omitempty"`
-	Status          string `json:"status,omitempty"`
-	Queued          int64  `json:"queued,omitempty"`
-	Start           int64  `json:"start,omitempty"`
-	Done            int64  `json:"done,omitempty"`
-	ModelName       string `json:"modelName,omitempty"`
-	PipelineName    string `json:"pipelineName,omitempty"`
-	PipelineType    string `json:"type,omitempty"`
-	ProjectKey      string `json:"projectKey,omitempty"`
-	ApplicationName string `json:"applicationName,omitempty"`
-	EnvironmentName string `json:"environmentName,omitempty"`
-	BranchName      string `json:"branchName,omitempty"`
-	Hash            string `json:"hash,omitempty"`
 }
 
 // EventNotif contains event data for a job

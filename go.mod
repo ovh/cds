@@ -69,6 +69,7 @@ require (
 	github.com/gorhill/cronexpr v0.0.0-20161205141322-d520615e531a
 	github.com/gorilla/handlers v0.0.0-20160816184729-a5775781a543
 	github.com/gorilla/mux v1.6.2
+	github.com/gorilla/websocket v1.4.0
 	github.com/gregjones/httpcache v0.0.0-20190212212710-3befbb6ad0cc // indirect
 	github.com/grpc-ecosystem/grpc-gateway v1.9.6 // indirect
 	github.com/hashicorp/consul v1.3.0 // indirect
