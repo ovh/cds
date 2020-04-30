@@ -140,7 +140,7 @@ func SetToBuilding(ctx context.Context, db gorp.SqlExecutor, workerID string, jo
 	if err := gorpmapping.UpdateAndSign(ctx, db, dbData); err != nil {
 		return err
 	}
-	return err
+	return nil
 }
 
 // LoadWorkerByIDWithDecryptKey load worker with decrypted private key
@@ -152,14 +152,14 @@ func LoadWorkerByIDWithDecryptKey(ctx context.Context, db gorp.SqlExecutor, work
 		return sdk.Worker{}, err
 	}
 	if !found {
-		return sdk.Worker{}, sdk.ErrNotFound
+		return sdk.Worker{}, sdk.WithStack(sdk.ErrNotFound)
 	}
 	isValid, err := gorpmapping.CheckSignature(work, work.Signature)
 	if err != nil {
 		return sdk.Worker{}, err
 	}
 	if !isValid {
-		return sdk.Worker{}, sdk.ErrInvalidData
+		return sdk.Worker{}, sdk.WithStack(sdk.ErrInvalidData)
 	}
 	return work.Worker, err
 }
@@ -173,7 +173,7 @@ func LoadWorkerByName(ctx context.Context, db gorp.SqlExecutor, workerName strin
 		return sdk.Worker{}, err
 	}
 	if !found {
-		return sdk.Worker{}, sdk.ErrNotFound
+		return sdk.Worker{}, sdk.WithStack(sdk.ErrNotFound)
 	}
 	return work.Worker, err
 }
