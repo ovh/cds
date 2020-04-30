@@ -20,7 +20,7 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
-func RegisterWorker(t *testing.T, api *API, groupID int64, existingWorkerModelName string) (*sdk.Worker, string) {
+func RegisterWorker(t *testing.T, api *API, groupID int64, existingWorkerModelName string, jobID int64, registerOnly bool) (*sdk.Worker, string) {
 	model, err := workermodel.LoadByNameAndGroupID(api.mustDB(), existingWorkerModelName, groupID)
 	if err != nil {
 		t.Fatalf("RegisterWorker> Error getting worker model : %s", err)
@@ -42,6 +42,8 @@ func RegisterWorker(t *testing.T, api *API, groupID int64, existingWorkerModelNa
 		HatcheryName: hSrv.Name,
 		Model:        model,
 		WorkerName:   hSrv.Name + "-worker",
+		JobID:        jobID,
+		RegisterOnly: registerOnly,
 	})
 	test.NoError(t, err)
 	assert.NotNil(t, hConsumer)
@@ -112,7 +114,7 @@ func TestPostRegisterWorkerHandler(t *testing.T) {
 
 	model := LoadOrCreateWorkerModel(t, api, g.ID, "Test1")
 
-	_, workerJWT := RegisterWorker(t, api, g.ID, model.Name)
+	_, workerJWT := RegisterWorker(t, api, g.ID, model.Name, 0, true)
 
 	uri := api.Router.GetRoute("POST", api.postRefreshWorkerHandler, nil)
 	test.NotEmpty(t, uri)
@@ -131,4 +133,45 @@ func TestPostRegisterWorkerHandler(t *testing.T) {
 	rec = httptest.NewRecorder()
 	api.Router.Mux.ServeHTTP(rec, req)
 	assert.Equal(t, 204, rec.Code)
+}
+
+// TestPostInvalidRegister tests to register a worker for a job, without a JobID
+func TestPostInvalidRegister(t *testing.T) {
+	api, _, _, end := newTestAPI(t)
+	defer end()
+
+	g := LoadSharedInfraGroup(t, api)
+
+	model := LoadOrCreateWorkerModel(t, api, g.ID, "Test2")
+
+	hSrv, hPrivKey, hConsumer, _ := assets.InsertHatchery(t, api.mustDB(), *g)
+
+	hPubKey, err := jws.ExportPublicKey(hPrivKey)
+	if err != nil {
+		t.Fatalf("RegisterWorker> Error exporting public key : %s", err)
+	}
+	log.Debug("hatchery public key is %s", string(hPubKey))
+
+	jwt, err := hatchery.NewWorkerToken(hSrv.Name, hPrivKey, time.Now().Add(time.Hour), hatchery.SpawnArguments{
+		HatcheryName: hSrv.Name,
+		Model:        model,
+		WorkerName:   hSrv.Name + "-worker",
+		JobID:        0,
+		RegisterOnly: false,
+	})
+	test.NoError(t, err)
+	assert.NotNil(t, hConsumer)
+
+	uri := api.Router.GetRoute("POST", api.postRegisterWorkerHandler, nil)
+	test.NotEmpty(t, uri)
+	req := assets.NewJWTAuthentifiedRequest(t, jwt, "POST", uri, sdk.WorkerRegistrationForm{
+		Arch:    runtime.GOARCH,
+		OS:      runtime.GOOS,
+		Version: sdk.VERSION,
+	})
+
+	//Do the request
+	rec := httptest.NewRecorder()
+	api.Router.Mux.ServeHTTP(rec, req)
+	assert.Equal(t, 401, rec.Code)
 }

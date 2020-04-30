@@ -2,6 +2,7 @@
   "/cdsapi": {
     "target": "http://localhost:8081",
     "secure": false,
+    "ws": true,
     "pathRewrite": {
       "^/cdsapi": ""
     }

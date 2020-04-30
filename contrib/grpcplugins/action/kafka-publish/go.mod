@@ -16,6 +16,6 @@ require (
 	github.com/klauspost/cpuid v1.2.1 // indirect
 	github.com/ovh/cds v0.0.0-00010101000000-000000000000
 	github.com/phayes/permbits v0.0.0-20190612203442-39d7c581d2ee
-	github.com/stretchr/testify v1.4.0
+	github.com/stretchr/testify v1.5.1
 	gopkg.in/urfave/cli.v1 v1.20.0
 )

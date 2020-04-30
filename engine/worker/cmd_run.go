@@ -37,6 +37,10 @@ func runCmd() func(cmd *cobra.Command, args []string) {
 		// Get the booked job ID
 		bookedWJobID := FlagInt64(cmd, flagBookedWorkflowJobID)
 
+		if bookedWJobID == 0 {
+			sdk.Exit("flag --booked-workflow-job-id is mandatory")
+		}
+
 		ctx, cancel := context.WithCancel(ctx)
 		// Gracefully shutdown connections
 		c := make(chan os.Signal, 1)

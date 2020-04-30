@@ -11,7 +11,12 @@ import (
 )
 
 func StartWorker(ctx context.Context, w *CurrentWorker, bookedJobID int64) (mainError error) {
-	log.Info(ctx, "Starting worker %s", w.Name())
+	log.Info(ctx, "Starting worker %s on job %d", w.Name(), bookedJobID)
+
+	if bookedJobID == 0 {
+		return fmt.Errorf("startWorker: bookedJobID is mandatory. val:%d", bookedJobID)
+	}
+
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 	httpServerCtx, stopHTTPServer := context.WithCancel(ctx)
@@ -50,26 +55,17 @@ func StartWorker(ctx context.Context, w *CurrentWorker, bookedJobID int64) (main
 		}
 	}
 
-	if bookedJobID != 0 {
-		if err := processBookedWJob(ctx, w, jobsChan, bookedJobID); err != nil {
-			// Unbook job
-			if errR := w.Client().QueueJobRelease(ctx, bookedJobID); errR != nil {
-				log.Error(ctx, "runCmd> QueueJobRelease> Cannot release job")
-			}
-			bookedJobID = 0 // nolint
-			// this worker was spawned for a job
-			// this job can't be process (err != nil)
-			// so, call endFunc() now, this worker don't have to work
-			// on another job
-			endFunc()
-			return sdk.WrapError(err, "unable to process booked job")
+	if err := processBookedWJob(ctx, w, jobsChan, bookedJobID); err != nil {
+		// Unbook job
+		if errR := w.Client().QueueJobRelease(ctx, bookedJobID); errR != nil {
+			log.Error(ctx, "runCmd> QueueJobRelease> Cannot release job")
 		}
-	} else {
-		sdk.GoRoutine(ctx, "worker.QueuePolling", func(ctx context.Context) {
-			if err := w.Client().QueuePolling(ctx, jobsChan, errsChan, 2*time.Second, "", nil); err != nil {
-				log.Info(ctx, "Queues polling stopped: %v", err)
-			}
-		})
+		// this worker was spawned for a job
+		// this job can't be process (err != nil)
+		// so, call endFunc() now, this worker don't have to work
+		// on another job
+		endFunc()
+		return sdk.WrapError(err, "unable to process booked job")
 	}
 
 	if err := w.Client().WorkerSetStatus(ctx, sdk.StatusWaiting); err != nil {
@@ -124,33 +120,15 @@ func StartWorker(ctx context.Context, w *CurrentWorker, bookedJobID int64) (main
 			}
 			log.Debug("checkQueue> Receive workflow job %d", j.ID)
 
-			var requirementsOK, pluginsOK bool
-			var t string
-			if bookedJobID == 0 { // If we already check the requirements before and it was OK
-				requirementsOK, _ = checkRequirements(ctx, w, &j.Job.Action)
-
-				var errPlugins error
-				pluginsOK, errPlugins = checkPluginDeployment(ctx, w, j)
-				if !pluginsOK {
-					log.Error(ctx, "Plugins doesn't match: %v", errPlugins)
-				}
-			} else { // Because already checked previously
-				requirementsOK = true
-				pluginsOK = true
-			}
-
 			//Take the job
-			if requirementsOK && pluginsOK {
-				log.Debug("checkQueue> Try take the job %d%s", j.ID, t)
-				if err := w.Take(ctx, j); err != nil {
-					log.Info(ctx, "Unable to run this job  %d. Take info:%s: %v", j.ID, t, err)
-					bookedJobID = 0 // nolint
-					errsChan <- err
-				}
+			log.Debug("checkQueue> Try take the job %d", j.ID)
+			if err := w.Take(ctx, j); err != nil {
+				log.Info(ctx, "Unable to run this job  %d. Take info: %v", j.ID, err)
+				errsChan <- err
 			}
 
 			if err := w.Client().WorkerSetStatus(ctx, sdk.StatusWaiting); err != nil {
-				log.Error(ctx, "WorkerSetStatus> error on WorkerSetStatus(ctx, sdk.StatusWaiting): %s", err)
+				log.Error(ctx, "WorkerSetStatus> error on WorkerSetStatus(ctx, sdk.StatusWaiting): %v", err)
 			}
 
 			// Unregister from engine

@@ -6,10 +6,12 @@ import { Title } from '@angular/platform-browser';
 import { ActivatedRoute, NavigationEnd, NavigationStart, ResolveEnd, ResolveStart, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
+import { EventService } from 'app/event.service';
 import { WorkflowNodeRun } from 'app/model/workflow.run.model';
 import { GetCDSStatus } from 'app/store/cds.action';
 import { CDSState } from 'app/store/cds.state';
 import { Observable } from 'rxjs';
+import { WebSocketSubject } from 'rxjs/internal-compatibility';
 import { bufferTime, filter, map, mergeMap } from 'rxjs/operators';
 import { Subscription } from 'rxjs/Subscription';
 import * as format from 'string-format-obj';
@@ -57,10 +59,12 @@ export class AppComponent implements OnInit {
     maintenance: boolean;
     cdsstateSub: Subscription;
     user: AuthentifiedUser;
+    previousURL: string
 
     @ViewChild('gamification')
     eltGamification: ElementRef;
     gameInit: boolean;
+    websocket: WebSocketSubject<any>;
 
     constructor(
         _translate: TranslateService,
@@ -72,7 +76,8 @@ export class AppComponent implements OnInit {
         private _notification: NotificationService,
         private _appService: AppService,
         private _toastService: ToastService,
-        private _store: Store
+        private _store: Store,
+        private _eventService: EventService
     ) {
         this.zone = new NgZone({ enableLongStackTrace: false });
         this.toasterConfig = this._toastService.getConfig();
@@ -120,6 +125,7 @@ export class AppComponent implements OnInit {
                 this.user = user;
                 this.isConnected = true;
                 this.startSSE();
+                this._eventService.startWebsocket(this.user);
             }
         });
         this.startVersionWorker();
@@ -137,6 +143,14 @@ export class AppComponent implements OnInit {
 
         this._routerNavEndSubscription = this._router.events
             .pipe(filter((event) => event instanceof NavigationEnd))
+            .pipe(map((e: NavigationEnd) => {
+                if ((!this.previousURL || this.previousURL.split('?')[0] !== e.url.split('?')[0])) {
+                    this.previousURL = e.url;
+                    this._eventService.manageWebsocketFilterByUrl(e.url);
+                    return;
+                }
+
+            }))
             .pipe(map(() => this._activatedRoute))
             .pipe(map((route) => {
                 let params = {};
@@ -183,6 +197,9 @@ export class AppComponent implements OnInit {
     }
 
     startSSE(): void {
+        if (this.user.isAdmin() && localStorage.getItem('WS-EVENT')) {
+            return
+        }
         if (this.sseWorker) {
             this.stopWorker(this.sseWorker, null);
         }
