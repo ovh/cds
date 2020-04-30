@@ -89,3 +89,9 @@ target/cds-engine.deb: $(TARGET_DIR)/config.toml.sample
 
 docker:
 	docker build --tag ovhcom/cds-engine:$(VERSION) .
+
+tar: target/cds-engine.tar.gz
+
+target/cds-engine.tar.gz: $(TARGET_DIR)/config.toml.sample $(TARGET_DIR)/tmpl-config
+	mkdir -p target
+	tar -czvf target/cds-engine.tar.gz -C $(TARGET_DIR) .
