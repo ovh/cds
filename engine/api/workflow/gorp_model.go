@@ -10,7 +10,10 @@ import (
 )
 
 // Workflow is a gorp wrapper around sdk.WorkflowData
-type Workflow sdk.Workflow
+type Workflow struct {
+	sdk.Workflow
+	ProjectKey string `db:"project_key"`
+}
 
 // Notification is a gorp wrapper around sdk.WorkflowNotification
 type Notification sdk.WorkflowNotification

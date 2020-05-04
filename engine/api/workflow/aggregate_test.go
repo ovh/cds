@@ -16,11 +16,15 @@ func TestAggregateOnWorkflowTemplateInstance(t *testing.T) {
 	db.OnSelect = func(i interface{}) {
 		gs := i.(*[]workflow.Workflow)
 		*gs = append(*gs, workflow.Workflow{
-			ID:   1,
-			Name: "wkf-1",
+			Workflow: sdk.Workflow{
+				ID:   1,
+				Name: "wkf-1",
+			},
 		}, workflow.Workflow{
-			ID:   2,
-			Name: "wkf-2",
+			Workflow: sdk.Workflow{
+				ID:   2,
+				Name: "wkf-2",
+			},
 		})
 	}
 

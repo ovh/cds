@@ -20,7 +20,10 @@ func UpdateWorkflowAsCode(ctx context.Context, store cache.Store, db gorp.SqlExe
 	if err := RenameNode(ctx, db, &wf); err != nil {
 		return nil, err
 	}
-	if err := IsValid(ctx, store, db, &wf, proj, LoadOptions{DeepPipeline: true}); err != nil {
+	if err := CompleteWorkflow(ctx, db, &wf, proj, LoadOptions{DeepPipeline: true}); err != nil {
+		return nil, err
+	}
+	if err := CheckValidity(ctx, db, &wf); err != nil {
 		return nil, err
 	}
 

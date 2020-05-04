@@ -38,7 +38,7 @@ func getAll(ctx context.Context, db gorp.SqlExecutor, q gorpmapping.Query) (sdk.
 
 	ws := make([]sdk.Workflow, 0, len(res))
 	for i := range res {
-		ws = append(ws, sdk.Workflow(res[i]))
+		ws = append(ws, res[i].Get())
 	}
 	return ws, nil
 }
@@ -113,8 +113,9 @@ func LoadByRepo(ctx context.Context, store cache.Store, db gorp.SqlExecutor, pro
 	if err != nil {
 		return nil, err
 	}
-	if err := IsValid(ctx, store, db, w, proj, LoadOptions{}); err != nil {
-		return nil, sdk.WrapError(err, "unable to validate workflow")
+
+	if err := CompleteWorkflow(ctx, db, w, proj, LoadOptions{DeepPipeline: false}); err != nil {
+		return nil, err
 	}
 	return w, nil
 }
@@ -202,6 +203,14 @@ func (w *Workflow) PostUpdate(db gorp.SqlExecutor) error {
 	return nil
 }
 
+func (w *Workflow) Get() sdk.Workflow {
+	wf := w.Workflow
+	if wf.ProjectKey == "" {
+		wf.ProjectKey = w.ProjectKey
+	}
+	return wf
+}
+
 // LoadAll loads all workflows for a project. All users in a project can list all workflows in a project
 func LoadAll(db gorp.SqlExecutor, projectKey string) (sdk.Workflows, error) {
 	res := sdk.Workflows{}
@@ -227,7 +236,7 @@ func LoadAll(db gorp.SqlExecutor, projectKey string) (sdk.Workflows, error) {
 		if err := w.PostGet(db); err != nil {
 			return nil, sdk.WrapError(err, "Unable to execute post get")
 		}
-		res = append(res, sdk.Workflow(w))
+		res = append(res, w.Get())
 	}
 
 	return res, nil
@@ -311,8 +320,8 @@ func Load(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj sdk.
 	res.ProjectKey = proj.Key
 
 	if !opts.Minimal {
-		if err := IsValid(ctx, store, db, res, proj, opts); err != nil {
-			return nil, sdk.WrapError(err, "Unable to valid workflow")
+		if err := CompleteWorkflow(ctx, db, res, proj, opts); err != nil {
+			return nil, err
 		}
 	}
 
@@ -330,8 +339,8 @@ func LoadAndLockByID(ctx context.Context, db gorp.SqlExecutor, store cache.Store
 		return nil, sdk.WrapError(err, "Unable to load workflow %d", id)
 	}
 
-	if err := IsValid(context.TODO(), store, db, res, proj, opts); err != nil {
-		return nil, sdk.WrapError(err, "Unable to valid workflow")
+	if err := CompleteWorkflow(ctx, db, res, proj, opts); err != nil {
+		return nil, err
 	}
 	return res, nil
 }
@@ -347,8 +356,8 @@ func LoadByID(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj 
 		return nil, sdk.WrapError(err, "Unable to load workflow %d", id)
 	}
 
-	if err := IsValid(context.TODO(), store, db, res, proj, opts); err != nil {
-		return nil, sdk.WrapError(err, "Unable to valid workflow")
+	if err := CompleteWorkflow(ctx, db, res, proj, opts); err != nil {
+		return nil, err
 	}
 	return res, nil
 }
@@ -377,7 +386,7 @@ func LoadByPipelineName(ctx context.Context, db gorp.SqlExecutor, projectKey str
 	res := make(sdk.Workflows, len(dbRes))
 	for i, w := range dbRes {
 		w.ProjectKey = projectKey
-		res[i] = sdk.Workflow(w)
+		res[i] = w.Get()
 	}
 
 	return res, nil
@@ -407,7 +416,7 @@ func LoadByApplicationName(ctx context.Context, db gorp.SqlExecutor, projectKey 
 	res := make(sdk.Workflows, len(dbRes))
 	for i, w := range dbRes {
 		w.ProjectKey = projectKey
-		res[i] = sdk.Workflow(w)
+		res[i] = w.Get()
 	}
 
 	return res, nil
@@ -437,7 +446,7 @@ func LoadByEnvName(ctx context.Context, db gorp.SqlExecutor, projectKey string, 
 	res := make(sdk.Workflows, len(dbRes))
 	for i, w := range dbRes {
 		w.ProjectKey = projectKey
-		res[i] = sdk.Workflow(w)
+		res[i] = w.Get()
 	}
 
 	return res, nil
@@ -459,7 +468,7 @@ func loadByWorkflowTemplateID(ctx context.Context, db gorp.SqlExecutor, query st
 		if err != nil {
 			return nil, sdk.WrapError(err, "cannot load project key for workflow %s and project_id %d", wf.Name, wf.ProjectID)
 		}
-		workflows[i] = sdk.Workflow(wf)
+		workflows[i] = wf.Get()
 	}
 
 	return workflows, nil
@@ -490,7 +499,7 @@ func load(ctx context.Context, db gorp.SqlExecutor, proj sdk.Project, opts LoadO
 		return nil, sdk.WrapError(err, "Unable to load workflow")
 	}
 
-	res := sdk.Workflow(dbRes)
+	res := dbRes.Get()
 	if proj.Key == "" {
 		res.ProjectKey, _ = db.SelectStr("select projectkey from project where id = $1", res.ProjectID)
 	} else {
@@ -588,8 +597,12 @@ func IsFavorite(db gorp.SqlExecutor, w *sdk.Workflow, uID string) (bool, error) 
 
 // Insert inserts a new workflow
 func Insert(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj sdk.Project, w *sdk.Workflow) error {
-	if err := IsValid(ctx, store, db, w, proj, LoadOptions{}); err != nil {
-		return sdk.WrapError(err, "Unable to validate workflow")
+	if err := CheckValidity(ctx, db, w); err != nil {
+		return err
+	}
+
+	if err := CompleteWorkflow(ctx, db, w, proj, LoadOptions{}); err != nil {
+		return err
 	}
 
 	if w.WorkflowData.Node.Context != nil && w.WorkflowData.Node.Context.ApplicationID != 0 {
@@ -613,7 +626,7 @@ func Insert(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj sd
 		return sdk.WrapError(err, "Unable to insert workflow %s/%s", w.ProjectKey, w.Name)
 	}
 
-	dbw := Workflow(*w)
+	dbw := Workflow{Workflow: *w}
 	if err := dbw.PostInsert(db); err != nil {
 		return sdk.WrapError(err, "Cannot post insert hook")
 	}
@@ -706,7 +719,7 @@ func Insert(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj sd
 		}
 	}
 
-	dbWorkflow := Workflow(*w)
+	dbWorkflow := Workflow{Workflow: *w}
 	if err := dbWorkflow.PostUpdate(db); err != nil {
 		return sdk.WrapError(err, "Insert> Unable to create workflow data")
 	}
@@ -889,9 +902,11 @@ func RenameNode(ctx context.Context, db gorp.SqlExecutor, w *sdk.Workflow) error
 
 // Update updates a workflow
 func Update(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj sdk.Project, wf *sdk.Workflow, uptOption UpdateOptions) error {
-	ctx, end := observability.Span(ctx, "workflow.Update")
-	defer end()
-	if err := IsValid(ctx, store, db, wf, proj, LoadOptions{}); err != nil {
+	if err := CheckValidity(ctx, db, wf); err != nil {
+		return err
+	}
+
+	if err := CompleteWorkflow(ctx, db, wf, proj, LoadOptions{}); err != nil {
 		return err
 	}
 
@@ -954,11 +969,11 @@ func Update(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj sd
 	}
 
 	wf.LastModified = time.Now()
-	dbw := Workflow(*wf)
-	if _, err := db.Update(&dbw); err != nil {
+	dbw := Workflow{Workflow: *wf}
+	if _, err := db.UpdateColumns(func(c *gorp.ColumnMap) bool { return c.ColumnName != "project_key" }, &dbw); err != nil {
 		return sdk.WrapError(err, "Unable to update workflow")
 	}
-	*wf = sdk.Workflow(dbw)
+	*wf = dbw.Get()
 
 	return nil
 }
@@ -998,7 +1013,7 @@ func Delete(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj sd
 	}
 
 	//Delete workflow
-	dbw := Workflow(*w)
+	dbw := Workflow{Workflow: *w}
 	if _, err := db.Delete(&dbw); err != nil {
 		return sdk.WrapError(err, "unable to delete workflow")
 	}
@@ -1006,8 +1021,53 @@ func Delete(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj sd
 	return nil
 }
 
-// IsValid cheks workflow validity
-func IsValid(ctx context.Context, store cache.Store, db gorp.SqlExecutor, w *sdk.Workflow, proj sdk.Project, opts LoadOptions) error {
+func CompleteWorkflow(ctx context.Context, db gorp.SqlExecutor, w *sdk.Workflow, proj sdk.Project, opts LoadOptions) error {
+
+	w.InitMaps()
+
+	w.AssignEmptyType()
+
+	nodesArray := w.WorkflowData.Array()
+	for i := range nodesArray {
+		n := nodesArray[i]
+		if n.Context == nil {
+			continue
+		}
+
+		if err := checkPipeline(ctx, db, proj, w, n, opts); err != nil {
+			return err
+		}
+		if err := checkApplication(db, proj, w, n); err != nil {
+			return err
+		}
+		if err := checkEnvironment(db, proj, w, n); err != nil {
+			return err
+		}
+		if err := checkProjectIntegration(proj, w, n); err != nil {
+			return err
+		}
+		if err := checkEventIntegration(proj, w); err != nil {
+			return err
+		}
+		if err := checkHooks(db, w, n); err != nil {
+			return err
+		}
+		if err := checkOutGoingHook(db, w, n); err != nil {
+			return err
+		}
+
+		if n.Context.ApplicationID != 0 && n.Context.ProjectIntegrationID != 0 {
+			if err := n.CheckApplicationDeploymentStrategies(proj, w); err != nil {
+				return sdk.NewError(sdk.ErrWorkflowInvalid, err)
+			}
+		}
+	}
+
+	return nil
+}
+
+// CheckValidity checks workflow validity
+func CheckValidity(ctx context.Context, db gorp.SqlExecutor, w *sdk.Workflow) error {
 	//Check project is not empty
 	if w.ProjectKey == "" {
 		return sdk.NewError(sdk.ErrWorkflowInvalid, fmt.Errorf("Invalid project key"))
@@ -1035,25 +1095,6 @@ func IsValid(ctx context.Context, store cache.Store, db gorp.SqlExecutor, w *sdk
 		}
 	}
 
-	if w.Pipelines == nil {
-		w.Pipelines = make(map[int64]sdk.Pipeline)
-	}
-	if w.Applications == nil {
-		w.Applications = make(map[int64]sdk.Application)
-	}
-	if w.Environments == nil {
-		w.Environments = make(map[int64]sdk.Environment)
-	}
-	if w.ProjectIntegrations == nil {
-		w.ProjectIntegrations = make(map[int64]sdk.ProjectIntegration)
-	}
-	if w.HookModels == nil {
-		w.HookModels = make(map[int64]sdk.WorkflowHookModel)
-	}
-	if w.OutGoingHookModels == nil {
-		w.OutGoingHookModels = make(map[int64]sdk.WorkflowHookModel)
-	}
-
 	if w.WorkflowData.Node.Context != nil && w.WorkflowData.Node.Context.DefaultPayload != nil {
 		defaultPayload, err := w.WorkflowData.Node.Context.DefaultPayloadToMap()
 		if err != nil {
@@ -1067,45 +1108,8 @@ func IsValid(ctx context.Context, store cache.Store, db gorp.SqlExecutor, w *sdk
 	}
 
 	// Fill empty node type
-	w.AssignEmptyType()
 	if err := w.ValidateType(); err != nil {
 		return err
-	}
-
-	nodesArray := w.WorkflowData.Array()
-	for i := range nodesArray {
-		n := nodesArray[i]
-		if n.Context == nil {
-			continue
-		}
-
-		if err := checkPipeline(ctx, db, proj, w, n, opts); err != nil {
-			return err
-		}
-		if err := checkApplication(store, db, proj, w, n); err != nil {
-			return err
-		}
-		if err := checkEnvironment(db, proj, w, n); err != nil {
-			return err
-		}
-		if err := checkProjectIntegration(proj, w, n); err != nil {
-			return err
-		}
-		if err := checkEventIntegration(proj, w); err != nil {
-			return err
-		}
-		if err := checkHooks(db, w, n); err != nil {
-			return err
-		}
-		if err := checkOutGoingHook(db, w, n); err != nil {
-			return err
-		}
-
-		if n.Context.ApplicationID != 0 && n.Context.ProjectIntegrationID != 0 {
-			if err := n.CheckApplicationDeploymentStrategies(proj, w); err != nil {
-				return sdk.NewError(sdk.ErrWorkflowInvalid, err)
-			}
-		}
 	}
 
 	return nil
@@ -1296,7 +1300,7 @@ func checkEnvironment(db gorp.SqlExecutor, proj sdk.Project, w *sdk.Workflow, n 
 }
 
 // CheckApplication checks application data
-func checkApplication(store cache.Store, db gorp.SqlExecutor, proj sdk.Project, w *sdk.Workflow, n *sdk.Node) error {
+func checkApplication(db gorp.SqlExecutor, proj sdk.Project, w *sdk.Workflow, n *sdk.Node) error {
 	if n.Context.ApplicationID != 0 {
 		app, ok := w.Applications[n.Context.ApplicationID]
 		if !ok {

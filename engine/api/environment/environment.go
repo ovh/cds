@@ -12,6 +12,45 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
+// LoadAllByIDs load all environment
+func LoadAllByIDs(db gorp.SqlExecutor, ids []int64) ([]sdk.Environment, error) {
+	var envs []sdk.Environment
+
+	query := `SELECT environment.id, environment.name, environment.last_modified, environment.from_repository, project.projectkey
+		  FROM environment
+		  JOIN project ON project.id = environment.project_id
+		  WHERE environment.id = ANY($1)
+		  ORDER by environment.name`
+	rows, err := db.Query(query, pq.Int64Array(ids))
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return envs, sdk.ErrNoEnvironment
+		}
+		return envs, sdk.WithStack(err)
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var env sdk.Environment
+		var lastModified time.Time
+		var projectKey string
+		if err := rows.Scan(&env.ID, &env.Name, &lastModified, &env.FromRepository, &projectKey); err != nil {
+			return envs, sdk.WithStack(err)
+		}
+		env.LastModified = lastModified.Unix()
+		env.ProjectKey = projectKey
+		envs = append(envs, env)
+	}
+	rows.Close()
+
+	for i := range envs {
+		if err := loadDependencies(db, &envs[i]); err != nil {
+			return envs, err
+		}
+	}
+	return envs, nil
+}
+
 // LoadEnvironments load all environment from the given project
 func LoadEnvironments(db gorp.SqlExecutor, projectKey string) ([]sdk.Environment, error) {
 	var envs []sdk.Environment

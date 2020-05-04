@@ -117,6 +117,27 @@ func (workflows Workflows) Filter(f func(w Workflow) bool) Workflows {
 	return res
 }
 
+func (w *Workflow) InitMaps() {
+	if w.Pipelines == nil {
+		w.Pipelines = make(map[int64]Pipeline)
+	}
+	if w.Applications == nil {
+		w.Applications = make(map[int64]Application)
+	}
+	if w.Environments == nil {
+		w.Environments = make(map[int64]Environment)
+	}
+	if w.ProjectIntegrations == nil {
+		w.ProjectIntegrations = make(map[int64]ProjectIntegration)
+	}
+	if w.HookModels == nil {
+		w.HookModels = make(map[int64]WorkflowHookModel)
+	}
+	if w.OutGoingHookModels == nil {
+		w.OutGoingHookModels = make(map[int64]WorkflowHookModel)
+	}
+}
+
 // GetApplication retrieve application from workflow
 func (w *Workflow) GetApplication(ID int64) Application {
 	return w.Applications[ID]
