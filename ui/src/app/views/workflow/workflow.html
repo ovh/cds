@@ -18,9 +18,8 @@
             <div class="content infoPopup">
                 <ng-container
                     *ngIf="workflow && (workflow.from_repository || (workflow.as_code_events && workflow.as_code_events.length > 0))">
-                    <app-ascode-event [events]="workflow.as_code_events" [repo]="workflow.from_repository"
-                        [appName]="workflow.applications[workflow.workflow_data.node.context.application_id]?.name"
-                        [project]="project"></app-ascode-event>
+                    <app-ascode-event [events]="workflow.as_code_events" [project]="project" [workflow]="workflow">
+                    </app-ascode-event>
                 </ng-container>
                 <ng-container
                     *ngIf="workflow && !workflow.from_repository && (!workflow.as_code_events || workflow.as_code_events.length === 0)">
@@ -35,7 +34,8 @@
                             </div>
                         </div>
                         <div class="migrate">
-                            <button class="ui right floated green mini button" (click)="openSaveAsCodeModal();popup.close()">{{'common_migrate'
+                            <button class="ui right floated green mini button"
+                                (click)="openSaveAsCodeModal();popup.close()">{{'common_migrate'
                                 | translate}}</button>
                         </div>
                     </div>

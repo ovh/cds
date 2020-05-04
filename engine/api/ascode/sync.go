@@ -14,29 +14,34 @@ import (
 
 type SyncResult struct {
 	FromRepository string
-	MergedWorkflow []int64
+	Merged         bool
 }
 
 // SyncEvents checks if workflow as to become ascode.
-func SyncEvents(ctx context.Context, db *gorp.DbMap, store cache.Store, proj sdk.Project, app sdk.Application, u sdk.Identifiable) (SyncResult, error) {
+func SyncEvents(ctx context.Context, db *gorp.DbMap, store cache.Store, proj sdk.Project, workflowHolder sdk.Workflow, u sdk.Identifiable) (SyncResult, error) {
 	var res SyncResult
 
-	vcsServer := repositoriesmanager.GetProjectVCSServer(proj, app.VCSServer)
+	if workflowHolder.WorkflowData.Node.Context.ApplicationID == 0 {
+		return res, sdk.NewErrorFrom(sdk.ErrWrongRequest, "no application found on the root node of the workflow")
+	}
+	rootApp := workflowHolder.Applications[workflowHolder.WorkflowData.Node.Context.ApplicationID]
+
+	vcsServer := repositoriesmanager.GetProjectVCSServer(proj, rootApp.VCSServer)
 	if vcsServer == nil {
-		return res, sdk.NewErrorFrom(sdk.ErrNotFound, "no vcs server found on application %s", app.Name)
+		return res, sdk.NewErrorFrom(sdk.ErrNotFound, "no vcs server found on application %s", rootApp.Name)
 	}
 	client, err := repositoriesmanager.AuthorizedClient(ctx, db, store, proj.Key, vcsServer)
 	if err != nil {
 		return res, err
 	}
 
-	fromRepo := app.FromRepository
+	fromRepo := rootApp.FromRepository
 	if fromRepo == "" {
-		repo, err := client.RepoByFullname(ctx, app.RepositoryFullname)
+		repo, err := client.RepoByFullname(ctx, rootApp.RepositoryFullname)
 		if err != nil {
-			return res, sdk.WrapError(err, "cannot get repo %s", app.RepositoryFullname)
+			return res, sdk.WrapError(err, "cannot get repo %s", rootApp.RepositoryFullname)
 		}
-		if app.RepositoryStrategy.ConnectionType == "ssh" {
+		if rootApp.RepositoryStrategy.ConnectionType == "ssh" {
 			fromRepo = repo.SSHCloneURL
 		} else {
 			fromRepo = repo.HTTPCloneURL
@@ -50,7 +55,7 @@ func SyncEvents(ctx context.Context, db *gorp.DbMap, store cache.Store, proj sdk
 	}
 	defer tx.Rollback() //nolint
 
-	asCodeEvents, err := LoadAsCodeEventByRepo(ctx, tx, fromRepo)
+	asCodeEvents, err := LoadEventsByWorkflowID(ctx, tx, workflowHolder.ID)
 	if err != nil {
 		return res, err
 	}
@@ -58,22 +63,20 @@ func SyncEvents(ctx context.Context, db *gorp.DbMap, store cache.Store, proj sdk
 	eventLeft := make([]sdk.AsCodeEvent, 0)
 	eventToDelete := make([]sdk.AsCodeEvent, 0)
 	for _, ascodeEvt := range asCodeEvents {
-		pr, err := client.PullRequest(ctx, app.RepositoryFullname, int(ascodeEvt.PullRequestID))
+		pr, err := client.PullRequest(ctx, rootApp.RepositoryFullname, int(ascodeEvt.PullRequestID))
 		if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
 			return res, sdk.WrapError(err, "unable to check pull request status")
 		}
 		prNotFound := sdk.ErrorIs(err, sdk.ErrNotFound)
 
 		if prNotFound {
-			log.Debug("Pull request %s #%d not found", app.RepositoryFullname, int(ascodeEvt.PullRequestID))
+			log.Debug("Pull request %s #%d not found", rootApp.RepositoryFullname, int(ascodeEvt.PullRequestID))
 		}
 
 		// If the PR was merged we want to set the repo url on the workflow
 		if ascodeEvt.Migrate && len(ascodeEvt.Data.Workflows) == 1 {
-			for id := range ascodeEvt.Data.Workflows {
-				if pr.Merged {
-					res.MergedWorkflow = append(res.MergedWorkflow, id)
-				}
+			if pr.Merged {
+				res.Merged = true
 			}
 		}
 
@@ -86,7 +89,7 @@ func SyncEvents(ctx context.Context, db *gorp.DbMap, store cache.Store, proj sdk
 	}
 
 	for _, ascodeEvt := range eventToDelete {
-		if err := DeleteAsCodeEvent(tx, ascodeEvt); err != nil {
+		if err := deleteEvent(tx, &ascodeEvt); err != nil {
 			return res, err
 		}
 	}

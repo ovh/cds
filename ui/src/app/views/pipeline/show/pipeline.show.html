@@ -14,9 +14,9 @@
                 </a>
                 <ng-template let-popup #popupFromRepository>
                     <div class="content infoPopup">
-                        <ng-container *ngIf="pipeline && pipeline.from_repository">
-                            <app-ascode-event [project]="project" [events]="pipeline.ascode_events"
-                                [repo]="pipeline.from_repository"></app-ascode-event>
+                        <ng-container *ngIf="pipeline?.workflow_ascode_holder">
+                            <app-ascode-event [project]="project" [workflow]="pipeline.workflow_ascode_holder"
+                                [events]="pipeline.ascode_events"></app-ascode-event>
                         </ng-container>
                         <ng-container *ngIf="pipeline && !pipeline.from_repository">
                             <p>{{'pipeline_repository_help_line_1' | translate}}</p>

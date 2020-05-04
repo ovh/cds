@@ -426,7 +426,7 @@ func (api *API) postTemplateApplyHandler() service.Handler {
 							FromRepo:      existingWorkflow.FromRepository,
 							OperationUUID: ope.UUID,
 						}
-						asCodeEvent := ascode.UpdateAsCodeResult(ctx, api.mustDB(), api.Cache, *p, *rootApp, ed, consumer)
+						asCodeEvent := ascode.UpdateAsCodeResult(ctx, api.mustDB(), api.Cache, *p, existingWorkflow.ID, *rootApp, ed, consumer)
 						if asCodeEvent != nil {
 							event.PublishAsCodeEvent(ctx, p.Key, *asCodeEvent, consumer)
 						}
@@ -651,13 +651,13 @@ func (api *API) postTemplateBulkHandler() service.Handler {
 							}
 
 							ed := ascode.EntityData{
-																Name:      existingWorkflow.Name,
-								ID:        existingWorkflow.ID,
-								Type:      ascode.WorkflowEvent,
-                FromRepo:  existingWorkflow.FromRepository,
-                OperationUUID: ope.UUID,
+								Name:          existingWorkflow.Name,
+								ID:            existingWorkflow.ID,
+								Type:          ascode.WorkflowEvent,
+								FromRepo:      existingWorkflow.FromRepository,
+								OperationUUID: ope.UUID,
 							}
-							asCodeEvent := ascode.UpdateAsCodeResult(ctx, api.mustDB(), api.Cache, *p, *rootApp, ed, consumer)
+							asCodeEvent := ascode.UpdateAsCodeResult(ctx, api.mustDB(), api.Cache, *p, existingWorkflow.ID, *rootApp, ed, consumer)
 							if asCodeEvent != nil {
 								event.PublishAsCodeEvent(ctx, p.Key, *asCodeEvent, consumer)
 							}

@@ -43,16 +43,17 @@ func CreateFromRepository(ctx context.Context, db *gorp.DbMap, store cache.Store
 	ctx, end := observability.Span(ctx, "workflow.CreateFromRepository")
 	defer end()
 
-	ope, err := createOperationRequest(*wf, opts)
+	newOperation, err := createOperationRequest(*wf, opts)
 	if err != nil {
 		return nil, sdk.WrapError(err, "unable to create operation request")
 	}
 
-	if err := operation.PostRepositoryOperation(ctx, db, *p, &ope, nil); err != nil {
+	if err := operation.PostRepositoryOperation(ctx, db, *p, &newOperation, nil); err != nil {
 		return nil, sdk.WrapError(err, "unable to post repository operation")
 	}
 
-	if err := pollRepositoryOperation(ctx, db, store, &ope); err != nil {
+	ope, err := pollRepositoryOperation(ctx, db, store, newOperation.UUID)
+	if err != nil {
 		return nil, sdk.WrapError(err, "cannot analyse repository")
 	}
 
@@ -68,7 +69,7 @@ func CreateFromRepository(ctx context.Context, db *gorp.DbMap, store cache.Store
 			}
 		}
 	}
-	return extractWorkflow(ctx, db, store, p, wf, ope, u, decryptFunc, uuid)
+	return extractWorkflow(ctx, db, store, p, wf, *ope, u, decryptFunc, uuid)
 }
 
 func extractWorkflow(ctx context.Context, db *gorp.DbMap, store cache.Store, p *sdk.Project, wf *sdk.Workflow,
@@ -167,8 +168,7 @@ func ReadCDSFiles(files map[string][]byte) (*tar.Reader, error) {
 	return tar.NewReader(buf), nil
 }
 
-func pollRepositoryOperation(c context.Context, db gorp.SqlExecutor, store cache.Store, ope *sdk.Operation) error {
-	var err error
+func pollRepositoryOperation(c context.Context, db gorp.SqlExecutor, store cache.Store, operationUUID string) (*sdk.Operation, error) {
 	tickTimeout := time.NewTicker(10 * time.Minute)
 	tickPoll := time.NewTicker(2 * time.Second)
 	defer tickTimeout.Stop()
@@ -176,23 +176,23 @@ func pollRepositoryOperation(c context.Context, db gorp.SqlExecutor, store cache
 		select {
 		case <-c.Done():
 			if c.Err() != nil {
-				return sdk.WrapError(c.Err(), "exiting")
+				return nil, sdk.WrapError(c.Err(), "exiting")
 			}
 		case <-tickTimeout.C:
-			return sdk.WrapError(sdk.ErrRepoOperationTimeout, "timeout analyzing repository")
+			return nil, sdk.WrapError(sdk.ErrRepoOperationTimeout, "timeout analyzing repository")
 		case <-tickPoll.C:
-			ope, err = operation.GetRepositoryOperation(c, db, ope.UUID)
+			ope, err := operation.GetRepositoryOperation(c, db, operationUUID)
 			if err != nil {
-				return sdk.WrapError(err, "cannot get repository operation status")
+				return nil, sdk.WrapError(err, "cannot get repository operation status")
 			}
 			switch ope.Status {
 			case sdk.OperationStatusError:
 				opeTrusted := *ope
 				opeTrusted.RepositoryStrategy.SSHKeyContent = "***"
 				opeTrusted.RepositoryStrategy.Password = "***"
-				return sdk.WrapError(fmt.Errorf("%s", ope.Error), "getImportAsCodeHandler> Operation in error. %+v", opeTrusted)
+				return nil, sdk.WrapError(fmt.Errorf("%s", ope.Error), "getImportAsCodeHandler> Operation in error. %+v", opeTrusted)
 			case sdk.OperationStatusDone:
-				return nil
+				return ope, nil
 			}
 			continue
 		}

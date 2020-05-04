@@ -128,7 +128,7 @@ func (api *API) postWorkflowAsCodeHandler() service.Handler {
 				FromRepo:      wfDB.FromRepository,
 				OperationUUID: ope.UUID,
 			}
-			asCodeEvent := ascode.UpdateAsCodeResult(ctx, api.mustDB(), api.Cache, *p, *rootApp, ed, u)
+			asCodeEvent := ascode.UpdateAsCodeResult(ctx, api.mustDB(), api.Cache, *p, wfDB.ID, *rootApp, ed, u)
 			if asCodeEvent != nil {
 				event.PublishAsCodeEvent(ctx, p.Key, *asCodeEvent, u)
 			}
@@ -183,7 +183,7 @@ func (api *API) migrateWorkflowAsCode(ctx context.Context, w http.ResponseWriter
 			Name:          wf.Name,
 			OperationUUID: ope.UUID,
 		}
-		asCodeEvent := ascode.UpdateAsCodeResult(ctx, api.mustDB(), api.Cache, proj, app, ed, u)
+		asCodeEvent := ascode.UpdateAsCodeResult(ctx, api.mustDB(), api.Cache, proj, wf.ID, app, ed, u)
 		if asCodeEvent != nil {
 			event.PublishAsCodeEvent(ctx, proj.Key, *asCodeEvent, u)
 		}

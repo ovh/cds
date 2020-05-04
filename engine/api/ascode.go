@@ -7,7 +7,6 @@ import (
 
 	"github.com/gorilla/mux"
 
-	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/ascode"
 	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/operation"
@@ -201,46 +200,34 @@ func (api *API) postPerformImportAsCodeHandler() service.Handler {
 	}
 }
 
-func (api *API) postResyncPRAsCodeHandler() service.Handler {
+func (api *API) postWorkflowAsCodeEventsResyncHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
-		key := vars["key"]
-		appName := FormString(r, "appName")
-		fromRepo := FormString(r, "repo")
+		projectKey := vars["key"]
+		workflowName := vars["permWorkflowName"]
 
-		proj, errP := project.Load(api.mustDB(), key,
+		proj, err := project.Load(api.mustDB(), projectKey,
 			project.LoadOptions.WithApplicationWithDeploymentStrategies,
 			project.LoadOptions.WithPipelines,
 			project.LoadOptions.WithEnvironments,
 			project.LoadOptions.WithIntegrations,
-			project.LoadOptions.WithClearKeys)
-		if errP != nil {
-			return sdk.WrapError(errP, "unable to load project")
-		}
-		var app sdk.Application
-		switch {
-		case appName != "":
-			appP, err := application.LoadByName(api.mustDB(), key, appName)
-			if err != nil {
-				return err
-			}
-			app = *appP
-		case fromRepo != "":
-			wkf, err := workflow.LoadByRepo(ctx, api.Cache, api.mustDB(), *proj, fromRepo, workflow.LoadOptions{})
-			if err != nil {
-				return err
-			}
-			app = wkf.Applications[wkf.WorkflowData.Node.Context.ApplicationID]
-		default:
-			return sdk.WrapError(sdk.ErrWrongRequest, "Missing appName or repo query parameter")
-		}
-
-		res, err := ascode.SyncEvents(ctx, api.mustDB(), api.Cache, *proj, app, getAPIConsumer(ctx).AuthentifiedUser)
+			project.LoadOptions.WithClearKeys,
+		)
 		if err != nil {
 			return err
 		}
-		for _, id := range res.MergedWorkflow {
-			if err := workflow.UpdateFromRepository(api.mustDB(), id, res.FromRepository); err != nil {
+
+		wf, err := workflow.Load(ctx, api.mustDB(), api.Cache, *proj, workflowName, workflow.LoadOptions{})
+		if err != nil {
+			return err
+		}
+
+		res, err := ascode.SyncEvents(ctx, api.mustDB(), api.Cache, *proj, *wf, getAPIConsumer(ctx).AuthentifiedUser)
+		if err != nil {
+			return err
+		}
+		if res.Merged {
+			if err := workflow.UpdateFromRepository(api.mustDB(), wf.ID, res.FromRepository); err != nil {
 				return err
 			}
 		}

@@ -564,17 +564,11 @@ func load(ctx context.Context, db gorp.SqlExecutor, proj sdk.Project, opts LoadO
 	}
 
 	if opts.WithAsCodeUpdateEvent {
-		var asCodeEvents []sdk.AsCodeEvent
-		var errAS error
 		_, next = observability.Span(ctx, "workflow.load.AddCodeUpdateEvents")
-		if res.FromRepository != "" {
-			asCodeEvents, errAS = ascode.LoadAsCodeEventByRepo(ctx, db, res.FromRepository)
-		} else {
-			asCodeEvents, errAS = ascode.LoadAsCodeEventByWorkflowID(ctx, db, res.ID)
-		}
+		asCodeEvents, err := ascode.LoadEventsByWorkflowID(ctx, db, res.ID)
 		next()
-		if errAS != nil {
-			return nil, sdk.WrapError(errAS, "Load> unable to load as code update events")
+		if err != nil {
+			return nil, sdk.WrapError(err, "unable to load as code update events")
 		}
 		res.AsCodeEvent = asCodeEvents
 	}

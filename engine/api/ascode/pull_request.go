@@ -33,7 +33,7 @@ type EntityData struct {
 }
 
 // UpdateAsCodeResult pulls repositories operation and the create pullrequest + update workflow
-func UpdateAsCodeResult(ctx context.Context, db *gorp.DbMap, store cache.Store, proj sdk.Project, app sdk.Application, ed EntityData, u sdk.Identifiable) *sdk.AsCodeEvent {
+func UpdateAsCodeResult(ctx context.Context, db *gorp.DbMap, store cache.Store, proj sdk.Project, workflowHolderID int64, rootApp sdk.Application, ed EntityData, u sdk.Identifiable) *sdk.AsCodeEvent {
 	tick := time.NewTicker(2 * time.Second)
 	ctx, cancel := context.WithTimeout(ctx, 1*time.Minute)
 	defer cancel()
@@ -62,7 +62,7 @@ forLoop:
 				break forLoop
 			}
 			if ope.Status == sdk.OperationStatusDone {
-				ae, err := createPullRequest(ctx, db, store, proj, app, ed, u, ope.Setup)
+				ae, err := createPullRequest(ctx, db, store, proj, workflowHolderID, rootApp, ed, u, ope.Setup)
 				if err != nil {
 					globalErr = err
 					break forLoop
@@ -92,10 +92,10 @@ forLoop:
 	return asCodeEvent
 }
 
-func createPullRequest(ctx context.Context, db *gorp.DbMap, store cache.Store, proj sdk.Project, app sdk.Application, ed EntityData, u sdk.Identifiable, opeSetup sdk.OperationSetup) (*sdk.AsCodeEvent, error) {
-	vcsServer := repositoriesmanager.GetProjectVCSServer(proj, app.VCSServer)
+func createPullRequest(ctx context.Context, db *gorp.DbMap, store cache.Store, proj sdk.Project, workflowHolderID int64, rootApp sdk.Application, ed EntityData, u sdk.Identifiable, opeSetup sdk.OperationSetup) (*sdk.AsCodeEvent, error) {
+	vcsServer := repositoriesmanager.GetProjectVCSServer(proj, rootApp.VCSServer)
 	if vcsServer == nil {
-		return nil, sdk.NewErrorFrom(sdk.ErrNotFound, "no vcs server found on application %s", app.Name)
+		return nil, sdk.NewErrorFrom(sdk.ErrNotFound, "no vcs server found on application %s", rootApp.Name)
 	}
 	client, err := repositoriesmanager.AuthorizedClient(ctx, db, store, proj.Key, vcsServer)
 	if err != nil {
@@ -108,19 +108,19 @@ func createPullRequest(ctx context.Context, db *gorp.DbMap, store cache.Store, p
 			Branch: sdk.VCSBranch{
 				DisplayID: opeSetup.Push.FromBranch,
 			},
-			Repo: app.RepositoryFullname,
+			Repo: rootApp.RepositoryFullname,
 		},
 		Base: sdk.VCSPushEvent{
 			Branch: sdk.VCSBranch{
 				DisplayID: opeSetup.Push.ToBranch,
 			},
-			Repo: app.RepositoryFullname,
+			Repo: rootApp.RepositoryFullname,
 		},
 	}
 
 	// Try to reuse a PR for the branche if exists else create a new one
 	var pr *sdk.VCSPullRequest
-	prs, err := client.PullRequests(ctx, app.RepositoryFullname, sdk.VCSRequestModifierWithState(sdk.VCSPullRequestStateOpen))
+	prs, err := client.PullRequests(ctx, rootApp.RepositoryFullname, sdk.VCSRequestModifierWithState(sdk.VCSPullRequestStateOpen))
 	if err != nil {
 		return nil, sdk.NewErrorFrom(err, "unable to list pull request")
 	}
@@ -131,25 +131,26 @@ func createPullRequest(ctx context.Context, db *gorp.DbMap, store cache.Store, p
 		}
 	}
 	if pr == nil {
-		newPR, err := client.PullRequestCreate(ctx, app.RepositoryFullname, request)
+		newPR, err := client.PullRequestCreate(ctx, rootApp.RepositoryFullname, request)
 		if err != nil {
 			return nil, sdk.NewErrorFrom(err, "unable to create pull request")
 		}
 		pr = &newPR
 	}
 
-	// Find existing ascode event with this pullrequest
-	asCodeEvent, err := LoadAsCodeByPRID(ctx, db, int64(pr.ID))
+	// Find existing ascode event with this pull request info
+	asCodeEvent, err := LoadEventByWorkflowIDAndPullRequest(ctx, db, workflowHolderID, rootApp.RepositoryFullname, int64(pr.ID))
 	if err != nil && sdk.ErrorIs(err, sdk.ErrNotFound) {
 		return nil, sdk.NewErrorFrom(err, "unable to save pull request")
 	}
 	if asCodeEvent.ID == 0 {
-		asCodeEvent = sdk.AsCodeEvent{
+		asCodeEvent = &sdk.AsCodeEvent{
+			WorkflowID:     workflowHolderID,
+			FromRepo:       ed.FromRepo,
 			PullRequestID:  int64(pr.ID),
 			PullRequestURL: pr.URL,
 			Username:       u.GetUsername(),
 			CreateDate:     time.Now(),
-			FromRepo:       ed.FromRepo,
 			Migrate:        !opeSetup.Push.Update,
 		}
 	}
@@ -185,9 +186,9 @@ func createPullRequest(ctx context.Context, db *gorp.DbMap, store cache.Store, p
 		}
 	}
 
-	if err := InsertOrUpdateAsCodeEvent(db, &asCodeEvent); err != nil {
+	if err := UpsertEvent(db, asCodeEvent); err != nil {
 		return nil, sdk.NewErrorFrom(err, "unable to insert as code event")
 	}
 
-	return &asCodeEvent, nil
+	return asCodeEvent, nil
 }

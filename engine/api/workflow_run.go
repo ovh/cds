@@ -947,29 +947,20 @@ func (api *API) initWorkflowRun(ctx context.Context, projKey string, wf *sdk.Wor
 	if wfRun.Status == sdk.StatusPending {
 		// Sync as code event to remove events in case where a PR was merged
 		if len(wf.AsCodeEvent) > 0 {
-			if wf.WorkflowData.Node.Context.ApplicationID == 0 {
-				r1 := failInitWorkflowRun(ctx, api.mustDB(), wfRun, sdk.WrapError(sdk.ErrNotFound, "unable to find application on root node"))
-				report.Merge(ctx, r1)
-				return
-			}
-			app := wf.Applications[wf.WorkflowData.Node.Context.ApplicationID]
-
-			res, err := ascode.SyncEvents(ctx, api.mustDB(), api.Cache, *p, app, u.AuthentifiedUser)
+			res, err := ascode.SyncEvents(ctx, api.mustDB(), api.Cache, *p, *wf, u.AuthentifiedUser)
 			if err != nil {
 				r := failInitWorkflowRun(ctx, api.mustDB(), wfRun, sdk.WrapError(err, "unable to sync as code event"))
 				report.Merge(ctx, r)
 				return
 			}
-			for _, id := range res.MergedWorkflow {
-				if err := workflow.UpdateFromRepository(api.mustDB(), id, res.FromRepository); err != nil {
+			if res.Merged {
+				if err := workflow.UpdateFromRepository(api.mustDB(), wf.ID, res.FromRepository); err != nil {
 					r := failInitWorkflowRun(ctx, api.mustDB(), wfRun, sdk.WrapError(err, "unable to sync as code event"))
 					report.Merge(ctx, r)
 					return
 				}
-				if id == wf.ID {
-					wf.FromRepository = res.FromRepository
-					event.PublishWorkflowUpdate(ctx, p.Key, *wf, *wf, u)
-				}
+				wf.FromRepository = res.FromRepository
+				event.PublishWorkflowUpdate(ctx, p.Key, *wf, *wf, u)
 			}
 		}
 

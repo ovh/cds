@@ -109,19 +109,17 @@ func TestPostUpdateWorkflowAsCodeHandler(t *testing.T) {
 				if err := enc.Encode(hook); err != nil {
 					return writeError(w, err)
 				}
+			case "/vcs/github/repos/foo/myrepo/pullrequests?state=open":
+				vcsPRs := []sdk.VCSPullRequest{}
+				if err := enc.Encode(vcsPRs); err != nil {
+					return writeError(w, err)
+				}
 			case "/vcs/github/repos/foo/myrepo/pullrequests":
-				if r.Method == http.MethodGet {
-					vcsPRs := []sdk.VCSPullRequest{}
-					if err := enc.Encode(vcsPRs); err != nil {
-						return writeError(w, err)
-					}
-				} else {
-					vcsPR := sdk.VCSPullRequest{
-						URL: "myURL",
-					}
-					if err := enc.Encode(vcsPR); err != nil {
-						return writeError(w, err)
-					}
+				vcsPR := sdk.VCSPullRequest{
+					URL: "myURL",
+				}
+				if err := enc.Encode(vcsPR); err != nil {
+					return writeError(w, err)
 				}
 			case "/task/bulk":
 				var hooks map[string]sdk.NodeHook
@@ -302,19 +300,17 @@ func TestPostMigrateWorkflowAsCodeHandler(t *testing.T) {
 				if err := enc.Encode(hook); err != nil {
 					return writeError(w, err)
 				}
+			case "/vcs/github/repos/foo/myrepo/pullrequests?state=open":
+				vcsPRs := []sdk.VCSPullRequest{}
+				if err := enc.Encode(vcsPRs); err != nil {
+					return writeError(w, err)
+				}
 			case "/vcs/github/repos/foo/myrepo/pullrequests":
-				if r.Method == http.MethodGet {
-					vcsPRs := []sdk.VCSPullRequest{}
-					if err := enc.Encode(vcsPRs); err != nil {
-						return writeError(w, err)
-					}
-				} else {
-					vcsPR := sdk.VCSPullRequest{
-						URL: "myURL",
-					}
-					if err := enc.Encode(vcsPR); err != nil {
-						return writeError(w, err)
-					}
+				vcsPR := sdk.VCSPullRequest{
+					URL: "myURL",
+				}
+				if err := enc.Encode(vcsPR); err != nil {
+					return writeError(w, err)
 				}
 			case "/task/bulk":
 				var hooks map[string]sdk.NodeHook
