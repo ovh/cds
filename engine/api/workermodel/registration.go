@@ -2,7 +2,6 @@ package workermodel
 
 import (
 	"context"
-	"errors"
 	"strconv"
 	"strings"
 	"time"
@@ -24,9 +23,7 @@ const (
 // setting flag need_registration to true in DB.
 func ComputeRegistrationNeeds(db gorp.SqlExecutor, allBinaryReqs sdk.RequirementList, reqs sdk.RequirementList) error {
 	log.Debug("ComputeRegistrationNeeds>")
-	var nbModelReq int
-	var nbOSArchReq int
-	var nbHostnameReq int
+	var nbModelReq, nbOSArchReq, nbHostnameReq, nbRegionReq int
 
 	for _, r := range reqs {
 		switch r.Type {
@@ -47,17 +44,22 @@ func ComputeRegistrationNeeds(db gorp.SqlExecutor, allBinaryReqs sdk.Requirement
 			nbModelReq++
 		case sdk.HostnameRequirement:
 			nbHostnameReq++
+		case sdk.RegionRequirement:
+			nbRegionReq++
 		}
 	}
 
 	if nbOSArchReq > 1 {
-		return sdk.NewError(sdk.ErrWrongRequest, errors.New("invalid os-architecture requirement usage"))
+		return sdk.NewErrorFrom(sdk.ErrWrongRequest, "invalid os-architecture requirement usage")
 	}
 	if nbModelReq > 1 {
-		return sdk.NewError(sdk.ErrWrongRequest, errors.New("invalid model requirement usage"))
+		return sdk.NewErrorFrom(sdk.ErrWrongRequest, "invalid model requirement usage")
 	}
 	if nbHostnameReq > 1 {
-		return sdk.NewError(sdk.ErrWrongRequest, errors.New("invalid hostname requirement usage"))
+		return sdk.NewErrorFrom(sdk.ErrWrongRequest, "invalid hostname requirement usage")
+	}
+	if nbRegionReq > 1 {
+		return sdk.NewErrorFrom(sdk.ErrWrongRequest, "invalid region requirement usage")
 	}
 
 	return nil

@@ -26,6 +26,7 @@ var requirementCheckFuncs = map[string]func(w *CurrentWorker, r sdk.Requirement)
 	sdk.MemoryRequirement:        checkMemoryRequirement,
 	sdk.VolumeRequirement:        checkVolumeRequirement,
 	sdk.OSArchRequirement:        checkOSArchRequirement,
+	sdk.RegionRequirement:        checkRegionRequirement,
 }
 
 func checkRequirements(ctx context.Context, w *CurrentWorker, a *sdk.Action) (bool, []sdk.Requirement) {
@@ -207,6 +208,11 @@ func checkOSArchRequirement(w *CurrentWorker, r sdk.Requirement) (bool, error) {
 	}
 
 	return osarch[0] == strings.ToLower(sdk.GOOS) && osarch[1] == strings.ToLower(sdk.GOARCH), nil
+}
+
+// region is checked by hatchery only
+func checkRegionRequirement(w *CurrentWorker, r sdk.Requirement) (bool, error) {
+	return true, nil
 }
 
 // checkPluginDeployment returns true if current job:

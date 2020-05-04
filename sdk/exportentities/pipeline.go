@@ -60,6 +60,7 @@ type Requirement struct {
 	Service           ServiceRequirement `json:"service,omitempty" yaml:"service,omitempty"`
 	Memory            string             `json:"memory,omitempty" yaml:"memory,omitempty"`
 	OSArchRequirement string             `json:"os-architecture,omitempty" yaml:"os-architecture,omitempty"`
+	RegionRequirement string             `json:"region,omitempty" yaml:"region,omitempty"`
 }
 
 // ServiceRequirement represents an exported sdk.Requirement of type ServiceRequirement
@@ -151,6 +152,8 @@ func newRequirements(req []sdk.Requirement) []Requirement {
 			res = append(res, Requirement{Service: ServiceRequirement{Name: r.Name, Value: r.Value}})
 		case sdk.OSArchRequirement:
 			res = append(res, Requirement{OSArchRequirement: r.Value})
+		case sdk.RegionRequirement:
+			res = append(res, Requirement{RegionRequirement: r.Value})
 		case sdk.MemoryRequirement:
 			res = append(res, Requirement{Memory: r.Value})
 		}
@@ -222,6 +225,10 @@ func computeJobRequirements(req []Requirement) []sdk.Requirement {
 			name = r.OSArchRequirement
 			val = r.OSArchRequirement
 			tpe = sdk.OSArchRequirement
+		} else if r.RegionRequirement != "" {
+			name = "region"
+			val = r.RegionRequirement
+			tpe = sdk.RegionRequirement
 		} else if r.Plugin != "" {
 			name = r.Plugin
 			val = r.Plugin

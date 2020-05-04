@@ -25,6 +25,8 @@ const (
 	VolumeRequirement = "volume"
 	// OSArchRequirement checks the 'dist' of a worker eg {GOOS}/{GOARCH}
 	OSArchRequirement = "os-architecture"
+	// RegionRequirement lets a use to force a job running in a hatchery's region
+	RegionRequirement = "region"
 )
 
 // RequirementList is a list of requirement
@@ -89,14 +91,15 @@ var (
 	// AvailableRequirementsType List of all requirements
 	AvailableRequirementsType = []string{
 		BinaryRequirement,
-		NetworkAccessRequirement,
-		ModelRequirement,
 		HostnameRequirement,
-		PluginRequirement,
-		ServiceRequirement,
 		MemoryRequirement,
-		VolumeRequirement,
+		ModelRequirement,
+		NetworkAccessRequirement,
 		OSArchRequirement,
+		PluginRequirement,
+		RegionRequirement,
+		ServiceRequirement,
+		VolumeRequirement,
 	}
 
 	// OSArchRequirementValues comes from go tool dist list
