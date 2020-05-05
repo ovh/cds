@@ -249,6 +249,7 @@ type API struct {
 	StartupTime         time.Time
 	Maintenance         bool
 	eventsBroker        *eventsBroker
+	websocketBroker     *websocketBroker
 	Cache               cache.Store
 	Metrics             struct {
 		WorkflowRunFailed        *stats.Int64Measure

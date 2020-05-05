@@ -14,7 +14,7 @@ import (
 )
 
 // WorkerPool returns all the worker owned by the hatchery h, registered or not on the CDS API
-func WorkerPool(ctx context.Context, h Interface, status ...string) ([]sdk.Worker, error) {
+func WorkerPool(ctx context.Context, h Interface, statusFilter ...string) ([]sdk.Worker, error) {
 	ctx = observability.ContextWithTag(ctx,
 		observability.TagServiceName, h.Name(),
 		observability.TagServiceType, h.Type(),
@@ -30,9 +30,6 @@ func WorkerPool(ctx context.Context, h Interface, status ...string) ([]sdk.Worke
 
 	// Then: get all workers in the orchestrator queue
 	startedWorkers := h.WorkersStarted(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("unable to get started workers: %v", err)
-	}
 
 	// Make the union of the two slices
 	allWorkers := make([]sdk.Worker, 0, len(startedWorkers)+len(registeredWorkers))
@@ -106,17 +103,18 @@ func WorkerPool(ctx context.Context, h Interface, status ...string) ([]sdk.Worke
 	}
 	stats.Record(ctx, measures...)
 
-	// Filter by status
+	// no filter on status, returns the workers list as is.
+	if len(statusFilter) == 0 {
+		return allWorkers, nil
+	}
+
+	// return workers list filtered by status
 	res := make([]sdk.Worker, 0, len(allWorkers))
-	if len(status) == 0 {
-		res = allWorkers
-	} else {
-		for _, w := range allWorkers {
-			for _, s := range status {
-				if s == w.Status {
-					res = append(res, w)
-					break
-				}
+	for _, w := range allWorkers {
+		for _, s := range statusFilter {
+			if s == w.Status {
+				res = append(res, w)
+				break
 			}
 		}
 	}

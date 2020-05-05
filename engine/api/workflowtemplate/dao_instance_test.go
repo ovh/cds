@@ -80,7 +80,7 @@ func TestLoad_Instance(t *testing.T) {
 		WorkflowTemplateID:      tmpl.ID,
 		WorkflowTemplateVersion: tmpl.Version,
 		Request: sdk.WorkflowTemplateRequest{
-			WorkflowName: "my-workflow",
+			WorkflowName: "my-workflow-1",
 			ProjectKey:   proj2.Key,
 		},
 	}
@@ -92,7 +92,7 @@ func TestLoad_Instance(t *testing.T) {
 		WorkflowTemplateID:      tmpl.ID,
 		WorkflowTemplateVersion: tmpl.Version,
 		Request: sdk.WorkflowTemplateRequest{
-			WorkflowName: "my-workflow",
+			WorkflowName: "my-workflow-2",
 			ProjectKey:   proj2.Key,
 		},
 	}
@@ -105,14 +105,6 @@ func TestLoad_Instance(t *testing.T) {
 	is, err = workflowtemplate.LoadInstancesByTemplateIDAndProjectIDs(context.TODO(), db, tmpl.ID, []int64{proj1.ID, proj2.ID})
 	require.NoError(t, err)
 	assert.Len(t, is, 3)
-
-	is, err = workflowtemplate.LoadInstancesByTemplateIDAndProjectIDAndRequestWorkflowName(context.TODO(), db, tmpl.ID, proj2.ID, "my-unknown-workflow")
-	require.NoError(t, err)
-	assert.Len(t, is, 0)
-
-	is, err = workflowtemplate.LoadInstancesByTemplateIDAndProjectIDAndRequestWorkflowName(context.TODO(), db, tmpl.ID, proj2.ID, "my-workflow")
-	require.NoError(t, err)
-	assert.Len(t, is, 2)
 
 	is, err = workflowtemplate.LoadInstancesByWorkflowIDs(context.TODO(), db, []int64{wk1.ID})
 	require.NoError(t, err)
@@ -132,4 +124,11 @@ func TestLoad_Instance(t *testing.T) {
 	i, err = workflowtemplate.LoadInstanceByIDForTemplateIDAndProjectIDs(context.TODO(), db, wti2.ID, tmpl.ID, []int64{proj2.ID})
 	require.NoError(t, err)
 	assert.Equal(t, wti2.ID, i.ID)
+
+	i, err = workflowtemplate.LoadInstanceByTemplateIDAndProjectIDAndRequestWorkflowName(context.TODO(), db, tmpl.ID, proj2.ID, "my-unknown-workflow")
+	assert.Error(t, err)
+
+	i, err = workflowtemplate.LoadInstanceByTemplateIDAndProjectIDAndRequestWorkflowName(context.TODO(), db, tmpl.ID, proj2.ID, "my-workflow-1")
+	require.NoError(t, err)
+	assert.Equal(t, i.ID, wti2.ID)
 }

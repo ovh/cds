@@ -30,14 +30,13 @@
                             <ul>
                                 <li *ngFor="let j of stage.jobs; let i = index" id="Job{{i}}">
                                     <div class="job ui segment pointing" [class.inactive]="!j.enabled"
-                                        (click)="selectJob(j, stage)"
-                                        [class.active]="selectedJob &&
+                                        (click)="selectJob(j, stage)" [class.active]="selectedJob &&
                                         (!j.ref && j.pipeline_action_id === selectedJob?.pipeline_action_id) ||
                                         (j.ref && j.ref === selectedJob?.ref)">
                                         <span class="ellipsis" title="{{j.action.name}}">{{j.action.name}}</span>
                                     </div>
                                 </li>
-                                <li class="new job">
+                                <li *ngIf="!readOnly" class="new job">
                                     <div class="new job ui segment pointing" (click)="addJob(stage)">
                                         <span class="ellipsis" title="{{ 'step_add_job' | translate }}">
                                             {{ 'step_add_job' | translate }}
@@ -47,7 +46,7 @@
                             </ul>
                         </div>
                     </li>
-                    <li class="stage" [class.one]="pipeline.stages.length === 0"
+                    <li *ngIf="!readOnly" class="stage" [class.one]="pipeline.stages.length === 0"
                         [class.two]="pipeline.stages.length === 1" [class.three]="pipeline.stages.length === 2"
                         [class.four]="pipeline.stages.length === 3" [class.five]="pipeline.stages.length === 4"
                         [class.six]="pipeline.stages.length === 5" [class.seven]="pipeline.stages.length === 6">
@@ -70,7 +69,7 @@
     </div>
     <div *ngIf="selectedJob && pipeline" class="mb130">
         <app-action [project]="project" [suggest]="suggest" [action]="selectedJob.action" [pipeline]="pipeline"
-            [stage]="selectedStage" [keys]="keys" [edit]="project.permissions.writable" [editPipelineMode]="editMode"
+            [stage]="selectedStage" [keys]="keys" [edit]="!readOnly" [editPipelineMode]="editMode"
             (actionEvent)="jobEvent($event)">
         </app-action>
     </div>
@@ -78,19 +77,19 @@
 
 <sm-modal title="{{ 'pipeline_stage_edit' | translate }}" class="fluid" #editStageModal>
     <modal-content>
-        <app-pipeline-stage-form [project]="project" [pipeline]="pipeline" [stage]="selectedStage">
+        <app-pipeline-stage-form [project]="project" [pipeline]="pipeline" [stage]="selectedStage"
+            [readOnly]="readOnly">
         </app-pipeline-stage-form>
     </modal-content>
     <modal-actions>
         <button class="ui grey button" [disabled]="loadingStage"
             (click)="editStageModal.hide()">{{ 'btn_cancel' | translate }}</button>
-        <button class="ui green button" [disabled]="loadingStage"
-            [class.loading]="loadingStage" (click)="stageEvent('update')">
+        <button *ngIf="!readOnly" class="ui green button" [disabled]="loadingStage" [class.loading]="loadingStage"
+            (click)="stageEvent('update')">
             <span *ngIf="!editMode">{{ 'btn_save' | translate }}</span>
             <span *ngIf="editMode">{{ 'btn_apply' | translate }}</span>
         </button>
-        <app-delete-button (event)="stageEvent('delete')"
-            *ngIf="!selectedStage?.hasChanged && project.permissions.writable">
+        <app-delete-button (event)="stageEvent('delete')" *ngIf="!selectedStage?.hasChanged && !readOnly">
         </app-delete-button>
     </modal-actions>
 </sm-modal>

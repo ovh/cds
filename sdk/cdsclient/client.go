@@ -11,16 +11,27 @@ import (
 	"sync"
 	"time"
 
+	"github.com/gorilla/websocket"
+
 	"github.com/ovh/cds/sdk"
 )
 
 var _ Interface = new(client)
 
 type client struct {
-	httpClient    *http.Client
-	httpSSEClient *http.Client
-	config        *Config
-	name          string
+	httpClient          *http.Client
+	httpSSEClient       *http.Client
+	httpWebsocketClient *websocket.Dialer
+	config              *Config
+	name                string
+}
+
+func NewWebsocketDialer(insecureSkipVerifyTLS bool) *websocket.Dialer {
+	return &websocket.Dialer{
+		Proxy:            http.ProxyFromEnvironment,
+		HandshakeTimeout: 10 * time.Second,
+		TLSClientConfig:  &tls.Config{InsecureSkipVerify: insecureSkipVerifyTLS},
+	}
 }
 
 // NewHTTPClient returns a new HTTP Client.
@@ -58,6 +69,7 @@ func New(c Config) Interface {
 	cli.config.Mutex = new(sync.Mutex)
 	cli.httpClient = NewHTTPClient(time.Second*60, c.InsecureSkipVerifyTLS)
 	cli.httpSSEClient = NewHTTPClient(0, c.InsecureSkipVerifyTLS)
+	cli.httpWebsocketClient = NewWebsocketDialer(c.InsecureSkipVerifyTLS)
 	cli.init()
 	return cli
 }
@@ -78,6 +90,7 @@ func NewWorker(endpoint string, name string, c *http.Client) WorkerInterface {
 		cli.httpClient = c
 	}
 	cli.httpSSEClient = NewHTTPClient(0, false)
+	cli.httpWebsocketClient = NewWebsocketDialer(false)
 
 	cli.name = name
 	cli.init()
@@ -112,6 +125,7 @@ func NewProviderClient(cfg ProviderConfig) ProviderClient {
 	cli.config.Mutex = new(sync.Mutex)
 	cli.httpClient = NewHTTPClient(time.Duration(cfg.RequestSecondsTimeout)*time.Second, conf.InsecureSkipVerifyTLS)
 	cli.httpSSEClient = NewHTTPClient(0, conf.InsecureSkipVerifyTLS)
+	cli.httpWebsocketClient = NewWebsocketDialer(conf.InsecureSkipVerifyTLS)
 	cli.init()
 	return cli
 }
@@ -134,6 +148,7 @@ func NewServiceClient(cfg ServiceConfig) (Interface, []byte, error) {
 	cli.config.Mutex = new(sync.Mutex)
 	cli.httpClient = NewHTTPClient(time.Duration(cfg.RequestSecondsTimeout)*time.Second, conf.InsecureSkipVerifyTLS)
 	cli.httpSSEClient = NewHTTPClient(0, conf.InsecureSkipVerifyTLS)
+	cli.httpWebsocketClient = NewWebsocketDialer(conf.InsecureSkipVerifyTLS)
 	cli.config.Verbose = cfg.Verbose
 	cli.init()
 
@@ -180,4 +195,7 @@ func (c *client) HTTPClient() *http.Client {
 }
 func (c *client) HTTPSSEClient() *http.Client {
 	return c.httpSSEClient
+}
+func (c *client) HTTPWebsocketClient() *websocket.Dialer {
+	return c.httpWebsocketClient
 }

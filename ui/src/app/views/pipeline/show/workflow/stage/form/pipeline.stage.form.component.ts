@@ -17,15 +17,19 @@ export class PipelineStageFormComponent implements OnInit {
     @Input() project: Project;
     @Input() pipeline: Pipeline;
     @Input() stage: Stage;
+    @Input() readOnly: boolean;
 
     triggerConditions: WorkflowTriggerConditionCache;
-    loading = true;
+    loading: boolean;
 
-    constructor(private pipelineService: PipelineService, private _cd: ChangeDetectorRef) {
-
-    }
+    constructor(
+        private pipelineService: PipelineService,
+        private _cd: ChangeDetectorRef
+    ) { }
 
     ngOnInit(): void {
+        this.loading = true;
+        this._cd.markForCheck();
         this.pipelineService.getStageConditionsName(this.project.key, this.pipeline.name)
             .pipe(finalize(() => {
                 this.loading = false;

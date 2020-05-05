@@ -28,12 +28,14 @@ import { finalize, first } from 'rxjs/operators';
 })
 @AutoUnsubscribe()
 export class PipelineWorkflowComponent implements OnInit, OnDestroy {
-
     @Input() project: Project;
     @Input() editMode: boolean;
+    @Input() readOnly: boolean;
+
     @Input('currentPipeline')
     set currentPipeline(data: Pipeline) {
         this.pipeline = cloneDeep(data);
+
         this.originalPipeline = this.pipeline;
         if (!this.pipeline) {
             return;
@@ -153,12 +155,11 @@ export class PipelineWorkflowComponent implements OnInit, OnDestroy {
                     stage: stageMoved
                 })).pipe(finalize(() => {
                     this._cd.markForCheck();
-                }))
-                    .subscribe(() => {
-                        if (!this.editMode) {
-                            this._toast.success('', this._translate.instant('pipeline_stage_moved'))
-                        }
-                    });
+                })).subscribe(() => {
+                    if (!this.editMode) {
+                        this._toast.success('', this._translate.instant('pipeline_stage_moved'))
+                    }
+                });
             });
         });
     }
@@ -197,7 +198,6 @@ export class PipelineWorkflowComponent implements OnInit, OnDestroy {
 
         this._varService.getContextVariable(this.project.key, this.pipeline.id)
             .pipe(first(), finalize(() => this._cd.markForCheck())).subscribe(s => this.suggest = s);
-
     }
 
     addStageAndJob(): void {

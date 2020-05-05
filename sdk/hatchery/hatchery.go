@@ -278,11 +278,17 @@ func canRunJob(ctx context.Context, h Interface, j workerStarterRequest) bool {
 			return false
 		}
 
+		if r.Type == sdk.RegionRequirement && r.Value != h.Configuration().Provision.Region {
+			log.Debug("canRunJob> %d - job %d - job with region requirement: cannot spawn. hatchery-region:%s prerequisite:%s", j.timestamp, j.id, h.Configuration().Provision.Region, r.Value)
+			return false
+		}
+
 		// Skip others requirement as we can't check it
 		if r.Type == sdk.PluginRequirement || r.Type == sdk.ServiceRequirement || r.Type == sdk.MemoryRequirement {
-			log.Debug("canRunJob> %d - job %d - job with service, plugin, network or memory requirement. Skip these check as we can't checkt it on hatchery routine", j.timestamp, j.id)
+			log.Debug("canRunJob> %d - job %d - job with service, plugin, network or memory requirement. Skip these check as we can't check it on hatchery routine", j.timestamp, j.id)
 			continue
 		}
+
 	}
 	return h.CanSpawn(ctx, nil, j.id, j.requirements)
 }
@@ -293,18 +299,18 @@ const MemoryRegisterContainer int64 = 128
 
 func canRunJobWithModel(ctx context.Context, h InterfaceWithModels, j workerStarterRequest, model *sdk.Model) bool {
 	if model.Type != h.ModelType() {
-		log.Debug("canRunJob> model %s type:%s current hatchery modelType: %s", model.Name, model.Type, h.ModelType())
+		log.Debug("canRunJobWithModel> model %s type:%s current hatchery modelType: %s", model.Name, model.Type, h.ModelType())
 		return false
 	}
 
 	// If the model needs registration, don't spawn for now
 	if h.NeedRegistration(ctx, model) {
-		log.Debug("canRunJob> model %s needs registration", model.Name)
+		log.Debug("canRunJobWithModel> model %s needs registration", model.Name)
 		return false
 	}
 
 	if model.NbSpawnErr > 5 {
-		log.Warning(ctx, "canRunJob> Too many errors on spawn with model %s, please check this worker model", model.Name)
+		log.Warning(ctx, "canRunJobWithModel> Too many errors on spawn with model %s, please check this worker model", model.Name)
 		return false
 	}
 
@@ -317,7 +323,7 @@ func canRunJobWithModel(ctx context.Context, h InterfaceWithModels, j workerStar
 			}
 		}
 		if !checkGroup {
-			log.Debug("canRunJob> job %d - model %s attached to group %d can't run this job", j.id, model.Name, model.GroupID)
+			log.Debug("canRunJobWithModel> job %d - model %s attached to group %d can't run this job", j.id, model.Name, model.GroupID)
 			return false
 		}
 	}
@@ -333,7 +339,7 @@ func canRunJobWithModel(ctx context.Context, h InterfaceWithModels, j workerStar
 	}
 
 	if model.IsDeprecated && !containsModelRequirement {
-		log.Debug("canRunJob> %d - job %d - Cannot launch this model because it is deprecated", j.timestamp, j.id)
+		log.Debug("canRunJobWithModel> %d - job %d - Cannot launch this model because it is deprecated", j.timestamp, j.id)
 		return false
 	}
 
@@ -348,30 +354,35 @@ func canRunJobWithModel(ctx context.Context, h InterfaceWithModels, j workerStar
 			isSharedInfraModel := model.Group.Name == sdk.SharedInfraGroupName && modelName == model.Name
 			isSameName := modelName == model.Name // for backward compatibility with runs, if only the name match we considered that the model can be used, keep this condition until the workflow runs were not migrated.
 			if !isGroupModel && !isSharedInfraModel && !isSameName {
-				log.Debug("canRunJob> %d - job %d - model requirement r.Value(%s) do not match model.Name(%s) and model.Group(%s)", j.timestamp, j.id, strings.Split(r.Value, " ")[0], model.Name, model.Group.Name)
+				log.Debug("canRunJobWithModel> %d - job %d - model requirement r.Value(%s) do not match model.Name(%s) and model.Group(%s)", j.timestamp, j.id, strings.Split(r.Value, " ")[0], model.Name, model.Group.Name)
 				return false
 			}
 		}
 
 		// service and memory requirements are only supported by docker model
 		if model.Type != sdk.Docker && (r.Type == sdk.ServiceRequirement || r.Type == sdk.MemoryRequirement) {
-			log.Debug("canRunJob> %d - job %d - job with service requirement or memory requirement: only for model docker. current model:%s", j.timestamp, j.id, model.Type)
+			log.Debug("canRunJobWithModel> %d - job %d - job with service requirement or memory requirement: only for model docker. current model:%s", j.timestamp, j.id, model.Type)
 			return false
 		}
 
 		if r.Type == sdk.NetworkAccessRequirement && !sdk.CheckNetworkAccessRequirement(r) {
-			log.Debug("canRunJob> %d - job %d - network requirement failed: %v", j.timestamp, j.id, r.Value)
+			log.Debug("canRunJobWithModel> %d - job %d - network requirement failed: %v", j.timestamp, j.id, r.Value)
 			return false
 		}
 
 		// Skip other requirement as we can't check it
 		if r.Type == sdk.PluginRequirement || r.Type == sdk.ServiceRequirement || r.Type == sdk.MemoryRequirement {
-			log.Debug("canRunJob> %d - job %d - job with service, plugin, network or memory requirement. Skip these check as we can't check it on hatchery routine", j.timestamp, j.id)
+			log.Debug("canRunJobWithModel> %d - job %d - job with service, plugin, network or memory requirement. Skip these check as we can't check it on hatchery routine", j.timestamp, j.id)
 			continue
 		}
 
 		if r.Type == sdk.OSArchRequirement && model.RegisteredOS != "" && model.RegisteredArch != "" && r.Value != (model.RegisteredOS+"/"+model.RegisteredArch) {
-			log.Debug("canRunJob> %d - job %d - job with OSArch requirement: cannot spawn on this OSArch. current model: %s/%s", j.timestamp, j.id, model.RegisteredOS, model.RegisteredArch)
+			log.Debug("canRunJobWithModel> %d - job %d - job with OSArch requirement: cannot spawn on this OSArch. current model: %s/%s", j.timestamp, j.id, model.RegisteredOS, model.RegisteredArch)
+			return false
+		}
+
+		if r.Type == sdk.RegionRequirement && r.Value != h.Configuration().Provision.Region {
+			log.Debug("canRunJobWithModel> %d - job %d - job with region requirement: cannot spawn. hatchery-region:%s prerequisite:%s", j.timestamp, j.id, h.Configuration().Provision.Region, r.Value)
 			return false
 		}
 
@@ -387,7 +398,7 @@ func canRunJobWithModel(ctx context.Context, h InterfaceWithModels, j workerStar
 				}
 
 				if !found {
-					log.Debug("canRunJob> %d - job %d - model(%s) does not have binary %s(%s) for this job.", j.timestamp, j.id, model.Name, r.Name, r.Value)
+					log.Debug("canRunJobWithModel> %d - job %d - model(%s) does not have binary %s(%s) for this job.", j.timestamp, j.id, model.Name, r.Name, r.Value)
 					return false
 				}
 			}

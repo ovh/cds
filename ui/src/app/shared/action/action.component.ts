@@ -67,7 +67,7 @@ export class ActionComponent implements OnDestroy, OnInit {
     @Output() actionEvent = new EventEmitter<ActionEvent>();
 
     collapsed = true;
-    configRequirements: { disableModel?: boolean, disableHostname?: boolean } = {};
+    configRequirements: { disableModel?: boolean, disableHostname?: boolean, disableRegion?: boolean } = {};
     workerModels: Array<WorkerModel>;
 
     constructor(
@@ -143,6 +143,9 @@ export class ActionComponent implements OnDestroy, OnInit {
                 if (r.requirement.type === 'hostname') {
                     this.configRequirements.disableHostname = true;
                 }
+                if (r.requirement.type === 'region') {
+                    this.configRequirements.disableRegion = true;
+                }
                 break;
             case 'delete':
                 let indexDelete = this.editableAction.requirements.indexOf(r.requirement);
@@ -154,6 +157,9 @@ export class ActionComponent implements OnDestroy, OnInit {
                 }
                 if (r.requirement.type === 'hostname') {
                     this.configRequirements.disableHostname = false;
+                }
+                if (r.requirement.type === 'region') {
+                    this.configRequirements.disableRegion = false;
                 }
                 break;
         }
@@ -176,6 +182,9 @@ export class ActionComponent implements OnDestroy, OnInit {
             }
             if (req.type === 'hostname') {
                 this.configRequirements.disableHostname = true;
+            }
+            if (req.type === 'region') {
+                this.configRequirements.disableRegion = true;
             }
         });
     }

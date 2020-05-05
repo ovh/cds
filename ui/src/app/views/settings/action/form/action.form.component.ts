@@ -63,7 +63,7 @@ export class ActionFormComponent implements OnDestroy {
     steps: Array<Action> = new Array<Action>();
     actions: Array<Action> = new Array<Action>();
     collapsed = true;
-    configRequirements: { disableModel?: boolean, disableHostname?: boolean } = {};
+    configRequirements: { disableModel?: boolean, disableHostname?: boolean, disableRegion?: boolean } = {};
     stepFormExpended: boolean;
     workerModels: Array<WorkerModel>;
 
@@ -146,6 +146,9 @@ export class ActionFormComponent implements OnDestroy {
                 if (r.requirement.type === 'hostname') {
                     this.configRequirements.disableHostname = true;
                 }
+                if (r.requirement.type === 'region') {
+                    this.configRequirements.disableRegion = true;
+                }
                 break;
             case 'delete':
                 let indexDelete = this.action.requirements.indexOf(r.requirement);
@@ -157,6 +160,9 @@ export class ActionFormComponent implements OnDestroy {
                 }
                 if (r.requirement.type === 'hostname') {
                     this.configRequirements.disableHostname = false;
+                }
+                if (r.requirement.type === 'region') {
+                    this.configRequirements.disableRegion = false;
                 }
                 break;
         }
@@ -179,6 +185,9 @@ export class ActionFormComponent implements OnDestroy {
             }
             if (req.type === 'hostname') {
                 this.configRequirements.disableHostname = true;
+            }
+            if (req.type === 'region') {
+                this.configRequirements.disableRegion = true;
             }
         });
     }

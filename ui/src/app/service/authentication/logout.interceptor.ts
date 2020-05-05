@@ -33,7 +33,6 @@ export class LogoutInterceptor implements HttpInterceptor {
 
                         this._router.navigate(['/auth/signin'], navigationExtras);
                     } else if (req.url.indexOf('auth/me') === -1) { // ignore error on auth/me used for auth pages
-                        console.log(e)
                         // error formatted from CDS API
                         if (e.error) {
                             if (e.error.message) {

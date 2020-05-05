@@ -40,6 +40,17 @@ func (api *API) InitRouter() {
 	}
 	api.eventsBroker.Init(r.Background, api.PanicDump())
 
+	api.websocketBroker = &websocketBroker{
+		router:           api.Router,
+		cache:            api.Cache,
+		dbFunc:           api.mustDB,
+		clients:          make(map[string]*websocketClient),
+		messages:         make(chan sdk.Event),
+		chanAddClient:    make(chan *websocketClient),
+		chanRemoveClient: make(chan string),
+	}
+	api.websocketBroker.Init(r.Background, api.PanicDump())
+
 	// Auth
 	r.Handle("/auth/driver", ScopeNone(), r.GET(api.getAuthDriversHandler, Auth(false)))
 	r.Handle("/auth/me", Scope(sdk.AuthConsumerScopeAction), r.GET(api.getAuthMe))
@@ -180,7 +191,6 @@ func (api *API) InitRouter() {
 	r.Handle("/project/{permProjectKey}/export/application/{applicationName}", Scope(sdk.AuthConsumerScopeProject), r.GET(api.getApplicationExportHandler))
 
 	// Application
-	r.Handle("/project/{permProjectKey}/ascode/application", Scope(sdk.AuthConsumerScopeProject), r.GET(api.getAsCodeApplicationHandler))
 	r.Handle("/project/{permProjectKey}/application/{applicationName}", Scope(sdk.AuthConsumerScopeProject), r.GET(api.getApplicationHandler), r.PUT(api.updateApplicationHandler), r.DELETE(api.deleteApplicationHandler))
 	r.Handle("/project/{permProjectKey}/application/{applicationName}/metrics/{metricName}", Scope(sdk.AuthConsumerScopeProject), r.GET(api.getApplicationMetricHandler))
 	r.Handle("/project/{permProjectKey}/application/{applicationName}/keys", Scope(sdk.AuthConsumerScopeProject), r.GET(api.getKeysInApplicationHandler), r.POST(api.addKeyInApplicationHandler))
@@ -405,6 +415,7 @@ func (api *API) InitRouter() {
 
 	// SSE
 	r.Handle("/events", ScopeNone(), r.GET(api.eventsBroker.ServeHTTP))
+	r.Handle("/ws", ScopeNone(), r.GET(api.websocketBroker.ServeHTTP))
 
 	// Feature
 	r.Handle("/feature/clean", ScopeNone(), r.POST(api.cleanFeatureHandler, NeedToken("X-Izanami-Token", api.Config.Features.Izanami.Token)))
@@ -426,7 +437,6 @@ func (api *API) InitRouter() {
 	r.Handle("/template/{groupName}/{templateSlug}/instance", Scope(sdk.AuthConsumerScopeTemplate), r.GET(api.getTemplateInstancesHandler))
 	r.Handle("/template/{groupName}/{templateSlug}/instance/{instanceID}", Scope(sdk.AuthConsumerScopeTemplate), r.DELETE(api.deleteTemplateInstanceHandler))
 	r.Handle("/template/{groupName}/{templateSlug}/usage", Scope(sdk.AuthConsumerScopeTemplate), r.GET(api.getTemplateUsageHandler))
-	r.Handle("/project/{key}/workflow/{permWorkflowName}/templateInstance", Scope(sdk.AuthConsumerScopeTemplate), r.GET(api.getTemplateInstanceHandler))
 
 	//Not Found handler
 	r.Mux.NotFoundHandler = http.HandlerFunc(NotFoundHandler)

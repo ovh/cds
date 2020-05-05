@@ -178,31 +178,6 @@ func (h *HatcheryLocal) getWorkerBinaryName() string {
 	return workerName
 }
 
-// checkCapabilities checks all requirements, foreach type binary, check if binary is on current host
-// returns an error "Exit status X" if current host misses one requirement
-func (h *HatcheryLocal) checkCapabilities(req []sdk.Requirement) ([]sdk.Requirement, error) {
-	var tmp map[string]sdk.Requirement
-
-	tmp = make(map[string]sdk.Requirement)
-	for _, r := range req {
-		ok, err := h.checkRequirement(r)
-		if err != nil {
-			return nil, err
-		}
-
-		if ok {
-			tmp[r.Name] = r
-		}
-	}
-
-	capa := make([]sdk.Requirement, 0, len(tmp))
-	for _, r := range tmp {
-		capa = append(capa, r)
-	}
-
-	return capa, nil
-}
-
 //Configuration returns Hatchery CommonConfiguration
 func (h *HatcheryLocal) Configuration() service.HatcheryCommonConfiguration {
 	return h.Config.HatcheryCommonConfiguration
@@ -349,6 +324,12 @@ func (h *HatcheryLocal) checkRequirement(r sdk.Requirement) (bool, error) {
 		}
 		return true, nil
 	case sdk.PluginRequirement:
+		return true, nil
+	case sdk.RegionRequirement:
+		if r.Value != h.Configuration().Provision.Region {
+			log.Debug("checkRequirement> job with region requirement: cannot spawn. hatchery-region:%s prerequisite:%s", h.Configuration().Provision.Region, r.Value)
+			return false, nil
+		}
 		return true, nil
 	case sdk.OSArchRequirement:
 		osarch := strings.Split(r.Value, "/")

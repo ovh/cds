@@ -6,17 +6,17 @@
             [remote]="remote" [branch]="branch">
             <div class="right floated labelFeature" [title]="'workflow_from_repository_btn' | translate">
                 <a class="ui label small basic"
-                   [class.green]="pipeline && pipeline.from_repository && (!pipeline.ascode_events || pipeline.ascode_events.length ===0)"
-                   [class.orange]="pipeline && pipeline.from_repository && pipeline?.ascode_events?.length > 0"
-                   suiPopup
-                    [popupTemplate]="popupFromRepository" popupPlacement="bottom right" popupTrigger="outsideClick"
-                    #popup="suiPopup">
+                    [class.green]="pipeline && pipeline.from_repository && (!pipeline.ascode_events || pipeline.ascode_events.length ===0)"
+                    [class.orange]="pipeline && pipeline.from_repository && pipeline?.ascode_events?.length > 0"
+                    suiPopup [popupTemplate]="popupFromRepository" popupPlacement="bottom right"
+                    popupTrigger="outsideClick" #popup="suiPopup">
                     <i class="code icon"></i>as code
                 </a>
                 <ng-template let-popup #popupFromRepository>
                     <div class="content infoPopup">
                         <ng-container *ngIf="pipeline && pipeline.from_repository">
-                            <app-ascode-event [project]="project" [events]="pipeline.ascode_events" [repo]="pipeline.from_repository"></app-ascode-event>
+                            <app-ascode-event [project]="project" [events]="pipeline.ascode_events"
+                                [repo]="pipeline.from_repository"></app-ascode-event>
                         </ng-container>
                         <ng-container *ngIf="pipeline && !pipeline.from_repository">
                             <p>{{'pipeline_repository_help_line_1' | translate}}</p>
@@ -56,12 +56,13 @@
                     *ngIf="project.permissions.writable">
                     <i class="graduation icon"></i>{{ 'common_advanced' | translate }}
                 </a>
-                <div class="ui small buttons" *ngIf="editMode">
+                <div class="ui small buttons" *ngIf="editMode && !readOnly">
                     <ng-container *ngIf="pipeline.editModeChanged">
                         <button class="ui button" (click)="cancelPipeline()">{{'common_cancel' | translate }}</button>
                         <div class="or"></div>
                     </ng-container>
-                    <button class="ui green button"  [disabled]="!pipeline.editModeChanged" (click)="saveEditMode()">{{'btn_save_pipeline' | translate }}</button>
+                    <button class="ui green button" [disabled]="!pipeline.editModeChanged"
+                        (click)="saveEditMode()">{{'btn_save_pipeline' | translate }}</button>
                 </div>
             </sm-menu>
         </div>
@@ -71,14 +72,15 @@
                 <div class="viewContent" [ngSwitch]="selectedTab">
                     <div *ngSwitchCase="'pipeline'">
                         <app-pipeline-workflow [project]="project" [currentPipeline]="pipeline"
-                            [queryParams]="queryParams" [editMode]="editMode"></app-pipeline-workflow>
+                            [queryParams]="queryParams" [editMode]="editMode" [readOnly]="readOnly">
+                        </app-pipeline-workflow>
                     </div>
                     <div *ngSwitchCase="'parameters'">
                         <h3>{{ 'pipeline_parameters_list_title' | translate }}</h3>
                         <app-parameter-list (event)="parameterEvent($event)" [project]="project"
-                            [parameters]="pipeline.parameters" [keys]="keys"
-                            [mode]="project.permissions.writable? 'edit': 'ro'"></app-parameter-list>
-                        <ng-container *ngIf="project.permissions.writable">
+                            [parameters]="pipeline.parameters" [keys]="keys" [mode]="readOnly? 'ro' : 'edit'">
+                        </app-parameter-list>
+                        <ng-container *ngIf="!readOnly">
                             <h3>{{ 'pipeline_parameters_form_title' | translate }}</h3>
                             <app-parameter-form [project]="project" [loading]="paramFormLoading"
                                 (createParameterEvent)="parameterEvent($event)" [keys]="keys"></app-parameter-form>
@@ -86,7 +88,6 @@
                         <app-warning-modal [title]="_translate.instant('warning_modal_title')"
                             [msg]="_translate.instant('warning_modal_body')" (event)="parameterEvent($event, true)"
                             #paramWarning></app-warning-modal>
-
                     </div>
                     <div *ngSwitchCase="'usage'">
                         <app-usage [project]="project" [applications]="applications" [workflows]="workflows"
@@ -111,9 +112,6 @@
     <div class="ui text active loader">Loading pipeline...</div>
 </ng-template>
 <ng-container *ngIf="appAsCode">
-    <app-update-ascode
-            [project]="project"
-            [appName]="appAsCode.name"
-            [name]="pipeline.name"
-            #updateEditMode></app-update-ascode>
+    <app-update-ascode [project]="project" [appName]="appAsCode.name" [name]="pipeline.name" #updateEditMode>
+    </app-update-ascode>
 </ng-container>

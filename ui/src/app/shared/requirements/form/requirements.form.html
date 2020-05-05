@@ -64,14 +64,14 @@
             <div suiPopup
             [popupText]="popupText"
             popupPlacement="top"
-            *ngIf="(newRequirement.type === 'model' && config.disableModel) || (newRequirement.type === 'hostname' && config.disableHostname)">
+            *ngIf="(newRequirement.type === 'model' && config.disableModel) || (newRequirement.type === 'hostname' && config.disableHostname) || (newRequirement.type === 'region' && config.disableRegion)">
                 <button class="ui blue icon button"
                     [disabled]="!isFormValid"
                     (click)="onSubmitAddRequirement(formAddRequirement)">
                     <i class="plus icon"></i>
                 </button>
             </div>
-            <div *ngIf="(newRequirement.type !== 'model' || !config.disableModel) && (newRequirement.type !== 'hostname' || !config.disableHostname)">
+            <div *ngIf="(newRequirement.type !== 'model' || !config.disableModel) && (newRequirement.type !== 'hostname' || !config.disableHostname) && (newRequirement.type !== 'region' || !config.disableRegion)">
                 <button class="ui blue icon button"
                     [disabled]="!isFormValid"
                     (click)="onSubmitAddRequirement(formAddRequirement)">

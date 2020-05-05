@@ -13,6 +13,6 @@ require (
 	github.com/golang/protobuf v1.3.2
 	github.com/ovh/cds v0.0.0-00010101000000-000000000000
 	github.com/ovh/cds/sdk/interpolate v0.0.0-20191126072910-b8d81d038865
-	github.com/stretchr/testify v1.4.0
+	github.com/stretchr/testify v1.5.1
 	github.com/xeipuuv/gojsonschema v1.2.0
 )
