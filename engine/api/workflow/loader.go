@@ -485,6 +485,7 @@ func LoadAllWorkflows(ctx context.Context, db gorp.SqlExecutor, opts LoadAllWork
 			return nil, err
 		}
 		w := workflows[i].Get()
+		w.Normalize()
 		ws = append(ws, w)
 	}
 	return ws, nil

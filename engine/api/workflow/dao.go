@@ -1024,7 +1024,6 @@ func Delete(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj sd
 func CompleteWorkflow(ctx context.Context, db gorp.SqlExecutor, w *sdk.Workflow, proj sdk.Project, opts LoadOptions) error {
 
 	w.InitMaps()
-
 	w.AssignEmptyType()
 
 	nodesArray := w.WorkflowData.Array()
@@ -1062,6 +1061,8 @@ func CompleteWorkflow(ctx context.Context, db gorp.SqlExecutor, w *sdk.Workflow,
 			}
 		}
 	}
+
+	w.Normalize()
 
 	return nil
 }
@@ -1157,7 +1158,6 @@ func checkHooks(db gorp.SqlExecutor, w *sdk.Workflow, n *sdk.Node) error {
 				}
 				w.HookModels[h.HookModelID] = *hmDB
 			}
-			h.HookModelName = w.HookModels[h.HookModelID].Name
 		} else {
 			hm, err := LoadHookModelByName(db, h.HookModelName)
 			if err != nil {
@@ -1228,7 +1228,6 @@ func checkProjectIntegration(proj sdk.Project, w *sdk.Workflow, n *sdk.Node) err
 			}
 			w.ProjectIntegrations[n.Context.ProjectIntegrationID] = pp
 		}
-		n.Context.ProjectIntegrationName = pp.Name
 		return nil
 	}
 	if n.Context.ProjectIntegrationName != "" {
@@ -1285,7 +1284,6 @@ func checkEnvironment(db gorp.SqlExecutor, proj sdk.Project, w *sdk.Workflow, n 
 
 			w.Environments[n.Context.EnvironmentID] = env
 		}
-		n.Context.EnvironmentName = env.Name
 		return nil
 	}
 	if n.Context.EnvironmentName != "" {
@@ -1315,7 +1313,6 @@ func checkApplication(db gorp.SqlExecutor, proj sdk.Project, w *sdk.Workflow, n 
 
 			w.Applications[n.Context.ApplicationID] = app
 		}
-		n.Context.ApplicationName = app.Name
 		return nil
 	}
 	if n.Context.ApplicationName != "" {
@@ -1350,7 +1347,6 @@ func checkPipeline(ctx context.Context, db gorp.SqlExecutor, proj sdk.Project, w
 
 			w.Pipelines[n.Context.PipelineID] = pip
 		}
-		n.Context.PipelineName = pip.Name
 		return nil
 	}
 	if n.Context.PipelineName != "" {

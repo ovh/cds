@@ -213,6 +213,49 @@ func (w *Workflow) SortNode() {
 }
 
 // AssignEmptyType fill node type field
+// This function should be called after completing the maps
+func (w *Workflow) Normalize() {
+	w.InitMaps()
+	w.AssignEmptyType()
+
+	nodesArray := w.WorkflowData.Array()
+	for i := range nodesArray {
+		n := nodesArray[i]
+		if n.Context == nil {
+			continue
+		}
+
+		pip, ok := w.Pipelines[n.Context.PipelineID]
+		if ok {
+			n.Context.PipelineName = pip.Name
+		}
+
+		app, ok := w.Applications[n.Context.ApplicationID]
+		if ok {
+			n.Context.ApplicationName = app.Name
+		}
+
+		env, ok := w.Environments[n.Context.EnvironmentID]
+		if ok {
+			n.Context.EnvironmentName = env.Name
+		}
+
+		integ, ok := w.ProjectIntegrations[n.Context.ProjectIntegrationID]
+		if ok {
+			n.Context.ProjectIntegrationName = integ.Name
+		}
+
+		for i := range n.Hooks {
+			h := &n.Hooks[i]
+			hookModel, ok := w.HookModels[h.HookModelID]
+			if ok {
+				h.HookModelName = hookModel.Name
+			}
+		}
+	}
+}
+
+// AssignEmptyType fill node type field
 func (w *Workflow) AssignEmptyType() {
 	// set node type for join
 	for i := range w.WorkflowData.Joins {
