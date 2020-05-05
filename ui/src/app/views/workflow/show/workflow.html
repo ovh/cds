@@ -32,12 +32,12 @@
                     *ngIf="detailedWorkflow.permissions.writable">
                     <i class="graduation icon"></i>
                     {{'common_advanced' | translate }}</a>
-                <div class="ui small buttons" *ngIf="editMode">
+                <div class="ui small buttons" *ngIf="editMode && !isReadOnly">
                     <ng-container *ngIf="editModeWorkflowChanged">
                         <button class="ui button" (click)="rollbackWorkflow()">{{'common_cancel' | translate }}</button>
                         <div class="or"></div>
                     </ng-container>
-                    <button class="ui green button"  [disabled]="!editModeWorkflowChanged" (click)="saveWorkflow()">{{'btn_save_workflow' | translate }}</button>
+                    <button class="ui green button" [disabled]="!editModeWorkflowChanged" (click)="saveWorkflow()">{{'btn_save_workflow' | translate }}</button>
                 </div>
             </sm-menu>
         </div>
@@ -101,7 +101,7 @@
         </div>
         <app-scrollview class="scrollview" *ngIf="selectedTab !== 'workflows'" [ngSwitch]="selectedTab">
             <div *ngSwitchCase="'notifications'">
-                <app-workflow-notification-list [project]="project" [workflow]="detailedWorkflow" [editMode]="editMode"></app-workflow-notification-list>
+                <app-workflow-notification-list [project]="project" [workflow]="detailedWorkflow" [editMode]="editMode" [readOnly]="isReadOnly"></app-workflow-notification-list>
             </div>
             <div *ngSwitchCase="'permissions'" class="padded">
                 <h3>{{ 'workflow_permission_list_title' | translate }}</h3>

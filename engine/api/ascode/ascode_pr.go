@@ -27,7 +27,7 @@ type EntityData struct {
 }
 
 // UpdateAsCodeResult pulls repositories operation and the create pullrequest + update workflow
-func UpdateAsCodeResult(ctx context.Context, db *gorp.DbMap, store cache.Store, proj sdk.Project, app *sdk.Application, ed EntityData, u sdk.Identifiable) *sdk.AsCodeEvent {
+func UpdateAsCodeResult(ctx context.Context, db *gorp.DbMap, store cache.Store, proj sdk.Project, app sdk.Application, ed EntityData, u sdk.Identifiable) *sdk.AsCodeEvent {
 	tick := time.NewTicker(2 * time.Second)
 	ctx, cancel := context.WithTimeout(ctx, 1*time.Minute)
 	defer func() {

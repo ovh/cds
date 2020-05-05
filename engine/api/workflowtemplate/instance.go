@@ -202,22 +202,10 @@ func CheckAndExecuteTemplate(ctx context.Context, db *gorp.DbMap, consumer sdk.A
 	}
 	defer tx.Rollback() // nolint
 
-	var wti *sdk.WorkflowTemplateInstance
-
 	// try to get a instance not assign to a workflow but with the same slug
-	wtis, err := LoadInstancesByTemplateIDAndProjectIDAndRequestWorkflowName(ctx, tx, wt.ID, p.ID, req.WorkflowName)
-	if err != nil {
+	wti, err := LoadInstanceByTemplateIDAndProjectIDAndRequestWorkflowName(ctx, tx, wt.ID, p.ID, req.WorkflowName)
+	if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
 		return nil, err
-	}
-	for _, res := range wtis {
-		if wti == nil {
-			wti = &res
-		} else {
-			// if there are more than one instance found, delete others
-			if err := DeleteInstance(tx, &res); err != nil {
-				return nil, err
-			}
-		}
 	}
 
 	// if a previous instance exist for the same workflow update it, else create a new one

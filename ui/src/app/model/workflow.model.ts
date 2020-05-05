@@ -9,6 +9,7 @@ import { Parameter } from './parameter.model';
 import { Pipeline } from './pipeline.model';
 import { Label } from './project.model';
 import { Usage } from './usage.model';
+import { WorkflowTemplateInstance } from './workflow-template.model';
 import { WorkflowHookModel } from './workflow.hook.model';
 import { WorkflowRun } from './workflow.run.model';
 
@@ -38,6 +39,7 @@ export class Workflow {
     notifications: Array<WorkflowNotification>;
     from_repository: string;
     from_template: string;
+    template_instance: WorkflowTemplateInstance;
     template_up_to_date: boolean;
     favorite: boolean;
     pipelines: { [key: number]: Pipeline; };

@@ -30,7 +30,7 @@ import { finalize, first } from 'rxjs/operators';
 })
 @AutoUnsubscribe()
 export class WorkflowTemplateParamFormComponent implements OnInit {
-    @ViewChild('codemirror', { static: false }) codemirror: any;
+    @ViewChild('codemirror') codemirror: any;
 
     _project: Project;
     @Input('project') set project(data: Project) {

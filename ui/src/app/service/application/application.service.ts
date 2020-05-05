@@ -11,12 +11,6 @@ export class ApplicationService {
     constructor(private _http: HttpClient) {
     }
 
-    getAsCodeApplication(key: string, fromrepo: string): Observable<Array<Application>> {
-        let params = new HttpParams();
-        params = params.append('repo', fromrepo);
-        return this._http.get<Array<Application>>(`/project/${key}/ascode/application`, { params: params});
-    }
-
     getApplication(key: string, appName: string): Observable<Application> {
         let params = new HttpParams();
         params = params.append('withNotifs', 'true');
