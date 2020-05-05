@@ -336,6 +336,13 @@
 	"content": ""
 },
 {
+	"uri": "https://ovh.github.io/cds/docs/concepts/requirement/requirement_region/",
+	"title": "Region Requirement",
+	"tags": [],
+	"description": "",
+	"content": "The Region prerequisite allows you to require a worker to have access to a specific region.\nA Region can be configured on each hatchery. With a free text as myregion in hatchery configuration, user can set a prerequisite \u0026lsquo;region\u0026rsquo; with value myregion on CDS Job.\nExample of job configuration:\njobs: - job: build requirements: - region: myregion steps: ...  "
+},
+{
 	"uri": "https://ovh.github.io/cds/docs/concepts/workflow/run-conditions/",
 	"title": "Run conditions on pipeline",
 	"tags": [],
@@ -522,7 +529,7 @@
 	"title": "Requirement",
 	"tags": [],
 	"description": "",
-	"content": "Requirement types:\n Binary Model Hostname Network access Service Memory OS \u0026amp; Architecture  A Job will be executed by a worker.\nCDS will choose a worker dependending on the requirements you define for your job.\nYou can set as many requirements as you want, following these rules:\n Only one model can be set as requirement Only one hostname can be set as requirement Only one OS \u0026amp; Architecture requirement can be set at a time Memory and Services requirements are available only on Docker models  "
+	"content": "Requirement types:\n Binary Model Hostname Network access Service Memory OS \u0026amp; Architecture Region  A Job will be executed by a worker.\nCDS will choose a worker dependending on the requirements you define for your job.\nYou can set as many requirements as you want, following these rules:\n Only one model can be set as requirement Only one hostname can be set as requirement Only one OS \u0026amp; Architecture requirement can be set at a time Memory and Services requirements are available only on Docker models Only one region can be set as requirement  "
 },
 {
 	"uri": "https://ovh.github.io/cds/docs/concepts/workflow/run-number/",

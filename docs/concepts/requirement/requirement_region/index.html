@@ -2,7 +2,7 @@
 <html id="docs" lang="en" class="">
 	<head>
 	<meta charset="utf-8">
-<title>Application configuration file - CDS - Continuous Delivery Service</title>
+<title>Region Requirement - CDS - Continuous Delivery Service</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="shortcut icon" type="image/png" href="https://ovh.github.io/cds/images/favicon.png">
 
@@ -17,20 +17,23 @@
 <link rel="stylesheet" href="https://ovh.github.io/cds/css/solarized-light.css">
 
 <meta name="description"
-    content="An Application allows you to enable some features of CDS within a workflow:
- Variables Keys VCS Deployment  The application configuration format is as following:
-version: v1.0 name: my-application variables: artifact.name: type: string value: my-application docker.image: value: my-org/my-application docker.registry: value: hub.docker.com keys: app-mySSHKey: type: ssh repo: my-org/my-application vcs_server: github vcs_connection_type: ssh vcs_ssh_key: app-mySSHKey deployments: my-kubernetes-cluster: timeout: value: 180 namespace: my-namespace helm_chart: value: deploy/helm/ helm_values: type: deploy/helm/values.yaml helm_version: type: 2.">
+    content="The Region prerequisite allows you to require a worker to have access to a specific region.
+A Region can be configured on each hatchery. With a free text as myregion in hatchery configuration, user can set a prerequisite &lsquo;region&rsquo; with value myregion on CDS Job.
+Example of job configuration:
+jobs: - job: build requirements: - region: myregion steps: ...  ">
 <meta property="og:description"
-    content="An Application allows you to enable some features of CDS within a workflow:
- Variables Keys VCS Deployment  The application configuration format is as following:
-version: v1.0 name: my-application variables: artifact.name: type: string value: my-application docker.image: value: my-org/my-application docker.registry: value: hub.docker.com keys: app-mySSHKey: type: ssh repo: my-org/my-application vcs_server: github vcs_connection_type: ssh vcs_ssh_key: app-mySSHKey deployments: my-kubernetes-cluster: timeout: value: 180 namespace: my-namespace helm_chart: value: deploy/helm/ helm_values: type: deploy/helm/values.yaml helm_version: type: 2.">
+    content="The Region prerequisite allows you to require a worker to have access to a specific region.
+A Region can be configured on each hatchery. With a free text as myregion in hatchery configuration, user can set a prerequisite &lsquo;region&rsquo; with value myregion on CDS Job.
+Example of job configuration:
+jobs: - job: build requirements: - region: myregion steps: ...  ">
 <meta name="twitter:description"
-    content="An Application allows you to enable some features of CDS within a workflow:
- Variables Keys VCS Deployment  The application configuration format is as following:
-version: v1.0 name: my-application variables: artifact.name: type: string value: my-application docker.image: value: my-org/my-application docker.registry: value: hub.docker.com keys: app-mySSHKey: type: ssh repo: my-org/my-application vcs_server: github vcs_connection_type: ssh vcs_ssh_key: app-mySSHKey deployments: my-kubernetes-cluster: timeout: value: 180 namespace: my-namespace helm_chart: value: deploy/helm/ helm_values: type: deploy/helm/values.yaml helm_version: type: 2.">
-<meta property="og:url" content="https://ovh.github.io/cds/docs/concepts/files/application-syntax/">
-<meta property="og:title" content="Application configuration file">
-<meta name="twitter:title" content="Application configuration file">
+    content="The Region prerequisite allows you to require a worker to have access to a specific region.
+A Region can be configured on each hatchery. With a free text as myregion in hatchery configuration, user can set a prerequisite &lsquo;region&rsquo; with value myregion on CDS Job.
+Example of job configuration:
+jobs: - job: build requirements: - region: myregion steps: ...  ">
+<meta property="og:url" content="https://ovh.github.io/cds/docs/concepts/requirement/requirement_region/">
+<meta property="og:title" content="Region Requirement">
+<meta name="twitter:title" content="Region Requirement">
 <meta name="twitter:image:alt" content="CDS - Continuous Delivery Service">
 <meta property="og:image" content="/images/cds-transparent.png">
 <script type="text/javascript" src="https://ovh.github.io/cds/js/anchor-4.1.1.min.js"></script>
@@ -519,221 +522,26 @@ version: v1.0 name: my-application variables: artifact.name: type: string value:
 			<div id="docsContent">
         		
 
-<h1>Application configuration file</h1>
+<h1>Region Requirement</h1>
 
 
 
 
 
-<p>An <strong>Application</strong> allows you to enable some features of CDS within a workflow:</p>
+<p>The <code>Region</code> prerequisite allows you to require a worker to have access to a specific region.</p>
 
-<ul>
-<li>Variables</li>
-<li>Keys</li>
-<li>VCS</li>
-<li>Deployment</li>
-</ul>
+<p>A <code>Region</code> can be configured on each hatchery. With a free text as <code>myregion</code> in hatchery configuration,
+user can set a prerequisite &lsquo;region&rsquo; with value <code>myregion</code> on CDS Job.</p>
 
-<p>The application configuration format is as following:</p>
+<p>Example of job configuration:</p>
 
-<pre><code class="language-yaml">version: v1.0
-name: my-application
-
-variables:
-  artifact.name:
-    type: string
-    value: my-application
-  docker.image:
-    value: my-org/my-application
-  docker.registry: 
-    value: hub.docker.com
-
-keys:
-  app-mySSHKey:
-    type: ssh
-
-repo: my-org/my-application
-vcs_server: github
-vcs_connection_type: ssh
-vcs_ssh_key: app-mySSHKey
-
-deployments:
-  my-kubernetes-cluster:
-    timeout:
-      value: 180
-    namespace:
-      my-namespace
-    helm_chart:
-      value: deploy/helm/
-    helm_values:
-      type: deploy/helm/values.yaml
-    helm_version:
-      type: 2.12.2
+<pre><code>jobs:
+- job: build
+  requirements:
+  - region: myregion
+  steps:
+  ...
 </code></pre>
-
-<h2 id="variables">Variables</h2>
-
-<p>Define application scoped variables as a dictionary. Each Variable must have a <code>type</code> and a <code>value</code>. You will be able to play with those variables using <code>{{.cds.app.my-variable}}</code> and <code>CDS_APP_MY_VARIABLE</code>. The recognized types are <code>string</code>, <code>password</code>, <code>text</code>, <code>boolean</code> or <code>number</code>. By default the type is <code>string</code>.</p>
-
-<p>To be able to write secret in the CDS yaml files, you have to encrypt data within your CDS project.</p>
-
-<pre><code class="language-bash">  $ cdsctl encrypt MYPROJECT my-data my-super-secret-value
-  my-data: 01234567890987654321
-</code></pre>
-
-<p>The command returns the value: <code>01234567890987654321</code>. You can use this value in a configuration file.</p>
-
-<h2 id="keys">Keys</h2>
-
-<p>Keys managed in CDS in are from two types: <code>SSH</code> and <code>PGP</code>. Let&rsquo;s import an application with a SSH Key. Those key could be important to manage your Git repositories.</p>
-
-<pre><code class="language-bash">➜  ~ cat app.yml
-name: myapp
-keys:
-  app-mysshkey:
-    type: ssh
-
-➜  ~ cdsctl application import MYPROJ app.yml
-Application myapp successfully created
-SSH key app-mysshkey created on application myapp
-</code></pre>
-
-<p>CDS has just created a new SSH keypair on its own. To be able to keep this keypair for the future, you can gather an identifier by running an export.</p>
-
-<pre><code class="language-bash">➜  ~ cdsctl application export FSAMIN myapp
-version: v1.0
-name: myapp
-keys:
-  app-mysshkey:
-    type: ssh
-    value: 19a2ca3271854c3183aabb4af9df05e1
-</code></pre>
-
-<p>Note that each time you want to import the application and <em>keep</em> the keypair as it, you <em>must</em> provide the exported value.</p>
-
-<p>If you want to keep your application in your git repository and let CDS configure and reconfigure the application automatically, we suggest to use the <code>regen</code> option. With this option CDS will generate the SSH keypair if it doesn&rsquo;t exist, and won&rsquo;t touch it on each import.</p>
-
-<pre><code class="language-yaml">name: myapp
-keys:
-  app-mysshkey:
-    type: ssh
-    regen: false
-</code></pre>
-
-<h2 id="vcs">VCS</h2>
-
-<p>To be able to link an application to a VCS, you must have at least one <a href="https://ovh.github.io/cds/docs/integrations/">repository manager</a> properly configured on your CDS instance.
-Each application in CDS can be linked to one repository on a repository manager.</p>
-
-<p>Defining your VCS setup on an application will allow to benefit for the deep integration of CDS and the Repository Manager (such as GitHub). So you would be able to setup webhooks, browse through commits and publish your releases easily.</p>
-
-<table>
-<thead>
-<tr>
-<th>Setting</th>
-<th>Definition</th>
-</tr>
-</thead>
-
-<tbody>
-<tr>
-<td>vcs_server</td>
-<td>Set the name of the repository manager on which on repository is hosted</td>
-</tr>
-
-<tr>
-<td>repo</td>
-<td>The fullname of the repositiry i.e <code>myorg/myrepo</code></td>
-</tr>
-
-<tr>
-<td>vcs_connection_type</td>
-<td>Define the way you would like to checkout the code. Allowed values are <code>ssh</code> or <code>https</code></td>
-</tr>
-
-<tr>
-<td>vcs_ssh_key</td>
-<td>If you set <code>vcs_connection_type = ssh</code>, choose the ssh key you want to use to git clone</td>
-</tr>
-
-<tr>
-<td>vcs_user</td>
-<td>If you set <code>vcs_connection_type = http</code>, set the HTTP Username</td>
-</tr>
-
-<tr>
-<td>vcs_password</td>
-<td>If you set <code>vcs_connection_type = http</code>, set the HTTP Password</td>
-</tr>
-
-<tr>
-<td>vcs_pgp_key</td>
-<td>If you want to commit and sign, you can choose here a PGP Key</td>
-</tr>
-</tbody>
-</table>
-
-<p>Please note that you can use key at <code>project</code> or <code>application</code> level. Default <code>vcs_connection_type</code> is <code>https</code>. If your repository is public, you can omit <code>vcs_connection_type</code>, <code>vcs_user</code> and <code>vcs_password</code>.</p>
-
-<h3 id="example">Example</h3>
-
-<pre><code class="language-yaml">version: v1.0
-name: myapp
-repo: myorg/myapp
-vcs_server: github
-vcs_connection_type: ssh
-vcs_ssh_key: proj-ssh-key
-vcs_pgp_key: proj-pgp-key
-</code></pre>
-
-<p>Now with this setup you will be able to use the actions <a href="https://ovh.github.io/cds/docs/actions/builtin-checkoutapplication/">CheckoutApplication</a> and <a href="https://ovh.github.io/cds/docs/actions/builtin-release/">Release</a> in your pipelines.</p>
-
-<h2 id="deployment">Deployment</h2>
-
-<p>In this section, you can define the setup to deploy your application on a platform. To be able to setup it, you must have at least one <a href="https://ovh.github.io/cds/docs/integrations/">integration supporting deployment</a> properly configured on your CDS instance.</p>
-
-<p>The <code>deployments</code> section is the list of the settings you can use to deploy to several platforms. For instance, if you want to be able to be deploy the same application, from the same helm chart with subtle changes in variables, depending on the cluster, you can set the following configuration.</p>
-
-<pre><code class="language-yaml">version: v1.0
-name: myapp
-
-deployments:
-
-  my-kubernetes-cluster-A:
-    namespace:
-      my-namespace-A
-    helm_chart:
-      value: deploy/helm/
-    helm_values:
-      type: deploy/helm/values-cluster-A.yaml
-    helm_version:
-      type: 2.12.2
-
-  my-kubernetes-cluster-B:
-    namespace:
-      my-namespace-B
-    helm_chart:
-      value: deploy/helm/
-    helm_values:
-      type: deploy/helm/values-cluster-B.yaml
-    helm_version:
-      type: 2.12.2
-</code></pre>
-
-<p>The list of the availabe deployment platform is available from the Web UI on the <code>project / integration</code> section, or with the command <code>cdsctl project integration list</code></p>
-
-<pre><code class="language-bash">➜  ~ cdsctl project integration list MYPROJ
-+-----------------------------+
-|            NAME             |
-+-----------------------------+
-| my-kubernetes-cluster-A     |
-| my-kubernetes-cluster-B     |
-+-----------------------------+
-</code></pre>
-
-<p>The settings depend on the integration. Please refer to the <a href="https://ovh.github.io/cds/docs/integrations/">integration documentation</a>.</p>
-
-<p>Now you are ready to use the <a href="https://ovh.github.io/cds/docs/actions/builtin-deployapplication/">DeployApplication</a> action in your pipelines.</p>
 
 
 

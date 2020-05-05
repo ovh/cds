@@ -437,6 +437,18 @@ golang.org:80  </description>
     </item>
     
     <item>
+      <title>Region Requirement</title>
+      <link>https://ovh.github.io/cds/docs/concepts/requirement/requirement_region/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/docs/concepts/requirement/requirement_region/</guid>
+      <description>The Region prerequisite allows you to require a worker to have access to a specific region.
+A Region can be configured on each hatchery. With a free text as myregion in hatchery configuration, user can set a prerequisite &amp;lsquo;region&amp;rsquo; with value myregion on CDS Job.
+Example of job configuration:
+jobs: - job: build requirements: - region: myregion steps: ...  </description>
+    </item>
+    
+    <item>
       <title>Run conditions on pipeline</title>
       <link>https://ovh.github.io/cds/docs/concepts/workflow/run-conditions/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
