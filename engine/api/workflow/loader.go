@@ -237,6 +237,9 @@ func (opt LoadAllWorkflowsOptions) withEnvironments(db gorp.SqlExecutor, ws *[]W
 			n := nodesArray[i]
 			if n.Context != nil && n.Context.EnvironmentID != 0 {
 				if env, ok := mapIDs[n.Context.EnvironmentID]; ok {
+					if env == nil {
+						return sdk.WrapError(sdk.ErrNotFound, "unable to find environment %d", n.Context.EnvironmentID)
+					}
 					w.Environments[n.Context.EnvironmentID] = *env
 				}
 			}
@@ -285,6 +288,9 @@ func (opt LoadAllWorkflowsOptions) withPipelines(db gorp.SqlExecutor, ws *[]Work
 			n := nodesArray[i]
 			if n.Context != nil && n.Context.PipelineID != 0 {
 				if pip, ok := mapIDs[n.Context.PipelineID]; ok {
+					if pip == nil {
+						return sdk.WrapError(sdk.ErrNotFound, "unable to find pipeline %d", n.Context.PipelineID)
+					}
 					w.Pipelines[n.Context.PipelineID] = *pip
 				}
 			}
@@ -365,6 +371,9 @@ func (opt LoadAllWorkflowsOptions) withIntegrations(db gorp.SqlExecutor, ws *[]W
 			n := nodesArray[i]
 			if n.Context != nil && n.Context.ProjectIntegrationID != 0 {
 				if integ, ok := mapIDs[n.Context.ProjectIntegrationID]; ok {
+					if integ == nil {
+						return sdk.WrapError(sdk.ErrNotFound, "unable to find integration %d", n.Context.ProjectIntegrationID)
+					}
 					w.ProjectIntegrations[n.Context.ProjectIntegrationID] = *integ
 				}
 			}
@@ -453,6 +462,9 @@ func (opt LoadAllWorkflowsOptions) withApplications(db gorp.SqlExecutor, ws *[]W
 			n := nodesArray[i]
 			if n.Context != nil && n.Context.ApplicationID != 0 {
 				if app, ok := mapIDs[n.Context.ApplicationID]; ok {
+					if app == nil {
+						return sdk.WrapError(sdk.ErrNotFound, "unable to find application %d", n.Context.ApplicationID)
+					}
 					w.Applications[n.Context.ApplicationID] = *app
 				}
 			}
