@@ -181,8 +181,7 @@ func Test_websocketGetWorkflowEvent(t *testing.T) {
 	require.Equal(t, response.Event.EventType, "sdk.EventRunWorkflow")
 	require.Equal(t, response.Event.ProjectKey, proj.Key)
 	require.Equal(t, response.Event.WorkflowName, w.Name)
-
-	assert.Equal(t, 0, len(chanMessageReceived))
+	require.Equal(t, 0, len(chanMessageReceived))
 }
 
 func Test_websocketDeconnection(t *testing.T) {
