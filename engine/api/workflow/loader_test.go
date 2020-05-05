@@ -2,6 +2,7 @@ package workflow_test
 
 import (
 	"context"
+	"fmt"
 	"testing"
 
 	"github.com/ovh/cds/engine/api/test"
@@ -79,8 +80,10 @@ func TestLoadAllWorkflows(t *testing.T) {
 		},
 	}
 
-	for _, opt := range opts {
-		_, err := workflow.LoadAllWorkflows(context.TODO(), db, opt)
-		require.NoError(t, err)
+	for i, opt := range opts {
+		t.Run(fmt.Sprintf("test LoadAllWorkflows #%d", i), func(t *testing.T) {
+			_, err := workflow.LoadAllWorkflows(context.TODO(), db, opt)
+			require.NoError(t, err)
+		})
 	}
 }

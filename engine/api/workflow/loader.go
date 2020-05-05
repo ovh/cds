@@ -338,6 +338,7 @@ func (opt LoadAllWorkflowsOptions) withIntegrations(db gorp.SqlExecutor, ws *[]W
 		nodesArray := w.WorkflowData.Array()
 		for _, n := range nodesArray {
 			if n.Context != nil && n.Context.ProjectIntegrationID != 0 {
+				log.Debug("found ProjectIntegrationID=%d(%s) on workflow %d, node=%d", n.Context.ProjectIntegrationID, n.Context.ProjectIntegrationName, w.ID, n.ID)
 				if _, ok := mapIDs[n.Context.ProjectIntegrationID]; !ok {
 					mapIDs[n.Context.ProjectIntegrationID] = nil
 				}
@@ -350,6 +351,7 @@ func (opt LoadAllWorkflowsOptions) withIntegrations(db gorp.SqlExecutor, ws *[]W
 		ids = append(ids, id)
 	}
 
+	log.Debug("loading project_integration %+v", ids)
 	projectIntegrations, err := integration.LoadIntegrationsByIDs(db, ids)
 	if err != nil {
 		return err
