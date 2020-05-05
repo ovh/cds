@@ -597,11 +597,11 @@ func IsFavorite(db gorp.SqlExecutor, w *sdk.Workflow, uID string) (bool, error) 
 
 // Insert inserts a new workflow
 func Insert(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj sdk.Project, w *sdk.Workflow) error {
-	if err := CheckValidity(ctx, db, w); err != nil {
+	if err := CompleteWorkflow(ctx, db, w, proj, LoadOptions{}); err != nil {
 		return err
 	}
 
-	if err := CompleteWorkflow(ctx, db, w, proj, LoadOptions{}); err != nil {
+	if err := CheckValidity(ctx, db, w); err != nil {
 		return err
 	}
 
@@ -902,11 +902,11 @@ func RenameNode(ctx context.Context, db gorp.SqlExecutor, w *sdk.Workflow) error
 
 // Update updates a workflow
 func Update(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj sdk.Project, wf *sdk.Workflow, uptOption UpdateOptions) error {
-	if err := CheckValidity(ctx, db, wf); err != nil {
+	if err := CompleteWorkflow(ctx, db, wf, proj, LoadOptions{}); err != nil {
 		return err
 	}
 
-	if err := CompleteWorkflow(ctx, db, wf, proj, LoadOptions{}); err != nil {
+	if err := CheckValidity(ctx, db, wf); err != nil {
 		return err
 	}
 

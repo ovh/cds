@@ -62,11 +62,11 @@ func (api *API) postWorkflowPreviewHandler() service.Handler {
 			return sdk.WrapError(err, "unable import workflow %s", ew.GetName())
 		}
 
-		if err := workflow.CheckValidity(ctx, api.mustDB(), wf); err != nil {
+		if err := workflow.CompleteWorkflow(ctx, api.mustDB(), wf, *proj, workflow.LoadOptions{}); err != nil {
 			return err
 		}
 
-		if err := workflow.CompleteWorkflow(ctx, api.mustDB(), wf, *proj, workflow.LoadOptions{}); err != nil {
+		if err := workflow.CheckValidity(ctx, api.mustDB(), wf); err != nil {
 			return err
 		}
 
