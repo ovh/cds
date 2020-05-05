@@ -372,13 +372,16 @@ func (c *websocketClient) send(ctx context.Context, event sdk.Event) (err error)
 	case strings.HasPrefix(event.EventType, "sdk.EventRunWorkflow") && c.filter.Type == sdk.WebsocketFilterTypeWorkflow:
 		if event.ProjectKey != c.filter.ProjectKey || event.WorkflowName != c.filter.WorkflowName {
 			sendEvent = false
+			break
 		}
 		if c.filter.WorkflowRunNumber != 0 && event.WorkflowRunNum != c.filter.WorkflowRunNumber {
 			sendEvent = false
+			break
 		}
 		// WORKFLOW NODE RUN EVENT
 		if c.filter.WorkflowNodeRunID != 0 && event.WorkflowNodeRunID != c.filter.WorkflowNodeRunID {
 			sendEvent = false
+			break
 		}
 		sendEvent = true
 	default:
