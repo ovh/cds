@@ -28,9 +28,9 @@ func (api *API) putBookWorkerModelHandler() service.Handler {
 			return err
 		}
 
-		m, err := workermodel.LoadByNameAndGroupID(api.mustDB(), modelName, g.ID)
+		m, err := workermodel.LoadByNameAndGroupID(ctx, api.mustDB(), modelName, g.ID, workermodel.LoadOptions.Default)
 		if err != nil {
-			return sdk.WrapError(err, "cannot load worker model")
+			return err
 		}
 
 		s, err := services.LoadByID(ctx, api.mustDB(), getAPIConsumer(ctx).Service.ID)
@@ -62,9 +62,9 @@ func (api *API) putSpawnErrorWorkerModelHandler() service.Handler {
 			return err
 		}
 
-		model, err := workermodel.LoadByNameAndGroupID(api.mustDB(), modelName, g.ID)
+		model, err := workermodel.LoadByNameAndGroupID(ctx, api.mustDB(), modelName, g.ID, workermodel.LoadOptions.Default)
 		if err != nil {
-			return sdk.WrapError(err, "cannot load worker model")
+			return err
 		}
 
 		tx, err := api.mustDB().Begin()

@@ -171,7 +171,7 @@ func workerModelDeleteRun(v cli.Values) error {
 	}
 
 	if err := client.WorkerModelDelete(groupName, modelName); err != nil {
-		if sdk.ErrorIs(err, sdk.ErrNoWorkerModel) && v.GetBool("force") {
+		if sdk.ErrorIs(err, sdk.ErrNotFound) && v.GetBool("force") {
 			return nil
 		}
 		return err

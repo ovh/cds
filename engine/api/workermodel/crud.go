@@ -20,7 +20,11 @@ func Create(ctx context.Context, db gorp.SqlExecutor, data sdk.Model, ident sdk.
 	}
 
 	// check if worker model already exists
-	if _, err := LoadByNameAndGroupID(db, data.Name, data.GroupID); err == nil {
+	existingModel, err := LoadByNameAndGroupID(ctx, db, data.Name, data.GroupID)
+	if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
+		return nil, err
+	}
+	if existingModel != nil {
 		return nil, sdk.NewErrorFrom(sdk.ErrModelNameExist, "worker model already exists with name %s for given group", data.Name)
 	}
 
@@ -67,7 +71,11 @@ func Update(ctx context.Context, db gorp.SqlExecutor, old *sdk.Model, data sdk.M
 
 	if old.GroupID != data.GroupID || old.Name != data.Name {
 		// check if worker model already exists
-		if _, err := LoadByNameAndGroupID(db, data.Name, data.GroupID); err == nil {
+		existingModel, err := LoadByNameAndGroupID(ctx, db, data.Name, data.GroupID)
+		if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
+			return nil, err
+		}
+		if existingModel != nil {
 			return nil, sdk.NewErrorFrom(sdk.ErrModelNameExist, "worker model already exists with name %s for given group", data.Name)
 		}
 	}

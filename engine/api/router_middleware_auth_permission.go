@@ -104,7 +104,7 @@ func (api *API) checkProjectPermissions(ctx context.Context, projectKey string, 
 	ctx, end := observability.Span(ctx, "api.checkProjectPermissions")
 	defer end()
 
-	if _, err := project.Load(api.mustDB(),  projectKey); err != nil {
+	if _, err := project.Load(api.mustDB(), projectKey); err != nil {
 		return err
 	}
 
@@ -240,12 +240,8 @@ func (api *API) checkWorkerModelPermissions(ctx context.Context, modelName strin
 		return err
 	}
 
-	wm, err := workermodel.LoadByNameAndGroupID(api.mustDB(), modelName, g.ID)
-	if err != nil {
+	if _, err := workermodel.LoadByNameAndGroupID(ctx, api.mustDB(), modelName, g.ID, workermodel.LoadOptions.Default); err != nil {
 		return err
-	}
-	if wm == nil {
-		return sdk.WithStack(sdk.ErrNotFound)
 	}
 
 	return nil

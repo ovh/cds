@@ -68,9 +68,8 @@ func RegisterWorker(ctx context.Context, db gorp.SqlExecutor, store cache.Store,
 
 	var model *sdk.Model
 	if spawnArgs.Model != nil {
-		// Load Model
 		var err error
-		model, err = workermodel.LoadByID(db, spawnArgs.Model.ID)
+		model, err = workermodel.LoadByID(ctx, db, spawnArgs.Model.ID, workermodel.LoadOptions.Default)
 		if err != nil {
 			return nil, err
 		}

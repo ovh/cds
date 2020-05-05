@@ -123,7 +123,7 @@ func (api *API) postWorkerModelImportHandler() service.Handler {
 			return sdk.WithStack(err)
 		}
 
-		newModel, err = workermodel.LoadByID(api.mustDB(), newModel.ID)
+		newModel, err = workermodel.LoadByID(ctx, api.mustDB(), newModel.ID, workermodel.LoadOptions.Default)
 		if err != nil {
 			return err
 		}

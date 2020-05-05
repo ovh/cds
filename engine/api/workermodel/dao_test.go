@@ -5,8 +5,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/ovh/cds/engine/api/worker"
-
 	"github.com/go-gorp/gorp"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -15,6 +13,7 @@ import (
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/api/test/assets"
+	"github.com/ovh/cds/engine/api/worker"
 	"github.com/ovh/cds/engine/api/workermodel"
 	"github.com/ovh/cds/sdk"
 )
@@ -83,7 +82,7 @@ func TestInsert(t *testing.T) {
 	src := insertWorkerModel(t, db, sdk.RandomString(10), g.ID)
 	test.NotEqual(t, 0, src.ID)
 
-	res, err := workermodel.LoadByID(db, src.ID)
+	res, err := workermodel.LoadByID(context.TODO(), db, src.ID, workermodel.LoadOptions.Default)
 	test.NoError(t, err)
 
 	// lastregistration is LOCALTIMESTAMP (at sql insert)
@@ -107,12 +106,12 @@ func TestLoadByNameAndGroupID(t *testing.T) {
 
 	src := insertWorkerModel(t, db, sdk.RandomString(10), g.ID)
 
-	res, err := workermodel.LoadByNameAndGroupID(db, src.Name, g.ID)
+	res, err := workermodel.LoadByNameAndGroupID(context.TODO(), db, src.Name, g.ID)
 	test.NoError(t, err)
 	test.Equal(t, src.ID, res.ID)
 
-	_, err = workermodel.LoadByNameAndGroupID(db, "NotExisting", g.ID)
-	test.Equal(t, true, sdk.ErrorIs(err, sdk.ErrNoWorkerModel))
+	_, err = workermodel.LoadByNameAndGroupID(context.TODO(), db, "NotExisting", g.ID)
+	test.Equal(t, true, sdk.ErrorIs(err, sdk.ErrNotFound))
 }
 
 func TestLoadWorkerModelsByNameAndGroupIDs(t *testing.T) {
@@ -281,72 +280,6 @@ func TestLoadAllByGroupIDs(t *testing.T) {
 	test.Equal(t, m4.ID, wms[0].ID)
 }
 
-func TestLoadAllByBinary(t *testing.T) {
-	db, _, end := test.SetupPG(t, bootstrap.InitiliazeDB)
-	defer end()
-	deleteAllWorkerModel(t, db)
-
-	g := assets.InsertTestGroup(t, db, sdk.RandomString(10))
-
-	insertWorkerModel(t, db, sdk.RandomString(10), g.ID)
-	m2 := insertWorkerModel(t, db, sdk.RandomString(10), g.ID, sdk.Requirement{
-		Name:  "capa_2",
-		Type:  sdk.BinaryRequirement,
-		Value: "capa_2",
-	})
-
-	models, err := workermodel.LoadAllByBinary(db, "capa_0")
-	test.NoError(t, err)
-	test.Equal(t, 0, len(models))
-
-	models, err = workermodel.LoadAllByBinary(db, "capa_1")
-	test.NoError(t, err)
-	test.Equal(t, 2, len(models))
-
-	models, err = workermodel.LoadAllByBinary(db, "capa_2")
-	test.NoError(t, err)
-	test.Equal(t, 1, len(models))
-	test.Equal(t, m2.ID, models[0].ID)
-}
-
-func TestLoadAllByBinaryAndGroupIDs(t *testing.T) {
-	db, _, end := test.SetupPG(t, bootstrap.InitiliazeDB)
-	defer end()
-	deleteAllWorkerModel(t, db)
-
-	g1 := assets.InsertTestGroup(t, db, sdk.RandomString(10))
-	g2 := assets.InsertTestGroup(t, db, sdk.RandomString(10))
-
-	m1 := insertWorkerModel(t, db, "abc", g1.ID)
-	m2 := insertWorkerModel(t, db, "def", g2.ID)
-	m3 := insertWorkerModel(t, db, "ghi", g2.ID, sdk.Requirement{
-		Name:  "capa_2",
-		Type:  sdk.BinaryRequirement,
-		Value: "capa_2",
-	})
-
-	wms, err := workermodel.LoadAllByBinaryAndGroupIDs(db, "capa_0", []int64{g1.ID})
-	test.NoError(t, err)
-	test.Equal(t, 0, len(wms))
-
-	wms, err = workermodel.LoadAllByBinaryAndGroupIDs(db, "capa_1", []int64{g1.ID})
-	test.NoError(t, err)
-	test.Equal(t, 1, len(wms))
-	test.Equal(t, m1.ID, wms[0].ID)
-
-	wms, err = workermodel.LoadAllByBinaryAndGroupIDs(db, "capa_1", []int64{g1.ID, g2.ID})
-	test.NoError(t, err)
-	test.Equal(t, 3, len(wms))
-	test.Equal(t, m1.ID, wms[0].ID)
-	test.Equal(t, m2.ID, wms[1].ID)
-	test.Equal(t, m3.ID, wms[2].ID)
-
-	wms, err = workermodel.LoadAllByBinaryAndGroupIDs(db, "capa_2", []int64{g1.ID, g2.ID})
-	test.NoError(t, err)
-	test.Equal(t, 1, len(wms))
-	test.Equal(t, m3.ID, wms[0].ID)
-}
-
 func TestLoadCapabilities(t *testing.T) {
 	db, _, end := test.SetupPG(t, bootstrap.InitiliazeDB)
 	defer end()
@@ -386,7 +319,7 @@ func TestUpdate(t *testing.T) {
 
 	test.NoError(t, workermodel.UpdateDB(db, &data))
 
-	res, err := workermodel.LoadByID(db, src.ID)
+	res, err := workermodel.LoadByID(context.TODO(), db, src.ID, workermodel.LoadOptions.Default)
 	test.NoError(t, err)
 	test.Equal(t, sdk.Openstack, res.Type)
 	test.Equal(t, 2, len(res.RegisteredCapabilities))
@@ -412,12 +345,12 @@ func TestLoadWorkerModelsForGroupIDs(t *testing.T) {
 	}
 	test.NoError(t, workermodel.Insert(db, &m3))
 
-	models, err := workermodel.LoadAllActiveAndNotDeprecatedForGroupIDs(db, []int64{g1.ID})
+	models, err := workermodel.LoadAllActiveAndNotDeprecatedForGroupIDs(context.TODO(), db, []int64{g1.ID})
 	test.NoError(t, err)
 	test.Equal(t, 1, len(models))
 	test.Equal(t, m1.ID, models[0].ID)
 
-	models, err = workermodel.LoadAllActiveAndNotDeprecatedForGroupIDs(db, []int64{g1.ID, g2.ID})
+	models, err = workermodel.LoadAllActiveAndNotDeprecatedForGroupIDs(context.TODO(), db, []int64{g1.ID, g2.ID})
 	test.NoError(t, err)
 	test.Equal(t, 2, len(models))
 	test.Equal(t, m1.ID, models[0].ID)

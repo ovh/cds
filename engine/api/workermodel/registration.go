@@ -97,7 +97,7 @@ func UpdateSpawnErrorWorkerModel(db gorp.SqlExecutor, modelID int64, spawnError 
 		return sdk.WithStack(err)
 	}
 	if n == 0 {
-		return sdk.WithStack(sdk.ErrNoWorkerModel)
+		return sdk.WithStack(sdk.ErrNotFound)
 	}
 	return nil
 }

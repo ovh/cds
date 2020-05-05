@@ -2,6 +2,7 @@ package workermodel
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"sort"
 	"time"
@@ -21,6 +22,7 @@ func getAll(ctx context.Context, db gorp.SqlExecutor, q gorpmapping.Query, opts 
 		return nil, sdk.WrapError(err, "cannot get worker models")
 	}
 
+	// Temporary hide password and exec post select
 	for i := range pms {
 		if err := pms[i].PostSelect(db); err != nil {
 			return nil, sdk.WithStack(err)
@@ -50,6 +52,36 @@ func getAll(ctx context.Context, db gorp.SqlExecutor, q gorpmapping.Query, opts 
 	}
 
 	return res, nil
+}
+
+func get(ctx context.Context, db gorp.SqlExecutor, q gorpmapping.Query, opts ...LoadOptionFunc) (*sdk.Model, error) {
+	var dbModel WorkerModel
+
+	found, err := gorpmapping.Get(ctx, db, q, &dbModel)
+	if err != nil {
+		return nil, sdk.WrapError(err, "cannot get worker model")
+	}
+	if !found {
+		return nil, sdk.WithStack(sdk.ErrNotFound)
+	}
+
+	// Temporary hide password and exec post select
+	if err := dbModel.PostSelect(db); err != nil {
+		return nil, sdk.WithStack(err)
+	}
+	if dbModel.ModelDocker.Password != "" {
+		dbModel.ModelDocker.Password = sdk.PasswordPlaceholder
+	}
+
+	model := sdk.Model(dbModel)
+
+	for i := range opts {
+		if err := opts[i](ctx, db, &model); err != nil {
+			return nil, err
+		}
+	}
+
+	return &model, nil
 }
 
 // LoadAll retrieves worker models from database.
@@ -110,6 +142,100 @@ func LoadAllByNameAndGroupIDs(ctx context.Context, db gorp.SqlExecutor, name str
 	return getAll(ctx, db, query, opts...)
 }
 
+// LoadAllActiveAndNotDeprecatedForGroupIDs retrieves models for given group ids.
+func LoadAllActiveAndNotDeprecatedForGroupIDs(ctx context.Context, db gorp.SqlExecutor, groupIDs []int64, opts ...LoadOptionFunc) ([]sdk.Model, error) {
+	query := gorpmapping.NewQuery(`
+    SELECT *
+    FROM worker_model
+    WHERE group_id = ANY(string_to_array($1, ',')::int[])
+    AND is_deprecated = false
+    AND disabled = false
+    ORDER BY name
+  `).Args(gorpmapping.IDsToQueryString(groupIDs))
+	return getAll(ctx, db, query, opts...)
+}
+
+// LoadByID retrieves a specific worker model in database.
+func LoadByID(ctx context.Context, db gorp.SqlExecutor, id int64, opts ...LoadOptionFunc) (*sdk.Model, error) {
+	query := gorpmapping.NewQuery(`
+    SELECT *
+    FROM worker_model
+    WHERE id = $1
+  `).Args(id)
+	return get(ctx, db, query, opts...)
+}
+
+// LoadByNameAndGroupID retrieves a specific worker model in database by name and group id.
+func LoadByNameAndGroupID(ctx context.Context, db gorp.SqlExecutor, name string, groupID int64, opts ...LoadOptionFunc) (*sdk.Model, error) {
+	query := gorpmapping.NewQuery(`
+    SELECT *
+    FROM worker_model
+    WHERE name = $1 AND group_id = $2
+  `).Args(name, groupID)
+	return get(ctx, db, query, opts...)
+}
+
+// loadAll retrieves a list of worker model in database.
+func loadAll(db gorp.SqlExecutor, withPassword bool, query string, args ...interface{}) ([]sdk.Model, error) {
+	wms := []dbResultWMS{}
+	if _, err := db.Select(&wms, query, args...); err != nil {
+		if err == sql.ErrNoRows {
+			return nil, sdk.WithStack(sdk.ErrNotFound)
+		}
+		return nil, sdk.WithStack(err)
+	}
+	if len(wms) == 0 {
+		return []sdk.Model{}, nil
+	}
+	r, err := scanAll(db, wms, withPassword)
+	if err != nil {
+		return nil, err
+	}
+	return r, nil
+}
+
+// load retrieves a specific worker model in database.
+func load(db gorp.SqlExecutor, withPassword bool, query string, args ...interface{}) (*sdk.Model, error) {
+	wms := []dbResultWMS{}
+	if _, err := db.Select(&wms, query, args...); err != nil {
+		if err == sql.ErrNoRows {
+			return nil, sdk.WithStack(sdk.ErrNotFound)
+		}
+		return nil, err
+	}
+	if len(wms) == 0 {
+		return nil, sdk.WithStack(sdk.ErrNotFound)
+	}
+	r, err := scanAll(db, wms, withPassword)
+	if err != nil {
+		return nil, err
+	}
+	if len(r) != 1 {
+		return nil, sdk.WithStack(fmt.Errorf("worker model not unique"))
+	}
+	return &r[0], nil
+}
+
+func scanAll(db gorp.SqlExecutor, rows []dbResultWMS, withPassword bool) ([]sdk.Model, error) {
+	models := []sdk.Model{}
+	for _, row := range rows {
+		m := row.WorkerModel
+		m.Group = &sdk.Group{ID: m.GroupID, Name: row.GroupName}
+		if err := m.PostSelect(db); err != nil {
+			return nil, sdk.WithStack(err)
+		}
+		if m.ModelDocker.Password != "" && !withPassword {
+			m.ModelDocker.Password = sdk.PasswordPlaceholder
+		}
+		models = append(models, sdk.Model(m))
+	}
+	// as we can't use order by name with sql union without alias, sort models here
+	sort.Slice(models, func(i, j int) bool {
+		return models[i].Name <= models[j].Name
+	})
+	return models, nil
+}
+
 const modelColumns = `
 	DISTINCT worker_model.id,
 	worker_model.type,
@@ -131,17 +257,6 @@ const modelColumns = `
 	worker_model.date_last_spawn_err,
 	worker_model.is_deprecated,
 	"group".name as groupname`
-
-// LoadByID retrieves a specific worker model in database.
-func LoadByID(db gorp.SqlExecutor, id int64) (*sdk.Model, error) {
-	query := fmt.Sprintf(`
-    SELECT %s
-    FROM worker_model
-    JOIN "group" on worker_model.group_id = "group".id
-    WHERE worker_model.id = $1
-  `, modelColumns)
-	return load(db, false, query, id)
-}
 
 // LoadByIDWithClearPassword retrieves a specific worker model in database.
 func LoadByIDWithClearPassword(db gorp.SqlExecutor, id int64) (*sdk.Model, error) {
@@ -178,45 +293,6 @@ func LoadByNameAndGroupIDWithClearPassword(db gorp.SqlExecutor, name string, gro
 	return load(db, true, query, name, groupID)
 }
 
-// LoadByNameAndGroupID retrieves a specific worker model in database by name and group id.
-func LoadByNameAndGroupID(db gorp.SqlExecutor, name string, groupID int64) (*sdk.Model, error) {
-	query := fmt.Sprintf(`
-    SELECT %s
-    FROM worker_model
-    JOIN "group" ON worker_model.group_id = "group".id
-    WHERE worker_model.name = $1 AND worker_model.group_id = $2
-  `, modelColumns)
-	return load(db, false, query, name, groupID)
-}
-
-// LoadAllActiveAndNotDeprecatedForGroupIDs retrieves models for given group ids.
-func LoadAllActiveAndNotDeprecatedForGroupIDs(db gorp.SqlExecutor, groupIDs []int64) ([]sdk.Model, error) {
-	query := `
-    SELECT worker_model.*, "group".name as groupname
-    FROM worker_model
-    JOIN "group" ON worker_model.group_id = "group".id
-    WHERE worker_model.group_id = ANY(string_to_array($1, ',')::int[])
-    AND worker_model.is_deprecated = false
-    AND worker_model.disabled = false
-    ORDER BY worker_model.name
-  `
-	return loadAll(db, false, query, gorpmapping.IDsToQueryString(groupIDs))
-}
-
-// LoadAllByBinaryAndGroupIDs returns worker models list with given binary capability for group ids.
-func LoadAllByBinaryAndGroupIDs(db gorp.SqlExecutor, binary string, groupIDs []int64) ([]sdk.Model, error) {
-	query := fmt.Sprintf(`
-    SELECT %s
-    FROM worker_model
-    JOIN "group" ON worker_model.group_id = "group".id
-    JOIN worker_capability ON worker_model.id = worker_capability.worker_model_id
-    WHERE worker_model.group_id = ANY(string_to_array($1, ',')::int[])
-    AND worker_capability.type = 'binary'
-    AND worker_capability.argument = $2
-  `, modelColumns)
-	return loadAll(db, false, query, gorpmapping.IDsToQueryString(groupIDs), binary)
-}
-
 // LoadAllUsableWithClearPasswordByGroupIDs returns usable worker models for given group ids.
 func LoadAllUsableWithClearPasswordByGroupIDs(db gorp.SqlExecutor, groupIDs []int64) ([]sdk.Model, error) {
 	// note about restricted field on worker model:
@@ -251,38 +327,6 @@ func LoadAllUsableWithClearPasswordByGroupIDs(db gorp.SqlExecutor, groupIDs []in
 		}
 	}
 
-	return models, nil
-}
-
-// LoadAllByBinary returns worker models list with given binary capability.
-func LoadAllByBinary(db gorp.SqlExecutor, binary string) ([]sdk.Model, error) {
-	query := fmt.Sprintf(`
-    SELECT %s
-    FROM worker_model
-    JOIN "group" ON worker_model.group_id = "group".id
-    JOIN worker_capability ON worker_model.id = worker_capability.worker_model_id
-    WHERE worker_capability.type = 'binary'
-    AND worker_capability.argument = $1
-  `, modelColumns)
-	return loadAll(db, false, query, binary)
-}
-func scanAll(db gorp.SqlExecutor, rows []dbResultWMS, withPassword bool) ([]sdk.Model, error) {
-	models := []sdk.Model{}
-	for _, row := range rows {
-		m := row.WorkerModel
-		m.Group = &sdk.Group{ID: m.GroupID, Name: row.GroupName}
-		if err := m.PostSelect(db); err != nil {
-			return nil, sdk.WithStack(err)
-		}
-		if m.ModelDocker.Password != "" && !withPassword {
-			m.ModelDocker.Password = sdk.PasswordPlaceholder
-		}
-		models = append(models, sdk.Model(m))
-	}
-	// as we can't use order by name with sql union without alias, sort models here
-	sort.Slice(models, func(i, j int) bool {
-		return models[i].Name <= models[j].Name
-	})
 	return models, nil
 }
 
@@ -331,7 +375,7 @@ func Delete(db gorp.SqlExecutor, ID int64) error {
 		return sdk.WithStack(err)
 	}
 	if count == 0 {
-		return sdk.WithStack(sdk.ErrNoWorkerModel)
+		return sdk.WithStack(sdk.ErrNotFound)
 	}
 	return nil
 }
