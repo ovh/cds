@@ -166,19 +166,23 @@ func Test_websocketGetWorkflowEvent(t *testing.T) {
 	go client.WebsocketEventsListen(context.TODO(), chanMessageToSend, chanMessageReceived)
 
 	chanMessageToSend <- sdk.WebsocketFilter{
-		Type:         sdk.WebsocketFilterTypeWorkflow,
-		ProjectKey:   key,
-		WorkflowName: w.Name,
+		Type:              sdk.WebsocketFilterTypeWorkflow,
+		ProjectKey:        key,
+		WorkflowName:      w.Name,
+		WorkflowRunNumber: 1,
 	}
 	// Waiting websocket to update filter
 	time.Sleep(1 * time.Second)
 
-	api.websocketBroker.messages <- sdk.Event{ProjectKey: proj.Key, WorkflowName: w.Name, EventType: "sdk.EventWorkflow"}
+	api.websocketBroker.messages <- sdk.Event{ProjectKey: "blabla", WorkflowName: "toto", EventType: "sdk.EventRunWorkflow", WorkflowRunNum: 1}
+	api.websocketBroker.messages <- sdk.Event{ProjectKey: proj.Key, WorkflowName: w.Name, EventType: "sdk.EventRunWorkflow", WorkflowRunNum: 1}
 	response := <-chanMessageReceived
 	require.Equal(t, "OK", response.Status)
-	require.Equal(t, response.Event.EventType, "sdk.EventWorkflow")
+	require.Equal(t, response.Event.EventType, "sdk.EventRunWorkflow")
 	require.Equal(t, response.Event.ProjectKey, proj.Key)
 	require.Equal(t, response.Event.WorkflowName, w.Name)
+
+	assert.Equal(t, 0, len(chanMessageReceived))
 }
 
 func Test_websocketDeconnection(t *testing.T) {
