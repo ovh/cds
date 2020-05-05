@@ -27,12 +27,11 @@ declare var CodeMirror: any;
 })
 @AutoUnsubscribe()
 export class WorkflowNodeRunParamComponent implements AfterViewInit {
-
-    @ViewChild('runWithParamModal', { static: false })
+    @ViewChild('runWithParamModal')
     runWithParamModal: ModalTemplate<boolean, boolean, void>;
     modal: SuiActiveModal<boolean, boolean, void>;
 
-    @ViewChild('textareaCodeMirror', { static: false }) codemirror: any;
+    @ViewChild('textareaCodeMirror') codemirror: any;
 
     projectKey: string;
     workflow: Workflow;
