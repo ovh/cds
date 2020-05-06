@@ -279,9 +279,9 @@ func LoadAllUsableWithClearPasswordByGroupIDs(ctx context.Context, db gorp.SqlEx
     SELECT *
     FROM worker_model
     WHERE (
-      group_id = ANY(string_to_array($1, ',')::int[])
+      group_id = ANY($1)
       OR (
-        $2 = ANY(string_to_array($1, ',')::int[])
+        $2 = ANY($1)
         AND restricted = false
       )
     ) AND disabled = false

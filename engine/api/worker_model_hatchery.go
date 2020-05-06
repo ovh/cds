@@ -94,7 +94,7 @@ func (api *API) putSpawnErrorWorkerModelHandler() service.Handler {
 func (api *API) getWorkerModelsEnabledHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		// this handler should only answer to an hatchery
-		if ok := isHatchery(ctx); !ok {
+		if !isHatchery(ctx) && !isMaintainer(ctx) {
 			return sdk.WithStack(sdk.ErrForbidden)
 		}
 
