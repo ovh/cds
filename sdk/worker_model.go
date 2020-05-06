@@ -1,6 +1,8 @@
 package sdk
 
 import (
+	"database/sql/driver"
+	json "encoding/json"
 	"fmt"
 	"time"
 )
@@ -170,7 +172,7 @@ type ModelPattern struct {
 	ID    int64     `json:"id" db:"id"`
 	Name  string    `json:"name" db:"name"`
 	Type  string    `json:"type" db:"type"`
-	Model ModelCmds `json:"model" db:"-"`
+	Model ModelCmds `json:"model" db:"model"`
 }
 
 // ModelCmds is the struct to represent a pattern
@@ -180,6 +182,24 @@ type ModelCmds struct {
 	PreCmd  string            `json:"pre_cmd,omitempty"`
 	Cmd     string            `json:"cmd,omitempty"`
 	PostCmd string            `json:"post_cmd,omitempty"`
+}
+
+// Value returns driver.Value from model cmds.
+func (m ModelCmds) Value() (driver.Value, error) {
+	j, err := json.Marshal(m)
+	return j, WrapError(err, "cannot marshal ModelCmds")
+}
+
+// Scan model cmds.
+func (m *ModelCmds) Scan(src interface{}) error {
+	if src == nil {
+		return nil
+	}
+	source, ok := src.([]byte)
+	if !ok {
+		return WithStack(fmt.Errorf("type assertion .([]byte) failed (%T)", src))
+	}
+	return WrapError(json.Unmarshal(source, m), "cannot unmarshal ModelCmds")
 }
 
 // ModelsToGroupIDs returns group ids of given worker models.

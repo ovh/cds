@@ -43,11 +43,11 @@ func Test_DeleteAllWorkerModels(t *testing.T) {
 	}
 
 	// Load and delete all worker model patterns
-	modelPatterns, err := workermodel.LoadPatterns(api.mustDB())
+	modelPatterns, err := workermodel.LoadPatterns(context.TODO(), api.mustDB())
 	require.NoError(t, err)
 
 	for _, wmp := range modelPatterns {
-		assert.NoError(t, workermodel.DeletePattern(api.mustDB(), wmp.ID))
+		assert.NoError(t, workermodel.DeletePatternByID(api.mustDB(), wmp.ID))
 	}
 }
 

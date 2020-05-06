@@ -328,15 +328,8 @@ func UpdateDB(db gorp.SqlExecutor, model *sdk.Model) error {
 	return nil
 }
 
-// Delete a worker model from database and all its capabilities.
-func Delete(db gorp.SqlExecutor, ID int64) error {
-	m := WorkerModel(sdk.Model{ID: ID})
-	count, err := db.Delete(&m)
-	if err != nil {
-		return sdk.WithStack(err)
-	}
-	if count == 0 {
-		return sdk.WithStack(sdk.ErrNotFound)
-	}
-	return nil
+// DeleteByID a worker model from database and all its capabilities.
+func DeleteByID(db gorp.SqlExecutor, id int64) error {
+	_, err := db.Exec("DELETE FROM worker_model WHERE id = $1", id)
+	return sdk.WrapError(err, "unable to remove worker model with id %d", id)
 }

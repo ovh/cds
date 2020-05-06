@@ -169,7 +169,7 @@ func (api *API) deleteWorkerModelHandler() service.Handler {
 		}
 		defer tx.Rollback() // nolint
 
-		if err := workermodel.Delete(tx, m.ID); err != nil {
+		if err := workermodel.DeleteByID(tx, m.ID); err != nil {
 			return sdk.WrapError(err, "cannot delete worker model")
 		}
 

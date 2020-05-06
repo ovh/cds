@@ -14,7 +14,7 @@ import (
 
 func init() {
 	gorpmapping.Register(gorpmapping.New(WorkerModel{}, "worker_model", true, "id"))
-	gorpmapping.Register(gorpmapping.New(workerModelPattern{}, "worker_model_pattern", true, "id"))
+	gorpmapping.Register(gorpmapping.New(sdk.ModelPattern{}, "worker_model_pattern", true, "id"))
 	gorpmapping.Register(gorpmapping.New(workerModelCapability{}, "worker_capability", false, "worker_model_id", "type", "name"))
 }
 
@@ -166,41 +166,4 @@ func (m *WorkerModel) PostSelect(s gorp.SqlExecutor) error {
 	}
 
 	return nil
-}
-
-// workerModelPattern is a gorp wrapper around sdk.ModelPattern
-type workerModelPattern sdk.ModelPattern
-
-//PostGet load capabilitites and createdBy user
-func (wmp *workerModelPattern) PostGet(s gorp.SqlExecutor) error {
-	modelStr, err := s.SelectNullStr("SELECT model FROM worker_model_pattern WHERE id = $1", wmp.ID)
-	if err != nil {
-		return sdk.WrapError(err, "Cannot load model for pattern %d", wmp.ID)
-	}
-
-	if err := gorpmapping.JSONNullString(modelStr, &wmp.Model); err != nil {
-		return sdk.WrapError(err, "Cannot unmarshal json from model pattern")
-	}
-
-	return nil
-}
-
-//PostInsert is a DB Hook on workerModelPattern
-func (wmp *workerModelPattern) PostInsert(s gorp.SqlExecutor) error {
-	modelBtes, err := json.Marshal(wmp.Model)
-	if err != nil {
-		return sdk.WrapError(err, "Cannot marshal model")
-	}
-
-	query := "update worker_model_pattern set model = $1 where id = $2"
-	if _, err := s.Exec(query, modelBtes, wmp.ID); err != nil {
-		return sdk.WrapError(err, "Cannot update model")
-	}
-
-	return nil
-}
-
-//PostUpdate is a DB Hook on workerModelPattern
-func (wmp *workerModelPattern) PostUpdate(s gorp.SqlExecutor) error {
-	return wmp.PostInsert(s)
 }

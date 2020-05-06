@@ -30,7 +30,7 @@ func Create(ctx context.Context, db gorp.SqlExecutor, data sdk.Model, ident sdk.
 
 	// if a model pattern is given try to get it from database
 	if data.PatternName != "" {
-		modelPattern, err := LoadPatternByName(db, data.Type, data.PatternName)
+		modelPattern, err := LoadPatternByNameAndType(ctx, db, data.Type, data.PatternName)
 		if err != nil {
 			return nil, sdk.NewErrorWithStack(err, sdk.NewErrorFrom(sdk.ErrWrongRequest, "invalid given worker model name"))
 		}
@@ -82,7 +82,7 @@ func Update(ctx context.Context, db gorp.SqlExecutor, old *sdk.Model, data sdk.M
 
 	// if a model pattern is given try to get it from database
 	if data.PatternName != "" {
-		modelPattern, err := LoadPatternByName(db, data.Type, data.PatternName)
+		modelPattern, err := LoadPatternByNameAndType(ctx, db, data.Type, data.PatternName)
 		if err != nil {
 			return nil, sdk.NewErrorWithStack(err, sdk.NewErrorFrom(sdk.ErrWrongRequest, "invalid given worker model name"))
 		}

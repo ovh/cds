@@ -30,7 +30,7 @@ func deleteAllWorkerModel(t *testing.T, db gorp.SqlExecutor) {
 	require.NoError(t, err)
 
 	for _, m := range models {
-		test.NoError(t, workermodel.Delete(db, m.ID))
+		test.NoError(t, workermodel.DeleteByID(db, m.ID))
 	}
 }
 
