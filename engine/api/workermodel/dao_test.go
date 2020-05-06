@@ -293,7 +293,7 @@ func TestLoadCapabilities(t *testing.T) {
 		Value: "capa_2",
 	})
 
-	cs, err := workermodel.LoadCapabilities(db, m.ID)
+	cs, err := workermodel.LoadCapabilities(context.TODO(), db, m.ID)
 	test.NoError(t, err)
 	test.Equal(t, 2, len(cs))
 	test.Equal(t, "capa_1", cs[0].Name)

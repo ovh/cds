@@ -163,7 +163,7 @@ func UnbookForRegister(ctx context.Context, store cache.Store, id int64) {
 }
 
 func UpdateCapabilities(ctx context.Context, db gorp.SqlExecutor, spawnArgs hatchery.SpawnArguments, registrationForm sdk.WorkerRegistrationForm) error {
-	existingCapas, err := LoadCapabilities(db, spawnArgs.Model.ID)
+	existingCapas, err := LoadCapabilities(ctx, db, spawnArgs.Model.ID)
 	if err != nil {
 		log.Warning(ctx, "RegisterWorker> Unable to load worker model capabilities: %s", err)
 		return sdk.WithStack(err)

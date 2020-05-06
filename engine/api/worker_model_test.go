@@ -803,7 +803,7 @@ func Test_putWorkerModelWithPassword(t *testing.T) {
 	test.NoError(t, json.Unmarshal(w.Body.Bytes(), &resp))
 	test.Equal(t, sdk.PasswordPlaceholder, resp.ModelDocker.Password, "Worker model should not return password, but placeholder")
 
-	wm, errL := workermodel.LoadByNameAndGroupIDWithClearPassword(api.mustDB(), resp.Name, resp.GroupID)
+	wm, errL := workermodel.LoadByNameAndGroupIDWithClearPassword(context.TODO(), api.mustDB(), resp.Name, resp.GroupID)
 	test.NoError(t, errL)
 
 	pw, errPw := secret.DecryptValue(wm.ModelDocker.Password)

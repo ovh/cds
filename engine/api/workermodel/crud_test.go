@@ -80,7 +80,7 @@ func TestUpdateModel(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, "cmd", model1.ModelDocker.Cmd)
 
-	model1Clear, err := workermodel.LoadByIDWithClearPassword(db, model1.ID)
+	model1Clear, err := workermodel.LoadByIDWithClearPassword(context.TODO(), db, model1.ID)
 	require.NoError(t, err)
 	assert.Equal(t, "12345678", model1Clear.ModelDocker.Password)
 
@@ -107,7 +107,7 @@ func TestUpdateModel(t *testing.T) {
 	assert.Equal(t, u.Username, res.Author.Username)
 	assert.Equal(t, pattern.Model.Cmd, res.ModelDocker.Cmd)
 
-	resClear, err := workermodel.LoadByIDWithClearPassword(db, res.ID)
+	resClear, err := workermodel.LoadByIDWithClearPassword(context.TODO(), db, res.ID)
 	require.NoError(t, err)
 	assert.Equal(t, "12345678", resClear.ModelDocker.Password, "password should be preserved")
 

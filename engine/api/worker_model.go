@@ -85,9 +85,9 @@ func (api *API) putWorkerModelHandler() service.Handler {
 			return err
 		}
 
-		old, errLoad := workermodel.LoadByNameAndGroupIDWithClearPassword(api.mustDB(), modelName, g.ID)
-		if errLoad != nil {
-			return sdk.WrapError(errLoad, "cannot load worker model")
+		old, err := workermodel.LoadByNameAndGroupIDWithClearPassword(ctx, api.mustDB(), modelName, g.ID)
+		if err != nil {
+			return sdk.WrapError(err, "cannot load worker model with name %s for group %s", modelName, g.Name)
 		}
 
 		// parse request and validate given data
