@@ -73,15 +73,3 @@ func (e ExternalService) ServiceConfig() ServiceConfig {
 	json.Unmarshal(b, &cfg) // nolint
 	return cfg
 }
-
-// ExternalServiceConfiguration is the configuration of external service
-type ExternalServiceConfiguration struct {
-	Name       string `toml:"name" json:"name"`
-	URL        string `toml:"url" json:"url"`
-	Port       string `toml:"port" json:"port"`
-	Path       string `toml:"path" json:"path"`
-	HealthURL  string `toml:"healthUrl" json:"healthUrl"`
-	HealthPort string `toml:"healthPort" json:"healthPort"`
-	HealthPath string `toml:"healthPath" json:"healthPath"`
-	Type       string `toml:"type" json:"type"`
-}

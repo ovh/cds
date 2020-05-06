@@ -23,10 +23,17 @@ func (api *API) getExternalServiceHandler() service.Handler {
 
 		for _, s := range api.Config.Services {
 			if s.Type == typeService {
-				return service.WriteJSON(w, s, http.StatusOK)
+				extService := sdk.ExternalService{
+					HealthPath: s.HealthPath,
+					HealthPort: s.HealthPort,
+					Path:       s.Path,
+					HealthURL:  s.HealthURL,
+					Port:       s.Port,
+					URL:        s.URL,
+				}
+				return service.WriteJSON(w, extService, http.StatusOK)
 			}
 		}
-
 		return sdk.WrapError(sdk.ErrNotFound, "service %s not found", typeService)
 	}
 }
@@ -60,9 +67,9 @@ func (api *API) postServiceRegisterHandler() service.Handler {
 		}
 		if srv != nil && !(srv.Type == data.Type) {
 			return sdk.WrapError(sdk.ErrForbidden, "cannot register service %s of type %s for consumer %s while existing service type is different", data.Name, data.Type, consumer.ID)
-    }
-    
-    // Update or create the service
+		}
+
+		// Update or create the service
 		if srv != nil {
 			srv.Update(data)
 			if err := services.Update(ctx, tx, srv); err != nil {

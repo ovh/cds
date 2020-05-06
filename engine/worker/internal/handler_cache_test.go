@@ -87,7 +87,7 @@ func Test_cachePushPullHandler(t *testing.T) {
 
 	// Prepare mock client for cds workers
 	ctrl := gomock.NewController(t)
-	m := mock_cdsclient.NewMockInterface(ctrl)
+	m := mock_cdsclient.NewMockWorkerInterface(ctrl)
 	wkPush.client = m
 	wkPull.client = m
 

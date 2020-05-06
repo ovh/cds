@@ -383,7 +383,7 @@ type WorkerInterface interface {
 	ProjectIntegrationGet(projectKey string, integrationName string, clearPassword bool) (sdk.ProjectIntegration, error)
 	QueueClient
 	Requirements() ([]sdk.Requirement, error)
-	ServiceConfigurationGet(context.Context, string) (*sdk.ExternalServiceConfiguration, error)
+	ServiceConfigurationGet(context.Context, string) (*sdk.ExternalService, error)
 	WorkerClient
 	WorkflowRunArtifacts(projectKey string, name string, number int64) ([]sdk.WorkflowNodeRunArtifact, error)
 	WorkflowCachePush(projectKey, integrationName, ref string, tarContent io.Reader, size int) error
