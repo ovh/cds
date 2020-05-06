@@ -19,17 +19,14 @@ func TestCRUDModel(t *testing.T) {
 	ok, err := ModelExists(db, p.Name)
 	require.NoError(t, err)
 
-	if ok {
-		p, err := LoadModelByName(db, p.Name)
+	if !ok {
+		err = InsertModel(db, p)
 		require.NoError(t, err)
-		// Eventually we have to clean all project_integration linked
-		_, err = db.Exec("delete from project_integration where integration_model_id = $1", p.ID)
+	} else {
+		p1, err := LoadModelByName(db, p.Name)
 		require.NoError(t, err)
-		require.NoError(t, DeleteModel(db, p.ID))
+		p = &p1
 	}
-
-	err = InsertModel(db, p)
-	require.NoError(t, err)
 
 	model, err := LoadModelByNameWithClearPassword(db, p.Name)
 	require.NoError(t, err)
