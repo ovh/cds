@@ -272,6 +272,8 @@ See $ engine config command for more details.
 				sdk.Exit("Unable to init service %s: %v", s.arg, err)
 			}
 
+			log.Info(ctx, "%s> %s configuration applied", s.arg, s.service.Name())
+
 			if srv, ok := s.service.(service.BeforeStart); ok {
 				if err := srv.BeforeStart(ctx); err != nil {
 					sdk.Exit("Unable to start service %s: %v", s.arg, err)
