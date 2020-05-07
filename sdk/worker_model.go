@@ -45,8 +45,8 @@ type Model struct {
 	Image               string              `json:"image" db:"image" cli:"image"` // TODO: DELETE after migration done
 	Disabled            bool                `json:"disabled" db:"disabled" cli:"disabled"`
 	Restricted          bool                `json:"restricted" db:"restricted" cli:"restricted"`
-	RegisteredOS        string              `json:"registered_os" db:"registered_os" cli:"-"`
-	RegisteredArch      string              `json:"registered_arch" db:"registered_arch" cli:"-"`
+	RegisteredOS        *string             `json:"registered_os" db:"registered_os" cli:"-"`
+	RegisteredArch      *string             `json:"registered_arch" db:"registered_arch" cli:"-"`
 	NeedRegistration    bool                `json:"need_registration" db:"need_registration" cli:"-"`
 	LastRegistration    time.Time           `json:"last_registration" db:"last_registration" cli:"-"`
 	CheckRegistration   bool                `json:"check_registration" db:"check_registration" cli:"-"`
