@@ -13,7 +13,6 @@ export class WorkerModel {
     model_virtual_machine: ModelVirtualMachine;
     registered_capabilities: Array<Requirement>;
     created_by: User;
-    owner_id: number;
     group_id: number;
     restricted: boolean;
     check_registration: boolean;

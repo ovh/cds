@@ -60,6 +60,7 @@ type Model struct {
 	IsDeprecated        bool                `json:"is_deprecated" db:"is_deprecated" cli:"deprecated"`
 	ModelVirtualMachine ModelVirtualMachine `json:"model_virtual_machine,omitempty" db:"model_virtual_machine" cli:"-"`
 	ModelDocker         ModelDocker         `json:"model_docker,omitempty" db:"model_docker" cli:"-"`
+	Secrets             IntegrationConfig   `json:"secrets" db:"cipher_secrets" gorpmapping:"encrypted,ID,Name"`
 	// aggregates
 	Editable               bool          `json:"editable,omitempty" db:"-"`
 	Group                  *Group        `json:"group" db:"-" cli:"-"`
@@ -67,6 +68,8 @@ type Model struct {
 	IsOfficial             bool          `json:"is_official" db:"-" cli:"official"`
 	PatternName            string        `json:"pattern_name,omitempty" db:"-" cli:"-"`
 }
+
+type Models []Model
 
 // Author struct contains info about model author.
 type Author struct {

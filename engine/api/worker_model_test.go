@@ -188,7 +188,7 @@ func Test_WorkerModelUsage(t *testing.T) {
 			},
 		},
 	}
-	test.NoError(t, workermodel.Insert(db, &model))
+	test.NoError(t, workermodel.Insert(context.TODO(), db, &model))
 
 	pkey := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, api.Cache, pkey, pkey)
@@ -943,21 +943,21 @@ func Test_getWorkerModels(t *testing.T) {
 		GroupID: g1.ID,
 		Type:    sdk.Docker,
 	}
-	require.NoError(t, workermodel.Insert(db, &m1))
+	require.NoError(t, workermodel.Insert(context.TODO(), db, &m1))
 
 	m2 := sdk.Model{
 		Name:    "B" + sdk.RandomString(10),
 		GroupID: g1.ID,
 		Type:    sdk.Docker,
 	}
-	require.NoError(t, workermodel.Insert(db, &m2))
+	require.NoError(t, workermodel.Insert(context.TODO(), db, &m2))
 
 	m3 := sdk.Model{
 		Name:    "C" + sdk.RandomString(10),
 		GroupID: g2.ID,
 		Type:    sdk.Docker,
 	}
-	require.NoError(t, workermodel.Insert(db, &m3))
+	require.NoError(t, workermodel.Insert(context.TODO(), db, &m3))
 
 	// getWorkerModelsHandler by admin
 	uri := router.GetRoute(http.MethodGet, api.getWorkerModelsHandler, nil)

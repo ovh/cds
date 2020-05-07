@@ -11,139 +11,140 @@ import (
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/secret"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/log"
 )
 
-func getAll(ctx context.Context, db gorp.SqlExecutor, q gorpmapping.Query, opts ...LoadOptionFunc) ([]sdk.Model, error) {
-	pms := []*WorkerModel{}
+func getAllCommon(ctx context.Context, db gorp.SqlExecutor, q gorpmapping.Query, opts ...LoadOptionFunc) (sdk.Models, error) {
+	ms := []*workerModel{}
 
-	if err := gorpmapping.GetAll(ctx, db, q, &pms); err != nil {
+	if err := gorpmapping.GetAll(ctx, db, q, &ms); err != nil {
 		return nil, sdk.WrapError(err, "cannot get worker models")
 	}
 
-	// Temporary hide password and exec post select
-	for i := range pms {
-		if pms[i].ModelDocker.Password != "" {
-			pms[i].ModelDocker.Password = sdk.PasswordPlaceholder
+	// Check signature of data, if invalid do not return it
+	verifiedModels := make([]*sdk.Model, 0, len(ms))
+	for i := range ms {
+		isValid, err := gorpmapping.CheckSignature(ms[i], ms[i].Signature)
+		if err != nil {
+			return nil, err
 		}
+		if !isValid {
+			log.Error(ctx, "workermodel.getAll> worker model %d data corrupted", ms[i].ID)
+			continue
+		}
+		verifiedModels = append(verifiedModels, &ms[i].Model)
 	}
 
-	var pres = make([]*sdk.Model, len(pms))
-	for i := range pms {
-		wm := sdk.Model(*pms[i])
-		pres[i] = &wm
-	}
-
-	if len(pres) > 0 {
+	if len(verifiedModels) > 0 {
 		for i := range opts {
-			if err := opts[i](ctx, db, pres...); err != nil {
+			if err := opts[i](ctx, db, verifiedModels...); err != nil {
 				return nil, err
 			}
 		}
 	}
 
-	var res = make([]sdk.Model, len(pms))
-	for i := range pres {
-		res[i] = *pres[i]
+	models := make([]sdk.Model, len(verifiedModels))
+	for i := range verifiedModels {
+		models[i] = *verifiedModels[i]
 	}
 
-	return res, nil
+	return models, nil
+}
+
+func getAll(ctx context.Context, db gorp.SqlExecutor, q gorpmapping.Query, opts ...LoadOptionFunc) (sdk.Models, error) {
+	ms, err := getAllCommon(ctx, db, q, opts...)
+	if err != nil {
+		return nil, err
+	}
+
+	// Temporary hide password
+	for i := range ms {
+		if ms[i].ModelDocker.Password != "" {
+			ms[i].ModelDocker.Password = sdk.PasswordPlaceholder
+		}
+	}
+
+	return ms, nil
 }
 
 func getAllWithClearPassword(ctx context.Context, db gorp.SqlExecutor, q gorpmapping.Query, opts ...LoadOptionFunc) ([]sdk.Model, error) {
-	pms := []*WorkerModel{}
-
-	if err := gorpmapping.GetAll(ctx, db, q, &pms); err != nil {
-		return nil, sdk.WrapError(err, "cannot get worker models")
+	ms, err := getAllCommon(ctx, db, q, opts...)
+	if err != nil {
+		return nil, err
 	}
 
-	// Temporary decrypt password and exec post select
-	for i := range pms {
-		if pms[i].ModelDocker.Private && pms[i].ModelDocker.Password != "" {
+	// Temporary decrypt password
+	for i := range ms {
+		if ms[i].ModelDocker.Private && ms[i].ModelDocker.Password != "" {
 			var err error
-			pms[i].ModelDocker.Password, err = secret.DecryptValue(pms[i].ModelDocker.Password)
+			ms[i].ModelDocker.Password, err = secret.DecryptValue(ms[i].ModelDocker.Password)
 			if err != nil {
-				return nil, sdk.WrapError(err, "cannot decrypt value for model with id %d", pms[i].ID)
+				return nil, sdk.WrapError(err, "cannot decrypt value for model with id %d", ms[i].ID)
 			}
 		}
 	}
 
-	var pres = make([]*sdk.Model, len(pms))
-	for i := range pms {
-		wm := sdk.Model(*pms[i])
-		pres[i] = &wm
+	return ms, nil
+}
+
+func getCommon(ctx context.Context, db gorp.SqlExecutor, q gorpmapping.Query, opts ...LoadOptionFunc) (*sdk.Model, error) {
+	var dbModel workerModel
+
+	found, err := gorpmapping.Get(ctx, db, q, &dbModel)
+	if err != nil {
+		return nil, sdk.WrapError(err, "cannot get worker model")
+	}
+	if !found {
+		return nil, sdk.WithStack(sdk.ErrNotFound)
 	}
 
-	if len(pres) > 0 {
-		for i := range opts {
-			if err := opts[i](ctx, db, pres...); err != nil {
-				return nil, err
-			}
+	isValid, err := gorpmapping.CheckSignature(dbModel, dbModel.Signature)
+	if err != nil {
+		return nil, err
+	}
+	if !isValid {
+		log.Error(ctx, "workermodel.get> worker model %d data corrupted", dbModel.ID)
+		return nil, sdk.WithStack(sdk.ErrNotFound)
+	}
+
+	model := dbModel.Model
+	for i := range opts {
+		if err := opts[i](ctx, db, &model); err != nil {
+			return nil, err
 		}
 	}
-
-	var res = make([]sdk.Model, len(pms))
-	for i := range pres {
-		res[i] = *pres[i]
-	}
-
-	return res, nil
+	return &model, nil
 }
 
 func get(ctx context.Context, db gorp.SqlExecutor, q gorpmapping.Query, opts ...LoadOptionFunc) (*sdk.Model, error) {
-	var dbModel WorkerModel
-
-	found, err := gorpmapping.Get(ctx, db, q, &dbModel)
+	m, err := getCommon(ctx, db, q, opts...)
 	if err != nil {
-		return nil, sdk.WrapError(err, "cannot get worker model")
-	}
-	if !found {
-		return nil, sdk.WithStack(sdk.ErrNotFound)
+		return nil, err
 	}
 
-	// Temporary hide password and exec post select
-	if dbModel.ModelDocker.Password != "" {
-		dbModel.ModelDocker.Password = sdk.PasswordPlaceholder
+	// Temporary hide password
+	if m.ModelDocker.Password != "" {
+		m.ModelDocker.Password = sdk.PasswordPlaceholder
 	}
 
-	model := sdk.Model(dbModel)
-
-	for i := range opts {
-		if err := opts[i](ctx, db, &model); err != nil {
-			return nil, err
-		}
-	}
-
-	return &model, nil
+	return m, nil
 }
 
 func getWithClearPassword(ctx context.Context, db gorp.SqlExecutor, q gorpmapping.Query, opts ...LoadOptionFunc) (*sdk.Model, error) {
-	var dbModel WorkerModel
-
-	found, err := gorpmapping.Get(ctx, db, q, &dbModel)
+	m, err := getCommon(ctx, db, q, opts...)
 	if err != nil {
-		return nil, sdk.WrapError(err, "cannot get worker model")
-	}
-	if !found {
-		return nil, sdk.WithStack(sdk.ErrNotFound)
+		return nil, err
 	}
 
-	// Temporary decrypt password and exec post select
-	if dbModel.ModelDocker.Private && dbModel.ModelDocker.Password != "" {
-		dbModel.ModelDocker.Password, err = secret.DecryptValue(dbModel.ModelDocker.Password)
+	// Temporary decrypt password
+	if m.ModelDocker.Private && m.ModelDocker.Password != "" {
+		m.ModelDocker.Password, err = secret.DecryptValue(m.ModelDocker.Password)
 		if err != nil {
-			return nil, sdk.WrapError(err, "cannot decrypt value for model with id %d", dbModel.ID)
+			return nil, sdk.WrapError(err, "cannot decrypt value for model with id %d", m.ID)
 		}
 	}
 
-	model := sdk.Model(dbModel)
-
-	for i := range opts {
-		if err := opts[i](ctx, db, &model); err != nil {
-			return nil, err
-		}
-	}
-
-	return &model, nil
+	return m, nil
 }
 
 // LoadAll retrieves worker models from database.
@@ -280,8 +281,8 @@ func LoadAllUsableWithClearPasswordByGroupIDs(ctx context.Context, db gorp.SqlEx
 }
 
 // Insert a new worker model in database.
-func Insert(db gorp.SqlExecutor, model *sdk.Model) error {
-	dbmodel := WorkerModel(*model)
+func Insert(ctx context.Context, db gorp.SqlExecutor, model *sdk.Model) error {
+	dbmodel := workerModel{Model: *model}
 
 	dbmodel.UserLastModified = time.Now()
 	dbmodel.NeedRegistration = true
@@ -306,7 +307,7 @@ func Insert(db gorp.SqlExecutor, model *sdk.Model) error {
 		}
 	}
 
-	if err := db.Insert(&dbmodel); err != nil {
+	if err := gorpmapping.InsertAndSign(ctx, db, &dbmodel); err != nil {
 		return sdk.WithStack(err)
 	}
 
@@ -316,17 +317,20 @@ func Insert(db gorp.SqlExecutor, model *sdk.Model) error {
 		}
 	}
 
-	*model = sdk.Model(dbmodel)
+	*model = dbmodel.Model
+
+	// Temporary hide password
 	if model.ModelDocker.Password != "" {
 		model.ModelDocker.Password = sdk.PasswordPlaceholder
 	}
+
 	return nil
 }
 
 // UpdateDB a worker model
 // if the worker model have SpawnErr -> clear them.
-func UpdateDB(db gorp.SqlExecutor, model *sdk.Model) error {
-	dbmodel := WorkerModel(*model)
+func UpdateDB(ctx context.Context, db gorp.SqlExecutor, model *sdk.Model) error {
+	dbmodel := workerModel{Model: *model}
 
 	if err := DeleteCapabilitiesByModelID(db, dbmodel.ID); err != nil {
 		return err
@@ -355,7 +359,7 @@ func UpdateDB(db gorp.SqlExecutor, model *sdk.Model) error {
 		dbmodel.ModelDocker.Registry = ""
 	}
 
-	if _, err := db.Update(&dbmodel); err != nil {
+	if err := gorpmapping.UpdateAndSign(ctx, db, &dbmodel); err != nil {
 		return sdk.WithStack(err)
 	}
 
@@ -365,7 +369,9 @@ func UpdateDB(db gorp.SqlExecutor, model *sdk.Model) error {
 		}
 	}
 
-	*model = sdk.Model(dbmodel)
+	*model = dbmodel.Model
+
+	// Temporary hide password
 	if model.ModelDocker.Password != "" {
 		model.ModelDocker.Password = sdk.PasswordPlaceholder
 	}

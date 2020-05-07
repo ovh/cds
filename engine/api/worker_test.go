@@ -98,7 +98,7 @@ func LoadOrCreateWorkerModel(t *testing.T, api *API, groupID int64, workermodelN
 			},
 		}
 
-		if err := workermodel.Insert(api.mustDB(), model); err != nil {
+		if err := workermodel.Insert(context.TODO(), api.mustDB(), model); err != nil {
 			t.Fatalf("Error inserting model : %s", err)
 		}
 	}

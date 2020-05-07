@@ -31,7 +31,7 @@ func insertWorkerModel(t *testing.T, db gorp.SqlExecutor, name string, groupID i
 			Value: "capa_1",
 		}),
 	}
-	require.NoError(t, workermodel.Insert(db, &m))
+	require.NoError(t, workermodel.Insert(context.TODO(), db, &m))
 	return &m
 }
 
@@ -126,7 +126,7 @@ func TestLoadAll(t *testing.T) {
 		GroupID:      g.ID,
 		IsDeprecated: true,
 	}
-	require.NoError(t, workermodel.Insert(db, &m2))
+	require.NoError(t, workermodel.Insert(context.TODO(), db, &m2))
 	m3 := sdk.Model{
 		Name:         "ghi",
 		GroupID:      g.ID,
@@ -137,7 +137,7 @@ func TestLoadAll(t *testing.T) {
 			Value: "capa_1",
 		}},
 	}
-	require.NoError(t, workermodel.Insert(db, &m3))
+	require.NoError(t, workermodel.Insert(context.TODO(), db, &m3))
 
 	models, err = workermodel.LoadAll(context.TODO(), db, nil)
 	require.NoError(t, err)
@@ -198,7 +198,7 @@ func TestLoadAllByGroupIDs(t *testing.T) {
 		GroupID:  g2.ID,
 		Disabled: true,
 	}
-	require.NoError(t, workermodel.Insert(db, &m3))
+	require.NoError(t, workermodel.Insert(context.TODO(), db, &m3))
 	m4 := sdk.Model{
 		Name:     "jkl",
 		GroupID:  g2.ID,
@@ -209,7 +209,7 @@ func TestLoadAllByGroupIDs(t *testing.T) {
 			Value: "capa_2",
 		}},
 	}
-	require.NoError(t, workermodel.Insert(db, &m4))
+	require.NoError(t, workermodel.Insert(context.TODO(), db, &m4))
 
 	wms, err := workermodel.LoadAllByGroupIDs(context.TODO(), db, []int64{g1.ID}, nil)
 	require.NoError(t, err)
@@ -282,7 +282,7 @@ func TestUpdate(t *testing.T) {
 		Type:  sdk.BinaryRequirement,
 		Value: "capa_2",
 	})
-	require.NoError(t, workermodel.UpdateDB(db, &data))
+	require.NoError(t, workermodel.UpdateDB(context.TODO(), db, &data))
 
 	res, err := workermodel.LoadByID(context.TODO(), db, src.ID, workermodel.LoadOptions.Default)
 	require.NoError(t, err)
@@ -307,7 +307,7 @@ func TestLoadWorkerModelsForGroupIDs(t *testing.T) {
 		UserLastModified: time.Now(),
 		Disabled:         true,
 	}
-	require.NoError(t, workermodel.Insert(db, &m3))
+	require.NoError(t, workermodel.Insert(context.TODO(), db, &m3))
 
 	models, err := workermodel.LoadAllActiveAndNotDeprecatedForGroupIDs(context.TODO(), db, []int64{g1.ID})
 	require.NoError(t, err)

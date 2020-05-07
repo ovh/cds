@@ -55,7 +55,7 @@ func Create(ctx context.Context, db gorp.SqlExecutor, data sdk.Model, ident sdk.
 	model.Author.Fullname = ident.GetFullname()
 	model.Author.Email = ident.GetEmail()
 
-	if err := Insert(db, &model); err != nil {
+	if err := Insert(context.TODO(), db, &model); err != nil {
 		return nil, sdk.WrapError(err, "cannot add worker model")
 	}
 
@@ -115,7 +115,7 @@ func Update(ctx context.Context, db gorp.SqlExecutor, old *sdk.Model, data sdk.M
 	model.Update(data)
 
 	// update model in db
-	if err := UpdateDB(db, &model); err != nil {
+	if err := UpdateDB(context.TODO(), db, &model); err != nil {
 		return nil, sdk.WrapError(err, "cannot update worker model")
 	}
 

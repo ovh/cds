@@ -418,7 +418,7 @@ func TestManualRun3(t *testing.T) {
 			},
 		}
 
-		if err := workermodel.Insert(db, model); err != nil {
+		if err := workermodel.Insert(context.TODO(), db, model); err != nil {
 			t.Fatalf("Error inserting model : %s", err)
 		}
 	}
