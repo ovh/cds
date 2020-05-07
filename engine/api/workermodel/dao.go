@@ -286,21 +286,24 @@ func Insert(db gorp.SqlExecutor, model *sdk.Model) error {
 	dbmodel.UserLastModified = time.Now()
 	dbmodel.NeedRegistration = true
 
-	if dbmodel.ModelDocker.Password == sdk.PasswordPlaceholder {
-		return sdk.WithStack(sdk.ErrInvalidPassword)
-	}
-	if dbmodel.ModelDocker.Private {
-		if dbmodel.ModelDocker.Password != "" {
-			var err error
-			dbmodel.ModelDocker.Password, err = secret.EncryptValue(dbmodel.ModelDocker.Password)
-			if err != nil {
-				return sdk.WrapError(err, "cannot encrypt docker password")
-			}
+	if dbmodel.Type == sdk.Docker {
+		dbmodel.ModelDocker.Envs = MergeModelEnvsWithDefaultEnvs(dbmodel.ModelDocker.Envs)
+		if dbmodel.ModelDocker.Password == sdk.PasswordPlaceholder {
+			return sdk.WithStack(sdk.ErrInvalidPassword)
 		}
-	} else {
-		dbmodel.ModelDocker.Username = ""
-		dbmodel.ModelDocker.Password = ""
-		dbmodel.ModelDocker.Registry = ""
+		if dbmodel.ModelDocker.Private {
+			if dbmodel.ModelDocker.Password != "" {
+				var err error
+				dbmodel.ModelDocker.Password, err = secret.EncryptValue(dbmodel.ModelDocker.Password)
+				if err != nil {
+					return sdk.WrapError(err, "cannot encrypt docker password")
+				}
+			}
+		} else {
+			dbmodel.ModelDocker.Username = ""
+			dbmodel.ModelDocker.Password = ""
+			dbmodel.ModelDocker.Registry = ""
+		}
 	}
 
 	if err := db.Insert(&dbmodel); err != nil {

@@ -71,7 +71,6 @@ func updateAllToCheckRegistration(db gorp.SqlExecutor) error {
 	if err != nil {
 		return sdk.WithStack(err)
 	}
-
 	rows, err := res.RowsAffected()
 	if err != nil {
 		return sdk.WithStack(err)
@@ -103,7 +102,7 @@ func UpdateSpawnErrorWorkerModel(db gorp.SqlExecutor, modelID int64, spawnError 
 
 // UpdateRegistration updates need_registration to false and last_registration time, reset err registration.
 func UpdateRegistration(ctx context.Context, db gorp.SqlExecutor, store cache.Store, modelID int64) error {
-	query := `UPDATE worker_model SET need_registration=false, check_registration=false, last_registration = $2, nb_spawn_err=0, last_spawn_err=NULL, last_spawn_err_log=NULL WHERE id = $1`
+	query := `UPDATE worker_model SET need_registration=false, check_registration=false, last_registration=$2, nb_spawn_err=0, last_spawn_err=NULL, last_spawn_err_log=NULL WHERE id = $1`
 	res, err := db.Exec(query, modelID, time.Now())
 	if err != nil {
 		return sdk.WithStack(err)
@@ -120,7 +119,7 @@ func UpdateRegistration(ctx context.Context, db gorp.SqlExecutor, store cache.St
 
 // UpdateOSAndArch updates os and arch for a worker model.
 func UpdateOSAndArch(db gorp.SqlExecutor, modelID int64, OS, arch string) error {
-	query := `UPDATE worker_model SET registered_os=$1, registered_arch = $2 WHERE id = $3`
+	query := `UPDATE worker_model SET registered_os=$1, registered_arch=$2 WHERE id = $3`
 	res, err := db.Exec(query, OS, arch, modelID)
 	if err != nil {
 		return sdk.WithStack(err)
