@@ -63,7 +63,7 @@ func runCmd() func(cmd *cobra.Command, args []string) {
 		}()
 		// Start the worker
 		if err := internal.StartWorker(ctx, w, bookedWJobID); err != nil {
-			log.Error(ctx, "StartWorker > Error:%s jobID:%d", err, bookedWJobID)
+			log.Error(ctx, "StartWorker > Error:%v jobID:%d", err, bookedWJobID)
 			time.Sleep(2 * time.Second)
 			sdk.Exit("error: %v", err)
 		}
