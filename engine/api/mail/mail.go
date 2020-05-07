@@ -193,6 +193,9 @@ func SendEmail(ctx context.Context, subject string, mailContent *bytes.Buffer, u
 	headers["From"] = smtpFrom
 	headers["To"] = to.String()
 	headers["Subject"] = subject
+	// https://tools.ietf.org/html/rfc4021
+	headers["Date"] = time.Now().Format(time.RFC1123Z)
+
 	// https://tools.ietf.org/html/rfc2392
 	headers["Message-ID"] = fmt.Sprintf("<%d.%s>", time.Now().UnixNano(), smtpFrom)
 
