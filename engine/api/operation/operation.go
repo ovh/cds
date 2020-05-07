@@ -75,7 +75,7 @@ func PushOperation(ctx context.Context, db gorp.SqlExecutor, store cache.Store, 
 		},
 	}
 	ope.User.Email = u.GetEmail()
-	ope.User.Username = u.GetFullname()
+	ope.User.Fullname = u.GetFullname()
 	ope.User.Username = u.GetUsername()
 
 	return pushOperation(ctx, db, store, proj, data, ope)
@@ -95,7 +95,7 @@ func PushOperationUpdate(ctx context.Context, db gorp.SqlExecutor, store cache.S
 		},
 	}
 	ope.User.Email = u.GetEmail()
-	ope.User.Username = u.GetFullname()
+	ope.User.Fullname = u.GetFullname()
 	ope.User.Username = u.GetUsername()
 
 	return pushOperation(ctx, db, store, proj, data, ope)

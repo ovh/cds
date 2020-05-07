@@ -48,7 +48,7 @@ forLoop:
 	for {
 		select {
 		case <-ctx.Done():
-			globalErr = sdk.NewErrorFrom(sdk.ErrRepoOperationTimeout, "updating repository take too many time")
+			globalErr = sdk.NewErrorFrom(sdk.ErrRepoOperationTimeout, "updating repository take too much time")
 			break forLoop
 		case <-tick.C:
 			ope, err := operation.GetRepositoryOperation(ctx, db, ed.OperationUUID)
