@@ -49,7 +49,7 @@ export class WorkflowNodeHookComponent implements OnInit {
     ) {
         this.projectKey = this._store.selectSnapshot(ProjectState.projectSnapshot).key;
         let workflow = this._store.selectSnapshot(WorkflowState.workflowSnapshot);
-        this.isReadOnly = workflow.permissions.writable || !!workflow.from_template;
+        this.isReadOnly = !workflow.permissions.writable || !!workflow.from_template;
     }
 
     ngOnInit(): void {
