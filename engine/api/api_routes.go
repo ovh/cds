@@ -423,7 +423,7 @@ func (api *API) InitRouter() {
 	// Engine µServices
 	r.Handle("/services/register", Scope(sdk.AuthConsumerScopeService), r.POST(api.postServiceRegisterHandler, MaintenanceAware()))
 	r.Handle("/services/heartbeat", Scope(sdk.AuthConsumerScopeService), r.POST(api.postServiceHearbeatHandler))
-	r.Handle("/services/{type}", Scope(sdk.AuthConsumerScopeWorker), r.GET(api.getExternalServiceHandler))
+	r.Handle("/services/{type}", Scope(sdk.AuthConsumerScopeService), r.GET(api.getExternalServiceHandler))
 
 	// Templates
 	r.Handle("/template", Scope(sdk.AuthConsumerScopeTemplate), r.GET(api.getTemplatesHandler), r.POST(api.postTemplateHandler))
