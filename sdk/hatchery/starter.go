@@ -167,8 +167,6 @@ func spawnWorkerForJob(ctx context.Context, h Interface, j workerStarterRequest)
 	})
 	next()
 
-	log.Info(ctx, "hatchery> spawnWorkerForJob> SpawnWorker> starting model %s for job %d", modelName, j.id)
-
 	_, next = observability.Span(ctxJob, "hatchery.SpawnWorker")
 	arg := SpawnArguments{
 		WorkerName:   generateWorkerName(h.Service().Name, false, modelName),
@@ -177,6 +175,8 @@ func spawnWorkerForJob(ctx context.Context, h Interface, j workerStarterRequest)
 		Requirements: j.requirements,
 		HatcheryName: h.Service().Name,
 	}
+
+	log.Info(ctx, "hatchery> spawnWorkerForJob> SpawnWorker> starting model %s for job %d with name %s", modelName, arg.JobID, arg.WorkerName)
 
 	// Get a JWT to authentified the worker
 	jwt, err := NewWorkerToken(h.Service().Name, h.GetPrivateKey(), time.Now().Add(1*time.Hour), arg)
