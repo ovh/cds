@@ -2,6 +2,11 @@ package api
 
 import (
 	"context"
+	"net/url"
+	"strings"
+	"testing"
+	"time"
+
 	"github.com/ovh/cds/engine/api/authentication"
 	"github.com/ovh/cds/engine/api/authentication/builtin"
 	"github.com/ovh/cds/engine/api/test/assets"
@@ -9,10 +14,6 @@ import (
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/stretchr/testify/require"
-	"net/url"
-	"strings"
-	"testing"
-	"time"
 )
 
 func Test_websocketWrongFilters(t *testing.T) {
@@ -181,8 +182,7 @@ func Test_websocketGetWorkflowEvent(t *testing.T) {
 	require.Equal(t, response.Event.EventType, "sdk.EventRunWorkflow")
 	require.Equal(t, response.Event.ProjectKey, proj.Key)
 	require.Equal(t, response.Event.WorkflowName, w.Name)
-
-	assert.Equal(t, 0, len(chanMessageReceived))
+	require.Equal(t, 0, len(chanMessageReceived))
 }
 
 func Test_websocketDeconnection(t *testing.T) {

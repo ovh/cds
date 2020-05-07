@@ -44,6 +44,7 @@ func publishRunWorkflow(ctx context.Context, payload interface{}, data publishWo
 		EnvironmentName:     data.environmentName,
 		WorkflowRunNum:      data.workflowRunNum,
 		WorkflowRunNumSub:   data.workflowRunSubNum,
+		WorkflowNodeRunID:   data.workflowNodeRunID,
 		Status:              data.status,
 		Tags:                data.workflowRunTags,
 		EventIntegrationsID: eventIntegrationsID,
