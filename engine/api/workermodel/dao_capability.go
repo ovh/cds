@@ -9,8 +9,8 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-// LoadCapabilities retrieves capabilities of given worker model.
-func LoadCapabilities(ctx context.Context, db gorp.SqlExecutor, workerModelID int64) (sdk.RequirementList, error) {
+// LoadCapabilitiesByModelID retrieves capabilities of given worker model.
+func LoadCapabilitiesByModelID(ctx context.Context, db gorp.SqlExecutor, workerModelID int64) (sdk.RequirementList, error) {
 	query := gorpmapping.NewQuery(`
     SELECT *
     FROM worker_capability
@@ -32,4 +32,21 @@ func LoadCapabilities(ctx context.Context, db gorp.SqlExecutor, workerModelID in
 		})
 	}
 	return rs, nil
+}
+
+// DeleteCapabilitiesByModelID removes all capabilities from database for given worker model id.
+func DeleteCapabilitiesByModelID(db gorp.SqlExecutor, workerModelID int64) error {
+	_, err := db.Exec("DELETE FROM worker_capability WHERE worker_model_id = $1", workerModelID)
+	return sdk.WrapError(err, "unable to remove worker capabilities for model with id %d", workerModelID)
+}
+
+// InsertCapabilityForModelID inserts given capability in database.
+func InsertCapabilityForModelID(db gorp.SqlExecutor, workerModelID int64, r *sdk.Requirement) error {
+	c := workerModelCapability{
+		WorkerModelID: workerModelID,
+		Type:          r.Type,
+		Name:          r.Name,
+		Argument:      r.Value,
+	}
+	return sdk.WithStack(db.Insert(&c))
 }

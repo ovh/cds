@@ -22,9 +22,6 @@ func getAll(ctx context.Context, db gorp.SqlExecutor, q gorpmapping.Query, opts 
 
 	// Temporary hide password and exec post select
 	for i := range pms {
-		if err := pms[i].PostSelect(db); err != nil {
-			return nil, sdk.WithStack(err)
-		}
 		if pms[i].ModelDocker.Password != "" {
 			pms[i].ModelDocker.Password = sdk.PasswordPlaceholder
 		}
@@ -61,9 +58,6 @@ func getAllWithClearPassword(ctx context.Context, db gorp.SqlExecutor, q gorpmap
 
 	// Temporary decrypt password and exec post select
 	for i := range pms {
-		if err := pms[i].PostSelect(db); err != nil {
-			return nil, sdk.WithStack(err)
-		}
 		if pms[i].ModelDocker.Private && pms[i].ModelDocker.Password != "" {
 			var err error
 			pms[i].ModelDocker.Password, err = secret.DecryptValue(pms[i].ModelDocker.Password)
@@ -107,9 +101,6 @@ func get(ctx context.Context, db gorp.SqlExecutor, q gorpmapping.Query, opts ...
 	}
 
 	// Temporary hide password and exec post select
-	if err := dbModel.PostSelect(db); err != nil {
-		return nil, sdk.WithStack(err)
-	}
 	if dbModel.ModelDocker.Password != "" {
 		dbModel.ModelDocker.Password = sdk.PasswordPlaceholder
 	}
@@ -137,9 +128,6 @@ func getWithClearPassword(ctx context.Context, db gorp.SqlExecutor, q gorpmappin
 	}
 
 	// Temporary decrypt password and exec post select
-	if err := dbModel.PostSelect(db); err != nil {
-		return nil, sdk.WithStack(err)
-	}
 	if dbModel.ModelDocker.Private && dbModel.ModelDocker.Password != "" {
 		dbModel.ModelDocker.Password, err = secret.DecryptValue(dbModel.ModelDocker.Password)
 		if err != nil {
@@ -294,14 +282,37 @@ func LoadAllUsableWithClearPasswordByGroupIDs(ctx context.Context, db gorp.SqlEx
 // Insert a new worker model in database.
 func Insert(db gorp.SqlExecutor, model *sdk.Model) error {
 	dbmodel := WorkerModel(*model)
+
+	dbmodel.UserLastModified = time.Now()
 	dbmodel.NeedRegistration = true
-	model.UserLastModified = time.Now()
-	if model.ModelDocker.Password == sdk.PasswordPlaceholder {
+
+	if dbmodel.ModelDocker.Password == sdk.PasswordPlaceholder {
 		return sdk.WithStack(sdk.ErrInvalidPassword)
 	}
+	if dbmodel.ModelDocker.Private {
+		if dbmodel.ModelDocker.Password != "" {
+			var err error
+			dbmodel.ModelDocker.Password, err = secret.EncryptValue(dbmodel.ModelDocker.Password)
+			if err != nil {
+				return sdk.WrapError(err, "cannot encrypt docker password")
+			}
+		}
+	} else {
+		dbmodel.ModelDocker.Username = ""
+		dbmodel.ModelDocker.Password = ""
+		dbmodel.ModelDocker.Registry = ""
+	}
+
 	if err := db.Insert(&dbmodel); err != nil {
 		return sdk.WithStack(err)
 	}
+
+	for _, r := range dbmodel.RegisteredCapabilities {
+		if err := InsertCapabilityForModelID(db, dbmodel.ID, &r); err != nil {
+			return err
+		}
+	}
+
 	*model = sdk.Model(dbmodel)
 	if model.ModelDocker.Password != "" {
 		model.ModelDocker.Password = sdk.PasswordPlaceholder
@@ -312,19 +323,50 @@ func Insert(db gorp.SqlExecutor, model *sdk.Model) error {
 // UpdateDB a worker model
 // if the worker model have SpawnErr -> clear them.
 func UpdateDB(db gorp.SqlExecutor, model *sdk.Model) error {
-	model.UserLastModified = time.Now()
-	model.NeedRegistration = true
-	model.NbSpawnErr = 0
-	model.LastSpawnErr = ""
-	model.LastSpawnErrLogs = nil
 	dbmodel := WorkerModel(*model)
+
+	if err := DeleteCapabilitiesByModelID(db, dbmodel.ID); err != nil {
+		return err
+	}
+
+	dbmodel.UserLastModified = time.Now()
+	dbmodel.NeedRegistration = true
+	dbmodel.NbSpawnErr = 0
+	dbmodel.LastSpawnErr = ""
+	dbmodel.LastSpawnErrLogs = nil
+
+	if dbmodel.ModelDocker.Password == sdk.PasswordPlaceholder {
+		return sdk.WithStack(sdk.ErrInvalidPassword)
+	}
+	if dbmodel.ModelDocker.Private {
+		if dbmodel.ModelDocker.Password != "" {
+			var err error
+			dbmodel.ModelDocker.Password, err = secret.EncryptValue(dbmodel.ModelDocker.Password)
+			if err != nil {
+				return sdk.WrapError(err, "cannot encrypt docker password")
+			}
+		}
+	} else {
+		dbmodel.ModelDocker.Username = ""
+		dbmodel.ModelDocker.Password = ""
+		dbmodel.ModelDocker.Registry = ""
+	}
+
 	if _, err := db.Update(&dbmodel); err != nil {
 		return sdk.WithStack(err)
 	}
+
+	for _, r := range dbmodel.RegisteredCapabilities {
+		if err := InsertCapabilityForModelID(db, dbmodel.ID, &r); err != nil {
+			return err
+		}
+	}
+
 	*model = sdk.Model(dbmodel)
 	if model.ModelDocker.Password != "" {
 		model.ModelDocker.Password = sdk.PasswordPlaceholder
 	}
+
 	return nil
 }
 

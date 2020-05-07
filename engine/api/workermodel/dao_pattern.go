@@ -50,14 +50,14 @@ func LoadPatternByNameAndType(ctx context.Context, db gorp.SqlExecutor, patternT
     SELECT *
     FROM worker_model_pattern
     WHERE name = $1 AND type = $2
-  `).Args(patternName, patternName)
+  `).Args(patternName, patternType)
 
 	found, err := gorpmapping.Get(ctx, db, query, &p)
 	if err != nil {
-		return nil, sdk.WrapError(err, "cannot load worker pattern with type %s and name %s", patternType, patternName)
+		return nil, sdk.WrapError(err, "cannot load worker model pattern with type %s and name %s", patternType, patternName)
 	}
 	if !found {
-		return nil, sdk.NewErrorFrom(sdk.ErrNotFound, "no worker model found with type %s and name %s", patternType, patternName)
+		return nil, sdk.NewErrorFrom(sdk.ErrNotFound, "no worker model pattern found with type %s and name %s", patternType, patternName)
 	}
 
 	return &p, nil

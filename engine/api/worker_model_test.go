@@ -39,7 +39,7 @@ func Test_DeleteAllWorkerModels(t *testing.T) {
 	require.NoError(t, err)
 
 	for _, m := range models {
-		assert.NoError(t, workermodel.Delete(api.mustDB(), m.ID))
+		assert.NoError(t, workermodel.DeleteByID(api.mustDB(), m.ID))
 	}
 
 	// Load and delete all worker model patterns
@@ -104,7 +104,7 @@ func Test_addWorkerModelWithPrivateRegistryAsAdmin(t *testing.T) {
 
 	//Delete all of them
 	for _, m := range models {
-		if err := workermodel.Delete(api.mustDB(), m.ID); err != nil {
+		if err := workermodel.DeleteByID(api.mustDB(), m.ID); err != nil {
 			t.Fatalf("Error deleting model : %s", err)
 		}
 	}

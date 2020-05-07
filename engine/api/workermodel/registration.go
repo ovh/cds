@@ -22,7 +22,6 @@ const (
 // if requirements contains "binary" type: all workers model need to be registered again by
 // setting flag need_registration to true in DB.
 func ComputeRegistrationNeeds(db gorp.SqlExecutor, allBinaryReqs sdk.RequirementList, reqs sdk.RequirementList) error {
-	log.Debug("ComputeRegistrationNeeds>")
 	var nbModelReq, nbOSArchReq, nbHostnameReq, nbRegionReq int
 
 	for _, r := range reqs {
@@ -162,10 +161,10 @@ func UnbookForRegister(ctx context.Context, store cache.Store, id int64) {
 	}
 }
 
+// UpdateCapabilities .
 func UpdateCapabilities(ctx context.Context, db gorp.SqlExecutor, spawnArgs hatchery.SpawnArguments, registrationForm sdk.WorkerRegistrationForm) error {
-	existingCapas, err := LoadCapabilities(ctx, db, spawnArgs.Model.ID)
+	existingCapas, err := LoadCapabilitiesByModelID(ctx, db, spawnArgs.Model.ID)
 	if err != nil {
-		log.Warning(ctx, "RegisterWorker> Unable to load worker model capabilities: %s", err)
 		return sdk.WithStack(err)
 	}
 
@@ -185,11 +184,12 @@ func UpdateCapabilities(ctx context.Context, db gorp.SqlExecutor, spawnArgs hatc
 	if len(newCapas) > 0 {
 		log.Debug("Updating model %d binary capabilities with %d capabilities", spawnArgs.Model.ID, len(newCapas))
 		for _, b := range newCapas {
-			query := `insert into worker_capability (worker_model_id, name, argument, type) values ($1, $2, $3, $4)`
-			if _, err := db.Exec(query, spawnArgs.Model.ID, b, b, string(sdk.BinaryRequirement)); err != nil {
-				//Ignore errors because we let the database to check constraints...
-				log.Debug("registerWorker> Cannot insert into worker_capability: %v", err)
-				return sdk.WithStack(err)
+			if err := InsertCapabilityForModelID(db, spawnArgs.Model.ID, &sdk.Requirement{
+				Type:  sdk.BinaryRequirement,
+				Name:  b,
+				Value: b,
+			}); err != nil {
+				return err
 			}
 		}
 	}
@@ -215,7 +215,6 @@ func UpdateCapabilities(ctx context.Context, db gorp.SqlExecutor, spawnArgs hatc
 			//Ignore errors because we let the database to check constraints...
 			log.Warning(ctx, "registerWorker> Cannot delete from worker_capability: %v", err)
 			return sdk.WithStack(err)
-
 		}
 	}
 

@@ -38,38 +38,59 @@ var (
 // Model represents a worker model (ex: Go 1.5.1 Docker Images)
 // with specified capabilities (ex: go, golint and go2xunit binaries)
 type Model struct {
-	ID                     int64               `json:"id" db:"id" cli:"-"`
-	Name                   string              `json:"name" db:"name" cli:"name,key"`
-	Description            string              `json:"description"  db:"description" cli:"description"`
-	Type                   string              `json:"type"  db:"type" cli:"type"`
-	Image                  string              `json:"image" db:"image" cli:"image"` // TODO: DELETE after migration done
-	ModelVirtualMachine    ModelVirtualMachine `json:"model_virtual_machine,omitempty" db:"-" cli:"-"`
-	ModelDocker            ModelDocker         `json:"model_docker,omitempty" db:"-" cli:"-"`
-	Disabled               bool                `json:"disabled"  db:"disabled" cli:"disabled"`
-	Restricted             bool                `json:"restricted"  db:"restricted" cli:"restricted"`
-	RegisteredCapabilities []Requirement       `json:"registered_capabilities"  db:"-" cli:"-"`
-	RegisteredOS           string              `json:"registered_os"  db:"-" cli:"-"`
-	RegisteredArch         string              `json:"registered_arch"  db:"-" cli:"-"`
-	NeedRegistration       bool                `json:"need_registration"  db:"need_registration" cli:"-"`
-	LastRegistration       time.Time           `json:"last_registration"  db:"last_registration" cli:"-"`
-	CheckRegistration      bool                `json:"check_registration"  db:"check_registration" cli:"-"`
-	UserLastModified       time.Time           `json:"user_last_modified"  db:"user_last_modified" cli:"-"`
-	Author                 struct {
-		Username string `json:"username"  db:"-" cli:"-"`
-		Fullname string `json:"fullname"  db:"-" cli:"-"`
-		Email    string `json:"email"  db:"-" cli:"-"`
-	} `json:"created_by" db:"-" cli:"-"`
-	GroupID          int64      `json:"group_id" db:"group_id" cli:"-"`
-	NbSpawnErr       int64      `json:"nb_spawn_err" db:"nb_spawn_err" cli:"nb_spawn_err"`
-	LastSpawnErr     string     `json:"last_spawn_err" db:"-" cli:"-"`
-	LastSpawnErrLogs *string    `json:"last_spawn_err_log" db:"-" cli:"-"`
-	DateLastSpawnErr *time.Time `json:"date_last_spawn_err" db:"date_last_spawn_err" cli:"-"`
-	IsDeprecated     bool       `json:"is_deprecated" db:"is_deprecated" cli:"deprecated"`
-	IsOfficial       bool       `json:"is_official" db:"-" cli:"official"`
-	PatternName      string     `json:"pattern_name,omitempty" db:"-" cli:"-"`
+	ID                  int64               `json:"id" db:"id" cli:"-"`
+	Name                string              `json:"name" db:"name" cli:"name,key"`
+	Description         string              `json:"description" db:"description" cli:"description"`
+	Type                string              `json:"type" db:"type" cli:"type"`
+	Image               string              `json:"image" db:"image" cli:"image"` // TODO: DELETE after migration done
+	Disabled            bool                `json:"disabled" db:"disabled" cli:"disabled"`
+	Restricted          bool                `json:"restricted" db:"restricted" cli:"restricted"`
+	RegisteredOS        string              `json:"registered_os" db:"registered_os" cli:"-"`
+	RegisteredArch      string              `json:"registered_arch" db:"registered_arch" cli:"-"`
+	NeedRegistration    bool                `json:"need_registration" db:"need_registration" cli:"-"`
+	LastRegistration    time.Time           `json:"last_registration" db:"last_registration" cli:"-"`
+	CheckRegistration   bool                `json:"check_registration" db:"check_registration" cli:"-"`
+	UserLastModified    time.Time           `json:"user_last_modified" db:"user_last_modified" cli:"-"`
+	Author              Author              `json:"created_by" db:"created_by" cli:"-"`
+	GroupID             int64               `json:"group_id" db:"group_id" cli:"-"`
+	NbSpawnErr          int64               `json:"nb_spawn_err" db:"nb_spawn_err" cli:"nb_spawn_err"`
+	LastSpawnErr        string              `json:"last_spawn_err" db:"last_spawn_err" cli:"-"`
+	LastSpawnErrLogs    *string             `json:"last_spawn_err_log" db:"last_spawn_err_log" cli:"-"`
+	DateLastSpawnErr    *time.Time          `json:"date_last_spawn_err" db:"date_last_spawn_err" cli:"-"`
+	IsDeprecated        bool                `json:"is_deprecated" db:"is_deprecated" cli:"deprecated"`
+	ModelVirtualMachine ModelVirtualMachine `json:"model_virtual_machine,omitempty" db:"model_virtual_machine" cli:"-"`
+	ModelDocker         ModelDocker         `json:"model_docker,omitempty" db:"model_docker" cli:"-"`
 	// aggregates
-	Editable bool   `json:"editable,omitempty" db:"-"`
-	Group    *Group `json:"group" db:"-" cli:"-"`
+	Editable               bool          `json:"editable,omitempty" db:"-"`
+	Group                  *Group        `json:"group" db:"-" cli:"-"`
+	RegisteredCapabilities []Requirement `json:"registered_capabilities" db:"-" cli:"-"`
+	IsOfficial             bool          `json:"is_official" db:"-" cli:"official"`
+	PatternName            string        `json:"pattern_name,omitempty" db:"-" cli:"-"`
+}
+
+// Author struct contains info about model author.
+type Author struct {
+	Username string `json:"username" cli:"-"`
+	Fullname string `json:"fullname" cli:"-"`
+	Email    string `json:"email" cli:"-"`
+}
+
+// Value returns driver.Value from author.
+func (a Author) Value() (driver.Value, error) {
+	j, err := json.Marshal(a)
+	return j, WrapError(err, "cannot marshal Author")
+}
+
+// Scan author.
+func (a *Author) Scan(src interface{}) error {
+	if src == nil {
+		return nil
+	}
+	source, ok := src.([]byte)
+	if !ok {
+		return WithStack(fmt.Errorf("type assertion .([]byte) failed (%T)", src))
+	}
+	return WrapError(json.Unmarshal(source, a), "cannot unmarshal Author")
 }
 
 // Update workflow template field from new data.
@@ -145,7 +166,7 @@ func (m Model) GetPath(groupName string) string {
 	return fmt.Sprintf("%s/%s", groupName, m.Name)
 }
 
-// ModelVirtualMachine for openstack or vsphere
+// ModelVirtualMachine for openstack or vsphere.
 type ModelVirtualMachine struct {
 	Image   string `json:"image,omitempty"`
 	Flavor  string `json:"flavor,omitempty"`
@@ -154,7 +175,25 @@ type ModelVirtualMachine struct {
 	PostCmd string `json:"post_cmd,omitempty"`
 }
 
-// ModelDocker for swarm, marathon and kubernetes
+// Value returns driver.Value from model virtual machine.
+func (m ModelVirtualMachine) Value() (driver.Value, error) {
+	j, err := json.Marshal(m)
+	return j, WrapError(err, "cannot marshal ModelVirtualMachine")
+}
+
+// Scan model virtual machine.
+func (m *ModelVirtualMachine) Scan(src interface{}) error {
+	if src == nil {
+		return nil
+	}
+	source, ok := src.([]byte)
+	if !ok {
+		return WithStack(fmt.Errorf("type assertion .([]byte) failed (%T)", src))
+	}
+	return WrapError(json.Unmarshal(source, m), "cannot unmarshal ModelVirtualMachine")
+}
+
+// ModelDocker for swarm, marathon and kubernetes.
 type ModelDocker struct {
 	Image    string            `json:"image,omitempty"`
 	Private  bool              `json:"private,omitempty"`
@@ -165,6 +204,24 @@ type ModelDocker struct {
 	Envs     map[string]string `json:"envs,omitempty"`
 	Shell    string            `json:"shell,omitempty"`
 	Cmd      string            `json:"cmd,omitempty"`
+}
+
+// Value returns driver.Value from model docker.
+func (m ModelDocker) Value() (driver.Value, error) {
+	j, err := json.Marshal(m)
+	return j, WrapError(err, "cannot marshal ModelDocker")
+}
+
+// Scan model docker.
+func (m *ModelDocker) Scan(src interface{}) error {
+	if src == nil {
+		return nil
+	}
+	source, ok := src.([]byte)
+	if !ok {
+		return WithStack(fmt.Errorf("type assertion .([]byte) failed (%T)", src))
+	}
+	return WrapError(json.Unmarshal(source, m), "cannot unmarshal ModelDocker")
 }
 
 // ModelPattern represent patterns for users and admin when creating a worker model

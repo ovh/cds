@@ -15,15 +15,20 @@ type LoadOptionFunc func(context.Context, gorp.SqlExecutor, ...*sdk.Model) error
 
 // LoadOptions provides all options to load worker models.
 var LoadOptions = struct {
-	Default   LoadOptionFunc
-	WithGroup LoadOptionFunc
+	Default          LoadOptionFunc
+	WithGroup        LoadOptionFunc
+	WithCapabilities LoadOptionFunc
 }{
-	Default:   loadDefault,
-	WithGroup: loadGroup,
+	Default:          loadDefault,
+	WithGroup:        loadGroup,
+	WithCapabilities: loadCapabilities,
 }
 
 func loadDefault(ctx context.Context, db gorp.SqlExecutor, ms ...*sdk.Model) error {
-	return loadGroup(ctx, db, ms...)
+	if err := loadGroup(ctx, db, ms...); err != nil {
+		return err
+	}
+	return loadCapabilities(ctx, db, ms...)
 }
 
 func loadGroup(ctx context.Context, db gorp.SqlExecutor, ms ...*sdk.Model) error {
@@ -40,9 +45,21 @@ func loadGroup(ctx context.Context, db gorp.SqlExecutor, ms ...*sdk.Model) error
 	for _, model := range ms {
 		if g, ok := m[model.GroupID]; ok {
 			model.Group = &g
+			model.IsOfficial = model.GroupID == group.SharedInfraGroup.ID
 		}
 	}
 
+	return nil
+}
+
+func loadCapabilities(ctx context.Context, db gorp.SqlExecutor, ms ...*sdk.Model) error {
+	for i := range ms {
+		rs, err := LoadCapabilitiesByModelID(ctx, db, ms[i].ID)
+		if err != nil {
+			return err
+		}
+		ms[i].RegisteredCapabilities = rs
+	}
 	return nil
 }
 
@@ -109,8 +126,3 @@ const (
 	StateActive     StateFilter = "active"
 	StateOfficial   StateFilter = "official"
 )
-
-type dbResultWMS struct {
-	WorkerModel
-	GroupName string `db:"groupname"`
-}

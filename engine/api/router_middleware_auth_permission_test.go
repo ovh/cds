@@ -493,7 +493,7 @@ func Test_checkWorkerModelPermissions(t *testing.T) {
 	}
 	require.NoError(t, workermodel.Insert(db, &m))
 	defer func() {
-		require.NoError(t, workermodel.Delete(db, m.ID))
+		require.NoError(t, workermodel.DeleteByID(db, m.ID))
 	}()
 
 	assert.Error(t, api.checkWorkerModelPermissions(context.TODO(), m.Name, sdk.PermissionRead, map[string]string{
