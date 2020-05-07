@@ -54,7 +54,7 @@ type Model struct {
 	Author              Author              `json:"created_by" db:"created_by" cli:"-"`
 	GroupID             int64               `json:"group_id" db:"group_id" cli:"-"`
 	NbSpawnErr          int64               `json:"nb_spawn_err" db:"nb_spawn_err" cli:"nb_spawn_err"`
-	LastSpawnErr        string              `json:"last_spawn_err" db:"last_spawn_err" cli:"-"`
+	LastSpawnErr        *string             `json:"last_spawn_err" db:"last_spawn_err" cli:"-"`
 	LastSpawnErrLogs    *string             `json:"last_spawn_err_log" db:"last_spawn_err_log" cli:"-"`
 	DateLastSpawnErr    *time.Time          `json:"date_last_spawn_err" db:"date_last_spawn_err" cli:"-"`
 	IsDeprecated        bool                `json:"is_deprecated" db:"is_deprecated" cli:"deprecated"`

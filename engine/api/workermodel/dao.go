@@ -332,7 +332,7 @@ func UpdateDB(db gorp.SqlExecutor, model *sdk.Model) error {
 	dbmodel.UserLastModified = time.Now()
 	dbmodel.NeedRegistration = true
 	dbmodel.NbSpawnErr = 0
-	dbmodel.LastSpawnErr = ""
+	dbmodel.LastSpawnErr = nil
 	dbmodel.LastSpawnErrLogs = nil
 
 	if dbmodel.ModelDocker.Password == sdk.PasswordPlaceholder {

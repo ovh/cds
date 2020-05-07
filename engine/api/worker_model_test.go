@@ -11,7 +11,6 @@ import (
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/project"
-	"github.com/ovh/cds/engine/api/secret"
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/api/test/assets"
 	"github.com/ovh/cds/engine/api/worker"
@@ -806,10 +805,7 @@ func Test_putWorkerModelWithPassword(t *testing.T) {
 	wm, errL := workermodel.LoadByNameAndGroupIDWithClearPassword(context.TODO(), api.mustDB(), resp.Name, resp.GroupID)
 	test.NoError(t, errL)
 
-	pw, errPw := secret.DecryptValue(wm.ModelDocker.Password)
-	test.NoError(t, errPw)
-
-	test.Equal(t, "testpw", pw)
+	test.Equal(t, "testpw", wm.ModelDocker.Password)
 }
 
 func Test_deleteWorkerModel(t *testing.T) {
