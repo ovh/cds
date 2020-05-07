@@ -44,10 +44,7 @@ export class WorkflowService {
         if (!wf) {
             params = params.append('migrate', 'true');
         }
-        return this._http.post<Operation>(
-            `/project/${projectKey}/workflows/${workflowName}/ascode`,
-            wf,
-            { params });
+        return this._http.post<Operation>(`/project/${projectKey}/workflows/${workflowName}/ascode`, wf, { params });
     }
 
     updateRunNumber(projectKey: string, workflowName: string, runNumber: number): Observable<null> {

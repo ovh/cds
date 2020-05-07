@@ -15,6 +15,7 @@ Requirement types:
 - [Service]({{< relref "/docs/concepts/requirement/requirement_service.md" >}})
 - [Memory]({{< relref "/docs/concepts/requirement/requirement_memory.md" >}})
 - [OS & Architecture]({{< relref "/docs/concepts/requirement/requirement_os_arch.md" >}})
+- [Region]({{< relref "/docs/concepts/requirement/requirement_region.md" >}})
 
 A [Job]({{< relref "/docs/concepts/job.md" >}}) will be executed by a **worker**.
 
@@ -26,3 +27,4 @@ You can set as many requirements as you want, following these rules:
 - Only one hostname can be set as requirement
 - Only one OS & Architecture requirement can be set at a time
 - Memory and Services requirements are available only on Docker models
+- Only one region can be set as requirement

@@ -101,19 +101,20 @@ func Exists(db gorp.SqlExecutor, key string, name string) (bool, error) {
 	return count > 0, nil
 }
 
-func LoadByRepo(ctx context.Context, store cache.Store, db gorp.SqlExecutor, proj sdk.Project, repo string) (*sdk.Workflow, error) {
+func LoadByRepo(ctx context.Context, store cache.Store, db gorp.SqlExecutor, proj sdk.Project, repo string, opts LoadOptions) (*sdk.Workflow, error) {
 	query := `
     SELECT workflow.*
     FROM workflow
-	JOIN project ON project.id = workflow.project_id
-    WHERE project.projectkey = $1 AND  workflow.from_repository = $2
-	LIMIT 1`
-	w, err := load(ctx, db, proj, LoadOptions{}, query, proj.Key, repo)
+	  JOIN project ON project.id = workflow.project_id
+    WHERE project.projectkey = $1 AND workflow.from_repository = $2
+    LIMIT 1
+  `
+	w, err := load(ctx, db, proj, opts, query, proj.Key, repo)
 	if err != nil {
 		return nil, err
 	}
 	if err := IsValid(ctx, store, db, w, proj, LoadOptions{}); err != nil {
-		return nil, sdk.WrapError(err, "Unable to valid workflow")
+		return nil, sdk.WrapError(err, "unable to validate workflow")
 	}
 	return w, nil
 }

@@ -110,7 +110,7 @@ export class WorkflowNodeEditModalComponent implements AfterViewInit {
                 this.currentNodeName = stateSnap.node.name;
                 this.currentNodeType = stateSnap.node.type;
                 this.groups = cloneDeep(stateSnap.node.groups);
-                this.readonly = !stateSnap.canEdit;
+                this.readonly = !stateSnap.canEdit || !!this.workflow.from_template;
                 if (stateSnap.hook) {
                     this.hookSelected = true;
                 }

@@ -32,6 +32,7 @@ export class WorkflowNotificationFormComponent implements OnInit {
     }
 
     @Input() editMode: boolean;
+    @Input() readOnly: boolean;
 
     types: Array<string>;
     notifOnSuccess: Array<string>;

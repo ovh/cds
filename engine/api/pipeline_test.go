@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/pipeline"
@@ -38,9 +39,11 @@ func TestUpdateAsCodePipelineHandler(t *testing.T) {
 
 	a, _ := assets.InsertService(t, db, "TestUpdateAsCodePipelineHandler", services.TypeVCS)
 	b, _ := assets.InsertService(t, db, "TestUpdateAsCodePipelineHandler", services.TypeRepositories)
+	c, _ := assets.InsertService(t, db, "TestUpdateAsCodePipelineHandler", services.TypeHooks)
 	defer func() {
 		_ = services.Delete(db, a) // nolint
 		_ = services.Delete(db, b) // nolint
+		_ = services.Delete(db, c) // nolint
 	}()
 	//This is a mock for the repositories service
 	services.HTTPClient = mock(
@@ -65,7 +68,14 @@ func TestUpdateAsCodePipelineHandler(t *testing.T) {
 				if err := enc.Encode(ope); err != nil {
 					return writeError(w, err)
 				}
-
+			case "/vcs/github/webhooks":
+				hookInfo := repositoriesmanager.WebhooksInfos{
+					WebhooksSupported: true,
+					WebhooksDisabled:  false,
+				}
+				if err := enc.Encode(hookInfo); err != nil {
+					return writeError(w, err)
+				}
 			case "/vcs/github/repos/foo/myrepo":
 				vcsRepo := sdk.VCSRepo{
 					Name:         "foo/myrepo",
@@ -75,11 +85,30 @@ func TestUpdateAsCodePipelineHandler(t *testing.T) {
 				if err := enc.Encode(vcsRepo); err != nil {
 					return writeError(w, err)
 				}
+			case "/vcs/github/repos/foo/myrepo/hooks":
+				hook := sdk.VCSHook{
+					ID: "myod",
+				}
+				if err := enc.Encode(hook); err != nil {
+					return writeError(w, err)
+				}
 			case "/vcs/github/repos/foo/myrepo/pullrequests":
 				vcsPR := sdk.VCSPullRequest{
 					URL: "myURL",
 				}
 				if err := enc.Encode(vcsPR); err != nil {
+					return writeError(w, err)
+				}
+			case "/task/bulk":
+				var hooks map[string]sdk.NodeHook
+				bts, err := ioutil.ReadAll(r.Body)
+				if err != nil {
+					return writeError(w, err)
+				}
+				if err := json.Unmarshal(bts, &hooks); err != nil {
+					return writeError(w, err)
+				}
+				if err := enc.Encode(hooks); err != nil {
 					return writeError(w, err)
 				}
 			default:
@@ -130,10 +159,17 @@ func TestUpdateAsCodePipelineHandler(t *testing.T) {
 	assert.NoError(t, application.Insert(db, *proj, &app))
 	assert.NoError(t, repositoriesmanager.InsertForApplication(db, &app, proj.Key))
 
+	repoModel, err := workflow.LoadHookModelByName(db, sdk.RepositoryWebHookModelName)
+	assert.NoError(t, err)
+
+	wk := initWorkflow(t, db, proj, &app, &pip, repoModel)
+	wk.FromRepository = "myrepofrom"
+	require.NoError(t, workflow.Insert(context.Background(), db, api.Cache, *proj, wk))
+
 	uri := api.Router.GetRoute("PUT", api.updateAsCodePipelineHandler, map[string]string{
 		"permProjectKey": proj.Key,
 		"pipelineKey":    pip.Name,
-	}) + "?repo=myrepofrom"
+	})
 	req := assets.NewJWTAuthentifiedRequest(t, pass, "PUT", uri, pip)
 
 	// Do the request

@@ -44,7 +44,7 @@ export class RequirementsFormComponent implements OnInit {
 
 
     @Input() modal: SemanticModalComponent;
-    @Input() config: { disableModel?: boolean, disableHostname?: boolean };
+    @Input() config: { disableModel?: boolean, disableHostname?: boolean, disableRegion?: boolean };
 
     @Output() event = new EventEmitter<RequirementEvent>();
 
@@ -139,13 +139,17 @@ export class RequirementsFormComponent implements OnInit {
         this.popupText = '';
         let goodModel = this.newRequirement.type !== 'model' || !this.config.disableModel;
         let goodHostname = this.newRequirement.type !== 'hostname' || !this.config.disableHostname;
+        let goodRegion = this.newRequirement.type !== 'region' || !this.config.disableRegion;
         this.isFormValid = (form.valid === true && this.newRequirement.name !== '' && this.newRequirement.value !== '')
-            && goodModel && goodHostname;
+            && goodModel && goodHostname && goodRegion;
         if (!goodModel) {
             this.popupText = this._translate.instant('requirement_error_model');
         }
         if (!goodHostname) {
             this.popupText = this._translate.instant('requirement_error_hostname');
+        }
+        if (!goodRegion) {
+            this.popupText = this._translate.instant('requirement_error_region');
         }
     }
 

@@ -30,6 +30,10 @@ type annotation struct {
 
 // SpawnWorker creates a new vm instance
 func (h *HatcheryVSphere) SpawnWorker(ctx context.Context, spawnArgs hatchery.SpawnArguments) error {
+	if spawnArgs.JobID == 0 && !spawnArgs.RegisterOnly {
+		return sdk.WithStack(fmt.Errorf("no job ID and no register"))
+	}
+
 	var vm *object.VirtualMachine
 	var errV error
 	_, errM := h.getModelByName(ctx, spawnArgs.Model.Name)
@@ -196,9 +200,8 @@ func (h *HatcheryVSphere) launchScriptWorker(name string, jobID int64, token str
 		GraylogPort:       h.Configuration().Provision.WorkerLogsOptions.Graylog.Port,
 		GraylogExtraKey:   h.Configuration().Provision.WorkerLogsOptions.Graylog.ExtraKey,
 		GraylogExtraValue: h.Configuration().Provision.WorkerLogsOptions.Graylog.ExtraValue,
+		WorkflowJobID:     jobID,
 	}
-
-	udataParam.WorkflowJobID = jobID
 
 	var buffer bytes.Buffer
 	if err := tmpl.Execute(&buffer, udataParam); err != nil {

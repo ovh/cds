@@ -42,6 +42,7 @@ export class WorkflowShowComponent implements OnInit {
     direction: string;
     editMode: boolean;
     editModeWorkflowChanged: boolean;
+    isReadOnly: boolean;
 
     @ViewChild('workflowGraph')
     workflowGraph: WorkflowGraphComponent;
@@ -89,6 +90,7 @@ export class WorkflowShowComponent implements OnInit {
             } else {
                 this.detailedWorkflow = s.workflow;
             }
+            this.isReadOnly = !!this.detailedWorkflow.from_template;
             if (this.detailedWorkflow) {
                 let from_repository = this.detailedWorkflow.from_repository;
                 this.previewWorkflow = this.detailedWorkflow.preview;
@@ -115,7 +117,7 @@ export class WorkflowShowComponent implements OnInit {
 
 
         this.paramsSubs = this.activatedRoute.params.subscribe(() => {
-            this._workflowCoreService.toggleAsCodeEditor({open: false, save: false});
+            this._workflowCoreService.toggleAsCodeEditor({ open: false, save: false });
             this._workflowCoreService.setWorkflowPreview(null);
         });
 
@@ -134,13 +136,13 @@ export class WorkflowShowComponent implements OnInit {
         this.workflowPreviewSubscription = this._workflowCoreService.getWorkflowPreview()
             .subscribe((wfPreview) => {
                 if (wfPreview != null) {
-                    this._workflowCoreService.toggleAsCodeEditor({open: false, save: false});
+                    this._workflowCoreService.toggleAsCodeEditor({ open: false, save: false });
                 }
             });
     }
 
     savePreview() {
-        this._workflowCoreService.toggleAsCodeEditor({open: false, save: true});
+        this._workflowCoreService.toggleAsCodeEditor({ open: false, save: true });
     }
 
     changeDirection() {
@@ -152,7 +154,7 @@ export class WorkflowShowComponent implements OnInit {
     }
 
     showAsCodeEditor() {
-        this._workflowCoreService.toggleAsCodeEditor({open: true, save: false});
+        this._workflowCoreService.toggleAsCodeEditor({ open: true, save: false });
     }
 
     groupManagement(event: PermissionEvent, skip?: boolean): void {

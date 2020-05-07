@@ -95,4 +95,18 @@ func TestRegister(t *testing.T) {
 	assert.Equal(t, w.ID, wk.ID)
 	assert.Equal(t, w.ModelID, wk.ModelID)
 	assert.Equal(t, w.HatcheryID, wk.HatcheryID)
+
+	// try to register a worker for a job, without a JobID
+	w2, err := worker.RegisterWorker(context.TODO(), db, store, hatchery.SpawnArguments{
+		HatcheryName: h.Name,
+		Model:        m,
+		WorkerName:   sdk.RandomString(10),
+	}, h.ID, c, sdk.WorkerRegistrationForm{
+		Arch:               runtime.GOARCH,
+		OS:                 runtime.GOOS,
+		BinaryCapabilities: []string{"bash"},
+	})
+
+	test.Error(t, err)
+	assert.Nil(t, w2)
 }

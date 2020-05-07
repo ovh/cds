@@ -62,6 +62,10 @@ func (api *API) postTakeWorkflowJobHandler() service.Handler {
 			return err
 		}
 
+		if wk.JobRunID == nil || *wk.JobRunID != id {
+			return sdk.NewErrorFrom(sdk.ErrForbidden, "unauthorized to take this job. booked:%d vs asked:%d", wk.JobRunID, id)
+		}
+
 		p, err := project.LoadProjectByNodeJobRunID(ctx, api.mustDB(), api.Cache, id, project.LoadOptions.WithVariables, project.LoadOptions.WithClearKeys)
 		if err != nil {
 			return sdk.WrapError(err, "cannot load project by nodeJobRunID: %d", id)

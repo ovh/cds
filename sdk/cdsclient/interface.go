@@ -321,7 +321,6 @@ type WorkflowClient interface {
 	WorkflowAllHooksList() ([]sdk.NodeHook, error)
 	WorkflowCachePush(projectKey, integrationName, ref string, tarContent io.Reader, size int) error
 	WorkflowCachePull(projectKey, integrationName, ref string) (io.Reader, error)
-	WorkflowTemplateInstanceGet(projectKey, workflowName string) (*sdk.WorkflowTemplateInstance, error)
 	WorkflowTransformAsCode(projectKey, workflowName string) (*sdk.Operation, error)
 	WorkflowTransformAsCodeFollow(projectKey, workflowName string, ope *sdk.Operation) error
 }
@@ -498,6 +497,15 @@ func WithKeys() RequestModifier {
 	return func(r *http.Request) {
 		q := r.URL.Query()
 		q.Set("withKeys", "true")
+		r.URL.RawQuery = q.Encode()
+	}
+}
+
+// WithTemplate allow a provider to retrieve a workflow with template if exists.
+func WithTemplate() RequestModifier {
+	return func(r *http.Request) {
+		q := r.URL.Query()
+		q.Set("withTemplate", "true")
 		r.URL.RawQuery = q.Encode()
 	}
 }

@@ -117,13 +117,17 @@ func templateApplyRun(v cli.Values) error {
 	projectKey := v.GetString(_ProjectKey)
 	workflowName := v.GetString(_WorkflowName)
 
-	var wti *sdk.WorkflowTemplateInstance
+	var existingWorkflow *sdk.Workflow
+	var existingWorkflowTemplateInstance *sdk.WorkflowTemplateInstance
 	var err error
 	if workflowName != "" {
 		// try to get an existing template instance for current workflow
-		wti, err = client.WorkflowTemplateInstanceGet(projectKey, workflowName)
+		existingWorkflow, err = client.WorkflowGet(projectKey, workflowName, cdsclient.WithTemplate())
 		if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
 			return err
+		}
+		if existingWorkflow != nil && existingWorkflow.TemplateInstance != nil {
+			existingWorkflowTemplateInstance = existingWorkflow.TemplateInstance
 		}
 	}
 
@@ -133,8 +137,8 @@ func templateApplyRun(v cli.Values) error {
 	}
 
 	// if no template given from args, and exiting instance try to get it's template
-	if wt == nil && wti != nil {
-		wt = wti.Template
+	if wt == nil && existingWorkflowTemplateInstance != nil {
+		wt = existingWorkflowTemplateInstance.Template
 	}
 
 	// if no template found for workflow or no instance, suggest one
@@ -150,9 +154,9 @@ func templateApplyRun(v cli.Values) error {
 
 	// init params map from previous template instance if exists
 	params := make(map[string]string)
-	if wti != nil {
+	if existingWorkflowTemplateInstance != nil {
 		for _, p := range wt.Parameters {
-			if v, ok := wti.Request.Parameters[p.Key]; ok {
+			if v, ok := existingWorkflowTemplateInstance.Request.Parameters[p.Key]; ok {
 				params[p.Key] = v
 			}
 		}
@@ -168,8 +172,9 @@ func templateApplyRun(v cli.Values) error {
 		params[ps[0]] = strings.Join(ps[1:], "=")
 	}
 
-	importPush := v.GetBool("import-push")
-	importAsCode := v.GetBool("import-as-code")
+	// Import flags are not allowed if an existing ascode workflow exists
+	importPush := v.GetBool("import-push") && (existingWorkflow == nil || existingWorkflow.FromRepository == "")
+	importAsCode := v.GetBool("import-as-code") && (existingWorkflow == nil || existingWorkflow.FromRepository == "")
 	detached := v.GetBool("detach")
 
 	// try to find existing .git repository
@@ -295,7 +300,8 @@ func templateApplyRun(v cli.Values) error {
 			}
 		}
 
-		if !importAsCode && !importPush {
+		// We ask for import only if there is no existing workflow or if exists but not ascode
+		if !importAsCode && !importPush && (existingWorkflow == nil || existingWorkflow.FromRepository == "") {
 			if localRepoURL != "" {
 				importAsCode = cli.AskConfirm(fmt.Sprintf("Import the generated workflow as code to the %s project", projectKey))
 			}
@@ -317,7 +323,7 @@ func templateApplyRun(v cli.Values) error {
 		return fmt.Errorf("Unable to create directory %s: %v", v.GetString("output-dir"), err)
 	}
 
-	// check request before submit
+	// Check request before submit
 	req := sdk.WorkflowTemplateRequest{
 		ProjectKey:   projectKey,
 		WorkflowName: workflowName,
@@ -333,7 +339,7 @@ func templateApplyRun(v cli.Values) error {
 		return err
 	}
 
-	// import or push the generated workflow if one option is set
+	// Import or push the generated workflow if one option is set
 	if importAsCode || importPush {
 		var buf bytes.Buffer
 		tr, err = teeTarReader(tr, &buf)

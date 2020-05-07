@@ -1,15 +1,15 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnInit, ViewChild } from '@angular/core';
-import {TranslateService} from '@ngx-translate/core';
+import { TranslateService } from '@ngx-translate/core';
 import { Select, Store } from '@ngxs/store';
 import { SuiActiveModal } from '@richardlt/ng2-semantic-ui';
 import { WNode, WNodeHook, Workflow, WorkflowNodeHookConfigValue } from 'app/model/workflow.model';
 import { WorkflowNodeRunHookEvent, WorkflowRun } from 'app/model/workflow.run.model';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
-import {DeleteModalComponent} from 'app/shared/modal/delete/delete.component';
-import {ToastService} from 'app/shared/toast/ToastService';
+import { DeleteModalComponent } from 'app/shared/modal/delete/delete.component';
+import { ToastService } from 'app/shared/toast/ToastService';
 import { ProjectState } from 'app/store/project.state';
-import {DeleteHookWorkflow, OpenEditModal, SelectHook} from 'app/store/workflow.action';
-import {WorkflowState} from 'app/store/workflow.state';
+import { DeleteHookWorkflow, OpenEditModal, SelectHook } from 'app/store/workflow.action';
+import { WorkflowState } from 'app/store/workflow.state';
 import { Observable } from 'rxjs';
 import { Subscription } from 'rxjs/Subscription';
 
@@ -38,34 +38,36 @@ export class WorkflowNodeHookComponent implements OnInit {
     projectKey: string;
     hookEvent: WorkflowNodeRunHookEvent;
     currentRunID: number;
-    hasWritable: boolean;
+    isReadOnly: boolean;
     icon: string;
 
     constructor(
-        private _store: Store, private _toast: ToastService, private _translate: TranslateService,
+        private _store: Store,
+        private _toast: ToastService,
+        private _translate: TranslateService,
         private _cd: ChangeDetectorRef
     ) {
         this.projectKey = this._store.selectSnapshot(ProjectState.projectSnapshot).key;
         let workflow = this._store.selectSnapshot(WorkflowState.workflowSnapshot);
-        this.hasWritable = workflow.permissions.writable;
+        this.isReadOnly = workflow.permissions.writable || !!workflow.from_template;
     }
 
     ngOnInit(): void {
         // Check if hook event has changed
         this.workflowRunSub = this.workflowRun$.subscribe(wr => {
-           if (!wr) {
-               return;
-           }
-           if (wr.id === this.currentRunID) {
-               return;
-           }
-           if (wr && this.node && wr.nodes && wr.nodes[this.node.id] && wr.nodes[this.node.id].length > 0) {
-               let nodeRun = wr.nodes[this.node.id][0];
-               this.hookEvent = nodeRun.hook_event;
-               this.currentRunID = wr.id;
-               this.hasWritable = false;
-               this._cd.markForCheck();
-           }
+            if (!wr) {
+                return;
+            }
+            if (wr.id === this.currentRunID) {
+                return;
+            }
+            if (wr && this.node && wr.nodes && wr.nodes[this.node.id] && wr.nodes[this.node.id].length > 0) {
+                let nodeRun = wr.nodes[this.node.id][0];
+                this.hookEvent = nodeRun.hook_event;
+                this.currentRunID = wr.id;
+                this.isReadOnly = true;
+                this._cd.markForCheck();
+            }
         });
 
         if (this.hook) {
@@ -82,7 +84,7 @@ export class WorkflowNodeHookComponent implements OnInit {
     receivedEvent(e: string): void {
         switch (e) {
             case 'details':
-                this._store.dispatch(new SelectHook({hook: this.hook, node: this.node}));
+                this._store.dispatch(new SelectHook({ hook: this.hook, node: this.node }));
                 break;
             case 'edit':
                 this._store.dispatch(new OpenEditModal({
@@ -106,12 +108,12 @@ export class WorkflowNodeHookComponent implements OnInit {
             workflowName: this.workflow.name,
             hook: this.hook
         })).subscribe(() => {
-                if (editMode) {
-                    this._toast.info('', this._translate.instant('workflow_ascode_updated'));
-                } else {
-                    this._toast.success('', this._translate.instant('workflow_updated'));
-                }
-                modal.approve(null);
-            });
+            if (editMode) {
+                this._toast.info('', this._translate.instant('workflow_ascode_updated'));
+            } else {
+                this._toast.success('', this._translate.instant('workflow_updated'));
+            }
+            modal.approve(null);
+        });
     }
 }

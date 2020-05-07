@@ -41,6 +41,11 @@ var (
 										Type:  sdk.OSArchRequirement,
 										Value: "freebsd/amd64",
 									},
+									{
+										Name:  sdk.RegionRequirement,
+										Type:  sdk.RegionRequirement,
+										Value: "graxyz",
+									},
 								},
 								Actions: []sdk.Action{
 									{
@@ -542,6 +547,7 @@ jobs:
   requirements:
   - binary: git
   - os-archicture: freebsd/amd64
+  - region: graxyz
   steps:
   - gitClone:
       branch: '{{.git.branch}}'
@@ -568,7 +574,7 @@ jobs:
 	test.NoError(t, err)
 
 	assert.Len(t, p.Stages[0].Jobs[0].Action.Actions, 3)
-	assert.Len(t, p.Stages[0].Jobs[0].Action.Requirements, 2)
+	assert.Len(t, p.Stages[0].Jobs[0].Action.Requirements, 3)
 	assert.Equal(t, sdk.GitCloneAction, p.Stages[0].Jobs[0].Action.Actions[0].Name)
 	assert.Equal(t, sdk.ArtifactUpload, p.Stages[0].Jobs[0].Action.Actions[1].Name)
 	assert.Equal(t, sdk.ServeStaticFiles, p.Stages[0].Jobs[0].Action.Actions[2].Name)
