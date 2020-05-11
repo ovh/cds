@@ -669,7 +669,6 @@
   "user_auth_my_consumers": "My consumers",
   "user_auth_sessions": "Sessions",
   "user_auth_session_current": "Current",
-  "user_auth_info_scopes": "More information about scopes.",
   "user_auth_consumer_detach_btn": "Detach",
   "user_auth_consumer_delete_btn": "Delete",
   "user_auth_consumer_disabled": "Disabled",

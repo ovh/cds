@@ -671,7 +671,6 @@
   "user_auth_my_consumers": "Mes clients",
   "user_auth_sessions": "Sessions",
   "user_auth_session_current": "Courante",
-  "user_auth_info_scopes": "Plus d'information concernant les 'scopes'.",
   "user_auth_consumer_detach_btn": "Détacher",
   "user_auth_consumer_delete_btn": "Supprimer",
   "user_auth_consumer_disabled": "Désactivé",

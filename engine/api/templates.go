@@ -243,7 +243,7 @@ func (api *API) putTemplateHandler() service.Handler {
 		clone := sdk.WorkflowTemplate(*old)
 		clone.Update(data)
 
-		// execute template with no instance only to check if parsing is ok
+		// execute template with no instance only to check if golang template parsing is ok
 		if _, err := workflowtemplate.Parse(clone); err != nil {
 			return err
 		}
@@ -354,7 +354,7 @@ func (api *API) postTemplateApplyHandler() service.Handler {
 		}
 
 		// load project with key
-		p, err := project.Load(api.mustDB(),  req.ProjectKey,
+		p, err := project.Load(api.mustDB(), req.ProjectKey,
 			project.LoadOptions.WithGroups,
 			project.LoadOptions.WithApplications,
 			project.LoadOptions.WithEnvironments,
@@ -518,7 +518,7 @@ func (api *API) postTemplateBulkHandler() service.Handler {
 					}
 
 					// load project with key
-					p, err := project.Load(api.mustDB(),  bulk.Operations[i].Request.ProjectKey,
+					p, err := project.Load(api.mustDB(), bulk.Operations[i].Request.ProjectKey,
 						project.LoadOptions.WithGroups,
 						project.LoadOptions.WithApplications,
 						project.LoadOptions.WithEnvironments,
@@ -689,7 +689,7 @@ func (api *API) getTemplateInstanceHandler() service.Handler {
 		key := vars["key"]
 		workflowName := vars["permWorkflowName"]
 
-		proj, err := project.Load(api.mustDB(),  key, project.LoadOptions.WithIntegrations)
+		proj, err := project.Load(api.mustDB(), key, project.LoadOptions.WithIntegrations)
 		if err != nil {
 			return sdk.WrapError(err, "unable to load projet")
 		}
