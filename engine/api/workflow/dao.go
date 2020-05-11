@@ -229,7 +229,7 @@ func LoadAllNames(db gorp.SqlExecutor, projID int64) (sdk.IDNames, error) {
 	}
 	for i := range res {
 		var err error
-		res[i].Labels, err = Labels(db, res[i].ID)
+		res[i].Labels, err = LoadLabels(db, res[i].ID)
 		if err != nil {
 			return res, sdk.WrapError(err, "cannot load labels for workflow %s", res[i].Name)
 		}
@@ -270,6 +270,9 @@ func Load(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj sdk.
 		}
 		if opts.DeepPipeline {
 			loadOpts.Loaders.WithDeepPipelines = true
+		}
+		if opts.WithLabels {
+			loadOpts.Loaders.WithLabels = true
 		}
 	}
 
@@ -444,7 +447,7 @@ func load(ctx context.Context, db gorp.SqlExecutor, proj sdk.Project, opts LoadO
 
 	if opts.WithLabels {
 		_, next = observability.Span(ctx, "workflow.load.Labels")
-		labels, errL := Labels(db, res.ID)
+		labels, errL := LoadLabels(db, res.ID)
 		next()
 
 		if errL != nil {

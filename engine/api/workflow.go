@@ -285,7 +285,7 @@ func (api *API) postWorkflowLabelHandler() service.Handler {
 				return sdk.NewErrorFrom(sdk.ErrWrongRequest, "label ID or label name should not be empty")
 			}
 
-			lbl, err := project.LabelByName(db, proj.ID, label.Name)
+			lbl, err := project.LabelByName(tx, proj.ID, label.Name)
 			if err != nil {
 				if sdk.Cause(err) != sql.ErrNoRows {
 					return sdk.WrapError(err, "cannot load label by name")
@@ -299,7 +299,7 @@ func (api *API) postWorkflowLabelHandler() service.Handler {
 			}
 		}
 
-		wf, err := workflow.Load(ctx, db, api.Cache, *proj, workflowName, workflow.LoadOptions{WithLabels: true})
+		wf, err := workflow.Load(ctx, tx, api.Cache, *proj, workflowName, workflow.LoadOptions{WithLabels: true})
 		if err != nil {
 			return sdk.WrapError(err, "cannot load workflow %s/%s", key, workflowName)
 		}

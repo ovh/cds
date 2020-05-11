@@ -889,7 +889,6 @@ func (api *API) postWorkflowRunHandler() service.Handler {
 			var errWf error
 			wf, errWf = workflow.Load(ctx, api.mustDB(), api.Cache, *p, name, workflow.LoadOptions{
 				DeepPipeline:          true,
-				Base64Keys:            true,
 				WithAsCodeUpdateEvent: true,
 				WithIcon:              true,
 				WithIntegrations:      true,

@@ -1226,7 +1226,6 @@ func Test_postWorkflowRollbackHandler(t *testing.T) {
 }
 
 func Test_postAndDeleteWorkflowLabelHandler(t *testing.T) {
-
 	api, db, router, end := newTestAPI(t)
 	defer end()
 
@@ -1341,11 +1340,11 @@ func Test_postAndDeleteWorkflowLabelHandler(t *testing.T) {
 	wfUpdated, errW := workflow.Load(context.TODO(), db, api.Cache, *proj, wf.Name, workflow.LoadOptions{WithLabels: true})
 	test.NoError(t, errW)
 
-	assert.NotNil(t, wfUpdated.Labels)
-	assert.Equal(t, 1, len(wfUpdated.Labels))
-	assert.Equal(t, lbl1.Name, wfUpdated.Labels[0].Name)
+	require.NotNil(t, wfUpdated.Labels)
+	require.Equal(t, 1, len(wfUpdated.Labels))
+	require.Equal(t, lbl1.Name, wfUpdated.Labels[0].Name)
 
-	//Unlink label
+	// Unlink label
 	vars = map[string]string{
 		"key":              proj.Key,
 		"permWorkflowName": name,
@@ -1361,9 +1360,8 @@ func Test_postAndDeleteWorkflowLabelHandler(t *testing.T) {
 	assert.Equal(t, 200, w.Code)
 
 	wfUpdated, errW = workflow.Load(context.TODO(), db, api.Cache, *proj, wf.Name, workflow.LoadOptions{WithLabels: true})
-	test.NoError(t, errW)
-	assert.NotNil(t, wfUpdated.Labels)
-	assert.Equal(t, 0, len(wfUpdated.Labels))
+	require.NoError(t, errW)
+	require.Equal(t, 0, len(wfUpdated.Labels))
 }
 
 func Test_deleteWorkflowHandler(t *testing.T) {

@@ -520,6 +520,28 @@ func (opt LoadAllWorkflowsOptions) withNotifications(db gorp.SqlExecutor, ws *[]
 }
 
 func (opt LoadAllWorkflowsOptions) withLabels(db gorp.SqlExecutor, ws *[]Workflow) error {
+
+	var ids = make([]int64, 0, len(*ws))
+	for _, w := range *ws {
+		ids = append(ids, w.ID)
+	}
+
+	labels, err := LoadLabels(db, ids...)
+	if err != nil {
+		return err
+	}
+
+	log.Debug("withLabels> %+v => %+v", ids, labels)
+
+	for x := range *ws {
+		w := &(*ws)[x]
+		for _, label := range labels {
+			if w.ID == label.WorkflowID {
+				w.Labels = append(w.Labels, label)
+			}
+		}
+	}
+
 	return nil
 }
 

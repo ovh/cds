@@ -1216,7 +1216,6 @@ func Test_postWorkflowRunAsyncFailedHandler(t *testing.T) {
 		require.NoError(t, json.Unmarshal(recGetBody, &wrGet))
 
 		if sdk.StatusIsTerminated(wrGet.Status) {
-			t.Logf("wrGet.Infos> %+v", wrGet.Infos)
 			assert.Equal(t, sdk.StatusFail, wrGet.Status)
 			assert.Equal(t, 1, len(wrGet.Infos))
 			if len(wrGet.Infos) == 1 {
