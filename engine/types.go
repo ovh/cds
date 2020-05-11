@@ -3,6 +3,7 @@ package main
 import (
 	"github.com/ovh/cds/engine/api"
 	"github.com/ovh/cds/engine/api/observability"
+	"github.com/ovh/cds/engine/cdn"
 	"github.com/ovh/cds/engine/elasticsearch"
 	"github.com/ovh/cds/engine/hatchery/kubernetes"
 	"github.com/ovh/cds/engine/hatchery/local"
@@ -36,6 +37,7 @@ type Configuration struct {
 	UI              *ui.Configuration             `toml:"ui" comment:"#####################\n UI Configuration \n####################" json:"ui"`
 	Hatchery        *HatcheryConfiguration        `toml:"hatchery" json:"hatchery"`
 	Hooks           *hooks.Configuration          `toml:"hooks" comment:"######################\n CDS Hooks Settings \n######################" json:"hooks"`
+	CDN             *cdn.Configuration            `toml:"cdn" comment:"######################\n CDS cdn Settings \n######################" json:"cdn"`
 	VCS             *vcs.Configuration            `toml:"vcs" comment:"######################\n CDS VCS Settings \n######################" json:"vcs"`
 	Repositories    *repositories.Configuration   `toml:"repositories" comment:"######################\n CDS Repositories Settings \n######################" json:"repositories"`
 	ElasticSearch   *elasticsearch.Configuration  `toml:"elasticsearch" comment:"######################\n CDS ElasticSearch Settings \n This is use for CDS timeline and is optional\n######################" json:"elasticsearch"`

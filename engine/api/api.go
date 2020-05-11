@@ -49,6 +49,7 @@ import (
 	"github.com/ovh/cds/engine/api/worker"
 	"github.com/ovh/cds/engine/api/workermodel"
 	"github.com/ovh/cds/engine/api/workflow"
+	"github.com/ovh/cds/engine/cdn"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
@@ -192,6 +193,7 @@ type Configuration struct {
 		StepMaxSize    int64 `toml:"stepMaxSize" default:"15728640" comment:"Max step logs size in bytes (default: 15MB)" json:"stepMaxSize"`
 		ServiceMaxSize int64 `toml:"serviceMaxSize" default:"15728640" comment:"Max service logs size in bytes (default: 15MB)" json:"serviceMaxSize"`
 	} `toml:"log" json:"log" comment:"###########################\n Log settings.\n##########################"`
+	CDN cdn.Configuration `toml:"cdn" json:"cdn" comment:"###########################\n CDN settings.\n##########################"`
 }
 
 // ServiceConfiguration is the configuration of external service
@@ -871,6 +873,13 @@ func (a *API) Serve(ctx context.Context) error {
 		}
 		log.Error(ctx, "api> heap dump uploaded to %s", s)
 	}()
+
+	cdsService := &cdn.Service{
+		Cfg:   a.Config.CDN,
+		Db:    a.mustDB(),
+		Cache: a.Cache,
+	}
+	cdsService.RunTcpLogServer(ctx)
 
 	log.Info(ctx, "Starting CDS API HTTP Server on %s:%d", a.Config.HTTP.Addr, a.Config.HTTP.Port)
 	if err := s.ListenAndServe(); err != nil {

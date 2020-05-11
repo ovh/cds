@@ -14,6 +14,7 @@ import (
 	"github.com/ovh/cds/engine/api"
 	"github.com/ovh/cds/engine/api/observability"
 	"github.com/ovh/cds/engine/api/services"
+	"github.com/ovh/cds/engine/cdn"
 	"github.com/ovh/cds/engine/elasticsearch"
 	"github.com/ovh/cds/engine/hatchery/kubernetes"
 	"github.com/ovh/cds/engine/hatchery/local"
@@ -79,9 +80,12 @@ This component operates CDS workflow repositories
 #### VCS
 This component operates CDS VCS connectivity
 
+#### CDN
+This component operates CDS CDN to handle storage
+
 Start all of this with a single command:
 
-	$ engine start [api] [hatchery:local] [hatchery:marathon] [hatchery:openstack] [hatchery:swarm] [hatchery:vsphere] [elasticsearch] [hooks] [vcs] [repositories] [migrate] [ui]
+	$ engine start [api] [cdn] [hatchery:local] [hatchery:marathon] [hatchery:openstack] [hatchery:swarm] [hatchery:vsphere] [elasticsearch] [hooks] [vcs] [repositories] [migrate] [ui]
 
 All the services are using the same configuration file format.
 
@@ -133,7 +137,7 @@ See $ engine config command for more details.
 		for _, a := range args {
 			fmt.Printf("Starting service %s\n", a)
 			switch a {
-			case "api":
+			case services.TypeAPI:
 				if conf.API == nil {
 					sdk.Exit("Unable to start: missing service %s configuration", a)
 				}
@@ -141,7 +145,7 @@ See $ engine config command for more details.
 				names = append(names, conf.API.Name)
 				types = append(types, services.TypeAPI)
 
-			case "ui":
+			case services.TypeUI:
 				if conf.UI == nil {
 					sdk.Exit("Unable to start: missing service %s configuration", a)
 				}
@@ -157,7 +161,7 @@ See $ engine config command for more details.
 				names = append(names, conf.DatabaseMigrate.Name)
 				types = append(types, services.TypeDBMigrate)
 
-			case "hatchery:local":
+			case services.TypeHatchery + ":local":
 				if conf.Hatchery.Local == nil {
 					sdk.Exit("Unable to start: missing service %s configuration", a)
 				}
@@ -165,7 +169,7 @@ See $ engine config command for more details.
 				names = append(names, conf.Hatchery.Local.Name)
 				types = append(types, services.TypeHatchery)
 
-			case "hatchery:kubernetes":
+			case services.TypeHatchery + ":kubernetes":
 				if conf.Hatchery.Kubernetes == nil {
 					sdk.Exit("Unable to start: missing service %s configuration", a)
 				}
@@ -173,7 +177,7 @@ See $ engine config command for more details.
 				names = append(names, conf.Hatchery.Kubernetes.Name)
 				types = append(types, services.TypeHatchery)
 
-			case "hatchery:marathon":
+			case services.TypeHatchery + ":marathon":
 				if conf.Hatchery.Marathon == nil {
 					sdk.Exit("Unable to start: missing service %s configuration", a)
 				}
@@ -181,7 +185,7 @@ See $ engine config command for more details.
 				names = append(names, conf.Hatchery.Marathon.Name)
 				types = append(types, services.TypeHatchery)
 
-			case "hatchery:openstack":
+			case services.TypeHatchery + ":openstack":
 				if conf.Hatchery.Openstack == nil {
 					sdk.Exit("Unable to start: missing service %s configuration", a)
 				}
@@ -189,7 +193,7 @@ See $ engine config command for more details.
 				names = append(names, conf.Hatchery.Openstack.Name)
 				types = append(types, services.TypeAPI)
 
-			case "hatchery:swarm":
+			case services.TypeHatchery + ":swarm":
 				if conf.Hatchery.Swarm == nil {
 					sdk.Exit("Unable to start: missing service %s configuration", a)
 				}
@@ -197,7 +201,7 @@ See $ engine config command for more details.
 				names = append(names, conf.Hatchery.Swarm.Name)
 				types = append(types, services.TypeHatchery)
 
-			case "hatchery:vsphere":
+			case services.TypeHatchery + ":vsphere":
 				if conf.Hatchery.VSphere == nil {
 					sdk.Exit("Unable to start: missing service %s configuration", a)
 				}
@@ -205,7 +209,7 @@ See $ engine config command for more details.
 				names = append(names, conf.Hatchery.VSphere.Name)
 				types = append(types, services.TypeHatchery)
 
-			case "hooks":
+			case services.TypeHooks:
 				if conf.Hooks == nil {
 					sdk.Exit("Unable to start: missing service %s configuration", a)
 				}
@@ -213,7 +217,15 @@ See $ engine config command for more details.
 				names = append(names, conf.Hooks.Name)
 				types = append(types, services.TypeHooks)
 
-			case "vcs":
+			case services.TypeCDN:
+				if conf.CDN == nil {
+					sdk.Exit("Unable to start: missing service %s configuration", a)
+				}
+				serviceConfs = append(serviceConfs, serviceConf{arg: a, service: cdn.New(), cfg: *conf.CDN})
+				names = append(names, conf.CDN.Name)
+				types = append(types, services.TypeCDN)
+
+			case services.TypeVCS:
 				if conf.VCS == nil {
 					sdk.Exit("Unable to start: missing service %s configuration", a)
 				}
@@ -221,7 +233,7 @@ See $ engine config command for more details.
 				names = append(names, conf.VCS.Name)
 				types = append(types, services.TypeVCS)
 
-			case "repositories":
+			case services.TypeRepositories:
 				if conf.Repositories == nil {
 					sdk.Exit("Unable to start: missing service %s configuration", a)
 				}

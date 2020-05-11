@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/docker/docker/api/types"
+
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
@@ -24,6 +25,7 @@ func (h *HatcherySwarm) getServicesLogs() error {
 			if !isWorkflowService {
 				continue
 			}
+			workerName := cnt.Labels["service_worker"]
 			ctx, cancel := context.WithTimeout(context.Background(), time.Minute*2)
 			logsOpts := types.ContainerLogsOptions{
 				Details:    true,
@@ -72,17 +74,21 @@ func (h *HatcherySwarm) getServicesLogs() error {
 					ServiceRequirementID:   reqServiceID,
 					ServiceRequirementName: cnt.Labels["service_req_name"],
 					Val:                    string(logs),
+					WorkerName:             workerName,
 				})
 			}
-
-			if len(servicesLogs) > 0 {
+		}
+		if len(servicesLogs) > 0 {
+			ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+			if h.Common.ServiceLogger == nil {
 				// Do call api
-				ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 				if err := h.Client.QueueServiceLogs(ctx, servicesLogs); err != nil {
 					log.Error(ctx, "Hatchery> Swarm> Cannot send service logs : %v", err)
 				}
-				cancel()
+			} else {
+				h.Common.SendServiceLog(ctx, servicesLogs)
 			}
+			cancel()
 		}
 	}
 	return nil

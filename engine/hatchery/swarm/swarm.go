@@ -172,6 +172,9 @@ func (h *HatcherySwarm) InitHatchery(ctx context.Context) error {
 			return fmt.Errorf("no docker engine available")
 		}
 	}
+	if err := h.Common.InitServiceLogger(); err != nil {
+		return err
+	}
 
 	sdk.GoRoutine(context.Background(), "swarm", func(ctx context.Context) { h.routines(ctx) })
 

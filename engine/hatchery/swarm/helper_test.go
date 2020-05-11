@@ -1,6 +1,7 @@
 package swarm
 
 import (
+	"github.com/ovh/cds/engine/hatchery"
 	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/h2non/gock.v1"
@@ -37,6 +38,7 @@ func testSwarmHatchery(t *testing.T) *HatcherySwarm {
 		Config: HatcheryConfiguration{
 			DisableDockerOptsOnRequirements: false,
 		},
+		Common: hatchery.Common{},
 	}
 	h.dockerClients["default"] = &dockerClient{Client: *c, MaxContainers: 2, name: "default"}
 
