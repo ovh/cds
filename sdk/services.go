@@ -56,20 +56,16 @@ func (c *ServiceConfig) Scan(src interface{}) error {
 	return WrapError(json.Unmarshal(source, c), "cannot unmarshal ServiceConfig")
 }
 
-// ExternalService represents an external service
-type ExternalService struct {
-	Service    `json:"-"`
-	HealthURL  string `json:"health_url"`
-	HealthPort string `json:"health_port"`
-	HealthPath string `json:"health_path"`
-	Port       string `json:"port"`
-	URL        string `json:"url"`
-	Path       string `json:"path"`
-}
-
-func (e ExternalService) ServiceConfig() ServiceConfig {
-	b, _ := json.Marshal(e)
-	var cfg ServiceConfig
-	json.Unmarshal(b, &cfg) // nolint
-	return cfg
+// ServiceConfiguration is the configuration of service
+type ServiceConfiguration struct {
+	Name       string `toml:"name" json:"name"`
+	URL        string `toml:"url" json:"url"`
+	Port       string `toml:"port" json:"port"`
+	Path       string `toml:"path" json:"path"`
+	HealthURL  string `toml:"healthUrl" json:"health_url"`
+	HealthPort string `toml:"healthPort" json:"health_port"`
+	HealthPath string `toml:"healthPath" json:"health_path"`
+	Type       string `toml:"type" json:"type"`
+	PublicKey  string `json:"publicKey"`
+	ID         int64  `json:"id"`
 }

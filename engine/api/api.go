@@ -180,9 +180,9 @@ type Configuration struct {
 			Token        string `toml:"token" comment:"Token shared between Izanami and CDS to be able to send webhooks from izanami" json:"-"`
 		} `toml:"izanami" comment:"Feature flipping provider: https://maif.github.io/izanami" json:"izanami"`
 	} `toml:"features" comment:"###########################\n CDS Features flipping Settings \n##########################" json:"features"`
-	Services    []ServiceConfiguration `toml:"services" comment:"###########################\n CDS Services Settings \n##########################" json:"services"`
-	DefaultOS   string                 `toml:"defaultOS" default:"linux" comment:"if no model and os/arch is specified in your job's requirements then spawn worker on this operating system (example: freebsd, linux, windows)" json:"defaultOS"`
-	DefaultArch string                 `toml:"defaultArch" default:"amd64" comment:"if no model and no os/arch is specified in your job's requirements then spawn worker on this architecture (example: amd64, arm, 386)" json:"defaultArch"`
+	Services    []sdk.ServiceConfiguration `toml:"services" comment:"###########################\n CDS Services Settings \n##########################" json:"services"`
+	DefaultOS   string                     `toml:"defaultOS" default:"linux" comment:"if no model and os/arch is specified in your job's requirements then spawn worker on this operating system (example: freebsd, linux, windows)" json:"defaultOS"`
+	DefaultArch string                     `toml:"defaultArch" default:"amd64" comment:"if no model and no os/arch is specified in your job's requirements then spawn worker on this architecture (example: amd64, arm, 386)" json:"defaultArch"`
 	Graylog     struct {
 		AccessToken string `toml:"accessToken" json:"-"`
 		Stream      string `toml:"stream" json:"-"`
@@ -192,18 +192,6 @@ type Configuration struct {
 		StepMaxSize    int64 `toml:"stepMaxSize" default:"15728640" comment:"Max step logs size in bytes (default: 15MB)" json:"stepMaxSize"`
 		ServiceMaxSize int64 `toml:"serviceMaxSize" default:"15728640" comment:"Max service logs size in bytes (default: 15MB)" json:"serviceMaxSize"`
 	} `toml:"log" json:"log" comment:"###########################\n Log settings.\n##########################"`
-}
-
-// ServiceConfiguration is the configuration of external service
-type ServiceConfiguration struct {
-	Name       string `toml:"name" json:"name"`
-	URL        string `toml:"url" json:"url"`
-	Port       string `toml:"port" json:"port"`
-	Path       string `toml:"path" json:"path"`
-	HealthURL  string `toml:"healthUrl" json:"healthUrl"`
-	HealthPort string `toml:"healthPort" json:"healthPort"`
-	HealthPath string `toml:"healthPath" json:"healthPath"`
-	Type       string `toml:"type" json:"type"`
 }
 
 // DefaultValues is the struc for API Default configuration default values
@@ -780,10 +768,10 @@ func (a *API) Serve(ctx context.Context) error {
 	// Init Services
 	services.Initialize(ctx, a.DBConnectionFactory, a.PanicDump())
 
-	externalServices := make([]sdk.ExternalService, 0, len(a.Config.Services))
+	externalServices := make([]services.ExternalService, 0, len(a.Config.Services))
 	for _, s := range a.Config.Services {
 		log.Info(ctx, "Managing external service %s %s", s.Name, s.Type)
-		serv := sdk.ExternalService{
+		serv := services.ExternalService{
 			Service: sdk.Service{
 				CanonicalService: sdk.CanonicalService{
 					Name:    s.Name,

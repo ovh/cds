@@ -15,12 +15,12 @@ func serviceHandler(ctx context.Context, wk *CurrentWorker) http.HandlerFunc {
 		serviceType := vars["type"]
 
 		log.Debug("Getting service configuration...")
-		serviceConfig, err := wk.Client().ServiceConfigurationGet(ctx, serviceType)
+		servicesConfig, err := wk.Client().ServiceConfigurationGet(ctx, serviceType)
 		if err != nil {
 			log.Warning(ctx, "unable to get data: %v", err)
 			writeError(w, r, fmt.Errorf("unable to get service configuration"))
 		}
-		writeJSON(w, serviceConfig, http.StatusOK)
+		writeJSON(w, servicesConfig, http.StatusOK)
 		return
 	}
 }
