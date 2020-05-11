@@ -163,7 +163,6 @@ func (w *Workflow) PostGet(db gorp.SqlExecutor) error {
 	}
 
 	for i := range nodes {
-		log.Debug("PostGet> node groups: %+v", mapGroups[nodes[i].ID])
 		nodes[i].Groups = mapGroups[nodes[i].ID]
 	}
 

@@ -99,6 +99,14 @@ func (a *WorkflowData) Scan(src interface{}) error {
 
 type Workflows []Workflow
 
+func (workflows Workflows) IDs() []int64 {
+	var res = make([]int64, len(workflows))
+	for i := range workflows {
+		res[i] = workflows[i].ID
+	}
+	return res
+}
+
 func (workflows Workflows) Names() []string {
 	var res = make([]string, len(workflows))
 	for i := range workflows {

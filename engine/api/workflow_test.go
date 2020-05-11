@@ -85,6 +85,7 @@ func Test_getWorkflowsHandler(t *testing.T) {
 
 	wfList := []sdk.Workflow{}
 	test.NoError(t, json.Unmarshal(w.Body.Bytes(), &wfList))
+	require.Len(t, wfList, 1)
 	for _, w := range wfList {
 		assert.Equal(t, true, w.Permissions.Readable, "readable should be true")
 		assert.Equal(t, true, w.Permissions.Writable, "writable should be true")

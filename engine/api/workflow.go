@@ -12,6 +12,7 @@ import (
 
 	"github.com/go-gorp/gorp"
 	"github.com/gorilla/mux"
+
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/event"
@@ -30,39 +31,32 @@ import (
 // getWorkflowsHandler returns ID and name of workflows for a given project/user
 func (api *API) getWorkflowsHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		vars := mux.Vars(r)
-		key := vars[permProjectKey]
+		filterByProject := r.FormValue(permProjectKey)
 		filterByRepo := r.FormValue("repo")
 
-		ws, err := workflow.LoadAll(api.mustDB(), key)
+		var opts = workflow.LoadAllWorkflowsOptions{}
+
+		if filterByProject != "" {
+			opts.Filters.ProjectKey = filterByProject
+		}
+
+		if filterByRepo != "" {
+			opts.Filters.Repository = filterByRepo
+		}
+
+		groupIDS := getAPIConsumer(ctx).GetGroupIDs()
+		opts.Filters.GroupIDs = groupIDS
+		if isMaintainer(ctx) {
+			opts.Filters.GroupIDs = nil
+		}
+
+		ws, err := workflow.LoadAllWorkflows(ctx, api.mustDBWithCtx(ctx), opts)
 		if err != nil {
 			return err
 		}
 
-		if filterByRepo != "" {
-			mapApps := make(map[int64]sdk.Application)
-			apps, err := application.LoadAll(api.mustDB(), key)
-			if err != nil {
-				return err
-			}
-
-			for _, app := range apps {
-				mapApps[app.ID] = app
-			}
-
-			ws = ws.Filter(
-				func(w sdk.Workflow) bool {
-					if w.WorkflowData.Node.Context != nil {
-						app, _ := mapApps[w.WorkflowData.Node.Context.ApplicationID]
-						return app.RepositoryFullname == filterByRepo
-					}
-					return false
-				},
-			)
-		}
-
-		names := ws.Names()
-		perms, err := permission.LoadWorkflowMaxLevelPermission(ctx, api.mustDB(), key, names, getAPIConsumer(ctx).GetGroupIDs())
+		ids := ws.IDs()
+		perms, err := permission.LoadWorkflowMaxLevelPermissionByWorkflowIDs(ctx, api.mustDB(), ids, groupIDS)
 		if err != nil {
 			return err
 		}
@@ -71,7 +65,8 @@ func (api *API) getWorkflowsHandler() service.Handler {
 			if isAdmin(ctx) {
 				ws[i].Permissions = sdk.Permissions{Readable: true, Writable: true, Executable: true}
 			} else {
-				ws[i].Permissions = perms.Permissions(ws[i].Name)
+				idString := strconv.FormatInt(ws[i].ID, 10)
+				ws[i].Permissions = perms.Permissions(idString)
 				if isMaintainer(ctx) {
 					ws[i].Permissions.Readable = true
 				}
