@@ -32,3 +32,12 @@ func (c *client) ServiceRegister(ctx context.Context, s sdk.Service) (*sdk.Servi
 	}
 	return &s, nil
 }
+
+func (c *client) ServiceConfigurationGet(ctx context.Context, t string) (*sdk.ExternalService, error) {
+	var serviceConf sdk.ExternalService
+	_, err := c.GetJSON(ctx, fmt.Sprintf("/services/%s", t), &serviceConf)
+	if err != nil {
+		return nil, err
+	}
+	return &serviceConf, nil
+}
