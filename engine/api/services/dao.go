@@ -80,7 +80,7 @@ func LoadAllByType(ctx context.Context, db gorp.SqlExecutor, typeService string)
 // LoadAllByType returns all services that users can see with given type.
 func LoadAllByTypeAndUserID(ctx context.Context, db gorp.SqlExecutor, typeService string, userID string) ([]sdk.Service, error) {
 	query := gorpmapping.NewQuery(`
-		SELECT * 
+		SELECT service.* 
 		FROM service 
 		JOIN auth_consumer on auth_consumer.id = service.auth_consumer_id
 		WHERE service.type = $1 AND auth_consumer.user_id = $2`).Args(typeService, userID)

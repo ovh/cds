@@ -20,6 +20,7 @@ func TestServicesHandlers(t *testing.T) {
 	defer end()
 
 	admin, jwtRaw := assets.InsertAdminUser(t, api.mustDB())
+	_, jwtLambda := assets.InsertLambdaUser(t, api.mustDB())
 
 	data := sdk.AuthConsumer{
 		Name:         sdk.RandomString(10),
@@ -81,6 +82,38 @@ func TestServicesHandlers(t *testing.T) {
 	rec = httptest.NewRecorder()
 	api.Router.Mux.ServeHTTP(rec, req)
 	require.Equal(t, 204, rec.Code)
+
+	// Get service with lambda user => 404
+	uri = api.Router.GetRoute(http.MethodGet, api.getServiceHandler, map[string]string{
+		"type": services.TypeHatchery,
+	})
+	require.NotEmpty(t, uri)
+	req = assets.NewJWTAuthentifiedRequest(t, jwtLambda, http.MethodGet, uri, data)
+	rec = httptest.NewRecorder()
+	api.Router.Mux.ServeHTTP(rec, req)
+	require.Equal(t, 404, rec.Code)
+
+	// lambda user Insert a service
+	uri = api.Router.GetRoute(http.MethodPost, api.postServiceRegisterHandler, nil)
+	require.NotEmpty(t, uri)
+	req = assets.NewJWTAuthentifiedRequest(t, jwtLambda, http.MethodPost, uri, srv)
+	rec = httptest.NewRecorder()
+	api.Router.Mux.ServeHTTP(rec, req)
+	require.Equal(t, 200, rec.Code)
+
+	// Get service with lambda user => 404
+	uri = api.Router.GetRoute(http.MethodGet, api.getServiceHandler, map[string]string{
+		"type": services.TypeHatchery,
+	})
+	require.NotEmpty(t, uri)
+	req = assets.NewJWTAuthentifiedRequest(t, jwtLambda, http.MethodGet, uri, data)
+	rec = httptest.NewRecorder()
+	api.Router.Mux.ServeHTTP(rec, req)
+	require.Equal(t, 200, rec.Code)
+
+	var servs []sdk.ServiceConfiguration
+	require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &servs))
+	require.Equal(t, 1, len(servs))
 
 	require.NoError(t, services.Delete(api.mustDB(), &srv))
 }
