@@ -23,10 +23,17 @@ func (api *API) getExternalServiceHandler() service.Handler {
 
 		for _, s := range api.Config.Services {
 			if s.Type == typeService {
-				return service.WriteJSON(w, s, http.StatusOK)
+				extService := sdk.ExternalService{
+					HealthPath: s.HealthPath,
+					HealthPort: s.HealthPort,
+					Path:       s.Path,
+					HealthURL:  s.HealthURL,
+					Port:       s.Port,
+					URL:        s.URL,
+				}
+				return service.WriteJSON(w, extService, http.StatusOK)
 			}
 		}
-
 		return sdk.WrapError(sdk.ErrNotFound, "service %s not found", typeService)
 	}
 }
