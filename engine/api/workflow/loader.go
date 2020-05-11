@@ -386,39 +386,24 @@ func (opt LoadAllWorkflowsOptions) withIntegrations(db gorp.SqlExecutor, ws *[]W
 }
 
 func (opt LoadAllWorkflowsOptions) withAsCodeUpdateEvents(db gorp.SqlExecutor, ws *[]Workflow) error {
-	var mapRepos = map[string][]sdk.AsCodeEvent{}
+	var ids = make([]int64, 0, len(*ws))
 	for _, w := range *ws {
-		if w.FromRepository != "" {
-			mapRepos[w.FromRepository] = nil
-		}
+		ids = append(ids, w.ID)
 	}
 
-	var repos = make([]string, 0, len(mapRepos))
-	for repo := range mapRepos {
-		repos = append(repos, repo)
-	}
-
-	asCodeEvents, err := ascode.LoadAsCodeEventByRepos(context.Background(), db, repos)
+	asCodeEvents, err := ascode.LoadAsCodeEventByWorkflowIDs(context.Background(), db, ids)
 	if err != nil {
 		return err
-	}
-
-	for repo := range mapRepos {
-		for i := range asCodeEvents {
-			if repo == asCodeEvents[i].FromRepo {
-				mapRepos[repo] = append(mapRepos[repo], asCodeEvents[i])
-			}
-		}
 	}
 
 	for x := range *ws {
 		w := &(*ws)[x]
 		w.InitMaps()
-		if w.FromRepository == "" {
-			continue
-		}
-		if events, ok := mapRepos[w.FromRepository]; ok {
-			w.AsCodeEvent = events
+
+		for _, evt := range asCodeEvents {
+			if _, ok := evt.Data.Workflows[w.ID]; ok {
+				w.AsCodeEvent = append(w.AsCodeEvent, evt)
+			}
 		}
 	}
 

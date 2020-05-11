@@ -25,9 +25,10 @@ func LoadAsCodeByPRID(ctx context.Context, db gorp.SqlExecutor, ID int64) (sdk.A
 	return sdk.AsCodeEvent(event), nil
 }
 
-// LoadAsCodeEventByRepos Load as code events for the given repositories
-func LoadAsCodeEventByRepos(ctx context.Context, db gorp.SqlExecutor, repos []string) ([]sdk.AsCodeEvent, error) {
-	query := gorpmapping.NewQuery("SELECT * FROM as_code_events where from_repository = ANY($1)").Args(pq.StringArray(repos))
+// LoadAsCodeEventByWorkflowIDs Load as code events workf given workflow IDs
+func LoadAsCodeEventByWorkflowIDs(ctx context.Context, db gorp.SqlExecutor, workflowIDs []int64) ([]sdk.AsCodeEvent, error) {
+	// ?| => Do any of these array strings exist as top-level keys?
+	query := gorpmapping.NewQuery("SELECT * FROM as_code_events where (data->'workflows')::jsonb ?| $1").Args(pq.Int64Array(workflowIDs))
 	var events []dbAsCodeEvents
 	if err := gorpmapping.GetAll(ctx, db, query, &events); err != nil {
 		return nil, sdk.WrapError(err, "Unable to load as code events")
