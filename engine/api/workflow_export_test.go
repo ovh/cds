@@ -166,8 +166,12 @@ func Test_getWorkflowExportHandlerWithPermissions(t *testing.T) {
 		Name: "Test_getWorkflowExportHandlerWithPermissions-Group2",
 	}
 
-	require.NoError(t, group.Insert(context.TODO(), api.mustDB(), group2))
-	group2, _ = group.LoadByName(context.TODO(), api.mustDB(), "Test_getWorkflowExportHandlerWithPermissions-Group2")
+	g, _ := group.LoadByName(context.TODO(), api.mustDB(), group2.Name)
+	if g != nil {
+		group2 = g
+	} else {
+		require.NoError(t, group.Insert(context.TODO(), api.mustDB(), group2))
+	}
 
 	//First pipeline
 	pip := sdk.Pipeline{

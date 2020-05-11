@@ -16,6 +16,7 @@ import (
 
 // SyncAsCodeEvent checks if workflow as to become ascode
 func SyncAsCodeEvent(ctx context.Context, db *gorp.DbMap, store cache.Store, proj sdk.Project, app sdk.Application, u sdk.Identifiable) ([]sdk.AsCodeEvent, string, error) {
+	log.Debug("sync.SyncAsCodeEvent> proj: %s, app: %s", proj.Key, app.Name)
 	vcsServer := repositoriesmanager.GetProjectVCSServer(proj, app.VCSServer)
 	if vcsServer == nil {
 		return nil, "", sdk.NewErrorFrom(sdk.ErrNotFound, "no vcs server found on application %s", app.Name)

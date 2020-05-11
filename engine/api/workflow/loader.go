@@ -3,6 +3,7 @@ package workflow
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/go-gorp/gorp"
 	"github.com/lib/pq"
@@ -11,6 +12,7 @@ import (
 	"github.com/ovh/cds/engine/api/ascode"
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/engine/api/environment"
+	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/integration"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/workflowtemplate"
@@ -29,11 +31,14 @@ type LoadAllWorkflowsOptionsFilters struct {
 type LoadAllWorkflowsOptionsLoaders struct {
 	WithApplications       bool
 	WithPipelines          bool
+	WithDeepPipelines      bool
 	WithEnvironments       bool
 	WithIntegrations       bool
 	WithIcon               bool
 	WithAsCodeUpdateEvents bool
 	WithTemplate           bool
+	WithNotifications      bool
+	WithLabels             bool
 }
 
 type LoadAllWorkflowsOptions struct {
@@ -80,7 +85,8 @@ func (opt LoadAllWorkflowsOptions) Query() gorpmapping.Query {
     )
     SELECT workflow.* , selected_workflow.projectkey as "project_key"
     FROM workflow 
-    JOIN selected_workflow ON selected_workflow.workflow_id = workflow.id
+	JOIN selected_workflow ON selected_workflow.workflow_id = workflow.id
+	WHERE workflow.to_delete  = false
     `
 
 	var filters []string
@@ -107,11 +113,7 @@ func (opt LoadAllWorkflowsOptions) Query() gorpmapping.Query {
 	}
 
 	for i, f := range filters {
-		if i == 0 {
-			queryString += " WHERE "
-		} else {
-			queryString += " AND "
-		}
+		queryString += " AND "
 		queryString += fmt.Sprintf(f, i+1)
 	}
 
@@ -156,10 +158,15 @@ func (opt LoadAllWorkflowsOptions) GetLoaders() []gorpmapping.GetOptionFunc {
 		})
 	}
 
-	if opt.Loaders.WithPipelines {
+	if opt.Loaders.WithDeepPipelines {
 		loaders = append(loaders, func(db gorp.SqlExecutor, i interface{}) error {
 			ws := i.(*[]Workflow)
-			return opt.withPipelines(db, ws)
+			return opt.withPipelines(db, ws, true)
+		})
+	} else if opt.Loaders.WithPipelines {
+		loaders = append(loaders, func(db gorp.SqlExecutor, i interface{}) error {
+			ws := i.(*[]Workflow)
+			return opt.withPipelines(db, ws, false)
 		})
 	}
 
@@ -195,7 +202,55 @@ func (opt LoadAllWorkflowsOptions) GetLoaders() []gorpmapping.GetOptionFunc {
 		})
 	}
 
+	if opt.Loaders.WithNotifications {
+		loaders = append(loaders, func(db gorp.SqlExecutor, i interface{}) error {
+			ws := i.(*[]Workflow)
+			return opt.withNotifications(db, ws)
+		})
+	}
+
+	if opt.Loaders.WithLabels {
+		loaders = append(loaders, func(db gorp.SqlExecutor, i interface{}) error {
+			ws := i.(*[]Workflow)
+			return opt.withLabels(db, ws)
+		})
+	}
+
+	loaders = append(loaders, func(db gorp.SqlExecutor, i interface{}) error {
+		ws := i.(*[]Workflow)
+		return opt.withGroups(db, ws)
+	})
+
 	return loaders
+}
+
+func (opt LoadAllWorkflowsOptions) withGroups(db gorp.SqlExecutor, ws *[]Workflow) error {
+	var mapIDs = map[int64]*Workflow{}
+	for _, w := range *ws {
+		mapIDs[w.ID] = &w
+	}
+
+	var ids = make([]int64, 0, len(mapIDs))
+	for id := range mapIDs {
+		ids = append(ids, id)
+	}
+
+	perms, err := group.LoadWorkflowGroupsByWorkflowIDs(db, ids)
+	if err != nil {
+		return err
+	}
+
+	for workflowID, perm := range perms {
+		for i, w := range *ws {
+			if w.ID == workflowID {
+				w.Groups = perm
+				(*ws)[i] = w
+				break
+			}
+		}
+	}
+
+	return nil
 }
 
 func (opt LoadAllWorkflowsOptions) withEnvironments(db gorp.SqlExecutor, ws *[]Workflow) error {
@@ -249,7 +304,7 @@ func (opt LoadAllWorkflowsOptions) withEnvironments(db gorp.SqlExecutor, ws *[]W
 	return nil
 }
 
-func (opt LoadAllWorkflowsOptions) withPipelines(db gorp.SqlExecutor, ws *[]Workflow) error {
+func (opt LoadAllWorkflowsOptions) withPipelines(db gorp.SqlExecutor, ws *[]Workflow, deep bool) error {
 	var mapIDs = map[int64]*sdk.Pipeline{}
 	for _, w := range *ws {
 		nodesArray := w.WorkflowData.Array()
@@ -267,7 +322,7 @@ func (opt LoadAllWorkflowsOptions) withPipelines(db gorp.SqlExecutor, ws *[]Work
 		ids = append(ids, id)
 	}
 
-	pips, err := pipeline.LoadAllByIDs(db, ids, false)
+	pips, err := pipeline.LoadAllByIDs(db, ids, deep)
 	if err != nil {
 		return err
 	}
@@ -351,7 +406,6 @@ func (opt LoadAllWorkflowsOptions) withIntegrations(db gorp.SqlExecutor, ws *[]W
 		ids = append(ids, id)
 	}
 
-	log.Debug("loading project_integration %+v", ids)
 	projectIntegrations, err := integration.LoadIntegrationsByIDs(db, ids)
 	if err != nil {
 		return err
@@ -461,12 +515,22 @@ func (opt LoadAllWorkflowsOptions) withApplications(db gorp.SqlExecutor, ws *[]W
 	return nil
 }
 
-func LoadAllWorkflows(ctx context.Context, db gorp.SqlExecutor, opts LoadAllWorkflowsOptions) ([]sdk.Workflow, error) {
+func (opt LoadAllWorkflowsOptions) withNotifications(db gorp.SqlExecutor, ws *[]Workflow) error {
+	return nil
+}
+
+func (opt LoadAllWorkflowsOptions) withLabels(db gorp.SqlExecutor, ws *[]Workflow) error {
+	return nil
+}
+
+func LoadAllWorkflows(ctx context.Context, db gorp.SqlExecutor, opts LoadAllWorkflowsOptions) (sdk.Workflows, error) {
+	t0 := time.Now()
+
 	var workflows []Workflow
 	if err := gorpmapping.GetAll(ctx, db, opts.Query(), &workflows, opts.GetLoaders()...); err != nil {
 		return nil, err
 	}
-	ws := make([]sdk.Workflow, 0, len(workflows))
+	ws := make(sdk.Workflows, 0, len(workflows))
 	for i := range workflows {
 		if err := workflows[i].PostGet(db); err != nil {
 			return nil, err
@@ -475,5 +539,11 @@ func LoadAllWorkflows(ctx context.Context, db gorp.SqlExecutor, opts LoadAllWork
 		w.Normalize()
 		ws = append(ws, w)
 	}
+
+	// TODO load workflow groupd and node_groups properly in mandatory loaders
+
+	delta := time.Since(t0).Seconds()
+	log.Debug("LoadAllWorkflows - %d results in %.3f seconds", len(ws), delta)
+
 	return ws, nil
 }

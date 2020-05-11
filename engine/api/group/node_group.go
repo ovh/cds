@@ -5,8 +5,8 @@ import (
 	"strings"
 
 	"github.com/go-gorp/gorp"
+	"github.com/lib/pq"
 
-	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/sdk"
 )
 
@@ -17,10 +17,10 @@ func LoadGroupsByNode(db gorp.SqlExecutor, nodeID []int64) (map[int64][]sdk.Grou
 		JOIN project_group ON "group".id = project_group.group_id
 		JOIN workflow_perm ON workflow_perm.project_group_id = project_group.id
 	 	JOIN workflow_node_group ON workflow_node_group.workflow_group_id = workflow_perm.id
-		WHERE workflow_node_group.workflow_node_id = ANY(string_to_array($1, ',')::int[])
+		WHERE workflow_node_group.workflow_node_id = ANY($1)
 		ORDER BY "group".name ASC`
 
-	rows, err := db.Query(query, gorpmapping.IDsToQueryString(nodeID))
+	rows, err := db.Query(query, pq.Int64Array(nodeID))
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, nil

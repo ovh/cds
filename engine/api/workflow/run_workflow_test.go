@@ -107,6 +107,7 @@ func TestManualRun1(t *testing.T) {
 	w1, err := workflow.Load(context.TODO(), db, cache, *proj, "test_1", workflow.LoadOptions{
 		DeepPipeline: true,
 	})
+	t.Logf("w1: %+v", w1)
 	require.NoError(t, err)
 
 	wr, errWR := workflow.CreateRun(db, w1, nil, u)
