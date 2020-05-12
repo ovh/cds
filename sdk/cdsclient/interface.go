@@ -277,11 +277,12 @@ type WorkerClient interface {
 	WorkerUnregister(ctx context.Context) error
 	WorkerDisable(ctx context.Context, id string) error
 	WorkerModelAdd(name, modelType, patternName string, dockerModel *sdk.ModelDocker, vmModel *sdk.ModelVirtualMachine, groupID int64) (sdk.Model, error)
-	WorkerModel(groupName, name string) (sdk.Model, error)
+	WorkerModelGet(groupName, name string) (sdk.Model, error)
 	WorkerModelDelete(groupName, name string) error
 	WorkerModelSpawnError(groupName, name string, info sdk.SpawnErrorForm) error
-	WorkerModels(*WorkerModelFilter) ([]sdk.Model, error)
-	WorkerModelsEnabled() ([]sdk.Model, error)
+	WorkerModelList(*WorkerModelFilter) ([]sdk.Model, error)
+	WorkerModelEnabledList() ([]sdk.Model, error)
+	WorkerModelSecretList(groupName, name string) (sdk.WorkerModelSecrets, error)
 	WorkerRegister(ctx context.Context, authToken string, form sdk.WorkerRegistrationForm) (*sdk.Worker, bool, error)
 	WorkerSetStatus(ctx context.Context, status string) error
 }

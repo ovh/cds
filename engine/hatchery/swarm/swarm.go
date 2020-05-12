@@ -38,6 +38,8 @@ func New() *HatcherySwarm {
 	return s
 }
 
+var _ hatchery.InterfaceWithModels = new(HatcherySwarm)
+
 // InitHatchery connect the hatchery to the docker api
 func (h *HatcherySwarm) InitHatchery(ctx context.Context) error {
 	h.dockerClients = map[string]*dockerClient{}
@@ -589,7 +591,12 @@ func (h *HatcherySwarm) Configuration() service.HatcheryCommonConfiguration {
 
 // WorkerModelsEnabled returns Worker model enabled
 func (h *HatcherySwarm) WorkerModelsEnabled() ([]sdk.Model, error) {
-	return h.CDSClient().WorkerModelsEnabled()
+	return h.CDSClient().WorkerModelEnabledList()
+}
+
+// WorkerModelSecretList returns secret for given model.
+func (h *HatcherySwarm) WorkerModelSecretList(m sdk.Model) (sdk.WorkerModelSecrets, error) {
+	return h.CDSClient().WorkerModelSecretList(m.Group.Name, m.Name)
 }
 
 func (h *HatcherySwarm) routines(ctx context.Context) {

@@ -29,8 +29,7 @@ func MergeModelEnvsWithDefaultEnvs(envs map[string]string) map[string]string {
 	return envs
 }
 
-const registryPasswordSecretName = "registry_password"
-const registryPasswordSecretTemplate = "{{.secrets.registry_password}}"
+const registryPasswordSecretName = "secrets.registry_password"
 
 // If a docker registry password is given as password input we want to save it as a secret.
 // Also we will reset the input fields to prevent the stortage of the clear value.
@@ -54,13 +53,13 @@ func replaceDockerRegistryPassword(db gorp.SqlExecutor, dbmodel *workerModel) (b
 
 	// Password not changed
 	if dbmodel.ModelDocker.PasswordInput == sdk.PasswordPlaceholder {
-		dbmodel.ModelDocker.Password = registryPasswordSecretTemplate
+		dbmodel.ModelDocker.Password = "{{." + registryPasswordSecretName + "}}"
 		return false, "", nil
 	}
 
 	clearPassword := dbmodel.ModelDocker.PasswordInput
 	dbmodel.ModelDocker.PasswordInput = sdk.PasswordPlaceholder
-	dbmodel.ModelDocker.Password = registryPasswordSecretTemplate
+	dbmodel.ModelDocker.Password = "{{." + registryPasswordSecretName + "}}"
 	return true, clearPassword, nil
 }
 

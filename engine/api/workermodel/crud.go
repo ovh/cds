@@ -128,7 +128,7 @@ func Update(ctx context.Context, db gorp.SqlExecutor, old *sdk.Model, data sdk.M
 		return nil, err
 	}
 
-	oldPath, newPath := old.GetPath(oldGrp.Name), model.GetPath(grp.Name)
+	oldPath, newPath := sdk.ComputeWorkerModelPath(oldGrp.Name, old.Name), sdk.ComputeWorkerModelPath(grp.Name, model.Name)
 	// if the model has been renamed, we will have to update requirements
 	if oldPath != newPath {
 		// select requirements to update

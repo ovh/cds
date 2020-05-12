@@ -12,7 +12,7 @@ import (
 )
 
 // LoadSecretsByModelID retrieves all worker model secrets for given model id.
-func LoadSecretsByModelID(ctx context.Context, db gorp.SqlExecutor, workerModelID int64) ([]sdk.WorkerModelSecret, error) {
+func LoadSecretsByModelID(ctx context.Context, db gorp.SqlExecutor, workerModelID int64) (sdk.WorkerModelSecrets, error) {
 	var dbSecrets []workerModelSecret
 
 	q := gorpmapping.NewQuery(`
@@ -26,7 +26,7 @@ func LoadSecretsByModelID(ctx context.Context, db gorp.SqlExecutor, workerModelI
 	}
 
 	// Check signature of data, if invalid do not return it
-	verifiedSecrets := make([]sdk.WorkerModelSecret, 0, len(dbSecrets))
+	verifiedSecrets := make(sdk.WorkerModelSecrets, 0, len(dbSecrets))
 	for i := range dbSecrets {
 		isValid, err := gorpmapping.CheckSignature(dbSecrets[i], dbSecrets[i].Signature)
 		if err != nil {

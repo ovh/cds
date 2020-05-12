@@ -78,6 +78,16 @@ type WorkerModelSecret struct {
 	Value         string    `json:"value" db:"cipher_value" gorpmapping:"encrypted,ID,Name"`
 }
 
+type WorkerModelSecrets []WorkerModelSecret
+
+func (w WorkerModelSecrets) ToMap() map[string]string {
+	res := make(map[string]string, len(w))
+	for i := range w {
+		res[w[i].Name] = w[i].Value
+	}
+	return res
+}
+
 // Author struct contains info about model author.
 type Author struct {
 	Username string `json:"username" cli:"-"`
@@ -168,12 +178,17 @@ func (m Model) IsValidType() error {
 	return nil
 }
 
-// GetPath returns path for model.
-func (m Model) GetPath(groupName string) string {
+// Path returns full path of the model that contains group and model names.
+func (m Model) Path() string {
+	return ComputeWorkerModelPath(m.Group.Name, m.Name)
+}
+
+// ComputeWorkerModelPath returns path for a worker model with given group name and model name.
+func ComputeWorkerModelPath(groupName, modelName string) string {
 	if groupName == SharedInfraGroupName {
-		return m.Name
+		return modelName
 	}
-	return fmt.Sprintf("%s/%s", groupName, m.Name)
+	return fmt.Sprintf("%s/%s", groupName, modelName)
 }
 
 // ModelVirtualMachine for openstack or vsphere.

@@ -34,6 +34,8 @@ var (
 	}
 )
 
+var _ hatchery.InterfaceWithModels = new(HatcheryOpenstack)
+
 // New instanciates a new Hatchery Openstack
 func New() *HatcheryOpenstack {
 	s := new(HatcheryOpenstack)
@@ -43,7 +45,8 @@ func New() *HatcheryOpenstack {
 	return s
 }
 
-func (s *HatcheryOpenstack) Init(config interface{}) (cdsclient.ServiceConfig, error) {
+// Init cdsclient config.
+func (h *HatcheryOpenstack) Init(config interface{}) (cdsclient.ServiceConfig, error) {
 	var cfg cdsclient.ServiceConfig
 	sConfig, ok := config.(HatcheryConfiguration)
 	if !ok {
@@ -149,9 +152,14 @@ func (*HatcheryOpenstack) ModelType() string {
 	return sdk.Openstack
 }
 
-// WorkerModelsEnabled returns Worker model enabled
+// WorkerModelsEnabled returns Worker model enabled.
 func (h *HatcheryOpenstack) WorkerModelsEnabled() ([]sdk.Model, error) {
-	return h.CDSClient().WorkerModelsEnabled()
+	return h.CDSClient().WorkerModelEnabledList()
+}
+
+// WorkerModelSecretList returns secret for given model.
+func (h *HatcheryOpenstack) WorkerModelSecretList(m sdk.Model) (sdk.WorkerModelSecrets, error) {
+	return h.CDSClient().WorkerModelSecretList(m.Group.Name, m.Name)
 }
 
 // CanSpawn return wether or not hatchery can spawn model
