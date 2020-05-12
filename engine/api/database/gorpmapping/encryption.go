@@ -109,7 +109,7 @@ func updateEncryptedData(db gorp.SqlExecutor, i interface{}) error {
 		c++
 	}
 
-	query := fmt.Sprintf("UPDATE %s SET %s WHERE %s = %v", table, strings.Join(updateSlice, ","), key, id)
+	query := fmt.Sprintf("UPDATE %s SET %s WHERE %s = '%v'", table, strings.Join(updateSlice, ","), key, id)
 	res, err := db.Exec(query, encryptedContentArgs...)
 	if err != nil {
 		return sdk.WithStack(err)

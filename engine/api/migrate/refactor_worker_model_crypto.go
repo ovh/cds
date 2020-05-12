@@ -6,6 +6,7 @@ import (
 
 	"github.com/go-gorp/gorp"
 
+	"github.com/ovh/cds/engine/api/secret"
 	"github.com/ovh/cds/engine/api/workermodel"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
@@ -86,7 +87,23 @@ func refactorWorkerModelCrypto(ctx context.Context, db *gorp.DbMap, id int64) er
 		return sdk.WrapError(err, "unable to select and lock application %d", id)
 	}
 
-	// TODO move encrypted password from model_docker to secrets
+	// Clean useless model data part if exists
+	switch m.Type {
+	case sdk.Docker:
+		m.ModelVirtualMachine = sdk.ModelVirtualMachine{}
+	default:
+		m.ModelDocker = sdk.ModelDocker{}
+	}
+
+	// For docker model with private registry password, we want to move the password to secrets.
+	// To do it we will give the clear value in PasswordInput field that will be managed by UpdateDB func.
+	if m.Type == sdk.Docker && m.ModelDocker.Private && m.ModelDocker.Password != "" {
+		clearPassword, err := secret.DecryptValue(m.ModelDocker.Password)
+		if err != nil {
+			return sdk.WrapError(err, "cannot decrypt registry password for model with id %d", m.ID)
+		}
+		m.ModelDocker.PasswordInput = clearPassword
+	}
 
 	if err := workermodel.UpdateDB(ctx, tx, &m); err != nil {
 		return sdk.WrapError(err, "unable to update worker_model %d", id)

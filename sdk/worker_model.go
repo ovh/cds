@@ -60,7 +60,6 @@ type Model struct {
 	IsDeprecated        bool                `json:"is_deprecated" db:"is_deprecated" cli:"deprecated"`
 	ModelVirtualMachine ModelVirtualMachine `json:"model_virtual_machine,omitempty" db:"model_virtual_machine" cli:"-"`
 	ModelDocker         ModelDocker         `json:"model_docker,omitempty" db:"model_docker" cli:"-"`
-	Secrets             IntegrationConfig   `json:"secrets" db:"cipher_secrets" gorpmapping:"encrypted,ID,Name"`
 	// aggregates
 	Editable               bool          `json:"editable,omitempty" db:"-"`
 	Group                  *Group        `json:"group" db:"-" cli:"-"`
@@ -70,6 +69,14 @@ type Model struct {
 }
 
 type Models []Model
+
+type WorkerModelSecret struct {
+	ID            string    `json:"id" db:"id"`
+	Created       time.Time `json:"created" cli:"created" db:"created"`
+	WorkerModelID int64     `json:"worker_model_id" db:"worker_model_id"`
+	Name          string    `json:"name" db:"name"`
+	Value         string    `json:"value" db:"cipher_value" gorpmapping:"encrypted,ID,Name"`
+}
 
 // Author struct contains info about model author.
 type Author struct {
@@ -198,15 +205,16 @@ func (m *ModelVirtualMachine) Scan(src interface{}) error {
 
 // ModelDocker for swarm, marathon and kubernetes.
 type ModelDocker struct {
-	Image    string            `json:"image,omitempty"`
-	Private  bool              `json:"private,omitempty"`
-	Registry string            `json:"registry,omitempty"`
-	Username string            `json:"username,omitempty"`
-	Password string            `json:"password,omitempty"`
-	Memory   int64             `json:"memory,omitempty"`
-	Envs     map[string]string `json:"envs,omitempty"`
-	Shell    string            `json:"shell,omitempty"`
-	Cmd      string            `json:"cmd,omitempty"`
+	Image         string            `json:"image,omitempty"`
+	Private       bool              `json:"private,omitempty"`
+	Registry      string            `json:"registry,omitempty"`
+	Username      string            `json:"username,omitempty"`
+	Password      string            `json:"password,omitempty"`
+	PasswordInput string            `json:"password_input,omitempty"`
+	Memory        int64             `json:"memory,omitempty"`
+	Envs          map[string]string `json:"envs,omitempty"`
+	Shell         string            `json:"shell,omitempty"`
+	Cmd           string            `json:"cmd,omitempty"`
 }
 
 // Value returns driver.Value from model docker.

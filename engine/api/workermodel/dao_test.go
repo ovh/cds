@@ -17,6 +17,103 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
+func TestInsertAndUpdate_WithRegistryPassword(t *testing.T) {
+	db, _, end := test.SetupPG(t, bootstrap.InitiliazeDB)
+	defer end()
+
+	g := assets.InsertGroup(t, db)
+
+	// Insert a model with a registry password
+	m := sdk.Model{
+		Name: sdk.RandomString(10),
+		Type: sdk.Docker,
+		ModelDocker: sdk.ModelDocker{
+			Image:         "foo/bar:3.4",
+			Private:       true,
+			PasswordInput: "my-clear-password",
+		},
+		GroupID: g.ID,
+	}
+	require.NoError(t, workermodel.Insert(context.TODO(), db, &m))
+
+	wm, err := workermodel.LoadByID(context.TODO(), db, m.ID)
+	require.NoError(t, err)
+	assert.Equal(t, sdk.PasswordPlaceholder, wm.ModelDocker.PasswordInput)
+	assert.Equal(t, "{{.secrets.registry_password}}", wm.ModelDocker.Password)
+	s, err := workermodel.LoadSecretByModelIDAndName(context.TODO(), db, m.ID, "registry_password")
+	require.NoError(t, err)
+	assert.Equal(t, "my-clear-password", s.Value)
+
+	// No change expected when updating with password input that contains placeholder value
+	require.NoError(t, workermodel.UpdateDB(context.TODO(), db, &m))
+
+	wm, err = workermodel.LoadByID(context.TODO(), db, m.ID)
+	require.NoError(t, err)
+	assert.Equal(t, sdk.PasswordPlaceholder, wm.ModelDocker.PasswordInput)
+	assert.Equal(t, "{{.secrets.registry_password}}", wm.ModelDocker.Password)
+	s, err = workermodel.LoadSecretByModelIDAndName(context.TODO(), db, m.ID, "registry_password")
+	require.NoError(t, err)
+	assert.Equal(t, "my-clear-password", s.Value)
+
+	// Changes on password template should be ignored
+	m.ModelDocker.Password = "{{.secrets.unknown}}"
+	require.NoError(t, workermodel.UpdateDB(context.TODO(), db, &m))
+
+	wm, err = workermodel.LoadByID(context.TODO(), db, m.ID)
+	require.NoError(t, err)
+	assert.Equal(t, sdk.PasswordPlaceholder, wm.ModelDocker.PasswordInput)
+	assert.Equal(t, "{{.secrets.registry_password}}", wm.ModelDocker.Password)
+	s, err = workermodel.LoadSecretByModelIDAndName(context.TODO(), db, m.ID, "registry_password")
+	require.NoError(t, err)
+	assert.Equal(t, "my-clear-password", s.Value)
+
+	// Empty password should be stored
+	m.ModelDocker.PasswordInput = ""
+	require.NoError(t, workermodel.UpdateDB(context.TODO(), db, &m))
+
+	wm, err = workermodel.LoadByID(context.TODO(), db, m.ID)
+	require.NoError(t, err)
+	assert.Equal(t, sdk.PasswordPlaceholder, wm.ModelDocker.PasswordInput)
+	assert.Equal(t, "{{.secrets.registry_password}}", wm.ModelDocker.Password)
+	s, err = workermodel.LoadSecretByModelIDAndName(context.TODO(), db, m.ID, "registry_password")
+	require.NoError(t, err)
+	assert.Equal(t, "", s.Value)
+
+	// Disabling private registry should delete the secret
+	m.ModelDocker.Private = false
+	require.NoError(t, workermodel.UpdateDB(context.TODO(), db, &m))
+
+	wm, err = workermodel.LoadByID(context.TODO(), db, m.ID)
+	require.NoError(t, err)
+	assert.Equal(t, "", wm.ModelDocker.PasswordInput)
+	assert.Equal(t, "", wm.ModelDocker.Password)
+	s, err = workermodel.LoadSecretByModelIDAndName(context.TODO(), db, m.ID, "registry_password")
+	require.Error(t, err)
+
+	// Enabling private registry should create the secret even if empty string
+	m.ModelDocker.Private = true
+	require.NoError(t, workermodel.UpdateDB(context.TODO(), db, &m))
+
+	wm, err = workermodel.LoadByID(context.TODO(), db, m.ID)
+	require.NoError(t, err)
+	assert.Equal(t, sdk.PasswordPlaceholder, wm.ModelDocker.PasswordInput)
+	assert.Equal(t, "{{.secrets.registry_password}}", wm.ModelDocker.Password)
+	s, err = workermodel.LoadSecretByModelIDAndName(context.TODO(), db, m.ID, "registry_password")
+	require.NoError(t, err)
+	assert.Equal(t, "", s.Value)
+
+	// Changing the type of the model should delete the secret
+	m.Type = sdk.Openstack
+	require.NoError(t, workermodel.UpdateDB(context.TODO(), db, &m))
+
+	wm, err = workermodel.LoadByID(context.TODO(), db, m.ID)
+	require.NoError(t, err)
+	assert.Equal(t, "", wm.ModelDocker.PasswordInput)
+	assert.Equal(t, "", wm.ModelDocker.Password)
+	s, err = workermodel.LoadSecretByModelIDAndName(context.TODO(), db, m.ID, "registry_password")
+	require.Error(t, err)
+}
+
 func insertWorkerModel(t *testing.T, db gorp.SqlExecutor, name string, groupID int64, req ...sdk.Requirement) *sdk.Model {
 	m := sdk.Model{
 		Name: name,

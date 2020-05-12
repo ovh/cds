@@ -115,3 +115,34 @@ func (api *API) getWorkerModelsEnabledHandler() service.Handler {
 		return service.WriteJSON(w, models, http.StatusOK)
 	}
 }
+
+func (api *API) getWorkerModelSecretHandler() service.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		// this handler should only answer to an hatchery
+		if !isHatchery(ctx) && !isMaintainer(ctx) {
+			return sdk.WithStack(sdk.ErrForbidden)
+		}
+
+		vars := mux.Vars(r)
+
+		groupName := vars["permGroupName"]
+		modelName := vars["permModelName"]
+
+		g, err := group.LoadByName(ctx, api.mustDB(), groupName)
+		if err != nil {
+			return err
+		}
+
+		m, err := workermodel.LoadByNameAndGroupID(ctx, api.mustDB(), modelName, g.ID)
+		if err != nil {
+			return err
+		}
+
+		secrets, err := workermodel.LoadSecretsByModelID(ctx, api.mustDB(), m.ID)
+		if err != nil {
+			return err
+		}
+
+		return service.WriteJSON(w, secrets, http.StatusOK)
+	}
+}

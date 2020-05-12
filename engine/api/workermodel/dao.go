@@ -9,7 +9,6 @@ import (
 
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/engine/api/group"
-	"github.com/ovh/cds/engine/api/secret"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
@@ -73,21 +72,10 @@ func getAllWithClearPassword(ctx context.Context, db gorp.SqlExecutor, q gorpmap
 		return nil, err
 	}
 
-	// Temporary decrypt password
-	for i := range ms {
-		if ms[i].ModelDocker.Private && ms[i].ModelDocker.Password != "" {
-			var err error
-			ms[i].ModelDocker.Password, err = secret.DecryptValue(ms[i].ModelDocker.Password)
-			if err != nil {
-				return nil, sdk.WrapError(err, "cannot decrypt value for model with id %d", ms[i].ID)
-			}
-		}
-	}
-
 	return ms, nil
 }
 
-func getCommon(ctx context.Context, db gorp.SqlExecutor, q gorpmapping.Query, opts ...LoadOptionFunc) (*sdk.Model, error) {
+func get(ctx context.Context, db gorp.SqlExecutor, q gorpmapping.Query, opts ...LoadOptionFunc) (*sdk.Model, error) {
 	var dbModel workerModel
 
 	found, err := gorpmapping.Get(ctx, db, q, &dbModel)
@@ -116,35 +104,33 @@ func getCommon(ctx context.Context, db gorp.SqlExecutor, q gorpmapping.Query, op
 	return &model, nil
 }
 
-func get(ctx context.Context, db gorp.SqlExecutor, q gorpmapping.Query, opts ...LoadOptionFunc) (*sdk.Model, error) {
-	m, err := getCommon(ctx, db, q, opts...)
-	if err != nil {
-		return nil, err
-	}
-
-	// Temporary hide password
-	if m.ModelDocker.Password != "" {
-		m.ModelDocker.Password = sdk.PasswordPlaceholder
-	}
-
-	return m, nil
-}
-
 func getWithClearPassword(ctx context.Context, db gorp.SqlExecutor, q gorpmapping.Query, opts ...LoadOptionFunc) (*sdk.Model, error) {
-	m, err := getCommon(ctx, db, q, opts...)
+	var dbModel workerModel
+
+	found, err := gorpmapping.Get(ctx, db, q, &dbModel, gorpmapping.GetOptions.WithDecryption)
+	if err != nil {
+		return nil, sdk.WrapError(err, "cannot get worker model")
+	}
+	if !found {
+		return nil, sdk.WithStack(sdk.ErrNotFound)
+	}
+
+	isValid, err := gorpmapping.CheckSignature(dbModel, dbModel.Signature)
 	if err != nil {
 		return nil, err
 	}
+	if !isValid {
+		log.Error(ctx, "workermodel.get> worker model %d data corrupted", dbModel.ID)
+		return nil, sdk.WithStack(sdk.ErrNotFound)
+	}
 
-	// Temporary decrypt password
-	if m.ModelDocker.Private && m.ModelDocker.Password != "" {
-		m.ModelDocker.Password, err = secret.DecryptValue(m.ModelDocker.Password)
-		if err != nil {
-			return nil, sdk.WrapError(err, "cannot decrypt value for model with id %d", m.ID)
+	model := dbModel.Model
+	for i := range opts {
+		if err := opts[i](ctx, db, &model); err != nil {
+			return nil, err
 		}
 	}
-
-	return m, nil
+	return &model, nil
 }
 
 // LoadAll retrieves worker models from database.
@@ -287,28 +273,17 @@ func Insert(ctx context.Context, db gorp.SqlExecutor, model *sdk.Model) error {
 	dbmodel.UserLastModified = time.Now()
 	dbmodel.NeedRegistration = true
 
-	if dbmodel.Type == sdk.Docker {
-		dbmodel.ModelDocker.Envs = MergeModelEnvsWithDefaultEnvs(dbmodel.ModelDocker.Envs)
-		if dbmodel.ModelDocker.Password == sdk.PasswordPlaceholder {
-			return sdk.WithStack(sdk.ErrInvalidPassword)
-		}
-		if dbmodel.ModelDocker.Private {
-			if dbmodel.ModelDocker.Password != "" {
-				var err error
-				dbmodel.ModelDocker.Password, err = secret.EncryptValue(dbmodel.ModelDocker.Password)
-				if err != nil {
-					return sdk.WrapError(err, "cannot encrypt docker password")
-				}
-			}
-		} else {
-			dbmodel.ModelDocker.Username = ""
-			dbmodel.ModelDocker.Password = ""
-			dbmodel.ModelDocker.Registry = ""
-		}
+	needSaveRegistryPassword, dockerRegistryPassword, err := replaceDockerRegistryPassword(db, &dbmodel)
+	if err != nil {
+		return err
 	}
-
 	if err := gorpmapping.InsertAndSign(ctx, db, &dbmodel); err != nil {
 		return sdk.WithStack(err)
+	}
+	if needSaveRegistryPassword {
+		if err := storeDockerRegistryPassword(ctx, db, dbmodel.ID, dockerRegistryPassword); err != nil {
+			return err
+		}
 	}
 
 	for _, r := range dbmodel.RegisteredCapabilities {
@@ -318,11 +293,6 @@ func Insert(ctx context.Context, db gorp.SqlExecutor, model *sdk.Model) error {
 	}
 
 	*model = dbmodel.Model
-
-	// Temporary hide password
-	if model.ModelDocker.Password != "" {
-		model.ModelDocker.Password = sdk.PasswordPlaceholder
-	}
 
 	return nil
 }
@@ -342,25 +312,17 @@ func UpdateDB(ctx context.Context, db gorp.SqlExecutor, model *sdk.Model) error 
 	dbmodel.LastSpawnErr = nil
 	dbmodel.LastSpawnErrLogs = nil
 
-	if dbmodel.ModelDocker.Password == sdk.PasswordPlaceholder {
-		return sdk.WithStack(sdk.ErrInvalidPassword)
+	needSaveRegistryPassword, dockerRegistryPassword, err := replaceDockerRegistryPassword(db, &dbmodel)
+	if err != nil {
+		return err
 	}
-	if dbmodel.ModelDocker.Private {
-		if dbmodel.ModelDocker.Password != "" {
-			var err error
-			dbmodel.ModelDocker.Password, err = secret.EncryptValue(dbmodel.ModelDocker.Password)
-			if err != nil {
-				return sdk.WrapError(err, "cannot encrypt docker password")
-			}
-		}
-	} else {
-		dbmodel.ModelDocker.Username = ""
-		dbmodel.ModelDocker.Password = ""
-		dbmodel.ModelDocker.Registry = ""
-	}
-
 	if err := gorpmapping.UpdateAndSign(ctx, db, &dbmodel); err != nil {
 		return sdk.WithStack(err)
+	}
+	if needSaveRegistryPassword {
+		if err := storeDockerRegistryPassword(ctx, db, dbmodel.ID, dockerRegistryPassword); err != nil {
+			return err
+		}
 	}
 
 	for _, r := range dbmodel.RegisteredCapabilities {
@@ -370,11 +332,6 @@ func UpdateDB(ctx context.Context, db gorp.SqlExecutor, model *sdk.Model) error 
 	}
 
 	*model = dbmodel.Model
-
-	// Temporary hide password
-	if model.ModelDocker.Password != "" {
-		model.ModelDocker.Password = sdk.PasswordPlaceholder
-	}
 
 	return nil
 }
