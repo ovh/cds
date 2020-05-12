@@ -3315,7 +3315,7 @@ cdsctl workflow run [ PROJECT-KEY WORKFLOW-NAME ] [flags]  Options  -d, --data s
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
       <guid>https://ovh.github.io/cds/development/rest/services/</guid>
-      <description> GET /services/&amp;lt;type&amp;gt;    URL /services/&amp;lt;type&amp;gt;     Method GET   Permissions Auth: true   Scopes Service   Code getExternalServiceHandler    POST /services/heartbeat    URL /services/heartbeat     Method POST   Permissions Auth: true   Scopes Service   Code postServiceHearbeatHandler    POST /services/register    URL /services/register     Method POST   Permissions Auth: true   Scopes Service   Code postServiceRegisterHandler    </description>
+      <description> GET /services/&amp;lt;type&amp;gt;    URL /services/&amp;lt;type&amp;gt;     Method GET   Permissions Auth: true   Scopes Service   Code getServiceHandler    POST /services/heartbeat    URL /services/heartbeat     Method POST   Permissions Auth: true   Scopes Service   Code postServiceHearbeatHandler    POST /services/register    URL /services/register     Method POST   Permissions Auth: true   Scopes Service   Code postServiceRegisterHandler    </description>
     </item>
     
     <item>

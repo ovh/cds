@@ -2608,7 +2608,7 @@
 	"title": "services",
 	"tags": [],
 	"description": "",
-	"content": " GET /services/\u0026lt;type\u0026gt;    URL /services/\u0026lt;type\u0026gt;     Method GET   Permissions Auth: true   Scopes Service   Code getExternalServiceHandler    POST /services/heartbeat    URL /services/heartbeat     Method POST   Permissions Auth: true   Scopes Service   Code postServiceHearbeatHandler    POST /services/register    URL /services/register     Method POST   Permissions Auth: true   Scopes Service   Code postServiceRegisterHandler    "
+	"content": " GET /services/\u0026lt;type\u0026gt;    URL /services/\u0026lt;type\u0026gt;     Method GET   Permissions Auth: true   Scopes Service   Code getServiceHandler    POST /services/heartbeat    URL /services/heartbeat     Method POST   Permissions Auth: true   Scopes Service   Code postServiceHearbeatHandler    POST /services/register    URL /services/register     Method POST   Permissions Auth: true   Scopes Service   Code postServiceRegisterHandler    "
 },
 {
 	"uri": "https://ovh.github.io/cds/docs/components/cdsctl/admin/services/",
