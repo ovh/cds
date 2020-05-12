@@ -40,7 +40,12 @@ func (api *API) updateAsCodePipelineHandler() service.Handler {
 			return sdk.WrapError(sdk.ErrInvalidPipelinePattern, "updateAsCodePipelineHandler: Pipeline name %s do not respect pattern", p.Name)
 		}
 
-		proj, err := project.Load(api.mustDB(), key, project.LoadOptions.WithClearKeys)
+		proj, err := project.Load(api.mustDB(), key,
+			project.LoadOptions.WithApplicationWithDeploymentStrategies,
+			project.LoadOptions.WithPipelines,
+			project.LoadOptions.WithEnvironments,
+			project.LoadOptions.WithIntegrations,
+			project.LoadOptions.WithClearKeys)
 		if err != nil {
 			return err
 		}
@@ -295,7 +300,11 @@ func (api *API) getPipelineHandler() service.Handler {
 		withWorkflows := FormBool(r, "withWorkflows")
 		withAsCodeEvent := FormBool(r, "withAsCodeEvents")
 
-		proj, err := project.Load(api.mustDB(), projectKey)
+		proj, err := project.Load(api.mustDB(), projectKey,
+			project.LoadOptions.WithApplicationWithDeploymentStrategies,
+			project.LoadOptions.WithPipelines,
+			project.LoadOptions.WithEnvironments,
+			project.LoadOptions.WithIntegrations)
 		if err != nil {
 			return err
 		}
