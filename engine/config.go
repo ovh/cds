@@ -68,7 +68,7 @@ func configBootstrap(args []string) Configuration {
 			conf.API = &api.Configuration{}
 			conf.API.Name = "cds-api-" + namesgenerator.GetRandomNameCDS(0)
 			defaults.SetDefaults(conf.API)
-			conf.API.Services = append(conf.API.Services, api.ServiceConfiguration{
+			conf.API.Services = append(conf.API.Services, sdk.ServiceConfiguration{
 				Name:       "sample-service",
 				URL:        "https://ovh.github.io",
 				Port:       "443",
