@@ -24,8 +24,8 @@ Hatcheries They are the components responsible for spawning workers. Supported i
  Local machine Openstack Docker Swarm Openstack Vsphere  Hooks This component operates CDS workflow hooks
 Repositories This component operates CDS workflow repositories
 VCS This component operates CDS VCS connectivity
-Start all of this with a single command:
-$ engine start [api] [hatchery:local] [hatchery:marathon] [hatchery:openstack] [hatchery:swarm] [hatchery:vsphere] [elasticsearch] [hooks] [vcs] [repositories] [migrate] [ui]  All the services are using the same configuration file format.">
+CDN This component operates CDS CDN to handle storage
+Start all of this with a single command:">
 <meta property="og:description"
     content="engine start Start CDS
 Synopsis Start CDS Engine Services
@@ -34,8 +34,8 @@ Hatcheries They are the components responsible for spawning workers. Supported i
  Local machine Openstack Docker Swarm Openstack Vsphere  Hooks This component operates CDS workflow hooks
 Repositories This component operates CDS workflow repositories
 VCS This component operates CDS VCS connectivity
-Start all of this with a single command:
-$ engine start [api] [hatchery:local] [hatchery:marathon] [hatchery:openstack] [hatchery:swarm] [hatchery:vsphere] [elasticsearch] [hooks] [vcs] [repositories] [migrate] [ui]  All the services are using the same configuration file format.">
+CDN This component operates CDS CDN to handle storage
+Start all of this with a single command:">
 <meta name="twitter:description"
     content="engine start Start CDS
 Synopsis Start CDS Engine Services
@@ -44,8 +44,8 @@ Hatcheries They are the components responsible for spawning workers. Supported i
  Local machine Openstack Docker Swarm Openstack Vsphere  Hooks This component operates CDS workflow hooks
 Repositories This component operates CDS workflow repositories
 VCS This component operates CDS VCS connectivity
-Start all of this with a single command:
-$ engine start [api] [hatchery:local] [hatchery:marathon] [hatchery:openstack] [hatchery:swarm] [hatchery:vsphere] [elasticsearch] [hooks] [vcs] [repositories] [migrate] [ui]  All the services are using the same configuration file format.">
+CDN This component operates CDS CDN to handle storage
+Start all of this with a single command:">
 <meta property="og:url" content="https://ovh.github.io/cds/docs/components/engine/start/">
 <meta property="og:title" content="start">
 <meta name="twitter:title" content="start">
@@ -2609,9 +2609,13 @@ $ engine start [api] [hatchery:local] [hatchery:marathon] [hatchery:openstack] [
 
 <p>This component operates CDS VCS connectivity</p>
 
+<h4 id="cdn">CDN</h4>
+
+<p>This component operates CDS CDN to handle storage</p>
+
 <p>Start all of this with a single command:</p>
 
-<pre><code>$ engine start [api] [hatchery:local] [hatchery:marathon] [hatchery:openstack] [hatchery:swarm] [hatchery:vsphere] [elasticsearch] [hooks] [vcs] [repositories] [migrate] [ui]
+<pre><code>$ engine start [api] [cdn] [hatchery:local] [hatchery:marathon] [hatchery:openstack] [hatchery:swarm] [hatchery:vsphere] [elasticsearch] [hooks] [vcs] [repositories] [migrate] [ui]
 </code></pre>
 
 <p>All the services are using the same configuration file format.</p>
