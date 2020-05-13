@@ -139,6 +139,26 @@ func (s *Service) handleWorkerLog(ctx context.Context, workerID string, workerNa
 		logs.Val += "\n"
 	}
 
+	var lvl string
+	switch m.Level {
+	case int32(hook.LOG_DEBUG):
+		lvl = "DEBUG"
+	case int32(hook.LOG_INFO):
+		lvl = "INFO"
+	case int32(hook.LOG_NOTICE):
+		lvl = "NOTICE"
+	case int32(hook.LOG_WARNING):
+		lvl = "WARN"
+	case int32(hook.LOG_ERR):
+		lvl = "ERROR"
+	case int32(hook.LOG_CRIT):
+		lvl = "CRITICAL"
+	case int32(hook.LOG_ALERT):
+		lvl = "ALERT"
+	case int32(hook.LOG_EMERG):
+		lvl = "EMERGENCY"
+	}
+	logs.Val = fmt.Sprintf("[%s] %s", lvl, logs.Val)
 	if err := s.Client.QueueSendLogs(ctx, signature.JobID, logs); err != nil {
 		return err
 	}
