@@ -3290,6 +3290,21 @@ func (m *MockWorkerClient) EXPECT() *MockWorkerClientMockRecorder {
 	return m.recorder
 }
 
+// WorkerGet mocks base method
+func (m *MockWorkerClient) WorkerGet(ctx context.Context, name string) (*sdk.Worker, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "WorkerGet", ctx, name)
+	ret0, _ := ret[0].(*sdk.Worker)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// WorkerGet indicates an expected call of WorkerGet
+func (mr *MockWorkerClientMockRecorder) WorkerGet(ctx, name interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkerGet", reflect.TypeOf((*MockWorkerClient)(nil).WorkerGet), ctx, name)
+}
+
 // WorkerModelBook mocks base method
 func (m *MockWorkerClient) WorkerModelBook(groupName, name string) error {
 	m.ctrl.T.Helper()
@@ -3531,6 +3546,44 @@ func (m *MockHookClient) VCSConfiguration() (map[string]sdk.VCSConfiguration, er
 func (mr *MockHookClientMockRecorder) VCSConfiguration() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "VCSConfiguration", reflect.TypeOf((*MockHookClient)(nil).VCSConfiguration))
+}
+
+// MockServiceClient is a mock of ServiceClient interface
+type MockServiceClient struct {
+	ctrl     *gomock.Controller
+	recorder *MockServiceClientMockRecorder
+}
+
+// MockServiceClientMockRecorder is the mock recorder for MockServiceClient
+type MockServiceClientMockRecorder struct {
+	mock *MockServiceClient
+}
+
+// NewMockServiceClient creates a new mock instance
+func NewMockServiceClient(ctrl *gomock.Controller) *MockServiceClient {
+	mock := &MockServiceClient{ctrl: ctrl}
+	mock.recorder = &MockServiceClientMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use
+func (m *MockServiceClient) EXPECT() *MockServiceClientMockRecorder {
+	return m.recorder
+}
+
+// ServiceConfigurationGet mocks base method
+func (m *MockServiceClient) ServiceConfigurationGet(arg0 context.Context, arg1 string) ([]sdk.ServiceConfiguration, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ServiceConfigurationGet", arg0, arg1)
+	ret0, _ := ret[0].([]sdk.ServiceConfiguration)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ServiceConfigurationGet indicates an expected call of ServiceConfigurationGet
+func (mr *MockServiceClientMockRecorder) ServiceConfigurationGet(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ServiceConfigurationGet", reflect.TypeOf((*MockServiceClient)(nil).ServiceConfigurationGet), arg0, arg1)
 }
 
 // MockWorkflowClient is a mock of WorkflowClient interface
@@ -6901,6 +6954,21 @@ func (mr *MockInterfaceMockRecorder) RepositoriesList(projectKey, repoManager, r
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RepositoriesList", reflect.TypeOf((*MockInterface)(nil).RepositoriesList), projectKey, repoManager, resync)
 }
 
+// ServiceConfigurationGet mocks base method
+func (m *MockInterface) ServiceConfigurationGet(arg0 context.Context, arg1 string) ([]sdk.ServiceConfiguration, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ServiceConfigurationGet", arg0, arg1)
+	ret0, _ := ret[0].([]sdk.ServiceConfiguration)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ServiceConfigurationGet indicates an expected call of ServiceConfigurationGet
+func (mr *MockInterfaceMockRecorder) ServiceConfigurationGet(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ServiceConfigurationGet", reflect.TypeOf((*MockInterface)(nil).ServiceConfigurationGet), arg0, arg1)
+}
+
 // ServiceRegister mocks base method
 func (m *MockInterface) ServiceRegister(arg0 context.Context, arg1 sdk.Service) (*sdk.Service, error) {
 	m.ctrl.T.Helper()
@@ -7018,6 +7086,21 @@ func (m *MockInterface) UserGetSchema() (sdk.SchemaResponse, error) {
 func (mr *MockInterfaceMockRecorder) UserGetSchema() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UserGetSchema", reflect.TypeOf((*MockInterface)(nil).UserGetSchema))
+}
+
+// WorkerGet mocks base method
+func (m *MockInterface) WorkerGet(ctx context.Context, name string) (*sdk.Worker, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "WorkerGet", ctx, name)
+	ret0, _ := ret[0].(*sdk.Worker)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// WorkerGet indicates an expected call of WorkerGet
+func (mr *MockInterfaceMockRecorder) WorkerGet(ctx, name interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkerGet", reflect.TypeOf((*MockInterface)(nil).WorkerGet), ctx, name)
 }
 
 // WorkerModelBook mocks base method
@@ -8362,6 +8445,21 @@ func (m *MockWorkerInterface) ServiceConfigurationGet(arg0 context.Context, arg1
 func (mr *MockWorkerInterfaceMockRecorder) ServiceConfigurationGet(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ServiceConfigurationGet", reflect.TypeOf((*MockWorkerInterface)(nil).ServiceConfigurationGet), arg0, arg1)
+}
+
+// WorkerGet mocks base method
+func (m *MockWorkerInterface) WorkerGet(ctx context.Context, name string) (*sdk.Worker, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "WorkerGet", ctx, name)
+	ret0, _ := ret[0].(*sdk.Worker)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// WorkerGet indicates an expected call of WorkerGet
+func (mr *MockWorkerInterfaceMockRecorder) WorkerGet(ctx, name interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkerGet", reflect.TypeOf((*MockWorkerInterface)(nil).WorkerGet), ctx, name)
 }
 
 // WorkerModelBook mocks base method

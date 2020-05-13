@@ -271,6 +271,7 @@ type UserClient interface {
 
 // WorkerClient exposes workers functions
 type WorkerClient interface {
+	WorkerGet(ctx context.Context, name string) (*sdk.Worker, error)
 	WorkerModelBook(groupName, name string) error
 	WorkerList(ctx context.Context) ([]sdk.Worker, error)
 	WorkerRefresh(ctx context.Context) error
@@ -290,6 +291,11 @@ type WorkerClient interface {
 type HookClient interface {
 	PollVCSEvents(uuid string, workflowID int64, vcsServer string, timestamp int64) (events sdk.RepositoryEvents, interval time.Duration, err error)
 	VCSConfiguration() (map[string]sdk.VCSConfiguration, error)
+}
+
+// ServiceClient exposes functions used for services
+type ServiceClient interface {
+	ServiceConfigurationGet(context.Context, string) ([]sdk.ServiceConfiguration, error)
 }
 
 // WorkflowClient exposes workflows functions
@@ -367,6 +373,7 @@ type Interface interface {
 	Navbar() ([]sdk.NavbarProjectData, error)
 	Requirements() ([]sdk.Requirement, error)
 	RepositoriesManagerInterface
+	ServiceClient
 	ServiceRegister(context.Context, sdk.Service) (*sdk.Service, error)
 	ServiceHeartbeat(sdk.MonitoringStatus) error
 	UserClient
@@ -383,7 +390,7 @@ type WorkerInterface interface {
 	ProjectIntegrationGet(projectKey string, integrationName string, clearPassword bool) (sdk.ProjectIntegration, error)
 	QueueClient
 	Requirements() ([]sdk.Requirement, error)
-	ServiceConfigurationGet(context.Context, string) ([]sdk.ServiceConfiguration, error)
+	ServiceClient
 	WorkerClient
 	WorkflowRunArtifacts(projectKey string, name string, number int64) ([]sdk.WorkflowNodeRunArtifact, error)
 	WorkflowCachePush(projectKey, integrationName, ref string, tarContent io.Reader, size int) error
