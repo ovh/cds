@@ -40,7 +40,7 @@ func TestInsertAndUpdate_WithRegistryPassword(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, sdk.PasswordPlaceholder, wm.ModelDocker.PasswordInput)
 	assert.Equal(t, "{{.secrets.registry_password}}", wm.ModelDocker.Password)
-	s, err := workermodel.LoadSecretByModelIDAndName(context.TODO(), db, m.ID, "registry_password")
+	s, err := workermodel.LoadSecretByModelIDAndName(context.TODO(), db, wm.ID, "secrets.registry_password")
 	require.NoError(t, err)
 	assert.Equal(t, "my-clear-password", s.Value)
 
@@ -51,7 +51,7 @@ func TestInsertAndUpdate_WithRegistryPassword(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, sdk.PasswordPlaceholder, wm.ModelDocker.PasswordInput)
 	assert.Equal(t, "{{.secrets.registry_password}}", wm.ModelDocker.Password)
-	s, err = workermodel.LoadSecretByModelIDAndName(context.TODO(), db, m.ID, "registry_password")
+	s, err = workermodel.LoadSecretByModelIDAndName(context.TODO(), db, m.ID, "secrets.registry_password")
 	require.NoError(t, err)
 	assert.Equal(t, "my-clear-password", s.Value)
 
@@ -63,7 +63,7 @@ func TestInsertAndUpdate_WithRegistryPassword(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, sdk.PasswordPlaceholder, wm.ModelDocker.PasswordInput)
 	assert.Equal(t, "{{.secrets.registry_password}}", wm.ModelDocker.Password)
-	s, err = workermodel.LoadSecretByModelIDAndName(context.TODO(), db, m.ID, "registry_password")
+	s, err = workermodel.LoadSecretByModelIDAndName(context.TODO(), db, m.ID, "secrets.registry_password")
 	require.NoError(t, err)
 	assert.Equal(t, "my-clear-password", s.Value)
 
@@ -75,7 +75,7 @@ func TestInsertAndUpdate_WithRegistryPassword(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, sdk.PasswordPlaceholder, wm.ModelDocker.PasswordInput)
 	assert.Equal(t, "{{.secrets.registry_password}}", wm.ModelDocker.Password)
-	s, err = workermodel.LoadSecretByModelIDAndName(context.TODO(), db, m.ID, "registry_password")
+	s, err = workermodel.LoadSecretByModelIDAndName(context.TODO(), db, m.ID, "secrets.registry_password")
 	require.NoError(t, err)
 	assert.Equal(t, "", s.Value)
 
@@ -87,7 +87,7 @@ func TestInsertAndUpdate_WithRegistryPassword(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, "", wm.ModelDocker.PasswordInput)
 	assert.Equal(t, "", wm.ModelDocker.Password)
-	s, err = workermodel.LoadSecretByModelIDAndName(context.TODO(), db, m.ID, "registry_password")
+	s, err = workermodel.LoadSecretByModelIDAndName(context.TODO(), db, m.ID, "secrets.registry_password")
 	require.Error(t, err)
 
 	// Enabling private registry should create the secret even if empty string
@@ -98,7 +98,7 @@ func TestInsertAndUpdate_WithRegistryPassword(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, sdk.PasswordPlaceholder, wm.ModelDocker.PasswordInput)
 	assert.Equal(t, "{{.secrets.registry_password}}", wm.ModelDocker.Password)
-	s, err = workermodel.LoadSecretByModelIDAndName(context.TODO(), db, m.ID, "registry_password")
+	s, err = workermodel.LoadSecretByModelIDAndName(context.TODO(), db, m.ID, "secrets.registry_password")
 	require.NoError(t, err)
 	assert.Equal(t, "", s.Value)
 
@@ -110,7 +110,7 @@ func TestInsertAndUpdate_WithRegistryPassword(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, "", wm.ModelDocker.PasswordInput)
 	assert.Equal(t, "", wm.ModelDocker.Password)
-	s, err = workermodel.LoadSecretByModelIDAndName(context.TODO(), db, m.ID, "registry_password")
+	s, err = workermodel.LoadSecretByModelIDAndName(context.TODO(), db, m.ID, "secrets.registry_password")
 	require.Error(t, err)
 }
 

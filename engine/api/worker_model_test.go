@@ -129,9 +129,9 @@ func Test_addWorkerModelWithPrivateRegistryAsAdmin(t *testing.T) {
 			Envs: map[string]string{
 				"CDS_TEST": "THIS IS A TEST",
 			},
-			Private:  true,
-			Username: "test",
-			Password: "pwtest",
+			Private:       true,
+			Username:      "test",
+			PasswordInput: "pwtest",
 		},
 		RegisteredCapabilities: sdk.RequirementList{
 			{
@@ -159,7 +159,14 @@ func Test_addWorkerModelWithPrivateRegistryAsAdmin(t *testing.T) {
 
 	test.Equal(t, "worker --api={{.API}}", newModel.ModelDocker.Cmd, "Main worker command is not good")
 	test.Equal(t, "THIS IS A TEST", newModel.ModelDocker.Envs["CDS_TEST"], "Worker model envs are not good")
-	test.Equal(t, sdk.PasswordPlaceholder, newModel.ModelDocker.Password, "Worker model password returned are not placeholder")
+	test.Equal(t, "{{.secrets.registry_password}}", newModel.ModelDocker.Password)
+	test.Equal(t, sdk.PasswordPlaceholder, newModel.ModelDocker.PasswordInput, "Worker model password returned are not placeholder")
+
+	secrets, err := workermodel.LoadSecretsByModelID(context.TODO(), api.mustDB(), newModel.ID)
+	require.NoError(t, err)
+	require.Len(t, secrets, 1)
+	assert.Equal(t, "secrets.registry_password", secrets[0].Name)
+	assert.Equal(t, "pwtest", secrets[0].Value)
 }
 
 func Test_WorkerModelUsage(t *testing.T) {
@@ -724,12 +731,12 @@ func Test_putWorkerModelWithPassword(t *testing.T) {
 		Type:       sdk.Docker,
 		Restricted: true,
 		ModelDocker: sdk.ModelDocker{
-			Image:    "buildpack-deps:jessie",
-			Shell:    "sh -c",
-			Cmd:      "worker",
-			Private:  true,
-			Username: "test",
-			Password: "testpw",
+			Image:         "buildpack-deps:jessie",
+			Shell:         "sh -c",
+			Cmd:           "worker",
+			Private:       true,
+			Username:      "test",
+			PasswordInput: "pwtest",
 		},
 		RegisteredCapabilities: sdk.RequirementList{
 			{
@@ -762,12 +769,12 @@ func Test_putWorkerModelWithPassword(t *testing.T) {
 		Type:       sdk.Docker,
 		Restricted: true,
 		ModelDocker: sdk.ModelDocker{
-			Image:    "buildpack-deps:jessie",
-			Cmd:      "worker",
-			Shell:    "sh -c",
-			Private:  true,
-			Username: "test",
-			Password: sdk.PasswordPlaceholder,
+			Image:         "buildpack-deps:jessie",
+			Cmd:           "worker",
+			Shell:         "sh -c",
+			Private:       true,
+			Username:      "test",
+			PasswordInput: sdk.PasswordPlaceholder,
 		},
 		RegisteredCapabilities: sdk.RequirementList{
 			{
@@ -800,12 +807,14 @@ func Test_putWorkerModelWithPassword(t *testing.T) {
 	assert.Equal(t, 200, w.Code)
 	var resp sdk.Model
 	test.NoError(t, json.Unmarshal(w.Body.Bytes(), &resp))
-	test.Equal(t, sdk.PasswordPlaceholder, resp.ModelDocker.Password, "Worker model should not return password, but placeholder")
+	test.Equal(t, "{{.secrets.registry_password}}", resp.ModelDocker.Password)
+	test.Equal(t, sdk.PasswordPlaceholder, resp.ModelDocker.PasswordInput, "Worker model should not return password, but placeholder")
 
-	wm, errL := workermodel.LoadByNameAndGroupIDWithClearPassword(context.TODO(), api.mustDB(), resp.Name, resp.GroupID)
-	test.NoError(t, errL)
-
-	test.Equal(t, "testpw", wm.ModelDocker.Password)
+	secrets, err := workermodel.LoadSecretsByModelID(context.TODO(), api.mustDB(), resp.ID)
+	require.NoError(t, err)
+	require.Len(t, secrets, 1)
+	assert.Equal(t, "secrets.registry_password", secrets[0].Name)
+	assert.Equal(t, "pwtest", secrets[0].Value)
 }
 
 func Test_deleteWorkerModel(t *testing.T) {

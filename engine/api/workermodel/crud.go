@@ -100,16 +100,6 @@ func Update(ctx context.Context, db gorp.SqlExecutor, old *sdk.Model, data sdk.M
 		}
 	}
 
-	// if model type is docker and given password equals the place holder value, we will reuse the old password value
-	if data.Type == sdk.Docker && data.ModelDocker.Private && data.ModelDocker.Password == sdk.PasswordPlaceholder {
-		modelClear, err := LoadByIDWithClearPassword(ctx, db, old.ID)
-		if err != nil {
-			return nil, err
-		}
-
-		data.ModelDocker.Password = modelClear.ModelDocker.Password
-	}
-
 	// update fields from request data
 	model := sdk.Model(*old)
 	model.Update(data)

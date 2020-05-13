@@ -72,17 +72,21 @@ func TestUpdateModel(t *testing.T) {
 		Name:    model1Name,
 		GroupID: g1.ID,
 		ModelDocker: sdk.ModelDocker{
-			Cmd:      "cmd",
-			Private:  true,
-			Password: "12345678",
+			Cmd:           "cmd",
+			Private:       true,
+			PasswordInput: "12345678",
 		},
 	}, u)
 	require.NoError(t, err)
 	assert.Equal(t, "cmd", model1.ModelDocker.Cmd)
+	assert.Equal(t, "{{.secrets.registry_password}}", model1.ModelDocker.Password)
+	assert.Equal(t, sdk.PasswordPlaceholder, model1.ModelDocker.PasswordInput)
 
-	model1Clear, err := workermodel.LoadByIDWithClearPassword(context.TODO(), db, model1.ID)
+	secrets, err := workermodel.LoadSecretsByModelID(context.TODO(), db, model1.ID)
 	require.NoError(t, err)
-	assert.Equal(t, "12345678", model1Clear.ModelDocker.Password)
+	require.Len(t, secrets, 1)
+	assert.Equal(t, "secrets.registry_password", secrets[0].Name)
+	assert.Equal(t, "12345678", secrets[0].Value)
 
 	model2Name := sdk.RandomString(10)
 	_, err = workermodel.Create(context.TODO(), db, sdk.Model{
@@ -98,18 +102,22 @@ func TestUpdateModel(t *testing.T) {
 		PatternName: pattern.Name,
 		GroupID:     g1.ID,
 		ModelDocker: sdk.ModelDocker{
-			Private:  true,
-			Password: sdk.PasswordPlaceholder,
+			Private:       true,
+			PasswordInput: sdk.PasswordPlaceholder,
 		},
 	})
 	require.NoError(t, err)
 	assert.Equal(t, sdk.Docker, res.Type)
 	assert.Equal(t, u.Username, res.Author.Username)
 	assert.Equal(t, pattern.Model.Cmd, res.ModelDocker.Cmd)
+	assert.Equal(t, "{{.secrets.registry_password}}", res.ModelDocker.Password)
+	assert.Equal(t, sdk.PasswordPlaceholder, res.ModelDocker.PasswordInput)
 
-	resClear, err := workermodel.LoadByIDWithClearPassword(context.TODO(), db, res.ID)
+	secrets, err = workermodel.LoadSecretsByModelID(context.TODO(), db, res.ID)
 	require.NoError(t, err)
-	assert.Equal(t, "12345678", resClear.ModelDocker.Password, "password should be preserved")
+	require.Len(t, secrets, 1)
+	assert.Equal(t, "secrets.registry_password", secrets[0].Name)
+	assert.Equal(t, "12345678", secrets[0].Value, "password should be preserved")
 
 	// Test change group and name
 	cpy := *res

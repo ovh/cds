@@ -13,7 +13,7 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
-func getAllCommon(ctx context.Context, db gorp.SqlExecutor, q gorpmapping.Query, opts ...LoadOptionFunc) (sdk.Models, error) {
+func getAll(ctx context.Context, db gorp.SqlExecutor, q gorpmapping.Query, opts ...LoadOptionFunc) (sdk.Models, error) {
 	ms := []*workerModel{}
 
 	if err := gorpmapping.GetAll(ctx, db, q, &ms); err != nil {
@@ -50,64 +50,10 @@ func getAllCommon(ctx context.Context, db gorp.SqlExecutor, q gorpmapping.Query,
 	return models, nil
 }
 
-func getAll(ctx context.Context, db gorp.SqlExecutor, q gorpmapping.Query, opts ...LoadOptionFunc) (sdk.Models, error) {
-	ms, err := getAllCommon(ctx, db, q, opts...)
-	if err != nil {
-		return nil, err
-	}
-
-	// Temporary hide password
-	for i := range ms {
-		if ms[i].ModelDocker.Password != "" {
-			ms[i].ModelDocker.Password = sdk.PasswordPlaceholder
-		}
-	}
-
-	return ms, nil
-}
-
-func getAllWithClearPassword(ctx context.Context, db gorp.SqlExecutor, q gorpmapping.Query, opts ...LoadOptionFunc) ([]sdk.Model, error) {
-	ms, err := getAllCommon(ctx, db, q, opts...)
-	if err != nil {
-		return nil, err
-	}
-
-	return ms, nil
-}
-
 func get(ctx context.Context, db gorp.SqlExecutor, q gorpmapping.Query, opts ...LoadOptionFunc) (*sdk.Model, error) {
 	var dbModel workerModel
 
 	found, err := gorpmapping.Get(ctx, db, q, &dbModel)
-	if err != nil {
-		return nil, sdk.WrapError(err, "cannot get worker model")
-	}
-	if !found {
-		return nil, sdk.WithStack(sdk.ErrNotFound)
-	}
-
-	isValid, err := gorpmapping.CheckSignature(dbModel, dbModel.Signature)
-	if err != nil {
-		return nil, err
-	}
-	if !isValid {
-		log.Error(ctx, "workermodel.get> worker model %d data corrupted", dbModel.ID)
-		return nil, sdk.WithStack(sdk.ErrNotFound)
-	}
-
-	model := dbModel.Model
-	for i := range opts {
-		if err := opts[i](ctx, db, &model); err != nil {
-			return nil, err
-		}
-	}
-	return &model, nil
-}
-
-func getWithClearPassword(ctx context.Context, db gorp.SqlExecutor, q gorpmapping.Query, opts ...LoadOptionFunc) (*sdk.Model, error) {
-	var dbModel workerModel
-
-	found, err := gorpmapping.Get(ctx, db, q, &dbModel, gorpmapping.GetOptions.WithDecryption)
 	if err != nil {
 		return nil, sdk.WrapError(err, "cannot get worker model")
 	}
@@ -224,28 +170,8 @@ func LoadByNameAndGroupID(ctx context.Context, db gorp.SqlExecutor, name string,
 	return get(ctx, db, query, opts...)
 }
 
-// LoadByIDWithClearPassword retrieves a specific worker model in database.
-func LoadByIDWithClearPassword(ctx context.Context, db gorp.SqlExecutor, id int64, opts ...LoadOptionFunc) (*sdk.Model, error) {
-	query := gorpmapping.NewQuery(`
-    SELECT *
-    FROM worker_model
-    WHERE id = $1
-  `).Args(id)
-	return getWithClearPassword(ctx, db, query, opts...)
-}
-
-// LoadByNameAndGroupIDWithClearPassword retrieves a specific worker model in database by name and group id.
-func LoadByNameAndGroupIDWithClearPassword(ctx context.Context, db gorp.SqlExecutor, name string, groupID int64, opts ...LoadOptionFunc) (*sdk.Model, error) {
-	query := gorpmapping.NewQuery(`
-    SELECT *
-    FROM worker_model
-    WHERE name = $1 AND group_id = $2
-  `).Args(name, groupID)
-	return getWithClearPassword(ctx, db, query, opts...)
-}
-
-// LoadAllUsableWithClearPasswordByGroupIDs returns usable worker models for given group ids.
-func LoadAllUsableWithClearPasswordByGroupIDs(ctx context.Context, db gorp.SqlExecutor, groupIDs []int64, opts ...LoadOptionFunc) ([]sdk.Model, error) {
+// LoadAllUsableByGroupIDs returns usable worker models for given group ids.
+func LoadAllUsableByGroupIDs(ctx context.Context, db gorp.SqlExecutor, groupIDs []int64, opts ...LoadOptionFunc) ([]sdk.Model, error) {
 	// note about restricted field on worker model:
 	// if restricted = true, worker model can be launched by a group hatchery only
 	// so, a 'shared.infra' hatchery need all its worker models and all others with restricted = false
@@ -263,7 +189,7 @@ func LoadAllUsableWithClearPasswordByGroupIDs(ctx context.Context, db gorp.SqlEx
     ORDER BY name
   `).Args(pq.Int64Array(groupIDs), group.SharedInfraGroup.ID)
 
-	return getAllWithClearPassword(ctx, db, query, opts...)
+	return getAll(ctx, db, query, opts...)
 }
 
 // Insert a new worker model in database.
