@@ -124,10 +124,8 @@ func (api *API) postServiceRegisterHandler() service.Handler {
 					continue
 				}
 				srv.LogServer = tcpConfig
-				log.Warning(ctx, "BLLLLL: %+v", srv.LogServer)
 				break
 			}
-			log.Warning(ctx, "BLLLLL222: %+v", srv.LogServer)
 			if srv.LogServer.Addr == "" || srv.LogServer.Port == 0 {
 				return sdk.WrapError(sdk.ErrNotFound, "unable to find any tcp server configuration in CDN")
 			}

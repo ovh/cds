@@ -27,7 +27,7 @@ type Configuration struct {
 		Addr string `toml:"addr" default:"" commented:"true" comment:"Listen address without port, example: 127.0.0.1" json:"addr"`
 		Port int    `toml:"port" default:"8089" json:"port"`
 	} `toml:"http" comment:"######################\n CDS CDN HTTP Configuration \n######################" json:"http"`
-	URL string                          `default:"http://localhost:8087" json:"url"`
+	URL string                          `default:"http://localhost:8089" json:"url"`
 	API service.APIServiceConfiguration `toml:"api" comment:"######################\n CDS API Settings \n######################" json:"api"`
 	Log struct {
 		StepMaxSize    int64 `toml:"stepMaxSize" default:"15728640" comment:"Max step logs size in bytes (default: 15MB)" json:"stepMaxSize"`

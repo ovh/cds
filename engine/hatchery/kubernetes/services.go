@@ -2,7 +2,6 @@ package kubernetes
 
 import (
 	"context"
-	"fmt"
 	"strconv"
 	"time"
 
@@ -67,14 +66,7 @@ func (h *HatcheryKubernetes) getServicesLogs(ctx context.Context) error {
 	if len(servicesLogs) > 0 {
 		ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
 		defer cancel()
-		if h.Common.ServiceLogger == nil {
-			if err := h.Client.QueueServiceLogs(ctx, servicesLogs); err != nil {
-				return sdk.WithStack(fmt.Errorf("hatchery> Swarm> Cannot send service logs : %v", err))
-			}
-		} else {
-			h.Common.SendServiceLog(ctx, servicesLogs)
-		}
+		h.Common.SendServiceLog(ctx, servicesLogs)
 	}
-
 	return nil
 }

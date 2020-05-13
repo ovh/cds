@@ -591,7 +591,7 @@ func (api *API) postWorkflowJobLogsHandler() service.Handler {
 
 func (api *API) postWorkflowJobServiceLogsHandler() service.AsynchronousHandler {
 	return func(ctx context.Context, r *http.Request) error {
-		if ok := isHatchery(ctx); !ok {
+		if !isCDN(ctx) {
 			return sdk.WithStack(sdk.ErrForbidden)
 		}
 
