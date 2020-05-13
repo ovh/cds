@@ -559,7 +559,7 @@ func (api *API) postWorkflowJobLogsHandler() service.Handler {
 			return sdk.WrapError(err, "invalid id")
 		}
 
-		if ok := isWorker(ctx); !ok {
+		if !isCDN(ctx) {
 			return sdk.WithStack(sdk.ErrForbidden)
 		}
 

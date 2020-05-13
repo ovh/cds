@@ -511,20 +511,12 @@ func (w *CurrentWorker) ProcessJob(jobInfo sdk.WorkflowNodeJobRunData) (res sdk.
 	ctx = workerruntime.SetJobID(ctx, jobInfo.NodeJobRun.ID)
 	ctx = workerruntime.SetStepOrder(ctx, 0)
 
-	// start logger routine with a large buffer
-	w.logger.logChan = make(chan sdk.Log, 100000)
-	go func() {
-		if err := w.logProcessor(ctx, jobInfo.NodeJobRun.ID); err != nil {
-			log.Error(ctx, "processJob> Logs processor error: %v", err)
-		}
-	}()
 	defer func() {
-		if err := w.drainLogsAndCloseLogger(ctx); err != nil {
-			log.Error(ctx, "processJob> Drain logs error: %v", err)
+		if res.Status == sdk.StatusSuccess {
+			log.Info(ctx, "processJob> Status: %s", res.Status)
+		} else {
+			log.Error(ctx, "processJob> Status: %s | Reason: %s", res.Status, res.Reason)
 		}
-	}()
-	defer func() {
-		log.Error(ctx, "processJob> Status: %s | Reason: %s", res.Status, res.Reason)
 	}()
 
 	wdFile, wdAbs, err := w.setupWorkingDirectory(ctx, jobInfo)

@@ -229,12 +229,11 @@ func (s *Service) getClearWorker(ctx context.Context, workerName string) (sdk.Wo
 	if err != nil {
 		return sdk.Worker{}, err
 	}
-	bts := make([]byte, 32)
-	_, err = base64.StdEncoding.Decode(bts, w.PrivateKey)
+	publicKeyDecoded, err := base64.StdEncoding.DecodeString(string(w.PrivateKey))
 	if err != nil {
 		return sdk.Worker{}, sdk.WithStack(err)
 	}
-	w.PrivateKey = bts
+	w.PrivateKey = publicKeyDecoded
 	logCache.Set(workerKey, *w, gocache.DefaultExpiration)
 
 	return *w, nil
@@ -247,12 +246,11 @@ func (s *Service) refreshHatcheriesPK(ctx context.Context) error {
 		return sdk.WrapError(sdk.ErrNotFound, "unable to find hatcheries")
 	}
 	for _, s := range srvs {
-		bts := make([]byte, 0)
-		_, err := base64.StdEncoding.Decode(bts, []byte(s.PublicKey))
+		publicKey, err := base64.StdEncoding.DecodeString(s.PublicKey)
 		if err != nil {
 			return sdk.WithStack(err)
 		}
-		pk, err := jws.NewPublicKeyFromPEM(bts)
+		pk, err := jws.NewPublicKeyFromPEM(publicKey)
 		if err != nil {
 			return sdk.WithStack(err)
 		}

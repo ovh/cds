@@ -129,7 +129,7 @@ func initBuiltinConsumersFromStartupConfig(ctx context.Context, tx gorp.SqlExecu
 		case sdk.TypeHooks:
 			scopes = sdk.NewAuthConsumerScopeDetails(sdk.AuthConsumerScopeService, sdk.AuthConsumerScopeHooks, sdk.AuthConsumerScopeProject, sdk.AuthConsumerScopeRun)
 		case sdk.TypeCDN:
-			scopes = sdk.NewAuthConsumerScopeDetails(sdk.AuthConsumerScopeService, sdk.AuthConsumerScopeWorker)
+			scopes = sdk.NewAuthConsumerScopeDetails(sdk.AuthConsumerScopeService, sdk.AuthConsumerScopeWorker, sdk.AuthConsumerScopeRunExecution)
 		default:
 			scopes = sdk.NewAuthConsumerScopeDetails(sdk.AuthConsumerScopeService)
 		}

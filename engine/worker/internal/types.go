@@ -1,7 +1,6 @@
 package internal
 
 import (
-	"container/list"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -34,8 +33,6 @@ type CurrentWorker struct {
 	basedir    afero.Fs
 	manualExit bool
 	logger     struct {
-		logChan    chan sdk.Log
-		llist      *list.List
 		stepLogger *logrus.Logger
 	}
 	httpPort int32
@@ -94,20 +91,7 @@ func (wk *CurrentWorker) SendLog(ctx context.Context, level workerruntime.Level,
 		return
 	}
 
-	jobID, _ := workerruntime.JobID(ctx)
 	stepOrder, err := workerruntime.StepOrder(ctx)
-	if wk.logger.stepLogger == nil {
-		if !strings.HasSuffix(s, "\n") {
-			s += "\n"
-		}
-		if err != nil {
-			log.Error(ctx, "SendLog> %v", err)
-		}
-		if err := wk.sendLog(jobID, fmt.Sprintf("[%s] ", level)+s, stepOrder, false); err != nil {
-			log.Error(ctx, "SendLog> %v", err)
-		}
-		return
-	}
 
 	var logLevel logrus.Level
 	switch level {
@@ -119,7 +103,6 @@ func (wk *CurrentWorker) SendLog(ctx context.Context, level workerruntime.Level,
 		logLevel = logrus.WarnLevel
 	case workerruntime.LevelError:
 		logLevel = logrus.ErrorLevel
-	default:
 	}
 
 	dataToSign := log.Signature{

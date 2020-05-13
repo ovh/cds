@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"database/sql"
+	"encoding/base64"
 	"fmt"
 	"net/http"
 	"strings"
@@ -127,6 +128,8 @@ func (api *API) getWorkerHandler() service.Handler {
 		if err != nil {
 			return err
 		}
+		encodedKey := base64.StdEncoding.EncodeToString(wkr.PrivateKey)
+		wkr.PrivateKey = []byte(encodedKey)
 		return service.WriteJSON(w, wkr, http.StatusOK)
 	}
 }
