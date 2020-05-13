@@ -70,7 +70,7 @@ func TestWorkerLog(t *testing.T) {
 	logs, err := workflow.LoadLogs(s.Db, dbj.ID)
 	require.NoError(t, err)
 	require.Len(t, logs, 1)
-	require.Equal(t, "this is my message\n", logs[0].Val)
+	require.Equal(t, "[ALERT] this is my message\n", logs[0].Val)
 }
 
 func TestServiceLog(t *testing.T) {
