@@ -85,6 +85,15 @@ func (wk *CurrentWorker) Parameters() []sdk.Parameter {
 }
 
 func (wk *CurrentWorker) SendLog(ctx context.Context, level workerruntime.Level, s string) {
+	if wk.currentJob.wJob == nil {
+		log.Error(wk.GetContext(), "unable to send log: %s. Job is nil", s)
+		return
+	}
+	if err := wk.Blur(&s); err != nil {
+		log.Error(wk.GetContext(), "unable to blur log: %v", err)
+		return
+	}
+
 	jobID, _ := workerruntime.JobID(ctx)
 	stepOrder, err := workerruntime.StepOrder(ctx)
 	if wk.logger.stepLogger == nil {
@@ -99,6 +108,7 @@ func (wk *CurrentWorker) SendLog(ctx context.Context, level workerruntime.Level,
 		}
 		return
 	}
+
 	var logLevel logrus.Level
 	switch level {
 	case workerruntime.LevelDebug:
