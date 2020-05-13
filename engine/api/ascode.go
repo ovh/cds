@@ -228,7 +228,7 @@ func (api *API) postResyncPRAsCodeHandler() service.Handler {
 			}
 			app = *appP
 		case fromRepo != "":
-			wkf, err := workflow.LoadByRepo(ctx, api.Cache, api.mustDB(), *proj, fromRepo)
+			wkf, err := workflow.LoadByRepo(ctx, api.Cache, api.mustDB(), *proj, fromRepo, workflow.LoadOptions{})
 			if err != nil {
 				return err
 			}

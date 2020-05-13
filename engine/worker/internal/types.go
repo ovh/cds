@@ -10,11 +10,13 @@ import (
 	"time"
 
 	"github.com/ovh/cds/engine/worker/pkg/workerruntime"
-
+	"github.com/sirupsen/logrus"
 	"github.com/spf13/afero"
+	"gopkg.in/square/go-jose.v2"
 
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
+	"github.com/ovh/cds/sdk/jws"
 	"github.com/ovh/cds/sdk/log"
 )
 
@@ -32,8 +34,9 @@ type CurrentWorker struct {
 	basedir    afero.Fs
 	manualExit bool
 	logger     struct {
-		logChan chan sdk.Log
-		llist   *list.List
+		logChan    chan sdk.Log
+		llist      *list.List
+		stepLogger *logrus.Logger
 	}
 	httpPort int32
 	register struct {
@@ -47,6 +50,7 @@ type CurrentWorker struct {
 		params       []sdk.Parameter
 		secrets      []sdk.Variable
 		context      context.Context
+		signer       jose.Signer
 	}
 	status struct {
 		Name   string `json:"name"`
@@ -81,17 +85,57 @@ func (wk *CurrentWorker) Parameters() []sdk.Parameter {
 }
 
 func (wk *CurrentWorker) SendLog(ctx context.Context, level workerruntime.Level, s string) {
+	if wk.currentJob.wJob == nil {
+		log.Error(wk.GetContext(), "unable to send log: %s. Job is nil", s)
+		return
+	}
+	if err := wk.Blur(&s); err != nil {
+		log.Error(wk.GetContext(), "unable to blur log: %v", err)
+		return
+	}
+
 	jobID, _ := workerruntime.JobID(ctx)
 	stepOrder, err := workerruntime.StepOrder(ctx)
-	if !strings.HasSuffix(s, "\n") {
-		s += "\n"
+	if wk.logger.stepLogger == nil {
+		if !strings.HasSuffix(s, "\n") {
+			s += "\n"
+		}
+		if err != nil {
+			log.Error(ctx, "SendLog> %v", err)
+		}
+		if err := wk.sendLog(jobID, fmt.Sprintf("[%s] ", level)+s, stepOrder, false); err != nil {
+			log.Error(ctx, "SendLog> %v", err)
+		}
+		return
 	}
+
+	var logLevel logrus.Level
+	switch level {
+	case workerruntime.LevelDebug:
+		logLevel = logrus.DebugLevel
+	case workerruntime.LevelInfo:
+		logLevel = logrus.InfoLevel
+	case workerruntime.LevelWarn:
+		logLevel = logrus.WarnLevel
+	case workerruntime.LevelError:
+		logLevel = logrus.ErrorLevel
+	default:
+	}
+
+	dataToSign := log.Signature{
+		Worker: &log.SignatureWorker{
+			WorkerID:  wk.id,
+			StepOrder: int64(stepOrder),
+		},
+		JobID:     wk.currentJob.wJob.ID,
+		Timestamp: time.Now().UnixNano(),
+	}
+	signature, err := jws.Sign(wk.currentJob.signer, dataToSign)
 	if err != nil {
-		log.Error(ctx, "SendLog> %v", err)
+		log.Error(ctx, "unable to sign logs: %v", err)
 	}
-	if err := wk.sendLog(jobID, fmt.Sprintf("[%s] ", level)+s, stepOrder, false); err != nil {
-		log.Error(ctx, "SendLog> %v", err)
-	}
+	wk.logger.stepLogger.WithField(log.ExtraFieldSignature, signature).Log(logLevel, s)
+
 }
 
 func (wk *CurrentWorker) Name() string {

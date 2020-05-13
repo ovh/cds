@@ -2,11 +2,13 @@ package internal
 
 import (
 	"context"
+	"encoding/base64"
 	"strings"
 	"time"
 
 	"github.com/ovh/cds/engine/worker/pkg/workerruntime"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/jws"
 	"github.com/ovh/cds/sdk/log"
 )
 
@@ -30,6 +32,27 @@ func (w *CurrentWorker) Take(ctx context.Context, job sdk.WorkflowNodeJobRun) er
 	w.currentJob.secrets = info.Secrets
 	// Reset build variables
 	w.currentJob.newVariables = nil
+
+	if info.SigningKey != "" {
+		secretKey := make([]byte, 32)
+		if _, err := base64.StdEncoding.Decode(secretKey, []byte(info.SigningKey)); err != nil {
+			return sdk.WithStack(err)
+		}
+		signer, err := jws.NewHMacSigner(secretKey)
+		if err != nil {
+			return sdk.WithStack(err)
+		}
+		w.currentJob.signer = signer
+	}
+
+	if info.GelfServiceAddr != "" {
+		log.Info(ctx, "Setup step logger")
+		logger, err := log.New(info.GelfServiceAddr)
+		if err != nil {
+			return sdk.WithStack(err)
+		}
+		w.logger.stepLogger = logger
+	}
 
 	start := time.Now()
 

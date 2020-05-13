@@ -381,6 +381,26 @@ func (api *API) postTemplateApplyHandler() service.Handler {
 			return service.Write(w, buf.Bytes(), http.StatusOK, "application/tar")
 		}
 
+		// In case we want to generated a workflow not detached from the template, we need to check if the template
+		// was not already applied to the same target workflow. If there is already a workflow and it's ascode we will
+		// create a PR from the apply request and we will not execute the template.
+		if withImport && !req.Detached {
+			wti, err := workflowtemplate.LoadInstanceByTemplateIDAndProjectIDAndRequestWorkflowName(ctx, api.mustDB(), wt.ID, p.ID, req.WorkflowName)
+			if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
+				return err
+			}
+			if wti != nil && wti.WorkflowID != nil {
+				existingWorkflow, err := workflow.LoadByID(ctx, api.mustDB(), api.Cache, *p, *wti.WorkflowID, workflow.LoadOptions{})
+				if err != nil {
+					return err
+				}
+				if existingWorkflow.FromRepository != "" {
+					// TODO we need to create a PR
+					return sdk.NewErrorFrom(sdk.ErrNotImplemented, "update a workflow ascode with template not yet available")
+				}
+			}
+		}
+
 		mods := []workflowtemplate.TemplateRequestModifierFunc{
 			workflowtemplate.TemplateRequestModifiers.DefaultKeys(*p),
 		}
@@ -542,10 +562,38 @@ func (api *API) postTemplateBulkHandler() service.Handler {
 						},
 					}
 
+					// In case we want to update a workflow that is ascode, we want to create a PR instead of pushing directly the new workflow.
+					wti, err := workflowtemplate.LoadInstanceByTemplateIDAndProjectIDAndRequestWorkflowName(ctx, api.mustDB(), wt.ID, p.ID, data.Template.Name)
+					if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
+						if errD := errorDefer(err); errD != nil {
+							log.Error(ctx, "%v", errD)
+							return
+						}
+						continue
+					}
+					if wti != nil && wti.WorkflowID != nil {
+						existingWorkflow, err := workflow.LoadByID(ctx, api.mustDB(), api.Cache, *p, *wti.WorkflowID, workflow.LoadOptions{})
+						if err != nil {
+							if errD := errorDefer(err); errD != nil {
+								log.Error(ctx, "%v", errD)
+								return
+							}
+							continue
+						}
+						if existingWorkflow.FromRepository != "" {
+							// TODO we need to create a PR
+							if errD := errorDefer(sdk.NewErrorFrom(sdk.ErrNotImplemented, "update a workflow ascode with template not yet available")); errD != nil {
+								log.Error(ctx, "%v", errD)
+								return
+							}
+							continue
+						}
+					}
+
 					mods := []workflowtemplate.TemplateRequestModifierFunc{
 						workflowtemplate.TemplateRequestModifiers.DefaultKeys(*p),
 					}
-					wti, err := workflowtemplate.CheckAndExecuteTemplate(ctx, api.mustDB(), *consumer, *p, &data, mods...)
+					wti, err = workflowtemplate.CheckAndExecuteTemplate(ctx, api.mustDB(), *consumer, *p, &data, mods...)
 					if err != nil {
 						if errD := errorDefer(err); errD != nil {
 							log.Error(ctx, "%v", errD)
@@ -680,37 +728,6 @@ func (api *API) getTemplateInstancesHandler() service.Handler {
 		}
 
 		return service.WriteJSON(w, is, http.StatusOK)
-	}
-}
-
-func (api *API) getTemplateInstanceHandler() service.Handler {
-	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		vars := mux.Vars(r)
-		key := vars["key"]
-		workflowName := vars["permWorkflowName"]
-
-		proj, err := project.Load(api.mustDB(), key, project.LoadOptions.WithIntegrations)
-		if err != nil {
-			return sdk.WrapError(err, "unable to load projet")
-		}
-
-		wf, err := workflow.Load(ctx, api.mustDB(), api.Cache, *proj, workflowName, workflow.LoadOptions{})
-		if err != nil {
-			if sdk.ErrorIs(err, sdk.ErrNotFound) {
-				return sdk.NewErrorFrom(sdk.ErrNotFound, "cannot load workflow %s", workflowName)
-			}
-			return sdk.WithStack(err)
-		}
-
-		// return the template instance if workflow is a generated one
-		wti, err := workflowtemplate.LoadInstanceByWorkflowID(ctx, api.mustDB(), wf.ID, workflowtemplate.LoadInstanceOptions.WithTemplate)
-		if err != nil {
-			return err
-		}
-
-		wti.Project = proj
-
-		return service.WriteJSON(w, wti, http.StatusOK)
 	}
 }
 

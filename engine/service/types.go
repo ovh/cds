@@ -6,6 +6,9 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/sirupsen/logrus"
+	"gopkg.in/square/go-jose.v2"
+
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
 )
@@ -102,6 +105,8 @@ type Common struct {
 	ServiceType          string
 	ServiceInstance      *sdk.Service
 	PrivateKey           *rsa.PrivateKey
+	Signer               jose.Signer
+	ServiceLogger        *logrus.Logger
 }
 
 // Service is the interface for a engine service

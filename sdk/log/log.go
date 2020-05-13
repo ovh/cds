@@ -8,9 +8,8 @@ import (
 	"os"
 	"strings"
 
-	log "github.com/sirupsen/logrus"
-
 	loghook "github.com/ovh/cds/sdk/log/hook"
+	log "github.com/sirupsen/logrus"
 )
 
 // Conf contains log configuration
@@ -33,6 +32,8 @@ const (
 	HeaderRequestID            = "Request-ID"
 	ContextLoggingRequestIDKey = "ctx-logging-request-id"
 	ContextLoggingFuncKey      = "ctx-logging-func"
+
+	ExtraFieldSignature = "Signature"
 )
 
 var (
@@ -238,4 +239,39 @@ func newEntry(ctx context.Context, fields log.Fields) *log.Entry {
 	}
 
 	return entry
+}
+
+type Signature struct {
+	Worker    *SignatureWorker
+	Service   *SignatureService
+	JobID     int64
+	Timestamp int64
+}
+
+type SignatureWorker struct {
+	WorkerID  string
+	StepOrder int64
+}
+
+type SignatureService struct {
+	HatcheryID      int64
+	HatcheryName    string
+	RequirementID   int64
+	RequirementName string
+	WorkerName      string
+}
+
+func New(logServerAddr string) (*log.Logger, error) {
+	newLogger := log.New()
+	graylogcfg := &loghook.Config{
+		Addr:     logServerAddr,
+		Protocol: "tcp",
+	}
+	extra := map[string]interface{}{}
+	hook, err := loghook.NewHook(graylogcfg, extra)
+	if err != nil {
+		return nil, fmt.Errorf("unable to add hook: %v", err)
+	}
+	newLogger.AddHook(hook)
+	return newLogger, nil
 }

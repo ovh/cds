@@ -26,7 +26,6 @@ declare var CodeMirror: any;
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 @AutoUnsubscribe()
-
 export class WorkflowNodeRunParamComponent implements AfterViewInit {
     @ViewChild('runWithParamModal')
     runWithParamModal: ModalTemplate<boolean, boolean, void>;
@@ -104,7 +103,7 @@ export class WorkflowNodeRunParamComponent implements AfterViewInit {
         this.currentNodeRun = this._store.selectSnapshot(WorkflowState.nodeRunSnapshot);
         this.currentWorkflowRun = this._store.selectSnapshot(WorkflowState.workflowRunSnapshot);
         this.workflow = this._store.selectSnapshot(WorkflowState.workflowSnapshot);
-        this.projectKey =  this._store.selectSnapshot(ProjectState.projectSnapshot).key;
+        this.projectKey = this._store.selectSnapshot(ProjectState.projectSnapshot).key;
 
         if (this.currentNodeRun && this.currentNodeRun.workflow_node_id !== this.nodeToRun.id) {
             delete this.currentNodeRun;
@@ -124,7 +123,11 @@ export class WorkflowNodeRunParamComponent implements AfterViewInit {
             }
         }
 
-        this.linkedToRepo = WNode.linkedToRepo(this.nodeToRun, this.workflow);
+        if (this.currentWorkflowRun && this.currentWorkflowRun.workflow) {
+            this.linkedToRepo = WNode.linkedToRepo(this.nodeToRun, this.currentWorkflowRun.workflow);
+        } else {
+            this.linkedToRepo = WNode.linkedToRepo(this.nodeToRun, this.workflow);
+        }
 
         let num: number;
         let nodeRunID: number;
@@ -221,7 +224,7 @@ export class WorkflowNodeRunParamComponent implements AfterViewInit {
                     .pipe(first(), finalize(() => this._cd.markForCheck()))
                     .subscribe(n => {
                         this.lastNum = n.num + 1;
-                        this.getCommits( n.num + 1, false);
+                        this.getCommits(n.num + 1, false);
                     });
             } else {
                 this.getCommits(this.num, false);
@@ -433,7 +436,7 @@ export class WorkflowNodeRunParamComponent implements AfterViewInit {
                     this.refreshVCSInfos(this.payloadRemote);
                 }
 
-                this.getCommits( num || this.lastNum, true);
+                this.getCommits(num || this.lastNum, true);
             });
         }
     }

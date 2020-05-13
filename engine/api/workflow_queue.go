@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"encoding/base64"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -26,6 +27,7 @@ import (
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/jws"
 	"github.com/ovh/cds/sdk/log"
 )
 
@@ -102,6 +104,9 @@ func (api *API) postTakeWorkflowJobHandler() service.Handler {
 			return sdk.WrapError(err, "cannot takeJob nodeJobRunID:%d", id)
 		}
 
+		if api.Config.CDN.TCP.Addr != "" && api.Config.CDN.TCP.Port > 0 {
+			pbji.GelfServiceAddr = fmt.Sprintf("%s:%d", api.Config.CDN.TCP.Addr, api.Config.CDN.TCP.Port)
+		}
 		workflow.ResyncNodeRunsWithCommits(ctx, api.mustDB(), api.Cache, *p, report)
 		go WorkflowSendEvent(context.Background(), api.mustDB(), api.Cache, *p, report)
 
@@ -135,10 +140,16 @@ func takeJob(ctx context.Context, dbFunc func() *gorp.DbMap, store cache.Store, 
 		return nil, sdk.WrapError(err, "cannot take job %d", id)
 	}
 
+	workerKey, err := jws.NewRandomSymmetricKey(32)
+	if err != nil {
+		return nil, err
+	}
+
 	// Change worker status
-	if err := worker.SetToBuilding(tx, wk.ID, job.ID); err != nil {
+	if err := worker.SetToBuilding(ctx, tx, wk.ID, job.ID, workerKey); err != nil {
 		return nil, sdk.WrapError(err, "cannot update worker %s status", wk.Name)
 	}
+	wnjri.SigningKey = base64.StdEncoding.EncodeToString(workerKey)
 
 	// Load the node run
 	noderun, err := workflow.LoadNodeRunByID(tx, job.WorkflowNodeRunID, workflow.LoadRunOptions{})
@@ -184,6 +195,9 @@ func takeJob(ctx context.Context, dbFunc func() *gorp.DbMap, store cache.Store, 
 	wnjri.Secrets = append(wnjri.Secrets, secretsKeys...)
 	wnjri.NodeJobRun.Parameters = append(wnjri.NodeJobRun.Parameters, params...)
 
+	if err != nil {
+		return nil, err
+	}
 	if err := tx.Commit(); err != nil {
 		return nil, sdk.WithStack(err)
 	}
@@ -491,7 +505,7 @@ func postJobResult(ctx context.Context, dbFunc func(context.Context) *gorp.DbMap
 	// ^ build variables are now updated on job run and on node
 
 	//Update worker status
-	if err := worker.SetStatus(tx, wr.ID, sdk.StatusWaiting); err != nil {
+	if err := worker.SetStatus(ctx, tx, wr.ID, sdk.StatusWaiting); err != nil {
 		return nil, sdk.WrapError(err, "cannot update worker %s status", wr.ID)
 	}
 
@@ -530,13 +544,13 @@ func (api *API) postWorkflowJobLogsHandler() service.Handler {
 			return sdk.WrapError(err, "invalid id")
 		}
 
+		if ok := isWorker(ctx); !ok {
+			return sdk.WithStack(sdk.ErrForbidden)
+		}
+
 		pbJob, err := workflow.LoadNodeJobRun(ctx, api.mustDB(), api.Cache, id)
 		if err != nil {
 			return sdk.WrapError(err, "cannot get job run %d", id)
-		}
-
-		if ok := isWorker(ctx); !ok {
-			return sdk.WithStack(sdk.ErrForbidden)
 		}
 
 		// Checks that the token used by the worker cas access to one of the execgroups

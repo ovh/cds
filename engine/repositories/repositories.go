@@ -54,7 +54,6 @@ func (s *Service) ApplyConfiguration(config interface{}) error {
 	s.ServiceType = services.TypeRepositories
 	s.HTTPURL = s.Cfg.URL
 	s.MaxHeartbeatFailures = s.Cfg.API.MaxHeartbeatFailures
-	s.ServiceName = "cds-repositories"
 
 	return nil
 }

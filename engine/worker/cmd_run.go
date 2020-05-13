@@ -2,10 +2,13 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
+	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 
 	"github.com/ovh/cds/engine/worker/internal"
@@ -62,6 +65,13 @@ func runCmd() func(cmd *cobra.Command, args []string) {
 		}()
 		// Start the worker
 		if err := internal.StartWorker(ctx, w, bookedWJobID); err != nil {
+			isErrWithStack := sdk.IsErrorWithStack(err)
+			fields := logrus.Fields{}
+			if isErrWithStack {
+				fields["stack_trace"] = fmt.Sprintf("%+v", err)
+			}
+			log.ErrorWithFields(ctx, fields, "%v", err)
+			time.Sleep(2 * time.Second)
 			sdk.Exit("error: %v", err)
 		}
 	}

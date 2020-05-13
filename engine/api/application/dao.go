@@ -59,17 +59,6 @@ func Exists(db gorp.SqlExecutor, projectKey, appName string) (bool, error) {
 	return count == 1, nil
 }
 
-// LoadAsCode load an ascode application from DB
-func LoadAsCode(db gorp.SqlExecutor, projectKey, fromRepo string) ([]sdk.Application, error) {
-	query := gorpmapping.NewQuery(`
-		SELECT application.*
-		FROM application
-		JOIN project ON project.id = application.project_id
-		WHERE project.projectkey = $1
-		AND application.from_repository = $2`).Args(projectKey, fromRepo)
-	return getAll(context.Background(), db, nil, query)
-}
-
 // LoadByName load an application from DB
 func LoadByName(db gorp.SqlExecutor, projectKey, appName string, opts ...LoadOptionFunc) (*sdk.Application, error) {
 	query := gorpmapping.NewQuery(`

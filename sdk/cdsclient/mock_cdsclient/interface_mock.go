@@ -3980,21 +3980,6 @@ func (mr *MockWorkflowClientMockRecorder) WorkflowCachePull(projectKey, integrat
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkflowCachePull", reflect.TypeOf((*MockWorkflowClient)(nil).WorkflowCachePull), projectKey, integrationName, ref)
 }
 
-// WorkflowTemplateInstanceGet mocks base method
-func (m *MockWorkflowClient) WorkflowTemplateInstanceGet(projectKey, workflowName string) (*sdk.WorkflowTemplateInstance, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "WorkflowTemplateInstanceGet", projectKey, workflowName)
-	ret0, _ := ret[0].(*sdk.WorkflowTemplateInstance)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// WorkflowTemplateInstanceGet indicates an expected call of WorkflowTemplateInstanceGet
-func (mr *MockWorkflowClientMockRecorder) WorkflowTemplateInstanceGet(projectKey, workflowName interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkflowTemplateInstanceGet", reflect.TypeOf((*MockWorkflowClient)(nil).WorkflowTemplateInstanceGet), projectKey, workflowName)
-}
-
 // WorkflowTransformAsCode mocks base method
 func (m *MockWorkflowClient) WorkflowTransformAsCode(projectKey, workflowName string) (*sdk.Operation, error) {
 	m.ctrl.T.Helper()
@@ -7663,21 +7648,6 @@ func (mr *MockInterfaceMockRecorder) WorkflowCachePull(projectKey, integrationNa
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkflowCachePull", reflect.TypeOf((*MockInterface)(nil).WorkflowCachePull), projectKey, integrationName, ref)
 }
 
-// WorkflowTemplateInstanceGet mocks base method
-func (m *MockInterface) WorkflowTemplateInstanceGet(projectKey, workflowName string) (*sdk.WorkflowTemplateInstance, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "WorkflowTemplateInstanceGet", projectKey, workflowName)
-	ret0, _ := ret[0].(*sdk.WorkflowTemplateInstance)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// WorkflowTemplateInstanceGet indicates an expected call of WorkflowTemplateInstanceGet
-func (mr *MockInterfaceMockRecorder) WorkflowTemplateInstanceGet(projectKey, workflowName interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkflowTemplateInstanceGet", reflect.TypeOf((*MockInterface)(nil).WorkflowTemplateInstanceGet), projectKey, workflowName)
-}
-
 // WorkflowTransformAsCode mocks base method
 func (m *MockInterface) WorkflowTransformAsCode(projectKey, workflowName string) (*sdk.Operation, error) {
 	m.ctrl.T.Helper()
@@ -8407,6 +8377,21 @@ func (m *MockWorkerInterface) Requirements() ([]sdk.Requirement, error) {
 func (mr *MockWorkerInterfaceMockRecorder) Requirements() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Requirements", reflect.TypeOf((*MockWorkerInterface)(nil).Requirements))
+}
+
+// ServiceConfigurationGet mocks base method
+func (m *MockWorkerInterface) ServiceConfigurationGet(arg0 context.Context, arg1 string) ([]sdk.ServiceConfiguration, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ServiceConfigurationGet", arg0, arg1)
+	ret0, _ := ret[0].([]sdk.ServiceConfiguration)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ServiceConfigurationGet indicates an expected call of ServiceConfigurationGet
+func (mr *MockWorkerInterfaceMockRecorder) ServiceConfigurationGet(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ServiceConfigurationGet", reflect.TypeOf((*MockWorkerInterface)(nil).ServiceConfigurationGet), arg0, arg1)
 }
 
 // WorkerModelBook mocks base method
