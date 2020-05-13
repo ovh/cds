@@ -25,7 +25,6 @@ import (
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
 
 	"github.com/ovh/cds/engine/api"
-	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/ovh/cds/sdk/hatchery"
@@ -139,7 +138,7 @@ func (h *HatcheryKubernetes) ApplyConfiguration(cfg interface{}) error {
 	}
 
 	h.Common.Common.ServiceName = h.Config.Name
-	h.Common.Common.ServiceType = services.TypeHatchery
+	h.Common.Common.ServiceType = sdk.TypeHatchery
 	h.HTTPURL = h.Config.URL
 	h.MaxHeartbeatFailures = h.Config.API.MaxHeartbeatFailures
 	var err error

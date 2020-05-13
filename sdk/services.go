@@ -7,6 +7,19 @@ import (
 	"time"
 )
 
+// Those are constant for services types
+const (
+	TypeHooks         = "hooks"
+	TypeRepositories  = "repositories"
+	TypeElasticsearch = "elasticsearch"
+	TypeVCS           = "vcs"
+	TypeAPI           = "api"
+	TypeUI            = "ui"
+	TypeCDN           = "cdn"
+	TypeHatchery      = "hatchery"
+	TypeDBMigrate     = "dbmigrate"
+)
+
 type CanonicalService struct {
 	ID         int64         `json:"id" db:"id"`
 	Name       string        `json:"name" db:"name" cli:"name,key"`
@@ -55,6 +68,21 @@ func (c *ServiceConfig) Scan(src interface{}) error {
 		return WithStack(fmt.Errorf("type assertion .([]byte) failed (%T)", src))
 	}
 	return WrapError(json.Unmarshal(source, c), "cannot unmarshal ServiceConfig")
+}
+
+func (c ServiceConfig) Get(key string, dest interface{}) error {
+	v, ok := c[key]
+	if !ok {
+		return WrapError(ErrNotFound, "unable to find %s", key)
+	}
+	bts, err := json.Marshal(v)
+	if err != nil {
+		return WithStack(err)
+	}
+	if err := json.Unmarshal(bts, dest); err != nil {
+		return WithStack(err)
+	}
+	return nil
 }
 
 // ServiceConfiguration is the configuration of service

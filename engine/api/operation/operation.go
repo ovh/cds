@@ -83,7 +83,7 @@ func PushOperation(ctx context.Context, db gorp.SqlExecutor, store cache.Store, 
 
 // PostRepositoryOperation creates a new repository operation
 func PostRepositoryOperation(ctx context.Context, db gorp.SqlExecutor, prj sdk.Project, ope *sdk.Operation, multipartData *services.MultiPartData) error {
-	srvs, err := services.LoadAllByType(ctx, db, services.TypeRepositories)
+	srvs, err := services.LoadAllByType(ctx, db, sdk.TypeRepositories)
 	if err != nil {
 		return sdk.WrapError(err, "Unable to found repositories service")
 	}
@@ -121,7 +121,7 @@ func PostRepositoryOperation(ctx context.Context, db gorp.SqlExecutor, prj sdk.P
 
 // GetRepositoryOperation get repository operation status
 func GetRepositoryOperation(ctx context.Context, db gorp.SqlExecutor, ope *sdk.Operation) error {
-	srvs, err := services.LoadAllByType(ctx, db, services.TypeRepositories)
+	srvs, err := services.LoadAllByType(ctx, db, sdk.TypeRepositories)
 	if err != nil {
 		return sdk.WrapError(err, "Unable to found repositories service")
 	}

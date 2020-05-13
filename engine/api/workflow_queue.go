@@ -104,9 +104,24 @@ func (api *API) postTakeWorkflowJobHandler() service.Handler {
 			return sdk.WrapError(err, "cannot takeJob nodeJobRunID:%d", id)
 		}
 
-		if api.Config.CDN.TCP.Addr != "" && api.Config.CDN.TCP.Port > 0 {
-			pbji.GelfServiceAddr = fmt.Sprintf("%s:%d", api.Config.CDN.TCP.Addr, api.Config.CDN.TCP.Port)
+		// Get CDN TCP Addr
+		srvs, err := services.LoadAllByType(ctx, api.mustDB(), sdk.TypeCDN)
+		if err != nil {
+			return err
 		}
+		for _, svr := range srvs {
+			var tcpConfig sdk.TCPServer
+			if err := svr.Config.Get("tcp", &tcpConfig); err != nil {
+				log.Error(ctx, "unable to get tcp configudation from cdn uservice")
+				continue
+			}
+			pbji.GelfServiceAddr = fmt.Sprintf("%s:%d", tcpConfig.Addr, tcpConfig.Port)
+			break
+		}
+		if pbji.GelfServiceAddr == "" {
+			return sdk.WrapError(sdk.ErrNotFound, "unable to find any tcp configuration in CDN Uservice")
+		}
+
 		workflow.ResyncNodeRunsWithCommits(ctx, api.mustDB(), api.Cache, *p, report)
 		go WorkflowSendEvent(context.Background(), api.mustDB(), api.Cache, *p, report)
 

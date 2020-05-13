@@ -453,7 +453,7 @@ func InsertHatchery(t *testing.T, db gorp.SqlExecutor, grp sdk.Group) (*sdk.Serv
 	var srv = sdk.Service{
 		CanonicalService: sdk.CanonicalService{
 			Name:       hConsumer.Name,
-			Type:       services.TypeHatchery,
+			Type:       sdk.TypeHatchery,
 			PublicKey:  publicKey,
 			ConsumerID: &hConsumer.ID,
 		},

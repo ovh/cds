@@ -40,7 +40,7 @@ func (api *API) postRegisterWorkerHandler() service.Handler {
 		}
 
 		// Check that hatchery exists
-		hatchSrv, err := services.LoadByNameAndType(ctx, api.mustDB(), workerTokenFromHatchery.Worker.HatcheryName, services.TypeHatchery)
+		hatchSrv, err := services.LoadByNameAndType(ctx, api.mustDB(), workerTokenFromHatchery.Worker.HatcheryName, sdk.TypeHatchery)
 		if err != nil {
 			return sdk.WrapError(err, "unable to load hatchery %s", workerTokenFromHatchery.Worker.HatcheryName)
 		}
@@ -111,6 +111,23 @@ func (api *API) postRegisterWorkerHandler() service.Handler {
 
 		// Return worker info to worker itself
 		return service.WriteJSON(w, wk, http.StatusOK)
+	}
+}
+
+func (api *API) getWorkerHandler() service.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		vars := mux.Vars(r)
+		name := vars["name"]
+
+		if !isCDN(ctx) {
+			return sdk.WrapError(sdk.ErrForbidden, "only CDN can call this route")
+		}
+
+		wkr, err := worker.LoadWorkerByNameWithDecryptKey(ctx, api.mustDB(), name)
+		if err != nil {
+			return err
+		}
+		return service.WriteJSON(w, wkr, http.StatusOK)
 	}
 }
 

@@ -13,7 +13,6 @@ import (
 
 	"github.com/ovh/cds/engine/api"
 	"github.com/ovh/cds/engine/api/observability"
-	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/engine/cdn"
 	"github.com/ovh/cds/engine/elasticsearch"
 	"github.com/ovh/cds/engine/hatchery/kubernetes"
@@ -137,21 +136,21 @@ See $ engine config command for more details.
 		for _, a := range args {
 			fmt.Printf("Starting service %s\n", a)
 			switch a {
-			case services.TypeAPI:
+			case sdk.TypeAPI:
 				if conf.API == nil {
 					sdk.Exit("Unable to start: missing service %s configuration", a)
 				}
 				serviceConfs = append(serviceConfs, serviceConf{arg: a, service: api.New(), cfg: *conf.API})
 				names = append(names, conf.API.Name)
-				types = append(types, services.TypeAPI)
+				types = append(types, sdk.TypeAPI)
 
-			case services.TypeUI:
+			case sdk.TypeUI:
 				if conf.UI == nil {
 					sdk.Exit("Unable to start: missing service %s configuration", a)
 				}
 				serviceConfs = append(serviceConfs, serviceConf{arg: a, service: ui.New(), cfg: *conf.UI})
 				names = append(names, conf.UI.Name)
-				types = append(types, services.TypeUI)
+				types = append(types, sdk.TypeUI)
 
 			case "migrate":
 				if conf.DatabaseMigrate == nil {
@@ -159,87 +158,87 @@ See $ engine config command for more details.
 				}
 				serviceConfs = append(serviceConfs, serviceConf{arg: a, service: migrateservice.New(), cfg: *conf.DatabaseMigrate})
 				names = append(names, conf.DatabaseMigrate.Name)
-				types = append(types, services.TypeDBMigrate)
+				types = append(types, sdk.TypeDBMigrate)
 
-			case services.TypeHatchery + ":local":
+			case sdk.TypeHatchery + ":local":
 				if conf.Hatchery.Local == nil {
 					sdk.Exit("Unable to start: missing service %s configuration", a)
 				}
 				serviceConfs = append(serviceConfs, serviceConf{arg: a, service: local.New(), cfg: *conf.Hatchery.Local})
 				names = append(names, conf.Hatchery.Local.Name)
-				types = append(types, services.TypeHatchery)
+				types = append(types, sdk.TypeHatchery)
 
-			case services.TypeHatchery + ":kubernetes":
+			case sdk.TypeHatchery + ":kubernetes":
 				if conf.Hatchery.Kubernetes == nil {
 					sdk.Exit("Unable to start: missing service %s configuration", a)
 				}
 				serviceConfs = append(serviceConfs, serviceConf{arg: a, service: kubernetes.New(), cfg: *conf.Hatchery.Kubernetes})
 				names = append(names, conf.Hatchery.Kubernetes.Name)
-				types = append(types, services.TypeHatchery)
+				types = append(types, sdk.TypeHatchery)
 
-			case services.TypeHatchery + ":marathon":
+			case sdk.TypeHatchery + ":marathon":
 				if conf.Hatchery.Marathon == nil {
 					sdk.Exit("Unable to start: missing service %s configuration", a)
 				}
 				serviceConfs = append(serviceConfs, serviceConf{arg: a, service: marathon.New(), cfg: *conf.Hatchery.Marathon})
 				names = append(names, conf.Hatchery.Marathon.Name)
-				types = append(types, services.TypeHatchery)
+				types = append(types, sdk.TypeHatchery)
 
-			case services.TypeHatchery + ":openstack":
+			case sdk.TypeHatchery + ":openstack":
 				if conf.Hatchery.Openstack == nil {
 					sdk.Exit("Unable to start: missing service %s configuration", a)
 				}
 				serviceConfs = append(serviceConfs, serviceConf{arg: a, service: openstack.New(), cfg: *conf.Hatchery.Openstack})
 				names = append(names, conf.Hatchery.Openstack.Name)
-				types = append(types, services.TypeAPI)
+				types = append(types, sdk.TypeAPI)
 
-			case services.TypeHatchery + ":swarm":
+			case sdk.TypeHatchery + ":swarm":
 				if conf.Hatchery.Swarm == nil {
 					sdk.Exit("Unable to start: missing service %s configuration", a)
 				}
 				serviceConfs = append(serviceConfs, serviceConf{arg: a, service: swarm.New(), cfg: *conf.Hatchery.Swarm})
 				names = append(names, conf.Hatchery.Swarm.Name)
-				types = append(types, services.TypeHatchery)
+				types = append(types, sdk.TypeHatchery)
 
-			case services.TypeHatchery + ":vsphere":
+			case sdk.TypeHatchery + ":vsphere":
 				if conf.Hatchery.VSphere == nil {
 					sdk.Exit("Unable to start: missing service %s configuration", a)
 				}
 				serviceConfs = append(serviceConfs, serviceConf{arg: a, service: vsphere.New(), cfg: *conf.Hatchery.VSphere})
 				names = append(names, conf.Hatchery.VSphere.Name)
-				types = append(types, services.TypeHatchery)
+				types = append(types, sdk.TypeHatchery)
 
-			case services.TypeHooks:
+			case sdk.TypeHooks:
 				if conf.Hooks == nil {
 					sdk.Exit("Unable to start: missing service %s configuration", a)
 				}
 				serviceConfs = append(serviceConfs, serviceConf{arg: a, service: hooks.New(), cfg: *conf.Hooks})
 				names = append(names, conf.Hooks.Name)
-				types = append(types, services.TypeHooks)
+				types = append(types, sdk.TypeHooks)
 
-			case services.TypeCDN:
+			case sdk.TypeCDN:
 				if conf.CDN == nil {
 					sdk.Exit("Unable to start: missing service %s configuration", a)
 				}
 				serviceConfs = append(serviceConfs, serviceConf{arg: a, service: cdn.New(), cfg: *conf.CDN})
 				names = append(names, conf.CDN.Name)
-				types = append(types, services.TypeCDN)
+				types = append(types, sdk.TypeCDN)
 
-			case services.TypeVCS:
+			case sdk.TypeVCS:
 				if conf.VCS == nil {
 					sdk.Exit("Unable to start: missing service %s configuration", a)
 				}
 				serviceConfs = append(serviceConfs, serviceConf{arg: a, service: vcs.New(), cfg: *conf.VCS})
 				names = append(names, conf.VCS.Name)
-				types = append(types, services.TypeVCS)
+				types = append(types, sdk.TypeVCS)
 
-			case services.TypeRepositories:
+			case sdk.TypeRepositories:
 				if conf.Repositories == nil {
 					sdk.Exit("Unable to start: missing service %s configuration", a)
 				}
 				serviceConfs = append(serviceConfs, serviceConf{arg: a, service: repositories.New(), cfg: *conf.Repositories})
 				names = append(names, conf.Repositories.Name)
-				types = append(types, services.TypeRepositories)
+				types = append(types, sdk.TypeRepositories)
 
 			case "elasticsearch":
 				if conf.ElasticSearch == nil {
@@ -247,7 +246,7 @@ See $ engine config command for more details.
 				}
 				serviceConfs = append(serviceConfs, serviceConf{arg: a, service: elasticsearch.New(), cfg: *conf.ElasticSearch})
 				names = append(names, conf.ElasticSearch.Name)
-				types = append(types, services.TypeElasticsearch)
+				types = append(types, sdk.TypeElasticsearch)
 
 			default:
 				fmt.Printf("Error: service '%s' unknown\n", a)

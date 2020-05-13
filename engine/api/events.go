@@ -17,7 +17,6 @@ import (
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/observability"
 	"github.com/ovh/cds/engine/api/permission"
-	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
@@ -231,7 +230,7 @@ func (client *eventsBrokerSubscribe) manageEvent(db gorp.SqlExecutor, event sdk.
 		return true, nil
 	}
 
-	var isHatchery = client.consumer.Service != nil && client.consumer.Service.Type == services.TypeHatchery
+	var isHatchery = client.consumer.Service != nil && client.consumer.Service.Type == sdk.TypeHatchery
 	var isHatcheryWithGroups = isHatchery && len(client.consumer.GroupIDs) > 0
 
 	switch {

@@ -179,31 +179,10 @@ func SetToBuilding(ctx context.Context, db gorp.SqlExecutor, workerID string, jo
 }
 
 // LoadWorkerByIDWithDecryptKey load worker with decrypted private key
-func LoadWorkerByIDWithDecryptKey(ctx context.Context, db gorp.SqlExecutor, workerID string) (*sdk.Worker, error) {
-	var work dbWorker
-	query := gorpmapping.NewQuery(`SELECT * FROM worker WHERE id = $1`).Args(workerID)
-	found, err := gorpmapping.Get(ctx, db, query, &work, gorpmapping.GetOptions.WithDecryption)
-	if err != nil {
-		return nil, err
-	}
-	if !found {
-		return nil, sdk.WithStack(sdk.ErrNotFound)
-	}
-	isValid, err := gorpmapping.CheckSignature(work, work.Signature)
-	if err != nil {
-		return nil, err
-	}
-	if !isValid {
-		return nil, sdk.WithStack(sdk.ErrInvalidData)
-	}
-	return &work.Worker, err
-}
-
-// LoadWorkerByName load worker by name
-func LoadWorkerByName(ctx context.Context, db gorp.SqlExecutor, workerName string) (*sdk.Worker, error) {
+func LoadWorkerByNameWithDecryptKey(ctx context.Context, db gorp.SqlExecutor, workerName string) (*sdk.Worker, error) {
 	var work dbWorker
 	query := gorpmapping.NewQuery(`SELECT * FROM worker WHERE name = $1`).Args(workerName)
-	found, err := gorpmapping.Get(ctx, db, query, &work)
+	found, err := gorpmapping.Get(ctx, db, query, &work, gorpmapping.GetOptions.WithDecryption)
 	if err != nil {
 		return nil, err
 	}

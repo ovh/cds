@@ -16,7 +16,6 @@ import (
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gorilla/mux"
 	"github.com/ovh/cds/engine/api"
-	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
@@ -61,7 +60,7 @@ func (h *HatcheryLocal) ApplyConfiguration(cfg interface{}) error {
 
 	genname := h.Configuration().Name
 	h.Common.Common.ServiceName = genname
-	h.Common.Common.ServiceType = services.TypeHatchery
+	h.Common.Common.ServiceType = sdk.TypeHatchery
 	var err error
 	h.Config.Basedir, err = filepath.Abs(h.Config.Basedir)
 	if err != nil {

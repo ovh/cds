@@ -145,7 +145,7 @@ func Update(ctx context.Context, db gorp.SqlExecutor, s *sdk.Service) error {
 
 // Delete a service.
 func Delete(db gorp.SqlExecutor, s *sdk.Service) error {
-	if s.Type == TypeHatchery {
+	if s.Type == sdk.TypeHatchery {
 		wks, err := worker.LoadByHatcheryID(context.Background(), db, s.ID)
 		if err != nil {
 			return err

@@ -5,7 +5,9 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/ovh/cds/engine/api/services"
+	"github.com/gorilla/mux"
+
+	"github.com/ovh/cds/engine/api"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/ovh/cds/sdk/log"
@@ -14,11 +16,11 @@ import (
 // New returns a new service
 func New() *Service {
 	s := new(Service)
-	/*
-		s.Router = &api.Router{
-			Mux: mux.NewRouter(),
-		}
-	*/
+
+	s.Router = &api.Router{
+		Mux: mux.NewRouter(),
+	}
+
 	return s
 }
 
@@ -48,7 +50,7 @@ func (s *Service) ApplyConfiguration(config interface{}) error {
 	}
 
 	s.ServiceName = s.Cfg.Name
-	s.ServiceType = services.TypeCDN
+	s.ServiceType = sdk.TypeCDN
 	s.HTTPURL = s.Cfg.URL
 	s.MaxHeartbeatFailures = s.Cfg.API.MaxHeartbeatFailures
 	return nil
@@ -81,8 +83,8 @@ func (s *Service) Serve(c context.Context) error {
 	//Init the http server
 	s.initRouter(ctx)
 	server := &http.Server{
-		Addr: fmt.Sprintf("%s:%d", s.Cfg.HTTP.Addr, s.Cfg.HTTP.Port),
-		//Handler:        s.Router.Mux,
+		Addr:           fmt.Sprintf("%s:%d", s.Cfg.HTTP.Addr, s.Cfg.HTTP.Port),
+		Handler:        s.Router.Mux,
 		MaxHeaderBytes: 1 << 20,
 	}
 

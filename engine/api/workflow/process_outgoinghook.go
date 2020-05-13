@@ -49,7 +49,7 @@ func processNodeOutGoingHook(ctx context.Context, db gorp.SqlExecutor, store cac
 		}
 	}
 
-	srvs, err := services.LoadAllByType(ctx, db, services.TypeHooks)
+	srvs, err := services.LoadAllByType(ctx, db, sdk.TypeHooks)
 	if err != nil {
 		return nil, false, sdk.WrapError(err, "cannot get hooks service")
 	}

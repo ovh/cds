@@ -1071,11 +1071,7 @@ func TestWorkerPrivateKey(t *testing.T) {
 	ctx.worker.JobRunID = &wrDB.WorkflowNodeRuns[w.WorkflowData.Node.ID][0].Stages[0].RunJobs[0].ID
 	assert.NoError(t, worker.SetToBuilding(context.TODO(), db, ctx.worker.ID, *ctx.worker.JobRunID, []byte("mysecret")))
 
-	wkFromDB, err := worker.LoadWorkerByName(context.TODO(), db, ctx.worker.Name)
-	require.NoError(t, err)
-	require.NotEqual(t, "mysecret", string(wkFromDB.PrivateKey))
-
-	wkFromDB, err = worker.LoadWorkerByIDWithDecryptKey(context.TODO(), db, ctx.worker.ID)
+	wkFromDB, err := worker.LoadWorkerByNameWithDecryptKey(context.TODO(), db, ctx.worker.Name)
 	require.NoError(t, err)
 	require.Equal(t, "mysecret", string(wkFromDB.PrivateKey))
 }

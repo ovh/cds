@@ -114,9 +114,11 @@ func (wk *CurrentWorker) SendLog(ctx context.Context, level workerruntime.Level,
 
 	dataToSign := log.Signature{
 		Worker: &log.SignatureWorker{
-			WorkerID:  wk.id,
-			StepOrder: int64(stepOrder),
+			WorkerID:   wk.id,
+			WorkerName: wk.Name(),
+			StepOrder:  int64(stepOrder),
 		},
+		NodeRunID: wk.currentJob.wJob.WorkflowNodeRunID,
 		JobID:     wk.currentJob.wJob.ID,
 		Timestamp: time.Now().UnixNano(),
 	}

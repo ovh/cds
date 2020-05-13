@@ -18,7 +18,6 @@ import (
 
 	"github.com/ovh/cds/engine/api"
 	"github.com/ovh/cds/engine/api/observability"
-	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
@@ -62,7 +61,7 @@ func (h *HatcheryMarathon) ApplyConfiguration(cfg interface{}) error {
 	}
 
 	h.Common.Common.ServiceName = h.Config.Name
-	h.Common.Common.ServiceType = services.TypeHatchery
+	h.Common.Common.ServiceType = sdk.TypeHatchery
 	h.HTTPURL = h.Config.URL
 	h.MaxHeartbeatFailures = h.Config.API.MaxHeartbeatFailures
 

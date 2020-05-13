@@ -8,7 +8,6 @@ import (
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/group"
-	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
@@ -72,7 +71,15 @@ func isHatchery(ctx context.Context) bool {
 	if c == nil {
 		return false
 	}
-	return c.Service != nil && c.Service.Type == services.TypeHatchery
+	return c.Service != nil && c.Service.Type == sdk.TypeHatchery
+}
+
+func isCDN(ctx context.Context) bool {
+	c := getAPIConsumer(ctx)
+	if c == nil {
+		return false
+	}
+	return c.Service != nil && c.Service.Type == sdk.TypeCDN
 }
 
 func getAPIConsumer(c context.Context) *sdk.AuthConsumer {

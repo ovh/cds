@@ -71,7 +71,7 @@ func (api *API) postServiceRegisterHandler() service.Handler {
 		data.LastHeartbeat = time.Now()
 
 		// Service that are not hatcheries should be started be an admin
-		if data.Type != services.TypeHatchery && !isAdmin(ctx) {
+		if data.Type != sdk.TypeHatchery && !isAdmin(ctx) {
 			return sdk.WrapError(sdk.ErrForbidden, "cannot register service of type %s for consumer %s", data.Type, consumer.ID)
 		}
 
@@ -111,12 +111,33 @@ func (api *API) postServiceRegisterHandler() service.Handler {
 			log.Debug("postServiceRegisterHandler> service %s registered with public key: %s", srv.Name, string(srv.PublicKey))
 		}
 
+		if srv.Type == sdk.TypeHatchery {
+			srvs, err := services.LoadAllByType(ctx, tx, sdk.TypeCDN)
+			if err != nil {
+				return err
+			}
+
+			for _, s := range srvs {
+				var tcpConfig sdk.TCPServer
+				if err := s.Config.Get("tcp", &tcpConfig); err != nil {
+					log.Error(ctx, "unable to get tcp configudation from cdn uservice: %v", err)
+					continue
+				}
+				srv.LogServer = tcpConfig
+				log.Warning(ctx, "BLLLLL: %+v", srv.LogServer)
+				break
+			}
+			log.Warning(ctx, "BLLLLL222: %+v", srv.LogServer)
+			if srv.LogServer.Addr == "" || srv.LogServer.Port == 0 {
+				return sdk.WrapError(sdk.ErrNotFound, "unable to find any tcp server configuration in CDN")
+			}
+		}
+
 		if err := tx.Commit(); err != nil {
 			return sdk.WithStack(err)
 		}
 
 		srv.Uptodate = data.Version == sdk.VERSION
-		srv.LogServer = api.Config.CDN.TCP
 
 		return service.WriteJSON(w, srv, http.StatusOK)
 	}
@@ -205,7 +226,7 @@ func (api *API) serviceAPIHeartbeatUpdate(ctx context.Context, db *gorp.DbMap) {
 	srv := &sdk.Service{
 		CanonicalService: sdk.CanonicalService{
 			Name:   event.GetCDSName(),
-			Type:   services.TypeAPI,
+			Type:   sdk.TypeAPI,
 			Config: srvConfig,
 		},
 		MonitoringStatus: api.Status(ctx),

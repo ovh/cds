@@ -10,7 +10,6 @@ import (
 
 	"github.com/ovh/cds/engine/api"
 	"github.com/ovh/cds/engine/api/cache"
-	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/engine/vcs/bitbucketcloud"
 	"github.com/ovh/cds/engine/vcs/bitbucketserver"
 	"github.com/ovh/cds/engine/vcs/gerrit"
@@ -56,7 +55,7 @@ func (s *Service) ApplyConfiguration(config interface{}) error {
 	}
 
 	s.ServiceName = s.Cfg.Name
-	s.ServiceType = services.TypeVCS
+	s.ServiceType = sdk.TypeVCS
 	s.HTTPURL = s.Cfg.URL
 	s.MaxHeartbeatFailures = s.Cfg.API.MaxHeartbeatFailures
 	s.ServiceName = "cds-vcs"

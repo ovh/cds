@@ -10,7 +10,6 @@ import (
 	"gopkg.in/olivere/elastic.v6"
 
 	"github.com/ovh/cds/engine/api"
-	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/ovh/cds/sdk/log"
@@ -40,7 +39,7 @@ func (s *Service) ApplyConfiguration(config interface{}) error {
 
 	s.HTTPURL = s.Cfg.URL
 	s.ServiceName = s.Cfg.Name
-	s.ServiceType = services.TypeElasticsearch
+	s.ServiceType = sdk.TypeElasticsearch
 	s.MaxHeartbeatFailures = s.Cfg.API.MaxHeartbeatFailures
 	s.ServiceName = "cds-elasticsearch"
 	return nil

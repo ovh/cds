@@ -390,6 +390,7 @@ func (api *API) InitRouter() {
 	r.Handle("/worker", Scope(sdk.AuthConsumerScopeAdmin, sdk.AuthConsumerScopeWorker, sdk.AuthConsumerScopeHatchery), r.GET(api.getWorkersHandler))
 	r.Handle("/worker/refresh", Scope(sdk.AuthConsumerScopeWorker), r.POST(api.postRefreshWorkerHandler, MaintenanceAware()))
 	r.Handle("/worker/waiting", Scope(sdk.AuthConsumerScopeWorker), r.POST(api.workerWaitingHandler, MaintenanceAware()))
+	r.Handle("/worker/{name}", Scope(sdk.AuthConsumerScopeWorker), r.GET(api.getWorkerHandler))
 	r.Handle("/worker/{id}/disable", Scope(sdk.AuthConsumerScopeAdmin, sdk.AuthConsumerScopeHatchery), r.POST(api.disableWorkerHandler, MaintenanceAware()))
 
 	// Worker models

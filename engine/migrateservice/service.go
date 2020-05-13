@@ -12,7 +12,6 @@ import (
 
 	"github.com/ovh/cds/engine/api"
 	"github.com/ovh/cds/engine/api/database"
-	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
@@ -81,7 +80,7 @@ func (s *dbmigservice) ApplyConfiguration(cfg interface{}) error {
 
 	s.cfg = dbCfg
 	s.ServiceName = s.cfg.Name
-	s.ServiceType = services.TypeDBMigrate
+	s.ServiceType = sdk.TypeDBMigrate
 	s.HTTPURL = s.cfg.URL
 
 	s.MaxHeartbeatFailures = s.cfg.API.MaxHeartbeatFailures
