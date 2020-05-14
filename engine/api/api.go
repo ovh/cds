@@ -867,6 +867,9 @@ func (a *API) Serve(ctx context.Context) error {
 		Db:    a.mustDB(),
 		Cache: a.Cache,
 	}
+	if err := cdsService.InitMetrics(); err != nil {
+		return sdk.WithStack(err)
+	}
 	cdsService.RunTcpLogServer(ctx)
 
 	log.Info(ctx, "Starting CDS API HTTP Server on %s:%d", a.Config.HTTP.Addr, a.Config.HTTP.Port)
