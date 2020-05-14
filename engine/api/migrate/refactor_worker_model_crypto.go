@@ -96,13 +96,13 @@ func refactorWorkerModelCrypto(ctx context.Context, db *gorp.DbMap, id int64) er
 	}
 
 	// For docker model with private registry password, we want to move the password to secrets.
-	// To do it we will give the clear value in PasswordInput field that will be managed by UpdateDB func.
+	// To do it we will give the clear value in Password field that will be managed by UpdateDB func.
 	if m.Type == sdk.Docker && m.ModelDocker.Private && m.ModelDocker.Password != "" {
 		clearPassword, err := secret.DecryptValue(m.ModelDocker.Password)
 		if err != nil {
 			return sdk.WrapError(err, "cannot decrypt registry password for model with id %d", m.ID)
 		}
-		m.ModelDocker.PasswordInput = clearPassword
+		m.ModelDocker.Password = clearPassword
 	}
 
 	if err := workermodel.UpdateDB(ctx, tx, &m); err != nil {

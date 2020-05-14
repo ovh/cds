@@ -172,7 +172,7 @@
                             <div class="field">
                                 <label>{{'worker_model_password' | translate}}</label>
                                 <input class="ui input" type="password" name="registry_password"
-                                    [(ngModel)]="workerModel.model_docker.password_input"
+                                    [(ngModel)]="workerModel.model_docker.password"
                                     [disabled]="loading || (!currentUser.isAdmin() && !workerModel.restricted)">
                             </div>
                         </ng-container>

@@ -72,15 +72,14 @@ func TestUpdateModel(t *testing.T) {
 		Name:    model1Name,
 		GroupID: g1.ID,
 		ModelDocker: sdk.ModelDocker{
-			Cmd:           "cmd",
-			Private:       true,
-			PasswordInput: "12345678",
+			Cmd:      "cmd",
+			Private:  true,
+			Password: "12345678",
 		},
 	}, u)
 	require.NoError(t, err)
 	assert.Equal(t, "cmd", model1.ModelDocker.Cmd)
 	assert.Equal(t, "{{.secrets.registry_password}}", model1.ModelDocker.Password)
-	assert.Equal(t, sdk.PasswordPlaceholder, model1.ModelDocker.PasswordInput)
 
 	secrets, err := workermodel.LoadSecretsByModelID(context.TODO(), db, model1.ID)
 	require.NoError(t, err)
@@ -102,8 +101,8 @@ func TestUpdateModel(t *testing.T) {
 		PatternName: pattern.Name,
 		GroupID:     g1.ID,
 		ModelDocker: sdk.ModelDocker{
-			Private:       true,
-			PasswordInput: sdk.PasswordPlaceholder,
+			Private:  true,
+			Password: "{{.secrets.registry_password}}",
 		},
 	})
 	require.NoError(t, err)
@@ -111,7 +110,6 @@ func TestUpdateModel(t *testing.T) {
 	assert.Equal(t, u.Username, res.Author.Username)
 	assert.Equal(t, pattern.Model.Cmd, res.ModelDocker.Cmd)
 	assert.Equal(t, "{{.secrets.registry_password}}", res.ModelDocker.Password)
-	assert.Equal(t, sdk.PasswordPlaceholder, res.ModelDocker.PasswordInput)
 
 	secrets, err = workermodel.LoadSecretsByModelID(context.TODO(), db, res.ID)
 	require.NoError(t, err)

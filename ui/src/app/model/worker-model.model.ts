@@ -42,7 +42,6 @@ export class ModelDocker {
     registry: string;
     username: string;
     password: string;
-    password_input: string;
     shell: string;
     envs: {};
     cmd: string;

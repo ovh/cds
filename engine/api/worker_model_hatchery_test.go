@@ -26,12 +26,12 @@ func Test_getWorkerModelSecretHandler(t *testing.T) {
 		Type:       sdk.Docker,
 		Restricted: true,
 		ModelDocker: sdk.ModelDocker{
-			Image:         "buildpack-deps:jessie",
-			Shell:         "sh -c",
-			Cmd:           "worker",
-			Private:       true,
-			Username:      "test",
-			PasswordInput: "pwtest",
+			Image:    "buildpack-deps:jessie",
+			Shell:    "sh -c",
+			Cmd:      "worker",
+			Private:  true,
+			Username: "test",
+			Password: "pwtest",
 		},
 	}
 

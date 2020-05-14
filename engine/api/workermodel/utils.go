@@ -40,7 +40,6 @@ func replaceDockerRegistryPassword(db gorp.SqlExecutor, dbmodel *workerModel) (b
 		dbmodel.ModelDocker.Registry = ""
 		dbmodel.ModelDocker.Username = ""
 		dbmodel.ModelDocker.Password = ""
-		dbmodel.ModelDocker.PasswordInput = ""
 		if dbmodel.ID > 0 {
 			if err := DeleteSecretRegistryPasswordForModelID(db, dbmodel.ID); err != nil {
 				return false, "", err
@@ -52,13 +51,11 @@ func replaceDockerRegistryPassword(db gorp.SqlExecutor, dbmodel *workerModel) (b
 	dbmodel.ModelDocker.Envs = MergeModelEnvsWithDefaultEnvs(dbmodel.ModelDocker.Envs)
 
 	// Password not changed
-	if dbmodel.ModelDocker.PasswordInput == sdk.PasswordPlaceholder {
-		dbmodel.ModelDocker.Password = "{{." + registryPasswordSecretName + "}}"
+	if dbmodel.ModelDocker.Password == "{{."+registryPasswordSecretName+"}}" {
 		return false, "", nil
 	}
 
-	clearPassword := dbmodel.ModelDocker.PasswordInput
-	dbmodel.ModelDocker.PasswordInput = sdk.PasswordPlaceholder
+	clearPassword := dbmodel.ModelDocker.Password
 	dbmodel.ModelDocker.Password = "{{." + registryPasswordSecretName + "}}"
 	return true, clearPassword, nil
 }
