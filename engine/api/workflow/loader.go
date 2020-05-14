@@ -21,11 +21,13 @@ import (
 )
 
 type LoadAllWorkflowsOptionsFilters struct {
-	ProjectKey   string
-	WorkflowName string
-	VCSServer    string
-	Repository   string
-	GroupIDs     []int64
+	ProjectKey            string
+	WorkflowName          string
+	VCSServer             string
+	ApplicationRepository string
+	FromRepository        string
+	GroupIDs              []int64
+	WorkflowIDs           []int64
 }
 
 type LoadAllWorkflowsOptionsLoaders struct {
@@ -49,6 +51,7 @@ type LoadAllWorkflowsOptions struct {
 	Offset    int
 	Limit     int
 	Ascending bool
+	Lock      bool
 }
 
 func (opt LoadAllWorkflowsOptions) Query() gorpmapping.Query {
@@ -105,13 +108,21 @@ func (opt LoadAllWorkflowsOptions) Query() gorpmapping.Query {
 		filters = append(filters, "selected_workflow.vcs_server = $%d")
 		args = append(args, opt.Filters.VCSServer)
 	}
-	if opt.Filters.Repository != "" {
+	if opt.Filters.ApplicationRepository != "" {
 		filters = append(filters, "selected_workflow.repo_fullname = $%d")
-		args = append(args, opt.Filters.Repository)
+		args = append(args, opt.Filters.ApplicationRepository)
+	}
+	if opt.Filters.FromRepository != "" {
+		filters = append(filters, "workflow.from_repository = $%d")
+		args = append(args, opt.Filters.FromRepository)
 	}
 	if len(opt.Filters.GroupIDs) != 0 {
 		filters = append(filters, "selected_workflow.groups && $%d")
 		args = append(args, pq.Int64Array(opt.Filters.GroupIDs))
+	}
+	if len(opt.Filters.WorkflowIDs) != 0 {
+		filters = append(filters, "workflow.id = ANY($%d)")
+		args = append(args, pq.Int64Array(opt.Filters.WorkflowIDs))
 	}
 
 	for i, f := range filters {
@@ -133,6 +144,10 @@ func (opt LoadAllWorkflowsOptions) Query() gorpmapping.Query {
 
 	if opt.Limit != 0 {
 		queryString += fmt.Sprintf(" LIMIT %d", opt.Limit)
+	}
+
+	if opt.Lock {
+		queryString += " for update skip locked"
 	}
 
 	q := gorpmapping.NewQuery(queryString).Args(args...)

@@ -28,7 +28,12 @@ func TestLoadAllWorkflows(t *testing.T) {
 		},
 		{
 			Filters: workflow.LoadAllWorkflowsOptionsFilters{
-				Repository: "test",
+				ApplicationRepository: "test",
+			},
+		},
+		{
+			Filters: workflow.LoadAllWorkflowsOptionsFilters{
+				FromRepository: "test",
 			},
 		},
 		{
@@ -43,18 +48,18 @@ func TestLoadAllWorkflows(t *testing.T) {
 		},
 		{
 			Filters: workflow.LoadAllWorkflowsOptionsFilters{
-				ProjectKey:   "test",
-				WorkflowName: "test",
-				Repository:   "test",
-				VCSServer:    "test",
-				GroupIDs:     []int64{1, 2, 3, 4},
+				ProjectKey:            "test",
+				WorkflowName:          "test",
+				ApplicationRepository: "test",
+				VCSServer:             "test",
+				GroupIDs:              []int64{1, 2, 3, 4},
 			},
 		},
 		{
 			Filters: workflow.LoadAllWorkflowsOptionsFilters{
-				ProjectKey: "test",
-				Repository: "test",
-				GroupIDs:   []int64{1, 2, 3, 4},
+				ProjectKey:            "test",
+				ApplicationRepository: "test",
+				GroupIDs:              []int64{1, 2, 3, 4},
 			},
 			Loaders: workflow.LoadAllWorkflowsOptionsLoaders{
 				WithAsCodeUpdateEvents: true,

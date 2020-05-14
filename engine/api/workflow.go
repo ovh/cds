@@ -41,7 +41,7 @@ func (api *API) getWorkflowsHandler() service.Handler {
 		}
 
 		if filterByRepo != "" {
-			opts.Filters.Repository = filterByRepo
+			opts.Filters.ApplicationRepository = filterByRepo
 		}
 
 		opts.Loaders.WithFavoritesForUserID = getAPIConsumer(ctx).AuthentifiedUserID

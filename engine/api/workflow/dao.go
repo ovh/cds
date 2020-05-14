@@ -14,7 +14,6 @@ import (
 	"github.com/lib/pq"
 
 	"github.com/ovh/cds/engine/api/application"
-	"github.com/ovh/cds/engine/api/ascode"
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/engine/api/environment"
@@ -23,7 +22,6 @@ import (
 	"github.com/ovh/cds/engine/api/keys"
 	"github.com/ovh/cds/engine/api/observability"
 	"github.com/ovh/cds/engine/api/pipeline"
-	"github.com/ovh/cds/engine/api/workflowtemplate"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/exportentities"
 	"github.com/ovh/cds/sdk/log"
@@ -71,6 +69,35 @@ type LoadOptions struct {
 	WithFavoritesForUserID string
 }
 
+func (opts LoadOptions) ToLoadAllWorkflowsOptions() LoadAllWorkflowsOptions {
+	var loadOpts LoadAllWorkflowsOptions
+
+	if !opts.Minimal {
+		loadOpts.Loaders.WithPipelines = true
+		loadOpts.Loaders.WithApplications = true
+		loadOpts.Loaders.WithEnvironments = true
+		loadOpts.Loaders.WithIntegrations = true
+		loadOpts.Loaders.WithFavoritesForUserID = opts.WithFavoritesForUserID
+
+		if opts.WithIcon {
+			loadOpts.Loaders.WithIcon = true
+		}
+		if opts.WithAsCodeUpdateEvent {
+			loadOpts.Loaders.WithAsCodeUpdateEvents = true
+		}
+		if opts.WithTemplate {
+			loadOpts.Loaders.WithTemplate = true
+		}
+		if opts.DeepPipeline {
+			loadOpts.Loaders.WithDeepPipelines = true
+		}
+		if opts.WithLabels {
+			loadOpts.Loaders.WithLabels = true
+		}
+	}
+	return loadOpts
+}
+
 // UpdateOptions is option to parse a workflow
 type UpdateOptions struct {
 	DisableHookManagement bool
@@ -92,22 +119,29 @@ func Exists(db gorp.SqlExecutor, key string, name string) (bool, error) {
 }
 
 func LoadByRepo(ctx context.Context, store cache.Store, db gorp.SqlExecutor, proj sdk.Project, repo string, opts LoadOptions) (*sdk.Workflow, error) {
-	query := `
-    SELECT workflow.*
-    FROM workflow
-	  JOIN project ON project.id = workflow.project_id
-    WHERE project.projectkey = $1 AND workflow.from_repository = $2
-    LIMIT 1
-  `
-	w, err := load(ctx, db, proj, opts, query, proj.Key, repo)
+	ctx, end := observability.Span(ctx, "workflow.Load")
+	defer end()
+
+	loadOpts := opts.ToLoadAllWorkflowsOptions()
+	loadOpts.Filters.FromRepository = repo
+	loadOpts.Limit = 1
+
+	ws, err := LoadAllWorkflows(ctx, db, loadOpts)
 	if err != nil {
 		return nil, err
 	}
 
-	if err := CompleteWorkflow(ctx, db, w, proj, LoadOptions{DeepPipeline: false}); err != nil {
-		return nil, err
+	if len(ws) == 0 {
+		return nil, sdk.WithStack(sdk.ErrNotFound)
 	}
-	return w, nil
+
+	if !opts.Minimal {
+		if err := CompleteWorkflow(ctx, db, &ws[0], proj, opts); err != nil {
+			return nil, err
+		}
+	}
+
+	return &ws[0], nil
 }
 
 // UpdateIcon update the icon of a workflow
@@ -240,42 +274,13 @@ func LoadAllNames(db gorp.SqlExecutor, projID int64) (sdk.IDNames, error) {
 
 // Load loads a workflow for a given user (ie. checking permissions)
 func Load(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj sdk.Project, name string, opts LoadOptions) (*sdk.Workflow, error) {
-	ctx, end := observability.Span(ctx, "workflow.Load",
-		observability.Tag(observability.TagWorkflow, name),
-		observability.Tag(observability.TagProjectKey, proj.Key),
-		observability.Tag("minimal", opts.Minimal),
-		observability.Tag("with_pipeline", opts.DeepPipeline),
-	)
+	ctx, end := observability.Span(ctx, "workflow.Load")
 	defer end()
 
-	var loadOpts LoadAllWorkflowsOptions
+	loadOpts := opts.ToLoadAllWorkflowsOptions()
 	loadOpts.Filters.ProjectKey = proj.Key
 	loadOpts.Filters.WorkflowName = name
 	loadOpts.Limit = 1
-
-	if !opts.Minimal {
-		loadOpts.Loaders.WithPipelines = true
-		loadOpts.Loaders.WithApplications = true
-		loadOpts.Loaders.WithEnvironments = true
-		loadOpts.Loaders.WithIntegrations = true
-		loadOpts.Loaders.WithFavoritesForUserID = opts.WithFavoritesForUserID
-
-		if opts.WithIcon {
-			loadOpts.Loaders.WithIcon = true
-		}
-		if opts.WithAsCodeUpdateEvent {
-			loadOpts.Loaders.WithAsCodeUpdateEvents = true
-		}
-		if opts.WithTemplate {
-			loadOpts.Loaders.WithTemplate = true
-		}
-		if opts.DeepPipeline {
-			loadOpts.Loaders.WithDeepPipelines = true
-		}
-		if opts.WithLabels {
-			loadOpts.Loaders.WithLabels = true
-		}
-	}
 
 	ws, err := LoadAllWorkflows(ctx, db, loadOpts)
 	if err != nil {
@@ -296,218 +301,50 @@ func Load(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj sdk.
 }
 
 // LoadAndLockByID loads a workflow
-// TODO
 func LoadAndLockByID(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj sdk.Project, id int64, opts LoadOptions) (*sdk.Workflow, error) {
-	query := `
-		select *
-		from workflow
-		where id = $1 for update skip locked`
-	res, err := load(ctx, db, proj, opts, query, id)
-	if err != nil {
-		return nil, sdk.WrapError(err, "Unable to load workflow %d", id)
-	}
+	loadOpts := opts.ToLoadAllWorkflowsOptions()
+	loadOpts.Filters.WorkflowIDs = []int64{id}
+	loadOpts.Limit = 1
+	loadOpts.Lock = true
 
-	if err := CompleteWorkflow(ctx, db, res, proj, opts); err != nil {
+	ws, err := LoadAllWorkflows(ctx, db, loadOpts)
+	if err != nil {
 		return nil, err
 	}
-	return res, nil
+
+	if len(ws) == 0 {
+		return nil, sdk.WithStack(sdk.ErrNotFound)
+	}
+
+	if !opts.Minimal {
+		if err := CompleteWorkflow(ctx, db, &ws[0], proj, opts); err != nil {
+			return nil, err
+		}
+	}
+	return &ws[0], nil
 }
 
 // LoadByID loads a workflow
-// TODO
 func LoadByID(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj sdk.Project, id int64, opts LoadOptions) (*sdk.Workflow, error) {
-	query := `
-		select *
-		from workflow
-		where id = $1`
-	res, err := load(ctx, db, proj, opts, query, id)
-	if err != nil {
-		return nil, sdk.WrapError(err, "Unable to load workflow %d", id)
-	}
+	loadOpts := opts.ToLoadAllWorkflowsOptions()
+	loadOpts.Filters.WorkflowIDs = []int64{id}
+	loadOpts.Limit = 1
 
-	if err := CompleteWorkflow(ctx, db, res, proj, opts); err != nil {
+	ws, err := LoadAllWorkflows(ctx, db, loadOpts)
+	if err != nil {
 		return nil, err
 	}
-	return res, nil
-}
 
-// LoadByPipelineName loads a workflow for a given project key and pipeline name
-func LoadByPipelineName(ctx context.Context, db gorp.SqlExecutor, projectKey string, pipName string) ([]sdk.WorkflowName, error) {
-	query := `SELECT distinct workflow.*, project.projectkey as "project_key", project.id as "project_id"
-		from workflow
-		join project on project.id = workflow.project_id
-		join w_node on w_node.workflow_id = workflow.id
-    	join w_node_context on w_node_context.node_id = w_node.id
-		join pipeline on pipeline.id = w_node_context.pipeline_id
-		where project.projectkey = $1 and pipeline.name = $2
-		and workflow.to_delete = false
-		order by workflow.name asc`
-	var result []sdk.WorkflowName // This struct is not registered as a gorpmapping entity so we can't use gorpmapping.Query
-	_, err := db.Select(&result, query, projectKey, pipName)
-	return result, sdk.WithStack(err)
-}
-
-// LoadByApplicationName loads a workflow for a given project key and application name
-func LoadByApplicationName(ctx context.Context, db gorp.SqlExecutor, projectKey string, appName string) ([]sdk.WorkflowName, error) {
-	query := `SELECT distinct workflow.*, project.projectkey as "project_key", project.id as "project_id"
-	from workflow
-	join project on project.id = workflow.project_id
-	join w_node on w_node.workflow_id = workflow.id
-	join w_node_context on w_node_context.node_id = w_node.id
-	join application on w_node_context.application_id = application.id
-	where project.projectkey = $1 and application.name = $2
-	and workflow.to_delete = false
-	order by workflow.name asc`
-	var result []sdk.WorkflowName // This struct is not registered as a gorpmapping entity so we can't use gorpmapping.Query
-	_, err := db.Select(&result, query, projectKey, appName)
-	return result, sdk.WithStack(err)
-}
-
-// LoadByEnvName loads a workflow for a given project key and environment name (ie. checking permissions)
-func LoadByEnvName(ctx context.Context, db gorp.SqlExecutor, projectKey string, envName string) ([]sdk.WorkflowName, error) {
-	query := `SELECT distinct workflow.*, project.projectkey as "project_key", project.id as "project_id"
-	from workflow
-	join project on project.id = workflow.project_id
-	join w_node on w_node.workflow_id = workflow.id
-	join w_node_context on w_node_context.node_id = w_node.id
-	join environment on w_node_context.environment_id = environment.id
-	where project.projectkey = $1 and environment.name = $2
-	and workflow.to_delete = false
-	order by workflow.name asc`
-	var result []sdk.WorkflowName // This struct is not registered as a gorpmapping entity so we can't use gorpmapping.Query
-	_, err := db.Select(&result, query, projectKey, envName)
-	return result, sdk.WithStack(err)
-}
-
-// LoadByWorkflowTemplateID load all workflow names linked to a workflow template
-func LoadByWorkflowTemplateID(ctx context.Context, db gorp.SqlExecutor, templateID int64) ([]sdk.WorkflowName, error) {
-	query := `SELECT distinct workflow.*, project.projectkey as "project_key", project.id as "project_id"
-	FROM workflow
-	JOIN workflow_template_instance ON workflow_template_instance.workflow_id = workflow.id
-	JOIN project on project.id = workflow.project_id
-	WHERE workflow_template_instance.workflow_template_id = $1 AND workflow.to_delete = false`
-	var result []sdk.WorkflowName // This struct is not registered as a gorpmapping entity so we can't use gorpmapping.Query
-	_, err := db.Select(&result, query, templateID)
-	return result, sdk.WithStack(err)
-}
-
-func load(ctx context.Context, db gorp.SqlExecutor, proj sdk.Project, opts LoadOptions, query string, args ...interface{}) (*sdk.Workflow, error) {
-	t0 := time.Now()
-	dbRes := Workflow{}
-
-	_, next := observability.Span(ctx, "workflow.load.selectOne")
-	err := db.SelectOne(&dbRes, query, args...)
-	next()
-	if err != nil {
-		if err == sql.ErrNoRows {
-			return nil, sdk.WithStack(sdk.ErrNotFound)
-		}
-		return nil, sdk.WrapError(err, "Unable to load workflow")
+	if len(ws) == 0 {
+		return nil, sdk.WithStack(sdk.ErrNotFound)
 	}
 
-	res := dbRes.Get()
-	if proj.Key == "" {
-		res.ProjectKey, _ = db.SelectStr("select projectkey from project where id = $1", res.ProjectID)
-	} else {
-		res.ProjectKey = proj.Key
-	}
-
-	// Load groups
-	_, next = observability.Span(ctx, "workflow.load.loadWorkflowGroups")
-	gps, err := group.LoadWorkflowGroups(db, res.ID)
-	next()
-	if err != nil {
-		return nil, sdk.WrapError(err, "Unable to load workflow groups")
-	}
-	res.Groups = gps
-
-	res.Pipelines = map[int64]sdk.Pipeline{}
-	res.Applications = map[int64]sdk.Application{}
-	res.Environments = map[int64]sdk.Environment{}
-	res.HookModels = map[int64]sdk.WorkflowHookModel{}
-	res.OutGoingHookModels = map[int64]sdk.WorkflowHookModel{}
-
-	if opts.WithLabels {
-		_, next = observability.Span(ctx, "workflow.load.Labels")
-		labels, errL := LoadLabels(db, res.ID)
-		next()
-
-		if errL != nil {
-			return nil, sdk.WrapError(errL, "Load> unable to load labels")
-		}
-		res.Labels = labels
-	}
-
-	if opts.WithAsCodeUpdateEvent {
-		var asCodeEvents []sdk.AsCodeEvent
-		var errAS error
-		_, next = observability.Span(ctx, "workflow.load.AddCodeUpdateEvents")
-		if res.FromRepository != "" {
-			asCodeEvents, errAS = ascode.LoadAsCodeEventByRepo(ctx, db, res.FromRepository)
-		} else {
-			asCodeEvents, errAS = ascode.LoadAsCodeEventByWorkflowID(ctx, db, res.ID)
-		}
-		next()
-		if errAS != nil {
-			return nil, sdk.WrapError(errAS, "Load> unable to load as code update events")
-		}
-		res.AsCodeEvent = asCodeEvents
-	}
-
-	if opts.WithIntegrations {
-		_, next = observability.Span(ctx, "workflow.load.AddIntegrations")
-		integrations, errInt := integration.LoadIntegrationsByWorkflowID(db, res.ID, false)
-		next()
-
-		if errInt != nil {
-			return nil, sdk.WrapError(errInt, "Load> unable to load workflow integrations")
-		}
-		res.EventIntegrations = integrations
-	}
-
-	if opts.WithTemplate {
-		wti, err := workflowtemplate.LoadInstanceByWorkflowID(ctx, db, res.ID, workflowtemplate.LoadInstanceOptions.WithTemplate)
-		if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
+	if !opts.Minimal {
+		if err := CompleteWorkflow(ctx, db, &ws[0], proj, opts); err != nil {
 			return nil, err
 		}
-		if wti != nil {
-			res.TemplateInstance = wti
-			res.FromTemplate = fmt.Sprintf("%s@%d", wti.Template.Path(), wti.WorkflowTemplateVersion)
-			res.TemplateUpToDate = wti.Template.Version == wti.WorkflowTemplateVersion
-		}
 	}
-
-	_, next = observability.Span(ctx, "workflow.load.loadNotifications")
-	notifs, errN := loadNotifications(db, &res)
-	next()
-
-	if errN != nil {
-		return nil, sdk.WrapError(errN, "Load> Unable to load workflow notification")
-	}
-	res.Notifications = notifs
-
-	delta := time.Since(t0).Seconds()
-
-	log.Debug("Load> Load workflow (%s/%s)%d took %.3f seconds", res.ProjectKey, res.Name, res.ID, delta)
-	w := &res
-	return w, nil
-}
-
-func IsFavorite(db gorp.SqlExecutor, w *sdk.Workflow, uID string) (bool, error) {
-	count, err := db.SelectInt("SELECT COUNT(1) FROM workflow_favorite WHERE authentified_user_id = $1 AND workflow_id = $2", uID, w.ID)
-	if err != nil {
-		return false, sdk.WithStack(err)
-	}
-	return count > 0, nil
-}
-
-// UserFavoriteWorkflowIDs returns the list of workflow ID
-func UserFavoriteWorkflowIDs(db gorp.SqlExecutor, uID string) ([]int64, error) {
-	var result []int64
-	if _, err := db.Select(&result, "SELECT workflow_id FROM workflow_favorite WHERE authentified_user_id = $1", uID); err != nil {
-		return nil, sdk.WithStack(err)
-	}
-	return result, nil
+	return &ws[0], nil
 }
 
 // Insert inserts a new workflow
