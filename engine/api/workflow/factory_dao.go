@@ -20,6 +20,47 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
+// LoadOptions custom option for loading workflow
+type LoadOptions struct {
+	Minimal                bool
+	DeepPipeline           bool
+	WithLabels             bool
+	WithIcon               bool
+	WithAsCodeUpdateEvent  bool
+	WithIntegrations       bool
+	WithTemplate           bool
+	WithFavoritesForUserID string
+}
+
+func (opts LoadOptions) ToLoadAllWorkflowsOptions() LoadAllWorkflowsOptions {
+	var loadOpts LoadAllWorkflowsOptions
+
+	if !opts.Minimal {
+		loadOpts.Loaders.WithPipelines = true
+		loadOpts.Loaders.WithApplications = true
+		loadOpts.Loaders.WithEnvironments = true
+		loadOpts.Loaders.WithIntegrations = true
+		loadOpts.Loaders.WithFavoritesForUserID = opts.WithFavoritesForUserID
+
+		if opts.WithIcon {
+			loadOpts.Loaders.WithIcon = true
+		}
+		if opts.WithAsCodeUpdateEvent {
+			loadOpts.Loaders.WithAsCodeUpdateEvents = true
+		}
+		if opts.WithTemplate {
+			loadOpts.Loaders.WithTemplate = true
+		}
+		if opts.DeepPipeline {
+			loadOpts.Loaders.WithDeepPipelines = true
+		}
+		if opts.WithLabels {
+			loadOpts.Loaders.WithLabels = true
+		}
+	}
+	return loadOpts
+}
+
 type LoadAllWorkflowsOptionsFilters struct {
 	ProjectKey            string
 	WorkflowName          string
@@ -540,6 +581,7 @@ func (opt LoadAllWorkflowsOptions) withApplications(db gorp.SqlExecutor, ws *[]W
 }
 
 func (opt LoadAllWorkflowsOptions) withNotifications(db gorp.SqlExecutor, ws *[]Workflow) error {
+	// TODO
 	return nil
 }
 
@@ -598,10 +640,8 @@ func LoadAllWorkflows(ctx context.Context, db gorp.SqlExecutor, opts LoadAllWork
 		ws = append(ws, w)
 	}
 
-	// TODO load workflow groupd and node_groups properly in mandatory loaders
-
 	delta := time.Since(t0).Seconds()
-	log.Debug("LoadAllWorkflows - %d results in %.3f seconds", len(ws), delta)
+	log.Info(ctx, "LoadAllWorkflows - %d results in %.3f seconds", len(ws), delta)
 
 	return ws, nil
 }

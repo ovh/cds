@@ -15,7 +15,6 @@ import (
 
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/cache"
-	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/integration"
@@ -28,74 +27,23 @@ import (
 )
 
 // LoadAllByProjectIDs returns all workflow for given project ids.
-func LoadAllByProjectIDs(ctx context.Context, db gorp.SqlExecutor, projectIDs []int64) (sdk.Workflows, error) {
-	var res Workflows
-	query := gorpmapping.NewQuery(`
+func LoadAllNamesByProjectIDs(ctx context.Context, db gorp.SqlExecutor, projectIDs []int64) ([]sdk.WorkflowName, error) {
+	query := `
     SELECT workflow.*, project.projectkey
 	FROM workflow
 	JOIN project ON project.id = workflow.project_id
-    WHERE project_id = ANY($1)
-  `).Args(pq.Int64Array(projectIDs))
-	if err := gorpmapping.GetAll(ctx, db, query, &res); err != nil {
-		return nil, err
-	}
-	return res.Get(), nil
+    WHERE project_id = ANY($1)`
+
+	var result []sdk.WorkflowName // This struct is not registered as a gorpmapping entity so we can't use gorpmapping.Query
+	_, err := db.Select(&result, query, pq.Int64Array(projectIDs))
+	return result, sdk.WithStack(err)
 }
 
 // LoadAllByIDs returns all workflows by ids.
 func LoadAllByIDs(ctx context.Context, db gorp.SqlExecutor, ids []int64) (sdk.Workflows, error) {
-	var res Workflows
-	query := gorpmapping.NewQuery(`
-	SELECT workflow.*, project.projectkey
-	FROM workflow
-	JOIN project ON project.id = workflow.project_id
-    WHERE workflow.id = ANY($1)
-  `).Args(pq.Int64Array(ids))
-	if err := gorpmapping.GetAll(ctx, db, query, &res); err != nil {
-		return nil, err
-	}
-	return res.Get(), nil
-}
-
-// LoadOptions custom option for loading workflow
-type LoadOptions struct {
-	Minimal                bool
-	DeepPipeline           bool
-	WithLabels             bool
-	WithIcon               bool
-	WithAsCodeUpdateEvent  bool
-	WithIntegrations       bool
-	WithTemplate           bool
-	WithFavoritesForUserID string
-}
-
-func (opts LoadOptions) ToLoadAllWorkflowsOptions() LoadAllWorkflowsOptions {
 	var loadOpts LoadAllWorkflowsOptions
-
-	if !opts.Minimal {
-		loadOpts.Loaders.WithPipelines = true
-		loadOpts.Loaders.WithApplications = true
-		loadOpts.Loaders.WithEnvironments = true
-		loadOpts.Loaders.WithIntegrations = true
-		loadOpts.Loaders.WithFavoritesForUserID = opts.WithFavoritesForUserID
-
-		if opts.WithIcon {
-			loadOpts.Loaders.WithIcon = true
-		}
-		if opts.WithAsCodeUpdateEvent {
-			loadOpts.Loaders.WithAsCodeUpdateEvents = true
-		}
-		if opts.WithTemplate {
-			loadOpts.Loaders.WithTemplate = true
-		}
-		if opts.DeepPipeline {
-			loadOpts.Loaders.WithDeepPipelines = true
-		}
-		if opts.WithLabels {
-			loadOpts.Loaders.WithLabels = true
-		}
-	}
-	return loadOpts
+	loadOpts.Filters.WorkflowIDs = ids
+	return LoadAllWorkflows(ctx, db, loadOpts)
 }
 
 // UpdateOptions is option to parse a workflow
