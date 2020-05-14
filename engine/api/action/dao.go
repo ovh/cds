@@ -200,8 +200,8 @@ func GetRequirementsTypeModelAndValueStartBy(ctx context.Context, db gorp.SqlExe
 	query := gorpmapping.NewQuery(`
     SELECT *
     FROM action_requirement
-    WHERE type = 'model' AND value LIKE $1
-  `).Args(value + "%")
+    WHERE type = 'model' AND (value LIKE $1 OR value = $2)
+  `).Args(value+" %", value)
 
 	if err := gorpmapping.GetAll(ctx, db, query, &rs); err != nil {
 		return nil, sdk.WrapError(err, "cannot get requirements")
