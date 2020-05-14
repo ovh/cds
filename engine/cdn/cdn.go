@@ -78,6 +78,8 @@ func (s *Service) Serve(c context.Context) error {
 	ctx, cancel := context.WithCancel(c)
 	defer cancel()
 
+	s.initMetrics()
+
 	s.RunTcpLogServer(ctx)
 
 	//Init the http server

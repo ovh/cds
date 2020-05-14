@@ -12,6 +12,7 @@ import (
 
 	gocache "github.com/patrickmn/go-cache"
 
+	"github.com/ovh/cds/engine/api/observability"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/jws"
 	"github.com/ovh/cds/sdk/log"
@@ -48,10 +49,12 @@ func (s *Service) RunTcpLogServer(ctx context.Context) {
 		for {
 			conn, err := listener.Accept()
 			if err != nil {
+				observability.Record(ctx, Errors, 1)
 				log.Error(ctx, "unable to accept connection: %v", err)
 				return
 			}
 			sdk.GoRoutine(ctx, "cdn-logServer", func(ctx context.Context) {
+				observability.Record(ctx, Hits, 1)
 				s.handleConnection(ctx, conn)
 			})
 		}
@@ -73,6 +76,7 @@ func (s *Service) handleConnection(ctx context.Context, conn net.Conn) {
 		bytes = bytes[:len(bytes)-1]
 
 		if err := s.handleLogMessage(ctx, bytes); err != nil {
+			observability.Record(ctx, Errors, 1)
 			log.Error(ctx, "cdn.log> %v", err)
 			continue
 		}
@@ -100,8 +104,10 @@ func (s *Service) handleLogMessage(ctx context.Context, messageReceived []byte) 
 
 	switch {
 	case signature.Worker != nil:
+		observability.Record(ctx, WorkerLogReceived, 1)
 		return s.handleWorkerLog(ctx, signature.Worker.WorkerID, signature.Worker.WorkerName, sig, m)
 	case signature.Service != nil:
+		observability.Record(ctx, ServiceLogReceived, 1)
 		return s.handleServiceLog(ctx, signature.Service.HatcheryID, signature.Service.HatcheryName, signature.Service.WorkerName, sig, m)
 	default:
 		return sdk.WithStack(sdk.ErrWrongRequest)
