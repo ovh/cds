@@ -39,6 +39,8 @@ type LoadAllWorkflowsOptionsLoaders struct {
 	WithTemplate           bool
 	WithNotifications      bool
 	WithLabels             bool
+	WithAudits             bool
+	WithFavoritesForUserID string
 }
 
 type LoadAllWorkflowsOptions struct {
@@ -213,6 +215,13 @@ func (opt LoadAllWorkflowsOptions) GetLoaders() []gorpmapping.GetOptionFunc {
 		loaders = append(loaders, func(db gorp.SqlExecutor, i interface{}) error {
 			ws := i.(*[]Workflow)
 			return opt.withLabels(db, ws)
+		})
+	}
+
+	if opt.Loaders.WithFavoritesForUserID != "" {
+		loaders = append(loaders, func(db gorp.SqlExecutor, i interface{}) error {
+			ws := i.(*[]Workflow)
+			return opt.withFavorites(db, ws, opt.Loaders.WithFavoritesForUserID)
 		})
 	}
 
@@ -531,8 +540,6 @@ func (opt LoadAllWorkflowsOptions) withLabels(db gorp.SqlExecutor, ws *[]Workflo
 		return err
 	}
 
-	log.Debug("withLabels> %+v => %+v", ids, labels)
-
 	for x := range *ws {
 		w := &(*ws)[x]
 		for _, label := range labels {
@@ -540,6 +547,20 @@ func (opt LoadAllWorkflowsOptions) withLabels(db gorp.SqlExecutor, ws *[]Workflo
 				w.Labels = append(w.Labels, label)
 			}
 		}
+	}
+
+	return nil
+}
+
+func (opt LoadAllWorkflowsOptions) withFavorites(db gorp.SqlExecutor, ws *[]Workflow, userID string) error {
+	workflowIDs, err := UserFavoriteWorkflowIDs(db, userID)
+	if err != nil {
+		return err
+	}
+
+	for x := range *ws {
+		w := &(*ws)[x]
+		w.Favorite = sdk.IsInInt64Array(w.ID, workflowIDs)
 	}
 
 	return nil

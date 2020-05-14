@@ -61,13 +61,14 @@ func LoadAllByIDs(ctx context.Context, db gorp.SqlExecutor, ids []int64) (sdk.Wo
 
 // LoadOptions custom option for loading workflow
 type LoadOptions struct {
-	Minimal               bool
-	DeepPipeline          bool
-	WithLabels            bool
-	WithIcon              bool
-	WithAsCodeUpdateEvent bool
-	WithIntegrations      bool
-	WithTemplate          bool
+	Minimal                bool
+	DeepPipeline           bool
+	WithLabels             bool
+	WithIcon               bool
+	WithAsCodeUpdateEvent  bool
+	WithIntegrations       bool
+	WithTemplate           bool
+	WithFavoritesForUserID string
 }
 
 // UpdateOptions is option to parse a workflow
@@ -257,6 +258,7 @@ func Load(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj sdk.
 		loadOpts.Loaders.WithApplications = true
 		loadOpts.Loaders.WithEnvironments = true
 		loadOpts.Loaders.WithIntegrations = true
+		loadOpts.Loaders.WithFavoritesForUserID = opts.WithFavoritesForUserID
 
 		if opts.WithIcon {
 			loadOpts.Loaders.WithIcon = true
@@ -294,6 +296,7 @@ func Load(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj sdk.
 }
 
 // LoadAndLockByID loads a workflow
+// TODO
 func LoadAndLockByID(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj sdk.Project, id int64, opts LoadOptions) (*sdk.Workflow, error) {
 	query := `
 		select *
@@ -311,6 +314,7 @@ func LoadAndLockByID(ctx context.Context, db gorp.SqlExecutor, store cache.Store
 }
 
 // LoadByID loads a workflow
+// TODO
 func LoadByID(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj sdk.Project, id int64, opts LoadOptions) (*sdk.Workflow, error) {
 	query := `
 		select *
@@ -327,10 +331,9 @@ func LoadByID(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj 
 	return res, nil
 }
 
-// LoadByPipelineName loads a workflow for a given project key and pipeline name (ie. checking permissions)
-func LoadByPipelineName(ctx context.Context, db gorp.SqlExecutor, projectKey string, pipName string) (sdk.Workflows, error) {
-	dbRes := Workflows{}
-	query := gorpmapping.NewQuery(`select distinct workflow.*, project.projectkey
+// LoadByPipelineName loads a workflow for a given project key and pipeline name
+func LoadByPipelineName(ctx context.Context, db gorp.SqlExecutor, projectKey string, pipName string) ([]sdk.WorkflowName, error) {
+	query := `SELECT distinct workflow.*, project.projectkey as "project_key", project.id as "project_id"
 		from workflow
 		join project on project.id = workflow.project_id
 		join w_node on w_node.workflow_id = workflow.id
@@ -338,20 +341,15 @@ func LoadByPipelineName(ctx context.Context, db gorp.SqlExecutor, projectKey str
 		join pipeline on pipeline.id = w_node_context.pipeline_id
 		where project.projectkey = $1 and pipeline.name = $2
 		and workflow.to_delete = false
-		order by workflow.name asc`).Args(projectKey, pipName)
-
-	if err := gorpmapping.GetAll(ctx, db, query, &dbRes); err != nil {
-		return nil, sdk.WrapError(err, "Unable to load workflows for project %s and pipeline %s", projectKey, pipName)
-	}
-
-	return dbRes.Get(), nil
+		order by workflow.name asc`
+	var result []sdk.WorkflowName // This struct is not registered as a gorpmapping entity so we can't use gorpmapping.Query
+	_, err := db.Select(&result, query, projectKey, pipName)
+	return result, sdk.WithStack(err)
 }
 
-// LoadByApplicationName loads a workflow for a given project key and application name (ie. checking permissions)
-func LoadByApplicationName(ctx context.Context, db gorp.SqlExecutor, projectKey string, appName string) (sdk.Workflows, error) {
-	dbRes := Workflows{}
-	query := gorpmapping.NewQuery(`
-	select distinct workflow.*, project.projectkey
+// LoadByApplicationName loads a workflow for a given project key and application name
+func LoadByApplicationName(ctx context.Context, db gorp.SqlExecutor, projectKey string, appName string) ([]sdk.WorkflowName, error) {
+	query := `SELECT distinct workflow.*, project.projectkey as "project_key", project.id as "project_id"
 	from workflow
 	join project on project.id = workflow.project_id
 	join w_node on w_node.workflow_id = workflow.id
@@ -359,20 +357,15 @@ func LoadByApplicationName(ctx context.Context, db gorp.SqlExecutor, projectKey 
 	join application on w_node_context.application_id = application.id
 	where project.projectkey = $1 and application.name = $2
 	and workflow.to_delete = false
-	order by workflow.name asc`).Args(projectKey, appName)
-
-	if err := gorpmapping.GetAll(ctx, db, query, &dbRes); err != nil {
-		return nil, sdk.WrapError(err, "Unable to load workflows for project %s and application %s", projectKey, appName)
-	}
-
-	return dbRes.Get(), nil
+	order by workflow.name asc`
+	var result []sdk.WorkflowName // This struct is not registered as a gorpmapping entity so we can't use gorpmapping.Query
+	_, err := db.Select(&result, query, projectKey, appName)
+	return result, sdk.WithStack(err)
 }
 
 // LoadByEnvName loads a workflow for a given project key and environment name (ie. checking permissions)
-func LoadByEnvName(ctx context.Context, db gorp.SqlExecutor, projectKey string, envName string) (sdk.Workflows, error) {
-	dbRes := Workflows{}
-	query := gorpmapping.NewQuery(`
-	select distinct workflow.*, project.projectkey
+func LoadByEnvName(ctx context.Context, db gorp.SqlExecutor, projectKey string, envName string) ([]sdk.WorkflowName, error) {
+	query := `SELECT distinct workflow.*, project.projectkey as "project_key", project.id as "project_id"
 	from workflow
 	join project on project.id = workflow.project_id
 	join w_node on w_node.workflow_id = workflow.id
@@ -380,32 +373,22 @@ func LoadByEnvName(ctx context.Context, db gorp.SqlExecutor, projectKey string, 
 	join environment on w_node_context.environment_id = environment.id
 	where project.projectkey = $1 and environment.name = $2
 	and workflow.to_delete = false
-	order by workflow.name asc`).Args(projectKey, envName)
-
-	if err := gorpmapping.GetAll(ctx, db, query, &dbRes); err != nil {
-		return nil, sdk.WrapError(err, "Unable to load workflows for project %s and environment %s", projectKey, envName)
-	}
-
-	return dbRes.Get(), nil
+	order by workflow.name asc`
+	var result []sdk.WorkflowName // This struct is not registered as a gorpmapping entity so we can't use gorpmapping.Query
+	_, err := db.Select(&result, query, projectKey, envName)
+	return result, sdk.WithStack(err)
 }
 
-func loadByWorkflowTemplateID(ctx context.Context, db gorp.SqlExecutor, query gorpmapping.Query) (sdk.Workflows, error) {
-	var dbRes Workflows
-	if err := gorpmapping.GetAll(ctx, db, query, &dbRes); err != nil {
-		return nil, err
-	}
-	return dbRes.Get(), nil
-}
-
-// LoadByWorkflowTemplateID load all workflows linked to a workflow template but without loading workflow details
-func LoadByWorkflowTemplateID(ctx context.Context, db gorp.SqlExecutor, templateID int64) (sdk.Workflows, error) {
-	query := gorpmapping.NewQuery(`
-	SELECT workflow.*, project.projectkey
+// LoadByWorkflowTemplateID load all workflow names linked to a workflow template
+func LoadByWorkflowTemplateID(ctx context.Context, db gorp.SqlExecutor, templateID int64) ([]sdk.WorkflowName, error) {
+	query := `SELECT distinct workflow.*, project.projectkey as "project_key", project.id as "project_id"
 	FROM workflow
 	JOIN workflow_template_instance ON workflow_template_instance.workflow_id = workflow.id
 	JOIN project on project.id = workflow.project_id
-	WHERE workflow_template_instance.workflow_template_id = $1 AND workflow.to_delete = false`).Args(templateID)
-	return loadByWorkflowTemplateID(ctx, db, query)
+	WHERE workflow_template_instance.workflow_template_id = $1 AND workflow.to_delete = false`
+	var result []sdk.WorkflowName // This struct is not registered as a gorpmapping entity so we can't use gorpmapping.Query
+	_, err := db.Select(&result, query, templateID)
+	return result, sdk.WithStack(err)
 }
 
 func load(ctx context.Context, db gorp.SqlExecutor, proj sdk.Project, opts LoadOptions, query string, args ...interface{}) (*sdk.Workflow, error) {
@@ -516,6 +499,15 @@ func IsFavorite(db gorp.SqlExecutor, w *sdk.Workflow, uID string) (bool, error) 
 		return false, sdk.WithStack(err)
 	}
 	return count > 0, nil
+}
+
+// UserFavoriteWorkflowIDs returns the list of workflow ID
+func UserFavoriteWorkflowIDs(db gorp.SqlExecutor, uID string) ([]int64, error) {
+	var result []int64
+	if _, err := db.Select(&result, "SELECT workflow_id FROM workflow_favorite WHERE authentified_user_id = $1", uID); err != nil {
+		return nil, sdk.WithStack(err)
+	}
+	return result, nil
 }
 
 // Insert inserts a new workflow

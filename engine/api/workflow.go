@@ -44,6 +44,8 @@ func (api *API) getWorkflowsHandler() service.Handler {
 			opts.Filters.Repository = filterByRepo
 		}
 
+		opts.Loaders.WithFavoritesForUserID = getAPIConsumer(ctx).AuthentifiedUserID
+
 		groupIDS := getAPIConsumer(ctx).GetGroupIDs()
 		opts.Filters.GroupIDs = groupIDS
 		if isMaintainer(ctx) {
@@ -98,22 +100,18 @@ func (api *API) getWorkflowHandler() service.Handler {
 		}
 
 		opts := workflow.LoadOptions{
-			Minimal:               minimal, // if true, load only data from table workflow, not pipelines, app, env...
-			DeepPipeline:          withDeepPipelines,
-			WithIcon:              !withoutIcons,
-			WithLabels:            withLabels,
-			WithAsCodeUpdateEvent: withAsCodeEvents,
-			WithIntegrations:      true,
-			WithTemplate:          withTemplate,
+			Minimal:                minimal, // if true, load only data from table workflow, not pipelines, app, env...
+			DeepPipeline:           withDeepPipelines,
+			WithIcon:               !withoutIcons,
+			WithLabels:             withLabels,
+			WithAsCodeUpdateEvent:  withAsCodeEvents,
+			WithIntegrations:       true,
+			WithTemplate:           withTemplate,
+			WithFavoritesForUserID: getAPIConsumer(ctx).AuthentifiedUserID,
 		}
 		w1, err := workflow.Load(ctx, api.mustDB(), api.Cache, *proj, name, opts)
 		if err != nil {
 			return sdk.WrapError(err, "cannot load workflow %s", name)
-		}
-
-		w1.Favorite, err = workflow.IsFavorite(api.mustDB(), w1, getAPIConsumer(ctx).AuthentifiedUserID)
-		if err != nil {
-			return err
 		}
 
 		if withUsage {

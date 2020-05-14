@@ -932,7 +932,7 @@ func (api *API) getTemplateUsageHandler() service.Handler {
 				mProjectIDs[ps[i].ID] = struct{}{}
 			}
 
-			filteredWorkflow := []sdk.Workflow{}
+			filteredWorkflow := []sdk.WorkflowName{}
 			for i := range wfs {
 				if _, ok := mProjectIDs[wfs[i].ProjectID]; ok {
 					filteredWorkflow = append(filteredWorkflow, wfs[i])

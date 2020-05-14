@@ -19,6 +19,13 @@ const (
 // ColorRegexp represent the regexp for a format to hexadecimal color
 var ColorRegexp = regexp.MustCompile(`^#\w{3,8}$`)
 
+type WorkflowName struct {
+	ID         int64  `json:"id" db:"id" cli:"-"`
+	Name       string `json:"name" db:"name" cli:"name,key"`
+	ProjectKey string `json:"project_key" db:"project_key" cli:"project_key"`
+	ProjectID  int64  `json:"project_id" db:"project_id" cli:"-"`
+}
+
 //Workflow represents a pipeline based workflow
 type Workflow struct {
 	ID                      int64                        `json:"id" db:"id" cli:"-"`
