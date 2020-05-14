@@ -158,7 +158,6 @@ func TestUpdateModelInPipeline(t *testing.T) {
 		ModelDocker: sdk.ModelDocker{},
 	}, u)
 	require.NoError(t, err)
-	assert.Equal(t, "cmd", model1.ModelDocker.Cmd)
 
 	model1NameFoo := model1Name + "-foo"
 	model1Foo, err := workermodel.Create(context.TODO(), db, sdk.Model{
@@ -169,7 +168,6 @@ func TestUpdateModelInPipeline(t *testing.T) {
 		ModelDocker: sdk.ModelDocker{},
 	}, u)
 	require.NoError(t, err)
-	assert.Equal(t, "cmd", model1.ModelDocker.Cmd)
 
 	projectKey := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, cache, projectKey, projectKey)
