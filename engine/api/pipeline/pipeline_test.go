@@ -200,7 +200,7 @@ func TestLoadByWorkerModel(t *testing.T) {
 
 	model1 := sdk.Model{Name: sdk.RandomString(10), Group: g1, GroupID: g1.ID}
 	model2 := sdk.Model{Name: sdk.RandomString(10), Group: g2, GroupID: g2.ID}
-	model3 := sdk.Model{Name: model1.Name + "-Container", Group: g1, GroupID: g1.ID}
+	model3 := sdk.Model{Name: model1.Name[:5], Group: g1, GroupID: g1.ID}
 
 	projectKey := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, cache, projectKey, projectKey)
