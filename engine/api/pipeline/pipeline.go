@@ -93,7 +93,7 @@ func LoadByWorkerModel(ctx context.Context, db gorp.SqlExecutor, model *sdk.Mode
 	var query gorpmapping.Query
 
 	isSharedInfraModel := model.GroupID == group.SharedInfraGroup.ID
-	modelNamePattern := model.Group.Name + "/" + model.Name + "%"
+	modelNamePattern := model.Group.Name + "/" + model.Name
 
 	if isSharedInfraModel {
 		query = gorpmapping.NewQuery(`
@@ -104,8 +104,11 @@ func LoadByWorkerModel(ctx context.Context, db gorp.SqlExecutor, model *sdk.Mode
         JOIN pipeline ON pipeline.id = pipeline_stage.pipeline_id
         JOIN project ON project.id = pipeline.project_id
       WHERE action_requirement.type = 'model'
-        AND (action_requirement.value LIKE $1 OR action_requirement.value LIKE $2)
-    `).Args(model.Name+"%", modelNamePattern)
+		AND (action_requirement.value LIKE $1 OR 
+			action_requirement.value LIKE $2 OR 
+			action_requirement.value = $3 OR 
+			action_requirement.value = $4)
+    `).Args(model.Name+" %", modelNamePattern+" %", model.Name, modelNamePattern)
 	} else {
 		query = gorpmapping.NewQuery(`
       SELECT DISTINCT pipeline.*, project.projectkey AS projectKey
@@ -115,8 +118,8 @@ func LoadByWorkerModel(ctx context.Context, db gorp.SqlExecutor, model *sdk.Mode
         JOIN pipeline ON pipeline.id = pipeline_stage.pipeline_id
         JOIN project ON project.id = pipeline.project_id
       WHERE action_requirement.type = 'model'
-        AND action_requirement.value LIKE $1
-    `).Args(modelNamePattern)
+        AND (action_requirement.value LIKE $1 OR action_requirement.value = $2)
+    `).Args(modelNamePattern+" %", modelNamePattern)
 	}
 
 	var dbPips Pipelines
@@ -132,7 +135,7 @@ func LoadByWorkerModelAndGroupIDs(ctx context.Context, db gorp.SqlExecutor, mode
 	var query gorpmapping.Query
 
 	isSharedInfraModel := model.GroupID == group.SharedInfraGroup.ID
-	modelNamePattern := model.Group.Name + "/" + model.Name + "%"
+	modelNamePattern := model.Group.Name + "/" + model.Name
 
 	if isSharedInfraModel {
 		query = gorpmapping.NewQuery(`
@@ -143,13 +146,14 @@ func LoadByWorkerModelAndGroupIDs(ctx context.Context, db gorp.SqlExecutor, mode
         JOIN pipeline ON pipeline.id = pipeline_stage.pipeline_id
         JOIN project ON project.id = pipeline.project_id
       WHERE action_requirement.type = 'model'
-        AND (action_requirement.value LIKE $1 OR action_requirement.value LIKE $2)
+		AND (action_requirement.value LIKE $1 OR action_requirement.value LIKE $2 OR
+			action_requirement.value = $3 OR action_requirement.value = $4)
         AND project.id IN (
           SELECT project_group.project_id
             FROM project_group
-          WHERE project_group.group_id = ANY(string_to_array($3, ',')::int[])
+          WHERE project_group.group_id = ANY(string_to_array($5, ',')::int[])
         )
-    `).Args(model.Name+"%", modelNamePattern, gorpmapping.IDsToQueryString(groupIDs))
+    `).Args(model.Name+" %", modelNamePattern+" %", model.Name, modelNamePattern, gorpmapping.IDsToQueryString(groupIDs))
 	} else {
 		query = gorpmapping.NewQuery(`
       SELECT DISTINCT pipeline.*, project.projectkey AS projectKey
@@ -159,14 +163,14 @@ func LoadByWorkerModelAndGroupIDs(ctx context.Context, db gorp.SqlExecutor, mode
         JOIN pipeline ON pipeline.id = pipeline_stage.pipeline_id
         JOIN project ON project.id = pipeline.project_id
       WHERE action_requirement.type = 'model'
-        AND action_requirement.value LIKE $1
+        AND (action_requirement.value LIKE $1 OR action_requirement.value = $2)
         AND project.id IN (
           SELECT project_group.project_id
             FROM project_group
           WHERE
-            project_group.group_id = ANY(string_to_array($2, ',')::int[])
+            project_group.group_id = ANY(string_to_array($3, ',')::int[])
         )
-    `).Args(modelNamePattern, gorpmapping.IDsToQueryString(groupIDs))
+    `).Args(modelNamePattern+" %", modelNamePattern, gorpmapping.IDsToQueryString(groupIDs))
 	}
 
 	var pips Pipelines
