@@ -335,10 +335,15 @@ func (api *API) getPipelineHandler() service.Handler {
 			wkAscodeHolder, err := workflow.LoadByRepo(ctx, api.Cache, api.mustDB(), *proj, p.FromRepository, workflow.LoadOptions{
 				WithTemplate: true,
 			})
-			if err != nil {
+			if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
 				return sdk.NewErrorFrom(err, "cannot found workflow holder of the pipeline")
 			}
 			p.WorkflowAscodeHolder = wkAscodeHolder
+
+			// FIXME from_repository should never be set if the workflow holder was deleted
+			if p.WorkflowAscodeHolder == nil {
+				p.FromRepository = ""
+			}
 		}
 
 		return service.WriteJSON(w, p, http.StatusOK)
