@@ -410,6 +410,7 @@ vcs_ssh_key: proj-blabla
 
 	// Add some events to resync
 	asCodeEvent := sdk.AsCodeEvent{
+		WorkflowID:     wf.ID,
 		Username:       u.GetUsername(),
 		CreateDate:     time.Now(),
 		FromRepo:       repoURL,
