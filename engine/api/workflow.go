@@ -755,7 +755,7 @@ func (api *API) getWorkflowNotificationsConditionsHandler() service.Handler {
 
 func (api *API) getAllWorkflowsHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		vars := mux.Vars(r)
+		//vars := mux.Vars(r)
 
 		// TODO
 
