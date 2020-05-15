@@ -200,6 +200,7 @@ func TestLoadByWorkerModel(t *testing.T) {
 
 	model1 := sdk.Model{Name: sdk.RandomString(10), Group: g1, GroupID: g1.ID}
 	model2 := sdk.Model{Name: sdk.RandomString(10), Group: g2, GroupID: g2.ID}
+	model3 := sdk.Model{Name: model1.Name[:5], Group: g1, GroupID: g1.ID}
 
 	projectKey := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, cache, projectKey, projectKey)
@@ -267,6 +268,13 @@ func TestLoadByWorkerModel(t *testing.T) {
 	assert.Equal(t, pip1.Name, pips[0].Name)
 	assert.Equal(t, pip2.Name, pips[1].Name)
 
+	pips, err = pipeline.LoadByWorkerModel(context.TODO(), db, &model3)
+	assert.NoError(t, err)
+
+	if !assert.Equal(t, 0, len(pips)) {
+		t.FailNow()
+	}
+
 	pips, err = pipeline.LoadByWorkerModel(context.TODO(), db, &model2)
 	assert.NoError(t, err)
 
@@ -274,6 +282,10 @@ func TestLoadByWorkerModel(t *testing.T) {
 		t.FailNow()
 	}
 	assert.Equal(t, pip3.Name, pips[0].Name)
+
+	pips, err = pipeline.LoadByWorkerModelAndGroupIDs(context.TODO(), db, &model3, []int64{})
+	assert.NoError(t, err)
+	assert.Equal(t, 0, len(pips))
 
 	pips, err = pipeline.LoadByWorkerModelAndGroupIDs(context.TODO(), db, &model1, []int64{})
 	assert.NoError(t, err)
