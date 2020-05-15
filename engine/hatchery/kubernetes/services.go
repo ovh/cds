@@ -59,18 +59,21 @@ func (h *HatcheryKubernetes) getServicesLogs(ctx context.Context) error {
 				ServiceRequirementID:   reqServiceID,
 				ServiceRequirementName: subsStr[0][2],
 				Val:                    string(logs),
+				WorkerName:             pod.ObjectMeta.Name,
 			})
 		}
 	}
 
 	if len(servicesLogs) > 0 {
-		// Do call api
 		ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
-		if err := h.Client.QueueServiceLogs(ctx, servicesLogs); err != nil {
-			cancel()
-			return fmt.Errorf("Hatchery> Swarm> Cannot send service logs : %v", err)
+		defer cancel()
+		if h.Common.ServiceLogger == nil {
+			if err := h.Client.QueueServiceLogs(ctx, servicesLogs); err != nil {
+				return sdk.WithStack(fmt.Errorf("hatchery> Swarm> Cannot send service logs : %v", err))
+			}
+		} else {
+			h.Common.SendServiceLog(ctx, servicesLogs)
 		}
-		cancel()
 	}
 
 	return nil

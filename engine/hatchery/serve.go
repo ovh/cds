@@ -13,12 +13,15 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
+	"github.com/sirupsen/logrus"
+	"gopkg.in/square/go-jose.v2"
 
 	"github.com/ovh/cds/engine/api"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/ovh/cds/sdk/hatchery"
+	"github.com/ovh/cds/sdk/jws"
 	"github.com/ovh/cds/sdk/log"
 )
 
@@ -184,6 +187,46 @@ func (c *Common) getPanicDumpListHandler() service.Handler {
 			return err
 		}
 		return service.WriteJSON(w, l, http.StatusOK)
+	}
+}
+
+func (c *Common) InitServiceLogger() error {
+	tcpServer := c.Common.ServiceInstance.LogServer
+	var signer jose.Signer
+	if tcpServer.Addr != "" && tcpServer.Port > 0 {
+		logger, err := log.New(fmt.Sprintf("%s:%d", tcpServer.Addr, tcpServer.Port))
+		if err != nil {
+			return sdk.WithStack(err)
+		}
+		signer, err = jws.NewSigner(c.Common.PrivateKey)
+		if err != nil {
+			return sdk.WithStack(err)
+		}
+		c.Signer = signer
+		c.ServiceLogger = logger
+	}
+	return nil
+}
+
+func (c *Common) SendServiceLog(ctx context.Context, servicesLogs []sdk.ServiceLog) {
+	for _, s := range servicesLogs {
+		dataToSign := log.Signature{
+			Service: &log.SignatureService{
+				HatcheryID:      c.Service().ID,
+				HatcheryName:    c.ServiceName(),
+				RequirementID:   s.ServiceRequirementID,
+				RequirementName: s.ServiceRequirementName,
+				WorkerName:      s.WorkerName,
+			},
+			JobID:     s.WorkflowNodeJobRunID,
+			Timestamp: time.Now().UnixNano(),
+		}
+		signature, err := jws.Sign(c.Signer, dataToSign)
+		if err != nil {
+			log.Error(ctx, "SendServiceLog> unable to sign service log message: %v", err)
+			continue
+		}
+		c.ServiceLogger.WithField("Signature", signature).Log(logrus.InfoLevel, s.Val)
 	}
 }
 

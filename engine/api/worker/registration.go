@@ -106,7 +106,7 @@ func RegisterWorker(ctx context.Context, db gorp.SqlExecutor, store cache.Store,
 
 	w.Uptodate = registrationForm.Version == sdk.VERSION
 
-	if err := Insert(db, w); err != nil {
+	if err := Insert(ctx, db, w); err != nil {
 		return nil, err
 	}
 

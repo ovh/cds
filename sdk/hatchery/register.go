@@ -34,7 +34,7 @@ loopModels:
 		if models[k].Type != h.ModelType() {
 			continue
 		}
-		if h.NeedRegistration(ctx, &models[k]) || models[k].CheckRegistration {
+		if h.CanSpawn(ctx, &models[k], 0, nil) && (h.NeedRegistration(ctx, &models[k]) || models[k].CheckRegistration) {
 			log.Debug("hatchery> workerRegister> need register")
 		} else {
 			continue
@@ -68,15 +68,13 @@ loopModels:
 			continue
 		}
 
-		if h.NeedRegistration(ctx, &models[k]) || models[k].CheckRegistration {
-			if err := h.CDSClient().WorkerModelBook(models[k].Group.Name, models[k].Name); err != nil {
-				log.Debug("%v", sdk.WrapError(err, "cannot book model %s with id %d", models[k].Name, models[k].ID))
-			} else {
-				log.Info(ctx, "hatchery> workerRegister> spawning model %s (%d)", models[k].Name, models[k].ID)
-				//Ask for the creation
-				startWorkerChan <- workerStarterRequest{
-					registerWorkerModel: &models[k],
-				}
+		if err := h.CDSClient().WorkerModelBook(models[k].Group.Name, models[k].Name); err != nil {
+			log.Debug("%v", sdk.WrapError(err, "cannot book model %s with id %d", models[k].Name, models[k].ID))
+		} else {
+			log.Info(ctx, "hatchery> workerRegister> spawning model %s (%d)", models[k].Name, models[k].ID)
+			//Ask for the creation
+			startWorkerChan <- workerStarterRequest{
+				registerWorkerModel: &models[k],
 			}
 		}
 	}

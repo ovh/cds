@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"net/http"
 	"time"
@@ -16,18 +17,46 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
-func (api *API) getExternalServiceHandler() service.Handler {
+func (api *API) getServiceHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		typeService := vars["type"]
 
+		var servicesConf []sdk.ServiceConfiguration
 		for _, s := range api.Config.Services {
 			if s.Type == typeService {
-				return service.WriteJSON(w, s, http.StatusOK)
+				servicesConf = append(servicesConf, s)
 			}
 		}
+		if len(servicesConf) != 0 {
+			return service.WriteJSON(w, servicesConf, http.StatusOK)
+		}
 
-		return sdk.WrapError(sdk.ErrNotFound, "service %s not found", typeService)
+		// Try to load from DB
+		var srvs []sdk.Service
+		var err error
+		if isAdmin(ctx) || isMaintainer(ctx) {
+			srvs, err = services.LoadAllByType(ctx, api.mustDB(), typeService)
+		} else {
+			c := getAPIConsumer(ctx)
+			srvs, err = services.LoadAllByTypeAndUserID(ctx, api.mustDB(), typeService, c.AuthentifiedUserID)
+		}
+		if err != nil {
+			return err
+		}
+		for _, s := range srvs {
+			servicesConf = append(servicesConf, sdk.ServiceConfiguration{
+				URL:       s.HTTPURL,
+				Name:      s.Name,
+				ID:        s.ID,
+				PublicKey: base64.StdEncoding.EncodeToString(s.PublicKey),
+				Type:      s.Type,
+			})
+		}
+		if len(servicesConf) == 0 {
+			return sdk.WrapError(sdk.ErrNotFound, "service %s not found", typeService)
+		}
+		return service.WriteJSON(w, servicesConf, http.StatusOK)
 	}
 }
 
@@ -60,9 +89,9 @@ func (api *API) postServiceRegisterHandler() service.Handler {
 		}
 		if srv != nil && !(srv.Type == data.Type) {
 			return sdk.WrapError(sdk.ErrForbidden, "cannot register service %s of type %s for consumer %s while existing service type is different", data.Name, data.Type, consumer.ID)
-    }
-    
-    // Update or create the service
+		}
+
+		// Update or create the service
 		if srv != nil {
 			srv.Update(data)
 			if err := services.Update(ctx, tx, srv); err != nil {
@@ -87,6 +116,7 @@ func (api *API) postServiceRegisterHandler() service.Handler {
 		}
 
 		srv.Uptodate = data.Version == sdk.VERSION
+		srv.LogServer = api.Config.CDN.TCP
 
 		return service.WriteJSON(w, srv, http.StatusOK)
 	}

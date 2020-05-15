@@ -69,11 +69,21 @@ func LoadAll(ctx context.Context, db gorp.SqlExecutor) ([]sdk.Service, error) {
 }
 
 // LoadAllByType returns all services with given type.
-func LoadAllByType(ctx context.Context, db gorp.SqlExecutor, stype string) ([]sdk.Service, error) {
-	if ss, ok := internalCache.getFromCache(stype); ok {
+func LoadAllByType(ctx context.Context, db gorp.SqlExecutor, typeService string) ([]sdk.Service, error) {
+	if ss, ok := internalCache.getFromCache(typeService); ok {
 		return ss, nil
 	}
-	query := gorpmapping.NewQuery(`SELECT * FROM service WHERE type = $1`).Args(stype)
+	query := gorpmapping.NewQuery(`SELECT * FROM service WHERE type = $1`).Args(typeService)
+	return getAll(ctx, db, query)
+}
+
+// LoadAllByType returns all services that users can see with given type.
+func LoadAllByTypeAndUserID(ctx context.Context, db gorp.SqlExecutor, typeService string, userID string) ([]sdk.Service, error) {
+	query := gorpmapping.NewQuery(`
+		SELECT service.* 
+		FROM service 
+		JOIN auth_consumer on auth_consumer.id = service.auth_consumer_id
+		WHERE service.type = $1 AND auth_consumer.user_id = $2`).Args(typeService, userID)
 	return getAll(ctx, db, query)
 }
 

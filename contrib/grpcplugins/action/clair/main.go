@@ -38,10 +38,11 @@ func (actPlugin *clairActionPlugin) Manifest(ctx context.Context, _ *empty.Empty
 func (actPlugin *clairActionPlugin) Run(ctx context.Context, q *actionplugin.ActionQuery) (*actionplugin.ActionResult, error) {
 	// get clair configuration
 	fmt.Printf("Retrieve clair configuration...")
-	serv, err := grpcplugins.GetExternalServices(actPlugin.HTTPPort, "clair")
+	servs, err := grpcplugins.GetServices(actPlugin.HTTPPort, "clair")
 	if err != nil {
 		return actionplugin.Fail("Unable to get clair configuration: %s", err)
 	}
+	serv := servs[0]
 	viper.Set("clair.uri", serv.URL)
 	viper.Set("clair.port", serv.Port)
 	viper.Set("clair.healthPort", serv.HealthPort)

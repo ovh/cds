@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"net/url"
 	"time"
@@ -11,8 +12,26 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
+// ExternalService represents an external service
+type ExternalService struct {
+	sdk.Service `json:"-"`
+	HealthURL   string `json:"health_url"`
+	HealthPort  string `json:"health_port"`
+	HealthPath  string `json:"health_path"`
+	Port        string `json:"port"`
+	URL         string `json:"url"`
+	Path        string `json:"path"`
+}
+
+func (e ExternalService) ServiceConfig() sdk.ServiceConfig {
+	b, _ := json.Marshal(e)
+	var cfg sdk.ServiceConfig
+	json.Unmarshal(b, &cfg) // nolint
+	return cfg
+}
+
 // Pings browses all external services and ping them
-func Pings(ctx context.Context, dbFunc func() *gorp.DbMap, ss []sdk.ExternalService) {
+func Pings(ctx context.Context, dbFunc func() *gorp.DbMap, ss []ExternalService) {
 	tickPing := time.NewTicker(1 * time.Minute)
 	db := dbFunc()
 	for {
@@ -42,7 +61,7 @@ func Pings(ctx context.Context, dbFunc func() *gorp.DbMap, ss []sdk.ExternalServ
 	}
 }
 
-func ping(ctx context.Context, db gorp.SqlExecutor, s sdk.ExternalService) error {
+func ping(ctx context.Context, db gorp.SqlExecutor, s ExternalService) error {
 	// Select for update
 	serv, err := LoadByNameForUpdateAndSkipLocked(context.Background(), db, s.Name)
 	if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
@@ -93,7 +112,7 @@ func ping(ctx context.Context, db gorp.SqlExecutor, s sdk.ExternalService) error
 }
 
 // InitExternal initializes external services
-func InitExternal(ctx context.Context, db *gorp.DbMap, ss []sdk.ExternalService) error {
+func InitExternal(ctx context.Context, db *gorp.DbMap, ss []ExternalService) error {
 	for _, s := range ss {
 		tx, err := db.Begin()
 		if err != nil {

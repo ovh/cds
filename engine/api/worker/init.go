@@ -7,8 +7,6 @@ import (
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/cache"
-	"github.com/ovh/cds/engine/api/database/gorpmapping"
-	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
 
@@ -38,8 +36,4 @@ func Initialize(c context.Context, DBFunc func() *gorp.DbMap, store cache.Store)
 			}()
 		}
 	}
-}
-
-func init() {
-	gorpmapping.Register(gorpmapping.New(sdk.Worker{}, "worker", false, "id"))
 }

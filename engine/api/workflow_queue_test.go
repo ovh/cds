@@ -6,6 +6,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"github.com/ovh/cds/engine/cdn"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
@@ -436,6 +437,14 @@ func Test_postTakeWorkflowJobHandler(t *testing.T) {
 	//Register the worker
 	testRegisterWorker(t, api, router, &ctx)
 
+	// Add cdn config
+	api.Config.CDN = cdn.Configuration{
+		TCP: sdk.TCPServer{
+			Port: 8090,
+			Addr: "localhost",
+		},
+	}
+
 	uri := router.GetRoute("POST", api.postTakeWorkflowJobHandler, vars)
 	require.NotEmpty(t, uri)
 
@@ -469,12 +478,18 @@ func Test_postTakeWorkflowJobHandler(t *testing.T) {
 		}
 	}
 
+	assert.Equal(t, "localhost:8090", pbji.GelfServiceAddr)
+
 	run, err := workflow.LoadNodeJobRun(context.TODO(), api.mustDB(), api.Cache, ctx.job.ID)
 	require.NoError(t, err)
 	assert.Equal(t, "Building", run.Status)
 	assert.Equal(t, ctx.model.Name, run.Model)
 	assert.Equal(t, ctx.worker.Name, run.WorkerName)
 	assert.NotEmpty(t, run.HatcheryName)
+
+	wkrDB, err := worker.LoadWorkerByIDWithDecryptKey(context.TODO(), api.mustDB(), ctx.worker.ID)
+	assert.NoError(t, err)
+	assert.Len(t, wkrDB.PrivateKey, 32)
 }
 
 func Test_postTakeWorkflowInvalidJobHandler(t *testing.T) {
@@ -948,6 +963,123 @@ func Test_postWorkflowJobStaticFilesHandler(t *testing.T) {
 	require.Equal(t, http.StatusNotImplemented, rec.Code)
 }
 
+func TestWorkerPrivateKey(t *testing.T) {
+	api, db, router, end := newTestAPI(t)
+	defer end()
+
+	// Create user
+	u, pass := assets.InsertAdminUser(t, api.mustDB())
+	consumer, _ := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
+
+	// Create project
+	key := sdk.RandomString(10)
+	proj := assets.InsertTestProject(t, db, api.Cache, key, key)
+
+	// add group
+	require.NoError(t, group.InsertLinkGroupUser(context.TODO(), api.mustDB(), &group.LinkGroupUser{
+		GroupID:            proj.ProjectGroups[0].Group.ID,
+		AuthentifiedUserID: u.ID,
+		Admin:              true,
+	}))
+	u.Groups = append(u.Groups, proj.ProjectGroups[0].Group)
+
+	// Create pipeline
+	pip := &sdk.Pipeline{
+		ProjectID: proj.ID,
+		Name:      sdk.RandomString(10),
+	}
+	assert.NoError(t, pipeline.InsertPipeline(db, pip))
+
+	s := sdk.Stage{
+		PipelineID: pip.ID,
+		Name:       "foo",
+		Enabled:    true,
+	}
+
+	assert.NoError(t, pipeline.InsertStage(db, &s))
+
+	// get script action
+	script := assets.GetBuiltinOrPluginActionByName(t, db, sdk.ScriptAction)
+
+	j := sdk.Job{
+		Enabled:         true,
+		PipelineStageID: s.ID,
+		Action: sdk.Action{
+			Name: "script",
+			Actions: []sdk.Action{
+				assets.NewAction(script.ID, sdk.Parameter{Name: "script", Value: "echo lol"}),
+			},
+		},
+	}
+	assert.NoError(t, pipeline.InsertJob(db, &j, s.ID, pip))
+
+	var errPip error
+	pip, errPip = pipeline.LoadPipelineByID(context.TODO(), db, pip.ID, true)
+	assert.NoError(t, errPip)
+
+	// Create application
+	app := sdk.Application{
+		ProjectID: proj.ID,
+		Name:      sdk.RandomString(10),
+	}
+	assert.NoError(t, application.Insert(db, *proj, &app))
+
+	// Create workflow
+	w := sdk.Workflow{
+		Name:       sdk.RandomString(10),
+		ProjectID:  proj.ID,
+		ProjectKey: proj.Key,
+		WorkflowData: sdk.WorkflowData{
+			Node: sdk.Node{
+				Name: "node1",
+				Ref:  "node1",
+				Type: sdk.NodeTypePipeline,
+				Context: &sdk.NodeContext{
+					PipelineID:    pip.ID,
+					ApplicationID: app.ID,
+				},
+			},
+		},
+	}
+
+	p, err := project.Load(db, proj.Key, project.LoadOptions.WithPipelines, project.LoadOptions.WithApplications)
+	assert.NoError(t, err)
+	assert.NoError(t, workflow.Insert(context.TODO(), db, api.Cache, *p, &w))
+
+	workflowDeepPipeline, err := workflow.LoadByID(context.TODO(), db, api.Cache, *p, w.ID, workflow.LoadOptions{DeepPipeline: true})
+	assert.NoError(t, err)
+
+	wrDB, errwr := workflow.CreateRun(db, workflowDeepPipeline, nil, u)
+	assert.NoError(t, errwr)
+	wrDB.Workflow = *workflowDeepPipeline
+
+	_, errmr := workflow.StartWorkflowRun(context.Background(), db, api.Cache, *p, wrDB,
+		&sdk.WorkflowRunPostHandlerOption{
+			Manual: &sdk.WorkflowNodeRunManual{Username: u.Username},
+		},
+		consumer, nil)
+	assert.NoError(t, errmr)
+
+	ctx := testRunWorkflowCtx{
+		user:     u,
+		password: pass,
+		project:  proj,
+		workflow: &w,
+		run:      wrDB,
+	}
+	testRegisterWorker(t, api, router, &ctx)
+	ctx.worker.JobRunID = &wrDB.WorkflowNodeRuns[w.WorkflowData.Node.ID][0].Stages[0].RunJobs[0].ID
+	assert.NoError(t, worker.SetToBuilding(context.TODO(), db, ctx.worker.ID, *ctx.worker.JobRunID, []byte("mysecret")))
+
+	wkFromDB, err := worker.LoadWorkerByName(context.TODO(), db, ctx.worker.Name)
+	require.NoError(t, err)
+	require.NotEqual(t, "mysecret", string(wkFromDB.PrivateKey))
+
+	wkFromDB, err = worker.LoadWorkerByIDWithDecryptKey(context.TODO(), db, ctx.worker.ID)
+	require.NoError(t, err)
+	require.Equal(t, "mysecret", string(wkFromDB.PrivateKey))
+}
+
 func TestPostVulnerabilityReportHandler(t *testing.T) {
 	api, db, router, end := newTestAPI(t)
 	defer end()
@@ -1062,7 +1194,7 @@ func TestPostVulnerabilityReportHandler(t *testing.T) {
 	}
 	testRegisterWorker(t, api, router, &ctx)
 	ctx.worker.JobRunID = &wrDB.WorkflowNodeRuns[w.WorkflowData.Node.ID][0].Stages[0].RunJobs[0].ID
-	assert.NoError(t, worker.SetToBuilding(db, ctx.worker.ID, *ctx.worker.JobRunID))
+	assert.NoError(t, worker.SetToBuilding(context.TODO(), db, ctx.worker.ID, *ctx.worker.JobRunID, nil))
 
 	request := sdk.VulnerabilityWorkerReport{
 		Vulnerabilities: []sdk.Vulnerability{
@@ -1384,7 +1516,7 @@ func TestInsertNewCodeCoverageReport(t *testing.T) {
 	}
 	testRegisterWorker(t, api, router, &ctx)
 	ctx.worker.JobRunID = &wrr.WorkflowNodeRuns[w.WorkflowData.Node.ID][0].Stages[0].RunJobs[0].ID
-	assert.NoError(t, worker.SetToBuilding(db, ctx.worker.ID, *ctx.worker.JobRunID))
+	assert.NoError(t, worker.SetToBuilding(context.TODO(), db, ctx.worker.ID, *ctx.worker.JobRunID, nil))
 
 	uri := router.GetRoute("POST", api.postWorkflowJobCoverageResultsHandler, vars)
 	test.NotEmpty(t, uri)

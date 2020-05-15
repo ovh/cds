@@ -93,7 +93,10 @@ func (w *TCPWriter) Write(p []byte) (int, error) {
 	}
 
 	if err := w.WriteMessage(&m); err != nil {
-		return 0, err
+		fmt.Fprintln(os.Stderr, "[gelf] Try 1 retry: ", err)
+		if err := w.WriteMessage(&m); err != nil {
+			return 0, err
+		}
 	}
 
 	return len(p), nil

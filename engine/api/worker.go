@@ -213,7 +213,7 @@ func (api *API) workerWaitingHandler() service.Handler {
 			return nil
 		}
 
-		if err := worker.SetStatus(api.mustDB(), wk.ID, sdk.StatusWaiting); err != nil {
+		if err := worker.SetStatus(ctx, api.mustDB(), wk.ID, sdk.StatusWaiting); err != nil {
 			return sdk.WrapError(err, "cannot update worker %s", wk.ID)
 		}
 		return nil
@@ -254,7 +254,7 @@ func DisableWorker(ctx context.Context, db *gorp.DbMap, id string) error {
 		log.Info(ctx, "DisableWorker> Worker %s crashed while building %d !", name, jobID.Int64)
 	}
 
-	if err := worker.SetStatus(tx, id, sdk.StatusDisabled); err != nil {
+	if err := worker.SetStatus(ctx, tx, id, sdk.StatusDisabled); err != nil {
 		cause := sdk.Cause(err)
 		if cause == worker.ErrNoWorker || cause == sql.ErrNoRows {
 			return sdk.WrapError(sdk.ErrWrongRequest, "DisableWorker> worker %s does not exists", id)

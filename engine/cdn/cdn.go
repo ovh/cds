@@ -1,15 +1,10 @@
-package repositories
+package cdn
 
 import (
 	"context"
 	"fmt"
 	"net/http"
-	"time"
 
-	"github.com/gorilla/mux"
-
-	"github.com/ovh/cds/engine/api"
-	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
@@ -19,9 +14,11 @@ import (
 // New returns a new service
 func New() *Service {
 	s := new(Service)
-	s.Router = &api.Router{
-		Mux: mux.NewRouter(),
-	}
+	/*
+		s.Router = &api.Router{
+			Mux: mux.NewRouter(),
+		}
+	*/
 	return s
 }
 
@@ -29,7 +26,7 @@ func (s *Service) Init(config interface{}) (cdsclient.ServiceConfig, error) {
 	var cfg cdsclient.ServiceConfig
 	sConfig, ok := config.(Configuration)
 	if !ok {
-		return cfg, sdk.WithStack(fmt.Errorf("invalid repositories service configuration"))
+		return cfg, sdk.WithStack(fmt.Errorf("invalid CDN service configuration"))
 	}
 
 	cfg.Host = sConfig.API.HTTP.URL
@@ -39,7 +36,7 @@ func (s *Service) Init(config interface{}) (cdsclient.ServiceConfig, error) {
 	return cfg, nil
 }
 
-// ApplyConfiguration apply an object of type repositories.Configuration after checking it
+// ApplyConfiguration apply an object of type CDN.Configuration after checking it
 func (s *Service) ApplyConfiguration(config interface{}) error {
 	if err := s.CheckConfiguration(config); err != nil {
 		return err
@@ -47,14 +44,13 @@ func (s *Service) ApplyConfiguration(config interface{}) error {
 	var ok bool
 	s.Cfg, ok = config.(Configuration)
 	if !ok {
-		return fmt.Errorf("Invalid Repositories configuration")
+		return fmt.Errorf("invalid configuration")
 	}
 
 	s.ServiceName = s.Cfg.Name
-	s.ServiceType = services.TypeRepositories
+	s.ServiceType = services.TypeCDN
 	s.HTTPURL = s.Cfg.URL
 	s.MaxHeartbeatFailures = s.Cfg.API.MaxHeartbeatFailures
-
 	return nil
 }
 
@@ -62,14 +58,14 @@ func (s *Service) ApplyConfiguration(config interface{}) error {
 func (s *Service) CheckConfiguration(config interface{}) error {
 	sConfig, ok := config.(Configuration)
 	if !ok {
-		return fmt.Errorf("Invalid Repositories configuration")
+		return fmt.Errorf("invalid configuration")
 	}
 
 	if sConfig.URL == "" {
 		return fmt.Errorf("your CDS configuration seems to be empty. Please use environment variables, file or Consul to set your configuration")
 	}
 	if sConfig.Name == "" {
-		return fmt.Errorf("please enter a name in your repositories configuration")
+		return fmt.Errorf("please enter a name in your CDN configuration")
 	}
 
 	return nil
@@ -80,54 +76,29 @@ func (s *Service) Serve(c context.Context) error {
 	ctx, cancel := context.WithCancel(c)
 	defer cancel()
 
-	//Init the cache
-	var errCache error
-	s.Cache, errCache = cache.New(s.Cfg.Cache.Redis.Host, s.Cfg.Cache.Redis.Password, s.Cfg.Cache.TTL)
-	if errCache != nil {
-		return fmt.Errorf("Cannot connect to redis instance : %v", errCache)
-	}
+	s.RunTcpLogServer(ctx)
 
 	//Init the http server
 	s.initRouter(ctx)
 	server := &http.Server{
-		Addr:           fmt.Sprintf("%s:%d", s.Cfg.HTTP.Addr, s.Cfg.HTTP.Port),
-		Handler:        s.Router.Mux,
-		ReadTimeout:    10 * time.Minute,
-		WriteTimeout:   10 * time.Minute,
+		Addr: fmt.Sprintf("%s:%d", s.Cfg.HTTP.Addr, s.Cfg.HTTP.Port),
+		//Handler:        s.Router.Mux,
 		MaxHeaderBytes: 1 << 20,
 	}
-
-	//Set the dao
-	s.dao = dao{
-		store: s.Cache,
-	}
-
-	go func() {
-		if err := s.processor(ctx); err != nil {
-			log.Info(ctx, "Repositories> Shutdown processor")
-		}
-	}()
-
-	go func() {
-		if err := s.vacuumCleaner(ctx); err != nil {
-			log.Info(ctx, "Repositories> Shutdown vacuumCleaner")
-		}
-	}()
 
 	//Gracefully shutdown the http server
 	go func() {
 		select {
 		case <-ctx.Done():
-			log.Info(ctx, "Repositories> Shutdown HTTP Server")
-			server.Shutdown(ctx)
+			log.Info(ctx, "CDN> Shutdown HTTP Server")
+			_ = server.Shutdown(ctx)
 		}
 	}()
 
 	//Start the http server
-	log.Info(ctx, "Repositories> Starting HTTP Server on port %d", s.Cfg.HTTP.Port)
+	log.Info(ctx, "CDN> Starting HTTP Server on port %d", s.Cfg.HTTP.Port)
 	if err := server.ListenAndServe(); err != nil {
-		log.Error(ctx, "Repositories> Listen and serve failed: %s", err)
+		log.Fatalf("CDN> Cannot start cds-cdn: %v", err)
 	}
-
 	return ctx.Err()
 }

@@ -10,3 +10,8 @@ type ConfigUser struct {
 	URLUI  string `json:"url.ui"`
 	URLAPI string `json:"url.api"`
 }
+
+type TCPServer struct {
+	Addr string `toml:"addr" default:"" commented:"true" comment:"Listen address without port, example: 127.0.0.1" json:"addr"`
+	Port int    `toml:"port" default:"8089" json:"port"`
+}
