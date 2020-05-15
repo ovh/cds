@@ -75,7 +75,7 @@ type WorkerModelSecret struct {
 	Created       time.Time `json:"created" cli:"created" db:"created"`
 	WorkerModelID int64     `json:"worker_model_id" db:"worker_model_id"`
 	Name          string    `json:"name" db:"name"`
-	Value         string    `json:"value" db:"cipher_value" gorpmapping:"encrypted,ID,Name"`
+	Value         string    `json:"value" db:"cipher_value" gorpmapping:"encrypted,WorkerModelID,Name"`
 }
 
 type WorkerModelSecrets []WorkerModelSecret
