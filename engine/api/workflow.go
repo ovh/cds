@@ -31,7 +31,11 @@ import (
 // getWorkflowsHandler returns ID and name of workflows for a given project/user
 func (api *API) getWorkflowsHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		filterByProject := r.FormValue(permProjectKey)
+		vars := mux.Vars(r)
+		filterByProject := vars[permProjectKey]
+		if filterByProject == "" {
+			filterByProject = r.FormValue(permProjectKey)
+		}
 		filterByRepo := r.FormValue("repo")
 
 		var opts = workflow.LoadAllWorkflowsOptions{}
