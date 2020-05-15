@@ -132,6 +132,7 @@ func (opt LoadAllWorkflowsOptions) Query() gorpmapping.Query {
     SELECT workflow.* , selected_workflow.projectkey as "project_key"
     FROM workflow 
 	JOIN selected_workflow ON selected_workflow.workflow_id = workflow.id
+	JOIN project_permission ON project_permission.project_id = workflow.project_id
 	WHERE workflow.to_delete  = false
     `
 

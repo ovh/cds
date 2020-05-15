@@ -426,7 +426,6 @@ func addJobsToQueue(ctx context.Context, db gorp.SqlExecutor, stage *sdk.Stage, 
 
 	_, next = observability.Span(ctx, "workflow.getJobExecutablesGroups")
 	groups, err := getExecutablesGroups(wr, nr)
-	log.Debug("getJobExecutablesGroups => %+v", groups)
 	if err != nil {
 		return report, sdk.WrapError(err, "error getting job executables groups")
 	}

@@ -87,7 +87,10 @@ func TestLoadAllWorkflows(t *testing.T) {
 
 	for i, opt := range opts {
 		t.Run(fmt.Sprintf("test LoadAllWorkflows #%d", i), func(t *testing.T) {
-			_, err := workflow.LoadAllWorkflows(context.TODO(), db, opt)
+			wss, err := workflow.LoadAllWorkflows(context.TODO(), db, opt)
+			for _, ws := range wss {
+				require.NotEmpty(t, ws.ProjectKey)
+			}
 			require.NoError(t, err)
 		})
 	}

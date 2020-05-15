@@ -757,10 +757,7 @@ func (api *API) getAllWorkflowsHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 
-		for _, v := range vars {
-			switch v {
-			}
-		}
+		// TODO
 
 		return nil
 	}

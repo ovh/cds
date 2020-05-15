@@ -54,8 +54,6 @@ func LoadLabels(db gorp.SqlExecutor, workflowIDs ...int64) ([]sdk.Label, error) 
 		return nil, sdk.WrapError(err, "Cannot load labels")
 	}
 
-	log.Debug("=> %+v", labels)
-
 	var result = make([]sdk.Label, 0, len(labels))
 	for i := range labels {
 		labels[i].Label.WorkflowID = labels[i].WorkflowID
