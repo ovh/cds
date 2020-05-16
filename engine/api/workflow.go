@@ -38,25 +38,24 @@ func (api *API) getWorkflowsHandler() service.Handler {
 		}
 		filterByRepo := r.FormValue("repo")
 
-		var opts = workflow.LoadAllWorkflowsOptions{}
-
+		var dao workflow.WorkflowDAO
 		if filterByProject != "" {
-			opts.Filters.ProjectKey = filterByProject
+			dao.Filters.ProjectKey = filterByProject
 		}
 
 		if filterByRepo != "" {
-			opts.Filters.ApplicationRepository = filterByRepo
+			dao.Filters.ApplicationRepository = filterByRepo
 		}
 
-		opts.Loaders.WithFavoritesForUserID = getAPIConsumer(ctx).AuthentifiedUserID
+		dao.Loaders.WithFavoritesForUserID = getAPIConsumer(ctx).AuthentifiedUserID
 
 		groupIDS := getAPIConsumer(ctx).GetGroupIDs()
-		opts.Filters.GroupIDs = groupIDS
+		dao.Filters.GroupIDs = groupIDS
 		if isMaintainer(ctx) {
-			opts.Filters.GroupIDs = nil
+			dao.Filters.GroupIDs = nil
 		}
 
-		ws, err := workflow.LoadAllWorkflows(ctx, api.mustDBWithCtx(ctx), opts)
+		ws, err := dao.LoadAll(ctx, api.mustDBWithCtx(ctx))
 		if err != nil {
 			return err
 		}
@@ -602,26 +601,36 @@ func (api *API) deleteWorkflowHandler() service.Handler {
 		consumer := getAPIConsumer(ctx)
 		sdk.GoRoutine(api.Router.Background, "deleteWorkflowHandler",
 			func(ctx context.Context) {
-				txg, errT := api.mustDB().Begin()
-				if errT != nil {
-					log.Error(ctx, "deleteWorkflowHandler> Cannot start transaction: %v", errT)
+				txg, err := api.mustDB().Begin()
+				if err != nil {
+					log.Error(ctx, "deleteWorkflowHandler> Cannot start transaction: %v", err)
 				}
 				defer txg.Rollback() // nolint
 
-				oldW, err := workflow.Load(ctx, txg, api.Cache, *p, name, workflow.LoadOptions{})
+				var dao workflow.WorkflowDAO
+				dao.Filters.ProjectKey = p.Key
+				dao.Filters.WorkflowName = name
+				dao.Filters.DisableFilterDeletedWorkflow = true
+
+				oldW, err := dao.Load(ctx, txg)
 				if err != nil {
-					log.Error(ctx, "deleteWorkflowHandler> unable to load workflow: %v", err)
+					log.Error(ctx, "deleteWorkflowHandler> unable to load workflow for deletion: %v", err)
 					return
 				}
 
-				if err := workflow.Delete(ctx, txg, api.Cache, *p, oldW); err != nil {
+				if err := workflow.CompleteWorkflow(ctx, txg, &oldW, *p, workflow.LoadOptions{}); err != nil {
+					log.Error(ctx, "deleteWorkflowHandler> unable to load workflow: not found")
+					return
+				}
+
+				if err := workflow.Delete(ctx, txg, api.Cache, *p, &oldW); err != nil {
 					log.Error(ctx, "deleteWorkflowHandler> unable to delete workflow: %v", err)
 					return
 				}
 				if err := txg.Commit(); err != nil {
 					log.Error(ctx, "deleteWorkflowHandler> Cannot commit transaction: %v", err)
 				}
-				event.PublishWorkflowDelete(ctx, key, *oldW, consumer)
+				event.PublishWorkflowDelete(ctx, key, oldW, consumer)
 			}, api.PanicDump())
 
 		return service.WriteJSON(w, nil, http.StatusOK)

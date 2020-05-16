@@ -2,11 +2,15 @@ package sdk
 
 import (
 	"bytes"
+	"database/sql/driver"
+	"encoding/json"
+	"fmt"
 	"text/template"
 	"time"
 
-	"github.com/ovh/cds/sdk/interpolate"
 	"github.com/ovh/venom"
+
+	"github.com/ovh/cds/sdk/interpolate"
 )
 
 //const
@@ -42,6 +46,24 @@ type UserNotificationSettings struct {
 	Recipients   []string                  `json:"recipients,omitempty" yaml:"recipients,omitempty"`
 	Template     *UserNotificationTemplate `json:"template,omitempty" yaml:"template,omitempty"`
 	Conditions   WorkflowNodeConditions    `json:"conditions,omitempty" yaml:"conditions,omitempty"`
+}
+
+// Value returns driver.Value from Metadata.
+func (a UserNotificationSettings) Value() (driver.Value, error) {
+	j, err := json.Marshal(a)
+	return j, WrapError(err, "cannot marshal UserNotificationSettings")
+}
+
+// Scan Metadata.
+func (a *UserNotificationSettings) Scan(src interface{}) error {
+	if src == nil {
+		return nil
+	}
+	source, ok := src.([]byte)
+	if !ok {
+		return WithStack(fmt.Errorf("type assertion .([]byte) failed (%T)", src))
+	}
+	return WrapError(json.Unmarshal(source, a), "cannot unmarshal UserNotificationSettings")
 }
 
 // UserNotificationTemplate is the notification content

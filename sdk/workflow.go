@@ -268,6 +268,17 @@ func (w *Workflow) Normalize() {
 			}
 		}
 	}
+
+	// Set the node names in the notifactions
+	for i := range w.Notifications {
+		n := &w.Notifications[i]
+		for _, id := range n.NodeIDs {
+			notifNode := w.WorkflowData.NodeByID(id)
+			if notifNode != nil {
+				n.SourceNodeRefs = append(n.SourceNodeRefs, notifNode.Name)
+			}
+		}
+	}
 }
 
 // AssignEmptyType fill node type field

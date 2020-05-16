@@ -41,9 +41,9 @@ func LoadAllNamesByProjectIDs(ctx context.Context, db gorp.SqlExecutor, projectI
 
 // LoadAllByIDs returns all workflows by ids.
 func LoadAllByIDs(ctx context.Context, db gorp.SqlExecutor, ids []int64) (sdk.Workflows, error) {
-	var loadOpts LoadAllWorkflowsOptions
-	loadOpts.Filters.WorkflowIDs = ids
-	return LoadAllWorkflows(ctx, db, loadOpts)
+	var dao WorkflowDAO
+	dao.Filters.WorkflowIDs = ids
+	return dao.LoadAll(ctx, db)
 }
 
 // UpdateOptions is option to parse a workflow
@@ -70,26 +70,22 @@ func LoadByRepo(ctx context.Context, store cache.Store, db gorp.SqlExecutor, pro
 	ctx, end := observability.Span(ctx, "workflow.Load")
 	defer end()
 
-	loadOpts := opts.ToLoadAllWorkflowsOptions()
-	loadOpts.Filters.FromRepository = repo
-	loadOpts.Limit = 1
+	dao := opts.GetWorkflowDAO()
+	dao.Filters.FromRepository = repo
+	dao.Limit = 1
 
-	ws, err := LoadAllWorkflows(ctx, db, loadOpts)
+	ws, err := dao.Load(ctx, db)
 	if err != nil {
 		return nil, err
 	}
 
-	if len(ws) == 0 {
-		return nil, sdk.WithStack(sdk.ErrNotFound)
-	}
-
 	if !opts.Minimal {
-		if err := CompleteWorkflow(ctx, db, &ws[0], proj, opts); err != nil {
+		if err := CompleteWorkflow(ctx, db, &ws, proj, opts); err != nil {
 			return nil, err
 		}
 	}
 
-	return &ws[0], nil
+	return &ws, nil
 }
 
 // UpdateIcon update the icon of a workflow
@@ -185,12 +181,12 @@ func (w *Workflow) Get() sdk.Workflow {
 
 // LoadAll loads all workflows for a project. All users in a project can list all workflows in a project
 func LoadAll(db gorp.SqlExecutor, projectKey string) (sdk.Workflows, error) {
-	opts := LoadAllWorkflowsOptions{
+	dao := WorkflowDAO{
 		Filters: LoadAllWorkflowsOptionsFilters{
 			ProjectKey: projectKey,
 		},
 	}
-	return LoadAllWorkflows(context.Background(), db, opts)
+	return dao.LoadAll(context.Background(), db)
 }
 
 // LoadAllNames loads all workflow names for a project.
@@ -225,74 +221,59 @@ func Load(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj sdk.
 	ctx, end := observability.Span(ctx, "workflow.Load")
 	defer end()
 
-	loadOpts := opts.ToLoadAllWorkflowsOptions()
-	loadOpts.Filters.ProjectKey = proj.Key
-	loadOpts.Filters.WorkflowName = name
-	loadOpts.Limit = 1
+	dao := opts.GetWorkflowDAO()
+	dao.Filters.ProjectKey = proj.Key
+	dao.Filters.WorkflowName = name
 
-	ws, err := LoadAllWorkflows(ctx, db, loadOpts)
+	ws, err := dao.Load(ctx, db)
 	if err != nil {
 		return nil, err
 	}
 
-	if len(ws) == 0 {
-		return nil, sdk.WithStack(sdk.ErrNotFound)
-	}
-
 	if !opts.Minimal {
-		if err := CompleteWorkflow(ctx, db, &ws[0], proj, opts); err != nil {
+		if err := CompleteWorkflow(ctx, db, &ws, proj, opts); err != nil {
 			return nil, err
 		}
 	}
 
-	return &ws[0], nil
+	return &ws, nil
 }
 
 // LoadAndLockByID loads a workflow
 func LoadAndLockByID(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj sdk.Project, id int64, opts LoadOptions) (*sdk.Workflow, error) {
-	loadOpts := opts.ToLoadAllWorkflowsOptions()
-	loadOpts.Filters.WorkflowIDs = []int64{id}
-	loadOpts.Limit = 1
-	loadOpts.Lock = true
+	dao := opts.GetWorkflowDAO()
+	dao.Filters.WorkflowIDs = []int64{id}
+	dao.Lock = true
 
-	ws, err := LoadAllWorkflows(ctx, db, loadOpts)
+	ws, err := dao.Load(ctx, db)
 	if err != nil {
 		return nil, err
 	}
 
-	if len(ws) == 0 {
-		return nil, sdk.WithStack(sdk.ErrNotFound)
-	}
-
 	if !opts.Minimal {
-		if err := CompleteWorkflow(ctx, db, &ws[0], proj, opts); err != nil {
+		if err := CompleteWorkflow(ctx, db, &ws, proj, opts); err != nil {
 			return nil, err
 		}
 	}
-	return &ws[0], nil
+	return &ws, nil
 }
 
 // LoadByID loads a workflow
 func LoadByID(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj sdk.Project, id int64, opts LoadOptions) (*sdk.Workflow, error) {
-	loadOpts := opts.ToLoadAllWorkflowsOptions()
-	loadOpts.Filters.WorkflowIDs = []int64{id}
-	loadOpts.Limit = 1
+	dao := opts.GetWorkflowDAO()
+	dao.Filters.WorkflowIDs = []int64{id}
 
-	ws, err := LoadAllWorkflows(ctx, db, loadOpts)
+	ws, err := dao.Load(ctx, db)
 	if err != nil {
 		return nil, err
 	}
 
-	if len(ws) == 0 {
-		return nil, sdk.WithStack(sdk.ErrNotFound)
-	}
-
 	if !opts.Minimal {
-		if err := CompleteWorkflow(ctx, db, &ws[0], proj, opts); err != nil {
+		if err := CompleteWorkflow(ctx, db, &ws, proj, opts); err != nil {
 			return nil, err
 		}
 	}
-	return &ws[0], nil
+	return &ws, nil
 }
 
 // Insert inserts a new workflow

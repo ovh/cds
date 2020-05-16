@@ -4,6 +4,7 @@ import (
 	"database/sql"
 
 	"github.com/go-gorp/gorp"
+	"github.com/lib/pq"
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/sdk"
 )
@@ -16,52 +17,50 @@ func DeleteNotifications(db gorp.SqlExecutor, workflowID int64) error {
 	return nil
 }
 
-func loadNotifications(db gorp.SqlExecutor, w *sdk.Workflow) ([]sdk.WorkflowNotification, error) {
-	notifIDs := []int64{}
-	_, err := db.Select(&notifIDs, "select id from workflow_notification where workflow_id = $1", w.ID)
-	if err != nil {
+func LoadNotificationsByWorkflowIDs(db gorp.SqlExecutor, ids []int64) (map[int64][]sdk.WorkflowNotification, error) {
+	query := `
+		SELECT 
+		workflow_notification.*,
+		array_agg(workflow_notification_source.node_id) as "node_ids"
+		FROM workflow_notification
+		JOIN workflow_notification_source ON workflow_notification_source.workflow_notification_id = workflow_notification.id
+		WHERE workflow_notification.workflow_id = ANY($1)
+		GROUP BY workflow_notification.workflow_id, workflow_notification.id
+		ORDER BY workflow_notification.workflow_id`
+
+	var dbNotifs = []struct {
+		ID         int64                        `db:"id"`
+		WorkflowID int64                        `db:"workflow_id"`
+		NodeIDs    pq.Int64Array                `db:"node_ids"`
+		Type       string                       `db:"type"`
+		Settings   sdk.UserNotificationSettings `db:"settings"`
+	}{}
+
+	if _, err := db.Select(&dbNotifs, query, pq.Int64Array(ids)); err != nil {
 		if err == sql.ErrNoRows {
 			return nil, nil
 		}
-		return nil, sdk.WrapError(err, "Unable to load notification IDs on workflow %d", w.ID)
+		return nil, sdk.WithStack(err)
 	}
 
-	notifications := make([]sdk.WorkflowNotification, len(notifIDs))
-	for index, id := range notifIDs {
-		n, errJ := loadNotification(db, w, id)
-		if errJ != nil {
-			return nil, sdk.WrapError(errJ, "loadNotification> Unable to load notification %d on workflow %d", id, w.ID)
+	mapNotifs := make(map[int64][]sdk.WorkflowNotification)
+
+	for _, n := range dbNotifs {
+		arrayNotif := mapNotifs[n.WorkflowID]
+		notif := sdk.WorkflowNotification{
+			ID:         n.ID,
+			NodeIDs:    n.NodeIDs,
+			Settings:   n.Settings,
+			Type:       n.Type,
+			WorkflowID: n.WorkflowID,
 		}
-		notifications[index] = n
+		// Need the node_name for references...
+		arrayNotif = append(arrayNotif, notif)
+		mapNotifs[n.WorkflowID] = arrayNotif
 	}
 
-	return notifications, nil
-}
+	return mapNotifs, nil
 
-func loadNotification(db gorp.SqlExecutor, w *sdk.Workflow, id int64) (sdk.WorkflowNotification, error) {
-	dbnotif := Notification{}
-	//Load the notification
-	if err := db.SelectOne(&dbnotif, "select * from workflow_notification where id = $1", id); err != nil {
-		return sdk.WorkflowNotification{}, sdk.WrapError(err, "Unable to load notification %d", id)
-	}
-	dbnotif.WorkflowID = w.ID
-
-	//Load sources
-	var ids []int64
-	if _, err := db.Select(&ids, "select node_id from workflow_notification_source where workflow_notification_id = $1", id); err != nil {
-		return sdk.WorkflowNotification{}, sdk.WrapError(err, "Unable to load notification %d sources", id)
-	}
-	dbnotif.NodeIDs = ids
-	n := sdk.WorkflowNotification(dbnotif)
-
-	for _, id := range n.NodeIDs {
-		notifNode := w.WorkflowData.NodeByID(id)
-		if notifNode != nil {
-			n.SourceNodeRefs = append(n.SourceNodeRefs, notifNode.Name)
-		}
-	}
-
-	return n, nil
 }
 
 func InsertNotification(db gorp.SqlExecutor, w *sdk.Workflow, n *sdk.WorkflowNotification) error {

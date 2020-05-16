@@ -32,43 +32,45 @@ type LoadOptions struct {
 	WithFavoritesForUserID string
 }
 
-func (opts LoadOptions) ToLoadAllWorkflowsOptions() LoadAllWorkflowsOptions {
-	var loadOpts LoadAllWorkflowsOptions
+func (loadOpts LoadOptions) GetWorkflowDAO() WorkflowDAO {
+	var dao WorkflowDAO
 
-	if !opts.Minimal {
-		loadOpts.Loaders.WithPipelines = true
-		loadOpts.Loaders.WithApplications = true
-		loadOpts.Loaders.WithEnvironments = true
-		loadOpts.Loaders.WithIntegrations = true
-		loadOpts.Loaders.WithFavoritesForUserID = opts.WithFavoritesForUserID
+	if !loadOpts.Minimal {
+		dao.Loaders.WithPipelines = true
+		dao.Loaders.WithApplications = true
+		dao.Loaders.WithEnvironments = true
+		dao.Loaders.WithIntegrations = true
+		dao.Loaders.WithNotifications = true
+		dao.Loaders.WithFavoritesForUserID = loadOpts.WithFavoritesForUserID
 
-		if opts.WithIcon {
-			loadOpts.Loaders.WithIcon = true
+		if loadOpts.WithIcon {
+			dao.Loaders.WithIcon = true
 		}
-		if opts.WithAsCodeUpdateEvent {
-			loadOpts.Loaders.WithAsCodeUpdateEvents = true
+		if loadOpts.WithAsCodeUpdateEvent {
+			dao.Loaders.WithAsCodeUpdateEvents = true
 		}
-		if opts.WithTemplate {
-			loadOpts.Loaders.WithTemplate = true
+		if loadOpts.WithTemplate {
+			dao.Loaders.WithTemplate = true
 		}
-		if opts.DeepPipeline {
-			loadOpts.Loaders.WithDeepPipelines = true
+		if loadOpts.DeepPipeline {
+			dao.Loaders.WithDeepPipelines = true
 		}
-		if opts.WithLabels {
-			loadOpts.Loaders.WithLabels = true
+		if loadOpts.WithLabels {
+			dao.Loaders.WithLabels = true
 		}
 	}
-	return loadOpts
+	return dao
 }
 
 type LoadAllWorkflowsOptionsFilters struct {
-	ProjectKey            string
-	WorkflowName          string
-	VCSServer             string
-	ApplicationRepository string
-	FromRepository        string
-	GroupIDs              []int64
-	WorkflowIDs           []int64
+	ProjectKey                   string
+	WorkflowName                 string
+	VCSServer                    string
+	ApplicationRepository        string
+	FromRepository               string
+	GroupIDs                     []int64
+	WorkflowIDs                  []int64
+	DisableFilterDeletedWorkflow bool
 }
 
 type LoadAllWorkflowsOptionsLoaders struct {
@@ -86,7 +88,7 @@ type LoadAllWorkflowsOptionsLoaders struct {
 	WithFavoritesForUserID string
 }
 
-type LoadAllWorkflowsOptions struct {
+type WorkflowDAO struct {
 	Filters   LoadAllWorkflowsOptionsFilters
 	Loaders   LoadAllWorkflowsOptionsLoaders
 	Offset    int
@@ -95,7 +97,7 @@ type LoadAllWorkflowsOptions struct {
 	Lock      bool
 }
 
-func (opt LoadAllWorkflowsOptions) Query() gorpmapping.Query {
+func (dao WorkflowDAO) Query() gorpmapping.Query {
 	var queryString = `
     WITH 
     workflow_root_application_id AS (
@@ -133,110 +135,117 @@ func (opt LoadAllWorkflowsOptions) Query() gorpmapping.Query {
     FROM workflow 
 	JOIN selected_workflow ON selected_workflow.workflow_id = workflow.id
 	JOIN project_permission ON project_permission.project_id = workflow.project_id
-	WHERE workflow.to_delete  = false
     `
 
 	var filters []string
 	var args []interface{}
-	if opt.Filters.ProjectKey != "" {
+	if dao.Filters.ProjectKey != "" {
 		filters = append(filters, "selected_workflow.projectkey = $%d")
-		args = append(args, opt.Filters.ProjectKey)
+		args = append(args, dao.Filters.ProjectKey)
 	}
-	if opt.Filters.WorkflowName != "" {
+	if dao.Filters.WorkflowName != "" {
 		filters = append(filters, "selected_workflow.workflow_name = $%d")
-		args = append(args, opt.Filters.WorkflowName)
+		args = append(args, dao.Filters.WorkflowName)
 	}
-	if opt.Filters.VCSServer != "" {
+	if dao.Filters.VCSServer != "" {
 		filters = append(filters, "selected_workflow.vcs_server = $%d")
-		args = append(args, opt.Filters.VCSServer)
+		args = append(args, dao.Filters.VCSServer)
 	}
-	if opt.Filters.ApplicationRepository != "" {
+	if dao.Filters.ApplicationRepository != "" {
 		filters = append(filters, "selected_workflow.repo_fullname = $%d")
-		args = append(args, opt.Filters.ApplicationRepository)
+		args = append(args, dao.Filters.ApplicationRepository)
 	}
-	if opt.Filters.FromRepository != "" {
+	if dao.Filters.FromRepository != "" {
 		filters = append(filters, "workflow.from_repository = $%d")
-		args = append(args, opt.Filters.FromRepository)
+		args = append(args, dao.Filters.FromRepository)
 	}
-	if len(opt.Filters.GroupIDs) != 0 {
+	if len(dao.Filters.GroupIDs) != 0 {
 		filters = append(filters, "selected_workflow.groups && $%d")
-		args = append(args, pq.Int64Array(opt.Filters.GroupIDs))
+		args = append(args, pq.Int64Array(dao.Filters.GroupIDs))
 	}
-	if len(opt.Filters.WorkflowIDs) != 0 {
+	if len(dao.Filters.WorkflowIDs) != 0 {
 		filters = append(filters, "workflow.id = ANY($%d)")
-		args = append(args, pq.Int64Array(opt.Filters.WorkflowIDs))
+		args = append(args, pq.Int64Array(dao.Filters.WorkflowIDs))
 	}
 
 	for i, f := range filters {
-		queryString += " AND "
+		if i == 0 {
+			queryString += " WHERE "
+		} else {
+			queryString += " AND "
+		}
 		queryString += fmt.Sprintf(f, i+1)
 	}
 
+	if !dao.Filters.DisableFilterDeletedWorkflow {
+		queryString += " AND workflow.to_delete  = false"
+	}
+
 	var order = " ORDER BY selected_workflow.projectkey, selected_workflow.workflow_name "
-	if opt.Ascending {
+	if dao.Ascending {
 		order += "ASC"
 	} else {
 		order += "DESC"
 	}
 	queryString += order
 
-	if opt.Offset != 0 {
-		queryString += fmt.Sprintf(" OFFSET %d", opt.Offset)
+	if dao.Offset != 0 {
+		queryString += fmt.Sprintf(" OFFSET %d", dao.Offset)
 	}
 
-	if opt.Limit != 0 {
-		queryString += fmt.Sprintf(" LIMIT %d", opt.Limit)
+	if dao.Limit != 0 {
+		queryString += fmt.Sprintf(" LIMIT %d", dao.Limit)
 	}
 
-	if opt.Lock {
+	if dao.Lock {
 		queryString += " for update skip locked"
 	}
 
 	q := gorpmapping.NewQuery(queryString).Args(args...)
 
-	log.Debug("workflow.LoadAllWorkflowsOptions.Query> %v", q)
+	log.Debug("workflow.WorkflowDAO.Query> %v", q)
 
 	return q
 }
 
-func (opt LoadAllWorkflowsOptions) GetLoaders() []gorpmapping.GetOptionFunc {
+func (dao WorkflowDAO) GetLoaders() []gorpmapping.GetOptionFunc {
 
 	var loaders = []gorpmapping.GetOptionFunc{}
 
-	if opt.Loaders.WithApplications {
+	if dao.Loaders.WithApplications {
 		loaders = append(loaders, func(db gorp.SqlExecutor, i interface{}) error {
 			ws := i.(*[]Workflow)
-			return opt.withApplications(db, ws)
+			return dao.withApplications(db, ws)
 		})
 	}
 
-	if opt.Loaders.WithEnvironments {
+	if dao.Loaders.WithEnvironments {
 		loaders = append(loaders, func(db gorp.SqlExecutor, i interface{}) error {
 			ws := i.(*[]Workflow)
-			return opt.withEnvironments(db, ws)
+			return dao.withEnvironments(db, ws)
 		})
 	}
 
-	if opt.Loaders.WithDeepPipelines {
+	if dao.Loaders.WithDeepPipelines {
 		loaders = append(loaders, func(db gorp.SqlExecutor, i interface{}) error {
 			ws := i.(*[]Workflow)
-			return opt.withPipelines(db, ws, true)
+			return dao.withPipelines(db, ws, true)
 		})
-	} else if opt.Loaders.WithPipelines {
+	} else if dao.Loaders.WithPipelines {
 		loaders = append(loaders, func(db gorp.SqlExecutor, i interface{}) error {
 			ws := i.(*[]Workflow)
-			return opt.withPipelines(db, ws, false)
-		})
-	}
-
-	if opt.Loaders.WithAsCodeUpdateEvents {
-		loaders = append(loaders, func(db gorp.SqlExecutor, i interface{}) error {
-			ws := i.(*[]Workflow)
-			return opt.withAsCodeUpdateEvents(db, ws)
+			return dao.withPipelines(db, ws, false)
 		})
 	}
 
-	if !opt.Loaders.WithIcon {
+	if dao.Loaders.WithAsCodeUpdateEvents {
+		loaders = append(loaders, func(db gorp.SqlExecutor, i interface{}) error {
+			ws := i.(*[]Workflow)
+			return dao.withAsCodeUpdateEvents(db, ws)
+		})
+	}
+
+	if !dao.Loaders.WithIcon {
 		loaders = append(loaders, func(db gorp.SqlExecutor, i interface{}) error {
 			ws := i.(*[]Workflow)
 			for j := range *ws {
@@ -247,50 +256,50 @@ func (opt LoadAllWorkflowsOptions) GetLoaders() []gorpmapping.GetOptionFunc {
 		})
 	}
 
-	if opt.Loaders.WithIntegrations {
+	if dao.Loaders.WithIntegrations {
 		loaders = append(loaders, func(db gorp.SqlExecutor, i interface{}) error {
 			ws := i.(*[]Workflow)
-			return opt.withIntegrations(db, ws)
+			return dao.withIntegrations(db, ws)
 		})
 	}
 
-	if opt.Loaders.WithTemplate {
+	if dao.Loaders.WithTemplate {
 		loaders = append(loaders, func(db gorp.SqlExecutor, i interface{}) error {
 			ws := i.(*[]Workflow)
-			return opt.withTemplates(db, ws)
+			return dao.withTemplates(db, ws)
 		})
 	}
 
-	if opt.Loaders.WithNotifications {
+	if dao.Loaders.WithNotifications {
 		loaders = append(loaders, func(db gorp.SqlExecutor, i interface{}) error {
 			ws := i.(*[]Workflow)
-			return opt.withNotifications(db, ws)
+			return dao.withNotifications(db, ws)
 		})
 	}
 
-	if opt.Loaders.WithLabels {
+	if dao.Loaders.WithLabels {
 		loaders = append(loaders, func(db gorp.SqlExecutor, i interface{}) error {
 			ws := i.(*[]Workflow)
-			return opt.withLabels(db, ws)
+			return dao.withLabels(db, ws)
 		})
 	}
 
-	if opt.Loaders.WithFavoritesForUserID != "" {
+	if dao.Loaders.WithFavoritesForUserID != "" {
 		loaders = append(loaders, func(db gorp.SqlExecutor, i interface{}) error {
 			ws := i.(*[]Workflow)
-			return opt.withFavorites(db, ws, opt.Loaders.WithFavoritesForUserID)
+			return dao.withFavorites(db, ws, dao.Loaders.WithFavoritesForUserID)
 		})
 	}
 
 	loaders = append(loaders, func(db gorp.SqlExecutor, i interface{}) error {
 		ws := i.(*[]Workflow)
-		return opt.withGroups(db, ws)
+		return dao.withGroups(db, ws)
 	})
 
 	return loaders
 }
 
-func (opt LoadAllWorkflowsOptions) withGroups(db gorp.SqlExecutor, ws *[]Workflow) error {
+func (dao WorkflowDAO) withGroups(db gorp.SqlExecutor, ws *[]Workflow) error {
 	var mapIDs = map[int64]*Workflow{}
 	for _, w := range *ws {
 		mapIDs[w.ID] = &w
@@ -319,7 +328,7 @@ func (opt LoadAllWorkflowsOptions) withGroups(db gorp.SqlExecutor, ws *[]Workflo
 	return nil
 }
 
-func (opt LoadAllWorkflowsOptions) withEnvironments(db gorp.SqlExecutor, ws *[]Workflow) error {
+func (dao WorkflowDAO) withEnvironments(db gorp.SqlExecutor, ws *[]Workflow) error {
 	var mapIDs = map[int64]*sdk.Environment{}
 	for _, w := range *ws {
 		nodesArray := w.WorkflowData.Array()
@@ -370,7 +379,7 @@ func (opt LoadAllWorkflowsOptions) withEnvironments(db gorp.SqlExecutor, ws *[]W
 	return nil
 }
 
-func (opt LoadAllWorkflowsOptions) withPipelines(db gorp.SqlExecutor, ws *[]Workflow, deep bool) error {
+func (dao WorkflowDAO) withPipelines(db gorp.SqlExecutor, ws *[]Workflow, deep bool) error {
 	var mapIDs = map[int64]*sdk.Pipeline{}
 	for _, w := range *ws {
 		nodesArray := w.WorkflowData.Array()
@@ -421,7 +430,7 @@ func (opt LoadAllWorkflowsOptions) withPipelines(db gorp.SqlExecutor, ws *[]Work
 	return nil
 }
 
-func (opt LoadAllWorkflowsOptions) withTemplates(db gorp.SqlExecutor, ws *[]Workflow) error {
+func (dao WorkflowDAO) withTemplates(db gorp.SqlExecutor, ws *[]Workflow) error {
 	var mapIDs = map[int64]struct{}{}
 	for _, w := range *ws {
 		mapIDs[w.ID] = struct{}{}
@@ -453,7 +462,7 @@ func (opt LoadAllWorkflowsOptions) withTemplates(db gorp.SqlExecutor, ws *[]Work
 	return nil
 }
 
-func (opt LoadAllWorkflowsOptions) withIntegrations(db gorp.SqlExecutor, ws *[]Workflow) error {
+func (dao WorkflowDAO) withIntegrations(db gorp.SqlExecutor, ws *[]Workflow) error {
 	var mapIDs = map[int64]*sdk.ProjectIntegration{}
 	for _, w := range *ws {
 		nodesArray := w.WorkflowData.Array()
@@ -505,7 +514,7 @@ func (opt LoadAllWorkflowsOptions) withIntegrations(db gorp.SqlExecutor, ws *[]W
 	return nil
 }
 
-func (opt LoadAllWorkflowsOptions) withAsCodeUpdateEvents(db gorp.SqlExecutor, ws *[]Workflow) error {
+func (dao WorkflowDAO) withAsCodeUpdateEvents(db gorp.SqlExecutor, ws *[]Workflow) error {
 	var ids = make([]int64, 0, len(*ws))
 	for _, w := range *ws {
 		ids = append(ids, w.ID)
@@ -530,7 +539,7 @@ func (opt LoadAllWorkflowsOptions) withAsCodeUpdateEvents(db gorp.SqlExecutor, w
 	return nil
 }
 
-func (opt LoadAllWorkflowsOptions) withApplications(db gorp.SqlExecutor, ws *[]Workflow) error {
+func (dao WorkflowDAO) withApplications(db gorp.SqlExecutor, ws *[]Workflow) error {
 	var mapIDs = map[int64]*sdk.Application{}
 	for _, w := range *ws {
 		nodesArray := w.WorkflowData.Array()
@@ -548,7 +557,7 @@ func (opt LoadAllWorkflowsOptions) withApplications(db gorp.SqlExecutor, ws *[]W
 		ids = append(ids, id)
 	}
 
-	apps, err := application.LoadAllByIDs(db, ids)
+	apps, err := application.LoadAllByIDs(db, ids, application.LoadOptions.WithVariables, application.LoadOptions.WithDeploymentStrategies)
 	if err != nil {
 		return err
 	}
@@ -581,13 +590,29 @@ func (opt LoadAllWorkflowsOptions) withApplications(db gorp.SqlExecutor, ws *[]W
 	return nil
 }
 
-func (opt LoadAllWorkflowsOptions) withNotifications(db gorp.SqlExecutor, ws *[]Workflow) error {
-	// TODO
+func (dao WorkflowDAO) withNotifications(db gorp.SqlExecutor, ws *[]Workflow) error {
+	var ids = make([]int64, 0, len(*ws))
+	for _, w := range *ws {
+		ids = append(ids, w.ID)
+	}
+
+	notificationsMap, err := LoadNotificationsByWorkflowIDs(db, ids)
+	if err != nil {
+		return err
+	}
+
+	for x := range *ws {
+		w := &(*ws)[x]
+		for wID, notifations := range notificationsMap {
+			if w.ID == wID {
+				w.Notifications = notifations
+			}
+		}
+	}
 	return nil
 }
 
-func (opt LoadAllWorkflowsOptions) withLabels(db gorp.SqlExecutor, ws *[]Workflow) error {
-
+func (dao WorkflowDAO) withLabels(db gorp.SqlExecutor, ws *[]Workflow) error {
 	var ids = make([]int64, 0, len(*ws))
 	for _, w := range *ws {
 		ids = append(ids, w.ID)
@@ -610,7 +635,7 @@ func (opt LoadAllWorkflowsOptions) withLabels(db gorp.SqlExecutor, ws *[]Workflo
 	return nil
 }
 
-func (opt LoadAllWorkflowsOptions) withFavorites(db gorp.SqlExecutor, ws *[]Workflow, userID string) error {
+func (dao WorkflowDAO) withFavorites(db gorp.SqlExecutor, ws *[]Workflow, userID string) error {
 	workflowIDs, err := UserFavoriteWorkflowIDs(db, userID)
 	if err != nil {
 		return err
@@ -624,11 +649,23 @@ func (opt LoadAllWorkflowsOptions) withFavorites(db gorp.SqlExecutor, ws *[]Work
 	return nil
 }
 
-func LoadAllWorkflows(ctx context.Context, db gorp.SqlExecutor, opts LoadAllWorkflowsOptions) (sdk.Workflows, error) {
+func (dao WorkflowDAO) Load(ctx context.Context, db gorp.SqlExecutor) (sdk.Workflow, error) {
+	dao.Limit = 1
+	ws, err := dao.LoadAll(ctx, db)
+	if err != nil {
+		return sdk.Workflow{}, err
+	}
+	if len(ws) == 0 {
+		return sdk.Workflow{}, sdk.WithStack(sdk.ErrNotFound)
+	}
+	return ws[0], nil
+}
+
+func (dao WorkflowDAO) LoadAll(ctx context.Context, db gorp.SqlExecutor) (sdk.Workflows, error) {
 	t0 := time.Now()
 
 	var workflows []Workflow
-	if err := gorpmapping.GetAll(ctx, db, opts.Query(), &workflows, opts.GetLoaders()...); err != nil {
+	if err := gorpmapping.GetAll(ctx, db, dao.Query(), &workflows, dao.GetLoaders()...); err != nil {
 		return nil, err
 	}
 	ws := make(sdk.Workflows, 0, len(workflows))
@@ -642,7 +679,7 @@ func LoadAllWorkflows(ctx context.Context, db gorp.SqlExecutor, opts LoadAllWork
 	}
 
 	delta := time.Since(t0).Seconds()
-	log.Info(ctx, "LoadAllWorkflows - %d results in %.3f seconds", len(ws), delta)
+	log.Info(ctx, "LoadAll - %d results in %.3f seconds", len(ws), delta)
 
 	return ws, nil
 }

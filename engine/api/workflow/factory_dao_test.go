@@ -14,7 +14,7 @@ func TestLoadAllWorkflows(t *testing.T) {
 	db, _, end := test.SetupPG(t)
 	defer end()
 
-	var opts = []workflow.LoadAllWorkflowsOptions{
+	var opts = []workflow.WorkflowDAO{
 		{},
 		{
 			Filters: workflow.LoadAllWorkflowsOptionsFilters{
@@ -87,7 +87,7 @@ func TestLoadAllWorkflows(t *testing.T) {
 
 	for i, opt := range opts {
 		t.Run(fmt.Sprintf("test LoadAllWorkflows #%d", i), func(t *testing.T) {
-			wss, err := workflow.LoadAllWorkflows(context.TODO(), db, opt)
+			wss, err := opt.LoadAll(context.TODO(), db)
 			for _, ws := range wss {
 				require.NotEmpty(t, ws.ProjectKey)
 			}
