@@ -21,9 +21,9 @@ func LoadNotificationsByWorkflowIDs(db gorp.SqlExecutor, ids []int64) (map[int64
 	query := `
 		SELECT 
 		workflow_notification.*,
-		array_agg(workflow_notification_source.node_id) as "node_ids"
+		array_remove(array_agg(workflow_notification_source.node_id::text), NULL)  "node_ids"
 		FROM workflow_notification
-		JOIN workflow_notification_source ON workflow_notification_source.workflow_notification_id = workflow_notification.id
+		LEFT OUTER JOIN workflow_notification_source ON workflow_notification_source.workflow_notification_id = workflow_notification.id
 		WHERE workflow_notification.workflow_id = ANY($1)
 		GROUP BY workflow_notification.workflow_id, workflow_notification.id
 		ORDER BY workflow_notification.workflow_id`
@@ -49,8 +49,8 @@ func LoadNotificationsByWorkflowIDs(db gorp.SqlExecutor, ids []int64) (map[int64
 		arrayNotif := mapNotifs[n.WorkflowID]
 		notif := sdk.WorkflowNotification{
 			ID:         n.ID,
-			NodeIDs:    n.NodeIDs,
 			Settings:   n.Settings,
+			NodeIDs:    n.NodeIDs,
 			Type:       n.Type,
 			WorkflowID: n.WorkflowID,
 		}

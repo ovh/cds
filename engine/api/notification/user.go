@@ -120,6 +120,7 @@ func GetUserWorkflowEvents(ctx context.Context, db gorp.SqlExecutor, store cache
 				if err != nil {
 					log.Error(ctx, "notification.GetUserWorkflowEvents> unable to handle event %+v: %v", jn, err)
 				}
+				log.Debug("GetUserWorkflowEvents> will send mail notifications: %+v", notif)
 				go sendMailNotif(ctx, notif)
 			}
 		}

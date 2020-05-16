@@ -40,7 +40,6 @@ func (loadOpts LoadOptions) GetWorkflowDAO() WorkflowDAO {
 		dao.Loaders.WithApplications = true
 		dao.Loaders.WithEnvironments = true
 		dao.Loaders.WithIntegrations = true
-		dao.Loaders.WithNotifications = true
 		dao.Loaders.WithFavoritesForUserID = loadOpts.WithFavoritesForUserID
 
 		if loadOpts.WithIcon {
@@ -82,7 +81,6 @@ type LoadAllWorkflowsOptionsLoaders struct {
 	WithIcon               bool
 	WithAsCodeUpdateEvents bool
 	WithTemplate           bool
-	WithNotifications      bool
 	WithLabels             bool
 	WithAudits             bool
 	WithFavoritesForUserID string
@@ -270,13 +268,6 @@ func (dao WorkflowDAO) GetLoaders() []gorpmapping.GetOptionFunc {
 		})
 	}
 
-	if dao.Loaders.WithNotifications {
-		loaders = append(loaders, func(db gorp.SqlExecutor, i interface{}) error {
-			ws := i.(*[]Workflow)
-			return dao.withNotifications(db, ws)
-		})
-	}
-
 	if dao.Loaders.WithLabels {
 		loaders = append(loaders, func(db gorp.SqlExecutor, i interface{}) error {
 			ws := i.(*[]Workflow)
@@ -291,10 +282,15 @@ func (dao WorkflowDAO) GetLoaders() []gorpmapping.GetOptionFunc {
 		})
 	}
 
-	loaders = append(loaders, func(db gorp.SqlExecutor, i interface{}) error {
-		ws := i.(*[]Workflow)
-		return dao.withGroups(db, ws)
-	})
+	loaders = append(loaders,
+		func(db gorp.SqlExecutor, i interface{}) error {
+			ws := i.(*[]Workflow)
+			return dao.withGroups(db, ws)
+		},
+		func(db gorp.SqlExecutor, i interface{}) error {
+			ws := i.(*[]Workflow)
+			return dao.withNotifications(db, ws)
+		})
 
 	return loaders
 }

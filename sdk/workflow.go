@@ -272,11 +272,20 @@ func (w *Workflow) Normalize() {
 	// Set the node names in the notifactions
 	for i := range w.Notifications {
 		n := &w.Notifications[i]
-		n.SourceNodeRefs = nil
-		for _, id := range n.NodeIDs {
-			notifNode := w.WorkflowData.NodeByID(id)
-			if notifNode != nil {
-				n.SourceNodeRefs = append(n.SourceNodeRefs, notifNode.Name)
+		if len(n.NodeIDs) != 0 {
+			n.SourceNodeRefs = nil
+			for _, id := range n.NodeIDs {
+				notifNode := w.WorkflowData.NodeByID(id)
+				if notifNode != nil {
+					n.SourceNodeRefs = append(n.SourceNodeRefs, notifNode.Name)
+				}
+			}
+		} else if len(n.SourceNodeRefs) != 0 {
+			for _, nodeName := range n.SourceNodeRefs {
+				notifNode := w.WorkflowData.NodeByName(nodeName)
+				if notifNode != nil {
+					n.NodeIDs = append(n.NodeIDs, notifNode.ID)
+				}
 			}
 		}
 	}
