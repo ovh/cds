@@ -766,12 +766,44 @@ func (api *API) getWorkflowNotificationsConditionsHandler() service.Handler {
 	}
 }
 
-func (api *API) getAllWorkflowsHandler() service.Handler {
+func (api *API) getSearchWorkflowHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		//vars := mux.Vars(r)
+		var dao workflow.WorkflowDAO
+		dao.Filters.ProjectKey = r.FormValue("project")
+		dao.Filters.WorkflowName = r.FormValue("name")
+		dao.Filters.VCSServer = r.FormValue("vcs")
+		dao.Filters.ApplicationRepository = r.FormValue("repository")
+		dao.Loaders.WithFavoritesForUserID = getAPIConsumer(ctx).AuthentifiedUserID
 
-		// TODO
+		groupIDS := getAPIConsumer(ctx).GetGroupIDs()
+		dao.Filters.GroupIDs = groupIDS
+		if isMaintainer(ctx) {
+			dao.Filters.GroupIDs = nil
+		}
 
-		return nil
+		ws, err := dao.LoadAll(ctx, api.mustDBWithCtx(ctx))
+		if err != nil {
+			return err
+		}
+
+		ids := ws.IDs()
+		perms, err := permission.LoadWorkflowMaxLevelPermissionByWorkflowIDs(ctx, api.mustDB(), ids, groupIDS)
+		if err != nil {
+			return err
+		}
+
+		for i := range ws {
+			if isAdmin(ctx) {
+				ws[i].Permissions = sdk.Permissions{Readable: true, Writable: true, Executable: true}
+			} else {
+				idString := strconv.FormatInt(ws[i].ID, 10)
+				ws[i].Permissions = perms.Permissions(idString)
+				if isMaintainer(ctx) {
+					ws[i].Permissions.Readable = true
+				}
+			}
+		}
+
+		return service.WriteJSON(w, ws, http.StatusOK)
 	}
 }

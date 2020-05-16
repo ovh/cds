@@ -1908,3 +1908,84 @@ func Test_getWorkflowsHandler_FilterByRepo(t *testing.T) {
 	require.Equal(t, pip.ID, wfs[0].WorkflowData.Node.Context.PipelineID)
 
 }
+
+func Test_getSearchWorkflowHandler(t *testing.T) {
+	api, tsURL, tsClose := newTestServer(t)
+	defer tsClose()
+
+	admin, _ := assets.InsertAdminUser(t, api.mustDB())
+	localConsumer, err := authentication.LoadConsumerByTypeAndUserID(context.TODO(), api.mustDB(), sdk.ConsumerLocal, admin.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
+	require.NoError(t, err)
+
+	_, jws, err := builtin.NewConsumer(context.TODO(), api.mustDB(), sdk.RandomString(10), sdk.RandomString(10), localConsumer, admin.GetGroupIDs(),
+		sdk.NewAuthConsumerScopeDetails(sdk.AuthConsumerScopeProject))
+
+	u, _ := assets.InsertLambdaUser(t, api.mustDB())
+
+	pkey := sdk.RandomString(10)
+	proj := assets.InsertTestProject(t, api.mustDB(), api.Cache, pkey, pkey)
+	require.NoError(t, group.InsertLinkGroupUser(context.TODO(), api.mustDB(), &group.LinkGroupUser{
+		GroupID:            proj.ProjectGroups[0].Group.ID,
+		AuthentifiedUserID: u.ID,
+		Admin:              true,
+	}))
+
+	repofullName := sdk.RandomString(20)
+
+	app := &sdk.Application{
+		Name:               sdk.RandomString(10),
+		RepositoryFullname: "ovh/" + repofullName,
+	}
+	require.NoError(t, application.Insert(api.mustDB(), *proj, app))
+
+	pip := sdk.Pipeline{
+		ProjectID:  proj.ID,
+		ProjectKey: proj.Key,
+		Name:       "pip1",
+	}
+	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), &pip))
+
+	wf := sdk.Workflow{
+		Name:       "workflow1",
+		ProjectID:  proj.ID,
+		ProjectKey: proj.Key,
+		WorkflowData: sdk.WorkflowData{
+			Node: sdk.Node{
+				Name: "root",
+				Context: &sdk.NodeContext{
+					PipelineID:    pip.ID,
+					ApplicationID: app.ID,
+				},
+			},
+		},
+	}
+	test.NoError(t, workflow.Insert(context.TODO(), api.mustDB(), api.Cache, *proj, &wf))
+
+	wf2 := sdk.Workflow{
+		Name:       "workflow2",
+		ProjectID:  proj.ID,
+		ProjectKey: proj.Key,
+		WorkflowData: sdk.WorkflowData{
+			Node: sdk.Node{
+				Name: "root",
+				Context: &sdk.NodeContext{
+					PipelineID: pip.ID,
+				},
+			},
+		},
+	}
+	test.NoError(t, workflow.Insert(context.TODO(), api.mustDB(), api.Cache, *proj, &wf2))
+
+	// Call with an admin
+	sdkclientAdmin := cdsclient.New(cdsclient.Config{
+		Host:                              tsURL,
+		BuitinConsumerAuthenticationToken: jws,
+	})
+
+	wfs, err := sdkclientAdmin.WorkflowSearch(cdsclient.WithQueryParameter("repository", "ovh/"+repofullName))
+	require.NoError(t, err)
+	require.Len(t, wfs, 1)
+	require.Equal(t, wf.Name, wfs[0].Name)
+	require.Equal(t, app.ID, wfs[0].WorkflowData.Node.Context.ApplicationID)
+	require.Equal(t, pip.ID, wfs[0].WorkflowData.Node.Context.PipelineID)
+}

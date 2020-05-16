@@ -12,7 +12,7 @@ import (
 	sdk "github.com/ovh/cds/sdk"
 	cdsclient "github.com/ovh/cds/sdk/cdsclient"
 	venom "github.com/ovh/venom"
-	coverage "github.com/sguiheux/go-coverage"
+	go_coverage "github.com/sguiheux/go-coverage"
 	io "io"
 	http "net/http"
 	reflect "reflect"
@@ -3010,7 +3010,7 @@ func (mr *MockQueueClientMockRecorder) QueueJobSendSpawnInfo(ctx, id, in interfa
 }
 
 // QueueSendCoverage mocks base method
-func (m *MockQueueClient) QueueSendCoverage(ctx context.Context, id int64, report coverage.Report) error {
+func (m *MockQueueClient) QueueSendCoverage(ctx context.Context, id int64, report go_coverage.Report) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "QueueSendCoverage", ctx, id, report)
 	ret0, _ := ret[0].(error)
@@ -3554,6 +3554,25 @@ func NewMockWorkflowClient(ctrl *gomock.Controller) *MockWorkflowClient {
 // EXPECT returns an object that allows the caller to indicate expected use
 func (m *MockWorkflowClient) EXPECT() *MockWorkflowClientMockRecorder {
 	return m.recorder
+}
+
+// WorkflowSearch mocks base method
+func (m *MockWorkflowClient) WorkflowSearch(opts ...cdsclient.RequestModifier) ([]sdk.Workflow, error) {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{}
+	for _, a := range opts {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "WorkflowSearch", varargs...)
+	ret0, _ := ret[0].([]sdk.Workflow)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// WorkflowSearch indicates an expected call of WorkflowSearch
+func (mr *MockWorkflowClientMockRecorder) WorkflowSearch(opts ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkflowSearch", reflect.TypeOf((*MockWorkflowClient)(nil).WorkflowSearch), opts...)
 }
 
 // WorkflowList mocks base method
@@ -6712,7 +6731,7 @@ func (mr *MockInterfaceMockRecorder) QueueJobSendSpawnInfo(ctx, id, in interface
 }
 
 // QueueSendCoverage mocks base method
-func (m *MockInterface) QueueSendCoverage(ctx context.Context, id int64, report coverage.Report) error {
+func (m *MockInterface) QueueSendCoverage(ctx context.Context, id int64, report go_coverage.Report) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "QueueSendCoverage", ctx, id, report)
 	ret0, _ := ret[0].(error)
@@ -7207,6 +7226,25 @@ func (m *MockInterface) WorkerSetStatus(ctx context.Context, status string) erro
 func (mr *MockInterfaceMockRecorder) WorkerSetStatus(ctx, status interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkerSetStatus", reflect.TypeOf((*MockInterface)(nil).WorkerSetStatus), ctx, status)
+}
+
+// WorkflowSearch mocks base method
+func (m *MockInterface) WorkflowSearch(opts ...cdsclient.RequestModifier) ([]sdk.Workflow, error) {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{}
+	for _, a := range opts {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "WorkflowSearch", varargs...)
+	ret0, _ := ret[0].([]sdk.Workflow)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// WorkflowSearch indicates an expected call of WorkflowSearch
+func (mr *MockInterfaceMockRecorder) WorkflowSearch(opts ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkflowSearch", reflect.TypeOf((*MockInterface)(nil).WorkflowSearch), opts...)
 }
 
 // WorkflowList mocks base method
@@ -8190,7 +8228,7 @@ func (mr *MockWorkerInterfaceMockRecorder) QueueJobSendSpawnInfo(ctx, id, in int
 }
 
 // QueueSendCoverage mocks base method
-func (m *MockWorkerInterface) QueueSendCoverage(ctx context.Context, id int64, report coverage.Report) error {
+func (m *MockWorkerInterface) QueueSendCoverage(ctx context.Context, id int64, report go_coverage.Report) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "QueueSendCoverage", ctx, id, report)
 	ret0, _ := ret[0].(error)

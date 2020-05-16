@@ -410,8 +410,8 @@ func (api *API) InitRouter() {
 	r.Handle("/group/{permGroupName}/worker/model", Scope(sdk.AuthConsumerScopeWorkerModel), r.GET(api.getWorkerModelsForGroupHandler))
 
 	// Workflows
-	r.Handle("/workflow", Scope(sdk.AuthConsumerScopeProject), r.GET(api.getAllWorkflowsHandler))
 
+	r.Handle("/workflow/search", Scope(sdk.AuthConsumerScopeProject), r.GET(api.getSearchWorkflowHandler))
 	r.Handle("/workflow/hook", Scope(sdk.AuthConsumerScopeHooks), r.GET(api.getWorkflowHooksHandler))
 	r.Handle("/workflow/hook/model/{model}", ScopeNone(), r.GET(api.getWorkflowHookModelHandler), r.POST(api.postWorkflowHookModelHandler, NeedAdmin(true)), r.PUT(api.putWorkflowHookModelHandler, NeedAdmin(true)))
 
