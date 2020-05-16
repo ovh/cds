@@ -219,16 +219,21 @@ vcs_ssh_key: proj-blabla
 		PurgeTags:     []string{"git.branch"},
 	}
 
+	t.Log("Inserting workflow=====")
+
 	test.NoError(t, workflow.Insert(context.TODO(), db, api.Cache, *proj, &w))
 	w1, err := workflow.Load(context.TODO(), db, api.Cache, *proj, "test_1", workflow.LoadOptions{
 		DeepPipeline: true,
 	})
 	test.NoError(t, err)
 
+	t.Log("Inserting workflow run=====")
+
 	// creates a run
 	wr, errWR := workflow.CreateRun(db, w1, nil, u)
 	assert.NoError(t, errWR)
 	wr.Workflow = *w1
+	t.Log("Starting workflow run=====")
 	_, errWr := workflow.StartWorkflowRun(context.TODO(), db, api.Cache, *proj, wr, &sdk.WorkflowRunPostHandlerOption{
 		Manual: &sdk.WorkflowNodeRunManual{
 			Username: u.Username,
@@ -245,6 +250,8 @@ vcs_ssh_key: proj-blabla
 		"applicationName": app.Name,
 	}
 
+	t.Log("Trying to detach=====")
+
 	uri := router.GetRoute("POST", api.detachRepositoriesManagerHandler, vars)
 
 	req, err := http.NewRequest("POST", uri, nil)
@@ -256,6 +263,8 @@ vcs_ssh_key: proj-blabla
 	router.Mux.ServeHTTP(rw, req)
 	// as there is one repository webhook attached, 403 is expected
 	assert.Equal(t, 403, rw.Code)
+
+	t.Log("Loading the workflow=====")
 
 	w2, err := workflow.Load(context.TODO(), db, api.Cache, *proj, "test_1", workflow.LoadOptions{})
 	test.NoError(t, err)
@@ -269,7 +278,8 @@ vcs_ssh_key: proj-blabla
 	}
 	w2.WorkflowData.Node.Hooks = append(w2.WorkflowData.Node.Hooks[:index], w2.WorkflowData.Node.Hooks[index+1:]...)
 
-	// save the workflow with the repositorywebhok deleted
+	// save the workflow with the repositorywebhook deleted
+	t.Log("Updating the workflo without the repositorywebhook=====")
 	test.NoError(t, workflow.Update(context.TODO(), db, api.Cache, *proj, w2, workflow.UpdateOptions{}))
 
 	req, err = http.NewRequest("POST", uri, nil)

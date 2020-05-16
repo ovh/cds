@@ -60,14 +60,12 @@ func LoadNotificationsByWorkflowIDs(db gorp.SqlExecutor, ids []int64) (map[int64
 	}
 
 	return mapNotifs, nil
-
 }
 
 func InsertNotification(db gorp.SqlExecutor, w *sdk.Workflow, n *sdk.WorkflowNotification) error {
 	n.WorkflowID = w.ID
 	n.ID = 0
 	n.NodeIDs = nil
-	dbNotif := Notification(*n)
 
 	for _, s := range n.SourceNodeRefs {
 		nodeFoundRef := w.WorkflowData.NodeByName(s)
@@ -76,6 +74,8 @@ func InsertNotification(db gorp.SqlExecutor, w *sdk.Workflow, n *sdk.WorkflowNot
 		}
 		n.NodeIDs = append(n.NodeIDs, nodeFoundRef.ID)
 	}
+
+	dbNotif := Notification(*n)
 
 	//Insert the notification
 	if err := db.Insert(&dbNotif); err != nil {
