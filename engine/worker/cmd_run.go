@@ -69,6 +69,7 @@ func runCmd() func(cmd *cobra.Command, args []string) {
 			fields := logrus.Fields{}
 			if isErrWithStack {
 				fields["stack_trace"] = fmt.Sprintf("%+v", err)
+				fields["request_id"] = err.(sdk.Error).RequestID
 			}
 			log.ErrorWithFields(ctx, fields, "%v", err)
 			time.Sleep(2 * time.Second)
