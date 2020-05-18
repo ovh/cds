@@ -327,14 +327,6 @@ func (api *API) getPipelineHandler() service.Handler {
 				WithTemplate: true,
 			})
 			if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
-				return err
-			}
-			p.WorkflowAscodeHolder = wkAscodeHolder
-
-			wkAscodeHolder, err := workflow.LoadByRepo(ctx, api.Cache, api.mustDB(), *proj, p.FromRepository, workflow.LoadOptions{
-				WithTemplate: true,
-			})
-			if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
 				return sdk.NewErrorFrom(err, "cannot found workflow holder of the pipeline")
 			}
 			p.WorkflowAscodeHolder = wkAscodeHolder
