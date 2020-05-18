@@ -44,15 +44,14 @@ func PushOperation(ctx context.Context, db gorp.SqlExecutor, store cache.Store, 
 	ope.User.Username = u.GetFullname()
 	ope.User.Username = u.GetUsername()
 
-	vcsServer := repositoriesmanager.GetProjectVCSServer(proj, vcsServerName)
-	if vcsServer == nil {
-		return nil, sdk.WithStack(fmt.Errorf("no vcsServer found"))
+	vcsServer, err := repositoriesmanager.LoadProjectVCSServerLinkByProjectKeyAndVCSServerName(ctx, db, proj.Key, vcsServerName)
+	if err != nil {
+		return nil, err
 	}
-	client, errC := repositoriesmanager.AuthorizedClient(ctx, db, store, proj.Key, vcsServer)
-	if errC != nil {
-		return nil, errC
+	client, err := repositoriesmanager.AuthorizedClient(ctx, db, store, proj.Key, vcsServer)
+	if err != nil {
+		return nil, err
 	}
-
 	repo, errR := client.RepoByFullname(ctx, repoFullname)
 	if errR != nil {
 		return nil, sdk.WrapError(errR, "cannot get repo %s", repoFullname)

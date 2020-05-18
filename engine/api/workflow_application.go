@@ -36,7 +36,7 @@ func (api *API) releaseApplicationWorkflowHandler() service.Handler {
 			return errU
 		}
 
-		proj, errprod := project.Load(api.mustDB(),  key)
+		proj, errprod := project.Load(api.mustDB(), key)
 		if errprod != nil {
 			return sdk.WrapError(errprod, "releaseApplicationWorkflowHandler")
 		}
@@ -72,9 +72,9 @@ func (api *API) releaseApplicationWorkflowHandler() service.Handler {
 			return sdk.WithStack(sdk.ErrNoReposManager)
 		}
 
-		rm := repositoriesmanager.GetProjectVCSServer(*proj, app.VCSServer)
-		if rm == nil {
-			return sdk.WithStack(sdk.ErrNoReposManager)
+		rm, err := repositoriesmanager.LoadProjectVCSServerLinkByProjectKeyAndVCSServerName(ctx, api.mustDB(), key, app.VCSServer)
+		if err != nil {
+			return sdk.WrapError(sdk.ErrNoReposManagerClientAuth, "cannot get client %s %s got: %v", key, app.VCSServer, err)
 		}
 
 		client, err := repositoriesmanager.AuthorizedClient(ctx, api.mustDB(), api.Cache, proj.Key, rm)

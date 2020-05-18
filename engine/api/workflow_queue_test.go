@@ -6,7 +6,6 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"github.com/ovh/cds/engine/cdn"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
@@ -15,6 +14,8 @@ import (
 	"path"
 	"testing"
 	"time"
+
+	"github.com/ovh/cds/engine/cdn"
 
 	"github.com/ovh/venom"
 
@@ -65,6 +66,14 @@ func testRunWorkflow(t *testing.T, api *API, router *Router) testRunWorkflowCtx 
 		Admin:              true,
 	}))
 	u.Groups = append(u.Groups, proj.ProjectGroups[0].Group)
+
+	vcsServer := sdk.ProjectVCSServerLink{
+		ProjectID: proj.ID,
+		Name:      "github",
+	}
+	vcsServer.Set("token", "foo")
+	vcsServer.Set("secret", "bar")
+	assert.NoError(t, repositoriesmanager.InsertProjectVCSServerLink(context.TODO(), api.mustDB(), &vcsServer))
 
 	//First pipeline
 	pip := sdk.Pipeline{
@@ -1243,10 +1252,14 @@ func TestInsertNewCodeCoverageReport(t *testing.T) {
 	// Add repo manager
 	proj.VCSServers = make([]sdk.ProjectVCSServer, 0, 1)
 	proj.VCSServers = append(proj.VCSServers)
-	assert.NoError(t, repositoriesmanager.InsertForProject(db, proj, &sdk.ProjectVCSServer{
-		Name:     "repoManServ",
-		Username: "foo",
-	}))
+
+	vcsServer := sdk.ProjectVCSServerLink{
+		ProjectID: proj.ID,
+		Name:      "repoManServ",
+	}
+	vcsServer.Set("token", "foo")
+	vcsServer.Set("secret", "bar")
+	assert.NoError(t, repositoriesmanager.InsertProjectVCSServerLink(context.TODO(), db, &vcsServer))
 
 	// Create pipeline
 	pip := &sdk.Pipeline{

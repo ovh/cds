@@ -65,7 +65,7 @@ func processEvent(ctx context.Context, db *gorp.DbMap, event sdk.Event, store ca
 	if eventWNR.RepositoryManagerName == "" {
 		return nil
 	}
-	vcsServer, err := LoadForProject(db, event.ProjectKey, eventWNR.RepositoryManagerName)
+	vcsServer, err := LoadProjectVCSServerLinkByProjectKeyAndVCSServerName(ctx, db, event.ProjectKey, eventWNR.RepositoryManagerName)
 	if err != nil {
 		return fmt.Errorf("repositoriesmanager>processEvent> AuthorizedClient (%s, %s) > err:%s", event.ProjectKey, eventWNR.RepositoryManagerName, err)
 	}

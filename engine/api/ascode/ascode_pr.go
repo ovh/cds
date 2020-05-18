@@ -53,11 +53,11 @@ forLoop:
 				break forLoop
 			}
 			if ed.Operation.Status == sdk.OperationStatusDone {
-				vcsServer := repositoriesmanager.GetProjectVCSServer(proj, app.VCSServer)
-				if vcsServer == nil {
-					log.Error(ctx, "postWorkflowAsCodeHandler> No vcsServer found")
+				vcsServer, err := repositoriesmanager.LoadProjectVCSServerLinkByProjectKeyAndVCSServerName(ctx, db, proj.Key, app.VCSServer)
+				if err != nil {
+					log.Error(ctx, "postWorkflowAsCodeHandler> No vcsServer found: %v", err)
 					ed.Operation.Status = sdk.OperationStatusError
-					ed.Operation.Error = "No vcsServer found"
+					ed.Operation.Error = "No vcsServer found: " + err.Error()
 					return nil
 				}
 				client, errclient := repositoriesmanager.AuthorizedClient(ctx, db, store, proj.Key, vcsServer)

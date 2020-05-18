@@ -16,10 +16,11 @@ import (
 
 // SyncAsCodeEvent checks if workflow as to become ascode
 func SyncAsCodeEvent(ctx context.Context, db *gorp.DbMap, store cache.Store, proj sdk.Project, app sdk.Application, u sdk.Identifiable) ([]sdk.AsCodeEvent, string, error) {
-	vcsServer := repositoriesmanager.GetProjectVCSServer(proj, app.VCSServer)
-	if vcsServer == nil {
-		return nil, "", sdk.NewErrorFrom(sdk.ErrNotFound, "no vcs server found on application %s", app.Name)
+	vcsServer, err := repositoriesmanager.LoadProjectVCSServerLinkByProjectKeyAndVCSServerName(ctx, db, proj.Key, app.VCSServer)
+	if err != nil {
+		return nil, "", sdk.WrapError(sdk.ErrNoReposManagerClientAuth, "cannot get client %s %s got: %v", proj.Key, app.VCSServer, err)
 	}
+
 	client, err := repositoriesmanager.AuthorizedClient(ctx, db, store, proj.Key, vcsServer)
 	if err != nil {
 		return nil, "", err

@@ -1522,13 +1522,13 @@ func TestInsertAndDeleteMultiHook(t *testing.T) {
 	// Create project
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, cache, key, key)
-	assert.NoError(t, repositoriesmanager.InsertForProject(db, proj, &sdk.ProjectVCSServer{
-		Name: "github",
-		Data: map[string]string{
-			"token":  "foo",
-			"secret": "bar",
-		},
-	}))
+	vcsServer := sdk.ProjectVCSServerLink{
+		ProjectID: proj.ID,
+		Name:      "github",
+	}
+	vcsServer.Set("token", "foo")
+	vcsServer.Set("secret", "bar")
+	assert.NoError(t, repositoriesmanager.InsertProjectVCSServerLink(context.TODO(), db, &vcsServer))
 
 	srvs, err := services.LoadAll(context.Background(), db)
 	require.NoError(t, err)

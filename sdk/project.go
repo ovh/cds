@@ -196,6 +196,46 @@ func (proj Project) GetIntegrationByID(id int64) *ProjectIntegration {
 	return nil
 }
 
+type ProjectVCSServerLink struct {
+	ID                       int64                      `json:"id" db:"id" cli:"-"`
+	ProjectID                int64                      `json:"project_id" db:"project_id" cli:"-"`
+	Name                     string                     `json:"name" db:"name" cli:"name"`
+	Username                 string                     `json:"username" db:"username" cli:"username"`
+	VCSProject               string                     `json:"vcs_project" db:"vcs_project" cli:"vcs_project"` // not used for the moment
+	ProjectVCSServerLinkData []ProjectVCSServerLinkData `json:"authentication" db:"-"`
+}
+
+func (l ProjectVCSServerLink) Get(key string) (string, bool) {
+	for _, d := range l.ProjectVCSServerLinkData {
+		if d.Key == key {
+			return d.Value, true
+		}
+	}
+	return "", false
+}
+
+func (l *ProjectVCSServerLink) Set(key, value string) {
+	for i := range l.ProjectVCSServerLinkData {
+		d := &l.ProjectVCSServerLinkData[i]
+		if d.Key == key {
+			d.Value = value
+			return
+		}
+	}
+	l.ProjectVCSServerLinkData = append(l.ProjectVCSServerLinkData, ProjectVCSServerLinkData{
+		ProjectVCSServerLinkID: l.ID,
+		Key:                    key,
+		Value:                  value,
+	})
+}
+
+type ProjectVCSServerLinkData struct {
+	ID                     int64  `json:"id" db:"id"`
+	ProjectVCSServerLinkID int64  `json:"project_vcs_server_link_id" db:"project_vcs_server_link_id"`
+	Key                    string `json:"key" db:"key"`
+	Value                  string `json:"value" db:"cipher_value" gorpmapping:"encrypted,ID,ProjectVCSServerLinkID"`
+}
+
 // ProjectVCSServer represents associations between a project and a vcs server
 type ProjectVCSServer struct {
 	Name     string            `json:"name" yaml:"name" db:"-" cli:"name"`
