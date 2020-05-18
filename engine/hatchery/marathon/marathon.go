@@ -249,7 +249,7 @@ func (h *HatcheryMarathon) SpawnWorker(ctx context.Context, spawnArgs hatchery.S
 		memory = hatchery.MemoryRegisterContainer
 	}
 
-	cmd = fmt.Sprintf("sh -c \"%s\"; sleep 900", cmd) // sleep 30min
+	cmd = fmt.Sprintf("sh -c \"%s ; sleep 900\"", cmd) // sleep 30min
 
 	//Check if there is a memory requirement
 	//if there is a service requirement: exit
