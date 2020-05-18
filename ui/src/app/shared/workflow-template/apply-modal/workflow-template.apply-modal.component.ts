@@ -18,6 +18,7 @@ import { WorkflowService } from 'app/service/workflow/workflow.service';
 import { calculateWorkflowTemplateDiff } from 'app/shared/diff/diff';
 import { Item } from 'app/shared/diff/list/diff.list.component';
 import { finalize } from 'rxjs/operators';
+import { forkJoin } from 'rxjs/internal/observable/forkJoin';
 
 @Component({
     selector: 'app-workflow-template-apply-modal',
@@ -32,15 +33,24 @@ export class WorkflowTemplateApplyModalComponent implements OnChanges {
     modal: SuiActiveModal<boolean, boolean, void>;
     open: boolean;
 
-    @Input() project: Project;
-    @Input() workflow: Workflow;
-    @Input() workflowTemplate: WorkflowTemplate;
-    @Input() workflowTemplateInstance: WorkflowTemplateInstance;
+    // tslint:disable-next-line: no-input-rename
+    @Input('project') projectIn: Project;
+    // tslint:disable-next-line: no-input-rename
+    @Input('workflow') workflowIn: Workflow;
+    // tslint:disable-next-line: no-input-rename
+    @Input('workflowTemplate') workflowTemplateIn: WorkflowTemplate;
+    // tslint:disable-next-line: no-input-rename
+    @Input('workflowTemplateInstance') workflowTemplateInstanceIn: WorkflowTemplateInstance;
     @Output() close = new EventEmitter();
 
     diffVisible: boolean;
     diffItems: Array<Item>;
     workflowTemplateAuditMessages: Array<string>;
+
+    project: Project;
+    workflow: Workflow;
+    workflowTemplate: WorkflowTemplate;
+    workflowTemplateInstance: WorkflowTemplateInstance;
 
     constructor(
         private _modalService: SuiModalService,
@@ -81,25 +91,33 @@ export class WorkflowTemplateApplyModalComponent implements OnChanges {
     }
 
     load() {
-        if (this.workflowTemplate && this.workflowTemplateInstance) {
-            this._projectService.getProject(this.workflowTemplateInstance.project.key, [new LoadOpts('withKeys', 'keys')])
+        if (this.workflowTemplateIn && this.workflowTemplateInstanceIn) {
+            this.workflowTemplate = this.workflowTemplateIn;
+            this.workflowTemplateInstance = this.workflowTemplateInstanceIn;
+            forkJoin([
+                this._projectService.getProject(this.workflowTemplateInstanceIn.project.key, [new LoadOpts('withKeys', 'keys')]),
+                this._workflowService.getWorkflow(this.workflowTemplateInstance.project.key, this.workflowTemplateInstance.workflow_name)
+            ])
                 .pipe(finalize(() => this._cd.markForCheck()))
-                .subscribe(p => {
-                    this.project = p;
+                .subscribe(results => {
+                    this.project = results[0];
+                    this.workflow = results[1];
                     this.loadAudits();
                 });
-            return
-        } else if (this.workflow) {
+            return;
+        } else if (this.projectIn && this.workflowIn) {
             // retrieve workflow template and instance from given workflow
-            let s = this.workflow.from_template.split('@');
+            let s = this.workflowIn.from_template.split('@');
             s = s[0].split('/');
-            this.workflowTemplateInstance = this.workflow.template_instance;
-
-            this._templateService.get(s[0], s.splice(1, s.length - 1).join('/')).subscribe(wt => {
-                this.workflowTemplate = wt;
-                this.loadAudits();
-                this._cd.markForCheck();
-            });
+            this.project = this.projectIn;
+            this.workflow = this.workflowIn;
+            this.workflowTemplateInstance = this.workflowIn.template_instance;
+            this._templateService.get(s[0], s.splice(1, s.length - 1).join('/'))
+                .pipe(finalize(() => this._cd.markForCheck()))
+                .subscribe(wt => {
+                    this.workflowTemplate = wt;
+                    this.loadAudits();
+                });
         }
     }
 

@@ -30,6 +30,11 @@ func (s *Service) processPush(ctx context.Context, op *sdk.Operation) error {
 		return sdk.WrapError(err, "unable to process gitclone")
 	}
 
+	// FIXME create Fetch and FetchTags method in go repo
+	if err := gitRepo.FetchRemoteBranch("origin", op.RepositoryInfo.DefaultBranch); err != nil {
+		return sdk.WrapError(err, "cannot fetch changes from remote at %s", op.RepositoryInfo.FetchURL)
+	}
+
 	if op.Setup.Push.ToBranch == "" {
 		op.Setup.Push.ToBranch = op.RepositoryInfo.DefaultBranch
 	}
@@ -69,7 +74,7 @@ func (s *Service) processPush(ctx context.Context, op *sdk.Operation) error {
 		}
 		// Create files
 		if err := os.Mkdir(filepath.Join(path, ".cds"), os.ModePerm); err != nil {
-			return sdk.WrapError(err, "error creating cds directory")
+			return sdk.WrapError(err, "error creating .cds directory")
 		}
 	}
 

@@ -3,33 +3,37 @@
     <div class="workflowShow">
         <div class="CDSmenu">
             <sm-menu title="" class="pointing secondary">
-                <a sm-item [class.active]="selectedTab === 'workflows'" id="WorkflowGraphTabs" (click)="showTab('workflows')">
+                <a sm-item [class.active]="selectedTab === 'workflows'" id="WorkflowGraphTabs"
+                    (click)="showTab('workflows')">
                     <i class="share alternate icon"></i>
                     {{'common_workflows' | translate }}
-                    <i class="orange warning sign icon ml5" *ngIf="previewWorkflow" suiPopup [popupText]="'workflow_preview_mode' | translate"
-                        popupPlacement="top center">
+                    <i class="orange warning sign icon ml5" *ngIf="previewWorkflow" suiPopup
+                        [popupText]="'workflow_preview_mode' | translate" popupPlacement="top center">
                     </i>
                 </a>
-                <a sm-item [class.active]="selectedTab === 'notifications'" id="WorkflowNotificationTabs" (click)="showTab('notifications')">
+                <a sm-item [class.active]="selectedTab === 'notifications'" id="WorkflowNotificationTabs"
+                    (click)="showTab('notifications')">
                     <i class="alarm icon"></i>
                     {{'common_notifications' | translate }}</a>
-                <a sm-item [class.active]="selectedTab === 'permissions'" id="WorkflowPermissionsTabs" (click)="showTab('permissions')">
+                <a sm-item [class.active]="selectedTab === 'permissions'" id="WorkflowPermissionsTabs"
+                    (click)="showTab('permissions')">
                     <i class="users icon"></i>
                     {{'common_permissions' | translate }}</a>
                 <ng-container *ngIf="!detailedWorkflow.from_repository">
-                    <a sm-item [class.active]="selectedTab === 'audits'" id="WorkflowAuditsTabs" (click)="showTab('audits')">
+                    <a sm-item [class.active]="selectedTab === 'audits'" id="WorkflowAuditsTabs"
+                        (click)="showTab('audits')">
                         <i class="history icon"></i>
                         {{'common_audit' | translate }}
                     </a>
                 </ng-container>
 
-                <a sm-item [class.active]="selectedTab === 'usage'" id="WorkflowUsageTabs" [class.disabled]="usageCount === 0"
-                    (click)="usageCount !== 0 && showTab('usage')">
+                <a sm-item [class.active]="selectedTab === 'usage'" id="WorkflowUsageTabs"
+                    [class.disabled]="usageCount === 0" (click)="usageCount !== 0 && showTab('usage')">
                     <i class="map signs icon"></i>
                     {{'common_usage' | translate }}{{ ' (' + usageCount + ')' }}
                 </a>
-                <a sm-item [class.active]="selectedTab === 'advanced'" id="WorkflowAdvancesTabs" (click)="showTab('advanced')"
-                    *ngIf="detailedWorkflow.permissions.writable">
+                <a sm-item [class.active]="selectedTab === 'advanced'" id="WorkflowAdvancesTabs"
+                    (click)="showTab('advanced')" *ngIf="detailedWorkflow.permissions.writable">
                     <i class="graduation icon"></i>
                     {{'common_advanced' | translate }}</a>
                 <div class="ui small buttons" *ngIf="editMode && !isReadOnly">
@@ -37,7 +41,8 @@
                         <button class="ui button" (click)="rollbackWorkflow()">{{'common_cancel' | translate }}</button>
                         <div class="or"></div>
                     </ng-container>
-                    <button class="ui green button" [disabled]="!editModeWorkflowChanged" (click)="saveWorkflow()">{{'btn_save_workflow' | translate }}</button>
+                    <button class="ui green button" [disabled]="!editModeWorkflowChanged"
+                        (click)="saveWorkflow()">{{'btn_save_workflow' | translate }}</button>
                 </div>
             </sm-menu>
         </div>
@@ -51,10 +56,12 @@
                                 <div class="ui grid">
                                     <div class="row">
                                         <div class="five wide column" title="{{'common_orientation' | translate}}">
-                                            <button class="ui icon button" *ngIf="direction === 'TB'" (click)="changeDirection()">
+                                            <button class="ui icon button" *ngIf="direction === 'TB'"
+                                                (click)="changeDirection()">
                                                 <i class="resize horizontal icon"></i>
                                             </button>
-                                            <button class="ui icon button" *ngIf="direction === 'LR'" (click)="changeDirection()">
+                                            <button class="ui icon button" *ngIf="direction === 'LR'"
+                                                (click)="changeDirection()">
                                                 <i class="resize vertical icon"></i>
                                             </button>
                                         </div>
@@ -69,7 +76,8 @@
                                                         popupPlacement="top center">
                                                     </i>
                                                 </div>
-                                                <div *ngIf="previewWorkflow" class="ui green button" (click)="savePreview()"
+                                                <div *ngIf="previewWorkflow" class="ui green button"
+                                                    (click)="savePreview()"
                                                     [class.disabled]="loading || !detailedWorkflow.permissions.writable"
                                                     [class.loading]="loading">
                                                     <i class="save icon"></i> {{'btn_save' |
@@ -77,14 +85,16 @@
                                                 </div>
                                             </div>
                                         </div>
-                                            <div class="right aligned five wide column" title="{{'btn_run_workflow' | translate}}">
-                                                <div class="ui green buttons">
-                                                    <div class="ui button" [class.disabled]="!detailedWorkflow.permissions.executable || editModeWorkflowChanged"
-                                                         (click)="runWithParameter()" [class.loading]="loading">
-                                                        {{'btn_run_workflow' | translate }}
-                                                    </div>
+                                        <div class="right aligned five wide column"
+                                            title="{{'btn_run_workflow' | translate}}">
+                                            <div class="ui green buttons">
+                                                <div class="ui button"
+                                                    [class.disabled]="!detailedWorkflow.permissions.executable || editModeWorkflowChanged"
+                                                    (click)="runWithParameter()" [class.loading]="loading">
+                                                    {{'btn_run_workflow' | translate }}
                                                 </div>
                                             </div>
+                                        </div>
 
                                     </div>
                                 </div>
@@ -101,32 +111,41 @@
         </div>
         <app-scrollview class="scrollview" *ngIf="selectedTab !== 'workflows'" [ngSwitch]="selectedTab">
             <div *ngSwitchCase="'notifications'">
-                <app-workflow-notification-list [project]="project" [workflow]="detailedWorkflow" [editMode]="editMode" [readOnly]="isReadOnly"></app-workflow-notification-list>
+                <app-workflow-notification-list [project]="project" [workflow]="detailedWorkflow" [editMode]="editMode"
+                    [readOnly]="isReadOnly"></app-workflow-notification-list>
             </div>
             <div *ngSwitchCase="'permissions'" class="padded">
                 <h3>{{ 'workflow_permission_list_title' | translate }}</h3>
-                <app-permission-list [permissions]="this.groups" (event)="groupManagement($event)" [edit]="detailedWorkflow.permissions.writable && !(detailedWorkflow.from_repository && detailedWorkflow.from_repository.length > 0)"></app-permission-list>
-                <ng-container *ngIf="detailedWorkflow.permissions.writable && !(detailedWorkflow.from_repository && detailedWorkflow.from_repository.length > 0)">
+                <app-permission-list [permissions]="this.groups" (event)="groupManagement($event)"
+                    [edit]="detailedWorkflow.permissions.writable && !(detailedWorkflow.from_repository && detailedWorkflow.from_repository.length > 0)">
+                </app-permission-list>
+                <ng-container
+                    *ngIf="detailedWorkflow.permissions.writable && !(detailedWorkflow.from_repository && detailedWorkflow.from_repository.length > 0)">
                     <h3>{{ 'workflow_permission_form_title' | translate }}</h3>
-                    <app-permission-form (createGroupPermissionEvent)="groupManagement($event)" [loading]="permFormLoading"></app-permission-form>
+                    <app-permission-form (createGroupPermissionEvent)="groupManagement($event)"
+                        [loading]="permFormLoading"></app-permission-form>
                 </ng-container>
-                <app-warning-modal [title]="_translate.instant('warning_modal_title')" [msg]="_translate.instant('warning_modal_body')"
-                    (event)="groupManagement($event, true)" #permWarning></app-warning-modal>
+                <app-warning-modal [title]="_translate.instant('warning_modal_title')"
+                    [msg]="_translate.instant('warning_modal_body')" (event)="groupManagement($event, true)"
+                    #permWarning></app-warning-modal>
             </div>
             <div *ngSwitchCase="'advanced'" class="padded">
-                <app-workflow-admin [project]="project" [workflow]="detailedWorkflow" [editMode]="editMode"></app-workflow-admin>
+                <app-workflow-admin [project]="project" [workflow]="detailedWorkflow" [editMode]="editMode">
+                </app-workflow-admin>
             </div>
             <div *ngSwitchCase="'usage'" class="padded">
-                <app-usage [project]="project" [pipelines]="detailedWorkflow.usage.pipelines" [applications]="detailedWorkflow.usage.applications"
+                <app-usage [project]="project" [pipelines]="detailedWorkflow.usage.pipelines"
+                    [applications]="detailedWorkflow.usage.applications"
                     [environments]="detailedWorkflow.usage.environments">
                 </app-usage>
             </div>
             <div *ngSwitchCase="'audits'" class="padded">
-                <app-audit-list [audits]="detailedWorkflow.audits" [loading]="loading" (rollback)="rollback($event)" [canRollback]="detailedWorkflow.permissions.writable"></app-audit-list>
+                <app-audit-list [audits]="detailedWorkflow.audits" [loading]="loading" (rollback)="rollback($event)"
+                    [canRollback]="detailedWorkflow.permissions.writable"></app-audit-list>
             </div>
         </app-scrollview>
         <ng-container>
-            <app-workflow-node-run-param #workflowStartParam ></app-workflow-node-run-param>
+            <app-workflow-node-run-param #workflowStartParam></app-workflow-node-run-param>
         </ng-container>
     </div>
 </ng-template>
@@ -136,9 +155,6 @@
 
 <!-- EDIT AS CODE -->
 <ng-container *ngIf="detailedWorkflow?.from_repository">
-    <app-update-ascode
-            [project]="project"
-            [appName]="detailedWorkflow.applications[detailedWorkflow.workflow_data.node.context.application_id].name"
-            [name]="detailedWorkflow.name"
-            #updateAsCode></app-update-ascode>
+    <app-ascode-save-modal [project]="project" [workflow]="detailedWorkflow" [name]="detailedWorkflow.name"
+        #updateAsCode></app-ascode-save-modal>
 </ng-container>

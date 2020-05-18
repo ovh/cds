@@ -13,7 +13,7 @@ func (c *gerritClient) PullRequest(ctx context.Context, repo string, id int) (sd
 }
 
 // PullRequests fetch all the pull request for a repository
-func (c *gerritClient) PullRequests(context.Context, string) ([]sdk.VCSPullRequest, error) {
+func (c *gerritClient) PullRequests(ctx context.Context, repo string, opts sdk.VCSPullRequestOptions) ([]sdk.VCSPullRequest, error) {
 	return []sdk.VCSPullRequest{}, nil
 }
 

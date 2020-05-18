@@ -11,8 +11,8 @@ import { AuthentifiedUser } from 'app/model/user.model';
 import { Workflow } from 'app/model/workflow.model';
 import { KeyService } from 'app/service/keys/keys.service';
 import { PipelineCoreService } from 'app/service/pipeline/pipeline.core.service';
+import { AsCodeSaveModalComponent } from 'app/shared/ascode/save-modal/ascode.save-modal.component';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
-import { UpdateAsCodeComponent } from 'app/shared/modal/save-as-code/update.as.code.component';
 import { WarningModalComponent } from 'app/shared/modal/warning/warning.component';
 import { ParameterEvent } from 'app/shared/parameter/parameter.event.model';
 import { ToastService } from 'app/shared/toast/ToastService';
@@ -70,7 +70,7 @@ export class PipelineShowComponent implements OnInit {
     @ViewChild('paramWarning')
     parameterModalWarning: WarningModalComponent;
     @ViewChild('updateEditMode')
-    asCodeSaveModal: UpdateAsCodeComponent;
+    asCodeSaveModal: AsCodeSaveModalComponent;
 
     keys: AllKeys;
     asCodeEditorOpen: boolean;

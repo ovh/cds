@@ -18,7 +18,7 @@ import (
 
 type VCSEventMessenger struct {
 	commitsStatuses map[string][]sdk.VCSCommitStatus
-	vcsClient       sdk.VCSAuthorizedClient
+	vcsClient       sdk.VCSAuthorizedClientService
 }
 
 // ResyncCommitStatus resync commit status for a workflow run

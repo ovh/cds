@@ -9,12 +9,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/ovh/cds/engine/api/authentication"
-
 	"github.com/stretchr/testify/assert"
 	"gopkg.in/yaml.v2"
 
 	"github.com/ovh/cds/engine/api/application"
+	"github.com/ovh/cds/engine/api/authentication"
 	"github.com/ovh/cds/engine/api/bootstrap"
 	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/pipeline"

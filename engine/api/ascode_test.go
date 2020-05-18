@@ -356,13 +356,6 @@ func Test_postResyncPRAsCodeHandler(t *testing.T) {
 	pkey := sdk.RandomString(10)
 	p := assets.InsertTestProject(t, db, api.Cache, pkey, pkey)
 
-	// Clean as code event
-	as, err := ascode.LoadAsCodeEventByRepo(context.TODO(), db, repoURL)
-	assert.NoError(t, err)
-	for _, a := range as {
-		assert.NoError(t, ascode.DeleteAsCodeEvent(db, a))
-	}
-
 	vcsServer := sdk.ProjectVCSServerLink{
 		ProjectID: p.ID,
 		Name:      "github",
@@ -457,6 +450,7 @@ vcs_ssh_key: proj-blabla
 
 	// Add some events to resync
 	asCodeEvent := sdk.AsCodeEvent{
+		WorkflowID:     wf.ID,
 		Username:       u.GetUsername(),
 		CreateDate:     time.Now(),
 		FromRepo:       repoURL,
@@ -475,10 +469,11 @@ vcs_ssh_key: proj-blabla
 			},
 		},
 	}
-	assert.NoError(t, ascode.InsertOrUpdateAsCodeEvent(db, &asCodeEvent))
+	assert.NoError(t, ascode.UpsertEvent(db, &asCodeEvent))
 
-	uri := api.Router.GetRoute("POST", api.postResyncPRAsCodeHandler, map[string]string{
-		"key": pkey,
+	uri := api.Router.GetRoute("POST", api.postWorkflowAsCodeEventsResyncHandler, map[string]string{
+		"key":              pkey,
+		"permWorkflowName": wf.Name,
 	})
 
 	uri = fmt.Sprintf("%s?repo=%s", uri, repoURL)
@@ -493,7 +488,7 @@ vcs_ssh_key: proj-blabla
 	t.Logf(w.Body.String())
 
 	// Check there is no more events in db
-	assDB, err := ascode.LoadAsCodeEventByRepo(context.TODO(), db, repoURL)
+	assDB, err := ascode.LoadEventsByWorkflowID(context.TODO(), db, wf.ID)
 	assert.NoError(t, err)
 	assert.Equal(t, 0, len(assDB))
 

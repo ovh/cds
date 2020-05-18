@@ -113,20 +113,22 @@ func requestModifyDefaultNameAndRepositories(ctx context.Context, db gorp.SqlExe
 // CheckAndExecuteTemplate will execute the workflow template if given workflow components contains a template instance.
 // When detached is set this will not create/update any template instance in database (this is useful for workflow ascode branches).
 func CheckAndExecuteTemplate(ctx context.Context, db *gorp.DbMap, consumer sdk.AuthConsumer, p sdk.Project,
-	data *exportentities.WorkflowComponents, mods ...TemplateRequestModifierFunc) (*sdk.WorkflowTemplateInstance, error) {
+	data *exportentities.WorkflowComponents, mods ...TemplateRequestModifierFunc) ([]sdk.Message, *sdk.WorkflowTemplateInstance, error) {
+	var allMsgs []sdk.Message
+
 	if data.Template.From == "" {
-		return nil, nil
+		return allMsgs, nil, nil
 	}
 
 	groupName, templateSlug, templateVersion, err := data.Template.ParseFrom()
 	if err != nil {
-		return nil, err
+		return allMsgs, nil, err
 	}
 
 	// check that group exists
 	grp, err := group.LoadByName(ctx, db, groupName)
 	if err != nil {
-		return nil, err
+		return allMsgs, nil, err
 	}
 
 	var groupPermissionValid bool
@@ -144,20 +146,22 @@ func CheckAndExecuteTemplate(ctx context.Context, db *gorp.DbMap, consumer sdk.A
 		}
 	}
 	if !groupPermissionValid {
-		return nil, sdk.NewErrorFrom(sdk.ErrWrongRequest, "could not find given workflow template")
+		return allMsgs, nil, sdk.NewErrorFrom(sdk.ErrWrongRequest, "could not find given workflow template")
 	}
 
 	wt, err := LoadBySlugAndGroupID(ctx, db, templateSlug, grp.ID, LoadOptions.Default)
 	if err != nil {
-		return nil, sdk.NewErrorFrom(err, "could not find a template with slug %s in group %s", templateSlug, grp.Name)
+		return allMsgs, nil, sdk.NewErrorFrom(err, "could not find a template with slug %s in group %s", templateSlug, grp.Name)
 	}
 	if templateVersion > 0 {
 		wta, err := LoadAuditByTemplateIDAndVersion(ctx, db, wt.ID, templateVersion)
 		if err != nil {
-			return nil, err
+			return allMsgs, nil, err
 		}
 		wt = &wta.DataAfter
 	}
+
+	allMsgs = append(allMsgs, sdk.NewMessage(sdk.MsgWorkflowGeneratedFromTemplateVersion, wt.PathWithVersion()))
 
 	req := sdk.WorkflowTemplateRequest{
 		ProjectKey:   p.Key,
@@ -166,12 +170,12 @@ func CheckAndExecuteTemplate(ctx context.Context, db *gorp.DbMap, consumer sdk.A
 	}
 	for i := range mods {
 		if err := mods[i](*wt, &req); err != nil {
-			return nil, err
+			return allMsgs, nil, err
 		}
 	}
 
 	if err := wt.CheckParams(req); err != nil {
-		return nil, err
+		return allMsgs, nil, err
 	}
 
 	var result exportentities.WorkflowComponents
@@ -188,24 +192,24 @@ func CheckAndExecuteTemplate(ctx context.Context, db *gorp.DbMap, consumer sdk.A
 		// execute template with request
 		result, err = Execute(*wt, *wti)
 		if err != nil {
-			return nil, err
+			return allMsgs, nil, err
 		}
 
 		// do not return an instance if detached
 		*data = result
-		return nil, nil
+		return allMsgs, wti, nil
 	}
 
 	tx, err := db.Begin()
 	if err != nil {
-		return nil, sdk.WrapError(err, "cannot start transaction")
+		return allMsgs, nil, sdk.WrapError(err, "cannot start transaction")
 	}
 	defer tx.Rollback() // nolint
 
 	// try to get a instance not assign to a workflow but with the same slug
 	wti, err := LoadInstanceByTemplateIDAndProjectIDAndRequestWorkflowName(ctx, tx, wt.ID, p.ID, req.WorkflowName)
 	if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
-		return nil, err
+		return allMsgs, nil, err
 	}
 
 	// if a previous instance exist for the same workflow update it, else create a new one
@@ -216,7 +220,7 @@ func CheckAndExecuteTemplate(ctx context.Context, db *gorp.DbMap, consumer sdk.A
 		wti.WorkflowTemplateVersion = wt.Version
 		wti.Request = req
 		if err := UpdateInstance(tx, wti); err != nil {
-			return nil, err
+			return allMsgs, nil, err
 		}
 	} else {
 		wti = &sdk.WorkflowTemplateInstance{
@@ -227,47 +231,47 @@ func CheckAndExecuteTemplate(ctx context.Context, db *gorp.DbMap, consumer sdk.A
 		}
 		// only store the new instance if request is not for a detached workflow
 		if err := InsertInstance(tx, wti); err != nil {
-			return nil, err
+			return allMsgs, nil, err
 		}
 	}
 
 	// execute template with request
 	result, err = Execute(*wt, *wti)
 	if err != nil {
-		return nil, err
+		return allMsgs, nil, err
 	}
 
 	// parse the generated workflow to find its name an update it in instance if not detached
 	// also set the template path in generated workflow if not detached
 	wti.WorkflowName = result.Workflow.GetName()
 	if err := UpdateInstance(tx, wti); err != nil {
-		return nil, err
+		return allMsgs, nil, err
 	}
 
 	if old != nil {
 		if err := CreateAuditInstanceUpdate(tx, *old, *wti, consumer); err != nil {
-			return nil, err
+			return allMsgs, nil, err
 		}
 	} else if !req.Detached {
 		if err := CreateAuditInstanceAdd(tx, *wti, consumer); err != nil {
-			return nil, err
+			return allMsgs, nil, err
 		}
 	}
 
 	if err := tx.Commit(); err != nil {
-		return nil, sdk.WithStack(err)
+		return allMsgs, nil, sdk.WithStack(err)
 	}
 
 	// if the template was successfully executed we want to return only the a file with template instance data
 	*data = result
-	return wti, nil
+	return allMsgs, wti, nil
 }
 
 // UpdateTemplateInstanceWithWorkflow will perform some action after a successful workflow push, if it was generated
 // from a template we want to set the workflow id on generated template instance.
 func UpdateTemplateInstanceWithWorkflow(ctx context.Context, db gorp.SqlExecutor, w sdk.Workflow,
 	u sdk.Identifiable, wti *sdk.WorkflowTemplateInstance) error {
-	if wti == nil {
+	if wti == nil || wti.Request.Detached {
 		return nil
 	}
 

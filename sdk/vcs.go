@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"net/http"
 	"time"
 )
 
@@ -33,15 +34,24 @@ type VCSConfiguration struct {
 	SSHPort  int    `json:"sshport"`
 }
 
-// VCSServer is an interce for a OAuth VCS Server. The goal of this interface is to return a VCSAuthorizedClient
-type VCSServer interface {
+type VCSServerCommon interface {
 	AuthorizeRedirect(context.Context) (string, string, error)
 	AuthorizeToken(context.Context, string, string) (string, string, error)
+}
+
+// VCSServer is an interface for a OAuth VCS Server. The goal of this interface is to return a VCSAuthorizedClient.
+type VCSServer interface {
+	VCSServerCommon
 	GetAuthorizedClient(context.Context, string, string, int64) (VCSAuthorizedClient, error)
 }
 
-// VCSAuthorizedClient is an interface for a connected client on a VCS Server.
-type VCSAuthorizedClient interface {
+type VCSServerService interface {
+	VCSServerCommon
+	GetAuthorizedClient(context.Context, string, string, int64) (VCSAuthorizedClientService, error)
+}
+
+// VCSAuthorizedClientCommon is an interface for a connected client on a VCS Server.
+type VCSAuthorizedClientCommon interface {
 	//Repos
 	Repos(context.Context) ([]VCSRepo, error)
 	RepoByFullname(ctx context.Context, fullname string) (VCSRepo, error)
@@ -59,10 +69,9 @@ type VCSAuthorizedClient interface {
 	CommitsBetweenRefs(ctx context.Context, repo, base, head string) ([]VCSCommit, error)
 
 	// PullRequests
-	PullRequest(context.Context, string, int) (VCSPullRequest, error)
-	PullRequests(context.Context, string) ([]VCSPullRequest, error)
-	PullRequestComment(context.Context, string, VCSPullRequestCommentRequest) error
-	PullRequestCreate(context.Context, string, VCSPullRequest) (VCSPullRequest, error)
+	PullRequest(ctx context.Context, repo string, id int) (VCSPullRequest, error)
+	PullRequestComment(ctx context.Context, repo string, c VCSPullRequestCommentRequest) error
+	PullRequestCreate(ctx context.Context, repo string, pr VCSPullRequest) (VCSPullRequest, error)
 
 	//Hooks
 	CreateHook(ctx context.Context, repo string, hook *VCSHook) error
@@ -93,6 +102,26 @@ type VCSAuthorizedClient interface {
 
 	// Access Token
 	GetAccessToken(ctx context.Context) string
+}
+
+type VCSAuthorizedClient interface {
+	VCSAuthorizedClientCommon
+	PullRequests(ctx context.Context, repo string, opts VCSPullRequestOptions) ([]VCSPullRequest, error)
+}
+
+type VCSAuthorizedClientService interface {
+	VCSAuthorizedClientCommon
+	PullRequests(ctx context.Context, repo string, mods ...VCSRequestModifier) ([]VCSPullRequest, error)
+}
+
+type VCSRequestModifier func(r *http.Request)
+
+func VCSRequestModifierWithState(state VCSPullRequestState) VCSRequestModifier {
+	return func(r *http.Request) {
+		q := r.URL.Query()
+		q.Set("state", string(state))
+		r.URL.RawQuery = q.Encode()
+	}
 }
 
 // GetDefaultBranch return the default branch

@@ -19,9 +19,9 @@ type Operation struct {
 	RepositoryInfo     *OperationRepositoryInfo `json:"repository_info,omitempty"`
 	Date               *time.Time               `json:"date,omitempty"`
 	User               struct {
-		Username string `json:"username"  db:"-" cli:"-"`
-		Fullname string `json:"fullname"  db:"-" cli:"-"`
-		Email    string `json:"email"  db:"-" cli:"-"`
+		Username string `json:"username,omitempty"  db:"-" cli:"-"`
+		Fullname string `json:"fullname,omitempty"  db:"-" cli:"-"`
+		Email    string `json:"email,omitempty"  db:"-" cli:"-"`
 	} `json:"user,omitempty"`
 }
 

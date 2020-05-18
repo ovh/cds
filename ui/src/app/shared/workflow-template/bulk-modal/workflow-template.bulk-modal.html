@@ -40,6 +40,13 @@
             </div>
             <div *ngIf="currentStep === 1" class="sixteen wide column">
                 <div class="ui grid">
+                    <div *ngIf="withAsCodeWorkflow" class="sixteen wide column">
+                        <div class="ui blue message">
+                            {{'workflow_template_bulk_info_line_ascode' | translate}}
+                        </div>
+                        <app-ascode-save-form (paramChange)="onAsCodeParamChange($event)">
+                        </app-ascode-save-form>
+                    </div>
                     <div class="sixteen wide column">
                         <div class="ui styled fluid accordion">
                             <ng-container *ngFor="let instance of selectedInstances;let i = index">
@@ -51,6 +58,7 @@
                                     <app-workflow-template-param-form *ngIf="accordionOpenedIndex === i"
                                         [project]="instance.project" [workflowTemplate]="workflowTemplate"
                                         [workflowTemplateInstance]="instance"
+                                        [parameters]="parameters[instance.id] ? parameters[instance.id] : null"
                                         (paramChange)="changeParam(instance.id, $event)">
                                     </app-workflow-template-param-form>
                                 </div>
@@ -63,7 +71,7 @@
                         </button>
                     </div>
                     <div class="eight wide column centered">
-                        <button class="ui positive button" (click)="clickRunBulk()">
+                        <button class="ui positive button" [disabled]="!validFields" (click)="clickRunBulk()">
                             {{ 'workflow_template_btn_run_bulk' | translate }}
                         </button>
                     </div>
