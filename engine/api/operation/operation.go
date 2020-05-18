@@ -26,7 +26,7 @@ func pushOperation(ctx context.Context, db gorp.SqlExecutor, store cache.Store, 
 		ope.RepositoryStrategy.SSHKeyContent = key.Private
 	}
 
-	vcsServer, err := repositoriesmanager.LoadProjectVCSServerLinkByProjectKeyAndVCSServerName(ctx, db, proj.Key, vcsServerName)
+	vcsServer, err := repositoriesmanager.LoadProjectVCSServerLinkByProjectKeyAndVCSServerName(ctx, db, proj.Key, ope.VCSServer)
 	if err != nil {
 		return nil, err
 	}
