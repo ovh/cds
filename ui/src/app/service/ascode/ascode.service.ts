@@ -1,4 +1,4 @@
-import { HttpClient, HttpParams } from '@angular/common/http';
+import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Store } from '@ngxs/store';
 import { ResyncEvents } from 'app/store/ascode.action';
@@ -11,16 +11,8 @@ export class AscodeService {
         private _store: Store
     ) { }
 
-    resyncPRAsCode(projectKey: string, appName: string, repo?: string): Observable<boolean> {
-        let params = new HttpParams();
-        if (repo) {
-            params = params.append('repo', repo);
-        }
-        if (appName) {
-            params = params.append('appName', appName);
-        }
-
-        return this._http.post<boolean>(`/project/${projectKey}/ascode/events/resync`, null, { params })
+    resyncPRAsCode(projectKey: string, workflowName: string): Observable<boolean> {
+        return this._http.post<boolean>(`/project/${projectKey}/workflows/${workflowName}/ascode/events/resync`, null)
             .map(() => {
                 this._store.dispatch(new ResyncEvents());
                 return true;

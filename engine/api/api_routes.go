@@ -182,9 +182,6 @@ func (api *API) InitRouter() {
 	r.Handle("/project/{permProjectKey}/keys", Scope(sdk.AuthConsumerScopeProject), r.GET(api.getKeysInProjectHandler), r.POST(api.addKeyInProjectHandler))
 	r.Handle("/project/{permProjectKey}/keys/{name}", Scope(sdk.AuthConsumerScopeProject), r.DELETE(api.deleteKeyInProjectHandler))
 
-	// As Code
-	r.Handle("/project/{key}/ascode/events/resync", Scope(sdk.AuthConsumerScopeProject), r.POST(api.postResyncPRAsCodeHandler, EnableTracing()))
-
 	// Import Application
 	r.Handle("/project/{permProjectKey}/import/application", Scope(sdk.AuthConsumerScopeProject), r.POST(api.postApplicationImportHandler))
 	// Export Application
@@ -239,6 +236,7 @@ func (api *API) InitRouter() {
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/eventsintegration/{integrationID}", Scope(sdk.AuthConsumerScopeProject), r.DELETE(api.deleteWorkflowEventsIntegrationHandler))
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/icon", Scope(sdk.AuthConsumerScopeProject), r.PUT(api.putWorkflowIconHandler), r.DELETE(api.deleteWorkflowIconHandler))
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/ascode", Scope(sdk.AuthConsumerScopeProject), r.POST(api.postWorkflowAsCodeHandler))
+	r.Handle("/project/{key}/workflows/{permWorkflowName}/ascode/events/resync", Scope(sdk.AuthConsumerScopeProject), r.POST(api.postWorkflowAsCodeEventsResyncHandler, EnableTracing()))
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/ascode/{uuid}", Scope(sdk.AuthConsumerScopeProject), r.GET(api.getWorkflowAsCodeHandler))
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/label", Scope(sdk.AuthConsumerScopeProject), r.POST(api.postWorkflowLabelHandler))
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/label/{labelID}", Scope(sdk.AuthConsumerScopeProject), r.DELETE(api.deleteWorkflowLabelHandler))

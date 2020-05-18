@@ -131,7 +131,7 @@ func GetReposForProjectVCSServer(ctx context.Context, db gorp.SqlExecutor, store
 }
 
 // NewVCSServerConsumer returns a sdk.VCSServer wrapping vcs µServices calls
-func NewVCSServerConsumer(dbFunc func(ctx context.Context) *gorp.DbMap, store cache.Store, name string) (sdk.VCSServer, error) {
+func NewVCSServerConsumer(dbFunc func(ctx context.Context) *gorp.DbMap, store cache.Store, name string) (sdk.VCSServerService, error) {
 	return &vcsConsumer{name: name, dbFunc: dbFunc}, nil
 }
 
@@ -173,7 +173,7 @@ func (c *vcsConsumer) AuthorizeToken(ctx context.Context, token string, secret s
 	return res["token"], res["secret"], nil
 }
 
-func (c *vcsConsumer) GetAuthorizedClient(ctx context.Context, token, secret string, created int64) (sdk.VCSAuthorizedClient, error) {
+func (c *vcsConsumer) GetAuthorizedClient(ctx context.Context, token, secret string, created int64) (sdk.VCSAuthorizedClientService, error) {
 	s := GetProjectVCSServer(*c.proj, c.name)
 	if s == nil {
 		return nil, sdk.ErrNoReposManagerClientAuth
@@ -197,9 +197,9 @@ func (c *vcsConsumer) GetAuthorizedClient(ctx context.Context, token, secret str
 }
 
 //AuthorizedClient returns an implementation of AuthorizedClient wrapping calls to vcs uService
-func AuthorizedClient(ctx context.Context, db gorp.SqlExecutor, store cache.Store, projectKey string, repo *sdk.ProjectVCSServer) (sdk.VCSAuthorizedClient, error) {
+func AuthorizedClient(ctx context.Context, db gorp.SqlExecutor, store cache.Store, projectKey string, repo *sdk.ProjectVCSServer) (sdk.VCSAuthorizedClientService, error) {
 	if repo == nil {
-		return nil, sdk.ErrNoReposManagerClientAuth
+		return nil, sdk.WithStack(sdk.ErrNoReposManagerClientAuth)
 	}
 
 	srvs, err := services.LoadAllByType(ctx, db, services.TypeVCS)
@@ -373,7 +373,7 @@ func (c *vcsClient) Branch(ctx context.Context, fullname string, branchName stri
 }
 
 // DefaultBranch get default branch from given repository
-func DefaultBranch(ctx context.Context, c sdk.VCSAuthorizedClient, fullname string) (sdk.VCSBranch, error) {
+func DefaultBranch(ctx context.Context, c sdk.VCSAuthorizedClientCommon, fullname string) (sdk.VCSBranch, error) {
 	branches, err := c.Branches(ctx, fullname)
 	if err != nil {
 		return sdk.VCSBranch{}, sdk.WrapError(err, "Unable to list branches on repository %s", fullname)
@@ -431,10 +431,16 @@ func (c *vcsClient) PullRequest(ctx context.Context, fullname string, ID int) (s
 	return pr, nil
 }
 
-func (c *vcsClient) PullRequests(ctx context.Context, fullname string) ([]sdk.VCSPullRequest, error) {
+func (c *vcsClient) PullRequests(ctx context.Context, fullname string, mods ...sdk.VCSRequestModifier) ([]sdk.VCSPullRequest, error) {
+	req, err := http.NewRequest("GET", fmt.Sprintf("/vcs/%s/repos/%s/pullrequests", c.name, fullname), nil)
+	if err != nil {
+		return nil, sdk.WithStack(err)
+	}
+	for _, m := range mods {
+		m(req)
+	}
 	prs := []sdk.VCSPullRequest{}
-	path := fmt.Sprintf("/vcs/%s/repos/%s/pullrequests", c.name, fullname)
-	if _, err := c.doJSONRequest(ctx, "GET", path, nil, &prs); err != nil {
+	if _, err := c.doJSONRequest(ctx, "GET", req.URL.String(), nil, &prs); err != nil {
 		return nil, sdk.WrapError(err, "unable to find pullrequests on repository %s from %s", fullname, c.name)
 	}
 	return prs, nil
@@ -624,7 +630,7 @@ type WebhooksInfos struct {
 }
 
 // GetWebhooksInfos returns webhooks_supported, webhooks_disabled, webhooks_creation_supported, webhooks_creation_disabled for a vcs server
-func GetWebhooksInfos(ctx context.Context, c sdk.VCSAuthorizedClient) (WebhooksInfos, error) {
+func GetWebhooksInfos(ctx context.Context, c sdk.VCSAuthorizedClientService) (WebhooksInfos, error) {
 	client, ok := c.(*vcsClient)
 	if !ok {
 		return WebhooksInfos{}, fmt.Errorf("Polling infos cast error")
@@ -644,7 +650,7 @@ type PollingInfos struct {
 }
 
 // GetPollingInfos returns polling_supported and polling_disabled for a vcs server
-func GetPollingInfos(ctx context.Context, c sdk.VCSAuthorizedClient, prj sdk.Project) (PollingInfos, error) {
+func GetPollingInfos(ctx context.Context, c sdk.VCSAuthorizedClientService, prj sdk.Project) (PollingInfos, error) {
 	client, ok := c.(*vcsClient)
 	if !ok {
 		return PollingInfos{}, fmt.Errorf("Polling infos cast error")

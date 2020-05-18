@@ -996,12 +996,6 @@ func Test_postWorkflowRunAsyncFailedHandler(t *testing.T) {
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, api.Cache, key, key)
 
-	// Clean ascode event
-	evts, _ := ascode.LoadAsCodeEventByRepo(context.TODO(), db, "ssh:/cloneurl")
-	for _, e := range evts {
-		_ = ascode.DeleteAsCodeEvent(db, e) // nolint
-	}
-
 	assert.NoError(t, repositoriesmanager.InsertForProject(db, proj, &sdk.ProjectVCSServer{
 		Name: "github",
 		Data: map[string]string{
@@ -1122,6 +1116,11 @@ func Test_postWorkflowRunAsyncFailedHandler(t *testing.T) {
 				if err := enc.Encode(h); err != nil {
 					return writeError(w, err)
 				}
+			case "/vcs/github/repos/foo/myrepo/pullrequests?state=open":
+				vcsPRs := []sdk.VCSPullRequest{}
+				if err := enc.Encode(vcsPRs); err != nil {
+					return writeError(w, err)
+				}
 			case "/vcs/github/repos/foo/myrepo/pullrequests":
 				pr := sdk.VCSPullRequest{
 					Title: "blabla",
@@ -1133,7 +1132,6 @@ func Test_postWorkflowRunAsyncFailedHandler(t *testing.T) {
 				}
 			case "/vcs/github/repos/foo/myrepo/pullrequests/1":
 				return writeError(w, fmt.Errorf("error for test"))
-
 			case "/task/bulk":
 				hooks := map[string]sdk.NodeHook{}
 				hooks["123"] = sdk.NodeHook{
@@ -1168,14 +1166,14 @@ func Test_postWorkflowRunAsyncFailedHandler(t *testing.T) {
 		},
 	}
 	ed := ascode.EntityData{
-		FromRepo:  "ssh:/cloneurl",
-		Operation: &ope,
-		Name:      w1.Name,
-		ID:        w1.ID,
-		Type:      ascode.AsCodeWorkflow,
+		FromRepo:      "ssh:/cloneurl",
+		Name:          w1.Name,
+		ID:            w1.ID,
+		Type:          ascode.WorkflowEvent,
+		OperationUUID: ope.UUID,
 	}
 
-	x := ascode.UpdateAsCodeResult(context.TODO(), api.mustDB(), api.Cache, *proj, app, ed, u)
+	x := ascode.UpdateAsCodeResult(context.TODO(), api.mustDB(), api.Cache, *proj, w1.ID, app, ed, u)
 	require.NotNil(t, x, "ascodeEvent should not be nil, but it was")
 
 	//Prepare request

@@ -315,11 +315,14 @@ func (api *API) postWorkflowPushHandler() service.Handler {
 		if pushOptions != nil && pushOptions.FromRepository != "" {
 			mods = append(mods, workflowtemplate.TemplateRequestModifiers.DefaultNameAndRepositories(ctx, api.mustDB(), api.Cache, *proj, pushOptions.FromRepository))
 		}
-		wti, err := workflowtemplate.CheckAndExecuteTemplate(ctx, api.mustDB(), *consumer, *proj, &data, mods...)
+		var allMsg []sdk.Message
+		msgTemplate, wti, err := workflowtemplate.CheckAndExecuteTemplate(ctx, api.mustDB(), *consumer, *proj, &data, mods...)
+		allMsg = append(allMsg, msgTemplate...)
 		if err != nil {
 			return err
 		}
-		allMsg, wrkflw, oldWrkflw, err := workflow.Push(ctx, db, api.Cache, proj, data, pushOptions, u, project.DecryptWithBuiltinKey)
+		msgPush, wrkflw, oldWrkflw, err := workflow.Push(ctx, db, api.Cache, proj, data, pushOptions, u, project.DecryptWithBuiltinKey)
+		allMsg = append(allMsg, msgPush...)
 		if err != nil {
 			return err
 		}

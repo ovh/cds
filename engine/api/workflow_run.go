@@ -14,7 +14,7 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/sirupsen/logrus"
 
-	ascodesync "github.com/ovh/cds/engine/api/ascode/sync"
+	"github.com/ovh/cds/engine/api/ascode"
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/integration"
@@ -945,24 +945,23 @@ func (api *API) initWorkflowRun(ctx context.Context, projKey string, wf *sdk.Wor
 	}()
 
 	if wfRun.Status == sdk.StatusPending {
-		// Become as code ?
-		if wf.FromRepository == "" && len(wf.AsCodeEvent) > 0 {
-			if wf.WorkflowData.Node.Context.ApplicationID == 0 {
-				r1 := failInitWorkflowRun(ctx, api.mustDB(), wfRun, sdk.WrapError(sdk.ErrNotFound, "unable to find application on root node"))
-				report.Merge(ctx, r1)
-				return
-			}
-			app := wf.Applications[wf.WorkflowData.Node.Context.ApplicationID]
-
-			_, fromRepo, err := ascodesync.SyncAsCodeEvent(ctx, api.mustDB(), api.Cache, *p, app, u.AuthentifiedUser)
+		// Sync as code event to remove events in case where a PR was merged
+		if len(wf.AsCodeEvent) > 0 {
+			res, err := ascode.SyncEvents(ctx, api.mustDB(), api.Cache, *p, *wf, u.AuthentifiedUser)
 			if err != nil {
 				r := failInitWorkflowRun(ctx, api.mustDB(), wfRun, sdk.WrapError(err, "unable to sync as code event"))
 				report.Merge(ctx, r)
 				return
 			}
-			event.PublishWorkflowUpdate(ctx, p.Key, *wf, *wf, u)
-
-			wf.FromRepository = fromRepo
+			if res.Merged {
+				if err := workflow.UpdateFromRepository(api.mustDB(), wf.ID, res.FromRepository); err != nil {
+					r := failInitWorkflowRun(ctx, api.mustDB(), wfRun, sdk.WrapError(err, "unable to sync as code event"))
+					report.Merge(ctx, r)
+					return
+				}
+				wf.FromRepository = res.FromRepository
+				event.PublishWorkflowUpdate(ctx, p.Key, *wf, *wf, u)
+			}
 		}
 
 		// If the workflow is as code we need to reimport it.
@@ -993,17 +992,16 @@ func (api *API) initWorkflowRun(ctx context.Context, projKey string, wf *sdk.Wor
 			log.Debug("workflow.CreateFromRepository> %s", wf.Name)
 			oldWf := *wf
 			asCodeInfosMsg, err := workflow.CreateFromRepository(ctx, api.mustDB(), api.Cache, p1, wf, *opts, *u, project.DecryptWithBuiltinKey)
-			if err != nil {
-				infos := make([]sdk.SpawnMsg, len(asCodeInfosMsg))
-				for i, msg := range asCodeInfosMsg {
-					infos[i] = sdk.SpawnMsg{
-						ID:   msg.ID,
-						Args: msg.Args,
-						Type: msg.Type,
-					}
-
+			infos := make([]sdk.SpawnMsg, len(asCodeInfosMsg))
+			for i, msg := range asCodeInfosMsg {
+				infos[i] = sdk.SpawnMsg{
+					ID:   msg.ID,
+					Args: msg.Args,
+					Type: msg.Type,
 				}
-				workflow.AddWorkflowRunInfo(wfRun, infos...)
+			}
+			workflow.AddWorkflowRunInfo(wfRun, infos...)
+			if err != nil {
 				r1 := failInitWorkflowRun(ctx, api.mustDB(), wfRun, sdk.WrapError(err, "unable to get workflow from repository"))
 				report.Merge(ctx, r1)
 				return

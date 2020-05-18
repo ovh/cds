@@ -6,12 +6,15 @@
         <div class="ui form">
             <div class="ui grid">
                 <div class="sixteen wide column">
-                    <div class="ui blue message">
+                    <div *ngIf="!this.workflow || !this.workflow.from_repository" class="ui blue message">
                         {{'workflow_template_update_info_line_1' | translate}}
+                    </div>
+                    <div *ngIf="this.workflow && this.workflow.from_repository" class="ui blue message">
+                        {{'workflow_template_update_info_line_2' | translate}}
                     </div>
                 </div>
                 <div class="sixteen wide column loading" *ngIf="!project || !workflowTemplate || !workflowTemplateInstance">
-                    <div class="ui active inverted dimmer">
+                    <div class="ui active dimmer">
                         <div class="ui text loader">{{ 'common_loading' | translate }}</div>
                     </div>
                 </div>

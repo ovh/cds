@@ -106,7 +106,6 @@ require (
 	github.com/kr/pty v1.1.8 // indirect
 	github.com/kylelemons/godebug v1.1.0 // indirect
 	github.com/lib/pq v1.0.0
-	github.com/lytics/logrus v0.0.0-20170528191427-4389a17ed024 // indirect
 	github.com/magiconair/properties v1.8.1 // indirect
 	github.com/mailru/easyjson v0.0.0-20171120080333-32fa128f234d // indirect
 	github.com/marstr/guid v1.1.0 // indirect
