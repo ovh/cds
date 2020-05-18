@@ -51,7 +51,7 @@ export class WorkflowWNodeMenuEditComponent implements OnInit {
         this.workflowrun = state.workflowRun;
         this.noderun = state.workflowNodeRun;
         this.node = state.node;
-        this.readonly = !state.canEdit || !!this.workflow.from_template;
+        this.readonly = !state.canEdit || (!!this.workflow.from_template && !!this.workflow.from_repository);
 
         this.runnable = this.getCanBeRun();
         this._cd.markForCheck();

@@ -1,6 +1,6 @@
 <div class="asCodeEvents">
     <p>
-        <span *ngIf="workflow.from_repository">{{ 'pipeline_from_repository' | translate: {repo: repo} }}</span>
+        <span *ngIf="workflow.from_repository">{{ 'pipeline_from_repository' | translate: {repo: workflow.from_repository} }}</span>
         <span *ngIf="!workflow.from_repository">{{ 'workflow_from_repository_pending' | translate }}</span>
     </p>
     <ul>

@@ -63,7 +63,7 @@ export class WorkflowNodeEditModalComponent implements AfterViewInit {
     readonly = true;
 
     constructor(private _modalService: SuiModalService, private _store: Store, private _cd: ChangeDetectorRef,
-                private _translate: TranslateService, private _toast: ToastService) {
+        private _translate: TranslateService, private _toast: ToastService) {
         this.projectSubscriber = this._store.select(ProjectState)
             .subscribe((projState: ProjectStateModel) => {
                 this.project = projState.project;
@@ -110,7 +110,7 @@ export class WorkflowNodeEditModalComponent implements AfterViewInit {
                 this.currentNodeName = stateSnap.node.name;
                 this.currentNodeType = stateSnap.node.type;
                 this.groups = cloneDeep(stateSnap.node.groups);
-                this.readonly = !stateSnap.canEdit || !!this.workflow.from_template;
+                this.readonly = !stateSnap.canEdit || (!!this.workflow.from_template && !!this.workflow.from_repository);
                 if (stateSnap.hook) {
                     this.hookSelected = true;
                 }
@@ -209,7 +209,7 @@ export class WorkflowNodeEditModalComponent implements AfterViewInit {
 
     changeView(newView: string): void {
         if (this.selected === newView) {
-         return;
+            return;
         }
         if (this.hasModification) {
             if (confirm(this._translate.instant('workflow_modal_change_view_confirm'))) {

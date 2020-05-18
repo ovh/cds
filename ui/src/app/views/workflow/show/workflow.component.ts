@@ -90,7 +90,7 @@ export class WorkflowShowComponent implements OnInit {
                 this.detailedWorkflow = s.workflow;
             }
             if (this.detailedWorkflow) {
-                this.isReadOnly = !!this.detailedWorkflow.from_template;
+                this.isReadOnly = !!this.detailedWorkflow.from_template && !!this.detailedWorkflow.from_repository;
                 let from_repository = this.detailedWorkflow.from_repository;
                 this.previewWorkflow = this.detailedWorkflow.preview;
                 this.groups = cloneDeep(this.detailedWorkflow.groups);
