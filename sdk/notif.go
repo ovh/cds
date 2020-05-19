@@ -54,7 +54,7 @@ func (a UserNotificationSettings) Value() (driver.Value, error) {
 	return j, WrapError(err, "cannot marshal UserNotificationSettings")
 }
 
-// Scan Metadata.
+// Scan UserNotificationSettings.
 func (a *UserNotificationSettings) Scan(src interface{}) error {
 	if src == nil {
 		return nil

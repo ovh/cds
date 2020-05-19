@@ -24,7 +24,7 @@ func LoadAllByIDs(db gorp.SqlExecutor, ids []int64) ([]sdk.Environment, error) {
 	rows, err := db.Query(query, pq.Int64Array(ids))
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return envs, sdk.ErrNoEnvironment
+			return envs, sdk.WithStack(sdk.ErrNoEnvironment)
 		}
 		return envs, sdk.WithStack(err)
 	}
