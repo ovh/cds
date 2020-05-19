@@ -3,6 +3,8 @@ package integration
 import (
 	"context"
 
+	"github.com/lib/pq"
+
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
@@ -150,6 +152,12 @@ func LoadIntegrationsByProjectIDWithClearPassword(db gorp.SqlExecutor, id int64)
 // LoadIntegrationsByProjectID load integration integrations by project id
 func LoadIntegrationsByProjectID(db gorp.SqlExecutor, id int64) ([]sdk.ProjectIntegration, error) {
 	query := gorpmapping.NewQuery("SELECT * from project_integration WHERE project_id = $1").Args(id)
+	return loadAll(db, query)
+}
+
+// LoadIntegrationsByIDs load integration integrations by id
+func LoadIntegrationsByIDs(db gorp.SqlExecutor, ids []int64) ([]sdk.ProjectIntegration, error) {
+	query := gorpmapping.NewQuery("SELECT * from project_integration WHERE id = ANY($1)").Args(pq.Int64Array(ids))
 	return loadAll(db, query)
 }
 

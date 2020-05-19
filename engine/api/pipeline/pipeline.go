@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/go-gorp/gorp"
+	"github.com/lib/pq"
 
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/engine/api/group"
@@ -237,6 +238,37 @@ func DeletePipeline(ctx context.Context, db gorp.SqlExecutor, pipelineID int64) 
 	}
 
 	return nil
+}
+
+// LoadAllByIDs loads all pipelines
+func LoadAllByIDs(db gorp.SqlExecutor, ids []int64, loadDependencies bool) ([]sdk.Pipeline, error) {
+	var pips []sdk.Pipeline
+	query := `SELECT id, name, description, project_id, last_modified, from_repository
+			  FROM pipeline
+			  WHERE id = ANY($1)
+			  ORDER BY pipeline.name`
+
+	if _, err := db.Select(&pips, query, pq.Int64Array(ids)); err != nil {
+		if err == sql.ErrNoRows {
+			return nil, nil
+		}
+		return nil, sdk.WithStack(err)
+	}
+
+	for i := range pips {
+		if loadDependencies {
+			if err := LoadPipelineStage(context.TODO(), db, &pips[i]); err != nil {
+				return nil, err
+			}
+		}
+		params, err := GetAllParametersInPipeline(context.TODO(), db, pips[i].ID)
+		if err != nil {
+			return nil, err
+		}
+		pips[i].Parameter = params
+	}
+
+	return pips, nil
 }
 
 // LoadPipelines loads all pipelines in a project

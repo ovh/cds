@@ -161,8 +161,6 @@ func loadApplicationUsage(ctx context.Context, db gorp.SqlExecutor, projKey, app
 	}
 	usage.Workflows = wf
 
-	// TODO: add usage of pipelines and environments
-
 	return usage, nil
 }
 

@@ -19,6 +19,13 @@ const (
 // ColorRegexp represent the regexp for a format to hexadecimal color
 var ColorRegexp = regexp.MustCompile(`^#\w{3,8}$`)
 
+type WorkflowName struct {
+	ID         int64  `json:"id" db:"id" cli:"-"`
+	Name       string `json:"name" db:"name" cli:"name,key"`
+	ProjectKey string `json:"project_key" db:"project_key" cli:"project_key"`
+	ProjectID  int64  `json:"project_id" db:"project_id" cli:"-"`
+}
+
 //Workflow represents a pipeline based workflow
 type Workflow struct {
 	ID                      int64                        `json:"id" db:"id" cli:"-"`
@@ -30,10 +37,10 @@ type Workflow struct {
 	ProjectKey              string                       `json:"project_key" db:"-" cli:"-"`
 	Groups                  []GroupPermission            `json:"groups,omitempty" db:"-" cli:"-"`
 	Permissions             Permissions                  `json:"permissions" db:"-" cli:"-"`
-	Metadata                Metadata                     `json:"metadata,omitempty" yaml:"metadata" db:"-"`
+	Metadata                Metadata                     `json:"metadata,omitempty" yaml:"metadata" db:"metadata"`
 	Usage                   *Usage                       `json:"usage,omitempty" db:"-" cli:"-"`
 	HistoryLength           int64                        `json:"history_length" db:"history_length" cli:"-"`
-	PurgeTags               []string                     `json:"purge_tags,omitempty" db:"-" cli:"-"`
+	PurgeTags               PurgeTags                    `json:"purge_tags,omitempty" db:"purge_tags" cli:"-"`
 	Notifications           []WorkflowNotification       `json:"notifications,omitempty" db:"-" cli:"-"`
 	FromRepository          string                       `json:"from_repository,omitempty" db:"from_repository" cli:"from"`
 	DerivedFromWorkflowID   int64                        `json:"derived_from_workflow_id,omitempty" db:"derived_from_workflow_id" cli:"-"`
@@ -49,7 +56,7 @@ type Workflow struct {
 	Labels                  []Label                      `json:"labels,omitempty" db:"-" cli:"labels"`
 	ToDelete                bool                         `json:"to_delete" db:"to_delete" cli:"-"`
 	Favorite                bool                         `json:"favorite" db:"-" cli:"favorite"`
-	WorkflowData            WorkflowData                 `json:"workflow_data" db:"-" cli:"-"`
+	WorkflowData            WorkflowData                 `json:"workflow_data" db:"workflow_data" cli:"-"`
 	EventIntegrations       []ProjectIntegration         `json:"event_integrations,omitempty" db:"-" cli:"-"`
 	AsCodeEvent             []AsCodeEvent                `json:"as_code_events,omitempty" db:"-" cli:"-"`
 	// aggregates
@@ -59,7 +66,53 @@ type Workflow struct {
 	URLs             URL                       `json:"urls" yaml:"-" db:"-" cli:"-"`
 }
 
+type PurgeTags []string
+
+// Value returns driver.Value from PurgeTags.
+func (a PurgeTags) Value() (driver.Value, error) {
+	j, err := json.Marshal(a)
+	return j, WrapError(err, "cannot marshal Metadata")
+}
+
+// Scan PurgeTags.
+func (a *PurgeTags) Scan(src interface{}) error {
+	if src == nil {
+		return nil
+	}
+	source, ok := src.([]byte)
+	if !ok {
+		return WithStack(fmt.Errorf("type assertion .([]byte) failed (%T)", src))
+	}
+	return WrapError(json.Unmarshal(source, a), "cannot unmarshal PurgeTags")
+}
+
+// Value returns driver.Value from WorkflowData.
+func (a WorkflowData) Value() (driver.Value, error) {
+	j, err := json.Marshal(a)
+	return j, WrapError(err, "cannot marshal WorkflowData")
+}
+
+// Scan WorkflowData.
+func (a *WorkflowData) Scan(src interface{}) error {
+	if src == nil {
+		return nil
+	}
+	source, ok := src.([]byte)
+	if !ok {
+		return WithStack(fmt.Errorf("type assertion .([]byte) failed (%T)", src))
+	}
+	return WrapError(json.Unmarshal(source, a), "cannot unmarshal WorkflowData")
+}
+
 type Workflows []Workflow
+
+func (workflows Workflows) IDs() []int64 {
+	var res = make([]int64, len(workflows))
+	for i := range workflows {
+		res[i] = workflows[i].ID
+	}
+	return res
+}
 
 func (workflows Workflows) Names() []string {
 	var res = make([]string, len(workflows))
@@ -77,6 +130,27 @@ func (workflows Workflows) Filter(f func(w Workflow) bool) Workflows {
 		}
 	}
 	return res
+}
+
+func (w *Workflow) InitMaps() {
+	if w.Pipelines == nil {
+		w.Pipelines = make(map[int64]Pipeline)
+	}
+	if w.Applications == nil {
+		w.Applications = make(map[int64]Application)
+	}
+	if w.Environments == nil {
+		w.Environments = make(map[int64]Environment)
+	}
+	if w.ProjectIntegrations == nil {
+		w.ProjectIntegrations = make(map[int64]ProjectIntegration)
+	}
+	if w.HookModels == nil {
+		w.HookModels = make(map[int64]WorkflowHookModel)
+	}
+	if w.OutGoingHookModels == nil {
+		w.OutGoingHookModels = make(map[int64]WorkflowHookModel)
+	}
 }
 
 // GetApplication retrieve application from workflow
@@ -150,6 +224,70 @@ func (w *Workflow) SortNode() {
 		sort.Slice(join.Triggers, func(i, j int) bool {
 			return join.Triggers[i].ChildNode.Name < join.Triggers[j].ChildNode.Name
 		})
+	}
+}
+
+// AssignEmptyType fill node type field
+// This function should be called after completing the maps
+func (w *Workflow) Normalize() {
+	w.InitMaps()
+	w.AssignEmptyType()
+
+	nodesArray := w.WorkflowData.Array()
+	for i := range nodesArray {
+		n := nodesArray[i]
+		if n.Context == nil {
+			continue
+		}
+
+		pip, ok := w.Pipelines[n.Context.PipelineID]
+		if ok {
+			n.Context.PipelineName = pip.Name
+		}
+
+		app, ok := w.Applications[n.Context.ApplicationID]
+		if ok {
+			n.Context.ApplicationName = app.Name
+		}
+
+		env, ok := w.Environments[n.Context.EnvironmentID]
+		if ok {
+			n.Context.EnvironmentName = env.Name
+		}
+
+		integ, ok := w.ProjectIntegrations[n.Context.ProjectIntegrationID]
+		if ok {
+			n.Context.ProjectIntegrationName = integ.Name
+		}
+
+		for i := range n.Hooks {
+			h := &n.Hooks[i]
+			hookModel, ok := w.HookModels[h.HookModelID]
+			if ok {
+				h.HookModelName = hookModel.Name
+			}
+		}
+	}
+
+	// Set the node names in the notifactions
+	for i := range w.Notifications {
+		n := &w.Notifications[i]
+		if len(n.NodeIDs) != 0 {
+			n.SourceNodeRefs = nil
+			for _, id := range n.NodeIDs {
+				notifNode := w.WorkflowData.NodeByID(id)
+				if notifNode != nil {
+					n.SourceNodeRefs = append(n.SourceNodeRefs, notifNode.Name)
+				}
+			}
+		} else if len(n.SourceNodeRefs) != 0 {
+			for _, nodeName := range n.SourceNodeRefs {
+				notifNode := w.WorkflowData.NodeByName(nodeName)
+				if notifNode != nil {
+					n.NodeIDs = append(n.NodeIDs, notifNode.ID)
+				}
+			}
+		}
 	}
 }
 
