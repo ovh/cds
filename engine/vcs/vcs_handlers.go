@@ -22,6 +22,11 @@ func muxVar(r *http.Request, s string) string {
 	return vars[s]
 }
 
+// QueryString return a string from a query parameter
+func QueryString(r *http.Request, s string) string {
+	return r.FormValue(s)
+}
+
 func (s *Service) getAllVCSServersHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		servers := make(map[string]sdk.VCSConfiguration, len(s.Cfg.Servers))
@@ -670,6 +675,11 @@ func (s *Service) getPullRequestsHandler() service.Handler {
 		owner := muxVar(r, "owner")
 		repo := muxVar(r, "repo")
 
+		state := sdk.VCSPullRequestState(QueryString(r, "state"))
+		if state != "" && !state.IsValid() {
+			return sdk.NewErrorFrom(sdk.ErrWrongRequest, "invalid given pull request state %s", state)
+		}
+
 		accessToken, accessTokenSecret, created, ok := getAccessTokens(ctx)
 		if !ok {
 			return sdk.WrapError(sdk.ErrUnauthorized, "VCS> getPullRequestsHandler> Unable to get access token headers %s %s/%s", name, owner, repo)
@@ -689,7 +699,9 @@ func (s *Service) getPullRequestsHandler() service.Handler {
 			w.Header().Set(sdk.HeaderXAccessToken, client.GetAccessToken(ctx))
 		}
 
-		c, err := client.PullRequests(ctx, fmt.Sprintf("%s/%s", owner, repo))
+		c, err := client.PullRequests(ctx, fmt.Sprintf("%s/%s", owner, repo), sdk.VCSPullRequestOptions{
+			State: state,
+		})
 		if err != nil {
 			return sdk.WrapError(err, "Unable to get pull requests on %s/%s", owner, repo)
 		}

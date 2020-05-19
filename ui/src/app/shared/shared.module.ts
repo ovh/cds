@@ -9,10 +9,11 @@ import { NgxChartsModule } from '@swimlane/ngx-charts';
 import { AuthenticationGuard } from 'app/guard/authentication.guard';
 import { NoAuthenticationGuard } from 'app/guard/no-authentication.guard';
 import { AsCodeEventComponent } from 'app/shared/ascode/events/ascode.event.component';
+import { AsCodeSaveFormComponent } from 'app/shared/ascode/save-form/ascode.save-form.component';
+import { AsCodeSaveModalComponent } from 'app/shared/ascode/save-modal/ascode.save-modal.component';
 import { ConditionsComponent } from 'app/shared/conditions/conditions.component';
 import { GroupFormComponent } from 'app/shared/group/form/group.form.component';
 import { AutoFocusInputComponent } from 'app/shared/input/autofocus/autofocus.input.component';
-import { UpdateAsCodeComponent } from 'app/shared/modal/save-as-code/update.as.code.component';
 import { SelectFilterComponent } from 'app/shared/select/select.component';
 import { WorkflowHookMenuEditComponent } from 'app/shared/workflow/menu/edit-hook/menu.edit.hook.component';
 import { WorkflowWizardNodeConditionComponent } from 'app/shared/workflow/wizard/conditions/wizard.conditions.component';
@@ -181,7 +182,8 @@ import { ZoneComponent } from './zone/zone.component';
         StatusIconComponent,
         TabsComponent,
         TruncatePipe,
-        UpdateAsCodeComponent,
+        AsCodeSaveModalComponent,
+        AsCodeSaveFormComponent,
         UploadButtonComponent,
         UsageApplicationsComponent,
         UsageComponent,
@@ -287,7 +289,8 @@ import { ZoneComponent } from './zone/zone.component';
         TranslateModule,
         TruncatePipe,
         SafeHtmlPipe,
-        UpdateAsCodeComponent,
+        AsCodeSaveModalComponent,
+        AsCodeSaveFormComponent,
         VariableComponent,
         VariableFormComponent,
         VariableValueComponent,

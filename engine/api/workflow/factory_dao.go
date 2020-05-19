@@ -516,7 +516,7 @@ func (dao WorkflowDAO) withAsCodeUpdateEvents(db gorp.SqlExecutor, ws *[]Workflo
 		ids = append(ids, w.ID)
 	}
 
-	asCodeEvents, err := ascode.LoadAsCodeEventByWorkflowIDs(context.Background(), db, ids)
+	asCodeEvents, err := ascode.LoadEventsByWorkflowIDs(context.Background(), db, ids)
 	if err != nil {
 		return err
 	}

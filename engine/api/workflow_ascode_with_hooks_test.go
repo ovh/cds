@@ -557,12 +557,6 @@ func Test_WorkflowAsCodeWithDefaultHookAndAScheduler_ShouldGive_TheSameRepoWebHo
 		"permProjectKey": proj.Key,
 	})
 
-	UUID := sdk.UUID()
-
-	servicesClients.EXPECT().
-		DoJSONRequest(gomock.Any(), "POST", "/operations", gomock.Any(), gomock.Any()).
-		Return(nil, 201, nil).Times(2)
-
 	servicesClients.EXPECT().
 		DoJSONRequest(gomock.Any(), "GET", "/vcs/github/repos/fsamin/go-repo", gomock.Any(), gomock.Any(), gomock.Any()).MinTimes(0)
 
@@ -594,13 +588,24 @@ func Test_WorkflowAsCodeWithDefaultHookAndAScheduler_ShouldGive_TheSameRepoWebHo
 			},
 		).MaxTimes(3)
 
+	operationUUID := sdk.UUID()
+
 	servicesClients.EXPECT().
-		DoJSONRequest(gomock.Any(), "GET", gomock.Any(), gomock.Any(), gomock.Any()).
+		DoJSONRequest(gomock.Any(), "POST", "/operations", gomock.Any(), gomock.Any()).
+		DoAndReturn(func(ctx context.Context, method, path string, in interface{}, out interface{}) (http.Header, int, error) {
+			ope := new(sdk.Operation)
+			ope.UUID = operationUUID
+			*(out.(*sdk.Operation)) = *ope
+			return nil, 200, nil
+		}).Times(2)
+
+	servicesClients.EXPECT().
+		DoJSONRequest(gomock.Any(), "GET", "/operations/"+operationUUID, gomock.Any(), gomock.Any(), gomock.Any()).
 		DoAndReturn(
 			func(ctx context.Context, method, path string, in interface{}, out interface{}) (http.Header, int, error) {
 				ope := new(sdk.Operation)
 				ope.URL = "https://github.com/fsamin/go-repo.git"
-				ope.UUID = UUID
+				ope.UUID = operationUUID
 				ope.Status = sdk.OperationStatusDone
 				ope.VCSServer = "github"
 				ope.RepoFullName = "fsamin/go-repo"
@@ -745,7 +750,7 @@ version: v1.0`),
 
 	uri = api.Router.GetRoute("POST", api.postPerformImportAsCodeHandler, map[string]string{
 		"permProjectKey": prjKey,
-		"uuid":           UUID,
+		"uuid":           operationUUID,
 	})
 	req, err = http.NewRequest("POST", uri, nil)
 	require.NoError(t, err)

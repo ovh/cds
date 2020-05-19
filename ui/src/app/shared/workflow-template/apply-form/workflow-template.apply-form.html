@@ -9,6 +9,11 @@
             <app-workflow-template-param-form [project]="project" [workflowTemplate]="workflowTemplate"
                 [workflowTemplateInstance]="workflowTemplateInstance" (paramChange)="changeParam($event)">
             </app-workflow-template-param-form>
+            <div class="wide field">
+                <app-ascode-save-form *ngIf="asCodeApply" [project]="project" [workflow]="workflow"
+                    [operation]="asCodeOperation" (paramChange)="onAsCodeParamChange($event)">
+                </app-ascode-save-form>
+            </div>
             <div class="wide field" *ngIf="result">
                 <div class="ui message">
                     <ul>
@@ -18,7 +23,7 @@
             </div>
             <div class="wide field">
                 <div class="ui wide field">
-                    <app-delete-button *ngIf="workflowTemplateInstance && workflowTemplateInstance.id"
+                    <app-delete-button *ngIf="workflowTemplateInstance?.id && !asCodeApply"
                         class="left floated" (event)="clickDetach()" [loading]="loading"
                         [title]="'workflow_template_detach'"></app-delete-button>
                     <div class="ui checked checkbox" *ngIf="!workflowTemplateInstance && !result">
@@ -27,7 +32,7 @@
                         <label>{{'workflow_template_apply_detach' | translate}}</label>
                     </div>
                     <button class="ui green button right floated" type="button" (click)="applyTemplate()"
-                        [class.loading]="loading">{{ 'btn_apply' | translate }}</button>
+                        [class.loading]="loading" [disabled]="!validFields">{{ 'btn_apply' | translate }}</button>
                     <button class="ui primary button right floated" type="button" (click)="goToWorkflow()"
                         *ngIf="result && !withClose">{{
                         'btn_goto_workflow' | translate}}</button>

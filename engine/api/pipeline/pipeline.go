@@ -94,7 +94,10 @@ func LoadByWorkerModel(ctx context.Context, db gorp.SqlExecutor, model *sdk.Mode
 	var query gorpmapping.Query
 
 	isSharedInfraModel := model.GroupID == group.SharedInfraGroup.ID
-	modelNamePattern := model.Group.Name + "/" + model.Name + "%"
+	modelNamePatternWithGroup := model.Group.Name + "/" + model.Name
+
+	modelNamePattern1 := fmt.Sprintf("^%s(?!\\S)", model.Name)
+	modelNamePattern2 := fmt.Sprintf("^%s(?!\\S)", modelNamePatternWithGroup)
 
 	if isSharedInfraModel {
 		query = gorpmapping.NewQuery(`
@@ -105,8 +108,8 @@ func LoadByWorkerModel(ctx context.Context, db gorp.SqlExecutor, model *sdk.Mode
         JOIN pipeline ON pipeline.id = pipeline_stage.pipeline_id
         JOIN project ON project.id = pipeline.project_id
       WHERE action_requirement.type = 'model'
-        AND (action_requirement.value LIKE $1 OR action_requirement.value LIKE $2)
-    `).Args(model.Name+"%", modelNamePattern)
+        AND (action_requirement.value ~ $1 OR action_requirement.value ~ $2)
+    `).Args(modelNamePattern1, modelNamePattern2)
 	} else {
 		query = gorpmapping.NewQuery(`
       SELECT DISTINCT pipeline.*, project.projectkey AS projectKey
@@ -116,13 +119,13 @@ func LoadByWorkerModel(ctx context.Context, db gorp.SqlExecutor, model *sdk.Mode
         JOIN pipeline ON pipeline.id = pipeline_stage.pipeline_id
         JOIN project ON project.id = pipeline.project_id
       WHERE action_requirement.type = 'model'
-        AND action_requirement.value LIKE $1
-    `).Args(modelNamePattern)
+        AND action_requirement.value ~ $1
+    `).Args(modelNamePattern2)
 	}
 
 	var dbPips Pipelines
 	if err := gorpmapping.GetAll(ctx, db, query, &dbPips); err != nil {
-		return nil, sdk.WrapError(err, "unable to load pipelines linked to worker model pattern %s", modelNamePattern)
+		return nil, sdk.WrapError(err, "unable to load pipelines linked to worker model pattern %s", modelNamePattern2)
 	}
 
 	return dbPips.Cast(), nil
@@ -133,7 +136,10 @@ func LoadByWorkerModelAndGroupIDs(ctx context.Context, db gorp.SqlExecutor, mode
 	var query gorpmapping.Query
 
 	isSharedInfraModel := model.GroupID == group.SharedInfraGroup.ID
-	modelNamePattern := model.Group.Name + "/" + model.Name + "%"
+	modelNamePatternWithGroup := model.Group.Name + "/" + model.Name
+
+	modelNamePattern1 := fmt.Sprintf("^%s(?!\\S)", model.Name)
+	modelNamePattern2 := fmt.Sprintf("^%s(?!\\S)", modelNamePatternWithGroup)
 
 	if isSharedInfraModel {
 		query = gorpmapping.NewQuery(`
@@ -144,13 +150,13 @@ func LoadByWorkerModelAndGroupIDs(ctx context.Context, db gorp.SqlExecutor, mode
         JOIN pipeline ON pipeline.id = pipeline_stage.pipeline_id
         JOIN project ON project.id = pipeline.project_id
       WHERE action_requirement.type = 'model'
-        AND (action_requirement.value LIKE $1 OR action_requirement.value LIKE $2)
+        AND (action_requirement.value ~ $1 OR action_requirement.value ~ $2)
         AND project.id IN (
           SELECT project_group.project_id
             FROM project_group
           WHERE project_group.group_id = ANY(string_to_array($3, ',')::int[])
         )
-    `).Args(model.Name+"%", modelNamePattern, gorpmapping.IDsToQueryString(groupIDs))
+    `).Args(modelNamePattern1, modelNamePattern2, gorpmapping.IDsToQueryString(groupIDs))
 	} else {
 		query = gorpmapping.NewQuery(`
       SELECT DISTINCT pipeline.*, project.projectkey AS projectKey
@@ -160,19 +166,19 @@ func LoadByWorkerModelAndGroupIDs(ctx context.Context, db gorp.SqlExecutor, mode
         JOIN pipeline ON pipeline.id = pipeline_stage.pipeline_id
         JOIN project ON project.id = pipeline.project_id
       WHERE action_requirement.type = 'model'
-        AND action_requirement.value LIKE $1
+        AND action_requirement.value ~ $1
         AND project.id IN (
           SELECT project_group.project_id
             FROM project_group
           WHERE
             project_group.group_id = ANY(string_to_array($2, ',')::int[])
         )
-    `).Args(modelNamePattern, gorpmapping.IDsToQueryString(groupIDs))
+    `).Args(modelNamePattern2, gorpmapping.IDsToQueryString(groupIDs))
 	}
 
 	var pips Pipelines
 	if err := gorpmapping.GetAll(ctx, db, query, &pips); err != nil {
-		return nil, sdk.WrapError(err, "unable to load pipelines linked to worker model pattern %s", modelNamePattern)
+		return nil, sdk.WrapError(err, "unable to load pipelines linked to worker model pattern %s", modelNamePattern2)
 	}
 
 	return pips.Cast(), nil

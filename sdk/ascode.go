@@ -9,6 +9,7 @@ import (
 
 type AsCodeEvent struct {
 	ID             int64           `json:"id" db:"id"`
+	WorkflowID     int64           `json:"workflow_id" db:"workflow_id"`
 	PullRequestID  int64           `json:"pullrequest_id" db:"pullrequest_id"`
 	PullRequestURL string          `json:"pullrequest_url" db:"pullrequest_url"`
 	Username       string          `json:"username" db:"username"`

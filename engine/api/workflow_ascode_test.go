@@ -109,6 +109,11 @@ func TestPostUpdateWorkflowAsCodeHandler(t *testing.T) {
 				if err := enc.Encode(hook); err != nil {
 					return writeError(w, err)
 				}
+			case "/vcs/github/repos/foo/myrepo/pullrequests?state=open":
+				vcsPRs := []sdk.VCSPullRequest{}
+				if err := enc.Encode(vcsPRs); err != nil {
+					return writeError(w, err)
+				}
 			case "/vcs/github/repos/foo/myrepo/pullrequests":
 				vcsPR := sdk.VCSPullRequest{
 					URL: "myURL",
@@ -293,6 +298,11 @@ func TestPostMigrateWorkflowAsCodeHandler(t *testing.T) {
 					ID: "myod",
 				}
 				if err := enc.Encode(hook); err != nil {
+					return writeError(w, err)
+				}
+			case "/vcs/github/repos/foo/myrepo/pullrequests?state=open":
+				vcsPRs := []sdk.VCSPullRequest{}
+				if err := enc.Encode(vcsPRs); err != nil {
 					return writeError(w, err)
 				}
 			case "/vcs/github/repos/foo/myrepo/pullrequests":

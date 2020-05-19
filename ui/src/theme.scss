@@ -487,6 +487,12 @@ a.ui.basic.grey.label:hover {
     }
 }
 
+.ui.pointing.dropdown>.menu:not(.hidden):after {
+    .night & {
+        background-color: $darkTheme_grey_0;
+    }
+}
+
 .ui.modal>.close {
     .night & {
         color: $darkTheme_grey_5;
@@ -613,4 +619,8 @@ a.ui.basic.grey.label:hover {
         border-color: $darkTheme_grey_1;
         color: $darkTheme_grey_6;
     }
+}
+
+.loading .ui.dimmer {
+    background-color: unset;
 }

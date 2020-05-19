@@ -12,7 +12,7 @@ import (
 
 func TestPullRequests(t *testing.T) {
 	client := getAuthorizedClient(t)
-	prs, err := client.PullRequests(context.Background(), "CDS/images")
+	prs, err := client.PullRequests(context.Background(), "CDS/images", sdk.VCSPullRequestOptions{})
 	test.NoError(t, err)
 	assert.NotEmpty(t, prs)
 	t.Logf("%v", prs)
@@ -20,7 +20,7 @@ func TestPullRequests(t *testing.T) {
 
 func TestPullRequestComment(t *testing.T) {
 	client := getAuthorizedClient(t)
-	prs, err := client.PullRequests(context.Background(), "CDS/images")
+	prs, err := client.PullRequests(context.Background(), "CDS/images", sdk.VCSPullRequestOptions{})
 	test.NoError(t, err)
 	assert.NotEmpty(t, prs)
 	t.Logf("%v", prs)
