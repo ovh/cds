@@ -59,11 +59,6 @@ func (api *API) repositoriesManagerAuthorizeHandler() service.Handler {
 			return sdk.WrapError(err, "cannot load project")
 		}
 
-		_, err = repositoriesmanager.LoadProjectVCSServerLinkByProjectKeyAndVCSServerName(ctx, api.mustDB(), key, rmName)
-		if err != nil {
-			return err
-		}
-
 		vcsServer, err := repositoriesmanager.NewVCSServerConsumer(api.mustDBWithCtx, api.Cache, rmName)
 		if err != nil {
 			return sdk.WrapError(err, "cannot start transaction")

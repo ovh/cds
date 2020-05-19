@@ -4,14 +4,13 @@ import (
 	"context"
 	"database/sql"
 	"errors"
-
-	"github.com/ovh/cds/engine/api/database/gorpmapping"
-
-	"github.com/ovh/cds/engine/api/repositoriesmanager"
-
-	"github.com/ovh/cds/engine/api/project"
+	"fmt"
 
 	"github.com/go-gorp/gorp"
+
+	"github.com/ovh/cds/engine/api/database/gorpmapping"
+	"github.com/ovh/cds/engine/api/project"
+	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
@@ -86,16 +85,17 @@ func refactorProjectVCSServers(ctx context.Context, db *gorp.DbMap, id int64) er
 
 	log.Info(ctx, "migrate.refactorProjectVCSServers> project %s (%d) started migration", proj.Name, proj.ID)
 
-	for _, vcsServer := range proj.VCSServers {
-		newVCSServer := sdk.ProjectVCSServerLink{
+	for _, vcsServer := range proj.DeprecatedVCSServers {
+		newVCSServer := &sdk.ProjectVCSServerLink{
 			ProjectID: id,
 			Name:      vcsServer.Name,
 			Username:  vcsServer.Username,
 		}
 		for k, v := range vcsServer.Data {
+			log.Debug("setting %s for %s", k, vcsServer.Name)
 			newVCSServer.Set(k, v)
 		}
-		if err := repositoriesmanager.InsertProjectVCSServerLink(ctx, tx, &newVCSServer); err != nil {
+		if err := repositoriesmanager.InsertProjectVCSServerLink(ctx, tx, newVCSServer); err != nil {
 			return err
 		}
 	}
@@ -106,36 +106,38 @@ func refactorProjectVCSServers(ctx context.Context, db *gorp.DbMap, id int64) er
 		return err
 	}
 
-	if len(proj.VCSServers) != len(allMigratedVCSServers) {
-		return errors.New("not the same number of vcs_server :(")
+	if len(proj.DeprecatedVCSServers) != len(allMigratedVCSServers) {
+		return sdk.WithStack(errors.New("not the same number of vcs_server :("))
 	}
 
-	for _, vcsServer := range proj.VCSServers {
+	for _, vcsServer := range proj.DeprecatedVCSServers {
 		var found bool
-		for _, migratedVCSServer := range allMigratedVCSServers {
+		for i := range allMigratedVCSServers {
+			migratedVCSServer := &allMigratedVCSServers[i]
 			if vcsServer.Name == migratedVCSServer.Name {
 				found = true
 				if vcsServer.Username != migratedVCSServer.Username {
-					return errors.New("assertion failed")
+					return sdk.WithStack(fmt.Errorf("assertion failed on username: %s %s", vcsServer.Username, migratedVCSServer.Username))
 				}
-				newData, err := repositoriesmanager.LoadProjectVCSServerLinksData(ctx, db, migratedVCSServer.ID, gorpmapping.GetOptions.WithDecryption)
+				newData, err := repositoriesmanager.LoadProjectVCSServerLinksData(ctx, tx, migratedVCSServer.ID, gorpmapping.GetOptions.WithDecryption)
 				if err != nil {
 					return err
 				}
+				log.Debug("newData: %+v", newData)
 				migratedVCSServer.ProjectVCSServerLinkData = newData
 				for k, v := range vcsServer.Data {
 					newValue, foundValue := migratedVCSServer.Get(k)
 					if !foundValue {
-						return errors.New("assertion failed")
+						return sdk.WithStack(fmt.Errorf("assertion failed: missing value %s", k))
 					}
 					if newValue != v {
-						return errors.New("assertion failed")
+						return sdk.WithStack(fmt.Errorf("assertion failed: value %s doesn't match (%s - %s)", k, v, newValue))
 					}
 				}
 			}
 		}
 		if !found {
-			return errors.New("not missing vcs_server")
+			return sdk.WithStack(errors.New("not missing vcs_server"))
 		}
 	}
 

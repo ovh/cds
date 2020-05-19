@@ -74,19 +74,6 @@ func (c *vcsClient) Cache() *gocache.Cache {
 	return c.cache
 }
 
-// DeprecatedGetProjectVCSServer returns sdk.ProjectVCSServer for a project
-func DeprecatedGetProjectVCSServer(p sdk.Project, name string) *sdk.ProjectVCSServer {
-	if name == "" {
-		return nil
-	}
-	for _, v := range p.VCSServers {
-		if v.Name == name {
-			return &v
-		}
-	}
-	return nil
-}
-
 type Options struct {
 	Sync bool
 }
