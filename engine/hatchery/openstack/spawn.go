@@ -29,21 +29,36 @@ func (h *HatcheryOpenstack) SpawnWorker(ctx context.Context, spawnArgs hatchery.
 		return sdk.WithStack(fmt.Errorf("no job ID and no register"))
 	}
 
-	if len(h.getServers(ctx)) == h.Configuration().Provision.MaxWorker {
+	existingServers := h.getServers(ctx)
+	if len(existingServers) >= h.Configuration().Provision.MaxWorker {
 		log.Debug("MaxWorker limit (%d) reached", h.Configuration().Provision.MaxWorker)
 		return nil
 	}
 
-	// Get image ID
-	imageID, erri := h.imageID(ctx, spawnArgs.Model.ModelVirtualMachine.Image)
-	if erri != nil {
-		return erri
+	// Get flavor for target model
+	flavor, err := h.flavor(spawnArgs.Model.ModelVirtualMachine.Flavor)
+	if err != nil {
+		return err
 	}
 
-	// Get flavor ID
-	flavorID, errf := h.flavorID(spawnArgs.Model.ModelVirtualMachine.Flavor)
-	if errf != nil {
-		return errf
+	// If a max CPUs count is set in configuration we will check that there are enough CPUs available to spawn the model
+	if h.Config.MaxCPUs > 0 {
+		var totalCPUsUsed int
+		for i := range existingServers {
+			totalCPUsUsed += existingServers[i].Flavor["vcpus"].(int)
+		}
+		if totalCPUsUsed+flavor.VCPUs >= h.Config.MaxCPUs {
+			log.Debug("MaxCPUs limit (%d) reached", h.Config.MaxCPUs)
+			return nil
+		}
+	}
+
+	// TODO If the CountSmallerFlavorToKeep is set in config, we should check that there will be enough CPUs to spawn a smaller flavor after this one
+
+	// Get image ID
+	imageID, err := h.imageID(ctx, spawnArgs.Model.ModelVirtualMachine.Image)
+	if err != nil {
+		return err
 	}
 
 	var withExistingImage bool
@@ -124,7 +139,7 @@ func (h *HatcheryOpenstack) SpawnWorker(ctx context.Context, spawnArgs hatchery.
 		networks := []servers.Network{{UUID: h.networkID, FixedIP: ip}}
 		r := servers.Create(h.openstackClient, servers.CreateOpts{
 			Name:      spawnArgs.WorkerName,
-			FlavorRef: flavorID,
+			FlavorRef: flavor.ID,
 			ImageRef:  imageID,
 			Metadata:  meta,
 			UserData:  []byte(udata64),
@@ -134,10 +149,10 @@ func (h *HatcheryOpenstack) SpawnWorker(ctx context.Context, spawnArgs hatchery.
 		server, err := r.Extract()
 		if err != nil {
 			if strings.Contains(err.Error(), "is already in use on instance") && try < maxTries { // Fixed IP address X.X.X.X is already in use on instance
-				log.Warning(ctx, "SpawnWorker> Unable to create server: name:%s flavor:%s image:%s metadata:%v networks:%s err:%v body:%s - Try %d/%d", spawnArgs.WorkerName, flavorID, imageID, meta, networks, err, r.Body, try, maxTries)
+				log.Warning(ctx, "SpawnWorker> Unable to create server: name:%s flavor:%s image:%s metadata:%v networks:%s err:%v body:%s - Try %d/%d", spawnArgs.WorkerName, flavor.ID, imageID, meta, networks, err, r.Body, try, maxTries)
 				continue
 			}
-			return fmt.Errorf("SpawnWorker> Unable to create server: name:%s flavor:%s image:%s metadata:%v networks:%s err:%v body:%s", spawnArgs.WorkerName, flavorID, imageID, meta, networks, err, r.Body)
+			return fmt.Errorf("SpawnWorker> Unable to create server: name:%s flavor:%s image:%s metadata:%v networks:%s err:%v body:%s", spawnArgs.WorkerName, flavor.ID, imageID, meta, networks, err, r.Body)
 		}
 		log.Debug("SpawnWorker> Created Server ID: %s", server.ID)
 		break

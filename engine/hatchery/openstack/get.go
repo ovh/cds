@@ -6,6 +6,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/gophercloud/gophercloud/openstack/compute/v2/flavors"
 	"github.com/gophercloud/gophercloud/openstack/compute/v2/images"
 	"github.com/gophercloud/gophercloud/openstack/compute/v2/servers"
 
@@ -20,17 +21,17 @@ func (h *HatcheryOpenstack) imageID(ctx context.Context, img string) (string, er
 			return i.ID, nil
 		}
 	}
-	return "", fmt.Errorf("imageID> image '%s' not found", img)
+	return "", sdk.WithStack(fmt.Errorf("image '%s' not found", img))
 }
 
 // Find flavor ID from flavor name
-func (h *HatcheryOpenstack) flavorID(flavor string) (string, error) {
-	for _, f := range h.flavors {
-		if f.Name == flavor {
-			return f.ID, nil
+func (h *HatcheryOpenstack) flavor(flavor string) (flavors.Flavor, error) {
+	for i := range h.flavors {
+		if h.flavors[i].Name == flavor {
+			return h.flavors[i], nil
 		}
 	}
-	return "", fmt.Errorf("flavorID> flavor '%s' not found", flavor)
+	return flavors.Flavor{}, sdk.WithStack(fmt.Errorf("flavor '%s' not found", flavor))
 }
 
 //This a embedded cache for images list
