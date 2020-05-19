@@ -105,6 +105,9 @@ func (api *API) postWorkflowAsCodeHandler() service.Handler {
 		if err := workflow.RenameNode(ctx, api.mustDB(), &wf); err != nil {
 			return err
 		}
+		if err := workflow.CheckValidity(ctx, api.mustDB(), &wf); err != nil {
+			return err
+		}
 		if err := workflow.CompleteWorkflow(ctx, api.mustDB(), &wf, *p, workflow.LoadOptions{DeepPipeline: true}); err != nil {
 			return err
 		}

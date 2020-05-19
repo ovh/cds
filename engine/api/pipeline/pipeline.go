@@ -249,6 +249,9 @@ func LoadAllByIDs(db gorp.SqlExecutor, ids []int64, loadDependencies bool) ([]sd
 			  ORDER BY pipeline.name`
 
 	if _, err := db.Select(&pips, query, pq.Int64Array(ids)); err != nil {
+		if err == sql.ErrNoRows {
+			return nil, nil
+		}
 		return nil, sdk.WithStack(err)
 	}
 

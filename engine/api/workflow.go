@@ -601,6 +601,7 @@ func (api *API) deleteWorkflowHandler() service.Handler {
 				txg, err := api.mustDB().Begin()
 				if err != nil {
 					log.Error(ctx, "deleteWorkflowHandler> Cannot start transaction: %v", err)
+					return
 				}
 				defer txg.Rollback() // nolint
 
