@@ -33,9 +33,6 @@ func (api *API) getWorkflowsHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		filterByProject := vars[permProjectKey]
-		if filterByProject == "" {
-			filterByProject = r.FormValue(permProjectKey)
-		}
 		filterByRepo := r.FormValue("repo")
 
 		var dao workflow.WorkflowDAO

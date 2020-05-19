@@ -36,6 +36,9 @@ func LoadAllNamesByProjectIDs(ctx context.Context, db gorp.SqlExecutor, projectI
 
 	var result []sdk.WorkflowName // This struct is not registered as a gorpmapping entity so we can't use gorpmapping.Query
 	_, err := db.Select(&result, query, pq.Int64Array(projectIDs))
+	if err == sql.ErrNoRows {
+		return result, nil
+	}
 	return result, sdk.WithStack(err)
 }
 
