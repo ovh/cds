@@ -1,0 +1,18 @@
+<ng-template let-context let-modal="modal" #updateAsCodeModal>
+    <div class="header">{{ 'ascode_modal_title' | translate }}</div>
+    <div class="content">
+        <div *ngIf="repositoryFullname" class="ui blue message">
+            {{'ascode_save_modal_info_line_1' | translate: {repo: repositoryFullname} }}
+        </div>
+        <app-ascode-save-form [project]="project" [workflow]="workflow" [operation]="asCodeOperation"
+            (paramChange)="onParamChange($event)">
+        </app-ascode-save-form>
+    </div>
+    <div class="actions">
+        <div class="ui blue button" [class.loading]="loading" [class.disabled]="loading" (click)="close()">
+            {{'common_cancel' | translate}}
+        </div>
+        <div class="ui green button" [class.loading]="loading" [class.disabled]="loading" (click)="save()">
+            {{'btn_save' | translate}}</div>
+    </div>
+</ng-template>

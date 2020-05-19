@@ -124,7 +124,6 @@ func UpdateIcon(db gorp.SqlExecutor, workflowID int64, icon string) error {
 	if _, err := db.Exec("update workflow set icon = $1 where id = $2", icon, workflowID); err != nil {
 		return sdk.WrapError(err, "cannot update workflow icon for workflow id %d", workflowID)
 	}
-
 	return nil
 }
 
@@ -564,17 +563,11 @@ func load(ctx context.Context, db gorp.SqlExecutor, proj sdk.Project, opts LoadO
 	}
 
 	if opts.WithAsCodeUpdateEvent {
-		var asCodeEvents []sdk.AsCodeEvent
-		var errAS error
 		_, next = observability.Span(ctx, "workflow.load.AddCodeUpdateEvents")
-		if res.FromRepository != "" {
-			asCodeEvents, errAS = ascode.LoadAsCodeEventByRepo(ctx, db, res.FromRepository)
-		} else {
-			asCodeEvents, errAS = ascode.LoadAsCodeEventByWorkflowID(ctx, db, res.ID)
-		}
+		asCodeEvents, err := ascode.LoadEventsByWorkflowID(ctx, db, res.ID)
 		next()
-		if errAS != nil {
-			return nil, sdk.WrapError(errAS, "Load> unable to load as code update events")
+		if err != nil {
+			return nil, sdk.WrapError(err, "unable to load as code update events")
 		}
 		res.AsCodeEvent = asCodeEvents
 	}

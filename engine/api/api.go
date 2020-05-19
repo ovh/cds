@@ -713,6 +713,10 @@ func (a *API) Serve(ctx context.Context) error {
 		return migrate.RefactorProjectIntegrationCrypto(ctx, a.DBConnectionFactory.GetDBMap())
 	}})
 
+	migrate.Add(ctx, sdk.Migration{Name: "AsCodeEventsWorkflowHolder", Release: "0.44.0", Blocker: false, Automatic: true, ExecFunc: func(ctx context.Context) error {
+		return migrate.RefactorAsCodeEventsWorkflowHolder(ctx, a.DBConnectionFactory.GetDBMap())
+	}})
+
 	migrate.Add(ctx, sdk.Migration{Name: "RefactorWorkerModelCrypto", Release: "0.44.0", Blocker: true, Automatic: true, ExecFunc: func(ctx context.Context) error {
 		return migrate.RefactorWorkerModelCrypto(ctx, a.DBConnectionFactory.GetDBMap())
 	}})
@@ -870,6 +874,9 @@ func (a *API) Serve(ctx context.Context) error {
 		Cfg:   a.Config.CDN,
 		Db:    a.mustDB(),
 		Cache: a.Cache,
+	}
+	if err := cdsService.InitMetrics(); err != nil {
+		return sdk.WithStack(err)
 	}
 	cdsService.RunTcpLogServer(ctx)
 

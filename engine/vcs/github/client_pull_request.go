@@ -75,10 +75,10 @@ func (g *githubClient) PullRequest(ctx context.Context, fullname string, id int)
 }
 
 // PullRequests fetch all the pull request for a repository
-func (g *githubClient) PullRequests(ctx context.Context, fullname string) ([]sdk.VCSPullRequest, error) {
+func (g *githubClient) PullRequests(ctx context.Context, fullname string, opts sdk.VCSPullRequestOptions) ([]sdk.VCSPullRequest, error) {
 	var pullRequests = []PullRequest{}
 	cacheKey := cache.Key("vcs", "github", "pullrequests", g.OAuthToken, "/repos/"+fullname+"/pulls")
-	opts := []getArgFunc{withETag}
+	githubOpts := []getArgFunc{withETag}
 
 	var nextPage = "/repos/" + fullname + "/pulls"
 	for nextPage != "" {
@@ -86,7 +86,7 @@ func (g *githubClient) PullRequests(ctx context.Context, fullname string) ([]sdk
 			break
 		}
 
-		status, body, headers, err := g.get(ctx, nextPage, opts...)
+		status, body, headers, err := g.get(ctx, nextPage, githubOpts...)
 		if err != nil {
 			log.Warning(ctx, "githubClient.PullRequests> Error %s", err)
 			return nil, err
@@ -94,7 +94,7 @@ func (g *githubClient) PullRequests(ctx context.Context, fullname string) ([]sdk
 		if status >= 400 {
 			return nil, sdk.NewError(sdk.ErrUnknownError, errorAPI(body))
 		}
-		opts[0] = withETag
+		githubOpts[0] = withETag
 		nextPullRequests := []PullRequest{}
 
 		//Github may return 304 status because we are using conditional request with ETag based headers
@@ -105,7 +105,7 @@ func (g *githubClient) PullRequests(ctx context.Context, fullname string) ([]sdk
 				log.Error(ctx, "cannot get from cache %s: %v", cacheKey, err)
 			}
 			if !find {
-				opts[0] = withoutETag
+				githubOpts[0] = withoutETag
 				log.Error(ctx, "Unable to get pullrequest (%s) from the cache", strings.ReplaceAll(cacheKey, g.OAuthToken, ""))
 				continue
 			}
@@ -130,6 +130,21 @@ func (g *githubClient) PullRequests(ctx context.Context, fullname string) ([]sdk
 
 	prResults := []sdk.VCSPullRequest{}
 	for _, pullr := range pullRequests {
+		// If a state is given we want to filter PRs
+		switch opts.State {
+		case sdk.VCSPullRequestStateOpen:
+			if pullr.State == "closed" || pullr.Merged {
+				continue
+			}
+		case sdk.VCSPullRequestStateMerged:
+			if !pullr.Merged {
+				continue
+			}
+		case sdk.VCSPullRequestStateClosed:
+			if pullr.State != "closed" || pullr.Merged {
+				continue
+			}
+		}
 		pr := pullr.ToVCSPullRequest()
 		prResults = append(prResults, pr)
 	}

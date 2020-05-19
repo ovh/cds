@@ -42,6 +42,7 @@ export class WorkflowTemplateParamFormComponent implements OnInit {
     }
     @Input() workflowTemplate: WorkflowTemplate;
     @Input() workflowTemplateInstance: WorkflowTemplateInstance;
+    @Input() parameters: ParamData;
     @Output() paramChange = new EventEmitter<ParamData>();
 
     vcsNames: Array<string>;
@@ -79,6 +80,7 @@ export class WorkflowTemplateParamFormComponent implements OnInit {
 
     ngOnInit(): void {
         this.initProject();
+        this.changeParam();
     }
 
     initProject() {
@@ -142,7 +144,8 @@ export class WorkflowTemplateParamFormComponent implements OnInit {
     fillFormWithInstanceData(): void {
         if (this.workflowTemplate && this.workflowTemplateInstance) {
             this.workflowTemplate.parameters.forEach(parameter => {
-                let v = this.workflowTemplateInstance.request.parameters[parameter.key];
+                let v = (this.parameters && this.parameters[parameter.key]) ?
+                    this.parameters[parameter.key] : this.workflowTemplateInstance.request.parameters[parameter.key];
                 if (v) {
                     switch (parameter.type) {
                         case 'boolean':

@@ -2,6 +2,7 @@ package action
 
 import (
 	"context"
+	"fmt"
 	"strings"
 
 	"github.com/go-gorp/gorp"
@@ -197,11 +198,14 @@ func GetRequirementsDistinctBinary(db gorp.SqlExecutor) (sdk.RequirementList, er
 func GetRequirementsTypeModelAndValueStartBy(ctx context.Context, db gorp.SqlExecutor, value string) ([]sdk.Requirement, error) {
 	rs := []sdk.Requirement{}
 
+	// if value equals Debian9, the regex should match "Debian9" and "Debian9 --foo", but not "Debian9-Foo"
+	reg := fmt.Sprintf("^%s(?!\\S)", value)
+
 	query := gorpmapping.NewQuery(`
     SELECT *
     FROM action_requirement
-    WHERE type = 'model' AND value LIKE $1
-  `).Args(value + "%")
+    WHERE type = 'model' AND (value ~ $1)
+  `).Args(reg)
 
 	if err := gorpmapping.GetAll(ctx, db, query, &rs); err != nil {
 		return nil, sdk.WrapError(err, "cannot get requirements")

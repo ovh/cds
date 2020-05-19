@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input } from '@angular/core';
 import { AsCodeEvents } from 'app/model/ascode.model';
 import { Project } from 'app/model/project.model';
+import { Workflow } from 'app/model/workflow.model';
 import { AscodeService } from 'app/service/ascode/ascode.service';
 import { finalize } from 'rxjs/operators';
 
@@ -12,9 +13,8 @@ import { finalize } from 'rxjs/operators';
 })
 export class AsCodeEventComponent {
     @Input() events: Array<AsCodeEvents>;
-    @Input() repo: string;
-    @Input() appName: string;
     @Input() project: Project;
+    @Input() workflow: Workflow;
 
     loadingPopupButton = false;
 
@@ -25,7 +25,7 @@ export class AsCodeEventComponent {
 
     resyncEvents(): void {
         this.loadingPopupButton = true;
-        this._ascodeService.resyncPRAsCode(this.project.key, this.appName, this.repo)
+        this._ascodeService.resyncPRAsCode(this.project.key, this.workflow.name)
             .pipe(finalize(() => {
                 this.loadingPopupButton = false;
                 this._cd.markForCheck();

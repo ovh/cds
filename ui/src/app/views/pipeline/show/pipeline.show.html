@@ -8,15 +8,16 @@
                 <a class="ui label small basic"
                     [class.green]="pipeline && pipeline.from_repository && (!pipeline.ascode_events || pipeline.ascode_events.length ===0)"
                     [class.orange]="pipeline && pipeline.from_repository && pipeline?.ascode_events?.length > 0"
+                    [class.grey]="pipeline && !pipeline.from_repository && (!pipeline.as_code_events || pipeline.as_code_events.length === 0)"
                     suiPopup [popupTemplate]="popupFromRepository" popupPlacement="bottom right"
                     popupTrigger="outsideClick" #popup="suiPopup">
                     <i class="code icon"></i>as code
                 </a>
                 <ng-template let-popup #popupFromRepository>
                     <div class="content infoPopup">
-                        <ng-container *ngIf="pipeline && pipeline.from_repository">
-                            <app-ascode-event [project]="project" [events]="pipeline.ascode_events"
-                                [repo]="pipeline.from_repository"></app-ascode-event>
+                        <ng-container *ngIf="pipeline?.workflow_ascode_holder">
+                            <app-ascode-event [project]="project" [workflow]="pipeline.workflow_ascode_holder"
+                                [events]="pipeline.ascode_events"></app-ascode-event>
                         </ng-container>
                         <ng-container *ngIf="pipeline && !pipeline.from_repository">
                             <p>{{'pipeline_repository_help_line_1' | translate}}</p>
@@ -111,7 +112,8 @@
 <ng-template #loadPipeline>
     <div class="ui text active loader">Loading pipeline...</div>
 </ng-template>
-<ng-container *ngIf="appAsCode">
-    <app-update-ascode [project]="project" [appName]="appAsCode.name" [name]="pipeline.name" #updateEditMode>
-    </app-update-ascode>
+<ng-container *ngIf="pipeline?.workflow_ascode_holder">
+    <app-ascode-save-modal [project]="project" [workflow]="pipeline.workflow_ascode_holder" [name]="pipeline.name"
+        #updateEditMode>
+    </app-ascode-save-modal>
 </ng-container>

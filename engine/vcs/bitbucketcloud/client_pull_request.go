@@ -32,10 +32,20 @@ func (client *bitbucketcloudClient) PullRequest(ctx context.Context, fullname st
 }
 
 // PullRequests fetch all the pull request for a repository
-func (client *bitbucketcloudClient) PullRequests(ctx context.Context, fullname string) ([]sdk.VCSPullRequest, error) {
+func (client *bitbucketcloudClient) PullRequests(ctx context.Context, fullname string, opts sdk.VCSPullRequestOptions) ([]sdk.VCSPullRequest, error) {
 	var pullrequests []PullRequest
 	path := fmt.Sprintf("/repositories/%s/pullrequests", fullname)
 	params := url.Values{}
+
+	switch opts.State {
+	case sdk.VCSPullRequestStateOpen:
+		params.Set("state", "OPEN")
+	case sdk.VCSPullRequestStateMerged:
+		params.Set("state", "MERGED")
+	case sdk.VCSPullRequestStateClosed:
+		params.Set("state", "DECLINED")
+	}
+
 	params.Set("pagelen", "50")
 	nextPage := 1
 	for {
