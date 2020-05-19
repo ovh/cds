@@ -1986,6 +1986,8 @@ func Test_getSearchWorkflowHandler(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, wfs, 1)
 	require.Equal(t, wf.Name, wfs[0].Name)
+	require.NotEmpty(t, wfs[0].URLs.APIURL)
+	require.NotEmpty(t, wfs[0].URLs.UIURL)
 	require.Equal(t, app.ID, wfs[0].WorkflowData.Node.Context.ApplicationID)
 	require.Equal(t, pip.ID, wfs[0].WorkflowData.Node.Context.PipelineID)
 }

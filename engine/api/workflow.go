@@ -73,6 +73,10 @@ func (api *API) getWorkflowsHandler() service.Handler {
 					ws[i].Permissions.Readable = true
 				}
 			}
+
+			w1 := &ws[i]
+			w1.URLs.APIURL = api.Config.URL.API + api.Router.GetRoute("GET", api.getWorkflowHandler, map[string]string{"key": w1.ProjectKey, "permWorkflowName": w1.Name})
+			w1.URLs.UIURL = api.Config.URL.UI + "/project/" + w1.ProjectKey + "/workflow/" + w1.Name
 		}
 
 		return service.WriteJSON(w, ws, http.StatusOK)
@@ -800,6 +804,10 @@ func (api *API) getSearchWorkflowHandler() service.Handler {
 					ws[i].Permissions.Readable = true
 				}
 			}
+
+			w1 := &ws[i]
+			w1.URLs.APIURL = api.Config.URL.API + api.Router.GetRoute("GET", api.getWorkflowHandler, map[string]string{"key": w1.ProjectKey, "permWorkflowName": w1.Name})
+			w1.URLs.UIURL = api.Config.URL.UI + "/project/" + w1.ProjectKey + "/workflow/" + w1.Name
 		}
 
 		return service.WriteJSON(w, ws, http.StatusOK)
