@@ -83,7 +83,8 @@ func extractWorkflow(ctx context.Context, db *gorp.DbMap, store cache.Store, p *
 		allMsgs = append(allMsgs, sdk.NewMessage(sdk.MsgWorkflowErrorBadCdsDir))
 		return allMsgs, sdk.WrapError(err, "unable to read cds files")
 	}
-	ope.RepositoryStrategy.SSHKeyContent = ""
+	ope.RepositoryStrategy.SSHKeyContent = sdk.PasswordPlaceholder
+	ope.RepositoryStrategy.Password = sdk.PasswordPlaceholder
 	opt := &PushOption{
 		VCSServer:          ope.VCSServer,
 		RepositoryName:     ope.RepoFullName,
@@ -188,8 +189,8 @@ func pollRepositoryOperation(c context.Context, db gorp.SqlExecutor, store cache
 			switch ope.Status {
 			case sdk.OperationStatusError:
 				opeTrusted := *ope
-				opeTrusted.RepositoryStrategy.SSHKeyContent = "***"
-				opeTrusted.RepositoryStrategy.Password = "***"
+				opeTrusted.RepositoryStrategy.SSHKeyContent = sdk.PasswordPlaceholder
+				opeTrusted.RepositoryStrategy.Password = sdk.PasswordPlaceholder
 				return nil, sdk.WrapError(fmt.Errorf("%s", ope.Error), "getImportAsCodeHandler> Operation in error. %+v", opeTrusted)
 			case sdk.OperationStatusDone:
 				return ope, nil
