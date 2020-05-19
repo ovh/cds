@@ -31,7 +31,6 @@ func LoadEventByWorkflowIDAndPullRequest(ctx context.Context, db gorp.SqlExecuto
 }
 
 func LoadEventsByWorkflowIDs(ctx context.Context, db gorp.SqlExecutor, workflowIDs []int64) ([]sdk.AsCodeEvent, error) {
-	// ?| => Do any of these array strings exist as top-level keys?
 	query := gorpmapping.NewQuery("SELECT * FROM as_code_events where workflow_id = ANY($1)").Args(pq.Int64Array(workflowIDs))
 	var events []dbAsCodeEvents
 	if err := gorpmapping.GetAll(ctx, db, query, &events); err != nil {
