@@ -8,6 +8,7 @@
                 <a class="ui label small basic"
                     [class.green]="pipeline && pipeline.from_repository && (!pipeline.ascode_events || pipeline.ascode_events.length ===0)"
                     [class.orange]="pipeline && pipeline.from_repository && pipeline?.ascode_events?.length > 0"
+                    [class.grey]="pipeline && !pipeline.from_repository && (!pipeline.as_code_events || pipeline.as_code_events.length === 0)"
                     suiPopup [popupTemplate]="popupFromRepository" popupPlacement="bottom right"
                     popupTrigger="outsideClick" #popup="suiPopup">
                     <i class="code icon"></i>as code
