@@ -47,6 +47,17 @@ type HatcheryConfiguration struct {
 
 	// CreateImageTimeout max wait for create an openstack image (in seconds)
 	CreateImageTimeout int `mapstructure:"createImageTimeout" toml:"createImageTimeout" default:"180" commented:"false" comment:"max wait for create an openstack image (in seconds)" json:"createImageTimeout"`
+
+	// AllowedFlavors if not empty the hatchery will be able to start a model only if its flavor is listed in allowed flavors
+	AllowedFlavors []string `mapstructure:"allowedFlavors" toml:"allowedFlavors" default:"" commented:"true" comment:"List of allowed flavors that can be used by the hatchery." json:"allowedFlavors"`
+
+	// MaxCPUs if set the hatchery will stop starting new models if its flavors requires more CPUs than availables
+	MaxCPUs int `mapstructure:"maxCpus" toml:"maxCpus" default:"" commented:"true" comment:"Maximum count of CPUs that can be used at a same time by the hatchery." json:"maxCpus"`
+
+	// CountSmallerFlavorToKeep define the count of smaller flavors that the hatchery should be able to boot when booting a larger flavor.
+	// This count will prevent big flavor to take all the CPUs available for the hatchery and will keep some available for smaller flavors.
+	// Ex: if two flavors are available with 8 and 4 cpus and count to keep equals 2 the hatchery will need 8+4*2=16cpus available to start a 8cpus flavor.
+	CountSmallerFlavorToKeep int `mapstructure:"countSmallerFlavorToKeep" toml:"countSmallerFlavorToKeep" default:"" commented:"true" comment:"Count of smaller flavors that the hatchery should be able to boot when booting a larger flavor." json:"countSmallerFlavorToKeep"`
 }
 
 // HatcheryOpenstack spawns instances of worker model with type 'ISO'
