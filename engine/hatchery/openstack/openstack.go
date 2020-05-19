@@ -169,28 +169,13 @@ func (h *HatcheryOpenstack) WorkerModelsEnabled() ([]sdk.Model, error) {
 			continue
 		}
 
-		// If allowed flavors are given in configuration we should check that given flavor is part of the list.
-		if h.Config.AllowedFlavors != nil && len(h.Config.AllowedFlavors) > 0 {
-			var allowed bool
-			for j := range h.Config.AllowedFlavors {
-				if h.Config.AllowedFlavors[j] == allModels[i].ModelVirtualMachine.Flavor {
-					allowed = true
-					break
-				}
-			}
-			if !allowed {
-				log.Debug("WorkerModelsEnabled> model %s/%s is not usable because flavor '%s' is not allowed", allModels[i].Group.Name, allModels[i].Name, allModels[i].ModelVirtualMachine.Flavor)
-				continue
-			}
-		}
-
 		filteredModels = append(filteredModels, allModels[i])
 	}
 
 	// Sort models by required CPUs, this will allows to starts job without defined model on the smallest flavor.
 	sort.Slice(filteredModels, func(i, j int) bool {
 		flavorI, _ := h.flavor(filteredModels[i].ModelVirtualMachine.Flavor)
-		flavorJ, _ := h.flavor(filteredModels[i].ModelVirtualMachine.Flavor)
+		flavorJ, _ := h.flavor(filteredModels[j].ModelVirtualMachine.Flavor)
 		return flavorI.VCPUs < flavorJ.VCPUs
 	})
 

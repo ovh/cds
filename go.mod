@@ -209,7 +209,7 @@ require (
 	gopkg.in/stomp.v1 v1.0.1 // indirect
 	gopkg.in/vmihailenco/msgpack.v2 v2.9.1 // indirect
 	gopkg.in/yaml.v2 v2.2.4
-	gotest.tools v2.1.0+incompatible // indirect
+	gotest.tools v2.1.0+incompatible
 	k8s.io/api v0.0.0-20181204000039-89a74a8d264d
 	k8s.io/apimachinery v0.0.0-20190223094358-dcb391cde5ca
 	k8s.io/client-go v10.0.0+incompatible

@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/gophercloud/gophercloud/openstack/compute/v2/servers"
+	"github.com/sirupsen/logrus"
 
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/hatchery"
@@ -30,9 +31,13 @@ func (h *HatcheryOpenstack) SpawnWorker(ctx context.Context, spawnArgs hatchery.
 		return sdk.WithStack(fmt.Errorf("no job ID and no register"))
 	}
 
-	existingServers := h.getServers(ctx)
-	if len(existingServers) >= h.Configuration().Provision.MaxWorker {
-		log.Debug("MaxWorker limit (%d) reached", h.Configuration().Provision.MaxWorker)
+	if err := h.checkSpawnLimits(ctx, *spawnArgs.Model); err != nil {
+		isErrWithStack := sdk.IsErrorWithStack(err)
+		fields := logrus.Fields{}
+		if isErrWithStack {
+			fields["stack_trace"] = fmt.Sprintf("%+v", err)
+		}
+		log.InfoWithFields(ctx, fields, "%s", err)
 		return nil
 	}
 
@@ -40,33 +45,6 @@ func (h *HatcheryOpenstack) SpawnWorker(ctx context.Context, spawnArgs hatchery.
 	flavor, err := h.flavor(spawnArgs.Model.ModelVirtualMachine.Flavor)
 	if err != nil {
 		return err
-	}
-
-	// If a max CPUs count is set in configuration we will check that there are enough CPUs available to spawn the model
-	var totalCPUsUsed int
-	if h.Config.MaxCPUs > 0 {
-		for i := range existingServers {
-			totalCPUsUsed += existingServers[i].Flavor["vcpus"].(int)
-		}
-		if totalCPUsUsed+flavor.VCPUs >= h.Config.MaxCPUs {
-			log.Debug("MaxCPUs limit (%d) reached", h.Config.MaxCPUs)
-			return nil
-		}
-	}
-
-	// If the CountSmallerFlavorToKeep is set in config, we should check that there will be enough CPUs to spawn a smaller flavor after this one
-	if h.Config.MaxCPUs > 0 && h.Config.CountSmallerFlavorToKeep > 0 {
-		smallerFlavor := h.getSmallerFlavorThan(flavor)
-		// If same id, means that the requested flavor is the smallest one so we want to start it.
-		if smallerFlavor.ID != flavor.ID {
-			minCPUsNeededToStart := flavor.VCPUs + h.Config.CountSmallerFlavorToKeep*smallerFlavor.VCPUs
-			countCPUsLeft := int(math.Max(.0, float64(h.Config.MaxCPUs-totalCPUsUsed))) // Set zero as min value in case that the limit changed and count of used greater than max count
-			if minCPUsNeededToStart > countCPUsLeft {
-				log.Debug("CountSmallerFlavorToKeep limit reached, can't start model %s/%s with flavor %s that requires %d CPUs. Smaller flavor is %s and need %d CPUs. There are currently %d/%d left CPUs.",
-					spawnArgs.Model.Group.Name, spawnArgs.Model.Name, flavor.Name, flavor.VCPUs, smallerFlavor.Name, smallerFlavor.VCPUs, countCPUsLeft, h.Config.MaxCPUs)
-				return nil
-			}
-		}
 	}
 
 	// Get image ID
@@ -171,5 +149,48 @@ func (h *HatcheryOpenstack) SpawnWorker(ctx context.Context, spawnArgs hatchery.
 		log.Debug("SpawnWorker> Created Server ID: %s", server.ID)
 		break
 	}
+	return nil
+}
+
+func (h *HatcheryOpenstack) checkSpawnLimits(ctx context.Context, model sdk.Model) error {
+	existingServers := h.getServers(ctx)
+	if len(existingServers) >= h.Configuration().Provision.MaxWorker {
+		return sdk.WithStack(fmt.Errorf("MaxWorker limit (%d) reached", h.Configuration().Provision.MaxWorker))
+	}
+
+	// Get flavor for target model
+	flavor, err := h.flavor(model.ModelVirtualMachine.Flavor)
+	if err != nil {
+		return err
+	}
+
+	// If a max CPUs count is set in configuration we will check that there are enough CPUs available to spawn the model
+	var totalCPUsUsed int
+	if h.Config.MaxCPUs > 0 {
+		for i := range existingServers {
+			totalCPUsUsed += existingServers[i].Flavor["vcpus"].(int)
+		}
+		if totalCPUsUsed+flavor.VCPUs > h.Config.MaxCPUs {
+			return sdk.WithStack(fmt.Errorf("MaxCPUs limit (%d) reached", h.Config.MaxCPUs))
+		}
+	}
+
+	// If the CountSmallerFlavorToKeep is set in config, we should check that there will be enough CPUs to spawn a smaller flavor after this one
+	if h.Config.MaxCPUs > 0 && h.Config.CountSmallerFlavorToKeep > 0 {
+		smallerFlavor := h.getSmallerFlavorThan(flavor)
+		// If same id, means that the requested flavor is the smallest one so we want to start it.
+		log.Debug("checkSpawnLimits> smaller flavor found for %s is %s", flavor.Name, smallerFlavor.Name)
+		if smallerFlavor.ID != flavor.ID {
+			minCPUsNeededToStart := flavor.VCPUs + h.Config.CountSmallerFlavorToKeep*smallerFlavor.VCPUs
+			countCPUsLeft := int(math.Max(.0, float64(h.Config.MaxCPUs-totalCPUsUsed))) // Set zero as min value in case that the limit changed and count of used greater than max count
+			if minCPUsNeededToStart > countCPUsLeft {
+				return sdk.WithStack(fmt.Errorf("CountSmallerFlavorToKeep limit reached, can't start model %s/%s with flavor %s that requires %d CPUs. Smaller flavor is %s and need %d CPUs. There are currently %d/%d left CPUs",
+					model.Group.Name, model.Name, flavor.Name, flavor.VCPUs, smallerFlavor.Name, smallerFlavor.VCPUs, countCPUsLeft, h.Config.MaxCPUs))
+			}
+			log.Debug("checkSpawnLimits> %d/%d CPUs left is enougth to start model %s/%s with flavor %s that require %d CPUs",
+				countCPUsLeft, h.Config.MaxCPUs, model.Group.Name, model.Name, flavor.Name, flavor.VCPUs)
+		}
+	}
+
 	return nil
 }

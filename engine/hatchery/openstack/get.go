@@ -39,7 +39,7 @@ func (h *HatcheryOpenstack) getSmallerFlavorThan(flavor flavors.Flavor) flavors.
 	var smaller *flavors.Flavor
 	for i := range h.flavors {
 		// If the flavor is not the given one and need less CPUs its
-		if h.flavors[i].ID != flavor.ID && h.flavors[i].VCPUs < flavor.VCPUs && (smaller == nil || smaller.VCPUs > h.flavors[i].VCPUs) {
+		if h.flavors[i].ID != flavor.ID && h.flavors[i].VCPUs < flavor.VCPUs && (smaller == nil || smaller.VCPUs < h.flavors[i].VCPUs) {
 			smaller = &h.flavors[i]
 		}
 	}
