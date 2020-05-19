@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/base64"
 	"fmt"
+	"math"
 	"strings"
 	"text/template"
 	"time"
@@ -42,8 +43,8 @@ func (h *HatcheryOpenstack) SpawnWorker(ctx context.Context, spawnArgs hatchery.
 	}
 
 	// If a max CPUs count is set in configuration we will check that there are enough CPUs available to spawn the model
+	var totalCPUsUsed int
 	if h.Config.MaxCPUs > 0 {
-		var totalCPUsUsed int
 		for i := range existingServers {
 			totalCPUsUsed += existingServers[i].Flavor["vcpus"].(int)
 		}
@@ -53,7 +54,20 @@ func (h *HatcheryOpenstack) SpawnWorker(ctx context.Context, spawnArgs hatchery.
 		}
 	}
 
-	// TODO If the CountSmallerFlavorToKeep is set in config, we should check that there will be enough CPUs to spawn a smaller flavor after this one
+	// If the CountSmallerFlavorToKeep is set in config, we should check that there will be enough CPUs to spawn a smaller flavor after this one
+	if h.Config.MaxCPUs > 0 && h.Config.CountSmallerFlavorToKeep > 0 {
+		smallerFlavor := h.getSmallerFlavorThan(flavor)
+		// If same id, means that the requested flavor is the smallest one so we want to start it.
+		if smallerFlavor.ID != flavor.ID {
+			minCPUsNeededToStart := flavor.VCPUs + h.Config.CountSmallerFlavorToKeep*smallerFlavor.VCPUs
+			countCPUsLeft := int(math.Max(.0, float64(h.Config.MaxCPUs-totalCPUsUsed))) // Set zero as min value in case that the limit changed and count of used greater than max count
+			if minCPUsNeededToStart > countCPUsLeft {
+				log.Debug("CountSmallerFlavorToKeep limit reached, can't start model %s/%s with flavor %s that requires %d CPUs. Smaller flavor is %s and need %d CPUs. There are currently %d/%d left CPUs.",
+					spawnArgs.Model.Group.Name, spawnArgs.Model.Name, flavor.Name, flavor.VCPUs, smallerFlavor.Name, smallerFlavor.VCPUs, countCPUsLeft, h.Config.MaxCPUs)
+				return nil
+			}
+		}
+	}
 
 	// Get image ID
 	imageID, err := h.imageID(ctx, spawnArgs.Model.ModelVirtualMachine.Image)
@@ -83,9 +97,9 @@ func (h *HatcheryOpenstack) SpawnWorker(ctx context.Context, spawnArgs hatchery.
 
 	udata := spawnArgs.Model.ModelVirtualMachine.PreCmd + "\n" + spawnArgs.Model.ModelVirtualMachine.Cmd + "\n" + spawnArgs.Model.ModelVirtualMachine.PostCmd
 
-	tmpl, errt := template.New("udata").Parse(udata)
-	if errt != nil {
-		return errt
+	tmpl, err := template.New("udata").Parse(udata)
+	if err != nil {
+		return err
 	}
 	udataParam := sdk.WorkerArgs{
 		API:               h.Configuration().API.HTTP.URL,

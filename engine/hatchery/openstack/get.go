@@ -34,6 +34,21 @@ func (h *HatcheryOpenstack) flavor(flavor string) (flavors.Flavor, error) {
 	return flavors.Flavor{}, sdk.WithStack(fmt.Errorf("flavor '%s' not found", flavor))
 }
 
+// Find flavor ID from flavor name
+func (h *HatcheryOpenstack) getSmallerFlavorThan(flavor flavors.Flavor) flavors.Flavor {
+	var smaller *flavors.Flavor
+	for i := range h.flavors {
+		// If the flavor is not the given one and need less CPUs its
+		if h.flavors[i].ID != flavor.ID && h.flavors[i].VCPUs < flavor.VCPUs && (smaller == nil || smaller.VCPUs > h.flavors[i].VCPUs) {
+			smaller = &h.flavors[i]
+		}
+	}
+	if smaller == nil {
+		return flavor
+	}
+	return *smaller
+}
+
 //This a embedded cache for images list
 var limages = struct {
 	mu   sync.RWMutex

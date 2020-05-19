@@ -157,7 +157,7 @@ func (h *HatcheryOpenstack) WorkerModelsEnabled() ([]sdk.Model, error) {
 		return nil, err
 	}
 
-	filteredModels := make([]sdk.Model, 0, len(allEnabledModels))
+	filteredModels := make([]sdk.Model, 0, len(allModels))
 	for i := range allModels {
 		if allModels[i].Type != sdk.Openstack {
 			continue
@@ -165,7 +165,7 @@ func (h *HatcheryOpenstack) WorkerModelsEnabled() ([]sdk.Model, error) {
 
 		// Required flavor should be available on target OpenStack project
 		if _, err := h.flavor(allModels[i].ModelVirtualMachine.Flavor); err != nil {
-			log.Debug("WorkerModelsEnabled> model %s/%s is not usable because flavor '%s' not found", model.Group.Name, model.Name, model.ModelVirtualMachine.Flavor)
+			log.Debug("WorkerModelsEnabled> model %s/%s is not usable because flavor '%s' not found", allModels[i].Group.Name, allModels[i].Name, allModels[i].ModelVirtualMachine.Flavor)
 			continue
 		}
 
@@ -179,7 +179,7 @@ func (h *HatcheryOpenstack) WorkerModelsEnabled() ([]sdk.Model, error) {
 				}
 			}
 			if !allowed {
-				log.Debug("WorkerModelsEnabled> model %s/%s is not usable because flavor '%s' is not allowed", model.Group.Name, model.Name, model.ModelVirtualMachine.Flavor)
+				log.Debug("WorkerModelsEnabled> model %s/%s is not usable because flavor '%s' is not allowed", allModels[i].Group.Name, allModels[i].Name, allModels[i].ModelVirtualMachine.Flavor)
 				continue
 			}
 		}
@@ -194,7 +194,7 @@ func (h *HatcheryOpenstack) WorkerModelsEnabled() ([]sdk.Model, error) {
 		return flavorI.VCPUs < flavorJ.VCPUs
 	})
 
-	return
+	return filteredModels, nil
 }
 
 // CanSpawn return wether or not hatchery can spawn model
