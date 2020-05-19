@@ -249,7 +249,7 @@ func (h *HatcheryMarathon) SpawnWorker(ctx context.Context, spawnArgs hatchery.S
 		memory = hatchery.MemoryRegisterContainer
 	}
 
-	cmd += "; sleep 300" // sleep 5min, to let marathon hatchery remove the container
+	cmd += "; sleep 120" // sleep 2min, to let marathon hatchery remove the container
 
 	//Check if there is a memory requirement
 	//if there is a service requirement: exit
