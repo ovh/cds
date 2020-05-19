@@ -2,7 +2,7 @@ package sdk
 
 import (
 	"database/sql/driver"
-	json "encoding/json"
+	"encoding/json"
 	"fmt"
 	"time"
 )
