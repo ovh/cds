@@ -550,7 +550,7 @@ func Test_WorkflowAsCodeWithNotifications(t *testing.T) {
 				out = bs
 				return nil, 200, nil
 			},
-		).Times(4)
+		).MaxTimes(10)
 
 	servicesClients.EXPECT().
 		DoJSONRequest(gomock.Any(), "GET", "/vcs/github/repos/fsamin/go-repo/branches/?branch=master", gomock.Any(), gomock.Any(), gomock.Any()).
@@ -563,7 +563,7 @@ func Test_WorkflowAsCodeWithNotifications(t *testing.T) {
 				*(out.(*sdk.VCSBranch)) = *b
 				return nil, 200, nil
 			},
-		).MaxTimes(6)
+		).MaxTimes(10)
 
 	servicesClients.EXPECT().
 		DoJSONRequest(gomock.Any(), "GET", "/vcs/github/repos/fsamin/go-repo/commits/aaaaaaa", gomock.Any(), gomock.Any(), gomock.Any()).
@@ -581,7 +581,7 @@ func Test_WorkflowAsCodeWithNotifications(t *testing.T) {
 				*(out.(*sdk.VCSCommit)) = *c
 				return nil, 200, nil
 			},
-		).MaxTimes(1)
+		).MaxTimes(10)
 
 	servicesClients.EXPECT().
 		DoJSONRequest(gomock.Any(), "GET", "/vcs/github/repos/fsamin/go-repo/commits/aaaaaaa/statuses", gomock.Any(), gomock.Any(), gomock.Any()).
@@ -597,7 +597,7 @@ func Test_WorkflowAsCodeWithNotifications(t *testing.T) {
 			func(ctx context.Context, method, path string, in interface{}, out interface{}) (http.Header, int, error) {
 				return nil, 200, nil
 			},
-		).MaxTimes(4)
+		).MaxTimes(10)
 
 	servicesClients.EXPECT().
 		DoJSONRequest(gomock.Any(), "POST", "/vcs/github/status", gomock.Any(), gomock.Any(), gomock.Any()).
