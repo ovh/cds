@@ -108,9 +108,9 @@ func readOperationMultipart(r *http.Request) (*sdk.Operation, map[string][]byte,
 func (s *Service) getOperationsHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		uuid := muxVar(r, "uuid")
-
 		op := s.dao.loadOperation(ctx, uuid)
-
+		op.RepositoryStrategy.SSHKeyContent = sdk.PasswordPlaceholder
+		op.RepositoryStrategy.Password = sdk.PasswordPlaceholder
 		return service.WriteJSON(w, op, http.StatusOK)
 	}
 }

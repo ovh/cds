@@ -73,7 +73,8 @@ func (api *API) postImportAsCodeHandler() service.Handler {
 		if err := operation.PostRepositoryOperation(ctx, api.mustDB(), *p, ope, nil); err != nil {
 			return sdk.WrapError(err, "cannot create repository operation")
 		}
-		ope.RepositoryStrategy.SSHKeyContent = ""
+		ope.RepositoryStrategy.SSHKeyContent = sdk.PasswordPlaceholder
+		ope.RepositoryStrategy.Password = sdk.PasswordPlaceholder
 
 		return service.WriteJSON(w, ope, http.StatusCreated)
 	}
@@ -91,6 +92,8 @@ func (api *API) getImportAsCodeHandler() service.Handler {
 		if err != nil {
 			return sdk.WrapError(err, "cannot get repository operation status")
 		}
+		ope.RepositoryStrategy.SSHKeyContent = sdk.PasswordPlaceholder
+		ope.RepositoryStrategy.Password = sdk.PasswordPlaceholder
 		return service.WriteJSON(w, ope, http.StatusOK)
 	}
 }
@@ -130,7 +133,7 @@ func (api *API) postPerformImportAsCodeHandler() service.Handler {
 
 		tr, err := workflow.ReadCDSFiles(ope.LoadFiles.Results)
 		if err != nil {
-			return sdk.WrapError(err, "Unable to read cds files")
+			return sdk.WrapError(err, "unable to read cds files")
 		}
 
 		//TODO: Delete branch and default branch
