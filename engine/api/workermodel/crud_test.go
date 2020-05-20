@@ -199,14 +199,14 @@ func TestUpdateModelInPipeline(t *testing.T) {
 	}
 	test.NoError(t, pipeline.InsertJob(db, &job1, 0, &pip1))
 
-	model1FooLoad, err := workermodel.LoadByNameAndGroupID(db, model1Foo.Name, g1.ID)
+	model1FooLoad, err := workermodel.LoadByNameAndGroupID(context.TODO(), db, model1Foo.Name, g1.ID, workermodel.LoadOptions.Default)
 	require.NoError(t, err)
 
 	pips, err := pipeline.LoadByWorkerModel(context.TODO(), db, model1FooLoad)
 	assert.NoError(t, err)
 	require.Equal(t, 1, len(pips))
 
-	model1Load, err := workermodel.LoadByIDWithClearPassword(db, model1.ID)
+	model1Load, err := workermodel.LoadByID(context.TODO(), db, model1.ID, workermodel.LoadOptions.Default)
 	require.NoError(t, err)
 
 	pips, err = pipeline.LoadByWorkerModel(context.TODO(), db, model1Load)
@@ -226,7 +226,7 @@ func TestUpdateModelInPipeline(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	model2Load, err := workermodel.LoadByIDWithClearPassword(db, res.ID)
+	model2Load, err := workermodel.LoadByID(context.TODO(), db, res.ID, workermodel.LoadOptions.Default)
 	require.NoError(t, err)
 
 	pips, err = pipeline.LoadByWorkerModel(context.TODO(), db, model1Load)
@@ -240,7 +240,6 @@ func TestUpdateModelInPipeline(t *testing.T) {
 	pips, err = pipeline.LoadByWorkerModel(context.TODO(), db, model1FooLoad)
 	assert.NoError(t, err)
 	require.Equal(t, 1, len(pips))
-
 }
 
 func TestUpdateModelInPipelineSimple(t *testing.T) {
@@ -294,7 +293,7 @@ func TestUpdateModelInPipelineSimple(t *testing.T) {
 	}
 	test.NoError(t, pipeline.InsertJob(db, &job1, 0, &pip1))
 
-	model1Load, err := workermodel.LoadByIDWithClearPassword(db, model1.ID)
+	model1Load, err := workermodel.LoadByID(context.TODO(), db, model1.ID, workermodel.LoadOptions.Default)
 	require.NoError(t, err)
 
 	pips, err := pipeline.LoadByWorkerModel(context.TODO(), db, model1Load)
@@ -314,7 +313,7 @@ func TestUpdateModelInPipelineSimple(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	model1FooLoad, err := workermodel.LoadByIDWithClearPassword(db, res.ID)
+	model1FooLoad, err := workermodel.LoadByID(context.TODO(), db, res.ID, workermodel.LoadOptions.Default)
 	require.NoError(t, err)
 
 	pips, err = pipeline.LoadByWorkerModel(context.TODO(), db, model1FooLoad)
