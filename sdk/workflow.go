@@ -276,14 +276,14 @@ func (w *Workflow) Normalize() {
 			n.SourceNodeRefs = nil
 			for _, id := range n.NodeIDs {
 				notifNode := w.WorkflowData.NodeByID(id)
-				if notifNode != nil {
+				if notifNode != nil && notifNode.ID != 0 {
 					n.SourceNodeRefs = append(n.SourceNodeRefs, notifNode.Name)
 				}
 			}
 		} else if len(n.SourceNodeRefs) != 0 {
 			for _, nodeName := range n.SourceNodeRefs {
 				notifNode := w.WorkflowData.NodeByName(nodeName)
-				if notifNode != nil {
+				if notifNode != nil && notifNode.ID != 0 {
 					n.NodeIDs = append(n.NodeIDs, notifNode.ID)
 				}
 			}
