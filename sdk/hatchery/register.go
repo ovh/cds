@@ -69,13 +69,21 @@ loopModels:
 		}
 
 		if err := h.CDSClient().WorkerModelBook(models[k].Group.Name, models[k].Name); err != nil {
-			log.Debug("%v", sdk.WrapError(err, "cannot book model %s with id %d", models[k].Name, models[k].ID))
-		} else {
-			log.Info(ctx, "hatchery> workerRegister> spawning model %s (%d)", models[k].Name, models[k].ID)
-			//Ask for the creation
-			startWorkerChan <- workerStarterRequest{
-				registerWorkerModel: &models[k],
-			}
+			log.Debug("%v", sdk.WrapError(err, "cannot book model %s with id %d", models[k].Path(), models[k].ID))
+			continue
+		}
+
+		log.Info(ctx, "hatchery> workerRegister> spawning model %s (%d)", models[k].Name, models[k].ID)
+
+		// Interpolate model secrets
+		if err := ModelInterpolateSecrets(h, &models[k]); err != nil {
+			log.Error(ctx, "hatchery> workerRegister> cannot interpolate secrets for model %s: %v", models[k].Path(), err)
+			continue
+		}
+
+		//Ask for the creation
+		startWorkerChan <- workerStarterRequest{
+			registerWorkerModel: &models[k],
 		}
 	}
 	return nil

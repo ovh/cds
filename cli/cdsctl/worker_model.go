@@ -51,11 +51,11 @@ func workerModelListRun(v cli.Values) (cli.ListResult, error) {
 	stateFlag := v.GetString("state")
 
 	if binaryFlag != "" {
-		workerModels, err = client.WorkerModels(&cdsclient.WorkerModelFilter{
+		workerModels, err = client.WorkerModelList(&cdsclient.WorkerModelFilter{
 			Binary: binaryFlag,
 		})
 	} else {
-		workerModels, err = client.WorkerModels(&cdsclient.WorkerModelFilter{
+		workerModels, err = client.WorkerModelList(&cdsclient.WorkerModelFilter{
 			State: stateFlag,
 		})
 	}
@@ -147,7 +147,7 @@ func workerModelShowRun(v cli.Values) (interface{}, error) {
 		return nil, err
 	}
 
-	wm, err := client.WorkerModel(groupName, modelName)
+	wm, err := client.WorkerModelGet(groupName, modelName)
 	if err != nil {
 		return nil, err
 	}
@@ -171,7 +171,7 @@ func workerModelDeleteRun(v cli.Values) error {
 	}
 
 	if err := client.WorkerModelDelete(groupName, modelName); err != nil {
-		if sdk.ErrorIs(err, sdk.ErrNoWorkerModel) && v.GetBool("force") {
+		if sdk.ErrorIs(err, sdk.ErrNotFound) && v.GetBool("force") {
 			return nil
 		}
 		return err

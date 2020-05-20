@@ -247,7 +247,7 @@ func (api *API) putTemplateHandler() service.Handler {
 		clone := sdk.WorkflowTemplate(*old)
 		clone.Update(data)
 
-		// execute template with no instance only to check if parsing is ok
+		// execute template with no instance only to check if golang template parsing is ok
 		if _, err := workflowtemplate.Parse(clone); err != nil {
 			return err
 		}

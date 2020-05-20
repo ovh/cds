@@ -20,13 +20,17 @@ func Create(ctx context.Context, db gorp.SqlExecutor, data sdk.Model, ident sdk.
 	}
 
 	// check if worker model already exists
-	if _, err := LoadByNameAndGroupID(db, data.Name, data.GroupID); err == nil {
+	existingModel, err := LoadByNameAndGroupID(ctx, db, data.Name, data.GroupID)
+	if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
+		return nil, err
+	}
+	if existingModel != nil {
 		return nil, sdk.NewErrorFrom(sdk.ErrModelNameExist, "worker model already exists with name %s for given group", data.Name)
 	}
 
 	// if a model pattern is given try to get it from database
 	if data.PatternName != "" {
-		modelPattern, err := LoadPatternByName(db, data.Type, data.PatternName)
+		modelPattern, err := LoadPatternByNameAndType(ctx, db, data.Type, data.PatternName)
 		if err != nil {
 			return nil, sdk.NewErrorWithStack(err, sdk.NewErrorFrom(sdk.ErrWrongRequest, "invalid given worker model name"))
 		}
@@ -51,7 +55,7 @@ func Create(ctx context.Context, db gorp.SqlExecutor, data sdk.Model, ident sdk.
 	model.Author.Fullname = ident.GetFullname()
 	model.Author.Email = ident.GetEmail()
 
-	if err := Insert(db, &model); err != nil {
+	if err := Insert(ctx, db, &model); err != nil {
 		return nil, sdk.WrapError(err, "cannot add worker model")
 	}
 
@@ -67,14 +71,18 @@ func Update(ctx context.Context, db gorp.SqlExecutor, old *sdk.Model, data sdk.M
 
 	if old.GroupID != data.GroupID || old.Name != data.Name {
 		// check if worker model already exists
-		if _, err := LoadByNameAndGroupID(db, data.Name, data.GroupID); err == nil {
+		existingModel, err := LoadByNameAndGroupID(ctx, db, data.Name, data.GroupID)
+		if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
+			return nil, err
+		}
+		if existingModel != nil {
 			return nil, sdk.NewErrorFrom(sdk.ErrModelNameExist, "worker model already exists with name %s for given group", data.Name)
 		}
 	}
 
 	// if a model pattern is given try to get it from database
 	if data.PatternName != "" {
-		modelPattern, err := LoadPatternByName(db, data.Type, data.PatternName)
+		modelPattern, err := LoadPatternByNameAndType(ctx, db, data.Type, data.PatternName)
 		if err != nil {
 			return nil, sdk.NewErrorWithStack(err, sdk.NewErrorFrom(sdk.ErrWrongRequest, "invalid given worker model name"))
 		}
@@ -92,22 +100,12 @@ func Update(ctx context.Context, db gorp.SqlExecutor, old *sdk.Model, data sdk.M
 		}
 	}
 
-	// if model type is docker and given password equals the place holder value, we will reuse the old password value
-	if data.Type == sdk.Docker && data.ModelDocker.Private && data.ModelDocker.Password == sdk.PasswordPlaceholder {
-		modelClear, err := LoadByIDWithClearPassword(db, old.ID)
-		if err != nil {
-			return nil, err
-		}
-
-		data.ModelDocker.Password = modelClear.ModelDocker.Password
-	}
-
 	// update fields from request data
 	model := sdk.Model(*old)
 	model.Update(data)
 
 	// update model in db
-	if err := UpdateDB(db, &model); err != nil {
+	if err := UpdateDB(ctx, db, &model); err != nil {
 		return nil, sdk.WrapError(err, "cannot update worker model")
 	}
 
@@ -120,7 +118,7 @@ func Update(ctx context.Context, db gorp.SqlExecutor, old *sdk.Model, data sdk.M
 		return nil, err
 	}
 
-	oldPath, newPath := old.GetPath(oldGrp.Name), model.GetPath(grp.Name)
+	oldPath, newPath := sdk.ComputeWorkerModelPath(oldGrp.Name, old.Name), sdk.ComputeWorkerModelPath(grp.Name, model.Name)
 	// if the model has been renamed, we will have to update requirements
 	if oldPath != newPath {
 		// select requirements to update

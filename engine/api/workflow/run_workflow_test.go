@@ -401,7 +401,7 @@ func TestManualRun3(t *testing.T) {
 	require.NoError(t, plugin.Insert(db, &p))
 	assert.NotEqual(t, 0, p.ID)
 
-	model, _ := workermodel.LoadByNameAndGroupID(db, "TestManualRun", g.ID)
+	model, _ := workermodel.LoadByNameAndGroupID(context.TODO(), db, "TestManualRun", g.ID)
 	if model == nil {
 		model = &sdk.Model{
 			Name:    "TestManualRun",
@@ -419,7 +419,7 @@ func TestManualRun3(t *testing.T) {
 			},
 		}
 
-		if err := workermodel.Insert(db, model); err != nil {
+		if err := workermodel.Insert(context.TODO(), db, model); err != nil {
 			t.Fatalf("Error inserting model : %s", err)
 		}
 	}

@@ -399,6 +399,7 @@ func (api *API) InitRouter() {
 	r.Handle("/worker/model/pattern/{type}/{name}", Scope(sdk.AuthConsumerScopeWorkerModel), r.GET(api.getWorkerModelPatternHandler), r.PUT(api.putWorkerModelPatternHandler, NeedAdmin(true)), r.DELETE(api.deleteWorkerModelPatternHandler, NeedAdmin(true)))
 	r.Handle("/worker/model/import", Scope(sdk.AuthConsumerScopeWorkerModel), r.POST(api.postWorkerModelImportHandler))
 	r.Handle("/worker/model/{permGroupName}/{permModelName}", Scope(sdk.AuthConsumerScopeWorkerModel), r.GET(api.getWorkerModelHandler), r.PUT(api.putWorkerModelHandler), r.DELETE(api.deleteWorkerModelHandler))
+	r.Handle("/worker/model/{permGroupName}/{permModelName}/secret", Scope(sdk.AuthConsumerScopeWorkerModel), r.GET(api.getWorkerModelSecretHandler))
 	r.Handle("/worker/model/{permGroupName}/{permModelName}/export", Scope(sdk.AuthConsumerScopeWorkerModel), r.GET(api.getWorkerModelExportHandler))
 	r.Handle("/worker/model/{permGroupName}/{permModelName}/usage", Scope(sdk.AuthConsumerScopeWorkerModel), r.GET(api.getWorkerModelUsageHandler))
 	r.Handle("/worker/model/{permGroupName}/{permModelName}/book", Scope(sdk.AuthConsumerScopeWorkerModel), r.PUT(api.putBookWorkerModelHandler, MaintenanceAware()))
