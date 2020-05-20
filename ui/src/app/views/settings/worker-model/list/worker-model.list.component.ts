@@ -27,8 +27,11 @@ export class WorkerModelListComponent {
         this.filter = f => {
             const lowerFilter = f.toLowerCase();
             return d => {
-                return d.name.toLowerCase().indexOf(lowerFilter) !== -1 ||
-                    d.type.toLowerCase().indexOf(lowerFilter) !== -1;
+                let s = `${d.group.name}/${d.name}`.toLowerCase();
+                return s.indexOf(lowerFilter) !== -1 ||
+                    d.type.toLowerCase().indexOf(lowerFilter) !== -1 ||
+                    d.description.toLowerCase().indexOf(lowerFilter) !== -1 ||
+                    this.getImageName(d).toLowerCase().indexOf(lowerFilter) !== -1;
             }
         };
 
@@ -40,6 +43,11 @@ export class WorkerModelListComponent {
         }];
 
         this.columns = [
+            <Column<WorkerModel>>{
+                name: 'worker_model_group',
+                class: 'three',
+                selector: (wm: WorkerModel) => wm.group.name
+            },
             <Column<WorkerModel>>{
                 type: ColumnType.ROUTER_LINK_WITH_ICONS,
                 name: 'common_name',
@@ -98,11 +106,6 @@ export class WorkerModelListComponent {
                 class: 'three',
                 selector: this.getImageName
             },
-            <Column<WorkerModel>>{
-                name: 'worker_model_group',
-                class: 'three',
-                selector: (wm: WorkerModel) => wm.group.name
-            },
         ];
 
         this.loadWorkerModels();
@@ -116,7 +119,14 @@ export class WorkerModelListComponent {
                 this._cd.markForCheck();
             }))
             .subscribe(wms => {
-                this.workerModels = wms;
+                this.workerModels = wms.sort((a, b) => {
+                    let aG = a.group.name.toLowerCase();
+                    let bG = b.group.name.toLowerCase();
+                    if (aG === bG) {
+                        return a.name.toLowerCase() > b.name.toLowerCase() ? 1 : -1;
+                    }
+                    return aG > bG ? 1 : -1;
+                });
             });
     }
 
