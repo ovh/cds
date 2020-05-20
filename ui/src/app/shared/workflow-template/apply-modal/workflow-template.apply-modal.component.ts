@@ -17,8 +17,8 @@ import { WorkflowTemplateService } from 'app/service/workflow-template/workflow-
 import { WorkflowService } from 'app/service/workflow/workflow.service';
 import { calculateWorkflowTemplateDiff } from 'app/shared/diff/diff';
 import { Item } from 'app/shared/diff/list/diff.list.component';
-import { finalize } from 'rxjs/operators';
 import { forkJoin } from 'rxjs/internal/observable/forkJoin';
+import { finalize } from 'rxjs/operators';
 
 @Component({
     selector: 'app-workflow-template-apply-modal',
@@ -94,6 +94,17 @@ export class WorkflowTemplateApplyModalComponent implements OnChanges {
         if (this.workflowTemplateIn && this.workflowTemplateInstanceIn) {
             this.workflowTemplate = this.workflowTemplateIn;
             this.workflowTemplateInstance = this.workflowTemplateInstanceIn;
+
+            if (!this.workflowTemplateInstance.workflow) {
+                this._projectService.getProject(this.workflowTemplateInstanceIn.project.key, [new LoadOpts('withKeys', 'keys')])
+                    .pipe(finalize(() => this._cd.markForCheck()))
+                    .subscribe(p => {
+                        this.project = p;
+                        this.loadAudits();
+                    });
+                return;
+            }
+
             forkJoin([
                 this._projectService.getProject(this.workflowTemplateInstanceIn.project.key, [new LoadOpts('withKeys', 'keys')]),
                 this._workflowService.getWorkflow(this.workflowTemplateInstance.project.key, this.workflowTemplateInstance.workflow_name)

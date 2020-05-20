@@ -79,6 +79,10 @@ type templateBulkFileInstance struct {
 	Parameters   []string `json:"parameters" yaml:"parameters"`
 }
 
+func templateInstanceKey(w sdk.WorkflowTemplateInstance) string {
+	return fmt.Sprintf("%s/%s", w.Project.Key, w.Request.WorkflowName)
+}
+
 func templateExtractAndValidateInstances(instanceKeys []string) (map[string]templateBulkInstancePath, error) {
 	minstances := make(map[string]templateBulkInstancePath)
 	for i := range instanceKeys {
@@ -269,7 +273,7 @@ func templateAskForInstances(wt *sdk.WorkflowTemplate, mwtis map[string]sdk.Work
 			info = cli.Green("up to date")
 		}
 
-		_, instanceGivenAsParam := moperations[instance.Key()]
+		_, instanceGivenAsParam := moperations[templateInstanceKey(instance)]
 		// selected by default if given as param or if no instances given as param an not up to date
 		defaultSelected := instanceGivenAsParam || (instance.Workflow != nil && notUpToDate && len(moperations) == 0)
 
@@ -360,7 +364,7 @@ func templateBulkRun(v cli.Values) error {
 
 	mwtis := make(map[string]sdk.WorkflowTemplateInstance, len(wtis))
 	for _, i := range wtis {
-		mwtis[i.Key()] = i
+		mwtis[templateInstanceKey(i)] = i
 	}
 
 	moperations := templateInitOperationFromParams(mwtis, fileOperations, minstances, params)
@@ -377,7 +381,7 @@ func templateBulkRun(v cli.Values) error {
 
 	// ask interactively for params if prompt not disabled
 	if !v.GetBool("no-interactive") {
-		sort.Slice(wtis, func(i, j int) bool { return wtis[i].Key() < wtis[j].Key() })
+		sort.Slice(wtis, func(i, j int) bool { return templateInstanceKey(wtis[i]) < templateInstanceKey(wtis[j]) })
 		if err := templateAskForInstances(wt, mwtis, minstances, moperations); err != nil {
 			return err
 		}
@@ -505,7 +509,7 @@ func templateBulkRun(v cli.Values) error {
 	}
 
 	if len(moperations) == 0 {
-		fmt.Printf("Nothing to do")
+		fmt.Println("Nothing to do")
 		return nil
 	}
 

@@ -22,7 +22,7 @@ export class WorkflowTemplateListComponent {
             const lowerFilter = f.toLowerCase();
             return d => {
                 let s = `${d.group.name}/${d.name}`.toLowerCase();
-                return s.indexOf(lowerFilter) !== -1;
+                return s.indexOf(lowerFilter) !== -1 || d.description.toLowerCase().indexOf(lowerFilter) !== -1;
             }
         };
 
@@ -35,8 +35,14 @@ export class WorkflowTemplateListComponent {
 
         this.columns = [
             <Column<WorkflowTemplate>>{
+                name: 'common_group',
+                class: 'three',
+                selector: (wt: WorkflowTemplate) => wt.group.name
+            },
+            <Column<WorkflowTemplate>>{
                 type: ColumnType.ROUTER_LINK,
                 name: 'common_name',
+                class: 'four',
                 selector: (wt: WorkflowTemplate) => {
                     return {
                         link: `/settings/workflow-template/${wt.group.name}/${wt.slug}`,
@@ -45,13 +51,14 @@ export class WorkflowTemplateListComponent {
                 }
             },
             <Column<WorkflowTemplate>>{
-                name: 'common_group',
-                selector: (wt: WorkflowTemplate) => wt.group.name
-            },
-            <Column<WorkflowTemplate>>{
                 type: ColumnType.MARKDOWN,
                 name: 'common_description',
-                selector: (wt: WorkflowTemplate) => wt.description
+                selector: (wt: WorkflowTemplate) => {
+                    if (wt.description && wt.description.length > 100) {
+                        return wt.description.substr(0, 100) + '...';
+                    }
+                    return wt.description;
+                }
             }
         ];
 
@@ -65,6 +72,15 @@ export class WorkflowTemplateListComponent {
                 this.loading = false;
                 this._cd.markForCheck();
             }))
-            .subscribe(wts => { this.workflowTemplates = wts; });
+            .subscribe(wts => {
+                this.workflowTemplates = wts.sort((a, b) => {
+                    let aG = a.group.name.toLowerCase();
+                    let bG = b.group.name.toLowerCase();
+                    if (aG === bG) {
+                        return a.name.toLowerCase() > b.name.toLowerCase() ? 1 : -1;
+                    }
+                    return aG > bG ? 1 : -1;
+                });
+            });
     }
 }
