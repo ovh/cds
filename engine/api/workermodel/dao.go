@@ -232,12 +232,6 @@ func UpdateDB(ctx context.Context, db gorp.SqlExecutor, model *sdk.Model) error 
 		return err
 	}
 
-	dbmodel.UserLastModified = time.Now()
-	dbmodel.NeedRegistration = true
-	dbmodel.NbSpawnErr = 0
-	dbmodel.LastSpawnErr = nil
-	dbmodel.LastSpawnErrLogs = nil
-
 	needSaveRegistryPassword, dockerRegistryPassword, err := replaceDockerRegistryPassword(db, &dbmodel)
 	if err != nil {
 		return err
