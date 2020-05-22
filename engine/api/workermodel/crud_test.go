@@ -131,7 +131,6 @@ func TestUpdateModel(t *testing.T) {
 	cpy.GroupID = g2.ID
 	res, err = workermodel.Update(context.TODO(), db, res, cpy)
 	require.Error(t, err)
-
 }
 
 // create a worker model aaa
@@ -362,4 +361,38 @@ func TestCopyModelTypeData_OldRestricted(t *testing.T) {
 		Restricted:  false,
 		PatternName: "my-pattern",
 	}))
+}
+
+func TestUpdateModel_NeedRegister(t *testing.T) {
+	db, store, end := test.SetupPG(t, bootstrap.InitiliazeDB)
+	defer end()
+
+	g := assets.InsertTestGroup(t, db, sdk.RandomString(10))
+
+	u, _ := assets.InsertLambdaUser(t, db)
+
+	name := sdk.RandomString(10)
+	m, err := workermodel.Create(context.TODO(), db, sdk.Model{
+		Type:        sdk.Docker,
+		Name:        name,
+		GroupID:     g.ID,
+		ModelDocker: sdk.ModelDocker{},
+	}, u)
+	require.NoError(t, err)
+	require.NoError(t, workermodel.UpdateRegistration(context.TODO(), db, store, m.ID))
+
+	m, err = workermodel.LoadByID(context.TODO(), db, m.ID)
+	require.NoError(t, err)
+	require.False(t, m.NeedRegistration)
+	require.True(t, m.LastRegistration.After(m.UserLastModified))
+
+	mUpdated, err := workermodel.Update(context.TODO(), db, m, sdk.Model{
+		Type:        sdk.Docker,
+		Name:        name,
+		GroupID:     g.ID,
+		ModelDocker: sdk.ModelDocker{},
+	})
+	require.NoError(t, err)
+	require.True(t, mUpdated.NeedRegistration)
+	require.True(t, mUpdated.UserLastModified.After(m.LastRegistration))
 }

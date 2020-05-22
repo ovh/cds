@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/go-gorp/gorp"
 
@@ -103,6 +104,13 @@ func Update(ctx context.Context, db gorp.SqlExecutor, old *sdk.Model, data sdk.M
 	// update fields from request data
 	model := sdk.Model(*old)
 	model.Update(data)
+
+	// model need to be register when modified
+	model.UserLastModified = time.Now()
+	model.NeedRegistration = true
+	model.NbSpawnErr = 0
+	model.LastSpawnErr = nil
+	model.LastSpawnErrLogs = nil
 
 	// update model in db
 	if err := UpdateDB(ctx, db, &model); err != nil {
