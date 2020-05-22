@@ -156,7 +156,7 @@ func processNodeJobRunRequirementsGetModel(ctx context.Context, db gorp.SqlExecu
 
 		// if there is no shared.infra model we will try to find one for exec groups, backward compatibility for existing workflow runs.
 		if wm == nil {
-			wms, err := workermodel.LoadAllByNameAndGroupIDs(ctx, db, modelName, execsGroupIDs)
+			wms, err := workermodel.LoadAllByNameAndGroupIDs(ctx, db, modelName, execsGroupIDs, workermodel.LoadOptions.Default)
 			if err != nil {
 				return nil, err
 			}
