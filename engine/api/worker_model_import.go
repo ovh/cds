@@ -81,7 +81,7 @@ func (api *API) postWorkerModelImportHandler() service.Handler {
 		var newModel *sdk.Model
 
 		// check if a model already exists for given info, if exists but not force update returns an error
-		old, err := workermodel.LoadByNameAndGroupIDWithClearPassword(api.mustDB(), data.Name, grp.ID)
+		old, err := workermodel.LoadByNameAndGroupID(ctx, api.mustDB(), data.Name, grp.ID)
 		if err != nil {
 			if !isAdmin(ctx) {
 				// if current user is not admin and model is not restricted, a pattern should be given
@@ -123,7 +123,7 @@ func (api *API) postWorkerModelImportHandler() service.Handler {
 			return sdk.WithStack(err)
 		}
 
-		newModel, err = workermodel.LoadByID(api.mustDB(), newModel.ID)
+		newModel, err = workermodel.LoadByID(ctx, api.mustDB(), newModel.ID, workermodel.LoadOptions.Default)
 		if err != nil {
 			return err
 		}

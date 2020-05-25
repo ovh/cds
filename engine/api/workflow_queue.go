@@ -74,9 +74,9 @@ func (api *API) postTakeWorkflowJobHandler() service.Handler {
 		// Load worker model
 		var workerModelName string
 		if wk.ModelID != nil {
-			wm, err := workermodel.LoadByID(api.mustDB(), *wk.ModelID)
+			wm, err := workermodel.LoadByID(ctx, api.mustDB(), *wk.ModelID, workermodel.LoadOptions.Default)
 			if err != nil {
-				return sdk.WithStack(sdk.ErrNoWorkerModel)
+				return err
 			}
 			workerModelName = wm.Name
 		}

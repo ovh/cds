@@ -202,6 +202,8 @@ func TestInsertSimpleWorkflowWithApplicationAndEnv(t *testing.T) {
 	test.NoError(t, err)
 
 	assert.Equal(t, w.ID, w1.ID)
+	require.NotNil(t, w.ID, w1.WorkflowData)
+	require.NotEqual(t, 0, w1.WorkflowData.Node.ID)
 	assert.Equal(t, w.WorkflowData.Node.Context.ApplicationID, w1.WorkflowData.Node.Context.ApplicationID)
 	assert.Equal(t, w.WorkflowData.Node.Context.EnvironmentID, w1.WorkflowData.Node.Context.EnvironmentID)
 	assert.Equal(t, w.WorkflowData.Node.Context.Mutex, w1.WorkflowData.Node.Context.Mutex)

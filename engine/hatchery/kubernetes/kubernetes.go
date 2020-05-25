@@ -41,6 +41,8 @@ func New() *HatcheryKubernetes {
 	return s
 }
 
+var _ hatchery.InterfaceWithModels = new(HatcheryKubernetes)
+
 // InitHatchery register local hatchery with its worker model
 func (h *HatcheryKubernetes) InitHatchery(ctx context.Context) error {
 	if err := h.Common.InitServiceLogger(); err != nil {
@@ -52,7 +54,8 @@ func (h *HatcheryKubernetes) InitHatchery(ctx context.Context) error {
 	return nil
 }
 
-func (s *HatcheryKubernetes) Init(config interface{}) (cdsclient.ServiceConfig, error) {
+// Init cdsclient config.
+func (h *HatcheryKubernetes) Init(config interface{}) (cdsclient.ServiceConfig, error) {
 	var cfg cdsclient.ServiceConfig
 	sConfig, ok := config.(HatcheryConfiguration)
 	if !ok {
@@ -215,9 +218,14 @@ func (*HatcheryKubernetes) ModelType() string {
 	return sdk.Docker
 }
 
-// WorkerModelsEnabled returns Worker model enabled
+// WorkerModelsEnabled returns Worker model enabled.
 func (h *HatcheryKubernetes) WorkerModelsEnabled() ([]sdk.Model, error) {
-	return h.CDSClient().WorkerModelsEnabled()
+	return h.CDSClient().WorkerModelEnabledList()
+}
+
+// WorkerModelSecretList returns secret for given model.
+func (h *HatcheryKubernetes) WorkerModelSecretList(m sdk.Model) (sdk.WorkerModelSecrets, error) {
+	return h.CDSClient().WorkerModelSecretList(m.Group.Name, m.Name)
 }
 
 // CanSpawn return wether or not hatchery can spawn model.
@@ -299,7 +307,6 @@ func (h *HatcheryKubernetes) SpawnWorker(ctx context.Context, spawnArgs hatchery
 		spawnArgs.Model.ModelDocker.Envs = map[string]string{}
 	}
 	envsWm := map[string]string{}
-	envsWm["CDS_FORCE_EXIT"] = "1"
 	envsWm["CDS_MODEL_MEMORY"] = fmt.Sprintf("%d", memory)
 	envsWm["CDS_API"] = udataParam.API
 	envsWm["CDS_TOKEN"] = udataParam.Token
@@ -378,7 +385,7 @@ func (h *HatcheryKubernetes) SpawnWorker(ctx context.Context, spawnArgs hatchery
 	secretName := "cds-credreg-" + spawnArgs.Model.Name
 	if spawnArgs.Model.ModelDocker.Private {
 		if err := h.createSecret(secretName, *spawnArgs.Model); err != nil {
-			return sdk.WrapError(err, "cannot create secret for model %s", spawnArgs.Model.Name)
+			return sdk.WrapError(err, "cannot create secret for model %s", spawnArgs.Model.Path())
 		}
 		podSchema.Spec.ImagePullSecrets = []apiv1.LocalObjectReference{{Name: secretName}}
 		podSchema.ObjectMeta.Labels[LABEL_SECRET] = secretName

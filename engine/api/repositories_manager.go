@@ -545,7 +545,7 @@ func (api *API) attachRepositoriesManagerHandler() service.Handler {
 				wfDB.WorkflowData.Node.Context.DefaultPayload = defaultPayload
 
 				if err := workflow.Update(ctx, db, api.Cache, *proj, wfDB, workflow.UpdateOptions{DisableHookManagement: true}); err != nil {
-					return sdk.WrapError(err, "cannot update node context %d", wf.WorkflowData.Node.Context.ID)
+					return sdk.WrapError(err, "cannot update node context %d", wfDB.WorkflowData.Node.Context.ID)
 				}
 
 				event.PublishWorkflowUpdate(ctx, proj.Key, *wfDB, *wfOld, getAPIConsumer(ctx))

@@ -45,9 +45,11 @@ func (e *dbApplicationDeploymentStrategy) IntegrationConfig() sdk.IntegrationCon
 
 // LoadDeploymentStrategies loads the deployment strategies for an application
 func LoadDeploymentStrategies(db gorp.SqlExecutor, appID int64, withClearPassword bool) (map[string]sdk.IntegrationConfig, error) {
-	query := gorpmapping.NewQuery(`SELECT application_deployment_strategy.*
-	FROM application_deployment_strategy
-	WHERE application_deployment_strategy.application_id = $1`).Args(appID)
+	query := gorpmapping.NewQuery(`
+    SELECT *
+	  FROM application_deployment_strategy
+    WHERE application_id = $1
+  `).Args(appID)
 
 	var res []dbApplicationDeploymentStrategy
 	if err := gorpmapping.GetAll(context.Background(), db, query, &res, gorpmapping.GetOptions.WithDecryption); err != nil {
@@ -100,10 +102,10 @@ func DeleteAllDeploymentStrategies(db gorp.SqlExecutor, appID int64) error {
 
 // DeleteDeploymentStrategy delete a line in table application_deployment_strategy
 func DeleteDeploymentStrategy(db gorp.SqlExecutor, projID, appID, pfID int64) error {
-	query := `DELETE FROM application_deployment_strategy 
+	query := `DELETE FROM application_deployment_strategy
 	WHERE application_id = $1
 	AND project_integration_id IN (
-		SELECT 	project_integration.id 
+		SELECT 	project_integration.id
 		FROM project_integration
 		WHERE project_integration.project_id = $2
 		AND project_integration.id = $3
@@ -115,7 +117,7 @@ func DeleteDeploymentStrategy(db gorp.SqlExecutor, projID, appID, pfID int64) er
 
 func findDeploymentStrategy(db gorp.SqlExecutor, projectIntegrationID, applicationID int64) (*dbApplicationDeploymentStrategy, error) {
 	query := gorpmapping.NewQuery(`SELECT *
-	FROM application_deployment_strategy 
+	FROM application_deployment_strategy
 	WHERE application_deployment_strategy.project_integration_id = $1
 	AND application_deployment_strategy.application_id = $2`).Args(projectIntegrationID, applicationID)
 
@@ -133,7 +135,7 @@ func findDeploymentStrategy(db gorp.SqlExecutor, projectIntegrationID, applicati
 }
 
 func getProjectIntegrationID(db gorp.SqlExecutor, projID, pfID int64, ppfName string) (int64, error) {
-	query := gorpmapping.NewQuery(`SELECT project_integration.id 
+	query := gorpmapping.NewQuery(`SELECT project_integration.id
 	FROM project_integration
 	WHERE project_integration.project_id = $1
 	AND project_integration.integration_model_id = $2

@@ -12,6 +12,7 @@ import (
 	"strconv"
 
 	"github.com/gorilla/mux"
+	"github.com/sirupsen/logrus"
 
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/ascode"
@@ -246,7 +247,7 @@ func (api *API) putTemplateHandler() service.Handler {
 		clone := sdk.WorkflowTemplate(*old)
 		clone.Update(data)
 
-		// execute template with no instance only to check if parsing is ok
+		// execute template with no instance only to check if golang template parsing is ok
 		if _, err := workflowtemplate.Parse(clone); err != nil {
 			return err
 		}
@@ -565,7 +566,10 @@ func (api *API) postTemplateBulkHandler() service.Handler {
 
 					errorDefer := func(err error) error {
 						if err != nil {
-							log.Error(ctx, "%+v", err)
+							err = sdk.WrapError(err, "error occurred in template bulk with id %d", bulk.ID)
+							log.ErrorWithFields(ctx, logrus.Fields{
+								"stack_trace": fmt.Sprintf("%+v", err),
+							}, "%s", err)
 							bulk.Operations[i].Status = sdk.OperationStatusError
 							bulk.Operations[i].Error = fmt.Sprintf("%s", sdk.Cause(err))
 							if err := workflowtemplate.UpdateBulk(api.mustDB(), &bulk); err != nil {
@@ -1014,7 +1018,7 @@ func (api *API) getTemplateUsageHandler() service.Handler {
 				mProjectIDs[ps[i].ID] = struct{}{}
 			}
 
-			filteredWorkflow := []sdk.Workflow{}
+			filteredWorkflow := []sdk.WorkflowName{}
 			for i := range wfs {
 				if _, ok := mProjectIDs[wfs[i].ProjectID]; ok {
 					filteredWorkflow = append(filteredWorkflow, wfs[i])

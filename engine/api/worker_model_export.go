@@ -9,7 +9,6 @@ import (
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/workermodel"
 	"github.com/ovh/cds/engine/service"
-	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/exportentities"
 )
 
@@ -34,9 +33,9 @@ func (api *API) getWorkerModelExportHandler() service.Handler {
 			return err
 		}
 
-		wm, err := workermodel.LoadByNameAndGroupID(api.mustDB(), modelName, g.ID)
+		wm, err := workermodel.LoadByNameAndGroupID(ctx, api.mustDB(), modelName, g.ID, workermodel.LoadOptions.Default)
 		if err != nil {
-			return sdk.WrapError(err, "cannot load worker model")
+			return err
 		}
 
 		opts := []exportentities.WorkerModelOption{}

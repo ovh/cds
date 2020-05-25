@@ -15,6 +15,15 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
+func (c *client) WorkflowSearch(opts ...RequestModifier) ([]sdk.Workflow, error) {
+	url := fmt.Sprintf("/workflow/search")
+	w := []sdk.Workflow{}
+	if _, err := c.GetJSON(context.Background(), url, &w, opts...); err != nil {
+		return nil, err
+	}
+	return w, nil
+}
+
 func (c *client) WorkflowList(projectKey string, opts ...RequestModifier) ([]sdk.Workflow, error) {
 	url := fmt.Sprintf("/project/%s/workflows", projectKey)
 	w := []sdk.Workflow{}

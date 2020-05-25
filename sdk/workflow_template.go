@@ -397,15 +397,6 @@ type WorkflowTemplateInstance struct {
 	Workflow   *Workflow                      `json:"workflow,omitempty" db:"-"`
 }
 
-// Key returns unique key for instance.
-func (w WorkflowTemplateInstance) Key() string {
-	workflowName := w.WorkflowName
-	if w.Workflow != nil {
-		workflowName = w.Workflow.Name
-	}
-	return fmt.Sprintf("%s/%s", w.Project.Key, workflowName)
-}
-
 // WorkflowTemplateInstancesToIDs returns ids of given workflow template instances.
 func WorkflowTemplateInstancesToIDs(wtis []*WorkflowTemplateInstance) []int64 {
 	ids := make([]int64, len(wtis))

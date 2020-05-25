@@ -82,10 +82,13 @@ func TestUpdateModel(t *testing.T) {
 	}, u)
 	require.NoError(t, err)
 	assert.Equal(t, "cmd", model1.ModelDocker.Cmd)
+	assert.Equal(t, "{{.secrets.registry_password}}", model1.ModelDocker.Password)
 
-	model1Clear, err := workermodel.LoadByIDWithClearPassword(db, model1.ID)
+	secrets, err := workermodel.LoadSecretsByModelID(context.TODO(), db, model1.ID)
 	require.NoError(t, err)
-	assert.Equal(t, "12345678", model1Clear.ModelDocker.Password)
+	require.Len(t, secrets, 1)
+	assert.Equal(t, "secrets.registry_password", secrets[0].Name)
+	assert.Equal(t, "12345678", secrets[0].Value)
 
 	model2Name := sdk.RandomString(10)
 	_, err = workermodel.Create(context.TODO(), db, sdk.Model{
@@ -102,17 +105,20 @@ func TestUpdateModel(t *testing.T) {
 		GroupID:     g1.ID,
 		ModelDocker: sdk.ModelDocker{
 			Private:  true,
-			Password: sdk.PasswordPlaceholder,
+			Password: "{{.secrets.registry_password}}",
 		},
 	})
 	require.NoError(t, err)
 	assert.Equal(t, sdk.Docker, res.Type)
 	assert.Equal(t, u.Username, res.Author.Username)
 	assert.Equal(t, pattern.Model.Cmd, res.ModelDocker.Cmd)
+	assert.Equal(t, "{{.secrets.registry_password}}", res.ModelDocker.Password)
 
-	resClear, err := workermodel.LoadByIDWithClearPassword(db, res.ID)
+	secrets, err = workermodel.LoadSecretsByModelID(context.TODO(), db, res.ID)
 	require.NoError(t, err)
-	assert.Equal(t, "12345678", resClear.ModelDocker.Password, "password should be preserved")
+	require.Len(t, secrets, 1)
+	assert.Equal(t, "secrets.registry_password", secrets[0].Name)
+	assert.Equal(t, "12345678", secrets[0].Value, "password should be preserved")
 
 	// Test change group and name
 	cpy := *res
@@ -125,7 +131,6 @@ func TestUpdateModel(t *testing.T) {
 	cpy.GroupID = g2.ID
 	res, err = workermodel.Update(context.TODO(), db, res, cpy)
 	require.Error(t, err)
-
 }
 
 // create a worker model aaa
@@ -193,14 +198,14 @@ func TestUpdateModelInPipeline(t *testing.T) {
 	}
 	test.NoError(t, pipeline.InsertJob(db, &job1, 0, &pip1))
 
-	model1FooLoad, err := workermodel.LoadByNameAndGroupID(db, model1Foo.Name, g1.ID)
+	model1FooLoad, err := workermodel.LoadByNameAndGroupID(context.TODO(), db, model1Foo.Name, g1.ID, workermodel.LoadOptions.Default)
 	require.NoError(t, err)
 
 	pips, err := pipeline.LoadByWorkerModel(context.TODO(), db, model1FooLoad)
 	assert.NoError(t, err)
 	require.Equal(t, 1, len(pips))
 
-	model1Load, err := workermodel.LoadByIDWithClearPassword(db, model1.ID)
+	model1Load, err := workermodel.LoadByID(context.TODO(), db, model1.ID, workermodel.LoadOptions.Default)
 	require.NoError(t, err)
 
 	pips, err = pipeline.LoadByWorkerModel(context.TODO(), db, model1Load)
@@ -220,7 +225,7 @@ func TestUpdateModelInPipeline(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	model2Load, err := workermodel.LoadByIDWithClearPassword(db, res.ID)
+	model2Load, err := workermodel.LoadByID(context.TODO(), db, res.ID, workermodel.LoadOptions.Default)
 	require.NoError(t, err)
 
 	pips, err = pipeline.LoadByWorkerModel(context.TODO(), db, model1Load)
@@ -234,7 +239,6 @@ func TestUpdateModelInPipeline(t *testing.T) {
 	pips, err = pipeline.LoadByWorkerModel(context.TODO(), db, model1FooLoad)
 	assert.NoError(t, err)
 	require.Equal(t, 1, len(pips))
-
 }
 
 func TestUpdateModelInPipelineSimple(t *testing.T) {
@@ -288,7 +292,7 @@ func TestUpdateModelInPipelineSimple(t *testing.T) {
 	}
 	test.NoError(t, pipeline.InsertJob(db, &job1, 0, &pip1))
 
-	model1Load, err := workermodel.LoadByIDWithClearPassword(db, model1.ID)
+	model1Load, err := workermodel.LoadByID(context.TODO(), db, model1.ID, workermodel.LoadOptions.Default)
 	require.NoError(t, err)
 
 	pips, err := pipeline.LoadByWorkerModel(context.TODO(), db, model1Load)
@@ -308,7 +312,7 @@ func TestUpdateModelInPipelineSimple(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	model1FooLoad, err := workermodel.LoadByIDWithClearPassword(db, res.ID)
+	model1FooLoad, err := workermodel.LoadByID(context.TODO(), db, res.ID, workermodel.LoadOptions.Default)
 	require.NoError(t, err)
 
 	pips, err = pipeline.LoadByWorkerModel(context.TODO(), db, model1FooLoad)
@@ -357,4 +361,38 @@ func TestCopyModelTypeData_OldRestricted(t *testing.T) {
 		Restricted:  false,
 		PatternName: "my-pattern",
 	}))
+}
+
+func TestUpdateModel_NeedRegister(t *testing.T) {
+	db, store, end := test.SetupPG(t, bootstrap.InitiliazeDB)
+	defer end()
+
+	g := assets.InsertTestGroup(t, db, sdk.RandomString(10))
+
+	u, _ := assets.InsertLambdaUser(t, db)
+
+	name := sdk.RandomString(10)
+	m, err := workermodel.Create(context.TODO(), db, sdk.Model{
+		Type:        sdk.Docker,
+		Name:        name,
+		GroupID:     g.ID,
+		ModelDocker: sdk.ModelDocker{},
+	}, u)
+	require.NoError(t, err)
+	require.NoError(t, workermodel.UpdateRegistration(context.TODO(), db, store, m.ID))
+
+	m, err = workermodel.LoadByID(context.TODO(), db, m.ID)
+	require.NoError(t, err)
+	require.False(t, m.NeedRegistration)
+	require.True(t, m.LastRegistration.After(m.UserLastModified))
+
+	mUpdated, err := workermodel.Update(context.TODO(), db, m, sdk.Model{
+		Type:        sdk.Docker,
+		Name:        name,
+		GroupID:     g.ID,
+		ModelDocker: sdk.ModelDocker{},
+	})
+	require.NoError(t, err)
+	require.True(t, mUpdated.NeedRegistration)
+	require.True(t, mUpdated.UserLastModified.After(m.LastRegistration))
 }

@@ -1150,7 +1150,9 @@ func Test_postWorkflowRunAsyncFailedHandler(t *testing.T) {
 					return writeError(w, err)
 				}
 			default:
-				return writeError(w, fmt.Errorf("route %s must not be called", r.URL.String()))
+				return writeError(w, sdk.NewError(sdk.ErrServiceUnavailable,
+					fmt.Errorf("route %s must not be called", r.URL.String()),
+				))
 			}
 			return w, nil
 		},
@@ -1175,6 +1177,8 @@ func Test_postWorkflowRunAsyncFailedHandler(t *testing.T) {
 
 	x := ascode.UpdateAsCodeResult(context.TODO(), api.mustDB(), api.Cache, *proj, w1.ID, app, ed, u)
 	require.NotNil(t, x, "ascodeEvent should not be nil, but it was")
+
+	t.Logf("UpdateAsCodeResult => %+v", x)
 
 	//Prepare request
 	vars := map[string]string{
@@ -1204,13 +1208,12 @@ func Test_postWorkflowRunAsyncFailedHandler(t *testing.T) {
 		reqGet := assets.NewAuthentifiedRequest(t, u, pass, "GET", uriGet, nil)
 		recGet := httptest.NewRecorder()
 		router.Mux.ServeHTTP(recGet, reqGet)
-
+		require.Equal(t, 200, recGet.Code)
 		var wrGet sdk.WorkflowRun
 		recGetBody := recGet.Body.Bytes()
-		assert.NoError(t, json.Unmarshal(recGetBody, &wrGet))
+		require.NoError(t, json.Unmarshal(recGetBody, &wrGet))
 
 		if sdk.StatusIsTerminated(wrGet.Status) {
-			t.Logf("%+v", wrGet)
 			assert.Equal(t, sdk.StatusFail, wrGet.Status)
 			assert.Equal(t, 1, len(wrGet.Infos))
 			if len(wrGet.Infos) == 1 {

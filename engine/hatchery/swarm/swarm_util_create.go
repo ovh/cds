@@ -51,7 +51,7 @@ type containerArgs struct {
 //shortcut to create+start(=run) a container
 func (h *HatcherySwarm) createAndStartContainer(ctx context.Context, dockerClient *dockerClient, cArgs containerArgs, spawnArgs hatchery.SpawnArguments) error {
 	if spawnArgs.Model == nil {
-		return sdk.WithStack(sdk.ErrNoWorkerModel)
+		return sdk.WithStack(sdk.ErrNotFound)
 	}
 
 	ctx, end := observability.Span(ctx, "swarm.createAndStartContainer", observability.Tag(observability.TagWorker, cArgs.name))

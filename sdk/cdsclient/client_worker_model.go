@@ -28,7 +28,7 @@ func (c *client) WorkerModelBook(groupName, name string) error {
 }
 
 // WorkerModelsEnabled retrieves all worker models enabled and available to user.
-func (c *client) WorkerModelsEnabled() ([]sdk.Model, error) {
+func (c *client) WorkerModelEnabledList() ([]sdk.Model, error) {
 	var models []sdk.Model
 	if _, err := c.GetJSON(context.Background(), "/worker/model/enabled", &models); err != nil {
 		return nil, err
@@ -37,7 +37,7 @@ func (c *client) WorkerModelsEnabled() ([]sdk.Model, error) {
 }
 
 // WorkerModels retrieves all worker models.
-func (c *client) WorkerModels(filter *WorkerModelFilter) ([]sdk.Model, error) {
+func (c *client) WorkerModelList(filter *WorkerModelFilter) ([]sdk.Model, error) {
 	var mods []RequestModifier
 	if filter != nil {
 		mods = []RequestModifier{
@@ -110,7 +110,7 @@ func (c *client) WorkerModelAdd(name, modelType, patternName string, dockerModel
 	return modelCreated, nil
 }
 
-func (c *client) WorkerModel(groupName, name string) (sdk.Model, error) {
+func (c *client) WorkerModelGet(groupName, name string) (sdk.Model, error) {
 	uri := fmt.Sprintf("/worker/model/%s/%s", groupName, name)
 	var model sdk.Model
 	_, err := c.GetJSON(context.Background(), uri, &model)
@@ -121,4 +121,14 @@ func (c *client) WorkerModelDelete(groupName, name string) error {
 	uri := fmt.Sprintf("/worker/model/%s/%s", groupName, name)
 	_, errDelete := c.DeleteJSON(context.Background(), uri, nil)
 	return errDelete
+}
+
+// WorkerModelSecretList retrieves all worker model's secrets.
+func (c *client) WorkerModelSecretList(groupName, name string) (sdk.WorkerModelSecrets, error) {
+	url := fmt.Sprintf("/worker/model/%s/%s/secret", groupName, name)
+	var secrets sdk.WorkerModelSecrets
+	if _, err := c.GetJSON(context.Background(), url, &secrets); err != nil {
+		return nil, err
+	}
+	return secrets, nil
 }

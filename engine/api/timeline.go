@@ -44,7 +44,7 @@ func (api *API) getTimelineHandler() service.Handler {
 			return err
 		}
 
-		ws, err := workflow.LoadAllByProjectIDs(ctx, api.mustDB(), sdk.ProjectsToIDs(ps))
+		ws, err := workflow.LoadAllNamesByProjectIDs(ctx, api.mustDB(), sdk.ProjectsToIDs(ps))
 		if err != nil {
 			return err
 		}

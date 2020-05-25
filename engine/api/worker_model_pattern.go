@@ -2,7 +2,6 @@ package api
 
 import (
 	"context"
-	"database/sql"
 	"net/http"
 
 	"github.com/gorilla/mux"
@@ -14,11 +13,10 @@ import (
 
 func (api *API) getWorkerModelPatternsHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		modelPatterns, err := workermodel.LoadPatterns(api.mustDB())
+		modelPatterns, err := workermodel.LoadPatterns(ctx, api.mustDB())
 		if err != nil {
-			return sdk.WrapError(err, "cannot load worker model patterns")
+			return err
 		}
-
 		return service.WriteJSON(w, modelPatterns, http.StatusOK)
 	}
 }
@@ -29,9 +27,9 @@ func (api *API) getWorkerModelPatternHandler() service.Handler {
 		patternName := vars["name"]
 		patternType := vars["type"]
 
-		modelPattern, err := workermodel.LoadPatternByName(api.mustDB(), patternType, patternName)
+		modelPattern, err := workermodel.LoadPatternByNameAndType(ctx, api.mustDB(), patternType, patternName)
 		if err != nil {
-			return sdk.WrapError(err, "cannot load worker model patterns")
+			return err
 		}
 
 		return service.WriteJSON(w, modelPattern, http.StatusOK)
@@ -119,12 +117,9 @@ func (api *API) putWorkerModelPatternHandler() service.Handler {
 			return sdk.WithStack(sdk.ErrInvalidPatternModel)
 		}
 
-		oldWmp, errOld := workermodel.LoadPatternByName(api.mustDB(), patternType, patternName)
-		if errOld != nil {
-			if sdk.Cause(errOld) == sql.ErrNoRows {
-				return sdk.WrapError(sdk.ErrNotFound, "cannot load worker model pattern (%s/%s) : %v", patternType, patternName, errOld)
-			}
-			return sdk.WrapError(errOld, "cannot load worker model pattern")
+		oldWmp, err := workermodel.LoadPatternByNameAndType(ctx, api.mustDB(), patternType, patternName)
+		if err != nil {
+			return err
 		}
 		modelPattern.ID = oldWmp.ID
 
@@ -146,15 +141,12 @@ func (api *API) deleteWorkerModelPatternHandler() service.Handler {
 		patternName := vars["name"]
 		patternType := vars["type"]
 
-		wmp, err := workermodel.LoadPatternByName(api.mustDB(), patternType, patternName)
+		wmp, err := workermodel.LoadPatternByNameAndType(ctx, api.mustDB(), patternType, patternName)
 		if err != nil {
-			if sdk.Cause(err) == sql.ErrNoRows {
-				return sdk.WrapError(sdk.ErrNotFound, "cannot load worker model by name (%s/%s)", patternType, patternName)
-			}
-			return sdk.WrapError(err, "cannot load worker model by name (%s/%s) : %v", patternType, patternName, err)
+			return err
 		}
 
-		if err := workermodel.DeletePattern(api.mustDB(), wmp.ID); err != nil {
+		if err := workermodel.DeletePatternByID(api.mustDB(), wmp.ID); err != nil {
 			return sdk.WrapError(err, "cannot delete worker model (%s/%s) : %v", patternType, patternName, err)
 		}
 

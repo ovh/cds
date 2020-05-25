@@ -249,8 +249,13 @@ func Create(ctx context.Context, h Interface) error {
 			}
 
 			if chosenModel != nil {
-				//We got a model, let's start a worker
+				// We got a model, let's start a worker
 				workerRequest.model = chosenModel
+
+				// Interpolate model secrets
+				if err := ModelInterpolateSecrets(hWithModels, chosenModel); err != nil {
+					return err
+				}
 			}
 
 			//Ask to start
@@ -376,8 +381,8 @@ func canRunJobWithModel(ctx context.Context, h InterfaceWithModels, j workerStar
 			continue
 		}
 
-		if r.Type == sdk.OSArchRequirement && model.RegisteredOS != "" && model.RegisteredArch != "" && r.Value != (model.RegisteredOS+"/"+model.RegisteredArch) {
-			log.Debug("canRunJobWithModel> %d - job %d - job with OSArch requirement: cannot spawn on this OSArch. current model: %s/%s", j.timestamp, j.id, model.RegisteredOS, model.RegisteredArch)
+		if r.Type == sdk.OSArchRequirement && model.RegisteredOS != nil && *model.RegisteredOS != "" && model.RegisteredArch != nil && *model.RegisteredArch != "" && r.Value != (*model.RegisteredOS+"/"+*model.RegisteredArch) {
+			log.Debug("canRunJobWithModel> %d - job %d - job with OSArch requirement: cannot spawn on this OSArch. current model: %s/%s", j.timestamp, j.id, *model.RegisteredOS, *model.RegisteredArch)
 			return false
 		}
 

@@ -5,6 +5,8 @@ import (
 	"database/sql"
 	"time"
 
+	"github.com/lib/pq"
+
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
@@ -235,6 +237,16 @@ func LoadAll(db gorp.SqlExecutor, key string, opts ...LoadOptionFunc) ([]sdk.App
 	WHERE project.projectkey = $1
 	ORDER BY application.name ASC`).Args(key)
 
+	return getAll(context.Background(), db, opts, query)
+}
+
+// LoadAllByIDs returns all applications
+func LoadAllByIDs(db gorp.SqlExecutor, ids []int64, opts ...LoadOptionFunc) ([]sdk.Application, error) {
+	query := gorpmapping.NewQuery(`
+	SELECT application.*
+	FROM application
+	WHERE application.id = ANY($1)
+	ORDER BY application.name ASC`).Args(pq.Int64Array(ids))
 	return getAll(context.Background(), db, opts, query)
 }
 

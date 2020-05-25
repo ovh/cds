@@ -42,7 +42,6 @@ var (
 	ErrBuildArchived                                 = Error{ID: 26, Status: http.StatusBadRequest}
 	ErrNoEnvironment                                 = Error{ID: 27, Status: http.StatusNotFound}
 	ErrModelNameExist                                = Error{ID: 28, Status: http.StatusConflict}
-	ErrNoWorkerModel                                 = Error{ID: 29, Status: http.StatusNotFound}
 	ErrNoProject                                     = Error{ID: 30, Status: http.StatusNotFound}
 	ErrVariableExists                                = Error{ID: 31, Status: http.StatusConflict}
 	ErrInvalidGroupPattern                           = Error{ID: 32, Status: http.StatusBadRequest}
@@ -52,7 +51,6 @@ var (
 	ErrInvalidApplicationPattern                     = Error{ID: 36, Status: http.StatusBadRequest}
 	ErrInvalidPipelinePattern                        = Error{ID: 37, Status: http.StatusBadRequest}
 	ErrNotFound                                      = Error{ID: 38, Status: http.StatusNotFound}
-	ErrNoWorkerModelCapa                             = Error{ID: 39, Status: http.StatusNotFound}
 	ErrNoHook                                        = Error{ID: 40, Status: http.StatusNotFound}
 	ErrNoAttachedPipeline                            = Error{ID: 41, Status: http.StatusNotFound}
 	ErrNoReposManager                                = Error{ID: 42, Status: http.StatusNotFound}
@@ -230,7 +228,6 @@ var errorsAmericanEnglish = map[int]string{
 	ErrBuildArchived.ID:                                 "Cannot restart this build because it has been archived",
 	ErrNoEnvironment.ID:                                 "environment does not exist",
 	ErrModelNameExist.ID:                                "worker model name already used",
-	ErrNoWorkerModel.ID:                                 "worker model does not exist",
 	ErrNoProject.ID:                                     "project does not exist",
 	ErrVariableExists.ID:                                "variable already exists",
 	ErrInvalidGroupPattern.ID:                           "group name must respect '^[a-zA-Z0-9.-_-]{1,}$'",
@@ -241,7 +238,6 @@ var errorsAmericanEnglish = map[int]string{
 	ErrInvalidWorkerModelNamePattern.ID:                 "worker model name must respect '^[a-zA-Z0-9.-_-]{1,}$'",
 	ErrInvalidPipelinePattern.ID:                        "pipeline name must respect '^[a-zA-Z0-9.-_-]{1,}$'",
 	ErrNotFound.ID:                                      "resource not found",
-	ErrNoWorkerModelCapa.ID:                             "capability not found",
 	ErrNoHook.ID:                                        "hook not found",
 	ErrNoAttachedPipeline.ID:                            "pipeline not attached to the application",
 	ErrNoReposManager.ID:                                "repositories manager not found",
@@ -412,7 +408,6 @@ var errorsFrench = map[int]string{
 	ErrBuildArchived.ID:                                 "impossible de relancer ce build car il a été archivé",
 	ErrNoEnvironment.ID:                                 "l'environement n'existe pas",
 	ErrModelNameExist.ID:                                "le nom du modèle de worker est déjà utilisé",
-	ErrNoWorkerModel.ID:                                 "le modèle de worker n'existe pas",
 	ErrNoProject.ID:                                     "le projet n'existe pas",
 	ErrVariableExists.ID:                                "la variable existe déjà",
 	ErrInvalidGroupPattern.ID:                           "nom de groupe invalide '^[a-zA-Z0-9.-_-]{1,}$'",
@@ -423,7 +418,6 @@ var errorsFrench = map[int]string{
 	ErrInvalidWorkerModelNamePattern.ID:                 "nom du worker model invalide '^[a-zA-Z0-9.-_-]{1,}$'",
 	ErrInvalidPipelinePattern.ID:                        "nom du pipeline invalide '^[a-zA-Z0-9.-_-]{1,}$'",
 	ErrNotFound.ID:                                      "la ressource n'existe pas",
-	ErrNoWorkerModelCapa.ID:                             "la capacité n'existe pas",
 	ErrNoHook.ID:                                        "le hook n'existe pas",
 	ErrNoAttachedPipeline.ID:                            "le pipeline n'est pas lié à l'application",
 	ErrNoReposManager.ID:                                "le gestionnaire de dépôt n'existe pas",

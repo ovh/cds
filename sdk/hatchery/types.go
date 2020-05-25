@@ -109,6 +109,7 @@ type InterfaceWithModels interface {
 	ModelType() string
 	NeedRegistration(ctx context.Context, model *sdk.Model) bool
 	WorkerModelsEnabled() ([]sdk.Model, error)
+	WorkerModelSecretList(sdk.Model) (sdk.WorkerModelSecrets, error)
 }
 
 type Metrics struct {

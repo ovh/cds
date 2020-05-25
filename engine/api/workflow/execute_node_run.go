@@ -1035,7 +1035,7 @@ func getVCSInfos(ctx context.Context, db gorp.SqlExecutor, store cache.Store, pr
 	if err != nil {
 		log.Error(ctx, "cannot get from cache %s: %v", cacheKey, err)
 	}
-	if find {
+	if find && vcsInfos.Branch != "" && vcsInfos.Hash != "" {
 		log.Debug("completeVCSInfos> load from cache: %s", cacheKey)
 		return &vcsInfos, nil
 	}

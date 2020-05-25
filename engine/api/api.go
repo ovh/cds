@@ -719,6 +719,10 @@ func (a *API) Serve(ctx context.Context) error {
 
 	migrate.Add(ctx, sdk.Migration{Name: "RefactorProjectVCSServerCrypto", Release: "0.44.0", Blocker: true, Automatic: true, ExecFunc: func(ctx context.Context) error {
 		return migrate.RefactorProjectVCSServers(ctx, a.DBConnectionFactory.GetDBMap())
+  }})
+
+	migrate.Add(ctx, sdk.Migration{Name: "RefactorWorkerModelCrypto", Release: "0.44.0", Blocker: true, Automatic: true, ExecFunc: func(ctx context.Context) error {
+		return migrate.RefactorWorkerModelCrypto(ctx, a.DBConnectionFactory.GetDBMap())
 	}})
 
 	isFreshInstall, errF := version.IsFreshInstall(a.mustDB())

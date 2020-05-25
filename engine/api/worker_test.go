@@ -21,7 +21,7 @@ import (
 )
 
 func RegisterWorker(t *testing.T, api *API, groupID int64, existingWorkerModelName string, jobID int64, registerOnly bool) (*sdk.Worker, string) {
-	model, err := workermodel.LoadByNameAndGroupID(api.mustDB(), existingWorkerModelName, groupID)
+	model, err := workermodel.LoadByNameAndGroupID(context.TODO(), api.mustDB(), existingWorkerModelName, groupID)
 	if err != nil {
 		t.Fatalf("RegisterWorker> Error getting worker model : %s", err)
 	}
@@ -80,7 +80,7 @@ func LoadSharedInfraGroup(t *testing.T, api *API) *sdk.Group {
 }
 
 func LoadOrCreateWorkerModel(t *testing.T, api *API, groupID int64, workermodelName string) *sdk.Model {
-	model, _ := workermodel.LoadByNameAndGroupID(api.mustDB(), workermodelName, groupID)
+	model, _ := workermodel.LoadByNameAndGroupID(context.TODO(), api.mustDB(), workermodelName, groupID)
 	if model == nil {
 		model = &sdk.Model{
 			Name:    workermodelName,
@@ -98,7 +98,7 @@ func LoadOrCreateWorkerModel(t *testing.T, api *API, groupID int64, workermodelN
 			},
 		}
 
-		if err := workermodel.Insert(api.mustDB(), model); err != nil {
+		if err := workermodel.Insert(context.TODO(), api.mustDB(), model); err != nil {
 			t.Fatalf("Error inserting model : %s", err)
 		}
 	}

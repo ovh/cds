@@ -99,5 +99,6 @@ func init() {
 		gorpmapping.New(group{}, "group", true, "id"),
 		gorpmapping.New(LinkGroupUser{}, "group_authentified_user", true, "id"),
 		gorpmapping.New(LinkGroupProject{}, "project_group", true, "id"),
+		gorpmapping.New(LinkWorkflowGroupPermission{}, "workflow_perm", false),
 	)
 }

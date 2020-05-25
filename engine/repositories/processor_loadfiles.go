@@ -2,13 +2,11 @@ package repositories
 
 import (
 	"context"
-	"fmt"
 	"io/ioutil"
 
 	repo "github.com/fsamin/go-repo"
 
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 )
 
 func (s *Service) processLoadFiles(ctx context.Context, op *sdk.Operation) error {
@@ -16,18 +14,15 @@ func (s *Service) processLoadFiles(ctx context.Context, op *sdk.Operation) error
 
 	gitRepo, err := repo.New(r.Basedir)
 	if err != nil {
-		log.Error(ctx, "Repositories> processLoadFiles> repo.New > [%s] Error: %v", op.UUID, err)
-		return err
+		return sdk.WithStack(err)
 	}
 
 	files, err := gitRepo.Glob(op.LoadFiles.Pattern)
 	if err != nil {
-		log.Error(ctx, "Repositories> processLoadFiles> Glob> [%s] Error: %v", op.UUID, err)
-		return err
+		return sdk.WithStack(err)
 	}
-
 	if len(files) == 0 {
-		return fmt.Errorf("No file found in %s", op.LoadFiles.Pattern)
+		return sdk.NewErrorFrom(sdk.ErrWrongRequest, "no file found in %s", op.LoadFiles.Pattern)
 	}
 
 	op.LoadFiles.Results = make(map[string][]byte, len(files))
@@ -35,14 +30,12 @@ func (s *Service) processLoadFiles(ctx context.Context, op *sdk.Operation) error
 	for _, f := range files {
 		fi, err := gitRepo.Open(f)
 		if err != nil {
-			log.Debug("Repositories> processLoadFiles> Open > [%s] Error: %v", op.UUID, err)
-			return err
+			return sdk.WithStack(err)
 		}
 		btes, err := ioutil.ReadAll(fi)
 		if err != nil {
 			fi.Close()
-			log.Debug("Repositories> processLoadFiles> ReadAll> [%s] Error: %v", op.UUID, err)
-			return err
+			return sdk.WithStack(err)
 		}
 		op.LoadFiles.Results[f] = btes
 		fi.Close()
