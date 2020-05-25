@@ -38,7 +38,7 @@ func DeprecatedLoadAllForProject(db gorp.SqlExecutor, projectKey string) ([]sdk.
 func InsertForApplication(db gorp.SqlExecutor, app *sdk.Application, projectKey string) error {
 	query := `UPDATE application SET vcs_server = $1, repo_fullname = $2 WHERE id = $3`
 	if _, err := db.Exec(query, app.VCSServer, app.RepositoryFullname, app.ID); err != nil {
-		return err
+		return sdk.WithStack(err)
 	}
 	return nil
 }
