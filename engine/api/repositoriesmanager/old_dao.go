@@ -14,7 +14,7 @@ import (
 func DeprecatedLoadAllForProject(db gorp.SqlExecutor, projectKey string) ([]sdk.ProjectVCSServer, error) {
 	vcsServerStr := []byte{}
 	if err := db.QueryRow("select vcs_servers from project where projectkey = $1", projectKey).Scan(&vcsServerStr); err != nil {
-		return nil, err
+		return nil, sdk.WithStack(err)
 	}
 
 	if len(vcsServerStr) == 0 {
