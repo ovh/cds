@@ -144,7 +144,6 @@ type EnvironmentVariableClient interface {
 // EventsClient listen SSE Events from CDS API
 type EventsClient interface {
 	// Must be  run in a go routine
-	EventsListen(ctx context.Context, chanSSEvt chan<- SSEvent)
 	WebsocketEventsListen(ctx context.Context, chanMsgToSend <-chan sdk.WebsocketFilter, chanMsgReceived chan<- sdk.WebsocketEvent)
 }
 
