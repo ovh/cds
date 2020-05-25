@@ -65,9 +65,9 @@ func refactorIntegrationModelCrypto(ctx context.Context, db *gorp.DbMap, id int6
 
 	query := `
 	SELECT id, name, author, identifier, icon ,default_config, disabled, hook, storage, deployment, compute, deployment_default_config, public, public_configurations, event
-	FROM integration_model 
-	WHERE id = $1 
-	AND sig IS NULL 
+	FROM integration_model
+	WHERE id = $1
+	AND sig IS NULL
 	FOR UPDATE SKIP LOCKED`
 
 	var integrationModel sdk.IntegrationModel
@@ -172,9 +172,9 @@ func refactorProjectIntegrationCrypto(ctx context.Context, db *gorp.DbMap, id in
 	}
 
 	query := `SELECT id, name, project_id, integration_model_id, config
-	FROM project_integration 
-	WHERE id = $1 
-	AND sig IS NULL 
+	FROM project_integration
+	WHERE id = $1
+	AND sig IS NULL
 	FOR UPDATE SKIP LOCKED`
 
 	defer tx.Rollback() // nolint

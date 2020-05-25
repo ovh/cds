@@ -662,16 +662,8 @@ func (a *API) Serve(ctx context.Context) error {
 		return migrate.RefactorGroupMembership(ctx, a.DBConnectionFactory.GetDBMap())
 	}})
 
-	migrate.Add(ctx, sdk.Migration{Name: "RefactorApplicationKeys", Release: "0.44.0", Blocker: true, Automatic: true, ExecFunc: func(ctx context.Context) error {
-		return migrate.RefactorApplicationKeys(ctx, a.DBConnectionFactory.GetDBMap())
-	}})
-
 	migrate.Add(ctx, sdk.Migration{Name: "RefactorProjectKeys", Release: "0.44.0", Blocker: true, Automatic: true, ExecFunc: func(ctx context.Context) error {
 		return migrate.RefactorProjectKeys(ctx, a.DBConnectionFactory.GetDBMap())
-	}})
-
-	migrate.Add(ctx, sdk.Migration{Name: "RefactorApplicationVariables", Release: "0.44.0", Blocker: true, Automatic: true, ExecFunc: func(ctx context.Context) error {
-		return migrate.RefactorApplicationVariables(ctx, a.DBConnectionFactory.GetDBMap())
 	}})
 
 	migrate.Add(ctx, sdk.Migration{Name: "RefactorEnvironmentKeys", Release: "0.44.0", Blocker: true, Automatic: true, ExecFunc: func(ctx context.Context) error {
@@ -700,10 +692,6 @@ func (a *API) Serve(ctx context.Context) error {
 
 	migrate.Add(ctx, sdk.Migration{Name: "FixEmptyUUIDHooks", Release: "0.44.0", Blocker: false, Automatic: false, ExecFunc: func(ctx context.Context) error {
 		return migrate.FixEmptyUUIDHooks(ctx, a.DBConnectionFactory.GetDBMap(), a.Cache)
-	}})
-
-	migrate.Add(ctx, sdk.Migration{Name: "RefactorApplicationCrypto", Release: "0.44.0", Blocker: true, Automatic: true, ExecFunc: func(ctx context.Context) error {
-		return migrate.RefactorApplicationCrypto(ctx, a.DBConnectionFactory.GetDBMap())
 	}})
 
 	migrate.Add(ctx, sdk.Migration{Name: "RefactorIntegrationCrypto", Release: "0.44.0", Blocker: true, Automatic: true, ExecFunc: func(ctx context.Context) error {
