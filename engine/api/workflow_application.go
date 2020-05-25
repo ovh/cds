@@ -74,7 +74,7 @@ func (api *API) releaseApplicationWorkflowHandler() service.Handler {
 
 		rm, err := repositoriesmanager.LoadProjectVCSServerLinkByProjectKeyAndVCSServerName(ctx, api.mustDB(), key, app.VCSServer)
 		if err != nil {
-			return sdk.WrapError(sdk.ErrNoReposManagerClientAuth, "cannot get client %s %s got: %v", key, app.VCSServer, err)
+			return sdk.NewErrorWithStack(err, sdk.WrapError(sdk.ErrNoReposManagerClientAuth, "cannot get client %s %s", key, app.VCSServer))
 		}
 
 		client, err := repositoriesmanager.AuthorizedClient(ctx, api.mustDB(), api.Cache, proj.Key, rm)
