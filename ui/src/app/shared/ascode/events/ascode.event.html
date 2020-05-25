@@ -1,7 +1,7 @@
 <div class="asCodeEvents">
     <p>
-        <span *ngIf="repo">{{ 'pipeline_from_repository' | translate: {repo: repo} }}</span>
-        <span *ngIf="!repo">{{ 'workflow_from_repository_pending' | translate }}</span>
+        <span *ngIf="workflow.from_repository">{{ 'pipeline_from_repository' | translate: {repo: workflow.from_repository} }}</span>
+        <span *ngIf="!workflow.from_repository">{{ 'workflow_from_repository_pending' | translate }}</span>
     </p>
     <ul>
         <li *ngFor="let e of events">

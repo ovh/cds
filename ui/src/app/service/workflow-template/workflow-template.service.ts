@@ -2,6 +2,7 @@
 import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { AuditWorkflowTemplate } from 'app/model/audit.model';
+import { Operation } from 'app/model/operation.model';
 import {
     WorkflowTemplate,
     WorkflowTemplateApplyResult,
@@ -47,6 +48,16 @@ export class WorkflowTemplateService {
             });
     }
 
+    applyAsCode(groupName: string, templateSlug: string, req: WorkflowTemplateRequest,
+        branch: string, message: string): Observable<Operation> {
+        let params = new HttpParams();
+        params = params.append('import', 'true');
+        params = params.append('branch', branch);
+        params = params.append('message', message)
+        return this._http.post<Operation>(`/template/${groupName}/${templateSlug}/apply`,
+            req, { params });
+    }
+
     deleteInstance(wt: WorkflowTemplate, wti: WorkflowTemplateInstance): Observable<any> {
         return this._http.delete<any>(`/template/${wt.group.name}/${wt.slug}/instance/${wti.id}`);
     }
@@ -70,6 +81,15 @@ export class WorkflowTemplateService {
 
     bulk(groupName: string, templateSlug: string, req: WorkflowTemplateBulk): Observable<WorkflowTemplateBulk> {
         return this._http.post<WorkflowTemplateBulk>(`/template/${groupName}/${templateSlug}/bulk`, req);
+    }
+
+    bulkAsCode(groupName: string, templateSlug: string, req: WorkflowTemplateBulk,
+        branch: string, message: string): Observable<WorkflowTemplateBulk> {
+        let params = new HttpParams();
+        params = params.append('branch', branch);
+        params = params.append('message', message)
+        return this._http.post<WorkflowTemplateBulk>(`/template/${groupName}/${templateSlug}/bulk`,
+            req, { params });
     }
 
     getBulk(groupName: string, templateSlug: string, id: number): Observable<WorkflowTemplateBulk> {

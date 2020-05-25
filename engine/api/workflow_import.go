@@ -62,9 +62,12 @@ func (api *API) postWorkflowPreviewHandler() service.Handler {
 			return sdk.WrapError(err, "unable import workflow %s", ew.GetName())
 		}
 
-		// Browse all node to find IDs
-		if err := workflow.IsValid(ctx, api.Cache, api.mustDB(), wf, *proj, workflow.LoadOptions{}); err != nil {
-			return sdk.WrapError(err, "workflow is not valid")
+		if err := workflow.CompleteWorkflow(ctx, api.mustDB(), wf, *proj, workflow.LoadOptions{}); err != nil {
+			return err
+		}
+
+		if err := workflow.CheckValidity(ctx, api.mustDB(), wf); err != nil {
+			return err
 		}
 
 		if err := workflow.RenameNode(ctx, api.mustDB(), wf); err != nil {
@@ -315,11 +318,14 @@ func (api *API) postWorkflowPushHandler() service.Handler {
 		if pushOptions != nil && pushOptions.FromRepository != "" {
 			mods = append(mods, workflowtemplate.TemplateRequestModifiers.DefaultNameAndRepositories(ctx, api.mustDB(), api.Cache, *proj, pushOptions.FromRepository))
 		}
-		wti, err := workflowtemplate.CheckAndExecuteTemplate(ctx, api.mustDB(), *consumer, *proj, &data, mods...)
+		var allMsg []sdk.Message
+		msgTemplate, wti, err := workflowtemplate.CheckAndExecuteTemplate(ctx, api.mustDB(), *consumer, *proj, &data, mods...)
+		allMsg = append(allMsg, msgTemplate...)
 		if err != nil {
 			return err
 		}
-		allMsg, wrkflw, oldWrkflw, err := workflow.Push(ctx, db, api.Cache, proj, data, pushOptions, u, project.DecryptWithBuiltinKey)
+		msgPush, wrkflw, oldWrkflw, err := workflow.Push(ctx, db, api.Cache, proj, data, pushOptions, u, project.DecryptWithBuiltinKey)
+		allMsg = append(allMsg, msgPush...)
 		if err != nil {
 			return err
 		}

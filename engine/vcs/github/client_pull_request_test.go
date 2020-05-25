@@ -2,17 +2,17 @@ package github
 
 import (
 	"context"
-	"github.com/ovh/cds/sdk"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 
 	"github.com/ovh/cds/engine/api/test"
+	"github.com/ovh/cds/sdk"
 )
 
 func TestPullRequests(t *testing.T) {
 	client := getNewAuthorizedClient(t)
-	prs, err := client.PullRequests(context.Background(), "ovh/cds")
+	prs, err := client.PullRequests(context.Background(), "ovh/cds", sdk.VCSPullRequestOptions{})
 	test.NoError(t, err)
 	assert.NotEmpty(t, prs)
 	t.Logf("%v", prs)
@@ -20,7 +20,7 @@ func TestPullRequests(t *testing.T) {
 
 func TestPullRequestComment(t *testing.T) {
 	client := getNewAuthorizedClient(t)
-	prs, err := client.PullRequests(context.Background(), "ovh/cds")
+	prs, err := client.PullRequests(context.Background(), "ovh/cds", sdk.VCSPullRequestOptions{})
 	test.NoError(t, err)
 	assert.NotEmpty(t, prs)
 	t.Logf("%v", prs)

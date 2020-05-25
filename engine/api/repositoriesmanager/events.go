@@ -50,7 +50,7 @@ func RetryEvent(e *sdk.Event, err error, store cache.Store) error {
 }
 
 func processEvent(ctx context.Context, db *gorp.DbMap, event sdk.Event, store cache.Store) error {
-	var c sdk.VCSAuthorizedClient
+	var c sdk.VCSAuthorizedClientService
 	var errC error
 
 	if event.EventType != fmt.Sprintf("%T", sdk.EventRunWorkflowNode{}) {
@@ -70,8 +70,8 @@ func processEvent(ctx context.Context, db *gorp.DbMap, event sdk.Event, store ca
 		return fmt.Errorf("repositoriesmanager>processEvent> AuthorizedClient (%s, %s) > err:%s", event.ProjectKey, eventWNR.RepositoryManagerName, err)
 	}
 
-	c, errC = AuthorizedClient(ctx, db, store, event.ProjectKey, vcsServer)
-	if errC != nil {
+	c, err = AuthorizedClient(ctx, db, store, event.ProjectKey, vcsServer)
+	if err != nil {
 		return fmt.Errorf("repositoriesmanager>processEvent> AuthorizedClient (%s, %s) > err:%s", event.ProjectKey, eventWNR.RepositoryManagerName, errC)
 	}
 

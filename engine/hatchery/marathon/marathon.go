@@ -34,7 +34,10 @@ func New() *HatcheryMarathon {
 	return s
 }
 
-func (s *HatcheryMarathon) Init(config interface{}) (cdsclient.ServiceConfig, error) {
+var _ hatchery.InterfaceWithModels = new(HatcheryMarathon)
+
+// Init cdsclient config.
+func (h *HatcheryMarathon) Init(config interface{}) (cdsclient.ServiceConfig, error) {
 	var cfg cdsclient.ServiceConfig
 	sConfig, ok := config.(HatcheryConfiguration)
 	if !ok {
@@ -148,9 +151,14 @@ func (*HatcheryMarathon) ModelType() string {
 	return sdk.Docker
 }
 
-// WorkerModelsEnabled returns Worker model enabled
+// WorkerModelsEnabled returns Worker model enabled.
 func (h *HatcheryMarathon) WorkerModelsEnabled() ([]sdk.Model, error) {
-	return h.CDSClient().WorkerModelsEnabled()
+	return h.CDSClient().WorkerModelEnabledList()
+}
+
+// WorkerModelSecretList returns secret for given model.
+func (h *HatcheryMarathon) WorkerModelSecretList(m sdk.Model) (sdk.WorkerModelSecrets, error) {
+	return h.CDSClient().WorkerModelSecretList(m.Group.Name, m.Name)
 }
 
 // CanSpawn return wether or not hatchery can spawn model
@@ -224,7 +232,7 @@ func (h *HatcheryMarathon) SpawnWorker(ctx context.Context, spawnArgs hatchery.S
 		HTTPInsecure:      h.Config.API.HTTP.Insecure,
 		Name:              spawnArgs.WorkerName,
 		TTL:               h.Config.WorkerTTL,
-		Model:             spawnArgs.Model.GetPath(spawnArgs.Model.Group.Name),
+		Model:             spawnArgs.Model.Path(),
 		HatcheryName:      h.Name(),
 		GraylogHost:       h.Configuration().Provision.WorkerLogsOptions.Graylog.Host,
 		GraylogPort:       h.Configuration().Provision.WorkerLogsOptions.Graylog.Port,
@@ -248,6 +256,8 @@ func (h *HatcheryMarathon) SpawnWorker(ctx context.Context, spawnArgs hatchery.S
 		memory = hatchery.MemoryRegisterContainer
 	}
 
+	cmd += "; sleep 120" // sleep 2min, to let marathon hatchery remove the container
+
 	//Check if there is a memory requirement
 	//if there is a service requirement: exit
 	if spawnArgs.JobID > 0 {
@@ -270,7 +280,6 @@ func (h *HatcheryMarathon) SpawnWorker(ctx context.Context, spawnArgs hatchery.S
 	}
 
 	envsWm := map[string]string{}
-	envsWm["CDS_FORCE_EXIT"] = "0"
 	envsWm["CDS_MODEL_MEMORY"] = fmt.Sprintf("%d", memory)
 	envsWm["CDS_API"] = udataParam.API
 	envsWm["CDS_TOKEN"] = udataParam.Token

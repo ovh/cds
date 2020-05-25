@@ -29,7 +29,10 @@ func New() *HatcheryVSphere {
 	return s
 }
 
-func (s *HatcheryVSphere) Init(config interface{}) (cdsclient.ServiceConfig, error) {
+var _ hatchery.InterfaceWithModels = new(HatcheryVSphere)
+
+// Init cdsclient config.
+func (h *HatcheryVSphere) Init(config interface{}) (cdsclient.ServiceConfig, error) {
 	var cfg cdsclient.ServiceConfig
 	sConfig, ok := config.(HatcheryConfiguration)
 	if !ok {
@@ -143,12 +146,17 @@ func (h *HatcheryVSphere) NeedRegistration(ctx context.Context, m *sdk.Model) bo
 
 // WorkerModelsEnabled returns Worker model enabled
 func (h *HatcheryVSphere) WorkerModelsEnabled() ([]sdk.Model, error) {
-	return h.CDSClient().WorkerModelsEnabled()
+	return h.CDSClient().WorkerModelEnabledList()
+}
+
+// WorkerModelSecretList returns secret for given model.
+func (h *HatcheryVSphere) WorkerModelSecretList(m sdk.Model) (sdk.WorkerModelSecrets, error) {
+	return h.CDSClient().WorkerModelSecretList(m.Group.Name, m.Name)
 }
 
 // WorkersStartedByModel returns the number of instances of given model started but
 // not necessarily register on CDS yet
-func (h *HatcheryVSphere) WorkersStartedByModel(model *sdk.Model) int {
+func (h *HatcheryVSphere) WorkersStartedByModel(ctx context.Context, model *sdk.Model) int {
 	var x int
 	for _, s := range h.getServers() {
 		if strings.Contains(strings.ToLower(s.Name), strings.ToLower(model.Name)) {

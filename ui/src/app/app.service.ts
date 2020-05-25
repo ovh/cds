@@ -71,8 +71,7 @@ export class AppService {
         }
         if (event.type_event.indexOf(EventType.ASCODE) === 0) {
             if (event.username === this._store.selectSnapshot(AuthenticationState.user).username) {
-                let e: AsCodeEvent = <AsCodeEvent>event.payload['as_code_event'];
-                this._store.dispatch(e);
+                this._store.dispatch(new AsCodeEvent(event.payload['as_code_event']));
             }
             return;
         }
@@ -203,7 +202,7 @@ export class AppService {
                     this.routeParams['appName'] && this.routeParams['appName'] === event.application_name &&
                     event.username !== this._store.selectSnapshot(AuthenticationState.user).username) {
                     this._toast.info('', this._translate.instant('application_deleted_by',
-                        {appName: this.routeParams['appName'], username: event.username}));
+                        { appName: this.routeParams['appName'], username: event.username }));
                     this._router.navigate(['/project'], this.routeParams['key']);
                 }
                 this._store.dispatch(new ClearCacheApplication());

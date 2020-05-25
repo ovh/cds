@@ -97,6 +97,27 @@ type VCSPullRequest struct {
 	Revision string       `json:"revision"`
 }
 
+type VCSPullRequestOptions struct {
+	State VCSPullRequestState
+}
+
+const (
+	VCSPullRequestStateAll    VCSPullRequestState = "all"
+	VCSPullRequestStateOpen   VCSPullRequestState = "open"
+	VCSPullRequestStateClosed VCSPullRequestState = "closed"
+	VCSPullRequestStateMerged VCSPullRequestState = "merged"
+)
+
+type VCSPullRequestState string
+
+func (s VCSPullRequestState) IsValid() bool {
+	switch s {
+	case VCSPullRequestStateAll, VCSPullRequestStateOpen, VCSPullRequestStateClosed, VCSPullRequestStateMerged:
+		return true
+	}
+	return false
+}
+
 type VCSPullRequestCommentRequest struct {
 	VCSPullRequest
 	Message string `json:"message"`

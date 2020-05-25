@@ -17,55 +17,35 @@ import (
 
 var CacheOperationKey = cache.Key("repositories", "operation", "push")
 
-func PushOperation(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj sdk.Project, wp exportentities.WorkflowComponents, vcsServerName, repoFullname, branch, message string, vcsStrategy sdk.RepositoryStrategy, isUpdate bool, u sdk.Identifiable) (*sdk.Operation, error) {
-	if vcsStrategy.SSHKey != "" {
-		key := proj.GetSSHKey(vcsStrategy.SSHKey)
+func pushOperation(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj sdk.Project, data exportentities.WorkflowComponents, ope sdk.Operation) (*sdk.Operation, error) {
+	if ope.RepositoryStrategy.SSHKey != "" {
+		key := proj.GetSSHKey(ope.RepositoryStrategy.SSHKey)
 		if key == nil {
-			return nil, sdk.WithStack(fmt.Errorf("unable to find key %s on project %s", vcsStrategy.SSHKey, proj.Key))
+			return nil, sdk.WithStack(fmt.Errorf("unable to find key %s on project %s", ope.RepositoryStrategy.SSHKey, proj.Key))
 		}
-		vcsStrategy.SSHKeyContent = key.Private
+		ope.RepositoryStrategy.SSHKeyContent = key.Private
 	}
 
-	// Create VCS Operation
-	ope := sdk.Operation{
-		VCSServer:          vcsServerName,
-		RepoFullName:       repoFullname,
-		URL:                "",
-		RepositoryStrategy: vcsStrategy,
-		Setup: sdk.OperationSetup{
-			Push: sdk.OperationPush{
-				FromBranch: branch,
-				Message:    message,
-				Update:     isUpdate,
-			},
-		},
-	}
-	ope.User.Email = u.GetEmail()
-	ope.User.Username = u.GetFullname()
-	ope.User.Username = u.GetUsername()
-
-	vcsServer := repositoriesmanager.GetProjectVCSServer(proj, vcsServerName)
+	vcsServer := repositoriesmanager.GetProjectVCSServer(proj, ope.VCSServer)
 	if vcsServer == nil {
-		return nil, sdk.WithStack(fmt.Errorf("no vcsServer found"))
+		return nil, sdk.NewErrorFrom(sdk.ErrNotFound, "no vcs server found on project %s for given name %s", proj.Key, ope.VCSServer)
 	}
-	client, errC := repositoriesmanager.AuthorizedClient(ctx, db, store, proj.Key, vcsServer)
-	if errC != nil {
-		return nil, errC
+	client, err := repositoriesmanager.AuthorizedClient(ctx, db, store, proj.Key, vcsServer)
+	if err != nil {
+		return nil, err
 	}
-
-	repo, errR := client.RepoByFullname(ctx, repoFullname)
-	if errR != nil {
-		return nil, sdk.WrapError(errR, "cannot get repo %s", repoFullname)
+	repo, err := client.RepoByFullname(ctx, ope.RepoFullName)
+	if err != nil {
+		return nil, sdk.WrapError(err, "cannot get repo %s", ope.RepoFullName)
 	}
-
-	if vcsStrategy.ConnectionType == "ssh" {
+	if ope.RepositoryStrategy.ConnectionType == "ssh" {
 		ope.URL = repo.SSHCloneURL
 	} else {
 		ope.URL = repo.HTTPCloneURL
 	}
 
 	buf := new(bytes.Buffer)
-	if err := exportentities.TarWorkflowComponents(ctx, wp, buf); err != nil {
+	if err := exportentities.TarWorkflowComponents(ctx, data, buf); err != nil {
 		return nil, sdk.WrapError(err, "cannot tar pulled workflow")
 	}
 
@@ -76,9 +56,50 @@ func PushOperation(ctx context.Context, db gorp.SqlExecutor, store cache.Store, 
 	if err := PostRepositoryOperation(ctx, db, proj, &ope, multipartData); err != nil {
 		return nil, sdk.WrapError(err, "unable to post repository operation")
 	}
-	ope.RepositoryStrategy.SSHKeyContent = ""
+
+	ope.RepositoryStrategy.SSHKeyContent = sdk.PasswordPlaceholder
+	ope.RepositoryStrategy.Password = sdk.PasswordPlaceholder
 	_ = store.SetWithTTL(cache.Key(CacheOperationKey, ope.UUID), ope, 300)
 	return &ope, nil
+}
+
+func PushOperation(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj sdk.Project, data exportentities.WorkflowComponents, vcsServerName, repoFullname, branch, message string, vcsStrategy sdk.RepositoryStrategy, u sdk.Identifiable) (*sdk.Operation, error) {
+	ope := sdk.Operation{
+		VCSServer:          vcsServerName,
+		RepoFullName:       repoFullname,
+		RepositoryStrategy: vcsStrategy,
+		Setup: sdk.OperationSetup{
+			Push: sdk.OperationPush{
+				FromBranch: branch,
+				Message:    message,
+			},
+		},
+	}
+	ope.User.Email = u.GetEmail()
+	ope.User.Fullname = u.GetFullname()
+	ope.User.Username = u.GetUsername()
+
+	return pushOperation(ctx, db, store, proj, data, ope)
+}
+
+func PushOperationUpdate(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj sdk.Project, data exportentities.WorkflowComponents, vcsServerName, repoFullname, branch, message string, vcsStrategy sdk.RepositoryStrategy, u sdk.Identifiable) (*sdk.Operation, error) {
+	ope := sdk.Operation{
+		VCSServer:          vcsServerName,
+		RepoFullName:       repoFullname,
+		RepositoryStrategy: vcsStrategy,
+		Setup: sdk.OperationSetup{
+			Push: sdk.OperationPush{
+				FromBranch: branch,
+				Message:    message,
+				Update:     true,
+			},
+		},
+	}
+	ope.User.Email = u.GetEmail()
+	ope.User.Fullname = u.GetFullname()
+	ope.User.Username = u.GetUsername()
+
+	return pushOperation(ctx, db, store, proj, data, ope)
 }
 
 // PostRepositoryOperation creates a new repository operation
@@ -114,20 +135,20 @@ func PostRepositoryOperation(ctx context.Context, db gorp.SqlExecutor, prj sdk.P
 		return nil
 	}
 	if _, err := services.NewClient(db, srvs).DoMultiPartRequest(ctx, http.MethodPost, "/operations", multipartData, ope, ope); err != nil {
-		return sdk.WrapError(err, "Unable to perform multipart operation")
+		return sdk.WrapError(err, "unable to perform multipart operation")
 	}
 	return nil
 }
 
-// GetRepositoryOperation get repository operation status
-func GetRepositoryOperation(ctx context.Context, db gorp.SqlExecutor, ope *sdk.Operation) error {
+// GetRepositoryOperation get repository operation status.
+func GetRepositoryOperation(ctx context.Context, db gorp.SqlExecutor, uuid string) (*sdk.Operation, error) {
 	srvs, err := services.LoadAllByType(ctx, db, sdk.TypeRepositories)
 	if err != nil {
-		return sdk.WrapError(err, "Unable to found repositories service")
+		return nil, sdk.WrapError(err, "unable to found repositories service")
 	}
-
-	if _, _, err := services.NewClient(db, srvs).DoJSONRequest(ctx, http.MethodGet, "/operations/"+ope.UUID, nil, ope); err != nil {
-		return sdk.WrapError(err, "Unable to get operation")
+	var ope sdk.Operation
+	if _, _, err := services.NewClient(db, srvs).DoJSONRequest(ctx, http.MethodGet, "/operations/"+uuid, nil, &ope); err != nil {
+		return nil, sdk.WrapError(err, "unable to get operation")
 	}
-	return nil
+	return &ope, nil
 }

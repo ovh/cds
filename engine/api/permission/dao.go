@@ -6,12 +6,40 @@ import (
 	"strings"
 
 	"github.com/go-gorp/gorp"
+	"github.com/lib/pq"
 
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/observability"
 	"github.com/ovh/cds/sdk"
 )
+
+func LoadWorkflowMaxLevelPermissionByWorkflowIDs(ctx context.Context, db gorp.SqlExecutor, workflowIDs []int64, groupIDs []int64) (sdk.EntitiesPermissions, error) {
+	_, end := observability.Span(ctx, "permission.LoadWorkflowMaxLevelPermissionByWorkflowIDs")
+	defer end()
+
+	query := `
+		SELECT workflow.id::text, max(workflow_perm.role)
+		FROM workflow_perm
+		JOIN workflow ON workflow.id = workflow_perm.workflow_id
+		JOIN project ON project.id = workflow.project_id
+		JOIN project_group ON project_group.id = workflow_perm.project_group_id
+		WHERE project_group.project_id = project.id
+		AND workflow.id = ANY($1)
+		AND project_group.group_id = ANY($2)
+		GROUP BY workflow.id, workflow.name`
+
+	rows, err := db.Query(query, pq.Int64Array(workflowIDs), pq.Int64Array(groupIDs))
+	if err == sql.ErrNoRows {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, sdk.WithStack(err)
+	}
+	defer rows.Close()
+
+	return scanPermissions(rows)
+}
 
 func LoadWorkflowMaxLevelPermission(ctx context.Context, db gorp.SqlExecutor, projectKey string, workflowNames []string, groupIDs []int64) (sdk.EntitiesPermissions, error) {
 	_, end := observability.Span(ctx, "permission.LoadWorkflowMaxLevelPermission")

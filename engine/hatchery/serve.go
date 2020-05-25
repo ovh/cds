@@ -226,7 +226,7 @@ func (c *Common) SendServiceLog(ctx context.Context, servicesLogs []sdk.ServiceL
 			log.Error(ctx, "SendServiceLog> unable to sign service log message: %v", err)
 			continue
 		}
-		c.ServiceLogger.WithField("Signature", signature).Log(logrus.InfoLevel, s)
+		c.ServiceLogger.WithField("Signature", signature).Log(logrus.InfoLevel, s.Val)
 	}
 }
 

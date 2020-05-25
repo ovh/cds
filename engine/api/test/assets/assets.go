@@ -394,7 +394,7 @@ func InsertGroup(t *testing.T, db gorp.SqlExecutor) *sdk.Group {
 	if g1 != nil {
 		models, _ := workermodel.LoadAllByGroupIDs(context.Background(), db, []int64{g.ID}, nil)
 		for _, m := range models {
-			_ = workermodel.Delete(db, m.ID)
+			_ = workermodel.DeleteByID(db, m.ID)
 		}
 
 		if err := group.Delete(context.TODO(), db, g1); err != nil {
@@ -427,7 +427,7 @@ func InsertWorkerModel(t *testing.T, db gorp.SqlExecutor, name string, groupID i
 		UserLastModified: time.Now(),
 	}
 
-	if err := workermodel.Insert(db, &m); err != nil {
+	if err := workermodel.Insert(context.TODO(), db, &m); err != nil {
 		t.Fatalf("Cannot insert worker model: %s", err)
 	}
 

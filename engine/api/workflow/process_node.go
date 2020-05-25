@@ -257,7 +257,9 @@ func processNode(ctx context.Context, db gorp.SqlExecutor, store cache.Store, pr
 
 	// CONDITION
 	if !checkCondition(ctx, wr, n.Context.Conditions, nr.BuildParameters) {
-		log.Debug("Condition failed on processNode %d/%d %+v", wr.ID, n.ID, nr.BuildParameters)
+		log.Debug("Conditions failed on processNode %d/%d", wr.ID, n.ID)
+		log.Debug("Conditions was: %+v", n.Context.Conditions)
+		log.Debug("BuildParameters was: %+v", nr.BuildParameters)
 		return nil, false, nil
 	}
 

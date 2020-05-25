@@ -20,6 +20,7 @@ import {
     WorkflowTemplateInstance
 } from 'app/model/workflow-template.model';
 import { WorkflowTemplateService } from 'app/service/workflow-template/workflow-template.service';
+import { ParamData as AsCodeParamData } from 'app/shared/ascode/save-form/ascode.save-form.component';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { Column, ColumnType, Select } from 'app/shared/table/data-table.component';
 import { Observable, Subscription } from 'rxjs';
@@ -39,6 +40,7 @@ export class WorkflowTemplateBulkModalComponent {
 
     @Input() workflowTemplate: WorkflowTemplate;
     @Output() close = new EventEmitter();
+
     columnsInstances: Array<Column<WorkflowTemplateInstance>>;
     columnsOperations: Array<Column<WorkflowTemplateBulkOperation>>;
     instances: Array<WorkflowTemplateInstance>;
@@ -50,6 +52,9 @@ export class WorkflowTemplateBulkModalComponent {
     parameters: { [s: number]: ParamData };
     response: WorkflowTemplateBulk;
     pollingStatusSub: Subscription;
+    asCodeParameters: AsCodeParamData;
+    withAsCodeWorkflow: boolean;
+    validFields: boolean;
 
     constructor(
         private _modalService: SuiModalService,
@@ -154,8 +159,7 @@ export class WorkflowTemplateBulkModalComponent {
                 this.loadingInstances = false;
                 this._cd.markForCheck();
             }))
-            .subscribe(is => this.instances = is.filter(i => !i.workflow || !i.workflow.from_repository)
-                .sort((a, b) => a.key() < b.key() ? -1 : 1));
+            .subscribe(is => this.instances = is.sort((a, b) => a.key() < b.key() ? -1 : 1));
 
         this.selectedInstanceKeys = [];
 
@@ -164,6 +168,13 @@ export class WorkflowTemplateBulkModalComponent {
 
     clickGoToParam() {
         this.selectedInstances = this.instances.filter(i => !!this.selectedInstanceKeys.find(k => k === i.key()));
+        this.withAsCodeWorkflow = false;
+        for (let i = 0; i < this.selectedInstances.length; i++) {
+            if (this.selectedInstances[i].workflow && this.selectedInstances[i].workflow.from_repository) {
+                this.withAsCodeWorkflow = true;
+                break;
+            }
+        }
         this.moveToStep(1);
     }
 
@@ -180,12 +191,17 @@ export class WorkflowTemplateBulkModalComponent {
         });
 
         this.response = null;
-        this._workflowTemplateService.bulk(this.workflowTemplate.group.name, this.workflowTemplate.slug, req)
-            .pipe(finalize(() => this._cd.markForCheck()))
-            .subscribe(b => {
-                this.response = b;
-                this.startPollingStatus();
-            });
+        let request: Observable<WorkflowTemplateBulk>;
+        if (this.withAsCodeWorkflow) {
+            request = this._workflowTemplateService.bulkAsCode(this.workflowTemplate.group.name, this.workflowTemplate.slug, req,
+                this.asCodeParameters.branch_name, this.asCodeParameters.commit_message)
+        } else {
+            request = this._workflowTemplateService.bulk(this.workflowTemplate.group.name, this.workflowTemplate.slug, req)
+        }
+        request.pipe(finalize(() => this._cd.markForCheck())).subscribe(b => {
+            this.response = b;
+            this.startPollingStatus();
+        });
 
         this.moveToStep(2);
     }
@@ -224,5 +240,15 @@ export class WorkflowTemplateBulkModalComponent {
                     }
                 })
         });
+    }
+
+    onAsCodeParamChange(param: AsCodeParamData): void {
+        this.asCodeParameters = param;
+        this.validateParam();
+    }
+
+    validateParam() {
+        this.validFields = !this.withAsCodeWorkflow || (this.asCodeParameters &&
+            !!this.asCodeParameters.branch_name && !!this.asCodeParameters.commit_message);
     }
 }

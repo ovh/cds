@@ -62,7 +62,7 @@ func (api *API) postRegisterWorkerHandler() service.Handler {
 		if workerTokenFromHatchery.Worker.JobID != 0 {
 			job, err := workflow.LoadNodeJobRun(ctx, tx, api.Cache, workerTokenFromHatchery.Worker.JobID)
 			if err != nil {
-				return sdk.NewErrorWithStack(err, sdk.ErrForbidden)
+				return sdk.NewErrorWithStack(sdk.WrapError(err, "error on LoadNodeJobRun with jobID %d", workerTokenFromHatchery.Worker.JobID), sdk.ErrForbidden)
 			}
 			groupIDs = sdk.Groups(job.ExecGroups).ToIDs()
 		} else {

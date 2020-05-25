@@ -12,9 +12,13 @@ import (
 	"strconv"
 
 	"github.com/gorilla/mux"
+	"github.com/sirupsen/logrus"
 
+	"github.com/ovh/cds/engine/api/application"
+	"github.com/ovh/cds/engine/api/ascode"
 	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/group"
+	"github.com/ovh/cds/engine/api/operation"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/engine/api/workflowtemplate"
@@ -243,7 +247,7 @@ func (api *API) putTemplateHandler() service.Handler {
 		clone := sdk.WorkflowTemplate(*old)
 		clone.Update(data)
 
-		// execute template with no instance only to check if parsing is ok
+		// execute template with no instance only to check if golang template parsing is ok
 		if _, err := workflowtemplate.Parse(clone); err != nil {
 			return err
 		}
@@ -322,6 +326,8 @@ func (api *API) postTemplateApplyHandler() service.Handler {
 		}
 
 		withImport := FormBool(r, "import")
+		branch := FormString(r, "branch")
+		message := FormString(r, "message")
 
 		// parse and check request
 		var req sdk.WorkflowTemplateRequest
@@ -360,7 +366,9 @@ func (api *API) postTemplateApplyHandler() service.Handler {
 			project.LoadOptions.WithEnvironments,
 			project.LoadOptions.WithPipelines,
 			project.LoadOptions.WithApplicationWithDeploymentStrategies,
-			project.LoadOptions.WithIntegrations)
+			project.LoadOptions.WithIntegrations,
+			project.LoadOptions.WithClearKeys,
+		)
 		if err != nil {
 			return err
 		}
@@ -395,8 +403,37 @@ func (api *API) postTemplateApplyHandler() service.Handler {
 					return err
 				}
 				if existingWorkflow.FromRepository != "" {
-					// TODO we need to create a PR
-					return sdk.NewErrorFrom(sdk.ErrNotImplemented, "update a workflow ascode with template not yet available")
+					var rootApp *sdk.Application
+					if existingWorkflow.WorkflowData.Node.Context != nil && existingWorkflow.WorkflowData.Node.Context.ApplicationID != 0 {
+						rootApp, err = application.LoadByIDWithClearVCSStrategyPassword(api.mustDB(), existingWorkflow.WorkflowData.Node.Context.ApplicationID)
+						if err != nil {
+							return err
+						}
+					}
+					if rootApp == nil {
+						return sdk.NewErrorFrom(sdk.ErrWrongRequest, "cannot find the root application of the workflow")
+					}
+
+					ope, err := operation.PushOperationUpdate(ctx, api.mustDB(), api.Cache, *p, data, rootApp.VCSServer, rootApp.RepositoryFullname, branch, message, rootApp.RepositoryStrategy, consumer)
+					if err != nil {
+						return err
+					}
+
+					sdk.GoRoutine(context.Background(), fmt.Sprintf("UpdateAsCodeResult-%s", ope.UUID), func(ctx context.Context) {
+						ed := ascode.EntityData{
+							Name:          existingWorkflow.Name,
+							ID:            existingWorkflow.ID,
+							Type:          ascode.WorkflowEvent,
+							FromRepo:      existingWorkflow.FromRepository,
+							OperationUUID: ope.UUID,
+						}
+						asCodeEvent := ascode.UpdateAsCodeResult(ctx, api.mustDB(), api.Cache, *p, existingWorkflow.ID, *rootApp, ed, consumer)
+						if asCodeEvent != nil {
+							event.PublishAsCodeEvent(ctx, p.Key, *asCodeEvent, consumer)
+						}
+					}, api.PanicDump())
+
+					return service.WriteJSON(w, ope, http.StatusOK)
 				}
 			}
 		}
@@ -407,7 +444,7 @@ func (api *API) postTemplateApplyHandler() service.Handler {
 		if req.Detached {
 			mods = append(mods, workflowtemplate.TemplateRequestModifiers.Detached)
 		}
-		wti, err := workflowtemplate.CheckAndExecuteTemplate(ctx, api.mustDB(), *consumer, *p, &data, mods...)
+		_, wti, err := workflowtemplate.CheckAndExecuteTemplate(ctx, api.mustDB(), *consumer, *p, &data, mods...)
 		if err != nil {
 			return err
 		}
@@ -469,6 +506,9 @@ func (api *API) postTemplateBulkHandler() service.Handler {
 			return err
 		}
 
+		branch := FormString(r, "branch")
+		message := FormString(r, "message")
+
 		// check all requests
 		var req sdk.WorkflowTemplateBulk
 		if err := service.UnmarshalBody(r, &req); err != nil {
@@ -526,7 +566,10 @@ func (api *API) postTemplateBulkHandler() service.Handler {
 
 					errorDefer := func(err error) error {
 						if err != nil {
-							log.Error(ctx, "%v", err)
+							err = sdk.WrapError(err, "error occurred in template bulk with id %d", bulk.ID)
+							log.ErrorWithFields(ctx, logrus.Fields{
+								"stack_trace": fmt.Sprintf("%+v", err),
+							}, "%s", err)
 							bulk.Operations[i].Status = sdk.OperationStatusError
 							bulk.Operations[i].Error = fmt.Sprintf("%s", sdk.Cause(err))
 							if err := workflowtemplate.UpdateBulk(api.mustDB(), &bulk); err != nil {
@@ -544,7 +587,9 @@ func (api *API) postTemplateBulkHandler() service.Handler {
 						project.LoadOptions.WithEnvironments,
 						project.LoadOptions.WithPipelines,
 						project.LoadOptions.WithApplicationWithDeploymentStrategies,
-						project.LoadOptions.WithIntegrations)
+						project.LoadOptions.WithIntegrations,
+						project.LoadOptions.WithClearKeys,
+					)
 					if err != nil {
 						if errD := errorDefer(err); errD != nil {
 							log.Error(ctx, "%v", errD)
@@ -581,11 +626,52 @@ func (api *API) postTemplateBulkHandler() service.Handler {
 							continue
 						}
 						if existingWorkflow.FromRepository != "" {
-							// TODO we need to create a PR
-							if errD := errorDefer(sdk.NewErrorFrom(sdk.ErrNotImplemented, "update a workflow ascode with template not yet available")); errD != nil {
-								log.Error(ctx, "%v", errD)
+							var rootApp *sdk.Application
+							if existingWorkflow.WorkflowData.Node.Context != nil && existingWorkflow.WorkflowData.Node.Context.ApplicationID != 0 {
+								rootApp, err = application.LoadByIDWithClearVCSStrategyPassword(api.mustDB(), existingWorkflow.WorkflowData.Node.Context.ApplicationID)
+								if err != nil {
+									if errD := errorDefer(err); errD != nil {
+										log.Error(ctx, "%v", errD)
+										return
+									}
+									continue
+								}
+							}
+							if rootApp == nil {
+								if errD := errorDefer(sdk.NewErrorFrom(sdk.ErrWrongRequest, "cannot find the root application of the workflow")); errD != nil {
+									log.Error(ctx, "%v", errD)
+									return
+								}
+								continue
+							}
+
+							ope, err := operation.PushOperationUpdate(ctx, api.mustDB(), api.Cache, *p, data, rootApp.VCSServer, rootApp.RepositoryFullname, branch, message, rootApp.RepositoryStrategy, consumer)
+							if err != nil {
+								if errD := errorDefer(err); errD != nil {
+									log.Error(ctx, "%v", errD)
+									return
+								}
+								continue
+							}
+
+							ed := ascode.EntityData{
+								Name:          existingWorkflow.Name,
+								ID:            existingWorkflow.ID,
+								Type:          ascode.WorkflowEvent,
+								FromRepo:      existingWorkflow.FromRepository,
+								OperationUUID: ope.UUID,
+							}
+							asCodeEvent := ascode.UpdateAsCodeResult(ctx, api.mustDB(), api.Cache, *p, existingWorkflow.ID, *rootApp, ed, consumer)
+							if asCodeEvent != nil {
+								event.PublishAsCodeEvent(ctx, p.Key, *asCodeEvent, consumer)
+							}
+
+							bulk.Operations[i].Status = sdk.OperationStatusDone
+							if err := workflowtemplate.UpdateBulk(api.mustDB(), &bulk); err != nil {
+								log.Error(ctx, "%v", err)
 								return
 							}
+
 							continue
 						}
 					}
@@ -593,7 +679,7 @@ func (api *API) postTemplateBulkHandler() service.Handler {
 					mods := []workflowtemplate.TemplateRequestModifierFunc{
 						workflowtemplate.TemplateRequestModifiers.DefaultKeys(*p),
 					}
-					wti, err = workflowtemplate.CheckAndExecuteTemplate(ctx, api.mustDB(), *consumer, *p, &data, mods...)
+					_, wti, err = workflowtemplate.CheckAndExecuteTemplate(ctx, api.mustDB(), *consumer, *p, &data, mods...)
 					if err != nil {
 						if errD := errorDefer(err); errD != nil {
 							log.Error(ctx, "%v", errD)
@@ -932,7 +1018,7 @@ func (api *API) getTemplateUsageHandler() service.Handler {
 				mProjectIDs[ps[i].ID] = struct{}{}
 			}
 
-			filteredWorkflow := []sdk.Workflow{}
+			filteredWorkflow := []sdk.WorkflowName{}
 			for i := range wfs {
 				if _, ok := mProjectIDs[wfs[i].ProjectID]; ok {
 					filteredWorkflow = append(filteredWorkflow, wfs[i])

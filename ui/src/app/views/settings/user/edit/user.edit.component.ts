@@ -176,20 +176,8 @@ export class UserEditComponent implements OnInit {
                 selector: (c: AuthConsumer) => c.description
             },
             <Column<AuthConsumer>>{
-                type: ColumnType.TEXT_ICONS,
                 name: 'user_auth_scopes',
-                selector: (c: AuthConsumer) => {
-                    return {
-                        value: c.scope_details.map(s => s.scope).join(', '),
-                        icons: [
-                            {
-                                label: 'user_auth_info_scopes',
-                                class: ['info', 'circle', 'icon', 'primary', 'link'],
-                                title: 'user_auth_info_scopes'
-                            }
-                        ]
-                    }
-                }
+                selector: (c: AuthConsumer) => c.scope_details.map(s => s.scope).join(', ')
             },
             <Column<AuthConsumer>>{
                 type: ColumnType.TEXT_ICONS,

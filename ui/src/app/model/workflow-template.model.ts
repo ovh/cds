@@ -64,6 +64,7 @@ export class WorkflowTemplateInstance implements WithKey {
     request: WorkflowTemplateRequest;
     project: Project;
     workflow: Workflow;
+    workflow_id: Workflow;
     first_audit: AuditWorkflowTemplateInstance;
     last_audit: AuditWorkflowTemplateInstance;
     workflow_name: string;

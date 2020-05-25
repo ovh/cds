@@ -67,8 +67,8 @@ func InsertWorkflowData(db gorp.SqlExecutor, w *sdk.Workflow) error {
 		}
 	}
 
-	dbWorkflow := Workflow(*w)
-	if err := dbWorkflow.PostUpdate(db); err != nil {
+	dbWorkflow := Workflow{Workflow: *w}
+	if _, err := db.UpdateColumns(func(c *gorp.ColumnMap) bool { return c.ColumnName != "project_key" }, &dbWorkflow); err != nil {
 		return sdk.WrapError(err, "InsertWorkflowData> unable to update workflow data")
 	}
 
