@@ -6,7 +6,6 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"github.com/ovh/cds/engine/cdn"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
@@ -37,6 +36,7 @@ import (
 	"github.com/ovh/cds/engine/api/test/assets"
 	"github.com/ovh/cds/engine/api/worker"
 	"github.com/ovh/cds/engine/api/workflow"
+	"github.com/ovh/cds/engine/cdn"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
@@ -1317,7 +1317,7 @@ func TestInsertNewCodeCoverageReport(t *testing.T) {
 		}
 	}
 
-	a, _ := assets.InsertService(t, db, "TestInsertNewCodeCoverageReport", services.TypeVCS)
+	a, _ := assets.InsertService(t, db, "TestInsertNewCodeCoverageReport", sdk.TypeVCS)
 
 	defer func() {
 		_ = services.Delete(db, a)

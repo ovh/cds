@@ -1056,17 +1056,17 @@ func Test_postWorkflowRunAsyncFailedHandler(t *testing.T) {
 	}
 
 	// Prepare VCS Mock
-	mockVCSSservice, _ := assets.InsertService(t, db, "Test_postWorkflowRunAsyncFailedHandlerVCS", services.TypeVCS)
+	mockVCSSservice, _ := assets.InsertService(t, db, "Test_postWorkflowRunAsyncFailedHandlerVCS", sdk.TypeVCS)
 	defer func() {
 		_ = services.Delete(db, mockVCSSservice) // nolint
 	}()
 
-	mockRepoService, _ := assets.InsertService(t, db, "Test_postWorkflowRunAsyncFailedHandlerRepo", services.TypeRepositories)
+	mockRepoService, _ := assets.InsertService(t, db, "Test_postWorkflowRunAsyncFailedHandlerRepo", sdk.TypeRepositories)
 	defer func() {
 		_ = services.Delete(db, mockRepoService) // nolint
 	}()
 
-	mockHookService, _ := assets.InsertService(t, db, "Test_postWorkflowRunAsyncFailedHandlerHook", services.TypeHooks)
+	mockHookService, _ := assets.InsertService(t, db, "Test_postWorkflowRunAsyncFailedHandlerHook", sdk.TypeHooks)
 	defer func() {
 		_ = services.Delete(db, mockHookService) // nolint
 	}()
@@ -1391,7 +1391,7 @@ func Test_postWorkflowRunHandlerWithoutRightConditionsOnHook(t *testing.T) {
 	test.NoError(t, pipeline.InsertJob(api.mustDB(), j, s.ID, &pip2))
 	s.Jobs = append(s.Jobs, *j)
 
-	mockHookService, _ := assets.InsertService(t, db, "Test_postWorkflowRunHandlerWithoutRightConditionsOnHook", services.TypeHooks)
+	mockHookService, _ := assets.InsertService(t, db, "Test_postWorkflowRunHandlerWithoutRightConditionsOnHook", sdk.TypeHooks)
 	defer func() {
 		_ = services.Delete(db, mockHookService) // nolint
 	}()
@@ -1550,7 +1550,7 @@ func Test_postWorkflowRunHandlerHookWithMutex(t *testing.T) {
 	test.NoError(t, pipeline.InsertJob(api.mustDB(), j, s.ID, &pip2))
 	s.Jobs = append(s.Jobs, *j)
 
-	mockServiceHook, _ := assets.InsertService(t, db, "Test_postWorkflowRunHandlerHookWithMutex", services.TypeHooks)
+	mockServiceHook, _ := assets.InsertService(t, db, "Test_postWorkflowRunHandlerHookWithMutex", sdk.TypeHooks)
 	defer func() {
 		_ = services.Delete(db, mockServiceHook) // nolint
 	}()
@@ -1712,7 +1712,7 @@ func Test_postWorkflowRunHandlerHook(t *testing.T) {
 	test.NoError(t, pipeline.InsertJob(api.mustDB(), j, s.ID, &pip2))
 	s.Jobs = append(s.Jobs, *j)
 
-	mockServiceHook, _ := assets.InsertService(t, db, "Test_postWorkflowRunHandlerHookWithMutex", services.TypeHooks)
+	mockServiceHook, _ := assets.InsertService(t, db, "Test_postWorkflowRunHandlerHookWithMutex", sdk.TypeHooks)
 	defer func() {
 		_ = services.Delete(db, mockServiceHook) // nolint
 	}()
@@ -2355,7 +2355,7 @@ func Test_deleteWorkflowRunsBranchHandler(t *testing.T) {
 	}, consumer, nil)
 	require.NoError(t, err)
 
-	mockHookService, _ := assets.InsertService(t, db, "Test_deleteWorkflowRunsBranchHandler", services.TypeHooks, sdk.AuthConsumerScopeRun)
+	mockHookService, _ := assets.InsertService(t, db, "Test_deleteWorkflowRunsBranchHandler", sdk.TypeHooks, sdk.AuthConsumerScopeRun)
 	defer func() {
 		_ = services.Delete(db, mockHookService) // nolint
 	}()

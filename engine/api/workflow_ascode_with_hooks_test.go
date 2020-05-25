@@ -26,9 +26,9 @@ func Test_WorkflowAsCodeWithNoHook_ShouldGive_AnAutomaticRepoWebHook(t *testing.
 	api, db, _, end := newTestAPI(t)
 	defer end()
 
-	_, _ = assets.InsertService(t, db, t.Name()+"_HOOKS", services.TypeHooks)
-	_, _ = assets.InsertService(t, db, t.Name()+"_VCS", services.TypeVCS)
-	_, _ = assets.InsertService(t, db, t.Name()+"_REPO", services.TypeRepositories)
+	_, _ = assets.InsertService(t, db, t.Name()+"_HOOKS", sdk.TypeHooks)
+	_, _ = assets.InsertService(t, db, t.Name()+"_VCS", sdk.TypeVCS)
+	_, _ = assets.InsertService(t, db, t.Name()+"_REPO", sdk.TypeRepositories)
 
 	// Setup a mock for all services called by the API
 	ctrl := gomock.NewController(t)
@@ -238,9 +238,9 @@ func Test_WorkflowAsCodeWithDefaultHook_ShouldGive_TheSameRepoWebHook(t *testing
 	api, db, _, end := newTestAPI(t)
 	defer end()
 
-	_, _ = assets.InsertService(t, db, t.Name()+"_HOOKS", services.TypeHooks)
-	_, _ = assets.InsertService(t, db, t.Name()+"_VCS", services.TypeVCS)
-	_, _ = assets.InsertService(t, db, t.Name()+"_REPO", services.TypeRepositories)
+	_, _ = assets.InsertService(t, db, t.Name()+"_HOOKS", sdk.TypeHooks)
+	_, _ = assets.InsertService(t, db, t.Name()+"_VCS", sdk.TypeVCS)
+	_, _ = assets.InsertService(t, db, t.Name()+"_REPO", sdk.TypeRepositories)
 
 	// Setup a mock for all services called by the API
 	ctrl := gomock.NewController(t)
@@ -520,9 +520,9 @@ func Test_WorkflowAsCodeWithDefaultHookAndAScheduler_ShouldGive_TheSameRepoWebHo
 	api, db, _, end := newTestAPI(t)
 	defer end()
 
-	_, _ = assets.InsertService(t, db, t.Name()+"_HOOKS", services.TypeHooks)
-	_, _ = assets.InsertService(t, db, t.Name()+"_VCS", services.TypeVCS)
-	_, _ = assets.InsertService(t, db, t.Name()+"_REPO", services.TypeRepositories)
+	_, _ = assets.InsertService(t, db, t.Name()+"_HOOKS", sdk.TypeHooks)
+	_, _ = assets.InsertService(t, db, t.Name()+"_VCS", sdk.TypeVCS)
+	_, _ = assets.InsertService(t, db, t.Name()+"_REPO", sdk.TypeRepositories)
 
 	// Setup a mock for all services called by the API
 	ctrl := gomock.NewController(t)
@@ -886,9 +886,9 @@ func Test_WorkflowAsCodeWithJustAcheduler_ShouldGive_ARepoWebHookAndTheScheduler
 	api, db, _, end := newTestAPI(t)
 	defer end()
 
-	_, _ = assets.InsertService(t, db, t.Name()+"_HOOKS", services.TypeHooks)
-	_, _ = assets.InsertService(t, db, t.Name()+"_VCS", services.TypeVCS)
-	_, _ = assets.InsertService(t, db, t.Name()+"_REPO", services.TypeRepositories)
+	_, _ = assets.InsertService(t, db, t.Name()+"_HOOKS", sdk.TypeHooks)
+	_, _ = assets.InsertService(t, db, t.Name()+"_VCS", sdk.TypeVCS)
+	_, _ = assets.InsertService(t, db, t.Name()+"_REPO", sdk.TypeRepositories)
 
 	// Setup a mock for all services called by the API
 	ctrl := gomock.NewController(t)

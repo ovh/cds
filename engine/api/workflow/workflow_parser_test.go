@@ -131,12 +131,12 @@ func TestParseAndImportFromRepository(t *testing.T) {
 
 	UUID := sdk.UUID()
 
-	mockServiceVCS, _ := assets.InsertService(t, db, "Test_postWorkflowAsCodeHandlerVCS", services.TypeVCS)
+	mockServiceVCS, _ := assets.InsertService(t, db, "Test_postWorkflowAsCodeHandlerVCS", sdk.TypeVCS)
 	defer func() {
 		_ = services.Delete(db, mockServiceVCS) // nolint
 	}()
 
-	mockServiceHook, _ := assets.InsertService(t, db, "Test_postWorkflowAsCodeHandlerHook", services.TypeHooks)
+	mockServiceHook, _ := assets.InsertService(t, db, "Test_postWorkflowAsCodeHandlerHook", sdk.TypeHooks)
 	defer func() {
 		_ = services.Delete(db, mockServiceHook) // nolint
 	}()

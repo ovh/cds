@@ -70,8 +70,8 @@ func Test_postImportAsCodeHandler(t *testing.T) {
 		},
 	}))
 
-	a, _ := assets.InsertService(t, db, "Test_postImportAsCodeHandler", services.TypeRepositories)
-	b, _ := assets.InsertService(t, db, "Test_VCSService", services.TypeVCS)
+	a, _ := assets.InsertService(t, db, "Test_postImportAsCodeHandler", sdk.TypeRepositories)
+	b, _ := assets.InsertService(t, db, "Test_VCSService", sdk.TypeVCS)
 
 	defer func() {
 		_ = services.Delete(db, a)
@@ -143,7 +143,7 @@ func Test_getImportAsCodeHandler(t *testing.T) {
 	p := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
 	u, pass := assets.InsertAdminUser(t, db)
 
-	a, _ := assets.InsertService(t, db, "Test_getImportAsCodeHandler", services.TypeRepositories)
+	a, _ := assets.InsertService(t, db, "Test_getImportAsCodeHandler", sdk.TypeRepositories)
 	defer func() {
 		_ = services.Delete(db, a)
 	}()
@@ -212,8 +212,8 @@ func Test_postPerformImportAsCodeHandler(t *testing.T) {
 	pkey := sdk.RandomString(10)
 	_ = assets.InsertTestProject(t, db, api.Cache, pkey, pkey)
 
-	a, _ := assets.InsertService(t, db, "Test_postPerformImportAsCodeHandler_Repo", services.TypeRepositories)
-	b, _ := assets.InsertService(t, db, "Test_postPerformImportAsCodeHandler_VCS", services.TypeHooks)
+	a, _ := assets.InsertService(t, db, "Test_postPerformImportAsCodeHandler_Repo", sdk.TypeRepositories)
+	b, _ := assets.InsertService(t, db, "Test_postPerformImportAsCodeHandler_VCS", sdk.TypeHooks)
 
 	defer func() {
 		_ = services.Delete(db, a)
@@ -376,7 +376,7 @@ vcs_ssh_key: proj-blabla
 	}
 
 	// Prepare VCS Mock
-	mockVCSSservice, _ := assets.InsertService(t, db, "Test_postResyncPRAsCodeHandler", services.TypeVCS)
+	mockVCSSservice, _ := assets.InsertService(t, db, "Test_postResyncPRAsCodeHandler", sdk.TypeVCS)
 	defer func() {
 		_ = services.Delete(db, mockVCSSservice) // nolint
 	}()

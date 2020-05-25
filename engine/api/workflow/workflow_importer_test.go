@@ -43,7 +43,7 @@ func TestImport(t *testing.T) {
 		}
 	}
 
-	assets.InsertService(t, db, "service_test"+sdk.RandomString(5), services.TypeHooks)
+	assets.InsertService(t, db, "service_test"+sdk.RandomString(5), sdk.TypeHooks)
 
 	//Mock HTTPClient from services package
 	services.HTTPClient = &mockHTTPClient{}

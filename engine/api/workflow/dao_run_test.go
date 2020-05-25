@@ -82,7 +82,7 @@ func TestPurgeWorkflowRun(t *testing.T) {
 	defer end()
 	_ = event.Initialize(context.Background(), db, cache)
 
-	mockVCSSservice, _ := assets.InsertService(t, db, "TestManualRunBuildParameterMultiApplication", services.TypeVCS)
+	mockVCSSservice, _ := assets.InsertService(t, db, "TestManualRunBuildParameterMultiApplication", sdk.TypeVCS)
 	defer func() {
 		services.Delete(db, mockVCSSservice) // nolint
 	}()
@@ -356,7 +356,7 @@ func TestPurgeWorkflowRunWithOneSuccessWorkflowRun(t *testing.T) {
 	defer end()
 	_ = event.Initialize(context.Background(), db, cache)
 
-	mockVCSSservice, _ := assets.InsertService(t, db, "TestManualRunBuildParameterMultiApplication", services.TypeVCS)
+	mockVCSSservice, _ := assets.InsertService(t, db, "TestManualRunBuildParameterMultiApplication", sdk.TypeVCS)
 	defer func() {
 		services.Delete(db, mockVCSSservice) // nolint
 	}()
@@ -558,7 +558,7 @@ func TestPurgeWorkflowRunWithNoSuccessWorkflowRun(t *testing.T) {
 	defer end()
 	_ = event.Initialize(context.Background(), db, cache)
 
-	mockVCSSservice, _ := assets.InsertService(t, db, "TestManualRunBuildParameterMultiApplication", services.TypeVCS)
+	mockVCSSservice, _ := assets.InsertService(t, db, "TestManualRunBuildParameterMultiApplication", sdk.TypeVCS)
 	defer func() {
 		services.Delete(db, mockVCSSservice) // nolint
 	}()

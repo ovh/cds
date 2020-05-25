@@ -37,12 +37,12 @@ func TestAPI_detachRepositoriesManagerHandler(t *testing.T) {
 		require.NoError(t, services.Delete(db, &srv))
 	}
 
-	mockVCSSservice, _ := assets.InsertService(t, db, "TestAPI_detachRepositoriesManagerVCS", services.TypeVCS)
+	mockVCSSservice, _ := assets.InsertService(t, db, "TestAPI_detachRepositoriesManagerVCS", sdk.TypeVCS)
 	defer func() {
 		services.Delete(db, mockVCSSservice) // nolint
 	}()
 
-	mockServiceHook, _ := assets.InsertService(t, db, "TestAPI_detachRepositoriesManagerHook", services.TypeHooks)
+	mockServiceHook, _ := assets.InsertService(t, db, "TestAPI_detachRepositoriesManagerHook", sdk.TypeHooks)
 	defer func() {
 		_ = services.Delete(db, mockServiceHook) // nolint
 	}()
