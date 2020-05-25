@@ -41,8 +41,8 @@ func hookUnregistration(ctx context.Context, db gorp.SqlExecutor, store cache.St
 	for _, h := range hookToDelete {
 		if h.HookModelName == sdk.RepositoryWebHookModelName {
 			// Call VCS to know if repository allows webhook and get the configuration fields
-			projectVCSServer := repositoriesmanager.GetProjectVCSServer(proj, h.Config["vcsServer"].Value)
-			if projectVCSServer != nil {
+			projectVCSServer, err := repositoriesmanager.LoadProjectVCSServerLinkByProjectKeyAndVCSServerName(ctx, db, proj.Key, h.Config["vcsServer"].Value)
+			if err == nil {
 				client, errclient := repositoriesmanager.AuthorizedClient(ctx, db, store, proj.Key, projectVCSServer)
 				if errclient != nil {
 					return errclient
@@ -271,8 +271,9 @@ func createVCSConfiguration(ctx context.Context, db gorp.SqlExecutor, store cach
 	ctx, end := observability.Span(ctx, "workflow.createVCSConfiguration", observability.Tag("UUID", h.UUID))
 	defer end()
 	// Call VCS to know if repository allows webhook and get the configuration fields
-	projectVCSServer := repositoriesmanager.GetProjectVCSServer(proj, h.Config["vcsServer"].Value)
-	if projectVCSServer == nil {
+	projectVCSServer, err := repositoriesmanager.LoadProjectVCSServerLinkByProjectKeyAndVCSServerName(ctx, db, proj.Key, h.Config["vcsServer"].Value)
+	if err != nil {
+		log.Debug("createVCSConfiguration> No vcsServer found: %v", err)
 		return nil
 	}
 
@@ -334,8 +335,9 @@ func updateVCSConfiguration(ctx context.Context, db gorp.SqlExecutor, store cach
 	ctx, end := observability.Span(ctx, "workflow.updateVCSConfiguration", observability.Tag("UUID", h.UUID))
 	defer end()
 	// Call VCS to know if repository allows webhook and get the configuration fields
-	projectVCSServer := repositoriesmanager.GetProjectVCSServer(proj, h.Config["vcsServer"].Value)
-	if projectVCSServer == nil {
+	projectVCSServer, err := repositoriesmanager.LoadProjectVCSServerLinkByProjectKeyAndVCSServerName(ctx, db, proj.Key, h.Config["vcsServer"].Value)
+	if err != nil {
+		log.Debug("createVCSConfiguration> No vcsServer found: %v", err)
 		return nil
 	}
 
@@ -388,8 +390,8 @@ func DefaultPayload(ctx context.Context, db gorp.SqlExecutor, store cache.Store,
 
 	if app.RepositoryFullname != "" {
 		defaultBranch := "master"
-		projectVCSServer := repositoriesmanager.GetProjectVCSServer(proj, app.VCSServer)
-		if projectVCSServer != nil {
+		projectVCSServer, err := repositoriesmanager.LoadProjectVCSServerLinkByProjectKeyAndVCSServerName(ctx, db, proj.Key, app.VCSServer)
+		if err == nil {
 			client, err := repositoriesmanager.AuthorizedClient(ctx, db, store, proj.Key, projectVCSServer)
 			if err != nil {
 				return wf.WorkflowData.Node.Context.DefaultPayload, sdk.WrapError(err, "cannot get authorized client")

@@ -549,9 +549,9 @@ func GetNodeRunBuildCommits(ctx context.Context, db gorp.SqlExecutor, store cach
 	}
 	cur.BuildNumber = number
 
-	vcsServer := repositoriesmanager.GetProjectVCSServer(proj, app.VCSServer)
-	if vcsServer == nil {
-		log.Debug("GetNodeRunBuildCommits> No vcsServer found")
+	vcsServer, err := repositoriesmanager.LoadProjectVCSServerLinkByProjectKeyAndVCSServerName(ctx, db, proj.Key, app.VCSServer)
+	if err != nil {
+		log.Debug("GetNodeRunBuildCommits> No vcsServer found: %v", err)
 		return nil, cur, nil
 	}
 

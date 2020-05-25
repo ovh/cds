@@ -978,7 +978,10 @@ func (api *API) postWorkflowJobTestsResultsHandler() service.Handler {
 			}
 
 			// Get vcs info to known if we are on the default branch or not
-			projectVCSServer := repositoriesmanager.GetProjectVCSServer(*p, nr.VCSServer)
+			projectVCSServer, err := repositoriesmanager.LoadProjectVCSServerLinkByProjectKeyAndVCSServerName(ctx, api.mustDB(), p.Key, nr.VCSServer)
+			if err != nil {
+				return sdk.WrapError(sdk.ErrNoReposManagerClientAuth, "cannot get client %s %s got: %v", p.Key, nr.VCSServer, err)
+			}
 			client, err := repositoriesmanager.AuthorizedClient(ctx, api.mustDB(), api.Cache, p.Key, projectVCSServer)
 			if err != nil {
 				log.Error(ctx, "postWorkflowJobTestsResultsHandler> Cannot get repo client %s : %v", nr.VCSServer, err)

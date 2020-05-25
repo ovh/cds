@@ -114,7 +114,7 @@ func (p *dbProject) PostGet(db gorp.SqlExecutor) error {
 		}
 
 		if len(clearVCSServer) > 0 {
-			if err := yaml.Unmarshal(clearVCSServer, &p.VCSServers); err != nil {
+			if err := yaml.Unmarshal(clearVCSServer, &p.DeprecatedVCSServers); err != nil {
 				log.Error(context.TODO(), "Unable to load project %d: %v", p.ID, err)
 				p.VCSServers = nil
 				db.Update(p)

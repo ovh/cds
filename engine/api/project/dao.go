@@ -13,6 +13,7 @@ import (
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/keys"
 	"github.com/ovh/cds/engine/api/observability"
+	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
@@ -295,6 +296,12 @@ func unwrap(db gorp.SqlExecutor, p *dbProject, opts []LoadOptionFunc) (*sdk.Proj
 			return nil, err
 		}
 	}
+
+	vcsServers, err := repositoriesmanager.LoadAllProjectVCSServerLinksByProjectID(context.Background(), db, p.ID)
+	if err != nil {
+		return nil, err
+	}
+	proj.VCSServers = vcsServers
 
 	return &proj, nil
 }
