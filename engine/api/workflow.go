@@ -771,10 +771,11 @@ func (api *API) getWorkflowNotificationsConditionsHandler() service.Handler {
 func (api *API) getSearchWorkflowHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		var dao workflow.WorkflowDAO
-		dao.Filters.ProjectKey = r.FormValue("project")
-		dao.Filters.WorkflowName = r.FormValue("name")
-		dao.Filters.VCSServer = r.FormValue("vcs")
-		dao.Filters.ApplicationRepository = r.FormValue("repository")
+		dao.Filters.ProjectKey = FormString(r, "project")
+		dao.Filters.WorkflowName = FormString(r, "name")
+		dao.Filters.VCSServer = FormString(r, "vcs")
+		dao.Filters.ApplicationRepository = FormString(r, "repository")
+		dao.Loaders.WithRuns = FormInt(r, "runs")
 		dao.Loaders.WithFavoritesForUserID = getAPIConsumer(ctx).AuthentifiedUserID
 
 		groupIDS := getAPIConsumer(ctx).GetGroupIDs()

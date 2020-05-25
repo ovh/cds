@@ -17,10 +17,7 @@ func (api *API) getTimelineHandler() service.Handler {
 		consumer := getAPIConsumer(ctx)
 
 		// Get index of the first element to return
-		currentItem, err := FormInt(r, "currentItem")
-		if err != nil {
-			return sdk.WrapError(err, "invalid format for current item")
-		}
+		currentItem := FormInt(r, "currentItem")
 
 		// Get workflow to mute
 		timelineFilter, err := user.LoadTimelineFilter(api.mustDB(), consumer.AuthentifiedUser.ID)

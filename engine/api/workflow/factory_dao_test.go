@@ -81,6 +81,7 @@ func TestLoadAllWorkflows(t *testing.T) {
 				WithIntegrations:       true,
 				WithPipelines:          true,
 				WithTemplate:           true,
+				WithRuns:               10,
 			},
 		},
 	}

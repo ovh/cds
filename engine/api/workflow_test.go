@@ -1982,7 +1982,10 @@ func Test_getSearchWorkflowHandler(t *testing.T) {
 		BuitinConsumerAuthenticationToken: jws,
 	})
 
-	wfs, err := sdkclientAdmin.WorkflowSearch(cdsclient.WithQueryParameter("repository", "ovh/"+repofullName))
+	wfs, err := sdkclientAdmin.WorkflowSearch(
+		cdsclient.WithQueryParameter("repository", "ovh/"+repofullName),
+		cdsclient.WithQueryParameter("runs", "10"),
+	)
 	require.NoError(t, err)
 	require.Len(t, wfs, 1)
 	require.Equal(t, wf.Name, wfs[0].Name)

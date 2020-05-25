@@ -84,6 +84,7 @@ type LoadAllWorkflowsOptionsLoaders struct {
 	WithLabels             bool
 	WithAudits             bool
 	WithFavoritesForUserID string
+	WithRuns               int
 }
 
 type WorkflowDAO struct {
@@ -279,6 +280,13 @@ func (dao WorkflowDAO) GetLoaders() []gorpmapping.GetOptionFunc {
 		loaders = append(loaders, func(db gorp.SqlExecutor, i interface{}) error {
 			ws := i.(*[]Workflow)
 			return dao.withFavorites(db, ws, dao.Loaders.WithFavoritesForUserID)
+		})
+	}
+
+	if dao.Loaders.WithRuns != 0 {
+		loaders = append(loaders, func(db gorp.SqlExecutor, i interface{}) error {
+			ws := i.(*[]Workflow)
+			return dao.withRuns(db, ws, dao.Loaders.WithRuns)
 		})
 	}
 
@@ -621,6 +629,29 @@ func (dao WorkflowDAO) withLabels(db gorp.SqlExecutor, ws *[]Workflow) error {
 		for _, label := range labels {
 			if w.ID == label.WorkflowID {
 				w.Labels = append(w.Labels, label)
+			}
+		}
+	}
+
+	return nil
+}
+
+func (dao WorkflowDAO) withRuns(db gorp.SqlExecutor, ws *[]Workflow, limit int) error {
+	var ids = make([]int64, 0, len(*ws))
+	for _, w := range *ws {
+		ids = append(ids, w.ID)
+	}
+
+	runs, err := LoadLastRuns(db, ids, limit)
+	if err != nil {
+		return err
+	}
+
+	for x := range *ws {
+		w := &(*ws)[x]
+		for _, run := range runs {
+			if w.ID == run.WorkflowID {
+				w.Runs = append(w.Runs, run)
 			}
 		}
 	}
