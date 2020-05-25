@@ -83,28 +83,26 @@ func (c *client) QueuePolling(ctx context.Context, jobs chan<- sdk.WorkflowNodeJ
 			if jobs == nil {
 				continue
 			}
-			if wsEvent.Event.EventType == "sdk.EventRunWorkflowJob" {
-				if wsEvent.Event.Status == sdk.StatusWaiting {
-					var jobEvent sdk.EventRunWorkflowJob
-					if err := json.Unmarshal(wsEvent.Event.Payload, &jobEvent); err != nil {
-						errs <- fmt.Errorf("unable to unmarshal job %v: %v", wsEvent.Event.Payload, err)
-						continue
-					}
-					job, err := c.QueueJobInfo(ctx, jobEvent.ID)
-					// Do not log the error if the job does not exist
-					if sdk.ErrorIs(err, sdk.ErrWorkflowNodeRunJobNotFound) {
-						continue
-					}
+			if wsEvent.Event.EventType == "sdk.EventRunWorkflowJob" && wsEvent.Event.Status == sdk.StatusWaiting {
+				var jobEvent sdk.EventRunWorkflowJob
+				if err := json.Unmarshal(wsEvent.Event.Payload, &jobEvent); err != nil {
+					errs <- fmt.Errorf("unable to unmarshal job %v: %v", wsEvent.Event.Payload, err)
+					continue
+				}
+				job, err := c.QueueJobInfo(ctx, jobEvent.ID)
+				// Do not log the error if the job does not exist
+				if sdk.ErrorIs(err, sdk.ErrWorkflowNodeRunJobNotFound) {
+					continue
+				}
 
-					if err != nil {
-						errs <- fmt.Errorf("unable to get job %v info: %v", job.ID, err)
-						continue
-					}
-					// push the job in the channel
-					if job.Status == sdk.StatusWaiting && job.BookedBy.Name == "" {
-						job.Header["WS"] = "true"
-						jobs <- *job
-					}
+				if err != nil {
+					errs <- fmt.Errorf("unable to get job %v info: %v", job.ID, err)
+					continue
+				}
+				// push the job in the channel
+				if job.Status == sdk.StatusWaiting && job.BookedBy.Name == "" {
+					job.Header["WS"] = "true"
+					jobs <- *job
 				}
 			}
 		case <-jobsTicker.C:
