@@ -28,7 +28,7 @@ func DeprecatedLoadAllForProject(db gorp.SqlExecutor, projectKey string) ([]sdk.
 	vcsServer := []sdk.ProjectVCSServer{}
 
 	if err := yaml.Unmarshal(clearVCSServer, &vcsServer); err != nil {
-		return nil, err
+		return nil, sdk.WithStack(err)
 	}
 
 	return vcsServer, nil
