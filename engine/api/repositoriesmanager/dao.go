@@ -105,7 +105,7 @@ func getAllProjectVCSServerLinks(ctx context.Context, db gorp.SqlExecutor, query
 			return nil, err
 		}
 		if !isValid {
-			log.Error(ctx, "repostoriesmanager.LoadAllProjectVCSServerLinksByProjectID> vcs_server_project_link %d data corrupted", res[i].ID)
+			log.Error(ctx, "repostoriesmanager. getAllProjectVCSServerLinks> vcs_server_project_link %d data corrupted", res[i].ID)
 			continue
 		}
 
