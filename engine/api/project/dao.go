@@ -253,10 +253,6 @@ func loadprojects(ctx context.Context, db gorp.SqlExecutor, opts []LoadOptionFun
 	projs := make([]sdk.Project, 0, len(res))
 	for i := range res {
 		p := &res[i]
-		if err := p.PostGet(db); err != nil {
-			log.Error(ctx, "loadprojects> PostGet error (ID=%d, Key:%s): %v", p.ID, p.Key, err)
-			continue
-		}
 		proj, err := unwrap(db, p, opts)
 		if err != nil {
 			log.Error(ctx, "loadprojects> unwrap error (ID=%d, Key:%s): %v", p.ID, p.Key, err)

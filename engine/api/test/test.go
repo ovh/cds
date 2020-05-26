@@ -19,7 +19,6 @@ import (
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/database"
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
-	"github.com/ovh/cds/engine/api/secret"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 	"github.com/ovh/configstore"
@@ -102,7 +101,6 @@ func SetupPG(t log.Logger, bootstrapFunc ...Bootstrapf) (*gorp.DbMap, cache.Stor
 	RedisHost = cfg["redisHost"]
 	RedisPassword = cfg["redisPassword"]
 
-	secret.Init("3dojuwevn94y7orh5e3t4ejtmbtstest")
 	err = authentication.Init("cds_test", SigningKey) // nolint
 	if err != nil {
 		log.Fatalf("unable to init authentication layer: %v", err)

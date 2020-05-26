@@ -43,7 +43,6 @@ import (
 	"github.com/ovh/cds/engine/api/objectstore"
 	"github.com/ovh/cds/engine/api/purge"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
-	"github.com/ovh/cds/engine/api/secret"
 	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/engine/api/version"
 	"github.com/ovh/cds/engine/api/worker"
@@ -401,9 +400,6 @@ func (a *API) Serve(ctx context.Context) error {
 		return errors.New("worker binary unavailable")
 	}
 
-	// Initialize secret driver
-	secret.Init(a.Config.Secrets.Key)
-
 	// Initialize the jwt layer
 	if err := authentication.Init(a.ServiceName, []byte(a.Config.Auth.RSAPrivateKey)); err != nil {
 		return sdk.WrapError(err, "unable to initialize the JWT Layer")
@@ -476,7 +472,6 @@ func (a *API) Serve(ctx context.Context) error {
 		},
 	}
 
-	// DEPRECATED
 	// API Storage will be a public integration
 	var err error
 	a.SharedStorage, err = objectstore.Init(ctx, cfg)
@@ -657,61 +652,6 @@ func (a *API) Serve(ctx context.Context) error {
 	sdk.GoRoutine(ctx, "authentication.SessionCleaner", func(ctx context.Context) {
 		authentication.SessionCleaner(ctx, a.mustDB)
 	}, a.PanicDump())
-
-	migrate.Add(ctx, sdk.Migration{Name: "RefactorGroupMembership", Release: "0.44.0", Blocker: true, Automatic: true, ExecFunc: func(ctx context.Context) error {
-		return migrate.RefactorGroupMembership(ctx, a.DBConnectionFactory.GetDBMap())
-	}})
-
-	migrate.Add(ctx, sdk.Migration{Name: "RefactorProjectKeys", Release: "0.44.0", Blocker: true, Automatic: true, ExecFunc: func(ctx context.Context) error {
-		return migrate.RefactorProjectKeys(ctx, a.DBConnectionFactory.GetDBMap())
-	}})
-
-	migrate.Add(ctx, sdk.Migration{Name: "RefactorEnvironmentKeys", Release: "0.44.0", Blocker: true, Automatic: true, ExecFunc: func(ctx context.Context) error {
-		return migrate.RefactorEnvironmentKeys(ctx, a.DBConnectionFactory.GetDBMap())
-	}})
-
-	migrate.Add(ctx, sdk.Migration{Name: "RefactorProjectVariables", Release: "0.44.0", Blocker: true, Automatic: true, ExecFunc: func(ctx context.Context) error {
-		return migrate.RefactorProjectVariables(ctx, a.DBConnectionFactory.GetDBMap())
-	}})
-
-	migrate.Add(ctx, sdk.Migration{Name: "RefactorEnvironmentVariables", Release: "0.44.0", Blocker: true, Automatic: true, ExecFunc: func(ctx context.Context) error {
-		return migrate.RefactorEnvironmentVariables(ctx, a.DBConnectionFactory.GetDBMap())
-	}})
-
-	migrate.Add(ctx, sdk.Migration{Name: "CleanDuplicateNodes", Release: "0.44.0", Blocker: false, Automatic: true, ExecFunc: func(ctx context.Context) error {
-		return migrate.CleanDuplicateNodes(ctx, a.DBConnectionFactory.GetDBMap())
-	}})
-
-	migrate.Add(ctx, sdk.Migration{Name: "ListDuplicateHooks", Release: "0.44.0", Blocker: false, Automatic: true, ExecFunc: func(ctx context.Context) error {
-		return migrate.CleanDuplicateHooks(ctx, a.DBConnectionFactory.GetDBMap(), a.Cache, true)
-	}})
-
-	migrate.Add(ctx, sdk.Migration{Name: "CleanDuplicateHooks", Release: "0.44.0", Blocker: false, Automatic: false, ExecFunc: func(ctx context.Context) error {
-		return migrate.CleanDuplicateHooks(ctx, a.DBConnectionFactory.GetDBMap(), a.Cache, false)
-	}})
-
-	migrate.Add(ctx, sdk.Migration{Name: "FixEmptyUUIDHooks", Release: "0.44.0", Blocker: false, Automatic: false, ExecFunc: func(ctx context.Context) error {
-		return migrate.FixEmptyUUIDHooks(ctx, a.DBConnectionFactory.GetDBMap(), a.Cache)
-	}})
-
-	migrate.Add(ctx, sdk.Migration{Name: "RefactorIntegrationCrypto", Release: "0.44.0", Blocker: true, Automatic: true, ExecFunc: func(ctx context.Context) error {
-		if err := migrate.RefactorIntegrationModelCrypto(ctx, a.DBConnectionFactory.GetDBMap()); err != nil {
-			return err
-		}
-		return migrate.RefactorProjectIntegrationCrypto(ctx, a.DBConnectionFactory.GetDBMap())
-	}})
-
-	migrate.Add(ctx, sdk.Migration{Name: "AsCodeEventsWorkflowHolder", Release: "0.44.0", Blocker: false, Automatic: true, ExecFunc: func(ctx context.Context) error {
-		return migrate.RefactorAsCodeEventsWorkflowHolder(ctx, a.DBConnectionFactory.GetDBMap())
-	}})
-
-	migrate.Add(ctx, sdk.Migration{Name: "RefactorProjectVCSServerCrypto", Release: "0.44.0", Blocker: true, Automatic: true, ExecFunc: func(ctx context.Context) error {
-		return migrate.RefactorProjectVCSServers(ctx, a.DBConnectionFactory.GetDBMap())
-  }})
-
-	migrate.Add(ctx, sdk.Migration{Name: "RefactorWorkerModelCrypto", Release: "0.44.0", Blocker: true, Automatic: true, ExecFunc: func(ctx context.Context) error {
-		return migrate.RefactorWorkerModelCrypto(ctx, a.DBConnectionFactory.GetDBMap())
-	}})
 
 	isFreshInstall, errF := version.IsFreshInstall(a.mustDB())
 	if errF != nil {

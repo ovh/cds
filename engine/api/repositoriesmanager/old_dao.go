@@ -4,35 +4,9 @@ import (
 	"database/sql"
 
 	"github.com/go-gorp/gorp"
-	yaml "gopkg.in/yaml.v2"
 
-	"github.com/ovh/cds/engine/api/secret"
 	"github.com/ovh/cds/sdk"
 )
-
-//DeprecatedLoadAllForProject loads all repomanager link for a project
-func DeprecatedLoadAllForProject(db gorp.SqlExecutor, projectKey string) ([]sdk.ProjectVCSServer, error) {
-	vcsServerStr := []byte{}
-	if err := db.QueryRow("select vcs_servers from project where projectkey = $1", projectKey).Scan(&vcsServerStr); err != nil {
-		return nil, sdk.WithStack(err)
-	}
-
-	if len(vcsServerStr) == 0 {
-		return []sdk.ProjectVCSServer{}, nil
-	}
-
-	clearVCSServer, err := secret.Decrypt(vcsServerStr)
-	if err != nil {
-		return nil, err
-	}
-	vcsServer := []sdk.ProjectVCSServer{}
-
-	if err := yaml.Unmarshal(clearVCSServer, &vcsServer); err != nil {
-		return nil, sdk.WithStack(err)
-	}
-
-	return vcsServer, nil
-}
 
 //InsertForApplication associates a repositories manager with an application
 func InsertForApplication(db gorp.SqlExecutor, app *sdk.Application, projectKey string) error {

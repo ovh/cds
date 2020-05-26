@@ -1,17 +1,13 @@
 package project
 
 import (
-	"context"
 	"database/sql"
 	"encoding/json"
 
 	"github.com/go-gorp/gorp"
-	yaml "gopkg.in/yaml.v2"
 
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
-	"github.com/ovh/cds/engine/api/secret"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 )
 
 type dbProject sdk.Project
@@ -90,68 +86,6 @@ func init() {
 	gorpmapping.Register(gorpmapping.New(dbProjectKey{}, "project_key", true, "id"))
 	gorpmapping.Register(gorpmapping.New(dbLabel{}, "project_label", true, "id"))
 	gorpmapping.Register(gorpmapping.New(dbProjectVariable{}, "project_variable", true, "id"))
-}
-
-// PostGet is a db hook
-func (p *dbProject) PostGet(db gorp.SqlExecutor) error {
-	var fields = struct {
-		Metadata   sql.NullString `db:"metadata"`
-		VCSServers []byte         `db:"vcs_servers"`
-	}{}
-
-	if err := db.QueryRow("select metadata,vcs_servers from project where id = $1", p.ID).Scan(&fields.Metadata, &fields.VCSServers); err != nil {
-		return err
-	}
-
-	if err := gorpmapping.JSONNullString(fields.Metadata, &p.Metadata); err != nil {
-		return err
-	}
-
-	if len(fields.VCSServers) > 0 {
-		clearVCSServer, err := secret.Decrypt([]byte(fields.VCSServers))
-		if err != nil {
-			return err
-		}
-
-		if len(clearVCSServer) > 0 {
-			if err := yaml.Unmarshal(clearVCSServer, &p.DeprecatedVCSServers); err != nil {
-				log.Error(context.TODO(), "Unable to load project %d: %v", p.ID, err)
-				p.VCSServers = nil
-				db.Update(p)
-			}
-		}
-	}
-
-	return nil
-}
-
-// PostUpdate is a db hook
-func (p *dbProject) PostUpdate(db gorp.SqlExecutor) error {
-	bm, errm := json.Marshal(p.Metadata)
-	if errm != nil {
-		return errm
-	}
-
-	if len(p.VCSServers) > 0 {
-		b1, err := yaml.Marshal(p.VCSServers)
-		if err != nil {
-			return err
-		}
-		encryptedVCSServerStr, err := secret.Encrypt(b1)
-		if err != nil {
-			return err
-		}
-		_, err = db.Exec("update project set metadata = $2, vcs_servers = $3 where id = $1", p.ID, bm, encryptedVCSServerStr)
-		return err
-	}
-
-	_, err := db.Exec("update project set metadata = $2 where id = $1", p.ID, bm)
-	return err
-}
-
-// PostInsert is a db hook
-func (p *dbProject) PostInsert(db gorp.SqlExecutor) error {
-	return p.PostUpdate(db)
 }
 
 // PostGet is a db hook

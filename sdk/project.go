@@ -42,7 +42,7 @@ type Project struct {
 	EnvironmentNames     IDNames                `json:"environment_names,omitempty" yaml:"environment_names,omitempty" db:"-"  cli:"-"`
 	Labels               []Label                `json:"labels,omitempty" yaml:"labels,omitempty" db:"-"  cli:"-"`
 	Permissions          Permissions            `json:"permissions" yaml:"-" db:"-"  cli:"-"`
-	Metadata             Metadata               `json:"metadata" yaml:"metadata" db:"-" cli:"-"`
+	Metadata             Metadata               `json:"metadata" yaml:"metadata" db:"metadata" cli:"-"`
 	Keys                 []ProjectKey           `json:"keys" yaml:"keys" db:"-" cli:"-"`
 	DeprecatedVCSServers []ProjectVCSServer     `json:"-" yaml:"-" db:"-" cli:"-"`
 	VCSServers           []ProjectVCSServerLink `json:"vcs_servers" yaml:"vcs_servers" db:"-" cli:"-"`
