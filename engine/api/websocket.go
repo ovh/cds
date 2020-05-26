@@ -374,6 +374,13 @@ func (c *websocketClient) send(ctx context.Context, event sdk.Event) (err error)
 			sendEvent = false
 			break
 		}
+
+		// sdk.EventRunWorkflow must always be sent for sidebar
+		if event.EventType == "sdk.EventRunWorkflow" {
+			sendEvent = true
+			break
+		}
+
 		if c.filter.WorkflowRunNumber != 0 && event.WorkflowRunNum != c.filter.WorkflowRunNumber {
 			sendEvent = false
 			break
