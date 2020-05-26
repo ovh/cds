@@ -12,6 +12,7 @@ import (
 
 	"github.com/fsamin/go-dump"
 	"github.com/go-gorp/gorp"
+	"github.com/lib/pq"
 	"go.opencensus.io/stats"
 
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
@@ -238,6 +239,15 @@ func LoadLastRun(db gorp.SqlExecutor, projectkey, workflowname string, loadOpts 
 	return loadRun(db, loadOpts, query, projectkey, workflowname)
 }
 
+// LoadLastRuns returns the last run per workflowIDs
+func LoadLastRuns(db gorp.SqlExecutor, workflowIDs []int64, limit int) ([]sdk.WorkflowRun, error) {
+	query := fmt.Sprintf(`select %s
+	from workflow_run
+	where workflow_run.workflow_id = ANY($1)
+	order by workflow_run.workflow_id, workflow_run.num desc limit $2`, wfRunfields)
+	return loadRuns(db, query, pq.Int64Array(workflowIDs), limit)
+}
+
 // LoadRun returns a specific run
 func LoadRun(ctx context.Context, db gorp.SqlExecutor, projectkey, workflowname string, number int64, loadOpts LoadRunOptions) (*sdk.WorkflowRun, error) {
 	_, end := observability.Span(ctx, "workflow.LoadRun",
@@ -282,6 +292,22 @@ func LoadAndLockRunByJobID(db gorp.SqlExecutor, id int64, loadOpts LoadRunOption
 	join workflow_node_run_job on workflow_node_run.id = workflow_node_run_job.workflow_node_run_id
 	where workflow_node_run_job.id = $1 for update`, wfRunfields)
 	return loadRun(db, loadOpts, query, id)
+}
+
+func loadRuns(db gorp.SqlExecutor, query string, args ...interface{}) ([]sdk.WorkflowRun, error) {
+	runs := []Run{}
+	if _, err := db.Select(&runs, query, args...); err != nil {
+		return nil, sdk.WrapError(err, "Unable to load runs")
+	}
+	wruns := make([]sdk.WorkflowRun, len(runs))
+	for i := range runs {
+		wr := sdk.WorkflowRun(runs[i])
+		if err := loadRunTags(db, &wr); err != nil {
+			return nil, sdk.WrapError(err, "Unable to load tags")
+		}
+		wruns[i] = wr
+	}
+	return wruns, nil
 }
 
 //LoadRuns loads all runs
@@ -367,18 +393,9 @@ func LoadRuns(db gorp.SqlExecutor, projectkey, workflowname string, offset, limi
 		args = append(args, strings.Join(tags, ","))
 	}
 
-	runs := []Run{}
-	if _, err := db.Select(&runs, query, args...); err != nil {
-		return nil, 0, 0, 0, sdk.WrapError(errc, "Unable to load runs")
-	}
-	wruns := make([]sdk.WorkflowRun, len(runs))
-	for i := range runs {
-		wr := sdk.WorkflowRun(runs[i])
-		if err := loadRunTags(db, &wr); err != nil {
-			return nil, 0, 0, 0, sdk.WrapError(err, "Unable to load tags")
-		}
-
-		wruns[i] = wr
+	wruns, err := loadRuns(db, query, args...)
+	if err != nil {
+		return nil, 0, 0, 0, err
 	}
 
 	return wruns, offset, limit, int(count), nil
