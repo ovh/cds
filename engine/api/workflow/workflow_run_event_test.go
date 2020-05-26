@@ -31,13 +31,13 @@ func TestResyncCommitStatusNotifDisabled(t *testing.T) {
 
 	pkey := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, cache, pkey, pkey)
-	assert.NoError(t, repositoriesmanager.InsertForProject(db, proj, &sdk.ProjectVCSServer{
-		Name: "gerrit",
-		Data: map[string]string{
-			"token":  "foo",
-			"secret": "bar",
-		},
-	}))
+	vcsServer := sdk.ProjectVCSServerLink{
+		ProjectID: proj.ID,
+		Name:      "gerrit",
+	}
+	vcsServer.Set("token", "foo")
+	vcsServer.Set("secret", "bar")
+	assert.NoError(t, repositoriesmanager.InsertProjectVCSServerLink(context.TODO(), db, &vcsServer))
 
 	// Create Application
 	app := sdk.Application{
@@ -129,13 +129,13 @@ func TestResyncCommitStatusSetStatus(t *testing.T) {
 
 	pkey := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, cache, pkey, pkey)
-	assert.NoError(t, repositoriesmanager.InsertForProject(db, proj, &sdk.ProjectVCSServer{
-		Name: "gerrit",
-		Data: map[string]string{
-			"token":  "foo",
-			"secret": "bar",
-		},
-	}))
+	vcsServer := sdk.ProjectVCSServerLink{
+		ProjectID: proj.ID,
+		Name:      "gerrit",
+	}
+	vcsServer.Set("token", "foo")
+	vcsServer.Set("secret", "bar")
+	assert.NoError(t, repositoriesmanager.InsertProjectVCSServerLink(context.TODO(), db, &vcsServer))
 
 	// Create Application
 	app := sdk.Application{
@@ -233,13 +233,13 @@ func TestResyncCommitStatusCommentPR(t *testing.T) {
 
 	pkey := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, cache, pkey, pkey)
-	assert.NoError(t, repositoriesmanager.InsertForProject(db, proj, &sdk.ProjectVCSServer{
-		Name: "gerrit",
-		Data: map[string]string{
-			"token":  "foo",
-			"secret": "bar",
-		},
-	}))
+	vcsServer := sdk.ProjectVCSServerLink{
+		ProjectID: proj.ID,
+		Name:      "gerrit",
+	}
+	vcsServer.Set("token", "foo")
+	vcsServer.Set("secret", "bar")
+	assert.NoError(t, repositoriesmanager.InsertProjectVCSServerLink(context.TODO(), db, &vcsServer))
 
 	// Create Application
 	app := sdk.Application{
@@ -351,13 +351,13 @@ func TestResyncCommitStatusCommentPRNotTerminated(t *testing.T) {
 
 	pkey := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, cache, pkey, pkey)
-	assert.NoError(t, repositoriesmanager.InsertForProject(db, proj, &sdk.ProjectVCSServer{
-		Name: "gerrit",
-		Data: map[string]string{
-			"token":  "foo",
-			"secret": "bar",
-		},
-	}))
+	vcsServer := sdk.ProjectVCSServerLink{
+		ProjectID: proj.ID,
+		Name:      "gerrit",
+	}
+	vcsServer.Set("token", "foo")
+	vcsServer.Set("secret", "bar")
+	assert.NoError(t, repositoriesmanager.InsertProjectVCSServerLink(context.TODO(), db, &vcsServer))
 
 	// Create Application
 	app := sdk.Application{
@@ -460,13 +460,13 @@ func TestResyncCommitStatusCommitCache(t *testing.T) {
 
 	pkey := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, cache, pkey, pkey)
-	assert.NoError(t, repositoriesmanager.InsertForProject(db, proj, &sdk.ProjectVCSServer{
-		Name: "gerrit",
-		Data: map[string]string{
-			"token":  "foo",
-			"secret": "bar",
-		},
-	}))
+	vcsServer := sdk.ProjectVCSServerLink{
+		ProjectID: proj.ID,
+		Name:      "gerrit",
+	}
+	vcsServer.Set("token", "foo")
+	vcsServer.Set("secret", "bar")
+	assert.NoError(t, repositoriesmanager.InsertProjectVCSServerLink(context.TODO(), db, &vcsServer))
 
 	// Create Application
 	app := sdk.Application{

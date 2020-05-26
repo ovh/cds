@@ -62,7 +62,7 @@ func (api *API) postWorkerModelHandler() service.Handler {
 		}
 
 		// reload complete worker model
-		new, err := workermodel.LoadByID(api.mustDB(), model.ID)
+		new, err := workermodel.LoadByID(ctx, api.mustDB(), model.ID, workermodel.LoadOptions.Default)
 		if err != nil {
 			return err
 		}
@@ -85,9 +85,9 @@ func (api *API) putWorkerModelHandler() service.Handler {
 			return err
 		}
 
-		old, errLoad := workermodel.LoadByNameAndGroupIDWithClearPassword(api.mustDB(), modelName, g.ID)
-		if errLoad != nil {
-			return sdk.WrapError(errLoad, "cannot load worker model")
+		old, err := workermodel.LoadByNameAndGroupID(ctx, api.mustDB(), modelName, g.ID)
+		if err != nil {
+			return sdk.WrapError(err, "cannot load worker model with name %s for group %s", modelName, g.Name)
 		}
 
 		// parse request and validate given data
@@ -135,7 +135,7 @@ func (api *API) putWorkerModelHandler() service.Handler {
 			return sdk.WrapError(err, "unable to commit transaction")
 		}
 
-		new, err := workermodel.LoadByID(api.mustDB(), model.ID)
+		new, err := workermodel.LoadByID(ctx, api.mustDB(), model.ID, workermodel.LoadOptions.Default)
 		if err != nil {
 			return err
 		}
@@ -158,17 +158,18 @@ func (api *API) deleteWorkerModelHandler() service.Handler {
 			return err
 		}
 
-		m, err := workermodel.LoadByNameAndGroupID(api.mustDB(), modelName, g.ID)
+		m, err := workermodel.LoadByNameAndGroupID(ctx, api.mustDB(), modelName, g.ID, workermodel.LoadOptions.Default)
 		if err != nil {
-			return sdk.WrapError(err, "cannot load worker model")
+			return err
 		}
 
 		tx, err := api.mustDB().Begin()
 		if err != nil {
 			return sdk.WrapError(err, "cannot start transaction")
 		}
+		defer tx.Rollback() // nolint
 
-		if err := workermodel.Delete(tx, m.ID); err != nil {
+		if err := workermodel.DeleteByID(tx, m.ID); err != nil {
 			return sdk.WrapError(err, "cannot delete worker model")
 		}
 
@@ -192,10 +193,9 @@ func (api *API) getWorkerModelHandler() service.Handler {
 			return err
 		}
 
-		// FIXME implements load options for worker model dao
-		m, err := workermodel.LoadByNameAndGroupID(api.mustDB(), modelName, g.ID)
+		m, err := workermodel.LoadByNameAndGroupID(ctx, api.mustDB(), modelName, g.ID, workermodel.LoadOptions.Default)
 		if err != nil {
-			return sdk.WrapError(err, "cannot load worker model")
+			return err
 		}
 
 		m.Editable = isGroupAdmin(ctx, g) || isAdmin(ctx)
@@ -259,9 +259,9 @@ func (api *API) getWorkerModelUsageHandler() service.Handler {
 			return err
 		}
 
-		m, err := workermodel.LoadByNameAndGroupID(api.mustDB(), modelName, g.ID)
+		m, err := workermodel.LoadByNameAndGroupID(ctx, api.mustDB(), modelName, g.ID, workermodel.LoadOptions.Default)
 		if err != nil {
-			return sdk.WrapError(err, "cannot load worker model")
+			return err
 		}
 
 		var pips []sdk.Pipeline
@@ -294,7 +294,7 @@ func (api *API) getWorkerModelsForProjectHandler() service.Handler {
 			groupIDs[i] = proj.ProjectGroups[i].Group.ID
 		}
 
-		models, err := workermodel.LoadAllActiveAndNotDeprecatedForGroupIDs(api.mustDB(), append(groupIDs, group.SharedInfraGroup.ID))
+		models, err := workermodel.LoadAllActiveAndNotDeprecatedForGroupIDs(ctx, api.mustDB(), append(groupIDs, group.SharedInfraGroup.ID), workermodel.LoadOptions.Default)
 		if err != nil {
 			return err
 		}
@@ -318,7 +318,7 @@ func (api *API) getWorkerModelsForGroupHandler() service.Handler {
 			return sdk.WithStack(sdk.ErrForbidden)
 		}
 
-		wms, err := workermodel.LoadAllActiveAndNotDeprecatedForGroupIDs(api.mustDB(), []int64{g.ID, group.SharedInfraGroup.ID})
+		wms, err := workermodel.LoadAllActiveAndNotDeprecatedForGroupIDs(ctx, api.mustDB(), []int64{g.ID, group.SharedInfraGroup.ID}, workermodel.LoadOptions.Default)
 		if err != nil {
 			return err
 		}

@@ -45,7 +45,10 @@ func (api *API) getHookPollingVCSEvents() service.Handler {
 		}
 
 		//get the client for the repositories manager
-		vcsServer := repositoriesmanager.GetProjectVCSServer(*proj, vcsServerParam)
+		vcsServer, err := repositoriesmanager.LoadProjectVCSServerLinkByProjectKeyAndVCSServerName(ctx, api.mustDB(), proj.Key, vcsServerParam)
+		if err != nil {
+			return err
+		}
 		client, err := repositoriesmanager.AuthorizedClient(ctx, api.mustDB(), api.Cache, proj.Key, vcsServer)
 		if err != nil {
 			return err

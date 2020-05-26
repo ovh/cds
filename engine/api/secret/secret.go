@@ -184,9 +184,9 @@ func DecryptValue(v string) (string, error) {
 	if err64 != nil {
 		return "", sdk.WrapError(err64, "cannot decode string")
 	}
-	secret, errD := Decrypt(b)
-	if errD != nil {
-		return "", sdk.WrapError(errD, "cannot decrypt password")
+	secret, err := Decrypt(b)
+	if err != nil {
+		return "", sdk.WrapError(err, "cannot decrypt password")
 	}
 	return string(secret), nil
 }

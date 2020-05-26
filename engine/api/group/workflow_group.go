@@ -6,7 +6,9 @@ import (
 	"strings"
 
 	"github.com/go-gorp/gorp"
+	"github.com/lib/pq"
 
+	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/sdk"
 )
 
@@ -148,14 +150,52 @@ func checkAtLeastOneGroupWithWriteRoleOnWorkflow(db gorp.SqlExecutor, wID int64)
 	return nb > 0, err
 }
 
+type LinkWorkflowGroupPermission struct {
+	WorkflowID int64  `db:"workflow_id"`
+	GroupID    int64  `db:"group_id"`
+	GroupName  string `db:"group_name"`
+	Role       int    `db:"role"`
+}
+
+// LoadWorkflowGroupsByWorkflowIDs returns a map with key: workflowID and value the slite of groups
+func LoadWorkflowGroupsByWorkflowIDs(db gorp.SqlExecutor, workflowIDs []int64) (map[int64][]sdk.GroupPermission, error) {
+	result := make(map[int64][]sdk.GroupPermission, len(workflowIDs))
+	query := gorpmapping.NewQuery(`
+	SELECT workflow_perm.workflow_id, "group".id as "group_id", "group".name as "group_name", workflow_perm.role
+	FROM "group"
+	JOIN project_group ON project_group.group_id = "group".id
+	JOIN workflow_perm ON workflow_perm.project_group_id = project_group.id
+	WHERE workflow_perm.workflow_id = ANY($1)
+	ORDER BY workflow_perm.workflow_id, "group".name ASC
+	`).Args(pq.Int64Array(workflowIDs))
+	var dbResultSet = []LinkWorkflowGroupPermission{}
+	if err := gorpmapping.GetAll(context.Background(), db, query, &dbResultSet); err != nil {
+		return nil, err
+	}
+
+	for _, row := range dbResultSet {
+		perms := result[row.WorkflowID]
+		perms = append(perms, sdk.GroupPermission{
+			Permission: row.Role,
+			Group: sdk.Group{
+				ID:   row.GroupID,
+				Name: row.GroupName,
+			},
+		})
+		result[row.WorkflowID] = perms
+	}
+
+	return result, nil
+}
+
 // LoadWorkflowGroups load groups for a workflow
 func LoadWorkflowGroups(db gorp.SqlExecutor, workflowID int64) ([]sdk.GroupPermission, error) {
 	wgs := []sdk.GroupPermission{}
 
 	query := `SELECT "group".id, "group".name, workflow_perm.role
 		FROM "group"
-			JOIN project_group ON project_group.group_id = "group".id
-			JOIN workflow_perm ON workflow_perm.project_group_id = project_group.id
+		JOIN project_group ON project_group.group_id = "group".id
+		JOIN workflow_perm ON workflow_perm.project_group_id = project_group.id
 		WHERE workflow_perm.workflow_id = $1
 		ORDER BY "group".name ASC`
 	rows, errq := db.Query(query, workflowID)

@@ -96,7 +96,7 @@ func LoadAllVariables(db gorp.SqlExecutor, appID int64) ([]sdk.Variable, error) 
 		FROM application_variable
 		WHERE application_id = $1
 		ORDER BY var_name
-			  `).Args(appID)
+	`).Args(appID)
 	return loadAllVariables(db, query)
 }
 
@@ -107,7 +107,7 @@ func LoadAllVariablesWithDecrytion(db gorp.SqlExecutor, appID int64) ([]sdk.Vari
 		FROM application_variable
 		WHERE application_id = $1
 		ORDER BY var_name
-			  `).Args(appID)
+	`).Args(appID)
 	return loadAllVariables(db, query, gorpmapping.GetOptions.WithDecryption)
 }
 

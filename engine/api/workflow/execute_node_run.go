@@ -1005,7 +1005,7 @@ func (i vcsInfos) String() string {
 	return fmt.Sprintf("%s:%s:%s:%s", i.Server, i.Repository, i.Branch, i.Hash)
 }
 
-func getVCSInfos(ctx context.Context, db gorp.SqlExecutor, store cache.Store, projectKey string, vcsServer *sdk.ProjectVCSServer, gitValues map[string]string, applicationName, applicationVCSServer, applicationRepositoryFullname string) (*vcsInfos, error) {
+func getVCSInfos(ctx context.Context, db gorp.SqlExecutor, store cache.Store, projectKey string, vcsServer sdk.ProjectVCSServerLink, gitValues map[string]string, applicationName, applicationVCSServer, applicationRepositoryFullname string) (*vcsInfos, error) {
 	var vcsInfos vcsInfos
 	vcsInfos.Repository = gitValues[tagGitRepository]
 	vcsInfos.Branch = gitValues[tagGitBranch]
@@ -1015,12 +1015,9 @@ func getVCSInfos(ctx context.Context, db gorp.SqlExecutor, store cache.Store, pr
 	vcsInfos.Message = gitValues[tagGitMessage]
 	vcsInfos.URL = gitValues[tagGitURL]
 	vcsInfos.HTTPUrl = gitValues[tagGitHTTPURL]
+	vcsInfos.Server = vcsServer.Name
 
-	if vcsServer != nil {
-		vcsInfos.Server = vcsServer.Name
-	}
-
-	if applicationName == "" || applicationVCSServer == "" || vcsServer == nil {
+	if applicationName == "" || applicationVCSServer == "" || vcsServer.ID == 0 {
 		return &vcsInfos, nil
 	}
 
@@ -1038,7 +1035,7 @@ func getVCSInfos(ctx context.Context, db gorp.SqlExecutor, store cache.Store, pr
 	if err != nil {
 		log.Error(ctx, "cannot get from cache %s: %v", cacheKey, err)
 	}
-	if find {
+	if find && vcsInfos.Branch != "" && vcsInfos.Hash != "" {
 		log.Debug("completeVCSInfos> load from cache: %s", cacheKey)
 		return &vcsInfos, nil
 	}
@@ -1109,8 +1106,8 @@ func getVCSInfos(ctx context.Context, db gorp.SqlExecutor, store cache.Store, pr
 		commit, errCm := client.Commit(ctx, vcsInfos.Repository, vcsInfos.Hash)
 		if errCm != nil {
 			// log to debug random 401
-			log.Error(ctx, "cannot get commit infos for %s %s - vcsServer.Name:%s vcsServer.Username:%s vcsServer.len-data:%d vcsServer.len-token:%v vcsServer.len-secret:%d vcsServer.created:%v err: %v",
-				vcsInfos.Repository, vcsInfos.Hash, vcsServer.Name, vcsServer.Username, len(vcsServer.Data), len(vcsServer.Data["token"]), len(vcsServer.Data["secret"]), vcsServer.Data["created"], errCm)
+			log.Error(ctx, "cannot get commit infos for %s %s - vcsServer.Name:%s vcsServer.Username:%s: %v",
+				vcsInfos.Repository, vcsInfos.Hash, vcsServer.Name, vcsServer.Username, errCm)
 
 			return nil, sdk.WrapError(errCm, "cannot get commit infos for %s %s", vcsInfos.Repository, vcsInfos.Hash)
 		}

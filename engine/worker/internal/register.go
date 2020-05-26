@@ -37,7 +37,7 @@ func (w *CurrentWorker) Register(ctx context.Context) error {
 	w.id = worker.ID
 
 	if worker.ModelID != nil {
-		models, err := w.client.WorkerModels(nil)
+		models, err := w.client.WorkerModelList(nil)
 		if err != nil {
 			return sdk.WrapError(err, "unable to get worker model list")
 		}

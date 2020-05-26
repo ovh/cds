@@ -21,7 +21,6 @@ func insertFirstPatterns(db gorp.SqlExecutor) error {
 set +e
 export CDS_FROM_WORKER_IMAGE={{.FromWorkerImage}}
 export CDS_SINGLE_USE=1
-export CDS_FORCE_EXIT=1
 export CDS_API={{.API}}
 export CDS_TOKEN={{.Token}}
 export CDS_NAME={{.Name}}

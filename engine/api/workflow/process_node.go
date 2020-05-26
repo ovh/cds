@@ -237,8 +237,12 @@ func processNode(ctx context.Context, db gorp.SqlExecutor, store cache.Store, pr
 	// * different repo
 	var vcsInf *vcsInfos
 	var errVcs error
-	if needVCSInfo {
-		vcsServer := repositoriesmanager.GetProjectVCSServer(proj, app.VCSServer)
+	if needVCSInfo && app.VCSServer != "" {
+		vcsServer, err := repositoriesmanager.LoadProjectVCSServerLinkByProjectKeyAndVCSServerName(ctx, db, proj.Key, app.VCSServer)
+		if err != nil {
+			return nil, false, sdk.WrapError(sdk.ErrNoReposManagerClientAuth, "cannot get client %s %s got: %v", proj.Key, app.VCSServer, err)
+		}
+
 		vcsInf, errVcs = getVCSInfos(ctx, db, store, proj.Key, vcsServer, currentJobGitValues, app.Name, app.VCSServer, app.RepositoryFullname)
 		if errVcs != nil {
 			AddWorkflowRunInfo(wr, sdk.SpawnMsg{
@@ -257,7 +261,9 @@ func processNode(ctx context.Context, db gorp.SqlExecutor, store cache.Store, pr
 
 	// CONDITION
 	if !checkCondition(ctx, wr, n.Context.Conditions, nr.BuildParameters) {
-		log.Debug("Condition failed on processNode %d/%d %+v", wr.ID, n.ID, nr.BuildParameters)
+		log.Debug("Conditions failed on processNode %d/%d", wr.ID, n.ID)
+		log.Debug("Conditions was: %+v", n.Context.Conditions)
+		log.Debug("BuildParameters was: %+v", nr.BuildParameters)
 		return nil, false, nil
 	}
 
@@ -291,7 +297,9 @@ func processNode(ctx context.Context, db gorp.SqlExecutor, store cache.Store, pr
 			wr.Tag(tagGitTag, nr.VCSTag)
 		}
 		wr.Tag(tagGitHash, nr.VCSHash)
-		wr.Tag(tagGitAuthor, vcsInf.Author)
+		if vcsInf != nil {
+			wr.Tag(tagGitAuthor, vcsInf.Author)
+		}
 	}
 
 	// Add env tag

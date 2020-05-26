@@ -114,10 +114,8 @@ func (p *dbProject) PostGet(db gorp.SqlExecutor) error {
 		}
 
 		if len(clearVCSServer) > 0 {
-			if err := yaml.Unmarshal(clearVCSServer, &p.VCSServers); err != nil {
+			if err := yaml.Unmarshal(clearVCSServer, &p.DeprecatedVCSServers); err != nil {
 				log.Error(context.TODO(), "Unable to load project %d: %v", p.ID, err)
-				p.VCSServers = nil
-				db.Update(p)
 			}
 		}
 	}
@@ -130,19 +128,6 @@ func (p *dbProject) PostUpdate(db gorp.SqlExecutor) error {
 	bm, errm := json.Marshal(p.Metadata)
 	if errm != nil {
 		return errm
-	}
-
-	if len(p.VCSServers) > 0 {
-		b1, err := yaml.Marshal(p.VCSServers)
-		if err != nil {
-			return err
-		}
-		encryptedVCSServerStr, err := secret.Encrypt(b1)
-		if err != nil {
-			return err
-		}
-		_, err = db.Exec("update project set metadata = $2, vcs_servers = $3 where id = $1", p.ID, bm, encryptedVCSServerStr)
-		return err
 	}
 
 	_, err := db.Exec("update project set metadata = $2 where id = $1", p.ID, bm)

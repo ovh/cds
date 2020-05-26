@@ -132,7 +132,7 @@ func processNodeJobRunRequirementsGetModel(ctx context.Context, db gorp.SqlExecu
 		g, err := group.LoadByName(ctx, db, modelPath[0])
 		if err != nil {
 			if sdk.ErrorIs(err, sdk.ErrNotFound) {
-				return nil, sdk.NewErrorFrom(sdk.ErrNoWorkerModel, "could not find a worker model that match %s", modelName)
+				return nil, sdk.NewErrorFrom(sdk.ErrNotFound, "could not find a worker model that match %s", modelName)
 			}
 			return nil, err
 		}
@@ -141,7 +141,7 @@ func processNodeJobRunRequirementsGetModel(ctx context.Context, db gorp.SqlExecu
 			return nil, sdk.NewErrorFrom(sdk.ErrInvalidJobRequirementWorkerModelPermission, "group %s should have execution permission", g.Name)
 		}
 
-		wm, err = workermodel.LoadByNameAndGroupID(db, modelPath[1], g.ID)
+		wm, err = workermodel.LoadByNameAndGroupID(ctx, db, modelPath[1], g.ID, workermodel.LoadOptions.Default)
 		if err != nil {
 			return nil, err
 		}
@@ -149,22 +149,22 @@ func processNodeJobRunRequirementsGetModel(ctx context.Context, db gorp.SqlExecu
 		var err error
 
 		// if there is no group info, try to find a shared.infra model for given name
-		wm, err = workermodel.LoadByNameAndGroupID(db, modelName, group.SharedInfraGroup.ID)
-		if err != nil && !sdk.ErrorIs(err, sdk.ErrNoWorkerModel) {
+		wm, err = workermodel.LoadByNameAndGroupID(ctx, db, modelName, group.SharedInfraGroup.ID, workermodel.LoadOptions.Default)
+		if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
 			return nil, err
 		}
 
 		// if there is no shared.infra model we will try to find one for exec groups, backward compatibility for existing workflow runs.
 		if wm == nil {
-			wms, err := workermodel.LoadAllByNameAndGroupIDs(ctx, db, modelName, execsGroupIDs)
+			wms, err := workermodel.LoadAllByNameAndGroupIDs(ctx, db, modelName, execsGroupIDs, workermodel.LoadOptions.Default)
 			if err != nil {
 				return nil, err
 			}
 			if len(wms) > 1 {
-				return nil, sdk.NewErrorFrom(sdk.ErrNoWorkerModel, "invalid given model name \"%s\", missing group name in requirement", modelName)
+				return nil, sdk.NewErrorFrom(sdk.ErrNotFound, "invalid given model name \"%s\", missing group name in requirement", modelName)
 			}
 			if len(wms) == 0 {
-				return nil, sdk.NewErrorFrom(sdk.ErrNoWorkerModel, "can not find a model with name \"%s\" for workflow's exec groups", modelName)
+				return nil, sdk.NewErrorFrom(sdk.ErrNotFound, "can not find a model with name \"%s\" for workflow's exec groups", modelName)
 			}
 			wm = &wms[0]
 		}

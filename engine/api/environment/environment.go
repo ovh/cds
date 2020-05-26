@@ -3,7 +3,6 @@ package environment
 import (
 	"database/sql"
 	"fmt"
-	"time"
 
 	"github.com/go-gorp/gorp"
 	"github.com/lib/pq"
@@ -12,19 +11,22 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-// LoadEnvironments load all environment from the given project
-func LoadEnvironments(db gorp.SqlExecutor, projectKey string) ([]sdk.Environment, error) {
+// LoadAllByIDs load all environment
+func LoadAllByIDs(db gorp.SqlExecutor, ids []int64) ([]sdk.Environment, error) {
 	var envs []sdk.Environment
 
-	query := `SELECT environment.id, environment.name, environment.last_modified, environment.from_repository
-		  FROM environment
-		  JOIN project ON project.id = environment.project_id
-		  WHERE project.projectKey = $1
-		  ORDER by environment.name`
-	rows, err := db.Query(query, projectKey)
+	query := `
+    SELECT environment.id, environment.name, environment.project_id, environment.created,
+      environment.last_modified, environment.from_repository, project.projectkey
+		FROM environment
+		JOIN project ON project.id = environment.project_id
+		WHERE environment.id = ANY($1)
+    ORDER by environment.name
+  `
+	rows, err := db.Query(query, pq.Int64Array(ids))
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return envs, sdk.ErrNoEnvironment
+			return envs, sdk.WithStack(sdk.ErrNoEnvironment)
 		}
 		return envs, sdk.WithStack(err)
 	}
@@ -32,12 +34,49 @@ func LoadEnvironments(db gorp.SqlExecutor, projectKey string) ([]sdk.Environment
 
 	for rows.Next() {
 		var env sdk.Environment
-		var lastModified time.Time
-		if err := rows.Scan(&env.ID, &env.Name, &lastModified, &env.FromRepository); err != nil {
+		if err := rows.Scan(&env.ID, &env.Name, &env.ProjectID, &env.Created,
+			&env.LastModified, &env.FromRepository, &env.ProjectKey); err != nil {
 			return envs, sdk.WithStack(err)
 		}
-		env.LastModified = lastModified.Unix()
-		env.ProjectKey = projectKey
+		envs = append(envs, env)
+	}
+	rows.Close()
+
+	for i := range envs {
+		if err := loadDependencies(db, &envs[i]); err != nil {
+			return envs, err
+		}
+	}
+	return envs, nil
+}
+
+// LoadEnvironments load all environment from the given project
+func LoadEnvironments(db gorp.SqlExecutor, projectKey string) ([]sdk.Environment, error) {
+	var envs []sdk.Environment
+
+	query := `
+    SELECT environment.id, environment.name, environment.project_id, environment.created,
+      environment.last_modified, environment.from_repository, project.projectkey
+		FROM environment
+		JOIN project ON project.id = environment.project_id
+		WHERE project.projectKey = $1
+    ORDER by environment.name
+  `
+	rows, err := db.Query(query, projectKey)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return envs, sdk.WithStack(sdk.ErrNoEnvironment)
+		}
+		return envs, sdk.WithStack(err)
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var env sdk.Environment
+		if err := rows.Scan(&env.ID, &env.Name, &env.ProjectID, &env.Created,
+			&env.LastModified, &env.FromRepository, &env.ProjectKey); err != nil {
+			return envs, sdk.WithStack(err)
+		}
 		envs = append(envs, env)
 	}
 	rows.Close()
@@ -73,10 +112,15 @@ func LoadEnvironmentByID(db gorp.SqlExecutor, ID int64) (*sdk.Environment, error
 		return &sdk.DefaultEnv, nil
 	}
 	var env sdk.Environment
-	query := `SELECT environment.id, environment.name, environment.project_id, environment.from_repository
-		  	FROM environment
-		 	WHERE id = $1`
-	if err := db.QueryRow(query, ID).Scan(&env.ID, &env.Name, &env.ProjectID, &env.FromRepository); err != nil {
+	query := `
+    SELECT environment.id, environment.name, environment.project_id, environment.created,
+      environment.last_modified, environment.from_repository, project.projectkey
+    FROM environment
+    JOIN project ON project.id = environment.project_id
+    WHERE environment.id = $1
+  `
+	if err := db.QueryRow(query, ID).Scan(&env.ID, &env.Name, &env.ProjectID, &env.Created,
+		&env.LastModified, &env.FromRepository, &env.ProjectKey); err != nil {
 		if err == sql.ErrNoRows {
 			return nil, sdk.WithStack(sdk.ErrEnvironmentNotFound)
 		}
@@ -92,19 +136,20 @@ func LoadEnvironmentByName(db gorp.SqlExecutor, projectKey, envName string) (*sd
 	}
 
 	var env sdk.Environment
-	query := `SELECT environment.id, environment.name,  environment.project_id, environment.from_repository, environment.last_modified
-		  FROM environment
-		  JOIN project ON project.id = environment.project_id
-		  WHERE project.projectKey = $1 AND environment.name = $2`
-	var lastModified time.Time
-	if err := db.QueryRow(query, projectKey, envName).Scan(&env.ID, &env.Name, &env.ProjectID, &env.FromRepository, &lastModified); err != nil {
+	query := `
+    SELECT environment.id, environment.name, environment.project_id, environment.created,
+      environment.last_modified, environment.from_repository, project.projectkey
+    FROM environment
+    JOIN project ON project.id = environment.project_id
+    WHERE project.projectKey = $1 AND environment.name = $2
+  `
+	if err := db.QueryRow(query, projectKey, envName).Scan(&env.ID, &env.Name, &env.ProjectID, &env.Created,
+		&env.LastModified, &env.FromRepository, &env.ProjectKey); err != nil {
 		if err == sql.ErrNoRows {
 			return nil, sdk.WithData(sdk.ErrEnvironmentNotFound, envName)
 		}
 		return nil, sdk.WithStack(err)
 	}
-	env.LastModified = lastModified.Unix()
-	env.ProjectKey = projectKey
 	return &env, sdk.WithStack(loadDependencies(db, &env))
 }
 
@@ -181,15 +226,14 @@ func loadDependencies(db gorp.SqlExecutor, env *sdk.Environment) error {
 
 // InsertEnvironment Insert new environment
 func InsertEnvironment(db gorp.SqlExecutor, env *sdk.Environment) error {
-	query := `INSERT INTO environment (name, project_id, from_repository) VALUES($1, $2, $3) RETURNING id, last_modified`
+	query := `INSERT INTO environment (name, project_id, from_repository) VALUES($1, $2, $3) RETURNING id, created, last_modified`
 
 	rx := sdk.NamePatternRegex
 	if !rx.MatchString(env.Name) {
 		return sdk.NewError(sdk.ErrInvalidName, fmt.Errorf("Invalid environment name. It should match %s", sdk.NamePattern))
 	}
 
-	var lastModified time.Time
-	err := db.QueryRow(query, env.Name, env.ProjectID, env.FromRepository).Scan(&env.ID, &lastModified)
+	err := db.QueryRow(query, env.Name, env.ProjectID, env.FromRepository).Scan(&env.ID, &env.Created, &env.LastModified)
 	if err != nil {
 		pqerr, ok := err.(*pq.Error)
 		if ok {
@@ -199,7 +243,6 @@ func InsertEnvironment(db gorp.SqlExecutor, env *sdk.Environment) error {
 		}
 		return err
 	}
-	env.LastModified = lastModified.Unix()
 	return nil
 }
 

@@ -549,9 +549,9 @@ func GetNodeRunBuildCommits(ctx context.Context, db gorp.SqlExecutor, store cach
 	}
 	cur.BuildNumber = number
 
-	vcsServer := repositoriesmanager.GetProjectVCSServer(proj, app.VCSServer)
-	if vcsServer == nil {
-		log.Debug("GetNodeRunBuildCommits> No vcsServer found")
+	vcsServer, err := repositoriesmanager.LoadProjectVCSServerLinkByProjectKeyAndVCSServerName(ctx, db, proj.Key, app.VCSServer)
+	if err != nil {
+		log.Debug("GetNodeRunBuildCommits> No vcsServer found: %v", err)
 		return nil, cur, nil
 	}
 
@@ -607,7 +607,7 @@ func GetNodeRunBuildCommits(ctx context.Context, db gorp.SqlExecutor, store cach
 		}
 		if br != nil {
 			if br.LatestCommit == "" {
-				return nil, cur, sdk.WrapError(sdk.ErrNoBranch, "branch %s or latest commit not found", cur.Branch)
+				return nil, cur, sdk.WrapError(sdk.ErrNoBranch, "branch %s latest commit not found", cur.Branch)
 			}
 
 			//and return the last commit of the branch

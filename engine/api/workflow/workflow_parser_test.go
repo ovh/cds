@@ -4,10 +4,11 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	v2 "github.com/ovh/cds/sdk/exportentities/v2"
 	"io/ioutil"
 	"net/http"
 	"testing"
+
+	v2 "github.com/ovh/cds/sdk/exportentities/v2"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -121,13 +122,13 @@ func TestParseAndImportFromRepository(t *testing.T) {
 
 	pkey := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, cache, pkey, pkey)
-	assert.NoError(t, repositoriesmanager.InsertForProject(db, proj, &sdk.ProjectVCSServer{
-		Name: "github",
-		Data: map[string]string{
-			"token":  "foo",
-			"secret": "bar",
-		},
-	}))
+	vcsServer := sdk.ProjectVCSServerLink{
+		ProjectID: proj.ID,
+		Name:      "github",
+	}
+	vcsServer.Set("token", "foo")
+	vcsServer.Set("secret", "bar")
+	assert.NoError(t, repositoriesmanager.InsertProjectVCSServerLink(context.TODO(), db, &vcsServer))
 
 	UUID := sdk.UUID()
 

@@ -190,7 +190,8 @@ func checkSignature(i Canonicaller, k symmecrypt.Key, f *CanonicalForm, sig []by
 		return false, sdk.WrapError(err, "unable to decrypt content (%s)", string(sig))
 	}
 
-	res := clearContent.String() == string(decryptedSig)
+	clearContentStr := clearContent.String()
+	res := clearContentStr == string(decryptedSig)
 
 	return res, nil
 }

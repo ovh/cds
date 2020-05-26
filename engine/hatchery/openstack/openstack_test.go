@@ -44,7 +44,7 @@ func TestHatcheryOpenstack_WorkerModelsEnabled(t *testing.T) {
 	h.Client = mockClient
 	t.Cleanup(func() { ctrl.Finish() })
 
-	mockClient.EXPECT().WorkerModelsEnabled().DoAndReturn(func() ([]sdk.Model, error) {
+	mockClient.EXPECT().WorkerModelEnabledList().DoAndReturn(func() ([]sdk.Model, error) {
 		return []sdk.Model{
 			{
 				ID:    1,

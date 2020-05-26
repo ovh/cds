@@ -178,8 +178,6 @@ func (api *API) jwtMiddleware(ctx context.Context, w http.ResponseWriter, req *h
 	ctx, end := observability.Span(ctx, "router.jwtMiddleware")
 	defer end()
 
-	log.Debug("jwtMiddleware> try to find a jwt token in cookie or header")
-
 	var jwtRaw string
 	var jwtFromCookie bool
 	// Try to get the jwt from the cookie firstly then from the authorization bearer header, a XSRF token with cookie

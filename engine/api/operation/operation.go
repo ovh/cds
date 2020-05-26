@@ -26,9 +26,9 @@ func pushOperation(ctx context.Context, db gorp.SqlExecutor, store cache.Store, 
 		ope.RepositoryStrategy.SSHKeyContent = key.Private
 	}
 
-	vcsServer := repositoriesmanager.GetProjectVCSServer(proj, ope.VCSServer)
-	if vcsServer == nil {
-		return nil, sdk.NewErrorFrom(sdk.ErrNotFound, "no vcs server found on project %s for given name %s", proj.Key, ope.VCSServer)
+	vcsServer, err := repositoriesmanager.LoadProjectVCSServerLinkByProjectKeyAndVCSServerName(ctx, db, proj.Key, ope.VCSServer)
+	if err != nil {
+		return nil, err
 	}
 	client, err := repositoriesmanager.AuthorizedClient(ctx, db, store, proj.Key, vcsServer)
 	if err != nil {
@@ -57,7 +57,8 @@ func pushOperation(ctx context.Context, db gorp.SqlExecutor, store cache.Store, 
 		return nil, sdk.WrapError(err, "unable to post repository operation")
 	}
 
-	ope.RepositoryStrategy.SSHKeyContent = ""
+	ope.RepositoryStrategy.SSHKeyContent = sdk.PasswordPlaceholder
+	ope.RepositoryStrategy.Password = sdk.PasswordPlaceholder
 	_ = store.SetWithTTL(cache.Key(CacheOperationKey, ope.UUID), ope, 300)
 	return &ope, nil
 }

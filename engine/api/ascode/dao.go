@@ -4,6 +4,8 @@ import (
 	"context"
 	"database/sql"
 
+	"github.com/lib/pq"
+
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
@@ -26,6 +28,20 @@ func LoadEventByWorkflowIDAndPullRequest(ctx context.Context, db gorp.SqlExecuto
 	}
 	event := sdk.AsCodeEvent(dbEvent)
 	return &event, nil
+}
+
+func LoadEventsByWorkflowIDs(ctx context.Context, db gorp.SqlExecutor, workflowIDs []int64) ([]sdk.AsCodeEvent, error) {
+	query := gorpmapping.NewQuery("SELECT * FROM as_code_events where workflow_id = ANY($1)").Args(pq.Int64Array(workflowIDs))
+	var events []dbAsCodeEvents
+	if err := gorpmapping.GetAll(ctx, db, query, &events); err != nil {
+		return nil, sdk.WrapError(err, "Unable to load as code events")
+	}
+
+	asCodeEvents := make([]sdk.AsCodeEvent, len(events))
+	for i := range events {
+		asCodeEvents[i] = sdk.AsCodeEvent(events[i])
+	}
+	return asCodeEvents, nil
 }
 
 // LoadEventsByWorkflowID returns as code events for the given workflow.

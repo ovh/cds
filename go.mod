@@ -93,6 +93,7 @@ require (
 	github.com/inconshreveable/mousetrap v1.0.0 // indirect
 	github.com/itsjamie/gin-cors v0.0.0-20160420130702-97b4a9da7933
 	github.com/jefferai/jsonx v0.0.0-20160721235117-9cc31c3135ee // indirect
+	github.com/jstemmer/go-junit-report v0.9.1 // indirect
 	github.com/jtolds/gls v4.2.1+incompatible // indirect
 	github.com/juju/errors v0.0.0-20190207033735-e65537c515d7 // indirect
 	github.com/juju/loggo v0.0.0-20190526231331-6e530bcce5d8 // indirect
@@ -180,6 +181,7 @@ require (
 	github.com/xanzy/go-gitlab v0.15.0
 	github.com/xi2/xz v0.0.0-20171230120015-48954b6210f8 // indirect
 	github.com/yesnault/go-toml v0.0.0-20191205182532-f5ef6cee7945
+	github.com/yesnault/gorp v2.0.0+incompatible // indirect
 	github.com/yuin/gluare v0.0.0-20170607022532-d7c94f1a80ed
 	github.com/yuin/gopher-lua v0.0.0-20170901023928-8c2befcd3908
 	github.com/ziutek/mymysql v1.5.4 // indirect

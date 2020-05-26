@@ -4,6 +4,8 @@ import (
 	"context"
 	"strings"
 
+	"github.com/lib/pq"
+
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
@@ -91,6 +93,16 @@ func LoadInstancesByWorkflowIDs(ctx context.Context, db gorp.SqlExecutor, workfl
     FROM workflow_template_instance
     WHERE workflow_id = ANY(string_to_array($1, ',')::int[])
   `).Args(gorpmapping.IDsToQueryString(workflowIDs))
+	return getInstances(ctx, db, query, opts...)
+}
+
+// LoadInstanceByWorkflowIDs returns a workflow template instance by workflow ids.
+func LoadInstanceByWorkflowIDs(ctx context.Context, db gorp.SqlExecutor, workflowID []int64, opts ...LoadInstanceOptionFunc) ([]sdk.WorkflowTemplateInstance, error) {
+	query := gorpmapping.NewQuery(`
+    SELECT *
+    FROM workflow_template_instance
+    WHERE workflow_id = ANY($1)
+  `).Args(pq.Int64Array(workflowID))
 	return getInstances(ctx, db, query, opts...)
 }
 
