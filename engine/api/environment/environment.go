@@ -3,6 +3,7 @@ package environment
 import (
 	"database/sql"
 	"fmt"
+	"time"
 
 	"github.com/go-gorp/gorp"
 	"github.com/lib/pq"
@@ -247,15 +248,16 @@ func InsertEnvironment(db gorp.SqlExecutor, env *sdk.Environment) error {
 }
 
 // UpdateEnvironment Update an environment
-func UpdateEnvironment(db gorp.SqlExecutor, environment *sdk.Environment) error {
+func UpdateEnvironment(db gorp.SqlExecutor, env *sdk.Environment) error {
 	rx := sdk.NamePatternRegex
-	if !rx.MatchString(environment.Name) {
-		return sdk.NewError(sdk.ErrInvalidName, fmt.Errorf("Invalid environment name. It should match %s", sdk.NamePattern))
+	if !rx.MatchString(env.Name) {
+		return sdk.NewErrorFrom(sdk.ErrInvalidName, "environment name should match pattern %s", sdk.NamePattern)
 	}
 
-	query := `UPDATE environment SET name=$1, from_repository=$3 WHERE id=$2`
-	if _, err := db.Exec(query, environment.Name, environment.ID, environment.FromRepository); err != nil {
-		return err
+	env.LastModified = time.Now()
+	query := `UPDATE environment SET name=$1, from_repository=$2, last_modified=$3 WHERE id=$4`
+	if _, err := db.Exec(query, env.Name, env.FromRepository, env.LastModified, env.ID); err != nil {
+		return sdk.WithStack(err)
 	}
 	return nil
 }
