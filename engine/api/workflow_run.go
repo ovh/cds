@@ -348,9 +348,11 @@ func (api *API) stopWorkflowRunHandler() service.Handler {
 			return err
 		}
 
-		run, errL := workflow.LoadRun(ctx, api.mustDB(), key, name, number, workflow.LoadRunOptions{})
-		if errL != nil {
-			return sdk.WrapError(errL, "stopWorkflowRunHandler> Unable to load last workflow run")
+		run, err := workflow.LoadRun(ctx, api.mustDB(), key, name, number, workflow.LoadRunOptions{
+			WithDeleted: true,
+		})
+		if err != nil {
+			return sdk.WrapError(err, "unable to load last workflow run")
 		}
 
 		proj, errP := project.Load(api.mustDB(), key)
