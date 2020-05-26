@@ -141,8 +141,10 @@ export class WorkflowStepLogComponent implements OnInit, OnDestroy {
             let activeStep = parseInt(qps['stageId'], 10) === this.job.pipeline_stage_id &&
                 parseInt(qps['actionId'], 10) === this.job.pipeline_action_id && parseInt(qps['stepOrder'], 10) === this.stepOrder;
             if (activeStep) {
-                this.showLogs = true;
                 this.selectedLine = parseInt(qps['line'], 10);
+                if (!this.showLogs) {
+                    this.toggleLogs();
+                }
             } else {
                 this.selectedLine = null;
             }
