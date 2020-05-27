@@ -1,6 +1,8 @@
 package main
 
 import (
+	"fmt"
+
 	"github.com/spf13/cobra"
 
 	"github.com/ovh/cds/cli"
@@ -78,7 +80,6 @@ var adminDatabaseSignatureRoll = cli.Command{
 }
 
 func adminDatabaseSignatureRollFunc(args cli.Values) error {
-
 	entities := args.GetStringSlice("entity")
 	if len(entities) == 0 {
 		return client.AdminDatabaseSignaturesRollAllEntities()
@@ -91,7 +92,6 @@ func adminDatabaseSignatureRollFunc(args cli.Values) error {
 	}
 
 	return nil
-
 }
 
 var adminDatabaseEncryptionResume = cli.Command{
@@ -100,7 +100,11 @@ var adminDatabaseEncryptionResume = cli.Command{
 }
 
 func adminDatabaseEncryptionResumeFunc(_ cli.Values) (interface{}, error) {
-	return client.AdminDatabaseListEncryptedEntities()
+	entities, err := client.AdminDatabaseListEncryptedEntities()
+	for _, e := range entities {
+		fmt.Println(e)
+	}
+	return nil, err
 }
 
 var adminDatabaseEncryptionRoll = cli.Command{
@@ -122,7 +126,5 @@ func adminDatabaseEncryptionRollFunc(args cli.Values) error {
 			return err
 		}
 	}
-
 	return nil
-
 }
