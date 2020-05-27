@@ -1783,6 +1783,51 @@ func Test_postWorkflowRunHandlerMutexRelease(t *testing.T) {
 		break
 	}
 
+	// Run workflow 3
+	uri = router.GetRoute("POST", api.postWorkflowRunHandler, map[string]string{
+		"key":              proj.Key,
+		"permWorkflowName": wkf.Name,
+	})
+	require.NotEmpty(t, uri)
+	req = assets.NewAuthentifiedRequest(t, u, jwt, "POST", uri, sdk.WorkflowRunPostHandlerOption{})
+	rec = httptest.NewRecorder()
+	router.Mux.ServeHTTP(rec, req)
+	require.Equal(t, 202, rec.Code)
+
+	try = 0
+	for {
+		if try > 10 {
+			t.Logf("Maximum attempts reached on getWorkflowRunHandler for run 3")
+			t.FailNow()
+			return
+		}
+		try++
+		t.Logf("Attempt #%d on getWorkflowRunHandler for run 3", try)
+		uri := router.GetRoute("GET", api.getWorkflowRunHandler, map[string]string{
+			"key":              proj.Key,
+			"permWorkflowName": wkf.Name,
+			"number":           "3",
+		})
+		req := assets.NewAuthentifiedRequest(t, u, jwt, "GET", uri, nil)
+		rec := httptest.NewRecorder()
+		router.Mux.ServeHTTP(rec, req)
+		require.Equal(t, 200, rec.Code)
+
+		var wkfRun sdk.WorkflowRun
+		require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &wkfRun))
+		if wkfRun.Status != sdk.StatusBuilding {
+			t.Logf("Workflow run status: %s", wkfRun.Status)
+			continue
+		}
+
+		require.Equal(t, sdk.StatusBuilding, wkfRun.Status)
+		require.Equal(t, 2, len(wkfRun.Infos))
+		require.Equal(t, sdk.MsgWorkflowStarting.ID, wkfRun.Infos[0].Message.ID)
+		require.Equal(t, sdk.MsgWorkflowNodeMutex.ID, wkfRun.Infos[1].Message.ID)
+		require.Equal(t, "", wkfRun.RootRun().Stages[0].Status)
+		break
+	}
+
 	// Stop workflow 1
 	uri = router.GetRoute("POST", api.stopWorkflowRunHandler, map[string]string{
 		"key":              proj.Key,
@@ -1826,6 +1871,7 @@ func Test_postWorkflowRunHandlerMutexRelease(t *testing.T) {
 		break
 	}
 
+	// Run 2 should be running
 	try = 0
 	for {
 		if try > 10 {
@@ -1854,6 +1900,41 @@ func Test_postWorkflowRunHandlerMutexRelease(t *testing.T) {
 
 		require.Equal(t, sdk.StatusBuilding, wkfRun.Status)
 		require.Equal(t, sdk.StatusWaiting, wkfRun.RootRun().Stages[0].Status, "Stop a previous workflow run should have release the mutex and trigger the second run, status of the stage should change for empty string to waiting")
+		break
+	}
+
+	// Run 3 should still be locked
+	try = 0
+	for {
+		if try > 10 {
+			t.Logf("Maximum attempts reached on getWorkflowRunHandler for run 3")
+			t.FailNow()
+			return
+		}
+		try++
+		t.Logf("Attempt #%d on getWorkflowRunHandler for run 3", try)
+		uri := router.GetRoute("GET", api.getWorkflowRunHandler, map[string]string{
+			"key":              proj.Key,
+			"permWorkflowName": wkf.Name,
+			"number":           "3",
+		})
+		req := assets.NewAuthentifiedRequest(t, u, jwt, "GET", uri, nil)
+		rec := httptest.NewRecorder()
+		router.Mux.ServeHTTP(rec, req)
+		require.Equal(t, 200, rec.Code)
+
+		var wkfRun sdk.WorkflowRun
+		require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &wkfRun))
+		if wkfRun.Status != sdk.StatusBuilding {
+			t.Logf("Workflow run status: %s", wkfRun.Status)
+			continue
+		}
+
+		require.Equal(t, sdk.StatusBuilding, wkfRun.Status)
+		require.Equal(t, 2, len(wkfRun.Infos))
+		require.Equal(t, sdk.MsgWorkflowStarting.ID, wkfRun.Infos[0].Message.ID)
+		require.Equal(t, sdk.MsgWorkflowNodeMutex.ID, wkfRun.Infos[1].Message.ID)
+		require.Equal(t, "", wkfRun.RootRun().Stages[0].Status)
 		break
 	}
 }
