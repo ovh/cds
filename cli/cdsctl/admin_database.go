@@ -20,7 +20,7 @@ func adminDatabase() *cobra.Command {
 		cli.NewListCommand(adminDatabaseMigrationsList, adminDatabaseMigrationsListFunc, nil),
 		cli.NewGetCommand(adminDatabaseSignatureResume, adminDatabaseSignatureResumeFunc, nil),
 		cli.NewCommand(adminDatabaseSignatureRoll, adminDatabaseSignatureRollFunc, nil),
-		cli.NewGetCommand(adminDatabaseEncryptionResume, adminDatabaseEncryptionResumeFunc, nil),
+		cli.NewCommand(adminDatabaseEncryptionResume, adminDatabaseEncryptionResumeFunc, nil),
 		cli.NewCommand(adminDatabaseEncryptionRoll, adminDatabaseEncryptionRollFunc, nil),
 	})
 }
@@ -99,12 +99,12 @@ var adminDatabaseEncryptionResume = cli.Command{
 	Short: "List all encrypted data in database",
 }
 
-func adminDatabaseEncryptionResumeFunc(_ cli.Values) (interface{}, error) {
+func adminDatabaseEncryptionResumeFunc(_ cli.Values) error {
 	entities, err := client.AdminDatabaseListEncryptedEntities()
 	for _, e := range entities {
 		fmt.Println(e)
 	}
-	return nil, err
+	return err
 }
 
 var adminDatabaseEncryptionRoll = cli.Command{
