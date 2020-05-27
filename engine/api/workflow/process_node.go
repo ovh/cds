@@ -204,7 +204,9 @@ func processNode(ctx context.Context, db gorp.SqlExecutor, store cache.Store, pr
 		}
 	}
 	// Find an ancestor on the same repo
-	if currentRepo != "" && parentRepo != nil && parentRepo.Value != currentRepo {
+	if currentRepo != "" && parentRepo == nil {
+		needVCSInfo = true
+	} else if currentRepo != "" && parentRepo != nil && parentRepo.Value != currentRepo {
 		// Try to found a parent on the same repo
 		found := false
 		for _, parent := range wr.WorkflowNodeRuns {
