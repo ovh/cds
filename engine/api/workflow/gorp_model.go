@@ -189,6 +189,23 @@ func (j JobRun) WorkflowNodeRunJob() (sdk.WorkflowNodeJobRun, error) {
 			})
 		}
 	}
+	if defaultRegion != "" {
+		var regionFound bool
+		for _, req := range jr.Job.Action.Requirements {
+			if req.Type == sdk.RegionRequirement {
+				regionFound = true
+				break
+			}
+		}
+
+		if !regionFound {
+			jr.Job.Action.Requirements = append(jr.Job.Action.Requirements, sdk.Requirement{
+				Name:  defaultRegion,
+				Type:  sdk.RegionRequirement,
+				Value: defaultRegion,
+			})
+		}
+	}
 	return jr, nil
 }
 
