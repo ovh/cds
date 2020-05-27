@@ -51,7 +51,6 @@ export class WorkflowComponent implements OnInit {
     workflowSubscription: Subscription;
 
     projectSubscription: Subscription;
-    dataRouteSubscription: Subscription;
     qpRouteSubscription: Subscription;
     paramsRouteSubscription: Subscription;
     eventsRouteSubscription: Subscription;
@@ -79,9 +78,6 @@ export class WorkflowComponent implements OnInit {
     selectedNodeID: number;
     selectedNodeRef: string;
     selectecHookRef: string;
-
-    showButtons = false;
-    loadingPopupButton = false;
 
     constructor(
         private _activatedRoute: ActivatedRoute,
