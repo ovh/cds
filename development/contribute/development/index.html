@@ -359,21 +359,21 @@ $ tar xzf node-v12.4.0-darwin-x64.tar.gz
 
 <h2 id="golang">Golang</h2>
 
-<p>Download the latest Golang version from <a href="https://golang.org/dl/">https://golang.org/dl/</a>, version &gt;= 1.13</p>
+<p>Download the latest Golang version from <a href="https://golang.org/dl/">https://golang.org/dl/</a>, version &gt;= 1.14</p>
 
-<p>Example with version 1.13 on macOS:</p>
+<p>Example with version 1.14 on macOS:</p>
 
 <pre><code class="language-bash">$ export GOROOT=~/go
 $ export PATH=$PATH:$GOROOT/bin
 $ cd ~
-$ curl -O https://dl.google.com/go/go1.13.darwin-amd64.tar.gz
-$ tar xzf go1.13.darwin-amd64.tar.gz
+$ curl -O https://dl.google.com/go/go1.14.darwin-amd64.tar.gz
+$ tar xzf go1.14.darwin-amd64.tar.gz
 </code></pre>
 
 <p>Check if Go installation is ok</p>
 
 <pre><code class="language-bash">$ go version
-go version go1.13 darwin/amd64
+go version go1.14 darwin/amd64
 </code></pre>
 
 <h2 id="cds">CDS</h2>
@@ -404,10 +404,23 @@ $ engine config new &gt; ~/.cds/dev.toml
 # edit ~/.cds/dev.toml file 
 ## in section [api]
 ### --&gt; set variable defaultOS to your OS, darwin if you are on macOS for example
+
 ## in section [hatchery.local.commonConfiguration]
 ### --&gt; set name to &quot;hatchery-local&quot;
+
 ## in section [hatchery.local.commonConfiguration.api.http]
 ### --&gt; uncomment url, should be set to url = &quot;http://localhost:8081&quot; 
+
+## in section [hatchery.local]
+### basedir = &quot;/tmp/cds&quot; 
+# this directory will contains the cds workers workspace
+
+## in section [api.directories]
+### baseDirectory = &quot;/your-gopath/src/github.com/ovh/cds/engine/worker/dist&quot; 
+# this directory should contains the workers binaries
+
+## in section [api.artifact.local]
+# baseDirectory = &quot;/tmp/cds/artifacts&quot;
 
 </code></pre>
 
@@ -423,9 +436,9 @@ $ engine database upgrade --db-password cds --db-sslmode disable
 <p>If you don&rsquo;t have a local PostgreSQL, you should run <code>engine database upgrade --help</code>
 and update <code>~/.cds/dev.toml</code> file.</p>
 
-<p>Launch CDS engine API &amp; local hatchery:</p>
+<p>Launch CDS engine API:</p>
 
-<pre><code class="language-bash">$ engine --config ~/.cds/dev.toml start api hatchery:local
+<pre><code class="language-bash">$ engine --config ~/.cds/dev.toml start api
 </code></pre>
 
 <p>Launch CDS UI:</p>
@@ -440,6 +453,11 @@ $ npm start
 export INIT_TOKEN=`./engine config init-token --config ~/.cds/dev.toml`
 $ cdsctl signup -H http://localhost:8081 --email your-username@localhost.local --fullname yourFullname --username your-username
 # Check CDS API logs to get the validation code
+</code></pre>
+
+<p>Launch local hatchery:</p>
+
+<pre><code class="language-bash">$ engine --config ~/.cds/dev.toml start hatchery:local
 </code></pre>
 
 <p>Open a browser, go on <a href="http://localhost:8080">http://localhost:8080</a> - Have fun.</p>
