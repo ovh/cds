@@ -161,7 +161,9 @@ func UpdateNodeJobRunStatus(ctx context.Context, db gorp.SqlExecutor, store cach
 		job.Status = status
 
 		_, next := observability.Span(ctx, "workflow.LoadRunByID")
-		wf, errLoadWf := LoadRunByID(db, nodeRun.WorkflowRunID, LoadRunOptions{})
+		wf, errLoadWf := LoadRunByID(db, nodeRun.WorkflowRunID, LoadRunOptions{
+			WithDeleted: true,
+		})
 		next()
 		if errLoadWf != nil {
 			return nil, sdk.WrapError(errLoadWf, "workflow.UpdateNodeJobRunStatus> Unable to load run id %d", nodeRun.WorkflowRunID)
