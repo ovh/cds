@@ -31,9 +31,9 @@ func WorkflowSendEvent(ctx context.Context, db gorp.SqlExecutor, store cache.Sto
 			continue
 		}
 
-		var previousNodeRun sdk.WorkflowNodeRun
+		var previousNodeRun *sdk.WorkflowNodeRun
 		if wnr.SubNumber > 0 {
-			previousNodeRun = wnr
+			previousNodeRun = &wnr
 		} else {
 			var errN error
 			previousNodeRun, errN = workflow.PreviousNodeRun(db, wnr, wnr.WorkflowNodeName, wr.WorkflowID)
@@ -55,7 +55,7 @@ func WorkflowSendEvent(ctx context.Context, db gorp.SqlExecutor, store cache.Sto
 			log.Warning(ctx, "WorkflowSendEvent> Unable to load workflow for event: %v", err)
 			continue
 		}
-		eventsNotif := notification.GetUserWorkflowEvents(ctx, db, store, wr.Workflow.ProjectID, wr.Workflow.ProjectKey, workDB.Name, wr.Workflow.Notifications, &previousNodeRun, *nr)
+		eventsNotif := notification.GetUserWorkflowEvents(ctx, db, store, wr.Workflow.ProjectID, wr.Workflow.ProjectKey, workDB.Name, wr.Workflow.Notifications, previousNodeRun, *nr)
 		event.PublishWorkflowNodeRun(ctx, *nr, wr.Workflow, eventsNotif)
 		e := &workflow.VCSEventMessenger{}
 		if err := e.SendVCSEvent(ctx, db, store, proj, *wr, wnr); err != nil {
