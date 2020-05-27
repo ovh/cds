@@ -10,6 +10,7 @@ import (
 
 	"github.com/fsamin/go-dump"
 	"github.com/go-gorp/gorp"
+	"github.com/sirupsen/logrus"
 
 	"github.com/ovh/cds/engine/api/action"
 	"github.com/ovh/cds/engine/api/cache"
@@ -285,7 +286,7 @@ func executeNodeRun(ctx context.Context, db gorp.SqlExecutor, store cache.Store,
 	}
 
 	// If pipeline build succeed, reprocess the workflow (in the same transaction)
-	//Delete jobs only when node is over
+	// Delete jobs only when node is over
 	if sdk.StatusIsTerminated(nr.Status) {
 		if nr.Status != sdk.StatusStopped {
 			r1, _, err := processWorkflowDataRun(ctx, db, store, proj, updatedWorkflowRun, nil, nil, nil)
@@ -295,80 +296,98 @@ func executeNodeRun(ctx context.Context, db gorp.SqlExecutor, store cache.Store,
 			report.Merge(ctx, r1)
 		}
 
-		//Delete the line in workflow_node_run_job
+		// Delete the line in workflow_node_run_job
 		if err := DeleteNodeJobRuns(db, nr.ID); err != nil {
 			return nil, sdk.WrapError(err, "unable to delete node %d job runs", nr.ID)
 		}
 
 		var hasMutex bool
 		var nodeName string
-
 		node := updatedWorkflowRun.Workflow.WorkflowData.NodeByID(nr.WorkflowNodeID)
 		if node != nil && node.Context != nil && node.Context.Mutex {
 			hasMutex = node.Context.Mutex
 			nodeName = node.Name
 		}
 
-		//Do we release a mutex ?
-		//Try to find one node run of the same node from the same workflow at status Waiting
+		// If current node has a mutex, we want to trigger another node run that can be waiting for the mutex
 		if hasMutex {
-			_, next := observability.Span(ctx, "workflow.releaseMutex")
-
-			mutexQuery := `select workflow_node_run.id
-			from workflow_node_run
-			join workflow_run on workflow_run.id = workflow_node_run.workflow_run_id
-			join workflow on workflow.id = workflow_run.workflow_id
-			where workflow.id = $1
-			and workflow_node_run.workflow_node_name = $2
-			and workflow_node_run.status = $3
-			order by workflow_node_run.start asc
-			limit 1`
-			waitingRunID, errID := db.SelectInt(mutexQuery, updatedWorkflowRun.WorkflowID, nodeName, string(sdk.StatusWaiting))
-			if errID != nil && errID != sql.ErrNoRows {
-				log.Error(ctx, "workflow.execute> Unable to load mutex-locked workflow node run ID: %v", errID)
-				return report, nil
-			}
-			//If not more run is found, stop the loop
-			if waitingRunID == 0 {
-				return report, nil
-			}
-			waitingRun, errRun := LoadNodeRunByID(db, waitingRunID, LoadRunOptions{})
-			if errRun != nil && sdk.Cause(errRun) != sql.ErrNoRows {
-				log.Error(ctx, "workflow.execute> Unable to load mutex-locked workflow rnode un: %v", errRun)
-				return report, nil
-			}
-			//If not more run is found, stop the loop
-			if waitingRun == nil {
-				return report, nil
-			}
-
-			//Here we are loading another workflow run
-			workflowRun, errWRun := LoadRunByID(db, waitingRun.WorkflowRunID, LoadRunOptions{})
-			if errWRun != nil {
-				log.Error(ctx, "workflow.execute> Unable to load mutex-locked workflow rnode un: %v", errWRun)
-				return report, nil
-			}
-			AddWorkflowRunInfo(workflowRun, sdk.SpawnMsg{
-				ID:   sdk.MsgWorkflowNodeMutexRelease.ID,
-				Args: []interface{}{waitingRun.WorkflowNodeName},
-				Type: sdk.MsgWorkflowNodeMutexRelease.Type,
-			})
-
-			if err := UpdateWorkflowRun(ctx, db, workflowRun); err != nil {
-				return nil, sdk.WrapError(err, "unable to update workflow run %d after mutex release", workflowRun.ID)
-			}
-
-			log.Debug("workflow.execute> process the node run %d because mutex has been released", waitingRun.ID)
-			r, err := executeNodeRun(ctx, db, store, proj, waitingRun)
+			r, err := releaseMutex(ctx, db, store, proj, updatedWorkflowRun.WorkflowID, nodeName)
 			report.Merge(ctx, r)
 			if err != nil {
-				return nil, sdk.WrapError(err, "unable to reprocess workflow")
+				return report, err
 			}
-
-			next()
 		}
 	}
 	return report, nil
+}
+
+func releaseMutex(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj sdk.Project, workflowID int64, nodeName string) (*ProcessorReport, error) {
+	_, next := observability.Span(ctx, "workflow.releaseMutex")
+	defer next()
+
+	mutexQuery := `
+    SELECT workflow_node_run.id
+    FROM workflow_node_run
+    JOIN workflow_run on workflow_run.id = workflow_node_run.workflow_run_id
+    JOIN workflow on workflow.id = workflow_run.workflow_id
+    WHERE workflow.id = $1
+      AND workflow_node_run.workflow_node_name = $2
+      AND workflow_node_run.status = $3
+    ORDER BY workflow_run.num ASC
+    LIMIT 1
+  `
+	waitingRunID, err := db.SelectInt(mutexQuery, workflowID, nodeName, string(sdk.StatusWaiting))
+	if err != nil && err != sql.ErrNoRows {
+		err = sdk.WrapError(err, "unable to load mutex-locked workflow node run id")
+		log.ErrorWithFields(ctx, logrus.Fields{
+			"stack_trace": fmt.Sprintf("%+v", err),
+		}, "%s", err)
+		return nil, nil
+	}
+	if waitingRunID == 0 {
+		return nil, nil
+	}
+
+	// Load the workflow node run that is waiting for the mutex
+	waitingRun, errRun := LoadNodeRunByID(db, waitingRunID, LoadRunOptions{})
+	if errRun != nil && sdk.Cause(errRun) != sql.ErrNoRows {
+		err = sdk.WrapError(err, "unable to load mutex-locked workflow node run")
+		log.ErrorWithFields(ctx, logrus.Fields{
+			"stack_trace": fmt.Sprintf("%+v", err),
+		}, "%s", err)
+		return nil, nil
+	}
+	if waitingRun == nil {
+		return nil, nil
+	}
+
+	// Load the workflow run that is waiting for the mutex
+	workflowRun, err := LoadRunByID(db, waitingRun.WorkflowRunID, LoadRunOptions{})
+	if err != nil {
+		err = sdk.WrapError(err, "unable to load mutex-locked workflow run")
+		log.ErrorWithFields(ctx, logrus.Fields{
+			"stack_trace": fmt.Sprintf("%+v", err),
+		}, "%s", err)
+		return nil, nil
+	}
+
+	// Add a spawn info on the workflow run
+	AddWorkflowRunInfo(workflowRun, sdk.SpawnMsg{
+		ID:   sdk.MsgWorkflowNodeMutexRelease.ID,
+		Args: []interface{}{waitingRun.WorkflowNodeName},
+		Type: sdk.MsgWorkflowNodeMutexRelease.Type,
+	})
+	if err := UpdateWorkflowRun(ctx, db, workflowRun); err != nil {
+		return nil, sdk.WrapError(err, "unable to update workflow run %d after mutex release", workflowRun.ID)
+	}
+
+	log.Debug("workflow.execute> process the node run %d because mutex has been released", waitingRun.ID)
+	r, err := executeNodeRun(ctx, db, store, proj, waitingRun)
+	if err != nil {
+		return r, sdk.WrapError(err, "unable to reprocess workflow")
+	}
+
+	return r, nil
 }
 
 func checkRunOnlyFailedJobs(wr *sdk.WorkflowRun, nr *sdk.WorkflowNodeRun) (*sdk.WorkflowNodeRun, error) {
@@ -853,27 +872,33 @@ func stopWorkflowNodeOutGoingHook(ctx context.Context, dbFunc func() *gorp.DbMap
 }
 
 // StopWorkflowNodeRun to stop a workflow node run with a specific spawn info
-func StopWorkflowNodeRun(ctx context.Context, dbFunc func() *gorp.DbMap, store cache.Store, proj sdk.Project, nodeRun sdk.WorkflowNodeRun, stopInfos sdk.SpawnInfo) (*ProcessorReport, error) {
+func StopWorkflowNodeRun(ctx context.Context, dbFunc func() *gorp.DbMap, store cache.Store, proj sdk.Project, workflowRun sdk.WorkflowRun, workflowNodeRun sdk.WorkflowNodeRun, stopInfos sdk.SpawnInfo) (*ProcessorReport, error) {
 	var end func()
 	ctx, end = observability.Span(ctx, "workflow.StopWorkflowNodeRun")
 	defer end()
 
 	report := new(ProcessorReport)
 
-	var r1 *ProcessorReport
-	var errS error
-	if nodeRun.Stages != nil && len(nodeRun.Stages) > 0 {
-		r1, errS = stopWorkflowNodePipeline(ctx, dbFunc, store, proj, &nodeRun, stopInfos)
+	var r *ProcessorReport
+	var err error
+	if workflowNodeRun.Stages != nil && len(workflowNodeRun.Stages) > 0 {
+		r, err = stopWorkflowNodePipeline(ctx, dbFunc, store, proj, &workflowNodeRun, stopInfos)
 	}
-	if nodeRun.OutgoingHook != nil {
-		errS = stopWorkflowNodeOutGoingHook(ctx, dbFunc, &nodeRun)
+	if workflowNodeRun.OutgoingHook != nil {
+		err = stopWorkflowNodeOutGoingHook(ctx, dbFunc, &workflowNodeRun)
 	}
-	if errS != nil {
-		return report, sdk.WrapError(errS, "unable to stop workflow node run")
+	if err != nil {
+		return report, sdk.WrapError(err, "unable to stop workflow node run")
 	}
 
-	report.Merge(ctx, r1)
-	report.Add(ctx, nodeRun)
+	report.Merge(ctx, r)
+	report.Add(ctx, workflowNodeRun)
+
+	r, err = releaseMutex(ctx, dbFunc(), store, proj, workflowNodeRun.WorkflowID, workflowNodeRun.WorkflowNodeName)
+	report.Merge(ctx, r)
+	if err != nil {
+		return report, err
+	}
 
 	return report, nil
 }

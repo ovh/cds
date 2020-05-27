@@ -194,11 +194,13 @@ func LoadNodeRunByID(db gorp.SqlExecutor, id int64, loadOpts LoadRunOptions) (*s
 		testsField = withLightNodeRunTestsField
 	}
 
-	query := fmt.Sprintf(`select %s %s
-	from workflow_node_run
-	where workflow_node_run.id = $1`, nodeRunFields, testsField)
+	query := fmt.Sprintf(`
+    SELECT %s %s
+	  FROM workflow_node_run
+    WHERE workflow_node_run.id = $1
+  `, nodeRunFields, testsField)
 	if err := db.SelectOne(&rr, query, id); err != nil {
-		return nil, sdk.WrapError(err, "Unable to load workflow_node_run node=%d", id)
+		return nil, sdk.WrapError(err, "unable to load workflow_node_run with id %d", id)
 	}
 
 	r, err := fromDBNodeRun(rr, loadOpts)
@@ -207,23 +209,22 @@ func LoadNodeRunByID(db gorp.SqlExecutor, id int64, loadOpts LoadRunOptions) (*s
 	}
 
 	if loadOpts.WithArtifacts {
-		arts, errA := loadArtifactByNodeRunID(db, r.ID)
-		if errA != nil {
-			return nil, sdk.WrapError(errA, "LoadNodeRunByID>Error loading artifacts for run %d", r.ID)
+		arts, err := loadArtifactByNodeRunID(db, r.ID)
+		if err != nil {
+			return nil, sdk.WrapError(err, "cannot load artifacts for workflow node run %d", r.ID)
 		}
 		r.Artifacts = arts
 	}
 
 	if loadOpts.WithStaticFiles {
-		staticFiles, errS := loadStaticFilesByNodeRunID(db, r.ID)
-		if errS != nil {
-			return nil, sdk.WrapError(errS, "LoadNodeRunByID>Error loading static files for run %d", r.ID)
+		staticFiles, err := loadStaticFilesByNodeRunID(db, r.ID)
+		if err != nil {
+			return nil, sdk.WrapError(err, "cannot load static files for workflow node run %d", r.ID)
 		}
 		r.StaticFiles = staticFiles
 	}
 
 	return r, nil
-
 }
 
 //insertWorkflowNodeRun insert in table workflow_node_run
