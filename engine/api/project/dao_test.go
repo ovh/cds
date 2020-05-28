@@ -18,8 +18,8 @@ import (
 )
 
 func TestInsertProject(t *testing.T) {
-	db, _, end := test.SetupPG(t, bootstrap.InitiliazeDB)
-	defer end()
+	db, _ := test.SetupPG(t, bootstrap.InitiliazeDB)
+
 	project.Delete(db, "key")
 
 	proj := sdk.Project{
@@ -30,8 +30,8 @@ func TestInsertProject(t *testing.T) {
 }
 
 func TestInsertProject_withWrongKey(t *testing.T) {
-	db, _, end := test.SetupPG(t, bootstrap.InitiliazeDB)
-	defer end()
+	db, _ := test.SetupPG(t, bootstrap.InitiliazeDB)
+
 	proj := sdk.Project{
 		Name: "test proj",
 		Key:  "error key",
@@ -53,8 +53,8 @@ func TestExist(t *testing.T) {
 }
 
 func TestLoadAllByRepo(t *testing.T) {
-	db, cache, end := test.SetupPG(t, bootstrap.InitiliazeDB)
-	defer end()
+	db, cache := test.SetupPG(t, bootstrap.InitiliazeDB)
+
 	_ = event.Initialize(context.Background(), db, cache)
 
 	app, _ := application.LoadByName(db, "TestLoadAllByRepo", "TestLoadAllByRepo")
@@ -102,8 +102,7 @@ func TestLoadAllByRepo(t *testing.T) {
 }
 
 func TestLoadAll(t *testing.T) {
-	db, cache, end := test.SetupPG(t, bootstrap.InitiliazeDB)
-	defer end()
+	db, cache := test.SetupPG(t, bootstrap.InitiliazeDB)
 
 	project.Delete(db, "test_TestLoadAll1")
 	project.Delete(db, "test_TestLoadAll2")

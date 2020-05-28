@@ -18,8 +18,7 @@ import (
 )
 
 func Test_postApplicationMetadataHandler_AsProvider(t *testing.T) {
-	api, tsURL, tsClose := newTestServer(t)
-	defer tsClose()
+	api, tsURL := newTestServer(t)
 
 	u, _ := assets.InsertAdminUser(t, api.mustDB())
 	localConsumer, err := authentication.LoadConsumerByTypeAndUserID(context.TODO(), api.mustDB(), sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)

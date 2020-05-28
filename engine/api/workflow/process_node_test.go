@@ -35,8 +35,8 @@ type mockServiceClient struct {
 
 // Payload: nothing
 func TestHookRunWithoutPayloadProcessNodeBuildParameter(t *testing.T) {
-	db, cache, end := test.SetupPG(t, bootstrap.InitiliazeDB)
-	defer end()
+	db, cache := test.SetupPG(t, bootstrap.InitiliazeDB)
+
 	u, _ := assets.InsertAdminUser(t, db)
 
 	webHookModel, err := workflow.LoadHookModelByName(db, sdk.WebHookModelName)
@@ -227,8 +227,8 @@ func TestHookRunWithoutPayloadProcessNodeBuildParameter(t *testing.T) {
 
 // Payload: commit only
 func TestHookRunWithHashOnlyProcessNodeBuildParameter(t *testing.T) {
-	db, cache, end := test.SetupPG(t, bootstrap.InitiliazeDB)
-	defer end()
+	db, cache := test.SetupPG(t, bootstrap.InitiliazeDB)
+
 	u, _ := assets.InsertAdminUser(t, db)
 
 	webHookModel, err := workflow.LoadHookModelByName(db, sdk.WebHookModelName)
@@ -411,8 +411,8 @@ func TestHookRunWithHashOnlyProcessNodeBuildParameter(t *testing.T) {
 
 // Payload: branch only
 func TestManualRunWithPayloadProcessNodeBuildParameter(t *testing.T) {
-	db, cache, end := test.SetupPG(t, bootstrap.InitiliazeDB)
-	defer end()
+	db, cache := test.SetupPG(t, bootstrap.InitiliazeDB)
+
 	u, _ := assets.InsertAdminUser(t, db)
 
 	// Create project
@@ -564,8 +564,8 @@ func TestManualRunWithPayloadProcessNodeBuildParameter(t *testing.T) {
 
 // Payload: branch and commit
 func TestManualRunBranchAndCommitInPayloadProcessNodeBuildParameter(t *testing.T) {
-	db, cache, end := test.SetupPG(t, bootstrap.InitiliazeDB)
-	defer end()
+	db, cache := test.SetupPG(t, bootstrap.InitiliazeDB)
+
 	u, _ := assets.InsertAdminUser(t, db)
 
 	// Create project
@@ -710,8 +710,8 @@ func TestManualRunBranchAndCommitInPayloadProcessNodeBuildParameter(t *testing.T
 
 // Payload: branch and repository (we want to build a fork)
 func TestManualRunBranchAndRepositoryInPayloadProcessNodeBuildParameter(t *testing.T) {
-	db, cache, end := test.SetupPG(t, bootstrap.InitiliazeDB)
-	defer end()
+	db, cache := test.SetupPG(t, bootstrap.InitiliazeDB)
+
 	u, _ := assets.InsertAdminUser(t, db)
 
 	// Create project
@@ -942,8 +942,8 @@ func TestManualRunBranchAndRepositoryInPayloadProcessNodeBuildParameter(t *testi
 
 // Payload: multi application, multi repo
 func TestManualRunBuildParameterMultiApplication(t *testing.T) {
-	db, cache, end := test.SetupPG(t, bootstrap.InitiliazeDB)
-	defer end()
+	db, cache := test.SetupPG(t, bootstrap.InitiliazeDB)
+
 	u, _ := assets.InsertAdminUser(t, db)
 
 	// Create project
@@ -1188,8 +1188,7 @@ func TestManualRunBuildParameterMultiApplication(t *testing.T) {
 }
 
 func TestManualRunBuildParameterNoApplicationOnRoot(t *testing.T) {
-	db, cache, end := test.SetupPG(t, bootstrap.InitiliazeDB)
-	defer end()
+	db, cache := test.SetupPG(t, bootstrap.InitiliazeDB)
 	u, _ := assets.InsertAdminUser(t, db)
 
 	// Create project
@@ -1433,8 +1432,8 @@ func TestManualRunBuildParameterNoApplicationOnRoot(t *testing.T) {
 
 // Payload: branch only
 func TestGitParamOnPipelineWithoutApplication(t *testing.T) {
-	db, cache, end := test.SetupPG(t, bootstrap.InitiliazeDB)
-	defer end()
+	db, cache := test.SetupPG(t, bootstrap.InitiliazeDB)
+
 	u, _ := assets.InsertAdminUser(t, db)
 
 	// Create project
@@ -1620,8 +1619,8 @@ func TestGitParamOnPipelineWithoutApplication(t *testing.T) {
 
 // Payload: branch only
 func TestGitParamOnApplicationWithoutRepo(t *testing.T) {
-	db, cache, end := test.SetupPG(t, bootstrap.InitiliazeDB)
-	defer end()
+	db, cache := test.SetupPG(t, bootstrap.InitiliazeDB)
+
 	u, _ := assets.InsertAdminUser(t, db)
 
 	// Create project
@@ -1801,8 +1800,8 @@ func TestGitParamOnApplicationWithoutRepo(t *testing.T) {
 
 // Payload: branch only
 func TestGitParamOn2ApplicationSameRepo(t *testing.T) {
-	db, cache, end := test.SetupPG(t, bootstrap.InitiliazeDB)
-	defer end()
+	db, cache := test.SetupPG(t, bootstrap.InitiliazeDB)
+
 	u, _ := assets.InsertAdminUser(t, db)
 
 	// Create project
@@ -2002,8 +2001,8 @@ func TestGitParamOn2ApplicationSameRepo(t *testing.T) {
 
 // Payload: branch only
 func TestGitParamWithJoin(t *testing.T) {
-	db, cache, end := test.SetupPG(t, bootstrap.InitiliazeDB)
-	defer end()
+	db, cache := test.SetupPG(t, bootstrap.InitiliazeDB)
+
 	u, _ := assets.InsertAdminUser(t, db)
 
 	// Create project
@@ -2221,8 +2220,8 @@ func TestGitParamWithJoin(t *testing.T) {
 
 // Payload: branch only
 func TestGitParamOn2ApplicationSameRepoWithFork(t *testing.T) {
-	db, cache, end := test.SetupPG(t, bootstrap.InitiliazeDB)
-	defer end()
+	db, cache := test.SetupPG(t, bootstrap.InitiliazeDB)
+
 	u, _ := assets.InsertAdminUser(t, db)
 
 	// Create project
@@ -2438,8 +2437,8 @@ func TestGitParamOn2ApplicationSameRepoWithFork(t *testing.T) {
 
 // Payload: branch only  + run condition on git.branch
 func TestManualRunWithPayloadAndRunCondition(t *testing.T) {
-	db, cache, end := test.SetupPG(t, bootstrap.InitiliazeDB)
-	defer end()
+	db, cache := test.SetupPG(t, bootstrap.InitiliazeDB)
+
 	u, _ := assets.InsertAdminUser(t, db)
 
 	// Create project

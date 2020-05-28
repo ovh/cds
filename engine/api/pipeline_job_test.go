@@ -18,8 +18,7 @@ import (
 )
 
 func TestAddJobHandler(t *testing.T) {
-	api, db, router, end := newTestAPI(t)
-	defer end()
+	api, db, router := newTestAPI(t)
 
 	//1. Create admin user
 	u, pass := assets.InsertAdminUser(t, api.mustDB())
@@ -84,8 +83,7 @@ func TestAddJobHandler(t *testing.T) {
 }
 
 func TestUpdateJobHandler(t *testing.T) {
-	api, db, router, end := newTestAPI(t)
-	defer end()
+	api, db, router := newTestAPI(t)
 
 	//1. Create admin user
 	u, pass := assets.InsertAdminUser(t, api.mustDB())
@@ -165,8 +163,7 @@ func TestUpdateJobHandler(t *testing.T) {
 }
 
 func TestUpdateInvalidJobHandler(t *testing.T) {
-	api, db, router, end := newTestAPI(t)
-	defer end()
+	api, db, router := newTestAPI(t)
 
 	//1. Create admin user
 	u, pass := assets.InsertAdminUser(t, api.mustDB())
@@ -247,8 +244,7 @@ func TestUpdateInvalidJobHandler(t *testing.T) {
 }
 
 func TestDeleteJobHandler(t *testing.T) {
-	api, db, router, end := newTestAPI(t)
-	defer end()
+	api, db, router := newTestAPI(t)
 
 	//1. Create admin user
 	u, pass := assets.InsertAdminUser(t, api.mustDB())

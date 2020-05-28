@@ -22,8 +22,7 @@ import (
 )
 
 func Test_postAuthSignoutHandler(t *testing.T) {
-	api, db, _, end := newTestAPI(t)
-	defer end()
+	api, db, _ := newTestAPI(t)
 
 	_, jwtRaw := assets.InsertLambdaUser(t, db)
 
@@ -54,8 +53,7 @@ func Test_postAuthSignoutHandler(t *testing.T) {
 }
 
 func Test_postAuthSigninHandler_ShouldSuccessWithANewUser(t *testing.T) {
-	api, db, _, end := newTestAPI(t)
-	defer end()
+	api, db, _ := newTestAPI(t)
 
 	uri := api.Router.GetRoute(http.MethodPost, api.postAuthSigninHandler, map[string]string{
 		"consumerType": "futurama",
@@ -78,8 +76,7 @@ func Test_postAuthSigninHandler_ShouldSuccessWithANewUser(t *testing.T) {
 }
 
 func Test_postAuthSigninHandler_ShouldSuccessWithAKnownUser(t *testing.T) {
-	api, db, _, end := newTestAPI(t)
-	defer end()
+	api, db, _ := newTestAPI(t)
 
 	uri := api.Router.GetRoute(http.MethodPost, api.postAuthSigninHandler, map[string]string{
 		"consumerType": "futurama",
@@ -113,8 +110,7 @@ func Test_postAuthSigninHandler_ShouldSuccessWithAKnownUser(t *testing.T) {
 }
 
 func Test_postAuthSigninHandler_ShouldSuccessWithAKnownUserAndAnotherConsumerType(t *testing.T) {
-	api, db, _, end := newTestAPI(t)
-	defer end()
+	api, db, _ := newTestAPI(t)
 
 	uri := api.Router.GetRoute(http.MethodPost, api.postAuthSigninHandler, map[string]string{
 		"consumerType": "futurama",
@@ -163,8 +159,7 @@ func Test_postAuthSigninHandler_ShouldSuccessWithAKnownUserAndAnotherConsumerTyp
 }
 
 func Test_postAuthSigninHandler_ShouldSuccessWithAKnownUserAnotherConsumerTypeAndAnotherUsername(t *testing.T) {
-	api, db, _, end := newTestAPI(t)
-	defer end()
+	api, db, _ := newTestAPI(t)
 
 	uri := api.Router.GetRoute(http.MethodPost, api.postAuthSigninHandler, map[string]string{
 		"consumerType": "futurama",
@@ -213,8 +208,7 @@ func Test_postAuthSigninHandler_ShouldSuccessWithAKnownUserAnotherConsumerTypeAn
 }
 
 func Test_postAuthSigninHandler_ShouldSuccessWithAnExistingUserFromCurrentSessionAndAnotherConsumerType(t *testing.T) {
-	api, db, _, end := newTestAPI(t)
-	defer end()
+	api, db, _ := newTestAPI(t)
 
 	// clean before test
 	u1, _ := user.LoadByUsername(context.TODO(), db, "fry")
@@ -314,8 +308,7 @@ dg/94O8U5bC2T8a9CsA/q8eGuucP
 )
 
 func Test_postAuthSigninHandler_WithCorporateSSO(t *testing.T) {
-	api, _, _, end := newTestAPI(t)
-	defer end()
+	api, _, _ := newTestAPI(t)
 
 	var cfg corpsso.Config
 	cfg.Request.Keys.RequestSigningKey = AuthKey
@@ -436,8 +429,7 @@ func generateToken(t *testing.T, username string) string {
 }
 
 func Test_getAuthMe(t *testing.T) {
-	api, db, _, end := newTestAPI(t)
-	defer end()
+	api, db, _ := newTestAPI(t)
 
 	_, jwtRaw := assets.InsertLambdaUser(t, db)
 

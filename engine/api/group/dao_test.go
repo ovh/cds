@@ -15,8 +15,7 @@ import (
 )
 
 func TestLoadAll(t *testing.T) {
-	db, _, end := test.SetupPG(t, bootstrap.InitiliazeDB)
-	defer end()
+	db, _ := test.SetupPG(t, bootstrap.InitiliazeDB)
 
 	u, _ := assets.InsertLambdaUser(t, db)
 	groupName := sdk.RandomString(10)

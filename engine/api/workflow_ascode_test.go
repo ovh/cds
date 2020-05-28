@@ -30,8 +30,7 @@ import (
 )
 
 func TestPostUpdateWorkflowAsCodeHandler(t *testing.T) {
-	api, db, _, end := newTestAPI(t)
-	defer end()
+	api, db, _ := newTestAPI(t)
 
 	_, _ = assets.InsertService(t, db, t.Name()+"_HOOKS", services.TypeHooks)
 	_, _ = assets.InsertService(t, db, t.Name()+"_VCS", services.TypeVCS)
@@ -235,8 +234,7 @@ func TestPostUpdateWorkflowAsCodeHandler(t *testing.T) {
 }
 
 func TestPostMigrateWorkflowAsCodeHandler(t *testing.T) {
-	api, db, _, end := newTestAPI(t)
-	defer end()
+	api, db, _ := newTestAPI(t)
 
 	u, pass := assets.InsertAdminUser(t, db)
 
@@ -502,8 +500,7 @@ func initWorkflow(t *testing.T, db gorp.SqlExecutor, proj *sdk.Project, app *sdk
 }
 
 func Test_WorkflowAsCodeWithNotifications(t *testing.T) {
-	api, db, _, end := newTestAPI(t)
-	defer end()
+	api, db, _ := newTestAPI(t)
 
 	_, _ = assets.InsertService(t, db, t.Name()+"_HOOKS", services.TypeHooks)
 	_, _ = assets.InsertService(t, db, t.Name()+"_VCS", services.TypeVCS)

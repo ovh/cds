@@ -14,8 +14,7 @@ import (
 )
 
 func Test_DAO_Project_Link(t *testing.T) {
-	db, cache, end := test.SetupPG(t, bootstrap.InitiliazeDB)
-	defer end()
+	db, cache := test.SetupPG(t, bootstrap.InitiliazeDB)
 
 	pkey := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, cache, pkey, pkey)

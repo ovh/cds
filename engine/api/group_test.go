@@ -16,8 +16,7 @@ import (
 )
 
 func Test_getGroupHandler(t *testing.T) {
-	api, db, _, end := newTestAPI(t)
-	defer end()
+	api, db, _ := newTestAPI(t)
 
 	g := sdk.Group{Name: sdk.RandomString(10)}
 	u, jwtRaw := assets.InsertLambdaUser(t, db, &g)
@@ -40,8 +39,7 @@ func Test_getGroupHandler(t *testing.T) {
 }
 
 func Test_getGroupsHandler(t *testing.T) {
-	api, db, _, end := newTestAPI(t)
-	defer end()
+	api, db, _ := newTestAPI(t)
 
 	g1 := &sdk.Group{Name: sdk.RandomString(10)}
 	g2 := &sdk.Group{Name: sdk.RandomString(10)}
@@ -71,8 +69,7 @@ func Test_getGroupsHandler(t *testing.T) {
 }
 
 func Test_postGroupHandler(t *testing.T) {
-	api, db, _, end := newTestAPI(t)
-	defer end()
+	api, db, _ := newTestAPI(t)
 
 	u, jwtRaw := assets.InsertLambdaUser(t, db)
 
@@ -96,8 +93,7 @@ func Test_postGroupHandler(t *testing.T) {
 }
 
 func Test_putGroupHandler(t *testing.T) {
-	api, db, _, end := newTestAPI(t)
-	defer end()
+	api, db, _ := newTestAPI(t)
 
 	g1Name, g2Name := sdk.RandomString(10), sdk.RandomString(10)
 	g1, g2 := &sdk.Group{Name: g1Name}, &sdk.Group{Name: g2Name}
@@ -129,8 +125,7 @@ func Test_putGroupHandler(t *testing.T) {
 }
 
 func Test_deleteGroupHandler(t *testing.T) {
-	api, db, _, end := newTestAPI(t)
-	defer end()
+	api, db, _ := newTestAPI(t)
 
 	g := sdk.Group{Name: sdk.RandomString(10)}
 	_, jwtRaw := assets.InsertLambdaUser(t, db, &g)
@@ -149,8 +144,7 @@ func Test_deleteGroupHandler(t *testing.T) {
 }
 
 func Test_postGroupUserHandler(t *testing.T) {
-	api, db, _, end := newTestAPI(t)
-	defer end()
+	api, db, _ := newTestAPI(t)
 
 	g := &sdk.Group{Name: sdk.RandomString(10)}
 	_, jwtRaw1 := assets.InsertLambdaUser(t, db, g)
@@ -192,8 +186,7 @@ func Test_postGroupUserHandler(t *testing.T) {
 }
 
 func Test_putGroupUserHandler(t *testing.T) {
-	api, db, _, end := newTestAPI(t)
-	defer end()
+	api, db, _ := newTestAPI(t)
 
 	g := &sdk.Group{Name: sdk.RandomString(10)}
 	_, jwtRaw1 := assets.InsertLambdaUser(t, db, g)
@@ -234,8 +227,7 @@ func Test_putGroupUserHandler(t *testing.T) {
 }
 
 func Test_deleteGroupUserHandler(t *testing.T) {
-	api, db, _, end := newTestAPI(t)
-	defer end()
+	api, db, _ := newTestAPI(t)
 
 	g := &sdk.Group{Name: sdk.RandomString(10)}
 	u1, jwtRaw1 := assets.InsertLambdaUser(t, db, g)

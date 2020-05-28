@@ -16,8 +16,7 @@ import (
 )
 
 func TestServicesHandlers(t *testing.T) {
-	api, _, _, end := newTestAPI(t)
-	defer end()
+	api, _, _ := newTestAPI(t)
 
 	admin, jwtRaw := assets.InsertAdminUser(t, api.mustDB())
 	_, jwtLambda := assets.InsertLambdaUser(t, api.mustDB())

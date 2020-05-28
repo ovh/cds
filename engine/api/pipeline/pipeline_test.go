@@ -21,8 +21,8 @@ import (
 )
 
 func TestInsertPipeline(t *testing.T) {
-	db, _, end := test.SetupPG(t)
-	defer end()
+	db, _ := test.SetupPG(t)
+
 	pk := sdk.RandomString(8)
 
 	p := sdk.Project{
@@ -74,8 +74,8 @@ func TestInsertPipeline(t *testing.T) {
 }
 
 func TestInsertPipelineWithParemeters(t *testing.T) {
-	db, _, end := test.SetupPG(t)
-	defer end()
+	db, _ := test.SetupPG(t)
+
 	pk := sdk.RandomString(8)
 
 	p := sdk.Project{
@@ -112,8 +112,8 @@ func TestInsertPipelineWithParemeters(t *testing.T) {
 }
 
 func TestInsertPipelineWithWithWrongParemeters(t *testing.T) {
-	db, _, end := test.SetupPG(t)
-	defer end()
+	db, _ := test.SetupPG(t)
+
 	pk := sdk.RandomString(8)
 
 	p := sdk.Project{
@@ -143,8 +143,8 @@ func TestInsertPipelineWithWithWrongParemeters(t *testing.T) {
 }
 
 func TestLoadByWorkflowID(t *testing.T) {
-	db, cache, end := test.SetupPG(t, bootstrap.InitiliazeDB)
-	defer end()
+	db, cache := test.SetupPG(t, bootstrap.InitiliazeDB)
+
 	key := sdk.RandomString(10)
 
 	proj := assets.InsertTestProject(t, db, cache, key, key)
@@ -192,8 +192,7 @@ func TestLoadByWorkflowID(t *testing.T) {
 }
 
 func TestLoadByWorkerModel(t *testing.T) {
-	db, cache, end := test.SetupPG(t, bootstrap.InitiliazeDB)
-	defer end()
+	db, cache := test.SetupPG(t, bootstrap.InitiliazeDB)
 
 	g1 := group.SharedInfraGroup
 	g2 := assets.InsertTestGroup(t, db, sdk.RandomString(10))

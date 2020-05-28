@@ -27,8 +27,7 @@ import (
 )
 
 func TestVariableInProject(t *testing.T) {
-	api, db, _, end := newTestAPI(t)
-	defer end()
+	api, db, _ := newTestAPI(t)
 
 	// 1. Create project
 	project1 := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
@@ -75,8 +74,8 @@ func TestVariableInProject(t *testing.T) {
 }
 
 func Test_getProjectsHandler(t *testing.T) {
-	api, db, _, end := newTestAPI(t)
-	defer end()
+	api, db, _ := newTestAPI(t)
+
 	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
 	repofullname := sdk.RandomString(10) + "/" + sdk.RandomString(10)
 	app := &sdk.Application{
@@ -104,8 +103,8 @@ func Test_getProjectsHandler(t *testing.T) {
 }
 
 func Test_addProjectHandler(t *testing.T) {
-	api, db, _, end := newTestAPI(t)
-	defer end()
+	api, db, _ := newTestAPI(t)
+
 	u, pass := assets.InsertLambdaUser(t, db)
 
 	proj := sdk.Project{
@@ -137,8 +136,7 @@ func Test_addProjectHandler(t *testing.T) {
 }
 
 func Test_addProjectHandlerWithGroup(t *testing.T) {
-	api, db, _, end := newTestAPI(t)
-	defer end()
+	api, db, _ := newTestAPI(t)
 
 	u, pass := assets.InsertAdminUser(t, db)
 	g := sdk.Group{Name: sdk.RandomString(10)}
@@ -174,8 +172,8 @@ func Test_addProjectHandlerWithGroup(t *testing.T) {
 }
 
 func Test_getProjectsHandler_WithWPermissionShouldReturnNoProjects(t *testing.T) {
-	api, db, _, end := newTestAPI(t)
-	defer end()
+	api, db, _ := newTestAPI(t)
+
 	assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
 
 	u, pass := assets.InsertLambdaUser(t, api.mustDB())
@@ -198,8 +196,8 @@ func Test_getProjectsHandler_WithWPermissionShouldReturnNoProjects(t *testing.T)
 }
 
 func Test_getProjectHandler_CheckPermission(t *testing.T) {
-	api, db, _, end := newTestAPI(t)
-	defer end()
+	api, db, _ := newTestAPI(t)
+
 	u, pass := assets.InsertLambdaUser(t, api.mustDB())
 	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
 	require.NoError(t, group.InsertLinkGroupUser(context.TODO(), api.mustDB(), &group.LinkGroupUser{
@@ -260,8 +258,8 @@ func Test_getProjectHandler_CheckPermission(t *testing.T) {
 }
 
 func Test_getProjectsHandler_WithWPermissionShouldReturnOneProject(t *testing.T) {
-	api, db, _, end := newTestAPI(t)
-	defer end()
+	api, db, _ := newTestAPI(t)
+
 	u, pass := assets.InsertLambdaUser(t, api.mustDB())
 	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
 	require.NoError(t, group.InsertLinkGroupUser(context.TODO(), api.mustDB(), &group.LinkGroupUser{
@@ -288,8 +286,7 @@ func Test_getProjectsHandler_WithWPermissionShouldReturnOneProject(t *testing.T)
 }
 
 func Test_getProjectsHandler_AsProvider(t *testing.T) {
-	api, tsURL, tsClose := newTestServer(t)
-	defer tsClose()
+	api, tsURL := newTestServer(t)
 
 	admin, _ := assets.InsertAdminUser(t, api.mustDB())
 	localConsumer, err := authentication.LoadConsumerByTypeAndUserID(context.TODO(), api.mustDB(), sdk.ConsumerLocal, admin.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
@@ -319,8 +316,7 @@ func Test_getProjectsHandler_AsProvider(t *testing.T) {
 }
 
 func Test_getprojectsHandler_AsProviderWithRequestedUsername(t *testing.T) {
-	api, tsURL, tsClose := newTestServer(t)
-	defer tsClose()
+	api, tsURL := newTestServer(t)
 
 	admin, _ := assets.InsertAdminUser(t, api.mustDB())
 	localConsumer, err := authentication.LoadConsumerByTypeAndUserID(context.TODO(), api.mustDB(), sdk.ConsumerLocal, admin.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
@@ -374,8 +370,8 @@ func Test_getprojectsHandler_AsProviderWithRequestedUsername(t *testing.T) {
 }
 
 func Test_putProjectLabelsHandler(t *testing.T) {
-	api, db, _, end := newTestAPI(t)
-	defer end()
+	api, db, _ := newTestAPI(t)
+
 	u, pass := assets.InsertAdminUser(t, db)
 
 	pkey := sdk.RandomString(10)
@@ -432,8 +428,7 @@ func Test_putProjectLabelsHandler(t *testing.T) {
 }
 
 func Test_getProjectsHandler_FilterByRepo(t *testing.T) {
-	api, tsURL, tsClose := newTestServer(t)
-	defer tsClose()
+	api, tsURL := newTestServer(t)
 
 	admin, _ := assets.InsertAdminUser(t, api.mustDB())
 	localConsumer, err := authentication.LoadConsumerByTypeAndUserID(context.TODO(), api.mustDB(), sdk.ConsumerLocal, admin.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)

@@ -18,8 +18,8 @@ import (
 )
 
 func TestInsertStaticFiles(t *testing.T) {
-	db, cache, end := test.SetupPG(t, bootstrap.InitiliazeDB)
-	defer end()
+	db, cache := test.SetupPG(t, bootstrap.InitiliazeDB)
+
 	_ = event.Initialize(context.Background(), db, cache)
 
 	u, _ := assets.InsertAdminUser(t, db)
