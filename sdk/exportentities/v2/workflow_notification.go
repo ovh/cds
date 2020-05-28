@@ -109,7 +109,7 @@ func CheckWorkflowNotificationsValidity(w Workflow) error {
 	for _, notifEntry := range w.Notifications {
 		for _, s := range notifEntry.Pipelines {
 			if _, ok := w.Workflow[s]; !ok {
-				mError.Append(fmt.Errorf("error: wrong usage: invalid notification on %s (%s is missing)", notifEntry.Pipelines, s))
+				mError.Append(sdk.NewErrorFrom(sdk.ErrWrongRequest, "invalid notification on %s (%s is missing)", notifEntry.Pipelines, s))
 			}
 		}
 	}
@@ -126,7 +126,7 @@ func ProcessNotificationValues(notif NotificationEntry) (sdk.WorkflowNotificatio
 	defaultTemplate, has := sdk.UserNotificationTemplateMap[n.Type]
 	//Check the type
 	if !has {
-		return n, fmt.Errorf("Error: wrong usage: invalid notification type %s", n.Type)
+		return n, sdk.NewErrorFrom(sdk.ErrWrongRequest, "invalid notification type %s", n.Type)
 	}
 	//Default settings
 	if notif.Settings == nil {

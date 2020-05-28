@@ -101,40 +101,40 @@ func (w Workflow) CheckValidity() error {
 	//Check valid application name
 	rx := sdk.NamePatternRegex
 	if !rx.MatchString(w.Name) {
-		mError.Append(fmt.Errorf("workflow name %s do not respect pattern %s", w.Name, sdk.NamePattern))
+		mError.Append(sdk.NewErrorFrom(sdk.ErrWrongRequest, "workflow name %s do not respect pattern %s", w.Name, sdk.NamePattern))
 	}
 
 	if len(w.Workflow) != 0 {
 		if w.ApplicationName != "" {
-			mError.Append(fmt.Errorf("error: wrong usage: application %s not allowed here", w.ApplicationName))
+			mError.Append(sdk.NewErrorFrom(sdk.ErrWrongRequest, "application %s not allowed here", w.ApplicationName))
 		}
 		if w.EnvironmentName != "" {
-			mError.Append(fmt.Errorf("error: wrong usage: environment %s not allowed here", w.EnvironmentName))
+			mError.Append(sdk.NewErrorFrom(sdk.ErrWrongRequest, "environment %s not allowed here", w.EnvironmentName))
 		}
 		if w.ProjectIntegrationName != "" {
-			mError.Append(fmt.Errorf("error: wrong usage: integration %s not allowed here", w.ProjectIntegrationName))
+			mError.Append(sdk.NewErrorFrom(sdk.ErrWrongRequest, "integration %s not allowed here", w.ProjectIntegrationName))
 		}
 		if w.PipelineName != "" {
-			mError.Append(fmt.Errorf("error: wrong usage: pipeline %s not allowed here", w.PipelineName))
+			mError.Append(sdk.NewErrorFrom(sdk.ErrWrongRequest, "pipeline %s not allowed here", w.PipelineName))
 		}
 		if w.Conditions != nil {
-			mError.Append(fmt.Errorf("error: wrong usage: conditions not allowed here"))
+			mError.Append(sdk.NewErrorFrom(sdk.ErrWrongRequest, "conditions not allowed here"))
 		}
 		if len(w.When) != 0 {
-			mError.Append(fmt.Errorf("error: wrong usage: when not allowed here"))
+			mError.Append(sdk.NewErrorFrom(sdk.ErrWrongRequest, "when not allowed here"))
 		}
 		if len(w.PipelineHooks) != 0 {
-			mError.Append(fmt.Errorf("error: wrong usage: pipeline_hooks not allowed here"))
+			mError.Append(sdk.NewErrorFrom(sdk.ErrWrongRequest, "pipeline_hooks not allowed here"))
 		}
 	} else {
 		if len(w.Hooks) > 0 {
-			mError.Append(fmt.Errorf("error: wrong usage: hooks not allowed here"))
+			mError.Append(sdk.NewErrorFrom(sdk.ErrWrongRequest, "hooks not allowed here"))
 		}
 	}
 
 	for name := range w.Hooks {
 		if _, ok := w.Workflow[name]; !ok {
-			mError.Append(fmt.Errorf("Error: wrong usage: invalid hook on %s", name))
+			mError.Append(sdk.NewErrorFrom(sdk.ErrWrongRequest, "invalid hook on %s", name))
 		}
 	}
 

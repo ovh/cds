@@ -341,10 +341,10 @@ func (w Workflow) GetWorkflow() (*sdk.Workflow, error) {
 	wf.ProjectIntegrations = make(map[int64]sdk.ProjectIntegration)
 
 	if err := w.CheckValidity(); err != nil {
-		return nil, sdk.WrapError(err, "Unable to check validity")
+		return nil, sdk.WrapError(err, "unable to check validity")
 	}
 	if err := w.CheckDependencies(); err != nil {
-		return nil, sdk.WrapError(err, "Unable to check dependencies")
+		return nil, sdk.WrapError(err, "unable to check dependencies")
 	}
 	wf.PurgeTags = w.PurgeTags
 	if len(w.Metadata) > 0 {
@@ -368,7 +368,7 @@ func (w Workflow) GetWorkflow() (*sdk.Workflow, error) {
 			entry.ID = fakeID
 			ok, err := entry.processNode(name, wf)
 			if err != nil {
-				return nil, sdk.WrapError(err, "Unable to process node")
+				return nil, sdk.WrapError(err, "unable to process node")
 			}
 			if ok {
 				delete(w.Workflow, name)
@@ -407,12 +407,12 @@ func (w Workflow) CheckValidity() error {
 	//Check valid application name
 	rx := sdk.NamePatternRegex
 	if !rx.MatchString(w.Name) {
-		mError.Append(fmt.Errorf("workflow name %s do not respect pattern %s", w.Name, sdk.NamePattern))
+		mError.Append(sdk.NewErrorFrom(sdk.ErrWrongRequest, "workflow name %s do not respect pattern %s", w.Name, sdk.NamePattern))
 	}
 
 	for name := range w.Hooks {
 		if _, ok := w.Workflow[name]; !ok {
-			mError.Append(fmt.Errorf("error: wrong usage: invalid hook on %s", name))
+			mError.Append(sdk.NewErrorFrom(sdk.ErrWrongRequest, "invalid hook on %s", name))
 		}
 	}
 
