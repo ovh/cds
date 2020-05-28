@@ -12,7 +12,7 @@ import (
 	sdk "github.com/ovh/cds/sdk"
 	cdsclient "github.com/ovh/cds/sdk/cdsclient"
 	venom "github.com/ovh/venom"
-	go_coverage "github.com/sguiheux/go-coverage"
+	coverage "github.com/sguiheux/go-coverage"
 	io "io"
 	http "net/http"
 	reflect "reflect"
@@ -3010,7 +3010,7 @@ func (mr *MockQueueClientMockRecorder) QueueJobSendSpawnInfo(ctx, id, in interfa
 }
 
 // QueueSendCoverage mocks base method
-func (m *MockQueueClient) QueueSendCoverage(ctx context.Context, id int64, report go_coverage.Report) error {
+func (m *MockQueueClient) QueueSendCoverage(ctx context.Context, id int64, report coverage.Report) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "QueueSendCoverage", ctx, id, report)
 	ret0, _ := ret[0].(error)
@@ -4000,32 +4000,33 @@ func (mr *MockWorkflowClientMockRecorder) WorkflowCachePull(projectKey, integrat
 }
 
 // WorkflowTransformAsCode mocks base method
-func (m *MockWorkflowClient) WorkflowTransformAsCode(projectKey, workflowName string) (*sdk.Operation, error) {
+func (m *MockWorkflowClient) WorkflowTransformAsCode(projectKey, workflowName, branch, message string) (*sdk.Operation, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "WorkflowTransformAsCode", projectKey, workflowName)
+	ret := m.ctrl.Call(m, "WorkflowTransformAsCode", projectKey, workflowName, branch, message)
 	ret0, _ := ret[0].(*sdk.Operation)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // WorkflowTransformAsCode indicates an expected call of WorkflowTransformAsCode
-func (mr *MockWorkflowClientMockRecorder) WorkflowTransformAsCode(projectKey, workflowName interface{}) *gomock.Call {
+func (mr *MockWorkflowClientMockRecorder) WorkflowTransformAsCode(projectKey, workflowName, branch, message interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkflowTransformAsCode", reflect.TypeOf((*MockWorkflowClient)(nil).WorkflowTransformAsCode), projectKey, workflowName)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkflowTransformAsCode", reflect.TypeOf((*MockWorkflowClient)(nil).WorkflowTransformAsCode), projectKey, workflowName, branch, message)
 }
 
 // WorkflowTransformAsCodeFollow mocks base method
-func (m *MockWorkflowClient) WorkflowTransformAsCodeFollow(projectKey, workflowName string, ope *sdk.Operation) error {
+func (m *MockWorkflowClient) WorkflowTransformAsCodeFollow(projectKey, workflowName, opeUUID string) (*sdk.Operation, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "WorkflowTransformAsCodeFollow", projectKey, workflowName, ope)
-	ret0, _ := ret[0].(error)
-	return ret0
+	ret := m.ctrl.Call(m, "WorkflowTransformAsCodeFollow", projectKey, workflowName, opeUUID)
+	ret0, _ := ret[0].(*sdk.Operation)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
 // WorkflowTransformAsCodeFollow indicates an expected call of WorkflowTransformAsCodeFollow
-func (mr *MockWorkflowClientMockRecorder) WorkflowTransformAsCodeFollow(projectKey, workflowName, ope interface{}) *gomock.Call {
+func (mr *MockWorkflowClientMockRecorder) WorkflowTransformAsCodeFollow(projectKey, workflowName, opeUUID interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkflowTransformAsCodeFollow", reflect.TypeOf((*MockWorkflowClient)(nil).WorkflowTransformAsCodeFollow), projectKey, workflowName, ope)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkflowTransformAsCodeFollow", reflect.TypeOf((*MockWorkflowClient)(nil).WorkflowTransformAsCodeFollow), projectKey, workflowName, opeUUID)
 }
 
 // MockMonitoringClient is a mock of MonitoringClient interface
@@ -6746,7 +6747,7 @@ func (mr *MockInterfaceMockRecorder) QueueJobSendSpawnInfo(ctx, id, in interface
 }
 
 // QueueSendCoverage mocks base method
-func (m *MockInterface) QueueSendCoverage(ctx context.Context, id int64, report go_coverage.Report) error {
+func (m *MockInterface) QueueSendCoverage(ctx context.Context, id int64, report coverage.Report) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "QueueSendCoverage", ctx, id, report)
 	ret0, _ := ret[0].(error)
@@ -7687,32 +7688,33 @@ func (mr *MockInterfaceMockRecorder) WorkflowCachePull(projectKey, integrationNa
 }
 
 // WorkflowTransformAsCode mocks base method
-func (m *MockInterface) WorkflowTransformAsCode(projectKey, workflowName string) (*sdk.Operation, error) {
+func (m *MockInterface) WorkflowTransformAsCode(projectKey, workflowName, branch, message string) (*sdk.Operation, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "WorkflowTransformAsCode", projectKey, workflowName)
+	ret := m.ctrl.Call(m, "WorkflowTransformAsCode", projectKey, workflowName, branch, message)
 	ret0, _ := ret[0].(*sdk.Operation)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // WorkflowTransformAsCode indicates an expected call of WorkflowTransformAsCode
-func (mr *MockInterfaceMockRecorder) WorkflowTransformAsCode(projectKey, workflowName interface{}) *gomock.Call {
+func (mr *MockInterfaceMockRecorder) WorkflowTransformAsCode(projectKey, workflowName, branch, message interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkflowTransformAsCode", reflect.TypeOf((*MockInterface)(nil).WorkflowTransformAsCode), projectKey, workflowName)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkflowTransformAsCode", reflect.TypeOf((*MockInterface)(nil).WorkflowTransformAsCode), projectKey, workflowName, branch, message)
 }
 
 // WorkflowTransformAsCodeFollow mocks base method
-func (m *MockInterface) WorkflowTransformAsCodeFollow(projectKey, workflowName string, ope *sdk.Operation) error {
+func (m *MockInterface) WorkflowTransformAsCodeFollow(projectKey, workflowName, opeUUID string) (*sdk.Operation, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "WorkflowTransformAsCodeFollow", projectKey, workflowName, ope)
-	ret0, _ := ret[0].(error)
-	return ret0
+	ret := m.ctrl.Call(m, "WorkflowTransformAsCodeFollow", projectKey, workflowName, opeUUID)
+	ret0, _ := ret[0].(*sdk.Operation)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
 // WorkflowTransformAsCodeFollow indicates an expected call of WorkflowTransformAsCodeFollow
-func (mr *MockInterfaceMockRecorder) WorkflowTransformAsCodeFollow(projectKey, workflowName, ope interface{}) *gomock.Call {
+func (mr *MockInterfaceMockRecorder) WorkflowTransformAsCodeFollow(projectKey, workflowName, opeUUID interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkflowTransformAsCodeFollow", reflect.TypeOf((*MockInterface)(nil).WorkflowTransformAsCodeFollow), projectKey, workflowName, ope)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkflowTransformAsCodeFollow", reflect.TypeOf((*MockInterface)(nil).WorkflowTransformAsCodeFollow), projectKey, workflowName, opeUUID)
 }
 
 // MonStatus mocks base method
@@ -8258,7 +8260,7 @@ func (mr *MockWorkerInterfaceMockRecorder) QueueJobSendSpawnInfo(ctx, id, in int
 }
 
 // QueueSendCoverage mocks base method
-func (m *MockWorkerInterface) QueueSendCoverage(ctx context.Context, id int64, report go_coverage.Report) error {
+func (m *MockWorkerInterface) QueueSendCoverage(ctx context.Context, id int64, report coverage.Report) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "QueueSendCoverage", ctx, id, report)
 	ret0, _ := ret[0].(error)

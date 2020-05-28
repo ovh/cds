@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
@@ -187,6 +186,10 @@ func TestPostUpdateWorkflowAsCodeHandler(t *testing.T) {
 	})
 
 	req := assets.NewJWTAuthentifiedRequest(t, pass, "POST", uri, w)
+	q := req.URL.Query()
+	q.Set("branch", "master")
+	q.Set("message", "my message")
+	req.URL.RawQuery = q.Encode()
 
 	// Do the request
 	wr := httptest.NewRecorder()
@@ -198,6 +201,13 @@ func TestPostUpdateWorkflowAsCodeHandler(t *testing.T) {
 
 	retry := 0
 	for {
+		retry++
+		if retry > 10 {
+			t.Log("Number of retry reached")
+			t.Fail()
+			break
+		}
+
 		// Get operation
 		uriGET := api.Router.GetRoute("GET", api.getWorkflowAsCodeHandler, map[string]string{
 			"key":              proj.Key,
@@ -205,28 +215,23 @@ func TestPostUpdateWorkflowAsCodeHandler(t *testing.T) {
 			"uuid":             myOpe.UUID,
 		})
 		reqGET, err := http.NewRequest("GET", uriGET, nil)
-		test.NoError(t, err)
+		require.NoError(t, err)
 		assets.AuthentifyRequest(t, reqGET, u, pass)
 		wrGet := httptest.NewRecorder()
 		api.Router.Mux.ServeHTTP(wrGet, reqGET)
-		assert.Equal(t, 200, wrGet.Code)
+		require.Equal(t, 200, wrGet.Code)
+
 		myOpeGet := new(sdk.Operation)
-		assert.NoError(t, json.Unmarshal(wrGet.Body.Bytes(), myOpeGet))
+		require.NoError(t, json.Unmarshal(wrGet.Body.Bytes(), myOpeGet))
 		if myOpeGet.Status < sdk.OperationStatusDone {
 			time.Sleep(1 * time.Second)
-			retry++
-
-			if retry > 10 {
-				t.Fail()
-				break
-			}
 			continue
 		}
-		test.NoError(t, json.Unmarshal(wrGet.Body.Bytes(), myOpeGet))
+
+		require.Equal(t, sdk.OperationStatusDone, myOpeGet.Status, "Invalid status for operation %v", string(wrGet.Body.Bytes()))
 		assert.Equal(t, "myURL", myOpeGet.Setup.Push.PRLink)
 		break
 	}
-
 }
 
 func TestPostMigrateWorkflowAsCodeHandler(t *testing.T) {
@@ -381,7 +386,12 @@ func TestPostMigrateWorkflowAsCodeHandler(t *testing.T) {
 		"permWorkflowName": w.Name,
 	})
 
-	req := assets.NewJWTAuthentifiedRequest(t, pass, "POST", fmt.Sprintf("%s?migrate=true", uri), nil)
+	req := assets.NewJWTAuthentifiedRequest(t, pass, "POST", uri, nil)
+	q := req.URL.Query()
+	q.Set("migrate", "true")
+	q.Set("branch", "master")
+	q.Set("message", "my message")
+	req.URL.RawQuery = q.Encode()
 
 	// Do the request
 	wr := httptest.NewRecorder()
@@ -393,12 +403,12 @@ func TestPostMigrateWorkflowAsCodeHandler(t *testing.T) {
 
 	cpt := 0
 	for {
+		cpt++
 		if cpt > 10 {
+			t.Log("Number of retry reached")
 			t.Fail()
 			break
 		}
-		cpt++
-		time.Sleep(2 * time.Second)
 
 		// Get operation
 		uriGET := api.Router.GetRoute("GET", api.getWorkflowAsCodeHandler, map[string]string{
@@ -407,17 +417,20 @@ func TestPostMigrateWorkflowAsCodeHandler(t *testing.T) {
 			"uuid":             myOpe.UUID,
 		})
 		reqGET, err := http.NewRequest("GET", uriGET, nil)
-		test.NoError(t, err)
+		require.NoError(t, err)
 		assets.AuthentifyRequest(t, reqGET, u, pass)
 		wrGet := httptest.NewRecorder()
 		api.Router.Mux.ServeHTTP(wrGet, reqGET)
-		assert.Equal(t, 200, wrGet.Code)
-		myOpeGet := new(sdk.Operation)
-		test.NoError(t, json.Unmarshal(wrGet.Body.Bytes(), myOpeGet))
+		require.Equal(t, 200, wrGet.Code)
 
+		myOpeGet := new(sdk.Operation)
+		require.NoError(t, json.Unmarshal(wrGet.Body.Bytes(), myOpeGet))
 		if myOpeGet.Status < sdk.OperationStatusDone {
+			time.Sleep(1 * time.Second)
 			continue
 		}
+
+		require.Equal(t, sdk.OperationStatusDone, myOpeGet.Status, "Invalid status for operation %v", string(wrGet.Body.Bytes()))
 		assert.Equal(t, "myURL", myOpeGet.Setup.Push.PRLink)
 		break
 	}
