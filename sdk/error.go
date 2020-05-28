@@ -732,8 +732,17 @@ func NewError(httpError Error, err error) error {
 		return e
 	}
 
+	if e, ok := err.(*MultiError); ok {
+		var ss []string
+		for i := range *e {
+			ss = append(ss, ExtractHTTPError((*e)[i], "").Error())
+		}
+		httpError.From = strings.Join(ss, ", ")
+	} else {
+		httpError.From = err.Error()
+	}
+
 	// if it's a library error create a new error with stack
-	httpError.From = err.Error()
 	return errorWithStack{
 		root:      errors.WithStack(err),
 		stack:     callers(),
@@ -795,6 +804,11 @@ func WithStack(err error) error {
 		return nil
 	}
 
+	// if it's a MultiError we want to preserve the from info from errors
+	if _, ok := err.(*MultiError); ok {
+		err = NewError(ErrUnknownError, err)
+	}
+
 	// if it's already a CDS error do not override the stack
 	if e, ok := err.(errorWithStack); ok {
 		return e
@@ -831,6 +845,13 @@ func ExtractHTTPError(source error, al string) Error {
 
 	// try to recognize http error from source
 	switch e := source.(type) {
+	case *MultiError:
+		httpError = ErrUnknownError
+		var ss []string
+		for i := range *e {
+			ss = append(ss, ExtractHTTPError((*e)[i], al).Error())
+		}
+		httpError.Message = strings.Join(ss, ", ")
 	case errorWithStack:
 		httpError = e.httpError
 	case Error:
@@ -910,14 +931,11 @@ func ErrorIsUnknown(err error) bool {
 type MultiError []error
 
 func (e *MultiError) Error() string {
-	var s string
+	var ss []string
 	for i := range *e {
-		if i > 0 {
-			s += ", "
-		}
-		s += (*e)[i].Error()
+		ss = append(ss, (*e)[i].Error())
 	}
-	return s
+	return strings.Join(ss, ", ")
 }
 
 // Join joins errors from MultiError to another errors MultiError
@@ -937,7 +955,7 @@ func (e *MultiError) Append(err error) {
 			e.Append((*mError)[i])
 		}
 	} else {
-		*e = append(*e, err)
+		*e = append(*e, WithStack(err))
 	}
 }
 
