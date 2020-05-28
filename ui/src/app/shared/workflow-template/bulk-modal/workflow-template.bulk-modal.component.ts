@@ -216,6 +216,7 @@ export class WorkflowTemplateBulkModalComponent {
 
     changeParam(instanceID: number, params: ParamData) {
         this.parameters[instanceID] = params;
+        this.validateParam();
     }
 
     startPollingStatus() {
