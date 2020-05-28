@@ -158,7 +158,7 @@ func ReadCDSFiles(files map[string][]byte) (*tar.Reader, error) {
 		if n, err := tw.Write(fcontent); err != nil {
 			return nil, sdk.WrapError(err, "cannot write content")
 		} else if n == 0 {
-			return nil, fmt.Errorf("nothing to write")
+			return nil, sdk.WithStack(fmt.Errorf("nothing to write"))
 		}
 	}
 	// Make sure to check the error on Close.
@@ -191,7 +191,7 @@ func pollRepositoryOperation(c context.Context, db gorp.SqlExecutor, store cache
 				opeTrusted := *ope
 				opeTrusted.RepositoryStrategy.SSHKeyContent = sdk.PasswordPlaceholder
 				opeTrusted.RepositoryStrategy.Password = sdk.PasswordPlaceholder
-				return nil, sdk.WrapError(fmt.Errorf("%s", ope.Error), "getImportAsCodeHandler> Operation in error. %+v", opeTrusted)
+				return nil, sdk.WrapError(fmt.Errorf("%s", ope.Error), "operation in error: %+v", opeTrusted)
 			case sdk.OperationStatusDone:
 				return ope, nil
 			}
@@ -237,7 +237,7 @@ func createOperationRequest(w sdk.Workflow, opts sdk.WorkflowRunPostHandlerOptio
 		e.ExtraFields.Type = false
 		m1, errm1 := e.ToStringMap(opts.Manual.Payload)
 		if errm1 != nil {
-			return ope, sdk.WrapError(errm1, "CreateFromRepository> Unable to compute payload")
+			return ope, sdk.WrapError(errm1, "unable to compute payload")
 		}
 		tag = m1[tagGitTag]
 		branch = m1[tagGitBranch]
@@ -249,7 +249,7 @@ func createOperationRequest(w sdk.Workflow, opts sdk.WorkflowRunPostHandlerOptio
 
 	// This should not append because the hook must set a default payload with git.branch
 	if ope.Setup.Checkout.Branch == "" && ope.Setup.Checkout.Tag == "" {
-		return ope, sdk.WrapError(sdk.NewError(sdk.ErrWrongRequest, fmt.Errorf("branch or tag parameter are mandatories")), "createOperationRequest")
+		return ope, sdk.NewErrorFrom(sdk.ErrWrongRequest, "branch or tag parameter are mandatories")
 	}
 
 	return ope, nil

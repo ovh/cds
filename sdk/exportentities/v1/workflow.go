@@ -151,7 +151,7 @@ func (w Workflow) CheckDependencies() error {
 	mError := new(sdk.MultiError)
 	for s, e := range w.Entries() {
 		if err := e.checkDependencies(s, w); err != nil {
-			mError.Append(fmt.Errorf("Error: %s invalid: %v", s, err))
+			mError.Append(err)
 		}
 	}
 
@@ -170,7 +170,7 @@ nextDep:
 				continue nextDep
 			}
 		}
-		mError.Append(fmt.Errorf("the pipeline %s depends on an unknown pipeline: %s", nodeName, d))
+		mError.Append(sdk.NewErrorFrom(sdk.ErrWrongRequest, "the pipeline %s depends on an unknown pipeline: %s", nodeName, d))
 	}
 	if mError.IsEmpty() {
 		return nil
@@ -330,7 +330,7 @@ func (e *NodeEntry) getNode(name string) (*sdk.Node, error) {
 				Variable: "cds.manual",
 			})
 		default:
-			return nil, fmt.Errorf("Unsupported when condition %s", w)
+			return nil, sdk.NewErrorFrom(sdk.ErrWrongRequest, "unsupported when condition %s", w)
 		}
 	}
 

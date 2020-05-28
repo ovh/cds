@@ -2,7 +2,6 @@ package v1
 
 import (
 	"context"
-	"fmt"
 	"sort"
 	"strings"
 
@@ -59,7 +58,7 @@ func craftNotificationEntry(ctx context.Context, w sdk.Workflow, notif sdk.Workf
 	if entry.Settings.Template != nil {
 		defaultTemplate, has := sdk.UserNotificationTemplateMap[entry.Type]
 		if !has {
-			return nil, entry, fmt.Errorf("workflow notification %s not found", entry.Type)
+			return nil, entry, sdk.NewErrorFrom(sdk.ErrWrongRequest, "workflow notification %s not found", entry.Type)
 		}
 		if defaultTemplate.Subject == entry.Settings.Template.Subject {
 			entry.Settings.Template.Subject = ""

@@ -96,7 +96,7 @@ func hookRegistration(ctx context.Context, db gorp.SqlExecutor, store cache.Stor
 
 	//Perform the request on one off the hooks service
 	if len(srvs) < 1 {
-		return sdk.WrapError(fmt.Errorf("no hooks service available, please try again"), "Unable to get services")
+		return sdk.WithStack(fmt.Errorf("no hooks service available, please try again"))
 	}
 
 	hookToUpdate := make(map[string]sdk.NodeHook)

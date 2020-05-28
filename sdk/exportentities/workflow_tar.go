@@ -200,7 +200,7 @@ func UntarWorkflowComponents(ctx context.Context, tr *tar.Reader) (WorkflowCompo
 			var app Application
 			if err := Unmarshal(b, format, &app); err != nil {
 				log.Error(ctx, "ExtractWorkflowFromTar> Unable to unmarshal application %s: %v", hdr.Name, err)
-				mError.Append(fmt.Errorf("unable to unmarshal application %s: %v", hdr.Name, err))
+				mError.Append(sdk.NewErrorFrom(err, "unable to unmarshal application %s", hdr.Name))
 				continue
 			}
 			res.Applications = append(res.Applications, app)
@@ -208,7 +208,7 @@ func UntarWorkflowComponents(ctx context.Context, tr *tar.Reader) (WorkflowCompo
 			var pip PipelineV1
 			if err := Unmarshal(b, format, &pip); err != nil {
 				log.Error(ctx, "ExtractWorkflowFromTar> Unable to unmarshal pipeline %s: %v", hdr.Name, err)
-				mError.Append(fmt.Errorf("unable to unmarshal pipeline %s: %v", hdr.Name, err))
+				mError.Append(sdk.NewErrorFrom(err, "unable to unmarshal pipeline %s", hdr.Name))
 				continue
 			}
 			res.Pipelines = append(res.Pipelines, pip)
@@ -216,7 +216,7 @@ func UntarWorkflowComponents(ctx context.Context, tr *tar.Reader) (WorkflowCompo
 			var env Environment
 			if err := Unmarshal(b, format, &env); err != nil {
 				log.Error(ctx, "ExtractWorkflowFromTar> Unable to unmarshal environment %s: %v", hdr.Name, err)
-				mError.Append(fmt.Errorf("unable to unmarshal environment %s: %v", hdr.Name, err))
+				mError.Append(sdk.NewErrorFrom(err, "unable to unmarshal environment %s", hdr.Name))
 				continue
 			}
 			res.Environments = append(res.Environments, env)
@@ -226,7 +226,7 @@ func UntarWorkflowComponents(ctx context.Context, tr *tar.Reader) (WorkflowCompo
 					res.Workflow.GetName(), hdr.Name)
 			}
 			if res.Template.Name != "" {
-				mError.Append(fmt.Errorf("only one workflow or template file should be given: %s and %s",
+				mError.Append(sdk.NewErrorFrom(sdk.ErrWrongRequest, "only one workflow or template file should be given: %s and %s",
 					res.Template.Name, hdr.Name))
 				break
 			}
@@ -241,7 +241,7 @@ func UntarWorkflowComponents(ctx context.Context, tr *tar.Reader) (WorkflowCompo
 			res.Workflow, err = UnmarshalWorkflow(b, format)
 			if err != nil {
 				log.Error(ctx, "Push> Unable to unmarshal workflow %s: %v", hdr.Name, err)
-				mError.Append(fmt.Errorf("unable to unmarshal workflow %s: %v", hdr.Name, err))
+				mError.Append(sdk.NewErrorFrom(err, "unable to unmarshal workflow %s", hdr.Name))
 				continue
 			}
 		}

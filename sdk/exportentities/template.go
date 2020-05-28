@@ -193,12 +193,12 @@ func ReadTemplateFromTar(tr *tar.Reader) (sdk.WorkflowTemplate, error) {
 			break
 		}
 		if err != nil {
-			return wt, sdk.NewError(sdk.ErrWrongRequest, sdk.WrapError(err, "Unable to read tar file"))
+			return wt, sdk.NewError(sdk.ErrWrongRequest, sdk.WrapError(err, "unable to read tar file"))
 		}
 
 		buff := new(bytes.Buffer)
 		if _, err := io.Copy(buff, tr); err != nil {
-			return wt, sdk.NewError(sdk.ErrWrongRequest, sdk.WrapError(err, "Unable to read tar file"))
+			return wt, sdk.NewError(sdk.ErrWrongRequest, sdk.WrapError(err, "unable to read tar file"))
 		}
 
 		b := buff.Bytes()
@@ -212,18 +212,18 @@ func ReadTemplateFromTar(tr *tar.Reader) (sdk.WorkflowTemplate, error) {
 		case hdr.Name == "workflow.yml":
 			// if a workflow was already found, it's a mistake
 			if len(wkf) != 0 {
-				mError.Append(fmt.Errorf("Two workflow files found"))
+				mError.Append(sdk.NewErrorFrom(sdk.ErrWrongRequest, "two workflow files found"))
 				break
 			}
 			wkf = b
 		default:
 			// if a template was already found, it's a mistake
 			if templateFileName != "" {
-				mError.Append(fmt.Errorf("Two template files found: %s and %s", templateFileName, hdr.Name))
+				mError.Append(sdk.NewErrorFrom(sdk.ErrWrongRequest, "two template files found: %s and %s", templateFileName, hdr.Name))
 				break
 			}
 			if err := yaml.Unmarshal(b, &tmpl); err != nil {
-				mError.Append(sdk.WrapError(err, "Unable to unmarshal template %s", hdr.Name))
+				mError.Append(sdk.NewErrorFrom(err, "unable to unmarshal template %s", hdr.Name))
 				continue
 			}
 			templateFileName = hdr.Name

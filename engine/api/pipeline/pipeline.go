@@ -335,7 +335,7 @@ func UpdatePipeline(db gorp.SqlExecutor, p *sdk.Pipeline) error {
 	p.LastModified = now.Unix()
 	rx := sdk.NamePatternRegex
 	if !rx.MatchString(p.Name) {
-		return sdk.NewError(sdk.ErrInvalidName, fmt.Errorf("Invalid pipeline name. It should match %s", sdk.NamePattern))
+		return sdk.NewErrorFrom(sdk.ErrInvalidName, "ipipeline name should match %s", sdk.NamePattern)
 	}
 
 	//Update pipeline
@@ -350,7 +350,7 @@ func InsertPipeline(db gorp.SqlExecutor, p *sdk.Pipeline) error {
 
 	rx := sdk.NamePatternRegex
 	if !rx.MatchString(p.Name) {
-		return sdk.NewError(sdk.ErrInvalidName, fmt.Errorf("invalid pipeline name, should match %s", sdk.NamePattern))
+		return sdk.NewErrorFrom(sdk.ErrInvalidName, "pipeline name should match %s", sdk.NamePattern)
 	}
 
 	if p.ProjectID == 0 {
