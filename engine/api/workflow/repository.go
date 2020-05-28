@@ -81,7 +81,7 @@ func extractWorkflow(ctx context.Context, db *gorp.DbMap, store cache.Store, p *
 	tr, err := ReadCDSFiles(ope.LoadFiles.Results)
 	if err != nil {
 		allMsgs = append(allMsgs, sdk.NewMessage(sdk.MsgWorkflowErrorBadCdsDir))
-		return allMsgs, sdk.WrapError(err, "unable to read cds files")
+		return allMsgs, sdk.NewErrorWithStack(err, sdk.NewErrorFrom(sdk.ErrWorkflowInvalid, "unable to read cds files"))
 	}
 	ope.RepositoryStrategy.SSHKeyContent = sdk.PasswordPlaceholder
 	ope.RepositoryStrategy.Password = sdk.PasswordPlaceholder
@@ -155,10 +155,8 @@ func ReadCDSFiles(files map[string][]byte) (*tar.Reader, error) {
 		if err := tw.WriteHeader(hdr); err != nil {
 			return nil, sdk.WrapError(err, "cannot write header")
 		}
-		if n, err := tw.Write(fcontent); err != nil {
+		if _, err := tw.Write(fcontent); err != nil {
 			return nil, sdk.WrapError(err, "cannot write content")
-		} else if n == 0 {
-			return nil, sdk.WithStack(fmt.Errorf("nothing to write"))
 		}
 	}
 	// Make sure to check the error on Close.

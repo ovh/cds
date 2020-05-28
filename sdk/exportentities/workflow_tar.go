@@ -222,12 +222,11 @@ func UntarWorkflowComponents(ctx context.Context, tr *tar.Reader) (WorkflowCompo
 			res.Environments = append(res.Environments, env)
 		default:
 			if res.Workflow != nil {
-				log.Error(ctx, "only one workflow or template file should be given: %s and %s",
-					res.Workflow.GetName(), hdr.Name)
+				mError.Append(sdk.NewErrorFrom(sdk.ErrWrongRequest, "only one workflow or template file should be given but %s and %s were found", res.Workflow.GetName(), hdr.Name))
+				break
 			}
 			if res.Template.Name != "" {
-				mError.Append(sdk.NewErrorFrom(sdk.ErrWrongRequest, "only one workflow or template file should be given: %s and %s",
-					res.Template.Name, hdr.Name))
+				mError.Append(sdk.NewErrorFrom(sdk.ErrWrongRequest, "only one workflow or template file should be given but %s and %s were found", res.Template.Name, hdr.Name))
 				break
 			}
 

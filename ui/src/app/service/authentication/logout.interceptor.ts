@@ -36,7 +36,9 @@ export class LogoutInterceptor implements HttpInterceptor {
                         // error formatted from CDS API
                         if (e.error) {
                             if (e.error.message) {
-                                this._toast.error(e.statusText, e.error.message);
+                                this._toast.error(
+                                    e.statusText, e.error.from ? `${e.error.message} (from: ${e.error.from})` : e.error.message
+                                );
                             } else if (Array.isArray(e.error)) {
                                 try {
                                     let messages = e.error as Array<string>;

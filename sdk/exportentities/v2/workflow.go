@@ -404,7 +404,6 @@ func (w Workflow) GetWorkflow() (*sdk.Workflow, error) {
 func (w Workflow) CheckValidity() error {
 	mError := new(sdk.MultiError)
 
-	//Check valid application name
 	rx := sdk.NamePatternRegex
 	if !rx.MatchString(w.Name) {
 		mError.Append(sdk.NewErrorFrom(sdk.ErrWrongRequest, "workflow name %s do not respect pattern %s", w.Name, sdk.NamePattern))
@@ -416,7 +415,7 @@ func (w Workflow) CheckValidity() error {
 		}
 	}
 
-	//Checks map notifications validity
+	// Checks map notifications validity
 	mError.Append(CheckWorkflowNotificationsValidity(w))
 
 	if mError.IsEmpty() {

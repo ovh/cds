@@ -591,6 +591,21 @@ func (e Error) Error() string {
 	return message
 }
 
+func (e Error) printLight() string {
+	var message string
+	if e.Message != "" {
+		message = e.Message
+	} else if en, ok := errorsAmericanEnglish[e.ID]; ok {
+		message = en
+	} else {
+		message = errorsAmericanEnglish[ErrUnknownError.ID]
+	}
+	if e.From != "" {
+		message = fmt.Sprintf("%s: %s", message, e.From)
+	}
+	return message
+}
+
 func (e Error) Translate(al string) string {
 	acceptedLanguages, _, err := language.ParseAcceptLanguage(al)
 	if err != nil {
@@ -735,7 +750,7 @@ func NewError(httpError Error, err error) error {
 	if e, ok := err.(*MultiError); ok {
 		var ss []string
 		for i := range *e {
-			ss = append(ss, ExtractHTTPError((*e)[i], "").Error())
+			ss = append(ss, ExtractHTTPError((*e)[i], "").printLight())
 		}
 		httpError.From = strings.Join(ss, ", ")
 	} else {
@@ -849,7 +864,7 @@ func ExtractHTTPError(source error, al string) Error {
 		httpError = ErrUnknownError
 		var ss []string
 		for i := range *e {
-			ss = append(ss, ExtractHTTPError((*e)[i], al).Error())
+			ss = append(ss, ExtractHTTPError((*e)[i], al).printLight())
 		}
 		httpError.Message = strings.Join(ss, ", ")
 	case errorWithStack:
