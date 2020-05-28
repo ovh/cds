@@ -1663,8 +1663,7 @@ func Test_postWorkflowRunHandlerHookWithMutex(t *testing.T) {
 }
 
 func Test_postWorkflowRunHandlerMutexRelease(t *testing.T) {
-	api, db, router, end := newTestAPI(t)
-	defer end()
+	api, db, router := newTestAPI(t)
 
 	u, jwt := assets.InsertAdminUser(t, api.mustDB())
 
