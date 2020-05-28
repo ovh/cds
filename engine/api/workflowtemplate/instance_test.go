@@ -217,7 +217,7 @@ name: Pipeline-[[.id]]`)),
 	_, wti, err := workflowtemplate.CheckAndExecuteTemplate(context.TODO(), db, *consumer, *proj, &data)
 	require.NoError(t, err)
 
-	_, wkf, _, err := workflow.Push(context.TODO(), db, cache, proj, data, nil, consumer, project.DecryptWithBuiltinKey)
+	_, wkf, _, _, err := workflow.Push(context.TODO(), db, cache, proj, data, nil, consumer, project.DecryptWithBuiltinKey)
 	require.NoError(t, err)
 
 	require.NoError(t, workflowtemplate.UpdateTemplateInstanceWithWorkflow(context.TODO(), db, *wkf, consumer, wti))

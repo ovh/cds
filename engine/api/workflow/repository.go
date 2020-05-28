@@ -39,22 +39,22 @@ type PushOption struct {
 
 // CreateFromRepository a workflow from a repository.
 func CreateFromRepository(ctx context.Context, db *gorp.DbMap, store cache.Store, p *sdk.Project, wf *sdk.Workflow,
-	opts sdk.WorkflowRunPostHandlerOption, u sdk.AuthConsumer, decryptFunc keys.DecryptFunc) ([]sdk.Message, error) {
+	opts sdk.WorkflowRunPostHandlerOption, u sdk.AuthConsumer, decryptFunc keys.DecryptFunc) (*PushSecrets, []sdk.Message, error) {
 	ctx, end := observability.Span(ctx, "workflow.CreateFromRepository")
 	defer end()
 
 	newOperation, err := createOperationRequest(*wf, opts)
 	if err != nil {
-		return nil, sdk.WrapError(err, "unable to create operation request")
+		return nil, nil, sdk.WrapError(err, "unable to create operation request")
 	}
 
 	if err := operation.PostRepositoryOperation(ctx, db, *p, &newOperation, nil); err != nil {
-		return nil, sdk.WrapError(err, "unable to post repository operation")
+		return nil, nil, sdk.WrapError(err, "unable to post repository operation")
 	}
 
 	ope, err := pollRepositoryOperation(ctx, db, store, newOperation.UUID)
 	if err != nil {
-		return nil, sdk.WrapError(err, "cannot analyse repository")
+		return nil, nil, sdk.WrapError(err, "cannot analyse repository")
 	}
 
 	var uuid string
@@ -73,7 +73,7 @@ func CreateFromRepository(ctx context.Context, db *gorp.DbMap, store cache.Store
 }
 
 func extractWorkflow(ctx context.Context, db *gorp.DbMap, store cache.Store, p *sdk.Project, wf *sdk.Workflow,
-	ope sdk.Operation, consumer sdk.AuthConsumer, decryptFunc keys.DecryptFunc, hookUUID string) ([]sdk.Message, error) {
+	ope sdk.Operation, consumer sdk.AuthConsumer, decryptFunc keys.DecryptFunc, hookUUID string) (*PushSecrets, []sdk.Message, error) {
 	ctx, end := observability.Span(ctx, "workflow.extractWorkflow")
 	defer end()
 	var allMsgs []sdk.Message
@@ -81,7 +81,7 @@ func extractWorkflow(ctx context.Context, db *gorp.DbMap, store cache.Store, p *
 	tr, err := ReadCDSFiles(ope.LoadFiles.Results)
 	if err != nil {
 		allMsgs = append(allMsgs, sdk.NewMessage(sdk.MsgWorkflowErrorBadCdsDir))
-		return allMsgs, sdk.WrapError(err, "unable to read cds files")
+		return nil, allMsgs, sdk.WrapError(err, "unable to read cds files")
 	}
 	ope.RepositoryStrategy.SSHKeyContent = sdk.PasswordPlaceholder
 	ope.RepositoryStrategy.Password = sdk.PasswordPlaceholder
@@ -98,7 +98,7 @@ func extractWorkflow(ctx context.Context, db *gorp.DbMap, store cache.Store, p *
 
 	data, err := exportentities.UntarWorkflowComponents(ctx, tr)
 	if err != nil {
-		return allMsgs, err
+		return nil, allMsgs, err
 	}
 
 	mods := []workflowtemplate.TemplateRequestModifierFunc{
@@ -113,9 +113,9 @@ func extractWorkflow(ctx context.Context, db *gorp.DbMap, store cache.Store, p *
 	msgTemplate, wti, err := workflowtemplate.CheckAndExecuteTemplate(ctx, db, consumer, *p, &data, mods...)
 	allMsgs = append(allMsgs, msgTemplate...)
 	if err != nil {
-		return allMsgs, err
+		return nil, allMsgs, err
 	}
-	msgPush, workflowPushed, _, err := Push(ctx, db, store, p, data, opt, consumer, decryptFunc)
+	msgPush, workflowPushed, _, secrets, err := Push(ctx, db, store, p, data, opt, consumer, decryptFunc)
 	// Filter workflow push message if generated from template
 	for i := range msgPush {
 		if wti != nil && msgPush[i].ID == sdk.MsgWorkflowDeprecatedVersion.ID {
@@ -124,10 +124,10 @@ func extractWorkflow(ctx context.Context, db *gorp.DbMap, store cache.Store, p *
 		allMsgs = append(allMsgs, msgPush[i])
 	}
 	if err != nil {
-		return allMsgs, sdk.WrapError(err, "unable to get workflow from file")
+		return nil, allMsgs, sdk.WrapError(err, "unable to get workflow from file")
 	}
 	if err := workflowtemplate.UpdateTemplateInstanceWithWorkflow(ctx, db, *workflowPushed, consumer, wti); err != nil {
-		return allMsgs, err
+		return nil, allMsgs, err
 	}
 	*wf = *workflowPushed
 
@@ -135,7 +135,7 @@ func extractWorkflow(ctx context.Context, db *gorp.DbMap, store cache.Store, p *
 		log.Debug("workflow.extractWorkflow> Workflow has been renamed from %s to %s", wf.Name, workflowPushed.Name)
 	}
 
-	return allMsgs, nil
+	return secrets, allMsgs, nil
 }
 
 // ReadCDSFiles reads CDS files

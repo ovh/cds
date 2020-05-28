@@ -216,6 +216,18 @@ type dbNodeOutGoingHookData sdk.NodeOutGoingHook
 type dbNodeJoinData sdk.NodeJoin
 type dbNodeHookData sdk.NodeHook
 
+type dbWorkflowRunSecret struct {
+	gorpmapping.SignedEntity
+	sdk.WorkflowRunSecret
+}
+
+func (e dbWorkflowRunSecret) Canonical() gorpmapping.CanonicalForms {
+	var _ = []interface{}{e.WorkflowRunID, e.Name}
+	return gorpmapping.CanonicalForms{
+		"{{print .ID}}{{.Name}}",
+	}
+}
+
 type dbAsCodeEvents sdk.AsCodeEvent
 
 func init() {
@@ -239,4 +251,5 @@ func init() {
 	gorpmapping.Register(gorpmapping.New(dbNodeOutGoingHookData{}, "w_node_outgoing_hook", true, "id"))
 	gorpmapping.Register(gorpmapping.New(dbNodeJoinData{}, "w_node_join", true, "id"))
 	gorpmapping.Register(gorpmapping.New(dbAsCodeEvents{}, "as_code_events", true, "id"))
+	gorpmapping.Register(gorpmapping.New(dbWorkflowRunSecret{}, "workflow_run_secret", false, "workflow_run_id", "name"))
 }

@@ -629,7 +629,7 @@ queueRun:
 			t.Fatal(err)
 		}
 
-		secrets, err := workflow.LoadSecrets(db, cache, nodeRun, workflowRun, proj.Variables)
+		secrets, err := workflow.LoadSecrets(context.TODO(), db, workflowRun, nodeRun)
 		assert.NoError(t, err)
 		assert.Len(t, secrets, 1)
 

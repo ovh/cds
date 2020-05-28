@@ -8,12 +8,8 @@ import (
 	"time"
 
 	"github.com/go-gorp/gorp"
-	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/cache"
-	"github.com/ovh/cds/engine/api/environment"
-	"github.com/ovh/cds/engine/api/integration"
 	"github.com/ovh/cds/engine/api/observability"
-	"github.com/ovh/cds/engine/api/secret"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
@@ -316,222 +312,61 @@ func checkStatusWaiting(ctx context.Context, store cache.Store, jobID int64, sta
 	return nil
 }
 
-// LoadNodeJobRunKeys loads all keys for a job run
-func LoadNodeJobRunKeys(ctx context.Context, db gorp.SqlExecutor, proj *sdk.Project, wr *sdk.WorkflowRun, nodeRun *sdk.WorkflowNodeRun) ([]sdk.Parameter, []sdk.Variable, error) {
-	var app *sdk.Application
-	var env *sdk.Environment
-
-	n := wr.Workflow.WorkflowData.NodeByID(nodeRun.WorkflowNodeID)
-	if n.Context.ApplicationID != 0 {
-		appMap, has := wr.Workflow.Applications[n.Context.ApplicationID]
-		if has {
-			app = &appMap
-			keys, err := application.LoadAllKeysWithPrivateContent(db, app.ID)
-			if err != nil {
-				return nil, nil, err
-			}
-			app.Keys = keys
-		}
-	}
-	if n.Context.EnvironmentID != 0 {
-		envMap, has := wr.Workflow.Environments[n.Context.EnvironmentID]
-		if has {
-			env = &envMap
-			keys, err := environment.LoadAllKeysWithPrivateContent(db, n.Context.EnvironmentID)
-			if err != nil {
-				return nil, nil, err
-			}
-			env.Keys = keys
-		}
-	}
-
-	params := []sdk.Parameter{}
-	secrets := []sdk.Variable{}
-
-	for _, k := range proj.Keys {
-		params = append(params, sdk.Parameter{
-			Name:  "cds.key." + k.Name + ".pub",
-			Type:  "string",
-			Value: k.Public,
-		})
-		params = append(params, sdk.Parameter{
-			Name:  "cds.key." + k.Name + ".id",
-			Type:  "string",
-			Value: k.KeyID,
-		})
-		secrets = append(secrets, sdk.Variable{
-			Name:  "cds.key." + k.Name + ".priv",
-			Type:  string(k.Type),
-			Value: k.Private,
-		})
-	}
-
-	//Load node definition
-	if app != nil {
-		for _, k := range app.Keys {
-			params = append(params, sdk.Parameter{
-				Name:  "cds.key." + k.Name + ".pub",
-				Type:  "string",
-				Value: k.Public,
-			})
-			params = append(params, sdk.Parameter{
-				Name:  "cds.key." + k.Name + ".id",
-				Type:  "string",
-				Value: k.KeyID,
-			})
-
-			secrets = append(secrets, sdk.Variable{
-				Name:  "cds.key." + k.Name + ".priv",
-				Type:  string(k.Type),
-				Value: k.Private,
-			})
-		}
-	}
-
-	if env != nil && env.ID != sdk.DefaultEnv.ID {
-		for _, k := range env.Keys {
-			params = append(params, sdk.Parameter{
-				Name:  "cds.key." + k.Name + ".pub",
-				Type:  "string",
-				Value: k.Public,
-			})
-			params = append(params, sdk.Parameter{
-				Name:  "cds.key." + k.Name + ".id",
-				Type:  "string",
-				Value: k.KeyID,
-			})
-			secrets = append(secrets, sdk.Variable{
-				Name:  "cds.key." + k.Name + ".priv",
-				Type:  string(k.Type),
-				Value: k.Private,
-			})
-		}
-
-	}
-	return params, secrets, nil
-}
-
 // LoadSecrets loads all secrets for a job run
-func LoadSecrets(db gorp.SqlExecutor, store cache.Store, nodeRun *sdk.WorkflowNodeRun, w *sdk.WorkflowRun, pv []sdk.Variable) ([]sdk.Variable, error) {
-	var secrets []sdk.Variable
+func LoadSecrets(ctx context.Context, db gorp.SqlExecutor, wr *sdk.WorkflowRun, nodeRun *sdk.WorkflowNodeRun) ([]sdk.Variable, error) {
+	secrets := make([]sdk.Variable, 0)
 
-	pv = sdk.VariablesFilter(pv, sdk.SecretVariable, sdk.KeyVariable)
-	pv = sdk.VariablesPrefix(pv, "cds.proj.")
-	secrets = append(secrets, pv...)
+	projetSecrets, err := loadRunSecretByContext(ctx, db, wr.ID, "proj")
+	if err != nil {
+		return nil, err
+	}
+	secrets = append(secrets, projetSecrets...)
 
-	var app *sdk.Application
-	var env *sdk.Environment
-	var pp *sdk.ProjectIntegration
+	if nodeRun == nil {
+		return secrets, nil
+	}
 
-	// Load node definition
-	if nodeRun != nil {
-		node := w.Workflow.WorkflowData.NodeByID(nodeRun.WorkflowNodeID)
-		if node != nil && node.Context != nil {
-			if node.Context.ApplicationID != 0 {
-				a := w.Workflow.Applications[node.Context.ApplicationID]
-				app = &a
-			}
-			if node.Context.EnvironmentID != 0 {
-				e := w.Workflow.Environments[node.Context.EnvironmentID]
-				env = &e
-			}
-			if node.Context.ProjectIntegrationID != 0 {
-				p := w.Workflow.ProjectIntegrations[node.Context.ProjectIntegrationID]
-				pp = &p
-			}
+	node := wr.Workflow.WorkflowData.NodeByID(nodeRun.WorkflowNodeID)
+	if node == nil {
+		return nil, sdk.WrapError(sdk.ErrWorkflowNodeNotFound, "unable to find node %d in worflow run", nodeRun.WorkflowNodeID)
+	}
+
+	if node.Context == nil {
+		return secrets, nil
+	}
+
+	if node.Context.ApplicationID != 0 {
+		appSecrets, err := loadRunSecretByContext(ctx, db, wr.ID, fmt.Sprintf("app:%d", node.Context.ApplicationID))
+		if err != nil {
+			return nil, err
 		}
+		secrets = append(secrets, appSecrets...)
+	}
 
-		// Application variables
-		av := []sdk.Variable{}
-		if app != nil {
-			// FIXME manage secret ascode
-			// try to retreive application from database, application can be not found for ascode run
-			tempApp, err := application.LoadByIDWithClearVCSStrategyPassword(db, app.ID)
-			if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
+	if node.Context.EnvironmentID != 0 {
+		envSecrets, err := loadRunSecretByContext(ctx, db, wr.ID, fmt.Sprintf("env:%d", node.Context.EnvironmentID))
+		if err != nil {
+			return nil, err
+		}
+		secrets = append(secrets, envSecrets...)
+	}
+
+	if node.Context.ProjectIntegrationID != 0 {
+		piSecrets, err := loadRunSecretByContext(ctx, db, wr.ID, fmt.Sprintf("integration:%d", node.Context.ProjectIntegrationID))
+		if err != nil {
+			return nil, err
+		}
+		secrets = append(secrets, piSecrets...)
+
+		if node.Context.ApplicationID != 0 {
+			piAppSecrets, err := loadRunSecretByContext(ctx, db, wr.ID, fmt.Sprintf("app:%d:integration:%d", node.Context.ApplicationID, node.Context.ProjectIntegrationID))
+			if err != nil {
 				return nil, err
 			}
-			if tempApp != nil {
-				app.RepositoryStrategy.Password = tempApp.RepositoryStrategy.Password
-			}
-
-			appVariables, err := application.LoadAllVariablesWithDecrytion(db, app.ID)
-			if err != nil {
-				return nil, sdk.WrapError(err, "LoadSecrets> Cannot load application variables")
-			}
-			av = sdk.VariablesFilter(appVariables, sdk.SecretVariable)
-			av = sdk.VariablesPrefix(av, "cds.app.")
-
-			av = append(av, sdk.Variable{
-				Name:  "git.http.password",
-				Type:  sdk.SecretVariable,
-				Value: app.RepositoryStrategy.Password,
-			})
-		}
-		secrets = append(secrets, av...)
-
-		// Environment variables
-		ev := []sdk.Variable{}
-		if env != nil {
-			envv, errE := environment.LoadAllVariablesWithDecrytion(db, env.ID)
-			if errE != nil {
-				return nil, sdk.WrapError(errE, "LoadSecrets> Cannot load environment variables")
-			}
-			ev = sdk.VariablesFilter(envv, sdk.SecretVariable, sdk.KeyVariable)
-			ev = sdk.VariablesPrefix(ev, "cds.env.")
-		}
-		secrets = append(secrets, ev...)
-
-		if pp != nil {
-			projectIntegration, err := integration.LoadProjectIntegrationByIDWithClearPassword(db, pp.ID)
-			if err != nil {
-				return nil, sdk.WrapError(err, "LoadSecrets> Cannot load integration %d", pp.ID)
-			}
-
-			// Project integration variable
-			pfv := make([]sdk.Variable, 0, len(projectIntegration.Config))
-			for k, v := range projectIntegration.Config {
-				pfv = append(pfv, sdk.Variable{
-					Name:  k,
-					Type:  v.Type,
-					Value: v.Value,
-				})
-			}
-			pfv = sdk.VariablesPrefix(pfv, "cds.integration.")
-			pfv = sdk.VariablesFilter(pfv, sdk.SecretVariable)
-
-			if app != nil && app.DeploymentStrategies != nil {
-				strats, err := application.LoadDeploymentStrategies(db, app.ID, true)
-				if err != nil {
-					return nil, sdk.WrapError(err, "LoadSecrets> Cannot load application deployment strategies %d", app.ID)
-				}
-				start, has := strats[pp.Name]
-
-				// Application deployment strategies variables
-				apv := []sdk.Variable{}
-				if has {
-					for k, v := range start {
-						apv = append(apv, sdk.Variable{
-							Name:  k,
-							Type:  v.Type,
-							Value: v.Value,
-						})
-					}
-				}
-				apv = sdk.VariablesPrefix(apv, "cds.integration.")
-				apv = sdk.VariablesFilter(apv, sdk.SecretVariable)
-				secrets = append(secrets, apv...)
-			}
-			secrets = append(secrets, pfv...)
+			secrets = append(secrets, piAppSecrets...)
 		}
 	}
 
-	//Decrypt secrets
-	for i := range secrets {
-		s := &secrets[i]
-		if err := secret.DecryptVariable(s); err != nil {
-			return nil, sdk.WrapError(err, "Unable to decrypt variables")
-		}
-	}
 	return secrets, nil
 }
 

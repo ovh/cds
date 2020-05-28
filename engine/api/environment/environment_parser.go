@@ -1,6 +1,7 @@
 package environment
 
 import (
+	"fmt"
 	"strings"
 	"sync"
 
@@ -19,33 +20,33 @@ type ImportOptions struct {
 }
 
 // ParseAndImport parse an exportentities.Environment and insert or update the environment in database
-func ParseAndImport(db gorp.SqlExecutor, proj sdk.Project, eenv exportentities.Environment, opts ImportOptions, decryptFunc keys.DecryptFunc, u sdk.Identifiable) (*sdk.Environment, []sdk.Message, error) {
+func ParseAndImport(db gorp.SqlExecutor, proj sdk.Project, eenv exportentities.Environment, opts ImportOptions, decryptFunc keys.DecryptFunc, u sdk.Identifiable) (*sdk.Environment, []sdk.Variable, []sdk.Message, error) {
 	log.Debug("ParseAndImport>> Import environment %s in project %s (force=%v)", eenv.Name, proj.Key, opts.Force)
 	log.Debug("ParseAndImport>> Env: %+v", eenv)
 
 	// Check valid application name
 	rx := sdk.NamePatternRegex
 	if !rx.MatchString(eenv.Name) {
-		return nil, nil, sdk.NewErrorFrom(sdk.ErrInvalidName, "environment name %s do not respect pattern %s", eenv.Name, sdk.NamePattern)
+		return nil, nil, nil, sdk.NewErrorFrom(sdk.ErrInvalidName, "environment name %s do not respect pattern %s", eenv.Name, sdk.NamePattern)
 	}
 
 	// Check if env exist
 	oldEnv, err := LoadEnvironmentByName(db, proj.Key, eenv.Name)
 	if err != nil && !sdk.ErrorIs(err, sdk.ErrEnvironmentNotFound) {
-		return nil, nil, sdk.WrapError(err, "unable to load environment")
+		return nil, nil, nil, sdk.WrapError(err, "unable to load environment")
 	}
 
 	// If the environment exists and we don't want to force, raise an error
 	var exist bool
 	if oldEnv != nil && !opts.Force {
-		return nil, nil, sdk.ErrEnvironmentExist
+		return nil, nil, nil, sdk.ErrEnvironmentExist
 	}
 	if oldEnv != nil {
 		exist = true
 	}
 
 	if oldEnv != nil && oldEnv.FromRepository != "" && opts.FromRepository != oldEnv.FromRepository {
-		return nil, nil, sdk.WrapError(sdk.ErrEnvironmentAsCodeOverride, "unable to update as code environment %s/%s.", oldEnv.FromRepository, opts.FromRepository)
+		return nil, nil, nil, sdk.WrapError(sdk.ErrEnvironmentAsCodeOverride, "unable to update as code environment %s/%s.", oldEnv.FromRepository, opts.FromRepository)
 	}
 
 	env := new(sdk.Environment)
@@ -55,6 +56,8 @@ func ParseAndImport(db gorp.SqlExecutor, proj sdk.Project, eenv exportentities.E
 		env.ID = oldEnv.ID
 	}
 
+	envSecrets := make([]sdk.Variable, 0)
+
 	//Compute variables
 	for p, v := range eenv.Values {
 		switch v.Type {
@@ -63,19 +66,24 @@ func ParseAndImport(db gorp.SqlExecutor, proj sdk.Project, eenv exportentities.E
 		case sdk.SecretVariable:
 			secret, err := decryptFunc(db, proj.ID, v.Value)
 			if err != nil {
-				return env, nil, sdk.WrapError(err, "Unable to decrypt secret variable")
+				return env, nil, nil, sdk.WrapError(err, "Unable to decrypt secret variable")
 			}
 			v.Value = secret
 		}
 
 		vv := sdk.Variable{Name: p, Type: v.Type, Value: v.Value}
 		env.Variables = append(env.Variables, vv)
+		envSecrets = append(envSecrets, sdk.Variable{
+			Name:  fmt.Sprintf("cds.env.%s", vv.Name),
+			Type:  v.Type,
+			Value: v.Value,
+		})
 	}
 
 	//Compute keys
 	for kname, kval := range eenv.Keys {
 		if !strings.HasPrefix(kname, "env-") {
-			return env, nil, sdk.WrapError(sdk.ErrInvalidKeyName, "ParseAndImport>> Unable to parse key")
+			return env, nil, nil, sdk.WrapError(sdk.ErrInvalidKeyName, "ParseAndImport>> Unable to parse key")
 		}
 
 		var oldKey *sdk.EnvironmentKey
@@ -98,7 +106,7 @@ func ParseAndImport(db gorp.SqlExecutor, proj sdk.Project, eenv exportentities.E
 
 		kk, err := keys.Parse(db, proj.ID, kname, kval, decryptFunc)
 		if err != nil {
-			return env, nil, sdk.WrapError(err, "Unable to parse key")
+			return env, nil, nil, sdk.WrapError(err, "Unable to parse key")
 		}
 
 		k := sdk.EnvironmentKey{
@@ -121,6 +129,12 @@ func ParseAndImport(db gorp.SqlExecutor, proj sdk.Project, eenv exportentities.E
 		}
 
 		env.Keys = append(env.Keys, k)
+
+		envSecrets = append(envSecrets, sdk.Variable{
+			Name:  fmt.Sprintf("cds.key.%s.priv", k.Name),
+			Type:  string(k.Type),
+			Value: k.Private,
+		})
 	}
 
 	done := new(sync.WaitGroup)
@@ -145,5 +159,5 @@ func ParseAndImport(db gorp.SqlExecutor, proj sdk.Project, eenv exportentities.E
 	close(msgChan)
 	done.Wait()
 
-	return env, msgList, globalError
+	return env, envSecrets, msgList, globalError
 }

@@ -452,7 +452,7 @@ jobLoop:
 
 		//Process variables for the jobs
 		_, next = observability.Span(ctx, "workflow..getNodeJobRunParameters")
-		jobParams, err := getNodeJobRunParameters(db, *job, nr, stage)
+		jobParams, err := getNodeJobRunParameters(*job, nr, stage)
 		next()
 		if err != nil {
 			spawnErrs.Join(*err)

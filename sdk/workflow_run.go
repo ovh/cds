@@ -54,6 +54,13 @@ type WorkflowRun struct {
 	Header           WorkflowRunHeaders               `json:"header,omitempty" db:"-"`
 }
 
+type WorkflowRunSecret struct {
+	WorkflowRunID int64  `json:"-" db:"workflow_run_id"`
+	Context       string `json:"-" db:"context"`
+	Name          string `json:"-" db:"name"`
+	Value         []byte `json:"-" db:"cypher_value" gorpmapping:"WorkflowRunID,Context,Name"`
+}
+
 // WorkflowNodeRunRelease represents the request struct use by release builtin action for workflow
 type WorkflowNodeRunRelease struct {
 	TagName        string   `json:"tag_name"`

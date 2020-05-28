@@ -171,13 +171,7 @@ func takeJob(ctx context.Context, dbFunc func() *gorp.DbMap, store cache.Store, 
 		return nil, sdk.WrapError(err, "Unable to load workflow run")
 	}
 
-	// Load the secrets
-	pv, err := project.LoadAllVariablesWithDecrytion(tx, p.ID)
-	if err != nil {
-		return nil, sdk.WrapError(err, "Cannot load project variable")
-	}
-
-	secrets, errSecret := workflow.LoadSecrets(tx, store, noderun, workflowRun, pv)
+	secrets, errSecret := workflow.LoadSecrets(ctx, tx, workflowRun, noderun)
 	if errSecret != nil {
 		return nil, sdk.WrapError(errSecret, "Cannot load secrets")
 	}
@@ -187,13 +181,6 @@ func takeJob(ctx context.Context, dbFunc func() *gorp.DbMap, store cache.Store, 
 	wnjri.Number = noderun.Number
 	wnjri.SubNumber = noderun.SubNumber
 	wnjri.Secrets = secrets
-
-	params, secretsKeys, errK := workflow.LoadNodeJobRunKeys(ctx, tx, p, workflowRun, noderun)
-	if errK != nil {
-		return nil, sdk.WrapError(errK, "Cannot load keys")
-	}
-	wnjri.Secrets = append(wnjri.Secrets, secretsKeys...)
-	wnjri.NodeJobRun.Parameters = append(wnjri.NodeJobRun.Parameters, params...)
 
 	if err != nil {
 		return nil, err
