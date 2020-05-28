@@ -65,7 +65,6 @@ var workflowLogListCmd = cli.Command{
 				match, _ := regexp.MatchString(`[0-9]?`, s)
 				return match
 			},
-			Weight: 1,
 		},
 	},
 }
@@ -196,7 +195,6 @@ var workflowLogDownloadCmd = cli.Command{
 				match, _ := regexp.MatchString(`[0-9]?`, s)
 				return match
 			},
-			Weight: 1,
 		},
 	},
 	Flags: []cli.Flag{
