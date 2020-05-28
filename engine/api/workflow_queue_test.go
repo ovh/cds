@@ -354,8 +354,7 @@ func testRegisterHatchery(t *testing.T, api *API, router *Router, ctx *testRunWo
 }
 
 func TestGetWorkflowJobQueueHandler(t *testing.T) {
-	api, db, router, end := newTestAPI(t)
-	defer end()
+	api, db, router := newTestAPI(t)
 
 	// delete all existing workers
 	workers, err := worker.LoadAll(context.TODO(), db)
@@ -430,8 +429,8 @@ func TestGetWorkflowJobQueueHandler(t *testing.T) {
 }
 
 func Test_postTakeWorkflowJobHandler(t *testing.T) {
-	api, _, router, end := newTestAPI(t)
-	defer end()
+	api, _, router := newTestAPI(t)
+
 	ctx := testRunWorkflow(t, api, router)
 	testGetWorkflowJobAsWorker(t, api, router, &ctx)
 	require.NotNil(t, ctx.job)
@@ -502,8 +501,8 @@ func Test_postTakeWorkflowJobHandler(t *testing.T) {
 }
 
 func Test_postTakeWorkflowJobHandlerDefautlRegion(t *testing.T) {
-	api, _, router, end := newTestAPI(t)
-	defer end()
+	api, _, router := newTestAPI(t)
+
 	ctx := testRunWorkflow(t, api, router)
 	testGetWorkflowJobAsWorker(t, api, router, &ctx)
 	require.NotNil(t, ctx.job)
@@ -559,8 +558,8 @@ func Test_postTakeWorkflowJobHandlerDefautlRegion(t *testing.T) {
 }
 
 func Test_postTakeWorkflowInvalidJobHandler(t *testing.T) {
-	api, _, router, end := newTestAPI(t)
-	defer end()
+	api, _, router := newTestAPI(t)
+
 	ctx := testRunWorkflow(t, api, router)
 	testGetWorkflowJobAsWorker(t, api, router, &ctx)
 	require.NotNil(t, ctx.job)
@@ -599,8 +598,8 @@ func Test_postTakeWorkflowInvalidJobHandler(t *testing.T) {
 }
 
 func Test_postBookWorkflowJobHandler(t *testing.T) {
-	api, _, router, end := newTestAPI(t)
-	defer end()
+	api, _, router := newTestAPI(t)
+
 	ctx := testRunWorkflow(t, api, router)
 	testGetWorkflowJobAsHatchery(t, api, router, &ctx)
 	assert.NotNil(t, ctx.job)
@@ -621,8 +620,8 @@ func Test_postBookWorkflowJobHandler(t *testing.T) {
 }
 
 func Test_postWorkflowJobResultHandler(t *testing.T) {
-	api, _, router, end := newTestAPI(t)
-	defer end()
+	api, _, router := newTestAPI(t)
+
 	ctx := testRunWorkflow(t, api, router)
 	testGetWorkflowJobAsWorker(t, api, router, &ctx)
 	assert.NotNil(t, ctx.job)
@@ -712,8 +711,8 @@ func Test_postWorkflowJobResultHandler(t *testing.T) {
 }
 
 func Test_postWorkflowJobTestsResultsHandler(t *testing.T) {
-	api, _, router, end := newTestAPI(t)
-	defer end()
+	api, _, router := newTestAPI(t)
+
 	ctx := testRunWorkflow(t, api, router)
 	testGetWorkflowJobAsWorker(t, api, router, &ctx)
 	assert.NotNil(t, ctx.job)
@@ -816,8 +815,8 @@ func Test_postWorkflowJobTestsResultsHandler(t *testing.T) {
 }
 
 func Test_postWorkflowJobArtifactHandler(t *testing.T) {
-	api, db, router, end := newTestAPI(t)
-	defer end()
+	api, db, router := newTestAPI(t)
+
 	ctx := testRunWorkflow(t, api, router)
 	testGetWorkflowJobAsWorker(t, api, router, &ctx)
 
@@ -962,8 +961,8 @@ func fileExists(filename string) bool {
 }
 
 func Test_postWorkflowJobStaticFilesHandler(t *testing.T) {
-	api, _, router, end := newTestAPI(t)
-	defer end()
+	api, _, router := newTestAPI(t)
+
 	ctx := testRunWorkflow(t, api, router)
 	testGetWorkflowJobAsWorker(t, api, router, &ctx)
 	require.NotNil(t, ctx.job)
@@ -1030,8 +1029,7 @@ func Test_postWorkflowJobStaticFilesHandler(t *testing.T) {
 }
 
 func TestWorkerPrivateKey(t *testing.T) {
-	api, db, router, end := newTestAPI(t)
-	defer end()
+	api, db, router := newTestAPI(t)
 
 	// Create user
 	u, pass := assets.InsertAdminUser(t, api.mustDB())
@@ -1147,8 +1145,7 @@ func TestWorkerPrivateKey(t *testing.T) {
 }
 
 func TestPostVulnerabilityReportHandler(t *testing.T) {
-	api, db, router, end := newTestAPI(t)
-	defer end()
+	api, db, router := newTestAPI(t)
 
 	// Create user
 	u, pass := assets.InsertAdminUser(t, api.mustDB())
@@ -1288,8 +1285,7 @@ func TestPostVulnerabilityReportHandler(t *testing.T) {
 }
 
 func TestInsertNewCodeCoverageReport(t *testing.T) {
-	api, db, router, end := newTestAPI(t)
-	defer end()
+	api, db, router := newTestAPI(t)
 
 	// Create user
 	u, pass := assets.InsertAdminUser(t, api.mustDB())

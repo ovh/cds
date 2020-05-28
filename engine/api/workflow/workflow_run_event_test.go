@@ -24,8 +24,7 @@ import (
 // Test ResyncCommitStatus with a notification where all is disabled.
 // Must: no error returned, only list status is called
 func TestResyncCommitStatusNotifDisabled(t *testing.T) {
-	db, cache, end := test.SetupPG(t)
-	defer end()
+	db, cache := test.SetupPG(t)
 
 	ctx := context.TODO()
 
@@ -122,8 +121,7 @@ func TestResyncCommitStatusNotifDisabled(t *testing.T) {
 // Test TestResyncCommitStatusSetStatus with a notification where all is disabled.
 // Must: no error returned, setStatus must be called
 func TestResyncCommitStatusSetStatus(t *testing.T) {
-	db, cache, end := test.SetupPG(t)
-	defer end()
+	db, cache := test.SetupPG(t)
 
 	ctx := context.TODO()
 
@@ -226,8 +224,7 @@ func TestResyncCommitStatusSetStatus(t *testing.T) {
 // Test TestResyncCommitStatusCommentPR with a notification where all is disabled.
 // Must: no error returned, postComment must be called
 func TestResyncCommitStatusCommentPR(t *testing.T) {
-	db, cache, end := test.SetupPG(t)
-	defer end()
+	db, cache := test.SetupPG(t)
 
 	ctx := context.TODO()
 
@@ -344,8 +341,7 @@ func TestResyncCommitStatusCommentPR(t *testing.T) {
 // Test TestResyncCommitStatusCommentPRNotTerminated with a notification where all is disabled.
 // Must: no error returned, postComment must be called
 func TestResyncCommitStatusCommentPRNotTerminated(t *testing.T) {
-	db, cache, end := test.SetupPG(t)
-	defer end()
+	db, cache := test.SetupPG(t)
 
 	ctx := context.TODO()
 
@@ -453,8 +449,7 @@ func TestResyncCommitStatusCommentPRNotTerminated(t *testing.T) {
 // Test TestResyncCommitStatus with a notification where all is disabled.
 // Must: no error returned, postComment must be called
 func TestResyncCommitStatusCommitCache(t *testing.T) {
-	db, cache, end := test.SetupPG(t)
-	defer end()
+	db, cache := test.SetupPG(t)
 
 	ctx := context.TODO()
 

@@ -14,8 +14,7 @@ import (
 )
 
 func Test_getAdminDatabaseSignatureResume(t *testing.T) {
-	api, _, _, end := newTestAPI(t)
-	defer end()
+	api, _, _ := newTestAPI(t)
 
 	_, jwt := assets.InsertAdminUser(t, api.mustDB())
 
@@ -31,8 +30,7 @@ func Test_getAdminDatabaseSignatureResume(t *testing.T) {
 }
 
 func Test_getAdminDatabaseSignatureTuplesByPrimaryKey(t *testing.T) {
-	api, _, _, end := newTestAPI(t)
-	defer end()
+	api, _, _ := newTestAPI(t)
 
 	_, jwt := assets.InsertAdminUser(t, api.mustDB())
 
@@ -73,8 +71,7 @@ func Test_getAdminDatabaseSignatureTuplesByPrimaryKey(t *testing.T) {
 }
 
 func Test_postAdminDatabaseSignatureRollEntityByPrimaryKey(t *testing.T) {
-	api, _, _, end := newTestAPI(t)
-	defer end()
+	api, _, _ := newTestAPI(t)
 
 	_, jwt := assets.InsertAdminUser(t, api.mustDB())
 
@@ -137,8 +134,7 @@ type TestEncryptedData struct {
 func Test_getAdminDatabaseEncryptedEntities(t *testing.T) {
 	gorpmapping.Register(gorpmapping.New(TestEncryptedData{}, "test_encrypted_data", true, "id"))
 
-	api, _, _, end := newTestAPI(t)
-	defer end()
+	api, _, _ := newTestAPI(t)
 
 	_, jwt := assets.InsertAdminUser(t, api.mustDB())
 
@@ -156,8 +152,7 @@ func Test_getAdminDatabaseEncryptedEntities(t *testing.T) {
 func Test_getAdminDatabaseEncryptedTuplesByEntity(t *testing.T) {
 	gorpmapping.Register(gorpmapping.New(TestEncryptedData{}, "test_encrypted_data", true, "id"))
 
-	api, _, _, end := newTestAPI(t)
-	defer end()
+	api, _, _ := newTestAPI(t)
 
 	_, jwt := assets.InsertAdminUser(t, api.mustDB())
 
@@ -175,8 +170,7 @@ func Test_getAdminDatabaseEncryptedTuplesByEntity(t *testing.T) {
 func Test_postAdminDatabaseRollEncryptedEntityByPrimaryKey(t *testing.T) {
 	gorpmapping.Register(gorpmapping.New(TestEncryptedData{}, "test_encrypted_data", true, "id"))
 
-	api, _, _, end := newTestAPI(t)
-	defer end()
+	api, _, _ := newTestAPI(t)
 
 	_, jwt := assets.InsertAdminUser(t, api.mustDB())
 

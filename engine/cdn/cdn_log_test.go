@@ -3,13 +3,14 @@ package cdn
 import (
 	"context"
 	"fmt"
+	"testing"
+	"time"
+
 	"github.com/ovh/cds/engine/api/bootstrap"
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/sdk"
 	gocache "github.com/patrickmn/go-cache"
-	"testing"
-	"time"
 
 	"github.com/ovh/cds/sdk/jws"
 	"github.com/ovh/cds/sdk/log"
@@ -17,9 +18,7 @@ import (
 )
 
 func TestWorkerLog(t *testing.T) {
-	// Init DB
-	db, cache, end := test.SetupPG(t, bootstrap.InitiliazeDB)
-	defer end()
+	db, cache := test.SetupPG(t, bootstrap.InitiliazeDB)
 
 	// Create worker private key
 	key, err := jws.NewRandomSymmetricKey(32)
@@ -61,7 +60,7 @@ func TestWorkerLog(t *testing.T) {
 	signatureField, err := jws.Sign(sign, signature)
 	require.NoError(t, err)
 
-	message := `{"level": 1, "version": "1", "short": "this", "_facility": "fa", "_file": "file", 
+	message := `{"level": 1, "version": "1", "short": "this", "_facility": "fa", "_file": "file",
 	"host": "host", "_line":1, "_pid": 1, "_prefix": "prefix", "full_message": "this is my message", "_Signature": "%s"}`
 	message = fmt.Sprintf(message, signatureField)
 
@@ -74,9 +73,7 @@ func TestWorkerLog(t *testing.T) {
 }
 
 func TestServiceLog(t *testing.T) {
-	// Init DB
-	db, cache, end := test.SetupPG(t, bootstrap.InitiliazeDB)
-	defer end()
+	db, cache := test.SetupPG(t, bootstrap.InitiliazeDB)
 
 	// Create hatchery private key
 	key, err := jws.NewRandomRSAKey()
@@ -120,7 +117,7 @@ func TestServiceLog(t *testing.T) {
 	signatureField, err := jws.Sign(sign, signature)
 	require.NoError(t, err)
 
-	message := `{"level": 1, "version": "1", "short": "this", "_facility": "fa", "_file": "file", 
+	message := `{"level": 1, "version": "1", "short": "this", "_facility": "fa", "_file": "file",
 	"host": "host", "_line":1, "_pid": 1, "_prefix": "prefix", "full_message": "this is my service message", "_Signature": "%s"}`
 	message = fmt.Sprintf(message, signatureField)
 

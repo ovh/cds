@@ -18,8 +18,7 @@ import (
 )
 
 func TestInsertAndUpdate_WithRegistryPassword(t *testing.T) {
-	db, _, end := test.SetupPG(t, bootstrap.InitiliazeDB)
-	defer end()
+	db, _ := test.SetupPG(t, bootstrap.InitiliazeDB)
 
 	g := assets.InsertGroup(t, db)
 
@@ -115,8 +114,7 @@ func insertWorkerModel(t *testing.T, db gorp.SqlExecutor, name string, groupID i
 }
 
 func TestInsert(t *testing.T) {
-	db, _, end := test.SetupPG(t, bootstrap.InitiliazeDB)
-	defer end()
+	db, _ := test.SetupPG(t, bootstrap.InitiliazeDB)
 
 	g := assets.InsertGroup(t, db)
 
@@ -138,8 +136,7 @@ func TestInsert(t *testing.T) {
 }
 
 func TestLoadByNameAndGroupID(t *testing.T) {
-	db, _, end := test.SetupPG(t, bootstrap.InitiliazeDB)
-	defer end()
+	db, _ := test.SetupPG(t, bootstrap.InitiliazeDB)
 
 	g := assets.InsertGroup(t, db)
 
@@ -154,8 +151,7 @@ func TestLoadByNameAndGroupID(t *testing.T) {
 }
 
 func TestLoadWorkerModelsByNameAndGroupIDs(t *testing.T) {
-	db, _, end := test.SetupPG(t, bootstrap.InitiliazeDB)
-	defer end()
+	db, _ := test.SetupPG(t, bootstrap.InitiliazeDB)
 
 	g1 := assets.InsertTestGroup(t, db, sdk.RandomString(10))
 	g2 := assets.InsertTestGroup(t, db, sdk.RandomString(10))
@@ -182,8 +178,7 @@ func TestLoadWorkerModelsByNameAndGroupIDs(t *testing.T) {
 }
 
 func TestLoadAll(t *testing.T) {
-	db, _, end := test.SetupPG(t, bootstrap.InitiliazeDB)
-	defer end()
+	db, _ := test.SetupPG(t, bootstrap.InitiliazeDB)
 
 	// delete all workers
 	wks, err := worker.LoadAll(context.TODO(), db)
@@ -260,8 +255,7 @@ func TestLoadAll(t *testing.T) {
 }
 
 func TestLoadAllByGroupIDs(t *testing.T) {
-	db, _, end := test.SetupPG(t, bootstrap.InitiliazeDB)
-	defer end()
+	db, _ := test.SetupPG(t, bootstrap.InitiliazeDB)
 
 	g1 := assets.InsertTestGroup(t, db, sdk.RandomString(10))
 	g2 := assets.InsertTestGroup(t, db, sdk.RandomString(10))
@@ -329,8 +323,7 @@ func TestLoadAllByGroupIDs(t *testing.T) {
 }
 
 func TestLoadCapabilities(t *testing.T) {
-	db, _, end := test.SetupPG(t, bootstrap.InitiliazeDB)
-	defer end()
+	db, _ := test.SetupPG(t, bootstrap.InitiliazeDB)
 
 	g := assets.InsertTestGroup(t, db, sdk.RandomString(10))
 
@@ -348,8 +341,7 @@ func TestLoadCapabilities(t *testing.T) {
 }
 
 func TestUpdate(t *testing.T) {
-	db, _, end := test.SetupPG(t, bootstrap.InitiliazeDB)
-	defer end()
+	db, _ := test.SetupPG(t, bootstrap.InitiliazeDB)
 
 	g := assets.InsertTestGroup(t, db, sdk.RandomString(10))
 	src := insertWorkerModel(t, db, sdk.RandomString(10), g.ID)
@@ -370,8 +362,7 @@ func TestUpdate(t *testing.T) {
 }
 
 func TestLoadWorkerModelsForGroupIDs(t *testing.T) {
-	db, _, end := test.SetupPG(t, bootstrap.InitiliazeDB)
-	defer end()
+	db, _ := test.SetupPG(t, bootstrap.InitiliazeDB)
 
 	g1 := assets.InsertTestGroup(t, db, sdk.RandomString(10))
 	g2 := assets.InsertTestGroup(t, db, sdk.RandomString(10))

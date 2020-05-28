@@ -14,8 +14,7 @@ import (
 )
 
 func Test_getNavbarHandler(t *testing.T) {
-	api, db, _, end := newTestAPI(t)
-	defer end()
+	api, db, _ := newTestAPI(t)
 
 	u, pass := assets.InsertAdminUser(t, api.mustDB())
 

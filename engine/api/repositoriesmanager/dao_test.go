@@ -17,8 +17,8 @@ import (
 )
 
 func Test_CRUDProjectVCSServerLink(t *testing.T) {
-	db, _, end := test.SetupPG(t)
-	defer end()
+	db, _ := test.SetupPG(t)
+
 	pk := sdk.RandomString(8)
 
 	proj := sdk.Project{

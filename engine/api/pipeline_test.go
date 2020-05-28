@@ -24,8 +24,7 @@ import (
 )
 
 func TestUpdateAsCodePipelineHandler(t *testing.T) {
-	api, db, _, end := newTestAPI(t)
-	defer end()
+	api, db, _ := newTestAPI(t)
 
 	u, pass := assets.InsertAdminUser(t, db)
 

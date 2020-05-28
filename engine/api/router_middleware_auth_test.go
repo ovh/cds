@@ -18,8 +18,7 @@ import (
 )
 
 func Test_authMiddleware_WithAuth(t *testing.T) {
-	api, db, _, end := newTestAPI(t)
-	defer end()
+	api, db, _ := newTestAPI(t)
 
 	u, jwt := assets.InsertLambdaUser(t, db)
 
@@ -45,8 +44,7 @@ func Test_authMiddleware_WithAuth(t *testing.T) {
 }
 
 func Test_authMiddleware_WithAuthConsumerDisabled(t *testing.T) {
-	api, db, _, end := newTestAPI(t)
-	defer end()
+	api, db, _ := newTestAPI(t)
 
 	g := assets.InsertGroup(t, db)
 	u, _ := assets.InsertLambdaUser(t, db, g)
@@ -78,8 +76,7 @@ func Test_authMiddleware_WithAuthConsumerDisabled(t *testing.T) {
 }
 
 func Test_authMiddleware_WithoutAuth(t *testing.T) {
-	api, db, _, end := newTestAPI(t)
-	defer end()
+	api, db, _ := newTestAPI(t)
 
 	u, jwt := assets.InsertLambdaUser(t, db)
 
@@ -107,8 +104,7 @@ func Test_authMiddleware_WithoutAuth(t *testing.T) {
 }
 
 func Test_authMiddleware_NeedAdmin(t *testing.T) {
-	api, db, _, end := newTestAPI(t)
-	defer end()
+	api, db, _ := newTestAPI(t)
 
 	_, jwtLambda := assets.InsertLambdaUser(t, db)
 	admin, jwtAdmin := assets.InsertAdminUser(t, db)
@@ -135,8 +131,7 @@ func Test_authMiddleware_NeedAdmin(t *testing.T) {
 }
 
 func Test_authMiddleware_WithAuthConsumerScoped(t *testing.T) {
-	api, db, _, end := newTestAPI(t)
-	defer end()
+	api, db, _ := newTestAPI(t)
 
 	g := assets.InsertGroup(t, db)
 	u, _ := assets.InsertLambdaUser(t, db, g)

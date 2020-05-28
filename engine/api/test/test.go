@@ -84,7 +84,14 @@ XeJEyyEjosSa3qWACDYorGMnzRXdeJa5H7J0W+G3x4tH2LMW8VHS
 -----END RSA PRIVATE KEY-----`)
 
 // SetupPG setup PG DB for test
-func SetupPG(t log.Logger, bootstrapFunc ...Bootstrapf) (*gorp.DbMap, cache.Store, context.CancelFunc) {
+func SetupPG(t *testing.T, bootstrapFunc ...Bootstrapf) (*gorp.DbMap, cache.Store) {
+	db, cache, cancel := SetupPGToCancel(t, bootstrapFunc...)
+	t.Cleanup(cancel)
+	return db, cache
+}
+
+// SetupPGToCancel setup PG DB for test
+func SetupPGToCancel(t log.Logger, bootstrapFunc ...Bootstrapf) (*gorp.DbMap, cache.Store, func()) {
 	log.SetLogger(t)
 	cfg := LoadTestingConf(t)
 	DBDriver = cfg["dbDriver"]

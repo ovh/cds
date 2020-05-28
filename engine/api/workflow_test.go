@@ -37,8 +37,8 @@ import (
 )
 
 func Test_getWorkflowsHandler(t *testing.T) {
-	api, db, _, end := newTestAPI(t)
-	defer end()
+	api, db, _ := newTestAPI(t)
+
 	u, pass := assets.InsertLambdaUser(t, api.mustDB())
 	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
 	require.NoError(t, group.InsertLinkGroupUser(context.TODO(), api.mustDB(), &group.LinkGroupUser{
@@ -134,8 +134,8 @@ func Test_getWorkflowsHandler(t *testing.T) {
 }
 
 func Test_getWorkflowNotificationsConditionsHandler(t *testing.T) {
-	api, db, router, end := newTestAPI(t)
-	defer end()
+	api, db, router := newTestAPI(t)
+
 	u, pass := assets.InsertAdminUser(t, db)
 	consumer, _ := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
 	key := sdk.RandomString(10)
@@ -260,8 +260,7 @@ func Test_getWorkflowNotificationsConditionsHandler(t *testing.T) {
 }
 
 func Test_getWorkflowHandler(t *testing.T) {
-	api, db, router, end := newTestAPI(t)
-	defer end()
+	api, db, router := newTestAPI(t)
 
 	// Init user
 	u, pass := assets.InsertAdminUser(t, api.mustDB())
@@ -284,8 +283,8 @@ func Test_getWorkflowHandler(t *testing.T) {
 }
 
 func Test_getWorkflowHandler_CheckPermission(t *testing.T) {
-	api, db, _, end := newTestAPI(t)
-	defer end()
+	api, db, _ := newTestAPI(t)
+
 	u, pass := assets.InsertLambdaUser(t, api.mustDB())
 	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
 	require.NoError(t, group.InsertLinkGroupUser(context.TODO(), api.mustDB(), &group.LinkGroupUser{
@@ -376,8 +375,7 @@ func Test_getWorkflowHandler_CheckPermission(t *testing.T) {
 }
 
 func Test_getWorkflowHandler_AsProvider(t *testing.T) {
-	api, tsURL, tsClose := newTestServer(t)
-	defer tsClose()
+	api, tsURL := newTestServer(t)
 
 	admin, _ := assets.InsertAdminUser(t, api.mustDB())
 	localConsumer, err := authentication.LoadConsumerByTypeAndUserID(context.TODO(), api.mustDB(), sdk.ConsumerLocal, admin.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
@@ -440,8 +438,7 @@ func Test_getWorkflowHandler_AsProvider(t *testing.T) {
 }
 
 func Test_getWorkflowHandler_withUsage(t *testing.T) {
-	api, db, router, end := newTestAPI(t)
-	defer end()
+	api, db, router := newTestAPI(t)
 
 	// Init user
 	u, pass := assets.InsertAdminUser(t, api.mustDB())
@@ -503,8 +500,7 @@ func Test_getWorkflowHandler_withUsage(t *testing.T) {
 }
 
 func Test_postWorkflowHandlerWithoutRootShouldFail(t *testing.T) {
-	api, db, router, end := newTestAPI(t)
-	defer end()
+	api, db, router := newTestAPI(t)
 
 	// Init user
 	u, pass := assets.InsertAdminUser(t, api.mustDB())
@@ -528,8 +524,7 @@ func Test_postWorkflowHandlerWithoutRootShouldFail(t *testing.T) {
 
 func Test_postWorkflowHandlerWithRootShouldSuccess(t *testing.T) {
 
-	api, db, router, end := newTestAPI(t)
-	defer end()
+	api, db, router := newTestAPI(t)
 
 	// Init user
 	u, pass := assets.InsertAdminUser(t, api.mustDB())
@@ -591,8 +586,7 @@ func Test_postWorkflowHandlerWithRootShouldSuccess(t *testing.T) {
 }
 func Test_postWorkflowHandlerWithBadPayloadShouldFail(t *testing.T) {
 
-	api, db, router, end := newTestAPI(t)
-	defer end()
+	api, db, router := newTestAPI(t)
 
 	// Init user
 	u, pass := assets.InsertAdminUser(t, api.mustDB())
@@ -645,8 +639,7 @@ func Test_postWorkflowHandlerWithBadPayloadShouldFail(t *testing.T) {
 
 func Test_putWorkflowHandler(t *testing.T) {
 
-	api, db, router, end := newTestAPI(t)
-	defer end()
+	api, db, router := newTestAPI(t)
 
 	// Init user
 	u, pass := assets.InsertAdminUser(t, api.mustDB())
@@ -884,8 +877,7 @@ func Test_putWorkflowHandler(t *testing.T) {
 }
 
 func Test_deleteWorkflowEventIntegrationHandler(t *testing.T) {
-	api, db, router, end := newTestAPI(t)
-	defer end()
+	api, db, router := newTestAPI(t)
 
 	// Init user
 	u, pass := assets.InsertAdminUser(t, api.mustDB())
@@ -1017,8 +1009,7 @@ func Test_postWorkflowHandlerWithError(t *testing.T) {
 	// because default payload on non-root node should be illegal
 	// issue #4593
 
-	api, db, router, end := newTestAPI(t)
-	defer end()
+	api, db, router := newTestAPI(t)
 
 	// Init user
 	u, pass := assets.InsertAdminUser(t, api.mustDB())
@@ -1074,8 +1065,7 @@ func Test_postWorkflowHandlerWithError(t *testing.T) {
 
 func Test_postWorkflowRollbackHandler(t *testing.T) {
 
-	api, db, router, end := newTestAPI(t)
-	defer end()
+	api, db, router := newTestAPI(t)
 
 	// Init user
 	u, pass := assets.InsertAdminUser(t, api.mustDB())
@@ -1227,8 +1217,7 @@ func Test_postWorkflowRollbackHandler(t *testing.T) {
 }
 
 func Test_postAndDeleteWorkflowLabelHandler(t *testing.T) {
-	api, db, router, end := newTestAPI(t)
-	defer end()
+	api, db, router := newTestAPI(t)
 
 	// Init user
 	u, pass := assets.InsertAdminUser(t, api.mustDB())
@@ -1366,8 +1355,8 @@ func Test_postAndDeleteWorkflowLabelHandler(t *testing.T) {
 }
 
 func Test_deleteWorkflowHandler(t *testing.T) {
-	api, db, router, end := newTestAPI(t)
-	defer end()
+	api, db, router := newTestAPI(t)
+
 	test.NoError(t, workflow.CreateBuiltinWorkflowHookModels(db))
 
 	// Init user
@@ -1449,8 +1438,7 @@ loop:
 func TestBenchmarkGetWorkflowsWithoutAPIAsAdmin(t *testing.T) {
 	t.SkipNow()
 
-	db, cache, end := test.SetupPG(t)
-	defer end()
+	db, cache := test.SetupPG(t)
 
 	// Init project
 	key := sdk.RandomString(10)
@@ -1514,8 +1502,7 @@ func TestBenchmarkGetWorkflowsWithoutAPIAsAdmin(t *testing.T) {
 
 func TestBenchmarkGetWorkflowsWithAPI(t *testing.T) {
 	t.SkipNow()
-	api, db, router, end := newTestAPI(t)
-	defer end()
+	api, db, router := newTestAPI(t)
 
 	// Init project
 	key := sdk.RandomString(10)
@@ -1596,8 +1583,7 @@ func TestBenchmarkGetWorkflowsWithAPI(t *testing.T) {
 }
 
 func Test_putWorkflowShouldNotCallHOOKSIfHookDoesNotChange(t *testing.T) {
-	api, db, router, end := newTestAPI(t)
-	defer end()
+	api, db, router := newTestAPI(t)
 
 	_, _ = assets.InsertService(t, db, t.Name()+"_HOOKS", services.TypeHooks)
 
@@ -1706,8 +1692,7 @@ func Test_putWorkflowShouldNotCallHOOKSIfHookDoesNotChange(t *testing.T) {
 }
 
 func Test_putWorkflowWithDuplicateHooksShouldRaiseAnError(t *testing.T) {
-	api, db, router, end := newTestAPI(t)
-	defer end()
+	api, db, router := newTestAPI(t)
 
 	_, _ = assets.InsertService(t, db, t.Name()+"_HOOKS", services.TypeHooks)
 
@@ -1828,8 +1813,7 @@ func Test_putWorkflowWithDuplicateHooksShouldRaiseAnError(t *testing.T) {
 }
 
 func Test_getWorkflowsHandler_FilterByRepo(t *testing.T) {
-	api, tsURL, tsClose := newTestServer(t)
-	defer tsClose()
+	api, tsURL := newTestServer(t)
 
 	admin, _ := assets.InsertAdminUser(t, api.mustDB())
 	localConsumer, err := authentication.LoadConsumerByTypeAndUserID(context.TODO(), api.mustDB(), sdk.ConsumerLocal, admin.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
@@ -1910,8 +1894,7 @@ func Test_getWorkflowsHandler_FilterByRepo(t *testing.T) {
 }
 
 func Test_getSearchWorkflowHandler(t *testing.T) {
-	api, tsURL, tsClose := newTestServer(t)
-	defer tsClose()
+	api, tsURL := newTestServer(t)
 
 	admin, _ := assets.InsertAdminUser(t, api.mustDB())
 	localConsumer, err := authentication.LoadConsumerByTypeAndUserID(context.TODO(), api.mustDB(), sdk.ConsumerLocal, admin.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)

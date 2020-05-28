@@ -10,8 +10,7 @@ import (
 )
 
 func TestRefactorGroupMembership(t *testing.T) {
-	db, _, end := test.SetupPG(t)
-	defer end()
+	db, _ := test.SetupPG(t)
+
 	require.NoError(t, migrate.RefactorGroupMembership(context.TODO(), db))
 }
- 

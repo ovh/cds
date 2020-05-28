@@ -16,8 +16,7 @@ import (
 )
 
 func TestLoadSession(t *testing.T) {
-	db, _, end := test.SetupPG(t, bootstrap.InitiliazeDB)
-	defer end()
+	db, _ := test.SetupPG(t, bootstrap.InitiliazeDB)
 
 	u := sdk.AuthentifiedUser{Username: sdk.RandomString(10)}
 	require.NoError(t, user.Insert(context.TODO(), db, &u))
@@ -59,8 +58,7 @@ func TestLoadSession(t *testing.T) {
 }
 
 func TestInsertSession(t *testing.T) {
-	db, _, end := test.SetupPG(t, bootstrap.InitiliazeDB)
-	defer end()
+	db, _ := test.SetupPG(t, bootstrap.InitiliazeDB)
 
 	u := sdk.AuthentifiedUser{
 		Username: sdk.RandomString(10),
@@ -80,8 +78,7 @@ func TestInsertSession(t *testing.T) {
 }
 
 func TestUpdateSession(t *testing.T) {
-	db, _, end := test.SetupPG(t, bootstrap.InitiliazeDB)
-	defer end()
+	db, _ := test.SetupPG(t, bootstrap.InitiliazeDB)
 
 	u := sdk.AuthentifiedUser{
 		Username: sdk.RandomString(10),
@@ -103,8 +100,7 @@ func TestUpdateSession(t *testing.T) {
 }
 
 func TestDeleteSession(t *testing.T) {
-	db, _, end := test.SetupPG(t, bootstrap.InitiliazeDB)
-	defer end()
+	db, _ := test.SetupPG(t, bootstrap.InitiliazeDB)
 
 	u := sdk.AuthentifiedUser{
 		Username: sdk.RandomString(10),
@@ -128,8 +124,8 @@ func TestDeleteSession(t *testing.T) {
 }
 
 func Test_GetAndDeleteCorruptedSessions(t *testing.T) {
-	db, _, end := test.SetupPG(t)
-	defer end()
+	db, _ := test.SetupPG(t)
+
 	sessions, err := authentication.UnsafeLoadCorruptedSessions(context.TODO(), db)
 	require.NoError(t, err)
 	for _, s := range sessions {

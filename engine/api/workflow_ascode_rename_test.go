@@ -22,8 +22,7 @@ import (
 )
 
 func Test_WorkflowAsCodeRename(t *testing.T) {
-	api, db, _, end := newTestAPI(t)
-	defer end()
+	api, db, _ := newTestAPI(t)
 
 	_, _ = assets.InsertService(t, db, t.Name()+"_HOOKS", services.TypeHooks)
 	_, _ = assets.InsertService(t, db, t.Name()+"_VCS", services.TypeVCS)
