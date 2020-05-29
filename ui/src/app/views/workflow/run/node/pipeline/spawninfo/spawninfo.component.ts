@@ -99,7 +99,7 @@ export class WorkflowRunJobSpawnInfoComponent implements OnDestroy, OnInit {
                 this.jobStatus = njr.status;
                 this.currentJobID = njr.id;
                 this.variables = njr.parameters;
-                if (!this.worker) {
+                if (!PipelineStatus.isDone(njr.status)) {
                     this.initWorker();
                 } else {
                     this.spawnInfos = this.getSpawnInfos(njr.spawninfos);
