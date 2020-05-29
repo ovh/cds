@@ -1,15 +1,27 @@
-import {Injectable} from '@angular/core';
-import {ToasterConfig, ToasterService} from 'angular2-toaster/angular2-toaster';
+import { Injectable } from '@angular/core';
+import { ToasterConfig, ToasterService } from 'angular2-toaster/angular2-toaster';
 
 @Injectable()
 export class ToastService {
-    private toasterconfig: ToasterConfig = new ToasterConfig({mouseoverTimerStop: true});
+    private configDefault: ToasterConfig = new ToasterConfig({
+        mouseoverTimerStop: true,
+        toastContainerId: 1
+    });
+    private configErrorHTTP: ToasterConfig = new ToasterConfig({
+        showCloseButton: true,
+        timeout: 0,
+        toastContainerId: 2
+    });
 
     constructor(private _toasterService: ToasterService) {
     }
 
-    getConfig(): ToasterConfig {
-      return this.toasterconfig;
+    getConfigDefault(): ToasterConfig {
+        return this.configDefault;
+    }
+
+    getConfigErrorHTTP(): ToasterConfig {
+        return this.configErrorHTTP;
     }
 
     success(title: string, msg: string) {
@@ -21,6 +33,15 @@ export class ToastService {
     }
 
     error(title: string, msg: string) {
-        this._toasterService.pop('error', title, msg);
+        this._toasterService.pop(
+            { type: 'error', title: title, body: msg, toastContainerId: 1 }
+        );
+    }
+
+    errorHTTP(title: string, msg: string, from: string, requestID: string) {
+        let body = from ? `${msg} (from: ${from})` : msg;
+        this._toasterService.pop(
+            { type: 'error', title: title, body: body, toastContainerId: 2 }
+        );
     }
 }

@@ -182,12 +182,12 @@ func hookRegistration(ctx context.Context, db gorp.SqlExecutor, store cache.Stor
 			if h.HookModelName == sdk.RepositoryWebHookModelName && h.Config["vcsServer"].Value != "" {
 				if !ok || v.Value == "" {
 					if err := createVCSConfiguration(ctx, db, store, proj, h); err != nil {
-						return sdk.WrapError(err, "Cannot create vcs configuration")
+						return sdk.WithStack(err)
 					}
 				}
 				if ok && v.Value != "" {
 					if err := updateVCSConfiguration(ctx, db, store, proj, h); err != nil {
-						return sdk.WrapError(err, "Cannot update vcs configuration")
+						return sdk.WithStack(err)
 					}
 				}
 			}
@@ -279,23 +279,23 @@ func createVCSConfiguration(ctx context.Context, db gorp.SqlExecutor, store cach
 
 	client, err := repositoriesmanager.AuthorizedClient(ctx, db, store, proj.Key, projectVCSServer)
 	if err != nil {
-		return sdk.WrapError(err, "createVCSConfiguration> Cannot get vcs client")
+		return sdk.WrapError(err, "cannot get vcs client")
 	}
 	// We have to check the repository to know if webhooks are supported and how (events)
-	webHookInfo, errWH := repositoriesmanager.GetWebhooksInfos(ctx, client)
-	if errWH != nil {
-		return sdk.WrapError(errWH, "createVCSConfiguration> Cannot get vcs web hook info")
+	webHookInfo, err := repositoriesmanager.GetWebhooksInfos(ctx, client)
+	if err != nil {
+		return sdk.WrapError(err, "cannot get vcs web hook info")
 	}
 	if !webHookInfo.WebhooksSupported || webHookInfo.WebhooksDisabled {
-		return sdk.WrapError(sdk.ErrForbidden, "createVCSConfiguration> hook creation are forbidden")
+		return sdk.NewErrorFrom(sdk.ErrForbidden, "hook creation are forbidden")
 	}
 
 	// Check hook config to avoid sending wrong hooks to VCS
 	if h.Config["repoFullName"].Value == "" {
-		return sdk.WrapError(sdk.ErrInvalidHookConfiguration, "wrong repoFullName value for hook")
+		return sdk.WrapError(sdk.ErrInvalidHookConfiguration, "missing repo fullname value for hook")
 	}
 	if !sdk.IsURL(h.Config["webHookURL"].Value) {
-		return sdk.WrapError(sdk.ErrInvalidHookConfiguration, "wrong webHookURL value (project: %s, repository: %s)", proj.Key, h.Config["repoFullName"].Value)
+		return sdk.WrapError(sdk.ErrInvalidHookConfiguration, "given webhook url value %s is not a url", h.Config["webHookURL"].Value)
 	}
 
 	// Prepare the hook that will be send to VCS

@@ -906,7 +906,7 @@ func DecodeError(data []byte) error {
 		return nil
 	}
 
-	if e.Message == "" {
+	if e.ID == 0 {
 		return nil
 	}
 
