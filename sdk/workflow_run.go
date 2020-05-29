@@ -55,6 +55,7 @@ type WorkflowRun struct {
 }
 
 type WorkflowRunSecret struct {
+	ID            string `json:"-" db:"id"`
 	WorkflowRunID int64  `json:"-" db:"workflow_run_id"`
 	Context       string `json:"-" db:"context"`
 	Name          string `json:"-" db:"name"`

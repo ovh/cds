@@ -1014,21 +1014,29 @@ func (api *API) initWorkflowRun(ctx context.Context, projKey string, wf *sdk.Wor
 			}
 
 			event.PublishWorkflowUpdate(ctx, p.Key, *wf, oldWf, u)
+		} else {
+			// Get all secrets for non ascode run
+			workflowSecrets, err = workflow.RetrieveSecrets(api.mustDB(), *wf)
+			if err != nil {
+				r1 := failInitWorkflowRun(ctx, api.mustDB(), wfRun, sdk.WrapError(err, "unable to retrieve workflow secret"))
+				report.Merge(ctx, r1)
+				return
+			}
 		}
 
 		wfRun.Workflow = *wf
+
+		if err := saveWorkflowRunSecrets(ctx, api.mustDB(), p.ID, *wfRun, workflowSecrets); err != nil {
+			r := failInitWorkflowRun(ctx, api.mustDB(), wfRun, sdk.WrapError(err, "unable to compute workflow secrets %s/%s", p.Key, wf.Name))
+			report.Merge(ctx, r)
+			return
+		}
+
 	}
 
 	tx, err := api.mustDB().Begin()
 	if err != nil {
 		r := failInitWorkflowRun(ctx, api.mustDB(), wfRun, sdk.WrapError(err, "unable to start workflow %s/%s", p.Key, wf.Name))
-		report.Merge(ctx, r)
-		return
-	}
-
-	if err := saveWorkflowRunSecrets(ctx, tx, p.ID, *wfRun, workflowSecrets); err != nil {
-		_ = tx.Rollback()
-		r := failInitWorkflowRun(ctx, api.mustDB(), wfRun, sdk.WrapError(err, "unable to compute workflow secrets %s/%s", p.Key, wf.Name))
 		report.Merge(ctx, r)
 		return
 	}
@@ -1084,7 +1092,7 @@ func saveWorkflowRunSecrets(ctx context.Context, db gorp.SqlExecutor, projID int
 	for _, k := range p.Keys {
 		wrSecret := sdk.WorkflowRunSecret{
 			WorkflowRunID: wr.ID,
-			Context:       fmt.Sprintf("proj:%d", projID),
+			Context:       "proj",
 			Name:          fmt.Sprintf("cds.key.%s.priv", k.Name),
 			Value:         []byte(k.Private),
 		}
@@ -1161,7 +1169,8 @@ func saveWorkflowRunSecrets(ctx context.Context, db gorp.SqlExecutor, projID int
 		for _, v := range variables {
 			wrSecret := sdk.WorkflowRunSecret{
 				WorkflowRunID: wr.ID,
-				Name:          fmt.Sprintf("env:%d:%s", id, v.Name),
+				Context:       fmt.Sprintf("env:%d", id),
+				Name:          v.Name,
 				Value:         []byte(v.Value),
 			}
 			if err := workflow.InsertRunSecret(ctx, db, &wrSecret); err != nil {

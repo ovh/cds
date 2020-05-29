@@ -11,6 +11,7 @@ import (
 
 func InsertRunSecret(ctx context.Context, db gorp.SqlExecutor, wrSecret *sdk.WorkflowRunSecret) error {
 	dbData := &dbWorkflowRunSecret{WorkflowRunSecret: *wrSecret}
+	dbData.ID = sdk.UUID()
 	if err := gorpmapping.InsertAndSign(ctx, db, dbData); err != nil {
 		return err
 	}
