@@ -42,6 +42,21 @@ func RetrieveSecrets(db gorp.SqlExecutor, wf sdk.Workflow) (*PushSecrets, error)
 				Value: k.Private,
 			})
 		}
+
+		appDeploymentStrats, err := application.LoadDeploymentStrategies(db, app.ID, true)
+		if err != nil {
+			return nil, err
+		}
+		for name, appD := range appDeploymentStrats {
+			for vName, v := range appD {
+				secretsVariables = append(secretsVariables, sdk.Variable{
+					Name:  fmt.Sprintf("%s:cds.integration.%s", name, vName),
+					Type:  sdk.SecretVariable,
+					Value: v.Value,
+				})
+			}
+		}
+
 		secrets.ApplicationsSecrets[app.ID] = secretsVariables
 	}
 

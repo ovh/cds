@@ -359,7 +359,7 @@ func LoadSecrets(ctx context.Context, db gorp.SqlExecutor, wr *sdk.WorkflowRun, 
 		secrets = append(secrets, piSecrets...)
 
 		if node.Context.ApplicationID != 0 {
-			piAppSecrets, err := loadRunSecretByContext(ctx, db, wr.ID, fmt.Sprintf("app:%d:integration:%d", node.Context.ApplicationID, node.Context.ProjectIntegrationID))
+			piAppSecrets, err := loadRunSecretByContext(ctx, db, wr.ID, fmt.Sprintf("app:%d:integration:%s", node.Context.ApplicationID, wr.Workflow.ProjectIntegrations[node.Context.ProjectIntegrationID].Name))
 			if err != nil {
 				return nil, err
 			}

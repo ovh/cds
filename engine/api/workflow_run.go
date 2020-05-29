@@ -1140,7 +1140,7 @@ func saveWorkflowRunSecrets(ctx context.Context, db gorp.SqlExecutor, projID int
 		for _, v := range variables {
 			var wrSecret sdk.WorkflowRunSecret
 			switch {
-			case strings.HasPrefix(v.Name, "cds.app."):
+			case strings.HasPrefix(v.Name, "cds.app.") || strings.HasPrefix(v.Name, "cds.key."):
 				wrSecret = sdk.WorkflowRunSecret{
 					WorkflowRunID: wr.ID,
 					Context:       fmt.Sprintf("app:%d", id),
@@ -1148,7 +1148,7 @@ func saveWorkflowRunSecrets(ctx context.Context, db gorp.SqlExecutor, projID int
 					Value:         []byte(v.Value),
 				}
 			case strings.Contains(v.Name, ":cds.integration."):
-				piName := strings.SplitN(v.Name, ":", 1)
+				piName := strings.SplitN(v.Name, ":", 2)
 				wrSecret = sdk.WorkflowRunSecret{
 					WorkflowRunID: wr.ID,
 					Context:       fmt.Sprintf("app:%d:integration:%s", id, piName[0]),

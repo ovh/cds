@@ -2,7 +2,7 @@
 CREATE TABLE IF NOT EXISTS "workflow_run_secret" (
     "id" VARCHAR(36) NOT NULL PRIMARY KEY,
     "workflow_run_id" BIGINT NOT NULL,
-    "context" VARCHAR(25) NOT NULL,
+    "context" TEXT NOT NULL,
     "name" TEXT NOT NULL,
     "cypher_value" BYTEA,
     "sig" BYTEA,

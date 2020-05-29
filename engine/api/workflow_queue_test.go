@@ -471,21 +471,6 @@ func Test_postTakeWorkflowJobHandler(t *testing.T) {
 
 	pbji := &sdk.WorkflowNodeJobRunData{}
 	require.NoError(t, json.Unmarshal(rec.Body.Bytes(), pbji))
-	require.Len(t, pbji.Secrets, 3)
-	for _, s := range pbji.Secrets {
-		switch s.Name {
-		case "cds.key.my-app-key.priv":
-			assert.NotEmpty(t, s.Value)
-			assert.Equal(t, "pgp", s.Type)
-		case "cds.key.my-env-key.priv":
-			assert.NotEmpty(t, s.Value)
-			assert.Equal(t, "pgp", s.Type)
-		case "git.http.password":
-
-		default:
-			t.Errorf("unexpected secrets: %s", s.Name)
-		}
-	}
 
 	assert.Equal(t, "localhost:8090", pbji.GelfServiceAddr)
 

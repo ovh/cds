@@ -134,12 +134,12 @@ func findDeploymentStrategy(db gorp.SqlExecutor, projectIntegrationID, applicati
 	return &i, nil
 }
 
-func getProjectIntegrationID(db gorp.SqlExecutor, projID, pfID int64, ppfName string) (int64, error) {
+func getProjectIntegrationID(db gorp.SqlExecutor, projID, pfModelID int64, ppfName string) (int64, error) {
 	query := gorpmapping.NewQuery(`SELECT project_integration.id
 	FROM project_integration
 	WHERE project_integration.project_id = $1
 	AND project_integration.integration_model_id = $2
-	AND project_integration.name = $3`).Args(projID, pfID, ppfName)
+	AND project_integration.name = $3`).Args(projID, pfModelID, ppfName)
 	id, err := gorpmapping.GetInt(db, query)
 	if err != nil {
 		return -1, err
@@ -148,8 +148,8 @@ func getProjectIntegrationID(db gorp.SqlExecutor, projID, pfID int64, ppfName st
 }
 
 // SetDeploymentStrategy update the application_deployment_strategy table
-func SetDeploymentStrategy(db gorp.SqlExecutor, projID, appID, pfID int64, ppfName string, cfg sdk.IntegrationConfig) error {
-	projectIntegrationID, err := getProjectIntegrationID(db, projID, pfID, ppfName)
+func SetDeploymentStrategy(db gorp.SqlExecutor, projID, appID, pfModelID int64, ppfName string, cfg sdk.IntegrationConfig) error {
+	projectIntegrationID, err := getProjectIntegrationID(db, projID, pfModelID, ppfName)
 	if err != nil {
 		return err
 	}

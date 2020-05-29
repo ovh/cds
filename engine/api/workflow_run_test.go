@@ -18,7 +18,9 @@ import (
 	"github.com/ovh/cds/engine/api/authentication"
 	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/group"
+	"github.com/ovh/cds/engine/api/integration"
 	"github.com/ovh/cds/engine/api/pipeline"
+	"github.com/ovh/cds/engine/api/plugin"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/engine/api/services"
@@ -838,6 +840,24 @@ func Test_postWorkflowRunHandler(t *testing.T) {
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, api.Cache, key, key)
 
+	projKey := sdk.ProjectKey{
+		Name:      "proj-sshkey",
+		Type:      sdk.KeySSHParameter,
+		Public:    "publicssh-proj",
+		Private:   "privatessh-proj",
+		Builtin:   false,
+		ProjectID: proj.ID,
+		KeyID:     "key-id-proj",
+	}
+	require.NoError(t, project.InsertKey(db, &projKey))
+
+	pwdProject := sdk.Variable{
+		Name:  "projvar",
+		Type:  sdk.SecretVariable,
+		Value: "myprojpassword",
+	}
+	require.NoError(t, project.InsertVariable(db, proj.ID, &pwdProject, u))
+
 	//First pipeline
 	pip := sdk.Pipeline{
 		ProjectID:  proj.ID,
@@ -881,6 +901,122 @@ func Test_postWorkflowRunHandler(t *testing.T) {
 	pipeline.InsertJob(api.mustDB(), j, s.ID, &pip2)
 	s.Jobs = append(s.Jobs, *j)
 
+	modelIntegration := sdk.IntegrationModel{
+		Name:       sdk.RandomString(10),
+		Deployment: true,
+	}
+	require.NoError(t, integration.InsertModel(db, &modelIntegration))
+	projInt := sdk.ProjectIntegration{
+		Config: sdk.IntegrationConfig{
+			"test": sdk.IntegrationConfigValue{
+				Description: "here is a test",
+				Type:        sdk.IntegrationConfigTypeString,
+				Value:       "test",
+			},
+			"mypassword": sdk.IntegrationConfigValue{
+				Description: "here isa password",
+				Type:        sdk.IntegrationConfigTypePassword,
+				Value:       "mypassword",
+			},
+		},
+		Name:               sdk.RandomString(10),
+		ProjectID:          proj.ID,
+		Model:              modelIntegration,
+		IntegrationModelID: modelIntegration.ID,
+	}
+	require.NoError(t, integration.InsertIntegration(db, &projInt))
+	t.Logf("### Integration %s created with id: %d\n", projInt.Name, projInt.ID)
+
+	p := sdk.GRPCPlugin{
+		Author:             "unitTest",
+		Description:        "desc",
+		Name:               sdk.RandomString(10),
+		Type:               sdk.GRPCPluginDeploymentIntegration,
+		IntegrationModelID: &modelIntegration.ID,
+		Integration:        modelIntegration.Name,
+		Binaries: []sdk.GRPCPluginBinary{
+			{
+				OS:   "linux",
+				Arch: "adm64",
+				Name: "blabla",
+			},
+		},
+	}
+
+	require.NoError(t, plugin.Insert(db, &p))
+	assert.NotEqual(t, 0, p.ID)
+
+	app := sdk.Application{
+		ProjectKey: proj.Key,
+		ProjectID:  proj.ID,
+		Name:       sdk.RandomString(10),
+		Variables: []sdk.Variable{
+			{
+				Name:  "app-password",
+				Type:  sdk.SecretVariable,
+				Value: "apppassword",
+			},
+		},
+		Keys: []sdk.ApplicationKey{
+			{
+				Type:    sdk.KeySSHParameter,
+				Name:    "app-sshkey",
+				Private: "private-key",
+				Public:  "public-key",
+				KeyID:   "id",
+			},
+		},
+		DeploymentStrategies: map[string]sdk.IntegrationConfig{
+			projInt.Name: map[string]sdk.IntegrationConfigValue{
+				"token": {
+					Type:        "password",
+					Value:       "app-token",
+					Description: "token",
+				},
+			},
+		},
+	}
+	require.NoError(t, application.Insert(db, *proj, &app))
+	require.NoError(t, application.InsertVariable(db, app.ID, &app.Variables[0], u))
+	app.Keys[0].ApplicationID = app.ID
+	require.NoError(t, application.InsertKey(db, &app.Keys[0]))
+	require.NoError(t, application.SetDeploymentStrategy(db, proj.ID, app.ID, modelIntegration.ID, projInt.Name, app.DeploymentStrategies[projInt.Name]))
+
+	env := sdk.Environment{
+		ProjectID:  proj.ID,
+		ProjectKey: proj.Key,
+		Name:       sdk.RandomString(10),
+		Variables: []sdk.Variable{
+			{
+				Name:  "env-password",
+				Type:  sdk.SecretVariable,
+				Value: "envpassword",
+			},
+		},
+		Keys: []sdk.EnvironmentKey{
+			{
+				Type:    sdk.KeySSHParameter,
+				Name:    "env-sshkey",
+				Private: "private-key-env",
+				Public:  "public-key-env",
+				KeyID:   "id-env",
+			},
+		},
+	}
+	require.NoError(t, environment.InsertEnvironment(db, &env))
+	require.NoError(t, environment.InsertVariable(db, env.ID, &env.Variables[0], u))
+	env.Keys[0].EnvironmentID = env.ID
+	require.NoError(t, environment.InsertKey(db, &env.Keys[0]))
+
+	proj2, errP := project.Load(api.mustDB(), key,
+		project.LoadOptions.WithApplicationWithDeploymentStrategies,
+		project.LoadOptions.WithPipelines,
+		project.LoadOptions.WithEnvironments,
+		project.LoadOptions.WithGroups,
+		project.LoadOptions.WithIntegrations,
+	)
+	require.NoError(t, errP)
+
 	w := sdk.Workflow{
 		Name:       "test_1",
 		ProjectID:  proj.ID,
@@ -890,7 +1026,10 @@ func Test_postWorkflowRunHandler(t *testing.T) {
 				Name: "root",
 				Type: sdk.NodeTypePipeline,
 				Context: &sdk.NodeContext{
-					PipelineID: pip.ID,
+					PipelineID:           pip.ID,
+					ApplicationID:        app.ID,
+					EnvironmentID:        env.ID,
+					ProjectIntegrationID: proj2.Integrations[0].ID,
 				},
 				Triggers: []sdk.NodeTrigger{
 					{
@@ -907,11 +1046,9 @@ func Test_postWorkflowRunHandler(t *testing.T) {
 		},
 	}
 
-	proj2, errP := project.Load(api.mustDB(), proj.Key, project.LoadOptions.WithPipelines, project.LoadOptions.WithGroups, project.LoadOptions.WithIntegrations)
-	require.NoError(t, errP)
-
+	t.Logf("%+v", proj2.Applications[0].DeploymentStrategies)
 	require.NoError(t, workflow.Insert(context.TODO(), api.mustDB(), api.Cache, *proj2, &w))
-	w1, err := workflow.Load(context.TODO(), api.mustDB(), api.Cache, *proj, "test_1", workflow.LoadOptions{})
+	w1, err := workflow.Load(context.TODO(), api.mustDB(), api.Cache, *proj2, "test_1", workflow.LoadOptions{})
 	require.NoError(t, err)
 
 	//Prepare request
@@ -955,9 +1092,34 @@ func Test_postWorkflowRunHandler(t *testing.T) {
 			testFound = true
 		}
 	}
-
 	assert.Equal(t, 1, payloadCount)
 	assert.True(t, testFound, "should find 'test' in build parameters")
+
+	secrets, err := workflow.LoadSecrets(context.TODO(), db, lastRun, lastRun.RootRun())
+	require.NoError(t, err)
+
+	t.Logf("%+v", secrets)
+
+	// Proj key
+	require.NotNil(t, sdk.VariableFind(secrets, "cds.key.proj-sshkey.priv"))
+	// Project password
+	require.NotNil(t, sdk.VariableFind(secrets, "cds.proj.projvar"))
+
+	// Proj Integration
+	require.NotNil(t, sdk.VariableFind(secrets, "cds.integration.mypassword"))
+
+	// Application variable
+	require.NotNil(t, sdk.VariableFind(secrets, "cds.app.app-password"))
+	// Application key
+	require.NotNil(t, sdk.VariableFind(secrets, "cds.key.app-sshkey.priv"))
+	// Application integration
+	require.NotNil(t, sdk.VariableFind(secrets, "cds.integration.token"))
+
+	// Env variable
+	require.NotNil(t, sdk.VariableFind(secrets, "cds.env.env-password"))
+	// En  key
+	require.NotNil(t, sdk.VariableFind(secrets, "cds.key.env-sshkey.priv"))
+
 }
 
 func waitCraftinWorkflow(t *testing.T, db gorp.SqlExecutor, id int64) error {
