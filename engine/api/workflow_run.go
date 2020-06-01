@@ -797,10 +797,6 @@ func (api *API) postWorkflowRunHandler() service.Handler {
 			project.LoadOptions.WithVariables,
 			project.LoadOptions.WithFeatures(api.Cache),
 			project.LoadOptions.WithIntegrations,
-			project.LoadOptions.WithApplicationVariables,
-			project.LoadOptions.WithApplicationWithDeploymentStrategies,
-			project.LoadOptions.WithEnvironments,
-			project.LoadOptions.WithPipelines,
 		)
 		next()
 		if errP != nil {
@@ -929,13 +925,9 @@ func (api *API) initWorkflowRun(ctx context.Context, projKey string, wf *sdk.Wor
 
 	p, err := project.Load(api.mustDB(), projKey,
 		project.LoadOptions.WithVariables,
+		project.LoadOptions.WithKeys,
 		project.LoadOptions.WithFeatures(api.Cache),
 		project.LoadOptions.WithIntegrations,
-		project.LoadOptions.WithApplicationVariables,
-		project.LoadOptions.WithApplicationKeys,
-		project.LoadOptions.WithApplicationWithDeploymentStrategies,
-		project.LoadOptions.WithEnvironments,
-		project.LoadOptions.WithPipelines,
 	)
 	if err != nil {
 		r := failInitWorkflowRun(ctx, api.mustDB(), wfRun, sdk.WrapError(err, "cannot load project for as code workflow creation"))

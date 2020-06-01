@@ -1120,6 +1120,14 @@ func Test_postWorkflowRunHandler(t *testing.T) {
 	// En  key
 	require.NotNil(t, sdk.VariableFind(secrets, "cds.key.env-sshkey.priv"))
 
+	// Check public and id key in node run param
+	require.NotNil(t, sdk.ParameterFind(lastRun.RootRun().BuildParameters, "cds.key.proj-sshkey.pub"))
+	require.NotNil(t, sdk.ParameterFind(lastRun.RootRun().BuildParameters, "cds.key.proj-sshkey.id"))
+	require.NotNil(t, sdk.ParameterFind(lastRun.RootRun().BuildParameters, "cds.key.app-sshkey.pub"))
+	require.NotNil(t, sdk.ParameterFind(lastRun.RootRun().BuildParameters, "cds.key.app-sshkey.id"))
+	require.NotNil(t, sdk.ParameterFind(lastRun.RootRun().BuildParameters, "cds.key.env-sshkey.pub"))
+	require.NotNil(t, sdk.ParameterFind(lastRun.RootRun().BuildParameters, "cds.key.env-sshkey.id"))
+
 }
 
 func waitCraftinWorkflow(t *testing.T, db gorp.SqlExecutor, id int64) error {

@@ -991,7 +991,7 @@ func checkApplication(db gorp.SqlExecutor, proj sdk.Project, w *sdk.Workflow, n 
 	if n.Context.ApplicationID != 0 {
 		app, ok := w.Applications[n.Context.ApplicationID]
 		if !ok {
-			appDB, errA := application.LoadByID(db, n.Context.ApplicationID, application.LoadOptions.WithDeploymentStrategies, application.LoadOptions.WithVariables)
+			appDB, errA := application.LoadByID(db, n.Context.ApplicationID, application.LoadOptions.WithDeploymentStrategies, application.LoadOptions.WithVariables, application.LoadOptions.WithKeys)
 			if errA != nil {
 				return errA
 			}
@@ -1005,7 +1005,7 @@ func checkApplication(db gorp.SqlExecutor, proj sdk.Project, w *sdk.Workflow, n 
 		return nil
 	}
 	if n.Context.ApplicationName != "" {
-		appDB, err := application.LoadByName(db, proj.Key, n.Context.ApplicationName, application.LoadOptions.WithDeploymentStrategies, application.LoadOptions.WithVariables)
+		appDB, err := application.LoadByName(db, proj.Key, n.Context.ApplicationName, application.LoadOptions.WithDeploymentStrategies, application.LoadOptions.WithVariables, application.LoadOptions.WithKeys)
 		if err != nil {
 			if sdk.ErrorIs(err, sdk.ErrNotFound) {
 				return sdk.WithData(sdk.ErrNotFound, n.Context.ApplicationName)

@@ -20,7 +20,7 @@ func (api *API) getWorkflowTriggerConditionHandler() service.Handler {
 		name := vars["permWorkflowName"]
 		id := FormInt(r, "nodeID")
 
-		proj, err := project.Load(api.mustDB(), key, project.LoadOptions.WithVariables, project.LoadOptions.WithIntegrations)
+		proj, err := project.Load(api.mustDB(), key, project.LoadOptions.WithVariables, project.LoadOptions.WithIntegrations, project.LoadOptions.WithKeys)
 		if err != nil {
 			return sdk.WrapError(err, "unable to load project")
 		}
@@ -61,7 +61,7 @@ func (api *API) getWorkflowTriggerConditionHandler() service.Handler {
 			refNode = wf.WorkflowData.NodeByID(int64(id))
 			ancestorIds := refNode.Ancestors(wf.WorkflowData)
 
-			params, err = workflow.NodeBuildParametersFromWorkflow(ctx, *proj, wf, refNode, ancestorIds)
+			params, err = workflow.NodeBuildParametersFromWorkflow(*proj, wf, refNode, ancestorIds)
 			if err != nil {
 				return sdk.WrapError(err, "unable to load build parameters from workflow")
 			}

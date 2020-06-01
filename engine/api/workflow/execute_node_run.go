@@ -695,7 +695,7 @@ func NodeBuildParametersFromRun(wr sdk.WorkflowRun, id int64) ([]sdk.Parameter, 
 }
 
 //NodeBuildParametersFromWorkflow returns build_parameters for a node given its id
-func NodeBuildParametersFromWorkflow(ctx context.Context, proj sdk.Project, wf *sdk.Workflow, refNode *sdk.Node, ancestorsIds []int64) ([]sdk.Parameter, error) {
+func NodeBuildParametersFromWorkflow(proj sdk.Project, wf *sdk.Workflow, refNode *sdk.Node, ancestorsIds []int64) ([]sdk.Parameter, error) {
 	runContext := nodeRunContext{}
 	res := []sdk.Parameter{}
 	if refNode != nil && refNode.Context != nil {
