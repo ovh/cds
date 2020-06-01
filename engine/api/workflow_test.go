@@ -1959,6 +1959,20 @@ func Test_getSearchWorkflowHandler(t *testing.T) {
 	}
 	test.NoError(t, workflow.Insert(context.TODO(), api.mustDB(), api.Cache, *proj, &wf2))
 
+	// Run the workflow
+	consumer, _ := authentication.LoadConsumerByTypeAndUserID(context.TODO(), api.mustDB(), sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
+	wr, err := workflow.CreateRun(api.mustDB(), &wf, nil, admin)
+	assert.NoError(t, err)
+	wr.Workflow = wf
+	wr.Tag("git.branch", "master")
+	_, err = workflow.StartWorkflowRun(context.TODO(), api.mustDB(), api.Cache, *proj, wr, &sdk.WorkflowRunPostHandlerOption{
+		Manual: &sdk.WorkflowNodeRunManual{
+			Username: u.GetUsername(),
+			Payload:  `{"git.branch": "master"}`,
+		},
+	}, consumer, nil)
+	require.NoError(t, err)
+
 	// Call with an admin
 	sdkclientAdmin := cdsclient.New(cdsclient.Config{
 		Host:                              tsURL,
@@ -1976,4 +1990,10 @@ func Test_getSearchWorkflowHandler(t *testing.T) {
 	require.NotEmpty(t, wfs[0].URLs.UIURL)
 	require.Equal(t, app.ID, wfs[0].WorkflowData.Node.Context.ApplicationID)
 	require.Equal(t, pip.ID, wfs[0].WorkflowData.Node.Context.PipelineID)
+	require.NotEmpty(t, wfs[0].Runs)
+	require.NotEmpty(t, wfs[0].Runs[0].URLs.APIURL)
+	require.NotEmpty(t, wfs[0].Runs[0].URLs.UIURL)
+
+	t.Logf("%+v", wfs[0].Runs[0].URLs)
+
 }
