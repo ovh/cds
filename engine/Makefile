@@ -62,17 +62,30 @@ build: $(TARGET_DIR)
 	$(MAKE) lint -C sql
 	$(MAKE) build -C sql
 	@cp sql/sql.tar.gz $(TARGET_DIR)/
-	@for GOOS in $(TARGET_OS); do \
-		for GOARCH in $(TARGET_ARCH); do \
-			if go tool dist list | grep "$$GOOS" | grep "$$GOARCH" > /dev/null; then \
-				EXTENSION=""; \
-				if test "$$GOOS" = "windows" ; then EXTENSION=".exe"; fi; \
-				echo Compiling $(TARGET_DIR)/$(TARGET_ENGINE)-$$GOOS-$$GOARCH$$EXTENSION $(VERSION); \
-				GOOS=$$GOOS GOARCH=$$GOARCH $(GO_BUILD) $(TARGET_LDFLAGS) -o $(TARGET_DIR)/$(TARGET_ENGINE)-$$GOOS-$$GOARCH$$EXTENSION; \
-			fi; \
-		done; \
-	done
+	$(MAKE) build_all_engine
 	$(MAKE) build -C worker
+
+define get_os_from_binary_file
+$(strip $(shell echo $(1) | awk '{n=split($$1,a,"-");print a[n-1]}'))
+endef
+
+define get_arch_from_binary_file
+$(strip $(patsubst %.exe, %,$(shell echo $(1) | awk '{n=split($$1,a,"-");print a[n]}')))
+endef
+
+gobuild:
+	$(info Checking support for $(GOOS)/$(GOARCH))
+	@if go tool dist list | grep "$$GOOS" | grep "$$GOARCH" > /dev/null 2>&1; then \
+		GOOS=$$GOOS GOARCH=$$GOARCH CGO_ENABLED=0 $(GO_BUILD) $(TARGET_LDFLAGS) -o $(abspath $(OUTPUT)); \
+	fi
+
+isWindows = $(filter $1,windows)
+TARGET_ENGINE_BINARIES := $(foreach OS, $(TARGET_OS), $(foreach ARCH, $(TARGET_ARCH), $(TARGET_DIR)/$(TARGET_ENGINE)-$(OS)-$(ARCH)$(if $(call isWindows, $(OS)),.exe)))
+$(TARGET_ENGINE_BINARIES): $(TARGET_DIR)
+	$(info Compiling $@: $(abspath $@))
+	$(MAKE) --no-print-directory gobuild GOOS=$(call get_os_from_binary_file,$@) GOARCH=$(call get_arch_from_binary_file,$@) OUTPUT=$@
+
+build_all_engine: $(TARGET_ENGINE_BINARIES)
 
 test-redis-start-docker:
 	$(TEST_REDIS_START_DOCKER)

@@ -49,10 +49,11 @@ goinstall:
 
 build:
 	$(info Building CDS Components for $(TARGET_OS) - $(TARGET_ARCH))
-	# Make UI and Engine in parallel
-	$(MAKE) build_ui -j2 $(MAKE) build_engine -j2
-	# Make Worker, CLI and contrib in parallel
-	$(MAKE) build_worker -j3 $(MAKE) build_cli -j3  $(MAKE) build_contrib -j3
+	$(MAKE) build_ui 
+	$(MAKE) build_engine -j4
+	$(MAKE) build_worker -j4
+	$(MAKE) build_cli -j4
+	$(MAKE) build_contrib -j4
 	$(MAKE) package -C contrib TARGET_DIST="$(abspath $(TARGET_DIR))"
 
 build_ui:
