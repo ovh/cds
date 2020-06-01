@@ -116,7 +116,7 @@ func (api *API) postServiceRegisterHandler() service.Handler {
 		}
 
 		srv.Uptodate = data.Version == sdk.VERSION
-		srv.LogServer = api.Config.CDN.TCP
+		srv.LogServerAdress = api.Config.CDN.PublicTCP
 
 		return service.WriteJSON(w, srv, http.StatusOK)
 	}
