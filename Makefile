@@ -49,12 +49,26 @@ goinstall:
 
 build:
 	$(info Building CDS Components for $(TARGET_OS) - $(TARGET_ARCH))
-	$(MAKE) build -C ui
-	$(MAKE) build -C engine OS="${TARGET_OS}" ARCH="${TARGET_ARCH}"
-	$(MAKE) build -C engine/worker OS="${TARGET_OS}" ARCH="${TARGET_ARCH}"
-	$(MAKE) build -C cli/cdsctl OS="$(foreach OS,${TARGET_OS},${OS}/%)" ARCH="$(foreach ARCH,${TARGET_ARCH},%/${ARCH})"
-	$(MAKE) build -C contrib OS="${TARGET_OS}" ARCH="${TARGET_ARCH}"
+	# Make UI and Engine in parallel
+	$(MAKE) build_ui -j2 $(MAKE) build_engine -j2
+	# Make Worker, CLI and contrib in parallel
+	$(MAKE) build_worker -j3 $(MAKE) build_cli -j3  $(MAKE) build_contrib -j3
 	$(MAKE) package -C contrib TARGET_DIST="$(abspath $(TARGET_DIR))"
+
+build_ui:
+	$(MAKE) build -C ui
+
+build_engine:
+	$(MAKE) build -C engine OS="${TARGET_OS}" ARCH="${TARGET_ARCH}"
+
+build_worker:
+	$(MAKE) build -C engine/worker OS="${TARGET_OS}" ARCH="${TARGET_ARCH}"
+
+build_cli:
+	$(MAKE) build -C cli/cdsctl OS="$(foreach OS,${TARGET_OS},${OS}/%)" ARCH="$(foreach ARCH,${TARGET_ARCH},%/${ARCH})"
+
+build_contrib:
+	 $(MAKE) build -C contrib OS="${TARGET_OS}" ARCH="${TARGET_ARCH}"
 
 define get_dist_from_target
 $(filter %/$(notdir $(1)), $(ALL_DIST))
