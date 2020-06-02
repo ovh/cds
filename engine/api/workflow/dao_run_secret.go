@@ -30,7 +30,7 @@ func InsertRunSecret(ctx context.Context, db gorp.SqlExecutor, wrSecret *sdk.Wor
 
 func loadRunSecretWithDecryption(ctx context.Context, db gorp.SqlExecutor, runID int64, entities []string) ([]sdk.Variable, error) {
 	var dbSecrets []dbWorkflowRunSecret
-	query := gorpmapping.NewQuery(`SELECT * FROM workflow_run_secret WHERE workflow_run_id = $1 AND context = ANY(string_to_array($1, ',')::text[])`).Args(runID, gorpmapping.IDStringsToQueryString(entities))
+	query := gorpmapping.NewQuery(`SELECT * FROM workflow_run_secret WHERE workflow_run_id = $1 AND context = ANY(string_to_array($2, ',')::text[])`).Args(runID, gorpmapping.IDStringsToQueryString(entities))
 	if err := gorpmapping.GetAll(ctx, db, query, &dbSecrets, gorpmapping.GetOptions.WithDecryption); err != nil {
 		return nil, err
 	}
