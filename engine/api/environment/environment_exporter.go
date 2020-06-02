@@ -45,7 +45,7 @@ func ExportEnvironment(db gorp.SqlExecutor, env sdk.Environment, encryptFunc sdk
 		case sdk.SecretVariable:
 			content, err := encryptFunc(db, env.ProjectID, fmt.Sprintf("envID:%d:%s", env.ID, v.Name), v.Value)
 			if err != nil {
-				return exportentities.Environment{}, sdk.WrapError(err, "Unknown key type")
+				return exportentities.Environment{}, sdk.WrapError(err, "unable to encrypt var for env %d in project %d", env.ID, env.ProjectID)
 			}
 			v.Value = content
 			envvars = append(envvars, v)
@@ -59,7 +59,7 @@ func ExportEnvironment(db gorp.SqlExecutor, env sdk.Environment, encryptFunc sdk
 	for _, k := range env.Keys {
 		content, err := encryptFunc(db, env.ProjectID, fmt.Sprintf("envID:%d:%s", env.ID, k.Name), k.Private)
 		if err != nil {
-			return exportentities.Environment{}, sdk.WrapError(err, "Unable to encrypt key")
+			return exportentities.Environment{}, sdk.WrapError(err, "unable to encrypt key for env %d in project %d", env.ID, env.ProjectID)
 		}
 		ek := exportentities.EncryptedKey{
 			Type:    string(k.Type),

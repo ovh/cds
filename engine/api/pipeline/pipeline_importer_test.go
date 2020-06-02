@@ -75,8 +75,8 @@ func testImportUpdate(t *testing.T, db gorp.SqlExecutor, store cache.Store, tt t
 }
 
 func TestImportUpdate(t *testing.T) {
-	db, cache, end := test.SetupPG(t, bootstrap.InitiliazeDB)
-	defer end()
+	db, cache := test.SetupPG(t, bootstrap.InitiliazeDB)
+
 	_ = event.Initialize(context.Background(), db, cache)
 
 	if db == nil {

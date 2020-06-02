@@ -16,8 +16,7 @@ import (
 )
 
 func TestDAO(t *testing.T) {
-	db, _, end := test.SetupPG(t, bootstrap.InitiliazeDB)
-	defer end()
+	db, _ := test.SetupPG(t, bootstrap.InitiliazeDB)
 
 	workers, err := worker.LoadAll(context.TODO(), db)
 	test.NoError(t, err)
@@ -62,15 +61,14 @@ func TestDAO(t *testing.T) {
 }
 
 func TestDeadWorkers(t *testing.T) {
-	db, _, end := test.SetupPG(t)
-	defer end()
+	db, _ := test.SetupPG(t)
+
 	test.NoError(t, worker.DisableDeadWorkers(context.TODO(), db))
 	test.NoError(t, worker.DeleteDeadWorkers(context.TODO(), db))
 }
 
 func TestRegister(t *testing.T) {
-	db, store, end := test.SetupPG(t, bootstrap.InitiliazeDB)
-	defer end()
+	db, store := test.SetupPG(t, bootstrap.InitiliazeDB)
 
 	g := assets.InsertGroup(t, db)
 	h, _, c, _ := assets.InsertHatchery(t, db, *g)

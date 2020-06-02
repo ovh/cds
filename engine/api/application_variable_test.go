@@ -15,8 +15,7 @@ import (
 )
 
 func Test_getVariableAuditInApplicationHandler(t *testing.T) {
-	api, db, router, end := newTestAPI(t)
-	defer end()
+	api, db, router := newTestAPI(t)
 
 	//Create admin user
 	u, pass := assets.InsertAdminUser(t, api.mustDB())

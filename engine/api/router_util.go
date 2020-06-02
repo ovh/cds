@@ -81,6 +81,13 @@ func FormString(r *http.Request, s string) string {
 	return r.FormValue(s)
 }
 
+// FormIntr return a int
+func FormInt(r *http.Request, s string) int {
+	v := r.FormValue(s)
+	i, _ := strconv.Atoi(v)
+	return i
+}
+
 // QueryString return a string from a query parameter
 func QueryString(r *http.Request, s string) string {
 	return r.FormValue(s)
@@ -154,19 +161,6 @@ func QuerySort(r *http.Request) (map[string]SortOrder, error) {
 	}
 
 	return res, nil
-}
-
-// FormInt return a int from query params
-func FormInt(r *http.Request, s string) (int, error) {
-	stringValue := FormString(r, s)
-	if stringValue == "" {
-		return 0, nil
-	}
-	i, err := strconv.Atoi(stringValue)
-	if err != nil {
-		return i, sdk.WrapError(sdk.ErrInvalidNumber, "FormInt> %s is not a integer", stringValue)
-	}
-	return i, nil
 }
 
 // requestVarInt return int value for a var in Request

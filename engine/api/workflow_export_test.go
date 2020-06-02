@@ -22,8 +22,8 @@ import (
 )
 
 func Test_getWorkflowExportHandler(t *testing.T) {
-	api, db, _, end := newTestAPI(t)
-	defer end()
+	api, db, _ := newTestAPI(t)
+
 	u, pass := assets.InsertAdminUser(t, api.mustDB())
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, api.mustDB(), api.Cache, key, key)
@@ -150,8 +150,8 @@ workflow:
 }
 
 func Test_getWorkflowExportHandlerWithPermissions(t *testing.T) {
-	api, db, _, end := newTestAPI(t)
-	defer end()
+	api, db, _ := newTestAPI(t)
+
 	u, pass := assets.InsertAdminUser(t, api.mustDB())
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, api.mustDB(), api.Cache, key, key)
@@ -284,8 +284,8 @@ history_length: 25
 }
 
 func Test_getWorkflowPullHandler(t *testing.T) {
-	api, db, _, end := newTestAPI(t)
-	defer end()
+	api, db, _ := newTestAPI(t)
+
 	u, pass := assets.InsertAdminUser(t, api.mustDB())
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, api.mustDB(), api.Cache, key, key)

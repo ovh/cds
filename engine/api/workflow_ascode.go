@@ -50,6 +50,10 @@ func (api *API) postWorkflowAsCodeHandler() service.Handler {
 		branch := FormString(r, "branch")
 		message := FormString(r, "message")
 
+		if branch == "" || message == "" {
+			return sdk.NewErrorFrom(sdk.ErrWrongRequest, "missing branch or message data")
+		}
+
 		u := getAPIConsumer(ctx)
 		p, err := project.Load(api.mustDB(), key,
 			project.LoadOptions.WithApplicationWithDeploymentStrategies,

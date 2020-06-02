@@ -18,8 +18,7 @@ import (
 
 // Given a consumer with two groups, if we invalidate one it should be invalidated and one warning should be set.
 func TestConsumerInvalidateGroupForUser_InvalidateOneConsumerGroup(t *testing.T) {
-	db, _, end := test.SetupPG(t, bootstrap.InitiliazeDB)
-	defer end()
+	db, _ := test.SetupPG(t, bootstrap.InitiliazeDB)
 
 	assets.DeleteConsumers(t, db)
 
@@ -58,8 +57,7 @@ func TestConsumerInvalidateGroupForUser_InvalidateOneConsumerGroup(t *testing.T)
 
 // Given a consumer with two groups, if we invalidate one it should not be invalidated if the user is an admin.
 func TestConsumerInvalidateGroupForUser_InvalidateOneConsumerGroupForAdmin(t *testing.T) {
-	db, _, end := test.SetupPG(t, bootstrap.InitiliazeDB)
-	defer end()
+	db, _ := test.SetupPG(t, bootstrap.InitiliazeDB)
 
 	assets.DeleteConsumers(t, db)
 
@@ -96,8 +94,7 @@ func TestConsumerInvalidateGroupForUser_InvalidateOneConsumerGroupForAdmin(t *te
 
 // Given a consumer with one group, if we invalidate the group it should disable the consumer and add two warnings.
 func TestConsumerInvalidateGroupForUser_InvalidateLastConsumerGroup(t *testing.T) {
-	db, _, end := test.SetupPG(t, bootstrap.InitiliazeDB)
-	defer end()
+	db, _ := test.SetupPG(t, bootstrap.InitiliazeDB)
 
 	assets.DeleteConsumers(t, db)
 
@@ -136,8 +133,7 @@ func TestConsumerInvalidateGroupForUser_InvalidateLastConsumerGroup(t *testing.T
 
 // Given a consumer with two groups, if we remove one a warning should be set.
 func TestConsumerRemoveGroup_RemoveOneConsumerGroup(t *testing.T) {
-	db, _, end := test.SetupPG(t, bootstrap.InitiliazeDB)
-	defer end()
+	db, _ := test.SetupPG(t, bootstrap.InitiliazeDB)
 
 	assets.DeleteConsumers(t, db)
 
@@ -175,8 +171,7 @@ func TestConsumerRemoveGroup_RemoveOneConsumerGroup(t *testing.T) {
 
 // Given a consumer with a valid and an invalid group, if we remove the invalid one a warning should be set to replace previous warning.
 func TestConsumerRemoveGroup_RemoveOneInvalidConsumerGroup(t *testing.T) {
-	db, _, end := test.SetupPG(t, bootstrap.InitiliazeDB)
-	defer end()
+	db, _ := test.SetupPG(t, bootstrap.InitiliazeDB)
 
 	assets.DeleteConsumers(t, db)
 
@@ -220,8 +215,7 @@ func TestConsumerRemoveGroup_RemoveOneInvalidConsumerGroup(t *testing.T) {
 
 // Given a consumer with one group, if we remove the group it should disable the consumer and add two warnings.
 func TestConsumerRemoveGroup_RemoveLastConsumerGroup(t *testing.T) {
-	db, _, end := test.SetupPG(t, bootstrap.InitiliazeDB)
-	defer end()
+	db, _ := test.SetupPG(t, bootstrap.InitiliazeDB)
 
 	assets.DeleteConsumers(t, db)
 
@@ -259,8 +253,7 @@ func TestConsumerRemoveGroup_RemoveLastConsumerGroup(t *testing.T) {
 
 // Given a consumer with one invalid group, if we remove the group it should disable the consumer and add two warnings.
 func TestConsumerRemoveGroup_RemoveLastInvalidConsumerGroup(t *testing.T) {
-	db, _, end := test.SetupPG(t, bootstrap.InitiliazeDB)
-	defer end()
+	db, _ := test.SetupPG(t, bootstrap.InitiliazeDB)
 
 	assets.DeleteConsumers(t, db)
 
@@ -309,8 +302,7 @@ func TestConsumerRemoveGroup_RemoveLastInvalidConsumerGroup(t *testing.T) {
 
 // Given a consumer with a valid and an invalid group, restoring the invalid one should remove warning.
 func TestConsumerRestoreInvalidatedGroupForUser_RestoreInvalidatedGroup(t *testing.T) {
-	db, _, end := test.SetupPG(t, bootstrap.InitiliazeDB)
-	defer end()
+	db, _ := test.SetupPG(t, bootstrap.InitiliazeDB)
 
 	assets.DeleteConsumers(t, db)
 
@@ -355,8 +347,7 @@ func TestConsumerRestoreInvalidatedGroupForUser_RestoreInvalidatedGroup(t *testi
 
 // Given a disabled consumer with an invalid group, restoring the group remove warning and re-enable the consumer.
 func TestConsumerLifecycle_RestoreInvalidatedLastGroup(t *testing.T) {
-	db, _, end := test.SetupPG(t, bootstrap.InitiliazeDB)
-	defer end()
+	db, _ := test.SetupPG(t, bootstrap.InitiliazeDB)
 
 	assets.DeleteConsumers(t, db)
 
@@ -401,8 +392,7 @@ func TestConsumerLifecycle_RestoreInvalidatedLastGroup(t *testing.T) {
 }
 
 func TestConsumerInvalidateGroupsForUser_InvalidateLastGroups(t *testing.T) {
-	db, _, end := test.SetupPG(t, bootstrap.InitiliazeDB)
-	defer end()
+	db, _ := test.SetupPG(t, bootstrap.InitiliazeDB)
 
 	assets.DeleteConsumers(t, db)
 
@@ -453,8 +443,7 @@ func TestConsumerInvalidateGroupsForUser_InvalidateLastGroups(t *testing.T) {
 }
 
 func TestConsumerRestoreInvalidatedGroupsForUser(t *testing.T) {
-	db, _, end := test.SetupPG(t, bootstrap.InitiliazeDB)
-	defer end()
+	db, _ := test.SetupPG(t, bootstrap.InitiliazeDB)
 
 	assets.DeleteConsumers(t, db)
 

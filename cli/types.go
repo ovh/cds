@@ -3,7 +3,6 @@ package cli
 import (
 	"fmt"
 	"reflect"
-	"sort"
 	"strconv"
 	"strings"
 
@@ -83,37 +82,7 @@ func (v *Values) GetStringArray(s string) []string {
 type Arg struct {
 	Name       string
 	IsValid    func(string) bool
-	Weight     int
 	AllowEmpty bool
-}
-
-func orderArgs(a ...Arg) args {
-	for i := range a {
-		if a[i].Weight == 0 {
-			a[i].Weight = i
-		}
-	}
-	res := args(a)
-	sort.Sort(res)
-	return res
-}
-
-type args []Arg
-
-// Len is the number of elements in the collection.
-func (s args) Len() int {
-	return len(s)
-}
-
-// Less reports whether the element with
-// index i should sort before the element with index j.
-func (s args) Less(i, j int) bool {
-	return s[i].Weight < s[j].Weight
-}
-
-// Swap swaps the elements with indexes i and j.
-func (s args) Swap(i, j int) {
-	s[i], s[j] = s[j], s[i]
 }
 
 // Command represents the way to instantiate a cobra.Command

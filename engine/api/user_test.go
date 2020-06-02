@@ -14,8 +14,7 @@ import (
 )
 
 func Test_getUsersHandler(t *testing.T) {
-	api, db, _, end := newTestAPI(t)
-	defer end()
+	api, db, _ := newTestAPI(t)
 
 	expected, jwtRaw := assets.InsertLambdaUser(t, db)
 
@@ -42,8 +41,7 @@ func Test_getUsersHandler(t *testing.T) {
 }
 
 func Test_getUserHandler(t *testing.T) {
-	api, db, _, end := newTestAPI(t)
-	defer end()
+	api, db, _ := newTestAPI(t)
 
 	expected, jwtRaw := assets.InsertLambdaUser(t, db)
 
@@ -62,8 +60,7 @@ func Test_getUserHandler(t *testing.T) {
 }
 
 func Test_putUserHandler(t *testing.T) {
-	api, db, _, end := newTestAPI(t)
-	defer end()
+	api, db, _ := newTestAPI(t)
 
 	assets.DeleteAdmins(t, db)
 
@@ -195,8 +192,7 @@ func Test_putUserHandler(t *testing.T) {
 }
 
 func Test_deleteUserHandler(t *testing.T) {
-	api, db, _, end := newTestAPI(t)
-	defer end()
+	api, db, _ := newTestAPI(t)
 
 	assets.DeleteAdmins(t, db)
 

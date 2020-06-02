@@ -21,10 +21,7 @@ var loggerCall = 0
 func Test_serviceLogs(t *testing.T) {
 	h := InitTestHatcherySwarm(t)
 	h.Common.ServiceInstance = &sdk.Service{
-		LogServer: sdk.TCPServer{
-			Addr: "tcphost",
-			Port: 8090,
-		},
+		LogServerAdress: "tcphost:8090",
 	}
 	reader := rand.Reader
 	bitSize := 2048

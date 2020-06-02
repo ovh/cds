@@ -89,6 +89,39 @@ func init() {
 }
 
 // PostGet is a db hook
+func (p *dbProject) PostGet(db gorp.SqlExecutor) error {
+	var fields = struct {
+		Metadata sql.NullString `db:"metadata"`
+	}{}
+
+	if err := db.QueryRow("select metadata from project where id = $1", p.ID).Scan(&fields.Metadata); err != nil {
+		return err
+	}
+
+	if err := gorpmapping.JSONNullString(fields.Metadata, &p.Metadata); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// PostUpdate is a db hook
+func (p *dbProject) PostUpdate(db gorp.SqlExecutor) error {
+	bm, errm := json.Marshal(p.Metadata)
+	if errm != nil {
+		return errm
+	}
+
+	_, err := db.Exec("update project set metadata = $2 where id = $1", p.ID, bm)
+	return err
+}
+
+// PostInsert is a db hook
+func (p *dbProject) PostInsert(db gorp.SqlExecutor) error {
+	return p.PostUpdate(db)
+}
+
+// PostGet is a db hook
 func (pva *dbProjectVariableAudit) PostGet(db gorp.SqlExecutor) error {
 	var before, after sql.NullString
 	query := "SELECT variable_before, variable_after from project_variable_audit WHERE id = $1"

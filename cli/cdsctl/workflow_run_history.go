@@ -20,7 +20,6 @@ var workflowHistoryCmd = cli.Command{
 				match, _ := regexp.MatchString(`[0-9]?`, s)
 				return match
 			},
-			Weight: 1,
 		},
 		{
 			Name: "limit",
@@ -28,7 +27,6 @@ var workflowHistoryCmd = cli.Command{
 				match, _ := regexp.MatchString(`[0-9]?`, s)
 				return match
 			},
-			Weight: 2,
 		},
 	},
 }

@@ -78,11 +78,11 @@ func (b *eventsBroker) cacheSubscribe(c context.Context, cacheMsgChan chan<- sdk
 	for {
 		select {
 		case <-c.Done():
-			if c.Err() != nil {
-				log.Error(c, "events.cacheSubscribe> Exiting: %v", c.Err())
-				return
-			}
+			return
 		case <-tick.C:
+			if c.Err() != nil {
+				continue
+			}
 			msg, err := store.GetMessageFromSubscription(c, pubSub)
 			if err != nil {
 				log.Warning(c, "events.cacheSubscribe> Cannot get message: %v", err)
@@ -120,10 +120,7 @@ func (b *eventsBroker) Start(ctx context.Context, panicCallback func(s string) (
 				}
 				observability.Record(b.router.Background, SSEClients, 0)
 			}
-			if ctx.Err() != nil {
-				log.Error(ctx, "eventsBroker.Start> Exiting: %v", ctx.Err())
-				return
-			}
+			return
 
 		case receivedEvent := <-b.messages:
 			for i := range b.clients {

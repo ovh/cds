@@ -141,8 +141,10 @@ export class WorkflowStepLogComponent implements OnInit, OnDestroy {
             let activeStep = parseInt(qps['stageId'], 10) === this.job.pipeline_stage_id &&
                 parseInt(qps['actionId'], 10) === this.job.pipeline_action_id && parseInt(qps['stepOrder'], 10) === this.stepOrder;
             if (activeStep) {
-                this.showLogs = true;
                 this.selectedLine = parseInt(qps['line'], 10);
+                if (!this.showLogs) {
+                    this.toggleLogs();
+                }
             } else {
                 this.selectedLine = null;
             }
@@ -343,7 +345,6 @@ export class WorkflowStepLogComponent implements OnInit, OnDestroy {
             stepOrder: this.stepOrder,
             line: lineNumber
         });
-        let fragment = 'L' + this.job.pipeline_stage_id + '-' + this.job.pipeline_action_id + '-' + this.stepOrder + '-' + lineNumber;
         this._router.navigate([
             'project',
             this._store.selectSnapshot(ProjectState.projectSnapshot).key,
@@ -353,6 +354,6 @@ export class WorkflowStepLogComponent implements OnInit, OnDestroy {
             (<WorkflowStateModel>this._store.selectSnapshot(WorkflowState)).workflowNodeRun.num,
             'node',
             (<WorkflowStateModel>this._store.selectSnapshot(WorkflowState)).workflowNodeRun.id
-        ], { queryParams: qps, fragment });
+        ], { queryParams: qps });
     }
 }

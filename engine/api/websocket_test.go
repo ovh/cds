@@ -17,8 +17,7 @@ import (
 )
 
 func Test_websocketWrongFilters(t *testing.T) {
-	api, tsURL, tsClose := newTestServer(t)
-	defer tsClose()
+	api, tsURL := newTestServer(t)
 
 	u, _ := assets.InsertAdminUser(t, api.mustDB())
 	localConsumer, err := authentication.LoadConsumerByTypeAndUserID(context.TODO(), api.mustDB(), sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
@@ -129,8 +128,7 @@ func Test_websocketWrongFilters(t *testing.T) {
 }
 
 func Test_websocketGetWorkflowEvent(t *testing.T) {
-	api, tsURL, tsClose := newTestServer(t)
-	defer tsClose()
+	api, tsURL := newTestServer(t)
 
 	u, _ := assets.InsertAdminUser(t, api.mustDB())
 	localConsumer, err := authentication.LoadConsumerByTypeAndUserID(context.TODO(), api.mustDB(), sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
@@ -186,8 +184,7 @@ func Test_websocketGetWorkflowEvent(t *testing.T) {
 }
 
 func Test_websocketDeconnection(t *testing.T) {
-	api, tsURL, tsClose := newTestServer(t)
-	defer tsClose()
+	api, tsURL := newTestServer(t)
 
 	u, _ := assets.InsertAdminUser(t, api.mustDB())
 	localConsumer, err := authentication.LoadConsumerByTypeAndUserID(context.TODO(), api.mustDB(), sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)

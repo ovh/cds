@@ -17,8 +17,7 @@ import (
 )
 
 func TestAddEnvironmentHandler(t *testing.T) {
-	api, db, router, end := newTestAPI(t)
-	defer end()
+	api, db, router := newTestAPI(t)
 
 	//1. Create admin user
 	u, pass := assets.InsertAdminUser(t, api.mustDB())
@@ -64,8 +63,7 @@ func TestAddEnvironmentHandler(t *testing.T) {
 }
 
 func TestUpdateEnvironmentHandler(t *testing.T) {
-	api, db, router, end := newTestAPI(t)
-	defer end()
+	api, db, router := newTestAPI(t)
 
 	//1. Create admin user
 	u, pass := assets.InsertAdminUser(t, api.mustDB())
@@ -122,8 +120,7 @@ func TestUpdateEnvironmentHandler(t *testing.T) {
 }
 
 func TestDeleteEnvironmentHandler(t *testing.T) {
-	api, db, router, end := newTestAPI(t)
-	defer end()
+	api, db, router := newTestAPI(t)
 
 	//1. Create admin user
 	u, pass := assets.InsertAdminUser(t, api.mustDB())
@@ -172,8 +169,7 @@ func TestDeleteEnvironmentHandler(t *testing.T) {
 }
 
 func TestGetEnvironmentsHandler(t *testing.T) {
-	api, db, router, end := newTestAPI(t)
-	defer end()
+	api, db, router := newTestAPI(t)
 
 	//1. Create admin user
 	u, pass := assets.InsertAdminUser(t, api.mustDB())
@@ -214,8 +210,7 @@ func TestGetEnvironmentsHandler(t *testing.T) {
 }
 
 func TestGetEnvironmentHandler(t *testing.T) {
-	api, db, router, end := newTestAPI(t)
-	defer end()
+	api, db, router := newTestAPI(t)
 
 	//1. Create admin user
 	u, pass := assets.InsertAdminUser(t, api.mustDB())
@@ -257,8 +252,7 @@ func TestGetEnvironmentHandler(t *testing.T) {
 }
 
 func Test_cloneEnvironmentHandler(t *testing.T) {
-	api, db, router, end := newTestAPI(t)
-	defer end()
+	api, db, router := newTestAPI(t)
 
 	//1. Create admin user
 	u, pass := assets.InsertAdminUser(t, api.mustDB())

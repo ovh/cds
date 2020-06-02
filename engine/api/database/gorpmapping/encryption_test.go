@@ -29,8 +29,7 @@ func (e TestEncryptedData) Canonical() gorpmapping.CanonicalForms {
 func TestEncryption(t *testing.T) {
 	gorpmapping.Register(gorpmapping.New(TestEncryptedData{}, "test_encrypted_data", true, "id"))
 
-	db, _, end := test.SetupPG(t)
-	defer end()
+	db, _ := test.SetupPG(t)
 
 	var d = TestEncryptedData{
 		Data:                 "data",
@@ -100,8 +99,7 @@ func TestEncryption(t *testing.T) {
 func TestEncryption_Multiple(t *testing.T) {
 	gorpmapping.Register(gorpmapping.New(TestEncryptedData{}, "test_encrypted_data", true, "id"))
 
-	db, _, end := test.SetupPG(t)
-	defer end()
+	db, _ := test.SetupPG(t)
 
 	var d = TestEncryptedData{
 		Data:                 "data",

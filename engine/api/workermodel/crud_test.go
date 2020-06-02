@@ -19,8 +19,7 @@ import (
 
 // create handler tests
 func TestCreateModel(t *testing.T) {
-	db, _, end := test.SetupPG(t, bootstrap.InitiliazeDB)
-	defer end()
+	db, _ := test.SetupPG(t, bootstrap.InitiliazeDB)
 
 	g := assets.InsertTestGroup(t, db, sdk.RandomString(10))
 	u, _ := assets.InsertLambdaUser(t, db)
@@ -51,8 +50,7 @@ func TestCreateModel(t *testing.T) {
 }
 
 func TestUpdateModel(t *testing.T) {
-	db, _, end := test.SetupPG(t, bootstrap.InitiliazeDB)
-	defer end()
+	db, _ := test.SetupPG(t, bootstrap.InitiliazeDB)
 
 	g1 := assets.InsertTestGroup(t, db, sdk.RandomString(10))
 	g2 := assets.InsertTestGroup(t, db, sdk.RandomString(10))
@@ -138,8 +136,7 @@ func TestUpdateModel(t *testing.T) {
 // rename worker model to aaa-bar
 // the pipeline should keep the name aaa-foo
 func TestUpdateModelInPipeline(t *testing.T) {
-	db, cache, end := test.SetupPG(t, bootstrap.InitiliazeDB)
-	defer end()
+	db, cache := test.SetupPG(t, bootstrap.InitiliazeDB)
 
 	g1 := assets.InsertTestGroup(t, db, sdk.RandomString(10))
 	u, _ := assets.InsertLambdaUser(t, db)
@@ -242,8 +239,7 @@ func TestUpdateModelInPipeline(t *testing.T) {
 }
 
 func TestUpdateModelInPipelineSimple(t *testing.T) {
-	db, cache, end := test.SetupPG(t, bootstrap.InitiliazeDB)
-	defer end()
+	db, cache := test.SetupPG(t, bootstrap.InitiliazeDB)
 
 	g1 := assets.InsertTestGroup(t, db, sdk.RandomString(10))
 	u, _ := assets.InsertLambdaUser(t, db)
@@ -364,8 +360,7 @@ func TestCopyModelTypeData_OldRestricted(t *testing.T) {
 }
 
 func TestUpdateModel_NeedRegister(t *testing.T) {
-	db, store, end := test.SetupPG(t, bootstrap.InitiliazeDB)
-	defer end()
+	db, store := test.SetupPG(t, bootstrap.InitiliazeDB)
 
 	g := assets.InsertTestGroup(t, db, sdk.RandomString(10))
 

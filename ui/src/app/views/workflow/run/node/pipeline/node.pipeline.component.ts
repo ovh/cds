@@ -61,9 +61,6 @@ export class WorkflowRunNodePipelineComponent implements OnInit, OnDestroy {
     }
 
     ngOnInit() {
-        this.queryParamsSub = this._route.queryParams.subscribe((queryParams) => {
-            this.updateSelectedItems(queryParams);
-        });
         this.nodeJobRunSubs = this.nodeJobRun$.subscribe(rj => {
             if (!rj && !this.currentJob) {
                 return;
@@ -100,12 +97,6 @@ export class WorkflowRunNodePipelineComponent implements OnInit, OnDestroy {
                 }
             }
         });
-    }
-
-    updateSelectedItems(queryParams) {
-        if (queryParams['actionId']) {
-            this.selectJob(queryParams['actionId']);
-        }
     }
 
     selectedJobManual(jobID: number) {
@@ -157,11 +148,14 @@ export class WorkflowRunNodePipelineComponent implements OnInit, OnDestroy {
                                 { status: rj.status, warnings, start: rj.start, done: rj.done });
                         }
 
-                        if (!currentNodeJobRun && sIndex === 0 && rjIndex === 0) {
+                        if (!currentNodeJobRun && sIndex === 0 && rjIndex === 0 && !this._route.snapshot.queryParams['actionId']) {
                             refresh = true;
                             this.selectJob(s.jobs[0].pipeline_action_id);
                         } else if (currentNodeJobRun && currentNodeJobRun.job.pipeline_action_id === this.currentJob.pipeline_action_id) {
                             this.selectJob(this.currentJob.pipeline_action_id);
+                        } else if (this._route.snapshot.queryParams['actionId'] &&
+                            this._route.snapshot.queryParams['actionId'] === rj.job.pipeline_action_id.toString()) {
+                            this.selectJob(rj.job.pipeline_action_id);
                         }
                     });
                 }
