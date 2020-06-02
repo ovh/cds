@@ -447,6 +447,7 @@ func Test_postTakeWorkflowJobHandler(t *testing.T) {
 
 	// Add cdn config
 	api.Config.CDN = cdn.Configuration{
+		PublicTCP: "cdn.net:4545",
 		TCP: sdk.TCPServer{
 			Port: 8090,
 			Addr: "localhost",
@@ -486,7 +487,7 @@ func Test_postTakeWorkflowJobHandler(t *testing.T) {
 		}
 	}
 
-	assert.Equal(t, "localhost:8090", pbji.GelfServiceAddr)
+	assert.Equal(t, "cdn.net:4545", pbji.GelfServiceAddr)
 
 	run, err := workflow.LoadNodeJobRun(context.TODO(), api.mustDB(), api.Cache, ctx.job.ID)
 	require.NoError(t, err)
