@@ -191,10 +191,10 @@ func (w Workflow) GetWorkflow() (*sdk.Workflow, error) {
 	wf.ProjectIntegrations = make(map[int64]sdk.ProjectIntegration)
 
 	if err := w.CheckValidity(); err != nil {
-		return nil, sdk.WrapError(err, "Unable to check validity")
+		return nil, sdk.WrapError(err, "unable to check validity")
 	}
 	if err := w.CheckDependencies(); err != nil {
-		return nil, sdk.WrapError(err, "Unable to check dependencies")
+		return nil, sdk.WrapError(err, "unable to check dependencies")
 	}
 	wf.PurgeTags = w.PurgeTags
 	if len(w.Metadata) > 0 {
@@ -307,7 +307,7 @@ func (e *NodeEntry) getNode(name string) (*sdk.Node, error) {
 
 	if len(e.Payload) > 0 {
 		if len(e.DependsOn) > 0 {
-			return nil, sdk.WrapError(sdk.ErrInvalidNodeDefaultPayload, "Default payload cannot be set on another node than the first one (node : %s)", name)
+			return nil, sdk.NewErrorFrom(sdk.ErrInvalidNodeDefaultPayload, "default payload cannot be set on another node than the first one (node: %s)", name)
 		}
 		node.Context.DefaultPayload = e.Payload
 	}

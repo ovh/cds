@@ -101,7 +101,7 @@ func NewWorkflow(ctx context.Context, w sdk.Workflow, version string, opts ...Ex
 
 		entry, err := craftNodeEntry(w, *n)
 		if err != nil {
-			return exportedWorkflow, sdk.WrapError(err, "Unable to craft Node entry %s", n.Name)
+			return exportedWorkflow, sdk.WrapError(err, "unable to craft Node entry %s", n.Name)
 		}
 		exportedWorkflow.Workflow[n.Name] = entry
 
@@ -112,7 +112,7 @@ func NewWorkflow(ctx context.Context, w sdk.Workflow, version string, opts ...Ex
 
 			m := sdk.GetBuiltinHookModelByName(h.HookModelName)
 			if m == nil {
-				return exportedWorkflow, sdk.WrapError(sdk.ErrNotFound, "unable to find hook model %s", h.HookModelName)
+				return exportedWorkflow, sdk.NewErrorFrom(sdk.ErrNotFound, "unable to find hook model %s", h.HookModelName)
 			}
 			pipHook := HookEntry{
 				Model:      h.HookModelName,
@@ -135,7 +135,7 @@ func NewWorkflow(ctx context.Context, w sdk.Workflow, version string, opts ...Ex
 
 	for _, f := range opts {
 		if err := f(w, &exportedWorkflow); err != nil {
-			return exportedWorkflow, sdk.WrapError(err, "Unable to run function")
+			return exportedWorkflow, sdk.WrapError(err, "unable to run function")
 		}
 	}
 
@@ -239,7 +239,7 @@ func craftNodeEntry(w sdk.Workflow, n sdk.Node) (NodeEntry, error) {
 			enc.Formatters = nil
 			m, err := enc.ToMap(n.Context.DefaultPayload)
 			if err != nil {
-				return entry, sdk.WrapError(err, "Unable to encode payload")
+				return entry, sdk.WrapError(err, "unable to encode payload")
 			}
 			entry.Payload = m
 		}
@@ -630,7 +630,7 @@ func (e *NodeEntry) getNode(name string) (*sdk.Node, error) {
 
 	if len(e.Payload) > 0 {
 		if len(e.DependsOn) > 0 {
-			return nil, sdk.NewErrorFrom(sdk.ErrInvalidNodeDefaultPayload, "default payload cannot be set on another node than the first one (node : %s)", name)
+			return nil, sdk.NewErrorFrom(sdk.ErrInvalidNodeDefaultPayload, "default payload cannot be set on another node than the first one (node: %s)", name)
 		}
 		node.Context.DefaultPayload = e.Payload
 	}
