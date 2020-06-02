@@ -68,6 +68,9 @@ manifestbuild:
 			echo "$$PLUGIN_MANIFEST_BINARY" > $(TARGET_DIR)/plugin-$$PACKAGE-$$GOOS-$$GOARCH.yml; \
 			perl -pi -e s,%os%,$$GOOS,g $(TARGET_DIR)/plugin-$$PACKAGE-$$GOOS-$$GOARCH.yml; \
 			perl -pi -e s,%arch%,$$GOARCH,g $(TARGET_DIR)/plugin-$$PACKAGE-$$GOOS-$$GOARCH.yml; \
+			EXTENSION=""; \
+			if test "$$GOOS" = "windows" ; then EXTENSION=".exe"; fi; \
+			FILENAME=plugin-$$PACKAGE-$$GOOS-$$GOARCH$$EXTENSION; \
 			perl -pi -e s,%filename%,$$FILENAME,g $(TARGET_DIR)/plugin-$$PACKAGE-$$GOOS-$$GOARCH.yml; \
 			pluginname=$$PACKAGE; \
 			cp $$PACKAGE/$$pluginname.yml $(TARGET_DIR)/plugin-$$PACKAGE.yml; \
@@ -81,25 +84,27 @@ publish-all:
 	@echo "Updating plugins..."
 	@for plugin in $(DIRS); do \
 		pluginname=$(basename "$$plugin"); \
-		cdsctl admin plugins import $$plugin/$(TARGET_DIR)/plugin.yml; \
+		if test "$$pluginname" = "examples" ; then continue; fi; \
+		if test "$$pluginname" = "dist" ; then continue; fi; \
+		cdsctl admin plugins import $(TARGET_DIR)/plugin-$$plugin.yml; \
 		for GOOS in $(TARGET_OS); do \
 			for GOARCH in $(TARGET_ARCH); do \
 			EXTENSION=""; \
 			if test "$$GOOS" = "windows" ; then EXTENSION=".exe"; fi; \
 			echo "Updating plugin binary $$pluginname-$$GOOS-$$GOARCH$$EXTENSION"; \
-			cdsctl admin plugins binary-add plugin-$$pluginname $$plugin/$(TARGET_DIR)/plugin-$$GOOS-$$GOARCH.yml $$plugin/$(TARGET_DIR)/$$pluginname-$$GOOS-$$GOARCH$$EXTENSION; \
+			cdsctl admin plugins binary-add plugin-$$pluginname $(TARGET_DIR)/plugin-$$pluginname-$$GOOS-$$GOARCH.yml $(TARGET_DIR)/plugin-$$pluginname-$$GOOS-$$GOARCH$$EXTENSION; \
 			done; \
 		done; \
 	done;
 
 publish:
 	@echo "Updating plugin $(TARGET_NAME)..."
-	cdsctl admin plugins import $(TARGET_NAME)/$(TARGET_DIR)/plugin.yml
+	cdsctl admin plugins import $(TARGET_DIR)/plugin-$(TARGET_NAME).yml
 	@for GOOS in $(TARGET_OS); do \
 		for GOARCH in $(TARGET_ARCH); do \
 			EXTENSION=""; \
 			if test "$$GOOS" = "windows" ; then EXTENSION=".exe"; fi; \
 			echo "Updating plugin binary $(TARGET_NAME)-$$GOOS-$$GOARCH$$EXTENSION"; \
-			cdsctl admin plugins binary-add plugin-$(TARGET_NAME) $(TARGET_NAME)/$(TARGET_DIR)/plugin-$$GOOS-$$GOARCH.yml $(TARGET_NAME)/$(TARGET_DIR)/$(TARGET_NAME)-$$GOOS-$$GOARCH$$EXTENSION; \
+			cdsctl admin plugins binary-add plugin-$(TARGET_NAME) $(TARGET_DIR)/plugin-$(TARGET_NAME)-$$GOOS-$$GOARCH.yml $(TARGET_DIR)/plugin-$(TARGET_NAME)-$$GOOS-$$GOARCH$$EXTENSION; \
 		done; \
 	done
