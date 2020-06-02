@@ -10,12 +10,26 @@ DROP TABLE IF EXISTS "access_token";
 -- Clean for 156_integration.sql
 ALTER TABLE "application_deployment_strategy" DROP COLUMN IF EXISTS project_platform_id;
 
+-- Clean for 158_workflow_node_permission.sql
+DROP TABLE IF EXISTS "workflow_group";
+DROP TABLE IF EXISTS "application_group";
+DROP TABLE IF EXISTS "environment_group";
+DROP TABLE IF EXISTS "pipeline_group";
+
 -- Clean for 180_user.sql
 DROP TABLE IF EXISTS "authentified_user_migration";
+DROP TABLE IF EXISTS "old_worker";
+DROP TABLE IF EXISTS "old_services";
 
 -- Clean for 183_drop_deprecated_user.sql
-DROP TABLE IF EXISTS "user";
 DROP TABLE IF EXISTS "user_persistent_session";
+DROP TABLE IF EXISTS "group_user";
+ALTER TABLE "project_favorite" DROP COLUMN IF EXISTS user_id;
+ALTER TABLE "workflow_favorite" DROP COLUMN IF EXISTS user_id;
+ALTER TABLE "broadcast_read" DROP COLUMN IF EXISTS user_id;
+ALTER TABLE "user_timeline" DROP COLUMN IF EXISTS user_id;
+ALTER TABLE "workflow_template_bulk" DROP COLUMN IF EXISTS user_id;
+DROP TABLE IF EXISTS "user";
 
 -- Clean for 185_consumer_scopes.sql
 ALTER TABLE "auth_consumer" DROP COLUMN scopes;
@@ -23,14 +37,28 @@ ALTER TABLE "auth_consumer" DROP COLUMN scopes;
 -- Clean for 186_application_key.sql
 DROP TABLE IF EXISTS "application_key_tmp";
 
+-- Clean for 187_project_key.sql
+DROP TABLE IF EXISTS "project_key_tmp";
+
+-- Clean for 189_environment_key.sql
+DROP TABLE IF EXISTS "environment_key_tmp";
+
 -- Clean for 190_application_variables.sql
 DROP TABLE IF EXISTS "application_variable_tmp";
+
+-- Clean for 191_project_variables.sql
+DROP TABLE IF EXISTS "project_variable_tmp";
+
+-- Clean for 192_environment_variables.sql
+DROP TABLE IF EXISTS "environment_variable_tmp";
 
 -- Clean for 198_app_crypto.sql
 ALTER TABLE "application" DROP COLUMN IF EXISTS repositories_manager_id;
 ALTER TABLE "application" DROP COLUMN IF EXISTS vcs_strategy;
 ALTER TABLE "application_deployment_strategy" DROP COLUMN IF EXISTS config;
 
+-- Clean for 199_refact_integration_crypto.sql
+ALTER TABLE "project_integration" DROP COLUMN IF EXISTS config;
 
 -- +migrate Down
 
