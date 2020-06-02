@@ -7,7 +7,6 @@ import (
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/application"
-	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/observability"
 	"github.com/ovh/cds/sdk"
@@ -16,11 +15,11 @@ import (
 )
 
 // Export a workflow
-func Export(ctx context.Context, db gorp.SqlExecutor, cache cache.Store, proj sdk.Project, name string, opts ...v2.ExportOptions) (exportentities.Workflow, error) {
+func Export(ctx context.Context, db gorp.SqlExecutor, projIdent sdk.ProjectIdentifiers, name string, opts ...v2.ExportOptions) (exportentities.Workflow, error) {
 	ctx, end := observability.Span(ctx, "workflow.Export")
 	defer end()
 
-	wf, err := Load(ctx, db, cache, proj, name, LoadOptions{})
+	wf, err := Load(ctx, db, projIdent, name, LoadOptions{})
 	if err != nil {
 		return v2.Workflow{}, sdk.WrapError(err, "cannot load workflow %s", name)
 	}
@@ -39,7 +38,7 @@ func Export(ctx context.Context, db gorp.SqlExecutor, cache cache.Store, proj sd
 }
 
 // Pull a workflow with all it dependencies; it writes a tar buffer in the writer
-func Pull(ctx context.Context, db gorp.SqlExecutor, cache cache.Store, proj sdk.Project, name string,
+func Pull(ctx context.Context, db gorp.SqlExecutor, projIdent sdk.ProjectIdentifiers, name string,
 	encryptFunc sdk.EncryptFunc, opts ...v2.ExportOptions) (exportentities.WorkflowComponents, error) {
 
 	ctx, end := observability.Span(ctx, "workflow.Pull")
@@ -47,7 +46,7 @@ func Pull(ctx context.Context, db gorp.SqlExecutor, cache cache.Store, proj sdk.
 
 	var wp exportentities.WorkflowComponents
 
-	wf, err := Load(ctx, db, cache, proj, name, LoadOptions{
+	wf, err := Load(ctx, db, projIdent, name, LoadOptions{
 		DeepPipeline: true,
 		WithTemplate: true,
 	})

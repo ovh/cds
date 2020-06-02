@@ -641,7 +641,7 @@ type PollingInfos struct {
 }
 
 // GetPollingInfos returns polling_supported and polling_disabled for a vcs server
-func GetPollingInfos(ctx context.Context, c sdk.VCSAuthorizedClientService, prj sdk.Project) (PollingInfos, error) {
+func GetPollingInfos(ctx context.Context, c sdk.VCSAuthorizedClientService, prjKey string) (PollingInfos, error) {
 	client, ok := c.(*vcsClient)
 	if !ok {
 		return PollingInfos{}, fmt.Errorf("Polling infos cast error")
@@ -649,7 +649,7 @@ func GetPollingInfos(ctx context.Context, c sdk.VCSAuthorizedClientService, prj 
 	res := PollingInfos{}
 	path := fmt.Sprintf("/vcs/%s/polling", client.name)
 	if _, err := client.doJSONRequest(ctx, "GET", path, nil, &res); err != nil {
-		return PollingInfos{}, sdk.WrapError(err, "project %s", prj.Key)
+		return PollingInfos{}, sdk.WrapError(err, "project %s", prjKey)
 	}
 	return res, nil
 }

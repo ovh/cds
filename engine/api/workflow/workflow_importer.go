@@ -12,12 +12,12 @@ import (
 )
 
 //Import is able to create a new workflow and all its components
-func Import(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj sdk.Project, oldW, w *sdk.Workflow, u sdk.Identifiable, force bool, msgChan chan<- sdk.Message) error {
+func Import(ctx context.Context, db gorp.SqlExecutor, store cache.Store, projIdent sdk.ProjectIdentifiers, projectsGroups []sdk.GroupPermission, oldW, w *sdk.Workflow, force bool, msgChan chan<- sdk.Message) error {
 	ctx, end := observability.Span(ctx, "workflow.Import")
 	defer end()
 
-	w.ProjectKey = proj.Key
-	w.ProjectID = proj.ID
+	w.ProjectKey = projIdent.Key
+	w.ProjectID = projIdent.ID
 
 	// Default value of history length is 20
 	if w.HistoryLength == 0 {
@@ -30,7 +30,7 @@ func Import(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj sd
 
 	// create the workflow if not exists
 	if oldW == nil {
-		if err := Insert(ctx, db, store, proj, w); err != nil {
+		if err := Insert(ctx, db, store, projIdent, w, projectsGroups); err != nil {
 			return sdk.WrapError(err, "Unable to insert workflow")
 		}
 		if msgChan != nil {
@@ -77,7 +77,7 @@ func Import(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj sd
 		DisableHookManagement: w.DerivationBranch != "",
 	}
 
-	if err := Update(ctx, db, store, proj, w, uptOptions); err != nil {
+	if err := Update(ctx, db, store, projIdent, w, uptOptions); err != nil {
 		return sdk.WrapError(err, "Unable to update workflow")
 	}
 

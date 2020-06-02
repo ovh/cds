@@ -21,16 +21,16 @@ func (api *API) postUserFavoriteHandler() service.Handler {
 		consumer := getAPIConsumer(ctx)
 
 		p, err := project.Load(api.mustDB(), params.ProjectKey,
-			project.LoadOptions.WithIntegrations,
 			project.LoadOptions.WithFavorites(consumer.AuthentifiedUser.ID),
 		)
 		if err != nil {
 			return sdk.WrapError(err, "unable to load projet")
 		}
 
+		projIdent := sdk.ProjectIdentifiers{ID: p.ID, Key: p.Key}
 		switch params.Type {
 		case "workflow":
-			wf, err := workflow.Load(ctx, api.mustDB(), api.Cache, *p, params.WorkflowName, workflow.LoadOptions{})
+			wf, err := workflow.Load(ctx, api.mustDB(), projIdent, params.WorkflowName, workflow.LoadOptions{})
 			if err != nil {
 				return sdk.WrapError(err, "cannot load workflow %s/%s", params.ProjectKey, params.WorkflowName)
 			}

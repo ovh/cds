@@ -116,16 +116,16 @@ func TestPull(t *testing.T) {
 		},
 	}
 
-	proj, _ = project.Load(db, proj.Key, project.LoadOptions.WithApplications, project.LoadOptions.WithEnvironments, project.LoadOptions.WithPipelines)
+	proj, _ = project.Load(db, proj.Key, project.LoadOptions.WithGroups)
+	projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
+	test.NoError(t, workflow.Insert(context.TODO(), db, cache, projIdent, &w, proj.ProjectGroups))
 
-	test.NoError(t, workflow.Insert(context.TODO(), db, cache, *proj, &w))
-
-	w1, err := workflow.Load(context.TODO(), db, cache, *proj, "test_1", workflow.LoadOptions{})
+	w1, err := workflow.Load(context.TODO(), db, projIdent, "test_1", workflow.LoadOptions{})
 	test.NoError(t, err)
 	test.Equal(t, w.Metadata, w1.Metadata)
 	test.Equal(t, w.PurgeTags, w1.PurgeTags)
 
-	pull, err := workflow.Pull(context.TODO(), db, cache, *proj, w1.Name, project.EncryptWithBuiltinKey)
+	pull, err := workflow.Pull(context.TODO(), db, projIdent, w1.Name, project.EncryptWithBuiltinKey)
 	test.NoError(t, err)
 
 	buff := new(bytes.Buffer)

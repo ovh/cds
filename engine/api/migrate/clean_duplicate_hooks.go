@@ -54,16 +54,13 @@ func cleanDuplicateHooks(ctx context.Context, db *gorp.DbMap, store cache.Store,
 		return nil
 	}
 
-	proj, err := project.LoadByID(tx, projectID,
-		project.LoadOptions.WithApplicationWithDeploymentStrategies,
-		project.LoadOptions.WithPipelines,
-		project.LoadOptions.WithEnvironments,
-		project.LoadOptions.WithIntegrations)
+	p, err := project.LoadByID(tx, projectID)
+	projIdent := sdk.ProjectIdentifiers{ID: p.ID, Key: p.Key}
 	if err != nil {
 		return sdk.WrapError(err, "unable to load project %d", projectID)
 	}
 
-	w, err := workflow.LoadAndLockByID(ctx, tx, store, *proj, workflowID, workflow.LoadOptions{})
+	w, err := workflow.LoadAndLockByID(ctx, tx, projIdent, workflowID, workflow.LoadOptions{})
 	if err != nil {
 		if sdk.ErrorIs(err, sdk.ErrNotFound) {
 			return nil
@@ -120,17 +117,17 @@ func cleanDuplicateHooks(ctx context.Context, db *gorp.DbMap, store cache.Store,
 	}
 	w.WorkflowData.Node.Hooks = newHooks
 
-	if err := workflow.Update(ctx, tx, store, *proj, w, workflow.UpdateOptions{DisableHookManagement: dryrun}); err != nil {
+	if err := workflow.Update(ctx, tx, store, projIdent, w, workflow.UpdateOptions{DisableHookManagement: dryrun}); err != nil {
 		return err
 	}
 
 	if dryrun {
-		log.Info(ctx, "migrate.cleanDuplicateHooks> workflow %s/%s (%d) should been cleaned", proj.Name, w.Name, w.ID)
+		log.Info(ctx, "migrate.cleanDuplicateHooks> workflow %s/%s (%d) should been cleaned", projIdent.Key, w.Name, w.ID)
 	} else {
 		if err := tx.Commit(); err != nil {
 			return err
 		}
-		log.Info(ctx, "migrate.cleanDuplicateHooks> workflow %s/%s (%d) has been cleaned", proj.Name, w.Name, w.ID)
+		log.Info(ctx, "migrate.cleanDuplicateHooks> workflow %s/%s (%d) has been cleaned", projIdent.Key, w.Name, w.ID)
 	}
 
 	return nil
@@ -178,16 +175,13 @@ func fixEmptyUUIDHooks(ctx context.Context, db *gorp.DbMap, store cache.Store, w
 		return nil
 	}
 
-	proj, err := project.LoadByID(tx, projectID,
-		project.LoadOptions.WithApplicationWithDeploymentStrategies,
-		project.LoadOptions.WithPipelines,
-		project.LoadOptions.WithEnvironments,
-		project.LoadOptions.WithIntegrations)
+	proj, err := project.LoadByID(tx, projectID)
 	if err != nil {
 		return sdk.WrapError(err, "unable to load project %d", projectID)
 	}
 
-	w, err := workflow.LoadAndLockByID(ctx, tx, store, *proj, workflowID, workflow.LoadOptions{})
+	projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
+	w, err := workflow.LoadAndLockByID(ctx, tx, projIdent, workflowID, workflow.LoadOptions{})
 	if err != nil {
 		if sdk.ErrorIs(err, sdk.ErrNotFound) {
 			return nil
@@ -201,7 +195,7 @@ func fixEmptyUUIDHooks(ctx context.Context, db *gorp.DbMap, store cache.Store, w
 		}
 	}
 
-	if err := workflow.Update(ctx, tx, store, *proj, w, workflow.UpdateOptions{}); err != nil {
+	if err := workflow.Update(ctx, tx, store, projIdent, w, workflow.UpdateOptions{}); err != nil {
 		return err
 	}
 

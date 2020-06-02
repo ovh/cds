@@ -360,7 +360,7 @@ func (api *API) postTemplateApplyHandler() service.Handler {
 		}
 
 		// load project with key
-		p, err := project.Load(api.mustDB(), req.ProjectKey,
+		proj, err := project.Load(api.mustDB(), req.ProjectKey,
 			project.LoadOptions.WithGroups,
 			project.LoadOptions.WithApplications,
 			project.LoadOptions.WithEnvironments,
@@ -373,6 +373,7 @@ func (api *API) postTemplateApplyHandler() service.Handler {
 			return err
 		}
 
+		projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
 		data := exportentities.WorkflowComponents{
 			Template: exportentities.TemplateInstance{
 				Name:       req.WorkflowName,
@@ -393,12 +394,12 @@ func (api *API) postTemplateApplyHandler() service.Handler {
 		// was not already applied to the same target workflow. If there is already a workflow and it's ascode we will
 		// create a PR from the apply request and we will not execute the template.
 		if withImport && !req.Detached {
-			wti, err := workflowtemplate.LoadInstanceByTemplateIDAndProjectIDAndRequestWorkflowName(ctx, api.mustDB(), wt.ID, p.ID, req.WorkflowName)
+			wti, err := workflowtemplate.LoadInstanceByTemplateIDAndProjectIDAndRequestWorkflowName(ctx, api.mustDB(), wt.ID, projIdent.ID, req.WorkflowName)
 			if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
 				return err
 			}
 			if wti != nil && wti.WorkflowID != nil {
-				existingWorkflow, err := workflow.LoadByID(ctx, api.mustDB(), api.Cache, *p, *wti.WorkflowID, workflow.LoadOptions{})
+				existingWorkflow, err := workflow.LoadByID(ctx, api.mustDB(), projIdent, *wti.WorkflowID, workflow.LoadOptions{})
 				if err != nil {
 					return err
 				}
@@ -414,7 +415,7 @@ func (api *API) postTemplateApplyHandler() service.Handler {
 						return sdk.NewErrorFrom(sdk.ErrWrongRequest, "cannot find the root application of the workflow")
 					}
 
-					ope, err := operation.PushOperationUpdate(ctx, api.mustDB(), api.Cache, *p, data, rootApp.VCSServer, rootApp.RepositoryFullname, branch, message, rootApp.RepositoryStrategy, consumer)
+					ope, err := operation.PushOperationUpdate(ctx, api.mustDB(), api.Cache, *proj, data, rootApp.VCSServer, rootApp.RepositoryFullname, branch, message, rootApp.RepositoryStrategy, consumer)
 					if err != nil {
 						return err
 					}
@@ -427,9 +428,9 @@ func (api *API) postTemplateApplyHandler() service.Handler {
 							FromRepo:      existingWorkflow.FromRepository,
 							OperationUUID: ope.UUID,
 						}
-						asCodeEvent := ascode.UpdateAsCodeResult(ctx, api.mustDB(), api.Cache, *p, existingWorkflow.ID, *rootApp, ed, consumer)
+						asCodeEvent := ascode.UpdateAsCodeResult(ctx, api.mustDB(), api.Cache, projIdent, existingWorkflow.ID, *rootApp, ed, consumer)
 						if asCodeEvent != nil {
-							event.PublishAsCodeEvent(ctx, p.Key, *asCodeEvent, consumer)
+							event.PublishAsCodeEvent(ctx, projIdent.Key, *asCodeEvent, consumer)
 						}
 					}, api.PanicDump())
 
@@ -439,12 +440,12 @@ func (api *API) postTemplateApplyHandler() service.Handler {
 		}
 
 		mods := []workflowtemplate.TemplateRequestModifierFunc{
-			workflowtemplate.TemplateRequestModifiers.DefaultKeys(*p),
+			workflowtemplate.TemplateRequestModifiers.DefaultKeys(*proj),
 		}
 		if req.Detached {
 			mods = append(mods, workflowtemplate.TemplateRequestModifiers.Detached)
 		}
-		_, wti, err := workflowtemplate.CheckAndExecuteTemplate(ctx, api.mustDB(), *consumer, *p, &data, mods...)
+		_, wti, err := workflowtemplate.CheckAndExecuteTemplate(ctx, api.mustDB(), *consumer, projIdent, &data, mods...)
 		if err != nil {
 			return err
 		}
@@ -459,7 +460,7 @@ func (api *API) postTemplateApplyHandler() service.Handler {
 			return service.Write(w, buf.Bytes(), http.StatusOK, "application/tar")
 		}
 
-		msgs, wkf, oldWkf, _, err := workflow.Push(ctx, api.mustDB(), api.Cache, p, data, nil, consumer, project.DecryptWithBuiltinKey)
+		msgs, wkf, oldWkf, _, err := workflow.Push(ctx, api.mustDB(), api.Cache, proj, data, nil, consumer, project.DecryptWithBuiltinKey)
 		if err != nil {
 			return sdk.WrapError(err, "cannot push generated workflow")
 		}
@@ -477,9 +478,9 @@ func (api *API) postTemplateApplyHandler() service.Handler {
 		}
 
 		if oldWkf != nil {
-			event.PublishWorkflowUpdate(ctx, p.Key, *wkf, *oldWkf, getAPIConsumer(ctx))
+			event.PublishWorkflowUpdate(ctx, projIdent.Key, *wkf, *oldWkf, getAPIConsumer(ctx))
 		} else {
-			event.PublishWorkflowAdd(ctx, p.Key, *wkf, getAPIConsumer(ctx))
+			event.PublishWorkflowAdd(ctx, projIdent.Key, *wkf, getAPIConsumer(ctx))
 		}
 
 		return service.WriteJSON(w, msgStrings, http.StatusOK)
@@ -598,6 +599,8 @@ func (api *API) postTemplateBulkHandler() service.Handler {
 						continue
 					}
 
+					projIdent := sdk.ProjectIdentifiers{ID: p.ID, Key: p.Key}
+
 					// apply and import workflow
 					data := exportentities.WorkflowComponents{
 						Template: exportentities.TemplateInstance{
@@ -608,7 +611,7 @@ func (api *API) postTemplateBulkHandler() service.Handler {
 					}
 
 					// In case we want to update a workflow that is ascode, we want to create a PR instead of pushing directly the new workflow.
-					wti, err := workflowtemplate.LoadInstanceByTemplateIDAndProjectIDAndRequestWorkflowName(ctx, api.mustDB(), wt.ID, p.ID, data.Template.Name)
+					wti, err := workflowtemplate.LoadInstanceByTemplateIDAndProjectIDAndRequestWorkflowName(ctx, api.mustDB(), wt.ID, projIdent.ID, data.Template.Name)
 					if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
 						if errD := errorDefer(err); errD != nil {
 							log.Error(ctx, "%v", errD)
@@ -617,7 +620,7 @@ func (api *API) postTemplateBulkHandler() service.Handler {
 						continue
 					}
 					if wti != nil && wti.WorkflowID != nil {
-						existingWorkflow, err := workflow.LoadByID(ctx, api.mustDB(), api.Cache, *p, *wti.WorkflowID, workflow.LoadOptions{})
+						existingWorkflow, err := workflow.LoadByID(ctx, api.mustDB(), projIdent, *wti.WorkflowID, workflow.LoadOptions{})
 						if err != nil {
 							if errD := errorDefer(err); errD != nil {
 								log.Error(ctx, "%v", errD)
@@ -661,9 +664,9 @@ func (api *API) postTemplateBulkHandler() service.Handler {
 								FromRepo:      existingWorkflow.FromRepository,
 								OperationUUID: ope.UUID,
 							}
-							asCodeEvent := ascode.UpdateAsCodeResult(ctx, api.mustDB(), api.Cache, *p, existingWorkflow.ID, *rootApp, ed, consumer)
+							asCodeEvent := ascode.UpdateAsCodeResult(ctx, api.mustDB(), api.Cache, projIdent, existingWorkflow.ID, *rootApp, ed, consumer)
 							if asCodeEvent != nil {
-								event.PublishAsCodeEvent(ctx, p.Key, *asCodeEvent, consumer)
+								event.PublishAsCodeEvent(ctx, projIdent.Key, *asCodeEvent, consumer)
 							}
 
 							bulk.Operations[i].Status = sdk.OperationStatusDone
@@ -679,7 +682,7 @@ func (api *API) postTemplateBulkHandler() service.Handler {
 					mods := []workflowtemplate.TemplateRequestModifierFunc{
 						workflowtemplate.TemplateRequestModifiers.DefaultKeys(*p),
 					}
-					_, wti, err = workflowtemplate.CheckAndExecuteTemplate(ctx, api.mustDB(), *consumer, *p, &data, mods...)
+					_, wti, err = workflowtemplate.CheckAndExecuteTemplate(ctx, api.mustDB(), *consumer, projIdent, &data, mods...)
 					if err != nil {
 						if errD := errorDefer(err); errD != nil {
 							log.Error(ctx, "%v", errD)

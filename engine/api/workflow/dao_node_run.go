@@ -536,7 +536,7 @@ func UpdateNodeRun(db gorp.SqlExecutor, n *sdk.WorkflowNodeRun) error {
 }
 
 // GetNodeRunBuildCommits gets commits for given node run and return current vcs info
-func GetNodeRunBuildCommits(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj sdk.Project, wf *sdk.Workflow, wNodeName string, number int64, nodeRun *sdk.WorkflowNodeRun, app *sdk.Application, env *sdk.Environment) ([]sdk.VCSCommit, sdk.BuildNumberAndHash, error) {
+func GetNodeRunBuildCommits(ctx context.Context, db gorp.SqlExecutor, store cache.Store, projIdent sdk.ProjectIdentifiers, wf *sdk.Workflow, wNodeName string, number int64, nodeRun *sdk.WorkflowNodeRun, app *sdk.Application, env *sdk.Environment) ([]sdk.VCSCommit, sdk.BuildNumberAndHash, error) {
 	var cur sdk.BuildNumberAndHash
 	if app == nil {
 		log.Debug("GetNodeRunBuildCommits> No app linked")
@@ -549,7 +549,7 @@ func GetNodeRunBuildCommits(ctx context.Context, db gorp.SqlExecutor, store cach
 	}
 	cur.BuildNumber = number
 
-	vcsServer, err := repositoriesmanager.LoadProjectVCSServerLinkByProjectKeyAndVCSServerName(ctx, db, proj.Key, app.VCSServer)
+	vcsServer, err := repositoriesmanager.LoadProjectVCSServerLinkByProjectKeyAndVCSServerName(ctx, db, projIdent.Key, app.VCSServer)
 	if err != nil {
 		log.Debug("GetNodeRunBuildCommits> No vcsServer found: %v", err)
 		return nil, cur, nil
@@ -557,7 +557,7 @@ func GetNodeRunBuildCommits(ctx context.Context, db gorp.SqlExecutor, store cach
 
 	res := []sdk.VCSCommit{}
 	//Get the RepositoriesManager Client
-	client, err := repositoriesmanager.AuthorizedClient(ctx, db, store, proj.Key, vcsServer)
+	client, err := repositoriesmanager.AuthorizedClient(ctx, db, store, projIdent.Key, vcsServer)
 	if err != nil {
 		return nil, cur, sdk.WrapError(err, "cannot get client")
 	}
@@ -621,7 +621,7 @@ func GetNodeRunBuildCommits(ctx context.Context, db gorp.SqlExecutor, store cach
 	}
 
 	//Get the commit hash for the node run number and the hash for the previous node run for the same branch and same remote
-	prev, err := PreviousNodeRunVCSInfos(ctx, db, proj.Key, wf, wNodeName, cur, app.ID, envID)
+	prev, err := PreviousNodeRunVCSInfos(ctx, db, projIdent.Key, wf, wNodeName, cur, app.ID, envID)
 	if err != nil {
 		return nil, cur, sdk.WrapError(err, "cannot get build number and hashes (buildNumber=%d, nodeName=%s, applicationID=%d)", number, wNodeName, app.ID)
 	}

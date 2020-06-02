@@ -29,7 +29,7 @@ func computeHookToDelete(newWorkflow *sdk.Workflow, oldWorkflow *sdk.Workflow) m
 	return hookToDelete
 }
 
-func hookUnregistration(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj sdk.Project, hookToDelete map[string]sdk.NodeHook) error {
+func hookUnregistration(ctx context.Context, db gorp.SqlExecutor, store cache.Store, projIdent sdk.ProjectIdentifiers, hookToDelete map[string]sdk.NodeHook) error {
 	ctx, end := observability.Span(ctx, "workflow.hookUnregistration")
 	defer end()
 
@@ -41,9 +41,9 @@ func hookUnregistration(ctx context.Context, db gorp.SqlExecutor, store cache.St
 	for _, h := range hookToDelete {
 		if h.HookModelName == sdk.RepositoryWebHookModelName {
 			// Call VCS to know if repository allows webhook and get the configuration fields
-			projectVCSServer, err := repositoriesmanager.LoadProjectVCSServerLinkByProjectKeyAndVCSServerName(ctx, db, proj.Key, h.Config["vcsServer"].Value)
+			projectVCSServer, err := repositoriesmanager.LoadProjectVCSServerLinkByProjectKeyAndVCSServerName(ctx, db, projIdent.Key, h.Config["vcsServer"].Value)
 			if err == nil {
-				client, errclient := repositoriesmanager.AuthorizedClient(ctx, db, store, proj.Key, projectVCSServer)
+				client, errclient := repositoriesmanager.AuthorizedClient(ctx, db, store, projIdent.Key, projectVCSServer)
 				if errclient != nil {
 					return errclient
 				}
@@ -75,7 +75,7 @@ func hookUnregistration(ctx context.Context, db gorp.SqlExecutor, store cache.St
 	return nil
 }
 
-func hookRegistration(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj sdk.Project, wf *sdk.Workflow, oldWorkflow *sdk.Workflow) error {
+func hookRegistration(ctx context.Context, db gorp.SqlExecutor, store cache.Store, projIdent sdk.ProjectIdentifiers, wf *sdk.Workflow, oldWorkflow *sdk.Workflow) error {
 	ctx, end := observability.Span(ctx, "workflow.hookRegistration")
 	defer end()
 
@@ -153,7 +153,7 @@ func hookRegistration(ctx context.Context, db gorp.SqlExecutor, store cache.Stor
 			}
 		}
 
-		if err := updateSchedulerPayload(ctx, db, store, proj, wf, h); err != nil {
+		if err := updateSchedulerPayload(ctx, db, store, projIdent, wf, h); err != nil {
 			return err
 		}
 		hookToUpdate[h.UUID] = *h
@@ -181,12 +181,12 @@ func hookRegistration(ctx context.Context, db gorp.SqlExecutor, store cache.Stor
 			v, ok := h.Config[sdk.HookConfigWebHookID]
 			if h.HookModelName == sdk.RepositoryWebHookModelName && h.Config["vcsServer"].Value != "" {
 				if !ok || v.Value == "" {
-					if err := createVCSConfiguration(ctx, db, store, proj, h); err != nil {
+					if err := createVCSConfiguration(ctx, db, store, projIdent, h); err != nil {
 						return sdk.WrapError(err, "Cannot create vcs configuration")
 					}
 				}
 				if ok && v.Value != "" {
-					if err := updateVCSConfiguration(ctx, db, store, proj, h); err != nil {
+					if err := updateVCSConfiguration(ctx, db, store, projIdent, h); err != nil {
 						return sdk.WrapError(err, "Cannot update vcs configuration")
 					}
 				}
@@ -197,7 +197,7 @@ func hookRegistration(ctx context.Context, db gorp.SqlExecutor, store cache.Stor
 	return nil
 }
 
-func updateSchedulerPayload(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj sdk.Project, wf *sdk.Workflow, h *sdk.NodeHook) error {
+func updateSchedulerPayload(ctx context.Context, db gorp.SqlExecutor, store cache.Store, projIdent sdk.ProjectIdentifiers, wf *sdk.Workflow, h *sdk.NodeHook) error {
 	ctx, end := observability.Span(ctx, "workflow.updateSchedulerPayload")
 	defer end()
 
@@ -245,7 +245,7 @@ func updateSchedulerPayload(ctx context.Context, db gorp.SqlExecutor, store cach
 
 		// try get git.branch on repo linked
 		if payloadValues["git.branch"] == "" {
-			defaultPayload, errDefault := DefaultPayload(ctx, db, store, proj, wf)
+			defaultPayload, errDefault := DefaultPayload(ctx, db, store, projIdent, wf)
 			if errDefault != nil {
 				return sdk.WrapError(errDefault, "unable to get default payload")
 			}
@@ -267,17 +267,17 @@ func updateSchedulerPayload(ctx context.Context, db gorp.SqlExecutor, store cach
 	return nil
 }
 
-func createVCSConfiguration(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj sdk.Project, h *sdk.NodeHook) error {
+func createVCSConfiguration(ctx context.Context, db gorp.SqlExecutor, store cache.Store, projIdent sdk.ProjectIdentifiers, h *sdk.NodeHook) error {
 	ctx, end := observability.Span(ctx, "workflow.createVCSConfiguration", observability.Tag("UUID", h.UUID))
 	defer end()
 	// Call VCS to know if repository allows webhook and get the configuration fields
-	projectVCSServer, err := repositoriesmanager.LoadProjectVCSServerLinkByProjectKeyAndVCSServerName(ctx, db, proj.Key, h.Config["vcsServer"].Value)
+	projectVCSServer, err := repositoriesmanager.LoadProjectVCSServerLinkByProjectKeyAndVCSServerName(ctx, db, projIdent.Key, h.Config["vcsServer"].Value)
 	if err != nil {
 		log.Debug("createVCSConfiguration> No vcsServer found: %v", err)
 		return nil
 	}
 
-	client, err := repositoriesmanager.AuthorizedClient(ctx, db, store, proj.Key, projectVCSServer)
+	client, err := repositoriesmanager.AuthorizedClient(ctx, db, store, projIdent.Key, projectVCSServer)
 	if err != nil {
 		return sdk.WrapError(err, "createVCSConfiguration> Cannot get vcs client")
 	}
@@ -295,7 +295,7 @@ func createVCSConfiguration(ctx context.Context, db gorp.SqlExecutor, store cach
 		return sdk.WrapError(sdk.ErrInvalidHookConfiguration, "wrong repoFullName value for hook")
 	}
 	if !sdk.IsURL(h.Config["webHookURL"].Value) {
-		return sdk.WrapError(sdk.ErrInvalidHookConfiguration, "wrong webHookURL value (project: %s, repository: %s)", proj.Key, h.Config["repoFullName"].Value)
+		return sdk.WrapError(sdk.ErrInvalidHookConfiguration, "wrong webHookURL value (project: %s, repository: %s)", projIdent.Key, h.Config["repoFullName"].Value)
 	}
 
 	// Prepare the hook that will be send to VCS
@@ -331,17 +331,17 @@ func createVCSConfiguration(ctx context.Context, db gorp.SqlExecutor, store cach
 	return nil
 }
 
-func updateVCSConfiguration(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj sdk.Project, h *sdk.NodeHook) error {
+func updateVCSConfiguration(ctx context.Context, db gorp.SqlExecutor, store cache.Store, projIdent sdk.ProjectIdentifiers, h *sdk.NodeHook) error {
 	ctx, end := observability.Span(ctx, "workflow.updateVCSConfiguration", observability.Tag("UUID", h.UUID))
 	defer end()
 	// Call VCS to know if repository allows webhook and get the configuration fields
-	projectVCSServer, err := repositoriesmanager.LoadProjectVCSServerLinkByProjectKeyAndVCSServerName(ctx, db, proj.Key, h.Config["vcsServer"].Value)
+	projectVCSServer, err := repositoriesmanager.LoadProjectVCSServerLinkByProjectKeyAndVCSServerName(ctx, db, projIdent.Key, h.Config["vcsServer"].Value)
 	if err != nil {
 		log.Debug("createVCSConfiguration> No vcsServer found: %v", err)
 		return nil
 	}
 
-	client, err := repositoriesmanager.AuthorizedClient(ctx, db, store, proj.Key, projectVCSServer)
+	client, err := repositoriesmanager.AuthorizedClient(ctx, db, store, projIdent.Key, projectVCSServer)
 	if err != nil {
 		return sdk.WrapError(err, "cannot get vcs client")
 	}
@@ -379,7 +379,7 @@ func updateVCSConfiguration(ctx context.Context, db gorp.SqlExecutor, store cach
 }
 
 // DefaultPayload returns the default payload for the workflow root
-func DefaultPayload(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj sdk.Project, wf *sdk.Workflow) (interface{}, error) {
+func DefaultPayload(ctx context.Context, db gorp.SqlExecutor, store cache.Store, projIdent sdk.ProjectIdentifiers, wf *sdk.Workflow) (interface{}, error) {
 	if wf.WorkflowData.Node.Context == nil || wf.WorkflowData.Node.Context.ApplicationID == 0 {
 		return nil, nil
 	}
@@ -390,9 +390,9 @@ func DefaultPayload(ctx context.Context, db gorp.SqlExecutor, store cache.Store,
 
 	if app.RepositoryFullname != "" {
 		defaultBranch := "master"
-		projectVCSServer, err := repositoriesmanager.LoadProjectVCSServerLinkByProjectKeyAndVCSServerName(ctx, db, proj.Key, app.VCSServer)
+		projectVCSServer, err := repositoriesmanager.LoadProjectVCSServerLinkByProjectKeyAndVCSServerName(ctx, db, projIdent.Key, app.VCSServer)
 		if err == nil {
-			client, err := repositoriesmanager.AuthorizedClient(ctx, db, store, proj.Key, projectVCSServer)
+			client, err := repositoriesmanager.AuthorizedClient(ctx, db, store, projIdent.Key, projectVCSServer)
 			if err != nil {
 				return wf.WorkflowData.Node.Context.DefaultPayload, sdk.WrapError(err, "cannot get authorized client")
 			}

@@ -52,6 +52,8 @@ func (api *API) postWorkflowPreviewHandler() service.Handler {
 			return sdk.WrapError(err, "unable load project")
 		}
 
+		projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
+
 		ew, errw := exportentities.UnmarshalWorkflow(body, format)
 		if errw != nil {
 			return sdk.NewError(sdk.ErrWrongRequest, errw)
@@ -62,7 +64,7 @@ func (api *API) postWorkflowPreviewHandler() service.Handler {
 			return sdk.WrapError(err, "unable import workflow %s", ew.GetName())
 		}
 
-		if err := workflow.CompleteWorkflow(ctx, api.mustDB(), wf, *proj, workflow.LoadOptions{}); err != nil {
+		if err := workflow.CompleteWorkflow(ctx, api.mustDB(), wf, projIdent, workflow.LoadOptions{}); err != nil {
 			return err
 		}
 
@@ -116,6 +118,7 @@ func (api *API) postWorkflowImportHandler() service.Handler {
 			return sdk.WrapError(err, "unable load project")
 		}
 
+		projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
 		tx, err := api.mustDB().Begin()
 		if err != nil {
 			return sdk.WrapError(err, "unable to start transaction")
@@ -125,13 +128,13 @@ func (api *API) postWorkflowImportHandler() service.Handler {
 		u := getAPIConsumer(ctx)
 
 		// load the workflow from database if exists
-		workflowExists, err := workflow.Exists(tx, proj.Key, ew.GetName())
+		workflowExists, err := workflow.Exists(tx, projIdent.Key, ew.GetName())
 		if err != nil {
 			return sdk.WrapError(err, "Cannot check if workflow exists")
 		}
 		var wf *sdk.Workflow
 		if workflowExists {
-			wf, err = workflow.Load(ctx, tx, api.Cache, *proj, ew.GetName(), workflow.LoadOptions{WithIcon: true})
+			wf, err = workflow.Load(ctx, tx, projIdent, ew.GetName(), workflow.LoadOptions{WithIcon: true})
 			if err != nil {
 				return sdk.WrapError(err, "unable to load existing workflow")
 			}
@@ -156,9 +159,9 @@ func (api *API) postWorkflowImportHandler() service.Handler {
 		}
 
 		if wf != nil {
-			event.PublishWorkflowUpdate(ctx, proj.Key, *wrkflw, *wf, u)
+			event.PublishWorkflowUpdate(ctx, projIdent.Key, *wrkflw, *wf, u)
 		} else {
-			event.PublishWorkflowAdd(ctx, proj.Key, *wrkflw, u)
+			event.PublishWorkflowAdd(ctx, projIdent.Key, *wrkflw, u)
 		}
 
 		if wrkflw != nil {
@@ -211,9 +214,10 @@ func (api *API) putWorkflowImportHandler() service.Handler {
 			return sdk.WrapError(err, "unable load project")
 		}
 
+		projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
 		u := getAPIConsumer(ctx)
 
-		wf, err := workflow.Load(ctx, api.mustDB(), api.Cache, *proj, wfName, workflow.LoadOptions{WithIcon: true})
+		wf, err := workflow.Load(ctx, api.mustDB(), projIdent, wfName, workflow.LoadOptions{WithIcon: true})
 		if err != nil {
 			return sdk.WrapError(err, "unable to load workflow")
 		}
@@ -305,6 +309,7 @@ func (api *API) postWorkflowPushHandler() service.Handler {
 			return sdk.WrapError(err, "cannot load project %s", key)
 		}
 
+		projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
 		data, err := exportentities.UntarWorkflowComponents(ctx, tr)
 		if err != nil {
 			return err
@@ -319,7 +324,7 @@ func (api *API) postWorkflowPushHandler() service.Handler {
 			mods = append(mods, workflowtemplate.TemplateRequestModifiers.DefaultNameAndRepositories(ctx, api.mustDB(), api.Cache, *proj, pushOptions.FromRepository))
 		}
 		var allMsg []sdk.Message
-		msgTemplate, wti, err := workflowtemplate.CheckAndExecuteTemplate(ctx, api.mustDB(), *consumer, *proj, &data, mods...)
+		msgTemplate, wti, err := workflowtemplate.CheckAndExecuteTemplate(ctx, api.mustDB(), *consumer, projIdent, &data, mods...)
 		allMsg = append(allMsg, msgTemplate...)
 		if err != nil {
 			return err

@@ -51,21 +51,21 @@ func Parse(ctx context.Context, proj sdk.Project, ew exportentities.Workflow) (*
 }
 
 // ParseAndImport parse an exportentities.workflow and insert or update the workflow in database
-func ParseAndImport(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj sdk.Project, oldW *sdk.Workflow, ew exportentities.Workflow, u sdk.Identifiable, opts ImportOptions) (*sdk.Workflow, []sdk.Message, error) {
+func ParseAndImport(ctx context.Context, db gorp.SqlExecutor, store cache.Store, p sdk.Project, oldW *sdk.Workflow, ew exportentities.Workflow, u sdk.Identifiable, opts ImportOptions) (*sdk.Workflow, []sdk.Message, error) {
 	ctx, end := observability.Span(ctx, "workflow.ParseAndImport")
 	defer end()
-
-	log.Info(ctx, "ParseAndImport>> Import workflow %s in project %s (force=%v)", ew.GetName(), proj.Key, opts.Force)
+	projIdent := sdk.ProjectIdentifiers{ID: p.ID, Key: p.Key}
+	log.Info(ctx, "ParseAndImport>> Import workflow %s in project %s (force=%v)", ew.GetName(), projIdent.Key, opts.Force)
 
 	//Parse workflow
-	w, errW := Parse(ctx, proj, ew)
+	w, errW := Parse(ctx, p, ew)
 	if errW != nil {
 		return nil, nil, errW
 	}
 
 	// Load deep pipelines if we come from workflow run ( so we have hook uuid ).
 	// We need deep pipelines to be able to run stages/jobs
-	if err := CompleteWorkflow(ctx, db, w, proj, LoadOptions{DeepPipeline: opts.HookUUID != ""}); err != nil {
+	if err := CompleteWorkflow(ctx, db, w, projIdent, LoadOptions{DeepPipeline: opts.HookUUID != ""}); err != nil {
 		// Get spawn infos from error
 		msg, ok := sdk.ErrorToMessage(err)
 		if ok {
@@ -157,7 +157,7 @@ func ParseAndImport(ctx context.Context, db gorp.SqlExecutor, store cache.Store,
 			}
 
 			var err error
-			if w.WorkflowData.Node.Context.DefaultPayload, err = DefaultPayload(ctx, db, store, proj, w); err != nil {
+			if w.WorkflowData.Node.Context.DefaultPayload, err = DefaultPayload(ctx, db, store, projIdent, w); err != nil {
 				return nil, nil, sdk.WrapError(err, "Unable to get default payload")
 			}
 		}
@@ -183,12 +183,12 @@ func ParseAndImport(ctx context.Context, db gorp.SqlExecutor, store cache.Store,
 		}
 	}(&msgList)
 
-	globalError := Import(ctx, db, store, proj, oldW, w, u, opts.Force, msgChan)
+	globalError := Import(ctx, db, store, projIdent, p.ProjectGroups, oldW, w, opts.Force, msgChan)
 	close(msgChan)
 	done.Wait()
 
 	if ew.GetVersion() == exportentities.WorkflowVersion1 {
-		msgList = append(msgList, sdk.NewMessage(sdk.MsgWorkflowDeprecatedVersion, proj.Key, ew.GetName()))
+		msgList = append(msgList, sdk.NewMessage(sdk.MsgWorkflowDeprecatedVersion, projIdent.Key, ew.GetName()))
 	}
 
 	return w, msgList, globalError

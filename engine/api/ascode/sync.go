@@ -18,7 +18,7 @@ type SyncResult struct {
 }
 
 // SyncEvents checks if workflow as to become ascode.
-func SyncEvents(ctx context.Context, db *gorp.DbMap, store cache.Store, proj sdk.Project, workflowHolder sdk.Workflow, u sdk.Identifiable) (SyncResult, error) {
+func SyncEvents(ctx context.Context, db *gorp.DbMap, store cache.Store, projIdent sdk.ProjectIdentifiers, workflowHolder sdk.Workflow, u sdk.Identifiable) (SyncResult, error) {
 	var res SyncResult
 
 	if workflowHolder.WorkflowData.Node.Context.ApplicationID == 0 {
@@ -26,11 +26,11 @@ func SyncEvents(ctx context.Context, db *gorp.DbMap, store cache.Store, proj sdk
 	}
 	rootApp := workflowHolder.Applications[workflowHolder.WorkflowData.Node.Context.ApplicationID]
 
-	vcsServer, err := repositoriesmanager.LoadProjectVCSServerLinkByProjectKeyAndVCSServerName(ctx, db, proj.Key, rootApp.VCSServer)
+	vcsServer, err := repositoriesmanager.LoadProjectVCSServerLinkByProjectKeyAndVCSServerName(ctx, db, projIdent.Key, rootApp.VCSServer)
 	if err != nil {
 		return res, err
 	}
-	client, err := repositoriesmanager.AuthorizedClient(ctx, db, store, proj.Key, vcsServer)
+	client, err := repositoriesmanager.AuthorizedClient(ctx, db, store, projIdent.Key, vcsServer)
 	if err != nil {
 		return res, err
 	}
@@ -99,7 +99,7 @@ func SyncEvents(ctx context.Context, db *gorp.DbMap, store cache.Store, proj sdk
 	}
 
 	for _, ed := range eventToDelete {
-		event.PublishAsCodeEvent(ctx, proj.Key, ed, u)
+		event.PublishAsCodeEvent(ctx, projIdent.Key, ed, u)
 	}
 
 	return res, nil

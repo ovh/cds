@@ -76,6 +76,8 @@ func extractWorkflow(ctx context.Context, db *gorp.DbMap, store cache.Store, p *
 	ope sdk.Operation, consumer sdk.AuthConsumer, decryptFunc keys.DecryptFunc, hookUUID string) (*PushSecrets, []sdk.Message, error) {
 	ctx, end := observability.Span(ctx, "workflow.extractWorkflow")
 	defer end()
+
+	projIdent := sdk.ProjectIdentifiers{ID: p.ID, Key: p.Key}
 	var allMsgs []sdk.Message
 	// Read files
 	tr, err := ReadCDSFiles(ope.LoadFiles.Results)
@@ -110,7 +112,7 @@ func extractWorkflow(ctx context.Context, db *gorp.DbMap, store cache.Store, p *
 	if opt.FromRepository != "" {
 		mods = append(mods, workflowtemplate.TemplateRequestModifiers.DefaultNameAndRepositories(ctx, db, store, *p, opt.FromRepository))
 	}
-	msgTemplate, wti, err := workflowtemplate.CheckAndExecuteTemplate(ctx, db, consumer, *p, &data, mods...)
+	msgTemplate, wti, err := workflowtemplate.CheckAndExecuteTemplate(ctx, db, consumer, projIdent, &data, mods...)
 	allMsgs = append(allMsgs, msgTemplate...)
 	if err != nil {
 		return nil, allMsgs, err

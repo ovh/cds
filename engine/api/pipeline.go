@@ -42,7 +42,7 @@ func (api *API) updateAsCodePipelineHandler() service.Handler {
 			return sdk.WrapError(sdk.ErrInvalidPipelinePattern, "updateAsCodePipelineHandler: Pipeline name %s do not respect pattern", p.Name)
 		}
 
-		proj, err := project.Load(api.mustDB(), key,
+		prj, err := project.Load(api.mustDB(), key,
 			project.LoadOptions.WithApplicationWithDeploymentStrategies,
 			project.LoadOptions.WithPipelines,
 			project.LoadOptions.WithEnvironments,
@@ -52,6 +52,7 @@ func (api *API) updateAsCodePipelineHandler() service.Handler {
 			return err
 		}
 
+		projIdent := sdk.ProjectIdentifiers{ID: prj.ID, Key: prj.Key}
 		pipelineDB, err := pipeline.LoadPipeline(ctx, api.mustDB(), key, name, true)
 		if err != nil {
 			return sdk.WrapError(err, "cannot load pipeline %s", name)
@@ -61,7 +62,7 @@ func (api *API) updateAsCodePipelineHandler() service.Handler {
 			return sdk.NewErrorFrom(sdk.ErrForbidden, "current pipeline is not ascode")
 		}
 
-		wkHolder, err := workflow.LoadByRepo(ctx, api.Cache, api.mustDB(), *proj, pipelineDB.FromRepository, workflow.LoadOptions{
+		wkHolder, err := workflow.LoadByRepo(ctx, api.mustDB(), projIdent, pipelineDB.FromRepository, workflow.LoadOptions{
 			WithTemplate: true,
 		})
 		if err != nil {
@@ -89,7 +90,7 @@ func (api *API) updateAsCodePipelineHandler() service.Handler {
 			Pipelines: []exportentities.PipelineV1{wpi},
 		}
 
-		ope, err := operation.PushOperationUpdate(ctx, api.mustDB(), api.Cache, *proj, wp, rootApp.VCSServer, rootApp.RepositoryFullname, branch, message, rootApp.RepositoryStrategy, u)
+		ope, err := operation.PushOperationUpdate(ctx, api.mustDB(), api.Cache, *prj, wp, rootApp.VCSServer, rootApp.RepositoryFullname, branch, message, rootApp.RepositoryStrategy, u)
 		if err != nil {
 			return err
 		}
@@ -102,9 +103,9 @@ func (api *API) updateAsCodePipelineHandler() service.Handler {
 				Name:          pipelineDB.Name,
 				OperationUUID: ope.UUID,
 			}
-			asCodeEvent := ascode.UpdateAsCodeResult(ctx, api.mustDB(), api.Cache, *proj, wkHolder.ID, *rootApp, ed, u)
+			asCodeEvent := ascode.UpdateAsCodeResult(ctx, api.mustDB(), api.Cache, projIdent, wkHolder.ID, *rootApp, ed, u)
 			if asCodeEvent != nil {
-				event.PublishAsCodeEvent(ctx, proj.Key, *asCodeEvent, u)
+				event.PublishAsCodeEvent(ctx, projIdent.Key, *asCodeEvent, u)
 			}
 		}, api.PanicDump())
 
@@ -308,22 +309,19 @@ func (api *API) getPipelineHandler() service.Handler {
 		withWorkflows := FormBool(r, "withWorkflows")
 		withAsCodeEvent := FormBool(r, "withAsCodeEvents")
 
-		proj, err := project.Load(api.mustDB(), projectKey,
-			project.LoadOptions.WithApplicationWithDeploymentStrategies,
-			project.LoadOptions.WithPipelines,
-			project.LoadOptions.WithEnvironments,
-			project.LoadOptions.WithIntegrations)
+		prj, err := project.Load(api.mustDB(), projectKey)
 		if err != nil {
 			return err
 		}
 
+		projIdent := sdk.ProjectIdentifiers{ID: prj.ID, Key: prj.Key}
 		p, err := pipeline.LoadPipeline(ctx, api.mustDB(), projectKey, pipelineName, true)
 		if err != nil {
 			return sdk.WrapError(err, "cannot load pipeline %s", pipelineName)
 		}
 
 		if p.FromRepository != "" {
-			wkAscodeHolder, err := workflow.LoadByRepo(ctx, api.Cache, api.mustDB(), *proj, p.FromRepository, workflow.LoadOptions{
+			wkAscodeHolder, err := workflow.LoadByRepo(ctx, api.mustDB(), projIdent, p.FromRepository, workflow.LoadOptions{
 				WithTemplate: true,
 			})
 			if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {

@@ -33,7 +33,7 @@ type EntityData struct {
 }
 
 // UpdateAsCodeResult pulls repositories operation and the create pullrequest + update workflow
-func UpdateAsCodeResult(ctx context.Context, db *gorp.DbMap, store cache.Store, proj sdk.Project, workflowHolderID int64, rootApp sdk.Application, ed EntityData, u sdk.Identifiable) *sdk.AsCodeEvent {
+func UpdateAsCodeResult(ctx context.Context, db *gorp.DbMap, store cache.Store, projIdent sdk.ProjectIdentifiers, workflowHolderID int64, rootApp sdk.Application, ed EntityData, u sdk.Identifiable) *sdk.AsCodeEvent {
 	tick := time.NewTicker(2 * time.Second)
 	ctx, cancel := context.WithTimeout(ctx, 1*time.Minute)
 	defer cancel()
@@ -62,7 +62,7 @@ forLoop:
 				break forLoop
 			}
 			if ope.Status == sdk.OperationStatusDone {
-				ae, err := createPullRequest(ctx, db, store, proj, workflowHolderID, rootApp, ed, u, ope.Setup)
+				ae, err := createPullRequest(ctx, db, store, projIdent, workflowHolderID, rootApp, ed, u, ope.Setup)
 				if err != nil {
 					globalErr = err
 					break forLoop
@@ -92,12 +92,12 @@ forLoop:
 	return asCodeEvent
 }
 
-func createPullRequest(ctx context.Context, db *gorp.DbMap, store cache.Store, proj sdk.Project, workflowHolderID int64, rootApp sdk.Application, ed EntityData, u sdk.Identifiable, opeSetup sdk.OperationSetup) (*sdk.AsCodeEvent, error) {
-	vcsServer, err := repositoriesmanager.LoadProjectVCSServerLinkByProjectKeyAndVCSServerName(ctx, db, proj.Key, rootApp.VCSServer)
+func createPullRequest(ctx context.Context, db *gorp.DbMap, store cache.Store, projIdent sdk.ProjectIdentifiers, workflowHolderID int64, rootApp sdk.Application, ed EntityData, u sdk.Identifiable, opeSetup sdk.OperationSetup) (*sdk.AsCodeEvent, error) {
+	vcsServer, err := repositoriesmanager.LoadProjectVCSServerLinkByProjectKeyAndVCSServerName(ctx, db, projIdent.Key, rootApp.VCSServer)
 	if err != nil {
 		return nil, err
 	}
-	client, err := repositoriesmanager.AuthorizedClient(ctx, db, store, proj.Key, vcsServer)
+	client, err := repositoriesmanager.AuthorizedClient(ctx, db, store, projIdent.Key, vcsServer)
 	if err != nil {
 		return nil, sdk.NewErrorFrom(err, "unable to create repositories manager client")
 	}

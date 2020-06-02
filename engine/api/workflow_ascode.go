@@ -62,7 +62,8 @@ func (api *API) postWorkflowAsCodeHandler() service.Handler {
 			return err
 		}
 
-		wfDB, err := workflow.Load(ctx, api.mustDB(), api.Cache, *p, workflowName, workflow.LoadOptions{
+		projIdent := sdk.ProjectIdentifiers{ID: p.ID, Key: p.Key}
+		wfDB, err := workflow.Load(ctx, api.mustDB(), projIdent, workflowName, workflow.LoadOptions{
 			DeepPipeline:          migrate,
 			WithAsCodeUpdateEvent: migrate,
 			WithTemplate:          true,
@@ -108,7 +109,7 @@ func (api *API) postWorkflowAsCodeHandler() service.Handler {
 		if err := workflow.CheckValidity(ctx, api.mustDB(), &wf); err != nil {
 			return err
 		}
-		if err := workflow.CompleteWorkflow(ctx, api.mustDB(), &wf, *p, workflow.LoadOptions{DeepPipeline: true}); err != nil {
+		if err := workflow.CompleteWorkflow(ctx, api.mustDB(), &wf, projIdent, workflow.LoadOptions{DeepPipeline: true}); err != nil {
 			return err
 		}
 
@@ -131,7 +132,7 @@ func (api *API) postWorkflowAsCodeHandler() service.Handler {
 				FromRepo:      wfDB.FromRepository,
 				OperationUUID: ope.UUID,
 			}
-			asCodeEvent := ascode.UpdateAsCodeResult(ctx, api.mustDB(), api.Cache, *p, wfDB.ID, *rootApp, ed, u)
+			asCodeEvent := ascode.UpdateAsCodeResult(ctx, api.mustDB(), api.Cache, projIdent, wfDB.ID, *rootApp, ed, u)
 			if asCodeEvent != nil {
 				event.PublishAsCodeEvent(ctx, p.Key, *asCodeEvent, u)
 			}
@@ -141,8 +142,10 @@ func (api *API) postWorkflowAsCodeHandler() service.Handler {
 	}
 }
 
-func (api *API) migrateWorkflowAsCode(ctx context.Context, w http.ResponseWriter, proj sdk.Project, wf *sdk.Workflow, app sdk.Application, branch, message string) error {
+func (api *API) migrateWorkflowAsCode(ctx context.Context, w http.ResponseWriter, p sdk.Project, wf *sdk.Workflow, app sdk.Application, branch, message string) error {
 	u := getAPIConsumer(ctx)
+
+	projIdent := sdk.ProjectIdentifiers{ID: p.ID, Key: p.Key}
 
 	if wf.FromRepository != "" || (wf.FromRepository == "" && len(wf.AsCodeEvent) > 0) {
 		return sdk.WithStack(sdk.ErrWorkflowAlreadyAsCode)
@@ -163,17 +166,17 @@ func (api *API) migrateWorkflowAsCode(ctx context.Context, w http.ResponseWriter
 		}
 		wf.WorkflowData.Node.Hooks = append(wf.WorkflowData.Node.Hooks, h)
 
-		if err := workflow.Update(ctx, api.mustDB(), api.Cache, proj, wf, workflow.UpdateOptions{}); err != nil {
+		if err := workflow.Update(ctx, api.mustDB(), api.Cache, projIdent, wf, workflow.UpdateOptions{}); err != nil {
 			return err
 		}
 	}
 
-	data, err := workflow.Pull(ctx, api.mustDB(), api.Cache, proj, wf.Name, project.EncryptWithBuiltinKey, v2.WorkflowSkipIfOnlyOneRepoWebhook)
+	data, err := workflow.Pull(ctx, api.mustDB(), projIdent, wf.Name, project.EncryptWithBuiltinKey, v2.WorkflowSkipIfOnlyOneRepoWebhook)
 	if err != nil {
 		return err
 	}
 
-	ope, err := operation.PushOperation(ctx, api.mustDB(), api.Cache, proj, data, app.VCSServer, app.RepositoryFullname, branch, message, app.RepositoryStrategy, u)
+	ope, err := operation.PushOperation(ctx, api.mustDB(), api.Cache, p, data, app.VCSServer, app.RepositoryFullname, branch, message, app.RepositoryStrategy, u)
 	if err != nil {
 		return err
 	}
@@ -186,9 +189,9 @@ func (api *API) migrateWorkflowAsCode(ctx context.Context, w http.ResponseWriter
 			Name:          wf.Name,
 			OperationUUID: ope.UUID,
 		}
-		asCodeEvent := ascode.UpdateAsCodeResult(ctx, api.mustDB(), api.Cache, proj, wf.ID, app, ed, u)
+		asCodeEvent := ascode.UpdateAsCodeResult(ctx, api.mustDB(), api.Cache, projIdent, wf.ID, app, ed, u)
 		if asCodeEvent != nil {
-			event.PublishAsCodeEvent(ctx, proj.Key, *asCodeEvent, u)
+			event.PublishAsCodeEvent(ctx, projIdent.Key, *asCodeEvent, u)
 		}
 	}, api.PanicDump())
 

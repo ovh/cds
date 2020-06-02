@@ -125,6 +125,7 @@ func (api *API) postPerformImportAsCodeHandler() service.Handler {
 			return sdk.WrapError(errp, "postPerformImportAsCodeHandler> Cannot load project %s", key)
 		}
 
+		projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
 		ope, err := operation.GetRepositoryOperation(ctx, api.mustDB(), uuid)
 		if err != nil {
 			return sdk.WrapError(err, "unable to get repository operation")
@@ -168,7 +169,7 @@ func (api *API) postPerformImportAsCodeHandler() service.Handler {
 			mods = append(mods, workflowtemplate.TemplateRequestModifiers.DefaultNameAndRepositories(ctx, api.mustDB(), api.Cache, *proj, opt.FromRepository))
 		}
 		var allMsg []sdk.Message
-		msgTemplate, wti, err := workflowtemplate.CheckAndExecuteTemplate(ctx, api.mustDB(), *consumer, *proj, &data, mods...)
+		msgTemplate, wti, err := workflowtemplate.CheckAndExecuteTemplate(ctx, api.mustDB(), *consumer, projIdent, &data, mods...)
 		allMsg = append(allMsg, msgTemplate...)
 		if err != nil {
 			return err
@@ -185,13 +186,13 @@ func (api *API) postPerformImportAsCodeHandler() service.Handler {
 
 		// Grant CDS as a repository collaborator
 		// TODO for this moment, this step is not mandatory. If it's failed, continue the ascode process
-		vcsServer, err := repositoriesmanager.LoadProjectVCSServerLinkByProjectKeyAndVCSServerName(ctx, api.mustDB(), proj.Key, ope.VCSServer)
+		vcsServer, err := repositoriesmanager.LoadProjectVCSServerLinkByProjectKeyAndVCSServerName(ctx, api.mustDB(), projIdent.Key, ope.VCSServer)
 		if err != nil {
 			return err
 		}
-		client, erra := repositoriesmanager.AuthorizedClient(ctx, api.mustDB(), api.Cache, proj.Key, vcsServer)
+		client, erra := repositoriesmanager.AuthorizedClient(ctx, api.mustDB(), api.Cache, projIdent.Key, vcsServer)
 		if erra != nil {
-			log.Error(ctx, "postPerformImportAsCodeHandler> Cannot get client for %s %s : %s", proj.Key, ope.VCSServer, erra)
+			log.Error(ctx, "postPerformImportAsCodeHandler> Cannot get client for %s %s : %s", projIdent.Key, ope.VCSServer, erra)
 		} else {
 			if err := client.GrantWritePermission(ctx, ope.RepoFullName); err != nil {
 				log.Error(ctx, "postPerformImportAsCodeHandler> Unable to grant CDS a repository %s/%s collaborator : %v", ope.VCSServer, ope.RepoFullName, err)
@@ -203,7 +204,7 @@ func (api *API) postPerformImportAsCodeHandler() service.Handler {
 			w.Header().Add(sdk.ResponseWorkflowNameHeader, wrkflw.Name)
 		}
 
-		event.PublishWorkflowAdd(ctx, proj.Key, *wrkflw, getAPIConsumer(ctx))
+		event.PublishWorkflowAdd(ctx, projIdent.Key, *wrkflw, getAPIConsumer(ctx))
 
 		return service.WriteJSON(w, msgListString, http.StatusOK)
 	}
@@ -215,23 +216,18 @@ func (api *API) postWorkflowAsCodeEventsResyncHandler() service.Handler {
 		projectKey := vars["key"]
 		workflowName := vars["permWorkflowName"]
 
-		proj, err := project.Load(api.mustDB(), projectKey,
-			project.LoadOptions.WithApplicationWithDeploymentStrategies,
-			project.LoadOptions.WithPipelines,
-			project.LoadOptions.WithEnvironments,
-			project.LoadOptions.WithIntegrations,
-			project.LoadOptions.WithClearKeys,
-		)
+		proj, err := project.Load(api.mustDB(), projectKey)
 		if err != nil {
 			return err
 		}
 
-		wf, err := workflow.Load(ctx, api.mustDB(), api.Cache, *proj, workflowName, workflow.LoadOptions{})
+		projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
+		wf, err := workflow.Load(ctx, api.mustDB(), projIdent, workflowName, workflow.LoadOptions{})
 		if err != nil {
 			return err
 		}
 
-		res, err := ascode.SyncEvents(ctx, api.mustDB(), api.Cache, *proj, *wf, getAPIConsumer(ctx).AuthentifiedUser)
+		res, err := ascode.SyncEvents(ctx, api.mustDB(), api.Cache, projIdent, *wf, getAPIConsumer(ctx).AuthentifiedUser)
 		if err != nil {
 			return err
 		}

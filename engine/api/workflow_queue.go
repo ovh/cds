@@ -71,6 +71,7 @@ func (api *API) postTakeWorkflowJobHandler() service.Handler {
 			return sdk.WrapError(err, "cannot load project by nodeJobRunID: %d", id)
 		}
 
+		projIdent := sdk.ProjectIdentifiers{ID: p.ID, Key: p.Key}
 		// Load worker model
 		var workerModelName string
 		if wk.ModelID != nil {
@@ -107,7 +108,7 @@ func (api *API) postTakeWorkflowJobHandler() service.Handler {
 		if api.Config.CDN.TCP.Addr != "" && api.Config.CDN.TCP.Port > 0 {
 			pbji.GelfServiceAddr = fmt.Sprintf("%s:%d", api.Config.CDN.TCP.Addr, api.Config.CDN.TCP.Port)
 		}
-		workflow.ResyncNodeRunsWithCommits(ctx, api.mustDB(), api.Cache, *p, report)
+		workflow.ResyncNodeRunsWithCommits(ctx, api.mustDB(), api.Cache, projIdent, report)
 		go WorkflowSendEvent(context.Background(), api.mustDB(), api.Cache, *p, report)
 
 		return service.WriteJSON(w, pbji, http.StatusOK)
@@ -365,7 +366,7 @@ func (api *API) postWorkflowJobResultHandler() service.Handler {
 		dbWithCtx := api.mustDBWithCtx(customCtx)
 
 		_, next := observability.Span(ctx, "project.LoadProjectByNodeJobRunID")
-		proj, err := project.LoadProjectByNodeJobRunID(ctx, dbWithCtx, api.Cache, id, project.LoadOptions.WithVariables)
+		proj, err := project.LoadProjectByNodeJobRunID(ctx, dbWithCtx, api.Cache, id, project.LoadOptions.WithVariables, project.LoadOptions.WithKeys)
 		next()
 		if err != nil {
 			if sdk.ErrorIs(err, sdk.ErrNoProject) {
@@ -386,6 +387,8 @@ func (api *API) postWorkflowJobResultHandler() service.Handler {
 			observability.Tag(observability.TagProjectKey, proj.Key),
 		)
 
+		projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
+
 		report, err := postJobResult(customCtx, api.mustDBWithCtx, api.Cache, proj, wk, &res)
 		if err != nil {
 			return sdk.WrapError(err, "unable to post job result")
@@ -402,7 +405,7 @@ func (api *API) postWorkflowJobResultHandler() service.Handler {
 		}
 
 		_, next = observability.Span(ctx, "workflow.ResyncNodeRunsWithCommits")
-		workflow.ResyncNodeRunsWithCommits(ctx, api.mustDB(), api.Cache, *proj, report)
+		workflow.ResyncNodeRunsWithCommits(ctx, api.mustDB(), api.Cache, projIdent, report)
 		next()
 
 		go WorkflowSendEvent(context.Background(), api.mustDB(), api.Cache, *proj, report)

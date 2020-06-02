@@ -476,14 +476,15 @@ func TestImport(t *testing.T) {
 				t.Errorf("%s", err)
 			}
 			var wf *sdk.Workflow
+			projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
 			if workflowExists {
-				wf, err = workflow.Load(context.TODO(), db, cache, *proj, tt.args.w.Name, workflow.LoadOptions{WithIcon: true})
+				wf, err = workflow.Load(context.TODO(), db, projIdent, tt.args.w.Name, workflow.LoadOptions{WithIcon: true})
 				if err != nil {
 					t.Errorf("%s", err)
 				}
 			}
 
-			if err := workflow.Import(context.TODO(), db, cache, *proj, wf, tt.args.w, u, tt.args.force, nil); err != nil {
+			if err := workflow.Import(context.TODO(), db, cache, projIdent, proj.ProjectGroups, wf, tt.args.w, tt.args.force, nil); err != nil {
 				if !tt.wantErr {
 					t.Errorf("Import() error = %v, wantErr %v", err, tt.wantErr)
 				} else {

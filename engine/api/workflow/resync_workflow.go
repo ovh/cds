@@ -11,12 +11,12 @@ import (
 )
 
 // Resync a workflow in the given workflow run
-func Resync(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj sdk.Project, wr *sdk.WorkflowRun) error {
+func Resync(ctx context.Context, db gorp.SqlExecutor, projIdent sdk.ProjectIdentifiers, wr *sdk.WorkflowRun) error {
 	options := LoadOptions{
 		DeepPipeline:     true,
 		WithIntegrations: true,
 	}
-	wf, errW := LoadByID(ctx, db, store, proj, wr.Workflow.ID, options)
+	wf, errW := LoadByID(ctx, db, projIdent, wr.Workflow.ID, options)
 	if errW != nil {
 		return sdk.WrapError(errW, "Resync> Cannot load workflow")
 	}
@@ -81,7 +81,7 @@ func ResyncWorkflowRunStatus(ctx context.Context, db gorp.SqlExecutor, wr *sdk.W
 }
 
 // ResyncNodeRunsWithCommits load commits build in this node run and save it into node run
-func ResyncNodeRunsWithCommits(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj sdk.Project, report *ProcessorReport) {
+func ResyncNodeRunsWithCommits(ctx context.Context, db gorp.SqlExecutor, store cache.Store, projIdent sdk.ProjectIdentifiers, report *ProcessorReport) {
 	if report == nil {
 		return
 	}
@@ -119,7 +119,7 @@ func ResyncNodeRunsWithCommits(ctx context.Context, db gorp.SqlExecutor, store c
 			}
 
 			//New context because we are in goroutine
-			commits, curVCSInfos, err := GetNodeRunBuildCommits(context.TODO(), db, store, proj, &wr.Workflow, nodeName, wr.Number, &nr, &app, env)
+			commits, curVCSInfos, err := GetNodeRunBuildCommits(context.TODO(), db, store, projIdent, &wr.Workflow, nodeName, wr.Number, &nr, &app, env)
 			if err != nil {
 				log.Error(ctx, "ResyncNodeRuns> cannot get build commits on a node run %v", err)
 			} else if commits != nil {

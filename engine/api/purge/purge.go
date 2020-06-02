@@ -60,7 +60,7 @@ func workflows(ctx context.Context, db *gorp.DbMap, store cache.Store, workflowR
 	}
 
 	var wrkflws = make([]sdk.Workflow, len(res))
-	var projects = map[int64]sdk.Project{}
+	var projects = map[int64]sdk.ProjectIdentifiers{}
 
 	for i, r := range res {
 		// Force delete workflow runs if any
@@ -88,18 +88,18 @@ func workflows(ctx context.Context, db *gorp.DbMap, store cache.Store, workflowR
 			continue
 		}
 
-		proj, has := projects[r.ProjectID]
+		projIdent, has := projects[r.ProjectID]
 		if !has {
 			p, err := project.LoadByID(db, r.ProjectID)
 			if err != nil {
 				log.Error(ctx, "purge.Workflows> unable to load project %d: %v", r.ProjectID, err)
 				continue
 			}
-			projects[r.ProjectID] = *p
-			proj = *p
+			projects[r.ProjectID] = sdk.ProjectIdentifiers{ID: p.ID, Key: p.Key}
+			projIdent = projects[r.ProjectID]
 		}
 
-		w, err := workflow.LoadByID(ctx, db, store, proj, r.ID, workflow.LoadOptions{})
+		w, err := workflow.LoadByID(ctx, db, projIdent, r.ID, workflow.LoadOptions{})
 		if err != nil {
 			log.Warning(ctx, "unable to load workflow %d due to error %v, we try to delete it", r.ID, err)
 			if _, err := db.Exec("delete from w_node_trigger where child_node_id IN (SELECT id from w_node where workflow_id = $1)", r.ID); err != nil {
@@ -119,7 +119,7 @@ func workflows(ctx context.Context, db *gorp.DbMap, store cache.Store, workflowR
 	}
 
 	for _, w := range wrkflws {
-		proj, has := projects[w.ProjectID]
+		projIdent, has := projects[w.ProjectID]
 		if !has {
 			continue
 		}
@@ -129,7 +129,7 @@ func workflows(ctx context.Context, db *gorp.DbMap, store cache.Store, workflowR
 			return sdk.WrapError(err, "unable to start tx")
 		}
 
-		if err := workflow.Delete(ctx, tx, store, proj, &w); err != nil {
+		if err := workflow.Delete(ctx, tx, store, projIdent, &w); err != nil {
 			log.Error(ctx, "purge.Workflows> unable to delete workflow %d: %v", w.ID, err)
 			_ = tx.Rollback()
 			continue

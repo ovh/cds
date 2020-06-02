@@ -24,13 +24,14 @@ func (api *API) deleteWorkflowGroupHandler() service.Handler {
 		groupName := vars["groupName"]
 		u := getAPIConsumer(ctx)
 
-		proj, err := project.Load(api.mustDB(), key, project.LoadOptions.WithIntegrations)
+		p, err := project.Load(api.mustDB(), key)
 		if err != nil {
 			return sdk.WrapError(err, "unable to load projet")
 		}
 
+		projIdent := sdk.ProjectIdentifiers{ID: p.ID, Key: p.Key}
 		options := workflow.LoadOptions{}
-		wf, err := workflow.Load(ctx, api.mustDB(), api.Cache, *proj, name, options)
+		wf, err := workflow.Load(ctx, api.mustDB(), projIdent, name, options)
 		if err != nil {
 			return sdk.WithStack(err)
 		}
@@ -88,13 +89,14 @@ func (api *API) putWorkflowGroupHandler() service.Handler {
 			return sdk.WrapError(sdk.ErrInvalidName, "putWorkflowGroupHandler")
 		}
 
-		proj, err := project.Load(api.mustDB(), key, project.LoadOptions.WithIntegrations)
+		p, err := project.Load(api.mustDB(), key)
 		if err != nil {
 			return sdk.WrapError(err, "unable to load projet")
 		}
 
+		projIdent := sdk.ProjectIdentifiers{ID: p.ID, Key: p.Key}
 		options := workflow.LoadOptions{}
-		wf, err := workflow.Load(ctx, api.mustDB(), api.Cache, *proj, name, options)
+		wf, err := workflow.Load(ctx, api.mustDB(), projIdent, name, options)
 		if err != nil {
 			return sdk.WithStack(err)
 		}
@@ -143,13 +145,14 @@ func (api *API) postWorkflowGroupHandler() service.Handler {
 			return sdk.WrapError(err, "cannot unmarshal body")
 		}
 
-		proj, err := project.Load(api.mustDB(), key, project.LoadOptions.WithIntegrations)
+		p, err := project.Load(api.mustDB(), key)
 		if err != nil {
 			return sdk.WrapError(err, "unable to load projet")
 		}
 
+		projIdent := sdk.ProjectIdentifiers{ID: p.ID, Key: p.Key}
 		options := workflow.LoadOptions{}
-		wf, err := workflow.Load(ctx, api.mustDB(), api.Cache, *proj, name, options)
+		wf, err := workflow.Load(ctx, api.mustDB(), projIdent, name, options)
 		if err != nil {
 			return sdk.WrapError(err, "cannot load workflow")
 		}

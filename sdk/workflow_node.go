@@ -266,7 +266,7 @@ func (n *Node) IsLinkedToRepo(w *Workflow) bool {
 }
 
 // CheckApplicationDeploymentStrategies checks application deployment strategies
-func (n Node) CheckApplicationDeploymentStrategies(proj Project, w *Workflow) error {
+func (n Node) CheckApplicationDeploymentStrategies(projIntegrations []ProjectIntegration, w *Workflow) error {
 	if n.Context == nil {
 		return nil
 	}
@@ -278,8 +278,14 @@ func (n Node) CheckApplicationDeploymentStrategies(proj Project, w *Workflow) er
 		return nil
 	}
 
-	pf := proj.GetIntegrationByID(n.Context.ProjectIntegrationID)
-	if pf == nil {
+	var pf ProjectIntegration
+	for _, pi := range projIntegrations {
+		if pi.ID == n.Context.ProjectIntegrationID {
+			pf = pi
+			break
+		}
+	}
+	if pf.ID == 0 {
 		return WithStack(fmt.Errorf("integration unavailable"))
 	}
 

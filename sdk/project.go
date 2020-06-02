@@ -20,6 +20,11 @@ func (projects Projects) Keys() []string {
 	return res
 }
 
+type ProjectIdentifiers struct {
+	ID  int64
+	Key string
+}
+
 // Project represent a team with group of users and pipelines
 type Project struct {
 	ID           int64     `json:"-" yaml:"-" db:"id" cli:"-"`

@@ -112,7 +112,7 @@ func requestModifyDefaultNameAndRepositories(ctx context.Context, db gorp.SqlExe
 
 // CheckAndExecuteTemplate will execute the workflow template if given workflow components contains a template instance.
 // When detached is set this will not create/update any template instance in database (this is useful for workflow ascode branches).
-func CheckAndExecuteTemplate(ctx context.Context, db *gorp.DbMap, consumer sdk.AuthConsumer, p sdk.Project,
+func CheckAndExecuteTemplate(ctx context.Context, db *gorp.DbMap, consumer sdk.AuthConsumer, projIdent sdk.ProjectIdentifiers,
 	data *exportentities.WorkflowComponents, mods ...TemplateRequestModifierFunc) ([]sdk.Message, *sdk.WorkflowTemplateInstance, error) {
 	var allMsgs []sdk.Message
 
@@ -164,7 +164,7 @@ func CheckAndExecuteTemplate(ctx context.Context, db *gorp.DbMap, consumer sdk.A
 	allMsgs = append(allMsgs, sdk.NewMessage(sdk.MsgWorkflowGeneratedFromTemplateVersion, wt.PathWithVersion()))
 
 	req := sdk.WorkflowTemplateRequest{
-		ProjectKey:   p.Key,
+		ProjectKey:   projIdent.Key,
 		WorkflowName: data.Template.Name,
 		Parameters:   data.Template.Parameters,
 	}
@@ -183,7 +183,7 @@ func CheckAndExecuteTemplate(ctx context.Context, db *gorp.DbMap, consumer sdk.A
 	if req.Detached {
 		wti := &sdk.WorkflowTemplateInstance{
 			ID:                      time.Now().Unix(), // if is a detached apply set an id based on time
-			ProjectID:               p.ID,
+			ProjectID:               projIdent.ID,
 			WorkflowTemplateID:      wt.ID,
 			WorkflowTemplateVersion: wt.Version,
 			Request:                 req,
@@ -207,7 +207,7 @@ func CheckAndExecuteTemplate(ctx context.Context, db *gorp.DbMap, consumer sdk.A
 	defer tx.Rollback() // nolint
 
 	// try to get a instance not assign to a workflow but with the same slug
-	wti, err := LoadInstanceByTemplateIDAndProjectIDAndRequestWorkflowName(ctx, tx, wt.ID, p.ID, req.WorkflowName)
+	wti, err := LoadInstanceByTemplateIDAndProjectIDAndRequestWorkflowName(ctx, tx, wt.ID, projIdent.ID, req.WorkflowName)
 	if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
 		return allMsgs, nil, err
 	}
@@ -224,7 +224,7 @@ func CheckAndExecuteTemplate(ctx context.Context, db *gorp.DbMap, consumer sdk.A
 		}
 	} else {
 		wti = &sdk.WorkflowTemplateInstance{
-			ProjectID:               p.ID,
+			ProjectID:               projIdent.ID,
 			WorkflowTemplateID:      wt.ID,
 			WorkflowTemplateVersion: wt.Version,
 			Request:                 req,

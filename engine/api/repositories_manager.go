@@ -504,19 +504,20 @@ func (api *API) attachRepositoriesManagerHandler() service.Handler {
 
 		// Update default payload of linked workflow root
 		if len(usage.Workflows) > 0 {
-			proj, errP := project.Load(db, projectKey, project.LoadOptions.WithIntegrations)
+			proj, errP := project.Load(db, projectKey)
 			if errP != nil {
 				return sdk.WrapError(errP, "attachRepositoriesManager> Cannot load project")
 			}
 
+			projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
 			for _, wf := range usage.Workflows {
-				wfDB, err := workflow.LoadByID(ctx, db, api.Cache, *proj, wf.ID, workflow.LoadOptions{})
+				wfDB, err := workflow.LoadByID(ctx, db, projIdent, wf.ID, workflow.LoadOptions{})
 				if err != nil {
 					return err
 				}
 
 				// second load for publish the event below
-				wfOld, err := workflow.LoadByID(ctx, db, api.Cache, *proj, wf.ID, workflow.LoadOptions{})
+				wfOld, err := workflow.LoadByID(ctx, db, projIdent, wf.ID, workflow.LoadOptions{})
 				if err != nil {
 					return err
 				}
@@ -537,14 +538,14 @@ func (api *API) attachRepositoriesManagerHandler() service.Handler {
 					continue
 				}
 
-				defaultPayload, err := workflow.DefaultPayload(ctx, db, api.Cache, *proj, wfDB)
+				defaultPayload, err := workflow.DefaultPayload(ctx, db, api.Cache, projIdent, wfDB)
 				if err != nil {
 					return sdk.WithStack(err)
 				}
 
 				wfDB.WorkflowData.Node.Context.DefaultPayload = defaultPayload
 
-				if err := workflow.Update(ctx, db, api.Cache, *proj, wfDB, workflow.UpdateOptions{DisableHookManagement: true}); err != nil {
+				if err := workflow.Update(ctx, db, api.Cache, projIdent, wfDB, workflow.UpdateOptions{DisableHookManagement: true}); err != nil {
 					return sdk.WrapError(err, "cannot update node context %d", wfDB.WorkflowData.Node.Context.ID)
 				}
 
