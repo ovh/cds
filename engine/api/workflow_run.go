@@ -1071,7 +1071,7 @@ func saveWorkflowRunSecrets(ctx context.Context, db gorp.SqlExecutor, projID int
 	for _, v := range pv {
 		wrSecret := sdk.WorkflowRunSecret{
 			WorkflowRunID: wr.ID,
-			Context:       "proj",
+			Context:       workflow.SecretProjContext,
 			Name:          v.Name,
 			Value:         []byte(v.Value),
 		}
@@ -1083,7 +1083,7 @@ func saveWorkflowRunSecrets(ctx context.Context, db gorp.SqlExecutor, projID int
 	for _, k := range p.Keys {
 		wrSecret := sdk.WorkflowRunSecret{
 			WorkflowRunID: wr.ID,
-			Context:       "proj",
+			Context:       workflow.SecretProjContext,
 			Name:          fmt.Sprintf("cds.key.%s.priv", k.Name),
 			Value:         []byte(k.Private),
 		}
@@ -1114,7 +1114,7 @@ func saveWorkflowRunSecrets(ctx context.Context, db gorp.SqlExecutor, projID int
 			}
 			wrSecret := sdk.WorkflowRunSecret{
 				WorkflowRunID: wr.ID,
-				Context:       fmt.Sprintf("integration:%d", ppID),
+				Context:       fmt.Sprintf(workflow.SecretProjIntegrationContext, ppID),
 				Name:          fmt.Sprintf("cds.integration.%s", k),
 				Value:         []byte(v.Value),
 			}
@@ -1134,7 +1134,7 @@ func saveWorkflowRunSecrets(ctx context.Context, db gorp.SqlExecutor, projID int
 			case strings.HasPrefix(v.Name, "cds.app.") || strings.HasPrefix(v.Name, "cds.key."):
 				wrSecret = sdk.WorkflowRunSecret{
 					WorkflowRunID: wr.ID,
-					Context:       fmt.Sprintf("app:%d", id),
+					Context:       fmt.Sprintf(workflow.SecretAppContext, id),
 					Name:          v.Name,
 					Value:         []byte(v.Value),
 				}
@@ -1142,7 +1142,7 @@ func saveWorkflowRunSecrets(ctx context.Context, db gorp.SqlExecutor, projID int
 				piName := strings.SplitN(v.Name, ":", 2)
 				wrSecret = sdk.WorkflowRunSecret{
 					WorkflowRunID: wr.ID,
-					Context:       fmt.Sprintf("app:%d:integration:%s", id, piName[0]),
+					Context:       fmt.Sprintf(workflow.SecretApplicationIntegrationContext, id, piName[0]),
 					Name:          piName[1],
 					Value:         []byte(v.Value),
 				}
@@ -1160,7 +1160,7 @@ func saveWorkflowRunSecrets(ctx context.Context, db gorp.SqlExecutor, projID int
 		for _, v := range variables {
 			wrSecret := sdk.WorkflowRunSecret{
 				WorkflowRunID: wr.ID,
-				Context:       fmt.Sprintf("env:%d", id),
+				Context:       fmt.Sprintf(workflow.SecretEnvContext, id),
 				Name:          v.Name,
 				Value:         []byte(v.Value),
 			}

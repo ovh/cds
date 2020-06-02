@@ -259,7 +259,7 @@ func (api *API) postWorkflowJobHookCallbackHandler() service.Handler {
 			return sdk.WrapError(err, "cannot load workflow run")
 		}
 
-		secrets, err := workflow.LoadSecrets(ctx, tx, wr, nil)
+		secrets, err := workflow.LoadDecryptSecrets(ctx, tx, wr, nil)
 		if err != nil {
 			return sdk.WrapError(err, "cannot load secrets")
 		}
@@ -316,7 +316,7 @@ func (api *API) getWorkflowJobHookDetailsHandler() service.Handler {
 			return sdk.WithStack(sdk.ErrNotFound)
 		}
 
-		secrets, errSecret := workflow.LoadSecrets(ctx, db, wr, nil)
+		secrets, errSecret := workflow.LoadDecryptSecrets(ctx, db, wr, nil)
 		if errSecret != nil {
 			return sdk.WrapError(errSecret, "cannot load secrets")
 		}

@@ -1095,7 +1095,7 @@ func Test_postWorkflowRunHandler(t *testing.T) {
 	assert.Equal(t, 1, payloadCount)
 	assert.True(t, testFound, "should find 'test' in build parameters")
 
-	secrets, err := workflow.LoadSecrets(context.TODO(), db, lastRun, lastRun.RootRun())
+	secrets, err := workflow.LoadDecryptSecrets(context.TODO(), db, lastRun, lastRun.RootRun())
 	require.NoError(t, err)
 
 	t.Logf("%+v", secrets)

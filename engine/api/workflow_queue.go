@@ -171,7 +171,7 @@ func takeJob(ctx context.Context, dbFunc func() *gorp.DbMap, store cache.Store, 
 		return nil, sdk.WrapError(err, "Unable to load workflow run")
 	}
 
-	secrets, errSecret := workflow.LoadSecrets(ctx, tx, workflowRun, noderun)
+	secrets, errSecret := workflow.LoadDecryptSecrets(ctx, tx, workflowRun, noderun)
 	if errSecret != nil {
 		return nil, sdk.WrapError(errSecret, "Cannot load secrets")
 	}

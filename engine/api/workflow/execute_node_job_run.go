@@ -313,60 +313,36 @@ func checkStatusWaiting(ctx context.Context, store cache.Store, jobID int64, sta
 }
 
 // LoadSecrets loads all secrets for a job run
-func LoadSecrets(ctx context.Context, db gorp.SqlExecutor, wr *sdk.WorkflowRun, nodeRun *sdk.WorkflowNodeRun) ([]sdk.Variable, error) {
-	secrets := make([]sdk.Variable, 0)
+func LoadDecryptSecrets(ctx context.Context, db gorp.SqlExecutor, wr *sdk.WorkflowRun, nodeRun *sdk.WorkflowNodeRun) ([]sdk.Variable, error) {
+	entities := []string{SecretProjContext}
+	if nodeRun != nil {
+		node := wr.Workflow.WorkflowData.NodeByID(nodeRun.WorkflowNodeID)
+		if node == nil {
+			return nil, sdk.WrapError(sdk.ErrWorkflowNodeNotFound, "unable to find node %d in worflow run", nodeRun.WorkflowNodeID)
+		}
+		if node.Context != nil {
+			if node.Context.ApplicationID != 0 {
+				entities = append(entities, fmt.Sprintf(SecretAppContext, node.Context.ApplicationID))
+			}
 
-	projetSecrets, err := loadRunSecretWithDecryption(ctx, db, wr.ID, "proj")
+			if node.Context.EnvironmentID != 0 {
+				entities = append(entities, fmt.Sprintf(SecretEnvContext, node.Context.EnvironmentID))
+			}
+
+			if node.Context.ProjectIntegrationID != 0 {
+				entities = append(entities, fmt.Sprintf(SecretProjIntegrationContext, node.Context.ProjectIntegrationID))
+
+				if node.Context.ApplicationID != 0 {
+					entities = append(entities, fmt.Sprintf(SecretApplicationIntegrationContext, node.Context.ApplicationID, wr.Workflow.ProjectIntegrations[node.Context.ProjectIntegrationID].Name))
+				}
+			}
+		}
+	}
+
+	secrets, err := loadRunSecretWithDecryption(ctx, db, wr.ID, entities)
 	if err != nil {
 		return nil, err
 	}
-	secrets = append(secrets, projetSecrets...)
-
-	if nodeRun == nil {
-		return secrets, nil
-	}
-
-	node := wr.Workflow.WorkflowData.NodeByID(nodeRun.WorkflowNodeID)
-	if node == nil {
-		return nil, sdk.WrapError(sdk.ErrWorkflowNodeNotFound, "unable to find node %d in worflow run", nodeRun.WorkflowNodeID)
-	}
-
-	if node.Context == nil {
-		return secrets, nil
-	}
-
-	if node.Context.ApplicationID != 0 {
-		appSecrets, err := loadRunSecretWithDecryption(ctx, db, wr.ID, fmt.Sprintf("app:%d", node.Context.ApplicationID))
-		if err != nil {
-			return nil, err
-		}
-		secrets = append(secrets, appSecrets...)
-	}
-
-	if node.Context.EnvironmentID != 0 {
-		envSecrets, err := loadRunSecretWithDecryption(ctx, db, wr.ID, fmt.Sprintf("env:%d", node.Context.EnvironmentID))
-		if err != nil {
-			return nil, err
-		}
-		secrets = append(secrets, envSecrets...)
-	}
-
-	if node.Context.ProjectIntegrationID != 0 {
-		piSecrets, err := loadRunSecretWithDecryption(ctx, db, wr.ID, fmt.Sprintf("integration:%d", node.Context.ProjectIntegrationID))
-		if err != nil {
-			return nil, err
-		}
-		secrets = append(secrets, piSecrets...)
-
-		if node.Context.ApplicationID != 0 {
-			piAppSecrets, err := loadRunSecretWithDecryption(ctx, db, wr.ID, fmt.Sprintf("app:%d:integration:%s", node.Context.ApplicationID, wr.Workflow.ProjectIntegrations[node.Context.ProjectIntegrationID].Name))
-			if err != nil {
-				return nil, err
-			}
-			secrets = append(secrets, piAppSecrets...)
-		}
-	}
-
 	return secrets, nil
 }
 
