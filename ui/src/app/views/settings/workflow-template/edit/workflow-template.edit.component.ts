@@ -1,8 +1,8 @@
-import {ChangeDetectorRef, Component, OnInit, ViewChild} from '@angular/core';
-import {ActivatedRoute, Router} from '@angular/router';
-import {TranslateService} from '@ngx-translate/core';
-import {AuditWorkflowTemplate} from 'app/model/audit.model';
-import {Group} from 'app/model/group.model';
+import { ChangeDetectorRef, Component, OnInit, ViewChild } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
+import { TranslateService } from '@ngx-translate/core';
+import { AuditWorkflowTemplate } from 'app/model/audit.model';
+import { Group } from 'app/model/group.model';
 // tslint:disable-next-line: max-line-length
 import {
     InstanceStatus,
@@ -11,21 +11,21 @@ import {
     WorkflowTemplateError,
     WorkflowTemplateInstance
 } from 'app/model/workflow-template.model';
-import {Workflow} from 'app/model/workflow.model';
-import {GroupService} from 'app/service/group/group.service';
-import {WorkflowTemplateService} from 'app/service/workflow-template/workflow-template.service';
-import {PathItem} from 'app/shared/breadcrumb/breadcrumb.component';
-import {AutoUnsubscribe} from 'app/shared/decorator/autoUnsubscribe';
-import {calculateWorkflowTemplateDiff} from 'app/shared/diff/diff';
-import {Item} from 'app/shared/diff/list/diff.list.component';
-import {Column, ColumnType} from 'app/shared/table/data-table.component';
-import {Tab} from 'app/shared/tabs/tabs.component';
-import {ToastService} from 'app/shared/toast/ToastService';
-import {WorkflowTemplateApplyModalComponent} from 'app/shared/workflow-template/apply-modal/workflow-template.apply-modal.component';
-import {WorkflowTemplateBulkModalComponent} from 'app/shared/workflow-template/bulk-modal/workflow-template.bulk-modal.component';
-import {Subscription} from 'rxjs';
-import {finalize} from 'rxjs/internal/operators/finalize';
-import {first} from 'rxjs/operators';
+import { Workflow } from 'app/model/workflow.model';
+import { GroupService } from 'app/service/group/group.service';
+import { WorkflowTemplateService } from 'app/service/workflow-template/workflow-template.service';
+import { PathItem } from 'app/shared/breadcrumb/breadcrumb.component';
+import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
+import { calculateWorkflowTemplateDiff } from 'app/shared/diff/diff';
+import { Item } from 'app/shared/diff/list/diff.list.component';
+import { Column, ColumnType } from 'app/shared/table/data-table.component';
+import { Tab } from 'app/shared/tabs/tabs.component';
+import { ToastService } from 'app/shared/toast/ToastService';
+import { WorkflowTemplateApplyModalComponent } from 'app/shared/workflow-template/apply-modal/workflow-template.apply-modal.component';
+import { WorkflowTemplateBulkModalComponent } from 'app/shared/workflow-template/bulk-modal/workflow-template.bulk-modal.component';
+import { Subscription } from 'rxjs';
+import { finalize } from 'rxjs/internal/operators/finalize';
+import { first } from 'rxjs/operators';
 
 @Component({
     selector: 'app-workflow-template-edit',
@@ -153,10 +153,10 @@ export class WorkflowTemplateEditComponent implements OnInit {
                         labels,
                         value
                     } : {
-                        link: '/project/' + i.project.key + '/workflow/' + i.workflow.name,
-                        labels,
-                        value
-                    };
+                            link: '/project/' + i.project.key + '/workflow/' + i.workflow.name,
+                            labels,
+                            value
+                        };
                 }
             }, <Column<WorkflowTemplateInstance>>{
                 type: ColumnType.LABEL,
@@ -203,7 +203,7 @@ export class WorkflowTemplateEditComponent implements OnInit {
                 this._cd.markForCheck();
             }))
             .subscribe(wt => {
-                this.oldWorkflowTemplate = {...wt};
+                this.oldWorkflowTemplate = { ...wt };
                 this.workflowTemplate = wt;
 
                 if (this.workflowTemplate.editable) {
@@ -258,7 +258,7 @@ export class WorkflowTemplateEditComponent implements OnInit {
                 this._cd.markForCheck();
             }))
             .subscribe(res => {
-                this.oldWorkflowTemplate = {...res};
+                this.oldWorkflowTemplate = { ...res };
                 this.workflowTemplate = res;
                 this.updatePath();
                 this.errors = [];

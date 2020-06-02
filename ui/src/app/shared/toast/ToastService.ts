@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
-import { ToasterConfig, ToasterService } from 'angular2-toaster/angular2-toaster';
+import { BodyOutputType, ToasterConfig, ToasterService } from 'angular2-toaster/angular2-toaster';
+import { ToastHTTPErrorComponent, ToastHTTPErrorData } from './toast-http-error.component';
 
 @Injectable()
 export class ToastService {
@@ -8,13 +9,17 @@ export class ToastService {
         toastContainerId: 1
     });
     private configErrorHTTP: ToasterConfig = new ToasterConfig({
-        showCloseButton: true,
-        timeout: 0,
+        mouseoverTimerStop: true,
         toastContainerId: 2
     });
+    private configErrorHTTPLocked: ToasterConfig = new ToasterConfig({
+        showCloseButton: true,
+        tapToDismiss: false,
+        timeout: 0,
+        toastContainerId: 3
+    });
 
-    constructor(private _toasterService: ToasterService) {
-    }
+    constructor(private _toasterService: ToasterService) { }
 
     getConfigDefault(): ToasterConfig {
         return this.configDefault;
@@ -24,12 +29,20 @@ export class ToastService {
         return this.configErrorHTTP;
     }
 
+    getConfigErrorHTTPLocked(): ToasterConfig {
+        return this.configErrorHTTPLocked;
+    }
+
     success(title: string, msg: string) {
-        this._toasterService.pop('success', title, msg);
+        this._toasterService.pop(
+            { type: 'success', title: title, body: msg, toastContainerId: 1 }
+        );
     }
 
     info(title: string, msg: string) {
-        this._toasterService.pop('info', title, msg);
+        this._toasterService.pop(
+            { type: 'info', title: title, body: msg, toastContainerId: 1 }
+        );
     }
 
     error(title: string, msg: string) {
@@ -38,10 +51,21 @@ export class ToastService {
         );
     }
 
-    errorHTTP(title: string, msg: string, from: string, requestID: string) {
-        let body = from ? `${msg} (from: ${from})` : msg;
+    errorHTTP(status: number, message: string, from: string, request_id: string) {
         this._toasterService.pop(
-            { type: 'error', title: title, body: body, toastContainerId: 2 }
+            {
+                type: 'error',
+                title: message,
+                body: ToastHTTPErrorComponent,
+                bodyOutputType: BodyOutputType.Component,
+                toastContainerId: status < 500 ? 2 : 3,
+                data: <ToastHTTPErrorData>{
+                    status,
+                    from,
+                    request_id
+                }
+            }
         );
     }
 }
+

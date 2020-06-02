@@ -24,7 +24,7 @@ export class ErrorInterceptor implements HttpInterceptor {
                         // error formatted from CDS API
                         if (e.error) {
                             if (e.error.message) {
-                                this._toast.errorHTTP(e.statusText, e.error.message, e.error.from, e.error.request_id);
+                                this._toast.errorHTTP(e.status, e.error.message, e.error.from, e.error.request_id);
                             } else if (Array.isArray(e.error)) {
                                 try {
                                     let messages = e.error as Array<string>;

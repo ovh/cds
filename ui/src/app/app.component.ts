@@ -54,6 +54,7 @@ export class AppComponent implements OnInit {
     displayResolver: boolean;
     toasterConfigDefault: any;
     toasterConfigErrorHTTP: any;
+    toasterConfigErrorHTTPLocked: any;
     lastPing: number;
     currentTheme: string;
     eventsRouteSubscription: Subscription;
@@ -83,6 +84,7 @@ export class AppComponent implements OnInit {
         this.zone = new NgZone({ enableLongStackTrace: false });
         this.toasterConfigDefault = this._toastService.getConfigDefault();
         this.toasterConfigErrorHTTP = this._toastService.getConfigErrorHTTP();
+        this.toasterConfigErrorHTTPLocked = this._toastService.getConfigErrorHTTPLocked();
         _translate.addLangs(['en', 'fr']);
         _translate.setDefaultLang('en');
         let browserLang = navigator.language.match(/fr/) ? 'fr' : 'en';
