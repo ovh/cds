@@ -222,9 +222,9 @@ type dbWorkflowRunSecret struct {
 }
 
 func (e dbWorkflowRunSecret) Canonical() gorpmapping.CanonicalForms {
-	var _ = []interface{}{e.WorkflowRunID, e.Name}
+	var _ = []interface{}{e.ID, e.WorkflowRunID, e.Context}
 	return gorpmapping.CanonicalForms{
-		"{{print .ID}}{{.WorkflowRunID}}{{.Name}}",
+		"{{print .ID}}{{.WorkflowRunID}}{{.Context}}",
 	}
 }
 

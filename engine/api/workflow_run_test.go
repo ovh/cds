@@ -1131,7 +1131,7 @@ func Test_postWorkflowRunHandler(t *testing.T) {
 }
 
 func waitCraftinWorkflow(t *testing.T, db gorp.SqlExecutor, id int64) error {
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	tick := time.NewTicker(100 * time.Millisecond)
 	defer tick.Stop()

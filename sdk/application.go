@@ -1,7 +1,6 @@
 package sdk
 
 import (
-	"fmt"
 	"strings"
 	"time"
 )
@@ -37,7 +36,7 @@ type Application struct {
 // IsValid returns error if the application is not valid.
 func (app Application) IsValid() error {
 	if !NamePatternRegex.MatchString(app.Name) {
-		return NewError(ErrInvalidName, fmt.Errorf("Invalid application name. It should match %s", NamePattern))
+		return NewErrorFrom(ErrInvalidName, "application name should match pattern %s", NamePattern)
 	}
 
 	if app.Icon != "" {

@@ -59,7 +59,7 @@ type WorkflowRunSecret struct {
 	WorkflowRunID int64  `json:"-" db:"workflow_run_id"`
 	Context       string `json:"-" db:"context"`
 	Name          string `json:"-" db:"name"`
-	Value         []byte `json:"-" db:"cypher_value" gorpmapping:"WorkflowRunID,Context,Name"`
+	Value         []byte `json:"-" db:"cypher_value" gorpmapping:"ID"`
 }
 
 // WorkflowNodeRunRelease represents the request struct use by release builtin action for workflow

@@ -316,7 +316,7 @@ func checkStatusWaiting(ctx context.Context, store cache.Store, jobID int64, sta
 func LoadSecrets(ctx context.Context, db gorp.SqlExecutor, wr *sdk.WorkflowRun, nodeRun *sdk.WorkflowNodeRun) ([]sdk.Variable, error) {
 	secrets := make([]sdk.Variable, 0)
 
-	projetSecrets, err := loadRunSecretByContext(ctx, db, wr.ID, "proj")
+	projetSecrets, err := loadRunSecretWithDecryption(ctx, db, wr.ID, "proj")
 	if err != nil {
 		return nil, err
 	}
@@ -336,7 +336,7 @@ func LoadSecrets(ctx context.Context, db gorp.SqlExecutor, wr *sdk.WorkflowRun, 
 	}
 
 	if node.Context.ApplicationID != 0 {
-		appSecrets, err := loadRunSecretByContext(ctx, db, wr.ID, fmt.Sprintf("app:%d", node.Context.ApplicationID))
+		appSecrets, err := loadRunSecretWithDecryption(ctx, db, wr.ID, fmt.Sprintf("app:%d", node.Context.ApplicationID))
 		if err != nil {
 			return nil, err
 		}
@@ -344,7 +344,7 @@ func LoadSecrets(ctx context.Context, db gorp.SqlExecutor, wr *sdk.WorkflowRun, 
 	}
 
 	if node.Context.EnvironmentID != 0 {
-		envSecrets, err := loadRunSecretByContext(ctx, db, wr.ID, fmt.Sprintf("env:%d", node.Context.EnvironmentID))
+		envSecrets, err := loadRunSecretWithDecryption(ctx, db, wr.ID, fmt.Sprintf("env:%d", node.Context.EnvironmentID))
 		if err != nil {
 			return nil, err
 		}
@@ -352,14 +352,14 @@ func LoadSecrets(ctx context.Context, db gorp.SqlExecutor, wr *sdk.WorkflowRun, 
 	}
 
 	if node.Context.ProjectIntegrationID != 0 {
-		piSecrets, err := loadRunSecretByContext(ctx, db, wr.ID, fmt.Sprintf("integration:%d", node.Context.ProjectIntegrationID))
+		piSecrets, err := loadRunSecretWithDecryption(ctx, db, wr.ID, fmt.Sprintf("integration:%d", node.Context.ProjectIntegrationID))
 		if err != nil {
 			return nil, err
 		}
 		secrets = append(secrets, piSecrets...)
 
 		if node.Context.ApplicationID != 0 {
-			piAppSecrets, err := loadRunSecretByContext(ctx, db, wr.ID, fmt.Sprintf("app:%d:integration:%s", node.Context.ApplicationID, wr.Workflow.ProjectIntegrations[node.Context.ProjectIntegrationID].Name))
+			piAppSecrets, err := loadRunSecretWithDecryption(ctx, db, wr.ID, fmt.Sprintf("app:%d:integration:%s", node.Context.ApplicationID, wr.Workflow.ProjectIntegrations[node.Context.ProjectIntegrationID].Name))
 			if err != nil {
 				return nil, err
 			}
