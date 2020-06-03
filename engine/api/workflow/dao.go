@@ -243,23 +243,6 @@ func Load(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj sdk.
 }
 
 // LoadAndLockByID loads a workflow
-func LoadAndLockByID(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj sdk.Project, id int64, opts LoadOptions) (*sdk.Workflow, error) {
-	dao := opts.GetWorkflowDAO()
-	dao.Filters.WorkflowIDs = []int64{id}
-	dao.Lock = true
-
-	ws, err := dao.Load(ctx, db)
-	if err != nil {
-		return nil, err
-	}
-
-	if !opts.Minimal {
-		if err := CompleteWorkflow(ctx, db, &ws, proj, opts); err != nil {
-			return nil, err
-		}
-	}
-	return &ws, nil
-}
 
 // LoadByID loads a workflow
 func LoadByID(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj sdk.Project, id int64, opts LoadOptions) (*sdk.Workflow, error) {
@@ -303,8 +286,8 @@ func Insert(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj sd
 	w.LastModified = time.Now()
 	if err := db.QueryRow(`INSERT INTO workflow (
 		name, description, icon, project_id, history_length, from_repository, purge_tags, workflow_data, metadata
-	) 
-	VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) 
+	)
+	VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
 	RETURNING id`,
 		w.Name, w.Description, w.Icon, w.ProjectID, w.HistoryLength, w.FromRepository, w.PurgeTags, w.WorkflowData, w.Metadata).Scan(&w.ID); err != nil {
 		return sdk.WrapError(err, "Unable to insert workflow %s/%s", w.ProjectKey, w.Name)
