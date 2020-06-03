@@ -59,6 +59,10 @@ ALTER TABLE "application_deployment_strategy" DROP COLUMN IF EXISTS config;
 
 -- Clean for 199_refact_integration_crypto.sql
 ALTER TABLE "project_integration" DROP COLUMN IF EXISTS config;
+ALTER TABLE "integration_model" DROP COLUMN IF EXISTS public_configurations;
+
+-- Clean for 204_project_vcs_server.sql
+ALTER TABLE "project" DROP COLUMN IF EXISTS vcs_servers;
 
 -- +migrate Down
 

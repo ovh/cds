@@ -74,7 +74,7 @@ func Import(ctx context.Context, db gorp.SqlExecutor, proj sdk.Project, app *sdk
 			return sdk.NewError(sdk.ErrNoReposManager, err)
 		}
 
-		if err := repositoriesmanager.InsertForApplication(db, app, proj.Key); err != nil {
+		if err := repositoriesmanager.InsertForApplication(db, app); err != nil {
 			return err
 		}
 	}
