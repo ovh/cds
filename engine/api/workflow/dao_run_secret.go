@@ -41,7 +41,7 @@ func loadRunSecretWithDecryption(ctx context.Context, db gorp.SqlExecutor, runID
 			return nil, err
 		}
 		if !isValid {
-			log.Error(ctx, "workflow.loadRunSecretWithDecryption> secret value corrupted", dbSecrets[i].ID)
+			log.Error(ctx, "workflow.loadRunSecretWithDecryption> secret value corrupted %s", dbSecrets[i].ID)
 			continue
 		}
 		secrets[i] = sdk.Variable{
