@@ -706,11 +706,16 @@ func (s *stack) String() string {
 		if strings.HasPrefix(name, "github.com/ovh/cds") {
 			sp := strings.Split(name, "/")
 			sp = strings.Split(sp[len(sp)-1], ".")
+			var name string
 			// check if it's a struct or package func
 			if strings.HasPrefix(sp[1], "(") {
-				names = append(names, sp[2])
+				name = sp[2]
 			} else {
-				names = append(names, sp[1])
+				name = sp[1]
+			}
+			ignoredNames := StringSlice{"NewError", "NewErrorFrom", "WithStack", "WrapError", "Append"}
+			if !ignoredNames.Contains(name) {
+				names = append(names, name)
 			}
 		}
 	}
