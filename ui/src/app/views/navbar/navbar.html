@@ -74,10 +74,10 @@
 
         <ng-template let-popup #popupSearchTemplate>
             <div class="content searchpopup">
-                <div class="ui right floated" suiPopup popupPlacement="left" [popupText]="'navbar_search_help_details' | translate"><i class="help icon"></i> 
+                <div class="ui right floated" suiPopup popupPlacement="left" [popupText]="'navbar_search_help_details' | translate"><i class="help icon"></i>
                     {{ 'navbar_search_help' | translate }}
                 </div>
-                
+
                 <div *ngIf="containsResult && isSearch"><div class="ui left"><i class="search icon"></i> {{'navbar_results' | translate}}</div></div>
                 <div *ngIf="containsResult && !isSearch"><div class="ui left"><i class="history icon"></i>{{'navbar_seen_recently' | translate}}</div></div>
                 <div *ngIf="!containsResult"><div class="ui center"><i class="search icon"></i>{{'navbar_no_result' | translate}}</div></div>
@@ -146,7 +146,7 @@
                                             title="{{ 'common_workflow_title' | translate }}{{el.title}}">
                                             {{el.title}}
                                         </a>
-                                        <div class="description">{{'navbar_in_project' | translate}} 
+                                        <div class="description">{{'navbar_in_project' | translate}}
                                             <a (click)="$event.stopPropagation()"
                                                 [routerLink]="['/project', el.projectKey]"
                                                 title="{{ 'common_project_title' | translate }}{{el.title}}">
@@ -158,7 +158,7 @@
                             </div>
                         </div>
                     </div>
-            
+
                     <div class="six wide column">
                         <div class="ui secondary pointing menu">
                             <div class="ui relaxed divided list">
@@ -187,7 +187,7 @@
                                             title="{{ 'common_application_title' | translate }}{{el.title}}">
                                             {{el.title}}
                                         </a>
-                                        <div class="description">{{'navbar_in_project' | translate}} 
+                                        <div class="description">{{'navbar_in_project' | translate}}
                                             <a (click)="$event.stopPropagation()"
                                                 [routerLink]="['/project', el.projectKey]"
                                                 title="{{ 'common_project_title' | translate }}{{el.title}}">
@@ -309,7 +309,7 @@
             <a sm-item href="#" [routerLink]="['settings', 'queue']">{{ 'admin_queue_title' | translate }}</a>
             <div class="divider"></div>
             <a sm-item href="#" [routerLink]="['settings', 'downloads']">{{ 'navbar_downloads' | translate }}</a>
-            <a sm-item href="https://ovh.github.io/cds/" target="_blank">{{ 'navbar_documentation' | translate }}</a>
+            <a sm-item href="https://ovh.github.io/cds/" target="_blank" rel="noopener noreferrer">{{ 'navbar_documentation' | translate }}</a>
             <div class="divider"></div>
             <sm-checkbox class="theme-switch" name="switch-theme" [control]="themeSwitch" type="toggle"
                 label="{{'navbar_dark_mode' | translate}}" (change)="changeTheme()"></sm-checkbox>

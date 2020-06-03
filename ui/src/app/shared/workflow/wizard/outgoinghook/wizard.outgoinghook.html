@@ -2,8 +2,8 @@
     <div class="ui form">
         <h3 class="inline">{{ 'workflow_node_hook_form_title' | translate }}</h3>
         <div class="right floated mb15">
-            <i class="book icon"></i><a href="https://ovh.github.io/cds/docs/concepts/workflow/hooks"
-                target="_blank">{{'common_documentation' | translate}}</a>
+            <i class="book icon"></i><a href="https://ovh.github.io/cds/docs/concepts/workflow/hooks" target="_blank"
+                rel="noopener noreferrer">{{'common_documentation' | translate}}</a>
         </div>
         <ng-container *ngIf="!loadingModels">
             <sui-select class="selection" placeholder="{{'workflow_node_hook_select' | translate}}"
@@ -35,8 +35,9 @@
                             [readonly]="!outgoingHook.outgoing_hook.config[k].configurable || mode === 'ro'"
                             *ngIf="k !== 'payload' && outgoingHook.outgoing_hook.config[k].type === 'password'" />
                         <ng-container *ngIf="k === 'payload' && outgoingHook.outgoing_hook.config[k].type === 'string'">
-                            <codemirror [class.invalid]="invalidJSON" [(ngModel)]="outgoingHook.outgoing_hook.config[k].value"
-                                [config]="codeMirrorConfig" (change)="changeCodeMirror($event)" #textareaCodeMirror>
+                            <codemirror [class.invalid]="invalidJSON"
+                                [(ngModel)]="outgoingHook.outgoing_hook.config[k].value" [config]="codeMirrorConfig"
+                                (change)="changeCodeMirror($event)" #textareaCodeMirror>
                             </codemirror>
                         </ng-container>
                     </div>
@@ -78,7 +79,8 @@
                         </sui-select>
                     </div>
                 </div>
-                <div class="inline fields" *ngIf="availableHooks && outgoingHook.outgoing_hook.config['target_hook'].value">
+                <div class="inline fields"
+                    *ngIf="availableHooks && outgoingHook.outgoing_hook.config['target_hook'].value">
                     <div class="four wide field"><label>payload</label></div>
                     <div class="twelve wide field">
                         <codemirror [class.invalid]="invalidJSON"
@@ -92,9 +94,7 @@
                 {{ 'workflow_node_hook_no_configuration' | translate }}</div>
         </ng-container>
         <ng-container *ngIf="mode === 'update' && workflow.permissions.writable">
-            <button class="ui right floated green button"
-                *ngIf="workflow.permissions.writable"
-                [disabled]="loading"
+            <button class="ui right floated green button" *ngIf="workflow.permissions.writable" [disabled]="loading"
                 [class.loading]="loading" (click)="updateWorkflow()">
                 {{ 'btn_save' | translate }}
             </button>
