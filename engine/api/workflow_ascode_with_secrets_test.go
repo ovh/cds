@@ -29,8 +29,7 @@ import (
 )
 
 func Test_RunNonDefaultBranchWithSecrets(t *testing.T) {
-	api, db, router, end := newTestAPI(t)
-	defer end()
+	api, db, router := newTestAPI(t)
 
 	_, _ = assets.InsertService(t, db, t.Name()+"_HOOKS", services.TypeHooks)
 	_, _ = assets.InsertService(t, db, t.Name()+"_VCS", services.TypeVCS)
