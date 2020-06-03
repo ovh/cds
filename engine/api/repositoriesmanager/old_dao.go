@@ -8,7 +8,7 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-//InsertForApplication associates a repositories manager with an application
+// InsertForApplication associates a repositories manager with an application.
 func InsertForApplication(db gorp.SqlExecutor, app *sdk.Application) error {
 	query := `UPDATE application SET vcs_server = $1, repo_fullname = $2 WHERE id = $3`
 	if _, err := db.Exec(query, app.VCSServer, app.RepositoryFullname, app.ID); err != nil {
@@ -17,8 +17,7 @@ func InsertForApplication(db gorp.SqlExecutor, app *sdk.Application) error {
 	return nil
 }
 
-//DeleteForApplication removes association between  a repositories manager and an application
-//it deletes the corresponding line in repositories_manager_project
+// DeleteForApplication removes association between a repositories manager and an application.
 func DeleteForApplication(db gorp.SqlExecutor, app *sdk.Application) error {
 	query := `UPDATE application SET vcs_server = '', repo_fullname = '' WHERE id = $1`
 	if _, err := db.Exec(query, app.ID); err != nil {
@@ -27,7 +26,7 @@ func DeleteForApplication(db gorp.SqlExecutor, app *sdk.Application) error {
 	return nil
 }
 
-//LoadLinkedApplicationNames loads applications which are linked with this repository manager name
+// LoadLinkedApplicationNames loads applications which are linked with this repository manager name.
 func LoadLinkedApplicationNames(db gorp.SqlExecutor, projectKey, rmName string) (sdk.IDNames, error) {
 	query := `
     SELECT application.id, application.name, application.description, '' AS icon

@@ -57,6 +57,10 @@ ALTER TABLE "application" DROP COLUMN IF EXISTS repositories_manager_id;
 ALTER TABLE "application" DROP COLUMN IF EXISTS vcs_strategy;
 ALTER TABLE "application_deployment_strategy" DROP COLUMN IF EXISTS config;
 
+-- Clean for 059_repositoriesmanager_project.sql
+DROP TABLE IF EXISTS "repositories_manager_project";
+DROP TABLE IF EXISTS "repositories_manager";
+
 -- Clean for 199_refact_integration_crypto.sql
 ALTER TABLE "project_integration" DROP COLUMN IF EXISTS config;
 ALTER TABLE "integration_model" DROP COLUMN IF EXISTS public_configurations;

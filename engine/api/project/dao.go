@@ -200,12 +200,8 @@ func DeleteByID(db gorp.SqlExecutor, id int64) error {
 		return err
 	}
 
-	if _, err := db.Exec(`DELETE FROM repositories_manager_project WHERE id_project = $1`, id); err != nil {
-		return err
-	}
-
 	if _, err := db.Exec(`DELETE FROM project WHERE project.id = $1`, id); err != nil {
-		return err
+		return sdk.WithStack(err)
 	}
 	return nil
 }
