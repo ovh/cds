@@ -75,11 +75,21 @@ func (api *API) getWorkflowsHandler() service.Handler {
 			}
 
 			w1 := &ws[i]
-			w1.URLs.APIURL = api.Config.URL.API + api.Router.GetRoute("GET", api.getWorkflowHandler, map[string]string{"key": w1.ProjectKey, "permWorkflowName": w1.Name})
-			w1.URLs.UIURL = api.Config.URL.UI + "/project/" + w1.ProjectKey + "/workflow/" + w1.Name
+			api.setWorkflowURLs(w1)
 		}
 
 		return service.WriteJSON(w, ws, http.StatusOK)
+	}
+}
+
+func (api *API) setWorkflowURLs(w1 *sdk.Workflow) {
+	w1.URLs.APIURL = api.Config.URL.API + api.Router.GetRoute("GET", api.getWorkflowHandler, map[string]string{"key": w1.ProjectKey, "permWorkflowName": w1.Name})
+	w1.URLs.UIURL = api.Config.URL.UI + "/project/" + w1.ProjectKey + "/workflow/" + w1.Name
+
+	for j := range w1.Runs {
+		r1 := &w1.Runs[j]
+		r1.URLs.APIURL = api.Config.URL.API + api.Router.GetRoute("GET", api.getWorkflowRunHandler, map[string]string{"key": w1.ProjectKey, "permWorkflowName": w1.Name, "number": strconv.FormatInt(r1.Number, 10)})
+		r1.URLs.UIURL = api.Config.URL.UI + "/project/" + w1.ProjectKey + "/workflow/" + w1.Name + "/run/" + strconv.FormatInt(r1.Number, 10)
 	}
 }
 
@@ -147,8 +157,7 @@ func (api *API) getWorkflowHandler() service.Handler {
 			}
 		}
 
-		w1.URLs.APIURL = api.Config.URL.API + api.Router.GetRoute("GET", api.getWorkflowHandler, map[string]string{"key": key, "permWorkflowName": w1.Name})
-		w1.URLs.UIURL = api.Config.URL.UI + "/project/" + key + "/workflow/" + w1.Name
+		api.setWorkflowURLs(w1)
 
 		//We filter project and workflow configuration key, because they are always set on insertHooks
 		w1.FilterHooksConfig(sdk.HookConfigProject, sdk.HookConfigWorkflow)
@@ -807,8 +816,7 @@ func (api *API) getSearchWorkflowHandler() service.Handler {
 			}
 
 			w1 := &ws[i]
-			w1.URLs.APIURL = api.Config.URL.API + api.Router.GetRoute("GET", api.getWorkflowHandler, map[string]string{"key": w1.ProjectKey, "permWorkflowName": w1.Name})
-			w1.URLs.UIURL = api.Config.URL.UI + "/project/" + w1.ProjectKey + "/workflow/" + w1.Name
+			api.setWorkflowURLs(w1)
 		}
 
 		return service.WriteJSON(w, ws, http.StatusOK)

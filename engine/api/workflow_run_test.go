@@ -34,8 +34,8 @@ import (
 )
 
 func Test_getWorkflowNodeRunHistoryHandler(t *testing.T) {
-	api, db, router, end := newTestAPI(t)
-	defer end()
+	api, db, router := newTestAPI(t)
+
 	u, pass := assets.InsertAdminUser(t, db)
 	consumer, _ := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
 
@@ -162,8 +162,8 @@ func Test_getWorkflowNodeRunHistoryHandler(t *testing.T) {
 }
 
 func Test_getWorkflowRunsHandler(t *testing.T) {
-	api, db, router, end := newTestAPI(t)
-	defer end()
+	api, db, router := newTestAPI(t)
+
 	u, pass := assets.InsertAdminUser(t, api.mustDB())
 	consumer, _ := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
 	key := sdk.RandomString(10)
@@ -316,8 +316,8 @@ func Test_getWorkflowRunsHandler(t *testing.T) {
 }
 
 func Test_getWorkflowRunsHandlerWithFilter(t *testing.T) {
-	api, db, router, end := newTestAPI(t)
-	defer end()
+	api, db, router := newTestAPI(t)
+
 	u, pass := assets.InsertAdminUser(t, api.mustDB())
 	consumer, _ := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
 
@@ -432,8 +432,8 @@ func Test_getWorkflowRunsHandlerWithFilter(t *testing.T) {
 }
 
 func Test_getLatestWorkflowRunHandler(t *testing.T) {
-	api, db, router, end := newTestAPI(t)
-	defer end()
+	api, db, router := newTestAPI(t)
+
 	u, pass := assets.InsertAdminUser(t, api.mustDB())
 	consumer, _ := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
 
@@ -566,8 +566,8 @@ func Test_getLatestWorkflowRunHandler(t *testing.T) {
 }
 
 func Test_getWorkflowRunHandler(t *testing.T) {
-	api, db, router, end := newTestAPI(t)
-	defer end()
+	api, db, router := newTestAPI(t)
+
 	u, pass := assets.InsertAdminUser(t, api.mustDB())
 	consumer, _ := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
 
@@ -683,8 +683,8 @@ func Test_getWorkflowRunHandler(t *testing.T) {
 }
 
 func Test_getWorkflowNodeRunHandler(t *testing.T) {
-	api, db, router, end := newTestAPI(t)
-	defer end()
+	api, db, router := newTestAPI(t)
+
 	u, pass := assets.InsertAdminUser(t, api.mustDB())
 	consumer, _ := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
 
@@ -834,8 +834,8 @@ func Test_getWorkflowNodeRunHandler(t *testing.T) {
 }
 
 func Test_postWorkflowRunHandler(t *testing.T) {
-	api, db, router, end := newTestAPI(t)
-	defer end()
+	api, db, router := newTestAPI(t)
+
 	u, pass := assets.InsertAdminUser(t, api.mustDB())
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, api.Cache, key, key)
@@ -1160,8 +1160,8 @@ func waitCraftinWorkflow(t *testing.T, db gorp.SqlExecutor, id int64) error {
  * 3. Run workflow :  Must fail on getting PR.id = 1
  */
 func Test_postWorkflowRunAsyncFailedHandler(t *testing.T) {
-	api, db, router, end := newTestAPI(t)
-	defer end()
+	api, db, router := newTestAPI(t)
+
 	u, pass := assets.InsertAdminUser(t, api.mustDB())
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, api.Cache, key, key)
@@ -1400,8 +1400,8 @@ func Test_postWorkflowRunAsyncFailedHandler(t *testing.T) {
 }
 
 func Test_postWorkflowRunHandlerWithoutRightOnEnvironment(t *testing.T) {
-	api, db, router, end := newTestAPI(t)
-	defer end()
+	api, db, router := newTestAPI(t)
+
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, api.Cache, key, key)
 
@@ -1512,8 +1512,8 @@ func Test_postWorkflowRunHandlerWithoutRightOnEnvironment(t *testing.T) {
 }
 
 func Test_postWorkflowRunHandlerWithoutRightConditionsOnHook(t *testing.T) {
-	api, db, router, end := newTestAPI(t)
-	defer end()
+	api, db, router := newTestAPI(t)
+
 	u, pass := assets.InsertAdminUser(t, api.mustDB())
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, api.Cache, key, key)
@@ -1671,8 +1671,8 @@ func Test_postWorkflowRunHandlerWithoutRightConditionsOnHook(t *testing.T) {
 }
 
 func Test_postWorkflowRunHandlerHookWithMutex(t *testing.T) {
-	api, db, router, end := newTestAPI(t)
-	defer end()
+	api, db, router := newTestAPI(t)
+
 	u, pass := assets.InsertAdminUser(t, api.mustDB())
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, api.Cache, key, key)
@@ -1832,9 +1832,285 @@ func Test_postWorkflowRunHandlerHookWithMutex(t *testing.T) {
 	assert.Equal(t, sdk.StatusBuilding, lastRun.Status)
 }
 
+func Test_postWorkflowRunHandlerMutexRelease(t *testing.T) {
+	api, db, router := newTestAPI(t)
+
+	u, jwt := assets.InsertAdminUser(t, api.mustDB())
+
+	// Init test pipeline with one stage and one job
+	projKey := sdk.RandomString(10)
+	proj := assets.InsertTestProject(t, db, api.Cache, projKey, projKey)
+	pip := sdk.Pipeline{ProjectID: proj.ID, ProjectKey: proj.Key, Name: sdk.RandomString(10)}
+	require.NoError(t, pipeline.InsertPipeline(api.mustDB(), &pip))
+	stage := sdk.Stage{PipelineID: pip.ID, Name: sdk.RandomString(10), Enabled: true}
+	require.NoError(t, pipeline.InsertStage(api.mustDB(), &stage))
+	job := &sdk.Job{Enabled: true, Action: sdk.Action{Enabled: true}}
+	require.NoError(t, pipeline.InsertJob(api.mustDB(), job, stage.ID, &pip))
+
+	// Init test workflow with one pipeline with mutex
+	wkf := sdk.Workflow{
+		ProjectID:  proj.ID,
+		ProjectKey: proj.Key,
+		Name:       sdk.RandomString(10),
+		WorkflowData: sdk.WorkflowData{
+			Node: sdk.Node{
+				Name: "root",
+				Type: sdk.NodeTypePipeline,
+				Context: &sdk.NodeContext{
+					PipelineID: pip.ID,
+					Mutex:      true,
+				},
+			},
+		},
+	}
+	require.NoError(t, workflow.Insert(context.TODO(), api.mustDB(), api.Cache, *proj, &wkf))
+
+	// Run workflow 1
+	uri := router.GetRoute("POST", api.postWorkflowRunHandler, map[string]string{
+		"key":              proj.Key,
+		"permWorkflowName": wkf.Name,
+	})
+	require.NotEmpty(t, uri)
+	req := assets.NewAuthentifiedRequest(t, u, jwt, "POST", uri, sdk.WorkflowRunPostHandlerOption{})
+	rec := httptest.NewRecorder()
+	router.Mux.ServeHTTP(rec, req)
+	require.Equal(t, 202, rec.Code)
+
+	var try int
+	for {
+		if try > 10 {
+			t.Logf("Maximum attempts reached on getWorkflowRunHandler for run 1")
+			t.FailNow()
+			return
+		}
+		try++
+		t.Logf("Attempt #%d on getWorkflowRunHandler for run 1", try)
+		uri := router.GetRoute("GET", api.getWorkflowRunHandler, map[string]string{
+			"key":              proj.Key,
+			"permWorkflowName": wkf.Name,
+			"number":           "1",
+		})
+		req := assets.NewAuthentifiedRequest(t, u, jwt, "GET", uri, nil)
+		rec := httptest.NewRecorder()
+		router.Mux.ServeHTTP(rec, req)
+		require.Equal(t, 200, rec.Code)
+
+		var wkfRun sdk.WorkflowRun
+		require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &wkfRun))
+		if wkfRun.Status != sdk.StatusBuilding {
+			t.Logf("Workflow run status: %s", wkfRun.Status)
+			continue
+		}
+
+		require.Equal(t, sdk.StatusBuilding, wkfRun.Status)
+		require.Equal(t, sdk.StatusWaiting, wkfRun.RootRun().Stages[0].Status)
+		break
+	}
+
+	// Run workflow 2
+	uri = router.GetRoute("POST", api.postWorkflowRunHandler, map[string]string{
+		"key":              proj.Key,
+		"permWorkflowName": wkf.Name,
+	})
+	require.NotEmpty(t, uri)
+	req = assets.NewAuthentifiedRequest(t, u, jwt, "POST", uri, sdk.WorkflowRunPostHandlerOption{})
+	rec = httptest.NewRecorder()
+	router.Mux.ServeHTTP(rec, req)
+	require.Equal(t, 202, rec.Code)
+
+	try = 0
+	for {
+		if try > 10 {
+			t.Logf("Maximum attempts reached on getWorkflowRunHandler for run 2")
+			t.FailNow()
+			return
+		}
+		try++
+		t.Logf("Attempt #%d on getWorkflowRunHandler for run 2", try)
+		uri := router.GetRoute("GET", api.getWorkflowRunHandler, map[string]string{
+			"key":              proj.Key,
+			"permWorkflowName": wkf.Name,
+			"number":           "2",
+		})
+		req := assets.NewAuthentifiedRequest(t, u, jwt, "GET", uri, nil)
+		rec := httptest.NewRecorder()
+		router.Mux.ServeHTTP(rec, req)
+		require.Equal(t, 200, rec.Code)
+
+		var wkfRun sdk.WorkflowRun
+		require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &wkfRun))
+		if wkfRun.Status != sdk.StatusBuilding {
+			t.Logf("Workflow run status: %s", wkfRun.Status)
+			continue
+		}
+
+		require.Equal(t, sdk.StatusBuilding, wkfRun.Status)
+		require.Equal(t, 2, len(wkfRun.Infos))
+		require.Equal(t, sdk.MsgWorkflowStarting.ID, wkfRun.Infos[0].Message.ID)
+		require.Equal(t, sdk.MsgWorkflowNodeMutex.ID, wkfRun.Infos[1].Message.ID)
+		require.Equal(t, "", wkfRun.RootRun().Stages[0].Status)
+		break
+	}
+
+	// Run workflow 3
+	uri = router.GetRoute("POST", api.postWorkflowRunHandler, map[string]string{
+		"key":              proj.Key,
+		"permWorkflowName": wkf.Name,
+	})
+	require.NotEmpty(t, uri)
+	req = assets.NewAuthentifiedRequest(t, u, jwt, "POST", uri, sdk.WorkflowRunPostHandlerOption{})
+	rec = httptest.NewRecorder()
+	router.Mux.ServeHTTP(rec, req)
+	require.Equal(t, 202, rec.Code)
+
+	try = 0
+	for {
+		if try > 10 {
+			t.Logf("Maximum attempts reached on getWorkflowRunHandler for run 3")
+			t.FailNow()
+			return
+		}
+		try++
+		t.Logf("Attempt #%d on getWorkflowRunHandler for run 3", try)
+		uri := router.GetRoute("GET", api.getWorkflowRunHandler, map[string]string{
+			"key":              proj.Key,
+			"permWorkflowName": wkf.Name,
+			"number":           "3",
+		})
+		req := assets.NewAuthentifiedRequest(t, u, jwt, "GET", uri, nil)
+		rec := httptest.NewRecorder()
+		router.Mux.ServeHTTP(rec, req)
+		require.Equal(t, 200, rec.Code)
+
+		var wkfRun sdk.WorkflowRun
+		require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &wkfRun))
+		if wkfRun.Status != sdk.StatusBuilding {
+			t.Logf("Workflow run status: %s", wkfRun.Status)
+			continue
+		}
+
+		require.Equal(t, sdk.StatusBuilding, wkfRun.Status)
+		require.Equal(t, 2, len(wkfRun.Infos))
+		require.Equal(t, sdk.MsgWorkflowStarting.ID, wkfRun.Infos[0].Message.ID)
+		require.Equal(t, sdk.MsgWorkflowNodeMutex.ID, wkfRun.Infos[1].Message.ID)
+		require.Equal(t, "", wkfRun.RootRun().Stages[0].Status)
+		break
+	}
+
+	// Stop workflow 1
+	uri = router.GetRoute("POST", api.stopWorkflowRunHandler, map[string]string{
+		"key":              proj.Key,
+		"permWorkflowName": wkf.Name,
+		"number":           "1",
+	})
+	require.NotEmpty(t, uri)
+	req = assets.NewAuthentifiedRequest(t, u, jwt, "POST", uri, nil)
+	rec = httptest.NewRecorder()
+	router.Mux.ServeHTTP(rec, req)
+	require.Equal(t, 200, rec.Code)
+
+	try = 0
+	for {
+		if try > 10 {
+			t.Logf("Maximum attempts reached on getWorkflowRunHandler for run 1")
+			t.FailNow()
+			return
+		}
+		try++
+		t.Logf("Attempt #%d on getWorkflowRunHandler for run 1", try)
+		uri := router.GetRoute("GET", api.getWorkflowRunHandler, map[string]string{
+			"key":              proj.Key,
+			"permWorkflowName": wkf.Name,
+			"number":           "1",
+		})
+		req := assets.NewAuthentifiedRequest(t, u, jwt, "GET", uri, nil)
+		rec := httptest.NewRecorder()
+		router.Mux.ServeHTTP(rec, req)
+		require.Equal(t, 200, rec.Code)
+
+		var wkfRun sdk.WorkflowRun
+		require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &wkfRun))
+		if wkfRun.Status != sdk.StatusStopped {
+			t.Logf("Workflow run status: %s", wkfRun.Status)
+			continue
+		}
+
+		require.Equal(t, sdk.StatusStopped, wkfRun.Status)
+		require.Equal(t, sdk.StatusStopped, wkfRun.RootRun().Stages[0].Status)
+		break
+	}
+
+	// Run 2 should be running
+	try = 0
+	for {
+		if try > 10 {
+			t.Logf("Maximum attempts reached on getWorkflowRunHandler for run 2")
+			t.FailNow()
+			return
+		}
+		try++
+		t.Logf("Attempt #%d on getWorkflowRunHandler for run 2", try)
+		uri := router.GetRoute("GET", api.getWorkflowRunHandler, map[string]string{
+			"key":              proj.Key,
+			"permWorkflowName": wkf.Name,
+			"number":           "2",
+		})
+		req := assets.NewAuthentifiedRequest(t, u, jwt, "GET", uri, nil)
+		rec := httptest.NewRecorder()
+		router.Mux.ServeHTTP(rec, req)
+		require.Equal(t, 200, rec.Code)
+
+		var wkfRun sdk.WorkflowRun
+		require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &wkfRun))
+		if wkfRun.Status != sdk.StatusBuilding && wkfRun.RootRun().Stages[0].Status == sdk.StatusWaiting {
+			t.Logf("Workflow run status: %s", wkfRun.Status)
+			continue
+		}
+
+		require.Equal(t, sdk.StatusBuilding, wkfRun.Status)
+		require.Equal(t, sdk.StatusWaiting, wkfRun.RootRun().Stages[0].Status, "Stop a previous workflow run should have release the mutex and trigger the second run, status of the stage should change for empty string to waiting")
+		break
+	}
+
+	// Run 3 should still be locked
+	try = 0
+	for {
+		if try > 10 {
+			t.Logf("Maximum attempts reached on getWorkflowRunHandler for run 3")
+			t.FailNow()
+			return
+		}
+		try++
+		t.Logf("Attempt #%d on getWorkflowRunHandler for run 3", try)
+		uri := router.GetRoute("GET", api.getWorkflowRunHandler, map[string]string{
+			"key":              proj.Key,
+			"permWorkflowName": wkf.Name,
+			"number":           "3",
+		})
+		req := assets.NewAuthentifiedRequest(t, u, jwt, "GET", uri, nil)
+		rec := httptest.NewRecorder()
+		router.Mux.ServeHTTP(rec, req)
+		require.Equal(t, 200, rec.Code)
+
+		var wkfRun sdk.WorkflowRun
+		require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &wkfRun))
+		if wkfRun.Status != sdk.StatusBuilding {
+			t.Logf("Workflow run status: %s", wkfRun.Status)
+			continue
+		}
+
+		require.Equal(t, sdk.StatusBuilding, wkfRun.Status)
+		require.Equal(t, 2, len(wkfRun.Infos))
+		require.Equal(t, sdk.MsgWorkflowStarting.ID, wkfRun.Infos[0].Message.ID)
+		require.Equal(t, sdk.MsgWorkflowNodeMutex.ID, wkfRun.Infos[1].Message.ID)
+		require.Equal(t, "", wkfRun.RootRun().Stages[0].Status)
+		break
+	}
+}
+
 func Test_postWorkflowRunHandlerHook(t *testing.T) {
-	api, db, router, end := newTestAPI(t)
-	defer end()
+	api, db, router := newTestAPI(t)
+
 	u, pass := assets.InsertAdminUser(t, api.mustDB())
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, api.Cache, key, key)
@@ -2002,8 +2278,8 @@ func Test_postWorkflowRunHandlerHook(t *testing.T) {
 }
 
 func Test_postWorkflowRunHandler_Forbidden(t *testing.T) {
-	api, db, router, end := newTestAPI(t)
-	defer end()
+	api, db, router := newTestAPI(t)
+
 	u, pass := assets.InsertAdminUser(t, api.mustDB())
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, api.Cache, key, key)
@@ -2075,8 +2351,8 @@ func Test_postWorkflowRunHandler_Forbidden(t *testing.T) {
 }
 
 func Test_postWorkflowRunHandler_ConditionNotOK(t *testing.T) {
-	api, db, router, end := newTestAPI(t)
-	defer end()
+	api, db, router := newTestAPI(t)
+
 	u, pass := assets.InsertAdminUser(t, api.mustDB())
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, api.Cache, key, key)
@@ -2159,8 +2435,8 @@ func Test_postWorkflowRunHandler_ConditionNotOK(t *testing.T) {
 }
 
 func Test_postWorkflowRunHandler_BadPayload(t *testing.T) {
-	api, db, router, end := newTestAPI(t)
-	defer end()
+	api, db, router := newTestAPI(t)
+
 	u, pass := assets.InsertAdminUser(t, api.mustDB())
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, api.Cache, key, key)
@@ -2370,8 +2646,7 @@ func initGetWorkflowNodeRunJobTest(t *testing.T, api *API, db *gorp.DbMap) (*sdk
 }
 
 func Test_getWorkflowNodeRunJobStepHandler(t *testing.T) {
-	api, db, router, end := newTestAPI(t)
-	defer end()
+	api, db, router := newTestAPI(t)
 
 	u, pass, proj, w1, lastRun, jobRun := initGetWorkflowNodeRunJobTest(t, api, db)
 
@@ -2400,8 +2675,7 @@ func Test_getWorkflowNodeRunJobStepHandler(t *testing.T) {
 }
 
 func Test_getWorkflowNodeRunJobServiceLogsHandler(t *testing.T) {
-	api, db, router, end := newTestAPI(t)
-	defer end()
+	api, db, router := newTestAPI(t)
 
 	u, pass, proj, w1, lastRun, jobRun := initGetWorkflowNodeRunJobTest(t, api, db)
 
@@ -2428,8 +2702,8 @@ func Test_getWorkflowNodeRunJobServiceLogsHandler(t *testing.T) {
 }
 
 func Test_deleteWorkflowRunsBranchHandler(t *testing.T) {
-	api, db, router, end := newTestAPI(t)
-	defer end()
+	api, db, router := newTestAPI(t)
+
 	u, pass := assets.InsertAdminUser(t, api.mustDB())
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, api.Cache, key, key)
@@ -2574,8 +2848,8 @@ func Test_deleteWorkflowRunsBranchHandler(t *testing.T) {
 }
 
 func Test_deleteWorkflowRunHandler(t *testing.T) {
-	api, db, router, end := newTestAPI(t)
-	defer end()
+	api, db, router := newTestAPI(t)
+
 	u, pass := assets.InsertAdminUser(t, api.mustDB())
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, api.Cache, key, key)
@@ -2690,8 +2964,7 @@ func Test_deleteWorkflowRunHandler(t *testing.T) {
 }
 
 func Test_postWorkflowRunHandlerBadResyncOptions(t *testing.T) {
-	api, db, router, end := newTestAPI(t)
-	defer end()
+	api, db, router := newTestAPI(t)
 
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, api.Cache, key, key)
@@ -2721,8 +2994,8 @@ func Test_postWorkflowRunHandlerBadResyncOptions(t *testing.T) {
 }
 
 func Test_postWorkflowRunHandlerRestartOnlyFailed(t *testing.T) {
-	api, db, router, end := newTestAPI(t)
-	defer end()
+	api, db, router := newTestAPI(t)
+
 	u, pass := assets.InsertAdminUser(t, api.mustDB())
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, api.Cache, key, key)
@@ -2865,8 +3138,8 @@ func Test_postWorkflowRunHandlerRestartOnlyFailed(t *testing.T) {
 }
 
 func Test_postWorkflowRunHandlerRestartResync(t *testing.T) {
-	api, db, router, end := newTestAPI(t)
-	defer end()
+	api, db, router := newTestAPI(t)
+
 	u, pass := assets.InsertAdminUser(t, api.mustDB())
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, api.Cache, key, key)

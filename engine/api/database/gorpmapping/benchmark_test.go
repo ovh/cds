@@ -32,7 +32,7 @@ BenchmarkCheckSignature: 5283 ns/op 1344 B/op 21 allocs/op
 func BenchmarkGetWithoutDecryption(b *testing.B) {
 	gorpmapping.Register(gorpmapping.New(TestEncryptedData{}, "test_encrypted_data", true, "id"))
 
-	db, _, end := test.SetupPG(b)
+	db, _, end := test.SetupPGToCancel(b)
 	defer end()
 
 	var d = TestEncryptedData{
@@ -54,7 +54,7 @@ func BenchmarkGetWithoutDecryption(b *testing.B) {
 func BenchmarkGetWithDecryption(b *testing.B) {
 	gorpmapping.Register(gorpmapping.New(TestEncryptedData{}, "test_encrypted_data", true, "id"))
 
-	db, _, end := test.SetupPG(b)
+	db, _, end := test.SetupPGToCancel(b)
 	defer end()
 
 	var d = TestEncryptedData{
@@ -76,7 +76,7 @@ func BenchmarkGetWithDecryption(b *testing.B) {
 func BenchmarkInsertWithoutSignature(b *testing.B) {
 	gorpmapping.Register(gorpmapping.New(TestEncryptedData{}, "test_encrypted_data", true, "id"))
 
-	db, _, end := test.SetupPG(b)
+	db, _, end := test.SetupPGToCancel(b)
 	defer end()
 
 	for n := 0; n < b.N; n++ {
@@ -93,7 +93,7 @@ func BenchmarkInsertWithoutSignature(b *testing.B) {
 func BenchmarkInsertWithSignature(b *testing.B) {
 	gorpmapping.Register(gorpmapping.New(TestEncryptedData{}, "test_encrypted_data", true, "id"))
 
-	db, _, end := test.SetupPG(b)
+	db, _, end := test.SetupPGToCancel(b)
 	defer end()
 
 	for n := 0; n < b.N; n++ {
@@ -110,7 +110,7 @@ func BenchmarkInsertWithSignature(b *testing.B) {
 func BenchmarkCheckSignature(b *testing.B) {
 	gorpmapping.Register(gorpmapping.New(TestEncryptedData{}, "test_encrypted_data", true, "id"))
 
-	db, _, end := test.SetupPG(b)
+	db, _, end := test.SetupPGToCancel(b)
 	defer end()
 
 	var d = TestEncryptedData{
@@ -124,5 +124,4 @@ func BenchmarkCheckSignature(b *testing.B) {
 	for n := 0; n < b.N; n++ {
 		_, _ = gorpmapping.CheckSignature(d, d.GetSignature())
 	}
-
 }

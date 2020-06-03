@@ -23,8 +23,7 @@ import (
 )
 
 func Test_WorkflowAsCodeWithNoHook_ShouldGive_AnAutomaticRepoWebHook(t *testing.T) {
-	api, db, _, end := newTestAPI(t)
-	defer end()
+	api, db, _ := newTestAPI(t)
 
 	_, _ = assets.InsertService(t, db, t.Name()+"_HOOKS", services.TypeHooks)
 	_, _ = assets.InsertService(t, db, t.Name()+"_VCS", services.TypeVCS)
@@ -235,8 +234,7 @@ func Test_WorkflowAsCodeWithDefaultHook_ShouldGive_TheSameRepoWebHook(t *testing
 	// Then we trigger the workflow, this aims to run another "as-code operation"
 	// This should not change the hooks
 
-	api, db, _, end := newTestAPI(t)
-	defer end()
+	api, db, _ := newTestAPI(t)
 
 	_, _ = assets.InsertService(t, db, t.Name()+"_HOOKS", services.TypeHooks)
 	_, _ = assets.InsertService(t, db, t.Name()+"_VCS", services.TypeVCS)
@@ -517,8 +515,7 @@ func Test_WorkflowAsCodeWithDefaultHookAndAScheduler_ShouldGive_TheSameRepoWebHo
 	// Then we trigger the workflow, this aims to run another "as-code operation"
 	// This should not change the hooks
 
-	api, db, _, end := newTestAPI(t)
-	defer end()
+	api, db, _ := newTestAPI(t)
 
 	_, _ = assets.InsertService(t, db, t.Name()+"_HOOKS", services.TypeHooks)
 	_, _ = assets.InsertService(t, db, t.Name()+"_VCS", services.TypeVCS)
@@ -883,8 +880,7 @@ func Test_WorkflowAsCodeWithJustAcheduler_ShouldGive_ARepoWebHookAndTheScheduler
 	// This last time, the scheduler should be deleted
 	// This should not change the repowebhook
 
-	api, db, _, end := newTestAPI(t)
-	defer end()
+	api, db, _ := newTestAPI(t)
 
 	_, _ = assets.InsertService(t, db, t.Name()+"_HOOKS", services.TypeHooks)
 	_, _ = assets.InsertService(t, db, t.Name()+"_VCS", services.TypeVCS)

@@ -30,9 +30,9 @@ var applicationVariableCreateCmd = cli.Command{
 		{Name: _ApplicationName},
 	},
 	Args: []cli.Arg{
-		{Name: "variable-name", Weight: 1},
-		{Name: "variable-type", Weight: 2},
-		{Name: "variable-value", Weight: 3},
+		{Name: "variable-name"},
+		{Name: "variable-type"},
+		{Name: "variable-value"},
 	},
 }
 
@@ -102,10 +102,10 @@ var applicationVariableUpdateCmd = cli.Command{
 		{Name: _ApplicationName},
 	},
 	Args: []cli.Arg{
-		{Name: "variable-oldname", Weight: 1},
-		{Name: "variable-name", Weight: 2},
-		{Name: "variable-type", Weight: 3},
-		{Name: "variable-value", Weight: 4},
+		{Name: "variable-oldname"},
+		{Name: "variable-name"},
+		{Name: "variable-type"},
+		{Name: "variable-value"},
 	},
 }
 

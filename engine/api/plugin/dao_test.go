@@ -29,8 +29,7 @@ func TestInsertUpdateLoadDelete(t *testing.T) {
 		},
 	}
 
-	db, _, end := test.SetupPG(t)
-	defer end()
+	db, _ := test.SetupPG(t)
 
 	require.NoError(t, Insert(db, &p))
 	assert.NotEqual(t, 0, p.ID)

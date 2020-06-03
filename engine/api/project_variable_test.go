@@ -15,8 +15,7 @@ import (
 )
 
 func Test_getVariableAuditInProjectHandler(t *testing.T) {
-	api, db, router, end := newTestAPI(t)
-	defer end()
+	api, db, router := newTestAPI(t)
 
 	//Create admin user
 	u, pass := assets.InsertAdminUser(t, api.mustDB())
@@ -58,8 +57,7 @@ func Test_getVariableAuditInProjectHandler(t *testing.T) {
 }
 
 func Test_postEncryptVariableHandler(t *testing.T) {
-	api, db, router, end := newTestAPI(t)
-	defer end()
+	api, db, router := newTestAPI(t)
 
 	//Create admin user
 	u, pass := assets.InsertAdminUser(t, api.mustDB())

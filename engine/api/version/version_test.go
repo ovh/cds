@@ -10,8 +10,7 @@ import (
 )
 
 func TestMaxInstall(t *testing.T) {
-	db, _, end := test.SetupPG(t, bootstrap.InitiliazeDB)
-	defer end()
+	db, _ := test.SetupPG(t, bootstrap.InitiliazeDB)
 
 	sdk.VERSION = "0.37.0"
 	test.NoError(t, version.Upsert(db))

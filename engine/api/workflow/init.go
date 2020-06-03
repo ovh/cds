@@ -10,13 +10,14 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
-var baseUIURL, defaultOS, defaultArch string
+var baseUIURL, defaultOS, defaultArch, defaultRegion string
 
 //Initialize starts goroutines for workflows
-func Initialize(ctx context.Context, DBFunc func() *gorp.DbMap, store cache.Store, uiURL, confDefaultOS, confDefaultArch string) {
+func Initialize(ctx context.Context, DBFunc func() *gorp.DbMap, store cache.Store, uiURL, confDefaultOS, confDefaultArch, confDefaultRegion string) {
 	baseUIURL = uiURL
 	defaultOS = confDefaultOS
 	defaultArch = confDefaultArch
+	defaultRegion = confDefaultRegion
 	tickStop := time.NewTicker(30 * time.Minute)
 	tickHeart := time.NewTicker(10 * time.Second)
 	defer tickHeart.Stop()
@@ -40,4 +41,9 @@ func Initialize(ctx context.Context, DBFunc func() *gorp.DbMap, store cache.Stor
 			}
 		}
 	}
+}
+
+// SetDefaultRegion is used by unit tests
+func SetDefaultRegion(r string) {
+	defaultRegion = r
 }

@@ -2,15 +2,11 @@ package main
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
-	"io/ioutil"
-
 	"github.com/spf13/cobra"
 
 	"github.com/ovh/cds/cli"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/cdsclient"
 )
 
 var eventsCmd = cli.Command{
@@ -27,28 +23,51 @@ func events() *cobra.Command {
 var eventsListenCmd = cli.Command{
 	Name:  "listen",
 	Short: "Listen CDS events",
+	Flags: []cli.Flag{
+		{
+			Name:  "project",
+			Usage: "project key to listen",
+			Type:  cli.FlagString,
+		},
+		{
+			Name:  "workflow",
+			Usage: "workflow name to listen",
+			Type:  cli.FlagString,
+		},
+	},
 }
 
 func eventsListenRun(v cli.Values) error {
 	ctx := context.Background()
-	chanSSE := make(chan cdsclient.SSEvent)
+	chanMessageReceived := make(chan sdk.WebsocketEvent)
+	chanMessageToSend := make(chan sdk.WebsocketFilter)
 
-	sdk.GoRoutine(ctx, "EventsListenCmd", func(ctx context.Context) {
-		client.EventsListen(ctx, chanSSE)
+	sdk.GoRoutine(ctx, "WebsocketEventsListenCmd", func(ctx context.Context) {
+		client.WebsocketEventsListen(ctx, chanMessageToSend, chanMessageReceived)
 	})
+
+	var t string
+	switch {
+	case v.GetString("workflow") != "":
+		t = sdk.WebsocketFilterTypeWorkflow
+	default:
+		t = sdk.WebsocketFilterTypeProject
+	}
+	chanMessageToSend <- sdk.WebsocketFilter{
+		ProjectKey:   v.GetString("project"),
+		WorkflowName: v.GetString("workflow"),
+		Type:         t,
+	}
 
 	for {
 		select {
 		case <-ctx.Done():
 			return ctx.Err()
-		case evt := <-chanSSE:
-			var e sdk.Event
-			content, _ := ioutil.ReadAll(evt.Data)
-			_ = json.Unmarshal(content, &e)
-			if e.EventType == "" {
+		case evt := <-chanMessageReceived:
+			if evt.Event.EventType == "" {
 				continue
 			}
-			fmt.Printf("%s: %s %s %s\n", e.EventType, e.ProjectKey, e.WorkflowName, e.Status)
+			fmt.Printf("%s: %s %s %s\n", evt.Event.EventType, evt.Event.ProjectKey, evt.Event.WorkflowName, evt.Event.Status)
 		}
 	}
 }

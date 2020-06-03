@@ -56,8 +56,7 @@ func writeError(w *http.Response, err error) (*http.Response, error) {
 }
 
 func Test_postImportAsCodeHandler(t *testing.T) {
-	api, db, _, end := newTestAPI(t)
-	defer end()
+	api, db, _ := newTestAPI(t)
 
 	u, pass := assets.InsertAdminUser(t, db)
 
@@ -138,8 +137,7 @@ func Test_postImportAsCodeHandler(t *testing.T) {
 }
 
 func Test_getImportAsCodeHandler(t *testing.T) {
-	api, db, _, end := newTestAPI(t)
-	defer end()
+	api, db, _ := newTestAPI(t)
 
 	p := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
 	u, pass := assets.InsertAdminUser(t, db)
@@ -202,8 +200,7 @@ func Test_getImportAsCodeHandler(t *testing.T) {
 }
 
 func Test_postPerformImportAsCodeHandler(t *testing.T) {
-	api, db, _, end := newTestAPI(t)
-	defer end()
+	api, db, _ := newTestAPI(t)
 
 	u, pass := assets.InsertAdminUser(t, db)
 
@@ -347,8 +344,7 @@ version: v1.0`),
 }
 
 func Test_postResyncPRAsCodeHandler(t *testing.T) {
-	api, db, _, end := newTestAPI(t)
-	defer end()
+	api, db, _ := newTestAPI(t)
 
 	repoURL := sdk.RandomString(10)
 

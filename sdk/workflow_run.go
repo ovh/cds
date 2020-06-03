@@ -52,6 +52,7 @@ type WorkflowRun struct {
 	ToDelete         bool                             `json:"to_delete" db:"to_delete" cli:"-"`
 	JoinTriggersRun  map[int64]WorkflowNodeTriggerRun `json:"join_triggers_run,omitempty" db:"-"`
 	Header           WorkflowRunHeaders               `json:"header,omitempty" db:"-"`
+	URLs             URL                              `json:"urls" yaml:"-" db:"-" cli:"-"`
 }
 
 type WorkflowRunSecret struct {

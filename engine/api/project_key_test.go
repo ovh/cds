@@ -16,8 +16,7 @@ import (
 )
 
 func Test_getKeysInProjectHandler(t *testing.T) {
-	api, db, router, end := newTestAPI(t)
-	defer end()
+	api, db, router := newTestAPI(t)
 
 	//Create admin user
 	u, pass := assets.InsertAdminUser(t, api.mustDB())
@@ -66,8 +65,7 @@ func Test_getKeysInProjectHandler(t *testing.T) {
 }
 
 func Test_deleteKeyInProjectHandler(t *testing.T) {
-	api, db, router, end := newTestAPI(t)
-	defer end()
+	api, db, router := newTestAPI(t)
 
 	//Create admin user
 	u, pass := assets.InsertAdminUser(t, api.mustDB())
@@ -109,8 +107,7 @@ func Test_deleteKeyInProjectHandler(t *testing.T) {
 }
 
 func Test_addKeyInProjectHandler(t *testing.T) {
-	api, db, router, end := newTestAPI(t)
-	defer end()
+	api, db, router := newTestAPI(t)
 
 	//Create admin user
 	u, pass := assets.InsertAdminUser(t, api.mustDB())

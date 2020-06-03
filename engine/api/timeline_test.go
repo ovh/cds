@@ -27,8 +27,7 @@ type testTimelineEvent struct {
 func (e testTimelineEvent) String() string { return e.ProjectKey + "/" + e.WorkflowName }
 
 func Test_getTimelineHandler(t *testing.T) {
-	api, db, _, end := newTestAPI(t)
-	defer end()
+	api, db, _ := newTestAPI(t)
 
 	// Create two projects with workflows
 	proj1 := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))

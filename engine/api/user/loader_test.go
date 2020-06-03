@@ -18,7 +18,7 @@ func TestLoadContacts(t *testing.T) {
 		Ring:     sdk.UserRingAdmin,
 	}
 
-	db, _, _ := test.SetupPG(t)
+	db, _ := test.SetupPG(t)
 	assert.NoError(t, user.Insert(context.TODO(), db, &u))
 
 	c := sdk.UserContact{

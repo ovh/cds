@@ -104,8 +104,8 @@ func (api *API) postTakeWorkflowJobHandler() service.Handler {
 			return sdk.WrapError(err, "cannot takeJob nodeJobRunID:%d", id)
 		}
 
-		if api.Config.CDN.TCP.Addr != "" && api.Config.CDN.TCP.Port > 0 {
-			pbji.GelfServiceAddr = fmt.Sprintf("%s:%d", api.Config.CDN.TCP.Addr, api.Config.CDN.TCP.Port)
+		if api.Config.CDN.PublicTCP != "" {
+			pbji.GelfServiceAddr = api.Config.CDN.PublicTCP
 		}
 		workflow.ResyncNodeRunsWithCommits(ctx, api.mustDB(), api.Cache, *p, report)
 		go WorkflowSendEvent(context.Background(), api.mustDB(), api.Cache, *p, report)

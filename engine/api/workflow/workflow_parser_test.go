@@ -28,8 +28,8 @@ import (
 )
 
 func TestParseAndImport(t *testing.T) {
-	db, cache, end := test.SetupPG(t)
-	defer end()
+	db, cache := test.SetupPG(t)
+
 	u, _ := assets.InsertAdminUser(t, db)
 	localConsumer, err := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
 	require.NoError(t, err)
@@ -116,8 +116,8 @@ func TestParseAndImport(t *testing.T) {
 
 // TestParseAndImportFromRepository tests to import a workflow with FromRepository
 func TestParseAndImportFromRepository(t *testing.T) {
-	db, cache, end := test.SetupPG(t)
-	defer end()
+	db, cache := test.SetupPG(t)
+
 	u, _ := assets.InsertAdminUser(t, db)
 
 	pkey := sdk.RandomString(10)

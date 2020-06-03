@@ -13,8 +13,7 @@ import (
 )
 
 func TestDAO(t *testing.T) {
-	db, _, end := test.SetupPG(t)
-	defer end()
+	db, _ := test.SetupPG(t)
 
 	allSrv, err := services.LoadAll(context.TODO(), db)
 	for _, s := range allSrv {

@@ -16,9 +16,9 @@ import (
 	"github.com/ovh/cds/engine/api/test"
 )
 
-func newTestAPIWithIzanamiToken(t *testing.T, token string, bootstrapFunc ...test.Bootstrapf) (*API, *gorp.DbMap, *Router, context.CancelFunc) {
+func newTestAPIWithIzanamiToken(t *testing.T, token string, bootstrapFunc ...test.Bootstrapf) (*API, *gorp.DbMap, *Router) {
 	bootstrapFunc = append(bootstrapFunc, bootstrap.InitiliazeDB)
-	db, cache, end := test.SetupPG(t, bootstrapFunc...)
+	db, cache := test.SetupPG(t, bootstrapFunc...)
 	router := newRouter(mux.NewRouter(), "/"+test.GetTestName(t))
 	var cancel context.CancelFunc
 	router.Background, cancel = context.WithCancel(context.Background())
@@ -31,16 +31,14 @@ func newTestAPIWithIzanamiToken(t *testing.T, token string, bootstrapFunc ...tes
 	}
 	api.Config.Features.Izanami.Token = token
 	api.InitRouter()
-	f := func() {
+	t.Cleanup(func() {
 		cancel()
-		end()
-	}
-	return api, db, router, f
+	})
+	return api, db, router
 }
 
 func TestFeatureClean(t *testing.T) {
-	api, _, router, end := newTestAPIWithIzanamiToken(t, "mytoken", bootstrap.InitiliazeDB)
-	defer end()
+	api, _, router := newTestAPIWithIzanamiToken(t, "mytoken", bootstrap.InitiliazeDB)
 
 	vars := map[string]string{}
 	uri := router.GetRoute("POST", api.cleanFeatureHandler, vars)

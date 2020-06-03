@@ -27,8 +27,7 @@ import (
 )
 
 func TestAPI_detachRepositoriesManagerHandler(t *testing.T) {
-	api, db, router, end := newTestAPI(t)
-	defer end()
+	api, db, router := newTestAPI(t)
 
 	srvs, err := services.LoadAll(context.TODO(), db)
 	require.NoError(t, err)
