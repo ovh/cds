@@ -284,6 +284,14 @@ func LoadRunByID(db gorp.SqlExecutor, id int64, loadOpts LoadRunOptions) (*sdk.W
 	return loadRun(db, loadOpts, query, id)
 }
 
+// LoadAndLockRunByID loads run by ID
+func LoadAndLockRunByID(db gorp.SqlExecutor, id int64, loadOpts LoadRunOptions) (*sdk.WorkflowRun, error) {
+	query := fmt.Sprintf(`select %s
+	from workflow_run
+	where workflow_run.id = $1 for update skip locked`, wfRunfields)
+	return loadRun(db, loadOpts, query, id)
+}
+
 // LoadAndLockRunByJobID loads a run by a job id
 func LoadAndLockRunByJobID(db gorp.SqlExecutor, id int64, loadOpts LoadRunOptions) (*sdk.WorkflowRun, error) {
 	query := fmt.Sprintf(`select %s
