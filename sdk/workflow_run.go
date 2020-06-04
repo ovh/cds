@@ -58,6 +58,7 @@ type WorkflowRun struct {
 type WorkflowRunSecret struct {
 	ID            string `json:"-" db:"id"`
 	WorkflowRunID int64  `json:"-" db:"workflow_run_id"`
+	Type          string `json:"-" db:"type"`
 	Context       string `json:"-" db:"context"`
 	Name          string `json:"-" db:"name"`
 	Value         []byte `json:"-" db:"cypher_value" gorpmapping:"ID"`

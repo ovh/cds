@@ -102,6 +102,7 @@ func migrateRunSecret(ctx context.Context, db *gorp.DbMap, id int64) error {
 				WorkflowRunID: run.ID,
 				Context:       workflow.SecretProjContext,
 				Name:          v.Name,
+				Type:          v.Type,
 				Value:         []byte(v.Value),
 			})
 		}
@@ -110,6 +111,7 @@ func migrateRunSecret(ctx context.Context, db *gorp.DbMap, id int64) error {
 				WorkflowRunID: run.ID,
 				Context:       workflow.SecretProjContext,
 				Name:          fmt.Sprintf("cds.key.%s.priv", k.Name),
+				Type:          string(k.Type),
 				Value:         []byte(k.Private),
 			})
 		}
@@ -150,6 +152,7 @@ func migrateRunSecret(ctx context.Context, db *gorp.DbMap, id int64) error {
 				WorkflowRunID: run.ID,
 				Context:       fmt.Sprintf(workflow.SecretProjIntegrationContext, ppID),
 				Name:          fmt.Sprintf("cds.integration.%s", k),
+				Type:          v.Type,
 				Value:         []byte(v.Value),
 			}
 			if err := workflow.InsertRunSecret(ctx, tx, &wrSecret); err != nil {
@@ -170,6 +173,7 @@ func migrateRunSecret(ctx context.Context, db *gorp.DbMap, id int64) error {
 					WorkflowRunID: run.ID,
 					Context:       fmt.Sprintf(workflow.SecretAppContext, id),
 					Name:          v.Name,
+					Type:          v.Type,
 					Value:         []byte(v.Value),
 				}
 			case strings.Contains(v.Name, ":cds.integration."):
@@ -196,6 +200,7 @@ func migrateRunSecret(ctx context.Context, db *gorp.DbMap, id int64) error {
 				WorkflowRunID: run.ID,
 				Context:       fmt.Sprintf(workflow.SecretEnvContext, id),
 				Name:          v.Name,
+				Type:          v.Type,
 				Value:         []byte(v.Value),
 			}
 			if err := workflow.InsertRunSecret(ctx, tx, &wrSecret); err != nil {

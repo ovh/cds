@@ -46,6 +46,7 @@ func loadRunSecretWithDecryption(ctx context.Context, db gorp.SqlExecutor, runID
 		}
 		secrets[i] = sdk.Variable{
 			Name:  dbSecrets[i].Name,
+			Type:  dbSecrets[i].Type,
 			Value: string(dbSecrets[i].Value),
 		}
 	}
