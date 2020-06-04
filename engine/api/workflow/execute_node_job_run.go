@@ -458,7 +458,7 @@ func LoadSecrets(db gorp.SqlExecutor, store cache.Store, nodeRun *sdk.WorkflowNo
 			if err != nil {
 				return nil, sdk.WrapError(err, "LoadSecrets> Cannot load application variables")
 			}
-			av = sdk.VariablesFilter(appVariables, sdk.SecretVariable)
+			av = sdk.VariablesFilter(sdk.FromAplicationVariables(appVariables), sdk.SecretVariable)
 			av = sdk.VariablesPrefix(av, "cds.app.")
 
 			av = append(av, sdk.Variable{

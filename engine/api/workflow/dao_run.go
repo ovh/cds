@@ -310,7 +310,7 @@ func loadRuns(db gorp.SqlExecutor, query string, args ...interface{}) ([]sdk.Wor
 	return wruns, nil
 }
 
-//LoadRuns loads all runs
+//LoadRuns loaloadRunsds all runs
 //It returns runs, offset, limit count and an error
 func LoadRuns(db gorp.SqlExecutor, projectkey, workflowname string, offset, limit int, tagFilter map[string]string) ([]sdk.WorkflowRun, int, int, int, error) {
 	var args = []interface{}{projectkey}

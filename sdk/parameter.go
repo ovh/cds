@@ -163,7 +163,7 @@ func ParametersFromProjectVariables(proj Project) map[string]string {
 
 // ParametersFromApplicationVariables returns a map from a slice of parameters
 func ParametersFromApplicationVariables(app Application) map[string]string {
-	params := VariablesToParameters("cds.app", app.Variables)
+	params := ApplicationVariablesToParameters("cds.app", app.Variables)
 	return ParametersToMap(params)
 }
 
@@ -193,6 +193,20 @@ func ParametersFromIntegration(ppf IntegrationConfig) map[string]string {
 	}
 	params := VariablesToParameters("cds.integration", vars)
 	return ParametersToMap(params)
+}
+
+func ApplicationVariablesToParameters(prefix string, variables []ApplicationVariable) []Parameter {
+	res := make([]Parameter, 0, len(variables))
+	for _, t := range variables {
+		if NeedPlaceholder(t.Type) {
+			continue
+		}
+		if prefix != "" {
+			t.Name = prefix + "." + t.Name
+		}
+		res = append(res, Parameter{Name: t.Name, Type: t.Type, Value: t.Value})
+	}
+	return res
 }
 
 func VariablesToParameters(prefix string, variables []Variable) []Parameter {

@@ -136,7 +136,7 @@ func (api *API) updateVariableInApplicationHandler() service.Handler {
 		appName := vars["applicationName"]
 		varName := vars["name"]
 
-		var newVar sdk.Variable
+		var newVar sdk.ApplicationVariable
 		if err := service.UnmarshalBody(r, &newVar); err != nil {
 			return err
 		}
@@ -184,7 +184,7 @@ func (api *API) addVariableInApplicationHandler() service.Handler {
 		appName := vars["applicationName"]
 		varName := vars["name"]
 
-		var newVar sdk.Variable
+		var newVar sdk.ApplicationVariable
 		if err := service.UnmarshalBody(r, &newVar); err != nil {
 			return err
 		}

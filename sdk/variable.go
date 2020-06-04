@@ -14,6 +14,37 @@ type Variable struct {
 	Type  string `json:"type" cli:"type"`
 }
 
+func FromAplicationVariables(appVars []ApplicationVariable) []Variable {
+	vars := make([]Variable, len(appVars))
+	for i, a := range appVars {
+		vars[i] = Variable{
+			Value: a.Value,
+			Name:  a.Name,
+			Type:  a.Type,
+			ID:    a.ID,
+		}
+	}
+	return vars
+}
+
+func (v *Variable) ToApplicationVariable(appID int64) *ApplicationVariable {
+	return &ApplicationVariable{
+		ID:            v.ID,
+		ApplicationID: appID,
+		Type:          v.Type,
+		Name:          v.Name,
+		Value:         v.Value,
+	}
+}
+
+type ApplicationVariable struct {
+	ID            int64  `json:"id,omitempty" cli:"-"`
+	Name          string `json:"name" cli:"name,key"`
+	Value         string `json:"value" cli:"value"`
+	Type          string `json:"type" cli:"type"`
+	ApplicationID int64  `json:"application_id" cli:"-"`
+}
+
 func (v Variable) ToParameter(prefix string) Parameter {
 	name := v.Name
 	if prefix != "" {

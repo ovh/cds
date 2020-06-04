@@ -32,7 +32,7 @@ func (ava *dbApplicationVariableAudit) PostGet(db gorp.SqlExecutor) error {
 	}
 
 	if before.Valid {
-		vBefore := &sdk.Variable{}
+		vBefore := &sdk.ApplicationVariable{}
 		if err := json.Unmarshal([]byte(before.String), vBefore); err != nil {
 			return err
 		}
@@ -44,7 +44,7 @@ func (ava *dbApplicationVariableAudit) PostGet(db gorp.SqlExecutor) error {
 	}
 
 	if after.Valid {
-		vAfter := &sdk.Variable{}
+		vAfter := &sdk.ApplicationVariable{}
 		if err := json.Unmarshal([]byte(after.String), vAfter); err != nil {
 			return err
 		}

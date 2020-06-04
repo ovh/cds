@@ -21,18 +21,18 @@ type EventApplicationDelete struct {
 
 // EventApplicationVariableAdd represents the event when adding an application variable
 type EventApplicationVariableAdd struct {
-	Variable Variable `json:"variable"`
+	Variable ApplicationVariable `json:"variable"`
 }
 
 // EventApplicationVariableUpdate represents the event when updating an application variable
 type EventApplicationVariableUpdate struct {
-	OldVariable Variable `json:"old_variable"`
-	NewVariable Variable `json:"new_variable"`
+	OldVariable ApplicationVariable `json:"old_variable"`
+	NewVariable ApplicationVariable `json:"new_variable"`
 }
 
 // EventApplicationVariableDelete represents the event when deleting an application variable
 type EventApplicationVariableDelete struct {
-	Variable Variable `json:"variable"`
+	Variable ApplicationVariable `json:"variable"`
 }
 
 // EventApplicationPermissionAdd represents the event when adding an application permission

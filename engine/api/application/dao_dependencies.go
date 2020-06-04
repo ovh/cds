@@ -17,7 +17,7 @@ var (
 	}
 
 	loadVariables = func(db gorp.SqlExecutor, app *sdk.Application) error {
-		variables, err := LoadAllVariables(db, app.ID)
+		variables, err := LoadAllVariables(db, []int64{app.ID})
 		if err != nil && sdk.Cause(err) != sql.ErrNoRows {
 			return sdk.WrapError(err, "Unable to load variables for application %d", app.ID)
 		}
