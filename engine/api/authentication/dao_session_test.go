@@ -105,22 +105,22 @@ func TestDeleteSession(t *testing.T) {
 	u := sdk.AuthentifiedUser{
 		Username: sdk.RandomString(10),
 	}
-	test.NoError(t, user.Insert(context.TODO(), db, &u))
+	require.NoError(t, user.Insert(context.TODO(), db, &u))
 
 	c, err := local.NewConsumer(context.TODO(), db, u.ID)
-	test.NoError(t, err)
+	require.NoError(t, err)
 
 	s, err := authentication.NewSession(context.TODO(), db, c, time.Second, false)
-	test.NoError(t, err)
+	require.NoError(t, err)
 
 	res, err := authentication.LoadSessionByID(context.TODO(), db, s.ID)
-	test.NoError(t, err)
-	test.NotNil(t, res)
+	require.NoError(t, err)
+	require.NotNil(t, res)
 
-	test.NoError(t, authentication.DeleteSessionByID(db, s.ID))
+	require.NoError(t, authentication.DeleteSessionByID(db, s.ID))
 
 	res, err = authentication.LoadSessionByID(context.TODO(), db, s.ID)
-	test.Error(t, err)
+	require.Error(t, err)
 }
 
 func Test_GetAndDeleteCorruptedSessions(t *testing.T) {
