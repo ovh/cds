@@ -23,10 +23,11 @@ build: $(TARGET_PLUGINS)
 
 package:
 	@mkdir -p dist
+	@for P in $(ALL_PLUGINS); do \
+		$(MAKE) package -C $$P; \
+	done;
 	@for PLU in $(ALL_PLUGINS); do \
-		for F in `find $$PLU/dist -name "$$PLU*"`; do \
-			mv $$F dist/; \
-		done; \
+		mv $$PLU/dist/*.tar.gz dist/; \
 	done;
 
 publish: 

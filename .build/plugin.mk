@@ -1,7 +1,7 @@
 
 BINARIES_CONF 					=	$(addprefix $(TARGET_DIST)/, $(addsuffix -$(OS)-$(ARCH).yml, $(notdir $(TARGET_NAME))))
 PLUGIN_CONF 					=	$(addprefix $(TARGET_DIST)/, $(addsuffix .yml, $(notdir $(TARGET_NAME))))
-CROSS_COMPILED_PLUGIN_CONF 		= 	$(foreach OS, $(TARGET_OS), $(foreach ARCH, $(TARGET_ARCH), $(BINARIES_CONF)))
+CROSS_COMPILED_PLUGIN_CONF 		= 	$(foreach OS, $(TARGET_OS), $(foreach ARCH, $(TARGET_ARCH), $(if $(IS_OS_ARCH_VALID), $(BINARIES_CONF))))
 
 define PLUGIN_MANIFEST_BINARY
 os: %os%
@@ -58,6 +58,9 @@ mk_plugin_publish:
 			cdsctl admin plugins binary-add $(TARGET_NAME) $(TARGET_DIST)/$(TARGET_NAME)-$$GOOS-$$GOARCH.yml $(TARGET_DIST)/$(TARGET_NAME)-$$GOOS-$$GOARCH$$EXTENSION; \
 		done; \
 	done
+
+mk_plugin_package: 
+	tar czf $(TARGET_DIST)/cds-$(TARGET_NAME)-all.tar.gz $(TARGET_DIST)/$(TARGET_NAME)*
 
 clean:
 	@rm -rf dist
