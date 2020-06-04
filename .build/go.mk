@@ -28,8 +28,8 @@ mk_go_clean: # clean target directory
 ##### =====> Compile <===== #####
 
 IS_TEST 							:= 	$(filter test,$(MAKECMDGOALS))
-TARGET_OS 							:= 	$(filter-out $(TARGET_OS_EXCLUDED), $(if ${ENABLE_CROSS_COMPILATION},$(if ${OS},${OS}, $(if $(IS_TEST), $(shell go env GOOS), darwin linux freebsd)),$(shell go env GOOS)))
-TARGET_ARCH 						:= 	$(if ${ARCH},${ARCH}, $(if $(IS_TEST), $(shell go env GOARCH),amd64))
+TARGET_OS 							:= 	$(filter-out $(TARGET_OS_EXCLUDED), $(if ${ENABLE_CROSS_COMPILATION},$(if ${OS},${OS}, $(if $(IS_TEST), $(shell go env GOOS), windows darwin linux freebsd)),$(shell go env GOOS)))
+TARGET_ARCH 						:= 	$(if ${ARCH},${ARCH}, $(if $(IS_TEST), $(shell go env GOARCH),amd64 arm 386 arm64))
 BINARIES 							=	$(addprefix $(TARGET_DIST)/, $(addsuffix -$(OS)-$(ARCH)$(if $(IS_WINDOWS),.exe), $(notdir $(TARGET_NAME))))
 CROSS_COMPILED_BINARIES 			= 	$(foreach OS, $(TARGET_OS), $(foreach ARCH, $(TARGET_ARCH), $(BINARIES)))
 GOFILES 							= $(call get_recursive_files, '.')
@@ -37,9 +37,10 @@ GOFILES 							= $(call get_recursive_files, '.')
 mk_go_build:
 	$(info *** mk_go_build)
 
-$(CROSS_COMPILED_BINARIES): $(GOFILES) $(TARGET_DIST)
+$(CROSS_COMPILED_BINARIES): $(GOFILES)
 	$(info *** compiling $@)
-	@GOOS=$(call get_os_from_binary_file,$@) \
+	@mkdir -p $(TARGET_DIST); \
+	GOOS=$(call get_os_from_binary_file,$@) \
 	GOARCH=$(call get_arch_from_binary_file,$@) \
 	$(GO_BUILD) $(LDFLAGS) -o $@;
 

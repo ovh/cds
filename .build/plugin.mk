@@ -27,9 +27,10 @@ $(strip $(patsubst dist/%, %, $(patsubst %-, %, $(shell echo $(1) |awk '{n=split
 endef
 
 ## Prepare yml file for each os-arch
-$(CROSS_COMPILED_PLUGIN_CONF): $(GOFILES) $(TARGET_DIST)
+$(CROSS_COMPILED_PLUGIN_CONF): $(GOFILES)
 	$(info *** prepare conf $@)
-	@echo "$$PLUGIN_MANIFEST_BINARY" > $@; \
+	@mkdir -p $(TARGET_DIST); \
+	echo "$$PLUGIN_MANIFEST_BINARY" > $@; \
 	OS=$(call get_os_from_binary_file,$@); \
 	ARCH=$(call get_arch_from_conf_file,$@); \
 	perl -pi -e s,%os%,$$OS,g $@ ; \
@@ -39,9 +40,10 @@ $(CROSS_COMPILED_PLUGIN_CONF): $(GOFILES) $(TARGET_DIST)
 	FILENAME=$(TARGET_NAME)-$$OS-$$ARCH$$EXTENSION; \
 	perl -pi -e s,%filename%,$$FILENAME,g $@
 
-$(PLUGIN_CONF): $(TARGET_DIST)
+$(PLUGIN_CONF):
 	$(info *** prepare conf $@)
-	@cp $(TARGET_NAME).yml $@;
+	@mkdir -p $(TARGET_DIST); \
+	cp $(TARGET_NAME).yml $@;
 
 mk_go_build_plugin: $(CROSS_COMPILED_PLUGIN_CONF) $(PLUGIN_CONF) $(CROSS_COMPILED_BINARIES)
 
