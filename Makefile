@@ -36,9 +36,9 @@ UI_DIST = ui/ui.tar.gz
 FILES = dist/FILES
 
 TARGET_DIR := dist/
-ALL_DIST = $(ENGINE_DIST) 
-ALL_DIST := $(ALL_DIST) $(WORKER_DIST) 
-ALL_DIST := $(ALL_DIST) $(CLI_DIST) 
+ALL_DIST = $(ENGINE_DIST)
+ALL_DIST := $(ALL_DIST) $(WORKER_DIST)
+ALL_DIST := $(ALL_DIST) $(CLI_DIST)
 ALL_DIST := $(ALL_DIST) $(UI_DIST)
 ALL_DIST := $(ALL_DIST) $(CONTRIB_DIST)
 ALL_TARGETS := $(foreach DIST,$(ALL_DIST),$(addprefix $(TARGET_DIR),$(notdir $(DIST))))
@@ -49,7 +49,7 @@ goinstall:
 
 build:
 	$(info Building CDS Components for $(TARGET_OS) - $(TARGET_ARCH))
-	$(MAKE) build_ui 
+	$(MAKE) build_ui -j1
 	$(MAKE) build_engine -j4
 	$(MAKE) build_worker -j4
 	$(MAKE) build_cli -j4
@@ -85,7 +85,7 @@ dist: $(ALL_TARGETS)
 	rm -f $(FILES)
 	cd dist/ && for i in `ls -p | grep -v /|grep -v FILES`; do echo "$$i;`${SHA512} $$i|cut -d ' ' -f1`" >> FILES; done;
 
-clean: 
+clean:
 	@rm -rf target
 	@rm -rf dist
 	$(MAKE) clean -C engine
@@ -95,7 +95,7 @@ clean:
 	$(MAKE) clean -C contrib
 
 deb: dist target/cds-engine.deb
-	
+
 $(TARGET_DIR)/config.toml.sample:
 	$(TARGET_DIR)/cds-engine-linux-amd64 config new > $(TARGET_DIR)/config.toml.sample
 

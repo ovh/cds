@@ -75,7 +75,7 @@ export class WorkflowRunComponent implements OnInit {
 
         // Subscribe to workflow Run
         this.subWorkflowRun = this.workflowRun$.subscribe(wr => {
-            if (!wr || wr.status === 'Pending') {
+            if (!wr) {
                 return;
             }
 

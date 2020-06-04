@@ -145,8 +145,8 @@ func UpdateNodeJobRunStatus(ctx context.Context, db gorp.SqlExecutor, store cach
 	switch status {
 	case sdk.StatusBuilding:
 		if currentStatus != sdk.StatusWaiting {
-			return nil, fmt.Errorf("workflow.UpdateNodeJobRunStatus> Cannot update status of WorkflowNodeJobRun %d to %s, expected current status %s, got %s",
-				job.ID, status, sdk.StatusWaiting, currentStatus)
+			return nil, sdk.WithStack(fmt.Errorf("cannot update status of WorkflowNodeJobRun %d to %s, expected current status %s, got %s",
+				job.ID, status, sdk.StatusWaiting, currentStatus))
 		}
 		job.Start = time.Now()
 		job.Status = status
@@ -174,7 +174,7 @@ func UpdateNodeJobRunStatus(ctx context.Context, db gorp.SqlExecutor, store cach
 			return nil, sdk.WrapError(err, "Cannot update WorkflowRun %d", wf.ID)
 		}
 	default:
-		return nil, fmt.Errorf("workflow.UpdateNodeJobRunStatus> Cannot update WorkflowNodeJobRun %d to status %v", job.ID, status)
+		return nil, sdk.WithStack(fmt.Errorf("cannot update WorkflowNodeJobRun %d to status %v", job.ID, status))
 	}
 
 	//If the job has been set to building, set the stage to building

@@ -69,6 +69,7 @@ import { StatusIconComponent } from './status/status.component';
 import { DataTableComponent, SelectorPipe, SelectPipe } from './table/data-table.component';
 import { PaginationComponent } from './table/pagination.component';
 import { TabsComponent } from './tabs/tabs.component';
+import { ToastHTTPErrorComponent } from './toast/toast-http-error.component';
 import { ToastService } from './toast/ToastService';
 import { UsageApplicationsComponent } from './usage/applications/usage.applications.component';
 import { UsageEnvironmentsComponent } from './usage/environments/usage.environments.component';
@@ -228,10 +229,12 @@ import { ZoneComponent } from './zone/zone.component';
         WorkflowWNodeOutGoingHookComponent,
         WorkflowWNodePipelineComponent,
         ZoneComponent,
-        ZoneContentComponent
+        ZoneContentComponent,
+        ToastHTTPErrorComponent
     ],
     entryComponents: [
-        NguiAutoCompleteComponent
+        NguiAutoCompleteComponent,
+        ToastHTTPErrorComponent
     ],
     providers: [
         DurationService,
@@ -336,7 +339,8 @@ import { ZoneComponent } from './zone/zone.component';
         TabsComponent,
         MenuComponent,
         ScrollviewComponent,
-        AutoFocusInputComponent
+        AutoFocusInputComponent,
+        ToastHTTPErrorComponent
     ]
 })
 export class SharedModule {

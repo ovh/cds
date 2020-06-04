@@ -176,6 +176,10 @@ func TestUpdateAsCodePipelineHandler(t *testing.T) {
 		"pipelineKey":    pip.Name,
 	})
 	req := assets.NewJWTAuthentifiedRequest(t, pass, "PUT", uri, pip)
+	q := req.URL.Query()
+	q.Set("branch", "master")
+	q.Set("message", "my message")
+	req.URL.RawQuery = q.Encode()
 
 	// Do the request
 	wr := httptest.NewRecorder()

@@ -2,7 +2,6 @@ package environment
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	"github.com/go-gorp/gorp"
@@ -108,16 +107,16 @@ func InsertVariable(db gorp.SqlExecutor, envID int64, v *sdk.Variable, u sdk.Ide
 	//Check variable name
 	rx := sdk.NamePatternRegex
 	if !rx.MatchString(v.Name) {
-		return sdk.NewError(sdk.ErrInvalidName, fmt.Errorf("Invalid variable name. It should match %s", sdk.NamePattern))
+		return sdk.NewErrorFrom(sdk.ErrInvalidName, "variable name should match %s", sdk.NamePattern)
 	}
 
 	if sdk.NeedPlaceholder(v.Type) && v.Value == sdk.PasswordPlaceholder {
-		return fmt.Errorf("You try to insert a placeholder for new variable %s", v.Name)
+		return sdk.NewErrorFrom(sdk.ErrWrongRequest, "you try to insert a placeholder for new variable %s", v.Name)
 	}
 
 	dbVar := newdbEnvironmentVariable(*v, envID)
 	if err := gorpmapping.InsertAndSign(context.Background(), db, &dbVar); err != nil {
-		return sdk.WrapError(err, "Cannot insert variable %s", v.Name)
+		return sdk.WrapError(err, "cannot insert variable %s", v.Name)
 	}
 
 	*v = dbVar.Variable()
@@ -132,7 +131,7 @@ func InsertVariable(db gorp.SqlExecutor, envID int64, v *sdk.Variable, u sdk.Ide
 	}
 
 	if err := insertAudit(db, ava); err != nil {
-		return sdk.WrapError(err, "Cannot insert audit for variable %d", v.ID)
+		return sdk.WrapError(err, "cannot insert audit for variable %d", v.ID)
 	}
 	return nil
 }
@@ -141,7 +140,7 @@ func InsertVariable(db gorp.SqlExecutor, envID int64, v *sdk.Variable, u sdk.Ide
 func UpdateVariable(db gorp.SqlExecutor, envID int64, variable *sdk.Variable, variableBefore *sdk.Variable, u sdk.Identifiable) error {
 	rx := sdk.NamePatternRegex
 	if !rx.MatchString(variable.Name) {
-		return sdk.NewError(sdk.ErrInvalidName, fmt.Errorf("Invalid variable name. It should match %s", sdk.NamePattern))
+		return sdk.NewErrorFrom(sdk.ErrInvalidName, "variable name should match %s", sdk.NamePattern)
 	}
 
 	dbVar := newdbEnvironmentVariable(*variable, envID)
@@ -167,7 +166,7 @@ func UpdateVariable(db gorp.SqlExecutor, envID int64, variable *sdk.Variable, va
 	}
 
 	if err := insertAudit(db, ava); err != nil {
-		return sdk.WrapError(err, "Cannot insert audit for variable %s", variable.Name)
+		return sdk.WrapError(err, "cannot insert audit for variable %s", variable.Name)
 	}
 
 	return nil

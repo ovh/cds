@@ -48,7 +48,7 @@ func ParseAndImport(ctx context.Context, db gorp.SqlExecutor, cache cache.Store,
 	}
 
 	if oldApp != nil && oldApp.FromRepository != "" && opts.FromRepository != oldApp.FromRepository {
-		return nil, msgList, sdk.WrapError(sdk.ErrApplicationAsCodeOverride, "unable to update as code application %s/%s.", oldApp.FromRepository, opts.FromRepository)
+		return nil, msgList, sdk.NewErrorFrom(sdk.ErrApplicationAsCodeOverride, "unable to update existing ascode application from %s", oldApp.FromRepository)
 	}
 
 	//Craft the application
