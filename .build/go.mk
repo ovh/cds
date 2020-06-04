@@ -1,12 +1,12 @@
-GO_BUILD 			= GOPRIVATE="${GO_PRIVATE}" CGO_ENABLED=0 go build -a -installsuffix cgo
-GO_LIST 			= env GO111MODULE=on GOPRIVATE="${GO_PRIVATE}" go list
-TEST_CMD 			= go test -v -timeout 600s -coverprofile=profile.coverprofile
-TEST_C_CMD 			= go test -c -coverprofile=profile.coverprofile
-TEST_RUN_ARGS 		= -test.v -test.timeout 600s -test.coverprofile=profile.coverprofile
-LDFLAGS		 		= -ldflags "-X github.com/ovh/cds/sdk.VERSION=$(VERSION) -X github.com/ovh/cds/sdk.GOOS=$$GOOS -X github.com/ovh/cds/sdk.GOARCH=$$GOARCH -X github.com/ovh/cds/sdk.GITHASH=$(GITHASH) -X github.com/ovh/cds/sdk.BUILDTIME=$(BUILDTIME) -X github.com/ovh/cds/sdk.BINARY=$(TARGET_ENGINE) -X github.com/ovh/cds/sdk.DBMIGRATE=$(DBMIGRATE)"
-CURRENT_PACKAGE 	= $(shell $(GO_LIST))
-TARGET_DIST 		:= ./dist
-TARGET_RESULTS 		:= ./results
+GO_BUILD 	             = GOPRIVATE="${GO_PRIVATE}" CGO_ENABLED=0 go build -a -installsuffix cgo
+GO_LIST                  = env GO111MODULE=on GOPRIVATE="${GO_PRIVATE}" go list
+TEST_CMD                 = go test -v -timeout 600s -coverprofile=profile.coverprofile
+TEST_C_CMD               = go test -c -coverprofile=profile.coverprofile
+TEST_RUN_ARGS            = -test.v -test.timeout 600s -test.coverprofile=profile.coverprofile
+LDFLAGS                  = -ldflags "-X github.com/ovh/cds/sdk.VERSION=$(VERSION) -X github.com/ovh/cds/sdk.GOOS=$$GOOS -X github.com/ovh/cds/sdk.GOARCH=$$GOARCH -X github.com/ovh/cds/sdk.GITHASH=$(GITHASH) -X github.com/ovh/cds/sdk.BUILDTIME=$(BUILDTIME) -X github.com/ovh/cds/sdk.BINARY=$(TARGET_ENGINE) -X github.com/ovh/cds/sdk.DBMIGRATE=$(DBMIGRATE)"
+CURRENT_PACKAGE          = $(shell $(GO_LIST))
+TARGET_DIST              := ./dist
+TARGET_RESULTS           := ./results
 ENABLE_CROSS_COMPILATION := true
 
 
@@ -27,14 +27,14 @@ mk_go_clean: # clean target directory
 
 ##### =====> Compile <===== #####
 
-IS_TEST 							:= 	$(filter test,$(MAKECMDGOALS))
-TARGET_OS 							:= 	$(filter-out $(TARGET_OS_EXCLUDED), $(if ${ENABLE_CROSS_COMPILATION},$(if ${OS},${OS}, $(if $(IS_TEST), $(shell go env GOOS), windows darwin linux openbsd freebsd)),$(shell go env GOOS)))
-TARGET_ARCH 						:= 	$(if ${ARCH},${ARCH}, $(if $(IS_TEST), $(shell go env GOARCH),amd64 arm 386 arm64 ppc64le))
-BINARIES 							=	$(addprefix $(TARGET_DIST)/, $(addsuffix -$(OS)-$(ARCH)$(if $(IS_WINDOWS),.exe), $(notdir $(TARGET_NAME))))
-OSARCHVALID 						= $(shell go tool dist list | grep -v '^darwin/arm'|grep -v '^darwin/386'|grep -v '^windows/386'|grep -v '^windows/arm'|grep -v '^openbsd/arm*'|grep -v '^openbsd/386'|grep -v '^freebsd/arm*'|grep -v '^freebsd/386')
-IS_OS_ARCH_VALID 					= $(filter $(OS)/$(ARCH),$(OSARCHVALID))
-CROSS_COMPILED_BINARIES 			= $(foreach OS, $(TARGET_OS), $(foreach ARCH, $(TARGET_ARCH), $(if $(IS_OS_ARCH_VALID), $(BINARIES))))
-GOFILES 							= $(call get_recursive_files, '.')
+IS_TEST 	               :=  $(filter test,$(MAKECMDGOALS))
+TARGET_OS                  :=  $(filter-out $(TARGET_OS_EXCLUDED), $(if ${ENABLE_CROSS_COMPILATION},$(if ${OS},${OS}, $(if $(IS_TEST), $(shell go env GOOS), windows darwin linux openbsd freebsd)),$(shell go env GOOS)))
+TARGET_ARCH                :=  $(if ${ARCH},${ARCH}, $(if $(IS_TEST), $(shell go env GOARCH),amd64 arm 386 arm64 ppc64le))
+BINARIES                   = $(addprefix $(TARGET_DIST)/, $(addsuffix -$(OS)-$(ARCH)$(if $(IS_WINDOWS),.exe), $(notdir $(TARGET_NAME))))
+OSARCHVALID                = $(shell go tool dist list | grep -v '^darwin/arm'|grep -v '^darwin/386'|grep -v '^windows/386'|grep -v '^windows/arm'|grep -v '^openbsd/arm*'|grep -v '^openbsd/386'|grep -v '^freebsd/arm*'|grep -v '^freebsd/386')
+IS_OS_ARCH_VALID           = $(filter $(OS)/$(ARCH),$(OSARCHVALID))
+CROSS_COMPILED_BINARIES    = $(foreach OS, $(TARGET_OS), $(foreach ARCH, $(TARGET_ARCH), $(if $(IS_OS_ARCH_VALID), $(BINARIES))))
+GOFILES                    = $(call get_recursive_files, '.')
 
 mk_go_build:
 	$(info *** mk_go_build)

@@ -1,7 +1,7 @@
 
-BINARIES_CONF 					=	$(addprefix $(TARGET_DIST)/, $(addsuffix -$(OS)-$(ARCH).yml, $(notdir $(TARGET_NAME))))
-PLUGIN_CONF 					=	$(addprefix $(TARGET_DIST)/, $(addsuffix .yml, $(notdir $(TARGET_NAME))))
-CROSS_COMPILED_PLUGIN_CONF 		= 	$(foreach OS, $(TARGET_OS), $(foreach ARCH, $(TARGET_ARCH), $(if $(IS_OS_ARCH_VALID), $(BINARIES_CONF))))
+BINARIES_CONF                   = $(addprefix $(TARGET_DIST)/, $(addsuffix -$(OS)-$(ARCH).yml, $(notdir $(TARGET_NAME))))
+PLUGIN_CONF                     = $(addprefix $(TARGET_DIST)/, $(addsuffix .yml, $(notdir $(TARGET_NAME))))
+CROSS_COMPILED_PLUGIN_CONF      = $(foreach OS, $(TARGET_OS), $(foreach ARCH, $(TARGET_ARCH), $(if $(IS_OS_ARCH_VALID), $(BINARIES_CONF))))
 
 define PLUGIN_MANIFEST_BINARY
 os: %os%

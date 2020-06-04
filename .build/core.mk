@@ -1,9 +1,9 @@
-CI		 			:= $(if ${CI},${CI},0)
-VERSION 			:= $(if ${CDS_SEMVER},${CDS_SEMVER},snapshot)
-CDS_VERSION 		:= $(if ${CDS_VERSION},${CDS_VERSION},snapshot)
-GITHASH 			:= $(if ${GIT_HASH},${GIT_HASH},`git log -1 --format="%H"`)
-BUILDTIME 			:= `date "+%m/%d/%y-%H:%M:%S"`
-UNAME 				:= $(shell uname)
+CI                  := $(if ${CI},${CI},0)
+VERSION             := $(if ${CDS_SEMVER},${CDS_SEMVER},snapshot)
+CDS_VERSION         := $(if ${CDS_VERSION},${CDS_VERSION},snapshot)
+GITHASH             := $(if ${GIT_HASH},${GIT_HASH},`git log -1 --format="%H"`)
+BUILDTIME           := `date "+%m/%d/%y-%H:%M:%S"`
+UNAME               := $(shell uname)
 UNAME_LOWERCASE     := $(shell uname -s| tr A-Z a-z)
 
 .PHONY: help
