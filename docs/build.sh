@@ -34,13 +34,13 @@ function generatePluginsDocumentation {
   pluginName=${filename/.yml/}
 
   OLD=`pwd`
-  PLUGIN_FILE="$OLD/content/docs/actions/plugin-${pluginName}.md"
+  PLUGIN_FILE="$OLD/content/docs/actions/${pluginName}.md"
 
   echo "generate ${PLUGIN_FILE}"
 
 cat << EOF > ${PLUGIN_FILE}
 ---
-title: "plugin-${pluginName}"
+title: "${pluginName}"
 card:
   name: plugin
 ---

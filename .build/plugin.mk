@@ -53,9 +53,13 @@ mk_plugin_publish:
 	@for GOOS in $(TARGET_OS); do \
 		for GOARCH in $(TARGET_ARCH); do \
 			EXTENSION=""; \
-			if test "$$GOOS" = "windows" ; then EXTENSION=".exe"; fi; \
-			echo "Updating plugin binary $(TARGET_NAME)-$$GOOS-$$GOARCH$$EXTENSION"; \
-			cdsctl admin plugins binary-add $(TARGET_NAME) $(TARGET_DIST)/$(TARGET_NAME)-$$GOOS-$$GOARCH.yml $(TARGET_DIST)/$(TARGET_NAME)-$$GOOS-$$GOARCH$$EXTENSION; \
+			for V in $(OSARCHVALID); do \
+				if test "$$GOOS/$$GOARCH" = "$$V"; then \
+					if test "$$GOOS" = "windows" ; then EXTENSION=".exe"; fi; \
+					echo "Updating plugin binary $(TARGET_NAME)-$$GOOS-$$GOARCH$$EXTENSION"; \
+					cdsctl admin plugins binary-add $(TARGET_NAME) $(TARGET_DIST)/$(TARGET_NAME)-$$GOOS-$$GOARCH.yml $(TARGET_DIST)/$(TARGET_NAME)-$$GOOS-$$GOARCH$$EXTENSION; \
+				fi; \
+			done; \
 		done; \
 	done
 
