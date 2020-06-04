@@ -58,7 +58,7 @@ func insertNodeRunJobInfo(db gorp.SqlExecutor, info *sdk.WorkflowNodeJobRunInfo)
 	if n, err := db.Exec(query, info.WorkflowNodeRunID, info.WorkflowNodeJobRunID, spawnJSON, time.Now()); err != nil {
 		return sdk.WrapError(err, "err while inserting spawninfos into workflow_node_run_job_info")
 	} else if n, _ := n.RowsAffected(); n == 0 {
-		return fmt.Errorf("insertNodeRunJobInfo> Unable to insert into workflow_node_run_job_info id = %d", info.WorkflowNodeJobRunID)
+		return sdk.WithStack(fmt.Errorf("unable to insert into workflow_node_run_job_info id = %d", info.WorkflowNodeJobRunID))
 	}
 
 	log.Debug("insertNodeRunJobInfo> on node run: %d (job run:%d)", info.WorkflowNodeRunID, info.WorkflowNodeJobRunID)

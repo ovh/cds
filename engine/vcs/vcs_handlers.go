@@ -1125,11 +1125,11 @@ func (s *Service) postHookHandler() service.Handler {
 
 		body := sdk.VCSHook{}
 		if err := service.UnmarshalBody(r, &body); err != nil {
-			return sdk.WrapError(err, "Unable to read body %s %s/%s", name, owner, repo)
+			return sdk.WrapError(err, "unable to read body %s %s/%s", name, owner, repo)
 		}
 
 		if err := client.CreateHook(ctx, fmt.Sprintf("%s/%s", owner, repo), &body); err != nil {
-			return sdk.WrapError(err, "CreateHook %s %s/%s", name, owner, repo)
+			return sdk.WrapError(err, "cannot create hook on %s for repository %s/%s", name, owner, repo)
 		}
 		return service.WriteJSON(w, body, http.StatusOK)
 	}

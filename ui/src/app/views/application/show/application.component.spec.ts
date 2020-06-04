@@ -11,6 +11,7 @@ import { AuthenticationService } from 'app/service/authentication/authentication
 import { UserService } from 'app/service/user/user.service';
 import { VariableEvent } from 'app/shared/variable/variable.event.model';
 import { AddApplicationVariable, DeleteApplicationVariable, UpdateApplicationVariable } from 'app/store/applications.action';
+import { ApplicationStateModel } from 'app/store/applications.state';
 import { NgxsStoreModule } from 'app/store/store.module';
 import { of } from 'rxjs';
 import 'rxjs/add/observable/of';
@@ -38,7 +39,6 @@ import { SharedModule } from '../../../shared/shared.module';
 import { ToastService } from '../../../shared/toast/ToastService';
 import { ApplicationModule } from '../application.module';
 import { ApplicationShowComponent } from './application.component';
-import { ApplicationStateModel } from 'app/store/applications.state';
 
 describe('CDS: Application', () => {
 

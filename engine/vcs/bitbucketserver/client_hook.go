@@ -18,7 +18,7 @@ func (b *bitbucketClient) getHooks(ctx context.Context, repo string) ([]WebHook,
 	var resp GetWebHooksResponse
 	getPath := fmt.Sprintf("/projects/%s/repos/%s/webhooks", project, slug)
 	if err := b.do(ctx, "GET", "core", getPath, nil, nil, &resp, nil); err != nil {
-		return nil, sdk.WrapError(err, "Unable to get hook config")
+		return nil, sdk.WrapError(err, "unable to get hook config")
 	}
 
 	return resp.Values, nil
@@ -34,7 +34,7 @@ func (b *bitbucketClient) getHookByID(ctx context.Context, repo string, webHookI
 
 	getPath := fmt.Sprintf("/projects/%s/repos/%s/webhooks/%s", project, slug, webHookID)
 	if err := b.do(ctx, "GET", "core", getPath, nil, nil, &resp, nil); err != nil {
-		return resp, sdk.WrapError(err, "Unable to get hook %s", webHookID)
+		return resp, sdk.WrapError(err, "unable to get hook %s", webHookID)
 	}
 
 	return resp, nil
@@ -97,10 +97,10 @@ func (b *bitbucketClient) CreateHook(ctx context.Context, repo string, hook *sdk
 
 	values, err := json.Marshal(&request)
 	if err != nil {
-		return err
+		return sdk.WithStack(err)
 	}
 	if err := b.do(ctx, "POST", "core", url, nil, values, &request, nil); err != nil {
-		return sdk.WrapError(err, "Unable to get enable webhook")
+		return sdk.WrapError(err, "unable to get enable webhook")
 	}
 	hook.ID = fmt.Sprintf("%d", request.ID)
 	return nil
@@ -131,7 +131,7 @@ func (b *bitbucketClient) UpdateHook(ctx context.Context, repo string, hook *sdk
 		return err
 	}
 	if err := b.do(ctx, "PUT", "core", url, nil, values, &bitbucketHook, nil); err != nil {
-		return sdk.WrapError(err, "Unable to update webhook")
+		return sdk.WrapError(err, "unable to update webhook")
 	}
 	return nil
 }
@@ -145,7 +145,7 @@ func (b *bitbucketClient) DeleteHook(ctx context.Context, repo string, hook sdk.
 	url := fmt.Sprintf("/projects/%s/repos/%s/webhooks/%s", project, slug, hook.ID)
 	if err := b.do(ctx, "DELETE", "core", url, nil, nil, nil, nil); err != nil {
 		if !sdk.ErrorIs(err, sdk.ErrNotFound) {
-			return sdk.WrapError(err, "Unable to get enable webhook")
+			return sdk.WrapError(err, "unable to get enable webhook")
 		}
 	}
 	return nil

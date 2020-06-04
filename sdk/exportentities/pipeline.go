@@ -1,7 +1,6 @@
 package exportentities
 
 import (
-	"fmt"
 	"sort"
 
 	"github.com/ovh/cds/sdk"
@@ -306,7 +305,7 @@ func (p PipelineV1) Pipeline() (pip *sdk.Pipeline, err error) {
 
 	for s, opt := range p.StageOptions {
 		if mapStages[s] == nil {
-			return nil, fmt.Errorf("Invalid stage option. Stage %s  not found", s)
+			return nil, sdk.NewErrorFrom(sdk.ErrWrongRequest, "invalid stage option, stage %s not found", s)
 		}
 		if opt.Enabled != nil {
 			mapStages[s].Enabled = *opt.Enabled

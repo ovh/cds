@@ -2,7 +2,6 @@ package pipeline
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	"github.com/go-gorp/gorp"
@@ -58,7 +57,7 @@ func ImportUpdate(ctx context.Context, db gorp.SqlExecutor, proj sdk.Project, pi
 		s := &pip.Stages[i]
 		// stage name mandatory if there are many stages
 		if len(pip.Stages) > 1 && !rx.MatchString(s.Name) {
-			return sdk.NewError(sdk.ErrInvalidName, fmt.Errorf("Invalid stage name '%s'. It should match %s", s.Name, sdk.NamePatternSpace))
+			return sdk.NewErrorFrom(sdk.ErrInvalidName, "stage name '%s' should match pattern %s", s.Name, sdk.NamePatternSpace)
 		}
 
 		//Insert stage

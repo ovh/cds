@@ -164,12 +164,12 @@ func _doJSONRequest(ctx context.Context, db gorp.SqlExecutor, srv *sdk.Service, 
 	mods = append(mods, cdsclient.SetHeader("Content-Type", "application/json"))
 	res, headers, code, err := doRequest(ctx, db, srv, method, path, b, mods...)
 	if err != nil {
-		return headers, code, sdk.ErrorWithFallback(err, sdk.ErrUnknownError, "Unable to perform request on service %s (%s)", srv.Name, srv.Type)
+		return headers, code, sdk.ErrorWithFallback(err, sdk.ErrUnknownError, "unable to perform request on service %s (%s)", srv.Name, srv.Type)
 	}
 
 	if out != nil {
 		if err := json.Unmarshal(res, out); err != nil {
-			return headers, code, sdk.WrapError(err, "Unable to marshal output")
+			return headers, code, sdk.WrapError(err, "unable to unmarshal output")
 		}
 	}
 
@@ -296,22 +296,22 @@ func doRequestFromURL(ctx context.Context, db gorp.SqlExecutor, method string, c
 
 	// Sign the http request with API private RSA Key
 	if err := HTTPSigner.Sign(req); err != nil {
-		return nil, nil, 0, sdk.WrapError(err, "services.DoRequest> Request signature failed")
+		return nil, nil, 0, sdk.WrapError(err, "request signature failed")
 	}
 
 	log.Debug("services.DoRequest> request %s %v (%s)", req.Method, req.URL, req.Header.Get("Authorization"))
 
 	//Do the request
-	resp, errDo := HTTPClient.Do(req)
-	if errDo != nil {
-		return nil, nil, 0, sdk.WrapError(errDo, "services.DoRequest> Request failed")
+	resp, err := HTTPClient.Do(req)
+	if err != nil {
+		return nil, nil, 0, sdk.WrapError(err, "request failed")
 	}
 	defer resp.Body.Close()
 
 	// Read the body
-	body, errBody := ioutil.ReadAll(resp.Body)
-	if errBody != nil {
-		return nil, resp.Header, resp.StatusCode, sdk.WrapError(errBody, "services.DoRequest> Unable to read body")
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return nil, resp.Header, resp.StatusCode, sdk.WrapError(err, "unable to read body")
 	}
 
 	log.Debug("services.DoRequest> response code:%d", resp.StatusCode)
@@ -326,6 +326,5 @@ func doRequestFromURL(ctx context.Context, db gorp.SqlExecutor, method string, c
 		return nil, resp.Header, resp.StatusCode, cdserr
 	}
 
-	return nil, resp.Header, resp.StatusCode, fmt.Errorf("Request Failed")
-
+	return nil, resp.Header, resp.StatusCode, sdk.WithStack(fmt.Errorf("request failed"))
 }
