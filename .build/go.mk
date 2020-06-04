@@ -28,7 +28,7 @@ mk_go_clean: # clean target directory
 ##### =====> Compile <===== #####
 
 IS_TEST 							:= 	$(filter test,$(MAKECMDGOALS))
-TARGET_OS 							:= 	$(if ${ENABLE_CROSS_COMPILATION},$(if ${OS},${OS}, $(if $(IS_TEST), $(shell go env GOOS), darwin linux freebsd)),$(shell go env GOOS))
+TARGET_OS 							:= 	$(filter-out $(TARGET_OS_EXCLUDED), $(if ${ENABLE_CROSS_COMPILATION},$(if ${OS},${OS}, $(if $(IS_TEST), $(shell go env GOOS), darwin linux freebsd)),$(shell go env GOOS)))
 TARGET_ARCH 						:= 	$(if ${ARCH},${ARCH}, $(if $(IS_TEST), $(shell go env GOARCH),amd64))
 BINARIES 							=	$(addprefix $(TARGET_DIST)/, $(addsuffix -$(OS)-$(ARCH)$(if $(IS_WINDOWS),.exe), $(notdir $(TARGET_NAME))))
 CROSS_COMPILED_BINARIES 			= 	$(foreach OS, $(TARGET_OS), $(foreach ARCH, $(TARGET_ARCH), $(BINARIES)))

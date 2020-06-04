@@ -1,7 +1,7 @@
 
 BINARIES_CONF 					=	$(addprefix $(TARGET_DIST)/, $(addsuffix -$(OS)-$(ARCH).yml, $(notdir $(TARGET_NAME))))
 PLUGIN_CONF 					=	$(addprefix $(TARGET_DIST)/, $(addsuffix .yml, $(notdir $(TARGET_NAME))))
-CROSS_COMPILED_CONF 			= 	$(foreach OS, $(TARGET_OS), $(foreach ARCH, $(TARGET_ARCH), $(BINARIES_CONF)))
+CROSS_COMPILED_PLUGIN_CONF 		= 	$(foreach OS, $(TARGET_OS), $(foreach ARCH, $(TARGET_ARCH), $(BINARIES_CONF)))
 
 define PLUGIN_MANIFEST_BINARY
 os: %os%
@@ -39,7 +39,9 @@ $(PLUGIN_CONF): $(TARGET_DIST)
 	$(info *** prepare conf $@)
 	@cp $(TARGET_NAME).yml $@;
 
-publish:
+mk_go_build_plugin: $(CROSS_COMPILED_PLUGIN_CONF) $(PLUGIN_CONF) $(CROSS_COMPILED_BINARIES)
+
+mk_plugin_publish:
 	@echo "Updating plugin $(TARGET_NAME)..."
 	cdsctl admin plugins import $(TARGET_DIST)/$(TARGET_NAME).yml
 	@for GOOS in $(TARGET_OS); do \
@@ -50,8 +52,6 @@ publish:
 			cdsctl admin plugins binary-add $(TARGET_NAME) $(TARGET_DIST)/$(TARGET_NAME)-$$GOOS-$$GOARCH.yml $(TARGET_DIST)/$(TARGET_NAME)-$$GOOS-$$GOARCH$$EXTENSION; \
 		done; \
 	done
-
-build: $(CROSS_COMPILED_PLUGIN_CONF) $(PLUGIN_CONF) $(CROSS_COMPILED_BINARIES) ## build action plugin and prepare configuration
 
 clean:
 	@rm -rf dist
