@@ -1,4 +1,4 @@
-GO_BUILD 	             = GOPRIVATE="${GO_PRIVATE}" CGO_ENABLED=0 go build -a -installsuffix cgo
+GO_BUILD                 = GOPRIVATE="${GO_PRIVATE}" CGO_ENABLED=0 go build -a -installsuffix cgo
 GO_LIST                  = env GO111MODULE=on GOPRIVATE="${GO_PRIVATE}" go list
 TEST_CMD                 = go test -v -timeout 600s -coverprofile=profile.coverprofile
 TEST_C_CMD               = go test -c -coverprofile=profile.coverprofile
