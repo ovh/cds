@@ -1,6 +1,6 @@
 module github.com/ovh/cds/contrib/grpcplugins/action/clair
 
-go 1.13
+go 1.14
 
 replace github.com/ovh/cds => ../../../../
 

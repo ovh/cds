@@ -2,7 +2,7 @@ module github.com/ovh/cds/contrib/grpcplugins/action/venom
 
 replace github.com/ovh/cds => ../../../../
 
-go 1.13
+go 1.14
 
 require (
 	github.com/bsm/sarama-cluster v2.1.15+incompatible // indirect

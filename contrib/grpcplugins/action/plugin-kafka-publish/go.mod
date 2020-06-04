@@ -2,7 +2,9 @@ module github.com/ovh/cds/contrib/grpcplugins/action/kafka-publish
 
 replace github.com/ovh/cds => ../../../../
 
-go 1.13
+replace github.com/go-gorp/gorp => github.com/yesnault/gorp v2.0.1-0.20200325154225-2dc6d8c2da37+incompatible
+
+go 1.14
 
 require (
 	github.com/Shopify/sarama v1.24.1

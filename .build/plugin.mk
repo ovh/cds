@@ -65,6 +65,3 @@ mk_plugin_publish:
 
 mk_plugin_package: 
 	tar czf $(TARGET_DIST)/cds-$(TARGET_NAME)-all.tar.gz $(TARGET_DIST)/$(TARGET_NAME)*
-
-clean:
-	@rm -rf dist

@@ -2,7 +2,7 @@ module github.com/ovh/cds/contrib/grpcplugins/action/marathon
 
 replace github.com/ovh/cds => ../../../../
 
-go 1.13
+go 1.14
 
 require (
 	github.com/facebookgo/ensure v0.0.0-20160127193407-b4ab57deab51 // indirect

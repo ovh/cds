@@ -1,7 +1,6 @@
 package kafkapublisher
 
 import (
-	"encoding/base64"
 	"io/ioutil"
 	"testing"
 
@@ -18,13 +17,12 @@ func TestKafkaMessages(t *testing.T) {
 	msgs, err := KafkaMessages(chunks)
 	test.NoError(t, err)
 
-	filenameB64 := base64.StdEncoding.EncodeToString([]byte("chunks.go"))
 	var chunks2 shredder.Chunks
 	for i, msg := range msgs {
 		c, err := ReadBytes(msg)
 		assert.NoError(t, err)
 		assert.NotNil(t, c)
-		assert.Equal(t, filenameB64, c.Ctx.UUID)
+		assert.Equal(t, "&filename=chunks.go", c.Ctx.UUID)
 		assert.Equal(t, shredder.FileContentType, c.Ctx.ContentType)
 		assert.Equal(t, 7, c.Ctx.ChunksNumber)
 		assert.Equal(t, i, c.Offset)

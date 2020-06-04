@@ -9,7 +9,7 @@ import (
 	"github.com/ovh/cds/sdk/grpcplugin/actionplugin"
 )
 
-func Test_parseEmptyMarathonFileShouldactionplugin.Fail(t *testing.T) {
+func Test_parseEmptyMarathonFileShouldactionpluginFail(t *testing.T) {
 	filepath := "./fixtures/marathon1.json"
 	app, err := parseApplicationConfigFile(filepath)
 	assert.Nil(t, app)
@@ -17,7 +17,7 @@ func Test_parseEmptyMarathonFileShouldactionplugin.Fail(t *testing.T) {
 	t.Log(err.Error())
 }
 
-func Test_parseInvalidJSONFileShouldactionplugin.Fail(t *testing.T) {
+func Test_parseInvalidJSONFileShouldactionpluginFail(t *testing.T) {
 	filepath := "./fixtures/marathon2.json"
 	app, err := parseApplicationConfigFile(filepath)
 	assert.Nil(t, app)
@@ -25,7 +25,7 @@ func Test_parseInvalidJSONFileShouldactionplugin.Fail(t *testing.T) {
 	t.Log(err.Error())
 }
 
-func Test_parseInvalidMarathonFileShouldactionplugin.Fail(t *testing.T) {
+func Test_parseInvalidMarathonFileShouldactionpluginFail(t *testing.T) {
 	filepath := "./fixtures/marathon3.json"
 	app, err := parseApplicationConfigFile(filepath)
 	assert.Nil(t, app)

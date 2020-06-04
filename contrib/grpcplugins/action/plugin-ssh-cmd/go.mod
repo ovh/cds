@@ -2,7 +2,7 @@ module github.com/ovh/cds/contrib/grpcplugins/action/ssh-cmd
 
 replace github.com/ovh/cds => ../../../../
 
-go 1.13
+go 1.14
 
 require (
 	github.com/golang/protobuf v1.3.2
