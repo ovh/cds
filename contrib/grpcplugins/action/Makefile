@@ -21,7 +21,7 @@ build: $(TARGET_PLUGINS)
 
 .PHONY: dist
 
-dist:
+package:
 	@mkdir -p dist
 	@for PLU in $(ALL_PLUGINS); do \
 		for F in `find $$PLU/dist -name "$$PLU*"`; do \
