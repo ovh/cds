@@ -18,6 +18,10 @@ define get_arch_from_binary_file
 $(strip $(patsubst %.exe, %,$(shell echo $(1) | awk '{n=split($$1,a,"-");print a[n]}')))
 endef
 
+define get_arch_from_conf_file
+$(strip $(patsubst %.yml, %,$(shell echo $(1) | awk '{n=split($$1,a,"-");print a[n]}')))
+endef
+
 define get_executor_path_from_binary_file
 $(strip $(patsubst dist/%, %, $(patsubst %-, %, $(shell echo $(1) |awk '{n=split($$1,a,"-");for (i = 2; i < n-1; i++) printf a[i] "-"}'))))
 endef
@@ -27,7 +31,7 @@ $(CROSS_COMPILED_PLUGIN_CONF): $(GOFILES) $(TARGET_DIST)
 	$(info *** prepare conf $@)
 	@echo "$$PLUGIN_MANIFEST_BINARY" > $@; \
 	OS=$(call get_os_from_binary_file,$@); \
-	ARCH=$(call get_arch_from_binary_file,$@); \
+	ARCH=$(call get_arch_from_conf_file,$@); \
 	perl -pi -e s,%os%,$$OS,g $@ ; \
 	perl -pi -e s,%arch%,$$ARCH,g $@ ; \
 	EXTENSION=""; \
