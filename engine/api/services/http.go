@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -128,25 +129,23 @@ func (s *defaultServiceClient) DoJSONRequest(ctx context.Context, method, path s
 
 // doJSONRequest performs an http request on a service
 func doJSONRequest(ctx context.Context, db gorp.SqlExecutor, srvs []sdk.Service, method, path string, in interface{}, out interface{}, mods ...cdsclient.RequestModifier) (http.Header, int, error) {
-	var lastErr error
+	var lastErr = sdk.WithStack(errors.New("unable to call service: service not found"))
 	var lastCode int
-	var attempt int
-	for {
-		attempt++
+	for attempt := 0; attempt < 5; attempt++ {
 		for i := range srvs {
 			srv := &srvs[i]
 			headers, code, err := _doJSONRequest(ctx, db, srv, method, path, in, out, mods...)
-			if err == nil {
-				return headers, code, nil
+			if err != nil {
+				lastErr = err
+				lastCode = code
+				continue
 			}
-			lastErr = err
-			lastCode = code
-		}
-		if lastErr != nil || attempt > 5 {
-			break
+			return headers, code, nil
 		}
 	}
-	return nil, lastCode, lastErr
+
+	log.Error(ctx, "unable to call service: maximum attempt exceed : %+v", lastErr)
+	return nil, lastCode, sdk.WithStack(lastErr)
 }
 
 // _doJSONRequest is a low level function that performs an http request on service
@@ -182,11 +181,13 @@ func PostMultipart(ctx context.Context, db gorp.SqlExecutor, srvs []sdk.Service,
 	writer := multipart.NewWriter(body)
 	part, err := writer.CreateFormFile("file", filename)
 	if err != nil {
-		return 0, err
+		return 0, sdk.WithStack(err)
 	}
-	part.Write(fileContents)
+	if _, err := part.Write(fileContents); err != nil {
+		return 0, sdk.WithStack(err)
+	}
 	if err := writer.Close(); err != nil {
-		return 0, err
+		return 0, sdk.WithStack(err)
 	}
 
 	mods = append(mods, cdsclient.SetHeader("Content-Type", "multipart/form-data"))
