@@ -46,7 +46,7 @@ func (actPlugin *npmAuditParserActionPlugin) Run(ctx context.Context, q *actionp
 	}
 
 	var report sdk.VulnerabilityWorkerReport
-	summary := make(map[string]int64)
+
 	for _, a := range npmAudit.Advisories {
 		for _, f := range a.Findings {
 			if len(a.CVES) > 0 {
@@ -63,8 +63,6 @@ func (actPlugin *npmAuditParserActionPlugin) Run(ctx context.Context, q *actionp
 						Version:     f.Version,
 					}
 					report.Vulnerabilities = append(report.Vulnerabilities, v)
-					count := summary[v.Severity]
-					summary[v.Severity] = count + 1
 				}
 			} else {
 				v := sdk.Vulnerability{
@@ -79,14 +77,10 @@ func (actPlugin *npmAuditParserActionPlugin) Run(ctx context.Context, q *actionp
 					Version:     f.Version,
 				}
 				report.Vulnerabilities = append(report.Vulnerabilities, v)
-				count := summary[v.Severity]
-				summary[v.Severity] = count + 1
 			}
-
 		}
 	}
 	report.Type = "js"
-	report.Summary = summary
 	if err := grpcplugins.SendVulnerabilityReport(actPlugin.HTTPPort, report); err != nil {
 		return actionplugin.Fail("Unable to send report: %s", err)
 	}

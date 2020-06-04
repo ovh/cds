@@ -67,7 +67,6 @@ func (actPlugin *clairActionPlugin) Run(ctx context.Context, q *actionplugin.Act
 	fmt.Printf("Creating report")
 
 	var vulnerabilities []sdk.Vulnerability
-	summary := make(map[string]int64)
 	if analysis.MostRecentLayer().Layer != nil {
 		for _, feat := range analysis.MostRecentLayer().Layer.Features {
 			for _, vuln := range feat.Vulnerabilities {
@@ -83,16 +82,12 @@ func (actPlugin *clairActionPlugin) Run(ctx context.Context, q *actionplugin.Act
 					Title:       fmt.Sprintf("%s %s", feat.Name, feat.Version),
 				}
 				vulnerabilities = append(vulnerabilities, v)
-
-				count := summary[v.Severity]
-				summary[v.Severity] = count + 1
 			}
 		}
 	}
 
 	report := sdk.VulnerabilityWorkerReport{
 		Vulnerabilities: vulnerabilities,
-		Summary:         summary,
 		Type:            "docker",
 	}
 	if err := grpcplugins.SendVulnerabilityReport(actPlugin.HTTPPort, report); err != nil {
