@@ -220,7 +220,19 @@ func Create(ctx context.Context, h Interface) error {
 			// Check at least one worker model can match
 			var chosenModel *sdk.Model
 			var canTakeJob bool
-			if isWithModels {
+
+			var containsRegionRequirement bool
+			for _, r := range workerRequest.requirements {
+				switch r.Type {
+				case sdk.RegionRequirement:
+					containsRegionRequirement = true
+				}
+			}
+
+			if !containsRegionRequirement && h.Configuration().Provision.IgnoreJobWithNoRegion {
+				log.Debug("cannot launch this job because it does not contains a region prerequisite and IgnoreJobWithNoRegion=true in hatchery configuration")
+				canTakeJob = false
+			} else if isWithModels {
 				for i := range models {
 					if canRunJobWithModel(ctx, hWithModels, workerRequest, &models[i]) {
 						chosenModel = &models[i]
