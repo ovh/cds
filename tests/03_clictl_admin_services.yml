@@ -22,4 +22,4 @@ testcases:
   - script: {{.cdsctl}} -f {{.cdsctl.config}} admin services request --name `{{.cdsctl}} -f {{.cdsctl.config}} admin services list -q|grep hatchery|head -n1` --query /debug/pprof/goroutine\?debug\=2
     assertions:
       - result.code ShouldEqual 0
-      - result.systemout ShouldContainSubstring transport.go
+      - result.systemout ShouldContainSubstring conn.go

@@ -60,7 +60,7 @@ func New(consumerKey string, privateKey []byte, URL, apiURL, uiURL, proxyURL, us
 func getRepo(fullname string) (string, string, error) {
 	t := strings.Split(fullname, "/")
 	if len(t) != 2 {
-		return "", "", fmt.Errorf("fullname %s must be <project>/<slug>", fullname)
+		return "", "", sdk.WithStack(fmt.Errorf("fullname %s must be <project>/<slug>", fullname))
 	}
 	project := t[0]
 	slug := t[1]

@@ -19,9 +19,7 @@ export class LogoutInterceptor implements HttpInterceptor {
         return next.handle(req).pipe(
             catchError(e => {
                 if (e instanceof HttpErrorResponse) {
-                    if (e.status === 0) {
-                        this._toast.error('API Unreachable', '');
-                    } else if (req.url.indexOf('auth') === -1 && e.status === 401) {
+                    if (req.url.indexOf('auth') === -1 && e.status === 401) {
                         let navigationExtras: NavigationExtras = {
                             queryParams: {}
                         };
@@ -32,22 +30,6 @@ export class LogoutInterceptor implements HttpInterceptor {
                         }
 
                         this._router.navigate(['/auth/signin'], navigationExtras);
-                    } else if (req.url.indexOf('auth/me') === -1) { // ignore error on auth/me used for auth pages
-                        // error formatted from CDS API
-                        if (e.error) {
-                            if (e.error.message) {
-                                this._toast.error(e.statusText, e.error.message);
-                            } else if (Array.isArray(e.error)) {
-                                try {
-                                    let messages = e.error as Array<string>;
-                                    this._toast.error(e.statusText, messages.join(', '));
-                                } catch (e) {
-                                    this._toast.error(e.statusText, this._translate.instant('common_error'));
-                                }
-                            } else {
-                                this._toast.error(e.statusText, this._translate.instant('common_error'));
-                            }
-                        }
                     }
                     return observableThrowError(e);
                 }

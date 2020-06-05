@@ -5,7 +5,9 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
 import { TranslateLoader, TranslateModule, TranslateParser, TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
+import { ApplicationService } from 'app/service/application/application.service';
 import { AuthenticationService } from 'app/service/authentication/authentication.service';
+import { EnvironmentService } from 'app/service/environment/environment.service';
 import { NavbarService } from 'app/service/navbar/navbar.service';
 import { ProjectService } from 'app/service/project/project.service';
 import { ProjectStore } from 'app/service/project/project.store';
@@ -13,6 +15,7 @@ import { MonitoringService, RouterService, UserService } from 'app/service/servi
 import { WorkflowRunService } from 'app/service/workflow/run/workflow.run.service';
 import { WorkflowService } from 'app/service/workflow/workflow.service';
 import { NgxsStoreModule } from 'app/store/store.module';
+import { of } from 'rxjs';
 import 'rxjs/add/observable/of';
 import { Observable } from 'rxjs/Observable';
 import { Pipeline } from '../../../../model/pipeline.model';
@@ -22,9 +25,6 @@ import { SharedModule } from '../../../../shared/shared.module';
 import { ToastService } from '../../../../shared/toast/ToastService';
 import { PipelineModule } from '../../pipeline.module';
 import { PipelineAdminComponent } from './pipeline.admin.component';
-import { ApplicationService } from 'app/service/application/application.service';
-import { EnvironmentService } from 'app/service/environment/environment.service';
-import { of } from 'rxjs';
 
 describe('CDS: Pipeline Admin Component', () => {
 

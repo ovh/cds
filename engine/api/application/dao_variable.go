@@ -2,7 +2,6 @@ package application
 
 import (
 	"context"
-	"fmt"
 	"strings"
 	"time"
 
@@ -162,17 +161,16 @@ func InsertVariable(db gorp.SqlExecutor, appID int64, v *sdk.Variable, u sdk.Ide
 	//Check variable name
 	rx := sdk.NamePatternRegex
 	if !rx.MatchString(v.Name) {
-		return sdk.NewError(sdk.ErrInvalidName, fmt.Errorf("Invalid variable name. It should match %s", sdk.NamePattern))
+		return sdk.NewErrorFrom(sdk.ErrInvalidName, "variable name should match pattern %s", sdk.NamePattern)
 	}
 
 	dbVar := newDBApplicationVariable(*v, appID)
 	err := gorpmapping.InsertAndSign(context.Background(), db, &dbVar)
 	if err != nil && strings.Contains(err.Error(), "application_variable_pkey") {
 		return sdk.WithStack(sdk.ErrVariableExists)
-
 	}
 	if err != nil {
-		return sdk.WrapError(err, "Cannot insert variable %s", v.Name)
+		return sdk.WrapError(err, "cannot insert variable %s", v.Name)
 	}
 
 	*v = dbVar.Variable()
@@ -196,7 +194,7 @@ func InsertVariable(db gorp.SqlExecutor, appID int64, v *sdk.Variable, u sdk.Ide
 func UpdateVariable(db gorp.SqlExecutor, appID int64, variable *sdk.Variable, variableBefore *sdk.Variable, u sdk.Identifiable) error {
 	rx := sdk.NamePatternRegex
 	if !rx.MatchString(variable.Name) {
-		return sdk.NewError(sdk.ErrInvalidName, fmt.Errorf("Invalid variable name. It should match %s", sdk.NamePattern))
+		return sdk.NewErrorFrom(sdk.ErrInvalidName, "variable name should match pattern %s", sdk.NamePattern)
 	}
 
 	dbVar := newDBApplicationVariable(*variable, appID)

@@ -36,9 +36,9 @@
                         <td class="middle-aligned">
                             <div class="field">
                                 <ng-container *ngIf="conditionNames">
-                                    <app-select-filter [disabled]="readonly" [searchable]="true"
-                                    [(value)]="c.variable" [options]="conditionNames"
-                                    (valueChange)="pushChange('name')"></app-select-filter>
+                                    <app-select-filter [disabled]="readonly" [searchable]="true" [(value)]="c.variable"
+                                        [options]="conditionNames" (valueChange)="pushChange('name')">
+                                    </app-select-filter>
                                 </ng-container>
                             </div>
                         </td>
@@ -112,12 +112,13 @@
                 <em> {{'workflow_node_condition_lua_help' | translate}}</em>
                 <div class="right floated">
                     <div>
-                        <i class="book icon"></i><a href="https://devhints.io/lua" target="_blank">Lua Cheatsheet</a>
+                        <i class="book icon"></i><a href="https://devhints.io/lua" target="_blank"
+                            rel="noopener noreferrer">Lua Cheatsheet</a>
                     </div>
                     <div>
                         <i class="book icon"></i><a
-                            href="https://ovh.github.io/cds/docs/concepts/workflow/run-conditions"
-                            target="_blank">{{'common_cds_documentation' | translate}}</a>
+                            href="https://ovh.github.io/cds/docs/concepts/workflow/run-conditions" target="_blank"
+                            rel="noopener noreferrer">{{'common_cds_documentation' | translate}}</a>
                     </div>
                 </div>
             </div>

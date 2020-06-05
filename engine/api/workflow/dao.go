@@ -738,7 +738,7 @@ func CompleteWorkflow(ctx context.Context, db gorp.SqlExecutor, w *sdk.Workflow,
 func CheckValidity(ctx context.Context, db gorp.SqlExecutor, w *sdk.Workflow) error {
 	//Check project is not empty
 	if w.ProjectKey == "" {
-		return sdk.NewError(sdk.ErrWorkflowInvalid, fmt.Errorf("Invalid project key"))
+		return sdk.NewErrorFrom(sdk.ErrWorkflowInvalid, "invalid project key")
 	}
 
 	if w.Icon != "" {
@@ -753,24 +753,24 @@ func CheckValidity(ctx context.Context, db gorp.SqlExecutor, w *sdk.Workflow) er
 	//Check workflow name
 	rx := sdk.NamePatternRegex
 	if !rx.MatchString(w.Name) {
-		return sdk.NewError(sdk.ErrWorkflowInvalid, fmt.Errorf("Invalid workflow name. It should match %s", sdk.NamePattern))
+		return sdk.NewErrorFrom(sdk.ErrWorkflowInvalid, "workflow name should match pattern %s", sdk.NamePattern)
 	}
 
 	//Check refs
 	for _, j := range w.WorkflowData.Joins {
 		if len(j.JoinContext) == 0 {
-			return sdk.NewError(sdk.ErrWorkflowInvalid, fmt.Errorf("Source node references is mandatory"))
+			return sdk.NewErrorFrom(sdk.ErrWorkflowInvalid, "source node references is mandatory")
 		}
 	}
 
 	if w.WorkflowData.Node.Context != nil && w.WorkflowData.Node.Context.DefaultPayload != nil {
 		defaultPayload, err := w.WorkflowData.Node.Context.DefaultPayloadToMap()
 		if err != nil {
-			return sdk.WrapError(err, "cannot transform default payload to map")
+			return sdk.NewErrorFrom(err, "cannot transform default payload to map")
 		}
 		for payloadKey := range defaultPayload {
 			if strings.HasPrefix(payloadKey, "cds.") {
-				return sdk.WrapError(sdk.ErrInvalidPayloadVariable, "cannot have key %s in default payload", payloadKey)
+				return sdk.NewErrorFrom(sdk.ErrInvalidPayloadVariable, "cannot have key %s in default payload", payloadKey)
 			}
 		}
 	}

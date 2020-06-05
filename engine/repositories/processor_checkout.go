@@ -38,8 +38,9 @@ func (s *Service) processCheckout(ctx context.Context, op *sdk.Operation) error 
 
 	// Check commit
 	if op.Setup.Checkout.Commit == "" {
-		log.Debug("processCheckout> pulling branch %s", op.Setup.Checkout.Branch)
-		if err := gitRepo.Pull("origin", op.Setup.Checkout.Branch); err != nil {
+		// Reset HARD to the latest commit of the remote branch (don't use pull because there can be conflicts if the remote was forced)
+		log.Debug("processCheckout> resetting the branch %s from remote", op.Setup.Checkout.Branch)
+		if err := gitRepo.ResetHard("origin/" + op.Setup.Checkout.Branch); err != nil {
 			return sdk.WithStack(err)
 		}
 	} else {

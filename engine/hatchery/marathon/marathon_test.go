@@ -4,16 +4,17 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"github.com/gambol99/go-marathon"
-	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/hatchery"
-	"github.com/stretchr/testify/assert"
-	"gopkg.in/h2non/gock.v1"
 	"io/ioutil"
 	"net/http"
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/gambol99/go-marathon"
+	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/hatchery"
+	"github.com/stretchr/testify/assert"
+	"gopkg.in/h2non/gock.v1"
 )
 
 func TestWorkerStarted(t *testing.T) {
@@ -320,7 +321,7 @@ func TestSpawnWorkerTimeout(t *testing.T) {
 	})
 	t.Logf("%+v\n", err)
 	assert.Error(t, err)
-	assert.Equal(t, "spawnMarathonDockerWorker> deployment for aaa timeout", err.Error())
+	assert.Equal(t, "spawnMarathonDockerWorker> TestSpawnWorkerTimeout>SpawnWorker: internal server error (caused by: deployment for aaa timeout)", err.Error())
 }
 
 func TestCanSpawn(t *testing.T) {

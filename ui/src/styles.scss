@@ -109,6 +109,10 @@ body ::-webkit-scrollbar-thumb {
     margin: 0;
 }
 
+.toast-close-button {
+    right: -3px;
+}
+
 // dropdown
 .ui.buttons {
     sm-dropdown>.ui.dropdown:last-child .menu {
