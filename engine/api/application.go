@@ -4,29 +4,28 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"github.com/ovh/cds/engine/api/ascode"
-	"github.com/ovh/cds/engine/api/operation"
-	"github.com/ovh/cds/sdk/exportentities"
 	"io/ioutil"
 	"net/http"
 	"strings"
-
-	"github.com/ovh/cds/engine/api/permission"
-	"github.com/ovh/cds/engine/api/user"
 
 	"github.com/go-gorp/gorp"
 	"github.com/gorilla/mux"
 
 	"github.com/ovh/cds/engine/api/application"
+	"github.com/ovh/cds/engine/api/ascode"
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/group"
+	"github.com/ovh/cds/engine/api/operation"
+	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
+	"github.com/ovh/cds/engine/api/user"
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/exportentities"
 )
 
 func (api *API) getApplicationsHandler() service.Handler {
@@ -413,12 +412,7 @@ func (api *API) updateAsCodeApplicationHandler() service.Handler {
 			return sdk.WrapError(sdk.ErrInvalidApplicationPattern, "Application name %s do not respect pattern", a.Name)
 		}
 
-		proj, err := project.Load(api.mustDB(), key,
-			project.LoadOptions.WithApplicationWithDeploymentStrategies,
-			project.LoadOptions.WithPipelines,
-			project.LoadOptions.WithEnvironments,
-			project.LoadOptions.WithIntegrations,
-			project.LoadOptions.WithClearKeys)
+		proj, err := project.Load(api.mustDB(), key, project.LoadOptions.WithClearKeys)
 		if err != nil {
 			return err
 		}
