@@ -268,14 +268,14 @@ func Test_cloneEnvironmentHandler(t *testing.T) {
 	}
 	test.NoError(t, environment.InsertEnvironment(api.mustDB(), &env))
 
-	v := &sdk.Variable{
+	v := &sdk.EnvironmentVariable{
 		Name:  "var1",
 		Type:  sdk.StringVariable,
 		Value: "val1",
 	}
 	test.NoError(t, environment.InsertVariable(api.mustDB(), env.ID, v, u))
 
-	v2 := &sdk.Variable{
+	v2 := &sdk.EnvironmentVariable{
 		Name:  "var2",
 		Type:  sdk.SecretVariable,
 		Value: "val2",
