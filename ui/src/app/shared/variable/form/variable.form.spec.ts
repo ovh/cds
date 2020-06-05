@@ -1,6 +1,6 @@
 /* tslint:disable:no-unused-variable */
 
-import {TestBed, getTestBed, tick, fakeAsync} from '@angular/core/testing';
+import {TestBed, tick, fakeAsync} from '@angular/core/testing';
 import {VariableService} from '../../../service/variable/variable.service';
 import {TranslateService, TranslateLoader, TranslateParser, TranslateModule} from '@ngx-translate/core';
 import {SharedService} from '../../shared.service';

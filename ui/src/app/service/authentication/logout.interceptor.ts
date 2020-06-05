@@ -1,8 +1,6 @@
 import { HttpErrorResponse, HttpEvent, HttpHandler, HttpInterceptor, HttpRequest } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { NavigationExtras, Router } from '@angular/router';
-import { TranslateService } from '@ngx-translate/core';
-import { ToastService } from 'app/shared/toast/ToastService';
 import { Observable, throwError as observableThrowError } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 
@@ -10,9 +8,7 @@ import { catchError } from 'rxjs/operators';
 export class LogoutInterceptor implements HttpInterceptor {
 
     constructor(
-        private _toast: ToastService,
-        private _router: Router,
-        private _translate: TranslateService) {
+        private _router: Router) {
     }
 
     intercept(req: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {

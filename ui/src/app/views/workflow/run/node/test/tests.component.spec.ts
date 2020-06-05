@@ -1,5 +1,5 @@
 /* tslint:disable:no-unused-variable */
-import {TestBed, fakeAsync, getTestBed} from '@angular/core/testing';
+import {TestBed, fakeAsync} from '@angular/core/testing';
 import {RouterTestingModule} from '@angular/router/testing';
 import {TranslateService, TranslateLoader, TranslateParser, TranslateModule} from '@ngx-translate/core';
 import {WorkflowRunTestsResultComponent} from './tests.component';
