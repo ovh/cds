@@ -226,6 +226,7 @@ func Create(ctx context.Context, h Interface) error {
 				switch r.Type {
 				case sdk.RegionRequirement:
 					containsRegionRequirement = true
+					break
 				}
 			}
 
