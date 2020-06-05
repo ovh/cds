@@ -47,7 +47,7 @@ func (e dbProjectVariable) Canonical() gorpmapping.CanonicalForms {
 	}
 }
 
-func newDBProjectVariable(v sdk.Variable, projID int64) dbProjectVariable {
+func newDBProjectVariable(v sdk.ProjectVariable, projID int64) dbProjectVariable {
 	if sdk.NeedPlaceholder(v.Type) {
 		return dbProjectVariable{
 			ID:          v.ID,
@@ -66,21 +66,23 @@ func newDBProjectVariable(v sdk.Variable, projID int64) dbProjectVariable {
 	}
 }
 
-func (e dbProjectVariable) Variable() sdk.Variable {
+func (e dbProjectVariable) Variable() sdk.ProjectVariable {
 	if sdk.NeedPlaceholder(e.Type) {
-		return sdk.Variable{
-			ID:    e.ID,
-			Name:  e.Name,
-			Value: e.CipherValue,
-			Type:  e.Type,
+		return sdk.ProjectVariable{
+			ID:        e.ID,
+			Name:      e.Name,
+			Value:     e.CipherValue,
+			Type:      e.Type,
+			ProjectID: e.ProjectID,
 		}
 	}
 
-	return sdk.Variable{
-		ID:    e.ID,
-		Name:  e.Name,
-		Value: e.ClearValue,
-		Type:  e.Type,
+	return sdk.ProjectVariable{
+		ID:        e.ID,
+		Name:      e.Name,
+		Value:     e.ClearValue,
+		Type:      e.Type,
+		ProjectID: e.ProjectID,
 	}
 }
 
@@ -148,7 +150,7 @@ func (pva *dbProjectVariableAudit) PostGet(db gorp.SqlExecutor) error {
 	}
 
 	if before.Valid {
-		vBefore := &sdk.Variable{}
+		vBefore := &sdk.ProjectVariable{}
 		if err := json.Unmarshal([]byte(before.String), vBefore); err != nil {
 			return err
 		}
@@ -160,7 +162,7 @@ func (pva *dbProjectVariableAudit) PostGet(db gorp.SqlExecutor) error {
 	}
 
 	if after.Valid {
-		vAfter := &sdk.Variable{}
+		vAfter := &sdk.ProjectVariable{}
 		if err := json.Unmarshal([]byte(after.String), vAfter); err != nil {
 			return err
 		}

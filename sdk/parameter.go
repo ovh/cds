@@ -157,7 +157,7 @@ func ParametersToMap(params []Parameter) map[string]string {
 
 // ParametersFromProjectVariables returns a map from a slice of parameters
 func ParametersFromProjectVariables(proj Project) map[string]string {
-	params := VariablesToParameters("cds.proj", proj.Variables)
+	params := ProjectVariablesToParameters("cds.proj", proj.Variables)
 	return ParametersToMap(params)
 }
 
@@ -210,6 +210,20 @@ func EnvironmentVariablesToParameters(prefix string, variables []EnvironmentVari
 }
 
 func ApplicationVariablesToParameters(prefix string, variables []ApplicationVariable) []Parameter {
+	res := make([]Parameter, 0, len(variables))
+	for _, t := range variables {
+		if NeedPlaceholder(t.Type) {
+			continue
+		}
+		if prefix != "" {
+			t.Name = prefix + "." + t.Name
+		}
+		res = append(res, Parameter{Name: t.Name, Type: t.Type, Value: t.Value})
+	}
+	return res
+}
+
+func ProjectVariablesToParameters(prefix string, variables []ProjectVariable) []Parameter {
 	res := make([]Parameter, 0, len(variables))
 	for _, t := range variables {
 		if NeedPlaceholder(t.Type) {

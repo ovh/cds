@@ -37,7 +37,7 @@ type Project struct {
 	Applications         []Application          `json:"applications,omitempty" yaml:"applications,omitempty" db:"-"  cli:"-"`
 	ApplicationNames     IDNames                `json:"application_names,omitempty" yaml:"application_names,omitempty" db:"-"  cli:"-"`
 	ProjectGroups        []GroupPermission      `json:"groups,omitempty" yaml:"permissions,omitempty" db:"-"  cli:"-"`
-	Variables            []Variable             `json:"variables,omitempty" yaml:"variables,omitempty" db:"-"  cli:"-"`
+	Variables            []ProjectVariable      `json:"variables,omitempty" yaml:"variables,omitempty" db:"-"  cli:"-"`
 	Environments         []Environment          `json:"environments,omitempty" yaml:"environments,omitempty" db:"-"  cli:"-"`
 	EnvironmentNames     IDNames                `json:"environment_names,omitempty" yaml:"environment_names,omitempty" db:"-"  cli:"-"`
 	Labels               []Label                `json:"labels,omitempty" yaml:"labels,omitempty" db:"-"  cli:"-"`
@@ -252,14 +252,14 @@ func (vcs ProjectVCSServer) Hash() uint64 {
 
 // ProjectVariableAudit represents an audit on a project variable
 type ProjectVariableAudit struct {
-	ID             int64     `json:"id" yaml:"-" db:"id"`
-	ProjectID      int64     `json:"project_id" yaml:"-" db:"project_id"`
-	VariableID     int64     `json:"variable_id" yaml:"-" db:"variable_id"`
-	Type           string    `json:"type" yaml:"-" db:"type"`
-	VariableBefore *Variable `json:"variable_before,omitempty" yaml:"-" db:"-"`
-	VariableAfter  Variable  `json:"variable_after,omitempty" yaml:"-" db:"-"`
-	Versionned     time.Time `json:"versionned" yaml:"-" db:"versionned"`
-	Author         string    `json:"author" yaml:"-" db:"author"`
+	ID             int64            `json:"id" yaml:"-" db:"id"`
+	ProjectID      int64            `json:"project_id" yaml:"-" db:"project_id"`
+	VariableID     int64            `json:"variable_id" yaml:"-" db:"variable_id"`
+	Type           string           `json:"type" yaml:"-" db:"type"`
+	VariableBefore *ProjectVariable `json:"variable_before,omitempty" yaml:"-" db:"-"`
+	VariableAfter  ProjectVariable  `json:"variable_after,omitempty" yaml:"-" db:"-"`
+	Versionned     time.Time        `json:"versionned" yaml:"-" db:"versionned"`
+	Author         string           `json:"author" yaml:"-" db:"author"`
 }
 
 // Metadata represents metadata

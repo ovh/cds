@@ -412,10 +412,10 @@ func LoadNodeJobRunKeys(ctx context.Context, db gorp.SqlExecutor, proj *sdk.Proj
 }
 
 // LoadSecrets loads all secrets for a job run
-func LoadSecrets(db gorp.SqlExecutor, store cache.Store, nodeRun *sdk.WorkflowNodeRun, w *sdk.WorkflowRun, pv []sdk.Variable) ([]sdk.Variable, error) {
+func LoadSecrets(db gorp.SqlExecutor, store cache.Store, nodeRun *sdk.WorkflowNodeRun, w *sdk.WorkflowRun, projV []sdk.ProjectVariable) ([]sdk.Variable, error) {
 	var secrets []sdk.Variable
 
-	pv = sdk.VariablesFilter(pv, sdk.SecretVariable, sdk.KeyVariable)
+	pv := sdk.VariablesFilter(sdk.FromProjectVariables(projV), sdk.SecretVariable, sdk.KeyVariable)
 	pv = sdk.VariablesPrefix(pv, "cds.proj.")
 	secrets = append(secrets, pv...)
 

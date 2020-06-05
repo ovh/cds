@@ -14,6 +14,19 @@ type Variable struct {
 	Type  string `json:"type" cli:"type"`
 }
 
+func FromProjectVariables(appVars []ProjectVariable) []Variable {
+	vars := make([]Variable, len(appVars))
+	for i, a := range appVars {
+		vars[i] = Variable{
+			Value: a.Value,
+			Name:  a.Name,
+			Type:  a.Type,
+			ID:    a.ID,
+		}
+	}
+	return vars
+}
+
 func FromAplicationVariables(appVars []ApplicationVariable) []Variable {
 	vars := make([]Variable, len(appVars))
 	for i, a := range appVars {
@@ -48,6 +61,14 @@ func (v *Variable) ToApplicationVariable(appID int64) *ApplicationVariable {
 		Name:          v.Name,
 		Value:         v.Value,
 	}
+}
+
+type ProjectVariable struct {
+	ID        int64  `json:"id,omitempty" cli:"-"`
+	Name      string `json:"name" cli:"name,key"`
+	Value     string `json:"value" cli:"value"`
+	Type      string `json:"type" cli:"type"`
+	ProjectID int64  `json:"project_id" cli:"-"`
 }
 
 type ApplicationVariable struct {

@@ -675,10 +675,6 @@ func (a *API) Serve(ctx context.Context) error {
 		return migrate.RefactorEnvironmentKeys(ctx, a.DBConnectionFactory.GetDBMap())
 	}})
 
-	migrate.Add(ctx, sdk.Migration{Name: "RefactorProjectVariables", Release: "0.44.0", Blocker: true, Automatic: true, ExecFunc: func(ctx context.Context) error {
-		return migrate.RefactorProjectVariables(ctx, a.DBConnectionFactory.GetDBMap())
-	}})
-
 	migrate.Add(ctx, sdk.Migration{Name: "CleanDuplicateNodes", Release: "0.44.0", Blocker: false, Automatic: true, ExecFunc: func(ctx context.Context) error {
 		return migrate.CleanDuplicateNodes(ctx, a.DBConnectionFactory.GetDBMap())
 	}})
