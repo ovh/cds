@@ -17,7 +17,7 @@ GO_GOJUNIT = ${GOPATH}/bin/go-junit-report
 GO_COBERTURA = ${GOPATH}/bin/gocover-cobertura
 GO_XUTOOLS = ${GOPATH}/bin/xutools
 
-PKGS_COMMA_SEP = go list -f '{{ join .Deps "\n" }}' . | grep github.com/ovh/cds | grep -v vendor | tr '\n' ',' | sed 's/,$$//'
+PKGS_COMMA_SEP = go list -f '{{ join .Deps "\n" }}{{"\n"}}{{.ImportPath}}' . | grep github.com/ovh/cds | grep -v vendor | tr '\n' ',' | sed 's/,$$//'
 
 TEST_PKGS = $(shell go list ./...)
 TEST_DB_HOST = $(if ${CDS_API_DATABASE_HOST},${CDS_API_DATABASE_HOST},localhost)

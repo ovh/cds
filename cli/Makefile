@@ -4,7 +4,7 @@ TARGET_DIR = ./dist
 GO_COV_MERGE = ${GOPATH}/bin/gocovmerge
 GO_GOJUNIT = ${GOPATH}/bin/go-junit-report
 GO_COBERTURA = ${GOPATH}/bin/gocover-cobertura
-PKGS_COMMA_SEP = go list -f '{{ join .Deps "\n" }}' . | grep github.com/ovh/cds | grep -v vendor | tr '\n' ',' | sed 's/,$$//'
+PKGS_COMMA_SEP = go list -f '{{ join .Deps "\n" }}{{"\n"}}{{.ImportPath}}' . | grep github.com/ovh/cds | grep -v vendor | tr '\n' ',' | sed 's/,$$//'
 TEST_PKGS = $(shell go list ./...)
 TEST_CMD = go test -tags skipkeychaintests -v -timeout 600s -coverprofile=profile.coverprofile
 
