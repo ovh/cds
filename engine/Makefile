@@ -136,10 +136,6 @@ test-coverage: $(GO_COV_MERGE) $(TARGET_DIR) $(GO_COBERTURA)
 	@$(GO_COV_MERGE) `find ./ -name "*.coverprofile"` > $(TARGET_DIR)/cover.out
 	@$(GO_COBERTURA) < $(TARGET_DIR)/cover.out > $(TARGET_DIR)/coverage.xml
 	@go tool cover -html=$(TARGET_DIR)/cover.out -o=$(TARGET_DIR)/cover.html
-	@if [ ! -z "${CDS_VERSION}" ]; then \
-		echo "Sending coverage report to CDS"; \
-		worker upload --tag "${CDS_VERSION}" $(abspath $(TARGET_DIR)/cover.html); \
-	fi;
 
 #  <testsuite name="github.com/ovh/cds/engine/api" tests="133" errors="0" failures="2" skip="0">
 test-xunit-report: $(GO_GOJUNIT) $(GO_XUTOOLS) $(TARGET_DIR)
@@ -155,24 +151,21 @@ test-xunit-report: $(GO_GOJUNIT) $(GO_XUTOOLS) $(TARGET_DIR)
 				if [ $$NO_TESTS -gt 0 ]; then \
 					echo "No tests found \t\t\t($$TST)"; \
 				else \
-					if [ ! -z "${CDS_VERSION}" ]; then \
-						echo "Sending $$TST to CDS"; \
-						worker upload --tag `echo $$TST | sed 's|./||' | sed 's|./||' | sed 's|/|_|g') | sed 's|_tests.log||'` $(abspath $$TST); \
-					fi; \
-					echo "Generating xUnit report \t$$TST.xml"; \
-					cat $$TST | $(GO_GOJUNIT) > $$TST.xml; \
+          if [ "$$TST" = "./tests.log" ]; then \
+            PACKAGE=engine; \
+					else \
+            PACKAGE=engine_`echo $$TST | sed 's|./||' | sed 's|/|_|g' | sed 's|_tests.log||'`; \
+          fi; \
+          XUNIT_OUT=$(TARGET_DIR)/$$PACKAGE.xml; \
+          echo "Generating xUnit report from \t$$TST.xml to $$XUNIT_OUT"; \
+					cat $$TST | $(GO_GOJUNIT) > $$XUNIT_OUT; \
+          TESTS_LOG_OUT=$(TARGET_DIR)/$$PACKAGE.log; \
+          echo "Copy tests log from \t$$TST.xml to $$TESTS_LOG_OUT"; \
+          cp $$TST $$TESTS_LOG_OUT; \
 				fi; \
 			fi; \
 		else \
 			echo "Ignoring empty file \t\t$$TST"; \
-		fi; \
-	done; \
-	for XML in `find . -name "tests.log.xml"`; do \
-		if [ "$$XML" =  "./tests.log.xml" ]; then \
-      		PWD=`pwd`; \
-		 	mv $$XML $(TARGET_DIR)/`basename $(PWD)`.xml; \
-		else \
-			mv $$XML $(TARGET_DIR)/`echo $$XML | sed 's|./||' | sed 's|/|_|g' | sed 's|_tests.log||'`; \
 		fi; \
 	done; \
 	xutools pretty --show-failures ./dist/*.xml > $(TARGET_DIR)/report; \

@@ -144,12 +144,10 @@ export class DataTableComponent<T extends WithKey> extends Table<T> implements O
             }
 
             if (this.activeLine) {
-                this.allData.some((data, index) => {
+                this.allData.forEach((data, index) => {
                     if (this.activeLine(data)) {
                         this.indexSelected = index;
-                        return true;
                     }
-                    return false;
                 });
             }
         }
