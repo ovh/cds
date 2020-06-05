@@ -49,6 +49,7 @@ type HatcheryCommonConfiguration struct {
 		MaxConcurrentRegistering  int    `toml:"maxConcurrentRegistering" default:"2" comment:"Maximum allowed simultaneous workers registering. -1 to disable registering on this hatchery" json:"maxConcurrentRegistering"`
 		RegisterFrequency         int    `toml:"registerFrequency" default:"60" comment:"Check if some worker model have to be registered each n Seconds" json:"registerFrequency"`
 		Region                    string `toml:"region" default:"" comment:"region of this hatchery - optional. With a free text as 'myregion', user can set a prerequisite 'region' with value 'myregion' on CDS Job" json:"region"`
+		IgnoreJobWithNoRegion     bool   `toml:"ignoreJobWithNoRegion" default:"false" comment:"Ignore job without a region prerequisite if ignoreJobWithNoRegion=true"`
 		WorkerLogsOptions         struct {
 			Graylog struct {
 				Host       string `toml:"host" comment:"Example: thot.ovh.com" json:"host"`
