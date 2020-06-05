@@ -27,6 +27,19 @@ func FromAplicationVariables(appVars []ApplicationVariable) []Variable {
 	return vars
 }
 
+func FromEnvironmentVariables(envVars []EnvironmentVariable) []Variable {
+	vars := make([]Variable, len(envVars))
+	for i, a := range envVars {
+		vars[i] = Variable{
+			Value: a.Value,
+			Name:  a.Name,
+			Type:  a.Type,
+			ID:    a.ID,
+		}
+	}
+	return vars
+}
+
 func (v *Variable) ToApplicationVariable(appID int64) *ApplicationVariable {
 	return &ApplicationVariable{
 		ID:            v.ID,
@@ -43,6 +56,14 @@ type ApplicationVariable struct {
 	Value         string `json:"value" cli:"value"`
 	Type          string `json:"type" cli:"type"`
 	ApplicationID int64  `json:"application_id" cli:"-"`
+}
+
+type EnvironmentVariable struct {
+	ID            int64  `json:"id,omitempty" cli:"-"`
+	Name          string `json:"name" cli:"name,key"`
+	Value         string `json:"value" cli:"value"`
+	Type          string `json:"type" cli:"type"`
+	EnvironmentID int64  `json:"environment_id" cli:"-"`
 }
 
 func (v Variable) ToParameter(prefix string) Parameter {

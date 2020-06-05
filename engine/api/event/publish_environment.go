@@ -52,7 +52,7 @@ func PublishEnvironmentDelete(ctx context.Context, projKey string, env sdk.Envir
 }
 
 // PublishEnvironmentVariableAdd publishes an event when adding a new variable
-func PublishEnvironmentVariableAdd(ctx context.Context, projKey string, env sdk.Environment, v sdk.Variable, u sdk.Identifiable) {
+func PublishEnvironmentVariableAdd(ctx context.Context, projKey string, env sdk.Environment, v sdk.EnvironmentVariable, u sdk.Identifiable) {
 	if sdk.NeedPlaceholder(v.Type) {
 		v.Value = sdk.PasswordPlaceholder
 	}
@@ -63,7 +63,7 @@ func PublishEnvironmentVariableAdd(ctx context.Context, projKey string, env sdk.
 }
 
 // PublishEnvironmentVariableUpdate publishes an event when updating a variable
-func PublishEnvironmentVariableUpdate(ctx context.Context, projKey string, env sdk.Environment, v sdk.Variable, vOld sdk.Variable, u sdk.Identifiable) {
+func PublishEnvironmentVariableUpdate(ctx context.Context, projKey string, env sdk.Environment, v sdk.EnvironmentVariable, vOld sdk.EnvironmentVariable, u sdk.Identifiable) {
 	e := sdk.EventEnvironmentVariableUpdate{
 		OldVariable: vOld,
 		NewVariable: v,
@@ -72,7 +72,7 @@ func PublishEnvironmentVariableUpdate(ctx context.Context, projKey string, env s
 }
 
 // PublishEnvironmentVariableDelete publishes an event when deleting a new variable
-func PublishEnvironmentVariableDelete(ctx context.Context, projKey string, env sdk.Environment, v sdk.Variable, u sdk.Identifiable) {
+func PublishEnvironmentVariableDelete(ctx context.Context, projKey string, env sdk.Environment, v sdk.EnvironmentVariable, u sdk.Identifiable) {
 	e := sdk.EventEnvironmentVariableDelete{
 		Variable: v,
 	}

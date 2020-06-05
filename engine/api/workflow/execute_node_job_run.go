@@ -476,7 +476,7 @@ func LoadSecrets(db gorp.SqlExecutor, store cache.Store, nodeRun *sdk.WorkflowNo
 			if errE != nil {
 				return nil, sdk.WrapError(errE, "LoadSecrets> Cannot load environment variables")
 			}
-			ev = sdk.VariablesFilter(envv, sdk.SecretVariable, sdk.KeyVariable)
+			ev = sdk.VariablesFilter(sdk.FromEnvironmentVariables(envv), sdk.SecretVariable, sdk.KeyVariable)
 			ev = sdk.VariablesPrefix(ev, "cds.env.")
 		}
 		secrets = append(secrets, ev...)

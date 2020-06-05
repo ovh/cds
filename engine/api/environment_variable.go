@@ -126,7 +126,7 @@ func (api *API) updateVariableInEnvironmentHandler() service.Handler {
 		envName := vars["environmentName"]
 		varName := vars["name"]
 
-		var newVar sdk.Variable
+		var newVar sdk.EnvironmentVariable
 		if err := service.UnmarshalBody(r, &newVar); err != nil {
 			return sdk.WithStack(sdk.ErrWrongRequest)
 		}
@@ -178,7 +178,7 @@ func (api *API) addVariableInEnvironmentHandler() service.Handler {
 		envName := vars["environmentName"]
 		varName := vars["name"]
 
-		var newVar sdk.Variable
+		var newVar sdk.EnvironmentVariable
 		if err := service.UnmarshalBody(r, &newVar); err != nil {
 			return sdk.WithStack(sdk.ErrWrongRequest)
 		}
