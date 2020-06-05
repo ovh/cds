@@ -5,19 +5,15 @@ import {VariableService} from '../../../service/variable/variable.service';
 import {TranslateService, TranslateLoader, TranslateParser, TranslateModule} from '@ngx-translate/core';
 import {SharedService} from '../../shared.service';
 import {RouterTestingModule} from '@angular/router/testing';
-import {Injector} from '@angular/core';
 import {VariableFormComponent} from './variable.form';
 import {GroupService} from '../../../service/group/group.service';
 import {Variable} from '../../../model/variable.model';
 import {VariableEvent} from '../variable.event.model';
 import {SharedModule} from '../../shared.module';
 import {HttpClientTestingModule} from '@angular/common/http/testing';
-import { ParameterService } from 'app/service/parameter/parameter.service';
 import { Observable, of } from 'rxjs';
 
 describe('CDS: Variable From Component', () => {
-
-    let injector: Injector;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -38,11 +34,6 @@ describe('CDS: Variable From Component', () => {
                 HttpClientTestingModule
             ]
         });
-        injector = getTestBed();
-    });
-
-    afterEach(() => {
-        injector = undefined;
     });
 
 

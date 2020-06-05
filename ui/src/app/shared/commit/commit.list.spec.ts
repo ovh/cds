@@ -9,8 +9,6 @@ import {APP_BASE_HREF} from '@angular/common';
 
 describe('CDS: Commit List', () => {
 
-    let injector: Injector;
-
     beforeEach(() => {
         TestBed.configureTestingModule({
             declarations: [],
@@ -26,12 +24,6 @@ describe('CDS: Commit List', () => {
                 SharedModule
             ]
         });
-
-        injector = getTestBed();
-    });
-
-    afterEach(() => {
-        injector = undefined;
     });
 
     it('should load component', fakeAsync(() => {

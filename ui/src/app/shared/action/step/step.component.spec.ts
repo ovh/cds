@@ -15,8 +15,6 @@ import {APP_BASE_HREF} from '@angular/common';
 
 describe('CDS: Step Component', () => {
 
-    let injector: Injector;
-
     beforeEach(() => {
         TestBed.configureTestingModule({
             declarations: [
@@ -35,15 +33,7 @@ describe('CDS: Step Component', () => {
                 SharedModule
             ]
         });
-
-        injector = getTestBed();
     });
-
-    afterEach(() => {
-        injector = undefined;
-    });
-
-
 
     it('should send remove step event', fakeAsync( () => {
         // Create component

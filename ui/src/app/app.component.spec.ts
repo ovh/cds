@@ -1,6 +1,5 @@
 import { HttpClient, HttpRequest } from '@angular/common/http';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
-import { Injector } from '@angular/core';
 import { getTestBed, TestBed } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
@@ -40,8 +39,6 @@ import { NgxsStoreModule } from './store/store.module';
 import { NavbarModule } from './views/navbar/navbar.module';
 
 describe('App: CDS', () => {
-
-    let injector: Injector;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -88,14 +85,7 @@ describe('App: CDS', () => {
                 }),
             ]
         });
-
-        injector = getTestBed();
     });
-
-    afterEach(() => {
-        injector = undefined;
-    });
-
 
     it('should create the app', () => {
         let fixture = TestBed.createComponent(AppComponent);

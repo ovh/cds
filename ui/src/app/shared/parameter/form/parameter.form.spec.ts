@@ -13,7 +13,6 @@ import { ParameterFormComponent } from './parameter.form';
 import { Observable, of } from 'rxjs';
 
 describe('CDS: parameter From Component', () => {
-    let injector: Injector;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -35,11 +34,6 @@ describe('CDS: parameter From Component', () => {
                 HttpClientTestingModule
             ]
         });
-        injector = getTestBed();
-    });
-
-    afterEach(() => {
-        injector = undefined;
     });
 
 

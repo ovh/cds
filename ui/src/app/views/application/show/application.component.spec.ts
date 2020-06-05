@@ -46,7 +46,6 @@ describe('CDS: Application', () => {
     let appStore: ApplicationStore;
     let store: Store;
     let router: Router;
-    let prjStore: ProjectStore;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -92,7 +91,6 @@ describe('CDS: Application', () => {
         appStore = injector.get(ApplicationStore);
         store = injector.get(Store);
         router = injector.get(Router);
-        prjStore = injector.get(ProjectStore);
     });
 
     afterEach(() => {
@@ -100,7 +98,6 @@ describe('CDS: Application', () => {
         appStore = undefined;
         store = undefined;
         router = undefined;
-        prjStore = undefined;
     });
 
     it('Load component + load application', fakeAsync(() => {

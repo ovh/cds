@@ -22,7 +22,7 @@ export class AuthScope implements WithKey {
     key(): string {
         return this.value;
     }
-};
+}
 
 export class AuthDriverManifests {
     is_first_connection: boolean;

@@ -67,9 +67,7 @@ export class ServiceShowComponent implements OnInit {
                             this.service.version = element.value;
                         }
                         if (srv.status !== 'AL') {
-                            if (element.status === 'AL') {
-                                srv.status = element.status;
-                            } else if (element.status === 'WARN') {
+                            if (element.status === 'AL' || element.status === 'WARN') {
                                 srv.status = element.status;
                             }
                         }
