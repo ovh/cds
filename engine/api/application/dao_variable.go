@@ -5,8 +5,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/lib/pq"
-
 	"github.com/go-gorp/gorp"
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/sdk"
@@ -92,13 +90,13 @@ func loadAllVariables(db gorp.SqlExecutor, query gorpmapping.Query, opts ...gorp
 	return vars, nil
 }
 
-func LoadAllVariables(db gorp.SqlExecutor, appIDs []int64, opts ...gorpmapping.GetOptionFunc) ([]sdk.ApplicationVariable, error) {
+func LoadAllVariables(db gorp.SqlExecutor, appID int64, opts ...gorpmapping.GetOptionFunc) ([]sdk.ApplicationVariable, error) {
 	query := gorpmapping.NewQuery(`
 		SELECT *
 		FROM application_variable
-		WHERE application.id = ANY($1)
-		ORDER BY application.id, var_name
-	`).Args(pq.Int64Array(appIDs))
+		WHERE application_id = $1
+		ORDER BY application_id, var_name
+	`).Args(appID)
 	return loadAllVariables(db, query, opts...)
 }
 

@@ -34,7 +34,7 @@ func Test_DAOVariable(t *testing.T) {
 	require.NoError(t, application.InsertVariable(db, app.ID, v2, u))
 	assert.Equal(t, sdk.PasswordPlaceholder, v2.Value)
 
-	vs, err := application.LoadAllVariables(db, []int64{app.ID})
+	vs, err := application.LoadAllVariables(db, app.ID)
 	require.NoError(t, err)
 	assert.Equal(t, "clear_value", vs[0].Value)
 	assert.Equal(t, sdk.PasswordPlaceholder, vs[1].Value)
