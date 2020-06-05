@@ -24,7 +24,7 @@ type Service struct {
 	MonitoringStatus MonitoringStatus `json:"monitoring_status" db:"monitoring_status" cli:"-"`
 	Version          string           `json:"version" db:"-" cli:"version"`
 	Uptodate         bool             `json:"up_to_date" db:"-"`
-	LogServer        TCPServer        `json:"tcp" db:"-"`
+	LogServerAdress  string           `json:"tcp_address" db:"-"`
 }
 
 // Update service field from new data.

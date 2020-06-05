@@ -151,10 +151,10 @@ func Create(ctx context.Context, h Interface) error {
 					observability.Tag(observability.TagWorkflowNodeJobRun, j.ID),
 				)
 
-				if _, ok := j.Header["SSE"]; ok {
-					log.Debug("hatchery> received job from SSE")
+				if _, ok := j.Header["WS"]; ok {
+					log.Debug("hatchery> received job from WS")
 					observability.Current(currentCtx,
-						observability.Tag("from", "sse"),
+						observability.Tag("from", "ws"),
 					)
 				}
 			}
@@ -178,8 +178,8 @@ func Create(ctx context.Context, h Interface) error {
 
 			stats.Record(currentCtx, GetMetrics().Jobs.M(1))
 
-			if _, ok := j.Header["SSE"]; ok {
-				stats.Record(currentCtx, GetMetrics().JobsSSE.M(1))
+			if _, ok := j.Header["WS"]; ok {
+				stats.Record(currentCtx, GetMetrics().JobsWebsocket.M(1))
 			}
 
 			//Check if the jobs is concerned by a pending worker creation

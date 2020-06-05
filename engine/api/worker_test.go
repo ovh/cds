@@ -107,8 +107,7 @@ func LoadOrCreateWorkerModel(t *testing.T, api *API, groupID int64, workermodelN
 }
 
 func TestPostRegisterWorkerHandler(t *testing.T) {
-	api, _, _, end := newTestAPI(t)
-	defer end()
+	api, _, _ := newTestAPI(t)
 
 	g := LoadSharedInfraGroup(t, api)
 
@@ -137,8 +136,7 @@ func TestPostRegisterWorkerHandler(t *testing.T) {
 
 // TestPostInvalidRegister tests to register a worker for a job, without a JobID
 func TestPostInvalidRegister(t *testing.T) {
-	api, _, _, end := newTestAPI(t)
-	defer end()
+	api, _, _ := newTestAPI(t)
 
 	g := LoadSharedInfraGroup(t, api)
 

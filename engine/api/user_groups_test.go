@@ -15,8 +15,7 @@ import (
 )
 
 func Test_getUserGroupsHandler(t *testing.T) {
-	api, db, _, end := newTestAPI(t)
-	defer end()
+	api, db, _ := newTestAPI(t)
 
 	g1 := assets.InsertGroup(t, db)
 	g2 := assets.InsertGroup(t, db)

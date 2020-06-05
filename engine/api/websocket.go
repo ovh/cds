@@ -76,11 +76,7 @@ func (b *websocketBroker) Start(ctx context.Context, panicCallback func(s string
 				}
 				observability.Record(b.router.Background, WebSocketClients, 0)
 			}
-			if ctx.Err() != nil {
-				log.Error(ctx, "websocketBroker.Start> Exiting: %v", ctx.Err())
-				return
-			}
-
+			return
 		case receivedEvent := <-b.messages:
 			for i := range b.clients {
 				c := b.clients[i]
@@ -131,11 +127,12 @@ func (b *websocketBroker) cacheSubscribe(ctx context.Context, cacheMsgChan chan<
 	for {
 		select {
 		case <-ctx.Done():
-			if ctx.Err() != nil {
-				log.Error(ctx, "websocketBroker.cacheSubscribe> Exiting: %v", ctx.Err())
-				return
-			}
+			return
 		case <-tick.C:
+			if ctx.Err() != nil {
+				continue
+			}
+
 			msg, err := store.GetMessageFromSubscription(ctx, pubSub)
 			if err != nil {
 				log.Warning(ctx, "websocketBroker.cacheSubscribe> Cannot get message %s: %s", msg, err)
@@ -404,6 +401,10 @@ func (c *websocketClient) send(ctx context.Context, event sdk.Event) (err error)
 		Event:  event,
 	}
 	if err := c.con.WriteJSON(msg); err != nil {
+		// ErrCloseSent is returned when the application writes a message to the connection after sending a close message.
+		if err == websocket.ErrCloseSent {
+			return sdk.WithStack(err)
+		}
 		if strings.Contains(err.Error(), "use of closed network connection") {
 			return sdk.WithStack(err)
 		}

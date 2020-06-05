@@ -2,7 +2,6 @@ package workflow
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/go-gorp/gorp"
 	"github.com/ovh/cds/engine/api/cache"
@@ -45,7 +44,7 @@ func Import(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj sd
 	}
 
 	if !force {
-		return sdk.NewError(sdk.ErrConflict, fmt.Errorf("Workflow exists"))
+		return sdk.NewErrorFrom(sdk.ErrConflict, "workflow exists")
 	}
 
 	// Retrieve existing hook

@@ -16,8 +16,7 @@ import (
 )
 
 func TestAPI_getStorageDriverDefault(t *testing.T) {
-	api, _, _, end := newTestAPI(t)
-	defer end()
+	api, _, _ := newTestAPI(t)
 
 	cfg := objectstore.Config{
 		Kind: objectstore.Filesystem,
@@ -43,8 +42,7 @@ func TestAPI_getStorageDriverDefault(t *testing.T) {
 }
 
 func TestAPI_getArtifactsStoreHandler(t *testing.T) {
-	api, _, _, end := newTestAPI(t)
-	defer end()
+	api, _, _ := newTestAPI(t)
 
 	cfg := objectstore.Config{
 		Kind: objectstore.Filesystem,

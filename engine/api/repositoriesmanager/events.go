@@ -50,9 +50,6 @@ func RetryEvent(e *sdk.Event, err error, store cache.Store) error {
 }
 
 func processEvent(ctx context.Context, db *gorp.DbMap, event sdk.Event, store cache.Store) error {
-	var c sdk.VCSAuthorizedClientService
-	var errC error
-
 	if event.EventType != fmt.Sprintf("%T", sdk.EventRunWorkflowNode{}) {
 		return nil
 	}
@@ -60,26 +57,26 @@ func processEvent(ctx context.Context, db *gorp.DbMap, event sdk.Event, store ca
 	var eventWNR sdk.EventRunWorkflowNode
 
 	if err := json.Unmarshal(event.Payload, &eventWNR); err != nil {
-		return fmt.Errorf("cannot read payload: %v", err)
+		return sdk.WrapError(err, "cannot read payload")
 	}
 	if eventWNR.RepositoryManagerName == "" {
 		return nil
 	}
 	vcsServer, err := LoadProjectVCSServerLinkByProjectKeyAndVCSServerName(ctx, db, event.ProjectKey, eventWNR.RepositoryManagerName)
 	if err != nil {
-		return fmt.Errorf("repositoriesmanager>processEvent> AuthorizedClient (%s, %s) > err:%s", event.ProjectKey, eventWNR.RepositoryManagerName, err)
+		return sdk.WrapError(err, "AuthorizedClient (%s, %s)", event.ProjectKey, eventWNR.RepositoryManagerName)
 	}
 
-	c, err = AuthorizedClient(ctx, db, store, event.ProjectKey, vcsServer)
+	c, err := AuthorizedClient(ctx, db, store, event.ProjectKey, vcsServer)
 	if err != nil {
-		return fmt.Errorf("repositoriesmanager>processEvent> AuthorizedClient (%s, %s) > err:%s", event.ProjectKey, eventWNR.RepositoryManagerName, errC)
+		return sdk.WrapError(err, "AuthorizedClient (%s, %s)", event.ProjectKey, eventWNR.RepositoryManagerName)
 	}
 
 	if err := c.SetStatus(ctx, event); err != nil {
-		if err2 := RetryEvent(&event, err, store); err2 != nil {
-			log.Error(ctx, "repositoriesmanager>processEvent> err while retry event: %v", err2)
+		if err := RetryEvent(&event, err, store); err != nil {
+			log.Error(ctx, "repositoriesmanager>processEvent> err while retry event: %v", err)
 		}
-		return fmt.Errorf("repositoriesmanager>processEvent> SetStatus > event.EventType:%s err:%s", event.EventType, err)
+		return sdk.WrapError(err, "event.EventType: %s", event.EventType)
 	}
 
 	return nil

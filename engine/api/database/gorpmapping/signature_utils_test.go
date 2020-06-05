@@ -19,16 +19,15 @@ func Test_GetSignedEntities(t *testing.T) {
 }
 
 func Test_ListCanonicalFormsByEntity(t *testing.T) {
-	db, _, end := test.SetupPG(t)
-	defer end()
+	db, _ := test.SetupPG(t)
+
 	res, err := gorpmapping.ListCanonicalFormsByEntity(db, "user.authentifiedUser")
 	require.NoError(t, err)
 	t.Logf("%+v", res)
 }
 
 func Test_ListTupleByCanonicalForm(t *testing.T) {
-	db, _, end := test.SetupPG(t)
-	defer end()
+	db, _ := test.SetupPG(t)
 
 	res, err := gorpmapping.ListCanonicalFormsByEntity(db, "user.authentifiedUser")
 	require.NoError(t, err)
@@ -45,8 +44,7 @@ func Test_ListTupleByCanonicalForm(t *testing.T) {
 }
 
 func Test_LoadTupleByPrimaryKey(t *testing.T) {
-	db, _, end := test.SetupPG(t)
-	defer end()
+	db, _ := test.SetupPG(t)
 
 	res, err := gorpmapping.ListCanonicalFormsByEntity(db, "user.authentifiedUser")
 	require.NoError(t, err)
@@ -65,8 +63,7 @@ func Test_LoadTupleByPrimaryKey(t *testing.T) {
 }
 
 func Test_RollSignedTupleByPrimaryKey(t *testing.T) {
-	db, _, end := test.SetupPG(t)
-	defer end()
+	db, _ := test.SetupPG(t)
 
 	res, err := gorpmapping.ListCanonicalFormsByEntity(db, "user.authentifiedUser")
 	require.NoError(t, err)

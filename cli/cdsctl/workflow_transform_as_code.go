@@ -19,6 +19,8 @@ var workflowTransformAsCodeCmd = cli.Command{
 	},
 	Flags: []cli.Flag{
 		{Name: "silent", Type: cli.FlagBool},
+		{Name: "branch", Type: cli.FlagString},
+		{Name: "message", Type: cli.FlagString},
 	},
 }
 
@@ -31,7 +33,18 @@ func workflowTransformAsCodeRun(v cli.Values) (interface{}, error) {
 		return nil, sdk.ErrWorkflowAlreadyAsCode
 	}
 
-	ope, err := client.WorkflowTransformAsCode(v.GetString(_ProjectKey), v.GetString(_WorkflowName))
+	noInteractive := v.GetBool("no-interactive")
+
+	branch := v.GetString("branch")
+	message := v.GetString("message")
+	if !noInteractive && branch == "" {
+		branch = cli.AskValue("Give a branch name")
+	}
+	if !noInteractive && message == "" {
+		message = cli.AskValue("Give a commit message")
+	}
+
+	ope, err := client.WorkflowTransformAsCode(v.GetString(_ProjectKey), v.GetString(_WorkflowName), branch, message)
 	if err != nil {
 		return nil, err
 	}
@@ -40,13 +53,18 @@ func workflowTransformAsCodeRun(v cli.Values) (interface{}, error) {
 		fmt.Println("CDS is pushing files on your repository. A pull request will be created, please wait...")
 	}
 	for {
-		if err := client.WorkflowTransformAsCodeFollow(v.GetString(_ProjectKey), v.GetString(_WorkflowName), ope); err != nil {
+		ope, err = client.WorkflowTransformAsCodeFollow(v.GetString(_ProjectKey), v.GetString(_WorkflowName), ope.UUID)
+		if err != nil {
 			return nil, err
 		}
 		if ope.Status > sdk.OperationStatusProcessing {
 			break
 		}
 		time.Sleep(1 * time.Second)
+	}
+
+	if ope.Status == sdk.OperationStatusError {
+		sdk.Exit("An error occured when migrate: %v", ope.Error)
 	}
 
 	urlSplitted := strings.Split(ope.Setup.Push.PRLink, "/")

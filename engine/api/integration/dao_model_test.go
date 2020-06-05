@@ -11,8 +11,7 @@ import (
 )
 
 func TestCRUDModel(t *testing.T) {
-	db, _, end := test.SetupPG(t)
-	defer end()
+	db, _ := test.SetupPG(t)
 
 	var p = &sdk.KafkaIntegration
 

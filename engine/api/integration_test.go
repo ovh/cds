@@ -13,8 +13,8 @@ import (
 )
 
 func Test_getIntegrationModelsHandler(t *testing.T) {
-	api, _, router, end := newTestAPI(t)
-	defer end()
+	api, _, router := newTestAPI(t)
+
 	u, pass := assets.InsertAdminUser(t, api.mustDB())
 
 	vars := map[string]string{}
@@ -29,8 +29,8 @@ func Test_getIntegrationModelsHandler(t *testing.T) {
 }
 
 func Test_postIntegrationModelHandler(t *testing.T) {
-	api, db, router, end := newTestAPI(t)
-	defer end()
+	api, db, router := newTestAPI(t)
+
 	u, pass := assets.InsertAdminUser(t, api.mustDB())
 
 	vars := map[string]string{}
@@ -51,8 +51,8 @@ func Test_postIntegrationModelHandler(t *testing.T) {
 }
 
 func Test_putIntegrationModelHandler(t *testing.T) {
-	api, db, router, end := newTestAPI(t)
-	defer end()
+	api, db, router := newTestAPI(t)
+
 	u, pass := assets.InsertAdminUser(t, api.mustDB())
 
 	model := sdk.IntegrationModel{
@@ -77,8 +77,8 @@ func Test_putIntegrationModelHandler(t *testing.T) {
 }
 
 func Test_deleteIntegrationModelHandler(t *testing.T) {
-	api, db, router, end := newTestAPI(t)
-	defer end()
+	api, db, router := newTestAPI(t)
+
 	u, pass := assets.InsertAdminUser(t, api.mustDB())
 
 	model := sdk.IntegrationModel{

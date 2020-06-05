@@ -50,8 +50,7 @@ jobs:
 }
 
 func Test_postTemplateApplyHandler(t *testing.T) {
-	api, db, _, end := newTestAPI(t)
-	defer end()
+	api, db, _ := newTestAPI(t)
 
 	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
 
@@ -135,8 +134,7 @@ func Test_postTemplateApplyHandler(t *testing.T) {
 }
 
 func Test_postTemplateBulkHandler(t *testing.T) {
-	api, db, _, end := newTestAPI(t)
-	defer end()
+	api, db, _ := newTestAPI(t)
 
 	_, jwt := assets.InsertAdminUser(t, api.mustDB())
 	g, err := group.LoadByName(context.TODO(), api.mustDB(), "shared.infra")
@@ -210,8 +208,7 @@ jobs:
 }
 
 func Test_getTemplateInstancesHandler(t *testing.T) {
-	api, db, _, end := newTestAPI(t)
-	defer end()
+	api, db, _ := newTestAPI(t)
 
 	projectOne := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
 	projectTwo := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))

@@ -14,8 +14,7 @@ import (
 )
 
 func Test_postUserFavoriteHandler(t *testing.T) {
-	api, db, _, end := newTestAPI(t)
-	defer end()
+	api, db, _ := newTestAPI(t)
 
 	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
 	wkf := assets.InsertTestWorkflow(t, db, api.Cache, proj, sdk.RandomString(10))

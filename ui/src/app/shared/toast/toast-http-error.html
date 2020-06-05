@@ -1,0 +1,5 @@
+<div>
+    <span *ngIf="toast.data.from">{{toast.data.from}}<br /></span>
+    <span *ngIf="toast.data.status === 500" style="font-size: 10px"><em>{{'toast_http_error_request_id' | translate}}:
+            {{toast.data.request_id}}</em></span>
+</div>

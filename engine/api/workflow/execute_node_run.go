@@ -10,6 +10,7 @@ import (
 
 	"github.com/fsamin/go-dump"
 	"github.com/go-gorp/gorp"
+	"github.com/sirupsen/logrus"
 
 	"github.com/ovh/cds/engine/api/action"
 	"github.com/ovh/cds/engine/api/cache"
@@ -95,56 +96,56 @@ func syncTakeJobInNodeRun(ctx context.Context, db gorp.SqlExecutor, n *sdk.Workf
 
 	// Save the node run in database
 	if err := updateNodeRunStatusAndStage(db, n); err != nil {
-		return nil, sdk.WrapError(fmt.Errorf("Unable to update node id=%d at status %s. err:%s", n.ID, n.Status, err), "workflow.syncTakeJobInNodeRun> Unable to execute node")
+		return nil, sdk.WrapError(err, "unable to update node id=%d at status %s", n.ID, n.Status)
 	}
 	return report, nil
 }
 
-func executeNodeRun(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj sdk.Project, nr *sdk.WorkflowNodeRun) (*ProcessorReport, error) {
+func executeNodeRun(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj sdk.Project, workflowNodeRun *sdk.WorkflowNodeRun) (*ProcessorReport, error) {
 	var end func()
 	ctx, end = observability.Span(ctx, "workflow.executeNodeRun",
-		observability.Tag(observability.TagWorkflowRun, nr.Number),
-		observability.Tag(observability.TagWorkflowNodeRun, nr.ID),
-		observability.Tag("workflow_node_run_status", nr.Status),
+		observability.Tag(observability.TagWorkflowRun, workflowNodeRun.Number),
+		observability.Tag(observability.TagWorkflowNodeRun, workflowNodeRun.ID),
+		observability.Tag("workflow_node_run_status", workflowNodeRun.Status),
 	)
 	defer end()
-	wr, errWr := LoadRunByID(db, nr.WorkflowRunID, LoadRunOptions{})
-	if errWr != nil {
-		return nil, sdk.WrapError(errWr, "workflow.executeNodeRun> unable to load workflow run ID %d", nr.WorkflowRunID)
+
+	wr, err := LoadRunByID(db, workflowNodeRun.WorkflowRunID, LoadRunOptions{})
+	if err != nil {
+		return nil, sdk.WrapError(err, "unable to load workflow run with id %d", workflowNodeRun.WorkflowRunID)
 	}
 
 	report := new(ProcessorReport)
-	defer func(wNr *sdk.WorkflowNodeRun) {
-		report.Add(ctx, *wNr)
-	}(nr)
+	defer func(wnr *sdk.WorkflowNodeRun) {
+		report.Add(ctx, *wnr)
+	}(workflowNodeRun)
 
-	//If status is not waiting neither build: nothing to do
-	if sdk.StatusIsTerminated(nr.Status) {
+	// If status is not waiting neither build: nothing to do
+	if sdk.StatusIsTerminated(workflowNodeRun.Status) {
 		return nil, nil
 	}
 
-	var newStatus = nr.Status
+	var newStatus = workflowNodeRun.Status
 
-	//If no stages ==> success
-	if len(nr.Stages) == 0 {
+	// If no stages ==> success
+	if len(workflowNodeRun.Stages) == 0 {
 		newStatus = sdk.StatusSuccess
-		nr.Done = time.Now()
+		workflowNodeRun.Done = time.Now()
 	}
 
 	stagesTerminated := 0
 	var previousNodeRun *sdk.WorkflowNodeRun
-	if nr.Manual != nil && nr.Manual.OnlyFailedJobs {
-		var err error
-		previousNodeRun, err = checkRunOnlyFailedJobs(wr, nr)
+	if workflowNodeRun.Manual != nil && workflowNodeRun.Manual.OnlyFailedJobs {
+		previousNodeRun, err = checkRunOnlyFailedJobs(wr, workflowNodeRun)
 		if err != nil {
 			return report, err
 		}
 	}
 
-	//Browse stages
-	for stageIndex := range nr.Stages {
-		stage := &nr.Stages[stageIndex]
-		//Initialize stage status at waiting
+	// Browse stages
+	for stageIndex := range workflowNodeRun.Stages {
+		stage := &workflowNodeRun.Stages[stageIndex]
+		// Initialize stage status at waiting
 		if stage.Status == "" {
 			var previousStage sdk.Stage
 			// Find previous stage
@@ -164,7 +165,7 @@ func executeNodeRun(ctx context.Context, db gorp.SqlExecutor, store cache.Store,
 				}
 			} else if sdk.StatusIsTerminated(previousStage.Status) {
 				// If stage terminated, recopy it
-				nr.Stages[stageIndex] = previousStage
+				workflowNodeRun.Stages[stageIndex] = previousStage
 				stagesTerminated++
 				continue
 			}
@@ -172,10 +173,10 @@ func executeNodeRun(ctx context.Context, db gorp.SqlExecutor, store cache.Store,
 			if len(stage.Jobs) == 0 {
 				stage.Status = sdk.StatusSuccess
 			} else {
-				//Add job to Queue
-				//Insert data in workflow_node_run_job
+				// Add job to Queue
+				// Insert data in workflow_node_run_job
 				log.Debug("workflow.executeNodeRun> stage %s call addJobsToQueue", stage.Name)
-				r, err := addJobsToQueue(ctx, db, stage, wr, nr, &previousStage)
+				r, err := addJobsToQueue(ctx, db, stage, wr, workflowNodeRun, &previousStage)
 				report.Merge(ctx, r)
 				if err != nil {
 					return report, err
@@ -183,7 +184,7 @@ func executeNodeRun(ctx context.Context, db gorp.SqlExecutor, store cache.Store,
 				log.Debug("workflow.executeNodeRun> stage %s status after call to addJobsToQueue %s", stage.Name, stage.Status)
 			}
 
-			// check for failure caused by action not usable or requirements problem
+			// Check for failure caused by action not usable or requirements problem
 			if sdk.StatusFail == stage.Status {
 				newStatus = sdk.StatusFail
 				break
@@ -227,13 +228,13 @@ func executeNodeRun(ctx context.Context, db gorp.SqlExecutor, store cache.Store,
 			} else {
 				//The stage is over
 				if stage.Status == sdk.StatusFail {
-					nr.Done = time.Now()
+					workflowNodeRun.Done = time.Now()
 					newStatus = sdk.StatusFail
 					stagesTerminated++
 					break
 				}
 				if stage.Status == sdk.StatusStopped {
-					nr.Done = time.Now()
+					workflowNodeRun.Done = time.Now()
 					newStatus = sdk.StatusStopped
 					stagesTerminated++
 					break
@@ -241,53 +242,54 @@ func executeNodeRun(ctx context.Context, db gorp.SqlExecutor, store cache.Store,
 
 				if sdk.StatusIsTerminated(stage.Status) {
 					stagesTerminated++
-					nr.Done = time.Now()
+					workflowNodeRun.Done = time.Now()
 				}
 
-				if stageIndex == len(nr.Stages)-1 {
-					nr.Done = time.Now()
+				if stageIndex == len(workflowNodeRun.Stages)-1 {
+					workflowNodeRun.Done = time.Now()
 					newStatus = sdk.StatusSuccess
 					stagesTerminated++
 					break
 				}
-				if stageIndex != len(nr.Stages)-1 {
+				if stageIndex != len(workflowNodeRun.Stages)-1 {
 					continue
 				}
 			}
 		}
 	}
 
-	if stagesTerminated >= len(nr.Stages) || (stagesTerminated >= len(nr.Stages)-1 && (nr.Stages[len(nr.Stages)-1].Status == sdk.StatusDisabled || nr.Stages[len(nr.Stages)-1].Status == sdk.StatusSkipped)) {
+	if stagesTerminated >= len(workflowNodeRun.Stages) || (stagesTerminated >= len(workflowNodeRun.Stages)-1 &&
+		(workflowNodeRun.Stages[len(workflowNodeRun.Stages)-1].Status == sdk.StatusDisabled || workflowNodeRun.Stages[len(workflowNodeRun.Stages)-1].Status == sdk.StatusSkipped)) {
 		var counterStatus statusCounter
-		if len(nr.Stages) > 0 {
-			for _, stage := range nr.Stages {
+		if len(workflowNodeRun.Stages) > 0 {
+			for _, stage := range workflowNodeRun.Stages {
 				computeRunStatus(stage.Status, &counterStatus)
 			}
 			newStatus = getRunStatus(counterStatus)
 		}
 	}
 
-	nr.Status = newStatus
+	workflowNodeRun.Status = newStatus
 
-	if sdk.StatusIsTerminated(nr.Status) && nr.Status != sdk.StatusNeverBuilt {
-		nr.Done = time.Now()
+	if sdk.StatusIsTerminated(workflowNodeRun.Status) && workflowNodeRun.Status != sdk.StatusNeverBuilt {
+		workflowNodeRun.Done = time.Now()
 	}
 
 	// Save the node run in database
-	if err := updateNodeRunStatusAndStage(db, nr); err != nil {
-		return nil, sdk.WrapError(err, "unable to update node id=%d at status %s", nr.ID, nr.Status)
+	if err := updateNodeRunStatusAndStage(db, workflowNodeRun); err != nil {
+		return nil, sdk.WrapError(err, "unable to update node id=%d at status %s", workflowNodeRun.ID, workflowNodeRun.Status)
 	}
 
 	//Reload the workflow
-	updatedWorkflowRun, err := LoadRunByID(db, nr.WorkflowRunID, LoadRunOptions{})
+	updatedWorkflowRun, err := LoadRunByID(db, workflowNodeRun.WorkflowRunID, LoadRunOptions{})
 	if err != nil {
-		return nil, sdk.WrapError(err, "unable to reload workflow run id=%d", nr.WorkflowRunID)
+		return nil, sdk.WrapError(err, "unable to reload workflow run id=%d", workflowNodeRun.WorkflowRunID)
 	}
 
 	// If pipeline build succeed, reprocess the workflow (in the same transaction)
-	//Delete jobs only when node is over
-	if sdk.StatusIsTerminated(nr.Status) {
-		if nr.Status != sdk.StatusStopped {
+	// Delete jobs only when node is over
+	if sdk.StatusIsTerminated(workflowNodeRun.Status) {
+		if workflowNodeRun.Status != sdk.StatusStopped {
 			r1, _, err := processWorkflowDataRun(ctx, db, store, proj, updatedWorkflowRun, nil, nil, nil)
 			if err != nil {
 				return nil, sdk.WrapError(err, "unable to reprocess workflow")
@@ -295,80 +297,92 @@ func executeNodeRun(ctx context.Context, db gorp.SqlExecutor, store cache.Store,
 			report.Merge(ctx, r1)
 		}
 
-		//Delete the line in workflow_node_run_job
-		if err := DeleteNodeJobRuns(db, nr.ID); err != nil {
-			return nil, sdk.WrapError(err, "unable to delete node %d job runs", nr.ID)
+		// Delete the line in workflow_node_run_job
+		if err := DeleteNodeJobRuns(db, workflowNodeRun.ID); err != nil {
+			return nil, sdk.WrapError(err, "unable to delete node %d job runs", workflowNodeRun.ID)
 		}
 
-		var hasMutex bool
-		var nodeName string
-
-		node := updatedWorkflowRun.Workflow.WorkflowData.NodeByID(nr.WorkflowNodeID)
-		if node != nil && node.Context != nil && node.Context.Mutex {
-			hasMutex = node.Context.Mutex
-			nodeName = node.Name
-		}
-
-		//Do we release a mutex ?
-		//Try to find one node run of the same node from the same workflow at status Waiting
+		// If current node has a mutex, we want to trigger another node run that can be waiting for the mutex
+		node := updatedWorkflowRun.Workflow.WorkflowData.NodeByID(workflowNodeRun.WorkflowNodeID)
+		hasMutex := node != nil && node.Context != nil && node.Context.Mutex
 		if hasMutex {
-			_, next := observability.Span(ctx, "workflow.releaseMutex")
-
-			mutexQuery := `select workflow_node_run.id
-			from workflow_node_run
-			join workflow_run on workflow_run.id = workflow_node_run.workflow_run_id
-			join workflow on workflow.id = workflow_run.workflow_id
-			where workflow.id = $1
-			and workflow_node_run.workflow_node_name = $2
-			and workflow_node_run.status = $3
-			order by workflow_node_run.start asc
-			limit 1`
-			waitingRunID, errID := db.SelectInt(mutexQuery, updatedWorkflowRun.WorkflowID, nodeName, string(sdk.StatusWaiting))
-			if errID != nil && errID != sql.ErrNoRows {
-				log.Error(ctx, "workflow.execute> Unable to load mutex-locked workflow node run ID: %v", errID)
-				return report, nil
-			}
-			//If not more run is found, stop the loop
-			if waitingRunID == 0 {
-				return report, nil
-			}
-			waitingRun, errRun := LoadNodeRunByID(db, waitingRunID, LoadRunOptions{})
-			if errRun != nil && sdk.Cause(errRun) != sql.ErrNoRows {
-				log.Error(ctx, "workflow.execute> Unable to load mutex-locked workflow rnode un: %v", errRun)
-				return report, nil
-			}
-			//If not more run is found, stop the loop
-			if waitingRun == nil {
-				return report, nil
-			}
-
-			//Here we are loading another workflow run
-			workflowRun, errWRun := LoadRunByID(db, waitingRun.WorkflowRunID, LoadRunOptions{})
-			if errWRun != nil {
-				log.Error(ctx, "workflow.execute> Unable to load mutex-locked workflow rnode un: %v", errWRun)
-				return report, nil
-			}
-			AddWorkflowRunInfo(workflowRun, sdk.SpawnMsg{
-				ID:   sdk.MsgWorkflowNodeMutexRelease.ID,
-				Args: []interface{}{waitingRun.WorkflowNodeName},
-				Type: sdk.MsgWorkflowNodeMutexRelease.Type,
-			})
-
-			if err := UpdateWorkflowRun(ctx, db, workflowRun); err != nil {
-				return nil, sdk.WrapError(err, "unable to update workflow run %d after mutex release", workflowRun.ID)
-			}
-
-			log.Debug("workflow.execute> process the node run %d because mutex has been released", waitingRun.ID)
-			r, err := executeNodeRun(ctx, db, store, proj, waitingRun)
+			r, err := releaseMutex(ctx, db, store, proj, updatedWorkflowRun.WorkflowID, workflowNodeRun.WorkflowNodeName)
 			report.Merge(ctx, r)
 			if err != nil {
-				return nil, sdk.WrapError(err, "unable to reprocess workflow")
+				return report, err
 			}
-
-			next()
 		}
 	}
 	return report, nil
+}
+
+func releaseMutex(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj sdk.Project, workflowID int64, nodeName string) (*ProcessorReport, error) {
+	_, next := observability.Span(ctx, "workflow.releaseMutex")
+	defer next()
+
+	mutexQuery := `
+    SELECT workflow_node_run.id
+    FROM workflow_node_run
+    JOIN workflow_run on workflow_run.id = workflow_node_run.workflow_run_id
+    JOIN workflow on workflow.id = workflow_run.workflow_id
+    WHERE workflow.id = $1
+      AND workflow_node_run.workflow_node_name = $2
+      AND workflow_node_run.status = $3
+    ORDER BY workflow_run.num ASC
+    LIMIT 1
+  `
+	waitingRunID, err := db.SelectInt(mutexQuery, workflowID, nodeName, string(sdk.StatusWaiting))
+	if err != nil && err != sql.ErrNoRows {
+		err = sdk.WrapError(err, "unable to load mutex-locked workflow node run id")
+		log.ErrorWithFields(ctx, logrus.Fields{
+			"stack_trace": fmt.Sprintf("%+v", err),
+		}, "%s", err)
+		return nil, nil
+	}
+	if waitingRunID == 0 {
+		return nil, nil
+	}
+
+	// Load the workflow node run that is waiting for the mutex
+	waitingRun, errRun := LoadNodeRunByID(db, waitingRunID, LoadRunOptions{})
+	if errRun != nil && sdk.Cause(errRun) != sql.ErrNoRows {
+		err = sdk.WrapError(err, "unable to load mutex-locked workflow node run")
+		log.ErrorWithFields(ctx, logrus.Fields{
+			"stack_trace": fmt.Sprintf("%+v", err),
+		}, "%s", err)
+		return nil, nil
+	}
+	if waitingRun == nil {
+		return nil, nil
+	}
+
+	// Load the workflow run that is waiting for the mutex
+	workflowRun, err := LoadRunByID(db, waitingRun.WorkflowRunID, LoadRunOptions{})
+	if err != nil {
+		err = sdk.WrapError(err, "unable to load mutex-locked workflow run")
+		log.ErrorWithFields(ctx, logrus.Fields{
+			"stack_trace": fmt.Sprintf("%+v", err),
+		}, "%s", err)
+		return nil, nil
+	}
+
+	// Add a spawn info on the workflow run
+	AddWorkflowRunInfo(workflowRun, sdk.SpawnMsg{
+		ID:   sdk.MsgWorkflowNodeMutexRelease.ID,
+		Args: []interface{}{waitingRun.WorkflowNodeName},
+		Type: sdk.MsgWorkflowNodeMutexRelease.Type,
+	})
+	if err := UpdateWorkflowRun(ctx, db, workflowRun); err != nil {
+		return nil, sdk.WrapError(err, "unable to update workflow run %d after mutex release", workflowRun.ID)
+	}
+
+	log.Debug("workflow.execute> process the node run %d because mutex has been released", waitingRun.ID)
+	r, err := executeNodeRun(ctx, db, store, proj, waitingRun)
+	if err != nil {
+		return r, sdk.WrapError(err, "unable to reprocess workflow")
+	}
+
+	return r, nil
 }
 
 func checkRunOnlyFailedJobs(wr *sdk.WorkflowRun, nr *sdk.WorkflowNodeRun) (*sdk.WorkflowNodeRun, error) {
@@ -834,13 +848,13 @@ func stopWorkflowNodeOutGoingHook(ctx context.Context, dbFunc func() *gorp.DbMap
 
 	srvs, err := services.LoadAllByType(ctx, db, services.TypeHooks)
 	if err != nil {
-		return fmt.Errorf("unable to get hooks services: %v", err)
+		return sdk.WrapError(err, "unable to get hooks services")
 	}
 
 	if nodeRun.HookExecutionID != "" {
 		path := fmt.Sprintf("/task/%s/execution/%d/stop", nodeRun.HookExecutionID, nodeRun.HookExecutionTimeStamp)
 		if _, _, err := services.NewClient(db, srvs).DoJSONRequest(ctx, "POST", path, nil, nil); err != nil {
-			return fmt.Errorf("unable to stop task execution: %v", err)
+			return sdk.WrapError(err, "unable to stop task execution")
 		}
 	}
 
@@ -853,27 +867,38 @@ func stopWorkflowNodeOutGoingHook(ctx context.Context, dbFunc func() *gorp.DbMap
 }
 
 // StopWorkflowNodeRun to stop a workflow node run with a specific spawn info
-func StopWorkflowNodeRun(ctx context.Context, dbFunc func() *gorp.DbMap, store cache.Store, proj sdk.Project, nodeRun sdk.WorkflowNodeRun, stopInfos sdk.SpawnInfo) (*ProcessorReport, error) {
+func StopWorkflowNodeRun(ctx context.Context, dbFunc func() *gorp.DbMap, store cache.Store, proj sdk.Project, workflowRun sdk.WorkflowRun, workflowNodeRun sdk.WorkflowNodeRun, stopInfos sdk.SpawnInfo) (*ProcessorReport, error) {
 	var end func()
 	ctx, end = observability.Span(ctx, "workflow.StopWorkflowNodeRun")
 	defer end()
 
 	report := new(ProcessorReport)
 
-	var r1 *ProcessorReport
-	var errS error
-	if nodeRun.Stages != nil && len(nodeRun.Stages) > 0 {
-		r1, errS = stopWorkflowNodePipeline(ctx, dbFunc, store, proj, &nodeRun, stopInfos)
+	var r *ProcessorReport
+	var err error
+	if workflowNodeRun.Stages != nil && len(workflowNodeRun.Stages) > 0 {
+		r, err = stopWorkflowNodePipeline(ctx, dbFunc, store, proj, &workflowNodeRun, stopInfos)
 	}
-	if nodeRun.OutgoingHook != nil {
-		errS = stopWorkflowNodeOutGoingHook(ctx, dbFunc, &nodeRun)
+	if workflowNodeRun.OutgoingHook != nil {
+		err = stopWorkflowNodeOutGoingHook(ctx, dbFunc, &workflowNodeRun)
 	}
-	if errS != nil {
-		return report, sdk.WrapError(errS, "unable to stop workflow node run")
+	if err != nil {
+		return report, sdk.WrapError(err, "unable to stop workflow node run")
 	}
 
-	report.Merge(ctx, r1)
-	report.Add(ctx, nodeRun)
+	report.Merge(ctx, r)
+	report.Add(ctx, workflowNodeRun)
+
+	// If current node has a mutex, we want to trigger another node run that can be waiting for the mutex
+	workflowNode := workflowRun.Workflow.WorkflowData.NodeByID(workflowNodeRun.WorkflowNodeID)
+	hasMutex := workflowNode != nil && workflowNode.Context != nil && workflowNode.Context.Mutex
+	if hasMutex {
+		r, err = releaseMutex(ctx, dbFunc(), store, proj, workflowNodeRun.WorkflowID, workflowNodeRun.WorkflowNodeName)
+		report.Merge(ctx, r)
+		if err != nil {
+			return report, err
+		}
+	}
 
 	return report, nil
 }
@@ -1065,7 +1090,7 @@ func getVCSInfos(ctx context.Context, db gorp.SqlExecutor, store cache.Store, pr
 
 		//If it's not a fork; reset this value to the application repository
 		if !forkFound {
-			return nil, sdk.NewError(sdk.ErrNotFound, fmt.Errorf("repository %s not found", vcsInfos.Repository))
+			return nil, sdk.NewErrorFrom(sdk.ErrNotFound, "repository %s not found", vcsInfos.Repository)
 		}
 	}
 

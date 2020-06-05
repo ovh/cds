@@ -2,7 +2,6 @@ package pipeline
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/go-gorp/gorp"
 	"github.com/lib/pq"
@@ -58,12 +57,12 @@ func GetAllParametersInPipeline(ctx context.Context, db gorp.SqlExecutor, pipeli
 // InsertParameterInPipeline Insert a new parameter in the given pipeline
 func InsertParameterInPipeline(db gorp.SqlExecutor, pipelineID int64, param *sdk.Parameter) error {
 	if param.Type == "" {
-		return sdk.NewError(sdk.ErrWrongRequest, fmt.Errorf("Invalid parameter, wrong type"))
+		return sdk.NewErrorFrom(sdk.ErrWrongRequest, "invalid parameter, wrong type")
 	}
 
 	rx := sdk.NamePatternRegex
 	if !rx.MatchString(param.Name) {
-		return sdk.NewError(sdk.ErrInvalidName, fmt.Errorf("Invalid parameter name. It should match %s", sdk.NamePattern))
+		return sdk.NewErrorFrom(sdk.ErrInvalidName, "parameter name should match %s", sdk.NamePattern)
 	}
 
 	if string(param.Type) == string(sdk.SecretVariable) {
@@ -83,22 +82,21 @@ func InsertParameterInPipeline(db gorp.SqlExecutor, pipelineID int64, param *sdk
 // UpdateParameterInPipeline Update a parameter in the given pipeline
 func UpdateParameterInPipeline(db gorp.SqlExecutor, pipelineID int64, oldParamName string, param sdk.Parameter) error {
 	if param.Type == "" {
-		return sdk.NewError(sdk.ErrWrongRequest, fmt.Errorf("Invalid parameter, wrong type"))
+		return sdk.NewErrorFrom(sdk.ErrWrongRequest, "invalid parameter, wrong type")
 	}
 
 	rx := sdk.NamePatternRegex
 	if !rx.MatchString(param.Name) {
-		return sdk.NewError(sdk.ErrInvalidName, fmt.Errorf("Invalid parameter name. It should match %s", sdk.NamePattern))
+		return sdk.NewErrorFrom(sdk.ErrInvalidName, "parameter name should match pattern %s", sdk.NamePattern)
 	}
 
 	// update parameter
 	query := `UPDATE pipeline_parameter SET value=$1, type=$2, description=$3, name=$4 WHERE pipeline_id=$5 AND name=$6`
-	_, err := db.Exec(query, param.Value, string(param.Type), param.Description, param.Name, pipelineID, oldParamName)
-	if err != nil {
+	if _, err := db.Exec(query, param.Value, string(param.Type), param.Description, param.Name, pipelineID, oldParamName); err != nil {
 		if errPG, ok := err.(*pq.Error); ok && errPG.Code == gorpmapping.ViolateUniqueKeyPGCode {
-			return sdk.WithStack(sdk.ErrParameterExists)
+			return sdk.NewErrorWithStack(err, sdk.ErrParameterExists)
 		}
-		return err
+		return sdk.WithStack(err)
 	}
 
 	return nil
@@ -109,7 +107,7 @@ func DeleteParameterFromPipeline(db gorp.SqlExecutor, pipelineID int64, paramNam
 	query := `DELETE FROM pipeline_parameter WHERE pipeline_id=$1 AND name=$2`
 	_, err := db.Exec(query, pipelineID, paramName)
 	if err != nil {
-		return err
+		return sdk.WithStack(err)
 	}
 
 	return nil
@@ -119,5 +117,5 @@ func DeleteParameterFromPipeline(db gorp.SqlExecutor, pipelineID int64, paramNam
 func DeleteAllParameterFromPipeline(db gorp.SqlExecutor, pipelineID int64) error {
 	query := `DELETE FROM pipeline_parameter WHERE pipeline_id=$1`
 	_, err := db.Exec(query, pipelineID)
-	return sdk.WrapError(err, "Unable to delete all parameters")
+	return sdk.WrapError(err, "unable to delete all parameters")
 }

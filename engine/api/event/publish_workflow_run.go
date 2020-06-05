@@ -197,13 +197,9 @@ func PublishWorkflowNodeRun(ctx context.Context, nr sdk.WorkflowNodeRun, w sdk.W
 // PublishWorkflowNodeJobRun publish a WorkflowNodeJobRun
 func PublishWorkflowNodeJobRun(ctx context.Context, pkey string, wr sdk.WorkflowRun, jr sdk.WorkflowNodeJobRun) {
 	e := sdk.EventRunWorkflowJob{
-		ID:           jr.ID,
-		Status:       jr.Status,
-		Start:        jr.Start.Unix(),
-		Requirements: jr.Job.Action.Requirements,
-		WorkerName:   jr.Job.WorkerName,
-		BookByName:   jr.BookedBy.Name,
-		Parameters:   jr.Parameters,
+		ID:     jr.ID,
+		Status: jr.Status,
+		Start:  jr.Start.Unix(),
 	}
 
 	if sdk.StatusIsTerminated(jr.Status) {

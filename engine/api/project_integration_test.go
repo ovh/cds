@@ -13,8 +13,8 @@ import (
 )
 
 func TestAddUpdateAndDeleteProjectIntegration(t *testing.T) {
-	api, db, router, end := newTestAPI(t)
-	defer end()
+	api, db, router := newTestAPI(t)
+
 	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
 	u, pass := assets.InsertAdminUser(t, api.mustDB())
 

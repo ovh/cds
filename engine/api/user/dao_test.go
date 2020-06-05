@@ -12,7 +12,7 @@ import (
 )
 
 func TestAuthenticatedUserDAO(t *testing.T) {
-	db, _, _ := test.SetupPG(t)
+	db, _ := test.SetupPG(t)
 
 	u := sdk.AuthentifiedUser{
 		Username: sdk.RandomString(10),
@@ -45,7 +45,8 @@ func TestAuthenticatedUserDAO(t *testing.T) {
 }
 
 func TestLoadAll(t *testing.T) {
-	db, _, _ := test.SetupPG(t)
+	db, _ := test.SetupPG(t)
+
 	for i := 0; i < 10; i++ {
 		var u = sdk.AuthentifiedUser{
 			Username: sdk.RandomString(10),
@@ -64,7 +65,7 @@ func TestLoadAll(t *testing.T) {
 }
 
 func TestLoadAllByIDs(t *testing.T) {
-	db, _, _ := test.SetupPG(t)
+	db, _ := test.SetupPG(t)
 
 	ids := make([]string, 3)
 	for i := 0; i < 2; i++ {

@@ -81,16 +81,19 @@ func (s *Service) Serve(c context.Context) error {
 	defer cancel()
 
 	//Init the cache
+	log.Info(ctx, "Initializing Redis connection (%s)...", s.Cfg.Cache.Redis.Host)
 	var errCache error
 	s.Cache, errCache = cache.New(s.Cfg.Cache.Redis.Host, s.Cfg.Cache.Redis.Password, s.Cfg.Cache.TTL)
 	if errCache != nil {
-		return fmt.Errorf("Cannot connect to redis instance : %v", errCache)
+		return fmt.Errorf("cannot connect to redis instance : %v", errCache)
 	}
 
+	var address = fmt.Sprintf("%s:%d", s.Cfg.HTTP.Addr, s.Cfg.HTTP.Port)
+	log.Info(ctx, "Initializing HTTP router (%s)...", address)
 	//Init the http server
 	s.initRouter(ctx)
 	server := &http.Server{
-		Addr:           fmt.Sprintf("%s:%d", s.Cfg.HTTP.Addr, s.Cfg.HTTP.Port),
+		Addr:           address,
 		Handler:        s.Router.Mux,
 		ReadTimeout:    10 * time.Minute,
 		WriteTimeout:   10 * time.Minute,
@@ -102,31 +105,31 @@ func (s *Service) Serve(c context.Context) error {
 		store: s.Cache,
 	}
 
+	log.Info(ctx, "Initializing processor...")
 	go func() {
 		if err := s.processor(ctx); err != nil {
-			log.Info(ctx, "Repositories> Shutdown processor")
+			log.Info(ctx, "Shutdown processor")
 		}
 	}()
 
+	log.Info(ctx, "Initializing vacuumCleaner...")
 	go func() {
 		if err := s.vacuumCleaner(ctx); err != nil {
-			log.Info(ctx, "Repositories> Shutdown vacuumCleaner")
+			log.Info(ctx, "Shutdown vacuumCleaner")
 		}
 	}()
 
 	//Gracefully shutdown the http server
 	go func() {
-		select {
-		case <-ctx.Done():
-			log.Info(ctx, "Repositories> Shutdown HTTP Server")
-			server.Shutdown(ctx)
-		}
+		<-ctx.Done()
+		log.Info(ctx, "Shutdown HTTP Server")
+		_ = server.Shutdown(ctx)
 	}()
 
 	//Start the http server
-	log.Info(ctx, "Repositories> Starting HTTP Server on port %d", s.Cfg.HTTP.Port)
+	log.Info(ctx, "Starting HTTP Server on port %d", s.Cfg.HTTP.Port)
 	if err := server.ListenAndServe(); err != nil {
-		log.Error(ctx, "Repositories> Listen and serve failed: %s", err)
+		log.Error(ctx, "Listen and serve failed: %s", err)
 	}
 
 	return ctx.Err()

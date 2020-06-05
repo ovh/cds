@@ -8,8 +8,7 @@ import (
 )
 
 func Test_PurgeAudits(t *testing.T) {
-	db, _, end := test.SetupPG(t)
-	defer end()
+	db, _ := test.SetupPG(t)
 
 	err := PurgeAudits(context.TODO(), db)
 	test.NoError(t, err)
