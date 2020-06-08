@@ -70,7 +70,7 @@ func (api *API) postServiceRegisterHandler() service.Handler {
 		}
 		data.LastHeartbeat = time.Now()
 
-		// Service that are not hatcheries should be started be an admin
+		// Service that are not hatcheries should be started as an admin
 		if data.Type != sdk.TypeHatchery && !isAdmin(ctx) {
 			return sdk.WrapError(sdk.ErrForbidden, "cannot register service of type %s for consumer %s", data.Type, consumer.ID)
 		}
@@ -120,7 +120,7 @@ func (api *API) postServiceRegisterHandler() service.Handler {
 			for _, s := range srvs {
 				var tcpConfig sdk.TCPServer
 				if err := s.Config.Get("tcp", &tcpConfig); err != nil {
-					log.Error(ctx, "unable to get tcp configudation from cdn uservice: %v", err)
+					log.Error(ctx, "unable to get tcp configuration from cdn uservice: %v", err)
 					continue
 				}
 				srv.LogServer = tcpConfig
