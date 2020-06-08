@@ -49,8 +49,8 @@ func (s *Service) doScheduledTaskExecution(ctx context.Context, t *sdk.TaskExecu
 			payloadValues[k] = v.Value
 		}
 	}
-	payloadValues["cds.triggered_by.username"] = "cds.scheduler"
-	payloadValues["cds.triggered_by.fullname"] = "CDS Scheduler"
+	payloadValues["cds.triggered_by.username"] = sdk.SchedulerUsername
+	payloadValues["cds.triggered_by.fullname"] = sdk.SchedulerFullname
 	h.Payload = payloadValues
 
 	return &h, nil

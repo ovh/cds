@@ -23,6 +23,13 @@ func Init(uiurl string) {
 	uiURL = uiurl
 }
 
+const (
+	paramsAuthorEmail = "cds.author.email"
+	paramsAuthorName  = "cds.author"
+	paramsStatus      = "cds.status"
+	paramsBuildURL    = "cds.buildURL"
+)
+
 // GetUserWorkflowEvents return events to send for the given workflow run
 func GetUserWorkflowEvents(ctx context.Context, db gorp.SqlExecutor, store cache.Store, projectID int64, projectKey, workflowName string, notifs []sdk.WorkflowNotification, previousWR *sdk.WorkflowNodeRun, nr sdk.WorkflowNodeRun) []sdk.EventNotif {
 	events := []sdk.EventNotif{}
@@ -33,18 +40,18 @@ func GetUserWorkflowEvents(ctx context.Context, db gorp.SqlExecutor, store cache
 		params[p.Name] = p.Value
 	}
 	//Set PipelineBuild UI URL
-	params["cds.buildURL"] = fmt.Sprintf("%s/project/%s/workflow/%s/run/%d", uiURL, projectKey, workflowName, nr.Number)
+	params[paramsBuildURL] = fmt.Sprintf("%s/project/%s/workflow/%s/run/%d", uiURL, projectKey, workflowName, nr.Number)
 	if p, ok := params["cds.triggered_by.email"]; ok {
-		params["cds.author.email"] = p
+		params[paramsAuthorEmail] = p
 	} else if p, ok := params["git.author.email"]; ok {
-		params["cds.author.email"] = p
+		params[paramsAuthorEmail] = p
 	}
 	if p, ok := params["cds.triggered_by.username"]; ok {
-		params["cds.author"] = p
+		params[paramsAuthorName] = p
 	} else if p, ok := params["git.author"]; ok {
-		params["cds.author"] = p
+		params[paramsAuthorName] = p
 	}
-	params["cds.status"] = nr.Status
+	params[paramsStatus] = nr.Status
 
 	for _, notif := range notifs {
 		if ShouldSendUserWorkflowNotification(ctx, notif, nr, previousWR) {
@@ -68,7 +75,7 @@ func GetUserWorkflowEvents(ctx context.Context, db gorp.SqlExecutor, store cache
 					}
 				}
 				if jn.SendToAuthor == nil || *jn.SendToAuthor {
-					if author, ok := params["cds.author.email"]; ok {
+					if author, ok := params[paramsAuthorEmail]; ok {
 						jn.Recipients = append(jn.Recipients, author)
 					}
 				}
@@ -102,13 +109,14 @@ func GetUserWorkflowEvents(ctx context.Context, db gorp.SqlExecutor, store cache
 					}
 				}
 				if jn.SendToAuthor == nil || *jn.SendToAuthor {
-					if email, ok := params["cds.author.email"]; ok {
+					if email, ok := params[paramsAuthorEmail]; ok {
 						jn.Recipients = append(jn.Recipients, email)
-					} else if author, okA := params["cds.author"]; okA && author != "" {
+					} else if author, okA := params[paramsAuthorName]; okA &&
+						author != "" && author != sdk.SchedulerUsername {
 						// Load the user
 						au, err := user.LoadByUsername(ctx, db, author)
 						if err != nil {
-							log.Warning(ctx, "notification[Email].GetUserWorkflowEvents> Cannot load author %s: %s", author, err)
+							log.Error(ctx, "notification[Email].GetUserWorkflowEvents> Cannot load author %s: %s", author, err)
 							continue
 						}
 						jn.Recipients = append(jn.Recipients, au.GetEmail())
