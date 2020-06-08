@@ -21,6 +21,7 @@ DROP TABLE IF EXISTS "old_services";
 -- Clean for 183_drop_deprecated_user.sql
 DROP TABLE IF EXISTS "user_persistent_session";
 DROP TABLE IF EXISTS "group_user";
+DROP TABLE IF EXISTS "pipeline_build";
 ALTER TABLE "project_favorite" DROP COLUMN IF EXISTS user_id;
 ALTER TABLE "workflow_favorite" DROP COLUMN IF EXISTS user_id;
 ALTER TABLE "broadcast_read" DROP COLUMN IF EXISTS user_id;
