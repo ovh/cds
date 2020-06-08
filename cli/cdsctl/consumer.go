@@ -10,6 +10,8 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
+const consumerIDArg = "consumer-id"
+
 func consumer() *cobra.Command {
 	cmd := cli.Command{
 		Name:  "consumer",
@@ -177,7 +179,7 @@ var authConsumerDeleteCmd = cli.Command{
 	},
 	Args: []cli.Arg{
 		{
-			Name: "consumer-id",
+			Name: consumerIDArg,
 		},
 	},
 }
@@ -188,7 +190,7 @@ func authConsumerDeleteRun(v cli.Values) error {
 		username = "me"
 	}
 
-	consumerID := v.GetString("consumer-id")
+	consumerID := v.GetString(consumerIDArg)
 	if err := client.AuthConsumerDelete(username, consumerID); err != nil {
 		return err
 	}
@@ -208,7 +210,7 @@ var authConsumerRegenCmd = cli.Command{
 	},
 	Args: []cli.Arg{
 		{
-			Name: "consumer-id",
+			Name: consumerIDArg,
 		},
 	},
 }
@@ -219,7 +221,7 @@ func authConsumerRegenRun(v cli.Values) error {
 		username = "me"
 	}
 
-	consumerID := v.GetString("consumer-id")
+	consumerID := v.GetString(consumerIDArg)
 	consumer, err := client.AuthConsumerRegen(username, consumerID)
 	if err != nil {
 		return err
