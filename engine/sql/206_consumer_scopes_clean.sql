@@ -1,8 +1,5 @@
 -- +migrate Up
 
--- Clean for 010_audit.sql
-DROP TABLE IF EXISTS "application_variable_audit_old";
-
 -- Clean for 153_access_token.sql
 DROP TABLE IF EXISTS "access_token_group";
 DROP TABLE IF EXISTS "access_token";
@@ -70,8 +67,12 @@ ALTER TABLE "project" DROP COLUMN IF EXISTS vcs_servers;
 
 -- +migrate Down
 
+-- Clean for 059_repositoriesmanager_project.sql
+-- Used in delete project before this migration.
+CREATE TABLE IF NOT EXISTS "repositories_manager_project" ( id_repositories_manager BIGINT NOT NULL, id_project BIGINT NOT NULL, data JSONB, PRIMARY KEY(id_repositories_manager, id_project));
+
 -- Clean for 185_consumer_scopes.sql
-ALTER TABLE "auth_consumer" ADD COLUMN scopes JSONB;
+ALTER TABLE "auth_consumer" ADD COLUMN IF NOT EXISTS scopes JSONB;
 UPDATE auth_consumer SET scopes = scope_details WHERE scope_details::TEXT = 'null';
 UPDATE auth_consumer SET scopes = tmp1.scopes FROM (
 	SELECT tmp2.id AS id, json_agg(tmp2."scope_detail"->>'scope') AS scopes
@@ -80,3 +81,7 @@ UPDATE auth_consumer SET scopes = tmp1.scopes FROM (
 	) AS tmp2 GROUP BY tmp2.id
 ) AS tmp1
 WHERE auth_consumer.id = tmp1.id AND auth_consumer.scope_details::TEXT <> 'null';
+
+-- Clean for 204_project_vcs_server.sql
+-- Used for migration before the migration.
+ALTER TABLE "project" ADD COLUMN IF NOT EXISTS vcs_servers JSONB;
