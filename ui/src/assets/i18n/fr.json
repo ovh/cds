@@ -644,6 +644,7 @@
   "user_label_fullname": "Nom complet de l'utilisateur",
   "user_label_password": "Mot de passe",
   "user_label_username": "Nom d'utilisateur",
+  "user_label_user_ldap": "Nom d'utilisateur LDAP",
   "user_list_title": "Utilisateurs",
   "user_load_user": "Chargement de l'utilisateur...",
   "user_saved": "Utilisateur sauvegardé",
