@@ -1,6 +1,6 @@
 
 TARGET_NAME 		= plugin-clair
-TARGET_OS_EXCLUDED  = freebsd openbsd
+TARGET_OS_EXCLUDED  = freebsd openbsd windows
 
 ##### ^^^^^^ EDIT ABOVE ^^^^^^ #####
 

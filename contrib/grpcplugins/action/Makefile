@@ -13,7 +13,8 @@ define get_plugin_name_from_conf
 $(strip $(patsubst dist/%.yml, %,$(shell echo $(1))))
 endef
 
-$(TARGET_PLUGINS): $(TARGET_DIST)
+$(TARGET_PLUGINS):
+	@mkdir -p dist
 	$(info building $(call get_plugin_name_from_conf,$@))
 	@P=$(call get_plugin_name_from_conf,$@); \
 	$(MAKE) build -C $$P
