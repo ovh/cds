@@ -32,10 +32,10 @@ IS_TEST                    = $(filter test,$(MAKECMDGOALS))
 TARGET_OS                  = $(filter-out $(TARGET_OS_EXCLUDED), $(if ${ENABLE_CROSS_COMPILATION},$(if ${OS},${OS}, $(if $(IS_TEST), $(shell go env GOOS), windows darwin linux openbsd freebsd)),$(shell go env GOOS)))
 TARGET_ARCH                = $(if ${ARCH},${ARCH}, $(if $(IS_TEST), $(shell go env GOARCH),amd64 arm 386 arm64 ppc64le))
 BINARIES                   = $(addprefix $(TARGET_DIST)/, $(addsuffix -$(OS)-$(ARCH)$(if $(IS_WINDOWS),.exe), $(notdir $(TARGET_NAME))))
-OSARCHVALID                = $(shell go tool dist list | grep -v '^darwin/arm'|grep -v '^darwin/386'|grep -v '^windows/386'|grep -v '^windows/arm'|grep -v '^openbsd/arm*'|grep -v '^openbsd/386'|grep -v '^freebsd/arm*'|grep -v '^freebsd/386')
+OSARCHVALID                := $(shell go tool dist list | grep -v '^darwin/arm'|grep -v '^darwin/386'|grep -v '^windows/386'|grep -v '^windows/arm'|grep -v '^openbsd/arm*'|grep -v '^openbsd/386'|grep -v '^freebsd/arm*'|grep -v '^freebsd/386')
 IS_OS_ARCH_VALID           = $(filter $(OS)/$(ARCH),$(OSARCHVALID))
 CROSS_COMPILED_BINARIES    = $(foreach OS, $(TARGET_OS), $(foreach ARCH, $(TARGET_ARCH), $(if $(IS_OS_ARCH_VALID), $(BINARIES))))
-GOFILES                    = $(call get_recursive_files, '.')
+GOFILES                    := $(call get_recursive_files, '.')
 
 mk_go_build:
 	$(info *** mk_go_build)
@@ -49,8 +49,8 @@ $(CROSS_COMPILED_BINARIES): $(GOFILES)
 
 ##### =====> Compile Tests <===== #####
 
-PKGS     = $(or $(PKG),$(shell $(GO_LIST) ./... 2>&1|grep -v 'no packages'))
-TESTPKGS = $(shell $(GO_LIST) -f \
+PKGS     := $(or $(PKG),$(shell $(GO_LIST) ./...))
+TESTPKGS := $(shell $(GO_LIST) -f \
 			'{{ if or .TestGoFiles .XTestGoFiles }}{{ .ImportPath }}{{ end }}' \
 			$(PKGS) 2>&1 | grep -v 'no Go files in' )
 
