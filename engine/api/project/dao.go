@@ -200,12 +200,8 @@ func DeleteByID(db gorp.SqlExecutor, id int64) error {
 		return err
 	}
 
-	if _, err := db.Exec(`DELETE FROM repositories_manager_project WHERE id_project = $1`, id); err != nil {
-		return err
-	}
-
 	if _, err := db.Exec(`DELETE FROM project WHERE project.id = $1`, id); err != nil {
-		return err
+		return sdk.WithStack(err)
 	}
 	return nil
 }
@@ -253,10 +249,6 @@ func loadprojects(ctx context.Context, db gorp.SqlExecutor, opts []LoadOptionFun
 	projs := make([]sdk.Project, 0, len(res))
 	for i := range res {
 		p := &res[i]
-		if err := p.PostGet(db); err != nil {
-			log.Error(ctx, "loadprojects> PostGet error (ID=%d, Key:%s): %v", p.ID, p.Key, err)
-			continue
-		}
 		proj, err := unwrap(db, p, opts)
 		if err != nil {
 			log.Error(ctx, "loadprojects> unwrap error (ID=%d, Key:%s): %v", p.ID, p.Key, err)

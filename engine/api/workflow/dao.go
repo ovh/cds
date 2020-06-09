@@ -243,23 +243,6 @@ func Load(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj sdk.
 }
 
 // LoadAndLockByID loads a workflow
-func LoadAndLockByID(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj sdk.Project, id int64, opts LoadOptions) (*sdk.Workflow, error) {
-	dao := opts.GetWorkflowDAO()
-	dao.Filters.WorkflowIDs = []int64{id}
-	dao.Lock = true
-
-	ws, err := dao.Load(ctx, db)
-	if err != nil {
-		return nil, err
-	}
-
-	if !opts.Minimal {
-		if err := CompleteWorkflow(ctx, db, &ws, proj, opts); err != nil {
-			return nil, err
-		}
-	}
-	return &ws, nil
-}
 
 // LoadByID loads a workflow
 func LoadByID(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj sdk.Project, id int64, opts LoadOptions) (*sdk.Workflow, error) {

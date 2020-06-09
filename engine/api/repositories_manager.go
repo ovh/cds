@@ -461,7 +461,7 @@ func (api *API) attachRepositoriesManagerHandler() service.Handler {
 
 		app, err := application.LoadByName(db, projectKey, appName)
 		if err != nil {
-			return sdk.WrapError(err, "Cannot load application %s", appName)
+			return sdk.WrapError(err, "cannot load application %s", appName)
 		}
 
 		//Load the repositoriesManager for the project
@@ -473,24 +473,24 @@ func (api *API) attachRepositoriesManagerHandler() service.Handler {
 		//Get an authorized Client
 		client, err := repositoriesmanager.AuthorizedClient(ctx, db, api.Cache, projectKey, rm)
 		if err != nil {
-			return sdk.WrapError(sdk.ErrNoReposManagerClientAuth, "attachRepositoriesManager> Cannot get client got %s %s : %s", projectKey, rmName, err)
+			return sdk.WrapError(sdk.ErrNoReposManagerClientAuth, "cannot get client got %s %s : %s", projectKey, rmName, err)
 		}
 
 		if _, err := client.RepoByFullname(ctx, fullname); err != nil {
-			return sdk.WrapError(sdk.ErrRepoNotFound, "attachRepositoriesManager> Cannot get repo %s: %s", fullname, err)
+			return sdk.WrapError(sdk.ErrRepoNotFound, "cannot get repo %s: %s", fullname, err)
 		}
 
 		app.VCSServer = rm.Name
 		app.RepositoryFullname = fullname
 
-		tx, errT := db.Begin()
-		if errT != nil {
-			return sdk.WrapError(errT, "attachRepositoriesManager> Cannot start transaction")
+		tx, err := db.Begin()
+		if err != nil {
+			return sdk.WrapError(err, "cannot start transaction")
 		}
 		defer tx.Rollback() // nolint
 
-		if err := repositoriesmanager.InsertForApplication(tx, app, projectKey); err != nil {
-			return sdk.WrapError(err, "Cannot insert for application")
+		if err := repositoriesmanager.InsertForApplication(tx, app); err != nil {
+			return sdk.WrapError(err, "cannot insert for application")
 		}
 
 		if err := tx.Commit(); err != nil {

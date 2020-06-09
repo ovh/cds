@@ -1300,7 +1300,7 @@ func TestInsertNewCodeCoverageReport(t *testing.T) {
 		VCSServer:          "repoManServ",
 	}
 	assert.NoError(t, application.Insert(db, *proj, &app))
-	assert.NoError(t, repositoriesmanager.InsertForApplication(db, &app, proj.Key))
+	assert.NoError(t, repositoriesmanager.InsertForApplication(db, &app))
 
 	// Create workflow
 	w := sdk.Workflow{
