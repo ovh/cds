@@ -102,28 +102,13 @@ func (api *API) addKeyInEnvironmentHandler() service.Handler {
 			newKey.Name = "env-" + newKey.Name
 		}
 
-		switch newKey.Type {
-		case sdk.KeyTypeSSH:
-			k, err := keys.GenerateSSHKey(newKey.Name)
-			if err != nil {
-				return sdk.WrapError(err, "addKeyInEnvironmentHandler> Cannot generate ssh key")
-			}
-			newKey.KeyID = k.KeyID
-			newKey.Public = k.Public
-			newKey.Private = k.Private
-			newKey.Type = k.Type
-		case sdk.KeyTypePGP:
-			k, err := keys.GeneratePGPKeyPair(newKey.Name)
-			if err != nil {
-				return sdk.WrapError(err, "addKeyInEnvironmentHandler> Cannot generate pgpKey")
-			}
-			newKey.KeyID = k.KeyID
-			newKey.Public = k.Public
-			newKey.Private = k.Private
-			newKey.Type = k.Type
-		default:
-			return sdk.WrapError(sdk.ErrUnknownKeyType, "addKeyInEnvironmentHandler> unknown key of type: %s", newKey.Type)
+		k, err := keys.GenerateKey(newKey.Name, newKey.Type)
+		if err != nil {
+			return err
 		}
+		newKey.Public = k.Public
+		newKey.Private = k.Private
+		newKey.ID = k.ID
 
 		tx, errT := api.mustDB().Begin()
 		if errT != nil {

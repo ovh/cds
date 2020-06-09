@@ -14,17 +14,21 @@ import * as ActionProject from './project.action';
 
 export class ApplicationStateModel {
     public application: Application;
+    public editApplication: Application;
     public overview: Overview;
     public currentProjectKey: string;
     public loading: boolean;
+    public editMode: boolean;
 }
 
 export function getInitialApplicationsState(): ApplicationStateModel {
     return {
         application: null,
+        editApplication: null,
         overview: null,
         currentProjectKey: null,
         loading: true,
+        editMode: false
     };
 }
 
@@ -89,10 +93,17 @@ export class ApplicationsState {
     @Action(ActionApplication.LoadApplication)
     load(ctx: StateContext<ApplicationStateModel>, action: ActionApplication.LoadApplication) {
         const state = ctx.getState();
+
+        let editMode = false;
+        if (action.payload.from_repository) {
+            editMode = true;
+        }
         ctx.setState({
             ...state,
             currentProjectKey: action.payload.project_key,
             application: action.payload,
+            editApplication: cloneDeep(action.payload),
+            editMode: editMode,
             loading: false,
         });
     }
@@ -109,6 +120,22 @@ export class ApplicationsState {
 
     @Action(ActionApplication.UpdateApplication)
     update(ctx: StateContext<ApplicationStateModel>, action: ActionApplication.UpdateApplication) {
+        const stateEditMode = ctx.getState();
+        if (stateEditMode.editMode) {
+            let appToUpdate = cloneDeep(stateEditMode.editApplication);
+            appToUpdate.name = action.payload.changes.name;
+            appToUpdate.description = action.payload.changes.description;
+            appToUpdate.deployment_strategies = action.payload.changes.deployment_strategies;
+            appToUpdate.vcs_strategy = action.payload.changes.vcs_strategy;
+            appToUpdate.editModeChanged = true;
+            return ctx.setState({
+                ...stateEditMode,
+                editApplication: appToUpdate,
+            });
+            return;
+        }
+
+
         return this._http.put<Application>(
             `/project/${action.payload.projectKey}/application/${action.payload.applicationName}`,
             action.payload.changes
@@ -171,6 +198,24 @@ export class ApplicationsState {
     @Action(ActionApplication.AddApplicationVariable)
     addVariable(ctx: StateContext<ApplicationStateModel>, action: ActionApplication.AddApplicationVariable) {
         let variable = action.payload.variable;
+
+        const stateEditMode = ctx.getState();
+        if (stateEditMode.editMode) {
+            let appToupdate = cloneDeep(stateEditMode.editApplication);
+            if (!appToupdate.variables) {
+                appToupdate.variables = new Array<Variable>();
+            }
+            action.payload.variable.hasChanged = false;
+            action.payload.variable.updating = false;
+            appToupdate.variables.push(cloneDeep(action.payload.variable));
+            appToupdate.editModeChanged = true;
+            return ctx.setState({
+                ...stateEditMode,
+                editApplication: appToupdate,
+            });
+        }
+
+
         let url = '/project/' + action.payload.projectKey + '/application/' + action.payload.applicationName + '/variable/' + variable.name;
         return this._http.post<Variable>(url, variable)
             .pipe(tap((v) => {
@@ -190,6 +235,23 @@ export class ApplicationsState {
     @Action(ActionApplication.UpdateApplicationVariable)
     updateVariable(ctx: StateContext<ApplicationStateModel>, action: ActionApplication.UpdateApplicationVariable) {
         let variable = action.payload.variable;
+
+        const stateEditMode = ctx.getState();
+        if (stateEditMode.editMode) {
+            let appToupdate = cloneDeep(stateEditMode.editApplication);
+            let varIndex = appToupdate.variables.findIndex(app => action.payload.variableName === app.name);
+            action.payload.variable.hasChanged = false;
+            action.payload.variable.updating = false;
+            appToupdate.variables[varIndex] = action.payload.variable;
+            appToupdate.editModeChanged = true;
+            ctx.setState({
+                ...stateEditMode,
+                editApplication: appToupdate,
+            });
+            return
+        }
+
+
         let url = '/project/' + action.payload.projectKey +
             '/application/' + action.payload.applicationName +
             '/variable/' + action.payload.variableName;
@@ -214,6 +276,20 @@ export class ApplicationsState {
     @Action(ActionApplication.DeleteApplicationVariable)
     deleteVariable(ctx: StateContext<ApplicationStateModel>, action: ActionApplication.DeleteApplicationVariable) {
         let variable = action.payload.variable;
+
+        const stateEditMode = ctx.getState();
+        if (stateEditMode.editMode) {
+            let appToupdate = cloneDeep(stateEditMode.editApplication);
+            action.payload.variable.hasChanged = false;
+            action.payload.variable.updating = false;
+            appToupdate.variables = appToupdate.variables.filter(app => app.name !== action.payload.variable.name);
+            appToupdate.editModeChanged = true;
+            ctx.setState({
+                ...stateEditMode,
+                editApplication: appToupdate,
+            });
+            return
+        }
         let url = `/project/${action.payload.projectKey}/application/${action.payload.applicationName}/variable/${variable.name}`;
         return this._http.delete<any>(url)
             .pipe(tap(() => {
@@ -232,6 +308,22 @@ export class ApplicationsState {
     @Action(ActionApplication.AddApplicationKey)
     addKey(ctx: StateContext<ApplicationStateModel>, action: ActionApplication.AddApplicationKey) {
         let key = action.payload.key;
+
+        const stateEditMode = ctx.getState();
+        if (stateEditMode.editMode) {
+            let appToupdate = cloneDeep(stateEditMode.editApplication);
+            if (!appToupdate.keys) {
+                appToupdate.keys = new Array<Key>();
+            }
+            appToupdate.keys.push(action.payload.key);
+            appToupdate.editModeChanged = true;
+            ctx.setState({
+                ...stateEditMode,
+                editApplication: appToupdate,
+            });
+            return
+        }
+
         let url = '/project/' + action.payload.projectKey + '/application/' + action.payload.applicationName + '/keys';
         return this._http.post<Key>(url, key)
             .pipe(tap((newKey) => {
@@ -249,6 +341,19 @@ export class ApplicationsState {
     @Action(ActionApplication.DeleteApplicationKey)
     deleteKey(ctx: StateContext<ApplicationStateModel>, action: ActionApplication.DeleteApplicationKey) {
         let key = action.payload.key;
+
+        const stateEditMode = ctx.getState();
+        if (stateEditMode.editMode) {
+            let appToupdate = cloneDeep(stateEditMode.editApplication);
+            appToupdate.keys = appToupdate.keys.filter(k => action.payload.key.name !== k.name);
+            appToupdate.editModeChanged = true;
+            ctx.setState({
+                ...stateEditMode,
+                editApplication: appToupdate,
+            });
+            return
+        }
+
         let url = `/project/${action.payload.projectKey}/application/${action.payload.applicationName}/keys/${key.name}`;
         return this._http.delete(url)
             .pipe(tap(() => {
@@ -267,6 +372,23 @@ export class ApplicationsState {
     @Action(ActionApplication.AddApplicationDeployment)
     addDeployment(ctx: StateContext<ApplicationStateModel>, action: ActionApplication.AddApplicationDeployment) {
         let integration = action.payload.integration;
+
+        const stateEditMode = ctx.getState();
+        if (stateEditMode.editMode) {
+            let appToupdate = cloneDeep(stateEditMode.editApplication);
+            if (!appToupdate.deployment_strategies) {
+                appToupdate.deployment_strategies = {};
+            }
+            console.log(integration);
+            appToupdate.deployment_strategies[integration.name] = cloneDeep(integration.model.deployment_default_config);
+            appToupdate.editModeChanged = true;
+            ctx.setState({
+                ...stateEditMode,
+                editApplication: appToupdate,
+            });
+            return
+        }
+
         let url = '/project/' + action.payload.projectKey +
             '/application/' + action.payload.applicationName + '/deployment/config/' + integration.name;
         return this._http.post<Application>(url, integration.model.deployment_default_config)
@@ -290,6 +412,18 @@ export class ApplicationsState {
         integration.model = new IntegrationModel();
         integration.model.deployment_default_config = action.payload.config;
 
+        const stateEditMode = ctx.getState();
+        if (stateEditMode.editMode) {
+            let appToupdate = cloneDeep(stateEditMode.editApplication);
+            appToupdate.deployment_strategies[integration.name] = integration.model.deployment_default_config;
+            appToupdate.editModeChanged = true;
+            ctx.setState({
+                ...stateEditMode,
+                editApplication: appToupdate,
+            });
+            return
+        }
+
         return ctx.dispatch(new ActionApplication.AddApplicationDeployment({
             projectKey: action.payload.projectKey,
             applicationName: action.payload.applicationName,
@@ -299,6 +433,19 @@ export class ApplicationsState {
 
     @Action(ActionApplication.DeleteApplicationDeployment)
     deleteDeployment(ctx: StateContext<ApplicationStateModel>, action: ActionApplication.DeleteApplicationDeployment) {
+
+        const stateEditMode = ctx.getState();
+        if (stateEditMode.editMode) {
+            let appToupdate = cloneDeep(stateEditMode.editApplication);
+            delete appToupdate.deployment_strategies[action.payload.integrationName];
+            appToupdate.editModeChanged = true;
+            ctx.setState({
+                ...stateEditMode,
+                editApplication: appToupdate,
+            });
+            return
+        }
+
         let url = '/project/' + action.payload.projectKey +
             '/application/' + action.payload.applicationName + '/deployment/config/' + action.payload.integrationName;
         return this._http.delete<Application>(url)
@@ -392,5 +539,20 @@ export class ApplicationsState {
     @Action(ActionApplication.ClearCacheApplication)
     clearCache(ctx: StateContext<ApplicationStateModel>, _: ActionApplication.ClearCacheApplication) {
         ctx.setState(getInitialApplicationsState());
+    }
+
+    @Action(ActionApplication.CancelApplicationEdition)
+    cancelApplicationEdition(ctx: StateContext<ApplicationStateModel>, _: ActionApplication.CancelApplicationEdition) {
+        const state = ctx.getState();
+        let editMode = state.editMode;
+        if (state.application.from_repository) {
+            editMode = true;
+        }
+        let editApplication = cloneDeep(state.application);
+        ctx.setState({
+            ...state,
+            editApplication: editApplication,
+            editMode: editMode,
+        });
     }
 }

@@ -17,6 +17,7 @@ import (
 	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/group"
+	"github.com/ovh/cds/engine/api/keys"
 	"github.com/ovh/cds/engine/api/operation"
 	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/api/project"
@@ -148,6 +149,18 @@ func (api *API) getApplicationHandler() service.Handler {
 			}
 			app.Usage = &usage
 		}
+
+		proj, err := project.Load(api.mustDB(), projectKey)
+		if err != nil {
+			return err
+		}
+		wkAscodeHolder, err := workflow.LoadByRepo(ctx, api.mustDB(), *proj, app.FromRepository, workflow.LoadOptions{
+			WithTemplate: true,
+		})
+		if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
+			return sdk.NewErrorFrom(err, "cannot found workflow holder of the pipeline")
+		}
+		app.WorkflowAscodeHolder = wkAscodeHolder
 
 		return service.WriteJSON(w, app, http.StatusOK)
 	}
@@ -426,7 +439,7 @@ func (api *API) updateAsCodeApplicationHandler() service.Handler {
 			return sdk.NewErrorFrom(sdk.ErrForbidden, "current application is not ascode")
 		}
 
-		wkHolder, err := workflow.LoadByRepo(ctx, api.Cache, api.mustDB(), *proj, appDB.FromRepository, workflow.LoadOptions{
+		wkHolder, err := workflow.LoadByRepo(ctx, api.mustDB(), *proj, appDB.FromRepository, workflow.LoadOptions{
 			WithTemplate: true,
 		})
 		if err != nil {
@@ -447,9 +460,21 @@ func (api *API) updateAsCodeApplicationHandler() service.Handler {
 			return sdk.NewErrorFrom(sdk.ErrWrongRequest, "cannot find the root application of the workflow %s that hold the pipeline", wkHolder.Name)
 		}
 
-		u := getAPIConsumer(ctx)
+		// create keys
+		for i := range a.Keys {
+			k := &a.Keys[i]
+			newKey, err := keys.GenerateKey(k.Name, k.Type)
+			if err != nil {
+				return err
+			}
+			k.Public = newKey.Public
+			k.Private = newKey.Private
+			k.KeyID = newKey.KeyID
+		}
 
-		app, err := application.ExportApplication(api.mustDB(), a, project.EncryptWithBuiltinKey)
+		u := getAPIConsumer(ctx)
+		a.ProjectID = proj.ID
+		app, err := application.ExportApplication(api.mustDB(), a, project.EncryptWithBuiltinKey, fmt.Sprintf("app:%d:%s", appDB.ID, branch))
 		if err != nil {
 			return sdk.WrapError(err, "unable to export app %s", a.Name)
 		}

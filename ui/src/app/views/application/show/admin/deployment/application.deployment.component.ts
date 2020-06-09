@@ -6,6 +6,7 @@ import {
     DeleteApplicationDeployment,
     UpdateApplicationDeployment
 } from 'app/store/applications.action';
+import { cloneDeep } from 'lodash-es';
 import { finalize } from 'rxjs/operators';
 import { Application } from '../../../../../model/application.model';
 import { ProjectIntegration } from '../../../../../model/integration.model';
@@ -20,28 +21,28 @@ import { ToastService } from '../../../../../shared/toast/ToastService';
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ApplicationDeploymentComponent {
+
+    _project: Project;
     @Input('project')
     set project(project: Project) {
         this._project = project;
         if (project.integrations) {
-            this.filteredIntegrations = project.integrations.filter(p => p.model.deployment);
+            this.filteredIntegrations = cloneDeep(project.integrations.filter(p => p.model.deployment));
         }
     }
     get project(): Project {
         return this._project;
     }
-
-    filteredIntegrations: Array<ProjectIntegration>;
-    selectedIntegration: ProjectIntegration;
-
-    public loadingBtn = false;
-
-    _project: Project;
+    @Input() application: Application;
+    @Input() editMode: boolean;
 
     @ViewChild('removeWarning') removeWarningModal: WarningModalComponent;
     @ViewChild('linkWarning') linkWarningModal: WarningModalComponent;
 
-    @Input() application: Application;
+    filteredIntegrations: Array<ProjectIntegration>;
+    selectedIntegration: ProjectIntegration;
+
+    loadingBtn = false;
 
     constructor(
         private _toast: ToastService,
@@ -69,7 +70,14 @@ export class ApplicationDeploymentComponent {
             this.loadingBtn = false;
             this._cd.markForCheck();
         }))
-            .subscribe(() => this._toast.success('', this._translate.instant('application_integration_deleted')));
+            .subscribe(() => {
+                if (this.editMode) {
+                    this._toast.info('', this._translate.instant('application_ascode_updated'));
+                } else {
+                    this._toast.success('', this._translate.instant('application_integration_deleted'));
+                }
+
+            });
     }
 
     updateIntegration(pfName: string) {
@@ -83,7 +91,14 @@ export class ApplicationDeploymentComponent {
             this.loadingBtn = false;
             this._cd.markForCheck();
         }))
-            .subscribe(() => this._toast.success('', this._translate.instant('application_integration_updated')));
+            .subscribe(() => {
+                if (this.editMode) {
+                    this._toast.info('', this._translate.instant('application_ascode_updated'));
+                } else {
+                    this._toast.success('', this._translate.instant('application_integration_updated'));
+                }
+
+            });
     }
 
     addIntegration() {
@@ -99,7 +114,11 @@ export class ApplicationDeploymentComponent {
             }))
                 .subscribe(() => {
                     this.selectedIntegration = null;
-                    this._toast.success('', this._translate.instant('application_integration_added'));
+                    if (this.editMode) {
+                        this._toast.info('', this._translate.instant('application_ascode_updated'));
+                    } else {
+                        this._toast.success('', this._translate.instant('application_integration_added'));
+                    }
                 });
         }
     }

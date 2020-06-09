@@ -32,6 +32,8 @@ type Application struct {
 	DeploymentStrategies map[string]IntegrationConfig `json:"deployment_strategies,omitempty" db:"-" cli:"-"`
 	Vulnerabilities      []Vulnerability              `json:"vulnerabilities,omitempty" db:"-" cli:"-"`
 	FromRepository       string                       `json:"from_repository,omitempty" db:"from_repository" cli:"-"`
+	// aggregate
+	WorkflowAscodeHolder *Workflow `json:"workflow_ascode_holder,omitempty" cli:"-" db:"-"`
 }
 
 // IsValid returns error if the application is not valid.

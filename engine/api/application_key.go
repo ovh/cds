@@ -104,25 +104,13 @@ func (api *API) addKeyInApplicationHandler() service.Handler {
 			newKey.Name = "app-" + newKey.Name
 		}
 
-		switch newKey.Type {
-		case sdk.KeyTypeSSH:
-			k, errK := keys.GenerateSSHKey(newKey.Name)
-			if errK != nil {
-				return sdk.WrapError(errK, "addKeyInApplicationHandler> Cannot generate ssh key")
-			}
-			newKey.Public = k.Public
-			newKey.Private = k.Private
-		case sdk.KeyTypePGP:
-			k, errGenerate := keys.GeneratePGPKeyPair(newKey.Name)
-			if errGenerate != nil {
-				return sdk.WrapError(errGenerate, "addKeyInApplicationHandler> Cannot generate pgpKey")
-			}
-			newKey.Public = k.Public
-			newKey.Private = k.Private
-			newKey.KeyID = k.KeyID
-		default:
-			return sdk.WrapError(sdk.ErrUnknownKeyType, "addKeyInApplicationHandler> unknown key of type: %s", newKey.Type)
+		k, err := keys.GenerateKey(newKey.Name, newKey.Type)
+		if err != nil {
+			return err
 		}
+		newKey.Public = k.Public
+		newKey.Private = k.Private
+		newKey.KeyID = k.KeyID
 
 		tx, errT := api.mustDB().Begin()
 		if errT != nil {

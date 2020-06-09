@@ -3,6 +3,8 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Application, Vulnerability } from 'app/model/application.model';
 import { Key } from 'app/model/keys.model';
+import { Operation } from 'app/model/operation.model';
+import { Pipeline } from 'app/model/pipeline.model';
 import { Observable } from 'rxjs';
 
 @Injectable()
@@ -54,5 +56,19 @@ export class ApplicationService {
     ignoreVulnerability(key: string, appName: string, v: Vulnerability): Observable<Vulnerability> {
         let url = '/project/' + key + '/application/' + appName + '/vulnerability/' + v.id;
         return this._http.post<Vulnerability>(url, v);
+    }
+
+    /**
+     * Update application as code
+     * @param key Project key
+     * @param application Application to update
+     * @param branch Branch name to create the PR
+     * @param message Message of the commit
+     */
+    updateAsCode(key: string, oldAppName, application: Application, branch, message: string): Observable<Operation> {
+        let params = new HttpParams();
+        params = params.append('branch', branch);
+        params = params.append('message', message)
+        return this._http.put<Operation>(`/project/${key}/application/${oldAppName}/ascode`, application, { params });
     }
 }
