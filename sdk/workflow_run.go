@@ -79,8 +79,10 @@ type WorkflowRunNumber struct {
 // Translate translates messages in WorkflowNodeRun
 func (r *WorkflowRun) Translate(lang string) {
 	for ki, info := range r.Infos {
-		m := NewMessage(Messages[info.Message.ID], info.Message.Args...)
-		r.Infos[ki].UserMessage = m.String(lang)
+		if _, ok := Messages[info.Message.ID]; ok {
+			m := NewMessage(Messages[info.Message.ID], info.Message.Args...)
+			r.Infos[ki].UserMessage = m.String(lang)
+		}
 	}
 }
 
@@ -419,8 +421,10 @@ type WorkflowNodeJobRunInfo struct {
 // Translate translates messages in WorkflowNodeJobRun
 func (wnjr *WorkflowNodeJobRun) Translate(lang string) {
 	for ki, info := range wnjr.SpawnInfos {
-		m := NewMessage(Messages[info.Message.ID], info.Message.Args...)
-		wnjr.SpawnInfos[ki].UserMessage = m.String(lang)
+		if _, ok := Messages[info.Message.ID]; ok {
+			m := NewMessage(Messages[info.Message.ID], info.Message.Args...)
+			wnjr.SpawnInfos[ki].UserMessage = m.String(lang)
+		}
 	}
 }
 

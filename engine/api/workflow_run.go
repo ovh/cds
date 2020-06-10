@@ -1238,8 +1238,10 @@ func (api *API) getWorkflowNodeRunJobSpawnInfosHandler() service.Handler {
 
 		l := r.Header.Get("Accept-Language")
 		for ki, info := range spawnInfos {
-			m := sdk.NewMessage(sdk.Messages[info.Message.ID], info.Message.Args...)
-			spawnInfos[ki].UserMessage = m.String(l)
+			if _, ok := sdk.Messages[info.Message.ID]; ok {
+				m := sdk.NewMessage(sdk.Messages[info.Message.ID], info.Message.Args...)
+				spawnInfos[ki].UserMessage = m.String(l)
+			}
 		}
 		return service.WriteJSON(w, spawnInfos, http.StatusOK)
 	}
