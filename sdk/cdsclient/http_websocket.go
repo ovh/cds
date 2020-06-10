@@ -17,6 +17,7 @@ import (
 
 func (c *client) RequestWebsocket(ctx context.Context, path string, msgToSend <-chan sdk.WebsocketFilter, msgReceived chan<- sdk.WebsocketEvent) error {
 	wsContext, wsContextCancel := context.WithCancel(ctx)
+	defer wsContextCancel()
 
 	// Checks that current session_token is still valid
 	// If not, challenge a new one against the authenticationToken
@@ -77,7 +78,6 @@ func (c *client) RequestWebsocket(ctx context.Context, path string, msgToSend <-
 		if err != nil {
 			if websocket.IsCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
 				log.Warning(ctx, "websocket error: %v", err)
-				wsContextCancel()
 				return err
 			}
 			log.Error(ctx, "ws: unable to read message: %v", err)

@@ -234,12 +234,14 @@ func RunScriptAction(ctx context.Context, wk workerruntime.Runtime, a sdk.Action
 		go func() {
 			for {
 				line, errs := stdoutreader.ReadString('\n')
+				if line != "" {
+					wk.SendLog(ctx, workerruntime.LevelInfo, line)
+				}
 				if errs != nil {
 					stdout.Close()
 					close(outchan)
 					return
 				}
-				wk.SendLog(ctx, workerruntime.LevelInfo, line)
 			}
 		}()
 
@@ -247,12 +249,14 @@ func RunScriptAction(ctx context.Context, wk workerruntime.Runtime, a sdk.Action
 		go func() {
 			for {
 				line, errs := stderrreader.ReadString('\n')
+				if line != "" {
+					wk.SendLog(ctx, workerruntime.LevelWarn, line)
+				}
 				if errs != nil {
 					stderr.Close()
 					close(errchan)
 					return
 				}
-				wk.SendLog(ctx, workerruntime.LevelWarn, line)
 			}
 		}()
 

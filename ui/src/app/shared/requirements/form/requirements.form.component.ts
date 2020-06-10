@@ -88,10 +88,6 @@ export class RequirementsFormComponent implements OnInit {
                         placeHolderValue = 'postgres:9.5.3';
                         helpMsg = this._translate.instant('requirement_help_service');
                         break;
-                    case 'network':
-                        placeHolderValue = '127.0.0.1';
-                        helpMsg = this._translate.instant('requirement_help_network');
-                        break;
                     case 'hostname':
                         placeHolderValue = this._translate.instant('requirement_placeholder_value_hostname');
                         helpMsg = this._translate.instant('requirement_help_hostname');

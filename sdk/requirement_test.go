@@ -19,17 +19,17 @@ func TestRequirementListDeduplicate(t *testing.T) {
 				l: RequirementList{
 					{
 						Name:  "namea",
-						Type:  NetworkAccessRequirement,
+						Type:  RegionRequirement,
 						Value: "valuea",
 					},
 					{
 						Name:  "namea",
-						Type:  NetworkAccessRequirement,
+						Type:  RegionRequirement,
 						Value: "valuea",
 					},
 					{
 						Name:  "nameb",
-						Type:  NetworkAccessRequirement,
+						Type:  RegionRequirement,
 						Value: "valueb",
 					},
 				},
@@ -37,12 +37,12 @@ func TestRequirementListDeduplicate(t *testing.T) {
 			want: RequirementList{
 				{
 					Name:  "namea",
-					Type:  NetworkAccessRequirement,
+					Type:  RegionRequirement,
 					Value: "valuea",
 				},
 				{
 					Name:  "nameb",
-					Type:  NetworkAccessRequirement,
+					Type:  RegionRequirement,
 					Value: "valueb",
 				},
 			},
@@ -53,17 +53,17 @@ func TestRequirementListDeduplicate(t *testing.T) {
 				l: RequirementList{
 					{
 						Name:  "namea",
-						Type:  NetworkAccessRequirement,
+						Type:  RegionRequirement,
 						Value: "valuea",
 					},
 					{
 						Name:  "nameb",
-						Type:  NetworkAccessRequirement,
+						Type:  RegionRequirement,
 						Value: "valueb",
 					},
 					{
 						Name:  "nameb",
-						Type:  NetworkAccessRequirement,
+						Type:  RegionRequirement,
 						Value: "valueb",
 					},
 				},
@@ -71,12 +71,12 @@ func TestRequirementListDeduplicate(t *testing.T) {
 			want: RequirementList{
 				{
 					Name:  "nameb",
-					Type:  NetworkAccessRequirement,
+					Type:  RegionRequirement,
 					Value: "valueb",
 				},
 				{
 					Name:  "namea",
-					Type:  NetworkAccessRequirement,
+					Type:  RegionRequirement,
 					Value: "valuea",
 				},
 			},

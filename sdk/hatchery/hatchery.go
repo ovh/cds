@@ -291,11 +291,6 @@ func canRunJob(ctx context.Context, h Interface, j workerStarterRequest) bool {
 			return false
 		}
 
-		if r.Type == sdk.NetworkAccessRequirement && !sdk.CheckNetworkAccessRequirement(r) {
-			log.Debug("canRunJob> %d - job %d - network requirement failed: %v", j.timestamp, j.id, r.Value)
-			return false
-		}
-
 		if r.Type == sdk.RegionRequirement && r.Value != h.Configuration().Provision.Region {
 			log.Debug("canRunJob> %d - job %d - job with region requirement: cannot spawn. hatchery-region:%s prerequisite:%s", j.timestamp, j.id, h.Configuration().Provision.Region, r.Value)
 			return false
@@ -303,7 +298,7 @@ func canRunJob(ctx context.Context, h Interface, j workerStarterRequest) bool {
 
 		// Skip others requirement as we can't check it
 		if r.Type == sdk.PluginRequirement || r.Type == sdk.ServiceRequirement || r.Type == sdk.MemoryRequirement {
-			log.Debug("canRunJob> %d - job %d - job with service, plugin, network or memory requirement. Skip these check as we can't check it on hatchery routine", j.timestamp, j.id)
+			log.Debug("canRunJob> %d - job %d - job with service, plugin or memory requirement. Skip these check as we can't check it on hatchery routine", j.timestamp, j.id)
 			continue
 		}
 
@@ -380,11 +375,6 @@ func canRunJobWithModel(ctx context.Context, h InterfaceWithModels, j workerStar
 		// service and memory requirements are only supported by docker model
 		if model.Type != sdk.Docker && (r.Type == sdk.ServiceRequirement || r.Type == sdk.MemoryRequirement) {
 			log.Debug("canRunJobWithModel> %d - job %d - job with service requirement or memory requirement: only for model docker. current model:%s", j.timestamp, j.id, model.Type)
-			return false
-		}
-
-		if r.Type == sdk.NetworkAccessRequirement && !sdk.CheckNetworkAccessRequirement(r) {
-			log.Debug("canRunJobWithModel> %d - job %d - network requirement failed: %v", j.timestamp, j.id, r.Value)
 			return false
 		}
 
