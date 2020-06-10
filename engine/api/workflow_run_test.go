@@ -808,7 +808,7 @@ func Test_getWorkflowNodeRunHandler(t *testing.T) {
 			Vulnerabilities: []sdk.Vulnerability{vuln},
 		},
 	}
-	assert.NoError(t, workflow.InsertVulnerabilityReport(db, report))
+	assert.NoError(t, workflow.InsertVulnerabilityReport(db, &report))
 
 	//Prepare request
 	vars := map[string]string{
