@@ -25,7 +25,7 @@ func Export(db gorp.SqlExecutor, key string, appName string, encryptFunc sdk.Enc
 
 // ExportApplication encrypt and export
 func ExportApplication(db gorp.SqlExecutor, app sdk.Application, encryptFunc sdk.EncryptFunc, encryptPrefix string) (exportentities.Application, error) {
-	var appvars []sdk.Variable
+	var appvars []sdk.ApplicationVariable
 	for _, v := range app.Variables {
 		switch v.Type {
 		case sdk.KeyVariable:

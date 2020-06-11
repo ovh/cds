@@ -278,7 +278,7 @@ func (api *API) cloneEnvironmentHandler() service.Handler {
 			}
 		}
 
-		variables := []sdk.Variable{}
+		variables := []sdk.EnvironmentVariable{}
 		for _, v := range env.Variables {
 			// do not clone secret variable to avoid 'secret value not specified'
 			if v.Type != sdk.SecretVariable {

@@ -34,19 +34,19 @@ func TestImportInto_Variable(t *testing.T) {
 
 	test.NoError(t, environment.InsertEnvironment(db, &env))
 
-	v0 := sdk.Variable{
+	v0 := sdk.EnvironmentVariable{
 		Name:  "v0",
 		Type:  sdk.StringVariable,
 		Value: "value0",
 	}
 
-	v1 := sdk.Variable{
+	v1 := sdk.EnvironmentVariable{
 		Name:  "v1",
 		Type:  sdk.StringVariable,
 		Value: "value1",
 	}
 
-	v2 := sdk.Variable{
+	v2 := sdk.EnvironmentVariable{
 		Name:  "v2",
 		Type:  sdk.StringVariable,
 		Value: "value2",
@@ -63,7 +63,7 @@ func TestImportInto_Variable(t *testing.T) {
 	env2 := sdk.Environment{
 		Name:      "testenv2",
 		ProjectID: proj.ID,
-		Variables: []sdk.Variable{
+		Variables: []sdk.EnvironmentVariable{
 			{
 				Name:  "v1",
 				Type:  sdk.TextVariable,
