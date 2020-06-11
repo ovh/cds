@@ -10,7 +10,7 @@ TARGET_LDFLAGS = -ldflags "-X github.com/ovh/cds/sdk.VERSION=$(VERSION) -X githu
 TARGET_OS = $(if ${OS},${OS},windows darwin linux freebsd)
 TARGET_ARCH = $(if ${ARCH},${ARCH},amd64 arm 386 arm64)
 
-GO_BUILD = go build 
+GO_BUILD = go build
 GO_LINT = ${GOPATH}/bin/gometalinter
 GO_COV_MERGE = ${GOPATH}/bin/gocovmerge
 GO_GO2XUNIT = ${GOPATH}/bin/go2xunit
@@ -76,10 +76,6 @@ test: clean
 test-coverage: $(GO_COV_MERGE) $(TARGET_DIR)
 	@$(GO_COV_MERGE) ./*.coverprofile > $(TARGET_DIR)/cover.out
 	@go tool cover -html=$(TARGET_DIR)/cover.out -o=$(TARGET_DIR)/cover.html
-	@if [ ! -z "${CDS_VERSION}" ]; then \
-		echo "Sending coverage report to CDS"; \
-		worker upload --tag "${CDS_VERSION}" $(abspath $(TARGET_DIR)/cover.html); \
-	fi;
 
 test-xunit-report: $(GO_GO2XUNIT) $(TARGET_DIR)
 	@for TST in `find . -name "tests.log"`; do \

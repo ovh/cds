@@ -1,6 +1,6 @@
 module github.com/ovh/cds/tools/smtpmock
 
-go 1.13
+go 1.14
 
 require (
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible

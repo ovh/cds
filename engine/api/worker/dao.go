@@ -20,7 +20,7 @@ func Insert(ctx context.Context, db gorp.SqlExecutor, w *sdk.Worker) error {
 	return nil
 }
 
-// Delete remove worker from database, it also removes the associated access_token
+// Delete remove worker from database, it also removes the associated consumer.
 func Delete(db gorp.SqlExecutor, id string) error {
 	accessTokenID, err := db.SelectNullStr("SELECT auth_consumer_id FROM worker WHERE id = $1", id)
 	if err != nil {

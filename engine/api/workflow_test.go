@@ -758,7 +758,7 @@ func Test_putWorkflowHandler(t *testing.T) {
 		VCSServer:          "github",
 	}
 	assert.NoError(t, application.Insert(db, *proj, &app))
-	assert.NoError(t, repositoriesmanager.InsertForApplication(db, &app, proj.Key))
+	assert.NoError(t, repositoriesmanager.InsertForApplication(db, &app))
 
 	//Prepare request
 	vars := map[string]string{

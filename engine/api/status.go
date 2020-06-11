@@ -268,7 +268,7 @@ func (api *API) computeMetrics(ctx context.Context) {
 					return
 				}
 			case <-tick:
-				api.countMetric(ctx, api.Metrics.nbUsers, "SELECT COUNT(1) FROM \"user\"")
+				api.countMetric(ctx, api.Metrics.nbUsers, "SELECT COUNT(1) FROM \"authentified_user\"")
 				api.countMetric(ctx, api.Metrics.nbApplications, "SELECT COUNT(1) FROM application")
 				api.countMetric(ctx, api.Metrics.nbProjects, "SELECT COUNT(1) FROM project")
 				api.countMetric(ctx, api.Metrics.nbGroups, "SELECT COUNT(1) FROM \"group\"")

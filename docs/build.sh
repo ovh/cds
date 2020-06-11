@@ -28,19 +28,19 @@ EOF
 }
 
 function generatePluginsDocumentation {
-  for plugin in `ls ../contrib/grpcplugins/action/*/*.yml`; do
+  for plugin in `ls ../contrib/grpcplugins/action/plugin-*/*.yml`; do
 
   filename=$(basename "$plugin")
   pluginName=${filename/.yml/}
 
   OLD=`pwd`
-  PLUGIN_FILE="$OLD/content/docs/actions/plugin-${pluginName}.md"
+  PLUGIN_FILE="$OLD/content/docs/actions/${pluginName}.md"
 
   echo "generate ${PLUGIN_FILE}"
 
 cat << EOF > ${PLUGIN_FILE}
 ---
-title: "plugin-${pluginName}"
+title: "${pluginName}"
 card:
   name: plugin
 ---

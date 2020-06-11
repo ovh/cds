@@ -64,10 +64,6 @@ test: clean
 test-coverage: $(GO_COV_MERGE) $(TARGET_DIR)
 	@$(GO_COV_MERGE) ./*.coverprofile > $(TARGET_DIR)/cover.out
 	@go tool cover -html=$(TARGET_DIR)/cover.out -o=$(TARGET_DIR)/cover.html
-	@if [ ! -z "${CDS_VERSION}" ]; then \
-		echo "Sending coverage report to CDS"; \
-		worker upload --tag "${CDS_VERSION}" $(abspath $(TARGET_DIR)/cover.html); \
-	fi;
 
 test-xunit-report: $(GO_GO2XUNIT) $(TARGET_DIR)
 	@for TST in `find . -name "tests.log"`; do \
