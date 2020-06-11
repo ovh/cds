@@ -1056,7 +1056,7 @@ func saveWorkflowRunSecrets(ctx context.Context, db gorp.SqlExecutor, projID int
 	}
 
 	// Create a snapshot of project secrets and keys
-	pv := sdk.VariablesFilter(p.Variables, sdk.SecretVariable, sdk.KeyVariable)
+	pv := sdk.VariablesFilter(sdk.FromProjectVariables(p.Variables), sdk.SecretVariable, sdk.KeyVariable)
 	pv = sdk.VariablesPrefix(pv, "cds.proj.")
 	for _, v := range pv {
 		wrSecret := sdk.WorkflowRunSecret{

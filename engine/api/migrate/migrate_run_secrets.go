@@ -95,7 +95,7 @@ func migrateRunSecret(ctx context.Context, db *gorp.DbMap, id int64) error {
 			return err
 		}
 		// Create a snapshot of project secrets and keys
-		pv := sdk.VariablesFilter(proj.Variables, sdk.SecretVariable, sdk.KeyVariable)
+		pv := sdk.VariablesFilter(sdk.FromProjectVariables(proj.Variables), sdk.SecretVariable, sdk.KeyVariable)
 		pv = sdk.VariablesPrefix(pv, "cds.proj.")
 		for _, v := range pv {
 			currentProjectSecrets = append(currentProjectSecrets, sdk.WorkflowRunSecret{
