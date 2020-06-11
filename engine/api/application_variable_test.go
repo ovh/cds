@@ -32,7 +32,7 @@ func Test_getVariableAuditInApplicationHandler(t *testing.T) {
 	}
 
 	// Add variable
-	v := sdk.Variable{
+	v := sdk.ApplicationVariable{
 		Name:  "foo",
 		Type:  "string",
 		Value: "bar",

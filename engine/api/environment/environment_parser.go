@@ -46,7 +46,7 @@ func ParseAndImport(db gorp.SqlExecutor, proj sdk.Project, eenv exportentities.E
 	}
 
 	if oldEnv != nil && oldEnv.FromRepository != "" && opts.FromRepository != oldEnv.FromRepository {
-		return nil, nil, nil, sdk.WrapError(sdk.ErrEnvironmentAsCodeOverride, "unable to update as code environment %s/%s.", oldEnv.FromRepository, opts.FromRepository)
+		return nil, nil, nil, sdk.NewErrorFrom(sdk.ErrEnvironmentAsCodeOverride, "unable to update existing ascode environment from %s", oldEnv.FromRepository)
 	}
 
 	env := new(sdk.Environment)
@@ -71,7 +71,7 @@ func ParseAndImport(db gorp.SqlExecutor, proj sdk.Project, eenv exportentities.E
 			v.Value = secret
 		}
 
-		vv := sdk.Variable{Name: p, Type: v.Type, Value: v.Value}
+		vv := sdk.EnvironmentVariable{Name: p, Type: v.Type, Value: v.Value, EnvironmentID: env.ID}
 		env.Variables = append(env.Variables, vv)
 		envSecrets = append(envSecrets, sdk.Variable{
 			Name:  fmt.Sprintf("cds.env.%s", vv.Name),

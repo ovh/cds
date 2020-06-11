@@ -401,6 +401,10 @@ func (c *websocketClient) send(ctx context.Context, event sdk.Event) (err error)
 		Event:  event,
 	}
 	if err := c.con.WriteJSON(msg); err != nil {
+		// ErrCloseSent is returned when the application writes a message to the connection after sending a close message.
+		if err == websocket.ErrCloseSent {
+			return sdk.WithStack(err)
+		}
 		if strings.Contains(err.Error(), "use of closed network connection") {
 			return sdk.WithStack(err)
 		}

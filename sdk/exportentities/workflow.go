@@ -2,7 +2,6 @@ package exportentities
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/ovh/cds/sdk"
 	v1 "github.com/ovh/cds/sdk/exportentities/v1"
@@ -85,9 +84,9 @@ func ParseWorkflow(exportWorkflow Workflow) (*sdk.Workflow, error) {
 			return workflowV1.GetWorkflow()
 		}
 	default:
-		return nil, sdk.WithStack(fmt.Errorf("exportentities workflow cannot be cast, unknown version %s", exportWorkflow.GetVersion()))
+		return nil, sdk.NewErrorFrom(sdk.ErrWrongRequest, "exportentities workflow cannot be cast, unknown version %s", exportWorkflow.GetVersion())
 	}
-	return nil, sdk.WithStack(fmt.Errorf("exportentities workflow cannot be cast %+v", exportWorkflow))
+	return nil, sdk.WrapError(sdk.NewErrorFrom(sdk.ErrWrongRequest, "exportentities workflow cannot be cast"), "workflow: %+v", exportWorkflow)
 }
 
 func NewWorkflow(ctx context.Context, w sdk.Workflow, opts ...v2.ExportOptions) (Workflow, error) {

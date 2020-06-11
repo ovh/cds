@@ -107,14 +107,15 @@ func LoadNodeRun(db gorp.SqlExecutor, projectkey, workflowname string, number, i
 		r.Coverage = cov
 	}
 	if loadOpts.WithVulnerabilities {
-		vuln, errV := loadVulnerabilityReport(db, r.ID)
-		if errV != nil && !sdk.ErrorIs(errV, sdk.ErrNotFound) {
-			return nil, sdk.WrapError(errV, "LoadNodeRun>Error vulnerability report coverage for run %d", r.ID)
+		vuln, err := loadVulnerabilityReport(db, r.ID)
+		if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
+			return nil, sdk.WrapError(err, "vulnerability report coverage for run %d", r.ID)
 		}
-		r.VulnerabilitiesReport = vuln
+		if vuln != nil {
+			r.VulnerabilitiesReport = *vuln
+		}
 	}
 	return r, nil
-
 }
 
 //LoadNodeRunByNodeJobID load a specific node run on a workflow from a node job run id

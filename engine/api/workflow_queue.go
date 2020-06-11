@@ -171,9 +171,9 @@ func takeJob(ctx context.Context, dbFunc func() *gorp.DbMap, store cache.Store, 
 		return nil, sdk.WrapError(err, "Unable to load workflow run")
 	}
 
-	secrets, errSecret := workflow.LoadDecryptSecrets(ctx, tx, workflowRun, noderun)
-	if errSecret != nil {
-		return nil, sdk.WrapError(errSecret, "Cannot load secrets")
+	secrets, err := workflow.LoadDecryptSecrets(ctx, tx, workflowRun, noderun)
+	if err != nil {
+		return nil, sdk.WrapError(err, "cannot load secrets")
 	}
 
 	// Feed the worker
@@ -182,9 +182,6 @@ func takeJob(ctx context.Context, dbFunc func() *gorp.DbMap, store cache.Store, 
 	wnjri.SubNumber = noderun.SubNumber
 	wnjri.Secrets = secrets
 
-	if err != nil {
-		return nil, err
-	}
 	if err := tx.Commit(); err != nil {
 		return nil, sdk.WithStack(err)
 	}
@@ -258,7 +255,7 @@ func (api *API) postVulnerabilityReportHandler() service.Handler {
 
 		id, err := requestVarInt(r, "permJobID")
 		if err != nil {
-			return sdk.WrapError(err, "invalid id")
+			return err
 		}
 
 		nr, err := workflow.LoadNodeRunByNodeJobID(api.mustDB(), id, workflow.LoadRunOptions{
@@ -287,7 +284,7 @@ func (api *API) postVulnerabilityReportHandler() service.Handler {
 		}
 		defer tx.Rollback() // nolint
 
-		if err := workflow.HandleVulnerabilityReport(ctx, tx, api.Cache, *p, nr, report); err != nil {
+		if err := workflow.SaveVulnerabilityReport(ctx, tx, api.Cache, *p, nr, report); err != nil {
 			return sdk.WrapError(err, "unable to handle report")
 		}
 

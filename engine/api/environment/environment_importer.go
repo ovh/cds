@@ -66,7 +66,7 @@ func Import(db gorp.SqlExecutor, proj sdk.Project, env *sdk.Environment, msgChan
 
 //ImportInto import variables and groups on an existing environment
 func ImportInto(db gorp.SqlExecutor, env *sdk.Environment, into *sdk.Environment, msgChan chan<- sdk.Message, u sdk.Identifiable) error {
-	var updateVar = func(v *sdk.Variable) {
+	var updateVar = func(v *sdk.EnvironmentVariable) {
 		log.Debug("ImportInto> Updating var %s", v.Name)
 
 		varBefore, errV := LoadVariable(db, into.ID, v.Name)
@@ -82,7 +82,7 @@ func ImportInto(db gorp.SqlExecutor, env *sdk.Environment, into *sdk.Environment
 		msgChan <- sdk.NewMessage(sdk.MsgEnvironmentVariableUpdated, v.Name, into.Name)
 	}
 
-	var insertVar = func(v *sdk.Variable) {
+	var insertVar = func(v *sdk.EnvironmentVariable) {
 		log.Debug("ImportInto> Creating var %s", v.Name)
 		if err := InsertVariable(db, into.ID, v, u); err != nil {
 			msgChan <- sdk.NewMessage(sdk.MsgEnvironmentVariableCannotBeCreated, v.Name, into.Name, err)

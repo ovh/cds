@@ -36,6 +36,8 @@ const (
 	RabbitMQHookModelExchangeType = "exchange_type"
 	RabbitMQHookModelExchangeName = "exchange_name"
 	RabbitMQHookModelConsumerTag  = "consumer_tag"
+	SchedulerUsername             = "cds.scheduler"
+	SchedulerFullname             = "CDS Scheduler"
 )
 
 // Here are the default hooks

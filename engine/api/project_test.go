@@ -33,7 +33,7 @@ func TestVariableInProject(t *testing.T) {
 	project1 := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
 
 	// 2. Insert new variable
-	var1 := &sdk.Variable{
+	var1 := &sdk.ProjectVariable{
 		Name:  "var1",
 		Value: "value1",
 		Type:  "PASSWORD",
@@ -62,7 +62,7 @@ func TestVariableInProject(t *testing.T) {
 	}
 
 	// 5. Insert new var
-	var3 := &sdk.Variable{
+	var3 := &sdk.ProjectVariable{
 		Name:  "var2",
 		Value: "value2",
 		Type:  "STRING",

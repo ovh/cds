@@ -2,7 +2,6 @@ package environment
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	"github.com/go-gorp/gorp"
@@ -12,10 +11,10 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
-func loadAllVariables(db gorp.SqlExecutor, query gorpmapping.Query, opts ...gorpmapping.GetOptionFunc) ([]sdk.Variable, error) {
+func loadAllVariables(db gorp.SqlExecutor, query gorpmapping.Query, opts ...gorpmapping.GetOptionFunc) ([]sdk.EnvironmentVariable, error) {
 	var ctx = context.Background()
 	var res []dbEnvironmentVariable
-	vars := make([]sdk.Variable, 0, len(res))
+	vars := make([]sdk.EnvironmentVariable, 0, len(res))
 
 	if err := gorpmapping.GetAll(ctx, db, query, &res, opts...); err != nil {
 		return nil, err
@@ -36,7 +35,7 @@ func loadAllVariables(db gorp.SqlExecutor, query gorpmapping.Query, opts ...gorp
 }
 
 // LoadAllVariables Get all variable for the given environment
-func LoadAllVariables(db gorp.SqlExecutor, envID int64) ([]sdk.Variable, error) {
+func LoadAllVariables(db gorp.SqlExecutor, envID int64) ([]sdk.EnvironmentVariable, error) {
 	query := gorpmapping.NewQuery(`
 		SELECT *
 		FROM environment_variable
@@ -47,7 +46,7 @@ func LoadAllVariables(db gorp.SqlExecutor, envID int64) ([]sdk.Variable, error) 
 }
 
 // LoadAllVariablesWithDecrytion Get all variable for the given environment, it also decrypt all the secure content
-func LoadAllVariablesWithDecrytion(db gorp.SqlExecutor, envID int64) ([]sdk.Variable, error) {
+func LoadAllVariablesWithDecrytion(db gorp.SqlExecutor, envID int64) ([]sdk.EnvironmentVariable, error) {
 	query := gorpmapping.NewQuery(`
 		SELECT *
 		FROM environment_variable
@@ -57,7 +56,7 @@ func LoadAllVariablesWithDecrytion(db gorp.SqlExecutor, envID int64) ([]sdk.Vari
 	return loadAllVariables(db, query, gorpmapping.GetOptions.WithDecryption)
 }
 
-func loadVariable(db gorp.SqlExecutor, q gorpmapping.Query, opts ...gorpmapping.GetOptionFunc) (*sdk.Variable, error) {
+func loadVariable(db gorp.SqlExecutor, q gorpmapping.Query, opts ...gorpmapping.GetOptionFunc) (*sdk.EnvironmentVariable, error) {
 	var v dbEnvironmentVariable
 	found, err := gorpmapping.Get(context.Background(), db, q, &v, opts...)
 	if err != nil {
@@ -80,14 +79,14 @@ func loadVariable(db gorp.SqlExecutor, q gorpmapping.Query, opts ...gorpmapping.
 }
 
 // LoadVariable retrieve a specific variable
-func LoadVariable(db gorp.SqlExecutor, envID int64, varName string) (*sdk.Variable, error) {
+func LoadVariable(db gorp.SqlExecutor, envID int64, varName string) (*sdk.EnvironmentVariable, error) {
 	query := gorpmapping.NewQuery(`SELECT * FROM environment_variable
 			WHERE environment_id = $1 AND name=$2`).Args(envID, varName)
 	return loadVariable(db, query)
 }
 
 // LoadVariableWithDecryption retrieve a specific variable with decrypted content
-func LoadVariableWithDecryption(db gorp.SqlExecutor, envID int64, varID int64, varName string) (*sdk.Variable, error) {
+func LoadVariableWithDecryption(db gorp.SqlExecutor, envID int64, varID int64, varName string) (*sdk.EnvironmentVariable, error) {
 	query := gorpmapping.NewQuery(`SELECT * FROM environment_variable
 			WHERE environment_id = $1 AND id = $2 AND name=$3`).Args(envID, varID, varName)
 	return loadVariable(db, query, gorpmapping.GetOptions.WithDecryption)
@@ -104,20 +103,20 @@ func DeleteAllVariables(db gorp.SqlExecutor, environmentID int64) error {
 }
 
 // InsertVariable Insert a new variable in the given environment
-func InsertVariable(db gorp.SqlExecutor, envID int64, v *sdk.Variable, u sdk.Identifiable) error {
+func InsertVariable(db gorp.SqlExecutor, envID int64, v *sdk.EnvironmentVariable, u sdk.Identifiable) error {
 	//Check variable name
 	rx := sdk.NamePatternRegex
 	if !rx.MatchString(v.Name) {
-		return sdk.NewError(sdk.ErrInvalidName, fmt.Errorf("Invalid variable name. It should match %s", sdk.NamePattern))
+		return sdk.NewErrorFrom(sdk.ErrInvalidName, "variable name should match %s", sdk.NamePattern)
 	}
 
 	if sdk.NeedPlaceholder(v.Type) && v.Value == sdk.PasswordPlaceholder {
-		return fmt.Errorf("You try to insert a placeholder for new variable %s", v.Name)
+		return sdk.NewErrorFrom(sdk.ErrWrongRequest, "you try to insert a placeholder for new variable %s", v.Name)
 	}
 
 	dbVar := newdbEnvironmentVariable(*v, envID)
 	if err := gorpmapping.InsertAndSign(context.Background(), db, &dbVar); err != nil {
-		return sdk.WrapError(err, "Cannot insert variable %s", v.Name)
+		return sdk.WrapError(err, "cannot insert variable %s", v.Name)
 	}
 
 	*v = dbVar.Variable()
@@ -132,16 +131,16 @@ func InsertVariable(db gorp.SqlExecutor, envID int64, v *sdk.Variable, u sdk.Ide
 	}
 
 	if err := insertAudit(db, ava); err != nil {
-		return sdk.WrapError(err, "Cannot insert audit for variable %d", v.ID)
+		return sdk.WrapError(err, "cannot insert audit for variable %d", v.ID)
 	}
 	return nil
 }
 
 // UpdateVariable Update a variable in the given environment
-func UpdateVariable(db gorp.SqlExecutor, envID int64, variable *sdk.Variable, variableBefore *sdk.Variable, u sdk.Identifiable) error {
+func UpdateVariable(db gorp.SqlExecutor, envID int64, variable *sdk.EnvironmentVariable, variableBefore *sdk.EnvironmentVariable, u sdk.Identifiable) error {
 	rx := sdk.NamePatternRegex
 	if !rx.MatchString(variable.Name) {
-		return sdk.NewError(sdk.ErrInvalidName, fmt.Errorf("Invalid variable name. It should match %s", sdk.NamePattern))
+		return sdk.NewErrorFrom(sdk.ErrInvalidName, "variable name should match %s", sdk.NamePattern)
 	}
 
 	dbVar := newdbEnvironmentVariable(*variable, envID)
@@ -167,14 +166,14 @@ func UpdateVariable(db gorp.SqlExecutor, envID int64, variable *sdk.Variable, va
 	}
 
 	if err := insertAudit(db, ava); err != nil {
-		return sdk.WrapError(err, "Cannot insert audit for variable %s", variable.Name)
+		return sdk.WrapError(err, "cannot insert audit for variable %s", variable.Name)
 	}
 
 	return nil
 }
 
 // DeleteVariable Delete a variable from the given pipeline
-func DeleteVariable(db gorp.SqlExecutor, envID int64, variable *sdk.Variable, u sdk.Identifiable) error {
+func DeleteVariable(db gorp.SqlExecutor, envID int64, variable *sdk.EnvironmentVariable, u sdk.Identifiable) error {
 	query := `DELETE FROM environment_variable
 		  WHERE environment_variable.environment_id = $1 AND environment_variable.name = $2`
 	result, err := db.Exec(query, envID, variable.Name)

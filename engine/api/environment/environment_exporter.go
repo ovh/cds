@@ -37,11 +37,11 @@ func Export(ctx context.Context, db gorp.SqlExecutor, key string, envName string
 
 // ExportEnvironment encrypt and export
 func ExportEnvironment(db gorp.SqlExecutor, env sdk.Environment, encryptFunc sdk.EncryptFunc) (exportentities.Environment, error) {
-	var envvars []sdk.Variable
+	var envvars []sdk.EnvironmentVariable
 	for _, v := range env.Variables {
 		switch v.Type {
 		case sdk.KeyVariable:
-			return exportentities.Environment{}, sdk.WrapError(fmt.Errorf("Unsupported variable %s", v.Name), "environment.Export> Unable to export application")
+			return exportentities.Environment{}, sdk.NewErrorFrom(sdk.ErrWrongRequest, "unsupported variable %s", v.Name)
 		case sdk.SecretVariable:
 			content, err := encryptFunc(db, env.ProjectID, fmt.Sprintf("envID:%d:%s", env.ID, v.Name), v.Value)
 			if err != nil {

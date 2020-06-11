@@ -31,9 +31,13 @@ func (api *API) updateAsCodePipelineHandler() service.Handler {
 		branch := FormString(r, "branch")
 		message := FormString(r, "message")
 
+		if branch == "" || message == "" {
+			return sdk.NewErrorFrom(sdk.ErrWrongRequest, "missing branch or message data")
+		}
+
 		var p sdk.Pipeline
 		if err := service.UnmarshalBody(r, &p); err != nil {
-			return sdk.WrapError(err, "Cannot read body")
+			return err
 		}
 
 		// check pipeline name pattern

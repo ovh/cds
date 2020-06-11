@@ -344,7 +344,7 @@ func (w *Workflow) ValidateType() error {
 		}
 	}
 	if len(namesInError) > 0 {
-		return WithStack(fmt.Errorf("wrong type for nodes %v", namesInError))
+		return NewErrorFrom(ErrWrongRequest, "wrong type for nodes %v", namesInError)
 	}
 	return nil
 }

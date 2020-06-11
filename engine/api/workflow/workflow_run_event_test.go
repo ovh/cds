@@ -49,7 +49,7 @@ func TestResyncCommitStatusNotifDisabled(t *testing.T) {
 		},
 	}
 	assert.NoError(t, application.Insert(db, *proj, &app))
-	assert.NoError(t, repositoriesmanager.InsertForApplication(db, &app, proj.Key))
+	assert.NoError(t, repositoriesmanager.InsertForApplication(db, &app))
 
 	tr := true
 	wr := &sdk.WorkflowRun{
@@ -146,7 +146,7 @@ func TestResyncCommitStatusSetStatus(t *testing.T) {
 		},
 	}
 	assert.NoError(t, application.Insert(db, *proj, &app))
-	assert.NoError(t, repositoriesmanager.InsertForApplication(db, &app, proj.Key))
+	assert.NoError(t, repositoriesmanager.InsertForApplication(db, &app))
 
 	tr := true
 	wr := &sdk.WorkflowRun{
@@ -249,7 +249,7 @@ func TestResyncCommitStatusCommentPR(t *testing.T) {
 		},
 	}
 	assert.NoError(t, application.Insert(db, *proj, &app))
-	assert.NoError(t, repositoriesmanager.InsertForApplication(db, &app, proj.Key))
+	assert.NoError(t, repositoriesmanager.InsertForApplication(db, &app))
 
 	tr := true
 	fls := false
@@ -366,7 +366,7 @@ func TestResyncCommitStatusCommentPRNotTerminated(t *testing.T) {
 		},
 	}
 	assert.NoError(t, application.Insert(db, *proj, &app))
-	assert.NoError(t, repositoriesmanager.InsertForApplication(db, &app, proj.Key))
+	assert.NoError(t, repositoriesmanager.InsertForApplication(db, &app))
 
 	tr := true
 	fls := false
@@ -474,7 +474,7 @@ func TestResyncCommitStatusCommitCache(t *testing.T) {
 		},
 	}
 	assert.NoError(t, application.Insert(db, *proj, &app))
-	assert.NoError(t, repositoriesmanager.InsertForApplication(db, &app, proj.Key))
+	assert.NoError(t, repositoriesmanager.InsertForApplication(db, &app))
 
 	tr := true
 	fls := false

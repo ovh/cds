@@ -17,6 +17,8 @@ import (
 	"github.com/ovh/cds/sdk/slug"
 )
 
+const actionPathArg = "action-path"
+
 var actionCmd = cli.Command{
 	Name:  "action",
 	Short: "Manage CDS action",
@@ -94,12 +96,12 @@ var actionUsageCmd = cli.Command{
 	Name:  "usage",
 	Short: "CDS action usage",
 	Args: []cli.Arg{
-		{Name: "action-path"},
+		{Name: actionPathArg},
 	},
 }
 
 func actionUsageRun(v cli.Values) (cli.ListResult, error) {
-	groupName, actionName, err := cli.ParsePath(v.GetString("action-path"))
+	groupName, actionName, err := cli.ParsePath(v.GetString(actionPathArg))
 	if err != nil {
 		return nil, err
 	}
@@ -134,12 +136,12 @@ var actionShowCmd = cli.Command{
 	Name:  "show",
 	Short: "Show a CDS action",
 	Args: []cli.Arg{
-		{Name: "action-path"},
+		{Name: actionPathArg},
 	},
 }
 
 func actionShowRun(v cli.Values) (interface{}, error) {
-	groupName, actionName, err := cli.ParsePath(v.GetString("action-path"))
+	groupName, actionName, err := cli.ParsePath(v.GetString(actionPathArg))
 	if err != nil {
 		return nil, err
 	}
@@ -163,7 +165,7 @@ var actionDeleteCmd = cli.Command{
 	cdsctl action delete myActionNotExist --force
 `,
 	Args: []cli.Arg{
-		{Name: "action-path"},
+		{Name: actionPathArg},
 	},
 	Flags: []cli.Flag{
 		{
@@ -179,7 +181,7 @@ var actionDeleteCmd = cli.Command{
 }
 
 func actionDeleteRun(v cli.Values) error {
-	groupName, actionName, err := cli.ParsePath(v.GetString("action-path"))
+	groupName, actionName, err := cli.ParsePath(v.GetString(actionPathArg))
 	if err != nil {
 		return err
 	}
@@ -257,7 +259,7 @@ var actionExportCmd = cli.Command{
 	Name:  "export",
 	Short: "Export a CDS action",
 	Args: []cli.Arg{
-		{Name: "action-path"},
+		{Name: actionPathArg},
 	},
 	Flags: []cli.Flag{
 		{
@@ -269,7 +271,7 @@ var actionExportCmd = cli.Command{
 }
 
 func actionExportRun(v cli.Values) error {
-	groupName, actionName, err := cli.ParsePath(v.GetString("action-path"))
+	groupName, actionName, err := cli.ParsePath(v.GetString(actionPathArg))
 	if err != nil {
 		return err
 	}

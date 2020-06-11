@@ -49,7 +49,7 @@ func ParseAndImport(ctx context.Context, db gorp.SqlExecutor, cache cache.Store,
 	}
 
 	if oldApp != nil && oldApp.FromRepository != "" && opts.FromRepository != oldApp.FromRepository {
-		return nil, nil, msgList, sdk.WrapError(sdk.ErrApplicationAsCodeOverride, "unable to update as code application %s/%s.", oldApp.FromRepository, opts.FromRepository)
+		return nil, nil, msgList, sdk.NewErrorFrom(sdk.ErrApplicationAsCodeOverride, "unable to update existing ascode application from %s", oldApp.FromRepository)
 	}
 
 	//Craft the application
@@ -73,7 +73,7 @@ func ParseAndImport(ctx context.Context, db gorp.SqlExecutor, cache cache.Store,
 			}
 			v.Value = secret
 		}
-		vv := sdk.Variable{Name: p, Type: v.Type, Value: v.Value}
+		vv := sdk.ApplicationVariable{Name: p, Type: v.Type, Value: v.Value}
 		app.Variables = append(app.Variables, vv)
 
 		if v.Type == sdk.SecretVariable {

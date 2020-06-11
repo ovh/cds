@@ -248,23 +248,6 @@ func Load(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj sdk.
 }
 
 // LoadAndLockByID loads a workflow
-func LoadAndLockByID(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj sdk.Project, id int64, opts LoadOptions) (*sdk.Workflow, error) {
-	dao := opts.GetWorkflowDAO()
-	dao.Filters.WorkflowIDs = []int64{id}
-	dao.Lock = true
-
-	ws, err := dao.Load(ctx, db)
-	if err != nil {
-		return nil, err
-	}
-
-	if !opts.Minimal {
-		if err := CompleteWorkflow(ctx, db, &ws, proj, opts); err != nil {
-			return nil, err
-		}
-	}
-	return &ws, nil
-}
 
 // LoadByID loads a workflow
 func LoadByID(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj sdk.Project, id int64, opts LoadOptions) (*sdk.Workflow, error) {
@@ -308,8 +291,8 @@ func Insert(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj sd
 	w.LastModified = time.Now()
 	if err := db.QueryRow(`INSERT INTO workflow (
 		name, description, icon, project_id, history_length, from_repository, purge_tags, workflow_data, metadata
-	) 
-	VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) 
+	)
+	VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
 	RETURNING id`,
 		w.Name, w.Description, w.Icon, w.ProjectID, w.HistoryLength, w.FromRepository, w.PurgeTags, w.WorkflowData, w.Metadata).Scan(&w.ID); err != nil {
 		return sdk.WrapError(err, "Unable to insert workflow %s/%s", w.ProjectKey, w.Name)
@@ -760,7 +743,7 @@ func CompleteWorkflow(ctx context.Context, db gorp.SqlExecutor, w *sdk.Workflow,
 func CheckValidity(ctx context.Context, db gorp.SqlExecutor, w *sdk.Workflow) error {
 	//Check project is not empty
 	if w.ProjectKey == "" {
-		return sdk.NewError(sdk.ErrWorkflowInvalid, fmt.Errorf("Invalid project key"))
+		return sdk.NewErrorFrom(sdk.ErrWorkflowInvalid, "invalid project key")
 	}
 
 	if w.Icon != "" {
@@ -775,24 +758,24 @@ func CheckValidity(ctx context.Context, db gorp.SqlExecutor, w *sdk.Workflow) er
 	//Check workflow name
 	rx := sdk.NamePatternRegex
 	if !rx.MatchString(w.Name) {
-		return sdk.NewError(sdk.ErrWorkflowInvalid, fmt.Errorf("Invalid workflow name. It should match %s", sdk.NamePattern))
+		return sdk.NewErrorFrom(sdk.ErrWorkflowInvalid, "workflow name should match pattern %s", sdk.NamePattern)
 	}
 
 	//Check refs
 	for _, j := range w.WorkflowData.Joins {
 		if len(j.JoinContext) == 0 {
-			return sdk.NewError(sdk.ErrWorkflowInvalid, fmt.Errorf("Source node references is mandatory"))
+			return sdk.NewErrorFrom(sdk.ErrWorkflowInvalid, "source node references is mandatory")
 		}
 	}
 
 	if w.WorkflowData.Node.Context != nil && w.WorkflowData.Node.Context.DefaultPayload != nil {
 		defaultPayload, err := w.WorkflowData.Node.Context.DefaultPayloadToMap()
 		if err != nil {
-			return sdk.WrapError(err, "cannot transform default payload to map")
+			return sdk.NewErrorFrom(err, "cannot transform default payload to map")
 		}
 		for payloadKey := range defaultPayload {
 			if strings.HasPrefix(payloadKey, "cds.") {
-				return sdk.WrapError(sdk.ErrInvalidPayloadVariable, "cannot have key %s in default payload", payloadKey)
+				return sdk.NewErrorFrom(sdk.ErrInvalidPayloadVariable, "cannot have key %s in default payload", payloadKey)
 			}
 		}
 	}

@@ -166,7 +166,7 @@ func getParentParameters(w *sdk.WorkflowRun, nodeRuns []*sdk.WorkflowNodeRun) ([
 
 		node := w.Workflow.WorkflowData.NodeByID(parentNodeRun.WorkflowNodeID)
 		if node == nil {
-			return nil, sdk.WrapError(fmt.Errorf("Unable to find node %d in workflow", parentNodeRun.WorkflowNodeID), "getParentParameters>")
+			return nil, sdk.WithStack(fmt.Errorf("Unable to find node %d in workflow", parentNodeRun.WorkflowNodeID))
 		}
 		nodeName = node.Name
 

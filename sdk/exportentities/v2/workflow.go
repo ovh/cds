@@ -101,7 +101,7 @@ func NewWorkflow(ctx context.Context, w sdk.Workflow, version string, opts ...Ex
 
 		entry, err := craftNodeEntry(w, *n)
 		if err != nil {
-			return exportedWorkflow, sdk.WrapError(err, "Unable to craft Node entry %s", n.Name)
+			return exportedWorkflow, sdk.WrapError(err, "unable to craft Node entry %s", n.Name)
 		}
 		exportedWorkflow.Workflow[n.Name] = entry
 
@@ -112,7 +112,7 @@ func NewWorkflow(ctx context.Context, w sdk.Workflow, version string, opts ...Ex
 
 			m := sdk.GetBuiltinHookModelByName(h.HookModelName)
 			if m == nil {
-				return exportedWorkflow, sdk.WrapError(sdk.ErrNotFound, "unable to find hook model %s", h.HookModelName)
+				return exportedWorkflow, sdk.NewErrorFrom(sdk.ErrNotFound, "unable to find hook model %s", h.HookModelName)
 			}
 			pipHook := HookEntry{
 				Model:      h.HookModelName,
@@ -135,7 +135,7 @@ func NewWorkflow(ctx context.Context, w sdk.Workflow, version string, opts ...Ex
 
 	for _, f := range opts {
 		if err := f(w, &exportedWorkflow); err != nil {
-			return exportedWorkflow, sdk.WrapError(err, "Unable to run function")
+			return exportedWorkflow, sdk.WrapError(err, "unable to run function")
 		}
 	}
 
@@ -239,7 +239,7 @@ func craftNodeEntry(w sdk.Workflow, n sdk.Node) (NodeEntry, error) {
 			enc.Formatters = nil
 			m, err := enc.ToMap(n.Context.DefaultPayload)
 			if err != nil {
-				return entry, sdk.WrapError(err, "Unable to encode payload")
+				return entry, sdk.WrapError(err, "unable to encode payload")
 			}
 			entry.Payload = m
 		}
@@ -341,10 +341,10 @@ func (w Workflow) GetWorkflow() (*sdk.Workflow, error) {
 	wf.ProjectIntegrations = make(map[int64]sdk.ProjectIntegration)
 
 	if err := w.CheckValidity(); err != nil {
-		return nil, sdk.WrapError(err, "Unable to check validity")
+		return nil, sdk.WrapError(err, "unable to check validity")
 	}
 	if err := w.CheckDependencies(); err != nil {
-		return nil, sdk.WrapError(err, "Unable to check dependencies")
+		return nil, sdk.WrapError(err, "unable to check dependencies")
 	}
 	wf.PurgeTags = w.PurgeTags
 	if len(w.Metadata) > 0 {
@@ -368,7 +368,7 @@ func (w Workflow) GetWorkflow() (*sdk.Workflow, error) {
 			entry.ID = fakeID
 			ok, err := entry.processNode(name, wf)
 			if err != nil {
-				return nil, sdk.WrapError(err, "Unable to process node")
+				return nil, sdk.WrapError(err, "unable to process node")
 			}
 			if ok {
 				delete(w.Workflow, name)
@@ -404,19 +404,18 @@ func (w Workflow) GetWorkflow() (*sdk.Workflow, error) {
 func (w Workflow) CheckValidity() error {
 	mError := new(sdk.MultiError)
 
-	//Check valid application name
 	rx := sdk.NamePatternRegex
 	if !rx.MatchString(w.Name) {
-		mError.Append(fmt.Errorf("workflow name %s do not respect pattern %s", w.Name, sdk.NamePattern))
+		mError.Append(sdk.NewErrorFrom(sdk.ErrWrongRequest, "workflow name %s do not respect pattern %s", w.Name, sdk.NamePattern))
 	}
 
 	for name := range w.Hooks {
 		if _, ok := w.Workflow[name]; !ok {
-			mError.Append(fmt.Errorf("error: wrong usage: invalid hook on %s", name))
+			mError.Append(sdk.NewErrorFrom(sdk.ErrWrongRequest, "invalid hook on %s", name))
 		}
 	}
 
-	//Checks map notifications validity
+	// Checks map notifications validity
 	mError.Append(CheckWorkflowNotificationsValidity(w))
 
 	if mError.IsEmpty() {
@@ -429,7 +428,7 @@ func (w Workflow) CheckDependencies() error {
 	mError := new(sdk.MultiError)
 	for s, e := range w.Workflow {
 		if err := e.checkDependencies(s, w); err != nil {
-			mError.Append(fmt.Errorf("Error: %s invalid: %v", s, err))
+			mError.Append(err)
 		}
 	}
 
@@ -448,7 +447,7 @@ nextDep:
 				continue nextDep
 			}
 		}
-		mError.Append(fmt.Errorf("the pipeline %s depends on an unknown pipeline: %s", nodeName, d))
+		mError.Append(sdk.NewErrorFrom(sdk.ErrWrongRequest, "the pipeline %s depends on an unknown pipeline: %s", nodeName, d))
 	}
 	if mError.IsEmpty() {
 		return nil
@@ -631,7 +630,7 @@ func (e *NodeEntry) getNode(name string) (*sdk.Node, error) {
 
 	if len(e.Payload) > 0 {
 		if len(e.DependsOn) > 0 {
-			return nil, sdk.WrapError(sdk.ErrInvalidNodeDefaultPayload, "Default payload cannot be set on another node than the first one (node : %s)", name)
+			return nil, sdk.NewErrorFrom(sdk.ErrInvalidNodeDefaultPayload, "default payload cannot be set on another node than the first one (node: %s)", name)
 		}
 		node.Context.DefaultPayload = e.Payload
 	}
@@ -654,7 +653,7 @@ func (e *NodeEntry) getNode(name string) (*sdk.Node, error) {
 				Variable: "cds.manual",
 			})
 		default:
-			return nil, fmt.Errorf("Unsupported when condition %s", w)
+			return nil, sdk.NewErrorFrom(sdk.ErrWrongRequest, "unsupported when condition %s", w)
 		}
 	}
 

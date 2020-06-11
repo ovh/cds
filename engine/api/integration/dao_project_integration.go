@@ -205,13 +205,6 @@ func UpdateIntegration(db gorp.SqlExecutor, pp sdk.ProjectIntegration) error {
 }
 
 // LoadIntegrationsByWorkflowID load integration integrations by Workflow id
-func LoadIntegrationsByWorkflowID(db gorp.SqlExecutor, id int64, clearPassword bool) ([]sdk.ProjectIntegration, error) {
-	query := gorpmapping.NewQuery(`SELECT project_integration.*
-	FROM project_integration
-		JOIN workflow_project_integration ON workflow_project_integration.project_integration_id = project_integration.id
-	WHERE workflow_project_integration.workflow_id = $1`).Args(id)
-	return loadAll(db, query)
-}
 
 // AddOnWorkflow link a project integration on a workflow
 func AddOnWorkflow(db gorp.SqlExecutor, workflowID int64, projectIntegrationID int64) error {

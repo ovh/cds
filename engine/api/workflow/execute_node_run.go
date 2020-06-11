@@ -96,7 +96,7 @@ func syncTakeJobInNodeRun(ctx context.Context, db gorp.SqlExecutor, n *sdk.Workf
 
 	// Save the node run in database
 	if err := updateNodeRunStatusAndStage(db, n); err != nil {
-		return nil, sdk.WrapError(fmt.Errorf("Unable to update node id=%d at status %s. err:%s", n.ID, n.Status, err), "workflow.syncTakeJobInNodeRun> Unable to execute node")
+		return nil, sdk.WrapError(err, "unable to update node id=%d at status %s", n.ID, n.Status)
 	}
 	return report, nil
 }
@@ -848,13 +848,13 @@ func stopWorkflowNodeOutGoingHook(ctx context.Context, dbFunc func() *gorp.DbMap
 
 	srvs, err := services.LoadAllByType(ctx, db, services.TypeHooks)
 	if err != nil {
-		return fmt.Errorf("unable to get hooks services: %v", err)
+		return sdk.WrapError(err, "unable to get hooks services")
 	}
 
 	if nodeRun.HookExecutionID != "" {
 		path := fmt.Sprintf("/task/%s/execution/%d/stop", nodeRun.HookExecutionID, nodeRun.HookExecutionTimeStamp)
 		if _, _, err := services.NewClient(db, srvs).DoJSONRequest(ctx, "POST", path, nil, nil); err != nil {
-			return fmt.Errorf("unable to stop task execution: %v", err)
+			return sdk.WrapError(err, "unable to stop task execution")
 		}
 	}
 
@@ -1090,7 +1090,7 @@ func getVCSInfos(ctx context.Context, db gorp.SqlExecutor, store cache.Store, pr
 
 		//If it's not a fork; reset this value to the application repository
 		if !forkFound {
-			return nil, sdk.NewError(sdk.ErrNotFound, fmt.Errorf("repository %s not found", vcsInfos.Repository))
+			return nil, sdk.NewErrorFrom(sdk.ErrNotFound, "repository %s not found", vcsInfos.Repository)
 		}
 	}
 

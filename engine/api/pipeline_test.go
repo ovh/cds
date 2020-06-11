@@ -162,7 +162,7 @@ func TestUpdateAsCodePipelineHandler(t *testing.T) {
 		FromRepository:     "myrepofrom",
 	}
 	assert.NoError(t, application.Insert(db, *proj, &app))
-	assert.NoError(t, repositoriesmanager.InsertForApplication(db, &app, proj.Key))
+	assert.NoError(t, repositoriesmanager.InsertForApplication(db, &app))
 
 	repoModel, err := workflow.LoadHookModelByName(db, sdk.RepositoryWebHookModelName)
 	assert.NoError(t, err)
@@ -176,6 +176,10 @@ func TestUpdateAsCodePipelineHandler(t *testing.T) {
 		"pipelineKey":    pip.Name,
 	})
 	req := assets.NewJWTAuthentifiedRequest(t, pass, "PUT", uri, pip)
+	q := req.URL.Query()
+	q.Set("branch", "master")
+	q.Set("message", "my message")
+	req.URL.RawQuery = q.Encode()
 
 	// Do the request
 	wr := httptest.NewRecorder()

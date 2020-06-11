@@ -1,17 +1,13 @@
 package project
 
 import (
-	"context"
 	"database/sql"
 	"encoding/json"
 
 	"github.com/go-gorp/gorp"
-	yaml "gopkg.in/yaml.v2"
 
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
-	"github.com/ovh/cds/engine/api/secret"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 )
 
 type dbProject sdk.Project
@@ -47,7 +43,7 @@ func (e dbProjectVariable) Canonical() gorpmapping.CanonicalForms {
 	}
 }
 
-func newDBProjectVariable(v sdk.Variable, projID int64) dbProjectVariable {
+func newDBProjectVariable(v sdk.ProjectVariable, projID int64) dbProjectVariable {
 	if sdk.NeedPlaceholder(v.Type) {
 		return dbProjectVariable{
 			ID:          v.ID,
@@ -66,21 +62,23 @@ func newDBProjectVariable(v sdk.Variable, projID int64) dbProjectVariable {
 	}
 }
 
-func (e dbProjectVariable) Variable() sdk.Variable {
+func (e dbProjectVariable) Variable() sdk.ProjectVariable {
 	if sdk.NeedPlaceholder(e.Type) {
-		return sdk.Variable{
-			ID:    e.ID,
-			Name:  e.Name,
-			Value: e.CipherValue,
-			Type:  e.Type,
+		return sdk.ProjectVariable{
+			ID:        e.ID,
+			Name:      e.Name,
+			Value:     e.CipherValue,
+			Type:      e.Type,
+			ProjectID: e.ProjectID,
 		}
 	}
 
-	return sdk.Variable{
-		ID:    e.ID,
-		Name:  e.Name,
-		Value: e.ClearValue,
-		Type:  e.Type,
+	return sdk.ProjectVariable{
+		ID:        e.ID,
+		Name:      e.Name,
+		Value:     e.ClearValue,
+		Type:      e.Type,
+		ProjectID: e.ProjectID,
 	}
 }
 
@@ -93,53 +91,6 @@ func init() {
 }
 
 // PostGet is a db hook
-func (p *dbProject) PostGet(db gorp.SqlExecutor) error {
-	var fields = struct {
-		Metadata   sql.NullString `db:"metadata"`
-		VCSServers []byte         `db:"vcs_servers"`
-	}{}
-
-	if err := db.QueryRow("select metadata,vcs_servers from project where id = $1", p.ID).Scan(&fields.Metadata, &fields.VCSServers); err != nil {
-		return err
-	}
-
-	if err := gorpmapping.JSONNullString(fields.Metadata, &p.Metadata); err != nil {
-		return err
-	}
-
-	if len(fields.VCSServers) > 0 {
-		clearVCSServer, err := secret.Decrypt([]byte(fields.VCSServers))
-		if err != nil {
-			return err
-		}
-
-		if len(clearVCSServer) > 0 {
-			if err := yaml.Unmarshal(clearVCSServer, &p.DeprecatedVCSServers); err != nil {
-				log.Error(context.TODO(), "Unable to load project %d: %v", p.ID, err)
-			}
-		}
-	}
-
-	return nil
-}
-
-// PostUpdate is a db hook
-func (p *dbProject) PostUpdate(db gorp.SqlExecutor) error {
-	bm, errm := json.Marshal(p.Metadata)
-	if errm != nil {
-		return errm
-	}
-
-	_, err := db.Exec("update project set metadata = $2 where id = $1", p.ID, bm)
-	return err
-}
-
-// PostInsert is a db hook
-func (p *dbProject) PostInsert(db gorp.SqlExecutor) error {
-	return p.PostUpdate(db)
-}
-
-// PostGet is a db hook
 func (pva *dbProjectVariableAudit) PostGet(db gorp.SqlExecutor) error {
 	var before, after sql.NullString
 	query := "SELECT variable_before, variable_after from project_variable_audit WHERE id = $1"
@@ -148,7 +99,7 @@ func (pva *dbProjectVariableAudit) PostGet(db gorp.SqlExecutor) error {
 	}
 
 	if before.Valid {
-		vBefore := &sdk.Variable{}
+		vBefore := &sdk.ProjectVariable{}
 		if err := json.Unmarshal([]byte(before.String), vBefore); err != nil {
 			return err
 		}
@@ -160,7 +111,7 @@ func (pva *dbProjectVariableAudit) PostGet(db gorp.SqlExecutor) error {
 	}
 
 	if after.Valid {
-		vAfter := &sdk.Variable{}
+		vAfter := &sdk.ProjectVariable{}
 		if err := json.Unmarshal([]byte(after.String), vAfter); err != nil {
 			return err
 		}

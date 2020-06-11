@@ -230,15 +230,15 @@ func (c *vcsClient) doJSONRequest(ctx context.Context, method, path string, in i
 	if code >= 400 {
 		switch code {
 		case http.StatusUnauthorized:
-			err = sdk.WrapError(sdk.ErrNoReposManagerClientAuth, "%s", err)
+			err = sdk.NewError(sdk.ErrNoReposManagerClientAuth, err)
 		case http.StatusBadRequest:
-			err = sdk.WrapError(sdk.ErrWrongRequest, "%s", err)
+			err = sdk.NewError(sdk.ErrWrongRequest, err)
 		case http.StatusNotFound:
-			err = sdk.WrapError(sdk.ErrNotFound, "%s", err)
+			err = sdk.NewError(sdk.ErrNotFound, err)
 		case http.StatusForbidden:
-			err = sdk.WrapError(sdk.ErrForbidden, "%s", err)
+			err = sdk.NewError(sdk.ErrForbidden, err)
 		default:
-			err = sdk.WrapError(sdk.ErrUnknownError, "%s", err)
+			err = sdk.NewError(sdk.ErrUnknownError, err)
 		}
 	}
 
@@ -455,20 +455,16 @@ func (c *vcsClient) PullRequestCreate(ctx context.Context, fullname string, pr s
 
 func (c *vcsClient) CreateHook(ctx context.Context, fullname string, hook *sdk.VCSHook) error {
 	path := fmt.Sprintf("/vcs/%s/repos/%s/hooks", c.name, fullname)
-	_, err := c.doJSONRequest(ctx, "POST", path, hook, hook)
-	if err != nil {
-		log.Error(ctx, "CreateHook> %v", err)
-		return sdk.NewErrorFrom(sdk.ErrUnknownError, "unable to create hook on repository %s from %s", fullname, c.name)
+	if _, err := c.doJSONRequest(ctx, "POST", path, hook, hook); err != nil {
+		return sdk.NewErrorFrom(err, "unable to create hook on repository %s from %s", fullname, c.name)
 	}
 	return nil
 }
 
 func (c *vcsClient) UpdateHook(ctx context.Context, fullname string, hook *sdk.VCSHook) error {
 	path := fmt.Sprintf("/vcs/%s/repos/%s/hooks", c.name, fullname)
-	_, err := c.doJSONRequest(ctx, "PUT", path, hook, hook)
-	if err != nil {
-		log.Error(ctx, "UpdateHook> %v", err)
-		return sdk.NewErrorFrom(sdk.ErrUnknownError, "unable to update hook %s on repository %s from %s", hook.ID, fullname, c.name)
+	if _, err := c.doJSONRequest(ctx, "PUT", path, hook, hook); err != nil {
+		return sdk.NewErrorFrom(err, "unable to update hook %s on repository %s from %s", hook.ID, fullname, c.name)
 	}
 	return nil
 }

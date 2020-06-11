@@ -317,7 +317,7 @@ func TestManualRun3(t *testing.T) {
 	proj := assets.InsertTestProject(t, db, cache, key, key)
 
 	// Add variable
-	v := sdk.Variable{
+	v := sdk.ProjectVariable{
 		Name:  "foo",
 		Type:  sdk.SecretVariable,
 		Value: "bar",

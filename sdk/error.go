@@ -591,6 +591,21 @@ func (e Error) Error() string {
 	return message
 }
 
+func (e Error) printLight() string {
+	var message string
+	if e.Message != "" {
+		message = e.Message
+	} else if en, ok := errorsAmericanEnglish[e.ID]; ok {
+		message = en
+	} else {
+		message = errorsAmericanEnglish[ErrUnknownError.ID]
+	}
+	if e.From != "" {
+		message = fmt.Sprintf("%s: %s", message, e.From)
+	}
+	return message
+}
+
 func (e Error) Translate(al string) string {
 	acceptedLanguages, _, err := language.ParseAcceptLanguage(al)
 	if err != nil {
@@ -691,11 +706,16 @@ func (s *stack) String() string {
 		if strings.HasPrefix(name, "github.com/ovh/cds") {
 			sp := strings.Split(name, "/")
 			sp = strings.Split(sp[len(sp)-1], ".")
+			var name string
 			// check if it's a struct or package func
 			if strings.HasPrefix(sp[1], "(") {
-				names = append(names, sp[2])
+				name = sp[2]
 			} else {
-				names = append(names, sp[1])
+				name = sp[1]
+			}
+			ignoredNames := StringSlice{"NewError", "NewErrorFrom", "WithStack", "WrapError", "Append"}
+			if !ignoredNames.Contains(name) {
+				names = append(names, name)
 			}
 		}
 	}
@@ -732,8 +752,17 @@ func NewError(httpError Error, err error) error {
 		return e
 	}
 
+	if e, ok := err.(*MultiError); ok {
+		var ss []string
+		for i := range *e {
+			ss = append(ss, ExtractHTTPError((*e)[i], "").printLight())
+		}
+		httpError.From = strings.Join(ss, ", ")
+	} else {
+		httpError.From = err.Error()
+	}
+
 	// if it's a library error create a new error with stack
-	httpError.From = err.Error()
 	return errorWithStack{
 		root:      errors.WithStack(err),
 		stack:     callers(),
@@ -795,6 +824,11 @@ func WithStack(err error) error {
 		return nil
 	}
 
+	// if it's a MultiError we want to preserve the from info from errors
+	if _, ok := err.(*MultiError); ok {
+		err = NewError(ErrUnknownError, err)
+	}
+
 	// if it's already a CDS error do not override the stack
 	if e, ok := err.(errorWithStack); ok {
 		return e
@@ -831,6 +865,13 @@ func ExtractHTTPError(source error, al string) Error {
 
 	// try to recognize http error from source
 	switch e := source.(type) {
+	case *MultiError:
+		httpError = ErrUnknownError
+		var ss []string
+		for i := range *e {
+			ss = append(ss, ExtractHTTPError((*e)[i], al).printLight())
+		}
+		httpError.Message = strings.Join(ss, ", ")
 	case errorWithStack:
 		httpError = e.httpError
 	case Error:
@@ -870,7 +911,7 @@ func DecodeError(data []byte) error {
 		return nil
 	}
 
-	if e.Message == "" {
+	if e.ID == 0 {
 		return nil
 	}
 
@@ -910,14 +951,11 @@ func ErrorIsUnknown(err error) bool {
 type MultiError []error
 
 func (e *MultiError) Error() string {
-	var s string
+	var ss []string
 	for i := range *e {
-		if i > 0 {
-			s += ", "
-		}
-		s += (*e)[i].Error()
+		ss = append(ss, (*e)[i].Error())
 	}
-	return s
+	return strings.Join(ss, ", ")
 }
 
 // Join joins errors from MultiError to another errors MultiError
@@ -937,7 +975,7 @@ func (e *MultiError) Append(err error) {
 			e.Append((*mError)[i])
 		}
 	} else {
-		*e = append(*e, err)
+		*e = append(*e, WithStack(err))
 	}
 }
 

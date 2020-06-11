@@ -414,6 +414,10 @@ func (api *API) postTemplateApplyHandler() service.Handler {
 						return sdk.NewErrorFrom(sdk.ErrWrongRequest, "cannot find the root application of the workflow")
 					}
 
+					if branch == "" || message == "" {
+						return sdk.NewErrorFrom(sdk.ErrWrongRequest, "missing branch or message data")
+					}
+
 					ope, err := operation.PushOperationUpdate(ctx, api.mustDB(), api.Cache, *p, data, rootApp.VCSServer, rootApp.RepositoryFullname, branch, message, rootApp.RepositoryStrategy, consumer)
 					if err != nil {
 						return err
@@ -639,6 +643,14 @@ func (api *API) postTemplateBulkHandler() service.Handler {
 							}
 							if rootApp == nil {
 								if errD := errorDefer(sdk.NewErrorFrom(sdk.ErrWrongRequest, "cannot find the root application of the workflow")); errD != nil {
+									log.Error(ctx, "%v", errD)
+									return
+								}
+								continue
+							}
+
+							if branch == "" || message == "" {
+								if errD := errorDefer(sdk.NewErrorFrom(sdk.ErrWrongRequest, "missing branch or message data")); errD != nil {
 									log.Error(ctx, "%v", errD)
 									return
 								}

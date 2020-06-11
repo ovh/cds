@@ -30,26 +30,25 @@ type Project struct {
 	Created      time.Time `json:"created" yaml:"created" db:"created" `
 	LastModified time.Time `json:"last_modified" yaml:"last_modified" db:"last_modified"`
 	// aggregates
-	Workflows            []Workflow             `json:"workflows,omitempty" yaml:"workflows,omitempty" db:"-" cli:"-"`
-	WorkflowNames        IDNames                `json:"workflow_names,omitempty" yaml:"workflow_names,omitempty" db:"-" cli:"-"`
-	Pipelines            []Pipeline             `json:"pipelines,omitempty" yaml:"pipelines,omitempty" db:"-"  cli:"-"`
-	PipelineNames        IDNames                `json:"pipeline_names,omitempty" yaml:"pipeline_names,omitempty" db:"-"  cli:"-"`
-	Applications         []Application          `json:"applications,omitempty" yaml:"applications,omitempty" db:"-"  cli:"-"`
-	ApplicationNames     IDNames                `json:"application_names,omitempty" yaml:"application_names,omitempty" db:"-"  cli:"-"`
-	ProjectGroups        []GroupPermission      `json:"groups,omitempty" yaml:"permissions,omitempty" db:"-"  cli:"-"`
-	Variables            []Variable             `json:"variables,omitempty" yaml:"variables,omitempty" db:"-"  cli:"-"`
-	Environments         []Environment          `json:"environments,omitempty" yaml:"environments,omitempty" db:"-"  cli:"-"`
-	EnvironmentNames     IDNames                `json:"environment_names,omitempty" yaml:"environment_names,omitempty" db:"-"  cli:"-"`
-	Labels               []Label                `json:"labels,omitempty" yaml:"labels,omitempty" db:"-"  cli:"-"`
-	Permissions          Permissions            `json:"permissions" yaml:"-" db:"-"  cli:"-"`
-	Metadata             Metadata               `json:"metadata" yaml:"metadata" db:"-" cli:"-"`
-	Keys                 []ProjectKey           `json:"keys" yaml:"keys" db:"-" cli:"-"`
-	DeprecatedVCSServers []ProjectVCSServer     `json:"-" yaml:"-" db:"-" cli:"-"`
-	VCSServers           []ProjectVCSServerLink `json:"vcs_servers" yaml:"vcs_servers" db:"-" cli:"-"`
-	Integrations         []ProjectIntegration   `json:"integrations" yaml:"integrations" db:"-" cli:"-"`
-	Features             map[string]bool        `json:"features" yaml:"features" db:"-" cli:"-"`
-	Favorite             bool                   `json:"favorite" yaml:"favorite" db:"-" cli:"favorite"`
-	URLs                 URL                    `json:"urls" yaml:"-" db:"-" cli:"-"`
+	Workflows        []Workflow             `json:"workflows,omitempty" yaml:"workflows,omitempty" db:"-" cli:"-"`
+	WorkflowNames    IDNames                `json:"workflow_names,omitempty" yaml:"workflow_names,omitempty" db:"-" cli:"-"`
+	Pipelines        []Pipeline             `json:"pipelines,omitempty" yaml:"pipelines,omitempty" db:"-"  cli:"-"`
+	PipelineNames    IDNames                `json:"pipeline_names,omitempty" yaml:"pipeline_names,omitempty" db:"-"  cli:"-"`
+	Applications     []Application          `json:"applications,omitempty" yaml:"applications,omitempty" db:"-"  cli:"-"`
+	ApplicationNames IDNames                `json:"application_names,omitempty" yaml:"application_names,omitempty" db:"-"  cli:"-"`
+	ProjectGroups    []GroupPermission      `json:"groups,omitempty" yaml:"permissions,omitempty" db:"-"  cli:"-"`
+	Variables        []ProjectVariable      `json:"variables,omitempty" yaml:"variables,omitempty" db:"-"  cli:"-"`
+	Environments     []Environment          `json:"environments,omitempty" yaml:"environments,omitempty" db:"-"  cli:"-"`
+	EnvironmentNames IDNames                `json:"environment_names,omitempty" yaml:"environment_names,omitempty" db:"-"  cli:"-"`
+	Labels           []Label                `json:"labels,omitempty" yaml:"labels,omitempty" db:"-"  cli:"-"`
+	Permissions      Permissions            `json:"permissions" yaml:"-" db:"-"  cli:"-"`
+	Metadata         Metadata               `json:"metadata" yaml:"metadata" db:"metadata" cli:"-"`
+	Keys             []ProjectKey           `json:"keys" yaml:"keys" db:"-" cli:"-"`
+	VCSServers       []ProjectVCSServerLink `json:"vcs_servers" yaml:"vcs_servers" db:"-" cli:"-"`
+	Integrations     []ProjectIntegration   `json:"integrations" yaml:"integrations" db:"-" cli:"-"`
+	Features         map[string]bool        `json:"features" yaml:"features" db:"-" cli:"-"`
+	Favorite         bool                   `json:"favorite" yaml:"favorite" db:"-" cli:"favorite"`
+	URLs             URL                    `json:"urls" yaml:"-" db:"-" cli:"-"`
 }
 
 type Permissions struct {
@@ -252,14 +251,14 @@ func (vcs ProjectVCSServer) Hash() uint64 {
 
 // ProjectVariableAudit represents an audit on a project variable
 type ProjectVariableAudit struct {
-	ID             int64     `json:"id" yaml:"-" db:"id"`
-	ProjectID      int64     `json:"project_id" yaml:"-" db:"project_id"`
-	VariableID     int64     `json:"variable_id" yaml:"-" db:"variable_id"`
-	Type           string    `json:"type" yaml:"-" db:"type"`
-	VariableBefore *Variable `json:"variable_before,omitempty" yaml:"-" db:"-"`
-	VariableAfter  Variable  `json:"variable_after,omitempty" yaml:"-" db:"-"`
-	Versionned     time.Time `json:"versionned" yaml:"-" db:"versionned"`
-	Author         string    `json:"author" yaml:"-" db:"author"`
+	ID             int64            `json:"id" yaml:"-" db:"id"`
+	ProjectID      int64            `json:"project_id" yaml:"-" db:"project_id"`
+	VariableID     int64            `json:"variable_id" yaml:"-" db:"variable_id"`
+	Type           string           `json:"type" yaml:"-" db:"type"`
+	VariableBefore *ProjectVariable `json:"variable_before,omitempty" yaml:"-" db:"-"`
+	VariableAfter  ProjectVariable  `json:"variable_after,omitempty" yaml:"-" db:"-"`
+	Versionned     time.Time        `json:"versionned" yaml:"-" db:"versionned"`
+	Author         string           `json:"author" yaml:"-" db:"author"`
 }
 
 // Metadata represents metadata

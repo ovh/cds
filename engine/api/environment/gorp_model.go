@@ -41,7 +41,7 @@ func (e dbEnvironmentVariable) Canonical() gorpmapping.CanonicalForms {
 	}
 }
 
-func newdbEnvironmentVariable(v sdk.Variable, projID int64) dbEnvironmentVariable {
+func newdbEnvironmentVariable(v sdk.EnvironmentVariable, projID int64) dbEnvironmentVariable {
 	if sdk.NeedPlaceholder(v.Type) {
 		return dbEnvironmentVariable{
 			ID:            v.ID,
@@ -60,21 +60,23 @@ func newdbEnvironmentVariable(v sdk.Variable, projID int64) dbEnvironmentVariabl
 	}
 }
 
-func (e dbEnvironmentVariable) Variable() sdk.Variable {
+func (e dbEnvironmentVariable) Variable() sdk.EnvironmentVariable {
 	if sdk.NeedPlaceholder(e.Type) {
-		return sdk.Variable{
-			ID:    e.ID,
-			Name:  e.Name,
-			Value: e.CipherValue,
-			Type:  e.Type,
+		return sdk.EnvironmentVariable{
+			ID:            e.ID,
+			Name:          e.Name,
+			Value:         e.CipherValue,
+			Type:          e.Type,
+			EnvironmentID: e.EnvironmentID,
 		}
 	}
 
-	return sdk.Variable{
-		ID:    e.ID,
-		Name:  e.Name,
-		Value: e.ClearValue,
-		Type:  e.Type,
+	return sdk.EnvironmentVariable{
+		ID:            e.ID,
+		Name:          e.Name,
+		Value:         e.ClearValue,
+		Type:          e.Type,
+		EnvironmentID: e.EnvironmentID,
 	}
 }
 
@@ -93,7 +95,7 @@ func (eva *dbEnvironmentVariableAudit) PostGet(db gorp.SqlExecutor) error {
 	}
 
 	if before.Valid {
-		vBefore := &sdk.Variable{}
+		vBefore := &sdk.EnvironmentVariable{}
 		if err := json.Unmarshal([]byte(before.String), vBefore); err != nil {
 			return sdk.WithStack(err)
 		}
@@ -105,7 +107,7 @@ func (eva *dbEnvironmentVariableAudit) PostGet(db gorp.SqlExecutor) error {
 	}
 
 	if after.Valid {
-		vAfter := &sdk.Variable{}
+		vAfter := &sdk.EnvironmentVariable{}
 		if err := json.Unmarshal([]byte(after.String), vAfter); err != nil {
 			return sdk.WithStack(err)
 		}
