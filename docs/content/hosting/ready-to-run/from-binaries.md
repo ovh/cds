@@ -103,7 +103,17 @@ curl http://localhost:8081/mon/version
 curl http://localhost:8081/mon/status
 ```
 
-## Launch CDS UI & Signup
+## Launch Signup & CDS UI
+
+Signup with cdsctl:
+
+```bash
+export INIT_TOKEN=`./cds-engine config init-token --config conf.toml`
+./cdsctl signup --api-url http://localhost:8081 --email admin@localhost.local --username admin --fullname admin
+```
+
+If you don't have email service configured you just have to check your CDS API logs to have the confirmation link.
+
 
 ```bash
 cd $HOME/cds
@@ -111,14 +121,7 @@ cd $HOME/cds
 ./cds-engine start ui --config conf.toml
 ```
 
-Then, open a browser on http://localhost:8080/ . You have to signup your first CDS user. It will be an administrator on CDS. In order to do that, just go on UI and click on signup or use `cdsctl signup`. If you don't have email service configured you just have to check your CDS API logs to have the confirmation link.
-
-Example of signup with cdsctl:
-
-```bash
-export INIT_TOKEN=`./cds-engine config init-token --config conf.toml`
-./cdsctl signup --api-url http://localhost:8081 --email admin@localhost.local --username admin --fullname admin
-```
+Then, open a browser on http://localhost:8080/ .
 
 ## Launch CDS Local Hatchery
 
