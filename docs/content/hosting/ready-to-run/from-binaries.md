@@ -76,7 +76,7 @@ You can edit the section `api.database` in `conf.toml` file if needed.
 If it's just for test purpose, you can start a postgreSQL database with docker, as:
 
 ```bash
-docker run --name cds-db -e POSTGRES_PASSWORD=cds -e POSTGRES_USER=cds -e POSTGRES_DB=cds -p 127.0.0.1:5432:5432 -d postgres:9.5
+docker run --name cds-db -e POSTGRES_PASSWORD=cds -e POSTGRES_USER=cds -e POSTGRES_DB=cds -p 127.0.0.1:5432:5432 -d postgres:9.6
 ```
 
 ```bash
