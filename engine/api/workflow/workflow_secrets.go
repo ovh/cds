@@ -18,11 +18,11 @@ func RetrieveSecrets(db gorp.SqlExecutor, wf sdk.Workflow) (*PushSecrets, error)
 
 	for _, app := range wf.Applications {
 		secretsVariables := make([]sdk.Variable, 0)
-		vars, err := application.LoadAllVariablesWithDecrytion(db, app.ID)
+		appVars, err := application.LoadAllVariablesWithDecrytion(db, app.ID)
 		if err != nil {
 			return nil, err
 		}
-		vars = sdk.VariablesFilter(vars, sdk.SecretVariable, sdk.KeyVariable)
+		vars := sdk.VariablesFilter(sdk.FromAplicationVariables(appVars), sdk.SecretVariable, sdk.KeyVariable)
 		for _, v := range vars {
 			secretsVariables = append(secretsVariables, sdk.Variable{
 				Name:  fmt.Sprintf("cds.app.%s", v.Name),
@@ -62,11 +62,11 @@ func RetrieveSecrets(db gorp.SqlExecutor, wf sdk.Workflow) (*PushSecrets, error)
 
 	for _, env := range wf.Environments {
 		secretsVariables := make([]sdk.Variable, 0)
-		vars, err := environment.LoadAllVariablesWithDecrytion(db, env.ID)
+		envVars, err := environment.LoadAllVariablesWithDecrytion(db, env.ID)
 		if err != nil {
 			return nil, err
 		}
-		vars = sdk.VariablesFilter(vars, sdk.SecretVariable, sdk.KeyVariable)
+		vars := sdk.VariablesFilter(sdk.FromEnvironmentVariables(envVars), sdk.SecretVariable, sdk.KeyVariable)
 		for _, v := range vars {
 			secretsVariables = append(secretsVariables, sdk.Variable{
 				Name:  fmt.Sprintf("cds.env.%s", v.Name),
