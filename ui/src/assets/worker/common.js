@@ -21,9 +21,3 @@ function httpCall(host, path) {
     }
     return xhr;
 }
-
-function connectSSE(url, headAuthKey, headAuthValue) {
-    var headers = {};
-    headers[headAuthKey] = headAuthValue;
-    return new EventSourcePolyfill(url, { headers: headers, errorOnTimeout: false, checkActivity: false, heartbeatTimeout: 300000 });
-}
