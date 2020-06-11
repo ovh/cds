@@ -30,16 +30,6 @@ func (api *API) InitRouter() {
 	r := api.Router
 
 	log.Info(api.Router.Background, "Initializing Events broker")
-	// Initialize event broker
-	api.eventsBroker = &eventsBroker{
-		router:   api.Router,
-		cache:    api.Cache,
-		clients:  make(map[string]*eventsBrokerSubscribe),
-		dbFunc:   api.DBConnectionFactory.GetDBMap,
-		messages: make(chan sdk.Event),
-	}
-	api.eventsBroker.Init(r.Background, api.PanicDump())
-
 	api.websocketBroker = &websocketBroker{
 		router:           api.Router,
 		cache:            api.Cache,
@@ -415,7 +405,6 @@ func (api *API) InitRouter() {
 	r.Handle("/workflow/hook/model/{model}", ScopeNone(), r.GET(api.getWorkflowHookModelHandler), r.POST(api.postWorkflowHookModelHandler, NeedAdmin(true)), r.PUT(api.putWorkflowHookModelHandler, NeedAdmin(true)))
 
 	// SSE
-	r.Handle("/events", ScopeNone(), r.GET(api.eventsBroker.ServeHTTP))
 	r.Handle("/ws", ScopeNone(), r.GET(api.websocketBroker.ServeHTTP))
 
 	// Feature
