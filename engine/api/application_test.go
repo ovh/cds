@@ -233,7 +233,7 @@ func TestUpdateAsCodeApplicationHandler(t *testing.T) {
 		FromRepository:     "myrepofrom",
 	}
 	assert.NoError(t, application.Insert(db, *proj, &app))
-	assert.NoError(t, repositoriesmanager.InsertForApplication(db, &app, proj.Key))
+	assert.NoError(t, repositoriesmanager.InsertForApplication(db, &app))
 
 	repoModel, err := workflow.LoadHookModelByName(db, sdk.RepositoryWebHookModelName)
 	assert.NoError(t, err)
