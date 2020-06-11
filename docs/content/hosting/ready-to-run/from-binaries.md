@@ -14,7 +14,7 @@ This article contains the steps to start CDS locally, with API, UI and a local H
 ## Prerequisite
 
 - a Redis
-- a PostgreSQL 9.5 min
+- a PostgreSQL 9.6 min
 
 ## Get the latest release from GitHub
 
