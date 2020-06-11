@@ -1,6 +1,7 @@
 package action
 
 import (
+	"context"
 	"testing"
 
 	"github.com/ovh/cds/sdk"
@@ -11,7 +12,7 @@ import (
 )
 
 func init() {
-	log.Initialize(&log.Conf{Level: "debug"})
+	log.Initialize(context.TODO(), &log.Conf{Level: "debug"})
 }
 
 func Test_prepareScriptContent(t *testing.T) {

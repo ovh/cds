@@ -224,10 +224,11 @@ func (w *CurrentWorker) runAction(ctx context.Context, a sdk.Action, jobID int64
 	//If the action if a edge of the action tree; run it
 	switch a.Type {
 	case sdk.BuiltinAction:
-		return w.runBuiltin(ctx, a, secrets)
+		res := w.runBuiltin(ctx, a, secrets)
+		return res
 	case sdk.PluginAction:
-		//Run the plugin
-		return w.runGRPCPlugin(ctx, a)
+		res := w.runGRPCPlugin(ctx, a)
+		return res
 	}
 
 	// There is is no children actions (action is empty) to do, success !
@@ -512,7 +513,7 @@ func (w *CurrentWorker) ProcessJob(jobInfo sdk.WorkflowNodeJobRunData) (res sdk.
 	ctx = workerruntime.SetStepOrder(ctx, 0)
 
 	// start logger routine with a large buffer
-	w.logger.logChan = make(chan sdk.Log, 100000)
+	w.logger.logChan = make(chan sdk.Log)
 	go func() {
 		if err := w.logProcessor(ctx, jobInfo.NodeJobRun.ID); err != nil {
 			log.Error(ctx, "processJob> Logs processor error: %v", err)
