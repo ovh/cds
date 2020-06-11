@@ -257,7 +257,7 @@
 <li><a href="#prepare-cache">Prepare Cache</a></li>
 <li><a href="#prepare-database">Prepare Database</a></li>
 <li><a href="#launch-cds-api">Launch CDS API</a></li>
-<li><a href="#launch-cds-ui-signup">Launch CDS UI &amp; Signup</a></li>
+<li><a href="#launch-signup-cds-ui">Launch Signup &amp; CDS UI</a></li>
 <li><a href="#launch-cds-local-hatchery">Launch CDS Local Hatchery</a></li>
 <li><a href="#note-about-cds-engine">Note about CDS Engine</a></li>
 <li><a href="#go-further">Go further</a></li>
@@ -360,20 +360,22 @@ port <code>5432</code>, with an existing empty database and user named <code>cds
 curl http://localhost:8081/mon/status
 </code></pre>
 
-<h2 id="launch-cds-ui-signup">Launch CDS UI &amp; Signup</h2>
+<h2 id="launch-signup-cds-ui">Launch Signup &amp; CDS UI</h2>
+
+<p>Signup with cdsctl:</p>
+
+<pre><code class="language-bash">export INIT_TOKEN=`./cds-engine config init-token --config conf.toml`
+./cdsctl signup --api-url http://localhost:8081 --email admin@localhost.local --username admin --fullname admin
+</code></pre>
+
+<p>If you don&rsquo;t have email service configured you just have to check your CDS API logs to have the confirmation link.</p>
 
 <pre><code class="language-bash">cd $HOME/cds
 ./cds-engine download ui --config conf.toml
 ./cds-engine start ui --config conf.toml
 </code></pre>
 
-<p>Then, open a browser on <a href="http://localhost:8080/">http://localhost:8080/</a> . You have to signup your first CDS user. It will be an administrator on CDS. In order to do that, just go on UI and click on signup or use <code>cdsctl signup</code>. If you don&rsquo;t have email service configured you just have to check your CDS API logs to have the confirmation link.</p>
-
-<p>Example of signup with cdsctl:</p>
-
-<pre><code class="language-bash">export INIT_TOKEN=`./cds-engine config init-token --config conf.toml`
-./cdsctl signup --api-url http://localhost:8081 --email admin@localhost.local --username admin --fullname admin
-</code></pre>
+<p>Then, open a browser on <a href="http://localhost:8080/">http://localhost:8080/</a> .</p>
 
 <h2 id="launch-cds-local-hatchery">Launch CDS Local Hatchery</h2>
 
