@@ -261,7 +261,7 @@ version: v1.0`),
 		RepositoryFullname: "myrepo",
 	}
 	require.NoError(t, application.Insert(db, *proj, &app))
-	require.NoError(t, repositoriesmanager.InsertForApplication(db, &app, proj.Key))
+	require.NoError(t, repositoriesmanager.InsertForApplication(db, &app))
 
 	env := sdk.Environment{
 		ProjectID:  proj.ID,

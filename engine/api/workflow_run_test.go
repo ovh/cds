@@ -851,7 +851,7 @@ func Test_postWorkflowRunHandler(t *testing.T) {
 	}
 	require.NoError(t, project.InsertKey(db, &projKey))
 
-	pwdProject := sdk.Variable{
+	pwdProject := sdk.ProjectVariable{
 		Name:  "projvar",
 		Type:  sdk.SecretVariable,
 		Value: "myprojpassword",
@@ -950,7 +950,7 @@ func Test_postWorkflowRunHandler(t *testing.T) {
 		ProjectKey: proj.Key,
 		ProjectID:  proj.ID,
 		Name:       sdk.RandomString(10),
-		Variables: []sdk.Variable{
+		Variables: []sdk.ApplicationVariable{
 			{
 				Name:  "app-password",
 				Type:  sdk.SecretVariable,
@@ -986,7 +986,7 @@ func Test_postWorkflowRunHandler(t *testing.T) {
 		ProjectID:  proj.ID,
 		ProjectKey: proj.Key,
 		Name:       sdk.RandomString(10),
-		Variables: []sdk.Variable{
+		Variables: []sdk.EnvironmentVariable{
 			{
 				Name:  "env-password",
 				Type:  sdk.SecretVariable,
