@@ -195,9 +195,6 @@ func takeJob(ctx context.Context, dbFunc func() *gorp.DbMap, store cache.Store, 
 	wnjri.Secrets = append(wnjri.Secrets, secretsKeys...)
 	wnjri.NodeJobRun.Parameters = append(wnjri.NodeJobRun.Parameters, params...)
 
-	if err != nil {
-		return nil, err
-	}
 	if err := tx.Commit(); err != nil {
 		return nil, sdk.WithStack(err)
 	}
@@ -271,7 +268,7 @@ func (api *API) postVulnerabilityReportHandler() service.Handler {
 
 		id, err := requestVarInt(r, "permJobID")
 		if err != nil {
-			return sdk.WrapError(err, "invalid id")
+			return err
 		}
 
 		nr, err := workflow.LoadNodeRunByNodeJobID(api.mustDB(), id, workflow.LoadRunOptions{
@@ -300,7 +297,7 @@ func (api *API) postVulnerabilityReportHandler() service.Handler {
 		}
 		defer tx.Rollback() // nolint
 
-		if err := workflow.HandleVulnerabilityReport(ctx, tx, api.Cache, *p, nr, report); err != nil {
+		if err := workflow.SaveVulnerabilityReport(ctx, tx, api.Cache, *p, nr, report); err != nil {
 			return sdk.WrapError(err, "unable to handle report")
 		}
 

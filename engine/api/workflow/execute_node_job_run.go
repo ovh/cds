@@ -13,7 +13,6 @@ import (
 	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/integration"
 	"github.com/ovh/cds/engine/api/observability"
-	"github.com/ovh/cds/engine/api/secret"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
@@ -525,13 +524,6 @@ func LoadSecrets(db gorp.SqlExecutor, store cache.Store, nodeRun *sdk.WorkflowNo
 		}
 	}
 
-	//Decrypt secrets
-	for i := range secrets {
-		s := &secrets[i]
-		if err := secret.DecryptVariable(s); err != nil {
-			return nil, sdk.WrapError(err, "Unable to decrypt variables")
-		}
-	}
 	return secrets, nil
 }
 

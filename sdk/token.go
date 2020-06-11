@@ -500,13 +500,6 @@ type AuthSessionJWTClaims struct {
 }
 
 // AuthSessionsToIDs returns ids of given auth sessions.
-func AuthSessionsToIDs(ass []*AuthSession) []string {
-	ids := make([]string, len(ass))
-	for i := range ass {
-		ids[i] = ass[i].ID
-	}
-	return ids
-}
 
 // AuthConsumersToIDs returns ids of given auth consumers.
 func AuthConsumersToIDs(cs []AuthConsumer) []string {
@@ -538,6 +531,9 @@ type Token struct {
 	Expiration  Expiration `json:"expiration" cli:"expiration"`
 	Created     time.Time  `json:"created" cli:"created"`
 }
+
+// Expiration defines how worker key should expire
+type Expiration int
 
 const AuthSigninConsumerTokenDuration time.Duration = time.Minute * 5
 

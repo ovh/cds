@@ -18,6 +18,7 @@ var (
 // GetVariableAudit Get variable audit for the given application
 // Deprecated
 func GetVariableAudit(db gorp.SqlExecutor, key, appName string) ([]sdk.VariableAudit, error) {
+	// FIXME refactor using application_variable_audit.
 	audits := []sdk.VariableAudit{}
 	query := `
 		SELECT application_variable_audit_old.id, application_variable_audit_old.versionned, application_variable_audit_old.data, application_variable_audit_old.author

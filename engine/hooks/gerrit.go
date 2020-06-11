@@ -317,7 +317,7 @@ func ListenGerritStreamEvent(ctx context.Context, store cache.Store, v sdk.VCSCo
 
 			// Avoid that 2 hook uservice dispatch the same event
 			// Take the lock to dispatch an event
-			_, _ = store.Lock(lockKey, time.Minute, 100, 100)
+			_, _ = store.Lock(lockKey, time.Minute, 100, 10)
 
 			// compute md5
 			hasher := md5.New()
@@ -329,26 +329,17 @@ func ListenGerritStreamEvent(ctx context.Context, store cache.Store, v sdk.VCSCo
 			var existString string
 			b, _ := store.Get(k, &existString)
 			if !b {
-				// Dispatch event
-				gerritEventChan <- event
 				_ = store.SetWithTTL(k, md5, 300)
 			}
-			cpt := 0
-			for {
-				if err := store.Unlock(lockKey); err == nil {
-					break
-				}
-				if cpt > 100 {
-					break
-				}
-				log.Warning(ctx, "gerrit> Cannot remove event lock. Retry in 100ms")
-				time.Sleep(100 * time.Millisecond)
-				cpt++
-			}
-			if cpt > 100 {
-				log.Error(ctx, "gerrit> Event lock cannot be removed.")
-			}
+
 			// release lock
+			if err := store.Unlock(lockKey); err == nil {
+				log.Error(ctx, "unable to unlock %s. Waiting lock timeout", lockKey)
+			}
+
+			if !b {
+				gerritEventChan <- event
+			}
 		}
 	}
 
