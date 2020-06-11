@@ -414,9 +414,13 @@ func (api *API) updateAsCodeApplicationHandler() service.Handler {
 		branch := FormString(r, "branch")
 		message := FormString(r, "message")
 
+		if branch == "" || message == "" {
+			return sdk.NewErrorFrom(sdk.ErrWrongRequest, "missing branch or message data")
+		}
+
 		var a sdk.Application
 		if err := service.UnmarshalBody(r, &a); err != nil {
-			return sdk.WrapError(err, "Cannot read body")
+			return err
 		}
 
 		// check application name pattern
