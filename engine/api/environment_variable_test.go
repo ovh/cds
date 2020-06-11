@@ -98,7 +98,7 @@ func TestUpdateVariableInEnvironmentHandler(t *testing.T) {
 	}
 
 	//4. add a variable
-	v := sdk.Variable{
+	v := sdk.EnvironmentVariable{
 		Name:  "foo",
 		Value: "bar",
 		Type:  sdk.StringVariable,
@@ -167,7 +167,7 @@ func TestDeleteVariableFromEnvironmentHandler(t *testing.T) {
 	}
 
 	//4. add a variable
-	v := sdk.Variable{
+	v := sdk.EnvironmentVariable{
 		Name:  "foo",
 		Value: "bar",
 		Type:  sdk.StringVariable,
@@ -225,7 +225,7 @@ func TestGetVariablesInEnvironmentHandler(t *testing.T) {
 	}
 
 	//4. add a variable
-	v := sdk.Variable{
+	v := sdk.EnvironmentVariable{
 		Name:  "foo",
 		Value: "bar",
 		Type:  sdk.StringVariable,
@@ -279,7 +279,7 @@ func Test_getVariableAuditInEnvironmentHandler(t *testing.T) {
 	}
 
 	// Add variable
-	v := sdk.Variable{
+	v := sdk.EnvironmentVariable{
 		Name:  "foo",
 		Type:  "string",
 		Value: "bar",

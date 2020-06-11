@@ -114,7 +114,7 @@ func Test_postEnvironmentImportHandler_NewEnvFromYAMLWithKeysAndSecrets(t *testi
 		t.Fatal(err)
 	}
 
-	require.NoError(t, environment.InsertVariable(db, env.ID, &sdk.Variable{
+	require.NoError(t, environment.InsertVariable(db, env.ID, &sdk.EnvironmentVariable{
 		Name:  "myPassword",
 		Type:  sdk.SecretVariable,
 		Value: "MySecretValue",
@@ -231,7 +231,7 @@ func Test_postEnvironmentImportHandler_NewEnvFromYAMLWithKeysAndSecretsAndReImpo
 		t.Fatal(err)
 	}
 
-	require.NoError(t, environment.InsertVariable(db, env.ID, &sdk.Variable{
+	require.NoError(t, environment.InsertVariable(db, env.ID, &sdk.EnvironmentVariable{
 		Name:  "myPassword",
 		Type:  sdk.SecretVariable,
 		Value: "MySecretValue",

@@ -70,8 +70,7 @@ func ParseAndImport(ctx context.Context, db gorp.SqlExecutor, cache cache.Store,
 			}
 			v.Value = secret
 		}
-
-		vv := sdk.Variable{Name: p, Type: v.Type, Value: v.Value}
+		vv := sdk.ApplicationVariable{Name: p, Type: v.Type, Value: v.Value}
 		app.Variables = append(app.Variables, vv)
 	}
 

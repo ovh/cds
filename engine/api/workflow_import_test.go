@@ -666,7 +666,7 @@ func Test_getWorkflowPushHandler(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	v1 := sdk.Variable{
+	v1 := sdk.ApplicationVariable{
 		Name:  "var1",
 		Value: "value 1",
 		Type:  sdk.StringVariable,
@@ -674,7 +674,7 @@ func Test_getWorkflowPushHandler(t *testing.T) {
 
 	test.NoError(t, application.InsertVariable(api.mustDB(), app.ID, &v1, u))
 
-	v2 := sdk.Variable{
+	v2 := sdk.ApplicationVariable{
 		Name:  "var2",
 		Value: "value 2",
 		Type:  sdk.SecretVariable,

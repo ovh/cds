@@ -56,7 +56,7 @@ func PublishDeleteProject(ctx context.Context, p *sdk.Project, u sdk.Identifiabl
 }
 
 // PublishAddProjectVariable publishes an event for the creation of the given variable
-func PublishAddProjectVariable(ctx context.Context, p *sdk.Project, v sdk.Variable, u sdk.Identifiable) {
+func PublishAddProjectVariable(ctx context.Context, p *sdk.Project, v sdk.ProjectVariable, u sdk.Identifiable) {
 	if sdk.NeedPlaceholder(v.Type) {
 		v.Value = sdk.PasswordPlaceholder
 	}
@@ -67,7 +67,7 @@ func PublishAddProjectVariable(ctx context.Context, p *sdk.Project, v sdk.Variab
 }
 
 // PublishUpdateProjectVariable publishes an event for the modification of a variable
-func PublishUpdateProjectVariable(ctx context.Context, p *sdk.Project, newVar sdk.Variable, oldVar sdk.Variable, u sdk.Identifiable) {
+func PublishUpdateProjectVariable(ctx context.Context, p *sdk.Project, newVar sdk.ProjectVariable, oldVar sdk.ProjectVariable, u sdk.Identifiable) {
 	if sdk.NeedPlaceholder(newVar.Type) {
 		newVar.Value = sdk.PasswordPlaceholder
 	}
@@ -82,7 +82,7 @@ func PublishUpdateProjectVariable(ctx context.Context, p *sdk.Project, newVar sd
 }
 
 // PublishDeleteProjectVariable publishes an event on project variable deletion
-func PublishDeleteProjectVariable(ctx context.Context, p *sdk.Project, v sdk.Variable, u sdk.Identifiable) {
+func PublishDeleteProjectVariable(ctx context.Context, p *sdk.Project, v sdk.ProjectVariable, u sdk.Identifiable) {
 	if sdk.NeedPlaceholder(v.Type) {
 		v.Value = sdk.PasswordPlaceholder
 	}
