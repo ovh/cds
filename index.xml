@@ -179,7 +179,7 @@ A metadata is composed by a key and a value.</description>
       <guid>https://ovh.github.io/cds/hosting/requirements/</guid>
       <description>CDS API is the core component of CDS. To start CDS API, the only mandatory dependencies are a PostgreSQL database, a Redis server and a path to the directory containing other CDS binaries.
 There is are two ways to set up CDS:
- as toml configuration over environment variables.  CDS API Third-parties At the minimum, CDS needs a PostgreSQL database &amp;gt;= 9.5 and Redis &amp;gt;= 3.2. But for serious usage your may need:</description>
+ as toml configuration over environment variables.  CDS API Third-parties At the minimum, CDS needs a PostgreSQL database &amp;gt;= 9.6 and Redis &amp;gt;= 3.2. But for serious usage your may need:</description>
     </item>
     
     <item>
@@ -300,7 +300,7 @@ You will play with many CDS Concepts, discover the reuse of pipelines, how to pl
       <guid>https://ovh.github.io/cds/development/contribute/development/</guid>
       <description>Before contributing to CDS, you&amp;rsquo;ll need to install your development environment.
  PostgreSQL Redis Node.js Golang CDS  If you are familiar with these different tools, you probably will not need to read this page :-)
-PostgreSQL Download PostgreSQL from https://www.postgresql.org/download/, version &amp;gt;= 9.5.
+PostgreSQL Download PostgreSQL from https://www.postgresql.org/download/, version &amp;gt;= 9.6.
 You can easily use only PostgreSQL binaries, downloaded from https://www.enterprisedb.com/download-postgresql-binaries.
 Initialize DB by running:
 $ mkdir -p ~/data/postgres/data $ initdb -D ~/data/postgres/data  Create user cds and database cds</description>
@@ -357,7 +357,7 @@ CDS pipelines can be parametrized. This allows you to reuse the same pipeline wh
       
       <guid>https://ovh.github.io/cds/hosting/ready-to-run/from-binaries/</guid>
       <description>This article contains the steps to start CDS locally, with API, UI and a local Hatchery.
- Download CDS from GitHub Prepare Database Launch CDS API, CDS UI and a Local Hatchery  Prerequisite  a Redis a PostgreSQL 9.5 min  Get the latest release from GitHub mkdir $HOME/cds cd cds LAST_RELEASE=$(curl -s https://api.github.com/repos/ovh/cds/releases | grep tag_name | head -n 1 | cut -d &#39;&amp;quot;&#39; -f 4) OS=linux # could be linux, darwin, windows, freebsd, openbsd ARCH=amd64 # could be 386, arm, amd64, arm64, ppc64le # GET Binaries from GitHub curl -L https://github.</description>
+ Download CDS from GitHub Prepare Database Launch CDS API, CDS UI and a Local Hatchery  Prerequisite  a Redis a PostgreSQL 9.6 min  Get the latest release from GitHub mkdir $HOME/cds cd cds LAST_RELEASE=$(curl -s https://api.github.com/repos/ovh/cds/releases | grep tag_name | head -n 1 | cut -d &#39;&amp;quot;&#39; -f 4) OS=linux # could be linux, darwin, windows, freebsd, openbsd ARCH=amd64 # could be 386, arm, amd64, arm64, ppc64le # GET Binaries from GitHub curl -L https://github.</description>
     </item>
     
     <item>

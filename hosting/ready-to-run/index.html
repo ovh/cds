@@ -279,7 +279,7 @@
 
 <ul>
 <li>a Redis</li>
-<li>a PostgreSQL 9.5 min</li>
+<li>a PostgreSQL 9.6 min</li>
 </ul>
 
 <h2 id="get-the-latest-release-from-github">Get the latest release from GitHub</h2>
@@ -336,7 +336,7 @@ port <code>5432</code>, with an existing empty database and user named <code>cds
 
 <p>If it&rsquo;s just for test purpose, you can start a postgreSQL database with docker, as:</p>
 
-<pre><code class="language-bash">docker run --name cds-db -e POSTGRES_PASSWORD=cds -e POSTGRES_USER=cds -e POSTGRES_DB=cds -p 127.0.0.1:5432:5432 -d postgres:9.5
+<pre><code class="language-bash">docker run --name cds-db -e POSTGRES_PASSWORD=cds -e POSTGRES_USER=cds -e POSTGRES_DB=cds -p 127.0.0.1:5432:5432 -d postgres:9.6
 </code></pre>
 
 <pre><code class="language-bash">cd $HOME/cds
