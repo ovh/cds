@@ -1,6 +1,7 @@
 package sdk
 
 import (
+	"fmt"
 	"time"
 )
 
@@ -18,6 +19,14 @@ type SpawnMsg struct {
 	ID   string        `json:"id" db:"-"`
 	Args []interface{} `json:"args" db:"-"`
 	Type string        `json:"type" db:"-"`
+}
+
+func (s SpawnMsg) DefaultUserMessage() string {
+	if _, ok := Messages[s.ID]; ok {
+		m := Messages[s.ID]
+		return fmt.Sprintf(m.Format[EN], s.Args...)
+	}
+	return ""
 }
 
 // ExecutedJob represents a running job
