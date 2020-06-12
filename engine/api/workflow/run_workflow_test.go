@@ -589,14 +589,14 @@ queueRun:
 			t.FailNow()
 		}
 
+		sp := sdk.SpawnMsg{ID: sdk.MsgSpawnInfoHatcheryStarts.ID}
 		//AddSpawnInfosNodeJobRun
 		err := workflow.AddSpawnInfosNodeJobRun(db, j.WorkflowNodeRunID, j.ID, []sdk.SpawnInfo{
 			{
-				APITime:    time.Now(),
-				RemoteTime: time.Now(),
-				Message: sdk.SpawnMsg{
-					ID: sdk.MsgSpawnInfoHatcheryStarts.ID,
-				},
+				APITime:     time.Now(),
+				RemoteTime:  time.Now(),
+				Message:     sp,
+				UserMessage: sp.DefaultUserMessage(),
 			},
 		})
 		assert.NoError(t, err)
@@ -605,15 +605,15 @@ queueRun:
 			t.FailNow()
 		}
 
+		sp = sdk.SpawnMsg{ID: sdk.MsgSpawnInfoJobTaken.ID}
 		//TakeNodeJobRun
 		takenJobID := j.ID
 		takenJob, _, _ := workflow.TakeNodeJobRun(context.TODO(), db, cache, *proj, takenJobID, "model", "worker", "1", []sdk.SpawnInfo{
 			{
-				APITime:    time.Now(),
-				RemoteTime: time.Now(),
-				Message: sdk.SpawnMsg{
-					ID: sdk.MsgSpawnInfoJobTaken.ID,
-				},
+				APITime:     time.Now(),
+				RemoteTime:  time.Now(),
+				Message:     sp,
+				UserMessage: sp.DefaultUserMessage(),
 			},
 		}, "hatchery_name")
 

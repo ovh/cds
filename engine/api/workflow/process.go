@@ -77,10 +77,11 @@ func checkCondition(ctx context.Context, wr *sdk.WorkflowRun, conditions sdk.Wor
 func AddWorkflowRunInfo(run *sdk.WorkflowRun, infos ...sdk.SpawnMsg) {
 	for _, i := range infos {
 		run.Infos = append(run.Infos, sdk.WorkflowRunInfo{
-			APITime:   time.Now(),
-			Message:   i,
-			Type:      i.Type,
-			SubNumber: run.LastSubNumber,
+			APITime:     time.Now(),
+			Message:     i,
+			Type:        i.Type,
+			SubNumber:   run.LastSubNumber,
+			UserMessage: i.DefaultUserMessage(),
 		})
 	}
 }
