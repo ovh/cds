@@ -112,6 +112,10 @@ func loadConfig(cmd *cobra.Command) (string, *cdsclient.Config, error) {
 
 	cdsctx.Verbose = verbose
 
+	if cdsctx.Host == "" {
+		return "", nil, fmt.Errorf("invalid cdsctl configuration to reach a CDS API.")
+	}
+
 	config := &cdsclient.Config{
 		Host:                              cdsctx.Host,
 		SessionToken:                      cdsctx.Session,
