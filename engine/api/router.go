@@ -117,7 +117,7 @@ func (r *Router) setRequestID(h http.HandlerFunc) http.HandlerFunc {
 			}
 		}
 		if requestID == "" {
-			requestID = uuid.NewV4().String()
+			requestID = sdk.UUID()
 		}
 
 		ctx := r.Context()

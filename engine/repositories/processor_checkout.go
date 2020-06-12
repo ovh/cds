@@ -18,7 +18,7 @@ func (s *Service) processCheckout(ctx context.Context, op *sdk.Operation) error 
 	if err := gitRepo.ResetHard("HEAD"); err != nil {
 		return sdk.WithStack(err)
 	}
-	log.Debug("processCheckout> repo reset to origin/%s", currentBranch)
+	log.Debug("processCheckout> repo reset to HEAD")
 
 	if op.Setup.Checkout.Tag != "" {
 		log.Debug("processCheckout> fetching tag %s from %s", op.Setup.Checkout.Tag, op.URL)
