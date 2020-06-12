@@ -16,20 +16,18 @@ func LabelWorkflow(db gorp.SqlExecutor, labelID, workflowID int64) error {
 	log.Debug("LabelWorkflow> %d %d", labelID, workflowID)
 	if _, err := db.Exec("INSERT INTO project_label_workflow (label_id, workflow_id) VALUES ($1, $2)", labelID, workflowID); err != nil {
 		if errPG, ok := err.(*pq.Error); ok && errPG.Code == gorpmapping.ViolateUniqueKeyPGCode {
-			return sdk.WrapError(sdk.ErrConflict, "LabelWorkflow> this label %d is already linked to workflow %d", labelID, workflowID)
+			return sdk.WrapError(sdk.ErrForbidden, "this label %d is already linked to workflow %d", labelID, workflowID)
 		}
-		return sdk.WrapError(err, "Cannot link label %d to workflow %d", labelID, workflowID)
+		return sdk.WrapError(err, "cannot link label %d to workflow %d", labelID, workflowID)
 	}
-
 	return nil
 }
 
 // UnLabelWorkflow unlink a label on a workflow given his workflow id
 func UnLabelWorkflow(db gorp.SqlExecutor, labelID, workflowID int64) error {
 	if _, err := db.Exec("DELETE FROM project_label_workflow WHERE label_id = $1 AND workflow_id = $2", labelID, workflowID); err != nil {
-		return sdk.WrapError(err, "Cannot unlink label %d to workflow %d", labelID, workflowID)
+		return sdk.WrapError(err, "cannot unlink label %d to workflow %d", labelID, workflowID)
 	}
-
 	return nil
 }
 

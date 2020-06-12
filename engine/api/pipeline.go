@@ -265,7 +265,7 @@ func (api *API) addPipelineHandler() service.Handler {
 			return sdk.WrapError(err, "cannot check if pipeline exist")
 		}
 		if exist {
-			return sdk.NewErrorFrom(sdk.ErrConflict, "pipeline %s already exists", p.Name)
+			return sdk.NewErrorFrom(sdk.ErrPipelineAlreadyExists, "pipeline %s already exists", p.Name)
 		}
 
 		tx, err := api.mustDB().Begin()

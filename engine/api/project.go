@@ -482,7 +482,7 @@ func (api *API) postProjectHandler() service.Handler {
 			return sdk.WrapError(errExist, "cannot check if project %s exist", p.Key)
 		}
 		if exist {
-			return sdk.WrapError(sdk.ErrConflict, "project %s already exists", p.Key)
+			return sdk.NewErrorFrom(sdk.ErrAlreadyExist, "project %s already exists", p.Key)
 		}
 
 		if err := project.Insert(tx, &p); err != nil {
@@ -641,11 +641,11 @@ func (api *API) deleteProjectHandler() service.Handler {
 		}
 
 		if len(p.Pipelines) > 0 {
-			return sdk.WrapError(sdk.ErrProjectHasPipeline, "deleteProject> Project '%s' still used by %d pipelines", key, len(p.Pipelines))
+			return sdk.WrapError(sdk.ErrProjectHasPipeline, "project '%s' still used by %d pipelines", key, len(p.Pipelines))
 		}
 
 		if len(p.Applications) > 0 {
-			return sdk.WrapError(sdk.ErrProjectHasApplication, "deleteProject> Project '%s' still used by %d applications", key, len(p.Applications))
+			return sdk.WrapError(sdk.ErrProjectHasApplication, "project '%s' still used by %d applications", key, len(p.Applications))
 		}
 
 		tx, errBegin := api.mustDB().Begin()
