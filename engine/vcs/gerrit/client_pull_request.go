@@ -36,7 +36,6 @@ func (c *gerritClient) PullRequestComment(ctx context.Context, repo string, prRe
 	}
 
 	return nil
-	return nil
 }
 
 // PullRequestCreate create a new pullrequest
