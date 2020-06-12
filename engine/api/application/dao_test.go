@@ -264,3 +264,40 @@ func TestWithRepositoryStrategy(t *testing.T) {
 	require.Equal(t, "", app.RepositoryStrategy.SSHKeyContent) // it depends on the connection type
 
 }
+
+func Test_LoadAllVCStrategyAllApps(t *testing.T) {
+	db, cache := test.SetupPG(t, bootstrap.InitiliazeDB)
+
+	key := sdk.RandomString(10)
+
+	proj := assets.InsertTestProject(t, db, cache, key, key)
+	app1 := &sdk.Application{Name: "my-app1", ProjectKey: proj.Key, ProjectID: proj.ID, RepositoryStrategy: sdk.RepositoryStrategy{
+		Password: "secret1",
+	}}
+	app2 := &sdk.Application{Name: "my-app2", ProjectKey: proj.Key, ProjectID: proj.ID, RepositoryStrategy: sdk.RepositoryStrategy{
+		Password: "secret2",
+	}}
+	require.NoError(t, application.Insert(db, *proj, app1))
+	require.NoError(t, application.Insert(db, *proj, app2))
+
+	apps, err := application.LoadAllByIDsWithDecryption(db, []int64{app1.ID, app2.ID})
+	require.NoError(t, err)
+
+	require.Len(t, apps, 2)
+	app1Check := false
+	app2Check := false
+	for _, app := range apps {
+		switch app.Name {
+		case "my-app1":
+			app1Check = true
+			require.Equal(t, "secret1", app.RepositoryStrategy.Password)
+		case "my-app2":
+			app2Check = true
+			require.Equal(t, "secret2", app.RepositoryStrategy.Password)
+		default:
+			t.Fail()
+		}
+	}
+	require.True(t, app1Check)
+	require.True(t, app2Check)
+}

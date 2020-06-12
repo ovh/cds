@@ -109,7 +109,7 @@ func LoadByWorkflowID(db gorp.SqlExecutor, workflowID int64) ([]sdk.Application,
 	JOIN w_node ON w_node.id = w_node_context.node_id
 	JOIN workflow ON workflow.id = w_node.workflow_id
 	WHERE workflow.id = $1`).Args(workflowID)
-	return getAll(context.Background(), db, nil, query)
+	return getAll(context.Background(), db, nil, query, false)
 }
 
 func get(ctx context.Context, db gorp.SqlExecutor, key string, opts []LoadOptionFunc, query gorpmapping.Query) (*sdk.Application, error) {
@@ -186,18 +186,6 @@ func Insert(db gorp.SqlExecutor, proj sdk.Project, app *sdk.Application) error {
 	return nil
 }
 
-// UpdateColumns is only available for migration, it should be removed in a further release
-func UpdateColumns(db gorp.SqlExecutor, app *sdk.Application, columnFilter gorp.ColumnFilter) error {
-	app.LastModified = time.Now()
-	dbApp := dbApplication{Application: *app}
-	if err := gorpmapping.UpdateColumnsAndSign(context.Background(), db, &dbApp, columnFilter); err != nil {
-		return sdk.WrapError(err, "application.Update %s(%d)", app.Name, app.ID)
-	}
-	app.RepositoryStrategy.Password = sdk.PasswordPlaceholder
-	app.RepositoryStrategy.SSHKeyContent = ""
-	return nil
-}
-
 // Update updates application id database
 func Update(db gorp.SqlExecutor, app *sdk.Application) error {
 	if app.RepositoryStrategy.Password == sdk.PasswordPlaceholder {
@@ -237,7 +225,16 @@ func LoadAll(db gorp.SqlExecutor, key string, opts ...LoadOptionFunc) ([]sdk.App
 	WHERE project.projectkey = $1
 	ORDER BY application.name ASC`).Args(key)
 
-	return getAll(context.Background(), db, opts, query)
+	return getAll(context.Background(), db, opts, query, false)
+}
+
+// LoadAllByIDsWithDecryption returns all applications with clear vcs strategy
+func LoadAllByIDsWithDecryption(db gorp.SqlExecutor, ids []int64, opts ...LoadOptionFunc) ([]sdk.Application, error) {
+	query := gorpmapping.NewQuery(`
+	SELECT application.*
+	FROM application
+	WHERE application.id = ANY($1)`).Args(pq.Int64Array(ids))
+	return getAll(context.Background(), db, opts, query, true)
 }
 
 // LoadAllByIDs returns all applications
@@ -247,7 +244,7 @@ func LoadAllByIDs(db gorp.SqlExecutor, ids []int64, opts ...LoadOptionFunc) ([]s
 	FROM application
 	WHERE application.id = ANY($1)
 	ORDER BY application.name ASC`).Args(pq.Int64Array(ids))
-	return getAll(context.Background(), db, opts, query)
+	return getAll(context.Background(), db, opts, query, false)
 }
 
 // LoadAllNames returns all application names
@@ -269,7 +266,7 @@ func LoadAllNames(db gorp.SqlExecutor, projID int64) (sdk.IDNames, error) {
 	return res, nil
 }
 
-func getAll(ctx context.Context, db gorp.SqlExecutor, opts []LoadOptionFunc, query gorpmapping.Query) ([]sdk.Application, error) {
+func getAll(ctx context.Context, db gorp.SqlExecutor, opts []LoadOptionFunc, query gorpmapping.Query, clearVCSStrategy bool) ([]sdk.Application, error) {
 	var res []dbApplication
 	if err := gorpmapping.GetAll(ctx, db, query, &res, gorpmapping.GetOptions.WithDecryption); err != nil {
 		return nil, err
@@ -292,8 +289,9 @@ func getAll(ctx context.Context, db gorp.SqlExecutor, opts []LoadOptionFunc, que
 			return nil, sdk.WrapError(err, "application.loadapplications")
 		}
 
-		//By default all vcds_strategy password are masked
-		app.RepositoryStrategy.Password = sdk.PasswordPlaceholder
+		if !clearVCSStrategy {
+			app.RepositoryStrategy.Password = sdk.PasswordPlaceholder
+		}
 		apps[i] = *app
 	}
 

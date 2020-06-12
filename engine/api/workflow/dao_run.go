@@ -227,6 +227,15 @@ func updateTags(db gorp.SqlExecutor, r *Run) error {
 	return InsertWorkflowRunTags(db, r.ID, r.Tags)
 }
 
+// LoadLastRuns returns the last run per last_mdodified
+func LoadLastRunsByDate(db gorp.SqlExecutor, month int) ([]sdk.WorkflowRun, error) {
+	query := fmt.Sprintf(`select %s
+	from workflow_run
+	where workflow_run.last_modified > NOW() - INTERVAL '$1 months'
+	order by workflow_run.id desc`, wfRunfields)
+	return loadRuns(db, query, month)
+}
+
 // LoadLastRun returns the last run for a workflow
 func LoadLastRun(db gorp.SqlExecutor, projectkey, workflowname string, loadOpts LoadRunOptions) (*sdk.WorkflowRun, error) {
 	query := fmt.Sprintf(`select %s
