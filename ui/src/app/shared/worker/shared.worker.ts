@@ -3,7 +3,7 @@ import { BehaviorSubject, Observable } from 'rxjs';
 import { CDSWorker } from './worker';
 
 
-declare module SharedWorker {
+declare module SharedWorkerModule {
     interface AbstractWorker extends EventTarget {
         onerror: (ev: ErrorEvent) => any;
     }
@@ -13,14 +13,14 @@ declare module SharedWorker {
     }
 }
 declare var SharedWorker: {
-    prototype: SharedWorker.SharedWorker;
-    new(stringUrl: string, name?: string): SharedWorker.SharedWorker;
+    prototype: SharedWorkerModule.SharedWorker;
+    new(stringUrl: string, name?: string): SharedWorkerModule.SharedWorker;
 };
 
 export class CDSSharedWorker implements CDSWorker {
 
     // Webworker
-    sharedWorker: SharedWorker.SharedWorker;
+    sharedWorker: SharedWorkerModule.SharedWorker;
 
     sharedWorkerScript: string;
 

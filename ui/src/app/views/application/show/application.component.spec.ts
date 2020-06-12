@@ -6,37 +6,39 @@ import { ActivatedRoute, ActivatedRouteSnapshot, Router } from '@angular/router'
 import { RouterTestingModule } from '@angular/router/testing';
 import { TranslateLoader, TranslateModule, TranslateParser, TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
+import { Permission } from 'app/model/permission.model';
 import { Variable } from 'app/model/variable.model';
 import { AuthenticationService } from 'app/service/authentication/authentication.service';
 import { UserService } from 'app/service/user/user.service';
 import { VariableEvent } from 'app/shared/variable/variable.event.model';
 import { AddApplicationVariable, DeleteApplicationVariable, UpdateApplicationVariable } from 'app/store/applications.action';
 import { ApplicationStateModel } from 'app/store/applications.state';
+import { ProjectStateModel } from 'app/store/project.state';
 import { NgxsStoreModule } from 'app/store/store.module';
 import { of } from 'rxjs';
 import 'rxjs/add/observable/of';
-import { Application } from '../../../model/application.model';
-import { Project } from '../../../model/project.model';
-import { Usage } from '../../../model/usage.model';
-import { ApplicationService } from '../../../service/application/application.service';
-import { ApplicationStore } from '../../../service/application/application.store';
-import { ApplicationWorkflowService } from '../../../service/application/application.workflow.service';
-import { EnvironmentService } from '../../../service/environment/environment.service';
-import { NavbarService } from '../../../service/navbar/navbar.service';
-import { PipelineService } from '../../../service/pipeline/pipeline.service';
-import { ProjectService } from '../../../service/project/project.service';
-import { ProjectStore } from '../../../service/project/project.store';
+import { Application } from 'app/model/application.model';
+import { Project } from 'app/model/project.model';
+import { Usage } from 'app/model/usage.model';
+import { ApplicationService } from 'app/service/application/application.service';
+import { ApplicationStore } from 'app/service/application/application.store';
+import { ApplicationWorkflowService } from 'app/service/application/application.workflow.service';
+import { EnvironmentService } from 'app/service/environment/environment.service';
+import { NavbarService } from 'app/service/navbar/navbar.service';
+import { PipelineService } from 'app/service/pipeline/pipeline.service';
+import { ProjectService } from 'app/service/project/project.service';
+import { ProjectStore } from 'app/service/project/project.store';
 import {
     MonitoringService,
     RouterService,
     ServicesModule,
     WorkflowRunService,
     WorkflowStore
-} from '../../../service/services.module';
-import { VariableService } from '../../../service/variable/variable.service';
-import { WorkflowService } from '../../../service/workflow/workflow.service';
-import { SharedModule } from '../../../shared/shared.module';
-import { ToastService } from '../../../shared/toast/ToastService';
+} from 'app/service/services.module';
+import { VariableService } from 'app/service/variable/variable.service';
+import { WorkflowService } from 'app/service/workflow/workflow.service';
+import { SharedModule } from 'app/shared/shared.module';
+import { ToastService } from 'app/shared/toast/ToastService';
 import { ApplicationModule } from '../application.module';
 import { ApplicationShowComponent } from './application.component';
 
@@ -46,7 +48,6 @@ describe('CDS: Application', () => {
     let appStore: ApplicationStore;
     let store: Store;
     let router: Router;
-    let prjStore: ProjectStore;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -92,7 +93,6 @@ describe('CDS: Application', () => {
         appStore = injector.get(ApplicationStore);
         store = injector.get(Store);
         router = injector.get(Router);
-        prjStore = injector.get(ProjectStore);
     });
 
     afterEach(() => {
@@ -100,19 +100,29 @@ describe('CDS: Application', () => {
         appStore = undefined;
         store = undefined;
         router = undefined;
-        prjStore = undefined;
     });
 
     it('Load component + load application', fakeAsync(() => {
 
         spyOn(appStore, 'updateRecentApplication');
 
+        let callOrder = 0;
         spyOn(store, 'select').and.callFake(() => {
+            if (callOrder === 0) {
+                callOrder++;
+                let state = new ProjectStateModel();
+                let p = new Project();
+                p.permissions = new Permission();
+                p.permissions.writable = true;
+                state.project = p;
+                return of(state);
+            }
             let state = new ApplicationStateModel();
             let app: Application = new Application();
             app.name = 'app1';
             app.usage = new Usage();
             state.application = app;
+            state.editMode = false;
             return of(state);
         });
 
@@ -150,7 +160,17 @@ describe('CDS: Application', () => {
     it('should run add variable', fakeAsync(() => {
         let call = 0;
 
+        let callOrder = 0;
         spyOn(store, 'select').and.callFake(() => {
+            if (callOrder === 0) {
+                callOrder++;
+                let state = new ProjectStateModel();
+                let p = new Project();
+                p.permissions = new Permission();
+                p.permissions.writable = true;
+                state.project = p;
+                return of(state);
+            }
             let state = new ApplicationStateModel();
             let app: Application = new Application();
             app.name = 'app1';
@@ -185,7 +205,17 @@ describe('CDS: Application', () => {
     }));
 
     it('should run update variable', fakeAsync(() => {
+        let callOrder = 0;
         spyOn(store, 'select').and.callFake(() => {
+            if (callOrder === 0) {
+                callOrder++;
+                let state = new ProjectStateModel();
+                let p = new Project();
+                p.permissions = new Permission();
+                p.permissions.writable = true;
+                state.project = p;
+                return of(state);
+            }
             let state = new ApplicationStateModel();
             let app: Application = new Application();
             app.name = 'app1';
@@ -221,7 +251,17 @@ describe('CDS: Application', () => {
     }));
 
     it('should run remove variable', fakeAsync(() => {
+        let callOrder = 0;
         spyOn(store, 'select').and.callFake(() => {
+            if (callOrder === 0) {
+                callOrder++;
+                let state = new ProjectStateModel();
+                let p = new Project();
+                p.permissions = new Permission();
+                p.permissions.writable = true;
+                state.project = p;
+                return of(state);
+            }
             let state = new ApplicationStateModel();
             let app: Application = new Application();
             app.name = 'app1';

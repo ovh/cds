@@ -10,7 +10,7 @@ import { ProjectService } from 'app/service/project/project.service';
 import { ProjectStore } from 'app/service/project/project.store';
 import { WorkflowRunService } from 'app/service/workflow/run/workflow.run.service';
 import { WorkflowService } from 'app/service/workflow/workflow.service';
-import { ApplicationsState, ApplicationStateModel } from './applications.state';
+import { ApplicationsState } from './applications.state';
 import { PipelinesState } from './pipelines.state';
 import { AddProject } from './project.action';
 import { ProjectState, ProjectStateModel } from './project.state';
@@ -21,10 +21,6 @@ import { EnvironmentService } from 'app/service/environment/environment.service'
 import { ApplicationService } from 'app/service/application/application.service';
 import { RouterService } from 'app/service/router/router.service';
 import { RouterTestingModule } from '@angular/router/testing';
-import { Router } from '@angular/router';
-import { Application } from 'app/model/application.model';
-import { Usage } from 'app/model/usage.model';
-import { of } from 'rxjs';
 
 describe('Workflows', () => {
     let store: Store;

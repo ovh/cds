@@ -113,4 +113,9 @@ export class ClearCacheApplication {
     constructor() { }
 }
 
+export class CancelApplicationEdition {
+    static readonly type = '[Application] Cancel application edition';
+    constructor() { }
+}
+
 

@@ -24,6 +24,7 @@ export class ApplicationRepositoryComponent implements OnInit {
 
     @Input() project: Project;
     @Input() application: Application;
+    @Input() editMode: boolean;
 
     selectedRepoManager: string;
     selectedRepo: string;
@@ -132,6 +133,13 @@ export class ApplicationRepositoryComponent implements OnInit {
             this.loadingBtn = false;
             this._cd.markForCheck();
         }))
-            .subscribe(() => this._toast.success('', this._translate.instant('application_update_ok')));
+            .subscribe(() => {
+                if (this.editMode) {
+                    this._toast.info('', this._translate.instant('application_ascode_updated'));
+                } else {
+                    this._toast.success('', this._translate.instant('application_update_ok'));
+                }
+
+            });
     }
 }

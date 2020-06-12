@@ -1,6 +1,6 @@
 <div class="AppRepository" [hidden]="!project.vcs_servers || project.vcs_servers.length === 0">
 
-    <form class="ui form" (ngSubmit)="linkRepository()" [hidden]="application.vcs_server">
+    <form class="ui form" (ngSubmit)="linkRepository()" [hidden]="application.vcs_server" *ngIf="!application.from_repository">
         <div class="fields">
             <div class="three wide field">
                 <label>{{'repoman_name' | translate}}</label>
@@ -66,7 +66,7 @@
                 {{ 'application_repo_strat_title' | translate }}
             </h4>
             <div class="detail" [class.active]="displayVCSStrategy">
-                <app-vcs-strategy [hideButton]="application.from_repository" [project]="project" [(strategy)]="application.vcs_strategy" (strategyChange)="saveVCSConfiguration()" [appName]="application.name" [loading]="loadingBtn"></app-vcs-strategy>
+                <app-vcs-strategy [project]="project" [(strategy)]="application.vcs_strategy" (strategyChange)="saveVCSConfiguration()" [appName]="application.name" [loading]="loadingBtn"></app-vcs-strategy>
             </div>
         </div>
     </div>

@@ -39,15 +39,15 @@ export class VariableComponent extends Table<Variable> {
     @Input('maxPerPage')
     set maxPerPage(data: number) {
         this.nbElementsByPage = data;
-    };
+    }
     // display mode:   edit (edit all field) / launcher (only type value) /ro (display field, no edit)
     @Input() mode = 'edit';
 
     // project/application/environment
     @Input() auditContext: string;
     @Input() project: Project;
-    @Input() environment: Environment;
-    @Input() application: Application;
+    @Input() environmentName: string;
+    @Input() applicationName: string;
 
     @Output() event = new EventEmitter<VariableEvent>();
 
@@ -110,7 +110,7 @@ export class VariableComponent extends Table<Variable> {
                     });
                     break;
                 case 'environment':
-                    this._envAudit.getVariableAudit(this.project.key, this.environment.name, v.name).subscribe(audits => {
+                    this._envAudit.getVariableAudit(this.project.key, this.environmentName, v.name).subscribe(audits => {
                         this.currentVariableAudits = audits;
                         setTimeout(() => {
                             this.auditModal.show({ observeChanges: true });
@@ -118,7 +118,7 @@ export class VariableComponent extends Table<Variable> {
                     });
                     break;
                 case 'application':
-                    this._appAudit.getVariableAudit(this.project.key, this.application.name, v.name).subscribe(audits => {
+                    this._appAudit.getVariableAudit(this.project.key, this.applicationName, v.name).subscribe(audits => {
                         this.currentVariableAudits = audits;
                         setTimeout(() => {
                             this.auditModal.show({ observeChanges: true });

@@ -1,10 +1,12 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, ViewChild } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { ModalTemplate, SuiActiveModal, SuiModalService, TemplateModalConfig } from '@richardlt/ng2-semantic-ui';
+import { Application } from 'app/model/application.model';
 import { Operation } from 'app/model/operation.model';
 import { Pipeline } from 'app/model/pipeline.model';
 import { Project } from 'app/model/project.model';
 import { Workflow } from 'app/model/workflow.model';
+import { ApplicationService } from 'app/service/application/application.service';
 import { PipelineService } from 'app/service/pipeline/pipeline.service';
 import { WorkflowService } from 'app/service/workflow/workflow.service';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
@@ -32,7 +34,6 @@ export class AsCodeSaveModalComponent {
     dataToSave: any;
     dataType: string;
     loading: boolean;
-    webworkerSub: Subscription;
     asCodeOperation: Operation;
     pollingOperationSub: Subscription;
     parameters: ParamData;
@@ -44,7 +45,8 @@ export class AsCodeSaveModalComponent {
         private _toast: ToastService,
         private _translate: TranslateService,
         private _workflowService: WorkflowService,
-        private _pipService: PipelineService
+        private _pipService: PipelineService,
+        private _appService: ApplicationService
     ) { }
 
     show(data: any, type: string) {
@@ -89,6 +91,15 @@ export class AsCodeSaveModalComponent {
                         this.asCodeOperation = o;
                         this.startPollingOperation((<Pipeline>this.dataToSave).workflow_ascode_holder.name);
                     });
+                break;
+            case 'application':
+                this.loading = true;
+                this._cd.markForCheck();
+                this._appService.updateAsCode(this.project.key, this.name, <Application>this.dataToSave,
+                    this.parameters.branch_name, this.parameters.commit_message).subscribe(o => {
+                    this.asCodeOperation = o;
+                    this.startPollingOperation((<Application>this.dataToSave).workflow_ascode_holder.name);
+                });
                 break;
             default:
                 this._toast.error('', this._translate.instant('ascode_error_unknown_type'))

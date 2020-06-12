@@ -34,7 +34,6 @@ describe('CDS: Pipeline Add Component', () => {
 
     let injector: Injector;
     let store: Store;
-    let router: Router;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -74,13 +73,11 @@ describe('CDS: Pipeline Add Component', () => {
 
         injector = getTestBed();
         store = injector.get(Store);
-        router = injector.get(Router);
     });
 
     afterEach(() => {
         injector = undefined;
         store = undefined;
-        router = undefined;
     });
 
     it('should create an empty pipeline', fakeAsync(() => {

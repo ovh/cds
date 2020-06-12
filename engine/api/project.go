@@ -565,25 +565,15 @@ func (api *API) postProjectHandler() service.Handler {
 		for i := range p.Keys {
 			k := &p.Keys[i]
 			k.ProjectID = p.ID
-			switch k.Type {
-			case sdk.KeyTypeSSH:
-				keyTemp, err := keys.GenerateSSHKey(k.Name)
-				if err != nil {
-					return sdk.WrapError(err, "cannot generate ssh key for project %s", p.Name)
-				}
-				k.Private = keyTemp.Private
-				k.Public = keyTemp.Public
-				k.Type = keyTemp.Type
-			case sdk.KeyTypePGP:
-				keyTemp, err := keys.GeneratePGPKeyPair(k.Name)
-				if err != nil {
-					return sdk.WrapError(err, "cannot generate pgp key for project %s", p.Name)
-				}
-				k.Private = keyTemp.Private
-				k.Public = keyTemp.Public
-				k.Type = keyTemp.Type
-				k.KeyID = keyTemp.KeyID
+
+			newKey, err := keys.GenerateKey(k.Name, k.Type)
+			if err != nil {
+				return err
 			}
+			k.Private = newKey.Private
+			k.Public = newKey.Public
+			k.KeyID = newKey.KeyID
+
 			if err := project.InsertKey(tx, k); err != nil {
 				return sdk.WrapError(err, "cannot add key %s in project %s", k.Name, p.Name)
 			}

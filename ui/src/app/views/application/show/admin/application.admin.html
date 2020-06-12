@@ -13,7 +13,7 @@
                         </div>
                     </div>
                     <div class="eight wide right aligned field">
-                        <button class="ui green button" [class.loading]="loading" name="updateNameButton" (click)="onSubmitApplicationUpdate()" [disabled]="applicationUpdateFrom.invalid || application.from_repository">{{ 'btn_rename' | translate }}
+                        <button class="ui green button" [class.loading]="loading" name="updateNameButton" (click)="onSubmitApplicationUpdate()" [disabled]="applicationUpdateFrom.invalid">{{ 'btn_rename' | translate }}
                         </button>
                         <app-warning-modal [title]="_translate.instant('warning_modal_title')" [msg]="_translate.instant('warning_modal_body')" (event)="onSubmitApplicationUpdate(true)" #updateWarning></app-warning-modal>
                     </div>
@@ -31,7 +31,7 @@
                         </textarea>
                     </div>
                     <div class="two wide right aligned field">
-                        <button class="ui green button" [class.loading]="loading" name="updateDescriptionButton" (click)="onSubmitApplicationUpdate()" [disabled]="loading || application.from_repository">{{ 'btn_save' | translate }}
+                        <button class="ui green button" [class.loading]="loading" name="updateDescriptionButton" (click)="onSubmitApplicationUpdate()" [disabled]="loading">{{ 'btn_save' | translate }}
                         </button>
                     </div>
                 </div>
@@ -60,13 +60,13 @@
     </app-zone>
     <app-zone header="{{ 'application_repo_title' | translate }}">
         <app-zone-content class="bottom">
-            <app-application-repo [project]="project" [application]="application"></app-application-repo>
+            <app-application-repo [project]="project" [application]="application" [editMode]="editMode"></app-application-repo>
         </app-zone-content>
     </app-zone>
     <ng-container *ngIf="project.integrations && project.integrations.length > 0">
         <app-zone header="{{ 'application_deployment_title' | translate }}">
             <app-zone-content class="bottom">
-                <app-application-deployment [project]="project" [application]="application"></app-application-deployment>
+                <app-application-deployment [project]="project" [application]="application" [editMode]="editMode"></app-application-deployment>
             </app-zone-content>
         </app-zone>
     </ng-container>

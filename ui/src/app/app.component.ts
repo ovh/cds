@@ -281,7 +281,7 @@ export class AppComponent implements OnInit {
                                 this.startSSE();
                             }
                         } else {
-                            this._appService.manageEvent(<Event>e);
+                            this._appService.manageEvent(e);
                         }
                     }
                 });
