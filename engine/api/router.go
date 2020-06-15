@@ -104,6 +104,30 @@ func (r *Router) compress(fn http.HandlerFunc) http.HandlerFunc {
 	}
 }
 
+const requestIDHeader = "Request-ID"
+
+func (r *Router) setRequestID(h http.HandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		var requestID string
+		if existingRequestID := r.Header.Get(requestIDHeader); existingRequestID != "" {
+			if _, err := uuid.FromString(existingRequestID); err == nil {
+				requestID = existingRequestID
+			}
+		}
+		if requestID == "" {
+			requestID = sdk.UUID()
+		}
+
+		ctx := r.Context()
+		ctx = context.WithValue(ctx, log.ContextLoggingRequestIDKey, requestID)
+		r = r.WithContext(ctx)
+
+		w.Header().Set(requestIDHeader, requestID)
+
+		h(w, r)
+	}
+}
+
 func (r *Router) recoverWrap(h http.HandlerFunc) http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		var err error
@@ -121,9 +145,10 @@ func (r *Router) recoverWrap(h http.HandlerFunc) http.HandlerFunc {
 				}
 
 				log.Error(context.TODO(), "[PANIC_RECOVERY] Panic occurred on %s:%s, recover %s", req.Method, req.URL.String(), err)
+
 				trace := make([]byte, 4096)
 				count := runtime.Stack(trace, true)
-				log.Error(context.TODO(), "[PANIC_RECOVERY] Stacktrace of %d bytes\n%s\n", count, trace)
+				log.Error(req.Context(), "[PANIC_RECOVERY] Stacktrace of %d bytes\n%s\n", count, trace)
 
 				//Checking if there are two much panics in two minutes
 				//If last panic was more than 2 minutes ago, reinit the panic counter
@@ -132,7 +157,7 @@ func (r *Router) recoverWrap(h http.HandlerFunc) http.HandlerFunc {
 				} else {
 					dur := time.Since(*r.lastPanic)
 					if dur.Minutes() > float64(2) {
-						log.Info(context.Background(), "[PANIC_RECOVERY] Last panic was %d seconds ago", int(dur.Seconds()))
+						log.Info(req.Context(), "[PANIC_RECOVERY] Last panic was %d seconds ago", int(dur.Seconds()))
 						r.nbPanic = 0
 					}
 				}
@@ -143,10 +168,10 @@ func (r *Router) recoverWrap(h http.HandlerFunc) http.HandlerFunc {
 				//If two much panic, change the status of /mon/status with panicked = true
 				if r.nbPanic > nbPanicsBeforeFail {
 					r.panicked = true
-					log.Error(context.TODO(), "[PANIC_RECOVERY] RESTART NEEDED")
+					log.Error(req.Context(), "[PANIC_RECOVERY] RESTART NEEDED")
 				}
 
-				service.WriteError(context.TODO(), w, req, err)
+				service.WriteError(req.Context(), w, req, err)
 			}
 		}()
 		h.ServeHTTP(w, req)
@@ -241,13 +266,13 @@ func (r *Router) computeScopeDetails() {
 func (r *Router) Handle(uri string, scope HandlerScope, handlers ...*service.HandlerConfig) {
 	uri = r.Prefix + uri
 	config, f := r.handle(uri, scope, handlers...)
-	r.Mux.Handle(uri, r.pprofLabel(config, r.compress(r.recoverWrap(f))))
+	r.Mux.Handle(uri, r.pprofLabel(config, r.compress(r.setRequestID(r.recoverWrap(f)))))
 }
 
 func (r *Router) HandlePrefix(uri string, scope HandlerScope, handlers ...*service.HandlerConfig) {
 	uri = r.Prefix + uri
 	config, f := r.handle(uri, scope, handlers...)
-	r.Mux.PathPrefix(uri).HandlerFunc(r.pprofLabel(config, r.compress(r.recoverWrap(f))))
+	r.Mux.PathPrefix(uri).HandlerFunc(r.pprofLabel(config, r.compress(r.setRequestID(r.recoverWrap(f)))))
 }
 
 // Handle adds all handler for their specific verb in gorilla router for given uri
@@ -277,15 +302,12 @@ func (r *Router) handle(uri string, scope HandlerScope, handlers ...*service.Han
 		defer cancel()
 
 		var requestID string
-		if existingRequestID := req.Header.Get("Request-ID"); existingRequestID != "" {
-			if _, err := uuid.FromString(existingRequestID); err == nil {
-				requestID = existingRequestID
+		iRequestID := ctx.Value(log.ContextLoggingRequestIDKey)
+		if iRequestID != nil {
+			if id, ok := iRequestID.(string); ok {
+				requestID = id
 			}
 		}
-		if requestID == "" {
-			requestID = uuid.NewV4().String()
-		}
-		ctx = context.WithValue(ctx, log.ContextLoggingRequestIDKey, requestID)
 
 		dateRFC5322 := req.Header.Get("Date")
 		dateReq, err := sdk.ParseDateRFC5322(dateRFC5322)
@@ -465,16 +487,26 @@ func processAsyncRequests(ctx context.Context, chanRequest chan asynchronousRequ
 	for {
 		select {
 		case req := <-chanRequest:
+			if iRequestID, ok := req.contextValues[log.ContextLoggingRequestIDKey]; ok {
+				if requestID, ok := iRequestID.(string); ok {
+					ctx = context.WithValue(ctx, log.ContextLoggingRequestIDKey, requestID)
+				}
+			}
 			if err := req.do(ctx, handler); err != nil {
+				isErrWithStack := sdk.IsErrorWithStack(err)
+				fields := logrus.Fields{}
+				if isErrWithStack {
+					fields["stack_trace"] = fmt.Sprintf("%+v", err)
+				}
 				myError, ok := err.(sdk.Error)
 				if ok && myError.Status >= 500 {
 					if req.nbErrors > retry {
-						log.Error(ctx, "Asynchronous Request on Error: %v with status:%d", err, myError.Status)
+						log.ErrorWithFields(ctx, fields, "Asynchronous Request on Error: %v with status: %d", err, myError.Status)
 					} else {
 						chanRequest <- req
 					}
 				} else {
-					log.Error(ctx, "Asynchronous Request on Error: %v", err)
+					log.ErrorWithFields(ctx, fields, "Asynchronous Request on Error: %v", err)
 				}
 			}
 		case <-ctx.Done():
@@ -492,9 +524,16 @@ func (r *Router) Asynchronous(handler service.AsynchronousHandlerFunc, retry int
 	return func() service.Handler {
 		return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 			async := asynchronousRequest{
-				contextValues: ContextValues(ctx),
-				request:       *r,
-				vars:          mux.Vars(r),
+				contextValues: map[interface{}]interface{}{
+					log.ContextLoggingRequestIDKey: ctx.Value(log.ContextLoggingRequestIDKey),
+					contextSession:                 ctx.Value(contextSession),
+					contextAPIConsumer:             ctx.Value(contextAPIConsumer),
+					contextJWT:                     ctx.Value(contextJWT),
+					contextJWTRaw:                  ctx.Value(contextJWTRaw),
+					contextJWTFromCookie:           ctx.Value(contextJWTFromCookie),
+				},
+				request: *r,
+				vars:    mux.Vars(r),
 			}
 			if btes, err := ioutil.ReadAll(r.Body); err == nil {
 				async.body = bytes.NewBuffer(btes)

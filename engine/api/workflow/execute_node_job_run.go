@@ -236,9 +236,10 @@ func PrepareSpawnInfos(infos []sdk.SpawnInfo) []sdk.SpawnInfo {
 	prepared := []sdk.SpawnInfo{}
 	for _, info := range infos {
 		prepared = append(prepared, sdk.SpawnInfo{
-			APITime:    now,
-			RemoteTime: info.RemoteTime,
-			Message:    info.Message,
+			APITime:     now,
+			RemoteTime:  info.RemoteTime,
+			Message:     info.Message,
+			UserMessage: info.Message.DefaultUserMessage(),
 		})
 	}
 	return prepared

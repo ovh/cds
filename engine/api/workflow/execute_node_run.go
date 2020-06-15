@@ -529,16 +529,19 @@ jobLoop:
 				}
 				msg.Args = []interface{}{sdk.Cause(e).Error()}
 				wjob.SpawnInfos = append(wjob.SpawnInfos, sdk.SpawnInfo{
-					APITime:    time.Now(),
-					Message:    msg,
-					RemoteTime: time.Now(),
+					APITime:     time.Now(),
+					Message:     msg,
+					RemoteTime:  time.Now(),
+					UserMessage: msg.DefaultUserMessage(),
 				})
 			}
 		} else {
+			sp := sdk.SpawnMsg{ID: sdk.MsgSpawnInfoJobInQueue.ID}
 			wjob.SpawnInfos = []sdk.SpawnInfo{{
-				APITime:    time.Now(),
-				Message:    sdk.SpawnMsg{ID: sdk.MsgSpawnInfoJobInQueue.ID},
-				RemoteTime: time.Now(),
+				APITime:     time.Now(),
+				Message:     sp,
+				RemoteTime:  time.Now(),
+				UserMessage: sp.DefaultUserMessage(),
 			}}
 		}
 
