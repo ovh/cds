@@ -32,11 +32,11 @@ func Export(ctx context.Context, db gorp.SqlExecutor, key string, envName string
 	}
 	env.Keys = keys
 
-	return ExportEnvironment(db, *env, encryptFunc)
+	return ExportEnvironment(db, *env, encryptFunc, fmt.Sprintf("env:%d", env.ID))
 }
 
 // ExportEnvironment encrypt and export
-func ExportEnvironment(db gorp.SqlExecutor, env sdk.Environment, encryptFunc sdk.EncryptFunc) (exportentities.Environment, error) {
+func ExportEnvironment(db gorp.SqlExecutor, env sdk.Environment, encryptFunc sdk.EncryptFunc, encryptPrefix string) (exportentities.Environment, error) {
 	var envvars []sdk.EnvironmentVariable
 	for _, v := range env.Variables {
 		switch v.Type {

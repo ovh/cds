@@ -124,7 +124,7 @@ func Pull(ctx context.Context, db gorp.SqlExecutor, cache cache.Store, proj sdk.
 		if e.FromRepository != wf.FromRepository { // don't export if coming from an other repository
 			continue
 		}
-		env, err := environment.ExportEnvironment(db, e, encryptFunc)
+		env, err := environment.ExportEnvironment(db, e, encryptFunc, fmt.Sprintf("env:%d", e.ID))
 		if err != nil {
 			return wp, sdk.WrapError(err, "unable to export env %s", e.Name)
 		}
