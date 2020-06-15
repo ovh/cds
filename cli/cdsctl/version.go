@@ -50,7 +50,7 @@ func versionRun(v cli.Values) error {
 	}
 
 	var versionAPI *sdk.Version
-	if cfg.Host != "" {
+	if cfg != nil && cfg.Host != "" {
 		var err error
 		versionAPI, err = client.Version()
 		if err != nil {
