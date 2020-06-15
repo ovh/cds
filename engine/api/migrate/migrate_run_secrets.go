@@ -23,18 +23,12 @@ func RunsSecrets(ctx context.Context, db *gorp.DbMap) error {
 		log.Error(ctx, "cannot get runs: %v", err)
 		return err
 	}
-	log.Info(ctx, "migrate.MigrateRunsSecrets: Runs count: %d", len(wrIds))
-	log.Info(ctx, "migrate.MigrateRunsSecrets: Runs deps: %+v", len(wrIds))
-	log.Info(ctx, "migrate.MigrateRunsSecrets: Runs deps: %+v", len(projIds))
-	log.Info(ctx, "migrate.MigrateRunsSecrets: Runs deps: %+v", len(appIds))
-	log.Info(ctx, "migrate.MigrateRunsSecrets: Runs deps: %+v", len(envIds))
 
 	log.Info(ctx, "migrate.MigrateRunsSecrets: Start Prepare migration")
 	projVars, err := project.LoadAllVariablesForProjectsWithDecryption(ctx, db, projIds)
 	if err != nil {
 		return err
 	}
-	log.Info(ctx, "migrate.MigrateRunsSecrets: Proj Var count %d", len(projVars))
 	defer func() {
 		projVars = make(map[int64][]sdk.ProjectVariable, 0)
 	}()
@@ -43,7 +37,6 @@ func RunsSecrets(ctx context.Context, db *gorp.DbMap) error {
 	if err != nil {
 		return err
 	}
-	log.Info(ctx, "migrate.MigrateRunsSecrets: Proj Key count %d", len(projKeys))
 	defer func() {
 		projKeys = make(map[int64][]sdk.ProjectKey, 0)
 	}()
@@ -60,7 +53,6 @@ func RunsSecrets(ctx context.Context, db *gorp.DbMap) error {
 		}
 		projInts[id] = mIntegrations
 	}
-	log.Info(ctx, "migrate.MigrateRunsSecrets: Proj ints count %d", len(projInts))
 	projIntsSlice = make(map[int64][]sdk.ProjectIntegration, 0)
 	defer func() {
 		projInts = make(map[int64]map[int64]sdk.ProjectIntegration, 0)
@@ -73,7 +65,6 @@ func RunsSecrets(ctx context.Context, db *gorp.DbMap) error {
 	defer func() {
 		appVars = make(map[int64][]sdk.ApplicationVariable, 0)
 	}()
-	log.Info(ctx, "migrate.MigrateRunsSecrets: App var  count %d", len(appVars))
 
 	appKeys, err := application.LoadAllKeysForAppsWithDecryption(ctx, db, appIds)
 	if err != nil {
@@ -82,7 +73,6 @@ func RunsSecrets(ctx context.Context, db *gorp.DbMap) error {
 	defer func() {
 		appKeys = make(map[int64][]sdk.ApplicationKey, 0)
 	}()
-	log.Info(ctx, "migrate.MigrateRunsSecrets: App keys  count %d", len(appKeys))
 
 	appDeployments, err := application.LoadAllDeploymnentForAppsWithDecryption(ctx, db, appIds)
 	if err != nil {
@@ -91,7 +81,6 @@ func RunsSecrets(ctx context.Context, db *gorp.DbMap) error {
 	defer func() {
 		appDeployments = make(map[int64]map[int64]sdk.IntegrationConfig, 0)
 	}()
-	log.Info(ctx, "migrate.MigrateRunsSecrets: App deploy  count %d", len(appDeployments))
 
 	appVCS, err := application.LoadAllByIDsWithDecryption(db, appIds)
 	if err != nil {
@@ -105,7 +94,6 @@ func RunsSecrets(ctx context.Context, db *gorp.DbMap) error {
 	defer func() {
 		appStrats = make(map[int64]sdk.RepositoryStrategy, 0)
 	}()
-	log.Info(ctx, "migrate.MigrateRunsSecrets: App strat  count %d", len(appStrats))
 
 	envsVars, err := environment.LoadAllVariablesForEnvsWithDecryption(ctx, db, envIds)
 	if err != nil {
@@ -114,7 +102,6 @@ func RunsSecrets(ctx context.Context, db *gorp.DbMap) error {
 	defer func() {
 		envsVars = make(map[int64][]sdk.EnvironmentVariable, 0)
 	}()
-	log.Info(ctx, "migrate.MigrateRunsSecrets: env vars  count %d", len(envsVars))
 
 	envsKeys, err := environment.LoadAllKeysForEnvsWithDecryption(ctx, db, envIds)
 	if err != nil {
@@ -123,10 +110,9 @@ func RunsSecrets(ctx context.Context, db *gorp.DbMap) error {
 	defer func() {
 		envsKeys = make(map[int64][]sdk.EnvironmentKey, 0)
 	}()
-	log.Info(ctx, "migrate.MigrateRunsSecrets: env keys  count %d", len(envsKeys))
+
 	log.Info(ctx, "migrate.MigrateRunsSecrets: start migration")
 	for _, id := range wrIds {
-		log.Info(ctx, "Run %d", id)
 		if err := migrate(ctx, db, id, projVars, projKeys, projInts, appVars, appKeys, appStrats, appDeployments, envsVars, envsKeys); err != nil {
 			log.Error(ctx, "unable to migrate run %d: %v", id, err)
 		}
@@ -159,7 +145,7 @@ func migrate(ctx context.Context, db *gorp.DbMap, id int64, projVarsMap map[int6
 			secrets = append(secrets, sdk.WorkflowRunSecret{
 				WorkflowRunID: run.ID,
 				Context:       workflow.SecretProjContext,
-				Name:          fmt.Sprintf("cds.proj.%s.", v.Name),
+				Name:          fmt.Sprintf("cds.proj.%s", v.Name),
 				Type:          v.Type,
 				Value:         []byte(v.Value),
 			})
@@ -250,6 +236,9 @@ func migrate(ctx context.Context, db *gorp.DbMap, id int64, projVarsMap map[int6
 		if appDeployments, ok := appDeploysMaps[id]; ok {
 			for depID, depValue := range appDeployments {
 				for vName, v := range depValue {
+					if v.Type != sdk.IntegrationConfigTypePassword {
+						continue
+					}
 					secrets = append(secrets, sdk.WorkflowRunSecret{
 						WorkflowRunID: run.ID,
 						Context:       fmt.Sprintf(workflow.SecretApplicationIntegrationContext, id, integrationsInProject[depID].Name),
@@ -292,7 +281,6 @@ func migrate(ctx context.Context, db *gorp.DbMap, id int64, projVarsMap map[int6
 
 	}
 
-	log.Info(ctx, "Secrets count %d", len(secrets))
 	for _, s := range secrets {
 		if err := workflow.InsertRunSecret(ctx, tx, &s); err != nil {
 			return err
@@ -311,8 +299,7 @@ func getRunsAndDeps(db gorp.SqlExecutor) ([]int64, []int64, []int64, []int64, er
 	if err != nil {
 		return nil, nil, nil, nil, err
 	}
-	log.Info(context.TODO(), "%+v", wrs)
-	log.Info(context.TODO(), "Runs get %d", len(wrs))
+
 	// Retrieve all dep
 	wrIds := make([]int64, 0, len(wrs))
 	projs := make(map[int64]struct{})
@@ -329,7 +316,6 @@ func getRunsAndDeps(db gorp.SqlExecutor) ([]int64, []int64, []int64, []int64, er
 			envs[envID] = struct{}{}
 		}
 	}
-	log.Info(context.TODO(), "Before transfo: %+v %+v %+v", projs, apps, envs)
 	return wrIds, sdk.IntMapToSlice(projs), sdk.IntMapToSlice(apps), sdk.IntMapToSlice(envs), nil
 }
 
