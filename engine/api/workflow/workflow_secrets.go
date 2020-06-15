@@ -17,12 +17,17 @@ func RetrieveSecrets(db gorp.SqlExecutor, wf sdk.Workflow) (*PushSecrets, error)
 	}
 
 	for _, app := range wf.Applications {
-		secretsVariables := make([]sdk.Variable, 0)
-		appVars, err := application.LoadAllVariablesWithDecrytion(db, app.ID)
+		appDB, err := application.LoadByIDWithClearVCSStrategyPassword(db, app.ID,
+			application.LoadOptions.WithVariablesWithClearPassword,
+			application.LoadOptions.WithClearDeploymentStrategies,
+			application.LoadOptions.WithClearKeys)
 		if err != nil {
 			return nil, err
 		}
-		vars := sdk.VariablesFilter(sdk.FromAplicationVariables(appVars), sdk.SecretVariable, sdk.KeyVariable)
+
+		secretsVariables := make([]sdk.Variable, 0)
+
+		vars := sdk.VariablesFilter(sdk.FromAplicationVariables(appDB.Variables), sdk.SecretVariable, sdk.KeyVariable)
 		for _, v := range vars {
 			secretsVariables = append(secretsVariables, sdk.Variable{
 				Name:  fmt.Sprintf("cds.app.%s", v.Name),
@@ -31,11 +36,7 @@ func RetrieveSecrets(db gorp.SqlExecutor, wf sdk.Workflow) (*PushSecrets, error)
 			})
 		}
 
-		keys, err := application.LoadAllKeysWithPrivateContent(db, app.ID)
-		if err != nil {
-			return nil, err
-		}
-		for _, k := range keys {
+		for _, k := range appDB.Keys {
 			secretsVariables = append(secretsVariables, sdk.Variable{
 				Name:  fmt.Sprintf("cds.key.%s.priv", k.Name),
 				Type:  string(k.Type),
@@ -43,11 +44,7 @@ func RetrieveSecrets(db gorp.SqlExecutor, wf sdk.Workflow) (*PushSecrets, error)
 			})
 		}
 
-		appDeploymentStrats, err := application.LoadDeploymentStrategies(db, app.ID, true)
-		if err != nil {
-			return nil, err
-		}
-		for name, appD := range appDeploymentStrats {
+		for name, appD := range appDB.DeploymentStrategies {
 			for vName, v := range appD {
 				secretsVariables = append(secretsVariables, sdk.Variable{
 					Name:  fmt.Sprintf("%s:cds.integration.%s", name, vName),
@@ -56,6 +53,11 @@ func RetrieveSecrets(db gorp.SqlExecutor, wf sdk.Workflow) (*PushSecrets, error)
 				})
 			}
 		}
+		secretsVariables = append(secretsVariables, sdk.Variable{
+			Name:  "git.http.password",
+			Type:  sdk.SecretVariable,
+			Value: appDB.RepositoryStrategy.Password,
+		})
 
 		secrets.ApplicationsSecrets[app.ID] = secretsVariables
 	}

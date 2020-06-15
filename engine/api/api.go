@@ -653,8 +653,8 @@ func (a *API) Serve(ctx context.Context) error {
 		authentication.SessionCleaner(ctx, a.mustDB)
 	}, a.PanicDump())
 
-	migrate.Add(ctx, sdk.Migration{Name: "MigrateRunsSecrets", Release: "0.47.0", Blocker: false, Automatic: true, ExecFunc: func(ctx context.Context) error {
-		return migrate.MigrateRunsSecrets(ctx, a.DBConnectionFactory.GetDBMap())
+	migrate.Add(ctx, sdk.Migration{Name: "RunsSecrets", Release: "0.47.0", Blocker: false, Automatic: true, ExecFunc: func(ctx context.Context) error {
+		return migrate.RunsSecrets(ctx, a.DBConnectionFactory.GetDBMap())
 	}})
 
 	isFreshInstall, errF := version.IsFreshInstall(a.mustDB())
