@@ -111,7 +111,7 @@ func UpsertWorkflowGroup(db gorp.SqlExecutor, projectID, workflowID int64, gp sd
 				(SELECT id FROM project_group WHERE project_group.project_id = $1 AND project_group.group_id = $2),
 				$3,
 				$4
-			) ON CONFLICT DO NOTHING`
+			) ON CONFLICT (project_group_id, workflow_id) DO UPDATE SET role = $4`
 	if _, err := db.Exec(query, projectID, gp.Group.ID, workflowID, gp.Permission); err != nil {
 		if strings.Contains(err.Error(), `null value in column "project_group_id"`) {
 			return sdk.WrapError(sdk.ErrNotFound, "cannot add this group on workflow because there isn't in the project groups : %v", err)
