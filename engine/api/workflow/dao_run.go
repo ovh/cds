@@ -228,12 +228,13 @@ func updateTags(db gorp.SqlExecutor, r *Run) error {
 }
 
 // LoadLastRuns returns the last run per last_mdodified
-func LoadLastRunsByDate(db gorp.SqlExecutor, month int) ([]sdk.WorkflowRun, error) {
+func LoadLastRunsByDate(db gorp.SqlExecutor) ([]sdk.WorkflowRun, error) {
 	query := fmt.Sprintf(`select %s
 	from workflow_run
-	where workflow_run.last_modified > NOW() - INTERVAL '$1 months'
+	left join workflow_run_secret on workflow_run_secret.workflow_run_id = workflow_run.id
+	where workflow_run.last_modified > NOW() - INTERVAL '3 months' AND workflow_run_secret.id IS NULL
 	order by workflow_run.id desc`, wfRunfields)
-	return loadRuns(db, query, month)
+	return loadRuns(db, query)
 }
 
 // LoadLastRun returns the last run for a workflow
