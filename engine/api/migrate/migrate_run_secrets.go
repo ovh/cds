@@ -68,6 +68,7 @@ func RunsSecrets(ctx context.Context, db *gorp.DbMap) error {
 	defer func() {
 		appVars = make(map[int64][]sdk.ApplicationVariable, 0)
 	}()
+	log.Info(ctx, "migrate.MigrateRunsSecrets: App var  count %d", len(appVars))
 
 	appKeys, err := application.LoadAllKeysForAppsWithDecryption(ctx, db, appIds)
 	if err != nil {
@@ -76,6 +77,7 @@ func RunsSecrets(ctx context.Context, db *gorp.DbMap) error {
 	defer func() {
 		appKeys = make(map[int64][]sdk.ApplicationKey, 0)
 	}()
+	log.Info(ctx, "migrate.MigrateRunsSecrets: App keys  count %d", len(appKeys))
 
 	appDeployments, err := application.LoadAllDeploymnentForAppsWithDecryption(ctx, db, appIds)
 	if err != nil {
@@ -84,6 +86,7 @@ func RunsSecrets(ctx context.Context, db *gorp.DbMap) error {
 	defer func() {
 		appDeployments = make(map[int64]map[int64]sdk.IntegrationConfig, 0)
 	}()
+	log.Info(ctx, "migrate.MigrateRunsSecrets: App deploy  count %d", len(appDeployments))
 
 	appVCS, err := application.LoadAllByIDsWithDecryption(db, appIds)
 	if err != nil {
@@ -97,6 +100,7 @@ func RunsSecrets(ctx context.Context, db *gorp.DbMap) error {
 	defer func() {
 		appStrats = make(map[int64]sdk.RepositoryStrategy, 0)
 	}()
+	log.Info(ctx, "migrate.MigrateRunsSecrets: App strat  count %d", len(appStrats))
 
 	envsVars, err := environment.LoadAllVariablesForEnvsWithDecryption(ctx, db, envIds)
 	if err != nil {
@@ -105,6 +109,7 @@ func RunsSecrets(ctx context.Context, db *gorp.DbMap) error {
 	defer func() {
 		envsVars = make(map[int64][]sdk.EnvironmentVariable, 0)
 	}()
+	log.Info(ctx, "migrate.MigrateRunsSecrets: env vars  count %d", len(envsVars))
 
 	envsKeys, err := environment.LoadAllKeysForEnvsWithDecryption(ctx, db, envIds)
 	if err != nil {
@@ -113,7 +118,7 @@ func RunsSecrets(ctx context.Context, db *gorp.DbMap) error {
 	defer func() {
 		envsKeys = make(map[int64][]sdk.EnvironmentKey, 0)
 	}()
-
+	log.Info(ctx, "migrate.MigrateRunsSecrets: env keys  count %d", len(envsKeys))
 	log.Info(ctx, "migrate.MigrateRunsSecrets: start migration")
 	for _, id := range wrIds {
 		log.Info(ctx, "Run %d", id)
