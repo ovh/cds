@@ -2,8 +2,9 @@ package migrate
 
 import (
 	"context"
+	"database/sql"
+	"encoding/json"
 	"fmt"
-
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/application"
@@ -23,6 +24,10 @@ func RunsSecrets(ctx context.Context, db *gorp.DbMap) error {
 		return err
 	}
 	log.Info(ctx, "migrate.MigrateRunsSecrets: Runs count: %d", len(wrIds))
+	log.Info(ctx, "migrate.MigrateRunsSecrets: Runs deps: %+v", len(wrIds))
+	log.Info(ctx, "migrate.MigrateRunsSecrets: Runs deps: %+v", len(projIds))
+	log.Info(ctx, "migrate.MigrateRunsSecrets: Runs deps: %+v", len(appIds))
+	log.Info(ctx, "migrate.MigrateRunsSecrets: Runs deps: %+v", len(envIds))
 
 	log.Info(ctx, "migrate.MigrateRunsSecrets: Start Prepare migration")
 	projVars, err := project.LoadAllVariablesForProjectsWithDecryption(ctx, db, projIds)
@@ -302,11 +307,11 @@ func migrate(ctx context.Context, db *gorp.DbMap, id int64, projVarsMap map[int6
 
 func getRunsAndDeps(db gorp.SqlExecutor) ([]int64, []int64, []int64, []int64, error) {
 	// Get all wruns to migrate
-	wrs, err := workflow.LoadLastRunsByDate(db)
+	wrs, err := LoadLastRunsByDate(db)
 	if err != nil {
 		return nil, nil, nil, nil, err
 	}
-
+	log.Info(context.TODO(), "%+v", wrs)
 	log.Info(context.TODO(), "Runs get %d", len(wrs))
 	// Retrieve all dep
 	wrIds := make([]int64, 0, len(wrs))
@@ -324,5 +329,47 @@ func getRunsAndDeps(db gorp.SqlExecutor) ([]int64, []int64, []int64, []int64, er
 			envs[envID] = struct{}{}
 		}
 	}
+	log.Info(context.TODO(), "Before transfo: %+v %+v %+v", projs, apps, envs)
 	return wrIds, sdk.IntMapToSlice(projs), sdk.IntMapToSlice(apps), sdk.IntMapToSlice(envs), nil
+}
+
+//WorkflowRun is an execution instance of a run
+type WorkflowRun struct {
+	ID        int64        `json:"id" db:"id"`
+	ProjectID int64        `json:"project_id,omitempty" db:"project_id"`
+	Workflow  sdk.Workflow `json:"workflow" db:"workflow"`
+}
+
+// LoadLastRuns returns the last run per last_mdodified
+func LoadLastRunsByDate(db gorp.SqlExecutor) ([]sdk.WorkflowRun, error) {
+	query := fmt.Sprintf(`select workflow_run.id, workflow_run.project_id, workflow_run.workflow
+	from workflow_run
+	left join workflow_run_secret on workflow_run_secret.workflow_run_id = workflow_run.id
+	where workflow_run.last_modified > NOW() - INTERVAL '3 months' AND workflow_run_secret.id IS NULL
+	order by workflow_run.id desc`)
+	return loadRuns(db, query)
+}
+
+func loadRuns(db gorp.SqlExecutor, query string) ([]sdk.WorkflowRun, error) {
+	rows, err := db.Query(query)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	wrs := make([]sdk.WorkflowRun, 0)
+	for rows.Next() {
+		wr := sdk.WorkflowRun{}
+		var ww sql.NullString
+		if err := rows.Scan(&wr.ID, &wr.ProjectID, &ww); err != nil {
+			return nil, err
+		}
+		if ww.Valid {
+			if err := json.Unmarshal([]byte(ww.String), &wr.Workflow); err != nil {
+				return nil, err
+			}
+		}
+		wrs = append(wrs, wr)
+	}
+	return wrs, nil
 }
