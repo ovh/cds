@@ -2,10 +2,12 @@ package api
 
 import (
 	"context"
+	"encoding/json"
 	"net/http"
 
 	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/project"
+	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/engine/api/user"
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/engine/service"
@@ -14,6 +16,14 @@ import (
 
 func (api *API) getTimelineHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		srvs, err := services.LoadAllByType(ctx, api.mustDB(), services.TypeElasticsearch)
+		if err != nil {
+			return err
+		}
+		if len(srvs) == 0 {
+			return service.WriteJSON(w, []json.RawMessage{}, http.StatusOK)
+		}
+
 		consumer := getAPIConsumer(ctx)
 
 		// Get index of the first element to return

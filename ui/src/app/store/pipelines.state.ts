@@ -154,6 +154,21 @@ export class PipelinesState {
     @Action(actionPipeline.AddPipelineParameter)
     addParameter(ctx: StateContext<PipelinesStateModel>, action: actionPipeline.AddPipelineParameter) {
         let parameter = action.payload.parameter;
+        const stateEditMode = ctx.getState();
+        if (stateEditMode.editMode) {
+            let pipToUpdate = cloneDeep(stateEditMode.editPipeline);
+            if (!pipToUpdate.parameters) {
+                pipToUpdate.parameters = new Array<Parameter>();
+            }
+            pipToUpdate.parameters.push(action.payload.parameter);
+            pipToUpdate.editModeChanged = true;
+            ctx.setState({
+                ...stateEditMode,
+                editPipeline: pipToUpdate,
+            });
+            return;
+        }
+
         let url = '/project/' + action.payload.projectKey + '/pipeline/' + action.payload.pipelineName + '/parameter/' + parameter.name;
         return this._http.post<Parameter>(url, parameter)
             .pipe(tap((param) => {
@@ -173,6 +188,22 @@ export class PipelinesState {
     @Action(actionPipeline.UpdatePipelineParameter)
     updateParameter(ctx: StateContext<PipelinesStateModel>, action: actionPipeline.UpdatePipelineParameter) {
         let parameter = action.payload.parameter;
+
+        const stateEditMode = ctx.getState();
+        if (stateEditMode.editMode) {
+            let pipToUpdate = cloneDeep(stateEditMode.editPipeline);
+            let indexParam = pipToUpdate.parameters.findIndex(p => p.name === action.payload.parameterName);
+            action.payload.parameter.hasChanged = false;
+            action.payload.parameter.updating = false;
+            pipToUpdate.parameters[indexParam] = action.payload.parameter
+            pipToUpdate.editModeChanged = true;
+            ctx.setState({
+                ...stateEditMode,
+                editPipeline: pipToUpdate,
+            });
+            return;
+        }
+
         let url = '/project/' + action.payload.projectKey +
             '/pipeline/' + action.payload.pipelineName +
             '/parameter/' + action.payload.parameterName;
@@ -197,6 +228,20 @@ export class PipelinesState {
     @Action(actionPipeline.DeletePipelineParameter)
     deleteParameter(ctx: StateContext<PipelinesStateModel>, action: actionPipeline.DeletePipelineParameter) {
         let parameter = action.payload.parameter;
+
+        const stateEditMode = ctx.getState();
+        if (stateEditMode.editMode) {
+            let pipToUpdate = cloneDeep(stateEditMode.editPipeline);
+            pipToUpdate.parameters = pipToUpdate.parameters.filter(p => p.name !== action.payload.parameter.name);
+            pipToUpdate.editModeChanged = true;
+            ctx.setState({
+                ...stateEditMode,
+                editPipeline: pipToUpdate,
+            });
+            return;
+        }
+
+
         let url = `/project/${action.payload.projectKey}/pipeline/${action.payload.pipelineName}/parameter/${parameter.name}`;
         return this._http.delete<Parameter>(url)
             .pipe(tap(() => {

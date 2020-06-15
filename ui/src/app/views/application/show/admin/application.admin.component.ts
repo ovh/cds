@@ -2,15 +2,15 @@ import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnInit, V
 import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
+import { Application } from 'app/model/application.model';
+import { Project } from 'app/model/project.model';
+import { AuthentifiedUser } from 'app/model/user.model';
+import { WarningModalComponent } from 'app/shared/modal/warning/warning.component';
+import { ToastService } from 'app/shared/toast/ToastService';
 import { DeleteApplication, UpdateApplication } from 'app/store/applications.action';
 import { AuthenticationState } from 'app/store/authentication.state';
 import cloneDeep from 'lodash-es/cloneDeep';
 import { finalize } from 'rxjs/operators';
-import { Application } from '../../../../model/application.model';
-import { Project } from '../../../../model/project.model';
-import { AuthentifiedUser } from '../../../../model/user.model';
-import { WarningModalComponent } from '../../../../shared/modal/warning/warning.component';
-import { ToastService } from '../../../../shared/toast/ToastService';
 
 @Component({
     selector: 'app-application-admin',
@@ -21,6 +21,7 @@ import { ToastService } from '../../../../shared/toast/ToastService';
 export class ApplicationAdminComponent implements OnInit {
     @Input() application: Application;
     @Input() project: Project;
+    @Input() editMode: boolean;
     @ViewChild('updateWarning')
     private updateWarningModal: WarningModalComponent;
 
@@ -64,10 +65,15 @@ export class ApplicationAdminComponent implements OnInit {
                 this._cd.markForCheck();
             }))
                 .subscribe(() => {
-                    this._toast.success('', this._translate.instant('application_update_ok'));
-                    if (nameUpdated) {
-                        this._router.navigate(['/project', this.project.key, 'application', this.newName]);
+                    if (this.editMode) {
+                        this._toast.info('', this._translate.instant('application_ascode_updated'));
+                    } else {
+                        this._toast.success('', this._translate.instant('application_update_ok'));
+                        if (nameUpdated) {
+                            this._router.navigate(['/project', this.project.key, 'application', this.newName]);
+                        }
                     }
+
                 });
         }
     }

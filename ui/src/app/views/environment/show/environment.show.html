@@ -55,7 +55,7 @@
                             <app-variable [variables]="environment.variables"
                                 [mode]="(project.permissions.writable && !environment.from_repository)?'edit':'ro'"
                                 (event)="variableEvent($event)" auditContext="environment" [project]="project"
-                                [environment]="environment"></app-variable>
+                                [environment]="environment.name"></app-variable>
                         </div>
                         <div *ngSwitchCase="'keys'">
                             <app-environment-keys [project]="project" [environment]="environment">

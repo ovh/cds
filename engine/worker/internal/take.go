@@ -46,12 +46,14 @@ func (w *CurrentWorker) Take(ctx context.Context, job sdk.WorkflowNodeJobRun) er
 	}
 
 	if info.GelfServiceAddr != "" {
-		log.Info(ctx, "Setup step logger")
-		logger, err := log.New(info.GelfServiceAddr)
+		log.Info(ctx, "Setup step logger %s", info.GelfServiceAddr)
+		l, h, err := log.New(ctx, info.GelfServiceAddr)
 		if err != nil {
 			return sdk.WithStack(err)
 		}
-		w.logger.stepLogger = logger
+		w.logger.gelfLogger = new(logger)
+		w.logger.gelfLogger.logger = l
+		w.logger.gelfLogger.hook = h
 	}
 
 	start := time.Now()

@@ -43,8 +43,8 @@ export class WorkflowAdminComponent implements OnInit, OnDestroy {
                 this.purgeTag = this._workflow.purge_tags[0];
             }
         }
-    };
-    get workflow() { return this._workflow };
+    }
+    get workflow() { return this._workflow }
 
     @Input() editMode: boolean;
 

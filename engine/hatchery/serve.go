@@ -193,7 +193,7 @@ func (c *Common) getPanicDumpListHandler() service.Handler {
 func (c *Common) InitServiceLogger() error {
 	var signer jose.Signer
 	if c.Common.ServiceInstance.LogServerAdress != "" {
-		logger, err := log.New(c.Common.ServiceInstance.LogServerAdress)
+		logger, _, err := log.New(context.Background(), c.Common.ServiceInstance.LogServerAdress)
 		if err != nil {
 			return sdk.WithStack(err)
 		}

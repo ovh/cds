@@ -19,7 +19,6 @@ import { ToolbarComponent } from './toolbar/toolbar.component';
 })
 @AutoUnsubscribe()
 export class HomeHeatmapComponent implements AfterViewInit {
-;
 
     loading = true;
     events: Array<Event>;

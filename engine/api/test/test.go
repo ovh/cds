@@ -39,7 +39,7 @@ var (
 )
 
 func init() {
-	log.Initialize(&log.Conf{Level: "debug"})
+	log.Initialize(context.TODO(), &log.Conf{Level: "debug"})
 }
 
 type Bootstrapf func(context.Context, sdk.DefaultValues, func() *gorp.DbMap) error

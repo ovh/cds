@@ -591,7 +591,7 @@ name: myNewApp`
 	//Do the request
 	rec := httptest.NewRecorder()
 	api.Router.Mux.ServeHTTP(rec, req)
-	assert.Equal(t, 409, rec.Code)
+	assert.Equal(t, 403, rec.Code)
 
 	//Check result
 	t.Logf(">>%s", rec.Body.String())

@@ -14,7 +14,7 @@ This article contains the steps to start CDS locally, with API, UI and a local H
 ## Prerequisite
 
 - a Redis
-- a PostgreSQL 9.5 min
+- a PostgreSQL 9.6 min
 
 ## Get the latest release from GitHub
 
@@ -76,7 +76,7 @@ You can edit the section `api.database` in `conf.toml` file if needed.
 If it's just for test purpose, you can start a postgreSQL database with docker, as:
 
 ```bash
-docker run --name cds-db -e POSTGRES_PASSWORD=cds -e POSTGRES_USER=cds -e POSTGRES_DB=cds -p 127.0.0.1:5432:5432 -d postgres:9.5
+docker run --name cds-db -e POSTGRES_PASSWORD=cds -e POSTGRES_USER=cds -e POSTGRES_DB=cds -p 127.0.0.1:5432:5432 -d postgres:9.6
 ```
 
 ```bash
@@ -103,7 +103,17 @@ curl http://localhost:8081/mon/version
 curl http://localhost:8081/mon/status
 ```
 
-## Launch CDS UI & Signup
+## Launch Signup & CDS UI
+
+Signup with cdsctl:
+
+```bash
+export INIT_TOKEN=`./cds-engine config init-token --config conf.toml`
+./cdsctl signup --api-url http://localhost:8081 --email admin@localhost.local --username admin --fullname admin
+```
+
+If you don't have email service configured you just have to check your CDS API logs to have the confirmation link.
+
 
 ```bash
 cd $HOME/cds
@@ -111,14 +121,7 @@ cd $HOME/cds
 ./cds-engine start ui --config conf.toml
 ```
 
-Then, open a browser on http://localhost:8080/ . You have to signup your first CDS user. It will be an administrator on CDS. In order to do that, just go on UI and click on signup or use `cdsctl signup`. If you don't have email service configured you just have to check your CDS API logs to have the confirmation link.
-
-Example of signup with cdsctl:
-
-```bash
-export INIT_TOKEN=`./cds-engine config init-token --config conf.toml`
-./cdsctl signup --api-url http://localhost:8081 --email admin@localhost.local --username admin --fullname admin
-```
+Then, open a browser on http://localhost:8080/ .
 
 ## Launch CDS Local Hatchery
 

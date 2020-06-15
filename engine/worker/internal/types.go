@@ -18,6 +18,7 @@ import (
 	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/ovh/cds/sdk/jws"
 	"github.com/ovh/cds/sdk/log"
+	loghook "github.com/ovh/cds/sdk/log/hook"
 )
 
 const (
@@ -28,6 +29,11 @@ const (
 	CDSApiUrl = "CDS_API_URL"
 )
 
+type logger struct {
+	hook   *loghook.Hook
+	logger *logrus.Logger
+}
+
 type CurrentWorker struct {
 	id         string
 	model      sdk.Model
@@ -36,7 +42,7 @@ type CurrentWorker struct {
 	logger     struct {
 		logChan    chan sdk.Log
 		llist      *list.List
-		stepLogger *logrus.Logger
+		gelfLogger *logger
 	}
 	httpPort int32
 	register struct {
@@ -96,7 +102,7 @@ func (wk *CurrentWorker) SendLog(ctx context.Context, level workerruntime.Level,
 
 	jobID, _ := workerruntime.JobID(ctx)
 	stepOrder, err := workerruntime.StepOrder(ctx)
-	if wk.logger.stepLogger == nil {
+	if wk.logger.gelfLogger == nil {
 		if !strings.HasSuffix(s, "\n") {
 			s += "\n"
 		}
@@ -134,8 +140,8 @@ func (wk *CurrentWorker) SendLog(ctx context.Context, level workerruntime.Level,
 	if err != nil {
 		log.Error(ctx, "unable to sign logs: %v", err)
 	}
-	wk.logger.stepLogger.WithField(log.ExtraFieldSignature, signature).Log(logLevel, s)
-
+	wk.logger.gelfLogger.logger.WithField(log.ExtraFieldSignature, signature).Log(logLevel, s)
+	wk.logger.gelfLogger.hook.Flush()
 }
 
 func (wk *CurrentWorker) Name() string {

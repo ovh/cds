@@ -23,8 +23,8 @@ var (
 	ErrInvalidID                                     = Error{ID: 5, Status: http.StatusBadRequest}
 	ErrInvalidProject                                = Error{ID: 6, Status: http.StatusBadRequest}
 	ErrInvalidProjectKey                             = Error{ID: 7, Status: http.StatusBadRequest}
-	ErrProjectHasPipeline                            = Error{ID: 8, Status: http.StatusConflict}
-	ErrProjectHasApplication                         = Error{ID: 9, Status: http.StatusConflict}
+	ErrProjectHasPipeline                            = Error{ID: 8, Status: http.StatusForbidden}
+	ErrProjectHasApplication                         = Error{ID: 9, Status: http.StatusForbidden}
 	ErrUnauthorized                                  = Error{ID: 10, Status: http.StatusUnauthorized}
 	ErrForbidden                                     = Error{ID: 11, Status: http.StatusForbidden}
 	ErrPipelineNotFound                              = Error{ID: 12, Status: http.StatusBadRequest}
@@ -32,7 +32,7 @@ var (
 	ErrNoEnvironmentProvided                         = Error{ID: 14, Status: http.StatusBadRequest}
 	ErrEnvironmentProvided                           = Error{ID: 15, Status: http.StatusBadRequest}
 	ErrUnknownEnv                                    = Error{ID: 16, Status: http.StatusBadRequest}
-	ErrEnvironmentExist                              = Error{ID: 17, Status: http.StatusConflict}
+	ErrEnvironmentExist                              = Error{ID: 17, Status: http.StatusForbidden}
 	ErrNoPipelineBuild                               = Error{ID: 18, Status: http.StatusNotFound}
 	ErrInvalidUsername                               = Error{ID: 21, Status: http.StatusBadRequest}
 	ErrInvalidEmail                                  = Error{ID: 22, Status: http.StatusBadRequest}
@@ -41,11 +41,11 @@ var (
 	ErrInvalidUser                                   = Error{ID: 25, Status: http.StatusBadRequest}
 	ErrBuildArchived                                 = Error{ID: 26, Status: http.StatusBadRequest}
 	ErrNoEnvironment                                 = Error{ID: 27, Status: http.StatusNotFound}
-	ErrModelNameExist                                = Error{ID: 28, Status: http.StatusConflict}
+	ErrModelNameExist                                = Error{ID: 28, Status: http.StatusForbidden}
 	ErrNoProject                                     = Error{ID: 30, Status: http.StatusNotFound}
-	ErrVariableExists                                = Error{ID: 31, Status: http.StatusConflict}
+	ErrVariableExists                                = Error{ID: 31, Status: http.StatusForbidden}
 	ErrInvalidGroupPattern                           = Error{ID: 32, Status: http.StatusBadRequest}
-	ErrGroupExists                                   = Error{ID: 33, Status: http.StatusConflict}
+	ErrGroupExists                                   = Error{ID: 33, Status: http.StatusForbidden}
 	ErrNotEnoughAdmin                                = Error{ID: 34, Status: http.StatusBadRequest}
 	ErrInvalidProjectName                            = Error{ID: 35, Status: http.StatusBadRequest}
 	ErrInvalidApplicationPattern                     = Error{ID: 36, Status: http.StatusBadRequest}
@@ -77,19 +77,17 @@ var (
 	ErrGroupNeedWrite                                = Error{ID: 64, Status: http.StatusBadRequest}
 	ErrNoVariable                                    = Error{ID: 65, Status: http.StatusNotFound}
 	ErrPluginInvalid                                 = Error{ID: 66, Status: http.StatusBadRequest}
-	ErrConflict                                      = Error{ID: 67, Status: http.StatusConflict}
-	ErrPipelineAlreadyAttached                       = Error{ID: 68, Status: http.StatusConflict}
-	ErrApplicationExist                              = Error{ID: 69, Status: http.StatusConflict}
+	ErrApplicationExist                              = Error{ID: 69, Status: http.StatusForbidden}
 	ErrBranchNameNotProvided                         = Error{ID: 70, Status: http.StatusBadRequest}
 	ErrInfiniteTriggerLoop                           = Error{ID: 71, Status: http.StatusBadRequest}
 	ErrInvalidResetUser                              = Error{ID: 72, Status: http.StatusBadRequest}
 	ErrUserConflict                                  = Error{ID: 73, Status: http.StatusBadRequest}
 	ErrWrongRequest                                  = Error{ID: 74, Status: http.StatusBadRequest}
-	ErrAlreadyExist                                  = Error{ID: 75, Status: http.StatusConflict}
+	ErrAlreadyExist                                  = Error{ID: 75, Status: http.StatusForbidden}
 	ErrInvalidType                                   = Error{ID: 76, Status: http.StatusBadRequest}
 	ErrParentApplicationAndPipelineMandatory         = Error{ID: 77, Status: http.StatusBadRequest}
 	ErrNoParentBuildFound                            = Error{ID: 78, Status: http.StatusNotFound}
-	ErrParameterExists                               = Error{ID: 79, Status: http.StatusConflict}
+	ErrParameterExists                               = Error{ID: 79, Status: http.StatusForbidden}
 	ErrNoHatchery                                    = Error{ID: 80, Status: http.StatusNotFound}
 	ErrInvalidWorkerStatus                           = Error{ID: 81, Status: http.StatusNotFound}
 	ErrInvalidToken                                  = Error{ID: 82, Status: http.StatusUnauthorized}
@@ -98,8 +96,8 @@ var (
 	ErrEnvironmentCannotBeDeleted                    = Error{ID: 85, Status: http.StatusForbidden}
 	ErrInvalidPipeline                               = Error{ID: 86, Status: http.StatusBadRequest}
 	ErrKeyNotFound                                   = Error{ID: 87, Status: http.StatusNotFound}
-	ErrPipelineAlreadyExists                         = Error{ID: 88, Status: http.StatusConflict}
-	ErrJobAlreadyBooked                              = Error{ID: 89, Status: http.StatusConflict}
+	ErrPipelineAlreadyExists                         = Error{ID: 88, Status: http.StatusForbidden}
+	ErrJobAlreadyBooked                              = Error{ID: 89, Status: http.StatusForbidden}
 	ErrPipelineBuildNotFound                         = Error{ID: 90, Status: http.StatusNotFound}
 	ErrAlreadyTaken                                  = Error{ID: 91, Status: http.StatusGone}
 	ErrWorkflowNodeNotFound                          = Error{ID: 93, Status: http.StatusNotFound}
@@ -124,7 +122,7 @@ var (
 	ErrWorkflowNodeRunJobNotFound                    = Error{ID: 112, Status: http.StatusNotFound}
 	ErrBuiltinKeyNotFound                            = Error{ID: 113, Status: http.StatusInternalServerError}
 	ErrStepNotFound                                  = Error{ID: 114, Status: http.StatusNotFound}
-	ErrWorkerModelAlreadyBooked                      = Error{ID: 115, Status: http.StatusConflict}
+	ErrWorkerModelAlreadyBooked                      = Error{ID: 115, Status: http.StatusForbidden}
 	ErrConditionsNotOk                               = Error{ID: 116, Status: http.StatusBadRequest}
 	ErrDownloadInvalidOS                             = Error{ID: 117, Status: http.StatusNotFound}
 	ErrDownloadInvalidArch                           = Error{ID: 118, Status: http.StatusNotFound}
@@ -147,7 +145,7 @@ var (
 	ErrJobNotBooked                                  = Error{ID: 135, Status: http.StatusBadRequest}
 	ErrUserNotFound                                  = Error{ID: 136, Status: http.StatusNotFound}
 	ErrInvalidNumber                                 = Error{ID: 137, Status: http.StatusBadRequest}
-	ErrKeyAlreadyExist                               = Error{ID: 138, Status: http.StatusConflict}
+	ErrKeyAlreadyExist                               = Error{ID: 138, Status: http.StatusForbidden}
 	ErrPipelineNameImport                            = Error{ID: 139, Status: http.StatusBadRequest}
 	ErrWorkflowNameImport                            = Error{ID: 140, Status: http.StatusBadRequest}
 	ErrIconBadFormat                                 = Error{ID: 141, Status: http.StatusBadRequest}
@@ -264,8 +262,6 @@ var errorsAmericanEnglish = map[int]string{
 	ErrGroupNeedWrite.ID:                                "need at least 1 group with write permission",
 	ErrNoVariable.ID:                                    "variable not found",
 	ErrPluginInvalid.ID:                                 "invalid plugin",
-	ErrConflict.ID:                                      "object conflict",
-	ErrPipelineAlreadyAttached.ID:                       "pipeline already attached to this application",
 	ErrApplicationExist.ID:                              "application already exists",
 	ErrBranchNameNotProvided.ID:                         "git.branch or git.tag parameter must be provided",
 	ErrInfiniteTriggerLoop.ID:                           "infinite trigger loop are forbidden",
@@ -444,8 +440,6 @@ var errorsFrench = map[int]string{
 	ErrGroupNeedWrite.ID:                                "il faut au moins 1 groupe avec les droits d'écriture",
 	ErrNoVariable.ID:                                    "la variable n'existe pas",
 	ErrPluginInvalid.ID:                                 "plugin non valide",
-	ErrConflict.ID:                                      "l'objet est en conflit",
-	ErrPipelineAlreadyAttached.ID:                       "le pipeline est déjà attaché à cette application",
 	ErrApplicationExist.ID:                              "une application du même nom existe déjà",
 	ErrBranchNameNotProvided.ID:                         "le paramètre git.branch ou git.tag est obligatoire",
 	ErrInfiniteTriggerLoop.ID:                           "création d'une boucle de trigger infinie interdite",

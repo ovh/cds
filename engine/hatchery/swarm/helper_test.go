@@ -1,12 +1,13 @@
 package swarm
 
 import (
+	"testing"
+	"time"
+
 	"github.com/ovh/cds/engine/hatchery"
 	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/h2non/gock.v1"
-	"testing"
-	"time"
 
 	docker "github.com/docker/docker/client"
 	"github.com/ovh/cds/sdk/log"
@@ -14,7 +15,7 @@ import (
 )
 
 func init() {
-	log.Initialize(&log.Conf{Level: "debug"})
+	log.Initialize(context.TODO(), &log.Conf{Level: "debug"})
 }
 
 func testSwarmHatchery(t *testing.T) *HatcherySwarm {

@@ -1,6 +1,7 @@
 package action
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"os"
@@ -26,38 +27,39 @@ type TestWorker struct {
 	keyDirectory     *afero.BasePathFile
 	client           cdsclient.WorkerInterface
 	Params           []sdk.Parameter
+	logBuffer        bytes.Buffer
 }
 
-func (w TestWorker) WorkingDirectory() *afero.BasePathFile {
+func (w *TestWorker) WorkingDirectory() *afero.BasePathFile {
 	return w.workingDirectory
 }
 
-func (w TestWorker) KeyDirectory() *afero.BasePathFile {
+func (w *TestWorker) KeyDirectory() *afero.BasePathFile {
 	return w.keyDirectory
 }
 
-func (w TestWorker) Blur(i interface{}) error {
+func (w *TestWorker) Blur(i interface{}) error {
 	w.t.Log("Blur")
 	return nil
 }
 
-func (w TestWorker) Parameters() []sdk.Parameter {
+func (w *TestWorker) Parameters() []sdk.Parameter {
 	return w.Params
 }
 
-func (w TestWorker) Client() cdsclient.WorkerInterface {
+func (w *TestWorker) Client() cdsclient.WorkerInterface {
 	return w.client
 }
 
-func (_ TestWorker) Environ() []string {
+func (_ *TestWorker) Environ() []string {
 	return os.Environ()
 }
 
-func (_ TestWorker) HTTPPort() int32 {
+func (_ *TestWorker) HTTPPort() int32 {
 	return 0
 }
 
-func (_ TestWorker) Name() string {
+func (_ *TestWorker) Name() string {
 	return "test"
 }
 
@@ -65,24 +67,26 @@ func (wk TestWorker) BaseDir() afero.Fs {
 	return wk.workspace
 }
 
-func (_ TestWorker) Register(ctx context.Context) error {
+func (_ *TestWorker) Register(ctx context.Context) error {
 	return nil
 }
-func (_ TestWorker) Take(ctx context.Context, job sdk.WorkflowNodeJobRun) error {
+func (_ *TestWorker) Take(ctx context.Context, job sdk.WorkflowNodeJobRun) error {
 	return nil
 }
-func (_ TestWorker) ProcessJob(job sdk.WorkflowNodeJobRunData) sdk.Result {
+func (_ *TestWorker) ProcessJob(job sdk.WorkflowNodeJobRunData) sdk.Result {
 	return sdk.Result{}
 }
-func (w TestWorker) SendLog(ctx context.Context, level workerruntime.Level, format string) {
-	w.t.Log("SendLog> [" + string(level) + "] " + format)
-
+func (w *TestWorker) SendLog(ctx context.Context, level workerruntime.Level, format string) {
+	s := "SendLog> [" + string(level) + "] " + format
+	w.t.Log(s)
+	_, err := w.logBuffer.WriteString(s)
+	require.NoError(w.t, err)
 }
-func (_ TestWorker) Unregister(ctx context.Context) error {
+func (_ *TestWorker) Unregister(ctx context.Context) error {
 	return nil
 }
 
-func (w TestWorker) InstallKey(key sdk.Variable) (*workerruntime.KeyResponse, error) {
+func (w *TestWorker) InstallKey(key sdk.Variable) (*workerruntime.KeyResponse, error) {
 	installedKeyPath := path.Join(w.keyDirectory.Name(), key.Name)
 	err := vcs.CleanAllSSHKeys(w.BaseDir(), w.keyDirectory.Name())
 	require.NoError(w.t, err)
@@ -101,7 +105,7 @@ func (w TestWorker) InstallKey(key sdk.Variable) (*workerruntime.KeyResponse, er
 	}, nil
 }
 
-func (w TestWorker) InstallKeyTo(key sdk.Variable, destinationPath string) (*workerruntime.KeyResponse, error) {
+func (w *TestWorker) InstallKeyTo(key sdk.Variable, destinationPath string) (*workerruntime.KeyResponse, error) {
 	var installedKeyPath string
 
 	w.t.Logf("InstallKey> destination : %s", destinationPath)
@@ -120,7 +124,7 @@ func (w TestWorker) InstallKeyTo(key sdk.Variable, destinationPath string) (*wor
 
 var _ workerruntime.Runtime = new(TestWorker)
 
-func SetupTest(t *testing.T) (TestWorker, context.Context) {
+func SetupTest(t *testing.T) (*TestWorker, context.Context) {
 	fs := afero.NewOsFs()
 	basedir := "test-" + test.GetTestName(t) + "-" + sdk.RandomString(10) + "-" + fmt.Sprintf("%d", time.Now().Unix())
 	log.Debug("creating basedir %s", basedir)
@@ -151,5 +155,5 @@ func SetupTest(t *testing.T) (TestWorker, context.Context) {
 	ctx = workerruntime.SetKeysDirectory(ctx, wk.keyDirectory)
 	ctx = workerruntime.SetJobID(ctx, 666)
 
-	return wk, ctx
+	return &wk, ctx
 }

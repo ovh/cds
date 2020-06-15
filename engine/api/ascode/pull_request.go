@@ -20,8 +20,9 @@ type EventType string
 
 // AsCodeEventType values.
 const (
-	PipelineEvent EventType = "pipeline"
-	WorkflowEvent EventType = "workflow"
+	PipelineEvent    EventType = "pipeline"
+	WorkflowEvent    EventType = "workflow"
+	ApplicationEvent EventType = "application"
 )
 
 type EntityData struct {
@@ -183,6 +184,20 @@ func createPullRequest(ctx context.Context, db *gorp.DbMap, store cache.Store, p
 		}
 		if !found {
 			asCodeEvent.Data.Pipelines[ed.ID] = ed.Name
+		}
+	case ApplicationEvent:
+		if asCodeEvent.Data.Applications == nil {
+			asCodeEvent.Data.Applications = make(map[int64]string)
+		}
+		found := false
+		for k := range asCodeEvent.Data.Applications {
+			if k == ed.ID {
+				found = true
+				break
+			}
+		}
+		if !found {
+			asCodeEvent.Data.Applications[ed.ID] = ed.Name
 		}
 	}
 
