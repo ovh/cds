@@ -426,17 +426,6 @@ You have to:
     </item>
     
     <item>
-      <title>Network Access</title>
-      <link>https://ovh.github.io/cds/docs/concepts/requirement/requirement_network/</link>
-      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
-      
-      <guid>https://ovh.github.io/cds/docs/concepts/requirement/requirement_network/</guid>
-      <description>The Network Access prerequisite allows you to require a worker to have access to a specific server.
-Example:
-golang.org:80  </description>
-    </item>
-    
-    <item>
       <title>Region Requirement</title>
       <link>https://ovh.github.io/cds/docs/concepts/requirement/requirement_region/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>

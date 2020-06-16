@@ -322,13 +322,6 @@
 	"content": "Do you want to run a workflow after a git push on a repository BUT your CDS instance isn\u0026rsquo;t accessible from the internet? This kind of hook is for you. (If your CDS instance is accessible from the internet please check the Git Repository Webhook).\nThis kind of hook will poll periodically the GitHub API to know the push and pull-request events on your repository.\nYou have to:\n link your project to a Repository Manager, on Advanced Section link an application to a git repository add a Git Poller on the root pipeline, this pipeline have the application linked in the context  For now, only GitHub are supported for git poller by CDS.\n"
 },
 {
-	"uri": "https://ovh.github.io/cds/docs/concepts/requirement/requirement_network/",
-	"title": "Network Access",
-	"tags": [],
-	"description": "",
-	"content": "The Network Access prerequisite allows you to require a worker to have access to a specific server.\nExample:\ngolang.org:80  "
-},
-{
 	"uri": "https://ovh.github.io/cds/hosting/ready-to-run/",
 	"title": "Ready to RUN",
 	"tags": [],
@@ -529,7 +522,7 @@
 	"title": "Requirement",
 	"tags": [],
 	"description": "",
-	"content": "Requirement types:\n Binary Model Hostname Network access Service Memory OS \u0026amp; Architecture Region  A Job will be executed by a worker.\nCDS will choose a worker dependending on the requirements you define for your job.\nYou can set as many requirements as you want, following these rules:\n Only one model can be set as requirement Only one hostname can be set as requirement Only one OS \u0026amp; Architecture requirement can be set at a time Memory and Services requirements are available only on Docker models Only one region can be set as requirement  "
+	"content": "Requirement types:\n Binary Model Hostname Service Memory OS \u0026amp; Architecture Region  A Job will be executed by a worker.\nCDS will choose a worker dependending on the requirements you define for your job.\nYou can set as many requirements as you want, following these rules:\n Only one model can be set as requirement Only one hostname can be set as requirement Only one OS \u0026amp; Architecture requirement can be set at a time Memory and Services requirements are available only on Docker models Only one region can be set as requirement  "
 },
 {
 	"uri": "https://ovh.github.io/cds/docs/concepts/workflow/run-number/",
