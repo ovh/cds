@@ -7,23 +7,21 @@ import { ActivatedRoute, NavigationEnd, NavigationStart, ResolveEnd, ResolveStar
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
 import { EventService } from 'app/event.service';
-import { WorkflowNodeRun } from 'app/model/workflow.run.model';
 import { GetCDSStatus } from 'app/store/cds.action';
 import { CDSState } from 'app/store/cds.state';
 import { Observable } from 'rxjs';
 import { WebSocketSubject } from 'rxjs/internal-compatibility';
-import { bufferTime, filter, map, mergeMap } from 'rxjs/operators';
+import { filter, map, mergeMap } from 'rxjs/operators';
 import { Subscription } from 'rxjs/Subscription';
 import * as format from 'string-format-obj';
 import { AppService } from './app.service';
-import { Event, EventType } from './model/event.model';
 import { AuthentifiedUser } from './model/user.model';
 import { LanguageStore } from './service/language/language.store';
 import { NotificationService } from './service/notification/notification.service';
+import { MonitoringService } from './service/services.module';
 import { ThemeStore } from './service/theme/theme.store';
 import { AutoUnsubscribe } from './shared/decorator/autoUnsubscribe';
 import { ToastService } from './shared/toast/ToastService';
-import { CDSSharedWorker } from './shared/worker/shared.worker';
 import { CDSWebWorker } from './shared/worker/web.worker';
 import { CDSWorker } from './shared/worker/worker';
 import { AuthenticationState } from './store/authentication.state';
@@ -77,7 +75,9 @@ export class AppComponent implements OnInit {
         private _appService: AppService,
         private _toastService: ToastService,
         private _store: Store,
-        private _eventService: EventService
+        private _eventService: EventService,
+        private _ngZone: NgZone,
+        private _monitoringService: MonitoringService
     ) {
         this.zone = new NgZone({ enableLongStackTrace: false });
         this.toasterConfigDefault = this._toastService.getConfigDefault();
@@ -198,17 +198,16 @@ export class AppComponent implements OnInit {
     }
 
     startVersionWorker(): void {
-        this.stopWorker(this.versionWorker, this.versionWorkerSubscription);
-        this.versionWorker = new CDSWebWorker('./assets/worker/web/version.js');
-        this.versionWorker.start({});
-        this.versionWorker.response().subscribe(msg => {
-            if (msg) {
-                this.zone.run(() => {
-                    if ((<any>window).cds_version !== '' && (<any>window).cds_version !== JSON.parse(msg).version) {
-                        this.showUIUpdatedBanner = true;
-                    }
+        this._ngZone.runOutsideAngular(() => {
+            this.versionWorkerSubscription = Observable.interval(60000)
+                .mergeMap(_ => this._monitoringService.getVersion())
+                .subscribe(v => {
+                    this._ngZone.run(() => {
+                        if ((<any>window).cds_version !== v.version) {
+                            this.showUIUpdatedBanner = true;
+                        }
+                    });
                 });
-            }
         });
     }
 
