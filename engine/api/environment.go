@@ -79,6 +79,20 @@ func (api *API) getEnvironmentHandler() service.Handler {
 			env.Usage.Workflows = wf
 		}
 
+		if env.FromRepository != "" {
+			proj, err := project.Load(api.mustDB(), projectKey)
+			if err != nil {
+				return err
+			}
+			wkAscodeHolder, err := workflow.LoadByRepo(ctx, api.mustDB(), *proj, env.FromRepository, workflow.LoadOptions{
+				WithTemplate: true,
+			})
+			if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
+				return sdk.NewErrorFrom(err, "cannot found workflow holder of the pipeline")
+			}
+			env.WorkflowAscodeHolder = wkAscodeHolder
+		}
+
 		return service.WriteJSON(w, env, http.StatusOK)
 	}
 }
