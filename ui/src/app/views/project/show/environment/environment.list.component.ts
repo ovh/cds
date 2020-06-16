@@ -1,5 +1,8 @@
-import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
-import { IdName, Project } from 'app/model/project.model';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnInit } from '@angular/core';
+import { Store } from '@ngxs/store';
+import { IdName, LoadOpts, Project } from 'app/model/project.model';
+import { ResyncProject } from 'app/store/project.action';
+import { finalize } from 'rxjs/operators';
 
 @Component({
     selector: 'app-project-environments',
@@ -7,7 +10,7 @@ import { IdName, Project } from 'app/model/project.model';
     styleUrls: ['./environment.list.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class ProjectEnvironmentListComponent {
+export class ProjectEnvironmentListComponent implements OnInit {
 
     @Input()
     set project(project: Project) {
@@ -36,8 +39,17 @@ export class ProjectEnvironmentListComponent {
     _filter = '';
 
     filteredEnvironments: Array<IdName> = [];
+    loading = true;
 
-    constructor() {
+    constructor(private store: Store, private _cd: ChangeDetectorRef) {}
 
+    ngOnInit(): void {
+        let opts: Array<LoadOpts> = [new LoadOpts('withEnvironmentNames', 'environment_names')];
+        this.store.dispatch(new ResyncProject({ projectKey: this.project.key, opts: opts }))
+            .pipe(finalize(() => {
+                this.loading = false;
+                this._cd.markForCheck();
+            }))
+            .subscribe();
     }
 }
