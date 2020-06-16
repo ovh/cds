@@ -41,7 +41,6 @@ export class AppComponent implements OnInit {
     isConnected: boolean;
     hideNavBar: boolean;
     versionWorker: CDSWebWorker;
-    sseWorker: CDSWorker;
     heartbeatToken: number;
     zone: NgZone;
     showUIUpdatedBanner: boolean;
@@ -56,7 +55,6 @@ export class AppComponent implements OnInit {
     toasterConfigErrorHTTP: any;
     toasterConfigErrorHTTPLocked: any;
     lastPing: number;
-    currentTheme: string;
     eventsRouteSubscription: Subscription;
     maintenance: boolean;
     cdsstateSub: Subscription;
@@ -124,12 +122,11 @@ export class AppComponent implements OnInit {
             if (!user) {
                 delete this.user;
                 this.isConnected = false;
-                this.stopWorker(this.sseWorker, null);
+                this._eventService.stopWebsocket();
             } else {
                 this.user = user;
                 this.isConnected = true;
-                this.startSSE();
-                this._eventService.startWebsocket(this.user);
+                this._eventService.startWebsocket();
             }
         });
         this.startVersionWorker();
@@ -199,95 +196,6 @@ export class AppComponent implements OnInit {
             s.unsubscribe();
         }
     }
-
-    startSSE(): void {
-        if (this.user.isAdmin() && localStorage.getItem('WS-EVENT')) {
-            return
-        }
-        if (this.sseWorker) {
-            this.stopWorker(this.sseWorker, null);
-        }
-        let authKey: string;
-        let authValue: string;
-        if (!this.user) {
-            return;
-        }
-
-        if (window['SharedWorker']) {
-            this.sseWorker = new CDSSharedWorker('./assets/worker/sharedWorker.js');
-            if (this.heartbeatToken !== 0) {
-                clearInterval(this.heartbeatToken);
-            }
-
-            this.heartbeatToken = window.setInterval(() => {
-                let d = (new Date()).getTime();
-                if (this.lastPing !== 0 && (d - this.lastPing) > 11000) {
-                    // If no ping in the last 11s restart SSE
-                    this.startSSE();
-                }
-            }, 2000);
-        } else {
-            this.sseWorker = new CDSWebWorker('./assets/worker/webWorker.js');
-        }
-
-        const href = this._router['location']._baseHref;
-        this.sseWorker.start({
-            headAuthKey: authKey,
-            headAuthValue: authValue,
-            urlSubscribe: `${href}/cdsapi/events/subscribe`,
-            urlUnsubscribe: `${href}/cdsapi/events/unsubscribe`,
-            sseURL: `${href}/cdsapi/events`,
-            pingURL: `${href}/cdsapi/user/me`,
-        });
-        this._sseSubscription = this.sseWorker.response()
-            .pipe(
-                filter((e) => e != null),
-                bufferTime(2000),
-                filter((events) => events.length !== 0),
-            )
-            .subscribe((events) => {
-                this.zone.run(() => {
-                    let resultEvents = (<Array<Event>>events).reduce((results, e) => {
-                        if (!e.type_event || e.type_event.indexOf(EventType.RUN_WORKFLOW_PREFIX) !== 0) {
-                            results.push(e);
-                        } else {
-                            let wr = results.find(re => {
-                                if (re.project_key === e.project_key && re.workflow_name === e.workflow_name
-                                    && re.type_event === e.type_event) {
-                                    switch (e.type_event) {
-                                        case EventType.RUN_WORKFLOW_NODE:
-                                            let wnrEvent = <WorkflowNodeRun>e.payload;
-                                            let otherEvent = <WorkflowNodeRun>re.payload;
-                                            return wnrEvent.id === otherEvent.id;
-                                        case EventType.RUN_WORKFLOW_PREFIX:
-                                            return e.workflow_run_num === re.workflow_run_num;
-                                        default: return true
-                                    }
-                                }
-                                return false;
-                            });
-                            if (!wr) {
-                                results.push(e);
-                            }
-                        }
-                        return results;
-                    }, new Array<Event>());
-                    for (let e of resultEvents) {
-                        if (e.healthCheck != null) {
-                            this.lastPing = (new Date()).getTime();
-                            // 0 = CONNECTING, 1 = OPEN, 2 = CLOSED
-                            if (e.healthCheck > 1) {
-                                // Reopen SSE
-                                this.startSSE();
-                            }
-                        } else {
-                            this._appService.manageEvent(e);
-                        }
-                    }
-                });
-            });
-    }
-
 
     startVersionWorker(): void {
         this.stopWorker(this.versionWorker, this.versionWorkerSubscription);

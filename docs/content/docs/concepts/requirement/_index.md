@@ -11,7 +11,6 @@ Requirement types:
 - Binary
 - Model
 - Hostname
-- [Network access]({{< relref "/docs/concepts/requirement/requirement_network.md" >}})
 - [Service]({{< relref "/docs/concepts/requirement/requirement_service.md" >}})
 - [Memory]({{< relref "/docs/concepts/requirement/requirement_memory.md" >}})
 - [OS & Architecture]({{< relref "/docs/concepts/requirement/requirement_os_arch.md" >}})

@@ -44,7 +44,7 @@ describe('CDS: Requirement Form Component', () => {
         let component = fixture.debugElement.componentInstance;
         expect(component).toBeTruthy();
 
-        http.expectOne('/requirement/types').flush(['binary', 'network']);
+        http.expectOne('/requirement/types').flush(['binary']);
 
         let compiled = fixture.debugElement.nativeElement;
 

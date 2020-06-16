@@ -23,6 +23,7 @@ func (w *CurrentWorker) Take(ctx context.Context, job sdk.WorkflowNodeJobRun) er
 	log.Info(ctx, "takeWorkflowJob> Job %d taken%s", job.ID, t)
 
 	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
 
 	w.currentJob.context = workerruntime.SetJobID(ctx, job.ID)
 	w.currentJob.context = ctx

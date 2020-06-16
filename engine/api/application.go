@@ -150,17 +150,19 @@ func (api *API) getApplicationHandler() service.Handler {
 			app.Usage = &usage
 		}
 
-		proj, err := project.Load(api.mustDB(), projectKey)
-		if err != nil {
-			return err
+		if app.FromRepository != "" {
+			proj, err := project.Load(api.mustDB(), projectKey)
+			if err != nil {
+				return err
+			}
+			wkAscodeHolder, err := workflow.LoadByRepo(ctx, api.mustDB(), *proj, app.FromRepository, workflow.LoadOptions{
+				WithTemplate: true,
+			})
+			if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
+				return sdk.NewErrorFrom(err, "cannot found workflow holder of the pipeline")
+			}
+			app.WorkflowAscodeHolder = wkAscodeHolder
 		}
-		wkAscodeHolder, err := workflow.LoadByRepo(ctx, api.mustDB(), *proj, app.FromRepository, workflow.LoadOptions{
-			WithTemplate: true,
-		})
-		if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
-			return sdk.NewErrorFrom(err, "cannot found workflow holder of the pipeline")
-		}
-		app.WorkflowAscodeHolder = wkAscodeHolder
 
 		return service.WriteJSON(w, app, http.StatusOK)
 	}
