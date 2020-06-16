@@ -1,16 +1,8 @@
 package sdk
 
-import (
-	"context"
-	"net"
-	"time"
-)
-
 const (
 	//BinaryRequirement refers to the need to a specific binary on host running the action
 	BinaryRequirement = "binary"
-	// NetworkAccessRequirement refers to the need of an opened network acces to given endpoint.
-	NetworkAccessRequirement = "network"
 	// ModelRequirement refers to the need fo a specific model
 	ModelRequirement = "model"
 	// HostnameRequirement checks the hostname of the worker
@@ -94,7 +86,6 @@ var (
 		HostnameRequirement,
 		MemoryRequirement,
 		ModelRequirement,
-		NetworkAccessRequirement,
 		OSArchRequirement,
 		PluginRequirement,
 		RegionRequirement,
@@ -147,7 +138,6 @@ var (
 
 // Requirement can be :
 // - a binary "which /usr/bin/docker"
-// - a network access "telnet google.com 443"
 type Requirement struct {
 	ID       int64  `json:"id" db:"id"`
 	ActionID int64  `json:"action_id" db:"action_id"`
@@ -177,19 +167,4 @@ func (a *Action) Requirement(name string, t string, value string) *Action {
 
 	a.Requirements = append(a.Requirements, r)
 	return a
-}
-
-// CheckNetworkAccessRequirement returns true if req.Value can Dial
-func CheckNetworkAccessRequirement(req Requirement) bool {
-	d := net.Dialer{Timeout: 10 * time.Second}
-	ctx, cancel := context.WithTimeout(context.Background(), d.Timeout)
-	defer cancel()
-
-	conn, err := d.DialContext(ctx, "tcp", req.Value)
-	if err != nil {
-		return false
-	}
-	conn.Close()
-
-	return true
 }

@@ -52,7 +52,6 @@ type Job struct {
 // Requirement represents an exported sdk.Requirement
 type Requirement struct {
 	Binary            string             `json:"binary,omitempty" yaml:"binary,omitempty"`
-	Network           string             `json:"network,omitempty" yaml:"network,omitempty"`
 	Model             string             `json:"model,omitempty" yaml:"model,omitempty"`
 	Hostname          string             `json:"hostname,omitempty" yaml:"hostname,omitempty"`
 	Plugin            string             `json:"plugin,omitempty" yaml:"plugin,omitempty"`
@@ -139,8 +138,6 @@ func newRequirements(req []sdk.Requirement) []Requirement {
 		switch r.Type {
 		case sdk.BinaryRequirement:
 			res = append(res, Requirement{Binary: r.Value})
-		case sdk.NetworkAccessRequirement:
-			res = append(res, Requirement{Network: r.Value})
 		case sdk.ModelRequirement:
 			res = append(res, Requirement{Model: r.Value})
 		case sdk.HostnameRequirement:
@@ -216,10 +213,6 @@ func computeJobRequirements(req []Requirement) []sdk.Requirement {
 			name = "model"
 			val = r.Model
 			tpe = sdk.ModelRequirement
-		} else if r.Network != "" {
-			name = "network"
-			val = r.Network
-			tpe = sdk.NetworkAccessRequirement
 		} else if r.OSArchRequirement != "" {
 			name = r.OSArchRequirement
 			val = r.OSArchRequirement

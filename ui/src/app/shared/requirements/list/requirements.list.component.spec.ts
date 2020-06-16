@@ -40,7 +40,7 @@ describe('CDS: Requirement List Component', () => {
 
     it('should load component + delete requirement', fakeAsync(  () => {
         const http = TestBed.get(HttpTestingController);
-        let mock = ['binary', 'network'];
+        let mock = ['binary'];
 
 
         // Create component
@@ -51,7 +51,7 @@ describe('CDS: Requirement List Component', () => {
         http.expectOne('/requirement/types').flush(mock);
 
 
-        expect(JSON.stringify(fixture.componentInstance.availableRequirements)).toBe(JSON.stringify(['binary', 'network']));
+        expect(JSON.stringify(fixture.componentInstance.availableRequirements)).toBe(JSON.stringify(['binary']));
 
         let reqs: Requirement[] = [];
         let r: Requirement = new Requirement('binary');
