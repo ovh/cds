@@ -39,8 +39,6 @@ var (
 	onceMetrics         sync.Once
 	Errors              *stats.Int64Measure
 	Hits                *stats.Int64Measure
-	SSEClients          *stats.Int64Measure
-	SSEEvents           *stats.Int64Measure
 	WebSocketClients    *stats.Int64Measure
 	WebSocketEvents     *stats.Int64Measure
 	ServerRequestCount  *stats.Int64Measure
@@ -146,17 +144,8 @@ func (r *Router) recoverWrap(h http.HandlerFunc) http.HandlerFunc {
 					err = sdk.ErrUnknownError
 				}
 
-				// the SSE handler can panic, and it's the way gorilla/mux works :(
-				if strings.HasPrefix(req.URL.String(), "/events") {
-					msg := fmt.Sprintf("%v", err)
-					for _, s := range handledEventErrors {
-						if strings.Contains(msg, s) {
-							return
-						}
-					}
-				}
+				log.Error(context.TODO(), "[PANIC_RECOVERY] Panic occurred on %s:%s, recover %s", req.Method, req.URL.String(), err)
 
-				log.Error(req.Context(), "[PANIC_RECOVERY] Panic occurred on %s:%s", req.Method, req.URL.String())
 				trace := make([]byte, 4096)
 				count := runtime.Stack(trace, true)
 				log.Error(req.Context(), "[PANIC_RECOVERY] Stacktrace of %d bytes\n%s\n", count, trace)
