@@ -112,8 +112,7 @@ func (api *API) postPerformImportAsCodeHandler() service.Handler {
 		key := vars[permProjectKey]
 		uuid := vars["uuid"]
 
-		//Load project
-		proj, errp := project.Load(api.mustDB(), key,
+		proj, err := project.Load(api.mustDB(), key,
 			project.LoadOptions.WithGroups,
 			project.LoadOptions.WithApplications,
 			project.LoadOptions.WithEnvironments,
@@ -121,8 +120,8 @@ func (api *API) postPerformImportAsCodeHandler() service.Handler {
 			project.LoadOptions.WithFeatures(api.Cache),
 			project.LoadOptions.WithClearIntegrations,
 		)
-		if errp != nil {
-			return sdk.WrapError(errp, "postPerformImportAsCodeHandler> Cannot load project %s", key)
+		if err != nil {
+			return sdk.WrapError(err, "cannot load project %s", key)
 		}
 
 		ope, err := operation.GetRepositoryOperation(ctx, api.mustDB(), uuid)

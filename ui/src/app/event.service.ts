@@ -19,7 +19,7 @@ export class EventService {
         private _router: Router,
         private _appService: AppService,
         private _toastService: ToastService
-    ) {}
+    ) { }
 
     stopWebsocket() {
         if (this.websocket) {
@@ -62,7 +62,9 @@ export class EventService {
 
     addOperationFilter(uuid: string) {
         this.currentFilter.operation = uuid;
-        this.websocket.next(this.currentFilter);
+        if (this.connected) {
+            this.websocket.next(this.currentFilter);
+        }
     }
 
     updateFilter(f: WebSocketMessage): void {
@@ -73,7 +75,7 @@ export class EventService {
     }
 
     manageWebsocketFilterByUrl(url: string) {
-        let msg =  new WebSocketMessage();
+        let msg = new WebSocketMessage();
         let urlSplitted = url.substr(1, url.length - 1).split('/');
         switch (urlSplitted[0]) {
             case 'home':
