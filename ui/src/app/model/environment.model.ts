@@ -13,4 +13,5 @@ export class Environment {
     from_repository: string;
 
     mute: boolean;
+    editModeChanged: boolean;
 }

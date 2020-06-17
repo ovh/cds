@@ -211,14 +211,8 @@ export class DeleteKeyInProject {
 }
 
 //  ------- Environment --------- //
-export class ResyncEnvironmentsInProject {
-    static readonly type = '[Project] Resync Environments in Project';
-    constructor(public payload: { projectKey: string }) { }
-}
-export class FetchEnvironmentsInProject {
-    static readonly type = '[Project] Fetch Environments in Project';
-    constructor(public payload: { projectKey: string }) { }
-}
+
+
 export class AddEnvironmentKey {
     static readonly type = '[Project] Add Environment Key in Project';
     constructor(public payload: { projectKey: string, envName: string, key: Key }) { }
@@ -227,46 +221,7 @@ export class DeleteEnvironmentKey {
     static readonly type = '[Project] Delete Environment Key in Project';
     constructor(public payload: { projectKey: string, envName: string, key: Key }) { }
 }
-export class FetchEnvironmentInProject {
-    static readonly type = '[Project] Fetch Single Environment in Project';
-    constructor(public payload: { projectKey: string, envName: string }) { }
-}
-export class LoadEnvironmentsInProject {
-    static readonly type = '[Project] Load Environments in Project';
-    constructor(public payload: Environment[]) { }
-}
-export class AddEnvironmentInProject {
-    static readonly type = '[Project] Add Environment in Project';
-    constructor(public payload: { projectKey: string, environment: Environment }) { }
-}
-export class CloneEnvironmentInProject {
-    static readonly type = '[Project] Clone Environment in Project';
-    constructor(public payload: { projectKey: string, cloneName: string, environment: Environment }) { }
-}
-export class UpdateEnvironmentInProject {
-    static readonly type = '[Project] Update environment in Project';
-    constructor(public payload: { projectKey: string, environmentName: string, changes: Environment }) { }
-}
-export class DeleteEnvironmentInProject {
-    static readonly type = '[Project] Delete Environment in Project';
-    constructor(public payload: { projectKey: string, environment: Environment }) { }
-}
-export class AddEnvironmentVariableInProject {
-    static readonly type = '[Project] Add Environment Variable in Project';
-    constructor(public payload: { projectKey: string, environmentName: string, variable: Variable }) { }
-}
-export class UpdateEnvironmentVariableInProject {
-    static readonly type = '[Project] Update environment variable in Project';
-    constructor(public payload: { projectKey: string, environmentName: string, variableName: string, changes: Variable }) { }
-}
-export class DeleteEnvironmentVariableInProject {
-    static readonly type = '[Project] Delete Environment Variable in Project';
-    constructor(public payload: { projectKey: string, environmentName: string, variable: Variable }) { }
-}
-export class FetchEnvironmentUsageInProject {
-    static readonly type = '[Project] Fetch Environment usage in Project';
-    constructor(public payload: { projectKey: string, environmentName: string }) { }
-}
+
 //  ------- Repository Manager --------- //
 export class ConnectRepositoryManagerInProject {
     static readonly type = '[Project] Connect Repository Manager in Project';

@@ -5,7 +5,7 @@ import { Environment } from 'app/model/environment.model';
 import { Project } from 'app/model/project.model';
 import { KeyEvent } from 'app/shared/keys/key.event';
 import { ToastService } from 'app/shared/toast/ToastService';
-import { AddEnvironmentKey, DeleteEnvironmentKey } from 'app/store/project.action';
+import { AddEnvironmentKey, DeleteEnvironmentKey } from 'app/store/environment.action';
 import { finalize } from 'rxjs/operators';
 
 @Component({

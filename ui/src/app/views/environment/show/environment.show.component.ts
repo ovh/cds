@@ -12,11 +12,12 @@ import { ToastService } from 'app/shared/toast/ToastService';
 import { VariableEvent } from 'app/shared/variable/variable.event.model';
 import { CDSWebWorker } from 'app/shared/worker/web.worker';
 import { AuthenticationState } from 'app/store/authentication.state';
-import * as projectActions from 'app/store/project.action';
+import * as envActions from 'app/store/environment.action';
+import { EnvironmentState, EnvironmentStateModel } from 'app/store/environment.state';
 import { ProjectState, ProjectStateModel } from 'app/store/project.state';
 import { cloneDeep } from 'lodash-es';
 import { Subscription } from 'rxjs';
-import { filter, finalize } from 'rxjs/operators';
+import { finalize } from 'rxjs/operators';
 
 @Component({
     selector: 'app-environment-show',
@@ -53,9 +54,7 @@ export class EnvironmentShowComponent implements OnInit {
     workflowNodeRun: string;
     workflowPipeline: string;
 
-    pipelines: Array<Pipeline> = new Array<Pipeline>();
     workflows: Array<Workflow> = new Array<Workflow>();
-    environments: Array<Environment> = new Array<Environment>();
     currentUser: AuthentifiedUser;
     usageCount = 0;
 
@@ -64,17 +63,16 @@ export class EnvironmentShowComponent implements OnInit {
         private _router: Router,
         private _toast: ToastService,
         public _translate: TranslateService,
-        private store: Store,
+        private _store: Store,
         private _cd: ChangeDetectorRef
     ) {
-        this.currentUser = this.store.selectSnapshot(AuthenticationState.user);
-        // Update data if route change
+        this.currentUser = this._store.selectSnapshot(AuthenticationState.user);
+        this.project = this._route.snapshot.data['project'];
+        this.projectSubscription = this._store.select(ProjectState)// Update data if route change
+            .subscribe((projectState: ProjectStateModel) => this.project = projectState.project);
         this._routeDataSub = this._route.data.subscribe(datas => {
             this.project = datas['project'];
         });
-
-        this.projectSubscription = this.store.select(ProjectState)
-            .subscribe((projectState: ProjectStateModel) => this.project = projectState.project);
 
         if (this._route.snapshot && this._route.queryParams) {
             this.workflowName = this._route.snapshot.queryParams['workflow'];
@@ -87,7 +85,7 @@ export class EnvironmentShowComponent implements OnInit {
             let key = params['key'];
             let envName = params['envName'];
             if (key && envName) {
-                this.store.dispatch(new projectActions.FetchEnvironmentInProject({ projectKey: key, envName }))
+                this._store.dispatch(new envActions.FetchEnvironment({ projectKey: key, envName }))
                     .subscribe(
                         null,
                         () => this._router.navigate(['/project', key], { queryParams: { tab: 'environments' } })
@@ -101,16 +99,16 @@ export class EnvironmentShowComponent implements OnInit {
                         this.environmentSubscription.unsubscribe();
                     }
 
-                    this.environmentSubscription = this.store.select(ProjectState.selectEnvironment(envName))
-                        .pipe(filter((env) => env != null))
-                        .subscribe((env: Environment) => {
+                    this.environmentSubscription = this._store.select(EnvironmentState.currentState())
+                        .subscribe((s: EnvironmentStateModel) => {
+                            if (!s.environment) {
+                                return;
+                            }
                             this.readyEnv = true;
-                            this.environment = cloneDeep(env);
-                            if (env.usage) {
-                                this.workflows = env.usage.workflows || [];
-                                this.environments = env.usage.environments || [];
-                                this.pipelines = env.usage.pipelines || [];
-                                this.usageCount = this.pipelines.length + this.environments.length + this.workflows.length;
+                            this.environment = cloneDeep(s.environment);
+                            if (this.environment.usage) {
+                                this.workflows = this.environment.usage.workflows || [];
+                                this.usageCount = this.workflows.length;
                             }
                             this._cd.markForCheck();
                         }, () => {
@@ -143,7 +141,7 @@ export class EnvironmentShowComponent implements OnInit {
         switch (event.type) {
             case 'add':
                 this.varFormLoading = true;
-                this.store.dispatch(new projectActions.AddEnvironmentVariableInProject({
+                this._store.dispatch(new envActions.AddEnvironmentVariable({
                     projectKey: this.project.key,
                     environmentName: this.environment.name,
                     variable: event.variable
@@ -154,7 +152,7 @@ export class EnvironmentShowComponent implements OnInit {
                     .subscribe(() => this._toast.success('', this._translate.instant('variable_added')));
                 break;
             case 'update':
-                this.store.dispatch(new projectActions.UpdateEnvironmentVariableInProject({
+                this._store.dispatch(new envActions.UpdateEnvironmentVariable({
                     projectKey: this.project.key,
                     environmentName: this.environment.name,
                     variableName: event.variable.name,
@@ -166,7 +164,7 @@ export class EnvironmentShowComponent implements OnInit {
                     .subscribe(() => this._toast.success('', this._translate.instant('variable_updated')));
                 break;
             case 'delete':
-                this.store.dispatch(new projectActions.DeleteEnvironmentVariableInProject({
+                this._store.dispatch(new envActions.DeleteEnvironmentVariable({
                     projectKey: this.project.key,
                     environmentName: this.environment.name,
                     variable: event.variable
