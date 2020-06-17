@@ -72,7 +72,9 @@ func requestModifyDefaultNameAndRepositories(ctx context.Context, db gorp.SqlExe
 		var repoPath string
 	loopVCSServer:
 		for _, vcs := range proj.VCSServers {
-			repos, err := repositoriesmanager.GetReposForProjectVCSServer(ctx, db, store, proj, vcs.Name, repositoriesmanager.Options{})
+			repos, err := repositoriesmanager.GetReposForProjectVCSServer(ctx, db, store, proj, vcs.Name, repositoriesmanager.Options{
+				Sync: true,
+			})
 			if err != nil {
 				return err
 			}
