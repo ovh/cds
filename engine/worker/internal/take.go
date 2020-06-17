@@ -3,6 +3,7 @@ package internal
 import (
 	"context"
 	"encoding/base64"
+	"fmt"
 	"strings"
 	"time"
 
@@ -10,6 +11,8 @@ import (
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/jws"
 	"github.com/ovh/cds/sdk/log"
+	"github.com/ovh/cds/sdk/log/hook"
+	"github.com/sirupsen/logrus"
 )
 
 func (w *CurrentWorker) Take(ctx context.Context, job sdk.WorkflowNodeJobRun) error {
@@ -55,6 +58,48 @@ func (w *CurrentWorker) Take(ctx context.Context, job sdk.WorkflowNodeJobRun) er
 		w.logger.gelfLogger = new(logger)
 		w.logger.gelfLogger.logger = l
 		w.logger.gelfLogger.hook = h
+		w.logger.gelfLogger.hook.FlushPolicy = &hook.FlushPolicy{
+			Delay: 100 * time.Millisecond,
+			FlushFunc: func(c chan *hook.Message) {
+				fmt.Printf("[graylog] aggregating %d messages from the channel\n", len(c))
+				var remainingMessages = make([]*hook.Message, 0, len(c))
+			L:
+				for {
+					select {
+					case m := <-c:
+						remainingMessages = append(remainingMessages, m)
+					default:
+						break L
+					}
+				}
+
+				s := "aggregrated messages"
+				AggrMsg := hook.Message{
+					Version:            "1.1",
+					Host:               h.Hostname,
+					Short:              s,
+					Full:               s,
+					Time:               float64(time.Now().UnixNano()) / 1e9,
+					Level:              int32(logrus.ErrorLevel),
+					Pid:                h.Pid,
+					Facility:           h.Facility,
+					AggregatedMessages: remainingMessages,
+				}
+				c <- &AggrMsg
+
+				var exit = &sdk.False
+				time.AfterFunc(30*time.Second, func() {
+					exit = &sdk.True
+				})
+
+				for len(c) > 0 && !*exit {
+					log.Debug("waiting for the bulk message to be sent")
+					time.Sleep(time.Second)
+				}
+
+			},
+			Timeout: 30 * time.Second,
+		}
 	}
 
 	start := time.Now()

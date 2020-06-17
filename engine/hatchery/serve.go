@@ -218,6 +218,7 @@ func (c *Common) SendServiceLog(ctx context.Context, servicesLogs []sdk.ServiceL
 				WorkerName:      s.WorkerName,
 			},
 			JobID:     s.WorkflowNodeJobRunID,
+			NodeRunID: s.WorkflowNodeRunID,
 			Timestamp: time.Now().UnixNano(),
 		}
 		signature, err := jws.Sign(c.Signer, dataToSign)

@@ -241,6 +241,7 @@ type Signature struct {
 	Worker    *SignatureWorker
 	Service   *SignatureService
 	JobID     int64
+	NodeRunID int64
 	Timestamp int64
 }
 

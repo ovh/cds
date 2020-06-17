@@ -6,9 +6,11 @@ import (
 	"crypto/rsa"
 	"fmt"
 	"net"
+	"runtime"
 	"strings"
 	"time"
 
+	"github.com/go-gorp/gorp"
 	gocache "github.com/patrickmn/go-cache"
 
 	"github.com/ovh/cds/engine/api/observability"
@@ -34,12 +36,21 @@ func (s *Service) RunTcpLogServer(ctx context.Context) {
 
 	//Gracefully shutdown the tcp server
 	go func() {
-		select {
-		case <-ctx.Done():
-			log.Info(ctx, "CDN> Shutdown tcp log Server")
-			_ = listener.Close()
-		}
+		<-ctx.Done()
+		log.Info(ctx, "CDN> Shutdown tcp log Server")
+		_ = listener.Close()
 	}()
+
+	var nbCPU = runtime.NumCPU()
+	s.ChanMessages = make(chan handledMessage, 10000)
+	for i := 0; i < nbCPU; i++ {
+		go func() {
+			log.Debug("process logs")
+			if err := s.processLogs(ctx); err != nil {
+				log.Error(ctx, err.Error())
+			}
+		}()
+	}
 
 	go func() {
 		for {
@@ -128,16 +139,63 @@ func (s *Service) handleWorkerLog(ctx context.Context, workerID string, sig inte
 		return sdk.WithStack(sdk.ErrForbidden)
 	}
 
-	pbJob, err := workflow.LoadNodeJobRun(ctx, s.Db, s.Cache, signature.JobID)
-	if err != nil {
-		return err
+	s.ChanMessages <- handledMessage{
+		signature: signature,
+		m:         m,
 	}
 
+	return nil
+}
+
+type handledMessage struct {
+	signature log.Signature
+	m         hook.Message
+}
+
+func (s *Service) processLogs(ctx context.Context) error {
+	for {
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		case msg := <-s.ChanMessages:
+			tx, err := s.Db.Begin()
+			if err != nil {
+				log.Error(ctx, "unable to start tx: %v", err)
+				continue
+			}
+			defer tx.Rollback() // nolint
+
+			if len(msg.m.AggregatedMessages) > 0 {
+				var currentLog string
+				for _, m1 := range msg.m.AggregatedMessages {
+					currentLog += buildMessage(msg.signature, *m1)
+				}
+				if err := s.processLog(ctx, tx, msg.signature, currentLog); err != nil {
+					log.Error(ctx, "unable to process log: %+v", err)
+					continue
+				}
+			} else {
+				currentLog := buildMessage(msg.signature, msg.m)
+				if err := s.processLog(ctx, tx, msg.signature, currentLog); err != nil {
+					log.Error(ctx, "unable to process log: %+v", err)
+					continue
+				}
+			}
+
+			if err := tx.Commit(); err != nil {
+				log.Error(ctx, "unable to commit tx: %+v", err)
+				continue
+			}
+		}
+	}
+}
+
+func buildMessage(signature log.Signature, m hook.Message) string {
 	logDate := time.Unix(0, int64(m.Time*1e9))
 	logs := sdk.Log{
-		JobID:        pbJob.ID,
+		JobID:        signature.JobID,
 		LastModified: &logDate,
-		NodeRunID:    pbJob.WorkflowNodeRunID,
+		NodeRunID:    signature.NodeRunID,
 		Start:        &logDate,
 		StepOrder:    signature.Worker.StepOrder,
 		Val:          m.Full,
@@ -165,16 +223,19 @@ func (s *Service) handleWorkerLog(ctx context.Context, workerID string, sig inte
 		lvl = "EMERGENCY"
 	}
 	logs.Val = fmt.Sprintf("[%s] %s", lvl, logs.Val)
-	tx, err := s.Db.Begin()
-	if err != nil {
-		return sdk.WithStack(err)
-	}
-	defer tx.Rollback() // nolint
+	return logs.Val
+}
 
-	if err := workflow.AddLog(tx, pbJob, &logs, s.Cfg.Log.StepMaxSize); err != nil {
-		return err
+func (s *Service) processLog(ctx context.Context, db gorp.SqlExecutor, signature log.Signature, message string) error {
+	now := time.Now()
+	l := sdk.Log{
+		JobID:        signature.JobID,
+		NodeRunID:    signature.NodeRunID,
+		LastModified: &now,
+		StepOrder:    signature.Worker.StepOrder,
+		Val:          message,
 	}
-	return sdk.WithStack(tx.Commit())
+	return workflow.AddLog(db, nil, &l, s.Cfg.Log.StepMaxSize)
 }
 
 func (s *Service) handleServiceLog(ctx context.Context, hatcheryID int64, hatcheryName string, workerName string, sig interface{}, m hook.Message) error {

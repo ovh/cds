@@ -58,13 +58,14 @@ var BufSize uint = 16384
 
 // Config is the required configuration for creating a Graylog hook
 type Config struct {
-	Addr       string
-	Protocol   string
-	Hostname   string
-	Facility   string
-	TLSConfig  *tls.Config
-	SendPolicy SendPolicy
-	Merge      func(...map[string]interface{}) map[string]interface{}
+	Addr        string
+	Protocol    string
+	Hostname    string
+	Facility    string
+	TLSConfig   *tls.Config
+	SendPolicy  SendPolicy
+	FlushPolicy *FlushPolicy
+	Merge       func(...map[string]interface{}) map[string]interface{}
 }
 
 // Hook to send logs to a logging service compatible with the Graylog API and the GELF format.
@@ -81,13 +82,18 @@ type Hook struct {
 	// Default is logrus.InfoLevel.
 	Threshold logrus.Level
 
-	merge      MergeFields
-	pid        int
-	gelfLogger Writer
-	messages   chan *Message
-	done       chan struct{}
-	closed     bool
-	l          sync.Mutex
+	merge       MergeFields
+	Pid         int
+	gelfLogger  Writer
+	messages    chan *Message
+	flushMutex  sync.Mutex
+	FlushPolicy *FlushPolicy
+}
+
+type FlushPolicy struct {
+	Delay     time.Duration
+	FlushFunc func(chan *Message)
+	Timeout   time.Duration
 }
 
 // NewHook creates a hook to be added to an instance of logger.
@@ -130,54 +136,83 @@ func NewHook(cfg *Config, extra map[string]interface{}) (*Hook, error) {
 		cfg.SendPolicy = DropPolicy
 	}
 
+	if cfg.FlushPolicy == nil {
+		cfg.FlushPolicy = DefaultFlushPolicy
+	}
+
 	merge := mergeFields
 	if cfg.Merge != nil {
 		merge = cfg.Merge
 	}
 
-	fmt.Fprintf(os.Stderr, "[graylog] using endpoint: %s\n", cfg.Addr)
+	fmt.Fprintf(os.Stdout, "[graylog] using endpoint: %s\n", cfg.Addr)
 
 	hook := &Hook{
-		Facility:   cfg.Facility,
-		Hostname:   hostname,
-		Extra:      extra,
-		SendPolicy: cfg.SendPolicy,
-		Threshold:  logrus.DebugLevel,
-		merge:      merge,
-		pid:        os.Getpid(),
-		gelfLogger: w,
-		messages:   make(chan *Message, BufSize),
-		done:       make(chan struct{}, 1),
+		Facility:    cfg.Facility,
+		Hostname:    hostname,
+		Extra:       extra,
+		SendPolicy:  cfg.SendPolicy,
+		Threshold:   logrus.DebugLevel,
+		merge:       merge,
+		Pid:         os.Getpid(),
+		gelfLogger:  w,
+		messages:    make(chan *Message, BufSize),
+		FlushPolicy: cfg.FlushPolicy,
 	}
 
 	go hook.fire() // Log in background
+
+	if hook.FlushPolicy.Delay != 0 {
+		go func() {
+			ticker := time.NewTicker(hook.FlushPolicy.Delay)
+			defer ticker.Stop()
+			<-ticker.C
+			fmt.Println("triggering autoflush...")
+			hook.Flush()
+		}()
+	}
+
 	return hook, nil
+}
+
+var (
+	True  = true
+	False = false
+)
+
+var DefaultFlushPolicy = &FlushPolicy{
+	Delay:   0,
+	Timeout: 1 * time.Minute,
+	FlushFunc: func(c chan *Message) {
+		fmt.Printf("[graylog] dropping %d messages\n", len(c))
+	L:
+		for {
+			select {
+			case <-c:
+			default:
+				break L
+			}
+		}
+	},
 }
 
 // Flush sends all remaining logs in the buffer to Graylog before returning
 func (hook *Hook) Flush() {
-	hook.l.Lock()
-	defer hook.l.Unlock()
-	if hook.closed {
-		return
+	hook.flushMutex.Lock()
+	defer hook.flushMutex.Unlock()
+	fmt.Printf("[graylog] FLUSH\n")
+
+	var exit = &False
+	time.AfterFunc(hook.FlushPolicy.Timeout, func() {
+		exit = &True
+	})
+
+	for len(hook.messages) > 0 && !*exit {
+		time.Sleep(time.Second)
 	}
-
-	// cloes send channel to start flushing
-	close(hook.messages)
-
-	// then simply wait for fire to empty the messages
-	// or timeout after a minute
-	select {
-	case <-hook.done:
-		close(hook.done)
-	case <-time.After(time.Minute):
-		fmt.Fprintln(os.Stderr, "[graylog] flushing timed out")
+	if len(hook.messages) > 0 {
+		hook.FlushPolicy.FlushFunc(hook.messages)
 	}
-
-	hook.messages = make(chan *Message, BufSize)
-	hook.done = make(chan struct{}, 1)
-
-	go hook.fire()
 }
 
 // Fire is called when a log event is fired.
@@ -191,37 +226,28 @@ func (hook *Hook) Fire(entry *logrus.Entry) error {
 	file, line := getCallerIgnoringLogMulti(1)
 	msg := hook.messageFromEntry(entry, file, line)
 
-	hook.l.Lock()
-	defer hook.l.Unlock()
-	if hook.closed {
-		return nil
-	}
-
 	hook.SendPolicy(msg, hook.messages)
 	return nil
 }
 
 // fire will loop on the 'buf' channel, and write entries to graylog
 func (hook *Hook) fire() {
-	r := retrier.New(retrier.ExponentialBackoff(3, time.Second), nil)
+	r := retrier.New(retrier.ExponentialBackoff(20, time.Millisecond), nil)
 	// consume message buffer
 	for message := range hook.messages {
 		// we retry at least 3 times to write message to graylog.
-		// gelf package also has its own retry behaviour, which is
-		// roughly trying for a good ~15 minutes.
 		err := r.Run(func() error {
 			if err := hook.gelfLogger.WriteMessage(message); err != nil {
-				fmt.Fprintln(os.Stderr, "[graylog] could not write message to Graylog:", err)
+				fmt.Fprintln(os.Stdout, "[graylog] could not write message to Graylog:", err)
 				return err
 			}
 			return nil
 		})
 		// if after all the retries we still cannot write the message, just skip
 		if err != nil {
-			fmt.Fprintln(os.Stderr, "[graylog] could not write message to Graylog after several retries:", err)
+			fmt.Fprintln(os.Stdout, "[graylog] could not write message to Graylog after several retries:", err)
 		}
 	}
-	hook.done <- struct{}{}
 }
 
 // Levels returns the available logging levels.
@@ -259,7 +285,7 @@ func (hook *Hook) messageFromEntry(entry *logrus.Entry, file string, line int) *
 		Full:     full,
 		Time:     float64(entry.Time.UnixNano()) / 1e9,
 		Level:    int32(priorities[entry.Level]),
-		Pid:      hook.pid,
+		Pid:      hook.Pid,
 		Facility: hook.Facility,
 		File:     file,
 		Line:     line,

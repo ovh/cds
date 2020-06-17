@@ -1333,8 +1333,6 @@ func (api *API) getWorkflowNodeRunJobStepHandler() service.Handler {
 			StepLogs: *ls,
 		}
 
-		log.Debug("logs: %+v", result)
-
 		return service.WriteJSON(w, result, http.StatusOK)
 	}
 }
