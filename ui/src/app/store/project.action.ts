@@ -63,6 +63,10 @@ export class ResyncVariablesInProject {
     static readonly type = '[Project] Resync Variables in Project';
     constructor(public payload: { projectKey: string }) { }
 }
+export class FetchVariablesInProject {
+    static readonly type = '[Project] Fetch Variables in Project';
+    constructor(public payload: { projectKey: string }) { }
+}
 export class LoadVariablesInProject {
     static readonly type = '[Project] Load Variables in Project';
     constructor(public payload: Variable[]) { }
@@ -163,6 +167,10 @@ export class ResyncIntegrationsInProject {
     static readonly type = '[Project] Resync Integrations in Project';
     constructor(public payload: { projectKey: string }) { }
 }
+export class FetchIntegrationsInProject {
+    static readonly type = '[Project] Fetch Integrations in Project';
+    constructor(public payload: { projectKey: string }) { }
+}
 export class LoadIntegrationsInProject {
     static readonly type = '[Project] Load Integrations in Project';
     constructor(public payload: ProjectIntegration[]) { }
@@ -183,6 +191,10 @@ export class DeleteIntegrationInProject {
 //  ------- Key --------- //
 export class ResyncKeysInProject {
     static readonly type = '[Project] Resync Keys in Project';
+    constructor(public payload: { projectKey: string }) { }
+}
+export class FetchKeysInProject {
+    static readonly type = '[Project] Fetch Keys in Project';
     constructor(public payload: { projectKey: string }) { }
 }
 export class LoadKeysInProject {

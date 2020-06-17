@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnInit } from '@angular/core';
 import { Store } from '@ngxs/store';
-import { ResyncIntegrationsInProject } from 'app/store/project.action';
+import { FetchIntegrationsInProject } from 'app/store/project.action';
 import { finalize } from 'rxjs/operators';
 import { Project } from '../../../../model/project.model';
 
@@ -18,7 +18,7 @@ export class ProjectIntegrationsComponent implements OnInit {
     constructor(private store: Store, private _cd: ChangeDetectorRef) { }
 
     ngOnInit(): void {
-        this.store.dispatch(new ResyncIntegrationsInProject({ projectKey: this.project.key }))
+        this.store.dispatch(new FetchIntegrationsInProject({ projectKey: this.project.key }))
             .pipe(finalize(() => {
                 this.loading = false;
                 this._cd.markForCheck();

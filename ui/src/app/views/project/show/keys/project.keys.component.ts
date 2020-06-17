@@ -5,7 +5,7 @@ import { Key } from 'app/model/keys.model';
 import { Project } from 'app/model/project.model';
 import { KeyEvent } from 'app/shared/keys/key.event';
 import { ToastService } from 'app/shared/toast/ToastService';
-import { AddKeyInProject, DeleteKeyInProject, ResyncKeysInProject } from 'app/store/project.action';
+import { AddKeyInProject, DeleteKeyInProject, FetchKeysInProject } from 'app/store/project.action';
 import { finalize } from 'rxjs/operators';
 
 @Component({
@@ -43,7 +43,7 @@ export class ProjectKeysComponent implements OnInit {
     }
 
     ngOnInit(): void {
-        this.store.dispatch(new ResyncKeysInProject({ projectKey: this.project.key }))
+        this.store.dispatch(new FetchKeysInProject({ projectKey: this.project.key }))
             .pipe(finalize(() => {
                 this.ready = true;
                 this._cd.markForCheck();

@@ -8,7 +8,7 @@ import { VariableEvent } from 'app/shared/variable/variable.event.model';
 import {
     AddVariableInProject,
     DeleteVariableInProject,
-    ResyncVariablesInProject,
+    FetchVariablesInProject,
     UpdateVariableInProject
 } from 'app/store/project.action';
 import { finalize } from 'rxjs/operators';
@@ -38,7 +38,7 @@ export class ProjectVariablesComponent implements OnInit {
     }
 
     ngOnInit() {
-        this.store.dispatch(new ResyncVariablesInProject({ projectKey: this.project.key }))
+        this.store.dispatch(new FetchVariablesInProject({ projectKey: this.project.key }))
             .pipe(finalize(() => {
                 this.loading = false;
                 this._cd.markForCheck();

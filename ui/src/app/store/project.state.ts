@@ -261,6 +261,21 @@ export class ProjectState {
     }
 
     //  ------- Variable --------- //
+    @Action(ProjectAction.FetchVariablesInProject)
+    fetchVariable(ctx: StateContext<ProjectStateModel>, action: ProjectAction.FetchVariablesInProject) {
+        const state = ctx.getState();
+
+        if (state.currentProjectKey && state.currentProjectKey === action.payload.projectKey &&
+            state.project && state.project.key && state.project.variables) {
+            return ctx.dispatch(new ProjectAction.LoadProject(state.project));
+        }
+        if (state.currentProjectKey && state.currentProjectKey !== action.payload.projectKey) {
+            ctx.dispatch(new ProjectAction.FetchProject({ projectKey: action.payload.projectKey, opts: [] }));
+        }
+
+        return ctx.dispatch(new ProjectAction.ResyncVariablesInProject(action.payload));
+    }
+
     @Action(ProjectAction.LoadVariablesInProject)
     loadVariable(ctx: StateContext<ProjectStateModel>, action: ProjectAction.LoadVariablesInProject) {
         const state = ctx.getState();
@@ -691,6 +706,21 @@ export class ProjectState {
     }
 
     //  ------- Key --------- //
+    @Action(ProjectAction.FetchKeysInProject)
+    fetchKeys(ctx: StateContext<ProjectStateModel>, action: ProjectAction.FetchKeysInProject) {
+        const state = ctx.getState();
+
+        if (state.currentProjectKey && state.currentProjectKey === action.payload.projectKey &&
+            state.project && state.project.key && state.project.keys) {
+            return ctx.dispatch(new ProjectAction.LoadProject(state.project));
+        }
+        if (state.currentProjectKey && state.currentProjectKey !== action.payload.projectKey) {
+            ctx.dispatch(new ProjectAction.FetchProject({ projectKey: action.payload.projectKey, opts: [] }));
+        }
+
+        return ctx.dispatch(new ProjectAction.ResyncKeysInProject(action.payload));
+    }
+
     @Action(ProjectAction.LoadKeysInProject)
     loadKeys(ctx: StateContext<ProjectStateModel>, action: ProjectAction.LoadKeysInProject) {
         const state = ctx.getState();
@@ -738,6 +768,21 @@ export class ProjectState {
     }
 
     //  ------- Integration --------- //
+    @Action(ProjectAction.FetchIntegrationsInProject)
+    fetchIntegrations(ctx: StateContext<ProjectStateModel>, action: ProjectAction.FetchIntegrationsInProject) {
+        const state = ctx.getState();
+
+        if (state.currentProjectKey && state.currentProjectKey === action.payload.projectKey &&
+            state.project && state.project.key && state.project.keys) {
+            return ctx.dispatch(new ProjectAction.LoadProject(state.project));
+        }
+        if (state.currentProjectKey && state.currentProjectKey !== action.payload.projectKey) {
+            ctx.dispatch(new ProjectAction.FetchProject({ projectKey: action.payload.projectKey, opts: [] }));
+        }
+
+        return ctx.dispatch(new ProjectAction.ResyncIntegrationsInProject(action.payload));
+    }
+
     @Action(ProjectAction.LoadIntegrationsInProject)
     loadIntegrations(ctx: StateContext<ProjectStateModel>, action: ProjectAction.LoadIntegrationsInProject) {
         const state = ctx.getState();
