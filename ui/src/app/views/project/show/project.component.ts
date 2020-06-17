@@ -10,7 +10,7 @@ import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { Tab } from 'app/shared/tabs/tabs.component';
 import { ToastService } from 'app/shared/toast/ToastService';
 import { AuthenticationState } from 'app/store/authentication.state';
-import { FetchProject, ResyncProject, UpdateFavoriteProject } from 'app/store/project.action';
+import { FetchProject, UpdateFavoriteProject } from 'app/store/project.action';
 import { ProjectState, ProjectStateModel } from 'app/store/project.state';
 import cloneDeep from 'lodash-es/cloneDeep';
 import { Subscription } from 'rxjs';

@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnInit } from '@angular/core';
 import { Store } from '@ngxs/store';
 import { IdName, LoadOpts, Project } from 'app/model/project.model';
-import { FetchProject, ResyncIntegrationsInProject, ResyncProject } from 'app/store/project.action';
+import { ResyncProject } from 'app/store/project.action';
 import { finalize } from 'rxjs/operators';
 
 @Component({
