@@ -149,28 +149,9 @@ export class ProjectShowComponent implements OnInit {
     }
 
     refreshDatas(key: string): void {
-        let opts = [
-            new LoadOpts('withApplicationNames', 'application_names'),
-            new LoadOpts('withPipelineNames', 'pipeline_names'),
-            new LoadOpts('withWorkflowNames', 'workflow_names'),
-            new LoadOpts('withEnvironmentNames', 'environment_names'),
-            new LoadOpts('withLabels', 'labels'),
-        ];
-
-        if (this.selectedTab) {
-            switch (this.selectedTab.key) {
-                case 'variables':
-                    opts.push(new LoadOpts('withVariables', 'variables'));
-                    break;
-                case 'permissions':
-                    opts.push(new LoadOpts('withEnvironments', 'environments'));
-                    break;
-            }
-        }
-
+        let opts = [new LoadOpts('withLabels', 'labels')];
         this._store.dispatch(new FetchProject({ projectKey: key, opts }))
             .subscribe(null, () => this._router.navigate(['/home']));
-
     }
 
     updateFav() {

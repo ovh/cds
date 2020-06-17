@@ -43,7 +43,7 @@ type Project struct {
 	Labels           []Label                `json:"labels,omitempty" yaml:"labels,omitempty" db:"-"  cli:"-"`
 	Permissions      Permissions            `json:"permissions" yaml:"-" db:"-"  cli:"-"`
 	Metadata         Metadata               `json:"metadata" yaml:"metadata" db:"metadata" cli:"-"`
-	Keys             []ProjectKey           `json:"keys" yaml:"keys" db:"-" cli:"-"`
+	Keys             []ProjectKey           `json:"keys,omitempty" yaml:"keys" db:"-" cli:"-"`
 	VCSServers       []ProjectVCSServerLink `json:"vcs_servers" yaml:"vcs_servers" db:"-" cli:"-"`
 	Integrations     []ProjectIntegration   `json:"integrations" yaml:"integrations" db:"-" cli:"-"`
 	Features         map[string]bool        `json:"features" yaml:"features" db:"-" cli:"-"`

@@ -7,7 +7,7 @@ import { ProjectStore } from 'app/service/project/project.store';
 import { TimelineStore } from 'app/service/timeline/timeline.store';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { ToastService } from 'app/shared/toast/ToastService';
-import { ResyncProject } from 'app/store/project.action';
+import { FetchProject } from 'app/store/project.action';
 import { ProjectState, ProjectStateModel } from 'app/store/project.state';
 import cloneDeep from 'lodash-es/cloneDeep';
 import { finalize, flatMap } from 'rxjs/operators';
@@ -93,7 +93,7 @@ export class HomeFilterComponent {
         let opts = new Array<LoadOpts>();
         opts.push(new LoadOpts('withWorkflowNames', 'workflow_names'));
 
-        this.store.dispatch(new ResyncProject({
+        this.store.dispatch(new FetchProject({
             projectKey: projFilter.key,
             opts
         })).pipe(
