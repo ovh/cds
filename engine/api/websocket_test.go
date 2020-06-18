@@ -27,7 +27,7 @@ func Test_websocketWrongFilters(t *testing.T) {
 		sdk.NewAuthConsumerScopeDetails(sdk.AuthConsumerScopeProject))
 
 	chanMessageReceived := make(chan sdk.WebsocketEvent)
-	chanMessageToSend := make(chan sdk.WebsocketFilter)
+	chanMessageToSend := make(chan []sdk.WebsocketFilter)
 
 	client := cdsclient.New(cdsclient.Config{
 		Host:                              tsURL,
@@ -38,93 +38,23 @@ func Test_websocketWrongFilters(t *testing.T) {
 	go client.WebsocketEventsListen(context.TODO(), chanMessageToSend, chanMessageReceived)
 
 	// Subscribe to project without project key
-	chanMessageToSend <- sdk.WebsocketFilter{
+	chanMessageToSend <- []sdk.WebsocketFilter{{
 		Type:       sdk.WebsocketFilterTypeProject,
 		ProjectKey: "",
-	}
+	}}
 	response := <-chanMessageReceived
 	require.Equal(t, "KO", response.Status)
-	require.Equal(t, "wrong request", response.Error)
+	require.Equal(t, "missing project key", response.Error)
 
 	// Subscribe to application without application name
-	chanMessageToSend <- sdk.WebsocketFilter{
+	chanMessageToSend <- []sdk.WebsocketFilter{{
 		Type:            sdk.WebsocketFilterTypeApplication,
 		ProjectKey:      "Key",
 		ApplicationName: "",
-	}
+	}}
 	response = <-chanMessageReceived
 	require.Equal(t, "KO", response.Status)
-	require.Equal(t, "wrong request", response.Error)
-
-	// Subscribe to application without project key
-	chanMessageToSend <- sdk.WebsocketFilter{
-		Type:            sdk.WebsocketFilterTypeApplication,
-		ProjectKey:      "",
-		ApplicationName: "App1",
-	}
-	response = <-chanMessageReceived
-	require.Equal(t, "KO", response.Status)
-	require.Equal(t, "wrong request", response.Error)
-
-	// Subscribe to pipeline without pipeline name
-	chanMessageToSend <- sdk.WebsocketFilter{
-		Type:         sdk.WebsocketFilterTypeApplication,
-		ProjectKey:   "Key",
-		PipelineName: "",
-	}
-	response = <-chanMessageReceived
-	require.Equal(t, "KO", response.Status)
-	require.Equal(t, "wrong request", response.Error)
-
-	// Subscribe to pipeline without project key
-	chanMessageToSend <- sdk.WebsocketFilter{
-		Type:         sdk.WebsocketFilterTypePipeline,
-		ProjectKey:   "",
-		PipelineName: "PipName",
-	}
-	response = <-chanMessageReceived
-	require.Equal(t, "KO", response.Status)
-	require.Equal(t, "wrong request", response.Error)
-
-	// Subscribe to environment without environment name
-	chanMessageToSend <- sdk.WebsocketFilter{
-		Type:            sdk.WebsocketFilterTypeEnvironment,
-		ProjectKey:      "Key",
-		EnvironmentName: "",
-	}
-	response = <-chanMessageReceived
-	require.Equal(t, "KO", response.Status)
-	require.Equal(t, "wrong request", response.Error)
-
-	// Subscribe to environment without project key
-	chanMessageToSend <- sdk.WebsocketFilter{
-		Type:            sdk.WebsocketFilterTypeEnvironment,
-		ProjectKey:      "",
-		EnvironmentName: "EnvNmae",
-	}
-	response = <-chanMessageReceived
-	require.Equal(t, "KO", response.Status)
-	require.Equal(t, "wrong request", response.Error)
-
-	// Subscribe to workflow without workflow name
-	chanMessageToSend <- sdk.WebsocketFilter{
-		Type:         sdk.WebsocketFilterTypeWorkflow,
-		ProjectKey:   "Key",
-		WorkflowName: "",
-	}
-	response = <-chanMessageReceived
-	require.Equal(t, "KO", response.Status)
-	require.Equal(t, "wrong request", response.Error)
-
-	// Subscribe to workflow without project key
-	chanMessageToSend <- sdk.WebsocketFilter{
-		Type:         sdk.WebsocketFilterTypeWorkflow,
-		ProjectKey:   "",
-		WorkflowName: "WorkflowName",
-	}
-	response = <-chanMessageReceived
-	require.Equal(t, "KO", response.Status)
-	require.Equal(t, "wrong request", response.Error)
+	require.Equal(t, "missing project key or application name", response.Error)
 }
 
 func Test_websocketGetWorkflowEvent(t *testing.T) {
@@ -154,7 +84,7 @@ func Test_websocketGetWorkflowEvent(t *testing.T) {
 		sdk.NewAuthConsumerScopeDetails(sdk.AuthConsumerScopeProject))
 
 	chanMessageReceived := make(chan sdk.WebsocketEvent)
-	chanMessageToSend := make(chan sdk.WebsocketFilter)
+	chanMessageToSend := make(chan []sdk.WebsocketFilter)
 
 	client := cdsclient.New(cdsclient.Config{
 		Host:                              tsURL,
@@ -164,23 +94,22 @@ func Test_websocketGetWorkflowEvent(t *testing.T) {
 	})
 	go client.WebsocketEventsListen(context.TODO(), chanMessageToSend, chanMessageReceived)
 
-	chanMessageToSend <- sdk.WebsocketFilter{
-		Type:              sdk.WebsocketFilterTypeWorkflow,
-		ProjectKey:        key,
-		WorkflowName:      w.Name,
-		WorkflowRunNumber: 1,
-	}
+	chanMessageToSend <- []sdk.WebsocketFilter{{
+		Type:         sdk.WebsocketFilterTypeWorkflow,
+		ProjectKey:   proj.Key,
+		WorkflowName: w.Name,
+	}}
 	// Waiting websocket to update filter
 	time.Sleep(1 * time.Second)
 
-	api.websocketBroker.messages <- sdk.Event{ProjectKey: "blabla", WorkflowName: "toto", EventType: "sdk.EventRunWorkflow", WorkflowRunNum: 1}
-	api.websocketBroker.messages <- sdk.Event{ProjectKey: proj.Key, WorkflowName: w.Name, EventType: "sdk.EventRunWorkflow", WorkflowRunNum: 1}
+	api.websocketBroker.messages <- sdk.Event{ProjectKey: "blabla", WorkflowName: "toto", EventType: "sdk.EventRunWorkflow"}
+	api.websocketBroker.messages <- sdk.Event{ProjectKey: proj.Key, WorkflowName: w.Name, EventType: "sdk.EventRunWorkflow"}
 	response := <-chanMessageReceived
 	require.Equal(t, "OK", response.Status)
-	require.Equal(t, response.Event.EventType, "sdk.EventRunWorkflow")
-	require.Equal(t, response.Event.ProjectKey, proj.Key)
-	require.Equal(t, response.Event.WorkflowName, w.Name)
-	require.Equal(t, 0, len(chanMessageReceived))
+	require.Equal(t, "sdk.EventRunWorkflow", response.Event.EventType)
+	require.Equal(t, proj.Key, response.Event.ProjectKey)
+	require.Equal(t, w.Name, response.Event.WorkflowName)
+	require.Len(t, chanMessageReceived, 0)
 }
 
 func Test_websocketDeconnection(t *testing.T) {
@@ -241,11 +170,11 @@ func Test_websocketDeconnection(t *testing.T) {
 	time.Sleep(1 * time.Second)
 
 	// Send filter
-	err = con.WriteJSON(sdk.WebsocketFilter{
+	err = con.WriteJSON([]sdk.WebsocketFilter{{
 		Type:         sdk.WebsocketFilterTypeWorkflow,
 		ProjectKey:   key,
 		WorkflowName: w.Name,
-	})
+	}})
 	require.NoError(t, err)
 
 	// Waiting websocket to update filter
@@ -263,5 +192,5 @@ func Test_websocketDeconnection(t *testing.T) {
 
 	time.Sleep(1 * time.Second)
 
-	require.Equal(t, len(api.websocketBroker.clients), 0)
+	require.Len(t, api.websocketBroker.clients, 0)
 }

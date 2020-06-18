@@ -12,6 +12,7 @@ import (
 
 	"github.com/go-gorp/gorp"
 	"github.com/gorilla/websocket"
+	"github.com/sirupsen/logrus"
 	"github.com/tevino/abool"
 
 	"github.com/ovh/cds/engine/api/cache"
@@ -29,13 +30,24 @@ var upgrader = websocket.Upgrader{
 }
 
 type websocketClient struct {
-	UUID             string
-	AuthConsumer     *sdk.AuthConsumer
-	isAlive          *abool.AtomicBool
-	con              *websocket.Conn
-	mutex            sync.Mutex
-	filter           sdk.WebsocketFilter
-	updateFilterChan chan sdk.WebsocketFilter
+	UUID          string
+	AuthConsumer  *sdk.AuthConsumer
+	isAlive       *abool.AtomicBool
+	con           *websocket.Conn
+	mutex         sync.Mutex
+	filters       webSocketFilters
+	inMessageChan chan []byte
+}
+
+type webSocketFilters map[string]struct{}
+
+func (f webSocketFilters) HasOneKey(keys ...string) bool {
+	for i := range keys {
+		if _, ok := f[keys[i]]; ok {
+			return true
+		}
+	}
+	return false
 }
 
 type websocketBroker struct {
@@ -154,22 +166,39 @@ func (b *websocketBroker) ServeHTTP() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) (err error) {
 		c, err := upgrader.Upgrade(w, r, nil)
 		if err != nil {
-			log.Warning(ctx, "websocket> upgrade: %v", err)
-			return err
+			return sdk.WithStack(err)
 		}
 		defer c.Close()
 
 		client := websocketClient{
-			UUID:             sdk.UUID(),
-			AuthConsumer:     getAPIConsumer(ctx),
-			isAlive:          abool.NewBool(true),
-			con:              c,
-			updateFilterChan: make(chan sdk.WebsocketFilter, 10),
+			UUID:          sdk.UUID(),
+			AuthConsumer:  getAPIConsumer(ctx),
+			isAlive:       abool.NewBool(true),
+			con:           c,
+			inMessageChan: make(chan []byte, 10),
 		}
 		b.chanAddClient <- &client
 
 		sdk.GoRoutine(ctx, fmt.Sprintf("readUpdateFilterChan-%s-%s", client.AuthConsumer.GetUsername(), client.UUID), func(ctx context.Context) {
-			client.readUpdateFilterChan(ctx, b.dbFunc())
+			for {
+				select {
+				case <-ctx.Done():
+					log.Debug("events.Http: context done")
+					return
+				case m := <-client.inMessageChan:
+					if err := client.updateEventFilters(ctx, b.dbFunc(), m); err != nil {
+						err = sdk.WithStack(err)
+						log.WarningWithFields(ctx, logrus.Fields{
+							"stack_trace": fmt.Sprintf("%+v", err),
+						}, "%s", err)
+						msg := sdk.WebsocketEvent{
+							Status: "KO",
+							Error:  sdk.Cause(err).Error(),
+						}
+						_ = client.con.WriteJSON(msg)
+					}
+				}
+			}
 		})
 
 		for {
@@ -177,161 +206,77 @@ func (b *websocketBroker) ServeHTTP() service.Handler {
 				return ctx.Err()
 			}
 
-			var msg sdk.WebsocketFilter
-			_, message, err := c.ReadMessage()
+			_, msg, err := c.ReadMessage()
 			if err != nil {
 				if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
-					log.Warning(ctx, "websocket error: %v", err)
+					err = sdk.WrapError(err, "websocket error occured")
+					log.WarningWithFields(ctx, logrus.Fields{
+						"stack_trace": fmt.Sprintf("%+v", err),
+					}, "%s", err)
 				}
 				log.Debug("%s disconnected", client.AuthConsumer.GetUsername())
 				break
 			}
 
-			if err := json.Unmarshal(message, &msg); err != nil {
-				log.Warning(ctx, "websocket.readJSON: %v", err)
-			}
-
-			// Send message to client
-			client.updateFilterChan <- msg
+			client.inMessageChan <- msg
 		}
 		return nil
 	}
 }
 
-func (c *websocketClient) readUpdateFilterChan(ctx context.Context, db *gorp.DbMap) {
-	for {
-		select {
-		case <-ctx.Done():
-			log.Debug("events.Http: context done")
-			return
-		case m := <-c.updateFilterChan:
-			if err := c.updateEventFilter(ctx, db, m); err != nil {
-				log.Error(ctx, "websocketClient.readUpdateFilterChan: unable to update event filter: %v", err)
-				msg := sdk.WebsocketEvent{
-					Status: "KO",
-					Error:  sdk.Cause(err).Error(),
-				}
-				_ = c.con.WriteJSON(msg)
-				continue
+func (c *websocketClient) updateEventFilters(ctx context.Context, db gorp.SqlExecutor, msg []byte) error {
+	var fs []sdk.WebsocketFilter
+	if err := json.Unmarshal(msg, &fs); err != nil {
+		return sdk.WrapError(err, "cannot unmarshal websocket input message")
+	}
+
+	// Check validity of given filters
+	for _, f := range fs {
+		if err := f.IsValid(); err != nil {
+			return err
+		}
+		switch f.Type {
+		case sdk.WebsocketFilterTypeProject,
+			sdk.WebsocketFilterTypeApplication,
+			sdk.WebsocketFilterTypePipeline,
+			sdk.WebsocketFilterTypeEnvironment,
+			sdk.WebsocketFilterTypeOperation:
+			perms, err := permission.LoadProjectMaxLevelPermission(ctx, db, []string{f.ProjectKey}, getAPIConsumer(ctx).GetGroupIDs())
+			if err != nil {
+				return err
+			}
+			maxLevelPermission := perms.Level(f.ProjectKey)
+			if maxLevelPermission < sdk.PermissionRead && !isMaintainer(ctx) {
+				return sdk.WithStack(sdk.ErrForbidden)
+			}
+		case sdk.WebsocketFilterTypeWorkflow:
+			perms, err := permission.LoadWorkflowMaxLevelPermission(ctx, db, f.ProjectKey, []string{f.WorkflowName}, getAPIConsumer(ctx).GetGroupIDs())
+			if err != nil {
+				return err
+			}
+			maxLevelPermission := perms.Level(f.WorkflowName)
+			if maxLevelPermission < sdk.PermissionRead && !isMaintainer(ctx) {
+				return sdk.WithStack(sdk.ErrForbidden)
 			}
 		}
 	}
-}
 
-func (c *websocketClient) updateEventFilter(ctx context.Context, db gorp.SqlExecutor, m sdk.WebsocketFilter) error {
+	// Update client filters
 	c.mutex.Lock()
-	defer c.mutex.Unlock()
-	switch m.Type {
-	case sdk.WebsocketFilterTypeProject:
-		if m.ProjectKey == "" {
-			return sdk.ErrWrongRequest
-		}
-		b, err := c.hasProjectPermission(ctx, db, m)
-		if err != nil {
-			return err
-		}
-		if b {
-			c.filter = sdk.WebsocketFilter{
-				ProjectKey: m.ProjectKey,
-				Type:       m.Type,
-				Operation:  m.Operation,
-			}
-		}
-	case sdk.WebsocketFilterTypeApplication:
-		if m.ProjectKey == "" || m.ApplicationName == "" {
-			return sdk.ErrWrongRequest
-		}
-		b, err := c.hasProjectPermission(ctx, db, m)
-		if err != nil {
-			return err
-		}
-		if b {
-			c.filter = sdk.WebsocketFilter{
-				ProjectKey:      m.ProjectKey,
-				Type:            m.Type,
-				ApplicationName: m.ApplicationName,
-				Operation:       m.Operation,
-			}
-		}
-	case sdk.WebsocketFilterTypePipeline:
-		if m.ProjectKey == "" || m.PipelineName == "" {
-			return sdk.ErrWrongRequest
-		}
-		b, err := c.hasProjectPermission(ctx, db, m)
-		if err != nil {
-			return err
-		}
-		if b {
-			c.filter = sdk.WebsocketFilter{
-				ProjectKey:   m.ProjectKey,
-				Type:         m.Type,
-				PipelineName: m.PipelineName,
-				Operation:    m.Operation,
-			}
-		}
-	case sdk.WebsocketFilterTypeEnvironment:
-		if m.ProjectKey == "" || m.EnvironmentName == "" {
-			return sdk.ErrWrongRequest
-		}
-		b, err := c.hasProjectPermission(ctx, db, m)
-		if err != nil {
-			return err
-		}
-		if b {
-			c.filter = sdk.WebsocketFilter{
-				ProjectKey:      m.ProjectKey,
-				Type:            m.Type,
-				EnvironmentName: m.EnvironmentName,
-				Operation:       m.Operation,
-			}
-		}
-	case sdk.WebsocketFilterTypeWorkflow:
-		if m.ProjectKey == "" || m.WorkflowName == "" {
-			return sdk.ErrWrongRequest
-		}
-		perms, err := permission.LoadWorkflowMaxLevelPermission(ctx, db, m.ProjectKey, []string{m.WorkflowName}, getAPIConsumer(ctx).GetGroupIDs())
-		if err != nil {
-			return err
-		}
-		maxLevelPermission := perms.Level(m.WorkflowName)
-		if maxLevelPermission < sdk.PermissionRead && !isMaintainer(ctx) && !isAdmin(ctx) {
-			return sdk.WithStack(sdk.ErrForbidden)
-		}
-
-		c.filter = sdk.WebsocketFilter{
-			ProjectKey:        m.ProjectKey,
-			Type:              m.Type,
-			WorkflowName:      m.WorkflowName,
-			WorkflowNodeRunID: m.WorkflowNodeRunID,
-			WorkflowRunNumber: m.WorkflowRunNumber,
-			Operation:         m.Operation,
-		}
-	case sdk.WebsocketFilterTypeQueue:
-		c.filter = sdk.WebsocketFilter{
-			Queue: true,
-			Type:  m.Type,
-		}
+	c.filters = make(webSocketFilters)
+	for i := range fs {
+		c.filters[fs[i].Key()] = struct{}{}
 	}
+	c.mutex.Unlock()
 
 	return nil
-}
-
-func (c *websocketClient) hasProjectPermission(ctx context.Context, db gorp.SqlExecutor, m sdk.WebsocketFilter) (bool, error) {
-	perms, err := permission.LoadProjectMaxLevelPermission(ctx, db, []string{m.ProjectKey}, getAPIConsumer(ctx).GetGroupIDs())
-	if err != nil {
-		return false, err
-	}
-	maxLevelPermission := perms.Level(m.ProjectKey)
-	if maxLevelPermission < sdk.PermissionRead && !isMaintainer(ctx) && !isAdmin(ctx) {
-		return false, sdk.WithStack(sdk.ErrForbidden)
-	}
-	return true, nil
 }
 
 // Send an event to a client
 func (c *websocketClient) send(ctx context.Context, event sdk.Event) (err error) {
 	c.mutex.Lock()
 	defer c.mutex.Unlock()
+
 	defer func() {
 		if r := recover(); r != nil {
 			err = sdk.WithStack(fmt.Errorf("websocketClient.Send recovered %v", r))
@@ -342,57 +287,81 @@ func (c *websocketClient) send(ctx context.Context, event sdk.Event) (err error)
 		return sdk.WithStack(fmt.Errorf("client deconnected"))
 	}
 
-	sendEvent := false
-	switch {
-	// Event on Job
-	case event.EventType == fmt.Sprintf("%T", sdk.EventRunWorkflowJob{}) && c.filter.Queue && c.filter.Type == sdk.WebsocketFilterTypeQueue:
-		sendEvent = true
-	// Event on Operation
-	case event.EventType == fmt.Sprintf("%T", sdk.Operation{}) && c.filter.Operation == event.OperationUUID && c.filter.ProjectKey == event.ProjectKey:
-		sendEvent = true
-	// Event on project
-	case strings.HasPrefix(event.EventType, "sdk.EventProject") && event.ProjectKey == c.filter.ProjectKey && c.filter.Type == sdk.WebsocketFilterTypeProject:
-		sendEvent = true
-	// Event on application
-	case strings.HasPrefix(event.EventType, "sdk.EventApplication") && event.ProjectKey == c.filter.ProjectKey && event.ApplicationName == c.filter.ApplicationName && c.filter.Type == sdk.WebsocketFilterTypeApplication:
-		sendEvent = true
-	// Event on pipeline
-	case strings.HasPrefix(event.EventType, "sdk.EventPipeline") && event.ProjectKey == c.filter.ProjectKey && event.PipelineName == c.filter.PipelineName && c.filter.Type == sdk.WebsocketFilterTypePipeline:
-		sendEvent = true
-	// Event on environment
-	case strings.HasPrefix(event.EventType, "sdk.EventEnvironment") && event.ProjectKey == c.filter.ProjectKey && event.EnvironmentName == c.filter.EnvironmentName && c.filter.Type == sdk.WebsocketFilterTypeEnvironment:
-		sendEvent = true
-	// Event on workflow
-	case strings.HasPrefix(event.EventType, "sdk.EventWorkflow") && event.ProjectKey == c.filter.ProjectKey && event.WorkflowName == c.filter.WorkflowName && c.filter.Type == sdk.WebsocketFilterTypeWorkflow:
-		sendEvent = true
-	// Event on runworkflow*
-	case strings.HasPrefix(event.EventType, "sdk.EventRunWorkflow") && c.filter.Type == sdk.WebsocketFilterTypeWorkflow:
-		if event.ProjectKey != c.filter.ProjectKey || event.WorkflowName != c.filter.WorkflowName {
-			sendEvent = false
-			break
-		}
+	// Compute required filter(s) key for given event
+	var keys []string
 
-		// sdk.EventRunWorkflow must always be sent for sidebar
-		if event.EventType == "sdk.EventRunWorkflow" {
-			sendEvent = true
-			break
-		}
-
-		if c.filter.WorkflowRunNumber != 0 && event.WorkflowRunNum != c.filter.WorkflowRunNumber {
-			sendEvent = false
-			break
-		}
-		// WORKFLOW NODE RUN EVENT
-		if c.filter.WorkflowNodeRunID != 0 && event.WorkflowNodeRunID != c.filter.WorkflowNodeRunID {
-			sendEvent = false
-			break
-		}
-		sendEvent = true
-	default:
-		sendEvent = false
+	// Event that match project filter
+	if strings.HasPrefix(event.EventType, "sdk.EventProject") {
+		keys = append(keys, sdk.WebsocketFilter{
+			Type:       sdk.WebsocketFilterTypeProject,
+			ProjectKey: event.ProjectKey,
+		}.Key())
 	}
-
-	if !sendEvent {
+	// Event that match workflow filter
+	if strings.HasPrefix(event.EventType, "sdk.EventWorkflow") || event.EventType == fmt.Sprintf("%T", sdk.EventRunWorkflow{}) {
+		keys = append(keys, sdk.WebsocketFilter{
+			Type:         sdk.WebsocketFilterTypeWorkflow,
+			ProjectKey:   event.ProjectKey,
+			WorkflowName: event.WorkflowName,
+		}.Key())
+	}
+	// Event that match workflow run filter
+	if event.EventType == fmt.Sprintf("%T", sdk.EventRunWorkflowJob{}) {
+		keys = append(keys, sdk.WebsocketFilter{
+			Type:              sdk.WebsocketFilterTypeWorkflowRun,
+			ProjectKey:        event.ProjectKey,
+			WorkflowName:      event.WorkflowName,
+			WorkflowRunNumber: event.WorkflowRunNum,
+		}.Key())
+	}
+	// Event that match workflow node run filter
+	if event.EventType == fmt.Sprintf("%T", sdk.EventRunWorkflowNode{}) {
+		keys = append(keys, sdk.WebsocketFilter{
+			Type:              sdk.WebsocketFilterTypeWorkflowNodeRun,
+			ProjectKey:        event.ProjectKey,
+			WorkflowName:      event.WorkflowName,
+			WorkflowNodeRunID: event.WorkflowNodeRunID,
+		}.Key())
+	}
+	// Event that match pipeline filter
+	if strings.HasPrefix(event.EventType, "sdk.EventPipeline") {
+		keys = append(keys, sdk.WebsocketFilter{
+			Type:         sdk.WebsocketFilterTypePipeline,
+			ProjectKey:   event.ProjectKey,
+			PipelineName: event.PipelineName,
+		}.Key())
+	}
+	// Event that match application filter
+	if strings.HasPrefix(event.EventType, "sdk.EventApplication") {
+		keys = append(keys, sdk.WebsocketFilter{
+			Type:            sdk.WebsocketFilterTypeApplication,
+			ProjectKey:      event.ProjectKey,
+			ApplicationName: event.ApplicationName,
+		}.Key())
+	}
+	// Event that match environment filter
+	if strings.HasPrefix(event.EventType, "sdk.EventEnvironment") {
+		keys = append(keys, sdk.WebsocketFilter{
+			Type:            sdk.WebsocketFilterTypeEnvironment,
+			ProjectKey:      event.ProjectKey,
+			EnvironmentName: event.EnvironmentName,
+		}.Key())
+	}
+	// Event that match queue filter
+	if event.EventType == fmt.Sprintf("%T", sdk.EventRunWorkflowJob{}) {
+		keys = append(keys, sdk.WebsocketFilter{
+			Type: sdk.WebsocketFilterTypeQueue,
+		}.Key())
+	}
+	// Event that match operation filter
+	if event.EventType == fmt.Sprintf("%T", sdk.Operation{}) {
+		keys = append(keys, sdk.WebsocketFilter{
+			Type:          sdk.WebsocketFilterTypeOperation,
+			ProjectKey:    event.ProjectKey,
+			OperationUUID: event.OperationUUID,
+		}.Key())
+	}
+	if len(keys) == 0 || !c.filters.HasOneKey(keys...) {
 		return nil
 	}
 

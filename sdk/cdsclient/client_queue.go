@@ -58,7 +58,7 @@ func (c *client) QueuePolling(ctx context.Context, jobs chan<- sdk.WorkflowNodeJ
 
 	// This goroutine call the SSE route
 	chanMessageReceived := make(chan sdk.WebsocketEvent, 10)
-	chanMessageToSend := make(chan sdk.WebsocketFilter, 10)
+	chanMessageToSend := make(chan []sdk.WebsocketFilter, 10)
 	sdk.GoRoutine(ctx, "RequestWebsocket", func(ctx context.Context) {
 		for ctx.Err() == nil {
 			if err := c.RequestWebsocket(ctx, "/ws", chanMessageToSend, chanMessageReceived); err != nil {
@@ -67,9 +67,9 @@ func (c *client) QueuePolling(ctx context.Context, jobs chan<- sdk.WorkflowNodeJ
 			time.Sleep(1 * time.Second)
 		}
 	})
-	chanMessageToSend <- sdk.WebsocketFilter{
-		Queue: true,
-	}
+	chanMessageToSend <- []sdk.WebsocketFilter{{
+		Type: sdk.WebsocketFilterTypeQueue,
+	}}
 
 	for {
 		select {

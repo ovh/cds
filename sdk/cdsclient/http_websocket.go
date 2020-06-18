@@ -15,7 +15,7 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
-func (c *client) RequestWebsocket(ctx context.Context, path string, msgToSend <-chan sdk.WebsocketFilter, msgReceived chan<- sdk.WebsocketEvent) error {
+func (c *client) RequestWebsocket(ctx context.Context, path string, msgToSend <-chan []sdk.WebsocketFilter, msgReceived chan<- sdk.WebsocketEvent) error {
 	wsContext, wsContextCancel := context.WithCancel(ctx)
 	defer wsContextCancel()
 

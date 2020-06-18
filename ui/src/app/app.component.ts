@@ -147,7 +147,7 @@ export class AppComponent implements OnInit {
             .pipe(map((e: NavigationEnd) => {
                 if ((!this.previousURL || this.previousURL.split('?')[0] !== e.url.split('?')[0])) {
                     this.previousURL = e.url;
-                    this._eventService.manageWebsocketFilterByUrl(e.url);
+                    this._eventService.subscribeAutoFromUrl(e.url);
                     return;
                 }
 

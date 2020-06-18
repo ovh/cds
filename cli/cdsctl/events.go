@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+
 	"github.com/spf13/cobra"
 
 	"github.com/ovh/cds/cli"
@@ -40,24 +41,24 @@ var eventsListenCmd = cli.Command{
 func eventsListenRun(v cli.Values) error {
 	ctx := context.Background()
 	chanMessageReceived := make(chan sdk.WebsocketEvent)
-	chanMessageToSend := make(chan sdk.WebsocketFilter)
+	chanMessageToSend := make(chan []sdk.WebsocketFilter)
 
 	sdk.GoRoutine(ctx, "WebsocketEventsListenCmd", func(ctx context.Context) {
 		client.WebsocketEventsListen(ctx, chanMessageToSend, chanMessageReceived)
 	})
 
-	var t string
+	var t sdk.WebsocketFilterType
 	switch {
 	case v.GetString("workflow") != "":
 		t = sdk.WebsocketFilterTypeWorkflow
 	default:
 		t = sdk.WebsocketFilterTypeProject
 	}
-	chanMessageToSend <- sdk.WebsocketFilter{
+	chanMessageToSend <- []sdk.WebsocketFilter{{
+		Type:         t,
 		ProjectKey:   v.GetString("project"),
 		WorkflowName: v.GetString("workflow"),
-		Type:         t,
-	}
+	}}
 
 	for {
 		select {
