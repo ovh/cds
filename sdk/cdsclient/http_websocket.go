@@ -40,7 +40,7 @@ func (c *client) RequestWebsocket(ctx context.Context, path string, msgToSend <-
 	urlWebsocket := url.URL{
 		Scheme: strings.Replace(uHost.Scheme, "http", "ws", -1),
 		Host:   uHost.Host,
-		Path:   "/ws",
+		Path:   uHost.Path + "/ws",
 	}
 
 	headers := make(map[string][]string)
