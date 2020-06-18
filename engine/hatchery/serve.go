@@ -23,6 +23,7 @@ import (
 	"github.com/ovh/cds/sdk/hatchery"
 	"github.com/ovh/cds/sdk/jws"
 	"github.com/ovh/cds/sdk/log"
+	"github.com/ovh/cds/sdk/log/hook"
 )
 
 type Common struct {
@@ -193,7 +194,12 @@ func (c *Common) getPanicDumpListHandler() service.Handler {
 func (c *Common) InitServiceLogger() error {
 	var signer jose.Signer
 	if c.Common.ServiceInstance.LogServerAdress != "" {
-		logger, _, err := log.New(context.Background(), c.Common.ServiceInstance.LogServerAdress)
+		var graylogCfg = &hook.Config{
+			Addr:     c.Common.ServiceInstance.LogServerAdress,
+			Protocol: "tcp",
+		}
+		logger, _, err := log.New(context.Background(), graylogCfg)
+
 		if err != nil {
 			return sdk.WithStack(err)
 		}

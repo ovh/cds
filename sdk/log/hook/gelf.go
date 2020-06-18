@@ -23,19 +23,18 @@ const (
 // Message represents the contents of the GELF message.  It is gzipped
 // before sending.
 type Message struct {
-	Version            string                 `json:"version"`
-	Host               string                 `json:"host"`
-	Short              string                 `json:"short_message"`
-	Full               string                 `json:"full_message,omitempty"`
-	Time               float64                `json:"timestamp"`
-	Level              int32                  `json:"level"`
-	Pid                int                    `json:"_pid,omitempty"`
-	Facility           string                 `json:"_facility,omitempty"` // optional, deprecated, send as additional field
-	File               string                 `json:"_file,omitempty"`     // optional, deprecated, send as additional field
-	Line               int                    `json:"_line,omitempty"`     // optional, deprecated, send as additional field
-	Prefix             string                 `json:"_prefix,omitempty"`
-	Extra              map[string]interface{} `json:"-"`
-	AggregatedMessages []*Message             `json:"embeddedMessages"`
+	Version  string                 `json:"version"`
+	Host     string                 `json:"host"`
+	Short    string                 `json:"short_message"`
+	Full     string                 `json:"full_message,omitempty"`
+	Time     float64                `json:"timestamp"`
+	Level    int32                  `json:"level"`
+	Pid      int                    `json:"_pid,omitempty"`
+	Facility string                 `json:"_facility,omitempty"` // optional, deprecated, send as additional field
+	File     string                 `json:"_file,omitempty"`     // optional, deprecated, send as additional field
+	Line     int                    `json:"_line,omitempty"`     // optional, deprecated, send as additional field
+	Prefix   string                 `json:"_prefix,omitempty"`
+	Extra    map[string]interface{} `json:"-"`
 }
 
 type innerMessage Message //against circular (Un)MarshalJSON

@@ -12,9 +12,8 @@ type Service struct {
 	service.Common
 	Cfg Configuration
 	//Router *api.Router
-	Db           *gorp.DbMap
-	Cache        cache.Store
-	ChanMessages chan handledMessage
+	Db    *gorp.DbMap
+	Cache cache.Store
 }
 
 // Configuration is the hooks configuration structure
