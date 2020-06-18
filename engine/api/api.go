@@ -237,7 +237,6 @@ type API struct {
 	SharedStorage       objectstore.Driver
 	StartupTime         time.Time
 	Maintenance         bool
-	eventsBroker        *eventsBroker
 	websocketBroker     *websocketBroker
 	Cache               cache.Store
 	Metrics             struct {

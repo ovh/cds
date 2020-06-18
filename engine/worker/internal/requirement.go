@@ -17,16 +17,15 @@ import (
 )
 
 var requirementCheckFuncs = map[string]func(w *CurrentWorker, r sdk.Requirement) (bool, error){
-	sdk.BinaryRequirement:        checkBinaryRequirement,
-	sdk.HostnameRequirement:      checkHostnameRequirement,
-	sdk.ModelRequirement:         checkModelRequirement,
-	sdk.NetworkAccessRequirement: checkNetworkAccessRequirement,
-	sdk.PluginRequirement:        checkPluginRequirement,
-	sdk.ServiceRequirement:       checkServiceRequirement,
-	sdk.MemoryRequirement:        checkMemoryRequirement,
-	sdk.VolumeRequirement:        checkVolumeRequirement,
-	sdk.OSArchRequirement:        checkOSArchRequirement,
-	sdk.RegionRequirement:        checkRegionRequirement,
+	sdk.BinaryRequirement:   checkBinaryRequirement,
+	sdk.HostnameRequirement: checkHostnameRequirement,
+	sdk.ModelRequirement:    checkModelRequirement,
+	sdk.PluginRequirement:   checkPluginRequirement,
+	sdk.ServiceRequirement:  checkServiceRequirement,
+	sdk.MemoryRequirement:   checkMemoryRequirement,
+	sdk.VolumeRequirement:   checkVolumeRequirement,
+	sdk.OSArchRequirement:   checkOSArchRequirement,
+	sdk.RegionRequirement:   checkRegionRequirement,
 }
 
 func checkRequirements(ctx context.Context, w *CurrentWorker, a *sdk.Action) (bool, []sdk.Requirement) {
@@ -123,11 +122,6 @@ func checkModelRequirement(w *CurrentWorker, r sdk.Requirement) (bool, error) {
 	isSharedInfra := w.model.Group.Name == sdk.SharedInfraGroupName && modelName == w.model.Name
 	isSameName := modelName == w.model.Name // for backward compatibility with runs, if only the name match we considered that the model can be used, keep this condition until the workflow runs were not migrated.
 	return isSharedInfra || isSameName, nil
-}
-
-func checkNetworkAccessRequirement(w *CurrentWorker, r sdk.Requirement) (bool, error) {
-	isValid := sdk.CheckNetworkAccessRequirement(r)
-	return isValid, nil
 }
 
 func checkServiceRequirement(w *CurrentWorker, r sdk.Requirement) (bool, error) {

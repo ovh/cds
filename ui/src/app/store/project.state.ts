@@ -6,7 +6,6 @@ import { GroupPermission } from 'app/model/group.model';
 import { ProjectIntegration } from 'app/model/integration.model';
 import { Key } from 'app/model/keys.model';
 import { IdName, Label, LoadOpts, Project } from 'app/model/project.model';
-import { Usage } from 'app/model/usage.model';
 import { Variable } from 'app/model/variable.model';
 import { EnvironmentService } from 'app/service/environment/environment.service';
 import { NavbarService } from 'app/service/navbar/navbar.service';
@@ -92,14 +91,7 @@ export class ProjectState {
             });
         }
 
-        return ctx.dispatch(new ProjectAction.ResyncProject(action.payload));
-    }
-
-    @Action(ProjectAction.ResyncProject)
-    resync(ctx: StateContext<ProjectStateModel>, action: ProjectAction.ResyncProject) {
-        let params = new HttpParams();
         let opts = action.payload.opts;
-
         if (Array.isArray(opts) && opts.length) {
             opts = opts.concat([
                 new LoadOpts('withGroups', 'groups'),
@@ -111,11 +103,18 @@ export class ProjectState {
                 new LoadOpts('withPermission', 'permission')
             ];
         }
-        opts.push(new LoadOpts('withLabels', 'labels'));
-        opts.push(new LoadOpts('withFeatures', 'features'));
         opts.push(new LoadOpts('withIntegrations', 'integrations'));
-        opts.forEach((opt) => params = params.append(opt.queryParam, 'true'));
+        opts.push(new LoadOpts('withLabels', 'labels'));
 
+        return ctx.dispatch(new ProjectAction.ResyncProject({projectKey: action.payload.projectKey, opts: opts}));
+    }
+
+    @Action(ProjectAction.ResyncProject)
+    resync(ctx: StateContext<ProjectStateModel>, action: ProjectAction.ResyncProject) {
+        let params = new HttpParams();
+        let opts = action.payload.opts;
+        opts.push(new LoadOpts('withFeatures', 'features'));
+        opts.forEach((opt) => params = params.append(opt.queryParam, 'true'));
         const state = ctx.getState();
         ctx.setState({
             ...state,

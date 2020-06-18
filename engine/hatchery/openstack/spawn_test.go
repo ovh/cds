@@ -30,17 +30,17 @@ func TestHatcheryOpenstack_checkSpawnLimits_MaxWorker(t *testing.T) {
 	}
 
 	lservers.list = []servers.Server{
-		{Flavor: map[string]interface{}{"vcpus": 8}},
-		{Flavor: map[string]interface{}{"vcpus": 16}},
+		{Metadata: map[string]string{"flavor": "b2-30"}},
+		{Metadata: map[string]string{"flavor": "b2-60"}},
 	}
 
 	err := h.checkSpawnLimits(context.TODO(), m)
 	require.NoError(t, err)
 
 	lservers.list = []servers.Server{
-		{Flavor: map[string]interface{}{"vcpus": 8}},
-		{Flavor: map[string]interface{}{"vcpus": 16}},
-		{Flavor: map[string]interface{}{"vcpus": 32}},
+		{Metadata: map[string]string{"flavor": "b2-30"}},
+		{Metadata: map[string]string{"flavor": "b2-60"}},
+		{Metadata: map[string]string{"flavor": "b2-120"}},
 	}
 
 	err = h.checkSpawnLimits(context.TODO(), m)
@@ -55,28 +55,28 @@ func TestHatcheryOpenstack_checkSpawnLimits_MaxCPUs(t *testing.T) {
 	h.Config.Provision.MaxWorker = 10
 	h.Config.MaxCPUs = 6
 	h.flavors = []flavors.Flavor{
-		{Name: "my-flavor", VCPUs: 2},
+		{Name: "b2-7", VCPUs: 2},
 	}
 
 	m := sdk.Model{
 		ID:                  1,
 		Name:                "my-model",
 		Group:               &sdk.Group{ID: 1, Name: "my-group"},
-		ModelVirtualMachine: sdk.ModelVirtualMachine{Flavor: "my-flavor"},
+		ModelVirtualMachine: sdk.ModelVirtualMachine{Flavor: "b2-7"},
 	}
 
 	lservers.list = []servers.Server{
-		{Flavor: map[string]interface{}{"vcpus": 2}},
-		{Flavor: map[string]interface{}{"vcpus": 2}},
+		{Metadata: map[string]string{"flavor": "b2-7"}},
+		{Metadata: map[string]string{"flavor": "b2-7"}},
 	}
 
 	err := h.checkSpawnLimits(context.TODO(), m)
 	require.NoError(t, err)
 
 	lservers.list = []servers.Server{
-		{Flavor: map[string]interface{}{"vcpus": 2}},
-		{Flavor: map[string]interface{}{"vcpus": 2}},
-		{Flavor: map[string]interface{}{"vcpus": 2}},
+		{Metadata: map[string]string{"flavor": "b2-7"}},
+		{Metadata: map[string]string{"flavor": "b2-7"}},
+		{Metadata: map[string]string{"flavor": "b2-7"}},
 	}
 
 	err = h.checkSpawnLimits(context.TODO(), m)
@@ -117,15 +117,15 @@ func TestHatcheryOpenstack_checkSpawnLimits_CountSmallerFlavorToKeep(t *testing.
 	}
 
 	lservers.list = []servers.Server{
-		{Flavor: map[string]interface{}{"vcpus": 8}},
+		{Metadata: map[string]string{"flavor": "b2-30"}},
 	}
 
 	err := h.checkSpawnLimits(context.TODO(), m3)
 	require.NoError(t, err, "22 CPUs left (30-8) should be enough to start 8 CPUs flavor (8+4*2=16)")
 
 	lservers.list = []servers.Server{
-		{Flavor: map[string]interface{}{"vcpus": 8}},
-		{Flavor: map[string]interface{}{"vcpus": 8}},
+		{Metadata: map[string]string{"flavor": "b2-30"}},
+		{Metadata: map[string]string{"flavor": "b2-30"}},
 	}
 
 	err = h.checkSpawnLimits(context.TODO(), m3)
@@ -136,25 +136,25 @@ func TestHatcheryOpenstack_checkSpawnLimits_CountSmallerFlavorToKeep(t *testing.
 	require.NoError(t, err, "14 CPUs left (30-8*2) should be enough to start 4 CPUs flavor (4+2*2=8)")
 
 	lservers.list = []servers.Server{
-		{Flavor: map[string]interface{}{"vcpus": 8}},
-		{Flavor: map[string]interface{}{"vcpus": 8}},
-		{Flavor: map[string]interface{}{"vcpus": 4}},
-		{Flavor: map[string]interface{}{"vcpus": 4}},
-		{Flavor: map[string]interface{}{"vcpus": 2}},
-		{Flavor: map[string]interface{}{"vcpus": 2}},
+		{Metadata: map[string]string{"flavor": "b2-30"}},
+		{Metadata: map[string]string{"flavor": "b2-30"}},
+		{Metadata: map[string]string{"flavor": "b2-15"}},
+		{Metadata: map[string]string{"flavor": "b2-15"}},
+		{Metadata: map[string]string{"flavor": "b2-7"}},
+		{Metadata: map[string]string{"flavor": "b2-7"}},
 	}
 
 	err = h.checkSpawnLimits(context.TODO(), m1)
 	require.NoError(t, err, "2 CPUs left (30-8*2-4*2-2*2) should be enough to start the smallest flavor with 2 CPUs")
 
 	lservers.list = []servers.Server{
-		{Flavor: map[string]interface{}{"vcpus": 8}},
-		{Flavor: map[string]interface{}{"vcpus": 8}},
-		{Flavor: map[string]interface{}{"vcpus": 4}},
-		{Flavor: map[string]interface{}{"vcpus": 4}},
-		{Flavor: map[string]interface{}{"vcpus": 2}},
-		{Flavor: map[string]interface{}{"vcpus": 2}},
-		{Flavor: map[string]interface{}{"vcpus": 2}},
+		{Metadata: map[string]string{"flavor": "b2-30"}},
+		{Metadata: map[string]string{"flavor": "b2-30"}},
+		{Metadata: map[string]string{"flavor": "b2-15"}},
+		{Metadata: map[string]string{"flavor": "b2-15"}},
+		{Metadata: map[string]string{"flavor": "b2-7"}},
+		{Metadata: map[string]string{"flavor": "b2-7"}},
+		{Metadata: map[string]string{"flavor": "b2-7"}},
 	}
 
 	err = h.checkSpawnLimits(context.TODO(), m1)

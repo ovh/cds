@@ -7,6 +7,6 @@ requirements:
 - name: python
   value: python
   type: binary
-- name: localhost.local
-  value: ovh.com:443
-  type: network
+- name: region
+  value: region
+  type: region

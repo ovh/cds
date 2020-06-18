@@ -65,6 +65,8 @@ export class ApplicationsState {
             ctx.setState({
                 ...state,
                 currentProjectKey: action.payload.projectKey,
+                editMode: false,
+                editApplication: null,
                 application: app,
                 loading: false
             });

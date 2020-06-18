@@ -1,6 +1,5 @@
 
 import { Application } from 'app/model/application.model';
-import { Environment } from 'app/model/environment.model';
 import { GroupPermission } from 'app/model/group.model';
 import { ProjectIntegration } from 'app/model/integration.model';
 import { Key } from 'app/model/keys.model';
@@ -208,18 +207,6 @@ export class AddKeyInProject {
 export class DeleteKeyInProject {
     static readonly type = '[Project] Delete Key in Project';
     constructor(public payload: { projectKey: string, key: Key }) { }
-}
-
-//  ------- Environment --------- //
-
-
-export class AddEnvironmentKey {
-    static readonly type = '[Project] Add Environment Key in Project';
-    constructor(public payload: { projectKey: string, envName: string, key: Key }) { }
-}
-export class DeleteEnvironmentKey {
-    static readonly type = '[Project] Delete Environment Key in Project';
-    constructor(public payload: { projectKey: string, envName: string, key: Key }) { }
 }
 
 //  ------- Repository Manager --------- //

@@ -56,6 +56,8 @@ export class PipelinesState {
             ctx.setState({
                 ...state,
                 currentProjectKey: action.payload.projectKey,
+                editPipeline: null,
+                editMode: false,
                 pipeline: pip,
                 loading: false,
             });

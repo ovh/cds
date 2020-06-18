@@ -68,5 +68,11 @@ export class DeleteEnvironmentKey {
     constructor(public payload: { projectKey: string, envName: string, key: Key }) { }
 }
 
+// Clean
+export class CleanEnvironmentState {
+    static readonly type = '[Environment] Clean state';
+    constructor() { }
+}
+
 
 

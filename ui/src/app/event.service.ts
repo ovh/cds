@@ -21,14 +21,12 @@ export class EventService {
         private _toastService: ToastService
     ) {}
 
-    startWebsocket(user: AuthentifiedUser) {
-        if (!user.isAdmin()) {
-            return
+    stopWebsocket() {
+        if (this.websocket) {
+            this.websocket.complete();
         }
-        if (!localStorage.getItem('WS-EVENT')) {
-            return
-        }
-        console.log('Starting websocket');
+    }
+    startWebsocket() {
         const protocol = window.location.protocol.replace('http', 'ws');
         const host = window.location.host;
         const href = this._router['location']._baseHref;

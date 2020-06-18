@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
@@ -12,6 +12,7 @@ import { ToastService } from 'app/shared/toast/ToastService';
 import { VariableEvent } from 'app/shared/variable/variable.event.model';
 import { CDSWebWorker } from 'app/shared/worker/web.worker';
 import { AuthenticationState } from 'app/store/authentication.state';
+import { CleanEnvironmentState } from 'app/store/environment.action';
 import * as envActions from 'app/store/environment.action';
 import { EnvironmentState, EnvironmentStateModel } from 'app/store/environment.state';
 import { ProjectState, ProjectStateModel } from 'app/store/project.state';
@@ -26,7 +27,7 @@ import { finalize } from 'rxjs/operators';
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 @AutoUnsubscribe()
-export class EnvironmentShowComponent implements OnInit {
+export class EnvironmentShowComponent implements OnInit, OnDestroy {
 
     // Flag to show the page or not
     public readyEnv = false;
@@ -126,6 +127,10 @@ export class EnvironmentShowComponent implements OnInit {
                 this.selectedTab = tab;
             }
         });
+    }
+
+    ngOnDestroy() {
+        this._store.dispatch(new CleanEnvironmentState())
     }
 
     showTab(tab: string): void {

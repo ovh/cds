@@ -93,14 +93,14 @@ export class EnvironmentState {
         }
 
 
-        return this._http.put<Environment>(
+        return this._http.put<Project>(
             `/project/${action.payload.projectKey}/environment/${action.payload.environmentName}`,
             action.payload.changes
-        ).pipe(tap((env) => {
+        ).pipe(tap((p: Project) => {
             const state = ctx.getState();
             ctx.setState({
                 ...state,
-                environment: env,
+                environment: p.environments.find(e => e.name === action.payload.changes.name),
                 editMode: false,
                 editEnvironment: null,
                 loading: false
@@ -237,6 +237,11 @@ export class EnvironmentState {
                     environment: env
                 });
             }));
+    }
+
+    @Action(ActionEnvironment.CleanEnvironmentState)
+    cleanEnvironmentState(ctx: StateContext<EnvironmentStateModel>, _: ActionEnvironment.DeleteEnvironmentKey) {
+        ctx.setState(getInitialEnvironmentState())  ;
     }
 
 }

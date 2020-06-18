@@ -63,29 +63,3 @@ func TestCheckHostnameRequirement(t *testing.T) {
 		t.Fatalf("Requirement should not be ok")
 	}
 }
-
-func TestNetworkAccessRequirement(t *testing.T) {
-	r := sdk.Requirement{
-		Type:  sdk.NetworkAccessRequirement,
-		Value: "google.com:443",
-	}
-
-	ok, err := checkRequirement(nil, r)
-	if err != nil {
-		t.Fatalf("checkRequirement should not fail: %s", err)
-	}
-
-	if !ok {
-		t.Fatalf("Requirement should be ok")
-	}
-
-	r.Value = "fewfewf"
-	ok, err = checkRequirement(nil, r)
-	if err != nil {
-		t.Fatalf("checkRequirement should not fail: %s", err)
-	}
-
-	if ok {
-		t.Fatalf("Requirement should not be ok")
-	}
-}
