@@ -2,11 +2,13 @@ import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, ViewChild
 import { TranslateService } from '@ngx-translate/core';
 import { ModalTemplate, SuiActiveModal, SuiModalService, TemplateModalConfig } from '@richardlt/ng2-semantic-ui';
 import { Application } from 'app/model/application.model';
+import { Environment } from 'app/model/environment.model';
 import { Operation } from 'app/model/operation.model';
 import { Pipeline } from 'app/model/pipeline.model';
 import { Project } from 'app/model/project.model';
 import { Workflow } from 'app/model/workflow.model';
 import { ApplicationService } from 'app/service/application/application.service';
+import { EnvironmentService } from 'app/service/environment/environment.service';
 import { PipelineService } from 'app/service/pipeline/pipeline.service';
 import { WorkflowService } from 'app/service/workflow/workflow.service';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
@@ -46,7 +48,8 @@ export class AsCodeSaveModalComponent {
         private _translate: TranslateService,
         private _workflowService: WorkflowService,
         private _pipService: PipelineService,
-        private _appService: ApplicationService
+        private _appService: ApplicationService,
+        private _envService: EnvironmentService
     ) { }
 
     show(data: any, type: string) {
@@ -99,6 +102,15 @@ export class AsCodeSaveModalComponent {
                     this.parameters.branch_name, this.parameters.commit_message).subscribe(o => {
                     this.asCodeOperation = o;
                     this.startPollingOperation((<Application>this.dataToSave).workflow_ascode_holder.name);
+                });
+                break;
+            case 'environment':
+                this.loading = true;
+                this._cd.markForCheck();
+                this._envService.updateAsCode(this.project.key, this.name, <Environment>this.dataToSave,
+                    this.parameters.branch_name, this.parameters.commit_message).subscribe(o => {
+                    this.asCodeOperation = o;
+                    this.startPollingOperation((<Environment>this.dataToSave).workflow_ascode_holder.name);
                 });
                 break;
             default:

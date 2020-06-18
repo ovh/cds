@@ -151,6 +151,19 @@ export class EnvironmentState {
     // VARIABLES
     @Action(ActionEnvironment.AddEnvironmentVariable)
     addEnvironmentVariable(ctx: StateContext<EnvironmentStateModel>, action: ActionEnvironment.AddEnvironmentVariable) {
+        const stateEditMode = ctx.getState();
+        if (stateEditMode.editMode) {
+            let envToUpdate = cloneDeep(stateEditMode.editEnvironment);
+            if (!envToUpdate.variables) {
+                envToUpdate.variables = new Array<Variable>();
+            }
+            envToUpdate.variables.push(action.payload.variable);
+            envToUpdate.editModeChanged = true;
+            return ctx.setState({
+                ...stateEditMode,
+                editEnvironment: envToUpdate,
+            });
+        }
         return this._http.post<Variable>(
             '/project/' + action.payload.projectKey + '/environment/' +
             action.payload.environmentName + '/variable/' + action.payload.variable.name,
@@ -171,6 +184,16 @@ export class EnvironmentState {
 
     @Action(ActionEnvironment.DeleteEnvironmentVariable)
     deleteEnvironmentVariable(ctx: StateContext<EnvironmentStateModel>, action: ActionEnvironment.DeleteEnvironmentVariable) {
+        const stateEditMode = ctx.getState();
+        if (stateEditMode.editMode) {
+            let envToUpdate = cloneDeep(stateEditMode.editEnvironment);
+            envToUpdate.variables = envToUpdate.variables.filter(e => e.name !== action.payload.variable.name);
+            envToUpdate.editModeChanged = true;
+            return ctx.setState({
+                ...stateEditMode,
+                editEnvironment: envToUpdate,
+            });
+        }
         return this._http.delete<Variable>(
             '/project/' + action.payload.projectKey + '/environment/' +
             action.payload.environmentName + '/variable/' + action.payload.variable.name
@@ -187,6 +210,21 @@ export class EnvironmentState {
 
     @Action(ActionEnvironment.UpdateEnvironmentVariable)
     updateEnvironmentVariable(ctx: StateContext<EnvironmentStateModel>, action: ActionEnvironment.UpdateEnvironmentVariable) {
+        const stateEditMode = ctx.getState();
+        if (stateEditMode.editMode) {
+            let envToUpdate = cloneDeep(stateEditMode.editEnvironment);
+            envToUpdate.variables = envToUpdate.variables.map( v => {
+                if (v.name === action.payload.variableName) {
+                    return action.payload.changes;
+                }
+                return v;
+            });
+            envToUpdate.editModeChanged = true;
+            return ctx.setState({
+                ...stateEditMode,
+                editEnvironment: envToUpdate,
+            });
+        }
         return this._http.put<Variable>(
             '/project/' + action.payload.projectKey + '/environment/' +
             action.payload.environmentName + '/variable/' + action.payload.variableName,
@@ -209,6 +247,19 @@ export class EnvironmentState {
 
     @Action(ActionEnvironment.AddEnvironmentKey)
     addEnvironmentKey(ctx: StateContext<EnvironmentStateModel>, action: ActionEnvironment.AddEnvironmentKey) {
+        const stateEditMode = ctx.getState();
+        if (stateEditMode.editMode) {
+            let envToUpdate = cloneDeep(stateEditMode.editEnvironment);
+            if (!envToUpdate.keys) {
+                envToUpdate.keys = new Array<Key>();
+            }
+            envToUpdate.keys.push(action.payload.key);
+            envToUpdate.editModeChanged = true;
+            return ctx.setState({
+                ...stateEditMode,
+                editEnvironment: envToUpdate,
+            });
+        }
         return this._http.post<Key>(`/project/${action.payload.projectKey}/environment/${action.payload.envName}/keys`, action.payload.key)
             .pipe(tap((key: Key) => {
                 const state = ctx.getState();
@@ -226,6 +277,16 @@ export class EnvironmentState {
 
     @Action(ActionEnvironment.DeleteEnvironmentKey)
     deleteEnvironmentKey(ctx: StateContext<EnvironmentStateModel>, action: ActionEnvironment.DeleteEnvironmentKey) {
+        const stateEditMode = ctx.getState();
+        if (stateEditMode.editMode) {
+            let envToUpdate = cloneDeep(stateEditMode.editEnvironment);
+            envToUpdate.keys = envToUpdate.keys.filter(e => e.name !== action.payload.key.name);
+            envToUpdate.editModeChanged = true;
+            return ctx.setState({
+                ...stateEditMode,
+                editEnvironment: envToUpdate,
+            });
+        }
         return this._http.delete<null>('/project/' + action.payload.projectKey +
             '/environment/' + action.payload.envName + '/keys/' + action.payload.key.name)
             .pipe(tap(() => {

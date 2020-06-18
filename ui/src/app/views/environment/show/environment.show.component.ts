@@ -3,7 +3,6 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
 import { Environment } from 'app/model/environment.model';
-import { Pipeline } from 'app/model/pipeline.model';
 import { Project } from 'app/model/project.model';
 import { AuthentifiedUser } from 'app/model/user.model';
 import { Workflow } from 'app/model/workflow.model';
@@ -37,6 +36,7 @@ export class EnvironmentShowComponent implements OnInit, OnDestroy {
     // Project & Application data
     project: Project;
     environment: Environment;
+    readOnlyEnvironment: Environment;
 
     // Subscription
     environmentSubscription: Subscription;
@@ -105,8 +105,15 @@ export class EnvironmentShowComponent implements OnInit, OnDestroy {
                             if (!s.environment) {
                                 return;
                             }
+                            if (s.editMode) {
+                                this.environment = cloneDeep(s.editEnvironment);
+                                this.readOnlyEnvironment = cloneDeep(s.environment);
+                            } else {
+                                this.environment = cloneDeep(s.environment);
+                                this.readOnlyEnvironment = cloneDeep(s.environment);
+                            }
                             this.readyEnv = true;
-                            this.environment = cloneDeep(s.environment);
+
                             if (this.environment.usage) {
                                 this.workflows = this.environment.usage.workflows || [];
                                 this.usageCount = this.workflows.length;

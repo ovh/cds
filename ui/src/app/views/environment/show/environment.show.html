@@ -55,7 +55,7 @@
                             <app-variable [variables]="environment.variables"
                                 [mode]="(project.permissions.writable && !environment.from_repository)?'edit':'ro'"
                                 (event)="variableEvent($event)" auditContext="environment" [project]="project"
-                                [environment]="environment.name"></app-variable>
+                                [environmentName]="environment.name"></app-variable>
                         </div>
                         <div *ngSwitchCase="'keys'">
                             <app-environment-keys [project]="project" [environment]="environment">
@@ -63,8 +63,7 @@
                         </div>
                         <div *ngSwitchCase="'usage'">
                             <ng-container *ngIf="usageCount > 0">
-                                <app-usage [project]="project" [workflows]="workflows" [pipelines]="pipelines"
-                                    [environments]="environments"></app-usage>
+                                <app-usage [project]="project" [workflows]="workflows"></app-usage>
                             </ng-container>
                             <ng-container *ngIf="usageCount === 0">
                                 <div class="ui info message">
@@ -85,3 +84,8 @@
 <ng-template #loadEnv>
     <div class="ui text active loader">Loading environment...</div>
 </ng-template>
+<ng-container *ngIf="environment?.workflow_ascode_holder">
+    <app-ascode-save-modal [project]="project" [workflow]="environment.workflow_ascode_holder" [name]="environment.name"
+                           #updateEditMode>
+    </app-ascode-save-modal>
+</ng-container>
