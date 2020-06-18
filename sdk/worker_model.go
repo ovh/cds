@@ -42,7 +42,6 @@ type Model struct {
 	Name                string              `json:"name" db:"name" cli:"name,key"`
 	Description         string              `json:"description" db:"description" cli:"description"`
 	Type                string              `json:"type" db:"type" cli:"type"`
-	Image               string              `json:"image" db:"image" cli:"image"` // TODO: DELETE after migration done
 	Disabled            bool                `json:"disabled" db:"disabled" cli:"disabled"`
 	Restricted          bool                `json:"restricted" db:"restricted" cli:"restricted"`
 	RegisteredOS        *string             `json:"registered_os" db:"registered_os" cli:"-"`
