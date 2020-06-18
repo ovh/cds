@@ -14,6 +14,7 @@ import (
 
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/log"
 )
 
 func muxVar(r *http.Request, s string) string {
@@ -37,6 +38,10 @@ func (s *Service) postOperationHandler() service.Handler {
 				return err
 			}
 		}
+
+		requestID := ctx.Value(log.ContextLoggingRequestIDKey)
+		log.Info(ctx, "setting request_id:%s on operation:%s", requestID, op.UUID)
+		op.RequestID, _ = requestID.(string)
 
 		uuid := sdk.UUID()
 		op.UUID = uuid

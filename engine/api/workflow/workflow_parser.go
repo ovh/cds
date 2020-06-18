@@ -113,20 +113,19 @@ func ParseAndImport(ctx context.Context, db gorp.SqlExecutor, store cache.Store,
 					h := &w.WorkflowData.Node.Hooks[i]
 					if h.HookModelName == sdk.RepositoryWebHookModel.Name {
 						h.UUID = oldRepoWebHook.UUID
-						h.Config = oldRepoWebHook.Config.Clone()
 						h.Config[sdk.HookConfigWorkflow] = sdk.WorkflowNodeHookConfigValue{Value: w.Name}
 						currentRepoWebHook = h
 						break
 					}
 				}
 
-				// If not found
+				// If not found, take the default config
 				if currentRepoWebHook == nil {
 					h := sdk.NodeHook{
 						UUID:          oldRepoWebHook.UUID,
 						HookModelName: oldRepoWebHook.HookModelName,
-						Config:        oldRepoWebHook.Config.Clone(),
-						HookModelID:   oldRepoWebHook.HookModelID,
+						Config:        sdk.RepositoryWebHookModel.DefaultConfig.Clone(),
+						HookModelID:   sdk.RepositoryWebHookModel.ID,
 					}
 					h.Config[sdk.HookConfigWorkflow] = sdk.WorkflowNodeHookConfigValue{Value: w.Name}
 					w.WorkflowData.Node.Hooks = append(w.WorkflowData.Node.Hooks, h)

@@ -196,6 +196,7 @@ var (
 	ErrWorkflowAsCodeResync                          = Error{ID: 186, Status: http.StatusForbidden}
 	ErrWorkflowNodeNameDuplicate                     = Error{ID: 187, Status: http.StatusBadRequest}
 	ErrUnsupportedMediaType                          = Error{ID: 188, Status: http.StatusUnsupportedMediaType}
+	ErrNothingToPush                                 = Error{ID: 189, Status: http.StatusBadRequest}
 )
 
 var errorsAmericanEnglish = map[int]string{
@@ -374,6 +375,7 @@ var errorsAmericanEnglish = map[int]string{
 	ErrWorkflowAsCodeResync.ID:                          "You cannot resynchronize an as-code workflow",
 	ErrWorkflowNodeNameDuplicate.ID:                     "You cannot have same name for different pipelines in your workflow",
 	ErrUnsupportedMediaType.ID:                          "Request format invalid",
+	ErrNothingToPush.ID:                                 "No diff to push",
 }
 
 var errorsFrench = map[int]string{
@@ -552,6 +554,7 @@ var errorsFrench = map[int]string{
 	ErrWorkflowAsCodeResync.ID:                          "Impossible de resynchroniser un workflow en mode as-code",
 	ErrWorkflowNodeNameDuplicate.ID:                     "Vous ne pouvez pas avoir plusieurs fois le même nom de pipeline dans votre workflow",
 	ErrUnsupportedMediaType.ID:                          "Le format de la requête est invalide",
+	ErrNothingToPush.ID:                                 "Aucune modification à pousser",
 }
 
 var errorsLanguages = []map[int]string{

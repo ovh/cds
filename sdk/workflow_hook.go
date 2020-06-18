@@ -106,6 +106,19 @@ func (w *WorkflowNodeHookConfig) Scan(src interface{}) error {
 	return WrapError(json.Unmarshal(source, w), "cannot unmarshal WorkflowNodeHookConfig")
 }
 
+func (w WorkflowNodeHookConfig) Equals(o WorkflowNodeHookConfig) bool {
+	for k, v := range w {
+		ov, has := o[k]
+		if !has {
+			return false
+		}
+		if v.Value != ov.Value {
+			return false
+		}
+	}
+	return true
+}
+
 // GetBuiltinHookModelByName retrieve the hook model
 func GetBuiltinHookModelByName(name string) *WorkflowHookModel {
 	for _, m := range BuiltinHookModels {
