@@ -62,6 +62,7 @@ func (actPlugin *venomActionPlugin) Run(ctx context.Context, q *actionplugin.Act
 	loglevel := q.GetOptions()["loglevel"]
 	vars := q.GetOptions()["vars"]
 	varsFromFile := q.GetOptions()["vars-from-file"]
+	stopOnFailureStr := q.GetOptions()["stop-on-failure"]
 
 	if path == "" {
 		path = "."
@@ -153,11 +154,17 @@ func (actPlugin *venomActionPlugin) Run(ctx context.Context, q *actionplugin.Act
 		}
 	}
 
+    stopOnFailure, err := strconv.ParseBool(stopOnFailureStr)
+    if err != nil {
+        return actionplugin.Fail("Error parsing stopOnFailure value : %s\n", err.Error())
+    }
+
 	v.AddVariables(data)
 	v.LogLevel = loglevel
 	v.OutputFormat = "xml"
 	v.OutputDir = output
 	v.Parallel = parallel
+    v.StopOnFailure = stopOnFailure
 
 	filepathVal := strings.Split(path, ",")
 	filepathExcluded := strings.Split(exclude, ",")
@@ -190,6 +197,7 @@ func (actPlugin *venomActionPlugin) Run(ctx context.Context, q *actionplugin.Act
 
 	fmt.Printf("VENOM - filepath: %v\n", filepathValComputed)
 	fmt.Printf("VENOM - excluded: %v\n", filepathExcludedComputed)
+	fmt.Printf("VENOM - stop on failure: %t\n", stopOnFailure)
 	tests, err := v.Process(filepathValComputed, filepathExcludedComputed)
 	if err != nil {
 		return actionplugin.Fail("VENOM - Fail on venom: %v\n", err)
