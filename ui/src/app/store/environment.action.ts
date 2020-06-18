@@ -3,7 +3,6 @@ import { Key } from 'app/model/keys.model';
 import { Variable } from 'app/model/variable.model';
 
 
-
 export class AddEnvironment {
     static readonly type = '[Environment] Add Environment';
     constructor(public payload: { projectKey: string, environment: Environment }) { }
