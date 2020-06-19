@@ -103,7 +103,6 @@
   "ascode_error_unknown_type": "Impossible de détecter la ressource à mettre à jour",
   "ascode_modal_title": "Sauvegarder as code",
   "ascode_modal_label_branch": "Sélectionner ou créer une branche",
-  "ascode_modal_label_branch_new": "Branche",
   "ascode_modal_label_message": "Message de commit",
   "ascode_save_modal_info_line_1": "Une \"pull request\" sera créée sur le gestionnaire de dépôt {{repo}}.",
   "audit_change": "Modification",
