@@ -5,6 +5,7 @@ import "fmt"
 type WebsocketFilterType string
 
 const (
+	WebsocketFilterTypeGlobal          WebsocketFilterType = "global"
 	WebsocketFilterTypeProject         WebsocketFilterType = "project"
 	WebsocketFilterTypeWorkflow        WebsocketFilterType = "workflow"
 	WebsocketFilterTypeWorkflowRun     WebsocketFilterType = "workflow-run"
@@ -18,7 +19,8 @@ const (
 
 func (f WebsocketFilterType) IsValid() bool {
 	switch f {
-	case WebsocketFilterTypeProject,
+	case WebsocketFilterTypeGlobal,
+		WebsocketFilterTypeProject,
 		WebsocketFilterTypeWorkflow,
 		WebsocketFilterTypeWorkflowRun,
 		WebsocketFilterTypeWorkflowNodeRun,

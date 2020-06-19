@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"encoding/json"
 	"net/url"
 	"strings"
 	"testing"
@@ -9,10 +10,13 @@ import (
 
 	"github.com/ovh/cds/engine/api/authentication"
 	"github.com/ovh/cds/engine/api/authentication/builtin"
+	"github.com/ovh/cds/engine/api/bootstrap"
+	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/api/test/assets"
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -57,12 +61,38 @@ func Test_websocketWrongFilters(t *testing.T) {
 	require.Equal(t, "missing project key or application name", response.Error)
 }
 
+func Test_websocketFilterRetroCompatibility(t *testing.T) {
+	db, _ := test.SetupPG(t, bootstrap.InitiliazeDB)
+
+	u, _ := assets.InsertLambdaUser(t, db)
+	localConsumer, err := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
+
+	c := &websocketClient{
+		AuthConsumer: localConsumer,
+	}
+	buf, err := json.Marshal([]sdk.WebsocketFilter{{
+		Type: sdk.WebsocketFilterTypeGlobal,
+	}})
+	require.NoError(t, err)
+	require.NoError(t, c.updateEventFilters(context.TODO(), nil, buf))
+	require.Len(t, c.filters, 1)
+	_, ok := c.filters["global"]
+	assert.True(t, ok)
+
+	buf, err = json.Marshal(sdk.WebsocketFilter{
+		Type: sdk.WebsocketFilterTypeQueue,
+	})
+	require.NoError(t, err)
+	require.NoError(t, c.updateEventFilters(context.TODO(), nil, buf))
+	require.Len(t, c.filters, 1)
+	_, ok = c.filters["queue"]
+	assert.True(t, ok)
+}
+
 func Test_websocketGetWorkflowEvent(t *testing.T) {
 	api, tsURL := newTestServer(t)
 
-	u, _ := assets.InsertAdminUser(t, api.mustDB())
-	localConsumer, err := authentication.LoadConsumerByTypeAndUserID(context.TODO(), api.mustDB(), sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
-	require.NoError(t, err)
+	u, jwt := assets.InsertAdminUser(t, api.mustDB())
 
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, api.mustDB(), api.Cache, key, key)
@@ -80,35 +110,47 @@ func Test_websocketGetWorkflowEvent(t *testing.T) {
 	}
 	require.NoError(t, workflow.Insert(context.TODO(), api.mustDB(), api.Cache, *proj, &w))
 
-	_, jws, err := builtin.NewConsumer(context.TODO(), api.mustDB(), sdk.RandomString(10), sdk.RandomString(10), localConsumer, u.GetGroupIDs(),
-		sdk.NewAuthConsumerScopeDetails(sdk.AuthConsumerScopeProject))
-
 	chanMessageReceived := make(chan sdk.WebsocketEvent)
 	chanMessageToSend := make(chan []sdk.WebsocketFilter)
 
 	client := cdsclient.New(cdsclient.Config{
-		Host:                              tsURL,
-		User:                              u.Username,
-		InsecureSkipVerifyTLS:             true,
-		BuitinConsumerAuthenticationToken: jws,
+		Host:                  tsURL,
+		User:                  u.Username,
+		InsecureSkipVerifyTLS: true,
+		SessionToken:          jwt,
 	})
 	go client.WebsocketEventsListen(context.TODO(), chanMessageToSend, chanMessageReceived)
+	var lastResponse *sdk.WebsocketEvent
+	go func() {
+		for e := range chanMessageReceived {
+			lastResponse = &e
+		}
+	}()
 
-	chanMessageToSend <- []sdk.WebsocketFilter{{
+	f := sdk.WebsocketFilter{
 		Type:         sdk.WebsocketFilterTypeWorkflow,
 		ProjectKey:   proj.Key,
 		WorkflowName: w.Name,
-	}}
+	}
+	chanMessageToSend <- []sdk.WebsocketFilter{f}
 	// Waiting websocket to update filter
 	time.Sleep(1 * time.Second)
+	require.Nil(t, lastResponse)
+	require.Len(t, api.websocketBroker.clients, 1)
+	for _, c := range api.websocketBroker.clients {
+		require.Len(t, c.filters, 1)
+		_, ok := c.filters[f.Key()]
+		require.True(t, ok)
+	}
 
 	api.websocketBroker.messages <- sdk.Event{ProjectKey: "blabla", WorkflowName: "toto", EventType: "sdk.EventRunWorkflow"}
 	api.websocketBroker.messages <- sdk.Event{ProjectKey: proj.Key, WorkflowName: w.Name, EventType: "sdk.EventRunWorkflow"}
-	response := <-chanMessageReceived
-	require.Equal(t, "OK", response.Status)
-	require.Equal(t, "sdk.EventRunWorkflow", response.Event.EventType)
-	require.Equal(t, proj.Key, response.Event.ProjectKey)
-	require.Equal(t, w.Name, response.Event.WorkflowName)
+	time.Sleep(1 * time.Second)
+	require.NotNil(t, lastResponse)
+	require.Equal(t, "OK", lastResponse.Status)
+	require.Equal(t, "sdk.EventRunWorkflow", lastResponse.Event.EventType)
+	require.Equal(t, proj.Key, lastResponse.Event.ProjectKey)
+	require.Equal(t, w.Name, lastResponse.Event.WorkflowName)
 	require.Len(t, chanMessageReceived, 0)
 }
 

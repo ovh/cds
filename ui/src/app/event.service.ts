@@ -77,7 +77,9 @@ export class EventService {
 
     subscribeAutoFromUrl(url: string) {
         // When we move from a page to another we reset the filters
-        let fs: Array<WebsocketFilter> = [];
+        let fs: Array<WebsocketFilter> = [
+            <WebsocketFilter>{type: WebsocketFilterType.GLOBAL}
+        ];
 
         let urlSplitted = url.substr(1, url.length - 1).split('/');
         switch (urlSplitted[0]) {

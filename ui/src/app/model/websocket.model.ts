@@ -1,6 +1,7 @@
 import { Event } from 'app/model/event.model';
 
 export enum WebsocketFilterType {
+    GLOBAL = 'global',
     PROJECT = 'project',
     WORKFLOW = 'workflow',
     WORKFLOW_RUN = 'workflow-run',

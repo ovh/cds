@@ -24,6 +24,11 @@ func events() *cobra.Command {
 var eventsListenCmd = cli.Command{
 	Name:  "listen",
 	Short: "Listen CDS events",
+	Example: `  cdsctl events listen --queue
+  cdsctl events listen --global
+  cdsctl events listen --project MYPROJ
+  cdsctl events listen --project MYPROJ --workflow my-workflow
+  `,
 	Flags: []cli.Flag{
 		{
 			Name:  "project",
@@ -34,6 +39,16 @@ var eventsListenCmd = cli.Command{
 			Name:  "workflow",
 			Usage: "workflow name to listen",
 			Type:  cli.FlagString,
+		},
+		{
+			Name:  "queue",
+			Usage: "listen job queue events",
+			Type:  cli.FlagBool,
+		},
+		{
+			Name:  "global",
+			Usage: "listen global events",
+			Type:  cli.FlagBool,
 		},
 	},
 }
@@ -47,18 +62,29 @@ func eventsListenRun(v cli.Values) error {
 		client.WebsocketEventsListen(ctx, chanMessageToSend, chanMessageReceived)
 	})
 
-	var t sdk.WebsocketFilterType
 	switch {
-	case v.GetString("workflow") != "":
-		t = sdk.WebsocketFilterTypeWorkflow
+	case v.GetString("project") != "" && v.GetString("workflow") != "":
+		chanMessageToSend <- []sdk.WebsocketFilter{{
+			Type:         sdk.WebsocketFilterTypeWorkflow,
+			ProjectKey:   v.GetString("project"),
+			WorkflowName: v.GetString("workflow"),
+		}}
+	case v.GetString("project") != "":
+		chanMessageToSend <- []sdk.WebsocketFilter{{
+			Type:       sdk.WebsocketFilterTypeProject,
+			ProjectKey: v.GetString("project"),
+		}}
+	case v.GetBool("queue"):
+		chanMessageToSend <- []sdk.WebsocketFilter{{
+			Type: sdk.WebsocketFilterTypeQueue,
+		}}
+	case v.GetBool("global"):
+		chanMessageToSend <- []sdk.WebsocketFilter{{
+			Type: sdk.WebsocketFilterTypeGlobal,
+		}}
 	default:
-		t = sdk.WebsocketFilterTypeProject
+		return fmt.Errorf("invalid given parameters")
 	}
-	chanMessageToSend <- []sdk.WebsocketFilter{{
-		Type:         t,
-		ProjectKey:   v.GetString("project"),
-		WorkflowName: v.GetString("workflow"),
-	}}
 
 	for {
 		select {

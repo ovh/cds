@@ -18,6 +18,7 @@ import (
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/observability"
 	"github.com/ovh/cds/engine/api/permission"
+	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
@@ -103,7 +104,7 @@ func (b *websocketBroker) Start(ctx context.Context, panicCallback func(s string
 					func(ctx context.Context) {
 						if c.isAlive.IsSet() {
 							log.Debug("send data to %s", c.AuthConsumer.GetUsername())
-							if err := c.send(ctx, receivedEvent); err != nil {
+							if err := c.send(ctx, b.dbFunc(), receivedEvent); err != nil {
 								b.chanRemoveClient <- c.UUID
 							}
 						}
@@ -226,9 +227,19 @@ func (b *websocketBroker) ServeHTTP() service.Handler {
 
 func (c *websocketClient) updateEventFilters(ctx context.Context, db gorp.SqlExecutor, msg []byte) error {
 	var fs []sdk.WebsocketFilter
-	if err := json.Unmarshal(msg, &fs); err != nil {
-		return sdk.WrapError(err, "cannot unmarshal websocket input message")
+
+	var f sdk.WebsocketFilter
+	if err := json.Unmarshal(msg, &f); err == nil {
+		fs = []sdk.WebsocketFilter{f}
+	} else {
+		if err := json.Unmarshal(msg, &fs); err != nil {
+			return sdk.WrapError(err, "cannot unmarshal websocket input message")
+		}
 	}
+
+	var isMaintainer = c.AuthConsumer.Maintainer() || c.AuthConsumer.Admin()
+	var isHatchery = c.AuthConsumer.Service != nil && c.AuthConsumer.Service.Type == services.TypeHatchery
+	var isHatcheryWithGroups = isHatchery && len(c.AuthConsumer.GroupIDs) > 0
 
 	// Check validity of given filters
 	for _, f := range fs {
@@ -241,21 +252,27 @@ func (c *websocketClient) updateEventFilters(ctx context.Context, db gorp.SqlExe
 			sdk.WebsocketFilterTypePipeline,
 			sdk.WebsocketFilterTypeEnvironment,
 			sdk.WebsocketFilterTypeOperation:
-			perms, err := permission.LoadProjectMaxLevelPermission(ctx, db, []string{f.ProjectKey}, getAPIConsumer(ctx).GetGroupIDs())
+			if isMaintainer && !isHatcheryWithGroups {
+				continue
+			}
+			perms, err := permission.LoadProjectMaxLevelPermission(ctx, db, []string{f.ProjectKey}, c.AuthConsumer.GetGroupIDs())
 			if err != nil {
 				return err
 			}
 			maxLevelPermission := perms.Level(f.ProjectKey)
-			if maxLevelPermission < sdk.PermissionRead && !isMaintainer(ctx) {
+			if maxLevelPermission < sdk.PermissionRead {
 				return sdk.WithStack(sdk.ErrForbidden)
 			}
 		case sdk.WebsocketFilterTypeWorkflow:
-			perms, err := permission.LoadWorkflowMaxLevelPermission(ctx, db, f.ProjectKey, []string{f.WorkflowName}, getAPIConsumer(ctx).GetGroupIDs())
+			if isMaintainer && !isHatcheryWithGroups {
+				continue
+			}
+			perms, err := permission.LoadWorkflowMaxLevelPermission(ctx, db, f.ProjectKey, []string{f.WorkflowName}, c.AuthConsumer.GetGroupIDs())
 			if err != nil {
 				return err
 			}
 			maxLevelPermission := perms.Level(f.WorkflowName)
-			if maxLevelPermission < sdk.PermissionRead && !isMaintainer(ctx) {
+			if maxLevelPermission < sdk.PermissionRead {
 				return sdk.WithStack(sdk.ErrForbidden)
 			}
 		}
@@ -273,7 +290,7 @@ func (c *websocketClient) updateEventFilters(ctx context.Context, db gorp.SqlExe
 }
 
 // Send an event to a client
-func (c *websocketClient) send(ctx context.Context, event sdk.Event) (err error) {
+func (c *websocketClient) send(ctx context.Context, db gorp.SqlExecutor, event sdk.Event) (err error) {
 	c.mutex.Lock()
 	defer c.mutex.Unlock()
 
@@ -287,11 +304,42 @@ func (c *websocketClient) send(ctx context.Context, event sdk.Event) (err error)
 		return sdk.WithStack(fmt.Errorf("client deconnected"))
 	}
 
+	var isMaintainer = c.AuthConsumer.Maintainer() || c.AuthConsumer.Admin()
+	var isHatchery = c.AuthConsumer.Service != nil && c.AuthConsumer.Service.Type == services.TypeHatchery
+	var isHatcheryWithGroups = isHatchery && len(c.AuthConsumer.GroupIDs) > 0
+
 	// Compute required filter(s) key for given event
 	var keys []string
 
+	// Event that match global filter
+	if event.EventType == fmt.Sprintf("%T", sdk.EventMaintenance{}) {
+		keys = append(keys, sdk.WebsocketFilter{
+			Type: sdk.WebsocketFilterTypeGlobal,
+		}.Key())
+	}
+	if strings.HasPrefix(event.EventType, "sdk.EventBroadcast") {
+		var allowed bool
+		if event.ProjectKey == "" {
+			allowed = true
+		} else {
+			if isMaintainer && !isHatcheryWithGroups {
+				allowed = true
+			} else {
+				perms, err := permission.LoadProjectMaxLevelPermission(context.Background(), db, []string{event.ProjectKey}, c.AuthConsumer.GetGroupIDs())
+				if err != nil {
+					return err
+				}
+				allowed = perms.Level(event.ProjectKey) >= sdk.PermissionRead
+			}
+		}
+		if allowed {
+			keys = append(keys, sdk.WebsocketFilter{
+				Type: sdk.WebsocketFilterTypeGlobal,
+			}.Key())
+		}
+	}
 	// Event that match project filter
-	if strings.HasPrefix(event.EventType, "sdk.EventProject") {
+	if strings.HasPrefix(event.EventType, "sdk.EventProject") || event.EventType == fmt.Sprintf("%T", sdk.EventAsCodeEvent{}) {
 		keys = append(keys, sdk.WebsocketFilter{
 			Type:       sdk.WebsocketFilterTypeProject,
 			ProjectKey: event.ProjectKey,
@@ -349,9 +397,25 @@ func (c *websocketClient) send(ctx context.Context, event sdk.Event) (err error)
 	}
 	// Event that match queue filter
 	if event.EventType == fmt.Sprintf("%T", sdk.EventRunWorkflowJob{}) {
-		keys = append(keys, sdk.WebsocketFilter{
-			Type: sdk.WebsocketFilterTypeQueue,
-		}.Key())
+		// We need to check the permission on project here
+		var allowed bool
+		if isMaintainer && !isHatcheryWithGroups {
+			allowed = true
+		} else {
+			// We search permission from database to allow events for project created after websocket init to be retuned.
+			// As the AuthConsumer group list is not updated, events for project where a group will be added after websocket
+			// init will not be returned until socket reconnection.
+			perms, err := permission.LoadWorkflowMaxLevelPermission(context.Background(), db, event.ProjectKey, []string{event.WorkflowName}, c.AuthConsumer.GetGroupIDs())
+			if err != nil {
+				return err
+			}
+			allowed = perms.Level(event.WorkflowName) >= sdk.PermissionRead
+		}
+		if allowed {
+			keys = append(keys, sdk.WebsocketFilter{
+				Type: sdk.WebsocketFilterTypeQueue,
+			}.Key())
+		}
 	}
 	// Event that match operation filter
 	if event.EventType == fmt.Sprintf("%T", sdk.Operation{}) {
