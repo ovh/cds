@@ -23,6 +23,7 @@ import {
 } from './store/applications.action';
 import { ApplicationsState, ApplicationStateModel } from './store/applications.state';
 import { AuthenticationState } from './store/authentication.state';
+import { AddEvent } from './store/event.action';
 import { DeleteFromCachePipeline, ExternalChangePipeline, ResyncPipeline } from './store/pipelines.action';
 import { PipelinesState, PipelinesStateModel } from './store/pipelines.state';
 import * as projectActions from './store/project.action';
@@ -65,6 +66,8 @@ export class AppService {
         if (!event || !event.type_event) {
             return
         }
+        this._store.dispatch(new AddEvent(event));
+
         if (event.type_event.indexOf(EventType.MAINTENANCE) === 0) {
             this._store.dispatch(new UpdateMaintenance(event.payload['enable']));
             return;
