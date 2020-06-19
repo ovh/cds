@@ -1,6 +1,5 @@
 import {HttpClient, HttpParams} from '@angular/common/http';
 import {Injectable} from '@angular/core';
-import { Application } from 'app/model/application.model';
 import {Environment} from 'app/model/environment.model';
 import { Operation } from 'app/model/operation.model';
 import {Usage} from 'app/model/usage.model';
