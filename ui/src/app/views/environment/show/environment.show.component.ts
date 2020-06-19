@@ -11,7 +11,6 @@ import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { ToastService } from 'app/shared/toast/ToastService';
 import { VariableEvent } from 'app/shared/variable/variable.event.model';
 import { CDSWebWorker } from 'app/shared/worker/web.worker';
-import { CancelApplicationEdition } from 'app/store/applications.action';
 import { AuthenticationState } from 'app/store/authentication.state';
 import { CleanEnvironmentState } from 'app/store/environment.action';
 import * as envActions from 'app/store/environment.action';
