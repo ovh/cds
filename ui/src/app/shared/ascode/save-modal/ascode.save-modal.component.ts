@@ -40,6 +40,8 @@ export class AsCodeSaveModalComponent {
     pollingOperationSub: Subscription;
     parameters: ParamData;
     repositoryFullname: string;
+    canSave = false;
+    displayCloseButton = false;
 
     constructor(
         private _modalService: SuiModalService,
@@ -72,6 +74,7 @@ export class AsCodeSaveModalComponent {
     }
 
     close() {
+        delete this.parameters;
         this.modal.approve(true);
     }
 
@@ -128,10 +131,17 @@ export class AsCodeSaveModalComponent {
             }))
             .subscribe(o => {
                 this.asCodeOperation = o;
+                this.displayCloseButton = true;
             });
     }
 
     onParamChange(param: ParamData): void {
         this.parameters = param;
+        this.canSave = !this.isEmpty(this.parameters.commit_message) && !this.isEmpty(this.parameters.branch_name);
+        this._cd.markForCheck();
+    }
+
+    isEmpty(str: string): boolean {
+        return (!str || str.length === 0);
     }
 }
