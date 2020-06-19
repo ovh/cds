@@ -56,17 +56,22 @@ func (s *Service) RunTcpLogServer(ctx context.Context) {
 	}()
 }
 
-func (s *Service) handleConnection(ctx context.Context, conn net.Conn) {
-	defer func() {
-		_ = conn.Close()
-	}()
-
+func (s *Service) handleConnectionChannel(ctx context.Context) chan<- handledMessage {
 	chanMessages := make(chan handledMessage, 1000)
 	sdk.GoRoutine(context.Background(), "cdn-msgreader-"+sdk.UUID(), func(ctx context.Context) {
 		if err := s.processLogs(ctx, chanMessages); err != nil {
 			log.Error(ctx, "error while processing logs: %v", err)
 		}
 	})
+	return chanMessages
+}
+
+func (s *Service) handleConnection(ctx context.Context, conn net.Conn) {
+	defer func() {
+		_ = conn.Close()
+	}()
+
+	chanMessages := s.handleConnectionChannel(ctx)
 	defer close(chanMessages)
 
 	bufReader := bufio.NewReader(conn)
