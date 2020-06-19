@@ -78,14 +78,14 @@ export class EventService {
     subscribeAutoFromUrl(url: string) {
         // When we move from a page to another we reset the filters
         let fs: Array<WebsocketFilter> = [
-            <WebsocketFilter>{type: WebsocketFilterType.GLOBAL}
+            <WebsocketFilter>{ type: WebsocketFilterType.GLOBAL }
         ];
 
         let urlSplitted = url.substr(1, url.length - 1).split('/');
         switch (urlSplitted[0]) {
-            /*case 'home':
-                msg.favorites = true;
-                break;*/
+            case 'home':
+                fs.push(<WebsocketFilter>{ type: WebsocketFilterType.TIMELINE });
+                break;
             case 'settings':
                 if (urlSplitted.length === 1) { // Ignore settings root page
                     break;

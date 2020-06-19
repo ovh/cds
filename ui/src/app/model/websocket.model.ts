@@ -10,7 +10,8 @@ export enum WebsocketFilterType {
     APPLICATION = 'application',
     ENVIRONMENT = 'environment',
     QUEUE = 'queue',
-    OPERATION = 'operation'
+    OPERATION = 'operation',
+    TIMELINE = 'timeline'
 }
 
 export class WebsocketFilter {

@@ -425,6 +425,25 @@ func (c *websocketClient) send(ctx context.Context, db gorp.SqlExecutor, event s
 			OperationUUID: event.OperationUUID,
 		}.Key())
 	}
+	// Event that match timeline filter
+	if event.EventType == fmt.Sprintf("%T", sdk.EventRunWorkflow{}) {
+		// We need to check the permission on project here
+		var allowed bool
+		if isMaintainer && !isHatcheryWithGroups {
+			allowed = true
+		} else {
+			perms, err := permission.LoadWorkflowMaxLevelPermission(context.Background(), db, event.ProjectKey, []string{event.WorkflowName}, c.AuthConsumer.GetGroupIDs())
+			if err != nil {
+				return err
+			}
+			allowed = perms.Level(event.WorkflowName) >= sdk.PermissionRead
+		}
+		if allowed {
+			keys = append(keys, sdk.WebsocketFilter{
+				Type: sdk.WebsocketFilterTypeTimeline,
+			}.Key())
+		}
+	}
 	if len(keys) == 0 || !c.filters.HasOneKey(keys...) {
 		return nil
 	}

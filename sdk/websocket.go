@@ -15,6 +15,7 @@ const (
 	WebsocketFilterTypeEnvironment     WebsocketFilterType = "environment"
 	WebsocketFilterTypeQueue           WebsocketFilterType = "queue"
 	WebsocketFilterTypeOperation       WebsocketFilterType = "operation"
+	WebsocketFilterTypeTimeline        WebsocketFilterType = "timeline"
 )
 
 func (f WebsocketFilterType) IsValid() bool {
@@ -28,7 +29,8 @@ func (f WebsocketFilterType) IsValid() bool {
 		WebsocketFilterTypeApplication,
 		WebsocketFilterTypeEnvironment,
 		WebsocketFilterTypeQueue,
-		WebsocketFilterTypeOperation:
+		WebsocketFilterTypeOperation,
+		WebsocketFilterTypeTimeline:
 		return true
 	}
 	return false
