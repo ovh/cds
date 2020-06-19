@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
@@ -6,10 +6,12 @@ import { Environment } from 'app/model/environment.model';
 import { Project } from 'app/model/project.model';
 import { AuthentifiedUser } from 'app/model/user.model';
 import { Workflow } from 'app/model/workflow.model';
+import { AsCodeSaveModalComponent } from 'app/shared/ascode/save-modal/ascode.save-modal.component';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { ToastService } from 'app/shared/toast/ToastService';
 import { VariableEvent } from 'app/shared/variable/variable.event.model';
 import { CDSWebWorker } from 'app/shared/worker/web.worker';
+import { CancelApplicationEdition } from 'app/store/applications.action';
 import { AuthenticationState } from 'app/store/authentication.state';
 import { CleanEnvironmentState } from 'app/store/environment.action';
 import * as envActions from 'app/store/environment.action';
@@ -28,6 +30,9 @@ import { finalize } from 'rxjs/operators';
 @AutoUnsubscribe()
 export class EnvironmentShowComponent implements OnInit, OnDestroy {
 
+    @ViewChild('updateEditMode')
+    asCodeSaveModal: AsCodeSaveModalComponent;
+
     // Flag to show the page or not
     public readyEnv = false;
     public varFormLoading = false;
@@ -37,6 +42,8 @@ export class EnvironmentShowComponent implements OnInit, OnDestroy {
     project: Project;
     environment: Environment;
     readOnlyEnvironment: Environment;
+    editMode: boolean;
+    readonly: boolean;
 
     // Subscription
     environmentSubscription: Subscription;
@@ -105,6 +112,9 @@ export class EnvironmentShowComponent implements OnInit, OnDestroy {
                             if (!s.environment) {
                                 return;
                             }
+                            this.editMode = s.editMode;
+                            this.readonly = (s.environment.workflow_ascode_holder && !!s.environment.workflow_ascode_holder.from_template)
+                                || !this.project.permissions.writable;
                             if (s.editMode) {
                                 this.environment = cloneDeep(s.editEnvironment);
                                 this.readOnlyEnvironment = cloneDeep(s.environment);
@@ -161,7 +171,14 @@ export class EnvironmentShowComponent implements OnInit, OnDestroy {
                     this.varFormLoading = false;
                     this._cd.markForCheck();
                 }))
-                    .subscribe(() => this._toast.success('', this._translate.instant('variable_added')));
+                    .subscribe(() => {
+                        if (this.editMode) {
+                            this._toast.info('', this._translate.instant('environment_ascode_updated'))
+                        } else {
+                            this._toast.success('', this._translate.instant('variable_added'));
+                        }
+
+                    });
                 break;
             case 'update':
                 this._store.dispatch(new envActions.UpdateEnvironmentVariable({
@@ -173,7 +190,13 @@ export class EnvironmentShowComponent implements OnInit, OnDestroy {
                     event.variable.updating = false;
                     this._cd.markForCheck();
                 }))
-                    .subscribe(() => this._toast.success('', this._translate.instant('variable_updated')));
+                    .subscribe(() => {
+                        if (this.editMode) {
+                            this._toast.info('', this._translate.instant('environment_ascode_updated'))
+                        } else {
+                            this._toast.success('', this._translate.instant('variable_updated'))
+                        }
+                    });
                 break;
             case 'delete':
                 this._store.dispatch(new envActions.DeleteEnvironmentVariable({
@@ -184,8 +207,27 @@ export class EnvironmentShowComponent implements OnInit, OnDestroy {
                     event.variable.updating = false;
                     this._cd.markForCheck();
                 }))
-                    .subscribe(() => this._toast.success('', this._translate.instant('variable_deleted')));
+                    .subscribe(() => {
+                        if (this.editMode) {
+                            this._toast.info('', this._translate.instant('environment_ascode_updated'))
+                        } else {
+                            this._toast.success('', this._translate.instant('variable_deleted'))
+                        }
+                    });
                 break;
+        }
+    }
+
+    cancelEnvironment(): void {
+        if (this.editMode) {
+            this._store.dispatch(new CleanEnvironmentState());
+        }
+    }
+
+    saveEditMode(): void {
+        if (this.editMode && this.environment.from_repository && this.asCodeSaveModal) {
+            // show modal to save as code
+            this.asCodeSaveModal.show(this.environment, 'environment');
         }
     }
 }

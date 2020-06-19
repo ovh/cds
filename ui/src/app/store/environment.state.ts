@@ -157,6 +157,8 @@ export class EnvironmentState {
             if (!envToUpdate.variables) {
                 envToUpdate.variables = new Array<Variable>();
             }
+            delete action.payload.variable.updating;
+            delete action.payload.variable.hasChanged;
             envToUpdate.variables.push(action.payload.variable);
             envToUpdate.editModeChanged = true;
             return ctx.setState({
@@ -212,6 +214,8 @@ export class EnvironmentState {
     updateEnvironmentVariable(ctx: StateContext<EnvironmentStateModel>, action: ActionEnvironment.UpdateEnvironmentVariable) {
         const stateEditMode = ctx.getState();
         if (stateEditMode.editMode) {
+            delete action.payload.changes.updating;
+            delete action.payload.changes.hasChanged;
             let envToUpdate = cloneDeep(stateEditMode.editEnvironment);
             envToUpdate.variables = envToUpdate.variables.map( v => {
                 if (v.name === action.payload.variableName) {
