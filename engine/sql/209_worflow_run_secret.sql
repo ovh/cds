@@ -11,11 +11,16 @@ CREATE TABLE IF NOT EXISTS "workflow_run_secret" (
 );
 SELECT create_foreign_key_idx_cascade('FK_WORKFLOW_RUN_SECRET', 'workflow_run_secret', 'workflow_run', 'workflow_run_id', 'id');
 
+SELECT create_index('workflow_run_secret', 'IDX_WORKFLOW_RUN_SECRET', 'workflow_run_id,context');
+
+
+-- CREATE INDEX run_id + context
+
 ALTER TABLE "workflow_run" ADD COLUMN read_only BOOLEAN;
 UPDATE "workflow_run" set read_only = false;
 ALTER TABLE "workflow_run" ALTER COLUMN read_only SET DEFAULT false;
 
-UPDATE workflow_run SET read_only = true WHERE last_modified < NOW() - INTERVAL '1 month';
+UPDATE workflow_run SET read_only = true WHERE last_modified < NOW() - INTERVAL '3 month';
 
 -- +migrate Down
 DROP TABLE "workflow_run_secret";

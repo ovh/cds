@@ -17,33 +17,45 @@ import (
 )
 
 func RunsSecrets(ctx context.Context, db *gorp.DbMap) error {
-	log.Info(ctx, "migrate.MigrateRunsSecrets: Get runs to migrate")
+	log.Info(ctx, "migrate.MigrateRunsSecrets: get runs to migrate")
+
+	for {
+		wrMigrated, err := migrateRuns(ctx, db)
+		if err != nil {
+			log.Error(ctx, "migrate.MigrateRunsSecrets: Error during migration: %v", err)
+			return err
+		}
+		if wrMigrated == 0 {
+			break
+		}
+	}
+	return nil
+}
+
+func migrateRuns(ctx context.Context, db *gorp.DbMap) (int, error) {
 	wrIds, projIds, appIds, envIds, err := getRunsAndDeps(db)
 	if err != nil {
-		log.Error(ctx, "cannot get runs: %v", err)
-		return err
+		return 0, err
+	}
+
+	if len(wrIds) == 0 {
+		return 0, nil
 	}
 
 	log.Info(ctx, "migrate.MigrateRunsSecrets: Start Prepare migration")
 	projVars, err := project.LoadAllVariablesForProjectsWithDecryption(ctx, db, projIds)
 	if err != nil {
-		return err
+		return 0, err
 	}
-	defer func() {
-		projVars = make(map[int64][]sdk.ProjectVariable, 0)
-	}()
 
 	projKeys, err := project.LoadAllKeysForProjectsWithDecryption(ctx, db, projIds)
 	if err != nil {
-		return err
+		return 0, err
 	}
-	defer func() {
-		projKeys = make(map[int64][]sdk.ProjectKey, 0)
-	}()
 
 	projIntsSlice, err := integration.LoadAllIntegrationsForProjectsWithDecryption(ctx, db, projIds)
 	if err != nil {
-		return err
+		return 0, err
 	}
 	projInts := make(map[int64]map[int64]sdk.ProjectIntegration, len(projIntsSlice))
 	for id, v := range projIntsSlice {
@@ -54,70 +66,50 @@ func RunsSecrets(ctx context.Context, db *gorp.DbMap) error {
 		projInts[id] = mIntegrations
 	}
 	projIntsSlice = make(map[int64][]sdk.ProjectIntegration, 0)
-	defer func() {
-		projInts = make(map[int64]map[int64]sdk.ProjectIntegration, 0)
-	}()
 
 	appVars, err := application.LoadAllVariablesForAppsWithDecryption(ctx, db, appIds)
 	if err != nil {
-		return err
+		return 0, err
 	}
-	defer func() {
-		appVars = make(map[int64][]sdk.ApplicationVariable, 0)
-	}()
 
 	appKeys, err := application.LoadAllKeysForAppsWithDecryption(ctx, db, appIds)
 	if err != nil {
-		return err
+		return 0, err
 	}
-	defer func() {
-		appKeys = make(map[int64][]sdk.ApplicationKey, 0)
-	}()
 
 	appDeployments, err := application.LoadAllDeploymnentForAppsWithDecryption(ctx, db, appIds)
 	if err != nil {
-		return err
+		return 0, err
 	}
-	defer func() {
-		appDeployments = make(map[int64]map[int64]sdk.IntegrationConfig, 0)
-	}()
 
 	appVCS, err := application.LoadAllByIDsWithDecryption(db, appIds)
 	if err != nil {
-		return err
+		return 0, err
 	}
 	appStrats := make(map[int64]sdk.RepositoryStrategy, len(appVCS))
 	for _, appVCS := range appVCS {
 		appStrats[appVCS.ID] = appVCS.RepositoryStrategy
 	}
 	appVCS = make([]sdk.Application, 0)
-	defer func() {
-		appStrats = make(map[int64]sdk.RepositoryStrategy, 0)
-	}()
 
 	envsVars, err := environment.LoadAllVariablesForEnvsWithDecryption(ctx, db, envIds)
 	if err != nil {
-		return err
+		return 0, err
 	}
-	defer func() {
-		envsVars = make(map[int64][]sdk.EnvironmentVariable, 0)
-	}()
 
 	envsKeys, err := environment.LoadAllKeysForEnvsWithDecryption(ctx, db, envIds)
 	if err != nil {
-		return err
+		return 0, err
 	}
-	defer func() {
-		envsKeys = make(map[int64][]sdk.EnvironmentKey, 0)
-	}()
 
 	log.Info(ctx, "migrate.MigrateRunsSecrets: start migration")
 	for _, id := range wrIds {
 		if err := migrate(ctx, db, id, projVars, projKeys, projInts, appVars, appKeys, appStrats, appDeployments, envsVars, envsKeys); err != nil {
-			log.Error(ctx, "unable to migrate run %d: %v", id, err)
+			log.Error(ctx, "migrate.MigrateRunsSecrets: unable to migrate run %d: %v", id, err)
 		}
 	}
-	return nil
+
+	return len(wrIds), nil
 }
 
 func migrate(ctx context.Context, db *gorp.DbMap, id int64, projVarsMap map[int64][]sdk.ProjectVariable, projKeysMap map[int64][]sdk.ProjectKey, projIntsMap map[int64]map[int64]sdk.ProjectIntegration, appVarsMap map[int64][]sdk.ApplicationVariable, appKeysMap map[int64][]sdk.ApplicationKey, appVCSMaps map[int64]sdk.RepositoryStrategy, appDeploysMaps map[int64]map[int64]sdk.IntegrationConfig, envVarsMap map[int64][]sdk.EnvironmentVariable, envKeysMap map[int64][]sdk.EnvironmentKey) interface{} {
@@ -332,7 +324,7 @@ func LoadLastRunsByDate(db gorp.SqlExecutor) ([]sdk.WorkflowRun, error) {
 	from workflow_run
 	left join workflow_run_secret on workflow_run_secret.workflow_run_id = workflow_run.id
 	where workflow_run.last_modified > NOW() - INTERVAL '3 months' AND workflow_run_secret.id IS NULL
-	order by workflow_run.id desc`)
+	order by workflow_run.id desc LIMIT 10000`)
 	return loadRuns(db, query)
 }
 
