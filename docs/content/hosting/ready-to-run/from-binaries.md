@@ -51,7 +51,11 @@ can use the `./cds-engine config edit` command.
 Example:
 
 ```bash
-./engine config edit conf.toml api.directories.download=./binaries --output conf.toml
+mkdir -p $HOME/cds/download $HOME/cds/download $HOME/cds/hatchery-basedir
+./cds-engine config edit conf.toml --output conf.toml \
+  api.artifact.local.baseDirectory=$HOME/cds/artifacts \
+  api.directories.download=$HOME/cds/download \
+  hatchery.local.basedir=$HOME/cds/hatchery-basedir
 ```
 
 ## Prepare Cache
@@ -105,18 +109,19 @@ curl http://localhost:8081/mon/status
 
 ## Launch Signup & CDS UI
 
-Signup with cdsctl:
+Signup with cdsctl. `INIT_TOKEN` is used to validate the user as an administrator.
 
 ```bash
 export INIT_TOKEN=`./cds-engine config init-token --config conf.toml`
 ./cdsctl signup --api-url http://localhost:8081 --email admin@localhost.local --username admin --fullname admin
 ```
 
-If you don't have email service configured you just have to check your CDS API logs to have the confirmation link.
+If you don't have email service configured you just have to check your CDS API logs to get the `cdsctl signup verify...` command to run.
 
 
 ```bash
 cd $HOME/cds
+./cdsctl signup verify --api-url ... # Get this command from the API Logs
 ./cds-engine download ui --config conf.toml
 ./cds-engine start ui --config conf.toml
 ```
@@ -136,10 +141,10 @@ Start the local hatchery:
 
 ## Note about CDS Engine
 
-It is possible to start all services as a single process `$ ./engine start api ui hooks hatchery:local --config config.toml`.
+It is possible to start all services as a single process `$ ./cds-engine start api ui hooks hatchery:local --config config.toml`.
 
 ```bash
-$ ./engine start api hooks hatchery:local --config config.toml
+$ ./cds-engine start api hooks hatchery:local --config config.toml
 Reading configuration file config.toml
 Starting service api
 ...
@@ -157,27 +162,27 @@ For serious deployment, we strongly suggest to run each service as a dedicated p
 
 ```bash
 
-$ ./engine start api --config config.toml
+$ ./cds-engine start api --config config.toml
 
-$ ./engine start ui --config config.toml
+$ ./cds-engine start ui --config config.toml
 
-$ ./engine start hooks --config config.toml
+$ ./cds-engine start hooks --config config.toml
 
-$ ./engine start vcs --config config.toml
+$ ./cds-engine start vcs --config config.toml
 
-$ ./engine start hatchery:local --config config.toml
-$ ./engine start hatchery:docker --config config.toml
-$ ./engine start hatchery:swarm --config config.toml
-$ ./engine start hatchery:marathon --config config.toml
-$ ./engine start hatchery:openstack --config config.toml
-$ ./engine start hatchery:vsphere --config config.toml
+$ ./cds-engine start hatchery:local --config config.toml
+$ ./cds-engine start hatchery:docker --config config.toml
+$ ./cds-engine start hatchery:swarm --config config.toml
+$ ./cds-engine start hatchery:marathon --config config.toml
+$ ./cds-engine start hatchery:openstack --config config.toml
+$ ./cds-engine start hatchery:vsphere --config config.toml
 
 ```
 
 You can scale as you want each of this component, you probably will have to create a configuration for each instance of each service expect the API.
 
 ```bash
-$ ./engine config new > config.api.toml # All API instance can share the same configuration.
+$ ./cds-engine config new > config.api.toml # All API instance can share the same configuration.
 
 $ cp config.api.toml config.hatchery.swarm-1.toml
 $ cp config.api.toml config.hatchery.swarm-2.toml
