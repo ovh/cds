@@ -14,8 +14,6 @@ SELECT create_foreign_key_idx_cascade('FK_WORKFLOW_RUN_SECRET', 'workflow_run_se
 SELECT create_index('workflow_run_secret', 'IDX_WORKFLOW_RUN_SECRET', 'workflow_run_id,context');
 
 
--- CREATE INDEX run_id + context
-
 ALTER TABLE "workflow_run" ADD COLUMN read_only BOOLEAN;
 UPDATE "workflow_run" set read_only = false;
 ALTER TABLE "workflow_run" ALTER COLUMN read_only SET DEFAULT false;
