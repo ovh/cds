@@ -15,7 +15,8 @@ type Operation struct {
 	Setup              OperationSetup           `json:"setup,omitempty"`
 	LoadFiles          OperationLoadFiles       `json:"load_files,omitempty"`
 	Status             OperationStatus          `json:"status"`
-	Error              *OperationError          `json:"error,omitempty"`
+	Error              *OperationError          `json:"error_details,omitempty"`
+	DeprecatedError    string                   `json:"error,omitempty"`
 	RepositoryInfo     *OperationRepositoryInfo `json:"repository_info,omitempty"`
 	Date               *time.Time               `json:"date,omitempty"`
 	User               struct {

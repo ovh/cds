@@ -22,7 +22,7 @@
         <div class="sixteen wide column">
             <div class="wide field">
                 <div class="ui message red" *ngIf="operation?.status > 2">
-                    {{operation.error.message}}
+                    {{operation.error_details.message}}
                 </div>
                 <div class="ui message green" *ngIf="operation?.status === 2">
                     {{ 'workflow_as_code_pr_success' | translate }}

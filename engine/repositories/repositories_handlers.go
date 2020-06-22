@@ -116,6 +116,16 @@ func (s *Service) getOperationsHandler() service.Handler {
 		op := s.dao.loadOperation(ctx, uuid)
 		op.RepositoryStrategy.SSHKeyContent = sdk.PasswordPlaceholder
 		op.RepositoryStrategy.Password = sdk.PasswordPlaceholder
+
+		// Handle old representation of operation error
+		if op.DeprecatedError != "" && op.Error == nil {
+			op.Error = &sdk.OperationError{
+				ID:      sdk.ErrUnknownError.ID,
+				Message: op.DeprecatedError,
+				Status:  sdk.ErrUnknownError.Status,
+			}
+		}
+
 		return service.WriteJSON(w, op, http.StatusOK)
 	}
 }

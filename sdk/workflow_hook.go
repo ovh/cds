@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"reflect"
 	"sort"
+	"strings"
 )
 
 // Those are icon for hooks
@@ -47,6 +48,18 @@ func (h NodeHook) Ref() string {
 
 //Equals checks functional equality between two hooks
 func (h NodeHook) Equals(h1 NodeHook) bool {
+	var areRepoWebHook = (h1.HookModelID == h.HookModelID) && (h.HookModelID == RepositoryWebHookModel.ID)
+	var isEventFilter = func(s string) bool { return s == HookConfigEventFilter }
+	var isEmptyEventFilter = func(s string) bool { return s == "" }
+	var isDefaultEventFilter = func(v string) bool {
+		return v == "" ||
+			v == strings.Join(BitbucketCloudEventsDefault, ";") ||
+			v == strings.Join(BitbucketEventsDefault, ";") ||
+			v == strings.Join(GitHubEventsDefault, ";") ||
+			v == strings.Join(GitlabEventsDefault, ";") ||
+			v == strings.Join(GerritEventsDefault, ";")
+	}
+
 	if h.UUID != h1.UUID {
 		return false
 	}
@@ -58,7 +71,11 @@ func (h NodeHook) Equals(h1 NodeHook) bool {
 		if !has {
 			return false
 		}
-		if cfg.Value != cfg1.Value {
+		if areRepoWebHook && isEventFilter(k) {
+			if isEmptyEventFilter(cfg.Value) && !isDefaultEventFilter(cfg1.Value) {
+				return false
+			}
+		} else if cfg.Value != cfg1.Value {
 			return false
 		}
 	}
@@ -67,7 +84,11 @@ func (h NodeHook) Equals(h1 NodeHook) bool {
 		if !has {
 			return false
 		}
-		if cfg.Value != cfg1.Value {
+		if areRepoWebHook && isEventFilter(k) {
+			if isEmptyEventFilter(cfg1.Value) && !isDefaultEventFilter(cfg.Value) {
+				return false
+			}
+		} else if cfg.Value != cfg1.Value {
 			return false
 		}
 	}
@@ -117,6 +138,16 @@ func (w WorkflowNodeHookConfig) Equals(o WorkflowNodeHookConfig) bool {
 		}
 	}
 	return true
+}
+
+func (w WorkflowNodeHookConfig) Filter(f func(k string, v WorkflowNodeHookConfigValue) bool) WorkflowNodeHookConfig {
+	var newCfg = WorkflowNodeHookConfig{}
+	for k, v := range w {
+		if f(k, v) {
+			newCfg[k] = v
+		}
+	}
+	return newCfg.Clone()
 }
 
 // GetBuiltinHookModelByName retrieve the hook model
