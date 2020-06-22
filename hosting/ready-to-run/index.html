@@ -314,7 +314,11 @@ can use the <code>./cds-engine config edit</code> command.</p>
 
 <p>Example:</p>
 
-<pre><code class="language-bash">./engine config edit conf.toml api.directories.download=./binaries --output conf.toml
+<pre><code class="language-bash">mkdir -p $HOME/cds/download $HOME/cds/download $HOME/cds/hatchery-basedir
+./cds-engine config edit conf.toml --output conf.toml \
+  api.artifact.local.baseDirectory=$HOME/cds/artifacts \
+  api.directories.download=$HOME/cds/download \
+  hatchery.local.basedir=$HOME/cds/hatchery-basedir
 </code></pre>
 
 <h2 id="prepare-cache">Prepare Cache</h2>
@@ -362,15 +366,16 @@ curl http://localhost:8081/mon/status
 
 <h2 id="launch-signup-cds-ui">Launch Signup &amp; CDS UI</h2>
 
-<p>Signup with cdsctl:</p>
+<p>Signup with cdsctl. <code>INIT_TOKEN</code> is used to validate the user as an administrator.</p>
 
 <pre><code class="language-bash">export INIT_TOKEN=`./cds-engine config init-token --config conf.toml`
 ./cdsctl signup --api-url http://localhost:8081 --email admin@localhost.local --username admin --fullname admin
 </code></pre>
 
-<p>If you don&rsquo;t have email service configured you just have to check your CDS API logs to have the confirmation link.</p>
+<p>If you don&rsquo;t have email service configured you just have to check your CDS API logs to get the <code>cdsctl signup verify...</code> command to run.</p>
 
 <pre><code class="language-bash">cd $HOME/cds
+./cdsctl signup verify --api-url ... # Get this command from the API Logs
 ./cds-engine download ui --config conf.toml
 ./cds-engine start ui --config conf.toml
 </code></pre>
@@ -389,9 +394,9 @@ curl http://localhost:8081/mon/status
 
 <h2 id="note-about-cds-engine">Note about CDS Engine</h2>
 
-<p>It is possible to start all services as a single process <code>$ ./engine start api ui hooks hatchery:local --config config.toml</code>.</p>
+<p>It is possible to start all services as a single process <code>$ ./cds-engine start api ui hooks hatchery:local --config config.toml</code>.</p>
 
-<pre><code class="language-bash">$ ./engine start api hooks hatchery:local --config config.toml
+<pre><code class="language-bash">$ ./cds-engine start api hooks hatchery:local --config config.toml
 Reading configuration file config.toml
 Starting service api
 ...
@@ -408,26 +413,26 @@ Starting service hatchery:local
 <p>For serious deployment, we strongly suggest to run each service as a dedicated process.</p>
 
 <pre><code class="language-bash">
-$ ./engine start api --config config.toml
+$ ./cds-engine start api --config config.toml
 
-$ ./engine start ui --config config.toml
+$ ./cds-engine start ui --config config.toml
 
-$ ./engine start hooks --config config.toml
+$ ./cds-engine start hooks --config config.toml
 
-$ ./engine start vcs --config config.toml
+$ ./cds-engine start vcs --config config.toml
 
-$ ./engine start hatchery:local --config config.toml
-$ ./engine start hatchery:docker --config config.toml
-$ ./engine start hatchery:swarm --config config.toml
-$ ./engine start hatchery:marathon --config config.toml
-$ ./engine start hatchery:openstack --config config.toml
-$ ./engine start hatchery:vsphere --config config.toml
+$ ./cds-engine start hatchery:local --config config.toml
+$ ./cds-engine start hatchery:docker --config config.toml
+$ ./cds-engine start hatchery:swarm --config config.toml
+$ ./cds-engine start hatchery:marathon --config config.toml
+$ ./cds-engine start hatchery:openstack --config config.toml
+$ ./cds-engine start hatchery:vsphere --config config.toml
 
 </code></pre>
 
 <p>You can scale as you want each of this component, you probably will have to create a configuration for each instance of each service expect the API.</p>
 
-<pre><code class="language-bash">$ ./engine config new &gt; config.api.toml # All API instance can share the same configuration.
+<pre><code class="language-bash">$ ./cds-engine config new &gt; config.api.toml # All API instance can share the same configuration.
 
 $ cp config.api.toml config.hatchery.swarm-1.toml
 $ cp config.api.toml config.hatchery.swarm-2.toml
