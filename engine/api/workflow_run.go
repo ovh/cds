@@ -1014,7 +1014,6 @@ func (api *API) initWorkflowRun(ctx context.Context, projKey string, wf *sdk.Wor
 		report.Merge(ctx, r)
 		return
 	}
-
 	workflow.ResyncNodeRunsWithCommits(ctx, api.mustDB(), api.Cache, *p, report)
 
 	// Purge workflow run
@@ -1023,6 +1022,16 @@ func (api *API) initWorkflowRun(ctx context.Context, projKey string, wf *sdk.Wor
 			log.Error(ctx, "workflow.PurgeWorkflowRun> error %v", err)
 		}
 	}, api.PanicDump())
+
+	// Update parent
+	for i := range report.WorkflowRuns() {
+		run := &report.WorkflowRuns()[i]
+		reportParent, err := updateParentWorkflowRun(ctx, api.mustDB, api.Cache, run)
+		if err != nil {
+			log.Error(ctx, "unable to update parent workflow run: %v", err)
+		}
+		go WorkflowSendEvent(context.Background(), api.mustDB(), api.Cache, *p, reportParent)
+	}
 }
 
 func failInitWorkflowRun(ctx context.Context, db *gorp.DbMap, wfRun *sdk.WorkflowRun, err error) *workflow.ProcessorReport {

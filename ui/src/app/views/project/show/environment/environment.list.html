@@ -1,4 +1,4 @@
-<div class="ui grid">
+<div class="ui grid" *ngIf="!loading">
     <div class="ui row">
         <div class="six wide column">
             <h3>{{ 'project_env_list_title' | translate }}</h3>
@@ -38,3 +38,5 @@
         </div>
     </div>
 </div>
+<div class="ui text active loader" *ngIf="loading">{{'common_loading' | translate}}</div>
+
