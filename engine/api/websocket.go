@@ -91,6 +91,11 @@ func (b *websocketBroker) Start(ctx context.Context, panicCallback func(s string
 			}
 			return
 		case receivedEvent := <-b.messages:
+			eventKeys := b.computeEventKeys(receivedEvent)
+			if len(eventKeys) == 0 {
+				continue
+			}
+
 			for i := range b.clients {
 				c := b.clients[i]
 				if c == nil {
@@ -100,16 +105,29 @@ func (b *websocketBroker) Start(ctx context.Context, panicCallback func(s string
 
 				// Send the event to the client websocket within a goroutine
 				s := "websocket-" + b.clients[i].UUID
-				sdk.GoRoutine(ctx, s,
-					func(ctx context.Context) {
-						if c.isAlive.IsSet() {
-							log.Debug("send data to %s", c.AuthConsumer.GetUsername())
-							if err := c.send(ctx, b.dbFunc(), receivedEvent); err != nil {
-								b.chanRemoveClient <- c.UUID
-							}
+				sdk.GoRoutine(ctx, s, func(ctx context.Context) {
+					if !c.filters.HasOneKey(eventKeys...) {
+						return
+					}
+					allowed, err := c.checkEventPermission(ctx, b.dbFunc(), receivedEvent)
+					if err != nil {
+						err = sdk.WrapError(err, "unable to check event permission for client %s with consumer id: %s", c.UUID, c.AuthConsumer.ID)
+						log.ErrorWithFields(ctx, logrus.Fields{
+							"stack_trace": fmt.Sprintf("%+v", err),
+						}, "%s", err)
+						return
+					}
+					if !allowed {
+						return
+					}
+					if c.isAlive.IsSet() {
+						log.Debug("send data to %s", c.AuthConsumer.GetUsername())
+						if err := c.send(ctx, receivedEvent); err != nil {
+							log.Debug("can't send to client %s it will be removed: %+v", c.UUID, err)
+							b.chanRemoveClient <- c.UUID
 						}
-					}, panicCallback,
-				)
+					}
+				}, panicCallback)
 			}
 
 		case client := <-b.chanAddClient:
@@ -289,25 +307,8 @@ func (c *websocketClient) updateEventFilters(ctx context.Context, db gorp.SqlExe
 	return nil
 }
 
-// Send an event to a client
-func (c *websocketClient) send(ctx context.Context, db gorp.SqlExecutor, event sdk.Event) (err error) {
-	c.mutex.Lock()
-	defer c.mutex.Unlock()
-
-	defer func() {
-		if r := recover(); r != nil {
-			err = sdk.WithStack(fmt.Errorf("websocketClient.Send recovered %v", r))
-		}
-	}()
-
-	if c == nil || c.con == nil || !c.isAlive.IsSet() {
-		return sdk.WithStack(fmt.Errorf("client deconnected"))
-	}
-
-	var isMaintainer = c.AuthConsumer.Maintainer() || c.AuthConsumer.Admin()
-	var isHatchery = c.AuthConsumer.Service != nil && c.AuthConsumer.Service.Type == services.TypeHatchery
-	var isHatcheryWithGroups = isHatchery && len(c.AuthConsumer.GroupIDs) > 0
-
+// This func will compute all the filter keys that match a given event.
+func (b *websocketBroker) computeEventKeys(event sdk.Event) []string {
 	// Compute required filter(s) key for given event
 	var keys []string
 
@@ -318,25 +319,9 @@ func (c *websocketClient) send(ctx context.Context, db gorp.SqlExecutor, event s
 		}.Key())
 	}
 	if strings.HasPrefix(event.EventType, "sdk.EventBroadcast") {
-		var allowed bool
-		if event.ProjectKey == "" {
-			allowed = true
-		} else {
-			if isMaintainer && !isHatcheryWithGroups {
-				allowed = true
-			} else {
-				perms, err := permission.LoadProjectMaxLevelPermission(context.Background(), db, []string{event.ProjectKey}, c.AuthConsumer.GetGroupIDs())
-				if err != nil {
-					return err
-				}
-				allowed = perms.Level(event.ProjectKey) >= sdk.PermissionRead
-			}
-		}
-		if allowed {
-			keys = append(keys, sdk.WebsocketFilter{
-				Type: sdk.WebsocketFilterTypeGlobal,
-			}.Key())
-		}
+		keys = append(keys, sdk.WebsocketFilter{
+			Type: sdk.WebsocketFilterTypeGlobal,
+		}.Key())
 	}
 	// Event that match project filter
 	if strings.HasPrefix(event.EventType, "sdk.EventProject") || event.EventType == fmt.Sprintf("%T", sdk.EventAsCodeEvent{}) {
@@ -397,25 +382,9 @@ func (c *websocketClient) send(ctx context.Context, db gorp.SqlExecutor, event s
 	}
 	// Event that match queue filter
 	if event.EventType == fmt.Sprintf("%T", sdk.EventRunWorkflowJob{}) {
-		// We need to check the permission on project here
-		var allowed bool
-		if isMaintainer && !isHatcheryWithGroups {
-			allowed = true
-		} else {
-			// We search permission from database to allow events for project created after websocket init to be retuned.
-			// As the AuthConsumer group list is not updated, events for project where a group will be added after websocket
-			// init will not be returned until socket reconnection.
-			perms, err := permission.LoadWorkflowMaxLevelPermission(context.Background(), db, event.ProjectKey, []string{event.WorkflowName}, c.AuthConsumer.GetGroupIDs())
-			if err != nil {
-				return err
-			}
-			allowed = perms.Level(event.WorkflowName) >= sdk.PermissionRead
-		}
-		if allowed {
-			keys = append(keys, sdk.WebsocketFilter{
-				Type: sdk.WebsocketFilterTypeQueue,
-			}.Key())
-		}
+		keys = append(keys, sdk.WebsocketFilter{
+			Type: sdk.WebsocketFilterTypeQueue,
+		}.Key())
 	}
 	// Event that match operation filter
 	if event.EventType == fmt.Sprintf("%T", sdk.Operation{}) {
@@ -427,25 +396,64 @@ func (c *websocketClient) send(ctx context.Context, db gorp.SqlExecutor, event s
 	}
 	// Event that match timeline filter
 	if event.EventType == fmt.Sprintf("%T", sdk.EventRunWorkflow{}) {
-		// We need to check the permission on project here
-		var allowed bool
-		if isMaintainer && !isHatcheryWithGroups {
-			allowed = true
-		} else {
-			perms, err := permission.LoadWorkflowMaxLevelPermission(context.Background(), db, event.ProjectKey, []string{event.WorkflowName}, c.AuthConsumer.GetGroupIDs())
-			if err != nil {
-				return err
-			}
-			allowed = perms.Level(event.WorkflowName) >= sdk.PermissionRead
-		}
-		if allowed {
-			keys = append(keys, sdk.WebsocketFilter{
-				Type: sdk.WebsocketFilterTypeTimeline,
-			}.Key())
-		}
+		keys = append(keys, sdk.WebsocketFilter{
+			Type: sdk.WebsocketFilterTypeTimeline,
+		}.Key())
 	}
-	if len(keys) == 0 || !c.filters.HasOneKey(keys...) {
-		return nil
+
+	return keys
+}
+
+// We need to check permission for some kind of events, when permission can't be verified at filter subscription.
+func (c *websocketClient) checkEventPermission(ctx context.Context, db gorp.SqlExecutor, event sdk.Event) (bool, error) {
+	var isMaintainer = c.AuthConsumer.Maintainer() || c.AuthConsumer.Admin()
+	var isHatchery = c.AuthConsumer.Service != nil && c.AuthConsumer.Service.Type == services.TypeHatchery
+	var isHatcheryWithGroups = isHatchery && len(c.AuthConsumer.GroupIDs) > 0
+
+	if strings.HasPrefix(event.EventType, "sdk.EventBroadcast") {
+		if event.ProjectKey == "" {
+			return true, nil
+		}
+		if isMaintainer && !isHatcheryWithGroups {
+			return true, nil
+		}
+		perms, err := permission.LoadProjectMaxLevelPermission(ctx, db, []string{event.ProjectKey}, c.AuthConsumer.GetGroupIDs())
+		if err != nil {
+			return false, err
+		}
+		return perms.Level(event.ProjectKey) >= sdk.PermissionRead, nil
+	}
+	if event.EventType == fmt.Sprintf("%T", sdk.EventRunWorkflow{}) || event.EventType == fmt.Sprintf("%T", sdk.EventRunWorkflowJob{}) {
+		// We need to check the permission on project here
+		if isMaintainer && !isHatcheryWithGroups {
+			return true, nil
+		}
+		// We search permission from database to allow events for project created after websocket init to be retuned.
+		// As the AuthConsumer group list is not updated, events for project where a group will be added after websocket
+		// init will not be returned until socket reconnection.
+		perms, err := permission.LoadWorkflowMaxLevelPermission(ctx, db, event.ProjectKey, []string{event.WorkflowName}, c.AuthConsumer.GetGroupIDs())
+		if err != nil {
+			return false, err
+		}
+		return perms.Level(event.WorkflowName) >= sdk.PermissionRead, nil
+	}
+
+	return true, nil
+}
+
+// Send an event to a client
+func (c *websocketClient) send(ctx context.Context, event sdk.Event) (err error) {
+	c.mutex.Lock()
+	defer c.mutex.Unlock()
+
+	defer func() {
+		if r := recover(); r != nil {
+			err = sdk.WithStack(fmt.Errorf("websocketClient.Send recovered %v", r))
+		}
+	}()
+
+	if c == nil || c.con == nil || !c.isAlive.IsSet() {
+		return sdk.WithStack(fmt.Errorf("client deconnected"))
 	}
 
 	msg := sdk.WebsocketEvent{
