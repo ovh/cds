@@ -123,14 +123,18 @@ func takeJob(ctx context.Context, dbFunc func() *gorp.DbMap, store cache.Store, 
 	defer tx.Rollback() // nolint
 
 	//Prepare spawn infos
+	m1 := sdk.SpawnMsg{ID: sdk.MsgSpawnInfoJobTaken.ID, Args: []interface{}{fmt.Sprintf("%d", id), wk.Name}}
+	m2 := sdk.SpawnMsg{ID: sdk.MsgSpawnInfoJobTakenWorkerVersion.ID, Args: []interface{}{wk.Name, wk.Version, wk.OS, wk.Arch}}
 	infos := []sdk.SpawnInfo{
 		{
-			RemoteTime: getRemoteTime(ctx),
-			Message:    sdk.SpawnMsg{ID: sdk.MsgSpawnInfoJobTaken.ID, Args: []interface{}{fmt.Sprintf("%d", id), wk.Name}},
+			RemoteTime:  getRemoteTime(ctx),
+			Message:     m1,
+			UserMessage: m1.DefaultUserMessage(),
 		},
 		{
-			RemoteTime: getRemoteTime(ctx),
-			Message:    sdk.SpawnMsg{ID: sdk.MsgSpawnInfoJobTakenWorkerVersion.ID, Args: []interface{}{wk.Name, wk.Version, wk.OS, wk.Arch}},
+			RemoteTime:  getRemoteTime(ctx),
+			Message:     m2,
+			UserMessage: m2.DefaultUserMessage(),
 		},
 	}
 
@@ -431,9 +435,11 @@ func postJobResult(ctx context.Context, dbFunc func(context.Context) *gorp.DbMap
 		observability.Tag(observability.TagWorkflowNodeRun, job.WorkflowNodeRunID),
 		observability.Tag(observability.TagJob, job.Job.Action.Name))
 
+	msg := sdk.SpawnMsg{ID: sdk.MsgSpawnInfoWorkerEnd.ID, Args: []interface{}{wr.Name, res.Duration}}
 	infos := []sdk.SpawnInfo{{
-		RemoteTime: res.RemoteTime,
-		Message:    sdk.SpawnMsg{ID: sdk.MsgSpawnInfoWorkerEnd.ID, Args: []interface{}{wr.Name, res.Duration}},
+		RemoteTime:  res.RemoteTime,
+		Message:     msg,
+		UserMessage: msg.DefaultUserMessage(),
 	}}
 
 	if err := workflow.AddSpawnInfosNodeJobRun(tx, job.WorkflowNodeRunID, job.ID, workflow.PrepareSpawnInfos(infos)); err != nil {

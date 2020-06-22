@@ -37,7 +37,7 @@ export class ParameterValueComponent implements OnInit, AfterViewChecked {
     @Input('value')
     set value(data: string | number | boolean) {
         this.castValue(data);
-    };
+    }
 
     @Input() editList = true;
     @Input() edit = true;
@@ -47,7 +47,7 @@ export class ParameterValueComponent implements OnInit, AfterViewChecked {
     @Input('ref')
     set ref(data: Parameter | Array<string>) {
         if (data && (<Parameter>data).type === 'list') {
-            this.refValue = (<string>(<Parameter>data).value).split(';');
+            this.refValue = (<Parameter>data).value.split(';');
         } else if (data && Array.isArray(data)) {
             this.list = data;
         }

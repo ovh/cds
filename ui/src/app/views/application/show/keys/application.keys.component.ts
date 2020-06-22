@@ -18,6 +18,8 @@ export class ApplicationKeysComponent {
 
     @Input() project: Project;
     @Input() application: Application;
+    @Input() editMode: boolean;
+    @Input() readOnly: boolean;
 
     loading = false;
 
@@ -42,7 +44,13 @@ export class ApplicationKeysComponent {
                     this.loading = false;
                     this._cd.markForCheck();
                 }))
-                    .subscribe(() => this._toast.success('', this._translate.instant('keys_added')));
+                    .subscribe(() => {
+                        if (this.editMode) {
+                            this._toast.info('', this._translate.instant('application_ascode_updated'));
+                        } else {
+                            this._toast.success('', this._translate.instant('keys_added'));
+                        }
+                    });
                 break;
             case 'delete':
                 this.loading = true;
@@ -54,7 +62,13 @@ export class ApplicationKeysComponent {
                     this.loading = false;
                     this._cd.markForCheck();
                 }))
-                    .subscribe(() => this._toast.success('', this._translate.instant('keys_removed')));
+                    .subscribe(() => {
+                        if (this.editMode) {
+                            this._toast.info('', this._translate.instant('application_ascode_updated'));
+                        } else {
+                            this._toast.success('', this._translate.instant('keys_removed'));
+                        }
+                    });
         }
     }
 }

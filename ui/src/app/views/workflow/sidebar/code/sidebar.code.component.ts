@@ -106,7 +106,6 @@ export class WorkflowSidebarCodeComponent implements OnInit, AfterViewInit {
                     this.initCodeMirror();
                 }
             }
-
         });
     }
 

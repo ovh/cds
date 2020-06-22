@@ -25,7 +25,7 @@ import (
 )
 
 func init() {
-	log.Initialize(&log.Conf{Level: "debug"})
+	log.Initialize(context.TODO(), &log.Conf{Level: "debug"})
 }
 
 func TestStartWorkerWithABookedJob(t *testing.T) {

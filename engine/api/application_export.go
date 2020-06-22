@@ -27,7 +27,7 @@ func (api *API) getApplicationExportHandler() service.Handler {
 			return err
 		}
 
-		app, err := application.Export(api.mustDB(), api.Cache, key, appName, project.EncryptWithBuiltinKey)
+		app, err := application.Export(api.mustDB(), key, appName, project.EncryptWithBuiltinKey)
 		if err != nil {
 			return sdk.WithStack(err)
 		}

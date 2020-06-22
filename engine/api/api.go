@@ -81,6 +81,10 @@ type Configuration struct {
 	Directories struct {
 		Download string `toml:"download" default:"/var/lib/cds-engine" json:"download"`
 	} `toml:"directories" json:"directories"`
+	InternalServiceMesh struct {
+		RequestSecondsTimeout int  `toml:"requestSecondsTimeout" json:"requestSecondsTimeout" default:"60"`
+		InsecureSkipVerifyTLS bool `toml:"insecureSkipVerifyTLS" json:"insecureSkipVerifyTLS" default:"false"`
+	} `toml:"internalServiceMesh" json:"internalServiceMesh"`
 	Auth struct {
 		DefaultGroup  string `toml:"defaultGroup" default:"" comment:"The default group is the group in which every new user will be granted at signup" json:"defaultGroup"`
 		RSAPrivateKey string `toml:"rsaPrivateKey" default:"" comment:"The RSA Private Key used to sign and verify the JWT Tokens issued by the API \nThis is mandatory." json:"-"`
@@ -237,7 +241,6 @@ type API struct {
 	SharedStorage       objectstore.Driver
 	StartupTime         time.Time
 	Maintenance         bool
-	eventsBroker        *eventsBroker
 	websocketBroker     *websocketBroker
 	Cache               cache.Store
 	Metrics             struct {
@@ -404,6 +407,15 @@ func (a *API) Serve(ctx context.Context) error {
 	if err := authentication.Init(a.ServiceName, []byte(a.Config.Auth.RSAPrivateKey)); err != nil {
 		return sdk.WrapError(err, "unable to initialize the JWT Layer")
 	}
+
+	// Intialize service mesh httpclient
+	if a.Config.InternalServiceMesh.RequestSecondsTimeout == 0 {
+		a.Config.InternalServiceMesh.RequestSecondsTimeout = 60
+	}
+	services.HTTPClient = cdsclient.NewHTTPClient(
+		time.Duration(a.Config.InternalServiceMesh.RequestSecondsTimeout)*time.Second,
+		a.Config.InternalServiceMesh.InsecureSkipVerifyTLS,
+	)
 
 	// Initialize mail package
 	log.Info(ctx, "Initializing mail driver...")

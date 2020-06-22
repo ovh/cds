@@ -44,7 +44,7 @@ func Import(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj sd
 	}
 
 	if !force {
-		return sdk.NewErrorFrom(sdk.ErrConflict, "workflow exists")
+		return sdk.NewErrorFrom(sdk.ErrAlreadyExist, "workflow exists")
 	}
 
 	// Retrieve existing hook

@@ -60,24 +60,11 @@ func Parse(db gorp.SqlExecutor, projID int64, kname string, kval exportentities.
 			return nil, sdk.ErrUnknownKeyType
 		}
 	} else if kval.Regen == nil || *kval.Regen == true {
-		switch k.Type {
-		//Compute PGP Keys
-		case sdk.KeyTypePGP:
-			ktemp, err := GeneratePGPKeyPair(kname)
-			if err != nil {
-				return nil, sdk.WrapError(err, "Unable to generate PGP key pair")
-			}
-			k = &ktemp
-		//Compute SSH Keys
-		case sdk.KeyTypeSSH:
-			ktemp, err := GenerateSSHKey(kname)
-			if err != nil {
-				return nil, sdk.WrapError(err, "Unable to generate SSH key pair")
-			}
-			k = &ktemp
-		default:
-			return nil, sdk.ErrUnknownKeyType
+		ktemp, err := GenerateKey(kname, k.Type)
+		if err != nil {
+			return nil, err
 		}
+		k = &ktemp
 	} else {
 		log.Debug("keys.Parse> Skip key regeneration")
 	}

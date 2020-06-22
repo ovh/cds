@@ -411,9 +411,10 @@ func stopWorkflowRun(ctx context.Context, dbFunc func() *gorp.DbMap, store cache
 	spwnMsg := sdk.SpawnMsg{ID: sdk.MsgWorkflowNodeStop.ID, Args: []interface{}{ident.GetUsername()}, Type: sdk.MsgWorkflowNodeStop.Type}
 
 	stopInfos := sdk.SpawnInfo{
-		APITime:    time.Now(),
-		RemoteTime: time.Now(),
-		Message:    spwnMsg,
+		APITime:     time.Now(),
+		RemoteTime:  time.Now(),
+		Message:     spwnMsg,
+		UserMessage: spwnMsg.DefaultUserMessage(),
 	}
 
 	workflow.AddWorkflowRunInfo(run, spwnMsg)
@@ -686,10 +687,12 @@ func (api *API) stopWorkflowNodeRunHandler() service.Handler {
 			return sdk.WrapError(err, "unable to load workflow node run with id %d for workflow %s and run with number %d", workflowNodeRunID, workflowName, workflowRun.Number)
 		}
 
+		sp := sdk.SpawnMsg{ID: sdk.MsgWorkflowNodeStop.ID, Args: []interface{}{getAPIConsumer(ctx).GetUsername()}}
 		report, err := workflow.StopWorkflowNodeRun(ctx, api.mustDB, api.Cache, *p, *workflowRun, *workflowNodeRun, sdk.SpawnInfo{
-			APITime:    time.Now(),
-			RemoteTime: time.Now(),
-			Message:    sdk.SpawnMsg{ID: sdk.MsgWorkflowNodeStop.ID, Args: []interface{}{getAPIConsumer(ctx).GetUsername()}},
+			APITime:     time.Now(),
+			RemoteTime:  time.Now(),
+			Message:     sp,
+			UserMessage: sp.DefaultUserMessage(),
 		})
 		if err != nil {
 			return sdk.WrapError(err, "unable to stop workflow node run")
@@ -1037,7 +1040,6 @@ func (api *API) initWorkflowRun(ctx context.Context, projKey string, wf *sdk.Wor
 		report.Merge(ctx, r)
 		return
 	}
-
 	workflow.ResyncNodeRunsWithCommits(ctx, api.mustDB(), api.Cache, *p, report)
 
 	// Purge workflow run
@@ -1046,6 +1048,16 @@ func (api *API) initWorkflowRun(ctx context.Context, projKey string, wf *sdk.Wor
 			log.Error(ctx, "workflow.PurgeWorkflowRun> error %v", err)
 		}
 	}, api.PanicDump())
+
+	// Update parent
+	for i := range report.WorkflowRuns() {
+		run := &report.WorkflowRuns()[i]
+		reportParent, err := updateParentWorkflowRun(ctx, api.mustDB, api.Cache, run)
+		if err != nil {
+			log.Error(ctx, "unable to update parent workflow run: %v", err)
+		}
+		go WorkflowSendEvent(context.Background(), api.mustDB(), api.Cache, *p, reportParent)
+	}
 }
 
 func saveWorkflowRunSecrets(ctx context.Context, db gorp.SqlExecutor, projID int64, wr sdk.WorkflowRun, secrets *workflow.PushSecrets) error {
@@ -1384,8 +1396,10 @@ func (api *API) getWorkflowNodeRunJobSpawnInfosHandler() service.Handler {
 
 		l := r.Header.Get("Accept-Language")
 		for ki, info := range spawnInfos {
-			m := sdk.NewMessage(sdk.Messages[info.Message.ID], info.Message.Args...)
-			spawnInfos[ki].UserMessage = m.String(l)
+			if _, ok := sdk.Messages[info.Message.ID]; ok {
+				m := sdk.NewMessage(sdk.Messages[info.Message.ID], info.Message.Args...)
+				spawnInfos[ki].UserMessage = m.String(l)
+			}
 		}
 		return service.WriteJSON(w, spawnInfos, http.StatusOK)
 	}

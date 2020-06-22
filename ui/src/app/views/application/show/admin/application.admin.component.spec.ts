@@ -43,7 +43,6 @@ class DummyComponent {
 describe('CDS: Application Admin Component', () => {
 
     let injector: Injector;
-    let appStore: ApplicationStore;
     let router: Router;
 
     beforeEach(() => {
@@ -91,13 +90,11 @@ describe('CDS: Application Admin Component', () => {
 
 
         injector = getTestBed();
-        appStore = injector.get(ApplicationStore);
         router = injector.get(Router);
     });
 
     afterEach(() => {
         injector = undefined;
-        appStore = undefined;
         router = undefined;
     });
 

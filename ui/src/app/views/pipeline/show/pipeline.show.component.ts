@@ -228,7 +228,13 @@ export class PipelineShowComponent implements OnInit {
                     })).pipe(finalize(() => {
                         this.paramFormLoading = false;
                         this._cd.markForCheck();
-                    })).subscribe(() => this._toast.success('', this._translate.instant('parameter_added')));
+                    })).subscribe(() => {
+                        if (this.editMode) {
+                            this._toast.info('', this._translate.instant('pipeline_ascode_updated'));
+                        } else {
+                            this._toast.success('', this._translate.instant('parameter_added'))
+                        }
+                    });
                     break;
                 case 'update':
                     this._store.dispatch(new UpdatePipelineParameter({
@@ -236,14 +242,26 @@ export class PipelineShowComponent implements OnInit {
                         pipelineName: this.pipeline.name,
                         parameterName: event.parameter.previousName || event.parameter.name,
                         parameter: event.parameter
-                    })).subscribe(() => this._toast.success('', this._translate.instant('parameter_updated')));
+                    })).subscribe(() => {
+                        if (this.editMode) {
+                            this._toast.info('', this._translate.instant('pipeline_ascode_updated'));
+                        } else {
+                            this._toast.success('', this._translate.instant('parameter_updated'));
+                        }
+                    });
                     break;
                 case 'delete':
                     this._store.dispatch(new DeletePipelineParameter({
                         projectKey: this.project.key,
                         pipelineName: this.pipeline.name,
                         parameter: event.parameter
-                    })).subscribe(() => this._toast.success('', this._translate.instant('parameter_deleted')));
+                    })).subscribe(() => {
+                        if (this.editMode) {
+                            this._toast.info('', this._translate.instant('pipeline_ascode_updated'));
+                        } else {
+                            this._toast.success('', this._translate.instant('parameter_deleted'))
+                        }
+                    });
                     break;
             }
         }

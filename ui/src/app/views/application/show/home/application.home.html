@@ -72,7 +72,7 @@
 </div>
 
 <!-- HISTORY -->
-<div class="history" *ngIf="overview">
+<div class="history" *ngIf="overview?.history">
     <h4>{{ 'application_home_history' | translate }}</h4>
     <div class="ui stackable three cards">
         <ng-container *ngFor="let k of overview.history | keys">

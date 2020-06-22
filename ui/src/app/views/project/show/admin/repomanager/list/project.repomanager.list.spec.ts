@@ -32,7 +32,6 @@ import { ProjectRepoManagerComponent } from './project.repomanager.list.componen
 describe('CDS: Project RepoManager List Component', () => {
 
     let injector: Injector;
-    let projectStore: ProjectStore;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -72,13 +71,11 @@ describe('CDS: Project RepoManager List Component', () => {
             ]
         });
         injector = getTestBed();
-        projectStore = injector.get(ProjectStore);
 
     });
 
     afterEach(() => {
         injector = undefined;
-        projectStore = undefined;
     });
 
 

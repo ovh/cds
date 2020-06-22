@@ -44,7 +44,7 @@ export class WorkflowRunJobSpawnInfoComponent implements OnDestroy, OnInit {
 
     currentJobID: number;
     jobStatus: string;
-    spawnInfos: String;
+    spawnInfos: string;
     variables: Array<Parameter>;
     @Output() displayServicesLogsChange = new EventEmitter<boolean>();
 

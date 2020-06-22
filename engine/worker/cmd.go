@@ -120,7 +120,7 @@ func initFromFlags(cmd *cobra.Command, w *internal.CurrentWorker) {
 		basedir = os.TempDir()
 	}
 
-	log.Initialize(&log.Conf{
+	log.Initialize(context.Background(), &log.Conf{
 		Level:                      FlagString(cmd, flagLogLevel),
 		GraylogProtocol:            FlagString(cmd, flagGraylogProtocol),
 		GraylogHost:                FlagString(cmd, flagGraylogHost),

@@ -65,7 +65,7 @@ func (api *API) updateAsCodePipelineHandler() service.Handler {
 			return sdk.NewErrorFrom(sdk.ErrForbidden, "current pipeline is not ascode")
 		}
 
-		wkHolder, err := workflow.LoadByRepo(ctx, api.Cache, api.mustDB(), *proj, pipelineDB.FromRepository, workflow.LoadOptions{
+		wkHolder, err := workflow.LoadByRepo(ctx, api.mustDB(), *proj, pipelineDB.FromRepository, workflow.LoadOptions{
 			WithTemplate: true,
 		})
 		if err != nil {
@@ -265,7 +265,7 @@ func (api *API) addPipelineHandler() service.Handler {
 			return sdk.WrapError(err, "cannot check if pipeline exist")
 		}
 		if exist {
-			return sdk.NewErrorFrom(sdk.ErrConflict, "pipeline %s already exists", p.Name)
+			return sdk.NewErrorFrom(sdk.ErrPipelineAlreadyExists, "pipeline %s already exists", p.Name)
 		}
 
 		tx, err := api.mustDB().Begin()
@@ -327,7 +327,7 @@ func (api *API) getPipelineHandler() service.Handler {
 		}
 
 		if p.FromRepository != "" {
-			wkAscodeHolder, err := workflow.LoadByRepo(ctx, api.Cache, api.mustDB(), *proj, p.FromRepository, workflow.LoadOptions{
+			wkAscodeHolder, err := workflow.LoadByRepo(ctx, api.mustDB(), *proj, p.FromRepository, workflow.LoadOptions{
 				WithTemplate: true,
 			})
 			if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {

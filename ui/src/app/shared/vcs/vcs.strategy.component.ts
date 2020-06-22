@@ -53,7 +53,6 @@ export class VCSStrategyComponent implements OnInit {
     @Output() strategyChange = new EventEmitter<VCSStrategy>();
     keys: AllKeys;
     connectionType = VCSConnections;
-    displayVCSStrategy = false;
     defaultKeyType = 'ssh';
 
     @ViewChild('createKey')

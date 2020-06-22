@@ -39,7 +39,7 @@ func ParseAndImport(db gorp.SqlExecutor, proj sdk.Project, eenv exportentities.E
 	// If the environment exists and we don't want to force, raise an error
 	var exist bool
 	if oldEnv != nil && !opts.Force {
-		return nil, nil, nil, sdk.ErrEnvironmentExist
+		return nil, nil, nil, sdk.WithStack(sdk.ErrEnvironmentExist)
 	}
 	if oldEnv != nil {
 		exist = true

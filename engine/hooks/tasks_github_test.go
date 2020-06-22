@@ -12,7 +12,7 @@ import (
 )
 
 func init() {
-	log.Initialize(&log.Conf{Level: "debug"})
+	log.Initialize(context.TODO(), &log.Conf{Level: "debug"})
 }
 
 func Test_doWebHookExecutionGithub(t *testing.T) {

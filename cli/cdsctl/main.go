@@ -80,7 +80,7 @@ func rootFromSubCommands(cmds []*cobra.Command) *cobra.Command {
 			return
 		}
 
-		cli.ExitOnError(err, login().Help)
+		cli.ExitOnError(err, root.Help)
 	}
 
 	return root

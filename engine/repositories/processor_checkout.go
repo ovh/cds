@@ -14,10 +14,11 @@ func (s *Service) processCheckout(ctx context.Context, op *sdk.Operation) error 
 	}
 	log.Debug("processCheckout> repo cloned with current branch: %s", currentBranch)
 
-	if err := gitRepo.ResetHard("origin/" + currentBranch); err != nil {
+	// Clean no commited changes if exists
+	if err := gitRepo.ResetHard("HEAD"); err != nil {
 		return sdk.WithStack(err)
 	}
-	log.Debug("processCheckout> repo reset to origin/%s", currentBranch)
+	log.Debug("processCheckout> repo reset to HEAD")
 
 	if op.Setup.Checkout.Tag != "" {
 		log.Debug("processCheckout> fetching tag %s from %s", op.Setup.Checkout.Tag, op.URL)

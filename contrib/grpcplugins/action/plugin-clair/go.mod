@@ -6,7 +6,7 @@ replace github.com/ovh/cds => ../../../../
 
 replace github.com/docker/docker => github.com/moby/moby v17.12.0-ce-rc1.0.20200528182317-b47e74255811+incompatible
 
-replace github.com/Sirupsen/logrus => github.com/sirupsen/logrus v1.6.0
+replace github.com/Sirupsen/logrus => github.com/sirupsen/logrus v1.4.2
 
 replace github.com/codegangsta/cli v1.22.2 => github.com/urfave/cli v1.22.2
 
@@ -16,7 +16,6 @@ replace github.com/opencontainers/runc v0.1.1 => github.com/opencontainers/runc 
 
 require (
 	github.com/Microsoft/hcsshim v0.8.9 // indirect
-	github.com/Sirupsen/logrus v0.0.0-00010101000000-000000000000 // indirect
 	github.com/containerd/containerd v1.3.4 // indirect
 	github.com/containerd/continuity v0.0.0-20200413184840-d3ef23f19fbb // indirect
 	github.com/docker/distribution v2.7.1+incompatible
@@ -36,7 +35,6 @@ require (
 	github.com/prometheus/client_golang v1.1.0
 	github.com/quay/clair/v2 v2.1.4
 	github.com/spf13/viper v1.7.0
-	github.com/t-yuki/gocover-cobertura v0.0.0-20180217150009-aaee18c8195c // indirect
 	github.com/vbatts/tar-split v0.11.1 // indirect
 	golang.org/x/net v0.0.0-20200602114024-627f9648deb9
 )

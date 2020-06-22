@@ -23,6 +23,7 @@ func (w *CurrentWorker) Take(ctx context.Context, job sdk.WorkflowNodeJobRun) er
 	log.Info(ctx, "takeWorkflowJob> Job %d taken%s", job.ID, t)
 
 	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
 
 	w.currentJob.context = workerruntime.SetJobID(ctx, job.ID)
 	w.currentJob.context = ctx
@@ -46,12 +47,14 @@ func (w *CurrentWorker) Take(ctx context.Context, job sdk.WorkflowNodeJobRun) er
 	}
 
 	if info.GelfServiceAddr != "" {
-		log.Info(ctx, "Setup step logger")
-		logger, err := log.New(info.GelfServiceAddr)
+		log.Info(ctx, "Setup step logger %s", info.GelfServiceAddr)
+		l, h, err := log.New(ctx, info.GelfServiceAddr)
 		if err != nil {
 			return sdk.WithStack(err)
 		}
-		w.logger.stepLogger = logger
+		w.logger.gelfLogger = new(logger)
+		w.logger.gelfLogger.logger = l
+		w.logger.gelfLogger.hook = h
 	}
 
 	start := time.Now()
@@ -116,9 +119,11 @@ func (w *CurrentWorker) Take(ctx context.Context, job sdk.WorkflowNodeJobRun) er
 
 	// Send the reason as a spawninfo
 	if res.Status != sdk.StatusSuccess && res.Reason != "" {
+		sp := sdk.SpawnMsg{ID: sdk.MsgWorkflowError.ID, Args: []interface{}{res.Reason}}
 		infos := []sdk.SpawnInfo{{
-			RemoteTime: time.Now(),
-			Message:    sdk.SpawnMsg{ID: sdk.MsgWorkflowError.ID, Args: []interface{}{res.Reason}},
+			RemoteTime:  time.Now(),
+			Message:     sp,
+			UserMessage: sp.DefaultUserMessage(),
 		}}
 		if err := w.Client().QueueJobSendSpawnInfo(ctx, job.ID, infos); err != nil {
 			log.Error(ctx, "processJob> Unable to send spawn info: %v", err)

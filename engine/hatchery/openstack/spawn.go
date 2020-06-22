@@ -168,7 +168,11 @@ func (h *HatcheryOpenstack) checkSpawnLimits(ctx context.Context, model sdk.Mode
 	var totalCPUsUsed int
 	if h.Config.MaxCPUs > 0 {
 		for i := range existingServers {
-			totalCPUsUsed += existingServers[i].Flavor["vcpus"].(int)
+			flavorName, _ := existingServers[i].Metadata["flavor"]
+			flavor, err := h.flavor(flavorName)
+			if err == nil {
+				totalCPUsUsed += flavor.VCPUs
+			}
 		}
 		if totalCPUsUsed+flavor.VCPUs > h.Config.MaxCPUs {
 			return sdk.WithStack(fmt.Errorf("MaxCPUs limit (%d) reached", h.Config.MaxCPUs))

@@ -45,11 +45,10 @@
         <!-- Pay attention ! Don't write any spaces, tabs or line between <pre> and <table> -->
         <pre *ngIf="!loading && !basicView"><table class="ui very basic table">
             <tbody>
-              <ng-container *ngFor="let logLine of splittedLogsToDisplay; let index = index; let last = last;">
+              <ng-container *ngFor="let logLine of splittedLogsToDisplay">
                 <tr
                   [class.active]="selectedLine === logLine.lineNumber"
-                  id="L{{job.pipeline_stage_id}}-{{job.pipeline_action_id}}-{{stepOrder}}-{{logLine.lineNumber}}"
-                  *ngIf="!last">
+                  id="L{{job.pipeline_stage_id}}-{{job.pipeline_action_id}}-{{stepOrder}}-{{logLine.lineNumber}}">
                   <td class="number right aligned pointing" (click)="generateLink(logLine.lineNumber)">{{logLine.lineNumber}}</td>
                   <td [innerHTML]="logLine.value | safeHtml:!htmlViewSelected" *ngIf="ansiViewSelected || htmlViewSelected"></td><td [innerText]="logLine.value" *ngIf="!ansiViewSelected && !htmlViewSelected"></td>
                 </tr>

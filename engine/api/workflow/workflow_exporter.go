@@ -113,7 +113,7 @@ func Pull(ctx context.Context, db gorp.SqlExecutor, cache cache.Store, proj sdk.
 		if a.FromRepository != wf.FromRepository { // don't export if coming from an other repository
 			continue
 		}
-		app, err := application.ExportApplication(db, a, encryptFunc)
+		app, err := application.ExportApplication(db, a, encryptFunc, fmt.Sprintf("appID:%d", a.ID))
 		if err != nil {
 			return wp, sdk.WrapError(err, "unable to export app %s", a.Name)
 		}

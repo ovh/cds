@@ -215,10 +215,6 @@ export class ResyncEnvironmentsInProject {
     static readonly type = '[Project] Resync Environments in Project';
     constructor(public payload: { projectKey: string }) { }
 }
-export class FetchEnvironmentsInProject {
-    static readonly type = '[Project] Fetch Environments in Project';
-    constructor(public payload: { projectKey: string }) { }
-}
 export class AddEnvironmentKey {
     static readonly type = '[Project] Add Environment Key in Project';
     constructor(public payload: { projectKey: string, envName: string, key: Key }) { }

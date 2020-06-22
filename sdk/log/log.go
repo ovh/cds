@@ -25,7 +25,6 @@ type Conf struct {
 	GraylogFieldCDSVersion     string
 	GraylogFieldCDSOS          string
 	GraylogFieldCDSArch        string
-	Ctx                        context.Context
 }
 
 const (
@@ -69,7 +68,7 @@ func logWithLogger(level string, fields log.Fields, format string, values ...int
 }
 
 // Initialize init log level
-func Initialize(conf *Conf) {
+func Initialize(ctx context.Context, conf *Conf) {
 	switch conf.Level {
 	case "debug":
 		log.SetLevel(log.DebugLevel)
@@ -135,12 +134,9 @@ func Initialize(conf *Conf) {
 		}
 	}
 
-	if conf.Ctx == nil {
-		conf.Ctx = context.Background()
-	}
 	go func() {
-		<-conf.Ctx.Done()
-		log.Info(conf.Ctx, "Draining logs")
+		<-ctx.Done()
+		Info(ctx, "Draining logs...")
 		if hook != nil {
 			hook.Flush()
 		}
@@ -261,7 +257,7 @@ type SignatureService struct {
 	WorkerName      string
 }
 
-func New(logServerAddr string) (*log.Logger, error) {
+func New(ctx context.Context, logServerAddr string) (*log.Logger, *loghook.Hook, error) {
 	newLogger := log.New()
 	graylogcfg := &loghook.Config{
 		Addr:     logServerAddr,
@@ -270,8 +266,14 @@ func New(logServerAddr string) (*log.Logger, error) {
 	extra := map[string]interface{}{}
 	hook, err := loghook.NewHook(graylogcfg, extra)
 	if err != nil {
-		return nil, fmt.Errorf("unable to add hook: %v", err)
+		return nil, nil, fmt.Errorf("unable to add hook: %v", err)
 	}
 	newLogger.AddHook(hook)
-	return newLogger, nil
+
+	go func() {
+		<-ctx.Done()
+		hook.Flush()
+	}()
+
+	return newLogger, hook, nil
 }
