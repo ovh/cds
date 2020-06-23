@@ -956,14 +956,14 @@ func stopWorkflowNodeJobRun(ctx context.Context, dbFunc func() *gorp.DbMap, stor
 		njr, errNRJ := LoadAndLockNodeJobRunWait(ctx, tx, store, njrID)
 		if errNRJ != nil {
 			chanErr <- sdk.WrapError(errNRJ, "StopWorkflowNodeRun> Cannot load node job run id")
-			tx.Rollback()
+			_ = tx.Rollback()
 			wg.Done()
 			return report
 		}
 
 		if err := AddSpawnInfosNodeJobRun(tx, njr.WorkflowNodeRunID, njr.ID, []sdk.SpawnInfo{stopInfos}); err != nil {
 			chanErr <- sdk.WrapError(err, "Cannot save spawn info job %d", njr.ID)
-			tx.Rollback()
+			_ = tx.Rollback()
 			wg.Done()
 			return report
 		}
@@ -973,14 +973,14 @@ func stopWorkflowNodeJobRun(ctx context.Context, dbFunc func() *gorp.DbMap, stor
 		report.Merge(ctx, r)
 		if err != nil {
 			chanErr <- sdk.WrapError(err, "cannot update node job run")
-			tx.Rollback()
+			_ = tx.Rollback()
 			wg.Done()
 			return report
 		}
 
 		if err := tx.Commit(); err != nil {
 			chanErr <- sdk.WithStack(err)
-			tx.Rollback()
+			_ = tx.Rollback()
 			wg.Done()
 			return report
 		}
@@ -1077,7 +1077,7 @@ func getVCSInfos(ctx context.Context, db gorp.SqlExecutor, store cache.Store, pr
 	// Check repository value
 	if vcsInfos.Repository == "" {
 		vcsInfos.Repository = applicationRepositoryFullname
-	} else if strings.ToLower(vcsInfos.Repository) != strings.ToLower(applicationRepositoryFullname) {
+	} else if !strings.EqualFold(vcsInfos.Repository, applicationRepositoryFullname) {
 		//The input repository is not the same as the application, we have to check if it is a fork
 		forks, err := client.ListForks(ctx, applicationRepositoryFullname)
 		if err != nil {

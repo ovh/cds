@@ -29,6 +29,18 @@ type NodeHook struct {
 	Conditions    WorkflowNodeConditions `json:"conditions" db:"conditions"`
 }
 
+func (h NodeHook) IsRepositoryWebHook() bool {
+	return h.HookModelName == RepositoryWebHookModel.Name || h.HookModelID == RepositoryWebHookModel.ID
+}
+
+func (h NodeHook) GetConfigValue(k string) (string, bool) {
+	v, ok := h.Config[k]
+	if !ok {
+		return "", false
+	}
+	return v.Value, true
+}
+
 func (h NodeHook) Ref() string {
 	s := "model:" + h.HookModelName + ";"
 
@@ -44,6 +56,39 @@ func (h NodeHook) Ref() string {
 	}
 
 	return base64.StdEncoding.EncodeToString([]byte(s))
+}
+
+func (h NodeHook) ConfigValueContainsEventsDefault() bool {
+	eventFilterValue, has := h.GetConfigValue(HookConfigEventFilter)
+	if !has {
+		return false
+	}
+	eventFilterValues := strings.Split(eventFilterValue, ";")
+
+	allDefaultsValue := [][]string{
+		BitbucketCloudEventsDefault,
+		BitbucketEventsDefault,
+		GitHubEventsDefault,
+		GitlabEventsDefault,
+		GerritEventsDefault,
+	}
+
+	var atLeastOneFound bool
+	for _, defaultValues := range allDefaultsValue {
+		var allFound = true
+		for _, s := range defaultValues {
+			if !IsInArray(s, eventFilterValues) {
+				allFound = false
+				break
+			}
+		}
+		if allFound {
+			atLeastOneFound = true
+			break
+		}
+	}
+
+	return atLeastOneFound
 }
 
 //Equals checks functional equality between two hooks
@@ -138,6 +183,12 @@ func (w WorkflowNodeHookConfig) Equals(o WorkflowNodeHookConfig) bool {
 		}
 	}
 	return true
+}
+
+func (w WorkflowNodeHookConfig) MergeWith(cfg WorkflowNodeHookConfig) {
+	for k, v := range cfg {
+		w[k] = v
+	}
 }
 
 func (w WorkflowNodeHookConfig) Filter(f func(k string, v WorkflowNodeHookConfigValue) bool) WorkflowNodeHookConfig {

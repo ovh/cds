@@ -42,7 +42,7 @@ func Resync(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj sd
 	wr.Workflow.HookModels = wf.HookModels
 	wr.Workflow.OutGoingHookModels = wf.OutGoingHookModels
 
-	return UpdateWorkflowRun(nil, db, wr)
+	return UpdateWorkflowRun(ctx, db, wr)
 }
 
 //ResyncWorkflowRunStatus resync the status of workflow if you stop a node run when workflow run is building

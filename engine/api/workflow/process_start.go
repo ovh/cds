@@ -115,7 +115,6 @@ func processAllJoins(ctx context.Context, db gorp.SqlExecutor, store cache.Store
 		//now checks if all sources have been completed
 		var ok = true
 
-		nodeRunIDs := []int64{}
 		sourcesParams := map[string]string{}
 		for _, nodeRun := range sources {
 			if nodeRun == nil {
@@ -136,7 +135,6 @@ func processAllJoins(ctx context.Context, db gorp.SqlExecutor, store cache.Store
 				}
 			}
 
-			nodeRunIDs = append(nodeRunIDs, nodeRun.ID)
 			//Merge build parameters from all sources
 			sourcesParams = sdk.ParametersMapMerge(sourcesParams, sdk.ParametersToMap(nodeRun.BuildParameters))
 		}

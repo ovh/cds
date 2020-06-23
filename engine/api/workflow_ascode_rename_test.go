@@ -264,6 +264,11 @@ version: v1.0`),
 			func(ctx context.Context, method, path string, in interface{}, out interface{}, _ interface{}) (http.Header, int, error) {
 				vcsHooks := in.(*sdk.VCSHook)
 				vcsHooks.ID = sdk.UUID()
+				require.Len(t, vcsHooks.Events, 0, "events list should be empty, default value is set by vcs")
+
+				vcsHooks.Events = []string{
+					"push",
+				}
 				*(out.(*sdk.VCSHook)) = *vcsHooks
 				return nil, 200, nil
 			},
@@ -295,6 +300,20 @@ version: v1.0`),
 	wk, err := workflow.Load(context.Background(), db, api.Cache, *proj, "w-go-repo", workflow.LoadOptions{})
 	assert.NoError(t, err)
 	assert.NotNil(t, wk)
+
+	require.Len(t, wk.WorkflowData.GetHooks(), 1)
+
+	for _, h := range wk.WorkflowData.GetHooks() {
+		log.Debug("--> %T %+v", h, h)
+		require.Equal(t, "RepositoryWebHook", h.HookModelName)
+		require.Equal(t, "push", h.Config["eventFilter"].Value)
+		require.Equal(t, "Github", h.Config["hookIcon"].Value)
+		require.Equal(t, "POST", h.Config["method"].Value)
+		require.Equal(t, proj.Key, h.Config["project"].Value)
+		require.Equal(t, "fsamin/go-repo", h.Config["repoFullName"].Value)
+		require.Equal(t, "github", h.Config["vcsServer"].Value)
+		require.Equal(t, wk.Name, h.Config["workflow"].Value)
+	}
 
 	// Then we will trigger a run of the workflow wich should trigger an as-code operation with a renamed workflow
 	vars := map[string]string{
@@ -343,13 +362,13 @@ version: v1.0`),
 
 	for _, h := range wk.WorkflowData.GetHooks() {
 		log.Debug("--> %T %+v", h, h)
-		assert.Equal(t, "RepositoryWebHook", h.HookModelName)
-		assert.Equal(t, "", h.Config["eventFilter"].Value)
-		assert.Equal(t, "Github", h.Config["hookIcon"].Value)
-		assert.Equal(t, "POST", h.Config["method"].Value)
-		assert.Equal(t, proj.Key, h.Config["project"].Value)
-		assert.Equal(t, "fsamin/go-repo", h.Config["repoFullName"].Value)
-		assert.Equal(t, "github", h.Config["vcsServer"].Value)
-		assert.Equal(t, wk.Name, h.Config["workflow"].Value)
+		require.Equal(t, "RepositoryWebHook", h.HookModelName)
+		require.Equal(t, "push", h.Config["eventFilter"].Value)
+		require.Equal(t, "Github", h.Config["hookIcon"].Value)
+		require.Equal(t, "POST", h.Config["method"].Value)
+		require.Equal(t, proj.Key, h.Config["project"].Value)
+		require.Equal(t, "fsamin/go-repo", h.Config["repoFullName"].Value)
+		require.Equal(t, "github", h.Config["vcsServer"].Value)
+		require.Equal(t, wk.Name, h.Config["workflow"].Value)
 	}
 }

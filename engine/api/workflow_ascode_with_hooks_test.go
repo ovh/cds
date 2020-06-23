@@ -499,7 +499,7 @@ version: v1.0`),
 	for _, h := range wk.WorkflowData.GetHooks() {
 		log.Debug("--> %T %+v", h, h)
 		assert.Equal(t, "RepositoryWebHook", h.HookModelName)
-		assert.Equal(t, "", h.Config["eventFilter"].Value)
+		assert.Equal(t, "push", h.Config["eventFilter"].Value)
 		assert.Equal(t, "Github", h.Config["hookIcon"].Value)
 		assert.Equal(t, "POST", h.Config["method"].Value)
 		assert.Equal(t, proj.Key, h.Config["project"].Value)
@@ -842,7 +842,7 @@ version: v1.0`),
 	for _, h := range wk.WorkflowData.GetHooks() {
 		switch h.HookModelName {
 		case "RepositoryWebHook":
-			assert.Equal(t, "", h.Config["eventFilter"].Value)
+			assert.Equal(t, "push", h.Config["eventFilter"].Value)
 			assert.Equal(t, "Github", h.Config["hookIcon"].Value)
 			assert.Equal(t, "POST", h.Config["method"].Value)
 			assert.Equal(t, proj.Key, h.Config["project"].Value)
@@ -1385,7 +1385,7 @@ version: v1.0`),
 	for _, h := range wk.WorkflowData.GetHooks() {
 		switch h.HookModelName {
 		case "RepositoryWebHook":
-			assert.Equal(t, "", h.Config["eventFilter"].Value)
+			assert.Equal(t, "push", h.Config["eventFilter"].Value)
 			assert.Equal(t, "Github", h.Config["hookIcon"].Value)
 			assert.Equal(t, "POST", h.Config["method"].Value)
 			assert.Equal(t, proj.Key, h.Config["project"].Value)
@@ -1457,7 +1457,7 @@ version: v1.0`),
 	for _, h := range wk.WorkflowData.GetHooks() {
 		switch h.HookModelName {
 		case "RepositoryWebHook":
-			assert.Equal(t, "", h.Config["eventFilter"].Value)
+			assert.Equal(t, "push", h.Config["eventFilter"].Value)
 			assert.Equal(t, "Github", h.Config["hookIcon"].Value)
 			assert.Equal(t, "POST", h.Config["method"].Value)
 			assert.Equal(t, proj.Key, h.Config["project"].Value)
