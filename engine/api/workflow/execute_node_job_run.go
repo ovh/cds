@@ -213,7 +213,8 @@ func UpdateNodeJobRunStatus(ctx context.Context, db gorp.SqlExecutor, store cach
 		report.Merge(ctx, r)
 		return report, err
 	}
-	return nil, nil
+
+	return report, nil
 }
 
 // AddSpawnInfosNodeJobRun saves spawn info before starting worker
