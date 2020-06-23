@@ -78,10 +78,9 @@ func (actPlugin *venomActionPlugin) Run(ctx context.Context, q *actionplugin.Act
 
 	stopOnFailure := false
 	if stopOnFailureStr != "" {
-		var errb error
-		stopOnFailure, errb = strconv.ParseBool(stopOnFailureStr)
+		stopOnFailure, err = strconv.ParseBool(stopOnFailureStr)
 		if err != nil {
-			return actionplugin.Fail("Error parsing stopOnFailure value : %s\n", errb.Error())
+			return actionplugin.Fail("Error parsing stopOnFailure value : %v\n", err)
 		}
 	}
 
