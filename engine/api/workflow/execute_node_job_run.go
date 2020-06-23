@@ -218,7 +218,6 @@ func UpdateNodeJobRunStatus(ctx context.Context, db gorp.SqlExecutor, store cach
 
 // AddSpawnInfosNodeJobRun saves spawn info before starting worker
 func AddSpawnInfosNodeJobRun(db gorp.SqlExecutor, nodeID, jobID int64, infos []sdk.SpawnInfo) error {
-
 	wnjri := &sdk.WorkflowNodeJobRunInfo{
 		WorkflowNodeRunID:    nodeID,
 		WorkflowNodeJobRunID: jobID,

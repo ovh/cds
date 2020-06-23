@@ -1,7 +1,7 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Operation } from 'app/model/operation.model';
-import { BuildResult, ServiceLog } from 'app/model/pipeline.model';
+import { BuildResult, ServiceLog, SpawnInfo } from 'app/model/pipeline.model';
 import { Workflow, WorkflowPull, WorkflowTriggerConditionCache } from 'app/model/workflow.model';
 import { Observable } from 'rxjs';
 
@@ -67,5 +67,10 @@ export class WorkflowService {
     getServiceLog(projectKey: string, workflowName: string, runNumber: number,
         nodeRunID: number, jobRunID: number): Observable<Array<ServiceLog>> {
         return this._http.get<Array<ServiceLog>>(`/project/${projectKey}/workflows/${workflowName}/runs/${runNumber}/nodes/${nodeRunID}/job/${jobRunID}/log/service`);
+    }
+
+    getNodeJobRunInfo(projectKey: string, workflowName: string, runNumber: number,
+        nodeRunID: number, nodeJobRunID: number): Observable<Array<SpawnInfo>> {
+        return this._http.get<Array<SpawnInfo>>(`/project/${projectKey}/workflows/${workflowName}/runs/${runNumber}/nodes/${nodeRunID}/job/${nodeJobRunID}/info`);
     }
 }
