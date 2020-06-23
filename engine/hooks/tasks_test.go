@@ -78,7 +78,7 @@ func Test_dequeueTaskExecutions_ScheduledTask(t *testing.T) {
 	s, cancel := setupTestHookService(t)
 	defer cancel()
 
-	ctx, cancel := context.WithTimeout(context.TODO(), 15*time.Second)
+	ctx, cancel := context.WithTimeout(context.TODO(), 20*time.Second)
 	defer cancel()
 
 	// Get the mock
