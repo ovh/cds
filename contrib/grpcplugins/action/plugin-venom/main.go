@@ -76,6 +76,15 @@ func (actPlugin *venomActionPlugin) Run(ctx context.Context, q *actionplugin.Act
 		}, nil
 	}
 
+	stopOnFailure := false
+	if stopOnFailureStr != "" {
+		var errb error
+		stopOnFailure, errb = strconv.ParseBool(stopOnFailureStr)
+		if err != nil {
+			return actionplugin.Fail("Error parsing stopOnFailure value : %s\n", errb.Error())
+		}
+	}
+
 	v := venom.New()
 	v.RegisterExecutor(exec.Name, exec.New())
 	v.RegisterExecutor(http.Name, http.New())
@@ -154,17 +163,12 @@ func (actPlugin *venomActionPlugin) Run(ctx context.Context, q *actionplugin.Act
 		}
 	}
 
-    stopOnFailure, err := strconv.ParseBool(stopOnFailureStr)
-    if err != nil {
-        return actionplugin.Fail("Error parsing stopOnFailure value : %s\n", err.Error())
-    }
-
 	v.AddVariables(data)
 	v.LogLevel = loglevel
 	v.OutputFormat = "xml"
 	v.OutputDir = output
 	v.Parallel = parallel
-    v.StopOnFailure = stopOnFailure
+	v.StopOnFailure = stopOnFailure
 
 	filepathVal := strings.Split(path, ",")
 	filepathExcluded := strings.Split(exclude, ",")
