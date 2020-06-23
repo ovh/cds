@@ -1,41 +1,32 @@
 import { Injectable } from '@angular/core';
-import { Action, createSelector, State, StateContext } from '@ngxs/store';
-import { Event, EventType } from '../model/event.model';
+import { Action, Selector, State, StateContext } from '@ngxs/store';
+import { Event } from '../model/event.model';
 import * as actionEvent from './event.action';
 
 export class EventStateModel {
-    public all: Array<Event>;
+    public last: Event;
 }
 @State<EventStateModel>({
     name: 'event',
     defaults: {
-        all: []
+        last: null,
     }
 })
 @Injectable()
 export class EventState {
     constructor() { }
 
-    static lastByType(type: EventType) {
-        return createSelector([EventState], (state: EventStateModel) => {
-            return state.all.filter(e => e.type_event === type);
-        });
+    @Selector()
+    static last(state: EventStateModel) {
+        return state.last
     }
 
     @Action(actionEvent.AddEvent)
     add(ctx: StateContext<EventStateModel>, action: actionEvent.AddEvent) {
         const state = ctx.getState();
-        // Set a limit to keep only a set of last received events
-        if (state.all.length >= 20) {
-            ctx.setState({
-                ...state,
-                all: state.all.slice(1).concat(action.payload)
-            });
-        } else {
-            ctx.setState({
-                ...state,
-                all: state.all.concat(action.payload)
-            });
-        }
+        ctx.setState({
+            ...state,
+            last: action.payload
+        });
     }
 }

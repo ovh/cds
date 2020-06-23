@@ -877,26 +877,25 @@ func StopWorkflowNodeRun(ctx context.Context, dbFunc func() *gorp.DbMap, store c
 
 	report := new(ProcessorReport)
 
-	var r *ProcessorReport
-	var err error
 	if workflowNodeRun.Stages != nil && len(workflowNodeRun.Stages) > 0 {
-		r, err = stopWorkflowNodePipeline(ctx, dbFunc, store, proj, &workflowNodeRun, stopInfos)
+		r, err := stopWorkflowNodePipeline(ctx, dbFunc, store, proj, &workflowNodeRun, stopInfos)
+		report.Merge(ctx, r)
+		if err != nil {
+			return report, sdk.WrapError(err, "unable to stop workflow node run")
+		}
 	}
 	if workflowNodeRun.OutgoingHook != nil {
-		err = stopWorkflowNodeOutGoingHook(ctx, dbFunc, &workflowNodeRun)
+		if err := stopWorkflowNodeOutGoingHook(ctx, dbFunc, &workflowNodeRun); err != nil {
+			return report, sdk.WrapError(err, "unable to stop workflow node run")
+		}
 	}
-	if err != nil {
-		return report, sdk.WrapError(err, "unable to stop workflow node run")
-	}
-
-	report.Merge(ctx, r)
 	report.Add(ctx, workflowNodeRun)
 
 	// If current node has a mutex, we want to trigger another node run that can be waiting for the mutex
 	workflowNode := workflowRun.Workflow.WorkflowData.NodeByID(workflowNodeRun.WorkflowNodeID)
 	hasMutex := workflowNode != nil && workflowNode.Context != nil && workflowNode.Context.Mutex
 	if hasMutex {
-		r, err = releaseMutex(ctx, dbFunc(), store, proj, workflowNodeRun.WorkflowID, workflowNodeRun.WorkflowNodeName)
+		r, err := releaseMutex(ctx, dbFunc(), store, proj, workflowNodeRun.WorkflowID, workflowNodeRun.WorkflowNodeName)
 		report.Merge(ctx, r)
 		if err != nil {
 			return report, err

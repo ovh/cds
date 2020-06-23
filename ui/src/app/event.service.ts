@@ -165,4 +165,5 @@ export class EventService {
 
         this.updateFilters(fs);
     }
+
 }
