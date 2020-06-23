@@ -177,4 +177,6 @@ func Test_dequeueTaskExecutions_ScheduledTask(t *testing.T) {
 	require.Len(t, execs, 2)
 	assert.Equal(t, "DONE", execs[0].Status)
 	assert.Equal(t, "SCHEDULED", execs[1].Status)
+
+	time.Sleep(5 * time.Second)
 }
