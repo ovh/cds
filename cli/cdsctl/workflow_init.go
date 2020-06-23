@@ -197,6 +197,30 @@ func searchRepository(pkey, repoManagerName, repoFullname string) (string, error
 	return "", fmt.Errorf("unable to find repository %s from %s: please check your credentials", repoFullname, repoManagerName)
 }
 
+// Check for given repo URL that it exists in project vcs.
+// This func will resync the repositories list if not found at first time.
+func checkRepositoryExists(proj sdk.Project, repoURL string) error {
+	for _, vcs := range proj.VCSServers {
+		var resync bool
+		for {
+			repos, err := client.RepositoriesList(proj.Key, vcs.Name, resync)
+			if err != nil {
+				return fmt.Errorf("unable to list repositories from %s: %v", vcs.Name, err)
+			}
+			for _, r := range repos {
+				if repoURL == r.HTTPCloneURL || repoURL == r.SSHCloneURL {
+					return nil
+				}
+			}
+			if resync {
+				break
+			}
+			resync = true
+		}
+	}
+	return fmt.Errorf("unable to find repository %s for project: please check project vcs configuration", repoURL)
+}
+
 func interactiveChoosePipeline(pkey, defaultPipeline string) (string, *sdk.Pipeline, error) {
 	// Try to find pipeline or create a new pipeline
 	pips, err := client.PipelineList(pkey)
@@ -427,9 +451,9 @@ func craftPipelineFile(proj *sdk.Project, existingPip *sdk.Pipeline, pipName, de
 
 func workflowInitRun(c cli.Values) error {
 	path := "."
-	gitRepo, errRepo := repo.New(path)
-	if errRepo != nil {
-		return errRepo
+	gitRepo, err := repo.New(path)
+	if err != nil {
+		return err
 	}
 
 	pkey, err := interactiveChooseProject(gitRepo, c.GetString(_ProjectKey))
@@ -476,7 +500,7 @@ func workflowInitRun(c cli.Values) error {
 
 	if len(files) > 0 {
 		if c.GetString("pipeline") != "" {
-			return errors.New("you can't set a pipeline name while files alerady exists in .cds/ folder")
+			return errors.New("you can't set a pipeline name while files already exists in .cds/ folder")
 		}
 	}
 
@@ -536,6 +560,10 @@ func workflowInitRun(c cli.Values) error {
 			files = append(files, pipFilePath)
 		}
 	} else {
+		// Check that current repository is accessible for CDS, also resync repositories
+		if err := checkRepositoryExists(*proj, fetchURL); err != nil {
+			return err
+		}
 		fmt.Println("Reading files:")
 		for _, f := range files {
 			fmt.Printf(" * %s", cli.Magenta(f))
