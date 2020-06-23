@@ -149,7 +149,7 @@ func CheckAndExecuteTemplate(ctx context.Context, db *gorp.DbMap, consumer sdk.A
 		return allMsgs, nil, sdk.NewErrorFrom(sdk.ErrWrongRequest, "could not find given workflow template")
 	}
 
-	wt, err := LoadBySlugAndGroupID(ctx, db, templateSlug, grp.ID, LoadOptions.Default)
+	wt, err := LoadBySlugAndGroupID(ctx, db, templateSlug, grp.ID)
 	if err != nil {
 		return allMsgs, nil, sdk.NewErrorFrom(err, "could not find a template with slug %s in group %s", templateSlug, grp.Name)
 	}
@@ -160,7 +160,9 @@ func CheckAndExecuteTemplate(ctx context.Context, db *gorp.DbMap, consumer sdk.A
 		}
 		wt = &wta.DataAfter
 	}
-
+	if err := LoadOptions.Default(ctx, db, wt); err != nil {
+		return allMsgs, nil, err
+	}
 	allMsgs = append(allMsgs, sdk.NewMessage(sdk.MsgWorkflowGeneratedFromTemplateVersion, wt.PathWithVersion()))
 
 	req := sdk.WorkflowTemplateRequest{
