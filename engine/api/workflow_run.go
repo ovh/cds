@@ -705,6 +705,13 @@ func (api *API) stopWorkflowNodeRunHandler() service.Handler {
 		}
 		defer tx.Rollback() // nolint
 
+		workflowRun, err = workflow.LoadRun(ctx, tx, p.Key, workflowName, workflowRunNumber, workflow.LoadRunOptions{
+			WithDeleted: true,
+		})
+		if err != nil {
+			return sdk.WrapError(err, "unable to load workflow run with number %d for workflow %s", workflowRunNumber, workflowName)
+		}
+
 		r2, err := workflow.ResyncWorkflowRunStatus(ctx, tx, workflowRun)
 		if err != nil {
 			return sdk.WrapError(err, "unable to resync workflow run status")
@@ -1342,8 +1349,6 @@ func (api *API) getWorkflowNodeRunJobStepHandler() service.Handler {
 			Status:   stepStatus,
 			StepLogs: *ls,
 		}
-
-		log.Debug("logs: %+v", result)
 
 		return service.WriteJSON(w, result, http.StatusOK)
 	}
