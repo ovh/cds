@@ -78,7 +78,7 @@ func Test_dequeueTaskExecutions_ScheduledTask(t *testing.T) {
 	s, cancel := setupTestHookService(t)
 	defer cancel()
 
-	ctx, cancel := context.WithTimeout(context.TODO(), 20*time.Second)
+	ctx, cancel := context.WithTimeout(context.TODO(), 60*time.Second)
 	defer cancel()
 
 	// Get the mock
@@ -177,6 +177,4 @@ func Test_dequeueTaskExecutions_ScheduledTask(t *testing.T) {
 	require.Len(t, execs, 2)
 	assert.Equal(t, "DONE", execs[0].Status)
 	assert.Equal(t, "SCHEDULED", execs[1].Status)
-
-	time.Sleep(10 * time.Millisecond)
 }
