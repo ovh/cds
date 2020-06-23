@@ -281,7 +281,7 @@ func (c *websocketClient) updateEventFilters(ctx context.Context, db gorp.SqlExe
 			if maxLevelPermission < sdk.PermissionRead {
 				return sdk.WithStack(sdk.ErrForbidden)
 			}
-		case sdk.WebsocketFilterTypeWorkflow:
+		case sdk.WebsocketFilterTypeWorkflow, sdk.WebsocketFilterTypeAscodeEvent:
 			if isMaintainer && !isHatcheryWithGroups {
 				continue
 			}
@@ -324,7 +324,7 @@ func (b *websocketBroker) computeEventKeys(event sdk.Event) []string {
 		}.Key())
 	}
 	// Event that match project filter
-	if strings.HasPrefix(event.EventType, "sdk.EventProject") || event.EventType == fmt.Sprintf("%T", sdk.EventAsCodeEvent{}) {
+	if strings.HasPrefix(event.EventType, "sdk.EventProject") {
 		keys = append(keys, sdk.WebsocketFilter{
 			Type:       sdk.WebsocketFilterTypeProject,
 			ProjectKey: event.ProjectKey,
@@ -387,7 +387,7 @@ func (b *websocketBroker) computeEventKeys(event sdk.Event) []string {
 		}.Key())
 	}
 	// Event that match operation filter
-	if event.EventType == fmt.Sprintf("%T", sdk.Operation{}) {
+	if event.EventType == fmt.Sprintf("%T", sdk.EventOperation{}) {
 		keys = append(keys, sdk.WebsocketFilter{
 			Type:          sdk.WebsocketFilterTypeOperation,
 			ProjectKey:    event.ProjectKey,
@@ -398,6 +398,14 @@ func (b *websocketBroker) computeEventKeys(event sdk.Event) []string {
 	if event.EventType == fmt.Sprintf("%T", sdk.EventRunWorkflow{}) {
 		keys = append(keys, sdk.WebsocketFilter{
 			Type: sdk.WebsocketFilterTypeTimeline,
+		}.Key())
+	}
+	// Event that match as code event filter
+	if event.EventType == fmt.Sprintf("%T", sdk.EventAsCodeEvent{}) {
+		keys = append(keys, sdk.WebsocketFilter{
+			Type:         sdk.WebsocketFilterTypeAscodeEvent,
+			ProjectKey:   event.ProjectKey,
+			WorkflowName: event.WorkflowName,
 		}.Key())
 	}
 

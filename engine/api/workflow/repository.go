@@ -4,9 +4,7 @@ import (
 	"archive/tar"
 	"bytes"
 	"context"
-	"fmt"
 	"path/filepath"
-	"time"
 
 	"github.com/fsamin/go-dump"
 	"github.com/go-gorp/gorp"
@@ -52,7 +50,7 @@ func CreateFromRepository(ctx context.Context, db *gorp.DbMap, store cache.Store
 		return nil, sdk.WrapError(err, "unable to post repository operation")
 	}
 
-	ope, err := pollRepositoryOperation(ctx, db, store, newOperation.UUID)
+	ope, err := operation.Poll(ctx, db, newOperation.UUID)
 	if err != nil {
 		return nil, sdk.WrapError(err, "cannot analyse repository")
 	}
@@ -165,37 +163,6 @@ func ReadCDSFiles(files map[string][]byte) (*tar.Reader, error) {
 	}
 
 	return tar.NewReader(buf), nil
-}
-
-func pollRepositoryOperation(c context.Context, db gorp.SqlExecutor, store cache.Store, operationUUID string) (*sdk.Operation, error) {
-	tickTimeout := time.NewTicker(10 * time.Minute)
-	tickPoll := time.NewTicker(2 * time.Second)
-	defer tickTimeout.Stop()
-	for {
-		select {
-		case <-c.Done():
-			if c.Err() != nil {
-				return nil, sdk.WrapError(c.Err(), "exiting")
-			}
-		case <-tickTimeout.C:
-			return nil, sdk.WrapError(sdk.ErrRepoOperationTimeout, "timeout analyzing repository")
-		case <-tickPoll.C:
-			ope, err := operation.GetRepositoryOperation(c, db, operationUUID)
-			if err != nil {
-				return nil, sdk.WrapError(err, "cannot get repository operation status")
-			}
-			switch ope.Status {
-			case sdk.OperationStatusError:
-				opeTrusted := *ope
-				opeTrusted.RepositoryStrategy.SSHKeyContent = sdk.PasswordPlaceholder
-				opeTrusted.RepositoryStrategy.Password = sdk.PasswordPlaceholder
-				return nil, sdk.WrapError(fmt.Errorf("%s", ope.Error), "operation in error: %+v", opeTrusted)
-			case sdk.OperationStatusDone:
-				return ope, nil
-			}
-			continue
-		}
-	}
 }
 
 func createOperationRequest(w sdk.Workflow, opts sdk.WorkflowRunPostHandlerOption) (sdk.Operation, error) {

@@ -16,6 +16,7 @@ const (
 	WebsocketFilterTypeQueue           WebsocketFilterType = "queue"
 	WebsocketFilterTypeOperation       WebsocketFilterType = "operation"
 	WebsocketFilterTypeTimeline        WebsocketFilterType = "timeline"
+	WebsocketFilterTypeAscodeEvent     WebsocketFilterType = "ascode-event"
 )
 
 func (f WebsocketFilterType) IsValid() bool {
@@ -30,7 +31,8 @@ func (f WebsocketFilterType) IsValid() bool {
 		WebsocketFilterTypeEnvironment,
 		WebsocketFilterTypeQueue,
 		WebsocketFilterTypeOperation,
-		WebsocketFilterTypeTimeline:
+		WebsocketFilterTypeTimeline,
+		WebsocketFilterTypeAscodeEvent:
 		return true
 	}
 	return false
@@ -55,7 +57,7 @@ func (f WebsocketFilter) Key() string {
 	switch f.Type {
 	case WebsocketFilterTypeProject:
 		return fmt.Sprintf("%s-%s", f.Type, f.ProjectKey)
-	case WebsocketFilterTypeWorkflow:
+	case WebsocketFilterTypeWorkflow, WebsocketFilterTypeAscodeEvent:
 		return fmt.Sprintf("%s-%s-%s", f.Type, f.ProjectKey, f.WorkflowName)
 	case WebsocketFilterTypeWorkflowRun:
 		return fmt.Sprintf("%s-%s-%s-%d", f.Type, f.ProjectKey, f.WorkflowName, f.WorkflowRunNumber)
@@ -85,7 +87,7 @@ func (f WebsocketFilter) IsValid() error {
 		if f.ProjectKey == "" {
 			return NewErrorFrom(ErrWrongRequest, "missing project key")
 		}
-	case WebsocketFilterTypeWorkflow:
+	case WebsocketFilterTypeWorkflow, WebsocketFilterTypeAscodeEvent:
 		if f.ProjectKey == "" || f.WorkflowName == "" {
 			return NewErrorFrom(ErrWrongRequest, "missing project key or workflow name")
 		}

@@ -99,7 +99,7 @@ func SyncEvents(ctx context.Context, db *gorp.DbMap, store cache.Store, proj sdk
 	}
 
 	for _, ed := range eventToDelete {
-		event.PublishAsCodeEvent(ctx, proj.Key, ed, u)
+		event.PublishAsCodeEvent(ctx, proj.Key, workflowHolder.Name, ed, u)
 	}
 
 	return res, nil

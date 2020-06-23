@@ -59,4 +59,6 @@ export class EventType {
     static BROADCAST_DELETE = 'sdk.EventBroadcastDelete';
 
     static ACTION_PREFIX = 'sdk.EventAction';
+
+    static OPERATION = 'sdk.EventOperation';
 }

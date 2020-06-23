@@ -55,10 +55,6 @@ export class WorkflowService {
         );
     }
 
-    getAsCodeOperation(projectKey: string, workflowName: string, operationUUID: string): Observable<Operation> {
-        return this._http.get<Operation>(`/project/${projectKey}/workflows/${workflowName}/ascode/${operationUUID}`);
-    }
-
     getStepLog(projectKey: string, workflowName: string, runNumber: number,
         nodeRunID: number, jobRunID: number, stepOrder: number): Observable<BuildResult> {
         return this._http.get<BuildResult>(`/project/${projectKey}/workflows/${workflowName}/runs/${runNumber}/nodes/${nodeRunID}/job/${jobRunID}/step/${stepOrder}`);

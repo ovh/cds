@@ -141,6 +141,10 @@ export class EventService {
                             type: WebsocketFilterType.WORKFLOW,
                             project_key: projectKey,
                             workflow_name: entityName
+                        }, <WebsocketFilter>{
+                            type: WebsocketFilterType.ASCODE_EVENT,
+                            project_key: projectKey,
+                            workflow_name: entityName
                         });
                         if (urlSplitted.length >= 6) {
                             fs.push(<WebsocketFilter>{
