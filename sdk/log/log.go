@@ -8,8 +8,9 @@ import (
 	"os"
 	"strings"
 
-	loghook "github.com/ovh/cds/sdk/log/hook"
 	log "github.com/sirupsen/logrus"
+
+	"github.com/ovh/cds/sdk/log/hook"
 )
 
 // Conf contains log configuration
@@ -36,8 +37,8 @@ const (
 )
 
 var (
-	logger Logger
-	hook   *loghook.Hook
+	logger      Logger
+	graylogHook *hook.Hook
 )
 
 // Logger defines the logs levels used
@@ -84,7 +85,7 @@ func Initialize(ctx context.Context, conf *Conf) {
 	log.SetFormatter(&CDSFormatter{})
 
 	if conf.GraylogHost != "" && conf.GraylogPort != "" {
-		graylogcfg := &loghook.Config{
+		graylogcfg := &hook.Config{
 			Addr:      fmt.Sprintf("%s:%s", conf.GraylogHost, conf.GraylogPort),
 			Protocol:  conf.GraylogProtocol,
 			TLSConfig: &tls.Config{ServerName: conf.GraylogHost},
@@ -124,12 +125,12 @@ func Initialize(ctx context.Context, conf *Conf) {
 		extra["CDSHostname"] = hostname
 
 		var errhook error
-		hook, errhook = loghook.NewHook(graylogcfg, extra)
+		graylogHook, errhook = hook.NewHook(graylogcfg, extra)
 
 		if errhook != nil {
 			log.Errorf("Error while initialize graylog hook: %v", errhook)
 		} else {
-			log.AddHook(hook)
+			log.AddHook(graylogHook)
 			log.SetOutput(ioutil.Discard)
 		}
 	}
@@ -137,8 +138,8 @@ func Initialize(ctx context.Context, conf *Conf) {
 	go func() {
 		<-ctx.Done()
 		Info(ctx, "Draining logs...")
-		if hook != nil {
-			hook.Flush()
+		if graylogHook != nil {
+			graylogHook.Flush()
 		}
 	}()
 }
@@ -241,6 +242,7 @@ type Signature struct {
 	Worker    *SignatureWorker
 	Service   *SignatureService
 	JobID     int64
+	NodeRunID int64
 	Timestamp int64
 }
 
@@ -257,14 +259,10 @@ type SignatureService struct {
 	WorkerName      string
 }
 
-func New(ctx context.Context, logServerAddr string) (*log.Logger, *loghook.Hook, error) {
+func New(ctx context.Context, graylogcfg *hook.Config) (*log.Logger, *hook.Hook, error) {
 	newLogger := log.New()
-	graylogcfg := &loghook.Config{
-		Addr:     logServerAddr,
-		Protocol: "tcp",
-	}
 	extra := map[string]interface{}{}
-	hook, err := loghook.NewHook(graylogcfg, extra)
+	hook, err := hook.NewHook(graylogcfg, extra)
 	if err != nil {
 		return nil, nil, fmt.Errorf("unable to add hook: %v", err)
 	}
