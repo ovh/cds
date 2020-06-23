@@ -134,5 +134,4 @@ func TestServiceLog(t *testing.T) {
 	logs, err := workflow.LoadServiceLog(db, dbj.ID, signature.Service.RequirementName)
 	require.NoError(t, err)
 	require.Equal(t, "this is my service message\n", logs.Val)
-
 }

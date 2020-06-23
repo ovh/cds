@@ -123,6 +123,10 @@ func (api *API) postPerformImportAsCodeHandler() service.Handler {
 		key := vars[permProjectKey]
 		uuid := vars["uuid"]
 
+		if uuid == "" {
+			return sdk.NewErrorFrom(sdk.ErrWrongRequest, "invalid given operation uuid")
+		}
+
 		proj, err := project.Load(api.mustDB(), key,
 			project.LoadOptions.WithGroups,
 			project.LoadOptions.WithApplications,

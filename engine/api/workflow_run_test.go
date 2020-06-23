@@ -1177,8 +1177,6 @@ func Test_postWorkflowRunAsyncFailedHandler(t *testing.T) {
 
 	ascode.UpdateAsCodeResult(context.TODO(), api.mustDB(), api.Cache, *proj, *w1, app, ed, u)
 
-	t.Logf("UpdateAsCodeResult => %+v", x)
-
 	//Prepare request
 	vars := map[string]string{
 		"key":              proj.Key,

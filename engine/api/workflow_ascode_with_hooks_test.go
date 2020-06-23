@@ -66,7 +66,14 @@ func Test_WorkflowAsCodeWithNoHook_ShouldGive_AnAutomaticRepoWebHook(t *testing.
 
 	servicesClients.EXPECT().
 		DoJSONRequest(gomock.Any(), "POST", "/operations", gomock.Any(), gomock.Any()).
-		Return(nil, 201, nil)
+		DoAndReturn(
+			func(ctx context.Context, method, path string, in interface{}, out interface{}) (http.Header, int, error) {
+				ope := new(sdk.Operation)
+				ope.UUID = UUID
+				ope.Status = sdk.OperationStatusPending
+				*(out.(*sdk.Operation)) = *ope
+				return nil, 201, nil
+			})
 
 	servicesClients.EXPECT().
 		DoJSONRequest(gomock.Any(), "GET", "/vcs/github/repos/fsamin/go-repo/branches", gomock.Any(), gomock.Any(), gomock.Any()).
@@ -277,7 +284,14 @@ func Test_WorkflowAsCodeWithDefaultHook_ShouldGive_TheSameRepoWebHook(t *testing
 
 	servicesClients.EXPECT().
 		DoJSONRequest(gomock.Any(), "POST", "/operations", gomock.Any(), gomock.Any()).
-		Return(nil, 201, nil).Times(2)
+		DoAndReturn(
+			func(ctx context.Context, method, path string, in interface{}, out interface{}) (http.Header, int, error) {
+				ope := new(sdk.Operation)
+				ope.UUID = UUID
+				ope.Status = sdk.OperationStatusPending
+				*(out.(*sdk.Operation)) = *ope
+				return nil, 201, nil
+			}).Times(2)
 
 	servicesClients.EXPECT().
 		DoJSONRequest(gomock.Any(), "GET", "/vcs/github/repos/fsamin/go-repo", gomock.Any(), gomock.Any(), gomock.Any()).MinTimes(0)
@@ -311,7 +325,7 @@ func Test_WorkflowAsCodeWithDefaultHook_ShouldGive_TheSameRepoWebHook(t *testing
 		).MaxTimes(3)
 
 	servicesClients.EXPECT().
-		DoJSONRequest(gomock.Any(), "GET", gomock.Any(), gomock.Any(), gomock.Any()).
+		DoJSONRequest(gomock.Any(), "GET", "/operations/"+UUID, gomock.Any(), gomock.Any()).
 		DoAndReturn(
 			func(ctx context.Context, method, path string, in interface{}, out interface{}) (http.Header, int, error) {
 				ope := new(sdk.Operation)
@@ -348,7 +362,7 @@ version: v1.0`),
 				*(out.(*sdk.Operation)) = *ope
 				return nil, 200, nil
 			},
-		).Times(2)
+		).Times(3)
 
 	servicesClients.EXPECT().
 		DoJSONRequest(gomock.Any(), "POST", "/task/bulk", gomock.Any(), gomock.Any()).
@@ -433,12 +447,12 @@ version: v1.0`),
 	// Do the request
 	w = httptest.NewRecorder()
 	api.Router.Mux.ServeHTTP(w, req)
-	assert.Equal(t, 200, w.Code)
+	require.Equal(t, 200, w.Code)
 	t.Logf(w.Body.String())
 
 	wk, err := workflow.Load(context.Background(), db, api.Cache, *proj, "w-go-repo", workflow.LoadOptions{})
-	assert.NoError(t, err)
-	assert.NotNil(t, wk)
+	require.NoError(t, err)
+	require.NotNil(t, wk)
 
 	require.Len(t, wk.WorkflowData.GetHooks(), 1)
 
@@ -455,11 +469,10 @@ version: v1.0`),
 	}
 
 	// Then we will trigger a run of the workflow wich should trigger an as-code operation
-	vars := map[string]string{
+	uri = api.Router.GetRoute("POST", api.postWorkflowRunHandler, map[string]string{
 		"key":              proj.Key,
 		"permWorkflowName": wk.Name,
-	}
-	uri = api.Router.GetRoute("POST", api.postWorkflowRunHandler, vars)
+	})
 	require.NotEmpty(t, uri)
 
 	opts := &sdk.WorkflowRunPostHandlerOption{
@@ -475,9 +488,7 @@ version: v1.0`),
 	//Do the request
 	rec := httptest.NewRecorder()
 	api.Router.Mux.ServeHTTP(rec, req)
-	assert.Equal(t, 202, rec.Code)
-
-	if rec.Code != 202 {
+	if !assert.Equal(t, 202, rec.Code) {
 		t.Logf("body => %s", rec.Body.String())
 		t.FailNow()
 	}
@@ -486,13 +497,13 @@ version: v1.0`),
 	require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &wrun))
 
 	require.NoError(t, waitCraftinWorkflow(t, api.mustDB(), wrun.ID))
-	wr, _ := workflow.LoadRunByID(db, wrun.ID, workflow.LoadRunOptions{})
-
-	assert.NotEqual(t, "Fail", wr.Status)
+	wr, err := workflow.LoadRunByID(db, wrun.ID, workflow.LoadRunOptions{})
+	require.NoError(t, nil)
+	require.NotEqual(t, "Fail", wr.Status)
 
 	wk, err = workflow.Load(context.Background(), db, api.Cache, *proj, "w-go-repo", workflow.LoadOptions{})
-	assert.NoError(t, err)
-	assert.NotNil(t, wk)
+	require.NoError(t, err)
+	require.NotNil(t, wk)
 
 	require.Len(t, wk.WorkflowData.GetHooks(), 1)
 
@@ -648,7 +659,7 @@ version: v1.0`),
 				*(out.(*sdk.Operation)) = *ope
 				return nil, 200, nil
 			},
-		).Times(2)
+		).Times(3)
 
 	servicesClients.EXPECT().
 		DoJSONRequest(gomock.Any(), "POST", "/task/bulk", gomock.Any(), gomock.Any()).
@@ -818,9 +829,7 @@ version: v1.0`),
 	//Do the request
 	rec := httptest.NewRecorder()
 	api.Router.Mux.ServeHTTP(rec, req)
-	assert.Equal(t, 202, rec.Code)
-
-	if rec.Code != 202 {
+	if assert.Equal(t, 202, rec.Code) {
 		t.Logf("body => %s", rec.Body.String())
 		t.FailNow()
 	}
@@ -917,7 +926,14 @@ func Test_WorkflowAsCodeWithJustAcheduler_ShouldGive_ARepoWebHookAndTheScheduler
 
 	servicesClients.EXPECT().
 		DoJSONRequest(gomock.Any(), "POST", "/operations", gomock.Any(), gomock.Any()).
-		Return(nil, 201, nil).Times(3)
+		DoAndReturn(
+			func(ctx context.Context, method, path string, in interface{}, out interface{}) (http.Header, int, error) {
+				ope := new(sdk.Operation)
+				ope.UUID = UUID
+				ope.Status = sdk.OperationStatusPending
+				*(out.(*sdk.Operation)) = *ope
+				return nil, 201, nil
+			}).Times(3)
 
 	servicesClients.EXPECT().
 		DoJSONRequest(gomock.Any(), "GET", "/vcs/github/repos/fsamin/go-repo", gomock.Any(), gomock.Any(), gomock.Any()).MinTimes(0)
@@ -1002,7 +1018,7 @@ version: v1.0`),
 					*(out.(*sdk.Operation)) = *ope
 					return nil, 200, nil
 				},
-			).Times(1),
+			).Times(2),
 
 		servicesClients.EXPECT().
 			DoJSONRequest(gomock.Any(), "GET", gomock.Any(), gomock.Any(), gomock.Any()).
@@ -1361,9 +1377,7 @@ version: v1.0`),
 	//Do the request
 	rec := httptest.NewRecorder()
 	api.Router.Mux.ServeHTTP(rec, req)
-	assert.Equal(t, 202, rec.Code)
-
-	if rec.Code != 202 {
+	if !assert.Equal(t, 202, rec.Code) {
 		t.Logf("body => %s", rec.Body.String())
 		t.FailNow()
 	}
@@ -1433,9 +1447,7 @@ version: v1.0`),
 	//Do the request
 	rec = httptest.NewRecorder()
 	api.Router.Mux.ServeHTTP(rec, req)
-	assert.Equal(t, 202, rec.Code)
-
-	if rec.Code != 202 {
+	if !assert.Equal(t, 202, rec.Code) {
 		t.Logf("body => %s", rec.Body.String())
 		t.FailNow()
 	}
