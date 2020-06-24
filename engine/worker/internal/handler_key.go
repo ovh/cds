@@ -63,7 +63,7 @@ func keyInstallHandler(ctx context.Context, wk *CurrentWorker) http.HandlerFunc 
 			if sdkerr, ok := err.(*sdk.Error); ok {
 				writeError(w, r, sdkerr)
 			} else {
-				writeError(w, r, sdk.NewError(sdk.ErrNotFound, err))
+				writeError(w, r, sdk.NewError(sdk.ErrUnknownError, err))
 			}
 			return
 		}
