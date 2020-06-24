@@ -31,9 +31,7 @@ func keyInstallHandler(ctx context.Context, wk *CurrentWorker) http.HandlerFunc 
 		var mapBody = make(map[string]string)
 		if len(body) > 0 {
 			if err := json.Unmarshal(body, &mapBody); err != nil {
-				sdkerr := sdk.Error{
-					Status:  sdk.ErrWrongRequest.Status,
-					Message: err.Error()}
+				sdkerr := sdk.NewError(sdk.ErrWrongRequest, err).(sdk.Error)
 				writeJSON(w, sdkerr, sdkerr.Status)
 				return
 			}
@@ -42,12 +40,9 @@ func keyInstallHandler(ctx context.Context, wk *CurrentWorker) http.HandlerFunc 
 		var key *sdk.Variable
 
 		if wk.currentJob.secrets == nil {
-			err := sdk.Error{
-				Message: "Cannot find any keys for your job",
-				Status:  http.StatusBadRequest,
-			}
+			sdkerr := sdk.NewError(sdk.ErrWrongRequest, fmt.Errorf("Cannot find any keys for your job")).(sdk.Error)
 			log.Error(ctx, "%v", err)
-			writeJSON(w, err, err.Status)
+			writeJSON(w, sdkerr, sdkerr.Status)
 			return
 		}
 
@@ -59,12 +54,9 @@ func keyInstallHandler(ctx context.Context, wk *CurrentWorker) http.HandlerFunc 
 		}
 
 		if key == nil {
-			err := sdk.Error{
-				Message: fmt.Sprintf("Key %s not found", keyName),
-				Status:  http.StatusNotFound,
-			}
+			sdkerr := sdk.NewError(sdk.ErrNotFound, fmt.Errorf("Cannot find any keys for your job")).(sdk.Error)
 			log.Error(ctx, "%v", err)
-			writeJSON(w, err, err.Status)
+			writeJSON(w, sdkerr, sdkerr.Status)
 			return
 		}
 
@@ -75,11 +67,8 @@ func keyInstallHandler(ctx context.Context, wk *CurrentWorker) http.HandlerFunc 
 			if sdkerr, ok := err.(*sdk.Error); ok {
 				writeJSON(w, sdkerr, sdkerr.Status)
 			} else {
-				err := sdk.Error{
-					Message: err.Error(),
-					Status:  sdk.ErrUnknownError.Status,
-				}
-				writeJSON(w, err, err.Status)
+				sdkerr := sdk.NewError(sdk.ErrNotFound, err).(sdk.Error)
+				writeJSON(w, sdkerr, sdkerr.Status)
 			}
 			return
 		}
