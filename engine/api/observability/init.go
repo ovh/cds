@@ -38,6 +38,7 @@ func StatsHTTPExporter() *HTTPExporter {
 
 // Init the opencensus exporter
 func Init(ctx context.Context, cfg Configuration, s service) (context.Context, error) {
+	log.Info(ctx, "observability> initializing observability for %s/%s", s.Type(), s.Name())
 	ctx = ContextWithTag(ctx,
 		TagServiceType, s.Type(),
 		TagServiceName, s.Name(),

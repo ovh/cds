@@ -34,3 +34,6 @@ build: $(FILES_UI) $(INDEX) ui.tar.gz
 
 ui.tar.gz:
 	tar cfz ui.tar.gz dist
+
+lintfix:
+	./node_modules/.bin/ng lint --fix

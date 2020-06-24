@@ -139,15 +139,15 @@ func executeWebHook(t *sdk.TaskExecution) (*sdk.WorkflowNodeRunHookEvent, error)
 		}
 		//Parse the content type
 		ct, _, _ = mime.ParseMediaType(ct)
-		switch {
-		case ct == "application/x-www-form-urlencoded":
+		switch ct {
+		case "application/x-www-form-urlencoded":
 			formValues, err := url.ParseQuery(string(t.WebHook.RequestBody))
-			if err == nil {
+			if err != nil {
 				return nil, sdk.WrapError(err, "Unable webhook to parse body %s", t.WebHook.RequestBody)
 			}
 			copyValues(values, formValues)
 			h.Payload["payload"] = string(t.WebHook.RequestBody)
-		case ct == "application/json":
+		case "application/json":
 			var bodyJSON interface{}
 
 			//Try to parse the body as an array

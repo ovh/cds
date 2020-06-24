@@ -697,11 +697,19 @@ func (api *API) stopWorkflowNodeRunHandler() service.Handler {
 			return sdk.WrapError(err, "unable to stop workflow node run")
 		}
 
+		// Reload workflow run then resync its status
 		tx, err := api.mustDB().Begin()
 		if err != nil {
 			return sdk.WithStack(err)
 		}
 		defer tx.Rollback() // nolint
+
+		workflowRun, err = workflow.LoadRun(ctx, tx, p.Key, workflowName, workflowRunNumber, workflow.LoadRunOptions{
+			WithDeleted: true,
+		})
+		if err != nil {
+			return sdk.WrapError(err, "unable to load workflow run with number %d for workflow %s", workflowRunNumber, workflowName)
+		}
 
 		r1, err := workflow.ResyncWorkflowRunStatus(ctx, tx, workflowRun)
 		report.Merge(ctx, r1)
@@ -1014,7 +1022,6 @@ func (api *API) initWorkflowRun(ctx context.Context, projKey string, wf *sdk.Wor
 		report.Merge(ctx, r)
 		return
 	}
-
 	workflow.ResyncNodeRunsWithCommits(ctx, api.mustDB(), api.Cache, *p, report)
 
 	// Purge workflow run
@@ -1023,6 +1030,16 @@ func (api *API) initWorkflowRun(ctx context.Context, projKey string, wf *sdk.Wor
 			log.Error(ctx, "workflow.PurgeWorkflowRun> error %v", err)
 		}
 	}, api.PanicDump())
+
+	// Update parent
+	for i := range report.WorkflowRuns() {
+		run := &report.WorkflowRuns()[i]
+		reportParent, err := updateParentWorkflowRun(ctx, api.mustDB, api.Cache, run)
+		if err != nil {
+			log.Error(ctx, "unable to update parent workflow run: %v", err)
+		}
+		go WorkflowSendEvent(context.Background(), api.mustDB(), api.Cache, *p, reportParent)
+	}
 }
 
 func failInitWorkflowRun(ctx context.Context, db *gorp.DbMap, wfRun *sdk.WorkflowRun, err error) *workflow.ProcessorReport {
@@ -1332,8 +1349,6 @@ func (api *API) getWorkflowNodeRunJobStepHandler() service.Handler {
 			Status:   stepStatus,
 			StepLogs: *ls,
 		}
-
-		log.Debug("logs: %+v", result)
 
 		return service.WriteJSON(w, result, http.StatusOK)
 	}

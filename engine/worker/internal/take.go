@@ -10,6 +10,7 @@ import (
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/jws"
 	"github.com/ovh/cds/sdk/log"
+	"github.com/ovh/cds/sdk/log/hook"
 )
 
 func (w *CurrentWorker) Take(ctx context.Context, job sdk.WorkflowNodeJobRun) error {
@@ -48,10 +49,23 @@ func (w *CurrentWorker) Take(ctx context.Context, job sdk.WorkflowNodeJobRun) er
 
 	if info.GelfServiceAddr != "" {
 		log.Info(ctx, "Setup step logger %s", info.GelfServiceAddr)
-		l, h, err := log.New(ctx, info.GelfServiceAddr)
+		throttlePolicy := hook.NewDefaultThrottlePolicy()
+
+		var graylogCfg = &hook.Config{
+			Addr:     info.GelfServiceAddr,
+			Protocol: "tcp",
+			ThrottlePolicy: &hook.ThrottlePolicyConfig{
+				Amount: 100,
+				Period: 10 * time.Millisecond,
+				Policy: throttlePolicy,
+			},
+		}
+
+		l, h, err := log.New(ctx, graylogCfg)
 		if err != nil {
 			return sdk.WithStack(err)
 		}
+
 		w.logger.gelfLogger = new(logger)
 		w.logger.gelfLogger.logger = l
 		w.logger.gelfLogger.hook = h
