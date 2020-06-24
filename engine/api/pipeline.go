@@ -312,21 +312,21 @@ func (api *API) getPipelineHandler() service.Handler {
 		withWorkflows := FormBool(r, "withWorkflows")
 		withAsCodeEvent := FormBool(r, "withAsCodeEvents")
 
-		proj, err := project.Load(api.mustDB(), projectKey,
-			project.LoadOptions.WithApplicationWithDeploymentStrategies,
-			project.LoadOptions.WithPipelines,
-			project.LoadOptions.WithEnvironments,
-			project.LoadOptions.WithIntegrations)
-		if err != nil {
-			return err
-		}
-
 		p, err := pipeline.LoadPipeline(ctx, api.mustDB(), projectKey, pipelineName, true)
 		if err != nil {
 			return sdk.WrapError(err, "cannot load pipeline %s", pipelineName)
 		}
 
 		if p.FromRepository != "" {
+			proj, err := project.Load(api.mustDB(), projectKey,
+				project.LoadOptions.WithApplicationWithDeploymentStrategies,
+				project.LoadOptions.WithPipelines,
+				project.LoadOptions.WithEnvironments,
+				project.LoadOptions.WithIntegrations)
+			if err != nil {
+				return err
+			}
+
 			wkAscodeHolder, err := workflow.LoadByRepo(ctx, api.mustDB(), *proj, p.FromRepository, workflow.LoadOptions{
 				WithTemplate: true,
 			})

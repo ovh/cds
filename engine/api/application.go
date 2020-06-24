@@ -151,17 +151,27 @@ func (api *API) getApplicationHandler() service.Handler {
 		}
 
 		if app.FromRepository != "" {
-			proj, err := project.Load(api.mustDB(), projectKey)
+			proj, err := project.Load(api.mustDB(), projectKey,
+				project.LoadOptions.WithApplicationWithDeploymentStrategies,
+				project.LoadOptions.WithPipelines,
+				project.LoadOptions.WithEnvironments,
+				project.LoadOptions.WithIntegrations)
 			if err != nil {
 				return err
 			}
+
 			wkAscodeHolder, err := workflow.LoadByRepo(ctx, api.mustDB(), *proj, app.FromRepository, workflow.LoadOptions{
 				WithTemplate: true,
 			})
 			if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
-				return sdk.NewErrorFrom(err, "cannot found workflow holder of the pipeline")
+				return sdk.NewErrorFrom(err, "cannot found workflow holder of the application")
 			}
 			app.WorkflowAscodeHolder = wkAscodeHolder
+
+			// FIXME from_repository should never be set if the workflow holder was deleted
+			if app.WorkflowAscodeHolder == nil {
+				app.FromRepository = ""
+			}
 		}
 
 		return service.WriteJSON(w, app, http.StatusOK)
