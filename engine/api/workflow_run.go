@@ -698,11 +698,19 @@ func (api *API) stopWorkflowNodeRunHandler() service.Handler {
 			return sdk.WrapError(err, "unable to stop workflow node run")
 		}
 
+		// Reload workflow run then resync its status
 		tx, err := api.mustDB().Begin()
 		if err != nil {
 			return sdk.WithStack(err)
 		}
 		defer tx.Rollback() // nolint
+
+		workflowRun, err = workflow.LoadRun(ctx, tx, p.Key, workflowName, workflowRunNumber, workflow.LoadRunOptions{
+			WithDeleted: true,
+		})
+		if err != nil {
+			return sdk.WrapError(err, "unable to load workflow run with number %d for workflow %s", workflowRunNumber, workflowName)
+		}
 
 		r1, err := workflow.ResyncWorkflowRunStatus(ctx, tx, workflowRun)
 		report.Merge(ctx, r1)
@@ -1487,8 +1495,6 @@ func (api *API) getWorkflowNodeRunJobStepHandler() service.Handler {
 			Status:   stepStatus,
 			StepLogs: *ls,
 		}
-
-		log.Debug("logs: %+v", result)
 
 		return service.WriteJSON(w, result, http.StatusOK)
 	}

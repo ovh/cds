@@ -134,6 +134,7 @@ func (wk *CurrentWorker) SendLog(ctx context.Context, level workerruntime.Level,
 			StepOrder: int64(stepOrder),
 		},
 		JobID:     wk.currentJob.wJob.ID,
+		NodeRunID: wk.currentJob.wJob.WorkflowNodeRunID,
 		Timestamp: time.Now().UnixNano(),
 	}
 	signature, err := jws.Sign(wk.currentJob.signer, dataToSign)
@@ -141,7 +142,6 @@ func (wk *CurrentWorker) SendLog(ctx context.Context, level workerruntime.Level,
 		log.Error(ctx, "unable to sign logs: %v", err)
 	}
 	wk.logger.gelfLogger.logger.WithField(log.ExtraFieldSignature, signature).Log(logLevel, s)
-	wk.logger.gelfLogger.hook.Flush()
 }
 
 func (wk *CurrentWorker) Name() string {

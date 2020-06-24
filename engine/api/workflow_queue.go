@@ -554,8 +554,6 @@ func (api *API) postWorkflowJobLogsHandler() service.Handler {
 			return err
 		}
 
-		log.Debug("postWorkflowJobLogsHandler> Logs: %+v", logs)
-
 		if err := workflow.AddLog(api.mustDB(), pbJob, &logs, api.Config.Log.StepMaxSize); err != nil {
 			return err
 		}

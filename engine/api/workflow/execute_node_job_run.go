@@ -400,6 +400,7 @@ func AddLog(db gorp.SqlExecutor, job *sdk.WorkflowNodeJobRun, logs *sdk.Log, max
 
 	// ignore the log if max size already reached
 	if maxReached := truncateLogs(maxLogSize, size, logs); maxReached {
+		log.Debug("truncated logs")
 		return nil
 	}
 
