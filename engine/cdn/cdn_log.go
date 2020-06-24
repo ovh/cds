@@ -180,16 +180,17 @@ func (s *Service) processLogs(ctx context.Context, chanMessages <-chan handledMe
 				log.Error(ctx, "unable to start tx: %v", err)
 				continue
 			}
-			defer tx.Rollback() // nolint
 
 			currentLog := buildMessage(msg.signature, msg.m)
 			if err := s.processLog(ctx, tx, msg.signature, currentLog); err != nil {
 				log.Error(ctx, "unable to process log: %+v", err)
+				tx.Rollback() // nolint
 				continue
 			}
 
 			if err := tx.Commit(); err != nil {
 				log.Error(ctx, "unable to commit tx: %+v", err)
+				tx.Rollback() // nolint
 				continue
 			}
 
