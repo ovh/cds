@@ -18,7 +18,7 @@ If you are familiar with these different tools, you probably will not need to re
 
 ## PostgreSQL
 
-Download PostgreSQL from https://www.postgresql.org/download/, version >= 9.5.
+Download PostgreSQL from https://www.postgresql.org/download/, version >= 9.6.
 
 You can easily use only PostgreSQL binaries, downloaded from https://www.enterprisedb.com/download-postgresql-binaries.
 
@@ -82,23 +82,23 @@ $ tar xzf node-v12.4.0-darwin-x64.tar.gz
 
 ## Golang
 
-Download the latest Golang version from https://golang.org/dl/, version >= 1.13
+Download the latest Golang version from https://golang.org/dl/, version >= 1.14
 
-Example with version 1.13 on macOS:
+Example with version 1.14 on macOS:
 
 ```bash
 $ export GOROOT=~/go
 $ export PATH=$PATH:$GOROOT/bin
 $ cd ~
-$ curl -O https://dl.google.com/go/go1.13.darwin-amd64.tar.gz
-$ tar xzf go1.13.darwin-amd64.tar.gz
+$ curl -O https://dl.google.com/go/go1.14.darwin-amd64.tar.gz
+$ tar xzf go1.14.darwin-amd64.tar.gz
 ```
 
 Check if Go installation is ok
 
 ```bash
 $ go version
-go version go1.13 darwin/amd64
+go version go1.14 darwin/amd64
 ```
 
 ## CDS
@@ -131,10 +131,23 @@ $ engine config new > ~/.cds/dev.toml
 # edit ~/.cds/dev.toml file 
 ## in section [api]
 ### --> set variable defaultOS to your OS, darwin if you are on macOS for example
+
 ## in section [hatchery.local.commonConfiguration]
 ### --> set name to "hatchery-local"
+
 ## in section [hatchery.local.commonConfiguration.api.http]
 ### --> uncomment url, should be set to url = "http://localhost:8081" 
+
+## in section [hatchery.local]
+### basedir = "/tmp/cds" 
+# this directory will contains the cds workers workspace
+
+## in section [api.directories]
+### baseDirectory = "/your-gopath/src/github.com/ovh/cds/engine/worker/dist" 
+# this directory should contains the workers binaries
+
+## in section [api.artifact.local]
+# baseDirectory = "/tmp/cds/artifacts"
 
 ```
 
@@ -151,10 +164,10 @@ $ engine database upgrade --db-password cds --db-sslmode disable
 If you don't have a local PostgreSQL, you should run `engine database upgrade --help`
 and update `~/.cds/dev.toml` file.
 
-Launch CDS engine API & local hatchery:
+Launch CDS engine API:
 
 ```bash
-$ engine --config ~/.cds/dev.toml start api hatchery:local
+$ engine --config ~/.cds/dev.toml start api
 ```
 
 Launch CDS UI:
@@ -171,6 +184,12 @@ Register first user with cdsctl:
 export INIT_TOKEN=`./engine config init-token --config ~/.cds/dev.toml`
 $ cdsctl signup -H http://localhost:8081 --email your-username@localhost.local --fullname yourFullname --username your-username
 # Check CDS API logs to get the validation code
+```
+
+Launch local hatchery:
+
+```bash
+$ engine --config ~/.cds/dev.toml start hatchery:local
 ```
 
 Open a browser, go on http://localhost:8080 - Have fun.

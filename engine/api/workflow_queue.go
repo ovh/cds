@@ -110,13 +110,10 @@ func (api *API) postTakeWorkflowJobHandler() service.Handler {
 			return err
 		}
 		for _, svr := range srvs {
-			var tcpConfig sdk.TCPServer
-			if err := svr.Config.Get("tcp", &tcpConfig); err != nil {
-				log.Error(ctx, "unable to get tcp configudation from cdn uservice")
-				continue
+			if addr, ok := svr.Config["public_tcp"]; ok {
+				pbji.GelfServiceAddr = addr.(string)
+				break
 			}
-			pbji.GelfServiceAddr = fmt.Sprintf("%s:%d", tcpConfig.Addr, tcpConfig.Port)
-			break
 		}
 		if pbji.GelfServiceAddr == "" {
 			return sdk.WrapError(sdk.ErrNotFound, "unable to find any tcp configuration in CDN Uservice")
@@ -138,14 +135,18 @@ func takeJob(ctx context.Context, dbFunc func() *gorp.DbMap, store cache.Store, 
 	defer tx.Rollback() // nolint
 
 	//Prepare spawn infos
+	m1 := sdk.SpawnMsg{ID: sdk.MsgSpawnInfoJobTaken.ID, Args: []interface{}{fmt.Sprintf("%d", id), wk.Name}}
+	m2 := sdk.SpawnMsg{ID: sdk.MsgSpawnInfoJobTakenWorkerVersion.ID, Args: []interface{}{wk.Name, wk.Version, wk.OS, wk.Arch}}
 	infos := []sdk.SpawnInfo{
 		{
-			RemoteTime: getRemoteTime(ctx),
-			Message:    sdk.SpawnMsg{ID: sdk.MsgSpawnInfoJobTaken.ID, Args: []interface{}{fmt.Sprintf("%d", id), wk.Name}},
+			RemoteTime:  getRemoteTime(ctx),
+			Message:     m1,
+			UserMessage: m1.DefaultUserMessage(),
 		},
 		{
-			RemoteTime: getRemoteTime(ctx),
-			Message:    sdk.SpawnMsg{ID: sdk.MsgSpawnInfoJobTakenWorkerVersion.ID, Args: []interface{}{wk.Name, wk.Version, wk.OS, wk.Arch}},
+			RemoteTime:  getRemoteTime(ctx),
+			Message:     m2,
+			UserMessage: m2.DefaultUserMessage(),
 		},
 	}
 
@@ -210,9 +211,6 @@ func takeJob(ctx context.Context, dbFunc func() *gorp.DbMap, store cache.Store, 
 	wnjri.Secrets = append(wnjri.Secrets, secretsKeys...)
 	wnjri.NodeJobRun.Parameters = append(wnjri.NodeJobRun.Parameters, params...)
 
-	if err != nil {
-		return nil, err
-	}
 	if err := tx.Commit(); err != nil {
 		return nil, sdk.WithStack(err)
 	}
@@ -286,7 +284,7 @@ func (api *API) postVulnerabilityReportHandler() service.Handler {
 
 		id, err := requestVarInt(r, "permJobID")
 		if err != nil {
-			return sdk.WrapError(err, "invalid id")
+			return err
 		}
 
 		nr, err := workflow.LoadNodeRunByNodeJobID(api.mustDB(), id, workflow.LoadRunOptions{
@@ -315,7 +313,7 @@ func (api *API) postVulnerabilityReportHandler() service.Handler {
 		}
 		defer tx.Rollback() // nolint
 
-		if err := workflow.HandleVulnerabilityReport(ctx, tx, api.Cache, *p, nr, report); err != nil {
+		if err := workflow.SaveVulnerabilityReport(ctx, tx, api.Cache, *p, nr, report); err != nil {
 			return sdk.WrapError(err, "unable to handle report")
 		}
 
@@ -462,9 +460,11 @@ func postJobResult(ctx context.Context, dbFunc func(context.Context) *gorp.DbMap
 		observability.Tag(observability.TagWorkflowNodeRun, job.WorkflowNodeRunID),
 		observability.Tag(observability.TagJob, job.Job.Action.Name))
 
+	msg := sdk.SpawnMsg{ID: sdk.MsgSpawnInfoWorkerEnd.ID, Args: []interface{}{wr.Name, res.Duration}}
 	infos := []sdk.SpawnInfo{{
-		RemoteTime: res.RemoteTime,
-		Message:    sdk.SpawnMsg{ID: sdk.MsgSpawnInfoWorkerEnd.ID, Args: []interface{}{wr.Name, res.Duration}},
+		RemoteTime:  res.RemoteTime,
+		Message:     msg,
+		UserMessage: msg.DefaultUserMessage(),
 	}}
 
 	if err := workflow.AddSpawnInfosNodeJobRun(tx, job.WorkflowNodeRunID, job.ID, workflow.PrepareSpawnInfos(infos)); err != nil {
@@ -578,8 +578,6 @@ func (api *API) postWorkflowJobLogsHandler() service.Handler {
 		if err := service.UnmarshalBody(r, &logs); err != nil {
 			return err
 		}
-
-		log.Debug("postWorkflowJobLogsHandler> Logs: %+v", logs)
 
 		if err := workflow.AddLog(api.mustDB(), pbJob, &logs, api.Config.Log.StepMaxSize); err != nil {
 			return err
@@ -993,7 +991,10 @@ func (api *API) postWorkflowJobTestsResultsHandler() service.Handler {
 			}
 
 			// Get vcs info to known if we are on the default branch or not
-			projectVCSServer := repositoriesmanager.GetProjectVCSServer(*p, nr.VCSServer)
+			projectVCSServer, err := repositoriesmanager.LoadProjectVCSServerLinkByProjectKeyAndVCSServerName(ctx, api.mustDB(), p.Key, nr.VCSServer)
+			if err != nil {
+				return sdk.WrapError(sdk.ErrNoReposManagerClientAuth, "cannot get client %s %s got: %v", p.Key, nr.VCSServer, err)
+			}
 			client, err := repositoriesmanager.AuthorizedClient(ctx, api.mustDB(), api.Cache, p.Key, projectVCSServer)
 			if err != nil {
 				log.Error(ctx, "postWorkflowJobTestsResultsHandler> Cannot get repo client %s : %v", nr.VCSServer, err)

@@ -13,7 +13,6 @@ import (
 	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/integration"
 	"github.com/ovh/cds/engine/api/observability"
-	"github.com/ovh/cds/engine/api/secret"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
@@ -145,8 +144,8 @@ func UpdateNodeJobRunStatus(ctx context.Context, db gorp.SqlExecutor, store cach
 	switch status {
 	case sdk.StatusBuilding:
 		if currentStatus != sdk.StatusWaiting {
-			return nil, fmt.Errorf("workflow.UpdateNodeJobRunStatus> Cannot update status of WorkflowNodeJobRun %d to %s, expected current status %s, got %s",
-				job.ID, status, sdk.StatusWaiting, currentStatus)
+			return nil, sdk.WithStack(fmt.Errorf("cannot update status of WorkflowNodeJobRun %d to %s, expected current status %s, got %s",
+				job.ID, status, sdk.StatusWaiting, currentStatus))
 		}
 		job.Start = time.Now()
 		job.Status = status
@@ -161,7 +160,9 @@ func UpdateNodeJobRunStatus(ctx context.Context, db gorp.SqlExecutor, store cach
 		job.Status = status
 
 		_, next := observability.Span(ctx, "workflow.LoadRunByID")
-		wf, errLoadWf := LoadRunByID(db, nodeRun.WorkflowRunID, LoadRunOptions{})
+		wf, errLoadWf := LoadRunByID(db, nodeRun.WorkflowRunID, LoadRunOptions{
+			WithDeleted: true,
+		})
 		next()
 		if errLoadWf != nil {
 			return nil, sdk.WrapError(errLoadWf, "workflow.UpdateNodeJobRunStatus> Unable to load run id %d", nodeRun.WorkflowRunID)
@@ -172,7 +173,7 @@ func UpdateNodeJobRunStatus(ctx context.Context, db gorp.SqlExecutor, store cach
 			return nil, sdk.WrapError(err, "Cannot update WorkflowRun %d", wf.ID)
 		}
 	default:
-		return nil, fmt.Errorf("workflow.UpdateNodeJobRunStatus> Cannot update WorkflowNodeJobRun %d to status %v", job.ID, status)
+		return nil, sdk.WithStack(fmt.Errorf("cannot update WorkflowNodeJobRun %d to status %v", job.ID, status))
 	}
 
 	//If the job has been set to building, set the stage to building
@@ -235,9 +236,10 @@ func PrepareSpawnInfos(infos []sdk.SpawnInfo) []sdk.SpawnInfo {
 	prepared := []sdk.SpawnInfo{}
 	for _, info := range infos {
 		prepared = append(prepared, sdk.SpawnInfo{
-			APITime:    now,
-			RemoteTime: info.RemoteTime,
-			Message:    info.Message,
+			APITime:     now,
+			RemoteTime:  info.RemoteTime,
+			Message:     info.Message,
+			UserMessage: info.Message.DefaultUserMessage(),
 		})
 	}
 	return prepared
@@ -410,10 +412,10 @@ func LoadNodeJobRunKeys(ctx context.Context, db gorp.SqlExecutor, proj *sdk.Proj
 }
 
 // LoadSecrets loads all secrets for a job run
-func LoadSecrets(db gorp.SqlExecutor, store cache.Store, nodeRun *sdk.WorkflowNodeRun, w *sdk.WorkflowRun, pv []sdk.Variable) ([]sdk.Variable, error) {
+func LoadSecrets(db gorp.SqlExecutor, store cache.Store, nodeRun *sdk.WorkflowNodeRun, w *sdk.WorkflowRun, projV []sdk.ProjectVariable) ([]sdk.Variable, error) {
 	var secrets []sdk.Variable
 
-	pv = sdk.VariablesFilter(pv, sdk.SecretVariable, sdk.KeyVariable)
+	pv := sdk.VariablesFilter(sdk.FromProjectVariables(projV), sdk.SecretVariable, sdk.KeyVariable)
 	pv = sdk.VariablesPrefix(pv, "cds.proj.")
 	secrets = append(secrets, pv...)
 
@@ -456,7 +458,7 @@ func LoadSecrets(db gorp.SqlExecutor, store cache.Store, nodeRun *sdk.WorkflowNo
 			if err != nil {
 				return nil, sdk.WrapError(err, "LoadSecrets> Cannot load application variables")
 			}
-			av = sdk.VariablesFilter(appVariables, sdk.SecretVariable)
+			av = sdk.VariablesFilter(sdk.FromAplicationVariables(appVariables), sdk.SecretVariable)
 			av = sdk.VariablesPrefix(av, "cds.app.")
 
 			av = append(av, sdk.Variable{
@@ -474,7 +476,7 @@ func LoadSecrets(db gorp.SqlExecutor, store cache.Store, nodeRun *sdk.WorkflowNo
 			if errE != nil {
 				return nil, sdk.WrapError(errE, "LoadSecrets> Cannot load environment variables")
 			}
-			ev = sdk.VariablesFilter(envv, sdk.SecretVariable, sdk.KeyVariable)
+			ev = sdk.VariablesFilter(sdk.FromEnvironmentVariables(envv), sdk.SecretVariable, sdk.KeyVariable)
 			ev = sdk.VariablesPrefix(ev, "cds.env.")
 		}
 		secrets = append(secrets, ev...)
@@ -523,13 +525,6 @@ func LoadSecrets(db gorp.SqlExecutor, store cache.Store, nodeRun *sdk.WorkflowNo
 		}
 	}
 
-	//Decrypt secrets
-	for i := range secrets {
-		s := &secrets[i]
-		if err := secret.DecryptVariable(s); err != nil {
-			return nil, sdk.WrapError(err, "Unable to decrypt variables")
-		}
-	}
 	return secrets, nil
 }
 
@@ -586,6 +581,7 @@ func AddLog(db gorp.SqlExecutor, job *sdk.WorkflowNodeJobRun, logs *sdk.Log, max
 
 	// ignore the log if max size already reached
 	if maxReached := truncateLogs(maxLogSize, size, logs); maxReached {
+		log.Debug("truncated logs")
 		return nil
 	}
 

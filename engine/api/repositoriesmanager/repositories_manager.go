@@ -11,6 +11,8 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/ovh/cds/engine/api/database/gorpmapping"
+
 	"github.com/go-gorp/gorp"
 	gocache "github.com/patrickmn/go-cache"
 
@@ -72,19 +74,6 @@ func (c *vcsClient) Cache() *gocache.Cache {
 	return c.cache
 }
 
-// GetProjectVCSServer returns sdk.ProjectVCSServer for a project
-func GetProjectVCSServer(p sdk.Project, name string) *sdk.ProjectVCSServer {
-	if name == "" {
-		return nil
-	}
-	for _, v := range p.VCSServers {
-		if v.Name == name {
-			return &v
-		}
-	}
-	return nil
-}
-
 type Options struct {
 	Sync bool
 }
@@ -92,12 +81,10 @@ type Options struct {
 func GetReposForProjectVCSServer(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj sdk.Project, vcsServerName string, opts Options) ([]sdk.VCSRepo, error) {
 	log.Debug("GetReposForProjectVCSServer> Loading repo for %s", vcsServerName)
 
-	vcsServer := GetProjectVCSServer(proj, vcsServerName)
-	if vcsServer == nil {
-		return nil, sdk.WrapError(sdk.ErrNoReposManagerClientAuth, "cannot get client got %s %s", proj.Key, vcsServerName)
+	vcsServer, err := LoadProjectVCSServerLinkByProjectKeyAndVCSServerName(ctx, db, proj.Key, vcsServerName)
+	if err != nil {
+		return nil, sdk.NewError(sdk.ErrNoReposManagerClientAuth, err)
 	}
-
-	log.Debug("GetReposForProjectVCSServer> Loading repo for %s; ok", vcsServer.Name)
 
 	client, err := AuthorizedClient(ctx, db, store, proj.Key, vcsServer)
 	if err != nil {
@@ -174,9 +161,9 @@ func (c *vcsConsumer) AuthorizeToken(ctx context.Context, token string, secret s
 }
 
 func (c *vcsConsumer) GetAuthorizedClient(ctx context.Context, token, secret string, created int64) (sdk.VCSAuthorizedClientService, error) {
-	s := GetProjectVCSServer(*c.proj, c.name)
-	if s == nil {
-		return nil, sdk.ErrNoReposManagerClientAuth
+	_, err := LoadProjectVCSServerLinkByProjectKeyAndVCSServerName(ctx, c.dbFunc(ctx), c.proj.Key, c.name)
+	if err != nil {
+		return nil, sdk.NewError(sdk.ErrNoReposManagerClientAuth, err)
 	}
 
 	srvs, err := services.LoadAllByType(ctx, c.dbFunc(ctx), sdk.TypeVCS)
@@ -197,10 +184,12 @@ func (c *vcsConsumer) GetAuthorizedClient(ctx context.Context, token, secret str
 }
 
 //AuthorizedClient returns an implementation of AuthorizedClient wrapping calls to vcs uService
-func AuthorizedClient(ctx context.Context, db gorp.SqlExecutor, store cache.Store, projectKey string, repo *sdk.ProjectVCSServer) (sdk.VCSAuthorizedClientService, error) {
-	if repo == nil {
-		return nil, sdk.WithStack(sdk.ErrNoReposManagerClientAuth)
+func AuthorizedClient(ctx context.Context, db gorp.SqlExecutor, store cache.Store, projectKey string, repo sdk.ProjectVCSServerLink) (sdk.VCSAuthorizedClientService, error) {
+	repoData, err := LoadProjectVCSServerLinksData(ctx, db, repo.ID, gorpmapping.GetOptions.WithDecryption)
+	if err != nil {
+		return nil, err
 	}
+	repo.ProjectVCSServerLinkData = repoData
 
 	srvs, err := services.LoadAllByType(ctx, db, sdk.TypeVCS)
 	if err != nil {
@@ -208,8 +197,8 @@ func AuthorizedClient(ctx context.Context, db gorp.SqlExecutor, store cache.Stor
 	}
 	var created int64
 
-	if _, ok := repo.Data["created"]; ok {
-		created, err = strconv.ParseInt(repo.Data["created"], 10, 64)
+	if createdS, ok := repo.Get("created"); ok {
+		created, err = strconv.ParseInt(createdS, 10, 64)
 		if err != nil {
 			return nil, sdk.WithStack(err)
 		}
@@ -217,13 +206,15 @@ func AuthorizedClient(ctx context.Context, db gorp.SqlExecutor, store cache.Stor
 
 	vcs := &vcsClient{
 		name:       repo.Name,
-		token:      repo.Data["token"],
-		secret:     repo.Data["secret"],
 		created:    created,
 		srvs:       srvs,
 		db:         db,
 		projectKey: projectKey,
 	}
+
+	vcs.token, _ = repo.Get("token")
+	vcs.secret, _ = repo.Get("secret")
+
 	return vcs, nil
 }
 
@@ -239,15 +230,15 @@ func (c *vcsClient) doJSONRequest(ctx context.Context, method, path string, in i
 	if code >= 400 {
 		switch code {
 		case http.StatusUnauthorized:
-			err = sdk.WrapError(sdk.ErrNoReposManagerClientAuth, "%s", err)
+			err = sdk.NewError(sdk.ErrNoReposManagerClientAuth, err)
 		case http.StatusBadRequest:
-			err = sdk.WrapError(sdk.ErrWrongRequest, "%s", err)
+			err = sdk.NewError(sdk.ErrWrongRequest, err)
 		case http.StatusNotFound:
-			err = sdk.WrapError(sdk.ErrNotFound, "%s", err)
+			err = sdk.NewError(sdk.ErrNotFound, err)
 		case http.StatusForbidden:
-			err = sdk.WrapError(sdk.ErrForbidden, "%s", err)
+			err = sdk.NewError(sdk.ErrForbidden, err)
 		default:
-			err = sdk.WrapError(sdk.ErrUnknownError, "%s", err)
+			err = sdk.NewError(sdk.ErrUnknownError, err)
 		}
 	}
 
@@ -270,21 +261,21 @@ func (c *vcsClient) checkAccessToken(ctx context.Context, header http.Header) er
 	if newAccessToken := header.Get(sdk.HeaderXAccessToken); newAccessToken != "" {
 		c.token = newAccessToken
 
-		vcsservers, err := LoadAllForProject(c.db, c.projectKey)
+		vcsserver, err := LoadProjectVCSServerLinkByProjectKeyAndVCSServerName(ctx, c.db, c.projectKey, c.name)
 		if err != nil {
-			return sdk.WrapError(err, "cannot load vcs servers for project %s", c.projectKey)
+			return sdk.NewErrorFrom(err, "cannot load vcs servers for project %s", c.projectKey)
 		}
 
-		for i := range vcsservers {
-			if vcsservers[i].Name == c.name {
-				vcsservers[i].Data["token"] = c.token
-				vcsservers[i].Data["created"] = fmt.Sprintf("%d", time.Now().Unix())
-				break
-			}
+		vcsserver.ProjectVCSServerLinkData, err = LoadProjectVCSServerLinksData(ctx, c.db, vcsserver.ID, gorpmapping.GetOptions.WithDecryption)
+		if err != nil {
+			return err
 		}
 
-		if err := UpdateForProject(c.db, &sdk.Project{Key: c.projectKey}, vcsservers); err != nil {
-			return sdk.WrapError(err, "cannot update vcsservers for project %s", c.projectKey)
+		vcsserver.Set("token", c.token)
+		vcsserver.Set("created", strconv.FormatInt(time.Now().Unix(), 10))
+
+		if err := UpdateProjectVCSServerLink(ctx, c.db, &vcsserver); err != nil {
+			return err
 		}
 	}
 
@@ -464,20 +455,16 @@ func (c *vcsClient) PullRequestCreate(ctx context.Context, fullname string, pr s
 
 func (c *vcsClient) CreateHook(ctx context.Context, fullname string, hook *sdk.VCSHook) error {
 	path := fmt.Sprintf("/vcs/%s/repos/%s/hooks", c.name, fullname)
-	_, err := c.doJSONRequest(ctx, "POST", path, hook, hook)
-	if err != nil {
-		log.Error(ctx, "CreateHook> %v", err)
-		return sdk.NewErrorFrom(sdk.ErrUnknownError, "unable to create hook on repository %s from %s", fullname, c.name)
+	if _, err := c.doJSONRequest(ctx, "POST", path, hook, hook); err != nil {
+		return sdk.NewErrorFrom(err, "unable to create hook on repository %s from %s", fullname, c.name)
 	}
 	return nil
 }
 
 func (c *vcsClient) UpdateHook(ctx context.Context, fullname string, hook *sdk.VCSHook) error {
 	path := fmt.Sprintf("/vcs/%s/repos/%s/hooks", c.name, fullname)
-	_, err := c.doJSONRequest(ctx, "PUT", path, hook, hook)
-	if err != nil {
-		log.Error(ctx, "UpdateHook> %v", err)
-		return sdk.NewErrorFrom(sdk.ErrUnknownError, "unable to update hook %s on repository %s from %s", hook.ID, fullname, c.name)
+	if _, err := c.doJSONRequest(ctx, "PUT", path, hook, hook); err != nil {
+		return sdk.NewErrorFrom(err, "unable to update hook %s on repository %s from %s", hook.ID, fullname, c.name)
 	}
 	return nil
 }

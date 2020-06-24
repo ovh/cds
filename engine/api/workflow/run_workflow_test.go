@@ -22,8 +22,8 @@ import (
 )
 
 func TestManualRun1(t *testing.T) {
-	db, cache, end := test.SetupPG(t, bootstrap.InitiliazeDB)
-	defer end()
+	db, cache := test.SetupPG(t, bootstrap.InitiliazeDB)
+
 	u, _ := assets.InsertAdminUser(t, db)
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, cache, key, key)
@@ -182,8 +182,8 @@ func TestManualRun1(t *testing.T) {
 }
 
 func TestManualRun2(t *testing.T) {
-	db, cache, end := test.SetupPG(t, bootstrap.InitiliazeDB)
-	defer end()
+	db, cache := test.SetupPG(t, bootstrap.InitiliazeDB)
+
 	u, _ := assets.InsertAdminUser(t, db)
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, cache, key, key)
@@ -301,8 +301,8 @@ func TestManualRun2(t *testing.T) {
 }
 
 func TestManualRun3(t *testing.T) {
-	db, cache, end := test.SetupPG(t, bootstrap.InitiliazeDB)
-	defer end()
+	db, cache := test.SetupPG(t, bootstrap.InitiliazeDB)
+
 	u, _ := assets.InsertAdminUser(t, db)
 	consumer, _ := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
 
@@ -317,7 +317,7 @@ func TestManualRun3(t *testing.T) {
 	proj := assets.InsertTestProject(t, db, cache, key, key)
 
 	// Add variable
-	v := sdk.Variable{
+	v := sdk.ProjectVariable{
 		Name:  "foo",
 		Type:  sdk.SecretVariable,
 		Value: "bar",
@@ -589,14 +589,14 @@ queueRun:
 			t.FailNow()
 		}
 
+		sp := sdk.SpawnMsg{ID: sdk.MsgSpawnInfoHatcheryStarts.ID}
 		//AddSpawnInfosNodeJobRun
 		err := workflow.AddSpawnInfosNodeJobRun(db, j.WorkflowNodeRunID, j.ID, []sdk.SpawnInfo{
 			{
-				APITime:    time.Now(),
-				RemoteTime: time.Now(),
-				Message: sdk.SpawnMsg{
-					ID: sdk.MsgSpawnInfoHatcheryStarts.ID,
-				},
+				APITime:     time.Now(),
+				RemoteTime:  time.Now(),
+				Message:     sp,
+				UserMessage: sp.DefaultUserMessage(),
 			},
 		})
 		assert.NoError(t, err)
@@ -605,15 +605,15 @@ queueRun:
 			t.FailNow()
 		}
 
+		sp = sdk.SpawnMsg{ID: sdk.MsgSpawnInfoJobTaken.ID}
 		//TakeNodeJobRun
 		takenJobID := j.ID
 		takenJob, _, _ := workflow.TakeNodeJobRun(context.TODO(), db, cache, *proj, takenJobID, "model", "worker", "1", []sdk.SpawnInfo{
 			{
-				APITime:    time.Now(),
-				RemoteTime: time.Now(),
-				Message: sdk.SpawnMsg{
-					ID: sdk.MsgSpawnInfoJobTaken.ID,
-				},
+				APITime:     time.Now(),
+				RemoteTime:  time.Now(),
+				Message:     sp,
+				UserMessage: sp.DefaultUserMessage(),
 			},
 		}, "hatchery_name")
 
@@ -827,8 +827,8 @@ queueRun:
 }
 
 func TestNoStage(t *testing.T) {
-	db, cache, end := test.SetupPG(t, bootstrap.InitiliazeDB)
-	defer end()
+	db, cache := test.SetupPG(t, bootstrap.InitiliazeDB)
+
 	u, _ := assets.InsertAdminUser(t, db)
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, cache, key, key)
@@ -897,8 +897,8 @@ func TestNoStage(t *testing.T) {
 }
 
 func TestNoJob(t *testing.T) {
-	db, cache, end := test.SetupPG(t, bootstrap.InitiliazeDB)
-	defer end()
+	db, cache := test.SetupPG(t, bootstrap.InitiliazeDB)
+
 	u, _ := assets.InsertAdminUser(t, db)
 	consumer, _ := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
 

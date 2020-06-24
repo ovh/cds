@@ -267,10 +267,8 @@ See $ engine config command for more details.
 			GraylogFieldCDSArch:        sdk.GOARCH,
 			GraylogFieldCDSServiceName: strings.Join(names, "_"),
 			GraylogFieldCDSServiceType: strings.Join(types, "_"),
-			Ctx:                        ctx,
 		}
-		// TODO Logger: each service should have it own logger
-		log.Initialize(&logConf)
+		log.Initialize(ctx, &logConf)
 
 		// Sort the slice of services we have to start to be sure to start the API au first
 		sort.Slice(serviceConfs, func(i, j int) bool {

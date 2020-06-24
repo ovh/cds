@@ -189,6 +189,7 @@ func (w *CurrentWorker) runAction(ctx context.Context, a sdk.Action, jobID int64
 	var t0 = time.Now()
 	defer func() {
 		w.SendLog(ctx, workerruntime.LevelInfo, fmt.Sprintf("End of step \"%s\" (%s)", actionName, sdk.Round(time.Since(t0), time.Second).String()))
+		w.gelfLogger.hook.Flush()
 	}()
 
 	//If the action is disabled; skip it
@@ -224,10 +225,11 @@ func (w *CurrentWorker) runAction(ctx context.Context, a sdk.Action, jobID int64
 	//If the action if a edge of the action tree; run it
 	switch a.Type {
 	case sdk.BuiltinAction:
-		return w.runBuiltin(ctx, a, secrets)
+		res := w.runBuiltin(ctx, a, secrets)
+		return res
 	case sdk.PluginAction:
-		//Run the plugin
-		return w.runGRPCPlugin(ctx, a)
+		res := w.runGRPCPlugin(ctx, a)
+		return res
 	}
 
 	// There is is no children actions (action is empty) to do, success !
@@ -512,11 +514,7 @@ func (w *CurrentWorker) ProcessJob(jobInfo sdk.WorkflowNodeJobRunData) (res sdk.
 	ctx = workerruntime.SetStepOrder(ctx, 0)
 
 	defer func() {
-		if res.Status == sdk.StatusSuccess {
-			log.Info(ctx, "processJob> Status: %s", res.Status)
-		} else {
-			log.Error(ctx, "processJob> Status: %s | Reason: %s", res.Status, res.Reason)
-		}
+		log.Warning(ctx, "processJob> Status: %s | Reason: %s", res.Status, res.Reason)
 	}()
 
 	wdFile, wdAbs, err := w.setupWorkingDirectory(ctx, jobInfo)
@@ -610,6 +608,7 @@ func (w *CurrentWorker) ProcessJob(jobInfo sdk.WorkflowNodeJobRunData) (res sdk.
 	if err := teardownDirectory(w.basedir, ""); err != nil {
 		log.Error(ctx, "Cannot remove basedir content: %s", err)
 	}
+	w.gelfLogger.hook.Flush()
 
 	return res
 }

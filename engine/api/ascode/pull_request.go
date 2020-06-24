@@ -20,8 +20,9 @@ type EventType string
 
 // AsCodeEventType values.
 const (
-	PipelineEvent EventType = "pipeline"
-	WorkflowEvent EventType = "workflow"
+	PipelineEvent    EventType = "pipeline"
+	WorkflowEvent    EventType = "workflow"
+	ApplicationEvent EventType = "application"
 )
 
 type EntityData struct {
@@ -93,9 +94,9 @@ forLoop:
 }
 
 func createPullRequest(ctx context.Context, db *gorp.DbMap, store cache.Store, proj sdk.Project, workflowHolderID int64, rootApp sdk.Application, ed EntityData, u sdk.Identifiable, opeSetup sdk.OperationSetup) (*sdk.AsCodeEvent, error) {
-	vcsServer := repositoriesmanager.GetProjectVCSServer(proj, rootApp.VCSServer)
-	if vcsServer == nil {
-		return nil, sdk.NewErrorFrom(sdk.ErrNotFound, "no vcs server found on application %s", rootApp.Name)
+	vcsServer, err := repositoriesmanager.LoadProjectVCSServerLinkByProjectKeyAndVCSServerName(ctx, db, proj.Key, rootApp.VCSServer)
+	if err != nil {
+		return nil, err
 	}
 	client, err := repositoriesmanager.AuthorizedClient(ctx, db, store, proj.Key, vcsServer)
 	if err != nil {
@@ -183,6 +184,20 @@ func createPullRequest(ctx context.Context, db *gorp.DbMap, store cache.Store, p
 		}
 		if !found {
 			asCodeEvent.Data.Pipelines[ed.ID] = ed.Name
+		}
+	case ApplicationEvent:
+		if asCodeEvent.Data.Applications == nil {
+			asCodeEvent.Data.Applications = make(map[int64]string)
+		}
+		found := false
+		for k := range asCodeEvent.Data.Applications {
+			if k == ed.ID {
+				found = true
+				break
+			}
+		}
+		if !found {
+			asCodeEvent.Data.Applications[ed.ID] = ed.Name
 		}
 	}
 

@@ -16,6 +16,7 @@ import { ApplicationService } from './application/application.service';
 import { ApplicationStore } from './application/application.store';
 import { ApplicationWorkflowService } from './application/application.workflow.service';
 import { AuthenticationService } from './authentication/authentication.service';
+import { ErrorInterceptor } from './authentication/error.interceptor';
 import { LogoutInterceptor } from './authentication/logout.interceptor';
 import { XSRFInterceptor } from './authentication/xsrf.interceptor';
 import { BroadcastService } from './broadcast/broadcast.service';
@@ -138,6 +139,11 @@ export class ServicesModule {
                 {
                     provide: HTTP_INTERCEPTORS,
                     useClass: LogoutInterceptor,
+                    multi: true
+                },
+                {
+                    provide: HTTP_INTERCEPTORS,
+                    useClass: ErrorInterceptor,
                     multi: true
                 }
             ]

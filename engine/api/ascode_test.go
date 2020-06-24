@@ -56,19 +56,19 @@ func writeError(w *http.Response, err error) (*http.Response, error) {
 }
 
 func Test_postImportAsCodeHandler(t *testing.T) {
-	api, db, _, end := newTestAPI(t)
-	defer end()
+	api, db, _ := newTestAPI(t)
 
 	u, pass := assets.InsertAdminUser(t, db)
 
 	p := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
-	assert.NoError(t, repositoriesmanager.InsertForProject(db, p, &sdk.ProjectVCSServer{
-		Name: "github",
-		Data: map[string]string{
-			"token":  "foo",
-			"secret": "bar",
-		},
-	}))
+	vcsServer := sdk.ProjectVCSServerLink{
+		ProjectID: p.ID,
+		Name:      "github",
+	}
+	vcsServer.Set("token", "foo")
+	vcsServer.Set("secret", "bar")
+
+	assert.NoError(t, repositoriesmanager.InsertProjectVCSServerLink(context.TODO(), db, &vcsServer))
 
 	a, _ := assets.InsertService(t, db, "Test_postImportAsCodeHandler", sdk.TypeRepositories)
 	b, _ := assets.InsertService(t, db, "Test_VCSService", sdk.TypeVCS)
@@ -137,8 +137,7 @@ func Test_postImportAsCodeHandler(t *testing.T) {
 }
 
 func Test_getImportAsCodeHandler(t *testing.T) {
-	api, db, _, end := newTestAPI(t)
-	defer end()
+	api, db, _ := newTestAPI(t)
 
 	p := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
 	u, pass := assets.InsertAdminUser(t, db)
@@ -201,8 +200,7 @@ func Test_getImportAsCodeHandler(t *testing.T) {
 }
 
 func Test_postPerformImportAsCodeHandler(t *testing.T) {
-	api, db, _, end := newTestAPI(t)
-	defer end()
+	api, db, _ := newTestAPI(t)
 
 	u, pass := assets.InsertAdminUser(t, db)
 
@@ -210,14 +208,23 @@ func Test_postPerformImportAsCodeHandler(t *testing.T) {
 
 	//Insert Project
 	pkey := sdk.RandomString(10)
-	_ = assets.InsertTestProject(t, db, api.Cache, pkey, pkey)
+	p := assets.InsertTestProject(t, db, api.Cache, pkey, pkey)
+	vcsServer := sdk.ProjectVCSServerLink{
+		ProjectID: p.ID,
+		Name:      "github",
+	}
+	vcsServer.Set("token", "foo")
+	vcsServer.Set("secret", "bar")
+	assert.NoError(t, repositoriesmanager.InsertProjectVCSServerLink(context.TODO(), db, &vcsServer))
 
-	a, _ := assets.InsertService(t, db, "Test_postPerformImportAsCodeHandler_Repo", sdk.TypeRepositories)
-	b, _ := assets.InsertService(t, db, "Test_postPerformImportAsCodeHandler_VCS", sdk.TypeHooks)
+	a, _ := assets.InsertService(t, db, "Test_postPerformImportAsCodeHandler_Repo", services.TypeRepositories)
+	b, _ := assets.InsertService(t, db, "Test_postPerformImportAsCodeHandler_VCS", services.TypeVCS)
+	c, _ := assets.InsertService(t, db, "Test_postPerformImportAsCodeHandler_Hooks", services.TypeHooks)
 
 	defer func() {
 		_ = services.Delete(db, a)
 		_ = services.Delete(db, b)
+		_ = services.Delete(db, c)
 	}()
 
 	UUID := sdk.UUID()
@@ -227,6 +234,36 @@ func Test_postPerformImportAsCodeHandler(t *testing.T) {
 		func(r *http.Request) (*http.Response, error) {
 			t.Logf("RequestURI: %s", r.URL.Path)
 			switch r.URL.Path {
+			case "/vcs/github/webhooks":
+				hookInfo := repositoriesmanager.WebhooksInfos{
+					WebhooksSupported: true,
+					WebhooksDisabled:  false,
+				}
+				body := new(bytes.Buffer)
+				w := new(http.Response)
+				enc := json.NewEncoder(body)
+				w.Body = ioutil.NopCloser(body)
+				if err := enc.Encode(hookInfo); err != nil {
+					return writeError(w, err)
+				}
+				w.StatusCode = http.StatusOK
+				return w, nil
+			case "/vcs/github/repos/go-repo/branches":
+				b := sdk.VCSBranch{
+					Default:      true,
+					DisplayID:    "master",
+					LatestCommit: "mylastcommit",
+				}
+
+				body := new(bytes.Buffer)
+				w := new(http.Response)
+				enc := json.NewEncoder(body)
+				w.Body = ioutil.NopCloser(body)
+				if err := enc.Encode([]sdk.VCSBranch{b}); err != nil {
+					return writeError(w, err)
+				}
+				w.StatusCode = http.StatusOK
+				return w, nil
 			case "/task/bulk":
 				hooks := map[string]sdk.NodeHook{}
 				if err := service.UnmarshalBody(r, &hooks); err != nil {
@@ -307,8 +344,7 @@ version: v1.0`),
 }
 
 func Test_postResyncPRAsCodeHandler(t *testing.T) {
-	api, db, _, end := newTestAPI(t)
-	defer end()
+	api, db, _ := newTestAPI(t)
 
 	repoURL := sdk.RandomString(10)
 
@@ -316,13 +352,13 @@ func Test_postResyncPRAsCodeHandler(t *testing.T) {
 	pkey := sdk.RandomString(10)
 	p := assets.InsertTestProject(t, db, api.Cache, pkey, pkey)
 
-	assert.NoError(t, repositoriesmanager.InsertForProject(db, p, &sdk.ProjectVCSServer{
-		Name: "github",
-		Data: map[string]string{
-			"token":  "foo",
-			"secret": "bar",
-		},
-	}))
+	vcsServer := sdk.ProjectVCSServerLink{
+		ProjectID: p.ID,
+		Name:      "github",
+	}
+	vcsServer.Set("token", "foo")
+	vcsServer.Set("secret", "bar")
+	assert.NoError(t, repositoriesmanager.InsertProjectVCSServerLink(context.TODO(), db, &vcsServer))
 
 	// Add application
 	appS := `version: v1.0

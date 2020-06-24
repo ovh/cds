@@ -1,17 +1,14 @@
 /* tslint:disable:no-unused-variable */
-import {TestBed, getTestBed, fakeAsync, tick} from '@angular/core/testing';
+import {TestBed, fakeAsync, tick} from '@angular/core/testing';
 import {TranslateService, TranslateLoader, TranslateParser, TranslateModule} from '@ngx-translate/core';
 import {SharedService} from '../../shared.service';
 import {RouterTestingModule} from '@angular/router/testing';
 import {VariableAudit} from '../../../model/variable.model';
-import {Injector} from '@angular/core';
 import {SharedModule} from '../../shared.module';
 import {VariableAuditComponent} from './audit.component';
 import {APP_BASE_HREF} from '@angular/common';
 
 describe('CDS: Variable Audit Component', () => {
-
-    let injector: Injector;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -31,14 +28,7 @@ describe('CDS: Variable Audit Component', () => {
             ]
         });
 
-        injector = getTestBed();
-
     });
-
-    afterEach(() => {
-        injector = undefined;
-    });
-
 
     it('Load Component', fakeAsync( () => {
         // Create component

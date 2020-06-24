@@ -2,7 +2,7 @@ package sdk
 
 // EventProjectAdd represents the event when adding a project
 type EventProjectAdd struct {
-	Variables   []Variable        `json:"variables"`
+	Variables   []ProjectVariable `json:"variables"`
 	Permissions []GroupPermission `json:"groups_permission"`
 	Keys        []ProjectKey      `json:"keys"`
 	Metadata    Metadata          `json:"metadata"`
@@ -22,18 +22,18 @@ type EventProjectDelete struct {
 
 // EventProjectVariableAdd represents the event when adding a project variable
 type EventProjectVariableAdd struct {
-	Variable Variable `json:"variable"`
+	Variable ProjectVariable `json:"variable"`
 }
 
 // EventProjectVariableUpdate represents the event when updating a project variable
 type EventProjectVariableUpdate struct {
-	OldVariable Variable `json:"old_variable"`
-	NewVariable Variable `json:"new_variable"`
+	OldVariable ProjectVariable `json:"old_variable"`
+	NewVariable ProjectVariable `json:"new_variable"`
 }
 
 // EventProjectVariableDelete represents the event when deleting a project variable
 type EventProjectVariableDelete struct {
-	Variable Variable `json:"variable"`
+	Variable ProjectVariable `json:"variable"`
 }
 
 // EventProjectPermissionAdd represents the event when adding a project permission

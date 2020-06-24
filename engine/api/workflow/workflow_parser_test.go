@@ -4,10 +4,11 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	v2 "github.com/ovh/cds/sdk/exportentities/v2"
 	"io/ioutil"
 	"net/http"
 	"testing"
+
+	v2 "github.com/ovh/cds/sdk/exportentities/v2"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -27,8 +28,8 @@ import (
 )
 
 func TestParseAndImport(t *testing.T) {
-	db, cache, end := test.SetupPG(t)
-	defer end()
+	db, cache := test.SetupPG(t)
+
 	u, _ := assets.InsertAdminUser(t, db)
 	localConsumer, err := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
 	require.NoError(t, err)
@@ -115,19 +116,19 @@ func TestParseAndImport(t *testing.T) {
 
 // TestParseAndImportFromRepository tests to import a workflow with FromRepository
 func TestParseAndImportFromRepository(t *testing.T) {
-	db, cache, end := test.SetupPG(t)
-	defer end()
+	db, cache := test.SetupPG(t)
+
 	u, _ := assets.InsertAdminUser(t, db)
 
 	pkey := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, cache, pkey, pkey)
-	assert.NoError(t, repositoriesmanager.InsertForProject(db, proj, &sdk.ProjectVCSServer{
-		Name: "github",
-		Data: map[string]string{
-			"token":  "foo",
-			"secret": "bar",
-		},
-	}))
+	vcsServer := sdk.ProjectVCSServerLink{
+		ProjectID: proj.ID,
+		Name:      "github",
+	}
+	vcsServer.Set("token", "foo")
+	vcsServer.Set("secret", "bar")
+	assert.NoError(t, repositoriesmanager.InsertProjectVCSServerLink(context.TODO(), db, &vcsServer))
 
 	UUID := sdk.UUID()
 

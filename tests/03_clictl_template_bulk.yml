@@ -32,5 +32,5 @@ testcases:
     - result.code ShouldEqual 0
     - result.systemoutjson.operations.operations0.status ShouldEqual 2
     - result.systemoutjson.operations.operations1.status ShouldEqual 3
-    - result.systemoutjson.operations.operations1.error ShouldEqual 'Unsupported when condition ok'
+    - result.systemoutjson.operations.operations1.error ShouldEqual 'unsupported when condition ok'
     - result.systemoutjson.operations.operations2.status ShouldEqual 2

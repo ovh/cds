@@ -14,8 +14,8 @@ import (
 )
 
 func TestCRUDIntegration(t *testing.T) {
-	db, _, end := test.SetupPG(t, bootstrap.InitiliazeDB)
-	defer end()
+	db, _ := test.SetupPG(t, bootstrap.InitiliazeDB)
+
 	project.Delete(db, "key")
 
 	proj := sdk.Project{

@@ -2,7 +2,6 @@ package v1
 
 import (
 	"context"
-	"fmt"
 	"sort"
 	"strings"
 
@@ -59,7 +58,7 @@ func craftNotificationEntry(ctx context.Context, w sdk.Workflow, notif sdk.Workf
 	if entry.Settings.Template != nil {
 		defaultTemplate, has := sdk.UserNotificationTemplateMap[entry.Type]
 		if !has {
-			return nil, entry, fmt.Errorf("workflow notification %s not found", entry.Type)
+			return nil, entry, sdk.NewErrorFrom(sdk.ErrWrongRequest, "workflow notification %s not found", entry.Type)
 		}
 		if defaultTemplate.Subject == entry.Settings.Template.Subject {
 			entry.Settings.Template.Subject = ""
@@ -112,11 +111,11 @@ func CheckWorkflowNotificationsValidity(w Workflow) error {
 	mError := new(sdk.MultiError)
 	if len(w.Workflow) != 0 {
 		if len(w.Notifications) != 0 {
-			mError.Append(fmt.Errorf("Error: wrong usage: notify not allowed here"))
+			mError.Append(sdk.NewErrorFrom(sdk.ErrWrongRequest, "notify not allowed here"))
 		}
 	} else {
 		if len(w.MapNotifications) > 0 {
-			mError.Append(fmt.Errorf("Error: wrong usage: notifications not allowed here"))
+			mError.Append(sdk.NewErrorFrom(sdk.ErrWrongRequest, "notifications not allowed here"))
 		}
 	}
 
@@ -126,7 +125,7 @@ func CheckWorkflowNotificationsValidity(w Workflow) error {
 			for _, s := range names {
 				name := strings.TrimSpace(s)
 				if _, ok := w.Workflow[name]; !ok {
-					mError.Append(fmt.Errorf("Error: wrong usage: invalid notification on %s (%s is missing)", nodeNames, name))
+					mError.Append(sdk.NewErrorFrom(sdk.ErrWrongRequest, "invalid notification on %s (%s is missing)", nodeNames, name))
 				}
 			}
 		}
@@ -144,7 +143,7 @@ func ProcessNotificationValues(notif NotificationEntry) (sdk.WorkflowNotificatio
 	defaultTemplate, has := sdk.UserNotificationTemplateMap[n.Type]
 	//Check the type
 	if !has {
-		return n, fmt.Errorf("Error: wrong usage: invalid notification type %s", n.Type)
+		return n, sdk.NewErrorFrom(sdk.ErrWrongRequest, "invalid notification type %s", n.Type)
 	}
 	//Default settings
 	if notif.Settings == nil {

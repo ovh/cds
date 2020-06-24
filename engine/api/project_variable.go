@@ -22,7 +22,8 @@ func (api *API) postEncryptVariableHandler() service.Handler {
 			return sdk.WrapError(errp, "unable to load project")
 		}
 
-		variable := new(sdk.Variable)
+		variable := new(sdk.ProjectVariable)
+		variable.ProjectID = p.ID
 		if err := service.UnmarshalBody(r, variable); err != nil {
 			return sdk.WrapError(err, "unable to read body")
 		}
@@ -111,7 +112,7 @@ func (api *API) updateVariableInProjectHandler() service.Handler {
 		key := vars[permProjectKey]
 		varName := vars["name"]
 
-		var newVar sdk.Variable
+		var newVar sdk.ProjectVariable
 		if err := service.UnmarshalBody(r, &newVar); err != nil {
 			return err
 		}
@@ -153,7 +154,7 @@ func (api *API) addVariableInProjectHandler() service.Handler {
 		key := vars[permProjectKey]
 		varName := vars["name"]
 
-		var newVar sdk.Variable
+		var newVar sdk.ProjectVariable
 		if err := service.UnmarshalBody(r, &newVar); err != nil {
 			return err
 		}

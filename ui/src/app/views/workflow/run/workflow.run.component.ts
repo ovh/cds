@@ -1,12 +1,13 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { Title } from '@angular/platform-browser';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Select, Store } from '@ngxs/store';
 import { PipelineStatus, SpawnInfo } from 'app/model/pipeline.model';
 import { Project } from 'app/model/project.model';
 import { WorkflowRun } from 'app/model/workflow.run.model';
 import { NotificationService } from 'app/service/notification/notification.service';
+import { RouterService } from 'app/service/router/router.service';
 import { WorkflowStore } from 'app/service/workflow/workflow.store';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { ProjectState } from 'app/store/project.state';
@@ -55,13 +56,20 @@ export class WorkflowRunComponent implements OnInit {
         private _notification: NotificationService,
         private _translate: TranslateService,
         private _titleService: Title,
-        private _cd: ChangeDetectorRef
+        private _cd: ChangeDetectorRef,
+        private _router: Router,
+        private _routerService: RouterService
     ) {
         this.project = this._store.selectSnapshot(ProjectState.projectSnapshot);
         this.workflowName = this._store.selectSnapshot(WorkflowState.workflowSnapshot).name;
         this._store.dispatch(new ChangeToRunView({}));
 
         this.paramsSub = this._activatedRoute.params.subscribe(p => {
+            let allParamsSnapshot = this._routerService.getRouteSnapshotParams({}, this._router.routerState.snapshot.root);
+            if (allParamsSnapshot['workflowName'] !== this.workflowName) {
+                // If workflow change, component will be destroy by parent
+                return;
+            }
             this.workflowRunData = {};
             this._cd.markForCheck();
             this._store.dispatch(
@@ -75,7 +83,7 @@ export class WorkflowRunComponent implements OnInit {
 
         // Subscribe to workflow Run
         this.subWorkflowRun = this.workflowRun$.subscribe(wr => {
-            if (!wr || wr.status === 'Pending') {
+            if (!wr) {
                 return;
             }
 

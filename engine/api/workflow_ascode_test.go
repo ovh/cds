@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
@@ -31,8 +30,7 @@ import (
 )
 
 func TestPostUpdateWorkflowAsCodeHandler(t *testing.T) {
-	api, db, _, end := newTestAPI(t)
-	defer end()
+	api, db, _ := newTestAPI(t)
 
 	_, _ = assets.InsertService(t, db, t.Name()+"_HOOKS", sdk.TypeHooks)
 	_, _ = assets.InsertService(t, db, t.Name()+"_VCS", sdk.TypeVCS)
@@ -187,6 +185,10 @@ func TestPostUpdateWorkflowAsCodeHandler(t *testing.T) {
 	})
 
 	req := assets.NewJWTAuthentifiedRequest(t, pass, "POST", uri, w)
+	q := req.URL.Query()
+	q.Set("branch", "master")
+	q.Set("message", "my message")
+	req.URL.RawQuery = q.Encode()
 
 	// Do the request
 	wr := httptest.NewRecorder()
@@ -198,6 +200,13 @@ func TestPostUpdateWorkflowAsCodeHandler(t *testing.T) {
 
 	retry := 0
 	for {
+		retry++
+		if retry > 10 {
+			t.Log("Number of retry reached")
+			t.Fail()
+			break
+		}
+
 		// Get operation
 		uriGET := api.Router.GetRoute("GET", api.getWorkflowAsCodeHandler, map[string]string{
 			"key":              proj.Key,
@@ -205,33 +214,27 @@ func TestPostUpdateWorkflowAsCodeHandler(t *testing.T) {
 			"uuid":             myOpe.UUID,
 		})
 		reqGET, err := http.NewRequest("GET", uriGET, nil)
-		test.NoError(t, err)
+		require.NoError(t, err)
 		assets.AuthentifyRequest(t, reqGET, u, pass)
 		wrGet := httptest.NewRecorder()
 		api.Router.Mux.ServeHTTP(wrGet, reqGET)
-		assert.Equal(t, 200, wrGet.Code)
+		require.Equal(t, 200, wrGet.Code)
+
 		myOpeGet := new(sdk.Operation)
-		assert.NoError(t, json.Unmarshal(wrGet.Body.Bytes(), myOpeGet))
+		require.NoError(t, json.Unmarshal(wrGet.Body.Bytes(), myOpeGet))
 		if myOpeGet.Status < sdk.OperationStatusDone {
 			time.Sleep(1 * time.Second)
-			retry++
-
-			if retry > 10 {
-				t.Fail()
-				break
-			}
 			continue
 		}
-		test.NoError(t, json.Unmarshal(wrGet.Body.Bytes(), myOpeGet))
+
+		require.Equal(t, sdk.OperationStatusDone, myOpeGet.Status, "Invalid status for operation %v", string(wrGet.Body.Bytes()))
 		assert.Equal(t, "myURL", myOpeGet.Setup.Push.PRLink)
 		break
 	}
-
 }
 
 func TestPostMigrateWorkflowAsCodeHandler(t *testing.T) {
-	api, db, _, end := newTestAPI(t)
-	defer end()
+	api, db, _ := newTestAPI(t)
 
 	u, pass := assets.InsertAdminUser(t, db)
 
@@ -381,7 +384,12 @@ func TestPostMigrateWorkflowAsCodeHandler(t *testing.T) {
 		"permWorkflowName": w.Name,
 	})
 
-	req := assets.NewJWTAuthentifiedRequest(t, pass, "POST", fmt.Sprintf("%s?migrate=true", uri), nil)
+	req := assets.NewJWTAuthentifiedRequest(t, pass, "POST", uri, nil)
+	q := req.URL.Query()
+	q.Set("migrate", "true")
+	q.Set("branch", "master")
+	q.Set("message", "my message")
+	req.URL.RawQuery = q.Encode()
 
 	// Do the request
 	wr := httptest.NewRecorder()
@@ -393,12 +401,12 @@ func TestPostMigrateWorkflowAsCodeHandler(t *testing.T) {
 
 	cpt := 0
 	for {
+		cpt++
 		if cpt > 10 {
+			t.Log("Number of retry reached")
 			t.Fail()
 			break
 		}
-		cpt++
-		time.Sleep(2 * time.Second)
 
 		// Get operation
 		uriGET := api.Router.GetRoute("GET", api.getWorkflowAsCodeHandler, map[string]string{
@@ -407,17 +415,20 @@ func TestPostMigrateWorkflowAsCodeHandler(t *testing.T) {
 			"uuid":             myOpe.UUID,
 		})
 		reqGET, err := http.NewRequest("GET", uriGET, nil)
-		test.NoError(t, err)
+		require.NoError(t, err)
 		assets.AuthentifyRequest(t, reqGET, u, pass)
 		wrGet := httptest.NewRecorder()
 		api.Router.Mux.ServeHTTP(wrGet, reqGET)
-		assert.Equal(t, 200, wrGet.Code)
-		myOpeGet := new(sdk.Operation)
-		test.NoError(t, json.Unmarshal(wrGet.Body.Bytes(), myOpeGet))
+		require.Equal(t, 200, wrGet.Code)
 
+		myOpeGet := new(sdk.Operation)
+		require.NoError(t, json.Unmarshal(wrGet.Body.Bytes(), myOpeGet))
 		if myOpeGet.Status < sdk.OperationStatusDone {
+			time.Sleep(1 * time.Second)
 			continue
 		}
+
+		require.Equal(t, sdk.OperationStatusDone, myOpeGet.Status, "Invalid status for operation %v", string(wrGet.Body.Bytes()))
 		assert.Equal(t, "myURL", myOpeGet.Setup.Push.PRLink)
 		break
 	}
@@ -427,13 +438,14 @@ func createProject(t *testing.T, db *gorp.DbMap, api *API) *sdk.Project {
 	// Create Project
 	pkey := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, api.Cache, pkey, pkey)
-	assert.NoError(t, repositoriesmanager.InsertForProject(db, proj, &sdk.ProjectVCSServer{
-		Name: "github",
-		Data: map[string]string{
-			"token":  "foo",
-			"secret": "bar",
-		},
-	}))
+	vcsServer := sdk.ProjectVCSServerLink{
+		ProjectID: proj.ID,
+		Name:      "github",
+	}
+	vcsServer.Set("token", "foo")
+	vcsServer.Set("secret", "bar")
+	assert.NoError(t, repositoriesmanager.InsertProjectVCSServerLink(context.TODO(), db, &vcsServer))
+
 	return proj
 }
 
@@ -454,7 +466,7 @@ func createApplication(t *testing.T, db gorp.SqlExecutor, api *API, proj *sdk.Pr
 		VCSServer:          "github",
 	}
 	assert.NoError(t, application.Insert(db, *proj, &app))
-	assert.NoError(t, repositoriesmanager.InsertForApplication(db, &app, proj.Key))
+	assert.NoError(t, repositoriesmanager.InsertForApplication(db, &app))
 	return &app
 }
 
@@ -488,8 +500,7 @@ func initWorkflow(t *testing.T, db gorp.SqlExecutor, proj *sdk.Project, app *sdk
 }
 
 func Test_WorkflowAsCodeWithNotifications(t *testing.T) {
-	api, db, _, end := newTestAPI(t)
-	defer end()
+	api, db, _ := newTestAPI(t)
 
 	_, _ = assets.InsertService(t, db, t.Name()+"_HOOKS", sdk.TypeHooks)
 	_, _ = assets.InsertService(t, db, t.Name()+"_VCS", sdk.TypeVCS)
@@ -514,13 +525,13 @@ func Test_WorkflowAsCodeWithNotifications(t *testing.T) {
 	proj := assets.InsertTestProject(t, db, api.Cache, prjKey, prjKey)
 	u, pass := assets.InsertLambdaUser(t, db, &proj.ProjectGroups[0].Group)
 
-	require.NoError(t, repositoriesmanager.InsertForProject(db, proj, &sdk.ProjectVCSServer{
-		Name: "github",
-		Data: map[string]string{
-			"token":  "foo",
-			"secret": "bar",
-		},
-	}))
+	vcsServer := sdk.ProjectVCSServerLink{
+		ProjectID: proj.ID,
+		Name:      "github",
+	}
+	vcsServer.Set("token", "foo")
+	vcsServer.Set("secret", "bar")
+	assert.NoError(t, repositoriesmanager.InsertProjectVCSServerLink(context.TODO(), db, &vcsServer))
 
 	// Perform a "import as-code operation" to create a new workflow
 	ope := `{"repo_fullname":"fsamin/go-repo",  "vcs_server": "github", "url":"https://github.com/fsamin/go-repo.git","strategy":{"connection_type":"https","ssh_key":"","user":"","password":"","branch":"","default_branch":"master","pgp_key":""},"setup":{"checkout":{"branch":"master"}}}`

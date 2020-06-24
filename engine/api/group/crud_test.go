@@ -14,8 +14,7 @@ import (
 )
 
 func Test_Create_LoadByName_Delete(t *testing.T) {
-	db, _, end := test.SetupPG(t, bootstrap.InitiliazeDB)
-	defer end()
+	db, _ := test.SetupPG(t, bootstrap.InitiliazeDB)
 
 	u, _ := assets.InsertLambdaUser(t, db)
 

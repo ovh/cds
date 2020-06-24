@@ -9,5 +9,4 @@ jobs:
     - env
   requirements:
   - model: "${CDS_MODEL_REQ}"
-  - network: "${CDS_NETWORK_REQ}"
   - region: "${CDS_REGION_REQ}"

@@ -24,8 +24,7 @@ import (
 )
 
 func TestUpdateAsCodePipelineHandler(t *testing.T) {
-	api, db, _, end := newTestAPI(t)
-	defer end()
+	api, db, _ := newTestAPI(t)
 
 	u, pass := assets.InsertAdminUser(t, db)
 
@@ -130,13 +129,14 @@ func TestUpdateAsCodePipelineHandler(t *testing.T) {
 	// Create Project
 	pkey := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, api.Cache, pkey, pkey)
-	assert.NoError(t, repositoriesmanager.InsertForProject(db, proj, &sdk.ProjectVCSServer{
-		Name: "github",
-		Data: map[string]string{
-			"token":  "foo",
-			"secret": "bar",
-		},
-	}))
+	vcsServer := sdk.ProjectVCSServerLink{
+		ProjectID: proj.ID,
+		Name:      "github",
+	}
+	vcsServer.Set("token", "foo")
+	vcsServer.Set("secret", "bar")
+	assert.NoError(t, repositoriesmanager.InsertProjectVCSServerLink(context.TODO(), db, &vcsServer))
+
 	wkf := assets.InsertTestWorkflow(t, db, api.Cache, proj, sdk.RandomString(10))
 
 	pip := sdk.Pipeline{
@@ -162,7 +162,7 @@ func TestUpdateAsCodePipelineHandler(t *testing.T) {
 		FromRepository:     "myrepofrom",
 	}
 	assert.NoError(t, application.Insert(db, *proj, &app))
-	assert.NoError(t, repositoriesmanager.InsertForApplication(db, &app, proj.Key))
+	assert.NoError(t, repositoriesmanager.InsertForApplication(db, &app))
 
 	repoModel, err := workflow.LoadHookModelByName(db, sdk.RepositoryWebHookModelName)
 	assert.NoError(t, err)
@@ -176,6 +176,10 @@ func TestUpdateAsCodePipelineHandler(t *testing.T) {
 		"pipelineKey":    pip.Name,
 	})
 	req := assets.NewJWTAuthentifiedRequest(t, pass, "PUT", uri, pip)
+	q := req.URL.Query()
+	q.Set("branch", "master")
+	q.Set("message", "my message")
+	req.URL.RawQuery = q.Encode()
 
 	// Do the request
 	wr := httptest.NewRecorder()

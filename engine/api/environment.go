@@ -256,14 +256,14 @@ func (api *API) cloneEnvironmentHandler() service.Handler {
 		environmentName := vars["environmentName"]
 		cloneName := vars["cloneName"]
 
-		env, errEnv := environment.LoadEnvironmentByName(api.mustDB(), projectKey, environmentName)
-		if errEnv != nil {
-			return sdk.WrapError(errEnv, "cloneEnvironmentHandler> Cannot load environment %s: %s", environmentName, errEnv)
+		env, err := environment.LoadEnvironmentByName(api.mustDB(), projectKey, environmentName)
+		if err != nil {
+			return sdk.WrapError(err, "cannot load environment %s", environmentName)
 		}
 
-		p, errProj := project.Load(api.mustDB(), projectKey)
-		if errProj != nil {
-			return sdk.WrapError(errProj, "cloneEnvironmentHandler> Cannot load project %s: %s", projectKey, errProj)
+		p, err := project.Load(api.mustDB(), projectKey)
+		if err != nil {
+			return sdk.WrapError(err, "cannot load project %s", projectKey)
 		}
 
 		//Load all environments to check if there is another environment with the same name
@@ -274,11 +274,11 @@ func (api *API) cloneEnvironmentHandler() service.Handler {
 
 		for _, e := range envs {
 			if e.Name == cloneName {
-				return sdk.WrapError(sdk.ErrConflict, "cloneEnvironmentHandler> an environment was found with the same name: %s", cloneName)
+				return sdk.WrapError(sdk.ErrEnvironmentExist, "an environment was found with the same name: %s", cloneName)
 			}
 		}
 
-		variables := []sdk.Variable{}
+		variables := []sdk.EnvironmentVariable{}
 		for _, v := range env.Variables {
 			// do not clone secret variable to avoid 'secret value not specified'
 			if v.Type != sdk.SecretVariable {

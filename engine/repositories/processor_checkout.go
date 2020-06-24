@@ -14,10 +14,11 @@ func (s *Service) processCheckout(ctx context.Context, op *sdk.Operation) error 
 	}
 	log.Debug("processCheckout> repo cloned with current branch: %s", currentBranch)
 
-	if err := gitRepo.ResetHard("origin/" + currentBranch); err != nil {
+	// Clean no commited changes if exists
+	if err := gitRepo.ResetHard("HEAD"); err != nil {
 		return sdk.WithStack(err)
 	}
-	log.Debug("processCheckout> repo reset to origin/%s", currentBranch)
+	log.Debug("processCheckout> repo reset to HEAD")
 
 	if op.Setup.Checkout.Tag != "" {
 		log.Debug("processCheckout> fetching tag %s from %s", op.Setup.Checkout.Tag, op.URL)
@@ -38,8 +39,9 @@ func (s *Service) processCheckout(ctx context.Context, op *sdk.Operation) error 
 
 	// Check commit
 	if op.Setup.Checkout.Commit == "" {
-		log.Debug("processCheckout> pulling branch %s", op.Setup.Checkout.Branch)
-		if err := gitRepo.Pull("origin", op.Setup.Checkout.Branch); err != nil {
+		// Reset HARD to the latest commit of the remote branch (don't use pull because there can be conflicts if the remote was forced)
+		log.Debug("processCheckout> resetting the branch %s from remote", op.Setup.Checkout.Branch)
+		if err := gitRepo.ResetHard("origin/" + op.Setup.Checkout.Branch); err != nil {
 			return sdk.WithStack(err)
 		}
 	} else {

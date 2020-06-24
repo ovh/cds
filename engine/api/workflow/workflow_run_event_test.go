@@ -24,20 +24,19 @@ import (
 // Test ResyncCommitStatus with a notification where all is disabled.
 // Must: no error returned, only list status is called
 func TestResyncCommitStatusNotifDisabled(t *testing.T) {
-	db, cache, end := test.SetupPG(t)
-	defer end()
+	db, cache := test.SetupPG(t)
 
 	ctx := context.TODO()
 
 	pkey := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, cache, pkey, pkey)
-	assert.NoError(t, repositoriesmanager.InsertForProject(db, proj, &sdk.ProjectVCSServer{
-		Name: "gerrit",
-		Data: map[string]string{
-			"token":  "foo",
-			"secret": "bar",
-		},
-	}))
+	vcsServer := sdk.ProjectVCSServerLink{
+		ProjectID: proj.ID,
+		Name:      "gerrit",
+	}
+	vcsServer.Set("token", "foo")
+	vcsServer.Set("secret", "bar")
+	assert.NoError(t, repositoriesmanager.InsertProjectVCSServerLink(context.TODO(), db, &vcsServer))
 
 	// Create Application
 	app := sdk.Application{
@@ -50,7 +49,7 @@ func TestResyncCommitStatusNotifDisabled(t *testing.T) {
 		},
 	}
 	assert.NoError(t, application.Insert(db, *proj, &app))
-	assert.NoError(t, repositoriesmanager.InsertForApplication(db, &app, proj.Key))
+	assert.NoError(t, repositoriesmanager.InsertForApplication(db, &app))
 
 	tr := true
 	wr := &sdk.WorkflowRun{
@@ -122,20 +121,19 @@ func TestResyncCommitStatusNotifDisabled(t *testing.T) {
 // Test TestResyncCommitStatusSetStatus with a notification where all is disabled.
 // Must: no error returned, setStatus must be called
 func TestResyncCommitStatusSetStatus(t *testing.T) {
-	db, cache, end := test.SetupPG(t)
-	defer end()
+	db, cache := test.SetupPG(t)
 
 	ctx := context.TODO()
 
 	pkey := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, cache, pkey, pkey)
-	assert.NoError(t, repositoriesmanager.InsertForProject(db, proj, &sdk.ProjectVCSServer{
-		Name: "gerrit",
-		Data: map[string]string{
-			"token":  "foo",
-			"secret": "bar",
-		},
-	}))
+	vcsServer := sdk.ProjectVCSServerLink{
+		ProjectID: proj.ID,
+		Name:      "gerrit",
+	}
+	vcsServer.Set("token", "foo")
+	vcsServer.Set("secret", "bar")
+	assert.NoError(t, repositoriesmanager.InsertProjectVCSServerLink(context.TODO(), db, &vcsServer))
 
 	// Create Application
 	app := sdk.Application{
@@ -148,7 +146,7 @@ func TestResyncCommitStatusSetStatus(t *testing.T) {
 		},
 	}
 	assert.NoError(t, application.Insert(db, *proj, &app))
-	assert.NoError(t, repositoriesmanager.InsertForApplication(db, &app, proj.Key))
+	assert.NoError(t, repositoriesmanager.InsertForApplication(db, &app))
 
 	tr := true
 	wr := &sdk.WorkflowRun{
@@ -226,20 +224,19 @@ func TestResyncCommitStatusSetStatus(t *testing.T) {
 // Test TestResyncCommitStatusCommentPR with a notification where all is disabled.
 // Must: no error returned, postComment must be called
 func TestResyncCommitStatusCommentPR(t *testing.T) {
-	db, cache, end := test.SetupPG(t)
-	defer end()
+	db, cache := test.SetupPG(t)
 
 	ctx := context.TODO()
 
 	pkey := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, cache, pkey, pkey)
-	assert.NoError(t, repositoriesmanager.InsertForProject(db, proj, &sdk.ProjectVCSServer{
-		Name: "gerrit",
-		Data: map[string]string{
-			"token":  "foo",
-			"secret": "bar",
-		},
-	}))
+	vcsServer := sdk.ProjectVCSServerLink{
+		ProjectID: proj.ID,
+		Name:      "gerrit",
+	}
+	vcsServer.Set("token", "foo")
+	vcsServer.Set("secret", "bar")
+	assert.NoError(t, repositoriesmanager.InsertProjectVCSServerLink(context.TODO(), db, &vcsServer))
 
 	// Create Application
 	app := sdk.Application{
@@ -252,7 +249,7 @@ func TestResyncCommitStatusCommentPR(t *testing.T) {
 		},
 	}
 	assert.NoError(t, application.Insert(db, *proj, &app))
-	assert.NoError(t, repositoriesmanager.InsertForApplication(db, &app, proj.Key))
+	assert.NoError(t, repositoriesmanager.InsertForApplication(db, &app))
 
 	tr := true
 	fls := false
@@ -344,20 +341,19 @@ func TestResyncCommitStatusCommentPR(t *testing.T) {
 // Test TestResyncCommitStatusCommentPRNotTerminated with a notification where all is disabled.
 // Must: no error returned, postComment must be called
 func TestResyncCommitStatusCommentPRNotTerminated(t *testing.T) {
-	db, cache, end := test.SetupPG(t)
-	defer end()
+	db, cache := test.SetupPG(t)
 
 	ctx := context.TODO()
 
 	pkey := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, cache, pkey, pkey)
-	assert.NoError(t, repositoriesmanager.InsertForProject(db, proj, &sdk.ProjectVCSServer{
-		Name: "gerrit",
-		Data: map[string]string{
-			"token":  "foo",
-			"secret": "bar",
-		},
-	}))
+	vcsServer := sdk.ProjectVCSServerLink{
+		ProjectID: proj.ID,
+		Name:      "gerrit",
+	}
+	vcsServer.Set("token", "foo")
+	vcsServer.Set("secret", "bar")
+	assert.NoError(t, repositoriesmanager.InsertProjectVCSServerLink(context.TODO(), db, &vcsServer))
 
 	// Create Application
 	app := sdk.Application{
@@ -370,7 +366,7 @@ func TestResyncCommitStatusCommentPRNotTerminated(t *testing.T) {
 		},
 	}
 	assert.NoError(t, application.Insert(db, *proj, &app))
-	assert.NoError(t, repositoriesmanager.InsertForApplication(db, &app, proj.Key))
+	assert.NoError(t, repositoriesmanager.InsertForApplication(db, &app))
 
 	tr := true
 	fls := false
@@ -453,20 +449,19 @@ func TestResyncCommitStatusCommentPRNotTerminated(t *testing.T) {
 // Test TestResyncCommitStatus with a notification where all is disabled.
 // Must: no error returned, postComment must be called
 func TestResyncCommitStatusCommitCache(t *testing.T) {
-	db, cache, end := test.SetupPG(t)
-	defer end()
+	db, cache := test.SetupPG(t)
 
 	ctx := context.TODO()
 
 	pkey := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, cache, pkey, pkey)
-	assert.NoError(t, repositoriesmanager.InsertForProject(db, proj, &sdk.ProjectVCSServer{
-		Name: "gerrit",
-		Data: map[string]string{
-			"token":  "foo",
-			"secret": "bar",
-		},
-	}))
+	vcsServer := sdk.ProjectVCSServerLink{
+		ProjectID: proj.ID,
+		Name:      "gerrit",
+	}
+	vcsServer.Set("token", "foo")
+	vcsServer.Set("secret", "bar")
+	assert.NoError(t, repositoriesmanager.InsertProjectVCSServerLink(context.TODO(), db, &vcsServer))
 
 	// Create Application
 	app := sdk.Application{
@@ -479,7 +474,7 @@ func TestResyncCommitStatusCommitCache(t *testing.T) {
 		},
 	}
 	assert.NoError(t, application.Insert(db, *proj, &app))
-	assert.NoError(t, repositoriesmanager.InsertForApplication(db, &app, proj.Key))
+	assert.NoError(t, repositoriesmanager.InsertForApplication(db, &app))
 
 	tr := true
 	fls := false

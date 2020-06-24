@@ -52,6 +52,7 @@ type WorkflowRun struct {
 	ToDelete         bool                             `json:"to_delete" db:"to_delete" cli:"-"`
 	JoinTriggersRun  map[int64]WorkflowNodeTriggerRun `json:"join_triggers_run,omitempty" db:"-"`
 	Header           WorkflowRunHeaders               `json:"header,omitempty" db:"-"`
+	URLs             URL                              `json:"urls" yaml:"-" db:"-" cli:"-"`
 }
 
 // WorkflowNodeRunRelease represents the request struct use by release builtin action for workflow
@@ -78,8 +79,10 @@ type WorkflowRunNumber struct {
 // Translate translates messages in WorkflowNodeRun
 func (r *WorkflowRun) Translate(lang string) {
 	for ki, info := range r.Infos {
-		m := NewMessage(Messages[info.Message.ID], info.Message.Args...)
-		r.Infos[ki].UserMessage = m.String(lang)
+		if _, ok := Messages[info.Message.ID]; ok {
+			m := NewMessage(Messages[info.Message.ID], info.Message.Args...)
+			r.Infos[ki].UserMessage = m.String(lang)
+		}
 	}
 }
 
@@ -418,8 +421,10 @@ type WorkflowNodeJobRunInfo struct {
 // Translate translates messages in WorkflowNodeJobRun
 func (wnjr *WorkflowNodeJobRun) Translate(lang string) {
 	for ki, info := range wnjr.SpawnInfos {
-		m := NewMessage(Messages[info.Message.ID], info.Message.Args...)
-		wnjr.SpawnInfos[ki].UserMessage = m.String(lang)
+		if _, ok := Messages[info.Message.ID]; ok {
+			m := NewMessage(Messages[info.Message.ID], info.Message.Args...)
+			wnjr.SpawnInfos[ki].UserMessage = m.String(lang)
+		}
 	}
 }
 

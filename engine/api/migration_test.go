@@ -14,8 +14,7 @@ import (
 )
 
 func TestPostAdminMigrationCancelHandler(t *testing.T) {
-	api, db, router, end := newTestAPI(t)
-	defer end()
+	api, db, router := newTestAPI(t)
 
 	//Create admin user
 	_, jwt := assets.InsertAdminUser(t, api.mustDB())

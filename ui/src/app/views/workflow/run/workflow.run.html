@@ -3,8 +3,7 @@
         [class.above]="workflowRunData['status'] === pipelineStatusEnum.PENDING">
     </app-workflow-run-summary>
     <ng-container *ngIf="workflowRunData['status'] !== pipelineStatusEnum.PENDING; else pendingBlock">
-        <ng-container
-            *ngIf="displayError">
+        <ng-container *ngIf="displayError">
             <div class="ui grid">
                 <div class="ui row">
                     <div class="ui one wide column mt">
@@ -24,7 +23,7 @@
                                     <div content>
                                         <p>
                                             {{info.user_message}}. <span
-                                                *ngIf="errorsMap[info.message.id] && errorsMap[info.message.id].description">{{errorsMap[info.message.id].description}}</span>
+                                                *ngIf="errorsMap[info.message.id] && errorsMap[info.message.id].description">{{errorsMap[info.message.id].description | translate}}</span>
                                         </p>
                                         <p *ngIf="errorsMap[info.message.id] && errorsMap[info.message.id].link">
                                             <i class="book open icon"></i>{{'common_find_help' | translate}} <a
@@ -39,8 +38,7 @@
                 </div>
             </div>
         </ng-container>
-        <ng-container
-                *ngIf="warnings && warnings.length > 0">
+        <ng-container *ngIf="warnings && warnings.length > 0">
             <div class="ui grid">
                 <div class="ui row">
                     <div class="ui one wide column mt"></div>
@@ -52,7 +50,8 @@
                                     <div title>
                                         <i class="dropdown icon"></i>
                                         <i class="yellow exclamation triangle icon"></i>
-                                        <span *ngIf="warningsMap[info.message.id]">{{warningsMap[info.message.id].title | translate}}</span>
+                                        <span
+                                            *ngIf="warningsMap[info.message.id]">{{warningsMap[info.message.id].title | translate}}</span>
                                         <span *ngIf="!warningsMap[info.message.id]">{{info.message.id}}</span>
                                     </div>
                                     <div content>
@@ -74,7 +73,7 @@
         </ng-container>
         <ng-container *ngIf="workflowRunData['workflow'] && workflowRunData['workflow'].workflow_data">
             <app-workflow-graph class="graph" [direction]="direction" [project]="project"
-                                [workflowData]="workflowRunData['workflow']">
+                [workflowData]="workflowRunData['workflow']">
             </app-workflow-graph>
         </ng-container>
     </ng-container>

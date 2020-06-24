@@ -37,13 +37,13 @@ func NewEnvironment(e sdk.Environment, keys []EncryptedKey) Environment {
 func (e *Environment) Environment() (env *sdk.Environment) {
 	env = new(sdk.Environment)
 	env.Name = e.Name
-	env.Variables = make([]sdk.Variable, len(e.Values))
+	env.Variables = make([]sdk.EnvironmentVariable, len(e.Values))
 	var i int
 	for k, v := range e.Values {
 		if v.Type == "" {
 			v.Type = sdk.StringVariable
 		}
-		env.Variables[i] = sdk.Variable{
+		env.Variables[i] = sdk.EnvironmentVariable{
 			Name:  k,
 			Type:  v.Type,
 			Value: v.Value,

@@ -46,7 +46,7 @@ export class ApplicationHomeComponent implements OnInit {
 
     renderGraph(): void {
         this.dashboards = new Array<GraphConfiguration>();
-        if (this.overview && this.overview.graphs.length > 0) {
+        if (this.overview?.graphs?.length > 0) {
             this.overview.graphs.forEach(g => {
                 if (g.datas && g.datas.length) {
                     switch (g.type) {

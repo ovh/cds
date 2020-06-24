@@ -8,8 +8,9 @@ import (
 	"os"
 	"strings"
 
-	loghook "github.com/ovh/cds/sdk/log/hook"
 	log "github.com/sirupsen/logrus"
+
+	"github.com/ovh/cds/sdk/log/hook"
 )
 
 // Conf contains log configuration
@@ -25,7 +26,6 @@ type Conf struct {
 	GraylogFieldCDSVersion     string
 	GraylogFieldCDSOS          string
 	GraylogFieldCDSArch        string
-	Ctx                        context.Context
 }
 
 const (
@@ -37,8 +37,8 @@ const (
 )
 
 var (
-	logger Logger
-	hook   *loghook.Hook
+	logger      Logger
+	graylogHook *hook.Hook
 )
 
 // Logger defines the logs levels used
@@ -69,7 +69,7 @@ func logWithLogger(level string, fields log.Fields, format string, values ...int
 }
 
 // Initialize init log level
-func Initialize(conf *Conf) {
+func Initialize(ctx context.Context, conf *Conf) {
 	switch conf.Level {
 	case "debug":
 		log.SetLevel(log.DebugLevel)
@@ -85,7 +85,7 @@ func Initialize(conf *Conf) {
 	log.SetFormatter(&CDSFormatter{})
 
 	if conf.GraylogHost != "" && conf.GraylogPort != "" {
-		graylogcfg := &loghook.Config{
+		graylogcfg := &hook.Config{
 			Addr:      fmt.Sprintf("%s:%s", conf.GraylogHost, conf.GraylogPort),
 			Protocol:  conf.GraylogProtocol,
 			TLSConfig: &tls.Config{ServerName: conf.GraylogHost},
@@ -125,24 +125,21 @@ func Initialize(conf *Conf) {
 		extra["CDSHostname"] = hostname
 
 		var errhook error
-		hook, errhook = loghook.NewHook(graylogcfg, extra)
+		graylogHook, errhook = hook.NewHook(graylogcfg, extra)
 
 		if errhook != nil {
 			log.Errorf("Error while initialize graylog hook: %v", errhook)
 		} else {
-			log.AddHook(hook)
+			log.AddHook(graylogHook)
 			log.SetOutput(ioutil.Discard)
 		}
 	}
 
-	if conf.Ctx == nil {
-		conf.Ctx = context.Background()
-	}
 	go func() {
-		<-conf.Ctx.Done()
-		log.Info(conf.Ctx, "Draining logs")
-		if hook != nil {
-			hook.Flush()
+		<-ctx.Done()
+		Info(ctx, "Draining logs...")
+		if graylogHook != nil {
+			graylogHook.Flush()
 		}
 	}()
 }
@@ -246,6 +243,7 @@ type Signature struct {
 	Service   *SignatureService
 	NodeRunID int64
 	JobID     int64
+	NodeRunID int64
 	Timestamp int64
 }
 
@@ -263,17 +261,19 @@ type SignatureService struct {
 	WorkerName      string
 }
 
-func New(logServerAddr string) (*log.Logger, error) {
+func New(ctx context.Context, graylogcfg *hook.Config) (*log.Logger, *hook.Hook, error) {
 	newLogger := log.New()
-	graylogcfg := &loghook.Config{
-		Addr:     logServerAddr,
-		Protocol: "tcp",
-	}
 	extra := map[string]interface{}{}
-	hook, err := loghook.NewHook(graylogcfg, extra)
+	hook, err := hook.NewHook(graylogcfg, extra)
 	if err != nil {
-		return nil, fmt.Errorf("unable to add hook: %v", err)
+		return nil, nil, fmt.Errorf("unable to add hook: %v", err)
 	}
 	newLogger.AddHook(hook)
-	return newLogger, nil
+
+	go func() {
+		<-ctx.Done()
+		hook.Flush()
+	}()
+
+	return newLogger, hook, nil
 }

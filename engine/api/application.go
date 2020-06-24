@@ -8,22 +8,25 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/ovh/cds/engine/api/permission"
-	"github.com/ovh/cds/engine/api/user"
-
 	"github.com/go-gorp/gorp"
 	"github.com/gorilla/mux"
 
 	"github.com/ovh/cds/engine/api/application"
+	"github.com/ovh/cds/engine/api/ascode"
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/group"
+	"github.com/ovh/cds/engine/api/keys"
+	"github.com/ovh/cds/engine/api/operation"
+	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
+	"github.com/ovh/cds/engine/api/user"
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/exportentities"
 )
 
 func (api *API) getApplicationsHandler() service.Handler {
@@ -147,6 +150,20 @@ func (api *API) getApplicationHandler() service.Handler {
 			app.Usage = &usage
 		}
 
+		if app.FromRepository != "" {
+			proj, err := project.Load(api.mustDB(), projectKey)
+			if err != nil {
+				return err
+			}
+			wkAscodeHolder, err := workflow.LoadByRepo(ctx, api.mustDB(), *proj, app.FromRepository, workflow.LoadOptions{
+				WithTemplate: true,
+			})
+			if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
+				return sdk.NewErrorFrom(err, "cannot found workflow holder of the pipeline")
+			}
+			app.WorkflowAscodeHolder = wkAscodeHolder
+		}
+
 		return service.WriteJSON(w, app, http.StatusOK)
 	}
 }
@@ -171,11 +188,6 @@ func (api *API) getApplicationVCSInfosHandler() service.Handler {
 		applicationName := vars["applicationName"]
 		remote := r.FormValue("remote")
 
-		proj, err := project.Load(api.mustDB(), projectKey)
-		if err != nil {
-			return sdk.WrapError(err, "Cannot load project %s from db", projectKey)
-		}
-
 		app, err := application.LoadByName(api.mustDB(), projectKey, applicationName, application.LoadOptions.Default)
 		if err != nil {
 			return sdk.WrapError(err, "Cannot load application %s for project %s from db", applicationName, projectKey)
@@ -191,10 +203,14 @@ func (api *API) getApplicationVCSInfosHandler() service.Handler {
 			return service.WriteJSON(w, resp, http.StatusOK)
 		}
 
-		vcsServer := repositoriesmanager.GetProjectVCSServer(*proj, app.VCSServer)
-		client, erra := repositoriesmanager.AuthorizedClient(ctx, api.mustDB(), api.Cache, projectKey, vcsServer)
-		if erra != nil {
-			return sdk.WrapError(sdk.ErrNoReposManagerClientAuth, "getApplicationVCSInfosHandler> Cannot get client got %s %s : %s", projectKey, app.VCSServer, erra)
+		vcsServer, err := repositoriesmanager.LoadProjectVCSServerLinkByProjectKeyAndVCSServerName(ctx, api.mustDB(), projectKey, app.VCSServer)
+		if err != nil {
+			return sdk.WrapError(sdk.ErrNoReposManagerClientAuth, "getApplicationVCSInfosHandler> Cannot get client got %s %s : %s", projectKey, app.VCSServer, err)
+		}
+
+		client, err := repositoriesmanager.AuthorizedClient(ctx, api.mustDB(), api.Cache, projectKey, vcsServer)
+		if err != nil {
+			return sdk.WrapError(sdk.ErrNoReposManagerClientAuth, "getApplicationVCSInfosHandler> Cannot get client got %s %s : %s", projectKey, app.VCSServer, err)
 		}
 
 		repositoryFullname := app.RepositoryFullname
@@ -389,6 +405,110 @@ func cloneApplication(ctx context.Context, db gorp.SqlExecutor, store cache.Stor
 	event.PublishAddApplication(ctx, proj.Key, *newApp, getAPIConsumer(ctx))
 
 	return nil
+}
+
+func (api *API) updateAsCodeApplicationHandler() service.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		vars := mux.Vars(r)
+		key := vars[permProjectKey]
+		name := vars["applicationName"]
+
+		branch := FormString(r, "branch")
+		message := FormString(r, "message")
+
+		if branch == "" || message == "" {
+			return sdk.NewErrorFrom(sdk.ErrWrongRequest, "missing branch or message data")
+		}
+
+		var a sdk.Application
+		if err := service.UnmarshalBody(r, &a); err != nil {
+			return err
+		}
+
+		// check application name pattern
+		regexp := sdk.NamePatternRegex
+		if !regexp.MatchString(a.Name) {
+			return sdk.WrapError(sdk.ErrInvalidApplicationPattern, "Application name %s do not respect pattern", a.Name)
+		}
+
+		proj, err := project.Load(api.mustDB(), key, project.LoadOptions.WithClearKeys)
+		if err != nil {
+			return err
+		}
+
+		appDB, err := application.LoadByName(api.mustDB(), key, name)
+		if err != nil {
+			return sdk.WrapError(err, "cannot load application %s", name)
+		}
+
+		if appDB.FromRepository == "" {
+			return sdk.NewErrorFrom(sdk.ErrForbidden, "current application is not ascode")
+		}
+
+		wkHolder, err := workflow.LoadByRepo(ctx, api.mustDB(), *proj, appDB.FromRepository, workflow.LoadOptions{
+			WithTemplate: true,
+		})
+		if err != nil {
+			return err
+		}
+		if wkHolder.TemplateInstance != nil {
+			return sdk.NewErrorFrom(sdk.ErrForbidden, "cannot edit an application that was generated by a template")
+		}
+
+		var rootApp *sdk.Application
+		if wkHolder.WorkflowData.Node.Context != nil && wkHolder.WorkflowData.Node.Context.ApplicationID != 0 {
+			rootApp, err = application.LoadByIDWithClearVCSStrategyPassword(api.mustDB(), wkHolder.WorkflowData.Node.Context.ApplicationID)
+			if err != nil {
+				return err
+			}
+		}
+		if rootApp == nil {
+			return sdk.NewErrorFrom(sdk.ErrWrongRequest, "cannot find the root application of the workflow %s that hold the pipeline", wkHolder.Name)
+		}
+
+		// create keys
+		for i := range a.Keys {
+			k := &a.Keys[i]
+			newKey, err := keys.GenerateKey(k.Name, k.Type)
+			if err != nil {
+				return err
+			}
+			k.Public = newKey.Public
+			k.Private = newKey.Private
+			k.KeyID = newKey.KeyID
+		}
+
+		u := getAPIConsumer(ctx)
+		a.ProjectID = proj.ID
+		app, err := application.ExportApplication(api.mustDB(), a, project.EncryptWithBuiltinKey, fmt.Sprintf("app:%d:%s", appDB.ID, branch))
+		if err != nil {
+			return sdk.WrapError(err, "unable to export app %s", a.Name)
+		}
+		wp := exportentities.WorkflowComponents{
+			Applications: []exportentities.Application{app},
+		}
+
+		ope, err := operation.PushOperationUpdate(ctx, api.mustDB(), api.Cache, *proj, wp, rootApp.VCSServer, rootApp.RepositoryFullname, branch, message, rootApp.RepositoryStrategy, u)
+		if err != nil {
+			return err
+		}
+
+		sdk.GoRoutine(context.Background(), fmt.Sprintf("UpdateAsCodeApplicationHandler-%s", ope.UUID), func(ctx context.Context) {
+			ed := ascode.EntityData{
+				FromRepo:      appDB.FromRepository,
+				Type:          ascode.ApplicationEvent,
+				ID:            appDB.ID,
+				Name:          appDB.Name,
+				OperationUUID: ope.UUID,
+			}
+			asCodeEvent := ascode.UpdateAsCodeResult(ctx, api.mustDB(), api.Cache, *proj, wkHolder.ID, *rootApp, ed, u)
+			if asCodeEvent != nil {
+				event.PublishAsCodeEvent(ctx, proj.Key, *asCodeEvent, u)
+			}
+		}, api.PanicDump())
+
+		return service.WriteJSON(w, ope, http.StatusOK)
+	}
 }
 
 func (api *API) updateApplicationHandler() service.Handler {

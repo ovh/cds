@@ -30,7 +30,7 @@ var (
 )
 
 func init() {
-	log.Initialize(&log.Conf{Level: "debug"})
+	log.Initialize(context.TODO(), &log.Conf{Level: "debug"})
 }
 
 func newTestService(t *testing.T) (*Service, error) {

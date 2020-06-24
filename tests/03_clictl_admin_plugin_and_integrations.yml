@@ -19,7 +19,7 @@ testcases:
   - script: {{.cdsctl}} -f {{.cdsctl.config}} admin plugins binary-add hello-it-plugin ./fixtures/plugins/hello-it-plugin-binary.yml ./fixtures/plugins/hello.py 
   - script: {{.cdsctl}} -f {{.cdsctl.config}} admin plugins binary-add hello-action-plugin ./fixtures/plugins/hello-action-plugin-binary.yml ./fixtures/plugins/hello.py
   # check if requirement with value: python exists
-  - script: "{{.cdsctl}} -f {{.cdsctl.config}} admin plugins export hello-it-plugin | grep 'value: ovh.com:443'"
+  - script: "{{.cdsctl}} -f {{.cdsctl.config}} admin plugins export hello-it-plugin | grep 'value: region'"
 
 - name: cdsctl admin plugins list
   steps:

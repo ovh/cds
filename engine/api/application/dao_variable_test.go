@@ -13,8 +13,7 @@ import (
 )
 
 func Test_DAOVariable(t *testing.T) {
-	db, cache, end := test.SetupPG(t)
-	defer end()
+	db, cache := test.SetupPG(t)
 
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, cache, key, key)
@@ -26,8 +25,8 @@ func Test_DAOVariable(t *testing.T) {
 
 	require.NoError(t, application.Insert(db, *proj, &app))
 
-	v1 := &sdk.Variable{Name: "clear", Type: sdk.TextVariable, Value: "clear_value"}
-	v2 := &sdk.Variable{Name: "secret", Type: sdk.SecretVariable, Value: "secret_value"}
+	v1 := &sdk.ApplicationVariable{Name: "clear", Type: sdk.TextVariable, Value: "clear_value"}
+	v2 := &sdk.ApplicationVariable{Name: "secret", Type: sdk.SecretVariable, Value: "secret_value"}
 
 	require.NoError(t, application.InsertVariable(db, app.ID, v1, u))
 	assert.Equal(t, "clear_value", v1.Value)

@@ -1,7 +1,7 @@
 <div *ngIf="application;then showApp;else loadApp"></div>
 <ng-template #showApp>
     <div id="ApplicationShow">
-        <app-project-breadcrumb [project]="project" [application]="application" [workflow]="workflowName"
+        <app-project-breadcrumb [project]="project" [application]="readOnlyApplication" [workflow]="workflowName"
             [workflowRun]="workflowNum" [workflowRunNode]="workflowNodeRun" [wPipeline]="workflowPipeline">
             <div class="right floated labelFeature" [title]="'workflow_from_repository_btn' | translate">
                 <a class="ui label small basic" [class.green]="application && application.from_repository" suiPopup
@@ -22,7 +22,7 @@
                             <div class="footer">
                                 <div>
                                     <div class="ui list">
-                                        <a class="item" target="_blank"
+                                        <a class="item" target="_blank" rel="noopener noreferrer"
                                             href="https://ovh.github.io/cds/docs/tutorials/init_workflow_with_cdsctl/">
                                             {{'common_read_more'| translate}}
                                         </a>
@@ -56,6 +56,14 @@
                 <a sm-item [class.active]="selectedTab === 'advanced'" (click)="showTab('advanced')">
                     <i class="graduation icon"></i>{{ 'common_advanced' | translate }}
                 </a>
+                <div class="ui small buttons" *ngIf="editMode && !readOnly">
+                    <ng-container *ngIf="application.editModeChanged">
+                        <button class="ui button" (click)="cancelApplication()">{{'common_cancel' | translate }}</button>
+                        <div class="or"></div>
+                    </ng-container>
+                    <button class="ui green button" [disabled]="!application.editModeChanged"
+                            (click)="saveEditMode()">{{'btn_save_application' | translate }}</button>
+                </div>
             </sm-menu>
         </div>
 
@@ -68,16 +76,16 @@
                         </div>
                         <div *ngSwitchCase="'variables'">
                             <ng-container
-                                *ngIf="project.permissions.writable && !application.from_repository">
+                                *ngIf="!readOnly">
                                 <h3>{{ 'application_variable_form_title' | translate}}</h3>
                                 <app-variable-form [loading]="varFormLoading"
                                     (createVariableEvent)="variableEvent($event)"></app-variable-form>
                             </ng-container>
                             <h3>{{ 'application_variable_list_title' | translate}}</h3>
                             <app-variable [variables]="application.variables"
-                                [mode]="(project.permissions.writable && !application.from_repository)?'edit':'ro'"
+                                [mode]="readOnly?'ro':'edit'"
                                 (event)="variableEvent($event)" auditContext="application" [project]="project"
-                                [application]="application"></app-variable>
+                                [applicationName]="readOnlyApplication.name"></app-variable>
                             <app-warning-modal [title]="_translate.instant('warning_modal_title')"
                                 [msg]="_translate.instant('warning_modal_body')" (event)="variableEvent($event, true)"
                                 #varWarning></app-warning-modal>
@@ -98,11 +106,11 @@
                             </ng-container>
                         </div>
                         <div *ngSwitchCase="'keys'">
-                            <app-application-keys [project]="project" [application]="application">
+                            <app-application-keys [project]="project" [application]="application" [editMode]="editMode" [readOnly]="readOnly">
                             </app-application-keys>
                         </div>
                         <div *ngSwitchCase="'advanced'">
-                            <app-application-admin [application]="application" [project]="project">
+                            <app-application-admin [application]="application" [project]="project" [editMode]="editMode">
                             </app-application-admin>
                         </div>
                     </div>
@@ -114,3 +122,8 @@
 <ng-template #loadApp>
     <div class="ui text active loader">Loading application...</div>
 </ng-template>
+<ng-container *ngIf="application?.workflow_ascode_holder">
+    <app-ascode-save-modal [project]="project" [workflow]="application.workflow_ascode_holder" [name]="readOnlyApplication.name"
+                           #updateEditMode>
+    </app-ascode-save-modal>
+</ng-container>

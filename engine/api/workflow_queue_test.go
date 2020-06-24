@@ -15,6 +15,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/ovh/cds/engine/cdn"
+
 	"github.com/ovh/venom"
 
 	"github.com/sguiheux/go-coverage"
@@ -65,6 +67,14 @@ func testRunWorkflow(t *testing.T, api *API, router *Router) testRunWorkflowCtx 
 		Admin:              true,
 	}))
 	u.Groups = append(u.Groups, proj.ProjectGroups[0].Group)
+
+	vcsServer := sdk.ProjectVCSServerLink{
+		ProjectID: proj.ID,
+		Name:      "github",
+	}
+	vcsServer.Set("token", "foo")
+	vcsServer.Set("secret", "bar")
+	assert.NoError(t, repositoriesmanager.InsertProjectVCSServerLink(context.TODO(), api.mustDB(), &vcsServer))
 
 	//First pipeline
 	pip := sdk.Pipeline{
@@ -345,8 +355,7 @@ func testRegisterHatchery(t *testing.T, api *API, router *Router, ctx *testRunWo
 }
 
 func TestGetWorkflowJobQueueHandler(t *testing.T) {
-	api, db, router, end := newTestAPI(t)
-	defer end()
+	api, db, router := newTestAPI(t)
 
 	// delete all existing workers
 	workers, err := worker.LoadAll(context.TODO(), db)
@@ -421,8 +430,8 @@ func TestGetWorkflowJobQueueHandler(t *testing.T) {
 }
 
 func Test_postTakeWorkflowJobHandler(t *testing.T) {
-	api, _, router, end := newTestAPI(t)
-	defer end()
+	api, _, router := newTestAPI(t)
+
 	ctx := testRunWorkflow(t, api, router)
 	testGetWorkflowJobAsWorker(t, api, router, &ctx)
 	require.NotNil(t, ctx.job)
@@ -439,6 +448,7 @@ func Test_postTakeWorkflowJobHandler(t *testing.T) {
 
 	// Add cdn config
 	api.Config.CDN = cdn.Configuration{
+		PublicTCP: "cdn.net:4545",
 		TCP: sdk.TCPServer{
 			Port: 8090,
 			Addr: "localhost",
@@ -478,7 +488,7 @@ func Test_postTakeWorkflowJobHandler(t *testing.T) {
 		}
 	}
 
-	assert.Equal(t, "localhost:8090", pbji.GelfServiceAddr)
+	assert.Equal(t, "cdn.net:4545", pbji.GelfServiceAddr)
 
 	run, err := workflow.LoadNodeJobRun(context.TODO(), api.mustDB(), api.Cache, ctx.job.ID)
 	require.NoError(t, err)
@@ -493,8 +503,8 @@ func Test_postTakeWorkflowJobHandler(t *testing.T) {
 }
 
 func Test_postTakeWorkflowInvalidJobHandler(t *testing.T) {
-	api, _, router, end := newTestAPI(t)
-	defer end()
+	api, _, router := newTestAPI(t)
+
 	ctx := testRunWorkflow(t, api, router)
 	testGetWorkflowJobAsWorker(t, api, router, &ctx)
 	require.NotNil(t, ctx.job)
@@ -533,8 +543,8 @@ func Test_postTakeWorkflowInvalidJobHandler(t *testing.T) {
 }
 
 func Test_postBookWorkflowJobHandler(t *testing.T) {
-	api, _, router, end := newTestAPI(t)
-	defer end()
+	api, _, router := newTestAPI(t)
+
 	ctx := testRunWorkflow(t, api, router)
 	testGetWorkflowJobAsHatchery(t, api, router, &ctx)
 	assert.NotNil(t, ctx.job)
@@ -555,8 +565,8 @@ func Test_postBookWorkflowJobHandler(t *testing.T) {
 }
 
 func Test_postWorkflowJobResultHandler(t *testing.T) {
-	api, _, router, end := newTestAPI(t)
-	defer end()
+	api, _, router := newTestAPI(t)
+
 	ctx := testRunWorkflow(t, api, router)
 	testGetWorkflowJobAsWorker(t, api, router, &ctx)
 	assert.NotNil(t, ctx.job)
@@ -646,8 +656,8 @@ func Test_postWorkflowJobResultHandler(t *testing.T) {
 }
 
 func Test_postWorkflowJobTestsResultsHandler(t *testing.T) {
-	api, _, router, end := newTestAPI(t)
-	defer end()
+	api, _, router := newTestAPI(t)
+
 	ctx := testRunWorkflow(t, api, router)
 	testGetWorkflowJobAsWorker(t, api, router, &ctx)
 	assert.NotNil(t, ctx.job)
@@ -750,8 +760,8 @@ func Test_postWorkflowJobTestsResultsHandler(t *testing.T) {
 }
 
 func Test_postWorkflowJobArtifactHandler(t *testing.T) {
-	api, db, router, end := newTestAPI(t)
-	defer end()
+	api, db, router := newTestAPI(t)
+
 	ctx := testRunWorkflow(t, api, router)
 	testGetWorkflowJobAsWorker(t, api, router, &ctx)
 
@@ -896,8 +906,8 @@ func fileExists(filename string) bool {
 }
 
 func Test_postWorkflowJobStaticFilesHandler(t *testing.T) {
-	api, _, router, end := newTestAPI(t)
-	defer end()
+	api, _, router := newTestAPI(t)
+
 	ctx := testRunWorkflow(t, api, router)
 	testGetWorkflowJobAsWorker(t, api, router, &ctx)
 	require.NotNil(t, ctx.job)
@@ -964,8 +974,7 @@ func Test_postWorkflowJobStaticFilesHandler(t *testing.T) {
 }
 
 func TestWorkerPrivateKey(t *testing.T) {
-	api, db, router, end := newTestAPI(t)
-	defer end()
+	api, db, router := newTestAPI(t)
 
 	// Create user
 	u, pass := assets.InsertAdminUser(t, api.mustDB())
@@ -1077,8 +1086,7 @@ func TestWorkerPrivateKey(t *testing.T) {
 }
 
 func TestPostVulnerabilityReportHandler(t *testing.T) {
-	api, db, router, end := newTestAPI(t)
-	defer end()
+	api, db, router := newTestAPI(t)
 
 	// Create user
 	u, pass := assets.InsertAdminUser(t, api.mustDB())
@@ -1218,8 +1226,7 @@ func TestPostVulnerabilityReportHandler(t *testing.T) {
 }
 
 func TestInsertNewCodeCoverageReport(t *testing.T) {
-	api, db, router, end := newTestAPI(t)
-	defer end()
+	api, db, router := newTestAPI(t)
 
 	// Create user
 	u, pass := assets.InsertAdminUser(t, api.mustDB())
@@ -1237,12 +1244,16 @@ func TestInsertNewCodeCoverageReport(t *testing.T) {
 	u.Groups = append(u.Groups, proj.ProjectGroups[0].Group)
 
 	// Add repo manager
-	proj.VCSServers = make([]sdk.ProjectVCSServer, 0, 1)
+	proj.VCSServers = make([]sdk.ProjectVCSServerLink, 0, 1)
 	proj.VCSServers = append(proj.VCSServers)
-	assert.NoError(t, repositoriesmanager.InsertForProject(db, proj, &sdk.ProjectVCSServer{
-		Name:     "repoManServ",
-		Username: "foo",
-	}))
+
+	vcsServer := sdk.ProjectVCSServerLink{
+		ProjectID: proj.ID,
+		Name:      "repoManServ",
+	}
+	vcsServer.Set("token", "foo")
+	vcsServer.Set("secret", "bar")
+	assert.NoError(t, repositoriesmanager.InsertProjectVCSServerLink(context.TODO(), db, &vcsServer))
 
 	// Create pipeline
 	pip := &sdk.Pipeline{
@@ -1286,7 +1297,7 @@ func TestInsertNewCodeCoverageReport(t *testing.T) {
 		VCSServer:          "repoManServ",
 	}
 	assert.NoError(t, application.Insert(db, *proj, &app))
-	assert.NoError(t, repositoriesmanager.InsertForApplication(db, &app, proj.Key))
+	assert.NoError(t, repositoriesmanager.InsertForApplication(db, &app))
 
 	// Create workflow
 	w := sdk.Workflow{

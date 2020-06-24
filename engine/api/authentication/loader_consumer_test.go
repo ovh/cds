@@ -17,8 +17,7 @@ import (
 )
 
 func TestWithAuthentifiedUser(t *testing.T) {
-	db, _, end := test.SetupPG(t, bootstrap.InitiliazeDB)
-	defer end()
+	db, _ := test.SetupPG(t, bootstrap.InitiliazeDB)
 
 	g := assets.InsertGroup(t, db)
 	u, _ := assets.InsertLambdaUser(t, db, g)
@@ -34,8 +33,7 @@ func TestWithAuthentifiedUser(t *testing.T) {
 }
 
 func TestWithConsumerGroups(t *testing.T) {
-	db, _, end := test.SetupPG(t, bootstrap.InitiliazeDB)
-	defer end()
+	db, _ := test.SetupPG(t, bootstrap.InitiliazeDB)
 
 	g1 := assets.InsertGroup(t, db)
 	g2 := assets.InsertGroup(t, db)

@@ -1,12 +1,8 @@
 /* tslint:disable:no-unused-variable */
-
-import { Injector } from '@angular/core';
 import { fakeAsync, TestBed } from '@angular/core/testing';
 import { Table } from './table';
 
 describe('CDS: Table component', () => {
-
-    let injector: Injector;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -19,11 +15,6 @@ describe('CDS: Table component', () => {
         });
 
     });
-
-    afterEach(() => {
-        injector = undefined;
-    });
-
 
     it('Table method', fakeAsync(() => {
         // Create loginComponent

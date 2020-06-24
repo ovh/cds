@@ -15,8 +15,7 @@ import (
 )
 
 func Test_getWorkerModelSecretHandler(t *testing.T) {
-	api, _, router, end := newTestAPI(t)
-	defer end()
+	api, _, router := newTestAPI(t)
 
 	g := assets.InsertTestGroup(t, api.mustDB(), sdk.RandomString(10))
 

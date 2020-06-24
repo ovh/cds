@@ -42,8 +42,6 @@ INIT_TOKEN="${INIT_TOKEN:-}"
 
 # If you want to run some tests with a specific model requirements, set CDS_MODEL_REQ
 CDS_MODEL_REQ="${CDS_MODEL_REQ:-buildpack-deps}"
-# If you want to run some tests with a specific network requirements, set CDS_NETWORK_REQ
-CDS_NETWORK_REQ="${CDS_NETWORK_REQ:-$CDS_API_URL}" 
 # If you want to run some tests with a specific region requirement, set CDS_REGION_REQ
 CDS_REGION_REQ="${CDS_REGION_REQ:-""}" 
 
@@ -149,7 +147,6 @@ workflow_with_integration_tests() {
 
 workflow_with_third_parties() {
     if [ -z "$CDS_MODEL_REQ" ]; then echo "missing CDS_MODEL_REQ variable"; exit 1; fi
-    if [ -z "$CDS_NETWORK_REQ" ]; then echo "missing CDS_NETWORK_REQ variable"; exit 1; fi
     if [ -z "$CDS_REGION_REQ" ]; then echo "missing CDS_REGION_REQ variable"; exit 1; fi
     echo "Running Workflow with third parties:"
     for f in $(ls -1 06_*.yml); do
@@ -184,7 +181,6 @@ for target in $@; do
             workflow_with_integration_tests;;
         workflow_with_third_parties)
             export CDS_MODEL_REQ
-            export CDS_NETWORK_REQ
             export CDS_REGION_REQ
             workflow_with_third_parties;;
         *) echo -e "${RED}Error: unknown target: $target${NOCOLOR}"

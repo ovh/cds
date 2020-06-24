@@ -20,12 +20,10 @@ cdsctl workflow stop MYPROJECT myworkflow 5 compile # To stop a workflow node ru
 	},
 	OptionalArgs: []cli.Arg{
 		{
-			Name:   "run-number",
-			Weight: 1,
+			Name: "run-number",
 		},
 		{
-			Name:   "node-name",
-			Weight: 2,
+			Name: "node-name",
 		},
 	},
 }

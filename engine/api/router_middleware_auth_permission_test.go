@@ -21,8 +21,7 @@ import (
 )
 
 func Test_checkWorkflowPermissions(t *testing.T) {
-	api, db, _, end := newTestAPI(t)
-	defer end()
+	api, db, _ := newTestAPI(t)
 
 	wctx := testRunWorkflow(t, api, api.Router)
 	user := wctx.user
@@ -78,8 +77,7 @@ func Test_checkWorkflowPermissions(t *testing.T) {
 }
 
 func Test_checkProjectPermissions(t *testing.T) {
-	api, _, _, end := newTestAPI(t)
-	defer end()
+	api, _, _ := newTestAPI(t)
 
 	g := assets.InsertGroup(t, api.mustDB())
 	authUser, _ := assets.InsertLambdaUser(t, api.mustDB(), g)
@@ -131,8 +129,7 @@ func Test_checkProjectPermissions(t *testing.T) {
 }
 
 func Test_checkUserPermissions(t *testing.T) {
-	api, db, _, end := newTestAPI(t)
-	defer end()
+	api, db, _ := newTestAPI(t)
 
 	authUser, _ := assets.InsertLambdaUser(t, db)
 	authUserMaintainer, _ := assets.InsertMaintainerUser(t, db)
@@ -214,8 +211,7 @@ func Test_checkUserPermissions(t *testing.T) {
 }
 
 func Test_checkUserPublicPermissions(t *testing.T) {
-	api, db, _, end := newTestAPI(t)
-	defer end()
+	api, db, _ := newTestAPI(t)
 
 	authUser, _ := assets.InsertLambdaUser(t, db)
 	authUserMaintainer, _ := assets.InsertMaintainerUser(t, db)
@@ -297,8 +293,7 @@ func Test_checkUserPublicPermissions(t *testing.T) {
 }
 
 func Test_checkConsumerPermissions(t *testing.T) {
-	api, db, _, end := newTestAPI(t)
-	defer end()
+	api, db, _ := newTestAPI(t)
 
 	authUser, _ := assets.InsertLambdaUser(t, db)
 	authUserConsumer, err := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, authUser.ID)
@@ -384,8 +379,7 @@ func Test_checkConsumerPermissions(t *testing.T) {
 }
 
 func Test_checkSessionPermissions(t *testing.T) {
-	api, db, _, end := newTestAPI(t)
-	defer end()
+	api, db, _ := newTestAPI(t)
 
 	authUser, _ := assets.InsertLambdaUser(t, db)
 	authUserConsumer, err := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, authUser.ID)
@@ -475,8 +469,7 @@ func Test_checkSessionPermissions(t *testing.T) {
 }
 
 func Test_checkWorkerModelPermissions(t *testing.T) {
-	api, db, _, end := newTestAPI(t)
-	defer end()
+	api, db, _ := newTestAPI(t)
 
 	g := assets.InsertTestGroup(t, db, sdk.RandomString(10))
 	defer func() {
@@ -508,8 +501,7 @@ func Test_checkWorkerModelPermissions(t *testing.T) {
 }
 
 func Test_checkWorkflowPermissionsByUser(t *testing.T) {
-	api, _, _, end := newTestAPI(t)
-	defer end()
+	api, _, _ := newTestAPI(t)
 
 	type setup struct {
 		UserAdmin                bool
@@ -705,8 +697,7 @@ func Test_checkJobIDPermissions(t *testing.T) {
 }
 
 func Test_checkGroupPermissions(t *testing.T) {
-	api, _, _, end := newTestAPI(t)
-	defer end()
+	api, _, _ := newTestAPI(t)
 
 	type setup struct {
 		currentUser           string
@@ -947,8 +938,7 @@ func Test_checkGroupPermissions(t *testing.T) {
 }
 
 func Test_checkTemplateSlugPermissions(t *testing.T) {
-	api, _, _, end := newTestAPI(t)
-	defer end()
+	api, _, _ := newTestAPI(t)
 
 	type setup struct {
 		groupName    string
@@ -1051,8 +1041,7 @@ func Test_checkTemplateSlugPermissions(t *testing.T) {
 }
 
 func Test_checkActionPermissions(t *testing.T) {
-	api, db, _, end := newTestAPI(t)
-	defer end()
+	api, db, _ := newTestAPI(t)
 
 	g := assets.InsertTestGroup(t, db, sdk.RandomString(10))
 	defer func() {
@@ -1081,8 +1070,7 @@ func Test_checkActionPermissions(t *testing.T) {
 }
 
 func Test_checkActionBuiltinPermissions(t *testing.T) {
-	api, db, _, end := newTestAPI(t)
-	defer end()
+	api, db, _ := newTestAPI(t)
 
 	scriptAction := assets.GetBuiltinOrPluginActionByName(t, db, "Script")
 

@@ -18,7 +18,7 @@ func (api *API) getWorkflowTriggerConditionHandler() service.Handler {
 		vars := mux.Vars(r)
 		key := vars["key"]
 		name := vars["permWorkflowName"]
-		id, _ := FormInt(r, "nodeID")
+		id := FormInt(r, "nodeID")
 
 		proj, err := project.Load(api.mustDB(), key, project.LoadOptions.WithVariables, project.LoadOptions.WithIntegrations)
 		if err != nil {

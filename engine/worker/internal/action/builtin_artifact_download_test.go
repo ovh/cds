@@ -19,12 +19,12 @@ func TestRunArtifactDownload(t *testing.T) {
 	wk, ctx := SetupTest(t)
 
 	as := []sdk.WorkflowNodeRunArtifact{
-		sdk.WorkflowNodeRunArtifact{
+		{
 			ID:   1,
 			Name: "myFile.txt",
 			Tag:  "999",
 		},
-		sdk.WorkflowNodeRunArtifact{
+		{
 			ID:   2,
 			Name: "myFile.csv",
 			Tag:  "999",
@@ -90,7 +90,7 @@ func TestRunArtifactDownloadOutsideWorkspace(t *testing.T) {
 	fileName := sdk.RandomString(10)
 
 	as := []sdk.WorkflowNodeRunArtifact{
-		sdk.WorkflowNodeRunArtifact{
+		{
 			ID:   1,
 			Name: fileName,
 			Tag:  "999",

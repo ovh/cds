@@ -1,191 +1,198 @@
 package repositoriesmanager
 
 import (
-	"database/sql"
+	"context"
 
 	"github.com/go-gorp/gorp"
-	yaml "gopkg.in/yaml.v2"
-
-	"github.com/ovh/cds/engine/api/secret"
+	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
 
-//InsertForProject link a project with a repository manager
-func InsertForProject(db gorp.SqlExecutor, proj *sdk.Project, vcsServer *sdk.ProjectVCSServer) error {
-	servers, err := LoadAllForProject(db, proj.Key)
-	for _, server := range servers {
-		if server.Name == vcsServer.Name {
-			return sdk.WithStack(sdk.ErrConflict)
+func init() {
+	gorpmapping.Register(
+		gorpmapping.New(dbProjectVCSServerLink{}, "project_vcs_server_link", true, "id"),
+		gorpmapping.New(dbProjectVCSServerLinkData{}, "project_vcs_server_link_data", true, "id"),
+	)
+}
+
+type dbProjectVCSServerLink struct {
+	gorpmapping.SignedEntity
+	sdk.ProjectVCSServerLink
+}
+
+func (e dbProjectVCSServerLink) Canonical() gorpmapping.CanonicalForms {
+	var _ = []interface{}{e.ID, e.Name, e.ProjectID, e.VCSProject}
+	return gorpmapping.CanonicalForms{
+		"{{.ID}}{{.Name}}{{.ProjectID}}{{.VCSProject}}",
+	}
+}
+
+type dbProjectVCSServerLinkData struct {
+	gorpmapping.SignedEntity
+	sdk.ProjectVCSServerLinkData
+}
+
+func (e dbProjectVCSServerLinkData) Canonical() gorpmapping.CanonicalForms {
+	var _ = []interface{}{e.ID, e.ProjectVCSServerLinkID, e.Key}
+	return gorpmapping.CanonicalForms{
+		"{{.ID}}{{.ProjectVCSServerLinkID}}{{.Key}}",
+	}
+}
+
+func InsertProjectVCSServerLink(ctx context.Context, db gorp.SqlExecutor, l *sdk.ProjectVCSServerLink) error {
+	var dbProjectVCSServerLink = dbProjectVCSServerLink{ProjectVCSServerLink: *l}
+	if err := gorpmapping.InsertAndSign(ctx, db, &dbProjectVCSServerLink); err != nil {
+		return err
+	}
+	*l = dbProjectVCSServerLink.ProjectVCSServerLink
+
+	for i := range l.ProjectVCSServerLinkData {
+		data := &l.ProjectVCSServerLinkData[i]
+		data.ProjectVCSServerLinkID = l.ID
+		dbData := dbProjectVCSServerLinkData{ProjectVCSServerLinkData: *data}
+		if err := gorpmapping.InsertAndSign(ctx, db, &dbData); err != nil {
+			return err
 		}
+		*data = dbData.ProjectVCSServerLinkData
 	}
-	if err != nil {
-		return err
-	}
-
-	servers = append(servers, *vcsServer)
-
-	b1, err := yaml.Marshal(servers)
-	if err != nil {
-		return err
-	}
-
-	log.Debug("repositoriesmanager.InsertForProject> %s %s", proj.Key, string(b1))
-
-	encryptedVCSServerStr, err := secret.Encrypt(b1)
-	if err != nil {
-		return err
-	}
-
-	if _, err := db.Exec("update project set vcs_servers = $2 where projectkey = $1", proj.Key, encryptedVCSServerStr); err != nil {
-		return err
-	}
-
-	proj.VCSServers = servers
 
 	return nil
 }
 
-//UpdateForProject update the link of project with a repository manager
-func UpdateForProject(db gorp.SqlExecutor, proj *sdk.Project, vcsServers []sdk.ProjectVCSServer) error {
-	b1, err := yaml.Marshal(vcsServers)
-	if err != nil {
-		return sdk.WithStack(err)
-	}
-
-	log.Debug("repositoriesmanager.UpdateForProject> %s %s", proj.Key, string(b1))
-
-	encryptedVCSServerStr, err := secret.Encrypt(b1)
-	if err != nil {
+func UpdateProjectVCSServerLink(ctx context.Context, db gorp.SqlExecutor, l *sdk.ProjectVCSServerLink) error {
+	var dbProjectVCSServerLink = dbProjectVCSServerLink{ProjectVCSServerLink: *l}
+	if err := gorpmapping.UpdateAndSign(ctx, db, &dbProjectVCSServerLink); err != nil {
 		return err
 	}
+	*l = dbProjectVCSServerLink.ProjectVCSServerLink
 
-	if _, err := db.Exec("update project set vcs_servers = $2 where projectkey = $1", proj.Key, encryptedVCSServerStr); err != nil {
-		return sdk.WithStack(err)
-	}
-
-	proj.VCSServers = vcsServers
-
-	return nil
-}
-
-//DeleteForProject unlink a project with a repository manager
-func DeleteForProject(db gorp.SqlExecutor, proj *sdk.Project, vcsServer *sdk.ProjectVCSServer) error {
-	servers, err := LoadAllForProject(db, proj.Key)
-	if err != nil {
-		return err
-	}
-	for i := range servers {
-		if servers[i].Name == vcsServer.Name {
-			servers = append(servers[:i], servers[i+1:]...)
-			break
+	for i := range l.ProjectVCSServerLinkData {
+		data := &l.ProjectVCSServerLinkData[i]
+		dbData := dbProjectVCSServerLinkData{ProjectVCSServerLinkData: *data}
+		if dbData.ID == 0 {
+			if err := gorpmapping.InsertAndSign(ctx, db, &dbData); err != nil {
+				return err
+			}
+		} else {
+			if err := gorpmapping.UpdateAndSign(ctx, db, &dbData); err != nil {
+				return err
+			}
 		}
+		*data = dbData.ProjectVCSServerLinkData
 	}
 
-	b1, err := yaml.Marshal(servers)
-	if err != nil {
-		return err
-	}
-
-	encryptedVCSServerStr, err := secret.Encrypt(b1)
-	if err != nil {
-		return err
-	}
-
-	if _, err := db.Exec("update project set vcs_servers = $2 where projectkey = $1", proj.Key, encryptedVCSServerStr); err != nil {
-		return err
-	}
-
-	proj.VCSServers = servers
 	return nil
 }
 
-//LoadAllForProject loads all repomanager link for a project
-func LoadAllForProject(db gorp.SqlExecutor, projectKey string) ([]sdk.ProjectVCSServer, error) {
-	vcsServerStr := []byte{}
-	if err := db.QueryRow("select vcs_servers from project where projectkey = $1", projectKey).Scan(&vcsServerStr); err != nil {
-		return nil, err
+func DeleteProjectVCSServerLink(ctx context.Context, db gorp.SqlExecutor, l *sdk.ProjectVCSServerLink) error {
+	var dbProjectVCSServerLink = dbProjectVCSServerLink{ProjectVCSServerLink: *l}
+	if err := gorpmapping.Delete(db, &dbProjectVCSServerLink); err != nil {
+		return err
 	}
-
-	if len(vcsServerStr) == 0 {
-		return []sdk.ProjectVCSServer{}, nil
-	}
-
-	clearVCSServer, err := secret.Decrypt(vcsServerStr)
-	if err != nil {
-		return nil, err
-	}
-	vcsServer := []sdk.ProjectVCSServer{}
-
-	if err := yaml.Unmarshal(clearVCSServer, &vcsServer); err != nil {
-		return nil, err
-	}
-
-	return vcsServer, nil
+	return nil
 }
 
-//LoadForProject loads a repomanager link for a project
-func LoadForProject(db gorp.SqlExecutor, projectKey, rmName string) (*sdk.ProjectVCSServer, error) {
-	vcsServerStr := []byte{}
-	if err := db.QueryRow("select vcs_servers from project where projectkey = $1", projectKey).Scan(&vcsServerStr); err != nil {
+func getAllProjectVCSServerLinks(ctx context.Context, db gorp.SqlExecutor, query gorpmapping.Query) ([]sdk.ProjectVCSServerLink, error) {
+	var res []dbProjectVCSServerLink
+	if err := gorpmapping.GetAll(ctx, db, query, &res); err != nil {
 		return nil, err
 	}
-
-	if len(vcsServerStr) == 0 {
-		return nil, sdk.WithStack(sdk.ErrNotFound)
-	}
-
-	clearVCSServer, err := secret.Decrypt(vcsServerStr)
-	if err != nil {
-		return nil, err
-	}
-
-	vcsServer := []sdk.ProjectVCSServer{}
-	if err := yaml.Unmarshal(clearVCSServer, &vcsServer); err != nil {
-		return nil, err
-	}
-
-	for _, v := range vcsServer {
-		if v.Name == rmName {
-			return &v, nil
+	links := make([]sdk.ProjectVCSServerLink, len(res))
+	for i := range res {
+		isValid, err := gorpmapping.CheckSignature(res[i], res[i].Signature)
+		if err != nil {
+			return nil, err
 		}
-	}
-
-	return nil, sdk.WithStack(sdk.ErrNotFound)
-}
-
-//InsertForApplication associates a repositories manager with an application
-func InsertForApplication(db gorp.SqlExecutor, app *sdk.Application, projectKey string) error {
-	query := `UPDATE application SET vcs_server = $1, repo_fullname = $2 WHERE id = $3`
-	if _, err := db.Exec(query, app.VCSServer, app.RepositoryFullname, app.ID); err != nil {
-		return err
-	}
-	return nil
-}
-
-//DeleteForApplication removes association between  a repositories manager and an application
-//it deletes the corresponding line in repositories_manager_project
-func DeleteForApplication(db gorp.SqlExecutor, app *sdk.Application) error {
-	query := `UPDATE application SET vcs_server = '', repo_fullname = '' WHERE id = $1`
-	if _, err := db.Exec(query, app.ID); err != nil {
-		return err
-	}
-	return nil
-}
-
-//LoadLinkedApplicationNames loads applications which are linked with this repository manager name
-func LoadLinkedApplicationNames(db gorp.SqlExecutor, projectKey, rmName string) (sdk.IDNames, error) {
-	query := `SELECT application.id, application.name, application.description, '' AS icon
-	FROM application
-		JOIN project ON project.id = application.project_id
-	WHERE project.projectkey = $1 AND application.vcs_server = $2`
-	var idNames sdk.IDNames
-	if _, err := db.Select(&idNames, query, projectKey, rmName); err != nil {
-		if err == sql.ErrNoRows {
-			return nil, nil
+		if !isValid {
+			log.Error(ctx, "repostoriesmanager. getAllProjectVCSServerLinks> vcs_server_project_link %d data corrupted", res[i].ID)
+			continue
 		}
-		return nil, sdk.WithStack(err)
+
+		a := res[i].ProjectVCSServerLink
+		links[i] = a
+	}
+	return links, nil
+}
+
+func LoadAllProjectVCSServerLinksByProjectID(ctx context.Context, db gorp.SqlExecutor, projectID int64) ([]sdk.ProjectVCSServerLink, error) {
+	var query = gorpmapping.NewQuery(`
+	SELECT *
+	FROM project_vcs_server_link
+	WHERE project_id = $1
+	ORDER BY name ASC
+	`).Args(projectID)
+	return getAllProjectVCSServerLinks(ctx, db, query)
+}
+
+func LoadAllProjectVCSServerLinksByProjectKey(ctx context.Context, db gorp.SqlExecutor, projectKey string) ([]sdk.ProjectVCSServerLink, error) {
+	var query = gorpmapping.NewQuery(`
+	SELECT project_vcs_server_link.*
+	FROM project_vcs_server_link
+	JOIN project on project.id = project_vcs_server_link.project_id
+	WHERE project.projectkey = $1	ORDER BY project_vcs_server_link.name ASC
+	`).Args(projectKey)
+	return getAllProjectVCSServerLinks(ctx, db, query)
+}
+
+func LoadProjectVCSServerLinkByProjectKeyAndVCSServerName(ctx context.Context, db gorp.SqlExecutor, projectKey, rmName string) (sdk.ProjectVCSServerLink, error) {
+	var query = gorpmapping.NewQuery(`
+	SELECT project_vcs_server_link.*
+	FROM project_vcs_server_link
+	JOIN project on project.id = project_vcs_server_link.project_id
+	WHERE project.projectkey = $1
+	AND project_vcs_server_link.name = $2
+	`).Args(projectKey, rmName)
+	var res dbProjectVCSServerLink
+	found, err := gorpmapping.Get(ctx, db, query, &res)
+	if err != nil {
+		return sdk.ProjectVCSServerLink{}, err
+	}
+	if !found {
+		return sdk.ProjectVCSServerLink{}, sdk.WithStack(sdk.ErrNotFound)
 	}
 
-	return idNames, nil
+	isValid, err := gorpmapping.CheckSignature(res, res.Signature)
+	if err != nil {
+		return sdk.ProjectVCSServerLink{}, err
+	}
+	if !isValid {
+		log.Error(ctx, "repostoriesmanager.LoadProjectVCSServerLinkByProjectKeyAndVCSServerName> vcs_server_project_link %d data corrupted", res.ID)
+		return sdk.ProjectVCSServerLink{}, sdk.WithStack(sdk.ErrNotFound)
+	}
+
+	data, err := LoadProjectVCSServerLinksData(ctx, db, res.ID)
+	if err != nil {
+		return sdk.ProjectVCSServerLink{}, err
+	}
+	res.ProjectVCSServerLinkData = data
+
+	return res.ProjectVCSServerLink, nil
+}
+
+func LoadProjectVCSServerLinksData(ctx context.Context, db gorp.SqlExecutor, projectVCSServerLinkID int64, opts ...gorpmapping.GetOptionFunc) ([]sdk.ProjectVCSServerLinkData, error) {
+	var query = gorpmapping.NewQuery(`
+		SELECT *
+		FROM project_vcs_server_link_data
+		WHERE project_vcs_server_link_id = $1
+		`).Args(projectVCSServerLinkID)
+	var res []dbProjectVCSServerLinkData
+	if err := gorpmapping.GetAll(ctx, db, query, &res, opts...); err != nil {
+		return nil, err
+	}
+	data := make([]sdk.ProjectVCSServerLinkData, len(res))
+	for i := range res {
+		isValid, err := gorpmapping.CheckSignature(res[i], res[i].Signature)
+		if err != nil {
+			return nil, err
+		}
+		if !isValid {
+			log.Error(ctx, "repostoriesmanager.LoadProjectVCSServerLinksData> vcs_server_project_link_data %d data corrupted", res[i].ID)
+			continue
+		}
+
+		a := res[i].ProjectVCSServerLinkData
+		data[i] = a
+	}
+	return data, nil
 }

@@ -64,6 +64,7 @@ type Workflow struct {
 	FromTemplate     string                    `json:"from_template,omitempty" db:"-" cli:"-"`
 	TemplateUpToDate bool                      `json:"template_up_to_date,omitempty" db:"-" cli:"-"`
 	URLs             URL                       `json:"urls" yaml:"-" db:"-" cli:"-"`
+	Runs             []WorkflowRun             `json:"runs,omitempty" yaml:"-" db:"-" cli:"-"`
 }
 
 type PurgeTags []string
@@ -343,7 +344,7 @@ func (w *Workflow) ValidateType() error {
 		}
 	}
 	if len(namesInError) > 0 {
-		return WithStack(fmt.Errorf("wrong type for nodes %v", namesInError))
+		return NewErrorFrom(ErrWrongRequest, "wrong type for nodes %v", namesInError)
 	}
 	return nil
 }

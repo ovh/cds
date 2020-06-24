@@ -92,11 +92,9 @@ func (s *Service) Serve(c context.Context) error {
 
 	//Gracefully shutdown the http server
 	go func() {
-		select {
-		case <-ctx.Done():
-			log.Info(ctx, "CDN> Shutdown HTTP Server")
-			_ = server.Shutdown(ctx)
-		}
+		<-ctx.Done()
+		log.Info(ctx, "CDN> Shutdown HTTP Server")
+		_ = server.Shutdown(ctx)
 	}()
 
 	//Start the http server

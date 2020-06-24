@@ -17,8 +17,7 @@ import (
 )
 
 func TestAddVariableInEnvironmentHandler(t *testing.T) {
-	api, db, router, end := newTestAPI(t)
-	defer end()
+	api, db, router := newTestAPI(t)
 
 	//1. Create admin user
 	u, pass := assets.InsertAdminUser(t, api.mustDB())
@@ -79,8 +78,7 @@ func TestAddVariableInEnvironmentHandler(t *testing.T) {
 }
 
 func TestUpdateVariableInEnvironmentHandler(t *testing.T) {
-	api, db, router, end := newTestAPI(t)
-	defer end()
+	api, db, router := newTestAPI(t)
 
 	//1. Create admin user
 	u, pass := assets.InsertAdminUser(t, api.mustDB())
@@ -100,7 +98,7 @@ func TestUpdateVariableInEnvironmentHandler(t *testing.T) {
 	}
 
 	//4. add a variable
-	v := sdk.Variable{
+	v := sdk.EnvironmentVariable{
 		Name:  "foo",
 		Value: "bar",
 		Type:  sdk.StringVariable,
@@ -149,8 +147,7 @@ func TestUpdateVariableInEnvironmentHandler(t *testing.T) {
 }
 
 func TestDeleteVariableFromEnvironmentHandler(t *testing.T) {
-	api, db, router, end := newTestAPI(t)
-	defer end()
+	api, db, router := newTestAPI(t)
 
 	//1. Create admin user
 	u, pass := assets.InsertAdminUser(t, api.mustDB())
@@ -170,7 +167,7 @@ func TestDeleteVariableFromEnvironmentHandler(t *testing.T) {
 	}
 
 	//4. add a variable
-	v := sdk.Variable{
+	v := sdk.EnvironmentVariable{
 		Name:  "foo",
 		Value: "bar",
 		Type:  sdk.StringVariable,
@@ -208,8 +205,7 @@ func TestDeleteVariableFromEnvironmentHandler(t *testing.T) {
 }
 
 func TestGetVariablesInEnvironmentHandler(t *testing.T) {
-	api, db, router, end := newTestAPI(t)
-	defer end()
+	api, db, router := newTestAPI(t)
 
 	//1. Create admin user
 	u, pass := assets.InsertAdminUser(t, api.mustDB())
@@ -229,7 +225,7 @@ func TestGetVariablesInEnvironmentHandler(t *testing.T) {
 	}
 
 	//4. add a variable
-	v := sdk.Variable{
+	v := sdk.EnvironmentVariable{
 		Name:  "foo",
 		Value: "bar",
 		Type:  sdk.StringVariable,
@@ -264,8 +260,7 @@ func TestGetVariablesInEnvironmentHandler(t *testing.T) {
 }
 
 func Test_getVariableAuditInEnvironmentHandler(t *testing.T) {
-	api, db, router, end := newTestAPI(t)
-	defer end()
+	api, db, router := newTestAPI(t)
 
 	//Create admin user
 	u, pass := assets.InsertAdminUser(t, api.mustDB())
@@ -284,7 +279,7 @@ func Test_getVariableAuditInEnvironmentHandler(t *testing.T) {
 	}
 
 	// Add variable
-	v := sdk.Variable{
+	v := sdk.EnvironmentVariable{
 		Name:  "foo",
 		Type:  "string",
 		Value: "bar",

@@ -42,10 +42,9 @@ export class WorkflowRunJobSpawnInfoComponent implements OnDestroy, OnInit {
     @Select(WorkflowState.getSelectedWorkflowNodeJobRun()) nodeJobRun$: Observable<WorkflowNodeJobRun>;
     nodeJobRunSubs: Subscription;
 
-    currentNodeJobRunID: number;
     currentJobID: number;
     jobStatus: string;
-    spawnInfos: String;
+    spawnInfos: string;
     variables: Array<Parameter>;
     @Output() displayServicesLogsChange = new EventEmitter<boolean>();
 
@@ -100,7 +99,7 @@ export class WorkflowRunJobSpawnInfoComponent implements OnDestroy, OnInit {
                 this.jobStatus = njr.status;
                 this.currentJobID = njr.id;
                 this.variables = njr.parameters;
-                if (!njr.spawninfos) {
+                if (!PipelineStatus.isDone(njr.status)) {
                     this.initWorker();
                 } else {
                     this.spawnInfos = this.getSpawnInfos(njr.spawninfos);
@@ -146,7 +145,7 @@ export class WorkflowRunJobSpawnInfoComponent implements OnDestroy, OnInit {
                 workflowName: this._store.selectSnapshot(WorkflowState.workflowSnapshot).name,
                 number: (<WorkflowStateModel>this._store.selectSnapshot(WorkflowState)).workflowNodeRun.num,
                 nodeRunId: (<WorkflowStateModel>this._store.selectSnapshot(WorkflowState)).workflowNodeRun.id,
-                runJobId: this.currentNodeJobRunID,
+                runJobId: this.currentJobID,
             });
 
             this.workerSubscription = this.worker.response().subscribe(msg => {

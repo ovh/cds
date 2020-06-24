@@ -38,7 +38,7 @@ func Insert(db gorp.SqlExecutor, i interface{}) error {
 		case ViolateUniqueKeyPGCode:
 			err = sdk.NewError(sdk.ErrInvalidData, e)
 		case StringDataRightTruncation:
-			err = sdk.NewError(sdk.ErrConflict, e)
+			err = sdk.NewError(sdk.ErrInvalidData, e)
 		}
 	}
 

@@ -17,6 +17,7 @@ import (
 	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/ovh/cds/sdk/jws"
 	"github.com/ovh/cds/sdk/log"
+	loghook "github.com/ovh/cds/sdk/log/hook"
 )
 
 const (
@@ -27,16 +28,19 @@ const (
 	CDSApiUrl = "CDS_API_URL"
 )
 
+type logger struct {
+	hook   *loghook.Hook
+	logger *logrus.Logger
+}
+
 type CurrentWorker struct {
 	id         string
 	model      sdk.Model
 	basedir    afero.Fs
 	manualExit bool
-	logger     struct {
-		stepLogger *logrus.Logger
-	}
-	httpPort int32
-	register struct {
+	gelfLogger *logger
+	httpPort   int32
+	register   struct {
 		apiEndpoint string
 		token       string
 		model       string
@@ -111,16 +115,15 @@ func (wk *CurrentWorker) SendLog(ctx context.Context, level workerruntime.Level,
 			WorkerName: wk.Name(),
 			StepOrder:  int64(stepOrder),
 		},
-		NodeRunID: wk.currentJob.wJob.WorkflowNodeRunID,
 		JobID:     wk.currentJob.wJob.ID,
+		NodeRunID: wk.currentJob.wJob.WorkflowNodeRunID,
 		Timestamp: time.Now().UnixNano(),
 	}
 	signature, err := jws.Sign(wk.currentJob.signer, dataToSign)
 	if err != nil {
 		log.Error(ctx, "unable to sign logs: %v", err)
 	}
-	wk.logger.stepLogger.WithField(log.ExtraFieldSignature, signature).Log(logLevel, s)
-
+	wk.gelfLogger.logger.WithField(log.ExtraFieldSignature, signature).Log(logLevel, s)
 }
 
 func (wk *CurrentWorker) Name() string {

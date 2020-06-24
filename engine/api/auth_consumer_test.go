@@ -18,8 +18,7 @@ import (
 )
 
 func Test_getConsumersByUserHandler(t *testing.T) {
-	api, db, _, end := newTestAPI(t)
-	defer end()
+	api, db, _ := newTestAPI(t)
 
 	u, jwtRaw := assets.InsertLambdaUser(t, db)
 	localConsumer, err := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID,
@@ -61,8 +60,7 @@ func Test_getConsumersByUserHandler(t *testing.T) {
 }
 
 func Test_postConsumerByUserHandler(t *testing.T) {
-	api, db, _, end := newTestAPI(t)
-	defer end()
+	api, db, _ := newTestAPI(t)
 
 	g := assets.InsertGroup(t, db)
 	u, jwtRaw := assets.InsertLambdaUser(t, db, g)
@@ -107,8 +105,7 @@ func Test_postConsumerByUserHandler(t *testing.T) {
 }
 
 func Test_deleteConsumerByUserHandler(t *testing.T) {
-	api, db, _, end := newTestAPI(t)
-	defer end()
+	api, db, _ := newTestAPI(t)
 
 	u, jwtRaw := assets.InsertLambdaUser(t, db)
 
@@ -138,8 +135,7 @@ func Test_deleteConsumerByUserHandler(t *testing.T) {
 }
 
 func Test_postConsumerRegenByUserHandler(t *testing.T) {
-	api, db, _, end := newTestAPI(t)
-	defer end()
+	api, db, _ := newTestAPI(t)
 
 	u, jwtRaw := assets.InsertLambdaUser(t, db)
 	localConsumer, err := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID,
@@ -238,8 +234,7 @@ func Test_postConsumerRegenByUserHandler(t *testing.T) {
 }
 
 func Test_getSessionsByUserHandler(t *testing.T) {
-	api, db, _, end := newTestAPI(t)
-	defer end()
+	api, db, _ := newTestAPI(t)
 
 	u, jwtRaw := assets.InsertLambdaUser(t, db)
 	localConsumer, err := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID,
@@ -272,8 +267,7 @@ func Test_getSessionsByUserHandler(t *testing.T) {
 }
 
 func Test_deleteSessionByUserHandler(t *testing.T) {
-	api, db, _, end := newTestAPI(t)
-	defer end()
+	api, db, _ := newTestAPI(t)
 
 	u, jwtRaw := assets.InsertLambdaUser(t, db)
 	localConsumer, err := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID,

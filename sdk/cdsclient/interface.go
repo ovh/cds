@@ -144,7 +144,6 @@ type EnvironmentVariableClient interface {
 // EventsClient listen SSE Events from CDS API
 type EventsClient interface {
 	// Must be  run in a go routine
-	EventsListen(ctx context.Context, chanSSEvt chan<- SSEvent)
 	WebsocketEventsListen(ctx context.Context, chanMsgToSend <-chan sdk.WebsocketFilter, chanMsgReceived chan<- sdk.WebsocketEvent)
 }
 
@@ -329,8 +328,8 @@ type WorkflowClient interface {
 	WorkflowAllHooksList() ([]sdk.NodeHook, error)
 	WorkflowCachePush(projectKey, integrationName, ref string, tarContent io.Reader, size int) error
 	WorkflowCachePull(projectKey, integrationName, ref string) (io.Reader, error)
-	WorkflowTransformAsCode(projectKey, workflowName string) (*sdk.Operation, error)
-	WorkflowTransformAsCodeFollow(projectKey, workflowName string, ope *sdk.Operation) error
+	WorkflowTransformAsCode(projectKey, workflowName, branch, message string) (*sdk.Operation, error)
+	WorkflowTransformAsCodeFollow(projectKey, workflowName, opeUUID string) (*sdk.Operation, error)
 }
 
 // MonitoringClient exposes monitoring functions

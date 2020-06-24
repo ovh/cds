@@ -118,15 +118,12 @@ func (api *API) postServiceRegisterHandler() service.Handler {
 			}
 
 			for _, s := range srvs {
-				var tcpConfig sdk.TCPServer
-				if err := s.Config.Get("tcp", &tcpConfig); err != nil {
-					log.Error(ctx, "unable to get tcp configudation from cdn uservice: %v", err)
-					continue
+				if addr, ok := s.Config["public_tcp"]; ok {
+					srv.LogServerAdress = addr.(string)
+					break
 				}
-				srv.LogServer = tcpConfig
-				break
 			}
-			if srv.LogServer.Addr == "" || srv.LogServer.Port == 0 {
+			if srv.LogServerAdress == "" {
 				return sdk.WrapError(sdk.ErrNotFound, "unable to find any tcp server configuration in CDN")
 			}
 		}

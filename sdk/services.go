@@ -37,7 +37,7 @@ type Service struct {
 	MonitoringStatus MonitoringStatus `json:"monitoring_status" db:"monitoring_status" cli:"-"`
 	Version          string           `json:"version" db:"-" cli:"version"`
 	Uptodate         bool             `json:"up_to_date" db:"-"`
-	LogServer        TCPServer        `json:"tcp" db:"-"`
+	LogServerAdress  string           `json:"tcp_address" db:"-"`
 }
 
 // Update service field from new data.
@@ -68,21 +68,6 @@ func (c *ServiceConfig) Scan(src interface{}) error {
 		return WithStack(fmt.Errorf("type assertion .([]byte) failed (%T)", src))
 	}
 	return WrapError(json.Unmarshal(source, c), "cannot unmarshal ServiceConfig")
-}
-
-func (c ServiceConfig) Get(key string, dest interface{}) error {
-	v, ok := c[key]
-	if !ok {
-		return WrapError(ErrNotFound, "unable to find %s", key)
-	}
-	bts, err := json.Marshal(v)
-	if err != nil {
-		return WithStack(err)
-	}
-	if err := json.Unmarshal(bts, dest); err != nil {
-		return WithStack(err)
-	}
-	return nil
 }
 
 // ServiceConfiguration is the configuration of service

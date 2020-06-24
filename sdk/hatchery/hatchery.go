@@ -151,10 +151,10 @@ func Create(ctx context.Context, h Interface) error {
 					observability.Tag(observability.TagWorkflowNodeJobRun, j.ID),
 				)
 
-				if _, ok := j.Header["SSE"]; ok {
-					log.Debug("hatchery> received job from SSE")
+				if _, ok := j.Header["WS"]; ok {
+					log.Debug("hatchery> received job from WS")
 					observability.Current(currentCtx,
-						observability.Tag("from", "sse"),
+						observability.Tag("from", "ws"),
 					)
 				}
 			}
@@ -178,8 +178,8 @@ func Create(ctx context.Context, h Interface) error {
 
 			stats.Record(currentCtx, GetMetrics().Jobs.M(1))
 
-			if _, ok := j.Header["SSE"]; ok {
-				stats.Record(currentCtx, GetMetrics().JobsSSE.M(1))
+			if _, ok := j.Header["WS"]; ok {
+				stats.Record(currentCtx, GetMetrics().JobsWebsocket.M(1))
 			}
 
 			//Check if the jobs is concerned by a pending worker creation
@@ -220,7 +220,20 @@ func Create(ctx context.Context, h Interface) error {
 			// Check at least one worker model can match
 			var chosenModel *sdk.Model
 			var canTakeJob bool
-			if isWithModels {
+
+			var containsRegionRequirement bool
+			for _, r := range workerRequest.requirements {
+				switch r.Type {
+				case sdk.RegionRequirement:
+					containsRegionRequirement = true
+					break
+				}
+			}
+
+			if !containsRegionRequirement && h.Configuration().Provision.IgnoreJobWithNoRegion {
+				log.Debug("cannot launch this job because it does not contains a region prerequisite and IgnoreJobWithNoRegion=true in hatchery configuration")
+				canTakeJob = false
+			} else if isWithModels {
 				for i := range models {
 					if canRunJobWithModel(ctx, hWithModels, workerRequest, &models[i]) {
 						chosenModel = &models[i]
@@ -278,11 +291,6 @@ func canRunJob(ctx context.Context, h Interface, j workerStarterRequest) bool {
 			return false
 		}
 
-		if r.Type == sdk.NetworkAccessRequirement && !sdk.CheckNetworkAccessRequirement(r) {
-			log.Debug("canRunJob> %d - job %d - network requirement failed: %v", j.timestamp, j.id, r.Value)
-			return false
-		}
-
 		if r.Type == sdk.RegionRequirement && r.Value != h.Configuration().Provision.Region {
 			log.Debug("canRunJob> %d - job %d - job with region requirement: cannot spawn. hatchery-region:%s prerequisite:%s", j.timestamp, j.id, h.Configuration().Provision.Region, r.Value)
 			return false
@@ -290,7 +298,7 @@ func canRunJob(ctx context.Context, h Interface, j workerStarterRequest) bool {
 
 		// Skip others requirement as we can't check it
 		if r.Type == sdk.PluginRequirement || r.Type == sdk.ServiceRequirement || r.Type == sdk.MemoryRequirement {
-			log.Debug("canRunJob> %d - job %d - job with service, plugin, network or memory requirement. Skip these check as we can't check it on hatchery routine", j.timestamp, j.id)
+			log.Debug("canRunJob> %d - job %d - job with service, plugin or memory requirement. Skip these check as we can't check it on hatchery routine", j.timestamp, j.id)
 			continue
 		}
 
@@ -370,11 +378,6 @@ func canRunJobWithModel(ctx context.Context, h InterfaceWithModels, j workerStar
 			return false
 		}
 
-		if r.Type == sdk.NetworkAccessRequirement && !sdk.CheckNetworkAccessRequirement(r) {
-			log.Debug("canRunJobWithModel> %d - job %d - network requirement failed: %v", j.timestamp, j.id, r.Value)
-			return false
-		}
-
 		// Skip other requirement as we can't check it
 		if r.Type == sdk.PluginRequirement || r.Type == sdk.ServiceRequirement || r.Type == sdk.MemoryRequirement {
 			log.Debug("canRunJobWithModel> %d - job %d - job with service, plugin, network or memory requirement. Skip these check as we can't check it on hatchery routine", j.timestamp, j.id)
@@ -418,7 +421,7 @@ func SendSpawnInfo(ctx context.Context, h Interface, jobID int64, spawnMsg sdk.S
 	if h.CDSClient() == nil || jobID == 0 {
 		return
 	}
-	infos := []sdk.SpawnInfo{{RemoteTime: time.Now(), Message: spawnMsg}}
+	infos := []sdk.SpawnInfo{{RemoteTime: time.Now(), Message: spawnMsg, UserMessage: spawnMsg.DefaultUserMessage()}}
 	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
 	defer cancel()
 	if err := h.CDSClient().QueueJobSendSpawnInfo(ctx, jobID, infos); err != nil {

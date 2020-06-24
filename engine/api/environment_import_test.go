@@ -16,8 +16,7 @@ import (
 )
 
 func Test_postEnvironmentImportHandler_NewEnvFromYAMLWithoutSecret(t *testing.T) {
-	api, db, _, end := newTestAPI(t)
-	defer end()
+	api, db, _ := newTestAPI(t)
 
 	u, pass := assets.InsertAdminUser(t, db)
 	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
@@ -85,8 +84,7 @@ variables:
 }
 
 func Test_postEnvironmentImportHandler_NewEnvFromYAMLWithKeysAndSecrets(t *testing.T) {
-	api, db, _, end := newTestAPI(t)
-	defer end()
+	api, db, _ := newTestAPI(t)
 
 	u, pass := assets.InsertAdminUser(t, db)
 	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
@@ -116,7 +114,7 @@ func Test_postEnvironmentImportHandler_NewEnvFromYAMLWithKeysAndSecrets(t *testi
 		t.Fatal(err)
 	}
 
-	require.NoError(t, environment.InsertVariable(db, env.ID, &sdk.Variable{
+	require.NoError(t, environment.InsertVariable(db, env.ID, &sdk.EnvironmentVariable{
 		Name:  "myPassword",
 		Type:  sdk.SecretVariable,
 		Value: "MySecretValue",
@@ -206,8 +204,7 @@ func Test_postEnvironmentImportHandler_NewEnvFromYAMLWithKeysAndSecrets(t *testi
 }
 
 func Test_postEnvironmentImportHandler_NewEnvFromYAMLWithKeysAndSecretsAndReImport(t *testing.T) {
-	api, db, _, end := newTestAPI(t)
-	defer end()
+	api, db, _ := newTestAPI(t)
 
 	u, pass := assets.InsertAdminUser(t, db)
 	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
@@ -234,7 +231,7 @@ func Test_postEnvironmentImportHandler_NewEnvFromYAMLWithKeysAndSecretsAndReImpo
 		t.Fatal(err)
 	}
 
-	require.NoError(t, environment.InsertVariable(db, env.ID, &sdk.Variable{
+	require.NoError(t, environment.InsertVariable(db, env.ID, &sdk.EnvironmentVariable{
 		Name:  "myPassword",
 		Type:  sdk.SecretVariable,
 		Value: "MySecretValue",
@@ -384,8 +381,7 @@ func Test_postEnvironmentImportHandler_NewEnvFromYAMLWithKeysAndSecretsAndReImpo
 }
 
 func Test_postEnvironmentImportHandler_NewEnvFromYAMLWithEmptyKey(t *testing.T) {
-	api, db, _, end := newTestAPI(t)
-	defer end()
+	api, db, _ := newTestAPI(t)
 
 	u, pass := assets.InsertAdminUser(t, db)
 	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
@@ -450,8 +446,7 @@ keys:
 }
 
 func Test_postEnvironmentImportHandler_ExistingAppFromYAMLWithoutForce(t *testing.T) {
-	api, db, _, end := newTestAPI(t)
-	defer end()
+	api, db, _ := newTestAPI(t)
 
 	u, pass := assets.InsertAdminUser(t, db)
 	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
@@ -479,15 +474,14 @@ name: myNewEnv`
 	//Do the request
 	rec := httptest.NewRecorder()
 	api.Router.Mux.ServeHTTP(rec, req)
-	assert.Equal(t, 409, rec.Code)
+	assert.Equal(t, 403, rec.Code)
 
 	//Check result
 	t.Logf(">>%s", rec.Body.String())
 }
 
 func Test_postEnvironmentImportHandler_ExistingAppFromYAMLInheritPermissions(t *testing.T) {
-	api, db, _, end := newTestAPI(t)
-	defer end()
+	api, db, _ := newTestAPI(t)
 
 	u, pass := assets.InsertAdminUser(t, db)
 	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))

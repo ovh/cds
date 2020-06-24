@@ -3,6 +3,7 @@ package openstack
 import (
 	"context"
 	"fmt"
+	"sort"
 	"strings"
 	"sync"
 	"time"
@@ -153,7 +154,34 @@ func (*HatcheryOpenstack) ModelType() string {
 
 // WorkerModelsEnabled returns Worker model enabled.
 func (h *HatcheryOpenstack) WorkerModelsEnabled() ([]sdk.Model, error) {
-	return h.CDSClient().WorkerModelEnabledList()
+	allModels, err := h.CDSClient().WorkerModelEnabledList()
+	if err != nil {
+		return nil, err
+	}
+
+	filteredModels := make([]sdk.Model, 0, len(allModels))
+	for i := range allModels {
+		if allModels[i].Type != sdk.Openstack {
+			continue
+		}
+
+		// Required flavor should be available on target OpenStack project
+		if _, err := h.flavor(allModels[i].ModelVirtualMachine.Flavor); err != nil {
+			log.Debug("WorkerModelsEnabled> model %s/%s is not usable because flavor '%s' not found", allModels[i].Group.Name, allModels[i].Name, allModels[i].ModelVirtualMachine.Flavor)
+			continue
+		}
+
+		filteredModels = append(filteredModels, allModels[i])
+	}
+
+	// Sort models by required CPUs, this will allows to starts job without defined model on the smallest flavor.
+	sort.Slice(filteredModels, func(i, j int) bool {
+		flavorI, _ := h.flavor(filteredModels[i].ModelVirtualMachine.Flavor)
+		flavorJ, _ := h.flavor(filteredModels[j].ModelVirtualMachine.Flavor)
+		return flavorI.VCPUs < flavorJ.VCPUs
+	})
+
+	return filteredModels, nil
 }
 
 // WorkerModelSecretList returns secret for given model.
@@ -164,15 +192,6 @@ func (h *HatcheryOpenstack) WorkerModelSecretList(m sdk.Model) (sdk.WorkerModelS
 // CanSpawn return wether or not hatchery can spawn model
 // requirements are not supported
 func (h *HatcheryOpenstack) CanSpawn(ctx context.Context, model *sdk.Model, jobID int64, requirements []sdk.Requirement) bool {
-	// if there is a model, we have to check if the flavor attached to model is knowned by this hatchery
-	if model != nil {
-		if _, err := h.flavorID(model.ModelVirtualMachine.Flavor); err != nil {
-			log.Debug("CanSpawn> h.flavorID on %s err:%v", model.ModelVirtualMachine.Flavor, err)
-			return false
-		}
-		log.Debug("CanSpawn> flavor '%s' found", model.ModelVirtualMachine.Flavor)
-	}
-
 	for _, r := range requirements {
 		if r.Type == sdk.ServiceRequirement || r.Type == sdk.MemoryRequirement || r.Type == sdk.HostnameRequirement {
 			return false

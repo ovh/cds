@@ -3,7 +3,7 @@ import { Metric } from './metric.model';
 import { Usage } from './usage.model';
 import { Variable } from './variable.model';
 import { VCSStrategy } from './vcs.model';
-import { Notification } from './workflow.model';
+import { Notification, Workflow } from './workflow.model';
 import { WorkflowRun } from './workflow.run.model';
 
 export const applicationNamePattern: RegExp = new RegExp('^[a-zA-Z0-9._-]+$');
@@ -21,7 +21,7 @@ export class Application {
     usage: Usage;
     keys: Array<Key>;
     vcs_strategy: VCSStrategy;
-    deployment_strategies: Map<string, any>;
+    deployment_strategies: {};
     vulnerabilities: Array<Vulnerability>;
     project_key: string; // project unique key
     from_repository: string;
@@ -29,6 +29,8 @@ export class Application {
 
     // true if someone has updated the application ( used for warnings )
     externalChange: boolean;
+    editModeChanged: boolean;
+    workflow_ascode_holder: Workflow;
 
     // Return true if pattern is good
     public static checkName(name: string): boolean {

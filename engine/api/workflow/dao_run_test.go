@@ -78,8 +78,8 @@ func TestCanBeRun(t *testing.T) {
 }
 
 func TestPurgeWorkflowRun(t *testing.T) {
-	db, cache, end := test.SetupPG(t, bootstrap.InitiliazeDB)
-	defer end()
+	db, cache := test.SetupPG(t, bootstrap.InitiliazeDB)
+
 	_ = event.Initialize(context.Background(), db, cache)
 
 	mockVCSSservice, _ := assets.InsertService(t, db, "TestManualRunBuildParameterMultiApplication", sdk.TypeVCS)
@@ -156,13 +156,13 @@ func TestPurgeWorkflowRun(t *testing.T) {
 
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, cache, key, key)
-	assert.NoError(t, repositoriesmanager.InsertForProject(db, proj, &sdk.ProjectVCSServer{
-		Name: "github",
-		Data: map[string]string{
-			"token":  "foo",
-			"secret": "bar",
-		},
-	}))
+	vcsServer := sdk.ProjectVCSServerLink{
+		ProjectID: proj.ID,
+		Name:      "github",
+	}
+	vcsServer.Set("token", "foo")
+	vcsServer.Set("secret", "bar")
+	assert.NoError(t, repositoriesmanager.InsertProjectVCSServerLink(context.TODO(), db, &vcsServer))
 
 	//First pipeline
 	pip := sdk.Pipeline{
@@ -254,8 +254,8 @@ vcs_ssh_key: proj-blabla
 }
 
 func TestPurgeWorkflowRunWithRunningStatus(t *testing.T) {
-	db, cache, end := test.SetupPG(t, bootstrap.InitiliazeDB)
-	defer end()
+	db, cache := test.SetupPG(t, bootstrap.InitiliazeDB)
+
 	_ = event.Initialize(context.Background(), db, cache)
 
 	u, _ := assets.InsertAdminUser(t, db)
@@ -352,8 +352,8 @@ func TestPurgeWorkflowRunWithRunningStatus(t *testing.T) {
 }
 
 func TestPurgeWorkflowRunWithOneSuccessWorkflowRun(t *testing.T) {
-	db, cache, end := test.SetupPG(t, bootstrap.InitiliazeDB)
-	defer end()
+	db, cache := test.SetupPG(t, bootstrap.InitiliazeDB)
+
 	_ = event.Initialize(context.Background(), db, cache)
 
 	mockVCSSservice, _ := assets.InsertService(t, db, "TestManualRunBuildParameterMultiApplication", sdk.TypeVCS)
@@ -431,13 +431,13 @@ func TestPurgeWorkflowRunWithOneSuccessWorkflowRun(t *testing.T) {
 
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, cache, key, key)
-	assert.NoError(t, repositoriesmanager.InsertForProject(db, proj, &sdk.ProjectVCSServer{
-		Name: "github",
-		Data: map[string]string{
-			"token":  "foo",
-			"secret": "bar",
-		},
-	}))
+	vcsServer := sdk.ProjectVCSServerLink{
+		ProjectID: proj.ID,
+		Name:      "github",
+	}
+	vcsServer.Set("token", "foo")
+	vcsServer.Set("secret", "bar")
+	assert.NoError(t, repositoriesmanager.InsertProjectVCSServerLink(context.TODO(), db, &vcsServer))
 
 	//First pipeline
 	pip := sdk.Pipeline{
@@ -554,8 +554,8 @@ vcs_ssh_key: proj-blabla
 }
 
 func TestPurgeWorkflowRunWithNoSuccessWorkflowRun(t *testing.T) {
-	db, cache, end := test.SetupPG(t, bootstrap.InitiliazeDB)
-	defer end()
+	db, cache := test.SetupPG(t, bootstrap.InitiliazeDB)
+
 	_ = event.Initialize(context.Background(), db, cache)
 
 	mockVCSSservice, _ := assets.InsertService(t, db, "TestManualRunBuildParameterMultiApplication", sdk.TypeVCS)
@@ -622,13 +622,13 @@ func TestPurgeWorkflowRunWithNoSuccessWorkflowRun(t *testing.T) {
 
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, cache, key, key)
-	assert.NoError(t, repositoriesmanager.InsertForProject(db, proj, &sdk.ProjectVCSServer{
-		Name: "github",
-		Data: map[string]string{
-			"token":  "foo",
-			"secret": "bar",
-		},
-	}))
+	vcsServer := sdk.ProjectVCSServerLink{
+		ProjectID: proj.ID,
+		Name:      "github",
+	}
+	vcsServer.Set("token", "foo")
+	vcsServer.Set("secret", "bar")
+	assert.NoError(t, repositoriesmanager.InsertProjectVCSServerLink(context.TODO(), db, &vcsServer))
 
 	//First pipeline
 	pip := sdk.Pipeline{
@@ -723,8 +723,8 @@ vcs_ssh_key: proj-blabla
 }
 
 func TestPurgeWorkflowRunWithoutTags(t *testing.T) {
-	db, cache, end := test.SetupPG(t, bootstrap.InitiliazeDB)
-	defer end()
+	db, cache := test.SetupPG(t, bootstrap.InitiliazeDB)
+
 	_ = event.Initialize(context.Background(), db, cache)
 
 	u, _ := assets.InsertAdminUser(t, db)
@@ -809,8 +809,8 @@ func TestPurgeWorkflowRunWithoutTags(t *testing.T) {
 }
 
 func TestPurgeWorkflowRunWithoutTagsBiggerHistoryLength(t *testing.T) {
-	db, cache, end := test.SetupPG(t, bootstrap.InitiliazeDB)
-	defer end()
+	db, cache := test.SetupPG(t, bootstrap.InitiliazeDB)
+
 	_ = event.Initialize(context.Background(), db, cache)
 
 	u, _ := assets.InsertAdminUser(t, db)

@@ -56,7 +56,7 @@ func PublishDeleteApplication(ctx context.Context, projKey string, app sdk.Appli
 }
 
 // PublishAddVariableApplication publishes an event when adding a new variable
-func PublishAddVariableApplication(ctx context.Context, projKey string, app sdk.Application, v sdk.Variable, u sdk.Identifiable) {
+func PublishAddVariableApplication(ctx context.Context, projKey string, app sdk.Application, v sdk.ApplicationVariable, u sdk.Identifiable) {
 	if sdk.NeedPlaceholder(v.Type) {
 		v.Value = sdk.PasswordPlaceholder
 	}
@@ -67,7 +67,7 @@ func PublishAddVariableApplication(ctx context.Context, projKey string, app sdk.
 }
 
 // PublishUpdateVariableApplication publishes an event when updating a variable
-func PublishUpdateVariableApplication(ctx context.Context, projKey string, app sdk.Application, v sdk.Variable, vOld sdk.Variable, u sdk.Identifiable) {
+func PublishUpdateVariableApplication(ctx context.Context, projKey string, app sdk.Application, v sdk.ApplicationVariable, vOld sdk.ApplicationVariable, u sdk.Identifiable) {
 	e := sdk.EventApplicationVariableUpdate{
 		OldVariable: vOld,
 		NewVariable: v,
@@ -76,7 +76,7 @@ func PublishUpdateVariableApplication(ctx context.Context, projKey string, app s
 }
 
 // PublishDeleteVariableApplication publishes an event when deleting a new variable
-func PublishDeleteVariableApplication(ctx context.Context, projKey string, app sdk.Application, v sdk.Variable, u sdk.Identifiable) {
+func PublishDeleteVariableApplication(ctx context.Context, projKey string, app sdk.Application, v sdk.ApplicationVariable, u sdk.Identifiable) {
 	e := sdk.EventApplicationVariableDelete{
 		Variable: v,
 	}

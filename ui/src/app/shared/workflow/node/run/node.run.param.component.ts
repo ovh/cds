@@ -169,9 +169,7 @@ export class WorkflowNodeRunParamComponent implements AfterViewInit {
                 });
         } else {
             let isPipelineRoot = false;
-            if (!this.currentWorkflowRun) {
-                isPipelineRoot = true;
-            } else if (this.currentWorkflowRun && this.currentWorkflowRun.workflow.workflow_data.node.id === this.nodeToRun.id) {
+            if (!this.currentWorkflowRun || this.currentWorkflowRun.workflow.workflow_data.node.id === this.nodeToRun.id) {
                 isPipelineRoot = true;
             }
             // run a workflow or a child pipeline, first run

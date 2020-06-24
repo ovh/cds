@@ -10,6 +10,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/go-gorp/gorp"
 	gocache "github.com/patrickmn/go-cache"
 
 	"github.com/ovh/cds/engine/api/observability"
@@ -38,11 +39,9 @@ func (s *Service) RunTcpLogServer(ctx context.Context) {
 
 	//Gracefully shutdown the tcp server
 	go func() {
-		select {
-		case <-ctx.Done():
-			log.Info(ctx, "CDN> Shutdown tcp log Server")
-			_ = listener.Close()
-		}
+		<-ctx.Done()
+		log.Info(ctx, "CDN> Shutdown tcp log Server")
+		_ = listener.Close()
 	}()
 
 	go func() {
@@ -61,10 +60,24 @@ func (s *Service) RunTcpLogServer(ctx context.Context) {
 	}()
 }
 
+func (s *Service) handleConnectionChannel(ctx context.Context) chan<- handledMessage {
+	chanMessages := make(chan handledMessage, 1000)
+	sdk.GoRoutine(context.Background(), "cdn-msgreader-"+sdk.UUID(), func(ctx context.Context) {
+		if err := s.processLogs(ctx, chanMessages); err != nil {
+			log.Error(ctx, "error while processing logs: %v", err)
+		}
+	})
+	return chanMessages
+}
+
 func (s *Service) handleConnection(ctx context.Context, conn net.Conn) {
 	defer func() {
 		_ = conn.Close()
 	}()
+
+	chanMessages := s.handleConnectionChannel(ctx)
+	defer close(chanMessages)
+
 	bufReader := bufio.NewReader(conn)
 	for {
 		bytes, err := bufReader.ReadBytes(byte(0))
@@ -75,7 +88,7 @@ func (s *Service) handleConnection(ctx context.Context, conn net.Conn) {
 		// remove byte(0)
 		bytes = bytes[:len(bytes)-1]
 
-		if err := s.handleLogMessage(ctx, bytes); err != nil {
+		if err := s.handleLogMessage(ctx, chanMessages, bytes); err != nil {
 			observability.Record(ctx, Errors, 1)
 			log.Error(ctx, "cdn.log> %v", err)
 			continue
@@ -83,8 +96,7 @@ func (s *Service) handleConnection(ctx context.Context, conn net.Conn) {
 	}
 }
 
-func (s *Service) handleLogMessage(ctx context.Context, messageReceived []byte) error {
-	// Get Log Message
+func (s *Service) handleLogMessage(ctx context.Context, chanMessages chan<- handledMessage, messageReceived []byte) error {
 	m := hook.Message{}
 	if err := m.UnmarshalJSON(messageReceived); err != nil {
 		return sdk.WrapError(err, "unable to unmarshall gelf message: %s", string(messageReceived))
@@ -105,7 +117,7 @@ func (s *Service) handleLogMessage(ctx context.Context, messageReceived []byte) 
 	switch {
 	case signature.Worker != nil:
 		observability.Record(ctx, WorkerLogReceived, 1)
-		return s.handleWorkerLog(ctx, signature.Worker.WorkerID, signature.Worker.WorkerName, sig, m)
+		return s.handleWorkerLog(ctx, chanMessages, signature.Worker.WorkerName, signature.Worker.WorkerID, sig, m)
 	case signature.Service != nil:
 		observability.Record(ctx, ServiceLogReceived, 1)
 		return s.handleServiceLog(ctx, signature.Service.HatcheryID, signature.Service.HatcheryName, signature.Service.WorkerName, sig, m)
@@ -114,7 +126,7 @@ func (s *Service) handleLogMessage(ctx context.Context, messageReceived []byte) 
 	}
 }
 
-func (s *Service) handleWorkerLog(ctx context.Context, workerID string, workerName string, sig interface{}, m hook.Message) error {
+func (s *Service) handleWorkerLog(ctx context.Context, chanMessages chan<- handledMessage, workerName string, workerID string, sig interface{}, m hook.Message) error {
 	var signature log.Signature
 
 	// Get worker data from cache
@@ -131,7 +143,67 @@ func (s *Service) handleWorkerLog(ctx context.Context, workerID string, workerNa
 		return sdk.WithStack(sdk.ErrForbidden)
 	}
 
-	// Send log to API
+	chanMessages <- handledMessage{
+		signature: signature,
+		m:         m,
+	}
+
+	return nil
+}
+
+type handledMessage struct {
+	signature log.Signature
+	m         hook.Message
+}
+
+func (s *Service) processLogs(ctx context.Context, chanMessages <-chan handledMessage) error {
+	var t0 = time.Now()
+	var nbMessages int
+	defer func() {
+		delta := time.Since(t0).Seconds()
+		log.Info(ctx, "processLogs - %d messages received in %.3f seconds", nbMessages, delta)
+	}()
+	for {
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+
+		case msg, more := <-chanMessages:
+			nbMessages++
+			if msg.signature.Worker == nil {
+				if !more {
+					return nil
+				}
+				continue
+			}
+
+			tx, err := s.Db.Begin()
+			if err != nil {
+				log.Error(ctx, "unable to start tx: %v", err)
+				continue
+			}
+
+			currentLog := buildMessage(msg.signature, msg.m)
+			if err := s.processLog(ctx, tx, msg.signature, currentLog); err != nil {
+				log.Error(ctx, "unable to process log: %+v", err)
+				tx.Rollback() // nolint
+				continue
+			}
+
+			if err := tx.Commit(); err != nil {
+				log.Error(ctx, "unable to commit tx: %+v", err)
+				tx.Rollback() // nolint
+				continue
+			}
+
+			if !more {
+				return nil
+			}
+		}
+	}
+}
+
+func buildMessage(signature log.Signature, m hook.Message) string {
 	logDate := time.Unix(0, int64(m.Time*1e9))
 	logs := sdk.Log{
 		JobID:        signature.JobID,
@@ -165,10 +237,19 @@ func (s *Service) handleWorkerLog(ctx context.Context, workerID string, workerNa
 		lvl = "EMERGENCY"
 	}
 	logs.Val = fmt.Sprintf("[%s] %s", lvl, logs.Val)
-	if err := s.Client.QueueSendLogs(ctx, signature.JobID, logs); err != nil {
-		return err
+	return logs.Val
+}
+
+func (s *Service) processLog(ctx context.Context, db gorp.SqlExecutor, signature log.Signature, message string) error {
+	now := time.Now()
+	l := sdk.Log{
+		JobID:        signature.JobID,
+		NodeRunID:    signature.NodeRunID,
+		LastModified: &now,
+		StepOrder:    signature.Worker.StepOrder,
+		Val:          message,
 	}
-	return nil
+	return s.Client.QueueSendLogs(ctx, signature.JobID, l)
 }
 
 func (s *Service) handleServiceLog(ctx context.Context, hatcheryID int64, hatcheryName string, workerName string, sig interface{}, m hook.Message) error {

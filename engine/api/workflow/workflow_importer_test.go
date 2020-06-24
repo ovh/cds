@@ -30,8 +30,8 @@ func (h *mockHTTPClient) Do(*http.Request) (*http.Response, error) {
 }
 
 func TestImport(t *testing.T) {
-	db, cache, end := test.SetupPG(t)
-	defer end()
+	db, cache := test.SetupPG(t)
+
 	u, _ := assets.InsertAdminUser(t, db)
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, cache, key, key)
