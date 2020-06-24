@@ -140,6 +140,9 @@ func migrate(ctx context.Context, db *gorp.DbMap, id int64, projVarsMap map[int6
 		DisableDetailledNodeRun: true,
 	})
 	if err != nil {
+		if sdk.ErrorIs(err, sdk.ErrNotFound) {
+			return nil
+		}
 		return err
 	}
 

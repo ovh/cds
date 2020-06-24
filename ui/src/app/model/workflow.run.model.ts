@@ -40,6 +40,7 @@ export class WorkflowRun {
     tags: Array<WorkflowRunTags>;
     commits: Array<Commit>;
     infos: Array<SpawnInfo>;
+    read_only: boolean;
 
     // Useful for UI
     duration: string;

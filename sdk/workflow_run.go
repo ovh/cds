@@ -53,6 +53,7 @@ type WorkflowRun struct {
 	JoinTriggersRun  map[int64]WorkflowNodeTriggerRun `json:"join_triggers_run,omitempty" db:"-"`
 	Header           WorkflowRunHeaders               `json:"header,omitempty" db:"-"`
 	URLs             URL                              `json:"urls" yaml:"-" db:"-" cli:"-"`
+	ReadOnly         bool                             `json:"read_only" yaml:"-" db:"read_only" cli:"-"`
 }
 
 type WorkflowRunSecret struct {
