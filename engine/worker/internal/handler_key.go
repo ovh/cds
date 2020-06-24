@@ -21,8 +21,7 @@ func keyInstallHandler(ctx context.Context, wk *CurrentWorker) http.HandlerFunc 
 
 		body, err := ioutil.ReadAll(r.Body)
 		if err != nil {
-			sdkerr := sdk.NewError(sdk.ErrWrongRequest, err).(sdk.Error)
-			writeJSON(w, sdkerr, sdkerr.Status)
+			writeError(w, r, sdk.NewError(sdk.ErrWrongRequest, err))
 			return
 		}
 
@@ -31,8 +30,7 @@ func keyInstallHandler(ctx context.Context, wk *CurrentWorker) http.HandlerFunc 
 		var mapBody = make(map[string]string)
 		if len(body) > 0 {
 			if err := json.Unmarshal(body, &mapBody); err != nil {
-				sdkerr := sdk.NewError(sdk.ErrWrongRequest, err).(sdk.Error)
-				writeJSON(w, sdkerr, sdkerr.Status)
+				writeError(w, r, sdk.NewError(sdk.ErrWrongRequest, err))
 				return
 			}
 		}
@@ -40,9 +38,8 @@ func keyInstallHandler(ctx context.Context, wk *CurrentWorker) http.HandlerFunc 
 		var key *sdk.Variable
 
 		if wk.currentJob.secrets == nil {
-			sdkerr := sdk.NewError(sdk.ErrWrongRequest, fmt.Errorf("Cannot find any keys for your job")).(sdk.Error)
 			log.Error(ctx, "%v", err)
-			writeJSON(w, sdkerr, sdkerr.Status)
+			writeError(w, r, sdk.NewError(sdk.ErrWrongRequest, fmt.Errorf("Cannot find any keys for your job")))
 			return
 		}
 
@@ -54,9 +51,8 @@ func keyInstallHandler(ctx context.Context, wk *CurrentWorker) http.HandlerFunc 
 		}
 
 		if key == nil {
-			sdkerr := sdk.NewError(sdk.ErrNotFound, fmt.Errorf("Cannot find any keys for your job")).(sdk.Error)
 			log.Error(ctx, "%v", err)
-			writeJSON(w, sdkerr, sdkerr.Status)
+			writeError(w, r, sdk.NewError(sdk.ErrNotFound, fmt.Errorf("Cannot find any keys for your job")))
 			return
 		}
 
@@ -65,10 +61,9 @@ func keyInstallHandler(ctx context.Context, wk *CurrentWorker) http.HandlerFunc 
 		if err != nil {
 			log.Error(ctx, "Unable to install key %s: %v", key.Name, err)
 			if sdkerr, ok := err.(*sdk.Error); ok {
-				writeJSON(w, sdkerr, sdkerr.Status)
+				writeError(w, r, sdkerr)
 			} else {
-				sdkerr := sdk.NewError(sdk.ErrNotFound, err).(sdk.Error)
-				writeJSON(w, sdkerr, sdkerr.Status)
+				writeError(w, r, sdk.NewError(sdk.ErrNotFound, err))
 			}
 			return
 		}
