@@ -16,7 +16,7 @@ import (
 
 func (api *API) getTimelineHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		srvs, err := services.LoadAllByType(ctx, api.mustDB(), services.TypeElasticsearch)
+		srvs, err := services.LoadAllByType(ctx, api.mustDB(), sdk.TypeElasticsearch)
 		if err != nil {
 			return err
 		}

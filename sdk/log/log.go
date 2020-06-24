@@ -241,7 +241,6 @@ func newEntry(ctx context.Context, fields log.Fields) *log.Entry {
 type Signature struct {
 	Worker    *SignatureWorker
 	Service   *SignatureService
-	NodeRunID int64
 	JobID     int64
 	NodeRunID int64
 	Timestamp int64
