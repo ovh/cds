@@ -58,7 +58,7 @@ func uploadHandler(ctx context.Context, wk *CurrentWorker) http.HandlerFunc {
 		workingDir, err := workerruntime.WorkingDirectory(wk.currentJob.context)
 		if err != nil {
 			wk.SendLog(ctx, workerruntime.LevelError, fmt.Sprintf("Artifact upload failed: %v", err))
-			log.Error(ctx, "Artifact upload failed: No woorking directory: %v", err)
+			log.Error(ctx, "Artifact upload failed: No working directory: %v", err)
 			writeError(w, r, err)
 			return
 		}
@@ -74,7 +74,7 @@ func uploadHandler(ctx context.Context, wk *CurrentWorker) http.HandlerFunc {
 		if result.Status != sdk.StatusSuccess {
 			wk.SendLog(ctx, workerruntime.LevelError, fmt.Sprintf("Artifact upload failed: %s", result.Reason))
 			log.Error(ctx, "Artifact upload failed: %v", result)
-			w.WriteHeader(http.StatusInternalServerError)
+			writeError(w, r, fmt.Errorf("Artifact upload failed: %s", result.Reason))
 			return
 		}
 	}

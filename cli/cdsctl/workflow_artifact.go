@@ -59,7 +59,7 @@ var workflowArtifactDownloadCmd = cli.Command{
 		{Name: "number"},
 	},
 	OptionalArgs: []cli.Arg{
-		{Name: "artefact-name"},
+		{Name: "artifact-name"},
 	},
 	Flags: []cli.Flag{
 		{
@@ -92,7 +92,7 @@ func workflowArtifactDownloadRun(v cli.Values) error {
 
 	var ok bool
 	for _, a := range artifacts {
-		if v.GetString("artefact-name") != "" && v.GetString("artefact-name") != a.Name {
+		if v.GetString("artifact-name") != "" && v.GetString("artifact-name") != a.Name {
 			continue
 		}
 		if v.GetString("exclude") != "" && reg.MatchString(a.Name) {
