@@ -3279,18 +3279,23 @@ func (m *MockWorkerClient) EXPECT() *MockWorkerClientMockRecorder {
 }
 
 // WorkerGet mocks base method
-func (m *MockWorkerClient) WorkerGet(ctx context.Context, name string) (*sdk.Worker, error) {
+func (m *MockWorkerClient) WorkerGet(ctx context.Context, name string, mods ...cdsclient.RequestModifier) (*sdk.Worker, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "WorkerGet", ctx, name)
+	varargs := []interface{}{ctx, name}
+	for _, a := range mods {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "WorkerGet", varargs...)
 	ret0, _ := ret[0].(*sdk.Worker)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // WorkerGet indicates an expected call of WorkerGet
-func (mr *MockWorkerClientMockRecorder) WorkerGet(ctx, name interface{}) *gomock.Call {
+func (mr *MockWorkerClientMockRecorder) WorkerGet(ctx, name interface{}, mods ...interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkerGet", reflect.TypeOf((*MockWorkerClient)(nil).WorkerGet), ctx, name)
+	varargs := append([]interface{}{ctx, name}, mods...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkerGet", reflect.TypeOf((*MockWorkerClient)(nil).WorkerGet), varargs...)
 }
 
 // WorkerModelBook mocks base method
@@ -7100,18 +7105,23 @@ func (mr *MockInterfaceMockRecorder) UserGetSchema() *gomock.Call {
 }
 
 // WorkerGet mocks base method
-func (m *MockInterface) WorkerGet(ctx context.Context, name string) (*sdk.Worker, error) {
+func (m *MockInterface) WorkerGet(ctx context.Context, name string, mods ...cdsclient.RequestModifier) (*sdk.Worker, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "WorkerGet", ctx, name)
+	varargs := []interface{}{ctx, name}
+	for _, a := range mods {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "WorkerGet", varargs...)
 	ret0, _ := ret[0].(*sdk.Worker)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // WorkerGet indicates an expected call of WorkerGet
-func (mr *MockInterfaceMockRecorder) WorkerGet(ctx, name interface{}) *gomock.Call {
+func (mr *MockInterfaceMockRecorder) WorkerGet(ctx, name interface{}, mods ...interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkerGet", reflect.TypeOf((*MockInterface)(nil).WorkerGet), ctx, name)
+	varargs := append([]interface{}{ctx, name}, mods...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkerGet", reflect.TypeOf((*MockInterface)(nil).WorkerGet), varargs...)
 }
 
 // WorkerModelBook mocks base method
@@ -8494,18 +8504,23 @@ func (mr *MockWorkerInterfaceMockRecorder) ServiceConfigurationGet(arg0, arg1 in
 }
 
 // WorkerGet mocks base method
-func (m *MockWorkerInterface) WorkerGet(ctx context.Context, name string) (*sdk.Worker, error) {
+func (m *MockWorkerInterface) WorkerGet(ctx context.Context, name string, mods ...cdsclient.RequestModifier) (*sdk.Worker, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "WorkerGet", ctx, name)
+	varargs := []interface{}{ctx, name}
+	for _, a := range mods {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "WorkerGet", varargs...)
 	ret0, _ := ret[0].(*sdk.Worker)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // WorkerGet indicates an expected call of WorkerGet
-func (mr *MockWorkerInterfaceMockRecorder) WorkerGet(ctx, name interface{}) *gomock.Call {
+func (mr *MockWorkerInterfaceMockRecorder) WorkerGet(ctx, name interface{}, mods ...interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkerGet", reflect.TypeOf((*MockWorkerInterface)(nil).WorkerGet), ctx, name)
+	varargs := append([]interface{}{ctx, name}, mods...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkerGet", reflect.TypeOf((*MockWorkerInterface)(nil).WorkerGet), varargs...)
 }
 
 // WorkerModelBook mocks base method

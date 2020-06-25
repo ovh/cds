@@ -105,19 +105,12 @@ func (api *API) postTakeWorkflowJobHandler() service.Handler {
 		}
 
 		// Get CDN TCP Addr
-		srvs, err := services.LoadAllByType(ctx, api.mustDB(), sdk.TypeCDN)
+		// Get CDN TCP Addr
+		addr, err := services.GetCDNPublicTCPAdress(ctx, api.mustDB())
 		if err != nil {
 			return err
 		}
-		for _, svr := range srvs {
-			if addr, ok := svr.Config["public_tcp"]; ok {
-				pbji.GelfServiceAddr = addr.(string)
-				break
-			}
-		}
-		if pbji.GelfServiceAddr == "" {
-			return sdk.WrapError(sdk.ErrNotFound, "unable to find any tcp configuration in CDN Uservice")
-		}
+		pbji.GelfServiceAddr = addr
 
 		workflow.ResyncNodeRunsWithCommits(ctx, api.mustDB(), api.Cache, *p, report)
 		go WorkflowSendEvent(context.Background(), api.mustDB(), api.Cache, *p, report)

@@ -270,7 +270,7 @@ type UserClient interface {
 
 // WorkerClient exposes workers functions
 type WorkerClient interface {
-	WorkerGet(ctx context.Context, name string) (*sdk.Worker, error)
+	WorkerGet(ctx context.Context, name string, mods ...RequestModifier) (*sdk.Worker, error)
 	WorkerModelBook(groupName, name string) error
 	WorkerList(ctx context.Context) ([]sdk.Worker, error)
 	WorkerRefresh(ctx context.Context) error

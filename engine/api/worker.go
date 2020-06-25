@@ -120,16 +120,26 @@ func (api *API) getWorkerHandler() service.Handler {
 		vars := mux.Vars(r)
 		name := vars["name"]
 
+		withKey := FormBool(r, "withKey")
+
 		if !isCDN(ctx) {
 			return sdk.WrapError(sdk.ErrForbidden, "only CDN can call this route")
 		}
 
-		wkr, err := worker.LoadWorkerByNameWithDecryptKey(ctx, api.mustDB(), name)
+		var wkr *sdk.Worker
+		var err error
+		if withKey {
+			wkr, err = worker.LoadWorkerByNameWithDecryptKey(ctx, api.mustDB(), name)
+			if wkr != nil {
+				encoded := base64.StdEncoding.EncodeToString(wkr.PrivateKey)
+				wkr.PrivateKey = []byte(encoded)
+			}
+		} else {
+			wkr, err = worker.LoadWorkerByName(ctx, api.mustDB(), name)
+		}
 		if err != nil {
 			return err
 		}
-		encodedKey := base64.StdEncoding.EncodeToString(wkr.PrivateKey)
-		wkr.PrivateKey = []byte(encodedKey)
 		return service.WriteJSON(w, wkr, http.StatusOK)
 	}
 }

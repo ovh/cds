@@ -6,6 +6,7 @@ import (
 	"crypto/rsa"
 	"encoding/base64"
 	"fmt"
+
 	"net"
 	"strings"
 	"time"
@@ -14,6 +15,7 @@ import (
 
 	"github.com/ovh/cds/engine/api/observability"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/ovh/cds/sdk/jws"
 	"github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk/log/hook"
@@ -296,7 +298,7 @@ func (s *Service) getClearWorker(ctx context.Context, workerName string) (sdk.Wo
 	}
 
 	// Get worker from API
-	w, err := s.Client.WorkerGet(ctx, workerName)
+	w, err := s.Client.WorkerGet(ctx, workerName, cdsclient.WithQueryParameter("withKey", "true"))
 	if err != nil {
 		return sdk.Worker{}, err
 	}
@@ -311,7 +313,6 @@ func (s *Service) getClearWorker(ctx context.Context, workerName string) (sdk.Wo
 }
 
 func (s *Service) refreshHatcheriesPK(ctx context.Context) error {
-	//s.Client.
 	srvs, err := s.Client.ServiceConfigurationGet(ctx, sdk.TypeHatchery)
 	if err != nil {
 		return sdk.WrapError(sdk.ErrNotFound, "unable to find hatcheries")

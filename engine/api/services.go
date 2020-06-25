@@ -112,20 +112,11 @@ func (api *API) postServiceRegisterHandler() service.Handler {
 		}
 
 		if srv.Type == sdk.TypeHatchery {
-			srvs, err := services.LoadAllByType(ctx, tx, sdk.TypeCDN)
+			addr, err := services.GetCDNPublicTCPAdress(ctx, tx)
 			if err != nil {
 				return err
 			}
-
-			for _, s := range srvs {
-				if addr, ok := s.Config["public_tcp"]; ok {
-					srv.LogServerAdress = addr.(string)
-					break
-				}
-			}
-			if srv.LogServerAdress == "" {
-				return sdk.WrapError(sdk.ErrNotFound, "unable to find any tcp server configuration in CDN")
-			}
+			srv.LogServerAdress = addr
 		}
 
 		if err := tx.Commit(); err != nil {

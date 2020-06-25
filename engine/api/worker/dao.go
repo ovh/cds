@@ -42,42 +42,12 @@ func Delete(db gorp.SqlExecutor, id string) error {
 
 func LoadByConsumerID(ctx context.Context, db gorp.SqlExecutor, id string) (*sdk.Worker, error) {
 	query := gorpmapping.NewQuery("SELECT * FROM worker WHERE auth_consumer_id = $1").Args(id)
-	var w dbWorker
-	found, err := gorpmapping.Get(ctx, db, query, &w)
-	if err != nil {
-		return nil, err
-	}
-	if !found {
-		return nil, sdk.WithStack(sdk.ErrNotFound)
-	}
-	isValid, err := gorpmapping.CheckSignature(w, w.Signature)
-	if err != nil {
-		return nil, err
-	}
-	if !isValid {
-		return nil, sdk.WithStack(sdk.ErrInvalidData)
-	}
-	return &w.Worker, nil
+	return loadWorker(ctx, db, query)
 }
 
 func LoadByID(ctx context.Context, db gorp.SqlExecutor, id string) (*sdk.Worker, error) {
 	query := gorpmapping.NewQuery("SELECT * FROM worker WHERE id = $1").Args(id)
-	var w dbWorker
-	found, err := gorpmapping.Get(ctx, db, query, &w)
-	if err != nil {
-		return nil, err
-	}
-	if !found {
-		return nil, sdk.WithStack(sdk.ErrNotFound)
-	}
-	isValid, err := gorpmapping.CheckSignature(w, w.Signature)
-	if err != nil {
-		return nil, err
-	}
-	if !isValid {
-		return nil, sdk.WithStack(sdk.ErrInvalidData)
-	}
-	return &w.Worker, nil
+	return loadWorker(ctx, db, query)
 }
 
 func LoadAll(ctx context.Context, db gorp.SqlExecutor) ([]sdk.Worker, error) {
@@ -180,9 +150,19 @@ func SetToBuilding(ctx context.Context, db gorp.SqlExecutor, workerID string, jo
 
 // LoadWorkerByIDWithDecryptKey load worker with decrypted private key
 func LoadWorkerByNameWithDecryptKey(ctx context.Context, db gorp.SqlExecutor, workerName string) (*sdk.Worker, error) {
-	var work dbWorker
 	query := gorpmapping.NewQuery(`SELECT * FROM worker WHERE name = $1`).Args(workerName)
-	found, err := gorpmapping.Get(ctx, db, query, &work, gorpmapping.GetOptions.WithDecryption)
+	return loadWorker(ctx, db, query, gorpmapping.GetOptions.WithDecryption)
+}
+
+// LoadWorkerByIDWithDecryptKey load worker with decrypted private key
+func LoadWorkerByName(ctx context.Context, db gorp.SqlExecutor, workerName string) (*sdk.Worker, error) {
+	query := gorpmapping.NewQuery(`SELECT * FROM worker WHERE name = $1`).Args(workerName)
+	return loadWorker(ctx, db, query)
+}
+
+func loadWorker(ctx context.Context, db gorp.SqlExecutor, query gorpmapping.Query, opts ...gorpmapping.GetOptionFunc) (*sdk.Worker, error) {
+	var work dbWorker
+	found, err := gorpmapping.Get(ctx, db, query, &work, opts...)
 	if err != nil {
 		return nil, err
 	}
