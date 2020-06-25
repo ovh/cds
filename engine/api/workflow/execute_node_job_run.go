@@ -567,12 +567,7 @@ func FreeNodeJobRun(ctx context.Context, store cache.Store, id int64) error {
 }
 
 //AddLog adds a build log
-func AddLog(db gorp.SqlExecutor, job *sdk.WorkflowNodeJobRun, logs *sdk.Log, maxLogSize int64) error {
-	if job != nil {
-		logs.JobID = job.ID
-		logs.NodeRunID = job.WorkflowNodeRunID
-	}
-
+func AddLog(db gorp.SqlExecutor, logs *sdk.Log, maxLogSize int64) error {
 	// check if log exists without loading data but with log size
 	exists, size, err := ExistsStepLog(db, logs.JobID, logs.StepOrder)
 	if err != nil {

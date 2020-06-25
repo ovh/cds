@@ -634,15 +634,19 @@ queueRun:
 		assert.Len(t, secrets, 1)
 
 		//TestAddLog
-		assert.NoError(t, workflow.AddLog(db, j, &sdk.Log{
-			Val: "This is a log",
+		assert.NoError(t, workflow.AddLog(db, &sdk.Log{
+			Val:       "This is a log",
+			JobID:     j.ID,
+			NodeRunID: j.WorkflowNodeRunID,
 		}, workflow.DefaultMaxLogSize))
 		if t.Failed() {
 			tx.Rollback()
 			t.FailNow()
 		}
-		assert.NoError(t, workflow.AddLog(db, j, &sdk.Log{
-			Val: "This is another log",
+		assert.NoError(t, workflow.AddLog(db, &sdk.Log{
+			Val:       "This is another log",
+			JobID:     j.ID,
+			NodeRunID: j.WorkflowNodeRunID,
 		}, workflow.DefaultMaxLogSize))
 		if t.Failed() {
 			tx.Rollback()

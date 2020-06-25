@@ -10,7 +10,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/go-gorp/gorp"
 	gocache "github.com/patrickmn/go-cache"
 
 	"github.com/ovh/cds/engine/api/observability"
@@ -60,16 +59,6 @@ func (s *Service) RunTcpLogServer(ctx context.Context) {
 	}()
 }
 
-func (s *Service) handleConnectionChannel(ctx context.Context) chan<- handledMessage {
-	chanMessages := make(chan handledMessage, 1000)
-	sdk.GoRoutine(context.Background(), "cdn-msgreader-"+sdk.UUID(), func(ctx context.Context) {
-		if err := s.processLogs(ctx, chanMessages); err != nil {
-			log.Error(ctx, "error while processing logs: %v", err)
-		}
-	})
-	return chanMessages
-}
-
 func (s *Service) handleConnection(ctx context.Context, conn net.Conn) {
 	defer func() {
 		_ = conn.Close()
@@ -94,6 +83,16 @@ func (s *Service) handleConnection(ctx context.Context, conn net.Conn) {
 			continue
 		}
 	}
+}
+
+func (s *Service) handleConnectionChannel(ctx context.Context) chan<- handledMessage {
+	chanMessages := make(chan handledMessage, 1000)
+	sdk.GoRoutine(ctx, "cdn-msgreader-"+sdk.UUID(), func(ctx context.Context) {
+		if err := s.processLogs(ctx, chanMessages); err != nil {
+			log.Error(ctx, "error while processing logs: %v", err)
+		}
+	})
+	return chanMessages
 }
 
 func (s *Service) handleLogMessage(ctx context.Context, chanMessages chan<- handledMessage, messageReceived []byte) error {
@@ -142,12 +141,10 @@ func (s *Service) handleWorkerLog(ctx context.Context, chanMessages chan<- handl
 	if workerData.JobRunID == nil || *workerData.JobRunID != signature.JobID || workerData.ID != workerID {
 		return sdk.WithStack(sdk.ErrForbidden)
 	}
-
 	chanMessages <- handledMessage{
 		signature: signature,
 		m:         m,
 	}
-
 	return nil
 }
 
@@ -177,22 +174,9 @@ func (s *Service) processLogs(ctx context.Context, chanMessages <-chan handledMe
 				continue
 			}
 
-			tx, err := s.Db.Begin()
-			if err != nil {
-				log.Error(ctx, "unable to start tx: %v", err)
-				continue
-			}
-
 			currentLog := buildMessage(msg.signature, msg.m)
-			if err := s.processLog(ctx, tx, msg.signature, currentLog); err != nil {
+			if err := s.processLog(ctx, msg.signature, currentLog); err != nil {
 				log.Error(ctx, "unable to process log: %+v", err)
-				tx.Rollback() // nolint
-				continue
-			}
-
-			if err := tx.Commit(); err != nil {
-				log.Error(ctx, "unable to commit tx: %+v", err)
-				tx.Rollback() // nolint
 				continue
 			}
 
@@ -240,7 +224,7 @@ func buildMessage(signature log.Signature, m hook.Message) string {
 	return logs.Val
 }
 
-func (s *Service) processLog(ctx context.Context, db gorp.SqlExecutor, signature log.Signature, message string) error {
+func (s *Service) processLog(ctx context.Context, signature log.Signature, message string) error {
 	now := time.Now()
 	l := sdk.Log{
 		JobID:        signature.JobID,

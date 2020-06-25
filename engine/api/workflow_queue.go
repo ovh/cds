@@ -554,7 +554,7 @@ func postJobResult(ctx context.Context, dbFunc func(context.Context) *gorp.DbMap
 
 func (api *API) postWorkflowJobLogsHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		id, err := requestVarInt(r, "permJobID")
+		id, err := requestVarInt(r, "jobID")
 		if err != nil {
 			return sdk.WrapError(err, "invalid id")
 		}
@@ -563,23 +563,15 @@ func (api *API) postWorkflowJobLogsHandler() service.Handler {
 			return sdk.WithStack(sdk.ErrForbidden)
 		}
 
-		pbJob, err := workflow.LoadNodeJobRun(ctx, api.mustDB(), api.Cache, id)
-		if err != nil {
-			return sdk.WrapError(err, "cannot get job run %d", id)
-		}
-
-		// Checks that the token used by the worker cas access to one of the execgroups
-		grantedGroupIDs := append(getAPIConsumer(ctx).GetGroupIDs(), group.SharedInfraGroup.ID)
-		if !pbJob.ExecGroups.HasOneOf(grantedGroupIDs...) {
-			return sdk.WrapError(sdk.ErrForbidden, "this worker is not authorized to send logs for this job: %d execGroups: %+v", id, pbJob.ExecGroups)
-		}
-
 		var logs sdk.Log
 		if err := service.UnmarshalBody(r, &logs); err != nil {
 			return err
 		}
 
-		if err := workflow.AddLog(api.mustDB(), pbJob, &logs, api.Config.Log.StepMaxSize); err != nil {
+		if id != logs.JobID {
+			return sdk.NewErrorFrom(sdk.ErrWrongRequest, "wrong job ID")
+		}
+		if err := workflow.AddLog(api.mustDB(), &logs, api.Config.Log.StepMaxSize); err != nil {
 			return err
 		}
 

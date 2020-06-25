@@ -2451,15 +2451,19 @@ func initGetWorkflowNodeRunJobTest(t *testing.T, api *API, db *gorp.DbMap) (*sdk
 	require.NoError(t, errUJ)
 
 	// Add log
-	require.NoError(t, workflow.AddLog(api.mustDB(), jobRun, &sdk.Log{
+	require.NoError(t, workflow.AddLog(api.mustDB(), &sdk.Log{
 		StepOrder: 1,
 		Val:       "1234567890",
+		NodeRunID: jobRun.WorkflowNodeRunID,
+		JobID:     jobRun.ID,
 	}, 15))
 
 	// Add truncated log
-	require.NoError(t, workflow.AddLog(api.mustDB(), jobRun, &sdk.Log{
+	require.NoError(t, workflow.AddLog(api.mustDB(), &sdk.Log{
 		StepOrder: 1,
 		Val:       "1234567890",
+		NodeRunID: jobRun.WorkflowNodeRunID,
+		JobID:     jobRun.ID,
 	}, 15))
 
 	// Add service log
