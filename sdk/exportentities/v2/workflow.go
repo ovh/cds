@@ -48,7 +48,7 @@ type NodeEntry struct {
 }
 
 type ConditionEntry struct {
-	PlainConditions []PlainConditionEntry `json:"plain,omitempty" yaml:"check,omitempty"`
+	PlainConditions []PlainConditionEntry `json:"check,omitempty" yaml:"check,omitempty"`
 	LuaScript       string                `json:"script,omitempty" yaml:"script,omitempty"`
 }
 
