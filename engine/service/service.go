@@ -119,11 +119,11 @@ func (c *Common) Register(ctx context.Context, cfg sdk.ServiceConfig) error {
 	for {
 		srv2, err := c.Client.ServiceRegister(ctx, srv)
 		if err != nil {
-			// hatchery can retry register vbecause they have to wait CDN to be up
+			// hatchery can retry register because they have to wait CDN to be up
 			if srv.Type == sdk.TypeHatchery {
 				retry++
 				if retry < 10 {
-					log.Error(ctx, "register> %v", err)
+					log.Warning(ctx, "register> %v", err)
 					time.Sleep(6 * time.Second)
 					continue
 				}
