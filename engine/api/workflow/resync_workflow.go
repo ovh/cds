@@ -70,10 +70,11 @@ func ResyncWorkflowRunStatus(ctx context.Context, db gorp.SqlExecutor, wr *sdk.W
 		newStatus = getRunStatus(counterStatus)
 	}
 
+	log.Debug("ResyncWorkflowRunStatus> %s/%s %+v", newStatus, wr.Status, counterStatus)
+
 	if newStatus != wr.Status {
 		wr.Status = newStatus
 		report.Add(ctx, *wr)
-
 		return report, UpdateWorkflowRunStatus(db, wr)
 	}
 

@@ -220,7 +220,7 @@ func (api *API) initMetrics(ctx context.Context) error {
 		"number of failed workflow runs",
 		stats.UnitDimensionless)
 	api.Metrics.DatabaseConns = stats.Int64(
-		fmt.Sprintf("cds/cds-api/%s/database_conn°", api.Name()),
+		fmt.Sprintf("cds/cds-api/%s/database_conn", api.Name()),
 		"number database connections",
 		stats.UnitDimensionless)
 
@@ -258,6 +258,12 @@ func (api *API) initMetrics(ctx context.Context) error {
 }
 
 func (api *API) computeMetrics(ctx context.Context) {
+	tags := observability.ContextGetTags(ctx, observability.TagServiceType, observability.TagServiceName)
+	ctx, err := tag.New(ctx, tags...)
+	if err != nil {
+		log.Error(ctx, "api.computeMetrics> unable to tag observability context: %v", err)
+	}
+
 	sdk.GoRoutine(ctx, "api.computeMetrics", func(ctx context.Context) {
 		tick := time.NewTicker(9 * time.Second).C
 		for {

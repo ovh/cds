@@ -6,24 +6,23 @@ import (
 
 // WorkerModel is the as code format of a worker model
 type WorkerModel struct {
-	Name          string            `json:"name" yaml:"name"`
-	Group         string            `json:"group" yaml:"group"`
-	Communication string            `json:"communication,omitempty" yaml:"communication,omitempty"`
-	Image         string            `json:"image" yaml:"image"`
-	Registry      string            `json:"registry,omitempty" yaml:"registry,omitempty"`
-	Username      string            `json:"username,omitempty" yaml:"username,omitempty"`
-	Password      string            `json:"password,omitempty" yaml:"password,omitempty"`
-	Description   string            `json:"description" yaml:"description"`
-	Type          string            `json:"type" yaml:"type"`
-	Flavor        string            `json:"flavor,omitempty" yaml:"flavor,omitempty"`
-	Envs          map[string]string `json:"envs,omitempty" yaml:"envs,omitempty"`
-	PatternName   string            `json:"pattern_name,omitempty" yaml:"pattern_name,omitempty"`
-	Shell         string            `json:"shell,omitempty" yaml:"shell,omitempty"`
-	PreCmd        string            `json:"pre_cmd,omitempty" yaml:"pre_cmd,omitempty"`
-	Cmd           string            `json:"cmd,omitempty" yaml:"cmd,omitempty"`
-	PostCmd       string            `json:"post_cmd,omitempty" yaml:"post_cmd,omitempty"`
-	Restricted    bool              `json:"restricted,omitempty" yaml:"restricted,omitempty"`
-	IsDeprecated  bool              `json:"is_deprecated,omitempty" yaml:"is_deprecated,omitempty"`
+	Name         string            `json:"name" yaml:"name"`
+	Group        string            `json:"group" yaml:"group"`
+	Image        string            `json:"image" yaml:"image"`
+	Registry     string            `json:"registry,omitempty" yaml:"registry,omitempty"`
+	Username     string            `json:"username,omitempty" yaml:"username,omitempty"`
+	Password     string            `json:"password,omitempty" yaml:"password,omitempty"`
+	Description  string            `json:"description" yaml:"description"`
+	Type         string            `json:"type" yaml:"type"`
+	Flavor       string            `json:"flavor,omitempty" yaml:"flavor,omitempty"`
+	Envs         map[string]string `json:"envs,omitempty" yaml:"envs,omitempty"`
+	PatternName  string            `json:"pattern_name,omitempty" yaml:"pattern_name,omitempty"`
+	Shell        string            `json:"shell,omitempty" yaml:"shell,omitempty"`
+	PreCmd       string            `json:"pre_cmd,omitempty" yaml:"pre_cmd,omitempty"`
+	Cmd          string            `json:"cmd,omitempty" yaml:"cmd,omitempty"`
+	PostCmd      string            `json:"post_cmd,omitempty" yaml:"post_cmd,omitempty"`
+	Restricted   bool              `json:"restricted,omitempty" yaml:"restricted,omitempty"`
+	IsDeprecated bool              `json:"is_deprecated,omitempty" yaml:"is_deprecated,omitempty"`
 }
 
 type WorkerModelOption func(sdk.Model, *WorkerModel) error
@@ -53,7 +52,6 @@ func NewWorkerModel(wm sdk.Model, opts ...WorkerModelOption) WorkerModel {
 		IsDeprecated: wm.IsDeprecated,
 		Description:  wm.Description,
 		Restricted:   wm.Restricted,
-		Image:        wm.Image,
 	}
 
 	switch wm.Type {

@@ -44,6 +44,53 @@ var workerModelListCmd = cli.Command{
 	},
 }
 
+type workerModelDisplay struct {
+	Name             string `json:"name" cli:"name,key"`
+	Type             string `json:"type" cli:"type"`
+	Disabled         bool   `json:"disabled" cli:"disabled"`
+	Restricted       bool   `json:"restricted" cli:"restricted"`
+	NeedRegistration bool   `json:"need_registration" cli:"need_registration"`
+	NbSpawnErr       int64  `json:"nb_spawn_err" cli:"nb_spawn_err"`
+	IsDeprecated     bool   `json:"is_deprecated" cli:"deprecated"`
+	IsOfficial       bool   `json:"is_official" cli:"official"`
+	Image            string `json:"image" cli:"image"`
+	Flavor           string `json:"flavor" cli:"flavor"`
+}
+
+func newWorkerModelDisplay(wm sdk.Model) workerModelDisplay {
+	name := wm.Name
+	if wm.Group != nil {
+		name = fmt.Sprintf("%s/%s", wm.Group.Name, wm.Name)
+	} else {
+		name = wm.Name
+	}
+
+	var image, flavor string
+
+	switch wm.Type {
+	case sdk.Docker:
+		image = wm.ModelDocker.Image
+	case sdk.Openstack, sdk.VSphere:
+		image = wm.ModelVirtualMachine.Image
+		flavor = wm.ModelVirtualMachine.Flavor
+	}
+
+	w := workerModelDisplay{
+		Name:             name,
+		Type:             wm.Type,
+		Disabled:         wm.Disabled,
+		Restricted:       wm.Restricted,
+		NeedRegistration: wm.NeedRegistration,
+		NbSpawnErr:       wm.NbSpawnErr,
+		IsDeprecated:     wm.IsDeprecated,
+		Image:            image,
+		Flavor:           flavor,
+		IsOfficial:       wm.IsOfficial,
+	}
+
+	return w
+}
+
 func workerModelListRun(v cli.Values) (cli.ListResult, error) {
 	var err error
 	var workerModels []sdk.Model
@@ -63,7 +110,13 @@ func workerModelListRun(v cli.Values) (cli.ListResult, error) {
 	if err != nil {
 		return nil, err
 	}
-	return cli.AsListResult(workerModels), nil
+
+	wms := make([]workerModelDisplay, len(workerModels))
+	for i := range workerModels {
+		wms[i] = newWorkerModelDisplay(workerModels[i])
+	}
+
+	return cli.AsListResult(wms), nil
 }
 
 var workerModelImportCmd = cli.Command{
