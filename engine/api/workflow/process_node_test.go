@@ -1217,7 +1217,7 @@ func TestManualRunBuildParameterNoApplicationOnRoot(t *testing.T) {
 		}
 	}
 
-	mockVCSSservice, _ := assets.InsertService(t, db, "TestManualRunBuildParameterMultiApplication", services.TypeVCS)
+	mockVCSSservice, _ := assets.InsertService(t, db, "TestManualRunBuildParameterMultiApplication", sdk.TypeVCS)
 	defer func() {
 		services.Delete(db, mockVCSSservice)
 	}()
