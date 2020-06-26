@@ -141,9 +141,20 @@ func migrate(ctx context.Context, db *gorp.DbMap, id int64, projVarsMap map[int6
 	})
 	if err != nil {
 		if sdk.ErrorIs(err, sdk.ErrNotFound) {
+			log.Info(ctx, "migrate.MigrateRunsSecrets: workflow run locked")
 			return nil
 		}
 		return err
+	}
+
+	// Check if workflow has been migrated
+	s, err := CountSecret(tx, id)
+	if err != nil {
+		return err
+	}
+	if s > 0 {
+		log.Info(ctx, "migrate.MigrateRunsSecrets: workflow run already migrated")
+		return nil
 	}
 
 	secrets := make([]sdk.WorkflowRunSecret, 0)
@@ -302,6 +313,7 @@ func migrate(ctx context.Context, db *gorp.DbMap, id int64, projVarsMap map[int6
 	if err := tx.Commit(); err != nil {
 		return sdk.WithStack(err)
 	}
+	log.Info(ctx, "migrate.MigrateRunsSecrets: workflow run migrated")
 	return nil
 }
 
@@ -346,6 +358,15 @@ func LoadLastRunsByDate(db gorp.SqlExecutor) ([]sdk.WorkflowRun, error) {
 	where workflow_run.read_only = false AND workflow_run_secret.id IS NULL
 	order by workflow_run.id desc LIMIT 10000`)
 	return loadRuns(db, query)
+}
+
+func CountSecret(db gorp.SqlExecutor, id int64) (int64, error) {
+	query := `select count(*) from workflow_run_secret where workflow_run_id = $1`
+	nb, err := db.SelectInt(query, id)
+	if err != nil {
+		return 0, err
+	}
+	return nb, nil
 }
 
 func loadRuns(db gorp.SqlExecutor, query string) ([]sdk.WorkflowRun, error) {
