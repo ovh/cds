@@ -2,7 +2,11 @@ package cdn
 
 import (
 	"context"
+	"encoding/base64"
 	"fmt"
+	"gopkg.in/h2non/gock.v1"
+	"net/http"
+	"strings"
 	"testing"
 	"time"
 
@@ -10,6 +14,7 @@ import (
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/cdsclient"
 	gocache "github.com/patrickmn/go-cache"
 
 	"github.com/ovh/cds/sdk/jws"
@@ -46,8 +51,9 @@ func TestWorkerLog(t *testing.T) {
 
 	signature := log.Signature{
 		Worker: &log.SignatureWorker{
-			WorkerID:  "abcdef-123456",
-			StepOrder: 0,
+			WorkerID:   "abcdef-123456",
+			StepOrder:  0,
+			WorkerName: "myworker",
 		},
 		JobID:     dbj.ID,
 		NodeRunID: jobRun.WorkflowNodeRunID,
@@ -65,16 +71,36 @@ func TestWorkerLog(t *testing.T) {
 	"host": "host", "_line":1, "_pid": 1, "_prefix": "prefix", "full_message": "this is my message", "_Signature": "%s"}`
 	message = fmt.Sprintf(message, signatureField)
 
+	s.Client = cdsclient.New(cdsclient.Config{
+		Host: "http://lolcat.host",
+	})
+
+	w := sdk.Worker{
+		Name:       signature.Worker.WorkerName,
+		ID:         signature.Worker.WorkerID,
+		PrivateKey: []byte(base64.StdEncoding.EncodeToString(key)),
+		JobRunID:   &signature.JobID,
+	}
+	gock.InterceptClient(s.Client.(cdsclient.Raw).HTTPClient())
+
+	//gock.New("http://lolcat.host").Post(fmt.Sprintf("/queue/workflows/%d/log", dbj.ID)).Reply(200)
+	gock.New("http://lolcat.host").AddMatcher(func(r *http.Request, rr *gock.Request) (bool, error) {
+		if r.Method == http.MethodGet && strings.HasPrefix(r.URL.String(), "http://lolcat.host/worker/myworker") {
+			return true, nil
+		}
+		if r.Method == http.MethodPost && strings.HasPrefix(r.URL.String(), fmt.Sprintf("/queue/workflows/%d/log", dbj.ID)) {
+			return true, nil
+		}
+		return false, nil
+	}).Reply(200).JSON(w)
+
 	chanMessages := s.handleConnectionChannel(context.TODO())
+
 	require.NoError(t, s.handleLogMessage(context.TODO(), chanMessages, []byte(message)))
 	close(chanMessages)
 
-	time.Sleep(100 * time.Millisecond)
-
-	logs, err := workflow.LoadLogs(s.Db, dbj.ID)
 	require.NoError(t, err)
-	require.Len(t, logs, 1)
-	require.Equal(t, "[ALERT] this is my message\n", logs[0].Val)
+	require.True(t, gock.IsDone())
 }
 
 func TestServiceLog(t *testing.T) {
