@@ -13,30 +13,27 @@ import (
 
 // InitHatchery create new client for vsphere
 func (h *HatcheryVSphere) InitHatchery(ctx context.Context) error {
-
 	h.user = h.Config.VSphereUser
 	h.password = h.Config.VSpherePassword
 	h.endpoint = h.Config.VSphereEndpoint
 
 	// Connect and login to ESX or vCenter
-	c, errNc := h.newClient(ctx)
-	if errNc != nil {
-		return fmt.Errorf("Unable to vsphere.newClient: %s", errNc)
+	c, err := h.newClient(ctx)
+	if err != nil {
+		return fmt.Errorf("Unable to vsphere.newClient: %v", err)
 	}
 	h.vclient = c
 
 	finder := find.NewFinder(h.vclient.Client, false)
 	h.finder = finder
 
-	var errDc error
-	if h.datacenter, errDc = finder.DatacenterOrDefault(ctx, h.datacenterString); errDc != nil {
-		return fmt.Errorf("Unable to find datacenter %s : %s", h.datacenterString, errDc)
+	if h.datacenter, err = finder.DatacenterOrDefault(ctx, h.datacenterString); err != nil {
+		return fmt.Errorf("Unable to find datacenter %s: %v", h.datacenterString, err)
 	}
 	finder.SetDatacenter(h.datacenter)
 
-	var errN error
-	if h.network, errN = finder.NetworkOrDefault(ctx, h.networkString); errN != nil {
-		return fmt.Errorf("Unable to find network %s : %s", h.networkString, errN)
+	if h.network, err = finder.NetworkOrDefault(ctx, h.networkString); err != nil {
+		return fmt.Errorf("Unable to find network %s: %v", h.networkString, err)
 	}
 
 	go h.main()
