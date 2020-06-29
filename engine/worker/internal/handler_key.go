@@ -21,8 +21,7 @@ func keyInstallHandler(ctx context.Context, wk *CurrentWorker) http.HandlerFunc 
 
 		body, err := ioutil.ReadAll(r.Body)
 		if err != nil {
-			sdkerr := sdk.NewError(sdk.ErrWrongRequest, err).(sdk.Error)
-			writeJSON(w, sdkerr, sdkerr.Status)
+			writeError(w, r, sdk.NewError(sdk.ErrWrongRequest, err))
 			return
 		}
 
@@ -31,10 +30,7 @@ func keyInstallHandler(ctx context.Context, wk *CurrentWorker) http.HandlerFunc 
 		var mapBody = make(map[string]string)
 		if len(body) > 0 {
 			if err := json.Unmarshal(body, &mapBody); err != nil {
-				sdkerr := sdk.Error{
-					Status:  sdk.ErrWrongRequest.Status,
-					Message: err.Error()}
-				writeJSON(w, sdkerr, sdkerr.Status)
+				writeError(w, r, sdk.NewError(sdk.ErrWrongRequest, err))
 				return
 			}
 		}
@@ -42,12 +38,8 @@ func keyInstallHandler(ctx context.Context, wk *CurrentWorker) http.HandlerFunc 
 		var key *sdk.Variable
 
 		if wk.currentJob.secrets == nil {
-			err := sdk.Error{
-				Message: "Cannot find any keys for your job",
-				Status:  http.StatusBadRequest,
-			}
 			log.Error(ctx, "%v", err)
-			writeJSON(w, err, err.Status)
+			writeError(w, r, sdk.NewError(sdk.ErrWrongRequest, fmt.Errorf("Cannot find any keys for your job")))
 			return
 		}
 
@@ -59,12 +51,8 @@ func keyInstallHandler(ctx context.Context, wk *CurrentWorker) http.HandlerFunc 
 		}
 
 		if key == nil {
-			err := sdk.Error{
-				Message: fmt.Sprintf("Key %s not found", keyName),
-				Status:  http.StatusNotFound,
-			}
 			log.Error(ctx, "%v", err)
-			writeJSON(w, err, err.Status)
+			writeError(w, r, sdk.NewError(sdk.ErrNotFound, fmt.Errorf("Cannot find any keys for your job")))
 			return
 		}
 
@@ -73,13 +61,9 @@ func keyInstallHandler(ctx context.Context, wk *CurrentWorker) http.HandlerFunc 
 		if err != nil {
 			log.Error(ctx, "Unable to install key %s: %v", key.Name, err)
 			if sdkerr, ok := err.(*sdk.Error); ok {
-				writeJSON(w, sdkerr, sdkerr.Status)
+				writeError(w, r, sdkerr)
 			} else {
-				err := sdk.Error{
-					Message: err.Error(),
-					Status:  sdk.ErrUnknownError.Status,
-				}
-				writeJSON(w, err, err.Status)
+				writeError(w, r, sdk.NewError(sdk.ErrUnknownError, err))
 			}
 			return
 		}

@@ -15,7 +15,8 @@ type Operation struct {
 	Setup              OperationSetup           `json:"setup,omitempty"`
 	LoadFiles          OperationLoadFiles       `json:"load_files,omitempty"`
 	Status             OperationStatus          `json:"status"`
-	Error              string                   `json:"error,omitempty"`
+	Error              *OperationError          `json:"error_details,omitempty"`
+	DeprecatedError    string                   `json:"error,omitempty"`
 	RepositoryInfo     *OperationRepositoryInfo `json:"repository_info,omitempty"`
 	Date               *time.Time               `json:"date,omitempty"`
 	User               struct {
@@ -23,6 +24,42 @@ type Operation struct {
 		Fullname string `json:"fullname,omitempty"  db:"-" cli:"-"`
 		Email    string `json:"email,omitempty"  db:"-" cli:"-"`
 	} `json:"user,omitempty"`
+	RequestID string `json:"request_id,omitempty"`
+	NbRetries int    `json:"nb_retries,omitempty"`
+}
+
+type OperationError struct {
+	ID         int    `json:"id"`
+	Status     int    `json:"status,omitempty"`
+	Message    string `json:"message"`
+	StackTrace string `json:"stack_trace,omitempty"`
+	From       string `json:"from,omitempty"`
+}
+
+func ToOperationError(err error) *OperationError {
+	if err == nil {
+		return nil
+	}
+	sdkError := ExtractHTTPError(err, "")
+	return &OperationError{
+		ID:         sdkError.ID,
+		Status:     sdkError.Status,
+		From:       sdkError.From,
+		Message:    sdkError.Message,
+		StackTrace: sdkError.StackTrace,
+	}
+}
+
+func (opError *OperationError) ToError() error {
+	if opError == nil {
+		return nil
+	}
+	return &Error{
+		ID:      opError.ID,
+		Status:  opError.Status,
+		Message: opError.Message,
+		From:    opError.From,
+	}
 }
 
 // OperationSetup is the setup for an operation basically its a checkout

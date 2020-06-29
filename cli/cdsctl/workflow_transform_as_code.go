@@ -81,7 +81,7 @@ func workflowTransformAsCodeRun(v cli.Values) (interface{}, error) {
 	}
 	switch ope.Status {
 	case sdk.OperationStatusError:
-		return nil, fmt.Errorf("cannot perform operation: %s", ope.Error)
+		return nil, fmt.Errorf("cannot perform operation: %v", ope.Error)
 	}
 	return response, nil
 }

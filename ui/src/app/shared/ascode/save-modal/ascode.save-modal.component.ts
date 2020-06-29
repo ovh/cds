@@ -78,7 +78,7 @@ export class AsCodeSaveModalComponent {
                 this.loading = true;
                 this._cd.markForCheck();
                 this._workflowService.updateAsCode(this.project.key, this.name, this.parameters.branch_name,
-                    this.parameters.commit_message, this.dataToSave).subscribe(o => {
+                    this.parameters.commit_message, this.dataToSave as Workflow).subscribe(o => {
                         this.asCodeOperation = o;
                         this.startPollingOperation(this.name);
                     });

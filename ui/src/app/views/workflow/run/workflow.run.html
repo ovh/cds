@@ -1,5 +1,6 @@
 <div *ngIf="workflowRunData && workflowRunData['id']" class="workflowRun">
-    <app-workflow-run-summary [(direction)]="direction" [project]="project" [class.above]="workflowRunData['status'] === pipelineStatusEnum.PENDING">
+    <app-workflow-run-summary [(direction)]="direction" [project]="project"
+        [class.above]="workflowRunData['status'] === pipelineStatusEnum.PENDING">
     </app-workflow-run-summary>
     <ng-container *ngIf="workflowRunData['status'] !== pipelineStatusEnum.PENDING; else pendingBlock">
         <ng-container *ngIf="displayError">

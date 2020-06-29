@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"reflect"
 	"sort"
+	"strings"
 )
 
 // Those are icon for hooks
@@ -28,6 +29,18 @@ type NodeHook struct {
 	Conditions    WorkflowNodeConditions `json:"conditions" db:"conditions"`
 }
 
+func (h NodeHook) IsRepositoryWebHook() bool {
+	return h.HookModelName == RepositoryWebHookModel.Name || h.HookModelID == RepositoryWebHookModel.ID
+}
+
+func (h NodeHook) GetConfigValue(k string) (string, bool) {
+	v, ok := h.Config[k]
+	if !ok {
+		return "", false
+	}
+	return v.Value, true
+}
+
 func (h NodeHook) Ref() string {
 	s := "model:" + h.HookModelName + ";"
 
@@ -45,8 +58,53 @@ func (h NodeHook) Ref() string {
 	return base64.StdEncoding.EncodeToString([]byte(s))
 }
 
+func (h NodeHook) ConfigValueContainsEventsDefault() bool {
+	eventFilterValue, has := h.GetConfigValue(HookConfigEventFilter)
+	if !has {
+		return false
+	}
+	eventFilterValues := strings.Split(eventFilterValue, ";")
+
+	allDefaultsValue := [][]string{
+		BitbucketCloudEventsDefault,
+		BitbucketEventsDefault,
+		GitHubEventsDefault,
+		GitlabEventsDefault,
+		GerritEventsDefault,
+	}
+
+	var atLeastOneFound bool
+	for _, defaultValues := range allDefaultsValue {
+		var allFound = true
+		for _, s := range defaultValues {
+			if !IsInArray(s, eventFilterValues) {
+				allFound = false
+				break
+			}
+		}
+		if allFound {
+			atLeastOneFound = true
+			break
+		}
+	}
+
+	return atLeastOneFound
+}
+
 //Equals checks functional equality between two hooks
 func (h NodeHook) Equals(h1 NodeHook) bool {
+	var areRepoWebHook = (h1.HookModelID == h.HookModelID) && (h.HookModelID == RepositoryWebHookModel.ID)
+	var isEventFilter = func(s string) bool { return s == HookConfigEventFilter }
+	var isEmptyEventFilter = func(s string) bool { return s == "" }
+	var isDefaultEventFilter = func(v string) bool {
+		return v == "" ||
+			v == strings.Join(BitbucketCloudEventsDefault, ";") ||
+			v == strings.Join(BitbucketEventsDefault, ";") ||
+			v == strings.Join(GitHubEventsDefault, ";") ||
+			v == strings.Join(GitlabEventsDefault, ";") ||
+			v == strings.Join(GerritEventsDefault, ";")
+	}
+
 	if h.UUID != h1.UUID {
 		return false
 	}
@@ -58,7 +116,11 @@ func (h NodeHook) Equals(h1 NodeHook) bool {
 		if !has {
 			return false
 		}
-		if cfg.Value != cfg1.Value {
+		if areRepoWebHook && isEventFilter(k) {
+			if isEmptyEventFilter(cfg.Value) && !isDefaultEventFilter(cfg1.Value) {
+				return false
+			}
+		} else if cfg.Value != cfg1.Value {
 			return false
 		}
 	}
@@ -67,7 +129,11 @@ func (h NodeHook) Equals(h1 NodeHook) bool {
 		if !has {
 			return false
 		}
-		if cfg.Value != cfg1.Value {
+		if areRepoWebHook && isEventFilter(k) {
+			if isEmptyEventFilter(cfg1.Value) && !isDefaultEventFilter(cfg.Value) {
+				return false
+			}
+		} else if cfg.Value != cfg1.Value {
 			return false
 		}
 	}
@@ -104,6 +170,35 @@ func (w *WorkflowNodeHookConfig) Scan(src interface{}) error {
 		return WithStack(fmt.Errorf("type assertion .([]byte) failed (%T)", src))
 	}
 	return WrapError(json.Unmarshal(source, w), "cannot unmarshal WorkflowNodeHookConfig")
+}
+
+func (w WorkflowNodeHookConfig) Equals(o WorkflowNodeHookConfig) bool {
+	for k, v := range w {
+		ov, has := o[k]
+		if !has {
+			return false
+		}
+		if v.Value != ov.Value {
+			return false
+		}
+	}
+	return true
+}
+
+func (w WorkflowNodeHookConfig) MergeWith(cfg WorkflowNodeHookConfig) {
+	for k, v := range cfg {
+		w[k] = v
+	}
+}
+
+func (w WorkflowNodeHookConfig) Filter(f func(k string, v WorkflowNodeHookConfigValue) bool) WorkflowNodeHookConfig {
+	var newCfg = WorkflowNodeHookConfig{}
+	for k, v := range w {
+		if f(k, v) {
+			newCfg[k] = v
+		}
+	}
+	return newCfg.Clone()
 }
 
 // GetBuiltinHookModelByName retrieve the hook model

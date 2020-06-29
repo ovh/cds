@@ -98,6 +98,12 @@ export class WorkflowRunComponent implements OnInit {
                 this.workflowName = this._store.selectSnapshot(WorkflowState.workflowSnapshot).name;
             }
 
+            if (this.workflowRunData['status'] && this.workflowRunData['status'] === 'Pending'
+                && this.workflowRunData['status'] !== wr.status) {
+                this.workflowRunData['workflow'] = wr.workflow;
+                this.workflowName = this._store.selectSnapshot(WorkflowState.workflowSnapshot).name;
+            }
+
             if (wr && this.workflowRunData['id'] && this.workflowRunData['id'] === wr.id
                 && this.workflowRunData['status'] !== wr.status && PipelineStatus.isDone(wr.status)) {
                 this.handleNotification(wr);

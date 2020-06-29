@@ -141,7 +141,7 @@ func downloadHandler(ctx context.Context, wk *CurrentWorker) http.HandlerFunc {
 
 		wg.Wait()
 		if isInError {
-			newError := sdk.NewError(sdk.ErrUnknownError, fmt.Errorf("Error while downloading artefacts - see previous logs"))
+			newError := sdk.NewError(sdk.ErrUnknownError, fmt.Errorf("Error while downloading artifacts - see previous logs"))
 			writeError(w, r, newError)
 		}
 	}

@@ -189,7 +189,7 @@ func pollRepositoryOperation(c context.Context, db gorp.SqlExecutor, operationUU
 				opeTrusted := *ope
 				opeTrusted.RepositoryStrategy.SSHKeyContent = sdk.PasswordPlaceholder
 				opeTrusted.RepositoryStrategy.Password = sdk.PasswordPlaceholder
-				return nil, sdk.WrapError(fmt.Errorf("%s", ope.Error), "operation in error: %+v", opeTrusted)
+				return nil, sdk.WrapError(fmt.Errorf("%+v", ope.Error), "operation in error: %+v", opeTrusted)
 			case sdk.OperationStatusDone:
 				return ope, nil
 			}

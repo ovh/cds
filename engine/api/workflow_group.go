@@ -44,14 +44,13 @@ func (api *API) deleteWorkflowGroupHandler() service.Handler {
 				break
 			}
 		}
-
 		if oldGp.Permission == 0 {
 			return sdk.WithStack(sdk.ErrNotFound)
 		}
 
-		tx, errT := api.mustDB().Begin()
-		if errT != nil {
-			return sdk.WrapError(errT, "cannot start transaction")
+		tx, err := api.mustDB().Begin()
+		if err != nil {
+			return sdk.WrapError(err, "cannot start transaction")
 		}
 		defer tx.Rollback() // nolint
 

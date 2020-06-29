@@ -19,7 +19,7 @@ import (
 var (
 	cmdDownloadWorkflowName string
 	cmdDownloadNumber       string
-	cmdDownloadArtefactName string
+	cmdDownloadArtifactName string
 	cmdDownloadTag          string
 )
 
@@ -51,7 +51,7 @@ Theses two commands have the same result:
 	}
 	c.Flags().StringVar(&cmdDownloadWorkflowName, "workflow", "", "Workflow name to download from. Optional, default: current workflow")
 	c.Flags().StringVar(&cmdDownloadNumber, "number", "", "Workflow Number to download from. Optional, default: current workflow run")
-	c.Flags().StringVar(&cmdDownloadArtefactName, "pattern", "", "Pattern matching files to download. Optional, default: *")
+	c.Flags().StringVar(&cmdDownloadArtifactName, "pattern", "", "Pattern matching files to download. Optional, default: *")
 	c.Flags().StringVar(&cmdDownloadTag, "tag", "", "Tag matching files to download. Optional")
 	return c
 }
@@ -81,7 +81,7 @@ func downloadCmd() func(cmd *cobra.Command, args []string) {
 		a := workerruntime.DownloadArtifact{
 			Workflow:    cmdDownloadWorkflowName,
 			Number:      number,
-			Pattern:     cmdDownloadArtefactName,
+			Pattern:     cmdDownloadArtifactName,
 			Tag:         cmdDownloadTag,
 			Destination: wd,
 		}
@@ -107,7 +107,7 @@ func downloadCmd() func(cmd *cobra.Command, args []string) {
 		if resp.StatusCode >= 300 {
 			body, err := ioutil.ReadAll(resp.Body)
 			if err != nil {
-				sdk.Exit("cannot artefact download HTTP %v\n", err)
+				sdk.Exit("cannot artifact download HTTP %v\n", err)
 			}
 			cdsError := sdk.DecodeError(body)
 			sdk.Exit("download failed: %v\n", cdsError)
