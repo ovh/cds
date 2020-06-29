@@ -17,7 +17,7 @@ See [User Actions Documentation](https://ovh.github.io/cds/docs/actions)
 
 ## Worker Models
 
-See [Worker Models Documentation](https://ovh.github.io/cds/docs/concepts/requirement/worker-model/)
+See [Worker Models Documentation](https://ovh.github.io/cds/docs/concepts/worker-model/)
 
 ## Workflow Templates
 

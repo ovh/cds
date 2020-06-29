@@ -233,7 +233,8 @@ func (api *API) xsrfMiddleware(ctx context.Context, w http.ResponseWriter, req *
 	// else if its a read request we want to reuse a cached XSRF token or generate one
 	if rc.PermissionLevel > sdk.PermissionRead {
 		if !existXSRFTokenInCache || xsrfToken != existingXSRFToken {
-			return ctx, sdk.WithStack(sdk.ErrUnauthorized)
+			// We want to return a forbidden to allow the user to retry with a new token.
+			return ctx, sdk.WithStack(sdk.ErrForbidden)
 		}
 
 		newXSRFToken, err := authentication.NewSessionXSRFToken(api.Cache, sessionID)

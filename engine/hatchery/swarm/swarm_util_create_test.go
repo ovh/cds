@@ -149,9 +149,7 @@ func TestHatcherySwarm_createAndStartContainer(t *testing.T) {
 	// RegisterOnly = true, this will pull image if image is not found
 	spawnArgs := hatchery.SpawnArguments{
 		RegisterOnly: true,
-		Model: &sdk.Model{
-			Image: args.image,
-		},
+		Model:        &sdk.Model{},
 	}
 	err := h.createAndStartContainer(context.TODO(), h.dockerClients["default"], args, spawnArgs)
 	require.NoError(t, err)
@@ -195,9 +193,7 @@ func TestHatcherySwarm_createAndStartContainerWithMount(t *testing.T) {
 
 	spawnArgs := hatchery.SpawnArguments{
 		RegisterOnly: false,
-		Model: &sdk.Model{
-			Image: args.image,
-		},
+		Model:        &sdk.Model{},
 	}
 	err = h.createAndStartContainer(context.TODO(), h.dockerClients["default"], args, spawnArgs)
 	require.NoError(t, err)
@@ -230,9 +226,7 @@ func TestHatcherySwarm_createAndStartContainerWithNetwork(t *testing.T) {
 
 	spawnArgs := hatchery.SpawnArguments{
 		RegisterOnly: false,
-		Model: &sdk.Model{
-			Image: args.image,
-		},
+		Model:        &sdk.Model{},
 	}
 	err = h.createAndStartContainer(context.TODO(), h.dockerClients["default"], args, spawnArgs)
 	require.NoError(t, err)
