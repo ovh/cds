@@ -106,7 +106,7 @@ func migrateRuns(ctx context.Context, dbFunc func() *gorp.DbMap) (int, error) {
 
 	jobs := make(chan int64, len(wrIds))
 	results := make(chan int64, len(wrIds))
-	for w := 1; w <= 5; w++ {
+	for w := 1; w <= 3; w++ {
 		go workerMigrate(ctx, dbFunc(), jobs, results, projVars, projKeys, projInts, appVars, appKeys, appStrats, appDeployments, envsVars, envsKeys)
 	}
 	for _, id := range wrIds {
