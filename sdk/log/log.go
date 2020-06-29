@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"os"
 	"strings"
+	"testing"
 
 	log "github.com/sirupsen/logrus"
 
@@ -48,8 +49,39 @@ type Logger interface {
 	Fatalf(fmt string, values ...interface{})
 }
 
+type TestingLogger struct {
+	t *testing.T
+}
+
+var _ Logger = new(TestingLogger)
+
+func (t *TestingLogger) isDone() bool {
+	return t.t.Failed() || t.t.Skipped()
+}
+
+func (t *TestingLogger) Logf(fmt string, values ...interface{}) {
+	if !t.isDone() {
+		t.t.Logf(fmt, values...)
+	}
+}
+func (t *TestingLogger) Errorf(fmt string, values ...interface{}) {
+	if !t.isDone() {
+		t.t.Errorf(fmt, values...)
+	}
+}
+func (t *TestingLogger) Fatalf(fmt string, values ...interface{}) {
+	if !t.isDone() {
+		t.t.Fatalf(fmt, values...)
+	}
+}
+
 // SetLogger replace logrus logger with custom one.
 func SetLogger(l Logger) {
+	t, isTesting := l.(*testing.T)
+	if isTesting {
+		logger = &TestingLogger{t: t}
+		return
+	}
 	logger = l
 }
 
