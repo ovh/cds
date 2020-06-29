@@ -289,6 +289,9 @@ func (api *API) updateAsCodeEnvironmentHandler() service.Handler {
 		u := getAPIConsumer(ctx)
 		env.ProjectID = proj.ID
 		envExported, err := environment.ExportEnvironment(api.mustDB(), env, project.EncryptWithBuiltinKey, fmt.Sprintf("env:%d:%s", envDB.ID, branch))
+		if err != nil {
+			return err
+		}
 		wp := exportentities.WorkflowComponents{
 			Environments: []exportentities.Environment{envExported},
 		}
