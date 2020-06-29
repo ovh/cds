@@ -92,9 +92,7 @@ func Test_dequeueTaskExecutions_ScheduledTask(t *testing.T) {
 
 	// Start the goroutine
 	go func() {
-		if err := s.dequeueTaskExecutions(ctx); err != nil {
-			t.Logf("dequeueTaskExecutions error: %v", err)
-		}
+		s.dequeueTaskExecutions(ctx) // nolint
 	}()
 
 	h := &sdk.NodeHook{
