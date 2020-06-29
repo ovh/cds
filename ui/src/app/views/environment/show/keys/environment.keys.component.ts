@@ -5,7 +5,7 @@ import { Environment } from 'app/model/environment.model';
 import { Project } from 'app/model/project.model';
 import { KeyEvent } from 'app/shared/keys/key.event';
 import { ToastService } from 'app/shared/toast/ToastService';
-import { AddEnvironmentKey, DeleteEnvironmentKey } from 'app/store/project.action';
+import { AddEnvironmentKey, DeleteEnvironmentKey } from 'app/store/environment.action';
 import { finalize } from 'rxjs/operators';
 
 @Component({
@@ -18,6 +18,8 @@ export class EnvironmentKeysComponent {
 
     @Input() project: Project;
     @Input() environment: Environment;
+    @Input() readonly: boolean;
+    @Input() editMode: boolean;
 
     loading = false;
 
@@ -42,7 +44,13 @@ export class EnvironmentKeysComponent {
                     this.loading = false;
                     this._cd.markForCheck();
                 }))
-                    .subscribe(() => this._toast.success('', this._translate.instant('keys_added')));
+                    .subscribe(() => {
+                        if (this.editMode) {
+                            this._toast.info('', this._translate.instant('environment_ascode_updated'))
+                        } else {
+                            this._toast.success('', this._translate.instant('keys_added'))
+                        }
+                    });
                 break;
             case 'delete':
                 this.loading = true;
@@ -53,7 +61,13 @@ export class EnvironmentKeysComponent {
                 })).pipe(finalize(() => {
                     this.loading = false;
                     this._cd.markForCheck();
-                })).subscribe(() => this._toast.success('', this._translate.instant('keys_removed')));
+                })).subscribe(() => {
+                    if (this.editMode) {
+                        this._toast.info('', this._translate.instant('environment_ascode_updated'))
+                    } else {
+                        this._toast.success('', this._translate.instant('keys_removed'))
+                    }
+                });
         }
     }
 }

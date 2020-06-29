@@ -286,6 +286,7 @@ func (api *API) InitRouter() {
 	r.Handle("/project/{permProjectKey}/environment/import", Scope(sdk.AuthConsumerScopeProject), r.POST(api.importNewEnvironmentHandler, DEPRECATED))
 	r.Handle("/project/{permProjectKey}/environment/import/{environmentName}", Scope(sdk.AuthConsumerScopeProject), r.POST(api.importIntoEnvironmentHandler, DEPRECATED))
 	r.Handle("/project/{permProjectKey}/environment/{environmentName}", Scope(sdk.AuthConsumerScopeProject), r.GET(api.getEnvironmentHandler), r.PUT(api.updateEnvironmentHandler), r.DELETE(api.deleteEnvironmentHandler))
+	r.Handle("/project/{permProjectKey}/environment/{environmentName}/ascode", Scope(sdk.AuthConsumerScopeProject), r.PUT(api.updateAsCodeEnvironmentHandler))
 	r.Handle("/project/{permProjectKey}/environment/{environmentName}/usage", Scope(sdk.AuthConsumerScopeProject), r.GET(api.getEnvironmentUsageHandler))
 	r.Handle("/project/{permProjectKey}/environment/{environmentName}/keys", Scope(sdk.AuthConsumerScopeProject), r.GET(api.getKeysInEnvironmentHandler), r.POST(api.addKeyInEnvironmentHandler))
 	r.Handle("/project/{permProjectKey}/environment/{environmentName}/keys/{name}", Scope(sdk.AuthConsumerScopeProject), r.DELETE(api.deleteKeyInEnvironmentHandler))
