@@ -797,10 +797,6 @@ func (api *API) postWorkflowRunHandler() service.Handler {
 			project.LoadOptions.WithVariables,
 			project.LoadOptions.WithFeatures(api.Cache),
 			project.LoadOptions.WithIntegrations,
-			project.LoadOptions.WithApplicationVariables,
-			project.LoadOptions.WithApplicationWithDeploymentStrategies,
-			project.LoadOptions.WithEnvironments,
-			project.LoadOptions.WithPipelines,
 		)
 		next()
 		if errP != nil {
