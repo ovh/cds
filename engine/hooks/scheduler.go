@@ -263,7 +263,6 @@ func (s *Service) dequeueTaskExecutions(ctx context.Context) error {
 			return ctx.Err()
 		}
 		if err := s.Cache.DequeueWithContext(ctx, schedulerQueueKey, &taskKey); err != nil {
-			log.Error(ctx, "dequeueTaskExecutions> store.DequeueWithContext err: %v", err)
 			continue
 		}
 		s.Dao.dequeuedIncr()
