@@ -55,7 +55,7 @@ func (api *API) postWorkflowAsCodeHandler() service.Handler {
 		}
 
 		u := getAPIConsumer(ctx)
-		p, err := project.Load(api.mustDB(), key,
+		p, err := project.Load(ctx, api.mustDB(), key,
 			project.LoadOptions.WithApplicationWithDeploymentStrategies,
 			project.LoadOptions.WithPipelines,
 			project.LoadOptions.WithEnvironments,

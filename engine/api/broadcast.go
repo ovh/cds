@@ -27,7 +27,7 @@ func (api *API) addBroadcastHandler() service.Handler {
 		bc.Updated = now
 
 		if bc.ProjectKey != "" {
-			proj, errProj := project.Load(api.mustDB(), bc.ProjectKey)
+			proj, errProj := project.Load(ctx, api.mustDB(), bc.ProjectKey)
 			if errProj != nil {
 				return sdk.WrapError(sdk.ErrNoProject, "Cannot load %s", bc.ProjectKey)
 			}
@@ -63,7 +63,7 @@ func (api *API) updateBroadcastHandler() service.Handler {
 		}
 
 		if bc.ProjectKey != "" {
-			proj, errProj := project.Load(api.mustDB(), bc.ProjectKey)
+			proj, errProj := project.Load(ctx, api.mustDB(), bc.ProjectKey)
 			if errProj != nil {
 				return sdk.WrapError(sdk.ErrNoProject, "Cannot load %s", bc.ProjectKey)
 			}
