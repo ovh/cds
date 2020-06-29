@@ -20,10 +20,17 @@ func (s *Service) processor(ctx context.Context) error {
 		}
 		if uuid != "" {
 			op := s.dao.loadOperation(ctx, uuid)
+			ctx = context.WithValue(ctx, log.ContextLoggingRequestIDKey, op.RequestID)
 			if err := s.do(ctx, *op); err != nil {
 				if err == errLockUnavailable {
-					log.Info(ctx, "repositories > processor > lock unavailable. Retry")
-					s.dao.pushOperation(op)
+					sdk.GoRoutine(ctx, "operation "+uuid+" retry", func(ctx context.Context) {
+						op.NbRetries++
+						log.Info(ctx, "repositories > processor > lock unavailable. retry")
+						time.Sleep(time.Duration(2*op.NbRetries) * time.Second)
+						if err := s.dao.pushOperation(op); err != nil {
+							log.Error(ctx, "repositories > processor > %v", err)
+						}
+					})
 				} else {
 					log.Error(ctx, "repositories > processor > %v", err)
 				}
@@ -55,10 +62,10 @@ func (s *Service) do(ctx context.Context, op sdk.Operation) error {
 			}
 			log.ErrorWithFields(ctx, fields, "%s", err)
 
-			op.Error = sdk.ExtractHTTPError(err, "").Error()
+			op.Error = sdk.ToOperationError(err)
 			op.Status = sdk.OperationStatusError
 		} else {
-			op.Error = ""
+			op.Error = nil
 			op.Status = sdk.OperationStatusDone
 			switch {
 			case op.LoadFiles.Pattern != "":
@@ -70,14 +77,14 @@ func (s *Service) do(ctx context.Context, op sdk.Operation) error {
 					}
 					log.ErrorWithFields(ctx, fields, "%s", err)
 
-					op.Error = sdk.ExtractHTTPError(err, "").Error()
+					op.Error = sdk.ToOperationError(err)
 					op.Status = sdk.OperationStatusError
 				} else {
-					op.Error = ""
+					op.Error = nil
 					op.Status = sdk.OperationStatusDone
 				}
 			default:
-				op.Error = "unrecognized operation"
+				op.Error = sdk.ToOperationError(sdk.NewErrorFrom(sdk.ErrUnknownError, "unrecognized operation"))
 				op.Status = sdk.OperationStatusError
 			}
 		}
@@ -91,14 +98,14 @@ func (s *Service) do(ctx context.Context, op sdk.Operation) error {
 			}
 			log.ErrorWithFields(ctx, fields, "%s", err)
 
-			op.Error = sdk.ExtractHTTPError(err, "").Error()
+			op.Error = sdk.ToOperationError(err)
 			op.Status = sdk.OperationStatusError
 		} else {
-			op.Error = ""
+			op.Error = nil
 			op.Status = sdk.OperationStatusDone
 		}
 	default:
-		op.Error = "unrecognized setup"
+		op.Error = sdk.ToOperationError(sdk.NewErrorFrom(sdk.ErrUnknownError, "unrecognized setup"))
 		op.Status = sdk.OperationStatusError
 	}
 

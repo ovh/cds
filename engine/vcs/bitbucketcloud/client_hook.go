@@ -24,7 +24,7 @@ func (client *bitbucketcloudClient) CreateHook(ctx context.Context, repo string,
 	}
 
 	if len(hook.Events) == 0 {
-		hook.Events = []string{"repo:push"}
+		hook.Events = sdk.BitbucketCloudEventsDefault
 	}
 	r := WebhookCreate{
 		Description: "CDS webhook - " + hook.Name,
@@ -140,7 +140,7 @@ func (client *bitbucketcloudClient) UpdateHook(ctx context.Context, repo string,
 	}
 
 	if len(hook.Events) == 0 {
-		hook.Events = []string{"repo:push"}
+		hook.Events = sdk.BitbucketCloudEventsDefault
 	}
 
 	bitbucketHook.Events = hook.Events

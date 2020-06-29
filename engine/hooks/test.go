@@ -30,11 +30,11 @@ func setupTestHookService(t *testing.T) (Service, func()) {
 	ctrl := gomock.NewController(t)
 	s.Client = mock_cdsclient.NewMockInterface(ctrl)
 
-	cancel := func() {
+	t.Cleanup(func() {
 		store.Client.Close()
 		store.Client = nil
 		ctrl.Finish()
-	}
+	})
 
-	return s, cancel
+	return s, func() {}
 }

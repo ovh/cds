@@ -131,15 +131,22 @@ func hookRegistration(ctx context.Context, db gorp.SqlExecutor, store cache.Stor
 			previousHook, has := oldHooks[h.UUID]
 			// If previous hook is the same, we do nothing
 			if has && h.Equals(*previousHook) {
+				// If this a repowebhook with an empty eventFilter, let's keep the old one because vcs won't be called to get the default eventFilter
+				eventFilter, has := h.GetConfigValue(sdk.HookConfigEventFilter)
+				if previousHook.IsRepositoryWebHook() && h.IsRepositoryWebHook() &&
+					(!has || eventFilter == "") {
+					h.Config[sdk.HookConfigEventFilter] = previousHook.Config[sdk.HookConfigEventFilter]
+				}
 				continue
 			}
+
 		}
 		// initialize a UUID is there no uuid
 		if h.UUID == "" {
 			h.UUID = sdk.UUID()
 		}
 
-		if h.HookModelName == sdk.RepositoryWebHookModelName || h.HookModelName == sdk.GitPollerModelName || h.HookModelName == sdk.GerritHookModelName {
+		if h.IsRepositoryWebHook() || h.HookModelName == sdk.GitPollerModelName || h.HookModelName == sdk.GerritHookModelName {
 			if wf.WorkflowData.Node.Context.ApplicationID == 0 || wf.Applications[wf.WorkflowData.Node.Context.ApplicationID].RepositoryFullname == "" || wf.Applications[wf.WorkflowData.Node.Context.ApplicationID].VCSServer == "" {
 				return sdk.NewErrorFrom(sdk.ErrForbidden, "cannot create a git poller or repository webhook on an application without a repository")
 			}
@@ -157,6 +164,7 @@ func hookRegistration(ctx context.Context, db gorp.SqlExecutor, store cache.Stor
 			return err
 		}
 		hookToUpdate[h.UUID] = *h
+		log.Debug("workflow.hookrRegistration> following hook must be updated: %+v", h)
 	}
 
 	if len(hookToUpdate) > 0 {
@@ -179,7 +187,10 @@ func hookRegistration(ctx context.Context, db gorp.SqlExecutor, store cache.Stor
 				continue
 			}
 			v, ok := h.Config[sdk.HookConfigWebHookID]
-			if h.HookModelName == sdk.RepositoryWebHookModelName && h.Config["vcsServer"].Value != "" {
+			if h.IsRepositoryWebHook() {
+				log.Debug("workflow.hookRegistration> managing vcs configuration: %+v", h)
+			}
+			if h.IsRepositoryWebHook() && h.Config["vcsServer"].Value != "" {
 				if !ok || v.Value == "" {
 					if err := createVCSConfiguration(ctx, db, store, proj, h); err != nil {
 						return sdk.WithStack(err)

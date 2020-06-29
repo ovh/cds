@@ -33,7 +33,12 @@ func (g *githubClient) PullRequest(ctx context.Context, fullname string, id int)
 			if err := g.Cache.Delete(cachePullRequestKey); err != nil {
 				log.Error(ctx, "githubclient.PullRequest > unable to delete cache key %v: %v", cachePullRequestKey, err)
 			}
-			return sdk.VCSPullRequest{}, sdk.NewError(sdk.ErrUnknownError, errorAPI(body))
+			if status > 500 {
+				return sdk.VCSPullRequest{}, sdk.NewError(sdk.ErrUnknownError, errorAPI(body))
+			} else {
+				return sdk.VCSPullRequest{}, sdk.NewError(sdk.ErrNotFound, errorAPI(body))
+			}
+
 		}
 
 		//Github may return 304 status because we are using conditional request with ETag based headers
@@ -198,11 +203,11 @@ func (g *githubClient) PullRequestComment(ctx context.Context, repo string, prRe
 func (g *githubClient) PullRequestCreate(ctx context.Context, repo string, pr sdk.VCSPullRequest) (sdk.VCSPullRequest, error) {
 	canWrite, err := g.UserHasWritePermission(ctx, repo)
 	if err != nil {
-		return sdk.VCSPullRequest{}, nil
+		return sdk.VCSPullRequest{}, err
 	}
 	if !canWrite {
 		if err := g.GrantWritePermission(ctx, repo); err != nil {
-			return sdk.VCSPullRequest{}, nil
+			return sdk.VCSPullRequest{}, err
 		}
 	}
 

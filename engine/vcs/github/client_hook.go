@@ -25,7 +25,7 @@ func (g *githubClient) CreateHook(ctx context.Context, repo string, hook *sdk.VC
 		hook.URL = g.proxyURL + hook.URL[lastIndexSlash:]
 	}
 	if len(hook.Events) == 0 {
-		hook.Events = []string{"push"}
+		hook.Events = sdk.GitHubEventsDefault
 	}
 
 	r := WebhookCreate{
@@ -80,7 +80,7 @@ func (g *githubClient) UpdateHook(ctx context.Context, repo string, hook *sdk.VC
 		hook.URL = g.proxyURL + hook.URL[lastIndexSlash:]
 	}
 	if len(hook.Events) == 0 {
-		hook.Events = []string{"push"}
+		hook.Events = sdk.GitHubEventsDefault
 	}
 
 	githubWebHook.Events = hook.Events

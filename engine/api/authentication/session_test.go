@@ -43,9 +43,9 @@ func Test_CheckSessionJWT(t *testing.T) {
 }
 
 func Test_SessionCleaner(t *testing.T) {
-	ctx, cancel := context.WithTimeout(context.TODO(), 15*time.Second)
+	ctx, cancel := context.WithTimeout(context.TODO(), 5*time.Second)
 	defer cancel()
 	db, _ := test.SetupPG(t, bootstrap.InitiliazeDB)
 
-	authentication.SessionCleaner(ctx, func() *gorp.DbMap { return db })
+	authentication.SessionCleaner(ctx, func() *gorp.DbMap { return db }, 1*time.Second)
 }

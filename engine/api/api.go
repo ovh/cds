@@ -662,7 +662,7 @@ func (a *API) Serve(ctx context.Context) error {
 		a.serviceAPIHeartbeat(ctx)
 	}, a.PanicDump())
 	sdk.GoRoutine(ctx, "authentication.SessionCleaner", func(ctx context.Context) {
-		authentication.SessionCleaner(ctx, a.mustDB)
+		authentication.SessionCleaner(ctx, a.mustDB, 10*time.Second)
 	}, a.PanicDump())
 
 	isFreshInstall, errF := version.IsFreshInstall(a.mustDB())
