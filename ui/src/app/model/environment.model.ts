@@ -1,3 +1,4 @@
+import { Workflow } from 'app/model/workflow.model';
 import { Key } from './keys.model';
 import { Usage } from './usage.model';
 import { Variable } from './variable.model';
@@ -13,4 +14,6 @@ export class Environment {
     from_repository: string;
 
     mute: boolean;
+    editModeChanged: boolean;
+    workflow_ascode_holder: Workflow;
 }

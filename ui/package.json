@@ -75,7 +75,7 @@
     "js-beautify": "1.8.9",
     "js-yaml": "3.13.1",
     "jsonschema": "1.2.5",
-    "jsrsasign": "8.0.12",
+    "jsrsasign": "8.0.20",
     "lodash-es": "4.17.15",
     "modernizr": "3.7.1",
     "moment": "2.24.0",

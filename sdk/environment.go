@@ -7,16 +7,17 @@ import (
 
 // Environment represent a deployment environment
 type Environment struct {
-	ID             int64                 `json:"id" yaml:"-"`
-	Name           string                `json:"name" yaml:"name" cli:"name,key"`
-	Variables      []EnvironmentVariable `json:"variables,omitempty" yaml:"variables"`
-	ProjectID      int64                 `json:"-" yaml:"-"`
-	ProjectKey     string                `json:"project_key" yaml:"-"`
-	Created        time.Time             `json:"created"`
-	LastModified   time.Time             `json:"last_modified"`
-	Keys           []EnvironmentKey      `json:"keys"`
-	Usage          *Usage                `json:"usage,omitempty"`
-	FromRepository string                `json:"from_repository,omitempty"`
+	ID                   int64                 `json:"id" yaml:"-"`
+	Name                 string                `json:"name" yaml:"name" cli:"name,key"`
+	Variables            []EnvironmentVariable `json:"variables,omitempty" yaml:"variables"`
+	ProjectID            int64                 `json:"-" yaml:"-"`
+	ProjectKey           string                `json:"project_key" yaml:"-"`
+	Created              time.Time             `json:"created"`
+	LastModified         time.Time             `json:"last_modified"`
+	Keys                 []EnvironmentKey      `json:"keys"`
+	Usage                *Usage                `json:"usage,omitempty"`
+	FromRepository       string                `json:"from_repository,omitempty"`
+	WorkflowAscodeHolder *Workflow             `json:"workflow_ascode_holder,omitempty" cli:"-"`
 }
 
 // UnmarshalJSON custom for last modified.

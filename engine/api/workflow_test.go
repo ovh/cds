@@ -210,7 +210,7 @@ func Test_getWorkflowNotificationsConditionsHandler(t *testing.T) {
 		},
 	}
 
-	proj2, errP := project.Load(api.mustDB(), proj.Key, project.LoadOptions.WithPipelines, project.LoadOptions.WithGroups, project.LoadOptions.WithIntegrations)
+	proj2, errP := project.Load(context.TODO(), api.mustDB(), proj.Key, project.LoadOptions.WithPipelines, project.LoadOptions.WithGroups, project.LoadOptions.WithIntegrations)
 	test.NoError(t, errP)
 
 	test.NoError(t, workflow.Insert(context.TODO(), db, api.Cache, *proj2, &w))
@@ -1268,7 +1268,7 @@ func Test_postAndDeleteWorkflowLabelHandler(t *testing.T) {
 	test.NoError(t, json.Unmarshal(w.Body.Bytes(), &pi))
 	assert.Equal(t, pname, pi.Name)
 
-	proj, err = project.Load(api.mustDB(), proj.Key,
+	proj, err = project.Load(context.TODO(), api.mustDB(), proj.Key,
 		project.LoadOptions.WithApplicationWithDeploymentStrategies,
 		project.LoadOptions.WithPipelines,
 		project.LoadOptions.WithEnvironments,
@@ -1457,7 +1457,7 @@ func TestBenchmarkGetWorkflowsWithoutAPIAsAdmin(t *testing.T) {
 
 	assert.NoError(t, application.Insert(db, *proj, &app))
 
-	prj, err := project.Load(db, proj.Key,
+	prj, err := project.Load(context.TODO(), db, proj.Key,
 		project.LoadOptions.WithPipelines,
 		project.LoadOptions.WithApplications,
 		project.LoadOptions.WithWorkflows,
@@ -1524,7 +1524,7 @@ func TestBenchmarkGetWorkflowsWithAPI(t *testing.T) {
 
 	assert.NoError(t, application.Insert(db, *proj, &app))
 
-	prj, err := project.Load(db, proj.Key,
+	prj, err := project.Load(context.TODO(), db, proj.Key,
 		project.LoadOptions.WithPipelines,
 		project.LoadOptions.WithApplications,
 		project.LoadOptions.WithWorkflows,

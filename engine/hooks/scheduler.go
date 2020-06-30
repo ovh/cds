@@ -242,7 +242,6 @@ func (s *Service) deleteTaskExecutionsRoutine(ctx context.Context) error {
 func (s *Service) dequeueTaskExecutions(ctx context.Context) error {
 	for {
 		if ctx.Err() != nil {
-			log.Error(ctx, "dequeueTaskExecutions> exiting go routine: %v", ctx.Err())
 			return ctx.Err()
 		}
 		size, err := s.Dao.QueueLen()
@@ -261,14 +260,15 @@ func (s *Service) dequeueTaskExecutions(ctx context.Context) error {
 		// Dequeuing context
 		var taskKey string
 		if ctx.Err() != nil {
-			log.Error(ctx, "dequeueTaskExecutions> exiting go routine: %v", err)
 			return ctx.Err()
 		}
 		if err := s.Cache.DequeueWithContext(ctx, schedulerQueueKey, &taskKey); err != nil {
-			log.Error(ctx, "dequeueTaskExecutions> store.DequeueWithContext err: %v", err)
 			continue
 		}
 		s.Dao.dequeuedIncr()
+		if taskKey == "" {
+			continue
+		}
 		log.Info(ctx, "dequeueTaskExecutions> work on taskKey: %s", taskKey)
 
 		// Load the task execution

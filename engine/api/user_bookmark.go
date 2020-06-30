@@ -20,7 +20,7 @@ func (api *API) postUserFavoriteHandler() service.Handler {
 
 		consumer := getAPIConsumer(ctx)
 
-		p, err := project.Load(api.mustDB(), params.ProjectKey,
+		p, err := project.Load(ctx, api.mustDB(), params.ProjectKey,
 			project.LoadOptions.WithIntegrations,
 			project.LoadOptions.WithFavorites(consumer.AuthentifiedUser.ID),
 		)

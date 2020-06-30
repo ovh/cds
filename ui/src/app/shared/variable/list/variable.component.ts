@@ -7,8 +7,6 @@ import {
     Output,
     ViewChild
 } from '@angular/core';
-import { Application } from 'app/model/application.model';
-import { Environment } from 'app/model/environment.model';
 import { Project } from 'app/model/project.model';
 import { Variable, VariableAudit } from 'app/model/variable.model';
 import { ApplicationAuditService } from 'app/service/application/application.audit.service';

@@ -395,6 +395,9 @@ func Insert(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj sd
 }
 
 func RenameNode(ctx context.Context, db gorp.SqlExecutor, w *sdk.Workflow) error {
+	ctx, end := observability.Span(ctx, "workflow.RenameNode")
+	defer end()
+
 	nodes := w.WorkflowData.Array()
 	var maxJoinNumber int
 	maxNumberByPipeline := map[int64]int{}
@@ -569,6 +572,9 @@ func RenameNode(ctx context.Context, db gorp.SqlExecutor, w *sdk.Workflow) error
 
 // Update updates a workflow
 func Update(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj sdk.Project, wf *sdk.Workflow, uptOption UpdateOptions) error {
+	ctx, end := observability.Span(ctx, "workflow.Update")
+	defer end()
+
 	if err := CompleteWorkflow(ctx, db, wf, proj, LoadOptions{}); err != nil {
 		return err
 	}
@@ -689,6 +695,8 @@ func Delete(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj sd
 }
 
 func CompleteWorkflow(ctx context.Context, db gorp.SqlExecutor, w *sdk.Workflow, proj sdk.Project, opts LoadOptions) error {
+	ctx, end := observability.Span(ctx, "workflow.CompleteWorkflow")
+	defer end()
 
 	w.InitMaps()
 	w.AssignEmptyType()

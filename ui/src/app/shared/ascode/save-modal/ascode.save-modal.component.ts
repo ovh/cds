@@ -2,11 +2,13 @@ import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, ViewChild
 import { TranslateService } from '@ngx-translate/core';
 import { ModalTemplate, SuiActiveModal, SuiModalService, TemplateModalConfig } from '@richardlt/ng2-semantic-ui';
 import { Application } from 'app/model/application.model';
+import { Environment } from 'app/model/environment.model';
 import { Operation } from 'app/model/operation.model';
 import { Pipeline } from 'app/model/pipeline.model';
 import { Project } from 'app/model/project.model';
 import { Workflow } from 'app/model/workflow.model';
 import { ApplicationService } from 'app/service/application/application.service';
+import { EnvironmentService } from 'app/service/environment/environment.service';
 import { PipelineService } from 'app/service/pipeline/pipeline.service';
 import { WorkflowService } from 'app/service/workflow/workflow.service';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
@@ -38,6 +40,8 @@ export class AsCodeSaveModalComponent {
     pollingOperationSub: Subscription;
     parameters: ParamData;
     repositoryFullname: string;
+    canSave = false;
+    displayCloseButton = false;
 
     constructor(
         private _modalService: SuiModalService,
@@ -46,7 +50,8 @@ export class AsCodeSaveModalComponent {
         private _translate: TranslateService,
         private _workflowService: WorkflowService,
         private _pipService: PipelineService,
-        private _appService: ApplicationService
+        private _appService: ApplicationService,
+        private _envService: EnvironmentService
     ) { }
 
     show(data: any, type: string) {
@@ -69,6 +74,7 @@ export class AsCodeSaveModalComponent {
     }
 
     close() {
+        delete this.parameters;
         this.modal.approve(true);
     }
 
@@ -78,7 +84,7 @@ export class AsCodeSaveModalComponent {
                 this.loading = true;
                 this._cd.markForCheck();
                 this._workflowService.updateAsCode(this.project.key, this.name, this.parameters.branch_name,
-                    this.parameters.commit_message, this.dataToSave).subscribe(o => {
+                    this.parameters.commit_message, this.dataToSave as Workflow).subscribe(o => {
                         this.asCodeOperation = o;
                         this.startPollingOperation(this.name);
                     });
@@ -101,6 +107,15 @@ export class AsCodeSaveModalComponent {
                     this.startPollingOperation((<Application>this.dataToSave).workflow_ascode_holder.name);
                 });
                 break;
+            case 'environment':
+                this.loading = true;
+                this._cd.markForCheck();
+                this._envService.updateAsCode(this.project.key, this.name, <Environment>this.dataToSave,
+                    this.parameters.branch_name, this.parameters.commit_message).subscribe(o => {
+                    this.asCodeOperation = o;
+                    this.startPollingOperation((<Environment>this.dataToSave).workflow_ascode_holder.name);
+                });
+                break;
             default:
                 this._toast.error('', this._translate.instant('ascode_error_unknown_type'))
         }
@@ -116,10 +131,17 @@ export class AsCodeSaveModalComponent {
             }))
             .subscribe(o => {
                 this.asCodeOperation = o;
+                this.displayCloseButton = true;
             });
     }
 
     onParamChange(param: ParamData): void {
         this.parameters = param;
+        this.canSave = !this.isEmpty(this.parameters.commit_message) && !this.isEmpty(this.parameters.branch_name);
+        this._cd.markForCheck();
+    }
+
+    isEmpty(str: string): boolean {
+        return (!str || str.length === 0);
     }
 }

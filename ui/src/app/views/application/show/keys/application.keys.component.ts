@@ -1,12 +1,12 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
+import { Application } from 'app/model/application.model';
+import { Project } from 'app/model/project.model';
+import { KeyEvent } from 'app/shared/keys/key.event';
+import { ToastService } from 'app/shared/toast/ToastService';
 import { AddApplicationKey, DeleteApplicationKey } from 'app/store/applications.action';
 import { finalize } from 'rxjs/operators';
-import { Application } from '../../../../model/application.model';
-import { Project } from '../../../../model/project.model';
-import { KeyEvent } from '../../../../shared/keys/key.event';
-import { ToastService } from '../../../../shared/toast/ToastService';
 
 @Component({
     selector: 'app-application-keys',

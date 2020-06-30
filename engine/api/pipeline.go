@@ -46,7 +46,7 @@ func (api *API) updateAsCodePipelineHandler() service.Handler {
 			return sdk.WrapError(sdk.ErrInvalidPipelinePattern, "updateAsCodePipelineHandler: Pipeline name %s do not respect pattern", p.Name)
 		}
 
-		proj, err := project.Load(api.mustDB(), key,
+		proj, err := project.Load(ctx, api.mustDB(), key,
 			project.LoadOptions.WithApplicationWithDeploymentStrategies,
 			project.LoadOptions.WithPipelines,
 			project.LoadOptions.WithEnvironments,
@@ -192,7 +192,7 @@ func (api *API) postPipelineRollbackHandler() service.Handler {
 			return sdk.WithStack(sdk.ErrForbidden)
 		}
 
-		proj, errP := project.Load(db, key, project.LoadOptions.WithGroups)
+		proj, errP := project.Load(ctx, db, key, project.LoadOptions.WithGroups)
 		if errP != nil {
 			return sdk.WrapError(errP, "postPipelineRollbackHandler> Cannot load project")
 		}
@@ -244,7 +244,7 @@ func (api *API) addPipelineHandler() service.Handler {
 		vars := mux.Vars(r)
 		key := vars[permProjectKey]
 
-		proj, err := project.Load(api.mustDB(), key, project.LoadOptions.Default)
+		proj, err := project.Load(ctx, api.mustDB(), key, project.LoadOptions.Default)
 		if err != nil {
 			return sdk.WrapError(err, "cannot load %s", key)
 		}
@@ -312,21 +312,21 @@ func (api *API) getPipelineHandler() service.Handler {
 		withWorkflows := FormBool(r, "withWorkflows")
 		withAsCodeEvent := FormBool(r, "withAsCodeEvents")
 
-		proj, err := project.Load(api.mustDB(), projectKey,
-			project.LoadOptions.WithApplicationWithDeploymentStrategies,
-			project.LoadOptions.WithPipelines,
-			project.LoadOptions.WithEnvironments,
-			project.LoadOptions.WithIntegrations)
-		if err != nil {
-			return err
-		}
-
 		p, err := pipeline.LoadPipeline(ctx, api.mustDB(), projectKey, pipelineName, true)
 		if err != nil {
 			return sdk.WrapError(err, "cannot load pipeline %s", pipelineName)
 		}
 
 		if p.FromRepository != "" {
+			proj, err := project.Load(ctx, api.mustDB(), projectKey,
+				project.LoadOptions.WithApplicationWithDeploymentStrategies,
+				project.LoadOptions.WithPipelines,
+				project.LoadOptions.WithEnvironments,
+				project.LoadOptions.WithIntegrations)
+			if err != nil {
+				return err
+			}
+
 			wkAscodeHolder, err := workflow.LoadByRepo(ctx, api.mustDB(), *proj, p.FromRepository, workflow.LoadOptions{
 				WithTemplate: true,
 			})
@@ -368,7 +368,7 @@ func (api *API) getPipelinesHandler() service.Handler {
 		vars := mux.Vars(r)
 		key := vars[permProjectKey]
 
-		project, err := project.Load(api.mustDB(), key, project.LoadOptions.Default)
+		project, err := project.Load(ctx, api.mustDB(), key, project.LoadOptions.Default)
 		if err != nil {
 			if !sdk.ErrorIs(err, sdk.ErrNoProject) {
 				log.Warning(ctx, "getPipelinesHandler: Cannot load %s: %s\n", key, err)
@@ -395,7 +395,7 @@ func (api *API) deletePipelineHandler() service.Handler {
 		key := vars[permProjectKey]
 		pipelineName := vars["pipelineKey"]
 
-		proj, errP := project.Load(api.mustDB(), key)
+		proj, errP := project.Load(ctx, api.mustDB(), key)
 		if errP != nil {
 			return sdk.WrapError(errP, "Cannot load project")
 		}

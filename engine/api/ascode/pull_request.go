@@ -23,6 +23,7 @@ const (
 	PipelineEvent    EventType = "pipeline"
 	WorkflowEvent    EventType = "workflow"
 	ApplicationEvent EventType = "application"
+	EnvironmentEvent EventType = "environment"
 )
 
 type EntityData struct {
@@ -54,12 +55,12 @@ forLoop:
 		case <-tick.C:
 			ope, err := operation.GetRepositoryOperation(ctx, db, ed.OperationUUID)
 			if err != nil {
-				globalErr = sdk.NewErrorFrom(err, "unable to get repository operation %s", ed.OperationUUID)
+				globalErr = sdk.WrapError(err, "unable to get repository operation %s", ed.OperationUUID)
 				break forLoop
 			}
-
 			if ope.Status == sdk.OperationStatusError {
-				globalErr = sdk.NewErrorFrom(sdk.ErrUnknownError, "repository operation in error: %s", ope.Error)
+				globalOperation.Error = ope.Error
+				globalErr = ope.Error.ToError()
 				break forLoop
 			}
 			if ope.Status == sdk.OperationStatusDone {
@@ -76,7 +77,6 @@ forLoop:
 		}
 	}
 	if globalErr != nil {
-		httpErr := sdk.ExtractHTTPError(globalErr, "")
 		isErrWithStack := sdk.IsErrorWithStack(globalErr)
 		fields := logrus.Fields{}
 		if isErrWithStack {
@@ -85,7 +85,9 @@ forLoop:
 		log.ErrorWithFields(ctx, fields, "%s", globalErr)
 
 		globalOperation.Status = sdk.OperationStatusError
-		globalOperation.Error = httpErr.Error()
+		if globalOperation.Error == nil {
+			globalOperation.Error = sdk.ToOperationError(globalErr)
+		}
 	}
 
 	_ = store.SetWithTTL(cache.Key(operation.CacheOperationKey, globalOperation.UUID), globalOperation, 300)
@@ -198,6 +200,20 @@ func createPullRequest(ctx context.Context, db *gorp.DbMap, store cache.Store, p
 		}
 		if !found {
 			asCodeEvent.Data.Applications[ed.ID] = ed.Name
+		}
+	case EnvironmentEvent:
+		if asCodeEvent.Data.Environments == nil {
+			asCodeEvent.Data.Environments = make(map[int64]string)
+		}
+		found := false
+		for k := range asCodeEvent.Data.Environments {
+			if k == ed.ID {
+				found = true
+				break
+			}
+		}
+		if !found {
+			asCodeEvent.Data.Environments[ed.ID] = ed.Name
 		}
 	}
 

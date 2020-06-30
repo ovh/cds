@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"math/rand"
 	"sort"
+	"strings"
 	"time"
 
 	"github.com/fsamin/go-dump"
@@ -48,7 +49,7 @@ type NodeEntry struct {
 }
 
 type ConditionEntry struct {
-	PlainConditions []PlainConditionEntry `json:"plain,omitempty" yaml:"check,omitempty"`
+	PlainConditions []PlainConditionEntry `json:"check,omitempty" yaml:"check,omitempty"`
 	LuaScript       string                `json:"script,omitempty" yaml:"script,omitempty"`
 }
 
@@ -64,6 +65,32 @@ type HookEntry struct {
 	Model      string                      `json:"type,omitempty" yaml:"type,omitempty" jsonschema_description:"Model of the hook.\nhttps://ovh.github.io/cds/docs/concepts/workflow/hooks"`
 	Config     map[string]string           `json:"config,omitempty" yaml:"config,omitempty"`
 	Conditions *sdk.WorkflowNodeConditions `json:"conditions,omitempty" yaml:"conditions,omitempty" jsonschema_description:"Conditions to run this hook.\nhttps://ovh.github.io/cds/docs/concepts/workflow/run-conditions."`
+}
+
+func (h HookEntry) IsDefault(model sdk.WorkflowHookModel) bool {
+	if h.Conditions != nil {
+		if h.Conditions.LuaScript != "" || len(h.Conditions.PlainConditions) > 0 {
+			return false
+		}
+	}
+
+	if h.Config != nil {
+		for k, v := range h.Config {
+			dfault, has := model.DefaultConfig[k]
+			if has {
+				if dfault.Configurable && dfault.Value != v &&
+					v != strings.Join(sdk.BitbucketCloudEventsDefault, ";") &&
+					v != strings.Join(sdk.BitbucketEventsDefault, ";") &&
+					v != strings.Join(sdk.GitHubEventsDefault, ";") &&
+					v != strings.Join(sdk.GitlabEventsDefault, ";") &&
+					v != strings.Join(sdk.GerritEventsDefault, ";") {
+					return false
+				}
+			}
+		}
+	}
+
+	return true
 }
 
 type ExportOptions func(w sdk.Workflow, exportedWorkflow *Workflow) error
@@ -301,6 +328,9 @@ func WorkflowSkipIfOnlyOneRepoWebhook(w sdk.Workflow, exportedWorkflow *Workflow
 	for nodeName, hs := range exportedWorkflow.Hooks {
 		if nodeName == w.WorkflowData.Node.Name && len(hs) == 1 {
 			if hs[0].Model == sdk.RepositoryWebHookModelName {
+				if !hs[0].IsDefault(sdk.RepositoryWebHookModel) {
+					return nil
+				}
 				delete(exportedWorkflow.Hooks, nodeName)
 				if exportedWorkflow.Workflow != nil {
 					for nodeName := range exportedWorkflow.Workflow {
