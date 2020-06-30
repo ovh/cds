@@ -3,6 +3,8 @@ package project
 import (
 	"context"
 	"database/sql"
+	"reflect"
+	"runtime"
 	"time"
 
 	"github.com/go-gorp/gorp"
@@ -125,7 +127,7 @@ func Exist(db gorp.SqlExecutor, projectKey string) (bool, error) {
 
 // Delete delete one or more projects given the key
 func Delete(db gorp.SqlExecutor, key string) error {
-	proj, err := Load(db, key, nil)
+	proj, err := Load(context.Background(), db, key, nil)
 	if err != nil {
 		return err
 	}
@@ -224,8 +226,8 @@ func LoadByID(db gorp.SqlExecutor, id int64, opts ...LoadOptionFunc) (*sdk.Proje
 }
 
 // Load  returns a project with all its variables and applications given a user. It can also returns pipelines, environments, groups, permission, and repositorires manager. See LoadOptions
-func Load(db gorp.SqlExecutor, key string, opts ...LoadOptionFunc) (*sdk.Project, error) {
-	return load(context.Background(), db, opts, "select project.* from project where projectkey = $1", key)
+func Load(ctx context.Context, db gorp.SqlExecutor, key string, opts ...LoadOptionFunc) (*sdk.Project, error) {
+	return load(ctx, db, opts, "select project.* from project where projectkey = $1", key)
 }
 
 // LoadProjectByWorkflowID loads a project from workflow iD
@@ -238,6 +240,10 @@ func LoadProjectByWorkflowID(db gorp.SqlExecutor, workflowID int64, opts ...Load
 }
 
 func loadprojects(ctx context.Context, db gorp.SqlExecutor, opts []LoadOptionFunc, query string, args ...interface{}) ([]sdk.Project, error) {
+	var end func()
+	_, end = observability.Span(ctx, "project.loadprojects")
+	defer end()
+
 	var res []dbProject
 	if _, err := db.Select(&res, query, args...); err != nil {
 		if err == sql.ErrNoRows {
@@ -249,7 +255,7 @@ func loadprojects(ctx context.Context, db gorp.SqlExecutor, opts []LoadOptionFun
 	projs := make([]sdk.Project, 0, len(res))
 	for i := range res {
 		p := &res[i]
-		proj, err := unwrap(db, p, opts)
+		proj, err := unwrap(ctx, db, p, opts)
 		if err != nil {
 			log.Error(ctx, "loadprojects> unwrap error (ID=%d, Key:%s): %v", p.ID, p.Key, err)
 			continue
@@ -274,22 +280,29 @@ func load(ctx context.Context, db gorp.SqlExecutor, opts []LoadOptionFunc, query
 		return nil, sdk.WithStack(err)
 	}
 
-	return unwrap(db, dbProj, opts)
+	return unwrap(ctx, db, dbProj, opts)
 }
 
-func unwrap(db gorp.SqlExecutor, p *dbProject, opts []LoadOptionFunc) (*sdk.Project, error) {
+func unwrap(ctx context.Context, db gorp.SqlExecutor, p *dbProject, opts []LoadOptionFunc) (*sdk.Project, error) {
+	ctx, end := observability.Span(ctx, "project.unwrap")
+	defer end()
+
 	proj := sdk.Project(*p)
 
 	for _, f := range opts {
 		if f == nil {
 			continue
 		}
+		name := runtime.FuncForPC(reflect.ValueOf(f).Pointer()).Name()
+		_, end = observability.Span(ctx, name)
 		if err := f(db, &proj); err != nil && sdk.Cause(err) != sql.ErrNoRows {
+			end()
 			return nil, err
 		}
+		end()
 	}
 
-	vcsServers, err := repositoriesmanager.LoadAllProjectVCSServerLinksByProjectID(context.Background(), db, p.ID)
+	vcsServers, err := repositoriesmanager.LoadAllProjectVCSServerLinksByProjectID(ctx, db, p.ID)
 	if err != nil {
 		return nil, err
 	}

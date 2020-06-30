@@ -38,7 +38,7 @@ import (
 
 // InsertTestProject create a test project.
 func InsertTestProject(t *testing.T, db *gorp.DbMap, store cache.Store, key, name string) *sdk.Project {
-	oldProj, _ := project.Load(db, key,
+	oldProj, _ := project.Load(context.TODO(), db, key,
 		project.LoadOptions.WithApplications,
 		project.LoadOptions.WithPipelines,
 		project.LoadOptions.WithWorkflows,

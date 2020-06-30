@@ -19,7 +19,7 @@ func (api *API) getKeysInProjectHandler() service.Handler {
 		vars := mux.Vars(r)
 		key := vars[permProjectKey]
 
-		p, err := project.Load(api.mustDB(), key)
+		p, err := project.Load(ctx, api.mustDB(), key)
 		if err != nil {
 			return err
 		}
@@ -39,7 +39,7 @@ func (api *API) deleteKeyInProjectHandler() service.Handler {
 		key := vars[permProjectKey]
 		keyName := vars["name"]
 
-		p, errP := project.Load(api.mustDB(), key, project.LoadOptions.WithKeys)
+		p, errP := project.Load(ctx, api.mustDB(), key, project.LoadOptions.WithKeys)
 		if errP != nil {
 			return sdk.WrapError(errP, "deleteKeyInProjectHandler> Cannot load project")
 		}
@@ -86,7 +86,7 @@ func (api *API) addKeyInProjectHandler() service.Handler {
 			return sdk.WrapError(sdk.ErrInvalidKeyPattern, "addKeyInProjectHandler: Key name %s do not respect pattern %s", newKey.Name, sdk.NamePattern)
 		}
 
-		p, errP := project.Load(api.mustDB(), key)
+		p, errP := project.Load(ctx, api.mustDB(), key)
 		if errP != nil {
 			return sdk.WrapError(errP, "addKeyInProjectHandler> Cannot load project")
 		}

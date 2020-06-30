@@ -47,7 +47,7 @@ func (api *API) postApplicationDeploymentStrategyConfigHandler() service.Handler
 		}
 		defer tx.Rollback() // nolint
 
-		proj, err := project.Load(tx, key, project.LoadOptions.WithIntegrations)
+		proj, err := project.Load(ctx, tx, key, project.LoadOptions.WithIntegrations)
 		if err != nil {
 			return sdk.WrapError(err, "unable to load project")
 		}
@@ -116,7 +116,7 @@ func (api *API) deleteApplicationDeploymentStrategyConfigHandler() service.Handl
 		}
 		defer tx.Rollback() // nolint
 
-		proj, err := project.Load(tx, key, project.LoadOptions.WithIntegrations)
+		proj, err := project.Load(ctx, tx, key, project.LoadOptions.WithIntegrations)
 		if err != nil {
 			return sdk.WrapError(err, "unable to load project")
 		}
