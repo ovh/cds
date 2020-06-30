@@ -136,7 +136,7 @@ func (api *API) putGroupRoleOnProjectHandler() service.Handler {
 		}
 
 		if err := tx.Commit(); err != nil {
-			return sdk.WrapError(err, "updateGroupRoleHandler: Cannot start transaction")
+			return sdk.WrapError(err, "cannot start transaction")
 		}
 
 		newGroupPermission := sdk.GroupPermission{Permission: newLink.Role, Group: *grp}

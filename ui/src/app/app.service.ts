@@ -88,7 +88,11 @@ export class AppService {
             event.type_event === EventType.WORKFLOW_ADD || event.type_event === EventType.WORKFLOW_UPDATE ||
             event.type_event === EventType.WORKFLOW_DELETE) {
             this.updateProjectCache(event);
-            this._navbarService.refreshData();
+
+            if (event.type_event === EventType.APPLICATION_UPDATE || event.type_event === EventType.WORKFLOW_UPDATE) {
+                this._navbarService.refreshData();
+            }
+
         }
         if (event.type_event.indexOf(EventType.APPLICATION_PREFIX) === 0) {
             this.updateApplicationCache(event);
@@ -180,7 +184,8 @@ export class AppService {
                     opts.push(new LoadOpts('withLabels', 'labels'));
                 }
 
-                if (event.type_event.indexOf('Variable') === -1 && event.type_event.indexOf('Parameter') === -1) {
+                if (event.type_event.indexOf('Variable') === -1 && event.type_event.indexOf('Parameter') === -1
+                    && event.type_event.indexOf(EventType.ENVIRONMENT_PREFIX) === -1) {
                     this._store.dispatch(new projectActions.ResyncProject({ projectKey: projectInCache.key, opts }));
                 }
             });

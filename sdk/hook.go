@@ -145,6 +145,11 @@ var (
 				Configurable: false,
 				Type:         HookConfigTypeString,
 			},
+			HookConfigEventFilter: {
+				Value:        "",
+				Configurable: true,
+				Type:         HookConfigTypeMultiChoice,
+			},
 		},
 	}
 

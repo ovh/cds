@@ -9,10 +9,19 @@
         </app-ascode-save-form>
     </div>
     <div class="actions">
-        <div class="ui blue button" [class.loading]="loading" [class.disabled]="loading" (click)="close()">
-            {{'common_cancel' | translate}}
-        </div>
-        <div class="ui green button" [class.loading]="loading" [class.disabled]="loading" (click)="save()">
-            {{'btn_save' | translate}}</div>
+        <ng-container *ngIf="!displayCloseButton">
+            <div class="ui blue button" [class.loading]="loading" [class.disabled]="loading" (click)="close()">
+                {{'common_cancel' | translate}}
+            </div>
+            <div class="ui green button" [class.loading]="loading"
+                 [class.disabled]="loading || !canSave"
+                 (click)="save()">
+                {{'btn_save' | translate}}</div>
+        </ng-container>
+        <ng-container *ngIf="displayCloseButton">
+            <div class="ui blue button" (click)="close()">
+                {{'common_close' | translate}}
+            </div>
+        </ng-container>
     </div>
 </ng-template>

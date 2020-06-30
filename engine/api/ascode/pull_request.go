@@ -24,6 +24,7 @@ const (
 	PipelineEvent    EventType = "pipeline"
 	WorkflowEvent    EventType = "workflow"
 	ApplicationEvent EventType = "application"
+	EnvironmentEvent EventType = "environment"
 )
 
 type EntityData struct {
@@ -54,7 +55,6 @@ func UpdateAsCodeResult(ctx context.Context, db *gorp.DbMap, store cache.Store, 
 	}
 
 	if globalErr != nil {
-		httpErr := sdk.ExtractHTTPError(globalErr, "")
 		isErrWithStack := sdk.IsErrorWithStack(globalErr)
 		fields := logrus.Fields{}
 		if isErrWithStack {
@@ -63,7 +63,7 @@ func UpdateAsCodeResult(ctx context.Context, db *gorp.DbMap, store cache.Store, 
 		log.ErrorWithFields(ctx, fields, "%s", globalErr)
 
 		globalOperation.Status = sdk.OperationStatusError
-		globalOperation.Error = httpErr.Error()
+		globalOperation.Error = sdk.ToOperationError(globalErr)
 	} else {
 		globalOperation.Status = sdk.OperationStatusDone
 		globalOperation.Setup.Push.PRLink = asCodeEvent.PullRequestURL
@@ -177,6 +177,20 @@ func createPullRequest(ctx context.Context, db *gorp.DbMap, store cache.Store, p
 		}
 		if !found {
 			asCodeEvent.Data.Applications[ed.ID] = ed.Name
+		}
+	case EnvironmentEvent:
+		if asCodeEvent.Data.Environments == nil {
+			asCodeEvent.Data.Environments = make(map[int64]string)
+		}
+		found := false
+		for k := range asCodeEvent.Data.Environments {
+			if k == ed.ID {
+				found = true
+				break
+			}
+		}
+		if !found {
+			asCodeEvent.Data.Environments[ed.ID] = ed.Name
 		}
 	}
 

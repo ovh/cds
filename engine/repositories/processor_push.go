@@ -105,8 +105,7 @@ func (s *Service) processPush(ctx context.Context, op *sdk.Operation) error {
 
 	// In case that there are no changes (ex: push changes on an existing branch that was not merged)
 	if !gitRepo.ExistsDiff() {
-		log.Debug("processPush> no files changes")
-		return nil
+		return sdk.WrapError(sdk.ErrNothingToPush, "processPush> %s : no files changes", op.UUID)
 	}
 
 	// Commit files
@@ -123,6 +122,6 @@ func (s *Service) processPush(ctx context.Context, op *sdk.Operation) error {
 		return sdk.WrapError(err, "push %s", op.Setup.Push.FromBranch)
 	}
 
-	log.Debug("processPush> files pushed")
+	log.Debug("processPush> %s : files pushed", op.UUID)
 	return nil
 }

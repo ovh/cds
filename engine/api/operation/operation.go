@@ -166,11 +166,11 @@ func Poll(ctx context.Context, db gorp.SqlExecutor, operationUUID string) (*sdk.
 		case <-tick.C:
 			ope, err := GetRepositoryOperation(ctx, db, operationUUID)
 			if err != nil {
-				return nil, sdk.NewErrorFrom(err, "unable to get repository operation %s", operationUUID)
+				return nil, sdk.WrapError(err, "unable to get repository operation %s", operationUUID)
 			}
 			switch ope.Status {
 			case sdk.OperationStatusError:
-				return nil, sdk.NewErrorFrom(sdk.ErrUnknownError, "repository operation in error: %s", ope.Error)
+				return nil, sdk.WrapError(ope.Error.ToError(), "repository operation in error: %s")
 			case sdk.OperationStatusDone:
 				return ope, nil
 			}

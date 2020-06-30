@@ -142,6 +142,9 @@ func doJSONRequest(ctx context.Context, db gorp.SqlExecutor, srvs []sdk.Service,
 			}
 			return headers, code, nil
 		}
+		if lastCode < 409 {
+			break
+		}
 	}
 
 	log.Error(ctx, "unable to call service: maximum attempt exceed : %+v", lastErr)

@@ -1078,7 +1078,7 @@ func getVCSInfos(ctx context.Context, db gorp.SqlExecutor, store cache.Store, pr
 	// Check repository value
 	if vcsInfos.Repository == "" {
 		vcsInfos.Repository = applicationRepositoryFullname
-	} else if strings.ToLower(vcsInfos.Repository) != strings.ToLower(applicationRepositoryFullname) {
+	} else if !strings.EqualFold(vcsInfos.Repository, applicationRepositoryFullname) {
 		//The input repository is not the same as the application, we have to check if it is a fork
 		forks, err := client.ListForks(ctx, applicationRepositoryFullname)
 		if err != nil {

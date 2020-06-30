@@ -4,7 +4,6 @@ import { Injectable } from '@angular/core';
 import { Application, Vulnerability } from 'app/model/application.model';
 import { Key } from 'app/model/keys.model';
 import { Operation } from 'app/model/operation.model';
-import { Pipeline } from 'app/model/pipeline.model';
 import { Observable } from 'rxjs';
 
 @Injectable()

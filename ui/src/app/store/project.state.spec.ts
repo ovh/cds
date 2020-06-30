@@ -3,7 +3,6 @@ import { HttpClientTestingModule, HttpTestingController } from '@angular/common/
 import { async, TestBed } from '@angular/core/testing';
 import { NgxsModule, Store } from '@ngxs/store';
 import { Application } from 'app/model/application.model';
-import { Environment } from 'app/model/environment.model';
 import { Group, GroupPermission } from 'app/model/group.model';
 import { ProjectIntegration } from 'app/model/integration.model';
 import { Key } from 'app/model/keys.model';
@@ -30,6 +29,7 @@ import { RouterTestingModule } from '@angular/router/testing';
 
 describe('Project', () => {
     let store: Store;
+    let http: HttpTestingController;
 
     beforeEach(async(() => {
         TestBed.configureTestingModule({
@@ -41,12 +41,11 @@ describe('Project', () => {
             ],
         }).compileComponents();
 
-        store = TestBed.get(Store);
-        // store.reset(getInitialProjectState());
+        store = TestBed.inject(Store);
+        http =  TestBed.inject(HttpTestingController);
     }));
 
     it('fetch project', async(() => {
-        const http = TestBed.get(HttpTestingController);
         store.dispatch(new ProjectAction.FetchProject({
             projectKey: 'test1',
             opts: []
@@ -65,7 +64,6 @@ describe('Project', () => {
     }));
 
     it('fetch project with options', async(() => {
-        const http = TestBed.get(HttpTestingController);
         store.dispatch(new ProjectAction.FetchProject({
             projectKey: 'test1',
             opts: []
@@ -119,7 +117,6 @@ describe('Project', () => {
     }));
 
     it('add project', async(() => {
-        const http = TestBed.get(HttpTestingController);
         let project = new Project();
         project.name = 'proj1';
         project.key = 'test1';
@@ -138,7 +135,6 @@ describe('Project', () => {
     }));
 
     it('update project', async(() => {
-        const http = TestBed.get(HttpTestingController);
         let project = new Project();
         project.name = 'proj1';
         project.key = 'test1';
@@ -167,7 +163,6 @@ describe('Project', () => {
     }));
 
     it('delete project', async(() => {
-        const http = TestBed.get(HttpTestingController);
         let project = new Project();
         project.name = 'proj1';
         project.key = 'test1';
@@ -192,7 +187,6 @@ describe('Project', () => {
     //  ------- Application --------- //
 
     it('add application in project', async(() => {
-        const http = TestBed.get(HttpTestingController);
         let project = new Project();
         project.name = 'proj1';
         project.key = 'test1';
@@ -220,7 +214,6 @@ describe('Project', () => {
     }));
 
     it('update application in project', async(() => {
-        const http = TestBed.get(HttpTestingController);
         let project = new Project();
         project.name = 'proj1';
         project.key = 'test1';
@@ -261,7 +254,6 @@ describe('Project', () => {
     }));
 
     it('delete application in project', async(() => {
-        const http = TestBed.get(HttpTestingController);
         let project = new Project();
         project.name = 'proj1';
         project.key = 'test1';
@@ -288,7 +280,6 @@ describe('Project', () => {
     //  ------- Workflow --------- //
 
     it('add workflow in project', async(() => {
-        const http = TestBed.get(HttpTestingController);
         let project = new Project();
         project.name = 'proj1';
         project.key = 'test1';
@@ -316,7 +307,6 @@ describe('Project', () => {
     }));
 
     it('update workflow in project', async(() => {
-        const http = TestBed.get(HttpTestingController);
         let project = new Project();
         project.name = 'proj1';
         project.key = 'test1';
@@ -350,7 +340,6 @@ describe('Project', () => {
     }));
 
     it('delete workflow in project', async(() => {
-        const http = TestBed.get(HttpTestingController);
         let project = new Project();
         project.name = 'proj1';
         project.key = 'test1';
@@ -377,7 +366,6 @@ describe('Project', () => {
     //  ------- Pipeline --------- //
 
     it('add pipeline in project', async(() => {
-        const http = TestBed.get(HttpTestingController);
         let project = new Project();
         project.name = 'proj1';
         project.key = 'test1';
@@ -404,7 +392,6 @@ describe('Project', () => {
     }));
 
     it('update pipeline in project', async(() => {
-        const http = TestBed.get(HttpTestingController);
         let project = new Project();
         project.name = 'proj1';
         project.key = 'test1';
@@ -438,7 +425,6 @@ describe('Project', () => {
     }));
 
     it('delete pipeline in project', async(() => {
-        const http = TestBed.get(HttpTestingController);
         let project = new Project();
         project.name = 'proj1';
         project.key = 'test1';
@@ -464,7 +450,6 @@ describe('Project', () => {
 
     //  ------- Label --------- //
     it('add label to workflow in project', async(() => {
-        const http = TestBed.get(HttpTestingController);
         let project = new Project();
         project.name = 'proj1';
         project.key = 'test1';
@@ -522,7 +507,6 @@ describe('Project', () => {
     }));
 
     it('delete label to workflow in project', async(() => {
-        const http = TestBed.get(HttpTestingController);
         let project = new Project();
         project.name = 'proj1';
         project.key = 'test1';
@@ -563,7 +547,6 @@ describe('Project', () => {
 
     //  ------- Variable --------- //
     it('add variable in project', async(() => {
-        const http = TestBed.get(HttpTestingController);
         let project = new Project();
         project.name = 'proj1';
         project.key = 'test1';
@@ -595,7 +578,6 @@ describe('Project', () => {
     }));
 
     it('update variable in project', async(() => {
-        const http = TestBed.get(HttpTestingController);
         let project = new Project();
         project.name = 'proj1';
         project.key = 'test1';
@@ -634,7 +616,6 @@ describe('Project', () => {
     }));
 
     it('delete variable in project', async(() => {
-        const http = TestBed.get(HttpTestingController);
         let project = new Project();
         project.name = 'proj1';
         project.key = 'test1';
@@ -666,7 +647,6 @@ describe('Project', () => {
     }));
 
     it('fetch variable in project', async(() => {
-        const http = TestBed.get(HttpTestingController);
         let project = new Project();
         project.name = 'proj1';
         project.key = 'test1';
@@ -700,7 +680,6 @@ describe('Project', () => {
 
     //  ------- Group --------- //
     it('add group permission in project', async(() => {
-        const http = TestBed.get(HttpTestingController);
         let project = new Project();
         project.name = 'proj1';
         project.key = 'test1';
@@ -735,7 +714,6 @@ describe('Project', () => {
     }));
 
     it('delete group permission in project', async(() => {
-        const http = TestBed.get(HttpTestingController);
         let project = new Project();
         project.name = 'proj1';
         project.key = 'test1';
@@ -769,7 +747,6 @@ describe('Project', () => {
     }));
 
     it('update group permission in project', async(() => {
-        const http = TestBed.get(HttpTestingController);
         let project = new Project();
         project.name = 'proj1';
         project.key = 'test1';
@@ -807,7 +784,6 @@ describe('Project', () => {
 
     //  ------- Key --------- //
     it('add key in project', async(() => {
-        const http = TestBed.get(HttpTestingController);
         let project = new Project();
         project.name = 'proj1';
         project.key = 'test1';
@@ -839,7 +815,6 @@ describe('Project', () => {
     }));
 
     it('delete key in project', async(() => {
-        const http = TestBed.get(HttpTestingController);
         let project = new Project();
         project.name = 'proj1';
         project.key = 'test1';
@@ -872,7 +847,6 @@ describe('Project', () => {
 
     //  ------- Integration --------- //
     it('add integration in project', async(() => {
-        const http = TestBed.get(HttpTestingController);
         let project = new Project();
         project.name = 'proj1';
         project.key = 'test1';
@@ -902,7 +876,6 @@ describe('Project', () => {
     }));
 
     it('update integration in project', async(() => {
-        const http = TestBed.get(HttpTestingController);
         let project = new Project();
         project.name = 'proj1';
         project.key = 'test1';
@@ -939,7 +912,6 @@ describe('Project', () => {
     }));
 
     it('delete integration in project', async(() => {
-        const http = TestBed.get(HttpTestingController);
         let project = new Project();
         project.name = 'proj1';
         project.key = 'test1';
@@ -969,283 +941,8 @@ describe('Project', () => {
         });
     }));
 
-    //  ------- Environment --------- //
-    it('add environment in project', async(() => {
-        const http = TestBed.get(HttpTestingController);
-        let project = new Project();
-        project.name = 'proj1';
-        project.key = 'test1';
-        store.dispatch(new ProjectAction.AddProject(project));
-        http.expectOne(((req: HttpRequest<any>) => {
-            return req.url === '/project';
-        })).flush(<Project>{
-            name: 'proj1',
-            key: 'test1',
-        });
-
-        let env = new Environment();
-        env.name = 'prod';
-        store.dispatch(new ProjectAction.AddEnvironmentInProject({ projectKey: project.key, environment: env }));
-        http.expectOne(((req: HttpRequest<any>) => {
-            return req.url === '/project/test1/environment';
-        })).flush(<Project>{
-            ...project,
-            environments: [env]
-        });
-
-        store.selectOnce(ProjectState).subscribe((state: ProjectStateModel) => {
-            expect(state.project).toBeTruthy();
-            expect(state.project.name).toEqual('proj1');
-            expect(state.project.key).toEqual('test1');
-            expect(state.project.environments).toBeTruthy();
-            expect(state.project.environments.length).toEqual(1);
-            expect(state.project.environments[0].name).toEqual('prod');
-        });
-    }));
-
-    it('fetch environment in project', async(() => {
-        const http = TestBed.get(HttpTestingController);
-        let project = new Project();
-        project.name = 'proj1';
-        project.key = 'test1';
-        store.dispatch(new ProjectAction.AddProject(project));
-        http.expectOne(((req: HttpRequest<any>) => {
-            return req.url === '/project';
-        })).flush(<Project>{
-            name: 'proj1',
-            key: 'test1',
-        });
-
-        let env = new Environment();
-        env.name = 'prod';
-        store.dispatch(new ProjectAction.FetchEnvironmentInProject({ projectKey: project.key, envName: env.name }));
-        http.expectOne(((req: HttpRequest<any>) => {
-            return req.url === '/project/test1/environment/prod';
-        })).flush(env);
-
-        store.selectOnce(ProjectState).subscribe((state: ProjectStateModel) => {
-            expect(state.project).toBeTruthy();
-            expect(state.project.name).toEqual('proj1');
-            expect(state.project.key).toEqual('test1');
-            expect(state.project.environments).toBeTruthy();
-            expect(state.project.environments.length).toEqual(1);
-            expect(state.project.environments[0].name).toEqual('prod');
-        });
-    }));
-
-    it('update environment in project', async(() => {
-        const http = TestBed.get(HttpTestingController);
-        let project = new Project();
-        project.name = 'proj1';
-        project.key = 'test1';
-        let env = new Environment();
-        env.name = 'prod';
-
-        store.dispatch(new ProjectAction.AddProject(project));
-        http.expectOne(((req: HttpRequest<any>) => {
-            return req.url === '/project';
-        })).flush(<Project>{
-            name: 'proj1',
-            key: 'test1',
-            environments: [env]
-        });
-
-        env.name = 'dev';
-        store.dispatch(new ProjectAction.UpdateEnvironmentInProject({
-            projectKey: project.key,
-            environmentName: 'prod',
-            changes: env
-        }));
-        http.expectOne(((req: HttpRequest<any>) => {
-            return req.url === '/project/test1/environment/prod';
-        })).flush(<Project>{
-            ...project,
-            environments: [env]
-        });
-
-        store.selectOnce(ProjectState).subscribe((state: ProjectStateModel) => {
-            expect(state.project).toBeTruthy();
-            expect(state.project.name).toEqual('proj1');
-            expect(state.project.key).toEqual('test1');
-            expect(state.project.environments).toBeTruthy();
-            expect(state.project.environments.length).toEqual(1);
-            expect(state.project.environments[0].name).toEqual('dev');
-        });
-    }));
-
-    it('delete environment in project', async(() => {
-        const http = TestBed.get(HttpTestingController);
-        let project = new Project();
-        project.name = 'proj1';
-        project.key = 'test1';
-        let env = new Environment();
-        env.name = 'prod';
-
-        store.dispatch(new ProjectAction.AddProject(project));
-        http.expectOne(((req: HttpRequest<any>) => {
-            return req.url === '/project';
-        })).flush(<Project>{
-            name: 'proj1',
-            key: 'test1',
-            environments: [env]
-        });
-
-        store.dispatch(new ProjectAction.DeleteEnvironmentInProject({ projectKey: project.key, environment: env }));
-        http.expectOne(((req: HttpRequest<any>) => {
-            return req.url === '/project/test1/environment/prod';
-        })).flush(<Project>{
-            ...project,
-            environments: []
-        });
-
-        store.selectOnce(ProjectState).subscribe((state: ProjectStateModel) => {
-            expect(state.project).toBeTruthy();
-            expect(state.project.name).toEqual('proj1');
-            expect(state.project.key).toEqual('test1');
-            expect(state.project.environments).toBeTruthy();
-            expect(state.project.environments.length).toEqual(0);
-        });
-    }));
-
-    it('add environment variable in project', async(() => {
-        const http = TestBed.get(HttpTestingController);
-        let project = new Project();
-        project.name = 'proj1';
-        project.key = 'test1';
-        store.dispatch(new ProjectAction.AddProject(project));
-        http.expectOne(((req: HttpRequest<any>) => {
-            return req.url === '/project';
-        })).flush(<Project>{
-            name: 'proj1',
-            key: 'test1',
-            environments: [{ name: 'prod' }]
-        });
-
-        let env = new Environment();
-        env.name = 'prod';
-        let variable = new Variable();
-        variable.name = 'testvar';
-        variable.type = 'string';
-        variable.value = 'myvalue';
-        env.variables = [variable];
-        store.dispatch(new ProjectAction.AddEnvironmentVariableInProject({
-            projectKey: project.key,
-            environmentName: env.name,
-            variable
-        }));
-        http.expectOne(((req: HttpRequest<any>) => {
-            return req.url === '/project/test1/environment/prod/variable/testvar';
-        })).flush(variable);
-
-        store.selectOnce(ProjectState).subscribe((state: ProjectStateModel) => {
-            expect(state.project).toBeTruthy();
-            expect(state.project.name).toEqual('proj1');
-            expect(state.project.key).toEqual('test1');
-            expect(state.project.environments).toBeTruthy();
-            expect(state.project.environments.length).toEqual(1);
-            expect(state.project.environments[0].name).toEqual('prod');
-            expect(state.project.environments[0].variables).toBeTruthy();
-            expect(state.project.environments[0].variables.length).toEqual(1);
-            expect(state.project.environments[0].variables[0].name).toEqual('testvar');
-        });
-    }));
-
-    it('update environment variable in project', async(() => {
-        const http = TestBed.get(HttpTestingController);
-        let project = new Project();
-        project.name = 'proj1';
-        project.key = 'test1';
-        let env = new Environment();
-        env.name = 'prod';
-        let variable = new Variable();
-        variable.name = 'testvar';
-        variable.type = 'string';
-        variable.value = 'myvalue';
-        env.variables = [variable];
-
-        store.dispatch(new ProjectAction.AddProject(project));
-        http.expectOne(((req: HttpRequest<any>) => {
-            return req.url === '/project';
-        })).flush(<Project>{
-            name: 'proj1',
-            key: 'test1',
-            environments: [env]
-        });
-
-        variable.name = 'testvarbis';
-        store.dispatch(new ProjectAction.UpdateEnvironmentVariableInProject({
-            projectKey: project.key,
-            environmentName: env.name,
-            variableName: 'testvar',
-            changes: variable
-        }));
-        http.expectOne(((req: HttpRequest<any>) => {
-            return req.url === '/project/test1/environment/prod/variable/testvar';
-        })).flush(<Project>{
-            ...project,
-            environments: [Object.assign({}, env, { variables: [variable] })]
-        });
-
-        store.selectOnce(ProjectState).subscribe((state: ProjectStateModel) => {
-            expect(state.project).toBeTruthy();
-            expect(state.project.name).toEqual('proj1');
-            expect(state.project.key).toEqual('test1');
-            expect(state.project.environments).toBeTruthy();
-            expect(state.project.environments.length).toEqual(1);
-            expect(state.project.environments[0].variables).toBeTruthy();
-            expect(state.project.environments[0].variables.length).toEqual(1);
-            expect(state.project.environments[0].variables[0].name).toEqual('testvarbis');
-        });
-    }));
-
-    it('delete environment variable in project', async(() => {
-        const http = TestBed.get(HttpTestingController);
-        let project = new Project();
-        project.name = 'proj1';
-        project.key = 'test1';
-        let env = new Environment();
-        env.name = 'prod';
-        let variable = new Variable();
-        variable.name = 'testvar';
-        variable.type = 'string';
-        variable.value = 'myvalue';
-        env.variables = [variable];
-
-        store.dispatch(new ProjectAction.AddProject(project));
-        http.expectOne(((req: HttpRequest<any>) => {
-            return req.url === '/project';
-        })).flush(<Project>{
-            name: 'proj1',
-            key: 'test1',
-            environments: [env]
-        });
-
-        store.dispatch(new ProjectAction.DeleteEnvironmentVariableInProject({
-            projectKey: project.key,
-            environmentName: env.name,
-            variable
-        }));
-        http.expectOne(((req: HttpRequest<any>) => {
-            return req.url === '/project/test1/environment/prod/variable/testvar';
-        })).flush(<Project>{
-            ...project,
-            environments: [Object.assign({}, env, { variables: [] })]
-        });
-
-        store.selectOnce(ProjectState).subscribe((state: ProjectStateModel) => {
-            expect(state.project).toBeTruthy();
-            expect(state.project.name).toEqual('proj1');
-            expect(state.project.key).toEqual('test1');
-            expect(state.project.environments).toBeTruthy();
-            expect(state.project.environments.length).toEqual(1);
-            expect(state.project.environments[0].variables).toBeTruthy();
-            expect(state.project.environments[0].variables.length).toEqual(0);
-        });
-    }));
-
     //  ------- Repository Manager --------- //
     it('connect repository manager variable in project', async(() => {
-        const http = TestBed.get(HttpTestingController);
         let project = new Project();
         project.name = 'proj1';
         project.key = 'test1';
@@ -1279,7 +976,6 @@ describe('Project', () => {
     }));
 
     it('callback repository manager basic auth in project', async(() => {
-        const http = TestBed.get(HttpTestingController);
         let project = new Project();
         project.name = 'proj1';
         project.key = 'test1';
@@ -1318,7 +1014,6 @@ describe('Project', () => {
 
 
     it('callback repository manager variable in project', async(() => {
-        const http = TestBed.get(HttpTestingController);
         let project = new Project();
         project.name = 'proj1';
         project.key = 'test1';
@@ -1356,7 +1051,6 @@ describe('Project', () => {
     }));
 
     it('disconnect repository manager variable in project', async(() => {
-        const http = TestBed.get(HttpTestingController);
         let project = new Project();
         project.name = 'proj1';
         project.key = 'test1';

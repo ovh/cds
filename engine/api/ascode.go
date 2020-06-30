@@ -87,7 +87,6 @@ func (api *API) postImportAsCodeHandler() service.Handler {
 
 			ope, err := operation.Poll(ctx, api.mustDB(), ope.UUID)
 			if err != nil {
-				httpErr := sdk.ExtractHTTPError(err, "")
 				isErrWithStack := sdk.IsErrorWithStack(err)
 				fields := logrus.Fields{}
 				if isErrWithStack {
@@ -96,7 +95,7 @@ func (api *API) postImportAsCodeHandler() service.Handler {
 				log.ErrorWithFields(ctx, fields, "%s", err)
 
 				globalOperation.Status = sdk.OperationStatusError
-				globalOperation.Error = httpErr.Error()
+				globalOperation.Error = sdk.ToOperationError(err)
 			} else {
 				globalOperation.Status = sdk.OperationStatusDone
 				globalOperation.LoadFiles = ope.LoadFiles

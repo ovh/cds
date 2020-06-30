@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Router } from '@angular/router';
 import { AppService } from 'app/app.service';
-import { WebsocketEvent, WebsocketFilter, WebsocketFilterType, } from 'app/model/websocket.model';
+import { WebsocketEvent, WebsocketFilter, WebsocketFilterType } from 'app/model/websocket.model';
 import { ToastService } from 'app/shared/toast/ToastService';
 import { WebSocketSubject } from 'rxjs/internal-compatibility';
 import { delay, retryWhen } from 'rxjs/operators';

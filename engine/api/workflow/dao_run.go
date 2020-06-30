@@ -494,7 +494,7 @@ func CanBeRun(workflowRun *sdk.WorkflowRun, workflowNodeRun *sdk.WorkflowNodeRun
 	}
 	ancestorsID := node.Ancestors(workflowRun.Workflow.WorkflowData)
 
-	if ancestorsID == nil || len(ancestorsID) == 0 {
+	if len(ancestorsID) == 0 {
 		return true
 	}
 	for _, ancestorID := range ancestorsID {
