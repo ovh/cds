@@ -99,6 +99,10 @@ func TestWorkerLog(t *testing.T) {
 	require.NoError(t, s.handleLogMessage(context.TODO(), chanMessages, []byte(message)))
 	close(chanMessages)
 
+	for i := range chanMessages {
+		t.Logf("%s", i.m.Full)
+	}
+
 	require.NoError(t, err)
 	require.True(t, gock.IsDone())
 }
