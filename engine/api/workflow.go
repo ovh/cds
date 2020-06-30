@@ -108,7 +108,7 @@ func (api *API) getWorkflowHandler() service.Handler {
 		minimal := FormBool(r, "minimal")
 		withoutIcons := FormBool(r, "withoutIcons")
 
-		proj, err := project.Load(api.mustDB(), key, project.LoadOptions.WithIntegrations)
+		proj, err := project.Load(ctx, api.mustDB(), key, project.LoadOptions.WithIntegrations)
 		if err != nil {
 			return sdk.WrapError(err, "unable to load projet")
 		}
@@ -201,7 +201,7 @@ func (api *API) postWorkflowRollbackHandler() service.Handler {
 		db := api.mustDB()
 		u := getAPIConsumer(ctx)
 
-		proj, err := project.Load(db, key,
+		proj, err := project.Load(ctx, db, key,
 			project.LoadOptions.WithGroups,
 			project.LoadOptions.WithApplications,
 			project.LoadOptions.WithEnvironments,
@@ -268,7 +268,7 @@ func (api *API) postWorkflowLabelHandler() service.Handler {
 			return sdk.WrapError(err, "cannot read body")
 		}
 
-		proj, err := project.Load(db, key,
+		proj, err := project.Load(ctx, db, key,
 			project.LoadOptions.WithApplicationWithDeploymentStrategies,
 			project.LoadOptions.WithPipelines,
 			project.LoadOptions.WithEnvironments,
@@ -338,7 +338,7 @@ func (api *API) deleteWorkflowLabelHandler() service.Handler {
 
 		db := api.mustDB()
 
-		proj, err := project.Load(db, key,
+		proj, err := project.Load(ctx, db, key,
 			project.LoadOptions.WithApplicationWithDeploymentStrategies,
 			project.LoadOptions.WithPipelines,
 			project.LoadOptions.WithEnvironments,
@@ -368,7 +368,7 @@ func (api *API) postWorkflowHandler() service.Handler {
 		vars := mux.Vars(r)
 		key := vars[permProjectKey]
 
-		p, err := project.Load(api.mustDB(), key,
+		p, err := project.Load(ctx, api.mustDB(), key,
 			project.LoadOptions.WithApplicationWithDeploymentStrategies,
 			project.LoadOptions.WithPipelines,
 			project.LoadOptions.WithEnvironments,
@@ -429,7 +429,7 @@ func (api *API) putWorkflowHandler() service.Handler {
 		key := vars["key"]
 		name := vars["permWorkflowName"]
 
-		p, err := project.Load(api.mustDB(), key,
+		p, err := project.Load(ctx, api.mustDB(), key,
 			project.LoadOptions.WithApplicationWithDeploymentStrategies,
 			project.LoadOptions.WithPipelines,
 			project.LoadOptions.WithEnvironments,
@@ -516,7 +516,7 @@ func (api *API) putWorkflowIconHandler() service.Handler {
 		key := vars["key"]
 		name := vars["permWorkflowName"]
 
-		p, errP := project.Load(api.mustDB(), key)
+		p, errP := project.Load(ctx, api.mustDB(), key)
 		if errP != nil {
 			return errP
 		}
@@ -557,7 +557,7 @@ func (api *API) deleteWorkflowIconHandler() service.Handler {
 		key := vars["key"]
 		name := vars["permWorkflowName"]
 
-		p, errP := project.Load(api.mustDB(), key)
+		p, errP := project.Load(ctx, api.mustDB(), key)
 		if errP != nil {
 			return errP
 		}
@@ -582,7 +582,7 @@ func (api *API) deleteWorkflowHandler() service.Handler {
 		key := vars["key"]
 		name := vars["permWorkflowName"]
 
-		p, errP := project.Load(api.mustDB(), key, project.LoadOptions.WithIntegrations)
+		p, errP := project.Load(ctx, api.mustDB(), key, project.LoadOptions.WithIntegrations)
 		if errP != nil {
 			return sdk.WrapError(errP, "Cannot load Project %s", key)
 		}
@@ -662,7 +662,7 @@ func (api *API) deleteWorkflowEventsIntegrationHandler() service.Handler {
 			return sdk.WrapError(sdk.ErrInvalidID, "integration id is not correct (%s) : %v", prjIntegrationIDStr, err)
 		}
 
-		p, err := project.Load(db, key, project.LoadOptions.WithIntegrations)
+		p, err := project.Load(ctx, db, key, project.LoadOptions.WithIntegrations)
 		if err != nil {
 			return sdk.WrapError(err, "cannot load Project %s", key)
 		}
@@ -687,7 +687,7 @@ func (api *API) getWorkflowHookHandler() service.Handler {
 		name := vars["permWorkflowName"]
 		uuid := vars["uuid"]
 
-		proj, err := project.Load(api.mustDB(), key,
+		proj, err := project.Load(ctx, api.mustDB(), key,
 			project.LoadOptions.WithIntegrations,
 			project.LoadOptions.WithApplicationWithDeploymentStrategies,
 			project.LoadOptions.WithPipelines,

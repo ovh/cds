@@ -29,7 +29,7 @@ func (api *API) deleteGroupFromProjectHandler() service.Handler {
 		}
 		defer tx.Rollback() // nolint
 
-		proj, err := project.Load(tx, key)
+		proj, err := project.Load(ctx, tx, key)
 		if err != nil {
 			return sdk.WrapError(err, "cannot load %s", key)
 		}
@@ -82,7 +82,7 @@ func (api *API) putGroupRoleOnProjectHandler() service.Handler {
 		}
 		defer tx.Rollback() // nolint
 
-		proj, err := project.Load(tx, key)
+		proj, err := project.Load(ctx, tx, key)
 		if err != nil {
 			return sdk.WrapError(err, "cannot load project %s", key)
 		}
@@ -168,7 +168,7 @@ func (api *API) postGroupInProjectHandler() service.Handler {
 		}
 		defer tx.Rollback() // nolint
 
-		proj, err := project.Load(tx, key)
+		proj, err := project.Load(ctx, tx, key)
 		if err != nil {
 			return sdk.WrapError(err, "cannot load %s", key)
 		}
@@ -231,7 +231,7 @@ func (api *API) postImportGroupsInProjectHandler() service.Handler {
 		key := vars[permProjectKey]
 		force := FormBool(r, "force")
 
-		proj, err := project.Load(api.mustDB(), key)
+		proj, err := project.Load(ctx, api.mustDB(), key)
 		if err != nil {
 			return sdk.WrapError(err, "cannot load project %s", key)
 		}

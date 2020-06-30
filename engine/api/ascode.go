@@ -48,7 +48,7 @@ func (api *API) postImportAsCodeHandler() service.Handler {
 			return sdk.WithStack(sdk.ErrWrongRequest)
 		}
 
-		p, err := project.Load(api.mustDB(), key, project.LoadOptions.WithClearKeys)
+		p, err := project.Load(ctx, api.mustDB(), key, project.LoadOptions.WithClearKeys)
 		if err != nil {
 			return sdk.WrapError(err, "cannot load project")
 		}
@@ -126,7 +126,7 @@ func (api *API) postPerformImportAsCodeHandler() service.Handler {
 			return sdk.NewErrorFrom(sdk.ErrWrongRequest, "invalid given operation uuid")
 		}
 
-		proj, err := project.Load(api.mustDB(), key,
+		proj, err := project.Load(ctx, api.mustDB(), key,
 			project.LoadOptions.WithGroups,
 			project.LoadOptions.WithApplications,
 			project.LoadOptions.WithEnvironments,
@@ -228,7 +228,7 @@ func (api *API) postWorkflowAsCodeEventsResyncHandler() service.Handler {
 		projectKey := vars["key"]
 		workflowName := vars["permWorkflowName"]
 
-		proj, err := project.Load(api.mustDB(), projectKey,
+		proj, err := project.Load(ctx, api.mustDB(), projectKey,
 			project.LoadOptions.WithApplicationWithDeploymentStrategies,
 			project.LoadOptions.WithPipelines,
 			project.LoadOptions.WithEnvironments,

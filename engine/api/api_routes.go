@@ -24,7 +24,7 @@ var (
 func (api *API) InitRouter() {
 	api.Router.URL = api.Config.URL.API
 	api.Router.SetHeaderFunc = DefaultHeaders
-	api.Router.Middlewares = append(api.Router.Middlewares, api.authMiddleware, api.tracingMiddleware, api.maintenanceMiddleware)
+	api.Router.Middlewares = append(api.Router.Middlewares, api.tracingMiddleware, api.authMiddleware, api.maintenanceMiddleware)
 	api.Router.PostMiddlewares = append(api.Router.PostMiddlewares, TracingPostMiddleware)
 
 	r := api.Router

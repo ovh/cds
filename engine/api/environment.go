@@ -80,7 +80,7 @@ func (api *API) getEnvironmentHandler() service.Handler {
 		}
 
 		if env.FromRepository != "" {
-			proj, err := project.Load(api.mustDB(), projectKey,
+			proj, err := project.Load(ctx, api.mustDB(), projectKey,
 				project.LoadOptions.WithApplicationWithDeploymentStrategies,
 				project.LoadOptions.WithPipelines,
 				project.LoadOptions.WithEnvironments,
@@ -141,7 +141,7 @@ func (api *API) addEnvironmentHandler() service.Handler {
 		vars := mux.Vars(r)
 		key := vars[permProjectKey]
 
-		proj, errProj := project.Load(api.mustDB(), key, project.LoadOptions.Default)
+		proj, errProj := project.Load(ctx, api.mustDB(), key, project.LoadOptions.Default)
 		if errProj != nil {
 			return sdk.WrapError(errProj, "addEnvironmentHandler> Cannot load %s", key)
 		}
@@ -186,7 +186,7 @@ func (api *API) deleteEnvironmentHandler() service.Handler {
 		projectKey := vars[permProjectKey]
 		environmentName := vars["environmentName"]
 
-		p, errProj := project.Load(api.mustDB(), projectKey, project.LoadOptions.Default)
+		p, errProj := project.Load(ctx, api.mustDB(), projectKey, project.LoadOptions.Default)
 		if errProj != nil {
 			return sdk.WrapError(errProj, "deleteEnvironmentHandler> Cannot load project %s", projectKey)
 		}
@@ -249,7 +249,7 @@ func (api *API) updateAsCodeEnvironmentHandler() service.Handler {
 			return sdk.WrapError(sdk.ErrInvalidApplicationPattern, "Environment name %s do not respect pattern", env.Name)
 		}
 
-		proj, err := project.Load(api.mustDB(), key, project.LoadOptions.WithClearKeys)
+		proj, err := project.Load(ctx, api.mustDB(), key, project.LoadOptions.WithClearKeys)
 		if err != nil {
 			return err
 		}
@@ -345,7 +345,7 @@ func (api *API) updateEnvironmentHandler() service.Handler {
 			return sdk.WithStack(sdk.ErrForbidden)
 		}
 
-		p, errProj := project.Load(api.mustDB(), projectKey)
+		p, errProj := project.Load(ctx, api.mustDB(), projectKey)
 		if errProj != nil {
 			return sdk.WrapError(errProj, "updateEnvironmentHandler> Cannot load project %s", projectKey)
 		}
@@ -396,7 +396,7 @@ func (api *API) cloneEnvironmentHandler() service.Handler {
 			return sdk.WrapError(err, "cannot load environment %s", environmentName)
 		}
 
-		p, err := project.Load(api.mustDB(), projectKey)
+		p, err := project.Load(ctx, api.mustDB(), projectKey)
 		if err != nil {
 			return sdk.WrapError(err, "cannot load project %s", projectKey)
 		}

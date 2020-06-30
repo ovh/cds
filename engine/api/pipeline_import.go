@@ -66,7 +66,7 @@ func (api *API) importPipelineHandler() service.Handler {
 		}
 
 		// Load project
-		proj, err := project.Load(api.mustDB(), key,
+		proj, err := project.Load(ctx, api.mustDB(), key,
 			project.LoadOptions.Default,
 			project.LoadOptions.WithGroups,
 		)
@@ -127,7 +127,7 @@ func (api *API) putImportPipelineHandler() service.Handler {
 			return err
 		}
 
-		proj, err := project.Load(api.mustDB(), key,
+		proj, err := project.Load(ctx, api.mustDB(), key,
 			project.LoadOptions.Default,
 			project.LoadOptions.WithGroups,
 		)

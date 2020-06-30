@@ -224,7 +224,7 @@ func (api *API) postWorkflowRunNumHandler() service.Handler {
 			return sdk.WrapError(sdk.ErrWrongRequest, "cannot num must be > %d, got %d", num, m.Num)
 		}
 
-		proj, err := project.Load(api.mustDB(), key, project.LoadOptions.WithIntegrations)
+		proj, err := project.Load(ctx, api.mustDB(), key, project.LoadOptions.WithIntegrations)
 		if err != nil {
 			return sdk.WrapError(err, "unable to load projet")
 		}
@@ -355,7 +355,7 @@ func (api *API) stopWorkflowRunHandler() service.Handler {
 			return sdk.WrapError(err, "unable to load last workflow run")
 		}
 
-		proj, err := project.Load(api.mustDB(), key)
+		proj, err := project.Load(ctx, api.mustDB(), key)
 		if err != nil {
 			return sdk.WrapError(err, "unable to load project")
 		}
@@ -459,7 +459,7 @@ func stopWorkflowRun(ctx context.Context, dbFunc func() *gorp.DbMap, store cache
 						continue
 					}
 
-					targetProj, errP := project.Load(dbFunc(), targetProject)
+					targetProj, errP := project.Load(ctx, dbFunc(), targetProject)
 					if errP != nil {
 						log.Error(ctx, "stopWorkflowRun> Unable to load project %v", errP)
 						continue
@@ -503,7 +503,7 @@ func updateParentWorkflowRun(ctx context.Context, dbFunc func() *gorp.DbMap, sto
 		return nil, nil
 	}
 
-	parentProj, err := project.Load(
+	parentProj, err := project.Load(context.Background(),
 		dbFunc(), run.RootRun().HookEvent.ParentWorkflow.Key,
 		project.LoadOptions.WithVariables,
 		project.LoadOptions.WithFeatures(store),
@@ -577,7 +577,7 @@ func (api *API) getWorkflowCommitsHandler() service.Handler {
 			return err
 		}
 
-		proj, errP := project.Load(api.mustDB(), key, project.LoadOptions.WithIntegrations)
+		proj, errP := project.Load(ctx, api.mustDB(), key, project.LoadOptions.WithIntegrations)
 		if errP != nil {
 			return sdk.WrapError(errP, "getWorkflowCommitsHandler> Unable to load project %s", key)
 		}
@@ -667,7 +667,7 @@ func (api *API) stopWorkflowNodeRunHandler() service.Handler {
 			return err
 		}
 
-		p, err := project.Load(api.mustDB(), key, project.LoadOptions.WithVariables)
+		p, err := project.Load(ctx, api.mustDB(), key, project.LoadOptions.WithVariables)
 		if err != nil {
 			return sdk.WrapError(err, "cannot load project")
 		}
@@ -793,7 +793,7 @@ func (api *API) postWorkflowRunHandler() service.Handler {
 
 		// LOAD PROJECT
 		_, next := observability.Span(ctx, "project.Load")
-		p, errP := project.Load(api.mustDB(), key,
+		p, errP := project.Load(ctx, api.mustDB(), key,
 			project.LoadOptions.WithVariables,
 			project.LoadOptions.WithFeatures(api.Cache),
 			project.LoadOptions.WithIntegrations,
@@ -927,7 +927,7 @@ func (api *API) initWorkflowRun(ctx context.Context, projKey string, wf *sdk.Wor
 	var asCodeInfosMsg []sdk.Message
 	report := new(workflow.ProcessorReport)
 
-	p, err := project.Load(api.mustDB(), projKey,
+	p, err := project.Load(ctx, api.mustDB(), projKey,
 		project.LoadOptions.WithVariables,
 		project.LoadOptions.WithFeatures(api.Cache),
 		project.LoadOptions.WithIntegrations,
@@ -973,7 +973,7 @@ func (api *API) initWorkflowRun(ctx context.Context, projKey string, wf *sdk.Wor
 
 		if wf.FromRepository != "" && (workflowStartedByRepoWebHook || opts.Manual != nil) {
 			log.Debug("initWorkflowRun> rebuild workflow %s/%s from as code configuration", p.Key, wf.Name)
-			p1, err := project.Load(api.mustDB(), projKey,
+			p1, err := project.Load(ctx, api.mustDB(), projKey,
 				project.LoadOptions.WithVariables,
 				project.LoadOptions.WithGroups,
 				project.LoadOptions.WithApplicationVariables,
@@ -1119,7 +1119,7 @@ func (api *API) getDownloadArtifactHandler() service.Handler {
 			return sdk.NewErrorFrom(sdk.ErrInvalidID, "invalid node job run ID")
 		}
 
-		proj, err := project.Load(api.mustDB(), key, project.LoadOptions.WithIntegrations)
+		proj, err := project.Load(ctx, api.mustDB(), key, project.LoadOptions.WithIntegrations)
 		if err != nil {
 			return sdk.WrapError(err, "unable to load projet")
 		}
@@ -1380,7 +1380,7 @@ func (api *API) postResyncVCSWorkflowRunHandler() service.Handler {
 			return err
 		}
 
-		proj, err := project.Load(db, key, project.LoadOptions.WithVariables)
+		proj, err := project.Load(ctx, db, key, project.LoadOptions.WithVariables)
 		if err != nil {
 			return sdk.WrapError(err, "cannot load project")
 		}

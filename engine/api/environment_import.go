@@ -27,7 +27,7 @@ func (api *API) postEnvironmentImportHandler() service.Handler {
 		key := vars[permProjectKey]
 		force := FormBool(r, "force")
 
-		proj, err := project.Load(api.mustDB(), key, project.LoadOptions.WithGroups)
+		proj, err := project.Load(ctx, api.mustDB(), key, project.LoadOptions.WithGroups)
 		if err != nil {
 			return sdk.WrapError(err, "unable load project")
 		}
@@ -82,7 +82,7 @@ func (api *API) importNewEnvironmentHandler() service.Handler {
 		vars := mux.Vars(r)
 		key := vars[permProjectKey]
 
-		proj, err := project.Load(api.mustDB(), key, project.LoadOptions.Default,
+		proj, err := project.Load(ctx, api.mustDB(), key, project.LoadOptions.Default,
 			project.LoadOptions.WithGroups, project.LoadOptions.WithPermission)
 		if err != nil {
 			return sdk.WrapError(err, "cannot load %s", key)

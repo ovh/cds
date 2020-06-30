@@ -151,7 +151,7 @@ func (api *API) getApplicationHandler() service.Handler {
 		}
 
 		if app.FromRepository != "" {
-			proj, err := project.Load(api.mustDB(), projectKey,
+			proj, err := project.Load(ctx, api.mustDB(), projectKey,
 				project.LoadOptions.WithApplicationWithDeploymentStrategies,
 				project.LoadOptions.WithPipelines,
 				project.LoadOptions.WithEnvironments,
@@ -255,7 +255,7 @@ func (api *API) addApplicationHandler() service.Handler {
 		vars := mux.Vars(r)
 		key := vars[permProjectKey]
 
-		proj, errl := project.Load(api.mustDB(), key)
+		proj, errl := project.Load(ctx, api.mustDB(), key)
 		if errl != nil {
 			return sdk.WrapError(errl, "addApplicationHandler> Cannot load %s", key)
 		}
@@ -299,7 +299,7 @@ func (api *API) deleteApplicationHandler() service.Handler {
 		projectKey := vars[permProjectKey]
 		applicationName := vars["applicationName"]
 
-		proj, errP := project.Load(api.mustDB(), projectKey)
+		proj, errP := project.Load(ctx, api.mustDB(), projectKey)
 		if errP != nil {
 			return sdk.WrapError(errP, "deleteApplicationHandler> Cannot laod project")
 		}
@@ -337,7 +337,7 @@ func (api *API) cloneApplicationHandler() service.Handler {
 		projectKey := vars[permProjectKey]
 		applicationName := vars["applicationName"]
 
-		proj, errProj := project.Load(api.mustDB(), projectKey)
+		proj, errProj := project.Load(ctx, api.mustDB(), projectKey)
 		if errProj != nil {
 			return sdk.WrapError(sdk.ErrNoProject, "cloneApplicationHandler> Cannot load %s", projectKey)
 		}
@@ -441,7 +441,7 @@ func (api *API) updateAsCodeApplicationHandler() service.Handler {
 			return sdk.WrapError(sdk.ErrInvalidApplicationPattern, "Application name %s do not respect pattern", a.Name)
 		}
 
-		proj, err := project.Load(api.mustDB(), key, project.LoadOptions.WithClearKeys)
+		proj, err := project.Load(ctx, api.mustDB(), key, project.LoadOptions.WithClearKeys)
 		if err != nil {
 			return err
 		}
@@ -527,7 +527,7 @@ func (api *API) updateApplicationHandler() service.Handler {
 		projectKey := vars[permProjectKey]
 		applicationName := vars["applicationName"]
 
-		p, err := project.Load(api.mustDB(), projectKey, project.LoadOptions.Default)
+		p, err := project.Load(ctx, api.mustDB(), projectKey, project.LoadOptions.Default)
 		if err != nil {
 			return sdk.WrapError(err, "cannot load project %s", projectKey)
 		}
