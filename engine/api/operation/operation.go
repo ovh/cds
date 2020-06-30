@@ -154,6 +154,25 @@ func GetRepositoryOperation(ctx context.Context, db gorp.SqlExecutor, uuid strin
 
 // Poll repository operatino for given uuid.
 func Poll(ctx context.Context, db gorp.SqlExecutor, operationUUID string) (*sdk.Operation, error) {
+	f := func() (*sdk.Operation, error) {
+		ope, err := GetRepositoryOperation(ctx, db, operationUUID)
+		if err != nil {
+			return nil, sdk.WrapError(err, "unable to get repository operation %s", operationUUID)
+		}
+		switch ope.Status {
+		case sdk.OperationStatusError:
+			return nil, sdk.WrapError(ope.Error.ToError(), "repository operation in error")
+		case sdk.OperationStatusDone:
+			return ope, nil
+		}
+		return nil, nil
+	}
+
+	ope, err := f()
+	if ope != nil || err != nil {
+		return ope, err
+	}
+
 	ctx, cancel := context.WithTimeout(ctx, 1*time.Minute)
 	defer cancel()
 	tick := time.NewTicker(2 * time.Second)
@@ -164,15 +183,9 @@ func Poll(ctx context.Context, db gorp.SqlExecutor, operationUUID string) (*sdk.
 		case <-ctx.Done():
 			return nil, sdk.NewErrorFrom(sdk.ErrRepoOperationTimeout, "updating repository take too much time")
 		case <-tick.C:
-			ope, err := GetRepositoryOperation(ctx, db, operationUUID)
-			if err != nil {
-				return nil, sdk.WrapError(err, "unable to get repository operation %s", operationUUID)
-			}
-			switch ope.Status {
-			case sdk.OperationStatusError:
-				return nil, sdk.WrapError(ope.Error.ToError(), "repository operation in error: %s")
-			case sdk.OperationStatusDone:
-				return ope, nil
+			ope, err := f()
+			if ope != nil || err != nil {
+				return ope, err
 			}
 		}
 	}
