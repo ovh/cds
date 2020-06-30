@@ -4,20 +4,20 @@ import (
 	"context"
 	"encoding/base64"
 	"fmt"
-	"gopkg.in/h2non/gock.v1"
 	"testing"
 	"time"
+
+	gocache "github.com/patrickmn/go-cache"
+	"github.com/stretchr/testify/require"
+	"gopkg.in/h2non/gock.v1"
 
 	"github.com/ovh/cds/engine/api/bootstrap"
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
-	gocache "github.com/patrickmn/go-cache"
-
 	"github.com/ovh/cds/sdk/jws"
 	"github.com/ovh/cds/sdk/log"
-	"github.com/stretchr/testify/require"
 )
 
 func TestWorkerLog(t *testing.T) {

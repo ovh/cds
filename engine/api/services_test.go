@@ -16,10 +16,15 @@ import (
 )
 
 func TestServicesHandlers(t *testing.T) {
-	api, _, _ := newTestAPI(t)
+	api, db, _ := newTestAPI(t)
 
 	admin, jwtRaw := assets.InsertAdminUser(t, api.mustDB())
 	_, jwtLambda := assets.InsertLambdaUser(t, api.mustDB())
+
+	s, _ := assets.InitCDNService(t, db)
+	defer func() {
+		_ = services.Delete(db, s)
+	}()
 
 	data := sdk.AuthConsumer{
 		Name:         sdk.RandomString(10),

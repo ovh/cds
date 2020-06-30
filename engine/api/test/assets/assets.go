@@ -501,6 +501,40 @@ func InsertService(t *testing.T, db gorp.SqlExecutor, name, serviceType string, 
 	return &srv, privateKey
 }
 
+func InitCDNService(t *testing.T, db gorp.SqlExecutor, scopes ...sdk.AuthConsumerScope) (*sdk.Service, *rsa.PrivateKey) {
+	usr1, _ := InsertAdminUser(t, db)
+
+	consumer, err := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, usr1.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
+	require.NoError(t, err)
+
+	sharedGroup, err := group.LoadByName(context.TODO(), db, sdk.SharedInfraGroupName)
+	require.NoError(t, err)
+	hConsumer, _, err := builtin.NewConsumer(context.TODO(), db, sdk.RandomString(10), "", consumer, []int64{sharedGroup.ID},
+		sdk.NewAuthConsumerScopeDetails(append(scopes, sdk.AuthConsumerScopeProject)...))
+	require.NoError(t, err)
+
+	privateKey, err := jws.NewRandomRSAKey()
+	require.NoError(t, err)
+	publicKey, err := jws.ExportPublicKey(privateKey)
+	require.NoError(t, err)
+
+	var srv = sdk.Service{
+		CanonicalService: sdk.CanonicalService{
+			Name:       hConsumer.Name,
+			Type:       sdk.TypeCDN,
+			PublicKey:  publicKey,
+			ConsumerID: &hConsumer.ID,
+			Config: map[string]interface{}{
+				"public_tcp": "cdn.net:4545",
+			},
+		},
+	}
+
+	require.NoError(t, services.Insert(context.TODO(), db, &srv))
+
+	return &srv, privateKey
+}
+
 func InsertTestWorkflow(t *testing.T, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, name string) *sdk.Workflow {
 	//First pipeline
 	pip := sdk.Pipeline{

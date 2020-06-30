@@ -15,8 +15,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/ovh/cds/engine/cdn"
-
 	"github.com/ovh/venom"
 
 	"github.com/sguiheux/go-coverage"
@@ -38,7 +36,6 @@ import (
 	"github.com/ovh/cds/engine/api/test/assets"
 	"github.com/ovh/cds/engine/api/worker"
 	"github.com/ovh/cds/engine/api/workflow"
-	"github.com/ovh/cds/engine/cdn"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
@@ -430,7 +427,7 @@ func TestGetWorkflowJobQueueHandler(t *testing.T) {
 }
 
 func Test_postTakeWorkflowJobHandler(t *testing.T) {
-	api, _, router := newTestAPI(t)
+	api, db, router := newTestAPI(t)
 
 	ctx := testRunWorkflow(t, api, router)
 	testGetWorkflowJobAsWorker(t, api, router, &ctx)
@@ -443,17 +440,14 @@ func Test_postTakeWorkflowJobHandler(t *testing.T) {
 		"id":               fmt.Sprintf("%d", ctx.job.ID),
 	}
 
+	// Prepare VCS Mock
+	mockVCSSservice, _ := assets.InitCDNService(t, db)
+	defer func() {
+		_ = services.Delete(db, mockVCSSservice) // nolint
+	}()
+
 	//Register the worker
 	testRegisterWorker(t, api, router, &ctx)
-
-	// Add cdn config
-	api.Config.CDN = cdn.Configuration{
-		PublicTCP: "cdn.net:4545",
-		TCP: sdk.TCPServer{
-			Port: 8090,
-			Addr: "localhost",
-		},
-	}
 
 	uri := router.GetRoute("POST", api.postTakeWorkflowJobHandler, vars)
 	require.NotEmpty(t, uri)
@@ -496,14 +490,15 @@ func Test_postTakeWorkflowJobHandler(t *testing.T) {
 	assert.Equal(t, ctx.model.Name, run.Model)
 	assert.Equal(t, ctx.worker.Name, run.WorkerName)
 	assert.NotEmpty(t, run.HatcheryName)
-
-	wkrDB, err := worker.LoadWorkerByIDWithDecryptKey(context.TODO(), api.mustDB(), ctx.worker.ID)
-	assert.NoError(t, err)
-	assert.Len(t, wkrDB.PrivateKey, 32)
 }
 
 func Test_postTakeWorkflowInvalidJobHandler(t *testing.T) {
-	api, _, router := newTestAPI(t)
+	api, db, router := newTestAPI(t)
+
+	s, _ := assets.InitCDNService(t, db)
+	defer func() {
+		_ = services.Delete(db, s)
+	}()
 
 	ctx := testRunWorkflow(t, api, router)
 	testGetWorkflowJobAsWorker(t, api, router, &ctx)
@@ -565,7 +560,12 @@ func Test_postBookWorkflowJobHandler(t *testing.T) {
 }
 
 func Test_postWorkflowJobResultHandler(t *testing.T) {
-	api, _, router := newTestAPI(t)
+	api, db, router := newTestAPI(t)
+
+	s, _ := assets.InitCDNService(t, db)
+	defer func() {
+		_ = services.Delete(db, s)
+	}()
 
 	ctx := testRunWorkflow(t, api, router)
 	testGetWorkflowJobAsWorker(t, api, router, &ctx)
@@ -584,18 +584,6 @@ func Test_postWorkflowJobResultHandler(t *testing.T) {
 	rec := httptest.NewRecorder()
 	router.Mux.ServeHTTP(rec, req)
 	require.Equal(t, 200, rec.Code)
-
-	//Send logs
-	logs := sdk.Log{
-		Val: "This is a log",
-	}
-
-	uri = router.Prefix + fmt.Sprintf("/queue/workflows/%d/log", ctx.job.ID)
-
-	req = assets.NewJWTAuthentifiedRequest(t, ctx.workerToken, "POST", uri, logs)
-	rec = httptest.NewRecorder()
-	router.Mux.ServeHTTP(rec, req)
-	require.Equal(t, 204, rec.Code)
 
 	//Send result
 	res := sdk.Result{
@@ -656,7 +644,12 @@ func Test_postWorkflowJobResultHandler(t *testing.T) {
 }
 
 func Test_postWorkflowJobTestsResultsHandler(t *testing.T) {
-	api, _, router := newTestAPI(t)
+	api, db, router := newTestAPI(t)
+
+	s, _ := assets.InitCDNService(t, db)
+	defer func() {
+		_ = services.Delete(db, s)
+	}()
 
 	ctx := testRunWorkflow(t, api, router)
 	testGetWorkflowJobAsWorker(t, api, router, &ctx)
@@ -761,6 +754,11 @@ func Test_postWorkflowJobTestsResultsHandler(t *testing.T) {
 
 func Test_postWorkflowJobArtifactHandler(t *testing.T) {
 	api, db, router := newTestAPI(t)
+
+	s, _ := assets.InitCDNService(t, db)
+	defer func() {
+		_ = services.Delete(db, s)
+	}()
 
 	ctx := testRunWorkflow(t, api, router)
 	testGetWorkflowJobAsWorker(t, api, router, &ctx)
@@ -906,7 +904,12 @@ func fileExists(filename string) bool {
 }
 
 func Test_postWorkflowJobStaticFilesHandler(t *testing.T) {
-	api, _, router := newTestAPI(t)
+	api, db, router := newTestAPI(t)
+
+	s, _ := assets.InitCDNService(t, db)
+	defer func() {
+		_ = services.Delete(db, s)
+	}()
 
 	ctx := testRunWorkflow(t, api, router)
 	testGetWorkflowJobAsWorker(t, api, router, &ctx)
