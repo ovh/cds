@@ -5,8 +5,6 @@ import (
 	"encoding/base64"
 	"fmt"
 	"gopkg.in/h2non/gock.v1"
-	"net/http"
-	"strings"
 	"testing"
 	"time"
 
@@ -59,9 +57,11 @@ func TestWorkerLog(t *testing.T) {
 		NodeRunID: jobRun.WorkflowNodeRunID,
 		Timestamp: time.Now().UnixNano(),
 	}
-	logCache.Set(fmt.Sprintf("worker-%s", signature.Worker.WorkerID), sdk.Worker{
-		JobRunID:   &signature.JobID,
+	logCache.Set(fmt.Sprintf("worker-%s", signature.Worker.WorkerName), sdk.Worker{
+		Name:       signature.Worker.WorkerName,
+		ID:         signature.Worker.WorkerID,
 		PrivateKey: key,
+		JobRunID:   &signature.JobID,
 	}, gocache.DefaultExpiration)
 
 	signatureField, err := jws.Sign(sign, signature)
@@ -75,36 +75,31 @@ func TestWorkerLog(t *testing.T) {
 		Host: "http://lolcat.host",
 	})
 
-	w := sdk.Worker{
-		Name:       signature.Worker.WorkerName,
-		ID:         signature.Worker.WorkerID,
-		PrivateKey: []byte(base64.StdEncoding.EncodeToString(key)),
-		JobRunID:   &signature.JobID,
-	}
 	gock.InterceptClient(s.Client.(cdsclient.Raw).HTTPClient())
 
-	//gock.New("http://lolcat.host").Post(fmt.Sprintf("/queue/workflows/%d/log", dbj.ID)).Reply(200)
-	gock.New("http://lolcat.host").AddMatcher(func(r *http.Request, rr *gock.Request) (bool, error) {
-		if r.Method == http.MethodGet && strings.HasPrefix(r.URL.String(), "http://lolcat.host/worker/myworker") {
-			return true, nil
-		}
-		if r.Method == http.MethodPost && strings.HasPrefix(r.URL.String(), fmt.Sprintf("/queue/workflows/%d/log", dbj.ID)) {
-			return true, nil
-		}
-		return false, nil
-	}).Reply(200).JSON(w)
+	gock.New("http://lolcat.host").Post(fmt.Sprintf("/queue/workflows/%d/log", dbj.ID)).Reply(200)
 
 	chanMessages := s.handleConnectionChannel(context.TODO())
 
 	require.NoError(t, s.handleLogMessage(context.TODO(), chanMessages, []byte(message)))
 	close(chanMessages)
 
-	for i := range chanMessages {
-		t.Logf("%s", i.m.Full)
+	// Waiting read of channel to send log
+	require.NoError(t, err)
+	cpt := 0
+	for {
+		b := gock.IsDone()
+		if b {
+			break
+		} else {
+			cpt++
+		}
+		if cpt > 10 {
+			t.Fail()
+		}
+		time.Sleep(100 * time.Millisecond)
 	}
 
-	require.NoError(t, err)
-	require.True(t, gock.IsDone())
 }
 
 func TestServiceLog(t *testing.T) {
