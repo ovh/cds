@@ -169,9 +169,7 @@ func TestServiceLog(t *testing.T) {
 
 	gock.New("http://lolcat.host").Post("/queue/workflows/log/service").Reply(200)
 
-	chanMessages := s.handleConnectionChannel(context.TODO())
-	require.NoError(t, s.handleLogMessage(context.TODO(), chanMessages, []byte(message)))
-	close(chanMessages)
+	require.NoError(t, s.handleLogMessage(context.TODO(), nil, []byte(message)))
 
 	require.True(t, gock.IsDone())
 
