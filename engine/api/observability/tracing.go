@@ -12,6 +12,12 @@ import (
 	"github.com/ovh/cds/sdk/tracingutils"
 )
 
+type contextKey int
+
+const (
+	contextMainSpan contextKey = iota
+)
+
 // New may start a tracing span
 func New(ctx context.Context, s service, name string, sampler trace.Sampler, spanKind int) (context.Context, *trace.Span) {
 	if traceExporter == nil {
@@ -79,6 +85,8 @@ func Start(ctx context.Context, s service, w http.ResponseWriter, req *http.Requ
 		trace.StringAttribute(UserAgentAttribute, req.UserAgent()),
 	)
 
+	ctx = context.WithValue(ctx, contextMainSpan, span)
+
 	ctx = tracingutils.SpanContextToContext(ctx, span.SpanContext())
 	ctx = ContextWithTag(ctx,
 		TagServiceType, s.Type(),
@@ -89,7 +97,16 @@ func Start(ctx context.Context, s service, w http.ResponseWriter, req *http.Requ
 
 // End may close a tracing span
 func End(ctx context.Context, w http.ResponseWriter, req *http.Request) (context.Context, error) {
-	span := trace.FromContext(ctx)
+	spanI := ctx.Value(contextMainSpan)
+	if spanI == nil {
+		return ctx, nil
+	}
+
+	span, ok := spanI.(*trace.Span)
+	if !ok {
+		return ctx, nil
+	}
+
 	if span == nil {
 		return ctx, nil
 	}
