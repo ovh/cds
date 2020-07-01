@@ -109,7 +109,7 @@ func LoadByWorkflowID(db gorp.SqlExecutor, workflowID int64) ([]sdk.Application,
 	JOIN w_node ON w_node.id = w_node_context.node_id
 	JOIN workflow ON workflow.id = w_node.workflow_id
 	WHERE workflow.id = $1`).Args(workflowID)
-	return getAll(context.Background(), db, nil, query, false)
+	return getAll(context.Background(), db, nil, query)
 }
 
 func get(ctx context.Context, db gorp.SqlExecutor, key string, opts []LoadOptionFunc, query gorpmapping.Query) (*sdk.Application, error) {
@@ -225,7 +225,7 @@ func LoadAll(db gorp.SqlExecutor, key string, opts ...LoadOptionFunc) ([]sdk.App
 	WHERE project.projectkey = $1
 	ORDER BY application.name ASC`).Args(key)
 
-	return getAll(context.Background(), db, opts, query, false)
+	return getAll(context.Background(), db, opts, query)
 }
 
 // LoadAllByIDsWithDecryption returns all applications with clear vcs strategy
@@ -234,7 +234,7 @@ func LoadAllByIDsWithDecryption(db gorp.SqlExecutor, ids []int64, opts ...LoadOp
 	SELECT application.*
 	FROM application
 	WHERE application.id = ANY($1)`).Args(pq.Int64Array(ids))
-	return getAll(context.Background(), db, opts, query, true)
+	return getAllWithClearVCS(context.Background(), db, opts, query)
 }
 
 // LoadAllByIDs returns all applications
@@ -244,7 +244,7 @@ func LoadAllByIDs(db gorp.SqlExecutor, ids []int64, opts ...LoadOptionFunc) ([]s
 	FROM application
 	WHERE application.id = ANY($1)
 	ORDER BY application.name ASC`).Args(pq.Int64Array(ids))
-	return getAll(context.Background(), db, opts, query, false)
+	return getAll(context.Background(), db, opts, query)
 }
 
 // LoadAllNames returns all application names
@@ -266,7 +266,7 @@ func LoadAllNames(db gorp.SqlExecutor, projID int64) (sdk.IDNames, error) {
 	return res, nil
 }
 
-func getAll(ctx context.Context, db gorp.SqlExecutor, opts []LoadOptionFunc, query gorpmapping.Query, clearVCSStrategy bool) ([]sdk.Application, error) {
+func getAllWithClearVCS(ctx context.Context, db gorp.SqlExecutor, opts []LoadOptionFunc, query gorpmapping.Query) ([]sdk.Application, error) {
 	var res []dbApplication
 	if err := gorpmapping.GetAll(ctx, db, query, &res, gorpmapping.GetOptions.WithDecryption); err != nil {
 		return nil, err
@@ -279,19 +279,43 @@ func getAll(ctx context.Context, db gorp.SqlExecutor, opts []LoadOptionFunc, que
 			return nil, err
 		}
 		if !isValid {
-			log.Error(ctx, "application.loadApplications> application %d data corrupted", res[i].ID)
+			log.Error(ctx, "application.getAllWithClearVCS> application %d data corrupted", res[i].ID)
+			continue
+		}
+		a := &res[i]
+		app, err := unwrap(db, opts, a)
+		if err != nil {
+			return nil, sdk.WrapError(err, "application.getAllWithClearVCS")
+		}
+		apps[i] = *app
+	}
+	return apps, nil
+}
+
+func getAll(ctx context.Context, db gorp.SqlExecutor, opts []LoadOptionFunc, query gorpmapping.Query) ([]sdk.Application, error) {
+	var res []dbApplication
+	if err := gorpmapping.GetAll(ctx, db, query, &res, gorpmapping.GetOptions.WithDecryption); err != nil {
+		return nil, err
+	}
+
+	apps := make([]sdk.Application, len(res))
+	for i := range res {
+		isValid, err := gorpmapping.CheckSignature(res[i], res[i].Signature)
+		if err != nil {
+			return nil, err
+		}
+		if !isValid {
+			log.Error(ctx, "application.getAll> application %d data corrupted", res[i].ID)
 			continue
 		}
 
 		a := &res[i]
 		app, err := unwrap(db, opts, a)
 		if err != nil {
-			return nil, sdk.WrapError(err, "application.loadapplications")
+			return nil, sdk.WrapError(err, "application.getAll")
 		}
 
-		if !clearVCSStrategy {
-			app.RepositoryStrategy.Password = sdk.PasswordPlaceholder
-		}
+		app.RepositoryStrategy.Password = sdk.PasswordPlaceholder
 		apps[i] = *app
 	}
 
