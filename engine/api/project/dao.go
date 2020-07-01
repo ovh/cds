@@ -26,6 +26,9 @@ func loadAllByRepo(ctx context.Context, db gorp.SqlExecutor, query string, args 
 
 // LoadAllByRepoAndGroupIDs returns all projects with an application linked to the repo against the groups
 func LoadAllByRepoAndGroupIDs(ctx context.Context, db gorp.SqlExecutor, groupIDs []int64, repo string, opts ...LoadOptionFunc) (sdk.Projects, error) {
+	var end func()
+	_, end = observability.Span(ctx, "project.LoadAllByRepoAndGroupIDs")
+	defer end()
 	query := `SELECT DISTINCT project.*
 		FROM  project
 		JOIN  application on project.id = application.project_id
@@ -44,6 +47,9 @@ func LoadAllByRepoAndGroupIDs(ctx context.Context, db gorp.SqlExecutor, groupIDs
 
 // LoadAllByRepo returns all projects with an application linked to the repo
 func LoadAllByRepo(ctx context.Context, db gorp.SqlExecutor, store cache.Store, repo string, opts ...LoadOptionFunc) (sdk.Projects, error) {
+	var end func()
+	_, end = observability.Span(ctx, "project.LoadAllByRepo")
+	defer end()
 	query := `SELECT DISTINCT project.*
 	FROM  project
 	JOIN  application on project.id = application.project_id
@@ -55,6 +61,9 @@ func LoadAllByRepo(ctx context.Context, db gorp.SqlExecutor, store cache.Store, 
 
 // LoadAllByGroupIDs returns all projects given groups
 func LoadAllByGroupIDs(ctx context.Context, db gorp.SqlExecutor, store cache.Store, IDs []int64, opts ...LoadOptionFunc) (sdk.Projects, error) {
+	var end func()
+	_, end = observability.Span(ctx, "project.LoadAllByGroupIDs")
+	defer end()
 	query := `SELECT project.*
 	FROM project
 	WHERE project.id IN (
@@ -72,6 +81,9 @@ func LoadAllByGroupIDs(ctx context.Context, db gorp.SqlExecutor, store cache.Sto
 
 // LoadAll returns all projects
 func LoadAll(ctx context.Context, db gorp.SqlExecutor, store cache.Store, opts ...LoadOptionFunc) (sdk.Projects, error) {
+	var end func()
+	_, end = observability.Span(ctx, "project.LoadAll")
+	defer end()
 	query := "select project.* from project ORDER by project.name, project.projectkey ASC"
 	return loadprojects(ctx, db, opts, query)
 }
@@ -227,6 +239,9 @@ func LoadByID(db gorp.SqlExecutor, id int64, opts ...LoadOptionFunc) (*sdk.Proje
 
 // Load  returns a project with all its variables and applications given a user. It can also returns pipelines, environments, groups, permission, and repositorires manager. See LoadOptions
 func Load(ctx context.Context, db gorp.SqlExecutor, key string, opts ...LoadOptionFunc) (*sdk.Project, error) {
+	var end func()
+	_, end = observability.Span(ctx, "project.Load")
+	defer end()
 	return load(ctx, db, opts, "select project.* from project where projectkey = $1", key)
 }
 

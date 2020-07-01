@@ -97,16 +97,7 @@ func Start(ctx context.Context, s service, w http.ResponseWriter, req *http.Requ
 
 // End may close a tracing span
 func End(ctx context.Context, w http.ResponseWriter, req *http.Request) (context.Context, error) {
-	spanI := ctx.Value(contextMainSpan)
-	if spanI == nil {
-		return ctx, nil
-	}
-
-	span, ok := spanI.(*trace.Span)
-	if !ok {
-		return ctx, nil
-	}
-
+	span := MainSpan(ctx)
 	if span == nil {
 		return ctx, nil
 	}

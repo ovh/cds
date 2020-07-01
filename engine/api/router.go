@@ -396,13 +396,12 @@ func (r *Router) handle(uri string, scope HandlerScope, handlers ...*service.Han
 				responseWriter.statusCode = 200
 			}
 			ctx = observability.ContextWithTag(ctx, observability.StatusCode, responseWriter.statusCode)
-
 			end := time.Now()
 			latency := end.Sub(start)
 
 			log.InfoWithFields(ctx, logrus.Fields{
 				"method":        req.Method,
-				"latency":       latency.Milliseconds(),
+				"latency_int":   latency.Nanoseconds,
 				"latency_human": latency,
 				"status":        responseWriter.statusCode,
 				"route":         cleanURL,
@@ -429,17 +428,22 @@ func (r *Router) handle(uri string, scope HandlerScope, handlers ...*service.Han
 			}
 		}
 
+		var end func()
+		ctx, end = observability.SpanFromMain(ctx, "router.handle")
+
 		if err := rc.Handler(ctx, responseWriter.wrappedResponseWriter(), req); err != nil {
 			observability.Record(r.Background, Errors, 1)
-			observability.End(ctx, responseWriter, req)
+			observability.End(ctx, responseWriter, req) // nolint
 			service.WriteError(ctx, responseWriter, req, err)
+			end()
 			deferFunc(ctx)
 			return
 		}
+		end()
 
 		// writeNoContentPostMiddleware is compliant Middleware Interface
 		// but no need to check ct, err in return
-		writeNoContentPostMiddleware(ctx, responseWriter, req, rc)
+		writeNoContentPostMiddleware(ctx, responseWriter, req, rc) // nolint
 
 		for _, m := range r.PostMiddlewares {
 			var err error

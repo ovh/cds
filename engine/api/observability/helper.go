@@ -105,6 +105,48 @@ func ContextGetTags(ctx context.Context, s ...string) []tag.Mutator {
 	return tags
 }
 
+func MainSpan(ctx context.Context) *trace.Span {
+	spanI := ctx.Value(contextMainSpan)
+	if spanI == nil {
+		return nil
+	}
+
+	rootSpan, ok := spanI.(*trace.Span)
+	if !ok {
+		return nil
+	}
+
+	return rootSpan
+}
+
+func SpanFromMain(ctx context.Context, name string, tags ...trace.Attribute) (context.Context, func()) {
+	rootSpan := MainSpan(ctx)
+	if rootSpan == nil {
+		return ctx, func() {}
+	}
+	rootSpanContext := rootSpan.SpanContext()
+
+	var traceOpts = []trace.StartOption{}
+
+	var sampler trace.Sampler
+	if rootSpanContext.IsSampled() {
+		sampler = trace.AlwaysSample()
+	}
+
+	if sampler != nil {
+		traceOpts = append(traceOpts, trace.WithSampler(sampler))
+	}
+
+	ctx, span := trace.StartSpanWithRemoteParent(ctx, name, rootSpanContext, traceOpts...)
+	span.AddLink(trace.Link{
+		TraceID: rootSpanContext.TraceID,
+		SpanID:  rootSpanContext.SpanID,
+	})
+	span.AddAttributes(tags...)
+
+	return ctx, span.End
+}
+
 // Span start a new span from the parent context
 func Span(ctx context.Context, name string, tags ...trace.Attribute) (context.Context, func()) {
 	// log.Debug("# %s - begin", name)
