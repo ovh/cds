@@ -8,6 +8,7 @@ import (
 	"github.com/gorilla/mux"
 
 	"github.com/ovh/cds/engine/api"
+	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/ovh/cds/sdk/log"
@@ -48,7 +49,6 @@ func (s *Service) ApplyConfiguration(config interface{}) error {
 	if !ok {
 		return fmt.Errorf("invalid configuration")
 	}
-
 	s.ServiceName = s.Cfg.Name
 	s.ServiceType = sdk.TypeCDN
 	s.HTTPURL = s.Cfg.URL
@@ -77,6 +77,12 @@ func (s *Service) CheckConfiguration(config interface{}) error {
 func (s *Service) Serve(c context.Context) error {
 	ctx, cancel := context.WithCancel(c)
 	defer cancel()
+
+	var errCache error
+	s.Cache, errCache = cache.New(s.Cfg.Cache.Redis.Host, s.Cfg.Cache.Redis.Password, s.Cfg.Cache.TTL)
+	if errCache != nil {
+		return fmt.Errorf("cannot connect to redis instance : %v", errCache)
+	}
 
 	s.initMetrics()
 

@@ -6,6 +6,7 @@ import (
 	"crypto/rsa"
 	"encoding/base64"
 	"fmt"
+	"strconv"
 
 	"net"
 	"strings"
@@ -13,6 +14,7 @@ import (
 
 	gocache "github.com/patrickmn/go-cache"
 
+	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/observability"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
@@ -22,7 +24,8 @@ import (
 )
 
 var (
-	logCache = gocache.New(20*time.Minute, 30*time.Minute)
+	logCache       = gocache.New(20*time.Minute, 30*time.Minute)
+	jobIncomingKey = cache.Key("cdn", "log", "job", "incoming")
 )
 
 func (s *Service) RunTcpLogServer(ctx context.Context) {
@@ -47,6 +50,24 @@ func (s *Service) RunTcpLogServer(ctx context.Context) {
 
 	go func() {
 		for {
+			if ctx.Err() != nil {
+				return
+			}
+			var queueKey string
+			if err := s.Cache.DequeueWithContext(ctx, jobIncomingKey, &queueKey); err != nil {
+				log.Error(ctx, "unable to dequeue redis incoming job queue: %v", err)
+				continue
+			}
+			sdk.GoRoutine(ctx, "cdn-dequeue-job-message", func(ctx context.Context) {
+				if err := s.dequeueJobMessages(ctx, queueKey); err != nil {
+					log.Error(ctx, "unable to dequeue redis incoming job queue: %v", err)
+				}
+			})
+		}
+	}()
+
+	go func() {
+		for {
 			conn, err := listener.Accept()
 			if err != nil {
 				observability.Record(ctx, Errors, 1)
@@ -66,9 +87,6 @@ func (s *Service) handleConnection(ctx context.Context, conn net.Conn) {
 		_ = conn.Close()
 	}()
 
-	chanMessages := s.handleConnectionChannel(ctx)
-	defer close(chanMessages)
-
 	bufReader := bufio.NewReader(conn)
 	for {
 		bytes, err := bufReader.ReadBytes(byte(0))
@@ -79,7 +97,7 @@ func (s *Service) handleConnection(ctx context.Context, conn net.Conn) {
 		// remove byte(0)
 		bytes = bytes[:len(bytes)-1]
 
-		if err := s.handleLogMessage(ctx, chanMessages, bytes); err != nil {
+		if err := s.handleLogMessage(ctx, bytes); err != nil {
 			observability.Record(ctx, Errors, 1)
 			log.Error(ctx, "cdn.log> %v", err)
 			continue
@@ -87,17 +105,23 @@ func (s *Service) handleConnection(ctx context.Context, conn net.Conn) {
 	}
 }
 
-func (s *Service) handleConnectionChannel(ctx context.Context) chan<- handledMessage {
-	chanMessages := make(chan handledMessage, 1000)
-	sdk.GoRoutine(ctx, "cdn-msgreader-"+sdk.UUID(), func(ctx context.Context) {
-		if err := s.processLogs(ctx, chanMessages); err != nil {
-			log.Error(ctx, "error while processing logs: %v", err)
+func (s *Service) dequeueJobMessages(ctx context.Context, jobLogsQueueKey string) error {
+	for {
+		if ctx.Err() != nil {
+			return ctx.Err()
 		}
-	})
-	return chanMessages
+		var hm handledMessage
+		if err := s.Cache.DequeueWithContext(ctx, jobLogsQueueKey, &hm); err != nil {
+			log.Error(ctx, "unable to dequeue job logs queue %s: %v", jobLogsQueueKey, err)
+			continue
+		}
+		if err := s.processLog(ctx, hm); err != nil {
+			log.Error(ctx, "unable to process log: %+v", err)
+		}
+	}
 }
 
-func (s *Service) handleLogMessage(ctx context.Context, chanMessages chan<- handledMessage, messageReceived []byte) error {
+func (s *Service) handleLogMessage(ctx context.Context, messageReceived []byte) error {
 	m := hook.Message{}
 	if err := m.UnmarshalJSON(messageReceived); err != nil {
 		return sdk.WrapError(err, "unable to unmarshall gelf message: %s", string(messageReceived))
@@ -118,7 +142,7 @@ func (s *Service) handleLogMessage(ctx context.Context, chanMessages chan<- hand
 	switch {
 	case signature.Worker != nil:
 		observability.Record(ctx, WorkerLogReceived, 1)
-		return s.handleWorkerLog(ctx, chanMessages, signature.Worker.WorkerName, signature.Worker.WorkerID, sig, m)
+		return s.handleWorkerLog(ctx, signature.Worker.WorkerName, signature.Worker.WorkerID, sig, m)
 	case signature.Service != nil:
 		observability.Record(ctx, ServiceLogReceived, 1)
 		return s.handleServiceLog(ctx, signature.Service.HatcheryID, signature.Service.HatcheryName, signature.Service.WorkerName, sig, m)
@@ -127,7 +151,7 @@ func (s *Service) handleLogMessage(ctx context.Context, chanMessages chan<- hand
 	}
 }
 
-func (s *Service) handleWorkerLog(ctx context.Context, chanMessages chan<- handledMessage, workerName string, workerID string, sig interface{}, m hook.Message) error {
+func (s *Service) handleWorkerLog(ctx context.Context, workerName string, workerID string, sig interface{}, m hook.Message) error {
 	var signature log.Signature
 
 	// Get worker data from cache
@@ -143,9 +167,24 @@ func (s *Service) handleWorkerLog(ctx context.Context, chanMessages chan<- handl
 	if workerData.JobRunID == nil || *workerData.JobRunID != signature.JobID || workerData.ID != workerID {
 		return sdk.WithStack(sdk.ErrForbidden)
 	}
-	chanMessages <- handledMessage{
+
+	hMessage := handledMessage{
 		signature: signature,
 		m:         m,
+	}
+	cacheKey := cache.Key("cdn", "log", "job", strconv.Itoa(int(signature.JobID)))
+	b, err := s.Cache.Exist(cacheKey)
+	if err != nil {
+		return err
+	}
+	if err := s.Cache.Enqueue(cacheKey, hMessage); err != nil {
+		return err
+	}
+	if !b {
+		// Push to queue to says that a new job is coming
+		if err := s.Cache.Enqueue(jobIncomingKey, cacheKey); err != nil {
+			log.Error(ctx, "unable to enqueue job incoming %s: %v", err)
+		}
 	}
 	return nil
 }
@@ -153,40 +192,6 @@ func (s *Service) handleWorkerLog(ctx context.Context, chanMessages chan<- handl
 type handledMessage struct {
 	signature log.Signature
 	m         hook.Message
-}
-
-func (s *Service) processLogs(ctx context.Context, chanMessages <-chan handledMessage) error {
-	var t0 = time.Now()
-	var nbMessages int
-	defer func() {
-		delta := time.Since(t0).Seconds()
-		log.Info(ctx, "processLogs - %d messages received in %.3f seconds", nbMessages, delta)
-	}()
-	for {
-		select {
-		case <-ctx.Done():
-			return ctx.Err()
-
-		case msg, more := <-chanMessages:
-			nbMessages++
-			if msg.signature.Worker == nil {
-				if !more {
-					return nil
-				}
-				continue
-			}
-
-			currentLog := buildMessage(msg.signature, msg.m)
-			if err := s.processLog(ctx, msg.signature, currentLog); err != nil {
-				log.Error(ctx, "unable to process log: %+v", err)
-				continue
-			}
-
-			if !more {
-				return nil
-			}
-		}
-	}
 }
 
 func buildMessage(signature log.Signature, m hook.Message) string {
@@ -226,16 +231,17 @@ func buildMessage(signature log.Signature, m hook.Message) string {
 	return logs.Val
 }
 
-func (s *Service) processLog(ctx context.Context, signature log.Signature, message string) error {
+func (s *Service) processLog(ctx context.Context, hm handledMessage) error {
+	currentLog := buildMessage(hm.signature, hm.m)
 	now := time.Now()
 	l := sdk.Log{
-		JobID:        signature.JobID,
-		NodeRunID:    signature.NodeRunID,
+		JobID:        hm.signature.JobID,
+		NodeRunID:    hm.signature.NodeRunID,
 		LastModified: &now,
-		StepOrder:    signature.Worker.StepOrder,
-		Val:          message,
+		StepOrder:    hm.signature.Worker.StepOrder,
+		Val:          currentLog,
 	}
-	return s.Client.QueueSendLogs(ctx, signature.JobID, l)
+	return s.Client.QueueSendLogs(ctx, hm.signature.JobID, l)
 }
 
 func (s *Service) handleServiceLog(ctx context.Context, hatcheryID int64, hatcheryName string, workerName string, sig interface{}, m hook.Message) error {

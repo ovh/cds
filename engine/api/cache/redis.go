@@ -173,6 +173,18 @@ func (s *RedisStore) DeleteAll(pattern string) error {
 	return nil
 }
 
+// Exist test is key exists
+func (s *RedisStore) Exist(key string) (bool, error) {
+	if s.Client == nil {
+		return false, sdk.WithStack(fmt.Errorf("redis> cannot get redis client"))
+	}
+	ok, err := s.Client.Exists(key).Result()
+	if err != nil {
+		return false, sdk.WrapError(err, "unable to test if key %s exists", key)
+	}
+	return ok == 1, nil
+}
+
 // Enqueue pushes to queue
 func (s *RedisStore) Enqueue(queueName string, value interface{}) error {
 	if s.Client == nil {
