@@ -2,7 +2,6 @@ package api
 
 import (
 	"context"
-	"database/sql"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -232,9 +231,7 @@ func (api *API) postWorkflowRollbackHandler() service.Handler {
 		if err != nil {
 			return sdk.WrapError(err, "cannot begin transaction")
 		}
-		defer func() {
-			_ = tx.Rollback()
-		}()
+		defer tx.Rollback() // nolint
 
 		newWf, _, errP := workflow.ParseAndImport(ctx, tx, api.Cache, *proj, wf, exportWf, u, workflow.ImportOptions{Force: true, WorkflowName: workflowName})
 		if errP != nil {
@@ -265,47 +262,39 @@ func (api *API) postWorkflowLabelHandler() service.Handler {
 
 		var label sdk.Label
 		if err := service.UnmarshalBody(r, &label); err != nil {
-			return sdk.WrapError(err, "cannot read body")
+			return err
+		}
+		if label.ID == 0 && label.Name == "" {
+			return sdk.NewErrorFrom(sdk.ErrWrongRequest, "label ID or label name should not be empty")
 		}
 
-		proj, err := project.Load(ctx, db, key,
-			project.LoadOptions.WithApplicationWithDeploymentStrategies,
-			project.LoadOptions.WithPipelines,
-			project.LoadOptions.WithEnvironments,
-			project.LoadOptions.WithGroups,
-			project.LoadOptions.WithIntegrations,
-		)
+		tx, err := db.Begin()
+		if err != nil {
+			return sdk.WrapError(err, "cannot create new transaction")
+		}
+		defer tx.Rollback() //nolint
+
+		proj, err := project.Load(ctx, tx, key)
 		if err != nil {
 			return sdk.WrapError(err, "cannot load project %s", key)
 		}
 		label.ProjectID = proj.ID
 
-		tx, errTx := db.Begin()
-		if errTx != nil {
-			return sdk.WrapError(errTx, "cannot create new transaction")
-		}
-		defer tx.Rollback() //nolint
-
 		if label.ID == 0 {
-			if label.Name == "" {
-				return sdk.NewErrorFrom(sdk.ErrWrongRequest, "label ID or label name should not be empty")
+			existingLabel, err := project.LabelByName(ctx, tx, proj.ID, label.Name)
+			if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
+				return err
 			}
-
-			lbl, err := project.LabelByName(tx, proj.ID, label.Name)
-			if err != nil {
-				if sdk.Cause(err) != sql.ErrNoRows {
-					return sdk.WrapError(err, "cannot load label by name")
-				}
-				// If label doesn't exist create him
+			if existingLabel == nil {
 				if err := project.InsertLabel(tx, &label); err != nil {
 					return sdk.WrapError(err, "cannot create new label")
 				}
 			} else {
-				label.ID = lbl.ID
+				label.ID = existingLabel.ID
 			}
 		}
 
-		wf, err := workflow.Load(ctx, tx, api.Cache, *proj, workflowName, workflow.LoadOptions{WithLabels: true})
+		wf, err := workflow.Load(ctx, tx, api.Cache, *proj, workflowName, workflow.LoadOptions{Minimal: true})
 		if err != nil {
 			return sdk.WrapError(err, "cannot load workflow %s/%s", key, workflowName)
 		}
@@ -313,9 +302,6 @@ func (api *API) postWorkflowLabelHandler() service.Handler {
 		if err := workflow.LabelWorkflow(tx, label.ID, wf.ID); err != nil {
 			return sdk.WrapError(err, "cannot link label %d to workflow %s", label.ID, wf.Name)
 		}
-		newWf := *wf
-		label.WorkflowID = wf.ID
-		newWf.Labels = append(newWf.Labels, label)
 
 		if err := tx.Commit(); err != nil {
 			return sdk.WithStack(err)
@@ -331,25 +317,19 @@ func (api *API) deleteWorkflowLabelHandler() service.Handler {
 		vars := mux.Vars(r)
 		key := vars["key"]
 		workflowName := vars["permWorkflowName"]
-		labelID, errV := requestVarInt(r, "labelID")
-		if errV != nil {
-			return sdk.WrapError(errV, "cannot convert to int labelID")
+		labelID, err := requestVarInt(r, "labelID")
+		if err != nil {
+			return sdk.WrapError(err, "cannot convert to int labelID")
 		}
 
 		db := api.mustDB()
 
-		proj, err := project.Load(ctx, db, key,
-			project.LoadOptions.WithApplicationWithDeploymentStrategies,
-			project.LoadOptions.WithPipelines,
-			project.LoadOptions.WithEnvironments,
-			project.LoadOptions.WithGroups,
-			project.LoadOptions.WithIntegrations,
-		)
+		proj, err := project.Load(ctx, db, key)
 		if err != nil {
 			return sdk.WrapError(err, "cannot load project %s", key)
 		}
 
-		wf, err := workflow.Load(ctx, db, api.Cache, *proj, workflowName, workflow.LoadOptions{})
+		wf, err := workflow.Load(ctx, db, api.Cache, *proj, workflowName, workflow.LoadOptions{Minimal: true})
 		if err != nil {
 			return sdk.WrapError(err, "cannot load workflow %s/%s", key, workflowName)
 		}
@@ -369,9 +349,6 @@ func (api *API) postWorkflowHandler() service.Handler {
 		key := vars[permProjectKey]
 
 		p, err := project.Load(ctx, api.mustDB(), key,
-			project.LoadOptions.WithApplicationWithDeploymentStrategies,
-			project.LoadOptions.WithPipelines,
-			project.LoadOptions.WithEnvironments,
 			project.LoadOptions.WithGroups,
 			project.LoadOptions.WithIntegrations,
 		)
@@ -390,9 +367,9 @@ func (api *API) postWorkflowHandler() service.Handler {
 		data.ProjectID = p.ID
 		data.ProjectKey = key
 
-		tx, errT := api.mustDB().Begin()
-		if errT != nil {
-			return sdk.WithStack(errT)
+		tx, err := api.mustDB().Begin()
+		if err != nil {
+			return sdk.WithStack(err)
 		}
 		defer tx.Rollback() // nolint
 
@@ -429,12 +406,7 @@ func (api *API) putWorkflowHandler() service.Handler {
 		key := vars["key"]
 		name := vars["permWorkflowName"]
 
-		p, err := project.Load(ctx, api.mustDB(), key,
-			project.LoadOptions.WithApplicationWithDeploymentStrategies,
-			project.LoadOptions.WithPipelines,
-			project.LoadOptions.WithEnvironments,
-			project.LoadOptions.WithIntegrations,
-		)
+		p, err := project.Load(ctx, api.mustDB(), key, project.LoadOptions.WithIntegrations)
 		if err != nil {
 			return sdk.WrapError(err, "cannot load Project %s", key)
 		}

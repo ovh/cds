@@ -58,9 +58,9 @@ func ParseAndImport(ctx context.Context, db gorp.SqlExecutor, store cache.Store,
 	log.Info(ctx, "ParseAndImport>> Import workflow %s in project %s (force=%v)", ew.GetName(), proj.Key, opts.Force)
 
 	//Parse workflow
-	w, errW := Parse(ctx, proj, ew)
-	if errW != nil {
-		return nil, nil, errW
+	w, err := Parse(ctx, proj, ew)
+	if err != nil {
+		return nil, nil, err
 	}
 
 	// Load deep pipelines if we come from workflow run ( so we have hook uuid ).
