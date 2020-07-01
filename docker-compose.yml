@@ -149,6 +149,20 @@ services:
       timeout: 10s
       retries: 6
 
+  cds-cdn:
+    image: ${CDS_DOCKER_IMAGE:-ovhcom/cds-engine:latest}
+    command: sh -c "/app/cds-engine-linux-amd64 start cdn --config /app/conf/conf.toml"
+    volumes:
+      - cds-conf-volume:/app/conf
+    ports:
+      - "127.0.0.1:8089:8089"
+      - "0.0.0.0:8090:8090"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://127.0.0.1:8089/mon/version"]
+      interval: 30s
+      timeout: 10s
+      retries: 6
+
   cds-hatchery-local:
     image: ${CDS_DOCKER_IMAGE:-ovhcom/cds-engine:latest}
     command: sh -c "/app/cds-engine-linux-amd64 start hatchery:local --config /app/conf/conf.toml"
