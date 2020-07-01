@@ -176,7 +176,7 @@ func testRunWorkflow(t *testing.T, api *API, router *Router) testRunWorkflowCtx 
 		},
 	}
 
-	proj2, errP := project.Load(api.mustDB(), proj.Key, project.LoadOptions.WithPipelines, project.LoadOptions.WithGroups)
+	proj2, errP := project.Load(context.TODO(), api.mustDB(), proj.Key, project.LoadOptions.WithPipelines, project.LoadOptions.WithGroups)
 	require.NoError(t, errP)
 
 	require.NoError(t, workflow.Insert(context.TODO(), api.mustDB(), api.Cache, *proj2, &w))
@@ -1035,7 +1035,7 @@ func TestWorkerPrivateKey(t *testing.T) {
 		},
 	}
 
-	p, err := project.Load(db, proj.Key, project.LoadOptions.WithPipelines, project.LoadOptions.WithApplications)
+	p, err := project.Load(context.TODO(), db, proj.Key, project.LoadOptions.WithPipelines, project.LoadOptions.WithApplications)
 	assert.NoError(t, err)
 	assert.NoError(t, workflow.Insert(context.TODO(), db, api.Cache, *p, &w))
 
@@ -1151,7 +1151,7 @@ func TestPostVulnerabilityReportHandler(t *testing.T) {
 		},
 	}
 
-	p, err := project.Load(db, proj.Key, project.LoadOptions.WithPipelines, project.LoadOptions.WithApplications)
+	p, err := project.Load(context.TODO(), db, proj.Key, project.LoadOptions.WithPipelines, project.LoadOptions.WithApplications)
 	assert.NoError(t, err)
 	assert.NoError(t, workflow.Insert(context.TODO(), db, api.Cache, *p, &w))
 
@@ -1305,7 +1305,7 @@ func TestInsertNewCodeCoverageReport(t *testing.T) {
 		},
 	}
 
-	p, err := project.Load(db, proj.Key, project.LoadOptions.WithPipelines, project.LoadOptions.WithApplications)
+	p, err := project.Load(context.TODO(), db, proj.Key, project.LoadOptions.WithPipelines, project.LoadOptions.WithApplications)
 	require.NoError(t, err)
 	require.NoError(t, workflow.Insert(context.TODO(), db, api.Cache, *p, &w))
 

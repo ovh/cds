@@ -55,7 +55,7 @@ func (api *API) getActionsForProjectHandler() service.Handler {
 		vars := mux.Vars(r)
 		key := vars[permProjectKey]
 
-		proj, err := project.Load(api.mustDB(), key, project.LoadOptions.WithGroups)
+		proj, err := project.Load(ctx, api.mustDB(), key, project.LoadOptions.WithGroups)
 		if err != nil {
 			return sdk.WrapError(err, "unable to load projet %s", key)
 		}

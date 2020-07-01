@@ -78,7 +78,7 @@ func Test_dequeueTaskExecutions_ScheduledTask(t *testing.T) {
 	s, cancel := setupTestHookService(t)
 	defer cancel()
 
-	ctx, cancel := context.WithTimeout(context.TODO(), 60*time.Second)
+	ctx, cancel := context.WithTimeout(context.TODO(), 70*time.Second)
 	defer cancel()
 
 	// Get the mock
@@ -92,9 +92,7 @@ func Test_dequeueTaskExecutions_ScheduledTask(t *testing.T) {
 
 	// Start the goroutine
 	go func() {
-		if err := s.dequeueTaskExecutions(ctx); err != nil {
-			t.Logf("dequeueTaskExecutions error: %v", err)
-		}
+		s.dequeueTaskExecutions(ctx) // nolint
 	}()
 
 	h := &sdk.NodeHook{
@@ -177,6 +175,4 @@ func Test_dequeueTaskExecutions_ScheduledTask(t *testing.T) {
 	require.Len(t, execs, 2)
 	assert.Equal(t, "DONE", execs[0].Status)
 	assert.Equal(t, "SCHEDULED", execs[1].Status)
-
-	time.Sleep(5 * time.Second)
 }

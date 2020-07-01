@@ -234,7 +234,7 @@ func (api *API) updateProjectHandler() service.Handler {
 		}
 
 		// Check is project exist
-		p, errProj := project.Load(api.mustDB(), key, project.LoadOptions.WithIcon)
+		p, errProj := project.Load(ctx, api.mustDB(), key, project.LoadOptions.WithIcon)
 		if errProj != nil {
 			return sdk.WrapError(errProj, "updateProject> Cannot load project from db")
 		}
@@ -331,7 +331,7 @@ func (api *API) getProjectHandler() service.Handler {
 			opts = append(opts, project.LoadOptions.WithLabels)
 		}
 
-		p, errProj := project.Load(api.mustDB(), key, opts...)
+		p, errProj := project.Load(ctx, api.mustDB(), key, opts...)
 		if errProj != nil {
 			return sdk.WrapError(errProj, "getProjectHandler (%s)", key)
 		}
@@ -372,7 +372,7 @@ func (api *API) putProjectLabelsHandler() service.Handler {
 		}
 
 		// Check if project exist
-		proj, err := project.Load(db, key, project.LoadOptions.WithLabels)
+		proj, err := project.Load(ctx, db, key, project.LoadOptions.WithLabels)
 		if err != nil {
 			return err
 		}
@@ -433,7 +433,7 @@ func (api *API) putProjectLabelsHandler() service.Handler {
 			return sdk.WithStack(err)
 		}
 
-		p, errP := project.Load(db, key,
+		p, errP := project.Load(ctx, db, key,
 			project.LoadOptions.WithLabels, project.LoadOptions.WithWorkflowNames, project.LoadOptions.WithVariables,
 			project.LoadOptions.WithFavorites(getAPIConsumer(ctx).AuthentifiedUser.ID),
 			project.LoadOptions.WithKeys, project.LoadOptions.WithPermission, project.LoadOptions.WithIntegrations)
@@ -597,7 +597,7 @@ func (api *API) postProjectHandler() service.Handler {
 
 		event.PublishAddProject(ctx, &p, consumer)
 
-		proj, err := project.Load(api.mustDB(), p.Key,
+		proj, err := project.Load(ctx, api.mustDB(), p.Key,
 			project.LoadOptions.WithLabels,
 			project.LoadOptions.WithWorkflowNames,
 			project.LoadOptions.WithFavorites(consumer.AuthentifiedUser.ID),
@@ -622,7 +622,7 @@ func (api *API) deleteProjectHandler() service.Handler {
 		vars := mux.Vars(r)
 		key := vars[permProjectKey]
 
-		p, err := project.Load(api.mustDB(), key, project.LoadOptions.WithPipelines, project.LoadOptions.WithApplications)
+		p, err := project.Load(ctx, api.mustDB(), key, project.LoadOptions.WithPipelines, project.LoadOptions.WithApplications)
 		if err != nil {
 			if !sdk.ErrorIs(err, sdk.ErrNoProject) {
 				return sdk.WrapError(err, "deleteProject> load project '%s' from db", key)

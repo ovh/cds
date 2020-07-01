@@ -360,7 +360,7 @@ func (api *API) postTemplateApplyHandler() service.Handler {
 		}
 
 		// load project with key
-		p, err := project.Load(api.mustDB(), req.ProjectKey,
+		p, err := project.Load(ctx, api.mustDB(), req.ProjectKey,
 			project.LoadOptions.WithGroups,
 			project.LoadOptions.WithApplications,
 			project.LoadOptions.WithEnvironments,
@@ -585,7 +585,7 @@ func (api *API) postTemplateBulkHandler() service.Handler {
 					}
 
 					// load project with key
-					p, err := project.Load(api.mustDB(), bulk.Operations[i].Request.ProjectKey,
+					p, err := project.Load(ctx, api.mustDB(), bulk.Operations[i].Request.ProjectKey,
 						project.LoadOptions.WithGroups,
 						project.LoadOptions.WithApplications,
 						project.LoadOptions.WithEnvironments,

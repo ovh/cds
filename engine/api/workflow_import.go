@@ -40,7 +40,7 @@ func (api *API) postWorkflowPreviewHandler() service.Handler {
 			return err
 		}
 
-		proj, err := project.Load(api.mustDB(), key,
+		proj, err := project.Load(ctx, api.mustDB(), key,
 			project.LoadOptions.WithGroups,
 			project.LoadOptions.WithApplications,
 			project.LoadOptions.WithEnvironments,
@@ -104,7 +104,7 @@ func (api *API) postWorkflowImportHandler() service.Handler {
 			return err
 		}
 
-		proj, err := project.Load(api.mustDB(), key,
+		proj, err := project.Load(ctx, api.mustDB(), key,
 			project.LoadOptions.WithGroups,
 			project.LoadOptions.WithApplications,
 			project.LoadOptions.WithEnvironments,
@@ -199,7 +199,7 @@ func (api *API) putWorkflowImportHandler() service.Handler {
 		}
 
 		// Load project
-		proj, err := project.Load(api.mustDB(), key,
+		proj, err := project.Load(ctx, api.mustDB(), key,
 			project.LoadOptions.WithGroups,
 			project.LoadOptions.WithApplications,
 			project.LoadOptions.WithEnvironments,
@@ -292,7 +292,7 @@ func (api *API) postWorkflowPushHandler() service.Handler {
 		u := getAPIConsumer(ctx)
 
 		//Load project
-		proj, err := project.Load(db, key,
+		proj, err := project.Load(ctx, db, key,
 			project.LoadOptions.WithGroups,
 			project.LoadOptions.WithApplications,
 			project.LoadOptions.WithEnvironments,

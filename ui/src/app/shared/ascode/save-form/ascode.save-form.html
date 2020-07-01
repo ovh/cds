@@ -1,22 +1,13 @@
 <form class="ui form">
     <div class="ui grid">
         <div class="sixteen wide column">
-            <div *ngIf="this.branches" class="field">
+            <div class="field">
                 <label>{{ 'ascode_modal_label_branch' | translate }}</label>
-                <sui-select class="selection" name="branch" [(ngModel)]="selectedBranch" [options]="branches"
-                    [optionsFilter]="optionsFilter" [isSearchable]="true" (selectedOptionChange)="changeParam()"
-                    #select>
-                    <sui-select-option *ngFor="let option of select.filteredOptions" [value]="option">
-                    </sui-select-option>
-                </sui-select>
-            </div>
-            <div *ngIf="!this.branches" class="field">
-                <label>{{ 'ascode_modal_label_branch_new' | translate }}</label>
-                <input type="text" [(ngModel)]="selectedBranch" (change)="changeParam()" name="branch" />
+                <input type="text" [(ngModel)]="selectedBranch" (keyup)="changeParam()" auto-complete [source]="branches" [min-chars]="1" name="branch" />
             </div>
             <div class="field">
                 <label>{{ 'ascode_modal_label_message' | translate }}</label>
-                <textarea rows="2" [(ngModel)]="commitMessage" (change)="changeParam()" name="commitMessage"></textarea>
+                <textarea rows="2" [(ngModel)]="commitMessage" (keyup)="changeParam()" name="commitMessage"></textarea>
             </div>
         </div>
         <div class="sixteen wide column">

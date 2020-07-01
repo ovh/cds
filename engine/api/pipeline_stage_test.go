@@ -18,7 +18,7 @@ import (
 func deleteAll(t *testing.T, api *API, key string) error {
 	// Delete all apps
 	t.Logf("start deleted : %s", key)
-	proj, errl := project.Load(api.mustDB(), key, project.LoadOptions.WithGroups)
+	proj, errl := project.Load(context.TODO(), api.mustDB(), key, project.LoadOptions.WithGroups)
 	if errl != nil {
 		return errl
 	}

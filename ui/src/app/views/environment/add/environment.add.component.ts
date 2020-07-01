@@ -6,7 +6,7 @@ import { Environment } from 'app/model/environment.model';
 import { Project } from 'app/model/project.model';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { ToastService } from 'app/shared/toast/ToastService';
-import { AddEnvironmentInProject } from 'app/store/project.action';
+import { AddEnvironment } from 'app/store/environment.action';
 import { Subscription } from 'rxjs';
 import { finalize } from 'rxjs/operators';
 
@@ -52,7 +52,7 @@ export class EnvironmentAddComponent {
         }
 
         this.loading = true;
-        this.store.dispatch(new AddEnvironmentInProject({ projectKey: this.project.key, environment: this.newEnvironment }))
+        this.store.dispatch(new AddEnvironment({ projectKey: this.project.key, environment: this.newEnvironment }))
             .pipe(finalize(() => this.loading = false))
             .subscribe(() => {
                 this._toast.success('', this._translate.instant('environment_created'));

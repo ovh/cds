@@ -8,10 +8,10 @@ import { AuthentifiedUser } from 'app/model/user.model';
 import { ToastService } from 'app/shared/toast/ToastService';
 import { AuthenticationState } from 'app/store/authentication.state';
 import {
-    CloneEnvironmentInProject,
-    DeleteEnvironmentInProject,
-    UpdateEnvironmentInProject
-} from 'app/store/project.action';
+    CloneEnvironment,
+    DeleteEnvironment,
+    UpdateEnvironment
+} from 'app/store/environment.action';
 import { finalize } from 'rxjs/operators';
 
 @Component({
@@ -49,7 +49,7 @@ export class EnvironmentAdvancedComponent implements OnInit {
 
     onSubmitEnvironmentUpdate(): void {
         this.loading = true;
-        this.store.dispatch(new UpdateEnvironmentInProject({
+        this.store.dispatch(new UpdateEnvironment({
             projectKey: this.project.key,
             environmentName: this.oldName,
             changes: this.environment
@@ -65,7 +65,7 @@ export class EnvironmentAdvancedComponent implements OnInit {
 
     cloneEnvironment(cloneModal?: any): void {
         this.loading = true;
-        this.store.dispatch(new CloneEnvironmentInProject({
+        this.store.dispatch(new CloneEnvironment({
             projectKey: this.project.key,
             cloneName: this.cloneName,
             environment: this.environment
@@ -82,7 +82,7 @@ export class EnvironmentAdvancedComponent implements OnInit {
 
     deleteEnvironment(): void {
         this.loading = true;
-        this.store.dispatch(new DeleteEnvironmentInProject({
+        this.store.dispatch(new DeleteEnvironment({
             projectKey: this.project.key, environment: this.environment
         })).pipe(finalize(() => this.loading = false))
             .subscribe(() => {

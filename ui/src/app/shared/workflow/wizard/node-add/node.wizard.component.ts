@@ -18,9 +18,9 @@ import { ApplicationService } from 'app/service/application/application.service'
 import { ToastService } from 'app/shared/toast/ToastService';
 import { AddApplication } from 'app/store/applications.action';
 import { ApplicationsState, ApplicationStateModel } from 'app/store/applications.state';
+import { AddEnvironment } from 'app/store/environment.action';
 import { AddPipeline } from 'app/store/pipelines.action';
 import { PipelinesState, PipelinesStateModel } from 'app/store/pipelines.state';
-import { AddEnvironmentInProject } from 'app/store/project.action';
 import { ProjectState, ProjectStateModel } from 'app/store/project.state';
 import cloneDeep from 'lodash-es/cloneDeep';
 import { Observable, of as observableOf } from 'rxjs';
@@ -285,7 +285,7 @@ export class WorkflowNodeAddWizardComponent implements OnInit {
 
   createEnvironment(): Observable<Project> {
     this.loadingCreateEnvironment = true;
-    return this.store.dispatch(new AddEnvironmentInProject({
+    return this.store.dispatch(new AddEnvironment({
       projectKey: this.project.key,
       environment: this.newEnvironment
     })).pipe(

@@ -399,7 +399,7 @@ vcs_ssh_key: proj-blabla
 			},
 		},
 	}
-	proj2, errP := project.Load(api.mustDB(), p.Key, project.LoadOptions.WithPipelines, project.LoadOptions.WithGroups, project.LoadOptions.WithIntegrations)
+	proj2, errP := project.Load(context.TODO(), api.mustDB(), p.Key, project.LoadOptions.WithPipelines, project.LoadOptions.WithGroups, project.LoadOptions.WithIntegrations)
 	require.NoError(t, errP)
 	require.NoError(t, workflow.Insert(context.TODO(), db, api.Cache, *proj2, &wf))
 
