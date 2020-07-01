@@ -295,7 +295,7 @@ version: v1.0`),
 	pip.Stages = append(pip.Stages, *s)
 
 	var err error
-	proj, err = project.Load(api.mustDB(), proj.Key,
+	proj, err = project.Load(context.TODO(), api.mustDB(), proj.Key,
 		project.LoadOptions.WithApplicationWithDeploymentStrategies,
 		project.LoadOptions.WithPipelines,
 		project.LoadOptions.WithEnvironments,
