@@ -42,13 +42,27 @@ type websocketClient struct {
 
 type webSocketFilters map[string]struct{}
 
-func (f webSocketFilters) HasOneKey(keys ...string) bool {
+func (f webSocketFilters) HasOneKey(keys ...string) (found bool, needCheckPermission bool) {
+	// For some kind of filter we need to check permission before sending to the client
+	globalFilterKey := sdk.WebsocketFilter{Type: sdk.WebsocketFilterTypeGlobal}.Key()
+	queueFilterKey := sdk.WebsocketFilter{Type: sdk.WebsocketFilterTypeQueue}.Key()
+	timelineFilterKey := sdk.WebsocketFilter{Type: sdk.WebsocketFilterTypeTimeline}.Key()
+
 	for i := range keys {
 		if _, ok := f[keys[i]]; ok {
-			return true
+			found = true
+			switch keys[i] {
+			case globalFilterKey, queueFilterKey, timelineFilterKey:
+				needCheckPermission = true
+			}
+			// If we found a filter that don't need to check permission we can return directly
+			// If not we will check if another filter match the given keys, this will prevent from checking permission if not needed
+			if !needCheckPermission {
+				return
+			}
 		}
 	}
-	return false
+	return
 }
 
 type websocketBroker struct {
@@ -106,19 +120,22 @@ func (b *websocketBroker) Start(ctx context.Context, panicCallback func(s string
 				// Send the event to the client websocket within a goroutine
 				s := "websocket-" + b.clients[i].UUID
 				sdk.GoRoutine(ctx, s, func(ctx context.Context) {
-					if !c.filters.HasOneKey(eventKeys...) {
+					found, needCheckPermission := c.filters.HasOneKey(eventKeys...)
+					if !found {
 						return
 					}
-					allowed, err := c.checkEventPermission(ctx, b.dbFunc(), receivedEvent)
-					if err != nil {
-						err = sdk.WrapError(err, "unable to check event permission for client %s with consumer id: %s", c.UUID, c.AuthConsumer.ID)
-						log.ErrorWithFields(ctx, logrus.Fields{
-							"stack_trace": fmt.Sprintf("%+v", err),
-						}, "%s", err)
-						return
-					}
-					if !allowed {
-						return
+					if needCheckPermission {
+						allowed, err := c.checkEventPermission(ctx, b.dbFunc(), receivedEvent)
+						if err != nil {
+							err = sdk.WrapError(err, "unable to check event permission for client %s with consumer id: %s", c.UUID, c.AuthConsumer.ID)
+							log.ErrorWithFields(ctx, logrus.Fields{
+								"stack_trace": fmt.Sprintf("%+v", err),
+							}, "%s", err)
+							return
+						}
+						if !allowed {
+							return
+						}
 					}
 					if c.isAlive.IsSet() {
 						log.Debug("send data to %s", c.AuthConsumer.GetUsername())

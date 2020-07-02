@@ -14,7 +14,6 @@ import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { WarningModalComponent } from 'app/shared/modal/warning/warning.component';
 import { ToastService } from 'app/shared/toast/ToastService';
 import { VariableEvent } from 'app/shared/variable/variable.event.model';
-import { CDSWebWorker } from 'app/shared/worker/web.worker';
 import * as applicationsActions from 'app/store/applications.action';
 import { CancelApplicationEdition, ClearCacheApplication } from 'app/store/applications.action';
 import { ApplicationsState, ApplicationStateModel } from 'app/store/applications.state';
@@ -50,7 +49,6 @@ export class ApplicationShowComponent implements OnInit, OnDestroy {
     projectSubscription: Subscription;
     _routeParamsSub: Subscription;
     _queryParamsSub: Subscription;
-    worker: CDSWebWorker;
 
     // Selected tab
     selectedTab = 'home';

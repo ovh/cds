@@ -14,6 +14,7 @@ import { AuthenticationState } from 'app/store/authentication.state';
 import { EventState } from 'app/store/event.state';
 import { AddOrUpdateJob, RemoveJob, SetJobs, SetJobUpdating } from 'app/store/queue.action';
 import { QueueState } from 'app/store/queue.state';
+import * as moment from 'moment';
 import { Subscription } from 'rxjs';
 import { finalize } from 'rxjs/operators';
 
@@ -71,7 +72,7 @@ export class QueueComponent {
             let fitlers = this.status.length > 0 ? this.status : this.statusOptions;
             this.nodeJobRuns = js.filter(j => {
                 return !!fitlers.find(f => f === j.status);
-            });
+            }).sort((a: WorkflowNodeJobRun, b: WorkflowNodeJobRun) => moment(a.queued).isBefore(moment(b.queued)) ? -1 : 1);
             if (this.nodeJobRuns.length > 0) {
                 this.requirementsList = [];
                 this.bookedOrBuildingByList = [];

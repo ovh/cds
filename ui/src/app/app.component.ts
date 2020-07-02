@@ -22,8 +22,6 @@ import { MonitoringService } from './service/services.module';
 import { ThemeStore } from './service/theme/theme.store';
 import { AutoUnsubscribe } from './shared/decorator/autoUnsubscribe';
 import { ToastService } from './shared/toast/ToastService';
-import { CDSWebWorker } from './shared/worker/web.worker';
-import { CDSWorker } from './shared/worker/worker';
 import { AuthenticationState } from './store/authentication.state';
 
 declare var PACMAN: any;
@@ -38,7 +36,6 @@ export class AppComponent implements OnInit {
     open: boolean;
     isConnected: boolean;
     hideNavBar: boolean;
-    versionWorker: CDSWebWorker;
     heartbeatToken: number;
     zone: NgZone;
     showUIUpdatedBanner: boolean;
@@ -114,8 +111,6 @@ export class AppComponent implements OnInit {
         });
     }
 
-
-
     ngOnInit(): void {
         this._store.dispatch(new GetCDSStatus());
         this._store.select(AuthenticationState.user).subscribe(user => {
@@ -186,15 +181,6 @@ export class AppComponent implements OnInit {
             }
             this.maintenance = m.maintenance;
         });
-    }
-
-    stopWorker(w: CDSWorker, s: Subscription): void {
-        if (w) {
-            w.stop();
-        }
-        if (s) {
-            s.unsubscribe();
-        }
     }
 
     startVersionWorker(): void {

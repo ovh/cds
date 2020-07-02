@@ -10,7 +10,6 @@ import { AsCodeSaveModalComponent } from 'app/shared/ascode/save-modal/ascode.sa
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { ToastService } from 'app/shared/toast/ToastService';
 import { VariableEvent } from 'app/shared/variable/variable.event.model';
-import { CDSWebWorker } from 'app/shared/worker/web.worker';
 import { AuthenticationState } from 'app/store/authentication.state';
 import { CleanEnvironmentState } from 'app/store/environment.action';
 import * as envActions from 'app/store/environment.action';
@@ -50,7 +49,6 @@ export class EnvironmentShowComponent implements OnInit, OnDestroy {
     _routeParamsSub: Subscription;
     _routeDataSub: Subscription;
     _queryParamsSub: Subscription;
-    worker: CDSWebWorker;
 
     // Selected tab
     selectedTab = 'variables';
