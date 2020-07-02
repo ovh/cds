@@ -71,6 +71,18 @@ func NewRedisStore(host, password string, ttl int) (*RedisStore, error) {
 	}, nil
 }
 
+// Keys List keys from pattern
+func (s *RedisStore) Keys(pattern string) ([]string, error) {
+	if s.Client == nil {
+		return nil, sdk.WithStack(fmt.Errorf("redis> cannot get redis client"))
+	}
+	keys, err := s.Client.Keys(pattern).Result()
+	if err != nil {
+		return nil, sdk.WrapError(err, "redis> cannot list keys: %s", pattern)
+	}
+	return keys, nil
+}
+
 // Get a key from redis
 func (s *RedisStore) Get(key string, value interface{}) (bool, error) {
 	if s.Client == nil {

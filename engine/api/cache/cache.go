@@ -22,6 +22,7 @@ func Key(args ...string) string {
 
 //Store is an interface
 type Store interface {
+	Keys(pattern string) ([]string, error)
 	Get(key string, value interface{}) (bool, error)
 	Set(key string, value interface{}) error
 	SetWithTTL(key string, value interface{}, ttl int) error
