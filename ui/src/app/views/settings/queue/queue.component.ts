@@ -57,7 +57,7 @@ export class QueueComponent {
             if (!e || e.type_event !== EventType.RUN_WORKFLOW_JOB) {
                 return
             }
-            let jobID = (e.payload as any).id;
+            let jobID = e.payload['id'];
             if (e.status === PipelineStatus.WAITING || e.status === PipelineStatus.BUILDING) {
                 this._queueService.getJobInfos(jobID).subscribe(wnr => {
                     this._store.dispatch(new AddOrUpdateJob(wnr));

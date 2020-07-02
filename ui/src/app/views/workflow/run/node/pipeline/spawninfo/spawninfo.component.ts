@@ -4,7 +4,7 @@ import {
     Component,
     EventEmitter,
     Input, NgZone,
-    OnDestroy, OnInit,
+    OnInit,
     Output,
     ViewChild
 } from '@angular/core';

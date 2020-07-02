@@ -51,7 +51,9 @@ func UpdateAsCodeResult(ctx context.Context, db *gorp.DbMap, store cache.Store, 
 		if err != nil {
 			globalErr = err
 		}
-		go event.PublishAsCodeEvent(ctx, proj.Key, workflowHolder.Name, *asCodeEvent, u)
+		sdk.GoRoutine(context.Background(), fmt.Sprintf("UpdateAsCodeResult-pusblish-as-code-event-%s", asCodeEvent.ID), func(ctx context.Context) {
+			event.PublishAsCodeEvent(ctx, proj.Key, workflowHolder.Name, *asCodeEvent, u)
+		})
 	}
 
 	if globalErr != nil {
@@ -69,7 +71,9 @@ func UpdateAsCodeResult(ctx context.Context, db *gorp.DbMap, store cache.Store, 
 		globalOperation.Setup.Push.PRLink = asCodeEvent.PullRequestURL
 	}
 
-	go event.PublishOperation(ctx, proj.Key, globalOperation, u)
+	sdk.GoRoutine(context.Background(), fmt.Sprintf("UpdateAsCodeResult-pusblish-operation-%s", globalOperation.UUID), func(ctx context.Context) {
+		event.PublishOperation(ctx, proj.Key, globalOperation, u)
+	})
 }
 
 func createPullRequest(ctx context.Context, db *gorp.DbMap, store cache.Store, proj sdk.Project, workflowHolderID int64, rootApp sdk.Application, ed EntityData, u sdk.Identifiable, opeSetup sdk.OperationSetup) (*sdk.AsCodeEvent, error) {

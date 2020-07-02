@@ -697,7 +697,9 @@ func (api *API) stopWorkflowNodeRunHandler() service.Handler {
 			return sdk.WrapError(err, "unable to stop workflow node run")
 		}
 
-		go WorkflowSendEvent(context.Background(), api.mustDB(), api.Cache, *p, r1)
+		sdk.GoRoutine(context.Background(), fmt.Sprintf("stopWorkflowNodeRunHandler-%d", workflowNodeRunID), func(ctx context.Context) {
+			WorkflowSendEvent(context.Background(), api.mustDB(), api.Cache, *p, r1)
+		})
 
 		tx, err := api.mustDB().Begin()
 		if err != nil {
@@ -729,7 +731,9 @@ func (api *API) stopWorkflowNodeRunHandler() service.Handler {
 			return sdk.WithStack(err)
 		}
 
-		go WorkflowSendEvent(context.Background(), api.mustDB(), api.Cache, *p, r2)
+		sdk.GoRoutine(context.Background(), fmt.Sprintf("stopWorkflowNodeRunHandler-%d-resync-run-%d", workflowNodeRunID, workflowRun.ID), func(ctx context.Context) {
+			WorkflowSendEvent(context.Background(), api.mustDB(), api.Cache, *p, r2)
+		})
 
 		go func(ID int64) {
 			wRun, err := workflow.LoadRunByID(api.mustDB(), ID, workflow.LoadRunOptions{DisableDetailledNodeRun: true})
