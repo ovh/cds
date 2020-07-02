@@ -963,7 +963,7 @@
 	"title": "add",
 	"tags": [],
 	"description": "",
-	"content": " cdsctl workflow label add Add label on one workflow\nSynopsis Add label on one workflow\ncdsctl workflow label add [ PROJECT-KEY WORKFLOW-NAME LABEL ]  Options inherited from parent commands  -c, --context string cdsctl context name -f, --file string set configuration file --insecure (SSL) This option explicitly allows curl to perform \u0026quot;insecure\u0026quot; SSL connections and transfers. -n, --no-interactive Set to disable interaction with ctl --verbose Enable verbose output  SEE ALSO  cdsctl workflow label - Manage Workflow Label  "
+	"content": " cdsctl workflow label add Add label on one workflow\nSynopsis Add label on one workflow\ncdsctl workflow label add [ PROJECT-KEY WORKFLOW-NAME ] LABEL  Options inherited from parent commands  -c, --context string cdsctl context name -f, --file string set configuration file --insecure (SSL) This option explicitly allows curl to perform \u0026quot;insecure\u0026quot; SSL connections and transfers. -n, --no-interactive Set to disable interaction with ctl --verbose Enable verbose output  SEE ALSO  cdsctl workflow label - Manage Workflow Label  "
 },
 {
 	"uri": "https://ovh.github.io/cds/development/rest/admin/",
@@ -1467,7 +1467,7 @@
 	"title": "delete",
 	"tags": [],
 	"description": "",
-	"content": " cdsctl workflow label delete Delete label from one workflow\nSynopsis Delete label from one workflow\ncdsctl workflow label delete [ PROJECT-KEY WORKFLOW-NAME LABEL ]  Options inherited from parent commands  -c, --context string cdsctl context name -f, --file string set configuration file --insecure (SSL) This option explicitly allows curl to perform \u0026quot;insecure\u0026quot; SSL connections and transfers. -n, --no-interactive Set to disable interaction with ctl --verbose Enable verbose output  SEE ALSO  cdsctl workflow label - Manage Workflow Label  "
+	"content": " cdsctl workflow label delete Delete label from one workflow\nSynopsis Delete label from one workflow\ncdsctl workflow label delete [ PROJECT-KEY WORKFLOW-NAME ] LABEL  Options inherited from parent commands  -c, --context string cdsctl context name -f, --file string set configuration file --insecure (SSL) This option explicitly allows curl to perform \u0026quot;insecure\u0026quot; SSL connections and transfers. -n, --no-interactive Set to disable interaction with ctl --verbose Enable verbose output  SEE ALSO  cdsctl workflow label - Manage Workflow Label  "
 },
 {
 	"uri": "https://ovh.github.io/cds/docs/components/cdsctl/template/detach/",
