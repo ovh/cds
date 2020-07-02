@@ -302,6 +302,7 @@ func (api *API) postWorkflowLabelHandler() service.Handler {
 		if err := workflow.LabelWorkflow(tx, label.ID, wf.ID); err != nil {
 			return sdk.WrapError(err, "cannot link label %d to workflow %s", label.ID, wf.Name)
 		}
+		label.WorkflowID = wf.ID
 
 		if err := tx.Commit(); err != nil {
 			return sdk.WithStack(err)
