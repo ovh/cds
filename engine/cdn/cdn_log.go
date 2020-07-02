@@ -238,15 +238,7 @@ func buildMessage(signature log.Signature, m hook.Message) string {
 }
 
 func (s *Service) processLog(ctx context.Context, db gorp.SqlExecutor, signature log.Signature, message string) error {
-	now := time.Now()
-	l := sdk.Log{
-		JobID:        signature.JobID,
-		NodeRunID:    signature.NodeRunID,
-		LastModified: &now,
-		StepOrder:    signature.Worker.StepOrder,
-		Val:          message,
-	}
-	return workflow.AddLog(db, nil, &l, s.Cfg.Log.StepMaxSize)
+	return workflow.AppendLog(db, signature.JobID, signature.NodeRunID, signature.Worker.StepOrder, message, s.Cfg.Log.StepMaxSize)
 }
 
 func (s *Service) handleServiceLog(ctx context.Context, hatcheryID int64, hatcheryName string, workerName string, sig interface{}, m hook.Message) error {

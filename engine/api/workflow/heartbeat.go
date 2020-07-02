@@ -13,7 +13,7 @@ import (
 const maxRetry = 3
 
 // manageDeadJob restart all jobs which are building but without worker
-func manageDeadJob(ctx context.Context, DBFunc func() *gorp.DbMap, store cache.Store) error {
+func manageDeadJob(ctx context.Context, DBFunc func() *gorp.DbMap, store cache.Store, maxLogSize int64) error {
 	db := DBFunc()
 	deadJobs, err := LoadDeadNodeJobRun(ctx, db, store)
 	if err != nil {
@@ -41,7 +41,7 @@ func manageDeadJob(ctx context.Context, DBFunc func() *gorp.DbMap, store cache.S
 					continue
 				}
 			} else {
-				if err := RestartWorkflowNodeJob(ctx, tx, deadJob); err != nil {
+				if err := RestartWorkflowNodeJob(ctx, tx, deadJob, maxLogSize); err != nil {
 					log.Warning(ctx, "manageDeadJob> Cannot restart node job run %d: %v", deadJob.ID, err)
 					_ = tx.Rollback()
 					continue
