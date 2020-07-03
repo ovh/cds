@@ -269,7 +269,7 @@ func (s *Service) handleServiceLog(ctx context.Context, hatcheryID int64, hatche
 		if err != nil {
 			return err
 		}
-		if w.HatcheryID != signature.Service.HatcheryID {
+		if w.HatcheryID != nil && *w.HatcheryID != signature.Service.HatcheryID {
 			return sdk.WrapError(sdk.ErrWrongRequest, "hatchery and worker does not match")
 		}
 		logCache.Set(workerCacheKey, true, gocache.DefaultExpiration)

@@ -22,21 +22,34 @@ func Insert(ctx context.Context, db gorp.SqlExecutor, w *sdk.Worker) error {
 
 // Delete remove worker from database, it also removes the associated consumer.
 func Delete(db gorp.SqlExecutor, id string) error {
-	accessTokenID, err := db.SelectNullStr("SELECT auth_consumer_id FROM worker WHERE id = $1", id)
+	consumerID, err := db.SelectNullStr("SELECT auth_consumer_id FROM worker WHERE id = $1", id)
 	if err != nil {
 		return sdk.WithStack(err)
 	}
+
 	query := `DELETE FROM worker WHERE id = $1`
 	if _, err := db.Exec(query, id); err != nil {
 		return sdk.WithStack(err)
 	}
 
-	if accessTokenID.Valid {
-		if err := authentication.DeleteConsumerByID(db, accessTokenID.String); err != nil {
+	if consumerID.Valid {
+		if err := authentication.DeleteConsumerByID(db, consumerID.String); err != nil {
 			return err
 		}
 	}
 
+	if _, err := db.Exec("UPDATE workflow_node_run_job SET worker_id = NULL WHERE worker_id = $1", id); err != nil {
+		return sdk.WrapError(err, "cannot update workflow_node_run_job to remove worker id in job if exists")
+	}
+
+	return nil
+}
+
+// ReleaseAllFromHatchery remove dependency to given given hatchery for all workers linked to it.
+func ReleaseAllFromHatchery(db gorp.SqlExecutor, hatcheryID int64) error {
+	if _, err := db.Exec("UPDATE worker SET hatchery_id = NULL WHERE hatchery_id = $1", hatcheryID); err != nil {
+		return sdk.WrapError(err, "cannot release workers for hatchery with id %d", hatcheryID)
+	}
 	return nil
 }
 
@@ -100,7 +113,7 @@ func LoadAll(ctx context.Context, db gorp.SqlExecutor) ([]sdk.Worker, error) {
 	return workers, nil
 }
 
-func LoadByHatcheryID(ctx context.Context, db gorp.SqlExecutor, hatcheryID int64) ([]sdk.Worker, error) {
+func LoadAllByHatcheryID(ctx context.Context, db gorp.SqlExecutor, hatcheryID int64) ([]sdk.Worker, error) {
 	var wks []dbWorker
 	query := gorpmapping.NewQuery(`SELECT * FROM worker WHERE hatchery_id = $1 ORDER BY name ASC`).Args(hatcheryID)
 	if err := gorpmapping.GetAll(ctx, db, query, &wks); err != nil {
