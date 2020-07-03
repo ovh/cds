@@ -22,6 +22,7 @@ func Key(args ...string) string {
 
 //Store is an interface
 type Store interface {
+	Keys(pattern string) ([]string, error)
 	Get(key string, value interface{}) (bool, error)
 	Set(key string, value interface{}) error
 	SetWithTTL(key string, value interface{}, ttl int) error
@@ -29,8 +30,9 @@ type Store interface {
 	UpdateTTL(key string, ttl int) error
 	Delete(key string) error
 	DeleteAll(key string) error
+	Exist(key string) (bool, error)
 	Enqueue(queueName string, value interface{}) error
-	DequeueWithContext(c context.Context, queueName string, value interface{}) error
+	DequeueWithContext(c context.Context, queueName string, waitDuration int64, value interface{}) error
 	QueueLen(queueName string) (int, error)
 	RemoveFromQueue(queueName string, memberKey string) error
 	Publish(ctx context.Context, queueName string, value interface{}) error
