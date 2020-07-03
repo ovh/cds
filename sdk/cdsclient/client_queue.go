@@ -69,6 +69,7 @@ func (c *client) QueuePolling(ctx context.Context, jobs chan<- sdk.WorkflowNodeJ
 	})
 	chanMessageToSend <- sdk.WebsocketFilter{
 		Queue: true,
+		Type:  sdk.WebsocketFilterTypeQueue,
 	}
 
 	for {
