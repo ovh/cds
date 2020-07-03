@@ -304,7 +304,7 @@ func (s *Service) waitingJobs(ctx context.Context) {
 
 			// Take a lock
 			lockKey := cache.Key(keyJobLock, jobID)
-			b, err := s.Cache.Lock(lockKey, 5*time.Second, 100, 10)
+			b, err := s.Cache.Lock(lockKey, 5*time.Second, 0, 1)
 			if err != nil {
 				log.Error(ctx, "unable to lock job %s", lockKey)
 				continue
