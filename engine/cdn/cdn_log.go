@@ -291,47 +291,20 @@ func (s *Service) waitingJobs(ctx context.Context) {
 			keyParts := strings.Split(k, ":")
 			jobID := keyParts[len(keyParts)-1]
 
-			heatbeatKey := cache.Key(keyJobHearbeat, jobID)
-			ok, err := s.Cache.Exist(heatbeatKey)
+			jobQueueKey, err := s.canDequeue(jobID)
 			if err != nil {
-				log.Error(ctx, "unable to check if heartbeat key %s exist", heatbeatKey)
+				log.Error(ctx, "unable to check canDequeue %s: %v", jobQueueKey, err)
 				continue
 			}
-			// If heartbeat exist, skip
-			if ok {
+			if jobQueueKey == "" {
 				continue
 			}
 
-			// Take a lock
-			lockKey := cache.Key(keyJobLock, jobID)
-			b, err := s.Cache.Lock(lockKey, 5*time.Second, 0, 1)
-			if err != nil {
-				log.Error(ctx, "unable to lock job %s", lockKey)
-				continue
-			}
-			if !b {
-				continue
-			}
-			// take queue
-			jobQueueKey := cache.Key(keyJobLogQueue, jobID)
-
-			//hearbeat
-			heartbeatKey := cache.Key(keyJobHearbeat, jobID)
-			if err := s.Cache.SetWithTTL(heartbeatKey, true, 30); err != nil {
-				log.Error(ctx, "unable to hearbeat %s: %v", heartbeatKey, err)
-				continue
-			}
 			sdk.GoRoutine(ctx, "cdn-dequeue-job-message", func(ctx context.Context) {
 				if err := s.dequeueJobMessages(ctx, jobQueueKey, jobID); err != nil {
 					log.Error(ctx, "unable to dequeue redis incoming job queue: %v", err)
 				}
 			})
-
-			// Release lock
-			if err := s.Cache.Unlock(lockKey); err != nil {
-				log.Error(ctx, "unable to unlock job %s", lockKey)
-				continue
-			}
 		}
 	}
 }
@@ -396,4 +369,38 @@ func (s *Service) dequeueJobMessages(ctx context.Context, jobLogsQueueKey string
 			}
 		}
 	}
+}
+
+func (s *Service) canDequeue(jobID string) (string, error) {
+	jobQueueKey := cache.Key(keyJobLogQueue, jobID)
+	heatbeatKey := cache.Key(keyJobHearbeat, jobID)
+
+	// Take a lock
+	lockKey := cache.Key(keyJobLock, jobID)
+	b, err := s.Cache.Lock(lockKey, 5*time.Second, 0, 1)
+	if err != nil {
+		return "", err
+	}
+	defer func() {
+		_ = s.Cache.Unlock(lockKey)
+	}()
+	if !b {
+		return "", nil
+	}
+
+	exist, err := s.Cache.Exist(heatbeatKey)
+	if err != nil {
+		return "", err
+	}
+	// if key exist, that mean that someone is already dequeuing
+	if exist {
+		return "", nil
+	}
+
+	//hearbeat
+	heartbeatKey := cache.Key(keyJobHearbeat, jobID)
+	if err := s.Cache.SetWithTTL(heartbeatKey, true, 30); err != nil {
+		return "", err
+	}
+	return jobQueueKey, nil
 }
