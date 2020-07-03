@@ -227,13 +227,13 @@ func (s *RedisStore) QueueLen(queueName string) (int, error) {
 }
 
 // DequeueWithContext gets from queue This is blocking while there is nothing in the queue, it can be cancelled with a context.Context
-func (s *RedisStore) DequeueWithContext(c context.Context, queueName string, value interface{}) error {
+func (s *RedisStore) DequeueWithContext(c context.Context, queueName string, waitDuration int64, value interface{}) error {
 	if s.Client == nil {
 		return sdk.WithStack(fmt.Errorf("redis> cannot get redis client"))
 	}
 
 	var elem string
-	ticker := time.NewTicker(250 * time.Millisecond).C
+	ticker := time.NewTicker(time.Duration(waitDuration) * time.Millisecond).C
 	for elem == "" {
 		select {
 		case <-ticker:
