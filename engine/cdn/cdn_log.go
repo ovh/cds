@@ -321,7 +321,6 @@ func (s *Service) waitingJobs(ctx context.Context) {
 				log.Error(ctx, "unable to hearbeat %s: %v", heartbeatKey, err)
 				continue
 			}
-			log.Info(ctx, "Dequeue %s", jobQueueKey)
 			sdk.GoRoutine(ctx, "cdn-dequeue-job-message", func(ctx context.Context) {
 				if err := s.dequeueJobMessages(ctx, jobQueueKey, jobID); err != nil {
 					log.Error(ctx, "unable to dequeue redis incoming job queue: %v", err)
@@ -338,12 +337,13 @@ func (s *Service) waitingJobs(ctx context.Context) {
 }
 
 func (s *Service) dequeueJobMessages(ctx context.Context, jobLogsQueueKey string, jobID string) error {
+	log.Info(ctx, "Dequeue %s", jobLogsQueueKey)
 	var t0 = time.Now()
 	var t1 = time.Now()
 	var nbMessages int
 	defer func() {
 		delta := t1.Sub(t0)
-		log.Info(ctx, "processLogs - %d messages received in %v", nbMessages, delta)
+		log.Info(ctx, "processLogs[%s] - %d messages received in %v", jobLogsQueueKey, nbMessages, delta)
 	}()
 
 	defer func() {
