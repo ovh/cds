@@ -201,10 +201,6 @@ func (api *API) putWorkflowImportHandler() service.Handler {
 		// Load project
 		proj, err := project.Load(ctx, api.mustDB(), key,
 			project.LoadOptions.WithGroups,
-			project.LoadOptions.WithApplications,
-			project.LoadOptions.WithEnvironments,
-			project.LoadOptions.WithPipelines,
-			project.LoadOptions.WithApplicationWithDeploymentStrategies,
 			project.LoadOptions.WithIntegrations,
 		)
 		if err != nil {
