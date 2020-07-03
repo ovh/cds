@@ -12,6 +12,7 @@ import (
 
 	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/services"
+	"github.com/ovh/cds/engine/api/worker"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
@@ -109,6 +110,14 @@ func (api *API) postServiceRegisterHandler() service.Handler {
 
 		if len(srv.PublicKey) > 0 {
 			log.Debug("postServiceRegisterHandler> service %s registered with public key: %s", srv.Name, string(srv.PublicKey))
+		}
+
+		// For hatchery service we need to check if there are workers that are not attached to an existing hatchery
+		// If some worker's parent consumer match current hatchery consumer we will attach this worker to the new hatchery.
+		if srv.Type == services.TypeHatchery {
+			if err := worker.ReAttachAllToHatchery(ctx, tx, *srv); err != nil {
+				return err
+			}
 		}
 
 		if err := tx.Commit(); err != nil {
