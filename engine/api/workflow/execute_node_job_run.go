@@ -566,17 +566,19 @@ func FreeNodeJobRun(ctx context.Context, store cache.Store, id int64) error {
 	return sdk.WrapError(sdk.ErrJobNotBooked, "BookNodeJobRun> job %d already released", id)
 }
 
-//AddLog adds a build log
-func AddLog(db gorp.SqlExecutor, job *sdk.WorkflowNodeJobRun, logs *sdk.Log, maxLogSize int64) error {
-	if job != nil {
-		logs.JobID = job.ID
-		logs.NodeRunID = job.WorkflowNodeRunID
-	}
-
+// AppendLog adds a build log.
+func AppendLog(db gorp.SqlExecutor, jobID, nodeRunID, stepOrder int64, val string, maxLogSize int64) error {
 	// check if log exists without loading data but with log size
-	exists, size, err := ExistsStepLog(db, logs.JobID, logs.StepOrder)
+	exists, size, err := ExistsStepLog(db, jobID, stepOrder)
 	if err != nil {
 		return sdk.WrapError(err, "cannot check if log exists")
+	}
+
+	logs := &sdk.Log{
+		JobID:     jobID,
+		NodeRunID: nodeRunID,
+		StepOrder: stepOrder,
+		Val:       val,
 	}
 
 	// ignore the log if max size already reached
@@ -628,7 +630,7 @@ func AddServiceLog(db gorp.SqlExecutor, job *sdk.WorkflowNodeJobRun, logs *sdk.S
 }
 
 // RestartWorkflowNodeJob restart all workflow node job and update logs to indicate restart
-func RestartWorkflowNodeJob(ctx context.Context, db gorp.SqlExecutor, wNodeJob sdk.WorkflowNodeJobRun) error {
+func RestartWorkflowNodeJob(ctx context.Context, db gorp.SqlExecutor, wNodeJob sdk.WorkflowNodeJobRun, maxLogSize int64) error {
 	var end func()
 	ctx, end = observability.Span(ctx, "workflow.RestartWorkflowNodeJob")
 	defer end()
@@ -638,43 +640,38 @@ func RestartWorkflowNodeJob(ctx context.Context, db gorp.SqlExecutor, wNodeJob s
 		if step.Status == sdk.StatusNeverBuilt || step.Status == sdk.StatusSkipped || step.Status == sdk.StatusDisabled {
 			continue
 		}
-		l, errL := LoadStepLogs(db, wNodeJob.ID, int64(step.StepOrder))
-		if errL != nil {
-			return sdk.WrapError(errL, "RestartWorkflowNodeJob> error while load step logs")
-		}
 		wNodeJob.Job.Reason = "Killed (Reason: Timeout)\n"
 		step.Status = sdk.StatusWaiting
 		step.Done = time.Time{}
-		if l != nil { // log could be nil here
-			l.Done = nil
-			logbuf := bytes.NewBufferString(l.Val)
-			logbuf.WriteString("\n\n\n-=-=-=-=-=- Worker timeout: job replaced in queue -=-=-=-=-=-\n\n\n")
-			l.Val = logbuf.String()
-			if err := updateLog(db, l); err != nil {
-				return sdk.WrapError(errL, "RestartWorkflowNodeJob> error while update step log")
-			}
+		if err := AppendLog(
+			db, wNodeJob.ID, wNodeJob.WorkflowNodeRunID, int64(step.StepOrder),
+			"\n\n\n-=-=-=-=-=- Worker timeout: job replaced in queue -=-=-=-=-=-\n\n\n",
+			maxLogSize,
+		); err != nil {
+			return err
 		}
 	}
-	nodeRun, errNR := LoadAndLockNodeRunByID(ctx, db, wNodeJob.WorkflowNodeRunID)
-	if errNR != nil {
-		return errNR
+
+	nodeRun, err := LoadAndLockNodeRunByID(ctx, db, wNodeJob.WorkflowNodeRunID)
+	if err != nil {
+		return err
 	}
 
 	//Synchronize struct but not in db
-	sync, errS := SyncNodeRunRunJob(ctx, db, nodeRun, wNodeJob)
-	if errS != nil {
-		return sdk.WrapError(errS, "RestartWorkflowNodeJob> error on sync nodeJobRun")
+	sync, err := SyncNodeRunRunJob(ctx, db, nodeRun, wNodeJob)
+	if err != nil {
+		return sdk.WrapError(err, "error on sync nodeJobRun")
 	}
 	if !sync {
-		log.Warning(ctx, "RestartWorkflowNodeJob> sync doesn't find a nodeJobRun")
+		log.Warning(ctx, "sync doesn't find a nodeJobRun")
 	}
 
-	if errU := UpdateNodeRun(db, nodeRun); errU != nil {
-		return sdk.WrapError(errU, "RestartWorkflowNodeJob> Cannot update node run")
+	if err := UpdateNodeRun(db, nodeRun); err != nil {
+		return sdk.WrapError(err, "cannot update node run")
 	}
 
 	if err := replaceWorkflowJobRunInQueue(db, wNodeJob); err != nil {
-		return sdk.WrapError(err, "Cannot replace workflow job in queue")
+		return sdk.WrapError(err, "cannot replace workflow job in queue")
 	}
 
 	return nil
