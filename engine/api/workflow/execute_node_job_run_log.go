@@ -96,6 +96,10 @@ func LoadLogs(db gorp.SqlExecutor, id int64) ([]sdk.Log, error) {
 }
 
 func insertLog(db gorp.SqlExecutor, logs *sdk.Log) error {
+	now := time.Now()
+	logs.Start = &now
+	logs.LastModified = &now
+
 	query := `
 		INSERT INTO workflow_node_run_job_logs (workflow_node_run_job_id, workflow_node_run_id, start, last_modified, done, step_order, value)
 		VALUES ($1, $2, $3, $4, $5, $6, $7)
@@ -105,26 +109,18 @@ func insertLog(db gorp.SqlExecutor, logs *sdk.Log) error {
 
 func updateLog(db gorp.SqlExecutor, logs *sdk.Log) error {
 	now := time.Now()
-	if logs.Start == nil {
-		logs.Start = &now
-	}
-	if logs.LastModified == nil {
-		logs.LastModified = &now
-	}
-	if logs.Done == nil {
-		logs.Done = &now
-	}
+	logs.LastModified = &now
+	logs.Done = &now
 
 	query := `
 		UPDATE workflow_node_run_job_logs set
 			workflow_node_run_id = $3,
-			start = $4,
-			last_modified = $5,
-			done = $6,
-			value = value || $7
+			last_modified = $4,
+			done = $5,
+			value = value || $6
 		WHERE workflow_node_run_job_id = $1 AND step_order = $2`
 
-	if _, err := db.Exec(query, logs.JobID, logs.StepOrder, logs.NodeRunID, logs.Start, logs.LastModified, logs.Done, logs.Val); err != nil {
+	if _, err := db.Exec(query, logs.JobID, logs.StepOrder, logs.NodeRunID, logs.LastModified, logs.Done, logs.Val); err != nil {
 		return sdk.WithStack(err)
 	}
 	return nil

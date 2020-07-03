@@ -18,6 +18,7 @@ import (
 	"gopkg.in/spacemonkeygo/httpsig.v0"
 
 	"github.com/ovh/cds/engine/api/authentication"
+	"github.com/ovh/cds/engine/api/observability"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/ovh/cds/sdk/log"
@@ -63,6 +64,12 @@ func (s *defaultServiceClient) DoMultiPartRequest(ctx context.Context, method, p
 
 // doMultiPartRequest performs an http request on a service with multipart  tar file + json field
 func doMultiPartRequest(ctx context.Context, db gorp.SqlExecutor, srvs []sdk.Service, method, path string, multiPartData *MultiPartData, in interface{}, out interface{}, mods ...cdsclient.RequestModifier) (int, error) {
+	ctx, end := observability.Span(ctx, "services.doMultiPartRequest",
+		observability.Tag("http.method", method),
+		observability.Tag("http.path", path),
+	)
+	defer end()
+
 	body := &bytes.Buffer{}
 	writer := multipart.NewWriter(body)
 
@@ -124,6 +131,12 @@ func doMultiPartRequest(ctx context.Context, db gorp.SqlExecutor, srvs []sdk.Ser
 }
 
 func (s *defaultServiceClient) DoJSONRequest(ctx context.Context, method, path string, in interface{}, out interface{}, mods ...cdsclient.RequestModifier) (http.Header, int, error) {
+	ctx, end := observability.Span(ctx, "services.DoJSONRequest",
+		observability.Tag("http.method", method),
+		observability.Tag("http.path", path),
+	)
+	defer end()
+
 	return doJSONRequest(ctx, s.db, s.srvs, method, path, in, out, mods...)
 }
 

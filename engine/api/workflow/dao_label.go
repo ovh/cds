@@ -6,18 +6,12 @@ import (
 	"github.com/go-gorp/gorp"
 	"github.com/lib/pq"
 
-	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 )
 
 // LabelWorkflow link a label on a workflow given his workflow id
 func LabelWorkflow(db gorp.SqlExecutor, labelID, workflowID int64) error {
-	log.Debug("LabelWorkflow> %d %d", labelID, workflowID)
-	if _, err := db.Exec("INSERT INTO project_label_workflow (label_id, workflow_id) VALUES ($1, $2)", labelID, workflowID); err != nil {
-		if errPG, ok := err.(*pq.Error); ok && errPG.Code == gorpmapping.ViolateUniqueKeyPGCode {
-			return sdk.WrapError(sdk.ErrForbidden, "this label %d is already linked to workflow %d", labelID, workflowID)
-		}
+	if _, err := db.Exec("INSERT INTO project_label_workflow (label_id, workflow_id) VALUES ($1, $2) ON CONFLICT DO NOTHING", labelID, workflowID); err != nil {
 		return sdk.WrapError(err, "cannot link label %d to workflow %d", labelID, workflowID)
 	}
 	return nil
@@ -40,10 +34,11 @@ type dbLabel struct {
 func LoadLabels(db gorp.SqlExecutor, workflowIDs ...int64) ([]sdk.Label, error) {
 	var labels []dbLabel
 	query := `
-	SELECT project_label.*, project_label_workflow.workflow_id
-	FROM project_label
-	JOIN project_label_workflow ON project_label.id = project_label_workflow.label_id
-	WHERE project_label_workflow.workflow_id = ANY($1)`
+  	SELECT project_label.*, project_label_workflow.workflow_id
+	  FROM project_label
+	  JOIN project_label_workflow ON project_label.id = project_label_workflow.label_id
+    WHERE project_label_workflow.workflow_id = ANY($1)
+  `
 
 	if _, err := db.Select(&labels, query, pq.Int64Array(workflowIDs)); err != nil {
 		if err == sql.ErrNoRows {

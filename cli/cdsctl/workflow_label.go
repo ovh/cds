@@ -44,14 +44,15 @@ var workflowLabelAddCmd = cli.Command{
 	Ctx: []cli.Arg{
 		{Name: _ProjectKey},
 		{Name: _WorkflowName},
+	},
+	Args: []cli.Arg{
 		{Name: "label"},
 	},
 }
 
 func workflowLabelAddRun(v cli.Values) error {
 	labelName := v.GetString("label")
-	err := client.WorkflowLabelAdd(v.GetString(_ProjectKey), v.GetString(_WorkflowName), labelName)
-	return err
+	return client.WorkflowLabelAdd(v.GetString(_ProjectKey), v.GetString(_WorkflowName), labelName)
 }
 
 var workflowLabelDeleteCmd = cli.Command{
@@ -61,6 +62,8 @@ var workflowLabelDeleteCmd = cli.Command{
 	Ctx: []cli.Arg{
 		{Name: _ProjectKey},
 		{Name: _WorkflowName},
+	},
+	Args: []cli.Arg{
 		{Name: "label"},
 	},
 }
