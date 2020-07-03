@@ -34,13 +34,14 @@ type logger struct {
 }
 
 type CurrentWorker struct {
-	id         string
-	model      sdk.Model
-	basedir    afero.Fs
-	manualExit bool
-	gelfLogger *logger
-	httpPort   int32
-	register   struct {
+	id          string
+	model       sdk.Model
+	basedir     afero.Fs
+	manualExit  bool
+	gelfLogger  *logger
+	stepLogLine int64
+	httpPort    int32
+	register    struct {
 		apiEndpoint string
 		token       string
 		model       string
@@ -85,18 +86,31 @@ func (wk *CurrentWorker) Parameters() []sdk.Parameter {
 	return wk.currentJob.params
 }
 
-func (wk *CurrentWorker) SendLog(ctx context.Context, level workerruntime.Level, s string) {
+func (wk *CurrentWorker) SendEndOfJobLog(ctx context.Context, level workerruntime.Level, logLine string, status string) {
+	msg, signature, logLevel, err := wk.prepareLog(ctx, level, logLine)
+	if err != nil {
+		log.Error(wk.GetContext(), "unable to prepare end of job log: %v", err)
+	}
+	wk.gelfLogger.logger.WithField(log.ExtraFieldSignature, signature).WithField(log.ExtraFieldLine, wk.stepLogLine).WithField(log.ExtraFieldJobStatus, status).Log(logLevel, msg)
+}
+func (wk *CurrentWorker) SendLog(ctx context.Context, level workerruntime.Level, logLine string) {
+	msg, signature, logLevel, err := wk.prepareLog(ctx, level, logLine)
+	if err != nil {
+		log.Error(wk.GetContext(), "unable to prepare log: %v", err)
+	}
+	wk.gelfLogger.logger.WithField(log.ExtraFieldSignature, signature).WithField(log.ExtraFieldLine, wk.stepLogLine).Log(logLevel, msg)
+}
+
+func (wk *CurrentWorker) prepareLog(ctx context.Context, level workerruntime.Level, s string) (string, string, logrus.Level, error) {
 	if wk.currentJob.wJob == nil {
-		log.Error(wk.GetContext(), "unable to send log: %s. Job is nil", s)
-		return
+		return s, "", logrus.ErrorLevel, sdk.WithStack(fmt.Errorf("job is nill"))
 	}
 	if err := wk.Blur(&s); err != nil {
 		log.Error(wk.GetContext(), "unable to blur log: %v", err)
-		return
+		return s, "", logrus.ErrorLevel, sdk.WithStack(err)
 	}
 
-	stepOrder, err := workerruntime.StepOrder(ctx)
-
+	stepOrder, _ := workerruntime.StepOrder(ctx)
 	var logLevel logrus.Level
 	switch level {
 	case workerruntime.LevelDebug:
@@ -121,9 +135,10 @@ func (wk *CurrentWorker) SendLog(ctx context.Context, level workerruntime.Level,
 	}
 	signature, err := jws.Sign(wk.currentJob.signer, dataToSign)
 	if err != nil {
-		log.Error(ctx, "unable to sign logs: %v", err)
+		return s, "", logrus.ErrorLevel, err
 	}
-	wk.gelfLogger.logger.WithField(log.ExtraFieldSignature, signature).Log(logLevel, s)
+	wk.stepLogLine++
+	return s, signature, logLevel, nil
 }
 
 func (wk *CurrentWorker) Name() string {

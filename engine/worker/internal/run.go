@@ -111,15 +111,21 @@ func (w *CurrentWorker) replaceVariablesPlaceholder(a *sdk.Action, params []sdk.
 
 func (w *CurrentWorker) runJob(ctx context.Context, a *sdk.Action, jobID int64, secrets []sdk.Variable) sdk.Result {
 	log.Info(ctx, "runJob> start job %s (%d)", a.Name, jobID)
-	defer func() { log.Info(ctx, "runJob> job %s (%d)", a.Name, jobID) }()
-
 	var jobResult = sdk.Result{
 		Status:  sdk.StatusSuccess,
 		BuildID: jobID,
 	}
 
+	defer func() {
+		w.SendEndOfJobLog(ctx, workerruntime.LevelInfo, "End of Job", jobResult.Status)
+		log.Info(ctx, "runJob> job %s (%d)", a.Name, jobID)
+	}()
+
 	var nDisabled, nCriticalFailed int
 	for jobStepIndex, step := range a.Actions {
+		// Reset step log line to 0
+		w.stepLogLine = 0
+
 		ctx = workerruntime.SetStepOrder(ctx, jobStepIndex)
 		if err := w.updateStepStatus(ctx, jobID, jobStepIndex, sdk.StatusBuilding); err != nil {
 			jobResult.Status = sdk.StatusFail

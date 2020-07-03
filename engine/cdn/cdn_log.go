@@ -102,7 +102,12 @@ func (s *Service) dequeueJobMessages(ctx context.Context, jobLogsQueueKey string
 		log.Info(ctx, "processLogs - %d messages received in %v", nbMessages, delta)
 	}()
 
-	tick := time.NewTicker(10 * time.Second)
+	defer func() {
+		// Remove heartbeat
+		_ = s.Cache.Delete(cache.Key(keyJobHearbeat, jobID))
+	}()
+
+	tick := time.NewTicker(5 * time.Second)
 	for {
 		select {
 		case <-ctx.Done():
@@ -113,11 +118,13 @@ func (s *Service) dequeueJobMessages(ctx context.Context, jobLogsQueueKey string
 				log.Error(ctx, "unable to check if queue still exist: %v", err)
 				continue
 			} else if !b {
+				// leave dequeue if queue does not exist anymore
 				log.Info(ctx, "leaving job queue %s (queue no more exists)", jobLogsQueueKey)
 				return nil
 			}
+			// heartbeat
 			heartbeatKey := cache.Key(keyJobHearbeat, jobID)
-			if err := s.Cache.SetWithTTL(heartbeatKey, true, 60); err != nil {
+			if err := s.Cache.SetWithTTL(heartbeatKey, true, 30); err != nil {
 				log.Error(ctx, "unable to hearbeat %s: %v", heartbeatKey, err)
 				continue
 			}
@@ -125,8 +132,11 @@ func (s *Service) dequeueJobMessages(ctx context.Context, jobLogsQueueKey string
 			dequeuCtx, cancel := context.WithTimeout(ctx, 15*time.Second)
 			var hm handledMessage
 			if err := s.Cache.DequeueWithContext(dequeuCtx, jobLogsQueueKey, 30, &hm); err != nil {
-				log.Error(ctx, "unable to dequeue job logs queue %s: %v", jobLogsQueueKey, err)
 				cancel()
+				if strings.Contains(err.Error(), "context deadline exceeded") {
+					return nil
+				}
+				log.Error(ctx, "unable to dequeue job logs queue %s: %v", jobLogsQueueKey, err)
 				continue
 			}
 			cancel()
@@ -189,9 +199,23 @@ func (s *Service) handleWorkerLog(ctx context.Context, workerName string, worker
 		return sdk.WithStack(sdk.ErrForbidden)
 	}
 
+	var line int64
+	lineI := m.Extra["_"+log.ExtraFieldLine]
+	if lineI != nil {
+		line = int64(lineI.(float64))
+	}
+
+	var status string
+	statusI := m.Extra["_"+log.ExtraFieldJobStatus]
+	if statusI != nil {
+		status = statusI.(string)
+	}
+
 	hMessage := handledMessage{
 		Signature: signature,
 		Msg:       m,
+		Line:      line,
+		Status:    status,
 	}
 	cacheKey := cache.Key(keyJobLogQueue, strconv.Itoa(int(signature.JobID)))
 	if err := s.Cache.Enqueue(cacheKey, hMessage); err != nil {
@@ -203,6 +227,8 @@ func (s *Service) handleWorkerLog(ctx context.Context, workerName string, worker
 type handledMessage struct {
 	Signature log.Signature
 	Msg       hook.Message
+	Line      int64
+	Status    string
 }
 
 func buildMessage(signature log.Signature, m hook.Message) string {
@@ -392,7 +418,7 @@ func (s *Service) waitingJobs(ctx context.Context) {
 
 			//hearbeat
 			heartbeatKey := cache.Key(keyJobHearbeat, jobID)
-			if err := s.Cache.SetWithTTL(heartbeatKey, true, 60); err != nil {
+			if err := s.Cache.SetWithTTL(heartbeatKey, true, 30); err != nil {
 				log.Error(ctx, "unable to hearbeat %s: %v", heartbeatKey, err)
 				continue
 			}
