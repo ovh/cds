@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"time"
 
 	"github.com/go-gorp/gorp"
 	"github.com/ovh/cds/engine/api/cache"
@@ -15,7 +16,7 @@ import (
 func ReceiveEvents(ctx context.Context, DBFunc func() *gorp.DbMap, store cache.Store) {
 	for {
 		e := sdk.Event{}
-		if err := store.DequeueWithContext(ctx, "events_repositoriesmanager", 250, &e); err != nil {
+		if err := store.DequeueWithContext(ctx, "events_repositoriesmanager", 250*time.Millisecond, &e); err != nil {
 			log.Error(ctx, "repositoriesmanager.ReceiveEvents > store.DequeueWithContext err: %v", err)
 			continue
 		}

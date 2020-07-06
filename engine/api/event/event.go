@@ -139,7 +139,7 @@ func Subscribe(ch chan<- sdk.Event) {
 func DequeueEvent(ctx context.Context, db *gorp.DbMap) {
 	for {
 		e := sdk.Event{}
-		if err := store.DequeueWithContext(ctx, "events", 250, &e); err != nil {
+		if err := store.DequeueWithContext(ctx, "events", 250*time.Millisecond, &e); err != nil {
 			log.Error(ctx, "Event.DequeueEvent> store.DequeueWithContext err: %v", err)
 			continue
 		}

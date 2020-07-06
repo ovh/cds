@@ -32,7 +32,7 @@ type Store interface {
 	DeleteAll(key string) error
 	Exist(key string) (bool, error)
 	Enqueue(queueName string, value interface{}) error
-	DequeueWithContext(c context.Context, queueName string, waitDuration int64, value interface{}) error
+	DequeueWithContext(c context.Context, queueName string, waitDuration time.Duration, value interface{}) error
 	QueueLen(queueName string) (int, error)
 	RemoveFromQueue(queueName string, memberKey string) error
 	Publish(ctx context.Context, queueName string, value interface{}) error

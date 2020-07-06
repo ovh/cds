@@ -348,7 +348,7 @@ func (s *Service) dequeueJobMessages(ctx context.Context, jobLogsQueueKey string
 		default:
 			dequeuCtx, cancel := context.WithTimeout(ctx, 15*time.Second)
 			var hm handledMessage
-			if err := s.Cache.DequeueWithContext(dequeuCtx, jobLogsQueueKey, 30, &hm); err != nil {
+			if err := s.Cache.DequeueWithContext(dequeuCtx, jobLogsQueueKey, 30*time.Millisecond, &hm); err != nil {
 				cancel()
 				if strings.Contains(err.Error(), "context deadline exceeded") {
 					return nil
