@@ -278,10 +278,9 @@ func (s *Service) waitingJobs(ctx context.Context) {
 	defer tick.Stop()
 	for {
 		select {
+		case <-ctx.Done():
+			return
 		case _ = <-tick.C:
-			if ctx.Err() != nil {
-				return
-			}
 			// List all queues
 			keyListQueue := cache.Key(keyJobLogQueue, "*")
 			listKeys, err := s.Cache.Keys(keyListQueue)
