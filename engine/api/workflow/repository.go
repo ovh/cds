@@ -11,12 +11,12 @@ import (
 
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/keys"
-	"github.com/ovh/cds/engine/api/observability"
 	"github.com/ovh/cds/engine/api/operation"
 	"github.com/ovh/cds/engine/api/workflowtemplate"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/exportentities"
 	"github.com/ovh/cds/sdk/log"
+	"github.com/ovh/cds/sdk/telemetry"
 )
 
 // WorkflowAsCodePattern is the default code pattern to find cds files
@@ -38,7 +38,7 @@ type PushOption struct {
 // CreateFromRepository a workflow from a repository.
 func CreateFromRepository(ctx context.Context, db *gorp.DbMap, store cache.Store, p *sdk.Project, wf *sdk.Workflow,
 	opts sdk.WorkflowRunPostHandlerOption, u sdk.AuthConsumer, decryptFunc keys.DecryptFunc) ([]sdk.Message, error) {
-	ctx, end := observability.Span(ctx, "workflow.CreateFromRepository")
+	ctx, end := telemetry.Span(ctx, "workflow.CreateFromRepository")
 	defer end()
 
 	newOperation, err := createOperationRequest(*wf, opts)
@@ -72,7 +72,7 @@ func CreateFromRepository(ctx context.Context, db *gorp.DbMap, store cache.Store
 
 func extractWorkflow(ctx context.Context, db *gorp.DbMap, store cache.Store, p *sdk.Project, wf *sdk.Workflow,
 	ope sdk.Operation, consumer sdk.AuthConsumer, decryptFunc keys.DecryptFunc, hookUUID string) ([]sdk.Message, error) {
-	ctx, end := observability.Span(ctx, "workflow.extractWorkflow")
+	ctx, end := telemetry.Span(ctx, "workflow.extractWorkflow")
 	defer end()
 	var allMsgs []sdk.Message
 	// Read files

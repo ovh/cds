@@ -15,12 +15,12 @@ import (
 	"github.com/ovh/cds/engine/api/action"
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/group"
-	"github.com/ovh/cds/engine/api/observability"
 	"github.com/ovh/cds/engine/api/plugin"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
+	"github.com/ovh/cds/sdk/telemetry"
 )
 
 func syncJobInNodeRun(n *sdk.WorkflowNodeRun, j *sdk.WorkflowNodeJobRun, stageIndex int) {
@@ -43,7 +43,7 @@ func syncJobInNodeRun(n *sdk.WorkflowNodeRun, j *sdk.WorkflowNodeJobRun, stageIn
 }
 
 func syncTakeJobInNodeRun(ctx context.Context, db gorp.SqlExecutor, n *sdk.WorkflowNodeRun, j *sdk.WorkflowNodeJobRun, stageIndex int) (*ProcessorReport, error) {
-	_, end := observability.Span(ctx, "workflow.syncTakeJobInNodeRun")
+	_, end := telemetry.Span(ctx, "workflow.syncTakeJobInNodeRun")
 	defer end()
 
 	report := new(ProcessorReport)
@@ -103,10 +103,10 @@ func syncTakeJobInNodeRun(ctx context.Context, db gorp.SqlExecutor, n *sdk.Workf
 
 func executeNodeRun(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj sdk.Project, workflowNodeRun *sdk.WorkflowNodeRun) (*ProcessorReport, error) {
 	var end func()
-	ctx, end = observability.Span(ctx, "workflow.executeNodeRun",
-		observability.Tag(observability.TagWorkflowRun, workflowNodeRun.Number),
-		observability.Tag(observability.TagWorkflowNodeRun, workflowNodeRun.ID),
-		observability.Tag("workflow_node_run_status", workflowNodeRun.Status),
+	ctx, end = telemetry.Span(ctx, "workflow.executeNodeRun",
+		telemetry.Tag(telemetry.TagWorkflowRun, workflowNodeRun.Number),
+		telemetry.Tag(telemetry.TagWorkflowNodeRun, workflowNodeRun.ID),
+		telemetry.Tag("workflow_node_run_status", workflowNodeRun.Status),
 	)
 	defer end()
 
@@ -217,7 +217,7 @@ func executeNodeRun(ctx context.Context, db gorp.SqlExecutor, store cache.Store,
 			newStatus = sdk.StatusBuilding
 			var end bool
 
-			_, next := observability.Span(ctx, "workflow.syncStage")
+			_, next := telemetry.Span(ctx, "workflow.syncStage")
 			end, errSync := syncStage(ctx, db, store, stage)
 			next()
 			if errSync != nil {
@@ -317,7 +317,7 @@ func executeNodeRun(ctx context.Context, db gorp.SqlExecutor, store cache.Store,
 }
 
 func releaseMutex(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj sdk.Project, workflowID int64, nodeName string) (*ProcessorReport, error) {
-	_, next := observability.Span(ctx, "workflow.releaseMutex")
+	_, next := telemetry.Span(ctx, "workflow.releaseMutex")
 	defer next()
 
 	mutexQuery := `
@@ -416,12 +416,12 @@ func checkRunOnlyFailedJobs(wr *sdk.WorkflowRun, nr *sdk.WorkflowNodeRun) (*sdk.
 
 func addJobsToQueue(ctx context.Context, db gorp.SqlExecutor, stage *sdk.Stage, wr *sdk.WorkflowRun, nr *sdk.WorkflowNodeRun, previousStage *sdk.Stage) (*ProcessorReport, error) {
 	var end func()
-	ctx, end = observability.Span(ctx, "workflow.addJobsToQueue")
+	ctx, end = telemetry.Span(ctx, "workflow.addJobsToQueue")
 	defer end()
 
 	report := new(ProcessorReport)
 
-	_, next := observability.Span(ctx, "checkCondition")
+	_, next := telemetry.Span(ctx, "checkCondition")
 	conditionsOK := checkCondition(ctx, wr, stage.Conditions, nr.BuildParameters)
 	next()
 	if !conditionsOK {
@@ -431,14 +431,14 @@ func addJobsToQueue(ctx context.Context, db gorp.SqlExecutor, stage *sdk.Stage, 
 		stage.Status = sdk.StatusDisabled
 	}
 
-	_, next = observability.Span(ctx, "workflow.getIntegrationPluginBinaries")
+	_, next = telemetry.Span(ctx, "workflow.getIntegrationPluginBinaries")
 	integrationPluginBinaries, err := getIntegrationPluginBinaries(db, wr, nr)
 	if err != nil {
 		return report, sdk.WrapError(err, "unable to get integration plugins requirement")
 	}
 	next()
 
-	_, next = observability.Span(ctx, "workflow.getJobExecutablesGroups")
+	_, next = telemetry.Span(ctx, "workflow.getJobExecutablesGroups")
 	groups, err := getExecutablesGroups(wr, nr)
 	if err != nil {
 		return report, sdk.WrapError(err, "error getting job executables groups")
@@ -465,14 +465,14 @@ jobLoop:
 		spawnErrs := sdk.MultiError{}
 
 		//Process variables for the jobs
-		_, next = observability.Span(ctx, "workflow..getNodeJobRunParameters")
+		_, next = telemetry.Span(ctx, "workflow..getNodeJobRunParameters")
 		jobParams, err := getNodeJobRunParameters(db, *job, nr, stage)
 		next()
 		if err != nil {
 			spawnErrs.Join(*err)
 		}
 
-		_, next = observability.Span(ctx, "workflow.processNodeJobRunRequirements")
+		_, next = telemetry.Span(ctx, "workflow.processNodeJobRunRequirements")
 		jobRequirements, containsService, wm, err := processNodeJobRunRequirements(ctx, db, *job, nr, sdk.Groups(groups).ToIDs(), integrationPluginBinaries)
 		next()
 		if err != nil {
@@ -485,7 +485,7 @@ jobLoop:
 		}
 
 		// add requirements in job parameters, to use them as {{.job.requirement...}} in job
-		_, next = observability.Span(ctx, "workflow.prepareRequirementsToNodeJobRunParameters")
+		_, next = telemetry.Span(ctx, "workflow.prepareRequirementsToNodeJobRunParameters")
 		jobParams = append(jobParams, prepareRequirementsToNodeJobRunParameters(jobRequirements)...)
 		next()
 
@@ -546,7 +546,7 @@ jobLoop:
 		}
 
 		// insert in database
-		_, next = observability.Span(ctx, "workflow.insertWorkflowNodeJobRun")
+		_, next = telemetry.Span(ctx, "workflow.insertWorkflowNodeJobRun")
 		if err := insertWorkflowNodeJobRun(db, &wjob); err != nil {
 			next()
 			return report, sdk.WrapError(err, "unable to insert in table workflow_node_run_job")
@@ -785,7 +785,7 @@ type stopNodeJobRunResult struct {
 
 func stopWorkflowNodePipeline(ctx context.Context, dbFunc func() *gorp.DbMap, store cache.Store, proj sdk.Project, nodeRun *sdk.WorkflowNodeRun, stopInfos sdk.SpawnInfo) (*ProcessorReport, error) {
 	var end func()
-	ctx, end = observability.Span(ctx, "workflow.stopWorkflowNodePipeline")
+	ctx, end = telemetry.Span(ctx, "workflow.stopWorkflowNodePipeline")
 	defer end()
 
 	report := new(ProcessorReport)
@@ -878,7 +878,7 @@ func stopWorkflowNodeOutGoingHook(ctx context.Context, dbFunc func() *gorp.DbMap
 // StopWorkflowNodeRun to stop a workflow node run with a specific spawn info
 func StopWorkflowNodeRun(ctx context.Context, dbFunc func() *gorp.DbMap, store cache.Store, proj sdk.Project, workflowRun sdk.WorkflowRun, workflowNodeRun sdk.WorkflowNodeRun, stopInfos sdk.SpawnInfo) (*ProcessorReport, error) {
 	var end func()
-	ctx, end = observability.Span(ctx, "workflow.StopWorkflowNodeRun")
+	ctx, end = telemetry.Span(ctx, "workflow.StopWorkflowNodeRun")
 	defer end()
 
 	report := new(ProcessorReport)
@@ -945,7 +945,7 @@ func stopWorkflowNodeRunStages(ctx context.Context, db gorp.SqlExecutor, nodeRun
 
 func stopWorkflowNodeJobRun(ctx context.Context, dbFunc func() *gorp.DbMap, store cache.Store, proj sdk.Project, stopInfos sdk.SpawnInfo, chanNjrID <-chan int64, chanResult chan<- stopNodeJobRunResult) {
 	var end func()
-	ctx, end = observability.Span(ctx, "workflow.stopWorkflowNodeJobRun")
+	ctx, end = telemetry.Span(ctx, "workflow.stopWorkflowNodeJobRun")
 	defer end()
 
 	for njrID := range chanNjrID {
@@ -994,7 +994,7 @@ func stopWorkflowNodeJobRun(ctx context.Context, dbFunc func() *gorp.DbMap, stor
 // SyncNodeRunRunJob sync step status and spawnInfos in a specific run job
 func SyncNodeRunRunJob(ctx context.Context, db gorp.SqlExecutor, nodeRun *sdk.WorkflowNodeRun, nodeJobRun sdk.WorkflowNodeJobRun) (bool, error) {
 	var end func()
-	_, end = observability.Span(ctx, "workflow.SyncNodeRunRunJob")
+	_, end = telemetry.Span(ctx, "workflow.SyncNodeRunRunJob")
 	defer end()
 
 	found := false
@@ -1051,10 +1051,10 @@ func getVCSInfos(ctx context.Context, db gorp.SqlExecutor, store cache.Store, pr
 	}
 
 	// START OBSERVABILITY
-	ctx, end := observability.Span(ctx, "workflow.getVCSInfos",
-		observability.Tag("application", applicationName),
-		observability.Tag("vcs_server", applicationVCSServer),
-		observability.Tag("vcs_repo", applicationRepositoryFullname),
+	ctx, end := telemetry.Span(ctx, "workflow.getVCSInfos",
+		telemetry.Tag("application", applicationName),
+		telemetry.Tag("vcs_server", applicationVCSServer),
+		telemetry.Tag("vcs_repo", applicationRepositoryFullname),
 	)
 	defer end()
 

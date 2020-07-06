@@ -16,12 +16,12 @@ import (
 	"github.com/tevino/abool"
 
 	"github.com/ovh/cds/engine/api/cache"
-	"github.com/ovh/cds/engine/api/observability"
 	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
+	"github.com/ovh/cds/sdk/telemetry"
 )
 
 var upgrader = websocket.Upgrader{
@@ -95,13 +95,13 @@ func (b *websocketBroker) Start(ctx context.Context, panicCallback func(s string
 	for {
 		select {
 		case <-tickerMetrics.C:
-			observability.Record(b.router.Background, WebSocketClients, int64(len(b.clients)))
+			telemetry.Record(b.router.Background, WebSocketClients, int64(len(b.clients)))
 		case <-ctx.Done():
 			if b.clients != nil {
 				for uuid := range b.clients {
 					delete(b.clients, uuid)
 				}
-				observability.Record(b.router.Background, WebSocketClients, 0)
+				telemetry.Record(b.router.Background, WebSocketClients, 0)
 			}
 			return
 		case receivedEvent := <-b.messages:
@@ -192,7 +192,7 @@ func (b *websocketBroker) cacheSubscribe(ctx context.Context, cacheMsgChan chan<
 				continue
 			}
 
-			observability.Record(b.router.Background, WebSocketEvents, 1)
+			telemetry.Record(b.router.Background, WebSocketEvents, 1)
 			cacheMsgChan <- e
 		}
 	}

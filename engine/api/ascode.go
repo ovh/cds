@@ -131,7 +131,6 @@ func (api *API) postPerformImportAsCodeHandler() service.Handler {
 			project.LoadOptions.WithApplications,
 			project.LoadOptions.WithEnvironments,
 			project.LoadOptions.WithPipelines,
-			project.LoadOptions.WithFeatures(api.Cache),
 			project.LoadOptions.WithClearIntegrations,
 		)
 		if err != nil {

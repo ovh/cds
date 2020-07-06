@@ -17,11 +17,11 @@ import (
 	gocache "github.com/patrickmn/go-cache"
 
 	"github.com/ovh/cds/engine/api/cache"
-	"github.com/ovh/cds/engine/api/observability"
 	"github.com/ovh/cds/engine/api/services"
 
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
+	"github.com/ovh/cds/sdk/telemetry"
 )
 
 func LoadByName(ctx context.Context, db gorp.SqlExecutor, vcsName string) (sdk.VCSConfiguration, error) {
@@ -301,7 +301,7 @@ func (c *vcsClient) Repos(ctx context.Context) ([]sdk.VCSRepo, error) {
 
 func (c *vcsClient) RepoByFullname(ctx context.Context, fullname string) (sdk.VCSRepo, error) {
 	var end func()
-	ctx, end = observability.Span(ctx, "repositories.RepoByFullname")
+	ctx, end = telemetry.Span(ctx, "repositories.RepoByFullname")
 	defer end()
 
 	items, has := c.Cache().Get("/repos/" + fullname)

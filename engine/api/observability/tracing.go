@@ -2,42 +2,30 @@ package observability
 
 import (
 	"context"
+	"fmt"
 	"net/http"
+	"strconv"
 
 	"github.com/go-gorp/gorp"
+	"github.com/gorilla/mux"
 	"go.opencensus.io/trace"
 
 	"github.com/ovh/cds/engine/api/cache"
-	"github.com/ovh/cds/engine/api/feature"
-	"github.com/ovh/cds/sdk/tracingutils"
+	"github.com/ovh/cds/sdk/log"
+	"github.com/ovh/cds/sdk/telemetry"
 )
-
-type contextKey int
-
-const (
-	contextMainSpan contextKey = iota
-)
-
-// New may start a tracing span
-func New(ctx context.Context, s service, name string, sampler trace.Sampler, spanKind int) (context.Context, *trace.Span) {
-	if traceExporter == nil {
-		return ctx, nil
-	}
-	return trace.StartSpan(ctx, name,
-		trace.WithSampler(sampler),
-		trace.WithSpanKind(spanKind))
-}
 
 // Start may start a tracing span
-func Start(ctx context.Context, s service, w http.ResponseWriter, req *http.Request, opt Options, db gorp.SqlExecutor, store cache.Store) (context.Context, error) {
-	if traceExporter == nil {
+func Start(ctx context.Context, s telemetry.Service, w http.ResponseWriter, req *http.Request, opt telemetry.Options, db gorp.SqlExecutor, store cache.Store) (context.Context, error) {
+	exp := telemetry.TraceExporter(ctx)
+	if exp == nil {
 		return ctx, nil
 	}
 
 	tags := []trace.Attribute{}
 
 	var span *trace.Span
-	rootSpanContext, hasSpanContext := tracingutils.DefaultFormat.SpanContextFromRequest(req)
+	rootSpanContext, hasSpanContext := telemetry.DefaultFormat.SpanContextFromRequest(req)
 
 	var pkey string
 	var ok bool
@@ -54,7 +42,8 @@ func Start(ctx context.Context, s service, w http.ResponseWriter, req *http.Requ
 
 	var sampler trace.Sampler
 	switch {
-	case ok && feature.IsEnabled(ctx, store, feature.FeatEnableTracing, pkey):
+	//TODO is tracing enable
+	case ok:
 		sampler = trace.AlwaysSample()
 	case hasSpanContext && rootSpanContext.IsSampled():
 		sampler = trace.AlwaysSample()
@@ -79,29 +68,54 @@ func Start(ctx context.Context, s service, w http.ResponseWriter, req *http.Requ
 
 	span.AddAttributes(tags...)
 	span.AddAttributes(
-		trace.StringAttribute(PathAttribute, req.URL.Path),
-		trace.StringAttribute(HostAttribute, req.URL.Host),
-		trace.StringAttribute(MethodAttribute, req.Method),
-		trace.StringAttribute(UserAgentAttribute, req.UserAgent()),
+		trace.StringAttribute(telemetry.PathAttribute, req.URL.Path),
+		trace.StringAttribute(telemetry.HostAttribute, req.URL.Host),
+		trace.StringAttribute(telemetry.MethodAttribute, req.Method),
+		trace.StringAttribute(telemetry.UserAgentAttribute, req.UserAgent()),
 	)
 
-	ctx = context.WithValue(ctx, contextMainSpan, span)
+	ctx = context.WithValue(ctx, telemetry.ContextMainSpan, span)
 
-	ctx = tracingutils.SpanContextToContext(ctx, span.SpanContext())
-	ctx = ContextWithTag(ctx,
-		TagServiceType, s.Type(),
-		TagServiceName, s.Name(),
+	ctx = telemetry.SpanContextToContext(ctx, span.SpanContext())
+	ctx = telemetry.ContextWithTag(ctx,
+		telemetry.TagServiceType, s.Type(),
+		telemetry.TagServiceName, s.Name(),
 	)
 	return ctx, nil
 }
 
-// End may close a tracing span
-func End(ctx context.Context, w http.ResponseWriter, req *http.Request) (context.Context, error) {
-	span := MainSpan(ctx)
-	if span == nil {
-		return ctx, nil
+func findPrimaryKeyFromRequest(ctx context.Context, req *http.Request, db gorp.SqlExecutor, store cache.Store) (string, bool) {
+	vars := mux.Vars(req)
+	pkey := vars["key"]
+	if pkey == "" {
+		pkey = vars["permProjectKey"]
 	}
 
-	span.End()
-	return ctx, nil
+	if pkey == "" {
+		id, _ := strconv.ParseInt(vars["id"], 10, 64)
+		//The ID found may be a node run job, let's try to find the project key behing
+		if id <= 0 {
+			id, _ = strconv.ParseInt(vars["permJobID"], 10, 64)
+		}
+		if id != 0 {
+			var err error
+			cacheKey := cache.Key("api:FindProjetKeyForNodeRunJob:", fmt.Sprintf("%v", id))
+			find, errGet := store.Get(cacheKey, &pkey)
+			if errGet != nil {
+				log.Error(ctx, "cannot get from cache %s: %v", cacheKey, errGet)
+			}
+			if !find {
+				pkey, err = findProjetKeyForNodeRunJob(ctx, db, id)
+				if err != nil {
+					log.Error(ctx, "tracingMiddleware> %v", err)
+					return "", false
+				}
+				if err := store.SetWithTTL(cacheKey, pkey, 60*15); err != nil {
+					log.Error(ctx, "cannot SetWithTTL: %s: %v", cacheKey, err)
+				}
+			}
+		}
+	}
+
+	return pkey, pkey != ""
 }

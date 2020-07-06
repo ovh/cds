@@ -10,10 +10,10 @@ import (
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/cache"
-	"github.com/ovh/cds/engine/api/observability"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
+	"github.com/ovh/cds/sdk/telemetry"
 )
 
 func processNodeTriggers(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj sdk.Project, wr *sdk.WorkflowRun, mapNodes map[int64]*sdk.Node, parentNodeRun []*sdk.WorkflowNodeRun, node *sdk.Node, parentSubNumber int) (*ProcessorReport, error) {
@@ -63,10 +63,10 @@ func processNodeRun(ctx context.Context, db gorp.SqlExecutor, store cache.Store,
 	}
 
 	var end func()
-	ctx, end = observability.Span(ctx, "workflow.processNodeRun",
-		observability.Tag(observability.TagWorkflow, wr.Workflow.Name),
-		observability.Tag(observability.TagWorkflowRun, wr.Number),
-		observability.Tag(observability.TagWorkflowNode, n.Name),
+	ctx, end = telemetry.Span(ctx, "workflow.processNodeRun",
+		telemetry.Tag(telemetry.TagWorkflow, wr.Workflow.Name),
+		telemetry.Tag(telemetry.TagWorkflowRun, wr.Number),
+		telemetry.Tag(telemetry.TagWorkflowNode, n.Name),
 	)
 	defer end()
 
@@ -157,7 +157,7 @@ func processNode(ctx context.Context, db gorp.SqlExecutor, store cache.Store, pr
 
 	// PARENT BUILD PARAMETER WITH git.*
 	if len(parents) > 0 {
-		_, next := observability.Span(ctx, "workflow.getParentParameters")
+		_, next := telemetry.Span(ctx, "workflow.getParentParameters")
 		parentsParams, errPP := getParentParameters(wr, parents)
 		next()
 		if errPP != nil {

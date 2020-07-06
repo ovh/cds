@@ -8,16 +8,16 @@ import (
 
 	"go.opencensus.io/stats"
 
-	"github.com/ovh/cds/engine/api/observability"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
+	"github.com/ovh/cds/sdk/telemetry"
 )
 
 // WorkerPool returns all the worker owned by the hatchery h, registered or not on the CDS API
 func WorkerPool(ctx context.Context, h Interface, statusFilter ...string) ([]sdk.Worker, error) {
-	ctx = observability.ContextWithTag(ctx,
-		observability.TagServiceName, h.Name(),
-		observability.TagServiceType, h.Type(),
+	ctx = telemetry.ContextWithTag(ctx,
+		telemetry.TagServiceName, h.Name(),
+		telemetry.TagServiceType, h.Type(),
 	)
 
 	// First: call API

@@ -1,55 +1,24 @@
-package observability
+package telemetry
 
 import (
 	"context"
 	"strings"
-	"sync"
 
 	"go.opencensus.io/stats"
 	"go.opencensus.io/stats/view"
 	"go.opencensus.io/tag"
 
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
-)
-
-var (
-	// DefaultSizeDistribution 25k, 100k, 250, 500, 1M, 1.5M, 5M, 10M,
-	DefaultSizeDistribution = view.Distribution(25*1024, 100*1024, 250*1024, 500*1024, 1024*1024, 1.5*1024*1024, 5*1024*1024, 10*1024*1024)
-	// DefaultLatencyDistribution 100ms, ...
-	DefaultLatencyDistribution = view.Distribution(100, 200, 300, 400, 500, 750, 1000, 2000, 5000)
-)
-
-const (
-	Host       = "http.host"
-	StatusCode = "http.status"
-	Path       = "http.path"
-	Method     = "http.method"
-	Handler    = "http.handler"
-	RequestID  = "http.request-id"
-)
-
-type ExposedView struct {
-	Name        string   `json:"name"`
-	Description string   `json:"description"`
-	Tags        []string `json:"tags"`
-	Dimension   string   `json:"dimension"`
-	Aggregation string   `json:"aggregagtion"`
-}
-
-var (
-	ExposedViews     []ExposedView
-	exposedViewMutex sync.Mutex
 )
 
 // RegisterView begins collecting data for the given views
-func RegisterView(views ...*view.View) error {
-	exposedViewMutex.Lock()
-	defer exposedViewMutex.Unlock()
+func RegisterView(ctx context.Context, views ...*view.View) error {
+	e := StatsExporter(ctx)
+	e.exposedViewMutex.Lock()
+	defer e.exposedViewMutex.Unlock()
 
 	for _, v := range views {
 		if view.Find(v.Name) == nil {
-			log.Debug("obserbability.RegisterView> Registering view %s with tags %v on measure %p", v.Name, v.TagKeys, v.Measure)
 			if err := view.Register(v); err != nil {
 				return sdk.WithStack(err)
 			}
@@ -62,7 +31,7 @@ func RegisterView(views ...*view.View) error {
 			for _, t := range v.TagKeys {
 				ev.Tags = append(ev.Tags, t.Name())
 			}
-			ExposedViews = append(ExposedViews, ev)
+			e.ExposedViews = append(e.ExposedViews, ev)
 		}
 	}
 
@@ -121,4 +90,37 @@ func RecordFloat64(ctx context.Context, m stats.Measure, v float64) {
 		return
 	}
 	stats.Record(ctx, mFloat64.M(v))
+}
+
+// NewViewLast creates a new view via aggregation LastValue()
+func NewViewLast(name string, s *stats.Int64Measure, tags []tag.Key) *view.View {
+	return &view.View{
+		Name:        name,
+		Description: s.Description(),
+		Measure:     s,
+		Aggregation: view.LastValue(),
+		TagKeys:     tags,
+	}
+}
+
+// NewViewLastFloat64 creates a new view via aggregation LastValue()
+func NewViewLastFloat64(name string, s *stats.Float64Measure, tags []tag.Key) *view.View {
+	return &view.View{
+		Name:        name,
+		Description: s.Description(),
+		Measure:     s,
+		Aggregation: view.LastValue(),
+		TagKeys:     tags,
+	}
+}
+
+// NewViewCount creates a new view via aggregation Count()
+func NewViewCount(name string, s *stats.Int64Measure, tags []tag.Key) *view.View {
+	return &view.View{
+		Name:        name,
+		Description: s.Description(),
+		Measure:     s,
+		Aggregation: view.Count(),
+		TagKeys:     tags,
+	}
 }

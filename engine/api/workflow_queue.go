@@ -18,7 +18,6 @@ import (
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/metrics"
 	"github.com/ovh/cds/engine/api/notification"
-	"github.com/ovh/cds/engine/api/observability"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/engine/api/services"
@@ -29,6 +28,7 @@ import (
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/jws"
 	"github.com/ovh/cds/sdk/log"
+	"github.com/ovh/cds/sdk/telemetry"
 )
 
 func (api *API) postTakeWorkflowJobHandler() service.Handler {
@@ -87,10 +87,10 @@ func (api *API) postTakeWorkflowJobHandler() service.Handler {
 			return sdk.WrapError(err, "cannot load job nodeJobRunID: %d", id)
 		}
 
-		observability.Current(ctx,
-			observability.Tag(observability.TagWorkflowNodeJobRun, id),
-			observability.Tag(observability.TagWorkflowNodeRun, pbj.WorkflowNodeRunID),
-			observability.Tag(observability.TagJob, pbj.Job.Action.Name))
+		telemetry.Current(ctx,
+			telemetry.Tag(telemetry.TagWorkflowNodeJobRun, id),
+			telemetry.Tag(telemetry.TagWorkflowNodeRun, pbj.WorkflowNodeRunID),
+			telemetry.Tag(telemetry.TagJob, pbj.Job.Action.Name))
 
 		// Checks that the token used by the worker cas access to one of the execgroups
 		grantedGroupIDs := append(getAPIConsumer(ctx).GetGroupIDs(), group.SharedInfraGroup.ID)
@@ -324,7 +324,7 @@ func (api *API) postSpawnInfosWorkflowJobHandler() service.Handler {
 			return sdk.WithStack(sdk.ErrForbidden)
 		}
 
-		observability.Current(ctx, observability.Tag(observability.TagWorkflowNodeJobRun, id))
+		telemetry.Current(ctx, telemetry.Tag(telemetry.TagWorkflowNodeJobRun, id))
 
 		var s []sdk.SpawnInfo
 		if err := service.UnmarshalBody(r, &s); err != nil {
@@ -378,7 +378,7 @@ func (api *API) postWorkflowJobResultHandler() service.Handler {
 		defer cancel()
 		dbWithCtx := api.mustDBWithCtx(customCtx)
 
-		_, next := observability.Span(ctx, "project.LoadProjectByNodeJobRunID")
+		_, next := telemetry.Span(ctx, "project.LoadProjectByNodeJobRunID")
 		proj, err := project.LoadProjectByNodeJobRunID(ctx, dbWithCtx, api.Cache, id, project.LoadOptions.WithVariables)
 		next()
 		if err != nil {
@@ -396,8 +396,8 @@ func (api *API) postWorkflowJobResultHandler() service.Handler {
 			return sdk.WrapError(err, "cannot load project from job %d", id)
 		}
 
-		observability.Current(ctx,
-			observability.Tag(observability.TagProjectKey, proj.Key),
+		telemetry.Current(ctx,
+			telemetry.Tag(telemetry.TagProjectKey, proj.Key),
 		)
 
 		report, err := postJobResult(customCtx, api.mustDBWithCtx, api.Cache, proj, wk, &res)
@@ -407,15 +407,15 @@ func (api *API) postWorkflowJobResultHandler() service.Handler {
 
 		workflowRuns := report.WorkflowRuns()
 		if len(workflowRuns) > 0 {
-			observability.Current(ctx,
-				observability.Tag(observability.TagWorkflow, workflowRuns[0].Workflow.Name))
+			telemetry.Current(ctx,
+				telemetry.Tag(telemetry.TagWorkflow, workflowRuns[0].Workflow.Name))
 
 			if workflowRuns[0].Status == sdk.StatusFail {
-				observability.Record(api.Router.Background, api.Metrics.WorkflowRunFailed, 1)
+				telemetry.Record(api.Router.Background, api.Metrics.WorkflowRunFailed, 1)
 			}
 		}
 
-		_, next = observability.Span(ctx, "workflow.ResyncNodeRunsWithCommits")
+		_, next = telemetry.Span(ctx, "workflow.ResyncNodeRunsWithCommits")
 		workflow.ResyncNodeRunsWithCommits(ctx, api.mustDB(), api.Cache, *proj, report)
 		next()
 
@@ -427,7 +427,7 @@ func (api *API) postWorkflowJobResultHandler() service.Handler {
 
 func postJobResult(ctx context.Context, dbFunc func(context.Context) *gorp.DbMap, store cache.Store, proj *sdk.Project, wr *sdk.Worker, res *sdk.Result) (*workflow.ProcessorReport, error) {
 	var end func()
-	ctx, end = observability.Span(ctx, "postJobResult")
+	ctx, end = telemetry.Span(ctx, "postJobResult")
 	defer end()
 
 	//Start the transaction
@@ -443,10 +443,10 @@ func postJobResult(ctx context.Context, dbFunc func(context.Context) *gorp.DbMap
 		return nil, sdk.WrapError(errj, "cannot load node run job %d", res.BuildID)
 	}
 
-	observability.Current(ctx,
-		observability.Tag(observability.TagWorkflowNodeJobRun, res.BuildID),
-		observability.Tag(observability.TagWorkflowNodeRun, job.WorkflowNodeRunID),
-		observability.Tag(observability.TagJob, job.Job.Action.Name))
+	telemetry.Current(ctx,
+		telemetry.Tag(telemetry.TagWorkflowNodeJobRun, res.BuildID),
+		telemetry.Tag(telemetry.TagWorkflowNodeRun, job.WorkflowNodeRunID),
+		telemetry.Tag(telemetry.TagJob, job.Job.Action.Name))
 
 	msg := sdk.SpawnMsg{ID: sdk.MsgSpawnInfoWorkerEnd.ID, Args: []interface{}{wr.Name, res.Duration}}
 	infos := []sdk.SpawnInfo{{

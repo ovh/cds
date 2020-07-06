@@ -9,15 +9,15 @@ import (
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/cache"
-	"github.com/ovh/cds/engine/api/observability"
 	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/interpolate"
 	"github.com/ovh/cds/sdk/log"
+	"github.com/ovh/cds/sdk/telemetry"
 )
 
 func processNodeOutGoingHook(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj sdk.Project, wr *sdk.WorkflowRun, mapNodes map[int64]*sdk.Node, parentNodeRun []*sdk.WorkflowNodeRun, node *sdk.Node, subNumber int, manual *sdk.WorkflowNodeRunManual) (*ProcessorReport, bool, error) {
-	ctx, end := observability.Span(ctx, "workflow.processNodeOutGoingHook")
+	ctx, end := telemetry.Span(ctx, "workflow.processNodeOutGoingHook")
 	defer end()
 
 	report := new(ProcessorReport)
@@ -91,7 +91,7 @@ func processNodeOutGoingHook(ctx context.Context, db gorp.SqlExecutor, store cac
 
 	// PARENT BUILD PARAMETER
 	if len(parentNodeRun) > 0 {
-		_, next := observability.Span(ctx, "workflow.getParentParameters")
+		_, next := telemetry.Span(ctx, "workflow.getParentParameters")
 		parentsParams, errPP := getParentParameters(wr, parentNodeRun)
 		next()
 		if errPP != nil {

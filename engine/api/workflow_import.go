@@ -10,7 +10,6 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/ovh/cds/engine/api/event"
-	"github.com/ovh/cds/engine/api/observability"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/engine/api/workflowtemplate"
@@ -18,6 +17,7 @@ import (
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/exportentities"
 	"github.com/ovh/cds/sdk/log"
+	"github.com/ovh/cds/sdk/telemetry"
 )
 
 func (api *API) postWorkflowPreviewHandler() service.Handler {
@@ -259,8 +259,8 @@ func (api *API) postWorkflowPushHandler() service.Handler {
 		vars := mux.Vars(r)
 		key := vars[permProjectKey]
 
-		observability.Current(ctx,
-			observability.Tag(observability.TagProjectKey, key),
+		telemetry.Current(ctx,
+			telemetry.Tag(telemetry.TagProjectKey, key),
 		)
 
 		if r.Body == nil {

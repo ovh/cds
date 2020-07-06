@@ -10,12 +10,12 @@ import (
 
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/engine/api/group"
-	"github.com/ovh/cds/engine/api/observability"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/telemetry"
 )
 
 func LoadWorkflowMaxLevelPermissionByWorkflowIDs(ctx context.Context, db gorp.SqlExecutor, workflowIDs []int64, groupIDs []int64) (sdk.EntitiesPermissions, error) {
-	_, end := observability.Span(ctx, "permission.LoadWorkflowMaxLevelPermissionByWorkflowIDs")
+	_, end := telemetry.Span(ctx, "permission.LoadWorkflowMaxLevelPermissionByWorkflowIDs")
 	defer end()
 
 	query := `
@@ -42,7 +42,7 @@ func LoadWorkflowMaxLevelPermissionByWorkflowIDs(ctx context.Context, db gorp.Sq
 }
 
 func LoadWorkflowMaxLevelPermission(ctx context.Context, db gorp.SqlExecutor, projectKey string, workflowNames []string, groupIDs []int64) (sdk.EntitiesPermissions, error) {
-	_, end := observability.Span(ctx, "permission.LoadWorkflowMaxLevelPermission")
+	_, end := telemetry.Span(ctx, "permission.LoadWorkflowMaxLevelPermission")
 	defer end()
 
 	query := `
@@ -70,7 +70,7 @@ func LoadWorkflowMaxLevelPermission(ctx context.Context, db gorp.SqlExecutor, pr
 }
 
 func LoadProjectMaxLevelPermission(ctx context.Context, db gorp.SqlExecutor, projectKeys []string, groupIDs []int64) (sdk.EntitiesPermissions, error) {
-	_, end := observability.Span(ctx, "permission.LoadProjectMaxLevelPermission")
+	_, end := telemetry.Span(ctx, "permission.LoadProjectMaxLevelPermission")
 	defer end()
 
 	query := `

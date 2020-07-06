@@ -1,14 +1,11 @@
 package project
 
 import (
-	"context"
 	"database/sql"
 
 	"github.com/go-gorp/gorp"
 	"github.com/ovh/cds/engine/api/application"
-	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/environment"
-	"github.com/ovh/cds/engine/api/feature"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/integration"
 	"github.com/ovh/cds/engine/api/pipeline"
@@ -42,7 +39,6 @@ var LoadOptions = struct {
 	WithIntegrations                        LoadOptionFunc
 	WithClearIntegrations                   LoadOptionFunc
 	WithFavorites                           func(uID string) LoadOptionFunc
-	WithFeatures                            func(store cache.Store) LoadOptionFunc
 	WithLabels                              LoadOptionFunc
 }{
 	Default:                                 loadDefault,
@@ -64,7 +60,6 @@ var LoadOptions = struct {
 	WithIntegrations:                        loadIntegrations,
 	WithClearIntegrations:                   loadClearIntegrations,
 	WithFavorites:                           loadFavorites,
-	WithFeatures:                            loadFeatures,
 	WithApplicationWithDeploymentStrategies: loadApplicationWithDeploymentStrategies,
 	WithLabels:                              loadLabels,
 }
@@ -170,14 +165,6 @@ func loadIntegrations(db gorp.SqlExecutor, proj *sdk.Project) error {
 	}
 	proj.Integrations = pf
 	return nil
-}
-
-func loadFeatures(store cache.Store) LoadOptionFunc {
-	return func(db gorp.SqlExecutor, proj *sdk.Project) error {
-		// Loads features into a project from the feature flipping provider
-		proj.Features = feature.GetFeatures(context.Background(), store, proj.Key)
-		return nil
-	}
 }
 
 func loadClearIntegrations(db gorp.SqlExecutor, proj *sdk.Project) error {

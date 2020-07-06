@@ -11,6 +11,7 @@ import (
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/observability"
 	"github.com/ovh/cds/engine/service"
+	"github.com/ovh/cds/sdk/telemetry"
 )
 
 func (api *API) tracingMiddleware(ctx context.Context, w http.ResponseWriter, req *http.Request, rc *service.HandlerConfig) (context.Context, error) {
@@ -18,7 +19,7 @@ func (api *API) tracingMiddleware(ctx context.Context, w http.ResponseWriter, re
 }
 
 func TracingPostMiddleware(ctx context.Context, w http.ResponseWriter, req *http.Request, rc *service.HandlerConfig) (context.Context, error) {
-	ctx, err := observability.End(ctx, w, req)
+	ctx, err := telemetry.End(ctx, w, req)
 	return ctx, err
 }
 
@@ -30,7 +31,7 @@ func TracingMiddlewareFunc(s service.Service, db gorp.SqlExecutor, store cache.S
 		splittedName := strings.Split(name, ".")
 		name = splittedName[len(splittedName)-1]
 
-		opts := observability.Options{
+		opts := telemetry.Options{
 			Name:   name,
 			Enable: rc.EnableTracing,
 		}
