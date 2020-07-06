@@ -71,6 +71,18 @@ func NewRedisStore(host, password string, ttl int) (*RedisStore, error) {
 	}, nil
 }
 
+// Keys List keys from pattern
+func (s *RedisStore) Keys(pattern string) ([]string, error) {
+	if s.Client == nil {
+		return nil, sdk.WithStack(fmt.Errorf("redis> cannot get redis client"))
+	}
+	keys, err := s.Client.Keys(pattern).Result()
+	if err != nil {
+		return nil, sdk.WrapError(err, "redis> cannot list keys: %s", pattern)
+	}
+	return keys, nil
+}
+
 // Get a key from redis
 func (s *RedisStore) Get(key string, value interface{}) (bool, error) {
 	if s.Client == nil {
@@ -173,6 +185,18 @@ func (s *RedisStore) DeleteAll(pattern string) error {
 	return nil
 }
 
+// Exist test is key exists
+func (s *RedisStore) Exist(key string) (bool, error) {
+	if s.Client == nil {
+		return false, sdk.WithStack(fmt.Errorf("redis> cannot get redis client"))
+	}
+	ok, err := s.Client.Exists(key).Result()
+	if err != nil {
+		return false, sdk.WrapError(err, "unable to test if key %s exists", key)
+	}
+	return ok == 1, nil
+}
+
 // Enqueue pushes to queue
 func (s *RedisStore) Enqueue(queueName string, value interface{}) error {
 	if s.Client == nil {
@@ -203,13 +227,13 @@ func (s *RedisStore) QueueLen(queueName string) (int, error) {
 }
 
 // DequeueWithContext gets from queue This is blocking while there is nothing in the queue, it can be cancelled with a context.Context
-func (s *RedisStore) DequeueWithContext(c context.Context, queueName string, value interface{}) error {
+func (s *RedisStore) DequeueWithContext(c context.Context, queueName string, waitDuration time.Duration, value interface{}) error {
 	if s.Client == nil {
 		return sdk.WithStack(fmt.Errorf("redis> cannot get redis client"))
 	}
 
 	var elem string
-	ticker := time.NewTicker(250 * time.Millisecond).C
+	ticker := time.NewTicker(waitDuration).C
 	for elem == "" {
 		select {
 		case <-ticker:

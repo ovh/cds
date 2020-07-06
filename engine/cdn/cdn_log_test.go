@@ -65,16 +65,32 @@ func TestWorkerLog(t *testing.T) {
 	"host": "host", "_line":1, "_pid": 1, "_prefix": "prefix", "full_message": "this is my message", "_Signature": "%s"}`
 	message = fmt.Sprintf(message, signatureField)
 
-	chanMessages := s.handleConnectionChannel(context.TODO())
-	require.NoError(t, s.handleLogMessage(context.TODO(), chanMessages, []byte(message)))
-	close(chanMessages)
+	require.NoError(t, s.handleLogMessage(context.TODO(), []byte(message)))
 
-	time.Sleep(100 * time.Millisecond)
+	ctx, cancel := context.WithCancel(context.TODO())
+	go s.waitingJobs(ctx)
 
-	logs, err := workflow.LoadLogs(s.Db, dbj.ID)
-	require.NoError(t, err)
-	require.Len(t, logs, 1)
-	require.Equal(t, "[ALERT] this is my message\n", logs[0].Val)
+	cpt := 0
+	for {
+		logs, err := workflow.LoadLogs(s.Db, dbj.ID)
+		require.NoError(t, err)
+
+		t.Logf("%d: %+v", cpt, logs)
+		if len(logs) == 0 {
+			if cpt > 20 {
+				t.Fail()
+				break
+			}
+			cpt++
+			time.Sleep(250 * time.Millisecond)
+			continue
+		}
+		require.Len(t, logs, 1)
+		require.Equal(t, "[ALERT] this is my message\n", logs[0].Val)
+		break
+	}
+	cancel()
+
 }
 
 func TestServiceLog(t *testing.T) {
@@ -127,9 +143,7 @@ func TestServiceLog(t *testing.T) {
 	"host": "host", "_line":1, "_pid": 1, "_prefix": "prefix", "full_message": "this is my service message", "_Signature": "%s"}`
 	message = fmt.Sprintf(message, signatureField)
 
-	chanMessages := s.handleConnectionChannel(context.TODO())
-	require.NoError(t, s.handleLogMessage(context.TODO(), chanMessages, []byte(message)))
-	close(chanMessages)
+	require.NoError(t, s.handleLogMessage(context.TODO(), []byte(message)))
 
 	logs, err := workflow.LoadServiceLog(db, dbj.ID, signature.Service.RequirementName)
 	require.NoError(t, err)
