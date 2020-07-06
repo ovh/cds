@@ -274,37 +274,42 @@ func (s *Service) getHatchery(ctx context.Context, hatcheryID int64, hatcheryNam
 }
 
 func (s *Service) waitingJobs(ctx context.Context) {
+	tick := time.NewTicker(250 * time.Millisecond)
+	defer tick.Stop()
 	for {
-		if ctx.Err() != nil {
-			return
-		}
-		// List all queues
-		keyListQueue := cache.Key(keyJobLogQueue, "*")
-		listKeys, err := s.Cache.Keys(keyListQueue)
-		if err != nil {
-			log.Error(ctx, "unable to list jobs queues %s", keyListQueue)
-			continue
-		}
-
-		// For each key, check if heartbeat key exist
-		for _, k := range listKeys {
-			keyParts := strings.Split(k, ":")
-			jobID := keyParts[len(keyParts)-1]
-
-			jobQueueKey, err := s.canDequeue(jobID)
+		select {
+		case _ = <-tick.C:
+			if ctx.Err() != nil {
+				return
+			}
+			// List all queues
+			keyListQueue := cache.Key(keyJobLogQueue, "*")
+			listKeys, err := s.Cache.Keys(keyListQueue)
 			if err != nil {
-				log.Error(ctx, "unable to check canDequeue %s: %v", jobQueueKey, err)
-				continue
-			}
-			if jobQueueKey == "" {
+				log.Error(ctx, "unable to list jobs queues %s", keyListQueue)
 				continue
 			}
 
-			sdk.GoRoutine(ctx, "cdn-dequeue-job-message", func(ctx context.Context) {
-				if err := s.dequeueJobMessages(ctx, jobQueueKey, jobID); err != nil {
-					log.Error(ctx, "unable to dequeue redis incoming job queue: %v", err)
+			// For each key, check if heartbeat key exist
+			for _, k := range listKeys {
+				keyParts := strings.Split(k, ":")
+				jobID := keyParts[len(keyParts)-1]
+
+				jobQueueKey, err := s.canDequeue(jobID)
+				if err != nil {
+					log.Error(ctx, "unable to check canDequeue %s: %v", jobQueueKey, err)
+					continue
 				}
-			})
+				if jobQueueKey == "" {
+					continue
+				}
+
+				sdk.GoRoutine(ctx, "cdn-dequeue-job-message", func(ctx context.Context) {
+					if err := s.dequeueJobMessages(ctx, jobQueueKey, jobID); err != nil {
+						log.Error(ctx, "unable to dequeue redis incoming job queue: %v", err)
+					}
+				})
+			}
 		}
 	}
 }
