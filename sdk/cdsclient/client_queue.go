@@ -97,7 +97,7 @@ func (c *client) QueuePolling(ctx context.Context, jobs chan<- sdk.WorkflowNodeJ
 				}
 
 				if err != nil {
-					errs <- fmt.Errorf("unable to get job %v info: %v", job.ID, err)
+					errs <- fmt.Errorf("unable to get job %v info: %v", jobEvent.ID, err)
 					continue
 				}
 				// push the job in the channel
