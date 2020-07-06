@@ -481,29 +481,36 @@ func postJobResult(ctx context.Context, dbFunc func(context.Context) *gorp.DbMap
 		return nil, sdk.WrapError(err, "Unable to update node job run %d", res.BuildID)
 	}
 
-	node, errn := workflow.LoadNodeRunByID(tx, job.WorkflowNodeRunID, workflow.LoadRunOptions{})
-	if errn != nil {
-		return nil, sdk.WrapError(errn, "postJobResult> Unable to load node %d", job.WorkflowNodeRunID)
-	}
+	if len(res.NewVariables) > 0 {
+		nodeRun, err := workflow.LoadAndLockNodeRunByID(ctx, tx, job.WorkflowNodeRunID)
+		if err != nil {
+			return nil, err
+		}
+		mustUpdateNodeRunParams := false
 
-	for _, v := range res.NewVariables {
-		log.Debug("postJobResult> managing new variable %s on node %d", v.Name, node.ID)
-		found := false
-		for i := range node.BuildParameters {
-			currentV := &node.BuildParameters[i]
-			if currentV.Name == v.Name {
-				currentV.Value = v.Value
-				found = true
-				break
+		for _, v := range res.NewVariables {
+			log.Debug("postJobResult> managing new variable %s on node %d", v.Name, nodeRun.ID)
+			found := false
+			for i := range nodeRun.BuildParameters {
+				currentV := &nodeRun.BuildParameters[i]
+				if currentV.Name == v.Name {
+					currentV.Value = v.Value
+					found = true
+					break
+				}
+			}
+			if !found {
+				log.Debug("postJobResult> add new key on node run %s", v.Name)
+				mustUpdateNodeRunParams = true
+				sdk.AddParameter(&nodeRun.BuildParameters, v.Name, sdk.StringParameter, v.Value)
 			}
 		}
-		if !found {
-			sdk.AddParameter(&node.BuildParameters, v.Name, sdk.StringParameter, v.Value)
-		}
-	}
 
-	if err := workflow.UpdateNodeRunBuildParameters(tx, node.ID, node.BuildParameters); err != nil {
-		return nil, sdk.WrapError(err, "unable to update node run %d", node.ID)
+		if mustUpdateNodeRunParams {
+			if err := workflow.UpdateNodeRunBuildParameters(tx, nodeRun.ID, nodeRun.BuildParameters); err != nil {
+				return nil, sdk.WrapError(err, "unable to update node run %d", nodeRun.ID)
+			}
+		}
 	}
 	// ^ build variables are now updated on job run and on node
 
