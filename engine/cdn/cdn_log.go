@@ -239,8 +239,11 @@ func (s *Service) handleServiceLog(ctx context.Context, hatcheryID int64, hatche
 	if err != nil {
 		return err
 	}
-	if w.HatcheryID == nil || *w.HatcheryID != signature.Service.HatcheryID {
-		return sdk.NewErrorFrom(sdk.ErrWrongRequest, "handleServiceLog: hatchery and worker does not match")
+	if w.HatcheryID == nil {
+		return sdk.WrapError(sdk.ErrWrongRequest, "hatchery %d cannot send service log for worker %s started by %s that is no more linked to an hatchery", signature.Service.HatcheryID, w.ID, w.HatcheryName)
+	}
+	if *w.HatcheryID != signature.Service.HatcheryID {
+		return sdk.WrapError(sdk.ErrWrongRequest, "cannot send service log for worker %s from hatchery (expected: %d/actual: %d)", w.ID, *w.HatcheryID, signature.Service.HatcheryID)
 	}
 
 	logs := sdk.ServiceLog{
