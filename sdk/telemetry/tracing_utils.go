@@ -8,15 +8,6 @@ import (
 	"go.opencensus.io/trace"
 )
 
-func TraceExporter(ctx context.Context) trace.Exporter {
-	i := ctx.Value(contextTraceExporter)
-	exp, ok := i.(trace.Exporter)
-	if ok {
-		return exp
-	}
-	return nil
-}
-
 // New may start a tracing span
 func New(ctx context.Context, s Service, name string, sampler trace.Sampler, spanKind int) (context.Context, *trace.Span) {
 	exp := TraceExporter(ctx)

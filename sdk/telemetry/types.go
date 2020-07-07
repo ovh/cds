@@ -29,6 +29,7 @@ type Configuration struct {
 	Exporters      struct {
 		Jaeger struct {
 			HTTPCollectorEndpoint string  `toml:"HTTPCollectorEndpoint" default:"http://localhost:14268" json:"httpCollectorEndpoint"`
+			CollectorEndpoint     string  `toml:"collectorEndpoint" default:"" json:"collectorEndpoint"`
 			SamplingProbability   float64 `toml:"samplingProbability" json:"metricSamplingProbability"`
 		} `json:"jaeger"`
 		Prometheus struct {
@@ -103,6 +104,5 @@ const (
 type Options struct {
 	Init     bool
 	Name     string
-	Enable   bool
 	SpanKind int
 }

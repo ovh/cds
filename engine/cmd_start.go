@@ -290,8 +290,7 @@ See $ engine config command for more details.
 				}
 			}
 
-			var err error
-			ctx, err = telemetry.Init(ctx, conf.Telemetry, s.service)
+			ctx, err := telemetry.Init(ctx, conf.Telemetry, s.service)
 			if err != nil {
 				sdk.Exit("Unable to start tracing exporter: %v", err)
 			}

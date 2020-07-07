@@ -4,8 +4,8 @@ import (
 	"context"
 	"testing"
 
-	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/engine/api/test"
+	"github.com/ovh/cds/sdk/gorpmapping"
 	"github.com/stretchr/testify/require"
 )
 

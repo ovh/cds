@@ -5,8 +5,8 @@ import (
 	"database/sql"
 
 	"github.com/go-gorp/gorp"
-	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/gorpmapping"
 )
 
 // Labels return list of labels given a project ID

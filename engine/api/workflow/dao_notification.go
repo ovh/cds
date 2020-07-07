@@ -5,8 +5,8 @@ import (
 
 	"github.com/go-gorp/gorp"
 	"github.com/lib/pq"
-	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/gorpmapping"
 )
 
 func DeleteNotifications(db gorp.SqlExecutor, workflowID int64) error {

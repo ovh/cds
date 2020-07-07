@@ -11,6 +11,7 @@ import (
 	"go.opencensus.io/trace"
 
 	"github.com/ovh/cds/engine/api/cache"
+	"github.com/ovh/cds/sdk/featureflipping"
 	"github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk/telemetry"
 )
@@ -28,9 +29,8 @@ func Start(ctx context.Context, s telemetry.Service, w http.ResponseWriter, req 
 	rootSpanContext, hasSpanContext := telemetry.DefaultFormat.SpanContextFromRequest(req)
 
 	var pkey string
-	var ok bool
 	if db != nil && store != nil {
-		pkey, ok = findPrimaryKeyFromRequest(ctx, req, db, store)
+		pkey, _ = findPrimaryKeyFromRequest(ctx, req, db, store)
 		if pkey != "" {
 			tags = append(tags, trace.StringAttribute("project_key", pkey))
 		}
@@ -40,10 +40,18 @@ func Start(ctx context.Context, s telemetry.Service, w http.ResponseWriter, req 
 		trace.WithSpanKind(trace.SpanKindServer),
 	}
 
+	mapVars := map[string]string{
+		"trace":                      opt.Name,
+		"project_key":                pkey,
+		telemetry.PathAttribute:      req.URL.Path,
+		telemetry.HostAttribute:      req.URL.Host,
+		telemetry.MethodAttribute:    req.Method,
+		telemetry.UserAgentAttribute: req.UserAgent(),
+	}
+
 	var sampler trace.Sampler
 	switch {
-	//TODO is tracing enable
-	case ok:
+	case featureflipping.IsEnabled(ctx, db, "tracing", mapVars):
 		sampler = trace.AlwaysSample()
 	case hasSpanContext && rootSpanContext.IsSampled():
 		sampler = trace.AlwaysSample()
@@ -74,6 +82,7 @@ func Start(ctx context.Context, s telemetry.Service, w http.ResponseWriter, req 
 		trace.StringAttribute(telemetry.UserAgentAttribute, req.UserAgent()),
 	)
 
+	log.Debug("# %s saving main span: %+v", opt.Name, span)
 	ctx = context.WithValue(ctx, telemetry.ContextMainSpan, span)
 
 	ctx = telemetry.SpanContextToContext(ctx, span.SpanContext())

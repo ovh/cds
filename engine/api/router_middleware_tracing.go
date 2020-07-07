@@ -32,8 +32,7 @@ func TracingMiddlewareFunc(s service.Service, db gorp.SqlExecutor, store cache.S
 		name = splittedName[len(splittedName)-1]
 
 		opts := telemetry.Options{
-			Name:   name,
-			Enable: rc.EnableTracing,
+			Name: name,
 		}
 
 		ctx, err := observability.Start(ctx, s, w, req, opts, db, store)

@@ -7,8 +7,8 @@ import (
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/stretchr/testify/require"
 
-	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	_ "github.com/ovh/cds/engine/api/user"
+	"github.com/ovh/cds/sdk/gorpmapping"
 	"github.com/stretchr/testify/assert"
 )
 

@@ -9,10 +9,11 @@ import (
 
 	"github.com/gorilla/mux"
 
-	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/featureflipping"
+	"github.com/ovh/cds/sdk/gorpmapping"
 	"github.com/ovh/cds/sdk/log"
 )
 
@@ -241,6 +242,89 @@ func (api *API) postAdminDatabaseRollEncryptedEntityByPrimaryKey() service.Handl
 		pk := vars["pk"]
 
 		if err := gorpmapping.RollEncryptedTupleByPrimaryKey(api.mustDB(), entity, pk); err != nil {
+			return err
+		}
+
+		return nil
+	}
+}
+
+func (api *API) getAdminFeatureFlipping() service.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		all, err := featureflipping.LoadAll(ctx, api.mustDB())
+		if err != nil {
+			return err
+		}
+		return service.WriteJSON(w, all, http.StatusOK)
+	}
+}
+
+func (api *API) getAdminFeatureFlippingByName() service.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		vars := mux.Vars(r)
+		name := vars["name"]
+
+		f, err := featureflipping.LoadByName(ctx, api.mustDB(), name)
+		if err != nil {
+			return err
+		}
+		return service.WriteJSON(w, f, http.StatusOK)
+	}
+}
+
+func (api *API) postAdminFeatureFlipping() service.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		var f sdk.Feature
+		if err := service.UnmarshalBody(r, &f); err != nil {
+			return err
+		}
+
+		if err := featureflipping.Insert(ctx, api.mustDB(), &f); err != nil {
+			return err
+		}
+		return service.WriteJSON(w, f, http.StatusOK)
+	}
+}
+
+func (api *API) putAdminFeatureFlipping() service.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		vars := mux.Vars(r)
+		name := vars["name"]
+
+		var f sdk.Feature
+		if err := service.UnmarshalBody(r, &f); err != nil {
+			return err
+		}
+
+		oldF, err := featureflipping.LoadByName(ctx, api.mustDB(), name)
+		if err != nil {
+			return err
+		}
+
+		if name != f.Name {
+			return sdk.WithStack(sdk.ErrWrongRequest)
+		}
+
+		f.ID = oldF.ID
+		if err := featureflipping.Update(ctx, api.mustDB(), &f); err != nil {
+			return err
+		}
+
+		return service.WriteJSON(w, f, http.StatusOK)
+	}
+}
+
+func (api *API) deleteAdminFeatureFlipping() service.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		vars := mux.Vars(r)
+		name := vars["name"]
+
+		oldF, err := featureflipping.LoadByName(ctx, api.mustDB(), name)
+		if err != nil {
+			return err
+		}
+
+		if err := featureflipping.Delete(ctx, api.mustDB(), oldF.ID); err != nil {
 			return err
 		}
 

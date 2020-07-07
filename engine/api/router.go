@@ -85,6 +85,7 @@ func (r *Router) pprofLabel(config map[string]*service.HandlerConfig, fn http.Ha
 			"goroutine-id", id,
 			"goroutine-name", name+"-"+id,
 		)
+
 		ctx := pprof.WithLabels(req.Context(), labels)
 		pprof.SetGoroutineLabels(ctx)
 		req = req.WithContext(ctx)
@@ -299,6 +300,8 @@ func (r *Router) handle(uri string, scope HandlerScope, handlers ...*service.Han
 	f := func(w http.ResponseWriter, req *http.Request) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
+
+		ctx = telemetry.ContextWithTelemetry(r.Background, ctx)
 
 		var requestID string
 		iRequestID := ctx.Value(log.ContextLoggingRequestIDKey)
@@ -663,14 +666,6 @@ func Auth(v bool) HandlerConfigParam {
 func MaintenanceAware() HandlerConfigParam {
 	f := func(rc *service.HandlerConfig) {
 		rc.MaintenanceAware = true
-	}
-	return f
-}
-
-// EnableTracing on a route
-func EnableTracing() HandlerConfigParam {
-	f := func(rc *service.HandlerConfig) {
-		rc.EnableTracing = true
 	}
 	return f
 }

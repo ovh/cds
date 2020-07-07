@@ -47,6 +47,11 @@ type Admin interface {
 	AdminCDSMigrationList() ([]sdk.Migration, error)
 	AdminCDSMigrationCancel(id int64) error
 	AdminCDSMigrationReset(id int64) error
+	Features() ([]sdk.Feature, error)
+	FeatureCreate(f sdk.Feature) error
+	FeatureDelete(name string) error
+	FeatureGet(name string) (sdk.Feature, error)
+	FeatureUpdate(f sdk.Feature) error
 	Services() ([]sdk.Service, error)
 	ServicesByName(name string) (*sdk.Service, error)
 	ServiceDelete(name string) error

@@ -11,7 +11,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/ovh/cds/engine/api/database/gorpmapping"
+	"github.com/ovh/cds/sdk/gorpmapping"
 
 	"github.com/go-gorp/gorp"
 	gocache "github.com/patrickmn/go-cache"

@@ -27,6 +27,27 @@ func StatsExporter(ctx context.Context) *HTTPExporter {
 	return nil
 }
 
+func TraceExporter(ctx context.Context) trace.Exporter {
+	i := ctx.Value(contextTraceExporter)
+	exp, ok := i.(trace.Exporter)
+	if ok {
+		return exp
+	}
+	return nil
+}
+
+func ContextWithTelemetry(from, to context.Context) context.Context {
+	se := StatsExporter(from)
+	te := TraceExporter(from)
+	if se != nil {
+		to = context.WithValue(to, contextStatsExporter, se)
+	}
+	if te != nil {
+		to = context.WithValue(to, contextTraceExporter, te)
+	}
+	return to
+}
+
 // Init the opencensus exporter
 func Init(ctx context.Context, cfg Configuration, s Service) (context.Context, error) {
 	log.Info(ctx, "observability> initializing observability for %s/%s", s.Type(), s.Name())
@@ -44,8 +65,9 @@ func Init(ctx context.Context, cfg Configuration, s Service) (context.Context, e
 		)
 		log.Info(ctx, "observability> initializing jaeger exporter for %s/%s", s.Type(), s.Name())
 		e, err := jaeger.NewExporter(jaeger.Options{
-			Endpoint:    cfg.Exporters.Jaeger.HTTPCollectorEndpoint, //"http://localhost:14268"
-			ServiceName: serviceName(s),
+			Endpoint:          cfg.Exporters.Jaeger.HTTPCollectorEndpoint, //"http://localhost:14268"
+			CollectorEndpoint: cfg.Exporters.Jaeger.CollectorEndpoint,
+			ServiceName:       serviceName(s),
 		})
 		if err != nil {
 			return ctx, sdk.WithStack(err)
