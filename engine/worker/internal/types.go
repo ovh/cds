@@ -82,6 +82,12 @@ func (wk *CurrentWorker) SetContext(c context.Context) {
 	wk.currentJob.context = c
 }
 
+func (wk *CurrentWorker) SetGelfLogger(h *loghook.Hook, l *logrus.Logger) {
+	wk.gelfLogger = new(logger)
+	wk.gelfLogger.logger = l
+	wk.gelfLogger.hook = h
+}
+
 func (wk *CurrentWorker) Parameters() []sdk.Parameter {
 	return wk.currentJob.params
 }

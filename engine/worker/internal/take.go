@@ -62,11 +62,7 @@ func (w *CurrentWorker) Take(ctx context.Context, job sdk.WorkflowNodeJobRun) er
 	if err != nil {
 		return sdk.WithStack(err)
 	}
-
-	w.gelfLogger = new(logger)
-	w.gelfLogger.logger = l
-	w.gelfLogger.hook = h
-
+	w.SetGelfLogger(h, l)
 	start := time.Now()
 
 	//This goroutine try to get the job every 5 seconds, if it fails, it cancel the build.
