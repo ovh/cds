@@ -14,6 +14,9 @@ import (
 // RegisterView begins collecting data for the given views
 func RegisterView(ctx context.Context, views ...*view.View) error {
 	e := StatsExporter(ctx)
+	if e == nil {
+		return nil
+	}
 	e.exposedViewMutex.Lock()
 	defer e.exposedViewMutex.Unlock()
 
