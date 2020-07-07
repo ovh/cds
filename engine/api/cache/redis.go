@@ -233,10 +233,11 @@ func (s *RedisStore) DequeueWithContext(c context.Context, queueName string, wai
 	}
 
 	var elem string
-	ticker := time.NewTicker(waitDuration).C
+	ticker := time.NewTicker(waitDuration)
+	defer ticker.Stop()
 	for elem == "" {
 		select {
-		case <-ticker:
+		case <-ticker.C:
 			if c.Err() != nil {
 				return c.Err()
 			}
