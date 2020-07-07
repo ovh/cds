@@ -274,13 +274,11 @@ func (s *Service) getHatchery(ctx context.Context, hatcheryID int64, hatcheryNam
 }
 
 func (s *Service) waitingJobs(ctx context.Context) {
-	tick := time.NewTicker(250 * time.Millisecond)
-	defer tick.Stop()
 	for {
 		select {
 		case <-ctx.Done():
 			return
-		case _ = <-tick.C:
+		default:
 			// List all queues
 			keyListQueue := cache.Key(keyJobLogQueue, "*")
 			listKeys, err := s.Cache.Keys(keyListQueue)
@@ -309,6 +307,7 @@ func (s *Service) waitingJobs(ctx context.Context) {
 					}
 				})
 			}
+			time.Sleep(250 * time.Millisecond)
 		}
 	}
 }
@@ -329,6 +328,7 @@ func (s *Service) dequeueJobMessages(ctx context.Context, jobLogsQueueKey string
 	}()
 
 	tick := time.NewTicker(5 * time.Second)
+	defer tick.Stop()
 	for {
 		select {
 		case <-ctx.Done():
