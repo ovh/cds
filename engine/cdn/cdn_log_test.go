@@ -79,27 +79,26 @@ func TestWorkerLog(t *testing.T) {
 
 	gock.New("http://lolcat.host").Post(fmt.Sprintf("/queue/workflows/%d/log", dbj.ID)).Reply(200)
 
-	chanMessages := s.handleConnectionChannel(context.TODO())
+	require.NoError(t, s.handleLogMessage(context.TODO(), []byte(message)))
 
-	require.NoError(t, s.handleLogMessage(context.TODO(), chanMessages, []byte(message)))
-	close(chanMessages)
+	ctx, cancel := context.WithCancel(context.TODO())
+	defer cancel()
+	go s.waitingJobs(ctx)
 
-	// Waiting read of channel to send log
-	require.NoError(t, err)
 	cpt := 0
 	for {
-		b := gock.IsDone()
-		if b {
-			break
-		} else {
+		done := gock.IsDone()
+		if !done {
+			if cpt > 20 {
+				t.Fail()
+				break
+			}
 			cpt++
+			time.Sleep(250 * time.Millisecond)
+			continue
 		}
-		if cpt > 10 {
-			t.Fail()
-		}
-		time.Sleep(100 * time.Millisecond)
+		break
 	}
-
 }
 
 func TestServiceLog(t *testing.T) {
@@ -167,8 +166,7 @@ func TestServiceLog(t *testing.T) {
 	message = fmt.Sprintf(message, signatureField)
 
 	gock.New("http://lolcat.host").Post("/queue/workflows/log/service").Reply(200)
-
-	require.NoError(t, s.handleLogMessage(context.TODO(), nil, []byte(message)))
+	require.NoError(t, s.handleLogMessage(context.TODO(), []byte(message)))
 
 	require.True(t, gock.IsDone())
 

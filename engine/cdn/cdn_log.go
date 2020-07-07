@@ -6,9 +6,8 @@ import (
 	"crypto/rsa"
 	"encoding/base64"
 	"fmt"
-	"strconv"
-
 	"net"
+	"strconv"
 	"strings"
 	"time"
 
@@ -50,6 +49,7 @@ func (s *Service) RunTcpLogServer(ctx context.Context) {
 		_ = listener.Close()
 	}()
 
+	//  Looking for something to dequeue
 	sdk.GoRoutine(ctx, "cdn-waiting-job", func(ctx context.Context) {
 		s.waitingJobs(ctx)
 	})
@@ -89,65 +89,6 @@ func (s *Service) handleConnection(ctx context.Context, conn net.Conn) {
 			observability.Record(ctx, Errors, 1)
 			log.Error(ctx, "cdn.log> %v", err)
 			continue
-		}
-	}
-}
-
-func (s *Service) dequeueJobMessages(ctx context.Context, jobLogsQueueKey string, jobID string) error {
-	var t0 = time.Now()
-	var t1 = time.Now()
-	var nbMessages int
-	defer func() {
-		delta := t1.Sub(t0)
-		log.Info(ctx, "processLogs - %d messages received in %v", nbMessages, delta)
-	}()
-
-	defer func() {
-		// Remove heartbeat
-		_ = s.Cache.Delete(cache.Key(keyJobHearbeat, jobID))
-	}()
-
-	tick := time.NewTicker(5 * time.Second)
-	for {
-		select {
-		case <-ctx.Done():
-			return ctx.Err()
-		case <-tick.C:
-			b, err := s.Cache.Exist(jobLogsQueueKey)
-			if err != nil {
-				log.Error(ctx, "unable to check if queue still exist: %v", err)
-				continue
-			} else if !b {
-				// leave dequeue if queue does not exist anymore
-				log.Info(ctx, "leaving job queue %s (queue no more exists)", jobLogsQueueKey)
-				return nil
-			}
-			// heartbeat
-			heartbeatKey := cache.Key(keyJobHearbeat, jobID)
-			if err := s.Cache.SetWithTTL(heartbeatKey, true, 30); err != nil {
-				log.Error(ctx, "unable to hearbeat %s: %v", heartbeatKey, err)
-				continue
-			}
-		default:
-			dequeuCtx, cancel := context.WithTimeout(ctx, 15*time.Second)
-			var hm handledMessage
-			if err := s.Cache.DequeueWithContext(dequeuCtx, jobLogsQueueKey, 30, &hm); err != nil {
-				cancel()
-				if strings.Contains(err.Error(), "context deadline exceeded") {
-					return nil
-				}
-				log.Error(ctx, "unable to dequeue job logs queue %s: %v", jobLogsQueueKey, err)
-				continue
-			}
-			cancel()
-			if hm.Signature.Worker == nil {
-				continue
-			}
-			nbMessages++
-			t1 = time.Now()
-			if err := s.processLog(ctx, hm); err != nil {
-				log.Error(ctx, "unable to process log: %+v", err)
-			}
 		}
 	}
 }
@@ -211,14 +152,14 @@ func (s *Service) handleWorkerLog(ctx context.Context, workerName string, worker
 		status = statusI.(string)
 	}
 
-	hMessage := handledMessage{
+	hm := handledMessage{
 		Signature: signature,
 		Msg:       m,
 		Line:      line,
 		Status:    status,
 	}
 	cacheKey := cache.Key(keyJobLogQueue, strconv.Itoa(int(signature.JobID)))
-	if err := s.Cache.Enqueue(cacheKey, hMessage); err != nil {
+	if err := s.Cache.Enqueue(cacheKey, hm); err != nil {
 		return err
 	}
 	return nil
@@ -266,19 +207,6 @@ func buildMessage(signature log.Signature, m hook.Message) string {
 	}
 	logs.Val = fmt.Sprintf("[%s] %s", lvl, logs.Val)
 	return logs.Val
-}
-
-func (s *Service) processLog(ctx context.Context, hm handledMessage) error {
-	currentLog := buildMessage(hm.Signature, hm.Msg)
-	now := time.Now()
-	l := sdk.Log{
-		JobID:        hm.Signature.JobID,
-		NodeRunID:    hm.Signature.NodeRunID,
-		LastModified: &now,
-		StepOrder:    hm.Signature.Worker.StepOrder,
-		Val:          currentLog,
-	}
-	return s.Client.QueueSendLogs(ctx, hm.Signature.JobID, l)
 }
 
 func (s *Service) handleServiceLog(ctx context.Context, hatcheryID int64, hatcheryName string, workerName string, sig interface{}, m hook.Message) error {
@@ -375,65 +303,144 @@ func (s *Service) refreshHatcheriesPK(ctx context.Context) error {
 }
 
 func (s *Service) waitingJobs(ctx context.Context) {
+	tick := time.NewTicker(250 * time.Millisecond)
+	defer tick.Stop()
 	for {
-		if ctx.Err() != nil {
+		select {
+		case <-ctx.Done():
 			return
-		}
-		// List all queues
-		keyListQueue := cache.Key(keyJobLogQueue, "*")
-		listKeys, err := s.Cache.Keys(keyListQueue)
-		if err != nil {
-			log.Error(ctx, "unable to list jobs queues %s", keyListQueue)
-			continue
-		}
-
-		// For each key, check if heartbeat key exist
-		for _, k := range listKeys {
-			keyParts := strings.Split(k, ":")
-			jobID := keyParts[len(keyParts)-1]
-
-			heatbeatKey := cache.Key(keyJobHearbeat, jobID)
-			ok, err := s.Cache.Exist(heatbeatKey)
+		case _ = <-tick.C:
+			// List all queues
+			keyListQueue := cache.Key(keyJobLogQueue, "*")
+			listKeys, err := s.Cache.Keys(keyListQueue)
 			if err != nil {
-				log.Error(ctx, "unable to check if heartbeat key %s exist", heatbeatKey)
-				continue
-			}
-			// If heartbeat exist, skip
-			if ok {
+				log.Error(ctx, "unable to list jobs queues %s", keyListQueue)
 				continue
 			}
 
-			// Take a lock
-			lockKey := cache.Key(keyJobLock, jobID)
-			b, err := s.Cache.Lock(lockKey, 5*time.Second, 100, 10)
+			// For each key, check if heartbeat key exist
+			for _, k := range listKeys {
+				keyParts := strings.Split(k, ":")
+				jobID := keyParts[len(keyParts)-1]
+
+				jobQueueKey, err := s.canDequeue(jobID)
+				if err != nil {
+					log.Error(ctx, "unable to check canDequeue %s: %v", jobQueueKey, err)
+					continue
+				}
+				if jobQueueKey == "" {
+					continue
+				}
+
+				sdk.GoRoutine(ctx, "cdn-dequeue-job-message", func(ctx context.Context) {
+					if err := s.dequeueJobMessages(ctx, jobQueueKey, jobID); err != nil {
+						log.Error(ctx, "unable to dequeue redis incoming job queue: %v", err)
+					}
+				})
+			}
+		}
+	}
+}
+
+func (s *Service) dequeueJobMessages(ctx context.Context, jobLogsQueueKey string, jobID string) error {
+	log.Info(ctx, "Dequeue %s", jobLogsQueueKey)
+	var t0 = time.Now()
+	var t1 = time.Now()
+	var nbMessages int
+	defer func() {
+		delta := t1.Sub(t0)
+		log.Info(ctx, "processLogs[%s] - %d messages received in %v", jobLogsQueueKey, nbMessages, delta)
+	}()
+
+	defer func() {
+		// Remove heartbeat
+		_ = s.Cache.Delete(cache.Key(keyJobHearbeat, jobID))
+	}()
+
+	tick := time.NewTicker(5 * time.Second)
+	for {
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		case <-tick.C:
+			b, err := s.Cache.Exist(jobLogsQueueKey)
 			if err != nil {
-				log.Error(ctx, "unable to lock job %s", lockKey)
+				log.Error(ctx, "unable to check if queue still exist: %v", err)
 				continue
+			} else if !b {
+				// leave dequeue if queue does not exist anymore
+				log.Info(ctx, "leaving job queue %s (queue no more exists)", jobLogsQueueKey)
+				return nil
 			}
-			if !b {
-				continue
-			}
-			// take queue
-			jobQueueKey := cache.Key(keyJobLogQueue, jobID)
-
-			//hearbeat
+			// heartbeat
 			heartbeatKey := cache.Key(keyJobHearbeat, jobID)
 			if err := s.Cache.SetWithTTL(heartbeatKey, true, 30); err != nil {
 				log.Error(ctx, "unable to hearbeat %s: %v", heartbeatKey, err)
 				continue
 			}
-			log.Info(ctx, "Dequeue %s", jobQueueKey)
-			sdk.GoRoutine(ctx, "cdn-dequeue-job-message", func(ctx context.Context) {
-				if err := s.dequeueJobMessages(ctx, jobQueueKey, jobID); err != nil {
-					log.Error(ctx, "unable to dequeue redis incoming job queue: %v", err)
+		default:
+			dequeuCtx, cancel := context.WithTimeout(ctx, 15*time.Second)
+			var hm handledMessage
+			if err := s.Cache.DequeueWithContext(dequeuCtx, jobLogsQueueKey, 30*time.Millisecond, &hm); err != nil {
+				cancel()
+				if strings.Contains(err.Error(), "context deadline exceeded") {
+					return nil
 				}
-			})
-
-			// Release lock
-			if err := s.Cache.Unlock(lockKey); err != nil {
-				log.Error(ctx, "unable to unlock job %s", lockKey)
+				log.Error(ctx, "unable to dequeue job logs queue %s: %v", jobLogsQueueKey, err)
 				continue
 			}
+			cancel()
+			if hm.Signature.Worker == nil {
+				continue
+			}
+			nbMessages++
+			now := time.Now()
+			t1 = now
+
+			currentLog := buildMessage(hm.Signature, hm.Msg)
+
+			l := sdk.Log{
+				JobID:        hm.Signature.JobID,
+				NodeRunID:    hm.Signature.NodeRunID,
+				LastModified: &now,
+				StepOrder:    hm.Signature.Worker.StepOrder,
+				Val:          currentLog,
+			}
+			return s.Client.QueueSendLogs(ctx, hm.Signature.JobID, l)
 		}
 	}
+}
+
+func (s *Service) canDequeue(jobID string) (string, error) {
+	jobQueueKey := cache.Key(keyJobLogQueue, jobID)
+	heatbeatKey := cache.Key(keyJobHearbeat, jobID)
+
+	// Take a lock
+	lockKey := cache.Key(keyJobLock, jobID)
+	b, err := s.Cache.Lock(lockKey, 5*time.Second, 0, 1)
+	if err != nil {
+		return "", err
+	}
+	defer func() {
+		_ = s.Cache.Unlock(lockKey)
+	}()
+	if !b {
+		return "", nil
+	}
+
+	exist, err := s.Cache.Exist(heatbeatKey)
+	if err != nil {
+		return "", err
+	}
+	// if key exist, that mean that someone is already dequeuing
+	if exist {
+		return "", nil
+	}
+
+	//hearbeat
+	heartbeatKey := cache.Key(keyJobHearbeat, jobID)
+	if err := s.Cache.SetWithTTL(heartbeatKey, true, 30); err != nil {
+		return "", err
+	}
+	return jobQueueKey, nil
 }

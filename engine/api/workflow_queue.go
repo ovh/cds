@@ -562,12 +562,12 @@ func (api *API) postWorkflowJobLogsHandler() service.Handler {
 		}
 
 		if id != logs.JobID {
-			return sdk.NewErrorFrom(sdk.ErrWrongRequest, "wrong job ID")
-		}
-		if err := workflow.AddLog(api.mustDB(), &logs, api.Config.Log.StepMaxSize); err != nil {
-			return err
+			return sdk.NewErrorFrom(sdk.ErrWrongRequest, "invalid job id")
 		}
 
+		if err := workflow.AppendLog(api.mustDB(), logs.JobID, logs.NodeRunID, logs.StepOrder, logs.Val, api.Config.Log.StepMaxSize); err != nil {
+			return err
+		}
 		return nil
 	}
 }

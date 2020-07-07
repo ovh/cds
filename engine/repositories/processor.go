@@ -14,7 +14,7 @@ import (
 func (s *Service) processor(ctx context.Context) error {
 	for {
 		var uuid string
-		if err := s.dao.store.DequeueWithContext(ctx, processorKey, 250, &uuid); err != nil {
+		if err := s.dao.store.DequeueWithContext(ctx, processorKey, 250*time.Millisecond, &uuid); err != nil {
 			log.Error(ctx, "repositories > processor > store.DequeueWithContext err: %v", err)
 			continue
 		}
