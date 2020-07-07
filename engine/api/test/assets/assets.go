@@ -525,7 +525,7 @@ func InsertTestWorkflow(t *testing.T, db gorp.SqlExecutor, store cache.Store, pr
 			},
 		},
 	}
-	require.NoError(t, pipeline.InsertJob(db, j, s.ID, &pip))
+	require.NoError(t, pipeline.InsertJob(context.TODO(), db, j, s.ID, &pip))
 	s.Jobs = append(s.Jobs, *j)
 
 	pip.Stages = append(pip.Stages, *s)

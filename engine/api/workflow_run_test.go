@@ -58,7 +58,7 @@ func Test_getWorkflowNodeRunHistoryHandler(t *testing.T) {
 			Enabled: true,
 		},
 	}
-	pipeline.InsertJob(db, j, s.ID, &pip)
+	pipeline.InsertJob(context.TODO(), db, j, s.ID, &pip)
 	s.Jobs = append(s.Jobs, *j)
 
 	pip.Stages = append(pip.Stages, *s)
@@ -80,7 +80,7 @@ func Test_getWorkflowNodeRunHistoryHandler(t *testing.T) {
 			Enabled: true,
 		},
 	}
-	pipeline.InsertJob(db, j, s.ID, &pip2)
+	pipeline.InsertJob(context.TODO(), db, j, s.ID, &pip2)
 	s.Jobs = append(s.Jobs, *j)
 
 	w := sdk.Workflow{
@@ -185,7 +185,7 @@ func Test_getWorkflowRunsHandler(t *testing.T) {
 			Enabled: true,
 		},
 	}
-	pipeline.InsertJob(api.mustDB(), j, s.ID, &pip)
+	pipeline.InsertJob(context.TODO(), api.mustDB(), j, s.ID, &pip)
 	s.Jobs = append(s.Jobs, *j)
 
 	pip.Stages = append(pip.Stages, *s)
@@ -207,7 +207,7 @@ func Test_getWorkflowRunsHandler(t *testing.T) {
 			Enabled: true,
 		},
 	}
-	pipeline.InsertJob(api.mustDB(), j, s.ID, &pip2)
+	pipeline.InsertJob(context.TODO(), api.mustDB(), j, s.ID, &pip2)
 	s.Jobs = append(s.Jobs, *j)
 
 	w := sdk.Workflow{
@@ -340,7 +340,7 @@ func Test_getWorkflowRunsHandlerWithFilter(t *testing.T) {
 			Enabled: true,
 		},
 	}
-	pipeline.InsertJob(api.mustDB(), j, s.ID, &pip)
+	pipeline.InsertJob(context.TODO(), api.mustDB(), j, s.ID, &pip)
 	s.Jobs = append(s.Jobs, *j)
 
 	pip.Stages = append(pip.Stages, *s)
@@ -362,7 +362,7 @@ func Test_getWorkflowRunsHandlerWithFilter(t *testing.T) {
 			Enabled: true,
 		},
 	}
-	pipeline.InsertJob(api.mustDB(), j, s.ID, &pip2)
+	pipeline.InsertJob(context.TODO(), api.mustDB(), j, s.ID, &pip2)
 	s.Jobs = append(s.Jobs, *j)
 
 	w := sdk.Workflow{
@@ -456,7 +456,7 @@ func Test_getLatestWorkflowRunHandler(t *testing.T) {
 			Enabled: true,
 		},
 	}
-	pipeline.InsertJob(api.mustDB(), j, s.ID, &pip)
+	pipeline.InsertJob(context.TODO(), api.mustDB(), j, s.ID, &pip)
 	s.Jobs = append(s.Jobs, *j)
 
 	pip.Stages = append(pip.Stages, *s)
@@ -478,7 +478,7 @@ func Test_getLatestWorkflowRunHandler(t *testing.T) {
 			Enabled: true,
 		},
 	}
-	pipeline.InsertJob(api.mustDB(), j, s.ID, &pip2)
+	pipeline.InsertJob(context.TODO(), api.mustDB(), j, s.ID, &pip2)
 	s.Jobs = append(s.Jobs, *j)
 
 	w := sdk.Workflow{
@@ -590,7 +590,7 @@ func Test_getWorkflowRunHandler(t *testing.T) {
 			Enabled: true,
 		},
 	}
-	pipeline.InsertJob(api.mustDB(), j, s.ID, &pip)
+	pipeline.InsertJob(context.TODO(), api.mustDB(), j, s.ID, &pip)
 	s.Jobs = append(s.Jobs, *j)
 
 	pip.Stages = append(pip.Stages, *s)
@@ -612,7 +612,7 @@ func Test_getWorkflowRunHandler(t *testing.T) {
 			Enabled: true,
 		},
 	}
-	pipeline.InsertJob(api.mustDB(), j, s.ID, &pip2)
+	pipeline.InsertJob(context.TODO(), api.mustDB(), j, s.ID, &pip2)
 	s.Jobs = append(s.Jobs, *j)
 
 	w := sdk.Workflow{
@@ -714,7 +714,7 @@ func Test_getWorkflowNodeRunHandler(t *testing.T) {
 			Enabled: true,
 		},
 	}
-	pipeline.InsertJob(api.mustDB(), j, s.ID, &pip)
+	pipeline.InsertJob(context.TODO(), api.mustDB(), j, s.ID, &pip)
 	s.Jobs = append(s.Jobs, *j)
 
 	pip.Stages = append(pip.Stages, *s)
@@ -736,7 +736,7 @@ func Test_getWorkflowNodeRunHandler(t *testing.T) {
 			Enabled: true,
 		},
 	}
-	pipeline.InsertJob(api.mustDB(), j, s.ID, &pip2)
+	pipeline.InsertJob(context.TODO(), api.mustDB(), j, s.ID, &pip2)
 	s.Jobs = append(s.Jobs, *j)
 
 	w := sdk.Workflow{
@@ -856,7 +856,7 @@ func Test_postWorkflowRunHandler(t *testing.T) {
 			Enabled: true,
 		},
 	}
-	pipeline.InsertJob(api.mustDB(), j, s.ID, &pip)
+	pipeline.InsertJob(context.TODO(), api.mustDB(), j, s.ID, &pip)
 	s.Jobs = append(s.Jobs, *j)
 
 	pip.Stages = append(pip.Stages, *s)
@@ -878,7 +878,7 @@ func Test_postWorkflowRunHandler(t *testing.T) {
 			Enabled: true,
 		},
 	}
-	pipeline.InsertJob(api.mustDB(), j, s.ID, &pip2)
+	pipeline.InsertJob(context.TODO(), api.mustDB(), j, s.ID, &pip2)
 	s.Jobs = append(s.Jobs, *j)
 
 	w := sdk.Workflow{
@@ -1238,7 +1238,7 @@ func Test_postWorkflowRunHandlerWithoutRightOnEnvironment(t *testing.T) {
 			Enabled: true,
 		},
 	}
-	pipeline.InsertJob(api.mustDB(), j, s.ID, &pip)
+	pipeline.InsertJob(context.TODO(), api.mustDB(), j, s.ID, &pip)
 	s.Jobs = append(s.Jobs, *j)
 
 	pip.Stages = append(pip.Stages, *s)
@@ -1260,7 +1260,7 @@ func Test_postWorkflowRunHandlerWithoutRightOnEnvironment(t *testing.T) {
 			Enabled: true,
 		},
 	}
-	pipeline.InsertJob(api.mustDB(), j, s.ID, &pip2)
+	pipeline.InsertJob(context.TODO(), api.mustDB(), j, s.ID, &pip2)
 	s.Jobs = append(s.Jobs, *j)
 	env := sdk.Environment{
 		Name:       "envtest",
@@ -1351,7 +1351,7 @@ func Test_postWorkflowRunHandlerWithoutRightConditionsOnHook(t *testing.T) {
 			Enabled: true,
 		},
 	}
-	test.NoError(t, pipeline.InsertJob(api.mustDB(), j, s.ID, &pip))
+	test.NoError(t, pipeline.InsertJob(context.TODO(), api.mustDB(), j, s.ID, &pip))
 	s.Jobs = append(s.Jobs, *j)
 
 	pip.Stages = append(pip.Stages, *s)
@@ -1373,7 +1373,7 @@ func Test_postWorkflowRunHandlerWithoutRightConditionsOnHook(t *testing.T) {
 			Enabled: true,
 		},
 	}
-	test.NoError(t, pipeline.InsertJob(api.mustDB(), j, s.ID, &pip2))
+	test.NoError(t, pipeline.InsertJob(context.TODO(), api.mustDB(), j, s.ID, &pip2))
 	s.Jobs = append(s.Jobs, *j)
 
 	mockHookService, _ := assets.InsertService(t, db, "Test_postWorkflowRunHandlerWithoutRightConditionsOnHook", services.TypeHooks)
@@ -1510,7 +1510,7 @@ func Test_postWorkflowRunHandlerHookWithMutex(t *testing.T) {
 			Enabled: true,
 		},
 	}
-	test.NoError(t, pipeline.InsertJob(api.mustDB(), j, s.ID, &pip))
+	test.NoError(t, pipeline.InsertJob(context.TODO(), api.mustDB(), j, s.ID, &pip))
 	s.Jobs = append(s.Jobs, *j)
 
 	pip.Stages = append(pip.Stages, *s)
@@ -1532,7 +1532,7 @@ func Test_postWorkflowRunHandlerHookWithMutex(t *testing.T) {
 			Enabled: true,
 		},
 	}
-	test.NoError(t, pipeline.InsertJob(api.mustDB(), j, s.ID, &pip2))
+	test.NoError(t, pipeline.InsertJob(context.TODO(), api.mustDB(), j, s.ID, &pip2))
 	s.Jobs = append(s.Jobs, *j)
 
 	mockServiceHook, _ := assets.InsertService(t, db, "Test_postWorkflowRunHandlerHookWithMutex", services.TypeHooks)
@@ -1660,7 +1660,7 @@ func Test_postWorkflowRunHandlerMutexRelease(t *testing.T) {
 	stage := sdk.Stage{PipelineID: pip.ID, Name: sdk.RandomString(10), Enabled: true}
 	require.NoError(t, pipeline.InsertStage(api.mustDB(), &stage))
 	job := &sdk.Job{Enabled: true, Action: sdk.Action{Enabled: true}}
-	require.NoError(t, pipeline.InsertJob(api.mustDB(), job, stage.ID, &pip))
+	require.NoError(t, pipeline.InsertJob(context.TODO(), api.mustDB(), job, stage.ID, &pip))
 
 	// Init test workflow with one pipeline with mutex
 	wkf := sdk.Workflow{
@@ -1948,7 +1948,7 @@ func Test_postWorkflowRunHandlerHook(t *testing.T) {
 			Enabled: true,
 		},
 	}
-	test.NoError(t, pipeline.InsertJob(api.mustDB(), j, s.ID, &pip))
+	test.NoError(t, pipeline.InsertJob(context.TODO(), api.mustDB(), j, s.ID, &pip))
 	s.Jobs = append(s.Jobs, *j)
 
 	pip.Stages = append(pip.Stages, *s)
@@ -1970,7 +1970,7 @@ func Test_postWorkflowRunHandlerHook(t *testing.T) {
 			Enabled: true,
 		},
 	}
-	test.NoError(t, pipeline.InsertJob(api.mustDB(), j, s.ID, &pip2))
+	test.NoError(t, pipeline.InsertJob(context.TODO(), api.mustDB(), j, s.ID, &pip2))
 	s.Jobs = append(s.Jobs, *j)
 
 	mockServiceHook, _ := assets.InsertService(t, db, "Test_postWorkflowRunHandlerHookWithMutex", services.TypeHooks)
@@ -2348,7 +2348,7 @@ func initGetWorkflowNodeRunJobTest(t *testing.T, api *API, db *gorp.DbMap) (*sdk
 			Enabled: true,
 		},
 	}
-	pipeline.InsertJob(api.mustDB(), j, s.ID, &pip)
+	pipeline.InsertJob(context.TODO(), api.mustDB(), j, s.ID, &pip)
 	s.Jobs = append(s.Jobs, *j)
 
 	pip.Stages = append(pip.Stages, *s)
@@ -2370,7 +2370,7 @@ func initGetWorkflowNodeRunJobTest(t *testing.T, api *API, db *gorp.DbMap) (*sdk
 			Enabled: true,
 		},
 	}
-	pipeline.InsertJob(api.mustDB(), j, s.ID, &pip2)
+	pipeline.InsertJob(context.TODO(), api.mustDB(), j, s.ID, &pip2)
 	s.Jobs = append(s.Jobs, *j)
 
 	w := sdk.Workflow{
@@ -2535,7 +2535,7 @@ func Test_deleteWorkflowRunsBranchHandler(t *testing.T) {
 			Enabled: true,
 		},
 	}
-	require.NoError(t, pipeline.InsertJob(api.mustDB(), j, s.ID, &pip))
+	require.NoError(t, pipeline.InsertJob(context.TODO(), api.mustDB(), j, s.ID, &pip))
 	s.Jobs = append(s.Jobs, *j)
 
 	pip.Stages = append(pip.Stages, *s)
@@ -2557,7 +2557,7 @@ func Test_deleteWorkflowRunsBranchHandler(t *testing.T) {
 			Enabled: true,
 		},
 	}
-	require.NoError(t, pipeline.InsertJob(api.mustDB(), j, s.ID, &pip2))
+	require.NoError(t, pipeline.InsertJob(context.TODO(), api.mustDB(), j, s.ID, &pip2))
 	s.Jobs = append(s.Jobs, *j)
 
 	w := sdk.Workflow{
@@ -2681,7 +2681,7 @@ func Test_deleteWorkflowRunHandler(t *testing.T) {
 			Enabled: true,
 		},
 	}
-	require.NoError(t, pipeline.InsertJob(api.mustDB(), j, s.ID, &pip))
+	require.NoError(t, pipeline.InsertJob(context.TODO(), api.mustDB(), j, s.ID, &pip))
 	s.Jobs = append(s.Jobs, *j)
 
 	pip.Stages = append(pip.Stages, *s)
@@ -2703,7 +2703,7 @@ func Test_deleteWorkflowRunHandler(t *testing.T) {
 			Enabled: true,
 		},
 	}
-	require.NoError(t, pipeline.InsertJob(api.mustDB(), j, s.ID, &pip2))
+	require.NoError(t, pipeline.InsertJob(context.TODO(), api.mustDB(), j, s.ID, &pip2))
 	s.Jobs = append(s.Jobs, *j)
 
 	w := sdk.Workflow{
@@ -2825,7 +2825,7 @@ func Test_postWorkflowRunHandlerRestartOnlyFailed(t *testing.T) {
 			Enabled: true,
 		},
 	}
-	pipeline.InsertJob(api.mustDB(), j, s.ID, &pip)
+	pipeline.InsertJob(context.TODO(), api.mustDB(), j, s.ID, &pip)
 	s.Jobs = append(s.Jobs, *j)
 
 	j2 := &sdk.Job{
@@ -2834,7 +2834,7 @@ func Test_postWorkflowRunHandlerRestartOnlyFailed(t *testing.T) {
 			Enabled: true,
 		},
 	}
-	pipeline.InsertJob(api.mustDB(), j2, s.ID, &pip)
+	pipeline.InsertJob(context.TODO(), api.mustDB(), j2, s.ID, &pip)
 	s.Jobs = append(s.Jobs, *j2)
 
 	pip.Stages = append(pip.Stages, *s)
@@ -2969,7 +2969,7 @@ func Test_postWorkflowRunHandlerRestartResync(t *testing.T) {
 			Enabled: true,
 		},
 	}
-	pipeline.InsertJob(api.mustDB(), j, s.ID, &pip)
+	pipeline.InsertJob(context.TODO(), api.mustDB(), j, s.ID, &pip)
 	s.Jobs = append(s.Jobs, *j)
 
 	j2 := &sdk.Job{
@@ -2978,7 +2978,7 @@ func Test_postWorkflowRunHandlerRestartResync(t *testing.T) {
 			Enabled: true,
 		},
 	}
-	pipeline.InsertJob(api.mustDB(), j2, s.ID, &pip)
+	pipeline.InsertJob(context.TODO(), api.mustDB(), j2, s.ID, &pip)
 	s.Jobs = append(s.Jobs, *j2)
 
 	pip.Stages = append(pip.Stages, *s)
@@ -3077,7 +3077,7 @@ func Test_postWorkflowRunHandlerRestartResync(t *testing.T) {
 			Enabled: true,
 		},
 	}
-	pipeline.InsertJob(api.mustDB(), j3, s.ID, &pip)
+	pipeline.InsertJob(context.TODO(), api.mustDB(), j3, s.ID, &pip)
 
 	uri = router.GetRoute("POST", api.postWorkflowRunHandler, vars)
 	test.NotEmpty(t, uri)

@@ -49,10 +49,9 @@ type EventPipelinePermissionDelete struct {
 
 // EventPipelineStageAdd represents the event when adding a stage
 type EventPipelineStageAdd struct {
-	Name         string         `json:"name"`
-	BuildOrder   int            `json:"build_order"`
-	Enabled      bool           `json:"enabled"`
-	Prerequisite []Prerequisite `json:"prerequisite"`
+	Name       string `json:"name"`
+	BuildOrder int    `json:"build_order"`
+	Enabled    bool   `json:"enabled"`
 }
 
 // EventPipelineStageMove represent the event when moving a stage
@@ -65,14 +64,12 @@ type EventPipelineStageMove struct {
 
 // EventPipelineStageUpdate represents the event when updating a stage
 type EventPipelineStageUpdate struct {
-	NewName         string         `json:"name"`
-	NewBuildOrder   int            `json:"build_order"`
-	NewPrerequisite []Prerequisite `json:"prerequisite"`
-	OldName         string         `json:"old_name"`
-	OldBuildOrder   int            `json:"old_build_order"`
-	OldPrerequisite []Prerequisite `json:"old_prerequisite"`
-	NewEnabled      bool           `json:"enabled"`
-	OldEnabled      bool           `json:"old_enabled"`
+	NewName       string `json:"name"`
+	NewBuildOrder int    `json:"build_order"`
+	OldName       string `json:"old_name"`
+	OldBuildOrder int    `json:"old_build_order"`
+	NewEnabled    bool   `json:"enabled"`
+	OldEnabled    bool   `json:"old_enabled"`
 }
 
 // EventPipelineStageDelete represents the event when deleting a stage

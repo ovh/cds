@@ -57,7 +57,7 @@ func Test_getWorkflowExportHandler(t *testing.T) {
 			},
 		},
 	}
-	pipeline.InsertJob(api.mustDB(), j, s.ID, &pip)
+	pipeline.InsertJob(context.TODO(), api.mustDB(), j, s.ID, &pip)
 	s.Jobs = append(s.Jobs, *j)
 
 	pip.Stages = append(pip.Stages, *s)
@@ -196,7 +196,7 @@ func Test_getWorkflowExportHandlerWithPermissions(t *testing.T) {
 			},
 		},
 	}
-	pipeline.InsertJob(api.mustDB(), j, s.ID, &pip)
+	pipeline.InsertJob(context.TODO(), api.mustDB(), j, s.ID, &pip)
 	s.Jobs = append(s.Jobs, *j)
 
 	pip.Stages = append(pip.Stages, *s)
@@ -319,7 +319,7 @@ func Test_getWorkflowPullHandler(t *testing.T) {
 			},
 		},
 	}
-	pipeline.InsertJob(api.mustDB(), j, s.ID, &pip)
+	pipeline.InsertJob(context.TODO(), api.mustDB(), j, s.ID, &pip)
 	s.Jobs = append(s.Jobs, *j)
 
 	pip.Stages = append(pip.Stages, *s)

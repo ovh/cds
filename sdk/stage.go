@@ -1,23 +1,20 @@
 package sdk
 
-import (
-	"strings"
-)
+import "time"
 
 // Stage Pipeline step that parallelize actions by order
 type Stage struct {
-	ID            int64                  `json:"id" yaml:"pipeline_stage_id"`
-	Name          string                 `json:"name"`
-	PipelineID    int64                  `json:"-" yaml:"-"`
-	BuildOrder    int                    `json:"build_order"`
-	Enabled       bool                   `json:"enabled"`
-	RunJobs       []WorkflowNodeJobRun   `json:"run_jobs"`
-	Prerequisites []Prerequisite         `json:"prerequisites"` //TODO: to delete
-	Conditions    WorkflowNodeConditions `json:"conditions"`
-	LastModified  int64                  `json:"last_modified"`
-	Jobs          []Job                  `json:"jobs"`
-	Status        string                 `json:"status"`
-	Warnings      []PipelineBuildWarning `json:"warnings"`
+	ID           int64                  `json:"id" yaml:"pipeline_stage_id" db:"id"`
+	Name         string                 `json:"name" db:"name"`
+	PipelineID   int64                  `json:"-" yaml:"-" db:"pipeline_id"`
+	BuildOrder   int                    `json:"build_order" db:"build_order"`
+	Enabled      bool                   `json:"enabled"  db:"enabled"`
+	Conditions   WorkflowNodeConditions `json:"conditions" db:"conditions"`
+	LastModified time.Time              `json:"last_modified" db:"last_modified"`
+
+	RunJobs []WorkflowNodeJobRun `json:"run_jobs" db:"-"`
+	Jobs    []Job                `json:"jobs" db:"-"`
+	Status  string               `json:"status" db:"-"`
 }
 
 // StageSummary is a light representation of stage for CDS event
@@ -46,22 +43,6 @@ func (s Stage) ToSummary() StageSummary {
 		sum.RunJobsSummary[i] = s.RunJobs[i].ToSummary()
 	}
 	return sum
-}
-
-// Conditions returns stage prerequisites as a set of WorkflowTriggerCondition regex
-func (s *Stage) PlainConditions() []WorkflowNodeCondition {
-	res := make([]WorkflowNodeCondition, len(s.Prerequisites))
-	for i, p := range s.Prerequisites {
-		if !strings.HasPrefix(p.Parameter, "workflow.") && !strings.HasPrefix(p.Parameter, "git.") {
-			p.Parameter = "cds.pip." + p.Parameter
-		}
-		res[i] = WorkflowNodeCondition{
-			Value:    p.ExpectedValue,
-			Variable: p.Parameter,
-			Operator: WorkflowConditionsOperatorRegex,
-		}
-	}
-	return res
 }
 
 // NewStage instantiate a new Stage

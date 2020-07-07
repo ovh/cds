@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
+	"time"
 
 	"github.com/go-gorp/gorp"
 	"github.com/lib/pq"
@@ -15,58 +16,31 @@ import (
 )
 
 // LoadStage Get a stage from its ID and pipeline ID
-func LoadStage(db gorp.SqlExecutor, pipelineID int64, stageID int64) (*sdk.Stage, error) {
-	query := `
-		SELECT pipeline_stage.id, pipeline_stage.pipeline_id, pipeline_stage.name, pipeline_stage.build_order, pipeline_stage.enabled
+func LoadStage(ctx context.Context, db gorp.SqlExecutor, pipelineID int64, stageID int64) (*sdk.Stage, error) {
+	query := gorpmapping.NewQuery(`
+		SELECT * 
 		FROM pipeline_stage
-		WHERE pipeline_stage.pipeline_id = $1
-		AND pipeline_stage.id = $2;
-		`
-
-	var stage sdk.Stage
-	rows, err := db.Query(query, pipelineID, stageID)
-	if err == sql.ErrNoRows {
-		return nil, sdk.WrapError(sdk.ErrNotFound, "stage does not exist")
-	}
-	if err != nil {
+		WHERE pipeline_id = $1 AND id = $2
+	`).Args(pipelineID, stageID)
+	var dbStage dbPipelineStage
+	if _, err := gorpmapping.Get(ctx, db, query, &dbStage); err != nil {
 		return nil, err
 	}
-	defer rows.Close()
-
-	for rows.Next() {
-		if err := rows.Scan(&stage.ID, &stage.PipelineID, &stage.Name, &stage.BuildOrder, &stage.Enabled); err != nil {
-			return nil, sdk.WithStack(err)
-		}
-	}
-
+	stage := dbStage.Stage()
 	return &stage, nil
 }
 
 // InsertStage insert given stage into given database
 func InsertStage(db gorp.SqlExecutor, s *sdk.Stage) error {
-	query := `INSERT INTO "pipeline_stage" (pipeline_id, name, build_order, enabled) VALUES($1,$2,$3,$4) RETURNING id`
-
-	if err := db.QueryRow(query, s.PipelineID, s.Name, s.BuildOrder, s.Enabled).Scan(&s.ID); err != nil {
-		return err
-	}
-	return insertStageConditions(db, s)
-}
-
-// insertStageConditions insert prequisite for given stage in database
-func insertStageConditions(db gorp.SqlExecutor, s *sdk.Stage) error {
 	if s.Conditions.LuaScript != "" {
 		s.Conditions.PlainConditions = nil
 	}
-	query := "UPDATE pipeline_stage SET conditions = $1 WHERE id = $2"
-
-	conditionsBts, err := json.Marshal(s.Conditions)
-
-	if err != nil {
-		return sdk.WithStack(err)
+	s.LastModified = time.Now()
+	dbStage := newdbStage(*s)
+	if err := gorpmapping.Insert(db, &dbStage); err != nil {
+		return err
 	}
-	if _, err := db.Exec(query, conditionsBts, s.ID); err != nil {
-		return sdk.WithStack(err)
-	}
+	s.ID = dbStage.ID
 	return nil
 }
 
@@ -137,7 +111,7 @@ func LoadPipelineStage(ctx context.Context, db gorp.SqlExecutor, p *sdk.Pipeline
 				Name:         stageName,
 				Enabled:      stageEnabled.Bool,
 				BuildOrder:   stageBuildOrder,
-				LastModified: stageLastModified.Time.Unix(),
+				LastModified: stageLastModified.Time,
 			}
 			mapStages[stageID] = stageData
 			stagesPtr = append(stagesPtr, stageData)
@@ -213,26 +187,19 @@ func LoadPipelineStage(ctx context.Context, db gorp.SqlExecutor, p *sdk.Pipeline
 	return nil
 }
 
-// updateStageOrder update only Stage order
-func updateStageOrder(db gorp.SqlExecutor, id int64, order int) error {
-	query := `UPDATE pipeline_stage SET build_order=$1 WHERE id=$2`
-	_, err := db.Exec(query, order, id)
-	return sdk.WithStack(err)
-}
-
 // UpdateStage update Stage and all its prequisites
 func UpdateStage(db gorp.SqlExecutor, s *sdk.Stage) error {
-	query := `UPDATE pipeline_stage SET name=$1, build_order=$2, enabled=$3 WHERE id=$4`
-	if _, err := db.Exec(query, s.Name, s.BuildOrder, s.Enabled, s.ID); err != nil {
+	dbStage := newdbStage(*s)
+	if err := gorpmapping.Update(db, &dbStage); err != nil {
 		return err
 	}
-
-	//Insert all prequisites
-	return insertStageConditions(db, s)
+	return nil
 }
 
 // DeleteStageByID Delete stage with associated pipeline action
 func DeleteStageByID(ctx context.Context, tx gorp.SqlExecutor, s *sdk.Stage) error {
+	// TODO  refactor to use delete cascade
+
 	nbOfStages, err := CountStageByPipelineID(tx, s.PipelineID)
 	if err != nil {
 		return err
@@ -250,39 +217,30 @@ func DeleteStageByID(ctx context.Context, tx gorp.SqlExecutor, s *sdk.Stage) err
 }
 
 func deleteStageByID(tx gorp.SqlExecutor, s *sdk.Stage) error {
-	//Delete stage
-	query := `DELETE FROM pipeline_stage WHERE id = $1`
-	_, err := tx.Exec(query, s.ID)
-	return sdk.WithStack(err)
+	dbStage := newdbStage(*s)
+	return gorpmapping.Delete(tx, &dbStage)
 }
 
 // CountStageByPipelineID Count the number of stages for the given pipeline
 func CountStageByPipelineID(db gorp.SqlExecutor, pipelineID int64) (int, error) {
-	var countStages int
 	query := `SELECT count(id) FROM "pipeline_stage"
 	 		  WHERE pipeline_id = $1`
-	err := db.QueryRow(query, pipelineID).Scan(&countStages)
-	return countStages, sdk.WithStack(err)
+	countStages, err := gorp.SelectInt(db, query, pipelineID)
+	if err != nil {
+		return 0, sdk.WithStack(err)
+	}
+	return int(countStages), nil
 }
 
 func seleteAllStageID(db gorp.SqlExecutor, pipelineID int64) ([]int64, error) {
 	var stageIDs []int64
-	query := `SELECT id FROM "pipeline_stage"
-	 		  WHERE pipeline_id = $1`
 
-	rows, err := db.Query(query, pipelineID)
-	if err != nil {
-		return stageIDs, sdk.WithStack(err)
-	}
-	defer rows.Close()
-
-	for rows.Next() {
-		var stageID int64
-		err = rows.Scan(&stageID)
-		if err != nil {
-			return stageIDs, sdk.WithStack(err)
-		}
-		stageIDs = append(stageIDs, stageID)
+	query := `
+		SELECT id FROM "pipeline_stage"
+		WHERE pipeline_id = $1
+	`
+	if _, err := db.Select(&stageIDs, query, pipelineID); err != nil {
+		return nil, err
 	}
 	return stageIDs, nil
 }
@@ -321,11 +279,12 @@ func MoveStage(db gorp.SqlExecutor, stageToMove *sdk.Stage, newBuildOrder int, p
 }
 
 func moveUpStages(db gorp.SqlExecutor, pipelineID int64, oldPosition, newPosition int) error {
-	query := `UPDATE pipeline_stage
-		  SET build_order=build_order+1
-		  WHERE build_order < $1
-		  AND build_order >= $2
-		  AND pipeline_id = $3`
+	query := `
+		UPDATE pipeline_stage
+		SET build_order=build_order+1
+ 		WHERE build_order < $1
+		AND build_order >= $2
+		AND pipeline_id = $3`
 	_, err := db.Exec(query, oldPosition, newPosition, pipelineID)
 	return sdk.WithStack(err)
 }

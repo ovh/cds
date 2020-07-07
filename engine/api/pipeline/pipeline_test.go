@@ -224,7 +224,7 @@ func TestLoadByWorkerModel(t *testing.T) {
 			}},
 		},
 	}
-	test.NoError(t, pipeline.InsertJob(db, &job1, 0, &pip1))
+	test.NoError(t, pipeline.InsertJob(context.TODO(), db, &job1, 0, &pip1))
 
 	// second pipeline with requirement model
 	pip2 := sdk.Pipeline{ProjectID: proj.ID, ProjectKey: proj.Key, Name: sdk.RandomString(10)}
@@ -240,7 +240,7 @@ func TestLoadByWorkerModel(t *testing.T) {
 			}},
 		},
 	}
-	test.NoError(t, pipeline.InsertJob(db, &job2, 0, &pip2))
+	test.NoError(t, pipeline.InsertJob(context.TODO(), db, &job2, 0, &pip2))
 
 	// third pipeline with requirement group/model
 	pip3 := sdk.Pipeline{ProjectID: proj.ID, ProjectKey: proj.Key, Name: sdk.RandomString(10)}
@@ -256,7 +256,7 @@ func TestLoadByWorkerModel(t *testing.T) {
 			}},
 		},
 	}
-	test.NoError(t, pipeline.InsertJob(db, &job3, 0, &pip3))
+	test.NoError(t, pipeline.InsertJob(context.TODO(), db, &job3, 0, &pip3))
 
 	pips, err := pipeline.LoadByWorkerModel(context.TODO(), db, &model1)
 	assert.NoError(t, err)

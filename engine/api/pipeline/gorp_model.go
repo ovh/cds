@@ -24,6 +24,40 @@ func (dbPipes Pipelines) Cast() []sdk.Pipeline {
 	return res
 }
 
+type dbPipelineStage struct {
+	ID           int64                      `json:"id" db:"id"`
+	Name         string                     `json:"name" db:"name"`
+	PipelineID   int64                      `json:"pipeline_id" db:"pipeline_id"`
+	BuildOrder   int                        `json:"build_order" db:"build_order"`
+	Enabled      bool                       `json:"enabled" db:"enabled"`
+	Conditions   sdk.WorkflowNodeConditions `json:"conditions" db:"conditions"`
+	LastModified time.Time                  `json:"last_modified" db:"last_modified"`
+}
+
+func (s dbPipelineStage) Stage() sdk.Stage {
+	return sdk.Stage{
+		ID:           s.ID,
+		Name:         s.Name,
+		PipelineID:   s.PipelineID,
+		BuildOrder:   s.BuildOrder,
+		Enabled:      s.Enabled,
+		Conditions:   s.Conditions,
+		LastModified: s.LastModified,
+	}
+}
+
+func newdbStage(s sdk.Stage) dbPipelineStage {
+	return dbPipelineStage{
+		ID:           s.ID,
+		Name:         s.Name,
+		LastModified: s.LastModified,
+		Conditions:   s.Conditions,
+		Enabled:      s.Enabled,
+		BuildOrder:   s.BuildOrder,
+		PipelineID:   s.PipelineID,
+	}
+}
+
 type pipelineAction struct {
 	ID              int64     `db:"id"`
 	PipelineStageID int64     `db:"pipeline_stage_id"`
@@ -54,6 +88,7 @@ func init() {
 		gorpmapping.New(Pipeline{}, "pipeline", true, "id"),
 		gorpmapping.New(PipelineAudit{}, "pipeline_audit", true, "id"),
 		gorpmapping.New(pipelineAction{}, "pipeline_action", true, "id"),
+		gorpmapping.New(dbPipelineStage{}, "pipeline_stage", true, "id"),
 	)
 }
 

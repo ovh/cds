@@ -210,11 +210,10 @@ func Test_WorkerModelUsage(t *testing.T) {
 
 	//Insert Stage
 	stage := &sdk.Stage{
-		Name:          "stage_Test_0",
-		PipelineID:    pip.ID,
-		BuildOrder:    1,
-		Enabled:       true,
-		Prerequisites: []sdk.Prerequisite{},
+		Name:       "stage_Test_0",
+		PipelineID: pip.ID,
+		BuildOrder: 1,
+		Enabled:    true,
 	}
 	pip.Stages = append(pip.Stages, *stage)
 
@@ -238,7 +237,7 @@ func Test_WorkerModelUsage(t *testing.T) {
 		},
 		Enabled: true,
 	}
-	errJob := pipeline.InsertJob(db, job, stage.ID, &pip)
+	errJob := pipeline.InsertJob(context.TODO(), db, job, stage.ID, &pip)
 	test.NoError(t, errJob)
 	assert.NotZero(t, job.PipelineActionID)
 	assert.NotZero(t, job.Action.ID)

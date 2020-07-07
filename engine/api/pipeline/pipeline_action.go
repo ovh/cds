@@ -34,7 +34,7 @@ func DeletePipelineActionByStage(ctx context.Context, db gorp.SqlExecutor, stage
 }
 
 // InsertJob  Insert a new Job ( pipeline_action + joinedAction )
-func InsertJob(db gorp.SqlExecutor, job *sdk.Job, stageID int64, pip *sdk.Pipeline) error {
+func InsertJob(ctx context.Context, db gorp.SqlExecutor, job *sdk.Job, stageID int64, pip *sdk.Pipeline) error {
 	// Insert Joined Action
 	job.Action.Type = sdk.JoinedAction
 	log.Debug("InsertJob> Insert Action %s on pipeline %s with %d children", job.Action.Name, pip.Name, len(job.Action.Actions))
@@ -58,7 +58,7 @@ func InsertJob(db gorp.SqlExecutor, job *sdk.Job, stageID int64, pip *sdk.Pipeli
 	} else {
 		//Else load the stage
 		var errLoad error
-		stage, errLoad = LoadStage(db, pip.ID, stageID)
+		stage, errLoad = LoadStage(ctx, db, pip.ID, stageID)
 		if errLoad != nil {
 			return errLoad
 		}

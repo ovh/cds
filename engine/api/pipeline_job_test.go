@@ -2,6 +2,7 @@ package api
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
@@ -119,7 +120,7 @@ func TestUpdateJobHandler(t *testing.T) {
 			Name:    "myJob",
 		},
 	}
-	test.NoError(t, pipeline.InsertJob(api.mustDB(), job, stage.ID, pip))
+	test.NoError(t, pipeline.InsertJob(context.TODO(), api.mustDB(), job, stage.ID, pip))
 	assert.NotZero(t, job.PipelineActionID)
 	assert.NotZero(t, job.Action.ID)
 
@@ -206,7 +207,7 @@ func TestUpdateInvalidJobHandler(t *testing.T) {
 			Name:    "myJob",
 		},
 	}
-	test.NoError(t, pipeline.InsertJob(api.mustDB(), job, stage1.ID, pip))
+	test.NoError(t, pipeline.InsertJob(context.TODO(), api.mustDB(), job, stage1.ID, pip))
 	assert.NotZero(t, job.PipelineActionID)
 	assert.NotZero(t, job.Action.ID)
 
@@ -280,7 +281,7 @@ func TestDeleteJobHandler(t *testing.T) {
 			Name:    "myJob",
 		},
 	}
-	test.NoError(t, pipeline.InsertJob(api.mustDB(), job, stage.ID, pip))
+	test.NoError(t, pipeline.InsertJob(context.TODO(), api.mustDB(), job, stage.ID, pip))
 	assert.NotZero(t, job.PipelineActionID)
 	assert.NotZero(t, job.Action.ID)
 
