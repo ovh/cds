@@ -428,6 +428,7 @@ Parameters  exclude: Exclude some files, one file per line loglevel: Log Level: 
 <li><strong>output</strong>: Directory where output xunit result file</li>
 <li><strong>parallel</strong>: Launch Test Suites in parallel. Enter here number of routines</li>
 <li><strong>path</strong>: Path containers yml venom files. Format: adirectory/, ./<em>aTest.yml, ./foo/b</em>/*<em>/z</em>.yml</li>
+<li><strong>stop-on-failure</strong>: Stop running Test Suite on first Test Case failure</li>
 <li><strong>vars</strong>: Empty: all {{.cds&hellip;}} vars will be rewrited. Otherwise, you can limit rewrite to some variables. Example, enter cds.app.yourvar,cds.build.foo,myvar=foo to rewrite {{.cds.app.yourvar}}, {{.cds.build.foo}} and {{.foo}}. Default: Empty</li>
 <li><strong>vars-from-file</strong>: filename.yaml or filename.json. See <a href="https://github.com/ovh/venom#run-venom-with-file-var">https://github.com/ovh/venom#run-venom-with-file-var</a></li>
 </ul>
