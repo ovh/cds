@@ -75,7 +75,7 @@ func (api *API) postRegisterWorkerHandler() service.Handler {
 		}
 
 		// Try to register worker
-		wk, err := worker.RegisterWorker(ctx, tx, api.Cache, workerTokenFromHatchery.Worker, hatchSrv.ID, workerConsumer, registrationForm)
+		wk, err := worker.RegisterWorker(ctx, tx, api.Cache, workerTokenFromHatchery.Worker, *hatchSrv, workerConsumer, registrationForm)
 		if err != nil {
 			return sdk.NewErrorWithStack(
 				sdk.WrapError(err, "[%s] Registering failed", workerTokenFromHatchery.Worker.WorkerName),
@@ -119,7 +119,7 @@ func (api *API) getWorkersHandler() service.Handler {
 		var workers []sdk.Worker
 		var err error
 		if isHatchery(ctx) {
-			workers, err = worker.LoadByHatcheryID(ctx, api.mustDB(), getAPIConsumer(ctx).Service.ID)
+			workers, err = worker.LoadAllByHatcheryID(ctx, api.mustDB(), getAPIConsumer(ctx).Service.ID)
 			if err != nil {
 				return err
 			}
@@ -153,7 +153,7 @@ func (api *API) disableWorkerHandler() service.Handler {
 			if err != nil {
 				return sdk.WrapError(sdk.ErrForbidden, "Cannot disable a worker from this hatchery: %v", err)
 			}
-			if wk.HatcheryID != hatcherySrv.ID {
+			if wk.HatcheryID != nil && *wk.HatcheryID != hatcherySrv.ID {
 				return sdk.WrapError(sdk.ErrForbidden, "Cannot disable a worker from hatchery (expected: %d/actual: %d)", wk.HatcheryID, hatcherySrv.ID)
 			}
 		}

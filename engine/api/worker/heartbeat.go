@@ -47,12 +47,6 @@ func DeleteDeadWorkers(ctx context.Context, db *gorp.DbMap) error {
 			continue
 		}
 
-		if _, errU := tx.Exec("UPDATE workflow_node_run_job SET worker_id = NULL WHERE worker_id = $1", workers[i].ID); errU != nil {
-			log.Warning(ctx, "deleteDeadWorkers> Cannot update workflow_node_run_job : %v", errU)
-			_ = tx.Rollback()
-			continue
-		}
-
 		if err := tx.Commit(); err != nil {
 			log.Error(ctx, "deleteDeadWorkers> Cannot commit transaction : %v", err)
 		}
