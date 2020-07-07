@@ -150,7 +150,7 @@ func TestServiceLog(t *testing.T) {
 	require.NoError(t, err)
 	w := sdk.Worker{
 		Name:       signature.Service.WorkerName,
-		HatcheryID: signature.Service.HatcheryID,
+		HatcheryID: &signature.Service.HatcheryID,
 		PrivateKey: []byte(base64.StdEncoding.EncodeToString(wKey)),
 		JobRunID:   &signature.JobID,
 	}
@@ -169,5 +169,4 @@ func TestServiceLog(t *testing.T) {
 	require.NoError(t, s.handleLogMessage(context.TODO(), []byte(message)))
 
 	require.True(t, gock.IsDone())
-
 }

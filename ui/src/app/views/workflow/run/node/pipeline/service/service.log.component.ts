@@ -11,8 +11,8 @@ import { Select, Store } from '@ngxs/store';
 import * as AU from 'ansi_up';
 import { PipelineStatus, ServiceLog } from 'app/model/pipeline.model';
 import { WorkflowNodeJobRun } from 'app/model/workflow.run.model';
+import { WorkflowService } from 'app/service/workflow/workflow.service';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
-import { CDSWebWorker } from 'app/shared/worker/web.worker';
 import { ProjectState } from 'app/store/project.state';
 import { WorkflowState, WorkflowStateModel } from 'app/store/workflow.state';
 import { Observable, Subscription } from 'rxjs';
@@ -25,10 +25,8 @@ import { Observable, Subscription } from 'rxjs';
 })
 @AutoUnsubscribe()
 export class WorkflowServiceLogComponent implements OnDestroy, OnInit {
-
     @Select(WorkflowState.getSelectedWorkflowNodeJobRun()) nodeJobRun$: Observable<WorkflowNodeJobRun>;
     nodeJobRunSubs: Subscription;
-
 
     @ViewChild('logsContent') logsElt: ElementRef;
 
@@ -36,7 +34,6 @@ export class WorkflowServiceLogComponent implements OnDestroy, OnInit {
 
     serviceLogs: Array<ServiceLog>;
 
-    worker: CDSWebWorker;
     workerSubscription: Subscription;
 
     currentRunJobID: number;
@@ -50,7 +47,9 @@ export class WorkflowServiceLogComponent implements OnDestroy, OnInit {
 
     constructor(
         private _store: Store,
-        private _cd: ChangeDetectorRef
+        private _cd: ChangeDetectorRef,
+        private _ngZone: NgZone,
+        private _workflowService: WorkflowService
     ) {
         this.zone = new NgZone({ enableLongStackTrace: false });
     }
@@ -66,7 +65,7 @@ export class WorkflowServiceLogComponent implements OnDestroy, OnInit {
             }
             this.currentRunJobID = njr.id;
             this.currentRunJobStatus = njr.status;
-            if (!this.worker && (!this.serviceLogs || this.serviceLogs.length === 0)) {
+            if (!this.workerSubscription && (!this.serviceLogs || this.serviceLogs.length === 0)) {
                 this.initWorker();
             }
             this._cd.markForCheck();
@@ -85,38 +84,46 @@ export class WorkflowServiceLogComponent implements OnDestroy, OnInit {
             this.loading = true;
         }
 
-        if (!this.worker) {
-            this.worker = new CDSWebWorker('./assets/worker/web/workflow-service-log.js');
-            this.worker.start({
-                key: this._store.selectSnapshot(ProjectState.projectSnapshot).key,
-                workflowName: this._store.selectSnapshot(WorkflowState.workflowSnapshot).name,
-                number: (<WorkflowStateModel>this._store.selectSnapshot(WorkflowState)).workflowNodeRun.num,
-                nodeRunId: (<WorkflowStateModel>this._store.selectSnapshot(WorkflowState)).workflowNodeRun.id,
-                runJobId: this.currentRunJobID,
-            });
+        let projectKey = this._store.selectSnapshot(ProjectState.projectSnapshot).key;
+        let workflowName = this._store.selectSnapshot(WorkflowState.workflowSnapshot).name;
+        let runNumber = (<WorkflowStateModel>this._store.selectSnapshot(WorkflowState)).workflowNodeRun.num;
+        let nodeRunId = (<WorkflowStateModel>this._store.selectSnapshot(WorkflowState)).workflowNodeRun.id;
+        let runJobId = this.currentRunJobID;
 
-            this.workerSubscription = this.worker.response().subscribe(msg => {
-                if (msg) {
-                    let serviceLogs: Array<ServiceLog> = JSON.parse(msg);
+        let callback = (serviceLogs: Array<ServiceLog>) => {
+            this.serviceLogs = serviceLogs.map((log, id) => {
+                this.showLog[id] = this.showLog[id] || false;
+                log.logsSplitted = this.getLogs(log).split('\n');
+                return log;
+            });
+            if (this.loading) {
+                this.loading = false;
+            }
+            this._cd.markForCheck();
+        };
+
+        this._workflowService.getServiceLog(projectKey, workflowName, runNumber, nodeRunId, runJobId).subscribe(callback);
+
+        if (this.currentRunJobStatus === PipelineStatus.SUCCESS
+            || this.currentRunJobStatus === PipelineStatus.FAIL
+            || this.currentRunJobStatus === PipelineStatus.STOPPED) {
+            return;
+        }
+
+        this._ngZone.runOutsideAngular(() => {
+            this.workerSubscription = Observable.interval(2000)
+                .mergeMap(_ => this._workflowService.getServiceLog(projectKey, workflowName, runNumber, nodeRunId, runJobId))
+                .subscribe(serviceLogs => {
                     this.zone.run(() => {
-                        this._cd.markForCheck();
-                        this.serviceLogs = serviceLogs.map((log, id) => {
-                            this.showLog[id] = this.showLog[id] || false;
-                            log.logsSplitted = this.getLogs(log).split('\n');
-                            return log;
-                        });
-                        if (this.loading) {
-                            this.loading = false;
-                        }
-                        if (this.currentRunJobStatus === PipelineStatus.SUCCESS || this.currentRunJobStatus === PipelineStatus.FAIL ||
-                            this.currentRunJobStatus === PipelineStatus.STOPPED) {
+                        callback(serviceLogs);
+                        if (this.currentRunJobStatus === PipelineStatus.SUCCESS
+                            || this.currentRunJobStatus === PipelineStatus.FAIL
+                            || this.currentRunJobStatus === PipelineStatus.STOPPED) {
                             this.stopWorker();
                         }
-                        this._cd.markForCheck();
                     });
-                }
-            });
-        }
+                });
+        });
     }
 
     ngOnDestroy() {
@@ -126,10 +133,6 @@ export class WorkflowServiceLogComponent implements OnDestroy, OnInit {
     stopWorker() {
         if (this.workerSubscription) {
             this.workerSubscription.unsubscribe();
-        }
-        if (this.worker) {
-            this.worker.stop();
-            this.worker = null;
         }
     }
 

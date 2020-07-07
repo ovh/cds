@@ -290,10 +290,6 @@ func Test_postApplicationDeploymentStrategyConfigHandler_InsertTwoDifferentInteg
 
 }
 
-func Test_deleteApplicationDeploymentStrategyConfigHandler(t *testing.T) {
-	//see Test_postApplicationDeploymentStrategyConfigHandler
-}
-
 func Test_postApplicationDeploymentStrategyConfigHandlerAsProvider(t *testing.T) {
 	api, tsURL := newTestServer(t)
 

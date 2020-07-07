@@ -1,4 +1,6 @@
-
+export class MonitoringVersion {
+    version: string;
+}
 
 // MonitoringStatus contains status of CDS Component
 export class MonitoringStatus {

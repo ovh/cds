@@ -388,7 +388,13 @@ func (r *Router) handle(uri string, scope HandlerScope, handlers ...*service.Han
 
 		// Log request start
 		start := time.Now()
-		log.Info(ctx, "%s | BEGIN | %s [%s]", req.Method, req.URL, rc.Name)
+		log.InfoWithFields(ctx, logrus.Fields{
+      "method":      req.Method,
+      "route":       cleanURL,
+      "request_uri": req.RequestURI,
+      "deprecated":  rc.IsDeprecated,
+      "handler":     rc.Name,
+    }, "%s | BEGIN | %s [%s]", req.Method, req.URL, rc.Name)
 
 		// Defer log request end
 		deferFunc := func(ctx context.Context) {
@@ -400,13 +406,15 @@ func (r *Router) handle(uri string, scope HandlerScope, handlers ...*service.Han
 			latency := end.Sub(start)
 
 			log.InfoWithFields(ctx, logrus.Fields{
-				"method":        req.Method,
-				"latency_int":   latency.Nanoseconds,
-				"latency_human": latency,
-				"status":        responseWriter.statusCode,
-				"route":         cleanURL,
-				"request_uri":   req.RequestURI,
-				"deprecated":    rc.IsDeprecated,
+				"method":      req.Method,
+				"latency_num": latency.Nanoseconds(),
+				"latency":     latency,
+				"status_num":  responseWriter.statusCode,
+				"status":      responseWriter.statusCode,
+				"route":       cleanURL,
+				"request_uri": req.RequestURI,
+				"deprecated":  rc.IsDeprecated,
+				"handler":     rc.Name,
 			}, "%s | END   | %s [%s] | [%d]", req.Method, req.URL, rc.Name, responseWriter.statusCode)
 
 			observability.RecordFloat64(ctx, ServerLatency, float64(latency)/float64(time.Millisecond))

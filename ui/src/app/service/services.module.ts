@@ -47,6 +47,7 @@ import {
 } from './project/project.resolver';
 import { ProjectService } from './project/project.service';
 import { ProjectStore } from './project/project.store';
+import { QueueService } from './queue/queue.service';
 import { RepoManagerService } from './repomanager/project.repomanager.service';
 import { RequirementService } from './requirement/requirement.service';
 import { RequirementStore } from './requirement/requirement.store';
@@ -113,6 +114,7 @@ export class ServicesModule {
                 ProjectService,
                 ProjectAuditService,
                 ProjectStore,
+                QueueService,
                 RepoManagerService,
                 RequirementStore,
                 RequirementService,
@@ -178,6 +180,7 @@ export {
     ProjectForWorkflowResolver,
     ProjectStore,
     ProjectAuditService,
+    QueueService,
     RepoManagerService,
     RequirementStore,
     RouterService,

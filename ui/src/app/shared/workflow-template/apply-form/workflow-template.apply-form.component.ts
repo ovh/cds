@@ -8,6 +8,9 @@ import {
     Output
 } from '@angular/core';
 import { Router } from '@angular/router';
+import { Store } from '@ngxs/store';
+import { EventService } from 'app/event.service';
+import { EventType } from 'app/model/event.model';
 import { Operation } from 'app/model/operation.model';
 import { Project } from 'app/model/project.model';
 import {
@@ -19,10 +22,10 @@ import {
 } from 'app/model/workflow-template.model';
 import { Workflow } from 'app/model/workflow.model';
 import { WorkflowTemplateService } from 'app/service/workflow-template/workflow-template.service';
-import { WorkflowService } from 'app/service/workflow/workflow.service';
 import { ParamData as AsCodeParamData } from 'app/shared/ascode/save-form/ascode.save-form.component';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
-import { Observable, Subscription } from 'rxjs';
+import { EventState } from 'app/store/event.state';
+import { Subscription } from 'rxjs';
 import { finalize, first } from 'rxjs/operators';
 
 @Component({
@@ -56,7 +59,8 @@ export class WorkflowTemplateApplyFormComponent implements OnChanges {
         private _workflowTemplateService: WorkflowTemplateService,
         private _router: Router,
         private _cd: ChangeDetectorRef,
-        private _workflowService: WorkflowService
+        private _eventService: EventService,
+        private _store: Store
     ) { }
 
     ngOnChanges() {
@@ -81,7 +85,7 @@ export class WorkflowTemplateApplyFormComponent implements OnChanges {
                 this.asCodeParameters.branch_name, this.asCodeParameters.commit_message)
                 .subscribe(o => {
                     this.asCodeOperation = o;
-                    this.startPollingOperation(this.workflow.name);
+                    this.startPollingOperation();
                 });
             return;
         }
@@ -135,13 +139,15 @@ export class WorkflowTemplateApplyFormComponent implements OnChanges {
             });
     }
 
-    onSelectDetachChange(e: any) {
+    onSelectDetachChange() {
         this.detached = !this.detached;
     }
 
-    startPollingOperation(workflowName: string) {
-        this.pollingOperationSub = Observable.interval(1000)
-            .mergeMap(_ => this._workflowService.getAsCodeOperation(this.project.key, workflowName, this.asCodeOperation.uuid))
+    startPollingOperation() {
+        this.pollingOperationSub = this._store.select(EventState.last)
+            .filter(e => e && e.type_event === EventType.OPERATION && e.project_key === this.project.key)
+            .map(e => e.payload as Operation)
+            .filter(o => o.uuid === this.asCodeOperation.uuid)
             .first(o => o.status > 1)
             .pipe(finalize(() => {
                 this.loading = false;
@@ -150,6 +156,7 @@ export class WorkflowTemplateApplyFormComponent implements OnChanges {
             .subscribe(o => {
                 this.asCodeOperation = o;
             });
+        this._eventService.subscribeToOperation(this.project.key, this.asCodeOperation.uuid);
     }
 
     onAsCodeParamChange(param: AsCodeParamData): void {

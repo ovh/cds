@@ -124,6 +124,9 @@ export class WorkflowGraphComponent implements AfterViewInit {
     }
 
     clickOrigin() {
+        if (!this.svgContainer?.element?.nativeElement?.width?.baseVal || !this.svgContainer?.element?.nativeElement?.height?.baseVal) {
+            return;
+        }
         let w = this.svgContainer.element.nativeElement.width.baseVal.value - WorkflowGraphComponent.margin;
         let h = this.svgContainer.element.nativeElement.height.baseVal.value - WorkflowGraphComponent.margin;
         let gw = this.g.graph().width;

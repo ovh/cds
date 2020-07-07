@@ -431,13 +431,13 @@ func (api *API) postTemplateApplyHandler() service.Handler {
 							FromRepo:      existingWorkflow.FromRepository,
 							OperationUUID: ope.UUID,
 						}
-						asCodeEvent := ascode.UpdateAsCodeResult(ctx, api.mustDB(), api.Cache, *p, existingWorkflow.ID, *rootApp, ed, consumer)
-						if asCodeEvent != nil {
-							event.PublishAsCodeEvent(ctx, p.Key, *asCodeEvent, consumer)
-						}
+						ascode.UpdateAsCodeResult(ctx, api.mustDB(), api.Cache, *p, *existingWorkflow, *rootApp, ed, consumer)
 					}, api.PanicDump())
 
-					return service.WriteJSON(w, ope, http.StatusOK)
+					return service.WriteJSON(w, sdk.Operation{
+						UUID:   ope.UUID,
+						Status: ope.Status,
+					}, http.StatusOK)
 				}
 			}
 		}
@@ -673,10 +673,7 @@ func (api *API) postTemplateBulkHandler() service.Handler {
 								FromRepo:      existingWorkflow.FromRepository,
 								OperationUUID: ope.UUID,
 							}
-							asCodeEvent := ascode.UpdateAsCodeResult(ctx, api.mustDB(), api.Cache, *p, existingWorkflow.ID, *rootApp, ed, consumer)
-							if asCodeEvent != nil {
-								event.PublishAsCodeEvent(ctx, p.Key, *asCodeEvent, consumer)
-							}
+							ascode.UpdateAsCodeResult(ctx, api.mustDB(), api.Cache, *p, *existingWorkflow, *rootApp, ed, consumer)
 
 							bulk.Operations[i].Status = sdk.OperationStatusDone
 							if err := workflowtemplate.UpdateBulk(api.mustDB(), &bulk); err != nil {

@@ -235,11 +235,12 @@ func (s *Service) handleServiceLog(ctx context.Context, hatcheryID int64, hatche
 
 	// Get worker + check hatchery ID
 	w, err := s.getClearWorker(ctx, workerName)
+
 	if err != nil {
 		return err
 	}
-	if w.HatcheryID != signature.Service.HatcheryID {
-		return sdk.WrapError(sdk.ErrWrongRequest, "hatchery and worker does not match")
+	if w.HatcheryID == nil || *w.HatcheryID != signature.Service.HatcheryID {
+		return sdk.NewErrorFrom(sdk.ErrWrongRequest, "handleServiceLog: hatchery and worker does not match")
 	}
 
 	logs := sdk.ServiceLog{

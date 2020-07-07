@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/go-gorp/gorp"
 
@@ -14,8 +15,6 @@ import (
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/exportentities"
 )
-
-var CacheOperationKey = cache.Key("repositories", "operation", "push")
 
 func pushOperation(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj sdk.Project, data exportentities.WorkflowComponents, ope sdk.Operation) (*sdk.Operation, error) {
 	if ope.RepositoryStrategy.SSHKey != "" {
@@ -59,7 +58,7 @@ func pushOperation(ctx context.Context, db gorp.SqlExecutor, store cache.Store, 
 
 	ope.RepositoryStrategy.SSHKeyContent = sdk.PasswordPlaceholder
 	ope.RepositoryStrategy.Password = sdk.PasswordPlaceholder
-	_ = store.SetWithTTL(cache.Key(CacheOperationKey, ope.UUID), ope, 300)
+
 	return &ope, nil
 }
 
@@ -151,4 +150,43 @@ func GetRepositoryOperation(ctx context.Context, db gorp.SqlExecutor, uuid strin
 		return nil, sdk.WrapError(err, "unable to get operation")
 	}
 	return &ope, nil
+}
+
+// Poll repository operatino for given uuid.
+func Poll(ctx context.Context, db gorp.SqlExecutor, operationUUID string) (*sdk.Operation, error) {
+	f := func() (*sdk.Operation, error) {
+		ope, err := GetRepositoryOperation(ctx, db, operationUUID)
+		if err != nil {
+			return nil, sdk.WrapError(err, "unable to get repository operation %s", operationUUID)
+		}
+		switch ope.Status {
+		case sdk.OperationStatusError:
+			return nil, sdk.WrapError(ope.Error.ToError(), "repository operation in error")
+		case sdk.OperationStatusDone:
+			return ope, nil
+		}
+		return nil, nil
+	}
+
+	ope, err := f()
+	if ope != nil || err != nil {
+		return ope, err
+	}
+
+	ctx, cancel := context.WithTimeout(ctx, 1*time.Minute)
+	defer cancel()
+	tick := time.NewTicker(2 * time.Second)
+	defer tick.Stop()
+
+	for {
+		select {
+		case <-ctx.Done():
+			return nil, sdk.NewErrorFrom(sdk.ErrRepoOperationTimeout, "updating repository take too much time")
+		case <-tick.C:
+			ope, err := f()
+			if ope != nil || err != nil {
+				return ope, err
+			}
+		}
+	}
 }
