@@ -9,6 +9,7 @@ import (
 	"github.com/sirupsen/logrus"
 
 	"github.com/ovh/cds/engine/api/cache"
+	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/operation"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/sdk"
@@ -35,47 +36,26 @@ type EntityData struct {
 }
 
 // UpdateAsCodeResult pulls repositories operation and the create pullrequest + update workflow
-func UpdateAsCodeResult(ctx context.Context, db *gorp.DbMap, store cache.Store, proj sdk.Project, workflowHolderID int64, rootApp sdk.Application, ed EntityData, u sdk.Identifiable) *sdk.AsCodeEvent {
-	tick := time.NewTicker(2 * time.Second)
-	ctx, cancel := context.WithTimeout(ctx, 1*time.Minute)
-	defer cancel()
-
+func UpdateAsCodeResult(ctx context.Context, db *gorp.DbMap, store cache.Store, proj sdk.Project, workflowHolder sdk.Workflow, rootApp sdk.Application, ed EntityData, u sdk.Identifiable) {
 	var asCodeEvent *sdk.AsCodeEvent
 	globalOperation := sdk.Operation{
 		UUID: ed.OperationUUID,
 	}
 	var globalErr error
 
-forLoop:
-	for {
-		select {
-		case <-ctx.Done():
-			globalErr = sdk.NewErrorFrom(sdk.ErrRepoOperationTimeout, "updating repository take too much time")
-			break forLoop
-		case <-tick.C:
-			ope, err := operation.GetRepositoryOperation(ctx, db, ed.OperationUUID)
-			if err != nil {
-				globalErr = sdk.WrapError(err, "unable to get repository operation %s", ed.OperationUUID)
-				break forLoop
-			}
-			if ope.Status == sdk.OperationStatusError {
-				globalOperation.Error = ope.Error
-				globalErr = ope.Error.ToError()
-				break forLoop
-			}
-			if ope.Status == sdk.OperationStatusDone {
-				ae, err := createPullRequest(ctx, db, store, proj, workflowHolderID, rootApp, ed, u, ope.Setup)
-				if err != nil {
-					globalErr = err
-					break forLoop
-				}
-				asCodeEvent = ae
-				globalOperation.Status = sdk.OperationStatusDone
-				globalOperation.Setup.Push.PRLink = ae.PullRequestURL
-				break forLoop
-			}
+	ope, err := operation.Poll(ctx, db, ed.OperationUUID)
+	if err != nil {
+		globalErr = err
+	} else {
+		asCodeEvent, err = createPullRequest(ctx, db, store, proj, workflowHolder.ID, rootApp, ed, u, ope.Setup)
+		if err != nil {
+			globalErr = err
 		}
+		sdk.GoRoutine(context.Background(), fmt.Sprintf("UpdateAsCodeResult-pusblish-as-code-event-%s", asCodeEvent.ID), func(ctx context.Context) {
+			event.PublishAsCodeEvent(ctx, proj.Key, workflowHolder.Name, *asCodeEvent, u)
+		})
 	}
+
 	if globalErr != nil {
 		isErrWithStack := sdk.IsErrorWithStack(globalErr)
 		fields := logrus.Fields{}
@@ -85,14 +65,15 @@ forLoop:
 		log.ErrorWithFields(ctx, fields, "%s", globalErr)
 
 		globalOperation.Status = sdk.OperationStatusError
-		if globalOperation.Error == nil {
-			globalOperation.Error = sdk.ToOperationError(globalErr)
-		}
+		globalOperation.Error = sdk.ToOperationError(globalErr)
+	} else {
+		globalOperation.Status = sdk.OperationStatusDone
+		globalOperation.Setup.Push.PRLink = asCodeEvent.PullRequestURL
 	}
 
-	_ = store.SetWithTTL(cache.Key(operation.CacheOperationKey, globalOperation.UUID), globalOperation, 300)
-
-	return asCodeEvent
+	sdk.GoRoutine(context.Background(), fmt.Sprintf("UpdateAsCodeResult-pusblish-operation-%s", globalOperation.UUID), func(ctx context.Context) {
+		event.PublishOperation(ctx, proj.Key, globalOperation, u)
+	})
 }
 
 func createPullRequest(ctx context.Context, db *gorp.DbMap, store cache.Store, proj sdk.Project, workflowHolderID int64, rootApp sdk.Application, ed EntityData, u sdk.Identifiable, opeSetup sdk.OperationSetup) (*sdk.AsCodeEvent, error) {

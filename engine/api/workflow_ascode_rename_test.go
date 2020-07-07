@@ -7,6 +7,7 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/go-gorp/gorp"
 	"github.com/golang/mock/gomock"
@@ -55,17 +56,18 @@ func Test_WorkflowAsCodeRename(t *testing.T) {
 	vcsServer.Set("secret", "bar")
 	assert.NoError(t, repositoriesmanager.InsertProjectVCSServerLink(context.TODO(), db, &vcsServer))
 
-	// Perform a "import as-code operation" to create a new workflow
-	ope := `{"repo_fullname":"fsamin/go-repo",  "vcs_server": "github", "url":"https://github.com/fsamin/go-repo.git","strategy":{"connection_type":"https","ssh_key":"","user":"","password":"","branch":"","default_branch":"master","pgp_key":""},"setup":{"checkout":{"branch":"master"}}}`
-	uri := api.Router.GetRoute("POST", api.postImportAsCodeHandler, map[string]string{
-		"permProjectKey": proj.Key,
-	})
-
 	UUID := sdk.UUID()
 
 	servicesClients.EXPECT().
 		DoJSONRequest(gomock.Any(), "POST", "/operations", gomock.Any(), gomock.Any()).
-		Return(nil, 201, nil).Times(2)
+		DoAndReturn(
+			func(ctx context.Context, method, path string, in interface{}, out interface{}) (http.Header, int, error) {
+				ope := new(sdk.Operation)
+				ope.UUID = UUID
+				ope.Status = sdk.OperationStatusPending
+				*(out.(*sdk.Operation)) = *ope
+				return nil, 201, nil
+			}).Times(2)
 
 	servicesClients.EXPECT().
 		DoJSONRequest(gomock.Any(), "GET", "/vcs/github/repos/fsamin/go-repo", gomock.Any(), gomock.Any(), gomock.Any()).MinTimes(0)
@@ -135,7 +137,7 @@ version: v1.0`),
 					*(out.(*sdk.Operation)) = *ope
 					return nil, 200, nil
 				},
-			).Times(1),
+			).Times(2),
 		servicesClients.EXPECT().
 			DoJSONRequest(gomock.Any(), "GET", gomock.Any(), gomock.Any(), gomock.Any()).
 			DoAndReturn(
@@ -274,14 +276,19 @@ version: v1.0`),
 			},
 		).Times(1)
 
+	// Perform a "import as-code operation" to create a new workflow
+	ope := `{"repo_fullname":"fsamin/go-repo",  "vcs_server": "github", "url":"https://github.com/fsamin/go-repo.git","strategy":{"connection_type":"https","ssh_key":"","user":"","password":"","branch":"","default_branch":"master","pgp_key":""},"setup":{"checkout":{"branch":"master"}}}`
+	uri := api.Router.GetRoute("POST", api.postImportAsCodeHandler, map[string]string{
+		"permProjectKey": proj.Key,
+	})
 	req, err := http.NewRequest("POST", uri, strings.NewReader(ope))
 	require.NoError(t, err)
 	assets.AuthentifyRequest(t, req, u, pass)
-
-	// Do the request
 	w := httptest.NewRecorder()
 	api.Router.Mux.ServeHTTP(w, req)
-	assert.Equal(t, 201, w.Code)
+	require.Equal(t, 201, w.Code)
+	// Fake wait api event for operation done
+	time.Sleep(time.Second)
 
 	uri = api.Router.GetRoute("POST", api.postPerformImportAsCodeHandler, map[string]string{
 		"permProjectKey": prjKey,
@@ -290,17 +297,13 @@ version: v1.0`),
 	req, err = http.NewRequest("POST", uri, nil)
 	require.NoError(t, err)
 	assets.AuthentifyRequest(t, req, u, pass)
-
-	// Do the request
 	w = httptest.NewRecorder()
 	api.Router.Mux.ServeHTTP(w, req)
-	assert.Equal(t, 200, w.Code)
+	require.Equal(t, 200, w.Code)
 	t.Logf(w.Body.String())
 
 	wk, err := workflow.Load(context.Background(), db, api.Cache, *proj, "w-go-repo", workflow.LoadOptions{})
-	assert.NoError(t, err)
-	assert.NotNil(t, wk)
-
+	require.NoError(t, err)
 	require.Len(t, wk.WorkflowData.GetHooks(), 1)
 
 	for _, h := range wk.WorkflowData.GetHooks() {

@@ -11,7 +11,9 @@ import { EnvironmentState } from 'app/store/environment.state';
 import { PipelinesState } from 'app/store/pipelines.state';
 import { environment as env } from '../../environments/environment';
 import { AuthenticationState } from './authentication.state';
+import { EventState } from './event.state';
 import { ProjectState } from './project.state';
+import { QueueState } from './queue.state';
 import { WorkflowState } from './workflow.state';
 
 @NgModule({
@@ -26,9 +28,11 @@ import { WorkflowState } from './workflow.state';
             ApplicationsState,
             CDSState,
             EnvironmentState,
-            ProjectState,
+            EventState,
             PipelinesState,
-            WorkflowState,
+            ProjectState,
+            QueueState,
+            WorkflowState
         ], { developmentMode: !env.production })
     ],
     exports: [

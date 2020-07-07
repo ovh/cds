@@ -49,6 +49,7 @@ export class EventType {
     static WORKFLOW_DELETE = 'sdk.EventWorkflowDelete';
 
     static RUN_WORKFLOW_PREFIX = 'sdk.EventRunWorkflow';
+    static RUN_WORKFLOW_JOB = 'sdk.EventRunWorkflowJob';
     static RUN_WORKFLOW_NODE = 'sdk.EventRunWorkflowNode';
     static RUN_WORKFLOW_OUTGOING_HOOK = 'sdk.EventRunWorkflowOutgoingHook';
 
@@ -58,4 +59,6 @@ export class EventType {
     static BROADCAST_DELETE = 'sdk.EventBroadcastDelete';
 
     static ACTION_PREFIX = 'sdk.EventAction';
+
+    static OPERATION = 'sdk.EventOperation';
 }

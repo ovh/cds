@@ -64,17 +64,21 @@ func (s *Service) processPush(ctx context.Context, op *sdk.Operation) error {
 		}
 	}
 
+	// Erase existing cds directory for migration, if update make sure that the cds directory exists
 	if !op.Setup.Push.Update {
-		// Erase cds directory
-		_, errStat := os.Stat(path + "/.cds")
-		if errStat == nil {
+		if _, err := os.Stat(path + "/.cds"); err == nil {
 			if err := os.RemoveAll(path + "/.cds"); err != nil {
 				return sdk.WrapError(err, "error removing old .cds directory")
 			}
 		}
-		// Create files
 		if err := os.Mkdir(filepath.Join(path, ".cds"), os.ModePerm); err != nil {
 			return sdk.WrapError(err, "error creating .cds directory")
+		}
+	} else {
+		if _, err := os.Stat(path + "/.cds"); err != nil {
+			if err := os.Mkdir(filepath.Join(path, ".cds"), os.ModePerm); err != nil {
+				return sdk.WrapError(err, "error creating .cds directory")
+			}
 		}
 	}
 
