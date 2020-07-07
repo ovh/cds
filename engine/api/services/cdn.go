@@ -18,5 +18,5 @@ func GetCDNPublicTCPAdress(ctx context.Context, db gorp.SqlExecutor) (string, er
 			return addr.(string), nil
 		}
 	}
-	return "", sdk.WrapError(sdk.ErrNotFound, "unable to find any tcp configuration in CDN Uservice")
+	return "", sdk.NewErrorFrom(sdk.ErrNotFound, "unable to find any tcp configuration in CDN Uservice")
 }

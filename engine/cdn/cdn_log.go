@@ -314,7 +314,7 @@ func (s *Service) waitingJobs(ctx context.Context) {
 			keyListQueue := cache.Key(keyJobLogQueue, "*")
 			listKeys, err := s.Cache.Keys(keyListQueue)
 			if err != nil {
-				log.Error(ctx, "unable to list jobs queues %s", keyListQueue)
+				log.Error(ctx, "waitingJobs: unable to list jobs queues %s", keyListQueue)
 				continue
 			}
 
@@ -325,7 +325,7 @@ func (s *Service) waitingJobs(ctx context.Context) {
 
 				jobQueueKey, err := s.canDequeue(jobID)
 				if err != nil {
-					log.Error(ctx, "unable to check canDequeue %s: %v", jobQueueKey, err)
+					log.Error(ctx, "waitingJobs: unable to check canDequeue %s: %v", jobQueueKey, err)
 					continue
 				}
 				if jobQueueKey == "" {
@@ -334,7 +334,7 @@ func (s *Service) waitingJobs(ctx context.Context) {
 
 				sdk.GoRoutine(ctx, "cdn-dequeue-job-message", func(ctx context.Context) {
 					if err := s.dequeueJobMessages(ctx, jobQueueKey, jobID); err != nil {
-						log.Error(ctx, "unable to dequeue redis incoming job queue: %v", err)
+						log.Error(ctx, "waitingJobs: unable to dequeue redis incoming job queue: %v", err)
 					}
 				})
 			}
@@ -343,13 +343,13 @@ func (s *Service) waitingJobs(ctx context.Context) {
 }
 
 func (s *Service) dequeueJobMessages(ctx context.Context, jobLogsQueueKey string, jobID string) error {
-	log.Info(ctx, "Dequeue %s", jobLogsQueueKey)
+	log.Info(ctx, "dequeueJobMessages: Dequeue %s", jobLogsQueueKey)
 	var t0 = time.Now()
 	var t1 = time.Now()
 	var nbMessages int
 	defer func() {
 		delta := t1.Sub(t0)
-		log.Info(ctx, "processLogs[%s] - %d messages received in %v", jobLogsQueueKey, nbMessages, delta)
+		log.Info(ctx, "dequeueJobMessages: processLogs[%s] - %d messages received in %v", jobLogsQueueKey, nbMessages, delta)
 	}()
 
 	defer func() {
@@ -358,6 +358,7 @@ func (s *Service) dequeueJobMessages(ctx context.Context, jobLogsQueueKey string
 	}()
 
 	tick := time.NewTicker(5 * time.Second)
+	defer tick.Stop()
 	for {
 		select {
 		case <-ctx.Done():
@@ -365,17 +366,17 @@ func (s *Service) dequeueJobMessages(ctx context.Context, jobLogsQueueKey string
 		case <-tick.C:
 			b, err := s.Cache.Exist(jobLogsQueueKey)
 			if err != nil {
-				log.Error(ctx, "unable to check if queue still exist: %v", err)
+				log.Error(ctx, "dequeueJobMessages: unable to check if queue still exist: %v", err)
 				continue
 			} else if !b {
 				// leave dequeue if queue does not exist anymore
-				log.Info(ctx, "leaving job queue %s (queue no more exists)", jobLogsQueueKey)
+				log.Info(ctx, "dequeueJobMessages: leaving job queue %s (queue no more exists)", jobLogsQueueKey)
 				return nil
 			}
 			// heartbeat
 			heartbeatKey := cache.Key(keyJobHearbeat, jobID)
 			if err := s.Cache.SetWithTTL(heartbeatKey, true, 30); err != nil {
-				log.Error(ctx, "unable to hearbeat %s: %v", heartbeatKey, err)
+				log.Error(ctx, "dequeueJobMessages: unable to hearbeat %s: %v", heartbeatKey, err)
 				continue
 			}
 		default:
@@ -386,7 +387,7 @@ func (s *Service) dequeueJobMessages(ctx context.Context, jobLogsQueueKey string
 				if strings.Contains(err.Error(), "context deadline exceeded") {
 					return nil
 				}
-				log.Error(ctx, "unable to dequeue job logs queue %s: %v", jobLogsQueueKey, err)
+				log.Error(ctx, "dequeueJobMessages: unable to dequeue job logs queue %s: %v", jobLogsQueueKey, err)
 				continue
 			}
 			cancel()
@@ -406,7 +407,10 @@ func (s *Service) dequeueJobMessages(ctx context.Context, jobLogsQueueKey string
 				StepOrder:    hm.Signature.Worker.StepOrder,
 				Val:          currentLog,
 			}
-			return s.Client.QueueSendLogs(ctx, hm.Signature.JobID, l)
+			if err := s.Client.QueueSendLogs(ctx, hm.Signature.JobID, l); err != nil {
+				log.Error(ctx, "dequeueJobMessages: unable to send log to API: %v", err)
+				continue
+			}
 		}
 	}
 }
