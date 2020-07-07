@@ -51,7 +51,7 @@ func UpdateAsCodeResult(ctx context.Context, db *gorp.DbMap, store cache.Store, 
 		if err != nil {
 			globalErr = err
 		}
-		sdk.GoRoutine(context.Background(), fmt.Sprintf("UpdateAsCodeResult-pusblish-as-code-event-%s", asCodeEvent.ID), func(ctx context.Context) {
+		sdk.GoRoutine(context.Background(), fmt.Sprintf("UpdateAsCodeResult-pusblish-as-code-event-%d", asCodeEvent.ID), func(ctx context.Context) {
 			event.PublishAsCodeEvent(ctx, proj.Key, workflowHolder.Name, *asCodeEvent, u)
 		})
 	}
