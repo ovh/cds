@@ -218,10 +218,10 @@ func (s *Service) handleServiceLog(ctx context.Context, hatcheryID int64, hatche
 			return err
 		}
 		if wk.HatcheryID == nil {
-			return sdk.WrapError(sdk.ErrWrongRequest, "hatchery %d cannot send service log for worker %d started by %s that is no more linked to an hatchery", signature.Service.HatcheryID, wk.ID, wk.HatcheryName)
+			return sdk.WrapError(sdk.ErrWrongRequest, "hatchery %d cannot send service log for worker %s started by %s that is no more linked to an hatchery", signature.Service.HatcheryID, wk.ID, wk.HatcheryName)
 		}
 		if *wk.HatcheryID != signature.Service.HatcheryID {
-			return sdk.WrapError(sdk.ErrWrongRequest, "cannot send service log for worker %d from hatchery (expected: %d/actual: %d)", wk.ID, *wk.HatcheryID, signature.Service.HatcheryID)
+			return sdk.WrapError(sdk.ErrWrongRequest, "cannot send service log for worker %s from hatchery (expected: %d/actual: %d)", wk.ID, *wk.HatcheryID, signature.Service.HatcheryID)
 		}
 		logCache.Set(workerCacheKey, true, gocache.DefaultExpiration)
 	}
