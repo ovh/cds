@@ -13,6 +13,7 @@ import (
 	"github.com/golang/protobuf/ptypes/empty"
 
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/ovh/cds/sdk/grpcplugin/integrationplugin"
 	"github.com/ovh/cds/sdk/interpolate"
 )
@@ -106,9 +107,7 @@ func (e *arsenalDeploymentPlugin) Deploy(ctx context.Context, q *integrationplug
 		return fail("Error: unable to interpolate data: %v. Please check you integration configuration\n", err)
 	}
 
-	httpClient := &http.Client{
-		Timeout: 60 * time.Second,
-	}
+	httpClient := cdsclient.NewHTTPClient(60*time.Second, false)
 
 	// Prepare the request
 	req, err := http.NewRequest(http.MethodPost, arsenalHost+"/deploy", strings.NewReader(deployData))
