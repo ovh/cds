@@ -11,7 +11,7 @@ export class MonitoringService {
     getVersion(): Observable<MonitoringVersion> {
         let params = new HttpParams();
         params = params.append('ts', new Date().getTime().toString());
-        return this._http.get<MonitoringVersion>('/mon/version', { params });
+        return this._http.get<MonitoringVersion>('./mon/version', { params });
     }
 
     getStatus(): Observable<MonitoringStatus> {
