@@ -307,13 +307,11 @@ func (s *Service) refreshHatcheriesPK(ctx context.Context) error {
 }
 
 func (s *Service) waitingJobs(ctx context.Context) {
-	tick := time.NewTicker(250 * time.Millisecond)
-	defer tick.Stop()
 	for {
 		select {
 		case <-ctx.Done():
 			return
-		case _ = <-tick.C:
+		default:
 			// List all queues
 			keyListQueue := cache.Key(keyJobLogQueue, "*")
 			listKeys, err := s.Cache.Keys(keyListQueue)
@@ -342,6 +340,7 @@ func (s *Service) waitingJobs(ctx context.Context) {
 					}
 				})
 			}
+			time.Sleep(250 * time.Millisecond)
 		}
 	}
 }
