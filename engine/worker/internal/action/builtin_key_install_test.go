@@ -98,6 +98,8 @@ func TestRunInstallKeyAction_Absolute(t *testing.T) {
 	workingdir, err := w.BaseDir().Open("workingdir")
 	require.NoError(t, err)
 	w.SetContext(workerruntime.SetWorkingDirectory(ctx, workingdir))
+
+	w.SetGelfLogger(nil, logrus.New())
 	// End worker init
 
 	keyInstallAction := sdk.Action{
