@@ -28,4 +28,4 @@ systemd-configuration:
   restart: always
   wanted-by: multi-user.target
   environments: 
-    CDS_SERVICE: "api vcs hooks repositories ui"
+    CDS_SERVICE: "api vcs hooks repositories ui cdn"
