@@ -78,9 +78,13 @@ func (wk *CurrentWorker) InstallKey(key sdk.Variable) (*workerruntime.KeyRespons
 		}
 		cmd := exec.Command(gpgBin, "--import", tmpfile.Name())
 		var out bytes.Buffer
+		var outErr bytes.Buffer
 		cmd.Stdout = &out
+		cmd.Stderr = &outErr
 		if err := cmd.Run(); err != nil {
-			return nil, sdk.NewError(sdk.ErrWorkerErrorCommand, fmt.Errorf("Cannot import pgp key %s : %v", key.Name, err))
+			outString := string(out.Bytes())
+			outErrString := string(outErr.Bytes())
+			return nil, sdk.NewError(sdk.ErrWorkerErrorCommand, fmt.Errorf("Cannot import pgp key %s (%v): %s %s", key.Name, err, outString, outErrString))
 		}
 		return &workerruntime.KeyResponse{
 			Type:    sdk.KeyTypePGP,
