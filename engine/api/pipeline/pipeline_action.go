@@ -78,7 +78,7 @@ func getJobs(ctx context.Context, db gorp.SqlExecutor, stagesIDs []int64) ([]sdk
 				}
 			}
 			job.Action.Actions = steps
-
+			job.Action.Requirements = job.Action.FlattenRequirements()
 			jobs = append(jobs, job)
 			break
 		}

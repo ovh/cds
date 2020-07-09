@@ -49,6 +49,7 @@ func LoadPipelineStage(ctx context.Context, db gorp.SqlExecutor, p *sdk.Pipeline
 	query := gorpmapping.NewQuery(`
 		SELECT * from pipeline_stage
 		WHERE pipeline_id = $1
+		ORDER BY build_order ASC
     `).Args(p.ID)
 	if err := gorpmapping.GetAll(ctx, db, query, &dbStages); err != nil {
 		return err
@@ -81,6 +82,9 @@ func LoadPipelineStage(ctx context.Context, db gorp.SqlExecutor, p *sdk.Pipeline
 
 // UpdateStage update Stage and all its prequisites
 func UpdateStage(db gorp.SqlExecutor, s *sdk.Stage) error {
+	if s.Conditions.LuaScript != "" {
+		s.Conditions.PlainConditions = nil
+	}
 	dbStage := newdbStage(*s)
 	if err := gorpmapping.Update(db, &dbStage); err != nil {
 		return err

@@ -7,13 +7,13 @@ import (
 
 // Stage Pipeline step that parallelize actions by order
 type Stage struct {
-	ID           int64                  `json:"id" yaml:"pipeline_stage_id" db:"id"`
-	Name         string                 `json:"name" db:"name"`
-	PipelineID   int64                  `json:"-" yaml:"-" db:"pipeline_id"`
-	BuildOrder   int                    `json:"build_order" db:"build_order"`
-	Enabled      bool                   `json:"enabled"  db:"enabled"`
-	Conditions   WorkflowNodeConditions `json:"conditions" db:"conditions"`
-	LastModified time.Time              `json:"last_modified" db:"last_modified"`
+	ID           int64                  `json:"id" yaml:"pipeline_stage_id"`
+	Name         string                 `json:"name"`
+	PipelineID   int64                  `json:"-" yaml:"-"`
+	BuildOrder   int                    `json:"build_order"`
+	Enabled      bool                   `json:"enabled"`
+	Conditions   WorkflowNodeConditions `json:"conditions"`
+	LastModified time.Time              `json:"last_modified"`
 
 	RunJobs []WorkflowNodeJobRun `json:"run_jobs" db:"-"`
 	Jobs    []Job                `json:"jobs" db:"-"`
