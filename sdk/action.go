@@ -58,6 +58,9 @@ type Action struct {
 	FirstAudit   *AuditAction    `json:"first_audit,omitempty" db:"-"`
 	LastAudit    *AuditAction    `json:"last_audit,omitempty" db:"-"`
 	Editable     bool            `json:"editable,omitempty" db:"-"`
+
+	// aggregates: action_edge identifiers
+	ActionEdgeID int64 `json:"-,omitempty" db:"-"`
 }
 
 // UsageAction represent a action using an action.

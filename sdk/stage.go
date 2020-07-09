@@ -1,6 +1,9 @@
 package sdk
 
-import "time"
+import (
+	"encoding/json"
+	"time"
+)
 
 // Stage Pipeline step that parallelize actions by order
 type Stage struct {
@@ -15,6 +18,44 @@ type Stage struct {
 	RunJobs []WorkflowNodeJobRun `json:"run_jobs" db:"-"`
 	Jobs    []Job                `json:"jobs" db:"-"`
 	Status  string               `json:"status" db:"-"`
+}
+
+func (s *Stage) UnmarshalJSON(data []byte) error {
+	var tmp struct {
+		ID         int64                  `json:"id"`
+		Name       string                 `json:"name"`
+		BuildOrder int                    `json:"build_order"`
+		Enabled    bool                   `json:"enabled"`
+		Conditions WorkflowNodeConditions `json:"conditions"`
+		RunJobs    []WorkflowNodeJobRun   `json:"run_jobs"`
+		Jobs       []Job                  `json:"jobs"`
+		Status     string                 `json:"status"`
+	}
+
+	if err := json.Unmarshal(data, &tmp); err != nil {
+		return err
+	}
+	s.ID = tmp.ID
+	s.Name = tmp.Name
+	s.BuildOrder = tmp.BuildOrder
+	s.Enabled = tmp.Enabled
+	s.Conditions = tmp.Conditions
+	s.RunJobs = tmp.RunJobs
+	s.Jobs = tmp.Jobs
+	s.Status = tmp.Status
+
+	var v map[string]interface{}
+	if err := json.Unmarshal(data, &v); err != nil {
+		return err
+	}
+	if lastModifiedNumber, ok := v["last_modified"].(float64); ok {
+		s.LastModified = time.Unix(int64(lastModifiedNumber), 0)
+	}
+	if lastModifiedString, ok := v["last_modified"].(string); ok {
+		date, _ := time.Parse(time.RFC3339, lastModifiedString)
+		s.LastModified = date
+	}
+	return nil
 }
 
 // StageSummary is a light representation of stage for CDS event

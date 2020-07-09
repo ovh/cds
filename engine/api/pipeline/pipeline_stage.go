@@ -2,14 +2,10 @@ package pipeline
 
 import (
 	"context"
-	"database/sql"
-	"encoding/json"
 	"time"
 
 	"github.com/go-gorp/gorp"
-	"github.com/lib/pq"
 
-	"github.com/ovh/cds/engine/api/action"
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/engine/api/observability"
 	"github.com/ovh/cds/sdk"
@@ -49,141 +45,37 @@ func LoadPipelineStage(ctx context.Context, db gorp.SqlExecutor, p *sdk.Pipeline
 	_, end := observability.Span(ctx, "pipeline.LoadPipelineStage")
 	defer end()
 
-	p.Stages = []sdk.Stage{}
-
-	query := `
-	SELECT pipeline_stage_R.id as stage_id, pipeline_stage_R.pipeline_id, pipeline_stage_R.name, pipeline_stage_R.last_modified,
-			pipeline_stage_R.build_order, pipeline_stage_R.enabled, pipeline_stage_R.conditions,
-			pipeline_action_R.id as pipeline_action_id, pipeline_action_R.action_id, pipeline_action_R.action_last_modified,
-			pipeline_action_R.action_args, pipeline_action_R.action_enabled
-	FROM (
-		SELECT pipeline_stage.id, pipeline_stage.pipeline_id,
-				pipeline_stage.name, pipeline_stage.last_modified, pipeline_stage.build_order,
-				pipeline_stage.enabled,
-				pipeline_stage.conditions
-		FROM pipeline_stage
+	var dbStages []dbPipelineStage
+	query := gorpmapping.NewQuery(`
+		SELECT * from pipeline_stage
 		WHERE pipeline_id = $1
-	) as pipeline_stage_R
-	LEFT OUTER JOIN (
-		SELECT pipeline_action.id, action.id as action_id, action.name as action_name, action.last_modified as action_last_modified,
-				pipeline_action.args as action_args, pipeline_action.enabled as action_enabled,
-				pipeline_action.pipeline_stage_id
-		FROM action
-		JOIN pipeline_action ON pipeline_action.action_id = action.id
-	) as pipeline_action_R ON pipeline_action_R.pipeline_stage_id = pipeline_stage_R.id
-	ORDER BY pipeline_stage_R.build_order, pipeline_action_R.action_name, pipeline_action_R.id ASC`
+    `).Args(p.ID)
+	if err := gorpmapping.GetAll(ctx, db, query, &dbStages); err != nil {
+		return err
+	}
+	p.Stages = make([]sdk.Stage, len(dbStages))
+	stageIDs := make([]int64, len(dbStages))
+	for i, dbS := range dbStages {
+		p.Stages[i] = dbS.Stage()
+		stageIDs[i] = dbS.ID
+	}
 
-	rows, err := db.Query(query, p.ID)
+	// Get all jobs
+	jobs, err := getJobs(ctx, db, stageIDs)
 	if err != nil {
-		return sdk.WithStack(err)
+		return err
 	}
-	defer rows.Close()
 
-	mapStages := map[int64]*sdk.Stage{}
-	mapAllActions := map[int64]*sdk.Job{}
-	mapActionsStages := map[int64][]sdk.Job{}
-	mapArgs := map[int64][]string{}
-	stagesPtr := []*sdk.Stage{}
-
-	for rows.Next() {
-		var stageID, pipelineID int64
-		var stageBuildOrder int
-		var pipelineActionID, actionID sql.NullInt64
-		var stageName string
-		var stageConditions, actionArgs sql.NullString
-		var stageEnabled, actionEnabled sql.NullBool
-		var stageLastModified, actionLastModified pq.NullTime
-
-		err = rows.Scan(
-			&stageID, &pipelineID, &stageName, &stageLastModified,
-			&stageBuildOrder, &stageEnabled, &stageConditions, &pipelineActionID, &actionID, &actionLastModified,
-			&actionArgs, &actionEnabled)
-		if err != nil {
-			return sdk.WithStack(err)
-		}
-
-		//Stage
-		stageData := mapStages[stageID]
-		if stageData == nil {
-			stageData = &sdk.Stage{
-				ID:           stageID,
-				PipelineID:   pipelineID,
-				Name:         stageName,
-				Enabled:      stageEnabled.Bool,
-				BuildOrder:   stageBuildOrder,
-				LastModified: stageLastModified.Time,
-			}
-			mapStages[stageID] = stageData
-			stagesPtr = append(stagesPtr, stageData)
-		}
-
-		if err := gorpmapping.JSONNullString(stageConditions, &stageData.Conditions); err != nil {
-			return sdk.WrapError(err, "cannot unmarshal stage conditions for stage id %d", stageID)
-		}
-
-		//Get actions
-		if pipelineActionID.Valid && actionID.Valid && actionEnabled.Valid && actionLastModified.Valid {
-			j := mapAllActions[pipelineActionID.Int64]
-			if j == nil {
-				j = &sdk.Job{
-					PipelineStageID:  stageID,
-					PipelineActionID: pipelineActionID.Int64,
-					LastModified:     actionLastModified.Time.Unix(),
-					Enabled:          actionEnabled.Bool,
-					Action: sdk.Action{
-						ID: actionID.Int64,
-					},
-				}
-				mapAllActions[pipelineActionID.Int64] = j
-				mapActionsStages[stageID] = append(mapActionsStages[stageID], *j)
-
-				if actionArgs.Valid {
-					mapArgs[stageID] = append(mapArgs[stageID], actionArgs.String)
-				} else {
-					mapArgs[stageID] = append(mapArgs[stageID], "[]")
-				}
+	// Add job in stage
+	for _, j := range jobs {
+		for i := range p.Stages {
+			s := &p.Stages[i]
+			if s.ID == j.PipelineStageID {
+				s.Jobs = append(s.Jobs, j)
+				break
 			}
 		}
 	}
-
-	//load job
-	for id := range mapStages {
-		for index := range mapActionsStages[id] {
-			job := mapActionsStages[id][index]
-
-			var a *sdk.Action
-			a, err = action.LoadByID(ctx, db, mapActionsStages[id][index].Action.ID,
-				action.LoadOptions.WithParameters,
-				action.LoadOptions.WithRequirements,
-				action.LoadOptions.WithChildren,
-			)
-			if err != nil {
-				return sdk.WrapError(err, "cannot action.LoadActionByID %d", mapActionsStages[id][index].Action.ID)
-			}
-			var pipelineActionParameter []sdk.Parameter
-			var isUpdated bool
-			err = json.Unmarshal([]byte(mapArgs[id][index]), &pipelineActionParameter)
-			if err != nil {
-				return sdk.WithStack(err)
-			}
-
-			for i := range a.Parameters {
-				isUpdated, pipelineActionParameter = updateParamInList(pipelineActionParameter, a.Parameters[i])
-				if !isUpdated {
-					pipelineActionParameter = append(pipelineActionParameter, a.Parameters[i])
-				}
-			}
-
-			job.Action = *a
-
-			// Insert job also
-			mapStages[id].Jobs = append(mapStages[id].Jobs, job)
-		}
-	}
-	for _, s := range stagesPtr {
-		p.Stages = append(p.Stages, *s)
-	}
-
 	return nil
 }
 
@@ -264,7 +156,7 @@ func DeleteAllStage(ctx context.Context, db gorp.SqlExecutor, pipelineID int64) 
 }
 
 // MoveStage Move a stage
-func MoveStage(db gorp.SqlExecutor, stageToMove *sdk.Stage, newBuildOrder int, p *sdk.Pipeline) error {
+func MoveStage(db gorp.SqlExecutor, stageToMove *sdk.Stage, newBuildOrder int) error {
 	if stageToMove.BuildOrder > newBuildOrder {
 		if err := moveUpStages(db, stageToMove.PipelineID, stageToMove.BuildOrder, newBuildOrder); err != nil {
 			return err

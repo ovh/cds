@@ -19,15 +19,19 @@ var LoadOptions = struct {
 	WithRequirements LoadOptionFunc
 	WithParameters   LoadOptionFunc
 	WithChildren     LoadOptionFunc
+	WithFlatChildren LoadOptionFunc
 	WithAudits       LoadOptionFunc
 	WithGroup        LoadOptionFunc
+	WithEdge         LoadOptionFunc
 }{
 	Default:          loadDefault,
 	WithRequirements: loadRequirements,
 	WithParameters:   loadParameters,
-	WithChildren:     loadChildren,
+	WithChildren:     loadChildrenRecursively,
+	WithFlatChildren: loadFlatChildren,
 	WithAudits:       loadAudits,
 	WithGroup:        loadGroup,
+	WithEdge:         loadEdge,
 }
 
 func loadDefault(ctx context.Context, db gorp.SqlExecutor, as ...*sdk.Action) error {
@@ -39,7 +43,7 @@ func loadDefault(ctx context.Context, db gorp.SqlExecutor, as ...*sdk.Action) er
 		return err
 	}
 
-	if err := loadChildren(ctx, db, as...); err != nil {
+	if err := loadChildrenRecursively(ctx, db, as...); err != nil {
 		return err
 	}
 
@@ -119,15 +123,123 @@ func loadAudits(ctx context.Context, db gorp.SqlExecutor, as ...*sdk.Action) err
 	return nil
 }
 
-func loadChildren(ctx context.Context, db gorp.SqlExecutor, as ...*sdk.Action) error {
+func loadEdge(ctx context.Context, db gorp.SqlExecutor, as ...*sdk.Action) error {
 	// don't try to load children if action is builtin
 	actionsNotBuiltIn := sdk.ActionsFilterNotTypes(as, sdk.BuiltinAction)
 	if len(actionsNotBuiltIn) == 0 {
 		return nil
 	}
+	actionEdge, err := loadEdgesByParentIDs(ctx, db, sdk.ActionsToIDs(actionsNotBuiltIn), loadEdgeParameters)
+	if err != nil {
+		return nil
+	}
 
+	for i := range as {
+		a := as[i]
+		a.Actions = make([]sdk.Action, 0)
+		for j := range actionEdge {
+			ae := actionEdge[j]
+			if ae.ParentID != a.ID {
+				continue
+			}
+			params := make([]sdk.Parameter, len(ae.Parameters))
+			for i, p := range ae.Parameters {
+				params[i] = sdk.Parameter{
+					ID:          p.ID,
+					Name:        p.Name,
+					Type:        p.Type,
+					Value:       p.Value,
+					Description: p.Description,
+					Advanced:    p.Advanced,
+				}
+			}
+			a.Actions = append(a.Actions, sdk.Action{ID: ae.ChildID, Parameters: params, ActionEdgeID: ae.ID})
+		}
+	}
+	return nil
+}
+
+func loadFlatChildren(ctx context.Context, db gorp.SqlExecutor, as ...*sdk.Action) error {
+	// don't try to load children if action is builtin
+	actionsNotBuiltIn := sdk.ActionsFilterNotTypes(as, sdk.BuiltinAction)
+	if len(actionsNotBuiltIn) == 0 {
+		return nil
+	}
 	// get edges for all actions, then init a map of edges for all actions
-	edges, err := loadEdgesByParentIDs(ctx, db, sdk.ActionsToIDs(actionsNotBuiltIn))
+	edges, err := loadEdgesByParentIDs(ctx, db, sdk.ActionsToIDs(actionsNotBuiltIn), loadEdgeParameters)
+	if err != nil {
+		return err
+	}
+
+	mapActions := make(map[int64]*sdk.Action)
+	for i := range as {
+		mapActions[as[i].ID] = as[i]
+	}
+	mapChilds := make(map[int64][]*sdk.Action)
+
+	for _, e := range edges {
+		parent := mapActions[e.ParentID]
+		child := mapActions[e.ChildID]
+
+		// Fill child with step data
+		child.StepName = e.StepName
+		child.Optional = e.Optional
+		child.AlwaysExecuted = e.AlwaysExecuted
+		child.Enabled = e.Enabled
+
+		child.Parameters = make([]sdk.Parameter, len(e.Parameters))
+		for i, ep := range e.Parameters {
+			child.Parameters[i] = sdk.Parameter{
+				Advanced:    ep.Advanced,
+				Description: ep.Description,
+				Value:       ep.Value,
+				Type:        ep.Type,
+				Name:        ep.Name,
+				ID:          ep.ID,
+			}
+		}
+		// replace action parameter with value configured by user when he created the child action
+		/*
+			params := make([]sdk.Parameter, len(child.Parameters))
+			for j := range child.Parameters {
+				params[j] = child.Parameters[j]
+				for k := range e.Parameters {
+					if e.Parameters[k].Name == params[j].Name {
+						params[j].Value = e.Parameters[k].Value
+						break
+					}
+				}
+			}
+			child.Parameters = params
+		*/
+
+		// add child to temp parent
+		if _, ok := mapChilds[parent.ID]; !ok {
+			mapChilds[parent.ID] = make([]*sdk.Action, 0)
+		}
+		mapChilds[parent.ID] = append(mapChilds[parent.ID], child)
+	}
+
+	for i := range as {
+		if children, has := mapChilds[as[i].ID]; has {
+			child := make([]sdk.Action, len(children))
+			for i, c := range children {
+				child[i] = *c
+			}
+			as[i].Actions = child
+		}
+	}
+	return nil
+}
+
+func loadChildrenRecursively(ctx context.Context, db gorp.SqlExecutor, as ...*sdk.Action) error {
+	// don't try to load children if action is builtin
+	actionsNotBuiltIn := sdk.ActionsFilterNotTypes(as, sdk.BuiltinAction)
+	if len(actionsNotBuiltIn) == 0 {
+		return nil
+	}
+	// get edges for all actions, then init a map of edges for all actions
+	edges, err := loadEdgesByParentIDs(ctx, db, sdk.ActionsToIDs(actionsNotBuiltIn), loadEdgeParameters, loadEdgeChildren)
 	if err != nil {
 		return err
 	}
@@ -178,7 +290,6 @@ func loadChildren(ctx context.Context, db gorp.SqlExecutor, as ...*sdk.Action) e
 	for i := range actionsNotBuiltIn {
 		actionsNotBuiltIn[i].Requirements = actionsNotBuiltIn[i].FlattenRequirements()
 	}
-
 	return nil
 }
 
@@ -242,7 +353,7 @@ func loadEdgeChildren(ctx context.Context, db gorp.SqlExecutor, es ...*actionEdg
 		loadParameters,
 		loadRequirements,
 		loadGroup,
-		loadChildren,
+		loadChildrenRecursively,
 	)
 	if err != nil {
 		return err

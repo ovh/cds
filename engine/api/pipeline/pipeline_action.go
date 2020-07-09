@@ -3,15 +3,126 @@ package pipeline
 import (
 	"context"
 	"fmt"
+	"github.com/lib/pq"
 	"strings"
 	"time"
 
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/action"
+	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
+
+func getJobs(ctx context.Context, db gorp.SqlExecutor, stagesIDs []int64) ([]sdk.Job, error) {
+
+	// Load pipeline action table
+	pipActions, err := getPipelineActionsByStageIDs(ctx, db, stagesIDs)
+	if err != nil {
+		return nil, err
+	}
+	jobIDs := make([]int64, len(pipActions))
+	for i, pa := range pipActions {
+		jobIDs[i] = pa.ActionID
+	}
+
+	// Load Joined Action
+	rootAction, err := action.LoadByIDs(ctx, db, jobIDs, action.LoadOptions.WithRequirements, action.LoadOptions.WithEdge)
+	if err != nil {
+		return nil, err
+	}
+
+	// Load steps
+	actionSteps, err := action.LoadActionsAndChildrenByActionJobIDs(ctx, db, jobIDs,
+		action.LoadOptions.WithRequirements, action.LoadOptions.WithParameters,
+		action.LoadOptions.WithGroup, action.LoadOptions.WithFlatChildren)
+	if err != nil {
+		return nil, err
+	}
+
+	// Links alls datas ( pipeline_action, joined action, steps )
+	jobs := make([]sdk.Job, len(rootAction))
+	for _, act := range rootAction {
+		for _, pipAct := range pipActions {
+			if pipAct.ActionID != act.ID {
+				continue
+			}
+			job := sdk.Job{
+				Action:           act,
+				PipelineStageID:  pipAct.PipelineStageID,
+				LastModified:     pipAct.LastModified.Unix(),
+				Enabled:          pipAct.Enabled,
+				PipelineActionID: pipAct.ID,
+			}
+
+			// add steps
+			steps := make([]sdk.Action, 0)
+
+			// Browser Root action child to find good action edge id and compute parameter
+			for _, rootStepAction := range act.Actions {
+				for i := range actionSteps {
+					step := actionSteps[i]
+					if rootStepAction.ActionEdgeID == step.ActionEdgeID {
+						for j := range step.Parameters {
+							for k := range rootStepAction.Parameters {
+								if rootStepAction.Parameters[k].Name == step.Parameters[j].Name {
+									step.Parameters[j].Value = rootStepAction.Parameters[k].Value
+									break
+								}
+							}
+						}
+						steps = append(steps, step)
+						break
+					}
+				}
+			}
+			job.Action.Actions = steps
+
+			jobs = append(jobs, job)
+			break
+		}
+	}
+	return jobs, nil
+}
+
+func getPipelineActionsByStageIDs(ctx context.Context, db gorp.SqlExecutor, stagesIDs []int64) ([]pipelineAction, error) {
+	var pas []pipelineAction
+	query := gorpmapping.NewQuery(
+		"SELECT * FROM pipeline_action WHERE pipeline_stage_id = ANY($1)",
+	).Args(pq.Int64Array(stagesIDs))
+
+	if err := gorpmapping.GetAll(ctx, db, query, &pas); err != nil {
+		return nil, sdk.WrapError(err, "cannot get pipeline actions links for stages %v", stagesIDs)
+	}
+	return pas, nil
+}
+
+func getPipelineActionsByStageID(ctx context.Context, db gorp.SqlExecutor, stageID int64) ([]pipelineAction, error) {
+	var pas []pipelineAction
+
+	query := gorpmapping.NewQuery(
+		"SELECT * FROM pipeline_action WHERE pipeline_stage_id = $1",
+	).Args(stageID)
+	if err := gorpmapping.GetAll(ctx, db, query, &pas); err != nil {
+		return nil, sdk.WrapError(err, "cannot get pipeline action links for stage id %d", stageID)
+	}
+
+	return pas, nil
+}
+
+func deletePipelineActionsByIDs(db gorp.SqlExecutor, ids []int64) error {
+	_, err := db.Exec(
+		"DELETE FROM pipeline_action WHERE id = ANY(string_to_array($1, ',')::int[])",
+		gorpmapping.IDsToQueryString(ids),
+	)
+	return sdk.WithStack(err)
+}
+
+func deletePipelineActionByActionID(db gorp.SqlExecutor, actionID int64) error {
+	_, err := db.Exec("DELETE FROM pipeline_action WHERE action_id = $1", actionID)
+	return sdk.WithStack(err)
+}
 
 // DeletePipelineActionByStage Delete all action from a stage
 func DeletePipelineActionByStage(ctx context.Context, db gorp.SqlExecutor, stageID int64) error {
@@ -148,57 +259,4 @@ func CheckJob(ctx context.Context, db gorp.SqlExecutor, job *sdk.Job) error {
 	}
 
 	return nil
-}
-
-// CountInPipelineData represents the result of CountInVarValue function
-type CountInPipelineData struct {
-	PipName   string
-	StageName string
-	JobName   string
-	Count     int64
-}
-
-// CountInPipelines count how many times a text is used on all pipeline for the given project
-func CountInPipelines(db gorp.SqlExecutor, key string, element string) ([]CountInPipelineData, error) {
-	query := `
-	WITH RECURSIVE parent(pipName, stageName, actionName, id, child_id) as (
-
-		SELECT pipeline.name, pipeline_stage.name, action.name, action_edge.id as id, action_edge.child_id as child_id, action_edge_parameter.value
-		FROM pipeline
-		JOIN pipeline_stage on pipeline_stage.pipeline_id = pipeline.id
-		JOIN pipeline_action on pipeline_action.pipeline_stage_id = pipeline_stage.id
-		JOIN project on project.id = pipeline.project_id
-		JOIN action on action.id = pipeline_action.action_id
-		LEFT JOIN action_edge ON action_edge.parent_id = action.id
-		LEFT JOIN action_edge_parameter on action_edge_parameter.action_edge_id = action_edge.id
-		WHERE project.projectkey = $1 AND action_edge.id IS NOT NULL
-
-		UNION
-
-		SELECT p.pipName, p.stageName, p.actionName, c.id, c.child_id, action_edge_parameter.value FROM parent as p, action_edge as c
-		LEFT JOIN action_edge_parameter ON action_edge_parameter.action_edge_id = c.id
-		WHERE p.child_id = c.parent_id
-	)
-	SELECT pipName, stageName, actionName, id, child_id,
-		count(*) as nb
-	FROM parent
-	WHERE value LIKE $2
-	GROUP BY pipName, stageName, actionName, id, child_id;
-	`
-	rows, err := db.Query(query, key, fmt.Sprintf("%%%s%%", element))
-	if err != nil {
-		return nil, sdk.WrapError(err, "unable to count usage")
-	}
-	defer rows.Close()
-
-	results := []CountInPipelineData{}
-	for rows.Next() {
-		var d CountInPipelineData
-		var id, childID int64
-		if err := rows.Scan(&d.PipName, &d.StageName, &d.JobName, &id, &childID, &d.Count); err != nil {
-			return nil, sdk.WrapError(err, "unable to scan")
-		}
-		results = append(results, d)
-	}
-	return results, nil
 }

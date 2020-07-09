@@ -148,7 +148,7 @@ func (api *API) moveStageHandler() service.Handler {
 				return sdk.WrapError(err, "Cannot load stage")
 			}
 
-			if err := pipeline.MoveStage(tx, oldStage, stageData.BuildOrder, pipelineData); err != nil {
+			if err := pipeline.MoveStage(tx, oldStage, stageData.BuildOrder); err != nil {
 				return sdk.WrapError(err, "Cannot move stage")
 			}
 		}
