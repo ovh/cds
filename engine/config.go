@@ -48,7 +48,7 @@ func configBootstrap(args []string) Configuration {
 	// Default config if nothing is given
 	if len(args) == 0 {
 		args = []string{
-			"api", "ui", "migrate", "hooks", "vcs", "repositories", "elasticsearch",
+			"api", "ui", "migrate", "hooks", "vcs", "repositories", "elasticsearch", "cdn",
 			"hatchery:local", "hatchery:kubernetes", "hatchery:marathon", "hatchery:openstack", "hatchery:swarm", "hatchery:vsphere",
 		}
 	}
