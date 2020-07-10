@@ -1023,6 +1023,9 @@ func (api *API) postWorkflowJobTagsHandler() service.Handler {
 
 		workflowRun, err := workflow.LoadAndLockRunByJobID(tx, id, workflow.LoadRunOptions{})
 		if err != nil {
+			if sdk.ErrorIs(err, sdk.ErrNotFound) {
+				return sdk.NewErrorFrom(sdk.ErrLocked, "workflow run is already locked")
+			}
 			return sdk.WrapError(err, "unable to load node run id %d", id)
 		}
 
