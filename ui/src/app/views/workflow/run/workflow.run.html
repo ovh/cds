@@ -71,6 +71,27 @@
                 </div>
             </div>
         </ng-container>
+        <ng-container *ngIf="workflowRunData && workflowRunData['read_only']">
+            <div class="ui grid">
+                <div class="ui row">
+                    <div class="ui one wide column mt"></div>
+                    <div class="ui fourteen wide column mt">
+                        <sui-accordion class="styled fluid">
+                            <sui-accordion-panel>
+                                <div title>
+                                    <i class="dropdown icon"></i>
+                                    <i class="blue exclamation circle icon"></i>
+                                    <span >{{'workflow_run_readonly_title' | translate}}</span>
+                                </div>
+                                <div content>
+                                    <p>{{'workflow_run_readonly_content' | translate}}</p>
+                                </div>
+                            </sui-accordion-panel>
+                        </sui-accordion>
+                    </div>
+                </div>
+            </div>
+        </ng-container>
         <ng-container *ngIf="workflowRunData['workflow'] && workflowRunData['workflow'].workflow_data">
             <app-workflow-graph class="graph" [direction]="direction" [project]="project"
                 [workflowData]="workflowRunData['workflow']">

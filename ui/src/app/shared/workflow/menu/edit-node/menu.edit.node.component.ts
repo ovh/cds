@@ -105,6 +105,10 @@ export class WorkflowWNodeMenuEditComponent implements OnInit {
             return false;
         }
 
+        if (this.workflowrun && this.workflowrun.read_only) {
+            return false;
+        }
+
         // If we are in a run, check if current node can be run ( compute by cds api)
         if (this.noderun && this.workflowrun && this.workflowrun.nodes) {
             let nodesRun = this.workflowrun.nodes[this.noderun.workflow_node_id];

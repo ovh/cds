@@ -230,6 +230,10 @@ export class WorkflowSidebarRunNodeComponent implements OnDestroy, OnInit {
             return false;
         }
 
+        if (this.workflowRun && this.workflowRun.read_only) {
+            return false;
+        }
+
         // If we are in a run, check if current node can be run ( compuite by cds api)
         if (this.currentWorkflowNodeRun && this.workflowRun && this.workflowRun.nodes) {
             let nodesRun = this.workflowRun.nodes[this.currentWorkflowNodeRun.workflow_node_id];
