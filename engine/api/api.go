@@ -665,7 +665,7 @@ func (a *API) Serve(ctx context.Context) error {
 		authentication.SessionCleaner(ctx, a.mustDB, 10*time.Second)
 	}, a.PanicDump())
 
-	migrate.Add(ctx, sdk.Migration{Name: "RunsSecrets", Release: "0.47.0", Blocker: false, Automatic: true, ExecFunc: func(ctx context.Context) error {
+	migrate.Add(ctx, sdk.Migration{Name: "RunsSecrets", Release: "0.48.0", Blocker: false, Automatic: true, ExecFunc: func(ctx context.Context) error {
 		return migrate.RunsSecrets(ctx, a.DBConnectionFactory.GetDBMap)
 	}})
 
