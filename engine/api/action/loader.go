@@ -198,20 +198,6 @@ func loadFlatChildren(ctx context.Context, db gorp.SqlExecutor, as ...*sdk.Actio
 				ID:          ep.ID,
 			}
 		}
-		// replace action parameter with value configured by user when he created the child action
-		/*
-			params := make([]sdk.Parameter, len(child.Parameters))
-			for j := range child.Parameters {
-				params[j] = child.Parameters[j]
-				for k := range e.Parameters {
-					if e.Parameters[k].Name == params[j].Name {
-						params[j].Value = e.Parameters[k].Value
-						break
-					}
-				}
-			}
-			child.Parameters = params
-		*/
 
 		// add child to temp parent
 		if _, ok := mapChilds[parent.ID]; !ok {
@@ -227,8 +213,10 @@ func loadFlatChildren(ctx context.Context, db gorp.SqlExecutor, as ...*sdk.Actio
 				child[i] = *c
 			}
 			as[i].Actions = child
+			as[i].Requirements = as[i].FlattenRequirementsRecursively()
 		}
 	}
+
 	return nil
 }
 
