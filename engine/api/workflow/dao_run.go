@@ -299,7 +299,7 @@ func LoadAndLockRunByJobID(db gorp.SqlExecutor, id int64, loadOpts LoadRunOption
 	from workflow_run
 	join workflow_node_run on workflow_run.id = workflow_node_run.workflow_run_id
 	join workflow_node_run_job on workflow_node_run.id = workflow_node_run_job.workflow_node_run_id
-	where workflow_node_run_job.id = $1 for update`, wfRunfields)
+	where workflow_node_run_job.id = $1 for update skip locked`, wfRunfields)
 	return loadRun(db, loadOpts, query, id)
 }
 
