@@ -31,3 +31,7 @@ parameters:
   vars-from-file:
     type: string
     description: 'filename.yaml or filename.json. See https://github.com/ovh/venom#run-venom-with-file-var'
+  stop-on-failure:
+    type: boolean
+    description: 'Stop running Test Suite on first Test Case failure'
+    default: 'true'

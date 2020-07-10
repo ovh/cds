@@ -171,13 +171,12 @@ export class BuildResult {
 
 export interface Log {
     id: number;
-    action_build_id: number;
-    pipeline_build_id: number;
-    timestamp: number;
-    step_order: number;
+    workflow_node_run_id: number;
+    workflow_node_run_job_id: number;
+    stepOrder: number;
     val: string;
     start: LogDate;
-    last_modified: LogDate;
+    lastModified: LogDate;
     done: LogDate;
 }
 

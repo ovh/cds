@@ -1174,7 +1174,7 @@ func Test_postWorkflowRunAsyncFailedHandler(t *testing.T) {
 	}
 	vcsServer.Set("token", "foo")
 	vcsServer.Set("secret", "bar")
-	assert.NoError(t, repositoriesmanager.InsertProjectVCSServerLink(context.TODO(), db, &vcsServer))
+	require.NoError(t, repositoriesmanager.InsertProjectVCSServerLink(context.TODO(), db, &vcsServer))
 
 	//First pipeline
 	pip := sdk.Pipeline{
@@ -1194,8 +1194,8 @@ func Test_postWorkflowRunAsyncFailedHandler(t *testing.T) {
 			ConnectionType: "ssh",
 		},
 	}
-	assert.NoError(t, application.Insert(db, *proj, &app))
-	assert.NoError(t, repositoriesmanager.InsertForApplication(db, &app))
+	require.NoError(t, application.Insert(db, *proj, &app))
+	require.NoError(t, repositoriesmanager.InsertForApplication(db, &app))
 
 	w := sdk.Workflow{
 		Name:       "test_1",
@@ -1213,8 +1213,8 @@ func Test_postWorkflowRunAsyncFailedHandler(t *testing.T) {
 		},
 	}
 
-	proj2, errP := project.Load(context.TODO(), api.mustDB(), proj.Key, project.LoadOptions.WithApplications, project.LoadOptions.WithPipelines, project.LoadOptions.WithGroups, project.LoadOptions.WithIntegrations)
-	require.NoError(t, errP)
+	proj2, err := project.Load(context.TODO(), api.mustDB(), proj.Key, project.LoadOptions.WithApplications, project.LoadOptions.WithPipelines, project.LoadOptions.WithGroups, project.LoadOptions.WithIntegrations)
+	require.NoError(t, err)
 
 	require.NoError(t, workflow.Insert(context.TODO(), api.mustDB(), api.Cache, *proj2, &w))
 	w1, err := workflow.Load(context.TODO(), api.mustDB(), api.Cache, *proj, "test_1", workflow.LoadOptions{})
@@ -1227,21 +1227,13 @@ func Test_postWorkflowRunAsyncFailedHandler(t *testing.T) {
 		}
 	}
 
-	// Prepare VCS Mock
-	mockVCSSservice, _ := assets.InsertService(t, db, "Test_postWorkflowRunAsyncFailedHandlerVCS", services.TypeVCS)
-	defer func() {
-		_ = services.Delete(db, mockVCSSservice) // nolint
-	}()
-
-	mockRepoService, _ := assets.InsertService(t, db, "Test_postWorkflowRunAsyncFailedHandlerRepo", services.TypeRepositories)
-	defer func() {
-		_ = services.Delete(db, mockRepoService) // nolint
-	}()
-
-	mockHookService, _ := assets.InsertService(t, db, "Test_postWorkflowRunAsyncFailedHandlerHook", services.TypeHooks)
-	defer func() {
-		_ = services.Delete(db, mockHookService) // nolint
-	}()
+	// Prepare service mocks
+	mockVCSSservice, _ := assets.InsertService(t, db, t.Name()+"_VCS", services.TypeVCS)
+	defer func() { _ = services.Delete(db, mockVCSSservice) }()
+	mockRepoService, _ := assets.InsertService(t, db, t.Name()+"_REPOSITORIES", services.TypeRepositories)
+	defer func() { _ = services.Delete(db, mockRepoService) }()
+	mockHookService, _ := assets.InsertService(t, db, t.Name()+"_HOOKS", services.TypeHooks)
+	defer func() { _ = services.Delete(db, mockHookService) }()
 
 	//This is a mock for the repositories service
 	services.HTTPClient = mock(
@@ -1340,33 +1332,24 @@ func Test_postWorkflowRunAsyncFailedHandler(t *testing.T) {
 		},
 	}
 	ed := ascode.EntityData{
-		FromRepo:      "ssh:/cloneurl",
+		FromRepo:      "ssh://cloneurl",
 		Name:          w1.Name,
 		ID:            w1.ID,
 		Type:          ascode.WorkflowEvent,
 		OperationUUID: ope.UUID,
 	}
 
-	x := ascode.UpdateAsCodeResult(context.TODO(), api.mustDB(), api.Cache, *proj, w1.ID, app, ed, u)
-	require.NotNil(t, x, "ascodeEvent should not be nil, but it was")
+	ascode.UpdateAsCodeResult(context.TODO(), api.mustDB(), api.Cache, *proj, *w1, app, ed, u)
 
-	t.Logf("UpdateAsCodeResult => %+v", x)
-
-	//Prepare request
-	vars := map[string]string{
+	// Prepare request
+	uri := router.GetRoute("POST", api.postWorkflowRunHandler, map[string]string{
 		"key":              proj.Key,
 		"permWorkflowName": w1.Name,
-	}
-	uri := router.GetRoute("POST", api.postWorkflowRunHandler, vars)
-	test.NotEmpty(t, uri)
-
-	opts := &sdk.WorkflowRunPostHandlerOption{}
-	req := assets.NewAuthentifiedRequest(t, u, pass, "POST", uri, opts)
-
-	//Do the request
+	})
+	req := assets.NewAuthentifiedRequest(t, u, pass, "POST", uri, &sdk.WorkflowRunPostHandlerOption{})
 	rec := httptest.NewRecorder()
 	router.Mux.ServeHTTP(rec, req)
-	assert.Equal(t, 202, rec.Code)
+	require.Equal(t, 202, rec.Code)
 
 	cpt := 0
 	for {
@@ -1397,7 +1380,9 @@ func Test_postWorkflowRunAsyncFailedHandler(t *testing.T) {
 		if cpt > 10 {
 			break
 		}
+		time.Sleep(time.Second)
 	}
+
 	t.FailNow()
 }
 
@@ -2623,16 +2608,10 @@ func initGetWorkflowNodeRunJobTest(t *testing.T, api *API, db *gorp.DbMap) (*sdk
 	require.NoError(t, errUJ)
 
 	// Add log
-	require.NoError(t, workflow.AddLog(api.mustDB(), jobRun, &sdk.Log{
-		StepOrder: 1,
-		Val:       "1234567890",
-	}, 15))
+	require.NoError(t, workflow.AppendLog(api.mustDB(), jobRun.ID, jobRun.WorkflowNodeRunID, 1, "1234567890", 15))
 
 	// Add truncated log
-	require.NoError(t, workflow.AddLog(api.mustDB(), jobRun, &sdk.Log{
-		StepOrder: 1,
-		Val:       "1234567890",
-	}, 15))
+	require.NoError(t, workflow.AppendLog(api.mustDB(), jobRun.ID, jobRun.WorkflowNodeRunID, 1, "1234567890", 15))
 
 	// Add service log
 	require.NoError(t, workflow.AddServiceLog(api.mustDB(), jobRun, &sdk.ServiceLog{

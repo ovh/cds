@@ -9,8 +9,6 @@ import (
 
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/ascode"
-	"github.com/ovh/cds/engine/api/cache"
-	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/operation"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/workflow"
@@ -18,26 +16,7 @@ import (
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/exportentities"
 	v2 "github.com/ovh/cds/sdk/exportentities/v2"
-	"github.com/ovh/cds/sdk/log"
 )
-
-func (api *API) getWorkflowAsCodeHandler() service.Handler {
-	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		vars := mux.Vars(r)
-		uuid := vars["uuid"]
-
-		var ope sdk.Operation
-		k := cache.Key(operation.CacheOperationKey, uuid)
-		b, err := api.Cache.Get(k, &ope)
-		if err != nil {
-			log.Error(ctx, "cannot get from cache %s: %v", k, err)
-		}
-		if !b {
-			return sdk.WithStack(sdk.ErrNotFound)
-		}
-		return service.WriteJSON(w, ope, http.StatusOK)
-	}
-}
 
 // postWorkflowAsCodeHandler update an ascode workflow, this will create a pull request to target repository.
 func (api *API) postWorkflowAsCodeHandler() service.Handler {
@@ -135,13 +114,13 @@ func (api *API) postWorkflowAsCodeHandler() service.Handler {
 				FromRepo:      wfDB.FromRepository,
 				OperationUUID: ope.UUID,
 			}
-			asCodeEvent := ascode.UpdateAsCodeResult(ctx, api.mustDB(), api.Cache, *p, wfDB.ID, *rootApp, ed, u)
-			if asCodeEvent != nil {
-				event.PublishAsCodeEvent(ctx, p.Key, *asCodeEvent, u)
-			}
+			ascode.UpdateAsCodeResult(ctx, api.mustDB(), api.Cache, *p, *wfDB, *rootApp, ed, u)
 		}, api.PanicDump())
 
-		return service.WriteJSON(w, ope, http.StatusOK)
+		return service.WriteJSON(w, sdk.Operation{
+			UUID:   ope.UUID,
+			Status: ope.Status,
+		}, http.StatusOK)
 	}
 }
 
@@ -190,11 +169,11 @@ func (api *API) migrateWorkflowAsCode(ctx context.Context, w http.ResponseWriter
 			Name:          wf.Name,
 			OperationUUID: ope.UUID,
 		}
-		asCodeEvent := ascode.UpdateAsCodeResult(ctx, api.mustDB(), api.Cache, proj, wf.ID, app, ed, u)
-		if asCodeEvent != nil {
-			event.PublishAsCodeEvent(ctx, proj.Key, *asCodeEvent, u)
-		}
+		ascode.UpdateAsCodeResult(ctx, api.mustDB(), api.Cache, proj, *wf, app, ed, u)
 	}, api.PanicDump())
 
-	return service.WriteJSON(w, ope, http.StatusOK)
+	return service.WriteJSON(w, sdk.Operation{
+		UUID:   ope.UUID,
+		Status: ope.Status,
+	}, http.StatusOK)
 }

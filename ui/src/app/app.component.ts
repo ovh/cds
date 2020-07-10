@@ -18,11 +18,10 @@ import { AppService } from './app.service';
 import { AuthentifiedUser } from './model/user.model';
 import { LanguageStore } from './service/language/language.store';
 import { NotificationService } from './service/notification/notification.service';
+import { MonitoringService } from './service/services.module';
 import { ThemeStore } from './service/theme/theme.store';
 import { AutoUnsubscribe } from './shared/decorator/autoUnsubscribe';
 import { ToastService } from './shared/toast/ToastService';
-import { CDSWebWorker } from './shared/worker/web.worker';
-import { CDSWorker } from './shared/worker/worker';
 import { AuthenticationState } from './store/authentication.state';
 
 declare var PACMAN: any;
@@ -37,7 +36,6 @@ export class AppComponent implements OnInit {
     open: boolean;
     isConnected: boolean;
     hideNavBar: boolean;
-    versionWorker: CDSWebWorker;
     heartbeatToken: number;
     zone: NgZone;
     showUIUpdatedBanner: boolean;
@@ -74,7 +72,9 @@ export class AppComponent implements OnInit {
         private _appService: AppService,
         private _toastService: ToastService,
         private _store: Store,
-        private _eventService: EventService
+        private _eventService: EventService,
+        private _ngZone: NgZone,
+        private _monitoringService: MonitoringService
     ) {
         this.zone = new NgZone({ enableLongStackTrace: false });
         this.toasterConfigDefault = this._toastService.getConfigDefault();
@@ -111,8 +111,6 @@ export class AppComponent implements OnInit {
         });
     }
 
-
-
     ngOnInit(): void {
         this._store.dispatch(new GetCDSStatus());
         this._store.select(AuthenticationState.user).subscribe(user => {
@@ -144,7 +142,7 @@ export class AppComponent implements OnInit {
             .pipe(map((e: NavigationEnd) => {
                 if ((!this.previousURL || this.previousURL.split('?')[0] !== e.url.split('?')[0])) {
                     this.previousURL = e.url;
-                    this._eventService.manageWebsocketFilterByUrl(e.url);
+                    this._eventService.subscribeAutoFromUrl(e.url);
                     return;
                 }
 
@@ -185,27 +183,17 @@ export class AppComponent implements OnInit {
         });
     }
 
-    stopWorker(w: CDSWorker, s: Subscription): void {
-        if (w) {
-            w.stop();
-        }
-        if (s) {
-            s.unsubscribe();
-        }
-    }
-
     startVersionWorker(): void {
-        this.stopWorker(this.versionWorker, this.versionWorkerSubscription);
-        this.versionWorker = new CDSWebWorker('./assets/worker/web/version.js');
-        this.versionWorker.start({});
-        this.versionWorker.response().subscribe(msg => {
-            if (msg) {
-                this.zone.run(() => {
-                    if ((<any>window).cds_version !== '' && (<any>window).cds_version !== JSON.parse(msg).version) {
-                        this.showUIUpdatedBanner = true;
-                    }
+        this._ngZone.runOutsideAngular(() => {
+            this.versionWorkerSubscription = Observable.interval(60000)
+                .mergeMap(_ => this._monitoringService.getVersion())
+                .subscribe(v => {
+                    this._ngZone.run(() => {
+                        if ((<any>window).cds_version !== v.version) {
+                            this.showUIUpdatedBanner = true;
+                        }
+                    });
                 });
-            }
         });
     }
 

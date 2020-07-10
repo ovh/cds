@@ -16,17 +16,19 @@ var defaultEnvs = map[string]string{
 	"CDS_GRAYLOG_EXTRA_VALUE": "{{.GraylogExtraValue}}",
 }
 
-func MergeModelEnvsWithDefaultEnvs(envs map[string]string) map[string]string {
-	if envs == nil {
-		return defaultEnvs
-	}
-	for envName := range defaultEnvs {
-		if _, ok := envs[envName]; !ok {
-			envs[envName] = defaultEnvs[envName]
-		}
+func mergeModelEnvsWithDefaultEnvs(m *workerModel) {
+	if m.Type != sdk.Docker {
+		return
 	}
 
-	return envs
+	if m.ModelDocker.Envs == nil {
+		m.ModelDocker.Envs = make(map[string]string)
+	}
+	for envName := range defaultEnvs {
+		if _, ok := m.ModelDocker.Envs[envName]; !ok {
+			m.ModelDocker.Envs[envName] = defaultEnvs[envName]
+		}
+	}
 }
 
 const registryPasswordSecretName = "secrets.registry_password"
@@ -47,8 +49,6 @@ func replaceDockerRegistryPassword(db gorp.SqlExecutor, dbmodel *workerModel) (b
 		}
 		return false, "", nil
 	}
-
-	dbmodel.ModelDocker.Envs = MergeModelEnvsWithDefaultEnvs(dbmodel.ModelDocker.Envs)
 
 	// Password not changed
 	if dbmodel.ModelDocker.Password == "{{."+registryPasswordSecretName+"}}" {

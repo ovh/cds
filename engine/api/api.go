@@ -756,7 +756,7 @@ func (a *API) Serve(ctx context.Context) error {
 		}, a.PanicDump())
 	sdk.GoRoutine(ctx, "workflow.Initialize",
 		func(ctx context.Context) {
-			workflow.Initialize(ctx, a.DBConnectionFactory.GetDBMap, a.Cache, a.Config.URL.UI, a.Config.DefaultOS, a.Config.DefaultArch)
+			workflow.Initialize(ctx, a.DBConnectionFactory.GetDBMap, a.Cache, a.Config.URL.UI, a.Config.DefaultOS, a.Config.DefaultArch, a.Config.Log.StepMaxSize)
 		}, a.PanicDump())
 	sdk.GoRoutine(ctx, "PushInElasticSearch",
 		func(ctx context.Context) {

@@ -778,6 +778,11 @@ func NodeBuildParametersFromWorkflow(proj sdk.Project, wf *sdk.Workflow, refNode
 	return res, nil
 }
 
+type stopNodeJobRunResult struct {
+	report *ProcessorReport
+	err    error
+}
+
 func stopWorkflowNodePipeline(ctx context.Context, dbFunc func() *gorp.DbMap, store cache.Store, proj sdk.Project, nodeRun *sdk.WorkflowNodeRun, stopInfos sdk.SpawnInfo) (*ProcessorReport, error) {
 	var end func()
 	ctx, end = observability.Span(ctx, "workflow.stopWorkflowNodePipeline")
@@ -787,40 +792,39 @@ func stopWorkflowNodePipeline(ctx context.Context, dbFunc func() *gorp.DbMap, st
 
 	const stopWorkflowNodeRunNBWorker = 5
 	var wg sync.WaitGroup
-	// Load node job run ID
-	ids, errIDS := LoadNodeJobRunIDByNodeRunID(dbFunc(), nodeRun.ID)
-	if errIDS != nil {
-		return report, sdk.WrapError(errIDS, "stopWorkflowNodePipeline> Cannot load node jobs run ids ")
+
+	ids, err := LoadNodeJobRunIDByNodeRunID(dbFunc(), nodeRun.ID)
+	if err != nil {
+		return report, sdk.WrapError(err, "cannot load node jobs run ids ")
 	}
 
-	chanNjrID := make(chan int64, stopWorkflowNodeRunNBWorker)
-	chanNodeJobRunDone := make(chan bool, stopWorkflowNodeRunNBWorker)
-	chanErr := make(chan error, stopWorkflowNodeRunNBWorker)
+	chanStopID := make(chan int64, stopWorkflowNodeRunNBWorker)
+	chanStopResult := make(chan stopNodeJobRunResult, stopWorkflowNodeRunNBWorker)
 	for i := 0; i < stopWorkflowNodeRunNBWorker && i < len(ids); i++ {
 		go func() {
-			r := stopWorkflowNodeJobRun(ctx, dbFunc, store, proj, stopInfos, chanNjrID, chanErr, chanNodeJobRunDone, &wg)
-			report.Merge(ctx, r)
+			stopWorkflowNodeJobRun(ctx, dbFunc, store, proj, stopInfos, chanStopID, chanStopResult)
 		}()
 	}
 
 	wg.Add(len(ids))
 	for _, njrID := range ids {
-		chanNjrID <- njrID
+		chanStopID <- njrID
 	}
-	close(chanNjrID)
+	close(chanStopID)
 
 	for i := 0; i < len(ids); i++ {
-		select {
-		case <-chanNodeJobRunDone:
-		case err := <-chanErr:
+		r := <-chanStopResult
+		wg.Done()
+		report.Merge(ctx, r.report)
+		if r.err != nil {
 			return report, err
 		}
 	}
 	wg.Wait()
 
-	tx, errTx := dbFunc().Begin()
-	if errTx != nil {
-		return nil, sdk.WrapError(errTx, "stopWorkflowNodePipeline> Unable to create transaction")
+	tx, err := dbFunc().Begin()
+	if err != nil {
+		return nil, sdk.WrapError(err, "unable to create transaction")
 	}
 	defer tx.Rollback() //nolint
 
@@ -830,12 +834,14 @@ func stopWorkflowNodePipeline(ctx context.Context, dbFunc func() *gorp.DbMap, st
 	nodeRun.Status = sdk.StatusStopped
 	nodeRun.Done = time.Now()
 
-	if errU := UpdateNodeRun(tx, nodeRun); errU != nil {
-		return report, sdk.WrapError(errU, "stopWorkflowNodePipeline> Cannot update node run")
+	if err := UpdateNodeRun(tx, nodeRun); err != nil {
+		return report, sdk.WrapError(err, "cannot update node run")
 	}
+
 	if err := tx.Commit(); err != nil {
-		return nil, sdk.WrapError(err, "stopWorkflowNodePipeline> Cannot commit transaction")
+		return nil, sdk.WrapError(err, "cannot commit transaction")
 	}
+
 	return report, nil
 }
 
@@ -877,26 +883,25 @@ func StopWorkflowNodeRun(ctx context.Context, dbFunc func() *gorp.DbMap, store c
 
 	report := new(ProcessorReport)
 
-	var r *ProcessorReport
-	var err error
 	if workflowNodeRun.Stages != nil && len(workflowNodeRun.Stages) > 0 {
-		r, err = stopWorkflowNodePipeline(ctx, dbFunc, store, proj, &workflowNodeRun, stopInfos)
+		r, err := stopWorkflowNodePipeline(ctx, dbFunc, store, proj, &workflowNodeRun, stopInfos)
+		report.Merge(ctx, r)
+		if err != nil {
+			return report, sdk.WrapError(err, "unable to stop workflow node run")
+		}
 	}
 	if workflowNodeRun.OutgoingHook != nil {
-		err = stopWorkflowNodeOutGoingHook(ctx, dbFunc, &workflowNodeRun)
+		if err := stopWorkflowNodeOutGoingHook(ctx, dbFunc, &workflowNodeRun); err != nil {
+			return report, sdk.WrapError(err, "unable to stop workflow node run")
+		}
 	}
-	if err != nil {
-		return report, sdk.WrapError(err, "unable to stop workflow node run")
-	}
-
-	report.Merge(ctx, r)
 	report.Add(ctx, workflowNodeRun)
 
 	// If current node has a mutex, we want to trigger another node run that can be waiting for the mutex
 	workflowNode := workflowRun.Workflow.WorkflowData.NodeByID(workflowNodeRun.WorkflowNodeID)
 	hasMutex := workflowNode != nil && workflowNode.Context != nil && workflowNode.Context.Mutex
 	if hasMutex {
-		r, err = releaseMutex(ctx, dbFunc(), store, proj, workflowNodeRun.WorkflowID, workflowNodeRun.WorkflowNodeName)
+		r, err := releaseMutex(ctx, dbFunc(), store, proj, workflowNodeRun.WorkflowID, workflowNodeRun.WorkflowNodeName)
 		report.Merge(ctx, r)
 		if err != nil {
 			return report, err
@@ -938,56 +943,52 @@ func stopWorkflowNodeRunStages(ctx context.Context, db gorp.SqlExecutor, nodeRun
 	}
 }
 
-func stopWorkflowNodeJobRun(ctx context.Context, dbFunc func() *gorp.DbMap, store cache.Store, proj sdk.Project, stopInfos sdk.SpawnInfo, chanNjrID <-chan int64, chanErr chan<- error, chanDone chan<- bool, wg *sync.WaitGroup) *ProcessorReport {
+func stopWorkflowNodeJobRun(ctx context.Context, dbFunc func() *gorp.DbMap, store cache.Store, proj sdk.Project, stopInfos sdk.SpawnInfo, chanNjrID <-chan int64, chanResult chan<- stopNodeJobRunResult) {
 	var end func()
 	ctx, end = observability.Span(ctx, "workflow.stopWorkflowNodeJobRun")
 	defer end()
 
-	report := new(ProcessorReport)
-
 	for njrID := range chanNjrID {
-		tx, errTx := dbFunc().Begin()
-		if errTx != nil {
-			chanErr <- sdk.WrapError(errTx, "StopWorkflowNodeRun> Cannot create transaction")
-			wg.Done()
-			return report
+		tx, err := dbFunc().Begin()
+		if err != nil {
+			chanResult <- stopNodeJobRunResult{err: sdk.WrapError(err, "cannot create transaction")}
+			continue
 		}
 
-		njr, errNRJ := LoadAndLockNodeJobRunWait(ctx, tx, store, njrID)
-		if errNRJ != nil {
-			chanErr <- sdk.WrapError(errNRJ, "StopWorkflowNodeRun> Cannot load node job run id")
-			_ = tx.Rollback()
-			wg.Done()
-			return report
+		njr, err := LoadAndLockNodeJobRunWait(ctx, tx, store, njrID)
+		if err != nil {
+			chanResult <- stopNodeJobRunResult{err: sdk.WrapError(err, "cannot load node job run id")}
+			tx.Rollback() // nolint
+			continue
 		}
 
 		if err := AddSpawnInfosNodeJobRun(tx, njr.WorkflowNodeRunID, njr.ID, []sdk.SpawnInfo{stopInfos}); err != nil {
-			chanErr <- sdk.WrapError(err, "Cannot save spawn info job %d", njr.ID)
-			_ = tx.Rollback()
-			wg.Done()
-			return report
+			chanResult <- stopNodeJobRunResult{err: sdk.WrapError(err, "cannot save spawn info job %d", njr.ID)}
+			tx.Rollback() // nolint
+			continue
 		}
+
+		var res stopNodeJobRunResult
 
 		njr.SpawnInfos = append(njr.SpawnInfos, stopInfos)
 		r, err := UpdateNodeJobRunStatus(ctx, tx, store, proj, njr, sdk.StatusStopped)
-		report.Merge(ctx, r)
+		res.report = r
 		if err != nil {
-			chanErr <- sdk.WrapError(err, "cannot update node job run")
-			_ = tx.Rollback()
-			wg.Done()
-			return report
+			res.err = sdk.WrapError(err, "cannot update node job run")
+			chanResult <- res
+			tx.Rollback() // nolint
+			continue
 		}
 
 		if err := tx.Commit(); err != nil {
-			chanErr <- sdk.WithStack(err)
-			_ = tx.Rollback()
-			wg.Done()
-			return report
+			res.err = sdk.WithStack(err)
+			chanResult <- res
+			tx.Rollback() // nolint
+			continue
 		}
-		chanDone <- true
-		wg.Done()
+
+		chanResult <- res
 	}
-	return report
 }
 
 // SyncNodeRunRunJob sync step status and spawnInfos in a specific run job

@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
+	"github.com/sirupsen/logrus"
 
 	"github.com/ovh/cds/engine/api/ascode"
 	"github.com/ovh/cds/engine/api/event"
@@ -76,28 +77,37 @@ func (api *API) postImportAsCodeHandler() service.Handler {
 		if err := operation.PostRepositoryOperation(ctx, api.mustDB(), *p, ope, nil); err != nil {
 			return sdk.WrapError(err, "cannot create repository operation")
 		}
-		ope.RepositoryStrategy.SSHKeyContent = sdk.PasswordPlaceholder
-		ope.RepositoryStrategy.Password = sdk.PasswordPlaceholder
 
-		return service.WriteJSON(w, ope, http.StatusCreated)
-	}
-}
+		u := getAPIConsumer(ctx)
 
-// getImportAsCodeHandler
-// @title Get import workflow as code operation details
-// @description This route helps you to know if a "import as code" is over, and the details of the performed operation
-// @requestBody None
-// @responseBody  {"uuid":"ee3946ac-3a77-46b1-af78-77868fde75ec","url":"https://github.com/fsamin/go-repo.git","strategy":{"connection_type":"","ssh_key":"","user":"","password":"","branch":"","default_branch":"","pgp_key":""},"setup":{"checkout":{}},"load_files":{"pattern":".cds/**/*.yml","results":{"w-go-repo.yml":"bmFtZTogdy1nby1yZXBvCgkJCQkJdmVyc2lvbjogdjEuMAoJCQkJCXBpcGVsaW5lOiBidWlsZAoJCQkJCWFwcGxpY2F0aW9uOiBnby1yZXBvCgkJCQkJcGlwZWxpbmVfaG9va3M6CgkJCQkJLSB0eXBlOiBSZXBvc2l0b3J5V2ViSG9vawoJCQkJCQ=="}},"status":2}
-func (api *API) getImportAsCodeHandler() service.Handler {
-	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		vars := mux.Vars(r)
-		ope, err := operation.GetRepositoryOperation(ctx, api.mustDB(), vars["uuid"])
-		if err != nil {
-			return sdk.WrapError(err, "cannot get repository operation status")
-		}
-		ope.RepositoryStrategy.SSHKeyContent = sdk.PasswordPlaceholder
-		ope.RepositoryStrategy.Password = sdk.PasswordPlaceholder
-		return service.WriteJSON(w, ope, http.StatusOK)
+		sdk.GoRoutine(context.Background(), fmt.Sprintf("postImportAsCodeHandler-%s", ope.UUID), func(ctx context.Context) {
+			globalOperation := sdk.Operation{
+				UUID: ope.UUID,
+			}
+
+			ope, err := operation.Poll(ctx, api.mustDB(), ope.UUID)
+			if err != nil {
+				isErrWithStack := sdk.IsErrorWithStack(err)
+				fields := logrus.Fields{}
+				if isErrWithStack {
+					fields["stack_trace"] = fmt.Sprintf("%+v", err)
+				}
+				log.ErrorWithFields(ctx, fields, "%s", err)
+
+				globalOperation.Status = sdk.OperationStatusError
+				globalOperation.Error = sdk.ToOperationError(err)
+			} else {
+				globalOperation.Status = sdk.OperationStatusDone
+				globalOperation.LoadFiles = ope.LoadFiles
+			}
+
+			event.PublishOperation(ctx, p.Key, globalOperation, u)
+		}, api.PanicDump())
+
+		return service.WriteJSON(w, sdk.Operation{
+			UUID:   ope.UUID,
+			Status: ope.Status,
+		}, http.StatusCreated)
 	}
 }
 
@@ -112,8 +122,11 @@ func (api *API) postPerformImportAsCodeHandler() service.Handler {
 		key := vars[permProjectKey]
 		uuid := vars["uuid"]
 
-		//Load project
-		proj, errp := project.Load(ctx, api.mustDB(), key,
+		if uuid == "" {
+			return sdk.NewErrorFrom(sdk.ErrWrongRequest, "invalid given operation uuid")
+		}
+
+		proj, err := project.Load(ctx, api.mustDB(), key,
 			project.LoadOptions.WithGroups,
 			project.LoadOptions.WithApplications,
 			project.LoadOptions.WithEnvironments,
@@ -121,8 +134,8 @@ func (api *API) postPerformImportAsCodeHandler() service.Handler {
 			project.LoadOptions.WithFeatures(api.Cache),
 			project.LoadOptions.WithClearIntegrations,
 		)
-		if errp != nil {
-			return sdk.WrapError(errp, "postPerformImportAsCodeHandler> Cannot load project %s", key)
+		if err != nil {
+			return sdk.WrapError(err, "cannot load project %s", key)
 		}
 
 		ope, err := operation.GetRepositoryOperation(ctx, api.mustDB(), uuid)

@@ -4,7 +4,7 @@ import {
     Component,
     EventEmitter,
     Input, NgZone,
-    OnDestroy, OnInit,
+    OnInit,
     Output,
     ViewChild
 } from '@angular/core';
@@ -14,8 +14,8 @@ import * as AU from 'ansi_up';
 import { Parameter } from 'app/model/parameter.model';
 import { PipelineStatus, SpawnInfo } from 'app/model/pipeline.model';
 import { WorkflowNodeJobRun } from 'app/model/workflow.run.model';
+import { WorkflowService } from 'app/service/workflow/workflow.service';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
-import { CDSWebWorker } from 'app/shared/worker/web.worker';
 import { ProjectState } from 'app/store/project.state';
 import { WorkflowState, WorkflowStateModel } from 'app/store/workflow.state';
 import { Observable, Subscription } from 'rxjs';
@@ -28,7 +28,7 @@ import { WorkflowRunJobVariableComponent } from '../variables/job.variables.comp
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 @AutoUnsubscribe()
-export class WorkflowRunJobSpawnInfoComponent implements OnDestroy, OnInit {
+export class WorkflowRunJobSpawnInfoComponent implements OnInit {
 
     @Input('displayServicesLogs')
     set displayServicesLogs(data: boolean) {
@@ -51,11 +51,9 @@ export class WorkflowRunJobSpawnInfoComponent implements OnDestroy, OnInit {
     @ViewChild('jobVariable')
     jobVariable: WorkflowRunJobVariableComponent;
 
-    worker: CDSWebWorker;
     workerSubscription: Subscription;
     zone: NgZone;
 
-    serviceSpawnInfos: Array<SpawnInfo>;
     loading = true;
 
     show = true;
@@ -66,13 +64,11 @@ export class WorkflowRunJobSpawnInfoComponent implements OnDestroy, OnInit {
     constructor(
         private _translate: TranslateService,
         private _cd: ChangeDetectorRef,
-        private _store: Store
+        private _store: Store,
+        private _workflowService: WorkflowService,
+        private _ngZone: NgZone
     ) {
         this.zone = new NgZone({ enableLongStackTrace: false });
-    }
-
-    ngOnDestroy(): void {
-        this.stopWorker();
     }
 
     ngOnInit(): void {
@@ -90,7 +86,7 @@ export class WorkflowRunJobSpawnInfoComponent implements OnDestroy, OnInit {
                     }
                     refresh = true;
                 }
-                if ( (!this.variables || this.variables.length) && njr.parameters) {
+                if ((!this.variables || this.variables.length) && njr.parameters) {
                     this.variables = njr.parameters;
                     refresh = true;
                 }
@@ -107,7 +103,6 @@ export class WorkflowRunJobSpawnInfoComponent implements OnDestroy, OnInit {
                 if (njr.job.action.requirements) {
                     this.displayServiceLogsLink = njr.job.action.requirements.find(r => r.type === 'service') != null;
                 }
-
             }
 
             if (refresh) {
@@ -135,41 +130,35 @@ export class WorkflowRunJobSpawnInfoComponent implements OnDestroy, OnInit {
     }
 
     initWorker(): void {
-        if (!this.serviceSpawnInfos) {
-            this.loading = true;
+        let projectKey = this._store.selectSnapshot(ProjectState.projectSnapshot).key;
+        let workflowName = this._store.selectSnapshot(WorkflowState.workflowSnapshot).name;
+        let runNumber = (<WorkflowStateModel>this._store.selectSnapshot(WorkflowState)).workflowNodeRun.num;
+        let nodeRunID = (<WorkflowStateModel>this._store.selectSnapshot(WorkflowState)).workflowNodeRun.id;
+        let runJobId = this.currentJobID;
+
+        let callback = (is: Array<SpawnInfo>) => {
+            if (is.length > 0) {
+                this.spawnInfos = this.getSpawnInfos(is);
+                this._cd.markForCheck();
+            }
         }
-        if (!this.worker) {
-            this.worker = new CDSWebWorker('./assets/worker/web/workflow-spawninfos.js');
-            this.worker.start({
-                key: this._store.selectSnapshot(ProjectState.projectSnapshot).key,
-                workflowName: this._store.selectSnapshot(WorkflowState.workflowSnapshot).name,
-                number: (<WorkflowStateModel>this._store.selectSnapshot(WorkflowState)).workflowNodeRun.num,
-                nodeRunId: (<WorkflowStateModel>this._store.selectSnapshot(WorkflowState)).workflowNodeRun.id,
-                runJobId: this.currentJobID,
-            });
 
-            this.workerSubscription = this.worker.response().subscribe(msg => {
-                if (msg) {
-                    let serviceSpawnInfos: Array<SpawnInfo> = JSON.parse(msg);
-                    this.zone.run(() => {
-                        if (serviceSpawnInfos && serviceSpawnInfos.length > 0) {
-                            this.spawnInfos = this.getSpawnInfos(serviceSpawnInfos);
-                            this._cd.detectChanges();
-                        }
+        this._workflowService.getNodeJobRunInfo(projectKey, workflowName, runNumber, nodeRunID, runJobId).subscribe(spawnInfos => {
+            callback(spawnInfos);
+        });
 
+        this._ngZone.runOutsideAngular(() => {
+            this.workerSubscription = Observable.interval(4000)
+                .mergeMap(_ => this._workflowService.getNodeJobRunInfo(projectKey, workflowName,
+                    runNumber, nodeRunID, runJobId)).subscribe(spawnInfos => {
+                        this._ngZone.run(() => { callback(spawnInfos); });
                     });
-                }
-            });
-        }
+        });
     }
 
     stopWorker() {
         if (this.workerSubscription) {
             this.workerSubscription.unsubscribe();
-        }
-        if (this.worker) {
-            this.worker.stop();
-            this.worker = null;
         }
     }
 

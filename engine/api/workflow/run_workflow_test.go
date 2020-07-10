@@ -635,16 +635,12 @@ queueRun:
 		}
 
 		//TestAddLog
-		assert.NoError(t, workflow.AddLog(db, j, &sdk.Log{
-			Val: "This is a log",
-		}, workflow.DefaultMaxLogSize))
+		assert.NoError(t, workflow.AppendLog(db, j.ID, j.WorkflowNodeRunID, 1, "This is a log", workflow.DefaultMaxLogSize))
 		if t.Failed() {
 			tx.Rollback()
 			t.FailNow()
 		}
-		assert.NoError(t, workflow.AddLog(db, j, &sdk.Log{
-			Val: "This is another log",
-		}, workflow.DefaultMaxLogSize))
+		assert.NoError(t, workflow.AppendLog(db, j.ID, j.WorkflowNodeRunID, 1, "This is another log", workflow.DefaultMaxLogSize))
 		if t.Failed() {
 			tx.Rollback()
 			t.FailNow()

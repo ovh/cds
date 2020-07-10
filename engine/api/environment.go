@@ -319,13 +319,13 @@ func (api *API) updateAsCodeEnvironmentHandler() service.Handler {
 				Name:          envDB.Name,
 				OperationUUID: ope.UUID,
 			}
-			asCodeEvent := ascode.UpdateAsCodeResult(ctx, api.mustDB(), api.Cache, *proj, wkHolder.ID, *rootApp, ed, u)
-			if asCodeEvent != nil {
-				event.PublishAsCodeEvent(ctx, proj.Key, *asCodeEvent, u)
-			}
+			ascode.UpdateAsCodeResult(ctx, api.mustDB(), api.Cache, *proj, *wkHolder, *rootApp, ed, u)
 		}, api.PanicDump())
 
-		return service.WriteJSON(w, ope, http.StatusOK)
+		return service.WriteJSON(w, sdk.Operation{
+			UUID:   ope.UUID,
+			Status: ope.Status,
+		}, http.StatusOK)
 	}
 }
 

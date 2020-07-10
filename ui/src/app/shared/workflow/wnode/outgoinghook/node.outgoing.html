@@ -20,7 +20,7 @@
                 </span>
             </ng-container>
             <ng-container *ngSwitchCase="'Workflow'">
-                <ng-container *ngIf="noderun && noderun.callback && (
+                <ng-container *ngIf="noderun?.callback?.workflow_run_number && (
                 noderun.callback.status === pipelineStatus.BUILDING  ||
                 noderun.callback.status === pipelineStatus.SUCCESS ||
                 noderun.callback.status === pipelineStatus.FAIL )">

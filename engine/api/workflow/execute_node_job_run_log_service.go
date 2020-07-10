@@ -113,7 +113,7 @@ func LoadServicesLogsByJob(db gorp.SqlExecutor, nodeJobRunID int64) ([]sdk.Servi
 	}
 	defer rows.Close() // nolint
 
-	var logs []sdk.ServiceLog
+	logs := []sdk.ServiceLog{}
 	for rows.Next() {
 		var log sdk.ServiceLog
 		var s, m pq.NullTime

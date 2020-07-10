@@ -1219,70 +1219,16 @@ func Test_postWorkflowRollbackHandler(t *testing.T) {
 func Test_postAndDeleteWorkflowLabelHandler(t *testing.T) {
 	api, db, router := newTestAPI(t)
 
-	// Init user
-	u, pass := assets.InsertAdminUser(t, api.mustDB())
-	// Init project
+	u, jwt := assets.InsertAdminUser(t, api.mustDB())
+
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, api.Cache, key, key)
 
-	lbl1 := sdk.Label{
-		Name:      sdk.RandomString(5),
-		ProjectID: proj.ID,
-	}
-	test.NoError(t, project.InsertLabel(db, &lbl1))
-
-	// Init pipeline
 	pip := sdk.Pipeline{
 		Name:      "pipeline1",
 		ProjectID: proj.ID,
 	}
-	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), &pip))
-
-	integrationModel, err := integration.LoadModelByName(db, sdk.KafkaIntegration.Name)
-	if err != nil {
-		assert.NoError(t, integration.CreateBuiltinModels(db))
-		models, _ := integration.LoadModels(db)
-		assert.True(t, len(models) > 0)
-	}
-
-	integrationModel, err = integration.LoadModelByName(db, sdk.KafkaIntegration.Name)
-	test.NoError(t, err)
-
-	pname := sdk.RandomString(10)
-	pp := sdk.ProjectIntegration{
-		Name:               pname,
-		Config:             sdk.KafkaIntegration.DefaultConfig.Clone(),
-		IntegrationModelID: integrationModel.ID,
-	}
-
-	// ADD integration
-	vars := map[string]string{}
-	vars[permProjectKey] = proj.Key
-	uri := router.GetRoute("POST", api.postProjectIntegrationHandler, vars)
-	req := assets.NewAuthentifiedRequest(t, u, pass, "POST", uri, pp)
-	w := httptest.NewRecorder()
-	router.Mux.ServeHTTP(w, req)
-	assert.Equal(t, 200, w.Code)
-
-	pi := sdk.ProjectIntegration{}
-	test.NoError(t, json.Unmarshal(w.Body.Bytes(), &pi))
-	assert.Equal(t, pname, pi.Name)
-
-	proj, err = project.Load(context.TODO(), api.mustDB(), proj.Key,
-		project.LoadOptions.WithApplicationWithDeploymentStrategies,
-		project.LoadOptions.WithPipelines,
-		project.LoadOptions.WithEnvironments,
-		project.LoadOptions.WithGroups,
-		project.LoadOptions.WithIntegrations,
-	)
-
-	test.NoError(t, err)
-
-	vars = map[string]string{
-		"permProjectKey": proj.Key,
-	}
-	uri = router.GetRoute("POST", api.postWorkflowHandler, vars)
-	test.NotEmpty(t, uri)
+	require.NoError(t, pipeline.InsertPipeline(api.mustDB(), &pip))
 
 	name := sdk.RandomString(10)
 	var wf = &sdk.Workflow{
@@ -1292,65 +1238,57 @@ func Test_postAndDeleteWorkflowLabelHandler(t *testing.T) {
 			Node: sdk.Node{
 				Type: sdk.NodeTypePipeline,
 				Context: &sdk.NodeContext{
-					PipelineID:           pip.ID,
-					ProjectIntegrationID: pi.ID,
+					PipelineID: pip.ID,
 				},
 			},
 		},
 	}
-
-	req = assets.NewAuthentifiedRequest(t, u, pass, "POST", uri, &wf)
-
-	//Do the request
-	w = httptest.NewRecorder()
+	uri := router.GetRoute("POST", api.postWorkflowHandler, map[string]string{
+		"permProjectKey": proj.Key,
+	})
+	req := assets.NewAuthentifiedRequest(t, u, jwt, "POST", uri, &wf)
+	w := httptest.NewRecorder()
 	router.Mux.ServeHTTP(w, req)
-	assert.Equal(t, 201, w.Code)
-	test.NoError(t, json.Unmarshal(w.Body.Bytes(), &wf))
+	require.Equal(t, 201, w.Code)
+	require.NoError(t, json.Unmarshal(w.Body.Bytes(), &wf))
 
-	//Prepare request
-	vars = map[string]string{
+	lbl1 := sdk.Label{
+		Name:      sdk.RandomString(5),
+		ProjectID: proj.ID,
+	}
+	uri = router.GetRoute("POST", api.postWorkflowLabelHandler, map[string]string{
 		"key":              proj.Key,
 		"permWorkflowName": name,
-	}
-	uri = router.GetRoute("POST", api.postWorkflowLabelHandler, vars)
-	test.NotEmpty(t, uri)
-
-	req = assets.NewAuthentifiedRequest(t, u, pass, "POST", uri, &lbl1)
-	//Do the request
+	})
+	req = assets.NewAuthentifiedRequest(t, u, jwt, "POST", uri, &lbl1)
 	w = httptest.NewRecorder()
 	router.Mux.ServeHTTP(w, req)
-	assert.Equal(t, 200, w.Code)
+	require.Equal(t, 200, w.Code)
+	require.NoError(t, json.Unmarshal(w.Body.Bytes(), &lbl1))
 
-	test.NoError(t, json.Unmarshal(w.Body.Bytes(), &lbl1))
+	require.NotEqual(t, 0, lbl1.ID)
+	require.Equal(t, proj.ID, lbl1.ProjectID)
+	require.Equal(t, wf.ID, lbl1.WorkflowID)
 
-	assert.NotEqual(t, 0, lbl1.ID)
-	assert.Equal(t, proj.ID, lbl1.ProjectID)
-	assert.Equal(t, wf.ID, lbl1.WorkflowID)
-
-	wfUpdated, errW := workflow.Load(context.TODO(), db, api.Cache, *proj, wf.Name, workflow.LoadOptions{WithLabels: true})
-	test.NoError(t, errW)
-
+	wfUpdated, err := workflow.Load(context.TODO(), db, api.Cache, *proj, wf.Name, workflow.LoadOptions{WithLabels: true})
+	require.NoError(t, err)
 	require.NotNil(t, wfUpdated.Labels)
 	require.Equal(t, 1, len(wfUpdated.Labels))
 	require.Equal(t, lbl1.Name, wfUpdated.Labels[0].Name)
 
 	// Unlink label
-	vars = map[string]string{
+	uri = router.GetRoute("DELETE", api.deleteWorkflowLabelHandler, map[string]string{
 		"key":              proj.Key,
 		"permWorkflowName": name,
 		"labelID":          fmt.Sprintf("%d", lbl1.ID),
-	}
-	uri = router.GetRoute("DELETE", api.deleteWorkflowLabelHandler, vars)
-	test.NotEmpty(t, uri)
-
-	req = assets.NewAuthentifiedRequest(t, u, pass, "DELETE", uri, nil)
-	//Do the request
+	})
+	req = assets.NewAuthentifiedRequest(t, u, jwt, "DELETE", uri, nil)
 	w = httptest.NewRecorder()
 	router.Mux.ServeHTTP(w, req)
-	assert.Equal(t, 200, w.Code)
+	require.Equal(t, 200, w.Code)
 
-	wfUpdated, errW = workflow.Load(context.TODO(), db, api.Cache, *proj, wf.Name, workflow.LoadOptions{WithLabels: true})
-	require.NoError(t, errW)
+	wfUpdated, err = workflow.Load(context.TODO(), db, api.Cache, *proj, wf.Name, workflow.LoadOptions{WithLabels: true})
+	require.NoError(t, err)
 	require.Equal(t, 0, len(wfUpdated.Labels))
 }
 

@@ -402,9 +402,9 @@ func stopWorkflowRun(ctx context.Context, dbFunc func() *gorp.DbMap, store cache
 	run *sdk.WorkflowRun, ident sdk.Identifiable, parentWorkflowRunID int64) (*workflow.ProcessorReport, error) {
 	report := new(workflow.ProcessorReport)
 
-	tx, errTx := dbFunc().Begin()
-	if errTx != nil {
-		return nil, sdk.WrapError(errTx, "unable to create transaction")
+	tx, err := dbFunc().Begin()
+	if err != nil {
+		return nil, sdk.WrapError(err, "unable to create transaction")
 	}
 	defer tx.Rollback() //nolint
 
@@ -688,7 +688,7 @@ func (api *API) stopWorkflowNodeRunHandler() service.Handler {
 		}
 
 		sp := sdk.SpawnMsg{ID: sdk.MsgWorkflowNodeStop.ID, Args: []interface{}{getAPIConsumer(ctx).GetUsername()}}
-		report, err := workflow.StopWorkflowNodeRun(ctx, api.mustDB, api.Cache, *p, *workflowRun, *workflowNodeRun, sdk.SpawnInfo{
+		r1, err := workflow.StopWorkflowNodeRun(ctx, api.mustDB, api.Cache, *p, *workflowRun, *workflowNodeRun, sdk.SpawnInfo{
 			APITime:     time.Now(),
 			RemoteTime:  time.Now(),
 			Message:     sp,
@@ -698,7 +698,10 @@ func (api *API) stopWorkflowNodeRunHandler() service.Handler {
 			return sdk.WrapError(err, "unable to stop workflow node run")
 		}
 
-		// Reload workflow run then resync its status
+		sdk.GoRoutine(context.Background(), fmt.Sprintf("stopWorkflowNodeRunHandler-%d", workflowNodeRunID), func(ctx context.Context) {
+			WorkflowSendEvent(context.Background(), api.mustDB(), api.Cache, *p, r1)
+		})
+
 		tx, err := api.mustDB().Begin()
 		if err != nil {
 			return sdk.WithStack(err)
@@ -712,8 +715,7 @@ func (api *API) stopWorkflowNodeRunHandler() service.Handler {
 			return sdk.WrapError(err, "unable to load workflow run with number %d for workflow %s", workflowRunNumber, workflowName)
 		}
 
-		r1, err := workflow.ResyncWorkflowRunStatus(ctx, tx, workflowRun)
-		report.Merge(ctx, r1)
+		r2, err := workflow.ResyncWorkflowRunStatus(ctx, tx, workflowRun)
 		if err != nil {
 			return sdk.WrapError(err, "unable to resync workflow run status")
 		}
@@ -730,6 +732,10 @@ func (api *API) stopWorkflowNodeRunHandler() service.Handler {
 			return sdk.WithStack(err)
 		}
 
+		sdk.GoRoutine(context.Background(), fmt.Sprintf("stopWorkflowNodeRunHandler-%d-resync-run-%d", workflowNodeRunID, workflowRun.ID), func(ctx context.Context) {
+			WorkflowSendEvent(context.Background(), api.mustDB(), api.Cache, *p, r2)
+		})
+
 		go func(ID int64) {
 			wRun, err := workflow.LoadRunByID(api.mustDB(), ID, workflow.LoadRunOptions{DisableDetailledNodeRun: true})
 			if err != nil {
@@ -744,8 +750,6 @@ func (api *API) stopWorkflowNodeRunHandler() service.Handler {
 				}
 			}
 		}(workflowRun.ID)
-
-		go WorkflowSendEvent(context.Background(), api.mustDB(), api.Cache, *p, report)
 
 		return service.WriteJSON(w, workflowNodeRun, http.StatusOK)
 	}
