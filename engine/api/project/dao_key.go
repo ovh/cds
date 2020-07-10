@@ -2,6 +2,7 @@ package project
 
 import (
 	"context"
+	"github.com/lib/pq"
 
 	"github.com/go-gorp/gorp"
 
@@ -14,17 +15,6 @@ import (
 func InsertKey(db gorp.SqlExecutor, key *sdk.ProjectKey) error {
 	var dbProjKey = dbProjectKey{ProjectKey: *key}
 	if err := gorpmapping.InsertAndSign(context.Background(), db, &dbProjKey); err != nil {
-		return err
-	}
-	*key = dbProjKey.ProjectKey
-	return nil
-}
-
-// UpdateKey a new project key in database.
-// This function should be use only for migration purpose and should be removed
-func UpdateKey(ctx context.Context, db gorp.SqlExecutor, key *sdk.ProjectKey) error {
-	var dbProjKey = dbProjectKey{ProjectKey: *key}
-	if err := gorpmapping.UpdateAndSign(ctx, db, &dbProjKey); err != nil {
 		return err
 	}
 	*key = dbProjKey.ProjectKey
@@ -143,4 +133,41 @@ func loadBuiltinKey(db gorp.SqlExecutor, projectID int64) (*sdk.ProjectKey, erro
 		return nil, sdk.WithStack(sdk.ErrNotFound)
 	}
 	return &k.ProjectKey, nil
+}
+
+func LoadAllKeysForProjectsWithDecryption(ctx context.Context, db gorp.SqlExecutor, projIDs []int64) (map[int64][]sdk.ProjectKey, error) {
+	return loadAllKeysForProjects(ctx, db, projIDs, gorpmapping.GetOptions.WithDecryption)
+}
+
+func loadAllKeysForProjects(ctx context.Context, db gorp.SqlExecutor, appsID []int64, opts ...gorpmapping.GetOptionFunc) (map[int64][]sdk.ProjectKey, error) {
+	var res []dbProjectKey
+	query := gorpmapping.NewQuery(`
+		SELECT *
+		FROM project_key
+		WHERE project_id = ANY($1)
+		AND builtin = false 
+		ORDER BY project_id
+	`).Args(pq.Int64Array(appsID))
+	if err := gorpmapping.GetAll(ctx, db, query, &res, opts...); err != nil {
+		return nil, err
+	}
+
+	projsKeys := make(map[int64][]sdk.ProjectKey)
+
+	for i := range res {
+		dbProjKey := res[i]
+		isValid, err := gorpmapping.CheckSignature(dbProjKey, dbProjKey.Signature)
+		if err != nil {
+			return nil, err
+		}
+		if !isValid {
+			log.Error(ctx, "project.loadAllKeysForProjects> project key id %d data corrupted", dbProjKey.ID)
+			continue
+		}
+		if _, ok := projsKeys[dbProjKey.ProjectID]; !ok {
+			projsKeys[dbProjKey.ProjectID] = make([]sdk.ProjectKey, 0)
+		}
+		projsKeys[dbProjKey.ProjectID] = append(projsKeys[dbProjKey.ProjectID], dbProjKey.ProjectKey)
+	}
+	return projsKeys, nil
 }

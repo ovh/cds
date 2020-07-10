@@ -38,9 +38,6 @@ export class WorkflowRunComponent implements OnInit {
 
     pipelineStatusEnum = PipelineStatus;
     notificationSubscription: Subscription;
-    dataSubs: Subscription;
-    paramsSubs: Subscription;
-    loadingRun = true;
     warningsMap = WarningMessageMap;
     errorsMap = ErrorMessageMap;
     warnings: Array<SpawnInfo>;
@@ -124,6 +121,8 @@ export class WorkflowRunComponent implements OnInit {
             this.workflowRunData['infos'] = wr.infos;
             this.workflowRunData['num'] = wr.num;
             this.workflowRunData['status'] = wr.status;
+            this.workflowRunData['read_only'] = wr.read_only;
+
             this.updateTitle(wr);
             this._cd.markForCheck();
         });

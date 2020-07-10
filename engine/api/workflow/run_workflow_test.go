@@ -373,6 +373,11 @@ func TestManualRun3(t *testing.T) {
 				Type:        sdk.IntegrationConfigTypeString,
 				Value:       "test",
 			},
+			"mypassword": sdk.IntegrationConfigValue{
+				Description: "here isa password",
+				Type:        sdk.IntegrationConfigTypePassword,
+				Value:       "mypassword",
+			},
 		},
 		Name:               sdk.RandomString(10),
 		ProjectID:          proj.ID,
@@ -538,7 +543,7 @@ func TestManualRun3(t *testing.T) {
 	require.NoError(t, err)
 
 	wr, errWR := workflow.CreateRun(db, w1, nil, u)
-	assert.NoError(t, errWR)
+	require.NoError(t, errWR)
 	wr.Workflow = *w1
 	_, errS := workflow.StartWorkflowRun(context.TODO(), db, cache, *proj, wr, &sdk.WorkflowRunPostHandlerOption{
 		Manual: &sdk.WorkflowNodeRunManual{Username: u.Username},
@@ -628,10 +633,6 @@ queueRun:
 		if err != nil {
 			t.Fatal(err)
 		}
-
-		secrets, err := workflow.LoadSecrets(db, cache, nodeRun, workflowRun, proj.Variables)
-		assert.NoError(t, err)
-		assert.Len(t, secrets, 1)
 
 		//TestAddLog
 		assert.NoError(t, workflow.AppendLog(db, j.ID, j.WorkflowNodeRunID, 1, "This is a log", workflow.DefaultMaxLogSize))

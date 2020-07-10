@@ -2,6 +2,7 @@ package application
 
 import (
 	"context"
+	"fmt"
 	"strings"
 	"sync"
 
@@ -21,7 +22,7 @@ type ImportOptions struct {
 }
 
 // ParseAndImport parse an exportentities.Application and insert or update the application in database
-func ParseAndImport(ctx context.Context, db gorp.SqlExecutor, cache cache.Store, proj sdk.Project, eapp *exportentities.Application, opts ImportOptions, decryptFunc keys.DecryptFunc, u sdk.Identifiable) (*sdk.Application, []sdk.Message, error) {
+func ParseAndImport(ctx context.Context, db gorp.SqlExecutor, cache cache.Store, proj sdk.Project, eapp *exportentities.Application, opts ImportOptions, decryptFunc keys.DecryptFunc, u sdk.Identifiable) (*sdk.Application, []sdk.Variable, []sdk.Message, error) {
 	log.Info(ctx, "ParseAndImport>> Import application %s in project %s (force=%v)", eapp.Name, proj.Key, opts.Force)
 	msgList := []sdk.Message{}
 
@@ -29,7 +30,7 @@ func ParseAndImport(ctx context.Context, db gorp.SqlExecutor, cache cache.Store,
 	rx := sdk.NamePatternRegex
 	if !rx.MatchString(eapp.Name) {
 		msgList = append(msgList, sdk.NewMessage(sdk.MsgWorkflowErrorBadApplicationName, eapp.Name))
-		return nil, msgList, sdk.WrapError(sdk.ErrInvalidApplicationPattern, "application name %s do not respect pattern %s", eapp.Name, sdk.NamePattern)
+		return nil, nil, msgList, sdk.WrapError(sdk.ErrInvalidApplicationPattern, "application name %s do not respect pattern %s", eapp.Name, sdk.NamePattern)
 	}
 
 	//Check if app exist
@@ -39,16 +40,16 @@ func ParseAndImport(ctx context.Context, db gorp.SqlExecutor, cache cache.Store,
 		LoadOptions.WithClearDeploymentStrategies,
 	)
 	if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
-		return nil, msgList, sdk.WrapError(err, "unable to load application")
+		return nil, nil, msgList, sdk.WrapError(err, "unable to load application")
 	}
 
 	//If the application exist and we don't want to force, raise an error
 	if oldApp != nil && !opts.Force {
-		return nil, msgList, sdk.WithStack(sdk.ErrApplicationExist)
+		return nil, nil, msgList, sdk.WithStack(sdk.ErrApplicationExist)
 	}
 
 	if oldApp != nil && oldApp.FromRepository != "" && opts.FromRepository != oldApp.FromRepository {
-		return nil, msgList, sdk.NewErrorFrom(sdk.ErrApplicationAsCodeOverride, "unable to update existing ascode application from %s", oldApp.FromRepository)
+		return nil, nil, msgList, sdk.NewErrorFrom(sdk.ErrApplicationAsCodeOverride, "unable to update existing ascode application from %s", oldApp.FromRepository)
 	}
 
 	//Craft the application
@@ -58,6 +59,8 @@ func ParseAndImport(ctx context.Context, db gorp.SqlExecutor, cache cache.Store,
 	app.RepositoryFullname = eapp.RepositoryName
 	app.FromRepository = opts.FromRepository
 
+	applicationSecrets := make([]sdk.Variable, 0)
+
 	//Compute variables
 	for p, v := range eapp.Variables {
 		switch v.Type {
@@ -66,19 +69,27 @@ func ParseAndImport(ctx context.Context, db gorp.SqlExecutor, cache cache.Store,
 		case sdk.SecretVariable:
 			secret, err := decryptFunc(db, proj.ID, v.Value)
 			if err != nil {
-				return app, msgList, sdk.WrapError(sdk.NewError(sdk.ErrWrongRequest, err), "unable to decrypt secret variable")
+				return app, nil, msgList, sdk.WrapError(sdk.NewError(sdk.ErrWrongRequest, err), "unable to decrypt secret variable")
 			}
 			v.Value = secret
 		}
 		vv := sdk.ApplicationVariable{Name: p, Type: v.Type, Value: v.Value}
 		app.Variables = append(app.Variables, vv)
+
+		if v.Type == sdk.SecretVariable {
+			applicationSecrets = append(applicationSecrets, sdk.Variable{
+				Name:  fmt.Sprintf("cds.app.%s", vv.Name),
+				Type:  v.Type,
+				Value: vv.Value,
+			})
+		}
 	}
 
 	//Compute keys
 	for kname, kval := range eapp.Keys {
 		if !strings.HasPrefix(kname, "app-") {
 			msgList = append(msgList, sdk.NewMessage(sdk.MsgWorkflowErrorUnknownKey, kname))
-			return app, msgList, sdk.WrapError(sdk.ErrInvalidKeyName, "unable to parse key %s", kname)
+			return app, nil, msgList, sdk.WrapError(sdk.ErrInvalidKeyName, "unable to parse key %s", kname)
 		}
 
 		var oldKey *sdk.ApplicationKey
@@ -103,7 +114,7 @@ func ParseAndImport(ctx context.Context, db gorp.SqlExecutor, cache cache.Store,
 
 		kk, err := keys.Parse(db, proj.ID, kname, kval, decryptFunc)
 		if err != nil {
-			return app, msgList, sdk.ErrorWithFallback(err, sdk.ErrWrongRequest, "unable to parse key %s", kname)
+			return app, nil, msgList, sdk.ErrorWithFallback(err, sdk.ErrWrongRequest, "unable to parse key %s", kname)
 		}
 
 		k := sdk.ApplicationKey{
@@ -125,6 +136,11 @@ func ParseAndImport(ctx context.Context, db gorp.SqlExecutor, cache cache.Store,
 		}
 
 		app.Keys = append(app.Keys, k)
+		applicationSecrets = append(applicationSecrets, sdk.Variable{
+			Name:  fmt.Sprintf("cds.key.%s.priv", k.Name),
+			Type:  string(k.Type),
+			Value: k.Private,
+		})
 	}
 
 	// VCS Strategy
@@ -139,14 +155,19 @@ func ParseAndImport(ctx context.Context, db gorp.SqlExecutor, cache cache.Store,
 		app.RepositoryStrategy.ConnectionType = "https"
 	}
 	if app.RepositoryStrategy.ConnectionType == "ssh" && app.RepositoryStrategy.SSHKey == "" {
-		return app, msgList, sdk.NewErrorFrom(sdk.ErrInvalidApplicationRepoStrategy, "could not import application %s with a connection type ssh without ssh key", app.Name)
+		return app, nil, msgList, sdk.NewErrorFrom(sdk.ErrInvalidApplicationRepoStrategy, "could not import application %s with a connection type ssh without ssh key", app.Name)
 	}
 	if eapp.VCSPassword != "" {
 		clearPWD, err := decryptFunc(db, proj.ID, eapp.VCSPassword)
 		if err != nil {
-			return app, msgList, sdk.WrapError(sdk.NewError(sdk.ErrWrongRequest, err), "unable to decrypt vcs password")
+			return app, nil, msgList, sdk.WrapError(sdk.NewError(sdk.ErrWrongRequest, err), "unable to decrypt vcs password")
 		}
 		app.RepositoryStrategy.Password = clearPWD
+		applicationSecrets = append(applicationSecrets, sdk.Variable{
+			Name:  "git.http.password",
+			Type:  sdk.SecretVariable,
+			Value: clearPWD,
+		})
 	}
 
 	// deployment strategies
@@ -156,7 +177,7 @@ func ParseAndImport(ctx context.Context, db gorp.SqlExecutor, cache cache.Store,
 		projIt, has := proj.GetIntegration(pfName)
 		if !has {
 			msgList = append(msgList, sdk.NewMessage(sdk.MsgWorkflowErrorBadIntegrationName, pfName))
-			return app, msgList, sdk.WrapError(sdk.NewErrorFrom(sdk.ErrWrongRequest, "deployment platform not found"), "deployment platform %s not found", pfName)
+			return app, nil, msgList, sdk.WrapError(sdk.NewErrorFrom(sdk.ErrWrongRequest, "deployment platform not found"), "deployment platform %s not found", pfName)
 		}
 		if projIt.Model.DeploymentDefaultConfig != nil {
 			deploymentStrategies[pfName] = projIt.Model.DeploymentDefaultConfig.Clone()
@@ -177,9 +198,14 @@ func ParseAndImport(ctx context.Context, db gorp.SqlExecutor, cache cache.Store,
 				if v.Type == sdk.SecretVariable {
 					clearPWD, err := decryptFunc(db, proj.ID, v.Value)
 					if err != nil {
-						return app, nil, sdk.WrapError(sdk.NewError(sdk.ErrWrongRequest, err), "unable to decrypt deployment strategy password")
+						return app, nil, nil, sdk.WrapError(sdk.NewError(sdk.ErrWrongRequest, err), "unable to decrypt deployment strategy password")
 					}
 					v.Value = clearPWD
+					applicationSecrets = append(applicationSecrets, sdk.Variable{
+						Name:  fmt.Sprintf("%s:cds.integration.%s", pfName, k),
+						Type:  sdk.SecretVariable,
+						Value: clearPWD,
+					})
 				}
 			}
 			deploymentStrategies[pfName][k] = sdk.IntegrationConfigValue{
@@ -204,5 +230,5 @@ func ParseAndImport(ctx context.Context, db gorp.SqlExecutor, cache cache.Store,
 	close(msgChan)
 	done.Wait()
 
-	return app, msgList, globalError
+	return app, applicationSecrets, msgList, globalError
 }

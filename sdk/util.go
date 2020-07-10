@@ -46,3 +46,12 @@ func DeleteEmptyValueFromArray(array []string) []string {
 	}
 	return out
 }
+
+// IntMapToSlice converts a map struct to a slice for int64 keys
+func IntMapToSlice(m map[int64]struct{}) []int64 {
+	slice := make([]int64, 0, len(m))
+	for i := range m {
+		slice = append(slice, i)
+	}
+	return slice
+}
