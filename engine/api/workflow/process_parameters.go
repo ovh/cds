@@ -6,14 +6,12 @@ import (
 	"strings"
 
 	"github.com/fsamin/go-dump"
-	"github.com/go-gorp/gorp"
-
 	"github.com/ovh/cds/engine/api/observability"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/interpolate"
 )
 
-func getNodeJobRunParameters(db gorp.SqlExecutor, j sdk.Job, run *sdk.WorkflowNodeRun, stage *sdk.Stage) ([]sdk.Parameter, *sdk.MultiError) {
+func getNodeJobRunParameters(j sdk.Job, run *sdk.WorkflowNodeRun, stage *sdk.Stage) ([]sdk.Parameter, *sdk.MultiError) {
 	params := run.BuildParameters
 	tmp := map[string]string{
 		"cds.stage": stage.Name,
@@ -44,10 +42,20 @@ func getBuildParameterFromNodeContext(proj sdk.Project, w *sdk.Workflow, runCont
 		vars[k] = v
 	}
 
+	tmpProj = sdk.ParametersFromProjectKeys(proj)
+	for k, v := range tmpProj {
+		vars[k] = v
+	}
+
 	// COMPUTE APPLICATION VARIABLE
 	if runContext.Application.ID != 0 {
 		vars["cds.application"] = runContext.Application.Name
 		tmp := sdk.ParametersFromApplicationVariables(runContext.Application)
+		for k, v := range tmp {
+			vars[k] = v
+		}
+
+		tmp = sdk.ParametersFromApplicationKeys(runContext.Application)
 		for k, v := range tmp {
 			vars[k] = v
 		}
@@ -57,6 +65,10 @@ func getBuildParameterFromNodeContext(proj sdk.Project, w *sdk.Workflow, runCont
 	if runContext.Environment.ID != 0 {
 		vars["cds.environment"] = runContext.Environment.Name
 		tmp := sdk.ParametersFromEnvironmentVariables(runContext.Environment)
+		for k, v := range tmp {
+			vars[k] = v
+		}
+		tmp = sdk.ParametersFromEnvironmentKeys(runContext.Environment)
 		for k, v := range tmp {
 			vars[k] = v
 		}

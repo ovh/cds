@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"sort"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 
@@ -863,6 +864,10 @@ func (api *API) postWorkflowRunHandler() service.Handler {
 		var wf *sdk.Workflow
 		// IF CONTINUE EXISTING RUN
 		if lastRun != nil {
+			if lastRun.ReadOnly {
+				return sdk.NewErrorFrom(sdk.ErrForbidden, "this workflow execution is on read only mode, it cannot be run anymore")
+			}
+
 			if opts != nil && opts.Manual != nil && opts.Manual.Resync {
 				log.Debug("Resync workflow %d for run %d", lastRun.Workflow.ID, lastRun.ID)
 				if err := workflow.Resync(ctx, api.mustDB(), api.Cache, *p, lastRun); err != nil {
@@ -929,12 +934,9 @@ func (api *API) initWorkflowRun(ctx context.Context, projKey string, wf *sdk.Wor
 
 	p, err := project.Load(ctx, api.mustDB(), projKey,
 		project.LoadOptions.WithVariables,
+		project.LoadOptions.WithKeys,
 		project.LoadOptions.WithFeatures(api.Cache),
 		project.LoadOptions.WithIntegrations,
-		project.LoadOptions.WithApplicationVariables,
-		project.LoadOptions.WithApplicationWithDeploymentStrategies,
-		project.LoadOptions.WithEnvironments,
-		project.LoadOptions.WithPipelines,
 	)
 	if err != nil {
 		r := failInitWorkflowRun(ctx, api.mustDB(), wfRun, sdk.WrapError(err, "cannot load project for as code workflow creation"))
@@ -946,6 +948,7 @@ func (api *API) initWorkflowRun(ctx context.Context, projKey string, wf *sdk.Wor
 		go WorkflowSendEvent(context.Background(), api.mustDB(), api.Cache, *p, report)
 	}()
 
+	var workflowSecrets *workflow.PushSecrets
 	if wfRun.Status == sdk.StatusPending {
 		// Sync as code event to remove events in case where a PR was merged
 		if len(wf.AsCodeEvent) > 0 {
@@ -977,6 +980,7 @@ func (api *API) initWorkflowRun(ctx context.Context, projKey string, wf *sdk.Wor
 				project.LoadOptions.WithVariables,
 				project.LoadOptions.WithGroups,
 				project.LoadOptions.WithApplicationVariables,
+				project.LoadOptions.WithApplicationKeys,
 				project.LoadOptions.WithApplicationWithDeploymentStrategies,
 				project.LoadOptions.WithEnvironments,
 				project.LoadOptions.WithPipelines,
@@ -993,7 +997,8 @@ func (api *API) initWorkflowRun(ctx context.Context, projKey string, wf *sdk.Wor
 			// Get workflow from repository
 			log.Debug("workflow.CreateFromRepository> %s", wf.Name)
 			oldWf := *wf
-			asCodeInfosMsg, err := workflow.CreateFromRepository(ctx, api.mustDB(), api.Cache, p1, wf, *opts, *u, project.DecryptWithBuiltinKey)
+			var asCodeInfosMsg []sdk.Message
+			workflowSecrets, asCodeInfosMsg, err = workflow.CreateFromRepository(ctx, api.mustDB(), api.Cache, p1, wf, *opts, *u, project.DecryptWithBuiltinKey)
 			infos := make([]sdk.SpawnMsg, len(asCodeInfosMsg))
 			for i, msg := range asCodeInfosMsg {
 				infos[i] = sdk.SpawnMsg{
@@ -1010,14 +1015,43 @@ func (api *API) initWorkflowRun(ctx context.Context, projKey string, wf *sdk.Wor
 			}
 
 			event.PublishWorkflowUpdate(ctx, p.Key, *wf, oldWf, u)
+		} else {
+			// Get all secrets for non ascode run
+			workflowSecrets, err = workflow.RetrieveSecrets(api.mustDB(), *wf)
+			if err != nil {
+				r1 := failInitWorkflowRun(ctx, api.mustDB(), wfRun, sdk.WrapError(err, "unable to retrieve workflow secret"))
+				report.Merge(ctx, r1)
+				return
+			}
 		}
 
 		wfRun.Workflow = *wf
+
+		if err := saveWorkflowRunSecrets(ctx, api.mustDB(), p.ID, *wfRun, workflowSecrets); err != nil {
+			r := failInitWorkflowRun(ctx, api.mustDB(), wfRun, sdk.WrapError(err, "unable to compute workflow secrets %s/%s", p.Key, wf.Name))
+			report.Merge(ctx, r)
+			return
+		}
+
 	}
 
-	r, err := workflow.StartWorkflowRun(ctx, api.mustDB(), api.Cache, *p, wfRun, opts, u, asCodeInfosMsg)
+	tx, err := api.mustDB().Begin()
+	if err != nil {
+		r := failInitWorkflowRun(ctx, api.mustDB(), wfRun, sdk.WrapError(err, "unable to start workflow %s/%s", p.Key, wf.Name))
+		report.Merge(ctx, r)
+		return
+	}
+
+	r, err := workflow.StartWorkflowRun(ctx, tx, api.Cache, *p, wfRun, opts, u, asCodeInfosMsg)
 	report.Merge(ctx, r)
 	if err != nil {
+		_ = tx.Rollback()
+		r := failInitWorkflowRun(ctx, api.mustDB(), wfRun, sdk.WrapError(err, "unable to start workflow %s/%s", p.Key, wf.Name))
+		report.Merge(ctx, r)
+		return
+	}
+	if err := tx.Commit(); err != nil {
+		_ = tx.Rollback()
 		r := failInitWorkflowRun(ctx, api.mustDB(), wfRun, sdk.WrapError(err, "unable to start workflow %s/%s", p.Key, wf.Name))
 		report.Merge(ctx, r)
 		return
@@ -1040,6 +1074,126 @@ func (api *API) initWorkflowRun(ctx context.Context, projKey string, wf *sdk.Wor
 		}
 		go WorkflowSendEvent(context.Background(), api.mustDB(), api.Cache, *p, reportParent)
 	}
+}
+
+func saveWorkflowRunSecrets(ctx context.Context, db gorp.SqlExecutor, projID int64, wr sdk.WorkflowRun, secrets *workflow.PushSecrets) error {
+	// Get project secrets
+	p, err := project.LoadByID(db, projID, project.LoadOptions.WithVariablesWithClearPassword, project.LoadOptions.WithClearKeys)
+	if err != nil {
+		return err
+	}
+
+	// Create a snapshot of project secrets and keys
+	pv := sdk.VariablesFilter(sdk.FromProjectVariables(p.Variables), sdk.SecretVariable, sdk.KeyVariable)
+	pv = sdk.VariablesPrefix(pv, "cds.proj.")
+	for _, v := range pv {
+		wrSecret := sdk.WorkflowRunSecret{
+			WorkflowRunID: wr.ID,
+			Context:       workflow.SecretProjContext,
+			Name:          v.Name,
+			Type:          v.Type,
+			Value:         []byte(v.Value),
+		}
+		if err := workflow.InsertRunSecret(ctx, db, &wrSecret); err != nil {
+			return err
+		}
+	}
+
+	for _, k := range p.Keys {
+		wrSecret := sdk.WorkflowRunSecret{
+			WorkflowRunID: wr.ID,
+			Context:       workflow.SecretProjContext,
+			Name:          fmt.Sprintf("cds.key.%s.priv", k.Name),
+			Type:          string(k.Type),
+			Value:         []byte(k.Private),
+		}
+		if err := workflow.InsertRunSecret(ctx, db, &wrSecret); err != nil {
+			return err
+		}
+	}
+
+	// Find Needed Project Integrations
+	ppIDs := make(map[int64]string, 0)
+	for _, n := range wr.Workflow.WorkflowData.Array() {
+		if n.Context == nil || n.Context.ProjectIntegrationID == 0 {
+			continue
+		}
+		ppIDs[n.Context.ProjectIntegrationID] = ""
+	}
+	for ppID := range ppIDs {
+		projectIntegration, err := integration.LoadProjectIntegrationByIDWithClearPassword(db, ppID)
+		if err != nil {
+			return err
+		}
+		ppIDs[ppID] = projectIntegration.Name
+
+		// Project integration secret variable
+		for k, v := range projectIntegration.Config {
+			if v.Type != sdk.SecretVariable {
+				continue
+			}
+			wrSecret := sdk.WorkflowRunSecret{
+				WorkflowRunID: wr.ID,
+				Context:       fmt.Sprintf(workflow.SecretProjIntegrationContext, ppID),
+				Name:          fmt.Sprintf("cds.integration.%s", k),
+				Type:          v.Type,
+				Value:         []byte(v.Value),
+			}
+			if err := workflow.InsertRunSecret(ctx, db, &wrSecret); err != nil {
+				return err
+			}
+
+		}
+	}
+
+	// Application secret
+	for id, variables := range secrets.ApplicationsSecrets {
+		// Filter to avoid getting cds.deployment variables
+		for _, v := range variables {
+			var wrSecret sdk.WorkflowRunSecret
+			switch {
+			case strings.HasPrefix(v.Name, "cds.app.") || strings.HasPrefix(v.Name, "cds.key."):
+				wrSecret = sdk.WorkflowRunSecret{
+					WorkflowRunID: wr.ID,
+					Context:       fmt.Sprintf(workflow.SecretAppContext, id),
+					Name:          v.Name,
+					Type:          v.Type,
+					Value:         []byte(v.Value),
+				}
+			case strings.Contains(v.Name, ":cds.integration."):
+				piName := strings.SplitN(v.Name, ":", 2)
+				wrSecret = sdk.WorkflowRunSecret{
+					WorkflowRunID: wr.ID,
+					Context:       fmt.Sprintf(workflow.SecretApplicationIntegrationContext, id, piName[0]),
+					Name:          piName[1],
+					Type:          v.Type,
+					Value:         []byte(v.Value),
+				}
+			default:
+				continue
+			}
+			if err := workflow.InsertRunSecret(ctx, db, &wrSecret); err != nil {
+				return err
+			}
+		}
+	}
+
+	// Environment secret
+	for id, variables := range secrets.EnvironmentdSecrets {
+		for _, v := range variables {
+			wrSecret := sdk.WorkflowRunSecret{
+				WorkflowRunID: wr.ID,
+				Context:       fmt.Sprintf(workflow.SecretEnvContext, id),
+				Name:          v.Name,
+				Type:          v.Type,
+				Value:         []byte(v.Value),
+			}
+			if err := workflow.InsertRunSecret(ctx, db, &wrSecret); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
 }
 
 func failInitWorkflowRun(ctx context.Context, db *gorp.DbMap, wfRun *sdk.WorkflowRun, err error) *workflow.ProcessorReport {

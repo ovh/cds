@@ -180,15 +180,9 @@ func takeJob(ctx context.Context, dbFunc func() *gorp.DbMap, store cache.Store, 
 		return nil, sdk.WrapError(err, "Unable to load workflow run")
 	}
 
-	// Load the secrets
-	pv, err := project.LoadAllVariablesWithDecrytion(tx, p.ID)
+	secrets, err := workflow.LoadDecryptSecrets(ctx, tx, workflowRun, noderun)
 	if err != nil {
-		return nil, sdk.WrapError(err, "Cannot load project variable")
-	}
-
-	secrets, errSecret := workflow.LoadSecrets(tx, store, noderun, workflowRun, pv)
-	if errSecret != nil {
-		return nil, sdk.WrapError(errSecret, "Cannot load secrets")
+		return nil, sdk.WrapError(err, "cannot load secrets")
 	}
 
 	// Feed the worker
@@ -196,13 +190,6 @@ func takeJob(ctx context.Context, dbFunc func() *gorp.DbMap, store cache.Store, 
 	wnjri.Number = noderun.Number
 	wnjri.SubNumber = noderun.SubNumber
 	wnjri.Secrets = secrets
-
-	params, secretsKeys, errK := workflow.LoadNodeJobRunKeys(ctx, tx, p, workflowRun, noderun)
-	if errK != nil {
-		return nil, sdk.WrapError(errK, "Cannot load keys")
-	}
-	wnjri.Secrets = append(wnjri.Secrets, secretsKeys...)
-	wnjri.NodeJobRun.Parameters = append(wnjri.NodeJobRun.Parameters, params...)
 
 	if err := tx.Commit(); err != nil {
 		return nil, sdk.WithStack(err)
@@ -1033,6 +1020,9 @@ func (api *API) postWorkflowJobTagsHandler() service.Handler {
 
 		workflowRun, err := workflow.LoadAndLockRunByJobID(tx, id, workflow.LoadRunOptions{})
 		if err != nil {
+			if sdk.ErrorIs(err, sdk.ErrNotFound) {
+				return sdk.NewErrorFrom(sdk.ErrLocked, "workflow run is already locked")
+			}
 			return sdk.WrapError(err, "unable to load node run id %d", id)
 		}
 

@@ -466,7 +466,7 @@ jobLoop:
 
 		//Process variables for the jobs
 		_, next = observability.Span(ctx, "workflow..getNodeJobRunParameters")
-		jobParams, err := getNodeJobRunParameters(db, *job, nr, stage)
+		jobParams, err := getNodeJobRunParameters(*job, nr, stage)
 		next()
 		if err != nil {
 			spawnErrs.Join(*err)
@@ -712,7 +712,7 @@ func NodeBuildParametersFromRun(wr sdk.WorkflowRun, id int64) ([]sdk.Parameter, 
 }
 
 //NodeBuildParametersFromWorkflow returns build_parameters for a node given its id
-func NodeBuildParametersFromWorkflow(ctx context.Context, proj sdk.Project, wf *sdk.Workflow, refNode *sdk.Node, ancestorsIds []int64) ([]sdk.Parameter, error) {
+func NodeBuildParametersFromWorkflow(proj sdk.Project, wf *sdk.Workflow, refNode *sdk.Node, ancestorsIds []int64) ([]sdk.Parameter, error) {
 	runContext := nodeRunContext{}
 	res := []sdk.Parameter{}
 	if refNode != nil && refNode.Context != nil {

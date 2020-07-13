@@ -232,3 +232,41 @@ func DeleteFromWorkflow(db gorp.SqlExecutor, workflowID int64) error {
 	}
 	return nil
 }
+
+// LoadAllIntegrationsForProjectsWithDecryption load all integrations for all given project, with decryption
+func LoadAllIntegrationsForProjectsWithDecryption(ctx context.Context, db gorp.SqlExecutor, projIDs []int64) (map[int64][]sdk.ProjectIntegration, error) {
+	return loadAllIntegrationsForProjects(ctx, db, projIDs, gorpmapping.GetOptions.WithDecryption)
+}
+
+func loadAllIntegrationsForProjects(ctx context.Context, db gorp.SqlExecutor, projIDs []int64, opts ...gorpmapping.GetOptionFunc) (map[int64][]sdk.ProjectIntegration, error) {
+	var res []dbProjectIntegration
+	query := gorpmapping.NewQuery(`
+		SELECT *
+		FROM project_integration
+		WHERE project_id = ANY($1)
+		ORDER BY project_id
+	`).Args(pq.Int64Array(projIDs))
+	if err := gorpmapping.GetAll(ctx, db, query, &res, opts...); err != nil {
+		return nil, err
+	}
+
+	projsInts := make(map[int64][]sdk.ProjectIntegration)
+
+	for i := range res {
+		dbProjInt := res[i]
+		isValid, err := gorpmapping.CheckSignature(dbProjInt, dbProjInt.Signature)
+		if err != nil {
+			return nil, err
+		}
+		if !isValid {
+			log.Error(ctx, "project.loadAllIntegrationsForProjects> project integration id %d data corrupted", dbProjInt.ID)
+			continue
+		}
+		if _, ok := projsInts[dbProjInt.ProjectID]; !ok {
+			projsInts[dbProjInt.ProjectID] = make([]sdk.ProjectIntegration, 0)
+		}
+		pIntegration := dbProjInt.ProjectIntegration
+		projsInts[dbProjInt.ProjectID] = append(projsInts[dbProjInt.ProjectID], pIntegration)
+	}
+	return projsInts, nil
+}
