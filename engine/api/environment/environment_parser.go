@@ -73,11 +73,14 @@ func ParseAndImport(db gorp.SqlExecutor, proj sdk.Project, eenv exportentities.E
 
 		vv := sdk.EnvironmentVariable{Name: p, Type: v.Type, Value: v.Value, EnvironmentID: env.ID}
 		env.Variables = append(env.Variables, vv)
-		envSecrets = append(envSecrets, sdk.Variable{
-			Name:  fmt.Sprintf("cds.env.%s", vv.Name),
-			Type:  v.Type,
-			Value: v.Value,
-		})
+
+		if v.Type == sdk.SecretVariable {
+			envSecrets = append(envSecrets, sdk.Variable{
+				Name:  fmt.Sprintf("cds.env.%s", vv.Name),
+				Type:  v.Type,
+				Value: v.Value,
+			})
+		}
 	}
 
 	//Compute keys
