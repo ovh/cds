@@ -3,8 +3,8 @@
 TARGET_OS = $(if ${OS},${OS},windows darwin linux freebsd)
 TARGET_ARCH = $(if ${ARCH},${ARCH},amd64 arm 386 arm64)
 VERSION := $(if ${CDS_VERSION},${CDS_VERSION},snapshot)
-GIT_DESCRIBE := $(shell git describe)
-GIT_VERSION := $(if ${GIT_DESCRIBE},${GIT_DESCRIBE},0.42.0-99-snapshot) #TODO fixme
+GIT_DESCRIBE := $(shell git describe --tags)
+GIT_VERSION := $(if ${GIT_DESCRIBE},${GIT_DESCRIBE},0.0.0-0-snapshot)
 SHA512 := $(if ifeq ${UNAME} "Darwin",shasum -a 512,sha512sum)
 
 TARGET_ENGINE = engine
