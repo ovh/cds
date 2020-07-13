@@ -46,6 +46,9 @@ func RetrieveSecrets(db gorp.SqlExecutor, wf sdk.Workflow) (*PushSecrets, error)
 
 		for name, appD := range appDB.DeploymentStrategies {
 			for vName, v := range appD {
+				if v.Type != sdk.IntegrationConfigTypePassword {
+					continue
+				}
 				secretsVariables = append(secretsVariables, sdk.Variable{
 					Name:  fmt.Sprintf("%s:cds.integration.%s", name, vName),
 					Type:  sdk.SecretVariable,
