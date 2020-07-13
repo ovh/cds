@@ -90,13 +90,11 @@ func LoadEnvironmentSecrets(db gorp.SqlExecutor, id int64) ([]sdk.Variable, erro
 	}
 	vars := sdk.VariablesFilter(sdk.FromEnvironmentVariables(envVars), sdk.SecretVariable, sdk.KeyVariable)
 	for _, v := range vars {
-		if v.Type == sdk.SecretVariable {
-			secretsVariables = append(secretsVariables, sdk.Variable{
-				Name:  fmt.Sprintf("cds.env.%s", v.Name),
-				Type:  v.Type,
-				Value: v.Value,
-			})
-		}
+		secretsVariables = append(secretsVariables, sdk.Variable{
+			Name:  fmt.Sprintf("cds.env.%s", v.Name),
+			Type:  v.Type,
+			Value: v.Value,
+		})
 	}
 
 	keys, err := environment.LoadAllKeysWithPrivateContent(db, id)
