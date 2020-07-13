@@ -1,11 +1,13 @@
 package hooks
 
 import (
+	"encoding/json"
 	"github.com/ovh/cds/sdk"
+	"strconv"
 	"time"
 )
 
-// GithubPushEvent represents payload send by github on a push event
+// GithubWebHookEvent represents payload send by github on a push event
 type GithubWebHookEvent struct {
 	Ref        string            `json:"ref"`
 	Before     string            `json:"before"`
@@ -112,8 +114,9 @@ type GithubRepository struct {
 	NotificationsURL string      `json:"notifications_url"`
 	LabelsURL        string      `json:"labels_url"`
 	ReleasesURL      string      `json:"releases_url"`
+	CreateAt         GithubDate  `json:"created_at"`
 	UpdatedAt        time.Time   `json:"updated_at"`
-	PushedAt         int         `json:"pushed_at"`
+	PushedAt         GithubDate  `json:"pushed_at"`
 	GitURL           string      `json:"git_url"`
 	SSHURL           string      `json:"ssh_url"`
 	CloneURL         string      `json:"clone_url"`
@@ -155,4 +158,21 @@ func (g *GithubWebHookEvent) GetCommits() []sdk.VCSCommit {
 		commits = append(commits, commit)
 	}
 	return commits
+}
+
+type GithubDate time.Time
+
+func (g *GithubDate) UnmarshalJSON(data []byte) error {
+	var d time.Time
+
+	dateInt, err := strconv.Atoi(string(data))
+	if err == nil {
+		d = time.Unix(int64(dateInt), 0)
+	} else {
+		if err := json.Unmarshal(data, &d); err != nil {
+			return err
+		}
+	}
+	*g = GithubDate(d)
+	return nil
 }

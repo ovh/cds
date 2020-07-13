@@ -43,7 +43,6 @@ func getBuildParameterFromNodeContext(proj sdk.Project, w *sdk.Workflow, runCont
 	}
 
 	tmpProj = sdk.ParametersFromProjectKeys(proj)
-	vars = make(map[string]string, len(tmpProj))
 	for k, v := range tmpProj {
 		vars[k] = v
 	}
