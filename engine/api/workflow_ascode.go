@@ -101,9 +101,19 @@ func (api *API) postWorkflowAsCodeHandler() service.Handler {
 			return err
 		}
 
-		ope, err := operation.PushOperationUpdate(ctx, api.mustDB(), api.Cache, *p, data, rootApp.VCSServer, rootApp.RepositoryFullname, branch, message, rootApp.RepositoryStrategy, u)
+		tx, err := api.mustDB().Begin()
+		if err != nil {
+			return sdk.WithStack(err)
+		}
+		defer tx.Rollback() // nolint
+
+		ope, err := operation.PushOperationUpdate(ctx, tx, api.Cache, *p, data, rootApp.VCSServer, rootApp.RepositoryFullname, branch, message, rootApp.RepositoryStrategy, u)
 		if err != nil {
 			return err
+		}
+
+		if err := tx.Commit(); err != nil {
+			return sdk.WithStack(err)
 		}
 
 		sdk.GoRoutine(context.Background(), fmt.Sprintf("UpdateAsCodeResult-%s", ope.UUID), func(ctx context.Context) {
@@ -131,6 +141,12 @@ func (api *API) migrateWorkflowAsCode(ctx context.Context, w http.ResponseWriter
 		return sdk.WithStack(sdk.ErrWorkflowAlreadyAsCode)
 	}
 
+	tx, err := api.mustDB().Begin()
+	if err != nil {
+		return sdk.WithStack(err)
+	}
+	defer tx.Rollback() // nolint
+
 	// Check if there is a repository web hook
 	found := false
 	for _, h := range wf.WorkflowData.GetHooks() {
@@ -146,19 +162,23 @@ func (api *API) migrateWorkflowAsCode(ctx context.Context, w http.ResponseWriter
 		}
 		wf.WorkflowData.Node.Hooks = append(wf.WorkflowData.Node.Hooks, h)
 
-		if err := workflow.Update(ctx, api.mustDB(), api.Cache, proj, wf, workflow.UpdateOptions{}); err != nil {
+		if err := workflow.Update(ctx, tx, api.Cache, proj, wf, workflow.UpdateOptions{}); err != nil {
 			return err
 		}
 	}
 
-	data, err := workflow.Pull(ctx, api.mustDB(), api.Cache, proj, wf.Name, project.EncryptWithBuiltinKey, v2.WorkflowSkipIfOnlyOneRepoWebhook)
+	data, err := workflow.Pull(ctx, tx, api.Cache, proj, wf.Name, project.EncryptWithBuiltinKey, v2.WorkflowSkipIfOnlyOneRepoWebhook)
 	if err != nil {
 		return err
 	}
 
-	ope, err := operation.PushOperation(ctx, api.mustDB(), api.Cache, proj, data, app.VCSServer, app.RepositoryFullname, branch, message, app.RepositoryStrategy, u)
+	ope, err := operation.PushOperation(ctx, tx, api.Cache, proj, data, app.VCSServer, app.RepositoryFullname, branch, message, app.RepositoryStrategy, u)
 	if err != nil {
 		return err
+	}
+
+	if err := tx.Commit(); err != nil {
+		return sdk.WithStack(err)
 	}
 
 	sdk.GoRoutine(context.Background(), fmt.Sprintf("MigrateWorkflowAsCodeResult-%s", ope.UUID), func(ctx context.Context) {

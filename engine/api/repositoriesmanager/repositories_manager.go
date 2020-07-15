@@ -51,9 +51,9 @@ func LoadAll(ctx context.Context, db *gorp.DbMap, store cache.Store) (map[string
 }
 
 type vcsConsumer struct {
-	name   string
-	proj   *sdk.Project
-	dbFunc func(ctx context.Context) *gorp.DbMap
+	name string
+	proj *sdk.Project
+	db   gorpmapping.SqlExecutorWithTx
 }
 
 type vcsClient struct {
@@ -64,7 +64,7 @@ type vcsClient struct {
 	created    int64 //Timestamp .Unix() of creation
 	srvs       []sdk.Service
 	cache      *gocache.Cache
-	db         gorp.SqlExecutor
+	db         gorpmapping.SqlExecutorWithTx
 }
 
 func (c *vcsClient) Cache() *gocache.Cache {
@@ -78,7 +78,7 @@ type Options struct {
 	Sync bool
 }
 
-func GetReposForProjectVCSServer(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj sdk.Project, vcsServerName string, opts Options) ([]sdk.VCSRepo, error) {
+func GetReposForProjectVCSServer(ctx context.Context, db gorpmapping.SqlExecutorWithTx, store cache.Store, proj sdk.Project, vcsServerName string, opts Options) ([]sdk.VCSRepo, error) {
 	log.Debug("GetReposForProjectVCSServer> Loading repo for %s", vcsServerName)
 
 	vcsServer, err := LoadProjectVCSServerLinkByProjectKeyAndVCSServerName(ctx, db, proj.Key, vcsServerName)
@@ -118,13 +118,12 @@ func GetReposForProjectVCSServer(ctx context.Context, db gorp.SqlExecutor, store
 }
 
 // NewVCSServerConsumer returns a sdk.VCSServer wrapping vcs µServices calls
-func NewVCSServerConsumer(dbFunc func(ctx context.Context) *gorp.DbMap, store cache.Store, name string) (sdk.VCSServerService, error) {
-	return &vcsConsumer{name: name, dbFunc: dbFunc}, nil
+func NewVCSServerConsumer(db gorpmapping.SqlExecutorWithTx, store cache.Store, name string) (sdk.VCSServerService, error) {
+	return &vcsConsumer{name: name, db: db}, nil
 }
 
 func (c *vcsConsumer) AuthorizeRedirect(ctx context.Context) (string, string, error) {
-	db := c.dbFunc(ctx)
-	srv, err := services.LoadAllByType(ctx, db, services.TypeVCS)
+	srv, err := services.LoadAllByType(ctx, c.db, services.TypeVCS)
 	if err != nil {
 		return "", "", sdk.WithStack(err)
 	}
@@ -132,7 +131,7 @@ func (c *vcsConsumer) AuthorizeRedirect(ctx context.Context) (string, string, er
 	res := map[string]string{}
 	path := fmt.Sprintf("/vcs/%s/authorize", c.name)
 	log.Info(ctx, "Performing request on %s", path)
-	if _, _, err := services.NewClient(db, srv).DoJSONRequest(ctx, "GET", path, nil, &res); err != nil {
+	if _, _, err := services.NewClient(c.db, srv).DoJSONRequest(ctx, "GET", path, nil, &res); err != nil {
 		return "", "", sdk.WithStack(err)
 	}
 
@@ -140,8 +139,7 @@ func (c *vcsConsumer) AuthorizeRedirect(ctx context.Context) (string, string, er
 }
 
 func (c *vcsConsumer) AuthorizeToken(ctx context.Context, token string, secret string) (string, string, error) {
-	db := c.dbFunc(ctx)
-	srv, err := services.LoadAllByType(ctx, db, services.TypeVCS)
+	srv, err := services.LoadAllByType(ctx, c.db, services.TypeVCS)
 	if err != nil {
 		return "", "", sdk.WithStack(err)
 	}
@@ -153,7 +151,7 @@ func (c *vcsConsumer) AuthorizeToken(ctx context.Context, token string, secret s
 
 	res := map[string]string{}
 	path := fmt.Sprintf("/vcs/%s/authorize", c.name)
-	if _, _, err := services.NewClient(db, srv).DoJSONRequest(ctx, "POST", path, body, &res); err != nil {
+	if _, _, err := services.NewClient(c.db, srv).DoJSONRequest(ctx, "POST", path, body, &res); err != nil {
 		return "", "", sdk.WithStack(err)
 	}
 
@@ -161,12 +159,12 @@ func (c *vcsConsumer) AuthorizeToken(ctx context.Context, token string, secret s
 }
 
 func (c *vcsConsumer) GetAuthorizedClient(ctx context.Context, token, secret string, created int64) (sdk.VCSAuthorizedClientService, error) {
-	_, err := LoadProjectVCSServerLinkByProjectKeyAndVCSServerName(ctx, c.dbFunc(ctx), c.proj.Key, c.name)
+	_, err := LoadProjectVCSServerLinkByProjectKeyAndVCSServerName(ctx, c.db, c.proj.Key, c.name)
 	if err != nil {
 		return nil, sdk.NewError(sdk.ErrNoReposManagerClientAuth, err)
 	}
 
-	srvs, err := services.LoadAllByType(ctx, c.dbFunc(ctx), services.TypeVCS)
+	srvs, err := services.LoadAllByType(ctx, c.db, services.TypeVCS)
 	if err != nil {
 		return nil, sdk.WithStack(err)
 	}
@@ -179,12 +177,12 @@ func (c *vcsConsumer) GetAuthorizedClient(ctx context.Context, token, secret str
 		secret:     secret,
 		srvs:       srvs,
 		cache:      gocache.New(5*time.Second, 60*time.Second),
-		db:         c.dbFunc(ctx),
+		db:         c.db,
 	}, nil
 }
 
 //AuthorizedClient returns an implementation of AuthorizedClient wrapping calls to vcs uService
-func AuthorizedClient(ctx context.Context, db gorp.SqlExecutor, store cache.Store, projectKey string, repo sdk.ProjectVCSServerLink) (sdk.VCSAuthorizedClientService, error) {
+func AuthorizedClient(ctx context.Context, db gorpmapping.SqlExecutorWithTx, store cache.Store, projectKey string, repo sdk.ProjectVCSServerLink) (sdk.VCSAuthorizedClientService, error) {
 	repoData, err := LoadProjectVCSServerLinksData(ctx, db, repo.ID, gorpmapping.GetOptions.WithDecryption)
 	if err != nil {
 		return nil, err

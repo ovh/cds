@@ -16,7 +16,7 @@ import (
 )
 
 func TestAPI_getStorageDriverDefault(t *testing.T) {
-	api, _, _ := newTestAPI(t)
+	api, db, _ := newTestAPI(t)
 
 	cfg := objectstore.Config{
 		Kind: objectstore.Filesystem,
@@ -32,7 +32,7 @@ func TestAPI_getStorageDriverDefault(t *testing.T) {
 	api.SharedStorage = storage
 
 	key := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, api.mustDB(), api.Cache, key, key)
+	proj := assets.InsertTestProject(t, db, api.Cache, key, key)
 
 	storageDriver, err := objectstore.GetDriver(context.Background(), api.mustDB(), api.SharedStorage, proj.Key, sdk.DefaultStorageIntegrationName)
 	test.NoError(t, err)
@@ -42,7 +42,7 @@ func TestAPI_getStorageDriverDefault(t *testing.T) {
 }
 
 func TestAPI_getArtifactsStoreHandler(t *testing.T) {
-	api, _, _ := newTestAPI(t)
+	api, db, _ := newTestAPI(t)
 
 	cfg := objectstore.Config{
 		Kind: objectstore.Filesystem,
@@ -57,9 +57,9 @@ func TestAPI_getArtifactsStoreHandler(t *testing.T) {
 	test.NoError(t, errO)
 	api.SharedStorage = storage
 
-	u, pass := assets.InsertAdminUser(t, api.mustDB())
+	u, pass := assets.InsertAdminUser(t, db)
 	key := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, api.mustDB(), api.Cache, key, key)
+	proj := assets.InsertTestProject(t, db, api.Cache, key, key)
 
 	//Prepare request
 	vars := map[string]string{

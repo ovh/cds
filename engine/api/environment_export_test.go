@@ -52,7 +52,7 @@ func Test_getEnvironmentExportHandler(t *testing.T) {
 	k.Public = kpgp.Public
 	k.Private = kpgp.Private
 	k.KeyID = kpgp.KeyID
-	test.NoError(t, environment.InsertKey(api.mustDB(), k))
+	test.NoError(t, environment.InsertKey(db, k))
 
 	k2 := &sdk.EnvironmentKey{
 		Name:          "mykey-ssh",
@@ -65,7 +65,7 @@ func Test_getEnvironmentExportHandler(t *testing.T) {
 	k2.Public = kssh.Public
 	k2.Private = kssh.Private
 	k2.KeyID = kssh.KeyID
-	test.NoError(t, environment.InsertKey(api.mustDB(), k2))
+	test.NoError(t, environment.InsertKey(db, k2))
 
 	//Prepare request
 	vars := map[string]string{

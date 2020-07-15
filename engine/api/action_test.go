@@ -172,11 +172,11 @@ func Test_postActionAuditRollbackHandler(t *testing.T) {
 func Test_getActions(t *testing.T) {
 	api, db, router := newTestAPI(t)
 
-	_, jwtAdmin := assets.InsertAdminUser(t, api.mustDB())
+	_, jwtAdmin := assets.InsertAdminUser(t, db)
 
 	g1 := &sdk.Group{Name: sdk.RandomString(10)}
 	g2 := assets.InsertGroup(t, db)
-	_, jwtGroupMember := assets.InsertLambdaUser(t, api.mustDB(), g1)
+	_, jwtGroupMember := assets.InsertLambdaUser(t, db, g1)
 
 	a1 := sdk.Action{
 		Name:    "A" + sdk.RandomString(10),

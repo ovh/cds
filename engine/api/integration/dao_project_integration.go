@@ -162,7 +162,7 @@ func LoadIntegrationsByIDs(db gorp.SqlExecutor, ids []int64) ([]sdk.ProjectInteg
 }
 
 // InsertIntegration inserts a integration
-func InsertIntegration(db gorp.SqlExecutor, pp *sdk.ProjectIntegration) error {
+func InsertIntegration(db gorpmapping.SqlExecutorWithTx, pp *sdk.ProjectIntegration) error {
 	oldConfig := pp.Config.Clone()
 	ppDb := dbProjectIntegration{ProjectIntegration: *pp}
 	if err := gorpmapping.InsertAndSign(context.Background(), db, &ppDb); err != nil {
@@ -175,7 +175,7 @@ func InsertIntegration(db gorp.SqlExecutor, pp *sdk.ProjectIntegration) error {
 }
 
 // UpdateIntegration Update a integration
-func UpdateIntegration(db gorp.SqlExecutor, pp sdk.ProjectIntegration) error {
+func UpdateIntegration(db gorpmapping.SqlExecutorWithTx, pp sdk.ProjectIntegration) error {
 	var oldConfig *sdk.ProjectIntegration
 
 	givenConfig := pp.Config.Clone()

@@ -19,7 +19,7 @@ func Test_getKeysInEnvironmentHandler(t *testing.T) {
 	api, db, router := newTestAPI(t)
 
 	//Create admin user
-	u, pass := assets.InsertAdminUser(t, api.mustDB())
+	u, pass := assets.InsertAdminUser(t, db)
 
 	//Insert Project
 	pkey := sdk.RandomString(10)
@@ -49,7 +49,7 @@ func Test_getKeysInEnvironmentHandler(t *testing.T) {
 	k.Private = kpgp.Private
 	k.KeyID = kpgp.KeyID
 
-	if err := environment.InsertKey(api.mustDB(), k); err != nil {
+	if err := environment.InsertKey(db, k); err != nil {
 		t.Fatal(err)
 	}
 
@@ -79,7 +79,7 @@ func Test_deleteKeyInEnvironmentHandler(t *testing.T) {
 	api, db, router := newTestAPI(t)
 
 	//Create admin user
-	u, pass := assets.InsertAdminUser(t, api.mustDB())
+	u, pass := assets.InsertAdminUser(t, db)
 
 	//Insert Project
 	pkey := sdk.RandomString(10)
@@ -102,7 +102,7 @@ func Test_deleteKeyInEnvironmentHandler(t *testing.T) {
 		EnvironmentID: env.ID,
 	}
 
-	if err := environment.InsertKey(api.mustDB(), k); err != nil {
+	if err := environment.InsertKey(db, k); err != nil {
 		t.Fatal(err)
 	}
 
@@ -132,7 +132,7 @@ func Test_addKeyInEnvironmentHandler(t *testing.T) {
 	api, db, router := newTestAPI(t)
 
 	//Create admin user
-	u, pass := assets.InsertAdminUser(t, api.mustDB())
+	u, pass := assets.InsertAdminUser(t, db)
 
 	//Insert Project
 	pkey := sdk.RandomString(10)

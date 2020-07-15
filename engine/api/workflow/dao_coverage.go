@@ -131,7 +131,7 @@ func (c *Coverage) PostUpdate(s gorp.SqlExecutor) error {
 }
 
 // ComputeNewReport compute trends and import new coverage report
-func ComputeNewReport(ctx context.Context, db gorp.SqlExecutor, cache cache.Store, report coverage.Report, wnr *sdk.WorkflowNodeRun, proj sdk.Project) error {
+func ComputeNewReport(ctx context.Context, db gorpmapping.SqlExecutorWithTx, cache cache.Store, report coverage.Report, wnr *sdk.WorkflowNodeRun, proj sdk.Project) error {
 	covReport := sdk.WorkflowNodeRunCoverage{
 		WorkflowID:        wnr.WorkflowID,
 		WorkflowRunID:     wnr.WorkflowRunID,
@@ -167,7 +167,7 @@ func ComputeNewReport(ctx context.Context, db gorp.SqlExecutor, cache cache.Stor
 }
 
 // ComputeLatestDefaultBranchReport add the default branch coverage report into  the given report
-func ComputeLatestDefaultBranchReport(ctx context.Context, db gorp.SqlExecutor, cache cache.Store, proj sdk.Project, wnr *sdk.WorkflowNodeRun, covReport *sdk.WorkflowNodeRunCoverage) error {
+func ComputeLatestDefaultBranchReport(ctx context.Context, db gorpmapping.SqlExecutorWithTx, cache cache.Store, proj sdk.Project, wnr *sdk.WorkflowNodeRun, covReport *sdk.WorkflowNodeRunCoverage) error {
 	// Get report latest report on previous branch
 	var defaultBranch string
 	projectVCSServer, err := repositoriesmanager.LoadProjectVCSServerLinkByProjectKeyAndVCSServerName(ctx, db, proj.Key, wnr.VCSServer)

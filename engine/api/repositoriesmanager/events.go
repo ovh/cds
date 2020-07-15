@@ -9,6 +9,7 @@ import (
 	"github.com/go-gorp/gorp"
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/gorpmapping"
 	"github.com/ovh/cds/sdk/log"
 )
 
@@ -27,11 +28,19 @@ func ReceiveEvents(ctx context.Context, DBFunc func() *gorp.DbMap, store cache.S
 
 		db := DBFunc()
 		if db != nil {
-			if err := processEvent(ctx, db, e, store); err != nil {
+			tx, err := db.Begin()
+			if err != nil {
+				log.Error(ctx, "ReceiveEvents> err opening tx: %v", err)
+			}
+			if err := processEvent(ctx, tx, e, store); err != nil {
 				log.Error(ctx, "ReceiveEvents> err while processing error: %v", err)
 				if err2 := RetryEvent(&e, err, store); err2 != nil {
 					log.Error(ctx, "ReceiveEvents> err while processing error on retry: %v", err2)
 				}
+			}
+			if err := tx.Commit(); err != nil {
+				tx.Rollback() // nolint
+				log.Error(ctx, "ReceiveEvents> err commit tx: %v", err)
 			}
 			continue
 		}
@@ -50,7 +59,7 @@ func RetryEvent(e *sdk.Event, err error, store cache.Store) error {
 	return store.Enqueue("events_repositoriesmanager", e)
 }
 
-func processEvent(ctx context.Context, db *gorp.DbMap, event sdk.Event, store cache.Store) error {
+func processEvent(ctx context.Context, db gorpmapping.SqlExecutorWithTx, event sdk.Event, store cache.Store) error {
 	if event.EventType != fmt.Sprintf("%T", sdk.EventRunWorkflowNode{}) {
 		return nil
 	}

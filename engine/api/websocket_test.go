@@ -21,13 +21,13 @@ import (
 )
 
 func Test_websocketWrongFilters(t *testing.T) {
-	api, tsURL := newTestServer(t)
+	api, db, tsURL := newTestServer(t)
 
-	u, _ := assets.InsertAdminUser(t, api.mustDB())
+	u, _ := assets.InsertAdminUser(t, db)
 	localConsumer, err := authentication.LoadConsumerByTypeAndUserID(context.TODO(), api.mustDB(), sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
 	require.NoError(t, err)
 
-	_, jws, err := builtin.NewConsumer(context.TODO(), api.mustDB(), sdk.RandomString(10), sdk.RandomString(10), localConsumer, u.GetGroupIDs(),
+	_, jws, err := builtin.NewConsumer(context.TODO(), db, sdk.RandomString(10), sdk.RandomString(10), localConsumer, u.GetGroupIDs(),
 		sdk.NewAuthConsumerScopeDetails(sdk.AuthConsumerScopeProject))
 
 	chanMessageReceived := make(chan sdk.WebsocketEvent)
@@ -90,12 +90,12 @@ func Test_websocketFilterRetroCompatibility(t *testing.T) {
 }
 
 func Test_websocketGetWorkflowEvent(t *testing.T) {
-	api, tsURL := newTestServer(t)
+	api, db, tsURL := newTestServer(t)
 
-	u, jwt := assets.InsertAdminUser(t, api.mustDB())
+	u, jwt := assets.InsertAdminUser(t, db)
 
 	key := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, api.mustDB(), api.Cache, key, key)
+	proj := assets.InsertTestProject(t, db, api.Cache, key, key)
 
 	w := sdk.Workflow{
 		Name:       "workflow1",
@@ -108,7 +108,7 @@ func Test_websocketGetWorkflowEvent(t *testing.T) {
 			},
 		},
 	}
-	require.NoError(t, workflow.Insert(context.TODO(), api.mustDB(), api.Cache, *proj, &w))
+	require.NoError(t, workflow.Insert(context.TODO(), db, api.Cache, *proj, &w))
 
 	chanMessageReceived := make(chan sdk.WebsocketEvent)
 	chanMessageToSend := make(chan []sdk.WebsocketFilter)
@@ -155,14 +155,14 @@ func Test_websocketGetWorkflowEvent(t *testing.T) {
 }
 
 func Test_websocketDeconnection(t *testing.T) {
-	api, tsURL := newTestServer(t)
+	api, db, tsURL := newTestServer(t)
 
-	u, _ := assets.InsertAdminUser(t, api.mustDB())
+	u, _ := assets.InsertAdminUser(t, db)
 	localConsumer, err := authentication.LoadConsumerByTypeAndUserID(context.TODO(), api.mustDB(), sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
 	require.NoError(t, err)
 
 	key := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, api.mustDB(), api.Cache, key, key)
+	proj := assets.InsertTestProject(t, db, api.Cache, key, key)
 
 	w := sdk.Workflow{
 		Name:       "workflow1",
@@ -175,9 +175,9 @@ func Test_websocketDeconnection(t *testing.T) {
 			},
 		},
 	}
-	require.NoError(t, workflow.Insert(context.TODO(), api.mustDB(), api.Cache, *proj, &w))
+	require.NoError(t, workflow.Insert(context.TODO(), db, api.Cache, *proj, &w))
 
-	_, jws, err := builtin.NewConsumer(context.TODO(), api.mustDB(), sdk.RandomString(10), sdk.RandomString(10), localConsumer, u.GetGroupIDs(),
+	_, jws, err := builtin.NewConsumer(context.TODO(), db, sdk.RandomString(10), sdk.RandomString(10), localConsumer, u.GetGroupIDs(),
 		sdk.NewAuthConsumerScopeDetails(sdk.AuthConsumerScopeProject))
 
 	// Open websocket

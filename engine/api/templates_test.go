@@ -58,9 +58,9 @@ func Test_postTemplateApplyHandler(t *testing.T) {
 	require.NoError(t, err)
 	projectGroup := &proj.ProjectGroups[0].Group
 
-	_, jwtAdmin := assets.InsertAdminUser(t, api.mustDB())
-	_, jwtLambdaInGroup := assets.InsertLambdaUser(t, api.mustDB(), projectGroup)
-	_, jwtLambdaNotInGroup := assets.InsertLambdaUser(t, api.mustDB())
+	_, jwtAdmin := assets.InsertAdminUser(t, db)
+	_, jwtLambdaInGroup := assets.InsertLambdaUser(t, db, projectGroup)
+	_, jwtLambdaNotInGroup := assets.InsertLambdaUser(t, db)
 
 	cases := []struct {
 		Name  string
@@ -136,7 +136,7 @@ func Test_postTemplateApplyHandler(t *testing.T) {
 func Test_postTemplateBulkHandler(t *testing.T) {
 	api, db, _ := newTestAPI(t)
 
-	_, jwt := assets.InsertAdminUser(t, api.mustDB())
+	_, jwt := assets.InsertAdminUser(t, db)
 	g, err := group.LoadByName(context.TODO(), api.mustDB(), "shared.infra")
 	assert.NoError(t, err)
 
@@ -219,9 +219,9 @@ func Test_getTemplateInstancesHandler(t *testing.T) {
 	projectOneGroup := &projectOne.ProjectGroups[0].Group
 	projectTwoGroup := &projectTwo.ProjectGroups[0].Group
 
-	_, jwtAdmin := assets.InsertAdminUser(t, api.mustDB())
-	_, jwtLambdaInGroupOneAndTwo := assets.InsertLambdaUser(t, api.mustDB(), projectOneGroup, projectTwoGroup)
-	_, jwtLambdaInGroupOne := assets.InsertLambdaUser(t, api.mustDB(), projectOneGroup)
+	_, jwtAdmin := assets.InsertAdminUser(t, db)
+	_, jwtLambdaInGroupOneAndTwo := assets.InsertLambdaUser(t, db, projectOneGroup, projectTwoGroup)
+	_, jwtLambdaInGroupOne := assets.InsertLambdaUser(t, db, projectOneGroup)
 
 	template := generateTemplate(sharedInfraGroup.ID, sdk.RandomString(10))
 	assert.NoError(t, workflowtemplate.Insert(db, template))

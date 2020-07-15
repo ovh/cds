@@ -4,11 +4,10 @@ import (
 	"context"
 	"time"
 
-	"github.com/go-gorp/gorp"
-
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/gorpmapping"
 	"github.com/ovh/cds/sdk/telemetry"
 )
 
@@ -28,7 +27,7 @@ const (
 )
 
 //RunFromHook is the entry point to trigger a workflow from a hook
-func runFromHook(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj sdk.Project, wr *sdk.WorkflowRun, e *sdk.WorkflowNodeRunHookEvent, asCodeMsg []sdk.Message) (*ProcessorReport, error) {
+func runFromHook(ctx context.Context, db gorpmapping.SqlExecutorWithTx, store cache.Store, proj sdk.Project, wr *sdk.WorkflowRun, e *sdk.WorkflowNodeRunHookEvent, asCodeMsg []sdk.Message) (*ProcessorReport, error) {
 	var end func()
 	ctx, end = telemetry.Span(ctx, "workflow.RunFromHook")
 	defer end()
@@ -79,7 +78,7 @@ func runFromHook(ctx context.Context, db gorp.SqlExecutor, store cache.Store, pr
 }
 
 //ManualRunFromNode is the entry point to trigger manually a piece of an existing run workflow
-func manualRunFromNode(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj sdk.Project, wr *sdk.WorkflowRun, e *sdk.WorkflowNodeRunManual, nodeID int64) (*ProcessorReport, error) {
+func manualRunFromNode(ctx context.Context, db gorpmapping.SqlExecutorWithTx, store cache.Store, proj sdk.Project, wr *sdk.WorkflowRun, e *sdk.WorkflowNodeRunManual, nodeID int64) (*ProcessorReport, error) {
 	report := new(ProcessorReport)
 
 	r1, condOk, err := processWorkflowDataRun(ctx, db, store, proj, wr, nil, e, &nodeID)
@@ -93,7 +92,7 @@ func manualRunFromNode(ctx context.Context, db gorp.SqlExecutor, store cache.Sto
 	return report, nil
 }
 
-func StartWorkflowRun(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj sdk.Project, wr *sdk.WorkflowRun,
+func StartWorkflowRun(ctx context.Context, db gorpmapping.SqlExecutorWithTx, store cache.Store, proj sdk.Project, wr *sdk.WorkflowRun,
 	opts *sdk.WorkflowRunPostHandlerOption, u *sdk.AuthConsumer, asCodeInfos []sdk.Message) (*ProcessorReport, error) {
 	ctx, end := telemetry.Span(ctx, "api.startWorkflowRun")
 	defer end()
@@ -163,7 +162,7 @@ func StartWorkflowRun(ctx context.Context, db gorp.SqlExecutor, store cache.Stor
 }
 
 //ManualRun is the entry point to trigger a workflow manually
-func manualRun(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj sdk.Project, wr *sdk.WorkflowRun, e *sdk.WorkflowNodeRunManual) (*ProcessorReport, error) {
+func manualRun(ctx context.Context, db gorpmapping.SqlExecutorWithTx, store cache.Store, proj sdk.Project, wr *sdk.WorkflowRun, e *sdk.WorkflowNodeRunManual) (*ProcessorReport, error) {
 	report := new(ProcessorReport)
 	ctx, end := telemetry.Span(ctx, "workflow.ManualRun", telemetry.Tag(telemetry.TagWorkflowRun, wr.Number))
 	defer end()

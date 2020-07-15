@@ -249,12 +249,18 @@ func (api *API) updateAsCodeEnvironmentHandler() service.Handler {
 			return sdk.WrapError(sdk.ErrInvalidApplicationPattern, "Environment name %s do not respect pattern", env.Name)
 		}
 
-		proj, err := project.Load(ctx, api.mustDB(), key, project.LoadOptions.WithClearKeys)
+		tx, err := api.mustDB().Begin()
+		if err != nil {
+			return sdk.WithStack(err)
+		}
+		defer tx.Rollback() // nolint
+
+		proj, err := project.Load(ctx, tx, key, project.LoadOptions.WithClearKeys)
 		if err != nil {
 			return err
 		}
 
-		envDB, err := environment.LoadEnvironmentByName(api.mustDB(), key, environmentName)
+		envDB, err := environment.LoadEnvironmentByName(tx, key, environmentName)
 		if err != nil {
 			return sdk.WrapError(err, "cannot load environment %s", environmentName)
 		}
@@ -263,7 +269,7 @@ func (api *API) updateAsCodeEnvironmentHandler() service.Handler {
 			return sdk.NewErrorFrom(sdk.ErrForbidden, "current environment is not ascode")
 		}
 
-		wkHolder, err := workflow.LoadByRepo(ctx, api.mustDB(), *proj, envDB.FromRepository, workflow.LoadOptions{
+		wkHolder, err := workflow.LoadByRepo(ctx, tx, *proj, envDB.FromRepository, workflow.LoadOptions{
 			WithTemplate: true,
 		})
 		if err != nil {
@@ -275,7 +281,7 @@ func (api *API) updateAsCodeEnvironmentHandler() service.Handler {
 
 		var rootApp *sdk.Application
 		if wkHolder.WorkflowData.Node.Context != nil && wkHolder.WorkflowData.Node.Context.ApplicationID != 0 {
-			rootApp, err = application.LoadByIDWithClearVCSStrategyPassword(api.mustDB(), wkHolder.WorkflowData.Node.Context.ApplicationID)
+			rootApp, err = application.LoadByIDWithClearVCSStrategyPassword(tx, wkHolder.WorkflowData.Node.Context.ApplicationID)
 			if err != nil {
 				return err
 			}
@@ -298,7 +304,7 @@ func (api *API) updateAsCodeEnvironmentHandler() service.Handler {
 
 		u := getAPIConsumer(ctx)
 		env.ProjectID = proj.ID
-		envExported, err := environment.ExportEnvironment(api.mustDB(), env, project.EncryptWithBuiltinKey, fmt.Sprintf("env:%d:%s", envDB.ID, branch))
+		envExported, err := environment.ExportEnvironment(tx, env, project.EncryptWithBuiltinKey, fmt.Sprintf("env:%d:%s", envDB.ID, branch))
 		if err != nil {
 			return err
 		}
@@ -306,9 +312,13 @@ func (api *API) updateAsCodeEnvironmentHandler() service.Handler {
 			Environments: []exportentities.Environment{envExported},
 		}
 
-		ope, err := operation.PushOperationUpdate(ctx, api.mustDB(), api.Cache, *proj, wp, rootApp.VCSServer, rootApp.RepositoryFullname, branch, message, rootApp.RepositoryStrategy, u)
+		ope, err := operation.PushOperationUpdate(ctx, tx, api.Cache, *proj, wp, rootApp.VCSServer, rootApp.RepositoryFullname, branch, message, rootApp.RepositoryStrategy, u)
 		if err != nil {
 			return err
+		}
+
+		if err := tx.Commit(); err != nil {
+			return sdk.WithStack(err)
 		}
 
 		sdk.GoRoutine(context.Background(), fmt.Sprintf("UpdateAsCodeEnvironmentHandler-%s", ope.UUID), func(ctx context.Context) {

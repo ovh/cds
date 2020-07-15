@@ -21,12 +21,11 @@ import (
 )
 
 func Test_getWorkflowHookModelsHandlerAsLambdaUser(t *testing.T) {
-	api, _, _ := newTestAPI(t)
+	api, db, _ := newTestAPI(t)
 
-	db := api.mustDB()
 	cache := api.Cache
 	test.NoError(t, workflow.CreateBuiltinWorkflowHookModels(api.mustDB()))
-	u, passUser := assets.InsertLambdaUser(t, api.mustDB())
+	u, passUser := assets.InsertLambdaUser(t, db)
 
 	proj := assets.InsertTestProject(t, db, cache, sdk.RandomString(10), sdk.RandomString(10))
 	require.NoError(t, group.InsertLinkGroupUser(context.TODO(), db, &group.LinkGroupUser{
@@ -89,12 +88,11 @@ func Test_getWorkflowHookModelsHandlerAsLambdaUser(t *testing.T) {
 }
 
 func Test_getWorkflowHookModelsHandlerAsAdminUser(t *testing.T) {
-	api, _, _ := newTestAPI(t)
+	api, db, _ := newTestAPI(t)
 
-	db := api.mustDB()
 	cache := api.Cache
 	test.NoError(t, workflow.CreateBuiltinWorkflowHookModels(api.mustDB()))
-	admin, passAdmin := assets.InsertAdminUser(t, api.mustDB())
+	admin, passAdmin := assets.InsertAdminUser(t, db)
 
 	proj := assets.InsertTestProject(t, db, cache, sdk.RandomString(10), sdk.RandomString(10))
 
@@ -157,10 +155,10 @@ func Test_getWorkflowHookModelsHandlerAsAdminUser(t *testing.T) {
 }
 
 func Test_getWorkflowHookModelHandler(t *testing.T) {
-	api, _, _ := newTestAPI(t)
+	api, db, _ := newTestAPI(t)
 
 	test.NoError(t, workflow.CreateBuiltinWorkflowHookModels(api.mustDB()))
-	admin, passAdmin := assets.InsertAdminUser(t, api.mustDB())
+	admin, passAdmin := assets.InsertAdminUser(t, db)
 
 	//Prepare request
 	vars := map[string]string{
@@ -185,10 +183,10 @@ func Test_getWorkflowHookModelHandler(t *testing.T) {
 }
 
 func Test_putWorkflowHookModelHandlerAsAdminUser(t *testing.T) {
-	api, _, _ := newTestAPI(t)
+	api, db, _ := newTestAPI(t)
 
 	test.NoError(t, workflow.CreateBuiltinWorkflowHookModels(api.mustDB()))
-	admin, passAdmin := assets.InsertAdminUser(t, api.mustDB())
+	admin, passAdmin := assets.InsertAdminUser(t, db)
 
 	//Prepare request
 	vars := map[string]string{
@@ -227,11 +225,11 @@ func Test_putWorkflowHookModelHandlerAsAdminUser(t *testing.T) {
 }
 
 func Test_putWorkflowHookModelHandlerAsLambdaUser(t *testing.T) {
-	api, _, _ := newTestAPI(t)
+	api, db, _ := newTestAPI(t)
 
 	test.NoError(t, workflow.CreateBuiltinWorkflowHookModels(api.mustDB()))
 
-	u, pass := assets.InsertLambdaUser(t, api.mustDB())
+	u, pass := assets.InsertLambdaUser(t, db)
 
 	//Prepare request
 	vars := map[string]string{
