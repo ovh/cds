@@ -1163,7 +1163,7 @@ func Push(ctx context.Context, db *gorp.DbMap, store cache.Store, proj *sdk.Proj
 	}
 
 	// come from run
-	if opts.HookUUID != "" {
+	if opts != nil && opts.HookUUID != "" {
 		// Load secrets from application and environment non-ascode
 		for id, app := range wf.Applications {
 			if app.FromRepository != "" {
