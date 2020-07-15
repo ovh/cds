@@ -6,7 +6,6 @@ import (
 	"strings"
 
 	"github.com/fsamin/go-dump"
-	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/interpolate"
