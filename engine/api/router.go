@@ -23,14 +23,13 @@ import (
 	"go.opencensus.io/stats"
 	"go.opencensus.io/tag"
 
-	"github.com/ovh/cds/engine/api/observability"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/ovh/cds/sdk/doc"
 	docSDK "github.com/ovh/cds/sdk/doc"
 	"github.com/ovh/cds/sdk/log"
-	"github.com/ovh/cds/sdk/tracingutils"
+	"github.com/ovh/cds/sdk/telemetry"
 )
 
 const nbPanicsBeforeFail = 50
@@ -86,6 +85,7 @@ func (r *Router) pprofLabel(config map[string]*service.HandlerConfig, fn http.Ha
 			"goroutine-id", id,
 			"goroutine-name", name+"-"+id,
 		)
+
 		ctx := pprof.WithLabels(req.Context(), labels)
 		pprof.SetGoroutineLabels(ctx)
 		req = req.WithContext(ctx)
@@ -179,9 +179,9 @@ func (r *Router) recoverWrap(h http.HandlerFunc) http.HandlerFunc {
 }
 
 var headers = []string{
-	http.CanonicalHeaderKey(tracingutils.TraceIDHeader),
-	http.CanonicalHeaderKey(tracingutils.SpanIDHeader),
-	http.CanonicalHeaderKey(tracingutils.SampledHeader),
+	http.CanonicalHeaderKey(telemetry.TraceIDHeader),
+	http.CanonicalHeaderKey(telemetry.SpanIDHeader),
+	http.CanonicalHeaderKey(telemetry.SampledHeader),
 	http.CanonicalHeaderKey(sdk.WorkflowAsCodeHeader),
 	http.CanonicalHeaderKey(sdk.ResponseWorkflowIDHeader),
 	http.CanonicalHeaderKey(sdk.ResponseWorkflowNameHeader),
@@ -301,6 +301,8 @@ func (r *Router) handle(uri string, scope HandlerScope, handlers ...*service.Han
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 
+		ctx = telemetry.ContextWithTelemetry(r.Background, ctx)
+
 		var requestID string
 		iRequestID := ctx.Value(log.ContextLoggingRequestIDKey)
 		if iRequestID != nil {
@@ -344,23 +346,23 @@ func (r *Router) handle(uri string, scope HandlerScope, handlers ...*service.Han
 		//Get route configuration
 		rc := cfg.Config[req.Method]
 		if rc == nil || rc.Handler == nil {
-			observability.Record(ctx, Errors, 1)
+			telemetry.Record(ctx, Errors, 1)
 			service.WriteError(ctx, w, req, sdk.ErrNotFound)
 			return
 		}
 
 		// Make the request context inherit from the context of the router
-		tags := observability.ContextGetTags(r.Background, observability.TagServiceType, observability.TagServiceName)
+		tags := telemetry.ContextGetTags(r.Background, telemetry.TagServiceType, telemetry.TagServiceName)
 		ctx, err = tag.New(ctx, tags...)
 		if err != nil {
-			log.Error(ctx, "observability.ContextGetTags> %v", err)
+			log.Error(ctx, "telemetry.ContextGetTags> %v", err)
 		}
-		ctx = observability.ContextWithTag(ctx,
-			observability.RequestID, requestID,
-			observability.Handler, rc.Name,
-			observability.Host, req.Host,
-			observability.Path, req.URL.Path,
-			observability.Method, req.Method)
+		ctx = telemetry.ContextWithTag(ctx,
+			telemetry.RequestID, requestID,
+			telemetry.Handler, rc.Name,
+			telemetry.Host, req.Host,
+			telemetry.Path, req.URL.Path,
+			telemetry.Method, req.Method)
 
 		// Prepare logging fields
 		ctx = context.WithValue(ctx, log.ContextLoggingFuncKey, func(ctx context.Context) logrus.Fields {
@@ -401,7 +403,7 @@ func (r *Router) handle(uri string, scope HandlerScope, handlers ...*service.Han
 			if responseWriter.statusCode == 0 {
 				responseWriter.statusCode = 200
 			}
-			ctx = observability.ContextWithTag(ctx, observability.StatusCode, responseWriter.statusCode)
+			ctx = telemetry.ContextWithTag(ctx, telemetry.StatusCode, responseWriter.statusCode)
 			end := time.Now()
 			latency := end.Sub(start)
 
@@ -417,19 +419,19 @@ func (r *Router) handle(uri string, scope HandlerScope, handlers ...*service.Han
 				"handler":     rc.Name,
 			}, "%s | END   | %s [%s] | [%d]", req.Method, req.URL, rc.Name, responseWriter.statusCode)
 
-			observability.RecordFloat64(ctx, ServerLatency, float64(latency)/float64(time.Millisecond))
-			observability.Record(ctx, ServerRequestBytes, responseWriter.reqSize)
-			observability.Record(ctx, ServerResponseBytes, responseWriter.respSize)
+			telemetry.RecordFloat64(ctx, ServerLatency, float64(latency)/float64(time.Millisecond))
+			telemetry.Record(ctx, ServerRequestBytes, responseWriter.reqSize)
+			telemetry.Record(ctx, ServerResponseBytes, responseWriter.respSize)
 		}
 
-		observability.Record(r.Background, Hits, 1)
-		observability.Record(ctx, ServerRequestCount, 1)
+		telemetry.Record(r.Background, Hits, 1)
+		telemetry.Record(ctx, ServerRequestCount, 1)
 
 		for _, m := range r.Middlewares {
 			var err error
 			ctx, err = m(ctx, responseWriter, req, rc)
 			if err != nil {
-				observability.Record(r.Background, Errors, 1)
+				telemetry.Record(r.Background, Errors, 1)
 				service.WriteError(ctx, responseWriter, req, err)
 				deferFunc(ctx)
 				return
@@ -437,11 +439,11 @@ func (r *Router) handle(uri string, scope HandlerScope, handlers ...*service.Han
 		}
 
 		var end func()
-		ctx, end = observability.SpanFromMain(ctx, "router.handle")
+		ctx, end = telemetry.SpanFromMain(ctx, "router.handle")
 
 		if err := rc.Handler(ctx, responseWriter.wrappedResponseWriter(), req); err != nil {
-			observability.Record(r.Background, Errors, 1)
-			observability.End(ctx, responseWriter, req) // nolint
+			telemetry.Record(r.Background, Errors, 1)
+			telemetry.End(ctx, responseWriter, req) // nolint
 			service.WriteError(ctx, responseWriter, req, err)
 			end()
 			deferFunc(ctx)
@@ -664,14 +666,6 @@ func Auth(v bool) HandlerConfigParam {
 func MaintenanceAware() HandlerConfigParam {
 	f := func(rc *service.HandlerConfig) {
 		rc.MaintenanceAware = true
-	}
-	return f
-}
-
-// EnableTracing on a route
-func EnableTracing() HandlerConfigParam {
-	f := func(rc *service.HandlerConfig) {
-		rc.EnableTracing = true
 	}
 	return f
 }

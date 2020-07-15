@@ -11,11 +11,11 @@ import (
 	"github.com/lib/pq"
 
 	"github.com/ovh/cds/engine/api/cache"
-	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/engine/api/group"
-	"github.com/ovh/cds/engine/api/observability"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/gorpmapping"
 	"github.com/ovh/cds/sdk/log"
+	"github.com/ovh/cds/sdk/telemetry"
 )
 
 // QueueFilter contains all criteria used to fetch queue
@@ -77,7 +77,7 @@ func CountNodeJobRunQueueByGroupIDs(ctx context.Context, db gorp.SqlExecutor, st
 
 // LoadNodeJobRunQueue load all workflow_node_run_job accessible
 func LoadNodeJobRunQueue(ctx context.Context, db gorp.SqlExecutor, store cache.Store, filter QueueFilter) ([]sdk.WorkflowNodeJobRun, error) {
-	ctx, end := observability.Span(ctx, "workflow.LoadNodeJobRunQueue")
+	ctx, end := telemetry.Span(ctx, "workflow.LoadNodeJobRunQueue")
 	defer end()
 	containsService := []bool{true, false}
 	if filter.RatioService != nil {
@@ -110,7 +110,7 @@ func LoadNodeJobRunQueue(ctx context.Context, db gorp.SqlExecutor, store cache.S
 
 // LoadNodeJobRunQueueByGroupIDs load all workflow_node_run_job accessible
 func LoadNodeJobRunQueueByGroupIDs(ctx context.Context, db gorp.SqlExecutor, store cache.Store, filter QueueFilter, groupIDs []int64) ([]sdk.WorkflowNodeJobRun, error) {
-	ctx, end := observability.Span(ctx, "workflow.LoadNodeJobRunQueueByGroups")
+	ctx, end := telemetry.Span(ctx, "workflow.LoadNodeJobRunQueueByGroups")
 	defer end()
 	containsService := []bool{true, false}
 	if filter.RatioService != nil {
@@ -190,7 +190,7 @@ func LoadNodeJobRunQueueByGroupIDs(ctx context.Context, db gorp.SqlExecutor, sto
 }
 
 func loadNodeJobRunQueue(ctx context.Context, db gorp.SqlExecutor, store cache.Store, query gorpmapping.Query, limit *int) ([]sdk.WorkflowNodeJobRun, error) {
-	ctx, end := observability.Span(ctx, "workflow.loadNodeJobRunQueue")
+	ctx, end := telemetry.Span(ctx, "workflow.loadNodeJobRunQueue")
 	defer end()
 
 	if limit != nil && *limit > 0 {
@@ -304,7 +304,7 @@ func LoadAndLockNodeJobRunWait(ctx context.Context, db gorp.SqlExecutor, store c
 //LoadAndLockNodeJobRunSkipLocked load for update a NodeJobRun given its ID
 func LoadAndLockNodeJobRunSkipLocked(ctx context.Context, db gorp.SqlExecutor, store cache.Store, id int64) (*sdk.WorkflowNodeJobRun, error) {
 	var end func()
-	_, end = observability.Span(ctx, "workflow.LoadAndLockNodeJobRunSkipLocked")
+	_, end = telemetry.Span(ctx, "workflow.LoadAndLockNodeJobRunSkipLocked")
 	defer end()
 
 	j := JobRun{}
@@ -353,7 +353,7 @@ func DeleteNodeJobRun(db gorp.SqlExecutor, nodeRunJob int64) error {
 //UpdateNodeJobRun updates a workflow_node_run_job
 func UpdateNodeJobRun(ctx context.Context, db gorp.SqlExecutor, j *sdk.WorkflowNodeJobRun) error {
 	var end func()
-	_, end = observability.Span(ctx, "workflow.UpdateNodeJobRun")
+	_, end = telemetry.Span(ctx, "workflow.UpdateNodeJobRun")
 	defer end()
 
 	dbj := new(JobRun)

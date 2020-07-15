@@ -12,7 +12,7 @@ import (
 	sdk "github.com/ovh/cds/sdk"
 	cdsclient "github.com/ovh/cds/sdk/cdsclient"
 	venom "github.com/ovh/venom"
-	coverage "github.com/sguiheux/go-coverage"
+	go_coverage "github.com/sguiheux/go-coverage"
 	io "io"
 	http "net/http"
 	reflect "reflect"
@@ -384,6 +384,78 @@ func (m *MockAdmin) AdminCDSMigrationReset(id int64) error {
 func (mr *MockAdminMockRecorder) AdminCDSMigrationReset(id interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AdminCDSMigrationReset", reflect.TypeOf((*MockAdmin)(nil).AdminCDSMigrationReset), id)
+}
+
+// Features mocks base method
+func (m *MockAdmin) Features() ([]sdk.Feature, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Features")
+	ret0, _ := ret[0].([]sdk.Feature)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// Features indicates an expected call of Features
+func (mr *MockAdminMockRecorder) Features() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Features", reflect.TypeOf((*MockAdmin)(nil).Features))
+}
+
+// FeatureCreate mocks base method
+func (m *MockAdmin) FeatureCreate(f sdk.Feature) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "FeatureCreate", f)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// FeatureCreate indicates an expected call of FeatureCreate
+func (mr *MockAdminMockRecorder) FeatureCreate(f interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FeatureCreate", reflect.TypeOf((*MockAdmin)(nil).FeatureCreate), f)
+}
+
+// FeatureDelete mocks base method
+func (m *MockAdmin) FeatureDelete(name string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "FeatureDelete", name)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// FeatureDelete indicates an expected call of FeatureDelete
+func (mr *MockAdminMockRecorder) FeatureDelete(name interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FeatureDelete", reflect.TypeOf((*MockAdmin)(nil).FeatureDelete), name)
+}
+
+// FeatureGet mocks base method
+func (m *MockAdmin) FeatureGet(name string) (sdk.Feature, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "FeatureGet", name)
+	ret0, _ := ret[0].(sdk.Feature)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// FeatureGet indicates an expected call of FeatureGet
+func (mr *MockAdminMockRecorder) FeatureGet(name interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FeatureGet", reflect.TypeOf((*MockAdmin)(nil).FeatureGet), name)
+}
+
+// FeatureUpdate mocks base method
+func (m *MockAdmin) FeatureUpdate(f sdk.Feature) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "FeatureUpdate", f)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// FeatureUpdate indicates an expected call of FeatureUpdate
+func (mr *MockAdminMockRecorder) FeatureUpdate(f interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FeatureUpdate", reflect.TypeOf((*MockAdmin)(nil).FeatureUpdate), f)
 }
 
 // Services mocks base method
@@ -2998,7 +3070,7 @@ func (mr *MockQueueClientMockRecorder) QueueJobSendSpawnInfo(ctx, id, in interfa
 }
 
 // QueueSendCoverage mocks base method
-func (m *MockQueueClient) QueueSendCoverage(ctx context.Context, id int64, report coverage.Report) error {
+func (m *MockQueueClient) QueueSendCoverage(ctx context.Context, id int64, report go_coverage.Report) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "QueueSendCoverage", ctx, id, report)
 	ret0, _ := ret[0].(error)
@@ -4904,6 +4976,78 @@ func (mr *MockInterfaceMockRecorder) AdminCDSMigrationReset(id interface{}) *gom
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AdminCDSMigrationReset", reflect.TypeOf((*MockInterface)(nil).AdminCDSMigrationReset), id)
 }
 
+// Features mocks base method
+func (m *MockInterface) Features() ([]sdk.Feature, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Features")
+	ret0, _ := ret[0].([]sdk.Feature)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// Features indicates an expected call of Features
+func (mr *MockInterfaceMockRecorder) Features() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Features", reflect.TypeOf((*MockInterface)(nil).Features))
+}
+
+// FeatureCreate mocks base method
+func (m *MockInterface) FeatureCreate(f sdk.Feature) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "FeatureCreate", f)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// FeatureCreate indicates an expected call of FeatureCreate
+func (mr *MockInterfaceMockRecorder) FeatureCreate(f interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FeatureCreate", reflect.TypeOf((*MockInterface)(nil).FeatureCreate), f)
+}
+
+// FeatureDelete mocks base method
+func (m *MockInterface) FeatureDelete(name string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "FeatureDelete", name)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// FeatureDelete indicates an expected call of FeatureDelete
+func (mr *MockInterfaceMockRecorder) FeatureDelete(name interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FeatureDelete", reflect.TypeOf((*MockInterface)(nil).FeatureDelete), name)
+}
+
+// FeatureGet mocks base method
+func (m *MockInterface) FeatureGet(name string) (sdk.Feature, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "FeatureGet", name)
+	ret0, _ := ret[0].(sdk.Feature)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// FeatureGet indicates an expected call of FeatureGet
+func (mr *MockInterfaceMockRecorder) FeatureGet(name interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FeatureGet", reflect.TypeOf((*MockInterface)(nil).FeatureGet), name)
+}
+
+// FeatureUpdate mocks base method
+func (m *MockInterface) FeatureUpdate(f sdk.Feature) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "FeatureUpdate", f)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// FeatureUpdate indicates an expected call of FeatureUpdate
+func (mr *MockInterfaceMockRecorder) FeatureUpdate(f interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FeatureUpdate", reflect.TypeOf((*MockInterface)(nil).FeatureUpdate), f)
+}
+
 // Services mocks base method
 func (m *MockInterface) Services() ([]sdk.Service, error) {
 	m.ctrl.T.Helper()
@@ -6723,7 +6867,7 @@ func (mr *MockInterfaceMockRecorder) QueueJobSendSpawnInfo(ctx, id, in interface
 }
 
 // QueueSendCoverage mocks base method
-func (m *MockInterface) QueueSendCoverage(ctx context.Context, id int64, report coverage.Report) error {
+func (m *MockInterface) QueueSendCoverage(ctx context.Context, id int64, report go_coverage.Report) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "QueueSendCoverage", ctx, id, report)
 	ret0, _ := ret[0].(error)
@@ -8236,7 +8380,7 @@ func (mr *MockWorkerInterfaceMockRecorder) QueueJobSendSpawnInfo(ctx, id, in int
 }
 
 // QueueSendCoverage mocks base method
-func (m *MockWorkerInterface) QueueSendCoverage(ctx context.Context, id int64, report coverage.Report) error {
+func (m *MockWorkerInterface) QueueSendCoverage(ctx context.Context, id int64, report go_coverage.Report) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "QueueSendCoverage", ctx, id, report)
 	ret0, _ := ret[0].(error)

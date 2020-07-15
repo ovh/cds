@@ -16,9 +16,9 @@ import (
 	"go.opencensus.io/stats/view"
 	"go.opencensus.io/tag"
 
-	"github.com/ovh/cds/engine/api/observability"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
+	"github.com/ovh/cds/sdk/telemetry"
 )
 
 type NamedService interface {
@@ -30,10 +30,10 @@ type NamedService interface {
 func GetPrometheustMetricsHandler(s NamedService) func() Handler {
 	return func() Handler {
 		return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-			if observability.StatsExporter() == nil {
+			if telemetry.StatsExporter(ctx) == nil {
 				return sdk.WithStack(sdk.ErrNotFound)
 			}
-			observability.StatsExporter().ServeHTTP(w, r)
+			telemetry.StatsExporter(ctx).ServeHTTP(w, r)
 			return nil
 		}
 	}
@@ -41,7 +41,11 @@ func GetPrometheustMetricsHandler(s NamedService) func() Handler {
 
 func GetMetricsHandler() Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		return WriteJSON(w, observability.ExposedViews, http.StatusOK)
+		var e = telemetry.StatsExporter(ctx)
+		if e == nil {
+			return sdk.WithStack(sdk.ErrNotFound)
+		}
+		return WriteJSON(w, e.ExposedViews, http.StatusOK)
 	}
 }
 
@@ -119,8 +123,8 @@ func RegisterCommonMetricsView(ctx context.Context) {
 			stats.UnitDimensionless,
 		)
 
-		tagServiceType := observability.MustNewKey(observability.TagServiceType)
-		tagServiceName := observability.MustNewKey(observability.TagServiceName)
+		tagServiceType := telemetry.MustNewKey(telemetry.TagServiceType)
+		tagServiceName := telemetry.MustNewKey(telemetry.TagServiceName)
 
 		allocView := view.View{
 			Name:        "cds/mem/alloc",
@@ -154,7 +158,7 @@ func RegisterCommonMetricsView(ctx context.Context) {
 			Aggregation: view.LastValue(),
 		}
 
-		if err := observability.RegisterView(&allocView, &totalAllocView, &sysView, &gcView); err != nil {
+		if err := telemetry.RegisterView(ctx, &allocView, &totalAllocView, &sysView, &gcView); err != nil {
 			// This should not append
 			panic(fmt.Errorf("unable to register service metrics view: %v", err))
 		}
@@ -210,9 +214,13 @@ func writeJSON(w http.ResponseWriter, i interface{}, statusCode int) error {
 	return sdk.WithStack(err)
 }
 
-func GetMetricHandler(exporter *observability.HTTPExporter, prefix string) func() Handler {
+func GetMetricHandler(prefix string) func() Handler {
 	return func() Handler {
 		return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+			exporter := telemetry.StatsExporter(ctx)
+			if exporter == nil {
+				return sdk.WithStack(sdk.ErrNotFound)
+			}
 			view := strings.TrimPrefix(r.URL.Path, prefix)
 			formValues := r.URL.Query()
 			tags := make(map[string]string)

@@ -9,9 +9,9 @@ import (
 
 	"github.com/go-gorp/gorp"
 	"github.com/ovh/cds/engine/api/cache"
-	"github.com/ovh/cds/engine/api/observability"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
+	"github.com/ovh/cds/sdk/telemetry"
 )
 
 // ProcessorReport represents the state of the workflow processor
@@ -117,15 +117,15 @@ func (r *ProcessorReport) Errors() []error {
 // UpdateNodeJobRunStatus Update status of an workflow_node_run_job.
 func UpdateNodeJobRunStatus(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj sdk.Project, job *sdk.WorkflowNodeJobRun, status string) (*ProcessorReport, error) {
 	var end func()
-	ctx, end = observability.Span(ctx, "workflow.UpdateNodeJobRunStatus",
-		observability.Tag(observability.TagWorkflowNodeJobRun, job.ID),
-		observability.Tag("workflow_node_run_job_status", status),
+	ctx, end = telemetry.Span(ctx, "workflow.UpdateNodeJobRunStatus",
+		telemetry.Tag(telemetry.TagWorkflowNodeJobRun, job.ID),
+		telemetry.Tag("workflow_node_run_job_status", status),
 	)
 	defer end()
 
 	report := new(ProcessorReport)
 
-	_, next := observability.Span(ctx, "workflow.LoadRunByID")
+	_, next := telemetry.Span(ctx, "workflow.LoadRunByID")
 	nodeRun, errLoad := LoadNodeRunByID(db, job.WorkflowNodeRunID, LoadRunOptions{})
 	next()
 	if errLoad != nil {
@@ -156,7 +156,7 @@ func UpdateNodeJobRunStatus(ctx context.Context, db gorp.SqlExecutor, store cach
 		job.Done = time.Now()
 		job.Status = status
 
-		_, next := observability.Span(ctx, "workflow.LoadRunByID")
+		_, next := telemetry.Span(ctx, "workflow.LoadRunByID")
 		wf, errLoadWf := LoadRunByID(db, nodeRun.WorkflowRunID, LoadRunOptions{
 			WithDeleted: true,
 		})
@@ -246,7 +246,7 @@ func PrepareSpawnInfos(infos []sdk.SpawnInfo) []sdk.SpawnInfo {
 func TakeNodeJobRun(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj sdk.Project, jobID int64,
 	workerModel, workerName, workerID string, infos []sdk.SpawnInfo, hatcheryName string) (*sdk.WorkflowNodeJobRun, *ProcessorReport, error) {
 	var end func()
-	ctx, end = observability.Span(ctx, "workflow.TakeNodeJobRun")
+	ctx, end = telemetry.Span(ctx, "workflow.TakeNodeJobRun")
 	defer end()
 
 	report := new(ProcessorReport)
@@ -451,7 +451,7 @@ func AddServiceLog(db gorp.SqlExecutor, job *sdk.WorkflowNodeJobRun, logs *sdk.S
 // RestartWorkflowNodeJob restart all workflow node job and update logs to indicate restart
 func RestartWorkflowNodeJob(ctx context.Context, db gorp.SqlExecutor, wNodeJob sdk.WorkflowNodeJobRun, maxLogSize int64) error {
 	var end func()
-	ctx, end = observability.Span(ctx, "workflow.RestartWorkflowNodeJob")
+	ctx, end = telemetry.Span(ctx, "workflow.RestartWorkflowNodeJob")
 	defer end()
 
 	for iS := range wNodeJob.Job.StepStatus {

@@ -23,10 +23,10 @@ import (
 	"golang.org/x/net/context"
 
 	"github.com/ovh/cds/engine/api"
-	"github.com/ovh/cds/engine/api/observability"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/hatchery"
 	"github.com/ovh/cds/sdk/log"
+	"github.com/ovh/cds/sdk/telemetry"
 )
 
 // New instanciates a new Hatchery Swarm
@@ -187,14 +187,14 @@ func (h *HatcherySwarm) InitHatchery(ctx context.Context) error {
 // User can add option on prerequisite, as --port and --privileged
 // but only hatchery NOT 'shared.infra' can launch containers with options
 func (h *HatcherySwarm) SpawnWorker(ctx context.Context, spawnArgs hatchery.SpawnArguments) error {
-	ctx, end := observability.Span(ctx, "swarm.SpawnWorker")
+	ctx, end := telemetry.Span(ctx, "swarm.SpawnWorker")
 	defer end()
 
 	if spawnArgs.JobID == 0 && !spawnArgs.RegisterOnly {
 		return sdk.WithStack(fmt.Errorf("unable to spawn worker, no Job ID and no Register."))
 	}
 
-	observability.Current(ctx, observability.Tag(observability.TagWorker, spawnArgs.WorkerName))
+	telemetry.Current(ctx, telemetry.Tag(telemetry.TagWorker, spawnArgs.WorkerName))
 	log.Debug("hatchery> swarm> SpawnWorker> Spawning worker %s", spawnArgs.WorkerName)
 
 	// Choose a dockerEngine
@@ -204,7 +204,7 @@ func (h *HatcherySwarm) SpawnWorker(ctx context.Context, spawnArgs hatchery.Spaw
 	//  To choose a docker client by the number of containers
 	fillrate := float64(-1)
 
-	_, next := observability.Span(ctx, "swarm.chooseDockerEngine")
+	_, next := telemetry.Span(ctx, "swarm.chooseDockerEngine")
 	for dname, dclient := range h.dockerClients {
 		ctxList, cancelList := context.WithTimeout(context.Background(), 3*time.Second)
 		defer cancelList()

@@ -15,10 +15,10 @@ import (
 	"github.com/lib/pq"
 	"go.opencensus.io/stats"
 
-	"github.com/ovh/cds/engine/api/database/gorpmapping"
-	"github.com/ovh/cds/engine/api/observability"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/gorpmapping"
 	"github.com/ovh/cds/sdk/log"
+	"github.com/ovh/cds/sdk/telemetry"
 )
 
 const wfRunfields string = `
@@ -60,7 +60,7 @@ func insertWorkflowRun(db gorp.SqlExecutor, wr *sdk.WorkflowRun) error {
 
 // UpdateWorkflowRun updates in table "workflow_run""
 func UpdateWorkflowRun(ctx context.Context, db gorp.SqlExecutor, wr *sdk.WorkflowRun) error {
-	_, end := observability.Span(ctx, "workflow.UpdateWorkflowRun")
+	_, end := telemetry.Span(ctx, "workflow.UpdateWorkflowRun")
 	defer end()
 
 	wr.LastModified = time.Now()
@@ -251,10 +251,10 @@ func LoadLastRuns(db gorp.SqlExecutor, workflowIDs []int64, limit int) ([]sdk.Wo
 
 // LoadRun returns a specific run
 func LoadRun(ctx context.Context, db gorp.SqlExecutor, projectkey, workflowname string, number int64, loadOpts LoadRunOptions) (*sdk.WorkflowRun, error) {
-	_, end := observability.Span(ctx, "workflow.LoadRun",
-		observability.Tag(observability.TagProjectKey, projectkey),
-		observability.Tag(observability.TagWorkflow, workflowname),
-		observability.Tag(observability.TagWorkflowRun, number),
+	_, end := telemetry.Span(ctx, "workflow.LoadRun",
+		telemetry.Tag(telemetry.TagProjectKey, projectkey),
+		telemetry.Tag(telemetry.TagWorkflow, workflowname),
+		telemetry.Tag(telemetry.TagWorkflowRun, number),
 	)
 	defer end()
 	query := fmt.Sprintf(`select %s
@@ -773,7 +773,7 @@ func PurgeWorkflowRun(ctx context.Context, db gorp.SqlExecutor, wf sdk.Workflow,
 
 		n, _ := res.RowsAffected()
 		if workflowRunsMarkToDelete != nil {
-			observability.Record(ctx, workflowRunsMarkToDelete, n)
+			telemetry.Record(ctx, workflowRunsMarkToDelete, n)
 		}
 
 		return nil
@@ -891,7 +891,7 @@ func PurgeWorkflowRun(ctx context.Context, db gorp.SqlExecutor, wf sdk.Workflow,
 
 	n, _ := res.RowsAffected()
 	if workflowRunsMarkToDelete != nil {
-		observability.Record(ctx, workflowRunsMarkToDelete, n)
+		telemetry.Record(ctx, workflowRunsMarkToDelete, n)
 	}
 	return nil
 }

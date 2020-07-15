@@ -24,6 +24,7 @@ func adminCommands() []*cobra.Command {
 		adminBroadcasts(),
 		adminErrors(),
 		adminCurl(),
+		adminFeatures(),
 	}
 }
 

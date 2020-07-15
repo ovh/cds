@@ -11,11 +11,11 @@ import (
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/integration"
 	"github.com/ovh/cds/engine/api/objectstore"
-	"github.com/ovh/cds/engine/api/observability"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
+	"github.com/ovh/cds/sdk/telemetry"
 )
 
 //Initialize starts goroutines for workflows
@@ -72,7 +72,7 @@ func workflows(ctx context.Context, db *gorp.DbMap, store cache.Store, workflowR
 		if n > 0 {
 			// If there is workflow runs to delete, wait for it...
 			if workflowRunsMarkToDelete != nil {
-				observability.Record(ctx, workflowRunsMarkToDelete, int64(n))
+				telemetry.Record(ctx, workflowRunsMarkToDelete, int64(n))
 			}
 			continue
 		}
@@ -165,7 +165,7 @@ func deleteWorkflowRunsHistory(ctx context.Context, db gorp.SqlExecutor, store c
 		}
 		n, _ := res.RowsAffected()
 		if workflowRunsDeleted != nil {
-			observability.Record(ctx, workflowRunsDeleted, n)
+			telemetry.Record(ctx, workflowRunsDeleted, n)
 		}
 		time.Sleep(10 * time.Millisecond) // avoid DDOS the database
 	}

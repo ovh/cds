@@ -116,7 +116,7 @@ func (c *Common) CommonServe(ctx context.Context, h hatchery.Interface) error {
 
 	//Init the http server
 	c.initRouter(ctx, h)
-	if err := api.InitRouterMetrics(h); err != nil {
+	if err := api.InitRouterMetrics(ctx, h); err != nil {
 		log.Error(ctx, "unable to init router metrics: %v", err)
 	}
 
