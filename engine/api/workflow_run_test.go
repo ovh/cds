@@ -956,6 +956,11 @@ func Test_postWorkflowRunHandler(t *testing.T) {
 				Type:  sdk.SecretVariable,
 				Value: "apppassword",
 			},
+			{
+				Name:  "app-clear",
+				Type:  sdk.StringVariable,
+				Value: "apppassword",
+			},
 		},
 		Keys: []sdk.ApplicationKey{
 			{
@@ -970,6 +975,11 @@ func Test_postWorkflowRunHandler(t *testing.T) {
 			projInt.Name: map[string]sdk.IntegrationConfigValue{
 				"token": {
 					Type:        "password",
+					Value:       "app-token",
+					Description: "token",
+				},
+				"notoken": {
+					Type:        "string",
 					Value:       "app-token",
 					Description: "token",
 				},
@@ -991,6 +1001,11 @@ func Test_postWorkflowRunHandler(t *testing.T) {
 				Name:  "env-password",
 				Type:  sdk.SecretVariable,
 				Value: "envpassword",
+			},
+			{
+				Name:  "env-data",
+				Type:  sdk.StringVariable,
+				Value: "coucou",
 			},
 		},
 		Keys: []sdk.EnvironmentKey{
@@ -1111,14 +1126,17 @@ func Test_postWorkflowRunHandler(t *testing.T) {
 	require.NotNil(t, sdk.VariableFind(secrets, "cds.integration.mypassword"))
 
 	// Application variable
+	require.Nil(t, sdk.VariableFind(secrets, "cds.app.app-clear"))
 	require.NotNil(t, sdk.VariableFind(secrets, "cds.app.app-password"))
 	// Application key
 	require.NotNil(t, sdk.VariableFind(secrets, "cds.key.app-sshkey.priv"))
 	// Application integration
 	require.NotNil(t, sdk.VariableFind(secrets, "cds.integration.token"))
+	require.Nil(t, sdk.VariableFind(secrets, "cds.integration.notoken"))
 
 	// Env variable
 	require.NotNil(t, sdk.VariableFind(secrets, "cds.env.env-password"))
+	require.Nil(t, sdk.VariableFind(secrets, "cds.env.env-data"))
 	// En  key
 	require.NotNil(t, sdk.VariableFind(secrets, "cds.key.env-sshkey.priv"))
 

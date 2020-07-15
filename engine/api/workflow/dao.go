@@ -1162,6 +1162,31 @@ func Push(ctx context.Context, db *gorp.DbMap, store cache.Store, proj *sdk.Proj
 		}
 	}
 
+	// come from run
+	if opts != nil && opts.HookUUID != "" {
+		// Load secrets from application and environment non-ascode
+		for id, app := range wf.Applications {
+			if app.FromRepository != "" {
+				continue
+			}
+			appSecrets, err := LoadApplicationSecrets(db, id)
+			if err != nil {
+				return nil, nil, nil, nil, err
+			}
+			allSecrets.ApplicationsSecrets[id] = appSecrets
+		}
+		for id, env := range wf.Environments {
+			if env.FromRepository != "" {
+				continue
+			}
+			secrets, err := LoadEnvironmentSecrets(db, id)
+			if err != nil {
+				return nil, nil, nil, nil, err
+			}
+			allSecrets.EnvironmentdSecrets[id] = secrets
+		}
+	}
+
 	if wf.WorkflowData.Node.Context.ApplicationID != 0 {
 		app := wf.Applications[wf.WorkflowData.Node.Context.ApplicationID]
 		if err := application.Update(tx, &app); err != nil {
