@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>features on CDS - Continuous Delivery Service</title>
+    <link>https://ovh.github.io/cds/docs/components/cdsctl/admin/features/</link>
+    <description>Recent content in features on CDS - Continuous Delivery Service</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    
+	<atom:link href="https://ovh.github.io/cds/docs/components/cdsctl/admin/features/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>delete</title>
+      <link>https://ovh.github.io/cds/docs/components/cdsctl/admin/features/delete/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/docs/components/cdsctl/admin/features/delete/</guid>
+      <description> cdsctl admin features delete Delete
+Synopsis Delete
+cdsctl admin features delete NAME [flags]  Options  --force Force delete without confirmation and exit 0 if resource does not exist  Options inherited from parent commands  -c, --context string cdsctl context name -f, --file string set configuration file --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers. -n, --no-interactive Set to disable interaction with ctl --verbose Enable verbose output  SEE ALSO  cdsctl admin features - Manage CDS feature flipping rules  </description>
+    </item>
+    
+    <item>
+      <title>export</title>
+      <link>https://ovh.github.io/cds/docs/components/cdsctl/admin/features/export/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/docs/components/cdsctl/admin/features/export/</guid>
+      <description> cdsctl admin features export Export a feature as a yaml file
+Synopsis Export a feature as a yaml file
+cdsctl admin features export NAME  Options inherited from parent commands  -c, --context string cdsctl context name -f, --file string set configuration file --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers. -n, --no-interactive Set to disable interaction with ctl --verbose Enable verbose output  SEE ALSO  cdsctl admin features - Manage CDS feature flipping rules  </description>
+    </item>
+    
+    <item>
+      <title>import</title>
+      <link>https://ovh.github.io/cds/docs/components/cdsctl/admin/features/import/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/docs/components/cdsctl/admin/features/import/</guid>
+      <description> cdsctl admin features import Import a feature as a yaml file
+Synopsis Import a feature as a yaml file
+cdsctl admin features import FILE  Options inherited from parent commands  -c, --context string cdsctl context name -f, --file string set configuration file --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers. -n, --no-interactive Set to disable interaction with ctl --verbose Enable verbose output  SEE ALSO  cdsctl admin features - Manage CDS feature flipping rules  </description>
+    </item>
+    
+    <item>
+      <title>list</title>
+      <link>https://ovh.github.io/cds/docs/components/cdsctl/admin/features/list/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/docs/components/cdsctl/admin/features/list/</guid>
+      <description>cdsctl admin features list List all the features
+Synopsis List all the features
+cdsctl admin features list [flags]  Options  --fields string Only display specified object fields. &#39;empty&#39; will display all fields, &#39;all&#39; will display all object fields, &#39;field1,field2&#39; to select multiple fields --filter string Filter output based on conditions provided --format string Output format: table|json|yaml (default &amp;quot;table&amp;quot;) -q, --quiet Only display object&#39;s key  Options inherited from parent commands  -c, --context string cdsctl context name -f, --file string set configuration file --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers.</description>
+    </item>
+    
+  </channel>
+</rss>
