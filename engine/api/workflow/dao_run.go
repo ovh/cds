@@ -31,7 +31,8 @@ workflow_run.last_modified,
 workflow_run.status,
 workflow_run.last_sub_num,
 workflow_run.last_execution,
-workflow_run.to_delete
+workflow_run.to_delete,
+workflow_run.read_only
 `
 
 // LoadRunOptions are options for loading a run (node or workflow)
@@ -284,13 +285,21 @@ func LoadRunByID(db gorp.SqlExecutor, id int64, loadOpts LoadRunOptions) (*sdk.W
 	return loadRun(db, loadOpts, query, id)
 }
 
+// LoadAndLockRunByID loads run by ID
+func LoadAndLockRunByID(db gorp.SqlExecutor, id int64, loadOpts LoadRunOptions) (*sdk.WorkflowRun, error) {
+	query := fmt.Sprintf(`select %s
+	from workflow_run
+	where workflow_run.id = $1 for update skip locked`, wfRunfields)
+	return loadRun(db, loadOpts, query, id)
+}
+
 // LoadAndLockRunByJobID loads a run by a job id
 func LoadAndLockRunByJobID(db gorp.SqlExecutor, id int64, loadOpts LoadRunOptions) (*sdk.WorkflowRun, error) {
 	query := fmt.Sprintf(`select %s
 	from workflow_run
 	join workflow_node_run on workflow_run.id = workflow_node_run.workflow_run_id
 	join workflow_node_run_job on workflow_node_run.id = workflow_node_run_job.workflow_node_run_id
-	where workflow_node_run_job.id = $1 for update`, wfRunfields)
+	where workflow_node_run_job.id = $1 for update skip locked`, wfRunfields)
 	return loadRun(db, loadOpts, query, id)
 }
 

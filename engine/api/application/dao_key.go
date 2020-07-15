@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/go-gorp/gorp"
+	"github.com/lib/pq"
 
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/gorpmapping"
@@ -116,6 +117,43 @@ func loadKey(db gorp.SqlExecutor, id int64, keyName string) (*sdk.ApplicationKey
 		return nil, sdk.WithStack(sdk.ErrNotFound)
 	}
 	return &k.ApplicationKey, nil
+}
+
+// LoadAllKeysForAppsWithDecryption load all keys for all given applications, with decryption
+func LoadAllKeysForAppsWithDecryption(ctx context.Context, db gorp.SqlExecutor, appIDs []int64) (map[int64][]sdk.ApplicationKey, error) {
+	return loadAllKeysForApps(ctx, db, appIDs, gorpmapping.GetOptions.WithDecryption)
+}
+
+func loadAllKeysForApps(ctx context.Context, db gorp.SqlExecutor, appsID []int64, opts ...gorpmapping.GetOptionFunc) (map[int64][]sdk.ApplicationKey, error) {
+	var res []dbApplicationKey
+	query := gorpmapping.NewQuery(`
+		SELECT *
+		FROM application_key
+		WHERE application_id = ANY($1)
+		ORDER BY application_id
+	`).Args(pq.Int64Array(appsID))
+	if err := gorpmapping.GetAll(ctx, db, query, &res, opts...); err != nil {
+		return nil, err
+	}
+
+	appsKeys := make(map[int64][]sdk.ApplicationKey)
+
+	for i := range res {
+		dbAppKey := res[i]
+		isValid, err := gorpmapping.CheckSignature(dbAppKey, dbAppKey.Signature)
+		if err != nil {
+			return nil, err
+		}
+		if !isValid {
+			log.Error(ctx, "application.loadAllKeysForApps> application key %d data corrupted", dbAppKey.ID)
+			continue
+		}
+		if _, ok := appsKeys[dbAppKey.ApplicationID]; !ok {
+			appsKeys[dbAppKey.ApplicationID] = make([]sdk.ApplicationKey, 0)
+		}
+		appsKeys[dbAppKey.ApplicationID] = append(appsKeys[dbAppKey.ApplicationID], dbAppKey.ApplicationKey)
+	}
+	return appsKeys, nil
 }
 
 // DeleteKey Delete the given key from the given application

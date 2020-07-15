@@ -93,31 +93,25 @@ func manualRunFromNode(ctx context.Context, db gorp.SqlExecutor, store cache.Sto
 	return report, nil
 }
 
-func StartWorkflowRun(ctx context.Context, db *gorp.DbMap, store cache.Store, proj sdk.Project, wr *sdk.WorkflowRun,
+func StartWorkflowRun(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj sdk.Project, wr *sdk.WorkflowRun,
 	opts *sdk.WorkflowRunPostHandlerOption, u *sdk.AuthConsumer, asCodeInfos []sdk.Message) (*ProcessorReport, error) {
 	ctx, end := telemetry.Span(ctx, "api.startWorkflowRun")
 	defer end()
 
 	report := new(ProcessorReport)
 
-	tx, errb := db.Begin()
-	if errb != nil {
-		return nil, sdk.WrapError(errb, "cannot start transaction")
-	}
-	defer tx.Rollback() // nolint
-
 	for _, msg := range asCodeInfos {
 		AddWorkflowRunInfo(wr, sdk.SpawnMsg{ID: msg.ID, Args: msg.Args, Type: msg.Type})
 	}
 
 	wr.Status = sdk.StatusWaiting
-	if err := UpdateWorkflowRun(ctx, tx, wr); err != nil {
+	if err := UpdateWorkflowRun(ctx, db, wr); err != nil {
 		return report, err
 	}
 
 	if opts.Hook != nil {
 		// Run from HOOK
-		r1, err := runFromHook(ctx, tx, store, proj, wr, opts.Hook, asCodeInfos)
+		r1, err := runFromHook(ctx, db, store, proj, wr, opts.Hook, asCodeInfos)
 		if err != nil {
 			return nil, err
 		}
@@ -145,7 +139,7 @@ func StartWorkflowRun(ctx context.Context, db *gorp.DbMap, store cache.Store, pr
 			}
 
 			// Continue  the current workflow run
-			r1, errmr := manualRunFromNode(ctx, tx, store, proj, wr, opts.Manual, fromNode.ID)
+			r1, errmr := manualRunFromNode(ctx, db, store, proj, wr, opts.Manual, fromNode.ID)
 			if errmr != nil {
 				return report, errmr
 			}
@@ -157,7 +151,7 @@ func StartWorkflowRun(ctx context.Context, db *gorp.DbMap, store cache.Store, pr
 				return nil, sdk.WrapError(sdk.ErrNoPermExecution, "not enough right on node %d", wr.Workflow.WorkflowData.Node.ID)
 			}
 			// Start new workflow
-			r1, errmr := manualRun(ctx, tx, store, proj, wr, opts.Manual)
+			r1, errmr := manualRun(ctx, db, store, proj, wr, opts.Manual)
 			if errmr != nil {
 				return nil, errmr
 			}
@@ -165,10 +159,6 @@ func StartWorkflowRun(ctx context.Context, db *gorp.DbMap, store cache.Store, pr
 		}
 	}
 
-	//Commit and return success
-	if err := tx.Commit(); err != nil {
-		return nil, sdk.WrapError(err, "unable to commit transaction")
-	}
 	return report, nil
 }
 

@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/go-gorp/gorp"
+	"github.com/lib/pq"
 
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/gorpmapping"
@@ -134,12 +135,12 @@ func findDeploymentStrategy(db gorp.SqlExecutor, projectIntegrationID, applicati
 	return &i, nil
 }
 
-func getProjectIntegrationID(db gorp.SqlExecutor, projID, pfID int64, ppfName string) (int64, error) {
+func getProjectIntegrationID(db gorp.SqlExecutor, projID, pfModelID int64, ppfName string) (int64, error) {
 	query := gorpmapping.NewQuery(`SELECT project_integration.id
 	FROM project_integration
 	WHERE project_integration.project_id = $1
 	AND project_integration.integration_model_id = $2
-	AND project_integration.name = $3`).Args(projID, pfID, ppfName)
+	AND project_integration.name = $3`).Args(projID, pfModelID, ppfName)
 	id, err := gorpmapping.GetInt(db, query)
 	if err != nil {
 		return -1, err
@@ -148,8 +149,8 @@ func getProjectIntegrationID(db gorp.SqlExecutor, projID, pfID int64, ppfName st
 }
 
 // SetDeploymentStrategy update the application_deployment_strategy table
-func SetDeploymentStrategy(db gorp.SqlExecutor, projID, appID, pfID int64, ppfName string, cfg sdk.IntegrationConfig) error {
-	projectIntegrationID, err := getProjectIntegrationID(db, projID, pfID, ppfName)
+func SetDeploymentStrategy(db gorp.SqlExecutor, projID, appID, pfModelID int64, ppfName string, cfg sdk.IntegrationConfig) error {
+	projectIntegrationID, err := getProjectIntegrationID(db, projID, pfModelID, ppfName)
 	if err != nil {
 		return err
 	}
@@ -167,4 +168,39 @@ func SetDeploymentStrategy(db gorp.SqlExecutor, projID, appID, pfID int64, ppfNa
 
 	dbCfg.SetConfig(cfg.Clone())
 	return gorpmapping.UpdateAndSign(context.Background(), db, dbCfg)
+}
+
+// LoadAllDeploymnentForAppsWithDecryption load all deployments for all given applications, with decryption
+func LoadAllDeploymnentForAppsWithDecryption(ctx context.Context, db gorp.SqlExecutor, appIDs []int64) (map[int64]map[int64]sdk.IntegrationConfig, error) {
+	return loadAllDeploymentsForApps(ctx, db, appIDs, gorpmapping.GetOptions.WithDecryption)
+}
+
+func loadAllDeploymentsForApps(ctx context.Context, db gorp.SqlExecutor, appsID []int64, opts ...gorpmapping.GetOptionFunc) (map[int64]map[int64]sdk.IntegrationConfig, error) {
+	var res []dbApplicationDeploymentStrategy
+	query := gorpmapping.NewQuery(`
+		SELECT *
+		FROM application_deployment_strategy
+		WHERE application_id = ANY($1)
+		ORDER BY application_id
+	`).Args(pq.Int64Array(appsID))
+	if err := gorpmapping.GetAll(ctx, db, query, &res, opts...); err != nil {
+		return nil, err
+	}
+	appsDeployments := make(map[int64]map[int64]sdk.IntegrationConfig)
+	for i := range res {
+		dbAppDeploy := res[i]
+		isValid, err := gorpmapping.CheckSignature(dbAppDeploy, dbAppDeploy.Signature)
+		if err != nil {
+			return nil, err
+		}
+		if !isValid {
+			log.Error(ctx, "application.loadAllDeploymentsForApps> application integration id %d data corrupted", dbAppDeploy.ID)
+			continue
+		}
+		if _, ok := appsDeployments[dbAppDeploy.ApplicationID]; !ok {
+			appsDeployments[dbAppDeploy.ApplicationID] = make(map[int64]sdk.IntegrationConfig, 0)
+		}
+		appsDeployments[dbAppDeploy.ApplicationID][dbAppDeploy.ProjectIntegrationID] = dbAppDeploy.IntegrationConfig()
+	}
+	return appsDeployments, nil
 }

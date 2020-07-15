@@ -161,16 +161,54 @@ func ParametersFromProjectVariables(proj Project) map[string]string {
 	return ParametersToMap(params)
 }
 
+func ParametersFromProjectKeys(proj Project) map[string]string {
+	keys := make(map[string]string, 0)
+	for _, k := range proj.Keys {
+		kk := fmt.Sprintf("cds.key.%s.pub", k.Name)
+		keys[kk] = k.Public
+
+		kk = fmt.Sprintf("cds.key.%s.id", k.Name)
+		keys[kk] = k.KeyID
+	}
+	return keys
+}
+
 // ParametersFromApplicationVariables returns a map from a slice of parameters
 func ParametersFromApplicationVariables(app Application) map[string]string {
 	params := ApplicationVariablesToParameters("cds.app", app.Variables)
 	return ParametersToMap(params)
 }
 
+// ParametersFromApplicationVariables returns a map from application key
+func ParametersFromApplicationKeys(app Application) map[string]string {
+	keys := make(map[string]string, 0)
+	for _, k := range app.Keys {
+		kk := fmt.Sprintf("cds.key.%s.pub", k.Name)
+		keys[kk] = k.Public
+
+		kk = fmt.Sprintf("cds.key.%s.id", k.Name)
+		keys[kk] = k.KeyID
+	}
+	return keys
+}
+
 // ParametersFromEnvironmentVariables returns a map from a slice of parameters
 func ParametersFromEnvironmentVariables(env Environment) map[string]string {
 	params := EnvironmentVariablesToParameters("cds.env", env.Variables)
 	return ParametersToMap(params)
+}
+
+// ParametersFromEnvironmentKeys returns a map from environment key
+func ParametersFromEnvironmentKeys(env Environment) map[string]string {
+	keys := make(map[string]string, 0)
+	for _, k := range env.Keys {
+		kk := fmt.Sprintf("cds.key.%s.pub", k.Name)
+		keys[kk] = k.Public
+
+		kk = fmt.Sprintf("cds.key.%s.id", k.Name)
+		keys[kk] = k.KeyID
+	}
+	return keys
 }
 
 // ParametersFromPipelineParameters returns a map from a slice of parameters

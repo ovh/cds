@@ -31,6 +31,7 @@ var LoadOptions = struct {
 	WithGroups                              LoadOptionFunc
 	WithPermission                          LoadOptionFunc
 	WithApplicationVariables                LoadOptionFunc
+	WithApplicationKeys                     LoadOptionFunc
 	WithApplicationWithDeploymentStrategies LoadOptionFunc
 	WithKeys                                LoadOptionFunc
 	WithWorkflows                           LoadOptionFunc
@@ -53,6 +54,7 @@ var LoadOptions = struct {
 	WithVariables:                           loadVariables,
 	WithVariablesWithClearPassword:          loadVariablesWithClearPassword,
 	WithApplicationVariables:                loadApplicationVariables,
+	WithApplicationKeys:                     loadApplicationKeys,
 	WithKeys:                                loadKeys,
 	WithWorkflows:                           loadWorkflows,
 	WithWorkflowNames:                       loadWorkflowNames,
@@ -133,6 +135,22 @@ func loadApplicationVariables(db gorp.SqlExecutor, proj *sdk.Project) error {
 
 	for _, a := range proj.Applications {
 		if err := (*application.LoadOptions.WithVariables)(db, &a); err != nil {
+			return sdk.WithStack(err)
+		}
+	}
+
+	return nil
+}
+
+func loadApplicationKeys(db gorp.SqlExecutor, proj *sdk.Project) error {
+	if proj.Applications == nil {
+		if err := loadApplications(db, proj); err != nil {
+			return sdk.WithStack(err)
+		}
+	}
+
+	for _, a := range proj.Applications {
+		if err := (*application.LoadOptions.WithKeys)(db, &a); err != nil {
 			return sdk.WithStack(err)
 		}
 	}

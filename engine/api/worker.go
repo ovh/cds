@@ -153,8 +153,11 @@ func (api *API) disableWorkerHandler() service.Handler {
 			if err != nil {
 				return sdk.WrapError(sdk.ErrForbidden, "Cannot disable a worker from this hatchery: %v", err)
 			}
-			if wk.HatcheryID != nil && *wk.HatcheryID != hatcherySrv.ID {
-				return sdk.WrapError(sdk.ErrForbidden, "Cannot disable a worker from hatchery (expected: %d/actual: %d)", wk.HatcheryID, hatcherySrv.ID)
+			if wk.HatcheryID == nil {
+				return sdk.WrapError(sdk.ErrForbidden, "hatchery %d cannot disable worker %s started by %s that is no more linked to an hatchery", hatcherySrv.ID, wk.ID, wk.HatcheryName)
+			}
+			if *wk.HatcheryID != hatcherySrv.ID {
+				return sdk.WrapError(sdk.ErrForbidden, "cannot disable a worker from hatchery (expected: %d/actual: %d)", *wk.HatcheryID, hatcherySrv.ID)
 			}
 		}
 

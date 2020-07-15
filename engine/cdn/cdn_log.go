@@ -213,12 +213,15 @@ func (s *Service) handleServiceLog(ctx context.Context, hatcheryID int64, hatche
 	_, ok = logCache.Get(workerCacheKey)
 	if !ok {
 		// Verify that the worker has been spawn by this hatchery
-		w, err := worker.LoadWorkerByName(ctx, s.Db, workerName)
+		wk, err := worker.LoadWorkerByName(ctx, s.Db, workerName)
 		if err != nil {
 			return err
 		}
-		if w.HatcheryID != nil && *w.HatcheryID != signature.Service.HatcheryID {
-			return sdk.WrapError(sdk.ErrWrongRequest, "hatchery and worker does not match")
+		if wk.HatcheryID == nil {
+			return sdk.WrapError(sdk.ErrWrongRequest, "hatchery %d cannot send service log for worker %s started by %s that is no more linked to an hatchery", signature.Service.HatcheryID, wk.ID, wk.HatcheryName)
+		}
+		if *wk.HatcheryID != signature.Service.HatcheryID {
+			return sdk.WrapError(sdk.ErrWrongRequest, "cannot send service log for worker %s from hatchery (expected: %d/actual: %d)", wk.ID, *wk.HatcheryID, signature.Service.HatcheryID)
 		}
 		logCache.Set(workerCacheKey, true, gocache.DefaultExpiration)
 	}
@@ -274,13 +277,11 @@ func (s *Service) getHatchery(ctx context.Context, hatcheryID int64, hatcheryNam
 }
 
 func (s *Service) waitingJobs(ctx context.Context) {
-	tick := time.NewTicker(250 * time.Millisecond)
-	defer tick.Stop()
 	for {
 		select {
 		case <-ctx.Done():
 			return
-		case _ = <-tick.C:
+		default:
 			// List all queues
 			keyListQueue := cache.Key(keyJobLogQueue, "*")
 			listKeys, err := s.Cache.Keys(keyListQueue)
@@ -309,6 +310,7 @@ func (s *Service) waitingJobs(ctx context.Context) {
 					}
 				})
 			}
+			time.Sleep(250 * time.Millisecond)
 		}
 	}
 }
@@ -329,6 +331,7 @@ func (s *Service) dequeueJobMessages(ctx context.Context, jobLogsQueueKey string
 	}()
 
 	tick := time.NewTicker(5 * time.Second)
+	defer tick.Stop()
 	for {
 		select {
 		case <-ctx.Done():
