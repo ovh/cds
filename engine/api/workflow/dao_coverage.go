@@ -8,10 +8,10 @@ import (
 	"github.com/sguiheux/go-coverage"
 
 	"github.com/ovh/cds/engine/api/cache"
-	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/engine/api/metrics"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/gorpmapping"
 )
 
 func loadPreviousCoverageReport(db gorp.SqlExecutor, workflowID int64, runNumber int64, repository string, branch string, appID int64) (sdk.WorkflowNodeRunCoverage, error) {

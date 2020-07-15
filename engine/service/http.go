@@ -51,7 +51,6 @@ type HandlerConfig struct {
 	NeedAuth         bool
 	NeedAdmin        bool
 	MaintenanceAware bool
-	EnableTracing    bool
 	AllowProvider    bool
 	AllowedTokens    []string
 	AllowedScopes    []sdk.AuthConsumerScope

@@ -12,7 +12,6 @@ import (
 	"time"
 
 	"github.com/ovh/cds/engine/api"
-	"github.com/ovh/cds/engine/api/observability"
 	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/engine/cdn"
 	"github.com/ovh/cds/engine/elasticsearch"
@@ -30,6 +29,7 @@ import (
 	"github.com/ovh/cds/engine/vcs"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
+	"github.com/ovh/cds/sdk/telemetry"
 
 	"github.com/spf13/cobra"
 )
@@ -290,12 +290,12 @@ See $ engine config command for more details.
 				}
 			}
 
-			c, err := observability.Init(ctx, conf.Telemetry, s.service)
+			ctx, err := telemetry.Init(ctx, conf.Telemetry, s.service)
 			if err != nil {
 				sdk.Exit("Unable to start tracing exporter: %v", err)
 			}
 
-			go start(c, s.service, s.cfg, s.arg)
+			go start(ctx, s.service, s.cfg, s.arg)
 
 			// Stupid trick: when API is starting wait a bit before start the other
 			if s.arg == "API" || s.arg == "api" {

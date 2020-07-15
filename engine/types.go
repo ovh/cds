@@ -2,7 +2,6 @@ package main
 
 import (
 	"github.com/ovh/cds/engine/api"
-	"github.com/ovh/cds/engine/api/observability"
 	"github.com/ovh/cds/engine/cdn"
 	"github.com/ovh/cds/engine/elasticsearch"
 	"github.com/ovh/cds/engine/hatchery/kubernetes"
@@ -16,6 +15,7 @@ import (
 	"github.com/ovh/cds/engine/repositories"
 	"github.com/ovh/cds/engine/ui"
 	"github.com/ovh/cds/engine/vcs"
+	"github.com/ovh/cds/sdk/telemetry"
 )
 
 // Configuration contains CDS Configuration and toml description
@@ -31,7 +31,7 @@ type Configuration struct {
 			ExtraValue string `toml:"extraValue" comment:"value for extraKey field. For many keys: valueaaa,valuebbb" json:"extraValue"`
 		} `toml:"graylog"`
 	} `toml:"log" comment:"#####################\n CDS Logs Settings \n####################"`
-	Telemetry observability.Configuration `toml:"telemetry" comment:"###########################\n CDS Telemetry Settings \n##########################" json:"telemetry"`
+	Telemetry telemetry.Configuration `toml:"telemetry" comment:"###########################\n CDS Telemetry Settings \n##########################" json:"telemetry"`
 	// services
 	API             *api.Configuration            `toml:"api" comment:"#####################\n API Configuration \n####################" json:"api"`
 	UI              *ui.Configuration             `toml:"ui" comment:"#####################\n UI Configuration \n####################" json:"ui"`

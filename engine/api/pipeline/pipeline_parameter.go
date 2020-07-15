@@ -6,9 +6,9 @@ import (
 	"github.com/go-gorp/gorp"
 	"github.com/lib/pq"
 
-	"github.com/ovh/cds/engine/api/database/gorpmapping"
-	"github.com/ovh/cds/engine/api/observability"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/gorpmapping"
+	"github.com/ovh/cds/sdk/telemetry"
 )
 
 // CheckParameterInPipeline check if the parameter is already in the pipeline or not
@@ -28,7 +28,7 @@ func CheckParameterInPipeline(db gorp.SqlExecutor, pipelineID int64, paramName s
 
 // GetAllParametersInPipeline Get all parameters for the given pipeline
 func GetAllParametersInPipeline(ctx context.Context, db gorp.SqlExecutor, pipelineID int64) ([]sdk.Parameter, error) {
-	_, end := observability.Span(ctx, "pipeline.GetAllParametersInPipeline")
+	_, end := telemetry.Span(ctx, "pipeline.GetAllParametersInPipeline")
 	defer end()
 
 	parameters := []sdk.Parameter{}

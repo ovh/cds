@@ -10,14 +10,14 @@ import (
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/cache"
-	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/keys"
-	"github.com/ovh/cds/engine/api/observability"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/gorpmapping"
 	"github.com/ovh/cds/sdk/log"
+	"github.com/ovh/cds/sdk/telemetry"
 )
 
 func loadAllByRepo(ctx context.Context, db gorp.SqlExecutor, query string, args []interface{}, opts ...LoadOptionFunc) (sdk.Projects, error) {
@@ -27,7 +27,7 @@ func loadAllByRepo(ctx context.Context, db gorp.SqlExecutor, query string, args 
 // LoadAllByRepoAndGroupIDs returns all projects with an application linked to the repo against the groups
 func LoadAllByRepoAndGroupIDs(ctx context.Context, db gorp.SqlExecutor, groupIDs []int64, repo string, opts ...LoadOptionFunc) (sdk.Projects, error) {
 	var end func()
-	ctx, end = observability.Span(ctx, "project.LoadAllByRepoAndGroupIDs")
+	ctx, end = telemetry.Span(ctx, "project.LoadAllByRepoAndGroupIDs")
 	defer end()
 	query := `SELECT DISTINCT project.*
 		FROM  project
@@ -48,7 +48,7 @@ func LoadAllByRepoAndGroupIDs(ctx context.Context, db gorp.SqlExecutor, groupIDs
 // LoadAllByRepo returns all projects with an application linked to the repo
 func LoadAllByRepo(ctx context.Context, db gorp.SqlExecutor, store cache.Store, repo string, opts ...LoadOptionFunc) (sdk.Projects, error) {
 	var end func()
-	ctx, end = observability.Span(ctx, "project.LoadAllByRepo")
+	ctx, end = telemetry.Span(ctx, "project.LoadAllByRepo")
 	defer end()
 	query := `SELECT DISTINCT project.*
 	FROM  project
@@ -62,7 +62,7 @@ func LoadAllByRepo(ctx context.Context, db gorp.SqlExecutor, store cache.Store, 
 // LoadAllByGroupIDs returns all projects given groups
 func LoadAllByGroupIDs(ctx context.Context, db gorp.SqlExecutor, store cache.Store, IDs []int64, opts ...LoadOptionFunc) (sdk.Projects, error) {
 	var end func()
-	ctx, end = observability.Span(ctx, "project.LoadAllByGroupIDs")
+	ctx, end = telemetry.Span(ctx, "project.LoadAllByGroupIDs")
 	defer end()
 	query := `SELECT project.*
 	FROM project
@@ -82,7 +82,7 @@ func LoadAllByGroupIDs(ctx context.Context, db gorp.SqlExecutor, store cache.Sto
 // LoadAll returns all projects
 func LoadAll(ctx context.Context, db gorp.SqlExecutor, store cache.Store, opts ...LoadOptionFunc) (sdk.Projects, error) {
 	var end func()
-	ctx, end = observability.Span(ctx, "project.LoadAll")
+	ctx, end = telemetry.Span(ctx, "project.LoadAll")
 	defer end()
 	query := "select project.* from project ORDER by project.name, project.projectkey ASC"
 	return loadprojects(ctx, db, opts, query)
@@ -240,7 +240,7 @@ func LoadByID(db gorp.SqlExecutor, id int64, opts ...LoadOptionFunc) (*sdk.Proje
 // Load  returns a project with all its variables and applications given a user. It can also returns pipelines, environments, groups, permission, and repositorires manager. See LoadOptions
 func Load(ctx context.Context, db gorp.SqlExecutor, key string, opts ...LoadOptionFunc) (*sdk.Project, error) {
 	var end func()
-	ctx, end = observability.Span(ctx, "project.Load")
+	ctx, end = telemetry.Span(ctx, "project.Load")
 	defer end()
 	return load(ctx, db, opts, "select project.* from project where projectkey = $1", key)
 }
@@ -256,7 +256,7 @@ func LoadProjectByWorkflowID(db gorp.SqlExecutor, workflowID int64, opts ...Load
 
 func loadprojects(ctx context.Context, db gorp.SqlExecutor, opts []LoadOptionFunc, query string, args ...interface{}) ([]sdk.Project, error) {
 	var end func()
-	ctx, end = observability.Span(ctx, "project.loadprojects")
+	ctx, end = telemetry.Span(ctx, "project.loadprojects")
 	defer end()
 
 	var res []dbProject
@@ -283,7 +283,7 @@ func loadprojects(ctx context.Context, db gorp.SqlExecutor, opts []LoadOptionFun
 
 func load(ctx context.Context, db gorp.SqlExecutor, opts []LoadOptionFunc, query string, args ...interface{}) (*sdk.Project, error) {
 	var end func()
-	ctx, end = observability.Span(ctx, "project.load")
+	ctx, end = telemetry.Span(ctx, "project.load")
 	defer end()
 
 	dbProj := &dbProject{}
@@ -299,7 +299,7 @@ func load(ctx context.Context, db gorp.SqlExecutor, opts []LoadOptionFunc, query
 }
 
 func unwrap(ctx context.Context, db gorp.SqlExecutor, p *dbProject, opts []LoadOptionFunc) (*sdk.Project, error) {
-	ctx, end := observability.Span(ctx, "project.unwrap")
+	ctx, end := telemetry.Span(ctx, "project.unwrap")
 	defer end()
 
 	proj := sdk.Project(*p)
@@ -309,7 +309,7 @@ func unwrap(ctx context.Context, db gorp.SqlExecutor, p *dbProject, opts []LoadO
 			continue
 		}
 		name := runtime.FuncForPC(reflect.ValueOf(f).Pointer()).Name()
-		_, end = observability.Span(ctx, name)
+		_, end = telemetry.Span(ctx, name)
 		if err := f(db, &proj); err != nil && sdk.Cause(err) != sql.ErrNoRows {
 			end()
 			return nil, err

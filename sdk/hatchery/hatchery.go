@@ -14,11 +14,10 @@ import (
 	"go.opencensus.io/stats"
 	"go.opencensus.io/trace"
 
-	"github.com/ovh/cds/engine/api/observability"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/ovh/cds/sdk/log"
-	"github.com/ovh/cds/sdk/tracingutils"
+	"github.com/ovh/cds/sdk/telemetry"
 )
 
 var (
@@ -33,12 +32,12 @@ func Create(ctx context.Context, h Interface) error {
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
-	ctx = observability.ContextWithTag(ctx,
-		observability.TagServiceName, h.Name(),
-		observability.TagServiceType, h.Type(),
+	ctx = telemetry.ContextWithTag(ctx,
+		telemetry.TagServiceName, h.Name(),
+		telemetry.TagServiceType, h.Type(),
 	)
 
-	if err := initMetrics(); err != nil {
+	if err := initMetrics(ctx); err != nil {
 		return err
 	}
 
@@ -137,34 +136,34 @@ func Create(ctx context.Context, h Interface) error {
 
 			var traceEnded *struct{}
 			currentCtx, currentCancel := context.WithTimeout(ctx, 10*time.Minute)
-			if val, has := j.Header.Get(tracingutils.SampledHeader); has && val == "1" {
-				currentCtx, _ = observability.New(currentCtx, h, "hatchery.JobReceive", trace.AlwaysSample(), trace.SpanKindServer)
+			if val, has := j.Header.Get(telemetry.SampledHeader); has && val == "1" {
+				currentCtx, _ = telemetry.New(currentCtx, h, "hatchery.JobReceive", trace.AlwaysSample(), trace.SpanKindServer)
 
 				r, _ := j.Header.Get(sdk.WorkflowRunHeader)
 				w, _ := j.Header.Get(sdk.WorkflowHeader)
 				p, _ := j.Header.Get(sdk.ProjectKeyHeader)
 
-				observability.Current(currentCtx,
-					observability.Tag(observability.TagWorkflow, w),
-					observability.Tag(observability.TagWorkflowRun, r),
-					observability.Tag(observability.TagProjectKey, p),
-					observability.Tag(observability.TagWorkflowNodeJobRun, j.ID),
+				telemetry.Current(currentCtx,
+					telemetry.Tag(telemetry.TagWorkflow, w),
+					telemetry.Tag(telemetry.TagWorkflowRun, r),
+					telemetry.Tag(telemetry.TagProjectKey, p),
+					telemetry.Tag(telemetry.TagWorkflowNodeJobRun, j.ID),
 				)
 
 				if _, ok := j.Header["WS"]; ok {
 					log.Debug("hatchery> received job from WS")
-					observability.Current(currentCtx,
-						observability.Tag("from", "ws"),
+					telemetry.Current(currentCtx,
+						telemetry.Tag("from", "ws"),
 					)
 				}
 			}
 			endTrace := func(reason string) {
 				if reason != "" {
-					observability.Current(currentCtx,
-						observability.Tag("reason", reason),
+					telemetry.Current(currentCtx,
+						telemetry.Tag("reason", reason),
 					)
 				}
-				observability.End(currentCtx, nil, nil) // nolint
+				telemetry.End(currentCtx, nil, nil) // nolint
 				var T struct{}
 				traceEnded = &T
 				currentCancel()

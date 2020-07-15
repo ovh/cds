@@ -1,4 +1,4 @@
-package tracingutils
+package telemetry
 
 import (
 	"context"
@@ -24,19 +24,6 @@ import (
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-
-type contextKey int
-
-// B3 headers that OpenCensus understands.
-const (
-	TraceIDHeader = "X-B3-TraceId"
-	SpanIDHeader  = "X-B3-SpanId"
-	SampledHeader = "X-B3-Sampled"
-
-	ContextTraceIDHeader contextKey = iota
-	ContextSpanIDHeader
-	ContextSampledHeader
-)
 
 // ParseTraceID parses the value of the X-B3-TraceId header.
 func ParseTraceID(tid string) (trace.TraceID, bool) {

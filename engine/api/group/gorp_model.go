@@ -1,8 +1,8 @@
 package group
 
 import (
-	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/gorpmapping"
 )
 
 type group struct { // group_authentified_user
