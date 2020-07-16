@@ -3,7 +3,7 @@ package gorpmapping_test
 import (
 	"testing"
 
-	"github.com/ovh/cds/engine/api/database/gorpmapping"
+	"github.com/ovh/cds/sdk/gorpmapping"
 	"github.com/stretchr/testify/assert"
 )
 

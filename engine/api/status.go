@@ -15,12 +15,12 @@ import (
 	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/mail"
 	"github.com/ovh/cds/engine/api/migrate"
-	"github.com/ovh/cds/engine/api/observability"
 	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/engine/api/workermodel"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
+	"github.com/ovh/cds/sdk/telemetry"
 )
 
 // VersionHandler returns version of current uservice
@@ -227,29 +227,29 @@ func (api *API) initMetrics(ctx context.Context) error {
 	tagRange, _ = tag.NewKey("range")
 	tagStatus, _ = tag.NewKey("status")
 
-	tagServiceType := observability.MustNewKey(observability.TagServiceType)
-	tagServiceName := observability.MustNewKey(observability.TagServiceName)
+	tagServiceType := telemetry.MustNewKey(telemetry.TagServiceType)
+	tagServiceName := telemetry.MustNewKey(telemetry.TagServiceName)
 	tagsRange := []tag.Key{tagRange, tagStatus}
 	tagsService = []tag.Key{tagServiceName, tagServiceType}
 
-	err := observability.RegisterView(
-		observability.NewViewLast("cds/nb_users", api.Metrics.nbUsers, nil),
-		observability.NewViewLast("cds/nb_applications", api.Metrics.nbApplications, nil),
-		observability.NewViewLast("cds/nb_projects", api.Metrics.nbProjects, nil),
-		observability.NewViewLast("cds/nb_groups", api.Metrics.nbGroups, nil),
-		observability.NewViewLast("cds/nb_pipelines", api.Metrics.nbPipelines, nil),
-		observability.NewViewLast("cds/nb_workflows", api.Metrics.nbWorkflows, nil),
-		observability.NewViewLast("cds/nb_artifacts", api.Metrics.nbArtifacts, nil),
-		observability.NewViewLast("cds/nb_worker_models", api.Metrics.nbWorkerModels, nil),
-		observability.NewViewLast("cds/nb_workflow_runs", api.Metrics.nbWorkflowRuns, nil),
-		observability.NewViewLast("cds/nb_workflow_node_runs", api.Metrics.nbWorkflowNodeRuns, nil),
-		observability.NewViewLast("cds/nb_max_workers_building", api.Metrics.nbMaxWorkersBuilding, nil),
-		observability.NewViewLast("cds/queue", api.Metrics.queue, tagsRange),
-		observability.NewViewCount("cds/workflow_runs_started", api.Metrics.WorkflowRunStarted, tagsService),
-		observability.NewViewCount("cds/workflow_runs_failed", api.Metrics.WorkflowRunFailed, tagsService),
-		observability.NewViewCount("cds/workflow_runs_mark_to_delete", api.Metrics.WorkflowRunsMarkToDelete, tagsService),
-		observability.NewViewCount("cds/workflow_runs_deleted", api.Metrics.WorkflowRunsDeleted, tagsService),
-		observability.NewViewLast("cds/database_conn", api.Metrics.DatabaseConns, tagsService),
+	err := telemetry.RegisterView(ctx,
+		telemetry.NewViewLast("cds/nb_users", api.Metrics.nbUsers, nil),
+		telemetry.NewViewLast("cds/nb_applications", api.Metrics.nbApplications, nil),
+		telemetry.NewViewLast("cds/nb_projects", api.Metrics.nbProjects, nil),
+		telemetry.NewViewLast("cds/nb_groups", api.Metrics.nbGroups, nil),
+		telemetry.NewViewLast("cds/nb_pipelines", api.Metrics.nbPipelines, nil),
+		telemetry.NewViewLast("cds/nb_workflows", api.Metrics.nbWorkflows, nil),
+		telemetry.NewViewLast("cds/nb_artifacts", api.Metrics.nbArtifacts, nil),
+		telemetry.NewViewLast("cds/nb_worker_models", api.Metrics.nbWorkerModels, nil),
+		telemetry.NewViewLast("cds/nb_workflow_runs", api.Metrics.nbWorkflowRuns, nil),
+		telemetry.NewViewLast("cds/nb_workflow_node_runs", api.Metrics.nbWorkflowNodeRuns, nil),
+		telemetry.NewViewLast("cds/nb_max_workers_building", api.Metrics.nbMaxWorkersBuilding, nil),
+		telemetry.NewViewLast("cds/queue", api.Metrics.queue, tagsRange),
+		telemetry.NewViewCount("cds/workflow_runs_started", api.Metrics.WorkflowRunStarted, tagsService),
+		telemetry.NewViewCount("cds/workflow_runs_failed", api.Metrics.WorkflowRunFailed, tagsService),
+		telemetry.NewViewCount("cds/workflow_runs_mark_to_delete", api.Metrics.WorkflowRunsMarkToDelete, tagsService),
+		telemetry.NewViewCount("cds/workflow_runs_deleted", api.Metrics.WorkflowRunsDeleted, tagsService),
+		telemetry.NewViewLast("cds/database_conn", api.Metrics.DatabaseConns, tagsService),
 	)
 
 	api.computeMetrics(ctx)
@@ -258,7 +258,7 @@ func (api *API) initMetrics(ctx context.Context) error {
 }
 
 func (api *API) computeMetrics(ctx context.Context) {
-	tags := observability.ContextGetTags(ctx, observability.TagServiceType, observability.TagServiceName)
+	tags := telemetry.ContextGetTags(ctx, telemetry.TagServiceType, telemetry.TagServiceName)
 	ctx, err := tag.New(ctx, tags...)
 	if err != nil {
 		log.Error(ctx, "api.computeMetrics> unable to tag observability context: %v", err)
@@ -286,7 +286,7 @@ func (api *API) computeMetrics(ctx context.Context) {
 				api.countMetric(ctx, api.Metrics.nbWorkflowNodeRuns, "SELECT COALESCE(MAX(id),0) FROM workflow_node_run")
 				api.countMetric(ctx, api.Metrics.nbMaxWorkersBuilding, "SELECT COUNT(1) FROM worker where status = 'Building'")
 
-				observability.Record(ctx, api.Metrics.DatabaseConns, int64(api.DBConnectionFactory.DB().Stats().OpenConnections))
+				telemetry.Record(ctx, api.Metrics.DatabaseConns, int64(api.DBConnectionFactory.DB().Stats().OpenConnections))
 
 				now := time.Now()
 				now10s := now.Add(-10 * time.Second)
@@ -320,7 +320,7 @@ func (api *API) countMetric(ctx context.Context, v *stats.Int64Measure, query st
 	if err != nil {
 		log.Warning(ctx, "metrics>Errors while fetching count %s: %v", query, err)
 	}
-	observability.Record(ctx, v, n)
+	telemetry.Record(ctx, v, n)
 }
 
 func (api *API) countMetricRange(ctx context.Context, status string, timerange string, v *stats.Int64Measure, query string, args ...interface{}) {
@@ -329,7 +329,7 @@ func (api *API) countMetricRange(ctx context.Context, status string, timerange s
 		log.Warning(ctx, "metrics>Errors while fetching count range %s: %v", query, err)
 	}
 	ctx, _ = tag.New(ctx, tag.Upsert(tagStatus, status), tag.Upsert(tagRange, timerange))
-	observability.Record(ctx, v, n)
+	telemetry.Record(ctx, v, n)
 }
 
 func (api *API) processStatusMetrics(ctx context.Context) {
@@ -382,11 +382,11 @@ func (api *API) processStatusMetrics(ctx context.Context) {
 		}
 
 		ctx, _ = tag.New(ctx, tag.Upsert(tagServiceName, service), tag.Upsert(tagService, line.Type))
-		v, err := observability.FindAndRegisterViewLast(item, tagsService)
+		v, err := telemetry.FindAndRegisterViewLast(item, tagsService)
 		if err != nil {
 			log.Warning(ctx, "metrics>Errors while FindAndRegisterViewLast %s: %v", item, err)
 			continue
 		}
-		observability.Record(ctx, v.Measure, number)
+		telemetry.Record(ctx, v.Measure, number)
 	}
 }

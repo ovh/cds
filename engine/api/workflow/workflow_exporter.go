@@ -9,15 +9,15 @@ import (
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/environment"
-	"github.com/ovh/cds/engine/api/observability"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/exportentities"
 	v2 "github.com/ovh/cds/sdk/exportentities/v2"
+	"github.com/ovh/cds/sdk/telemetry"
 )
 
 // Export a workflow
 func Export(ctx context.Context, db gorp.SqlExecutor, cache cache.Store, proj sdk.Project, name string, opts ...v2.ExportOptions) (exportentities.Workflow, error) {
-	ctx, end := observability.Span(ctx, "workflow.Export")
+	ctx, end := telemetry.Span(ctx, "workflow.Export")
 	defer end()
 
 	wf, err := Load(ctx, db, cache, proj, name, LoadOptions{})
@@ -42,7 +42,7 @@ func Export(ctx context.Context, db gorp.SqlExecutor, cache cache.Store, proj sd
 func Pull(ctx context.Context, db gorp.SqlExecutor, cache cache.Store, proj sdk.Project, name string,
 	encryptFunc sdk.EncryptFunc, opts ...v2.ExportOptions) (exportentities.WorkflowComponents, error) {
 
-	ctx, end := observability.Span(ctx, "workflow.Pull")
+	ctx, end := telemetry.Span(ctx, "workflow.Pull")
 	defer end()
 
 	var wp exportentities.WorkflowComponents

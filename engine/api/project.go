@@ -275,7 +275,6 @@ func (api *API) getProjectHandler() service.Handler {
 		withWorkflows := FormBool(r, "withWorkflows")
 		withWorkflowNames := FormBool(r, "withWorkflowNames")
 		withIntegrations := FormBool(r, "withIntegrations")
-		withFeatures := FormBool(r, "withFeatures")
 		withIcon := FormBool(r, "withIcon")
 		withLabels := FormBool(r, "withLabels")
 
@@ -320,9 +319,6 @@ func (api *API) getProjectHandler() service.Handler {
 		}
 		if withIntegrations {
 			opts = append(opts, project.LoadOptions.WithIntegrations)
-		}
-		if withFeatures {
-			opts = append(opts, project.LoadOptions.WithFeatures(api.Cache))
 		}
 		if withIcon {
 			opts = append(opts, project.LoadOptions.WithIcon)

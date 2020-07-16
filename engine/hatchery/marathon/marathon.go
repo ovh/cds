@@ -17,12 +17,12 @@ import (
 	"github.com/gorilla/mux"
 
 	"github.com/ovh/cds/engine/api"
-	"github.com/ovh/cds/engine/api/observability"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/ovh/cds/sdk/hatchery"
 	"github.com/ovh/cds/sdk/log"
+	"github.com/ovh/cds/sdk/telemetry"
 )
 
 // New instanciates a new Hatchery Marathon
@@ -207,7 +207,7 @@ func (h *HatcheryMarathon) CanSpawn(ctx context.Context, model *sdk.Model, jobID
 // SpawnWorker creates an application on mesos via marathon
 // requirements services are not supported
 func (h *HatcheryMarathon) SpawnWorker(ctx context.Context, spawnArgs hatchery.SpawnArguments) error {
-	ctx, end := observability.Span(ctx, "hatcheryMarathon.SpawnWorker")
+	ctx, end := telemetry.Span(ctx, "hatcheryMarathon.SpawnWorker")
 	defer end()
 
 	if spawnArgs.JobID > 0 {
@@ -320,7 +320,7 @@ func (h *HatcheryMarathon) SpawnWorker(ctx context.Context, spawnArgs hatchery.S
 		Labels:    &h.marathonLabels,
 	}
 
-	_, next := observability.Span(ctx, "marathonClient.CreateApplication")
+	_, next := telemetry.Span(ctx, "marathonClient.CreateApplication")
 	if _, err := h.marathonClient.CreateApplication(application); err != nil {
 		next()
 		return err
@@ -349,7 +349,7 @@ func (h *HatcheryMarathon) SpawnWorker(ctx context.Context, spawnArgs hatchery.S
 	}()
 
 	log.Debug("spawnMarathonDockerWorker> worker %s spawning in progress, please wait...", application.ID)
-	_, next = observability.Span(ctx, "marathonClient.ApplicationDeployments")
+	_, next = telemetry.Span(ctx, "marathonClient.ApplicationDeployments")
 	deployments, err := h.marathonClient.ApplicationDeployments(application.ID)
 	next()
 	if err != nil {
@@ -362,7 +362,7 @@ func (h *HatcheryMarathon) SpawnWorker(ctx context.Context, spawnArgs hatchery.S
 		return nil
 	}
 
-	_, next = observability.Span(ctx, "waitDeployment")
+	_, next = telemetry.Span(ctx, "waitDeployment")
 	wg := &sync.WaitGroup{}
 	var errorsChan = make(chan error, len(deployments))
 

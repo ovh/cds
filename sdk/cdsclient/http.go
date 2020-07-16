@@ -16,11 +16,11 @@ import (
 	"time"
 
 	"github.com/ovh/cds/cli"
+	"github.com/ovh/cds/sdk/telemetry"
 
 	"github.com/dgrijalva/jwt-go"
 
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/tracingutils"
 )
 
 const (
@@ -248,11 +248,11 @@ func (c *client) Stream(ctx context.Context, method string, path string, body io
 		req.Header.Set("X-CDS-RemoteTime", date)
 
 		if c.config.Verbose {
-			log.Printf("Stream > context> %s\n", tracingutils.DumpContext(ctx))
+			log.Printf("Stream > context> %s\n", telemetry.DumpContext(ctx))
 		}
-		spanCtx, ok := tracingutils.ContextToSpanContext(ctx)
+		spanCtx, ok := telemetry.ContextToSpanContext(ctx)
 		if ok {
-			tracingutils.DefaultFormat.SpanContextToRequest(spanCtx, req)
+			telemetry.DefaultFormat.SpanContextToRequest(spanCtx, req)
 		}
 
 		for i := range mods {

@@ -6,13 +6,13 @@ import (
 	"github.com/go-gorp/gorp"
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/group"
-	"github.com/ovh/cds/engine/api/observability"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/telemetry"
 )
 
 //Import is able to create a new workflow and all its components
 func Import(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj sdk.Project, oldW, w *sdk.Workflow, u sdk.Identifiable, force bool, msgChan chan<- sdk.Message) error {
-	ctx, end := observability.Span(ctx, "workflow.Import")
+	ctx, end := telemetry.Span(ctx, "workflow.Import")
 	defer end()
 
 	w.ProjectKey = proj.Key

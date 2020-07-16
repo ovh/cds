@@ -11,11 +11,11 @@ import (
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/cache"
-	"github.com/ovh/cds/engine/api/observability"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
+	"github.com/ovh/cds/sdk/telemetry"
 )
 
 func computeHookToDelete(newWorkflow *sdk.Workflow, oldWorkflow *sdk.Workflow) map[string]sdk.NodeHook {
@@ -30,7 +30,7 @@ func computeHookToDelete(newWorkflow *sdk.Workflow, oldWorkflow *sdk.Workflow) m
 }
 
 func hookUnregistration(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj sdk.Project, hookToDelete map[string]sdk.NodeHook) error {
-	ctx, end := observability.Span(ctx, "workflow.hookUnregistration")
+	ctx, end := telemetry.Span(ctx, "workflow.hookUnregistration")
 	defer end()
 
 	if len(hookToDelete) == 0 {
@@ -76,7 +76,7 @@ func hookUnregistration(ctx context.Context, db gorp.SqlExecutor, store cache.St
 }
 
 func hookRegistration(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj sdk.Project, wf *sdk.Workflow, oldWorkflow *sdk.Workflow) error {
-	ctx, end := observability.Span(ctx, "workflow.hookRegistration")
+	ctx, end := telemetry.Span(ctx, "workflow.hookRegistration")
 	defer end()
 
 	var oldHooks map[string]*sdk.NodeHook
@@ -209,7 +209,7 @@ func hookRegistration(ctx context.Context, db gorp.SqlExecutor, store cache.Stor
 }
 
 func updateSchedulerPayload(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj sdk.Project, wf *sdk.Workflow, h *sdk.NodeHook) error {
-	ctx, end := observability.Span(ctx, "workflow.updateSchedulerPayload")
+	ctx, end := telemetry.Span(ctx, "workflow.updateSchedulerPayload")
 	defer end()
 
 	if h.HookModelName != sdk.SchedulerModelName {
@@ -279,7 +279,7 @@ func updateSchedulerPayload(ctx context.Context, db gorp.SqlExecutor, store cach
 }
 
 func createVCSConfiguration(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj sdk.Project, h *sdk.NodeHook) error {
-	ctx, end := observability.Span(ctx, "workflow.createVCSConfiguration", observability.Tag("UUID", h.UUID))
+	ctx, end := telemetry.Span(ctx, "workflow.createVCSConfiguration", telemetry.Tag("UUID", h.UUID))
 	defer end()
 	// Call VCS to know if repository allows webhook and get the configuration fields
 	projectVCSServer, err := repositoriesmanager.LoadProjectVCSServerLinkByProjectKeyAndVCSServerName(ctx, db, proj.Key, h.Config["vcsServer"].Value)
@@ -324,7 +324,7 @@ func createVCSConfiguration(ctx context.Context, db gorp.SqlExecutor, store cach
 	if err := client.CreateHook(ctx, h.Config["repoFullName"].Value, &vcsHook); err != nil {
 		return sdk.WrapError(err, "Cannot create hook on repository: %+v", vcsHook)
 	}
-	observability.Current(ctx, observability.Tag("VCS_ID", vcsHook.ID))
+	telemetry.Current(ctx, telemetry.Tag("VCS_ID", vcsHook.ID))
 	h.Config[sdk.HookConfigWebHookID] = sdk.WorkflowNodeHookConfigValue{
 		Value:        vcsHook.ID,
 		Configurable: false,
@@ -343,7 +343,7 @@ func createVCSConfiguration(ctx context.Context, db gorp.SqlExecutor, store cach
 }
 
 func updateVCSConfiguration(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj sdk.Project, h *sdk.NodeHook) error {
-	ctx, end := observability.Span(ctx, "workflow.updateVCSConfiguration", observability.Tag("UUID", h.UUID))
+	ctx, end := telemetry.Span(ctx, "workflow.updateVCSConfiguration", telemetry.Tag("UUID", h.UUID))
 	defer end()
 	// Call VCS to know if repository allows webhook and get the configuration fields
 	projectVCSServer, err := repositoriesmanager.LoadProjectVCSServerLinkByProjectKeyAndVCSServerName(ctx, db, proj.Key, h.Config["vcsServer"].Value)

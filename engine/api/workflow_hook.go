@@ -7,12 +7,12 @@ import (
 
 	"github.com/gorilla/mux"
 
-	"github.com/ovh/cds/engine/api/observability"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/telemetry"
 )
 
 func (api *API) getWorkflowHooksHandler() service.Handler {
@@ -240,10 +240,9 @@ func (api *API) postWorkflowJobHookCallbackHandler() service.Handler {
 
 		defer tx.Rollback() // nolint
 
-		_, next := observability.Span(ctx, "project.Load")
+		_, next := telemetry.Span(ctx, "project.Load")
 		proj, err := project.Load(ctx, tx, key,
 			project.LoadOptions.WithVariables,
-			project.LoadOptions.WithFeatures(api.Cache),
 			project.LoadOptions.WithIntegrations,
 			project.LoadOptions.WithApplicationVariables,
 			project.LoadOptions.WithApplicationWithDeploymentStrategies,

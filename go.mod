@@ -137,7 +137,6 @@ require (
 	github.com/opencontainers/image-spec v1.0.1 // indirect
 	github.com/ory-am/common v0.4.0 // indirect
 	github.com/ovh/cds/sdk/interpolate v0.0.0-20190319104452-71125b036b25
-	github.com/ovh/cds/sdk/izanami v0.0.0-20190703081656-683453b50b2a
 	github.com/ovh/configstore v0.3.2
 	github.com/ovh/symmecrypt v0.4.0
 	github.com/ovh/venom v0.25.0
@@ -226,8 +225,6 @@ replace github.com/go-gorp/gorp => github.com/yesnault/gorp v2.0.1-0.20200325154
 replace github.com/docker/docker => github.com/docker/engine v0.0.0-20180816081446-320063a2ad06
 
 replace github.com/ovh/cds/sdk/interpolate => ./sdk/interpolate
-
-replace github.com/ovh/cds/sdk/izanami => ./sdk/izanami
 
 replace github.com/keybase/go-crypto => github.com/Alkorin/crypto v0.0.0-20190802123352-5ea49ae5e604
 

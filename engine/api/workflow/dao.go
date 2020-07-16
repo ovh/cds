@@ -19,11 +19,11 @@ import (
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/integration"
 	"github.com/ovh/cds/engine/api/keys"
-	"github.com/ovh/cds/engine/api/observability"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/exportentities"
 	"github.com/ovh/cds/sdk/log"
+	"github.com/ovh/cds/sdk/telemetry"
 )
 
 type PushSecrets struct {
@@ -75,7 +75,7 @@ func Exists(db gorp.SqlExecutor, key string, name string) (bool, error) {
 }
 
 func LoadByRepo(ctx context.Context, db gorp.SqlExecutor, proj sdk.Project, repo string, opts LoadOptions) (*sdk.Workflow, error) {
-	ctx, end := observability.Span(ctx, "workflow.Load")
+	ctx, end := telemetry.Span(ctx, "workflow.Load")
 	defer end()
 
 	dao := opts.GetWorkflowDAO()
@@ -226,7 +226,7 @@ func LoadAllNames(db gorp.SqlExecutor, projID int64) (sdk.IDNames, error) {
 
 // Load loads a workflow for a given user (ie. checking permissions)
 func Load(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj sdk.Project, name string, opts LoadOptions) (*sdk.Workflow, error) {
-	ctx, end := observability.Span(ctx, "workflow.Load")
+	ctx, end := telemetry.Span(ctx, "workflow.Load")
 	defer end()
 
 	dao := opts.GetWorkflowDAO()
@@ -400,7 +400,7 @@ func Insert(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj sd
 }
 
 func RenameNode(ctx context.Context, db gorp.SqlExecutor, w *sdk.Workflow) error {
-	ctx, end := observability.Span(ctx, "workflow.RenameNode")
+	ctx, end := telemetry.Span(ctx, "workflow.RenameNode")
 	defer end()
 
 	nodes := w.WorkflowData.Array()
@@ -577,7 +577,7 @@ func RenameNode(ctx context.Context, db gorp.SqlExecutor, w *sdk.Workflow) error
 
 // Update updates a workflow
 func Update(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj sdk.Project, wf *sdk.Workflow, uptOption UpdateOptions) error {
-	ctx, end := observability.Span(ctx, "workflow.Update")
+	ctx, end := telemetry.Span(ctx, "workflow.Update")
 	defer end()
 
 	if err := CompleteWorkflow(ctx, db, wf, proj, LoadOptions{}); err != nil {
@@ -700,7 +700,7 @@ func Delete(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj sd
 }
 
 func CompleteWorkflow(ctx context.Context, db gorp.SqlExecutor, w *sdk.Workflow, proj sdk.Project, opts LoadOptions) error {
-	ctx, end := observability.Span(ctx, "workflow.CompleteWorkflow")
+	ctx, end := telemetry.Span(ctx, "workflow.CompleteWorkflow")
 	defer end()
 
 	w.InitMaps()
@@ -1043,7 +1043,7 @@ func checkPipeline(ctx context.Context, db gorp.SqlExecutor, proj sdk.Project, w
 // Push push a workflow from cds files
 func Push(ctx context.Context, db *gorp.DbMap, store cache.Store, proj *sdk.Project, data exportentities.WorkflowComponents,
 	opts *PushOption, u sdk.Identifiable, decryptFunc keys.DecryptFunc) ([]sdk.Message, *sdk.Workflow, *sdk.Workflow, *PushSecrets, error) {
-	ctx, end := observability.Span(ctx, "workflow.Push")
+	ctx, end := telemetry.Span(ctx, "workflow.Push")
 	defer end()
 	if data.Workflow == nil {
 		return nil, nil, nil, nil, sdk.NewErrorFrom(sdk.ErrWrongRequest, "invalid given workflow components, missing workflow file")
@@ -1159,6 +1159,31 @@ func Push(ctx context.Context, db *gorp.DbMap, store cache.Store, proj *sdk.Proj
 		app := wf.Applications[wf.WorkflowData.Node.Context.ApplicationID]
 		if app.VCSServer == "" || app.RepositoryFullname == "" {
 			return nil, nil, nil, nil, sdk.WithStack(sdk.ErrApplicationMandatoryOnWorkflowAsCode)
+		}
+	}
+
+	// come from run
+	if opts != nil && opts.HookUUID != "" {
+		// Load secrets from application and environment non-ascode
+		for id, app := range wf.Applications {
+			if app.FromRepository != "" {
+				continue
+			}
+			appSecrets, err := LoadApplicationSecrets(db, id)
+			if err != nil {
+				return nil, nil, nil, nil, err
+			}
+			allSecrets.ApplicationsSecrets[id] = appSecrets
+		}
+		for id, env := range wf.Environments {
+			if env.FromRepository != "" {
+				continue
+			}
+			secrets, err := LoadEnvironmentSecrets(db, id)
+			if err != nil {
+				return nil, nil, nil, nil, err
+			}
+			allSecrets.EnvironmentdSecrets[id] = secrets
 		}
 	}
 

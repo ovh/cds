@@ -6,7 +6,6 @@ import (
 
 	"github.com/ovh/cds/engine/api/authentication"
 	"github.com/ovh/cds/engine/api/cache"
-	"github.com/ovh/cds/engine/api/observability"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/worker"
 	"github.com/ovh/cds/engine/api/workflow"
@@ -19,6 +18,7 @@ import (
 	"github.com/ovh/cds/engine/api/workflowtemplate"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
+	"github.com/ovh/cds/sdk/telemetry"
 )
 
 // PermCheckFunc defines func call to check permission
@@ -53,7 +53,7 @@ func (api *API) checkPermission(ctx context.Context, routeVar map[string]string,
 }
 
 func (api *API) checkJobIDPermissions(ctx context.Context, jobID string, perm int, routeVars map[string]string) error {
-	ctx, end := observability.Span(ctx, "api.checkJobIDPermissions")
+	ctx, end := telemetry.Span(ctx, "api.checkJobIDPermissions")
 	defer end()
 
 	id, err := strconv.ParseInt(jobID, 10, 64)
@@ -101,7 +101,7 @@ func (api *API) checkJobIDPermissions(ctx context.Context, jobID string, perm in
 }
 
 func (api *API) checkProjectPermissions(ctx context.Context, projectKey string, requiredPerm int, routeVars map[string]string) error {
-	ctx, end := observability.Span(ctx, "api.checkProjectPermissions")
+	ctx, end := telemetry.Span(ctx, "api.checkProjectPermissions")
 	defer end()
 
 	if _, err := project.Load(ctx, api.mustDB(), projectKey); err != nil {
@@ -125,7 +125,7 @@ func (api *API) checkProjectPermissions(ctx context.Context, projectKey string, 
 				return sdk.WrapError(sdk.ErrNoProject, "not authorized for project %s", projectKey)
 			}
 			log.Debug("checkProjectPermissions> %s(%s) access granted to %s because is maintainer", getAPIConsumer(ctx).Name, getAPIConsumer(ctx).ID, projectKey)
-			observability.Current(ctx, observability.Tag(observability.TagPermission, "is_maintainer"))
+			telemetry.Current(ctx, telemetry.Tag(telemetry.TagPermission, "is_maintainer"))
 			return nil
 		}
 
@@ -136,16 +136,16 @@ func (api *API) checkProjectPermissions(ctx context.Context, projectKey string, 
 			return sdk.WrapError(sdk.ErrForbidden, "not authorized for project %s", projectKey)
 		}
 		log.Debug("checkProjectPermissions> %s(%s) access granted to %s because is admin", getAPIConsumer(ctx).Name, getAPIConsumer(ctx).ID, projectKey)
-		observability.Current(ctx, observability.Tag(observability.TagPermission, "is_admin"))
+		telemetry.Current(ctx, telemetry.Tag(telemetry.TagPermission, "is_admin"))
 		return nil
 	}
 	log.Debug("checkWorkflowPermissions> %s(%s) access granted to %s because has permission (max permission = %d)", getAPIConsumer(ctx).Name, getAPIConsumer(ctx).ID, projectKey, callerPermission)
-	observability.Current(ctx, observability.Tag(observability.TagPermission, "is_granted"))
+	telemetry.Current(ctx, telemetry.Tag(telemetry.TagPermission, "is_granted"))
 	return nil
 }
 
 func (api *API) checkWorkflowPermissions(ctx context.Context, workflowName string, perm int, routeVars map[string]string) error {
-	ctx, end := observability.Span(ctx, "api.checkWorkflowPermissions")
+	ctx, end := telemetry.Span(ctx, "api.checkWorkflowPermissions")
 	defer end()
 
 	projectKey, has := routeVars["permProjectKey"]
@@ -184,7 +184,7 @@ func (api *API) checkWorkflowPermissions(ctx context.Context, workflowName strin
 				return sdk.WrapError(sdk.ErrForbidden, "not authorized for workflow %s/%s", projectKey, workflowName)
 			}
 			log.Debug("checkWorkflowPermissions> %s access granted to %s/%s because is maintainer", getAPIConsumer(ctx).ID, projectKey, workflowName)
-			observability.Current(ctx, observability.Tag(observability.TagPermission, "is_maintainer"))
+			telemetry.Current(ctx, telemetry.Tag(telemetry.TagPermission, "is_maintainer"))
 			return nil
 		}
 
@@ -195,12 +195,12 @@ func (api *API) checkWorkflowPermissions(ctx context.Context, workflowName strin
 			return sdk.WrapError(sdk.ErrForbidden, "not authorized for workflow %s/%s", projectKey, workflowName)
 		}
 		log.Debug("checkWorkflowPermissions> %s access granted to %s/%s because is admin", getAPIConsumer(ctx).ID, projectKey, workflowName)
-		observability.Current(ctx, observability.Tag(observability.TagPermission, "is_admin"))
+		telemetry.Current(ctx, telemetry.Tag(telemetry.TagPermission, "is_admin"))
 		return nil
 
 	}
 	log.Debug("checkWorkflowPermissions> %s access granted to %s/%s because has permission (max permission = %d)", getAPIConsumer(ctx).ID, projectKey, workflowName, maxLevelPermission)
-	observability.Current(ctx, observability.Tag(observability.TagPermission, "is_granted"))
+	telemetry.Current(ctx, telemetry.Tag(telemetry.TagPermission, "is_granted"))
 	return nil
 }
 

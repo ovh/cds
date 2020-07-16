@@ -9,9 +9,9 @@ import (
 	"github.com/lib/pq"
 
 	"github.com/ovh/cds/engine/api/action"
-	"github.com/ovh/cds/engine/api/database/gorpmapping"
-	"github.com/ovh/cds/engine/api/observability"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/gorpmapping"
+	"github.com/ovh/cds/sdk/telemetry"
 )
 
 // LoadStage Get a stage from its ID and pipeline ID
@@ -72,7 +72,7 @@ func insertStageConditions(db gorp.SqlExecutor, s *sdk.Stage) error {
 
 // LoadPipelineStage loads pipeline stage
 func LoadPipelineStage(ctx context.Context, db gorp.SqlExecutor, p *sdk.Pipeline) error {
-	_, end := observability.Span(ctx, "pipeline.LoadPipelineStage")
+	_, end := telemetry.Span(ctx, "pipeline.LoadPipelineStage")
 	defer end()
 
 	p.Stages = []sdk.Stage{}

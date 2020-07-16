@@ -7,9 +7,9 @@ import (
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/cache"
-	"github.com/ovh/cds/engine/api/observability"
 	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/telemetry"
 )
 
 const (
@@ -30,7 +30,7 @@ const (
 //RunFromHook is the entry point to trigger a workflow from a hook
 func runFromHook(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj sdk.Project, wr *sdk.WorkflowRun, e *sdk.WorkflowNodeRunHookEvent, asCodeMsg []sdk.Message) (*ProcessorReport, error) {
 	var end func()
-	ctx, end = observability.Span(ctx, "workflow.RunFromHook")
+	ctx, end = telemetry.Span(ctx, "workflow.RunFromHook")
 	defer end()
 
 	report := new(ProcessorReport)
@@ -95,7 +95,7 @@ func manualRunFromNode(ctx context.Context, db gorp.SqlExecutor, store cache.Sto
 
 func StartWorkflowRun(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj sdk.Project, wr *sdk.WorkflowRun,
 	opts *sdk.WorkflowRunPostHandlerOption, u *sdk.AuthConsumer, asCodeInfos []sdk.Message) (*ProcessorReport, error) {
-	ctx, end := observability.Span(ctx, "api.startWorkflowRun")
+	ctx, end := telemetry.Span(ctx, "api.startWorkflowRun")
 	defer end()
 
 	report := new(ProcessorReport)
@@ -165,7 +165,7 @@ func StartWorkflowRun(ctx context.Context, db gorp.SqlExecutor, store cache.Stor
 //ManualRun is the entry point to trigger a workflow manually
 func manualRun(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj sdk.Project, wr *sdk.WorkflowRun, e *sdk.WorkflowNodeRunManual) (*ProcessorReport, error) {
 	report := new(ProcessorReport)
-	ctx, end := observability.Span(ctx, "workflow.ManualRun", observability.Tag(observability.TagWorkflowRun, wr.Number))
+	ctx, end := telemetry.Span(ctx, "workflow.ManualRun", telemetry.Tag(telemetry.TagWorkflowRun, wr.Number))
 	defer end()
 
 	if err := CompleteWorkflow(ctx, db, &wr.Workflow, proj, LoadOptions{DeepPipeline: true}); err != nil {

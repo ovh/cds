@@ -7,10 +7,10 @@ import (
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/cache"
-	"github.com/ovh/cds/engine/api/observability"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/exportentities"
 	"github.com/ovh/cds/sdk/log"
+	"github.com/ovh/cds/sdk/telemetry"
 )
 
 // ImportOptions is option to parse a workflow
@@ -52,7 +52,7 @@ func Parse(ctx context.Context, proj sdk.Project, ew exportentities.Workflow) (*
 
 // ParseAndImport parse an exportentities.workflow and insert or update the workflow in database
 func ParseAndImport(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj sdk.Project, oldW *sdk.Workflow, ew exportentities.Workflow, u sdk.Identifiable, opts ImportOptions) (*sdk.Workflow, []sdk.Message, error) {
-	ctx, end := observability.Span(ctx, "workflow.ParseAndImport")
+	ctx, end := telemetry.Span(ctx, "workflow.ParseAndImport")
 	defer end()
 
 	log.Info(ctx, "ParseAndImport>> Import workflow %s in project %s (force=%v)", ew.GetName(), proj.Key, opts.Force)

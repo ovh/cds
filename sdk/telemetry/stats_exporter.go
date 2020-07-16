@@ -1,4 +1,4 @@
-package observability
+package telemetry
 
 import (
 	"reflect"
@@ -6,17 +6,6 @@ import (
 
 	"go.opencensus.io/stats/view"
 )
-
-type HTTPExporter struct {
-	Views []HTTPExporterView `json:"views"`
-}
-
-type HTTPExporterView struct {
-	Name  string            `json:"name"`
-	Tags  map[string]string `json:"tags"`
-	Value float64           `json:"value"`
-	Date  time.Time         `json:"date"`
-}
 
 func (e *HTTPExporter) GetView(name string, tags map[string]string) *HTTPExporterView {
 	for i := range e.Views {

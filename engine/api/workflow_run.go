@@ -20,7 +20,6 @@ import (
 	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/integration"
 	"github.com/ovh/cds/engine/api/objectstore"
-	"github.com/ovh/cds/engine/api/observability"
 	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/workflow"
@@ -28,6 +27,7 @@ import (
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk/luascript"
+	"github.com/ovh/cds/sdk/telemetry"
 )
 
 const (
@@ -385,12 +385,12 @@ func (api *API) stopWorkflowRunHandler() service.Handler {
 
 		workflowRuns := report.WorkflowRuns()
 		if len(workflowRuns) > 0 {
-			observability.Current(ctx,
-				observability.Tag(observability.TagProjectKey, proj.Key),
-				observability.Tag(observability.TagWorkflow, workflowRuns[0].Workflow.Name),
+			telemetry.Current(ctx,
+				telemetry.Tag(telemetry.TagProjectKey, proj.Key),
+				telemetry.Tag(telemetry.TagWorkflow, workflowRuns[0].Workflow.Name),
 			)
 			if workflowRuns[0].Status == sdk.StatusFail {
-				observability.Record(api.Router.Background, api.Metrics.WorkflowRunFailed, 1)
+				telemetry.Record(api.Router.Background, api.Metrics.WorkflowRunFailed, 1)
 			}
 		}
 
@@ -507,7 +507,6 @@ func updateParentWorkflowRun(ctx context.Context, dbFunc func() *gorp.DbMap, sto
 	parentProj, err := project.Load(context.Background(),
 		dbFunc(), run.RootRun().HookEvent.ParentWorkflow.Key,
 		project.LoadOptions.WithVariables,
-		project.LoadOptions.WithFeatures(store),
 		project.LoadOptions.WithIntegrations,
 		project.LoadOptions.WithApplicationVariables,
 		project.LoadOptions.WithApplicationWithDeploymentStrategies,
@@ -720,12 +719,12 @@ func (api *API) stopWorkflowNodeRunHandler() service.Handler {
 			return sdk.WrapError(err, "unable to resync workflow run status")
 		}
 
-		observability.Current(ctx,
-			observability.Tag(observability.TagProjectKey, p.Key),
-			observability.Tag(observability.TagWorkflow, workflowRun.Workflow.Name),
+		telemetry.Current(ctx,
+			telemetry.Tag(telemetry.TagProjectKey, p.Key),
+			telemetry.Tag(telemetry.TagWorkflow, workflowRun.Workflow.Name),
 		)
 		if workflowRun.Status == sdk.StatusFail {
-			observability.Record(api.Router.Background, api.Metrics.WorkflowRunFailed, 1)
+			telemetry.Record(api.Router.Background, api.Metrics.WorkflowRunFailed, 1)
 		}
 
 		if err := tx.Commit(); err != nil {
@@ -790,17 +789,16 @@ func (api *API) postWorkflowRunHandler() service.Handler {
 		key := vars["key"]
 		name := vars["permWorkflowName"]
 
-		observability.Current(ctx,
-			observability.Tag(observability.TagProjectKey, key),
-			observability.Tag(observability.TagWorkflow, name),
+		telemetry.Current(ctx,
+			telemetry.Tag(telemetry.TagProjectKey, key),
+			telemetry.Tag(telemetry.TagWorkflow, name),
 		)
-		observability.Record(api.Router.Background, api.Metrics.WorkflowRunStarted, 1)
+		telemetry.Record(api.Router.Background, api.Metrics.WorkflowRunStarted, 1)
 
 		// LOAD PROJECT
-		_, next := observability.Span(ctx, "project.Load")
+		_, next := telemetry.Span(ctx, "project.Load")
 		p, errP := project.Load(ctx, api.mustDB(), key,
 			project.LoadOptions.WithVariables,
-			project.LoadOptions.WithFeatures(api.Cache),
 			project.LoadOptions.WithIntegrations,
 		)
 		next()
@@ -935,7 +933,6 @@ func (api *API) initWorkflowRun(ctx context.Context, projKey string, wf *sdk.Wor
 	p, err := project.Load(ctx, api.mustDB(), projKey,
 		project.LoadOptions.WithVariables,
 		project.LoadOptions.WithKeys,
-		project.LoadOptions.WithFeatures(api.Cache),
 		project.LoadOptions.WithIntegrations,
 	)
 	if err != nil {
@@ -986,7 +983,6 @@ func (api *API) initWorkflowRun(ctx context.Context, projKey string, wf *sdk.Wor
 				project.LoadOptions.WithPipelines,
 				project.LoadOptions.WithClearKeys,
 				project.LoadOptions.WithClearIntegrations,
-				project.LoadOptions.WithFeatures(api.Cache),
 			)
 			if err != nil {
 				r := failInitWorkflowRun(ctx, api.mustDB(), wfRun, sdk.WrapError(err, "cannot load project for as code workflow creation"))

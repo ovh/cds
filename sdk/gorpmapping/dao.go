@@ -10,8 +10,8 @@ import (
 	"github.com/go-gorp/gorp"
 	"github.com/lib/pq"
 
-	"github.com/ovh/cds/engine/api/observability"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/telemetry"
 )
 
 func checkDatabase(db gorp.SqlExecutor) error {
@@ -170,7 +170,7 @@ func GetAll(ctx context.Context, db gorp.SqlExecutor, q Query, i interface{}, op
 		return err
 	}
 
-	_, end := observability.Span(ctx, fmt.Sprintf("database.GetAll(%T)", i), observability.Tag("query", q.String()))
+	_, end := telemetry.Span(ctx, fmt.Sprintf("database.GetAll(%T)", i), telemetry.Tag("query", q.String()))
 	defer end()
 
 	if _, err := db.Select(i, q.query, q.arguments...); err != nil {
@@ -212,7 +212,7 @@ func Get(ctx context.Context, db gorp.SqlExecutor, q Query, i interface{}, opts 
 		return false, err
 	}
 
-	_, end := observability.Span(ctx, fmt.Sprintf("database.Get(%T)", i), observability.Tag("query", q.String()))
+	_, end := telemetry.Span(ctx, fmt.Sprintf("database.Get(%T)", i), telemetry.Tag("query", q.String()))
 	defer end()
 
 	if err := db.SelectOne(i, q.query, q.arguments...); err != nil {
