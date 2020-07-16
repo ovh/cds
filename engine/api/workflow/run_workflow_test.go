@@ -47,7 +47,7 @@ func TestManualRun1(t *testing.T) {
 			Enabled: true,
 		},
 	}
-	pipeline.InsertJob(db, j, s.ID, &pip)
+	pipeline.InsertJob(context.TODO(), db, j, s.ID, &pip)
 	s.Jobs = append(s.Jobs, *j)
 
 	pip.Stages = append(pip.Stages, *s)
@@ -69,7 +69,7 @@ func TestManualRun1(t *testing.T) {
 			Enabled: true,
 		},
 	}
-	pipeline.InsertJob(db, j, s.ID, &pip2)
+	pipeline.InsertJob(context.TODO(), db, j, s.ID, &pip2)
 	s.Jobs = append(s.Jobs, *j)
 
 	proj, _ = project.LoadByID(db, proj.ID, project.LoadOptions.WithApplications, project.LoadOptions.WithPipelines, project.LoadOptions.WithEnvironments, project.LoadOptions.WithGroups)
@@ -207,7 +207,7 @@ func TestManualRun2(t *testing.T) {
 			Enabled: true,
 		},
 	}
-	pipeline.InsertJob(db, j, s.ID, &pip)
+	pipeline.InsertJob(context.TODO(), db, j, s.ID, &pip)
 	s.Jobs = append(s.Jobs, *j)
 
 	pip.Stages = append(pip.Stages, *s)
@@ -229,7 +229,7 @@ func TestManualRun2(t *testing.T) {
 			Enabled: true,
 		},
 	}
-	pipeline.InsertJob(db, j, s.ID, &pip2)
+	pipeline.InsertJob(context.TODO(), db, j, s.ID, &pip2)
 	s.Jobs = append(s.Jobs, *j)
 
 	proj, _ = project.LoadByID(db, proj.ID, project.LoadOptions.WithApplications, project.LoadOptions.WithPipelines, project.LoadOptions.WithEnvironments, project.LoadOptions.WithGroups)
@@ -461,8 +461,8 @@ func TestManualRun3(t *testing.T) {
 			Name:    "job11",
 		},
 	}
-	require.NoError(t, pipeline.InsertJob(db, j, s.ID, &pip))
-	require.NoError(t, pipeline.InsertJob(db, j2, s2.ID, &pip))
+	require.NoError(t, pipeline.InsertJob(context.TODO(), db, j, s.ID, &pip))
+	require.NoError(t, pipeline.InsertJob(context.TODO(), db, j2, s2.ID, &pip))
 	s.Jobs = append(s.Jobs, *j)
 	s2.Jobs = append(s.Jobs, *j2)
 
@@ -488,7 +488,7 @@ func TestManualRun3(t *testing.T) {
 			Requirements: []sdk.Requirement{{Name: "fooNameService", Value: "valueService", Type: sdk.ServiceRequirement}},
 		},
 	}
-	pipeline.InsertJob(db, j, s.ID, &pip2)
+	pipeline.InsertJob(context.TODO(), db, j, s.ID, &pip2)
 	s.Jobs = append(s.Jobs, *j)
 
 	w := sdk.Workflow{

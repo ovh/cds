@@ -149,7 +149,7 @@ func TestImportUpdate(t *testing.T) {
 
 			test.NoError(t, pipeline.InsertStage(db, &args.pip.Stages[0]))
 			for _, j := range args.pip.Stages[0].Jobs {
-				test.NoError(t, pipeline.InsertJob(db, &j, args.pip.Stages[0].ID, args.pip))
+				test.NoError(t, pipeline.InsertJob(context.TODO(), db, &j, args.pip.Stages[0].ID, args.pip))
 			}
 
 			args.pip.Stages = append(args.pip.Stages,
@@ -321,10 +321,10 @@ func TestImportUpdate(t *testing.T) {
 			test.NoError(t, pipeline.InsertStage(db, &args.pip.Stages[0]))
 			test.NoError(t, pipeline.InsertStage(db, &args.pip.Stages[1]))
 			for _, j := range args.pip.Stages[0].Jobs {
-				test.NoError(t, pipeline.InsertJob(db, &j, args.pip.Stages[0].ID, args.pip))
+				test.NoError(t, pipeline.InsertJob(context.TODO(), db, &j, args.pip.Stages[0].ID, args.pip))
 			}
 			for _, j := range args.pip.Stages[1].Jobs {
-				test.NoError(t, pipeline.InsertJob(db, &j, args.pip.Stages[1].ID, args.pip))
+				test.NoError(t, pipeline.InsertJob(context.TODO(), db, &j, args.pip.Stages[1].ID, args.pip))
 			}
 
 			args.pip.Stages[1].Jobs = append(args.pip.Stages[1].Jobs, sdk.Job{

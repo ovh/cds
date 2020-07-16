@@ -96,7 +96,7 @@ func (api *API) addJobToStageHandler() service.Handler {
 		//Default value is job enabled
 		job.Action.Enabled = true
 		job.Enabled = true
-		if err := pipeline.InsertJob(tx, &job, stageID, pip); err != nil {
+		if err := pipeline.InsertJob(ctx, tx, &job, stageID, pip); err != nil {
 			return sdk.WrapError(err, "cannot insert job in database")
 		}
 

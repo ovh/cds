@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { SharedInfraGroupName } from 'app/model/group.model';
 import { Requirement } from 'app/model/requirement.model';
 import { WorkerModel } from 'app/model/worker-model.model';
@@ -53,6 +53,7 @@ export class RequirementsListComponent extends Table<Requirement> implements OnI
 
     constructor(
         private _requirementStore: RequirementStore,
+        private _cd: ChangeDetectorRef
     ) {
         super();
         this.nbElementsByPage = 5;
@@ -61,6 +62,7 @@ export class RequirementsListComponent extends Table<Requirement> implements OnI
             .subscribe(r => {
                 this.availableRequirements = new Array<string>();
                 this.availableRequirements.push(...r.toArray());
+                this._cd.markForCheck();
             });
     }
 

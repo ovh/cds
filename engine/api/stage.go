@@ -89,7 +89,7 @@ func (api *API) getStageHandler() service.Handler {
 			return sdk.WrapError(err, "error on pipeline load")
 		}
 
-		s, err := pipeline.LoadStage(api.mustDB(), pipelineData.ID, stageID)
+		s, err := pipeline.LoadStage(ctx, api.mustDB(), pipelineData.ID, stageID)
 		if err != nil {
 			return sdk.WrapError(err, "Error on load stage")
 		}
@@ -143,12 +143,12 @@ func (api *API) moveStageHandler() service.Handler {
 		if stageData.BuildOrder <= nbStage {
 			// check if stage exist
 			var err error
-			oldStage, err = pipeline.LoadStage(tx, pipelineData.ID, stageData.ID)
+			oldStage, err = pipeline.LoadStage(ctx, tx, pipelineData.ID, stageData.ID)
 			if err != nil {
 				return sdk.WrapError(err, "Cannot load stage")
 			}
 
-			if err := pipeline.MoveStage(tx, oldStage, stageData.BuildOrder, pipelineData); err != nil {
+			if err := pipeline.MoveStage(tx, oldStage, stageData.BuildOrder); err != nil {
 				return sdk.WrapError(err, "Cannot move stage")
 			}
 		}
@@ -201,11 +201,12 @@ func (api *API) updateStageHandler() service.Handler {
 		}
 
 		// check if stage exist
-		s, err := pipeline.LoadStage(api.mustDB(), pipelineData.ID, stageData.ID)
+		s, err := pipeline.LoadStage(ctx, api.mustDB(), pipelineData.ID, stageData.ID)
 		if err != nil {
 			return sdk.WrapError(err, "Cannot Load stage")
 		}
 		stageData.ID = s.ID
+		stageData.PipelineID = s.PipelineID
 
 		tx, err := api.mustDB().Begin()
 		if err != nil {
@@ -262,7 +263,7 @@ func (api *API) deleteStageHandler() service.Handler {
 		}
 
 		// check if stage exist
-		s, err := pipeline.LoadStage(api.mustDB(), pipelineData.ID, stageID)
+		s, err := pipeline.LoadStage(ctx, api.mustDB(), pipelineData.ID, stageID)
 		if err != nil {
 			return sdk.WrapError(err, "Cannot Load stage")
 		}
