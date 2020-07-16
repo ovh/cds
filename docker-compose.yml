@@ -158,8 +158,8 @@ services:
     volumes:
       - cds-conf-volume:/app/conf
     ports:
-      - "127.0.0.1:8089:8089"
-      - "127.0.0.1:8090:8090"
+      - "8089:8089"
+      - "8090:8090"
     healthcheck:
       test: ["CMD", "curl", "-f", "http://127.0.0.1:8089/mon/version"]
       interval: 30s

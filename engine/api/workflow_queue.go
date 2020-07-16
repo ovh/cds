@@ -106,11 +106,10 @@ func (api *API) postTakeWorkflowJobHandler() service.Handler {
 
 		// Get CDN TCP Addr
 		// Get CDN TCP Addr
-		addr, err := services.GetCDNPublicTCPAdress(ctx, api.mustDB())
+		pbji.GelfServiceAddr, err = services.GetCDNPublicTCPAdress(ctx, api.mustDB())
 		if err != nil {
 			return err
 		}
-		pbji.GelfServiceAddr = addr
 
 		workflow.ResyncNodeRunsWithCommits(ctx, api.mustDB(), api.Cache, *p, report)
 		go WorkflowSendEvent(context.Background(), api.mustDB(), api.Cache, *p, report)
