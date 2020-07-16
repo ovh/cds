@@ -13,6 +13,7 @@ import (
 	"github.com/ovh/cds/engine/api/operation"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/gorpmapping"
 	"github.com/ovh/cds/sdk/log"
 )
 
@@ -46,14 +47,33 @@ func UpdateAsCodeResult(ctx context.Context, db *gorp.DbMap, store cache.Store, 
 	ope, err := operation.Poll(ctx, db, ed.OperationUUID)
 	if err != nil {
 		globalErr = err
-	} else {
-		asCodeEvent, err = createPullRequest(ctx, db, store, proj, workflowHolder.ID, rootApp, ed, u, ope.Setup)
+	}
+
+	var callback = func() error {
+		tx, err := db.Begin()
 		if err != nil {
-			globalErr = err
+			return sdk.WithStack(err)
 		}
+		defer tx.Rollback() // nolint
+
+		asCodeEvent, err = createPullRequest(ctx, tx, store, proj, workflowHolder.ID, rootApp, ed, u, ope.Setup)
+		if err != nil {
+			return err
+		}
+
+		if err := tx.Commit(); err != nil {
+			return sdk.WithStack(err)
+		}
+
 		sdk.GoRoutine(context.Background(), fmt.Sprintf("UpdateAsCodeResult-pusblish-as-code-event-%d", asCodeEvent.ID), func(ctx context.Context) {
 			event.PublishAsCodeEvent(ctx, proj.Key, workflowHolder.Name, *asCodeEvent, u)
 		})
+
+		return nil
+	}
+
+	if globalErr == nil {
+		globalErr = callback()
 	}
 
 	if globalErr != nil {
@@ -76,7 +96,7 @@ func UpdateAsCodeResult(ctx context.Context, db *gorp.DbMap, store cache.Store, 
 	})
 }
 
-func createPullRequest(ctx context.Context, db *gorp.DbMap, store cache.Store, proj sdk.Project, workflowHolderID int64, rootApp sdk.Application, ed EntityData, u sdk.Identifiable, opeSetup sdk.OperationSetup) (*sdk.AsCodeEvent, error) {
+func createPullRequest(ctx context.Context, db gorpmapping.SqlExecutorWithTx, store cache.Store, proj sdk.Project, workflowHolderID int64, rootApp sdk.Application, ed EntityData, u sdk.Identifiable, opeSetup sdk.OperationSetup) (*sdk.AsCodeEvent, error) {
 	vcsServer, err := repositoriesmanager.LoadProjectVCSServerLinkByProjectKeyAndVCSServerName(ctx, db, proj.Key, rootApp.VCSServer)
 	if err != nil {
 		return nil, err

@@ -19,6 +19,7 @@ func TestLoadContacts(t *testing.T) {
 	}
 
 	db, _ := test.SetupPG(t)
+
 	assert.NoError(t, user.Insert(context.TODO(), db, &u))
 
 	c := sdk.UserContact{

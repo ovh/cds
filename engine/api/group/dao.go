@@ -130,7 +130,7 @@ func LoadByID(ctx context.Context, db gorp.SqlExecutor, id int64, opts ...LoadOp
 }
 
 // Insert given group into database.
-func Insert(ctx context.Context, db gorp.SqlExecutor, g *sdk.Group) error {
+func Insert(ctx context.Context, db gorpmapping.SqlExecutorWithTx, g *sdk.Group) error {
 	grp := *g
 	var groupDB = group{
 		Group: grp,
@@ -143,7 +143,7 @@ func Insert(ctx context.Context, db gorp.SqlExecutor, g *sdk.Group) error {
 }
 
 // Update given group into database.
-func Update(ctx context.Context, db gorp.SqlExecutor, g *sdk.Group) error {
+func Update(ctx context.Context, db gorpmapping.SqlExecutorWithTx, g *sdk.Group) error {
 	grp := *g
 	var groupDB = group{
 		Group: grp,

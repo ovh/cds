@@ -13,6 +13,7 @@ import (
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/gorpmapping"
 	"github.com/ovh/cds/sdk/log"
 )
 
@@ -153,7 +154,7 @@ func propagatePublicIntegrationModel(ctx context.Context, db *gorp.DbMap, store 
 	}
 }
 
-func propagatePublicIntegrationModelOnProject(ctx context.Context, db gorp.SqlExecutor, store cache.Store, m sdk.IntegrationModel, p sdk.Project, u sdk.Identifiable) error {
+func propagatePublicIntegrationModelOnProject(ctx context.Context, db gorpmapping.SqlExecutorWithTx, store cache.Store, m sdk.IntegrationModel, p sdk.Project, u sdk.Identifiable) error {
 	if !m.Public {
 		return nil
 	}

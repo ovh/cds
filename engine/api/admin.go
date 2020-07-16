@@ -67,8 +67,16 @@ func (api *API) deleteAdminServiceHandler() service.Handler {
 		if err != nil {
 			return err
 		}
-		if err := services.Delete(api.mustDB(), srv); err != nil {
+		tx, err := api.mustDB().Begin()
+		if err != nil {
+			return sdk.WithStack(err)
+		}
+		defer tx.Rollback()
+		if err := services.Delete(tx, srv); err != nil {
 			return err
+		}
+		if err := tx.Commit(); err != nil {
+			return sdk.WithStack(err)
 		}
 		return service.WriteJSON(w, srv, http.StatusOK)
 	}
@@ -207,8 +215,18 @@ func (api *API) postAdminDatabaseSignatureRollEntityByPrimaryKey() service.Handl
 		entity := vars["entity"]
 		pk := vars["pk"]
 
-		if err := gorpmapping.RollSignedTupleByPrimaryKey(ctx, api.mustDB(), entity, pk); err != nil {
+		tx, err := api.mustDBWithCtx(ctx).Begin()
+		if err != nil {
+			return sdk.WithStack(err)
+		}
+		defer tx.Rollback() // nolint
+
+		if err := gorpmapping.RollSignedTupleByPrimaryKey(ctx, tx, entity, pk); err != nil {
 			return err
+		}
+
+		if err := tx.Commit(); err != nil {
+			return sdk.WithStack(err)
 		}
 
 		return nil

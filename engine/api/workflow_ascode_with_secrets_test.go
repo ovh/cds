@@ -3,6 +3,10 @@ package api
 import (
 	"context"
 	"encoding/json"
+	"net/http"
+	"net/http/httptest"
+	"testing"
+
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/integration"
@@ -12,9 +16,6 @@ import (
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/api/workflow"
-	"net/http"
-	"net/http/httptest"
-	"testing"
 
 	"github.com/go-gorp/gorp"
 	"github.com/golang/mock/gomock"
@@ -320,7 +321,7 @@ version: v1.0`),
 		},
 	}
 
-	require.NoError(t, workflow.Insert(context.TODO(), api.mustDB(), api.Cache, *proj, &w))
+	require.NoError(t, workflow.Insert(context.TODO(), db, api.Cache, *proj, &w))
 
 	// Make workflow as code
 	require.NoError(t, workflow.UpdateFromRepository(db, w.ID, "ssh://myrepo.git"))

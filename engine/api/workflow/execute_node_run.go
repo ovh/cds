@@ -19,6 +19,7 @@ import (
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/gorpmapping"
 	"github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk/telemetry"
 )
@@ -101,7 +102,7 @@ func syncTakeJobInNodeRun(ctx context.Context, db gorp.SqlExecutor, n *sdk.Workf
 	return report, nil
 }
 
-func executeNodeRun(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj sdk.Project, workflowNodeRun *sdk.WorkflowNodeRun) (*ProcessorReport, error) {
+func executeNodeRun(ctx context.Context, db gorpmapping.SqlExecutorWithTx, store cache.Store, proj sdk.Project, workflowNodeRun *sdk.WorkflowNodeRun) (*ProcessorReport, error) {
 	var end func()
 	ctx, end = telemetry.Span(ctx, "workflow.executeNodeRun",
 		telemetry.Tag(telemetry.TagWorkflowRun, workflowNodeRun.Number),
@@ -316,7 +317,7 @@ func executeNodeRun(ctx context.Context, db gorp.SqlExecutor, store cache.Store,
 	return report, nil
 }
 
-func releaseMutex(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj sdk.Project, workflowID int64, nodeName string) (*ProcessorReport, error) {
+func releaseMutex(ctx context.Context, db gorpmapping.SqlExecutorWithTx, store cache.Store, proj sdk.Project, workflowID int64, nodeName string) (*ProcessorReport, error) {
 	_, next := telemetry.Span(ctx, "workflow.releaseMutex")
 	defer next()
 
@@ -901,9 +902,19 @@ func StopWorkflowNodeRun(ctx context.Context, dbFunc func() *gorp.DbMap, store c
 	workflowNode := workflowRun.Workflow.WorkflowData.NodeByID(workflowNodeRun.WorkflowNodeID)
 	hasMutex := workflowNode != nil && workflowNode.Context != nil && workflowNode.Context.Mutex
 	if hasMutex {
-		r, err := releaseMutex(ctx, dbFunc(), store, proj, workflowNodeRun.WorkflowID, workflowNodeRun.WorkflowNodeName)
+		tx, err := dbFunc().Begin()
+		if err != nil {
+			return report, sdk.WithStack(err)
+		}
+		defer tx.Rollback() // nolint
+
+		r, err := releaseMutex(ctx, tx, store, proj, workflowNodeRun.WorkflowID, workflowNodeRun.WorkflowNodeName)
 		report.Merge(ctx, r)
 		if err != nil {
+			return report, err
+		}
+
+		if err := tx.Commit(); err != nil {
 			return report, err
 		}
 	}
@@ -1034,7 +1045,7 @@ func (i vcsInfos) String() string {
 	return fmt.Sprintf("%s:%s:%s:%s", i.Server, i.Repository, i.Branch, i.Hash)
 }
 
-func getVCSInfos(ctx context.Context, db gorp.SqlExecutor, store cache.Store, projectKey string, vcsServer sdk.ProjectVCSServerLink, gitValues map[string]string, applicationName, applicationVCSServer, applicationRepositoryFullname string) (*vcsInfos, error) {
+func getVCSInfos(ctx context.Context, db gorpmapping.SqlExecutorWithTx, store cache.Store, projectKey string, vcsServer sdk.ProjectVCSServerLink, gitValues map[string]string, applicationName, applicationVCSServer, applicationRepositoryFullname string) (*vcsInfos, error) {
 	var vcsInfos vcsInfos
 	vcsInfos.Repository = gitValues[tagGitRepository]
 	vcsInfos.Branch = gitValues[tagGitBranch]

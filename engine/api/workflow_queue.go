@@ -528,7 +528,7 @@ func postJobResult(ctx context.Context, dbFunc func(context.Context) *gorp.DbMap
 			return nil, sdk.WithStack(err)
 		}
 
-		go WorkflowSendEvent(context.Background(), tx, store, *proj, reportParent)
+		go WorkflowSendEvent(context.Background(), dbFunc(ctx), store, *proj, reportParent)
 	}
 
 	return report, nil
@@ -869,25 +869,38 @@ func (api *API) postWorkflowJobCoverageResultsHandler() service.Handler {
 			return sdk.WrapError(errLoad, "unable to load coverage report")
 		}
 
-		p, err := project.LoadProjectByNodeJobRunID(ctx, api.mustDB(), api.Cache, id)
+		tx, err := api.mustDB().Begin()
+		if err != nil {
+			return sdk.WithStack(err)
+		}
+		defer tx.Rollback() // nolint
+
+		p, err := project.LoadProjectByNodeJobRunID(ctx, tx, api.Cache, id)
 		if err != nil {
 			return sdk.WrapError(err, "cannot load project by nodeJobRunID:%d", id)
 		}
 		if sdk.ErrorIs(errLoad, sdk.ErrNotFound) {
-			if err := workflow.ComputeNewReport(ctx, api.mustDB(), api.Cache, report, wnr, *p); err != nil {
+			if err := workflow.ComputeNewReport(ctx, tx, api.Cache, report, wnr, *p); err != nil {
 				return sdk.WrapError(err, "cannot compute new coverage report")
+			}
+			if err := tx.Commit(); err != nil {
+				return sdk.WithStack(err)
 			}
 			return nil
 		}
 
 		// update
 		existingReport.Report = report
-		if err := workflow.ComputeLatestDefaultBranchReport(ctx, api.mustDB(), api.Cache, *p, wnr, &existingReport); err != nil {
+		if err := workflow.ComputeLatestDefaultBranchReport(ctx, tx, api.Cache, *p, wnr, &existingReport); err != nil {
 			return sdk.WrapError(err, "cannot compute default branch coverage report")
 		}
 
-		if err := workflow.UpdateCoverage(api.mustDB(), existingReport); err != nil {
+		if err := workflow.UpdateCoverage(tx, existingReport); err != nil {
 			return sdk.WrapError(err, "unable to update code coverage")
+		}
+
+		if err := tx.Commit(); err != nil {
+			return sdk.WithStack(err)
 		}
 
 		return nil
@@ -960,24 +973,20 @@ func (api *API) postWorkflowJobTestsResultsHandler() service.Handler {
 			return sdk.WrapError(err, "cannot update node run")
 		}
 
-		if err := tx.Commit(); err != nil {
-			return sdk.WrapError(err, "cannot update node run")
-		}
-
 		// If we are on default branch, push metrics
 		if nr.VCSServer != "" && nr.VCSBranch != "" {
-			p, err := project.LoadProjectByNodeJobRunID(ctx, api.mustDB(), api.Cache, id)
+			p, err := project.LoadProjectByNodeJobRunID(ctx, tx, api.Cache, id)
 			if err != nil {
 				log.Error(ctx, "postWorkflowJobTestsResultsHandler> Cannot load project by nodeJobRunID %d: %v", id, err)
 				return nil
 			}
 
 			// Get vcs info to known if we are on the default branch or not
-			projectVCSServer, err := repositoriesmanager.LoadProjectVCSServerLinkByProjectKeyAndVCSServerName(ctx, api.mustDB(), p.Key, nr.VCSServer)
+			projectVCSServer, err := repositoriesmanager.LoadProjectVCSServerLinkByProjectKeyAndVCSServerName(ctx, tx, p.Key, nr.VCSServer)
 			if err != nil {
 				return sdk.WrapError(sdk.ErrNoReposManagerClientAuth, "cannot get client %s %s got: %v", p.Key, nr.VCSServer, err)
 			}
-			client, err := repositoriesmanager.AuthorizedClient(ctx, api.mustDB(), api.Cache, p.Key, projectVCSServer)
+			client, err := repositoriesmanager.AuthorizedClient(ctx, tx, api.Cache, p.Key, projectVCSServer)
 			if err != nil {
 				log.Error(ctx, "postWorkflowJobTestsResultsHandler> Cannot get repo client %s : %v", nr.VCSServer, err)
 				return nil
@@ -993,8 +1002,12 @@ func (api *API) postWorkflowJobTestsResultsHandler() service.Handler {
 				// Push metrics
 				metrics.PushUnitTests(p.Key, nr.ApplicationID, nr.WorkflowID, nr.Number, *nr.Tests)
 			}
-
 		}
+
+		if err := tx.Commit(); err != nil {
+			return sdk.WrapError(err, "cannot update node run")
+		}
+
 		return nil
 	}
 }

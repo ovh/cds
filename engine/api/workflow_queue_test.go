@@ -39,6 +39,7 @@ import (
 	"github.com/ovh/cds/engine/api/worker"
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/gorpmapping"
 	"github.com/ovh/cds/sdk/log"
 )
 
@@ -56,11 +57,11 @@ type testRunWorkflowCtx struct {
 	model         *sdk.Model
 }
 
-func testRunWorkflow(t *testing.T, api *API, router *Router) testRunWorkflowCtx {
-	u, pass := assets.InsertLambdaUser(t, api.mustDB())
+func testRunWorkflow(t *testing.T, api *API, db gorpmapping.SqlExecutorWithTx, router *Router) testRunWorkflowCtx {
+	u, pass := assets.InsertLambdaUser(t, db)
 	key := "proj-" + sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, api.mustDB(), api.Cache, key, key)
-	require.NoError(t, group.InsertLinkGroupUser(context.TODO(), api.mustDB(), &group.LinkGroupUser{
+	proj := assets.InsertTestProject(t, db, api.Cache, key, key)
+	require.NoError(t, group.InsertLinkGroupUser(context.TODO(), db, &group.LinkGroupUser{
 		GroupID:            proj.ProjectGroups[0].Group.ID,
 		AuthentifiedUserID: u.ID,
 		Admin:              true,
@@ -73,7 +74,7 @@ func testRunWorkflow(t *testing.T, api *API, router *Router) testRunWorkflowCtx 
 	}
 	vcsServer.Set("token", "foo")
 	vcsServer.Set("secret", "bar")
-	assert.NoError(t, repositoriesmanager.InsertProjectVCSServerLink(context.TODO(), api.mustDB(), &vcsServer))
+	require.NoError(t, repositoriesmanager.InsertProjectVCSServerLink(context.TODO(), db, &vcsServer))
 
 	//First pipeline
 	pip := sdk.Pipeline{
@@ -107,7 +108,7 @@ func testRunWorkflow(t *testing.T, api *API, router *Router) testRunWorkflowCtx 
 	app := &sdk.Application{
 		Name: "app-" + sdk.RandomString(10),
 	}
-	if err := application.Insert(api.mustDB(), *proj, app); err != nil {
+	if err := application.Insert(db, *proj, app); err != nil {
 		t.Fatal(err)
 	}
 
@@ -126,7 +127,7 @@ func testRunWorkflow(t *testing.T, api *API, router *Router) testRunWorkflowCtx 
 	k.Private = pgpK.Private
 	k.KeyID = pgpK.KeyID
 
-	if err := application.InsertKey(api.mustDB(), k); err != nil {
+	if err := application.InsertKey(db, k); err != nil {
 		t.Fatal(err)
 	}
 
@@ -154,7 +155,7 @@ func testRunWorkflow(t *testing.T, api *API, router *Router) testRunWorkflowCtx 
 	envk.Private = kpgp.Private
 	envk.KeyID = kpgp.KeyID
 
-	if err := environment.InsertKey(api.mustDB(), envk); err != nil {
+	if err := environment.InsertKey(db, envk); err != nil {
 		t.Fatal(err)
 	}
 
@@ -179,7 +180,7 @@ func testRunWorkflow(t *testing.T, api *API, router *Router) testRunWorkflowCtx 
 	proj2, errP := project.Load(context.TODO(), api.mustDB(), proj.Key, project.LoadOptions.WithPipelines, project.LoadOptions.WithGroups)
 	require.NoError(t, errP)
 
-	require.NoError(t, workflow.Insert(context.TODO(), api.mustDB(), api.Cache, *proj2, &w))
+	require.NoError(t, workflow.Insert(context.TODO(), db, api.Cache, *proj2, &w))
 	w1, err := workflow.Load(context.TODO(), api.mustDB(), api.Cache, *proj, w.Name, workflow.LoadOptions{})
 	require.NoError(t, err)
 
@@ -287,8 +288,8 @@ func testGetWorkflowJobAsRegularUser(t *testing.T, api *API, router *Router, jwt
 	ctx.job = &jobs[len(jobs)-1]
 }
 
-func testGetWorkflowJobAsWorker(t *testing.T, api *API, router *Router, ctx *testRunWorkflowCtx) {
-	testRegisterWorker(t, api, router, ctx)
+func testGetWorkflowJobAsWorker(t *testing.T, api *API, db gorpmapping.SqlExecutorWithTx, router *Router, ctx *testRunWorkflowCtx) {
+	testRegisterWorker(t, api, db, router, ctx)
 
 	uri := router.GetRoute("GET", api.getWorkflowJobQueueHandler, nil)
 	test.NotEmpty(t, uri)
@@ -309,12 +310,12 @@ func testGetWorkflowJobAsWorker(t *testing.T, api *API, router *Router, ctx *tes
 	ctx.job = &jobs[0]
 }
 
-func testGetWorkflowJobAsHatchery(t *testing.T, api *API, router *Router, ctx *testRunWorkflowCtx) {
+func testGetWorkflowJobAsHatchery(t *testing.T, api *API, db gorpmapping.SqlExecutorWithTx, router *Router, ctx *testRunWorkflowCtx) {
 	uri := router.GetRoute("GET", api.getWorkflowJobQueueHandler, nil)
 	test.NotEmpty(t, uri)
 
 	//Register the worker
-	testRegisterHatchery(t, api, router, ctx)
+	testRegisterHatchery(t, api, db, router, ctx)
 	req := assets.NewJWTAuthentifiedRequest(t, ctx.hatcheryToken, "GET", uri, nil)
 	rec := httptest.NewRecorder()
 	router.Mux.ServeHTTP(rec, req)
@@ -331,24 +332,24 @@ func testGetWorkflowJobAsHatchery(t *testing.T, api *API, router *Router, ctx *t
 	ctx.job = &jobs[0]
 }
 
-func testRegisterWorker(t *testing.T, api *API, router *Router, ctx *testRunWorkflowCtx) {
+func testRegisterWorker(t *testing.T, api *API, db gorpmapping.SqlExecutorWithTx, router *Router, ctx *testRunWorkflowCtx) {
 	g, err := group.LoadByID(context.TODO(), api.mustDB(), ctx.user.Groups[0].ID)
 	if err != nil {
 		t.Fatalf("Error getting group: %+v", err)
 	}
-	model := LoadOrCreateWorkerModel(t, api, g.ID, "Test1")
+	model := LoadOrCreateWorkerModel(t, api, db, g.ID, "Test1")
 	var jobID int64
 	if ctx.job != nil {
 		jobID = ctx.job.ID
 	}
-	w, workerJWT := RegisterWorker(t, api, g.ID, model.Name, jobID, jobID == 0)
+	w, workerJWT := RegisterWorker(t, api, db, g.ID, model.Name, jobID, jobID == 0)
 	ctx.workerToken = workerJWT
 	ctx.worker = w
 	ctx.model = model
 }
 
-func testRegisterHatchery(t *testing.T, api *API, router *Router, ctx *testRunWorkflowCtx) {
-	h, _, _, jwt := assets.InsertHatchery(t, api.mustDB(), ctx.user.Groups[0])
+func testRegisterHatchery(t *testing.T, api *API, db gorpmapping.SqlExecutorWithTx, router *Router, ctx *testRunWorkflowCtx) {
+	h, _, _, jwt := assets.InsertHatchery(t, db, ctx.user.Groups[0])
 	ctx.hatchery = h
 	ctx.hatcheryToken = jwt
 }
@@ -370,16 +371,16 @@ func TestGetWorkflowJobQueueHandler(t *testing.T) {
 		_ = workflow.DeleteNodeJobRuns(db, j.WorkflowNodeRunID)
 	}
 
-	_, jwt := assets.InsertAdminUser(t, api.mustDB())
+	_, jwt := assets.InsertAdminUser(t, db)
 	t.Log("checkin as a user")
 
-	ctx := testRunWorkflow(t, api, router)
+	ctx := testRunWorkflow(t, api, db, router)
 	testGetWorkflowJobAsRegularUser(t, api, router, jwt, &ctx)
 	assert.NotNil(t, ctx.job)
 
 	t.Logf("checkin as a worker jobId:%d", ctx.job.ID)
 
-	testGetWorkflowJobAsWorker(t, api, router, &ctx)
+	testGetWorkflowJobAsWorker(t, api, db, router, &ctx)
 	assert.NotNil(t, ctx.job)
 
 	// count job in queue
@@ -429,10 +430,10 @@ func TestGetWorkflowJobQueueHandler(t *testing.T) {
 }
 
 func Test_postTakeWorkflowJobHandler(t *testing.T) {
-	api, _, router := newTestAPI(t)
+	api, db, router := newTestAPI(t)
 
-	ctx := testRunWorkflow(t, api, router)
-	testGetWorkflowJobAsWorker(t, api, router, &ctx)
+	ctx := testRunWorkflow(t, api, db, router)
+	testGetWorkflowJobAsWorker(t, api, db, router, &ctx)
 	require.NotNil(t, ctx.job)
 
 	//Prepare request
@@ -443,7 +444,7 @@ func Test_postTakeWorkflowJobHandler(t *testing.T) {
 	}
 
 	//Register the worker
-	testRegisterWorker(t, api, router, &ctx)
+	testRegisterWorker(t, api, db, router, &ctx)
 
 	// Add cdn config
 	api.Config.CDN = cdn.Configuration{
@@ -487,10 +488,10 @@ func Test_postTakeWorkflowJobHandler(t *testing.T) {
 }
 
 func Test_postTakeWorkflowInvalidJobHandler(t *testing.T) {
-	api, _, router := newTestAPI(t)
+	api, db, router := newTestAPI(t)
 
-	ctx := testRunWorkflow(t, api, router)
-	testGetWorkflowJobAsWorker(t, api, router, &ctx)
+	ctx := testRunWorkflow(t, api, db, router)
+	testGetWorkflowJobAsWorker(t, api, db, router, &ctx)
 	require.NotNil(t, ctx.job)
 
 	//Prepare request
@@ -501,7 +502,7 @@ func Test_postTakeWorkflowInvalidJobHandler(t *testing.T) {
 	}
 
 	//Register the worker
-	testRegisterWorker(t, api, router, &ctx)
+	testRegisterWorker(t, api, db, router, &ctx)
 
 	uri := router.GetRoute("POST", api.postTakeWorkflowJobHandler, vars)
 	require.NotEmpty(t, uri)
@@ -527,14 +528,14 @@ func Test_postTakeWorkflowInvalidJobHandler(t *testing.T) {
 }
 
 func Test_postBookWorkflowJobHandler(t *testing.T) {
-	api, _, router := newTestAPI(t)
+	api, db, router := newTestAPI(t)
 
-	ctx := testRunWorkflow(t, api, router)
-	testGetWorkflowJobAsHatchery(t, api, router, &ctx)
+	ctx := testRunWorkflow(t, api, db, router)
+	testGetWorkflowJobAsHatchery(t, api, db, router, &ctx)
 	assert.NotNil(t, ctx.job)
 
 	//Register the hatchery
-	testRegisterHatchery(t, api, router, &ctx)
+	testRegisterHatchery(t, api, db, router, &ctx)
 
 	//TakeBook
 	uri := router.GetRoute("POST", api.postBookWorkflowJobHandler, map[string]string{
@@ -549,14 +550,14 @@ func Test_postBookWorkflowJobHandler(t *testing.T) {
 }
 
 func Test_postWorkflowJobResultHandler(t *testing.T) {
-	api, _, router := newTestAPI(t)
+	api, db, router := newTestAPI(t)
 
-	ctx := testRunWorkflow(t, api, router)
-	testGetWorkflowJobAsWorker(t, api, router, &ctx)
+	ctx := testRunWorkflow(t, api, db, router)
+	testGetWorkflowJobAsWorker(t, api, db, router, &ctx)
 	assert.NotNil(t, ctx.job)
 
 	//Register the worker
-	testRegisterWorker(t, api, router, &ctx)
+	testRegisterWorker(t, api, db, router, &ctx)
 
 	//Take
 	uri := router.GetRoute("POST", api.postTakeWorkflowJobHandler, map[string]string{
@@ -640,16 +641,16 @@ func Test_postWorkflowJobResultHandler(t *testing.T) {
 }
 
 func Test_postWorkflowJobTestsResultsHandler(t *testing.T) {
-	api, _, router := newTestAPI(t)
+	api, db, router := newTestAPI(t)
 
-	ctx := testRunWorkflow(t, api, router)
-	testGetWorkflowJobAsWorker(t, api, router, &ctx)
+	ctx := testRunWorkflow(t, api, db, router)
+	testGetWorkflowJobAsWorker(t, api, db, router, &ctx)
 	assert.NotNil(t, ctx.job)
 
 	// Register the worker
-	testRegisterWorker(t, api, router, &ctx)
+	testRegisterWorker(t, api, db, router, &ctx)
 	// Register the hatchery
-	testRegisterHatchery(t, api, router, &ctx)
+	testRegisterHatchery(t, api, db, router, &ctx)
 
 	// Send spawninfo
 	info := []sdk.SpawnInfo{}
@@ -746,8 +747,8 @@ func Test_postWorkflowJobTestsResultsHandler(t *testing.T) {
 func Test_postWorkflowJobArtifactHandler(t *testing.T) {
 	api, db, router := newTestAPI(t)
 
-	ctx := testRunWorkflow(t, api, router)
-	testGetWorkflowJobAsWorker(t, api, router, &ctx)
+	ctx := testRunWorkflow(t, api, db, router)
+	testGetWorkflowJobAsWorker(t, api, db, router, &ctx)
 
 	assert.NotNil(t, ctx.job)
 
@@ -773,7 +774,7 @@ func Test_postWorkflowJobArtifactHandler(t *testing.T) {
 	}
 
 	//Register the worker
-	testRegisterWorker(t, api, router, &ctx)
+	testRegisterWorker(t, api, db, router, &ctx)
 
 	//Take
 	uri := router.GetRoute("POST", api.postTakeWorkflowJobHandler, vars)
@@ -890,10 +891,10 @@ func fileExists(filename string) bool {
 }
 
 func Test_postWorkflowJobStaticFilesHandler(t *testing.T) {
-	api, _, router := newTestAPI(t)
+	api, db, router := newTestAPI(t)
 
-	ctx := testRunWorkflow(t, api, router)
-	testGetWorkflowJobAsWorker(t, api, router, &ctx)
+	ctx := testRunWorkflow(t, api, db, router)
+	testGetWorkflowJobAsWorker(t, api, db, router, &ctx)
 	require.NotNil(t, ctx.job)
 
 	// Init store
@@ -918,7 +919,7 @@ func Test_postWorkflowJobStaticFilesHandler(t *testing.T) {
 	}
 
 	//Register the worker
-	testRegisterWorker(t, api, router, &ctx)
+	testRegisterWorker(t, api, db, router, &ctx)
 
 	//Take
 	uri := router.GetRoute("POST", api.postTakeWorkflowJobHandler, vars)
@@ -961,7 +962,7 @@ func TestWorkerPrivateKey(t *testing.T) {
 	api, db, router := newTestAPI(t)
 
 	// Create user
-	u, pass := assets.InsertAdminUser(t, api.mustDB())
+	u, pass := assets.InsertAdminUser(t, db)
 	consumer, _ := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
 
 	// Create project
@@ -969,7 +970,7 @@ func TestWorkerPrivateKey(t *testing.T) {
 	proj := assets.InsertTestProject(t, db, api.Cache, key, key)
 
 	// add group
-	require.NoError(t, group.InsertLinkGroupUser(context.TODO(), api.mustDB(), &group.LinkGroupUser{
+	require.NoError(t, group.InsertLinkGroupUser(context.TODO(), db, &group.LinkGroupUser{
 		GroupID:            proj.ProjectGroups[0].Group.ID,
 		AuthentifiedUserID: u.ID,
 		Admin:              true,
@@ -1042,7 +1043,7 @@ func TestWorkerPrivateKey(t *testing.T) {
 	workflowDeepPipeline, err := workflow.LoadByID(context.TODO(), db, api.Cache, *p, w.ID, workflow.LoadOptions{DeepPipeline: true})
 	assert.NoError(t, err)
 
-	wrDB, errwr := workflow.CreateRun(db, workflowDeepPipeline, nil, u)
+	wrDB, errwr := workflow.CreateRun(api.mustDB(), workflowDeepPipeline, nil, u)
 	assert.NoError(t, errwr)
 	wrDB.Workflow = *workflowDeepPipeline
 
@@ -1060,7 +1061,7 @@ func TestWorkerPrivateKey(t *testing.T) {
 		workflow: &w,
 		run:      wrDB,
 	}
-	testRegisterWorker(t, api, router, &ctx)
+	testRegisterWorker(t, api, db, router, &ctx)
 	ctx.worker.JobRunID = &wrDB.WorkflowNodeRuns[w.WorkflowData.Node.ID][0].Stages[0].RunJobs[0].ID
 	assert.NoError(t, worker.SetToBuilding(context.TODO(), db, ctx.worker.ID, *ctx.worker.JobRunID, []byte("mysecret")))
 
@@ -1077,7 +1078,7 @@ func TestPostVulnerabilityReportHandler(t *testing.T) {
 	api, db, router := newTestAPI(t)
 
 	// Create user
-	u, pass := assets.InsertAdminUser(t, api.mustDB())
+	u, pass := assets.InsertAdminUser(t, db)
 	consumer, _ := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
 
 	// Create project
@@ -1085,7 +1086,7 @@ func TestPostVulnerabilityReportHandler(t *testing.T) {
 	proj := assets.InsertTestProject(t, db, api.Cache, key, key)
 
 	// add group
-	require.NoError(t, group.InsertLinkGroupUser(context.TODO(), api.mustDB(), &group.LinkGroupUser{
+	require.NoError(t, group.InsertLinkGroupUser(context.TODO(), db, &group.LinkGroupUser{
 		GroupID:            proj.ProjectGroups[0].Group.ID,
 		AuthentifiedUserID: u.ID,
 		Admin:              true,
@@ -1158,7 +1159,7 @@ func TestPostVulnerabilityReportHandler(t *testing.T) {
 	workflowDeepPipeline, err := workflow.LoadByID(context.TODO(), db, api.Cache, *p, w.ID, workflow.LoadOptions{DeepPipeline: true})
 	assert.NoError(t, err)
 
-	wrDB, errwr := workflow.CreateRun(db, workflowDeepPipeline, nil, u)
+	wrDB, errwr := workflow.CreateRun(api.mustDB(), workflowDeepPipeline, nil, u)
 	assert.NoError(t, errwr)
 	wrDB.Workflow = *workflowDeepPipeline
 
@@ -1184,7 +1185,7 @@ func TestPostVulnerabilityReportHandler(t *testing.T) {
 		workflow: &w,
 		run:      wrDB,
 	}
-	testRegisterWorker(t, api, router, &ctx)
+	testRegisterWorker(t, api, db, router, &ctx)
 	ctx.worker.JobRunID = &wrDB.WorkflowNodeRuns[w.WorkflowData.Node.ID][0].Stages[0].RunJobs[0].ID
 	assert.NoError(t, worker.SetToBuilding(context.TODO(), db, ctx.worker.ID, *ctx.worker.JobRunID, nil))
 
@@ -1217,14 +1218,14 @@ func TestInsertNewCodeCoverageReport(t *testing.T) {
 	api, db, router := newTestAPI(t)
 
 	// Create user
-	u, pass := assets.InsertAdminUser(t, api.mustDB())
+	u, pass := assets.InsertAdminUser(t, db)
 
 	// Create project
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, api.Cache, key, key)
 
 	// add group
-	require.NoError(t, group.InsertLinkGroupUser(context.TODO(), api.mustDB(), &group.LinkGroupUser{
+	require.NoError(t, group.InsertLinkGroupUser(context.TODO(), db, &group.LinkGroupUser{
 		GroupID:            proj.ProjectGroups[0].Group.ID,
 		AuthentifiedUserID: u.ID,
 		Admin:              true,
@@ -1392,7 +1393,7 @@ func TestInsertNewCodeCoverageReport(t *testing.T) {
 	)
 
 	// Create previous run on default branch
-	wrDB, errwr := workflow.CreateRun(db, &w, nil, u)
+	wrDB, errwr := workflow.CreateRun(api.mustDB(), &w, nil, u)
 	assert.NoError(t, errwr)
 
 	workflowWithDeepPipeline, err := workflow.LoadByID(context.TODO(), db, api.Cache, *proj, w.ID, workflow.LoadOptions{DeepPipeline: true})
@@ -1413,7 +1414,7 @@ func TestInsertNewCodeCoverageReport(t *testing.T) {
 	assert.NoError(t, errmr)
 
 	// Create previous run on a branch
-	wrCB, errwr2 := workflow.CreateRun(db, &w, nil, u)
+	wrCB, errwr2 := workflow.CreateRun(api.mustDB(), &w, nil, u)
 	assert.NoError(t, errwr2)
 	wrCB.Workflow = w
 	_, errmr = workflow.StartWorkflowRun(context.Background(), db, api.Cache, *p, wrCB, &sdk.WorkflowRunPostHandlerOption{
@@ -1469,7 +1470,7 @@ func TestInsertNewCodeCoverageReport(t *testing.T) {
 	// Run test
 
 	// Create a workflow run
-	wrToTest, errwr3 := workflow.CreateRun(db, &w, nil, u)
+	wrToTest, errwr3 := workflow.CreateRun(api.mustDB(), &w, nil, u)
 	assert.NoError(t, errwr3)
 	wrToTest.Workflow = *workflowWithDeepPipeline
 
@@ -1509,7 +1510,7 @@ func TestInsertNewCodeCoverageReport(t *testing.T) {
 		workflow: &w,
 		run:      wrr,
 	}
-	testRegisterWorker(t, api, router, &ctx)
+	testRegisterWorker(t, api, db, router, &ctx)
 	ctx.worker.JobRunID = &wrr.WorkflowNodeRuns[w.WorkflowData.Node.ID][0].Stages[0].RunJobs[0].ID
 	assert.NoError(t, worker.SetToBuilding(context.TODO(), db, ctx.worker.ID, *ctx.worker.JobRunID, nil))
 

@@ -47,5 +47,5 @@ func Test_SessionCleaner(t *testing.T) {
 	defer cancel()
 	db, _ := test.SetupPG(t, bootstrap.InitiliazeDB)
 
-	authentication.SessionCleaner(ctx, func() *gorp.DbMap { return db }, 1*time.Second)
+	authentication.SessionCleaner(ctx, func() *gorp.DbMap { return db.DbMap }, 1*time.Second)
 }

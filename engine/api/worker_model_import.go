@@ -64,7 +64,7 @@ func (api *API) postWorkerModelImportHandler() service.Handler {
 		}
 
 		// check that the user is admin on the given template's group
-		grp, err := group.LoadByName(ctx, api.mustDB(), data.Group.Name, group.LoadOptions.WithMembers)
+		grp, err := group.LoadByName(ctx, tx, data.Group.Name, group.LoadOptions.WithMembers)
 		if err != nil {
 			return sdk.NewError(sdk.ErrWrongRequest, err)
 		}
@@ -81,7 +81,7 @@ func (api *API) postWorkerModelImportHandler() service.Handler {
 		var newModel *sdk.Model
 
 		// check if a model already exists for given info, if exists but not force update returns an error
-		old, err := workermodel.LoadByNameAndGroupID(ctx, api.mustDB(), data.Name, grp.ID)
+		old, err := workermodel.LoadByNameAndGroupID(ctx, tx, data.Name, grp.ID)
 		if err != nil {
 			if !isAdmin(ctx) {
 				// if current user is not admin and model is not restricted, a pattern should be given
@@ -95,7 +95,7 @@ func (api *API) postWorkerModelImportHandler() service.Handler {
 				return err
 			}
 
-			newModel, err = workermodel.Create(ctx, api.mustDB(), data, consumer)
+			newModel, err = workermodel.Create(ctx, tx, data, consumer)
 			if err != nil {
 				return err
 			}
@@ -111,7 +111,7 @@ func (api *API) postWorkerModelImportHandler() service.Handler {
 				return err
 			}
 
-			newModel, err = workermodel.Update(ctx, api.mustDB(), old, data)
+			newModel, err = workermodel.Update(ctx, tx, old, data)
 			if err != nil {
 				return err
 			}

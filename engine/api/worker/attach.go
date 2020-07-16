@@ -18,7 +18,7 @@ func ReleaseAllFromHatchery(db gorp.SqlExecutor, hatcheryID int64) error {
 }
 
 // ReAttachAllToHatchery search for workers without hatchery an re-attach workers if the hatchery consumer match worker consumer's parent.
-func ReAttachAllToHatchery(ctx context.Context, db gorp.SqlExecutor, hatchery sdk.Service) error {
+func ReAttachAllToHatchery(ctx context.Context, db gorpmapping.SqlExecutorWithTx, hatchery sdk.Service) error {
 	query := gorpmapping.NewQuery(`
     SELECT worker.* FROM worker
     JOIN auth_consumer ON auth_consumer.id = worker.auth_consumer_id

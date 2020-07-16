@@ -101,12 +101,12 @@ func LoadLinkGroupProjectForGroupIDAndProjectID(ctx context.Context, db gorp.Sql
 }
 
 // InsertLinkGroupProject inserts given link group-project into database.
-func InsertLinkGroupProject(ctx context.Context, db gorp.SqlExecutor, l *LinkGroupProject) error {
+func InsertLinkGroupProject(ctx context.Context, db gorpmapping.SqlExecutorWithTx, l *LinkGroupProject) error {
 	return sdk.WrapError(gorpmapping.InsertAndSign(ctx, db, l), "unable to insert link between group and project")
 }
 
 // updateDBLinkGroupProject updates given link group-project into database.
-func updateDBLinkGroupProject(ctx context.Context, db gorp.SqlExecutor, l *LinkGroupProject) error {
+func updateDBLinkGroupProject(ctx context.Context, db gorpmapping.SqlExecutorWithTx, l *LinkGroupProject) error {
 	return sdk.WrapError(gorpmapping.UpdateAndSign(ctx, db, l), "unable to update link between group and project")
 }
 

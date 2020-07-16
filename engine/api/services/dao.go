@@ -124,7 +124,7 @@ func FindDeadServices(ctx context.Context, db gorp.SqlExecutor, t time.Duration)
 }
 
 // Insert a service in database.
-func Insert(ctx context.Context, db gorp.SqlExecutor, s *sdk.Service) error {
+func Insert(ctx context.Context, db gorpmapping.SqlExecutorWithTx, s *sdk.Service) error {
 	sdb := service{Service: *s}
 	if err := gorpmapping.InsertAndSign(ctx, db, &sdb); err != nil {
 		return err
@@ -134,7 +134,7 @@ func Insert(ctx context.Context, db gorp.SqlExecutor, s *sdk.Service) error {
 }
 
 // Update a service in database.
-func Update(ctx context.Context, db gorp.SqlExecutor, s *sdk.Service) error {
+func Update(ctx context.Context, db gorpmapping.SqlExecutorWithTx, s *sdk.Service) error {
 	sdb := service{Service: *s}
 	if err := gorpmapping.UpdateAndSign(ctx, db, &sdb); err != nil {
 		return err

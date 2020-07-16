@@ -5,6 +5,7 @@ import (
 
 	"github.com/go-gorp/gorp"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/gorpmapping"
 )
 
 var defaultEnvs = map[string]string{
@@ -60,7 +61,7 @@ func replaceDockerRegistryPassword(db gorp.SqlExecutor, dbmodel *workerModel) (b
 	return true, clearPassword, nil
 }
 
-func storeDockerRegistryPassword(ctx context.Context, db gorp.SqlExecutor, workerModelID int64, password string) error {
+func storeDockerRegistryPassword(ctx context.Context, db gorpmapping.SqlExecutorWithTx, workerModelID int64, password string) error {
 	s, err := LoadSecretByModelIDAndName(ctx, db, workerModelID, registryPasswordSecretName)
 	if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
 		return err

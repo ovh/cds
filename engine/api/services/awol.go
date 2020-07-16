@@ -23,8 +23,20 @@ func KillDeadServices(ctx context.Context, dbFunc func() *gorp.DbMap) {
 			}
 			log.Debug("services.KillDeadServices> %d services to remove", len(services))
 			for i := range services {
-				if err := Delete(db, &services[i]); err != nil {
+				tx, err := db.Begin()
+				if err != nil {
+					log.Error(ctx, "services.KillDeadServices> unable to start transaction: %v", err)
+					continue
+				}
+				if err := Delete(tx, &services[i]); err != nil {
+					_ = tx.Rollback()
 					log.Error(ctx, "KillDeadServices> Unable to find dead services: %v", err)
+					continue
+				}
+
+				if err := tx.Commit(); err != nil {
+					_ = tx.Rollback()
+					log.Error(ctx, "KillDeadServices> Unable to  commit transaction: %v", err)
 					continue
 				}
 			}

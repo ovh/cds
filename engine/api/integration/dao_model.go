@@ -142,7 +142,7 @@ func ModelExists(db gorp.SqlExecutor, name string) (bool, error) {
 }
 
 // InsertModel inserts a integration model in database
-func InsertModel(db gorp.SqlExecutor, m *sdk.IntegrationModel) error {
+func InsertModel(db gorpmapping.SqlExecutorWithTx, m *sdk.IntegrationModel) error {
 	givenPublicConfig := m.PublicConfigurations.Clone()
 	dbm := integrationModel{IntegrationModel: *m}
 	if err := gorpmapping.InsertAndSign(context.Background(), db, &dbm); err != nil {
@@ -155,7 +155,7 @@ func InsertModel(db gorp.SqlExecutor, m *sdk.IntegrationModel) error {
 }
 
 // UpdateModel updates a integration model in database
-func UpdateModel(db gorp.SqlExecutor, m *sdk.IntegrationModel) error {
+func UpdateModel(db gorpmapping.SqlExecutorWithTx, m *sdk.IntegrationModel) error {
 	// reload the previous config to encuse we don't store placeholder
 	var oldModel sdk.IntegrationModel
 

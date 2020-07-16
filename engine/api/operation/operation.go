@@ -14,9 +14,10 @@ import (
 	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/exportentities"
+	"github.com/ovh/cds/sdk/gorpmapping"
 )
 
-func pushOperation(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj sdk.Project, data exportentities.WorkflowComponents, ope sdk.Operation) (*sdk.Operation, error) {
+func pushOperation(ctx context.Context, db gorpmapping.SqlExecutorWithTx, store cache.Store, proj sdk.Project, data exportentities.WorkflowComponents, ope sdk.Operation) (*sdk.Operation, error) {
 	if ope.RepositoryStrategy.SSHKey != "" {
 		key := proj.GetSSHKey(ope.RepositoryStrategy.SSHKey)
 		if key == nil {
@@ -62,7 +63,7 @@ func pushOperation(ctx context.Context, db gorp.SqlExecutor, store cache.Store, 
 	return &ope, nil
 }
 
-func PushOperation(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj sdk.Project, data exportentities.WorkflowComponents, vcsServerName, repoFullname, branch, message string, vcsStrategy sdk.RepositoryStrategy, u sdk.Identifiable) (*sdk.Operation, error) {
+func PushOperation(ctx context.Context, db gorpmapping.SqlExecutorWithTx, store cache.Store, proj sdk.Project, data exportentities.WorkflowComponents, vcsServerName, repoFullname, branch, message string, vcsStrategy sdk.RepositoryStrategy, u sdk.Identifiable) (*sdk.Operation, error) {
 	ope := sdk.Operation{
 		VCSServer:          vcsServerName,
 		RepoFullName:       repoFullname,
@@ -81,7 +82,7 @@ func PushOperation(ctx context.Context, db gorp.SqlExecutor, store cache.Store, 
 	return pushOperation(ctx, db, store, proj, data, ope)
 }
 
-func PushOperationUpdate(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj sdk.Project, data exportentities.WorkflowComponents, vcsServerName, repoFullname, branch, message string, vcsStrategy sdk.RepositoryStrategy, u sdk.Identifiable) (*sdk.Operation, error) {
+func PushOperationUpdate(ctx context.Context, db gorpmapping.SqlExecutorWithTx, store cache.Store, proj sdk.Project, data exportentities.WorkflowComponents, vcsServerName, repoFullname, branch, message string, vcsStrategy sdk.RepositoryStrategy, u sdk.Identifiable) (*sdk.Operation, error) {
 	ope := sdk.Operation{
 		VCSServer:          vcsServerName,
 		RepoFullName:       repoFullname,

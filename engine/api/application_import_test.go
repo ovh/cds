@@ -113,11 +113,11 @@ func Test_postApplicationImportHandler_NewAppFromYAMLWithKeysAndSecrets(t *testi
 	k.Public = kpgp.Public
 	k.Private = kpgp.Private
 	k.KeyID = kpgp.KeyID
-	if err := application.InsertKey(api.mustDB(), k); err != nil {
+	if err := application.InsertKey(db, k); err != nil {
 		t.Fatal(err)
 	}
 
-	test.NoError(t, application.InsertVariable(api.mustDB(), app.ID, &sdk.ApplicationVariable{
+	test.NoError(t, application.InsertVariable(db, app.ID, &sdk.ApplicationVariable{
 		Name:  "myPassword",
 		Type:  sdk.SecretVariable,
 		Value: "MySecretValue",
@@ -221,11 +221,11 @@ func Test_postApplicationImportHandler_NewAppFromYAMLWithKeysAndSecretsAndReImpo
 	k.Public = kpgp.Public
 	k.Private = kpgp.Private
 	k.KeyID = kpgp.KeyID
-	if err := application.InsertKey(api.mustDB(), k); err != nil {
+	if err := application.InsertKey(db, k); err != nil {
 		t.Fatal(err)
 	}
 
-	test.NoError(t, application.InsertVariable(api.mustDB(), app.ID, &sdk.ApplicationVariable{
+	test.NoError(t, application.InsertVariable(db, app.ID, &sdk.ApplicationVariable{
 		Name:  "myPassword",
 		Type:  sdk.SecretVariable,
 		Value: "MySecretValue",
@@ -385,7 +385,7 @@ func Test_postApplicationImportHandler_NewAppFromYAMLWithKeysAndSecretsAndReImpo
 	k1.Public = kpgp.Public
 	k1.Private = kpgp.Private
 	k1.KeyID = kpgp.KeyID
-	test.NoError(t, application.InsertKey(api.mustDB(), k1))
+	test.NoError(t, application.InsertKey(db, k1))
 
 	// create password, pgp and ssh keys
 	k2 := &sdk.ApplicationKey{
@@ -399,9 +399,9 @@ func Test_postApplicationImportHandler_NewAppFromYAMLWithKeysAndSecretsAndReImpo
 	k2.Public = kssh.Public
 	k2.Private = kssh.Private
 	k2.KeyID = kssh.KeyID
-	test.NoError(t, application.InsertKey(api.mustDB(), k2))
+	test.NoError(t, application.InsertKey(db, k2))
 
-	test.NoError(t, application.InsertVariable(api.mustDB(), app.ID, &sdk.ApplicationVariable{
+	test.NoError(t, application.InsertVariable(db, app.ID, &sdk.ApplicationVariable{
 		Name:  "myPassword",
 		Type:  sdk.SecretVariable,
 		Value: "MySecretValue",

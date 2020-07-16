@@ -2,9 +2,9 @@ package project
 
 import (
 	"context"
-	"github.com/lib/pq"
 
 	"github.com/go-gorp/gorp"
+	"github.com/lib/pq"
 
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/gorpmapping"
@@ -12,7 +12,7 @@ import (
 )
 
 // InsertKey a new project key in database
-func InsertKey(db gorp.SqlExecutor, key *sdk.ProjectKey) error {
+func InsertKey(db gorpmapping.SqlExecutorWithTx, key *sdk.ProjectKey) error {
 	var dbProjKey = dbProjectKey{ProjectKey: *key}
 	if err := gorpmapping.InsertAndSign(context.Background(), db, &dbProjKey); err != nil {
 		return err
@@ -47,9 +47,9 @@ func getAllKeys(db gorp.SqlExecutor, query gorpmapping.Query) ([]sdk.ProjectKey,
 // LoadAllKeys load all keys for the given project
 func LoadAllKeys(db gorp.SqlExecutor, projectID int64) ([]sdk.ProjectKey, error) {
 	query := gorpmapping.NewQuery(`
-		SELECT * 
-		FROM project_key 
-		WHERE project_id = $1 
+		SELECT *
+		FROM project_key
+		WHERE project_id = $1
 		AND builtin = false
 	`).Args(projectID)
 
@@ -77,11 +77,11 @@ func LoadAllKeysWithPrivateContent(db gorp.SqlExecutor, appID int64) ([]sdk.Proj
 
 func LoadKey(db gorp.SqlExecutor, id int64, keyName string) (*sdk.ProjectKey, error) {
 	query := gorpmapping.NewQuery(`
-	SELECT * 
+	SELECT *
 	FROM project_key
-	WHERE id = $1 
+	WHERE id = $1
 	AND name = $2
-	AND builtin = false 
+	AND builtin = false
 	`).Args(id, keyName)
 	var k dbProjectKey
 	found, err := gorpmapping.Get(context.Background(), db, query, &k, gorpmapping.GetOptions.WithDecryption)
@@ -110,10 +110,10 @@ func DeleteProjectKey(db gorp.SqlExecutor, projectID int64, keyName string) erro
 
 func loadBuiltinKey(db gorp.SqlExecutor, projectID int64) (*sdk.ProjectKey, error) {
 	query := gorpmapping.NewQuery(`
-	SELECT * 
+	SELECT *
 	FROM project_key
-	WHERE project_id = $1 
-	AND builtin = true 
+	WHERE project_id = $1
+	AND builtin = true
 	AND name = 'builtin'
 	`).Args(projectID)
 	var k dbProjectKey
@@ -145,7 +145,7 @@ func loadAllKeysForProjects(ctx context.Context, db gorp.SqlExecutor, appsID []i
 		SELECT *
 		FROM project_key
 		WHERE project_id = ANY($1)
-		AND builtin = false 
+		AND builtin = false
 		ORDER BY project_id
 	`).Args(pq.Int64Array(appsID))
 	if err := gorpmapping.GetAll(ctx, db, query, &res, opts...); err != nil {

@@ -418,9 +418,19 @@ func (api *API) postTemplateApplyHandler() service.Handler {
 						return sdk.NewErrorFrom(sdk.ErrWrongRequest, "missing branch or message data")
 					}
 
-					ope, err := operation.PushOperationUpdate(ctx, api.mustDB(), api.Cache, *p, data, rootApp.VCSServer, rootApp.RepositoryFullname, branch, message, rootApp.RepositoryStrategy, consumer)
+					tx, err := api.mustDB().Begin()
+					if err != nil {
+						return sdk.WithStack(err)
+					}
+					defer tx.Rollback() // nolint
+
+					ope, err := operation.PushOperationUpdate(ctx, tx, api.Cache, *p, data, rootApp.VCSServer, rootApp.RepositoryFullname, branch, message, rootApp.RepositoryStrategy, consumer)
 					if err != nil {
 						return err
+					}
+
+					if err := tx.Commit(); err != nil {
+						return sdk.WithStack(err)
 					}
 
 					sdk.GoRoutine(context.Background(), fmt.Sprintf("UpdateAsCodeResult-%s", ope.UUID), func(ctx context.Context) {
@@ -448,7 +458,7 @@ func (api *API) postTemplateApplyHandler() service.Handler {
 		if req.Detached {
 			mods = append(mods, workflowtemplate.TemplateRequestModifiers.Detached)
 		}
-		_, wti, err := workflowtemplate.CheckAndExecuteTemplate(ctx, api.mustDB(), *consumer, *p, &data, mods...)
+		_, wti, err := workflowtemplate.CheckAndExecuteTemplate(ctx, api.mustDB(), api.Cache, *consumer, *p, &data, mods...)
 		if err != nil {
 			return err
 		}
@@ -657,8 +667,25 @@ func (api *API) postTemplateBulkHandler() service.Handler {
 								continue
 							}
 
-							ope, err := operation.PushOperationUpdate(ctx, api.mustDB(), api.Cache, *p, data, rootApp.VCSServer, rootApp.RepositoryFullname, branch, message, rootApp.RepositoryStrategy, consumer)
+							tx, err := api.mustDB().Begin()
 							if err != nil {
+								if errD := errorDefer(err); errD != nil {
+									log.Error(ctx, "%v", errD)
+									return
+								}
+								continue
+							}
+							ope, err := operation.PushOperationUpdate(ctx, tx, api.Cache, *p, data, rootApp.VCSServer, rootApp.RepositoryFullname, branch, message, rootApp.RepositoryStrategy, consumer)
+							if err != nil {
+								tx.Rollback() // nolint
+								if errD := errorDefer(err); errD != nil {
+									log.Error(ctx, "%v", errD)
+									return
+								}
+								continue
+							}
+							if err := tx.Commit(); err != nil {
+								tx.Rollback() // nolint
 								if errD := errorDefer(err); errD != nil {
 									log.Error(ctx, "%v", errD)
 									return
@@ -688,7 +715,7 @@ func (api *API) postTemplateBulkHandler() service.Handler {
 					mods := []workflowtemplate.TemplateRequestModifierFunc{
 						workflowtemplate.TemplateRequestModifiers.DefaultKeys(*p),
 					}
-					_, wti, err = workflowtemplate.CheckAndExecuteTemplate(ctx, api.mustDB(), *consumer, *p, &data, mods...)
+					_, wti, err = workflowtemplate.CheckAndExecuteTemplate(ctx, api.mustDB(), api.Cache, *consumer, *p, &data, mods...)
 					if err != nil {
 						if errD := errorDefer(err); errD != nil {
 							log.Error(ctx, "%v", errD)

@@ -12,7 +12,7 @@ import (
 )
 
 // InsertKey a new environment key in database
-func InsertKey(db gorp.SqlExecutor, key *sdk.EnvironmentKey) error {
+func InsertKey(db gorpmapping.SqlExecutorWithTx, key *sdk.EnvironmentKey) error {
 	dbEnvironmentKey := dbEnvironmentKey{EnvironmentKey: *key}
 	if err := gorpmapping.InsertAndSign(context.Background(), db, &dbEnvironmentKey); err != nil {
 		return err
@@ -105,9 +105,9 @@ func LoadAllKeysWithPrivateContent(db gorp.SqlExecutor, envID int64) ([]sdk.Envi
 
 func LoadKey(db gorp.SqlExecutor, id int64, keyName string) (*sdk.EnvironmentKey, error) {
 	query := gorpmapping.NewQuery(`
-	SELECT * 
+	SELECT *
 	FROM environment_key
-	WHERE id = $1 
+	WHERE id = $1
 	AND name = $2
 	`).Args(id, keyName)
 	var k dbEnvironmentKey
