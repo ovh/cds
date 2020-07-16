@@ -620,10 +620,10 @@ metadata:
 func Test_getWorkflowPushHandler(t *testing.T) {
 	api, db, _ := newTestAPI(t)
 
-	u, pass := assets.InsertAdminUser(t, api.mustDB())
+	u, pass := assets.InsertAdminUser(t, db)
 	key := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, api.mustDB(), api.Cache, key, key)
-	require.NoError(t, group.InsertLinkGroupUser(context.TODO(), api.mustDB(), &group.LinkGroupUser{
+	proj := assets.InsertTestProject(t, db, api.Cache, key, key)
+	require.NoError(t, group.InsertLinkGroupUser(context.TODO(), db, &group.LinkGroupUser{
 		GroupID:            proj.ProjectGroups[0].Group.ID,
 		AuthentifiedUserID: u.ID,
 		Admin:              true,
@@ -663,7 +663,7 @@ func Test_getWorkflowPushHandler(t *testing.T) {
 	app := &sdk.Application{
 		Name: appName,
 	}
-	if err := application.Insert(api.mustDB(), *proj, app); err != nil {
+	if err := application.Insert(db, *proj, app); err != nil {
 		t.Fatal(err)
 	}
 
@@ -673,7 +673,7 @@ func Test_getWorkflowPushHandler(t *testing.T) {
 		Type:  sdk.StringVariable,
 	}
 
-	test.NoError(t, application.InsertVariable(api.mustDB(), app.ID, &v1, u))
+	test.NoError(t, application.InsertVariable(db, app.ID, &v1, u))
 
 	v2 := sdk.ApplicationVariable{
 		Name:  "var2",
@@ -681,7 +681,7 @@ func Test_getWorkflowPushHandler(t *testing.T) {
 		Type:  sdk.SecretVariable,
 	}
 
-	test.NoError(t, application.InsertVariable(api.mustDB(), app.ID, &v2, u))
+	test.NoError(t, application.InsertVariable(db, app.ID, &v2, u))
 
 	//Insert ssh and gpg keys
 	k := &sdk.ApplicationKey{
@@ -696,7 +696,7 @@ func Test_getWorkflowPushHandler(t *testing.T) {
 	k.Public = kpgp.Public
 	k.Private = kpgp.Private
 	k.KeyID = kpgp.KeyID
-	test.NoError(t, application.InsertKey(api.mustDB(), k))
+	test.NoError(t, application.InsertKey(db, k))
 
 	k2 := &sdk.ApplicationKey{
 		Name:          "app-mykey-ssh",
@@ -709,7 +709,7 @@ func Test_getWorkflowPushHandler(t *testing.T) {
 	k2.Public = kssh.Public
 	k2.Private = kssh.Private
 	k2.KeyID = kssh.KeyID
-	test.NoError(t, application.InsertKey(api.mustDB(), k2))
+	test.NoError(t, application.InsertKey(db, k2))
 
 	w := sdk.Workflow{
 		Name:       "test_1",
@@ -740,7 +740,7 @@ func Test_getWorkflowPushHandler(t *testing.T) {
 
 	proj, _ = project.Load(context.TODO(), api.mustDB(), proj.Key, project.LoadOptions.WithPipelines, project.LoadOptions.WithApplications)
 
-	test.NoError(t, workflow.Insert(context.TODO(), api.mustDB(), api.Cache, *proj, &w))
+	test.NoError(t, workflow.Insert(context.TODO(), db, api.Cache, *proj, &w))
 	test.NoError(t, workflow.RenameNode(context.TODO(), api.mustDB(), &w))
 	w1, err := workflow.Load(context.TODO(), api.mustDB(), api.Cache, *proj, "test_1", workflow.LoadOptions{DeepPipeline: true})
 	test.NoError(t, err)

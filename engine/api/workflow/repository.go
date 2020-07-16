@@ -106,9 +106,9 @@ func extractWorkflow(ctx context.Context, db *gorp.DbMap, store cache.Store, p *
 		mods = append(mods, workflowtemplate.TemplateRequestModifiers.Detached)
 	}
 	if opt.FromRepository != "" {
-		mods = append(mods, workflowtemplate.TemplateRequestModifiers.DefaultNameAndRepositories(ctx, db, store, *p, opt.FromRepository))
+		mods = append(mods, workflowtemplate.TemplateRequestModifiers.DefaultNameAndRepositories(*p, opt.FromRepository))
 	}
-	msgTemplate, wti, err := workflowtemplate.CheckAndExecuteTemplate(ctx, db, consumer, *p, &data, mods...)
+	msgTemplate, wti, err := workflowtemplate.CheckAndExecuteTemplate(ctx, db, store, consumer, *p, &data, mods...)
 	allMsgs = append(allMsgs, msgTemplate...)
 	if err != nil {
 		return nil, allMsgs, err

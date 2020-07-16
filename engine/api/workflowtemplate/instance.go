@@ -13,28 +13,29 @@ import (
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/exportentities"
+	"github.com/ovh/cds/sdk/gorpmapping"
 	"github.com/ovh/cds/sdk/log"
 )
 
-type TemplateRequestModifierFunc func(wt sdk.WorkflowTemplate, req *sdk.WorkflowTemplateRequest) error
+type TemplateRequestModifierFunc func(ctx context.Context, db gorpmapping.SqlExecutorWithTx, store cache.Store, wt sdk.WorkflowTemplate, req *sdk.WorkflowTemplateRequest) error
 
 var TemplateRequestModifiers = struct {
 	Detached                   TemplateRequestModifierFunc
 	DefaultKeys                func(proj sdk.Project) TemplateRequestModifierFunc
-	DefaultNameAndRepositories func(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj sdk.Project, repoURL string) TemplateRequestModifierFunc
+	DefaultNameAndRepositories func(proj sdk.Project, repoURL string) TemplateRequestModifierFunc
 }{
 	Detached:                   requestModifyDetached,
 	DefaultKeys:                requestModifyDefaultKeysfunc,
 	DefaultNameAndRepositories: requestModifyDefaultNameAndRepositories,
 }
 
-func requestModifyDetached(wt sdk.WorkflowTemplate, req *sdk.WorkflowTemplateRequest) error {
+func requestModifyDetached(ctx context.Context, db gorpmapping.SqlExecutorWithTx, store cache.Store, wt sdk.WorkflowTemplate, req *sdk.WorkflowTemplateRequest) error {
 	req.Detached = true
 	return nil
 }
 
 func requestModifyDefaultKeysfunc(proj sdk.Project) TemplateRequestModifierFunc {
-	return func(wt sdk.WorkflowTemplate, req *sdk.WorkflowTemplateRequest) error {
+	return func(ctx context.Context, db gorpmapping.SqlExecutorWithTx, store cache.Store, wt sdk.WorkflowTemplate, req *sdk.WorkflowTemplateRequest) error {
 		defaultSSHKey := sdk.GenerateProjectDefaultKeyName(proj.Key, sdk.KeyTypeSSH)
 		defaultPGPKey := sdk.GenerateProjectDefaultKeyName(proj.Key, sdk.KeyTypePGP)
 		var defaultSSHKeyFound, defaultPGPKeyFound bool
@@ -67,8 +68,8 @@ func requestModifyDefaultKeysfunc(proj sdk.Project) TemplateRequestModifierFunc 
 	}
 }
 
-func requestModifyDefaultNameAndRepositories(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj sdk.Project, repoURL string) TemplateRequestModifierFunc {
-	return func(wt sdk.WorkflowTemplate, req *sdk.WorkflowTemplateRequest) error {
+func requestModifyDefaultNameAndRepositories(proj sdk.Project, repoURL string) TemplateRequestModifierFunc {
+	return func(ctx context.Context, db gorpmapping.SqlExecutorWithTx, store cache.Store, wt sdk.WorkflowTemplate, req *sdk.WorkflowTemplateRequest) error {
 		var repoPath string
 	loopVCSServer:
 		for _, vcs := range proj.VCSServers {
@@ -112,7 +113,7 @@ func requestModifyDefaultNameAndRepositories(ctx context.Context, db gorp.SqlExe
 
 // CheckAndExecuteTemplate will execute the workflow template if given workflow components contains a template instance.
 // When detached is set this will not create/update any template instance in database (this is useful for workflow ascode branches).
-func CheckAndExecuteTemplate(ctx context.Context, db *gorp.DbMap, consumer sdk.AuthConsumer, p sdk.Project,
+func CheckAndExecuteTemplate(ctx context.Context, db *gorp.DbMap, store cache.Store, consumer sdk.AuthConsumer, p sdk.Project,
 	data *exportentities.WorkflowComponents, mods ...TemplateRequestModifierFunc) ([]sdk.Message, *sdk.WorkflowTemplateInstance, error) {
 	var allMsgs []sdk.Message
 
@@ -125,8 +126,14 @@ func CheckAndExecuteTemplate(ctx context.Context, db *gorp.DbMap, consumer sdk.A
 		return allMsgs, nil, err
 	}
 
+	tx, err := db.Begin()
+	if err != nil {
+		return allMsgs, nil, sdk.WrapError(err, "cannot start transaction")
+	}
+	defer tx.Rollback() // nolint
+
 	// check that group exists
-	grp, err := group.LoadByName(ctx, db, groupName)
+	grp, err := group.LoadByName(ctx, tx, groupName)
 	if err != nil {
 		return allMsgs, nil, err
 	}
@@ -149,18 +156,18 @@ func CheckAndExecuteTemplate(ctx context.Context, db *gorp.DbMap, consumer sdk.A
 		return allMsgs, nil, sdk.NewErrorFrom(sdk.ErrWrongRequest, "could not find given workflow template")
 	}
 
-	wt, err := LoadBySlugAndGroupID(ctx, db, templateSlug, grp.ID)
+	wt, err := LoadBySlugAndGroupID(ctx, tx, templateSlug, grp.ID)
 	if err != nil {
 		return allMsgs, nil, sdk.NewErrorFrom(err, "could not find a template with slug %s in group %s", templateSlug, grp.Name)
 	}
 	if templateVersion > 0 {
-		wta, err := LoadAuditByTemplateIDAndVersion(ctx, db, wt.ID, templateVersion)
+		wta, err := LoadAuditByTemplateIDAndVersion(ctx, tx, wt.ID, templateVersion)
 		if err != nil {
 			return allMsgs, nil, err
 		}
 		wt = &wta.DataAfter
 	}
-	if err := LoadOptions.Default(ctx, db, wt); err != nil {
+	if err := LoadOptions.Default(ctx, tx, wt); err != nil {
 		return allMsgs, nil, err
 	}
 	allMsgs = append(allMsgs, sdk.NewMessage(sdk.MsgWorkflowGeneratedFromTemplateVersion, wt.PathWithVersion()))
@@ -171,7 +178,7 @@ func CheckAndExecuteTemplate(ctx context.Context, db *gorp.DbMap, consumer sdk.A
 		Parameters:   data.Template.Parameters,
 	}
 	for i := range mods {
-		if err := mods[i](*wt, &req); err != nil {
+		if err := mods[i](ctx, tx, store, *wt, &req); err != nil {
 			return allMsgs, nil, err
 		}
 	}
@@ -201,12 +208,6 @@ func CheckAndExecuteTemplate(ctx context.Context, db *gorp.DbMap, consumer sdk.A
 		*data = result
 		return allMsgs, wti, nil
 	}
-
-	tx, err := db.Begin()
-	if err != nil {
-		return allMsgs, nil, sdk.WrapError(err, "cannot start transaction")
-	}
-	defer tx.Rollback() // nolint
 
 	// try to get a instance not assign to a workflow but with the same slug
 	wti, err := LoadInstanceByTemplateIDAndProjectIDAndRequestWorkflowName(ctx, tx, wt.ID, p.ID, req.WorkflowName)

@@ -59,8 +59,14 @@ func (fs CanonicalForms) Latest() (*CanonicalForm, CanonicalForms) {
 	return &fs[0], fs[1:]
 }
 
+type SqlExecutorWithTx interface {
+	gorp.SqlExecutor
+	Commit() error
+	Rollback() error
+}
+
 // InsertAndSign a data in database, given data should implement canonicaller interface.
-func InsertAndSign(ctx context.Context, db gorp.SqlExecutor, i Canonicaller) error {
+func InsertAndSign(ctx context.Context, db SqlExecutorWithTx, i Canonicaller) error {
 	if err := Insert(db, i); err != nil {
 		return err
 	}
@@ -68,7 +74,7 @@ func InsertAndSign(ctx context.Context, db gorp.SqlExecutor, i Canonicaller) err
 }
 
 // UpdateAndSign a data in database, given data should implement canonicaller interface.
-func UpdateAndSign(ctx context.Context, db gorp.SqlExecutor, i Canonicaller) error {
+func UpdateAndSign(ctx context.Context, db SqlExecutorWithTx, i Canonicaller) error {
 	if err := Update(db, i); err != nil {
 		return err
 	}
@@ -76,7 +82,7 @@ func UpdateAndSign(ctx context.Context, db gorp.SqlExecutor, i Canonicaller) err
 }
 
 // UpdateColumnsAndSign a data in database, given data should implement canonicaller interface.
-func UpdateColumnsAndSign(ctx context.Context, db gorp.SqlExecutor, i Canonicaller, colFilter gorp.ColumnFilter) error {
+func UpdateColumnsAndSign(ctx context.Context, db SqlExecutorWithTx, i Canonicaller, colFilter gorp.ColumnFilter) error {
 	if err := UpdateColumns(db, i, colFilter); err != nil {
 		return err
 	}

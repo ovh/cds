@@ -38,7 +38,7 @@ func TestVariableInProject(t *testing.T) {
 		Value: "value1",
 		Type:  "PASSWORD",
 	}
-	err := project.InsertVariable(api.mustDB(), project1.ID, var1, &sdk.AuthentifiedUser{Username: "foo"})
+	err := project.InsertVariable(db, project1.ID, var1, &sdk.AuthentifiedUser{Username: "foo"})
 	if err != nil {
 		t.Fatalf("cannot insert var1 in project1: %s", err)
 	}
@@ -46,7 +46,7 @@ func TestVariableInProject(t *testing.T) {
 	// 3. Test Update variable
 	var2 := var1
 	var2.Value = "value1Updated"
-	err = project.UpdateVariable(api.mustDB(), project1.ID, var2, var1, &sdk.AuthentifiedUser{Username: "foo"})
+	err = project.UpdateVariable(db, project1.ID, var2, var1, &sdk.AuthentifiedUser{Username: "foo"})
 	if err != nil {
 		t.Fatalf("cannot update var1 in project1: %s", err)
 	}
@@ -67,7 +67,7 @@ func TestVariableInProject(t *testing.T) {
 		Value: "value2",
 		Type:  "STRING",
 	}
-	err = project.InsertVariable(api.mustDB(), project1.ID, var3, &sdk.AuthentifiedUser{Username: "foo"})
+	err = project.InsertVariable(db, project1.ID, var3, &sdk.AuthentifiedUser{Username: "foo"})
 	if err != nil {
 		t.Fatalf("cannot insert var1 in project1: %s", err)
 	}
@@ -82,7 +82,7 @@ func Test_getProjectsHandler(t *testing.T) {
 		Name:               "app",
 		RepositoryFullname: repofullname,
 	}
-	u, pass := assets.InsertAdminUser(t, api.mustDB())
+	u, pass := assets.InsertAdminUser(t, db)
 	test.NoError(t, application.Insert(db, *proj, app))
 
 	vars := map[string]string{}
@@ -176,7 +176,7 @@ func Test_getProjectsHandler_WithWPermissionShouldReturnNoProjects(t *testing.T)
 
 	assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
 
-	u, pass := assets.InsertLambdaUser(t, api.mustDB())
+	u, pass := assets.InsertLambdaUser(t, db)
 
 	vars := map[string]string{}
 	uri := api.Router.GetRoute("GET", api.getProjectsHandler, vars)
@@ -198,9 +198,9 @@ func Test_getProjectsHandler_WithWPermissionShouldReturnNoProjects(t *testing.T)
 func Test_getProjectHandler_CheckPermission(t *testing.T) {
 	api, db, _ := newTestAPI(t)
 
-	u, pass := assets.InsertLambdaUser(t, api.mustDB())
+	u, pass := assets.InsertLambdaUser(t, db)
 	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
-	require.NoError(t, group.InsertLinkGroupUser(context.TODO(), api.mustDB(), &group.LinkGroupUser{
+	require.NoError(t, group.InsertLinkGroupUser(context.TODO(), db, &group.LinkGroupUser{
 		GroupID:            proj.ProjectGroups[0].Group.ID,
 		AuthentifiedUserID: u.ID,
 		Admin:              true,
@@ -260,9 +260,9 @@ func Test_getProjectHandler_CheckPermission(t *testing.T) {
 func Test_getProjectsHandler_WithWPermissionShouldReturnOneProject(t *testing.T) {
 	api, db, _ := newTestAPI(t)
 
-	u, pass := assets.InsertLambdaUser(t, api.mustDB())
+	u, pass := assets.InsertLambdaUser(t, db)
 	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
-	require.NoError(t, group.InsertLinkGroupUser(context.TODO(), api.mustDB(), &group.LinkGroupUser{
+	require.NoError(t, group.InsertLinkGroupUser(context.TODO(), db, &group.LinkGroupUser{
 		GroupID:            proj.ProjectGroups[0].Group.ID,
 		AuthentifiedUserID: u.ID,
 		Admin:              true,
@@ -286,20 +286,20 @@ func Test_getProjectsHandler_WithWPermissionShouldReturnOneProject(t *testing.T)
 }
 
 func Test_getProjectsHandler_AsProvider(t *testing.T) {
-	api, tsURL := newTestServer(t)
+	api, db, tsURL := newTestServer(t)
 
-	admin, _ := assets.InsertAdminUser(t, api.mustDB())
+	admin, _ := assets.InsertAdminUser(t, db)
 	localConsumer, err := authentication.LoadConsumerByTypeAndUserID(context.TODO(), api.mustDB(), sdk.ConsumerLocal, admin.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
 	require.NoError(t, err)
 
-	_, jws, err := builtin.NewConsumer(context.TODO(), api.mustDB(), sdk.RandomString(10), sdk.RandomString(10), localConsumer, admin.GetGroupIDs(),
+	_, jws, err := builtin.NewConsumer(context.TODO(), db, sdk.RandomString(10), sdk.RandomString(10), localConsumer, admin.GetGroupIDs(),
 		sdk.NewAuthConsumerScopeDetails(sdk.AuthConsumerScopeProject))
 	require.NoError(t, err)
 
-	u, _ := assets.InsertLambdaUser(t, api.mustDB())
+	u, _ := assets.InsertLambdaUser(t, db)
 	pkey := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, api.mustDB(), api.Cache, pkey, pkey)
-	require.NoError(t, group.InsertLinkGroupUser(context.TODO(), api.mustDB(), &group.LinkGroupUser{
+	proj := assets.InsertTestProject(t, db, api.Cache, pkey, pkey)
+	require.NoError(t, group.InsertLinkGroupUser(context.TODO(), db, &group.LinkGroupUser{
 		GroupID:            proj.ProjectGroups[0].Group.ID,
 		AuthentifiedUserID: u.ID,
 		Admin:              true,
@@ -316,20 +316,20 @@ func Test_getProjectsHandler_AsProvider(t *testing.T) {
 }
 
 func Test_getprojectsHandler_AsProviderWithRequestedUsername(t *testing.T) {
-	api, tsURL := newTestServer(t)
+	api, db, tsURL := newTestServer(t)
 
-	admin, _ := assets.InsertAdminUser(t, api.mustDB())
+	admin, _ := assets.InsertAdminUser(t, db)
 	localConsumer, err := authentication.LoadConsumerByTypeAndUserID(context.TODO(), api.mustDB(), sdk.ConsumerLocal, admin.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
 	require.NoError(t, err)
 
-	_, jws, err := builtin.NewConsumer(context.TODO(), api.mustDB(), sdk.RandomString(10), sdk.RandomString(10), localConsumer, admin.GetGroupIDs(),
+	_, jws, err := builtin.NewConsumer(context.TODO(), db, sdk.RandomString(10), sdk.RandomString(10), localConsumer, admin.GetGroupIDs(),
 		sdk.NewAuthConsumerScopeDetails(sdk.AuthConsumerScopeProject))
 
-	u, _ := assets.InsertLambdaUser(t, api.mustDB())
+	u, _ := assets.InsertLambdaUser(t, db)
 
 	pkey := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, api.mustDB(), api.Cache, pkey, pkey)
-	require.NoError(t, group.InsertLinkGroupUser(context.TODO(), api.mustDB(), &group.LinkGroupUser{
+	proj := assets.InsertTestProject(t, db, api.Cache, pkey, pkey)
+	require.NoError(t, group.InsertLinkGroupUser(context.TODO(), db, &group.LinkGroupUser{
 		GroupID:            proj.ProjectGroups[0].Group.ID,
 		AuthentifiedUserID: u.ID,
 		Admin:              true,
@@ -338,7 +338,7 @@ func Test_getprojectsHandler_AsProviderWithRequestedUsername(t *testing.T) {
 	app := &sdk.Application{
 		Name: sdk.RandomString(10),
 	}
-	require.NoError(t, application.Insert(api.mustDB(), *proj, app))
+	require.NoError(t, application.Insert(db, *proj, app))
 
 	// Call with an admin
 	sdkclientAdmin := cdsclient.NewProviderClient(cdsclient.ProviderConfig{
@@ -375,8 +375,8 @@ func Test_putProjectLabelsHandler(t *testing.T) {
 	u, pass := assets.InsertAdminUser(t, db)
 
 	pkey := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, api.mustDB(), api.Cache, pkey, pkey)
-	require.NoError(t, group.InsertLinkGroupUser(context.TODO(), api.mustDB(), &group.LinkGroupUser{
+	proj := assets.InsertTestProject(t, db, api.Cache, pkey, pkey)
+	require.NoError(t, group.InsertLinkGroupUser(context.TODO(), db, &group.LinkGroupUser{
 		GroupID:            proj.ProjectGroups[0].Group.ID,
 		AuthentifiedUserID: u.ID,
 		Admin:              true,
@@ -428,20 +428,20 @@ func Test_putProjectLabelsHandler(t *testing.T) {
 }
 
 func Test_getProjectsHandler_FilterByRepo(t *testing.T) {
-	api, tsURL := newTestServer(t)
+	api, db, tsURL := newTestServer(t)
 
-	admin, _ := assets.InsertAdminUser(t, api.mustDB())
+	admin, _ := assets.InsertAdminUser(t, db)
 	localConsumer, err := authentication.LoadConsumerByTypeAndUserID(context.TODO(), api.mustDB(), sdk.ConsumerLocal, admin.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
 	require.NoError(t, err)
 
-	_, jws, err := builtin.NewConsumer(context.TODO(), api.mustDB(), sdk.RandomString(10), sdk.RandomString(10), localConsumer, admin.GetGroupIDs(),
+	_, jws, err := builtin.NewConsumer(context.TODO(), db, sdk.RandomString(10), sdk.RandomString(10), localConsumer, admin.GetGroupIDs(),
 		sdk.NewAuthConsumerScopeDetails(sdk.AuthConsumerScopeProject))
 
-	u, _ := assets.InsertLambdaUser(t, api.mustDB())
+	u, _ := assets.InsertLambdaUser(t, db)
 
 	pkey := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, api.mustDB(), api.Cache, pkey, pkey)
-	require.NoError(t, group.InsertLinkGroupUser(context.TODO(), api.mustDB(), &group.LinkGroupUser{
+	proj := assets.InsertTestProject(t, db, api.Cache, pkey, pkey)
+	require.NoError(t, group.InsertLinkGroupUser(context.TODO(), db, &group.LinkGroupUser{
 		GroupID:            proj.ProjectGroups[0].Group.ID,
 		AuthentifiedUserID: u.ID,
 		Admin:              true,
@@ -453,7 +453,7 @@ func Test_getProjectsHandler_FilterByRepo(t *testing.T) {
 		Name:               sdk.RandomString(10),
 		RepositoryFullname: "ovh/" + repofullName,
 	}
-	require.NoError(t, application.Insert(api.mustDB(), *proj, app))
+	require.NoError(t, application.Insert(db, *proj, app))
 
 	pip := sdk.Pipeline{
 		ProjectID:  proj.ID,
@@ -476,7 +476,7 @@ func Test_getProjectsHandler_FilterByRepo(t *testing.T) {
 			},
 		},
 	}
-	test.NoError(t, workflow.Insert(context.TODO(), api.mustDB(), api.Cache, *proj, &wf))
+	test.NoError(t, workflow.Insert(context.TODO(), db, api.Cache, *proj, &wf))
 
 	// Call with an admin
 	sdkclientAdmin := cdsclient.New(cdsclient.Config{

@@ -129,7 +129,7 @@ func (api *API) importNewEnvironmentHandler() service.Handler {
 		}
 		defer tx.Rollback() // nolint
 
-		if err := environment.Import(api.mustDB(), *proj, env, msgChan, getAPIConsumer(ctx)); err != nil {
+		if err := environment.Import(tx, *proj, env, msgChan, getAPIConsumer(ctx)); err != nil {
 			return sdk.WithStack(err)
 		}
 

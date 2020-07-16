@@ -20,7 +20,7 @@ import (
 func TestInsertStaticFiles(t *testing.T) {
 	db, cache := test.SetupPG(t, bootstrap.InitiliazeDB)
 
-	_ = event.Initialize(context.Background(), db, cache)
+	_ = event.Initialize(context.Background(), db.DbMap, cache)
 
 	u, _ := assets.InsertAdminUser(t, db)
 	consumer, _ := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
@@ -81,7 +81,7 @@ func TestInsertStaticFiles(t *testing.T) {
 	})
 	test.NoError(t, err)
 
-	wfr, errWR := workflow.CreateRun(db, w1, nil, u)
+	wfr, errWR := workflow.CreateRun(db.DbMap, w1, nil, u)
 	assert.NoError(t, errWR)
 	wfr.Workflow = *w1
 	_, errWr := workflow.StartWorkflowRun(context.TODO(), db, cache, *proj, wfr, &sdk.WorkflowRunPostHandlerOption{

@@ -163,7 +163,7 @@ func unwrap(db gorp.SqlExecutor, opts []LoadOptionFunc, dbApp *dbApplication) (*
 }
 
 // Insert add an application id database
-func Insert(db gorp.SqlExecutor, proj sdk.Project, app *sdk.Application) error {
+func Insert(db gorpmapping.SqlExecutorWithTx, proj sdk.Project, app *sdk.Application) error {
 	if err := app.IsValid(); err != nil {
 		return sdk.WrapError(err, "application is not valid")
 	}
@@ -187,7 +187,7 @@ func Insert(db gorp.SqlExecutor, proj sdk.Project, app *sdk.Application) error {
 }
 
 // Update updates application id database
-func Update(db gorp.SqlExecutor, app *sdk.Application) error {
+func Update(db gorpmapping.SqlExecutorWithTx, app *sdk.Application) error {
 	if app.RepositoryStrategy.Password == sdk.PasswordPlaceholder {
 		appTmp, err := LoadByIDWithClearVCSStrategyPassword(db, app.ID)
 		if err != nil {

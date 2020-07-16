@@ -20,7 +20,7 @@ func TestAddVariableInEnvironmentHandler(t *testing.T) {
 	api, db, router := newTestAPI(t)
 
 	//1. Create admin user
-	u, pass := assets.InsertAdminUser(t, api.mustDB())
+	u, pass := assets.InsertAdminUser(t, db)
 
 	//2. Create project
 	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
@@ -81,7 +81,7 @@ func TestUpdateVariableInEnvironmentHandler(t *testing.T) {
 	api, db, router := newTestAPI(t)
 
 	//1. Create admin user
-	u, pass := assets.InsertAdminUser(t, api.mustDB())
+	u, pass := assets.InsertAdminUser(t, db)
 
 	//2. Create project
 	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
@@ -103,7 +103,7 @@ func TestUpdateVariableInEnvironmentHandler(t *testing.T) {
 		Value: "bar",
 		Type:  sdk.StringVariable,
 	}
-	if err := environment.InsertVariable(api.mustDB(), env.ID, &v, u); err != nil {
+	if err := environment.InsertVariable(db, env.ID, &v, u); err != nil {
 		t.Fail()
 		return
 	}
@@ -150,7 +150,7 @@ func TestDeleteVariableFromEnvironmentHandler(t *testing.T) {
 	api, db, router := newTestAPI(t)
 
 	//1. Create admin user
-	u, pass := assets.InsertAdminUser(t, api.mustDB())
+	u, pass := assets.InsertAdminUser(t, db)
 
 	//2. Create project
 	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
@@ -172,7 +172,7 @@ func TestDeleteVariableFromEnvironmentHandler(t *testing.T) {
 		Value: "bar",
 		Type:  sdk.StringVariable,
 	}
-	if err := environment.InsertVariable(api.mustDB(), env.ID, &v, u); err != nil {
+	if err := environment.InsertVariable(db, env.ID, &v, u); err != nil {
 		t.Fail()
 		return
 	}
@@ -208,7 +208,7 @@ func TestGetVariablesInEnvironmentHandler(t *testing.T) {
 	api, db, router := newTestAPI(t)
 
 	//1. Create admin user
-	u, pass := assets.InsertAdminUser(t, api.mustDB())
+	u, pass := assets.InsertAdminUser(t, db)
 
 	//2. Create project
 	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
@@ -230,7 +230,7 @@ func TestGetVariablesInEnvironmentHandler(t *testing.T) {
 		Value: "bar",
 		Type:  sdk.StringVariable,
 	}
-	if err := environment.InsertVariable(api.mustDB(), env.ID, &v, u); err != nil {
+	if err := environment.InsertVariable(db, env.ID, &v, u); err != nil {
 		t.Fail()
 		return
 	}
@@ -263,7 +263,7 @@ func Test_getVariableAuditInEnvironmentHandler(t *testing.T) {
 	api, db, router := newTestAPI(t)
 
 	//Create admin user
-	u, pass := assets.InsertAdminUser(t, api.mustDB())
+	u, pass := assets.InsertAdminUser(t, db)
 
 	//Insert Project
 	pkey := sdk.RandomString(10)
@@ -284,7 +284,7 @@ func Test_getVariableAuditInEnvironmentHandler(t *testing.T) {
 		Type:  "string",
 		Value: "bar",
 	}
-	if err := environment.InsertVariable(api.mustDB(), e.ID, &v, u); err != nil {
+	if err := environment.InsertVariable(db, e.ID, &v, u); err != nil {
 		t.Fatal(err)
 	}
 

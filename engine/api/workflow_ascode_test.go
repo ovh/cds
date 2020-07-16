@@ -29,13 +29,14 @@ import (
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
+	"github.com/ovh/cds/sdk/gorpmapping"
 	"github.com/ovh/cds/sdk/log"
 )
 
 func TestPostUpdateWorkflowAsCodeHandler(t *testing.T) {
-	api, tsURL := newTestServer(t)
-	db := api.mustDB()
-	require.NoError(t, event.Initialize(context.Background(), db, api.Cache))
+	api, db, tsURL := newTestServer(t)
+
+	require.NoError(t, event.Initialize(context.Background(), api.mustDB(), api.Cache))
 
 	u, jwt := assets.InsertAdminUser(t, db)
 
@@ -157,7 +158,7 @@ func TestPostUpdateWorkflowAsCodeHandler(t *testing.T) {
 		},
 	)
 
-	assert.NoError(t, workflow.CreateBuiltinWorkflowHookModels(db))
+	require.NoError(t, workflow.CreateBuiltinWorkflowHookModels(api.mustDB()))
 
 	proj := createProject(t, db, api)
 	pip := createPipeline(t, db, api, proj)
@@ -233,9 +234,9 @@ func TestPostUpdateWorkflowAsCodeHandler(t *testing.T) {
 }
 
 func TestPostMigrateWorkflowAsCodeHandler(t *testing.T) {
-	api, tsURL := newTestServer(t)
-	db := api.mustDB()
-	require.NoError(t, event.Initialize(context.Background(), db, api.Cache))
+	api, db, tsURL := newTestServer(t)
+
+	require.NoError(t, event.Initialize(context.Background(), api.mustDB(), api.Cache))
 
 	u, jwt := assets.InsertAdminUser(t, db)
 
@@ -258,7 +259,7 @@ func TestPostMigrateWorkflowAsCodeHandler(t *testing.T) {
 		_ = services.Delete(db, c)
 	}()
 
-	assert.NoError(t, workflow.CreateBuiltinWorkflowHookModels(db))
+	require.NoError(t, workflow.CreateBuiltinWorkflowHookModels(api.mustDB()))
 
 	//This is a mock for the repositories service
 	services.HTTPClient = mock(
@@ -429,7 +430,7 @@ func TestPostMigrateWorkflowAsCodeHandler(t *testing.T) {
 	}
 }
 
-func createProject(t *testing.T, db *gorp.DbMap, api *API) *sdk.Project {
+func createProject(t *testing.T, db gorpmapping.SqlExecutorWithTx, api *API) *sdk.Project {
 	// Create Project
 	pkey := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, api.Cache, pkey, pkey)
@@ -453,7 +454,7 @@ func createPipeline(t *testing.T, db gorp.SqlExecutor, api *API, proj *sdk.Proje
 	return &pip
 }
 
-func createApplication(t *testing.T, db gorp.SqlExecutor, api *API, proj *sdk.Project) *sdk.Application {
+func createApplication(t *testing.T, db gorpmapping.SqlExecutorWithTx, api *API, proj *sdk.Project) *sdk.Application {
 	app := sdk.Application{
 		Name:               sdk.RandomString(10),
 		ProjectID:          proj.ID,

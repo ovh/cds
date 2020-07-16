@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/test"
@@ -20,7 +21,7 @@ func TestAddEnvironmentHandler(t *testing.T) {
 	api, db, router := newTestAPI(t)
 
 	//1. Create admin user
-	u, pass := assets.InsertAdminUser(t, api.mustDB())
+	u, pass := assets.InsertAdminUser(t, db)
 
 	//2. Create project
 	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
@@ -66,7 +67,7 @@ func TestUpdateEnvironmentHandler(t *testing.T) {
 	api, db, router := newTestAPI(t)
 
 	//1. Create admin user
-	u, pass := assets.InsertAdminUser(t, api.mustDB())
+	u, pass := assets.InsertAdminUser(t, db)
 
 	//2. Create project
 	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
@@ -123,7 +124,7 @@ func TestDeleteEnvironmentHandler(t *testing.T) {
 	api, db, router := newTestAPI(t)
 
 	//1. Create admin user
-	u, pass := assets.InsertAdminUser(t, api.mustDB())
+	u, pass := assets.InsertAdminUser(t, db)
 
 	//2. Create project
 	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
@@ -172,7 +173,7 @@ func TestGetEnvironmentsHandler(t *testing.T) {
 	api, db, router := newTestAPI(t)
 
 	//1. Create admin user
-	u, pass := assets.InsertAdminUser(t, api.mustDB())
+	u, pass := assets.InsertAdminUser(t, db)
 
 	//2. Create project
 	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
@@ -213,7 +214,7 @@ func TestGetEnvironmentHandler(t *testing.T) {
 	api, db, router := newTestAPI(t)
 
 	//1. Create admin user
-	u, pass := assets.InsertAdminUser(t, api.mustDB())
+	u, pass := assets.InsertAdminUser(t, db)
 
 	//2. Create project
 	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
@@ -255,7 +256,7 @@ func Test_cloneEnvironmentHandler(t *testing.T) {
 	api, db, router := newTestAPI(t)
 
 	//1. Create admin user
-	u, pass := assets.InsertAdminUser(t, api.mustDB())
+	u, pass := assets.InsertAdminUser(t, db)
 
 	//2. Create project
 	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
@@ -273,14 +274,14 @@ func Test_cloneEnvironmentHandler(t *testing.T) {
 		Type:  sdk.StringVariable,
 		Value: "val1",
 	}
-	test.NoError(t, environment.InsertVariable(api.mustDB(), env.ID, v, u))
+	require.NoError(t, environment.InsertVariable(db, env.ID, v, u))
 
 	v2 := &sdk.EnvironmentVariable{
 		Name:  "var2",
 		Type:  sdk.SecretVariable,
 		Value: "val2",
 	}
-	test.NoError(t, environment.InsertVariable(api.mustDB(), env.ID, v2, u))
+	require.NoError(t, environment.InsertVariable(db, env.ID, v2, u))
 
 	vars := map[string]string{
 		"permProjectKey":  proj.Key,

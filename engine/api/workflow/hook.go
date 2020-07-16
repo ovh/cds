@@ -8,12 +8,12 @@ import (
 	"strings"
 
 	"github.com/fsamin/go-dump"
-	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/gorpmapping"
 	"github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk/telemetry"
 )
@@ -29,7 +29,7 @@ func computeHookToDelete(newWorkflow *sdk.Workflow, oldWorkflow *sdk.Workflow) m
 	return hookToDelete
 }
 
-func hookUnregistration(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj sdk.Project, hookToDelete map[string]sdk.NodeHook) error {
+func hookUnregistration(ctx context.Context, db gorpmapping.SqlExecutorWithTx, store cache.Store, proj sdk.Project, hookToDelete map[string]sdk.NodeHook) error {
 	ctx, end := telemetry.Span(ctx, "workflow.hookUnregistration")
 	defer end()
 
@@ -75,7 +75,7 @@ func hookUnregistration(ctx context.Context, db gorp.SqlExecutor, store cache.St
 	return nil
 }
 
-func hookRegistration(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj sdk.Project, wf *sdk.Workflow, oldWorkflow *sdk.Workflow) error {
+func hookRegistration(ctx context.Context, db gorpmapping.SqlExecutorWithTx, store cache.Store, proj sdk.Project, wf *sdk.Workflow, oldWorkflow *sdk.Workflow) error {
 	ctx, end := telemetry.Span(ctx, "workflow.hookRegistration")
 	defer end()
 
@@ -208,7 +208,7 @@ func hookRegistration(ctx context.Context, db gorp.SqlExecutor, store cache.Stor
 	return nil
 }
 
-func updateSchedulerPayload(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj sdk.Project, wf *sdk.Workflow, h *sdk.NodeHook) error {
+func updateSchedulerPayload(ctx context.Context, db gorpmapping.SqlExecutorWithTx, store cache.Store, proj sdk.Project, wf *sdk.Workflow, h *sdk.NodeHook) error {
 	ctx, end := telemetry.Span(ctx, "workflow.updateSchedulerPayload")
 	defer end()
 
@@ -278,7 +278,7 @@ func updateSchedulerPayload(ctx context.Context, db gorp.SqlExecutor, store cach
 	return nil
 }
 
-func createVCSConfiguration(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj sdk.Project, h *sdk.NodeHook) error {
+func createVCSConfiguration(ctx context.Context, db gorpmapping.SqlExecutorWithTx, store cache.Store, proj sdk.Project, h *sdk.NodeHook) error {
 	ctx, end := telemetry.Span(ctx, "workflow.createVCSConfiguration", telemetry.Tag("UUID", h.UUID))
 	defer end()
 	// Call VCS to know if repository allows webhook and get the configuration fields
@@ -342,7 +342,7 @@ func createVCSConfiguration(ctx context.Context, db gorp.SqlExecutor, store cach
 	return nil
 }
 
-func updateVCSConfiguration(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj sdk.Project, h *sdk.NodeHook) error {
+func updateVCSConfiguration(ctx context.Context, db gorpmapping.SqlExecutorWithTx, store cache.Store, proj sdk.Project, h *sdk.NodeHook) error {
 	ctx, end := telemetry.Span(ctx, "workflow.updateVCSConfiguration", telemetry.Tag("UUID", h.UUID))
 	defer end()
 	// Call VCS to know if repository allows webhook and get the configuration fields
@@ -390,7 +390,7 @@ func updateVCSConfiguration(ctx context.Context, db gorp.SqlExecutor, store cach
 }
 
 // DefaultPayload returns the default payload for the workflow root
-func DefaultPayload(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj sdk.Project, wf *sdk.Workflow) (interface{}, error) {
+func DefaultPayload(ctx context.Context, db gorpmapping.SqlExecutorWithTx, store cache.Store, proj sdk.Project, wf *sdk.Workflow) (interface{}, error) {
 	if wf.WorkflowData.Node.Context == nil || wf.WorkflowData.Node.Context.ApplicationID == 0 {
 		return nil, nil
 	}

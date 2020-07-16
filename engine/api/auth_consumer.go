@@ -43,18 +43,22 @@ func (api *API) getConsumersByUserHandler() service.Handler {
 func (api *API) postConsumerByUserHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
-
 		username := vars["permUsername"]
 
 		consumer := getAPIConsumer(ctx)
 
+		tx, err := api.mustDB().Begin()
+		if err != nil {
+			return sdk.WithStack(err)
+		}
+		defer tx.Rollback() // nolint
+
 		// Only a user can create a consumer for itself, an admin can't create one for an other user
 		var u *sdk.AuthentifiedUser
-		var err error
 		if username == "me" {
-			u, err = user.LoadByID(ctx, api.mustDB(), getAPIConsumer(ctx).AuthentifiedUserID)
+			u, err = user.LoadByID(ctx, tx, getAPIConsumer(ctx).AuthentifiedUserID)
 		} else {
-			u, err = user.LoadByUsername(ctx, api.mustDB(), username)
+			u, err = user.LoadByUsername(ctx, tx, username)
 		}
 		if err != nil {
 			return err
@@ -73,13 +77,17 @@ func (api *API) postConsumerByUserHandler() service.Handler {
 		}
 
 		// Create the new built in consumer from request data
-		newConsumer, token, err := builtin.NewConsumer(ctx, api.mustDB(), reqData.Name, reqData.Description,
+		newConsumer, token, err := builtin.NewConsumer(ctx, tx, reqData.Name, reqData.Description,
 			consumer, reqData.GroupIDs, reqData.ScopeDetails)
 		if err != nil {
 			return err
 		}
-		if err := authentication.LoadConsumerOptions.Default(ctx, api.mustDB(), newConsumer); err != nil {
+		if err := authentication.LoadConsumerOptions.Default(ctx, tx, newConsumer); err != nil {
 			return err
+		}
+
+		if err := tx.Commit(); err != nil {
+			return sdk.WithStack(err)
 		}
 
 		return service.WriteJSON(w, sdk.AuthConsumerCreateResponse{

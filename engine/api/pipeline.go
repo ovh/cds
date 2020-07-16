@@ -46,7 +46,13 @@ func (api *API) updateAsCodePipelineHandler() service.Handler {
 			return sdk.WrapError(sdk.ErrInvalidPipelinePattern, "updateAsCodePipelineHandler: Pipeline name %s do not respect pattern", p.Name)
 		}
 
-		proj, err := project.Load(ctx, api.mustDB(), key,
+		tx, err := api.mustDB().Begin()
+		if err != nil {
+			return sdk.WithStack(err)
+		}
+		defer tx.Rollback() // nolint
+
+		proj, err := project.Load(ctx, tx, key,
 			project.LoadOptions.WithApplicationWithDeploymentStrategies,
 			project.LoadOptions.WithPipelines,
 			project.LoadOptions.WithEnvironments,
@@ -56,7 +62,7 @@ func (api *API) updateAsCodePipelineHandler() service.Handler {
 			return err
 		}
 
-		pipelineDB, err := pipeline.LoadPipeline(ctx, api.mustDB(), key, name, true)
+		pipelineDB, err := pipeline.LoadPipeline(ctx, tx, key, name, true)
 		if err != nil {
 			return sdk.WrapError(err, "cannot load pipeline %s", name)
 		}
@@ -65,7 +71,7 @@ func (api *API) updateAsCodePipelineHandler() service.Handler {
 			return sdk.NewErrorFrom(sdk.ErrForbidden, "current pipeline is not ascode")
 		}
 
-		wkHolder, err := workflow.LoadByRepo(ctx, api.mustDB(), *proj, pipelineDB.FromRepository, workflow.LoadOptions{
+		wkHolder, err := workflow.LoadByRepo(ctx, tx, *proj, pipelineDB.FromRepository, workflow.LoadOptions{
 			WithTemplate: true,
 		})
 		if err != nil {
@@ -77,7 +83,7 @@ func (api *API) updateAsCodePipelineHandler() service.Handler {
 
 		var rootApp *sdk.Application
 		if wkHolder.WorkflowData.Node.Context != nil && wkHolder.WorkflowData.Node.Context.ApplicationID != 0 {
-			rootApp, err = application.LoadByIDWithClearVCSStrategyPassword(api.mustDB(), wkHolder.WorkflowData.Node.Context.ApplicationID)
+			rootApp, err = application.LoadByIDWithClearVCSStrategyPassword(tx, wkHolder.WorkflowData.Node.Context.ApplicationID)
 			if err != nil {
 				return err
 			}
@@ -93,9 +99,13 @@ func (api *API) updateAsCodePipelineHandler() service.Handler {
 			Pipelines: []exportentities.PipelineV1{wpi},
 		}
 
-		ope, err := operation.PushOperationUpdate(ctx, api.mustDB(), api.Cache, *proj, wp, rootApp.VCSServer, rootApp.RepositoryFullname, branch, message, rootApp.RepositoryStrategy, u)
+		ope, err := operation.PushOperationUpdate(ctx, tx, api.Cache, *proj, wp, rootApp.VCSServer, rootApp.RepositoryFullname, branch, message, rootApp.RepositoryStrategy, u)
 		if err != nil {
 			return err
+		}
+
+		if err := tx.Commit(); err != nil {
+			return sdk.WithStack(err)
 		}
 
 		sdk.GoRoutine(context.Background(), fmt.Sprintf("UpdateAsCodePipelineHandler-%s", ope.UUID), func(ctx context.Context) {

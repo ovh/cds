@@ -105,7 +105,7 @@ func DeleteAllVariables(db gorp.SqlExecutor, projectID int64) error {
 }
 
 // InsertVariable Insert a new variable in the given project
-func InsertVariable(db gorp.SqlExecutor, projID int64, v *sdk.ProjectVariable, u sdk.Identifiable) error {
+func InsertVariable(db gorpmapping.SqlExecutorWithTx, projID int64, v *sdk.ProjectVariable, u sdk.Identifiable) error {
 	//Check variable name
 	rx := sdk.NamePatternRegex
 	if !rx.MatchString(v.Name) {
@@ -139,7 +139,7 @@ func InsertVariable(db gorp.SqlExecutor, projID int64, v *sdk.ProjectVariable, u
 }
 
 // UpdateVariable Update a variable in the given project
-func UpdateVariable(db gorp.SqlExecutor, projID int64, variable *sdk.ProjectVariable, variableBefore *sdk.ProjectVariable, u sdk.Identifiable) error {
+func UpdateVariable(db gorpmapping.SqlExecutorWithTx, projID int64, variable *sdk.ProjectVariable, variableBefore *sdk.ProjectVariable, u sdk.Identifiable) error {
 	rx := sdk.NamePatternRegex
 	if !rx.MatchString(variable.Name) {
 		return sdk.NewError(sdk.ErrInvalidName, fmt.Errorf("Invalid variable name. It should match %s", sdk.NamePattern))

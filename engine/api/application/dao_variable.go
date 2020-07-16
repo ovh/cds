@@ -7,7 +7,7 @@ import (
 
 	"github.com/go-gorp/gorp"
 	"github.com/lib/pq"
-	
+
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/gorpmapping"
 	"github.com/ovh/cds/sdk/log"
@@ -160,7 +160,7 @@ func DeleteAllVariables(db gorp.SqlExecutor, applicationID int64) error {
 }
 
 // InsertVariable Insert a new variable in the given application
-func InsertVariable(db gorp.SqlExecutor, appID int64, v *sdk.ApplicationVariable, u sdk.Identifiable) error {
+func InsertVariable(db gorpmapping.SqlExecutorWithTx, appID int64, v *sdk.ApplicationVariable, u sdk.Identifiable) error {
 	//Check variable name
 	rx := sdk.NamePatternRegex
 	if !rx.MatchString(v.Name) {
@@ -193,7 +193,7 @@ func InsertVariable(db gorp.SqlExecutor, appID int64, v *sdk.ApplicationVariable
 }
 
 // UpdateVariable Update a variable in the given application
-func UpdateVariable(db gorp.SqlExecutor, appID int64, variable *sdk.ApplicationVariable, variableBefore *sdk.ApplicationVariable, u sdk.Identifiable) error {
+func UpdateVariable(db gorpmapping.SqlExecutorWithTx, appID int64, variable *sdk.ApplicationVariable, variableBefore *sdk.ApplicationVariable, u sdk.Identifiable) error {
 	rx := sdk.NamePatternRegex
 	if !rx.MatchString(variable.Name) {
 		return sdk.NewErrorFrom(sdk.ErrInvalidName, "variable name should match pattern %s", sdk.NamePattern)
