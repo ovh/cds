@@ -4,7 +4,6 @@ import {
     ElementRef,
     Input,
     NgZone,
-    OnDestroy,
     OnInit,
     ViewChild
 } from '@angular/core';
@@ -32,7 +31,7 @@ import { Observable, Subscription } from 'rxjs';
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 @AutoUnsubscribe()
-export class WorkflowStepLogComponent implements OnInit, OnDestroy {
+export class WorkflowStepLogComponent implements OnInit {
 
     // Static
     @Input() stepOrder: number;
@@ -48,7 +47,7 @@ export class WorkflowStepLogComponent implements OnInit, OnDestroy {
     logs: Log;
     showLogs = false;
 
-    workerSubscription: Subscription;
+    pollingSubscription: Subscription;
     queryParamsSubscription: Subscription;
     loading = true;
     loadingMore = false;
@@ -149,12 +148,6 @@ export class WorkflowStepLogComponent implements OnInit, OnDestroy {
         });
     }
 
-    ngOnDestroy(): void {
-        if (this.workerSubscription) {
-            this.workerSubscription.unsubscribe();
-        }
-    }
-
     copyRawLog() {
         this.logsElt.nativeElement.value = this.logs.val;
         this.logsElt.nativeElement.select();
@@ -190,18 +183,25 @@ export class WorkflowStepLogComponent implements OnInit, OnDestroy {
             return;
         }
 
+        this.stopWorker();
         this._ngZone.runOutsideAngular(() => {
-            this.workerSubscription = Observable.interval(2000)
+            this.pollingSubscription = Observable.interval(2000)
                 .mergeMap(_ => this._workflowService.getStepLog(projectKey, workflowName, runNumber, nodeRunId, runJobId, stepOrder))
                 .subscribe(build => {
                     this._ngZone.run(() => {
                         callback(build);
                         if (!PipelineStatus.isActive(build.status) || !PipelineStatus.isActive(this.stepStatus.status)) {
-                            this.workerSubscription.unsubscribe();
+                            this.stopWorker();
                         }
                     });
                 });
         });
+    }
+
+    stopWorker() {
+        if (this.pollingSubscription) {
+            this.pollingSubscription.unsubscribe();
+        }
     }
 
     htmlView() {
@@ -299,8 +299,8 @@ export class WorkflowStepLogComponent implements OnInit, OnDestroy {
             return;
         }
         this.showLogs = !this.showLogs;
-        if (!this.showLogs && this.workerSubscription) {
-            this.workerSubscription.unsubscribe();
+        if (!this.showLogs) {
+            this.stopWorker();
         } else {
             this.initWorker();
         }
