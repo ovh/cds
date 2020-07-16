@@ -598,7 +598,7 @@ func Update(ctx context.Context, db gorpmapping.SqlExecutorWithTx, store cache.S
 	}
 
 	// reload workflow to delete the current workflow data
-	oldWf, err := LoadByID(ctx, db, store, proj, wf.ID, LoadOptions{})
+	oldWf, err := LoadByID(ctx, db, store, proj, wf.ID, LoadOptions{Minimal: true})
 	if err != nil {
 		return sdk.WrapError(err, "Unable to load existing workflow with proj:%s ID:%d", proj.Key, wf.ID)
 	}
