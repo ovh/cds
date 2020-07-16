@@ -4,7 +4,7 @@ import {
     Component,
     ElementRef,
     NgZone,
-    OnDestroy, OnInit,
+    OnInit,
     ViewChild
 } from '@angular/core';
 import { Select, Store } from '@ngxs/store';
@@ -24,7 +24,7 @@ import { Observable, Subscription } from 'rxjs';
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 @AutoUnsubscribe()
-export class WorkflowServiceLogComponent implements OnDestroy, OnInit {
+export class WorkflowServiceLogComponent implements OnInit {
     @Select(WorkflowState.getSelectedWorkflowNodeJobRun()) nodeJobRun$: Observable<WorkflowNodeJobRun>;
     nodeJobRunSubs: Subscription;
 
@@ -34,7 +34,7 @@ export class WorkflowServiceLogComponent implements OnDestroy, OnInit {
 
     serviceLogs: Array<ServiceLog>;
 
-    workerSubscription: Subscription;
+    pollingSubscription: Subscription;
 
     currentRunJobID: number;
     currentRunJobStatus: string;
@@ -57,7 +57,7 @@ export class WorkflowServiceLogComponent implements OnDestroy, OnInit {
     ngOnInit(): void {
         this.nodeJobRunSubs = this.nodeJobRun$.subscribe(njr => {
             if (!njr) {
-                this.stopWorker();
+                this.stopPolling();
                 return
             }
             if (this.currentRunJobID && njr.id === this.currentRunJobID && this.currentRunJobStatus === njr.status) {
@@ -65,7 +65,7 @@ export class WorkflowServiceLogComponent implements OnDestroy, OnInit {
             }
             this.currentRunJobID = njr.id;
             this.currentRunJobStatus = njr.status;
-            if (!this.workerSubscription && (!this.serviceLogs || this.serviceLogs.length === 0)) {
+            if (!this.pollingSubscription && (!this.serviceLogs || this.serviceLogs.length === 0)) {
                 this.initWorker();
             }
             this._cd.markForCheck();
@@ -110,8 +110,9 @@ export class WorkflowServiceLogComponent implements OnDestroy, OnInit {
             return;
         }
 
+        this.stopPolling();
         this._ngZone.runOutsideAngular(() => {
-            this.workerSubscription = Observable.interval(2000)
+            this.pollingSubscription = Observable.interval(2000)
                 .mergeMap(_ => this._workflowService.getServiceLog(projectKey, workflowName, runNumber, nodeRunId, runJobId))
                 .subscribe(serviceLogs => {
                     this.zone.run(() => {
@@ -119,20 +120,16 @@ export class WorkflowServiceLogComponent implements OnDestroy, OnInit {
                         if (this.currentRunJobStatus === PipelineStatus.SUCCESS
                             || this.currentRunJobStatus === PipelineStatus.FAIL
                             || this.currentRunJobStatus === PipelineStatus.STOPPED) {
-                            this.stopWorker();
+                            this.stopPolling();
                         }
                     });
                 });
         });
     }
 
-    ngOnDestroy() {
-        this.stopWorker();
-    }
-
-    stopWorker() {
-        if (this.workerSubscription) {
-            this.workerSubscription.unsubscribe();
+    stopPolling() {
+        if (this.pollingSubscription) {
+            this.pollingSubscription.unsubscribe();
         }
     }
 

@@ -106,7 +106,7 @@ export class WorkflowNodeHookFormComponent implements OnInit {
             }
         });
 
-        this.availableIntegrations = this.project.integrations.filter(pf => pf.model.hook);
+        this.availableIntegrations = this.project.integrations?.filter(pf => pf.model.hook);
         if (this.hook && this.hook.config && this.hook.config['integration']) {
             this.selectedIntegration = this.project.integrations.find(pf => pf.name === this.hook.config['integration'].value);
         }
