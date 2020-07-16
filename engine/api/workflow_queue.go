@@ -581,23 +581,7 @@ func (api *API) postWorkflowJobServiceLogsHandler() service.AsynchronousHandler 
 		globalErr := &sdk.MultiError{}
 		errorOccured := false
 		for _, log := range logs {
-			nodeRunJob, errJob := workflow.LoadNodeJobRun(ctx, db, api.Cache, log.WorkflowNodeJobRunID)
-			if errJob != nil {
-				errorOccured = true
-				globalErr.Append(fmt.Errorf("postWorkflowJobServiceLogsHandler> Cannot get job run %d : %v", log.WorkflowNodeJobRunID, errJob))
-				continue
-			}
-			log.WorkflowNodeRunID = nodeRunJob.WorkflowNodeRunID
-
-			// Checks that the token used by the worker cas access to one of the execgroups
-			grantedGroupIDs := append(getAPIConsumer(ctx).GetGroupIDs(), group.SharedInfraGroup.ID)
-			if !nodeRunJob.ExecGroups.HasOneOf(grantedGroupIDs...) {
-				errorOccured = true
-				globalErr.Append(fmt.Errorf("postWorkflowJobServiceLogsHandler> Forbidden, you have no execution rights on workflow node"))
-				continue
-			}
-
-			if err := workflow.AddServiceLog(db, nodeRunJob, &log, api.Config.Log.ServiceMaxSize); err != nil {
+			if err := workflow.AddServiceLog(db, &log, api.Config.Log.ServiceMaxSize); err != nil {
 				errorOccured = true
 				globalErr.Append(fmt.Errorf("postWorkflowJobServiceLogsHandler> %v", err))
 			}

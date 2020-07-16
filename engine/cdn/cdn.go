@@ -84,7 +84,7 @@ func (s *Service) Serve(c context.Context) error {
 		return fmt.Errorf("cannot connect to redis instance : %v", errCache)
 	}
 
-	s.initMetrics()
+	s.initMetrics(ctx)
 
 	s.RunTcpLogServer(ctx)
 

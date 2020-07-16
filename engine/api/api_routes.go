@@ -322,7 +322,7 @@ func (api *API) InitRouter() {
 	r.Handle("/queue/workflows/{permJobID}/spawn/infos", Scope(sdk.AuthConsumerScopeRunExecution), r.POST(api.postSpawnInfosWorkflowJobHandler, MaintenanceAware()))
 	r.Handle("/queue/workflows/{permJobID}/result", Scope(sdk.AuthConsumerScopeRunExecution), r.POSTEXECUTE(api.postWorkflowJobResultHandler, MaintenanceAware()))
 	r.Handle("/queue/workflows/{permJobID}/log", Scope(sdk.AuthConsumerScopeRunExecution, sdk.AuthConsumerScopeService), r.POSTEXECUTE(api.postWorkflowJobLogsHandler, MaintenanceAware()))
-	r.Handle("/queue/workflows/log/service", Scope(sdk.AuthConsumerScopeRunExecution), r.POSTEXECUTE(r.Asynchronous(api.postWorkflowJobServiceLogsHandler, 1), MaintenanceAware()))
+	r.Handle("/queue/workflows/log/service", Scope(sdk.AuthConsumerScopeRunExecution, sdk.AuthConsumerScopeService), r.POSTEXECUTE(r.Asynchronous(api.postWorkflowJobServiceLogsHandler, 1), MaintenanceAware()))
 	r.Handle("/queue/workflows/{permJobID}/coverage", Scope(sdk.AuthConsumerScopeRunExecution), r.POSTEXECUTE(api.postWorkflowJobCoverageResultsHandler, MaintenanceAware()))
 	r.Handle("/queue/workflows/{permJobID}/test", Scope(sdk.AuthConsumerScopeRunExecution), r.POSTEXECUTE(api.postWorkflowJobTestsResultsHandler, MaintenanceAware()))
 	r.Handle("/queue/workflows/{permJobID}/tag", Scope(sdk.AuthConsumerScopeRunExecution), r.POSTEXECUTE(api.postWorkflowJobTagsHandler, MaintenanceAware()))
