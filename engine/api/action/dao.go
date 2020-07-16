@@ -142,13 +142,15 @@ func LoadActionsAndChildrenByActionJobIDs(ctx context.Context, db gorp.SqlExecut
 		Deprecated         bool   `db:"deprecated"`
 		ActionEdgeID       int64  `db:"action_edge_id"`
 		ActionEdgeParentID int64  `db:"parent_id"`
+		AlwaysExecuted     bool   `db:"always_executed"`
+		Optional           bool   `db:"optional"`
 	}
 	var dbActions []dbAction
 
 	query := `
 	WITH RECURSIVE allActions AS (
 		-- NON RECURSIVE
-		SELECT action.*, action_edge.id as action_edge_id, action_edge.parent_id
+		SELECT action.*, action_edge.id as action_edge_id, action_edge.parent_id, action_edge.always_executed, action_edge.optional
 		FROM action
 		JOIN action_edge ON action_edge.child_id = action.id
 		WHERE action_edge.parent_id = ANY($1)																		   
@@ -156,7 +158,7 @@ func LoadActionsAndChildrenByActionJobIDs(ctx context.Context, db gorp.SqlExecut
 		-- RECURSIVE
 		UNION
 			SELECT
-				a.*, action_edge.id as action_edge_id, action_edge.parent_id
+				a.*, action_edge.id as action_edge_id, action_edge.parent_id, action_edge.always_executed, action_edge.optional
 			FROM
 				action a
 			JOIN action_edge ON action_edge.child_id = a.id																   
@@ -172,14 +174,16 @@ func LoadActionsAndChildrenByActionJobIDs(ctx context.Context, db gorp.SqlExecut
 	actions := make([]*sdk.Action, len(dbActions))
 	for i, dbAct := range dbActions {
 		act := sdk.Action{
-			ID:           dbAct.ID,
-			ActionEdgeID: dbAct.ActionEdgeID,
-			GroupID:      dbAct.GroupID,
-			Name:         dbAct.Name,
-			Type:         dbAct.Type,
-			Description:  dbAct.Description,
-			Enabled:      dbAct.Enabled,
-			Deprecated:   dbAct.Deprecated,
+			ID:             dbAct.ID,
+			ActionEdgeID:   dbAct.ActionEdgeID,
+			GroupID:        dbAct.GroupID,
+			Name:           dbAct.Name,
+			Type:           dbAct.Type,
+			Description:    dbAct.Description,
+			Enabled:        dbAct.Enabled,
+			Deprecated:     dbAct.Deprecated,
+			Optional:       dbAct.Optional,
+			AlwaysExecuted: dbAct.AlwaysExecuted,
 		}
 		actions[i] = &act
 	}
