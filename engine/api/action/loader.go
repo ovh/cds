@@ -282,7 +282,12 @@ func loadChildrenRecursively(ctx context.Context, db gorp.SqlExecutor, as ...*sd
 }
 
 func loadGroup(ctx context.Context, db gorp.SqlExecutor, as ...*sdk.Action) error {
-	gs, err := group.LoadAllByIDs(ctx, db, sdk.ActionsToGroupIDs(as))
+	groupsIDs := sdk.ActionsToGroupIDs(as)
+	if len(groupsIDs) == 0 {
+		return nil
+	}
+
+	gs, err := group.LoadAllByIDs(ctx, db, groupsIDs)
 	if err != nil {
 		return err
 	}

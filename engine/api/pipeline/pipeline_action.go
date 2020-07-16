@@ -22,6 +22,10 @@ func getJobs(ctx context.Context, db gorp.SqlExecutor, stagesIDs []int64) ([]sdk
 	if err != nil {
 		return nil, err
 	}
+	if len(pipActions) == 0 {
+		return nil, nil
+	}
+
 	jobIDs := make([]int64, len(pipActions))
 	for i, pa := range pipActions {
 		jobIDs[i] = pa.ActionID

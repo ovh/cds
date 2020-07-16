@@ -74,6 +74,38 @@ func TestInsertPipeline(t *testing.T) {
 	}
 }
 
+func TestLoadEmptyStage(t *testing.T) {
+	db, _ := test.SetupPG(t)
+
+	pk := sdk.RandomString(8)
+
+	p := sdk.Project{
+		Key:  pk,
+		Name: pk,
+	}
+	if err := project.Insert(db, &p); err != nil {
+		t.Fatalf("Cannot insert project : %s", err)
+	}
+
+	pip := &sdk.Pipeline{
+		Name:      "Name",
+		ProjectID: p.ID,
+	}
+	require.NoError(t, pipeline.InsertPipeline(db, pip))
+
+	s := sdk.Stage{
+		Name:       "Stage1",
+		PipelineID: pip.ID,
+	}
+	require.NoError(t, pipeline.InsertStage(db, &s))
+
+	pip1, err := pipeline.LoadPipeline(context.TODO(), db, p.Key, "Name", true)
+	test.NoError(t, err)
+
+	require.Len(t, pip1.Stages, 1)
+	require.Len(t, pip1.Stages[0].Jobs, 0)
+}
+
 func TestLoadStage(t *testing.T) {
 	db, _ := test.SetupPG(t)
 
