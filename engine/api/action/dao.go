@@ -53,6 +53,14 @@ func get(ctx context.Context, db gorp.SqlExecutor, q gorpmapping.Query, opts ...
 	return &a, nil
 }
 
+// LoadByIDs retrieves in database action with given ids.
+func LoadByIDs(ctx context.Context, db gorp.SqlExecutor, ids []int64, opts ...LoadOptionFunc) ([]sdk.Action, error) {
+	query := gorpmapping.NewQuery(
+		"SELECT * FROM action WHERE id = ANY(string_to_array($1, ',')::int[])",
+	).Args(gorpmapping.IDsToQueryString(ids))
+	return getAll(ctx, db, query, opts...)
+}
+
 // LoadAllByTypes actions from database.
 func LoadAllByTypes(ctx context.Context, db gorp.SqlExecutor, types []string, opts ...LoadOptionFunc) ([]sdk.Action, error) {
 	query := gorpmapping.NewQuery(
