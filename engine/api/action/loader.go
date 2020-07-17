@@ -183,7 +183,12 @@ func loadChildren(ctx context.Context, db gorp.SqlExecutor, as ...*sdk.Action) e
 }
 
 func loadGroup(ctx context.Context, db gorp.SqlExecutor, as ...*sdk.Action) error {
-	gs, err := group.LoadAllByIDs(ctx, db, sdk.ActionsToGroupIDs(as))
+	groupIDs := sdk.ActionsToGroupIDs(as)
+	if len(groupIDs) == 0 {
+		return nil
+	}
+
+	gs, err := group.LoadAllByIDs(ctx, db, groupIDs)
 	if err != nil {
 		return err
 	}
