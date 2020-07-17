@@ -137,7 +137,7 @@ func LoadPipelineStage(ctx context.Context, db gorp.SqlExecutor, p *sdk.Pipeline
 				Name:         stageName,
 				Enabled:      stageEnabled.Bool,
 				BuildOrder:   stageBuildOrder,
-				LastModified: stageLastModified.Time.Unix(),
+				LastModified: stageLastModified.Time,
 			}
 			mapStages[stageID] = stageData
 			stagesPtr = append(stagesPtr, stageData)
