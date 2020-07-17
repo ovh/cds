@@ -59,9 +59,9 @@ func (h *HatcheryOpenstack) SpawnWorker(ctx context.Context, spawnArgs hatchery.
 		imgs := h.getImages(ctx)
 		log.Debug("spawnWorker> call images.List on openstack took %fs, nbImages:%d", time.Since(start).Seconds(), len(imgs))
 		for _, img := range imgs {
-			workerModelName := img.Metadata["worker_model_name"]
+			workerModelName := img.Metadata["worker_model_path"]
 			workerModelLastModified := img.Metadata["worker_model_last_modified"]
-			if workerModelName == spawnArgs.Model.Name && fmt.Sprintf("%s", workerModelLastModified) == fmt.Sprintf("%d", spawnArgs.Model.UserLastModified.Unix()) {
+			if workerModelName == spawnArgs.Model.Path() && fmt.Sprintf("%s", workerModelLastModified) == fmt.Sprintf("%d", spawnArgs.Model.UserLastModified.Unix()) {
 				withExistingImage = true
 				imageID = img.ID
 				break
@@ -111,7 +111,6 @@ func (h *HatcheryOpenstack) SpawnWorker(ctx context.Context, spawnArgs hatchery.
 		"flavor":                     spawnArgs.Model.ModelVirtualMachine.Flavor,
 		"model":                      spawnArgs.Model.ModelVirtualMachine.Image,
 		"worker_model_path":          spawnArgs.Model.Group.Name + "/" + spawnArgs.Model.Name,
-		"worker_model_name":          spawnArgs.Model.Name,
 		"worker_model_last_modified": fmt.Sprintf("%d", spawnArgs.Model.UserLastModified.Unix()),
 	}
 
