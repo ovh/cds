@@ -654,7 +654,7 @@ func Test_getWorkflowPushHandler(t *testing.T) {
 			},
 		},
 	}
-	pipeline.InsertJob(context.TODO(), api.mustDB(), j, s.ID, &pip)
+	pipeline.InsertJob(api.mustDB(), j, s.ID, &pip)
 	s.Jobs = append(s.Jobs, *j)
 
 	pip.Stages = append(pip.Stages, *s)

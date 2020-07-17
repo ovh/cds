@@ -99,7 +99,7 @@ func testRunWorkflow(t *testing.T, api *API, db gorpmapping.SqlExecutorWithTx, r
 			},
 		},
 	}
-	pipeline.InsertJob(context.TODO(), api.mustDB(), j, s.ID, &pip)
+	pipeline.InsertJob(api.mustDB(), j, s.ID, &pip)
 	s.Jobs = append(s.Jobs, *j)
 
 	pip.Stages = append(pip.Stages, *s)
@@ -1005,7 +1005,7 @@ func TestWorkerPrivateKey(t *testing.T) {
 			},
 		},
 	}
-	assert.NoError(t, pipeline.InsertJob(context.TODO(), db, &j, s.ID, pip))
+	assert.NoError(t, pipeline.InsertJob(db, &j, s.ID, pip))
 
 	var errPip error
 	pip, errPip = pipeline.LoadPipelineByID(context.TODO(), db, pip.ID, true)
@@ -1121,7 +1121,7 @@ func TestPostVulnerabilityReportHandler(t *testing.T) {
 			},
 		},
 	}
-	assert.NoError(t, pipeline.InsertJob(context.TODO(), db, &j, s.ID, pip))
+	assert.NoError(t, pipeline.InsertJob(db, &j, s.ID, pip))
 
 	var errPip error
 	pip, errPip = pipeline.LoadPipelineByID(context.TODO(), db, pip.ID, true)
@@ -1272,7 +1272,7 @@ func TestInsertNewCodeCoverageReport(t *testing.T) {
 			},
 		},
 	}
-	assert.NoError(t, pipeline.InsertJob(context.TODO(), db, &j, s.ID, pip))
+	assert.NoError(t, pipeline.InsertJob(db, &j, s.ID, pip))
 
 	var errPip error
 	pip, errPip = pipeline.LoadPipelineByID(context.TODO(), db, pip.ID, true)

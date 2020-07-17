@@ -288,24 +288,9 @@ func fromDBNodeRun(rr NodeRun, opts LoadRunOptions) (*sdk.WorkflowNodeRun, error
 	if err := gorpmapping.JSONNullString(rr.TriggersRun, &r.TriggersRun); err != nil {
 		return nil, sdk.WrapError(err, "Error loading node run trigger %d", r.ID)
 	}
-
-	var stages []interface{}
-	if err := gorpmapping.JSONNullString(rr.Stages, &stages); err != nil {
-		return nil, sdk.WrapError(err, "Error loading node run")
+	if err := gorpmapping.JSONNullString(rr.Stages, &r.Stages); err != nil {
+		return nil, sdk.WrapError(err, "Error loading node run %d", r.ID)
 	}
-	r.Stages = make([]sdk.Stage, len(stages))
-	for i, si := range stages {
-		var s sdk.Stage
-		bts, err := json.Marshal(si)
-		if err != nil {
-			return nil, sdk.WrapError(err, "unable to marshall interface stage")
-		}
-		if err := s.UnmarshalJSON(bts); err != nil {
-			return nil, sdk.WrapError(err, "unable to unmarshal stage")
-		}
-		r.Stages[i] = s
-	}
-
 	for i := range r.Stages {
 		s := &r.Stages[i]
 		for j := range s.RunJobs {

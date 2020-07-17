@@ -58,9 +58,6 @@ type Action struct {
 	FirstAudit   *AuditAction    `json:"first_audit,omitempty" db:"-"`
 	LastAudit    *AuditAction    `json:"last_audit,omitempty" db:"-"`
 	Editable     bool            `json:"editable,omitempty" db:"-"`
-
-	// aggregates: action_edge identifiers
-	ActionEdgeID int64 `json:"-,omitempty" db:"-"`
 }
 
 // UsageAction represent a action using an action.
@@ -153,46 +150,6 @@ func (a Action) IsValid() error {
 	return nil
 }
 
-func (a *Action) FlattenRequirementsRecursively() RequirementList {
-	if !a.Enabled {
-		return nil
-	}
-	rs := a.Requirements
-
-	// copy requirements from childs
-	for i := range a.Actions {
-		a.Actions[i].Requirements = a.Actions[i].FlattenRequirementsRecursively()
-		rs = filterRequirement(rs, a.Actions[i].Requirements)
-	}
-
-	return rs
-}
-
-func filterRequirement(parentRequirement, childRequirement RequirementList) RequirementList {
-	rs := parentRequirement
-	// now filter child requirements, not already in parent
-	// do not add a model or hostname requirement if parent already contains one
-	filtered := make([]Requirement, 0, len(childRequirement))
-	for j := range childRequirement {
-		var found bool
-		for k := range parentRequirement {
-			if parentRequirement[k].Type == childRequirement[j].Type &&
-				(parentRequirement[k].Type == ModelRequirement ||
-					parentRequirement[k].Type == HostnameRequirement ||
-					parentRequirement[k].Value == childRequirement[j].Value) {
-				found = true
-				break
-			}
-		}
-		if !found {
-			filtered = append(filtered, childRequirement[j])
-		}
-	}
-
-	rs = append(rs, filtered...)
-	return rs
-}
-
 // FlattenRequirements returns all requirements for an action and its children.
 func (a *Action) FlattenRequirements() RequirementList {
 	if !a.Enabled {
@@ -206,8 +163,31 @@ func (a *Action) FlattenRequirements() RequirementList {
 		if !a.Actions[i].Enabled {
 			continue
 		}
-		rs = filterRequirement(rs, a.Actions[i].Requirements)
+
+		rsChild := a.Actions[i].Requirements
+
+		// now filter child requirements, not already in parent
+		// do not add a model or hostname requirement if parent already contains one
+		filtered := make([]Requirement, 0, len(rsChild))
+		for j := range rsChild {
+			var found bool
+			for k := range rs {
+				if rs[k].Type == rsChild[j].Type &&
+					(rs[k].Type == ModelRequirement ||
+						rs[k].Type == HostnameRequirement ||
+						rs[k].Value == rsChild[j].Value) {
+					found = true
+					break
+				}
+			}
+			if !found {
+				filtered = append(filtered, rsChild[j])
+			}
+		}
+
+		rs = append(rs, filtered...)
 	}
+
 	return rs
 }
 
@@ -263,10 +243,10 @@ func ActionsToIDs(as []*Action) []int64 {
 
 // ActionsToGroupIDs returns group ids for given actions list.
 func ActionsToGroupIDs(as []*Action) []int64 {
-	ids := make([]int64, 0, len(as))
+	ids := make([]int64, len(as))
 	for i := range as {
 		if as[i].GroupID != nil {
-			ids = append(ids, *as[i].GroupID)
+			ids[i] = *as[i].GroupID
 		}
 	}
 	return ids

@@ -79,7 +79,7 @@ func ImportUpdate(ctx context.Context, db gorp.SqlExecutor, proj sdk.Project, pi
 			jobAction.PipelineStageID = s.ID
 			jobAction.Action.Type = sdk.JoinedAction
 			log.Debug("Creating job %s on stage %s on pipeline %s", jobAction.Action.Name, s.Name, pip.Name)
-			if err := InsertJob(ctx, db, jobAction, s.ID, pip); err != nil {
+			if err := InsertJob(db, jobAction, s.ID, pip); err != nil {
 				return sdk.WrapError(err, "Unable to insert job %s in %s", jobAction.Action.Name, pip.Name)
 			}
 			if msgChan != nil {
@@ -186,7 +186,7 @@ func importNew(ctx context.Context, db gorp.SqlExecutor, proj sdk.Project, pip *
 
 			jobAction.PipelineStageID = s.ID
 			log.Debug("pipeline.importNew> Creating job %s on stage %s on pipeline %s", jobAction.Action.Name, s.Name, pip.Name)
-			if err := InsertJob(ctx, db, jobAction, s.ID, pip); err != nil {
+			if err := InsertJob(db, jobAction, s.ID, pip); err != nil {
 				return err
 			}
 		}
