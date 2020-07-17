@@ -5,6 +5,7 @@
 package hook
 
 import (
+	"context"
 	"crypto/tls"
 	"fmt"
 	"os"
@@ -80,10 +81,12 @@ type Hook struct {
 	throttleStack  *Stack
 	throttleTicker *time.Ticker
 	throttlePolicy ThrottlePolicy
+
+	stopChan chan bool
 }
 
 // NewHook creates a hook to be added to an instance of logger.
-func NewHook(cfg *Config, extra map[string]interface{}) (*Hook, error) {
+func NewHook(ctx context.Context, cfg *Config, extra map[string]interface{}) (*Hook, error) {
 	// Get a hostname if not set
 	hostname := cfg.Hostname
 	if hostname == "" {
@@ -131,6 +134,7 @@ func NewHook(cfg *Config, extra map[string]interface{}) (*Hook, error) {
 		merge:      merge,
 		Pid:        os.Getpid(),
 		gelfLogger: w,
+		stopChan:   make(chan bool),
 	}
 
 	if cfg.ThrottlePolicy == nil {
@@ -150,7 +154,24 @@ func NewHook(cfg *Config, extra map[string]interface{}) (*Hook, error) {
 
 	go hook.fire() // Log in background
 
+	go func() {
+		select {
+		case <-ctx.Done():
+			hook.Flush()
+		case <-hook.stopChan:
+			return
+		}
+
+	}()
+
 	return hook, nil
+}
+
+func (hook *Hook) Stop() {
+	if hook.stopChan != nil {
+		hook.stopChan <- true
+		close(hook.stopChan)
+	}
 }
 
 // Fire is called when a log event is fired.

@@ -118,11 +118,6 @@ func (api *API) postServiceRegisterHandler() service.Handler {
 			if err := worker.ReAttachAllToHatchery(ctx, tx, *srv); err != nil {
 				return err
 			}
-			addr, err := services.GetCDNPublicTCPAdress(ctx, tx)
-			if err != nil {
-				return err
-			}
-			srv.LogServerAdress = addr
 		}
 
 		if err := tx.Commit(); err != nil {

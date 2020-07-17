@@ -12,23 +12,21 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/h2non/gock.v1"
-
-	"github.com/ovh/cds/sdk"
 )
 
 var loggerCall = 0
 
 func Test_serviceLogs(t *testing.T) {
+	defer gock.Off()
 	h := InitTestHatcherySwarm(t)
-	h.Common.ServiceInstance = &sdk.Service{
-		LogServerAdress: "tcphost:8090",
-	}
 	reader := rand.Reader
 	bitSize := 2048
 	key, err := rsa.GenerateKey(reader, bitSize)
 	require.NoError(t, err)
 	h.Common.PrivateKey = key
-	require.NoError(t, h.InitServiceLogger())
+
+	//gock.New("https://lolcat.api").Get("/config/cdn").Reply(http.StatusOK).JSON(sdk.CDNConfig{TCPURL: "tcphost:8090"})
+	//require.NoError(t, h.RefreshServiceLogger(context.TODO()))
 
 	containers := []types.Container{
 		{

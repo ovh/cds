@@ -191,25 +191,42 @@ func (c *Common) getPanicDumpListHandler() service.Handler {
 	}
 }
 
-func (c *Common) InitServiceLogger() error {
-	var signer jose.Signer
-	if c.Common.ServiceInstance.LogServerAdress != "" {
-		var graylogCfg = &hook.Config{
-			Addr:     c.Common.ServiceInstance.LogServerAdress,
-			Protocol: "tcp",
-		}
-		logger, _, err := log.New(context.Background(), graylogCfg)
+func (c *Common) RefreshServiceLogger(ctx context.Context) error {
+	cdnConfig, err := c.Client.ConfigCDN()
+	if err != nil {
+		return err
+	}
+	if cdnConfig.TCPURL == c.CDNLogsURL {
+		return nil
+	}
+	c.CDNLogsURL = cdnConfig.TCPURL
 
-		if err != nil {
-			return sdk.WithStack(err)
-		}
+	if c.Signer == nil {
+		var signer jose.Signer
 		signer, err = jws.NewSigner(c.Common.PrivateKey)
 		if err != nil {
 			return sdk.WithStack(err)
 		}
 		c.Signer = signer
-		c.ServiceLogger = logger
 	}
+
+	var graylogCfg = &hook.Config{
+		Addr:     c.CDNLogsURL,
+		Protocol: "tcp",
+	}
+
+	if c.ServiceLogger == nil {
+		logger, _, err := log.New(ctx, graylogCfg)
+		if err != nil {
+			return sdk.WithStack(err)
+		}
+		c.ServiceLogger = logger
+	} else {
+		if err := log.ReplaceAllHooks(context.Background(), c.ServiceLogger, graylogCfg); err != nil {
+			return sdk.WithStack(err)
+		}
+	}
+
 	return nil
 }
 

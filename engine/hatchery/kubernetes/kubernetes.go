@@ -44,9 +44,6 @@ var _ hatchery.InterfaceWithModels = new(HatcheryKubernetes)
 
 // InitHatchery register local hatchery with its worker model
 func (h *HatcheryKubernetes) InitHatchery(ctx context.Context) error {
-	if err := h.Common.InitServiceLogger(); err != nil {
-		return err
-	}
 	sdk.GoRoutine(context.Background(), "hatchery kubernetes routines", func(ctx context.Context) {
 		h.routines(ctx)
 	})
@@ -424,6 +421,7 @@ func (h *HatcheryKubernetes) SpawnWorker(ctx context.Context, spawnArgs hatchery
 		}
 
 		podSchema.ObjectMeta.Labels[LABEL_SERVICE_JOB_ID] = fmt.Sprintf("%d", spawnArgs.JobID)
+		podSchema.ObjectMeta.Labels[LABEL_SERVICE_NODE_RUN_ID] = fmt.Sprintf("%d", spawnArgs.NodeRunID)
 		podSchema.Spec.Containers = append(podSchema.Spec.Containers, servContainer)
 		podSchema.Spec.HostAliases[0].Hostnames[i+1] = strings.ToLower(serv.Name)
 	}
@@ -487,6 +485,12 @@ func (h *HatcheryKubernetes) routines(ctx context.Context) {
 	for {
 		select {
 		case <-ticker.C:
+			sdk.GoRoutine(ctx, "getCDNConfiguration", func(ctx context.Context) {
+				if err := h.Common.RefreshServiceLogger(ctx); err != nil {
+					log.Error(ctx, "hatchery> kubernetes> cannot get cdn configuration : %v", err)
+				}
+			})
+
 			sdk.GoRoutine(ctx, "getServicesLogs", func(ctx context.Context) {
 				if err := h.getServicesLogs(ctx); err != nil {
 					log.Error(ctx, "Hatchery> Kubernetes> Cannot get service logs : %v", err)

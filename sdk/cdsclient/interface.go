@@ -364,6 +364,7 @@ type Interface interface {
 	APIURL() string
 	ApplicationClient
 	ConfigUser() (sdk.ConfigUser, error)
+	ConfigCDN() (sdk.CDNConfig, error)
 	DownloadClient
 	EnvironmentClient
 	EventsClient

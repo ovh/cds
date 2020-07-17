@@ -88,6 +88,7 @@ func TestHatcheryKubernetes_Status(t *testing.T) {
 		require.Equal(t, "hachibi", podRequest.ObjectMeta.Namespace)
 		require.Equal(t, "kyubi", podRequest.Labels["CDS_HATCHERY_NAME"])
 		require.Equal(t, "666", podRequest.Labels["CDS_SERVICE_JOB_ID"])
+		require.Equal(t, "999", podRequest.Labels[LABEL_SERVICE_NODE_RUN_ID])
 		require.Equal(t, "execution", podRequest.Labels["CDS_WORKER"])
 		require.Equal(t, "model1", podRequest.Labels["CDS_WORKER_MODEL"])
 
@@ -103,6 +104,7 @@ func TestHatcheryKubernetes_Status(t *testing.T) {
 
 	err := h.SpawnWorker(context.TODO(), hatchery.SpawnArguments{
 		JobID:      666,
+		NodeRunID:  999,
 		Model:      m,
 		WorkerName: "k8s-toto",
 		Requirements: []sdk.Requirement{

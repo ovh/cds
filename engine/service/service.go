@@ -114,19 +114,9 @@ func (c *Common) Register(ctx context.Context, cfg sdk.ServiceConfig) error {
 		srv.PublicKey = pubKeyPEM
 	}
 
-	retry := 0
 	for {
 		srv2, err := c.Client.ServiceRegister(ctx, srv)
 		if err != nil {
-			// hatchery can retry register because they have to wait CDN to be up
-			if srv.Type == sdk.TypeHatchery {
-				retry++
-				if retry < 10 {
-					log.Warning(ctx, "register> %v", err)
-					time.Sleep(6 * time.Second)
-					continue
-				}
-			}
 			return sdk.WrapError(err, "Register>")
 		}
 		c.ServiceInstance = srv2

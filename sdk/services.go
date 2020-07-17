@@ -37,7 +37,6 @@ type Service struct {
 	MonitoringStatus MonitoringStatus `json:"monitoring_status" db:"monitoring_status" cli:"-"`
 	Version          string           `json:"version" db:"-" cli:"version"`
 	Uptodate         bool             `json:"up_to_date" db:"-"`
-	LogServerAdress  string           `json:"tcp_address" db:"-"`
 }
 
 // Update service field from new data.
@@ -82,4 +81,8 @@ type ServiceConfiguration struct {
 	Type       string `toml:"type" json:"type"`
 	PublicKey  string `json:"publicKey"`
 	ID         int64  `json:"id"`
+}
+
+type CDNConfig struct {
+	TCPURL string `json:"tcp_url"`
 }
