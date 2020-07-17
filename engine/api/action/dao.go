@@ -144,13 +144,14 @@ func LoadActionsAndChildrenByActionJobIDs(ctx context.Context, db gorp.SqlExecut
 		ActionEdgeParentID int64  `db:"parent_id"`
 		AlwaysExecuted     bool   `db:"always_executed"`
 		Optional           bool   `db:"optional"`
+		ActionEdgeEnabled  bool   `db:"action_edge_enabled"`
 	}
 	var dbActions []dbAction
 
 	query := `
 	WITH RECURSIVE allActions AS (
 		-- NON RECURSIVE
-		SELECT action.*, action_edge.id as action_edge_id, action_edge.parent_id, action_edge.always_executed, action_edge.optional
+		SELECT action.*, action_edge.id as action_edge_id, action_edge.parent_id, action_edge.always_executed, action_edge.optional, action_edge.enabled as action_edge_enabled
 		FROM action
 		JOIN action_edge ON action_edge.child_id = action.id
 		WHERE action_edge.parent_id = ANY($1)																		   
@@ -158,7 +159,7 @@ func LoadActionsAndChildrenByActionJobIDs(ctx context.Context, db gorp.SqlExecut
 		-- RECURSIVE
 		UNION
 			SELECT
-				a.*, action_edge.id as action_edge_id, action_edge.parent_id, action_edge.always_executed, action_edge.optional
+				a.*, action_edge.id as action_edge_id, action_edge.parent_id, action_edge.always_executed, action_edge.optional, action_edge.enabled as action_edge_enabled
 			FROM
 				action a
 			JOIN action_edge ON action_edge.child_id = a.id																   
@@ -180,7 +181,7 @@ func LoadActionsAndChildrenByActionJobIDs(ctx context.Context, db gorp.SqlExecut
 			Name:           dbAct.Name,
 			Type:           dbAct.Type,
 			Description:    dbAct.Description,
-			Enabled:        dbAct.Enabled,
+			Enabled:        dbAct.ActionEdgeEnabled,
 			Deprecated:     dbAct.Deprecated,
 			Optional:       dbAct.Optional,
 			AlwaysExecuted: dbAct.AlwaysExecuted,

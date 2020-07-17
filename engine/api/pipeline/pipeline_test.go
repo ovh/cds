@@ -218,6 +218,63 @@ func TestLoadStageWithDisabledJob(t *testing.T) {
 	require.True(t, pip1.Stages[0].Jobs[0].Action.Actions[0].Optional)
 }
 
+func TestLoadStageWithDisabledStep(t *testing.T) {
+	db, _ := test.SetupPG(t)
+
+	ac, err := action.LoadAllByTypes(context.TODO(), db, []string{sdk.BuiltinAction})
+
+	pk := sdk.RandomString(8)
+
+	p := sdk.Project{
+		Key:  pk,
+		Name: pk,
+	}
+	if err := project.Insert(db, &p); err != nil {
+		t.Fatalf("Cannot insert project : %s", err)
+	}
+
+	pip := &sdk.Pipeline{
+		Name:      "Name",
+		ProjectID: p.ID,
+	}
+	require.NoError(t, pipeline.InsertPipeline(db, pip))
+
+	s := sdk.Stage{
+		Name:       "Stage1",
+		PipelineID: pip.ID,
+	}
+	require.NoError(t, pipeline.InsertStage(db, &s))
+
+	j := sdk.Job{
+		Action: sdk.Action{
+			Name:    "myJob",
+			Enabled: true,
+			Type:    sdk.JoinedAction,
+			Actions: []sdk.Action{
+				ac[0],
+			},
+		},
+		Enabled:         true,
+		PipelineStageID: s.ID,
+	}
+	j.Action.Actions[0].AlwaysExecuted = true
+	j.Action.Actions[0].Enabled = false
+	j.Action.Actions[0].Optional = true
+	require.NoError(t, pipeline.InsertJob(context.TODO(), db, &j, s.ID, pip))
+
+	pip1, err := pipeline.LoadPipeline(context.TODO(), db, p.Key, "Name", true)
+	test.NoError(t, err)
+
+	require.Len(t, pip1.Stages, 1)
+	require.Len(t, pip1.Stages[0].Jobs, 1)
+	require.Len(t, pip1.Stages[0].Jobs[0].Action.Actions, 1)
+	require.True(t, pip1.Stages[0].Jobs[0].Enabled)
+	require.True(t, pip1.Stages[0].Jobs[0].Action.Enabled)
+	require.True(t, pip1.Stages[0].Jobs[0].Action.Actions[0].AlwaysExecuted)
+	require.False(t, pip1.Stages[0].Jobs[0].Action.Actions[0].Enabled)
+	require.True(t, pip1.Stages[0].Jobs[0].Action.Actions[0].Optional)
+}
+
 func TestInsertPipelineWithParemeters(t *testing.T) {
 	db, _ := test.SetupPG(t)
 
