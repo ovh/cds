@@ -14,15 +14,15 @@ import (
 	"strings"
 	"time"
 
-	"github.com/ovh/cds/engine/service"
-
 	"github.com/docker/docker/api/types"
 	docker "github.com/docker/docker/client"
 	"github.com/docker/go-connections/tlsconfig"
 	"github.com/gorilla/mux"
+	"github.com/sirupsen/logrus"
 	"golang.org/x/net/context"
 
 	"github.com/ovh/cds/engine/api"
+	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/hatchery"
 	"github.com/ovh/cds/sdk/log"
@@ -577,6 +577,10 @@ func (h *HatcherySwarm) WorkersStartedByModel(ctx context.Context, model *sdk.Mo
 	}
 	log.Debug("hatchery> swarm> WorkersStartedByModel> %s \t %d", model.Name, len(list))
 	return len(list)
+}
+
+func (h *HatcherySwarm) GetLogger() *logrus.Logger {
+	return h.ServiceLogger
 }
 
 // Serve start the hatchery server

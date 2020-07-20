@@ -11,20 +11,19 @@ import (
 	"time"
 
 	"github.com/dgrijalva/jwt-go"
-	"github.com/ovh/cds/engine/service"
-
-	"k8s.io/client-go/tools/clientcmd"
-
 	"github.com/gorilla/mux"
+	"github.com/sirupsen/logrus"
 	apiv1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 	"k8s.io/client-go/rest"
+	"k8s.io/client-go/tools/clientcmd"
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
 
 	"github.com/ovh/cds/engine/api"
+	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/ovh/cds/sdk/hatchery"
@@ -431,6 +430,10 @@ func (h *HatcheryKubernetes) SpawnWorker(ctx context.Context, spawnArgs hatchery
 	log.Debug("hatchery> kubernetes> SpawnWorker> %s > Pod created", spawnArgs.WorkerName)
 
 	return err
+}
+
+func (h *HatcheryKubernetes) GetLogger() *logrus.Logger {
+	return h.ServiceLogger
 }
 
 // WorkersStarted returns the number of instances started but

@@ -4,16 +4,17 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+
 	"strings"
 	"time"
 
 	"github.com/dgrijalva/jwt-go"
-	"github.com/ovh/cds/engine/service"
-
 	"github.com/gorilla/mux"
+	"github.com/sirupsen/logrus"
 	"github.com/vmware/govmomi/vim25/types"
 
 	"github.com/ovh/cds/engine/api"
+	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/ovh/cds/sdk/hatchery"
@@ -44,6 +45,10 @@ func (h *HatcheryVSphere) Init(config interface{}) (cdsclient.ServiceConfig, err
 	cfg.InsecureSkipVerifyTLS = sConfig.API.HTTP.Insecure
 	cfg.RequestSecondsTimeout = sConfig.API.RequestTimeout
 	return cfg, nil
+}
+
+func (h *HatcheryVSphere) GetLogger() *logrus.Logger {
+	return h.ServiceLogger
 }
 
 // ApplyConfiguration apply an object of type HatcheryConfiguration after checking it
@@ -186,23 +191,29 @@ func (*HatcheryVSphere) ModelType() string {
 	return sdk.VSphere
 }
 
-func (h *HatcheryVSphere) main() {
+func (h *HatcheryVSphere) main(ctx context.Context) {
 	serverListTick := time.NewTicker(10 * time.Second).C
+	cdnConfTick := time.NewTicker(10 * time.Second).C
 	killAwolServersTick := time.NewTicker(20 * time.Second).C
 	killDisabledWorkersTick := time.NewTicker(60 * time.Second).C
 
 	for {
 		select {
-
 		case <-serverListTick:
 			h.updateServerList()
-
 		case <-killAwolServersTick:
 			h.killAwolServers()
-
 		case <-killDisabledWorkersTick:
 			h.killDisabledWorkers()
-
+		case <-cdnConfTick:
+			if err := h.RefreshServiceLogger(ctx); err != nil {
+				log.Error(ctx, "Hatchery> vsphere> Cannot get cdn configuration : %v", err)
+			}
+		case <-ctx.Done():
+			if ctx.Err() != nil {
+				log.Error(ctx, "Hatchery> vsphereq> Exiting routines")
+			}
+			return
 		}
 	}
 }

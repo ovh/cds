@@ -5,6 +5,7 @@ import (
 	"crypto/rsa"
 
 	"github.com/dgrijalva/jwt-go"
+	"github.com/sirupsen/logrus"
 	"go.opencensus.io/stats"
 
 	"github.com/ovh/cds/engine/service"
@@ -61,6 +62,7 @@ type Interface interface {
 	Serve(ctx context.Context) error
 	PanicDumpDirectory() (string, error)
 	GetPrivateKey() *rsa.PrivateKey
+	GetLogger() *logrus.Logger
 }
 
 type InterfaceWithModels interface {

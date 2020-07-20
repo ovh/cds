@@ -36,7 +36,9 @@ func (h *HatcheryVSphere) InitHatchery(ctx context.Context) error {
 		return fmt.Errorf("Unable to find network %s: %v", h.networkString, err)
 	}
 
-	go h.main()
+	sdk.GoRoutine(context.Background(), "hatchery vsphere main", func(ctx context.Context) {
+		h.main(ctx)
+	})
 
 	return nil
 }

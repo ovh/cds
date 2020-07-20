@@ -15,6 +15,7 @@ import (
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gambol99/go-marathon"
 	"github.com/gorilla/mux"
+	"github.com/sirupsen/logrus"
 
 	"github.com/ovh/cds/engine/api"
 	"github.com/ovh/cds/engine/service"
@@ -35,6 +36,11 @@ func New() *HatcheryMarathon {
 }
 
 var _ hatchery.InterfaceWithModels = new(HatcheryMarathon)
+
+// GetLogger return the logger
+func (h *HatcheryMarathon) GetLogger() *logrus.Logger {
+	return h.ServiceLogger
+}
 
 // Init cdsclient config.
 func (h *HatcheryMarathon) Init(config interface{}) (cdsclient.ServiceConfig, error) {
@@ -461,28 +467,42 @@ func (h *HatcheryMarathon) WorkersStartedByModel(ctx context.Context, model *sdk
 
 // InitHatchery only starts killing routine of worker not registered
 func (h *HatcheryMarathon) InitHatchery(ctx context.Context) error {
-	h.startKillAwolWorkerRoutine()
+	sdk.GoRoutine(ctx, "marathon-routines", func(ctx context.Context) {
+		h.routines(ctx)
+	})
 	return nil
 }
 
-func (h *HatcheryMarathon) startKillAwolWorkerRoutine() {
-	go func() {
-		for {
-			time.Sleep(10 * time.Second)
-			if err := h.killDisabledWorkers(); err != nil {
-				log.Warning(context.Background(), "Cannot kill disabled workers: %s", err)
-			}
-		}
-	}()
+func (h *HatcheryMarathon) routines(ctx context.Context) {
+	ticker := time.NewTicker(10 * time.Second)
+	defer ticker.Stop()
 
-	go func() {
-		for {
-			time.Sleep(10 * time.Second)
-			if err := h.killAwolWorkers(); err != nil {
-				log.Warning(context.Background(), "Cannot kill awol workers: %s", err)
+	for {
+		select {
+		case <-ticker.C:
+			sdk.GoRoutine(ctx, "marathon-killDisabledWorker", func(ctx context.Context) {
+				if err := h.killDisabledWorkers(); err != nil {
+					log.Warning(context.Background(), "Cannot kill disabled workers: %s", err)
+				}
+			})
+			sdk.GoRoutine(ctx, "marathon-killAwolWorkers", func(ctx context.Context) {
+				if err := h.killAwolWorkers(); err != nil {
+					log.Warning(context.Background(), "Cannot kill awol workers: %s", err)
+				}
+			})
+			sdk.GoRoutine(ctx, "marathon-refreshCDNConfiguration", func(ctx context.Context) {
+				if err := h.RefreshServiceLogger(ctx); err != nil {
+					log.Error(ctx, "Hatchery> marathon> Cannot get cdn configuration : %v", err)
+				}
+			})
+		case <-ctx.Done():
+			if ctx.Err() != nil {
+				log.Error(ctx, "Hatchery> marathon> Exiting routines")
 			}
+			return
 		}
-	}()
+	}
+
 }
 
 func (h *HatcheryMarathon) killDisabledWorkers() error {
