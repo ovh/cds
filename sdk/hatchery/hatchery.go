@@ -134,7 +134,7 @@ func Create(ctx context.Context, h Interface) error {
 				continue
 			}
 			if h.GetLogger() == nil {
-				log.Warning(ctx, "Logger not found, don't spawn workers")
+				log.Error(ctx, "Logger not found, don't spawn workers")
 				continue
 			}
 
