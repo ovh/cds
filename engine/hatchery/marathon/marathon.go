@@ -467,6 +467,9 @@ func (h *HatcheryMarathon) WorkersStartedByModel(ctx context.Context, model *sdk
 
 // InitHatchery only starts killing routine of worker not registered
 func (h *HatcheryMarathon) InitHatchery(ctx context.Context) error {
+	if err := h.RefreshServiceLogger(ctx); err != nil {
+		log.Error(ctx, "Hatchery> marathon> Cannot get cdn configuration : %v", err)
+	}
 	sdk.GoRoutine(ctx, "marathon-routines", func(ctx context.Context) {
 		h.routines(ctx)
 	})

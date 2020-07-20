@@ -43,6 +43,9 @@ var _ hatchery.InterfaceWithModels = new(HatcheryKubernetes)
 
 // InitHatchery register local hatchery with its worker model
 func (h *HatcheryKubernetes) InitHatchery(ctx context.Context) error {
+	if err := h.Common.RefreshServiceLogger(ctx); err != nil {
+		log.Error(ctx, "hatchery> kubernetes> cannot get cdn configuration : %v", err)
+	}
 	sdk.GoRoutine(context.Background(), "hatchery kubernetes routines", func(ctx context.Context) {
 		h.routines(ctx)
 	})

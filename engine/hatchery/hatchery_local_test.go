@@ -61,6 +61,8 @@ func TestHatcheryLocal(t *testing.T) {
 	require.NotNil(t, srvCfg)
 	t.Logf("service config: %+v", srvCfg)
 
+	gock.New(s.URL).Get("/config/cdn").Times(-1).Reply(200).JSON(sdk.CDNConfig{TCPURL: "tcphost:8090"})
+
 	srvCfg.Hook = func(client cdsclient.Interface) error {
 		gock.InterceptClient(client.HTTPClient())
 		return nil
@@ -94,7 +96,9 @@ func TestHatcheryLocal(t *testing.T) {
 		pending := gock.Pending()
 		for _, m := range pending {
 			if m.Request().URLStruct.String() != s.URL+"/services/heartbeat" &&
-				!strings.HasPrefix(m.Request().URLStruct.String(), s.URL+"/download/worker") {
+				!strings.HasPrefix(m.Request().URLStruct.String(), s.URL+"/download/worker") &&
+				!strings.HasPrefix(m.Request().URLStruct.String(), s.URL+"/config/cdn") &&
+				!strings.HasPrefix(m.Request().URLStruct.String(), s.URL+"/worker") {
 				t.Errorf("PENDING %s %s", m.Request().Method, m.Request().URLStruct.String())
 			}
 		}

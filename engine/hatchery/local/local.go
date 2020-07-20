@@ -232,6 +232,9 @@ func (h *HatcheryLocal) WorkersStarted(ctx context.Context) []string {
 // InitHatchery register local hatchery with its worker model
 func (h *HatcheryLocal) InitHatchery(ctx context.Context) error {
 	h.workers = make(map[string]workerCmd)
+	if err := h.RefreshServiceLogger(ctx); err != nil {
+		log.Error(ctx, "Hatchery> local> Cannot get cdn configuration : %v", err)
+	}
 	sdk.GoRoutine(context.Background(), "hatchery locale routines", func(ctx context.Context) {
 		h.routines(ctx)
 	})

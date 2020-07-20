@@ -175,6 +175,9 @@ func (h *HatcherySwarm) InitHatchery(ctx context.Context) error {
 		}
 	}
 
+	if err := h.RefreshServiceLogger(ctx); err != nil {
+		log.Error(ctx, "Hatchery> swarm> Cannot get cdn configuration : %v", err)
+	}
 	sdk.GoRoutine(context.Background(), "swarm", func(ctx context.Context) { h.routines(ctx) })
 
 	return nil

@@ -51,6 +51,9 @@ func (h *HatcheryOpenstack) InitHatchery(ctx context.Context) error {
 		log.Warning(ctx, "Error on initIPStatus(): %v", err)
 	}
 
+	if err := h.RefreshServiceLogger(ctx); err != nil {
+		log.Error(ctx, "Hatchery> openstack> Cannot get cdn configuration : %v", err)
+	}
 	sdk.GoRoutine(context.Background(), "hatchery openstack routines", func(ctx context.Context) {
 		h.main(ctx)
 	})
