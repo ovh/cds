@@ -114,14 +114,12 @@ func (c *Common) Register(ctx context.Context, cfg sdk.ServiceConfig) error {
 		srv.PublicKey = pubKeyPEM
 	}
 
-	for {
-		srv2, err := c.Client.ServiceRegister(ctx, srv)
-		if err != nil {
-			return sdk.WrapError(err, "Register>")
-		}
-		c.ServiceInstance = srv2
-		break
+	srv2, err := c.Client.ServiceRegister(ctx, srv)
+	if err != nil {
+		return sdk.WrapError(err, "Register>")
 	}
+	c.ServiceInstance = srv2
+
 	return nil
 }
 

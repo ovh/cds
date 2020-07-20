@@ -313,7 +313,7 @@ func ReplaceAllHooks(ctx context.Context, l *log.Logger, graylogcfg *hook.Config
 			varType := fmt.Sprintf("%T", h)
 
 			if varType == fmt.Sprintf("%T", &hook.Hook{}) {
-				log.Info("hattchery.ReplaceAllHooks> stopping previous hook")
+				log.Info("hatchery.ReplaceAllHooks> stopping previous hook")
 				h.(*hook.Hook).Stop()
 			}
 		}

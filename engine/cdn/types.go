@@ -1,8 +1,6 @@
 package cdn
 
 import (
-	"encoding/json"
-
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api"
@@ -43,15 +41,4 @@ type Configuration struct {
 		StepMaxSize    int64 `toml:"stepMaxSize" default:"15728640" comment:"Max step logs size in bytes (default: 15MB)" json:"stepMaxSize"`
 		ServiceMaxSize int64 `toml:"serviceMaxSize" default:"15728640" comment:"Max service logs size in bytes (default: 15MB)" json:"serviceMaxSize"`
 	} `toml:"log" json:"log" comment:"###########################\n Log settings.\n##########################"`
-}
-
-func (c *Configuration) Unmarshal(configService sdk.ServiceConfig) error {
-	b, err := json.Marshal(configService)
-	if err != nil {
-		return sdk.WithStack(err)
-	}
-	if err := json.Unmarshal(b, c); err != nil {
-		return sdk.WithStack(err)
-	}
-	return nil
 }
