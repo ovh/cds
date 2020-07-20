@@ -156,7 +156,7 @@ func TestInsertAndLoadPipelineWith1StageAnd1ActionWithoutCondition(t *testing.T)
 		},
 		Enabled: true,
 	}
-	errJob := pipeline.InsertJob(context.TODO(), api.mustDB(), job, stage.ID, pip)
+	errJob := pipeline.InsertJob(api.mustDB(), job, stage.ID, pip)
 	test.NoError(t, errJob)
 	assert.NotZero(t, job.PipelineActionID)
 	assert.NotZero(t, job.Action.ID)
@@ -236,7 +236,7 @@ func TestInsertAndLoadPipelineWith2StagesWithAnEmptyStageAtFirstFollowedBy2Actio
 		},
 		Enabled: true,
 	}
-	errJob := pipeline.InsertJob(context.TODO(), api.mustDB(), job, stage1.ID, pip)
+	errJob := pipeline.InsertJob(api.mustDB(), job, stage1.ID, pip)
 	test.NoError(t, errJob)
 	assert.NotZero(t, job.PipelineActionID)
 	assert.NotZero(t, job.Action.ID)
@@ -248,7 +248,7 @@ func TestInsertAndLoadPipelineWith2StagesWithAnEmptyStageAtFirstFollowedBy2Actio
 		},
 		Enabled: true,
 	}
-	errJob2 := pipeline.InsertJob(context.TODO(), api.mustDB(), job2, stage1.ID, pip)
+	errJob2 := pipeline.InsertJob(api.mustDB(), job2, stage1.ID, pip)
 	test.NoError(t, errJob2)
 	assert.NotZero(t, job2.PipelineActionID)
 	assert.NotZero(t, job2.Action.ID)
@@ -328,7 +328,7 @@ func TestInsertAndLoadPipelineWith1StageWithoutConditionAnd1StageWith2Conditions
 		},
 		Enabled: true,
 	}
-	errJob := pipeline.InsertJob(context.TODO(), api.mustDB(), job, stage.ID, pip)
+	errJob := pipeline.InsertJob(api.mustDB(), job, stage.ID, pip)
 	test.NoError(t, errJob)
 	assert.NotZero(t, job.PipelineActionID)
 	assert.NotZero(t, job.Action.ID)
@@ -368,7 +368,7 @@ func TestInsertAndLoadPipelineWith1StageWithoutConditionAnd1StageWith2Conditions
 		},
 		Enabled: true,
 	}
-	errJob2 := pipeline.InsertJob(context.TODO(), api.mustDB(), job1, stage1.ID, pip)
+	errJob2 := pipeline.InsertJob(api.mustDB(), job1, stage1.ID, pip)
 	test.NoError(t, errJob2)
 	assert.NotZero(t, job.PipelineActionID)
 	assert.NotZero(t, job.Action.ID)

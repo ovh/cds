@@ -1,35 +1,40 @@
 package sdk
 
 import (
-	"encoding/json"
+	json "encoding/json"
+	"strings"
 	"time"
 )
 
 // Stage Pipeline step that parallelize actions by order
 type Stage struct {
-	ID           int64                  `json:"id" yaml:"pipeline_stage_id"`
-	Name         string                 `json:"name"`
-	PipelineID   int64                  `json:"-" yaml:"-"`
-	BuildOrder   int                    `json:"build_order"`
-	Enabled      bool                   `json:"enabled"`
-	Conditions   WorkflowNodeConditions `json:"conditions"`
-	LastModified time.Time              `json:"last_modified"`
-
-	RunJobs []WorkflowNodeJobRun `json:"run_jobs" db:"-"`
-	Jobs    []Job                `json:"jobs" db:"-"`
-	Status  string               `json:"status" db:"-"`
+	ID            int64                  `json:"id" yaml:"pipeline_stage_id"`
+	Name          string                 `json:"name"`
+	PipelineID    int64                  `json:"-" yaml:"-"`
+	BuildOrder    int                    `json:"build_order"`
+	Enabled       bool                   `json:"enabled"`
+	RunJobs       []WorkflowNodeJobRun   `json:"run_jobs"`
+	Prerequisites []Prerequisite         `json:"prerequisites"` //TODO: to delete
+	Conditions    WorkflowNodeConditions `json:"conditions"`
+	LastModified  time.Time              `json:"last_modified"`
+	Jobs          []Job                  `json:"jobs"`
+	Status        string                 `json:"status"`
+	Warnings      []PipelineBuildWarning `json:"warnings"`
 }
 
 func (s *Stage) UnmarshalJSON(data []byte) error {
 	var tmp struct {
-		ID         int64                  `json:"id"`
-		Name       string                 `json:"name"`
-		BuildOrder int                    `json:"build_order"`
-		Enabled    bool                   `json:"enabled"`
-		Conditions WorkflowNodeConditions `json:"conditions"`
-		RunJobs    []WorkflowNodeJobRun   `json:"run_jobs"`
-		Jobs       []Job                  `json:"jobs"`
-		Status     string                 `json:"status"`
+		ID            int64                  `json:"id" yaml:"pipeline_stage_id"`
+		Name          string                 `json:"name"`
+		PipelineID    int64                  `json:"-" yaml:"-"`
+		BuildOrder    int                    `json:"build_order"`
+		Enabled       bool                   `json:"enabled"`
+		RunJobs       []WorkflowNodeJobRun   `json:"run_jobs"`
+		Prerequisites []Prerequisite         `json:"prerequisites"`
+		Conditions    WorkflowNodeConditions `json:"conditions"`
+		Jobs          []Job                  `json:"jobs"`
+		Status        string                 `json:"status"`
+		Warnings      []PipelineBuildWarning `json:"warnings"`
 	}
 
 	if err := json.Unmarshal(data, &tmp); err != nil {
@@ -37,12 +42,15 @@ func (s *Stage) UnmarshalJSON(data []byte) error {
 	}
 	s.ID = tmp.ID
 	s.Name = tmp.Name
+	s.PipelineID = tmp.PipelineID
 	s.BuildOrder = tmp.BuildOrder
 	s.Enabled = tmp.Enabled
-	s.Conditions = tmp.Conditions
 	s.RunJobs = tmp.RunJobs
+	s.Prerequisites = tmp.Prerequisites
+	s.Conditions = tmp.Conditions
 	s.Jobs = tmp.Jobs
 	s.Status = tmp.Status
+	s.Warnings = tmp.Warnings
 
 	var v map[string]interface{}
 	if err := json.Unmarshal(data, &v); err != nil {
@@ -84,6 +92,22 @@ func (s Stage) ToSummary() StageSummary {
 		sum.RunJobsSummary[i] = s.RunJobs[i].ToSummary()
 	}
 	return sum
+}
+
+// Conditions returns stage prerequisites as a set of WorkflowTriggerCondition regex
+func (s *Stage) PlainConditions() []WorkflowNodeCondition {
+	res := make([]WorkflowNodeCondition, len(s.Prerequisites))
+	for i, p := range s.Prerequisites {
+		if !strings.HasPrefix(p.Parameter, "workflow.") && !strings.HasPrefix(p.Parameter, "git.") {
+			p.Parameter = "cds.pip." + p.Parameter
+		}
+		res[i] = WorkflowNodeCondition{
+			Value:    p.ExpectedValue,
+			Variable: p.Parameter,
+			Operator: WorkflowConditionsOperatorRegex,
+		}
+	}
+	return res
 }
 
 // NewStage instantiate a new Stage
