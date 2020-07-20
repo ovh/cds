@@ -63,6 +63,7 @@ func TestHatcheryKubernetes_WorkersStarted(t *testing.T) {
 
 func TestHatcheryKubernetes_Status(t *testing.T) {
 	defer gock.Off()
+	defer gock.Observe(nil)
 	h := NewHatcheryKubernetesTest(t)
 
 	m := &sdk.Model{
