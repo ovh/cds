@@ -306,7 +306,8 @@ func New(ctx context.Context, graylogcfg *hook.Config) (*log.Logger, *hook.Hook,
 }
 
 func ReplaceAllHooks(ctx context.Context, l *log.Logger, graylogcfg *hook.Config) error {
-	oldHooks := l.ReplaceHooks(nil)
+	emptyHooks := log.LevelHooks{}
+	oldHooks := l.ReplaceHooks(emptyHooks)
 	for _, hooks := range oldHooks {
 		for _, h := range hooks {
 			varType := fmt.Sprintf("%T", h)

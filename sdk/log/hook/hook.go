@@ -171,6 +171,7 @@ func (hook *Hook) Stop() {
 	if hook.stopChan != nil {
 		hook.stopChan <- true
 		close(hook.stopChan)
+		hook.stopChan = nil
 	}
 }
 
