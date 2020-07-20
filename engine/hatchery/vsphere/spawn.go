@@ -20,7 +20,6 @@ type annotation struct {
 	HatcheryName            string    `json:"hatchery_name"`
 	WorkerName              string    `json:"worker_name"`
 	RegisterOnly            bool      `json:"register_only"`
-	WorkerModelName         string    `json:"worker_model_name"`
 	WorkerModelPath         string    `json:"worker_model_path"`
 	WorkerModelLastModified string    `json:"worker_model_last_modified"`
 	Model                   bool      `json:"model"`
@@ -55,7 +54,7 @@ func (h *HatcheryVSphere) SpawnWorker(ctx context.Context, spawnArgs hatchery.Sp
 		WorkerName:              spawnArgs.WorkerName,
 		RegisterOnly:            spawnArgs.RegisterOnly,
 		WorkerModelLastModified: fmt.Sprintf("%d", spawnArgs.Model.UserLastModified.Unix()),
-		WorkerModelName:         spawnArgs.ModelName(),
+		WorkerModelPath:         spawnArgs.ModelName(),
 		Created:                 time.Now(),
 	}
 
@@ -92,7 +91,7 @@ func (h *HatcheryVSphere) createVMModel(model sdk.Model) (*object.VirtualMachine
 	annot := annotation{
 		HatcheryName:            h.Name(),
 		WorkerModelLastModified: fmt.Sprintf("%d", model.UserLastModified.Unix()),
-		WorkerModelName:         model.Name,
+		WorkerModelPath:         model.Path(),
 		Model:                   true,
 		Created:                 time.Now(),
 	}

@@ -161,7 +161,7 @@ func (h *HatcheryVSphere) deleteServer(s mo.VirtualMachine) error {
 					}
 					tuple := strings.SplitN(annot.WorkerModelPath, "/", 2)
 					if err := h.CDSClient().WorkerModelSpawnError(tuple[0], tuple[1], spawnErr); err != nil {
-						log.Error(ctx, "CheckWorkerModelRegister> error on call client.WorkerModelSpawnError on worker model %s for register: %v", annot.WorkerModelName, err)
+						log.Error(ctx, "CheckWorkerModelRegister> error on call client.WorkerModelSpawnError on worker model %s for register: %v", annot.WorkerModelPath, err)
 					}
 				}
 			}
