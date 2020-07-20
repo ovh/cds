@@ -253,7 +253,7 @@ func (api *API) postWorkflowJobArtifactHandler() service.Handler {
 
 func (api *API) postWorkflowJobArtifactWithTempURLCallbackHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		if  isWorker := isWorker(ctx); !isWorker {
+		if isWorker := isWorker(ctx); !isWorker {
 			return sdk.WithStack(sdk.ErrForbidden)
 		}
 

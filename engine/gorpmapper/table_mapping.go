@@ -1,13 +1,10 @@
-package gorpmapping
+package gorpmapper
 
 import (
 	"crypto/sha1"
-	"database/sql"
-	"encoding/json"
 	"fmt"
 	"reflect"
 	"strings"
-	"sync"
 	"text/template"
 	"time"
 
@@ -23,12 +20,6 @@ type TableMapping struct {
 	Keys            []string
 	EncryptedEntity bool
 	EncryptedFields []EncryptedField
-}
-
-type EncryptedField struct {
-	Name   string
-	Column string
-	Extras []string
 }
 
 func deepFields(iface interface{}) []reflect.StructField {
@@ -55,8 +46,8 @@ func deepFields(iface interface{}) []reflect.StructField {
 	return fields
 }
 
-// New initialize a TableMapping.
-func New(target interface{}, name string, autoIncrement bool, keys ...string) TableMapping {
+// NewTableMapping initialize a TableMapping.
+func (m *Mapper) NewTableMapping(target interface{}, name string, autoIncrement bool, keys ...string) TableMapping {
 	v := sdk.ValueFromInterface(target)
 
 	if v.Kind() != reflect.Struct {
@@ -92,15 +83,13 @@ func New(target interface{}, name string, autoIncrement bool, keys ...string) Ta
 
 			if tagValues[0] == "encrypted" {
 				encryptedEntity = true
-				encryptedFields = append(encryptedFields,
-					EncryptedField{
-						Name:   fields[i].Name,
-						Extras: tagValues[1:],
-						Column: column,
-					})
+				encryptedFields = append(encryptedFields, EncryptedField{
+					Name:   fields[i].Name,
+					Extras: tagValues[1:],
+					Column: column,
+				})
 			}
 		}
-
 	}
 
 	for i := 0; i < v.NumField(); i++ {
@@ -145,14 +134,13 @@ func New(target interface{}, name string, autoIncrement bool, keys ...string) Ta
 				err := fmt.Errorf("TableMapping error: target (%T) canonical function \"%s\" is invalid: %v", target, f.String(), err)
 				panic(err)
 			}
-			CanonicalFormTemplates.l.Lock()
-			CanonicalFormTemplates.m[sha] = t
-			CanonicalFormTemplates.l.Unlock()
+			m.CanonicalFormTemplates.L.Lock()
+			m.CanonicalFormTemplates.M[sha] = t
+			m.CanonicalFormTemplates.L.Unlock()
 		}
-
 	}
 
-	var m = TableMapping{
+	return TableMapping{
 		Target:          target,
 		Name:            name,
 		AutoIncrement:   autoIncrement,
@@ -161,53 +149,4 @@ func New(target interface{}, name string, autoIncrement bool, keys ...string) Ta
 		EncryptedEntity: encryptedEntity,
 		EncryptedFields: encryptedFields,
 	}
-
-	return m
-}
-
-// Mapping is the global var for all registered mapping
-var (
-	Mapping      = map[string]TableMapping{}
-	mappingMutex sync.Mutex
-)
-
-//Register intialiaze gorp mapping
-func Register(m ...TableMapping) {
-	mappingMutex.Lock()
-	defer mappingMutex.Unlock()
-	for _, t := range m {
-		k := reflect.TypeOf(t.Target).String()
-		Mapping[k] = t
-	}
-}
-
-func getTabbleMapping(i interface{}) (TableMapping, bool) {
-	if reflect.ValueOf(i).Kind() == reflect.Ptr {
-		i = reflect.ValueOf(i).Elem().Interface()
-	}
-	mappingMutex.Lock()
-	defer mappingMutex.Unlock()
-	k := reflect.TypeOf(i).String()
-	mapping, has := Mapping[k]
-	return mapping, has
-}
-
-//JSONToNullString returns a valid sql.NullString with json-marshalled i
-func JSONToNullString(i interface{}) (sql.NullString, error) {
-	if i == nil {
-		return sql.NullString{Valid: false}, nil
-	}
-	b, err := json.Marshal(i)
-	if err != nil {
-		return sql.NullString{Valid: false}, err
-	}
-	return sql.NullString{Valid: true, String: string(b)}, nil
-}
-
-//JSONNullString sets the holder with unmarshalled sql.NullString
-func JSONNullString(s sql.NullString, holder interface{}) error {
-	if !s.Valid {
-		return nil
-	}
-	return json.Unmarshal([]byte(s.String), holder)
 }

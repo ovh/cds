@@ -1,8 +1,8 @@
 package ascode
 
 import (
+	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/gorpmapping"
 )
 
 type dbAsCodeEvents sdk.AsCodeEvent

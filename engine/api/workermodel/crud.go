@@ -8,12 +8,12 @@ import (
 
 	"github.com/ovh/cds/engine/api/action"
 	"github.com/ovh/cds/engine/api/group"
+	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/gorpmapping"
 )
 
 // Create returns a new worker model for given data.
-func Create(ctx context.Context, db gorpmapping.SqlExecutorWithTx, data sdk.Model, ident sdk.Identifiable) (*sdk.Model, error) {
+func Create(ctx context.Context, db gorpmapper.SqlExecutorWithTx, data sdk.Model, ident sdk.Identifiable) (*sdk.Model, error) {
 	// the default group cannot own worker model
 	if group.IsDefaultGroupID(data.GroupID) {
 		return nil, sdk.WrapError(sdk.ErrWrongRequest, "this group can't be owner of a worker model")
@@ -63,7 +63,7 @@ func Create(ctx context.Context, db gorpmapping.SqlExecutorWithTx, data sdk.Mode
 }
 
 // Update from given data.
-func Update(ctx context.Context, db gorpmapping.SqlExecutorWithTx, old *sdk.Model, data sdk.Model) (*sdk.Model, error) {
+func Update(ctx context.Context, db gorpmapper.SqlExecutorWithTx, old *sdk.Model, data sdk.Model) (*sdk.Model, error) {
 	// the default group cannot own worker model
 	if group.IsDefaultGroupID(data.GroupID) {
 		return nil, sdk.WrapError(sdk.ErrWrongRequest, "this group can't be owner of a worker model")

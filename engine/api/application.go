@@ -24,10 +24,10 @@ import (
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/engine/api/user"
 	"github.com/ovh/cds/engine/api/workflow"
+	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/exportentities"
-	"github.com/ovh/cds/sdk/gorpmapping"
 )
 
 func (api *API) getApplicationsHandler() service.Handler {
@@ -389,7 +389,7 @@ func (api *API) cloneApplicationHandler() service.Handler {
 }
 
 // cloneApplication Clone an application with all her dependencies: pipelines, permissions, triggers
-func cloneApplication(ctx context.Context, db gorpmapping.SqlExecutorWithTx, store cache.Store, proj sdk.Project, newApp *sdk.Application, appToClone *sdk.Application) error {
+func cloneApplication(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store cache.Store, proj sdk.Project, newApp *sdk.Application, appToClone *sdk.Application) error {
 	// Create Application
 	if err := application.Insert(db, proj, newApp); err != nil {
 		return err

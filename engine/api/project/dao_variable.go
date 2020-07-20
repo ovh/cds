@@ -8,8 +8,9 @@ import (
 	"github.com/go-gorp/gorp"
 	"github.com/lib/pq"
 
+	"github.com/ovh/cds/engine/api/database/gorpmapping"
+	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/gorpmapping"
 	"github.com/ovh/cds/sdk/log"
 )
 
@@ -105,7 +106,7 @@ func DeleteAllVariables(db gorp.SqlExecutor, projectID int64) error {
 }
 
 // InsertVariable Insert a new variable in the given project
-func InsertVariable(db gorpmapping.SqlExecutorWithTx, projID int64, v *sdk.ProjectVariable, u sdk.Identifiable) error {
+func InsertVariable(db gorpmapper.SqlExecutorWithTx, projID int64, v *sdk.ProjectVariable, u sdk.Identifiable) error {
 	//Check variable name
 	rx := sdk.NamePatternRegex
 	if !rx.MatchString(v.Name) {
@@ -139,7 +140,7 @@ func InsertVariable(db gorpmapping.SqlExecutorWithTx, projID int64, v *sdk.Proje
 }
 
 // UpdateVariable Update a variable in the given project
-func UpdateVariable(db gorpmapping.SqlExecutorWithTx, projID int64, variable *sdk.ProjectVariable, variableBefore *sdk.ProjectVariable, u sdk.Identifiable) error {
+func UpdateVariable(db gorpmapper.SqlExecutorWithTx, projID int64, variable *sdk.ProjectVariable, variableBefore *sdk.ProjectVariable, u sdk.Identifiable) error {
 	rx := sdk.NamePatternRegex
 	if !rx.MatchString(variable.Name) {
 		return sdk.NewError(sdk.ErrInvalidName, fmt.Errorf("Invalid variable name. It should match %s", sdk.NamePattern))

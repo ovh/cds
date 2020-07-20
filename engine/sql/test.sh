@@ -22,7 +22,7 @@ RED='\033[0;31m'
 GREEN='\033[0;32m'
 
 PGUSER=${CDS_API_DATABASE_USER:-cds}
-PGPASSWORD=${CDS_API_DATABASE_PASSWORD:-cds}
+PGPASSWORD=${CDS_API_DATABASE_PASS:-cds}
 PGNAME=${CDS_API_DATABASE_NAME:-cds}
 PGHOST=${CDS_API_DATABASE_HOST:-localhost}
 PGPORT=${CDS_API_DATABASE_PORT:-5432}
@@ -36,7 +36,7 @@ echo "  Password: **********"
 echo "  Database: $PGNAME"
 
 echo "======================================================================"
-psql -t -f missing_pk.sql -o missing_pk.log -h $PGHOST -d $PGNAME
+psql -t -f missing_pk.sql -o missing_pk.log -h $PGHOST -d $PGNAME -U $PGUSER
 if grep -qvE '^\s*$' missing_pk.log
 then
     echo "SM0005: Missing primary keys"

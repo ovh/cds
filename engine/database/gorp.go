@@ -10,7 +10,7 @@ import (
 	"github.com/golang/protobuf/ptypes"
 	"github.com/golang/protobuf/ptypes/timestamp"
 
-	"github.com/ovh/cds/sdk/gorpmapping"
+	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk/log"
 )
 
@@ -19,13 +19,14 @@ type gorpLogger struct{}
 func (g gorpLogger) Printf(format string, v ...interface{}) { log.Debug(format, v...) }
 
 var (
-	lastDB    *sql.DB
-	lastDBMap *gorp.DbMap
+	lastDB     *sql.DB
+	lastDBMap  *gorp.DbMap
+	lastMapper *gorpmapper.Mapper
 )
 
 //DBMap returns a propor intialized gorp.DBMap pointer
-func DBMap(db *sql.DB) *gorp.DbMap {
-	if db == lastDB && lastDBMap != nil && db == lastDBMap.Db {
+func DBMap(m *gorpmapper.Mapper, db *sql.DB) *gorp.DbMap {
+	if db == lastDB && m == lastMapper && lastDBMap != nil && db == lastDBMap.Db {
 		return lastDBMap
 	}
 
@@ -35,7 +36,7 @@ func DBMap(db *sql.DB) *gorp.DbMap {
 		dbmap.TraceOn("[GORP]     Query>", gorpLogger{})
 	}
 
-	for _, m := range gorpmapping.Mapping {
+	for _, m := range m.Mapping {
 		tableMap := dbmap.AddTableWithName(m.Target, m.Name).SetKeys(m.AutoIncrement, m.Keys...)
 
 		if m.EncryptedEntity {
@@ -46,7 +47,6 @@ func DBMap(db *sql.DB) *gorp.DbMap {
 				}
 			}
 		}
-
 	}
 
 	lastDB = db

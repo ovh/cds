@@ -86,7 +86,7 @@ docker run --name cds-db -e POSTGRES_PASSWORD=cds -e POSTGRES_USER=cds -e POSTGR
 ```bash
 cd $HOME/cds
 ./cds-engine download sql --config conf.toml
-./cds-engine database upgrade --db-host localhost --db-user cds --db-password cds --db-name cds --db-sslmode disable --db-port 5432 --migrate-dir sql
+./cds-engine database upgrade --db-host localhost --db-user cds --db-password cds --db-name cds --db-sslmode disable --db-port 5432 --migrate-dir sql/api
 ```
 
 ## Launch CDS API

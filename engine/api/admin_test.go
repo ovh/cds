@@ -5,12 +5,13 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/ovh/cds/engine/api/test/assets"
-	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/gorpmapping"
-
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/ovh/cds/engine/api/database/gorpmapping"
+	"github.com/ovh/cds/engine/api/test/assets"
+	"github.com/ovh/cds/engine/gorpmapper"
+	"github.com/ovh/cds/sdk"
 )
 
 func Test_getAdminDatabaseSignatureResume(t *testing.T) {
@@ -124,15 +125,8 @@ func Test_postAdminDatabaseSignatureRollEntityByPrimaryKey(t *testing.T) {
 	}
 }
 
-type TestEncryptedData struct {
-	ID                   int64  `db:"id"`
-	Data                 string `db:"data"`
-	SensitiveData        string `db:"sensitive_data" gorpmapping:"encrypted"`
-	AnotherSensitiveData string `db:"another_sensitive_data" gorpmapping:"encrypted"`
-}
-
 func Test_getAdminDatabaseEncryptedEntities(t *testing.T) {
-	gorpmapping.Register(gorpmapping.New(TestEncryptedData{}, "test_encrypted_data", true, "id"))
+	gorpmapping.Register(gorpmapping.New(gorpmapper.TestEncryptedData{}, "test_encrypted_data", true, "id"))
 
 	api, db, _ := newTestAPI(t)
 
@@ -150,13 +144,13 @@ func Test_getAdminDatabaseEncryptedEntities(t *testing.T) {
 }
 
 func Test_getAdminDatabaseEncryptedTuplesByEntity(t *testing.T) {
-	gorpmapping.Register(gorpmapping.New(TestEncryptedData{}, "test_encrypted_data", true, "id"))
+	gorpmapping.Register(gorpmapping.New(gorpmapper.TestEncryptedData{}, "test_encrypted_data", true, "id"))
 
 	api, db, _ := newTestAPI(t)
 
 	_, jwt := assets.InsertAdminUser(t, db)
 
-	uri := api.Router.GetRoute("GET", api.getAdminDatabaseEncryptedTuplesByEntity, map[string]string{"entity": "api.TestEncryptedData"})
+	uri := api.Router.GetRoute("GET", api.getAdminDatabaseEncryptedTuplesByEntity, map[string]string{"entity": "gorpmapper.TestEncryptedData"})
 	req := assets.NewJWTAuthentifiedRequest(t, jwt, "GET", uri, nil)
 
 	// Do the request
@@ -168,25 +162,25 @@ func Test_getAdminDatabaseEncryptedTuplesByEntity(t *testing.T) {
 }
 
 func Test_postAdminDatabaseRollEncryptedEntityByPrimaryKey(t *testing.T) {
-	gorpmapping.Register(gorpmapping.New(TestEncryptedData{}, "test_encrypted_data", true, "id"))
+	gorpmapping.Register(gorpmapping.New(gorpmapper.TestEncryptedData{}, "test_encrypted_data", true, "id"))
 
 	api, db, _ := newTestAPI(t)
 
 	_, jwt := assets.InsertAdminUser(t, db)
 
-	uri := api.Router.GetRoute("GET", api.getAdminDatabaseEncryptedTuplesByEntity, map[string]string{"entity": "api.TestEncryptedData"})
+	uri := api.Router.GetRoute("GET", api.getAdminDatabaseEncryptedTuplesByEntity, map[string]string{"entity": "gorpmapper.TestEncryptedData"})
 	req := assets.NewJWTAuthentifiedRequest(t, jwt, "GET", uri, nil)
 
 	// Do the request
 	w := httptest.NewRecorder()
 	api.Router.Mux.ServeHTTP(w, req)
-	assert.Equal(t, 200, w.Code)
+	require.Equal(t, 200, w.Code)
 
 	var res []string
 	require.NoError(t, json.Unmarshal(w.Body.Bytes(), &res))
 
 	for _, s := range res {
-		uri := api.Router.GetRoute("POST", api.postAdminDatabaseRollEncryptedEntityByPrimaryKey, map[string]string{"entity": "api.TestEncryptedData", "pk": s})
+		uri := api.Router.GetRoute("POST", api.postAdminDatabaseRollEncryptedEntityByPrimaryKey, map[string]string{"entity": "gorpmapper.TestEncryptedData", "pk": s})
 		req := assets.NewJWTAuthentifiedRequest(t, jwt, "POST", uri, nil)
 
 		// Do the request

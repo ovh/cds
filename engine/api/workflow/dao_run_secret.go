@@ -5,8 +5,9 @@ import (
 
 	"github.com/go-gorp/gorp"
 
+	"github.com/ovh/cds/engine/api/database/gorpmapping"
+	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/gorpmapping"
 	"github.com/ovh/cds/sdk/log"
 )
 
@@ -18,7 +19,7 @@ const (
 	SecretApplicationIntegrationContext = "app:%d:integration:%s"
 )
 
-func InsertRunSecret(ctx context.Context, db gorpmapping.SqlExecutorWithTx, wrSecret *sdk.WorkflowRunSecret) error {
+func InsertRunSecret(ctx context.Context, db gorpmapper.SqlExecutorWithTx, wrSecret *sdk.WorkflowRunSecret) error {
 	dbData := &dbWorkflowRunSecret{WorkflowRunSecret: *wrSecret}
 	dbData.ID = sdk.UUID()
 	if err := gorpmapping.InsertAndSign(ctx, db, dbData); err != nil {

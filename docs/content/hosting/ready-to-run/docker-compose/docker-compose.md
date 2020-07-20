@@ -9,17 +9,19 @@ card:
 
 The [docker-compose.yml](https://github.com/ovh/cds/blob/master/docker-compose.yml) contains:
 
-- cds-db service with a PostgreSQL
+- cds-db-api service with a PostgreSQL
+- cds-db-cdn service with a PostgreSQL
 - cds-cache service with a Redis
 - elasticsearch service with an Elasticsearch
 - dockerhost allows cds-hatchery-swarm service to communicate with the local docker daemon
-- cds-migrate service to prepare DB tables
+- cds-migrate service to prepare databases for API and CDN
 - cds-api service
 - cds-ui service
 - cds-elasticsearch service
 - cds-hatchery-swarm service
 - cds-vcs service
 - cds-repositories service
+- cds-cdn service
 
 Docker compose is very convenient to launch CDS for testing it. But this is not recommended for a Production Installation.
 
@@ -34,11 +36,12 @@ $ export HOSTNAME=$(hostname)
 $ docker pull ovhcom/cds-engine:latest
 
 # Create PostgreSQL database, redis and elasticsearch
-$ docker-compose up --no-recreate -d cds-db cds-cache elasticsearch dockerhost
+$ docker-compose up --no-recreate -d cds-db-api cds-db-cdn cds-cache elasticsearch dockerhost
  
 # check if database is up, the logs must contain "LOG: database system is ready to accept connections"
 $ docker-compose logs| grep 'database system is ready to accept connections'
-# you should have this line after few seconds: cds-db_1 | LOG:  database system is ready to accept connections
+# you should have this line after few seconds: cds-db-api_1 | LOG:  database system is ready to accept connections
+# you should have this line after few seconds: cds-db-cdn_1 | LOG:  database system is ready to accept connections
 
 $ docker-compose up --no-recreate cds-migrate
 # You should have this log: "cdstest_cds-migrate_1 exited with code 0"

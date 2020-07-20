@@ -1,12 +1,15 @@
-package gorpmapping_test
+package gorpmapper_test
 
 import (
 	"context"
 	"testing"
 
-	"github.com/ovh/cds/engine/api/test"
-	"github.com/ovh/cds/sdk/gorpmapping"
 	"github.com/stretchr/testify/require"
+
+	"github.com/ovh/cds/engine/api/database/gorpmapping"
+	"github.com/ovh/cds/engine/api/test"
+	"github.com/ovh/cds/engine/gorpmapper"
+	"github.com/ovh/cds/sdk"
 )
 
 /**
@@ -30,98 +33,108 @@ BenchmarkCheckSignature: 5283 ns/op 1344 B/op 21 allocs/op
 */
 
 func BenchmarkGetWithoutDecryption(b *testing.B) {
-	gorpmapping.Register(gorpmapping.New(TestEncryptedData{}, "test_encrypted_data", true, "id"))
+	m := gorpmapper.New()
 
-	db, _, end := test.SetupPGToCancel(b)
+	m.Register(m.NewTableMapping(gorpmapper.TestEncryptedData{}, "test_encrypted_data", true, "id"))
+
+	db, _, end := test.SetupPGToCancel(b, m, sdk.TypeAPI)
 	defer end()
 
-	var d = TestEncryptedData{
+	var d = gorpmapper.TestEncryptedData{
 		Data:                 "data",
 		SensitiveData:        "sensitive-data",
 		AnotherSensitiveData: "another-sensitive-data",
 	}
 
-	require.NoError(b, gorpmapping.Insert(db, &d))
+	require.NoError(b, m.Insert(db, &d))
 
 	for n := 0; n < b.N; n++ {
-		query := gorpmapping.NewQuery("select * from test_encrypted_data where id = $1").Args(d.ID)
-		var d2 TestEncryptedData
-		_, err := gorpmapping.Get(context.TODO(), db, query, &d2)
+		query := gorpmapper.NewQuery("select * from test_encrypted_data where id = $1").Args(d.ID)
+		var d2 gorpmapper.TestEncryptedData
+		_, err := m.Get(context.TODO(), db, query, &d2)
 		require.NoError(b, err)
 	}
 }
 
 func BenchmarkGetWithDecryption(b *testing.B) {
-	gorpmapping.Register(gorpmapping.New(TestEncryptedData{}, "test_encrypted_data", true, "id"))
+	m := gorpmapper.New()
 
-	db, _, end := test.SetupPGToCancel(b)
+	m.Register(m.NewTableMapping(gorpmapper.TestEncryptedData{}, "test_encrypted_data", true, "id"))
+
+	db, _, end := test.SetupPGToCancel(b, m, sdk.TypeAPI)
 	defer end()
 
-	var d = TestEncryptedData{
+	var d = gorpmapper.TestEncryptedData{
 		Data:                 "data",
 		SensitiveData:        "sensitive-data",
 		AnotherSensitiveData: "another-sensitive-data",
 	}
 
-	require.NoError(b, gorpmapping.Insert(db, &d))
+	require.NoError(b, m.Insert(db, &d))
 
 	for n := 0; n < b.N; n++ {
-		query := gorpmapping.NewQuery("select * from test_encrypted_data where id = $1").Args(d.ID)
-		var d2 TestEncryptedData
-		_, err := gorpmapping.Get(context.TODO(), db, query, &d2, gorpmapping.GetOptions.WithDecryption)
+		query := gorpmapper.NewQuery("SELECT * FROM test_encrypted_data WHERE id = $1").Args(d.ID)
+		var d2 gorpmapper.TestEncryptedData
+		_, err := m.Get(context.TODO(), db, query, &d2, gorpmapping.GetOptions.WithDecryption)
 		require.NoError(b, err)
 	}
 }
 
 func BenchmarkInsertWithoutSignature(b *testing.B) {
-	gorpmapping.Register(gorpmapping.New(TestEncryptedData{}, "test_encrypted_data", true, "id"))
+	m := gorpmapper.New()
 
-	db, _, end := test.SetupPGToCancel(b)
+	m.Register(m.NewTableMapping(gorpmapper.TestEncryptedData{}, "test_encrypted_data", true, "id"))
+
+	db, _, end := test.SetupPGToCancel(b, m, sdk.TypeAPI)
 	defer end()
 
 	for n := 0; n < b.N; n++ {
-		var d = TestEncryptedData{
+		var d = gorpmapper.TestEncryptedData{
 			Data:                 "data",
 			SensitiveData:        "sensitive-data",
 			AnotherSensitiveData: "another-sensitive-data",
 		}
 
-		require.NoError(b, gorpmapping.Insert(db, &d))
+		require.NoError(b, m.Insert(db, &d))
 	}
 }
 
 func BenchmarkInsertWithSignature(b *testing.B) {
-	gorpmapping.Register(gorpmapping.New(TestEncryptedData{}, "test_encrypted_data", true, "id"))
+	m := gorpmapper.New()
 
-	db, _, end := test.SetupPGToCancel(b)
+	m.Register(m.NewTableMapping(gorpmapper.TestEncryptedData{}, "test_encrypted_data", true, "id"))
+
+	db, _, end := test.SetupPGToCancel(b, m, sdk.TypeAPI)
 	defer end()
 
 	for n := 0; n < b.N; n++ {
-		var d = TestEncryptedData{
+		var d = gorpmapper.TestEncryptedData{
 			Data:                 "data",
 			SensitiveData:        "sensitive-data",
 			AnotherSensitiveData: "another-sensitive-data",
 		}
 
-		require.NoError(b, gorpmapping.InsertAndSign(context.TODO(), db, &d))
+		require.NoError(b, m.InsertAndSign(context.TODO(), db, &d))
 	}
 }
 
 func BenchmarkCheckSignature(b *testing.B) {
-	gorpmapping.Register(gorpmapping.New(TestEncryptedData{}, "test_encrypted_data", true, "id"))
+	m := gorpmapper.New()
 
-	db, _, end := test.SetupPGToCancel(b)
+	m.Register(m.NewTableMapping(gorpmapper.TestEncryptedData{}, "test_encrypted_data", true, "id"))
+
+	db, _, end := test.SetupPGToCancel(b, m, sdk.TypeAPI)
 	defer end()
 
-	var d = TestEncryptedData{
+	var d = gorpmapper.TestEncryptedData{
 		Data:                 "data",
 		SensitiveData:        "sensitive-data",
 		AnotherSensitiveData: "another-sensitive-data",
 	}
 
-	require.NoError(b, gorpmapping.InsertAndSign(context.TODO(), db, &d))
+	require.NoError(b, m.InsertAndSign(context.TODO(), db, &d))
 
 	for n := 0; n < b.N; n++ {
-		_, _ = gorpmapping.CheckSignature(d, d.GetSignature())
+		_, _ = m.CheckSignature(d, d.GetSignature())
 	}
 }

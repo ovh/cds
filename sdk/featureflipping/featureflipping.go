@@ -8,22 +8,24 @@ import (
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk/luascript"
-	gocache "github.com/patrickmn/go-cache"
+  gocache "github.com/patrickmn/go-cache"
+
+	"github.com/ovh/cds/engine/gorpmapper"
 )
 
 var (
 	cacheFeature = gocache.New(time.Minute, time.Minute)
 )
 
-func Exists(ctx context.Context, db gorp.SqlExecutor, name string) bool {
-	f, _ := LoadByName(ctx, db, name)
+func Exists(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlExecutor, name string) bool {
+	f, _ := LoadByName(ctx, m, db, name)
 	return f.ID != 0
 }
 
-func IsEnabled(ctx context.Context, db gorp.SqlExecutor, name string, vars map[string]string) bool {
+func IsEnabled(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlExecutor, name string, vars map[string]string) bool {
 	cachedFeatureI, has := cacheFeature.Get(name)
 	if !has {
-		f, err := LoadByName(ctx, db, name)
+		f, err := LoadByName(ctx, m, db, name)
 		if err != nil {
 			log.Error(ctx, "featureflipping.IsEnabled> error: unable to load Feature '%s' from database: %v", name, err)
 			return false

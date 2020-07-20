@@ -5,8 +5,9 @@ import (
 
 	"github.com/go-gorp/gorp"
 
+	"github.com/ovh/cds/engine/api/database/gorpmapping"
+	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/gorpmapping"
 	"github.com/ovh/cds/sdk/log"
 )
 
@@ -83,12 +84,12 @@ func LoadLinkGroupUserForGroupIDAndUserID(ctx context.Context, db gorp.SqlExecut
 }
 
 // InsertLinkGroupUser inserts given link group-user into database.
-func InsertLinkGroupUser(ctx context.Context, db gorpmapping.SqlExecutorWithTx, l *LinkGroupUser) error {
+func InsertLinkGroupUser(ctx context.Context, db gorpmapper.SqlExecutorWithTx, l *LinkGroupUser) error {
 	return sdk.WrapError(gorpmapping.InsertAndSign(ctx, db, l), "unable to insert link between group and user")
 }
 
 // UpdateLinkGroupUser updates given link group-user into database.
-func UpdateLinkGroupUser(ctx context.Context, db gorpmapping.SqlExecutorWithTx, l *LinkGroupUser) error {
+func UpdateLinkGroupUser(ctx context.Context, db gorpmapper.SqlExecutorWithTx, l *LinkGroupUser) error {
 	return sdk.WrapError(gorpmapping.UpdateAndSign(ctx, db, l), "unable to update link between group and user with id: %d", l.ID)
 }
 

@@ -118,7 +118,7 @@ func Test_getAllVCSServersHandler(t *testing.T) {
 }
 
 func Test_accessTokenAuth(t *testing.T) {
-	cfg := test.LoadTestingConf(t)
+	cfg := test.LoadTestingConf(t, sdk.TypeAPI)
 
 	//Bootstrap the service
 	s, err := newTestService(t)
@@ -156,7 +156,7 @@ func Test_accessTokenAuth(t *testing.T) {
 }
 
 func Test_getReposHandler(t *testing.T) {
-	cfg := test.LoadTestingConf(t)
+	cfg := test.LoadTestingConf(t, sdk.TypeAPI)
 
 	//Bootstrap the service
 	s, err := newTestService(t)
@@ -195,7 +195,7 @@ func Test_getReposHandler(t *testing.T) {
 }
 
 func Test_getRepoHandler(t *testing.T) {
-	cfg := test.LoadTestingConf(t)
+	cfg := test.LoadTestingConf(t, sdk.TypeAPI)
 
 	//Bootstrap the service
 	s, err := newTestService(t)
@@ -237,7 +237,7 @@ func Test_getRepoHandler(t *testing.T) {
 }
 
 func Test_getBranchesHandler(t *testing.T) {
-	cfg := test.LoadTestingConf(t)
+	cfg := test.LoadTestingConf(t, sdk.TypeAPI)
 
 	//Bootstrap the service
 	s, err := newTestService(t)
@@ -279,7 +279,7 @@ func Test_getBranchesHandler(t *testing.T) {
 }
 
 func Test_getBranchHandler(t *testing.T) {
-	cfg := test.LoadTestingConf(t)
+	cfg := test.LoadTestingConf(t, sdk.TypeAPI)
 
 	//Bootstrap the service
 	s, err := newTestService(t)
@@ -329,7 +329,7 @@ func Test_getBranchHandler(t *testing.T) {
 }
 
 func Test_getCommitsHandler(t *testing.T) {
-	cfg := test.LoadTestingConf(t)
+	cfg := test.LoadTestingConf(t, sdk.TypeAPI)
 
 	//Bootstrap the service
 	s, err := newTestService(t)
@@ -377,7 +377,7 @@ func Test_getCommitsHandler(t *testing.T) {
 }
 
 func Test_getCommitHandler(t *testing.T) {
-	cfg := test.LoadTestingConf(t)
+	cfg := test.LoadTestingConf(t, sdk.TypeAPI)
 
 	//Bootstrap the service
 	s, err := newTestService(t)
@@ -420,7 +420,7 @@ func Test_getCommitHandler(t *testing.T) {
 }
 
 func Test_getCommitStatusHandler(t *testing.T) {
-	cfg := test.LoadTestingConf(t)
+	cfg := test.LoadTestingConf(t, sdk.TypeAPI)
 
 	//Bootstrap the service
 	s, err := newTestService(t)
@@ -503,7 +503,7 @@ func checkConfigGithub(cfg map[string]string, t *testing.T) {
 }
 
 func Test_postRepoGrantHandler(t *testing.T) {
-	cfg := test.LoadTestingConf(t)
+	cfg := test.LoadTestingConf(t, sdk.TypeAPI)
 
 	//Bootstrap the service
 	s, err := newTestService(t)

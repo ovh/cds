@@ -1,4 +1,4 @@
-package gorpmapping
+package gorpmapper
 
 import (
 	"encoding/json"
@@ -16,7 +16,7 @@ const (
 	KeyEcnryptionIdentifier = "db-crypt"
 )
 
-func Encrypt(src interface{}, dst *[]byte, extra []interface{}) error {
+func (m *Mapper) Encrypt(src interface{}, dst *[]byte, extra []interface{}) error {
 	clearContent, err := json.Marshal(src)
 	if err != nil {
 		return sdk.WithStack(fmt.Errorf("unable to marshal content: %v", err))
@@ -28,7 +28,7 @@ func Encrypt(src interface{}, dst *[]byte, extra []interface{}) error {
 		extrabytes = append(extrabytes, btes)
 	}
 
-	btes, err := encryptionKey.Encrypt(clearContent, extrabytes...)
+	btes, err := m.encryptionKey.Encrypt(clearContent, extrabytes...)
 	if err != nil {
 		return sdk.WithStack(fmt.Errorf("unable to encrypt content: %v", err))
 	}
@@ -38,7 +38,7 @@ func Encrypt(src interface{}, dst *[]byte, extra []interface{}) error {
 	return nil
 }
 
-func Decrypt(src []byte, dest interface{}, extra []interface{}) error {
+func (m *Mapper) Decrypt(src []byte, dest interface{}, extra []interface{}) error {
 	t := reflect.TypeOf(dest)
 	if t.Kind() != reflect.Ptr {
 		return fmt.Errorf("gorpmapping: cannot Decrypt into a non-pointer : %v", t)
@@ -50,7 +50,7 @@ func Decrypt(src []byte, dest interface{}, extra []interface{}) error {
 		extrabytes = append(extrabytes, btes)
 	}
 
-	clearContent, err := encryptionKey.Decrypt(src, extrabytes...)
+	clearContent, err := m.encryptionKey.Decrypt(src, extrabytes...)
 	if err != nil {
 		return sdk.WithStack(fmt.Errorf("unable to decrypt content: %v", err))
 	}
@@ -58,8 +58,8 @@ func Decrypt(src []byte, dest interface{}, extra []interface{}) error {
 	return json.Unmarshal(clearContent, dest)
 }
 
-func updateEncryptedData(db gorp.SqlExecutor, i interface{}) error {
-	mapping, has := getTabbleMapping(i)
+func (m *Mapper) updateEncryptedData(db gorp.SqlExecutor, i interface{}) error {
+	mapping, has := m.GetTableMapping(i)
 	if !has {
 		return sdk.WithStack(fmt.Errorf("unkown entity %T", i))
 	}
@@ -88,14 +88,14 @@ func updateEncryptedData(db gorp.SqlExecutor, i interface{}) error {
 			}
 			extras = append(extras, fieldV.Interface())
 		}
-		if err := Encrypt(&field, &encryptedContent, extras); err != nil {
+		if err := m.Encrypt(&field, &encryptedContent, extras); err != nil {
 			return err
 		}
 		encryptedContents[f.Name] = encryptedContent
 		encryptedColumns[f.Name] = f.Column
 	}
 
-	table, key, id, err := dbMappingPKey(i)
+	table, key, id, err := m.dbMappingPKey(i)
 	if err != nil {
 		return sdk.WrapError(err, "primary key field not found in table: %s", table)
 	}
@@ -121,8 +121,8 @@ func updateEncryptedData(db gorp.SqlExecutor, i interface{}) error {
 	return nil
 }
 
-func resetEncryptedData(db gorp.SqlExecutor, i interface{}) error {
-	mapping, has := getTabbleMapping(i)
+func (m *Mapper) resetEncryptedData(db gorp.SqlExecutor, i interface{}) error {
+	mapping, has := m.GetTableMapping(i)
 	if !has {
 		return sdk.WithStack(fmt.Errorf("unkown entity %T", i))
 	}
@@ -149,19 +149,19 @@ func resetEncryptedData(db gorp.SqlExecutor, i interface{}) error {
 	return nil
 }
 
-func getEncryptedData(db gorp.SqlExecutor, i interface{}) error {
+func getEncryptedData(m *Mapper, db gorp.SqlExecutor, i interface{}) error {
 	// If the target is a slice or a pointer of slice, let's call getEncryptedSliceData
 	t := reflect.TypeOf(i)
 	if t.Kind() == reflect.Ptr {
 		if t = t.Elem(); t.Kind() == reflect.Slice {
-			return getEncryptedSliceData(db, i)
+			return m.getEncryptedSliceData(db, i)
 		}
 	} else if t.Kind() == reflect.Slice {
-		return getEncryptedSliceData(db, i)
+		return m.getEncryptedSliceData(db, i)
 	}
 
 	// Get the TableMapping for the concrete type. If the type entity is not encrypt, let's skip all the things
-	mapping, has := getTabbleMapping(i)
+	mapping, has := m.GetTableMapping(i)
 	if !has {
 		return sdk.WithStack(fmt.Errorf("unkown entity %T", i))
 	}
@@ -169,7 +169,7 @@ func getEncryptedData(db gorp.SqlExecutor, i interface{}) error {
 		return nil
 	}
 
-	table, key, id, err := dbMappingPKey(i)
+	table, key, id, err := m.dbMappingPKey(i)
 	if err != nil {
 		return sdk.WrapError(err, "primary key field not found in table: %s", table)
 	}
@@ -215,7 +215,7 @@ func getEncryptedData(db gorp.SqlExecutor, i interface{}) error {
 		var targetField = val.FieldByName(mapping.EncryptedFields[idx].Name)
 		var targetHolder = reflect.New(reflect.TypeOf(targetField.Interface())).Interface()
 
-		if err := Decrypt(*encryptedContent, targetHolder, extras); err != nil {
+		if err := m.Decrypt(*encryptedContent, targetHolder, extras); err != nil {
 			return err
 		}
 		fieldsValue[idx].Set(reflect.ValueOf(targetHolder).Elem())
@@ -224,7 +224,7 @@ func getEncryptedData(db gorp.SqlExecutor, i interface{}) error {
 	return nil
 }
 
-func getEncryptedSliceData(db gorp.SqlExecutor, i interface{}) error {
+func (m *Mapper) getEncryptedSliceData(db gorp.SqlExecutor, i interface{}) error {
 	// Let's consider the value pointed only
 	val := reflect.ValueOf(i)
 	if reflect.ValueOf(i).Kind() == reflect.Ptr {
@@ -236,7 +236,7 @@ func getEncryptedSliceData(db gorp.SqlExecutor, i interface{}) error {
 	ieval := reflect.New(eval).Interface()
 
 	// Find the tabble mapping for the contained type of the slice
-	mapping, has := getTabbleMapping(ieval)
+	mapping, has := m.GetTableMapping(ieval)
 	if !has {
 		return sdk.WithStack(fmt.Errorf("unkown entity %T", i))
 	}
@@ -245,7 +245,7 @@ func getEncryptedSliceData(db gorp.SqlExecutor, i interface{}) error {
 		return nil
 	}
 
-	table, key, pk, err := dbMappingPKey(ieval)
+	table, key, pk, err := m.dbMappingPKey(ieval)
 	if err != nil {
 		return sdk.WrapError(err, "primary key field not found in table: %s", table)
 	}
@@ -311,7 +311,7 @@ func getEncryptedSliceData(db gorp.SqlExecutor, i interface{}) error {
 					encryptedContent := reflect.ValueOf(encryptedContentPtr).Elem().Interface().([]byte)
 					targetHolder := reflect.New(reflect.TypeOf(targetField.Interface())).Interface()
 					// Decrypt and store the result in the target slice element through power of reflection
-					if err := Decrypt(encryptedContent, targetHolder, extras); err != nil {
+					if err := m.Decrypt(encryptedContent, targetHolder, extras); err != nil {
 						return sdk.WithStack(err)
 					}
 					targetField.Set(reflect.ValueOf(targetHolder).Elem())

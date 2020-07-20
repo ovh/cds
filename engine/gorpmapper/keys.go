@@ -1,12 +1,8 @@
-package gorpmapping
+package gorpmapper
 
 import (
 	"encoding/json"
-	"sync"
 
-	"github.com/ovh/symmecrypt"
-
-	"github.com/ovh/configstore"
 	// Import all symmecrypt ciphers
 	_ "github.com/ovh/symmecrypt/ciphers/aesgcm"
 	_ "github.com/ovh/symmecrypt/ciphers/aespmacsiv"
@@ -16,17 +12,12 @@ import (
 	"github.com/ovh/symmecrypt/keyloader"
 
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/configstore"
 )
 
-var (
-	once          sync.Once
-	signatureKey  symmecrypt.Key
-	encryptionKey symmecrypt.Key
-)
-
-func ConfigureKeys(signatureKeys, encryptionKeys *[]keyloader.KeyConfig) error {
+func (m *Mapper) ConfigureKeys(signatureKeys, encryptionKeys *[]keyloader.KeyConfig) error {
 	var globalErr error
-	once.Do(func() {
+	m.once.Do(func() {
 		// Marshal the keys
 		var marshalledKeys [][]byte
 		for _, k := range *signatureKeys {
@@ -45,26 +36,25 @@ func ConfigureKeys(signatureKeys, encryptionKeys *[]keyloader.KeyConfig) error {
 			marshalledKeys = append(marshalledKeys, btes)
 		}
 
-		// Push the keys in the keyloader
-		// TODO: this should be updated to whole configuration management with configstore
+		store := configstore.NewStore()
+
 		var provider configstore.Provider
 		provider = func() (configstore.ItemList, error) {
 			list := configstore.ItemList{}
 			for _, btes := range marshalledKeys {
 				list.Items = append(list.Items, configstore.NewItem(keyloader.EncryptionKeyConfigName, string(btes), 99))
 			}
-
 			return list, nil
 		}
-		configstore.RegisterProvider("fakeConfigstoreProvider", provider)
+		store.RegisterProvider("fakeConfigstoreProvider", provider)
 
 		var err error
-		signatureKey, err = keyloader.WatchKey(KeySignIdentifier)
+		m.signatureKey, err = keyloader.WatchKeyFromStore(KeySignIdentifier, store)
 		if err != nil {
 			globalErr = sdk.WithStack(err)
 		}
 
-		encryptionKey, err = keyloader.WatchKey(KeyEcnryptionIdentifier)
+		m.encryptionKey, err = keyloader.WatchKeyFromStore(KeyEcnryptionIdentifier, store)
 		if err != nil {
 			globalErr = sdk.WithStack(err)
 		}

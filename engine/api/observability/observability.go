@@ -11,13 +11,14 @@ import (
 	"go.opencensus.io/trace"
 
 	"github.com/ovh/cds/engine/api/cache"
+	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk/featureflipping"
 	"github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk/telemetry"
 )
 
 // Start may start a tracing span
-func Start(ctx context.Context, s telemetry.Service, w http.ResponseWriter, req *http.Request, opt telemetry.Options, db gorp.SqlExecutor, store cache.Store) (context.Context, error) {
+func Start(ctx context.Context, s telemetry.Service, w http.ResponseWriter, req *http.Request, opt telemetry.Options, m *gorpmapper.Mapper, db gorp.SqlExecutor, store cache.Store) (context.Context, error) {
 	exp := telemetry.TraceExporter(ctx)
 	if exp == nil {
 		return ctx, nil
@@ -51,7 +52,7 @@ func Start(ctx context.Context, s telemetry.Service, w http.ResponseWriter, req 
 
 	var sampler trace.Sampler
 	switch {
-	case featureflipping.IsEnabled(ctx, db, "tracing", mapVars):
+	case featureflipping.IsEnabled(ctx, m, db, "tracing", mapVars):
 		sampler = trace.AlwaysSample()
 	case hasSpanContext && rootSpanContext.IsSampled():
 		sampler = trace.AlwaysSample()

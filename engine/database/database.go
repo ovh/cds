@@ -10,6 +10,7 @@ import (
 	"github.com/go-gorp/gorp"
 	"github.com/lib/pq"
 
+	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
@@ -53,8 +54,10 @@ func (f *DBConnectionFactory) DB() *sql.DB {
 }
 
 // GetDBMap returns a gorp.DbMap pointer
-func (f *DBConnectionFactory) GetDBMap() *gorp.DbMap {
-	return DBMap(f.DB())
+func (f *DBConnectionFactory) GetDBMap(m *gorpmapper.Mapper) func() *gorp.DbMap {
+	return func() *gorp.DbMap {
+		return DBMap(m, f.DB())
+	}
 }
 
 //Set is for tetsing purpose, we need to set manually the connection

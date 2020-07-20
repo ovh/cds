@@ -2,7 +2,7 @@
 
 ## Database and Roles creation
 
-The CDS API should be authenticated on the database with a RW Role on all tables in the database. A role with CREATE role is needed only to run migration scripts.
+The CDS API and CDN service should be authenticated on the database with a RW Role on all tables. A role with CREATE role is needed only to run migration scripts.
 Here is an example of roles creation script
 ```sql
 CREATE ROLE "cds-adm";
@@ -84,7 +84,7 @@ This will never-applied migration scripts (ie. run the `Up` parts) and mark them
     Flags:
         --dry-run              Dry run upgrade
         --limit int            Max number of migrations to apply (0 = unlimited)
-        --migrate-dir string   CDS SQL Migration directory (default "./engine/sql")
+        --migrate-dir string   CDS SQL Migration directory (default "./engine/sql/api")
 
     Global Flags:
         --db-host string       DB Host (default "localhost")
@@ -111,7 +111,7 @@ This will undo migration scripts (ie. run the `Down` parts) and mark them never 
     Flags:
         --dry-run              Dry run upgrade
         --limit int            Max number of migrations to apply (0 = unlimited)
-        --migrate-dir string   CDS SQL Migration directory (default "./engine/sql")
+        --migrate-dir string   CDS SQL Migration directory (default "./engine/sql/api")
 
     Global Flags:
         --db-host string       DB Host (default "localhost")
@@ -129,7 +129,7 @@ This will undo migration scripts (ie. run the `Down` parts) and mark them never 
 Show migration status.
 
 ```shell
-    $ <PATH_TO_CDS>/engine database status --db-host <host> --db-password <password> --db-name <database> --migrate-dir ./engine/sql
+    $ <PATH_TO_CDS>/engine database status --db-host <host> --db-password <password> --db-name <database> --migrate-dir ./engine/sql/api
     |          MIGRATION           |                APPLIED                |
     |------------------------------|---------------------------------------|
     | 000_create_all.sql           | 2016-10-26 16:01:08.575758 +0200 CEST |

@@ -6,11 +6,12 @@ package mock_services
 
 import (
 	context "context"
+	http "net/http"
+	reflect "reflect"
+
 	gomock "github.com/golang/mock/gomock"
 	services "github.com/ovh/cds/engine/api/services"
 	cdsclient "github.com/ovh/cds/sdk/cdsclient"
-	http "net/http"
-	reflect "reflect"
 )
 
 // MockClient is a mock of Client interface

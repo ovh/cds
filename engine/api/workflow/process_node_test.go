@@ -24,10 +24,10 @@ import (
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/api/test/assets"
 	"github.com/ovh/cds/engine/api/workflow"
+	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/ovh/cds/sdk/exportentities"
-	"github.com/ovh/cds/sdk/gorpmapping"
 )
 
 type mockServiceClient struct {
@@ -2697,7 +2697,7 @@ func createBuildPipeline(t *testing.T, db gorp.SqlExecutor, cache cache.Store, p
 	return pip
 }
 
-func createApplication1(t *testing.T, db gorpmapping.SqlExecutorWithTx, cache cache.Store, proj *sdk.Project, u *sdk.AuthentifiedUser) *sdk.Application {
+func createApplication1(t *testing.T, db gorpmapper.SqlExecutorWithTx, cache cache.Store, proj *sdk.Project, u *sdk.AuthentifiedUser) *sdk.Application {
 	// Add application
 	appS := `version: v1.0
 name: blabla
@@ -2712,7 +2712,7 @@ vcs_ssh_key: proj-blabla
 	return app
 }
 
-func createApplication2(t *testing.T, db gorpmapping.SqlExecutorWithTx, cache cache.Store, proj *sdk.Project, u *sdk.AuthentifiedUser) *sdk.Application {
+func createApplication2(t *testing.T, db gorpmapper.SqlExecutorWithTx, cache cache.Store, proj *sdk.Project, u *sdk.AuthentifiedUser) *sdk.Application {
 	// Add application
 	appS := `version: v1.0
 name: bloublou
@@ -2727,7 +2727,7 @@ vcs_ssh_key: proj-bloublou
 	return app
 }
 
-func createApplication3WithSameRepoAsA(t *testing.T, db gorpmapping.SqlExecutorWithTx, cache cache.Store, proj *sdk.Project, u *sdk.AuthentifiedUser) *sdk.Application {
+func createApplication3WithSameRepoAsA(t *testing.T, db gorpmapper.SqlExecutorWithTx, cache cache.Store, proj *sdk.Project, u *sdk.AuthentifiedUser) *sdk.Application {
 	// Add application
 	appS := `version: v1.0
 name: blabla2
@@ -2742,7 +2742,7 @@ vcs_ssh_key: proj-blabla
 	return app
 }
 
-func createApplicationWithoutRepo(t *testing.T, db gorpmapping.SqlExecutorWithTx, cache cache.Store, proj *sdk.Project, u *sdk.AuthentifiedUser) *sdk.Application {
+func createApplicationWithoutRepo(t *testing.T, db gorpmapper.SqlExecutorWithTx, cache cache.Store, proj *sdk.Project, u *sdk.AuthentifiedUser) *sdk.Application {
 	// Add application
 	appS := `version: v1.0
 name: app-no-repo

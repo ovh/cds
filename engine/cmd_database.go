@@ -18,8 +18,8 @@ import (
 	migrate "github.com/rubenv/sql-migrate"
 	"github.com/spf13/cobra"
 
-	"github.com/ovh/cds/engine/api/database"
 	"github.com/ovh/cds/engine/api/database/dbmigrate"
+	"github.com/ovh/cds/engine/database"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
 )
@@ -37,7 +37,7 @@ func init() {
 		pflags.StringVarP(&connFactory.DBName, "db-name", "", "cds", "DB Name")
 		pflags.StringVarP(&connFactory.DBHost, "db-host", "", "localhost", "DB Host")
 		pflags.IntVarP(&connFactory.DBPort, "db-port", "", 5432, "DB Port")
-		pflags.StringVarP(&sqlMigrateDir, "migrate-dir", "", "./engine/sql", "CDS SQL Migration directory")
+		pflags.StringVarP(&sqlMigrateDir, "migrate-dir", "", "./engine/sql/api", "CDS SQL Migration directory")
 		pflags.StringVarP(&connFactory.DBSSLMode, "db-sslmode", "", "require", "DB SSL Mode: require (default), verify-full, or disable")
 		pflags.IntVarP(&connFactory.DBMaxConn, "db-maxconn", "", 20, "DB Max connection")
 		pflags.IntVarP(&connFactory.DBTimeout, "db-timeout", "", 3000, "Statement timeout value in milliseconds")

@@ -4,9 +4,6 @@ import (
 	"context"
 	"crypto/rand"
 	"crypto/rsa"
-	"github.com/ovh/cds/sdk"
-	v1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"net/http"
 	"strings"
 	"testing"
@@ -15,6 +12,10 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/h2non/gock.v1"
+	v1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	"github.com/ovh/cds/sdk"
 )
 
 var loggerCall = 0

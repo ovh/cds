@@ -10,12 +10,13 @@ import (
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/cache"
+	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/keys"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
+	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/gorpmapping"
 	"github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk/telemetry"
 )
@@ -151,7 +152,7 @@ func Delete(db gorp.SqlExecutor, key string) error {
 const BuiltinGPGKey = "builtin"
 
 // Insert a new project in database
-func Insert(db gorpmapping.SqlExecutorWithTx, proj *sdk.Project) error {
+func Insert(db gorpmapper.SqlExecutorWithTx, proj *sdk.Project) error {
 	if err := proj.IsValid(); err != nil {
 		return sdk.WrapError(err, "project is not valid")
 	}

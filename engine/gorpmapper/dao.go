@@ -1,8 +1,9 @@
-package gorpmapping
+package gorpmapper
 
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"reflect"
 	"unsafe"
@@ -22,13 +23,12 @@ func checkDatabase(db gorp.SqlExecutor) error {
 }
 
 // Insert value in given db.
-func Insert(db gorp.SqlExecutor, i interface{}) error {
+func (m *Mapper) Insert(db gorp.SqlExecutor, i interface{}) error {
 	if err := checkDatabase(db); err != nil {
 		return err
 	}
 
-	_, has := getTabbleMapping(i)
-	if !has {
+	if _, has := m.GetTableMapping(i); !has {
 		return sdk.WithStack(fmt.Errorf("unkown entity %T", i))
 	}
 
@@ -46,22 +46,22 @@ func Insert(db gorp.SqlExecutor, i interface{}) error {
 		return sdk.WithStack(err)
 	}
 
-	if err := updateEncryptedData(db, i); err != nil {
+	if err := m.updateEncryptedData(db, i); err != nil {
 		return err
 	}
 
-	if err := resetEncryptedData(db, i); err != nil {
+	if err := m.resetEncryptedData(db, i); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func UpdateColumns(db gorp.SqlExecutor, i interface{}, columnFilter gorp.ColumnFilter) error {
+func (m *Mapper) UpdateColumns(db gorp.SqlExecutor, i interface{}, columnFilter gorp.ColumnFilter) error {
 	if err := checkDatabase(db); err != nil {
 		return err
 	}
-	mapping, has := getTabbleMapping(i)
+	mapping, has := m.GetTableMapping(i)
 	if !has {
 		return sdk.WithStack(fmt.Errorf("unkown entity %T", i))
 	}
@@ -87,7 +87,7 @@ func UpdateColumns(db gorp.SqlExecutor, i interface{}, columnFilter gorp.ColumnF
 		entityName := fmt.Sprintf("%T", reflect.ValueOf(i).Elem().Interface())
 
 		// Reload and decrypt the old tuple from the database
-		tuple, err := LoadTupleByPrimaryKey(db, entityName, id, GetOptions.WithDecryption)
+		tuple, err := m.LoadTupleByPrimaryKey(db, entityName, id, GetOptions.WithDecryption)
 		if err != nil {
 			return err
 		}
@@ -123,31 +123,27 @@ func UpdateColumns(db gorp.SqlExecutor, i interface{}, columnFilter gorp.ColumnF
 		return sdk.WithStack(sdk.ErrNotFound)
 	}
 
-	if err := updateEncryptedData(db, i); err != nil {
+	if err := m.updateEncryptedData(db, i); err != nil {
 		return err
 	}
 
-	if err := resetEncryptedData(db, i); err != nil {
+	if err := m.resetEncryptedData(db, i); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func acceptAllFilter(col *gorp.ColumnMap) bool {
-	return true
-}
-
 // Update value in given db.
-func Update(db gorp.SqlExecutor, i interface{}) error {
+func (m *Mapper) Update(db gorp.SqlExecutor, i interface{}) error {
 	if err := checkDatabase(db); err != nil {
 		return err
 	}
-	return UpdateColumns(db, i, acceptAllFilter)
+	return m.UpdateColumns(db, i, acceptAllFilter)
 }
 
 // Delete value in given db.
-func Delete(db gorp.SqlExecutor, i interface{}) error {
+func (m *Mapper) Delete(db gorp.SqlExecutor, i interface{}) error {
 	if err := checkDatabase(db); err != nil {
 		return err
 	}
@@ -156,7 +152,11 @@ func Delete(db gorp.SqlExecutor, i interface{}) error {
 	return sdk.WithStack(err)
 }
 
-type GetOptionFunc func(db gorp.SqlExecutor, i interface{}) error
+func acceptAllFilter(col *gorp.ColumnMap) bool {
+	return true
+}
+
+type GetOptionFunc func(m *Mapper, db gorp.SqlExecutor, i interface{}) error
 
 var GetOptions = struct {
 	WithDecryption GetOptionFunc
@@ -165,7 +165,7 @@ var GetOptions = struct {
 }
 
 // GetAll values from database.
-func GetAll(ctx context.Context, db gorp.SqlExecutor, q Query, i interface{}, opts ...GetOptionFunc) error {
+func (m *Mapper) GetAll(ctx context.Context, db gorp.SqlExecutor, q Query, i interface{}, opts ...GetOptionFunc) error {
 	if err := checkDatabase(db); err != nil {
 		return err
 	}
@@ -173,7 +173,7 @@ func GetAll(ctx context.Context, db gorp.SqlExecutor, q Query, i interface{}, op
 	_, end := telemetry.Span(ctx, fmt.Sprintf("database.GetAll(%T)", i), telemetry.Tag("query", q.String()))
 	defer end()
 
-	if _, err := db.Select(i, q.query, q.arguments...); err != nil {
+	if _, err := db.Select(i, q.Query, q.Arguments...); err != nil {
 		return sdk.WithStack(err)
 	}
 
@@ -188,18 +188,18 @@ func GetAll(ctx context.Context, db gorp.SqlExecutor, q Query, i interface{}, op
 			} else {
 				dest = reflect.NewAt(reflect.TypeOf(v.Index(i).Interface()), unsafe.Pointer(v.Index(i).UnsafeAddr()))
 			}
-			if err := resetEncryptedData(db, dest.Interface()); err != nil {
+			if err := m.resetEncryptedData(db, dest.Interface()); err != nil {
 				return err
 			}
 		}
 	default:
-		if err := resetEncryptedData(db, i); err != nil {
+		if err := m.resetEncryptedData(db, i); err != nil {
 			return err
 		}
 	}
 
 	for _, f := range opts {
-		if err := f(db, i); err != nil {
+		if err := f(m, db, i); err != nil {
 			return err
 		}
 	}
@@ -207,7 +207,7 @@ func GetAll(ctx context.Context, db gorp.SqlExecutor, q Query, i interface{}, op
 }
 
 // Get a value from database.
-func Get(ctx context.Context, db gorp.SqlExecutor, q Query, i interface{}, opts ...GetOptionFunc) (bool, error) {
+func (m *Mapper) Get(ctx context.Context, db gorp.SqlExecutor, q Query, i interface{}, opts ...GetOptionFunc) (bool, error) {
 	if err := checkDatabase(db); err != nil {
 		return false, err
 	}
@@ -215,19 +215,19 @@ func Get(ctx context.Context, db gorp.SqlExecutor, q Query, i interface{}, opts 
 	_, end := telemetry.Span(ctx, fmt.Sprintf("database.Get(%T)", i), telemetry.Tag("query", q.String()))
 	defer end()
 
-	if err := db.SelectOne(i, q.query, q.arguments...); err != nil {
+	if err := db.SelectOne(i, q.Query, q.Arguments...); err != nil {
 		if err == sql.ErrNoRows {
 			return false, nil
 		}
 		return false, sdk.WithStack(err)
 	}
 
-	if err := resetEncryptedData(db, i); err != nil {
+	if err := m.resetEncryptedData(db, i); err != nil {
 		return false, err
 	}
 
 	for _, f := range opts {
-		if err := f(db, i); err != nil {
+		if err := f(m, db, i); err != nil {
 			return false, err
 		}
 	}
@@ -235,12 +235,12 @@ func Get(ctx context.Context, db gorp.SqlExecutor, q Query, i interface{}, opts 
 }
 
 // GetInt a value from database.
-func GetInt(db gorp.SqlExecutor, q Query) (int64, error) {
+func (m *Mapper) GetInt(db gorp.SqlExecutor, q Query) (int64, error) {
 	if err := checkDatabase(db); err != nil {
 		return 0, err
 	}
 
-	res, err := db.SelectNullInt(q.query, q.arguments...)
+	res, err := db.SelectNullInt(q.Query, q.Arguments...)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return 0, nil
@@ -252,4 +252,19 @@ func GetInt(db gorp.SqlExecutor, q Query) (int64, error) {
 	}
 
 	return res.Int64, nil
+}
+
+func (m *Mapper) dbMappingPKey(i interface{}) (string, string, interface{}, error) {
+	mapping, has := m.GetTableMapping(i)
+	if !has {
+		return "", "", nil, sdk.WithStack(fmt.Errorf("unkown entity %T", i))
+	}
+
+	if len(mapping.Keys) > 1 {
+		return "", "", nil, sdk.WithStack(errors.New("multiple primary key not supported"))
+	}
+
+	id := reflectFindValueByTag(i, "db", mapping.Keys[0])
+
+	return mapping.Name, mapping.Keys[0], id, nil
 }

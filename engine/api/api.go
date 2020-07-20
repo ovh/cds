@@ -31,7 +31,7 @@ import (
 	"github.com/ovh/cds/engine/api/bootstrap"
 	"github.com/ovh/cds/engine/api/broadcast"
 	"github.com/ovh/cds/engine/api/cache"
-	"github.com/ovh/cds/engine/api/database"
+	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/integration"
 	"github.com/ovh/cds/engine/api/mail"
@@ -46,10 +46,11 @@ import (
 	"github.com/ovh/cds/engine/api/worker"
 	"github.com/ovh/cds/engine/api/workermodel"
 	"github.com/ovh/cds/engine/api/workflow"
+	"github.com/ovh/cds/engine/database"
+	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
-	"github.com/ovh/cds/sdk/gorpmapping"
 	"github.com/ovh/cds/sdk/jws"
 	"github.com/ovh/cds/sdk/log"
 )
@@ -68,7 +69,7 @@ type Configuration struct {
 	Secrets struct {
 		Key string `toml:"key" json:"-"`
 	} `toml:"secrets" json:"secrets"`
-	Database database.DBConfiguration `toml:"database" comment:"################################\n Postgresql Database settings \n###############################" json:"database"`
+	Database database.DBConfigurationWithEncryption `toml:"database" comment:"################################\n Postgresql Database settings \n###############################" json:"database"`
 	Cache    struct {
 		TTL   int `toml:"ttl" default:"60" json:"ttl"`
 		Redis struct {
@@ -491,8 +492,8 @@ func (a *API) Serve(ctx context.Context) error {
 	}
 
 	log.Info(ctx, "Setting up database keys...")
-	encryptionKeyConfig := a.Config.Database.EncryptionKey.GetKeys(gorpmapping.KeyEcnryptionIdentifier)
-	signatureKeyConfig := a.Config.Database.SignatureKey.GetKeys(gorpmapping.KeySignIdentifier)
+	encryptionKeyConfig := a.Config.Database.EncryptionKey.GetKeys(gorpmapper.KeyEcnryptionIdentifier)
+	signatureKeyConfig := a.Config.Database.SignatureKey.GetKeys(gorpmapper.KeySignIdentifier)
 	if err := gorpmapping.ConfigureKeys(&signatureKeyConfig, &encryptionKeyConfig); err != nil {
 		return fmt.Errorf("cannot setup database keys: %v", err)
 	}
@@ -607,37 +608,37 @@ func (a *API) Serve(ctx context.Context) error {
 	}, a.PanicDump())
 
 	sdk.GoRoutine(ctx, "workermodel.Initialize", func(ctx context.Context) {
-		if err := workermodel.Initialize(ctx, a.DBConnectionFactory.GetDBMap, a.Cache); err != nil {
+		if err := workermodel.Initialize(ctx, a.DBConnectionFactory.GetDBMap(gorpmapping.Mapper), a.Cache); err != nil {
 			log.Error(ctx, "error while initializing worker models routine: %s", err)
 		}
 	}, a.PanicDump())
 	sdk.GoRoutine(ctx, "worker.Initialize", func(ctx context.Context) {
-		if err := worker.Initialize(ctx, a.DBConnectionFactory.GetDBMap, a.Cache); err != nil {
+		if err := worker.Initialize(ctx, a.DBConnectionFactory.GetDBMap(gorpmapping.Mapper), a.Cache); err != nil {
 			log.Error(ctx, "error while initializing workers routine: %s", err)
 		}
 	}, a.PanicDump())
 	sdk.GoRoutine(ctx, "action.ComputeAudit", func(ctx context.Context) {
 		chanEvent := make(chan sdk.Event)
 		event.Subscribe(chanEvent)
-		action.ComputeAudit(ctx, a.DBConnectionFactory.GetDBMap, chanEvent)
+		action.ComputeAudit(ctx, a.DBConnectionFactory.GetDBMap(gorpmapping.Mapper), chanEvent)
 	}, a.PanicDump())
 	sdk.GoRoutine(ctx, "audit.ComputePipelineAudit", func(ctx context.Context) {
-		audit.ComputePipelineAudit(ctx, a.DBConnectionFactory.GetDBMap)
+		audit.ComputePipelineAudit(ctx, a.DBConnectionFactory.GetDBMap(gorpmapping.Mapper))
 	}, a.PanicDump())
 	sdk.GoRoutine(ctx, "audit.ComputeWorkflowAudit", func(ctx context.Context) {
-		audit.ComputeWorkflowAudit(ctx, a.DBConnectionFactory.GetDBMap)
+		audit.ComputeWorkflowAudit(ctx, a.DBConnectionFactory.GetDBMap(gorpmapping.Mapper))
 	}, a.PanicDump())
 	sdk.GoRoutine(ctx, "auditCleanerRoutine(ctx", func(ctx context.Context) {
-		auditCleanerRoutine(ctx, a.DBConnectionFactory.GetDBMap)
+		auditCleanerRoutine(ctx, a.DBConnectionFactory.GetDBMap(gorpmapping.Mapper))
 	})
 	sdk.GoRoutine(ctx, "repositoriesmanager.ReceiveEvents", func(ctx context.Context) {
-		repositoriesmanager.ReceiveEvents(ctx, a.DBConnectionFactory.GetDBMap, a.Cache)
+		repositoriesmanager.ReceiveEvents(ctx, a.DBConnectionFactory.GetDBMap(gorpmapping.Mapper), a.Cache)
 	}, a.PanicDump())
 	sdk.GoRoutine(ctx, "services.KillDeadServices", func(ctx context.Context) {
 		services.KillDeadServices(ctx, a.mustDB)
 	}, a.PanicDump())
 	sdk.GoRoutine(ctx, "broadcast.Initialize", func(ctx context.Context) {
-		broadcast.Initialize(ctx, a.DBConnectionFactory.GetDBMap)
+		broadcast.Initialize(ctx, a.DBConnectionFactory.GetDBMap(gorpmapping.Mapper))
 	}, a.PanicDump())
 	sdk.GoRoutine(ctx, "api.serviceAPIHeartbeat", func(ctx context.Context) {
 		a.serviceAPIHeartbeat(ctx)
@@ -647,7 +648,7 @@ func (a *API) Serve(ctx context.Context) error {
 	}, a.PanicDump())
 
 	migrate.Add(ctx, sdk.Migration{Name: "RunsSecrets", Release: "0.47.0", Blocker: false, Automatic: true, ExecFunc: func(ctx context.Context) error {
-		return migrate.RunsSecrets(ctx, a.DBConnectionFactory.GetDBMap)
+		return migrate.RunsSecrets(ctx, a.DBConnectionFactory.GetDBMap(gorpmapping.Mapper))
 	}})
 
 	isFreshInstall, errF := version.IsFreshInstall(a.mustDB())
@@ -681,19 +682,19 @@ func (a *API) Serve(ctx context.Context) error {
 	defaultValues := sdk.DefaultValues{
 		DefaultGroupName: a.Config.Auth.DefaultGroup,
 	}
-	if err := bootstrap.InitiliazeDB(ctx, defaultValues, a.DBConnectionFactory.GetDBMap); err != nil {
+	if err := bootstrap.InitiliazeDB(ctx, defaultValues, a.DBConnectionFactory.GetDBMap(gorpmapping.Mapper)); err != nil {
 		return fmt.Errorf("cannot setup databases: %v", err)
 	}
 
-	if err := workflow.CreateBuiltinWorkflowHookModels(a.DBConnectionFactory.GetDBMap()); err != nil {
+	if err := workflow.CreateBuiltinWorkflowHookModels(a.DBConnectionFactory.GetDBMap(gorpmapping.Mapper)()); err != nil {
 		return fmt.Errorf("cannot setup builtin workflow hook models: %v", err)
 	}
 
-	if err := workflow.CreateBuiltinWorkflowOutgoingHookModels(a.DBConnectionFactory.GetDBMap()); err != nil {
+	if err := workflow.CreateBuiltinWorkflowOutgoingHookModels(a.DBConnectionFactory.GetDBMap(gorpmapping.Mapper)()); err != nil {
 		return fmt.Errorf("cannot setup builtin workflow outgoing hook models: %v", err)
 	}
 
-	if err := integration.CreateBuiltinModels(a.DBConnectionFactory.GetDBMap()); err != nil {
+	if err := integration.CreateBuiltinModels(a.DBConnectionFactory.GetDBMap(gorpmapping.Mapper)()); err != nil {
 		return fmt.Errorf("cannot setup integrations: %v", err)
 	}
 
@@ -737,7 +738,7 @@ func (a *API) Serve(ctx context.Context) error {
 		}, a.PanicDump())
 	sdk.GoRoutine(ctx, "workflow.Initialize",
 		func(ctx context.Context) {
-			workflow.Initialize(ctx, a.DBConnectionFactory.GetDBMap, a.Cache, a.Config.URL.UI, a.Config.DefaultOS, a.Config.DefaultArch, a.Config.Log.StepMaxSize)
+			workflow.Initialize(ctx, a.DBConnectionFactory.GetDBMap(gorpmapping.Mapper), a.Cache, a.Config.URL.UI, a.Config.DefaultOS, a.Config.DefaultArch, a.Config.Log.StepMaxSize)
 		}, a.PanicDump())
 	sdk.GoRoutine(ctx, "PushInElasticSearch",
 		func(ctx context.Context) {
@@ -745,11 +746,11 @@ func (a *API) Serve(ctx context.Context) error {
 		}, a.PanicDump())
 	sdk.GoRoutine(ctx, "Metrics.pushInElasticSearch",
 		func(ctx context.Context) {
-			metrics.Init(ctx, a.DBConnectionFactory.GetDBMap)
+			metrics.Init(ctx, a.DBConnectionFactory.GetDBMap(gorpmapping.Mapper))
 		}, a.PanicDump())
 	sdk.GoRoutine(ctx, "Purge",
 		func(ctx context.Context) {
-			purge.Initialize(ctx, a.Cache, a.DBConnectionFactory.GetDBMap, a.SharedStorage, a.Metrics.WorkflowRunsMarkToDelete, a.Metrics.WorkflowRunsDeleted)
+			purge.Initialize(ctx, a.Cache, a.DBConnectionFactory.GetDBMap(gorpmapping.Mapper), a.SharedStorage, a.Metrics.WorkflowRunsMarkToDelete, a.Metrics.WorkflowRunsDeleted)
 		}, a.PanicDump())
 
 	// Check maintenance on redis
