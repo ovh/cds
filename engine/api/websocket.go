@@ -256,6 +256,12 @@ func (b *websocketBroker) ServeHTTP() service.Handler {
 
 			client.inMessageChan <- msg
 		}
+
+		close(client.inMessageChan)
+		client.inMessageChan = nil
+
+		b.chanRemoveClient <- client.UUID
+
 		return nil
 	}
 }
