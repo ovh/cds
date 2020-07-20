@@ -193,7 +193,7 @@ func TestUpdateModelInPipeline(t *testing.T) {
 			}},
 		},
 	}
-	test.NoError(t, pipeline.InsertJob(db, &job1, 0, &pip1))
+	test.NoError(t, pipeline.InsertJob(context.TODO(), db, &job1, 0, &pip1))
 
 	model1FooLoad, err := workermodel.LoadByNameAndGroupID(context.TODO(), db, model1Foo.Name, g1.ID, workermodel.LoadOptions.Default)
 	require.NoError(t, err)
@@ -286,7 +286,7 @@ func TestUpdateModelInPipelineSimple(t *testing.T) {
 			}},
 		},
 	}
-	test.NoError(t, pipeline.InsertJob(db, &job1, 0, &pip1))
+	test.NoError(t, pipeline.InsertJob(context.TODO(), db, &job1, 0, &pip1))
 
 	model1Load, err := workermodel.LoadByID(context.TODO(), db, model1.ID, workermodel.LoadOptions.Default)
 	require.NoError(t, err)

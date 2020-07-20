@@ -643,10 +643,20 @@ func (api *API) getWorkflowCommitsHandler() service.Handler {
 			}
 		}
 
+		tx, err := api.mustDB().Begin()
+		if err != nil {
+			return sdk.WithStack(err)
+		}
+		defer tx.Rollback() // nolint
+
 		log.Debug("getWorkflowCommitsHandler> VCSHash: %s VCSBranch: %s", wfNodeRun.VCSHash, wfNodeRun.VCSBranch)
-		commits, _, err := workflow.GetNodeRunBuildCommits(ctx, api.mustDB(), api.Cache, *proj, wf, nodeName, number, wfNodeRun, &app, &env)
+		commits, _, err := workflow.GetNodeRunBuildCommits(ctx, tx, api.Cache, *proj, wf, nodeName, number, wfNodeRun, &app, &env)
 		if err != nil {
 			return sdk.WrapError(err, "unable to load commits")
+		}
+
+		if err := tx.Commit(); err != nil {
+			return sdk.WithStack(err)
 		}
 
 		return service.WriteJSON(w, commits, http.StatusOK)
@@ -1028,7 +1038,6 @@ func (api *API) initWorkflowRun(ctx context.Context, projKey string, wf *sdk.Wor
 			report.Merge(ctx, r)
 			return
 		}
-
 	}
 
 	tx, err := api.mustDB().Begin()
@@ -1072,9 +1081,15 @@ func (api *API) initWorkflowRun(ctx context.Context, projKey string, wf *sdk.Wor
 	}
 }
 
-func saveWorkflowRunSecrets(ctx context.Context, db gorp.SqlExecutor, projID int64, wr sdk.WorkflowRun, secrets *workflow.PushSecrets) error {
+func saveWorkflowRunSecrets(ctx context.Context, db *gorp.DbMap, projID int64, wr sdk.WorkflowRun, secrets *workflow.PushSecrets) error {
+	tx, err := db.Begin()
+	if err != nil {
+		return sdk.WithStack(err)
+	}
+	defer tx.Rollback() // nolint
+
 	// Get project secrets
-	p, err := project.LoadByID(db, projID, project.LoadOptions.WithVariablesWithClearPassword, project.LoadOptions.WithClearKeys)
+	p, err := project.LoadByID(tx, projID, project.LoadOptions.WithVariablesWithClearPassword, project.LoadOptions.WithClearKeys)
 	if err != nil {
 		return err
 	}
@@ -1090,7 +1105,7 @@ func saveWorkflowRunSecrets(ctx context.Context, db gorp.SqlExecutor, projID int
 			Type:          v.Type,
 			Value:         []byte(v.Value),
 		}
-		if err := workflow.InsertRunSecret(ctx, db, &wrSecret); err != nil {
+		if err := workflow.InsertRunSecret(ctx, tx, &wrSecret); err != nil {
 			return err
 		}
 	}
@@ -1103,7 +1118,7 @@ func saveWorkflowRunSecrets(ctx context.Context, db gorp.SqlExecutor, projID int
 			Type:          string(k.Type),
 			Value:         []byte(k.Private),
 		}
-		if err := workflow.InsertRunSecret(ctx, db, &wrSecret); err != nil {
+		if err := workflow.InsertRunSecret(ctx, tx, &wrSecret); err != nil {
 			return err
 		}
 	}
@@ -1117,7 +1132,7 @@ func saveWorkflowRunSecrets(ctx context.Context, db gorp.SqlExecutor, projID int
 		ppIDs[n.Context.ProjectIntegrationID] = ""
 	}
 	for ppID := range ppIDs {
-		projectIntegration, err := integration.LoadProjectIntegrationByIDWithClearPassword(db, ppID)
+		projectIntegration, err := integration.LoadProjectIntegrationByIDWithClearPassword(tx, ppID)
 		if err != nil {
 			return err
 		}
@@ -1135,10 +1150,9 @@ func saveWorkflowRunSecrets(ctx context.Context, db gorp.SqlExecutor, projID int
 				Type:          v.Type,
 				Value:         []byte(v.Value),
 			}
-			if err := workflow.InsertRunSecret(ctx, db, &wrSecret); err != nil {
+			if err := workflow.InsertRunSecret(ctx, tx, &wrSecret); err != nil {
 				return err
 			}
-
 		}
 	}
 
@@ -1168,7 +1182,7 @@ func saveWorkflowRunSecrets(ctx context.Context, db gorp.SqlExecutor, projID int
 			default:
 				continue
 			}
-			if err := workflow.InsertRunSecret(ctx, db, &wrSecret); err != nil {
+			if err := workflow.InsertRunSecret(ctx, tx, &wrSecret); err != nil {
 				return err
 			}
 		}
@@ -1184,11 +1198,16 @@ func saveWorkflowRunSecrets(ctx context.Context, db gorp.SqlExecutor, projID int
 				Type:          v.Type,
 				Value:         []byte(v.Value),
 			}
-			if err := workflow.InsertRunSecret(ctx, db, &wrSecret); err != nil {
+			if err := workflow.InsertRunSecret(ctx, tx, &wrSecret); err != nil {
 				return err
 			}
 		}
 	}
+
+	if err := tx.Commit(); err != nil {
+		return sdk.WithStack(err)
+	}
+
 	return nil
 }
 
@@ -1521,7 +1540,6 @@ func (api *API) getWorkflowRunTagsHandler() service.Handler {
 
 func (api *API) postResyncVCSWorkflowRunHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		db := api.mustDB()
 		vars := mux.Vars(r)
 		key := vars["key"]
 		name := vars["permWorkflowName"]
@@ -1530,17 +1548,17 @@ func (api *API) postResyncVCSWorkflowRunHandler() service.Handler {
 			return err
 		}
 
-		proj, err := project.Load(ctx, db, key, project.LoadOptions.WithVariables)
+		proj, err := project.Load(ctx, api.mustDB(), key, project.LoadOptions.WithVariables)
 		if err != nil {
 			return sdk.WrapError(err, "cannot load project")
 		}
 
-		wfr, err := workflow.LoadRun(ctx, db, key, name, number, workflow.LoadRunOptions{DisableDetailledNodeRun: true})
+		wfr, err := workflow.LoadRun(ctx, api.mustDB(), key, name, number, workflow.LoadRunOptions{DisableDetailledNodeRun: true})
 		if err != nil {
 			return sdk.WrapError(err, "cannot load workflow run")
 		}
 
-		if err := workflow.ResyncCommitStatus(ctx, db, api.Cache, *proj, wfr); err != nil {
+		if err := workflow.ResyncCommitStatus(ctx, api.mustDB(), api.Cache, *proj, wfr); err != nil {
 			return sdk.WrapError(err, "cannot resync workflow run commit status")
 		}
 

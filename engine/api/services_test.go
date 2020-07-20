@@ -18,8 +18,8 @@ import (
 func TestServicesHandlers(t *testing.T) {
 	api, db, _ := newTestAPI(t)
 
-	admin, jwtRaw := assets.InsertAdminUser(t, api.mustDB())
-	_, jwtLambda := assets.InsertLambdaUser(t, api.mustDB())
+	admin, jwtRaw := assets.InsertAdminUser(t, db)
+	_, jwtLambda := assets.InsertLambdaUser(t, db)
 
 	s, _ := assets.InitCDNService(t, db)
 	defer func() {

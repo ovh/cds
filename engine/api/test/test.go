@@ -82,15 +82,22 @@ RvySYHtJvP64+7ncMqNjMnX8MbJZdoW3FE4gKomVof26/oUk/zHKNn5BECPIqEQv
 XeJEyyEjosSa3qWACDYorGMnzRXdeJa5H7J0W+G3x4tH2LMW8VHS
 -----END RSA PRIVATE KEY-----`)
 
+type FakeTransaction struct {
+	*gorp.DbMap
+}
+
+func (f *FakeTransaction) Rollback() error { return nil }
+func (f *FakeTransaction) Commit() error   { return nil }
+
 // SetupPG setup PG DB for test
-func SetupPG(t *testing.T, bootstrapFunc ...Bootstrapf) (*gorp.DbMap, cache.Store) {
+func SetupPG(t *testing.T, bootstrapFunc ...Bootstrapf) (*FakeTransaction, cache.Store) {
 	db, cache, cancel := SetupPGToCancel(t, bootstrapFunc...)
 	t.Cleanup(cancel)
 	return db, cache
 }
 
 // SetupPGToCancel setup PG DB for test
-func SetupPGToCancel(t log.Logger, bootstrapFunc ...Bootstrapf) (*gorp.DbMap, cache.Store, func()) {
+func SetupPGToCancel(t log.Logger, bootstrapFunc ...Bootstrapf) (*FakeTransaction, cache.Store, func()) {
 	log.SetLogger(t)
 	cfg := LoadTestingConf(t)
 	DBDriver = cfg["dbDriver"]
@@ -176,7 +183,9 @@ func SetupPGToCancel(t log.Logger, bootstrapFunc ...Bootstrapf) (*gorp.DbMap, ca
 		t.Fatalf("unable to init database connection")
 	}
 
-	return dbMap, store, cancel
+	return &FakeTransaction{
+		DbMap: dbMap,
+	}, store, cancel
 }
 
 // LoadTestingConf loads test configuration tests.cfg.json

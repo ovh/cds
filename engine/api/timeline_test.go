@@ -38,10 +38,10 @@ func Test_getTimelineHandler(t *testing.T) {
 	project1Group := &proj1.ProjectGroups[0].Group
 
 	// Create four users (a maitainer, one in project 1, one in project 1 with muted workflow and one without projects)
-	_, jwtMaintainer := assets.InsertMaintainerUser(t, api.mustDB())
-	_, jwtLambdaInGroup := assets.InsertLambdaUser(t, api.mustDB(), project1Group)
-	lambdaIngroupWithMuted, jwtLambdaInGroupWithMuted := assets.InsertLambdaUser(t, api.mustDB(), project1Group)
-	_, jwtLambdaNotInGroup := assets.InsertLambdaUser(t, api.mustDB())
+	_, jwtMaintainer := assets.InsertMaintainerUser(t, db)
+	_, jwtLambdaInGroup := assets.InsertLambdaUser(t, db, project1Group)
+	lambdaIngroupWithMuted, jwtLambdaInGroupWithMuted := assets.InsertLambdaUser(t, db, project1Group)
+	_, jwtLambdaNotInGroup := assets.InsertLambdaUser(t, db)
 	require.NoError(t, user.InsertTimelineFilter(db, sdk.TimelineFilter{
 		Projects: []sdk.ProjectFilter{
 			{

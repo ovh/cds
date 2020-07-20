@@ -39,9 +39,9 @@ import (
 func Test_getWorkflowsHandler(t *testing.T) {
 	api, db, _ := newTestAPI(t)
 
-	u, pass := assets.InsertLambdaUser(t, api.mustDB())
+	u, pass := assets.InsertLambdaUser(t, db)
 	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
-	require.NoError(t, group.InsertLinkGroupUser(context.TODO(), api.mustDB(), &group.LinkGroupUser{
+	require.NoError(t, group.InsertLinkGroupUser(context.TODO(), db, &group.LinkGroupUser{
 		GroupID:            proj.ProjectGroups[0].Group.ID,
 		AuthentifiedUserID: u.ID,
 		Admin:              true,
@@ -69,7 +69,7 @@ func Test_getWorkflowsHandler(t *testing.T) {
 		},
 	}
 
-	test.NoError(t, workflow.Insert(context.TODO(), api.mustDB(), api.Cache, *proj, &wf))
+	require.NoError(t, workflow.Insert(context.TODO(), db, api.Cache, *proj, &wf))
 
 	vars := map[string]string{
 		"permProjectKey": proj.Key,
@@ -159,7 +159,7 @@ func Test_getWorkflowNotificationsConditionsHandler(t *testing.T) {
 			Enabled: true,
 		},
 	}
-	test.NoError(t, pipeline.InsertJob(db, j, s.ID, &pip))
+	test.NoError(t, pipeline.InsertJob(context.TODO(), db, j, s.ID, &pip))
 	s.Jobs = append(s.Jobs, *j)
 
 	pip.Stages = append(pip.Stages, *s)
@@ -181,7 +181,7 @@ func Test_getWorkflowNotificationsConditionsHandler(t *testing.T) {
 			Enabled: true,
 		},
 	}
-	test.NoError(t, pipeline.InsertJob(db, j, s.ID, &pip2))
+	test.NoError(t, pipeline.InsertJob(context.TODO(), db, j, s.ID, &pip2))
 	s.Jobs = append(s.Jobs, *j)
 
 	w := sdk.Workflow{
@@ -217,7 +217,7 @@ func Test_getWorkflowNotificationsConditionsHandler(t *testing.T) {
 	w1, err := workflow.Load(context.TODO(), db, api.Cache, *proj, "test_1", workflow.LoadOptions{})
 	test.NoError(t, err)
 
-	wrCreate, err := workflow.CreateRun(db, w1, nil, u)
+	wrCreate, err := workflow.CreateRun(api.mustDB(), w1, nil, u)
 	assert.NoError(t, err)
 	wrCreate.Workflow = *w1
 	_, errMR := workflow.StartWorkflowRun(context.TODO(), db, api.Cache, *proj, wrCreate, &sdk.WorkflowRunPostHandlerOption{
@@ -263,7 +263,7 @@ func Test_getWorkflowHandler(t *testing.T) {
 	api, db, router := newTestAPI(t)
 
 	// Init user
-	u, pass := assets.InsertAdminUser(t, api.mustDB())
+	u, pass := assets.InsertAdminUser(t, db)
 	// Init project
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, api.Cache, key, key)
@@ -285,9 +285,9 @@ func Test_getWorkflowHandler(t *testing.T) {
 func Test_getWorkflowHandler_CheckPermission(t *testing.T) {
 	api, db, _ := newTestAPI(t)
 
-	u, pass := assets.InsertLambdaUser(t, api.mustDB())
+	u, pass := assets.InsertLambdaUser(t, db)
 	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
-	require.NoError(t, group.InsertLinkGroupUser(context.TODO(), api.mustDB(), &group.LinkGroupUser{
+	require.NoError(t, group.InsertLinkGroupUser(context.TODO(), db, &group.LinkGroupUser{
 		GroupID:            proj.ProjectGroups[0].Group.ID,
 		AuthentifiedUserID: u.ID,
 		Admin:              true,
@@ -315,7 +315,7 @@ func Test_getWorkflowHandler_CheckPermission(t *testing.T) {
 		},
 	}
 
-	test.NoError(t, workflow.Insert(context.TODO(), api.mustDB(), api.Cache, *proj, &wf))
+	require.NoError(t, workflow.Insert(context.TODO(), db, api.Cache, *proj, &wf))
 
 	vars := map[string]string{
 		"key":              proj.Key,
@@ -375,20 +375,20 @@ func Test_getWorkflowHandler_CheckPermission(t *testing.T) {
 }
 
 func Test_getWorkflowHandler_AsProvider(t *testing.T) {
-	api, tsURL := newTestServer(t)
+	api, db, tsURL := newTestServer(t)
 
-	admin, _ := assets.InsertAdminUser(t, api.mustDB())
+	admin, _ := assets.InsertAdminUser(t, db)
 	localConsumer, err := authentication.LoadConsumerByTypeAndUserID(context.TODO(), api.mustDB(), sdk.ConsumerLocal, admin.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
 	require.NoError(t, err)
 
-	_, jws, err := builtin.NewConsumer(context.TODO(), api.mustDB(), sdk.RandomString(10), sdk.RandomString(10), localConsumer, admin.GetGroupIDs(),
+	_, jws, err := builtin.NewConsumer(context.TODO(), db, sdk.RandomString(10), sdk.RandomString(10), localConsumer, admin.GetGroupIDs(),
 		sdk.NewAuthConsumerScopeDetails(sdk.AuthConsumerScopeProject))
 
-	u, _ := assets.InsertLambdaUser(t, api.mustDB())
+	u, _ := assets.InsertLambdaUser(t, db)
 
 	pkey := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, api.mustDB(), api.Cache, pkey, pkey)
-	require.NoError(t, group.InsertLinkGroupUser(context.TODO(), api.mustDB(), &group.LinkGroupUser{
+	proj := assets.InsertTestProject(t, db, api.Cache, pkey, pkey)
+	require.NoError(t, group.InsertLinkGroupUser(context.TODO(), db, &group.LinkGroupUser{
 		GroupID:            proj.ProjectGroups[0].Group.ID,
 		AuthentifiedUserID: u.ID,
 		Admin:              true,
@@ -423,7 +423,7 @@ func Test_getWorkflowHandler_AsProvider(t *testing.T) {
 		},
 	}
 
-	test.NoError(t, workflow.Insert(context.TODO(), api.mustDB(), api.Cache, *proj, &wf))
+	require.NoError(t, workflow.Insert(context.TODO(), db, api.Cache, *proj, &wf))
 
 	sdkclient := cdsclient.NewProviderClient(cdsclient.ProviderConfig{
 		Host:  tsURL,
@@ -441,7 +441,7 @@ func Test_getWorkflowHandler_withUsage(t *testing.T) {
 	api, db, router := newTestAPI(t)
 
 	// Init user
-	u, pass := assets.InsertAdminUser(t, api.mustDB())
+	u, pass := assets.InsertAdminUser(t, db)
 	// Init project
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, api.Cache, key, key)
@@ -503,7 +503,7 @@ func Test_postWorkflowHandlerWithoutRootShouldFail(t *testing.T) {
 	api, db, router := newTestAPI(t)
 
 	// Init user
-	u, pass := assets.InsertAdminUser(t, api.mustDB())
+	u, pass := assets.InsertAdminUser(t, db)
 	// Init project
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, api.Cache, key, key)
@@ -527,7 +527,7 @@ func Test_postWorkflowHandlerWithRootShouldSuccess(t *testing.T) {
 	api, db, router := newTestAPI(t)
 
 	// Init user
-	u, pass := assets.InsertAdminUser(t, api.mustDB())
+	u, pass := assets.InsertAdminUser(t, db)
 	// Init project
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, api.Cache, key, key)
@@ -551,7 +551,7 @@ func Test_postWorkflowHandlerWithRootShouldSuccess(t *testing.T) {
 		RepositoryFullname: "test/app1",
 		VCSServer:          "github",
 	}
-	test.NoError(t, application.Insert(api.mustDB(), *proj, &app))
+	require.NoError(t, application.Insert(db, *proj, &app))
 
 	var workflow = &sdk.Workflow{
 		Name:        "Name",
@@ -585,11 +585,10 @@ func Test_postWorkflowHandlerWithRootShouldSuccess(t *testing.T) {
 	assert.NotEmpty(t, payload["git.branch"], "git.branch should not be empty")
 }
 func Test_postWorkflowHandlerWithBadPayloadShouldFail(t *testing.T) {
-
 	api, db, router := newTestAPI(t)
 
 	// Init user
-	u, pass := assets.InsertAdminUser(t, api.mustDB())
+	u, pass := assets.InsertAdminUser(t, db)
 	// Init project
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, api.Cache, key, key)
@@ -613,7 +612,7 @@ func Test_postWorkflowHandlerWithBadPayloadShouldFail(t *testing.T) {
 		RepositoryFullname: "test/app1",
 		VCSServer:          "github",
 	}
-	test.NoError(t, application.Insert(api.mustDB(), *proj, &app))
+	require.NoError(t, application.Insert(db, *proj, &app))
 
 	var workflow = &sdk.Workflow{
 		Name:        "Name",
@@ -638,13 +637,12 @@ func Test_postWorkflowHandlerWithBadPayloadShouldFail(t *testing.T) {
 }
 
 func Test_putWorkflowHandler(t *testing.T) {
-
 	api, db, router := newTestAPI(t)
 
 	// Init user
-	u, pass := assets.InsertAdminUser(t, api.mustDB())
+	u, pass := assets.InsertAdminUser(t, db)
 
-	assert.NoError(t, workflow.CreateBuiltinWorkflowHookModels(db))
+	require.NoError(t, workflow.CreateBuiltinWorkflowHookModels(api.mustDB()))
 
 	repoHookModel, err := workflow.LoadHookModelByName(db, sdk.RepositoryWebHookModel.Name)
 	assert.NoError(t, err)
@@ -809,7 +807,7 @@ func Test_putWorkflowHandler(t *testing.T) {
 		Name:  sdk.RandomString(10),
 		Event: true,
 	}
-	test.NoError(t, integration.InsertModel(api.mustDB(), &model))
+	require.NoError(t, integration.InsertModel(db, &model))
 
 	projInt := sdk.ProjectIntegration{
 		Config: sdk.IntegrationConfig{
@@ -880,7 +878,7 @@ func Test_deleteWorkflowEventIntegrationHandler(t *testing.T) {
 	api, db, router := newTestAPI(t)
 
 	// Init user
-	u, pass := assets.InsertAdminUser(t, api.mustDB())
+	u, pass := assets.InsertAdminUser(t, db)
 	// Init project
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, api.Cache, key, key)
@@ -932,13 +930,13 @@ func Test_deleteWorkflowEventIntegrationHandler(t *testing.T) {
 		RepositoryFullname: "test/app1",
 		VCSServer:          "github",
 	}
-	test.NoError(t, application.Insert(api.mustDB(), *proj, &app))
+	require.NoError(t, application.Insert(db, *proj, &app))
 
 	model := sdk.IntegrationModel{
 		Name:  sdk.RandomString(10),
 		Event: true,
 	}
-	test.NoError(t, integration.InsertModel(api.mustDB(), &model))
+	require.NoError(t, integration.InsertModel(db, &model))
 
 	projInt := sdk.ProjectIntegration{
 		Config: sdk.IntegrationConfig{
@@ -1012,7 +1010,7 @@ func Test_postWorkflowHandlerWithError(t *testing.T) {
 	api, db, router := newTestAPI(t)
 
 	// Init user
-	u, pass := assets.InsertAdminUser(t, api.mustDB())
+	u, pass := assets.InsertAdminUser(t, db)
 	// Init project
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, api.Cache, key, key)
@@ -1068,7 +1066,7 @@ func Test_postWorkflowRollbackHandler(t *testing.T) {
 	api, db, router := newTestAPI(t)
 
 	// Init user
-	u, pass := assets.InsertAdminUser(t, api.mustDB())
+	u, pass := assets.InsertAdminUser(t, db)
 	// Init project
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, api.Cache, key, key)
@@ -1126,7 +1124,7 @@ func Test_postWorkflowRollbackHandler(t *testing.T) {
 		RepositoryFullname: "test/app1",
 		VCSServer:          "github",
 	}
-	test.NoError(t, application.Insert(api.mustDB(), *proj, &app))
+	require.NoError(t, application.Insert(db, *proj, &app))
 
 	var workflow1 = &sdk.Workflow{
 		ID:          wf.ID,
@@ -1219,7 +1217,7 @@ func Test_postWorkflowRollbackHandler(t *testing.T) {
 func Test_postAndDeleteWorkflowLabelHandler(t *testing.T) {
 	api, db, router := newTestAPI(t)
 
-	u, jwt := assets.InsertAdminUser(t, api.mustDB())
+	u, jwt := assets.InsertAdminUser(t, db)
 
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, api.Cache, key, key)
@@ -1295,10 +1293,10 @@ func Test_postAndDeleteWorkflowLabelHandler(t *testing.T) {
 func Test_deleteWorkflowHandler(t *testing.T) {
 	api, db, router := newTestAPI(t)
 
-	test.NoError(t, workflow.CreateBuiltinWorkflowHookModels(db))
+	require.NoError(t, workflow.CreateBuiltinWorkflowHookModels(api.mustDB()))
 
 	// Init user
-	u, pass := assets.InsertAdminUser(t, api.mustDB())
+	u, pass := assets.InsertAdminUser(t, db)
 	// Init project
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, api.Cache, key, key)
@@ -1525,7 +1523,7 @@ func Test_putWorkflowShouldNotCallHOOKSIfHookDoesNotChange(t *testing.T) {
 
 	_, _ = assets.InsertService(t, db, t.Name()+"_HOOKS", sdk.TypeHooks)
 
-	u, pass := assets.InsertAdminUser(t, api.mustDB())
+	u, pass := assets.InsertAdminUser(t, db)
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, api.Cache, key, key)
 	pip := sdk.Pipeline{
@@ -1634,7 +1632,7 @@ func Test_putWorkflowWithDuplicateHooksShouldRaiseAnError(t *testing.T) {
 
 	_, _ = assets.InsertService(t, db, t.Name()+"_HOOKS", sdk.TypeHooks)
 
-	u, pass := assets.InsertAdminUser(t, api.mustDB())
+	u, pass := assets.InsertAdminUser(t, db)
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, api.Cache, key, key)
 	pip := sdk.Pipeline{
@@ -1751,20 +1749,20 @@ func Test_putWorkflowWithDuplicateHooksShouldRaiseAnError(t *testing.T) {
 }
 
 func Test_getWorkflowsHandler_FilterByRepo(t *testing.T) {
-	api, tsURL := newTestServer(t)
+	api, db, tsURL := newTestServer(t)
 
-	admin, _ := assets.InsertAdminUser(t, api.mustDB())
+	admin, _ := assets.InsertAdminUser(t, db)
 	localConsumer, err := authentication.LoadConsumerByTypeAndUserID(context.TODO(), api.mustDB(), sdk.ConsumerLocal, admin.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
 	require.NoError(t, err)
 
-	_, jws, err := builtin.NewConsumer(context.TODO(), api.mustDB(), sdk.RandomString(10), sdk.RandomString(10), localConsumer, admin.GetGroupIDs(),
+	_, jws, err := builtin.NewConsumer(context.TODO(), db, sdk.RandomString(10), sdk.RandomString(10), localConsumer, admin.GetGroupIDs(),
 		sdk.NewAuthConsumerScopeDetails(sdk.AuthConsumerScopeProject))
 
-	u, _ := assets.InsertLambdaUser(t, api.mustDB())
+	u, _ := assets.InsertLambdaUser(t, db)
 
 	pkey := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, api.mustDB(), api.Cache, pkey, pkey)
-	require.NoError(t, group.InsertLinkGroupUser(context.TODO(), api.mustDB(), &group.LinkGroupUser{
+	proj := assets.InsertTestProject(t, db, api.Cache, pkey, pkey)
+	require.NoError(t, group.InsertLinkGroupUser(context.TODO(), db, &group.LinkGroupUser{
 		GroupID:            proj.ProjectGroups[0].Group.ID,
 		AuthentifiedUserID: u.ID,
 		Admin:              true,
@@ -1776,7 +1774,7 @@ func Test_getWorkflowsHandler_FilterByRepo(t *testing.T) {
 		Name:               sdk.RandomString(10),
 		RepositoryFullname: "ovh/" + repofullName,
 	}
-	require.NoError(t, application.Insert(api.mustDB(), *proj, app))
+	require.NoError(t, application.Insert(db, *proj, app))
 
 	pip := sdk.Pipeline{
 		ProjectID:  proj.ID,
@@ -1799,7 +1797,7 @@ func Test_getWorkflowsHandler_FilterByRepo(t *testing.T) {
 			},
 		},
 	}
-	test.NoError(t, workflow.Insert(context.TODO(), api.mustDB(), api.Cache, *proj, &wf))
+	require.NoError(t, workflow.Insert(context.TODO(), db, api.Cache, *proj, &wf))
 
 	wf2 := sdk.Workflow{
 		Name:       "workflow2",
@@ -1814,7 +1812,7 @@ func Test_getWorkflowsHandler_FilterByRepo(t *testing.T) {
 			},
 		},
 	}
-	test.NoError(t, workflow.Insert(context.TODO(), api.mustDB(), api.Cache, *proj, &wf2))
+	require.NoError(t, workflow.Insert(context.TODO(), db, api.Cache, *proj, &wf2))
 
 	// Call with an admin
 	sdkclientAdmin := cdsclient.New(cdsclient.Config{
@@ -1832,20 +1830,20 @@ func Test_getWorkflowsHandler_FilterByRepo(t *testing.T) {
 }
 
 func Test_getSearchWorkflowHandler(t *testing.T) {
-	api, tsURL := newTestServer(t)
+	api, db, tsURL := newTestServer(t)
 
-	admin, _ := assets.InsertAdminUser(t, api.mustDB())
+	admin, _ := assets.InsertAdminUser(t, db)
 	localConsumer, err := authentication.LoadConsumerByTypeAndUserID(context.TODO(), api.mustDB(), sdk.ConsumerLocal, admin.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
 	require.NoError(t, err)
 
-	_, jws, err := builtin.NewConsumer(context.TODO(), api.mustDB(), sdk.RandomString(10), sdk.RandomString(10), localConsumer, admin.GetGroupIDs(),
+	_, jws, err := builtin.NewConsumer(context.TODO(), db, sdk.RandomString(10), sdk.RandomString(10), localConsumer, admin.GetGroupIDs(),
 		sdk.NewAuthConsumerScopeDetails(sdk.AuthConsumerScopeProject))
 
-	u, _ := assets.InsertLambdaUser(t, api.mustDB())
+	u, _ := assets.InsertLambdaUser(t, db)
 
 	pkey := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, api.mustDB(), api.Cache, pkey, pkey)
-	require.NoError(t, group.InsertLinkGroupUser(context.TODO(), api.mustDB(), &group.LinkGroupUser{
+	proj := assets.InsertTestProject(t, db, api.Cache, pkey, pkey)
+	require.NoError(t, group.InsertLinkGroupUser(context.TODO(), db, &group.LinkGroupUser{
 		GroupID:            proj.ProjectGroups[0].Group.ID,
 		AuthentifiedUserID: u.ID,
 		Admin:              true,
@@ -1857,7 +1855,7 @@ func Test_getSearchWorkflowHandler(t *testing.T) {
 		Name:               sdk.RandomString(10),
 		RepositoryFullname: "ovh/" + repofullName,
 	}
-	require.NoError(t, application.Insert(api.mustDB(), *proj, app))
+	require.NoError(t, application.Insert(db, *proj, app))
 
 	pip := sdk.Pipeline{
 		ProjectID:  proj.ID,
@@ -1880,7 +1878,7 @@ func Test_getSearchWorkflowHandler(t *testing.T) {
 			},
 		},
 	}
-	test.NoError(t, workflow.Insert(context.TODO(), api.mustDB(), api.Cache, *proj, &wf))
+	require.NoError(t, workflow.Insert(context.TODO(), db, api.Cache, *proj, &wf))
 
 	wf2 := sdk.Workflow{
 		Name:       "workflow2",
@@ -1895,7 +1893,7 @@ func Test_getSearchWorkflowHandler(t *testing.T) {
 			},
 		},
 	}
-	test.NoError(t, workflow.Insert(context.TODO(), api.mustDB(), api.Cache, *proj, &wf2))
+	require.NoError(t, workflow.Insert(context.TODO(), db, api.Cache, *proj, &wf2))
 
 	// Run the workflow
 	consumer, _ := authentication.LoadConsumerByTypeAndUserID(context.TODO(), api.mustDB(), sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
@@ -1903,7 +1901,7 @@ func Test_getSearchWorkflowHandler(t *testing.T) {
 	assert.NoError(t, err)
 	wr.Workflow = wf
 	wr.Tag("git.branch", "master")
-	_, err = workflow.StartWorkflowRun(context.TODO(), api.mustDB(), api.Cache, *proj, wr, &sdk.WorkflowRunPostHandlerOption{
+	_, err = workflow.StartWorkflowRun(context.TODO(), db, api.Cache, *proj, wr, &sdk.WorkflowRunPostHandlerOption{
 		Manual: &sdk.WorkflowNodeRunManual{
 			Username: u.GetUsername(),
 			Payload:  `{"git.branch": "master"}`,

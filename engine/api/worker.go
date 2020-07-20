@@ -246,10 +246,17 @@ func (api *API) workerWaitingHandler() service.Handler {
 			return nil
 		}
 
-		if err := worker.SetStatus(ctx, api.mustDB(), wk.ID, sdk.StatusWaiting); err != nil {
+		tx, err := api.mustDB().Begin()
+		if err != nil {
+			return sdk.WithStack(err)
+		}
+		defer tx.Rollback() // nolint
+
+		if err := worker.SetStatus(ctx, tx, wk.ID, sdk.StatusWaiting); err != nil {
 			return sdk.WrapError(err, "cannot update worker %s", wk.ID)
 		}
-		return nil
+
+		return sdk.WithStack(tx.Commit())
 	}
 }
 

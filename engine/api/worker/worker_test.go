@@ -64,8 +64,8 @@ func TestDAO(t *testing.T) {
 func TestDeadWorkers(t *testing.T) {
 	db, _ := test.SetupPG(t)
 
-	require.NoError(t, worker.DisableDeadWorkers(context.TODO(), db))
-	require.NoError(t, worker.DeleteDeadWorkers(context.TODO(), db))
+	require.NoError(t, worker.DisableDeadWorkers(context.TODO(), db.DbMap))
+	require.NoError(t, worker.DeleteDeadWorkers(context.TODO(), db.DbMap))
 }
 
 func TestRegister(t *testing.T) {

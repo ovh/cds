@@ -47,7 +47,7 @@ func TestManualRun1(t *testing.T) {
 			Enabled: true,
 		},
 	}
-	pipeline.InsertJob(db, j, s.ID, &pip)
+	pipeline.InsertJob(context.TODO(), db, j, s.ID, &pip)
 	s.Jobs = append(s.Jobs, *j)
 
 	pip.Stages = append(pip.Stages, *s)
@@ -69,7 +69,7 @@ func TestManualRun1(t *testing.T) {
 			Enabled: true,
 		},
 	}
-	pipeline.InsertJob(db, j, s.ID, &pip2)
+	pipeline.InsertJob(context.TODO(), db, j, s.ID, &pip2)
 	s.Jobs = append(s.Jobs, *j)
 
 	proj, _ = project.LoadByID(db, proj.ID, project.LoadOptions.WithApplications, project.LoadOptions.WithPipelines, project.LoadOptions.WithEnvironments, project.LoadOptions.WithGroups)
@@ -110,7 +110,7 @@ func TestManualRun1(t *testing.T) {
 	t.Logf("w1: %+v", w1)
 	require.NoError(t, err)
 
-	wr, errWR := workflow.CreateRun(db, w1, nil, u)
+	wr, errWR := workflow.CreateRun(db.DbMap, w1, nil, u)
 	assert.NoError(t, errWR)
 	wr.Workflow = *w1
 	consumer, _ := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
@@ -125,7 +125,7 @@ func TestManualRun1(t *testing.T) {
 	}, consumer, nil)
 	require.NoError(t, errS)
 
-	wr2, errWR := workflow.CreateRun(db, w1, nil, u)
+	wr2, errWR := workflow.CreateRun(db.DbMap, w1, nil, u)
 	assert.NoError(t, errWR)
 	wr2.Workflow = *w1
 	_, errS = workflow.StartWorkflowRun(context.TODO(), db, cache, *proj, wr2, &sdk.WorkflowRunPostHandlerOption{
@@ -207,7 +207,7 @@ func TestManualRun2(t *testing.T) {
 			Enabled: true,
 		},
 	}
-	pipeline.InsertJob(db, j, s.ID, &pip)
+	pipeline.InsertJob(context.TODO(), db, j, s.ID, &pip)
 	s.Jobs = append(s.Jobs, *j)
 
 	pip.Stages = append(pip.Stages, *s)
@@ -229,7 +229,7 @@ func TestManualRun2(t *testing.T) {
 			Enabled: true,
 		},
 	}
-	pipeline.InsertJob(db, j, s.ID, &pip2)
+	pipeline.InsertJob(context.TODO(), db, j, s.ID, &pip2)
 	s.Jobs = append(s.Jobs, *j)
 
 	proj, _ = project.LoadByID(db, proj.ID, project.LoadOptions.WithApplications, project.LoadOptions.WithPipelines, project.LoadOptions.WithEnvironments, project.LoadOptions.WithGroups)
@@ -270,7 +270,7 @@ func TestManualRun2(t *testing.T) {
 	require.NoError(t, err)
 	consumer, _ := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
 
-	wr, errWR := workflow.CreateRun(db, w1, nil, u)
+	wr, errWR := workflow.CreateRun(db.DbMap, w1, nil, u)
 	assert.NoError(t, errWR)
 	wr.Workflow = *w1
 	_, errS := workflow.StartWorkflowRun(context.TODO(), db, cache, *proj, wr, &sdk.WorkflowRunPostHandlerOption{
@@ -278,7 +278,7 @@ func TestManualRun2(t *testing.T) {
 	}, consumer, nil)
 	require.NoError(t, errS)
 
-	wr2, errWR := workflow.CreateRun(db, w1, nil, u)
+	wr2, errWR := workflow.CreateRun(db.DbMap, w1, nil, u)
 	assert.NoError(t, errWR)
 	wr2.Workflow = *w1
 	_, errS = workflow.StartWorkflowRun(context.TODO(), db, cache, *proj, wr2, &sdk.WorkflowRunPostHandlerOption{
@@ -461,8 +461,8 @@ func TestManualRun3(t *testing.T) {
 			Name:    "job11",
 		},
 	}
-	require.NoError(t, pipeline.InsertJob(db, j, s.ID, &pip))
-	require.NoError(t, pipeline.InsertJob(db, j2, s2.ID, &pip))
+	require.NoError(t, pipeline.InsertJob(context.TODO(), db, j, s.ID, &pip))
+	require.NoError(t, pipeline.InsertJob(context.TODO(), db, j2, s2.ID, &pip))
 	s.Jobs = append(s.Jobs, *j)
 	s2.Jobs = append(s.Jobs, *j2)
 
@@ -488,7 +488,7 @@ func TestManualRun3(t *testing.T) {
 			Requirements: []sdk.Requirement{{Name: "fooNameService", Value: "valueService", Type: sdk.ServiceRequirement}},
 		},
 	}
-	pipeline.InsertJob(db, j, s.ID, &pip2)
+	pipeline.InsertJob(context.TODO(), db, j, s.ID, &pip2)
 	s.Jobs = append(s.Jobs, *j)
 
 	w := sdk.Workflow{
@@ -542,7 +542,7 @@ func TestManualRun3(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	wr, errWR := workflow.CreateRun(db, w1, nil, u)
+	wr, errWR := workflow.CreateRun(db.DbMap, w1, nil, u)
 	require.NoError(t, errWR)
 	wr.Workflow = *w1
 	_, errS := workflow.StartWorkflowRun(context.TODO(), db, cache, *proj, wr, &sdk.WorkflowRunPostHandlerOption{
@@ -577,7 +577,6 @@ queueRun:
 
 	for i := range jobs {
 		j := &jobs[i]
-		tx, _ := db.Begin()
 
 		t.Logf("##### work on job : %+v\n", j.Job.Action.Name)
 
@@ -588,11 +587,7 @@ queueRun:
 				ID:   1,
 			},
 		})
-		assert.NoError(t, err)
-		if t.Failed() {
-			tx.Rollback()
-			t.FailNow()
-		}
+		require.NoError(t, err)
 
 		sp := sdk.SpawnMsg{ID: sdk.MsgSpawnInfoHatcheryStarts.ID}
 		//AddSpawnInfosNodeJobRun
@@ -606,7 +601,6 @@ queueRun:
 		})
 		assert.NoError(t, err)
 		if t.Failed() {
-			tx.Rollback()
 			t.FailNow()
 		}
 
@@ -635,16 +629,8 @@ queueRun:
 		}
 
 		//TestAddLog
-		assert.NoError(t, workflow.AppendLog(db, j.ID, j.WorkflowNodeRunID, 1, "This is a log", workflow.DefaultMaxLogSize))
-		if t.Failed() {
-			tx.Rollback()
-			t.FailNow()
-		}
-		assert.NoError(t, workflow.AppendLog(db, j.ID, j.WorkflowNodeRunID, 1, "This is another log", workflow.DefaultMaxLogSize))
-		if t.Failed() {
-			tx.Rollback()
-			t.FailNow()
-		}
+		require.NoError(t, workflow.AppendLog(db, j.ID, j.WorkflowNodeRunID, 1, "This is a log", workflow.DefaultMaxLogSize))
+		require.NoError(t, workflow.AppendLog(db, j.ID, j.WorkflowNodeRunID, 1, "This is another log", workflow.DefaultMaxLogSize))
 
 		j, err = workflow.LoadNodeJobRun(context.TODO(), db, cache, j.ID)
 		require.NoError(t, err)
@@ -654,11 +640,7 @@ queueRun:
 
 		//TestUpdateNodeJobRunStatus
 		_, err = workflow.UpdateNodeJobRunStatus(context.TODO(), db, cache, *proj, j, sdk.StatusSuccess)
-		assert.NoError(t, err)
-		if t.Failed() {
-			tx.Rollback()
-			t.FailNow()
-		}
+		require.NoError(t, err)
 
 		workflowRun, err = workflow.LoadRunByID(db, wr.ID, workflow.LoadRunOptions{})
 		require.NoError(t, err)
@@ -685,14 +667,8 @@ queueRun:
 		}
 
 		logs, err := workflow.LoadLogs(db, takenJob.ID)
-		assert.NoError(t, err)
-		if t.Failed() {
-			tx.Rollback()
-			t.FailNow()
-		}
-		assert.NotEmpty(t, logs)
-
-		tx.Commit()
+		require.NoError(t, err)
+		require.NotEmpty(t, logs)
 
 		// check if there is another job to run
 		if takenJob.Job.Action.Name == "job10" {
@@ -875,7 +851,7 @@ func TestNoStage(t *testing.T) {
 	require.NoError(t, err)
 	consumer, _ := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
 
-	wr, errWR := workflow.CreateRun(db, w1, nil, u)
+	wr, errWR := workflow.CreateRun(db.DbMap, w1, nil, u)
 	assert.NoError(t, errWR)
 	wr.Workflow = *w1
 	_, errS := workflow.StartWorkflowRun(context.TODO(), db, cache, *proj, wr, &sdk.WorkflowRunPostHandlerOption{
@@ -951,7 +927,7 @@ func TestNoJob(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	wr, errWR := workflow.CreateRun(db, w1, nil, u)
+	wr, errWR := workflow.CreateRun(db.DbMap, w1, nil, u)
 	assert.NoError(t, errWR)
 	wr.Workflow = *w1
 	_, errS := workflow.StartWorkflowRun(context.TODO(), db, cache, *proj, wr, &sdk.WorkflowRunPostHandlerOption{

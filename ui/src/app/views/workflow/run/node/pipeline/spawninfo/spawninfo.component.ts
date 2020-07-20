@@ -51,7 +51,7 @@ export class WorkflowRunJobSpawnInfoComponent implements OnInit {
     @ViewChild('jobVariable')
     jobVariable: WorkflowRunJobVariableComponent;
 
-    workerSubscription: Subscription;
+    pollingSubscription: Subscription;
     zone: NgZone;
 
     loading = true;
@@ -70,7 +70,6 @@ export class WorkflowRunJobSpawnInfoComponent implements OnInit {
     ) {
         this.zone = new NgZone({ enableLongStackTrace: false });
     }
-
     ngOnInit(): void {
         this.nodeJobRunSubs = this.nodeJobRun$.subscribe(njr => {
             if (!njr) {
@@ -147,8 +146,9 @@ export class WorkflowRunJobSpawnInfoComponent implements OnInit {
             callback(spawnInfos);
         });
 
+        this.stopWorker();
         this._ngZone.runOutsideAngular(() => {
-            this.workerSubscription = Observable.interval(4000)
+            this.pollingSubscription = Observable.interval(4000)
                 .mergeMap(_ => this._workflowService.getNodeJobRunInfo(projectKey, workflowName,
                     runNumber, nodeRunID, runJobId)).subscribe(spawnInfos => {
                         this._ngZone.run(() => { callback(spawnInfos); });
@@ -157,8 +157,8 @@ export class WorkflowRunJobSpawnInfoComponent implements OnInit {
     }
 
     stopWorker() {
-        if (this.workerSubscription) {
-            this.workerSubscription.unsubscribe();
+        if (this.pollingSubscription) {
+            this.pollingSubscription.unsubscribe();
         }
     }
 

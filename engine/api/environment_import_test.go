@@ -110,7 +110,7 @@ func Test_postEnvironmentImportHandler_NewEnvFromYAMLWithKeysAndSecrets(t *testi
 	k.Public = kpgp.Public
 	k.Private = kpgp.Private
 	k.KeyID = kpgp.KeyID
-	if err := environment.InsertKey(api.mustDB(), k); err != nil {
+	if err := environment.InsertKey(db, k); err != nil {
 		t.Fatal(err)
 	}
 
@@ -227,7 +227,7 @@ func Test_postEnvironmentImportHandler_NewEnvFromYAMLWithKeysAndSecretsAndReImpo
 	k.Public = kpgp.Public
 	k.Private = kpgp.Private
 	k.KeyID = kpgp.KeyID
-	if err := environment.InsertKey(api.mustDB(), k); err != nil {
+	if err := environment.InsertKey(db, k); err != nil {
 		t.Fatal(err)
 	}
 

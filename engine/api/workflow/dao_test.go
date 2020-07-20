@@ -611,12 +611,7 @@ func TestUpdateSimpleWorkflowWithApplicationEnvPipelineParametersAndPayload(t *t
 	assert.Equal(t, app2.ID, w2.WorkflowData.Node.Context.ApplicationID)
 	assert.Equal(t, env.ID, w2.WorkflowData.Node.Context.EnvironmentID)
 
-	tx, err := db.Begin()
-	require.NoError(t, err)
-	defer tx.Rollback()
-	test.NoError(t, workflow.Delete(context.TODO(), tx, cache, *proj, w2))
-
-	require.NoError(t, tx.Commit())
+	require.NoError(t, workflow.Delete(context.TODO(), db, cache, *proj, w2))
 }
 
 func TestInsertComplexeWorkflowWithJoinsAndExport(t *testing.T) {
@@ -1224,18 +1219,14 @@ func TestUpdateWorkflowWithJoins(t *testing.T) {
 		}
 	}
 
-	tx, err := db.Begin()
-	require.NoError(t, err)
-	defer tx.Rollback()
-	test.NoError(t, workflow.Delete(context.TODO(), tx, cache, *proj, w2))
-	require.NoError(t, tx.Commit())
+	require.NoError(t, workflow.Delete(context.TODO(), db, cache, *proj, w2))
 }
 
 func TestInsertSimpleWorkflowWithHookAndExport(t *testing.T) {
 	db, cache := test.SetupPG(t)
 
-	test.NoError(t, workflow.CreateBuiltinWorkflowHookModels(db))
-	test.NoError(t, workflow.CreateBuiltinWorkflowOutgoingHookModels(db))
+	test.NoError(t, workflow.CreateBuiltinWorkflowHookModels(db.DbMap))
+	test.NoError(t, workflow.CreateBuiltinWorkflowOutgoingHookModels(db.DbMap))
 
 	hookModels, err := workflow.LoadHookModels(db)
 	test.NoError(t, err)
@@ -1493,7 +1484,7 @@ func TestInsertAndDeleteMultiHook(t *testing.T) {
 	db, cache := test.SetupPG(t, bootstrap.InitiliazeDB)
 
 	u, _ := assets.InsertAdminUser(t, db)
-	test.NoError(t, workflow.CreateBuiltinWorkflowHookModels(db))
+	test.NoError(t, workflow.CreateBuiltinWorkflowHookModels(db.DbMap))
 
 	hookModels, err := workflow.LoadHookModels(db)
 	test.NoError(t, err)

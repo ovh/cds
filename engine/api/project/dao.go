@@ -151,7 +151,7 @@ func Delete(db gorp.SqlExecutor, key string) error {
 const BuiltinGPGKey = "builtin"
 
 // Insert a new project in database
-func Insert(db gorp.SqlExecutor, proj *sdk.Project) error {
+func Insert(db gorpmapping.SqlExecutorWithTx, proj *sdk.Project) error {
 	if err := proj.IsValid(); err != nil {
 		return sdk.WrapError(err, "project is not valid")
 	}

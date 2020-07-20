@@ -140,7 +140,7 @@ func Test_postPerformImportAsCodeHandler(t *testing.T) {
 
 	u, pass := assets.InsertAdminUser(t, db)
 
-	assert.NoError(t, workflow.CreateBuiltinWorkflowHookModels(db))
+	assert.NoError(t, workflow.CreateBuiltinWorkflowHookModels(api.mustDB()))
 
 	//Insert Project
 	pkey := sdk.RandomString(10)

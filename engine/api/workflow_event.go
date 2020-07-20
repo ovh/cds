@@ -15,7 +15,7 @@ import (
 )
 
 // WorkflowSendEvent Send event on workflow run
-func WorkflowSendEvent(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj sdk.Project, report *workflow.ProcessorReport) {
+func WorkflowSendEvent(ctx context.Context, db *gorp.DbMap, store cache.Store, proj sdk.Project, report *workflow.ProcessorReport) {
 	if report == nil {
 		return
 	}

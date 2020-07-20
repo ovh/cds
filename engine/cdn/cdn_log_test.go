@@ -33,7 +33,7 @@ func TestWorkerLog(t *testing.T) {
 
 	// Create cdn service
 	s := Service{
-		Db:    db,
+		Db:    db.DbMap,
 		Cache: cache,
 	}
 
@@ -114,7 +114,7 @@ func TestServiceLog(t *testing.T) {
 
 	// Create cdn service
 	s := Service{
-		Db:    db,
+		Db:    db.DbMap,
 		Cache: cache,
 	}
 	s.Client = cdsclient.New(cdsclient.Config{

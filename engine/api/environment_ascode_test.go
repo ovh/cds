@@ -29,9 +29,9 @@ import (
 )
 
 func TestUpdateAsCodeEnvironmentHandler(t *testing.T) {
-	api, tsURL := newTestServer(t)
-	db := api.mustDB()
-	require.NoError(t, event.Initialize(context.Background(), db, api.Cache))
+	api, db, tsURL := newTestServer(t)
+
+	require.NoError(t, event.Initialize(context.Background(), api.mustDB(), api.Cache))
 
 	u, jwt := assets.InsertAdminUser(t, db)
 
@@ -162,7 +162,7 @@ func TestUpdateAsCodeEnvironmentHandler(t *testing.T) {
 			},
 		).Times(1)
 
-	require.NoError(t, workflow.CreateBuiltinWorkflowHookModels(db))
+	require.NoError(t, workflow.CreateBuiltinWorkflowHookModels(api.mustDB()))
 
 	// Create Project
 	pkey := sdk.RandomString(10)

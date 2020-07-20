@@ -18,9 +18,23 @@ func DisableDeadWorkers(ctx context.Context, db *gorp.DbMap) error {
 		return sdk.WrapError(err, "Cannot load dead workers")
 	}
 	for i := range workers {
+		tx, err := db.Begin()
+		if err != nil {
+			log.Error(ctx, "DisableDeadWorkers> unable to start transaction: %v", err)
+			continue
+		}
+
 		log.Debug("Disable worker %s[%s] LastBeat:%v status:%s", workers[i].Name, workers[i].ID, workers[i].LastBeat, workers[i].Status)
-		if errD := SetStatus(ctx, db, workers[i].ID, sdk.StatusDisabled); errD != nil {
+		if errD := SetStatus(ctx, tx, workers[i].ID, sdk.StatusDisabled); errD != nil {
+			_ = tx.Rollback()
 			log.Warning(ctx, "Cannot disable worker %v: %v", workers[i].ID, errD)
+			continue
+		}
+
+		if err := tx.Commit(); err != nil {
+			_ = tx.Rollback()
+			log.Error(ctx, "DisableDeadWorkers> unable to commit transaction: %v", err)
+			continue
 		}
 	}
 

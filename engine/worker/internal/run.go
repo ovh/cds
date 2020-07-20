@@ -2,7 +2,7 @@ package internal
 
 import (
 	"context"
-	"encoding/base64"
+	"crypto/md5"
 	"fmt"
 	"os"
 	"os/user"
@@ -378,8 +378,10 @@ func teardownDirectory(fs afero.Fs, dir string) error {
 }
 
 func workingDirectory(ctx context.Context, fs afero.Fs, jobInfo sdk.WorkflowNodeJobRunData, suffixes ...string) (string, error) {
-	var encodedName = base64.RawStdEncoding.EncodeToString([]byte(jobInfo.NodeJobRun.Job.Job.Action.Name))
-	paths := append([]string{encodedName}, suffixes...)
+	// Generate a hash of job name as workspace folder, this folder's name should not be too long as some tools are limiting path size.
+	data := []byte(jobInfo.NodeJobRun.Job.Job.Action.Name)
+	hashedName := fmt.Sprintf("%x", md5.Sum(data))
+	paths := append([]string{hashedName}, suffixes...)
 	dir := path.Join(paths...)
 
 	if _, err := fs.Stat(dir); os.IsExist(err) {

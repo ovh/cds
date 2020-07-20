@@ -1,15 +1,14 @@
 package action
 
 import (
-	"github.com/go-gorp/gorp"
-
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/action"
+	"github.com/ovh/cds/sdk/gorpmapping"
 	"github.com/ovh/cds/sdk/log"
 )
 
 // CreateBuiltinActions add builtin actions in database if needed
-func CreateBuiltinActions(db *gorp.DbMap) error {
+func CreateBuiltinActions(db gorpmapping.SqlExecutorWithTx) error {
 	for i := range action.List {
 		if err := checkBuiltinAction(db, &action.List[i].Action); err != nil {
 			return err
@@ -20,16 +19,10 @@ func CreateBuiltinActions(db *gorp.DbMap) error {
 }
 
 // checkBuiltinAction add builtin actions in database if needed
-func checkBuiltinAction(db *gorp.DbMap, a *sdk.Action) error {
+func checkBuiltinAction(db gorpmapping.SqlExecutorWithTx, a *sdk.Action) error {
 	a.Type = sdk.BuiltinAction
 
-	tx, err := db.Begin()
-	if err != nil {
-		return sdk.WithStack(err)
-	}
-	defer tx.Rollback() // nolint
-
-	nb, err := tx.SelectInt("SELECT COUNT(1) FROM action WHERE action.name = $1 and action.type = $2", a.Name, sdk.BuiltinAction)
+	nb, err := db.SelectInt("SELECT COUNT(1) FROM action WHERE action.name = $1 and action.type = $2", a.Name, sdk.BuiltinAction)
 	if err != nil {
 		return sdk.WrapError(err, "unable to count action %s", a.Name)
 	}
@@ -37,20 +30,20 @@ func checkBuiltinAction(db *gorp.DbMap, a *sdk.Action) error {
 	// If the action doesn't exist, let's create
 	if nb == 0 {
 		log.Debug("createBuiltinAction> create builtin action %s", a.Name)
-		if err := Insert(tx, a); err != nil {
+		if err := Insert(db, a); err != nil {
 			return err
 		}
-		return sdk.WithStack(tx.Commit())
+		return nil
 	}
 
-	id, err := tx.SelectInt("SELECT id FROM action WHERE action.name = $1 and action.type = $2", a.Name, sdk.BuiltinAction)
+	id, err := db.SelectInt("SELECT id FROM action WHERE action.name = $1 and action.type = $2", a.Name, sdk.BuiltinAction)
 	if err != nil {
 		return sdk.WrapError(err, "unable to get action %s ID", a.Name)
 	}
 
 	a.ID = id
-	if err := Update(tx, a); err != nil {
+	if err := Update(db, a); err != nil {
 		return err
 	}
-	return sdk.WithStack(tx.Commit())
+	return nil
 }

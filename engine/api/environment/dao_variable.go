@@ -141,7 +141,7 @@ func DeleteAllVariables(db gorp.SqlExecutor, environmentID int64) error {
 }
 
 // InsertVariable Insert a new variable in the given environment
-func InsertVariable(db gorp.SqlExecutor, envID int64, v *sdk.EnvironmentVariable, u sdk.Identifiable) error {
+func InsertVariable(db gorpmapping.SqlExecutorWithTx, envID int64, v *sdk.EnvironmentVariable, u sdk.Identifiable) error {
 	//Check variable name
 	rx := sdk.NamePatternRegex
 	if !rx.MatchString(v.Name) {
@@ -175,7 +175,7 @@ func InsertVariable(db gorp.SqlExecutor, envID int64, v *sdk.EnvironmentVariable
 }
 
 // UpdateVariable Update a variable in the given environment
-func UpdateVariable(db gorp.SqlExecutor, envID int64, variable *sdk.EnvironmentVariable, variableBefore *sdk.EnvironmentVariable, u sdk.Identifiable) error {
+func UpdateVariable(db gorpmapping.SqlExecutorWithTx, envID int64, variable *sdk.EnvironmentVariable, variableBefore *sdk.EnvironmentVariable, u sdk.Identifiable) error {
 	rx := sdk.NamePatternRegex
 	if !rx.MatchString(variable.Name) {
 		return sdk.NewErrorFrom(sdk.ErrInvalidName, "variable name should match %s", sdk.NamePattern)

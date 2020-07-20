@@ -52,12 +52,18 @@ func (api *API) getWorkflowHookModelsHandler() service.Handler {
 			return err
 		}
 
-		p, err := project.Load(ctx, api.mustDB(), key, project.LoadOptions.WithIntegrations)
+		tx, err := api.mustDB().Begin()
+		if err != nil {
+			return sdk.WithStack(err)
+		}
+		defer tx.Rollback() // nolint
+
+		p, err := project.Load(ctx, tx, key, project.LoadOptions.WithIntegrations)
 		if err != nil {
 			return sdk.WithStack(err)
 		}
 
-		wf, err := workflow.Load(ctx, api.mustDB(), api.Cache, *p, workflowName, workflow.LoadOptions{})
+		wf, err := workflow.Load(ctx, tx, api.Cache, *p, workflowName, workflow.LoadOptions{})
 		if err != nil {
 			return sdk.WithStack(err)
 		}
@@ -67,7 +73,7 @@ func (api *API) getWorkflowHookModelsHandler() service.Handler {
 			return sdk.WithStack(sdk.ErrWorkflowNodeNotFound)
 		}
 
-		m, err := workflow.LoadHookModels(api.mustDB())
+		m, err := workflow.LoadHookModels(tx)
 		if err != nil {
 			return sdk.WithStack(err)
 		}
@@ -83,7 +89,7 @@ func (api *API) getWorkflowHookModelsHandler() service.Handler {
 			// Call VCS to know if repository allows webhook and get the configuration fields
 			vcsServer, err := repositoriesmanager.LoadProjectVCSServerLinkByProjectKeyAndVCSServerName(ctx, api.mustDB(), p.Key, wf.GetApplication(node.Context.ApplicationID).VCSServer)
 			if err == nil {
-				client, err := repositoriesmanager.AuthorizedClient(ctx, api.mustDB(), api.Cache, p.Key, vcsServer)
+				client, err := repositoriesmanager.AuthorizedClient(ctx, tx, api.Cache, p.Key, vcsServer)
 				if err != nil {
 					return sdk.WrapError(err, "cannot get vcs client")
 				}
@@ -148,6 +154,10 @@ func (api *API) getWorkflowHookModelsHandler() service.Handler {
 			default:
 				models = append(models, m[i])
 			}
+		}
+
+		if err := tx.Commit(); err != nil {
+			return sdk.WithStack(err)
 		}
 
 		return service.WriteJSON(w, models, http.StatusOK)

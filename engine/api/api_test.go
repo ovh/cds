@@ -7,7 +7,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/go-gorp/gorp"
 	"github.com/gorilla/mux"
 
 	"github.com/ovh/cds/engine/api/authentication/builtin"
@@ -19,7 +18,7 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-func newTestAPI(t *testing.T, bootstrapFunc ...test.Bootstrapf) (*API, *gorp.DbMap, *Router) {
+func newTestAPI(t *testing.T, bootstrapFunc ...test.Bootstrapf) (*API, *test.FakeTransaction, *Router) {
 	bootstrapFunc = append(bootstrapFunc, bootstrap.InitiliazeDB)
 	db, cache := test.SetupPG(t, bootstrapFunc...)
 	router := newRouter(mux.NewRouter(), "/"+test.GetTestName(t))
@@ -57,9 +56,9 @@ func newRouter(m *mux.Router, p string) *Router {
 	return r
 }
 
-func newTestServer(t *testing.T, bootstrapFunc ...test.Bootstrapf) (*API, string) {
+func newTestServer(t *testing.T, bootstrapFunc ...test.Bootstrapf) (*API, *test.FakeTransaction, string) {
 	bootstrapFunc = append(bootstrapFunc, bootstrap.InitiliazeDB)
-	_, cache := test.SetupPG(t, bootstrapFunc...)
+	db, cache := test.SetupPG(t, bootstrapFunc...)
 	router := newRouter(mux.NewRouter(), "")
 	var cancel context.CancelFunc
 	router.Background, cancel = context.WithCancel(context.Background())
@@ -81,5 +80,5 @@ func newTestServer(t *testing.T, bootstrapFunc ...test.Bootstrapf) (*API, string
 		cancel()
 		ts.Close()
 	})
-	return api, url.String()
+	return api, db, url.String()
 }

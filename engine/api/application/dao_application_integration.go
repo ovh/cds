@@ -149,7 +149,7 @@ func getProjectIntegrationID(db gorp.SqlExecutor, projID, pfModelID int64, ppfNa
 }
 
 // SetDeploymentStrategy update the application_deployment_strategy table
-func SetDeploymentStrategy(db gorp.SqlExecutor, projID, appID, pfModelID int64, ppfName string, cfg sdk.IntegrationConfig) error {
+func SetDeploymentStrategy(db gorpmapping.SqlExecutorWithTx, projID, appID, pfModelID int64, ppfName string, cfg sdk.IntegrationConfig) error {
 	projectIntegrationID, err := getProjectIntegrationID(db, projID, pfModelID, ppfName)
 	if err != nil {
 		return err

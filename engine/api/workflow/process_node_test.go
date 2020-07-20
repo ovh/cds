@@ -27,6 +27,7 @@ import (
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/ovh/cds/sdk/exportentities"
+	"github.com/ovh/cds/sdk/gorpmapping"
 )
 
 type mockServiceClient struct {
@@ -207,7 +208,7 @@ func TestHookRunWithoutPayloadProcessNodeBuildParameter(t *testing.T) {
 	opts := &sdk.WorkflowRunPostHandlerOption{
 		Hook: &hookEvent,
 	}
-	wr, err := workflow.CreateRun(db, &w, opts, u)
+	wr, err := workflow.CreateRun(db.DbMap, &w, opts, u)
 	assert.NoError(t, err)
 	wr.Workflow = w
 	consumer, _ := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
@@ -391,7 +392,7 @@ func TestHookRunWithHashOnlyProcessNodeBuildParameter(t *testing.T) {
 	opts := &sdk.WorkflowRunPostHandlerOption{
 		Hook: &hookEvent,
 	}
-	wr, err := workflow.CreateRun(db, &w, opts, u)
+	wr, err := workflow.CreateRun(db.DbMap, &w, opts, u)
 	assert.NoError(t, err)
 	wr.Workflow = w
 	consumer, _ := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
@@ -544,7 +545,7 @@ func TestManualRunWithPayloadProcessNodeBuildParameter(t *testing.T) {
 	opts := &sdk.WorkflowRunPostHandlerOption{
 		Manual: &manualEvent,
 	}
-	wr, err := workflow.CreateRun(db, &w, opts, u)
+	wr, err := workflow.CreateRun(db.DbMap, &w, opts, u)
 	assert.NoError(t, err)
 	wr.Workflow = w
 	consumer, _ := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
@@ -690,7 +691,7 @@ func TestManualRunBranchAndCommitInPayloadProcessNodeBuildParameter(t *testing.T
 	opts := &sdk.WorkflowRunPostHandlerOption{
 		Manual: &manualEvent,
 	}
-	wr, err := workflow.CreateRun(db, &w, opts, u)
+	wr, err := workflow.CreateRun(db.DbMap, &w, opts, u)
 	assert.NoError(t, err)
 	wr.Workflow = w
 	consumer, _ := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
@@ -917,7 +918,7 @@ func TestManualRunBranchAndRepositoryInPayloadProcessNodeBuildParameter(t *testi
 	opts := &sdk.WorkflowRunPostHandlerOption{
 		Manual: &manualEvent,
 	}
-	wr, err := workflow.CreateRun(db, &w, opts, u)
+	wr, err := workflow.CreateRun(db.DbMap, &w, opts, u)
 	assert.NoError(t, err)
 	wr.Workflow = w
 
@@ -1151,7 +1152,7 @@ func TestManualRunBuildParameterMultiApplication(t *testing.T) {
 	opts := &sdk.WorkflowRunPostHandlerOption{
 		Manual: &manualEvent,
 	}
-	wr, err := workflow.CreateRun(db, &w, opts, u)
+	wr, err := workflow.CreateRun(db.DbMap, &w, opts, u)
 	assert.NoError(t, err)
 	wr.Workflow = w
 
@@ -1396,7 +1397,7 @@ func TestManualRunBuildParameterNoApplicationOnRoot(t *testing.T) {
 	opts := &sdk.WorkflowRunPostHandlerOption{
 		Manual: &manualEvent,
 	}
-	wr, err := workflow.CreateRun(db, &w, opts, u)
+	wr, err := workflow.CreateRun(db.DbMap, &w, opts, u)
 	assert.NoError(t, err)
 	wr.Workflow = w
 
@@ -1587,7 +1588,7 @@ func TestGitParamOnPipelineWithoutApplication(t *testing.T) {
 	opts := &sdk.WorkflowRunPostHandlerOption{
 		Manual: &manualEvent,
 	}
-	wr, err := workflow.CreateRun(db, &w, opts, u)
+	wr, err := workflow.CreateRun(db.DbMap, &w, opts, u)
 	assert.NoError(t, err)
 	wr.Workflow = w
 	consumer, _ := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
@@ -1773,7 +1774,7 @@ func TestGitParamOnApplicationWithoutRepo(t *testing.T) {
 	opts := &sdk.WorkflowRunPostHandlerOption{
 		Manual: &manualEvent,
 	}
-	wr, err := workflow.CreateRun(db, &w, opts, u)
+	wr, err := workflow.CreateRun(db.DbMap, &w, opts, u)
 	assert.NoError(t, err)
 	wr.Workflow = w
 	consumer, _ := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
@@ -1970,7 +1971,7 @@ func TestGitParamOn2ApplicationSameRepo(t *testing.T) {
 	opts := &sdk.WorkflowRunPostHandlerOption{
 		Manual: &manualEvent,
 	}
-	wr, err := workflow.CreateRun(db, &w, opts, u)
+	wr, err := workflow.CreateRun(db.DbMap, &w, opts, u)
 	assert.NoError(t, err)
 	wr.Workflow = w
 	consumer, _ := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
@@ -2181,7 +2182,7 @@ func TestGitParamWithJoin(t *testing.T) {
 	opts := &sdk.WorkflowRunPostHandlerOption{
 		Manual: &manualEvent,
 	}
-	wr, err := workflow.CreateRun(db, &w, opts, u)
+	wr, err := workflow.CreateRun(db.DbMap, &w, opts, u)
 	assert.NoError(t, err)
 	wr.Workflow = w
 	consumer, _ := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
@@ -2399,7 +2400,7 @@ func TestGitParamOn2ApplicationSameRepoWithFork(t *testing.T) {
 	opts := &sdk.WorkflowRunPostHandlerOption{
 		Manual: &manualEvent,
 	}
-	wr, err := workflow.CreateRun(db, &w, opts, u)
+	wr, err := workflow.CreateRun(db.DbMap, &w, opts, u)
 	assert.NoError(t, err)
 	wr.Workflow = w
 	consumer, _ := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
@@ -2590,7 +2591,7 @@ func TestManualRunWithPayloadAndRunCondition(t *testing.T) {
 	opts := &sdk.WorkflowRunPostHandlerOption{
 		Manual: &manualEvent,
 	}
-	wr, err := workflow.CreateRun(db, &w, opts, u)
+	wr, err := workflow.CreateRun(db.DbMap, &w, opts, u)
 	assert.NoError(t, err)
 	wr.Workflow = w
 	consumer, _ := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
@@ -2696,7 +2697,7 @@ func createBuildPipeline(t *testing.T, db gorp.SqlExecutor, cache cache.Store, p
 	return pip
 }
 
-func createApplication1(t *testing.T, db gorp.SqlExecutor, cache cache.Store, proj *sdk.Project, u *sdk.AuthentifiedUser) *sdk.Application {
+func createApplication1(t *testing.T, db gorpmapping.SqlExecutorWithTx, cache cache.Store, proj *sdk.Project, u *sdk.AuthentifiedUser) *sdk.Application {
 	// Add application
 	appS := `version: v1.0
 name: blabla
@@ -2711,7 +2712,7 @@ vcs_ssh_key: proj-blabla
 	return app
 }
 
-func createApplication2(t *testing.T, db gorp.SqlExecutor, cache cache.Store, proj *sdk.Project, u *sdk.AuthentifiedUser) *sdk.Application {
+func createApplication2(t *testing.T, db gorpmapping.SqlExecutorWithTx, cache cache.Store, proj *sdk.Project, u *sdk.AuthentifiedUser) *sdk.Application {
 	// Add application
 	appS := `version: v1.0
 name: bloublou
@@ -2726,7 +2727,7 @@ vcs_ssh_key: proj-bloublou
 	return app
 }
 
-func createApplication3WithSameRepoAsA(t *testing.T, db gorp.SqlExecutor, cache cache.Store, proj *sdk.Project, u *sdk.AuthentifiedUser) *sdk.Application {
+func createApplication3WithSameRepoAsA(t *testing.T, db gorpmapping.SqlExecutorWithTx, cache cache.Store, proj *sdk.Project, u *sdk.AuthentifiedUser) *sdk.Application {
 	// Add application
 	appS := `version: v1.0
 name: blabla2
@@ -2741,7 +2742,7 @@ vcs_ssh_key: proj-blabla
 	return app
 }
 
-func createApplicationWithoutRepo(t *testing.T, db gorp.SqlExecutor, cache cache.Store, proj *sdk.Project, u *sdk.AuthentifiedUser) *sdk.Application {
+func createApplicationWithoutRepo(t *testing.T, db gorpmapping.SqlExecutorWithTx, cache cache.Store, proj *sdk.Project, u *sdk.AuthentifiedUser) *sdk.Application {
 	// Add application
 	appS := `version: v1.0
 name: app-no-repo

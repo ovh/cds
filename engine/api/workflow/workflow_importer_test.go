@@ -82,7 +82,7 @@ func TestImport(t *testing.T) {
 	//Reload project
 	proj, _ = project.Load(context.TODO(), db, proj.Key, project.LoadOptions.WithApplications, project.LoadOptions.WithEnvironments, project.LoadOptions.WithPipelines)
 
-	test.NoError(t, workflow.CreateBuiltinWorkflowHookModels(db))
+	test.NoError(t, workflow.CreateBuiltinWorkflowHookModels(db.DbMap))
 	hookModels, err := workflow.LoadHookModels(db)
 	test.NoError(t, err)
 

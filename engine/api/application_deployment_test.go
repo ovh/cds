@@ -24,13 +24,13 @@ import (
 func Test_getApplicationDeploymentStrategiesConfigHandler(t *testing.T) {
 	api, db, router := newTestAPI(t)
 
-	u, pass := assets.InsertAdminUser(t, api.mustDB())
+	u, pass := assets.InsertAdminUser(t, db)
 	pkey := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, api.Cache, pkey, pkey)
 	app := &sdk.Application{
 		Name: sdk.RandomString(10),
 	}
-	test.NoError(t, application.Insert(api.mustDB(), *proj, app))
+	test.NoError(t, application.Insert(db, *proj, app))
 
 	vars := map[string]string{
 		"permProjectKey":  proj.Key,
@@ -51,13 +51,13 @@ func Test_getApplicationDeploymentStrategiesConfigHandler(t *testing.T) {
 func Test_postApplicationDeploymentStrategyConfigHandler(t *testing.T) {
 	api, db, router := newTestAPI(t)
 
-	u, pass := assets.InsertAdminUser(t, api.mustDB())
+	u, pass := assets.InsertAdminUser(t, db)
 	pkey := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, api.Cache, pkey, pkey)
 	app := &sdk.Application{
 		Name: sdk.RandomString(10),
 	}
-	test.NoError(t, application.Insert(api.mustDB(), *proj, app))
+	test.NoError(t, application.Insert(db, *proj, app))
 
 	pf := sdk.IntegrationModel{
 		Name:       "test-deploy-post-2" + pkey,
@@ -174,13 +174,13 @@ func Test_postApplicationDeploymentStrategyConfigHandler(t *testing.T) {
 func Test_postApplicationDeploymentStrategyConfigHandler_InsertTwoDifferentIntegrations(t *testing.T) {
 	api, db, router := newTestAPI(t)
 
-	u, pass := assets.InsertAdminUser(t, api.mustDB())
+	u, pass := assets.InsertAdminUser(t, db)
 	pkey := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, api.Cache, pkey, pkey)
 	app := &sdk.Application{
 		Name: sdk.RandomString(10),
 	}
-	test.NoError(t, application.Insert(api.mustDB(), *proj, app))
+	test.NoError(t, application.Insert(db, *proj, app))
 
 	pf := sdk.IntegrationModel{
 		Name:       "test-deploy-TwoDifferentIntegrations-2" + pkey,
@@ -291,21 +291,21 @@ func Test_postApplicationDeploymentStrategyConfigHandler_InsertTwoDifferentInteg
 }
 
 func Test_postApplicationDeploymentStrategyConfigHandlerAsProvider(t *testing.T) {
-	api, tsURL := newTestServer(t)
+	api, db, tsURL := newTestServer(t)
 
-	u, _ := assets.InsertAdminUser(t, api.mustDB())
+	u, _ := assets.InsertAdminUser(t, db)
 	localConsumer, err := authentication.LoadConsumerByTypeAndUserID(context.TODO(), api.mustDB(), sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
 	require.NoError(t, err)
 
-	_, jws, err := builtin.NewConsumer(context.TODO(), api.mustDB(), sdk.RandomString(10), sdk.RandomString(10), localConsumer, u.GetGroupIDs(),
+	_, jws, err := builtin.NewConsumer(context.TODO(), db, sdk.RandomString(10), sdk.RandomString(10), localConsumer, u.GetGroupIDs(),
 		sdk.NewAuthConsumerScopeDetails(sdk.AuthConsumerScopeProject))
 
 	pkey := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, api.mustDB(), api.Cache, pkey, pkey)
+	proj := assets.InsertTestProject(t, db, api.Cache, pkey, pkey)
 	app := &sdk.Application{
 		Name: sdk.RandomString(10),
 	}
-	test.NoError(t, application.Insert(api.mustDB(), *proj, app))
+	test.NoError(t, application.Insert(db, *proj, app))
 
 	pf := sdk.IntegrationModel{
 		Name:       "test-deploy-3" + pkey,
@@ -321,7 +321,7 @@ func Test_postApplicationDeploymentStrategyConfigHandlerAsProvider(t *testing.T)
 			},
 		},
 	}
-	test.NoError(t, integration.InsertModel(api.mustDB(), &pf))
+	test.NoError(t, integration.InsertModel(db, &pf))
 	defer func() { _ = integration.DeleteModel(api.mustDB(), pf.ID) }()
 
 	pp := sdk.ProjectIntegration{
@@ -330,7 +330,7 @@ func Test_postApplicationDeploymentStrategyConfigHandlerAsProvider(t *testing.T)
 		IntegrationModelID: pf.ID,
 		ProjectID:          proj.ID,
 	}
-	test.NoError(t, integration.InsertIntegration(api.mustDB(), &pp))
+	test.NoError(t, integration.InsertIntegration(db, &pp))
 
 	sdkclient := cdsclient.NewProviderClient(cdsclient.ProviderConfig{
 		Host:  tsURL,

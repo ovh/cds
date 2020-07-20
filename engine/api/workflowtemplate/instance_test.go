@@ -148,7 +148,7 @@ version: v2.0`)),
 			if c.Detached {
 				mods = append(mods, workflowtemplate.TemplateRequestModifiers.Detached)
 			}
-			_, wti, err := workflowtemplate.CheckAndExecuteTemplate(context.TODO(), db, *consumer, *proj, &c.Data, mods...)
+			_, wti, err := workflowtemplate.CheckAndExecuteTemplate(context.TODO(), db.DbMap, cache, *consumer, *proj, &c.Data, mods...)
 			if c.ErrorExists {
 				require.Error(t, err)
 			} else {
@@ -212,10 +212,10 @@ name: Pipeline-[[.id]]`)),
 			Parameters: map[string]string{"param1": "value1"},
 		},
 	}
-	_, wti, err := workflowtemplate.CheckAndExecuteTemplate(context.TODO(), db, *consumer, *proj, &data)
+	_, wti, err := workflowtemplate.CheckAndExecuteTemplate(context.TODO(), db.DbMap, cache, *consumer, *proj, &data)
 	require.NoError(t, err)
 
-	_, wkf, _, _, err := workflow.Push(context.TODO(), db, cache, proj, data, nil, consumer, project.DecryptWithBuiltinKey)
+	_, wkf, _, _, err := workflow.Push(context.TODO(), db.DbMap, cache, proj, data, nil, consumer, project.DecryptWithBuiltinKey)
 	require.NoError(t, err)
 
 	require.NoError(t, workflowtemplate.UpdateTemplateInstanceWithWorkflow(context.TODO(), db, *wkf, consumer, wti))

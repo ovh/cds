@@ -59,7 +59,7 @@ func get(ctx context.Context, db gorp.SqlExecutor, q gorpmapping.Query, opts ...
 	return &w.Worker, nil
 }
 
-func Insert(ctx context.Context, db gorp.SqlExecutor, w *sdk.Worker) error {
+func Insert(ctx context.Context, db gorpmapping.SqlExecutorWithTx, w *sdk.Worker) error {
 	dbData := &dbWorker{Worker: *w}
 	if err := gorpmapping.InsertAndSign(ctx, db, dbData); err != nil {
 		return err
@@ -142,7 +142,7 @@ func LoadDeadWorkers(ctx context.Context, db gorp.SqlExecutor, timeout float64, 
 }
 
 // SetStatus sets job_run_id and status to building on given worker
-func SetStatus(ctx context.Context, db gorp.SqlExecutor, workerID string, status string) error {
+func SetStatus(ctx context.Context, db gorpmapping.SqlExecutorWithTx, workerID string, status string) error {
 	w, err := LoadByID(ctx, db, workerID)
 	if err != nil {
 		return err
@@ -159,7 +159,7 @@ func SetStatus(ctx context.Context, db gorp.SqlExecutor, workerID string, status
 }
 
 // SetToBuilding sets job_run_id and status to building on given worker
-func SetToBuilding(ctx context.Context, db gorp.SqlExecutor, workerID string, jobRunID int64, key []byte) error {
+func SetToBuilding(ctx context.Context, db gorpmapping.SqlExecutorWithTx, workerID string, jobRunID int64, key []byte) error {
 	w, err := LoadByID(ctx, db, workerID)
 	if err != nil {
 		return err

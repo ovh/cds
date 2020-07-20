@@ -6,6 +6,7 @@ import (
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/gorpmapping"
 )
 
 // SharedInfraGroup is the group used to share infrastructure between projects
@@ -15,7 +16,7 @@ var (
 )
 
 // CreateDefaultGroup creates a group 'public' where every user will be
-func CreateDefaultGroup(db *gorp.DbMap, groupName string) error {
+func CreateDefaultGroup(db gorpmapping.SqlExecutorWithTx, groupName string) error {
 	if g, err := LoadByName(context.Background(), db, groupName); g != nil {
 		return nil
 	} else if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {

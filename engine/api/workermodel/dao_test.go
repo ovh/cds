@@ -5,7 +5,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/go-gorp/gorp"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -15,6 +14,7 @@ import (
 	"github.com/ovh/cds/engine/api/worker"
 	"github.com/ovh/cds/engine/api/workermodel"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/gorpmapping"
 )
 
 func TestInsertAndUpdate_WithRegistryPassword(t *testing.T) {
@@ -95,7 +95,7 @@ func TestInsertAndUpdate_WithRegistryPassword(t *testing.T) {
 	require.Error(t, err)
 }
 
-func insertWorkerModel(t *testing.T, db gorp.SqlExecutor, name string, groupID int64, req ...sdk.Requirement) *sdk.Model {
+func insertWorkerModel(t *testing.T, db gorpmapping.SqlExecutorWithTx, name string, groupID int64, req ...sdk.Requirement) *sdk.Model {
 	m := sdk.Model{
 		Name: name,
 		Type: sdk.Docker,

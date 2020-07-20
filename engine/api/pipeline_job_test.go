@@ -2,6 +2,7 @@ package api
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
@@ -21,7 +22,7 @@ func TestAddJobHandler(t *testing.T) {
 	api, db, router := newTestAPI(t)
 
 	//1. Create admin user
-	u, pass := assets.InsertAdminUser(t, api.mustDB())
+	u, pass := assets.InsertAdminUser(t, db)
 
 	//2. Create project
 	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
@@ -86,7 +87,7 @@ func TestUpdateJobHandler(t *testing.T) {
 	api, db, router := newTestAPI(t)
 
 	//1. Create admin user
-	u, pass := assets.InsertAdminUser(t, api.mustDB())
+	u, pass := assets.InsertAdminUser(t, db)
 
 	//2. Create project
 	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
@@ -119,7 +120,7 @@ func TestUpdateJobHandler(t *testing.T) {
 			Name:    "myJob",
 		},
 	}
-	test.NoError(t, pipeline.InsertJob(api.mustDB(), job, stage.ID, pip))
+	test.NoError(t, pipeline.InsertJob(context.TODO(), api.mustDB(), job, stage.ID, pip))
 	assert.NotZero(t, job.PipelineActionID)
 	assert.NotZero(t, job.Action.ID)
 
@@ -166,7 +167,7 @@ func TestUpdateInvalidJobHandler(t *testing.T) {
 	api, db, router := newTestAPI(t)
 
 	//1. Create admin user
-	u, pass := assets.InsertAdminUser(t, api.mustDB())
+	u, pass := assets.InsertAdminUser(t, db)
 
 	//2. Create project
 	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
@@ -206,7 +207,7 @@ func TestUpdateInvalidJobHandler(t *testing.T) {
 			Name:    "myJob",
 		},
 	}
-	test.NoError(t, pipeline.InsertJob(api.mustDB(), job, stage1.ID, pip))
+	test.NoError(t, pipeline.InsertJob(context.TODO(), api.mustDB(), job, stage1.ID, pip))
 	assert.NotZero(t, job.PipelineActionID)
 	assert.NotZero(t, job.Action.ID)
 
@@ -247,7 +248,7 @@ func TestDeleteJobHandler(t *testing.T) {
 	api, db, router := newTestAPI(t)
 
 	//1. Create admin user
-	u, pass := assets.InsertAdminUser(t, api.mustDB())
+	u, pass := assets.InsertAdminUser(t, db)
 
 	//2. Create project
 	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
@@ -280,7 +281,7 @@ func TestDeleteJobHandler(t *testing.T) {
 			Name:    "myJob",
 		},
 	}
-	test.NoError(t, pipeline.InsertJob(api.mustDB(), job, stage.ID, pip))
+	test.NoError(t, pipeline.InsertJob(context.TODO(), api.mustDB(), job, stage.ID, pip))
 	assert.NotZero(t, job.PipelineActionID)
 	assert.NotZero(t, job.Action.ID)
 

@@ -32,17 +32,17 @@ import (
 )
 
 func Test_postApplicationMetadataHandler_AsProvider(t *testing.T) {
-	api, tsURL := newTestServer(t)
+	api, db, tsURL := newTestServer(t)
 
-	u, _ := assets.InsertAdminUser(t, api.mustDB())
+	u, _ := assets.InsertAdminUser(t, db)
 	localConsumer, err := authentication.LoadConsumerByTypeAndUserID(context.TODO(), api.mustDB(), sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
 	require.NoError(t, err)
-	_, jws, err := builtin.NewConsumer(context.TODO(), api.mustDB(), sdk.RandomString(10), sdk.RandomString(10), localConsumer, u.GetGroupIDs(),
+	_, jws, err := builtin.NewConsumer(context.TODO(), db, sdk.RandomString(10), sdk.RandomString(10), localConsumer, u.GetGroupIDs(),
 		sdk.NewAuthConsumerScopeDetails(sdk.AuthConsumerScopeProject))
 
 	pkey := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, api.mustDB(), api.Cache, pkey, pkey)
-	require.NoError(t, group.InsertLinkGroupUser(context.TODO(), api.mustDB(), &group.LinkGroupUser{
+	proj := assets.InsertTestProject(t, db, api.Cache, pkey, pkey)
+	require.NoError(t, group.InsertLinkGroupUser(context.TODO(), db, &group.LinkGroupUser{
 		GroupID:            proj.ProjectGroups[0].Group.ID,
 		AuthentifiedUserID: u.ID,
 		Admin:              true,
@@ -55,7 +55,7 @@ func Test_postApplicationMetadataHandler_AsProvider(t *testing.T) {
 			"a1": "a1",
 		},
 	}
-	if err := application.Insert(api.mustDB(), *proj, app); err != nil {
+	if err := application.Insert(db, *proj, app); err != nil {
 		t.Fatal(err)
 	}
 
@@ -76,9 +76,8 @@ func Test_postApplicationMetadataHandler_AsProvider(t *testing.T) {
 }
 
 func TestUpdateAsCodeApplicationHandler(t *testing.T) {
-	api, tsURL := newTestServer(t)
-	db := api.mustDB()
-	require.NoError(t, event.Initialize(context.Background(), db, api.Cache))
+	api, db, tsURL := newTestServer(t)
+	require.NoError(t, event.Initialize(context.Background(), api.mustDB(), api.Cache))
 
 	u, jwt := assets.InsertAdminUser(t, db)
 
@@ -210,7 +209,7 @@ func TestUpdateAsCodeApplicationHandler(t *testing.T) {
 			},
 		).Times(1)
 
-	assert.NoError(t, workflow.CreateBuiltinWorkflowHookModels(db))
+	assert.NoError(t, workflow.CreateBuiltinWorkflowHookModels(api.mustDB()))
 
 	// Create Project
 	pkey := sdk.RandomString(10)
