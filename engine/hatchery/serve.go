@@ -194,6 +194,10 @@ func (c *Common) getPanicDumpListHandler() service.Handler {
 func (c *Common) RefreshServiceLogger(ctx context.Context) error {
 	cdnConfig, err := c.Client.ConfigCDN()
 	if err != nil {
+		if sdk.ErrorIs(err, sdk.ErrNotFound) {
+			c.CDNLogsURL = ""
+			c.ServiceLogger = nil
+		}
 		return err
 	}
 	if cdnConfig.TCPURL == c.CDNLogsURL {
@@ -249,7 +253,9 @@ func (c *Common) SendServiceLog(ctx context.Context, servicesLogs []sdk.ServiceL
 			log.Error(ctx, "SendServiceLog> unable to sign service log message: %v", err)
 			continue
 		}
-		c.ServiceLogger.WithField("Signature", signature).Log(logrus.InfoLevel, s.Val)
+		if c.ServiceLogger != nil {
+			c.ServiceLogger.WithField("Signature", signature).Log(logrus.InfoLevel, s.Val)
+		}
 	}
 }
 
