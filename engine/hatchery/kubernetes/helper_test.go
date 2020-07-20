@@ -1,6 +1,7 @@
 package kubernetes
 
 import (
+	"github.com/ovh/cds/sdk"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -24,5 +25,11 @@ func NewHatcheryKubernetesTest(t *testing.T) *HatcheryKubernetes {
 
 	h.Config.Name = "kyubi"
 	h.Config.Namespace = "hachibi"
+	h.ServiceInstance = &sdk.Service{
+		CanonicalService: sdk.CanonicalService{
+			ID:   1,
+			Name: "kyubi",
+		},
+	}
 	return h
 }

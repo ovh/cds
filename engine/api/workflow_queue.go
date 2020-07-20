@@ -580,7 +580,6 @@ func (api *API) postWorkflowJobServiceLogsHandler() service.AsynchronousHandler 
 		globalErr := &sdk.MultiError{}
 		errorOccured := false
 		for _, servLog := range logs {
-			log.Warning(ctx, "Service LOGGGGGG: %v", servLog)
 			if err := workflow.AddServiceLog(db, &servLog, api.Config.Log.ServiceMaxSize); err != nil {
 				errorOccured = true
 				globalErr.Append(fmt.Errorf("postWorkflowJobServiceLogsHandler> %v", err))

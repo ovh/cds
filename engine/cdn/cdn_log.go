@@ -257,7 +257,6 @@ func (s *Service) handleServiceLog(ctx context.Context, hatcheryID int64, hatche
 		logs.Val += "\n"
 	}
 
-	log.Warning(ctx, "SERVICES LOGS: %+v", logs)
 	if err := s.Client.QueueServiceLogs(ctx, []sdk.ServiceLog{logs}); err != nil {
 		return err
 	}

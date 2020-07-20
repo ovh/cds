@@ -1,8 +1,10 @@
 package swarm
 
 import (
+	"context"
 	"crypto/rand"
 	"crypto/rsa"
+	"github.com/ovh/cds/sdk"
 	"net/http"
 	"strings"
 	"testing"
@@ -25,8 +27,8 @@ func Test_serviceLogs(t *testing.T) {
 	require.NoError(t, err)
 	h.Common.PrivateKey = key
 
-	//gock.New("https://lolcat.api").Get("/config/cdn").Reply(http.StatusOK).JSON(sdk.CDNConfig{TCPURL: "tcphost:8090"})
-	//require.NoError(t, h.RefreshServiceLogger(context.TODO()))
+	gock.New("https://lolcat.api").Get("/config/cdn").Reply(http.StatusOK).JSON(sdk.CDNConfig{TCPURL: "tcphost:8090"})
+	require.NoError(t, h.RefreshServiceLogger(context.TODO()))
 
 	containers := []types.Container{
 		{
@@ -41,15 +43,17 @@ func Test_serviceLogs(t *testing.T) {
 			ID:    "service-1",
 			Names: []string{"swarmy-model1-w1"},
 			Labels: map[string]string{
-				"hatchery":       "swarmy",
-				"worker_name":    "swarmy-model1-w1",
-				"service_job_id": "666",
-				"service_id":     "1",
+				"hatchery":            "swarmy",
+				"worker_name":         "swarmy-model1-w1",
+				"service_node_run_id": "999",
+				"service_job_id":      "666",
+				"service_id":          "1",
 			},
 		},
 	}
 
 	gock.New("https://lolcat.host").Get("/v6.66/containers/json").Reply(http.StatusOK).JSON(containers)
+
 	gock.New("https://lolcat.host").AddMatcher(func(r *http.Request, rr *gock.Request) (bool, error) {
 		b, err := gock.MatchPath(r, rr)
 		assert.NoError(t, err)

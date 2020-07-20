@@ -21,12 +21,13 @@ var loggerCall = 0
 
 func Test_serviceLogs(t *testing.T) {
 	h := NewHatcheryKubernetesTest(t)
-	h.Common.CDNLogsURL = "tcphost:8090"
 	reader := rand.Reader
 	bitSize := 2048
 	key, err := rsa.GenerateKey(reader, bitSize)
 	require.NoError(t, err)
 	h.Common.PrivateKey = key
+
+	gock.New("http://lolcat.api").Get("/config/cdn").Reply(http.StatusOK).JSON(sdk.CDNConfig{TCPURL: "tcphost:8090"})
 	require.NoError(t, h.RefreshServiceLogger(context.TODO()))
 
 	podsList := v1.PodList{
@@ -36,7 +37,8 @@ func Test_serviceLogs(t *testing.T) {
 					Name:      "pod-name",
 					Namespace: "kyubi",
 					Labels: map[string]string{
-						LABEL_SERVICE_JOB_ID: "666",
+						LABEL_SERVICE_JOB_ID:      "666",
+						LABEL_SERVICE_NODE_RUN_ID: "999",
 					},
 				},
 				Spec: v1.PodSpec{
@@ -49,7 +51,6 @@ func Test_serviceLogs(t *testing.T) {
 			},
 		},
 	}
-	gock.New("http://lolcat.api").Get("/config/cdn").Reply(http.StatusOK).JSON(sdk.CDNConfig{TCPURL: "tcphost:8090"})
 	gock.New("http://lolcat.kube").Get("/api/v1/namespaces/hachibi/pods").Reply(http.StatusOK).JSON(podsList)
 
 	gock.New("http://lolcat.kube").AddMatcher(func(r *http.Request, rr *gock.Request) (bool, error) {

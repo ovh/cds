@@ -298,7 +298,6 @@ func New(ctx context.Context, graylogcfg *hook.Config) (*log.Logger, *hook.Hook,
 	newLogger := log.New()
 	extra := map[string]interface{}{}
 	hook, err := hook.NewHook(ctx, graylogcfg, extra)
-	Warning(ctx, ">>>>>>>>%T", hook)
 	if err != nil {
 		return nil, nil, fmt.Errorf("unable to add hook: %v", err)
 	}
