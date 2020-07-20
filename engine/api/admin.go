@@ -11,9 +11,9 @@ import (
 
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/engine/api/services"
+	"github.com/ovh/cds/engine/featureflipping"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/featureflipping"
 	"github.com/ovh/cds/sdk/log"
 )
 

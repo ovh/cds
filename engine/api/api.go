@@ -47,6 +47,7 @@ import (
 	"github.com/ovh/cds/engine/api/workermodel"
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/engine/database"
+	"github.com/ovh/cds/engine/featureflipping"
 	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
@@ -497,6 +498,9 @@ func (a *API) Serve(ctx context.Context) error {
 	if err := gorpmapping.ConfigureKeys(&signatureKeyConfig, &encryptionKeyConfig); err != nil {
 		return fmt.Errorf("cannot setup database keys: %v", err)
 	}
+
+	// Init dao packages
+	featureflipping.Init(gorpmapping.Mapper)
 
 	log.Info(ctx, "Initializing redis cache on %s...", a.Config.Cache.Redis.Host)
 	// Init the cache

@@ -10,6 +10,7 @@ import (
 
 	"github.com/ovh/cds/engine/api"
 	"github.com/ovh/cds/engine/api/cache"
+	"github.com/ovh/cds/engine/cdn/index"
 	"github.com/ovh/cds/engine/database"
 	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk"
@@ -108,6 +109,9 @@ func (s *Service) Serve(c context.Context) error {
 	if err := s.Mapper.ConfigureKeys(&signatureKeyConfig, &encryptionKeyConfig); err != nil {
 		return fmt.Errorf("cannot setup database keys: %v", err)
 	}
+
+	// Init dao packages
+	index.Init(s.Mapper)
 
 	log.Info(ctx, "Initializing redis cache on %s...", s.Cfg.Cache.Redis.Host)
 	s.Cache, err = cache.New(s.Cfg.Cache.Redis.Host, s.Cfg.Cache.Redis.Password, s.Cfg.Cache.TTL)
