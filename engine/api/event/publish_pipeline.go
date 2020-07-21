@@ -79,9 +79,10 @@ func PublishPipelineParameterDelete(ctx context.Context, key string, pipName str
 // PublishPipelineStageAdd publishes an event on adding a stage
 func PublishPipelineStageAdd(ctx context.Context, key string, pipName string, s sdk.Stage, u sdk.Identifiable) {
 	e := sdk.EventPipelineStageAdd{
-		Name:       s.Name,
-		BuildOrder: s.BuildOrder,
-		Enabled:    s.Enabled,
+		Name:         s.Name,
+		BuildOrder:   s.BuildOrder,
+		Enabled:      s.Enabled,
+		Prerequisite: s.Prerequisites,
 	}
 
 	publishPipelineEvent(ctx, e, key, pipName, u)
@@ -101,12 +102,14 @@ func PublishPipelineStageMove(ctx context.Context, key string, pipName string, s
 // PublishPipelineStageUpdate publishes an event on updating a stage
 func PublishPipelineStageUpdate(ctx context.Context, key string, pipName string, oldStage sdk.Stage, newStage sdk.Stage, u sdk.Identifiable) {
 	e := sdk.EventPipelineStageUpdate{
-		OldName:       oldStage.Name,
-		OldBuildOrder: oldStage.BuildOrder,
-		OldEnabled:    oldStage.Enabled,
-		NewName:       newStage.Name,
-		NewBuildOrder: newStage.BuildOrder,
-		NewEnabled:    newStage.Enabled,
+		OldName:         oldStage.Name,
+		OldBuildOrder:   oldStage.BuildOrder,
+		OldEnabled:      oldStage.Enabled,
+		OldPrerequisite: oldStage.Prerequisites,
+		NewName:         newStage.Name,
+		NewBuildOrder:   newStage.BuildOrder,
+		NewEnabled:      newStage.Enabled,
+		NewPrerequisite: newStage.Prerequisites,
 	}
 	publishPipelineEvent(ctx, e, key, pipName, u)
 }
