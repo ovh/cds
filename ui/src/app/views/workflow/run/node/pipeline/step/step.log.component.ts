@@ -87,54 +87,61 @@ export class WorkflowStepLogComponent implements OnInit {
 
     ngOnInit(): void {
         this.nodeJobRunSubs = this.nodeJobRun$.subscribe(nrj => {
-            if (!nrj) {
+            if (!nrj || !nrj.job.step_status) {
                 return;
             }
-            let refresh = false;
+
+            this.job = nrj.job;
+
+            let invalidStepOrder = !(this.stepOrder < this.job.action.actions.length) || !(this.stepOrder < this.job.step_status.length);
+            if (invalidStepOrder) {
+                return;
+            }
+
+            this.step = this.job.action.actions[this.stepOrder];
+            let oldStepStatus = this.stepStatus;
+            this.stepStatus = this.job.step_status[this.stepOrder];
+
             if (this.currentNodeJobRunID !== nrj.id) {
-                refresh = true;
                 this.currentNodeJobRunID = nrj.id;
-                this.job = nrj.job;
-                if (this.job.action.actions.length >= this.stepOrder + 1) {
-                    this.step = this.job.action.actions[this.stepOrder];
+
+                this.computeDuration();
+                if (this.stepStatus.status === this.pipelineBuildStatusEnum.BUILDING ||
+                    this.stepStatus.status === this.pipelineBuildStatusEnum.WAITING ||
+                    (this.stepStatus.status === this.pipelineBuildStatusEnum.FAIL && !this.step.optional)) {
+                    this.showLogs = true;
+                    this.initWorker();
                 }
-                if (nrj.job.step_status && nrj.job.step_status.length >= this.stepOrder + 1) {
-                    this.stepStatus = nrj.job.step_status[this.stepOrder];
-                    this.computeDuration();
-                }
-                if (this.stepStatus) {
-                    if (this.stepStatus.status === this.pipelineBuildStatusEnum.BUILDING ||
-                        this.stepStatus.status === this.pipelineBuildStatusEnum.WAITING ||
-                        (this.stepStatus.status === this.pipelineBuildStatusEnum.FAIL && !this.step.optional)) {
-                        this.showLogs = true;
-                        this.initWorker();
-                    }
-                }
-            } else {
-                // check if step status change
-                if (nrj.job.step_status && nrj.job.step_status.length >= this.stepOrder + 1) {
-                    let status = nrj.job.step_status[this.stepOrder].status;
-                    if (!this.stepStatus || status !== this.stepStatus.status) {
-                        if (!this.stepStatus) {
-                            this.initWorker();
-                            this.showLogs = true;
-                        } else if (this.pipelineBuildStatusEnum.isActive(this.stepStatus.status) &&
-                            this.pipelineBuildStatusEnum.isDone(status)) {
-                            this.showLogs = false;
-                        }
-                        this.stepStatus = nrj.job.step_status[this.stepOrder];
-                        this.computeDuration();
-                        refresh = true;
-                    }
-                }
-            }
-            if (refresh) {
+
                 this._cd.markForCheck();
+
+                return;
             }
+
+            // check if step status change
+            if (this.stepStatus.status === oldStepStatus.status) {
+                return;
+            }
+
+            if (!oldStepStatus) {
+                this.computeDuration();
+                this.initWorker();
+                this.showLogs = true;
+            } else if (this.pipelineBuildStatusEnum.isActive(this.stepStatus.status) &&
+                this.pipelineBuildStatusEnum.isDone(status)) {
+                this.showLogs = false;
+            }
+
+            this._cd.markForCheck();
         });
 
         this.queryParamsSubscription = this._route.queryParams.subscribe((qps) => {
+            if (!this.job) {
+                return;
+            }
+
             this._cd.markForCheck();
+
             let activeStep = parseInt(qps['stageId'], 10) === this.job.pipeline_stage_id &&
                 parseInt(qps['actionId'], 10) === this.job.pipeline_action_id && parseInt(qps['stepOrder'], 10) === this.stepOrder;
             if (activeStep) {
@@ -164,7 +171,10 @@ export class WorkflowStepLogComponent implements OnInit {
         let runNumber = (<WorkflowStateModel>this._store.selectSnapshot(WorkflowState)).workflowNodeRun.num;
         let nodeRunId = (<WorkflowStateModel>this._store.selectSnapshot(WorkflowState)).workflowNodeRun.id;
         let runJobId = this.currentNodeJobRunID;
-        let stepOrder = this.stepOrder;
+        if (!this.job.step_status) {
+            return;
+        }
+        let stepOrder = this.stepOrder < this.job.step_status.length ? this.stepOrder : this.job.step_status.length - 1;
 
         let callback = (b: BuildResult) => {
             if (b.step_logs.id) {
