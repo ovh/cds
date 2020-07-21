@@ -157,9 +157,11 @@ func (b *websocketBroker) Start(ctx context.Context, panicCallback func(s string
 			}
 
 		case client := <-b.chanAddClient:
+			log.Debug("add new websocket client %s for consumer %s", client.UUID, client.AuthConsumer.GetUsername())
 			b.clients[client.UUID] = client
 
 		case uuid := <-b.chanRemoveClient:
+			log.Debug("remove websocket client %s", uuid)
 			client, has := b.clients[uuid]
 			if !has {
 				continue
