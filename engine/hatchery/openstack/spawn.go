@@ -62,7 +62,7 @@ func (h *HatcheryOpenstack) SpawnWorker(ctx context.Context, spawnArgs hatchery.
 			workerModelName := img.Metadata["worker_model_name"] // Temporary check on name for old registred model but new snapshot will only have path
 			workerModelPath := img.Metadata["worker_model_path"]
 			workerModelLastModified := img.Metadata["worker_model_last_modified"]
-			nameOrPathMatch := (workerModelName != "" && workerModelName == spawnArgs.Model.Name) || workerModelPath == spawnArgs.Model.Path()
+			nameOrPathMatch := (workerModelName != "" && workerModelName == spawnArgs.Model.Name) || workerModelPath == spawnArgs.Model.Group.Name+"/"+spawnArgs.Model.Name
 			if nameOrPathMatch && fmt.Sprintf("%s", workerModelLastModified) == fmt.Sprintf("%d", spawnArgs.Model.UserLastModified.Unix()) {
 				withExistingImage = true
 				imageID = img.ID
