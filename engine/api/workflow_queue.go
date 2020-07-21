@@ -104,9 +104,13 @@ func (api *API) postTakeWorkflowJobHandler() service.Handler {
 			return sdk.WrapError(err, "cannot takeJob nodeJobRunID:%d", id)
 		}
 
-		if api.Config.CDN.PublicTCP != "" {
-			pbji.GelfServiceAddr = api.Config.CDN.PublicTCP
+		// Get CDN TCP Addr
+		// Get CDN TCP Addr
+		pbji.GelfServiceAddr, err = services.GetCDNPublicTCPAdress(ctx, api.mustDB())
+		if err != nil {
+			return err
 		}
+
 		workflow.ResyncNodeRunsWithCommits(ctx, api.mustDB(), api.Cache, *p, report)
 		go WorkflowSendEvent(context.Background(), api.mustDB(), api.Cache, *p, report)
 
@@ -536,24 +540,13 @@ func postJobResult(ctx context.Context, dbFunc func(context.Context) *gorp.DbMap
 
 func (api *API) postWorkflowJobLogsHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		id, err := requestVarInt(r, "permJobID")
+		id, err := requestVarInt(r, "jobID")
 		if err != nil {
 			return sdk.WrapError(err, "invalid id")
 		}
 
-		if ok := isWorker(ctx); !ok {
+		if !isCDN(ctx) {
 			return sdk.WithStack(sdk.ErrForbidden)
-		}
-
-		pbJob, err := workflow.LoadNodeJobRun(ctx, api.mustDB(), api.Cache, id)
-		if err != nil {
-			return sdk.WrapError(err, "cannot get job run %d", id)
-		}
-
-		// Checks that the token used by the worker cas access to one of the execgroups
-		grantedGroupIDs := append(getAPIConsumer(ctx).GetGroupIDs(), group.SharedInfraGroup.ID)
-		if !pbJob.ExecGroups.HasOneOf(grantedGroupIDs...) {
-			return sdk.WrapError(sdk.ErrForbidden, "this worker is not authorized to send logs for this job: %d execGroups: %+v", id, pbJob.ExecGroups)
 		}
 
 		var logs sdk.Log
@@ -561,17 +554,20 @@ func (api *API) postWorkflowJobLogsHandler() service.Handler {
 			return err
 		}
 
-		if err := workflow.AppendLog(api.mustDB(), pbJob.ID, pbJob.WorkflowNodeRunID, logs.StepOrder, logs.Val, api.Config.Log.StepMaxSize); err != nil {
-			return err
+		if id != logs.JobID {
+			return sdk.NewErrorFrom(sdk.ErrWrongRequest, "invalid job id")
 		}
 
+		if err := workflow.AppendLog(api.mustDB(), logs.JobID, logs.NodeRunID, logs.StepOrder, logs.Val, api.Config.Log.StepMaxSize); err != nil {
+			return err
+		}
 		return nil
 	}
 }
 
 func (api *API) postWorkflowJobServiceLogsHandler() service.AsynchronousHandler {
 	return func(ctx context.Context, r *http.Request) error {
-		if ok := isHatchery(ctx); !ok {
+		if !isCDN(ctx) {
 			return sdk.WithStack(sdk.ErrForbidden)
 		}
 
@@ -583,24 +579,8 @@ func (api *API) postWorkflowJobServiceLogsHandler() service.AsynchronousHandler 
 
 		globalErr := &sdk.MultiError{}
 		errorOccured := false
-		for _, log := range logs {
-			nodeRunJob, errJob := workflow.LoadNodeJobRun(ctx, db, api.Cache, log.WorkflowNodeJobRunID)
-			if errJob != nil {
-				errorOccured = true
-				globalErr.Append(fmt.Errorf("postWorkflowJobServiceLogsHandler> Cannot get job run %d : %v", log.WorkflowNodeJobRunID, errJob))
-				continue
-			}
-			log.WorkflowNodeRunID = nodeRunJob.WorkflowNodeRunID
-
-			// Checks that the token used by the worker cas access to one of the execgroups
-			grantedGroupIDs := append(getAPIConsumer(ctx).GetGroupIDs(), group.SharedInfraGroup.ID)
-			if !nodeRunJob.ExecGroups.HasOneOf(grantedGroupIDs...) {
-				errorOccured = true
-				globalErr.Append(fmt.Errorf("postWorkflowJobServiceLogsHandler> Forbidden, you have no execution rights on workflow node"))
-				continue
-			}
-
-			if err := workflow.AddServiceLog(db, nodeRunJob, &log, api.Config.Log.ServiceMaxSize); err != nil {
+		for _, servLog := range logs {
+			if err := workflow.AddServiceLog(db, &servLog, api.Config.Log.ServiceMaxSize); err != nil {
 				errorOccured = true
 				globalErr.Append(fmt.Errorf("postWorkflowJobServiceLogsHandler> %v", err))
 			}

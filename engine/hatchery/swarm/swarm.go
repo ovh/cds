@@ -14,15 +14,15 @@ import (
 	"strings"
 	"time"
 
-	"github.com/ovh/cds/engine/service"
-
 	"github.com/docker/docker/api/types"
 	docker "github.com/docker/docker/client"
 	"github.com/docker/go-connections/tlsconfig"
 	"github.com/gorilla/mux"
+	"github.com/sirupsen/logrus"
 	"golang.org/x/net/context"
 
 	"github.com/ovh/cds/engine/api"
+	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/hatchery"
 	"github.com/ovh/cds/sdk/log"
@@ -174,10 +174,10 @@ func (h *HatcherySwarm) InitHatchery(ctx context.Context) error {
 			return fmt.Errorf("no docker engine available")
 		}
 	}
-	if err := h.Common.InitServiceLogger(); err != nil {
-		return err
-	}
 
+	if err := h.RefreshServiceLogger(ctx); err != nil {
+		log.Error(ctx, "Hatchery> swarm> Cannot get cdn configuration : %v", err)
+	}
 	sdk.GoRoutine(context.Background(), "swarm", func(ctx context.Context) { h.routines(ctx) })
 
 	return nil
@@ -315,6 +315,7 @@ func (h *HatcherySwarm) SpawnWorker(ctx context.Context, spawnArgs hatchery.Spaw
 				}
 
 				if spawnArgs.JobID > 0 {
+					labels["service_node_run_id"] = fmt.Sprintf("%d", spawnArgs.NodeRunID)
 					labels["service_job_id"] = fmt.Sprintf("%d", spawnArgs.JobID)
 					labels["service_id"] = fmt.Sprintf("%d", r.ID)
 					labels["service_req_name"] = r.Name
@@ -581,6 +582,10 @@ func (h *HatcherySwarm) WorkersStartedByModel(ctx context.Context, model *sdk.Mo
 	return len(list)
 }
 
+func (h *HatcherySwarm) GetLogger() *logrus.Logger {
+	return h.ServiceLogger
+}
+
 // Serve start the hatchery server
 func (h *HatcherySwarm) Serve(ctx context.Context) error {
 	return h.CommonServe(ctx, h)
@@ -616,6 +621,12 @@ func (h *HatcherySwarm) routines(ctx context.Context) {
 
 			sdk.GoRoutine(ctx, "killAwolWorker", func(ctx context.Context) {
 				_ = h.killAwolWorker(ctx)
+			})
+
+			sdk.GoRoutine(ctx, "refreshCDNConfiguration", func(ctx context.Context) {
+				if err := h.RefreshServiceLogger(ctx); err != nil {
+					log.Error(ctx, "Hatchery> swarm> Cannot get cdn configuration : %v", err)
+				}
 			})
 		case <-ctx.Done():
 			if ctx.Err() != nil {

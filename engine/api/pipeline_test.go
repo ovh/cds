@@ -48,9 +48,9 @@ func TestUpdateAsCodePipelineHandler(t *testing.T) {
 		_ = services.Delete(db, &s) // nolint
 	}
 
-	a, _ := assets.InsertService(t, db, "TestUpdateAsCodePipelineHandler", services.TypeVCS)
-	b, _ := assets.InsertService(t, db, "TestUpdateAsCodePipelineHandler", services.TypeRepositories)
-	c, _ := assets.InsertService(t, db, "TestUpdateAsCodePipelineHandler", services.TypeHooks)
+	a, _ := assets.InsertService(t, db, "TestUpdateAsCodePipelineHandler", sdk.TypeVCS)
+	b, _ := assets.InsertService(t, db, "TestUpdateAsCodePipelineHandler", sdk.TypeRepositories)
+	c, _ := assets.InsertService(t, db, "TestUpdateAsCodePipelineHandler", sdk.TypeHooks)
 	defer func() {
 		_ = services.Delete(db, a) // nolint
 		_ = services.Delete(db, b) // nolint

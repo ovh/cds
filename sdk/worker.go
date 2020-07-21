@@ -21,7 +21,7 @@ type Worker struct {
 	Version      string    `json:"version" cli:"version"  db:"version"`
 	OS           string    `json:"os" cli:"os"  db:"os"`
 	Arch         string    `json:"arch" cli:"arch"  db:"arch"`
-	PrivateKey   []byte    `json:"-" cli:"-" db:"cypher_private_key" gorpmapping:"encrypted,ID,Name,JobRunID"`
+	PrivateKey   []byte    `json:"private_key,omitempty" cli:"-" db:"cypher_private_key" gorpmapping:"encrypted,ID,Name,JobRunID"`
 }
 
 // WorkerRegistrationForm represents the arguments needed to register a worker

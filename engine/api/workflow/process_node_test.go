@@ -61,12 +61,12 @@ func TestHookRunWithoutPayloadProcessNodeBuildParameter(t *testing.T) {
 		}
 	}
 
-	mockVCSSservice, _ := assets.InsertService(t, db, "TestHookRunWithoutPayloadProcessNodeBuildParameter_VCS", services.TypeVCS)
+	mockVCSSservice, _ := assets.InsertService(t, db, "TestHookRunWithoutPayloadProcessNodeBuildParameter_VCS", sdk.TypeVCS)
 	defer func() {
 		_ = services.Delete(db, mockVCSSservice) // nolint
 	}()
 
-	mockHooksService, _ := assets.InsertService(t, db, "TestHookRunWithoutPayloadProcessNodeBuildParameter_HOOKS", services.TypeHooks)
+	mockHooksService, _ := assets.InsertService(t, db, "TestHookRunWithoutPayloadProcessNodeBuildParameter_HOOKS", sdk.TypeHooks)
 	defer func() {
 		_ = services.Delete(db, mockHooksService) // nolint
 	}()
@@ -253,12 +253,12 @@ func TestHookRunWithHashOnlyProcessNodeBuildParameter(t *testing.T) {
 		}
 	}
 
-	mockVCSSservice, _ := assets.InsertService(t, db, "TestHookRunWithHashOnlyProcessNodeBuildParameter_VCS", services.TypeVCS)
+	mockVCSSservice, _ := assets.InsertService(t, db, "TestHookRunWithHashOnlyProcessNodeBuildParameter_VCS", sdk.TypeVCS)
 	defer func() {
 		_ = services.Delete(db, mockVCSSservice) // nolint
 	}()
 
-	mockHooksService, _ := assets.InsertService(t, db, "TestHookRunWithHashOnlyProcessNodeBuildParameter_HOOKS", services.TypeHooks)
+	mockHooksService, _ := assets.InsertService(t, db, "TestHookRunWithHashOnlyProcessNodeBuildParameter_HOOKS", sdk.TypeHooks)
 	defer func() {
 		_ = services.Delete(db, mockHooksService) // nolint
 	}()
@@ -434,7 +434,7 @@ func TestManualRunWithPayloadProcessNodeBuildParameter(t *testing.T) {
 		}
 	}
 
-	mockVCSSservice, _ := assets.InsertService(t, db, "TestManualRunWithPayloadProcessNodeBuildParameter", services.TypeVCS)
+	mockVCSSservice, _ := assets.InsertService(t, db, "TestManualRunWithPayloadProcessNodeBuildParameter", sdk.TypeVCS)
 	defer func() {
 		_ = services.Delete(db, mockVCSSservice) // nolint
 	}()
@@ -586,7 +586,7 @@ func TestManualRunBranchAndCommitInPayloadProcessNodeBuildParameter(t *testing.T
 		require.NoError(t, services.Delete(db, &srv))
 	}
 
-	mockVCSSservice, _ := assets.InsertService(t, db, "TestManualRunBranchAndCommitInPayloadProcessNodeBuildParameter", services.TypeVCS)
+	mockVCSSservice, _ := assets.InsertService(t, db, "TestManualRunBranchAndCommitInPayloadProcessNodeBuildParameter", sdk.TypeVCS)
 	defer func() {
 		services.Delete(db, mockVCSSservice)
 	}()
@@ -726,7 +726,7 @@ func TestManualRunBranchAndRepositoryInPayloadProcessNodeBuildParameter(t *testi
 	vcsServer.Set("secret", "bar")
 	assert.NoError(t, repositoriesmanager.InsertProjectVCSServerLink(context.TODO(), db, &vcsServer))
 
-	mockVCSSservice, _ := assets.InsertService(t, db, "TestManualRunBranchAndRepositoryInPayloadProcessNodeBuildParameter", services.TypeVCS)
+	mockVCSSservice, _ := assets.InsertService(t, db, "TestManualRunBranchAndRepositoryInPayloadProcessNodeBuildParameter", sdk.TypeVCS)
 	defer func() {
 		services.Delete(db, mockVCSSservice)
 	}()
@@ -973,7 +973,7 @@ func TestManualRunBuildParameterMultiApplication(t *testing.T) {
 		}
 	}
 
-	mockVCSSservice, _ := assets.InsertService(t, db, "TestManualRunBuildParameterMultiApplication", services.TypeVCS)
+	mockVCSSservice, _ := assets.InsertService(t, db, "TestManualRunBuildParameterMultiApplication", sdk.TypeVCS)
 	defer func() {
 		services.Delete(db, mockVCSSservice)
 	}()
@@ -1218,7 +1218,7 @@ func TestManualRunBuildParameterNoApplicationOnRoot(t *testing.T) {
 		}
 	}
 
-	mockVCSSservice, _ := assets.InsertService(t, db, "TestManualRunBuildParameterMultiApplication", services.TypeVCS)
+	mockVCSSservice, _ := assets.InsertService(t, db, "TestManualRunBuildParameterMultiApplication", sdk.TypeVCS)
 	defer func() {
 		services.Delete(db, mockVCSSservice)
 	}()
@@ -1463,7 +1463,7 @@ func TestGitParamOnPipelineWithoutApplication(t *testing.T) {
 		}
 	}
 
-	mockVCSSservice, _ := assets.InsertService(t, db, "TestManualRunBuildParameterMultiApplication", services.TypeVCS)
+	mockVCSSservice, _ := assets.InsertService(t, db, "TestManualRunBuildParameterMultiApplication", sdk.TypeVCS)
 	defer func() {
 		services.Delete(db, mockVCSSservice)
 	}()
@@ -1650,7 +1650,7 @@ func TestGitParamOnApplicationWithoutRepo(t *testing.T) {
 		}
 	}
 
-	mockVCSSservice, _ := assets.InsertService(t, db, "TestManualRunBuildParameterMultiApplication", services.TypeVCS)
+	mockVCSSservice, _ := assets.InsertService(t, db, "TestManualRunBuildParameterMultiApplication", sdk.TypeVCS)
 	defer func() {
 		services.Delete(db, mockVCSSservice)
 	}()
@@ -1831,7 +1831,7 @@ func TestGitParamOn2ApplicationSameRepo(t *testing.T) {
 		}
 	}
 
-	mockVCSSservice, _ := assets.InsertService(t, db, "TestManualRunBuildParameterMultiApplication", services.TypeVCS)
+	mockVCSSservice, _ := assets.InsertService(t, db, "TestManualRunBuildParameterMultiApplication", sdk.TypeVCS)
 	defer func() {
 		services.Delete(db, mockVCSSservice)
 	}()
@@ -2032,7 +2032,7 @@ func TestGitParamWithJoin(t *testing.T) {
 		}
 	}
 
-	mockVCSSservice, _ := assets.InsertService(t, db, "TestManualRunBuildParameterMultiApplication", services.TypeVCS)
+	mockVCSSservice, _ := assets.InsertService(t, db, "TestManualRunBuildParameterMultiApplication", sdk.TypeVCS)
 	defer func() {
 		services.Delete(db, mockVCSSservice) // nolint
 	}()
@@ -2251,7 +2251,7 @@ func TestGitParamOn2ApplicationSameRepoWithFork(t *testing.T) {
 		}
 	}
 
-	mockVCSSservice, _ := assets.InsertService(t, db, "TestManualRunBuildParameterMultiApplication", services.TypeVCS)
+	mockVCSSservice, _ := assets.InsertService(t, db, "TestManualRunBuildParameterMultiApplication", sdk.TypeVCS)
 	defer func() {
 		services.Delete(db, mockVCSSservice) //nolint
 	}()
@@ -2460,7 +2460,7 @@ func TestManualRunWithPayloadAndRunCondition(t *testing.T) {
 		}
 	}
 
-	mockVCSSservice, _ := assets.InsertService(t, db, "TestManualRunWithPayloadProcessNodeBuildParameter", services.TypeVCS)
+	mockVCSSservice, _ := assets.InsertService(t, db, "TestManualRunWithPayloadProcessNodeBuildParameter", sdk.TypeVCS)
 	defer func() {
 		_ = services.Delete(db, mockVCSSservice) // nolint
 	}()

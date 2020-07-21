@@ -119,6 +119,7 @@ func (c *Common) Register(ctx context.Context, cfg sdk.ServiceConfig) error {
 		return sdk.WrapError(err, "Register>")
 	}
 	c.ServiceInstance = srv2
+
 	return nil
 }
 

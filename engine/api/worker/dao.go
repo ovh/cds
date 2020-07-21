@@ -36,10 +36,10 @@ func getAll(ctx context.Context, db gorp.SqlExecutor, q gorpmapping.Query) ([]sd
 	return verifiedWorkers, nil
 }
 
-func get(ctx context.Context, db gorp.SqlExecutor, q gorpmapping.Query) (*sdk.Worker, error) {
+func get(ctx context.Context, db gorp.SqlExecutor, q gorpmapping.Query, opts ...gorpmapping.GetOptionFunc) (*sdk.Worker, error) {
 	var w dbWorker
 
-	found, err := gorpmapping.Get(ctx, db, q, &w)
+	found, err := gorpmapping.Get(ctx, db, q, &w, opts...)
 	if err != nil {
 		return nil, sdk.WrapError(err, "cannot get worker")
 	}
@@ -176,33 +176,13 @@ func SetToBuilding(ctx context.Context, db gorpmapping.SqlExecutorWithTx, worker
 }
 
 // LoadWorkerByIDWithDecryptKey load worker with decrypted private key
-func LoadWorkerByIDWithDecryptKey(ctx context.Context, db gorp.SqlExecutor, workerID string) (*sdk.Worker, error) {
-	var work dbWorker
-	query := gorpmapping.NewQuery(`SELECT * FROM worker WHERE id = $1`).Args(workerID)
-	found, err := gorpmapping.Get(ctx, db, query, &work, gorpmapping.GetOptions.WithDecryption)
-	if err != nil {
-		return nil, err
-	}
-	if !found {
-		return nil, sdk.WithStack(sdk.ErrNotFound)
-	}
-	isValid, err := gorpmapping.CheckSignature(work, work.Signature)
-	if err != nil {
-		return nil, err
-	}
-	if !isValid {
-		log.Error(ctx, "worker.get> worker %s data corrupted", work.ID)
-		return nil, sdk.WithStack(sdk.ErrNotFound)
-	}
-	return &work.Worker, err
+func LoadWorkerByNameWithDecryptKey(ctx context.Context, db gorp.SqlExecutor, workerName string) (*sdk.Worker, error) {
+	query := gorpmapping.NewQuery(`SELECT * FROM worker WHERE name = $1`).Args(workerName)
+	return get(ctx, db, query, gorpmapping.GetOptions.WithDecryption)
 }
 
-// LoadWorkerByName load worker by name
+// LoadWorkerByIDWithDecryptKey load worker with decrypted private key
 func LoadWorkerByName(ctx context.Context, db gorp.SqlExecutor, workerName string) (*sdk.Worker, error) {
-	query := gorpmapping.NewQuery(`
-    SELECT *
-    FROM worker
-    WHERE name = $1
-  `).Args(workerName)
+	query := gorpmapping.NewQuery(`SELECT * FROM worker WHERE name = $1`).Args(workerName)
 	return get(ctx, db, query)
 }

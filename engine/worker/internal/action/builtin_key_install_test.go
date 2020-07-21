@@ -8,14 +8,16 @@ import (
 	"testing"
 	"time"
 
+	"github.com/sirupsen/logrus"
+	"github.com/spf13/afero"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/worker/internal"
 	"github.com/ovh/cds/engine/worker/internal/action"
 	"github.com/ovh/cds/engine/worker/pkg/workerruntime"
 	"github.com/ovh/cds/sdk"
-	"github.com/spf13/afero"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 func TestRunInstallKeyAction_Relative(t *testing.T) {
@@ -38,6 +40,8 @@ func TestRunInstallKeyAction_Relative(t *testing.T) {
 	workingdir, err := w.BaseDir().Open("workingdir")
 	require.NoError(t, err)
 	w.SetContext(workerruntime.SetWorkingDirectory(ctx, workingdir))
+
+	w.SetGelfLogger(nil, logrus.New())
 	// End worker init
 
 	keyInstallAction := sdk.Action{
@@ -54,13 +58,14 @@ func TestRunInstallKeyAction_Relative(t *testing.T) {
 		},
 	}
 	secrets := []sdk.Variable{
-		sdk.Variable{
+		{
 			ID:    1,
 			Name:  "cds.key.proj-mykey.priv",
 			Value: "test",
 			Type:  string(sdk.KeyTypeSSH),
 		},
 	}
+
 	res, err := action.RunInstallKey(w.GetContext(), w, keyInstallAction, secrets)
 	assert.NoError(t, err)
 	assert.Equal(t, sdk.StatusSuccess, res.Status)
@@ -93,6 +98,8 @@ func TestRunInstallKeyAction_Absolute(t *testing.T) {
 	workingdir, err := w.BaseDir().Open("workingdir")
 	require.NoError(t, err)
 	w.SetContext(workerruntime.SetWorkingDirectory(ctx, workingdir))
+
+	w.SetGelfLogger(nil, logrus.New())
 	// End worker init
 
 	keyInstallAction := sdk.Action{

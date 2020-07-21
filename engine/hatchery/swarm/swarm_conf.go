@@ -8,7 +8,6 @@ import (
 	"github.com/dgrijalva/jwt-go"
 	types "github.com/docker/docker/api/types"
 
-	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/ovh/cds/sdk/log"
@@ -43,7 +42,7 @@ func (h *HatcherySwarm) ApplyConfiguration(cfg interface{}) error {
 	h.HTTPURL = h.Config.URL
 	h.MaxHeartbeatFailures = h.Config.API.MaxHeartbeatFailures
 	h.Common.Common.ServiceName = h.Config.Name
-	h.Common.Common.ServiceType = services.TypeHatchery
+	h.Common.Common.ServiceType = sdk.TypeHatchery
 	var err error
 	h.Common.Common.PrivateKey, err = jwt.ParseRSAPrivateKeyFromPEM([]byte(h.Config.RSAPrivateKey))
 	if err != nil {

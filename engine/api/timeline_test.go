@@ -52,7 +52,7 @@ func Test_getTimelineHandler(t *testing.T) {
 	}, lambdaIngroupWithMuted.ID))
 
 	// This is a mock for the elastic service
-	mockElasticService, _ := assets.InsertService(t, db, "Test_getTimelineHandler", services.TypeElasticsearch)
+	mockElasticService, _ := assets.InsertService(t, db, "Test_getTimelineHandler", sdk.TypeElasticsearch)
 	defer func() {
 		_ = services.Delete(db, mockElasticService) // nolint
 	}()

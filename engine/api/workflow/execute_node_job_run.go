@@ -386,7 +386,6 @@ func FreeNodeJobRun(ctx context.Context, store cache.Store, id int64) error {
 	return sdk.WrapError(sdk.ErrJobNotBooked, "BookNodeJobRun> job %d already released", id)
 }
 
-// AppendLog adds a build log.
 func AppendLog(db gorp.SqlExecutor, jobID, nodeRunID, stepOrder int64, val string, maxLogSize int64) error {
 	// check if log exists without loading data but with log size
 	exists, size, err := ExistsStepLog(db, jobID, stepOrder)
@@ -415,12 +414,7 @@ func AppendLog(db gorp.SqlExecutor, jobID, nodeRunID, stepOrder int64, val strin
 }
 
 //AddServiceLog adds a service log
-func AddServiceLog(db gorp.SqlExecutor, job *sdk.WorkflowNodeJobRun, logs *sdk.ServiceLog, maxLogSize int64) error {
-	if job != nil {
-		logs.WorkflowNodeJobRunID = job.ID
-		logs.WorkflowNodeRunID = job.WorkflowNodeRunID
-	}
-
+func AddServiceLog(db gorp.SqlExecutor, logs *sdk.ServiceLog, maxLogSize int64) error {
 	// check if log exists without loading data but with log size
 	exists, size, err := ExistsServiceLog(db, logs.WorkflowNodeJobRunID, logs.ServiceRequirementName)
 	if err != nil {

@@ -107,6 +107,7 @@ type Common struct {
 	ServiceInstance      *sdk.Service
 	PrivateKey           *rsa.PrivateKey
 	Signer               jose.Signer
+	CDNLogsURL           string
 	ServiceLogger        *logrus.Logger
 }
 

@@ -1,6 +1,7 @@
 package swarm
 
 import (
+	"github.com/ovh/cds/sdk"
 	"testing"
 	"time"
 
@@ -62,6 +63,12 @@ func InitTestHatcherySwarm(t *testing.T) *HatcherySwarm {
 		dockerClients: map[string]*dockerClient{},
 		Config: HatcheryConfiguration{
 			DisableDockerOptsOnRequirements: false,
+		},
+	}
+	h.ServiceInstance = &sdk.Service{
+		CanonicalService: sdk.CanonicalService{
+			ID:   1,
+			Name: "my-hatchery",
 		},
 	}
 	h.dockerClients["default"] = &dockerClient{Client: *c, name: "default"}

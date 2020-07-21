@@ -17,7 +17,6 @@ import (
 
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/permission"
-	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
@@ -273,7 +272,7 @@ func (c *websocketClient) updateEventFilters(ctx context.Context, db gorp.SqlExe
 	}
 
 	var isMaintainer = c.AuthConsumer.Maintainer() || c.AuthConsumer.Admin()
-	var isHatchery = c.AuthConsumer.Service != nil && c.AuthConsumer.Service.Type == services.TypeHatchery
+	var isHatchery = c.AuthConsumer.Service != nil && c.AuthConsumer.Service.Type == sdk.TypeHatchery
 	var isHatcheryWithGroups = isHatchery && len(c.AuthConsumer.GroupIDs) > 0
 
 	// Check validity of given filters
@@ -432,7 +431,7 @@ func (b *websocketBroker) computeEventKeys(event sdk.Event) []string {
 // We need to check permission for some kind of events, when permission can't be verified at filter subscription.
 func (c *websocketClient) checkEventPermission(ctx context.Context, db gorp.SqlExecutor, event sdk.Event) (bool, error) {
 	var isMaintainer = c.AuthConsumer.Maintainer() || c.AuthConsumer.Admin()
-	var isHatchery = c.AuthConsumer.Service != nil && c.AuthConsumer.Service.Type == services.TypeHatchery
+	var isHatchery = c.AuthConsumer.Service != nil && c.AuthConsumer.Service.Type == sdk.TypeHatchery
 	var isHatcheryWithGroups = isHatchery && len(c.AuthConsumer.GroupIDs) > 0
 
 	if strings.HasPrefix(event.EventType, "sdk.EventBroadcast") {

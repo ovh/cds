@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"database/sql"
+	"encoding/base64"
 	"fmt"
 	"net/http"
 	"strings"
@@ -40,7 +41,7 @@ func (api *API) postRegisterWorkerHandler() service.Handler {
 		}
 
 		// Check that hatchery exists
-		hatchSrv, err := services.LoadByNameAndType(ctx, api.mustDB(), workerTokenFromHatchery.Worker.HatcheryName, services.TypeHatchery)
+		hatchSrv, err := services.LoadByNameAndType(ctx, api.mustDB(), workerTokenFromHatchery.Worker.HatcheryName, sdk.TypeHatchery)
 		if err != nil {
 			return sdk.WrapError(err, "unable to load hatchery %s", workerTokenFromHatchery.Worker.HatcheryName)
 		}
@@ -111,6 +112,35 @@ func (api *API) postRegisterWorkerHandler() service.Handler {
 
 		// Return worker info to worker itself
 		return service.WriteJSON(w, wk, http.StatusOK)
+	}
+}
+
+func (api *API) getWorkerHandler() service.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		vars := mux.Vars(r)
+		name := vars["name"]
+
+		withKey := FormBool(r, "withKey")
+
+		if !isCDN(ctx) {
+			return sdk.WrapError(sdk.ErrForbidden, "only CDN can call this route")
+		}
+
+		var wkr *sdk.Worker
+		var err error
+		if withKey {
+			wkr, err = worker.LoadWorkerByNameWithDecryptKey(ctx, api.mustDB(), name)
+			if wkr != nil {
+				encoded := base64.StdEncoding.EncodeToString(wkr.PrivateKey)
+				wkr.PrivateKey = []byte(encoded)
+			}
+		} else {
+			wkr, err = worker.LoadWorkerByName(ctx, api.mustDB(), name)
+		}
+		if err != nil {
+			return err
+		}
+		return service.WriteJSON(w, wkr, http.StatusOK)
 	}
 }
 

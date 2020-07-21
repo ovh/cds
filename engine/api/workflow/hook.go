@@ -62,7 +62,7 @@ func hookUnregistration(ctx context.Context, db gorpmapping.SqlExecutorWithTx, s
 
 	//Push the hook to hooks µService
 	//Load service "hooks"
-	srvs, err := services.LoadAllByType(ctx, db, services.TypeHooks)
+	srvs, err := services.LoadAllByType(ctx, db, sdk.TypeHooks)
 	if err != nil {
 		return err
 	}
@@ -89,7 +89,7 @@ func hookRegistration(ctx context.Context, db gorpmapping.SqlExecutorWithTx, sto
 		return nil
 	}
 
-	srvs, err := services.LoadAllByType(ctx, db, services.TypeHooks)
+	srvs, err := services.LoadAllByType(ctx, db, sdk.TypeHooks)
 	if err != nil {
 		return sdk.WrapError(err, "unable to get services")
 	}

@@ -35,6 +35,8 @@ const (
 	ContextLoggingFuncKey      = "ctx-logging-func"
 
 	ExtraFieldSignature = "Signature"
+	ExtraFieldLine      = "Line"
+	ExtraFieldJobStatus = "JobStatus"
 )
 
 var (
@@ -157,7 +159,7 @@ func Initialize(ctx context.Context, conf *Conf) {
 		extra["CDSHostname"] = hostname
 
 		var errhook error
-		graylogHook, errhook = hook.NewHook(graylogcfg, extra)
+		graylogHook, errhook = hook.NewHook(ctx, graylogcfg, extra)
 
 		if errhook != nil {
 			log.Errorf("Error while initialize graylog hook: %v", errhook)
@@ -279,8 +281,9 @@ type Signature struct {
 }
 
 type SignatureWorker struct {
-	WorkerID  string
-	StepOrder int64
+	WorkerID   string
+	WorkerName string
+	StepOrder  int64
 }
 
 type SignatureService struct {
@@ -294,16 +297,33 @@ type SignatureService struct {
 func New(ctx context.Context, graylogcfg *hook.Config) (*log.Logger, *hook.Hook, error) {
 	newLogger := log.New()
 	extra := map[string]interface{}{}
-	hook, err := hook.NewHook(graylogcfg, extra)
+	hook, err := hook.NewHook(ctx, graylogcfg, extra)
 	if err != nil {
 		return nil, nil, fmt.Errorf("unable to add hook: %v", err)
 	}
 	newLogger.AddHook(hook)
-
-	go func() {
-		<-ctx.Done()
-		hook.Flush()
-	}()
-
 	return newLogger, hook, nil
+}
+
+func ReplaceAllHooks(ctx context.Context, l *log.Logger, graylogcfg *hook.Config) error {
+	emptyHooks := log.LevelHooks{}
+	oldHooks := l.ReplaceHooks(emptyHooks)
+	for _, hooks := range oldHooks {
+		for _, h := range hooks {
+			varType := fmt.Sprintf("%T", h)
+
+			if varType == fmt.Sprintf("%T", &hook.Hook{}) {
+				log.Info("hatchery.ReplaceAllHooks> stopping previous hook")
+				h.(*hook.Hook).Stop()
+			}
+		}
+	}
+
+	extra := map[string]interface{}{}
+	hook, err := hook.NewHook(ctx, graylogcfg, extra)
+	if err != nil {
+		return fmt.Errorf("unable to add hook: %v", err)
+	}
+	l.AddHook(hook)
+	return nil
 }

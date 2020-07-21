@@ -23,7 +23,7 @@ func (api *API) postMaintenanceHandler() service.Handler {
 		hook := FormBool(r, "withHook")
 
 		if hook {
-			srvs, err := services.LoadAllByType(ctx, api.mustDB(), services.TypeHooks)
+			srvs, err := services.LoadAllByType(ctx, api.mustDB(), sdk.TypeHooks)
 			if err != nil {
 				return err
 			}

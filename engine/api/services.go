@@ -71,8 +71,8 @@ func (api *API) postServiceRegisterHandler() service.Handler {
 		}
 		data.LastHeartbeat = time.Now()
 
-		// Service that are not hatcheries should be started be an admin
-		if data.Type != services.TypeHatchery && !isAdmin(ctx) {
+		// Service that are not hatcheries should be started as an admin
+		if data.Type != sdk.TypeHatchery && !isAdmin(ctx) {
 			return sdk.WrapError(sdk.ErrForbidden, "cannot register service of type %s for consumer %s", data.Type, consumer.ID)
 		}
 
@@ -114,7 +114,7 @@ func (api *API) postServiceRegisterHandler() service.Handler {
 
 		// For hatchery service we need to check if there are workers that are not attached to an existing hatchery
 		// If some worker's parent consumer match current hatchery consumer we will attach this worker to the new hatchery.
-		if srv.Type == services.TypeHatchery {
+		if srv.Type == sdk.TypeHatchery {
 			if err := worker.ReAttachAllToHatchery(ctx, tx, *srv); err != nil {
 				return err
 			}
@@ -125,7 +125,6 @@ func (api *API) postServiceRegisterHandler() service.Handler {
 		}
 
 		srv.Uptodate = data.Version == sdk.VERSION
-		srv.LogServerAdress = api.Config.CDN.PublicTCP
 
 		return service.WriteJSON(w, srv, http.StatusOK)
 	}
@@ -214,7 +213,7 @@ func (api *API) serviceAPIHeartbeatUpdate(ctx context.Context, db *gorp.DbMap) {
 	srv := &sdk.Service{
 		CanonicalService: sdk.CanonicalService{
 			Name:   event.GetCDSName(),
-			Type:   services.TypeAPI,
+			Type:   sdk.TypeAPI,
 			Config: srvConfig,
 		},
 		MonitoringStatus: api.Status(ctx),

@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
+	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 )
@@ -27,5 +28,18 @@ func (api *API) ConfigVCShandler() service.Handler {
 			return err
 		}
 		return service.WriteJSON(w, vcsServers, http.StatusOK)
+	}
+}
+
+func (api *API) ConfigCDNHandler() service.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		if !isHatchery(ctx) {
+			return sdk.WithStack(sdk.ErrForbidden)
+		}
+		tcpURL, err := services.GetCDNPublicTCPAdress(ctx, api.mustDB())
+		if err != nil {
+			return err
+		}
+		return service.WriteJSON(w, sdk.CDNConfig{TCPURL: tcpURL}, http.StatusOK)
 	}
 }

@@ -31,13 +31,12 @@ func (s *Service) statusHandler() service.Handler {
 
 func (s *Service) Status(ctx context.Context) sdk.MonitoringStatus {
 	m := s.CommonMonitoring()
-
 	status := sdk.MonitoringStatusOK
 	m.Lines = append(m.Lines, sdk.MonitoringStatusLine{Component: "CDN", Value: status, Status: status})
 	return m
 }
 
-func (s *Service) InitMetrics(ctx context.Context) error {
+func (s *Service) initMetrics(ctx context.Context) error {
 	var err error
 	onceMetrics.Do(func() {
 		Errors = stats.Int64(

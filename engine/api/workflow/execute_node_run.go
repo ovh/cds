@@ -856,7 +856,7 @@ func stopWorkflowNodeOutGoingHook(ctx context.Context, dbFunc func() *gorp.DbMap
 	nodeRun.Callback.Status = sdk.StatusStopped
 	nodeRun.Status = nodeRun.Callback.Status
 
-	srvs, err := services.LoadAllByType(ctx, db, services.TypeHooks)
+	srvs, err := services.LoadAllByType(ctx, db, sdk.TypeHooks)
 	if err != nil {
 		return sdk.WrapError(err, "unable to get hooks services")
 	}

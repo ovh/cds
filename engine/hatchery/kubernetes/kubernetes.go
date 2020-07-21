@@ -11,21 +11,19 @@ import (
 	"time"
 
 	"github.com/dgrijalva/jwt-go"
-	"github.com/ovh/cds/engine/service"
-
-	"k8s.io/client-go/tools/clientcmd"
-
 	"github.com/gorilla/mux"
+	"github.com/sirupsen/logrus"
 	apiv1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 	"k8s.io/client-go/rest"
+	"k8s.io/client-go/tools/clientcmd"
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
 
 	"github.com/ovh/cds/engine/api"
-	"github.com/ovh/cds/engine/api/services"
+	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/ovh/cds/sdk/hatchery"
@@ -45,8 +43,8 @@ var _ hatchery.InterfaceWithModels = new(HatcheryKubernetes)
 
 // InitHatchery register local hatchery with its worker model
 func (h *HatcheryKubernetes) InitHatchery(ctx context.Context) error {
-	if err := h.Common.InitServiceLogger(); err != nil {
-		return err
+	if err := h.Common.RefreshServiceLogger(ctx); err != nil {
+		log.Error(ctx, "hatchery> kubernetes> cannot get cdn configuration : %v", err)
 	}
 	sdk.GoRoutine(context.Background(), "hatchery kubernetes routines", func(ctx context.Context) {
 		h.routines(ctx)
@@ -142,7 +140,7 @@ func (h *HatcheryKubernetes) ApplyConfiguration(cfg interface{}) error {
 	}
 
 	h.Common.Common.ServiceName = h.Config.Name
-	h.Common.Common.ServiceType = services.TypeHatchery
+	h.Common.Common.ServiceType = sdk.TypeHatchery
 	h.HTTPURL = h.Config.URL
 	h.MaxHeartbeatFailures = h.Config.API.MaxHeartbeatFailures
 	var err error
@@ -425,6 +423,7 @@ func (h *HatcheryKubernetes) SpawnWorker(ctx context.Context, spawnArgs hatchery
 		}
 
 		podSchema.ObjectMeta.Labels[LABEL_SERVICE_JOB_ID] = fmt.Sprintf("%d", spawnArgs.JobID)
+		podSchema.ObjectMeta.Labels[LABEL_SERVICE_NODE_RUN_ID] = fmt.Sprintf("%d", spawnArgs.NodeRunID)
 		podSchema.Spec.Containers = append(podSchema.Spec.Containers, servContainer)
 		podSchema.Spec.HostAliases[0].Hostnames[i+1] = strings.ToLower(serv.Name)
 	}
@@ -434,6 +433,10 @@ func (h *HatcheryKubernetes) SpawnWorker(ctx context.Context, spawnArgs hatchery
 	log.Debug("hatchery> kubernetes> SpawnWorker> %s > Pod created", spawnArgs.WorkerName)
 
 	return err
+}
+
+func (h *HatcheryKubernetes) GetLogger() *logrus.Logger {
+	return h.ServiceLogger
 }
 
 // WorkersStarted returns the number of instances started but
@@ -488,6 +491,12 @@ func (h *HatcheryKubernetes) routines(ctx context.Context) {
 	for {
 		select {
 		case <-ticker.C:
+			sdk.GoRoutine(ctx, "getCDNConfiguration", func(ctx context.Context) {
+				if err := h.Common.RefreshServiceLogger(ctx); err != nil {
+					log.Error(ctx, "hatchery> kubernetes> cannot get cdn configuration : %v", err)
+				}
+			})
+
 			sdk.GoRoutine(ctx, "getServicesLogs", func(ctx context.Context) {
 				if err := h.getServicesLogs(ctx); err != nil {
 					log.Error(ctx, "Hatchery> Kubernetes> Cannot get service logs : %v", err)
