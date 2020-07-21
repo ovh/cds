@@ -655,7 +655,7 @@ type errorWithStack struct {
 func (w errorWithStack) Error() string {
 	var cause string
 	root := w.root.Error()
-	if root != "" && root != w.httpError.From {
+	if root != "" && root != w.httpError.From && root != w.httpError.Error() {
 		cause = fmt.Sprintf(" (caused by: %s)", w.root)
 	}
 	return fmt.Sprintf("%s: %s%s", w.stack.String(), w.httpError, cause)

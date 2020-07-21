@@ -182,5 +182,5 @@ func Test_cause(t *testing.T) {
 	mError.Append(err2)
 	mError.Append(err3)
 	mError.Append(err4)
-	assert.Equal(t, "Test_cause: internal server error (from: my error) (caused by: my lib error), Test_cause: wrong request (from: my error), Test_cause: wrong request (from: my error), Test_cause: wrong request (caused by: wrong request)", Cause(mError).Error())
+	assert.Equal(t, "Test_cause: internal server error (from: my error) (caused by: my lib error), Test_cause: wrong request (from: my error), Test_cause: wrong request (from: my error), Test_cause: wrong request", Cause(mError).Error())
 }
