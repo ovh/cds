@@ -496,7 +496,7 @@ func (h *HatcheryOpenstack) NeedRegistration(ctx context.Context, m *sdk.Model) 
 		return true
 	}
 	for _, img := range h.getImages(ctx) {
-		if w := img.Metadata["worker_model_path"]; w == m.Path() {
+		if w := img.Metadata["worker_model_path"]; w == m.Group.Name+"/"+m.Name {
 			if d, ok := img.Metadata["worker_model_last_modified"]; ok {
 				if fmt.Sprintf("%d", m.UserLastModified.Unix()) == d.(string) {
 					log.Debug("NeedRegistration> false. An image is already available for this worker model %s workerModel.UserLastModified", m.Name)
