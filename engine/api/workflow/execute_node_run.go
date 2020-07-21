@@ -528,7 +528,7 @@ jobLoop:
 				msg := sdk.SpawnMsg{
 					ID: sdk.MsgSpawnInfoJobError.ID,
 				}
-				msg.Args = []interface{}{sdk.Cause(e).Error()}
+				msg.Args = []interface{}{sdk.ExtractHTTPError(e, "").Error()}
 				wjob.SpawnInfos = append(wjob.SpawnInfos, sdk.SpawnInfo{
 					APITime:     time.Now(),
 					Message:     msg,

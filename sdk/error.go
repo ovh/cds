@@ -560,11 +560,6 @@ var errorsFrench = map[int]string{
 	ErrWorkerErrorCommand.ID:                            "Commande du worker en erreur",
 }
 
-var errorsLanguages = []map[int]string{
-	errorsAmericanEnglish,
-	errorsFrench,
-}
-
 // Error type.
 type Error struct {
 	ID         int         `json:"id"`
@@ -713,7 +708,7 @@ func (s *stack) String() string {
 			} else {
 				name = sp[1]
 			}
-			ignoredNames := StringSlice{"NewError", "NewErrorFrom", "WithStack", "WrapError", "Append"}
+			ignoredNames := StringSlice{"NewError", "NewErrorFrom", "WithStack", "WrapError", "Append", "NewErrorWithStack"}
 			if !ignoredNames.Contains(name) {
 				names = append(names, name)
 			}
@@ -837,7 +832,7 @@ func WithStack(err error) error {
 	// if it's a Error wrap it in error with stack
 	if e, ok := err.(Error); ok {
 		return errorWithStack{
-			root:      errors.New(""),
+			root:      errors.New(e.Translate("")),
 			stack:     callers(),
 			httpError: e,
 		}

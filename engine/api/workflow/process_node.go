@@ -38,7 +38,7 @@ func processNodeTriggers(ctx context.Context, db gorpmapping.SqlExecutorWithTx, 
 				log.Error(ctx, "processWorkflowRun> Unable to process node ID=%d: %s", t.ChildNode.ID, errPwnr)
 				AddWorkflowRunInfo(wr, sdk.SpawnMsg{
 					ID:   sdk.MsgWorkflowError.ID,
-					Args: []interface{}{errPwnr.Error()},
+					Args: []interface{}{sdk.ExtractHTTPError(errPwnr, "").Error()},
 					Type: sdk.MsgWorkflowError.Type,
 				})
 			}
@@ -248,7 +248,7 @@ func processNode(ctx context.Context, db gorpmapping.SqlExecutorWithTx, store ca
 		if errVcs != nil {
 			AddWorkflowRunInfo(wr, sdk.SpawnMsg{
 				ID:   sdk.MsgWorkflowError.ID,
-				Args: []interface{}{errVcs.Error()},
+				Args: []interface{}{sdk.ExtractHTTPError(errVcs, "").Error()},
 				Type: sdk.MsgWorkflowError.Type,
 			})
 			return nil, false, sdk.WrapError(errVcs, "unable to get git informations")
@@ -493,7 +493,7 @@ func computeNodeContextBuildParameters(ctx context.Context, proj sdk.Project, wr
 	if errParam != nil {
 		AddWorkflowRunInfo(wr, sdk.SpawnMsg{
 			ID:   sdk.MsgWorkflowError.ID,
-			Args: []interface{}{errParam.Error()},
+			Args: []interface{}{sdk.ExtractHTTPError(errParam, "").Error()},
 			Type: sdk.MsgWorkflowError.Type,
 		})
 		// if there an error -> display it in workflowRunInfo and not stop the launch
