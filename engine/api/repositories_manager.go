@@ -70,13 +70,13 @@ func (api *API) repositoriesManagerAuthorizeHandler() service.Handler {
 			return sdk.WrapError(err, "cannot start transaction")
 		}
 
-		if err := tx.Commit(); err != nil {
-			return sdk.WithStack(err)
-		}
-
 		token, url, err := vcsServer.AuthorizeRedirect(ctx)
 		if err != nil {
 			return sdk.WrapError(sdk.ErrNoReposManagerAuth, "error with AuthorizeRedirect %s", err)
+		}
+
+		if err := tx.Commit(); err != nil {
+			return sdk.WithStack(err)
 		}
 
 		data := map[string]string{
