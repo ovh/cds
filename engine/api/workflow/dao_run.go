@@ -715,7 +715,7 @@ func (a byInt64Desc) Less(i, j int) bool { return a[i] > a[j] }
 func (a byInt64Desc) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
 
 // PurgeWorkflowRun mark all workflow run to delete
-func PurgeWorkflowRun(ctx context.Context, db gorp.SqlExecutor, wf sdk.Workflow, workflowRunsMarkToDelete *stats.Int64Measure) error {
+func PurgeWorkflowRun(ctx context.Context, db gorp.SqlExecutor, wf sdk.Workflow) error {
 	ids := []struct {
 		Ids string `json:"ids" db:"ids"`
 	}{}
@@ -734,49 +734,7 @@ func PurgeWorkflowRun(ctx context.Context, db gorp.SqlExecutor, wf sdk.Workflow,
 
 	// Only if there aren't tags
 	if len(filteredPurgeTags) == 0 {
-		qLastSuccess := `
-		SELECT id
-			FROM (
-				SELECT id, status
-					FROM workflow_run
-				WHERE workflow_id = $1
-				ORDER BY id DESC
-				OFFSET $2
-			) as wr
-		WHERE status = $3
-		LIMIT 1`
-
-		lastWfrID, errID := db.SelectInt(qLastSuccess, wf.ID, wf.HistoryLength, sdk.StatusSuccess)
-		if errID != nil && errID != sql.ErrNoRows {
-			log.Warning(ctx, "PurgeWorkflowRun> Unable to last success run for workflow id %d and history length %d : %s", wf.ID, wf.HistoryLength, errID)
-			return errID
-		}
-
-		qDelete := `
-			UPDATE workflow_run SET to_delete = true
-			WHERE workflow_run.id IN (
-				SELECT workflow_run.id
-				FROM workflow_run
-				WHERE workflow_run.workflow_id = $1
-				AND workflow_run.id < $2
-				AND workflow_run.status <> $3
-				AND workflow_run.status <> $4
-				AND workflow_run.status <> $5
-				LIMIT 100
-			)
-		`
-		res, err := db.Exec(qDelete, wf.ID, lastWfrID, sdk.StatusBuilding, sdk.StatusChecking, sdk.StatusWaiting)
-		if err != nil {
-			log.Warning(ctx, "PurgeWorkflowRun> Unable to update workflow run for purge without tags for workflow id %d and history length %d : %s", wf.ID, wf.HistoryLength, err)
-			return err
-		}
-
-		n, _ := res.RowsAffected()
-		if workflowRunsMarkToDelete != nil {
-			telemetry.Record(ctx, workflowRunsMarkToDelete, n)
-		}
-
-		return nil
+		return purgeWorkflowRunWithoutTags(ctx, db, wf)
 	}
 
 	//  Only where there are tags
@@ -792,12 +750,13 @@ func PurgeWorkflowRun(ctx context.Context, db gorp.SqlExecutor, wf sdk.Workflow,
 					AND workflow_run.status <> $5
 					AND workflow_run.status <> $6
 					AND workflow_run.status <> $7
+					AND workflow_run.to_delete = false
 				ORDER BY workflow_run.id DESC
 			) as wr
 		GROUP BY tag, value HAVING COUNT(id) > $3
 	`
 
-	_, errS := db.Select(
+	_, err := db.Select(
 		&ids,
 		queryGetIds,
 		wf.ID,
@@ -808,9 +767,9 @@ func PurgeWorkflowRun(ctx context.Context, db gorp.SqlExecutor, wf sdk.Workflow,
 		sdk.StatusChecking,
 		sdk.StatusPending,
 	)
-	if errS != nil {
-		log.Warning(ctx, "PurgeWorkflowRun> Unable to get workflow run for purge with workflow id %d, tags %v and history length %d : %s", wf.ID, wf.PurgeTags, wf.HistoryLength, errS)
-		return errS
+	if err != nil {
+		log.Error(ctx, "PurgeWorkflowRun> Unable to get workflow run for purge with workflow id %d, tags %v and history length %d : %s", wf.ID, wf.PurgeTags, wf.HistoryLength, err)
+		return sdk.WithStack(err)
 	}
 
 	querySuccessIds := `
@@ -819,10 +778,11 @@ func PurgeWorkflowRun(ctx context.Context, db gorp.SqlExecutor, wf sdk.Workflow,
 		   	SELECT max(id::bigint)::text AS id, status
 		     	FROM (
 		       		SELECT workflow_run.id AS id, workflow_run_tag.tag AS tag, workflow_run_tag.value AS value, workflow_run.status AS status
-		         		FROM workflow_run
-		           		JOIN workflow_run_tag ON workflow_run.id = workflow_run_tag.workflow_run_id
-		         	WHERE workflow_run.workflow_id = $1
-		         		AND workflow_run_tag.tag = ANY(string_to_array($2, ',')::text[])
+		         	FROM workflow_run
+		           	JOIN workflow_run_tag ON workflow_run.id = workflow_run_tag.workflow_run_id
+					WHERE workflow_run.workflow_id = $1
+					AND workflow_run.to_delete = false
+		         	AND workflow_run_tag.tag = ANY(string_to_array($2, ',')::text[])
 		       		ORDER BY workflow_run.id DESC
 		    	) as wr
 		    GROUP BY tag, value, status
@@ -833,9 +793,9 @@ func PurgeWorkflowRun(ctx context.Context, db gorp.SqlExecutor, wf sdk.Workflow,
 	successIDs := []struct {
 		ID string `db:"id"`
 	}{}
-	if _, errS := db.Select(&successIDs, querySuccessIds, wf.ID, strings.Join(filteredPurgeTags, ","), sdk.StatusSuccess); errS != nil {
-		log.Warning(ctx, "PurgeWorkflowRun> Unable to get workflow run in success for purge with workflow id %d, tags %v and history length %d : %s", wf.ID, wf.PurgeTags, wf.HistoryLength, errS)
-		return errS
+	if _, err := db.Select(&successIDs, querySuccessIds, wf.ID, strings.Join(filteredPurgeTags, ","), sdk.StatusSuccess); err != nil {
+		log.Error(ctx, "PurgeWorkflowRun> Unable to get workflow run in success for purge with workflow id %d, tags %v and history length %d : %s", wf.ID, wf.PurgeTags, wf.HistoryLength, err)
+		return sdk.WithStack(err)
 	}
 
 	idsToUpdate := []string{}
@@ -848,7 +808,7 @@ func PurgeWorkflowRun(ctx context.Context, db gorp.SqlExecutor, wf sdk.Workflow,
 				nu, err := strconv.ParseInt(id, 10, 64)
 				if err != nil {
 					log.Error(ctx, "PurgeWorkflowRun> Cannot parse int64 %s: %v", id, err)
-					return err
+					return sdk.WithStack(err)
 				}
 				idsInt64[i] = nu
 			}
@@ -883,17 +843,67 @@ func PurgeWorkflowRun(ctx context.Context, db gorp.SqlExecutor, wf sdk.Workflow,
 	}
 
 	queryUpdate := `UPDATE workflow_run SET to_delete = true WHERE workflow_run.id = ANY(string_to_array($1, ',')::bigint[])`
-	res, err := db.Exec(queryUpdate, strings.Join(idsToUpdate, ","))
-	if err != nil {
-		log.Warning(ctx, "PurgeWorkflowRun> Unable to update workflow run for purge for workflow id %d and history length %d : %s", wf.ID, wf.HistoryLength, err)
+	if _, err := db.Exec(queryUpdate, strings.Join(idsToUpdate, ",")); err != nil {
+		log.Error(ctx, "PurgeWorkflowRun> Unable to update workflow run for purge for workflow id %d and history length %d : %s", wf.ID, wf.HistoryLength, err)
+		return sdk.WithStack(err)
+	}
+
+	return nil
+}
+
+func purgeWorkflowRunWithoutTags(ctx context.Context, db gorp.SqlExecutor, wf sdk.Workflow) error {
+	qLastSuccess := `
+	SELECT id
+		FROM (
+			SELECT id, status
+				FROM workflow_run
+			WHERE workflow_id = $1
+			ORDER BY id DESC
+			OFFSET $2
+		) as wr
+	WHERE status = $3
+	LIMIT 1`
+
+	lastWfrID, errID := db.SelectInt(qLastSuccess, wf.ID, wf.HistoryLength, sdk.StatusSuccess)
+	if errID != nil && errID != sql.ErrNoRows {
+		log.Warning(ctx, "PurgeWorkflowRun> Unable to last success run for workflow id %d and history length %d : %s", wf.ID, wf.HistoryLength, errID)
+		return errID
+	}
+
+	qDelete := `
+		WITH run_to_delete AS (
+			SELECT workflow_run.id
+			FROM workflow_run
+			WHERE workflow_run.workflow_id = $1
+			AND to_delete = false
+			AND workflow_run.id < $2
+			AND workflow_run.status <> $3
+			AND workflow_run.status <> $4
+			AND workflow_run.status <> $5
+		)
+		UPDATE workflow_run SET to_delete = true
+		FROM run_to_delete
+		WHERE workflow_run.id = run_to_delete.id
+	`
+	if _, err := db.Exec(qDelete, wf.ID, lastWfrID, sdk.StatusBuilding, sdk.StatusChecking, sdk.StatusWaiting); err != nil {
+		log.Warning(ctx, "PurgeWorkflowRun> Unable to update workflow run for purge without tags for workflow id %d and history length %d : %s", wf.ID, wf.HistoryLength, err)
 		return err
 	}
 
-	n, _ := res.RowsAffected()
+	return nil
+}
+
+func CountWorkflowRunsMarkToDelete(ctx context.Context, db gorp.SqlExecutor, workflowRunsMarkToDelete *stats.Int64Measure) int64 {
+	n, err := db.SelectInt("select count(1) from workflow_run where to_delete = true")
+	if err != nil {
+		log.Error(ctx, "countWorkflowRunsMarkToDelete> %v", err)
+		return 0
+	}
+	log.Debug("CountWorkflowRunsMarkToDelete> %d workflow to delete", n)
 	if workflowRunsMarkToDelete != nil {
 		telemetry.Record(ctx, workflowRunsMarkToDelete, n)
 	}
-	return nil
+	return n
 }
 
 // syncNodeRuns load the workflow node runs for a workflow run
@@ -1064,5 +1074,35 @@ func stopRunsBlocked(ctx context.Context, db *gorp.DbMap) error {
 	if err := tx.Commit(); err != nil {
 		return sdk.WrapError(err, "Unable to commit transaction")
 	}
+	return nil
+}
+
+func PurgeWorkflowRuns(ctx context.Context, db *gorp.DbMap, workflowRunsMarkToDelete *stats.Int64Measure) error {
+	dao := new(WorkflowDAO)
+	dao.Filters.DisableFilterDeletedWorkflow = false
+	wfs, err := dao.LoadAll(ctx, db)
+	if err != nil {
+		return err
+	}
+	for _, wf := range wfs {
+		tx, err := db.Begin()
+		defer tx.Rollback() // nolint
+		if err != nil {
+			log.Error(ctx, "workflow.PurgeWorkflowRuns> error %v", err)
+			tx.Rollback() // nolint
+			continue
+		}
+		if err := PurgeWorkflowRun(ctx, tx, wf); err != nil {
+			log.Error(ctx, "workflow.PurgeWorkflowRuns> error %v", err)
+			tx.Rollback() // nolint
+			continue
+		}
+		if err := tx.Commit(); err != nil {
+			log.Error(ctx, "workflow.PurgeWorkflowRuns> unable to commit transaction:  %v", err)
+			continue
+		}
+	}
+
+	CountWorkflowRunsMarkToDelete(ctx, db, workflowRunsMarkToDelete)
 	return nil
 }

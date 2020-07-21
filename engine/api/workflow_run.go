@@ -181,6 +181,8 @@ func (api *API) deleteWorkflowRunsBranchHandler() service.Handler {
 			return err
 		}
 
+		workflow.CountWorkflowRunsMarkToDelete(ctx, api.mustDB(), api.Metrics.WorkflowRunsMarkToDelete)
+
 		return service.WriteJSON(w, nil, http.StatusOK)
 	}
 }
@@ -334,6 +336,8 @@ func (api *API) deleteWorkflowRunHandler() service.Handler {
 		if err := workflow.MarkWorkflowRunsAsDelete(api.mustDB(), []int64{run.ID}); err != nil {
 			return sdk.WrapError(err, "cannot mark workflow run %d as delete", run.ID)
 		}
+
+		workflow.CountWorkflowRunsMarkToDelete(ctx, api.mustDB(), api.Metrics.WorkflowRunsMarkToDelete)
 
 		return service.WriteJSON(w, nil, http.StatusAccepted)
 	}
@@ -1065,9 +1069,24 @@ func (api *API) initWorkflowRun(ctx context.Context, projKey string, wf *sdk.Wor
 
 	// Purge workflow run
 	sdk.GoRoutine(ctx, "workflow.PurgeWorkflowRun", func(ctx context.Context) {
-		if err := workflow.PurgeWorkflowRun(ctx, api.mustDB(), *wf, api.Metrics.WorkflowRunsMarkToDelete); err != nil {
+
+		tx, err := api.mustDB().Begin()
+		defer tx.Rollback() // nolint
+		if err != nil {
 			log.Error(ctx, "workflow.PurgeWorkflowRun> error %v", err)
+			return
 		}
+		if err := workflow.PurgeWorkflowRun(ctx, tx, *wf); err != nil {
+			log.Error(ctx, "workflow.PurgeWorkflowRun> error %v", err)
+			return
+		}
+		if err := tx.Commit(); err != nil {
+			log.Error(ctx, "workflow.PurgeWorkflowRun> unable to commit transaction:  %v", err)
+			return
+		}
+
+		workflow.CountWorkflowRunsMarkToDelete(ctx, api.mustDB(), api.Metrics.WorkflowRunsMarkToDelete)
+
 	}, api.PanicDump())
 
 	// Update parent

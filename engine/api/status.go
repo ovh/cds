@@ -247,7 +247,7 @@ func (api *API) initMetrics(ctx context.Context) error {
 		telemetry.NewViewLast("cds/queue", api.Metrics.queue, tagsRange),
 		telemetry.NewViewCount("cds/workflow_runs_started", api.Metrics.WorkflowRunStarted, tagsService),
 		telemetry.NewViewCount("cds/workflow_runs_failed", api.Metrics.WorkflowRunFailed, tagsService),
-		telemetry.NewViewCount("cds/workflow_runs_mark_to_delete", api.Metrics.WorkflowRunsMarkToDelete, tagsService),
+		telemetry.NewViewLast("cds/workflow_runs_mark_to_delete", api.Metrics.WorkflowRunsMarkToDelete, tagsService),
 		telemetry.NewViewCount("cds/workflow_runs_deleted", api.Metrics.WorkflowRunsDeleted, tagsService),
 		telemetry.NewViewLast("cds/database_conn", api.Metrics.DatabaseConns, tagsService),
 	)
