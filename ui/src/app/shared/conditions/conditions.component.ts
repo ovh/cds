@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, EventEmitter, Input, OnInit, Output, ViewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, EventEmitter, Input, OnDestroy, OnInit, Output, ViewChild } from '@angular/core';
 import { PipelineStatus } from 'app/model/pipeline.model';
 import { Project } from 'app/model/project.model';
 import { WorkflowNodeCondition, WorkflowNodeConditions, WorkflowTriggerConditionCache } from 'app/model/workflow.model';
@@ -17,7 +17,7 @@ declare var CodeMirror: any;
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 @AutoUnsubscribe()
-export class ConditionsComponent extends Table<WorkflowNodeCondition> implements OnInit {
+export class ConditionsComponent extends Table<WorkflowNodeCondition> implements OnInit, OnDestroy {
     @Input('triggerConditions') set triggerConditions(data: WorkflowTriggerConditionCache) {
         this._triggerCondition = data;
         if (data) {
@@ -78,6 +78,8 @@ export class ConditionsComponent extends Table<WorkflowNodeCondition> implements
     ) {
         super();
     }
+
+    ngOnDestroy(): void {} // Should be set to use @AutoUnsubscribe with AOT
 
     getData(): Array<WorkflowNodeCondition> {
         return undefined;

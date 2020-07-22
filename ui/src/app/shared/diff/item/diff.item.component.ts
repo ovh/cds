@@ -4,6 +4,7 @@ import {
     Component,
     Input,
     OnChanges,
+    OnDestroy,
     OnInit,
     ViewChild
 } from '@angular/core';
@@ -25,7 +26,7 @@ export class Mode {
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 @AutoUnsubscribe()
-export class DiffItemComponent implements OnInit, OnChanges {
+export class DiffItemComponent implements OnInit, OnChanges, OnDestroy {
     @ViewChild('codeLeft') codeLeft: any;
     @ViewChild('codeRight') codeRight: any;
 
@@ -43,6 +44,8 @@ export class DiffItemComponent implements OnInit, OnChanges {
     constructor(
         private _theme: ThemeStore, private _cd: ChangeDetectorRef
     ) { }
+
+    ngOnDestroy(): void {} // Should be set to use @AutoUnsubscribe with AOT
 
     ngOnInit() {
         this.codeMirrorConfig = {

@@ -4,6 +4,7 @@ import {
     ElementRef,
     Input,
     NgZone,
+    OnDestroy,
     OnInit,
     ViewChild
 } from '@angular/core';
@@ -31,8 +32,7 @@ import { Observable, Subscription } from 'rxjs';
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 @AutoUnsubscribe()
-export class WorkflowStepLogComponent implements OnInit {
-
+export class WorkflowStepLogComponent implements OnInit, OnDestroy {
     // Static
     @Input() stepOrder: number;
 
@@ -85,6 +85,8 @@ export class WorkflowStepLogComponent implements OnInit {
         this.ansi_up.escape_for_html = !this.htmlViewSelected;
     }
 
+    ngOnDestroy(): void { } // Should be set to use @AutoUnsubscribe with AOT
+
     ngOnInit(): void {
         this.nodeJobRunSubs = this.nodeJobRun$.subscribe(nrj => {
             if (!nrj || !nrj.job.step_status) {
@@ -106,6 +108,7 @@ export class WorkflowStepLogComponent implements OnInit {
                 this.currentNodeJobRunID = nrj.id;
 
                 this.computeDuration();
+                this.showLogs = false;
                 if (this.stepStatus.status === this.pipelineBuildStatusEnum.BUILDING ||
                     this.stepStatus.status === this.pipelineBuildStatusEnum.WAITING ||
                     (this.stepStatus.status === this.pipelineBuildStatusEnum.FAIL && !this.step.optional)) {

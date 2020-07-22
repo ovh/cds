@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
@@ -23,7 +23,7 @@ import { finalize } from 'rxjs/operators';
 
 })
 @AutoUnsubscribe()
-export class BroadcastAddComponent {
+export class BroadcastAddComponent implements OnDestroy {
     loading = false;
     deleteLoading = false;
     broadcast: Broadcast;
@@ -70,6 +70,8 @@ export class BroadcastAddComponent {
             translate: 'common_create'
         }];
     }
+
+    ngOnDestroy(): void {} // Should be set to use @AutoUnsubscribe with AOT
 
     clickSaveButton(): void {
         if (!this.broadcast.title) {

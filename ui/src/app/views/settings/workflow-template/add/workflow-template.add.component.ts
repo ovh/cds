@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { GroupService } from 'app/service/group/group.service';
@@ -19,7 +19,7 @@ import { ToastService } from '../../../../shared/toast/ToastService';
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 @AutoUnsubscribe()
-export class WorkflowTemplateAddComponent implements OnInit {
+export class WorkflowTemplateAddComponent implements OnInit, OnDestroy {
     workflowTemplate: WorkflowTemplate;
     groups: Array<Group>;
     loading: boolean;
@@ -51,6 +51,8 @@ export class WorkflowTemplateAddComponent implements OnInit {
         this.workflowTemplate = <WorkflowTemplate>{ editable: true };
         this.getGroups();
     }
+
+    ngOnDestroy(): void {} // Should be set to use @AutoUnsubscribe with AOT
 
     ngOnInit() {
         this.queryParamsSub = this._route.queryParams.subscribe(params => {

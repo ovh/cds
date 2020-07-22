@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnDestroy, OnInit } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
 import { Subscription } from 'rxjs';
@@ -19,7 +19,7 @@ import { ApplicationsState } from '../../../../store/applications.state';
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 @AutoUnsubscribe()
-export class ApplicationHomeComponent implements OnInit {
+export class ApplicationHomeComponent implements OnInit, OnDestroy {
     @Input() project: Project;
     @Input() application: Application;
 
@@ -32,6 +32,8 @@ export class ApplicationHomeComponent implements OnInit {
         private store: Store,
         private _cd: ChangeDetectorRef
     ) { }
+
+    ngOnDestroy(): void {} // Should be set to use @AutoUnsubscribe with AOT
 
     ngOnInit(): void {
         this.store.dispatch(new FetchApplicationOverview({ projectKey: this.project.key, applicationName: this.application.name }));

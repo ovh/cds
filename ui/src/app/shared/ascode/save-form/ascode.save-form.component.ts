@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, EventEmitter, Input, OnDestroy, OnInit, Output } from '@angular/core';
 import { Operation } from 'app/model/operation.model';
 import { Project } from 'app/model/project.model';
 import { Workflow } from 'app/model/workflow.model';
@@ -17,7 +17,7 @@ export class ParamData {
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 @AutoUnsubscribe()
-export class AsCodeSaveFormComponent implements OnInit {
+export class AsCodeSaveFormComponent implements OnInit, OnDestroy {
     @Input() project: Project;
     @Input() workflow: Workflow;
     @Input() operation: Operation;
@@ -32,6 +32,8 @@ export class AsCodeSaveFormComponent implements OnInit {
         private _cd: ChangeDetectorRef,
         private _awService: ApplicationWorkflowService
     ) { }
+
+    ngOnDestroy(): void {} // Should be set to use @AutoUnsubscribe with AOT
 
     ngOnInit() {
         if (!this.workflow) {

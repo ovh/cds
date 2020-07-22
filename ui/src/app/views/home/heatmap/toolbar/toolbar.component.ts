@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy } from '@angular/core';
 import { Subject } from 'rxjs';
 import { finalize } from 'rxjs/operators';
 import { HeatmapSearchCriterion } from '../../../../model/heatmap.model';
@@ -13,7 +13,7 @@ import { AutoUnsubscribe } from '../../../../shared/decorator/autoUnsubscribe';
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 @AutoUnsubscribe()
-export class ToolbarComponent {
+export class ToolbarComponent implements OnDestroy {
 
   projects: Array<Project>;
   searchCriterion: string;
@@ -36,6 +36,8 @@ export class ToolbarComponent {
         }
     });
   }
+
+  ngOnDestroy(): void {} // Should be set to use @AutoUnsubscribe with AOT
 
   search() {
     this.subject.next(new HeatmapSearchCriterion(this.selectedProjectKeys, this.searchCriterion));

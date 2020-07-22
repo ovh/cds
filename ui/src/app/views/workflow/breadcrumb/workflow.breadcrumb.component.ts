@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnDestroy, OnInit } from '@angular/core';
 import { Select } from '@ngxs/store';
 import { Project } from 'app/model/project.model';
 import { Workflow } from 'app/model/workflow.model';
@@ -15,7 +15,7 @@ import { Observable, Subscription } from 'rxjs';
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 @AutoUnsubscribe()
-export class WorkflowBreadCrumbComponent implements OnInit {
+export class WorkflowBreadCrumbComponent implements OnInit, OnDestroy {
     _project: Project;
     @Input() set project(p: Project) {
         this._project = p;
@@ -37,6 +37,8 @@ export class WorkflowBreadCrumbComponent implements OnInit {
     path: Array<PathItem>;
 
     constructor(private _cd: ChangeDetectorRef) {}
+
+    ngOnDestroy(): void {} // Should be set to use @AutoUnsubscribe with AOT
 
     ngOnInit(): void {
         this.workflowRunSub = this.workflowRun$.subscribe(wr => {

@@ -5,6 +5,7 @@ import {
     EventEmitter,
     Input,
     OnChanges,
+    OnDestroy,
     Output
 } from '@angular/core';
 import { Router } from '@angular/router';
@@ -35,7 +36,7 @@ import { finalize, first } from 'rxjs/operators';
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 @AutoUnsubscribe()
-export class WorkflowTemplateApplyFormComponent implements OnChanges {
+export class WorkflowTemplateApplyFormComponent implements OnChanges, OnDestroy {
     @Input() project: Project;
     @Input() workflow: Workflow;
     @Input() workflowTemplate: WorkflowTemplate;
@@ -62,6 +63,8 @@ export class WorkflowTemplateApplyFormComponent implements OnChanges {
         private _eventService: EventService,
         private _store: Store
     ) { }
+
+    ngOnDestroy(): void {} // Should be set to use @AutoUnsubscribe with AOT
 
     ngOnChanges() {
         this.parameterName = this.workflowTemplateInstance ? this.workflowTemplateInstance.request.workflow_name : '';

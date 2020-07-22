@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, Input, OnDestroy } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Store } from '@ngxs/store';
 import { PipelineStatus } from 'app/model/pipeline.model';
@@ -15,7 +15,7 @@ import { ProjectState } from 'app/store/project.state';
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 @AutoUnsubscribe()
-export class WorkflowWNodePipelineComponent {
+export class WorkflowWNodePipelineComponent implements OnDestroy {
     @Input() public node: WNode;
     @Input() public workflow: Workflow;
     @Input() public noderun: WorkflowNodeRun;
@@ -32,6 +32,8 @@ export class WorkflowWNodePipelineComponent {
     ) {
         this.project = this._store.selectSnapshot(ProjectState.projectSnapshot);
     }
+
+    ngOnDestroy(): void {} // Should be set to use @AutoUnsubscribe with AOT
 
     displayLogs() {
         if (this.noderun) {

@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnDestroy } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
@@ -17,7 +17,7 @@ import { finalize } from 'rxjs/operators';
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 @AutoUnsubscribe()
-export class EnvironmentAddComponent {
+export class EnvironmentAddComponent implements OnDestroy {
 
     project: Project;
     newEnvironment: Environment = new Environment();
@@ -37,6 +37,8 @@ export class EnvironmentAddComponent {
             this.project = datas['project'];
         });
     }
+
+    ngOnDestroy(): void {} // Should be set to use @AutoUnsubscribe with AOT
 
     checkPattern(envName: string) {
         if (!envName) {

@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output, ViewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, EventEmitter, Input, OnDestroy, Output, ViewChild } from '@angular/core';
 import { Store } from '@ngxs/store';
 import { ModalTemplate, SuiActiveModal, SuiModalService, TemplateModalConfig } from '@richardlt/ng2-semantic-ui';
 import { Project } from 'app/model/project.model';
@@ -13,7 +13,7 @@ import { WorkflowState } from 'app/store/workflow.state';
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 @AutoUnsubscribe()
-export class WorkflowHookModalComponent {
+export class WorkflowHookModalComponent implements OnDestroy {
 
     @Input() project: Project;
     @Input() workflow: Workflow;
@@ -36,6 +36,8 @@ export class WorkflowHookModalComponent {
     constructor(private _modalService: SuiModalService, private _store: Store) {
         this.editMode = this._store.selectSnapshot(WorkflowState).editMode;
     }
+
+    ngOnDestroy(): void {} // Should be set to use @AutoUnsubscribe with AOT
 
     show(): void {
         if (this.hookModalComponent) {

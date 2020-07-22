@@ -1,4 +1,4 @@
-import { AfterViewInit, ChangeDetectionStrategy, ChangeDetectorRef, Component, ViewChild } from '@angular/core';
+import { AfterViewInit, ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, ViewChild } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { Select, Store } from '@ngxs/store';
 import {
@@ -28,7 +28,7 @@ import { finalize } from 'rxjs/operators';
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 @AutoUnsubscribe()
-export class WorkflowNodeEditModalComponent implements AfterViewInit {
+export class WorkflowNodeEditModalComponent implements AfterViewInit, OnDestroy {
 
     @Select(WorkflowState.getEditModal()) editModal$: Observable<boolean>;
     editModalSub: Subscription;
@@ -70,6 +70,8 @@ export class WorkflowNodeEditModalComponent implements AfterViewInit {
                 this._cd.markForCheck();
             });
     }
+
+    ngOnDestroy(): void {} // Should be set to use @AutoUnsubscribe with AOT
 
     ngAfterViewInit(): void {
         this.nodeSub = this.node$.subscribe(n => {

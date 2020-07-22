@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
 import { Title } from '@angular/platform-browser';
 import { ActivatedRoute, NavigationExtras, Router } from '@angular/router';
 import { Select, Store } from '@ngxs/store';
@@ -20,8 +20,7 @@ import { Observable, Subscription } from 'rxjs';
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 @AutoUnsubscribe()
-export class WorkflowNodeRunComponent implements OnInit {
-
+export class WorkflowNodeRunComponent implements OnInit, OnDestroy {
     @Select(WorkflowState.getSelectedNodeRun()) nodeRun$: Observable<WorkflowNodeRun>;
     nodeRunSubs: Subscription;
 
@@ -97,6 +96,8 @@ export class WorkflowNodeRunComponent implements OnInit {
                 });
         });
     }
+
+    ngOnDestroy(): void {} // Should be set to use @AutoUnsubscribe with AOT
 
     ngOnInit(): void {
         this.nodeRunSubs = this.nodeRun$.subscribe(nr => {

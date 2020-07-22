@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnInit, ViewChild } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
@@ -36,7 +36,7 @@ import { finalize, map, tap } from 'rxjs/operators';
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 @AutoUnsubscribe()
-export class WorkflowWNodeComponent implements OnInit {
+export class WorkflowWNodeComponent implements OnInit, OnDestroy {
 
     // Data set by workflow graph
     @Input() node: WNode;
@@ -83,6 +83,8 @@ export class WorkflowWNodeComponent implements OnInit {
             this.hasWorkflowRun = true;
         }
     }
+
+    ngOnDestroy(): void {} // Should be set to use @AutoUnsubscribe with AOT
 
     ngOnInit(): void {
         this.nodeRunSub = this._store.select(WorkflowState.nodeRunByNodeID)

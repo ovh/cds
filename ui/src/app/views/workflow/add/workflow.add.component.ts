@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit, ViewChild } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
@@ -30,7 +30,7 @@ import { filter, finalize, first } from 'rxjs/operators';
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 @AutoUnsubscribe()
-export class WorkflowAddComponent implements OnInit {
+export class WorkflowAddComponent implements OnInit, OnDestroy {
     @ViewChild('codeMirror') codemirror: any;
 
     workflow: Workflow;
@@ -94,6 +94,8 @@ workflow:
             autoRefresh: true,
         };
     }
+
+    ngOnDestroy(): void {} // Should be set to use @AutoUnsubscribe with AOT
 
     ngOnInit(): void {
         this._activatedRoute.data.subscribe(datas => {
