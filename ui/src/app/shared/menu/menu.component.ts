@@ -5,6 +5,7 @@ import {
     EventEmitter,
     Input,
     OnChanges,
+    OnDestroy,
     OnInit,
     Output
 } from '@angular/core';
@@ -30,7 +31,7 @@ export enum Orientation {
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 @AutoUnsubscribe()
-export class MenuComponent implements OnInit, OnChanges {
+export class MenuComponent implements OnInit, OnChanges, OnDestroy {
     @Input() items: Array<Item>;
     @Input() orientation: Orientation;
     @Input() withRouting: boolean;
@@ -46,6 +47,8 @@ export class MenuComponent implements OnInit, OnChanges {
         private _router: Router,
         private _cd: ChangeDetectorRef
     ) { }
+
+    ngOnDestroy(): void {} // Should be set to use @AutoUnsubscribe with AOT
 
     ngOnInit() {
         this.select(this.items.find(t => t.default));

@@ -23,14 +23,16 @@ func (s *Service) initRouter(ctx context.Context) {
 	r.SetHeaderFunc = api.DefaultHeaders
 	r.PostMiddlewares = append(r.PostMiddlewares, api.TracingPostMiddleware)
 
-	r.Handle("/mon/version", nil, r.GET(api.VersionHandler, api.Auth(false)))
-	r.Handle("/mon/status", nil, r.GET(s.statusHandler, api.Auth(false)))
-	r.Handle("/mon/metrics", nil, r.GET(service.GetPrometheustMetricsHandler(s), api.Auth(false)))
-	r.Handle("/mon/metrics/all", nil, r.GET(service.GetMetricsHandler, api.Auth(false)))
+	serviceURL, _ := url.Parse(s.Cfg.URL)
+
+	r.Handle(serviceURL.Path+"/mon/version", nil, r.GET(api.VersionHandler, api.Auth(false)))
+	r.Handle(serviceURL.Path+"/mon/status", nil, r.GET(s.statusHandler, api.Auth(false)))
+	r.Handle(serviceURL.Path+"/mon/metrics", nil, r.GET(service.GetPrometheustMetricsHandler(s), api.Auth(false)))
+	r.Handle(serviceURL.Path+"/mon/metrics/all", nil, r.GET(service.GetMetricsHandler, api.Auth(false)))
 
 	// proxypass
-	r.Mux.PathPrefix("/cdsapi").Handler(s.getReverseProxy("/cdsapi", s.Cfg.API.HTTP.URL))
-	r.Mux.PathPrefix("/cdshooks").Handler(s.getReverseProxy("/cdshooks", s.Cfg.HooksURL))
+	r.Mux.PathPrefix(serviceURL.Path + "/cdsapi").Handler(s.getReverseProxy(serviceURL.Path+"/cdsapi", s.Cfg.API.HTTP.URL))
+	r.Mux.PathPrefix(serviceURL.Path + "/cdshooks").Handler(s.getReverseProxy(serviceURL.Path+"/cdshooks", s.Cfg.HooksURL))
 
 	// serve static UI files
 	r.Mux.PathPrefix("/").Handler(s.uiServe(http.Dir(s.HTMLDir)))
@@ -38,10 +40,11 @@ func (s *Service) initRouter(ctx context.Context) {
 
 func (s *Service) getReverseProxy(path, urlRemote string) *httputil.ReverseProxy {
 	origin, _ := url.Parse(urlRemote)
+
 	director := func(req *http.Request) {
 		reqPath := strings.TrimPrefix(req.URL.Path, path)
 		// on proxypass /cdshooks, allow only request on /webhook/ path
-		if path == "/cdshooks" && !strings.HasPrefix(reqPath, "/webhook/") {
+		if strings.HasSuffix(path, "/cdshooks") && !strings.HasPrefix(reqPath, "/webhook/") {
 			// return 502 bad gateway
 			req = &http.Request{} // nolint
 		} else {
@@ -49,7 +52,7 @@ func (s *Service) getReverseProxy(path, urlRemote string) *httputil.ReverseProxy
 			req.Header.Add("X-Origin-Host", origin.Host)
 			req.URL.Scheme = origin.Scheme
 			req.URL.Host = origin.Host
-			req.URL.Path = reqPath
+			req.URL.Path = origin.Path + reqPath
 			req.Host = origin.Host
 		}
 	}
@@ -58,8 +61,11 @@ func (s *Service) getReverseProxy(path, urlRemote string) *httputil.ReverseProxy
 
 func (s *Service) uiServe(fs http.FileSystem) http.Handler {
 	fsh := http.FileServer(fs)
+	serviceURL, _ := url.Parse(s.Cfg.URL)
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		_, err := fs.Open(path.Clean(r.URL.Path))
+		r.URL.Path = strings.TrimPrefix(r.URL.Path, serviceURL.Path)
+		filePath := path.Clean(r.URL.Path)
+		_, err := fs.Open(filePath)
 		if os.IsNotExist(err) {
 			http.ServeFile(w, r, filepath.Join(s.HTMLDir, "index.html"))
 			return

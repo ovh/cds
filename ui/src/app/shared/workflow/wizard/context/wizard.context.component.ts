@@ -4,6 +4,7 @@ import {
     Component,
     EventEmitter,
     Input,
+    OnDestroy,
     OnInit,
     Output
 } from '@angular/core';
@@ -31,8 +32,7 @@ import { filter, finalize, first, flatMap } from 'rxjs/operators';
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 @AutoUnsubscribe()
-export class WorkflowWizardNodeContextComponent implements OnInit {
-
+export class WorkflowWizardNodeContextComponent implements OnInit, OnDestroy {
 
     @Input() workflow: Workflow;
     @Input() readonly = true;
@@ -51,13 +51,13 @@ export class WorkflowWizardNodeContextComponent implements OnInit {
     loading: boolean;
     showCheckStatus = false;
 
-
     constructor(private _store: Store, private _appService: ApplicationService, private _translate: TranslateService,
         private _toast: ToastService, private _cd: ChangeDetectorRef) {
         this.project = this._store.selectSnapshot(ProjectState.projectSnapshot);
         this.editMode = this._store.selectSnapshot(WorkflowState).editMode;
-
     }
+
+    ngOnDestroy(): void {} // Should be set to use @AutoUnsubscribe with AOT
 
     ngOnInit() {
         this.nodeSub = this.node$.subscribe(n => {

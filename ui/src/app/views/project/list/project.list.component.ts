@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy } from '@angular/core';
 import { Subscription } from 'rxjs/Subscription';
 import { Project } from '../../../model/project.model';
 import { ProjectStore } from '../../../service/project/project.store';
@@ -11,7 +11,7 @@ import { AutoUnsubscribe } from '../../../shared/decorator/autoUnsubscribe';
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 @AutoUnsubscribe()
-export class ProjectListComponent {
+export class ProjectListComponent implements OnDestroy {
     projects: Array<Project> = [];
     filteredProjects: Array<Project> = [];
     loading = true;
@@ -36,4 +36,6 @@ export class ProjectListComponent {
                 }
             });
     }
+
+    ngOnDestroy(): void {} // Should be set to use @AutoUnsubscribe with AOT
 }

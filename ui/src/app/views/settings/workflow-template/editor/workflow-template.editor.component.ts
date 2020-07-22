@@ -4,6 +4,7 @@ import {
     EventEmitter,
     Input,
     OnChanges,
+    OnDestroy,
     OnInit,
     Output,
     ViewChild
@@ -20,7 +21,7 @@ import { Subscription } from 'rxjs';
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 @AutoUnsubscribe()
-export class WorkflowTemplateEditorComponent implements OnInit, OnChanges {
+export class WorkflowTemplateEditorComponent implements OnInit, OnChanges, OnDestroy {
     @ViewChild('code') codemirror: any;
 
     @Input() editable: boolean;
@@ -46,6 +47,8 @@ export class WorkflowTemplateEditorComponent implements OnInit, OnChanges {
             lineNumbers: true
         };
     }
+
+    ngOnDestroy(): void {} // Should be set to use @AutoUnsubscribe with AOT
 
     ngOnInit() {
         this.themeSubscription = this._theme.get().subscribe(t => {

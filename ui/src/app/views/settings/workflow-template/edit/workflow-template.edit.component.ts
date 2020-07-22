@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, OnInit, ViewChild } from '@angular/core';
+import { ChangeDetectorRef, Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { AuditWorkflowTemplate } from 'app/model/audit.model';
@@ -33,7 +33,7 @@ import { first } from 'rxjs/operators';
     styleUrls: ['./workflow-template.edit.scss']
 })
 @AutoUnsubscribe()
-export class WorkflowTemplateEditComponent implements OnInit {
+export class WorkflowTemplateEditComponent implements OnInit, OnDestroy {
 
     @ViewChild('templateApplyModal')
     templateApplyModal: WorkflowTemplateApplyModalComponent;
@@ -70,8 +70,9 @@ export class WorkflowTemplateEditComponent implements OnInit {
         private _translate: TranslateService,
         private _router: Router,
         private _cd: ChangeDetectorRef
-    ) {
-    }
+    ) {}
+
+    ngOnDestroy(): void {} // Should be set to use @AutoUnsubscribe with AOT
 
     ngOnInit() {
         this.tabs = [<Tab>{

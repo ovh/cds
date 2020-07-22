@@ -4,6 +4,7 @@ import {
     ChangeDetectorRef,
     Component,
     Input,
+    OnDestroy,
     OnInit,
     ViewChild
 } from '@angular/core';
@@ -34,7 +35,7 @@ declare var CodeMirror: any;
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 @AutoUnsubscribe()
-export class WorkflowSidebarCodeComponent implements OnInit, AfterViewInit {
+export class WorkflowSidebarCodeComponent implements OnInit, AfterViewInit, OnDestroy {
     @ViewChild('codeMirror') codemirror: any;
 
     // Project that contains the workflow
@@ -108,6 +109,8 @@ export class WorkflowSidebarCodeComponent implements OnInit, AfterViewInit {
             }
         });
     }
+
+    ngOnDestroy(): void {} // Should be set to use @AutoUnsubscribe with AOT
 
     workflowCheck = cm => {
         const errors = CodeMirror.lint.yaml(cm);

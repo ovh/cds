@@ -4,6 +4,7 @@ import {
     Component,
     ElementRef,
     NgZone,
+    OnDestroy,
     OnInit,
     ViewChild
 } from '@angular/core';
@@ -24,7 +25,7 @@ import { Observable, Subscription } from 'rxjs';
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 @AutoUnsubscribe()
-export class WorkflowServiceLogComponent implements OnInit {
+export class WorkflowServiceLogComponent implements OnInit, OnDestroy {
     @Select(WorkflowState.getSelectedWorkflowNodeJobRun()) nodeJobRun$: Observable<WorkflowNodeJobRun>;
     nodeJobRunSubs: Subscription;
 
@@ -53,6 +54,8 @@ export class WorkflowServiceLogComponent implements OnInit {
     ) {
         this.zone = new NgZone({ enableLongStackTrace: false });
     }
+
+    ngOnDestroy(): void { } // Should be set to use @AutoUnsubscribe with AOT
 
     ngOnInit(): void {
         this.nodeJobRunSubs = this.nodeJobRun$.subscribe(njr => {

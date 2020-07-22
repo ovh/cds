@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
 import { Title } from '@angular/platform-browser';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
@@ -23,7 +23,7 @@ import { ErrorMessageMap, WarningMessageMap } from './errors';
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 @AutoUnsubscribe()
-export class WorkflowRunComponent implements OnInit {
+export class WorkflowRunComponent implements OnInit, OnDestroy {
 
     project: Project;
 
@@ -127,6 +127,8 @@ export class WorkflowRunComponent implements OnInit {
             this._cd.markForCheck();
         });
     }
+
+    ngOnDestroy(): void {} // Should be set to use @AutoUnsubscribe with AOT
 
     ngOnInit(): void {
         this.direction = this._workflowStore.getDirection(this.project.key, this.workflowName);

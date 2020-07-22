@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
@@ -23,7 +23,7 @@ import { finalize } from 'rxjs/operators';
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 @AutoUnsubscribe()
-export class BroadcastEditComponent {
+export class BroadcastEditComponent implements OnDestroy {
     loading = false;
     deleteLoading = false;
     broadcast: Broadcast;
@@ -80,6 +80,8 @@ export class BroadcastEditComponent {
             this._cd.markForCheck();
         });
     }
+
+    ngOnDestroy(): void {} // Should be set to use @AutoUnsubscribe with AOT
 
     clickDeleteButton(): void {
         this.deleteLoading = true;

@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, EventEmitter, Input, OnInit, Output, ViewChild } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, EventEmitter, Input, OnDestroy, OnInit, Output, ViewChild } from '@angular/core';
 import { Group } from 'app/model/group.model';
 import { AuthentifiedUser } from 'app/model/user.model';
 import { ModelPattern, WorkerModel } from 'app/model/worker-model.model';
@@ -17,7 +17,7 @@ import { Subscription } from 'rxjs/Subscription';
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 @AutoUnsubscribe()
-export class WorkerModelFormComponent implements OnInit {
+export class WorkerModelFormComponent implements OnInit, OnDestroy {
     @ViewChild('codeMirror') codemirror: any;
 
     _workerModel: WorkerModel;
@@ -63,6 +63,8 @@ export class WorkerModelFormComponent implements OnInit {
             autoRefresh: true,
         };
     }
+
+    ngOnDestroy(): void {} // Should be set to use @AutoUnsubscribe with AOT
 
     ngOnInit(): void {
         this.themeSubscription = this._theme.get().subscribe(t => {

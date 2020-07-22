@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnInit, ViewChild } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { Select, Store } from '@ngxs/store';
 import { SuiActiveModal } from '@richardlt/ng2-semantic-ui';
@@ -20,7 +20,7 @@ import { Subscription } from 'rxjs/Subscription';
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 @AutoUnsubscribe()
-export class WorkflowNodeHookComponent implements OnInit {
+export class WorkflowNodeHookComponent implements OnInit, OnDestroy {
 
     @Input() hook: WNodeHook;
     @Input() workflow: Workflow;
@@ -51,6 +51,8 @@ export class WorkflowNodeHookComponent implements OnInit {
         let workflow = this._store.selectSnapshot(WorkflowState.workflowSnapshot);
         this.isReadOnly = !workflow.permissions.writable || (!!workflow.from_template && !!workflow.from_repository);
     }
+
+    ngOnDestroy(): void {} // Should be set to use @AutoUnsubscribe with AOT
 
     ngOnInit(): void {
         // Check if hook event has changed

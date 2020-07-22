@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, EventEmitter, Input, OnChanges, OnInit, Output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { Subscription } from 'rxjs/Subscription';
@@ -18,13 +18,15 @@ export class Tab {
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 @AutoUnsubscribe()
-export class TabsComponent implements OnInit, OnChanges {
+export class TabsComponent implements OnInit, OnChanges, OnDestroy {
     @Input() tabs: Array<Tab>;
     @Output() onSelect = new EventEmitter<Tab>();
     selected: Tab;
     queryParamsSub: Subscription;
 
     constructor(private _route: ActivatedRoute, private _router: Router) { }
+
+    ngOnDestroy(): void {} // Should be set to use @AutoUnsubscribe with AOT
 
     ngOnInit() {
         this.select(this.tabs.find(t => t.default));

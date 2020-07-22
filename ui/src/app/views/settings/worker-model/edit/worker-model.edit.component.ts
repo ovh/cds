@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
@@ -24,7 +24,7 @@ import { ToastService } from '../../../../shared/toast/ToastService';
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 @AutoUnsubscribe()
-export class WorkerModelEditComponent implements OnInit {
+export class WorkerModelEditComponent implements OnInit, OnDestroy {
     loading = false;
     loadingUsage = false;
     workerModel: WorkerModel;
@@ -50,6 +50,8 @@ export class WorkerModelEditComponent implements OnInit {
         private _store: Store,
         private _cd: ChangeDetectorRef
     ) { }
+
+    ngOnDestroy(): void {} // Should be set to use @AutoUnsubscribe with AOT
 
     selectTab(tab: Tab): void {
         switch (tab.key) {

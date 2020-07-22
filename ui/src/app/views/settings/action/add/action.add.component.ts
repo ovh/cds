@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Subscription } from 'rxjs';
@@ -22,7 +22,7 @@ import { ToastService } from '../../../../shared/toast/ToastService';
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 @AutoUnsubscribe()
-export class ActionAddComponent implements OnInit {
+export class ActionAddComponent implements OnInit, OnDestroy {
     action: Action;
     groups: Array<Group>;
     loading: boolean;
@@ -54,6 +54,8 @@ export class ActionAddComponent implements OnInit {
             translate: 'common_create'
         }];
     }
+
+    ngOnDestroy(): void {} // Should be set to use @AutoUnsubscribe with AOT
 
     ngOnInit() {
         this.queryParamsSub = this._route.queryParams.subscribe(params => {

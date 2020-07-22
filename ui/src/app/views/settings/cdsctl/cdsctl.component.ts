@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit, ViewChild, } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit, ViewChild, } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
 import { AuthentifiedUser } from 'app/model/user.model';
@@ -17,7 +17,7 @@ import { finalize } from 'rxjs/operators';
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 @AutoUnsubscribe()
-export class CdsctlComponent implements OnInit {
+export class CdsctlComponent implements OnInit, OnDestroy {
     @ViewChild('codemirror1') codemirror1: any;
     @ViewChild('codemirror2') codemirror2: any;
     @ViewChild('codemirror3') codemirror3: any;
@@ -63,6 +63,8 @@ export class CdsctlComponent implements OnInit {
         this.osChoice = 'linux';
         this.archChoice = 'amd64'
     }
+
+    ngOnDestroy(): void {} // Should be set to use @AutoUnsubscribe with AOT
 
     ngOnInit() {
         this.themeSubscription = this._theme.get().subscribe(t => {

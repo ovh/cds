@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
 import { Select } from '@ngxs/store';
 import { Coverage } from 'app/model/coverage.model';
 import { Tests } from 'app/model/pipeline.model';
@@ -14,7 +14,7 @@ import { Observable, Subscription } from 'rxjs';
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 @AutoUnsubscribe()
-export class WorkflowRunTestsResultComponent implements OnInit {
+export class WorkflowRunTestsResultComponent implements OnInit, OnDestroy {
 
     @Select(WorkflowState.getSelectedNodeRun()) nodeRun$: Observable<WorkflowNodeRun>;
     nodeRunSubs: Subscription;
@@ -34,8 +34,9 @@ export class WorkflowRunTestsResultComponent implements OnInit {
 
     constructor(
         private _cd: ChangeDetectorRef
-    ) {
-    }
+    ) {    }
+
+    ngOnDestroy(): void {} // Should be set to use @AutoUnsubscribe with AOT
 
     ngOnInit(): void {
         this.nodeRunSubs = this.nodeRun$.subscribe(nr => {

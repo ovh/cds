@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Store } from '@ngxs/store';
 import { PipelineStatus } from 'app/model/pipeline.model';
@@ -14,7 +14,7 @@ import { map } from 'rxjs/operators';
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 @AutoUnsubscribe()
-export class StageStepSummaryComponent implements OnInit {
+export class StageStepSummaryComponent implements OnInit, OnDestroy {
     @Input() stageId: number;
     @Input() runNumber: number;
     @Input() workflowNodeRunId: number;
@@ -34,6 +34,8 @@ export class StageStepSummaryComponent implements OnInit {
         private _store: Store,
         private _cd: ChangeDetectorRef
     ) { }
+
+    ngOnDestroy(): void {} // Should be set to use @AutoUnsubscribe with AOT
 
     ngOnInit() {
         this.storeSubs = this._store.select(WorkflowState.nodeRunStage).pipe(map(filterFn => filterFn(this.stageId))).subscribe( s => {

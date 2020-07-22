@@ -1,4 +1,4 @@
-import { AfterViewInit, ChangeDetectionStrategy, ChangeDetectorRef, Component, ViewChild } from '@angular/core';
+import { AfterViewInit, ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, ViewChild } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { AppService } from 'app/app.service';
 import { Subscription } from 'rxjs/Subscription';
@@ -18,7 +18,7 @@ import { ToolbarComponent } from './toolbar/toolbar.component';
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 @AutoUnsubscribe()
-export class HomeHeatmapComponent implements AfterViewInit {
+export class HomeHeatmapComponent implements AfterViewInit, OnDestroy {
 
     loading = true;
     events: Array<Event>;
@@ -56,6 +56,8 @@ export class HomeHeatmapComponent implements AfterViewInit {
     static clone(objectToCopy) {
         return (JSON.parse(JSON.stringify(objectToCopy)));
     }
+
+    ngOnDestroy(): void {} // Should be set to use @AutoUnsubscribe with AOT
 
     ngAfterViewInit() {
         this.filterSub = this._timelineStore.getFilter().subscribe(f => {

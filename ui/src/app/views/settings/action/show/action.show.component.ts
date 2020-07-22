@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { finalize, first } from 'rxjs/operators';
 import { Subscription } from 'rxjs/Subscription';
@@ -15,7 +15,7 @@ import { Tab } from '../../../../shared/tabs/tabs.component';
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 @AutoUnsubscribe()
-export class ActionShowComponent implements OnInit {
+export class ActionShowComponent implements OnInit, OnDestroy {
     action: Action;
     actionDoc: string;
     loadingUsage: boolean;
@@ -32,6 +32,8 @@ export class ActionShowComponent implements OnInit {
         private _actionService: ActionService,
         private _cd: ChangeDetectorRef
     ) { }
+
+    ngOnDestroy(): void {} // Should be set to use @AutoUnsubscribe with AOT
 
     ngOnInit() {
         this.tabs = [<Tab>{

@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit, ViewChild } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { ModalTemplate, SuiActiveModal, SuiModalService, TemplateModalConfig } from '@richardlt/ng2-semantic-ui';
 import { TaskExecution } from 'app/model/workflow.hook.model';
 import { ThemeStore } from 'app/service/theme/theme.store';
@@ -14,7 +14,7 @@ import { finalize } from 'rxjs/operators';
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 @AutoUnsubscribe()
-export class WorkflowNodeHookDetailsComponent implements OnInit {
+export class WorkflowNodeHookDetailsComponent implements OnInit, OnDestroy {
   @ViewChild('code') codemirror: any;
   @ViewChild('nodeHookDetailsModal') nodeHookDetailsModal: ModalTemplate<boolean, boolean, void>;
 
@@ -39,6 +39,8 @@ export class WorkflowNodeHookDetailsComponent implements OnInit {
       readOnly: true
     };
   }
+
+  ngOnDestroy(): void {} // Should be set to use @AutoUnsubscribe with AOT
 
   ngOnInit(): void {
     this.themeSubscription = this._theme.get()

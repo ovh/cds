@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit, ViewChild } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, Params, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
@@ -36,7 +36,7 @@ import { filter, finalize, first } from 'rxjs/operators';
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 @AutoUnsubscribe()
-export class PipelineShowComponent implements OnInit {
+export class PipelineShowComponent implements OnInit, OnDestroy {
 
     public permFormLoading = false;
     public paramFormLoading = false;
@@ -120,6 +120,8 @@ export class PipelineShowComponent implements OnInit {
                 this._cd.markForCheck();
             });
     }
+
+    ngOnDestroy(): void {} // Should be set to use @AutoUnsubscribe with AOT
 
     refreshDatas(key: string, pipName: string) {
         this._store.dispatch(new FetchPipeline({

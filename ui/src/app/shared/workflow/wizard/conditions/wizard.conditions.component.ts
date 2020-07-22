@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, EventEmitter, Input, OnInit, Output, ViewChild } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, EventEmitter, Input, OnDestroy, OnInit, Output, ViewChild } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { Select, Store } from '@ngxs/store';
 import { PipelineStatus } from 'app/model/pipeline.model';
@@ -26,7 +26,7 @@ import { Subscription } from 'rxjs/Subscription';
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 @AutoUnsubscribe()
-export class WorkflowWizardNodeConditionComponent extends Table<WorkflowNodeCondition> implements OnInit {
+export class WorkflowWizardNodeConditionComponent extends Table<WorkflowNodeCondition> implements OnInit, OnDestroy {
     @Input() workflow: Workflow;
     @Input() readonly = true;
     @Output() conditionsChange = new EventEmitter<boolean>();
@@ -66,6 +66,8 @@ export class WorkflowWizardNodeConditionComponent extends Table<WorkflowNodeCond
         this.project = this.store.selectSnapshot(ProjectState.projectSnapshot);
         this.editMode = this.store.selectSnapshot(WorkflowState).editMode;
     }
+
+    ngOnDestroy(): void {} // Should be set to use @AutoUnsubscribe with AOT
 
     getData(): Array<WorkflowNodeCondition> {
         return undefined;
