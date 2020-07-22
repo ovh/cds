@@ -14,8 +14,7 @@ import (
 )
 
 func TestCRUD_Instance(t *testing.T) {
-	db, cache, end := test.SetupPG(t, bootstrap.InitiliazeDB)
-	defer end()
+	db, cache := test.SetupPG(t, bootstrap.InitiliazeDB)
 
 	proj := assets.InsertTestProject(t, db, cache, sdk.RandomString(10), sdk.RandomString(10))
 	grp := assets.InsertTestGroup(t, db, sdk.RandomString(10))
@@ -46,8 +45,7 @@ func TestCRUD_Instance(t *testing.T) {
 }
 
 func TestLoad_Instance(t *testing.T) {
-	db, cache, end := test.SetupPG(t, bootstrap.InitiliazeDB)
-	defer end()
+	db, cache := test.SetupPG(t, bootstrap.InitiliazeDB)
 
 	proj1 := assets.InsertTestProject(t, db, cache, sdk.RandomString(10), sdk.RandomString(10))
 	proj2 := assets.InsertTestProject(t, db, cache, sdk.RandomString(10), sdk.RandomString(10))

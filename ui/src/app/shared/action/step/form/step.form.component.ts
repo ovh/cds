@@ -26,7 +26,7 @@ export class ActionStepFormComponent implements OnInit {
 
     selectAction(id: number): void {
         this.selected = this.actions.find(a => a.id === Number(id));
-    };
+    }
 
     clickAddStep(): void {
         this.expended = false;

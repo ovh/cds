@@ -7,8 +7,8 @@ import (
 
 	"github.com/go-gorp/gorp"
 
-	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/gorpmapping"
 	"github.com/ovh/cds/sdk/log"
 )
 
@@ -162,7 +162,7 @@ func LoadIntegrationsByIDs(db gorp.SqlExecutor, ids []int64) ([]sdk.ProjectInteg
 }
 
 // InsertIntegration inserts a integration
-func InsertIntegration(db gorp.SqlExecutor, pp *sdk.ProjectIntegration) error {
+func InsertIntegration(db gorpmapping.SqlExecutorWithTx, pp *sdk.ProjectIntegration) error {
 	oldConfig := pp.Config.Clone()
 	ppDb := dbProjectIntegration{ProjectIntegration: *pp}
 	if err := gorpmapping.InsertAndSign(context.Background(), db, &ppDb); err != nil {
@@ -175,7 +175,7 @@ func InsertIntegration(db gorp.SqlExecutor, pp *sdk.ProjectIntegration) error {
 }
 
 // UpdateIntegration Update a integration
-func UpdateIntegration(db gorp.SqlExecutor, pp sdk.ProjectIntegration) error {
+func UpdateIntegration(db gorpmapping.SqlExecutorWithTx, pp sdk.ProjectIntegration) error {
 	var oldConfig *sdk.ProjectIntegration
 
 	givenConfig := pp.Config.Clone()
@@ -205,13 +205,6 @@ func UpdateIntegration(db gorp.SqlExecutor, pp sdk.ProjectIntegration) error {
 }
 
 // LoadIntegrationsByWorkflowID load integration integrations by Workflow id
-func LoadIntegrationsByWorkflowID(db gorp.SqlExecutor, id int64, clearPassword bool) ([]sdk.ProjectIntegration, error) {
-	query := gorpmapping.NewQuery(`SELECT project_integration.*
-	FROM project_integration
-		JOIN workflow_project_integration ON workflow_project_integration.project_integration_id = project_integration.id
-	WHERE workflow_project_integration.workflow_id = $1`).Args(id)
-	return loadAll(db, query)
-}
 
 // AddOnWorkflow link a project integration on a workflow
 func AddOnWorkflow(db gorp.SqlExecutor, workflowID int64, projectIntegrationID int64) error {
@@ -238,4 +231,42 @@ func DeleteFromWorkflow(db gorp.SqlExecutor, workflowID int64) error {
 		return sdk.WithStack(err)
 	}
 	return nil
+}
+
+// LoadAllIntegrationsForProjectsWithDecryption load all integrations for all given project, with decryption
+func LoadAllIntegrationsForProjectsWithDecryption(ctx context.Context, db gorp.SqlExecutor, projIDs []int64) (map[int64][]sdk.ProjectIntegration, error) {
+	return loadAllIntegrationsForProjects(ctx, db, projIDs, gorpmapping.GetOptions.WithDecryption)
+}
+
+func loadAllIntegrationsForProjects(ctx context.Context, db gorp.SqlExecutor, projIDs []int64, opts ...gorpmapping.GetOptionFunc) (map[int64][]sdk.ProjectIntegration, error) {
+	var res []dbProjectIntegration
+	query := gorpmapping.NewQuery(`
+		SELECT *
+		FROM project_integration
+		WHERE project_id = ANY($1)
+		ORDER BY project_id
+	`).Args(pq.Int64Array(projIDs))
+	if err := gorpmapping.GetAll(ctx, db, query, &res, opts...); err != nil {
+		return nil, err
+	}
+
+	projsInts := make(map[int64][]sdk.ProjectIntegration)
+
+	for i := range res {
+		dbProjInt := res[i]
+		isValid, err := gorpmapping.CheckSignature(dbProjInt, dbProjInt.Signature)
+		if err != nil {
+			return nil, err
+		}
+		if !isValid {
+			log.Error(ctx, "project.loadAllIntegrationsForProjects> project integration id %d data corrupted", dbProjInt.ID)
+			continue
+		}
+		if _, ok := projsInts[dbProjInt.ProjectID]; !ok {
+			projsInts[dbProjInt.ProjectID] = make([]sdk.ProjectIntegration, 0)
+		}
+		pIntegration := dbProjInt.ProjectIntegration
+		projsInts[dbProjInt.ProjectID] = append(projsInts[dbProjInt.ProjectID], pIntegration)
+	}
+	return projsInts, nil
 }

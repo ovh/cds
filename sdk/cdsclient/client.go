@@ -1,10 +1,11 @@
+// For more information about how to user cdsclient package have a look at https://ovh.github.io/cds/development/sdk/golang/.
+
 package cdsclient
 
 import (
 	"context"
 	"crypto/tls"
 	"encoding/base64"
-	"io"
 	"net"
 	"net/http"
 	"os"
@@ -95,16 +96,6 @@ func NewWorker(endpoint string, name string, c *http.Client) WorkerInterface {
 	cli.name = name
 	cli.init()
 	return cli
-}
-
-// NewClientFromConfig returns a client from the config file
-func NewClientFromConfig(r io.Reader) (Interface, error) {
-	return nil, nil
-}
-
-// NewClientFromEnv returns a client from the environment variables
-func NewClientFromEnv() (Interface, error) {
-	return nil, nil
 }
 
 // NewProviderClient returns an implementation for ProviderClient interface

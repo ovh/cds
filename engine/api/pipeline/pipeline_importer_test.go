@@ -52,7 +52,7 @@ func testImportUpdate(t *testing.T, db gorp.SqlExecutor, store cache.Store, tt t
 		tt.setup(t, tt.args)
 	}
 
-	proj, err := project.Load(db, tt.args.pip.ProjectKey, nil)
+	proj, err := project.Load(context.TODO(), db, tt.args.pip.ProjectKey, nil)
 	test.NoError(t, err)
 
 	if err := pipeline.ImportUpdate(context.TODO(), db, *proj, tt.args.pip, msgChan); (err != nil) != tt.wantErr {
@@ -75,9 +75,9 @@ func testImportUpdate(t *testing.T, db gorp.SqlExecutor, store cache.Store, tt t
 }
 
 func TestImportUpdate(t *testing.T) {
-	db, cache, end := test.SetupPG(t, bootstrap.InitiliazeDB)
-	defer end()
-	_ = event.Initialize(context.Background(), db, cache)
+	db, cache := test.SetupPG(t, bootstrap.InitiliazeDB)
+
+	_ = event.Initialize(context.Background(), db.DbMap, cache)
 
 	if db == nil {
 		t.FailNow()

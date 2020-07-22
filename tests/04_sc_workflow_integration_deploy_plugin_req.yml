@@ -60,7 +60,7 @@ testcases:
 
 - name: check if pre-requisite is visible in queue
   steps:
-  - script: {{.cdsctl}} -f {{.cdsctl.config}} admin curl /queue/workflows|grep "job.requirement.network.localhost.local"
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} admin curl /queue/workflows|grep "job.requirement.region"
 
 - name: stop workflow
   steps:

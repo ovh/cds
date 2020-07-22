@@ -35,7 +35,7 @@ func VerifyToken(ctx context.Context, db gorp.SqlExecutor, s string) (*hatchery.
 		return nil, sdk.NewErrorWithStack(err, sdk.ErrUnauthorized)
 	}
 
-	h, err := services.LoadByNameAndType(context.Background(), db, claims.Worker.HatcheryName, services.TypeHatchery)
+	h, err := services.LoadByNameAndType(context.Background(), db, claims.Worker.HatcheryName, sdk.TypeHatchery)
 	if err != nil {
 		log.Error(ctx, "worker.VerifyToken> unable to load hatchery %s: %v", claims.Worker.HatcheryName, err)
 		return nil, sdk.NewErrorWithStack(err, sdk.ErrUnauthorized)

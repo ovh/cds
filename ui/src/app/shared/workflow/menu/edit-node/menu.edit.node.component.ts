@@ -7,7 +7,7 @@ import {
     OnInit,
     Output
 } from '@angular/core';
-import { Store } from '@ngxs/store';
+import { Select, Store } from '@ngxs/store';
 import { IPopup } from '@richardlt/ng2-semantic-ui';
 import { PipelineStatus } from 'app/model/pipeline.model';
 import { Project } from 'app/model/project.model';
@@ -16,6 +16,8 @@ import { WorkflowNodeRun, WorkflowRun } from 'app/model/workflow.run.model';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { ProjectState } from 'app/store/project.state';
 import { WorkflowState, WorkflowStateModel } from 'app/store/workflow.state';
+import { Observable, Subscription } from 'rxjs';
+import { map } from 'rxjs/operators';
 
 @Component({
     selector: 'app-workflow-menu-wnode-edit',
@@ -32,9 +34,16 @@ export class WorkflowWNodeMenuEditComponent implements OnInit {
 
     project: Project;
     workflow: Workflow;
-    workflowrun: WorkflowRun;
-    noderun: WorkflowNodeRun;
     node: WNode;
+
+
+    workflowrun: WorkflowRun;
+    @Select(WorkflowState.getSelectedWorkflowRun()) workflowRun$: Observable<WorkflowRun>;
+    workflowRunSub: Subscription;
+
+    noderun: WorkflowNodeRun;
+    nodeRunSub: Subscription;
+
     runnable: boolean;
     readonly = true;
 
@@ -48,11 +57,36 @@ export class WorkflowWNodeMenuEditComponent implements OnInit {
 
         let state: WorkflowStateModel = this._store.selectSnapshot(WorkflowState);
         this.workflow = state.workflow;
-        this.workflowrun = state.workflowRun;
-        this.noderun = state.workflowNodeRun;
         this.node = state.node;
-        this.readonly = !state.canEdit || (!!this.workflow.from_template && !!this.workflow.from_repository);
 
+
+        this.workflowRunSub = this.workflowRun$.subscribe(wr => {
+            if (!wr) {
+               return;
+            }
+            if (this.workflow.id !== wr.workflow_id) {
+               return;
+            }
+            this.workflowrun = wr;
+            this.runnable = this.getCanBeRun();
+            this._cd.markForCheck();
+        });
+
+        this.nodeRunSub = this._store.select(WorkflowState.nodeRunByNodeID)
+            .pipe(map(filterFn => filterFn(this.node.id))).subscribe( nodeRun => {
+                if (!nodeRun) {
+                    return;
+                }
+                if (this.noderun && this.noderun.status === nodeRun.status) {
+                    return;
+                }
+                this.noderun = nodeRun;
+                this.runnable = this.getCanBeRun();
+                this._cd.markForCheck();
+            });
+
+
+        this.readonly = !state.canEdit || (!!this.workflow.from_template && !!this.workflow.from_repository);
         this.runnable = this.getCanBeRun();
         this._cd.markForCheck();
     }
@@ -68,6 +102,10 @@ export class WorkflowWNodeMenuEditComponent implements OnInit {
         }
 
         if (this.workflow && !this.workflow.permissions.executable) {
+            return false;
+        }
+
+        if (this.workflowrun && this.workflowrun.read_only) {
             return false;
         }
 

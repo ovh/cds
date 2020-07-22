@@ -9,11 +9,11 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/ovh/cds/engine/api/observability"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk/namesgenerator"
 	"github.com/ovh/cds/sdk/slug"
+	"github.com/ovh/cds/sdk/telemetry"
 )
 
 type workerStarterRequest struct {
@@ -107,14 +107,14 @@ func workerStarter(ctx context.Context, h Interface, workerNum string, jobs <-ch
 }
 
 func spawnWorkerForJob(ctx context.Context, h Interface, j workerStarterRequest) bool {
-	ctxJob, end := observability.Span(j.ctx, "hatchery.spawnWorkerForJob")
+	ctxJob, end := telemetry.Span(j.ctx, "hatchery.spawnWorkerForJob")
 	defer end()
 
-	ctxJob = observability.ContextWithTag(ctxJob,
-		observability.TagServiceName, h.Name(),
-		observability.TagServiceType, h.Type(),
+	ctxJob = telemetry.ContextWithTag(ctxJob,
+		telemetry.TagServiceName, h.Name(),
+		telemetry.TagServiceType, h.Type(),
 	)
-	observability.Record(ctxJob, GetMetrics().SpawnedWorkers, 1)
+	telemetry.Record(ctxJob, GetMetrics().SpawnedWorkers, 1)
 
 	log.Debug("hatchery> spawnWorkerForJob> %d", j.id)
 	defer log.Debug("hatchery> spawnWorkerForJob> %d (%.3f seconds elapsed)", j.id, time.Since(time.Unix(j.timestamp, 0)).Seconds())
@@ -143,7 +143,7 @@ func spawnWorkerForJob(ctx context.Context, h Interface, j workerStarterRequest)
 		return false
 	}
 
-	ctxQueueJobBook, next := observability.Span(ctxJob, "hatchery.QueueJobBook")
+	ctxQueueJobBook, next := telemetry.Span(ctxJob, "hatchery.QueueJobBook")
 	ctxQueueJobBook, cancel := context.WithTimeout(ctxQueueJobBook, 10*time.Second)
 	if err := h.CDSClient().QueueJobBook(ctxQueueJobBook, j.id); err != nil {
 		next()
@@ -156,7 +156,7 @@ func spawnWorkerForJob(ctx context.Context, h Interface, j workerStarterRequest)
 	cancel()
 	log.Debug("hatchery> spawnWorkerForJob> %d - send book job %d", j.timestamp, j.id)
 
-	ctxSendSpawnInfo, next := observability.Span(ctxJob, "hatchery.SendSpawnInfo", observability.Tag("msg", sdk.MsgSpawnInfoHatcheryStarts.ID))
+	ctxSendSpawnInfo, next := telemetry.Span(ctxJob, "hatchery.SendSpawnInfo", telemetry.Tag("msg", sdk.MsgSpawnInfoHatcheryStarts.ID))
 	start := time.Now()
 	SendSpawnInfo(ctxSendSpawnInfo, h, j.id, sdk.SpawnMsg{
 		ID: sdk.MsgSpawnInfoHatcheryStarts.ID,
@@ -167,11 +167,12 @@ func spawnWorkerForJob(ctx context.Context, h Interface, j workerStarterRequest)
 	})
 	next()
 
-	_, next = observability.Span(ctxJob, "hatchery.SpawnWorker")
+	_, next = telemetry.Span(ctxJob, "hatchery.SpawnWorker")
 	arg := SpawnArguments{
 		WorkerName:   generateWorkerName(h.Service().Name, false, modelName),
 		Model:        j.model,
 		JobID:        j.id,
+		NodeRunID:    j.workflowNodeRunID,
 		Requirements: j.requirements,
 		HatcheryName: h.Service().Name,
 	}
@@ -195,17 +196,17 @@ func spawnWorkerForJob(ctx context.Context, h Interface, j workerStarterRequest)
 	errSpawn := h.SpawnWorker(ctx, arg)
 	next()
 	if errSpawn != nil {
-		ctxSendSpawnInfo, next = observability.Span(ctxJob, "hatchery.QueueJobSendSpawnInfo", observability.Tag("status", "errSpawn"), observability.Tag("msg", sdk.MsgSpawnInfoHatcheryErrorSpawn.ID))
+		ctxSendSpawnInfo, next = telemetry.Span(ctxJob, "hatchery.QueueJobSendSpawnInfo", telemetry.Tag("status", "errSpawn"), telemetry.Tag("msg", sdk.MsgSpawnInfoHatcheryErrorSpawn.ID))
 		SendSpawnInfo(ctxSendSpawnInfo, h, j.id, sdk.SpawnMsg{
 			ID:   sdk.MsgSpawnInfoHatcheryErrorSpawn.ID,
-			Args: []interface{}{h.Service().Name, modelName, sdk.Round(time.Since(start), time.Second).String(), errSpawn.Error()},
+			Args: []interface{}{h.Service().Name, modelName, sdk.Round(time.Since(start), time.Second).String(), sdk.ExtractHTTPError(errSpawn, "").Error()},
 		})
 		log.Error(ctx, "hatchery %s cannot spawn worker %s for job %d: %v", h.Service().Name, modelName, j.id, errSpawn)
 		next()
 		return false
 	}
 
-	ctxSendSpawnInfo, next = observability.Span(ctxJob, "hatchery.SendSpawnInfo", observability.Tag("msg", sdk.MsgSpawnInfoHatcheryStartsSuccessfully.ID))
+	ctxSendSpawnInfo, next = telemetry.Span(ctxJob, "hatchery.SendSpawnInfo", telemetry.Tag("msg", sdk.MsgSpawnInfoHatcheryStartsSuccessfully.ID))
 	SendSpawnInfo(ctxSendSpawnInfo, h, j.id, sdk.SpawnMsg{
 		ID: sdk.MsgSpawnInfoHatcheryStartsSuccessfully.ID,
 		Args: []interface{}{
@@ -216,7 +217,7 @@ func spawnWorkerForJob(ctx context.Context, h Interface, j workerStarterRequest)
 	next()
 
 	if j.model != nil && j.model.IsDeprecated {
-		ctxSendSpawnInfo, next = observability.Span(ctxJob, "hatchery.SendSpawnInfo", observability.Tag("msg", sdk.MsgSpawnInfoDeprecatedModel.ID))
+		ctxSendSpawnInfo, next = telemetry.Span(ctxJob, "hatchery.SendSpawnInfo", telemetry.Tag("msg", sdk.MsgSpawnInfoDeprecatedModel.ID))
 		SendSpawnInfo(ctxSendSpawnInfo, h, j.id, sdk.SpawnMsg{
 			ID:   sdk.MsgSpawnInfoDeprecatedModel.ID,
 			Args: []interface{}{modelName},

@@ -157,7 +157,7 @@ func ParametersToMap(params []Parameter) map[string]string {
 
 // ParametersFromProjectVariables returns a map from a slice of parameters
 func ParametersFromProjectVariables(proj Project) map[string]string {
-	params := VariablesToParameters("cds.proj", proj.Variables)
+	params := ProjectVariablesToParameters("cds.proj", proj.Variables)
 	return ParametersToMap(params)
 }
 
@@ -175,7 +175,7 @@ func ParametersFromProjectKeys(proj Project) map[string]string {
 
 // ParametersFromApplicationVariables returns a map from a slice of parameters
 func ParametersFromApplicationVariables(app Application) map[string]string {
-	params := VariablesToParameters("cds.app", app.Variables)
+	params := ApplicationVariablesToParameters("cds.app", app.Variables)
 	return ParametersToMap(params)
 }
 
@@ -194,7 +194,7 @@ func ParametersFromApplicationKeys(app Application) map[string]string {
 
 // ParametersFromEnvironmentVariables returns a map from a slice of parameters
 func ParametersFromEnvironmentVariables(env Environment) map[string]string {
-	params := VariablesToParameters("cds.env", env.Variables)
+	params := EnvironmentVariablesToParameters("cds.env", env.Variables)
 	return ParametersToMap(params)
 }
 
@@ -231,6 +231,48 @@ func ParametersFromIntegration(ppf IntegrationConfig) map[string]string {
 	}
 	params := VariablesToParameters("cds.integration", vars)
 	return ParametersToMap(params)
+}
+
+func EnvironmentVariablesToParameters(prefix string, variables []EnvironmentVariable) []Parameter {
+	res := make([]Parameter, 0, len(variables))
+	for _, t := range variables {
+		if NeedPlaceholder(t.Type) {
+			continue
+		}
+		if prefix != "" {
+			t.Name = prefix + "." + t.Name
+		}
+		res = append(res, Parameter{Name: t.Name, Type: t.Type, Value: t.Value})
+	}
+	return res
+}
+
+func ApplicationVariablesToParameters(prefix string, variables []ApplicationVariable) []Parameter {
+	res := make([]Parameter, 0, len(variables))
+	for _, t := range variables {
+		if NeedPlaceholder(t.Type) {
+			continue
+		}
+		if prefix != "" {
+			t.Name = prefix + "." + t.Name
+		}
+		res = append(res, Parameter{Name: t.Name, Type: t.Type, Value: t.Value})
+	}
+	return res
+}
+
+func ProjectVariablesToParameters(prefix string, variables []ProjectVariable) []Parameter {
+	res := make([]Parameter, 0, len(variables))
+	for _, t := range variables {
+		if NeedPlaceholder(t.Type) {
+			continue
+		}
+		if prefix != "" {
+			t.Name = prefix + "." + t.Name
+		}
+		res = append(res, Parameter{Name: t.Name, Type: t.Type, Value: t.Value})
+	}
+	return res
 }
 
 func VariablesToParameters(prefix string, variables []Variable) []Parameter {

@@ -39,11 +39,6 @@ func prepareScriptContent(parameters []sdk.Parameter, basedir afero.Fs, workdir 
 	a := sdk.ParameterFind(parameters, "script")
 	scriptContent = a.Value
 
-	// Check that script content is there
-	if scriptContent == "" {
-		return nil, errors.New("script content not provided, aborting")
-	}
-
 	// except on windows where it's powershell
 	if isWindows() {
 		script.shell = "PowerShell"
@@ -187,6 +182,9 @@ func RunScriptAction(ctx context.Context, wk workerruntime.Runtime, a sdk.Action
 		script, err := prepareScriptContent(a.Parameters, wk.BaseDir(), workdir)
 		if err != nil {
 			chanErr <- err
+			res.Status = sdk.StatusFail
+			chanRes <- res
+			return
 		}
 
 		deferFunc, err := writeScriptContent(ctx, script, wk.BaseDir(), workdir)
@@ -195,6 +193,9 @@ func RunScriptAction(ctx context.Context, wk workerruntime.Runtime, a sdk.Action
 		}
 		if err != nil {
 			chanErr <- err
+			res.Status = sdk.StatusFail
+			chanRes <- res
+			return
 		}
 
 		log.Info(ctx, "runScriptAction> Running command %s %s in %s", script.shell, strings.Trim(fmt.Sprint(script.opts), "[]"), script.dir)
@@ -207,6 +208,9 @@ func RunScriptAction(ctx context.Context, wk workerruntime.Runtime, a sdk.Action
 		workerpath, err := osext.Executable()
 		if err != nil {
 			chanErr <- fmt.Errorf("Failure due to internal error (Worker Path): %v", err)
+			res.Status = sdk.StatusFail
+			chanRes <- res
+			return
 		}
 
 		log.Debug("runScriptAction> Worker binary path: %s", path.Dir(workerpath))
@@ -220,11 +224,17 @@ func RunScriptAction(ctx context.Context, wk workerruntime.Runtime, a sdk.Action
 		stdout, err := cmd.StdoutPipe()
 		if err != nil {
 			chanErr <- fmt.Errorf("Failure due to internal error: unable to capture stdout: %v", err)
+			res.Status = sdk.StatusFail
+			chanRes <- res
+			return
 		}
 
 		stderr, err := cmd.StderrPipe()
 		if err != nil {
 			chanErr <- fmt.Errorf("Failure due to internal error: unable to capture stderr: %v", err)
+			res.Status = sdk.StatusFail
+			chanRes <- res
+			return
 		}
 
 		stdoutreader := bufio.NewReader(stdout)
@@ -234,12 +244,14 @@ func RunScriptAction(ctx context.Context, wk workerruntime.Runtime, a sdk.Action
 		go func() {
 			for {
 				line, errs := stdoutreader.ReadString('\n')
+				if line != "" {
+					wk.SendLog(ctx, workerruntime.LevelInfo, line)
+				}
 				if errs != nil {
 					stdout.Close()
 					close(outchan)
 					return
 				}
-				wk.SendLog(ctx, workerruntime.LevelInfo, line)
 			}
 		}()
 
@@ -247,17 +259,22 @@ func RunScriptAction(ctx context.Context, wk workerruntime.Runtime, a sdk.Action
 		go func() {
 			for {
 				line, errs := stderrreader.ReadString('\n')
+				if line != "" {
+					wk.SendLog(ctx, workerruntime.LevelWarn, line)
+				}
 				if errs != nil {
 					stderr.Close()
 					close(errchan)
 					return
 				}
-				wk.SendLog(ctx, workerruntime.LevelWarn, line)
 			}
 		}()
 
 		if err := cmd.Start(); err != nil {
 			chanErr <- fmt.Errorf("unable to start command: %v", err)
+			res.Status = sdk.StatusFail
+			chanRes <- res
+			return
 		}
 
 		<-outchan

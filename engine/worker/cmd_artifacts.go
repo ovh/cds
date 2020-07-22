@@ -34,7 +34,7 @@ Inside a job, you can list artifacts of a workflow:
 	}
 	c.Flags().StringVar(&cmdDownloadWorkflowName, "workflow", "", "Workflow name. Optional, default: current workflow")
 	c.Flags().StringVar(&cmdDownloadNumber, "number", "", "Workflow Number. Optional, default: current workflow run")
-	c.Flags().StringVar(&cmdDownloadArtefactName, "pattern", "", "Pattern matching files to list. Optional, default: *")
+	c.Flags().StringVar(&cmdDownloadArtifactName, "pattern", "", "Pattern matching files to list. Optional, default: *")
 	c.Flags().StringVar(&cmdDownloadTag, "tag", "", "Tag matching files to list. Optional")
 
 	return c
@@ -64,7 +64,7 @@ func artifactsCmd() func(cmd *cobra.Command, args []string) {
 		a := workerruntime.DownloadArtifact{
 			Workflow: cmdDownloadWorkflowName,
 			Number:   number,
-			Pattern:  cmdDownloadArtefactName,
+			Pattern:  cmdDownloadArtifactName,
 			Tag:      cmdDownloadTag,
 		}
 

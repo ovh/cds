@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"fmt"
 	"io/ioutil"
-	"net/http"
 	"os"
 	"os/exec"
 	"path"
@@ -27,19 +26,11 @@ func (wk *CurrentWorker) InstallKey(key sdk.Variable) (*workerruntime.KeyRespons
 
 		installedKeyPath := path.Join(keysDirectory.Name(), key.Name)
 		if err := vcs.CleanAllSSHKeys(wk.basedir, keysDirectory.Name()); err != nil {
-			errClean := sdk.Error{
-				Message: fmt.Sprintf("Cannot clean ssh keys : %v", err),
-				Status:  http.StatusInternalServerError,
-			}
-			return nil, sdk.WithStack(errClean)
+			return nil, sdk.NewError(sdk.ErrUnknownError, fmt.Errorf("Cannot clean ssh keys : %v", err))
 		}
 
 		if err := vcs.SetupSSHKey(wk.basedir, keysDirectory.Name(), key); err != nil {
-			errSetup := sdk.Error{
-				Message: fmt.Sprintf("Cannot setup ssh key %s : %v", key.Name, err),
-				Status:  http.StatusInternalServerError,
-			}
-			return nil, sdk.WithStack(errSetup)
+			return nil, sdk.NewError(sdk.ErrUnknownError, fmt.Errorf("Cannot setup ssh key %s : %v", key.Name, err))
 		}
 
 		if x, ok := wk.BaseDir().(*afero.BasePathFs); ok {
@@ -61,40 +52,24 @@ func (wk *CurrentWorker) InstallKey(key sdk.Variable) (*workerruntime.KeyRespons
 
 		if !gpg2Found {
 			if _, err := exec.LookPath("gpg"); err != nil {
-				errBinary := sdk.Error{
-					Message: fmt.Sprintf("Cannot use gpg in your worker because you haven't gpg or gpg2 binary"),
-					Status:  http.StatusBadRequest,
-				}
-				return nil, sdk.WithStack(errBinary)
+				return nil, sdk.NewError(sdk.ErrWorkerErrorCommand, fmt.Errorf("Cannot use gpg in your worker because you haven't gpg or gpg2 binary"))
 			}
 		}
 		content := []byte(key.Value)
 		tmpfile, errTmpFile := ioutil.TempFile("", key.Name)
 		if errTmpFile != nil {
-			errFile := sdk.Error{
-				Message: fmt.Sprintf("Cannot setup pgp key %s : %v", key.Name, errTmpFile),
-				Status:  http.StatusInternalServerError,
-			}
-			return nil, sdk.WithStack(errFile)
+			return nil, sdk.NewError(sdk.ErrWorkerErrorCommand, fmt.Errorf("Cannot setup pgp key %s : %v", key.Name, errTmpFile))
 		}
 		defer func() {
 			_ = os.Remove(tmpfile.Name())
 		}()
 
 		if _, err := tmpfile.Write(content); err != nil {
-			errW := sdk.Error{
-				Message: fmt.Sprintf("Cannot setup pgp key file %s : %v", key.Name, err),
-				Status:  http.StatusInternalServerError,
-			}
-			return nil, sdk.WithStack(errW)
+			return nil, sdk.NewError(sdk.ErrWorkerErrorCommand, fmt.Errorf("Cannot setup pgp key file %s : %v", key.Name, err))
 		}
 
 		if err := tmpfile.Close(); err != nil {
-			errC := sdk.Error{
-				Message: fmt.Sprintf("Cannot setup pgp key file %s (close) : %v", key.Name, err),
-				Status:  http.StatusInternalServerError,
-			}
-			return nil, sdk.WithStack(errC)
+			return nil, sdk.NewError(sdk.ErrWorkerErrorCommand, fmt.Errorf("Cannot setup pgp key file %s (close) : %v", key.Name, err))
 		}
 
 		gpgBin := "gpg"
@@ -103,13 +78,13 @@ func (wk *CurrentWorker) InstallKey(key sdk.Variable) (*workerruntime.KeyRespons
 		}
 		cmd := exec.Command(gpgBin, "--import", tmpfile.Name())
 		var out bytes.Buffer
+		var outErr bytes.Buffer
 		cmd.Stdout = &out
+		cmd.Stderr = &outErr
 		if err := cmd.Run(); err != nil {
-			errR := sdk.Error{
-				Message: fmt.Sprintf("Cannot import pgp key %s : %v", key.Name, err),
-				Status:  http.StatusInternalServerError,
-			}
-			return nil, sdk.WithStack(errR)
+			outString := string(out.Bytes())
+			outErrString := string(outErr.Bytes())
+			return nil, sdk.NewError(sdk.ErrWorkerErrorCommand, fmt.Errorf("Cannot import pgp key %s (%v): %s %s", key.Name, err, outString, outErrString))
 		}
 		return &workerruntime.KeyResponse{
 			Type:    sdk.KeyTypePGP,
@@ -118,11 +93,7 @@ func (wk *CurrentWorker) InstallKey(key sdk.Variable) (*workerruntime.KeyRespons
 		}, nil
 
 	default:
-		err := sdk.Error{
-			Message: fmt.Sprintf("Type key %s is not implemented", key.Type),
-			Status:  http.StatusNotImplemented,
-		}
-		return nil, sdk.WithStack(err)
+		return nil, sdk.NewError(sdk.ErrWorkerErrorCommand, fmt.Errorf("Type key %s is not implemented", key.Type))
 	}
 }
 
@@ -145,11 +116,7 @@ func (wk *CurrentWorker) InstallKeyTo(key sdk.Variable, destinationPath string) 
 		}
 
 		if err := vcs.WriteKey(afero.NewOsFs(), destinationPath, key.Value); err != nil {
-			errSetup := sdk.Error{
-				Message: fmt.Sprintf("Cannot setup ssh key %s : %v", key.Name, err),
-				Status:  http.StatusInternalServerError,
-			}
-			return nil, sdk.WithStack(errSetup)
+			return nil, sdk.NewError(sdk.ErrWorkerErrorCommand, fmt.Errorf("Cannot setup ssh key %s : %v", key.Name, err))
 		}
 
 		return &workerruntime.KeyResponse{
@@ -167,40 +134,24 @@ func (wk *CurrentWorker) InstallKeyTo(key sdk.Variable, destinationPath string) 
 
 		if !gpg2Found {
 			if _, err := exec.LookPath("gpg"); err != nil {
-				errBinary := sdk.Error{
-					Message: fmt.Sprintf("Cannot use gpg in your worker because you haven't gpg or gpg2 binary"),
-					Status:  http.StatusBadRequest,
-				}
-				return nil, sdk.WithStack(errBinary)
+				return nil, sdk.NewError(sdk.ErrWorkerErrorCommand, fmt.Errorf("Cannot use gpg in your worker because you haven't gpg or gpg2 binary"))
 			}
 		}
 		content := []byte(key.Value)
 		tmpfile, errTmpFile := ioutil.TempFile("", key.Name)
 		if errTmpFile != nil {
-			errFile := sdk.Error{
-				Message: fmt.Sprintf("Cannot setup pgp key %s : %v", key.Name, errTmpFile),
-				Status:  http.StatusInternalServerError,
-			}
-			return nil, sdk.WithStack(errFile)
+			return nil, sdk.NewError(sdk.ErrWorkerErrorCommand, fmt.Errorf("Cannot setup pgp key %s : %v", key.Name, errTmpFile))
 		}
 		defer func() {
 			_ = os.Remove(tmpfile.Name())
 		}()
 
 		if _, err := tmpfile.Write(content); err != nil {
-			errW := sdk.Error{
-				Message: fmt.Sprintf("Cannot setup pgp key file %s : %v", key.Name, err),
-				Status:  http.StatusInternalServerError,
-			}
-			return nil, sdk.WithStack(errW)
+			return nil, sdk.NewError(sdk.ErrWorkerErrorCommand, fmt.Errorf("Cannot setup pgp key file %s : %v", key.Name, err))
 		}
 
 		if err := tmpfile.Close(); err != nil {
-			errC := sdk.Error{
-				Message: fmt.Sprintf("Cannot setup pgp key file %s (close) : %v", key.Name, err),
-				Status:  http.StatusInternalServerError,
-			}
-			return nil, sdk.WithStack(errC)
+			return nil, sdk.NewError(sdk.ErrWorkerErrorCommand, fmt.Errorf("Cannot setup pgp key file %s (close) : %v", key.Name, err))
 		}
 
 		gpgBin := "gpg"
@@ -211,11 +162,7 @@ func (wk *CurrentWorker) InstallKeyTo(key sdk.Variable, destinationPath string) 
 		var out bytes.Buffer
 		cmd.Stdout = &out
 		if err := cmd.Run(); err != nil {
-			errR := sdk.Error{
-				Message: fmt.Sprintf("Cannot import pgp key %s : %v", key.Name, err),
-				Status:  http.StatusInternalServerError,
-			}
-			return nil, sdk.WithStack(errR)
+			return nil, sdk.NewError(sdk.ErrWorkerErrorCommand, fmt.Errorf("Cannot import pgp key %s : %v", key.Name, err))
 		}
 		return &workerruntime.KeyResponse{
 			Type:    sdk.KeyTypePGP,
@@ -224,10 +171,6 @@ func (wk *CurrentWorker) InstallKeyTo(key sdk.Variable, destinationPath string) 
 		}, nil
 
 	default:
-		err := sdk.Error{
-			Message: fmt.Sprintf("Type key %s is not implemented", key.Type),
-			Status:  http.StatusNotImplemented,
-		}
-		return nil, sdk.WithStack(err)
+		return nil, sdk.NewError(sdk.ErrWorkerErrorCommand, fmt.Errorf("Type key %s is not implemented", key.Type))
 	}
 }

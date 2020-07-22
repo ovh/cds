@@ -15,13 +15,12 @@ import (
 )
 
 func Test_getWorkerModelSecretHandler(t *testing.T) {
-	api, _, router, end := newTestAPI(t)
-	defer end()
+	api, db, router := newTestAPI(t)
 
-	g := assets.InsertTestGroup(t, api.mustDB(), sdk.RandomString(10))
+	g := assets.InsertTestGroup(t, db, sdk.RandomString(10))
 
-	_, jwtAdmin := assets.InsertAdminUser(t, api.mustDB())
-	_, jwtLambda := assets.InsertLambdaUser(t, api.mustDB(), g)
+	_, jwtAdmin := assets.InsertAdminUser(t, db)
+	_, jwtLambda := assets.InsertLambdaUser(t, db, g)
 
 	model := sdk.Model{
 		Name:       "Test1",

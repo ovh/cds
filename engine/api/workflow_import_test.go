@@ -5,6 +5,7 @@ import (
 	"context"
 	"io/ioutil"
 	"net/http/httptest"
+	"sort"
 	"strings"
 	"testing"
 
@@ -24,8 +25,7 @@ import (
 )
 
 func Test_postWorkflowImportHandler(t *testing.T) {
-	api, db, _, end := newTestAPI(t)
-	defer end()
+	api, db, _ := newTestAPI(t)
 
 	u, pass := assets.InsertAdminUser(t, db)
 	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
@@ -70,7 +70,8 @@ metadata:
 	//Check result
 	t.Logf(">>%s", rec.Body.String())
 
-	w, err := workflow.Load(context.TODO(), db, api.Cache, *proj, "test_1", workflow.LoadOptions{})
+	projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
+	w, err := workflow.Load(context.TODO(), db, projIdent, "test_1", workflow.LoadOptions{})
 	test.NoError(t, err)
 
 	assert.NotNil(t, w)
@@ -88,8 +89,7 @@ metadata:
 }
 
 func Test_postWorkflowImportHandlerWithExistingIcon(t *testing.T) {
-	api, db, _, end := newTestAPI(t)
-	defer end()
+	api, db, _ := newTestAPI(t)
 
 	u, pass := assets.InsertAdminUser(t, db)
 	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
@@ -134,7 +134,8 @@ metadata:
 	//Check result
 	t.Logf(">>%s", rec.Body.String())
 
-	w, err := workflow.Load(context.TODO(), db, api.Cache, *proj, "test_1", workflow.LoadOptions{})
+	projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
+	w, err := workflow.Load(context.TODO(), db, projIdent, "test_1", workflow.LoadOptions{})
 	test.NoError(t, err)
 
 	assert.NotNil(t, w)
@@ -152,16 +153,15 @@ metadata:
 
 	w.Icon = "data:image/png;base64,example"
 
-	test.NoError(t, workflow.Update(context.TODO(), db, api.Cache, *proj, w, workflow.UpdateOptions{}))
+	test.NoError(t, workflow.Update(context.TODO(), db, api.Cache, projIdent, w, workflow.UpdateOptions{}))
 
-	wfLoaded, err := workflow.Load(context.TODO(), db, api.Cache, *proj, "test_1", workflow.LoadOptions{WithIcon: true})
+	wfLoaded, err := workflow.Load(context.TODO(), db, projIdent, "test_1", workflow.LoadOptions{WithIcon: true})
 	test.NoError(t, err)
 	test.NotEmpty(t, wfLoaded.Icon, "Workflow icon must be the same as before")
 }
 
 func Test_putWorkflowImportHandler(t *testing.T) {
-	api, db, _, end := newTestAPI(t)
-	defer end()
+	api, db, _ := newTestAPI(t)
 
 	u, pass := assets.InsertAdminUser(t, db)
 	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
@@ -224,8 +224,7 @@ workflow:
 }
 
 func Test_putWorkflowImportHandlerWithJoinAndCondition(t *testing.T) {
-	api, db, _, end := newTestAPI(t)
-	defer end()
+	api, db, _ := newTestAPI(t)
 
 	u, pass := assets.InsertAdminUser(t, db)
 	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
@@ -351,8 +350,7 @@ metadata:
 }
 
 func Test_putWorkflowImportHandlerWithJoinWithOrWithoutCondition(t *testing.T) {
-	api, db, _, end := newTestAPI(t)
-	defer end()
+	api, db, _ := newTestAPI(t)
 
 	u, pass := assets.InsertAdminUser(t, db)
 	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
@@ -484,8 +482,7 @@ metadata:
 }
 
 func Test_putWorkflowImportHandlerWithJoinWithoutCondition(t *testing.T) {
-	api, db, _, end := newTestAPI(t)
-	defer end()
+	api, db, _ := newTestAPI(t)
 
 	u, pass := assets.InsertAdminUser(t, db)
 	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
@@ -623,12 +620,12 @@ metadata:
 }
 
 func Test_getWorkflowPushHandler(t *testing.T) {
-	api, db, _, end := newTestAPI(t)
-	defer end()
-	u, pass := assets.InsertAdminUser(t, api.mustDB())
+	api, db, _ := newTestAPI(t)
+
+	u, pass := assets.InsertAdminUser(t, db)
 	key := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, api.mustDB(), api.Cache, key, key)
-	require.NoError(t, group.InsertLinkGroupUser(context.TODO(), api.mustDB(), &group.LinkGroupUser{
+	proj := assets.InsertTestProject(t, db, api.Cache, key, key)
+	require.NoError(t, group.InsertLinkGroupUser(context.TODO(), db, &group.LinkGroupUser{
 		GroupID:            proj.ProjectGroups[0].Group.ID,
 		AuthentifiedUserID: u.ID,
 		Admin:              true,
@@ -668,25 +665,25 @@ func Test_getWorkflowPushHandler(t *testing.T) {
 	app := &sdk.Application{
 		Name: appName,
 	}
-	if err := application.Insert(api.mustDB(), *proj, app); err != nil {
+	if err := application.Insert(db, *proj, app); err != nil {
 		t.Fatal(err)
 	}
 
-	v1 := sdk.Variable{
+	v1 := sdk.ApplicationVariable{
 		Name:  "var1",
 		Value: "value 1",
 		Type:  sdk.StringVariable,
 	}
 
-	test.NoError(t, application.InsertVariable(api.mustDB(), app.ID, &v1, u))
+	test.NoError(t, application.InsertVariable(db, app.ID, &v1, u))
 
-	v2 := sdk.Variable{
+	v2 := sdk.ApplicationVariable{
 		Name:  "var2",
 		Value: "value 2",
 		Type:  sdk.SecretVariable,
 	}
 
-	test.NoError(t, application.InsertVariable(api.mustDB(), app.ID, &v2, u))
+	test.NoError(t, application.InsertVariable(db, app.ID, &v2, u))
 
 	//Insert ssh and gpg keys
 	k := &sdk.ApplicationKey{
@@ -701,7 +698,7 @@ func Test_getWorkflowPushHandler(t *testing.T) {
 	k.Public = kpgp.Public
 	k.Private = kpgp.Private
 	k.KeyID = kpgp.KeyID
-	test.NoError(t, application.InsertKey(api.mustDB(), k))
+	test.NoError(t, application.InsertKey(db, k))
 
 	k2 := &sdk.ApplicationKey{
 		Name:          "app-mykey-ssh",
@@ -714,7 +711,7 @@ func Test_getWorkflowPushHandler(t *testing.T) {
 	k2.Public = kssh.Public
 	k2.Private = kssh.Private
 	k2.KeyID = kssh.KeyID
-	test.NoError(t, application.InsertKey(api.mustDB(), k2))
+	test.NoError(t, application.InsertKey(db, k2))
 
 	w := sdk.Workflow{
 		Name:       "test_1",
@@ -743,11 +740,12 @@ func Test_getWorkflowPushHandler(t *testing.T) {
 		},
 	}
 
-	proj, _ = project.Load(api.mustDB(), proj.Key, project.LoadOptions.WithPipelines, project.LoadOptions.WithApplications)
+	proj, _ = project.Load(context.TODO(), api.mustDB(), proj.Key, project.LoadOptions.WithGroups)
+	projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
 
-	test.NoError(t, workflow.Insert(context.TODO(), api.mustDB(), api.Cache, *proj, &w))
+	test.NoError(t, workflow.Insert(context.TODO(), db, api.Cache, projIdent, proj.ProjectGroups, &w))
 	test.NoError(t, workflow.RenameNode(context.TODO(), api.mustDB(), &w))
-	w1, err := workflow.Load(context.TODO(), api.mustDB(), api.Cache, *proj, "test_1", workflow.LoadOptions{DeepPipeline: true})
+	w1, err := workflow.Load(context.TODO(), api.mustDB(), projIdent, "test_1", workflow.LoadOptions{DeepPipeline: true})
 	test.NoError(t, err)
 
 	//Prepare request
@@ -790,8 +788,7 @@ func Test_getWorkflowPushHandler(t *testing.T) {
 }
 
 func Test_putWorkflowImportHandlerMustNotHave2Joins(t *testing.T) {
-	api, db, _, end := newTestAPI(t)
-	defer end()
+	api, db, _ := newTestAPI(t)
 
 	u, pass := assets.InsertAdminUser(t, db)
 	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
@@ -913,11 +910,146 @@ metadata:
 	api.Router.Mux.ServeHTTP(rec, req)
 	assert.Equal(t, 200, rec.Code)
 
-	p, errP := project.Load(db, proj.Key)
+	p, errP := project.Load(context.TODO(), db, proj.Key)
 	assert.NoError(t, errP)
-	wUpdated, err := workflow.Load(context.TODO(), db, api.Cache, *p, "test_1", workflow.LoadOptions{})
+	projIdent := sdk.ProjectIdentifiers{ID: p.ID, Key: p.Key}
+	wUpdated, err := workflow.Load(context.TODO(), db, projIdent, "test_1", workflow.LoadOptions{})
 	assert.NoError(t, err)
 
 	t.Logf("%+v", wUpdated.WorkflowData)
 	assert.Equal(t, 1, len(wUpdated.WorkflowData.Joins))
+}
+
+func Test_postWorkflowImportHandler_editPermissions(t *testing.T) {
+	api, db, _ := newTestAPI(t)
+
+	u, pass := assets.InsertAdminUser(t, db)
+	g1 := assets.InsertTestGroup(t, db, "b-"+sdk.RandomString(10))
+	g2 := assets.InsertTestGroup(t, db, "c-"+sdk.RandomString(10))
+
+	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), "a-"+sdk.RandomString(10))
+	require.NoError(t, group.InsertLinkGroupProject(context.TODO(), db, &group.LinkGroupProject{
+		GroupID:   g1.ID,
+		ProjectID: proj.ID,
+		Role:      sdk.PermissionReadExecute,
+	}))
+	require.NoError(t, group.InsertLinkGroupProject(context.TODO(), db, &group.LinkGroupProject{
+		GroupID:   g2.ID,
+		ProjectID: proj.ID,
+		Role:      sdk.PermissionReadExecute,
+	}))
+
+	pip := sdk.Pipeline{
+		ProjectID:  proj.ID,
+		ProjectKey: proj.Key,
+		Name:       "pip1",
+	}
+	require.NoError(t, pipeline.InsertPipeline(db, &pip))
+
+	uri := api.Router.GetRoute("POST", api.postWorkflowImportHandler, map[string]string{
+		"permProjectKey": proj.Key,
+	})
+	req := assets.NewAuthentifiedRequest(t, u, pass, "POST", uri, nil)
+
+	body := `name: test_1
+version: v2.0
+workflow:
+  pip1:
+    pipeline: pip1`
+	req.Body = ioutil.NopCloser(strings.NewReader(body))
+	req.Header.Set("Content-Type", "application/x-yaml")
+
+	rec := httptest.NewRecorder()
+	api.Router.Mux.ServeHTTP(rec, req)
+	require.Equal(t, 200, rec.Code)
+	t.Logf(">>%s", rec.Body.String())
+
+	projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
+	w, err := workflow.Load(context.TODO(), db, projIdent, "test_1", workflow.LoadOptions{})
+	require.NoError(t, err)
+
+	// Workflow permissions should be inherited from project
+	require.Len(t, w.Groups, 3)
+	sort.Slice(w.Groups, func(i, j int) bool {
+		return w.Groups[i].Group.Name < w.Groups[j].Group.Name
+	})
+	assert.Equal(t, proj.ProjectGroups[0].Group.Name, w.Groups[0].Group.Name)
+	assert.Equal(t, sdk.PermissionReadWriteExecute, w.Groups[0].Permission)
+	assert.Equal(t, g1.Name, w.Groups[1].Group.Name)
+	assert.Equal(t, sdk.PermissionReadExecute, w.Groups[1].Permission)
+	assert.Equal(t, g2.Name, w.Groups[2].Group.Name)
+	assert.Equal(t, sdk.PermissionReadExecute, w.Groups[2].Permission)
+
+	// We want to change to permisison for g2 and remove the permission for g1
+	uri = api.Router.GetRoute("POST", api.postWorkflowImportHandler, map[string]string{
+		"permProjectKey": proj.Key,
+	})
+	req = assets.NewAuthentifiedRequest(t, u, pass, "POST", uri, nil)
+	q := req.URL.Query()
+	q.Set("force", "true")
+	req.URL.RawQuery = q.Encode()
+
+	body = `name: test_1
+version: v2.0
+workflow:
+  pip1:
+    pipeline: pip1
+permissions:
+  ` + proj.ProjectGroups[0].Group.Name + `: 7
+  ` + g2.Name + `: 4`
+	req.Body = ioutil.NopCloser(strings.NewReader(body))
+	req.Header.Set("Content-Type", "application/x-yaml")
+
+	rec = httptest.NewRecorder()
+	api.Router.Mux.ServeHTTP(rec, req)
+	require.Equal(t, 200, rec.Code)
+	t.Logf(">>%s", rec.Body.String())
+
+	w, err = workflow.Load(context.TODO(), db, projIdent, "test_1", workflow.LoadOptions{})
+	require.NoError(t, err)
+
+	require.Len(t, w.Groups, 2)
+	sort.Slice(w.Groups, func(i, j int) bool {
+		return w.Groups[i].Group.Name < w.Groups[j].Group.Name
+	})
+	assert.Equal(t, proj.ProjectGroups[0].Group.Name, w.Groups[0].Group.Name)
+	assert.Equal(t, sdk.PermissionReadWriteExecute, w.Groups[0].Permission)
+	assert.Equal(t, g2.Name, w.Groups[1].Group.Name)
+	assert.Equal(t, sdk.PermissionRead, w.Groups[1].Permission)
+
+	// Import again the workflow without permissions should reset to project permissions
+	uri = api.Router.GetRoute("POST", api.postWorkflowImportHandler, map[string]string{
+		"permProjectKey": proj.Key,
+	})
+	req = assets.NewAuthentifiedRequest(t, u, pass, "POST", uri, nil)
+	q = req.URL.Query()
+	q.Set("force", "true")
+	req.URL.RawQuery = q.Encode()
+
+	body = `name: test_1
+version: v2.0
+workflow:
+  pip1:
+    pipeline: pip1`
+	req.Body = ioutil.NopCloser(strings.NewReader(body))
+	req.Header.Set("Content-Type", "application/x-yaml")
+
+	rec = httptest.NewRecorder()
+	api.Router.Mux.ServeHTTP(rec, req)
+	require.Equal(t, 200, rec.Code)
+	t.Logf(">>%s", rec.Body.String())
+
+	w, err = workflow.Load(context.TODO(), db, projIdent, "test_1", workflow.LoadOptions{})
+	require.NoError(t, err)
+
+	require.Len(t, w.Groups, 3)
+	sort.Slice(w.Groups, func(i, j int) bool {
+		return w.Groups[i].Group.Name < w.Groups[j].Group.Name
+	})
+	assert.Equal(t, proj.ProjectGroups[0].Group.Name, w.Groups[0].Group.Name)
+	assert.Equal(t, sdk.PermissionReadWriteExecute, w.Groups[0].Permission)
+	assert.Equal(t, g1.Name, w.Groups[1].Group.Name)
+	assert.Equal(t, sdk.PermissionReadExecute, w.Groups[1].Permission)
+	assert.Equal(t, g2.Name, w.Groups[2].Group.Name)
+	assert.Equal(t, sdk.PermissionReadExecute, w.Groups[2].Permission)
 }

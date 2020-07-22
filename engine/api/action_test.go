@@ -22,8 +22,7 @@ import (
 )
 
 func Test_getActionExportHandler(t *testing.T) {
-	api, db, _, end := newTestAPI(t)
-	defer end()
+	api, db, _ := newTestAPI(t)
 
 	_, jwt := assets.InsertAdminUser(t, db)
 
@@ -55,8 +54,7 @@ func Test_getActionExportHandler(t *testing.T) {
 }
 
 func Test_postActionImportHandler(t *testing.T) {
-	api, db, _, end := newTestAPI(t)
-	defer end()
+	api, db, _ := newTestAPI(t)
 
 	_, jwt := assets.InsertAdminUser(t, db)
 
@@ -101,8 +99,7 @@ func Test_postActionImportHandler(t *testing.T) {
 }
 
 func Test_postActionAuditRollbackHandler(t *testing.T) {
-	api, db, _, end := newTestAPI(t)
-	defer end()
+	api, db, _ := newTestAPI(t)
 
 	_, jwt := assets.InsertAdminUser(t, db)
 
@@ -173,14 +170,13 @@ func Test_postActionAuditRollbackHandler(t *testing.T) {
 }
 
 func Test_getActions(t *testing.T) {
-	api, db, router, end := newTestAPI(t)
-	defer end()
+	api, db, router := newTestAPI(t)
 
-	_, jwtAdmin := assets.InsertAdminUser(t, api.mustDB())
+	_, jwtAdmin := assets.InsertAdminUser(t, db)
 
 	g1 := &sdk.Group{Name: sdk.RandomString(10)}
 	g2 := assets.InsertGroup(t, db)
-	_, jwtGroupMember := assets.InsertLambdaUser(t, api.mustDB(), g1)
+	_, jwtGroupMember := assets.InsertLambdaUser(t, db, g1)
 
 	a1 := sdk.Action{
 		Name:    "A" + sdk.RandomString(10),

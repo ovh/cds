@@ -11,11 +11,11 @@ import (
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/integration"
 	"github.com/ovh/cds/engine/api/objectstore"
-	"github.com/ovh/cds/engine/api/observability"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
+	"github.com/ovh/cds/sdk/telemetry"
 )
 
 //Initialize starts goroutines for workflows
@@ -31,6 +31,11 @@ func Initialize(ctx context.Context, store cache.Store, DBFunc func() *gorp.DbMa
 				return
 			}
 		case <-tickPurge.C:
+			// Check all workflows to mark runs that should be deleted
+			if err := workflow.PurgeWorkflowRuns(ctx, DBFunc(), workflowRunsMarkToDelete); err != nil {
+				log.Warning(ctx, "purge> Error: %v", err)
+			}
+
 			log.Debug("purge> Deleting all workflow run marked to delete...")
 			if err := deleteWorkflowRunsHistory(ctx, DBFunc(), store, sharedStorage, workflowRunsDeleted); err != nil {
 				log.Warning(ctx, "purge> Error on deleteWorkflowRunsHistory : %v", err)
@@ -64,18 +69,12 @@ func workflows(ctx context.Context, db *gorp.DbMap, store cache.Store, workflowR
 
 	for i, r := range res {
 		// Force delete workflow runs if any
-		n, err := workflow.PurgeAllWorkflowRunsByWorkflowID(ctx, db, r.ID)
+		_, err := workflow.PurgeAllWorkflowRunsByWorkflowID(ctx, db, r.ID)
 		if err != nil {
 			log.Error(ctx, "unable to mark workflow runs to delete with workflow_id %d: %v", r.ID, err)
 			continue
 		}
-		if n > 0 {
-			// If there is workflow runs to delete, wait for it...
-			if workflowRunsMarkToDelete != nil {
-				observability.Record(ctx, workflowRunsMarkToDelete, int64(n))
-			}
-			continue
-		}
+		workflow.CountWorkflowRunsMarkToDelete(ctx, db, workflowRunsMarkToDelete)
 
 		// Checks if there is any workflow_runs
 		nbWorkflowRuns, err := db.SelectInt("select count(1) from workflow_run where workflow_id = $1", r.ID)
@@ -165,7 +164,7 @@ func deleteWorkflowRunsHistory(ctx context.Context, db gorp.SqlExecutor, store c
 		}
 		n, _ := res.RowsAffected()
 		if workflowRunsDeleted != nil {
-			observability.Record(ctx, workflowRunsDeleted, n)
+			telemetry.Record(ctx, workflowRunsDeleted, n)
 		}
 		time.Sleep(10 * time.Millisecond) // avoid DDOS the database
 	}

@@ -15,12 +15,13 @@ import (
 	"github.com/ovh/cds/engine/api/test/assets"
 	"github.com/ovh/cds/engine/api/workermodel"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/gorpmapping"
 	"github.com/ovh/cds/sdk/hatchery"
 	"github.com/ovh/cds/sdk/jws"
 	"github.com/ovh/cds/sdk/log"
 )
 
-func RegisterWorker(t *testing.T, api *API, groupID int64, existingWorkerModelName string, jobID int64, registerOnly bool) (*sdk.Worker, string) {
+func RegisterWorker(t *testing.T, api *API, db gorpmapping.SqlExecutorWithTx, groupID int64, existingWorkerModelName string, jobID int64, registerOnly bool) (*sdk.Worker, string) {
 	model, err := workermodel.LoadByNameAndGroupID(context.TODO(), api.mustDB(), existingWorkerModelName, groupID)
 	if err != nil {
 		t.Fatalf("RegisterWorker> Error getting worker model : %s", err)
@@ -30,7 +31,7 @@ func RegisterWorker(t *testing.T, api *API, groupID int64, existingWorkerModelNa
 	if err != nil {
 		t.Fatalf("RegisterWorker> Error getting group : %s", err)
 	}
-	hSrv, hPrivKey, hConsumer, _ := assets.InsertHatchery(t, api.mustDB(), *g)
+	hSrv, hPrivKey, hConsumer, _ := assets.InsertHatchery(t, db, *g)
 
 	hPubKey, err := jws.ExportPublicKey(hPrivKey)
 	if err != nil {
@@ -79,7 +80,7 @@ func LoadSharedInfraGroup(t *testing.T, api *API) *sdk.Group {
 	return g
 }
 
-func LoadOrCreateWorkerModel(t *testing.T, api *API, groupID int64, workermodelName string) *sdk.Model {
+func LoadOrCreateWorkerModel(t *testing.T, api *API, db gorpmapping.SqlExecutorWithTx, groupID int64, workermodelName string) *sdk.Model {
 	model, _ := workermodel.LoadByNameAndGroupID(context.TODO(), api.mustDB(), workermodelName, groupID)
 	if model == nil {
 		model = &sdk.Model{
@@ -98,7 +99,7 @@ func LoadOrCreateWorkerModel(t *testing.T, api *API, groupID int64, workermodelN
 			},
 		}
 
-		if err := workermodel.Insert(context.TODO(), api.mustDB(), model); err != nil {
+		if err := workermodel.Insert(context.TODO(), db, model); err != nil {
 			t.Fatalf("Error inserting model : %s", err)
 		}
 	}
@@ -107,14 +108,13 @@ func LoadOrCreateWorkerModel(t *testing.T, api *API, groupID int64, workermodelN
 }
 
 func TestPostRegisterWorkerHandler(t *testing.T) {
-	api, _, _, end := newTestAPI(t)
-	defer end()
+	api, db, _ := newTestAPI(t)
 
 	g := LoadSharedInfraGroup(t, api)
 
-	model := LoadOrCreateWorkerModel(t, api, g.ID, "Test1")
+	model := LoadOrCreateWorkerModel(t, api, db, g.ID, "Test1")
 
-	_, workerJWT := RegisterWorker(t, api, g.ID, model.Name, 0, true)
+	_, workerJWT := RegisterWorker(t, api, db, g.ID, model.Name, 0, true)
 
 	uri := api.Router.GetRoute("POST", api.postRefreshWorkerHandler, nil)
 	test.NotEmpty(t, uri)
@@ -137,14 +137,13 @@ func TestPostRegisterWorkerHandler(t *testing.T) {
 
 // TestPostInvalidRegister tests to register a worker for a job, without a JobID
 func TestPostInvalidRegister(t *testing.T) {
-	api, _, _, end := newTestAPI(t)
-	defer end()
+	api, db, _ := newTestAPI(t)
 
 	g := LoadSharedInfraGroup(t, api)
 
-	model := LoadOrCreateWorkerModel(t, api, g.ID, "Test2")
+	model := LoadOrCreateWorkerModel(t, api, db, g.ID, "Test2")
 
-	hSrv, hPrivKey, hConsumer, _ := assets.InsertHatchery(t, api.mustDB(), *g)
+	hSrv, hPrivKey, hConsumer, _ := assets.InsertHatchery(t, db, *g)
 
 	hPubKey, err := jws.ExportPublicKey(hPrivKey)
 	if err != nil {

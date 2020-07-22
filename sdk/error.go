@@ -23,8 +23,8 @@ var (
 	ErrInvalidID                                     = Error{ID: 5, Status: http.StatusBadRequest}
 	ErrInvalidProject                                = Error{ID: 6, Status: http.StatusBadRequest}
 	ErrInvalidProjectKey                             = Error{ID: 7, Status: http.StatusBadRequest}
-	ErrProjectHasPipeline                            = Error{ID: 8, Status: http.StatusConflict}
-	ErrProjectHasApplication                         = Error{ID: 9, Status: http.StatusConflict}
+	ErrProjectHasPipeline                            = Error{ID: 8, Status: http.StatusForbidden}
+	ErrProjectHasApplication                         = Error{ID: 9, Status: http.StatusForbidden}
 	ErrUnauthorized                                  = Error{ID: 10, Status: http.StatusUnauthorized}
 	ErrForbidden                                     = Error{ID: 11, Status: http.StatusForbidden}
 	ErrPipelineNotFound                              = Error{ID: 12, Status: http.StatusBadRequest}
@@ -32,7 +32,7 @@ var (
 	ErrNoEnvironmentProvided                         = Error{ID: 14, Status: http.StatusBadRequest}
 	ErrEnvironmentProvided                           = Error{ID: 15, Status: http.StatusBadRequest}
 	ErrUnknownEnv                                    = Error{ID: 16, Status: http.StatusBadRequest}
-	ErrEnvironmentExist                              = Error{ID: 17, Status: http.StatusConflict}
+	ErrEnvironmentExist                              = Error{ID: 17, Status: http.StatusForbidden}
 	ErrNoPipelineBuild                               = Error{ID: 18, Status: http.StatusNotFound}
 	ErrInvalidUsername                               = Error{ID: 21, Status: http.StatusBadRequest}
 	ErrInvalidEmail                                  = Error{ID: 22, Status: http.StatusBadRequest}
@@ -41,11 +41,11 @@ var (
 	ErrInvalidUser                                   = Error{ID: 25, Status: http.StatusBadRequest}
 	ErrBuildArchived                                 = Error{ID: 26, Status: http.StatusBadRequest}
 	ErrNoEnvironment                                 = Error{ID: 27, Status: http.StatusNotFound}
-	ErrModelNameExist                                = Error{ID: 28, Status: http.StatusConflict}
+	ErrModelNameExist                                = Error{ID: 28, Status: http.StatusForbidden}
 	ErrNoProject                                     = Error{ID: 30, Status: http.StatusNotFound}
-	ErrVariableExists                                = Error{ID: 31, Status: http.StatusConflict}
+	ErrVariableExists                                = Error{ID: 31, Status: http.StatusForbidden}
 	ErrInvalidGroupPattern                           = Error{ID: 32, Status: http.StatusBadRequest}
-	ErrGroupExists                                   = Error{ID: 33, Status: http.StatusConflict}
+	ErrGroupExists                                   = Error{ID: 33, Status: http.StatusForbidden}
 	ErrNotEnoughAdmin                                = Error{ID: 34, Status: http.StatusBadRequest}
 	ErrInvalidProjectName                            = Error{ID: 35, Status: http.StatusBadRequest}
 	ErrInvalidApplicationPattern                     = Error{ID: 36, Status: http.StatusBadRequest}
@@ -77,19 +77,17 @@ var (
 	ErrGroupNeedWrite                                = Error{ID: 64, Status: http.StatusBadRequest}
 	ErrNoVariable                                    = Error{ID: 65, Status: http.StatusNotFound}
 	ErrPluginInvalid                                 = Error{ID: 66, Status: http.StatusBadRequest}
-	ErrConflict                                      = Error{ID: 67, Status: http.StatusConflict}
-	ErrPipelineAlreadyAttached                       = Error{ID: 68, Status: http.StatusConflict}
-	ErrApplicationExist                              = Error{ID: 69, Status: http.StatusConflict}
+	ErrApplicationExist                              = Error{ID: 69, Status: http.StatusForbidden}
 	ErrBranchNameNotProvided                         = Error{ID: 70, Status: http.StatusBadRequest}
 	ErrInfiniteTriggerLoop                           = Error{ID: 71, Status: http.StatusBadRequest}
 	ErrInvalidResetUser                              = Error{ID: 72, Status: http.StatusBadRequest}
 	ErrUserConflict                                  = Error{ID: 73, Status: http.StatusBadRequest}
 	ErrWrongRequest                                  = Error{ID: 74, Status: http.StatusBadRequest}
-	ErrAlreadyExist                                  = Error{ID: 75, Status: http.StatusConflict}
+	ErrAlreadyExist                                  = Error{ID: 75, Status: http.StatusForbidden}
 	ErrInvalidType                                   = Error{ID: 76, Status: http.StatusBadRequest}
 	ErrParentApplicationAndPipelineMandatory         = Error{ID: 77, Status: http.StatusBadRequest}
 	ErrNoParentBuildFound                            = Error{ID: 78, Status: http.StatusNotFound}
-	ErrParameterExists                               = Error{ID: 79, Status: http.StatusConflict}
+	ErrParameterExists                               = Error{ID: 79, Status: http.StatusForbidden}
 	ErrNoHatchery                                    = Error{ID: 80, Status: http.StatusNotFound}
 	ErrInvalidWorkerStatus                           = Error{ID: 81, Status: http.StatusNotFound}
 	ErrInvalidToken                                  = Error{ID: 82, Status: http.StatusUnauthorized}
@@ -98,8 +96,8 @@ var (
 	ErrEnvironmentCannotBeDeleted                    = Error{ID: 85, Status: http.StatusForbidden}
 	ErrInvalidPipeline                               = Error{ID: 86, Status: http.StatusBadRequest}
 	ErrKeyNotFound                                   = Error{ID: 87, Status: http.StatusNotFound}
-	ErrPipelineAlreadyExists                         = Error{ID: 88, Status: http.StatusConflict}
-	ErrJobAlreadyBooked                              = Error{ID: 89, Status: http.StatusConflict}
+	ErrPipelineAlreadyExists                         = Error{ID: 88, Status: http.StatusForbidden}
+	ErrJobAlreadyBooked                              = Error{ID: 89, Status: http.StatusForbidden}
 	ErrPipelineBuildNotFound                         = Error{ID: 90, Status: http.StatusNotFound}
 	ErrAlreadyTaken                                  = Error{ID: 91, Status: http.StatusGone}
 	ErrWorkflowNodeNotFound                          = Error{ID: 93, Status: http.StatusNotFound}
@@ -124,7 +122,7 @@ var (
 	ErrWorkflowNodeRunJobNotFound                    = Error{ID: 112, Status: http.StatusNotFound}
 	ErrBuiltinKeyNotFound                            = Error{ID: 113, Status: http.StatusInternalServerError}
 	ErrStepNotFound                                  = Error{ID: 114, Status: http.StatusNotFound}
-	ErrWorkerModelAlreadyBooked                      = Error{ID: 115, Status: http.StatusConflict}
+	ErrWorkerModelAlreadyBooked                      = Error{ID: 115, Status: http.StatusForbidden}
 	ErrConditionsNotOk                               = Error{ID: 116, Status: http.StatusBadRequest}
 	ErrDownloadInvalidOS                             = Error{ID: 117, Status: http.StatusNotFound}
 	ErrDownloadInvalidArch                           = Error{ID: 118, Status: http.StatusNotFound}
@@ -147,7 +145,7 @@ var (
 	ErrJobNotBooked                                  = Error{ID: 135, Status: http.StatusBadRequest}
 	ErrUserNotFound                                  = Error{ID: 136, Status: http.StatusNotFound}
 	ErrInvalidNumber                                 = Error{ID: 137, Status: http.StatusBadRequest}
-	ErrKeyAlreadyExist                               = Error{ID: 138, Status: http.StatusConflict}
+	ErrKeyAlreadyExist                               = Error{ID: 138, Status: http.StatusForbidden}
 	ErrPipelineNameImport                            = Error{ID: 139, Status: http.StatusBadRequest}
 	ErrWorkflowNameImport                            = Error{ID: 140, Status: http.StatusBadRequest}
 	ErrIconBadFormat                                 = Error{ID: 141, Status: http.StatusBadRequest}
@@ -198,6 +196,8 @@ var (
 	ErrWorkflowAsCodeResync                          = Error{ID: 186, Status: http.StatusForbidden}
 	ErrWorkflowNodeNameDuplicate                     = Error{ID: 187, Status: http.StatusBadRequest}
 	ErrUnsupportedMediaType                          = Error{ID: 188, Status: http.StatusUnsupportedMediaType}
+	ErrNothingToPush                                 = Error{ID: 189, Status: http.StatusBadRequest}
+	ErrWorkerErrorCommand                            = Error{ID: 190, Status: http.StatusBadRequest}
 )
 
 var errorsAmericanEnglish = map[int]string{
@@ -264,8 +264,6 @@ var errorsAmericanEnglish = map[int]string{
 	ErrGroupNeedWrite.ID:                                "need at least 1 group with write permission",
 	ErrNoVariable.ID:                                    "variable not found",
 	ErrPluginInvalid.ID:                                 "invalid plugin",
-	ErrConflict.ID:                                      "object conflict",
-	ErrPipelineAlreadyAttached.ID:                       "pipeline already attached to this application",
 	ErrApplicationExist.ID:                              "application already exists",
 	ErrBranchNameNotProvided.ID:                         "git.branch or git.tag parameter must be provided",
 	ErrInfiniteTriggerLoop.ID:                           "infinite trigger loop are forbidden",
@@ -378,6 +376,8 @@ var errorsAmericanEnglish = map[int]string{
 	ErrWorkflowAsCodeResync.ID:                          "You cannot resynchronize an as-code workflow",
 	ErrWorkflowNodeNameDuplicate.ID:                     "You cannot have same name for different pipelines in your workflow",
 	ErrUnsupportedMediaType.ID:                          "Request format invalid",
+	ErrNothingToPush.ID:                                 "No diff to push",
+	ErrWorkerErrorCommand.ID:                            "Worker command in error",
 }
 
 var errorsFrench = map[int]string{
@@ -444,8 +444,6 @@ var errorsFrench = map[int]string{
 	ErrGroupNeedWrite.ID:                                "il faut au moins 1 groupe avec les droits d'écriture",
 	ErrNoVariable.ID:                                    "la variable n'existe pas",
 	ErrPluginInvalid.ID:                                 "plugin non valide",
-	ErrConflict.ID:                                      "l'objet est en conflit",
-	ErrPipelineAlreadyAttached.ID:                       "le pipeline est déjà attaché à cette application",
 	ErrApplicationExist.ID:                              "une application du même nom existe déjà",
 	ErrBranchNameNotProvided.ID:                         "le paramètre git.branch ou git.tag est obligatoire",
 	ErrInfiniteTriggerLoop.ID:                           "création d'une boucle de trigger infinie interdite",
@@ -558,11 +556,8 @@ var errorsFrench = map[int]string{
 	ErrWorkflowAsCodeResync.ID:                          "Impossible de resynchroniser un workflow en mode as-code",
 	ErrWorkflowNodeNameDuplicate.ID:                     "Vous ne pouvez pas avoir plusieurs fois le même nom de pipeline dans votre workflow",
 	ErrUnsupportedMediaType.ID:                          "Le format de la requête est invalide",
-}
-
-var errorsLanguages = []map[int]string{
-	errorsAmericanEnglish,
-	errorsFrench,
+	ErrNothingToPush.ID:                                 "Aucune modification à pousser",
+	ErrWorkerErrorCommand.ID:                            "Commande du worker en erreur",
 }
 
 // Error type.
@@ -587,6 +582,21 @@ func (e Error) Error() string {
 	}
 	if e.From != "" {
 		message = fmt.Sprintf("%s (from: %s)", message, e.From)
+	}
+	return message
+}
+
+func (e Error) printLight() string {
+	var message string
+	if e.Message != "" {
+		message = e.Message
+	} else if en, ok := errorsAmericanEnglish[e.ID]; ok {
+		message = en
+	} else {
+		message = errorsAmericanEnglish[ErrUnknownError.ID]
+	}
+	if e.From != "" {
+		message = fmt.Sprintf("%s: %s", message, e.From)
 	}
 	return message
 }
@@ -645,7 +655,7 @@ type errorWithStack struct {
 func (w errorWithStack) Error() string {
 	var cause string
 	root := w.root.Error()
-	if root != "" && root != w.httpError.From {
+	if root != "" && root != w.httpError.From && root != w.httpError.Error() {
 		cause = fmt.Sprintf(" (caused by: %s)", w.root)
 	}
 	return fmt.Sprintf("%s: %s%s", w.stack.String(), w.httpError, cause)
@@ -691,11 +701,16 @@ func (s *stack) String() string {
 		if strings.HasPrefix(name, "github.com/ovh/cds") {
 			sp := strings.Split(name, "/")
 			sp = strings.Split(sp[len(sp)-1], ".")
+			var name string
 			// check if it's a struct or package func
 			if strings.HasPrefix(sp[1], "(") {
-				names = append(names, sp[2])
+				name = sp[2]
 			} else {
-				names = append(names, sp[1])
+				name = sp[1]
+			}
+			ignoredNames := StringSlice{"NewError", "NewErrorFrom", "WithStack", "WrapError", "Append", "NewErrorWithStack"}
+			if !ignoredNames.Contains(name) {
+				names = append(names, name)
 			}
 		}
 	}
@@ -732,8 +747,17 @@ func NewError(httpError Error, err error) error {
 		return e
 	}
 
+	if e, ok := err.(*MultiError); ok {
+		var ss []string
+		for i := range *e {
+			ss = append(ss, ExtractHTTPError((*e)[i], "").printLight())
+		}
+		httpError.From = strings.Join(ss, ", ")
+	} else {
+		httpError.From = err.Error()
+	}
+
 	// if it's a library error create a new error with stack
-	httpError.From = err.Error()
 	return errorWithStack{
 		root:      errors.WithStack(err),
 		stack:     callers(),
@@ -795,6 +819,11 @@ func WithStack(err error) error {
 		return nil
 	}
 
+	// if it's a MultiError we want to preserve the from info from errors
+	if _, ok := err.(*MultiError); ok {
+		err = NewError(ErrUnknownError, err)
+	}
+
 	// if it's already a CDS error do not override the stack
 	if e, ok := err.(errorWithStack); ok {
 		return e
@@ -803,7 +832,7 @@ func WithStack(err error) error {
 	// if it's a Error wrap it in error with stack
 	if e, ok := err.(Error); ok {
 		return errorWithStack{
-			root:      errors.New(""),
+			root:      errors.New(e.Translate("")),
 			stack:     callers(),
 			httpError: e,
 		}
@@ -831,6 +860,13 @@ func ExtractHTTPError(source error, al string) Error {
 
 	// try to recognize http error from source
 	switch e := source.(type) {
+	case *MultiError:
+		httpError = ErrUnknownError
+		var ss []string
+		for i := range *e {
+			ss = append(ss, ExtractHTTPError((*e)[i], al).printLight())
+		}
+		httpError.Message = strings.Join(ss, ", ")
 	case errorWithStack:
 		httpError = e.httpError
 	case Error:
@@ -870,7 +906,7 @@ func DecodeError(data []byte) error {
 		return nil
 	}
 
-	if e.Message == "" {
+	if e.ID == 0 {
 		return nil
 	}
 
@@ -910,14 +946,11 @@ func ErrorIsUnknown(err error) bool {
 type MultiError []error
 
 func (e *MultiError) Error() string {
-	var s string
+	var ss []string
 	for i := range *e {
-		if i > 0 {
-			s += ", "
-		}
-		s += (*e)[i].Error()
+		ss = append(ss, (*e)[i].Error())
 	}
-	return s
+	return strings.Join(ss, ", ")
 }
 
 // Join joins errors from MultiError to another errors MultiError
@@ -937,7 +970,7 @@ func (e *MultiError) Append(err error) {
 			e.Append((*mError)[i])
 		}
 	} else {
-		*e = append(*e, err)
+		*e = append(*e, WithStack(err))
 	}
 }
 

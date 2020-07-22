@@ -59,6 +59,9 @@ services:
             api.smtp.disable=false \
             api.smtp.port=2023 \
             api.smtp.host=smtpmocksrv \
+            cdn.publicTCP=cds-cdn:8090 \
+            cdn.api.http.url=http://cds-api:8081 \
+            cdn.url=http://cds-cdn:8089 \
             hatchery.local.commonConfiguration.url=http://cds-hatchery-local:8086 \
             hatchery.local.commonConfiguration.api.http.url=http://cds-api:8081 \
             hatchery.local.basedir=/app/hatchery-local \
@@ -145,6 +148,20 @@ services:
 
     healthcheck:
       test: ["CMD", "curl", "-f", "http://127.0.0.1:8086/mon/version"]
+      interval: 30s
+      timeout: 10s
+      retries: 6
+
+  cds-cdn:
+    image: ${CDS_DOCKER_IMAGE:-ovhcom/cds-engine:latest}
+    command: sh -c "/app/cds-engine-linux-amd64 start cdn --config /app/conf/conf.toml"
+    volumes:
+      - cds-conf-volume:/app/conf
+    ports:
+      - "8089:8089"
+      - "8090:8090"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://127.0.0.1:8089/mon/version"]
       interval: 30s
       timeout: 10s
       retries: 6

@@ -9,16 +9,16 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/gorpmapping"
 )
 
 func Test_CRUDProjectVCSServerLink(t *testing.T) {
-	db, _, end := test.SetupPG(t)
-	defer end()
+	db, _ := test.SetupPG(t)
+
 	pk := sdk.RandomString(8)
 
 	proj := sdk.Project{

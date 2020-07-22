@@ -9,13 +9,13 @@ import { Project } from 'app/model/project.model';
 import { AuthentifiedUser } from 'app/model/user.model';
 import { Workflow } from 'app/model/workflow.model';
 import { ApplicationStore } from 'app/service/application/application.store';
+import { AsCodeSaveModalComponent } from 'app/shared/ascode/save-modal/ascode.save-modal.component';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { WarningModalComponent } from 'app/shared/modal/warning/warning.component';
 import { ToastService } from 'app/shared/toast/ToastService';
 import { VariableEvent } from 'app/shared/variable/variable.event.model';
-import { CDSWebWorker } from 'app/shared/worker/web.worker';
 import * as applicationsActions from 'app/store/applications.action';
-import { ClearCacheApplication } from 'app/store/applications.action';
+import { CancelApplicationEdition, ClearCacheApplication } from 'app/store/applications.action';
 import { ApplicationsState, ApplicationStateModel } from 'app/store/applications.state';
 import { AuthenticationState } from 'app/store/authentication.state';
 import { ProjectState, ProjectStateModel } from 'app/store/project.state';
@@ -40,21 +40,23 @@ export class ApplicationShowComponent implements OnInit, OnDestroy {
     // Project & Application data
     urlAppName: string;
     project: Project;
+    readOnlyApplication: Application;
     application: Application;
+    editMode: boolean;
+    readOnly: boolean;
 
     // Subscription
-    applicationSubscription: Subscription;
     projectSubscription: Subscription;
     _routeParamsSub: Subscription;
-    _routeDataSub: Subscription;
     _queryParamsSub: Subscription;
-    worker: CDSWebWorker;
 
     // Selected tab
     selectedTab = 'home';
 
     @ViewChild('varWarning')
     private varWarningModal: WarningModalComponent;
+    @ViewChild('updateEditMode')
+    asCodeSaveModal: AsCodeSaveModalComponent;
 
     // queryparam for breadcrum
     workflowName: string;
@@ -110,7 +112,17 @@ export class ApplicationShowComponent implements OnInit, OnDestroy {
             .pipe(filter((s: ApplicationStateModel) => s.application != null && s.application.name === this.urlAppName))
             .subscribe((s: ApplicationStateModel) => {
                 this.readyApp = true;
-                this.application = cloneDeep(s.application);
+                this.readOnly = (s.application.workflow_ascode_holder && !!s.application.workflow_ascode_holder.from_template) ||
+                    !this.project.permissions.writable;
+                this.editMode = s.editMode;
+                this.readOnlyApplication = s.application;
+                if (this.editMode) {
+                    this.application = cloneDeep(s.editApplication);
+                } else {
+                    this.application = cloneDeep(s.application);
+                }
+
+
                 if (this.application.usage) {
                     this.workflows = this.application.usage.workflows || [];
                     this.environments = this.application.usage.environments || [];
@@ -160,7 +172,14 @@ export class ApplicationShowComponent implements OnInit, OnDestroy {
                         event.variable.updating = false;
                         this.varFormLoading = false;
                         this._cd.markForCheck();
-                    })).subscribe(() => this._toast.success('', this._translate.instant('variable_added')));
+                    })).subscribe(() => {
+                        if (this.editMode) {
+                            this._toast.info('', this._translate.instant('application_ascode_updated'));
+                        } else {
+                            this._toast.success('', this._translate.instant('variable_added'));
+                        }
+
+                    });
                     break;
                 case 'update':
                     this._store.dispatch(new applicationsActions.UpdateApplicationVariable({
@@ -172,7 +191,13 @@ export class ApplicationShowComponent implements OnInit, OnDestroy {
                         event.variable.updating = false;
                         this._cd.markForCheck();
                     }))
-                        .subscribe(() => this._toast.success('', this._translate.instant('variable_updated')));
+                        .subscribe(() => {
+                            if (this.editMode) {
+                                this._toast.info('', this._translate.instant('application_ascode_updated'));
+                            } else {
+                                this._toast.success('', this._translate.instant('variable_updated'));
+                            }
+                        });
                     break;
                 case 'delete':
                     this._store.dispatch(new applicationsActions.DeleteApplicationVariable({
@@ -180,9 +205,28 @@ export class ApplicationShowComponent implements OnInit, OnDestroy {
                         applicationName: this.application.name,
                         variable: event.variable
                     })).pipe(finalize(() => this._cd.markForCheck()))
-                        .subscribe(() => this._toast.success('', this._translate.instant('variable_deleted')));
+                        .subscribe(() => {
+                            if (this.editMode) {
+                                this._toast.info('', this._translate.instant('application_ascode_updated'));
+                            } else {
+                                this._toast.success('', this._translate.instant('variable_deleted'));
+                            }
+                        });
                     break;
             }
+        }
+    }
+
+    cancelApplication(): void {
+        if (this.editMode) {
+            this._store.dispatch(new CancelApplicationEdition());
+        }
+    }
+
+    saveEditMode(): void {
+        if (this.editMode && this.application.from_repository && this.asCodeSaveModal) {
+            // show modal to save as code
+            this.asCodeSaveModal.show(this.application, 'application');
         }
     }
 

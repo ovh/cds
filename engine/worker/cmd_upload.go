@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"net/url"
 	"os"
@@ -88,7 +89,12 @@ func uploadCmd() func(cmd *cobra.Command, args []string) {
 			}
 
 			if resp.StatusCode >= 300 {
-				sdk.Exit("cannot artifact upload HTTP %d\n", resp.StatusCode)
+				body, err := ioutil.ReadAll(resp.Body)
+				if err != nil {
+					sdk.Exit("cannot artifact upload HTTP %v\n", err)
+				}
+				cdsError := sdk.DecodeError(body)
+				sdk.Exit("artifact upload failed: %v\n", cdsError)
 			}
 		}
 	}

@@ -14,11 +14,10 @@ import (
 )
 
 func TestPostAdminMigrationCancelHandler(t *testing.T) {
-	api, db, router, end := newTestAPI(t)
-	defer end()
+	api, db, router := newTestAPI(t)
 
 	//Create admin user
-	_, jwt := assets.InsertAdminUser(t, api.mustDB())
+	_, jwt := assets.InsertAdminUser(t, db)
 
 	//Load all migration
 	uri := router.GetRoute("GET", api.getAdminMigrationsHandler, nil)

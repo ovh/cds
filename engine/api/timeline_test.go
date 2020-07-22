@@ -27,8 +27,7 @@ type testTimelineEvent struct {
 func (e testTimelineEvent) String() string { return e.ProjectKey + "/" + e.WorkflowName }
 
 func Test_getTimelineHandler(t *testing.T) {
-	api, db, _, end := newTestAPI(t)
-	defer end()
+	api, db, _ := newTestAPI(t)
 
 	// Create two projects with workflows
 	proj1 := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
@@ -39,10 +38,10 @@ func Test_getTimelineHandler(t *testing.T) {
 	project1Group := &proj1.ProjectGroups[0].Group
 
 	// Create four users (a maitainer, one in project 1, one in project 1 with muted workflow and one without projects)
-	_, jwtMaintainer := assets.InsertMaintainerUser(t, api.mustDB())
-	_, jwtLambdaInGroup := assets.InsertLambdaUser(t, api.mustDB(), project1Group)
-	lambdaIngroupWithMuted, jwtLambdaInGroupWithMuted := assets.InsertLambdaUser(t, api.mustDB(), project1Group)
-	_, jwtLambdaNotInGroup := assets.InsertLambdaUser(t, api.mustDB())
+	_, jwtMaintainer := assets.InsertMaintainerUser(t, db)
+	_, jwtLambdaInGroup := assets.InsertLambdaUser(t, db, project1Group)
+	lambdaIngroupWithMuted, jwtLambdaInGroupWithMuted := assets.InsertLambdaUser(t, db, project1Group)
+	_, jwtLambdaNotInGroup := assets.InsertLambdaUser(t, db)
 	require.NoError(t, user.InsertTimelineFilter(db, sdk.TimelineFilter{
 		Projects: []sdk.ProjectFilter{
 			{
@@ -53,7 +52,7 @@ func Test_getTimelineHandler(t *testing.T) {
 	}, lambdaIngroupWithMuted.ID))
 
 	// This is a mock for the elastic service
-	mockElasticService, _ := assets.InsertService(t, db, "Test_getTimelineHandler", services.TypeElasticsearch)
+	mockElasticService, _ := assets.InsertService(t, db, "Test_getTimelineHandler", sdk.TypeElasticsearch)
 	defer func() {
 		_ = services.Delete(db, mockElasticService) // nolint
 	}()

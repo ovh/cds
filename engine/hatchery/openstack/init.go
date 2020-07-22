@@ -51,7 +51,12 @@ func (h *HatcheryOpenstack) InitHatchery(ctx context.Context) error {
 		log.Warning(ctx, "Error on initIPStatus(): %v", err)
 	}
 
-	go h.main(ctx)
+	if err := h.RefreshServiceLogger(ctx); err != nil {
+		log.Error(ctx, "Hatchery> openstack> Cannot get cdn configuration : %v", err)
+	}
+	sdk.GoRoutine(context.Background(), "hatchery openstack routines", func(ctx context.Context) {
+		h.main(ctx)
+	})
 
 	return nil
 }
@@ -61,12 +66,39 @@ func (h *HatcheryOpenstack) initFlavors() error {
 	if err != nil {
 		return sdk.WithStack(fmt.Errorf("initFlavors> error on flavors.ListDetail: %v", err))
 	}
+
 	lflavors, err := flavors.ExtractFlavors(all)
 	if err != nil {
 		return sdk.WithStack(fmt.Errorf("initFlavors> error on flavors.ExtractFlavors: %v", err))
 	}
-	h.flavors = lflavors
+
+	h.flavors = h.filterAllowedFlavors(lflavors)
+
 	return nil
+}
+
+func (h HatcheryOpenstack) filterAllowedFlavors(allFlavors []flavors.Flavor) []flavors.Flavor {
+	// If allowed flavors are given in configuration we should check that given flavor is part of the list.
+	if len(h.Config.AllowedFlavors) == 0 {
+		return allFlavors
+	}
+
+	filteredFlavors := make([]flavors.Flavor, 0, len(allFlavors))
+	for i := range allFlavors {
+		var allowed bool
+		for j := range h.Config.AllowedFlavors {
+			if h.Config.AllowedFlavors[j] == allFlavors[i].Name {
+				allowed = true
+				break
+			}
+		}
+		if !allowed {
+			log.Debug("initFlavors> flavor '%s' is not allowed", allFlavors[i].Name)
+			continue
+		}
+		filteredFlavors = append(filteredFlavors, allFlavors[i])
+	}
+	return filteredFlavors
 }
 
 func (h *HatcheryOpenstack) initNetworks() error {

@@ -4,27 +4,17 @@ import (
 	"context"
 
 	"github.com/go-gorp/gorp"
+	"github.com/lib/pq"
 
-	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/gorpmapping"
 	"github.com/ovh/cds/sdk/log"
 )
 
 // InsertKey a new project key in database
-func InsertKey(db gorp.SqlExecutor, key *sdk.ProjectKey) error {
+func InsertKey(db gorpmapping.SqlExecutorWithTx, key *sdk.ProjectKey) error {
 	var dbProjKey = dbProjectKey{ProjectKey: *key}
 	if err := gorpmapping.InsertAndSign(context.Background(), db, &dbProjKey); err != nil {
-		return err
-	}
-	*key = dbProjKey.ProjectKey
-	return nil
-}
-
-// UpdateKey a new project key in database.
-// This function should be use only for migration purpose and should be removed
-func UpdateKey(ctx context.Context, db gorp.SqlExecutor, key *sdk.ProjectKey) error {
-	var dbProjKey = dbProjectKey{ProjectKey: *key}
-	if err := gorpmapping.UpdateAndSign(ctx, db, &dbProjKey); err != nil {
 		return err
 	}
 	*key = dbProjKey.ProjectKey
@@ -57,9 +47,9 @@ func getAllKeys(db gorp.SqlExecutor, query gorpmapping.Query) ([]sdk.ProjectKey,
 // LoadAllKeys load all keys for the given project
 func LoadAllKeys(db gorp.SqlExecutor, projectID int64) ([]sdk.ProjectKey, error) {
 	query := gorpmapping.NewQuery(`
-		SELECT * 
-		FROM project_key 
-		WHERE project_id = $1 
+		SELECT *
+		FROM project_key
+		WHERE project_id = $1
 		AND builtin = false
 	`).Args(projectID)
 
@@ -87,11 +77,11 @@ func LoadAllKeysWithPrivateContent(db gorp.SqlExecutor, appID int64) ([]sdk.Proj
 
 func LoadKey(db gorp.SqlExecutor, id int64, keyName string) (*sdk.ProjectKey, error) {
 	query := gorpmapping.NewQuery(`
-	SELECT * 
+	SELECT *
 	FROM project_key
-	WHERE id = $1 
+	WHERE id = $1
 	AND name = $2
-	AND builtin = false 
+	AND builtin = false
 	`).Args(id, keyName)
 	var k dbProjectKey
 	found, err := gorpmapping.Get(context.Background(), db, query, &k, gorpmapping.GetOptions.WithDecryption)
@@ -120,10 +110,10 @@ func DeleteProjectKey(db gorp.SqlExecutor, projectID int64, keyName string) erro
 
 func loadBuiltinKey(db gorp.SqlExecutor, projectID int64) (*sdk.ProjectKey, error) {
 	query := gorpmapping.NewQuery(`
-	SELECT * 
+	SELECT *
 	FROM project_key
-	WHERE project_id = $1 
-	AND builtin = true 
+	WHERE project_id = $1
+	AND builtin = true
 	AND name = 'builtin'
 	`).Args(projectID)
 	var k dbProjectKey
@@ -143,4 +133,41 @@ func loadBuiltinKey(db gorp.SqlExecutor, projectID int64) (*sdk.ProjectKey, erro
 		return nil, sdk.WithStack(sdk.ErrNotFound)
 	}
 	return &k.ProjectKey, nil
+}
+
+func LoadAllKeysForProjectsWithDecryption(ctx context.Context, db gorp.SqlExecutor, projIDs []int64) (map[int64][]sdk.ProjectKey, error) {
+	return loadAllKeysForProjects(ctx, db, projIDs, gorpmapping.GetOptions.WithDecryption)
+}
+
+func loadAllKeysForProjects(ctx context.Context, db gorp.SqlExecutor, appsID []int64, opts ...gorpmapping.GetOptionFunc) (map[int64][]sdk.ProjectKey, error) {
+	var res []dbProjectKey
+	query := gorpmapping.NewQuery(`
+		SELECT *
+		FROM project_key
+		WHERE project_id = ANY($1)
+		AND builtin = false
+		ORDER BY project_id
+	`).Args(pq.Int64Array(appsID))
+	if err := gorpmapping.GetAll(ctx, db, query, &res, opts...); err != nil {
+		return nil, err
+	}
+
+	projsKeys := make(map[int64][]sdk.ProjectKey)
+
+	for i := range res {
+		dbProjKey := res[i]
+		isValid, err := gorpmapping.CheckSignature(dbProjKey, dbProjKey.Signature)
+		if err != nil {
+			return nil, err
+		}
+		if !isValid {
+			log.Error(ctx, "project.loadAllKeysForProjects> project key id %d data corrupted", dbProjKey.ID)
+			continue
+		}
+		if _, ok := projsKeys[dbProjKey.ProjectID]; !ok {
+			projsKeys[dbProjKey.ProjectID] = make([]sdk.ProjectKey, 0)
+		}
+		projsKeys[dbProjKey.ProjectID] = append(projsKeys[dbProjKey.ProjectID], dbProjKey.ProjectKey)
+	}
+	return projsKeys, nil
 }

@@ -6,8 +6,8 @@ import (
 
 	"github.com/go-gorp/gorp"
 
-	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/gorpmapping"
 	"github.com/ovh/cds/sdk/log"
 )
 
@@ -41,7 +41,7 @@ func LoadRegistrationByID(ctx context.Context, db gorp.SqlExecutor, id string) (
 }
 
 // InsertRegistration in database.
-func InsertRegistration(ctx context.Context, db gorp.SqlExecutor, ur *sdk.UserRegistration) error {
+func InsertRegistration(ctx context.Context, db gorpmapping.SqlExecutorWithTx, ur *sdk.UserRegistration) error {
 	if !sdk.UsernameRegex.MatchString(ur.Username) {
 		return sdk.WithStack(sdk.ErrInvalidUsername)
 	}

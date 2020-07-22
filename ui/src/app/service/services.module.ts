@@ -16,6 +16,7 @@ import { ApplicationService } from './application/application.service';
 import { ApplicationStore } from './application/application.store';
 import { ApplicationWorkflowService } from './application/application.workflow.service';
 import { AuthenticationService } from './authentication/authentication.service';
+import { ErrorInterceptor } from './authentication/error.interceptor';
 import { LogoutInterceptor } from './authentication/logout.interceptor';
 import { XSRFInterceptor } from './authentication/xsrf.interceptor';
 import { BroadcastService } from './broadcast/broadcast.service';
@@ -46,6 +47,7 @@ import {
 } from './project/project.resolver';
 import { ProjectService } from './project/project.service';
 import { ProjectStore } from './project/project.store';
+import { QueueService } from './queue/queue.service';
 import { RepoManagerService } from './repomanager/project.repomanager.service';
 import { RequirementService } from './requirement/requirement.service';
 import { RequirementStore } from './requirement/requirement.store';
@@ -112,6 +114,7 @@ export class ServicesModule {
                 ProjectService,
                 ProjectAuditService,
                 ProjectStore,
+                QueueService,
                 RepoManagerService,
                 RequirementStore,
                 RequirementService,
@@ -138,6 +141,11 @@ export class ServicesModule {
                 {
                     provide: HTTP_INTERCEPTORS,
                     useClass: LogoutInterceptor,
+                    multi: true
+                },
+                {
+                    provide: HTTP_INTERCEPTORS,
+                    useClass: ErrorInterceptor,
                     multi: true
                 }
             ]
@@ -172,6 +180,7 @@ export {
     ProjectForWorkflowResolver,
     ProjectStore,
     ProjectAuditService,
+    QueueService,
     RepoManagerService,
     RequirementStore,
     RouterService,

@@ -37,6 +37,14 @@
                     <i class="graduation icon"></i>
                     {{ 'common_advanced' | translate }}
                 </a>
+                <div class="ui small buttons" *ngIf="editMode && !readonly">
+                    <ng-container *ngIf="environment.editModeChanged">
+                        <button class="ui button" (click)="cancelEnvironment()">{{'common_cancel' | translate }}</button>
+                        <div class="or"></div>
+                    </ng-container>
+                    <button class="ui green button" [disabled]="!environment.editModeChanged"
+                            (click)="saveEditMode()">{{'btn_save_environment' | translate }}</button>
+                </div>
             </sm-menu>
         </div>
 
@@ -46,25 +54,23 @@
                     <div [ngSwitch]="selectedTab">
                         <div *ngSwitchCase="'variables'">
                             <ng-container
-                                *ngIf="project.permissions.writable && !environment.from_repository">
+                                *ngIf="!readonly">
                                 <h3>{{ 'environment_variable_form_title' | translate}}</h3>
                                 <app-variable-form [loading]="varFormLoading"
                                     (createVariableEvent)="variableEvent($event)"></app-variable-form>
                             </ng-container>
                             <h3>{{ 'environment_variable_list_title' | translate}}</h3>
                             <app-variable [variables]="environment.variables"
-                                [mode]="(project.permissions.writable && !environment.from_repository)?'edit':'ro'"
+                                [mode]="readonly?'ro':'edit'"
                                 (event)="variableEvent($event)" auditContext="environment" [project]="project"
-                                [environment]="environment"></app-variable>
+                                [environmentName]="environment.name"></app-variable>
                         </div>
                         <div *ngSwitchCase="'keys'">
-                            <app-environment-keys [project]="project" [environment]="environment">
-                            </app-environment-keys>
+                            <app-environment-keys [project]="project" [environment]="environment" [readonly]="readonly" [editMode]="editMode"></app-environment-keys>
                         </div>
                         <div *ngSwitchCase="'usage'">
                             <ng-container *ngIf="usageCount > 0">
-                                <app-usage [project]="project" [workflows]="workflows" [pipelines]="pipelines"
-                                    [environments]="environments"></app-usage>
+                                <app-usage [project]="project" [workflows]="workflows"></app-usage>
                             </ng-container>
                             <ng-container *ngIf="usageCount === 0">
                                 <div class="ui info message">
@@ -85,3 +91,8 @@
 <ng-template #loadEnv>
     <div class="ui text active loader">Loading environment...</div>
 </ng-template>
+<ng-container *ngIf="environment?.workflow_ascode_holder">
+    <app-ascode-save-modal [project]="project" [workflow]="environment.workflow_ascode_holder" [name]="environment.name"
+                           #updateEditMode>
+    </app-ascode-save-modal>
+</ng-container>

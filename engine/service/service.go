@@ -5,12 +5,11 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/ovh/cds/engine/api/observability"
-
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/ovh/cds/sdk/jws"
 	"github.com/ovh/cds/sdk/log"
+	"github.com/ovh/cds/sdk/telemetry"
 )
 
 // CommonMonitoring returns common part of MonitoringStatus
@@ -78,9 +77,9 @@ loop:
 		return sdk.WithStack(err)
 	}
 
-	ctx = observability.ContextWithTag(ctx,
-		observability.TagServiceType, c.Type(),
-		observability.TagServiceName, c.Name(),
+	ctx = telemetry.ContextWithTag(ctx,
+		telemetry.TagServiceType, c.Type(),
+		telemetry.TagServiceName, c.Name(),
 	)
 
 	RegisterCommonMetricsView(ctx)
@@ -120,6 +119,7 @@ func (c *Common) Register(ctx context.Context, cfg sdk.ServiceConfig) error {
 		return sdk.WrapError(err, "Register>")
 	}
 	c.ServiceInstance = srv2
+
 	return nil
 }
 

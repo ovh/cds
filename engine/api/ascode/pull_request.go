@@ -9,9 +9,11 @@ import (
 	"github.com/sirupsen/logrus"
 
 	"github.com/ovh/cds/engine/api/cache"
+	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/operation"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/gorpmapping"
 	"github.com/ovh/cds/sdk/log"
 )
 
@@ -20,8 +22,10 @@ type EventType string
 
 // AsCodeEventType values.
 const (
-	PipelineEvent EventType = "pipeline"
-	WorkflowEvent EventType = "workflow"
+	PipelineEvent    EventType = "pipeline"
+	WorkflowEvent    EventType = "workflow"
+	ApplicationEvent EventType = "application"
+	EnvironmentEvent EventType = "environment"
 )
 
 type EntityData struct {
@@ -33,49 +37,46 @@ type EntityData struct {
 }
 
 // UpdateAsCodeResult pulls repositories operation and the create pullrequest + update workflow
-func UpdateAsCodeResult(ctx context.Context, db *gorp.DbMap, store cache.Store, projIdent sdk.ProjectIdentifiers, workflowHolderID int64, rootApp sdk.Application, ed EntityData, u sdk.Identifiable) *sdk.AsCodeEvent {
-	tick := time.NewTicker(2 * time.Second)
-	ctx, cancel := context.WithTimeout(ctx, 1*time.Minute)
-	defer cancel()
-
+func UpdateAsCodeResult(ctx context.Context, db *gorp.DbMap, store cache.Store, projIdent sdk.ProjectIdentifiers, workflowHolder sdk.Workflow, rootApp sdk.Application, ed EntityData, u sdk.Identifiable) {
 	var asCodeEvent *sdk.AsCodeEvent
 	globalOperation := sdk.Operation{
 		UUID: ed.OperationUUID,
 	}
 	var globalErr error
 
-forLoop:
-	for {
-		select {
-		case <-ctx.Done():
-			globalErr = sdk.NewErrorFrom(sdk.ErrRepoOperationTimeout, "updating repository take too much time")
-			break forLoop
-		case <-tick.C:
-			ope, err := operation.GetRepositoryOperation(ctx, db, ed.OperationUUID)
-			if err != nil {
-				globalErr = sdk.NewErrorFrom(err, "unable to get repository operation %s", ed.OperationUUID)
-				break forLoop
-			}
-
-			if ope.Status == sdk.OperationStatusError {
-				globalErr = sdk.NewErrorFrom(sdk.ErrUnknownError, "repository operation in error: %s", ope.Error)
-				break forLoop
-			}
-			if ope.Status == sdk.OperationStatusDone {
-				ae, err := createPullRequest(ctx, db, store, projIdent, workflowHolderID, rootApp, ed, u, ope.Setup)
-				if err != nil {
-					globalErr = err
-					break forLoop
-				}
-				asCodeEvent = ae
-				globalOperation.Status = sdk.OperationStatusDone
-				globalOperation.Setup.Push.PRLink = ae.PullRequestURL
-				break forLoop
-			}
-		}
+	ope, err := operation.Poll(ctx, db, ed.OperationUUID)
+	if err != nil {
+		globalErr = err
 	}
+
+	var callback = func() error {
+		tx, err := db.Begin()
+		if err != nil {
+			return sdk.WithStack(err)
+		}
+		defer tx.Rollback() // nolint
+
+		asCodeEvent, err = createPullRequest(ctx, tx, store, projIdent, workflowHolder.ID, rootApp, ed, u, ope.Setup)
+		if err != nil {
+			return err
+		}
+
+		if err := tx.Commit(); err != nil {
+			return sdk.WithStack(err)
+		}
+
+		sdk.GoRoutine(context.Background(), fmt.Sprintf("UpdateAsCodeResult-pusblish-as-code-event-%d", asCodeEvent.ID), func(ctx context.Context) {
+			event.PublishAsCodeEvent(ctx, projIdent.Key, workflowHolder.Name, *asCodeEvent, u)
+		})
+
+		return nil
+	}
+
+	if globalErr == nil {
+		globalErr = callback()
+	}
+
 	if globalErr != nil {
-		httpErr := sdk.ExtractHTTPError(globalErr, "")
 		isErrWithStack := sdk.IsErrorWithStack(globalErr)
 		fields := logrus.Fields{}
 		if isErrWithStack {
@@ -84,15 +85,18 @@ forLoop:
 		log.ErrorWithFields(ctx, fields, "%s", globalErr)
 
 		globalOperation.Status = sdk.OperationStatusError
-		globalOperation.Error = httpErr.Error()
+		globalOperation.Error = sdk.ToOperationError(globalErr)
+	} else {
+		globalOperation.Status = sdk.OperationStatusDone
+		globalOperation.Setup.Push.PRLink = asCodeEvent.PullRequestURL
 	}
 
-	_ = store.SetWithTTL(cache.Key(operation.CacheOperationKey, globalOperation.UUID), globalOperation, 300)
-
-	return asCodeEvent
+	sdk.GoRoutine(context.Background(), fmt.Sprintf("UpdateAsCodeResult-pusblish-operation-%s", globalOperation.UUID), func(ctx context.Context) {
+		event.PublishOperation(ctx, projIdent.Key, globalOperation, u)
+	})
 }
 
-func createPullRequest(ctx context.Context, db *gorp.DbMap, store cache.Store, projIdent sdk.ProjectIdentifiers, workflowHolderID int64, rootApp sdk.Application, ed EntityData, u sdk.Identifiable, opeSetup sdk.OperationSetup) (*sdk.AsCodeEvent, error) {
+func createPullRequest(ctx context.Context, db gorpmapping.SqlExecutorWithTx, store cache.Store, projIdent sdk.ProjectIdentifiers, workflowHolderID int64, rootApp sdk.Application, ed EntityData, u sdk.Identifiable, opeSetup sdk.OperationSetup) (*sdk.AsCodeEvent, error) {
 	vcsServer, err := repositoriesmanager.LoadProjectVCSServerLinkByProjectKeyAndVCSServerName(ctx, db, projIdent.Key, rootApp.VCSServer)
 	if err != nil {
 		return nil, err
@@ -183,6 +187,34 @@ func createPullRequest(ctx context.Context, db *gorp.DbMap, store cache.Store, p
 		}
 		if !found {
 			asCodeEvent.Data.Pipelines[ed.ID] = ed.Name
+		}
+	case ApplicationEvent:
+		if asCodeEvent.Data.Applications == nil {
+			asCodeEvent.Data.Applications = make(map[int64]string)
+		}
+		found := false
+		for k := range asCodeEvent.Data.Applications {
+			if k == ed.ID {
+				found = true
+				break
+			}
+		}
+		if !found {
+			asCodeEvent.Data.Applications[ed.ID] = ed.Name
+		}
+	case EnvironmentEvent:
+		if asCodeEvent.Data.Environments == nil {
+			asCodeEvent.Data.Environments = make(map[int64]string)
+		}
+		found := false
+		for k := range asCodeEvent.Data.Environments {
+			if k == ed.ID {
+				found = true
+				break
+			}
+		}
+		if !found {
+			asCodeEvent.Data.Environments[ed.ID] = ed.Name
 		}
 	}
 

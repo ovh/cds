@@ -15,23 +15,22 @@ import (
 )
 
 func Test_getVariableAuditInProjectHandler(t *testing.T) {
-	api, db, router, end := newTestAPI(t)
-	defer end()
+	api, db, router := newTestAPI(t)
 
 	//Create admin user
-	u, pass := assets.InsertAdminUser(t, api.mustDB())
+	u, pass := assets.InsertAdminUser(t, db)
 
 	//Insert Project
 	pkey := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, api.Cache, pkey, pkey)
 
 	// Add variable
-	v := sdk.Variable{
+	v := sdk.ProjectVariable{
 		Name:  "foo",
 		Type:  "string",
 		Value: "bar",
 	}
-	if err := project.InsertVariable(api.mustDB(), proj.ID, &v, u); err != nil {
+	if err := project.InsertVariable(db, proj.ID, &v, u); err != nil {
 		t.Fatal(err)
 	}
 
@@ -58,11 +57,10 @@ func Test_getVariableAuditInProjectHandler(t *testing.T) {
 }
 
 func Test_postEncryptVariableHandler(t *testing.T) {
-	api, db, router, end := newTestAPI(t)
-	defer end()
+	api, db, router := newTestAPI(t)
 
 	//Create admin user
-	u, pass := assets.InsertAdminUser(t, api.mustDB())
+	u, pass := assets.InsertAdminUser(t, db)
 
 	//Insert Project
 	pkey := sdk.RandomString(10)

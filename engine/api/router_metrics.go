@@ -17,6 +17,7 @@ package api
 // limitations under the License.
 
 import (
+	"context"
 	"io"
 	"net/http"
 
@@ -24,13 +25,13 @@ import (
 	"go.opencensus.io/stats/view"
 	"go.opencensus.io/tag"
 
-	"github.com/ovh/cds/engine/api/observability"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk/log"
+	"github.com/ovh/cds/sdk/telemetry"
 )
 
 // InitRouterMetrics initialize prometheus metrics
-func InitRouterMetrics(s service.NamedService) error {
+func InitRouterMetrics(ctx context.Context, s service.NamedService) error {
 	var err error
 	onceMetrics.Do(func() {
 		Errors = stats.Int64(
@@ -40,14 +41,6 @@ func InitRouterMetrics(s service.NamedService) error {
 		Hits = stats.Int64(
 			"cds/router_hits",
 			"number of hits",
-			stats.UnitDimensionless)
-		SSEClients = stats.Int64(
-			"cds/sse_clients",
-			"number of sse clients",
-			stats.UnitDimensionless)
-		SSEEvents = stats.Int64(
-			"cds/sse_events",
-			"number of sse events",
 			stats.UnitDimensionless)
 		WebSocketClients = stats.Int64(
 			"cds/websocket_clients",
@@ -74,14 +67,14 @@ func InitRouterMetrics(s service.NamedService) error {
 			"End-to-end latency",
 			stats.UnitMilliseconds)
 
-		tagServiceType := observability.MustNewKey(observability.TagServiceType)
-		tagServiceName := observability.MustNewKey(observability.TagServiceName)
+		tagServiceType := telemetry.MustNewKey(telemetry.TagServiceType)
+		tagServiceName := telemetry.MustNewKey(telemetry.TagServiceName)
 
 		ServerRequestCountView := &view.View{
 			Name:        "cds/http/server/request_count_by_handler",
 			Description: "Count of HTTP requests started",
 			Measure:     ServerRequestCount,
-			TagKeys:     []tag.Key{tagServiceType, tagServiceName, observability.MustNewKey(observability.Handler)},
+			TagKeys:     []tag.Key{tagServiceType, tagServiceName, telemetry.MustNewKey(telemetry.Handler)},
 			Aggregation: view.Count(),
 		}
 
@@ -89,30 +82,30 @@ func InitRouterMetrics(s service.NamedService) error {
 			Name:        "cds/http/server/request_bytes_by_handler",
 			Description: "Size distribution of HTTP request body",
 			Measure:     ServerRequestBytes,
-			TagKeys:     []tag.Key{tagServiceType, tagServiceName, observability.MustNewKey(observability.Handler)},
-			Aggregation: observability.DefaultSizeDistribution,
+			TagKeys:     []tag.Key{tagServiceType, tagServiceName, telemetry.MustNewKey(telemetry.Handler)},
+			Aggregation: telemetry.DefaultSizeDistribution,
 		}
 
 		ServerResponseBytesView := &view.View{
 			Name:        "cds/http/server/response_bytes_by_handler",
 			Description: "Size distribution of HTTP response body",
 			Measure:     ServerResponseBytes,
-			TagKeys:     []tag.Key{tagServiceType, tagServiceName, observability.MustNewKey(observability.Handler)},
-			Aggregation: observability.DefaultSizeDistribution,
+			TagKeys:     []tag.Key{tagServiceType, tagServiceName, telemetry.MustNewKey(telemetry.Handler)},
+			Aggregation: telemetry.DefaultSizeDistribution,
 		}
 
 		ServerLatencyView := &view.View{
 			Name:        "cds/http/server/latency_by_handler",
 			Description: "Latency distribution of HTTP requests",
 			Measure:     ServerLatency,
-			TagKeys:     []tag.Key{tagServiceType, tagServiceName, observability.MustNewKey(observability.Handler)},
-			Aggregation: observability.DefaultLatencyDistribution,
+			TagKeys:     []tag.Key{tagServiceType, tagServiceName, telemetry.MustNewKey(telemetry.Handler)},
+			Aggregation: telemetry.DefaultLatencyDistribution,
 		}
 
 		ServerRequestCountByMethod := &view.View{
 			Name:        "cds/http/server/request_count_by_method_and_handler",
 			Description: "Server request count by HTTP method",
-			TagKeys:     []tag.Key{tagServiceType, tagServiceName, observability.MustNewKey(observability.Method), observability.MustNewKey(observability.Handler)},
+			TagKeys:     []tag.Key{tagServiceType, tagServiceName, telemetry.MustNewKey(telemetry.Method), telemetry.MustNewKey(telemetry.Handler)},
 			Measure:     ServerRequestCount,
 			Aggregation: view.Count(),
 		}
@@ -120,18 +113,16 @@ func InitRouterMetrics(s service.NamedService) error {
 		ServerResponseCountByStatusCode := &view.View{
 			Name:        "cds/http/server/response_count_by_status_code_and_handler",
 			Description: "Server response count by status code",
-			TagKeys:     []tag.Key{tagServiceType, tagServiceName, observability.MustNewKey(observability.StatusCode), observability.MustNewKey(observability.Handler)},
+			TagKeys:     []tag.Key{tagServiceType, tagServiceName, telemetry.MustNewKey(telemetry.StatusCode), telemetry.MustNewKey(telemetry.Handler)},
 			Measure:     ServerLatency,
 			Aggregation: view.Count(),
 		}
 
-		err = observability.RegisterView(
-			observability.NewViewCount("cds/http/router/router_errors", Errors, []tag.Key{tagServiceType, tagServiceName}),
-			observability.NewViewCount("cds/http/router/router_hits", Hits, []tag.Key{tagServiceType, tagServiceName}),
-			observability.NewViewLast("cds/http/router/sse_clients", SSEClients, []tag.Key{tagServiceType, tagServiceName}),
-			observability.NewViewCount("cds/http/router/sse_events", SSEEvents, []tag.Key{tagServiceType, tagServiceName}),
-			observability.NewViewLast("cds/http/router/websocket_clients", WebSocketClients, []tag.Key{tagServiceType, tagServiceName}),
-			observability.NewViewCount("cds/http/router/websocket_events", WebSocketEvents, []tag.Key{tagServiceType, tagServiceName}),
+		err = telemetry.RegisterView(ctx,
+			telemetry.NewViewCount("cds/http/router/router_errors", Errors, []tag.Key{tagServiceType, tagServiceName}),
+			telemetry.NewViewCount("cds/http/router/router_hits", Hits, []tag.Key{tagServiceType, tagServiceName}),
+			telemetry.NewViewLast("cds/http/router/websocket_clients", WebSocketClients, []tag.Key{tagServiceType, tagServiceName}),
+			telemetry.NewViewCount("cds/http/router/websocket_events", WebSocketEvents, []tag.Key{tagServiceType, tagServiceName}),
 			ServerRequestCountView,
 			ServerRequestBytesView,
 			ServerResponseBytesView,

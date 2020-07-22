@@ -32,7 +32,7 @@ export class ProjectAdminComponent implements OnInit {
         private _router: Router,
         private _store: Store,
         private _cd: ChangeDetectorRef
-    ) { };
+    ) { }
 
     ngOnInit(): void {
         if (!this.project.permissions.writable) {
@@ -53,7 +53,7 @@ export class ProjectAdminComponent implements OnInit {
                 }))
                 .subscribe(() => this._toast.success('', this._translate.instant('project_update_msg_ok')));
         }
-    };
+    }
 
     deleteProject(): void {
         this.loading = true;

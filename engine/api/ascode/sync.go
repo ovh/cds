@@ -26,11 +26,17 @@ func SyncEvents(ctx context.Context, db *gorp.DbMap, store cache.Store, projIden
 	}
 	rootApp := workflowHolder.Applications[workflowHolder.WorkflowData.Node.Context.ApplicationID]
 
-	vcsServer, err := repositoriesmanager.LoadProjectVCSServerLinkByProjectKeyAndVCSServerName(ctx, db, projIdent.Key, rootApp.VCSServer)
+	tx, err := db.Begin()
+	if err != nil {
+		return res, sdk.WithStack(err)
+	}
+	defer tx.Rollback() //nolint
+
+	vcsServer, err := repositoriesmanager.LoadProjectVCSServerLinkByProjectKeyAndVCSServerName(ctx, tx, projIdent.Key, rootApp.VCSServer)
 	if err != nil {
 		return res, err
 	}
-	client, err := repositoriesmanager.AuthorizedClient(ctx, db, store, projIdent.Key, vcsServer)
+	client, err := repositoriesmanager.AuthorizedClient(ctx, tx, store, projIdent.Key, vcsServer)
 	if err != nil {
 		return res, err
 	}
@@ -48,12 +54,6 @@ func SyncEvents(ctx context.Context, db *gorp.DbMap, store cache.Store, projIden
 		}
 	}
 	res.FromRepository = fromRepo
-
-	tx, err := db.Begin()
-	if err != nil {
-		return res, sdk.WithStack(err)
-	}
-	defer tx.Rollback() //nolint
 
 	asCodeEvents, err := LoadEventsByWorkflowID(ctx, tx, workflowHolder.ID)
 	if err != nil {
@@ -99,7 +99,7 @@ func SyncEvents(ctx context.Context, db *gorp.DbMap, store cache.Store, projIden
 	}
 
 	for _, ed := range eventToDelete {
-		event.PublishAsCodeEvent(ctx, projIdent.Key, ed, u)
+		event.PublishAsCodeEvent(ctx, projIdent.Key, workflowHolder.Name, ed, u)
 	}
 
 	return res, nil

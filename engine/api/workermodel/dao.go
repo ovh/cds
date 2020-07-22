@@ -7,9 +7,9 @@ import (
 	"github.com/go-gorp/gorp"
 	"github.com/lib/pq"
 
-	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/gorpmapping"
 	"github.com/ovh/cds/sdk/log"
 )
 
@@ -193,11 +193,13 @@ func LoadAllUsableByGroupIDs(ctx context.Context, db gorp.SqlExecutor, groupIDs 
 }
 
 // Insert a new worker model in database.
-func Insert(ctx context.Context, db gorp.SqlExecutor, model *sdk.Model) error {
+func Insert(ctx context.Context, db gorpmapping.SqlExecutorWithTx, model *sdk.Model) error {
 	dbmodel := workerModel{Model: *model}
 
 	dbmodel.UserLastModified = time.Now()
 	dbmodel.NeedRegistration = true
+
+	mergeModelEnvsWithDefaultEnvs(&dbmodel)
 
 	needSaveRegistryPassword, dockerRegistryPassword, err := replaceDockerRegistryPassword(db, &dbmodel)
 	if err != nil {
@@ -225,12 +227,14 @@ func Insert(ctx context.Context, db gorp.SqlExecutor, model *sdk.Model) error {
 
 // UpdateDB a worker model
 // if the worker model have SpawnErr -> clear them.
-func UpdateDB(ctx context.Context, db gorp.SqlExecutor, model *sdk.Model) error {
+func UpdateDB(ctx context.Context, db gorpmapping.SqlExecutorWithTx, model *sdk.Model) error {
 	dbmodel := workerModel{Model: *model}
 
 	if err := DeleteCapabilitiesByModelID(db, dbmodel.ID); err != nil {
 		return err
 	}
+
+	mergeModelEnvsWithDefaultEnvs(&dbmodel)
 
 	needSaveRegistryPassword, dockerRegistryPassword, err := replaceDockerRegistryPassword(db, &dbmodel)
 	if err != nil {

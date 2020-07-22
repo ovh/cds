@@ -3,7 +3,6 @@ package local
 import (
 	"context"
 	"fmt"
-	"net"
 	"net/http"
 	"os"
 	"os/exec"
@@ -15,8 +14,9 @@ import (
 
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gorilla/mux"
+	"github.com/sirupsen/logrus"
+
 	"github.com/ovh/cds/engine/api"
-	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
@@ -61,7 +61,7 @@ func (h *HatcheryLocal) ApplyConfiguration(cfg interface{}) error {
 
 	genname := h.Configuration().Name
 	h.Common.Common.ServiceName = genname
-	h.Common.Common.ServiceType = services.TypeHatchery
+	h.Common.Common.ServiceType = sdk.TypeHatchery
 	var err error
 	h.Config.Basedir, err = filepath.Abs(h.Config.Basedir)
 	if err != nil {
@@ -232,8 +232,44 @@ func (h *HatcheryLocal) WorkersStarted(ctx context.Context) []string {
 // InitHatchery register local hatchery with its worker model
 func (h *HatcheryLocal) InitHatchery(ctx context.Context) error {
 	h.workers = make(map[string]workerCmd)
-	sdk.GoRoutine(context.Background(), "startKillAwolWorkerRoutine", h.startKillAwolWorkerRoutine)
+	if err := h.RefreshServiceLogger(ctx); err != nil {
+		log.Error(ctx, "Hatchery> local> Cannot get cdn configuration : %v", err)
+	}
+	sdk.GoRoutine(context.Background(), "hatchery locale routines", func(ctx context.Context) {
+		h.routines(ctx)
+	})
 	return nil
+}
+
+func (h *HatcheryLocal) GetLogger() *logrus.Logger {
+	return h.ServiceLogger
+}
+
+func (h *HatcheryLocal) routines(ctx context.Context) {
+	ticker := time.NewTicker(10 * time.Second)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-ticker.C:
+			sdk.GoRoutine(ctx, "local-killAwolWorkers", func(ctx context.Context) {
+				if err := h.killAwolWorkers(); err != nil {
+					log.Warning(ctx, "Cannot kill awol workers: %s", err)
+				}
+			})
+			sdk.GoRoutine(ctx, "local-refreshCDNConfiguration", func(ctx context.Context) {
+				if err := h.RefreshServiceLogger(ctx); err != nil {
+					log.Error(ctx, "Hatchery> local> Cannot get cdn configuration : %v", err)
+				}
+			})
+		case <-ctx.Done():
+			if ctx.Err() != nil {
+				log.Error(ctx, "Hatchery> local> Exiting routines")
+			}
+			return
+		}
+	}
+
 }
 
 func (h *HatcheryLocal) localWorkerIndexCleanup() {
@@ -251,15 +287,6 @@ func (h *HatcheryLocal) localWorkerIndexCleanup() {
 
 	for _, name := range needToDeleteWorkers {
 		delete(h.workers, name)
-	}
-}
-
-func (h *HatcheryLocal) startKillAwolWorkerRoutine(ctx context.Context) {
-	t := time.NewTicker(5 * time.Second)
-	for range t.C {
-		if err := h.killAwolWorkers(); err != nil {
-			log.Warning(ctx, "Cannot kill awol workers: %s", err)
-		}
 	}
 }
 
@@ -337,15 +364,6 @@ func (h *HatcheryLocal) checkRequirement(r sdk.Requirement) (bool, error) {
 			return false, fmt.Errorf("invalid requirement %s", r.Value)
 		}
 		return osarch[0] == strings.ToLower(sdk.GOOS) && osarch[1] == strings.ToLower(sdk.GOARCH), nil
-	case sdk.NetworkAccessRequirement:
-		log.Debug("checkRequirement> checking network requirement:%v", r.Value)
-		conn, err := net.DialTimeout("tcp", r.Value, 10*time.Second)
-		if err != nil {
-			log.Debug("checkRequirement> dial err:%v", err)
-			return false, nil
-		}
-		conn.Close()
-		return true, nil
 	case sdk.HostnameRequirement:
 		h, err := os.Hostname()
 		if err != nil {

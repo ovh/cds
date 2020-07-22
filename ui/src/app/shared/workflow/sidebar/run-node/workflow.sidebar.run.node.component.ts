@@ -34,6 +34,9 @@ export class WorkflowSidebarRunNodeComponent implements OnDestroy, OnInit {
 
     project: Project;
     workflow: Workflow;
+
+    @Select(WorkflowState.getSelectedWorkflowRun()) worklowRun$: Observable<WorkflowRun>;
+    wrSubs: Subscription;
     workflowRun: WorkflowRun;
 
     @Select(WorkflowState.getSelectedNode()) node$: Observable<WNode>;
@@ -93,7 +96,15 @@ export class WorkflowSidebarRunNodeComponent implements OnDestroy, OnInit {
     ngOnInit(): void {
         this.project = this._store.selectSnapshot(ProjectState.projectSnapshot);
         this.workflow = this._store.selectSnapshot(WorkflowState.workflowSnapshot);
-        this.workflowRun = this._store.selectSnapshot(WorkflowState.workflowRunSnapshot);
+
+        this.wrSubs = this.worklowRun$.subscribe(wr => {
+            if (!wr) {
+                return;
+            }
+            this.workflowRun = wr;
+            this.canBeRun = this.getCanBeRun();
+            this._cd.markForCheck();
+        });
 
         this.nodeSubs = this.node$.subscribe(n => {
             if (!n && !this.node) {
@@ -216,6 +227,10 @@ export class WorkflowSidebarRunNodeComponent implements OnDestroy, OnInit {
             return false;
         }
         if (!this.workflow.permissions.executable) {
+            return false;
+        }
+
+        if (this.workflowRun && this.workflowRun.read_only) {
             return false;
         }
 

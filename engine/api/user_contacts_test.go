@@ -17,8 +17,7 @@ import (
 )
 
 func Test_getUserContactsHandler(t *testing.T) {
-	api, db, _, end := newTestAPI(t)
-	defer end()
+	api, db, _ := newTestAPI(t)
 
 	u, jwtRaw := assets.InsertLambdaUser(t, db)
 

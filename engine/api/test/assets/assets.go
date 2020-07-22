@@ -32,20 +32,22 @@ import (
 	"github.com/ovh/cds/engine/api/workermodel"
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/gorpmapping"
 	"github.com/ovh/cds/sdk/jws"
 	"github.com/ovh/cds/sdk/log"
 )
 
 // InsertTestProject create a test project.
-func InsertTestProject(t *testing.T, db *gorp.DbMap, store cache.Store, key, name string) *sdk.Project {
-	oldProj, _ := project.Load(db, key,
+func InsertTestProject(t *testing.T, db gorpmapping.SqlExecutorWithTx, store cache.Store, key, name string) *sdk.Project {
+	oldProj, _ := project.Load(context.TODO(), db, key,
 		project.LoadOptions.WithApplications,
 		project.LoadOptions.WithPipelines,
 		project.LoadOptions.WithWorkflows,
 	)
 	if oldProj != nil {
+		projIdent := sdk.ProjectIdentifiers{ID: oldProj.ID, Key: oldProj.Key}
 		for _, w := range oldProj.Workflows {
-			require.NoError(t, workflow.Delete(context.TODO(), db, store, *oldProj, &w))
+			require.NoError(t, workflow.Delete(context.TODO(), db, store, projIdent, &w))
 		}
 		for _, app := range oldProj.Applications {
 			require.NoError(t, application.DeleteApplication(db, app.ID))
@@ -82,7 +84,7 @@ func DeleteTestProject(t *testing.T, db gorp.SqlExecutor, store cache.Store, key
 }
 
 // InsertTestGroup create a test group
-func InsertTestGroup(t *testing.T, db gorp.SqlExecutor, name string) *sdk.Group {
+func InsertTestGroup(t *testing.T, db gorpmapping.SqlExecutorWithTx, name string) *sdk.Group {
 	g := sdk.Group{
 		Name: name,
 	}
@@ -99,7 +101,7 @@ func InsertTestGroup(t *testing.T, db gorp.SqlExecutor, name string) *sdk.Group 
 }
 
 // SetUserGroupAdmin allows a user to perform operations on given group
-func SetUserGroupAdmin(t *testing.T, db gorp.SqlExecutor, groupID int64, userID string) {
+func SetUserGroupAdmin(t *testing.T, db gorpmapping.SqlExecutorWithTx, groupID int64, userID string) {
 	l, err := group.LoadLinkGroupUserForGroupIDAndUserID(context.TODO(), db, groupID, userID)
 	if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
 		t.Fatalf("cannot load link between group %d and user %s", groupID, userID)
@@ -128,7 +130,7 @@ func DeleteTestGroup(t *testing.T, db gorp.SqlExecutor, g *sdk.Group) {
 }
 
 // InsertAdminUser have to be used only for tests.
-func InsertAdminUser(t *testing.T, db gorp.SqlExecutor) (*sdk.AuthentifiedUser, string) {
+func InsertAdminUser(t *testing.T, db gorpmapping.SqlExecutorWithTx) (*sdk.AuthentifiedUser, string) {
 	data := sdk.AuthentifiedUser{
 		Username: sdk.RandomString(10),
 		Fullname: sdk.RandomString(10),
@@ -167,7 +169,7 @@ func DeleteConsumers(t *testing.T, db gorp.SqlExecutor) {
 }
 
 // InsertMaintainerUser have to be used only for tests.
-func InsertMaintainerUser(t *testing.T, db gorp.SqlExecutor) (*sdk.AuthentifiedUser, string) {
+func InsertMaintainerUser(t *testing.T, db gorpmapping.SqlExecutorWithTx) (*sdk.AuthentifiedUser, string) {
 	data := sdk.AuthentifiedUser{
 		Username: sdk.RandomString(10),
 		Fullname: sdk.RandomString(10),
@@ -191,7 +193,7 @@ func InsertMaintainerUser(t *testing.T, db gorp.SqlExecutor) (*sdk.AuthentifiedU
 }
 
 // InsertLambdaUser have to be used only for tests.
-func InsertLambdaUser(t *testing.T, db gorp.SqlExecutor, groups ...*sdk.Group) (*sdk.AuthentifiedUser, string) {
+func InsertLambdaUser(t *testing.T, db gorpmapping.SqlExecutorWithTx, groups ...*sdk.Group) (*sdk.AuthentifiedUser, string) {
 	u := &sdk.AuthentifiedUser{
 		Username: sdk.RandomString(10),
 		Fullname: sdk.RandomString(10),
@@ -385,7 +387,7 @@ func NewAction(id int64, ps ...sdk.Parameter) sdk.Action {
 	}
 }
 
-func InsertGroup(t *testing.T, db gorp.SqlExecutor) *sdk.Group {
+func InsertGroup(t *testing.T, db gorpmapping.SqlExecutorWithTx) *sdk.Group {
 	g := &sdk.Group{
 		Name: sdk.RandomString(10),
 	}
@@ -409,7 +411,7 @@ func InsertGroup(t *testing.T, db gorp.SqlExecutor) *sdk.Group {
 	return g
 }
 
-func InsertWorkerModel(t *testing.T, db gorp.SqlExecutor, name string, groupID int64) *sdk.Model {
+func InsertWorkerModel(t *testing.T, db gorpmapping.SqlExecutorWithTx, name string, groupID int64) *sdk.Model {
 	m := sdk.Model{
 		Name: name,
 		Type: sdk.Docker,
@@ -435,7 +437,7 @@ func InsertWorkerModel(t *testing.T, db gorp.SqlExecutor, name string, groupID i
 	return &m
 }
 
-func InsertHatchery(t *testing.T, db gorp.SqlExecutor, grp sdk.Group) (*sdk.Service, *rsa.PrivateKey, *sdk.AuthConsumer, string) {
+func InsertHatchery(t *testing.T, db gorpmapping.SqlExecutorWithTx, grp sdk.Group) (*sdk.Service, *rsa.PrivateKey, *sdk.AuthConsumer, string) {
 	usr1, _ := InsertLambdaUser(t, db, &grp)
 
 	consumer, err := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, usr1.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
@@ -453,7 +455,7 @@ func InsertHatchery(t *testing.T, db gorp.SqlExecutor, grp sdk.Group) (*sdk.Serv
 	var srv = sdk.Service{
 		CanonicalService: sdk.CanonicalService{
 			Name:       hConsumer.Name,
-			Type:       services.TypeHatchery,
+			Type:       sdk.TypeHatchery,
 			PublicKey:  publicKey,
 			ConsumerID: &hConsumer.ID,
 		},
@@ -470,7 +472,7 @@ func InsertHatchery(t *testing.T, db gorp.SqlExecutor, grp sdk.Group) (*sdk.Serv
 	return &srv, privateKey, hConsumer, jwt
 }
 
-func InsertService(t *testing.T, db gorp.SqlExecutor, name, serviceType string, scopes ...sdk.AuthConsumerScope) (*sdk.Service, *rsa.PrivateKey) {
+func InsertService(t *testing.T, db gorpmapping.SqlExecutorWithTx, name, serviceType string, scopes ...sdk.AuthConsumerScope) (*sdk.Service, *rsa.PrivateKey) {
 	usr1, _ := InsertAdminUser(t, db)
 
 	consumer, err := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, usr1.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
@@ -501,7 +503,41 @@ func InsertService(t *testing.T, db gorp.SqlExecutor, name, serviceType string, 
 	return &srv, privateKey
 }
 
-func InsertTestWorkflow(t *testing.T, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, name string) *sdk.Workflow {
+func InitCDNService(t *testing.T, db gorpmapping.SqlExecutorWithTx, scopes ...sdk.AuthConsumerScope) (*sdk.Service, *rsa.PrivateKey) {
+	usr1, _ := InsertAdminUser(t, db)
+
+	consumer, err := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, usr1.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
+	require.NoError(t, err)
+
+	sharedGroup, err := group.LoadByName(context.TODO(), db, sdk.SharedInfraGroupName)
+	require.NoError(t, err)
+	hConsumer, _, err := builtin.NewConsumer(context.TODO(), db, sdk.RandomString(10), "", consumer, []int64{sharedGroup.ID},
+		sdk.NewAuthConsumerScopeDetails(append(scopes, sdk.AuthConsumerScopeProject)...))
+	require.NoError(t, err)
+
+	privateKey, err := jws.NewRandomRSAKey()
+	require.NoError(t, err)
+	publicKey, err := jws.ExportPublicKey(privateKey)
+	require.NoError(t, err)
+
+	var srv = sdk.Service{
+		CanonicalService: sdk.CanonicalService{
+			Name:       hConsumer.Name,
+			Type:       sdk.TypeCDN,
+			PublicKey:  publicKey,
+			ConsumerID: &hConsumer.ID,
+			Config: map[string]interface{}{
+				"public_tcp": "cdn.net:4545",
+			},
+		},
+	}
+
+	require.NoError(t, services.Insert(context.TODO(), db, &srv))
+
+	return &srv, privateKey
+}
+
+func InsertTestWorkflow(t *testing.T, db gorpmapping.SqlExecutorWithTx, store cache.Store, proj *sdk.Project, name string) *sdk.Workflow {
 	//First pipeline
 	pip := sdk.Pipeline{
 		ProjectID:  proj.ID,
@@ -546,7 +582,8 @@ func InsertTestWorkflow(t *testing.T, db gorp.SqlExecutor, store cache.Store, pr
 		},
 	}
 
-	require.NoError(t, workflow.Insert(context.TODO(), db, store, *proj, &w))
+	projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
+	require.NoError(t, workflow.Insert(context.TODO(), db, store, projIdent, proj.ProjectGroups, &w))
 
 	return &w
 }

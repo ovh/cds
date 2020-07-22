@@ -81,8 +81,7 @@ export class WorkflowGraphComponent implements AfterViewInit {
         if (!this.ready && this.workflow) {
             return;
         }
-        // FIXME add a delay for dom container to take good height, otherwise the workflow will not be centered
-        setTimeout(() => { this.initWorkflow(); }, 1);
+        this.initWorkflow();
     }
 
     initWorkflow() {
@@ -125,6 +124,9 @@ export class WorkflowGraphComponent implements AfterViewInit {
     }
 
     clickOrigin() {
+        if (!this.svgContainer?.element?.nativeElement?.width?.baseVal || !this.svgContainer?.element?.nativeElement?.height?.baseVal) {
+            return;
+        }
         let w = this.svgContainer.element.nativeElement.width.baseVal.value - WorkflowGraphComponent.margin;
         let h = this.svgContainer.element.nativeElement.height.baseVal.value - WorkflowGraphComponent.margin;
         let gw = this.g.graph().width;
@@ -163,6 +165,7 @@ export class WorkflowGraphComponent implements AfterViewInit {
             componentRef.instance.hook = h;
             componentRef.instance.workflow = this.workflow;
             componentRef.instance.node = node;
+            componentRef.changeDetectorRef.detectChanges();
             this.hooksComponent.set(hookId, componentRef);
 
             this.svgContainer.insert(componentRef.hostView, 0);
@@ -249,6 +252,7 @@ export class WorkflowGraphComponent implements AfterViewInit {
         componentRef.instance.node = node;
         componentRef.instance.workflow = this.workflow;
         componentRef.instance.project = this.project;
+        componentRef.changeDetectorRef.detectChanges();
         return componentRef;
     }
 }

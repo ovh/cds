@@ -7,6 +7,7 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/go-gorp/gorp"
 	"github.com/golang/mock/gomock"
@@ -22,12 +23,11 @@ import (
 )
 
 func Test_WorkflowAsCodeRename(t *testing.T) {
-	api, db, _, end := newTestAPI(t)
-	defer end()
+	api, db, _ := newTestAPI(t)
 
-	_, _ = assets.InsertService(t, db, t.Name()+"_HOOKS", services.TypeHooks)
-	_, _ = assets.InsertService(t, db, t.Name()+"_VCS", services.TypeVCS)
-	_, _ = assets.InsertService(t, db, t.Name()+"_REPO", services.TypeRepositories)
+	_, _ = assets.InsertService(t, db, t.Name()+"_HOOKS", sdk.TypeHooks)
+	_, _ = assets.InsertService(t, db, t.Name()+"_VCS", sdk.TypeVCS)
+	_, _ = assets.InsertService(t, db, t.Name()+"_REPO", sdk.TypeRepositories)
 
 	// Setup a mock for all services called by the API
 	ctrl := gomock.NewController(t)
@@ -56,17 +56,18 @@ func Test_WorkflowAsCodeRename(t *testing.T) {
 	vcsServer.Set("secret", "bar")
 	assert.NoError(t, repositoriesmanager.InsertProjectVCSServerLink(context.TODO(), db, &vcsServer))
 
-	// Perform a "import as-code operation" to create a new workflow
-	ope := `{"repo_fullname":"fsamin/go-repo",  "vcs_server": "github", "url":"https://github.com/fsamin/go-repo.git","strategy":{"connection_type":"https","ssh_key":"","user":"","password":"","branch":"","default_branch":"master","pgp_key":""},"setup":{"checkout":{"branch":"master"}}}`
-	uri := api.Router.GetRoute("POST", api.postImportAsCodeHandler, map[string]string{
-		"permProjectKey": proj.Key,
-	})
-
 	UUID := sdk.UUID()
 
 	servicesClients.EXPECT().
 		DoJSONRequest(gomock.Any(), "POST", "/operations", gomock.Any(), gomock.Any()).
-		Return(nil, 201, nil).Times(2)
+		DoAndReturn(
+			func(ctx context.Context, method, path string, in interface{}, out interface{}) (http.Header, int, error) {
+				ope := new(sdk.Operation)
+				ope.UUID = UUID
+				ope.Status = sdk.OperationStatusPending
+				*(out.(*sdk.Operation)) = *ope
+				return nil, 201, nil
+			}).Times(2)
 
 	servicesClients.EXPECT().
 		DoJSONRequest(gomock.Any(), "GET", "/vcs/github/repos/fsamin/go-repo", gomock.Any(), gomock.Any(), gomock.Any()).MinTimes(0)
@@ -136,7 +137,7 @@ version: v1.0`),
 					*(out.(*sdk.Operation)) = *ope
 					return nil, 200, nil
 				},
-			).Times(1),
+			).Times(2),
 		servicesClients.EXPECT().
 			DoJSONRequest(gomock.Any(), "GET", gomock.Any(), gomock.Any(), gomock.Any()).
 			DoAndReturn(
@@ -265,19 +266,29 @@ version: v1.0`),
 			func(ctx context.Context, method, path string, in interface{}, out interface{}, _ interface{}) (http.Header, int, error) {
 				vcsHooks := in.(*sdk.VCSHook)
 				vcsHooks.ID = sdk.UUID()
+				require.Len(t, vcsHooks.Events, 0, "events list should be empty, default value is set by vcs")
+
+				vcsHooks.Events = []string{
+					"push",
+				}
 				*(out.(*sdk.VCSHook)) = *vcsHooks
 				return nil, 200, nil
 			},
 		).Times(1)
 
+	// Perform a "import as-code operation" to create a new workflow
+	ope := `{"repo_fullname":"fsamin/go-repo",  "vcs_server": "github", "url":"https://github.com/fsamin/go-repo.git","strategy":{"connection_type":"https","ssh_key":"","user":"","password":"","branch":"","default_branch":"master","pgp_key":""},"setup":{"checkout":{"branch":"master"}}}`
+	uri := api.Router.GetRoute("POST", api.postImportAsCodeHandler, map[string]string{
+		"permProjectKey": proj.Key,
+	})
 	req, err := http.NewRequest("POST", uri, strings.NewReader(ope))
 	require.NoError(t, err)
 	assets.AuthentifyRequest(t, req, u, pass)
-
-	// Do the request
 	w := httptest.NewRecorder()
 	api.Router.Mux.ServeHTTP(w, req)
-	assert.Equal(t, 201, w.Code)
+	require.Equal(t, 201, w.Code)
+	// Fake wait api event for operation done
+	time.Sleep(time.Second)
 
 	uri = api.Router.GetRoute("POST", api.postPerformImportAsCodeHandler, map[string]string{
 		"permProjectKey": prjKey,
@@ -286,16 +297,27 @@ version: v1.0`),
 	req, err = http.NewRequest("POST", uri, nil)
 	require.NoError(t, err)
 	assets.AuthentifyRequest(t, req, u, pass)
-
-	// Do the request
 	w = httptest.NewRecorder()
 	api.Router.Mux.ServeHTTP(w, req)
-	assert.Equal(t, 200, w.Code)
+	require.Equal(t, 200, w.Code)
 	t.Logf(w.Body.String())
 
-	wk, err := workflow.Load(context.Background(), db, api.Cache, *proj, "w-go-repo", workflow.LoadOptions{})
-	assert.NoError(t, err)
-	assert.NotNil(t, wk)
+	projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
+	wk, err := workflow.Load(context.Background(), db, projIdent, "w-go-repo", workflow.LoadOptions{})
+	require.NoError(t, err)
+	require.Len(t, wk.WorkflowData.GetHooks(), 1)
+
+	for _, h := range wk.WorkflowData.GetHooks() {
+		log.Debug("--> %T %+v", h, h)
+		require.Equal(t, "RepositoryWebHook", h.HookModelName)
+		require.Equal(t, "push", h.Config["eventFilter"].Value)
+		require.Equal(t, "Github", h.Config["hookIcon"].Value)
+		require.Equal(t, "POST", h.Config["method"].Value)
+		require.Equal(t, proj.Key, h.Config["project"].Value)
+		require.Equal(t, "fsamin/go-repo", h.Config["repoFullName"].Value)
+		require.Equal(t, "github", h.Config["vcsServer"].Value)
+		require.Equal(t, wk.Name, h.Config["workflow"].Value)
+	}
 
 	// Then we will trigger a run of the workflow wich should trigger an as-code operation with a renamed workflow
 	vars := map[string]string{
@@ -333,24 +355,24 @@ version: v1.0`),
 
 	assert.NotEqual(t, "Fail", wr.Status)
 
-	wk, err = workflow.Load(context.Background(), db, api.Cache, *proj, "w-go-repo-renamed", workflow.LoadOptions{})
+	wk, err = workflow.Load(context.Background(), db, projIdent, "w-go-repo-renamed", workflow.LoadOptions{})
 	assert.NoError(t, err)
 	assert.NotNil(t, wk)
 
-	_, err = workflow.Load(context.Background(), db, api.Cache, *proj, "w-go-repo", workflow.LoadOptions{})
+	_, err = workflow.Load(context.Background(), db, projIdent, "w-go-repo", workflow.LoadOptions{})
 	assert.Error(t, err)
 
 	require.Len(t, wk.WorkflowData.GetHooks(), 1)
 
 	for _, h := range wk.WorkflowData.GetHooks() {
 		log.Debug("--> %T %+v", h, h)
-		assert.Equal(t, "RepositoryWebHook", h.HookModelName)
-		assert.Equal(t, "push", h.Config["eventFilter"].Value)
-		assert.Equal(t, "Github", h.Config["hookIcon"].Value)
-		assert.Equal(t, "POST", h.Config["method"].Value)
-		assert.Equal(t, proj.Key, h.Config["project"].Value)
-		assert.Equal(t, "fsamin/go-repo", h.Config["repoFullName"].Value)
-		assert.Equal(t, "github", h.Config["vcsServer"].Value)
-		assert.Equal(t, wk.Name, h.Config["workflow"].Value)
+		require.Equal(t, "RepositoryWebHook", h.HookModelName)
+		require.Equal(t, "push", h.Config["eventFilter"].Value)
+		require.Equal(t, "Github", h.Config["hookIcon"].Value)
+		require.Equal(t, "POST", h.Config["method"].Value)
+		require.Equal(t, proj.Key, h.Config["project"].Value)
+		require.Equal(t, "fsamin/go-repo", h.Config["repoFullName"].Value)
+		require.Equal(t, "github", h.Config["vcsServer"].Value)
+		require.Equal(t, wk.Name, h.Config["workflow"].Value)
 	}
 }

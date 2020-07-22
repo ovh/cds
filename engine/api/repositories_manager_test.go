@@ -27,8 +27,7 @@ import (
 )
 
 func TestAPI_detachRepositoriesManagerHandler(t *testing.T) {
-	api, db, router, end := newTestAPI(t)
-	defer end()
+	api, db, router := newTestAPI(t)
 
 	srvs, err := services.LoadAll(context.TODO(), db)
 	require.NoError(t, err)
@@ -37,12 +36,12 @@ func TestAPI_detachRepositoriesManagerHandler(t *testing.T) {
 		require.NoError(t, services.Delete(db, &srv))
 	}
 
-	mockVCSSservice, _ := assets.InsertService(t, db, "TestAPI_detachRepositoriesManagerVCS", services.TypeVCS)
+	mockVCSSservice, _ := assets.InsertService(t, db, "TestAPI_detachRepositoriesManagerVCS", sdk.TypeVCS)
 	defer func() {
 		services.Delete(db, mockVCSSservice) // nolint
 	}()
 
-	mockServiceHook, _ := assets.InsertService(t, db, "TestAPI_detachRepositoriesManagerHook", services.TypeHooks)
+	mockServiceHook, _ := assets.InsertService(t, db, "TestAPI_detachRepositoriesManagerHook", sdk.TypeHooks)
 	defer func() {
 		_ = services.Delete(db, mockServiceHook) // nolint
 	}()
@@ -221,8 +220,10 @@ vcs_ssh_key: proj-blabla
 
 	t.Log("Inserting workflow=====")
 
-	test.NoError(t, workflow.Insert(context.TODO(), db, api.Cache, *proj, &w))
-	w1, err := workflow.Load(context.TODO(), db, api.Cache, *proj, "test_1", workflow.LoadOptions{
+	projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
+
+	test.NoError(t, workflow.Insert(context.TODO(), db, api.Cache, projIdent, proj.ProjectGroups, &w))
+	w1, err := workflow.Load(context.TODO(), db, projIdent, "test_1", workflow.LoadOptions{
 		DeepPipeline: true,
 	})
 	test.NoError(t, err)
@@ -230,7 +231,7 @@ vcs_ssh_key: proj-blabla
 	t.Log("Inserting workflow run=====")
 
 	// creates a run
-	wr, errWR := workflow.CreateRun(db, w1, nil, u)
+	wr, errWR := workflow.CreateRun(db.DbMap, w1, nil, u)
 	assert.NoError(t, errWR)
 	wr.Workflow = *w1
 	t.Log("Starting workflow run=====")
@@ -266,7 +267,7 @@ vcs_ssh_key: proj-blabla
 
 	t.Log("Loading the workflow=====")
 
-	w2, err := workflow.Load(context.TODO(), db, api.Cache, *proj, "test_1", workflow.LoadOptions{})
+	w2, err := workflow.Load(context.TODO(), db, projIdent, "test_1", workflow.LoadOptions{})
 	test.NoError(t, err)
 
 	// Delete repository webhook
@@ -280,7 +281,7 @@ vcs_ssh_key: proj-blabla
 
 	// save the workflow with the repositorywebhook deleted
 	t.Log("Updating the workflo without the repositorywebhook=====")
-	test.NoError(t, workflow.Update(context.TODO(), db, api.Cache, *proj, w2, workflow.UpdateOptions{}))
+	test.NoError(t, workflow.Update(context.TODO(), db, api.Cache, projIdent, w2, workflow.UpdateOptions{}))
 
 	req, err = http.NewRequest("POST", uri, nil)
 	test.NoError(t, err)

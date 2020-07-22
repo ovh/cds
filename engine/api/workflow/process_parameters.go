@@ -6,9 +6,10 @@ import (
 	"strings"
 
 	"github.com/fsamin/go-dump"
-	"github.com/ovh/cds/engine/api/observability"
+
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/interpolate"
+	"github.com/ovh/cds/sdk/telemetry"
 )
 
 func getNodeJobRunParameters(j sdk.Job, run *sdk.WorkflowNodeRun, stage *sdk.Stage) ([]sdk.Parameter, *sdk.MultiError) {
@@ -43,7 +44,6 @@ func getBuildParameterFromNodeContext(proj sdk.Project, w *sdk.Workflow, runCont
 	}
 
 	tmpProj = sdk.ParametersFromProjectKeys(proj)
-	vars = make(map[string]string, len(tmpProj))
 	for k, v := range tmpProj {
 		vars[k] = v
 	}
@@ -166,7 +166,7 @@ func getParentParameters(w *sdk.WorkflowRun, nodeRuns []*sdk.WorkflowNodeRun) ([
 
 		node := w.Workflow.WorkflowData.NodeByID(parentNodeRun.WorkflowNodeID)
 		if node == nil {
-			return nil, sdk.WrapError(fmt.Errorf("Unable to find node %d in workflow", parentNodeRun.WorkflowNodeID), "getParentParameters>")
+			return nil, sdk.WithStack(fmt.Errorf("Unable to find node %d in workflow", parentNodeRun.WorkflowNodeID))
 		}
 		nodeName = node.Name
 
@@ -212,10 +212,10 @@ func getParentParameters(w *sdk.WorkflowRun, nodeRuns []*sdk.WorkflowNodeRun) ([
 }
 
 func getNodeRunBuildParameters(ctx context.Context, proj sdk.Project, wr *sdk.WorkflowRun, run *sdk.WorkflowNodeRun, runContext nodeRunContext) ([]sdk.Parameter, error) {
-	ctx, end := observability.Span(ctx, "workflow.getNodeRunBuildParameters",
-		observability.Tag(observability.TagWorkflow, wr.Workflow.Name),
-		observability.Tag(observability.TagWorkflowRun, wr.Number),
-		observability.Tag(observability.TagWorkflowNodeRun, run.ID),
+	ctx, end := telemetry.Span(ctx, "workflow.getNodeRunBuildParameters",
+		telemetry.Tag(telemetry.TagWorkflow, wr.Workflow.Name),
+		telemetry.Tag(telemetry.TagWorkflowRun, wr.Number),
+		telemetry.Tag(telemetry.TagWorkflowNodeRun, run.ID),
 	)
 	defer end()
 
@@ -237,7 +237,7 @@ func getNodeRunBuildParameters(ctx context.Context, proj sdk.Project, wr *sdk.Wo
 		tmp["cds.template.version"] = fmt.Sprintf("%d", wr.Workflow.TemplateInstance.WorkflowTemplateVersion)
 	}
 
-	_, next := observability.Span(ctx, "workflow.interpolate")
+	_, next := telemetry.Span(ctx, "workflow.interpolate")
 	params = make([]sdk.Parameter, 0, len(tmp))
 	for k, v := range tmp {
 		s, err := interpolate.Do(v, tmp)

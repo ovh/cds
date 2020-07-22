@@ -16,11 +16,10 @@ import (
 )
 
 func Test_getKeysInProjectHandler(t *testing.T) {
-	api, db, router, end := newTestAPI(t)
-	defer end()
+	api, db, router := newTestAPI(t)
 
 	//Create admin user
-	u, pass := assets.InsertAdminUser(t, api.mustDB())
+	u, pass := assets.InsertAdminUser(t, db)
 
 	//Insert Project
 	pkey := sdk.RandomString(10)
@@ -41,7 +40,7 @@ func Test_getKeysInProjectHandler(t *testing.T) {
 	k.Private = kpgp.Private
 	k.Type = kpgp.Type
 
-	if err := project.InsertKey(api.mustDB(), k); err != nil {
+	if err := project.InsertKey(db, k); err != nil {
 		t.Fatal(err)
 	}
 
@@ -66,11 +65,10 @@ func Test_getKeysInProjectHandler(t *testing.T) {
 }
 
 func Test_deleteKeyInProjectHandler(t *testing.T) {
-	api, db, router, end := newTestAPI(t)
-	defer end()
+	api, db, router := newTestAPI(t)
 
 	//Create admin user
-	u, pass := assets.InsertAdminUser(t, api.mustDB())
+	u, pass := assets.InsertAdminUser(t, db)
 
 	//Insert Project
 	pkey := sdk.RandomString(10)
@@ -84,7 +82,7 @@ func Test_deleteKeyInProjectHandler(t *testing.T) {
 		ProjectID: proj.ID,
 	}
 
-	if err := project.InsertKey(api.mustDB(), k); err != nil {
+	if err := project.InsertKey(db, k); err != nil {
 		t.Fatal(err)
 	}
 
@@ -109,11 +107,10 @@ func Test_deleteKeyInProjectHandler(t *testing.T) {
 }
 
 func Test_addKeyInProjectHandler(t *testing.T) {
-	api, db, router, end := newTestAPI(t)
-	defer end()
+	api, db, router := newTestAPI(t)
 
 	//Create admin user
-	u, pass := assets.InsertAdminUser(t, api.mustDB())
+	u, pass := assets.InsertAdminUser(t, db)
 
 	//Insert Project
 	pkey := sdk.RandomString(10)

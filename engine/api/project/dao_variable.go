@@ -6,16 +6,17 @@ import (
 	"time"
 
 	"github.com/go-gorp/gorp"
+	"github.com/lib/pq"
 
-	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/gorpmapping"
 	"github.com/ovh/cds/sdk/log"
 )
 
-func loadAllVariables(db gorp.SqlExecutor, query gorpmapping.Query, opts ...gorpmapping.GetOptionFunc) ([]sdk.Variable, error) {
+func loadAllVariables(db gorp.SqlExecutor, query gorpmapping.Query, opts ...gorpmapping.GetOptionFunc) ([]sdk.ProjectVariable, error) {
 	var ctx = context.Background()
 	var res []dbProjectVariable
-	vars := make([]sdk.Variable, 0, len(res))
+	vars := make([]sdk.ProjectVariable, 0, len(res))
 
 	if err := gorpmapping.GetAll(ctx, db, query, &res, opts...); err != nil {
 		return nil, err
@@ -36,7 +37,7 @@ func loadAllVariables(db gorp.SqlExecutor, query gorpmapping.Query, opts ...gorp
 }
 
 // LoadAllVariables Get all variable for the given project
-func LoadAllVariables(db gorp.SqlExecutor, projID int64) ([]sdk.Variable, error) {
+func LoadAllVariables(db gorp.SqlExecutor, projID int64) ([]sdk.ProjectVariable, error) {
 	query := gorpmapping.NewQuery(`
 		SELECT *
 		FROM project_variable
@@ -47,7 +48,7 @@ func LoadAllVariables(db gorp.SqlExecutor, projID int64) ([]sdk.Variable, error)
 }
 
 // LoadAllVariablesWithDecrytion Get all variable for the given project, it also decrypt all the secure content
-func LoadAllVariablesWithDecrytion(db gorp.SqlExecutor, projID int64) ([]sdk.Variable, error) {
+func LoadAllVariablesWithDecrytion(db gorp.SqlExecutor, projID int64) ([]sdk.ProjectVariable, error) {
 	query := gorpmapping.NewQuery(`
 		SELECT *
 		FROM project_variable
@@ -57,7 +58,7 @@ func LoadAllVariablesWithDecrytion(db gorp.SqlExecutor, projID int64) ([]sdk.Var
 	return loadAllVariables(db, query, gorpmapping.GetOptions.WithDecryption)
 }
 
-func loadVariable(db gorp.SqlExecutor, q gorpmapping.Query, opts ...gorpmapping.GetOptionFunc) (*sdk.Variable, error) {
+func loadVariable(db gorp.SqlExecutor, q gorpmapping.Query, opts ...gorpmapping.GetOptionFunc) (*sdk.ProjectVariable, error) {
 	var v dbProjectVariable
 	found, err := gorpmapping.Get(context.Background(), db, q, &v, opts...)
 	if err != nil {
@@ -80,14 +81,14 @@ func loadVariable(db gorp.SqlExecutor, q gorpmapping.Query, opts ...gorpmapping.
 }
 
 // LoadVariable retrieve a specific variable
-func LoadVariable(db gorp.SqlExecutor, projID int64, varName string) (*sdk.Variable, error) {
+func LoadVariable(db gorp.SqlExecutor, projID int64, varName string) (*sdk.ProjectVariable, error) {
 	query := gorpmapping.NewQuery(`SELECT * FROM project_variable
 			WHERE project_id = $1 AND var_name=$2`).Args(projID, varName)
 	return loadVariable(db, query)
 }
 
 // LoadVariableWithDecryption retrieve a specific variable with decrypted content
-func LoadVariableWithDecryption(db gorp.SqlExecutor, projID int64, varID int64, varName string) (*sdk.Variable, error) {
+func LoadVariableWithDecryption(db gorp.SqlExecutor, projID int64, varID int64, varName string) (*sdk.ProjectVariable, error) {
 	query := gorpmapping.NewQuery(`SELECT * FROM project_variable
 			WHERE project_id = $1 AND id = $2 AND var_name=$3`).Args(projID, varID, varName)
 	return loadVariable(db, query, gorpmapping.GetOptions.WithDecryption)
@@ -104,7 +105,7 @@ func DeleteAllVariables(db gorp.SqlExecutor, projectID int64) error {
 }
 
 // InsertVariable Insert a new variable in the given project
-func InsertVariable(db gorp.SqlExecutor, projID int64, v *sdk.Variable, u sdk.Identifiable) error {
+func InsertVariable(db gorpmapping.SqlExecutorWithTx, projID int64, v *sdk.ProjectVariable, u sdk.Identifiable) error {
 	//Check variable name
 	rx := sdk.NamePatternRegex
 	if !rx.MatchString(v.Name) {
@@ -138,7 +139,7 @@ func InsertVariable(db gorp.SqlExecutor, projID int64, v *sdk.Variable, u sdk.Id
 }
 
 // UpdateVariable Update a variable in the given project
-func UpdateVariable(db gorp.SqlExecutor, projID int64, variable *sdk.Variable, variableBefore *sdk.Variable, u sdk.Identifiable) error {
+func UpdateVariable(db gorpmapping.SqlExecutorWithTx, projID int64, variable *sdk.ProjectVariable, variableBefore *sdk.ProjectVariable, u sdk.Identifiable) error {
 	rx := sdk.NamePatternRegex
 	if !rx.MatchString(variable.Name) {
 		return sdk.NewError(sdk.ErrInvalidName, fmt.Errorf("Invalid variable name. It should match %s", sdk.NamePattern))
@@ -174,7 +175,7 @@ func UpdateVariable(db gorp.SqlExecutor, projID int64, variable *sdk.Variable, v
 }
 
 // DeleteVariable Delete a variable from the given pipeline
-func DeleteVariable(db gorp.SqlExecutor, projID int64, variable *sdk.Variable, u sdk.Identifiable) error {
+func DeleteVariable(db gorp.SqlExecutor, projID int64, variable *sdk.ProjectVariable, u sdk.Identifiable) error {
 	query := `DELETE FROM project_variable
 		  WHERE project_variable.project_id = $1 AND project_variable.var_name = $2`
 	result, err := db.Exec(query, projID, variable.Name)
@@ -203,4 +204,41 @@ func DeleteVariable(db gorp.SqlExecutor, projID int64, variable *sdk.Variable, u
 		return sdk.WrapError(err, "Cannot insert audit for variable %s", variable.Name)
 	}
 	return nil
+}
+
+// LoadAllVariablesForProjectsWithDecryption loads all variables for all givent projects
+func LoadAllVariablesForProjectsWithDecryption(ctx context.Context, db gorp.SqlExecutor, projIDs []int64) (map[int64][]sdk.ProjectVariable, error) {
+	return loadAllVariablesForProjects(ctx, db, projIDs, gorpmapping.GetOptions.WithDecryption)
+}
+
+func loadAllVariablesForProjects(ctx context.Context, db gorp.SqlExecutor, appsID []int64, opts ...gorpmapping.GetOptionFunc) (map[int64][]sdk.ProjectVariable, error) {
+	var res []dbProjectVariable
+	query := gorpmapping.NewQuery(`
+		SELECT *
+		FROM project_variable
+		WHERE project_id = ANY($1)
+		ORDER BY project_id
+	`).Args(pq.Int64Array(appsID))
+	if err := gorpmapping.GetAll(ctx, db, query, &res, opts...); err != nil {
+		return nil, err
+	}
+
+	projsVars := make(map[int64][]sdk.ProjectVariable)
+
+	for i := range res {
+		dbProjVar := res[i]
+		isValid, err := gorpmapping.CheckSignature(dbProjVar, dbProjVar.Signature)
+		if err != nil {
+			return nil, err
+		}
+		if !isValid {
+			log.Error(ctx, "project.loadAllVariablesForProjects> project variable id %d data corrupted", dbProjVar.ID)
+			continue
+		}
+		if _, ok := projsVars[dbProjVar.ProjectID]; !ok {
+			projsVars[dbProjVar.ProjectID] = make([]sdk.ProjectVariable, 0)
+		}
+		projsVars[dbProjVar.ProjectID] = append(projsVars[dbProjVar.ProjectID], dbProjVar.Variable())
+	}
+	return projsVars, nil
 }

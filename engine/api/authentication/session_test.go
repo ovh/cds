@@ -16,8 +16,7 @@ import (
 )
 
 func Test_CheckSessionJWT(t *testing.T) {
-	_, _, end := test.SetupPG(t, bootstrap.InitiliazeDB)
-	defer end()
+	_, _ = test.SetupPG(t, bootstrap.InitiliazeDB)
 
 	now := time.Now()
 
@@ -44,9 +43,9 @@ func Test_CheckSessionJWT(t *testing.T) {
 }
 
 func Test_SessionCleaner(t *testing.T) {
-	ctx, cancel := context.WithTimeout(context.TODO(), 15*time.Second)
+	ctx, cancel := context.WithTimeout(context.TODO(), 5*time.Second)
 	defer cancel()
-	db, _, end := test.SetupPG(t, bootstrap.InitiliazeDB)
-	defer end()
-	authentication.SessionCleaner(ctx, func() *gorp.DbMap { return db })
+	db, _ := test.SetupPG(t, bootstrap.InitiliazeDB)
+
+	authentication.SessionCleaner(ctx, func() *gorp.DbMap { return db.DbMap }, 1*time.Second)
 }

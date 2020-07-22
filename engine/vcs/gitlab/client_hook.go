@@ -58,7 +58,7 @@ func (c *gitlabClient) CreateHook(ctx context.Context, repo string, hook *sdk.VC
 
 	var pushEvent, mergeRequestEvent, TagPushEvent, issueEvent, noteEvent, wikiPageEvent, pipelineEvent, jobEvent bool
 	if len(hook.Events) == 0 {
-		hook.Events = []string{string(gitlab.EventTypePush), string(gitlab.EventTypeTagPush)}
+		hook.Events = sdk.GitlabEventsDefault
 	}
 
 	for _, e := range hook.Events {
@@ -117,7 +117,7 @@ func (c *gitlabClient) UpdateHook(ctx context.Context, repo string, hook *sdk.VC
 
 	var pushEvent, mergeRequestEvent, TagPushEvent, issueEvent, noteEvent, wikiPageEvent, pipelineEvent, jobEvent bool
 	if len(hook.Events) == 0 {
-		hook.Events = []string{string(gitlab.EventTypePush), string(gitlab.EventTypeTagPush)}
+		hook.Events = sdk.GitlabEventsDefault
 	}
 
 	for _, e := range hook.Events {

@@ -7,12 +7,12 @@ import (
 
 	"github.com/gorilla/mux"
 
-	"github.com/ovh/cds/engine/api/observability"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/telemetry"
 )
 
 func (api *API) getWorkflowHooksHandler() service.Handler {
@@ -52,13 +52,19 @@ func (api *API) getWorkflowHookModelsHandler() service.Handler {
 			return err
 		}
 
-		proj, err := project.Load(api.mustDB(), key, project.LoadOptions.WithIntegrations)
+		tx, err := api.mustDB().Begin()
+		if err != nil {
+			return sdk.WithStack(err)
+		}
+		defer tx.Rollback() // nolint
+
+		p, err := project.Load(ctx, tx, key, project.LoadOptions.WithIntegrations)
 		if err != nil {
 			return sdk.WithStack(err)
 		}
 
-		projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
-		wf, err := workflow.Load(ctx, api.mustDB(), projIdent, workflowName, workflow.LoadOptions{})
+		projIdent := sdk.ProjectIdentifiers{ID: p.ID, Key: p.Key}
+		wf, err := workflow.Load(ctx, tx, projIdent, workflowName, workflow.LoadOptions{})
 		if err != nil {
 			return sdk.WithStack(err)
 		}
@@ -68,7 +74,7 @@ func (api *API) getWorkflowHookModelsHandler() service.Handler {
 			return sdk.WithStack(sdk.ErrWorkflowNodeNotFound)
 		}
 
-		m, err := workflow.LoadHookModels(api.mustDB())
+		m, err := workflow.LoadHookModels(tx)
 		if err != nil {
 			return sdk.WithStack(err)
 		}
@@ -84,7 +90,7 @@ func (api *API) getWorkflowHookModelsHandler() service.Handler {
 			// Call VCS to know if repository allows webhook and get the configuration fields
 			vcsServer, err := repositoriesmanager.LoadProjectVCSServerLinkByProjectKeyAndVCSServerName(ctx, api.mustDB(), projIdent.Key, wf.GetApplication(node.Context.ApplicationID).VCSServer)
 			if err == nil {
-				client, err := repositoriesmanager.AuthorizedClient(ctx, api.mustDB(), api.Cache, projIdent.Key, vcsServer)
+				client, err := repositoriesmanager.AuthorizedClient(ctx, tx, api.Cache, projIdent.Key, vcsServer)
 				if err != nil {
 					return sdk.WrapError(err, "cannot get vcs client")
 				}
@@ -106,7 +112,7 @@ func (api *API) getWorkflowHookModelsHandler() service.Handler {
 		}
 
 		hasKafka := false
-		for _, integration := range proj.Integrations {
+		for _, integration := range p.Integrations {
 			if integration.Model.Hook {
 				hasKafka = true
 				break
@@ -149,6 +155,10 @@ func (api *API) getWorkflowHookModelsHandler() service.Handler {
 			default:
 				models = append(models, m[i])
 			}
+		}
+
+		if err := tx.Commit(); err != nil {
+			return sdk.WithStack(err)
 		}
 
 		return service.WriteJSON(w, models, http.StatusOK)
@@ -241,14 +251,17 @@ func (api *API) postWorkflowJobHookCallbackHandler() service.Handler {
 
 		defer tx.Rollback() // nolint
 
-		_, next := observability.Span(ctx, "project.Load")
-		proj, err := project.Load(tx, key,
+		_, next := telemetry.Span(ctx, "project.Load")
+		// need variable, integration, key for node process
+		proj, err := project.Load(ctx, tx, key,
 			project.LoadOptions.WithVariables,
-			project.LoadOptions.WithFeatures(api.Cache),
 			project.LoadOptions.WithIntegrations,
-			project.LoadOptions.WithApplicationVariables,
-			project.LoadOptions.WithApplicationWithDeploymentStrategies,
+			project.LoadOptions.WithKeys,
 		)
+		projIdent := sdk.ProjectIdentifiers{
+			ID:  proj.ID,
+			Key: proj.Key,
+		}
 		next()
 		if err != nil {
 			return sdk.WrapError(err, "cannot load project")
@@ -260,7 +273,7 @@ func (api *API) postWorkflowJobHookCallbackHandler() service.Handler {
 			return sdk.WrapError(err, "cannot load workflow run")
 		}
 
-		secrets, err := workflow.LoadSecrets(ctx, tx, wr, nil)
+		secrets, err := workflow.LoadDecryptSecrets(ctx, tx, wr, nil)
 		if err != nil {
 			return sdk.WrapError(err, "cannot load secrets")
 		}
@@ -279,14 +292,14 @@ func (api *API) postWorkflowJobHookCallbackHandler() service.Handler {
 			return sdk.WithStack(err)
 		}
 
-		go WorkflowSendEvent(context.Background(), api.mustDB(), api.Cache, *proj, report)
+		go WorkflowSendEvent(context.Background(), api.mustDB(), api.Cache, projIdent, report)
 
 		report, err = updateParentWorkflowRun(ctx, api.mustDB, api.Cache, wr)
 		if err != nil {
 			return sdk.WithStack(err)
 		}
 
-		go WorkflowSendEvent(context.Background(), api.mustDB(), api.Cache, *proj, report)
+		go WorkflowSendEvent(context.Background(), api.mustDB(), api.Cache, projIdent, report)
 
 		return nil
 	}
@@ -317,7 +330,7 @@ func (api *API) getWorkflowJobHookDetailsHandler() service.Handler {
 			return sdk.WithStack(sdk.ErrNotFound)
 		}
 
-		secrets, errSecret := workflow.LoadSecrets(ctx, db, wr, nil)
+		secrets, errSecret := workflow.LoadDecryptSecrets(ctx, db, wr, nil)
 		if errSecret != nil {
 			return sdk.WrapError(errSecret, "cannot load secrets")
 		}

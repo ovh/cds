@@ -28,8 +28,8 @@ import (
 )
 
 func TestParseAndImport(t *testing.T) {
-	db, cache, end := test.SetupPG(t)
-	defer end()
+	db, cache := test.SetupPG(t)
+
 	u, _ := assets.InsertAdminUser(t, db)
 	localConsumer, err := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
 	require.NoError(t, err)
@@ -62,7 +62,7 @@ func TestParseAndImport(t *testing.T) {
 	test.NoError(t, environment.InsertEnvironment(db, env))
 
 	//Reload project
-	proj, _ = project.Load(db, proj.Key, project.LoadOptions.WithApplications, project.LoadOptions.WithEnvironments, project.LoadOptions.WithPipelines)
+	proj, _ = project.Load(context.TODO(), db, proj.Key, project.LoadOptions.WithApplications, project.LoadOptions.WithEnvironments, project.LoadOptions.WithPipelines)
 
 	input := v2.Workflow{
 		Name:    sdk.RandomString(10),
@@ -93,7 +93,8 @@ func TestParseAndImport(t *testing.T) {
 	_, _, err = workflow.ParseAndImport(context.TODO(), db, cache, *proj, nil, input, localConsumer, workflow.ImportOptions{Force: true})
 	assert.NoError(t, err)
 
-	w, errW := workflow.Load(context.TODO(), db, cache, *proj, input.Name, workflow.LoadOptions{})
+	projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
+	w, errW := workflow.Load(context.TODO(), db, projIdent, input.Name, workflow.LoadOptions{})
 	assert.NoError(t, errW)
 	assert.NotNil(t, w)
 
@@ -116,8 +117,8 @@ func TestParseAndImport(t *testing.T) {
 
 // TestParseAndImportFromRepository tests to import a workflow with FromRepository
 func TestParseAndImportFromRepository(t *testing.T) {
-	db, cache, end := test.SetupPG(t)
-	defer end()
+	db, cache := test.SetupPG(t)
+
 	u, _ := assets.InsertAdminUser(t, db)
 
 	pkey := sdk.RandomString(10)
@@ -132,12 +133,12 @@ func TestParseAndImportFromRepository(t *testing.T) {
 
 	UUID := sdk.UUID()
 
-	mockServiceVCS, _ := assets.InsertService(t, db, "Test_postWorkflowAsCodeHandlerVCS", services.TypeVCS)
+	mockServiceVCS, _ := assets.InsertService(t, db, "Test_postWorkflowAsCodeHandlerVCS", sdk.TypeVCS)
 	defer func() {
 		_ = services.Delete(db, mockServiceVCS) // nolint
 	}()
 
-	mockServiceHook, _ := assets.InsertService(t, db, "Test_postWorkflowAsCodeHandlerHook", services.TypeHooks)
+	mockServiceHook, _ := assets.InsertService(t, db, "Test_postWorkflowAsCodeHandlerHook", sdk.TypeHooks)
 	defer func() {
 		_ = services.Delete(db, mockServiceHook) // nolint
 	}()
@@ -247,7 +248,7 @@ func TestParseAndImportFromRepository(t *testing.T) {
 	test.NoError(t, environment.InsertEnvironment(db, env))
 
 	//Reload project
-	proj, _ = project.Load(db, proj.Key, project.LoadOptions.WithApplications, project.LoadOptions.WithEnvironments, project.LoadOptions.WithPipelines)
+	proj, _ = project.Load(context.TODO(), db, proj.Key, project.LoadOptions.WithApplications, project.LoadOptions.WithEnvironments, project.LoadOptions.WithPipelines)
 
 	input := v2.Workflow{
 		Name:    sdk.RandomString(10),
@@ -263,7 +264,8 @@ func TestParseAndImportFromRepository(t *testing.T) {
 	_, _, err := workflow.ParseAndImport(context.TODO(), db, cache, *proj, nil, input, u, workflow.ImportOptions{Force: true, FromRepository: "foo/myrepo"})
 	assert.NoError(t, err)
 
-	w, errW := workflow.Load(context.TODO(), db, cache, *proj, input.Name, workflow.LoadOptions{})
+	projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
+	w, errW := workflow.Load(context.TODO(), db, projIdent, input.Name, workflow.LoadOptions{})
 	assert.NoError(t, errW)
 	assert.NotNil(t, w)
 

@@ -4,13 +4,12 @@ import (
 	"context"
 	"sync"
 
-	"github.com/go-gorp/gorp"
-
 	"github.com/ovh/cds/engine/api/cache"
-	"github.com/ovh/cds/engine/api/observability"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/exportentities"
+	"github.com/ovh/cds/sdk/gorpmapping"
 	"github.com/ovh/cds/sdk/log"
+	"github.com/ovh/cds/sdk/telemetry"
 )
 
 // ImportOptions is option to parse a workflow
@@ -51,16 +50,16 @@ func Parse(ctx context.Context, proj sdk.Project, ew exportentities.Workflow) (*
 }
 
 // ParseAndImport parse an exportentities.workflow and insert or update the workflow in database
-func ParseAndImport(ctx context.Context, db gorp.SqlExecutor, store cache.Store, p sdk.Project, oldW *sdk.Workflow, ew exportentities.Workflow, u sdk.Identifiable, opts ImportOptions) (*sdk.Workflow, []sdk.Message, error) {
-	ctx, end := observability.Span(ctx, "workflow.ParseAndImport")
+func ParseAndImport(ctx context.Context, db gorpmapping.SqlExecutorWithTx, store cache.Store, proj sdk.Project, oldW *sdk.Workflow, ew exportentities.Workflow, u sdk.Identifiable, opts ImportOptions) (*sdk.Workflow, []sdk.Message, error) {
+	ctx, end := telemetry.Span(ctx, "workflow.ParseAndImport")
 	defer end()
-	projIdent := sdk.ProjectIdentifiers{ID: p.ID, Key: p.Key}
+	projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
 	log.Info(ctx, "ParseAndImport>> Import workflow %s in project %s (force=%v)", ew.GetName(), projIdent.Key, opts.Force)
 
 	//Parse workflow
-	w, errW := Parse(ctx, p, ew)
-	if errW != nil {
-		return nil, nil, errW
+	w, err := Parse(ctx, proj, ew)
+	if err != nil {
+		return nil, nil, err
 	}
 
 	// Load deep pipelines if we come from workflow run ( so we have hook uuid ).
@@ -99,7 +98,7 @@ func ParseAndImport(ctx context.Context, db gorp.SqlExecutor, store cache.Store,
 		if oldW != nil {
 			for i := range oldW.WorkflowData.Node.Hooks {
 				h := &oldW.WorkflowData.Node.Hooks[i]
-				if h.HookModelName == sdk.RepositoryWebHookModel.Name {
+				if h.IsRepositoryWebHook() {
 					oldRepoWebHook = h
 					break
 				}
@@ -111,24 +110,36 @@ func ParseAndImport(ctx context.Context, db gorp.SqlExecutor, store cache.Store,
 				// Get current webhook
 				for i := range w.WorkflowData.Node.Hooks {
 					h := &w.WorkflowData.Node.Hooks[i]
-					if h.HookModelName == sdk.RepositoryWebHookModel.Name {
+					if h.IsRepositoryWebHook() {
 						h.UUID = oldRepoWebHook.UUID
-						h.Config = oldRepoWebHook.Config.Clone()
-						h.Config[sdk.HookConfigWorkflow] = sdk.WorkflowNodeHookConfigValue{Value: w.Name}
+						h.Config.MergeWith(
+							oldRepoWebHook.Config.Filter(
+								func(k string, v sdk.WorkflowNodeHookConfigValue) bool {
+									return !v.Configurable
+								},
+							),
+						)
+						// get only non cofigurable stuff
 						currentRepoWebHook = h
+						log.Debug("workflow.ParseAndImport> keeping the old repository web hook: %+v (%+v)", h, oldRepoWebHook)
 						break
 					}
 				}
 
-				// If not found
+				// If not found, take the default config
 				if currentRepoWebHook == nil {
 					h := sdk.NodeHook{
 						UUID:          oldRepoWebHook.UUID,
 						HookModelName: oldRepoWebHook.HookModelName,
-						Config:        oldRepoWebHook.Config.Clone(),
-						HookModelID:   oldRepoWebHook.HookModelID,
+						Config:        sdk.RepositoryWebHookModel.DefaultConfig.Clone(),
+						HookModelID:   sdk.RepositoryWebHookModel.ID,
 					}
-					h.Config[sdk.HookConfigWorkflow] = sdk.WorkflowNodeHookConfigValue{Value: w.Name}
+					oldNonConfigurableConfig := oldRepoWebHook.Config.Filter(func(k string, v sdk.WorkflowNodeHookConfigValue) bool {
+						return !v.Configurable
+					})
+					for k, v := range oldNonConfigurableConfig {
+						h.Config[k] = v
+					}
 					w.WorkflowData.Node.Hooks = append(w.WorkflowData.Node.Hooks, h)
 				}
 			}
@@ -144,10 +155,15 @@ func ParseAndImport(ctx context.Context, db gorp.SqlExecutor, store cache.Store,
 				Config:        sdk.RepositoryWebHookModel.DefaultConfig.Clone(),
 			}
 
-			// If the new workflow already contains a repowebhook (comparing refs), we dont have to add a new one
+			// If the new workflow already contains a repowebhook, we dont have to add a new one
 			var hasARepoWebHook bool
 			for _, h := range w.WorkflowData.Node.Hooks {
 				if h.Ref() == newRepoWebHook.Ref() {
+					hasARepoWebHook = true
+					break
+				}
+				if h.HookModelName == newRepoWebHook.HookModelName &&
+					h.ConfigValueContainsEventsDefault() {
 					hasARepoWebHook = true
 					break
 				}
@@ -183,7 +199,7 @@ func ParseAndImport(ctx context.Context, db gorp.SqlExecutor, store cache.Store,
 		}
 	}(&msgList)
 
-	globalError := Import(ctx, db, store, projIdent, p.ProjectGroups, oldW, w, opts.Force, msgChan)
+	globalError := Import(ctx, db, store, projIdent, proj.ProjectGroups, oldW, w, opts.Force, msgChan)
 	close(msgChan)
 	done.Wait()
 

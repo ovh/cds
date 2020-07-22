@@ -21,8 +21,7 @@ import (
 )
 
 func TestCheckAndExecuteTemplate(t *testing.T) {
-	db, cache, end := test.SetupPG(t, bootstrap.InitiliazeDB)
-	defer end()
+	db, cache := test.SetupPG(t, bootstrap.InitiliazeDB)
 
 	proj := assets.InsertTestProject(t, db, cache, sdk.RandomString(10), sdk.RandomString(10))
 	grp := proj.ProjectGroups[0].Group
@@ -149,7 +148,11 @@ version: v2.0`)),
 			if c.Detached {
 				mods = append(mods, workflowtemplate.TemplateRequestModifiers.Detached)
 			}
-			_, wti, err := workflowtemplate.CheckAndExecuteTemplate(context.TODO(), db, *consumer, *proj, &c.Data, mods...)
+			projIdent := sdk.ProjectIdentifiers{
+				ID:  proj.ID,
+				Key: proj.Key,
+			}
+			_, wti, err := workflowtemplate.CheckAndExecuteTemplate(context.TODO(), db.DbMap, cache, *consumer, projIdent, &c.Data, mods...)
 			if c.ErrorExists {
 				require.Error(t, err)
 			} else {
@@ -172,8 +175,7 @@ version: v2.0`)),
 }
 
 func TestUpdateTemplateInstanceWithWorkflow(t *testing.T) {
-	db, cache, end := test.SetupPG(t, bootstrap.InitiliazeDB)
-	defer end()
+	db, cache := test.SetupPG(t, bootstrap.InitiliazeDB)
 
 	proj := assets.InsertTestProject(t, db, cache, sdk.RandomString(10), sdk.RandomString(10))
 	grp := proj.ProjectGroups[0].Group
@@ -214,10 +216,14 @@ name: Pipeline-[[.id]]`)),
 			Parameters: map[string]string{"param1": "value1"},
 		},
 	}
-	_, wti, err := workflowtemplate.CheckAndExecuteTemplate(context.TODO(), db, *consumer, *proj, &data)
+	projIdent := sdk.ProjectIdentifiers{
+		ID:  proj.ID,
+		Key: proj.Key,
+	}
+	_, wti, err := workflowtemplate.CheckAndExecuteTemplate(context.TODO(), db.DbMap, cache, *consumer, projIdent, &data)
 	require.NoError(t, err)
 
-	_, wkf, _, _, err := workflow.Push(context.TODO(), db, cache, proj, data, nil, consumer, project.DecryptWithBuiltinKey)
+	_, wkf, _, _, err := workflow.Push(context.TODO(), db.DbMap, cache, proj, data, nil, consumer, project.DecryptWithBuiltinKey)
 	require.NoError(t, err)
 
 	require.NoError(t, workflowtemplate.UpdateTemplateInstanceWithWorkflow(context.TODO(), db, *wkf, consumer, wti))

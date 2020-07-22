@@ -10,7 +10,6 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/ovh/cds/engine/api/event"
-	"github.com/ovh/cds/engine/api/observability"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/engine/api/workflowtemplate"
@@ -18,6 +17,7 @@ import (
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/exportentities"
 	"github.com/ovh/cds/sdk/log"
+	"github.com/ovh/cds/sdk/telemetry"
 )
 
 func (api *API) postWorkflowPreviewHandler() service.Handler {
@@ -40,7 +40,7 @@ func (api *API) postWorkflowPreviewHandler() service.Handler {
 			return err
 		}
 
-		proj, err := project.Load(api.mustDB(), key,
+		proj, err := project.Load(ctx, api.mustDB(), key,
 			project.LoadOptions.WithGroups,
 			project.LoadOptions.WithApplications,
 			project.LoadOptions.WithEnvironments,
@@ -106,7 +106,7 @@ func (api *API) postWorkflowImportHandler() service.Handler {
 			return err
 		}
 
-		proj, err := project.Load(api.mustDB(), key,
+		proj, err := project.Load(ctx, api.mustDB(), key,
 			project.LoadOptions.WithGroups,
 			project.LoadOptions.WithApplications,
 			project.LoadOptions.WithEnvironments,
@@ -202,12 +202,8 @@ func (api *API) putWorkflowImportHandler() service.Handler {
 		}
 
 		// Load project
-		proj, err := project.Load(api.mustDB(), key,
+		proj, err := project.Load(ctx, api.mustDB(), key,
 			project.LoadOptions.WithGroups,
-			project.LoadOptions.WithApplications,
-			project.LoadOptions.WithEnvironments,
-			project.LoadOptions.WithPipelines,
-			project.LoadOptions.WithApplicationWithDeploymentStrategies,
 			project.LoadOptions.WithIntegrations,
 		)
 		if err != nil {
@@ -267,8 +263,8 @@ func (api *API) postWorkflowPushHandler() service.Handler {
 		vars := mux.Vars(r)
 		key := vars[permProjectKey]
 
-		observability.Current(ctx,
-			observability.Tag(observability.TagProjectKey, key),
+		telemetry.Current(ctx,
+			telemetry.Tag(telemetry.TagProjectKey, key),
 		)
 
 		if r.Body == nil {
@@ -296,7 +292,7 @@ func (api *API) postWorkflowPushHandler() service.Handler {
 		u := getAPIConsumer(ctx)
 
 		//Load project
-		proj, err := project.Load(db, key,
+		proj, err := project.Load(ctx, db, key,
 			project.LoadOptions.WithGroups,
 			project.LoadOptions.WithApplications,
 			project.LoadOptions.WithEnvironments,
@@ -321,10 +317,10 @@ func (api *API) postWorkflowPushHandler() service.Handler {
 			workflowtemplate.TemplateRequestModifiers.DefaultKeys(*proj),
 		}
 		if pushOptions != nil && pushOptions.FromRepository != "" {
-			mods = append(mods, workflowtemplate.TemplateRequestModifiers.DefaultNameAndRepositories(ctx, api.mustDB(), api.Cache, *proj, pushOptions.FromRepository))
+			mods = append(mods, workflowtemplate.TemplateRequestModifiers.DefaultNameAndRepositories(*proj, pushOptions.FromRepository))
 		}
 		var allMsg []sdk.Message
-		msgTemplate, wti, err := workflowtemplate.CheckAndExecuteTemplate(ctx, api.mustDB(), *consumer, projIdent, &data, mods...)
+		msgTemplate, wti, err := workflowtemplate.CheckAndExecuteTemplate(ctx, api.mustDB(), api.Cache, *consumer, projIdent, &data, mods...)
 		allMsg = append(allMsg, msgTemplate...)
 		if err != nil {
 			return err

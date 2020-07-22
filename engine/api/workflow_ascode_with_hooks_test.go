@@ -7,6 +7,7 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/go-gorp/gorp"
 	"github.com/golang/mock/gomock"
@@ -23,26 +24,21 @@ import (
 )
 
 func Test_WorkflowAsCodeWithNoHook_ShouldGive_AnAutomaticRepoWebHook(t *testing.T) {
-	api, db, _, end := newTestAPI(t)
-	defer end()
+	api, db, _ := newTestAPI(t)
 
-	_, _ = assets.InsertService(t, db, t.Name()+"_HOOKS", services.TypeHooks)
-	_, _ = assets.InsertService(t, db, t.Name()+"_VCS", services.TypeVCS)
-	_, _ = assets.InsertService(t, db, t.Name()+"_REPO", services.TypeRepositories)
+	_, _ = assets.InsertService(t, db, t.Name()+"_HOOKS", sdk.TypeHooks)
+	_, _ = assets.InsertService(t, db, t.Name()+"_VCS", sdk.TypeVCS)
+	_, _ = assets.InsertService(t, db, t.Name()+"_REPO", sdk.TypeRepositories)
 
 	// Setup a mock for all services called by the API
 	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
+	t.Cleanup(func() { ctrl.Finish() })
 	// The mock has been geenrated by mockgen: go get github.com/golang/mock/mockgen
 	// If you have to regenerate thi mock you just have to run, from directory $GOPATH/src/github.com/ovh/cds/engine/api/services:
 	// mockgen -source=http.go -destination=mock_services/services_mock.go Client
 	servicesClients := mock_services.NewMockClient(ctrl)
-	services.NewClient = func(_ gorp.SqlExecutor, _ []sdk.Service) services.Client {
-		return servicesClients
-	}
-	defer func() {
-		services.NewClient = services.NewDefaultClient
-	}()
+	services.NewClient = func(_ gorp.SqlExecutor, _ []sdk.Service) services.Client { return servicesClients }
+	t.Cleanup(func() { services.NewClient = services.NewDefaultClient })
 
 	// Create a project with a repository manager
 	prjKey := sdk.RandomString(10)
@@ -57,17 +53,18 @@ func Test_WorkflowAsCodeWithNoHook_ShouldGive_AnAutomaticRepoWebHook(t *testing.
 	vcsServer.Set("secret", "bar")
 	assert.NoError(t, repositoriesmanager.InsertProjectVCSServerLink(context.TODO(), db, &vcsServer))
 
-	// Perform a "import as-code operation" to create a new workflow
-	ope := `{"repo_fullname":"fsamin/go-repo",  "vcs_server": "github", "url":"https://github.com/fsamin/go-repo.git","strategy":{"connection_type":"https","ssh_key":"","user":"","password":"","branch":"","default_branch":"master","pgp_key":""},"setup":{"checkout":{"branch":"master"}}}`
-	uri := api.Router.GetRoute("POST", api.postImportAsCodeHandler, map[string]string{
-		"permProjectKey": proj.Key,
-	})
-
 	UUID := sdk.UUID()
 
 	servicesClients.EXPECT().
 		DoJSONRequest(gomock.Any(), "POST", "/operations", gomock.Any(), gomock.Any()).
-		Return(nil, 201, nil)
+		DoAndReturn(
+			func(ctx context.Context, method, path string, in interface{}, out interface{}) (http.Header, int, error) {
+				ope := new(sdk.Operation)
+				ope.UUID = UUID
+				ope.Status = sdk.OperationStatusPending
+				*(out.(*sdk.Operation)) = *ope
+				return nil, 201, nil
+			})
 
 	servicesClients.EXPECT().
 		DoJSONRequest(gomock.Any(), "GET", "/vcs/github/repos/fsamin/go-repo/branches", gomock.Any(), gomock.Any(), gomock.Any()).
@@ -119,7 +116,7 @@ version: v1.0`),
 				*(out.(*sdk.Operation)) = *ope
 				return nil, 200, nil
 			},
-		)
+		).Times(2)
 
 	servicesClients.EXPECT().
 		DoJSONRequest(gomock.Any(), "POST", "/task/bulk", gomock.Any(), gomock.Any()).
@@ -186,14 +183,19 @@ version: v1.0`),
 			},
 		)
 
+		// Perform a "import as-code operation" to create a new workflow
+	ope := `{"repo_fullname":"fsamin/go-repo",  "vcs_server": "github", "url":"https://github.com/fsamin/go-repo.git","strategy":{"connection_type":"https","ssh_key":"","user":"","password":"","branch":"","default_branch":"master","pgp_key":""},"setup":{"checkout":{"branch":"master"}}}`
+	uri := api.Router.GetRoute("POST", api.postImportAsCodeHandler, map[string]string{
+		"permProjectKey": proj.Key,
+	})
 	req, err := http.NewRequest("POST", uri, strings.NewReader(ope))
 	require.NoError(t, err)
 	assets.AuthentifyRequest(t, req, u, pass)
-
-	// Do the request
 	w := httptest.NewRecorder()
 	api.Router.Mux.ServeHTTP(w, req)
 	assert.Equal(t, 201, w.Code)
+	// Fake wait api event for operation done
+	time.Sleep(time.Second)
 
 	uri = api.Router.GetRoute("POST", api.postPerformImportAsCodeHandler, map[string]string{
 		"permProjectKey": prjKey,
@@ -209,7 +211,8 @@ version: v1.0`),
 	assert.Equal(t, 200, w.Code)
 	t.Logf(w.Body.String())
 
-	wk, err := workflow.Load(context.Background(), db, api.Cache, *proj, "w-go-repo", workflow.LoadOptions{})
+	projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
+	wk, err := workflow.Load(context.Background(), db, projIdent, "w-go-repo", workflow.LoadOptions{})
 	assert.NoError(t, err)
 	assert.NotNil(t, wk)
 
@@ -235,26 +238,21 @@ func Test_WorkflowAsCodeWithDefaultHook_ShouldGive_TheSameRepoWebHook(t *testing
 	// Then we trigger the workflow, this aims to run another "as-code operation"
 	// This should not change the hooks
 
-	api, db, _, end := newTestAPI(t)
-	defer end()
+	api, db, _ := newTestAPI(t)
 
-	_, _ = assets.InsertService(t, db, t.Name()+"_HOOKS", services.TypeHooks)
-	_, _ = assets.InsertService(t, db, t.Name()+"_VCS", services.TypeVCS)
-	_, _ = assets.InsertService(t, db, t.Name()+"_REPO", services.TypeRepositories)
+	_, _ = assets.InsertService(t, db, t.Name()+"_HOOKS", sdk.TypeHooks)
+	_, _ = assets.InsertService(t, db, t.Name()+"_VCS", sdk.TypeVCS)
+	_, _ = assets.InsertService(t, db, t.Name()+"_REPO", sdk.TypeRepositories)
 
 	// Setup a mock for all services called by the API
 	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
+	t.Cleanup(func() { ctrl.Finish() })
 	// The mock has been geenrated by mockgen: go get github.com/golang/mock/mockgen
 	// If you have to regenerate thi mock you just have to run, from directory $GOPATH/src/github.com/ovh/cds/engine/api/services:
 	// mockgen -source=http.go -destination=mock_services/services_mock.go Client
 	servicesClients := mock_services.NewMockClient(ctrl)
-	services.NewClient = func(_ gorp.SqlExecutor, _ []sdk.Service) services.Client {
-		return servicesClients
-	}
-	defer func() {
-		services.NewClient = services.NewDefaultClient
-	}()
+	services.NewClient = func(_ gorp.SqlExecutor, _ []sdk.Service) services.Client { return servicesClients }
+	t.Cleanup(func() { services.NewClient = services.NewDefaultClient })
 
 	// Create a project with a repository manager
 	prjKey := sdk.RandomString(10)
@@ -267,19 +265,20 @@ func Test_WorkflowAsCodeWithDefaultHook_ShouldGive_TheSameRepoWebHook(t *testing
 	}
 	vcsServer.Set("token", "foo")
 	vcsServer.Set("secret", "bar")
-	assert.NoError(t, repositoriesmanager.InsertProjectVCSServerLink(context.TODO(), db, &vcsServer))
-
-	// Perform a "import as-code operation" to create a new workflow
-	ope := `{"repo_fullname":"fsamin/go-repo",  "vcs_server": "github", "url":"https://github.com/fsamin/go-repo.git","strategy":{"connection_type":"https","ssh_key":"","user":"","password":"","branch":"","default_branch":"master","pgp_key":""},"setup":{"checkout":{"branch":"master"}}}`
-	uri := api.Router.GetRoute("POST", api.postImportAsCodeHandler, map[string]string{
-		"permProjectKey": proj.Key,
-	})
+	require.NoError(t, repositoriesmanager.InsertProjectVCSServerLink(context.TODO(), db, &vcsServer))
 
 	UUID := sdk.UUID()
 
 	servicesClients.EXPECT().
 		DoJSONRequest(gomock.Any(), "POST", "/operations", gomock.Any(), gomock.Any()).
-		Return(nil, 201, nil).Times(2)
+		DoAndReturn(
+			func(ctx context.Context, method, path string, in interface{}, out interface{}) (http.Header, int, error) {
+				ope := new(sdk.Operation)
+				ope.UUID = UUID
+				ope.Status = sdk.OperationStatusPending
+				*(out.(*sdk.Operation)) = *ope
+				return nil, 201, nil
+			}).Times(2)
 
 	servicesClients.EXPECT().
 		DoJSONRequest(gomock.Any(), "GET", "/vcs/github/repos/fsamin/go-repo", gomock.Any(), gomock.Any(), gomock.Any()).MinTimes(0)
@@ -313,7 +312,7 @@ func Test_WorkflowAsCodeWithDefaultHook_ShouldGive_TheSameRepoWebHook(t *testing
 		).MaxTimes(3)
 
 	servicesClients.EXPECT().
-		DoJSONRequest(gomock.Any(), "GET", gomock.Any(), gomock.Any(), gomock.Any()).
+		DoJSONRequest(gomock.Any(), "GET", "/operations/"+UUID, gomock.Any(), gomock.Any()).
 		DoAndReturn(
 			func(ctx context.Context, method, path string, in interface{}, out interface{}) (http.Header, int, error) {
 				ope := new(sdk.Operation)
@@ -350,7 +349,7 @@ version: v1.0`),
 				*(out.(*sdk.Operation)) = *ope
 				return nil, 200, nil
 			},
-		).Times(2)
+		).Times(3)
 
 	servicesClients.EXPECT().
 		DoJSONRequest(gomock.Any(), "POST", "/task/bulk", gomock.Any(), gomock.Any()).
@@ -415,14 +414,19 @@ version: v1.0`),
 			},
 		).Times(1)
 
+	// Perform a "import as-code operation" to create a new workflow
+	ope := `{"repo_fullname":"fsamin/go-repo",  "vcs_server": "github", "url":"https://github.com/fsamin/go-repo.git","strategy":{"connection_type":"https","ssh_key":"","user":"","password":"","branch":"","default_branch":"master","pgp_key":""},"setup":{"checkout":{"branch":"master"}}}`
+	uri := api.Router.GetRoute("POST", api.postImportAsCodeHandler, map[string]string{
+		"permProjectKey": proj.Key,
+	})
 	req, err := http.NewRequest("POST", uri, strings.NewReader(ope))
 	require.NoError(t, err)
 	assets.AuthentifyRequest(t, req, u, pass)
-
-	// Do the request
 	w := httptest.NewRecorder()
 	api.Router.Mux.ServeHTTP(w, req)
-	assert.Equal(t, 201, w.Code)
+	require.Equal(t, 201, w.Code)
+	// Fake wait api event for operation done
+	time.Sleep(time.Second)
 
 	uri = api.Router.GetRoute("POST", api.postPerformImportAsCodeHandler, map[string]string{
 		"permProjectKey": prjKey,
@@ -435,67 +439,57 @@ version: v1.0`),
 	// Do the request
 	w = httptest.NewRecorder()
 	api.Router.Mux.ServeHTTP(w, req)
-	assert.Equal(t, 200, w.Code)
+	require.Equal(t, 200, w.Code)
 	t.Logf(w.Body.String())
 
-	wk, err := workflow.Load(context.Background(), db, api.Cache, *proj, "w-go-repo", workflow.LoadOptions{})
-	assert.NoError(t, err)
-	assert.NotNil(t, wk)
-
+	projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
+	wk, err := workflow.Load(context.Background(), db, projIdent, "w-go-repo", workflow.LoadOptions{})
+	require.NoError(t, err)
 	require.Len(t, wk.WorkflowData.GetHooks(), 1)
 
 	for _, h := range wk.WorkflowData.GetHooks() {
 		log.Debug("--> %T %+v", h, h)
-		assert.Equal(t, "RepositoryWebHook", h.HookModelName)
-		assert.Equal(t, "push", h.Config["eventFilter"].Value)
-		assert.Equal(t, "Github", h.Config["hookIcon"].Value)
-		assert.Equal(t, "POST", h.Config["method"].Value)
-		assert.Equal(t, proj.Key, h.Config["project"].Value)
-		assert.Equal(t, "fsamin/go-repo", h.Config["repoFullName"].Value)
-		assert.Equal(t, "github", h.Config["vcsServer"].Value)
-		assert.Equal(t, wk.Name, h.Config["workflow"].Value)
+		require.Equal(t, "RepositoryWebHook", h.HookModelName)
+		require.Equal(t, "push", h.Config["eventFilter"].Value)
+		require.Equal(t, "Github", h.Config["hookIcon"].Value)
+		require.Equal(t, "POST", h.Config["method"].Value)
+		require.Equal(t, proj.Key, h.Config["project"].Value)
+		require.Equal(t, "fsamin/go-repo", h.Config["repoFullName"].Value)
+		require.Equal(t, "github", h.Config["vcsServer"].Value)
+		require.Equal(t, wk.Name, h.Config["workflow"].Value)
 	}
 
 	// Then we will trigger a run of the workflow wich should trigger an as-code operation
-	vars := map[string]string{
+	uri = api.Router.GetRoute("POST", api.postWorkflowRunHandler, map[string]string{
 		"key":              proj.Key,
 		"permWorkflowName": wk.Name,
-	}
-	uri = api.Router.GetRoute("POST", api.postWorkflowRunHandler, vars)
+	})
 	require.NotEmpty(t, uri)
-
-	opts := &sdk.WorkflowRunPostHandlerOption{
+	req = assets.NewAuthentifiedRequest(t, u, pass, "POST", uri, &sdk.WorkflowRunPostHandlerOption{
 		Hook: &sdk.WorkflowNodeRunHookEvent{
 			WorkflowNodeHookUUID: wk.WorkflowData.Node.Hooks[0].UUID,
 			Payload: map[string]string{
 				"git.branch": "master",
 			},
 		},
-	}
-	req = assets.NewAuthentifiedRequest(t, u, pass, "POST", uri, opts)
-
-	//Do the request
+	})
 	rec := httptest.NewRecorder()
 	api.Router.Mux.ServeHTTP(rec, req)
-	assert.Equal(t, 202, rec.Code)
-
-	if rec.Code != 202 {
+	if !assert.Equal(t, 202, rec.Code) {
 		t.Logf("body => %s", rec.Body.String())
 		t.FailNow()
 	}
-
 	var wrun sdk.WorkflowRun
 	require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &wrun))
 
 	require.NoError(t, waitCraftinWorkflow(t, api.mustDB(), wrun.ID))
-	wr, _ := workflow.LoadRunByID(db, wrun.ID, workflow.LoadRunOptions{})
+	wr, err := workflow.LoadRunByID(db, wrun.ID, workflow.LoadRunOptions{})
+	require.NoError(t, nil)
+	require.NotEqual(t, "Fail", wr.Status)
 
-	assert.NotEqual(t, "Fail", wr.Status)
-
-	wk, err = workflow.Load(context.Background(), db, api.Cache, *proj, "w-go-repo", workflow.LoadOptions{})
-	assert.NoError(t, err)
-	assert.NotNil(t, wk)
-
+	wk, err = workflow.Load(context.Background(), db, projIdent, "w-go-repo", workflow.LoadOptions{})
+	require.NoError(t, err)
+	require.NotNil(t, wk)
 	require.Len(t, wk.WorkflowData.GetHooks(), 1)
 
 	for _, h := range wk.WorkflowData.GetHooks() {
@@ -517,31 +511,26 @@ func Test_WorkflowAsCodeWithDefaultHookAndAScheduler_ShouldGive_TheSameRepoWebHo
 	// Then we trigger the workflow, this aims to run another "as-code operation"
 	// This should not change the hooks
 
-	api, db, _, end := newTestAPI(t)
-	defer end()
+	api, db, _ := newTestAPI(t)
 
-	_, _ = assets.InsertService(t, db, t.Name()+"_HOOKS", services.TypeHooks)
-	_, _ = assets.InsertService(t, db, t.Name()+"_VCS", services.TypeVCS)
-	_, _ = assets.InsertService(t, db, t.Name()+"_REPO", services.TypeRepositories)
+	_, _ = assets.InsertService(t, db, t.Name()+"_HOOKS", sdk.TypeHooks)
+	_, _ = assets.InsertService(t, db, t.Name()+"_VCS", sdk.TypeVCS)
+	_, _ = assets.InsertService(t, db, t.Name()+"_REPO", sdk.TypeRepositories)
 
 	// Setup a mock for all services called by the API
 	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
+	t.Cleanup(func() { ctrl.Finish() })
 	// The mock has been geenrated by mockgen: go get github.com/golang/mock/mockgen
 	// If you have to regenerate thi mock you just have to run, from directory $GOPATH/src/github.com/ovh/cds/engine/api/services:
 	// mockgen -source=http.go -destination=mock_services/services_mock.go Client
 	servicesClients := mock_services.NewMockClient(ctrl)
-	services.NewClient = func(_ gorp.SqlExecutor, _ []sdk.Service) services.Client {
-		return servicesClients
-	}
-	defer func() {
-		services.NewClient = services.NewDefaultClient
-	}()
+	services.NewClient = func(_ gorp.SqlExecutor, _ []sdk.Service) services.Client { return servicesClients }
+	t.Cleanup(func() { services.NewClient = services.NewDefaultClient })
 
 	// Create a project with a repository manager
 	prjKey := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, api.Cache, prjKey, prjKey)
-	u, pass := assets.InsertLambdaUser(t, db, &proj.ProjectGroups[0].Group)
+	u, jwt := assets.InsertLambdaUser(t, db, &proj.ProjectGroups[0].Group)
 
 	vcsServer := sdk.ProjectVCSServerLink{
 		ProjectID: proj.ID,
@@ -550,12 +539,6 @@ func Test_WorkflowAsCodeWithDefaultHookAndAScheduler_ShouldGive_TheSameRepoWebHo
 	vcsServer.Set("token", "foo")
 	vcsServer.Set("secret", "bar")
 	assert.NoError(t, repositoriesmanager.InsertProjectVCSServerLink(context.TODO(), db, &vcsServer))
-
-	// Perform a "import as-code operation" to create a new workflow
-	ope := `{"repo_fullname":"fsamin/go-repo",  "vcs_server": "github", "url":"https://github.com/fsamin/go-repo.git","strategy":{"connection_type":"https","ssh_key":"","user":"","password":"","branch":"","default_branch":"master","pgp_key":""},"setup":{"checkout":{"branch":"master"}}}`
-	uri := api.Router.GetRoute("POST", api.postImportAsCodeHandler, map[string]string{
-		"permProjectKey": proj.Key,
-	})
 
 	servicesClients.EXPECT().
 		DoJSONRequest(gomock.Any(), "GET", "/vcs/github/repos/fsamin/go-repo", gomock.Any(), gomock.Any(), gomock.Any()).MinTimes(0)
@@ -651,7 +634,7 @@ version: v1.0`),
 				*(out.(*sdk.Operation)) = *ope
 				return nil, 200, nil
 			},
-		).Times(2)
+		).Times(3)
 
 	servicesClients.EXPECT().
 		DoJSONRequest(gomock.Any(), "POST", "/task/bulk", gomock.Any(), gomock.Any()).
@@ -739,33 +722,45 @@ version: v1.0`),
 			},
 		).Times(1)
 
-	req, err := http.NewRequest("POST", uri, strings.NewReader(ope))
-	require.NoError(t, err)
-	assets.AuthentifyRequest(t, req, u, pass)
-
-	// Do the request
+	// Perform a "import as-code operation" to create a new workflow
+	ope := sdk.Operation{
+		RepoFullName: "fsamin/go-repo",
+		VCSServer:    "github",
+		URL:          "https://github.com/fsamin/go-repo.git",
+		RepositoryStrategy: sdk.RepositoryStrategy{
+			ConnectionType: "https",
+			DefaultBranch:  "master",
+		},
+		Setup: sdk.OperationSetup{
+			Checkout: sdk.OperationCheckout{
+				Branch: "master",
+			},
+		},
+	}
+	uri := api.Router.GetRoute("POST", api.postImportAsCodeHandler, map[string]string{
+		"permProjectKey": proj.Key,
+	})
+	req := assets.NewJWTAuthentifiedRequest(t, jwt, "POST", uri, ope)
 	w := httptest.NewRecorder()
 	api.Router.Mux.ServeHTTP(w, req)
-	assert.Equal(t, 201, w.Code)
+	require.Equal(t, 201, w.Code)
+	// Fake wait api event for operation done
+	time.Sleep(time.Second)
 
 	uri = api.Router.GetRoute("POST", api.postPerformImportAsCodeHandler, map[string]string{
 		"permProjectKey": prjKey,
 		"uuid":           operationUUID,
 	})
-	req, err = http.NewRequest("POST", uri, nil)
-	require.NoError(t, err)
-	assets.AuthentifyRequest(t, req, u, pass)
-
-	// Do the request
+	req = assets.NewJWTAuthentifiedRequest(t, jwt, "POST", uri, nil)
 	w = httptest.NewRecorder()
 	api.Router.Mux.ServeHTTP(w, req)
-	assert.Equal(t, 200, w.Code)
+	require.Equal(t, 200, w.Code)
 	t.Logf(w.Body.String())
 
-	wk, err := workflow.Load(context.Background(), db, api.Cache, *proj, "w-go-repo", workflow.LoadOptions{})
-	assert.NoError(t, err)
-	assert.NotNil(t, wk)
-
+	projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
+	wk, err := workflow.Load(context.Background(), db, projIdent, "w-go-repo", workflow.LoadOptions{})
+	require.NoError(t, err)
+	require.NotNil(t, wk)
 	require.Len(t, wk.WorkflowData.GetHooks(), 2)
 
 	for _, h := range wk.WorkflowData.GetHooks() {
@@ -801,45 +796,36 @@ version: v1.0`),
 	}
 
 	// Then we will trigger a run of the workflow wich should trigger an as-code operation
-	vars := map[string]string{
+	uri = api.Router.GetRoute("POST", api.postWorkflowRunHandler, map[string]string{
 		"key":              proj.Key,
 		"permWorkflowName": wk.Name,
-	}
-	uri = api.Router.GetRoute("POST", api.postWorkflowRunHandler, vars)
+	})
 	require.NotEmpty(t, uri)
-
-	opts := &sdk.WorkflowRunPostHandlerOption{
+	req = assets.NewAuthentifiedRequest(t, u, jwt, "POST", uri, &sdk.WorkflowRunPostHandlerOption{
 		Hook: &sdk.WorkflowNodeRunHookEvent{
 			WorkflowNodeHookUUID: wk.WorkflowData.Node.Hooks[0].UUID,
 			Payload: map[string]string{
 				"git.branch": "master",
 			},
 		},
-	}
-	req = assets.NewAuthentifiedRequest(t, u, pass, "POST", uri, opts)
-
-	//Do the request
+	})
 	rec := httptest.NewRecorder()
 	api.Router.Mux.ServeHTTP(rec, req)
-	assert.Equal(t, 202, rec.Code)
-
-	if rec.Code != 202 {
+	if !assert.Equal(t, 202, rec.Code) {
 		t.Logf("body => %s", rec.Body.String())
 		t.FailNow()
 	}
-
 	var wrun sdk.WorkflowRun
 	require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &wrun))
 
 	require.NoError(t, waitCraftinWorkflow(t, api.mustDB(), wrun.ID))
-	wr, _ := workflow.LoadRunByID(db, wrun.ID, workflow.LoadRunOptions{})
 
-	assert.NotEqual(t, "Fail", wr.Status)
+	wr, err := workflow.LoadRunByID(db, wrun.ID, workflow.LoadRunOptions{})
+	require.NoError(t, err)
+	require.NotEqual(t, "Fail", wr.Status)
 
-	wk, err = workflow.Load(context.Background(), db, api.Cache, *proj, "w-go-repo", workflow.LoadOptions{})
+	wk, err = workflow.Load(context.Background(), db, projIdent, "w-go-repo", workflow.LoadOptions{})
 	assert.NoError(t, err)
-	assert.NotNil(t, wk)
-
 	require.Len(t, wk.WorkflowData.GetHooks(), 2)
 
 	for _, h := range wk.WorkflowData.GetHooks() {
@@ -883,26 +869,21 @@ func Test_WorkflowAsCodeWithJustAcheduler_ShouldGive_ARepoWebHookAndTheScheduler
 	// This last time, the scheduler should be deleted
 	// This should not change the repowebhook
 
-	api, db, _, end := newTestAPI(t)
-	defer end()
+	api, db, _ := newTestAPI(t)
 
-	_, _ = assets.InsertService(t, db, t.Name()+"_HOOKS", services.TypeHooks)
-	_, _ = assets.InsertService(t, db, t.Name()+"_VCS", services.TypeVCS)
-	_, _ = assets.InsertService(t, db, t.Name()+"_REPO", services.TypeRepositories)
+	_, _ = assets.InsertService(t, db, t.Name()+"_HOOKS", sdk.TypeHooks)
+	_, _ = assets.InsertService(t, db, t.Name()+"_VCS", sdk.TypeVCS)
+	_, _ = assets.InsertService(t, db, t.Name()+"_REPO", sdk.TypeRepositories)
 
 	// Setup a mock for all services called by the API
 	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
+	t.Cleanup(func() { ctrl.Finish() })
 	// The mock has been geenrated by mockgen: go get github.com/golang/mock/mockgen
 	// If you have to regenerate thi mock you just have to run, from directory $GOPATH/src/github.com/ovh/cds/engine/api/services:
 	// mockgen -source=http.go -destination=mock_services/services_mock.go Client
 	servicesClients := mock_services.NewMockClient(ctrl)
-	services.NewClient = func(_ gorp.SqlExecutor, _ []sdk.Service) services.Client {
-		return servicesClients
-	}
-	defer func() {
-		services.NewClient = services.NewDefaultClient
-	}()
+	services.NewClient = func(_ gorp.SqlExecutor, _ []sdk.Service) services.Client { return servicesClients }
+	t.Cleanup(func() { services.NewClient = services.NewDefaultClient })
 
 	// Create a project with a repository manager
 	prjKey := sdk.RandomString(10)
@@ -921,7 +902,14 @@ func Test_WorkflowAsCodeWithJustAcheduler_ShouldGive_ARepoWebHookAndTheScheduler
 
 	servicesClients.EXPECT().
 		DoJSONRequest(gomock.Any(), "POST", "/operations", gomock.Any(), gomock.Any()).
-		Return(nil, 201, nil).Times(3)
+		DoAndReturn(
+			func(ctx context.Context, method, path string, in interface{}, out interface{}) (http.Header, int, error) {
+				ope := new(sdk.Operation)
+				ope.UUID = UUID
+				ope.Status = sdk.OperationStatusPending
+				*(out.(*sdk.Operation)) = *ope
+				return nil, 201, nil
+			}).Times(3)
 
 	servicesClients.EXPECT().
 		DoJSONRequest(gomock.Any(), "GET", "/vcs/github/repos/fsamin/go-repo", gomock.Any(), gomock.Any(), gomock.Any()).MinTimes(0)
@@ -1006,7 +994,7 @@ version: v1.0`),
 					*(out.(*sdk.Operation)) = *ope
 					return nil, 200, nil
 				},
-			).Times(1),
+			).Times(2),
 
 		servicesClients.EXPECT().
 			DoJSONRequest(gomock.Any(), "GET", gomock.Any(), gomock.Any(), gomock.Any()).
@@ -1272,15 +1260,14 @@ version: v1.0`),
 	uri := api.Router.GetRoute("POST", api.postImportAsCodeHandler, map[string]string{
 		"permProjectKey": proj.Key,
 	})
-
 	req, err := http.NewRequest("POST", uri, strings.NewReader(ope))
 	require.NoError(t, err)
 	assets.AuthentifyRequest(t, req, u, pass)
-
-	// Do the request
 	w := httptest.NewRecorder()
 	api.Router.Mux.ServeHTTP(w, req)
-	assert.Equal(t, 201, w.Code)
+	require.Equal(t, 201, w.Code)
+	// Fake wait api event for operation done
+	time.Sleep(time.Second)
 
 	uri = api.Router.GetRoute("POST", api.postPerformImportAsCodeHandler, map[string]string{
 		"permProjectKey": prjKey,
@@ -1293,16 +1280,16 @@ version: v1.0`),
 	// Do the request
 	w = httptest.NewRecorder()
 	api.Router.Mux.ServeHTTP(w, req)
-	assert.Equal(t, 200, w.Code)
-	t.Logf(w.Body.String())
+	if !assert.Equal(t, 200, w.Code) {
+		t.Logf(w.Body.String())
+		t.FailNow()
+	}
 
-	wk, err := workflow.Load(context.Background(), db, api.Cache, *proj, "w-go-repo", workflow.LoadOptions{})
-	assert.NoError(t, err)
-	assert.NotNil(t, wk)
-
+	projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
+	wk, err := workflow.Load(context.Background(), db, projIdent, "w-go-repo", workflow.LoadOptions{})
+	require.NoError(t, err)
 	require.Len(t, wk.WorkflowData.GetHooks(), 2)
 
-	require.Len(t, wk.WorkflowData.GetHooks(), 2)
 	var repositoryWebHookFound, schedulerFound bool
 	for _, h := range wk.WorkflowData.GetHooks() {
 		log.Debug("--> %T %+v", h, h)
@@ -1345,45 +1332,37 @@ version: v1.0`),
 
 	// ======================================================================================
 	// 2. Then we will trigger a run of the workflow wich should trigger an as-code operation
-	vars := map[string]string{
+	uri = api.Router.GetRoute("POST", api.postWorkflowRunHandler, map[string]string{
 		"key":              proj.Key,
 		"permWorkflowName": wk.Name,
-	}
-	uri = api.Router.GetRoute("POST", api.postWorkflowRunHandler, vars)
+	})
 	require.NotEmpty(t, uri)
-
-	opts := &sdk.WorkflowRunPostHandlerOption{
+	req = assets.NewAuthentifiedRequest(t, u, pass, "POST", uri, &sdk.WorkflowRunPostHandlerOption{
 		Hook: &sdk.WorkflowNodeRunHookEvent{
 			WorkflowNodeHookUUID: wk.WorkflowData.Node.Hooks[1].UUID,
 			Payload: map[string]string{
 				"git.branch": "master",
 			},
 		},
-	}
-	req = assets.NewAuthentifiedRequest(t, u, pass, "POST", uri, opts)
-
-	//Do the request
+	})
 	rec := httptest.NewRecorder()
 	api.Router.Mux.ServeHTTP(rec, req)
-	assert.Equal(t, 202, rec.Code)
-
-	if rec.Code != 202 {
+	if !assert.Equal(t, 202, rec.Code) {
 		t.Logf("body => %s", rec.Body.String())
 		t.FailNow()
 	}
-
 	var wrun sdk.WorkflowRun
 	require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &wrun))
 
 	require.NoError(t, waitCraftinWorkflow(t, api.mustDB(), wrun.ID))
-	wr, _ := workflow.LoadRunByID(db, wrun.ID, workflow.LoadRunOptions{})
+
+	wr, err := workflow.LoadRunByID(db, wrun.ID, workflow.LoadRunOptions{})
+	require.NoError(t, err)
 
 	assert.NotEqual(t, "Fail", wr.Status)
 
-	wk, err = workflow.Load(context.Background(), db, api.Cache, *proj, "w-go-repo", workflow.LoadOptions{})
-	assert.NoError(t, err)
-	assert.NotNil(t, wk)
-
+	wk, err = workflow.Load(context.Background(), db, projIdent, "w-go-repo", workflow.LoadOptions{})
+	require.NoError(t, err)
 	require.Len(t, wk.WorkflowData.GetHooks(), 2)
 
 	for _, h := range wk.WorkflowData.GetHooks() {
@@ -1417,29 +1396,25 @@ version: v1.0`),
 
 	// ===========================================================================================================
 	// 3. Then we will trigger a run of the workflow wich should trigger an as-code operation with a hook deletion
-	vars = map[string]string{
+	uri = api.Router.GetRoute("POST", api.postWorkflowRunHandler, map[string]string{
 		"key":              proj.Key,
 		"permWorkflowName": wk.Name,
-	}
-	uri = api.Router.GetRoute("POST", api.postWorkflowRunHandler, vars)
+	})
 	require.NotEmpty(t, uri)
 
-	opts = &sdk.WorkflowRunPostHandlerOption{
+	req = assets.NewAuthentifiedRequest(t, u, pass, "POST", uri, &sdk.WorkflowRunPostHandlerOption{
 		Hook: &sdk.WorkflowNodeRunHookEvent{
 			WorkflowNodeHookUUID: wk.WorkflowData.Node.Hooks[1].UUID,
 			Payload: map[string]string{
 				"git.branch": "master",
 			},
 		},
-	}
-	req = assets.NewAuthentifiedRequest(t, u, pass, "POST", uri, opts)
+	})
 
 	//Do the request
 	rec = httptest.NewRecorder()
 	api.Router.Mux.ServeHTTP(rec, req)
-	assert.Equal(t, 202, rec.Code)
-
-	if rec.Code != 202 {
+	if !assert.Equal(t, 202, rec.Code) {
 		t.Logf("body => %s", rec.Body.String())
 		t.FailNow()
 	}
@@ -1448,14 +1423,13 @@ version: v1.0`),
 	require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &wrun2))
 
 	require.NoError(t, waitCraftinWorkflow(t, api.mustDB(), wrun2.ID))
-	wr, _ = workflow.LoadRunByID(db, wrun2.ID, workflow.LoadRunOptions{})
 
-	assert.NotEqual(t, "Fail", wr.Status)
+	wr, err = workflow.LoadRunByID(db, wrun2.ID, workflow.LoadRunOptions{})
+	require.NoError(t, err)
+	require.NotEqual(t, "Fail", wr.Status)
 
-	wk, err = workflow.Load(context.Background(), db, api.Cache, *proj, "w-go-repo", workflow.LoadOptions{})
-	assert.NoError(t, err)
-	assert.NotNil(t, wk)
-
+	wk, err = workflow.Load(context.Background(), db, projIdent, "w-go-repo", workflow.LoadOptions{})
+	require.NoError(t, err)
 	require.Len(t, wk.WorkflowData.GetHooks(), 1)
 
 	for _, h := range wk.WorkflowData.GetHooks() {

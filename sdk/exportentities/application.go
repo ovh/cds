@@ -49,7 +49,7 @@ func NewApplication(app sdk.Application, keys []EncryptedKey) (a Application, er
 
 	a.Variables = make(map[string]VariableValue, len(app.Variables))
 	for _, v := range app.Variables {
-		at := string(v.Type)
+		at := v.Type
 		if at == "string" {
 			at = ""
 		}

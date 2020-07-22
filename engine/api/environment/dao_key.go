@@ -4,25 +4,17 @@ import (
 	"context"
 
 	"github.com/go-gorp/gorp"
+	"github.com/lib/pq"
 
-	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/gorpmapping"
 	"github.com/ovh/cds/sdk/log"
 )
 
 // InsertKey a new environment key in database
-func InsertKey(db gorp.SqlExecutor, key *sdk.EnvironmentKey) error {
+func InsertKey(db gorpmapping.SqlExecutorWithTx, key *sdk.EnvironmentKey) error {
 	dbEnvironmentKey := dbEnvironmentKey{EnvironmentKey: *key}
 	if err := gorpmapping.InsertAndSign(context.Background(), db, &dbEnvironmentKey); err != nil {
-		return err
-	}
-	*key = dbEnvironmentKey.EnvironmentKey
-	return nil
-}
-
-func UpdateKey(db gorp.SqlExecutor, key *sdk.EnvironmentKey) error {
-	dbEnvironmentKey := dbEnvironmentKey{EnvironmentKey: *key}
-	if err := gorpmapping.UpdateAndSign(context.Background(), db, &dbEnvironmentKey); err != nil {
 		return err
 	}
 	*key = dbEnvironmentKey.EnvironmentKey
@@ -52,6 +44,40 @@ func getAllKeys(db gorp.SqlExecutor, query gorpmapping.Query) ([]sdk.Environment
 	return keys, nil
 }
 
+// LoadAllKeysForEnvsWithDecryption load all keys for all given environments, with description
+func LoadAllKeysForEnvsWithDecryption(ctx context.Context, db gorp.SqlExecutor, envIDS []int64) (map[int64][]sdk.EnvironmentKey, error) {
+	return loadAllKeysForEnvs(ctx, db, envIDS, gorpmapping.GetOptions.WithDecryption)
+}
+
+func loadAllKeysForEnvs(ctx context.Context, db gorp.SqlExecutor, envIDS []int64, opts ...gorpmapping.GetOptionFunc) (map[int64][]sdk.EnvironmentKey, error) {
+	var res []dbEnvironmentKey
+	query := gorpmapping.NewQuery(`
+		SELECT * FROM environment_key WHERE environment_id = ANY($1) ORDER BY environment_id
+	`).Args(pq.Int64Array(envIDS))
+	if err := gorpmapping.GetAll(ctx, db, query, &res, opts...); err != nil {
+		return nil, err
+	}
+
+	envsVars := make(map[int64][]sdk.EnvironmentKey)
+
+	for i := range res {
+		dbKeyVar := res[i]
+		isValid, err := gorpmapping.CheckSignature(dbKeyVar, dbKeyVar.Signature)
+		if err != nil {
+			return nil, err
+		}
+		if !isValid {
+			log.Error(ctx, "environment.loadAllKeysForEnvs> environment key %d data corrupted", dbKeyVar.ID)
+			continue
+		}
+		if _, ok := envsVars[dbKeyVar.EnvironmentID]; !ok {
+			envsVars[dbKeyVar.EnvironmentID] = make([]sdk.EnvironmentKey, 0)
+		}
+		envsVars[dbKeyVar.EnvironmentID] = append(envsVars[dbKeyVar.EnvironmentID], dbKeyVar.EnvironmentKey)
+	}
+	return envsVars, nil
+}
+
 // LoadAllKeys load all keys for the given environment
 func LoadAllKeys(db gorp.SqlExecutor, envID int64) ([]sdk.EnvironmentKey, error) {
 	query := gorpmapping.NewQuery("SELECT * FROM environment_key WHERE environment_id = $1").Args(envID)
@@ -79,9 +105,9 @@ func LoadAllKeysWithPrivateContent(db gorp.SqlExecutor, envID int64) ([]sdk.Envi
 
 func LoadKey(db gorp.SqlExecutor, id int64, keyName string) (*sdk.EnvironmentKey, error) {
 	query := gorpmapping.NewQuery(`
-	SELECT * 
+	SELECT *
 	FROM environment_key
-	WHERE id = $1 
+	WHERE id = $1
 	AND name = $2
 	`).Args(id, keyName)
 	var k dbEnvironmentKey

@@ -8,14 +8,15 @@ import (
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/cache"
-	"github.com/ovh/cds/engine/api/observability"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/gorpmapping"
 	"github.com/ovh/cds/sdk/log"
+	"github.com/ovh/cds/sdk/telemetry"
 )
 
 // UpdateOutgoingHookRunStatus updates the status and callback of a outgoing hook run, and then it reprocess the whole workflow
-func UpdateOutgoingHookRunStatus(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj sdk.Project, wr *sdk.WorkflowRun, hookRunID string, callback sdk.WorkflowNodeOutgoingHookRunCallback) (*ProcessorReport, error) {
-	ctx, end := observability.Span(ctx, "workflow.UpdateOutgoingHookRunStatus")
+func UpdateOutgoingHookRunStatus(ctx context.Context, db gorpmapping.SqlExecutorWithTx, store cache.Store, proj sdk.Project, wr *sdk.WorkflowRun, hookRunID string, callback sdk.WorkflowNodeOutgoingHookRunCallback) (*ProcessorReport, error) {
+	ctx, end := telemetry.Span(ctx, "workflow.UpdateOutgoingHookRunStatus")
 	defer end()
 
 	report := new(ProcessorReport)
@@ -81,7 +82,7 @@ loop:
 
 // UpdateParentWorkflowRun updates the workflow which triggered the current workflow
 func UpdateParentWorkflowRun(ctx context.Context, dbFunc func() *gorp.DbMap, store cache.Store, wr *sdk.WorkflowRun, parentProj sdk.Project, parentWR *sdk.WorkflowRun) (*ProcessorReport, error) {
-	_, end := observability.Span(ctx, "workflow.UpdateParentWorkflowRun")
+	_, end := telemetry.Span(ctx, "workflow.UpdateParentWorkflowRun")
 	defer end()
 
 	// If the root node has been triggered by a parent workflow we have to update the parent workflow

@@ -7,7 +7,6 @@ testcases:
   - script: '[ -f ./fixtures/ITSCWRKFLW17/pipeline.yml ]' # check file exists
   - script: '[ -f ./fixtures/ITSCWRKFLW17/workflow.yml ]' # check file exists
   - script: '[ -z "${CDS_MODEL_REQ}" ] && exit 1 || exit 0' # check that the env variable is set
-  - script: '[ -z "${CDS_NETWORK_REQ}" ] && exit 1 || exit 0' # check that the env variable is set
   - script: '[ -z "${CDS_REGION_REQ}" ] && exit 1 || exit 0' # check that the env variable is set
 
 - name: prepare_tests

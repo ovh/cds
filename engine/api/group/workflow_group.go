@@ -8,8 +8,8 @@ import (
 	"github.com/go-gorp/gorp"
 	"github.com/lib/pq"
 
-	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/gorpmapping"
 )
 
 // LoadRoleGroupInWorkflow load role from group linked to the workflow
@@ -83,6 +83,7 @@ func UpdateWorkflowGroup(ctx context.Context, db gorp.SqlExecutor, w *sdk.Workfl
 	if !ok {
 		return sdk.WithStack(sdk.ErrLastGroupWithWriteRole)
 	}
+
 	return nil
 }
 
@@ -96,11 +97,12 @@ func UpsertAllWorkflowGroups(db gorp.SqlExecutor, w *sdk.Workflow, gps []sdk.Gro
 
 	ok, err := checkAtLeastOneGroupWithWriteRoleOnWorkflow(db, w.ID)
 	if err != nil {
-		return sdk.WrapError(err, "U")
+		return err
 	}
 	if !ok {
-		return sdk.WrapError(sdk.ErrLastGroupWithWriteRole, "U")
+		return sdk.WithStack(sdk.ErrLastGroupWithWriteRole)
 	}
+
 	return nil
 }
 
@@ -111,7 +113,7 @@ func UpsertWorkflowGroup(db gorp.SqlExecutor, projectID, workflowID int64, gp sd
 				(SELECT id FROM project_group WHERE project_group.project_id = $1 AND project_group.group_id = $2),
 				$3,
 				$4
-			) ON CONFLICT DO NOTHING`
+			) ON CONFLICT (project_group_id, workflow_id) DO UPDATE SET role = $4`
 	if _, err := db.Exec(query, projectID, gp.Group.ID, workflowID, gp.Permission); err != nil {
 		if strings.Contains(err.Error(), `null value in column "project_group_id"`) {
 			return sdk.WrapError(sdk.ErrNotFound, "cannot add this group on workflow because there isn't in the project groups : %v", err)
@@ -123,9 +125,11 @@ func UpsertWorkflowGroup(db gorp.SqlExecutor, projectID, workflowID int64, gp sd
 
 // DeleteWorkflowGroup remove group permission on the given workflow
 func DeleteWorkflowGroup(db gorp.SqlExecutor, w *sdk.Workflow, groupID int64, index int) error {
-	query := `DELETE FROM workflow_perm
+	query := `
+    DELETE FROM workflow_perm
 		USING project_group
-	WHERE workflow_perm.project_group_id = project_group.id AND workflow_perm.workflow_id = $1 AND project_group.group_id = $2`
+    WHERE workflow_perm.project_group_id = project_group.id AND workflow_perm.workflow_id = $1 AND project_group.group_id = $2
+  `
 	if _, err := db.Exec(query, w.ID, groupID); err != nil {
 		return sdk.WithStack(err)
 	}
@@ -138,6 +142,18 @@ func DeleteWorkflowGroup(db gorp.SqlExecutor, w *sdk.Workflow, groupID int64, in
 		return sdk.WithStack(sdk.ErrLastGroupWithWriteRole)
 	}
 	w.Groups = append(w.Groups[:index], w.Groups[index+1:]...)
+	return nil
+}
+
+// DeleteAllWorkflowGroups removes all group permission for the given workflow.
+func DeleteAllWorkflowGroups(db gorp.SqlExecutor, workflowID int64) error {
+	query := `
+    DELETE FROM workflow_perm
+    WHERE workflow_id = $1
+  `
+	if _, err := db.Exec(query, workflowID); err != nil {
+		return sdk.WrapError(err, "unable to remove group permissions for workflow %d", workflowID)
+	}
 	return nil
 }
 

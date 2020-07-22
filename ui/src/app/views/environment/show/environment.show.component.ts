@@ -1,22 +1,23 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
 import { Environment } from 'app/model/environment.model';
-import { Pipeline } from 'app/model/pipeline.model';
 import { Project } from 'app/model/project.model';
 import { AuthentifiedUser } from 'app/model/user.model';
 import { Workflow } from 'app/model/workflow.model';
+import { AsCodeSaveModalComponent } from 'app/shared/ascode/save-modal/ascode.save-modal.component';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { ToastService } from 'app/shared/toast/ToastService';
 import { VariableEvent } from 'app/shared/variable/variable.event.model';
-import { CDSWebWorker } from 'app/shared/worker/web.worker';
 import { AuthenticationState } from 'app/store/authentication.state';
-import * as projectActions from 'app/store/project.action';
+import { CleanEnvironmentState } from 'app/store/environment.action';
+import * as envActions from 'app/store/environment.action';
+import { EnvironmentState, EnvironmentStateModel } from 'app/store/environment.state';
 import { ProjectState, ProjectStateModel } from 'app/store/project.state';
 import { cloneDeep } from 'lodash-es';
 import { Subscription } from 'rxjs';
-import { filter, finalize } from 'rxjs/operators';
+import { finalize } from 'rxjs/operators';
 
 @Component({
     selector: 'app-environment-show',
@@ -25,7 +26,10 @@ import { filter, finalize } from 'rxjs/operators';
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 @AutoUnsubscribe()
-export class EnvironmentShowComponent implements OnInit {
+export class EnvironmentShowComponent implements OnInit, OnDestroy {
+
+    @ViewChild('updateEditMode')
+    asCodeSaveModal: AsCodeSaveModalComponent;
 
     // Flag to show the page or not
     public readyEnv = false;
@@ -35,6 +39,9 @@ export class EnvironmentShowComponent implements OnInit {
     // Project & Application data
     project: Project;
     environment: Environment;
+    readOnlyEnvironment: Environment;
+    editMode: boolean;
+    readonly: boolean;
 
     // Subscription
     environmentSubscription: Subscription;
@@ -42,7 +49,6 @@ export class EnvironmentShowComponent implements OnInit {
     _routeParamsSub: Subscription;
     _routeDataSub: Subscription;
     _queryParamsSub: Subscription;
-    worker: CDSWebWorker;
 
     // Selected tab
     selectedTab = 'variables';
@@ -53,9 +59,7 @@ export class EnvironmentShowComponent implements OnInit {
     workflowNodeRun: string;
     workflowPipeline: string;
 
-    pipelines: Array<Pipeline> = new Array<Pipeline>();
     workflows: Array<Workflow> = new Array<Workflow>();
-    environments: Array<Environment> = new Array<Environment>();
     currentUser: AuthentifiedUser;
     usageCount = 0;
 
@@ -64,17 +68,16 @@ export class EnvironmentShowComponent implements OnInit {
         private _router: Router,
         private _toast: ToastService,
         public _translate: TranslateService,
-        private store: Store,
+        private _store: Store,
         private _cd: ChangeDetectorRef
     ) {
-        this.currentUser = this.store.selectSnapshot(AuthenticationState.user);
-        // Update data if route change
+        this.currentUser = this._store.selectSnapshot(AuthenticationState.user);
+        this.project = this._route.snapshot.data['project'];
+        this.projectSubscription = this._store.select(ProjectState)// Update data if route change
+            .subscribe((projectState: ProjectStateModel) => this.project = projectState.project);
         this._routeDataSub = this._route.data.subscribe(datas => {
             this.project = datas['project'];
         });
-
-        this.projectSubscription = this.store.select(ProjectState)
-            .subscribe((projectState: ProjectStateModel) => this.project = projectState.project);
 
         if (this._route.snapshot && this._route.queryParams) {
             this.workflowName = this._route.snapshot.queryParams['workflow'];
@@ -87,7 +90,7 @@ export class EnvironmentShowComponent implements OnInit {
             let key = params['key'];
             let envName = params['envName'];
             if (key && envName) {
-                this.store.dispatch(new projectActions.FetchEnvironmentInProject({ projectKey: key, envName }))
+                this._store.dispatch(new envActions.FetchEnvironment({ projectKey: key, envName }))
                     .subscribe(
                         null,
                         () => this._router.navigate(['/project', key], { queryParams: { tab: 'environments' } })
@@ -101,16 +104,26 @@ export class EnvironmentShowComponent implements OnInit {
                         this.environmentSubscription.unsubscribe();
                     }
 
-                    this.environmentSubscription = this.store.select(ProjectState.selectEnvironment(envName))
-                        .pipe(filter((env) => env != null))
-                        .subscribe((env: Environment) => {
+                    this.environmentSubscription = this._store.select(EnvironmentState.currentState())
+                        .subscribe((s: EnvironmentStateModel) => {
+                            if (!s.environment) {
+                                return;
+                            }
+                            this.editMode = s.editMode;
+                            this.readonly = (s.environment.workflow_ascode_holder && !!s.environment.workflow_ascode_holder.from_template)
+                                || !this.project.permissions.writable;
+                            if (s.editMode) {
+                                this.environment = cloneDeep(s.editEnvironment);
+                                this.readOnlyEnvironment = cloneDeep(s.environment);
+                            } else {
+                                this.environment = cloneDeep(s.environment);
+                                this.readOnlyEnvironment = cloneDeep(s.environment);
+                            }
                             this.readyEnv = true;
-                            this.environment = cloneDeep(env);
-                            if (env.usage) {
-                                this.workflows = env.usage.workflows || [];
-                                this.environments = env.usage.environments || [];
-                                this.pipelines = env.usage.pipelines || [];
-                                this.usageCount = this.pipelines.length + this.environments.length + this.workflows.length;
+
+                            if (this.environment.usage) {
+                                this.workflows = this.environment.usage.workflows || [];
+                                this.usageCount = this.workflows.length;
                             }
                             this._cd.markForCheck();
                         }, () => {
@@ -130,6 +143,10 @@ export class EnvironmentShowComponent implements OnInit {
         });
     }
 
+    ngOnDestroy() {
+        this._store.dispatch(new CleanEnvironmentState())
+    }
+
     showTab(tab: string): void {
         this._router.navigateByUrl('/project/' + this.project.key + '/environment/' + this.environment.name + '?tab=' + tab);
     }
@@ -143,7 +160,7 @@ export class EnvironmentShowComponent implements OnInit {
         switch (event.type) {
             case 'add':
                 this.varFormLoading = true;
-                this.store.dispatch(new projectActions.AddEnvironmentVariableInProject({
+                this._store.dispatch(new envActions.AddEnvironmentVariable({
                     projectKey: this.project.key,
                     environmentName: this.environment.name,
                     variable: event.variable
@@ -151,10 +168,17 @@ export class EnvironmentShowComponent implements OnInit {
                     this.varFormLoading = false;
                     this._cd.markForCheck();
                 }))
-                    .subscribe(() => this._toast.success('', this._translate.instant('variable_added')));
+                    .subscribe(() => {
+                        if (this.editMode) {
+                            this._toast.info('', this._translate.instant('environment_ascode_updated'))
+                        } else {
+                            this._toast.success('', this._translate.instant('variable_added'));
+                        }
+
+                    });
                 break;
             case 'update':
-                this.store.dispatch(new projectActions.UpdateEnvironmentVariableInProject({
+                this._store.dispatch(new envActions.UpdateEnvironmentVariable({
                     projectKey: this.project.key,
                     environmentName: this.environment.name,
                     variableName: event.variable.name,
@@ -163,10 +187,16 @@ export class EnvironmentShowComponent implements OnInit {
                     event.variable.updating = false;
                     this._cd.markForCheck();
                 }))
-                    .subscribe(() => this._toast.success('', this._translate.instant('variable_updated')));
+                    .subscribe(() => {
+                        if (this.editMode) {
+                            this._toast.info('', this._translate.instant('environment_ascode_updated'))
+                        } else {
+                            this._toast.success('', this._translate.instant('variable_updated'))
+                        }
+                    });
                 break;
             case 'delete':
-                this.store.dispatch(new projectActions.DeleteEnvironmentVariableInProject({
+                this._store.dispatch(new envActions.DeleteEnvironmentVariable({
                     projectKey: this.project.key,
                     environmentName: this.environment.name,
                     variable: event.variable
@@ -174,8 +204,27 @@ export class EnvironmentShowComponent implements OnInit {
                     event.variable.updating = false;
                     this._cd.markForCheck();
                 }))
-                    .subscribe(() => this._toast.success('', this._translate.instant('variable_deleted')));
+                    .subscribe(() => {
+                        if (this.editMode) {
+                            this._toast.info('', this._translate.instant('environment_ascode_updated'))
+                        } else {
+                            this._toast.success('', this._translate.instant('variable_deleted'))
+                        }
+                    });
                 break;
+        }
+    }
+
+    cancelEnvironment(): void {
+        if (this.editMode) {
+            this._store.dispatch(new CleanEnvironmentState());
+        }
+    }
+
+    saveEditMode(): void {
+        if (this.editMode && this.environment.from_repository && this.asCodeSaveModal) {
+            // show modal to save as code
+            this.asCodeSaveModal.show(this.environment, 'environment');
         }
     }
 }

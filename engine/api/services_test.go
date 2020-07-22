@@ -16,11 +16,15 @@ import (
 )
 
 func TestServicesHandlers(t *testing.T) {
-	api, _, _, end := newTestAPI(t)
-	defer end()
+	api, db, _ := newTestAPI(t)
 
-	admin, jwtRaw := assets.InsertAdminUser(t, api.mustDB())
-	_, jwtLambda := assets.InsertLambdaUser(t, api.mustDB())
+	admin, jwtRaw := assets.InsertAdminUser(t, db)
+	_, jwtLambda := assets.InsertLambdaUser(t, db)
+
+	s, _ := assets.InitCDNService(t, db)
+	defer func() {
+		_ = services.Delete(db, s)
+	}()
 
 	data := sdk.AuthConsumer{
 		Name:         sdk.RandomString(10),
@@ -47,7 +51,7 @@ func TestServicesHandlers(t *testing.T) {
 	var srv = sdk.Service{
 		CanonicalService: sdk.CanonicalService{
 			Name: sdk.RandomString(10),
-			Type: services.TypeHatchery,
+			Type: sdk.TypeHatchery,
 		},
 	}
 
@@ -85,7 +89,7 @@ func TestServicesHandlers(t *testing.T) {
 
 	// Get service with lambda user => 404
 	uri = api.Router.GetRoute(http.MethodGet, api.getServiceHandler, map[string]string{
-		"type": services.TypeHatchery,
+		"type": sdk.TypeHatchery,
 	})
 	require.NotEmpty(t, uri)
 	req = assets.NewJWTAuthentifiedRequest(t, jwtLambda, http.MethodGet, uri, data)
@@ -103,7 +107,7 @@ func TestServicesHandlers(t *testing.T) {
 
 	// Get service with lambda user => 404
 	uri = api.Router.GetRoute(http.MethodGet, api.getServiceHandler, map[string]string{
-		"type": services.TypeHatchery,
+		"type": sdk.TypeHatchery,
 	})
 	require.NotEmpty(t, uri)
 	req = assets.NewJWTAuthentifiedRequest(t, jwtLambda, http.MethodGet, uri, data)

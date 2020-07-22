@@ -6,6 +6,7 @@ import (
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/gorpmapping"
 )
 
 // DeleteLinkGroupProject deletes the link between group and project and checks
@@ -28,7 +29,7 @@ func DeleteLinkGroupProject(db gorp.SqlExecutor, l *LinkGroupProject) error {
 }
 
 // UpdateLinkGroupProject updates group role for the given project.
-func UpdateLinkGroupProject(db gorp.SqlExecutor, l *LinkGroupProject) error {
+func UpdateLinkGroupProject(db gorpmapping.SqlExecutorWithTx, l *LinkGroupProject) error {
 	// If downgrade of permission, checks that there is still a group with RWX permissions
 	if l.Role < sdk.PermissionReadWriteExecute {
 		query := `

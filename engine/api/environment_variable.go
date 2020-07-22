@@ -126,7 +126,7 @@ func (api *API) updateVariableInEnvironmentHandler() service.Handler {
 		envName := vars["environmentName"]
 		varName := vars["name"]
 
-		var newVar sdk.Variable
+		var newVar sdk.EnvironmentVariable
 		if err := service.UnmarshalBody(r, &newVar); err != nil {
 			return sdk.WithStack(sdk.ErrWrongRequest)
 		}
@@ -142,23 +142,23 @@ func (api *API) updateVariableInEnvironmentHandler() service.Handler {
 			return sdk.WithStack(sdk.ErrForbidden)
 		}
 
-		tx, errBegin := api.mustDB().Begin()
-		if errBegin != nil {
-			return sdk.WrapError(errBegin, "updateVariableInEnvironmentHandler: Cannot start transaction")
+		tx, err := api.mustDB().Begin()
+		if err != nil {
+			return sdk.WrapError(err, "cannot start transaction")
 		}
 		defer tx.Rollback() // nolint
 
-		varBefore, err := environment.LoadVariable(api.mustDB(), env.ID, varName)
+		varBefore, err := environment.LoadVariable(tx, env.ID, varName)
 		if err != nil {
 			return err
 		}
 
-		if err := environment.UpdateVariable(api.mustDB(), env.ID, &newVar, varBefore, getAPIConsumer(ctx)); err != nil {
+		if err := environment.UpdateVariable(tx, env.ID, &newVar, varBefore, getAPIConsumer(ctx)); err != nil {
 			return err
 		}
 
 		if err := tx.Commit(); err != nil {
-			return sdk.WrapError(err, "updateVariableInEnvironmentHandler: Cannot commit transaction")
+			return sdk.WrapError(err, "cannot commit transaction")
 		}
 
 		event.PublishEnvironmentVariableUpdate(ctx, key, *env, newVar, *varBefore, getAPIConsumer(ctx))
@@ -178,7 +178,7 @@ func (api *API) addVariableInEnvironmentHandler() service.Handler {
 		envName := vars["environmentName"]
 		varName := vars["name"]
 
-		var newVar sdk.Variable
+		var newVar sdk.EnvironmentVariable
 		if err := service.UnmarshalBody(r, &newVar); err != nil {
 			return sdk.WithStack(sdk.ErrWrongRequest)
 		}

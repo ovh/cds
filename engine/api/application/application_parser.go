@@ -6,12 +6,11 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/go-gorp/gorp"
-
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/keys"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/exportentities"
+	"github.com/ovh/cds/sdk/gorpmapping"
 	"github.com/ovh/cds/sdk/log"
 )
 
@@ -22,7 +21,8 @@ type ImportOptions struct {
 }
 
 // ParseAndImport parse an exportentities.Application and insert or update the application in database
-func ParseAndImport(ctx context.Context, db gorp.SqlExecutor, cache cache.Store, proj sdk.Project, eapp *exportentities.Application, opts ImportOptions, decryptFunc keys.DecryptFunc, u sdk.Identifiable) (*sdk.Application, []sdk.Variable, []sdk.Message, error) {
+func ParseAndImport(ctx context.Context, db gorpmapping.SqlExecutorWithTx, cache cache.Store, proj sdk.Project, eapp *exportentities.Application, opts ImportOptions, decryptFunc keys.DecryptFunc, u sdk.Identifiable) (*sdk.Application, []sdk.Variable, []sdk.Message, error) {
+
 	log.Info(ctx, "ParseAndImport>> Import application %s in project %s (force=%v)", eapp.Name, proj.Key, opts.Force)
 	msgList := []sdk.Message{}
 
@@ -49,7 +49,7 @@ func ParseAndImport(ctx context.Context, db gorp.SqlExecutor, cache cache.Store,
 	}
 
 	if oldApp != nil && oldApp.FromRepository != "" && opts.FromRepository != oldApp.FromRepository {
-		return nil, nil, msgList, sdk.WrapError(sdk.ErrApplicationAsCodeOverride, "unable to update as code application %s/%s.", oldApp.FromRepository, opts.FromRepository)
+		return nil, nil, msgList, sdk.NewErrorFrom(sdk.ErrApplicationAsCodeOverride, "unable to update existing ascode application from %s", oldApp.FromRepository)
 	}
 
 	//Craft the application
@@ -73,7 +73,7 @@ func ParseAndImport(ctx context.Context, db gorp.SqlExecutor, cache cache.Store,
 			}
 			v.Value = secret
 		}
-		vv := sdk.Variable{Name: p, Type: v.Type, Value: v.Value}
+		vv := sdk.ApplicationVariable{Name: p, Type: v.Type, Value: v.Value}
 		app.Variables = append(app.Variables, vv)
 
 		if v.Type == sdk.SecretVariable {

@@ -18,7 +18,7 @@ import (
 func deleteAll(t *testing.T, api *API, key string) error {
 	// Delete all apps
 	t.Logf("start deleted : %s", key)
-	proj, errl := project.Load(api.mustDB(), key, project.LoadOptions.WithGroups)
+	proj, errl := project.Load(context.TODO(), api.mustDB(), key, project.LoadOptions.WithGroups)
 	if errl != nil {
 		return errl
 	}
@@ -66,8 +66,8 @@ func deleteAll(t *testing.T, api *API, key string) error {
 }
 
 func TestInsertAndLoadPipelineWith1StageAnd0ActionWithoutCondition(t *testing.T) {
-	api, db, _, end := newTestAPI(t)
-	defer end()
+	api, db, _ := newTestAPI(t)
+
 	deleteAll(t, api, "TESTPIPELINESTAGES")
 
 	//Insert Project
@@ -118,8 +118,7 @@ func TestInsertAndLoadPipelineWith1StageAnd0ActionWithoutCondition(t *testing.T)
 }
 
 func TestInsertAndLoadPipelineWith1StageAnd1ActionWithoutCondition(t *testing.T) {
-	api, db, _, end := newTestAPI(t)
-	defer end()
+	api, db, _ := newTestAPI(t)
 
 	deleteAll(t, api, "TESTPIPELINESTAGES")
 
@@ -188,8 +187,7 @@ func TestInsertAndLoadPipelineWith1StageAnd1ActionWithoutCondition(t *testing.T)
 }
 
 func TestInsertAndLoadPipelineWith2StagesWithAnEmptyStageAtFirstFollowedBy2ActionsStageWithoutCondition(t *testing.T) {
-	api, db, _, end := newTestAPI(t)
-	defer end()
+	api, db, _ := newTestAPI(t)
 
 	deleteAll(t, api, "TESTPIPELINESTAGES")
 
@@ -294,8 +292,7 @@ func TestInsertAndLoadPipelineWith2StagesWithAnEmptyStageAtFirstFollowedBy2Actio
 }
 
 func TestInsertAndLoadPipelineWith1StageWithoutConditionAnd1StageWith2Conditions(t *testing.T) {
-	api, db, _, end := newTestAPI(t)
-	defer end()
+	api, db, _ := newTestAPI(t)
 
 	deleteAll(t, api, "TESTPIPELINESTAGES")
 
@@ -430,8 +427,7 @@ func TestInsertAndLoadPipelineWith1StageWithoutConditionAnd1StageWith2Conditions
 }
 
 func TestDeleteStageByIDShouldDeleteStageConditions(t *testing.T) {
-	api, db, _, end := newTestAPI(t)
-	defer end()
+	api, db, _ := newTestAPI(t)
 
 	deleteAll(t, api, "TESTPIPELINESTAGES")
 
@@ -491,8 +487,7 @@ func TestDeleteStageByIDShouldDeleteStageConditions(t *testing.T) {
 }
 
 func TestUpdateStageShouldUpdateStageConditions(t *testing.T) {
-	api, db, _, end := newTestAPI(t)
-	defer end()
+	api, db, _ := newTestAPI(t)
 
 	deleteAll(t, api, "TESTPIPELINESTAGES")
 

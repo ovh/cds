@@ -2,7 +2,6 @@ package action
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"path/filepath"
 	"strings"
@@ -47,17 +46,17 @@ func RunArtifactUpload(ctx context.Context, wk workerruntime.Runtime, a sdk.Acti
 
 	tag := sdk.ParameterFind(a.Parameters, "tag")
 	if tag == nil {
-		return res, errors.New("tag variable is empty. aborting")
+		return res, sdk.NewError(sdk.ErrWorkerErrorCommand, fmt.Errorf("tag variable is empty. aborting"))
 	}
 
 	// Global all files matching filePath
 	filesPath, err := afero.Glob(afero.NewOsFs(), artifactPath)
 	if err != nil {
-		return res, fmt.Errorf("cannot perform globbing of pattern '%s': %s", artifactPath, err)
+		return res, sdk.NewError(sdk.ErrWorkerErrorCommand, fmt.Errorf("cannot perform globbing of pattern '%s': %s", artifactPath, err))
 	}
 
 	if len(filesPath) == 0 {
-		return res, fmt.Errorf("pattern '%s' matched no file", artifactPath)
+		return res, sdk.NewError(sdk.ErrWorkerErrorCommand, fmt.Errorf("pattern '%s' matched no file", artifactPath))
 	}
 
 	var globalError = &sdk.MultiError{}
@@ -105,8 +104,7 @@ func RunArtifactUpload(ctx context.Context, wk workerruntime.Runtime, a sdk.Acti
 	wgErrors.Wait()
 
 	if !globalError.IsEmpty() {
-		log.Error(ctx, "Error while uploading artifact: %v", globalError.Error())
-		return res, fmt.Errorf("error: %v", globalError.Error())
+		return res, sdk.NewError(sdk.ErrUnknownError, fmt.Errorf("error: %v", globalError.Error()))
 	}
 
 	return res, nil

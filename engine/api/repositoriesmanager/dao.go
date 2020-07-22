@@ -4,8 +4,8 @@ import (
 	"context"
 
 	"github.com/go-gorp/gorp"
-	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/gorpmapping"
 	"github.com/ovh/cds/sdk/log"
 )
 
@@ -40,7 +40,7 @@ func (e dbProjectVCSServerLinkData) Canonical() gorpmapping.CanonicalForms {
 	}
 }
 
-func InsertProjectVCSServerLink(ctx context.Context, db gorp.SqlExecutor, l *sdk.ProjectVCSServerLink) error {
+func InsertProjectVCSServerLink(ctx context.Context, db gorpmapping.SqlExecutorWithTx, l *sdk.ProjectVCSServerLink) error {
 	var dbProjectVCSServerLink = dbProjectVCSServerLink{ProjectVCSServerLink: *l}
 	if err := gorpmapping.InsertAndSign(ctx, db, &dbProjectVCSServerLink); err != nil {
 		return err
@@ -60,7 +60,7 @@ func InsertProjectVCSServerLink(ctx context.Context, db gorp.SqlExecutor, l *sdk
 	return nil
 }
 
-func UpdateProjectVCSServerLink(ctx context.Context, db gorp.SqlExecutor, l *sdk.ProjectVCSServerLink) error {
+func UpdateProjectVCSServerLink(ctx context.Context, db gorpmapping.SqlExecutorWithTx, l *sdk.ProjectVCSServerLink) error {
 	var dbProjectVCSServerLink = dbProjectVCSServerLink{ProjectVCSServerLink: *l}
 	if err := gorpmapping.UpdateAndSign(ctx, db, &dbProjectVCSServerLink); err != nil {
 		return err

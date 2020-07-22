@@ -5,7 +5,7 @@ import (
 	"runtime"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/ovh/cds/engine/api/bootstrap"
 	"github.com/ovh/cds/engine/api/test"
@@ -16,13 +16,12 @@ import (
 )
 
 func TestDAO(t *testing.T) {
-	db, _, end := test.SetupPG(t, bootstrap.InitiliazeDB)
-	defer end()
+	db, _ := test.SetupPG(t, bootstrap.InitiliazeDB)
 
 	workers, err := worker.LoadAll(context.TODO(), db)
-	test.NoError(t, err)
+	require.NoError(t, err)
 	for _, w := range workers {
-		worker.Delete(db, w.ID)
+		require.NoError(t, worker.Delete(db, w.ID))
 	}
 
 	g := assets.InsertGroup(t, db)
@@ -30,47 +29,47 @@ func TestDAO(t *testing.T) {
 	m := assets.InsertWorkerModel(t, db, sdk.RandomString(5), g.ID)
 
 	w := &sdk.Worker{
-		ID:         "foofoo",
-		Name:       "foo.bar.io",
-		ModelID:    &m.ID,
-		HatcheryID: hSrv.ID,
-		ConsumerID: hCons.ID,
-		Status:     sdk.StatusWaiting,
+		ID:           "foofoo",
+		Name:         "foo.bar.io",
+		ModelID:      &m.ID,
+		HatcheryID:   &hSrv.ID,
+		HatcheryName: hSrv.Name,
+		ConsumerID:   hCons.ID,
+		Status:       sdk.StatusWaiting,
 	}
 
 	if err := worker.Insert(context.TODO(), db, w); err != nil {
 		t.Fatalf("Cannot insert worker %+v: %v", w, err)
 	}
 
-	wks, err := worker.LoadByHatcheryID(context.TODO(), db, hSrv.ID)
-	test.NoError(t, err)
-	assert.Len(t, wks, 1)
+	wks, err := worker.LoadAllByHatcheryID(context.TODO(), db, hSrv.ID)
+	require.NoError(t, err)
+	require.Len(t, wks, 1)
 
 	if len(wks) == 1 {
-		assert.Equal(t, "foofoo", wks[0].ID)
+		require.Equal(t, "foofoo", wks[0].ID)
 	}
 
 	wk, err := worker.LoadByID(context.TODO(), db, "foofoo")
-	test.NoError(t, err)
-	assert.NotNil(t, wk)
+	require.NoError(t, err)
+	require.NotNil(t, wk)
 	if wk != nil {
-		assert.Equal(t, "foofoo", wk.ID)
+		require.Equal(t, "foofoo", wk.ID)
 	}
 
-	test.NoError(t, worker.SetStatus(context.TODO(), db, wk.ID, sdk.StatusBuilding))
-	test.NoError(t, worker.RefreshWorker(db, wk.ID))
+	require.NoError(t, worker.SetStatus(context.TODO(), db, wk.ID, sdk.StatusBuilding))
+	require.NoError(t, worker.RefreshWorker(db, wk.ID))
 }
 
 func TestDeadWorkers(t *testing.T) {
-	db, _, end := test.SetupPG(t)
-	defer end()
-	test.NoError(t, worker.DisableDeadWorkers(context.TODO(), db))
-	test.NoError(t, worker.DeleteDeadWorkers(context.TODO(), db))
+	db, _ := test.SetupPG(t)
+
+	require.NoError(t, worker.DisableDeadWorkers(context.TODO(), db.DbMap))
+	require.NoError(t, worker.DeleteDeadWorkers(context.TODO(), db.DbMap))
 }
 
 func TestRegister(t *testing.T) {
-	db, store, end := test.SetupPG(t, bootstrap.InitiliazeDB)
-	defer end()
+	db, store := test.SetupPG(t, bootstrap.InitiliazeDB)
 
 	g := assets.InsertGroup(t, db)
 	h, _, c, _ := assets.InsertHatchery(t, db, *g)
@@ -81,32 +80,31 @@ func TestRegister(t *testing.T) {
 		Model:        m,
 		RegisterOnly: true,
 		WorkerName:   sdk.RandomString(10),
-	}, h.ID, c, sdk.WorkerRegistrationForm{
+	}, *h, c, sdk.WorkerRegistrationForm{
 		Arch:               runtime.GOARCH,
 		OS:                 runtime.GOOS,
 		BinaryCapabilities: []string{"bash"},
 	})
-
-	test.NoError(t, err)
-	assert.NotNil(t, w)
+	require.NoError(t, err)
+	require.NotNil(t, w)
 
 	wk, err := worker.LoadByConsumerID(context.TODO(), db, w.ConsumerID)
-	test.NoError(t, err)
-	assert.Equal(t, w.ID, wk.ID)
-	assert.Equal(t, w.ModelID, wk.ModelID)
-	assert.Equal(t, w.HatcheryID, wk.HatcheryID)
+	require.NoError(t, err)
+	require.Equal(t, w.ID, wk.ID)
+	require.Equal(t, w.ModelID, wk.ModelID)
+	require.Equal(t, w.HatcheryID, wk.HatcheryID)
 
 	// try to register a worker for a job, without a JobID
 	w2, err := worker.RegisterWorker(context.TODO(), db, store, hatchery.SpawnArguments{
 		HatcheryName: h.Name,
 		Model:        m,
 		WorkerName:   sdk.RandomString(10),
-	}, h.ID, c, sdk.WorkerRegistrationForm{
+	}, *h, c, sdk.WorkerRegistrationForm{
 		Arch:               runtime.GOARCH,
 		OS:                 runtime.GOOS,
 		BinaryCapabilities: []string{"bash"},
 	})
 
-	test.Error(t, err)
-	assert.Nil(t, w2)
+	require.Error(t, err)
+	require.Nil(t, w2)
 }

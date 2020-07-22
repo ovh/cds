@@ -10,6 +10,7 @@ import (
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/jws"
 	"github.com/ovh/cds/sdk/log"
+	"github.com/ovh/cds/sdk/log/hook"
 )
 
 func (w *CurrentWorker) Take(ctx context.Context, job sdk.WorkflowNodeJobRun) error {
@@ -23,6 +24,7 @@ func (w *CurrentWorker) Take(ctx context.Context, job sdk.WorkflowNodeJobRun) er
 	log.Info(ctx, "takeWorkflowJob> Job %d taken%s", job.ID, t)
 
 	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
 
 	w.currentJob.context = workerruntime.SetJobID(ctx, job.ID)
 	w.currentJob.context = ctx
@@ -33,27 +35,34 @@ func (w *CurrentWorker) Take(ctx context.Context, job sdk.WorkflowNodeJobRun) er
 	// Reset build variables
 	w.currentJob.newVariables = nil
 
-	if info.SigningKey != "" {
-		secretKey := make([]byte, 32)
-		if _, err := base64.StdEncoding.Decode(secretKey, []byte(info.SigningKey)); err != nil {
-			return sdk.WithStack(err)
-		}
-		signer, err := jws.NewHMacSigner(secretKey)
-		if err != nil {
-			return sdk.WithStack(err)
-		}
-		w.currentJob.signer = signer
+	secretKey := make([]byte, 32)
+	if _, err := base64.StdEncoding.Decode(secretKey, []byte(info.SigningKey)); err != nil {
+		return sdk.WithStack(err)
+	}
+	signer, err := jws.NewHMacSigner(secretKey)
+	if err != nil {
+		return sdk.WithStack(err)
+	}
+	w.currentJob.signer = signer
+
+	log.Info(ctx, "Setup step logger %s", info.GelfServiceAddr)
+	throttlePolicy := hook.NewDefaultThrottlePolicy()
+
+	var graylogCfg = &hook.Config{
+		Addr:     info.GelfServiceAddr,
+		Protocol: "tcp",
+		ThrottlePolicy: &hook.ThrottlePolicyConfig{
+			Amount: 100,
+			Period: 10 * time.Millisecond,
+			Policy: throttlePolicy,
+		},
 	}
 
-	if info.GelfServiceAddr != "" {
-		log.Info(ctx, "Setup step logger")
-		logger, err := log.New(info.GelfServiceAddr)
-		if err != nil {
-			return sdk.WithStack(err)
-		}
-		w.logger.stepLogger = logger
+	l, h, err := log.New(ctx, graylogCfg)
+	if err != nil {
+		return sdk.WithStack(err)
 	}
-
+	w.SetGelfLogger(h, l)
 	start := time.Now()
 
 	//This goroutine try to get the job every 5 seconds, if it fails, it cancel the build.
@@ -116,9 +125,11 @@ func (w *CurrentWorker) Take(ctx context.Context, job sdk.WorkflowNodeJobRun) er
 
 	// Send the reason as a spawninfo
 	if res.Status != sdk.StatusSuccess && res.Reason != "" {
+		sp := sdk.SpawnMsg{ID: sdk.MsgWorkflowError.ID, Args: []interface{}{res.Reason}}
 		infos := []sdk.SpawnInfo{{
-			RemoteTime: time.Now(),
-			Message:    sdk.SpawnMsg{ID: sdk.MsgWorkflowError.ID, Args: []interface{}{res.Reason}},
+			RemoteTime:  time.Now(),
+			Message:     sp,
+			UserMessage: sp.DefaultUserMessage(),
 		}}
 		if err := w.Client().QueueJobSendSpawnInfo(ctx, job.ID, infos); err != nil {
 			log.Error(ctx, "processJob> Unable to send spawn info: %v", err)

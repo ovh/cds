@@ -89,7 +89,7 @@ export class WorkflowNotificationFormComponent implements OnInit {
 
     initNotif(): void {
         if (this.nodes && this.notification && !this.notification.id) {
-            (<WorkflowNotification>this.notification).source_node_ref = this.nodes.map(n => {
+            this.notification.source_node_ref = this.nodes.map(n => {
                 return n.name;
             });
         }

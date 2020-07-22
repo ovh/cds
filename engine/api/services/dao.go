@@ -5,9 +5,9 @@ import (
 	"time"
 
 	"github.com/go-gorp/gorp"
-	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/engine/api/worker"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/gorpmapping"
 	"github.com/ovh/cds/sdk/log"
 )
 
@@ -80,8 +80,8 @@ func LoadAllByType(ctx context.Context, db gorp.SqlExecutor, typeService string)
 // LoadAllByType returns all services that users can see with given type.
 func LoadAllByTypeAndUserID(ctx context.Context, db gorp.SqlExecutor, typeService string, userID string) ([]sdk.Service, error) {
 	query := gorpmapping.NewQuery(`
-		SELECT service.* 
-		FROM service 
+		SELECT service.*
+		FROM service
 		JOIN auth_consumer on auth_consumer.id = service.auth_consumer_id
 		WHERE service.type = $1 AND auth_consumer.user_id = $2`).Args(typeService, userID)
 	return getAll(ctx, db, query)
@@ -124,7 +124,7 @@ func FindDeadServices(ctx context.Context, db gorp.SqlExecutor, t time.Duration)
 }
 
 // Insert a service in database.
-func Insert(ctx context.Context, db gorp.SqlExecutor, s *sdk.Service) error {
+func Insert(ctx context.Context, db gorpmapping.SqlExecutorWithTx, s *sdk.Service) error {
 	sdb := service{Service: *s}
 	if err := gorpmapping.InsertAndSign(ctx, db, &sdb); err != nil {
 		return err
@@ -134,7 +134,7 @@ func Insert(ctx context.Context, db gorp.SqlExecutor, s *sdk.Service) error {
 }
 
 // Update a service in database.
-func Update(ctx context.Context, db gorp.SqlExecutor, s *sdk.Service) error {
+func Update(ctx context.Context, db gorpmapping.SqlExecutorWithTx, s *sdk.Service) error {
 	sdb := service{Service: *s}
 	if err := gorpmapping.UpdateAndSign(ctx, db, &sdb); err != nil {
 		return err
@@ -145,19 +145,11 @@ func Update(ctx context.Context, db gorp.SqlExecutor, s *sdk.Service) error {
 
 // Delete a service.
 func Delete(db gorp.SqlExecutor, s *sdk.Service) error {
-	if s.Type == TypeHatchery {
-		wks, err := worker.LoadByHatcheryID(context.Background(), db, s.ID)
-		if err != nil {
+	if s.Type == sdk.TypeHatchery {
+		if err := worker.ReleaseAllFromHatchery(db, s.ID); err != nil {
 			return err
 		}
-
-		for _, wk := range wks {
-			if err := worker.Delete(db, wk.ID); err != nil {
-				return err
-			}
-		}
 	}
-
 	sdb := service{Service: *s}
 	log.Debug("services.Delete> deleting service %s(%d) from database", s.Name, s.ID)
 	if _, err := db.Delete(&sdb); err != nil {

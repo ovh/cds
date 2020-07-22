@@ -15,11 +15,10 @@ import (
 )
 
 func Test_getVariableAuditInApplicationHandler(t *testing.T) {
-	api, db, router, end := newTestAPI(t)
-	defer end()
+	api, db, router := newTestAPI(t)
 
 	//Create admin user
-	u, pass := assets.InsertAdminUser(t, api.mustDB())
+	u, pass := assets.InsertAdminUser(t, db)
 
 	//Insert Project
 	pkey := sdk.RandomString(10)
@@ -28,17 +27,17 @@ func Test_getVariableAuditInApplicationHandler(t *testing.T) {
 	app := &sdk.Application{
 		Name: sdk.RandomString(10),
 	}
-	if err := application.Insert(api.mustDB(), *proj, app); err != nil {
+	if err := application.Insert(db, *proj, app); err != nil {
 		t.Fatal(err)
 	}
 
 	// Add variable
-	v := sdk.Variable{
+	v := sdk.ApplicationVariable{
 		Name:  "foo",
 		Type:  "string",
 		Value: "bar",
 	}
-	if err := application.InsertVariable(api.mustDB(), app.ID, &v, u); err != nil {
+	if err := application.InsertVariable(db, app.ID, &v, u); err != nil {
 		t.Fatal(err)
 	}
 

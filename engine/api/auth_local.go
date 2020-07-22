@@ -5,16 +5,14 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/go-gorp/gorp"
-
 	"github.com/ovh/cds/engine/api/authentication"
 	"github.com/ovh/cds/engine/api/authentication/local"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/mail"
-	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/engine/api/user"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/gorpmapping"
 	"github.com/ovh/cds/sdk/log"
 )
 
@@ -107,7 +105,7 @@ func (api *API) postAuthLocalSignupHandler() service.Handler {
 	}
 }
 
-func initBuiltinConsumersFromStartupConfig(ctx context.Context, tx gorp.SqlExecutor, consumer *sdk.AuthConsumer, initToken string) error {
+func initBuiltinConsumersFromStartupConfig(ctx context.Context, tx gorpmapping.SqlExecutorWithTx, consumer *sdk.AuthConsumer, initToken string) error {
 	// Deserialize the magic token to retrieve the startup configuration
 	var startupConfig StartupConfig
 	if err := authentication.VerifyJWS(initToken, &startupConfig); err != nil {
@@ -125,10 +123,12 @@ func initBuiltinConsumersFromStartupConfig(ctx context.Context, tx gorp.SqlExecu
 		var scopes sdk.AuthConsumerScopeDetails
 
 		switch cfg.ServiceType {
-		case services.TypeHatchery:
+		case sdk.TypeHatchery:
 			scopes = sdk.NewAuthConsumerScopeDetails(sdk.AuthConsumerScopeService, sdk.AuthConsumerScopeHatchery, sdk.AuthConsumerScopeRunExecution, sdk.AuthConsumerScopeWorkerModel)
-		case services.TypeHooks:
+		case sdk.TypeHooks:
 			scopes = sdk.NewAuthConsumerScopeDetails(sdk.AuthConsumerScopeService, sdk.AuthConsumerScopeHooks, sdk.AuthConsumerScopeProject, sdk.AuthConsumerScopeRun)
+		case sdk.TypeCDN:
+			scopes = sdk.NewAuthConsumerScopeDetails(sdk.AuthConsumerScopeService, sdk.AuthConsumerScopeWorker, sdk.AuthConsumerScopeRunExecution)
 		default:
 			scopes = sdk.NewAuthConsumerScopeDetails(sdk.AuthConsumerScopeService)
 		}

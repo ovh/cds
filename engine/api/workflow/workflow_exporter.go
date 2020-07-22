@@ -8,15 +8,15 @@ import (
 
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/environment"
-	"github.com/ovh/cds/engine/api/observability"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/exportentities"
 	v2 "github.com/ovh/cds/sdk/exportentities/v2"
+	"github.com/ovh/cds/sdk/telemetry"
 )
 
 // Export a workflow
 func Export(ctx context.Context, db gorp.SqlExecutor, projIdent sdk.ProjectIdentifiers, name string, opts ...v2.ExportOptions) (exportentities.Workflow, error) {
-	ctx, end := observability.Span(ctx, "workflow.Export")
+	ctx, end := telemetry.Span(ctx, "workflow.Export")
 	defer end()
 
 	wf, err := Load(ctx, db, projIdent, name, LoadOptions{})
@@ -41,7 +41,7 @@ func Export(ctx context.Context, db gorp.SqlExecutor, projIdent sdk.ProjectIdent
 func Pull(ctx context.Context, db gorp.SqlExecutor, projIdent sdk.ProjectIdentifiers, name string,
 	encryptFunc sdk.EncryptFunc, opts ...v2.ExportOptions) (exportentities.WorkflowComponents, error) {
 
-	ctx, end := observability.Span(ctx, "workflow.Pull")
+	ctx, end := telemetry.Span(ctx, "workflow.Pull")
 	defer end()
 
 	var wp exportentities.WorkflowComponents
@@ -112,7 +112,7 @@ func Pull(ctx context.Context, db gorp.SqlExecutor, projIdent sdk.ProjectIdentif
 		if a.FromRepository != wf.FromRepository { // don't export if coming from an other repository
 			continue
 		}
-		app, err := application.ExportApplication(db, a, encryptFunc)
+		app, err := application.ExportApplication(db, a, encryptFunc, fmt.Sprintf("appID:%d", a.ID))
 		if err != nil {
 			return wp, sdk.WrapError(err, "unable to export app %s", a.Name)
 		}
@@ -123,7 +123,7 @@ func Pull(ctx context.Context, db gorp.SqlExecutor, projIdent sdk.ProjectIdentif
 		if e.FromRepository != wf.FromRepository { // don't export if coming from an other repository
 			continue
 		}
-		env, err := environment.ExportEnvironment(db, e, encryptFunc)
+		env, err := environment.ExportEnvironment(db, e, encryptFunc, fmt.Sprintf("env:%d", e.ID))
 		if err != nil {
 			return wp, sdk.WrapError(err, "unable to export env %s", e.Name)
 		}

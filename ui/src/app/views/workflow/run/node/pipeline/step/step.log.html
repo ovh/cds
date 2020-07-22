@@ -1,55 +1,52 @@
 <div class="log">
-    <div class="logHeader pointing" (click)="toggleLogs()">
-        <div class="status" [class.icon]="stepStatus?.status !== pipelineBuildStatusEnum.BUILDING">
-            <app-status-icon [status]="stepStatus?.status"></app-status-icon>
+    <div class="logHeader pointing" (click)="toggleLogs()" *ngIf="step && stepStatus">
+        <div class="status" [class.icon]="stepStatus.status !== pipelineBuildStatusEnum.BUILDING">
+            <app-status-icon [status]="stepStatus.status"></app-status-icon>
         </div>
-        <div class="title" [title]="startExec ? ('step_title_duration' | translate:{start: startExec, end: doneExec}) : ''">
-            <span *ngIf="!step.step_name">{{step.name}}</span><span *ngIf="step.step_name">{{step.step_name}}</span> {{duration}}
-            <i class="textOrange" *ngIf="step.deprecated">
+        <div class="title"
+            [title]="startExec ? ('step_title_duration' | translate:{start: startExec, end: doneExec}) : ''">
+            <span *ngIf="!step.step_name">{{step.name}}</span><span *ngIf="step.step_name">{{step.step_name}}</span>
+            {{duration}}
+            <i class="textOrange" *ngIf="step?.deprecated">
                 <i class="warning orange sign icon"></i>{{'common_deprecated' | translate}}
             </i>
         </div>
         <div class="right floated flags" *ngIf="step.optional">
-            <i class="warning sign icon orange stepWarn" *ngIf="stepStatus?.status === pipelineBuildStatusEnum.FAIL && step.optional"></i>{{ 'action_optional' | translate }}
+            <i class="warning sign icon orange stepWarn"
+                *ngIf="stepStatus.status === pipelineBuildStatusEnum.FAIL && step.optional"></i>{{ 'action_optional' | translate }}
         </div>
     </div>
-    <div class="logs" *ngIf="showLogs">
+    <div class="logs" *ngIf="job && showLogs">
         <div class="right floated toolbar" *ngIf="splittedLogsToDisplay && splittedLogsToDisplay.length > 2">
-          <div class="mini ui icon buttons">
-              <button class="ui button"
-                  [title]="'workflow_logs_pretty_ansi' | translate"
-                  [class.active]="ansiViewSelected"
-                  [disabled]="splittedLogs && splittedLogs.length > MAX_PRETTY_LOGS_LINES"
-                  (click)="ansiView()">
-                <i class="tint icon"></i>
-              </button>
-              <button class="ui button"
-                  [title]="'workflow_logs_pretty_html' | translate"
-                  [class.active]="htmlViewSelected"
-                  [disabled]="splittedLogs && splittedLogs.length > MAX_PRETTY_LOGS_LINES"
-                  (click)="htmlView()">
-                <i class="code icon"></i>
-              </button>
-              <button class="ui button"
-                  [title]="'workflow_logs_raw' | translate"
-                  [class.active]="basicView"
-                  (click)="rawView()">
-                <i class="file outline icon"></i>
-              </button>
-              <button class="ui icon button copyButton" [title]="'common_copy_clipboard' | translate" (click)="copyRawLog()">
-                <i class="copy icon"></i>
-              </button>
-          </div>
+            <div class="mini ui icon buttons">
+                <button class="ui button" [title]="'workflow_logs_pretty_ansi' | translate"
+                    [class.active]="ansiViewSelected"
+                    [disabled]="splittedLogs && splittedLogs.length > MAX_PRETTY_LOGS_LINES" (click)="ansiView()">
+                    <i class="tint icon"></i>
+                </button>
+                <button class="ui button" [title]="'workflow_logs_pretty_html' | translate"
+                    [class.active]="htmlViewSelected"
+                    [disabled]="splittedLogs && splittedLogs.length > MAX_PRETTY_LOGS_LINES" (click)="htmlView()">
+                    <i class="code icon"></i>
+                </button>
+                <button class="ui button" [title]="'workflow_logs_raw' | translate" [class.active]="basicView"
+                    (click)="rawView()">
+                    <i class="file outline icon"></i>
+                </button>
+                <button class="ui icon button copyButton" [title]="'common_copy_clipboard' | translate"
+                    (click)="copyRawLog()">
+                    <i class="copy icon"></i>
+                </button>
+            </div>
 
         </div>
         <!-- Pay attention ! Don't write any spaces, tabs or line between <pre> and <table> -->
         <pre *ngIf="!loading && !basicView"><table class="ui very basic table">
             <tbody>
-              <ng-container *ngFor="let logLine of splittedLogsToDisplay; let index = index; let last = last;">
+              <ng-container *ngFor="let logLine of splittedLogsToDisplay">
                 <tr
                   [class.active]="selectedLine === logLine.lineNumber"
-                  id="L{{job.pipeline_stage_id}}-{{job.pipeline_action_id}}-{{stepOrder}}-{{logLine.lineNumber}}"
-                  *ngIf="!last">
+                  id="L{{job.pipeline_stage_id}}-{{job.pipeline_action_id}}-{{stepOrder}}-{{logLine.lineNumber}}">
                   <td class="number right aligned pointing" (click)="generateLink(logLine.lineNumber)">{{logLine.lineNumber}}</td>
                   <td [innerHTML]="logLine.value | safeHtml:!htmlViewSelected" *ngIf="ansiViewSelected || htmlViewSelected"></td><td [innerText]="logLine.value" *ngIf="!ansiViewSelected && !htmlViewSelected"></td>
                 </tr>
@@ -59,7 +56,7 @@
               </ng-container>
             </tbody>
           </table></pre>
-          <pre *ngIf="basicView && logs">{{logs.val}}</pre>
+        <pre *ngIf="basicView && logs">{{logs.val}}</pre>
         <textarea class="fakeInput" name="fakeInput" #logsContent></textarea>
         <div class="ui active centered inline loader" *ngIf="loading"></div>
     </div>

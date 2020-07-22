@@ -14,11 +14,10 @@ import (
 	"go.opencensus.io/stats"
 	"go.opencensus.io/trace"
 
-	"github.com/ovh/cds/engine/api/observability"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/ovh/cds/sdk/log"
-	"github.com/ovh/cds/sdk/tracingutils"
+	"github.com/ovh/cds/sdk/telemetry"
 )
 
 var (
@@ -33,12 +32,12 @@ func Create(ctx context.Context, h Interface) error {
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
-	ctx = observability.ContextWithTag(ctx,
-		observability.TagServiceName, h.Name(),
-		observability.TagServiceType, h.Type(),
+	ctx = telemetry.ContextWithTag(ctx,
+		telemetry.TagServiceName, h.Name(),
+		telemetry.TagServiceType, h.Type(),
 	)
 
-	if err := initMetrics(); err != nil {
+	if err := initMetrics(ctx); err != nil {
 		return err
 	}
 
@@ -134,37 +133,41 @@ func Create(ctx context.Context, h Interface) error {
 			if j.ID == 0 {
 				continue
 			}
+			if h.GetLogger() == nil {
+				log.Error(ctx, "Logger not found, don't spawn workers")
+				continue
+			}
 
 			var traceEnded *struct{}
 			currentCtx, currentCancel := context.WithTimeout(ctx, 10*time.Minute)
-			if val, has := j.Header.Get(tracingutils.SampledHeader); has && val == "1" {
-				currentCtx, _ = observability.New(currentCtx, h, "hatchery.JobReceive", trace.AlwaysSample(), trace.SpanKindServer)
+			if val, has := j.Header.Get(telemetry.SampledHeader); has && val == "1" {
+				currentCtx, _ = telemetry.New(currentCtx, h, "hatchery.JobReceive", trace.AlwaysSample(), trace.SpanKindServer)
 
 				r, _ := j.Header.Get(sdk.WorkflowRunHeader)
 				w, _ := j.Header.Get(sdk.WorkflowHeader)
 				p, _ := j.Header.Get(sdk.ProjectKeyHeader)
 
-				observability.Current(currentCtx,
-					observability.Tag(observability.TagWorkflow, w),
-					observability.Tag(observability.TagWorkflowRun, r),
-					observability.Tag(observability.TagProjectKey, p),
-					observability.Tag(observability.TagWorkflowNodeJobRun, j.ID),
+				telemetry.Current(currentCtx,
+					telemetry.Tag(telemetry.TagWorkflow, w),
+					telemetry.Tag(telemetry.TagWorkflowRun, r),
+					telemetry.Tag(telemetry.TagProjectKey, p),
+					telemetry.Tag(telemetry.TagWorkflowNodeJobRun, j.ID),
 				)
 
-				if _, ok := j.Header["SSE"]; ok {
-					log.Debug("hatchery> received job from SSE")
-					observability.Current(currentCtx,
-						observability.Tag("from", "sse"),
+				if _, ok := j.Header["WS"]; ok {
+					log.Debug("hatchery> received job from WS")
+					telemetry.Current(currentCtx,
+						telemetry.Tag("from", "ws"),
 					)
 				}
 			}
 			endTrace := func(reason string) {
 				if reason != "" {
-					observability.Current(currentCtx,
-						observability.Tag("reason", reason),
+					telemetry.Current(currentCtx,
+						telemetry.Tag("reason", reason),
 					)
 				}
-				observability.End(currentCtx, nil, nil) // nolint
+				telemetry.End(currentCtx, nil, nil) // nolint
 				var T struct{}
 				traceEnded = &T
 				currentCancel()
@@ -178,8 +181,8 @@ func Create(ctx context.Context, h Interface) error {
 
 			stats.Record(currentCtx, GetMetrics().Jobs.M(1))
 
-			if _, ok := j.Header["SSE"]; ok {
-				stats.Record(currentCtx, GetMetrics().JobsSSE.M(1))
+			if _, ok := j.Header["WS"]; ok {
+				stats.Record(currentCtx, GetMetrics().JobsWebsocket.M(1))
 			}
 
 			//Check if the jobs is concerned by a pending worker creation
@@ -220,7 +223,20 @@ func Create(ctx context.Context, h Interface) error {
 			// Check at least one worker model can match
 			var chosenModel *sdk.Model
 			var canTakeJob bool
-			if isWithModels {
+
+			var containsRegionRequirement bool
+			for _, r := range workerRequest.requirements {
+				switch r.Type {
+				case sdk.RegionRequirement:
+					containsRegionRequirement = true
+					break
+				}
+			}
+
+			if !containsRegionRequirement && h.Configuration().Provision.IgnoreJobWithNoRegion {
+				log.Debug("cannot launch this job because it does not contains a region prerequisite and IgnoreJobWithNoRegion=true in hatchery configuration")
+				canTakeJob = false
+			} else if isWithModels {
 				for i := range models {
 					if canRunJobWithModel(ctx, hWithModels, workerRequest, &models[i]) {
 						chosenModel = &models[i]
@@ -278,11 +294,6 @@ func canRunJob(ctx context.Context, h Interface, j workerStarterRequest) bool {
 			return false
 		}
 
-		if r.Type == sdk.NetworkAccessRequirement && !sdk.CheckNetworkAccessRequirement(r) {
-			log.Debug("canRunJob> %d - job %d - network requirement failed: %v", j.timestamp, j.id, r.Value)
-			return false
-		}
-
 		if r.Type == sdk.RegionRequirement && r.Value != h.Configuration().Provision.Region {
 			log.Debug("canRunJob> %d - job %d - job with region requirement: cannot spawn. hatchery-region:%s prerequisite:%s", j.timestamp, j.id, h.Configuration().Provision.Region, r.Value)
 			return false
@@ -290,7 +301,7 @@ func canRunJob(ctx context.Context, h Interface, j workerStarterRequest) bool {
 
 		// Skip others requirement as we can't check it
 		if r.Type == sdk.PluginRequirement || r.Type == sdk.ServiceRequirement || r.Type == sdk.MemoryRequirement {
-			log.Debug("canRunJob> %d - job %d - job with service, plugin, network or memory requirement. Skip these check as we can't check it on hatchery routine", j.timestamp, j.id)
+			log.Debug("canRunJob> %d - job %d - job with service, plugin or memory requirement. Skip these check as we can't check it on hatchery routine", j.timestamp, j.id)
 			continue
 		}
 
@@ -370,11 +381,6 @@ func canRunJobWithModel(ctx context.Context, h InterfaceWithModels, j workerStar
 			return false
 		}
 
-		if r.Type == sdk.NetworkAccessRequirement && !sdk.CheckNetworkAccessRequirement(r) {
-			log.Debug("canRunJobWithModel> %d - job %d - network requirement failed: %v", j.timestamp, j.id, r.Value)
-			return false
-		}
-
 		// Skip other requirement as we can't check it
 		if r.Type == sdk.PluginRequirement || r.Type == sdk.ServiceRequirement || r.Type == sdk.MemoryRequirement {
 			log.Debug("canRunJobWithModel> %d - job %d - job with service, plugin, network or memory requirement. Skip these check as we can't check it on hatchery routine", j.timestamp, j.id)
@@ -418,7 +424,7 @@ func SendSpawnInfo(ctx context.Context, h Interface, jobID int64, spawnMsg sdk.S
 	if h.CDSClient() == nil || jobID == 0 {
 		return
 	}
-	infos := []sdk.SpawnInfo{{RemoteTime: time.Now(), Message: spawnMsg}}
+	infos := []sdk.SpawnInfo{{RemoteTime: time.Now(), Message: spawnMsg, UserMessage: spawnMsg.DefaultUserMessage()}}
 	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
 	defer cancel()
 	if err := h.CDSClient().QueueJobSendSpawnInfo(ctx, jobID, infos); err != nil {

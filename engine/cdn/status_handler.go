@@ -8,10 +8,10 @@ import (
 	"go.opencensus.io/stats"
 	"go.opencensus.io/tag"
 
-	"github.com/ovh/cds/engine/api/observability"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
+	"github.com/ovh/cds/sdk/telemetry"
 )
 
 var (
@@ -31,13 +31,12 @@ func (s *Service) statusHandler() service.Handler {
 
 func (s *Service) Status(ctx context.Context) sdk.MonitoringStatus {
 	m := s.CommonMonitoring()
-
 	status := sdk.MonitoringStatusOK
 	m.Lines = append(m.Lines, sdk.MonitoringStatusLine{Component: "CDN", Value: status, Status: status})
 	return m
 }
 
-func (s *Service) InitMetrics() error {
+func (s *Service) initMetrics(ctx context.Context) error {
 	var err error
 	onceMetrics.Do(func() {
 		Errors = stats.Int64(
@@ -57,14 +56,14 @@ func (s *Service) InitMetrics() error {
 			"Number of service log received",
 			stats.UnitDimensionless)
 
-		tagServiceType := observability.MustNewKey(observability.TagServiceType)
-		tagServiceName := observability.MustNewKey(observability.TagServiceName)
+		tagServiceType := telemetry.MustNewKey(telemetry.TagServiceType)
+		tagServiceName := telemetry.MustNewKey(telemetry.TagServiceName)
 
-		err = observability.RegisterView(
-			observability.NewViewCount("cdn/tcp/router/router_errors", Errors, []tag.Key{tagServiceType, tagServiceName}),
-			observability.NewViewCount("cdn/tcp/router/router_hits", Hits, []tag.Key{tagServiceType, tagServiceName}),
-			observability.NewViewCount("cdn/tcp/worker/log/count", WorkerLogReceived, []tag.Key{tagServiceType, tagServiceName}),
-			observability.NewViewCount("cdn/tcp/service/log/count", ServiceLogReceived, []tag.Key{tagServiceType, tagServiceName}),
+		err = telemetry.RegisterView(ctx,
+			telemetry.NewViewCount("cdn/tcp/router/router_errors", Errors, []tag.Key{tagServiceType, tagServiceName}),
+			telemetry.NewViewCount("cdn/tcp/router/router_hits", Hits, []tag.Key{tagServiceType, tagServiceName}),
+			telemetry.NewViewCount("cdn/tcp/worker/log/count", WorkerLogReceived, []tag.Key{tagServiceType, tagServiceName}),
+			telemetry.NewViewCount("cdn/tcp/service/log/count", ServiceLogReceived, []tag.Key{tagServiceType, tagServiceName}),
 		)
 	})
 

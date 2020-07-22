@@ -15,15 +15,15 @@ import (
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gambol99/go-marathon"
 	"github.com/gorilla/mux"
+	"github.com/sirupsen/logrus"
 
 	"github.com/ovh/cds/engine/api"
-	"github.com/ovh/cds/engine/api/observability"
-	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/ovh/cds/sdk/hatchery"
 	"github.com/ovh/cds/sdk/log"
+	"github.com/ovh/cds/sdk/telemetry"
 )
 
 // New instanciates a new Hatchery Marathon
@@ -36,6 +36,11 @@ func New() *HatcheryMarathon {
 }
 
 var _ hatchery.InterfaceWithModels = new(HatcheryMarathon)
+
+// GetLogger return the logger
+func (h *HatcheryMarathon) GetLogger() *logrus.Logger {
+	return h.ServiceLogger
+}
 
 // Init cdsclient config.
 func (h *HatcheryMarathon) Init(config interface{}) (cdsclient.ServiceConfig, error) {
@@ -65,7 +70,7 @@ func (h *HatcheryMarathon) ApplyConfiguration(cfg interface{}) error {
 	}
 
 	h.Common.Common.ServiceName = h.Config.Name
-	h.Common.Common.ServiceType = services.TypeHatchery
+	h.Common.Common.ServiceType = sdk.TypeHatchery
 	h.HTTPURL = h.Config.URL
 	h.MaxHeartbeatFailures = h.Config.API.MaxHeartbeatFailures
 
@@ -208,7 +213,7 @@ func (h *HatcheryMarathon) CanSpawn(ctx context.Context, model *sdk.Model, jobID
 // SpawnWorker creates an application on mesos via marathon
 // requirements services are not supported
 func (h *HatcheryMarathon) SpawnWorker(ctx context.Context, spawnArgs hatchery.SpawnArguments) error {
-	ctx, end := observability.Span(ctx, "hatcheryMarathon.SpawnWorker")
+	ctx, end := telemetry.Span(ctx, "hatcheryMarathon.SpawnWorker")
 	defer end()
 
 	if spawnArgs.JobID > 0 {
@@ -321,7 +326,7 @@ func (h *HatcheryMarathon) SpawnWorker(ctx context.Context, spawnArgs hatchery.S
 		Labels:    &h.marathonLabels,
 	}
 
-	_, next := observability.Span(ctx, "marathonClient.CreateApplication")
+	_, next := telemetry.Span(ctx, "marathonClient.CreateApplication")
 	if _, err := h.marathonClient.CreateApplication(application); err != nil {
 		next()
 		return err
@@ -350,7 +355,7 @@ func (h *HatcheryMarathon) SpawnWorker(ctx context.Context, spawnArgs hatchery.S
 	}()
 
 	log.Debug("spawnMarathonDockerWorker> worker %s spawning in progress, please wait...", application.ID)
-	_, next = observability.Span(ctx, "marathonClient.ApplicationDeployments")
+	_, next = telemetry.Span(ctx, "marathonClient.ApplicationDeployments")
 	deployments, err := h.marathonClient.ApplicationDeployments(application.ID)
 	next()
 	if err != nil {
@@ -363,7 +368,7 @@ func (h *HatcheryMarathon) SpawnWorker(ctx context.Context, spawnArgs hatchery.S
 		return nil
 	}
 
-	_, next = observability.Span(ctx, "waitDeployment")
+	_, next = telemetry.Span(ctx, "waitDeployment")
 	wg := &sync.WaitGroup{}
 	var errorsChan = make(chan error, len(deployments))
 
@@ -462,28 +467,45 @@ func (h *HatcheryMarathon) WorkersStartedByModel(ctx context.Context, model *sdk
 
 // InitHatchery only starts killing routine of worker not registered
 func (h *HatcheryMarathon) InitHatchery(ctx context.Context) error {
-	h.startKillAwolWorkerRoutine()
+	if err := h.RefreshServiceLogger(ctx); err != nil {
+		log.Error(ctx, "Hatchery> marathon> Cannot get cdn configuration : %v", err)
+	}
+	sdk.GoRoutine(ctx, "marathon-routines", func(ctx context.Context) {
+		h.routines(ctx)
+	})
 	return nil
 }
 
-func (h *HatcheryMarathon) startKillAwolWorkerRoutine() {
-	go func() {
-		for {
-			time.Sleep(10 * time.Second)
-			if err := h.killDisabledWorkers(); err != nil {
-				log.Warning(context.Background(), "Cannot kill disabled workers: %s", err)
-			}
-		}
-	}()
+func (h *HatcheryMarathon) routines(ctx context.Context) {
+	ticker := time.NewTicker(10 * time.Second)
+	defer ticker.Stop()
 
-	go func() {
-		for {
-			time.Sleep(10 * time.Second)
-			if err := h.killAwolWorkers(); err != nil {
-				log.Warning(context.Background(), "Cannot kill awol workers: %s", err)
+	for {
+		select {
+		case <-ticker.C:
+			sdk.GoRoutine(ctx, "marathon-killDisabledWorker", func(ctx context.Context) {
+				if err := h.killDisabledWorkers(); err != nil {
+					log.Warning(context.Background(), "Cannot kill disabled workers: %s", err)
+				}
+			})
+			sdk.GoRoutine(ctx, "marathon-killAwolWorkers", func(ctx context.Context) {
+				if err := h.killAwolWorkers(); err != nil {
+					log.Warning(context.Background(), "Cannot kill awol workers: %s", err)
+				}
+			})
+			sdk.GoRoutine(ctx, "marathon-refreshCDNConfiguration", func(ctx context.Context) {
+				if err := h.RefreshServiceLogger(ctx); err != nil {
+					log.Error(ctx, "Hatchery> marathon> Cannot get cdn configuration : %v", err)
+				}
+			})
+		case <-ctx.Done():
+			if ctx.Err() != nil {
+				log.Error(ctx, "Hatchery> marathon> Exiting routines")
 			}
+			return
 		}
-	}()
+	}
+
 }
 
 func (h *HatcheryMarathon) killDisabledWorkers() error {

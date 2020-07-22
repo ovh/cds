@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
@@ -14,6 +15,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/ovh/cds/engine/api/application"
+	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/engine/api/services"
@@ -21,13 +23,22 @@ import (
 	"github.com/ovh/cds/engine/api/test/assets"
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/cdsclient"
 )
 
 func TestUpdateAsCodePipelineHandler(t *testing.T) {
-	api, db, _, end := newTestAPI(t)
-	defer end()
+	api, db, tsURL := newTestServer(t)
 
-	u, pass := assets.InsertAdminUser(t, db)
+	require.NoError(t, event.Initialize(context.Background(), api.mustDB(), api.Cache))
+
+	u, jwt := assets.InsertAdminUser(t, db)
+
+	client := cdsclient.New(cdsclient.Config{
+		Host:                  tsURL,
+		User:                  u.Username,
+		InsecureSkipVerifyTLS: true,
+		SessionToken:          jwt,
+	})
 
 	UUID := sdk.UUID()
 
@@ -37,9 +48,9 @@ func TestUpdateAsCodePipelineHandler(t *testing.T) {
 		_ = services.Delete(db, &s) // nolint
 	}
 
-	a, _ := assets.InsertService(t, db, "TestUpdateAsCodePipelineHandler", services.TypeVCS)
-	b, _ := assets.InsertService(t, db, "TestUpdateAsCodePipelineHandler", services.TypeRepositories)
-	c, _ := assets.InsertService(t, db, "TestUpdateAsCodePipelineHandler", services.TypeHooks)
+	a, _ := assets.InsertService(t, db, "TestUpdateAsCodePipelineHandler", sdk.TypeVCS)
+	b, _ := assets.InsertService(t, db, "TestUpdateAsCodePipelineHandler", sdk.TypeRepositories)
+	c, _ := assets.InsertService(t, db, "TestUpdateAsCodePipelineHandler", sdk.TypeHooks)
 	defer func() {
 		_ = services.Delete(db, a) // nolint
 		_ = services.Delete(db, b) // nolint
@@ -125,7 +136,7 @@ func TestUpdateAsCodePipelineHandler(t *testing.T) {
 		},
 	)
 
-	assert.NoError(t, workflow.CreateBuiltinWorkflowHookModels(db))
+	require.NoError(t, workflow.CreateBuiltinWorkflowHookModels(api.mustDB()))
 
 	// Create Project
 	pkey := sdk.RandomString(10)
@@ -137,8 +148,6 @@ func TestUpdateAsCodePipelineHandler(t *testing.T) {
 	vcsServer.Set("token", "foo")
 	vcsServer.Set("secret", "bar")
 	assert.NoError(t, repositoriesmanager.InsertProjectVCSServerLink(context.TODO(), db, &vcsServer))
-
-	wkf := assets.InsertTestWorkflow(t, db, api.Cache, proj, sdk.RandomString(10))
 
 	pip := sdk.Pipeline{
 		Name:           sdk.RandomString(10),
@@ -163,20 +172,34 @@ func TestUpdateAsCodePipelineHandler(t *testing.T) {
 		FromRepository:     "myrepofrom",
 	}
 	assert.NoError(t, application.Insert(db, *proj, &app))
-	assert.NoError(t, repositoriesmanager.InsertForApplication(db, &app, proj.Key))
+	assert.NoError(t, repositoriesmanager.InsertForApplication(db, &app))
 
 	repoModel, err := workflow.LoadHookModelByName(db, sdk.RepositoryWebHookModelName)
 	assert.NoError(t, err)
 
 	wk := initWorkflow(t, db, proj, &app, &pip, repoModel)
 	wk.FromRepository = "myrepofrom"
-	require.NoError(t, workflow.Insert(context.Background(), db, api.Cache, *proj, wk))
+	projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
+	require.NoError(t, workflow.Insert(context.Background(), db, api.Cache, projIdent, proj.ProjectGroups, wk))
+
+	chanMessageReceived := make(chan sdk.WebsocketEvent)
+	chanMessageToSend := make(chan []sdk.WebsocketFilter)
+	go client.WebsocketEventsListen(context.TODO(), chanMessageToSend, chanMessageReceived)
+	chanMessageToSend <- []sdk.WebsocketFilter{{
+		Type:         sdk.WebsocketFilterTypeAscodeEvent,
+		ProjectKey:   proj.Key,
+		WorkflowName: wk.Name,
+	}}
 
 	uri := api.Router.GetRoute("PUT", api.updateAsCodePipelineHandler, map[string]string{
 		"permProjectKey": proj.Key,
 		"pipelineKey":    pip.Name,
 	})
-	req := assets.NewJWTAuthentifiedRequest(t, pass, "PUT", uri, pip)
+	req := assets.NewJWTAuthentifiedRequest(t, jwt, "PUT", uri, pip)
+	q := req.URL.Query()
+	q.Set("branch", "master")
+	q.Set("message", "my message")
+	req.URL.RawQuery = q.Encode()
 
 	// Do the request
 	wr := httptest.NewRecorder()
@@ -186,36 +209,14 @@ func TestUpdateAsCodePipelineHandler(t *testing.T) {
 	test.NoError(t, json.Unmarshal(wr.Body.Bytes(), myOpe))
 	assert.NotEmpty(t, myOpe.UUID)
 
-	cpt := 0
-	for {
-		if cpt >= 10 {
-			t.Fail()
-			return
-		}
-
-		// Get operation
-		uriGET := api.Router.GetRoute("GET", api.getWorkflowAsCodeHandler, map[string]string{
-			"key":              proj.Key,
-			"permWorkflowName": wkf.Name,
-			"uuid":             myOpe.UUID,
-		})
-		reqGET, err := http.NewRequest("GET", uriGET, nil)
-		test.NoError(t, err)
-		assets.AuthentifyRequest(t, reqGET, u, pass)
-		wrGet := httptest.NewRecorder()
-		api.Router.Mux.ServeHTTP(wrGet, reqGET)
-		assert.Equal(t, 200, wrGet.Code)
-		myOpeGet := new(sdk.Operation)
-		err = json.Unmarshal(wrGet.Body.Bytes(), myOpeGet)
-		assert.NoError(t, err)
-
-		if myOpeGet.Status < sdk.OperationStatusDone {
-			cpt++
-			time.Sleep(1 * time.Second)
-			continue
-		}
-		test.NoError(t, json.Unmarshal(wrGet.Body.Bytes(), myOpeGet))
-		assert.Equal(t, "myURL", myOpeGet.Setup.Push.PRLink)
-		break
+	timeout := time.NewTimer(5 * time.Second)
+	select {
+	case <-timeout.C:
+		t.Fatal("test timeout")
+	case evt := <-chanMessageReceived:
+		require.Equal(t, fmt.Sprintf("%T", sdk.EventAsCodeEvent{}), evt.Event.EventType)
+		var ae sdk.EventAsCodeEvent
+		require.NoError(t, json.Unmarshal(evt.Event.Payload, &ae))
+		require.Equal(t, "myURL", ae.Event.PullRequestURL)
 	}
 }

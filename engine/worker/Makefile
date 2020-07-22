@@ -10,7 +10,7 @@ TARGET_LDFLAGS = -ldflags "-X github.com/ovh/cds/sdk.VERSION=$(VERSION) -X githu
 TARGET_OS = $(if ${OS},${OS},windows darwin linux freebsd)
 TARGET_ARCH = $(if ${ARCH},${ARCH},amd64 arm 386 arm64)
 
-GO_BUILD = go build 
+GO_BUILD = go build
 GO_LINT = ${GOPATH}/bin/gometalinter
 GO_COV_MERGE = ${GOPATH}/bin/gocovmerge
 GO_GO2XUNIT = ${GOPATH}/bin/go2xunit
@@ -42,17 +42,27 @@ clean:
 		rm $$profile; \
 	done;
 
-build: $(TARGET_DIR)
-	@for GOOS in $(TARGET_OS); do \
-		for GOARCH in $(TARGET_ARCH); do \
-			if go tool dist list | grep "$$GOOS" | grep "$$GOARCH" > /dev/null; then \
-				EXTENSION=""; \
-				if test "$$GOOS" = "windows" ; then EXTENSION=".exe"; fi; \
-				echo Compiling $(TARGET_DIR)/$(TARGET_BINARY)-$$GOOS-$$GOARCH$$EXTENSION $(VERSION); \
-				GOOS=$$GOOS GOARCH=$$GOARCH CGO_ENABLED=0 $(GO_BUILD) $(TARGET_LDFLAGS) -o $(TARGET_DIR)/$(TARGET_BINARY)-$$GOOS-$$GOARCH$$EXTENSION; \
-			fi; \
-		done; \
-	done
+define get_os_from_binary_file
+$(strip $(shell echo $(1) | awk '{n=split($$1,a,"-");print a[n-1]}'))
+endef
+
+define get_arch_from_binary_file
+$(strip $(patsubst %.exe, %,$(shell echo $(1) | awk '{n=split($$1,a,"-");print a[n]}')))
+endef
+
+gobuild:
+	@if go tool dist list | grep "$$GOOS" | grep "$$GOARCH" > /dev/null; then \
+		GOOS=$$GOOS GOARCH=$$GOARCH CGO_ENABLED=0 $(GO_BUILD) $(TARGET_LDFLAGS) -o $(abspath $(OUTPUT)); \
+	fi
+
+isWindows = $(filter $1,windows)
+TARGET_WORKER_BINARIES := $(foreach OS, $(TARGET_OS), $(foreach ARCH, $(TARGET_ARCH), $(TARGET_DIR)/$(TARGET_BINARY)-$(OS)-$(ARCH)$(if $(call isWindows, $(OS)),.exe)))
+$(TARGET_WORKER_BINARIES): $(TARGET_DIR)
+	$(info Compiling $@: $(abspath $@))
+	$(MAKE) --no-print-directory gobuild GOOS=$(call get_os_from_binary_file,$@) GOARCH=$(call get_arch_from_binary_file,$@) OUTPUT=$@
+
+
+build: $(TARGET_WORKER_BINARIES)
 
 test: clean
 	@for PKG in $(TEST_PKGS); do \
@@ -66,10 +76,6 @@ test: clean
 test-coverage: $(GO_COV_MERGE) $(TARGET_DIR)
 	@$(GO_COV_MERGE) ./*.coverprofile > $(TARGET_DIR)/cover.out
 	@go tool cover -html=$(TARGET_DIR)/cover.out -o=$(TARGET_DIR)/cover.html
-	@if [ ! -z "${CDS_VERSION}" ]; then \
-		echo "Sending coverage report to CDS"; \
-		worker upload --tag "${CDS_VERSION}" $(abspath $(TARGET_DIR)/cover.html); \
-	fi;
 
 test-xunit-report: $(GO_GO2XUNIT) $(TARGET_DIR)
 	@for TST in `find . -name "tests.log"`; do \

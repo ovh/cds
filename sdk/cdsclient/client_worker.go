@@ -19,6 +19,16 @@ func (c *client) WorkerList(ctx context.Context) ([]sdk.Worker, error) {
 	return p, nil
 }
 
+func (c *client) WorkerGet(ctx context.Context, name string, mods ...RequestModifier) (*sdk.Worker, error) {
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+	var wrk sdk.Worker
+	if _, err := c.GetJSON(ctx, fmt.Sprintf("/worker/%s", name), &wrk, mods...); err != nil {
+		return nil, err
+	}
+	return &wrk, nil
+}
+
 func (c *client) WorkerUnregister(ctx context.Context) error {
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()

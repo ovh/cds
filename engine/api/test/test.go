@@ -18,9 +18,8 @@ import (
 	"github.com/ovh/cds/engine/api/authentication"
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/database"
-	"github.com/ovh/cds/engine/api/database/gorpmapping"
-	"github.com/ovh/cds/engine/api/secret"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/gorpmapping"
 	"github.com/ovh/cds/sdk/log"
 	"github.com/ovh/configstore"
 )
@@ -40,7 +39,7 @@ var (
 )
 
 func init() {
-	log.Initialize(&log.Conf{Level: "debug"})
+	log.Initialize(context.TODO(), &log.Conf{Level: "debug"})
 }
 
 type Bootstrapf func(context.Context, sdk.DefaultValues, func() *gorp.DbMap) error
@@ -83,8 +82,22 @@ RvySYHtJvP64+7ncMqNjMnX8MbJZdoW3FE4gKomVof26/oUk/zHKNn5BECPIqEQv
 XeJEyyEjosSa3qWACDYorGMnzRXdeJa5H7J0W+G3x4tH2LMW8VHS
 -----END RSA PRIVATE KEY-----`)
 
+type FakeTransaction struct {
+	*gorp.DbMap
+}
+
+func (f *FakeTransaction) Rollback() error { return nil }
+func (f *FakeTransaction) Commit() error   { return nil }
+
 // SetupPG setup PG DB for test
-func SetupPG(t log.Logger, bootstrapFunc ...Bootstrapf) (*gorp.DbMap, cache.Store, context.CancelFunc) {
+func SetupPG(t *testing.T, bootstrapFunc ...Bootstrapf) (*FakeTransaction, cache.Store) {
+	db, cache, cancel := SetupPGToCancel(t, bootstrapFunc...)
+	t.Cleanup(cancel)
+	return db, cache
+}
+
+// SetupPGToCancel setup PG DB for test
+func SetupPGToCancel(t log.Logger, bootstrapFunc ...Bootstrapf) (*FakeTransaction, cache.Store, func()) {
 	log.SetLogger(t)
 	cfg := LoadTestingConf(t)
 	DBDriver = cfg["dbDriver"]
@@ -102,7 +115,6 @@ func SetupPG(t log.Logger, bootstrapFunc ...Bootstrapf) (*gorp.DbMap, cache.Stor
 	RedisHost = cfg["redisHost"]
 	RedisPassword = cfg["redisPassword"]
 
-	secret.Init("3dojuwevn94y7orh5e3t4ejtmbtstest")
 	err = authentication.Init("cds_test", SigningKey) // nolint
 	if err != nil {
 		log.Fatalf("unable to init authentication layer: %v", err)
@@ -171,7 +183,9 @@ func SetupPG(t log.Logger, bootstrapFunc ...Bootstrapf) (*gorp.DbMap, cache.Stor
 		t.Fatalf("unable to init database connection")
 	}
 
-	return dbMap, store, cancel
+	return &FakeTransaction{
+		DbMap: dbMap,
+	}, store, cancel
 }
 
 // LoadTestingConf loads test configuration tests.cfg.json

@@ -2,14 +2,12 @@ import {
     ChangeDetectionStrategy,
     ChangeDetectorRef,
     Component, OnInit,
-    QueryList,
     ViewChild,
-    ViewChildren
 } from '@angular/core';
 import { ActivatedRoute, NavigationStart, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Select, Store } from '@ngxs/store';
-import { SuiPopup, SuiPopupController, SuiPopupTemplateController } from '@richardlt/ng2-semantic-ui';
+import { SuiPopup } from '@richardlt/ng2-semantic-ui';
 import { Project } from 'app/model/project.model';
 import { Workflow } from 'app/model/workflow.model';
 import { WorkflowCoreService } from 'app/service/workflow/workflow.core.service';
@@ -51,7 +49,6 @@ export class WorkflowComponent implements OnInit {
     workflowSubscription: Subscription;
 
     projectSubscription: Subscription;
-    dataRouteSubscription: Subscription;
     qpRouteSubscription: Subscription;
     paramsRouteSubscription: Subscription;
     eventsRouteSubscription: Subscription;
@@ -79,9 +76,6 @@ export class WorkflowComponent implements OnInit {
     selectedNodeID: number;
     selectedNodeRef: string;
     selectecHookRef: string;
-
-    showButtons = false;
-    loadingPopupButton = false;
 
     constructor(
         private _activatedRoute: ActivatedRoute,

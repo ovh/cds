@@ -87,9 +87,6 @@ func newCommand(c Command, run interface{}, subCommands SubCommands, mods ...Com
 	cmd.SetOutput(os.Stdout)
 	cmd.Use = c.Name
 
-	sort.Sort(orderArgs(c.Args...))
-	sort.Sort(orderArgs(c.OptionalArgs...))
-
 	if len(c.Ctx) > 0 {
 		cmd.Use = cmd.Use + " ["
 	}
@@ -138,7 +135,6 @@ func newCommand(c Command, run interface{}, subCommands SubCommands, mods ...Com
 
 	definedArgs := append(c.Ctx, c.Args...)
 	definedArgs = append(definedArgs, c.OptionalArgs...)
-	sort.Sort(orderArgs(definedArgs...))
 	definedArgs = append(definedArgs, c.VariadicArgs)
 
 	cmd.Short = c.Short

@@ -34,8 +34,6 @@ export class AsCodeSaveFormComponent implements OnInit {
     ) { }
 
     ngOnInit() {
-        this.paramChange.emit(new ParamData());
-
         if (!this.workflow) {
             return;
         }
@@ -58,24 +56,10 @@ export class AsCodeSaveFormComponent implements OnInit {
             });
     }
 
-    optionsFilter = (opts: Array<string>, query: string): Array<string> => {
-        this.selectedBranch = query;
-        let result = Array<string>();
-        opts.forEach(o => {
-            if (o.indexOf(query) > -1) {
-                result.push(o);
-            }
-        });
-        if (result.indexOf(query) === -1) {
-            result.push(query);
-        }
-        return result;
-    };
-
     changeParam(): void {
         this.paramChange.emit(<ParamData>{
             branch_name: this.selectedBranch,
             commit_message: this.commitMessage
-        })
+        });
     }
 }

@@ -22,8 +22,8 @@ import (
 )
 
 func TestManualRun1(t *testing.T) {
-	db, cache, end := test.SetupPG(t, bootstrap.InitiliazeDB)
-	defer end()
+	db, cache := test.SetupPG(t, bootstrap.InitiliazeDB)
+
 	u, _ := assets.InsertAdminUser(t, db)
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, cache, key, key)
@@ -72,7 +72,7 @@ func TestManualRun1(t *testing.T) {
 	pipeline.InsertJob(db, j, s.ID, &pip2)
 	s.Jobs = append(s.Jobs, *j)
 
-	proj, _ = project.LoadByID(db, proj.ID, project.LoadOptions.WithApplications, project.LoadOptions.WithPipelines, project.LoadOptions.WithEnvironments, project.LoadOptions.WithGroups)
+	proj, _ = project.LoadByID(db, proj.ID, project.LoadOptions.WithGroups)
 
 	w := sdk.Workflow{
 		Name:       "test_1",
@@ -102,15 +102,19 @@ func TestManualRun1(t *testing.T) {
 		},
 	}
 
-	require.NoError(t, workflow.Insert(context.TODO(), db, cache, *proj, &w))
+	projIdent := sdk.ProjectIdentifiers{
+		ID:  proj.ID,
+		Key: proj.Key,
+	}
+	require.NoError(t, workflow.Insert(context.TODO(), db, cache, projIdent, proj.ProjectGroups, &w))
 
-	w1, err := workflow.Load(context.TODO(), db, cache, *proj, "test_1", workflow.LoadOptions{
+	w1, err := workflow.Load(context.TODO(), db, projIdent, "test_1", workflow.LoadOptions{
 		DeepPipeline: true,
 	})
 	t.Logf("w1: %+v", w1)
 	require.NoError(t, err)
 
-	wr, errWR := workflow.CreateRun(db, w1, nil, u)
+	wr, errWR := workflow.CreateRun(db.DbMap, w1, nil, u)
 	assert.NoError(t, errWR)
 	wr.Workflow = *w1
 	consumer, _ := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
@@ -125,7 +129,7 @@ func TestManualRun1(t *testing.T) {
 	}, consumer, nil)
 	require.NoError(t, errS)
 
-	wr2, errWR := workflow.CreateRun(db, w1, nil, u)
+	wr2, errWR := workflow.CreateRun(db.DbMap, w1, nil, u)
 	assert.NoError(t, errWR)
 	wr2.Workflow = *w1
 	_, errS = workflow.StartWorkflowRun(context.TODO(), db, cache, *proj, wr2, &sdk.WorkflowRunPostHandlerOption{
@@ -182,8 +186,8 @@ func TestManualRun1(t *testing.T) {
 }
 
 func TestManualRun2(t *testing.T) {
-	db, cache, end := test.SetupPG(t, bootstrap.InitiliazeDB)
-	defer end()
+	db, cache := test.SetupPG(t, bootstrap.InitiliazeDB)
+
 	u, _ := assets.InsertAdminUser(t, db)
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, cache, key, key)
@@ -232,7 +236,7 @@ func TestManualRun2(t *testing.T) {
 	pipeline.InsertJob(db, j, s.ID, &pip2)
 	s.Jobs = append(s.Jobs, *j)
 
-	proj, _ = project.LoadByID(db, proj.ID, project.LoadOptions.WithApplications, project.LoadOptions.WithPipelines, project.LoadOptions.WithEnvironments, project.LoadOptions.WithGroups)
+	proj, _ = project.LoadByID(db, proj.ID, project.LoadOptions.WithGroups)
 
 	w := sdk.Workflow{
 		Name:       "test_1",
@@ -262,15 +266,19 @@ func TestManualRun2(t *testing.T) {
 		},
 	}
 
-	require.NoError(t, workflow.Insert(context.TODO(), db, cache, *proj, &w))
+	projIdent := sdk.ProjectIdentifiers{
+		ID:  proj.ID,
+		Key: proj.Key,
+	}
+	require.NoError(t, workflow.Insert(context.TODO(), db, cache, projIdent, proj.ProjectGroups, &w))
 
-	w1, err := workflow.Load(context.TODO(), db, cache, *proj, "test_1", workflow.LoadOptions{
+	w1, err := workflow.Load(context.TODO(), db, projIdent, "test_1", workflow.LoadOptions{
 		DeepPipeline: true,
 	})
 	require.NoError(t, err)
 	consumer, _ := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
 
-	wr, errWR := workflow.CreateRun(db, w1, nil, u)
+	wr, errWR := workflow.CreateRun(db.DbMap, w1, nil, u)
 	assert.NoError(t, errWR)
 	wr.Workflow = *w1
 	_, errS := workflow.StartWorkflowRun(context.TODO(), db, cache, *proj, wr, &sdk.WorkflowRunPostHandlerOption{
@@ -278,7 +286,7 @@ func TestManualRun2(t *testing.T) {
 	}, consumer, nil)
 	require.NoError(t, errS)
 
-	wr2, errWR := workflow.CreateRun(db, w1, nil, u)
+	wr2, errWR := workflow.CreateRun(db.DbMap, w1, nil, u)
 	assert.NoError(t, errWR)
 	wr2.Workflow = *w1
 	_, errS = workflow.StartWorkflowRun(context.TODO(), db, cache, *proj, wr2, &sdk.WorkflowRunPostHandlerOption{
@@ -301,8 +309,8 @@ func TestManualRun2(t *testing.T) {
 }
 
 func TestManualRun3(t *testing.T) {
-	db, cache, end := test.SetupPG(t, bootstrap.InitiliazeDB)
-	defer end()
+	db, cache := test.SetupPG(t, bootstrap.InitiliazeDB)
+
 	u, _ := assets.InsertAdminUser(t, db)
 	consumer, _ := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
 
@@ -317,7 +325,7 @@ func TestManualRun3(t *testing.T) {
 	proj := assets.InsertTestProject(t, db, cache, key, key)
 
 	// Add variable
-	v := sdk.Variable{
+	v := sdk.ProjectVariable{
 		Name:  "foo",
 		Type:  sdk.SecretVariable,
 		Value: "bar",
@@ -532,17 +540,21 @@ func TestManualRun3(t *testing.T) {
 		},
 	}
 
-	proj, err = project.LoadByID(db, proj.ID, project.LoadOptions.WithApplications, project.LoadOptions.WithPipelines, project.LoadOptions.WithEnvironments, project.LoadOptions.WithGroups, project.LoadOptions.WithVariablesWithClearPassword, project.LoadOptions.WithKeys, project.LoadOptions.WithIntegrations)
+	proj, err = project.LoadByID(db, proj.ID, project.LoadOptions.WithGroups)
 	require.NoError(t, err)
 
-	require.NoError(t, workflow.Insert(context.TODO(), db, cache, *proj, &w))
+	projIdent := sdk.ProjectIdentifiers{
+		ID:  proj.ID,
+		Key: proj.Key,
+	}
+	require.NoError(t, workflow.Insert(context.TODO(), db, cache, projIdent, proj.ProjectGroups, &w))
 
-	w1, err := workflow.Load(context.TODO(), db, cache, *proj, "test_1", workflow.LoadOptions{
+	w1, err := workflow.Load(context.TODO(), db, projIdent, "test_1", workflow.LoadOptions{
 		DeepPipeline: true,
 	})
 	require.NoError(t, err)
 
-	wr, errWR := workflow.CreateRun(db, w1, nil, u)
+	wr, errWR := workflow.CreateRun(db.DbMap, w1, nil, u)
 	require.NoError(t, errWR)
 	wr.Workflow = *w1
 	_, errS := workflow.StartWorkflowRun(context.TODO(), db, cache, *proj, wr, &sdk.WorkflowRunPostHandlerOption{
@@ -577,7 +589,6 @@ queueRun:
 
 	for i := range jobs {
 		j := &jobs[i]
-		tx, _ := db.Begin()
 
 		t.Logf("##### work on job : %+v\n", j.Job.Action.Name)
 
@@ -588,37 +599,32 @@ queueRun:
 				ID:   1,
 			},
 		})
-		assert.NoError(t, err)
-		if t.Failed() {
-			tx.Rollback()
-			t.FailNow()
-		}
+		require.NoError(t, err)
 
+		sp := sdk.SpawnMsg{ID: sdk.MsgSpawnInfoHatcheryStarts.ID}
 		//AddSpawnInfosNodeJobRun
 		err := workflow.AddSpawnInfosNodeJobRun(db, j.WorkflowNodeRunID, j.ID, []sdk.SpawnInfo{
 			{
-				APITime:    time.Now(),
-				RemoteTime: time.Now(),
-				Message: sdk.SpawnMsg{
-					ID: sdk.MsgSpawnInfoHatcheryStarts.ID,
-				},
+				APITime:     time.Now(),
+				RemoteTime:  time.Now(),
+				Message:     sp,
+				UserMessage: sp.DefaultUserMessage(),
 			},
 		})
 		assert.NoError(t, err)
 		if t.Failed() {
-			tx.Rollback()
 			t.FailNow()
 		}
 
+		sp = sdk.SpawnMsg{ID: sdk.MsgSpawnInfoJobTaken.ID}
 		//TakeNodeJobRun
 		takenJobID := j.ID
 		takenJob, _, _ := workflow.TakeNodeJobRun(context.TODO(), db, cache, *proj, takenJobID, "model", "worker", "1", []sdk.SpawnInfo{
 			{
-				APITime:    time.Now(),
-				RemoteTime: time.Now(),
-				Message: sdk.SpawnMsg{
-					ID: sdk.MsgSpawnInfoJobTaken.ID,
-				},
+				APITime:     time.Now(),
+				RemoteTime:  time.Now(),
+				Message:     sp,
+				UserMessage: sp.DefaultUserMessage(),
 			},
 		}, "hatchery_name")
 
@@ -635,20 +641,8 @@ queueRun:
 		}
 
 		//TestAddLog
-		assert.NoError(t, workflow.AddLog(db, j, &sdk.Log{
-			Val: "This is a log",
-		}, workflow.DefaultMaxLogSize))
-		if t.Failed() {
-			tx.Rollback()
-			t.FailNow()
-		}
-		assert.NoError(t, workflow.AddLog(db, j, &sdk.Log{
-			Val: "This is another log",
-		}, workflow.DefaultMaxLogSize))
-		if t.Failed() {
-			tx.Rollback()
-			t.FailNow()
-		}
+		require.NoError(t, workflow.AppendLog(db, j.ID, j.WorkflowNodeRunID, 1, "This is a log", workflow.DefaultMaxLogSize))
+		require.NoError(t, workflow.AppendLog(db, j.ID, j.WorkflowNodeRunID, 1, "This is another log", workflow.DefaultMaxLogSize))
 
 		j, err = workflow.LoadNodeJobRun(context.TODO(), db, cache, j.ID)
 		require.NoError(t, err)
@@ -658,11 +652,7 @@ queueRun:
 
 		//TestUpdateNodeJobRunStatus
 		_, err = workflow.UpdateNodeJobRunStatus(context.TODO(), db, cache, *proj, j, sdk.StatusSuccess)
-		assert.NoError(t, err)
-		if t.Failed() {
-			tx.Rollback()
-			t.FailNow()
-		}
+		require.NoError(t, err)
 
 		workflowRun, err = workflow.LoadRunByID(db, wr.ID, workflow.LoadRunOptions{})
 		require.NoError(t, err)
@@ -689,14 +679,8 @@ queueRun:
 		}
 
 		logs, err := workflow.LoadLogs(db, takenJob.ID)
-		assert.NoError(t, err)
-		if t.Failed() {
-			tx.Rollback()
-			t.FailNow()
-		}
-		assert.NotEmpty(t, logs)
-
-		tx.Commit()
+		require.NoError(t, err)
+		require.NotEmpty(t, logs)
 
 		// check if there is another job to run
 		if takenJob.Job.Action.Name == "job10" {
@@ -828,8 +812,8 @@ queueRun:
 }
 
 func TestNoStage(t *testing.T) {
-	db, cache, end := test.SetupPG(t, bootstrap.InitiliazeDB)
-	defer end()
+	db, cache := test.SetupPG(t, bootstrap.InitiliazeDB)
+
 	u, _ := assets.InsertAdminUser(t, db)
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, cache, key, key)
@@ -842,7 +826,7 @@ func TestNoStage(t *testing.T) {
 	}
 	require.NoError(t, pipeline.InsertPipeline(db, &pip))
 
-	proj, _ = project.LoadByID(db, proj.ID, project.LoadOptions.WithApplications, project.LoadOptions.WithPipelines, project.LoadOptions.WithEnvironments, project.LoadOptions.WithGroups)
+	proj, _ = project.LoadByID(db, proj.ID, project.LoadOptions.WithGroups)
 
 	w := sdk.Workflow{
 		Name:       "test_1",
@@ -872,14 +856,18 @@ func TestNoStage(t *testing.T) {
 		},
 	}
 
-	require.NoError(t, workflow.Insert(context.TODO(), db, cache, *proj, &w))
-	w1, err := workflow.Load(context.TODO(), db, cache, *proj, "test_1", workflow.LoadOptions{
+	projIdent := sdk.ProjectIdentifiers{
+		ID:  proj.ID,
+		Key: proj.Key,
+	}
+	require.NoError(t, workflow.Insert(context.TODO(), db, cache, projIdent, proj.ProjectGroups, &w))
+	w1, err := workflow.Load(context.TODO(), db, projIdent, "test_1", workflow.LoadOptions{
 		DeepPipeline: true,
 	})
 	require.NoError(t, err)
 	consumer, _ := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
 
-	wr, errWR := workflow.CreateRun(db, w1, nil, u)
+	wr, errWR := workflow.CreateRun(db.DbMap, w1, nil, u)
 	assert.NoError(t, errWR)
 	wr.Workflow = *w1
 	_, errS := workflow.StartWorkflowRun(context.TODO(), db, cache, *proj, wr, &sdk.WorkflowRunPostHandlerOption{
@@ -898,8 +886,8 @@ func TestNoStage(t *testing.T) {
 }
 
 func TestNoJob(t *testing.T) {
-	db, cache, end := test.SetupPG(t, bootstrap.InitiliazeDB)
-	defer end()
+	db, cache := test.SetupPG(t, bootstrap.InitiliazeDB)
+
 	u, _ := assets.InsertAdminUser(t, db)
 	consumer, _ := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
 
@@ -919,7 +907,7 @@ func TestNoJob(t *testing.T) {
 	s.PipelineID = pip.ID
 	require.NoError(t, pipeline.InsertStage(db, s))
 
-	proj, _ = project.LoadByID(db, proj.ID, project.LoadOptions.WithApplications, project.LoadOptions.WithPipelines, project.LoadOptions.WithEnvironments, project.LoadOptions.WithGroups)
+	proj, _ = project.LoadByID(db, proj.ID, project.LoadOptions.WithGroups)
 
 	w := sdk.Workflow{
 		Name:       "test_1",
@@ -949,13 +937,17 @@ func TestNoJob(t *testing.T) {
 		},
 	}
 
-	require.NoError(t, workflow.Insert(context.TODO(), db, cache, *proj, &w))
-	w1, err := workflow.Load(context.TODO(), db, cache, *proj, "test_1", workflow.LoadOptions{
+	projIdent := sdk.ProjectIdentifiers{
+		ID:  proj.ID,
+		Key: proj.Key,
+	}
+	require.NoError(t, workflow.Insert(context.TODO(), db, cache, projIdent, proj.ProjectGroups, &w))
+	w1, err := workflow.Load(context.TODO(), db, projIdent, "test_1", workflow.LoadOptions{
 		DeepPipeline: true,
 	})
 	require.NoError(t, err)
 
-	wr, errWR := workflow.CreateRun(db, w1, nil, u)
+	wr, errWR := workflow.CreateRun(db.DbMap, w1, nil, u)
 	assert.NoError(t, errWR)
 	wr.Workflow = *w1
 	_, errS := workflow.StartWorkflowRun(context.TODO(), db, cache, *proj, wr, &sdk.WorkflowRunPostHandlerOption{

@@ -3,25 +3,33 @@ package cdsclient
 import (
 	"context"
 	"fmt"
+	"net/http"
 
 	"github.com/ovh/cds/sdk"
 )
 
-func (c *client) WorkflowTransformAsCode(projectKey, workflowName string) (*sdk.Operation, error) {
-	ope := new(sdk.Operation)
-	path := fmt.Sprintf("/project/%s/workflows/%s/ascode?migrate=true", projectKey, workflowName)
-	if _, err := c.PostJSON(context.Background(), path, nil, &ope); err != nil {
+func (c *client) WorkflowTransformAsCode(projectKey, workflowName, branch, message string) (*sdk.Operation, error) {
+	var ope sdk.Operation
+	path := fmt.Sprintf("/project/%s/workflows/%s/ascode", projectKey, workflowName)
+	if _, err := c.PostJSON(context.Background(), path, nil, &ope, func(r *http.Request) {
+		q := r.URL.Query()
+		q.Set("migrate", "true")
+		q.Set("branch", branch)
+		q.Set("message", message)
+		r.URL.RawQuery = q.Encode()
+	}); err != nil {
 		return nil, err
 	}
-	return ope, nil
+	return &ope, nil
 }
 
-func (c client) WorkflowTransformAsCodeFollow(projectKey, workflowName string, ope *sdk.Operation) error {
-	path := fmt.Sprintf("/project/%s/workflows/%s/ascode/%s", projectKey, workflowName, ope.UUID)
-	if _, err := c.GetJSON(context.Background(), path, ope); err != nil {
-		return err
+func (c client) WorkflowTransformAsCodeFollow(projectKey, workflowName, opeUUID string) (*sdk.Operation, error) {
+	var ope sdk.Operation
+	path := fmt.Sprintf("/project/%s/workflows/%s/ascode/%s", projectKey, workflowName, opeUUID)
+	if _, err := c.GetJSON(context.Background(), path, &ope); err != nil {
+		return nil, err
 	}
-	return nil
+	return &ope, nil
 }
 
 func (c *client) WorkflowAsCodeStart(projectKey string, repoURL string, repoStrategy sdk.RepositoryStrategy) (*sdk.Operation, error) {

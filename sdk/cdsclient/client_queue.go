@@ -57,15 +57,19 @@ func (c *client) QueuePolling(ctx context.Context, jobs chan<- sdk.WorkflowNodeJ
 	jobsTicker := time.NewTicker(delay)
 
 	// This goroutine call the SSE route
-	chanSSEvt := make(chan SSEvent)
-	sdk.GoRoutine(ctx, "RequestSSEGet", func(ctx context.Context) {
+	chanMessageReceived := make(chan sdk.WebsocketEvent, 10)
+	chanMessageToSend := make(chan []sdk.WebsocketFilter, 10)
+	sdk.GoRoutine(ctx, "RequestWebsocket", func(ctx context.Context) {
 		for ctx.Err() == nil {
-			if err := c.RequestSSEGet(ctx, "/events", chanSSEvt); err != nil {
+			if err := c.RequestWebsocket(ctx, "/ws", chanMessageToSend, chanMessageReceived); err != nil {
 				log.Println("QueuePolling", err)
 			}
 			time.Sleep(1 * time.Second)
 		}
 	})
+	chanMessageToSend <- []sdk.WebsocketFilter{{
+		Type: sdk.WebsocketFilterTypeQueue,
+	}}
 
 	for {
 		select {
@@ -75,44 +79,32 @@ func (c *client) QueuePolling(ctx context.Context, jobs chan<- sdk.WorkflowNodeJ
 				close(jobs)
 			}
 			return ctx.Err()
-		case evt := <-chanSSEvt:
+		case wsEvent := <-chanMessageReceived:
 			if jobs == nil {
 				continue
 			}
-
-			content, _ := ioutil.ReadAll(evt.Data)
-
-			var apiEvent sdk.Event
-			_ = json.Unmarshal(content, &apiEvent) // ignore errors
-			// filter only EventRunWorkflowJob
-			if apiEvent.EventType == "sdk.EventRunWorkflowJob" {
-				var runJob sdk.EventRunWorkflowJob
-				if err := json.Unmarshal(apiEvent.Payload, &runJob); err != nil {
-					errs <- fmt.Errorf("unable to unmarshal job event: %v", err)
+			if wsEvent.Event.EventType == "sdk.EventRunWorkflowJob" && wsEvent.Event.Status == sdk.StatusWaiting {
+				var jobEvent sdk.EventRunWorkflowJob
+				if err := json.Unmarshal(wsEvent.Event.Payload, &jobEvent); err != nil {
+					errs <- fmt.Errorf("unable to unmarshal job %v: %v", wsEvent.Event.Payload, err)
 					continue
 				}
-				if runJob.ID != 0 && runJob.Status == sdk.StatusWaiting {
-					job, err := c.QueueJobInfo(ctx, runJob.ID)
+				job, err := c.QueueJobInfo(ctx, jobEvent.ID)
+				// Do not log the error if the job does not exist
+				if sdk.ErrorIs(err, sdk.ErrWorkflowNodeRunJobNotFound) {
+					continue
+				}
 
-					// Do not log the error if the job does not exist
-					if sdk.ErrorIs(err, sdk.ErrWorkflowNodeRunJobNotFound) {
-						continue
-					}
-
-					if err != nil {
-						errs <- fmt.Errorf("unable to get job %v info: %v", runJob.ID, err)
-						continue
-					}
-
-					// push the job in the channel
-					if job.Status == sdk.StatusWaiting && job.BookedBy.Name == "" {
-						job.Header["SSE"] = "true"
-						jobs <- *job
-					}
-
+				if err != nil {
+					errs <- fmt.Errorf("unable to get job %v info: %v", jobEvent.ID, err)
+					continue
+				}
+				// push the job in the channel
+				if job.Status == sdk.StatusWaiting && job.BookedBy.Name == "" {
+					job.Header["WS"] = "true"
+					jobs <- *job
 				}
 			}
-
 		case <-jobsTicker.C:
 			if c.config.Verbose {
 				fmt.Println("jobsTicker")

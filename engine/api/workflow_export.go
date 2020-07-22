@@ -37,7 +37,7 @@ func (api *API) getWorkflowExportHandler() service.Handler {
 			opts = append(opts, v2.WorkflowWithPermissions)
 		}
 
-		proj, err := project.Load(api.mustDB(), key)
+		proj, err := project.Load(ctx, api.mustDB(), key)
 		if err != nil {
 			return sdk.WrapError(err, "unable to load projet")
 		}
@@ -72,7 +72,7 @@ func (api *API) getWorkflowPullHandler() service.Handler {
 			opts = append(opts, v2.WorkflowWithPermissions)
 		}
 
-		proj, err := project.Load(api.mustDB(), key)
+		proj, err := project.Load(ctx, api.mustDB(), key)
 		if err != nil {
 			return sdk.WrapError(err, "unable to load projet")
 		}

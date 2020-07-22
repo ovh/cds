@@ -71,7 +71,7 @@ func (api *API) addJobToStageHandler() service.Handler {
 		defer tx.Rollback() // nolint
 
 		// check that action used by job can be used by pipeline's project
-		project, err := project.Load(tx, pip.ProjectKey, project.LoadOptions.WithGroups)
+		project, err := project.Load(ctx, tx, pip.ProjectKey, project.LoadOptions.WithGroups)
 		if err != nil {
 			return sdk.WithStack(err)
 		}
@@ -195,7 +195,7 @@ func (api *API) updateJobHandler() service.Handler {
 		defer tx.Rollback() // nolint
 
 		// check that action used by job can be used by pipeline's project
-		project, err := project.Load(tx, pipelineData.ProjectKey, project.LoadOptions.WithGroups)
+		project, err := project.Load(ctx, tx, pipelineData.ProjectKey, project.LoadOptions.WithGroups)
 		if err != nil {
 			return sdk.WithStack(err)
 		}

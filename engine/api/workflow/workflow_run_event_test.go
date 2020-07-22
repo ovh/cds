@@ -2,6 +2,7 @@ package workflow_test
 
 import (
 	"context"
+	"github.com/stretchr/testify/require"
 
 	"github.com/go-gorp/gorp"
 	"github.com/golang/mock/gomock"
@@ -24,8 +25,7 @@ import (
 // Test ResyncCommitStatus with a notification where all is disabled.
 // Must: no error returned, only list status is called
 func TestResyncCommitStatusNotifDisabled(t *testing.T) {
-	db, cache, end := test.SetupPG(t)
-	defer end()
+	db, cache := test.SetupPG(t)
 
 	ctx := context.TODO()
 
@@ -50,7 +50,7 @@ func TestResyncCommitStatusNotifDisabled(t *testing.T) {
 		},
 	}
 	assert.NoError(t, application.Insert(db, *proj, &app))
-	assert.NoError(t, repositoriesmanager.InsertForApplication(db, &app, proj.Key))
+	assert.NoError(t, repositoriesmanager.InsertForApplication(db, &app))
 
 	tr := true
 	wr := &sdk.WorkflowRun{
@@ -91,7 +91,7 @@ func TestResyncCommitStatusNotifDisabled(t *testing.T) {
 		},
 	}
 
-	allSrv, err := services.LoadAll(context.TODO(), db)
+	allSrv, _ := services.LoadAll(context.TODO(), db)
 	for _, s := range allSrv {
 		if err := services.Delete(db, &s); err != nil {
 			t.Fatalf("unable to delete service: %v", err)
@@ -114,16 +114,14 @@ func TestResyncCommitStatusNotifDisabled(t *testing.T) {
 			gomock.Any(), gomock.Any(), gomock.Any()).
 		Return(nil, 201, nil)
 
-	err = workflow.ResyncCommitStatus(ctx, db, cache, *proj, wr)
-	assert.NoError(t, err)
-
+	projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
+	require.NoError(t, workflow.ResyncCommitStatus(ctx, db.DbMap, cache, projIdent, wr))
 }
 
 // Test TestResyncCommitStatusSetStatus with a notification where all is disabled.
 // Must: no error returned, setStatus must be called
 func TestResyncCommitStatusSetStatus(t *testing.T) {
-	db, cache, end := test.SetupPG(t)
-	defer end()
+	db, cache := test.SetupPG(t)
 
 	ctx := context.TODO()
 
@@ -148,7 +146,7 @@ func TestResyncCommitStatusSetStatus(t *testing.T) {
 		},
 	}
 	assert.NoError(t, application.Insert(db, *proj, &app))
-	assert.NoError(t, repositoriesmanager.InsertForApplication(db, &app, proj.Key))
+	assert.NoError(t, repositoriesmanager.InsertForApplication(db, &app))
 
 	tr := true
 	wr := &sdk.WorkflowRun{
@@ -219,15 +217,14 @@ func TestResyncCommitStatusSetStatus(t *testing.T) {
 			gomock.Any(), gomock.Any(), gomock.Any()).
 		Return(nil, 201, nil)
 
-	err := workflow.ResyncCommitStatus(ctx, db, cache, *proj, wr)
-	assert.NoError(t, err)
+	projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
+	require.NoError(t, workflow.ResyncCommitStatus(ctx, db.DbMap, cache, projIdent, wr))
 }
 
 // Test TestResyncCommitStatusCommentPR with a notification where all is disabled.
 // Must: no error returned, postComment must be called
 func TestResyncCommitStatusCommentPR(t *testing.T) {
-	db, cache, end := test.SetupPG(t)
-	defer end()
+	db, cache := test.SetupPG(t)
 
 	ctx := context.TODO()
 
@@ -252,7 +249,7 @@ func TestResyncCommitStatusCommentPR(t *testing.T) {
 		},
 	}
 	assert.NoError(t, application.Insert(db, *proj, &app))
-	assert.NoError(t, repositoriesmanager.InsertForApplication(db, &app, proj.Key))
+	assert.NoError(t, repositoriesmanager.InsertForApplication(db, &app))
 
 	tr := true
 	fls := false
@@ -337,15 +334,14 @@ func TestResyncCommitStatusCommentPR(t *testing.T) {
 			return nil, 200, nil
 		}).MaxTimes(1)
 
-	err := workflow.ResyncCommitStatus(ctx, db, cache, *proj, wr)
-	assert.NoError(t, err)
+	projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
+	require.NoError(t, workflow.ResyncCommitStatus(ctx, db.DbMap, cache, projIdent, wr))
 }
 
 // Test TestResyncCommitStatusCommentPRNotTerminated with a notification where all is disabled.
 // Must: no error returned, postComment must be called
 func TestResyncCommitStatusCommentPRNotTerminated(t *testing.T) {
-	db, cache, end := test.SetupPG(t)
-	defer end()
+	db, cache := test.SetupPG(t)
 
 	ctx := context.TODO()
 
@@ -370,7 +366,7 @@ func TestResyncCommitStatusCommentPRNotTerminated(t *testing.T) {
 		},
 	}
 	assert.NoError(t, application.Insert(db, *proj, &app))
-	assert.NoError(t, repositoriesmanager.InsertForApplication(db, &app, proj.Key))
+	assert.NoError(t, repositoriesmanager.InsertForApplication(db, &app))
 
 	tr := true
 	fls := false
@@ -446,15 +442,14 @@ func TestResyncCommitStatusCommentPRNotTerminated(t *testing.T) {
 			return nil, 200, nil
 		}).MaxTimes(1)
 
-	err := workflow.ResyncCommitStatus(ctx, db, cache, *proj, wr)
-	assert.NoError(t, err)
+	projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
+	require.NoError(t, workflow.ResyncCommitStatus(ctx, db.DbMap, cache, projIdent, wr))
 }
 
 // Test TestResyncCommitStatus with a notification where all is disabled.
 // Must: no error returned, postComment must be called
 func TestResyncCommitStatusCommitCache(t *testing.T) {
-	db, cache, end := test.SetupPG(t)
-	defer end()
+	db, cache := test.SetupPG(t)
 
 	ctx := context.TODO()
 
@@ -479,7 +474,7 @@ func TestResyncCommitStatusCommitCache(t *testing.T) {
 		},
 	}
 	assert.NoError(t, application.Insert(db, *proj, &app))
-	assert.NoError(t, repositoriesmanager.InsertForApplication(db, &app, proj.Key))
+	assert.NoError(t, repositoriesmanager.InsertForApplication(db, &app))
 
 	tr := true
 	fls := false
@@ -573,6 +568,7 @@ func TestResyncCommitStatusCommitCache(t *testing.T) {
 			return nil, 200, nil
 		}).MaxTimes(1)
 	e := workflow.VCSEventMessenger{}
-	err := e.SendVCSEvent(ctx, db, cache, *proj, *wr, wr.WorkflowNodeRuns[1][0])
-	assert.NoError(t, err)
+	projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
+	err := e.SendVCSEvent(ctx, db.DbMap, cache, projIdent, *wr, wr.WorkflowNodeRuns[1][0])
+	require.NoError(t, err)
 }

@@ -361,35 +361,6 @@ export class NavbarComponent implements OnInit {
             });
     }
 
-    navigateToResult(result: NavbarSearchItem) {
-        if (!result) {
-            return;
-        }
-        switch (result.type) {
-            case 'workflow':
-                this.navigateToWorkflow(result.projectKey, result.value.split('/', 2)[1]);
-                break;
-            case 'application':
-                this.navigateToApplication(result.projectKey, result.value.split('/', 2)[1]);
-                break;
-            default:
-                this.navigateToProject(result.projectKey);
-        }
-    }
-
-    searchItem(list: Array<NavbarSearchItem>, query: string): boolean | Array<NavbarSearchItem> {
-        let queryLowerCase = query.toLowerCase();
-        let found: Array<NavbarSearchItem> = [];
-        for (let elt of list) {
-            if (query === elt.projectKey) {
-                found.push(elt);
-            } else if (elt.title && elt.title.toLowerCase().indexOf(queryLowerCase) !== -1) {
-                found.push(elt);
-            }
-        }
-        return found;
-    }
-
     /**
      * Navigate to the selected project.
      * @param key Project unique key get by the event

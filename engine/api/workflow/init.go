@@ -13,7 +13,7 @@ import (
 var baseUIURL, defaultOS, defaultArch string
 
 //Initialize starts goroutines for workflows
-func Initialize(ctx context.Context, DBFunc func() *gorp.DbMap, store cache.Store, uiURL, confDefaultOS, confDefaultArch string) {
+func Initialize(ctx context.Context, DBFunc func() *gorp.DbMap, store cache.Store, uiURL, confDefaultOS, confDefaultArch string, maxLogSize int64) {
 	baseUIURL = uiURL
 	defaultOS = confDefaultOS
 	defaultArch = confDefaultArch
@@ -31,7 +31,7 @@ func Initialize(ctx context.Context, DBFunc func() *gorp.DbMap, store cache.Stor
 				return
 			}
 		case <-tickHeart.C:
-			if err := manageDeadJob(ctx, DBFunc, store); err != nil {
+			if err := manageDeadJob(ctx, DBFunc, store, maxLogSize); err != nil {
 				log.Warning(ctx, "workflow.manageDeadJob> Error on restartDeadJob : %v", err)
 			}
 		case <-tickStop.C:

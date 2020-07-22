@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"database/sql"
+	"encoding/base64"
 	"fmt"
 	"net/http"
 	"strings"
@@ -40,7 +41,7 @@ func (api *API) postRegisterWorkerHandler() service.Handler {
 		}
 
 		// Check that hatchery exists
-		hatchSrv, err := services.LoadByNameAndType(ctx, api.mustDB(), workerTokenFromHatchery.Worker.HatcheryName, services.TypeHatchery)
+		hatchSrv, err := services.LoadByNameAndType(ctx, api.mustDB(), workerTokenFromHatchery.Worker.HatcheryName, sdk.TypeHatchery)
 		if err != nil {
 			return sdk.WrapError(err, "unable to load hatchery %s", workerTokenFromHatchery.Worker.HatcheryName)
 		}
@@ -75,7 +76,7 @@ func (api *API) postRegisterWorkerHandler() service.Handler {
 		}
 
 		// Try to register worker
-		wk, err := worker.RegisterWorker(ctx, tx, api.Cache, workerTokenFromHatchery.Worker, hatchSrv.ID, workerConsumer, registrationForm)
+		wk, err := worker.RegisterWorker(ctx, tx, api.Cache, workerTokenFromHatchery.Worker, *hatchSrv, workerConsumer, registrationForm)
 		if err != nil {
 			return sdk.NewErrorWithStack(
 				sdk.WrapError(err, "[%s] Registering failed", workerTokenFromHatchery.Worker.WorkerName),
@@ -114,12 +115,41 @@ func (api *API) postRegisterWorkerHandler() service.Handler {
 	}
 }
 
+func (api *API) getWorkerHandler() service.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		vars := mux.Vars(r)
+		name := vars["name"]
+
+		withKey := FormBool(r, "withKey")
+
+		if !isCDN(ctx) {
+			return sdk.WrapError(sdk.ErrForbidden, "only CDN can call this route")
+		}
+
+		var wkr *sdk.Worker
+		var err error
+		if withKey {
+			wkr, err = worker.LoadWorkerByNameWithDecryptKey(ctx, api.mustDB(), name)
+			if wkr != nil {
+				encoded := base64.StdEncoding.EncodeToString(wkr.PrivateKey)
+				wkr.PrivateKey = []byte(encoded)
+			}
+		} else {
+			wkr, err = worker.LoadWorkerByName(ctx, api.mustDB(), name)
+		}
+		if err != nil {
+			return err
+		}
+		return service.WriteJSON(w, wkr, http.StatusOK)
+	}
+}
+
 func (api *API) getWorkersHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		var workers []sdk.Worker
 		var err error
 		if isHatchery(ctx) {
-			workers, err = worker.LoadByHatcheryID(ctx, api.mustDB(), getAPIConsumer(ctx).Service.ID)
+			workers, err = worker.LoadAllByHatcheryID(ctx, api.mustDB(), getAPIConsumer(ctx).Service.ID)
 			if err != nil {
 				return err
 			}
@@ -153,12 +183,15 @@ func (api *API) disableWorkerHandler() service.Handler {
 			if err != nil {
 				return sdk.WrapError(sdk.ErrForbidden, "Cannot disable a worker from this hatchery: %v", err)
 			}
-			if wk.HatcheryID != hatcherySrv.ID {
-				return sdk.WrapError(sdk.ErrForbidden, "Cannot disable a worker from hatchery (expected: %d/actual: %d)", wk.HatcheryID, hatcherySrv.ID)
+			if wk.HatcheryID == nil {
+				return sdk.WrapError(sdk.ErrForbidden, "hatchery %d cannot disable worker %s started by %s that is no more linked to an hatchery", hatcherySrv.ID, wk.ID, wk.HatcheryName)
+			}
+			if *wk.HatcheryID != hatcherySrv.ID {
+				return sdk.WrapError(sdk.ErrForbidden, "cannot disable a worker from hatchery (expected: %d/actual: %d)", *wk.HatcheryID, hatcherySrv.ID)
 			}
 		}
 
-		if err := DisableWorker(ctx, api.mustDB(), id); err != nil {
+		if err := DisableWorker(ctx, api.mustDB(), id, api.Config.Log.StepMaxSize); err != nil {
 			cause := sdk.Cause(err)
 			if cause == worker.ErrNoWorker || cause == sql.ErrNoRows {
 				return sdk.WrapError(sdk.ErrWrongRequest, "disableWorkerHandler> worker %s does not exists", id)
@@ -190,7 +223,7 @@ func (api *API) postUnregisterWorkerHandler() service.Handler {
 		if err != nil {
 			return err
 		}
-		if err := DisableWorker(ctx, api.mustDB(), wk.ID); err != nil {
+		if err := DisableWorker(ctx, api.mustDB(), wk.ID, api.Config.Log.StepMaxSize); err != nil {
 			return sdk.WrapError(err, "cannot delete worker %s", wk.Name)
 		}
 		return nil
@@ -213,10 +246,17 @@ func (api *API) workerWaitingHandler() service.Handler {
 			return nil
 		}
 
-		if err := worker.SetStatus(ctx, api.mustDB(), wk.ID, sdk.StatusWaiting); err != nil {
+		tx, err := api.mustDB().Begin()
+		if err != nil {
+			return sdk.WithStack(err)
+		}
+		defer tx.Rollback() // nolint
+
+		if err := worker.SetStatus(ctx, tx, wk.ID, sdk.StatusWaiting); err != nil {
 			return sdk.WrapError(err, "cannot update worker %s", wk.ID)
 		}
-		return nil
+
+		return sdk.WithStack(tx.Commit())
 	}
 }
 
@@ -224,7 +264,7 @@ func (api *API) workerWaitingHandler() service.Handler {
 // the package workflow
 
 // DisableWorker disable a worker
-func DisableWorker(ctx context.Context, db *gorp.DbMap, id string) error {
+func DisableWorker(ctx context.Context, db *gorp.DbMap, id string, maxLogSize int64) error {
 	tx, errb := db.Begin()
 	if errb != nil {
 		return fmt.Errorf("DisableWorker> Cannot start tx: %v", errb)
@@ -244,7 +284,7 @@ func DisableWorker(ctx context.Context, db *gorp.DbMap, id string) error {
 		// We need to restart this action
 		wNodeJob, errL := workflow.LoadNodeJobRun(ctx, tx, nil, jobID.Int64)
 		if errL == nil && wNodeJob.Retry < 3 {
-			if err := workflow.RestartWorkflowNodeJob(context.TODO(), db, *wNodeJob); err != nil {
+			if err := workflow.RestartWorkflowNodeJob(context.TODO(), db, *wNodeJob, maxLogSize); err != nil {
 				log.Warning(ctx, "DisableWorker[%s]> Cannot restart workflow node run: %v", name, err)
 			} else {
 				log.Info(ctx, "DisableWorker[%s]> WorkflowNodeRun %d restarted after crash", name, jobID.Int64)

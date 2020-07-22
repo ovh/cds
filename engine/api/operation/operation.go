@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/go-gorp/gorp"
 
@@ -13,11 +14,11 @@ import (
 	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/exportentities"
+	"github.com/ovh/cds/sdk/gorpmapping"
 )
 
-var CacheOperationKey = cache.Key("repositories", "operation", "push")
-
-func pushOperation(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj sdk.Project, data exportentities.WorkflowComponents, ope sdk.Operation) (*sdk.Operation, error) {
+// Need proj with SSHKeys
+func pushOperation(ctx context.Context, db gorpmapping.SqlExecutorWithTx, store cache.Store, proj sdk.Project, data exportentities.WorkflowComponents, ope sdk.Operation) (*sdk.Operation, error) {
 	if ope.RepositoryStrategy.SSHKey != "" {
 		key := proj.GetSSHKey(ope.RepositoryStrategy.SSHKey)
 		if key == nil {
@@ -59,11 +60,11 @@ func pushOperation(ctx context.Context, db gorp.SqlExecutor, store cache.Store, 
 
 	ope.RepositoryStrategy.SSHKeyContent = sdk.PasswordPlaceholder
 	ope.RepositoryStrategy.Password = sdk.PasswordPlaceholder
-	_ = store.SetWithTTL(cache.Key(CacheOperationKey, ope.UUID), ope, 300)
+
 	return &ope, nil
 }
 
-func PushOperation(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj sdk.Project, data exportentities.WorkflowComponents, vcsServerName, repoFullname, branch, message string, vcsStrategy sdk.RepositoryStrategy, u sdk.Identifiable) (*sdk.Operation, error) {
+func PushOperation(ctx context.Context, db gorpmapping.SqlExecutorWithTx, store cache.Store, proj sdk.Project, data exportentities.WorkflowComponents, vcsServerName, repoFullname, branch, message string, vcsStrategy sdk.RepositoryStrategy, u sdk.Identifiable) (*sdk.Operation, error) {
 	ope := sdk.Operation{
 		VCSServer:          vcsServerName,
 		RepoFullName:       repoFullname,
@@ -82,7 +83,7 @@ func PushOperation(ctx context.Context, db gorp.SqlExecutor, store cache.Store, 
 	return pushOperation(ctx, db, store, proj, data, ope)
 }
 
-func PushOperationUpdate(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj sdk.Project, data exportentities.WorkflowComponents, vcsServerName, repoFullname, branch, message string, vcsStrategy sdk.RepositoryStrategy, u sdk.Identifiable) (*sdk.Operation, error) {
+func PushOperationUpdate(ctx context.Context, db gorpmapping.SqlExecutorWithTx, store cache.Store, proj sdk.Project, data exportentities.WorkflowComponents, vcsServerName, repoFullname, branch, message string, vcsStrategy sdk.RepositoryStrategy, u sdk.Identifiable) (*sdk.Operation, error) {
 	ope := sdk.Operation{
 		VCSServer:          vcsServerName,
 		RepoFullName:       repoFullname,
@@ -103,8 +104,9 @@ func PushOperationUpdate(ctx context.Context, db gorp.SqlExecutor, store cache.S
 }
 
 // PostRepositoryOperation creates a new repository operation
+// Need project with Keys
 func PostRepositoryOperation(ctx context.Context, db gorp.SqlExecutor, prj sdk.Project, ope *sdk.Operation, multipartData *services.MultiPartData) error {
-	srvs, err := services.LoadAllByType(ctx, db, services.TypeRepositories)
+	srvs, err := services.LoadAllByType(ctx, db, sdk.TypeRepositories)
 	if err != nil {
 		return sdk.WrapError(err, "Unable to found repositories service")
 	}
@@ -142,7 +144,7 @@ func PostRepositoryOperation(ctx context.Context, db gorp.SqlExecutor, prj sdk.P
 
 // GetRepositoryOperation get repository operation status.
 func GetRepositoryOperation(ctx context.Context, db gorp.SqlExecutor, uuid string) (*sdk.Operation, error) {
-	srvs, err := services.LoadAllByType(ctx, db, services.TypeRepositories)
+	srvs, err := services.LoadAllByType(ctx, db, sdk.TypeRepositories)
 	if err != nil {
 		return nil, sdk.WrapError(err, "unable to found repositories service")
 	}
@@ -151,4 +153,43 @@ func GetRepositoryOperation(ctx context.Context, db gorp.SqlExecutor, uuid strin
 		return nil, sdk.WrapError(err, "unable to get operation")
 	}
 	return &ope, nil
+}
+
+// Poll repository operatino for given uuid.
+func Poll(ctx context.Context, db gorp.SqlExecutor, operationUUID string) (*sdk.Operation, error) {
+	f := func() (*sdk.Operation, error) {
+		ope, err := GetRepositoryOperation(ctx, db, operationUUID)
+		if err != nil {
+			return nil, sdk.WrapError(err, "unable to get repository operation %s", operationUUID)
+		}
+		switch ope.Status {
+		case sdk.OperationStatusError:
+			return nil, sdk.WrapError(ope.Error.ToError(), "repository operation in error")
+		case sdk.OperationStatusDone:
+			return ope, nil
+		}
+		return nil, nil
+	}
+
+	ope, err := f()
+	if ope != nil || err != nil {
+		return ope, err
+	}
+
+	ctx, cancel := context.WithTimeout(ctx, 1*time.Minute)
+	defer cancel()
+	tick := time.NewTicker(2 * time.Second)
+	defer tick.Stop()
+
+	for {
+		select {
+		case <-ctx.Done():
+			return nil, sdk.NewErrorFrom(sdk.ErrRepoOperationTimeout, "updating repository take too much time")
+		case <-tick.C:
+			ope, err := f()
+			if ope != nil || err != nil {
+				return ope, err
+			}
+		}
+	}
 }

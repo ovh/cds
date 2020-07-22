@@ -8,8 +8,8 @@ import (
 	"github.com/go-gorp/gorp"
 	"github.com/lib/pq"
 
-	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/gorpmapping"
 )
 
 // LoadAllByIDs load all environment
@@ -197,13 +197,13 @@ func CheckDefaultEnv(db gorp.SqlExecutor) error {
 			if err1 := db.QueryRow(query, sdk.DefaultEnv.Name).Scan(&env.ID); err1 != nil {
 				return err1
 			} else if env.ID != sdk.DefaultEnv.ID {
-				return fmt.Errorf("CheckDefaultEnv> default env created, but with wrong id. Please check db")
+				return sdk.WithStack(fmt.Errorf("default env created but with wrong id, please check db"))
 			}
 			return nil
 		}
 		return err
 	} else if env.ID != sdk.DefaultEnv.ID || env.Name != sdk.DefaultEnv.Name {
-		return fmt.Errorf("CheckDefaultEnv> default env exists, but with wrong id or name. Please check db")
+		return sdk.WithStack(fmt.Errorf("default env exists but with wrong id or name, please check db"))
 	}
 	return nil
 }
@@ -231,7 +231,7 @@ func InsertEnvironment(db gorp.SqlExecutor, env *sdk.Environment) error {
 
 	rx := sdk.NamePatternRegex
 	if !rx.MatchString(env.Name) {
-		return sdk.NewError(sdk.ErrInvalidName, fmt.Errorf("Invalid environment name. It should match %s", sdk.NamePattern))
+		return sdk.NewErrorFrom(sdk.ErrInvalidName, "environment name should match pattern %s", sdk.NamePattern)
 	}
 
 	err := db.QueryRow(query, env.Name, env.ProjectID, env.FromRepository).Scan(&env.ID, &env.Created, &env.LastModified)

@@ -1,0 +1,37 @@
+name: plugin-venom
+type: action
+author: Yvonnick Esnault <yvonnick.esnault@corp.ovh.com>
+description: |
+  This plugin helps you to run venom. Venom: https://github.com/ovh/venom.
+
+  Add an extra step of type junit on your job to view tests results on CDS UI.
+parameters:
+  path:
+    type: string
+    description: 'Path containers yml venom files. Format: adirectory/, ./*aTest.yml, ./foo/b*/**/z*.yml'
+    default: '.'
+  exclude:
+    type: text
+    description: Exclude some files, one file per line
+  output:
+    type: string
+    description: Directory where output xunit result file
+    default: '.'
+  parallel:
+    type: string
+    description: Launch Test Suites in parallel. Enter here number of routines
+    default: '1'
+  loglevel:
+    type: string
+    description: 'Log Level: debug, info, warn or error'
+    default: error
+  vars:
+    type: string
+    description: 'Empty: all {{.cds...}} vars will be rewrited. Otherwise, you can limit rewrite to some variables. Example, enter cds.app.yourvar,cds.build.foo,myvar=foo to rewrite {{.cds.app.yourvar}}, {{.cds.build.foo}} and {{.foo}}. Default: Empty'
+  vars-from-file:
+    type: string
+    description: 'filename.yaml or filename.json. See https://github.com/ovh/venom#run-venom-with-file-var'
+  stop-on-failure:
+    type: boolean
+    description: 'Stop running Test Suite on first Test Case failure'
+    default: 'true'

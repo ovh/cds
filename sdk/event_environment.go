@@ -17,18 +17,18 @@ type EventEnvironmentDelete struct {
 
 // EventEnvironmentVariableAdd represents the event when adding an environment variable
 type EventEnvironmentVariableAdd struct {
-	Variable Variable `json:"variable"`
+	Variable EnvironmentVariable `json:"variable"`
 }
 
 // EventEnvironmentVariableUpdate represents the event when updating an environment variable
 type EventEnvironmentVariableUpdate struct {
-	OldVariable Variable `json:"old_variable"`
-	NewVariable Variable `json:"new_variable"`
+	OldVariable EnvironmentVariable `json:"old_variable"`
+	NewVariable EnvironmentVariable `json:"new_variable"`
 }
 
 // EventEnvironmentVariableDelete represents the event when deleting an environment variable
 type EventEnvironmentVariableDelete struct {
-	Variable Variable `json:"variable"`
+	Variable EnvironmentVariable `json:"variable"`
 }
 
 // EventEnvironmentPermissionAdd represents the event when adding an environment permission

@@ -31,20 +31,21 @@ func (r *TestRunner) NewCmd(ctx context.Context, command string, args ...string)
 }
 
 func TestHatcheryLocal(t *testing.T) {
-	InitMock(t)
-	defer gock.Off()
+	s := InitWebsocketTestServer(t)
+	InitMock(t, s.URL)
+	defer s.Close()
 
+	defer gock.Off()
 	var h = local.New()
 
 	h.LocalWorkerRunner = &TestRunner{t}
-
 	var cfg = local.HatcheryConfiguration{
 		Basedir: os.TempDir(),
 	}
 
 	cfg.Name = "lolcat-test-hatchery"
 	cfg.API.HTTP.Insecure = false
-	cfg.API.HTTP.URL = "http://lolcat.host"
+	cfg.API.HTTP.URL = s.URL
 	cfg.API.Token = "xxxxxxxx"
 	cfg.API.MaxHeartbeatFailures = 0
 	cfg.Provision.RegisterFrequency = 1
@@ -60,9 +61,9 @@ func TestHatcheryLocal(t *testing.T) {
 	require.NotNil(t, srvCfg)
 	t.Logf("service config: %+v", srvCfg)
 
+	gock.New(s.URL).Get("/config/cdn").Times(-1).Reply(200).JSON(sdk.CDNConfig{TCPURL: "tcphost:8090"})
+
 	srvCfg.Hook = func(client cdsclient.Interface) error {
-		client.HTTPSSEClient().Transport = newMockSSERoundTripper(t, context.TODO())
-		gock.InterceptClient(client.HTTPSSEClient())
 		gock.InterceptClient(client.HTTPClient())
 		return nil
 	}
@@ -94,8 +95,10 @@ func TestHatcheryLocal(t *testing.T) {
 	if !gock.IsDone() {
 		pending := gock.Pending()
 		for _, m := range pending {
-			if m.Request().URLStruct.String() != "http://lolcat.host/services/heartbeat" &&
-				!strings.HasPrefix(m.Request().URLStruct.String(), "http://lolcat.host/download/worker") {
+			if m.Request().URLStruct.String() != s.URL+"/services/heartbeat" &&
+				!strings.HasPrefix(m.Request().URLStruct.String(), s.URL+"/download/worker") &&
+				!strings.HasPrefix(m.Request().URLStruct.String(), s.URL+"/config/cdn") &&
+				!strings.HasPrefix(m.Request().URLStruct.String(), s.URL+"/worker") {
 				t.Errorf("PENDING %s %s", m.Request().Method, m.Request().URLStruct.String())
 			}
 		}

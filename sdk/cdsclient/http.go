@@ -16,11 +16,11 @@ import (
 	"time"
 
 	"github.com/ovh/cds/cli"
+	"github.com/ovh/cds/sdk/telemetry"
 
 	"github.com/dgrijalva/jwt-go"
 
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/tracingutils"
 )
 
 const (
@@ -170,6 +170,15 @@ func (c *client) Request(ctx context.Context, method string, path string, body i
 
 var signinRouteRegexp = regexp.MustCompile(`\/auth\/consumer\/.*\/signin`)
 
+func extractBodyErrorFromResponse(r *http.Response) error {
+	body, _ := ioutil.ReadAll(r.Body)
+	r.Body.Close() // nolint
+	if err := sdk.DecodeError(body); err != nil {
+		return sdk.WithStack(err)
+	}
+	return sdk.WithStack(fmt.Errorf("HTTP %d", r.StatusCode))
+}
+
 // Stream makes an authenticated http request and return io.ReadCloser
 func (c *client) Stream(ctx context.Context, method string, path string, body io.Reader, noTimeout bool, mods ...RequestModifier) (io.ReadCloser, http.Header, int, error) {
 	// Checks that current session_token is still valid
@@ -182,14 +191,14 @@ func (c *client) Stream(ctx context.Context, method string, path string, body io
 
 	if checkToken && !c.config.HasValidSessionToken() && c.config.BuitinConsumerAuthenticationToken != "" {
 		if c.config.Verbose {
-			fmt.Printf("session token invalid: (%s). Relogin...\n", c.config.SessionToken)
+			log.Printf("session token invalid: (%s). Relogin...\n", c.config.SessionToken)
 		}
 		resp, err := c.AuthConsumerSignin(sdk.ConsumerBuiltin, sdk.AuthConsumerSigninRequest{"token": c.config.BuitinConsumerAuthenticationToken})
 		if err != nil {
 			return nil, nil, -1, sdk.WithStack(err)
 		}
 		if c.config.Verbose {
-			fmt.Println("jwt: ", resp.Token[:12])
+			log.Println("jwt: ", resp.Token[:12])
 		}
 		c.config.SessionToken = resp.Token
 	}
@@ -221,7 +230,7 @@ func (c *client) Stream(ctx context.Context, method string, path string, body io
 		var requestError error
 		if rs, ok := body.(io.ReadSeeker); ok {
 			if _, err := rs.Seek(0, 0); err != nil {
-				savederror = err
+				savederror = sdk.WithStack(err)
 				continue
 			}
 			req, requestError = http.NewRequest(method, url, body)
@@ -229,7 +238,7 @@ func (c *client) Stream(ctx context.Context, method string, path string, body io
 			req, requestError = http.NewRequest(method, url, bytes.NewBuffer(bodyBytes))
 		}
 		if requestError != nil {
-			savederror = requestError
+			savederror = sdk.WithStack(requestError)
 			continue
 		}
 
@@ -239,11 +248,11 @@ func (c *client) Stream(ctx context.Context, method string, path string, body io
 		req.Header.Set("X-CDS-RemoteTime", date)
 
 		if c.config.Verbose {
-			log.Printf("Stream > context> %s\n", tracingutils.DumpContext(ctx))
+			log.Printf("Stream > context> %s\n", telemetry.DumpContext(ctx))
 		}
-		spanCtx, ok := tracingutils.ContextToSpanContext(ctx)
+		spanCtx, ok := telemetry.ContextToSpanContext(ctx)
 		if ok {
-			tracingutils.DefaultFormat.SpanContextToRequest(spanCtx, req)
+			telemetry.DefaultFormat.SpanContextToRequest(spanCtx, req)
 		}
 
 		for i := range mods {
@@ -262,7 +271,7 @@ func (c *client) Stream(ctx context.Context, method string, path string, body io
 		if strings.HasPrefix(url, c.config.Host) && !signinRouteRegexp.MatchString(path) {
 			if _, _, err := new(jwt.Parser).ParseUnverified(c.config.SessionToken, &sdk.AuthSessionJWTClaims{}); err == nil {
 				if c.config.Verbose {
-					fmt.Println("JWT recognized")
+					log.Println("JWT recognized")
 				}
 				auth := "Bearer " + c.config.SessionToken
 				req.Header.Add("Authorization", auth)
@@ -284,7 +293,8 @@ func (c *client) Stream(ctx context.Context, method string, path string, body io
 			resp, errDo = c.httpClient.Do(req)
 		}
 		if errDo != nil {
-			return nil, nil, 0, sdk.WithStack(errDo)
+			savederror = sdk.WithStack(errDo)
+			continue
 		}
 
 		if c.config.Verbose {
@@ -298,41 +308,22 @@ func (c *client) Stream(ctx context.Context, method string, path string, body io
 			c.config.SessionToken = ""
 		}
 
-		// if everything is fine, return body
-		if resp.StatusCode < 500 {
-			return resp.Body, resp.Header, resp.StatusCode, nil
+		if resp.StatusCode == 409 || resp.StatusCode > 500 {
+			time.Sleep(250 * time.Millisecond)
+			savederror = extractBodyErrorFromResponse(resp)
+			continue
 		}
 
 		// if no request error by status > 500, check CDS error
 		// if there is a CDS errors, return it
 		if resp.StatusCode == 500 {
-			var body []byte
-			var errRead error
-			body, errRead = ioutil.ReadAll(resp.Body)
-			if errRead != nil {
-				resp.Body.Close()
-				continue
-			}
-			if err := sdk.DecodeError(body); err != nil {
-				resp.Body.Close()
-				return nil, resp.Header, resp.StatusCode, sdk.WithStack(err)
-			}
+			return nil, resp.Header, resp.StatusCode, extractBodyErrorFromResponse(resp)
 		}
 
-		if resp != nil && resp.StatusCode >= 500 {
-			savederror = fmt.Errorf("HTTP %d", resp.StatusCode)
-			if resp != nil && resp.Body != nil {
-				resp.Body.Close()
-			}
-			continue
-		}
-
-		if resp != nil && resp.Body != nil {
-			resp.Body.Close()
-		}
+		return resp.Body, resp.Header, resp.StatusCode, nil
 	}
 
-	return nil, nil, 0, sdk.WithStack(fmt.Errorf("x%d: %s", c.config.Retry, savederror))
+	return nil, nil, 0, sdk.WrapError(savederror, "request failed after %d retries", c.config.Retry)
 }
 
 // UploadMultiPart upload multipart

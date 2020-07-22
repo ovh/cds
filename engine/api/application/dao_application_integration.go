@@ -4,9 +4,10 @@ import (
 	"context"
 
 	"github.com/go-gorp/gorp"
+	"github.com/lib/pq"
 
-	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/gorpmapping"
 	"github.com/ovh/cds/sdk/log"
 )
 
@@ -148,7 +149,7 @@ func getProjectIntegrationID(db gorp.SqlExecutor, projID, pfModelID int64, ppfNa
 }
 
 // SetDeploymentStrategy update the application_deployment_strategy table
-func SetDeploymentStrategy(db gorp.SqlExecutor, projID, appID, pfModelID int64, ppfName string, cfg sdk.IntegrationConfig) error {
+func SetDeploymentStrategy(db gorpmapping.SqlExecutorWithTx, projID, appID, pfModelID int64, ppfName string, cfg sdk.IntegrationConfig) error {
 	projectIntegrationID, err := getProjectIntegrationID(db, projID, pfModelID, ppfName)
 	if err != nil {
 		return err
@@ -167,4 +168,39 @@ func SetDeploymentStrategy(db gorp.SqlExecutor, projID, appID, pfModelID int64, 
 
 	dbCfg.SetConfig(cfg.Clone())
 	return gorpmapping.UpdateAndSign(context.Background(), db, dbCfg)
+}
+
+// LoadAllDeploymnentForAppsWithDecryption load all deployments for all given applications, with decryption
+func LoadAllDeploymnentForAppsWithDecryption(ctx context.Context, db gorp.SqlExecutor, appIDs []int64) (map[int64]map[int64]sdk.IntegrationConfig, error) {
+	return loadAllDeploymentsForApps(ctx, db, appIDs, gorpmapping.GetOptions.WithDecryption)
+}
+
+func loadAllDeploymentsForApps(ctx context.Context, db gorp.SqlExecutor, appsID []int64, opts ...gorpmapping.GetOptionFunc) (map[int64]map[int64]sdk.IntegrationConfig, error) {
+	var res []dbApplicationDeploymentStrategy
+	query := gorpmapping.NewQuery(`
+		SELECT *
+		FROM application_deployment_strategy
+		WHERE application_id = ANY($1)
+		ORDER BY application_id
+	`).Args(pq.Int64Array(appsID))
+	if err := gorpmapping.GetAll(ctx, db, query, &res, opts...); err != nil {
+		return nil, err
+	}
+	appsDeployments := make(map[int64]map[int64]sdk.IntegrationConfig)
+	for i := range res {
+		dbAppDeploy := res[i]
+		isValid, err := gorpmapping.CheckSignature(dbAppDeploy, dbAppDeploy.Signature)
+		if err != nil {
+			return nil, err
+		}
+		if !isValid {
+			log.Error(ctx, "application.loadAllDeploymentsForApps> application integration id %d data corrupted", dbAppDeploy.ID)
+			continue
+		}
+		if _, ok := appsDeployments[dbAppDeploy.ApplicationID]; !ok {
+			appsDeployments[dbAppDeploy.ApplicationID] = make(map[int64]sdk.IntegrationConfig, 0)
+		}
+		appsDeployments[dbAppDeploy.ApplicationID][dbAppDeploy.ProjectIntegrationID] = dbAppDeploy.IntegrationConfig()
+	}
+	return appsDeployments, nil
 }

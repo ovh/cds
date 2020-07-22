@@ -23,14 +23,13 @@ import (
 	"go.opencensus.io/stats"
 	"go.opencensus.io/tag"
 
-	"github.com/ovh/cds/engine/api/observability"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/ovh/cds/sdk/doc"
 	docSDK "github.com/ovh/cds/sdk/doc"
 	"github.com/ovh/cds/sdk/log"
-	"github.com/ovh/cds/sdk/tracingutils"
+	"github.com/ovh/cds/sdk/telemetry"
 )
 
 const nbPanicsBeforeFail = 50
@@ -39,8 +38,6 @@ var (
 	onceMetrics         sync.Once
 	Errors              *stats.Int64Measure
 	Hits                *stats.Int64Measure
-	SSEClients          *stats.Int64Measure
-	SSEEvents           *stats.Int64Measure
 	WebSocketClients    *stats.Int64Measure
 	WebSocketEvents     *stats.Int64Measure
 	ServerRequestCount  *stats.Int64Measure
@@ -88,6 +85,7 @@ func (r *Router) pprofLabel(config map[string]*service.HandlerConfig, fn http.Ha
 			"goroutine-id", id,
 			"goroutine-name", name+"-"+id,
 		)
+
 		ctx := pprof.WithLabels(req.Context(), labels)
 		pprof.SetGoroutineLabels(ctx)
 		req = req.WithContext(ctx)
@@ -103,6 +101,30 @@ func (r *Router) compress(fn http.HandlerFunc) http.HandlerFunc {
 		} else {
 			fn(w, r)
 		}
+	}
+}
+
+const requestIDHeader = "Request-ID"
+
+func (r *Router) setRequestID(h http.HandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		var requestID string
+		if existingRequestID := r.Header.Get(requestIDHeader); existingRequestID != "" {
+			if _, err := uuid.FromString(existingRequestID); err == nil {
+				requestID = existingRequestID
+			}
+		}
+		if requestID == "" {
+			requestID = sdk.UUID()
+		}
+
+		ctx := r.Context()
+		ctx = context.WithValue(ctx, log.ContextLoggingRequestIDKey, requestID)
+		r = r.WithContext(ctx)
+
+		w.Header().Set(requestIDHeader, requestID)
+
+		h(w, r)
 	}
 }
 
@@ -122,20 +144,11 @@ func (r *Router) recoverWrap(h http.HandlerFunc) http.HandlerFunc {
 					err = sdk.ErrUnknownError
 				}
 
-				// the SSE handler can panic, and it's the way gorilla/mux works :(
-				if strings.HasPrefix(req.URL.String(), "/events") {
-					msg := fmt.Sprintf("%v", err)
-					for _, s := range handledEventErrors {
-						if strings.Contains(msg, s) {
-							return
-						}
-					}
-				}
-
 				log.Error(context.TODO(), "[PANIC_RECOVERY] Panic occurred on %s:%s, recover %s", req.Method, req.URL.String(), err)
+
 				trace := make([]byte, 4096)
 				count := runtime.Stack(trace, true)
-				log.Error(context.TODO(), "[PANIC_RECOVERY] Stacktrace of %d bytes\n%s\n", count, trace)
+				log.Error(req.Context(), "[PANIC_RECOVERY] Stacktrace of %d bytes\n%s\n", count, trace)
 
 				//Checking if there are two much panics in two minutes
 				//If last panic was more than 2 minutes ago, reinit the panic counter
@@ -144,7 +157,7 @@ func (r *Router) recoverWrap(h http.HandlerFunc) http.HandlerFunc {
 				} else {
 					dur := time.Since(*r.lastPanic)
 					if dur.Minutes() > float64(2) {
-						log.Info(context.Background(), "[PANIC_RECOVERY] Last panic was %d seconds ago", int(dur.Seconds()))
+						log.Info(req.Context(), "[PANIC_RECOVERY] Last panic was %d seconds ago", int(dur.Seconds()))
 						r.nbPanic = 0
 					}
 				}
@@ -155,10 +168,10 @@ func (r *Router) recoverWrap(h http.HandlerFunc) http.HandlerFunc {
 				//If two much panic, change the status of /mon/status with panicked = true
 				if r.nbPanic > nbPanicsBeforeFail {
 					r.panicked = true
-					log.Error(context.TODO(), "[PANIC_RECOVERY] RESTART NEEDED")
+					log.Error(req.Context(), "[PANIC_RECOVERY] RESTART NEEDED")
 				}
 
-				service.WriteError(context.TODO(), w, req, err)
+				service.WriteError(req.Context(), w, req, err)
 			}
 		}()
 		h.ServeHTTP(w, req)
@@ -166,9 +179,9 @@ func (r *Router) recoverWrap(h http.HandlerFunc) http.HandlerFunc {
 }
 
 var headers = []string{
-	http.CanonicalHeaderKey(tracingutils.TraceIDHeader),
-	http.CanonicalHeaderKey(tracingutils.SpanIDHeader),
-	http.CanonicalHeaderKey(tracingutils.SampledHeader),
+	http.CanonicalHeaderKey(telemetry.TraceIDHeader),
+	http.CanonicalHeaderKey(telemetry.SpanIDHeader),
+	http.CanonicalHeaderKey(telemetry.SampledHeader),
 	http.CanonicalHeaderKey(sdk.WorkflowAsCodeHeader),
 	http.CanonicalHeaderKey(sdk.ResponseWorkflowIDHeader),
 	http.CanonicalHeaderKey(sdk.ResponseWorkflowNameHeader),
@@ -253,13 +266,13 @@ func (r *Router) computeScopeDetails() {
 func (r *Router) Handle(uri string, scope HandlerScope, handlers ...*service.HandlerConfig) {
 	uri = r.Prefix + uri
 	config, f := r.handle(uri, scope, handlers...)
-	r.Mux.Handle(uri, r.pprofLabel(config, r.compress(r.recoverWrap(f))))
+	r.Mux.Handle(uri, r.pprofLabel(config, r.compress(r.setRequestID(r.recoverWrap(f)))))
 }
 
 func (r *Router) HandlePrefix(uri string, scope HandlerScope, handlers ...*service.HandlerConfig) {
 	uri = r.Prefix + uri
 	config, f := r.handle(uri, scope, handlers...)
-	r.Mux.PathPrefix(uri).HandlerFunc(r.pprofLabel(config, r.compress(r.recoverWrap(f))))
+	r.Mux.PathPrefix(uri).HandlerFunc(r.pprofLabel(config, r.compress(r.setRequestID(r.recoverWrap(f)))))
 }
 
 // Handle adds all handler for their specific verb in gorilla router for given uri
@@ -288,16 +301,15 @@ func (r *Router) handle(uri string, scope HandlerScope, handlers ...*service.Han
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 
+		ctx = telemetry.ContextWithTelemetry(r.Background, ctx)
+
 		var requestID string
-		if existingRequestID := req.Header.Get("Request-ID"); existingRequestID != "" {
-			if _, err := uuid.FromString(existingRequestID); err == nil {
-				requestID = existingRequestID
+		iRequestID := ctx.Value(log.ContextLoggingRequestIDKey)
+		if iRequestID != nil {
+			if id, ok := iRequestID.(string); ok {
+				requestID = id
 			}
 		}
-		if requestID == "" {
-			requestID = uuid.NewV4().String()
-		}
-		ctx = context.WithValue(ctx, log.ContextLoggingRequestIDKey, requestID)
 
 		dateRFC5322 := req.Header.Get("Date")
 		dateReq, err := sdk.ParseDateRFC5322(dateRFC5322)
@@ -334,23 +346,23 @@ func (r *Router) handle(uri string, scope HandlerScope, handlers ...*service.Han
 		//Get route configuration
 		rc := cfg.Config[req.Method]
 		if rc == nil || rc.Handler == nil {
-			observability.Record(ctx, Errors, 1)
+			telemetry.Record(ctx, Errors, 1)
 			service.WriteError(ctx, w, req, sdk.ErrNotFound)
 			return
 		}
 
 		// Make the request context inherit from the context of the router
-		tags := observability.ContextGetTags(r.Background, observability.TagServiceType, observability.TagServiceName)
+		tags := telemetry.ContextGetTags(r.Background, telemetry.TagServiceType, telemetry.TagServiceName)
 		ctx, err = tag.New(ctx, tags...)
 		if err != nil {
-			log.Error(ctx, "observability.ContextGetTags> %v", err)
+			log.Error(ctx, "telemetry.ContextGetTags> %v", err)
 		}
-		ctx = observability.ContextWithTag(ctx,
-			observability.RequestID, requestID,
-			observability.Handler, rc.Name,
-			observability.Host, req.Host,
-			observability.Path, req.URL.Path,
-			observability.Method, req.Method)
+		ctx = telemetry.ContextWithTag(ctx,
+			telemetry.RequestID, requestID,
+			telemetry.Handler, rc.Name,
+			telemetry.Host, req.Host,
+			telemetry.Path, req.URL.Path,
+			telemetry.Method, req.Method)
 
 		// Prepare logging fields
 		ctx = context.WithValue(ctx, log.ContextLoggingFuncKey, func(ctx context.Context) logrus.Fields {
@@ -378,58 +390,70 @@ func (r *Router) handle(uri string, scope HandlerScope, handlers ...*service.Han
 
 		// Log request start
 		start := time.Now()
-		log.Info(ctx, "%s | BEGIN | %s [%s]", req.Method, req.URL, rc.Name)
+		log.InfoWithFields(ctx, logrus.Fields{
+      "method":      req.Method,
+      "route":       cleanURL,
+      "request_uri": req.RequestURI,
+      "deprecated":  rc.IsDeprecated,
+      "handler":     rc.Name,
+    }, "%s | BEGIN | %s [%s]", req.Method, req.URL, rc.Name)
 
 		// Defer log request end
 		deferFunc := func(ctx context.Context) {
 			if responseWriter.statusCode == 0 {
 				responseWriter.statusCode = 200
 			}
-			ctx = observability.ContextWithTag(ctx, observability.StatusCode, responseWriter.statusCode)
-
+			ctx = telemetry.ContextWithTag(ctx, telemetry.StatusCode, responseWriter.statusCode)
 			end := time.Now()
 			latency := end.Sub(start)
 
 			log.InfoWithFields(ctx, logrus.Fields{
-				"method":        req.Method,
-				"latency":       latency.Milliseconds(),
-				"latency_human": latency,
-				"status":        responseWriter.statusCode,
-				"route":         cleanURL,
-				"request_uri":   req.RequestURI,
-				"deprecated":    rc.IsDeprecated,
+				"method":      req.Method,
+				"latency_num": latency.Nanoseconds(),
+				"latency":     latency,
+				"status_num":  responseWriter.statusCode,
+				"status":      responseWriter.statusCode,
+				"route":       cleanURL,
+				"request_uri": req.RequestURI,
+				"deprecated":  rc.IsDeprecated,
+				"handler":     rc.Name,
 			}, "%s | END   | %s [%s] | [%d]", req.Method, req.URL, rc.Name, responseWriter.statusCode)
 
-			observability.RecordFloat64(ctx, ServerLatency, float64(latency)/float64(time.Millisecond))
-			observability.Record(ctx, ServerRequestBytes, responseWriter.reqSize)
-			observability.Record(ctx, ServerResponseBytes, responseWriter.respSize)
+			telemetry.RecordFloat64(ctx, ServerLatency, float64(latency)/float64(time.Millisecond))
+			telemetry.Record(ctx, ServerRequestBytes, responseWriter.reqSize)
+			telemetry.Record(ctx, ServerResponseBytes, responseWriter.respSize)
 		}
 
-		observability.Record(r.Background, Hits, 1)
-		observability.Record(ctx, ServerRequestCount, 1)
+		telemetry.Record(r.Background, Hits, 1)
+		telemetry.Record(ctx, ServerRequestCount, 1)
 
 		for _, m := range r.Middlewares {
 			var err error
 			ctx, err = m(ctx, responseWriter, req, rc)
 			if err != nil {
-				observability.Record(r.Background, Errors, 1)
+				telemetry.Record(r.Background, Errors, 1)
 				service.WriteError(ctx, responseWriter, req, err)
 				deferFunc(ctx)
 				return
 			}
 		}
 
+		var end func()
+		ctx, end = telemetry.SpanFromMain(ctx, "router.handle")
+
 		if err := rc.Handler(ctx, responseWriter.wrappedResponseWriter(), req); err != nil {
-			observability.Record(r.Background, Errors, 1)
-			observability.End(ctx, responseWriter, req)
+			telemetry.Record(r.Background, Errors, 1)
+			telemetry.End(ctx, responseWriter, req) // nolint
 			service.WriteError(ctx, responseWriter, req, err)
+			end()
 			deferFunc(ctx)
 			return
 		}
+		end()
 
 		// writeNoContentPostMiddleware is compliant Middleware Interface
 		// but no need to check ct, err in return
-		writeNoContentPostMiddleware(ctx, responseWriter, req, rc)
+		writeNoContentPostMiddleware(ctx, responseWriter, req, rc) // nolint
 
 		for _, m := range r.PostMiddlewares {
 			var err error
@@ -477,16 +501,26 @@ func processAsyncRequests(ctx context.Context, chanRequest chan asynchronousRequ
 	for {
 		select {
 		case req := <-chanRequest:
+			if iRequestID, ok := req.contextValues[log.ContextLoggingRequestIDKey]; ok {
+				if requestID, ok := iRequestID.(string); ok {
+					ctx = context.WithValue(ctx, log.ContextLoggingRequestIDKey, requestID)
+				}
+			}
 			if err := req.do(ctx, handler); err != nil {
+				isErrWithStack := sdk.IsErrorWithStack(err)
+				fields := logrus.Fields{}
+				if isErrWithStack {
+					fields["stack_trace"] = fmt.Sprintf("%+v", err)
+				}
 				myError, ok := err.(sdk.Error)
 				if ok && myError.Status >= 500 {
 					if req.nbErrors > retry {
-						log.Error(ctx, "Asynchronous Request on Error: %v with status:%d", err, myError.Status)
+						log.ErrorWithFields(ctx, fields, "Asynchronous Request on Error: %v with status: %d", err, myError.Status)
 					} else {
 						chanRequest <- req
 					}
 				} else {
-					log.Error(ctx, "Asynchronous Request on Error: %v", err)
+					log.ErrorWithFields(ctx, fields, "Asynchronous Request on Error: %v", err)
 				}
 			}
 		case <-ctx.Done():
@@ -504,9 +538,16 @@ func (r *Router) Asynchronous(handler service.AsynchronousHandlerFunc, retry int
 	return func() service.Handler {
 		return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 			async := asynchronousRequest{
-				contextValues: ContextValues(ctx),
-				request:       *r,
-				vars:          mux.Vars(r),
+				contextValues: map[interface{}]interface{}{
+					log.ContextLoggingRequestIDKey: ctx.Value(log.ContextLoggingRequestIDKey),
+					contextSession:                 ctx.Value(contextSession),
+					contextAPIConsumer:             ctx.Value(contextAPIConsumer),
+					contextJWT:                     ctx.Value(contextJWT),
+					contextJWTRaw:                  ctx.Value(contextJWTRaw),
+					contextJWTFromCookie:           ctx.Value(contextJWTFromCookie),
+				},
+				request: *r,
+				vars:    mux.Vars(r),
 			}
 			if btes, err := ioutil.ReadAll(r.Body); err == nil {
 				async.body = bytes.NewBuffer(btes)
@@ -625,14 +666,6 @@ func Auth(v bool) HandlerConfigParam {
 func MaintenanceAware() HandlerConfigParam {
 	f := func(rc *service.HandlerConfig) {
 		rc.MaintenanceAware = true
-	}
-	return f
-}
-
-// EnableTracing on a route
-func EnableTracing() HandlerConfigParam {
-	f := func(rc *service.HandlerConfig) {
-		rc.EnableTracing = true
 	}
 	return f
 }

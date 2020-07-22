@@ -5,9 +5,9 @@ import (
 
 	"github.com/go-gorp/gorp"
 
-	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/gorpmapping"
 )
 
 // LoadOptionFunc for action.
@@ -183,7 +183,12 @@ func loadChildren(ctx context.Context, db gorp.SqlExecutor, as ...*sdk.Action) e
 }
 
 func loadGroup(ctx context.Context, db gorp.SqlExecutor, as ...*sdk.Action) error {
-	gs, err := group.LoadAllByIDs(ctx, db, sdk.ActionsToGroupIDs(as))
+	groupIDs := sdk.ActionsToGroupIDs(as)
+	if len(groupIDs) == 0 {
+		return nil
+	}
+
+	gs, err := group.LoadAllByIDs(ctx, db, groupIDs)
 	if err != nil {
 		return err
 	}

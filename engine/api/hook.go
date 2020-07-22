@@ -39,20 +39,31 @@ func (api *API) getHookPollingVCSEvents() service.Handler {
 			return err
 		}
 
-		proj, err := project.Load(api.mustDB(), h.Config[sdk.HookConfigProject].Value, nil)
+		proj, err := project.Load(ctx, api.mustDB(), h.Config[sdk.HookConfigProject].Value, nil)
 		if err != nil {
 			return err
 		}
 
 		projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
+
+		tx, err := api.mustDB().Begin()
+		if err != nil {
+			return sdk.WithStack(err)
+		}
+		defer tx.Rollback() // nolint
+
 		//get the client for the repositories manager
-		vcsServer, err := repositoriesmanager.LoadProjectVCSServerLinkByProjectKeyAndVCSServerName(ctx, api.mustDB(), projIdent.Key, vcsServerParam)
+		vcsServer, err := repositoriesmanager.LoadProjectVCSServerLinkByProjectKeyAndVCSServerName(ctx, tx, projIdent.Key, vcsServerParam)
 		if err != nil {
 			return err
 		}
-		client, err := repositoriesmanager.AuthorizedClient(ctx, api.mustDB(), api.Cache, projIdent.Key, vcsServer)
+		client, err := repositoriesmanager.AuthorizedClient(ctx, tx, api.Cache, projIdent.Key, vcsServer)
 		if err != nil {
 			return err
+		}
+
+		if err := tx.Commit(); err != nil {
+			return sdk.WithStack(err)
 		}
 
 		//Check if the polling if disabled

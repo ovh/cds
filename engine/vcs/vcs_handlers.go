@@ -102,102 +102,19 @@ func (s *Service) getVCSServersHooksHandler() service.Handler {
 			res.WebhooksDisabled = cfg.Bitbucket.DisableWebHooks
 			res.WebhooksIcon = sdk.BitbucketIcon
 			// https://confluence.atlassian.com/bitbucketserver/event-payload-938025882.html
-			res.Events = []string{
-				"repo:refs_changed",
-				"repo:modified",
-				"repo:forked",
-				"repo:comment:added",
-				"repo:comment:edited",
-				"repo:comment:deleted",
-				"pr:opened",
-				"pr:modified",
-				"pr:reviewer:updated",
-				"pr:reviewer:approved",
-				"pr:reviewer:unapproved",
-				"pr:reviewer:needs_work",
-				"pr:merged",
-				"pr:declined",
-				"pr:deleted",
-				"pr:comment:added",
-				"pr:comment:edited",
-				"pr:comment:deleted",
-			}
+			res.Events = sdk.BitbucketEvents
 		case cfg.BitbucketCloud != nil:
 			res.WebhooksSupported = true
 			res.WebhooksDisabled = cfg.BitbucketCloud.DisableWebHooks
 			res.WebhooksIcon = sdk.BitbucketIcon
 			// https://developer.atlassian.com/bitbucket/api/2/reference/resource/hook_events/%7Bsubject_type%7D
-			res.Events = []string{
-				"repo:push",
-				"pullrequest:unapproved",
-				"issue:comment_created",
-				"pullrequest:approved",
-				"repo:created",
-				"repo:deleted",
-				"repo:imported",
-				"pullrequest:comment_updated",
-				"issue:updated",
-				"project:updated",
-				"pullrequest:comment_created",
-				"repo:commit_status_updated",
-				"pullrequest:updated",
-				"issue:created",
-				"repo:fork",
-				"pullrequest:comment_deleted",
-				"repo:commit_status_created",
-				"repo:updated",
-				"pullrequest:rejected",
-				"pullrequest:fulfilled",
-				"pullrequest:created",
-				"repo:transfer",
-				"repo:commit_comment_created",
-			}
+			res.Events = sdk.BitbucketCloudEvents
 		case cfg.Github != nil:
 			res.WebhooksSupported = true
 			res.WebhooksDisabled = cfg.Github.DisableWebHooks
 			res.WebhooksIcon = sdk.GitHubIcon
 			// https://developer.github.com/v3/activity/events/types/
-			res.Events = []string{
-				"push",
-				"check_run",
-				"check_suite",
-				"commit_comment",
-				"create",
-				"delete",
-				"deployment",
-				"deployment_status",
-				"fork",
-				"github_app_authorization",
-				"gollum",
-				"installation",
-				"installation_repositories",
-				"issue_comment",
-				"issues",
-				"label",
-				"marketplace_purchase",
-				"member",
-				"membership",
-				"milestone",
-				"organization",
-				"org_block",
-				"page_build",
-				"project_card",
-				"project_column",
-				"project",
-				"public",
-				"pull-request_review_comment",
-				"pull-request_review",
-				"pull_request",
-				"repository",
-				"repository_import",
-				"repository_vulnerability_alert",
-				"release",
-				"security_advisory",
-				"status",
-				"team",
-				"team_add",
-				"watch",
-			}
+			res.Events = sdk.GitHubEvents
 		case cfg.Gitlab != nil:
 			res.WebhooksSupported = true
 			res.WebhooksDisabled = cfg.Gitlab.DisableWebHooks
@@ -218,26 +135,7 @@ func (s *Service) getVCSServersHooksHandler() service.Handler {
 			res.GerritHookDisabled = cfg.Gerrit.DisableGerritEvent
 			res.WebhooksIcon = sdk.GerritIcon
 			// https://git.eclipse.org/r/Documentation/cmd-stream-events.html#events
-			res.Events = []string{
-				"patchset-created",
-				"assignee-changed",
-				"change-abandoned",
-				"change-deleted",
-				"change-merged",
-				"change-restored",
-				"comment-added",
-				"draft-published",
-				"dropped-output",
-				"hashtags-changed",
-				"project-created",
-				"ref-updated",
-				"reviewer-added",
-				"reviewer-deleted",
-				"topic-changed",
-				"wip-state-changed",
-				"private-state-changed",
-				"vote-deleted",
-			}
+			res.Events = sdk.GerritEvents
 		}
 
 		return service.WriteJSON(w, res, http.StatusOK)
@@ -1125,11 +1023,11 @@ func (s *Service) postHookHandler() service.Handler {
 
 		body := sdk.VCSHook{}
 		if err := service.UnmarshalBody(r, &body); err != nil {
-			return sdk.WrapError(err, "Unable to read body %s %s/%s", name, owner, repo)
+			return sdk.WrapError(err, "unable to read body %s %s/%s", name, owner, repo)
 		}
 
 		if err := client.CreateHook(ctx, fmt.Sprintf("%s/%s", owner, repo), &body); err != nil {
-			return sdk.WrapError(err, "CreateHook %s %s/%s", name, owner, repo)
+			return sdk.WrapError(err, "cannot create hook on %s for repository %s/%s", name, owner, repo)
 		}
 		return service.WriteJSON(w, body, http.StatusOK)
 	}

@@ -45,6 +45,7 @@ export class WorkflowNodeRunSummaryComponent implements OnInit {
     nodeRunStart: string;
 
     loading = false;
+    readOnlyRun: boolean;
 
     constructor(
         private _wrService: WorkflowRunService,
@@ -80,6 +81,7 @@ export class WorkflowNodeRunSummaryComponent implements OnInit {
                 }
                 this._cd.markForCheck();
             }
+            this.readOnlyRun = this._store.selectSnapshot(WorkflowState)?.workflowRun?.read_only;
         });
 
     }

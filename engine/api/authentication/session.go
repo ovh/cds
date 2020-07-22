@@ -8,11 +8,12 @@ import (
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/gorpmapping"
 	"github.com/ovh/cds/sdk/log"
 )
 
 // NewSession returns a new session for a given auth consumer.
-func NewSession(ctx context.Context, db gorp.SqlExecutor, c *sdk.AuthConsumer, duration time.Duration, mfaEnable bool) (*sdk.AuthSession, error) {
+func NewSession(ctx context.Context, db gorpmapping.SqlExecutorWithTx, c *sdk.AuthConsumer, duration time.Duration, mfaEnable bool) (*sdk.AuthSession, error) {
 	s := sdk.AuthSession{
 		ConsumerID: c.ID,
 		ExpireAt:   time.Now().Add(duration),
@@ -70,10 +71,10 @@ func CheckSessionJWT(jwtToken string) (*jwt.Token, error) {
 }
 
 // SessionCleaner must be run as a goroutine
-func SessionCleaner(ctx context.Context, dbFunc func() *gorp.DbMap) {
+func SessionCleaner(ctx context.Context, dbFunc func() *gorp.DbMap, tickerDuration time.Duration) {
 	log.Info(ctx, "Initializing session cleaner...")
 	db := dbFunc()
-	tick := time.NewTicker(10 * time.Second)
+	tick := time.NewTicker(tickerDuration)
 	tickCorruped := time.NewTicker(12 * time.Hour)
 	defer tick.Stop()
 	defer tickCorruped.Stop()

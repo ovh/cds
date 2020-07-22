@@ -3,14 +3,13 @@ package environment
 import (
 	"strings"
 
-	"github.com/go-gorp/gorp"
-
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/gorpmapping"
 	"github.com/ovh/cds/sdk/log"
 )
 
 //Import import or reuser the provided environment
-func Import(db gorp.SqlExecutor, proj sdk.Project, env *sdk.Environment, msgChan chan<- sdk.Message, u sdk.Identifiable) error {
+func Import(db gorpmapping.SqlExecutorWithTx, proj sdk.Project, env *sdk.Environment, msgChan chan<- sdk.Message, u sdk.Identifiable) error {
 	exists, err := Exists(db, proj.Key, env.Name)
 	if err != nil {
 		return err
@@ -65,8 +64,8 @@ func Import(db gorp.SqlExecutor, proj sdk.Project, env *sdk.Environment, msgChan
 }
 
 //ImportInto import variables and groups on an existing environment
-func ImportInto(db gorp.SqlExecutor, env *sdk.Environment, into *sdk.Environment, msgChan chan<- sdk.Message, u sdk.Identifiable) error {
-	var updateVar = func(v *sdk.Variable) {
+func ImportInto(db gorpmapping.SqlExecutorWithTx, env *sdk.Environment, into *sdk.Environment, msgChan chan<- sdk.Message, u sdk.Identifiable) error {
+	var updateVar = func(v *sdk.EnvironmentVariable) {
 		log.Debug("ImportInto> Updating var %s", v.Name)
 
 		varBefore, errV := LoadVariable(db, into.ID, v.Name)
@@ -82,7 +81,7 @@ func ImportInto(db gorp.SqlExecutor, env *sdk.Environment, into *sdk.Environment
 		msgChan <- sdk.NewMessage(sdk.MsgEnvironmentVariableUpdated, v.Name, into.Name)
 	}
 
-	var insertVar = func(v *sdk.Variable) {
+	var insertVar = func(v *sdk.EnvironmentVariable) {
 		log.Debug("ImportInto> Creating var %s", v.Name)
 		if err := InsertVariable(db, into.ID, v, u); err != nil {
 			msgChan <- sdk.NewMessage(sdk.MsgEnvironmentVariableCannotBeCreated, v.Name, into.Name, err)

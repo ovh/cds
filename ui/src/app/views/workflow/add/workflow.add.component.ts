@@ -1,7 +1,9 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, NgZone, OnInit, ViewChild } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
+import { EventService } from 'app/event.service';
+import { EventType } from 'app/model/event.model';
 import { Operation, PerformAsCodeResponse } from 'app/model/operation.model';
 import { Project } from 'app/model/project.model';
 import { Repository } from 'app/model/repositories.model';
@@ -15,7 +17,7 @@ import { WorkflowTemplateService } from 'app/service/workflow-template/workflow-
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { SharedService } from 'app/shared/shared.service';
 import { ToastService } from 'app/shared/toast/ToastService';
-import { CDSWebWorker } from 'app/shared/worker/web.worker';
+import { EventState } from 'app/store/event.state';
 import { ProjectState, ProjectStateModel } from 'app/store/project.state';
 import { CreateWorkflow, ImportWorkflow } from 'app/store/workflow.action';
 import { Subscription } from 'rxjs';
@@ -80,7 +82,8 @@ workflow:
         private _workflowTemplateService: WorkflowTemplateService,
         private _sharedService: SharedService,
         private _theme: ThemeStore,
-        private _cd: ChangeDetectorRef
+        private _cd: ChangeDetectorRef,
+        private _eventService: EventService
     ) {
         this.workflow = new Workflow();
         this.selectedStrategy = new VCSStrategy();
@@ -218,24 +221,19 @@ workflow:
     }
 
     startOperationWorker(uuid: string): void {
-        // poll operation
-        let zone = new NgZone({ enableLongStackTrace: false });
-        let webworker = new CDSWebWorker('./assets/worker/web/operation.js')
-        webworker.start({
-            'path': '/import/' + this.project.key + '/' + uuid
-        });
-        this.webworkerSub = webworker.response().subscribe(ope => {
-            if (ope) {
-                zone.run(() => {
-                    this.pollingResponse = JSON.parse(ope);
-                    if (this.pollingResponse.status > 1) {
-                        this.pollingImport = false;
-                        webworker.stop();
-                    }
-                    this._cd.markForCheck();
-                });
-            }
-        });
+        this.webworkerSub = this._store.select(EventState.last)
+            .filter(e => e && e.type_event === EventType.OPERATION && e.project_key === this.project.key)
+            .map(e => e.payload as Operation)
+            .filter(o => o.uuid === this.pollingResponse.uuid)
+            .first(o => o.status > 1)
+            .pipe(finalize(() => {
+                this.pollingImport = false;
+                this._cd.markForCheck();
+            }))
+            .subscribe(o => {
+                this.pollingResponse = o;
+            });
+        this._eventService.subscribeToOperation(this.project.key, this.pollingResponse.uuid);
     }
 
     perform(): void {

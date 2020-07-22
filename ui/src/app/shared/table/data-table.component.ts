@@ -59,7 +59,7 @@ export class SelectorPipe<T> implements PipeTransform {
             let type: ColumnType;
             switch (typeof c.type) {
                 case 'function':
-                    type = (<SelectorType<T>>c.type)(data);
+                    type = c.type(data);
                     break;
                 default:
                     type = c.type;
@@ -138,18 +138,16 @@ export class DataTableComponent<T extends WithKey> extends Table<T> implements O
             if (this.withSelect) {
                 this.allData.forEach(d => this.selected[d.key()] = false);
                 if (typeof this.withSelect === 'function') {
-                    this.allData.filter(<Select<T>>this.withSelect).forEach(d => this.selected[d.key()] = true);
+                    this.allData.filter(this.withSelect).forEach(d => this.selected[d.key()] = true);
                     this.emitSelectChange();
                 }
             }
 
             if (this.activeLine) {
-                this.allData.some((data, index) => {
+                this.allData.forEach((data, index) => {
                     if (this.activeLine(data)) {
                         this.indexSelected = index;
-                        return true;
                     }
-                    return false;
                 });
             }
         }

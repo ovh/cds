@@ -12,8 +12,7 @@ import (
 )
 
 func Test_deleteWorkflowRunsHistory(t *testing.T) {
-	db, cache, end := test.SetupPG(t, bootstrap.InitiliazeDB)
-	defer end()
+	db, cache := test.SetupPG(t, bootstrap.InitiliazeDB)
 
 	// Init store
 	cfg := objectstore.Config{

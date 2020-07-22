@@ -11,8 +11,7 @@ import (
 )
 
 func TestLoadAllWorkflows(t *testing.T) {
-	db, _, end := test.SetupPG(t)
-	defer end()
+	db, _ := test.SetupPG(t)
 
 	var opts = []workflow.WorkflowDAO{
 		{},

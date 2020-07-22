@@ -20,6 +20,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
+const exportFileArg = "export-file"
+
 var adminMetadataCmd = cli.Command{
 	Name:  "metadata",
 	Short: "Manage CDS Metadata",
@@ -45,7 +47,7 @@ var adminMetadataProjectExportCmd = cli.Command{
 	Short: "export CDS Project Metadata",
 	Flags: []cli.Flag{
 		{
-			Name:    "export-file",
+			Name:    exportFileArg,
 			Usage:   "Filename of file created",
 			Default: "export_metadata_projects.csv",
 		},
@@ -56,7 +58,7 @@ var adminMetadataApplicationExportCmd = cli.Command{
 	Short: "export CDS Application Metadata",
 	Flags: []cli.Flag{
 		{
-			Name:    "export-file",
+			Name:    exportFileArg,
 			Usage:   "Filename of file created",
 			Default: "export_metadata_applications.csv",
 		},
@@ -67,7 +69,7 @@ var adminMetadataWorkflowExportCmd = cli.Command{
 	Short: "export CDS Workflow Metadata",
 	Flags: []cli.Flag{
 		{
-			Name:    "export-file",
+			Name:    exportFileArg,
 			Usage:   "Filename of file created",
 			Default: "export_metadata_workflows.csv",
 		},
@@ -82,7 +84,7 @@ var adminMetadataProjectImportCmd = cli.Command{
 	Long: `Metadata are represented with key:value
 
 Example of a csv file for a CDS Project
-	
+
 	project_key;project_name;last_modified;ou1;ou2
 	YOUR_PROJECT_KEY;Your Project Name;2020-01-01T00:00:00;OU_1_VALUE;OU_2_VALUE
 
@@ -98,7 +100,7 @@ var adminMetadataApplicationImportCmd = cli.Command{
 	Long: `Metadata are represented with key:value
 
 Example of a csv file for a CDS Application
-	
+
 	project_key;application_name;last_modified;vcs_repofullname;ou1;ou2
 	YOUR_PROJECT_KEY;Your Application Name;2020-01-01T00:00:00;repo_of_application;OU_1_VALUE;OU_2_VALUE
 
@@ -151,7 +153,7 @@ func adminMetadataProjectExportRun(c cli.Values) error {
 	}
 
 	titles := []string{"project_key", "project_name", "last_modified"}
-	adminMetadataExport(titles, nil, lines, c.GetString("export-file"), currentDisplay)
+	adminMetadataExport(titles, nil, lines, c.GetString(exportFileArg), currentDisplay)
 	return nil
 }
 
@@ -219,7 +221,7 @@ func adminMetadataApplicationExportRun(c cli.Values) error {
 	}
 	titles := []string{"project_key", "application_name", "last_modified"}
 	titlesAdd := []string{"vcs_repofullname"}
-	adminMetadataExport(titles, titlesAdd, lines, c.GetString("export-file"), currentDisplay)
+	adminMetadataExport(titles, titlesAdd, lines, c.GetString(exportFileArg), currentDisplay)
 	return nil
 }
 
@@ -317,7 +319,7 @@ func adminMetadataWorkflowExportRun(c cli.Values) error {
 		}
 	}
 	titles := []string{"project_key", "workflow_name", "last_modified"}
-	adminMetadataExport(titles, nil, lines, c.GetString("export-file"), currentDisplay)
+	adminMetadataExport(titles, nil, lines, c.GetString(exportFileArg), currentDisplay)
 	return nil
 }
 

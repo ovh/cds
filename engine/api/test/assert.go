@@ -31,11 +31,6 @@ func NotNil(t *testing.T, i interface{}, msg ...interface{}) {
 }
 
 // Nil logs Fatal if there is no nil value.
-func Nil(t *testing.T, i interface{}, msg ...interface{}) {
-	if !assert.Nil(t, i) {
-		t.Fatal(msg...)
-	}
-}
 
 // NotEmpty logs Fatal if it's empty
 func NotEmpty(t *testing.T, i interface{}, msg ...interface{}) {
@@ -65,13 +60,6 @@ func Equal(t *testing.T, expected, actual interface{}, msgAndArgs ...interface{}
 }
 
 // NotEqual checks that two elements are not equal.
-func NotEqual(t *testing.T, expected, actual interface{}, msgAndArgs ...interface{}) {
-	if DeepEquals(expected, actual) {
-		t.Log("Expected:" + dump.MustSdump(expected))
-		t.Log("Actual:" + dump.MustSdump(actual))
-		assert.FailNow(t, "Not equal failed", msgAndArgs...)
-	}
-}
 
 // DeepEquals returns equality between 2 elements using github.com/fsamin/go-dump
 func DeepEquals(a, b interface{}) bool {

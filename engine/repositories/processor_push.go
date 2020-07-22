@@ -64,17 +64,21 @@ func (s *Service) processPush(ctx context.Context, op *sdk.Operation) error {
 		}
 	}
 
+	// Erase existing cds directory for migration, if update make sure that the cds directory exists
 	if !op.Setup.Push.Update {
-		// Erase cds directory
-		_, errStat := os.Stat(path + "/.cds")
-		if errStat == nil {
+		if _, err := os.Stat(path + "/.cds"); err == nil {
 			if err := os.RemoveAll(path + "/.cds"); err != nil {
 				return sdk.WrapError(err, "error removing old .cds directory")
 			}
 		}
-		// Create files
 		if err := os.Mkdir(filepath.Join(path, ".cds"), os.ModePerm); err != nil {
 			return sdk.WrapError(err, "error creating .cds directory")
+		}
+	} else {
+		if _, err := os.Stat(path + "/.cds"); err != nil {
+			if err := os.Mkdir(filepath.Join(path, ".cds"), os.ModePerm); err != nil {
+				return sdk.WrapError(err, "error creating .cds directory")
+			}
 		}
 	}
 
@@ -101,8 +105,7 @@ func (s *Service) processPush(ctx context.Context, op *sdk.Operation) error {
 
 	// In case that there are no changes (ex: push changes on an existing branch that was not merged)
 	if !gitRepo.ExistsDiff() {
-		log.Debug("processPush> no files changes")
-		return nil
+		return sdk.WrapError(sdk.ErrNothingToPush, "processPush> %s : no files changes", op.UUID)
 	}
 
 	// Commit files
@@ -119,6 +122,6 @@ func (s *Service) processPush(ctx context.Context, op *sdk.Operation) error {
 		return sdk.WrapError(err, "push %s", op.Setup.Push.FromBranch)
 	}
 
-	log.Debug("processPush> files pushed")
+	log.Debug("processPush> %s : files pushed", op.UUID)
 	return nil
 }

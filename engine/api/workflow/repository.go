@@ -4,21 +4,19 @@ import (
 	"archive/tar"
 	"bytes"
 	"context"
-	"fmt"
 	"path/filepath"
-	"time"
 
 	"github.com/fsamin/go-dump"
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/keys"
-	"github.com/ovh/cds/engine/api/observability"
 	"github.com/ovh/cds/engine/api/operation"
 	"github.com/ovh/cds/engine/api/workflowtemplate"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/exportentities"
 	"github.com/ovh/cds/sdk/log"
+	"github.com/ovh/cds/sdk/telemetry"
 )
 
 // WorkflowAsCodePattern is the default code pattern to find cds files
@@ -40,7 +38,7 @@ type PushOption struct {
 // CreateFromRepository a workflow from a repository.
 func CreateFromRepository(ctx context.Context, db *gorp.DbMap, store cache.Store, p *sdk.Project, wf *sdk.Workflow,
 	opts sdk.WorkflowRunPostHandlerOption, u sdk.AuthConsumer, decryptFunc keys.DecryptFunc) (*PushSecrets, []sdk.Message, error) {
-	ctx, end := observability.Span(ctx, "workflow.CreateFromRepository")
+	ctx, end := telemetry.Span(ctx, "workflow.CreateFromRepository")
 	defer end()
 
 	newOperation, err := createOperationRequest(*wf, opts)
@@ -52,7 +50,7 @@ func CreateFromRepository(ctx context.Context, db *gorp.DbMap, store cache.Store
 		return nil, nil, sdk.WrapError(err, "unable to post repository operation")
 	}
 
-	ope, err := pollRepositoryOperation(ctx, db, store, newOperation.UUID)
+	ope, err := operation.Poll(ctx, db, newOperation.UUID)
 	if err != nil {
 		return nil, nil, sdk.WrapError(err, "cannot analyse repository")
 	}
@@ -74,7 +72,7 @@ func CreateFromRepository(ctx context.Context, db *gorp.DbMap, store cache.Store
 
 func extractWorkflow(ctx context.Context, db *gorp.DbMap, store cache.Store, p *sdk.Project, wf *sdk.Workflow,
 	ope sdk.Operation, consumer sdk.AuthConsumer, decryptFunc keys.DecryptFunc, hookUUID string) (*PushSecrets, []sdk.Message, error) {
-	ctx, end := observability.Span(ctx, "workflow.extractWorkflow")
+	ctx, end := telemetry.Span(ctx, "workflow.extractWorkflow")
 	defer end()
 
 	projIdent := sdk.ProjectIdentifiers{ID: p.ID, Key: p.Key}
@@ -83,7 +81,7 @@ func extractWorkflow(ctx context.Context, db *gorp.DbMap, store cache.Store, p *
 	tr, err := ReadCDSFiles(ope.LoadFiles.Results)
 	if err != nil {
 		allMsgs = append(allMsgs, sdk.NewMessage(sdk.MsgWorkflowErrorBadCdsDir))
-		return nil, allMsgs, sdk.WrapError(err, "unable to read cds files")
+		return nil, allMsgs, sdk.NewErrorWithStack(err, sdk.NewErrorFrom(sdk.ErrWorkflowInvalid, "unable to read cds files"))
 	}
 	ope.RepositoryStrategy.SSHKeyContent = sdk.PasswordPlaceholder
 	ope.RepositoryStrategy.Password = sdk.PasswordPlaceholder
@@ -110,9 +108,9 @@ func extractWorkflow(ctx context.Context, db *gorp.DbMap, store cache.Store, p *
 		mods = append(mods, workflowtemplate.TemplateRequestModifiers.Detached)
 	}
 	if opt.FromRepository != "" {
-		mods = append(mods, workflowtemplate.TemplateRequestModifiers.DefaultNameAndRepositories(ctx, db, store, *p, opt.FromRepository))
+		mods = append(mods, workflowtemplate.TemplateRequestModifiers.DefaultNameAndRepositories(*p, opt.FromRepository))
 	}
-	msgTemplate, wti, err := workflowtemplate.CheckAndExecuteTemplate(ctx, db, consumer, projIdent, &data, mods...)
+	msgTemplate, wti, err := workflowtemplate.CheckAndExecuteTemplate(ctx, db, store, consumer, projIdent, &data, mods...)
 	allMsgs = append(allMsgs, msgTemplate...)
 	if err != nil {
 		return nil, allMsgs, err
@@ -157,10 +155,8 @@ func ReadCDSFiles(files map[string][]byte) (*tar.Reader, error) {
 		if err := tw.WriteHeader(hdr); err != nil {
 			return nil, sdk.WrapError(err, "cannot write header")
 		}
-		if n, err := tw.Write(fcontent); err != nil {
+		if _, err := tw.Write(fcontent); err != nil {
 			return nil, sdk.WrapError(err, "cannot write content")
-		} else if n == 0 {
-			return nil, fmt.Errorf("nothing to write")
 		}
 	}
 	// Make sure to check the error on Close.
@@ -169,37 +165,6 @@ func ReadCDSFiles(files map[string][]byte) (*tar.Reader, error) {
 	}
 
 	return tar.NewReader(buf), nil
-}
-
-func pollRepositoryOperation(c context.Context, db gorp.SqlExecutor, store cache.Store, operationUUID string) (*sdk.Operation, error) {
-	tickTimeout := time.NewTicker(10 * time.Minute)
-	tickPoll := time.NewTicker(2 * time.Second)
-	defer tickTimeout.Stop()
-	for {
-		select {
-		case <-c.Done():
-			if c.Err() != nil {
-				return nil, sdk.WrapError(c.Err(), "exiting")
-			}
-		case <-tickTimeout.C:
-			return nil, sdk.WrapError(sdk.ErrRepoOperationTimeout, "timeout analyzing repository")
-		case <-tickPoll.C:
-			ope, err := operation.GetRepositoryOperation(c, db, operationUUID)
-			if err != nil {
-				return nil, sdk.WrapError(err, "cannot get repository operation status")
-			}
-			switch ope.Status {
-			case sdk.OperationStatusError:
-				opeTrusted := *ope
-				opeTrusted.RepositoryStrategy.SSHKeyContent = sdk.PasswordPlaceholder
-				opeTrusted.RepositoryStrategy.Password = sdk.PasswordPlaceholder
-				return nil, sdk.WrapError(fmt.Errorf("%s", ope.Error), "getImportAsCodeHandler> Operation in error. %+v", opeTrusted)
-			case sdk.OperationStatusDone:
-				return ope, nil
-			}
-			continue
-		}
-	}
 }
 
 func createOperationRequest(w sdk.Workflow, opts sdk.WorkflowRunPostHandlerOption) (sdk.Operation, error) {
@@ -239,7 +204,7 @@ func createOperationRequest(w sdk.Workflow, opts sdk.WorkflowRunPostHandlerOptio
 		e.ExtraFields.Type = false
 		m1, errm1 := e.ToStringMap(opts.Manual.Payload)
 		if errm1 != nil {
-			return ope, sdk.WrapError(errm1, "CreateFromRepository> Unable to compute payload")
+			return ope, sdk.WrapError(errm1, "unable to compute payload")
 		}
 		tag = m1[tagGitTag]
 		branch = m1[tagGitBranch]
@@ -251,7 +216,7 @@ func createOperationRequest(w sdk.Workflow, opts sdk.WorkflowRunPostHandlerOptio
 
 	// This should not append because the hook must set a default payload with git.branch
 	if ope.Setup.Checkout.Branch == "" && ope.Setup.Checkout.Tag == "" {
-		return ope, sdk.WrapError(sdk.NewError(sdk.ErrWrongRequest, fmt.Errorf("branch or tag parameter are mandatories")), "createOperationRequest")
+		return ope, sdk.NewErrorFrom(sdk.ErrWrongRequest, "branch or tag parameter are mandatories")
 	}
 
 	return ope, nil

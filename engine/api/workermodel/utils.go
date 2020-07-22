@@ -5,6 +5,7 @@ import (
 
 	"github.com/go-gorp/gorp"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/gorpmapping"
 )
 
 var defaultEnvs = map[string]string{
@@ -16,17 +17,19 @@ var defaultEnvs = map[string]string{
 	"CDS_GRAYLOG_EXTRA_VALUE": "{{.GraylogExtraValue}}",
 }
 
-func MergeModelEnvsWithDefaultEnvs(envs map[string]string) map[string]string {
-	if envs == nil {
-		return defaultEnvs
-	}
-	for envName := range defaultEnvs {
-		if _, ok := envs[envName]; !ok {
-			envs[envName] = defaultEnvs[envName]
-		}
+func mergeModelEnvsWithDefaultEnvs(m *workerModel) {
+	if m.Type != sdk.Docker {
+		return
 	}
 
-	return envs
+	if m.ModelDocker.Envs == nil {
+		m.ModelDocker.Envs = make(map[string]string)
+	}
+	for envName := range defaultEnvs {
+		if _, ok := m.ModelDocker.Envs[envName]; !ok {
+			m.ModelDocker.Envs[envName] = defaultEnvs[envName]
+		}
+	}
 }
 
 const registryPasswordSecretName = "secrets.registry_password"
@@ -48,8 +51,6 @@ func replaceDockerRegistryPassword(db gorp.SqlExecutor, dbmodel *workerModel) (b
 		return false, "", nil
 	}
 
-	dbmodel.ModelDocker.Envs = MergeModelEnvsWithDefaultEnvs(dbmodel.ModelDocker.Envs)
-
 	// Password not changed
 	if dbmodel.ModelDocker.Password == "{{."+registryPasswordSecretName+"}}" {
 		return false, "", nil
@@ -60,7 +61,7 @@ func replaceDockerRegistryPassword(db gorp.SqlExecutor, dbmodel *workerModel) (b
 	return true, clearPassword, nil
 }
 
-func storeDockerRegistryPassword(ctx context.Context, db gorp.SqlExecutor, workerModelID int64, password string) error {
+func storeDockerRegistryPassword(ctx context.Context, db gorpmapping.SqlExecutorWithTx, workerModelID int64, password string) error {
 	s, err := LoadSecretByModelIDAndName(ctx, db, workerModelID, registryPasswordSecretName)
 	if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
 		return err

@@ -17,39 +17,47 @@ import (
 
 //InitiliazeDB inits the database
 func InitiliazeDB(ctx context.Context, defaultValues sdk.DefaultValues, DBFunc func() *gorp.DbMap) error {
-	dbGorp := DBFunc()
+	tx, err := DBFunc().Begin()
+	if err != nil {
+		return sdk.WithStack(err)
+	}
+	defer tx.Rollback() // nolint
 
-	if err := group.CreateDefaultGroup(dbGorp, sdk.SharedInfraGroupName); err != nil {
+	if err := group.CreateDefaultGroup(tx, sdk.SharedInfraGroupName); err != nil {
 		return sdk.WrapError(err, "Cannot setup default %s group", sdk.SharedInfraGroupName)
 	}
 
 	if strings.TrimSpace(defaultValues.DefaultGroupName) != "" {
-		if err := group.CreateDefaultGroup(dbGorp, defaultValues.DefaultGroupName); err != nil {
+		if err := group.CreateDefaultGroup(tx, defaultValues.DefaultGroupName); err != nil {
 			return sdk.WrapError(err, "Cannot setup default %s group", defaultValues.DefaultGroupName)
 		}
 	}
 
-	if err := group.InitializeDefaultGroupName(dbGorp, defaultValues.DefaultGroupName); err != nil {
+	if err := group.InitializeDefaultGroupName(tx, defaultValues.DefaultGroupName); err != nil {
 		return sdk.WrapError(err, "Cannot InitializeDefaultGroupName")
 	}
 
-	if err := action.CreateBuiltinActions(dbGorp); err != nil {
+	if err := action.CreateBuiltinActions(tx); err != nil {
 		return sdk.WrapError(err, "Cannot setup builtin actions")
 	}
 
-	if err := environment.CreateBuiltinEnvironments(dbGorp); err != nil {
+	if err := environment.CreateBuiltinEnvironments(tx); err != nil {
 		return sdk.WrapError(err, "Cannot setup builtin environments")
 	}
 
-	if err := workflow.CreateBuiltinWorkflowHookModels(dbGorp); err != nil {
+	if err := tx.Commit(); err != nil {
+		return sdk.WithStack(err)
+	}
+
+	if err := workflow.CreateBuiltinWorkflowHookModels(DBFunc()); err != nil {
 		return fmt.Errorf("cannot setup builtin workflow hook models: %v", err)
 	}
 
-	if err := workflow.CreateBuiltinWorkflowOutgoingHookModels(dbGorp); err != nil {
+	if err := workflow.CreateBuiltinWorkflowOutgoingHookModels(DBFunc()); err != nil {
 		return fmt.Errorf("cannot setup builtin workflow outgoing hook models: %v", err)
 	}
 
-	if err := integration.CreateBuiltinModels(dbGorp); err != nil {
+	if err := integration.CreateBuiltinModels(DBFunc()); err != nil {
 		return fmt.Errorf("cannot setup integrations: %v", err)
 	}
 

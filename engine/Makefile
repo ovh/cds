@@ -15,8 +15,9 @@ GO_BUILD = go build
 GO_COV_MERGE = ${GOPATH}/bin/gocovmerge
 GO_GOJUNIT = ${GOPATH}/bin/go-junit-report
 GO_COBERTURA = ${GOPATH}/bin/gocover-cobertura
+GO_XUTOOLS = ${GOPATH}/bin/xutools
 
-PKGS_COMMA_SEP = go list -f '{{ join .Deps "\n" }}' . | grep github.com/ovh/cds | grep -v vendor | tr '\n' ',' | sed 's/,$$//'
+PKGS_COMMA_SEP = go list -f '{{ join .Deps "\n" }}{{"\n"}}{{.ImportPath}}' . | grep github.com/ovh/cds | grep -v vendor | tr '\n' ',' | sed 's/,$$//'
 
 TEST_PKGS = $(shell go list ./...)
 TEST_DB_HOST = $(if ${CDS_API_DATABASE_HOST},${CDS_API_DATABASE_HOST},localhost)
@@ -47,6 +48,9 @@ $(GO_GOJUNIT):
 $(GO_COBERTURA):
 	go get -u github.com/t-yuki/gocover-cobertura
 
+$(GO_XUTOOLS):
+	go get -u github.com/richardlt/xutools
+
 default: build
 
 clean:
@@ -62,17 +66,30 @@ build: $(TARGET_DIR)
 	$(MAKE) lint -C sql
 	$(MAKE) build -C sql
 	@cp sql/sql.tar.gz $(TARGET_DIR)/
-	@for GOOS in $(TARGET_OS); do \
-		for GOARCH in $(TARGET_ARCH); do \
-			if go tool dist list | grep "$$GOOS" | grep "$$GOARCH" > /dev/null; then \
-				EXTENSION=""; \
-				if test "$$GOOS" = "windows" ; then EXTENSION=".exe"; fi; \
-				echo Compiling $(TARGET_DIR)/$(TARGET_ENGINE)-$$GOOS-$$GOARCH$$EXTENSION $(VERSION); \
-				GOOS=$$GOOS GOARCH=$$GOARCH $(GO_BUILD) $(TARGET_LDFLAGS) -o $(TARGET_DIR)/$(TARGET_ENGINE)-$$GOOS-$$GOARCH$$EXTENSION; \
-			fi; \
-		done; \
-	done
+	$(MAKE) build_all_engine
 	$(MAKE) build -C worker
+
+define get_os_from_binary_file
+$(strip $(shell echo $(1) | awk '{n=split($$1,a,"-");print a[n-1]}'))
+endef
+
+define get_arch_from_binary_file
+$(strip $(patsubst %.exe, %,$(shell echo $(1) | awk '{n=split($$1,a,"-");print a[n]}')))
+endef
+
+gobuild:
+	$(info Checking support for $(GOOS)/$(GOARCH))
+	@if go tool dist list | grep "$$GOOS" | grep "$$GOARCH" > /dev/null 2>&1; then \
+		GOOS=$$GOOS GOARCH=$$GOARCH CGO_ENABLED=0 $(GO_BUILD) $(TARGET_LDFLAGS) -o $(abspath $(OUTPUT)); \
+	fi
+
+isWindows = $(filter $1,windows)
+TARGET_ENGINE_BINARIES := $(foreach OS, $(TARGET_OS), $(foreach ARCH, $(TARGET_ARCH), $(TARGET_DIR)/$(TARGET_ENGINE)-$(OS)-$(ARCH)$(if $(call isWindows, $(OS)),.exe)))
+$(TARGET_ENGINE_BINARIES): $(TARGET_DIR)
+	$(info Compiling $@: $(abspath $@))
+	$(MAKE) --no-print-directory gobuild GOOS=$(call get_os_from_binary_file,$@) GOARCH=$(call get_arch_from_binary_file,$@) OUTPUT=$@
+
+build_all_engine: $(TARGET_ENGINE_BINARIES)
 
 test-redis-start-docker:
 	$(TEST_REDIS_START_DOCKER)
@@ -119,13 +136,9 @@ test-coverage: $(GO_COV_MERGE) $(TARGET_DIR) $(GO_COBERTURA)
 	@$(GO_COV_MERGE) `find ./ -name "*.coverprofile"` > $(TARGET_DIR)/cover.out
 	@$(GO_COBERTURA) < $(TARGET_DIR)/cover.out > $(TARGET_DIR)/coverage.xml
 	@go tool cover -html=$(TARGET_DIR)/cover.out -o=$(TARGET_DIR)/cover.html
-	@if [ ! -z "${CDS_VERSION}" ]; then \
-		echo "Sending coverage report to CDS"; \
-		worker upload --tag "${CDS_VERSION}" $(abspath $(TARGET_DIR)/cover.html); \
-	fi;
 
 #  <testsuite name="github.com/ovh/cds/engine/api" tests="133" errors="0" failures="2" skip="0">
-test-xunit-report: $(GO_GOJUNIT) $(TARGET_DIR)
+test-xunit-report: $(GO_GOJUNIT) $(GO_XUTOOLS) $(TARGET_DIR)
 	@echo "Generating xUnit Report..."
 	@for TST in `find . -name "tests.log"`; do \
 		if [ -s $$TST ]; then \
@@ -138,57 +151,33 @@ test-xunit-report: $(GO_GOJUNIT) $(TARGET_DIR)
 				if [ $$NO_TESTS -gt 0 ]; then \
 					echo "No tests found \t\t\t($$TST)"; \
 				else \
-					if [ ! -z "${CDS_VERSION}" ]; then \
-						echo "Sending $$TST to CDS"; \
-						worker upload --tag `echo $$TST | sed 's|./||' | sed 's|./||' | sed 's|/|_|g') | sed 's|_tests.log||'` $(abspath $$TST); \
-					fi; \
-					echo "Generating xUnit report \t$$TST.xml"; \
-					cat $$TST | $(GO_GOJUNIT) > $$TST.xml; \
+          if [ "$$TST" = "./tests.log" ]; then \
+            PACKAGE=engine; \
+					else \
+            PACKAGE=engine_`echo $$TST | sed 's|./||' | sed 's|/|_|g' | sed 's|_tests.log||'`; \
+          fi; \
+          XUNIT_OUT=$(TARGET_DIR)/$$PACKAGE.xml; \
+          echo "Generating xUnit report from \t$$TST.xml to $$XUNIT_OUT"; \
+					cat $$TST | $(GO_GOJUNIT) > $$XUNIT_OUT; \
+          TESTS_LOG_OUT=$(TARGET_DIR)/$$PACKAGE.log; \
+          echo "Copy tests log from \t$$TST.xml to $$TESTS_LOG_OUT"; \
+          cp $$TST $$TESTS_LOG_OUT; \
 				fi; \
 			fi; \
 		else \
 			echo "Ignoring empty file \t\t$$TST"; \
 		fi; \
 	done; \
-	for XML in `find . -name "tests.log.xml"`; do \
-		if [ "$$XML" =  "./tests.log.xml" ]; then \
-      		PWD=`pwd`; \
-		 	mv $$XML $(TARGET_DIR)/`basename $(PWD)`.xml; \
-		else \
-			mv $$XML $(TARGET_DIR)/`echo $$XML | sed 's|./||' | sed 's|/|_|g' | sed 's|_tests.log||'`; \
-		fi; \
-	done; \
-	for XML in `find . -name "*.xml" -not -path "./ui/*"`; do \
-		if [ -s $$XML ]; then \
-			if grep -q 'name' $$XML; then \
-				echo "Generating report: " $$XML; \
-				echo "`xmllint --xpath "//testsuite/@name" $$XML | sed 's/name=//' | sed 's/"//g'`" \
-				"`xmllint --xpath "//testsuite/@tests" $$XML | sed 's/tests=//' | sed 's/"//g'` Tests :" \
-				"`xmllint --xpath "//testsuite/@errors" $$XML | sed 's/errors=//' | sed 's/"//g'` Errors ;"\
-				"`xmllint --xpath "//testsuite/@failures" $$XML | sed 's/failures=//' | sed 's/"//g'` Failures;" \
-				"`xmllint --xpath "//testsuite/@skip" $$XML | sed 's/skip=//' | sed 's/"//g'` Skipped;" \
-				>> $(TARGET_DIR)/report; \
-			fi; \
-		fi; \
-	done; \
+	xutools pretty --show-failures ./dist/*.xml > $(TARGET_DIR)/report; \
+  xutools sort-duration ./dist/*.xml > $(TARGET_DIR)/duration; \
 	if [ -e $(TARGET_DIR)/report ]; then \
+    echo "Report:"; \
 		cat $(TARGET_DIR)/report; \
 	fi; \
-	echo "#########################"; \
-	for XML in `find . -name "*.xml" -not -path "./ui/*"`; do \
-		if [ -s $$XML ]; then \
-			if grep -q 'errors' $$XML; then \
-				if [ "`xmllint --xpath "//testsuite/@errors" $$XML | sed 's/errors=//' | sed 's/"//g'`" -gt "0" ]; then  \
-					echo "	$$XML : Tests failed";  \
-				fi; \
-			fi; \
-			if grep -q 'failures' $$XML; then \
-				if [ "`xmllint --xpath "//testsuite/@failures" $$XML | sed 's/failures=//' | sed 's/"//g'`" -gt "0" ]; then  \
-					echo "	$$XML : Tests failed";  \
-				fi; \
-			fi; \
-		fi; \
-	done; \
+  if [ -e $(TARGET_DIR)/duration ]; then \
+    echo "Max duration:"; \
+		cat $(TARGET_DIR)/duration; \
+	fi; \
 	if [ -e $(TARGET_DIR)/fail ]; then \
 		echo "#########################"; \
 		echo "ERROR: Test compilation failure"; \

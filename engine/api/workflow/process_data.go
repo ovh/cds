@@ -8,9 +8,9 @@ import (
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/cache"
-	"github.com/ovh/cds/engine/api/observability"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/tracingutils"
+	"github.com/ovh/cds/sdk/gorpmapping"
+	"github.com/ovh/cds/sdk/telemetry"
 )
 
 type nodeRunContext struct {
@@ -21,12 +21,12 @@ type nodeRunContext struct {
 	NodeGroups         []sdk.GroupPermission
 }
 
-func processWorkflowDataRun(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj sdk.Project, wr *sdk.WorkflowRun, hookEvent *sdk.WorkflowNodeRunHookEvent, manual *sdk.WorkflowNodeRunManual, startingFromNode *int64) (*ProcessorReport, bool, error) {
+func processWorkflowDataRun(ctx context.Context, db gorpmapping.SqlExecutorWithTx, store cache.Store, proj sdk.Project, wr *sdk.WorkflowRun, hookEvent *sdk.WorkflowNodeRunHookEvent, manual *sdk.WorkflowNodeRunManual, startingFromNode *int64) (*ProcessorReport, bool, error) {
 	//TRACEABILITY
 	var end func()
-	ctx, end = observability.Span(ctx, "workflow.processWorkflowDataRun",
-		observability.Tag(observability.TagWorkflowRun, wr.Number),
-		observability.Tag(observability.TagWorkflow, wr.Workflow.Name),
+	ctx, end = telemetry.Span(ctx, "workflow.processWorkflowDataRun",
+		telemetry.Tag(telemetry.TagWorkflowRun, wr.Number),
+		telemetry.Tag(telemetry.TagWorkflow, wr.Workflow.Name),
 	)
 	defer end()
 
@@ -38,9 +38,9 @@ func processWorkflowDataRun(ctx context.Context, db gorp.SqlExecutor, store cach
 	wr.Header.Set(sdk.ProjectKeyHeader, proj.Key)
 
 	// Push data in header to allow tracing
-	if observability.Current(ctx).SpanContext().IsSampled() {
-		wr.Header.Set(tracingutils.SampledHeader, "1")
-		wr.Header.Set(tracingutils.TraceIDHeader, fmt.Sprintf("%v", observability.Current(ctx).SpanContext().TraceID))
+	if telemetry.Current(ctx).SpanContext().IsSampled() {
+		wr.Header.Set(telemetry.SampledHeader, "1")
+		wr.Header.Set(telemetry.TraceIDHeader, fmt.Sprintf("%v", telemetry.Current(ctx).SpanContext().TraceID))
 	}
 	//////
 
@@ -121,7 +121,7 @@ func computeAndUpdateWorkflowRunStatus(ctx context.Context, db gorp.SqlExecutor,
 	// the map of workflow node runs of the workflow run to get the right statuses
 	// After resync, recompute all status counter compute the workflow status
 	// All of this is useful to get the right workflow status is the last node status is skipped
-	_, next := observability.Span(ctx, "workflow.computeAndUpdateWorkflowRunStatus")
+	_, next := telemetry.Span(ctx, "workflow.computeAndUpdateWorkflowRunStatus")
 	if err := syncNodeRuns(db, wr, LoadRunOptions{}); err != nil {
 		next()
 		return report, sdk.WrapError(err, "unable to sync workflow node runs")

@@ -30,9 +30,9 @@ func (h *mockHTTPClient) Do(*http.Request) (*http.Response, error) {
 }
 
 func TestImport(t *testing.T) {
-	db, cache, end := test.SetupPG(t)
-	defer end()
-	u, _ := assets.InsertAdminUser(t, db)
+	db, cache := test.SetupPG(t)
+
+	_, _ = assets.InsertAdminUser(t, db)
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, cache, key, key)
 
@@ -43,7 +43,7 @@ func TestImport(t *testing.T) {
 		}
 	}
 
-	assets.InsertService(t, db, "service_test"+sdk.RandomString(5), services.TypeHooks)
+	assets.InsertService(t, db, "service_test"+sdk.RandomString(5), sdk.TypeHooks)
 
 	//Mock HTTPClient from services package
 	services.HTTPClient = &mockHTTPClient{}
@@ -80,9 +80,9 @@ func TestImport(t *testing.T) {
 	test.NoError(t, environment.InsertEnvironment(db, env))
 
 	//Reload project
-	proj, _ = project.Load(db, proj.Key, project.LoadOptions.WithApplications, project.LoadOptions.WithEnvironments, project.LoadOptions.WithPipelines)
+	proj, _ = project.Load(context.TODO(), db, proj.Key, project.LoadOptions.WithApplications, project.LoadOptions.WithEnvironments, project.LoadOptions.WithPipelines)
 
-	test.NoError(t, workflow.CreateBuiltinWorkflowHookModels(db))
+	test.NoError(t, workflow.CreateBuiltinWorkflowHookModels(db.DbMap))
 	hookModels, err := workflow.LoadHookModels(db)
 	test.NoError(t, err)
 

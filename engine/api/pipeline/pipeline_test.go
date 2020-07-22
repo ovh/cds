@@ -21,8 +21,8 @@ import (
 )
 
 func TestInsertPipeline(t *testing.T) {
-	db, _, end := test.SetupPG(t)
-	defer end()
+	db, _ := test.SetupPG(t)
+
 	pk := sdk.RandomString(8)
 
 	p := sdk.Project{
@@ -74,8 +74,8 @@ func TestInsertPipeline(t *testing.T) {
 }
 
 func TestInsertPipelineWithParemeters(t *testing.T) {
-	db, _, end := test.SetupPG(t)
-	defer end()
+	db, _ := test.SetupPG(t)
+
 	pk := sdk.RandomString(8)
 
 	p := sdk.Project{
@@ -112,8 +112,8 @@ func TestInsertPipelineWithParemeters(t *testing.T) {
 }
 
 func TestInsertPipelineWithWithWrongParemeters(t *testing.T) {
-	db, _, end := test.SetupPG(t)
-	defer end()
+	db, _ := test.SetupPG(t)
+
 	pk := sdk.RandomString(8)
 
 	p := sdk.Project{
@@ -143,8 +143,8 @@ func TestInsertPipelineWithWithWrongParemeters(t *testing.T) {
 }
 
 func TestLoadByWorkflowID(t *testing.T) {
-	db, cache, end := test.SetupPG(t, bootstrap.InitiliazeDB)
-	defer end()
+	db, cache := test.SetupPG(t, bootstrap.InitiliazeDB)
+
 	key := sdk.RandomString(10)
 
 	proj := assets.InsertTestProject(t, db, cache, key, key)
@@ -180,9 +180,10 @@ func TestLoadByWorkflowID(t *testing.T) {
 
 	test.NoError(t, workflow.RenameNode(context.TODO(), db, &w))
 
-	proj, _ = project.LoadByID(db, proj.ID, project.LoadOptions.WithApplications, project.LoadOptions.WithPipelines, project.LoadOptions.WithEnvironments, project.LoadOptions.WithGroups)
+	proj, _ = project.LoadByID(db, proj.ID, project.LoadOptions.WithGroups)
 
-	test.NoError(t, workflow.Insert(context.TODO(), db, cache, *proj, &w))
+	projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
+	test.NoError(t, workflow.Insert(context.TODO(), db, cache, projIdent, proj.ProjectGroups, &w))
 
 	actuals, err := pipeline.LoadByWorkflowID(db, w.ID)
 	assert.NoError(t, err)
@@ -192,8 +193,7 @@ func TestLoadByWorkflowID(t *testing.T) {
 }
 
 func TestLoadByWorkerModel(t *testing.T) {
-	db, cache, end := test.SetupPG(t, bootstrap.InitiliazeDB)
-	defer end()
+	db, cache := test.SetupPG(t, bootstrap.InitiliazeDB)
 
 	g1 := group.SharedInfraGroup
 	g2 := assets.InsertTestGroup(t, db, sdk.RandomString(10))

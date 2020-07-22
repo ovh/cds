@@ -14,19 +14,19 @@ import (
 	"strings"
 	"time"
 
-	"github.com/ovh/cds/engine/service"
-
 	"github.com/docker/docker/api/types"
 	docker "github.com/docker/docker/client"
 	"github.com/docker/go-connections/tlsconfig"
 	"github.com/gorilla/mux"
+	"github.com/sirupsen/logrus"
 	"golang.org/x/net/context"
 
 	"github.com/ovh/cds/engine/api"
-	"github.com/ovh/cds/engine/api/observability"
+	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/hatchery"
 	"github.com/ovh/cds/sdk/log"
+	"github.com/ovh/cds/sdk/telemetry"
 )
 
 // New instanciates a new Hatchery Swarm
@@ -174,10 +174,10 @@ func (h *HatcherySwarm) InitHatchery(ctx context.Context) error {
 			return fmt.Errorf("no docker engine available")
 		}
 	}
-	if err := h.Common.InitServiceLogger(); err != nil {
-		return err
-	}
 
+	if err := h.RefreshServiceLogger(ctx); err != nil {
+		log.Error(ctx, "Hatchery> swarm> Cannot get cdn configuration : %v", err)
+	}
 	sdk.GoRoutine(context.Background(), "swarm", func(ctx context.Context) { h.routines(ctx) })
 
 	return nil
@@ -187,14 +187,14 @@ func (h *HatcherySwarm) InitHatchery(ctx context.Context) error {
 // User can add option on prerequisite, as --port and --privileged
 // but only hatchery NOT 'shared.infra' can launch containers with options
 func (h *HatcherySwarm) SpawnWorker(ctx context.Context, spawnArgs hatchery.SpawnArguments) error {
-	ctx, end := observability.Span(ctx, "swarm.SpawnWorker")
+	ctx, end := telemetry.Span(ctx, "swarm.SpawnWorker")
 	defer end()
 
 	if spawnArgs.JobID == 0 && !spawnArgs.RegisterOnly {
 		return sdk.WithStack(fmt.Errorf("unable to spawn worker, no Job ID and no Register."))
 	}
 
-	observability.Current(ctx, observability.Tag(observability.TagWorker, spawnArgs.WorkerName))
+	telemetry.Current(ctx, telemetry.Tag(telemetry.TagWorker, spawnArgs.WorkerName))
 	log.Debug("hatchery> swarm> SpawnWorker> Spawning worker %s", spawnArgs.WorkerName)
 
 	// Choose a dockerEngine
@@ -204,7 +204,7 @@ func (h *HatcherySwarm) SpawnWorker(ctx context.Context, spawnArgs hatchery.Spaw
 	//  To choose a docker client by the number of containers
 	fillrate := float64(-1)
 
-	_, next := observability.Span(ctx, "swarm.chooseDockerEngine")
+	_, next := telemetry.Span(ctx, "swarm.chooseDockerEngine")
 	for dname, dclient := range h.dockerClients {
 		ctxList, cancelList := context.WithTimeout(context.Background(), 3*time.Second)
 		defer cancelList()
@@ -315,6 +315,7 @@ func (h *HatcherySwarm) SpawnWorker(ctx context.Context, spawnArgs hatchery.Spaw
 				}
 
 				if spawnArgs.JobID > 0 {
+					labels["service_node_run_id"] = fmt.Sprintf("%d", spawnArgs.NodeRunID)
 					labels["service_job_id"] = fmt.Sprintf("%d", spawnArgs.JobID)
 					labels["service_id"] = fmt.Sprintf("%d", r.ID)
 					labels["service_req_name"] = r.Name
@@ -581,6 +582,10 @@ func (h *HatcherySwarm) WorkersStartedByModel(ctx context.Context, model *sdk.Mo
 	return len(list)
 }
 
+func (h *HatcherySwarm) GetLogger() *logrus.Logger {
+	return h.ServiceLogger
+}
+
 // Serve start the hatchery server
 func (h *HatcherySwarm) Serve(ctx context.Context) error {
 	return h.CommonServe(ctx, h)
@@ -616,6 +621,12 @@ func (h *HatcherySwarm) routines(ctx context.Context) {
 
 			sdk.GoRoutine(ctx, "killAwolWorker", func(ctx context.Context) {
 				_ = h.killAwolWorker(ctx)
+			})
+
+			sdk.GoRoutine(ctx, "refreshCDNConfiguration", func(ctx context.Context) {
+				if err := h.RefreshServiceLogger(ctx); err != nil {
+					log.Error(ctx, "Hatchery> swarm> Cannot get cdn configuration : %v", err)
+				}
 			})
 		case <-ctx.Done():
 			if ctx.Err() != nil {

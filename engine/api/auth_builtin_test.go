@@ -46,14 +46,13 @@ func AuthentififyBuiltinConsumer(t *testing.T, api *API, jwsToken string) string
 }
 
 func Test_postAuthBuiltinSigninHandler(t *testing.T) {
-	api, _, _, end := newTestAPI(t)
-	defer end()
+	api, db, _ := newTestAPI(t)
 
-	usr, _ := assets.InsertLambdaUser(t, api.mustDB(), &sdk.Group{Name: sdk.RandomString(5)})
+	usr, _ := assets.InsertLambdaUser(t, db, &sdk.Group{Name: sdk.RandomString(5)})
 	localConsumer, err := authentication.LoadConsumerByTypeAndUserID(context.TODO(), api.mustDB(), sdk.ConsumerLocal, usr.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
 	require.NoError(t, err)
 
-	_, jws, err := builtin.NewConsumer(context.TODO(), api.mustDB(), sdk.RandomString(10), sdk.RandomString(10), localConsumer, usr.GetGroupIDs(),
+	_, jws, err := builtin.NewConsumer(context.TODO(), db, sdk.RandomString(10), sdk.RandomString(10), localConsumer, usr.GetGroupIDs(),
 		sdk.NewAuthConsumerScopeDetails(sdk.AuthConsumerScopeProject))
 	require.NoError(t, err)
 	AuthentififyBuiltinConsumer(t, api, jws)

@@ -5,11 +5,10 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/go-gorp/gorp"
-
 	"github.com/ovh/cds/engine/api/keys"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/exportentities"
+	"github.com/ovh/cds/sdk/gorpmapping"
 	"github.com/ovh/cds/sdk/log"
 )
 
@@ -20,7 +19,7 @@ type ImportOptions struct {
 }
 
 // ParseAndImport parse an exportentities.Environment and insert or update the environment in database
-func ParseAndImport(db gorp.SqlExecutor, proj sdk.Project, eenv exportentities.Environment, opts ImportOptions, decryptFunc keys.DecryptFunc, u sdk.Identifiable) (*sdk.Environment, []sdk.Variable, []sdk.Message, error) {
+func ParseAndImport(db gorpmapping.SqlExecutorWithTx, proj sdk.Project, eenv exportentities.Environment, opts ImportOptions, decryptFunc keys.DecryptFunc, u sdk.Identifiable) (*sdk.Environment, []sdk.Variable, []sdk.Message, error) {
 	log.Debug("ParseAndImport>> Import environment %s in project %s (force=%v)", eenv.Name, proj.Key, opts.Force)
 	log.Debug("ParseAndImport>> Env: %+v", eenv)
 
@@ -39,14 +38,14 @@ func ParseAndImport(db gorp.SqlExecutor, proj sdk.Project, eenv exportentities.E
 	// If the environment exists and we don't want to force, raise an error
 	var exist bool
 	if oldEnv != nil && !opts.Force {
-		return nil, nil, nil, sdk.ErrEnvironmentExist
+		return nil, nil, nil, sdk.WithStack(sdk.ErrEnvironmentExist)
 	}
 	if oldEnv != nil {
 		exist = true
 	}
 
 	if oldEnv != nil && oldEnv.FromRepository != "" && opts.FromRepository != oldEnv.FromRepository {
-		return nil, nil, nil, sdk.WrapError(sdk.ErrEnvironmentAsCodeOverride, "unable to update as code environment %s/%s.", oldEnv.FromRepository, opts.FromRepository)
+		return nil, nil, nil, sdk.NewErrorFrom(sdk.ErrEnvironmentAsCodeOverride, "unable to update existing ascode environment from %s", oldEnv.FromRepository)
 	}
 
 	env := new(sdk.Environment)
@@ -71,13 +70,16 @@ func ParseAndImport(db gorp.SqlExecutor, proj sdk.Project, eenv exportentities.E
 			v.Value = secret
 		}
 
-		vv := sdk.Variable{Name: p, Type: v.Type, Value: v.Value}
+		vv := sdk.EnvironmentVariable{Name: p, Type: v.Type, Value: v.Value, EnvironmentID: env.ID}
 		env.Variables = append(env.Variables, vv)
-		envSecrets = append(envSecrets, sdk.Variable{
-			Name:  fmt.Sprintf("cds.env.%s", vv.Name),
-			Type:  v.Type,
-			Value: v.Value,
-		})
+
+		if v.Type == sdk.SecretVariable {
+			envSecrets = append(envSecrets, sdk.Variable{
+				Name:  fmt.Sprintf("cds.env.%s", vv.Name),
+				Type:  v.Type,
+				Value: v.Value,
+			})
+		}
 	}
 
 	//Compute keys

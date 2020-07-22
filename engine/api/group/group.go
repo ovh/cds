@@ -5,8 +5,8 @@ import (
 
 	"github.com/go-gorp/gorp"
 
-	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/gorpmapping"
 )
 
 // DeleteUserFromGroup remove user from group
@@ -20,9 +20,9 @@ func DeleteUserFromGroup(ctx context.Context, db gorp.SqlExecutor, groupID int64
 
 	if grpLink.Admin {
 		var q = gorpmapping.NewQuery(`
-			SELECT COUNT(id) 
-			FROM "group_authentified_user" 
-			WHERE group_id = $1 
+			SELECT COUNT(id)
+			FROM "group_authentified_user"
+			WHERE group_id = $1
 			AND group_admin = true`).Args(groupID)
 		nbAdmin, err := gorpmapping.GetInt(db, q)
 		if err != nil {
@@ -38,7 +38,7 @@ func DeleteUserFromGroup(ctx context.Context, db gorp.SqlExecutor, groupID int64
 }
 
 // CheckUserInDefaultGroup insert user in default group
-func CheckUserInDefaultGroup(ctx context.Context, db gorp.SqlExecutor, userID string) error {
+func CheckUserInDefaultGroup(ctx context.Context, db gorpmapping.SqlExecutorWithTx, userID string) error {
 	if DefaultGroup == nil || DefaultGroup.ID == 0 || userID == "" {
 		return nil
 	}

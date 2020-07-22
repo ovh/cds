@@ -7,6 +7,7 @@ import { Store } from '@ngxs/store';
 import { ToasterService } from 'angular2-toaster/angular2-toaster';
 import { Project } from 'app/model/project.model';
 import { RepositoriesManager } from 'app/model/repositories.model';
+import { ApplicationService } from 'app/service/application/application.service';
 import { AuthenticationService } from 'app/service/authentication/authentication.service';
 import { EnvironmentService } from 'app/service/environment/environment.service';
 import { MonitoringService } from 'app/service/monitoring/monitoring.service';
@@ -15,6 +16,7 @@ import { PipelineService } from 'app/service/pipeline/pipeline.service';
 import { ProjectService } from 'app/service/project/project.service';
 import { ProjectStore } from 'app/service/project/project.store';
 import { RepoManagerService } from 'app/service/repomanager/project.repomanager.service';
+import { RouterService } from 'app/service/router/router.service';
 import { UserService } from 'app/service/user/user.service';
 import { VariableService } from 'app/service/variable/variable.service';
 import { WorkflowRunService } from 'app/service/workflow/run/workflow.run.service';
@@ -26,13 +28,10 @@ import { NgxsStoreModule } from 'app/store/store.module';
 import { ProjectModule } from 'app/views/project/project.module';
 import { of } from 'rxjs';
 import { ProjectRepoManagerComponent } from './project.repomanager.list.component';
-import { ApplicationService } from 'app/service/application/application.service';
-import { RouterService } from 'app/service/router/router.service';
 
 describe('CDS: Project RepoManager List Component', () => {
 
     let injector: Injector;
-    let projectStore: ProjectStore;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -72,13 +71,11 @@ describe('CDS: Project RepoManager List Component', () => {
             ]
         });
         injector = getTestBed();
-        projectStore = injector.get(ProjectStore);
 
     });
 
     afterEach(() => {
         injector = undefined;
-        projectStore = undefined;
     });
 
 

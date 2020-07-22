@@ -21,8 +21,8 @@ import (
 )
 
 func TestPull(t *testing.T) {
-	db, cache, end := test.SetupPG(t, bootstrap.InitiliazeDB)
-	defer end()
+	db, cache := test.SetupPG(t, bootstrap.InitiliazeDB)
+
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, cache, key, key)
 
@@ -116,9 +116,9 @@ func TestPull(t *testing.T) {
 		},
 	}
 
-	proj, _ = project.Load(db, proj.Key, project.LoadOptions.WithGroups)
+	proj, _ = project.Load(context.TODO(), db, proj.Key, project.LoadOptions.WithGroups)
 	projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
-	test.NoError(t, workflow.Insert(context.TODO(), db, cache, projIdent, &w, proj.ProjectGroups))
+	test.NoError(t, workflow.Insert(context.TODO(), db, cache, projIdent, proj.ProjectGroups, &w))
 
 	w1, err := workflow.Load(context.TODO(), db, projIdent, "test_1", workflow.LoadOptions{})
 	test.NoError(t, err)

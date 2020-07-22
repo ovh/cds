@@ -14,8 +14,7 @@ import (
 )
 
 func Test_getEnvironmentExportHandler(t *testing.T) {
-	api, db, _, end := newTestAPI(t)
-	defer end()
+	api, db, _ := newTestAPI(t)
 
 	u, pass := assets.InsertAdminUser(t, db)
 	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
@@ -27,14 +26,14 @@ func Test_getEnvironmentExportHandler(t *testing.T) {
 	}
 	test.NoError(t, environment.InsertEnvironment(db, env))
 
-	v1 := &sdk.Variable{
+	v1 := &sdk.EnvironmentVariable{
 		Name:  "var1",
 		Value: "value 1",
 		Type:  sdk.StringVariable,
 	}
 	test.NoError(t, environment.InsertVariable(db, env.ID, v1, u))
 
-	v2 := &sdk.Variable{
+	v2 := &sdk.EnvironmentVariable{
 		Name:  "var2",
 		Value: "value 2",
 		Type:  sdk.SecretVariable,
@@ -53,7 +52,7 @@ func Test_getEnvironmentExportHandler(t *testing.T) {
 	k.Public = kpgp.Public
 	k.Private = kpgp.Private
 	k.KeyID = kpgp.KeyID
-	test.NoError(t, environment.InsertKey(api.mustDB(), k))
+	test.NoError(t, environment.InsertKey(db, k))
 
 	k2 := &sdk.EnvironmentKey{
 		Name:          "mykey-ssh",
@@ -66,7 +65,7 @@ func Test_getEnvironmentExportHandler(t *testing.T) {
 	k2.Public = kssh.Public
 	k2.Private = kssh.Private
 	k2.KeyID = kssh.KeyID
-	test.NoError(t, environment.InsertKey(api.mustDB(), k2))
+	test.NoError(t, environment.InsertKey(db, k2))
 
 	//Prepare request
 	vars := map[string]string{

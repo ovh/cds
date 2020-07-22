@@ -2,7 +2,6 @@ package api
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 
 	"github.com/go-gorp/gorp"
@@ -14,6 +13,7 @@ import (
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/gorpmapping"
 	"github.com/ovh/cds/sdk/log"
 )
 
@@ -55,9 +55,9 @@ func (api *API) postIntegrationModelHandler() service.Handler {
 		defer tx.Rollback() // nolint
 
 		if exist, err := integration.ModelExists(tx, m.Name); err != nil {
-			return sdk.WrapError(err, "Unable to check if model %s exist", m.Name)
+			return sdk.WrapError(err, "unable to check if model %s exist", m.Name)
 		} else if exist {
-			return sdk.NewError(sdk.ErrConflict, fmt.Errorf("integration model %s already exist", m.Name))
+			return sdk.NewErrorFrom(sdk.ErrAlreadyExist, "integration model %s already exist", m.Name)
 		}
 
 		if err := integration.InsertModel(tx, m); err != nil {
@@ -65,7 +65,7 @@ func (api *API) postIntegrationModelHandler() service.Handler {
 		}
 
 		if err := tx.Commit(); err != nil {
-			return sdk.WrapError(err, "Unable to commit tx")
+			return sdk.WrapError(err, "unable to commit tx")
 		}
 
 		if m.Public {
@@ -154,7 +154,7 @@ func propagatePublicIntegrationModel(ctx context.Context, db *gorp.DbMap, store 
 	}
 }
 
-func propagatePublicIntegrationModelOnProject(ctx context.Context, db gorp.SqlExecutor, store cache.Store, m sdk.IntegrationModel, p sdk.Project, u sdk.Identifiable) error {
+func propagatePublicIntegrationModelOnProject(ctx context.Context, db gorpmapping.SqlExecutorWithTx, store cache.Store, m sdk.IntegrationModel, p sdk.Project, u sdk.Identifiable) error {
 	if !m.Public {
 		return nil
 	}

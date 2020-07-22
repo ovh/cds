@@ -29,12 +29,11 @@ import (
 )
 
 func Test_RunNonDefaultBranchWithSecrets(t *testing.T) {
-	api, db, router, end := newTestAPI(t)
-	defer end()
+	api, db, router := newTestAPI(t)
 
-	_, _ = assets.InsertService(t, db, t.Name()+"_HOOKS", services.TypeHooks)
-	_, _ = assets.InsertService(t, db, t.Name()+"_VCS", services.TypeVCS)
-	_, _ = assets.InsertService(t, db, t.Name()+"_REPO", services.TypeRepositories)
+	_, _ = assets.InsertService(t, db, t.Name()+"_HOOKS", sdk.TypeHooks)
+	_, _ = assets.InsertService(t, db, t.Name()+"_VCS", sdk.TypeVCS)
+	_, _ = assets.InsertService(t, db, t.Name()+"_REPO", sdk.TypeRepositories)
 
 	// Setup a mock for all services called by the API
 	ctrl := gomock.NewController(t)
@@ -262,7 +261,7 @@ version: v1.0`),
 		RepositoryFullname: "myrepo",
 	}
 	require.NoError(t, application.Insert(db, *proj, &app))
-	require.NoError(t, repositoriesmanager.InsertForApplication(db, &app, proj.Key))
+	require.NoError(t, repositoriesmanager.InsertForApplication(db, &app))
 
 	env := sdk.Environment{
 		ProjectID:  proj.ID,
@@ -296,13 +295,7 @@ version: v1.0`),
 	pip.Stages = append(pip.Stages, *s)
 
 	var err error
-	proj, err = project.Load(api.mustDB(), proj.Key,
-		project.LoadOptions.WithApplicationWithDeploymentStrategies,
-		project.LoadOptions.WithPipelines,
-		project.LoadOptions.WithEnvironments,
-		project.LoadOptions.WithGroups,
-		project.LoadOptions.WithIntegrations,
-	)
+	proj, err = project.Load(context.TODO(), api.mustDB(), proj.Key, project.LoadOptions.WithGroups)
 	require.NoError(t, err)
 
 	w := sdk.Workflow{
@@ -321,7 +314,11 @@ version: v1.0`),
 		},
 	}
 
-	require.NoError(t, workflow.Insert(context.TODO(), api.mustDB(), api.Cache, *proj, &w))
+	projIdent := sdk.ProjectIdentifiers{
+		ID:  proj.ID,
+		Key: proj.Key,
+	}
+	require.NoError(t, workflow.Insert(context.TODO(), db, api.Cache, projIdent, proj.ProjectGroups, &w))
 
 	// Make workflow as code
 	require.NoError(t, workflow.UpdateFromRepository(db, w.ID, "ssh://myrepo.git"))
@@ -358,7 +355,7 @@ version: v1.0`),
 	t.Logf("%d %+v", wrDB.Workflow.WorkflowData.Node.ID, wrDB.WorkflowNodeRuns)
 	require.NotNil(t, wrDB.WorkflowNodeRuns[wrDB.Workflow.WorkflowData.Node.ID])
 	require.Len(t, wrDB.WorkflowNodeRuns[wrDB.Workflow.WorkflowData.Node.ID], 1)
-	secrets, errS := workflow.LoadSecrets(context.TODO(), db, wrDB, &wrDB.WorkflowNodeRuns[wrDB.Workflow.WorkflowData.Node.ID][0])
+	secrets, errS := workflow.LoadDecryptSecrets(context.TODO(), db, wrDB, &wrDB.WorkflowNodeRuns[wrDB.Workflow.WorkflowData.Node.ID][0])
 	require.NoError(t, errS)
 
 	t.Logf("%+v", secrets)

@@ -7,29 +7,30 @@ import (
 
 // Environment represent a deployment environment
 type Environment struct {
-	ID             int64            `json:"id" yaml:"-"`
-	Name           string           `json:"name" yaml:"name" cli:"name,key"`
-	Variables      []Variable       `json:"variables,omitempty" yaml:"variables"`
-	ProjectID      int64            `json:"-" yaml:"-"`
-	ProjectKey     string           `json:"project_key" yaml:"-"`
-	Created        time.Time        `json:"created"`
-	LastModified   time.Time        `json:"last_modified"`
-	Keys           []EnvironmentKey `json:"keys"`
-	Usage          *Usage           `json:"usage,omitempty"`
-	FromRepository string           `json:"from_repository,omitempty"`
+	ID                   int64                 `json:"id" yaml:"-"`
+	Name                 string                `json:"name" yaml:"name" cli:"name,key"`
+	Variables            []EnvironmentVariable `json:"variables,omitempty" yaml:"variables"`
+	ProjectID            int64                 `json:"-" yaml:"-"`
+	ProjectKey           string                `json:"project_key" yaml:"-"`
+	Created              time.Time             `json:"created"`
+	LastModified         time.Time             `json:"last_modified"`
+	Keys                 []EnvironmentKey      `json:"keys"`
+	Usage                *Usage                `json:"usage,omitempty"`
+	FromRepository       string                `json:"from_repository,omitempty"`
+	WorkflowAscodeHolder *Workflow             `json:"workflow_ascode_holder,omitempty" cli:"-"`
 }
 
 // UnmarshalJSON custom for last modified.
 func (e *Environment) UnmarshalJSON(data []byte) error {
 	var tmp struct {
-		ID             int64            `json:"id"`
-		Name           string           `json:"name"`
-		Variables      []Variable       `json:"variables"`
-		ProjectKey     string           `json:"project_key"`
-		Created        time.Time        `json:"created"`
-		Keys           []EnvironmentKey `json:"keys"`
-		Usage          *Usage           `json:"usage"`
-		FromRepository string           `json:"from_repository"`
+		ID             int64                 `json:"id"`
+		Name           string                `json:"name"`
+		Variables      []EnvironmentVariable `json:"variables"`
+		ProjectKey     string                `json:"project_key"`
+		Created        time.Time             `json:"created"`
+		Keys           []EnvironmentKey      `json:"keys"`
+		Usage          *Usage                `json:"usage"`
+		FromRepository string                `json:"from_repository"`
 	}
 
 	if err := json.Unmarshal(data, &tmp); err != nil {
@@ -61,14 +62,14 @@ func (e *Environment) UnmarshalJSON(data []byte) error {
 
 // EnvironmentVariableAudit represents an audit on an environment variable
 type EnvironmentVariableAudit struct {
-	ID             int64     `json:"id" yaml:"-" db:"id"`
-	EnvironmentID  int64     `json:"environment_id" yaml:"-" db:"environment_id"`
-	VariableID     int64     `json:"variable_id" yaml:"-" db:"variable_id"`
-	Type           string    `json:"type" yaml:"-" db:"type"`
-	VariableBefore *Variable `json:"variable_before,omitempty" yaml:"-" db:"-"`
-	VariableAfter  Variable  `json:"variable_after,omitempty" yaml:"-" db:"-"`
-	Versionned     time.Time `json:"versionned" yaml:"-" db:"versionned"`
-	Author         string    `json:"author" yaml:"-" db:"author"`
+	ID             int64                `json:"id" yaml:"-" db:"id"`
+	EnvironmentID  int64                `json:"environment_id" yaml:"-" db:"environment_id"`
+	VariableID     int64                `json:"variable_id" yaml:"-" db:"variable_id"`
+	Type           string               `json:"type" yaml:"-" db:"type"`
+	VariableBefore *EnvironmentVariable `json:"variable_before,omitempty" yaml:"-" db:"-"`
+	VariableAfter  EnvironmentVariable  `json:"variable_after,omitempty" yaml:"-" db:"-"`
+	Versionned     time.Time            `json:"versionned" yaml:"-" db:"versionned"`
+	Author         string               `json:"author" yaml:"-" db:"author"`
 }
 
 // GetKey return a key by name

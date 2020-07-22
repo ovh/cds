@@ -1,22 +1,19 @@
 package authentication
 
 import (
-	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/gorpmapping"
 )
 
 type authConsumer struct {
 	sdk.AuthConsumer
 	gorpmapping.SignedEntity
-	// deprecated
-	Scopes sdk.AuthConsumerScopeSlice `json:"scopes,omitempty" cli:"scopes" db:"scopes"`
 }
 
 func (c authConsumer) Canonical() gorpmapping.CanonicalForms {
-	_ = []interface{}{c.ID, c.AuthentifiedUserID, c.Type, c.Data, c.Created, c.GroupIDs, c.Scopes, c.ScopeDetails, c.Disabled} // Checks that fields exists at compilation
+	_ = []interface{}{c.ID, c.AuthentifiedUserID, c.Type, c.Data, c.Created, c.GroupIDs, c.ScopeDetails, c.Disabled} // Checks that fields exists at compilation
 	return []gorpmapping.CanonicalForm{
 		"{{.ID}}{{.AuthentifiedUserID}}{{print .Type}}{{print .Data}}{{printDate .Created}}{{print .GroupIDs}}{{print .ScopeDetails}}{{print .Disabled}}",
-		"{{.ID}}{{.AuthentifiedUserID}}{{print .Type}}{{print .Data}}{{printDate .Created}}{{print .GroupIDs}}{{print .Scopes}}{{print .Disabled}}",
 	}
 }
 

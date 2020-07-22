@@ -1,8 +1,10 @@
 package swarm
 
 import (
+	"context"
 	"crypto/rand"
 	"crypto/rsa"
+	"github.com/ovh/cds/sdk"
 	"net/http"
 	"strings"
 	"testing"
@@ -12,26 +14,21 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/h2non/gock.v1"
-
-	"github.com/ovh/cds/sdk"
 )
 
 var loggerCall = 0
 
 func Test_serviceLogs(t *testing.T) {
+	defer gock.Off()
 	h := InitTestHatcherySwarm(t)
-	h.Common.ServiceInstance = &sdk.Service{
-		LogServer: sdk.TCPServer{
-			Addr: "tcphost",
-			Port: 8090,
-		},
-	}
 	reader := rand.Reader
 	bitSize := 2048
 	key, err := rsa.GenerateKey(reader, bitSize)
 	require.NoError(t, err)
 	h.Common.PrivateKey = key
-	require.NoError(t, h.InitServiceLogger())
+
+	gock.New("https://lolcat.api").Get("/config/cdn").Reply(http.StatusOK).JSON(sdk.CDNConfig{TCPURL: "tcphost:8090"})
+	require.NoError(t, h.RefreshServiceLogger(context.TODO()))
 
 	containers := []types.Container{
 		{
@@ -46,15 +43,17 @@ func Test_serviceLogs(t *testing.T) {
 			ID:    "service-1",
 			Names: []string{"swarmy-model1-w1"},
 			Labels: map[string]string{
-				"hatchery":       "swarmy",
-				"worker_name":    "swarmy-model1-w1",
-				"service_job_id": "666",
-				"service_id":     "1",
+				"hatchery":            "swarmy",
+				"worker_name":         "swarmy-model1-w1",
+				"service_node_run_id": "999",
+				"service_job_id":      "666",
+				"service_id":          "1",
 			},
 		},
 	}
 
 	gock.New("https://lolcat.host").Get("/v6.66/containers/json").Reply(http.StatusOK).JSON(containers)
+
 	gock.New("https://lolcat.host").AddMatcher(func(r *http.Request, rr *gock.Request) (bool, error) {
 		b, err := gock.MatchPath(r, rr)
 		assert.NoError(t, err)

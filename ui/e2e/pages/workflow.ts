@@ -1,5 +1,5 @@
 import config from '../config';
-import { Selector, ClientFunction, t } from "testcafe";
+import { Selector, t } from "testcafe";
 
 export default class WorkflowPage {
 

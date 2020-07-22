@@ -23,6 +23,7 @@ import (
 	"github.com/ovh/cds/sdk/hatchery"
 	"github.com/ovh/cds/sdk/jws"
 	"github.com/ovh/cds/sdk/log"
+	"github.com/ovh/cds/sdk/log/hook"
 )
 
 type Common struct {
@@ -115,7 +116,7 @@ func (c *Common) CommonServe(ctx context.Context, h hatchery.Interface) error {
 
 	//Init the http server
 	c.initRouter(ctx, h)
-	if err := api.InitRouterMetrics(h); err != nil {
+	if err := api.InitRouterMetrics(ctx, h); err != nil {
 		log.Error(ctx, "unable to init router metrics: %v", err)
 	}
 
@@ -190,21 +191,46 @@ func (c *Common) getPanicDumpListHandler() service.Handler {
 	}
 }
 
-func (c *Common) InitServiceLogger() error {
-	tcpServer := c.Common.ServiceInstance.LogServer
-	var signer jose.Signer
-	if tcpServer.Addr != "" && tcpServer.Port > 0 {
-		logger, err := log.New(fmt.Sprintf("%s:%d", tcpServer.Addr, tcpServer.Port))
-		if err != nil {
-			return sdk.WithStack(err)
+func (c *Common) RefreshServiceLogger(ctx context.Context) error {
+	cdnConfig, err := c.Client.ConfigCDN()
+	if err != nil {
+		if sdk.ErrorIs(err, sdk.ErrNotFound) {
+			c.CDNLogsURL = ""
+			c.ServiceLogger = nil
 		}
+		return err
+	}
+	if cdnConfig.TCPURL == c.CDNLogsURL {
+		return nil
+	}
+	c.CDNLogsURL = cdnConfig.TCPURL
+
+	if c.Signer == nil {
+		var signer jose.Signer
 		signer, err = jws.NewSigner(c.Common.PrivateKey)
 		if err != nil {
 			return sdk.WithStack(err)
 		}
 		c.Signer = signer
-		c.ServiceLogger = logger
 	}
+
+	var graylogCfg = &hook.Config{
+		Addr:     c.CDNLogsURL,
+		Protocol: "tcp",
+	}
+
+	if c.ServiceLogger == nil {
+		logger, _, err := log.New(ctx, graylogCfg)
+		if err != nil {
+			return sdk.WithStack(err)
+		}
+		c.ServiceLogger = logger
+	} else {
+		if err := log.ReplaceAllHooks(context.Background(), c.ServiceLogger, graylogCfg); err != nil {
+			return sdk.WithStack(err)
+		}
+	}
+
 	return nil
 }
 
@@ -219,6 +245,7 @@ func (c *Common) SendServiceLog(ctx context.Context, servicesLogs []sdk.ServiceL
 				WorkerName:      s.WorkerName,
 			},
 			JobID:     s.WorkflowNodeJobRunID,
+			NodeRunID: s.WorkflowNodeRunID,
 			Timestamp: time.Now().UnixNano(),
 		}
 		signature, err := jws.Sign(c.Signer, dataToSign)
@@ -226,7 +253,9 @@ func (c *Common) SendServiceLog(ctx context.Context, servicesLogs []sdk.ServiceL
 			log.Error(ctx, "SendServiceLog> unable to sign service log message: %v", err)
 			continue
 		}
-		c.ServiceLogger.WithField("Signature", signature).Log(logrus.InfoLevel, s.Val)
+		if c.ServiceLogger != nil {
+			c.ServiceLogger.WithField("Signature", signature).Log(logrus.InfoLevel, s.Val)
+		}
 	}
 }
 

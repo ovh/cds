@@ -9,18 +9,18 @@ import (
 	"github.com/go-gorp/gorp"
 	"github.com/lib/pq"
 
-	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/engine/api/group"
-	"github.com/ovh/cds/engine/api/observability"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/gorpmapping"
+	"github.com/ovh/cds/sdk/telemetry"
 )
 
 // LoadPipeline loads a pipeline from database
 func LoadPipeline(ctx context.Context, db gorp.SqlExecutor, projectKey, name string, deep bool) (*sdk.Pipeline, error) {
-	ctx, end := observability.Span(ctx, "pipeline.LoadPipeline",
-		observability.Tag(observability.TagProjectKey, projectKey),
-		observability.Tag(observability.TagPipeline, name),
-		observability.Tag(observability.TagPipelineDeep, deep),
+	ctx, end := telemetry.Span(ctx, "pipeline.LoadPipeline",
+		telemetry.Tag(telemetry.TagProjectKey, projectKey),
+		telemetry.Tag(telemetry.TagPipeline, name),
+		telemetry.Tag(telemetry.TagPipelineDeep, deep),
 	)
 	defer end()
 
@@ -55,9 +55,9 @@ func LoadPipeline(ctx context.Context, db gorp.SqlExecutor, projectKey, name str
 // LoadPipelineByID loads a pipeline from database
 func LoadPipelineByID(ctx context.Context, db gorp.SqlExecutor, pipelineID int64, deep bool) (*sdk.Pipeline, error) {
 	var end func()
-	ctx, end = observability.Span(ctx, "pipeline.LoadPipelineByID",
-		observability.Tag(observability.TagPipelineID, pipelineID),
-		observability.Tag(observability.TagPipelineDeep, deep),
+	ctx, end = telemetry.Span(ctx, "pipeline.LoadPipelineByID",
+		telemetry.Tag(telemetry.TagPipelineID, pipelineID),
+		telemetry.Tag(telemetry.TagPipelineDeep, deep),
 	)
 	defer end()
 
@@ -335,7 +335,7 @@ func UpdatePipeline(db gorp.SqlExecutor, p *sdk.Pipeline) error {
 	p.LastModified = now.Unix()
 	rx := sdk.NamePatternRegex
 	if !rx.MatchString(p.Name) {
-		return sdk.NewError(sdk.ErrInvalidName, fmt.Errorf("Invalid pipeline name. It should match %s", sdk.NamePattern))
+		return sdk.NewErrorFrom(sdk.ErrInvalidName, "pipeline name should match %s", sdk.NamePattern)
 	}
 
 	//Update pipeline
@@ -350,7 +350,7 @@ func InsertPipeline(db gorp.SqlExecutor, p *sdk.Pipeline) error {
 
 	rx := sdk.NamePatternRegex
 	if !rx.MatchString(p.Name) {
-		return sdk.NewError(sdk.ErrInvalidName, fmt.Errorf("invalid pipeline name, should match %s", sdk.NamePattern))
+		return sdk.NewErrorFrom(sdk.ErrInvalidName, "pipeline name should match %s", sdk.NamePattern)
 	}
 
 	if p.ProjectID == 0 {

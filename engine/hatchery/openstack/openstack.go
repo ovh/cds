@@ -3,23 +3,24 @@ package openstack
 import (
 	"context"
 	"fmt"
+	"sort"
 	"strings"
 	"sync"
 	"time"
 
 	"github.com/dgrijalva/jwt-go"
-	"github.com/ovh/cds/engine/service"
-
 	"github.com/gophercloud/gophercloud/openstack/compute/v2/images"
 	"github.com/gophercloud/gophercloud/openstack/compute/v2/servers"
 	"github.com/gorilla/mux"
+	"github.com/sirupsen/logrus"
 
 	"github.com/ovh/cds/engine/api"
-	"github.com/ovh/cds/engine/api/services"
+	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/ovh/cds/sdk/hatchery"
 	"github.com/ovh/cds/sdk/log"
+	"github.com/ovh/cds/sdk/slug"
 )
 
 var (
@@ -73,7 +74,7 @@ func (h *HatcheryOpenstack) ApplyConfiguration(cfg interface{}) error {
 	}
 
 	h.Common.Common.ServiceName = h.Config.Name
-	h.Common.Common.ServiceType = services.TypeHatchery
+	h.Common.Common.ServiceType = sdk.TypeHatchery
 	h.HTTPURL = h.Config.URL
 
 	h.MaxHeartbeatFailures = h.Config.API.MaxHeartbeatFailures
@@ -154,7 +155,34 @@ func (*HatcheryOpenstack) ModelType() string {
 
 // WorkerModelsEnabled returns Worker model enabled.
 func (h *HatcheryOpenstack) WorkerModelsEnabled() ([]sdk.Model, error) {
-	return h.CDSClient().WorkerModelEnabledList()
+	allModels, err := h.CDSClient().WorkerModelEnabledList()
+	if err != nil {
+		return nil, err
+	}
+
+	filteredModels := make([]sdk.Model, 0, len(allModels))
+	for i := range allModels {
+		if allModels[i].Type != sdk.Openstack {
+			continue
+		}
+
+		// Required flavor should be available on target OpenStack project
+		if _, err := h.flavor(allModels[i].ModelVirtualMachine.Flavor); err != nil {
+			log.Debug("WorkerModelsEnabled> model %s/%s is not usable because flavor '%s' not found", allModels[i].Group.Name, allModels[i].Name, allModels[i].ModelVirtualMachine.Flavor)
+			continue
+		}
+
+		filteredModels = append(filteredModels, allModels[i])
+	}
+
+	// Sort models by required CPUs, this will allows to starts job without defined model on the smallest flavor.
+	sort.Slice(filteredModels, func(i, j int) bool {
+		flavorI, _ := h.flavor(filteredModels[i].ModelVirtualMachine.Flavor)
+		flavorJ, _ := h.flavor(filteredModels[j].ModelVirtualMachine.Flavor)
+		return flavorI.VCPUs < flavorJ.VCPUs
+	})
+
+	return filteredModels, nil
 }
 
 // WorkerModelSecretList returns secret for given model.
@@ -165,15 +193,6 @@ func (h *HatcheryOpenstack) WorkerModelSecretList(m sdk.Model) (sdk.WorkerModelS
 // CanSpawn return wether or not hatchery can spawn model
 // requirements are not supported
 func (h *HatcheryOpenstack) CanSpawn(ctx context.Context, model *sdk.Model, jobID int64, requirements []sdk.Requirement) bool {
-	// if there is a model, we have to check if the flavor attached to model is knowned by this hatchery
-	if model != nil {
-		if _, err := h.flavorID(model.ModelVirtualMachine.Flavor); err != nil {
-			log.Debug("CanSpawn> h.flavorID on %s err:%v", model.ModelVirtualMachine.Flavor, err)
-			return false
-		}
-		log.Debug("CanSpawn> flavor '%s' found", model.ModelVirtualMachine.Flavor)
-	}
-
 	for _, r := range requirements {
 		if r.Type == sdk.ServiceRequirement || r.Type == sdk.MemoryRequirement || r.Type == sdk.HostnameRequirement {
 			return false
@@ -182,8 +201,13 @@ func (h *HatcheryOpenstack) CanSpawn(ctx context.Context, model *sdk.Model, jobI
 	return true
 }
 
+func (h *HatcheryOpenstack) GetLogger() *logrus.Logger {
+	return h.ServiceLogger
+}
+
 func (h *HatcheryOpenstack) main(ctx context.Context) {
 	serverListTick := time.NewTicker(10 * time.Second).C
+	cdnConfTick := time.NewTicker(10 * time.Second).C
 	killAwolServersTick := time.NewTicker(30 * time.Second).C
 	killErrorServersTick := time.NewTicker(60 * time.Second).C
 	killDisabledWorkersTick := time.NewTicker(60 * time.Second).C
@@ -198,6 +222,16 @@ func (h *HatcheryOpenstack) main(ctx context.Context) {
 			h.killErrorServers(ctx)
 		case <-killDisabledWorkersTick:
 			h.killDisabledWorkers()
+		case <-cdnConfTick:
+			if err := h.RefreshServiceLogger(ctx); err != nil {
+				log.Error(ctx, "Hatchery> openstack> Cannot get cdn configuration : %v", err)
+			}
+		case <-ctx.Done():
+			if ctx.Err() != nil {
+				log.Error(ctx, "Hatchery> openstack> Exiting routines")
+			}
+			return
+
 		}
 	}
 }
@@ -265,7 +299,7 @@ func (h *HatcheryOpenstack) killAwolServers(ctx context.Context) {
 
 		workerHatcheryName, _ := s.Metadata["hatchery_name"]
 		registerOnly, _ := s.Metadata["register_only"]
-		workerModelName, _ := s.Metadata["worker_model_name"]
+		workerModelPath, _ := s.Metadata["worker_model_path"]
 		workerModelNameLastModified, _ := s.Metadata["worker_model_last_modified"]
 		model, _ := s.Metadata["model"]
 		flavor, _ := s.Metadata["flavor"]
@@ -291,7 +325,7 @@ func (h *HatcheryOpenstack) killAwolServers(ctx context.Context) {
 			// check if we need to create a new openstack image from it
 			// by comparing userDateLastModified from worker model
 			if !h.Config.DisableCreateImage && s.Status == "SHUTOFF" && registerOnly == "true" {
-				h.killAwolServersComputeImage(ctx, workerModelName, workerModelNameLastModified, s.ID, model, flavor)
+				h.killAwolServersComputeImage(ctx, workerModelPath, workerModelNameLastModified, s.ID, model, flavor)
 			}
 
 			log.Debug("killAwolServers> Deleting server %s status: %s last update: %s registerOnly:%s toDeleteKilled:%t inWorkersList:%t", s.Name, s.Status, time.Since(s.Updated), registerOnly, toDeleteKilled, inWorkersList)
@@ -311,10 +345,10 @@ func (h *HatcheryOpenstack) killAwolServers(ctx context.Context) {
 	log.Debug("killAwolServers> workersAlive: %+v", workersAlive)
 }
 
-func (h *HatcheryOpenstack) killAwolServersComputeImage(ctx context.Context, workerModelName, workerModelNameLastModified, serverID, model, flavor string) {
+func (h *HatcheryOpenstack) killAwolServersComputeImage(ctx context.Context, workerModelPath, workerModelNameLastModified, serverID, model, flavor string) {
 	oldImagesID := []string{}
 	for _, img := range h.getImages(ctx) {
-		if w := img.Metadata["worker_model_name"]; w == workerModelName {
+		if w := img.Metadata["worker_model_path"]; w == workerModelPath {
 			oldImagesID = append(oldImagesID, img.ID)
 			if d, ok := img.Metadata["worker_model_last_modified"]; ok && d.(string) == workerModelNameLastModified {
 				// no need to recreate an image
@@ -325,9 +359,9 @@ func (h *HatcheryOpenstack) killAwolServersComputeImage(ctx context.Context, wor
 
 	log.Info(ctx, "killAwolServersComputeImage> create image before deleting server")
 	imageID, err := servers.CreateImage(h.openstackClient, serverID, servers.CreateImageOpts{
-		Name: "cds_image_" + workerModelName,
+		Name: "cds_image_" + slug.Convert(workerModelPath),
 		Metadata: map[string]string{
-			"worker_model_name":          workerModelName,
+			"worker_model_path":          workerModelPath,
 			"model":                      model,
 			"flavor":                     flavor,
 			"created_by":                 "cdsHatchery_" + h.Name(),
@@ -335,20 +369,20 @@ func (h *HatcheryOpenstack) killAwolServersComputeImage(ctx context.Context, wor
 		},
 	}).ExtractImageID()
 	if err != nil {
-		log.Error(ctx, "killAwolServersComputeImage> error on create image for worker model %s: %s", workerModelName, err)
+		log.Error(ctx, "killAwolServersComputeImage> error on create image for worker model %s: %s", workerModelPath, err)
 	} else {
-		log.Info(ctx, "killAwolServersComputeImage> image %s created for worker model %s - waiting %ds for saving created img...", imageID, workerModelName, h.Config.CreateImageTimeout)
+		log.Info(ctx, "killAwolServersComputeImage> image %s created for worker model %s - waiting %ds for saving created img...", imageID, workerModelPath, h.Config.CreateImageTimeout)
 
 		startTime := time.Now().Unix()
 		var newImageIsActive bool
 		for time.Now().Unix()-startTime < int64(h.Config.CreateImageTimeout) {
 			newImage, err := images.Get(h.openstackClient, imageID).Extract()
 			if err != nil {
-				log.Error(ctx, "killAwolServersComputeImage> error on get new image %s for worker model %s: %s", imageID, workerModelName, err)
+				log.Error(ctx, "killAwolServersComputeImage> error on get new image %s for worker model %s: %s", imageID, workerModelPath, err)
 			}
 			if newImage.Status == "ACTIVE" {
 				// new image is created, end wait
-				log.Info(ctx, "killAwolServersComputeImage> image %s created for worker model %s is active", imageID, workerModelName)
+				log.Info(ctx, "killAwolServersComputeImage> image %s created for worker model %s is active", imageID, workerModelPath)
 				newImageIsActive = true
 				break
 			}
@@ -356,14 +390,14 @@ func (h *HatcheryOpenstack) killAwolServersComputeImage(ctx context.Context, wor
 		}
 
 		if !newImageIsActive {
-			log.Info(ctx, "killAwolServersComputeImage> timeout while creating new image. Deleting new image for %s with ID %s", workerModelName, imageID)
+			log.Info(ctx, "killAwolServersComputeImage> timeout while creating new image. Deleting new image for %s with ID %s", workerModelPath, imageID)
 			if err := images.Delete(h.openstackClient, imageID).ExtractErr(); err != nil {
 				log.Error(ctx, "killAwolServersComputeImage> error while deleting new image %s", imageID)
 			}
 		}
 
 		for _, oldImageID := range oldImagesID {
-			log.Info(ctx, "killAwolServersComputeImage> deleting old image for %s with ID %s", workerModelName, oldImageID)
+			log.Info(ctx, "killAwolServersComputeImage> deleting old image for %s with ID %s", workerModelPath, oldImageID)
 			if err := images.Delete(h.openstackClient, oldImageID).ExtractErr(); err != nil {
 				log.Error(ctx, "killAwolServersComputeImage> error while deleting old image %s", oldImageID)
 			}
@@ -435,7 +469,6 @@ func (h *HatcheryOpenstack) deleteServer(ctx context.Context, s servers.Server) 
 				log.Error(ctx, "CheckWorkerModelRegister> error on call client.WorkerModelSpawnError on worker model %s for register: %s", modelPath, spawnErr)
 			}
 		}
-
 	}
 
 	r := servers.Delete(h.openstackClient, s.ID)
@@ -477,7 +510,7 @@ func (h *HatcheryOpenstack) NeedRegistration(ctx context.Context, m *sdk.Model) 
 		return true
 	}
 	for _, img := range h.getImages(ctx) {
-		if w := img.Metadata["worker_model_name"]; w == m.Name {
+		if w := img.Metadata["worker_model_path"]; w == m.Group.Name+"/"+m.Name {
 			if d, ok := img.Metadata["worker_model_last_modified"]; ok {
 				if fmt.Sprintf("%d", m.UserLastModified.Unix()) == d.(string) {
 					log.Debug("NeedRegistration> false. An image is already available for this worker model %s workerModel.UserLastModified", m.Name)

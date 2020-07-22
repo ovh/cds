@@ -2,6 +2,9 @@ package workflow_test
 
 import (
 	"context"
+	"github.com/stretchr/testify/assert"
+	"testing"
+
 	"github.com/ovh/cds/engine/api/authentication"
 	"github.com/ovh/cds/engine/api/bootstrap"
 	"github.com/ovh/cds/engine/api/test"
@@ -9,12 +12,11 @@ import (
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/sdk"
 	"github.com/stretchr/testify/require"
-	"testing"
 )
 
 func TestProcessJoinDefaultCondition(t *testing.T) {
-	db, cache, end := test.SetupPG(t, bootstrap.InitiliazeDB)
-	defer end()
+	db, cache := test.SetupPG(t, bootstrap.InitiliazeDB)
+
 	u, _ := assets.InsertAdminUser(t, db)
 	consumer, _ := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
 
@@ -50,10 +52,11 @@ func TestProcessJoinDefaultCondition(t *testing.T) {
 	}
 
 	// Insert workflow
-	require.NoError(t, workflow.Insert(context.TODO(), db, cache, *proj, &wr.Workflow))
+	projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
+	assert.NoError(t, workflow.Insert(context.TODO(), db, cache, projIdent, proj.ProjectGroups, &wr.Workflow))
 
 	// Create run
-	wrr, err := workflow.CreateRun(db, &wr.Workflow, nil, u)
+	wrr, err := workflow.CreateRun(db.DbMap, &wr.Workflow, nil, u)
 	require.NoError(t, err)
 	wr.ID = wrr.ID
 	wr.WorkflowID = wr.Workflow.ID
@@ -72,8 +75,8 @@ func TestProcessJoinDefaultCondition(t *testing.T) {
 }
 
 func TestProcessJoinCustomCondition(t *testing.T) {
-	db, cache, end := test.SetupPG(t, bootstrap.InitiliazeDB)
-	defer end()
+	db, cache := test.SetupPG(t, bootstrap.InitiliazeDB)
+
 	u, _ := assets.InsertAdminUser(t, db)
 	consumer, _ := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
 
@@ -120,10 +123,11 @@ func TestProcessJoinCustomCondition(t *testing.T) {
 	}
 
 	// Insert workflow
-	require.NoError(t, workflow.Insert(context.TODO(), db, cache, *proj, &wr.Workflow))
+	projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
+	assert.NoError(t, workflow.Insert(context.TODO(), db, cache, projIdent, proj.ProjectGroups, &wr.Workflow))
 
 	// Create run
-	wrr, err := workflow.CreateRun(db, &wr.Workflow, nil, u)
+	wrr, err := workflow.CreateRun(db.DbMap, &wr.Workflow, nil, u)
 	require.NoError(t, err)
 	wr.ID = wrr.ID
 	wr.WorkflowID = wr.Workflow.ID

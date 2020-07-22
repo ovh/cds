@@ -243,10 +243,10 @@ func ActionsToIDs(as []*Action) []int64 {
 
 // ActionsToGroupIDs returns group ids for given actions list.
 func ActionsToGroupIDs(as []*Action) []int64 {
-	ids := make([]int64, len(as))
+	ids := make([]int64, 0, len(as))
 	for i := range as {
 		if as[i].GroupID != nil {
-			ids[i] = *as[i].GroupID
+			ids = append(ids, *as[i].GroupID)
 		}
 	}
 	return ids

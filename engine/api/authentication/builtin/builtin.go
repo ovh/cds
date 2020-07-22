@@ -4,10 +4,9 @@ import (
 	"context"
 	"time"
 
-	"github.com/go-gorp/gorp"
-
 	"github.com/ovh/cds/engine/api/authentication"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/gorpmapping"
 	"github.com/ovh/cds/sdk/log"
 )
 
@@ -65,7 +64,7 @@ func (d AuthDriver) CheckSigninRequest(req sdk.AuthConsumerSigninRequest) error 
 
 // NewConsumer returns a new builtin consumer for given data.
 // The parent consumer should be given with all data loaded including the authentified user.
-func NewConsumer(ctx context.Context, db gorp.SqlExecutor, name, description string, parentConsumer *sdk.AuthConsumer,
+func NewConsumer(ctx context.Context, db gorpmapping.SqlExecutorWithTx, name, description string, parentConsumer *sdk.AuthConsumer,
 	groupIDs []int64, scopes sdk.AuthConsumerScopeDetails) (*sdk.AuthConsumer, string, error) {
 	if name == "" {
 		return nil, "", sdk.NewErrorFrom(sdk.ErrWrongRequest, "name should be given to create a built in consumer")

@@ -6,8 +6,8 @@ import (
 
 	"github.com/go-gorp/gorp"
 
-	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/gorpmapping"
 	"github.com/ovh/cds/sdk/log"
 )
 
@@ -132,7 +132,7 @@ func LoadSessionByID(ctx context.Context, db gorp.SqlExecutor, id string, opts .
 }
 
 // InsertSession in database.
-func InsertSession(ctx context.Context, db gorp.SqlExecutor, as *sdk.AuthSession) error {
+func InsertSession(ctx context.Context, db gorpmapping.SqlExecutorWithTx, as *sdk.AuthSession) error {
 	as.ID = sdk.UUID()
 	as.Created = time.Now()
 	s := authSession{AuthSession: *as}
@@ -144,7 +144,7 @@ func InsertSession(ctx context.Context, db gorp.SqlExecutor, as *sdk.AuthSession
 }
 
 // UpdateSession in database.
-func UpdateSession(ctx context.Context, db gorp.SqlExecutor, as *sdk.AuthSession) error {
+func UpdateSession(ctx context.Context, db gorpmapping.SqlExecutorWithTx, as *sdk.AuthSession) error {
 	s := authSession{AuthSession: *as}
 	if err := gorpmapping.UpdateAndSign(ctx, db, &s); err != nil {
 		return sdk.WrapError(err, "unable to update auth session with id: %s", s.ID)

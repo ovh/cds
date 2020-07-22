@@ -2,15 +2,12 @@ package main
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
-	"io/ioutil"
 
 	"github.com/spf13/cobra"
 
 	"github.com/ovh/cds/cli"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/cdsclient"
 )
 
 var eventsCmd = cli.Command{
@@ -27,28 +24,77 @@ func events() *cobra.Command {
 var eventsListenCmd = cli.Command{
 	Name:  "listen",
 	Short: "Listen CDS events",
+	Example: `  cdsctl events listen --queue
+  cdsctl events listen --global
+  cdsctl events listen --project MYPROJ
+  cdsctl events listen --project MYPROJ --workflow my-workflow
+  `,
+	Flags: []cli.Flag{
+		{
+			Name:  "project",
+			Usage: "project key to listen",
+			Type:  cli.FlagString,
+		},
+		{
+			Name:  "workflow",
+			Usage: "workflow name to listen",
+			Type:  cli.FlagString,
+		},
+		{
+			Name:  "queue",
+			Usage: "listen job queue events",
+			Type:  cli.FlagBool,
+		},
+		{
+			Name:  "global",
+			Usage: "listen global events",
+			Type:  cli.FlagBool,
+		},
+	},
 }
 
 func eventsListenRun(v cli.Values) error {
 	ctx := context.Background()
-	chanSSE := make(chan cdsclient.SSEvent)
+	chanMessageReceived := make(chan sdk.WebsocketEvent)
+	chanMessageToSend := make(chan []sdk.WebsocketFilter)
 
-	sdk.GoRoutine(ctx, "EventsListenCmd", func(ctx context.Context) {
-		client.EventsListen(ctx, chanSSE)
+	sdk.GoRoutine(ctx, "WebsocketEventsListenCmd", func(ctx context.Context) {
+		client.WebsocketEventsListen(ctx, chanMessageToSend, chanMessageReceived)
 	})
+
+	switch {
+	case v.GetString("project") != "" && v.GetString("workflow") != "":
+		chanMessageToSend <- []sdk.WebsocketFilter{{
+			Type:         sdk.WebsocketFilterTypeWorkflow,
+			ProjectKey:   v.GetString("project"),
+			WorkflowName: v.GetString("workflow"),
+		}}
+	case v.GetString("project") != "":
+		chanMessageToSend <- []sdk.WebsocketFilter{{
+			Type:       sdk.WebsocketFilterTypeProject,
+			ProjectKey: v.GetString("project"),
+		}}
+	case v.GetBool("queue"):
+		chanMessageToSend <- []sdk.WebsocketFilter{{
+			Type: sdk.WebsocketFilterTypeQueue,
+		}}
+	case v.GetBool("global"):
+		chanMessageToSend <- []sdk.WebsocketFilter{{
+			Type: sdk.WebsocketFilterTypeGlobal,
+		}}
+	default:
+		return fmt.Errorf("invalid given parameters")
+	}
 
 	for {
 		select {
 		case <-ctx.Done():
 			return ctx.Err()
-		case evt := <-chanSSE:
-			var e sdk.Event
-			content, _ := ioutil.ReadAll(evt.Data)
-			_ = json.Unmarshal(content, &e)
-			if e.EventType == "" {
+		case evt := <-chanMessageReceived:
+			if evt.Event.EventType == "" {
 				continue
 			}
-			fmt.Printf("%s: %s %s %s\n", e.EventType, e.ProjectKey, e.WorkflowName, e.Status)
+			fmt.Printf("%s: %s %s %s\n", evt.Event.EventType, evt.Event.ProjectKey, evt.Event.WorkflowName, evt.Event.Status)
 		}
 	}
 }

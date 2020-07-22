@@ -47,6 +47,11 @@ type Admin interface {
 	AdminCDSMigrationList() ([]sdk.Migration, error)
 	AdminCDSMigrationCancel(id int64) error
 	AdminCDSMigrationReset(id int64) error
+	Features() ([]sdk.Feature, error)
+	FeatureCreate(f sdk.Feature) error
+	FeatureDelete(name string) error
+	FeatureGet(name string) (sdk.Feature, error)
+	FeatureUpdate(f sdk.Feature) error
 	Services() ([]sdk.Service, error)
 	ServicesByName(name string) (*sdk.Service, error)
 	ServiceDelete(name string) error
@@ -144,8 +149,7 @@ type EnvironmentVariableClient interface {
 // EventsClient listen SSE Events from CDS API
 type EventsClient interface {
 	// Must be  run in a go routine
-	EventsListen(ctx context.Context, chanSSEvt chan<- SSEvent)
-	WebsocketEventsListen(ctx context.Context, chanMsgToSend <-chan sdk.WebsocketFilter, chanMsgReceived chan<- sdk.WebsocketEvent)
+	WebsocketEventsListen(ctx context.Context, chanMsgToSend <-chan []sdk.WebsocketFilter, chanMsgReceived chan<- sdk.WebsocketEvent)
 }
 
 // DownloadClient exposes download related functions
@@ -271,6 +275,7 @@ type UserClient interface {
 
 // WorkerClient exposes workers functions
 type WorkerClient interface {
+	WorkerGet(ctx context.Context, name string, mods ...RequestModifier) (*sdk.Worker, error)
 	WorkerModelBook(groupName, name string) error
 	WorkerList(ctx context.Context) ([]sdk.Worker, error)
 	WorkerRefresh(ctx context.Context) error
@@ -291,6 +296,11 @@ type WorkerClient interface {
 type HookClient interface {
 	PollVCSEvents(uuid string, workflowID int64, vcsServer string, timestamp int64) (events sdk.RepositoryEvents, interval time.Duration, err error)
 	VCSConfiguration() (map[string]sdk.VCSConfiguration, error)
+}
+
+// ServiceClient exposes functions used for services
+type ServiceClient interface {
+	ServiceConfigurationGet(context.Context, string) ([]sdk.ServiceConfiguration, error)
 }
 
 // WorkflowClient exposes workflows functions
@@ -323,8 +333,8 @@ type WorkflowClient interface {
 	WorkflowAllHooksList() ([]sdk.NodeHook, error)
 	WorkflowCachePush(projectKey, integrationName, ref string, tarContent io.Reader, size int) error
 	WorkflowCachePull(projectKey, integrationName, ref string) (io.Reader, error)
-	WorkflowTransformAsCode(projectKey, workflowName string) (*sdk.Operation, error)
-	WorkflowTransformAsCodeFollow(projectKey, workflowName string, ope *sdk.Operation) error
+	WorkflowTransformAsCode(projectKey, workflowName, branch, message string) (*sdk.Operation, error)
+	WorkflowTransformAsCodeFollow(projectKey, workflowName, opeUUID string) (*sdk.Operation, error)
 }
 
 // MonitoringClient exposes monitoring functions
@@ -354,6 +364,7 @@ type Interface interface {
 	APIURL() string
 	ApplicationClient
 	ConfigUser() (sdk.ConfigUser, error)
+	ConfigCDN() (sdk.CDNConfig, error)
 	DownloadClient
 	EnvironmentClient
 	EventsClient
@@ -369,6 +380,7 @@ type Interface interface {
 	Navbar() ([]sdk.NavbarProjectData, error)
 	Requirements() ([]sdk.Requirement, error)
 	RepositoriesManagerInterface
+	ServiceClient
 	ServiceRegister(context.Context, sdk.Service) (*sdk.Service, error)
 	ServiceHeartbeat(sdk.MonitoringStatus) error
 	UserClient
@@ -385,7 +397,7 @@ type WorkerInterface interface {
 	ProjectIntegrationGet(projectKey string, integrationName string, clearPassword bool) (sdk.ProjectIntegration, error)
 	QueueClient
 	Requirements() ([]sdk.Requirement, error)
-	ServiceConfigurationGet(context.Context, string) ([]sdk.ServiceConfiguration, error)
+	ServiceClient
 	WorkerClient
 	WorkflowRunArtifacts(projectKey string, name string, number int64) ([]sdk.WorkflowNodeRunArtifact, error)
 	WorkflowCachePush(projectKey, integrationName, ref string, tarContent io.Reader, size int) error

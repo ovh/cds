@@ -10,13 +10,13 @@ import (
 	"github.com/gorilla/mux"
 
 	"github.com/ovh/cds/engine/api/authentication"
-	"github.com/ovh/cds/engine/api/observability"
 	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/engine/api/user"
 	"github.com/ovh/cds/engine/api/worker"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
+	"github.com/ovh/cds/sdk/telemetry"
 )
 
 const (
@@ -26,7 +26,7 @@ const (
 )
 
 func (api *API) authMiddleware(ctx context.Context, w http.ResponseWriter, req *http.Request, rc *service.HandlerConfig) (context.Context, error) {
-	ctx, end := observability.Span(ctx, "router.authMiddleware")
+	ctx, end := telemetry.Span(ctx, "router.authMiddleware")
 	defer end()
 
 	// Tokens (like izanamy)
@@ -175,7 +175,7 @@ func (api *API) authStatusTokenMiddleware(ctx context.Context, w http.ResponseWr
 }
 
 func (api *API) jwtMiddleware(ctx context.Context, w http.ResponseWriter, req *http.Request, rc *service.HandlerConfig) (context.Context, error) {
-	ctx, end := observability.Span(ctx, "router.jwtMiddleware")
+	ctx, end := telemetry.Span(ctx, "router.jwtMiddleware")
 	defer end()
 
 	var jwtRaw string
@@ -210,7 +210,7 @@ func (api *API) jwtMiddleware(ctx context.Context, w http.ResponseWriter, req *h
 }
 
 func (api *API) xsrfMiddleware(ctx context.Context, w http.ResponseWriter, req *http.Request, rc *service.HandlerConfig) (context.Context, error) {
-	ctx, end := observability.Span(ctx, "router.xsrfMiddleware")
+	ctx, end := telemetry.Span(ctx, "router.xsrfMiddleware")
 	defer end()
 
 	jwtValue := ctx.Value(contextJWT)
@@ -233,7 +233,8 @@ func (api *API) xsrfMiddleware(ctx context.Context, w http.ResponseWriter, req *
 	// else if its a read request we want to reuse a cached XSRF token or generate one
 	if rc.PermissionLevel > sdk.PermissionRead {
 		if !existXSRFTokenInCache || xsrfToken != existingXSRFToken {
-			return ctx, sdk.WithStack(sdk.ErrUnauthorized)
+			// We want to return a forbidden to allow the user to retry with a new token.
+			return ctx, sdk.WithStack(sdk.ErrForbidden)
 		}
 
 		newXSRFToken, err := authentication.NewSessionXSRFToken(api.Cache, sessionID)

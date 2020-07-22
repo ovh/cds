@@ -7,16 +7,15 @@ import (
 	"strings"
 	"time"
 
-	"github.com/go-gorp/gorp"
-
 	"github.com/ovh/cds/engine/api/cache"
-	"github.com/ovh/cds/engine/api/observability"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/gorpmapping"
 	"github.com/ovh/cds/sdk/log"
+	"github.com/ovh/cds/sdk/telemetry"
 )
 
-func processNodeTriggers(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj sdk.Project, wr *sdk.WorkflowRun, mapNodes map[int64]*sdk.Node, parentNodeRun []*sdk.WorkflowNodeRun, node *sdk.Node, parentSubNumber int) (*ProcessorReport, error) {
+func processNodeTriggers(ctx context.Context, db gorpmapping.SqlExecutorWithTx, store cache.Store, proj sdk.Project, wr *sdk.WorkflowRun, mapNodes map[int64]*sdk.Node, parentNodeRun []*sdk.WorkflowNodeRun, node *sdk.Node, parentSubNumber int) (*ProcessorReport, error) {
 	report := new(ProcessorReport)
 
 	for j := range node.Triggers {
@@ -39,7 +38,7 @@ func processNodeTriggers(ctx context.Context, db gorp.SqlExecutor, store cache.S
 				log.Error(ctx, "processWorkflowRun> Unable to process node ID=%d: %s", t.ChildNode.ID, errPwnr)
 				AddWorkflowRunInfo(wr, sdk.SpawnMsg{
 					ID:   sdk.MsgWorkflowError.ID,
-					Args: []interface{}{errPwnr.Error()},
+					Args: []interface{}{sdk.ExtractHTTPError(errPwnr, "").Error()},
 					Type: sdk.MsgWorkflowError.Type,
 				})
 			}
@@ -50,7 +49,7 @@ func processNodeTriggers(ctx context.Context, db gorp.SqlExecutor, store cache.S
 	return report, nil
 }
 
-func processNodeRun(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj sdk.Project, wr *sdk.WorkflowRun,
+func processNodeRun(ctx context.Context, db gorpmapping.SqlExecutorWithTx, store cache.Store, proj sdk.Project, wr *sdk.WorkflowRun,
 	mapNodes map[int64]*sdk.Node, n *sdk.Node, subNumber int, parentNodeRuns []*sdk.WorkflowNodeRun,
 	hookEvent *sdk.WorkflowNodeRunHookEvent, manual *sdk.WorkflowNodeRunManual) (*ProcessorReport, bool, error) {
 	report := new(ProcessorReport)
@@ -63,10 +62,10 @@ func processNodeRun(ctx context.Context, db gorp.SqlExecutor, store cache.Store,
 	}
 
 	var end func()
-	ctx, end = observability.Span(ctx, "workflow.processNodeRun",
-		observability.Tag(observability.TagWorkflow, wr.Workflow.Name),
-		observability.Tag(observability.TagWorkflowRun, wr.Number),
-		observability.Tag(observability.TagWorkflowNode, n.Name),
+	ctx, end = telemetry.Span(ctx, "workflow.processNodeRun",
+		telemetry.Tag(telemetry.TagWorkflow, wr.Workflow.Name),
+		telemetry.Tag(telemetry.TagWorkflowRun, wr.Number),
+		telemetry.Tag(telemetry.TagWorkflowNode, n.Name),
 	)
 	defer end()
 
@@ -100,7 +99,7 @@ func processNodeRun(ctx context.Context, db gorp.SqlExecutor, store cache.Store,
 	return nil, false, nil
 }
 
-func processNode(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj sdk.Project, wr *sdk.WorkflowRun,
+func processNode(ctx context.Context, db gorpmapping.SqlExecutorWithTx, store cache.Store, proj sdk.Project, wr *sdk.WorkflowRun,
 	n *sdk.Node, subNumber int, parents []*sdk.WorkflowNodeRun,
 	hookEvent *sdk.WorkflowNodeRunHookEvent, manual *sdk.WorkflowNodeRunManual) (*ProcessorReport, bool, error) {
 	report := new(ProcessorReport)
@@ -157,7 +156,7 @@ func processNode(ctx context.Context, db gorp.SqlExecutor, store cache.Store, pr
 
 	// PARENT BUILD PARAMETER WITH git.*
 	if len(parents) > 0 {
-		_, next := observability.Span(ctx, "workflow.getParentParameters")
+		_, next := telemetry.Span(ctx, "workflow.getParentParameters")
 		parentsParams, errPP := getParentParameters(wr, parents)
 		next()
 		if errPP != nil {
@@ -204,7 +203,9 @@ func processNode(ctx context.Context, db gorp.SqlExecutor, store cache.Store, pr
 		}
 	}
 	// Find an ancestor on the same repo
-	if currentRepo != "" && parentRepo != nil && parentRepo.Value != currentRepo {
+	if currentRepo != "" && parentRepo == nil {
+		needVCSInfo = true
+	} else if currentRepo != "" && parentRepo != nil && parentRepo.Value != currentRepo {
 		// Try to found a parent on the same repo
 		found := false
 		for _, parent := range wr.WorkflowNodeRuns {
@@ -247,7 +248,7 @@ func processNode(ctx context.Context, db gorp.SqlExecutor, store cache.Store, pr
 		if errVcs != nil {
 			AddWorkflowRunInfo(wr, sdk.SpawnMsg{
 				ID:   sdk.MsgWorkflowError.ID,
-				Args: []interface{}{errVcs.Error()},
+				Args: []interface{}{sdk.ExtractHTTPError(errVcs, "").Error()},
 				Type: sdk.MsgWorkflowError.Type,
 			})
 			return nil, false, sdk.WrapError(errVcs, "unable to get git informations")
@@ -492,7 +493,7 @@ func computeNodeContextBuildParameters(ctx context.Context, proj sdk.Project, wr
 	if errParam != nil {
 		AddWorkflowRunInfo(wr, sdk.SpawnMsg{
 			ID:   sdk.MsgWorkflowError.ID,
-			Args: []interface{}{errParam.Error()},
+			Args: []interface{}{sdk.ExtractHTTPError(errParam, "").Error()},
 			Type: sdk.MsgWorkflowError.Type,
 		})
 		// if there an error -> display it in workflowRunInfo and not stop the launch

@@ -21,12 +21,11 @@ import (
 )
 
 func Test_getWorkflowHookModelsHandlerAsLambdaUser(t *testing.T) {
-	api, _, _, end := newTestAPI(t)
-	defer end()
-	db := api.mustDB()
+	api, db, _ := newTestAPI(t)
+
 	cache := api.Cache
 	test.NoError(t, workflow.CreateBuiltinWorkflowHookModels(api.mustDB()))
-	u, passUser := assets.InsertLambdaUser(t, api.mustDB())
+	u, passUser := assets.InsertLambdaUser(t, db)
 
 	proj := assets.InsertTestProject(t, db, cache, sdk.RandomString(10), sdk.RandomString(10))
 	require.NoError(t, group.InsertLinkGroupUser(context.TODO(), db, &group.LinkGroupUser{
@@ -43,12 +42,7 @@ func Test_getWorkflowHookModelsHandlerAsLambdaUser(t *testing.T) {
 
 	test.NoError(t, pipeline.InsertPipeline(db, &pip))
 
-	proj, _ = project.LoadByID(db, proj.ID,
-		project.LoadOptions.WithApplications,
-		project.LoadOptions.WithPipelines,
-		project.LoadOptions.WithEnvironments,
-		project.LoadOptions.WithGroups,
-	)
+	proj, _ = project.LoadByID(db, proj.ID, project.LoadOptions.WithGroups)
 
 	w := sdk.Workflow{
 		Name:       sdk.RandomString(10),
@@ -65,7 +59,8 @@ func Test_getWorkflowHookModelsHandlerAsLambdaUser(t *testing.T) {
 		},
 	}
 
-	test.NoError(t, workflow.Insert(context.TODO(), db, cache, *proj, &w))
+	projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
+	test.NoError(t, workflow.Insert(context.TODO(), db, cache, projIdent, proj.ProjectGroups, &w))
 
 	//Prepare request
 	vars := map[string]string{}
@@ -89,12 +84,11 @@ func Test_getWorkflowHookModelsHandlerAsLambdaUser(t *testing.T) {
 }
 
 func Test_getWorkflowHookModelsHandlerAsAdminUser(t *testing.T) {
-	api, _, _, end := newTestAPI(t)
-	defer end()
-	db := api.mustDB()
+	api, db, _ := newTestAPI(t)
+
 	cache := api.Cache
 	test.NoError(t, workflow.CreateBuiltinWorkflowHookModels(api.mustDB()))
-	admin, passAdmin := assets.InsertAdminUser(t, api.mustDB())
+	admin, passAdmin := assets.InsertAdminUser(t, db)
 
 	proj := assets.InsertTestProject(t, db, cache, sdk.RandomString(10), sdk.RandomString(10))
 
@@ -114,8 +108,7 @@ func Test_getWorkflowHookModelsHandlerAsAdminUser(t *testing.T) {
 	}
 	test.NoError(t, application.Insert(db, *proj, &app))
 
-	proj, _ = project.LoadByID(db, proj.ID, project.LoadOptions.WithApplications,
-		project.LoadOptions.WithPipelines, project.LoadOptions.WithEnvironments, project.LoadOptions.WithGroups)
+	proj, _ = project.LoadByID(db, proj.ID, project.LoadOptions.WithGroups)
 
 	w := sdk.Workflow{
 		Name:       sdk.RandomString(10),
@@ -133,7 +126,8 @@ func Test_getWorkflowHookModelsHandlerAsAdminUser(t *testing.T) {
 		},
 	}
 
-	test.NoError(t, workflow.Insert(context.TODO(), db, cache, *proj, &w))
+	projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
+	test.NoError(t, workflow.Insert(context.TODO(), db, cache, projIdent, proj.ProjectGroups, &w))
 
 	//Prepare request
 	vars := map[string]string{}
@@ -157,10 +151,10 @@ func Test_getWorkflowHookModelsHandlerAsAdminUser(t *testing.T) {
 }
 
 func Test_getWorkflowHookModelHandler(t *testing.T) {
-	api, _, _, end := newTestAPI(t)
-	defer end()
+	api, db, _ := newTestAPI(t)
+
 	test.NoError(t, workflow.CreateBuiltinWorkflowHookModels(api.mustDB()))
-	admin, passAdmin := assets.InsertAdminUser(t, api.mustDB())
+	admin, passAdmin := assets.InsertAdminUser(t, db)
 
 	//Prepare request
 	vars := map[string]string{
@@ -185,10 +179,10 @@ func Test_getWorkflowHookModelHandler(t *testing.T) {
 }
 
 func Test_putWorkflowHookModelHandlerAsAdminUser(t *testing.T) {
-	api, _, _, end := newTestAPI(t)
-	defer end()
+	api, db, _ := newTestAPI(t)
+
 	test.NoError(t, workflow.CreateBuiltinWorkflowHookModels(api.mustDB()))
-	admin, passAdmin := assets.InsertAdminUser(t, api.mustDB())
+	admin, passAdmin := assets.InsertAdminUser(t, db)
 
 	//Prepare request
 	vars := map[string]string{
@@ -227,11 +221,11 @@ func Test_putWorkflowHookModelHandlerAsAdminUser(t *testing.T) {
 }
 
 func Test_putWorkflowHookModelHandlerAsLambdaUser(t *testing.T) {
-	api, _, _, end := newTestAPI(t)
-	defer end()
+	api, db, _ := newTestAPI(t)
+
 	test.NoError(t, workflow.CreateBuiltinWorkflowHookModels(api.mustDB()))
 
-	u, pass := assets.InsertLambdaUser(t, api.mustDB())
+	u, pass := assets.InsertLambdaUser(t, db)
 
 	//Prepare request
 	vars := map[string]string{

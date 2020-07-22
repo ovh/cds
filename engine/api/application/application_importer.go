@@ -2,17 +2,15 @@ package application
 
 import (
 	"context"
-	"fmt"
 	"strings"
-
-	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/gorpmapping"
 )
 
 //Import is able to create a new application and all its components
-func Import(ctx context.Context, db gorp.SqlExecutor, proj sdk.Project, app *sdk.Application, repomanager string, u sdk.Identifiable, msgChan chan<- sdk.Message) error {
+func Import(ctx context.Context, db gorpmapping.SqlExecutorWithTx, proj sdk.Project, app *sdk.Application, repomanager string, u sdk.Identifiable, msgChan chan<- sdk.Message) error {
 	doUpdate, erre := Exists(db, proj.Key, app.Name)
 	if erre != nil {
 		return sdk.WrapError(erre, "application.Import> Unable to check if application exists")
@@ -74,7 +72,7 @@ func Import(ctx context.Context, db gorp.SqlExecutor, proj sdk.Project, app *sdk
 			return sdk.NewError(sdk.ErrNoReposManager, err)
 		}
 
-		if err := repositoriesmanager.InsertForApplication(db, app, proj.Key); err != nil {
+		if err := repositoriesmanager.InsertForApplication(db, app); err != nil {
 			return err
 		}
 	}
@@ -83,7 +81,7 @@ func Import(ctx context.Context, db gorp.SqlExecutor, proj sdk.Project, app *sdk
 	for _, k := range app.Keys {
 		k.ApplicationID = app.ID
 		if err := InsertKey(db, &k); err != nil {
-			return sdk.WrapError(err, "Unable to insert key %s", k.Name)
+			return sdk.WrapError(err, "unable to insert key %s", k.Name)
 		}
 		if msgChan != nil {
 			msgChan <- sdk.NewMessage(sdk.MsgAppKeyCreated, strings.ToUpper(k.Type.String()), k.Name, app.Name)
@@ -92,13 +90,13 @@ func Import(ctx context.Context, db gorp.SqlExecutor, proj sdk.Project, app *sdk
 
 	//Set deployment strategies
 	if err := DeleteAllDeploymentStrategies(db, app.ID); err != nil {
-		return sdk.WrapError(err, "Unable to delete deployment strategies")
+		return sdk.WrapError(err, "unable to delete deployment strategies")
 	}
 
 	for pfName, pfConfig := range app.DeploymentStrategies {
 		pf, has := proj.GetIntegration(pfName)
 		if !has {
-			return sdk.WrapError(sdk.NewError(sdk.ErrNotFound, fmt.Errorf("integration %s not found", pfName)), "application.Import")
+			return sdk.NewErrorFrom(sdk.ErrNotFound, "integration %s not found", pfName)
 		}
 		if err := SetDeploymentStrategy(db, proj.ID, app.ID, pf.IntegrationModelID, pfName, pfConfig); err != nil {
 			return sdk.WrapError(err, "unable to set deployment strategy %s", pfName)
@@ -109,7 +107,7 @@ func Import(ctx context.Context, db gorp.SqlExecutor, proj sdk.Project, app *sdk
 }
 
 //importVariables is able to create variable on an existing application
-func importVariables(db gorp.SqlExecutor, app *sdk.Application, u sdk.Identifiable, msgChan chan<- sdk.Message) error {
+func importVariables(db gorpmapping.SqlExecutorWithTx, app *sdk.Application, u sdk.Identifiable, msgChan chan<- sdk.Message) error {
 	for i := range app.Variables {
 		newVar := &app.Variables[i]
 		if !sdk.IsInArray(newVar.Type, sdk.AvailableVariableType) {

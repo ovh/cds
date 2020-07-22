@@ -52,14 +52,17 @@ type WorkflowRun struct {
 	ToDelete         bool                             `json:"to_delete" db:"to_delete" cli:"-"`
 	JoinTriggersRun  map[int64]WorkflowNodeTriggerRun `json:"join_triggers_run,omitempty" db:"-"`
 	Header           WorkflowRunHeaders               `json:"header,omitempty" db:"-"`
+	URLs             URL                              `json:"urls" yaml:"-" db:"-" cli:"-"`
+	ReadOnly         bool                             `json:"read_only" yaml:"-" db:"read_only" cli:"-"`
 }
 
 type WorkflowRunSecret struct {
 	ID            string `json:"-" db:"id"`
 	WorkflowRunID int64  `json:"-" db:"workflow_run_id"`
+	Type          string `json:"-" db:"type"`
 	Context       string `json:"-" db:"context"`
 	Name          string `json:"-" db:"name"`
-	Value         []byte `json:"-" db:"cypher_value" gorpmapping:"WorkflowRunID,Context,Name"`
+	Value         []byte `json:"-" db:"cypher_value" gorpmapping:"encrypted,ID"`
 }
 
 // WorkflowNodeRunRelease represents the request struct use by release builtin action for workflow
@@ -86,8 +89,10 @@ type WorkflowRunNumber struct {
 // Translate translates messages in WorkflowNodeRun
 func (r *WorkflowRun) Translate(lang string) {
 	for ki, info := range r.Infos {
-		m := NewMessage(Messages[info.Message.ID], info.Message.Args...)
-		r.Infos[ki].UserMessage = m.String(lang)
+		if _, ok := Messages[info.Message.ID]; ok {
+			m := NewMessage(Messages[info.Message.ID], info.Message.Args...)
+			r.Infos[ki].UserMessage = m.String(lang)
+		}
 	}
 }
 
@@ -426,8 +431,10 @@ type WorkflowNodeJobRunInfo struct {
 // Translate translates messages in WorkflowNodeJobRun
 func (wnjr *WorkflowNodeJobRun) Translate(lang string) {
 	for ki, info := range wnjr.SpawnInfos {
-		m := NewMessage(Messages[info.Message.ID], info.Message.Args...)
-		wnjr.SpawnInfos[ki].UserMessage = m.String(lang)
+		if _, ok := Messages[info.Message.ID]; ok {
+			m := NewMessage(Messages[info.Message.ID], info.Message.Args...)
+			wnjr.SpawnInfos[ki].UserMessage = m.String(lang)
+		}
 	}
 }
 

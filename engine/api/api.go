@@ -32,9 +32,7 @@ import (
 	"github.com/ovh/cds/engine/api/broadcast"
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/database"
-	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/engine/api/event"
-	"github.com/ovh/cds/engine/api/feature"
 	"github.com/ovh/cds/engine/api/integration"
 	"github.com/ovh/cds/engine/api/mail"
 	"github.com/ovh/cds/engine/api/metrics"
@@ -43,16 +41,15 @@ import (
 	"github.com/ovh/cds/engine/api/objectstore"
 	"github.com/ovh/cds/engine/api/purge"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
-	"github.com/ovh/cds/engine/api/secret"
 	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/engine/api/version"
 	"github.com/ovh/cds/engine/api/worker"
 	"github.com/ovh/cds/engine/api/workermodel"
 	"github.com/ovh/cds/engine/api/workflow"
-	"github.com/ovh/cds/engine/cdn"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
+	"github.com/ovh/cds/sdk/gorpmapping"
 	"github.com/ovh/cds/sdk/jws"
 	"github.com/ovh/cds/sdk/log"
 )
@@ -82,6 +79,10 @@ type Configuration struct {
 	Directories struct {
 		Download string `toml:"download" default:"/var/lib/cds-engine" json:"download"`
 	} `toml:"directories" json:"directories"`
+	InternalServiceMesh struct {
+		RequestSecondsTimeout int  `toml:"requestSecondsTimeout" json:"requestSecondsTimeout" default:"60"`
+		InsecureSkipVerifyTLS bool `toml:"insecureSkipVerifyTLS" json:"insecureSkipVerifyTLS" default:"false"`
+	} `toml:"internalServiceMesh" json:"internalServiceMesh"`
 	Auth struct {
 		DefaultGroup  string `toml:"defaultGroup" default:"" comment:"The default group is the group in which every new user will be granted at signup" json:"defaultGroup"`
 		RSAPrivateKey string `toml:"rsaPrivateKey" default:"" comment:"The RSA Private Key used to sign and verify the JWT Tokens issued by the API \nThis is mandatory." json:"-"`
@@ -173,14 +174,6 @@ type Configuration struct {
 			ForcePathStyle      bool   `toml:"forcePathStyle" json:"forcePathStyle" commented:"true"`                          //optional
 		} `toml:"awss3" json:"awss3"`
 	} `toml:"artifact" comment:"Either filesystem local storage or Openstack Swift Storage are supported" json:"artifact"`
-	Features struct {
-		Izanami struct {
-			APIURL       string `toml:"apiurl" json:"apiurl"`
-			ClientID     string `toml:"clientid" json:"-"`
-			ClientSecret string `toml:"clientsecret" json:"-"`
-			Token        string `toml:"token" comment:"Token shared between Izanami and CDS to be able to send webhooks from izanami" json:"-"`
-		} `toml:"izanami" comment:"Feature flipping provider: https://maif.github.io/izanami" json:"izanami"`
-	} `toml:"features" comment:"###########################\n CDS Features flipping Settings \n##########################" json:"features"`
 	Services    []sdk.ServiceConfiguration `toml:"services" comment:"###########################\n CDS Services Settings \n##########################" json:"services"`
 	DefaultOS   string                     `toml:"defaultOS" default:"linux" comment:"if no model and os/arch is specified in your job's requirements then spawn worker on this operating system (example: freebsd, linux, windows)" json:"defaultOS"`
 	DefaultArch string                     `toml:"defaultArch" default:"amd64" comment:"if no model and no os/arch is specified in your job's requirements then spawn worker on this architecture (example: amd64, arm, 386)" json:"defaultArch"`
@@ -193,7 +186,6 @@ type Configuration struct {
 		StepMaxSize    int64 `toml:"stepMaxSize" default:"15728640" comment:"Max step logs size in bytes (default: 15MB)" json:"stepMaxSize"`
 		ServiceMaxSize int64 `toml:"serviceMaxSize" default:"15728640" comment:"Max service logs size in bytes (default: 15MB)" json:"serviceMaxSize"`
 	} `toml:"log" json:"log" comment:"###########################\n Log settings.\n##########################"`
-	CDN cdn.Configuration `toml:"cdn" json:"cdn" comment:"###########################\n CDN settings.\n##########################"`
 }
 
 // DefaultValues is the struc for API Default configuration default values
@@ -224,7 +216,7 @@ func (*API) Service() sdk.Service {
 	return sdk.Service{
 		LastHeartbeat: time.Time{},
 		CanonicalService: sdk.CanonicalService{
-			Type: services.TypeAPI,
+			Type: sdk.TypeAPI,
 		},
 	}
 }
@@ -238,7 +230,6 @@ type API struct {
 	SharedStorage       objectstore.Driver
 	StartupTime         time.Time
 	Maintenance         bool
-	eventsBroker        *eventsBroker
 	websocketBroker     *websocketBroker
 	Cache               cache.Store
 	Metrics             struct {
@@ -276,7 +267,7 @@ func (a *API) ApplyConfiguration(config interface{}) error {
 		return fmt.Errorf("Invalid configuration")
 	}
 
-	a.Common.ServiceType = services.TypeAPI
+	a.Common.ServiceType = sdk.TypeAPI
 	a.Common.ServiceName = a.Config.Name
 	return nil
 }
@@ -401,13 +392,19 @@ func (a *API) Serve(ctx context.Context) error {
 		return errors.New("worker binary unavailable")
 	}
 
-	// Initialize secret driver
-	secret.Init(a.Config.Secrets.Key)
-
 	// Initialize the jwt layer
 	if err := authentication.Init(a.ServiceName, []byte(a.Config.Auth.RSAPrivateKey)); err != nil {
 		return sdk.WrapError(err, "unable to initialize the JWT Layer")
 	}
+
+	// Intialize service mesh httpclient
+	if a.Config.InternalServiceMesh.RequestSecondsTimeout == 0 {
+		a.Config.InternalServiceMesh.RequestSecondsTimeout = 60
+	}
+	services.HTTPClient = cdsclient.NewHTTPClient(
+		time.Duration(a.Config.InternalServiceMesh.RequestSecondsTimeout)*time.Second,
+		a.Config.InternalServiceMesh.InsecureSkipVerifyTLS,
+	)
 
 	// Initialize mail package
 	log.Info(ctx, "Initializing mail driver...")
@@ -418,14 +415,6 @@ func (a *API) Serve(ctx context.Context) error {
 		a.Config.SMTP.Port,
 		a.Config.SMTP.TLS,
 		a.Config.SMTP.Disable)
-
-	// Initialize feature packages
-	log.Info(ctx, "Initializing feature flipping with izanami %s", a.Config.Features.Izanami.APIURL)
-	if a.Config.Features.Izanami.APIURL != "" {
-		if err := feature.Init(a.Config.Features.Izanami.APIURL, a.Config.Features.Izanami.ClientID, a.Config.Features.Izanami.ClientSecret); err != nil {
-			return errors.Wrap(err, "feature flipping not enabled with izanami: %v")
-		}
-	}
 
 	//Initialize artifacts storage
 	log.Info(ctx, "Initializing %s objectstore...", a.Config.Artifact.Mode)
@@ -476,7 +465,6 @@ func (a *API) Serve(ctx context.Context) error {
 		},
 	}
 
-	// DEPRECATED
 	// API Storage will be a public integration
 	var err error
 	a.SharedStorage, err = objectstore.Init(ctx, cfg)
@@ -525,7 +513,7 @@ func (a *API) Serve(ctx context.Context) error {
 		Background: ctx,
 	}
 	a.InitRouter()
-	if err := InitRouterMetrics(a); err != nil {
+	if err := InitRouterMetrics(ctx, a); err != nil {
 		log.Error(ctx, "unable to init router metrics: %v", err)
 	}
 
@@ -655,74 +643,11 @@ func (a *API) Serve(ctx context.Context) error {
 		a.serviceAPIHeartbeat(ctx)
 	}, a.PanicDump())
 	sdk.GoRoutine(ctx, "authentication.SessionCleaner", func(ctx context.Context) {
-		authentication.SessionCleaner(ctx, a.mustDB)
+		authentication.SessionCleaner(ctx, a.mustDB, 10*time.Second)
 	}, a.PanicDump())
 
-	migrate.Add(ctx, sdk.Migration{Name: "RefactorGroupMembership", Release: "0.44.0", Blocker: true, Automatic: true, ExecFunc: func(ctx context.Context) error {
-		return migrate.RefactorGroupMembership(ctx, a.DBConnectionFactory.GetDBMap())
-	}})
-
-	migrate.Add(ctx, sdk.Migration{Name: "RefactorApplicationKeys", Release: "0.44.0", Blocker: true, Automatic: true, ExecFunc: func(ctx context.Context) error {
-		return migrate.RefactorApplicationKeys(ctx, a.DBConnectionFactory.GetDBMap())
-	}})
-
-	migrate.Add(ctx, sdk.Migration{Name: "RefactorProjectKeys", Release: "0.44.0", Blocker: true, Automatic: true, ExecFunc: func(ctx context.Context) error {
-		return migrate.RefactorProjectKeys(ctx, a.DBConnectionFactory.GetDBMap())
-	}})
-
-	migrate.Add(ctx, sdk.Migration{Name: "RefactorApplicationVariables", Release: "0.44.0", Blocker: true, Automatic: true, ExecFunc: func(ctx context.Context) error {
-		return migrate.RefactorApplicationVariables(ctx, a.DBConnectionFactory.GetDBMap())
-	}})
-
-	migrate.Add(ctx, sdk.Migration{Name: "RefactorEnvironmentKeys", Release: "0.44.0", Blocker: true, Automatic: true, ExecFunc: func(ctx context.Context) error {
-		return migrate.RefactorEnvironmentKeys(ctx, a.DBConnectionFactory.GetDBMap())
-	}})
-
-	migrate.Add(ctx, sdk.Migration{Name: "RefactorProjectVariables", Release: "0.44.0", Blocker: true, Automatic: true, ExecFunc: func(ctx context.Context) error {
-		return migrate.RefactorProjectVariables(ctx, a.DBConnectionFactory.GetDBMap())
-	}})
-
-	migrate.Add(ctx, sdk.Migration{Name: "RefactorEnvironmentVariables", Release: "0.44.0", Blocker: true, Automatic: true, ExecFunc: func(ctx context.Context) error {
-		return migrate.RefactorEnvironmentVariables(ctx, a.DBConnectionFactory.GetDBMap())
-	}})
-
-	migrate.Add(ctx, sdk.Migration{Name: "CleanDuplicateNodes", Release: "0.44.0", Blocker: false, Automatic: true, ExecFunc: func(ctx context.Context) error {
-		return migrate.CleanDuplicateNodes(ctx, a.DBConnectionFactory.GetDBMap())
-	}})
-
-	migrate.Add(ctx, sdk.Migration{Name: "ListDuplicateHooks", Release: "0.44.0", Blocker: false, Automatic: true, ExecFunc: func(ctx context.Context) error {
-		return migrate.CleanDuplicateHooks(ctx, a.DBConnectionFactory.GetDBMap(), a.Cache, true)
-	}})
-
-	migrate.Add(ctx, sdk.Migration{Name: "CleanDuplicateHooks", Release: "0.44.0", Blocker: false, Automatic: false, ExecFunc: func(ctx context.Context) error {
-		return migrate.CleanDuplicateHooks(ctx, a.DBConnectionFactory.GetDBMap(), a.Cache, false)
-	}})
-
-	migrate.Add(ctx, sdk.Migration{Name: "FixEmptyUUIDHooks", Release: "0.44.0", Blocker: false, Automatic: false, ExecFunc: func(ctx context.Context) error {
-		return migrate.FixEmptyUUIDHooks(ctx, a.DBConnectionFactory.GetDBMap(), a.Cache)
-	}})
-
-	migrate.Add(ctx, sdk.Migration{Name: "RefactorApplicationCrypto", Release: "0.44.0", Blocker: true, Automatic: true, ExecFunc: func(ctx context.Context) error {
-		return migrate.RefactorApplicationCrypto(ctx, a.DBConnectionFactory.GetDBMap())
-	}})
-
-	migrate.Add(ctx, sdk.Migration{Name: "RefactorIntegrationCrypto", Release: "0.44.0", Blocker: true, Automatic: true, ExecFunc: func(ctx context.Context) error {
-		if err := migrate.RefactorIntegrationModelCrypto(ctx, a.DBConnectionFactory.GetDBMap()); err != nil {
-			return err
-		}
-		return migrate.RefactorProjectIntegrationCrypto(ctx, a.DBConnectionFactory.GetDBMap())
-	}})
-
-	migrate.Add(ctx, sdk.Migration{Name: "AsCodeEventsWorkflowHolder", Release: "0.44.0", Blocker: false, Automatic: true, ExecFunc: func(ctx context.Context) error {
-		return migrate.RefactorAsCodeEventsWorkflowHolder(ctx, a.DBConnectionFactory.GetDBMap())
-	}})
-
-	migrate.Add(ctx, sdk.Migration{Name: "RefactorProjectVCSServerCrypto", Release: "0.44.0", Blocker: true, Automatic: true, ExecFunc: func(ctx context.Context) error {
-		return migrate.RefactorProjectVCSServers(ctx, a.DBConnectionFactory.GetDBMap())
-  }})
-
-	migrate.Add(ctx, sdk.Migration{Name: "RefactorWorkerModelCrypto", Release: "0.44.0", Blocker: true, Automatic: true, ExecFunc: func(ctx context.Context) error {
-		return migrate.RefactorWorkerModelCrypto(ctx, a.DBConnectionFactory.GetDBMap())
+	migrate.Add(ctx, sdk.Migration{Name: "RunsSecrets", Release: "0.47.0", Blocker: false, Automatic: true, ExecFunc: func(ctx context.Context) error {
+		return migrate.RunsSecrets(ctx, a.DBConnectionFactory.GetDBMap)
 	}})
 
 	isFreshInstall, errF := version.IsFreshInstall(a.mustDB())
@@ -812,7 +737,7 @@ func (a *API) Serve(ctx context.Context) error {
 		}, a.PanicDump())
 	sdk.GoRoutine(ctx, "workflow.Initialize",
 		func(ctx context.Context) {
-			workflow.Initialize(ctx, a.DBConnectionFactory.GetDBMap, a.Cache, a.Config.URL.UI, a.Config.DefaultOS, a.Config.DefaultArch)
+			workflow.Initialize(ctx, a.DBConnectionFactory.GetDBMap, a.Cache, a.Config.URL.UI, a.Config.DefaultOS, a.Config.DefaultArch, a.Config.Log.StepMaxSize)
 		}, a.PanicDump())
 	sdk.GoRoutine(ctx, "PushInElasticSearch",
 		func(ctx context.Context) {
@@ -873,16 +798,6 @@ func (a *API) Serve(ctx context.Context) error {
 		}
 		log.Error(ctx, "api> heap dump uploaded to %s", s)
 	}()
-
-	cdsService := &cdn.Service{
-		Cfg:   a.Config.CDN,
-		Db:    a.mustDB(),
-		Cache: a.Cache,
-	}
-	if err := cdsService.InitMetrics(); err != nil {
-		return sdk.WithStack(err)
-	}
-	cdsService.RunTcpLogServer(ctx)
 
 	log.Info(ctx, "Starting CDS API HTTP Server on %s:%d", a.Config.HTTP.Addr, a.Config.HTTP.Port)
 	if err := s.ListenAndServe(); err != nil {

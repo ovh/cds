@@ -2,13 +2,14 @@ package application
 
 import (
 	"context"
-	"fmt"
 	"strings"
 	"time"
 
 	"github.com/go-gorp/gorp"
-	"github.com/ovh/cds/engine/api/database/gorpmapping"
+	"github.com/lib/pq"
+
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/gorpmapping"
 	"github.com/ovh/cds/sdk/log"
 )
 
@@ -29,7 +30,7 @@ func (e dbApplicationVariable) Canonical() gorpmapping.CanonicalForms {
 	}
 }
 
-func newDBApplicationVariable(v sdk.Variable, appID int64) dbApplicationVariable {
+func newDBApplicationVariable(v sdk.ApplicationVariable, appID int64) dbApplicationVariable {
 	if sdk.NeedPlaceholder(v.Type) {
 		return dbApplicationVariable{
 			ID:            v.ID,
@@ -48,28 +49,30 @@ func newDBApplicationVariable(v sdk.Variable, appID int64) dbApplicationVariable
 	}
 }
 
-func (e dbApplicationVariable) Variable() sdk.Variable {
+func (e dbApplicationVariable) Variable() sdk.ApplicationVariable {
 	if sdk.NeedPlaceholder(e.Type) {
-		return sdk.Variable{
-			ID:    e.ID,
-			Name:  e.Name,
-			Value: e.CipherValue,
-			Type:  e.Type,
+		return sdk.ApplicationVariable{
+			ID:            e.ID,
+			Name:          e.Name,
+			Value:         e.CipherValue,
+			Type:          e.Type,
+			ApplicationID: e.ApplicationID,
 		}
 	}
 
-	return sdk.Variable{
-		ID:    e.ID,
-		Name:  e.Name,
-		Value: e.ClearValue,
-		Type:  e.Type,
+	return sdk.ApplicationVariable{
+		ID:            e.ID,
+		Name:          e.Name,
+		Value:         e.ClearValue,
+		Type:          e.Type,
+		ApplicationID: e.ApplicationID,
 	}
 }
 
-func loadAllVariables(db gorp.SqlExecutor, query gorpmapping.Query, opts ...gorpmapping.GetOptionFunc) ([]sdk.Variable, error) {
+func loadAllVariables(db gorp.SqlExecutor, query gorpmapping.Query, opts ...gorpmapping.GetOptionFunc) ([]sdk.ApplicationVariable, error) {
 	var ctx = context.Background()
 	var res []dbApplicationVariable
-	vars := make([]sdk.Variable, 0, len(res))
+	vars := make([]sdk.ApplicationVariable, 0, len(res))
 
 	if err := gorpmapping.GetAll(ctx, db, query, &res, opts...); err != nil {
 		return nil, err
@@ -89,19 +92,18 @@ func loadAllVariables(db gorp.SqlExecutor, query gorpmapping.Query, opts ...gorp
 	return vars, nil
 }
 
-// LoadAllVariables Get all variable for the given application
-func LoadAllVariables(db gorp.SqlExecutor, appID int64) ([]sdk.Variable, error) {
+func LoadAllVariables(db gorp.SqlExecutor, appID int64, opts ...gorpmapping.GetOptionFunc) ([]sdk.ApplicationVariable, error) {
 	query := gorpmapping.NewQuery(`
 		SELECT *
 		FROM application_variable
 		WHERE application_id = $1
-		ORDER BY var_name
+		ORDER BY application_id, var_name
 	`).Args(appID)
-	return loadAllVariables(db, query)
+	return loadAllVariables(db, query, opts...)
 }
 
 // LoadAllVariablesWithDecrytion Get all variable for the given application, it also decrypt all the secure content
-func LoadAllVariablesWithDecrytion(db gorp.SqlExecutor, appID int64) ([]sdk.Variable, error) {
+func LoadAllVariablesWithDecrytion(db gorp.SqlExecutor, appID int64) ([]sdk.ApplicationVariable, error) {
 	query := gorpmapping.NewQuery(`
 		SELECT *
 		FROM application_variable
@@ -111,7 +113,7 @@ func LoadAllVariablesWithDecrytion(db gorp.SqlExecutor, appID int64) ([]sdk.Vari
 	return loadAllVariables(db, query, gorpmapping.GetOptions.WithDecryption)
 }
 
-func loadVariable(db gorp.SqlExecutor, q gorpmapping.Query, opts ...gorpmapping.GetOptionFunc) (*sdk.Variable, error) {
+func loadVariable(db gorp.SqlExecutor, q gorpmapping.Query, opts ...gorpmapping.GetOptionFunc) (*sdk.ApplicationVariable, error) {
 	var v dbApplicationVariable
 	found, err := gorpmapping.Get(context.Background(), db, q, &v, opts...)
 	if err != nil {
@@ -134,14 +136,14 @@ func loadVariable(db gorp.SqlExecutor, q gorpmapping.Query, opts ...gorpmapping.
 }
 
 // LoadVariable retrieve a specific variable
-func LoadVariable(db gorp.SqlExecutor, appID int64, varName string) (*sdk.Variable, error) {
+func LoadVariable(db gorp.SqlExecutor, appID int64, varName string) (*sdk.ApplicationVariable, error) {
 	query := gorpmapping.NewQuery(`SELECT * FROM application_variable
 			WHERE application_id = $1 AND var_name=$2`).Args(appID, varName)
 	return loadVariable(db, query)
 }
 
 // LoadVariableWithDecryption retrieve a specific variable with decrypted content
-func LoadVariableWithDecryption(db gorp.SqlExecutor, appID int64, varID int64, varName string) (*sdk.Variable, error) {
+func LoadVariableWithDecryption(db gorp.SqlExecutor, appID int64, varID int64, varName string) (*sdk.ApplicationVariable, error) {
 	query := gorpmapping.NewQuery(`SELECT * FROM application_variable
 			WHERE application_id = $1 AND id = $2 AND var_name=$3`).Args(appID, varID, varName)
 	return loadVariable(db, query, gorpmapping.GetOptions.WithDecryption)
@@ -158,21 +160,19 @@ func DeleteAllVariables(db gorp.SqlExecutor, applicationID int64) error {
 }
 
 // InsertVariable Insert a new variable in the given application
-func InsertVariable(db gorp.SqlExecutor, appID int64, v *sdk.Variable, u sdk.Identifiable) error {
+func InsertVariable(db gorpmapping.SqlExecutorWithTx, appID int64, v *sdk.ApplicationVariable, u sdk.Identifiable) error {
 	//Check variable name
 	rx := sdk.NamePatternRegex
 	if !rx.MatchString(v.Name) {
-		return sdk.NewError(sdk.ErrInvalidName, fmt.Errorf("Invalid variable name. It should match %s", sdk.NamePattern))
+		return sdk.NewErrorFrom(sdk.ErrInvalidName, "variable name should match pattern %s", sdk.NamePattern)
 	}
-
 	dbVar := newDBApplicationVariable(*v, appID)
 	err := gorpmapping.InsertAndSign(context.Background(), db, &dbVar)
 	if err != nil && strings.Contains(err.Error(), "application_variable_pkey") {
 		return sdk.WithStack(sdk.ErrVariableExists)
-
 	}
 	if err != nil {
-		return sdk.WrapError(err, "Cannot insert variable %s", v.Name)
+		return sdk.WrapError(err, "cannot insert variable %s", v.Name)
 	}
 
 	*v = dbVar.Variable()
@@ -193,10 +193,10 @@ func InsertVariable(db gorp.SqlExecutor, appID int64, v *sdk.Variable, u sdk.Ide
 }
 
 // UpdateVariable Update a variable in the given application
-func UpdateVariable(db gorp.SqlExecutor, appID int64, variable *sdk.Variable, variableBefore *sdk.Variable, u sdk.Identifiable) error {
+func UpdateVariable(db gorpmapping.SqlExecutorWithTx, appID int64, variable *sdk.ApplicationVariable, variableBefore *sdk.ApplicationVariable, u sdk.Identifiable) error {
 	rx := sdk.NamePatternRegex
 	if !rx.MatchString(variable.Name) {
-		return sdk.NewError(sdk.ErrInvalidName, fmt.Errorf("Invalid variable name. It should match %s", sdk.NamePattern))
+		return sdk.NewErrorFrom(sdk.ErrInvalidName, "variable name should match pattern %s", sdk.NamePattern)
 	}
 
 	dbVar := newDBApplicationVariable(*variable, appID)
@@ -229,7 +229,7 @@ func UpdateVariable(db gorp.SqlExecutor, appID int64, variable *sdk.Variable, va
 }
 
 // DeleteVariable Delete a variable from the given pipeline
-func DeleteVariable(db gorp.SqlExecutor, appID int64, variable *sdk.Variable, u sdk.Identifiable) error {
+func DeleteVariable(db gorp.SqlExecutor, appID int64, variable *sdk.ApplicationVariable, u sdk.Identifiable) error {
 	query := `DELETE FROM application_variable
 		  WHERE application_variable.application_id = $1 AND application_variable.var_name = $2`
 	result, err := db.Exec(query, appID, variable.Name)
@@ -258,4 +258,41 @@ func DeleteVariable(db gorp.SqlExecutor, appID int64, variable *sdk.Variable, u 
 		return sdk.WrapError(err, "Cannot insert audit for variable %s", variable.Name)
 	}
 	return nil
+}
+
+// LoadAllVariablesForAppsWithDecryption load all variables from all given applications, with decryption
+func LoadAllVariablesForAppsWithDecryption(ctx context.Context, db gorp.SqlExecutor, appIDs []int64) (map[int64][]sdk.ApplicationVariable, error) {
+	return loadAllVariablesForApps(ctx, db, appIDs, gorpmapping.GetOptions.WithDecryption)
+}
+
+func loadAllVariablesForApps(ctx context.Context, db gorp.SqlExecutor, appsID []int64, opts ...gorpmapping.GetOptionFunc) (map[int64][]sdk.ApplicationVariable, error) {
+	var res []dbApplicationVariable
+	query := gorpmapping.NewQuery(`
+		SELECT *
+		FROM application_variable
+		WHERE application_id = ANY($1)
+		ORDER BY application_id
+	`).Args(pq.Int64Array(appsID))
+	if err := gorpmapping.GetAll(ctx, db, query, &res, opts...); err != nil {
+		return nil, err
+	}
+
+	appsVars := make(map[int64][]sdk.ApplicationVariable)
+
+	for i := range res {
+		dbAppVar := res[i]
+		isValid, err := gorpmapping.CheckSignature(dbAppVar, dbAppVar.Signature)
+		if err != nil {
+			return nil, err
+		}
+		if !isValid {
+			log.Error(ctx, "application.loadAllVariablesForApps> application variable %d data corrupted", dbAppVar.ID)
+			continue
+		}
+		if _, ok := appsVars[dbAppVar.ApplicationID]; !ok {
+			appsVars[dbAppVar.ApplicationID] = make([]sdk.ApplicationVariable, 0)
+		}
+		appsVars[dbAppVar.ApplicationID] = append(appsVars[dbAppVar.ApplicationID], dbAppVar.Variable())
+	}
+	return appsVars, nil
 }

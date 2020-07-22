@@ -18,9 +18,9 @@ import (
 )
 
 func TestInsertStaticFiles(t *testing.T) {
-	db, cache, end := test.SetupPG(t, bootstrap.InitiliazeDB)
-	defer end()
-	_ = event.Initialize(context.Background(), db, cache)
+	db, cache := test.SetupPG(t, bootstrap.InitiliazeDB)
+
+	_ = event.Initialize(context.Background(), db.DbMap, cache)
 
 	u, _ := assets.InsertAdminUser(t, db)
 	consumer, _ := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
@@ -74,14 +74,15 @@ func TestInsertStaticFiles(t *testing.T) {
 		PurgeTags:     []string{"git.branch"},
 	}
 
-	test.NoError(t, workflow.Insert(context.TODO(), db, cache, *proj, &w))
+	projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
+	test.NoError(t, workflow.Insert(context.TODO(), db, cache, projIdent, proj.ProjectGroups, &w))
 
-	w1, err := workflow.Load(context.TODO(), db, cache, *proj, "test_staticfiles_1", workflow.LoadOptions{
+	w1, err := workflow.Load(context.TODO(), db, projIdent, "test_staticfiles_1", workflow.LoadOptions{
 		DeepPipeline: true,
 	})
 	test.NoError(t, err)
 
-	wfr, errWR := workflow.CreateRun(db, w1, nil, u)
+	wfr, errWR := workflow.CreateRun(db.DbMap, w1, nil, u)
 	assert.NoError(t, errWR)
 	wfr.Workflow = *w1
 	_, errWr := workflow.StartWorkflowRun(context.TODO(), db, cache, *proj, wfr, &sdk.WorkflowRunPostHandlerOption{

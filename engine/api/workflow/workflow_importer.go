@@ -2,18 +2,19 @@ package workflow
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/go-gorp/gorp"
+
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/group"
-	"github.com/ovh/cds/engine/api/observability"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/gorpmapping"
+	"github.com/ovh/cds/sdk/telemetry"
 )
 
 //Import is able to create a new workflow and all its components
-func Import(ctx context.Context, db gorp.SqlExecutor, store cache.Store, projIdent sdk.ProjectIdentifiers, projectsGroups []sdk.GroupPermission, oldW, w *sdk.Workflow, force bool, msgChan chan<- sdk.Message) error {
-	ctx, end := observability.Span(ctx, "workflow.Import")
+func Import(ctx context.Context, db gorpmapping.SqlExecutorWithTx, store cache.Store, projIdent sdk.ProjectIdentifiers, projectsGroups []sdk.GroupPermission, oldW, w *sdk.Workflow, force bool, msgChan chan<- sdk.Message) error {
+	ctx, end := telemetry.Span(ctx, "workflow.Import")
 	defer end()
 
 	w.ProjectKey = projIdent.Key
@@ -30,7 +31,7 @@ func Import(ctx context.Context, db gorp.SqlExecutor, store cache.Store, projIde
 
 	// create the workflow if not exists
 	if oldW == nil {
-		if err := Insert(ctx, db, store, projIdent, w, projectsGroups); err != nil {
+		if err := Insert(ctx, db, store, projIdent, projectsGroups, w); err != nil {
 			return sdk.WrapError(err, "Unable to insert workflow")
 		}
 		if msgChan != nil {
@@ -45,7 +46,7 @@ func Import(ctx context.Context, db gorp.SqlExecutor, store cache.Store, projIde
 	}
 
 	if !force {
-		return sdk.NewError(sdk.ErrConflict, fmt.Errorf("Workflow exists"))
+		return sdk.NewErrorFrom(sdk.ErrAlreadyExist, "workflow exists")
 	}
 
 	// Retrieve existing hook
@@ -93,15 +94,18 @@ func Import(ctx context.Context, db gorp.SqlExecutor, store cache.Store, projIde
 
 func importWorkflowGroups(db gorp.SqlExecutor, w *sdk.Workflow) error {
 	if len(w.Groups) > 0 {
+		if err := group.DeleteAllWorkflowGroups(db, w.ID); err != nil {
+			return err
+		}
 		for i := range w.Groups {
 			g, err := group.LoadByName(context.Background(), db, w.Groups[i].Group.Name)
 			if err != nil {
-				return sdk.WrapError(err, "Unable to load group %s", w.Groups[i].Group.Name)
+				return sdk.WrapError(err, "unable to load group %s", w.Groups[i].Group.Name)
 			}
 			w.Groups[i].Group = *g
 		}
 		if err := group.UpsertAllWorkflowGroups(db, w, w.Groups); err != nil {
-			return sdk.WrapError(err, "Unable to update workflow")
+			return sdk.WrapError(err, "unable to update workflow")
 		}
 	}
 	return nil

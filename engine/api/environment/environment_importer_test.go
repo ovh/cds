@@ -12,8 +12,7 @@ import (
 )
 
 func TestImportInto_Variable(t *testing.T) {
-	db, _, end := test.SetupPG(t)
-	defer end()
+	db, _ := test.SetupPG(t)
 
 	u := &sdk.AuthentifiedUser{
 		Username: "foo",
@@ -35,19 +34,19 @@ func TestImportInto_Variable(t *testing.T) {
 
 	test.NoError(t, environment.InsertEnvironment(db, &env))
 
-	v0 := sdk.Variable{
+	v0 := sdk.EnvironmentVariable{
 		Name:  "v0",
 		Type:  sdk.StringVariable,
 		Value: "value0",
 	}
 
-	v1 := sdk.Variable{
+	v1 := sdk.EnvironmentVariable{
 		Name:  "v1",
 		Type:  sdk.StringVariable,
 		Value: "value1",
 	}
 
-	v2 := sdk.Variable{
+	v2 := sdk.EnvironmentVariable{
 		Name:  "v2",
 		Type:  sdk.StringVariable,
 		Value: "value2",
@@ -64,7 +63,7 @@ func TestImportInto_Variable(t *testing.T) {
 	env2 := sdk.Environment{
 		Name:      "testenv2",
 		ProjectID: proj.ID,
-		Variables: []sdk.Variable{
+		Variables: []sdk.EnvironmentVariable{
 			{
 				Name:  "v1",
 				Type:  sdk.TextVariable,
@@ -137,8 +136,7 @@ func TestImportInto_Variable(t *testing.T) {
 }
 
 func TestImportInto_Group(t *testing.T) {
-	db, _, end := test.SetupPG(t)
-	defer end()
+	db, _ := test.SetupPG(t)
 
 	u := &sdk.AuthentifiedUser{
 		Username: "foo",
