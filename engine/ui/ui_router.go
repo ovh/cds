@@ -23,16 +23,14 @@ func (s *Service) initRouter(ctx context.Context) {
 	r.SetHeaderFunc = api.DefaultHeaders
 	r.PostMiddlewares = append(r.PostMiddlewares, api.TracingPostMiddleware)
 
-	serviceURL, _ := url.Parse(s.Cfg.URL)
-
-	r.Handle(serviceURL.Path+"/mon/version", nil, r.GET(api.VersionHandler, api.Auth(false)))
-	r.Handle(serviceURL.Path+"/mon/status", nil, r.GET(s.statusHandler, api.Auth(false)))
-	r.Handle(serviceURL.Path+"/mon/metrics", nil, r.GET(service.GetPrometheustMetricsHandler(s), api.Auth(false)))
-	r.Handle(serviceURL.Path+"/mon/metrics/all", nil, r.GET(service.GetMetricsHandler, api.Auth(false)))
+	r.Handle(s.Cfg.DeployURL+"/mon/version", nil, r.GET(api.VersionHandler, api.Auth(false)))
+	r.Handle(s.Cfg.DeployURL+"/mon/status", nil, r.GET(s.statusHandler, api.Auth(false)))
+	r.Handle(s.Cfg.DeployURL+"/mon/metrics", nil, r.GET(service.GetPrometheustMetricsHandler(s), api.Auth(false)))
+	r.Handle(s.Cfg.DeployURL+"/mon/metrics/all", nil, r.GET(service.GetMetricsHandler, api.Auth(false)))
 
 	// proxypass
-	r.Mux.PathPrefix(serviceURL.Path + "/cdsapi").Handler(s.getReverseProxy(serviceURL.Path+"/cdsapi", s.Cfg.API.HTTP.URL))
-	r.Mux.PathPrefix(serviceURL.Path + "/cdshooks").Handler(s.getReverseProxy(serviceURL.Path+"/cdshooks", s.Cfg.HooksURL))
+	r.Mux.PathPrefix(s.Cfg.DeployURL + "/cdsapi").Handler(s.getReverseProxy(s.Cfg.DeployURL+"/cdsapi", s.Cfg.API.HTTP.URL))
+	r.Mux.PathPrefix(s.Cfg.DeployURL + "/cdshooks").Handler(s.getReverseProxy(s.Cfg.DeployURL+"/cdshooks", s.Cfg.HooksURL))
 
 	// serve static UI files
 	r.Mux.PathPrefix("/").Handler(s.uiServe(http.Dir(s.HTMLDir)))
@@ -61,9 +59,8 @@ func (s *Service) getReverseProxy(path, urlRemote string) *httputil.ReverseProxy
 
 func (s *Service) uiServe(fs http.FileSystem) http.Handler {
 	fsh := http.FileServer(fs)
-	serviceURL, _ := url.Parse(s.Cfg.URL)
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		r.URL.Path = strings.TrimPrefix(r.URL.Path, serviceURL.Path)
+		r.URL.Path = strings.TrimPrefix(r.URL.Path, s.Cfg.DeployURL)
 		filePath := path.Clean(r.URL.Path)
 		_, err := fs.Open(filePath)
 		if os.IsNotExist(err) {
