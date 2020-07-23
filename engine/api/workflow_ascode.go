@@ -34,18 +34,12 @@ func (api *API) postWorkflowAsCodeHandler() service.Handler {
 		}
 
 		u := getAPIConsumer(ctx)
-		p, err := project.Load(ctx, api.mustDB(), key,
-			project.LoadOptions.WithApplicationWithDeploymentStrategies,
-			project.LoadOptions.WithPipelines,
-			project.LoadOptions.WithEnvironments,
-			project.LoadOptions.WithIntegrations,
-			project.LoadOptions.WithClearKeys,
-		)
+		proj, err := project.Load(ctx, api.mustDB(), key, project.LoadOptions.WithClearKeys)
 		if err != nil {
 			return err
 		}
 
-		projIdent := sdk.ProjectIdentifiers{ID: p.ID, Key: p.Key}
+		projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
 		wfDB, err := workflow.Load(ctx, api.mustDB(), projIdent, workflowName, workflow.LoadOptions{
 			DeepPipeline:          migrate,
 			WithAsCodeUpdateEvent: migrate,
@@ -70,7 +64,7 @@ func (api *API) postWorkflowAsCodeHandler() service.Handler {
 			if rootApp.VCSServer == "" || rootApp.RepositoryFullname == "" {
 				return sdk.NewErrorFrom(sdk.ErrRepoNotFound, "no vcs configuration set on the root application of the given workflow")
 			}
-			return api.migrateWorkflowAsCode(ctx, w, *p, wfDB, *rootApp, branch, message)
+			return api.migrateWorkflowAsCode(ctx, w, projIdent, proj.Keys, wfDB, *rootApp, branch, message)
 		}
 
 		if wfDB.FromRepository == "" {
@@ -108,7 +102,7 @@ func (api *API) postWorkflowAsCodeHandler() service.Handler {
 		}
 		defer tx.Rollback() // nolint
 
-		ope, err := operation.PushOperationUpdate(ctx, tx, api.Cache, *p, data, rootApp.VCSServer, rootApp.RepositoryFullname, branch, message, rootApp.RepositoryStrategy, u)
+		ope, err := operation.PushOperationUpdate(ctx, tx, api.Cache, projIdent, proj.Keys, data, rootApp.VCSServer, rootApp.RepositoryFullname, branch, message, rootApp.RepositoryStrategy, u)
 		if err != nil {
 			return err
 		}
@@ -135,10 +129,8 @@ func (api *API) postWorkflowAsCodeHandler() service.Handler {
 	}
 }
 
-func (api *API) migrateWorkflowAsCode(ctx context.Context, w http.ResponseWriter, p sdk.Project, wf *sdk.Workflow, app sdk.Application, branch, message string) error {
+func (api *API) migrateWorkflowAsCode(ctx context.Context, w http.ResponseWriter, projIdent sdk.ProjectIdentifiers, projKeys []sdk.ProjectKey, wf *sdk.Workflow, app sdk.Application, branch, message string) error {
 	u := getAPIConsumer(ctx)
-
-	projIdent := sdk.ProjectIdentifiers{ID: p.ID, Key: p.Key}
 
 	if wf.FromRepository != "" || (wf.FromRepository == "" && len(wf.AsCodeEvent) > 0) {
 		return sdk.WithStack(sdk.ErrWorkflowAlreadyAsCode)
@@ -175,7 +167,7 @@ func (api *API) migrateWorkflowAsCode(ctx context.Context, w http.ResponseWriter
 		return err
 	}
 
-	ope, err := operation.PushOperation(ctx, tx, api.Cache, p, data, app.VCSServer, app.RepositoryFullname, branch, message, app.RepositoryStrategy, u)
+	ope, err := operation.PushOperation(ctx, tx, api.Cache, projIdent, projKeys, data, app.VCSServer, app.RepositoryFullname, branch, message, app.RepositoryStrategy, u)
 	if err != nil {
 		return err
 	}

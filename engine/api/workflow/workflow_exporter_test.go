@@ -25,7 +25,7 @@ func TestPull(t *testing.T) {
 
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, cache, key, key)
-
+	projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
 	//First pipeline
 	pip := sdk.Pipeline{
 		ProjectID:  proj.ID,
@@ -74,7 +74,7 @@ func TestPull(t *testing.T) {
 	app := &sdk.Application{
 		Name: sdk.RandomString(10),
 	}
-	test.NoError(t, application.Insert(db, *proj, app))
+	test.NoError(t, application.Insert(db, projIdent, app))
 
 	//Environment
 	envName := sdk.RandomString(10)
@@ -117,7 +117,6 @@ func TestPull(t *testing.T) {
 	}
 
 	proj, _ = project.Load(context.TODO(), db, proj.Key, project.LoadOptions.WithGroups)
-	projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
 	test.NoError(t, workflow.Insert(context.TODO(), db, cache, projIdent, proj.ProjectGroups, &w))
 
 	w1, err := workflow.Load(context.TODO(), db, projIdent, "test_1", workflow.LoadOptions{})

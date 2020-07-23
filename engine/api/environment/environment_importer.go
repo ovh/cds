@@ -9,8 +9,8 @@ import (
 )
 
 //Import import or reuser the provided environment
-func Import(db gorpmapping.SqlExecutorWithTx, proj sdk.Project, env *sdk.Environment, msgChan chan<- sdk.Message, u sdk.Identifiable) error {
-	exists, err := Exists(db, proj.Key, env.Name)
+func Import(db gorpmapping.SqlExecutorWithTx, projIdent sdk.ProjectIdentifiers, env *sdk.Environment, msgChan chan<- sdk.Message, u sdk.Identifiable) error {
+	exists, err := Exists(db, projIdent.Key, env.Name)
 	if err != nil {
 		return err
 	}
@@ -22,7 +22,7 @@ func Import(db gorpmapping.SqlExecutorWithTx, proj sdk.Project, env *sdk.Environ
 		}
 
 		//Reload environment
-		e, err := LoadEnvironmentByName(db, proj.Key, env.Name)
+		e, err := LoadEnvironmentByName(db, projIdent.Key, env.Name)
 		if err != nil {
 			return err
 		}
@@ -32,8 +32,8 @@ func Import(db gorpmapping.SqlExecutorWithTx, proj sdk.Project, env *sdk.Environ
 	}
 
 	//Else create it
-	env.ProjectID = proj.ID
-	env.ProjectKey = proj.Key
+	env.ProjectID = projIdent.ID
+	env.ProjectKey = projIdent.Key
 	if err := InsertEnvironment(db, env); err != nil {
 		return sdk.WrapError(err, "Unable to create env %s on project %s(%d) ", env.Name, env.ProjectKey, env.ProjectID)
 	}

@@ -66,14 +66,11 @@ func (api *API) importPipelineHandler() service.Handler {
 		}
 
 		// Load project
-		proj, err := project.Load(ctx, api.mustDB(), key,
-			project.LoadOptions.Default,
-			project.LoadOptions.WithGroups,
-		)
+		proj, err := project.Load(ctx, api.mustDB(), key, project.LoadOptions.WithGroups)
 		if err != nil {
 			return sdk.WrapError(err, "unable to load project %s", key)
 		}
-
+		projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
 		data, err := exportentities.ParsePipeline(format, body)
 		if err != nil {
 			return err
@@ -85,7 +82,7 @@ func (api *API) importPipelineHandler() service.Handler {
 		}
 		defer tx.Rollback() // nolint
 
-		pip, allMsg, globalError := pipeline.ParseAndImport(ctx, tx, api.Cache, *proj, data, getAPIConsumer(ctx),
+		pip, allMsg, globalError := pipeline.ParseAndImport(ctx, tx, projIdent, proj.ProjectGroups, data, getAPIConsumer(ctx),
 			pipeline.ImportOptions{Force: force})
 		msgListString := translate(r, allMsg)
 		if globalError != nil {
@@ -127,14 +124,11 @@ func (api *API) putImportPipelineHandler() service.Handler {
 			return err
 		}
 
-		proj, err := project.Load(ctx, api.mustDB(), key,
-			project.LoadOptions.Default,
-			project.LoadOptions.WithGroups,
-		)
+		proj, err := project.Load(ctx, api.mustDB(), key, project.LoadOptions.WithGroups)
 		if err != nil {
 			return sdk.WrapError(err, "unable to load project %s", key)
 		}
-
+		projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
 		data, err := exportentities.ParsePipeline(format, body)
 		if err != nil {
 			return err
@@ -146,7 +140,7 @@ func (api *API) putImportPipelineHandler() service.Handler {
 		}
 		defer tx.Rollback() // nolint
 
-		pip, allMsg, err := pipeline.ParseAndImport(ctx, tx, api.Cache, *proj, data, getAPIConsumer(ctx), pipeline.ImportOptions{Force: true, PipelineName: pipelineName})
+		pip, allMsg, err := pipeline.ParseAndImport(ctx, tx, projIdent, proj.ProjectGroups, data, getAPIConsumer(ctx), pipeline.ImportOptions{Force: true, PipelineName: pipelineName})
 		msgListString := translate(r, allMsg)
 		if err != nil {
 			return sdk.NewErrorWithStack(err, sdk.NewErrorFrom(sdk.ErrInvalidPipeline, "unable to parse and import pipeline"))

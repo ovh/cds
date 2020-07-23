@@ -149,7 +149,7 @@ func TestInsertSimpleWorkflowWithApplicationAndEnv(t *testing.T) {
 
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, cache, key, key)
-
+	projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
 	pip := sdk.Pipeline{
 		ProjectID:  proj.ID,
 		ProjectKey: proj.Key,
@@ -164,7 +164,7 @@ func TestInsertSimpleWorkflowWithApplicationAndEnv(t *testing.T) {
 		Name:       "app1",
 	}
 
-	test.NoError(t, application.Insert(db, *proj, &app))
+	test.NoError(t, application.Insert(db, projIdent, &app))
 
 	env := sdk.Environment{
 		ProjectID:  proj.ID,
@@ -194,7 +194,6 @@ func TestInsertSimpleWorkflowWithApplicationAndEnv(t *testing.T) {
 			},
 		},
 	}
-	projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
 	test.NoError(t, workflow.Insert(context.TODO(), db, cache, projIdent, proj.ProjectGroups, &w))
 
 	w1, err := workflow.Load(context.TODO(), db, projIdent, "test_1", workflow.LoadOptions{})
@@ -487,7 +486,7 @@ func TestUpdateSimpleWorkflowWithApplicationEnvPipelineParametersAndPayload(t *t
 
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, cache, key, key)
-
+	projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
 	pip := sdk.Pipeline{
 		ProjectID:  proj.ID,
 		ProjectKey: proj.Key,
@@ -532,7 +531,7 @@ func TestUpdateSimpleWorkflowWithApplicationEnvPipelineParametersAndPayload(t *t
 		Name:       "app1",
 	}
 
-	test.NoError(t, application.Insert(db, *proj, &app))
+	test.NoError(t, application.Insert(db, projIdent, &app))
 
 	app2 := sdk.Application{
 		ProjectID:  proj.ID,
@@ -540,7 +539,7 @@ func TestUpdateSimpleWorkflowWithApplicationEnvPipelineParametersAndPayload(t *t
 		Name:       "app2",
 	}
 
-	test.NoError(t, application.Insert(db, *proj, &app2))
+	test.NoError(t, application.Insert(db, projIdent, &app2))
 
 	env := sdk.Environment{
 		ProjectID:  proj.ID,
@@ -593,7 +592,6 @@ func TestUpdateSimpleWorkflowWithApplicationEnvPipelineParametersAndPayload(t *t
 		},
 	}
 
-	projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
 	test.NoError(t, workflow.Insert(context.TODO(), db, cache, projIdent, proj.ProjectGroups, &w))
 
 	w1, err := workflow.Load(context.TODO(), db, projIdent, "test_1", workflow.LoadOptions{})
@@ -1512,6 +1510,7 @@ func TestInsertAndDeleteMultiHook(t *testing.T) {
 	// Create project
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, cache, key, key)
+	projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
 	vcsServer := sdk.ProjectVCSServerLink{
 		ProjectID: proj.ID,
 		Name:      "github",
@@ -1682,7 +1681,7 @@ func TestInsertAndDeleteMultiHook(t *testing.T) {
 			},
 		},
 	}
-	assert.NoError(t, pipeline.Import(context.Background(), db, cache, *proj, pip, nil, u))
+	assert.NoError(t, pipeline.Import(context.Background(), db, projIdent, proj.ProjectGroups, pip, nil, u))
 	var errPip error
 	pip, errPip = pipeline.LoadPipeline(context.Background(), db, proj.Key, pip.Name, true)
 	assert.NoError(t, errPip)
@@ -1696,7 +1695,7 @@ vcs_ssh_key: proj-blabla
 `
 	var eapp = new(exportentities.Application)
 	assert.NoError(t, yaml.Unmarshal([]byte(appS), eapp))
-	app, _, _, globalError := application.ParseAndImport(context.Background(), db, cache, *proj, eapp, application.ImportOptions{Force: true}, nil, u)
+	app, _, _, globalError := application.ParseAndImport(context.Background(), db, projIdent, proj.Integrations, eapp, application.ImportOptions{Force: true}, nil, u)
 	assert.NoError(t, globalError)
 
 	proj.Applications = append(proj.Applications, *app)
@@ -1729,7 +1728,6 @@ vcs_ssh_key: proj-blabla
 			proj.Pipelines[0].ID: proj.Pipelines[0],
 		},
 	}
-	projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
 	assert.NoError(t, workflow.Insert(context.TODO(), db, cache, projIdent, proj.ProjectGroups, &w))
 
 	// Add check on Hook

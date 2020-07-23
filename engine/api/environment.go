@@ -310,7 +310,7 @@ func (api *API) updateAsCodeEnvironmentHandler() service.Handler {
 			Environments: []exportentities.Environment{envExported},
 		}
 
-		ope, err := operation.PushOperationUpdate(ctx, tx, api.Cache, *proj, wp, rootApp.VCSServer, rootApp.RepositoryFullname, branch, message, rootApp.RepositoryStrategy, u)
+		ope, err := operation.PushOperationUpdate(ctx, tx, api.Cache, projIdent, proj.Keys, wp, rootApp.VCSServer, rootApp.RepositoryFullname, branch, message, rootApp.RepositoryStrategy, u)
 		if err != nil {
 			return err
 		}

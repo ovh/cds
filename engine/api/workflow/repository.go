@@ -36,8 +36,8 @@ type PushOption struct {
 }
 
 // CreateFromRepository a workflow from a repository.
-func CreateFromRepository(ctx context.Context, db *gorp.DbMap, store cache.Store, p *sdk.Project, wf *sdk.Workflow,
-	opts sdk.WorkflowRunPostHandlerOption, u sdk.AuthConsumer, decryptFunc keys.DecryptFunc) (*PushSecrets, []sdk.Message, error) {
+func CreateFromRepository(ctx context.Context, db *gorp.DbMap, store cache.Store, projIdent sdk.ProjectIdentifiers, projPushData sdk.ProjectForWorkflowPush, projKeys []sdk.ProjectKey, wf *sdk.Workflow,
+	opts sdk.WorkflowRunPostHandlerOption, u sdk.AuthConsumer, decryptFunc keys.DecryptFunc, mods ...workflowtemplate.TemplateRequestModifierFunc) (*PushSecrets, []sdk.Message, error) {
 	ctx, end := telemetry.Span(ctx, "workflow.CreateFromRepository")
 	defer end()
 
@@ -46,7 +46,7 @@ func CreateFromRepository(ctx context.Context, db *gorp.DbMap, store cache.Store
 		return nil, nil, sdk.WrapError(err, "unable to create operation request")
 	}
 
-	if err := operation.PostRepositoryOperation(ctx, db, *p, &newOperation, nil); err != nil {
+	if err := operation.PostRepositoryOperation(ctx, db, projIdent, projKeys, &newOperation, nil); err != nil {
 		return nil, nil, sdk.WrapError(err, "unable to post repository operation")
 	}
 
@@ -67,15 +67,15 @@ func CreateFromRepository(ctx context.Context, db *gorp.DbMap, store cache.Store
 			}
 		}
 	}
-	return extractWorkflow(ctx, db, store, p, wf, *ope, u, decryptFunc, uuid)
+
+	return extractWorkflow(ctx, db, store, projIdent, projPushData, wf, *ope, u, decryptFunc, uuid, mods...)
 }
 
-func extractWorkflow(ctx context.Context, db *gorp.DbMap, store cache.Store, p *sdk.Project, wf *sdk.Workflow,
-	ope sdk.Operation, consumer sdk.AuthConsumer, decryptFunc keys.DecryptFunc, hookUUID string) (*PushSecrets, []sdk.Message, error) {
+func extractWorkflow(ctx context.Context, db *gorp.DbMap, store cache.Store, projIdent sdk.ProjectIdentifiers, projPushData sdk.ProjectForWorkflowPush, wf *sdk.Workflow,
+	ope sdk.Operation, consumer sdk.AuthConsumer, decryptFunc keys.DecryptFunc, hookUUID string, mods ...workflowtemplate.TemplateRequestModifierFunc) (*PushSecrets, []sdk.Message, error) {
 	ctx, end := telemetry.Span(ctx, "workflow.extractWorkflow")
 	defer end()
 
-	projIdent := sdk.ProjectIdentifiers{ID: p.ID, Key: p.Key}
 	var allMsgs []sdk.Message
 	// Read files
 	tr, err := ReadCDSFiles(ope.LoadFiles.Results)
@@ -101,21 +101,16 @@ func extractWorkflow(ctx context.Context, db *gorp.DbMap, store cache.Store, p *
 		return nil, allMsgs, err
 	}
 
-	mods := []workflowtemplate.TemplateRequestModifierFunc{
-		workflowtemplate.TemplateRequestModifiers.DefaultKeys(*p),
-	}
 	if !opt.IsDefaultBranch {
 		mods = append(mods, workflowtemplate.TemplateRequestModifiers.Detached)
 	}
-	if opt.FromRepository != "" {
-		mods = append(mods, workflowtemplate.TemplateRequestModifiers.DefaultNameAndRepositories(*p, opt.FromRepository))
-	}
+
 	msgTemplate, wti, err := workflowtemplate.CheckAndExecuteTemplate(ctx, db, store, consumer, projIdent, &data, mods...)
 	allMsgs = append(allMsgs, msgTemplate...)
 	if err != nil {
 		return nil, allMsgs, err
 	}
-	msgPush, workflowPushed, _, secrets, err := Push(ctx, db, store, p, data, opt, consumer, decryptFunc)
+	msgPush, workflowPushed, _, secrets, err := Push(ctx, db, store, projIdent, projPushData, data, opt, consumer, decryptFunc)
 	// Filter workflow push message if generated from template
 	for i := range msgPush {
 		if wti != nil && msgPush[i].ID == sdk.MsgWorkflowDeprecatedVersion.ID {

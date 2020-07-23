@@ -35,7 +35,7 @@ func TestImport(t *testing.T) {
 	_, _ = assets.InsertAdminUser(t, db)
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, cache, key, key)
-
+	projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
 	srvs, _ := services.LoadAll(context.TODO(), db)
 	for _, srv := range srvs {
 		if err := services.Delete(db, &srv); err != nil {
@@ -69,7 +69,7 @@ func TestImport(t *testing.T) {
 	app := &sdk.Application{
 		Name: sdk.RandomString(10),
 	}
-	test.NoError(t, application.Insert(db, *proj, app))
+	test.NoError(t, application.Insert(db, projIdent, app))
 
 	//Environment
 	envName := sdk.RandomString(10)

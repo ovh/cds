@@ -18,13 +18,14 @@ func Test_DAOVariable(t *testing.T) {
 
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, cache, key, key)
+	projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
 	app := sdk.Application{
 		Name: "my-app",
 	}
 
 	u, _ := assets.InsertLambdaUser(t, db, &proj.ProjectGroups[0].Group)
 
-	require.NoError(t, application.Insert(db, *proj, &app))
+	require.NoError(t, application.Insert(db, projIdent, &app))
 
 	v1 := &sdk.ApplicationVariable{Name: "clear", Type: sdk.TextVariable, Value: "clear_value"}
 	v2 := &sdk.ApplicationVariable{Name: "secret", Type: sdk.SecretVariable, Value: "secret_value"}
@@ -70,16 +71,17 @@ func Test_DAOAllVarsAllProjects(t *testing.T) {
 
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, cache, key, key)
+	projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
 	u, _ := assets.InsertLambdaUser(t, db, &proj.ProjectGroups[0].Group)
 
 	app1 := sdk.Application{
 		Name: "my-app",
 	}
-	require.NoError(t, application.Insert(db, *proj, &app1))
+	require.NoError(t, application.Insert(db, projIdent, &app1))
 	app2 := sdk.Application{
 		Name: "my-app2",
 	}
-	require.NoError(t, application.Insert(db, *proj, &app2))
+	require.NoError(t, application.Insert(db, projIdent, &app2))
 
 	v1 := &sdk.ApplicationVariable{Name: "clear", Type: sdk.TextVariable, Value: "clear_value1"}
 	v2 := &sdk.ApplicationVariable{Name: "secret", Type: sdk.SecretVariable, Value: "secret_value1"}

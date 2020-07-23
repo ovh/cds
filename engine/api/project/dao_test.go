@@ -91,10 +91,10 @@ func TestLoadAllByRepo(t *testing.T) {
 		Role:      sdk.PermissionReadWriteExecute,
 	}))
 	proj, _ = project.LoadByID(db, proj.ID, project.LoadOptions.WithGroups)
-
+	projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
 	u, _ := assets.InsertLambdaUser(t, db, &proj.ProjectGroups[0].Group)
 
-	test.NoError(t, application.Insert(db, *proj, app))
+	test.NoError(t, application.Insert(db, projIdent, app))
 
 	projs, err := project.LoadAllByRepoAndGroupIDs(context.TODO(), db, u.GetGroupIDs(), "ovh/cds")
 	assert.NoError(t, err)

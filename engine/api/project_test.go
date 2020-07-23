@@ -77,13 +77,14 @@ func Test_getProjectsHandler(t *testing.T) {
 	api, db, _ := newTestAPI(t)
 
 	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
+	projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
 	repofullname := sdk.RandomString(10) + "/" + sdk.RandomString(10)
 	app := &sdk.Application{
 		Name:               "app",
 		RepositoryFullname: repofullname,
 	}
 	u, pass := assets.InsertAdminUser(t, db)
-	test.NoError(t, application.Insert(db, *proj, app))
+	test.NoError(t, application.Insert(db, projIdent, app))
 
 	vars := map[string]string{}
 	uri := api.Router.GetRoute("GET", api.getProjectsHandler, vars)
@@ -329,6 +330,7 @@ func Test_getprojectsHandler_AsProviderWithRequestedUsername(t *testing.T) {
 
 	pkey := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, api.Cache, pkey, pkey)
+	projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
 	require.NoError(t, group.InsertLinkGroupUser(context.TODO(), db, &group.LinkGroupUser{
 		GroupID:            proj.ProjectGroups[0].Group.ID,
 		AuthentifiedUserID: u.ID,
@@ -338,7 +340,7 @@ func Test_getprojectsHandler_AsProviderWithRequestedUsername(t *testing.T) {
 	app := &sdk.Application{
 		Name: sdk.RandomString(10),
 	}
-	require.NoError(t, application.Insert(db, *proj, app))
+	require.NoError(t, application.Insert(db, projIdent, app))
 
 	// Call with an admin
 	sdkclientAdmin := cdsclient.NewProviderClient(cdsclient.ProviderConfig{
@@ -441,6 +443,7 @@ func Test_getProjectsHandler_FilterByRepo(t *testing.T) {
 
 	pkey := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, api.Cache, pkey, pkey)
+	projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
 	require.NoError(t, group.InsertLinkGroupUser(context.TODO(), db, &group.LinkGroupUser{
 		GroupID:            proj.ProjectGroups[0].Group.ID,
 		AuthentifiedUserID: u.ID,
@@ -453,7 +456,7 @@ func Test_getProjectsHandler_FilterByRepo(t *testing.T) {
 		Name:               sdk.RandomString(10),
 		RepositoryFullname: "ovh/" + repofullName,
 	}
-	require.NoError(t, application.Insert(db, *proj, app))
+	require.NoError(t, application.Insert(db, projIdent, app))
 
 	pip := sdk.Pipeline{
 		ProjectID:  proj.ID,
@@ -476,7 +479,6 @@ func Test_getProjectsHandler_FilterByRepo(t *testing.T) {
 			},
 		},
 	}
-	projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
 	test.NoError(t, workflow.Insert(context.TODO(), db, api.Cache, projIdent, proj.ProjectGroups, &wf))
 
 	// Call with an admin

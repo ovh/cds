@@ -526,6 +526,7 @@ func Test_postWorkflowHandlerWithRootShouldSuccess(t *testing.T) {
 	// Init project
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, api.Cache, key, key)
+	projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
 	// Init pipeline
 	pip := sdk.Pipeline{
 		Name:      "pipeline1",
@@ -546,7 +547,7 @@ func Test_postWorkflowHandlerWithRootShouldSuccess(t *testing.T) {
 		RepositoryFullname: "test/app1",
 		VCSServer:          "github",
 	}
-	require.NoError(t, application.Insert(db, *proj, &app))
+	require.NoError(t, application.Insert(db, projIdent, &app))
 
 	var workflow = &sdk.Workflow{
 		Name:        "Name",
@@ -587,6 +588,7 @@ func Test_postWorkflowHandlerWithBadPayloadShouldFail(t *testing.T) {
 	// Init project
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, api.Cache, key, key)
+	projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
 	// Init pipeline
 	pip := sdk.Pipeline{
 		Name:      "pipeline1",
@@ -607,7 +609,7 @@ func Test_postWorkflowHandlerWithBadPayloadShouldFail(t *testing.T) {
 		RepositoryFullname: "test/app1",
 		VCSServer:          "github",
 	}
-	require.NoError(t, application.Insert(db, *proj, &app))
+	require.NoError(t, application.Insert(db, projIdent, &app))
 
 	var workflow = &sdk.Workflow{
 		Name:        "Name",
@@ -728,6 +730,7 @@ func Test_putWorkflowHandler(t *testing.T) {
 	// Init project
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, api.Cache, key, key)
+	projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
 	vcsServer := sdk.ProjectVCSServerLink{
 		ProjectID: proj.ID,
 		Name:      "github",
@@ -750,7 +753,7 @@ func Test_putWorkflowHandler(t *testing.T) {
 		RepositoryFullname: "foo/bar",
 		VCSServer:          "github",
 	}
-	assert.NoError(t, application.Insert(db, *proj, &app))
+	assert.NoError(t, application.Insert(db, projIdent, &app))
 	assert.NoError(t, repositoriesmanager.InsertForApplication(db, &app))
 
 	//Prepare request
@@ -877,6 +880,7 @@ func Test_deleteWorkflowEventIntegrationHandler(t *testing.T) {
 	// Init project
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, api.Cache, key, key)
+	projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
 	// Init pipeline
 	pip := sdk.Pipeline{
 		Name:      "pipeline1",
@@ -925,7 +929,7 @@ func Test_deleteWorkflowEventIntegrationHandler(t *testing.T) {
 		RepositoryFullname: "test/app1",
 		VCSServer:          "github",
 	}
-	require.NoError(t, application.Insert(db, *proj, &app))
+	require.NoError(t, application.Insert(db, projIdent, &app))
 
 	model := sdk.IntegrationModel{
 		Name:  sdk.RandomString(10),
@@ -989,7 +993,6 @@ func Test_deleteWorkflowEventIntegrationHandler(t *testing.T) {
 	router.Mux.ServeHTTP(w, req)
 	assert.Equal(t, 200, w.Code)
 
-	projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
 	wfUpdated, err := workflow.Load(context.TODO(), api.mustDB(), projIdent, wf.Name, workflow.LoadOptions{WithIntegrations: true})
 	test.NoError(t, err, "cannot load workflow")
 
@@ -1066,6 +1069,7 @@ func Test_postWorkflowRollbackHandler(t *testing.T) {
 	// Init project
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, api.Cache, key, key)
+	projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
 
 	// Init pipeline
 	pip := sdk.Pipeline{
@@ -1120,7 +1124,7 @@ func Test_postWorkflowRollbackHandler(t *testing.T) {
 		RepositoryFullname: "test/app1",
 		VCSServer:          "github",
 	}
-	require.NoError(t, application.Insert(db, *proj, &app))
+	require.NoError(t, application.Insert(db, projIdent, &app))
 
 	var workflow1 = &sdk.Workflow{
 		ID:          wf.ID,
@@ -1377,6 +1381,7 @@ func TestBenchmarkGetWorkflowsWithoutAPIAsAdmin(t *testing.T) {
 	// Init project
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, cache, key, key)
+	projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
 	// Init pipeline
 	pip := sdk.Pipeline{
 		Name:      "pipeline1",
@@ -1389,7 +1394,7 @@ func TestBenchmarkGetWorkflowsWithoutAPIAsAdmin(t *testing.T) {
 		Name: sdk.RandomString(10),
 	}
 
-	assert.NoError(t, application.Insert(db, *proj, &app))
+	assert.NoError(t, application.Insert(db, projIdent, &app))
 
 	prj, err := project.Load(context.TODO(), db, proj.Key,
 		project.LoadOptions.WithPipelines,
@@ -1442,6 +1447,7 @@ func TestBenchmarkGetWorkflowsWithAPI(t *testing.T) {
 	// Init project
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, api.Cache, key, key)
+	projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
 
 	// Init user
 	u, pass := assets.InsertLambdaUser(t, db, &proj.ProjectGroups[0].Group)
@@ -1457,7 +1463,7 @@ func TestBenchmarkGetWorkflowsWithAPI(t *testing.T) {
 		Name: sdk.RandomString(10),
 	}
 
-	assert.NoError(t, application.Insert(db, *proj, &app))
+	assert.NoError(t, application.Insert(db, projIdent, &app))
 
 	prj, err := project.Load(context.TODO(), db, proj.Key, project.LoadOptions.WithGroups)
 	assert.NoError(t, err)
@@ -1479,8 +1485,7 @@ func TestBenchmarkGetWorkflowsWithAPI(t *testing.T) {
 			},
 		}
 
-		projIdent := sdk.ProjectIdentifiers{ID: prj.ID, Key: prj.Key}
-		assert.NoError(t, workflow.Insert(context.TODO(), db, api.Cache, projIdent, proj.ProjectGroups, &wf))
+		assert.NoError(t, workflow.Insert(context.TODO(), db, api.Cache, projIdent, prj.ProjectGroups, &wf))
 	}
 
 	//Prepare request
@@ -1758,6 +1763,7 @@ func Test_getWorkflowsHandler_FilterByRepo(t *testing.T) {
 
 	pkey := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, api.Cache, pkey, pkey)
+	projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
 	require.NoError(t, group.InsertLinkGroupUser(context.TODO(), db, &group.LinkGroupUser{
 		GroupID:            proj.ProjectGroups[0].Group.ID,
 		AuthentifiedUserID: u.ID,
@@ -1770,7 +1776,7 @@ func Test_getWorkflowsHandler_FilterByRepo(t *testing.T) {
 		Name:               sdk.RandomString(10),
 		RepositoryFullname: "ovh/" + repofullName,
 	}
-	require.NoError(t, application.Insert(db, *proj, app))
+	require.NoError(t, application.Insert(db, projIdent, app))
 
 	pip := sdk.Pipeline{
 		ProjectID:  proj.ID,
@@ -1793,7 +1799,6 @@ func Test_getWorkflowsHandler_FilterByRepo(t *testing.T) {
 			},
 		},
 	}
-	projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
 	require.NoError(t, workflow.Insert(context.TODO(), db, api.Cache, projIdent, proj.ProjectGroups, &wf))
 
 	wf2 := sdk.Workflow{
@@ -1840,6 +1845,7 @@ func Test_getSearchWorkflowHandler(t *testing.T) {
 
 	pkey := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, api.Cache, pkey, pkey)
+	projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
 	require.NoError(t, group.InsertLinkGroupUser(context.TODO(), db, &group.LinkGroupUser{
 		GroupID:            proj.ProjectGroups[0].Group.ID,
 		AuthentifiedUserID: u.ID,
@@ -1852,7 +1858,7 @@ func Test_getSearchWorkflowHandler(t *testing.T) {
 		Name:               sdk.RandomString(10),
 		RepositoryFullname: "ovh/" + repofullName,
 	}
-	require.NoError(t, application.Insert(db, *proj, app))
+	require.NoError(t, application.Insert(db, projIdent, app))
 
 	pip := sdk.Pipeline{
 		ProjectID:  proj.ID,
@@ -1875,7 +1881,6 @@ func Test_getSearchWorkflowHandler(t *testing.T) {
 			},
 		},
 	}
-	projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
 	assert.NoError(t, workflow.Insert(context.TODO(), db, api.Cache, projIdent, proj.ProjectGroups, &wf))
 
 	wf2 := sdk.Workflow{

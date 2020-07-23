@@ -6,7 +6,6 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/keys"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/exportentities"
@@ -21,9 +20,9 @@ type ImportOptions struct {
 }
 
 // ParseAndImport parse an exportentities.Application and insert or update the application in database
-func ParseAndImport(ctx context.Context, db gorpmapping.SqlExecutorWithTx, cache cache.Store, proj sdk.Project, eapp *exportentities.Application, opts ImportOptions, decryptFunc keys.DecryptFunc, u sdk.Identifiable) (*sdk.Application, []sdk.Variable, []sdk.Message, error) {
+func ParseAndImport(ctx context.Context, db gorpmapping.SqlExecutorWithTx, projIdent sdk.ProjectIdentifiers, projIntegrations []sdk.ProjectIntegration, eapp *exportentities.Application, opts ImportOptions, decryptFunc keys.DecryptFunc, u sdk.Identifiable) (*sdk.Application, []sdk.Variable, []sdk.Message, error) {
 
-	log.Info(ctx, "ParseAndImport>> Import application %s in project %s (force=%v)", eapp.Name, proj.Key, opts.Force)
+	log.Info(ctx, "ParseAndImport>> Import application %s in project %s (force=%v)", eapp.Name, projIdent.Key, opts.Force)
 	msgList := []sdk.Message{}
 
 	//Check valid application name
@@ -34,7 +33,7 @@ func ParseAndImport(ctx context.Context, db gorpmapping.SqlExecutorWithTx, cache
 	}
 
 	//Check if app exist
-	oldApp, err := LoadByName(db, proj.Key, eapp.Name,
+	oldApp, err := LoadByName(db, projIdent.Key, eapp.Name,
 		LoadOptions.WithVariablesWithClearPassword,
 		LoadOptions.WithClearKeys,
 		LoadOptions.WithClearDeploymentStrategies,
@@ -67,7 +66,7 @@ func ParseAndImport(ctx context.Context, db gorpmapping.SqlExecutorWithTx, cache
 		case "":
 			v.Type = sdk.StringVariable
 		case sdk.SecretVariable:
-			secret, err := decryptFunc(db, proj.ID, v.Value)
+			secret, err := decryptFunc(db, projIdent.ID, v.Value)
 			if err != nil {
 				return app, nil, msgList, sdk.WrapError(sdk.NewError(sdk.ErrWrongRequest, err), "unable to decrypt secret variable")
 			}
@@ -112,7 +111,7 @@ func ParseAndImport(ctx context.Context, db gorpmapping.SqlExecutorWithTx, cache
 			keepOldValue = true
 		}
 
-		kk, err := keys.Parse(db, proj.ID, kname, kval, decryptFunc)
+		kk, err := keys.Parse(db, projIdent.ID, kname, kval, decryptFunc)
 		if err != nil {
 			return app, nil, msgList, sdk.ErrorWithFallback(err, sdk.ErrWrongRequest, "unable to parse key %s", kname)
 		}
@@ -158,7 +157,7 @@ func ParseAndImport(ctx context.Context, db gorpmapping.SqlExecutorWithTx, cache
 		return app, nil, msgList, sdk.NewErrorFrom(sdk.ErrInvalidApplicationRepoStrategy, "could not import application %s with a connection type ssh without ssh key", app.Name)
 	}
 	if eapp.VCSPassword != "" {
-		clearPWD, err := decryptFunc(db, proj.ID, eapp.VCSPassword)
+		clearPWD, err := decryptFunc(db, projIdent.ID, eapp.VCSPassword)
 		if err != nil {
 			return app, nil, msgList, sdk.WrapError(sdk.NewError(sdk.ErrWrongRequest, err), "unable to decrypt vcs password")
 		}
@@ -174,7 +173,7 @@ func ParseAndImport(ctx context.Context, db gorpmapping.SqlExecutorWithTx, cache
 	deploymentStrategies := make(map[string]sdk.IntegrationConfig)
 	for pfName, pfConfig := range eapp.DeploymentStrategies {
 		// init deployment strategy from project if default exists
-		projIt, has := proj.GetIntegration(pfName)
+		projIt, has := sdk.GetProjectIntegrationByName(projIntegrations, pfName)
 		if !has {
 			msgList = append(msgList, sdk.NewMessage(sdk.MsgWorkflowErrorBadIntegrationName, pfName))
 			return app, nil, msgList, sdk.WrapError(sdk.NewErrorFrom(sdk.ErrWrongRequest, "deployment platform not found"), "deployment platform %s not found", pfName)
@@ -196,7 +195,7 @@ func ParseAndImport(ctx context.Context, db gorpmapping.SqlExecutorWithTx, cache
 		for k, v := range pfConfig {
 			if v.Value != "" {
 				if v.Type == sdk.SecretVariable {
-					clearPWD, err := decryptFunc(db, proj.ID, v.Value)
+					clearPWD, err := decryptFunc(db, projIdent.ID, v.Value)
 					if err != nil {
 						return app, nil, nil, sdk.WrapError(sdk.NewError(sdk.ErrWrongRequest, err), "unable to decrypt deployment strategy password")
 					}
@@ -226,7 +225,7 @@ func ParseAndImport(ctx context.Context, db gorpmapping.SqlExecutorWithTx, cache
 		}
 	}(&msgList)
 
-	globalError := Import(ctx, db, proj, app, eapp.VCSServer, u, msgChan)
+	globalError := Import(ctx, db, projIdent, projIntegrations, app, eapp.VCSServer, u, msgChan)
 	close(msgChan)
 	done.Wait()
 

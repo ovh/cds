@@ -40,14 +40,9 @@ func (api *API) postWorkflowPreviewHandler() service.Handler {
 			return err
 		}
 
+		// Need group for workflow.Parse
 		proj, err := project.Load(ctx, api.mustDB(), key,
-			project.LoadOptions.WithGroups,
-			project.LoadOptions.WithApplications,
-			project.LoadOptions.WithEnvironments,
-			project.LoadOptions.WithPipelines,
-			project.LoadOptions.WithIntegrations,
-			project.LoadOptions.WithApplicationWithDeploymentStrategies,
-		)
+			project.LoadOptions.WithGroups)
 		if err != nil {
 			return sdk.WrapError(err, "unable load project")
 		}
@@ -59,7 +54,7 @@ func (api *API) postWorkflowPreviewHandler() service.Handler {
 			return sdk.NewError(sdk.ErrWrongRequest, errw)
 		}
 
-		wf, err := workflow.Parse(ctx, *proj, ew)
+		wf, err := workflow.Parse(ctx, projIdent, proj.ProjectGroups, ew)
 		if err != nil {
 			return sdk.WrapError(err, "unable import workflow %s", ew.GetName())
 		}
@@ -106,19 +101,12 @@ func (api *API) postWorkflowImportHandler() service.Handler {
 			return err
 		}
 
-		proj, err := project.Load(ctx, api.mustDB(), key,
-			project.LoadOptions.WithGroups,
-			project.LoadOptions.WithApplications,
-			project.LoadOptions.WithEnvironments,
-			project.LoadOptions.WithPipelines,
-			project.LoadOptions.WithApplicationWithDeploymentStrategies,
-			project.LoadOptions.WithIntegrations,
-		)
+		p, err := project.Load(ctx, api.mustDB(), key, project.LoadOptions.WithGroups)
 		if err != nil {
 			return sdk.WrapError(err, "unable load project")
 		}
 
-		projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
+		projIdent := sdk.ProjectIdentifiers{ID: p.ID, Key: p.Key}
 		tx, err := api.mustDB().Begin()
 		if err != nil {
 			return sdk.WrapError(err, "unable to start transaction")
@@ -140,7 +128,7 @@ func (api *API) postWorkflowImportHandler() service.Handler {
 			}
 		}
 
-		wrkflw, msgList, globalError := workflow.ParseAndImport(ctx, tx, api.Cache, *proj, wf, ew, getAPIConsumer(ctx), workflow.ImportOptions{Force: force})
+		wrkflw, msgList, globalError := workflow.ParseAndImport(ctx, tx, api.Cache, projIdent, p.ProjectGroups, wf, ew, getAPIConsumer(ctx), workflow.ImportOptions{Force: force})
 		msgListString := translate(r, msgList)
 		if globalError != nil {
 			if len(msgListString) != 0 {
@@ -201,16 +189,13 @@ func (api *API) putWorkflowImportHandler() service.Handler {
 			return err
 		}
 
-		// Load project
-		proj, err := project.Load(ctx, api.mustDB(), key,
-			project.LoadOptions.WithGroups,
-			project.LoadOptions.WithIntegrations,
-		)
+		// New Project Groups for workflow.ParseAndImport
+		p, err := project.Load(ctx, api.mustDB(), key, project.LoadOptions.WithGroups)
 		if err != nil {
 			return sdk.WrapError(err, "unable load project")
 		}
 
-		projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
+		projIdent := sdk.ProjectIdentifiers{ID: p.ID, Key: p.Key}
 		u := getAPIConsumer(ctx)
 
 		wf, err := workflow.Load(ctx, api.mustDB(), projIdent, wfName, workflow.LoadOptions{WithIcon: true})
@@ -229,7 +214,7 @@ func (api *API) putWorkflowImportHandler() service.Handler {
 		}
 		defer tx.Rollback() //nolint
 
-		wrkflw, msgList, globalError := workflow.ParseAndImport(ctx, tx, api.Cache, *proj, wf, ew, u, workflow.ImportOptions{Force: true, WorkflowName: wfName})
+		wrkflw, msgList, globalError := workflow.ParseAndImport(ctx, tx, api.Cache, projIdent, p.ProjectGroups, wf, ew, u, workflow.ImportOptions{Force: true, WorkflowName: wfName})
 		msgListString := translate(r, msgList)
 		if globalError != nil {
 			if len(msgListString) != 0 {
@@ -294,18 +279,18 @@ func (api *API) postWorkflowPushHandler() service.Handler {
 		//Load project
 		proj, err := project.Load(ctx, db, key,
 			project.LoadOptions.WithGroups,
-			project.LoadOptions.WithApplications,
-			project.LoadOptions.WithEnvironments,
-			project.LoadOptions.WithPipelines,
-			project.LoadOptions.WithApplicationWithDeploymentStrategies,
 			project.LoadOptions.WithIntegrations,
-			project.LoadOptions.WithKeys,
 		)
 		if err != nil {
 			return sdk.WrapError(err, "cannot load project %s", key)
 		}
 
 		projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
+		projPushData := sdk.ProjectForWorkflowPush{
+			Integrations:  proj.Integrations,
+			ProjectGroups: proj.ProjectGroups,
+		}
+
 		data, err := exportentities.UntarWorkflowComponents(ctx, tr)
 		if err != nil {
 			return err
@@ -325,7 +310,7 @@ func (api *API) postWorkflowPushHandler() service.Handler {
 		if err != nil {
 			return err
 		}
-		msgPush, wrkflw, oldWrkflw, _, err := workflow.Push(ctx, db, api.Cache, proj, data, pushOptions, u, project.DecryptWithBuiltinKey)
+		msgPush, wrkflw, oldWrkflw, _, err := workflow.Push(ctx, db, api.Cache, projIdent, projPushData, data, pushOptions, u, project.DecryptWithBuiltinKey)
 		allMsg = append(allMsg, msgPush...)
 		if err != nil {
 			return err
@@ -342,9 +327,9 @@ func (api *API) postWorkflowPushHandler() service.Handler {
 		}
 
 		if oldWrkflw != nil {
-			event.PublishWorkflowUpdate(ctx, proj.Key, *wrkflw, *oldWrkflw, u)
+			event.PublishWorkflowUpdate(ctx, projIdent.Key, *wrkflw, *oldWrkflw, u)
 		} else {
-			event.PublishWorkflowAdd(ctx, proj.Key, *wrkflw, u)
+			event.PublishWorkflowAdd(ctx, projIdent.Key, *wrkflw, u)
 		}
 
 		return service.WriteJSON(w, msgListString, http.StatusOK)

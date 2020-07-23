@@ -22,7 +22,8 @@ func Test_getApplicationExportHandler(t *testing.T) {
 	app := &sdk.Application{
 		Name: appName,
 	}
-	if err := application.Insert(db, *proj, app); err != nil {
+	projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
+	if err := application.Insert(db, projIdent, app); err != nil {
 		t.Fatal(err)
 	}
 

@@ -10,8 +10,8 @@ import (
 )
 
 //Import is able to create a new application and all its components
-func Import(ctx context.Context, db gorpmapping.SqlExecutorWithTx, proj sdk.Project, app *sdk.Application, repomanager string, u sdk.Identifiable, msgChan chan<- sdk.Message) error {
-	doUpdate, erre := Exists(db, proj.Key, app.Name)
+func Import(ctx context.Context, db gorpmapping.SqlExecutorWithTx, projIdent sdk.ProjectIdentifiers, projInts []sdk.ProjectIntegration, app *sdk.Application, repomanager string, u sdk.Identifiable, msgChan chan<- sdk.Message) error {
+	doUpdate, erre := Exists(db, projIdent.Key, app.Name)
 	if erre != nil {
 		return sdk.WrapError(erre, "application.Import> Unable to check if application exists")
 	}
@@ -25,7 +25,7 @@ func Import(ctx context.Context, db gorpmapping.SqlExecutorWithTx, proj sdk.Proj
 	}
 
 	if doUpdate {
-		oldApp, errlo := LoadByName(db, proj.Key, app.Name, LoadOptions.WithKeys, LoadOptions.WithVariablesWithClearPassword, LoadOptions.WithClearDeploymentStrategies)
+		oldApp, errlo := LoadByName(db, projIdent.Key, app.Name, LoadOptions.WithKeys, LoadOptions.WithVariablesWithClearPassword, LoadOptions.WithClearDeploymentStrategies)
 		if errlo != nil {
 			return sdk.WrapError(errlo, "application.Import> Unable to load application by name: %s", app.Name)
 		}
@@ -52,7 +52,7 @@ func Import(ctx context.Context, db gorpmapping.SqlExecutorWithTx, proj sdk.Proj
 		}
 	} else {
 		//Save application in database
-		if err := Insert(db, proj, app); err != nil {
+		if err := Insert(db, projIdent, app); err != nil {
 			return sdk.WrapError(err, "application.Import")
 		}
 
@@ -68,7 +68,7 @@ func Import(ctx context.Context, db gorpmapping.SqlExecutorWithTx, proj sdk.Proj
 	//Set repositories manager
 	app.VCSServer = repomanager
 	if app.VCSServer != "" && app.RepositoryFullname != "" {
-		if _, err := repositoriesmanager.LoadProjectVCSServerLinkByProjectKeyAndVCSServerName(ctx, db, proj.Key, app.VCSServer); err != nil {
+		if _, err := repositoriesmanager.LoadProjectVCSServerLinkByProjectKeyAndVCSServerName(ctx, db, projIdent.Key, app.VCSServer); err != nil {
 			return sdk.NewError(sdk.ErrNoReposManager, err)
 		}
 
@@ -94,11 +94,11 @@ func Import(ctx context.Context, db gorpmapping.SqlExecutorWithTx, proj sdk.Proj
 	}
 
 	for pfName, pfConfig := range app.DeploymentStrategies {
-		pf, has := proj.GetIntegration(pfName)
+		pf, has := sdk.GetProjectIntegrationByName(projInts, pfName)
 		if !has {
 			return sdk.NewErrorFrom(sdk.ErrNotFound, "integration %s not found", pfName)
 		}
-		if err := SetDeploymentStrategy(db, proj.ID, app.ID, pf.IntegrationModelID, pfName, pfConfig); err != nil {
+		if err := SetDeploymentStrategy(db, projIdent.ID, app.ID, pf.IntegrationModelID, pfName, pfConfig); err != nil {
 			return sdk.WrapError(err, "unable to set deployment strategy %s", pfName)
 		}
 	}

@@ -13,8 +13,6 @@ import (
 
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/ascode"
-	"github.com/ovh/cds/engine/api/cache"
-	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/keys"
@@ -267,6 +265,7 @@ func (api *API) addApplicationHandler() service.Handler {
 		if errl != nil {
 			return sdk.WrapError(errl, "addApplicationHandler> Cannot load %s", key)
 		}
+		projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
 
 		var app sdk.Application
 		if err := service.UnmarshalBody(r, &app); err != nil {
@@ -286,7 +285,7 @@ func (api *API) addApplicationHandler() service.Handler {
 
 		defer tx.Rollback() // nolint
 
-		if err := application.Insert(tx, *proj, &app); err != nil {
+		if err := application.Insert(tx, projIdent, &app); err != nil {
 			return sdk.WrapError(err, "Cannot insert pipeline")
 		}
 
@@ -343,28 +342,16 @@ func (api *API) cloneApplicationHandler() service.Handler {
 		// Get pipeline and action name in URL
 		vars := mux.Vars(r)
 		projectKey := vars[permProjectKey]
-		applicationName := vars["applicationName"]
 
 		proj, errProj := project.Load(ctx, api.mustDB(), projectKey)
 		if errProj != nil {
 			return sdk.WrapError(sdk.ErrNoProject, "cloneApplicationHandler> Cannot load %s", projectKey)
 		}
-
-		envs, errE := environment.LoadEnvironments(api.mustDB(), projectKey)
-		if errE != nil {
-			return sdk.WrapError(errE, "cloneApplicationHandler> Cannot load Environments %s", projectKey)
-
-		}
-		proj.Environments = envs
+		projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
 
 		var newApp sdk.Application
 		if err := service.UnmarshalBody(r, &newApp); err != nil {
 			return err
-		}
-
-		appToClone, errApp := application.LoadByName(api.mustDB(), projectKey, applicationName, application.LoadOptions.Default)
-		if errApp != nil {
-			return sdk.WrapError(errApp, "cloneApplicationHandler> Cannot load application %s", applicationName)
 		}
 
 		tx, errBegin := api.mustDB().Begin()
@@ -373,7 +360,7 @@ func (api *API) cloneApplicationHandler() service.Handler {
 		}
 		defer tx.Rollback() // nolint
 
-		if err := cloneApplication(ctx, tx, api.Cache, *proj, &newApp, appToClone); err != nil {
+		if err := cloneApplication(ctx, tx, projIdent, &newApp); err != nil {
 			return sdk.WrapError(err, "Cannot insert new application %s", newApp.Name)
 		}
 
@@ -386,9 +373,9 @@ func (api *API) cloneApplicationHandler() service.Handler {
 }
 
 // cloneApplication Clone an application with all her dependencies: pipelines, permissions, triggers
-func cloneApplication(ctx context.Context, db gorpmapping.SqlExecutorWithTx, store cache.Store, proj sdk.Project, newApp *sdk.Application, appToClone *sdk.Application) error {
+func cloneApplication(ctx context.Context, db gorpmapping.SqlExecutorWithTx, projIdent sdk.ProjectIdentifiers, newApp *sdk.Application) error {
 	// Create Application
-	if err := application.Insert(db, proj, newApp); err != nil {
+	if err := application.Insert(db, projIdent, newApp); err != nil {
 		return err
 	}
 
@@ -420,7 +407,7 @@ func cloneApplication(ctx context.Context, db gorpmapping.SqlExecutorWithTx, sto
 		}
 	}
 
-	event.PublishAddApplication(ctx, proj.Key, *newApp, getAPIConsumer(ctx))
+	event.PublishAddApplication(ctx, projIdent.Key, *newApp, getAPIConsumer(ctx))
 
 	return nil
 }
@@ -513,7 +500,7 @@ func (api *API) updateAsCodeApplicationHandler() service.Handler {
 			Applications: []exportentities.Application{app},
 		}
 
-		ope, err := operation.PushOperationUpdate(ctx, tx, api.Cache, *proj, wp, rootApp.VCSServer, rootApp.RepositoryFullname, branch, message, rootApp.RepositoryStrategy, u)
+		ope, err := operation.PushOperationUpdate(ctx, tx, api.Cache, projIdent, proj.Keys, wp, rootApp.VCSServer, rootApp.RepositoryFullname, branch, message, rootApp.RepositoryStrategy, u)
 		if err != nil {
 			return err
 		}

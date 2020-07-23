@@ -1729,7 +1729,7 @@ func TestGitParamOnApplicationWithoutRepo(t *testing.T) {
 
 	pip := createEmptyPipeline(t, db, cache, proj, u)
 	app1 := createApplication1(t, db, cache, proj, u)
-	app2 := createApplicationWithoutRepo(t, db, cache, proj, u)
+	app2 := createApplicationWithoutRepo(t, db, proj, u)
 
 	// RELOAD PROJECT WITH DEPENDENCIES
 	proj.Applications = append(proj.Applications, *app1, *app2)
@@ -2635,7 +2635,8 @@ func createEmptyPipeline(t *testing.T, db gorp.SqlExecutor, cache cache.Store, p
 			},
 		},
 	}
-	assert.NoError(t, pipeline.Import(context.TODO(), db, cache, *proj, pip, nil, u))
+	projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
+	assert.NoError(t, pipeline.Import(context.TODO(), db, projIdent, proj.ProjectGroups, pip, nil, u))
 	var errPip error
 	pip, errPip = pipeline.LoadPipeline(context.TODO(), db, proj.Key, pip.Name, true)
 	assert.NoError(t, errPip)
@@ -2703,7 +2704,8 @@ func createBuildPipeline(t *testing.T, db gorp.SqlExecutor, cache cache.Store, p
 			},
 		},
 	}
-	assert.NoError(t, pipeline.Import(context.TODO(), db, cache, *proj, pip, nil, u))
+	projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
+	assert.NoError(t, pipeline.Import(context.TODO(), db, projIdent, proj.ProjectGroups, pip, nil, u))
 	var errPip error
 	pip, errPip = pipeline.LoadPipeline(context.TODO(), db, proj.Key, pip.Name, true)
 	assert.NoError(t, errPip)
@@ -2711,6 +2713,7 @@ func createBuildPipeline(t *testing.T, db gorp.SqlExecutor, cache cache.Store, p
 }
 
 func createApplication1(t *testing.T, db gorpmapping.SqlExecutorWithTx, cache cache.Store, proj *sdk.Project, u *sdk.AuthentifiedUser) *sdk.Application {
+	projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
 	// Add application
 	appS := `version: v1.0
 name: blabla
@@ -2720,7 +2723,7 @@ vcs_ssh_key: proj-blabla
 `
 	var eapp = new(exportentities.Application)
 	assert.NoError(t, yaml.Unmarshal([]byte(appS), eapp))
-	app, _, _, globalError := application.ParseAndImport(context.Background(), db, cache, *proj, eapp, application.ImportOptions{Force: true}, nil, u)
+	app, _, _, globalError := application.ParseAndImport(context.Background(), db, projIdent, proj.Integrations, eapp, application.ImportOptions{Force: true}, nil, u)
 	assert.NoError(t, globalError)
 	return app
 }
@@ -2735,12 +2738,14 @@ vcs_ssh_key: proj-bloublou
 `
 	var eapp = new(exportentities.Application)
 	assert.NoError(t, yaml.Unmarshal([]byte(appS), eapp))
-	app, _, _, globalError := application.ParseAndImport(context.Background(), db, cache, *proj, eapp, application.ImportOptions{Force: true}, nil, u)
+	projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
+	app, _, _, globalError := application.ParseAndImport(context.Background(), db, projIdent, proj.Integrations, eapp, application.ImportOptions{Force: true}, nil, u)
 	assert.NoError(t, globalError)
 	return app
 }
 
 func createApplication3WithSameRepoAsA(t *testing.T, db gorpmapping.SqlExecutorWithTx, cache cache.Store, proj *sdk.Project, u *sdk.AuthentifiedUser) *sdk.Application {
+	projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
 	// Add application
 	appS := `version: v1.0
 name: blabla2
@@ -2750,19 +2755,20 @@ vcs_ssh_key: proj-blabla
 `
 	var eapp = new(exportentities.Application)
 	assert.NoError(t, yaml.Unmarshal([]byte(appS), eapp))
-	app, _, _, globalError := application.ParseAndImport(context.Background(), db, cache, *proj, eapp, application.ImportOptions{Force: true}, nil, u)
+	app, _, _, globalError := application.ParseAndImport(context.Background(), db, projIdent, proj.Integrations, eapp, application.ImportOptions{Force: true}, nil, u)
 	assert.NoError(t, globalError)
 	return app
 }
 
-func createApplicationWithoutRepo(t *testing.T, db gorpmapping.SqlExecutorWithTx, cache cache.Store, proj *sdk.Project, u *sdk.AuthentifiedUser) *sdk.Application {
+func createApplicationWithoutRepo(t *testing.T, db gorpmapping.SqlExecutorWithTx, proj *sdk.Project, u *sdk.AuthentifiedUser) *sdk.Application {
+	projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
 	// Add application
 	appS := `version: v1.0
 name: app-no-repo
 `
 	var eapp = new(exportentities.Application)
 	assert.NoError(t, yaml.Unmarshal([]byte(appS), eapp))
-	app, _, _, globalError := application.ParseAndImport(context.Background(), db, cache, *proj, eapp, application.ImportOptions{Force: true}, nil, u)
+	app, _, _, globalError := application.ParseAndImport(context.Background(), db, projIdent, proj.Integrations, eapp, application.ImportOptions{Force: true}, nil, u)
 	assert.NoError(t, globalError)
 	return app
 }

@@ -78,21 +78,21 @@ type Options struct {
 	Sync bool
 }
 
-func GetReposForProjectVCSServer(ctx context.Context, db gorpmapping.SqlExecutorWithTx, store cache.Store, proj sdk.Project, vcsServerName string, opts Options) ([]sdk.VCSRepo, error) {
+func GetReposForProjectVCSServer(ctx context.Context, db gorpmapping.SqlExecutorWithTx, store cache.Store, projIdent sdk.ProjectIdentifiers, vcsServerName string, opts Options) ([]sdk.VCSRepo, error) {
 	log.Debug("GetReposForProjectVCSServer> Loading repo for %s", vcsServerName)
 
-	vcsServer, err := LoadProjectVCSServerLinkByProjectKeyAndVCSServerName(ctx, db, proj.Key, vcsServerName)
+	vcsServer, err := LoadProjectVCSServerLinkByProjectKeyAndVCSServerName(ctx, db, projIdent.Key, vcsServerName)
 	if err != nil {
 		return nil, sdk.NewError(sdk.ErrNoReposManagerClientAuth, err)
 	}
 
-	client, err := AuthorizedClient(ctx, db, store, proj.Key, vcsServer)
+	client, err := AuthorizedClient(ctx, db, store, projIdent.Key, vcsServer)
 	if err != nil {
 		return nil, sdk.NewErrorWithStack(err, sdk.NewErrorFrom(sdk.ErrNoReposManagerClientAuth,
-			"cannot get client got %s %s", proj.Key, vcsServer.Name))
+			"cannot get client got %s %s", projIdent.Key, vcsServer.Name))
 	}
 
-	cacheKey := cache.Key("reposmanager", "repos", proj.Key, vcsServer.Name)
+	cacheKey := cache.Key("reposmanager", "repos", projIdent.Key, vcsServer.Name)
 	if opts.Sync {
 		if err := store.Delete(cacheKey); err != nil {
 			log.Error(ctx, "GetReposForProjectVCSServer> error on delete cache key %v: %s", cacheKey, err)

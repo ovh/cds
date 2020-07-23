@@ -52,12 +52,7 @@ func (api *API) updateAsCodePipelineHandler() service.Handler {
 		}
 		defer tx.Rollback() // nolint
 
-		proj, err := project.Load(ctx, tx, key,
-			project.LoadOptions.WithApplicationWithDeploymentStrategies,
-			project.LoadOptions.WithPipelines,
-			project.LoadOptions.WithEnvironments,
-			project.LoadOptions.WithIntegrations,
-			project.LoadOptions.WithClearKeys)
+		proj, err := project.Load(ctx, tx, key, project.LoadOptions.WithClearKeys)
 		if err != nil {
 			return err
 		}
@@ -102,7 +97,7 @@ func (api *API) updateAsCodePipelineHandler() service.Handler {
 			Pipelines: []exportentities.PipelineV1{wpi},
 		}
 
-		ope, err := operation.PushOperationUpdate(ctx, tx, api.Cache, *proj, wp, rootApp.VCSServer, rootApp.RepositoryFullname, branch, message, rootApp.RepositoryStrategy, u)
+		ope, err := operation.PushOperationUpdate(ctx, tx, api.Cache, projIdent, proj.Keys, wp, rootApp.VCSServer, rootApp.RepositoryFullname, branch, message, rootApp.RepositoryStrategy, u)
 
 		if err != nil {
 			return err
@@ -210,6 +205,7 @@ func (api *API) postPipelineRollbackHandler() service.Handler {
 		if errP != nil {
 			return sdk.WrapError(errP, "postPipelineRollbackHandler> Cannot load project")
 		}
+		projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
 
 		audit, errA := pipeline.LoadAuditByID(db, auditID)
 		if errA != nil {
@@ -235,7 +231,7 @@ func (api *API) postPipelineRollbackHandler() service.Handler {
 			}
 		}(&msgList)
 
-		if err := pipeline.ImportUpdate(ctx, tx, *proj, audit.Pipeline, msgChan); err != nil {
+		if err := pipeline.ImportUpdate(ctx, tx, projIdent, proj.ProjectGroups, audit.Pipeline, msgChan); err != nil {
 			return sdk.WrapError(err, "cannot import pipeline")
 		}
 

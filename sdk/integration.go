@@ -331,6 +331,15 @@ type ProjectIntegration struct {
 	GRPCPlugins []GRPCPlugin `json:"integration_plugins,omitempty" db:"-" yaml:"-"`
 }
 
+func GetProjectIntegrationByName(ints []ProjectIntegration, pfName string) (ProjectIntegration, bool) {
+	for i := range ints {
+		if ints[i].Name == pfName {
+			return ints[i], true
+		}
+	}
+	return ProjectIntegration{}, false
+}
+
 // Blur replaces password with a placeholder
 func (pf *ProjectIntegration) Blur() {
 	pf.Config.Blur()

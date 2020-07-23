@@ -52,6 +52,7 @@ func Test_RunNonDefaultBranchWithSecrets(t *testing.T) {
 	// Create a project with a repository manager
 	prjKey := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, api.Cache, prjKey, prjKey)
+	projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
 	u, pass := assets.InsertLambdaUser(t, db, &proj.ProjectGroups[0].Group)
 
 	appVariable := sdk.Variable{
@@ -260,7 +261,7 @@ version: v1.0`),
 		VCSServer:          "github",
 		RepositoryFullname: "myrepo",
 	}
-	require.NoError(t, application.Insert(db, *proj, &app))
+	require.NoError(t, application.Insert(db, projIdent, &app))
 	require.NoError(t, repositoriesmanager.InsertForApplication(db, &app))
 
 	env := sdk.Environment{
@@ -314,10 +315,6 @@ version: v1.0`),
 		},
 	}
 
-	projIdent := sdk.ProjectIdentifiers{
-		ID:  proj.ID,
-		Key: proj.Key,
-	}
 	require.NoError(t, workflow.Insert(context.TODO(), db, api.Cache, projIdent, proj.ProjectGroups, &w))
 
 	// Make workflow as code

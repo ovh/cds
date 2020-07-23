@@ -287,7 +287,7 @@ func Test_postResyncPRAsCodeHandler(t *testing.T) {
 	u, pass := assets.InsertAdminUser(t, db)
 	pkey := sdk.RandomString(10)
 	p := assets.InsertTestProject(t, db, api.Cache, pkey, pkey)
-
+	projIdent := sdk.ProjectIdentifiers{ID: p.ID, Key: p.Key}
 	vcsServer := sdk.ProjectVCSServerLink{
 		ProjectID: p.ID,
 		Name:      "github",
@@ -305,7 +305,7 @@ vcs_ssh_key: proj-blabla
 `
 	var eapp = new(exportentities.Application)
 	assert.NoError(t, yaml.Unmarshal([]byte(appS), eapp))
-	app, _, _, globalError := application.ParseAndImport(context.Background(), db, api.Cache, *p, eapp, application.ImportOptions{Force: true}, nil, u)
+	app, _, _, globalError := application.ParseAndImport(context.Background(), db, projIdent, p.Integrations, eapp, application.ImportOptions{Force: true}, nil, u)
 	assert.NoError(t, globalError)
 
 	app.FromRepository = repoURL
@@ -337,7 +337,6 @@ vcs_ssh_key: proj-blabla
 	}
 	proj2, errP := project.Load(context.TODO(), api.mustDB(), p.Key, project.LoadOptions.WithGroups)
 	require.NoError(t, errP)
-	projIdent := sdk.ProjectIdentifiers{ID: p.ID, Key: p.Key}
 	require.NoError(t, workflow.Insert(context.TODO(), db, api.Cache, projIdent, proj2.ProjectGroups, &wf))
 
 	// mock service

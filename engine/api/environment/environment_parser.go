@@ -19,8 +19,8 @@ type ImportOptions struct {
 }
 
 // ParseAndImport parse an exportentities.Environment and insert or update the environment in database
-func ParseAndImport(db gorpmapping.SqlExecutorWithTx, proj sdk.Project, eenv exportentities.Environment, opts ImportOptions, decryptFunc keys.DecryptFunc, u sdk.Identifiable) (*sdk.Environment, []sdk.Variable, []sdk.Message, error) {
-	log.Debug("ParseAndImport>> Import environment %s in project %s (force=%v)", eenv.Name, proj.Key, opts.Force)
+func ParseAndImport(db gorpmapping.SqlExecutorWithTx, projIdent sdk.ProjectIdentifiers, eenv exportentities.Environment, opts ImportOptions, decryptFunc keys.DecryptFunc, u sdk.Identifiable) (*sdk.Environment, []sdk.Variable, []sdk.Message, error) {
+	log.Debug("ParseAndImport>> Import environment %s in project %s (force=%v)", eenv.Name, projIdent.Key, opts.Force)
 	log.Debug("ParseAndImport>> Env: %+v", eenv)
 
 	// Check valid application name
@@ -30,7 +30,7 @@ func ParseAndImport(db gorpmapping.SqlExecutorWithTx, proj sdk.Project, eenv exp
 	}
 
 	// Check if env exist
-	oldEnv, err := LoadEnvironmentByName(db, proj.Key, eenv.Name)
+	oldEnv, err := LoadEnvironmentByName(db, projIdent.Key, eenv.Name)
 	if err != nil && !sdk.ErrorIs(err, sdk.ErrEnvironmentNotFound) {
 		return nil, nil, nil, sdk.WrapError(err, "unable to load environment")
 	}
@@ -63,7 +63,7 @@ func ParseAndImport(db gorpmapping.SqlExecutorWithTx, proj sdk.Project, eenv exp
 		case "":
 			v.Type = sdk.StringVariable
 		case sdk.SecretVariable:
-			secret, err := decryptFunc(db, proj.ID, v.Value)
+			secret, err := decryptFunc(db, projIdent.ID, v.Value)
 			if err != nil {
 				return env, nil, nil, sdk.WrapError(err, "Unable to decrypt secret variable")
 			}
@@ -106,7 +106,7 @@ func ParseAndImport(db gorpmapping.SqlExecutorWithTx, proj sdk.Project, eenv exp
 			keepOldValue = true
 		}
 
-		kk, err := keys.Parse(db, proj.ID, kname, kval, decryptFunc)
+		kk, err := keys.Parse(db, projIdent.ID, kname, kval, decryptFunc)
 		if err != nil {
 			return env, nil, nil, sdk.WrapError(err, "Unable to parse key")
 		}
@@ -155,7 +155,7 @@ func ParseAndImport(db gorpmapping.SqlExecutorWithTx, proj sdk.Project, eenv exp
 	if exist {
 		globalError = ImportInto(db, env, oldEnv, msgChan, u)
 	} else {
-		globalError = Import(db, proj, env, msgChan, u)
+		globalError = Import(db, projIdent, env, msgChan, u)
 	}
 
 	close(msgChan)

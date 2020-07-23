@@ -54,10 +54,12 @@ func (api *API) postImportAsCodeHandler() service.Handler {
 		}
 		defer tx.Rollback() // nolint
 
+		// need key for PostRepositoryOperation
 		p, err := project.Load(ctx, tx, key, project.LoadOptions.WithClearKeys)
 		if err != nil {
 			return sdk.WrapError(err, "cannot load project")
 		}
+		projIdent := sdk.ProjectIdentifiers{ID: p.ID, Key: p.Key}
 
 		vcsServer, err := repositoriesmanager.LoadProjectVCSServerLinkByProjectKeyAndVCSServerName(ctx, tx, p.Key, ope.VCSServer)
 		if err != nil {
@@ -80,7 +82,7 @@ func (api *API) postImportAsCodeHandler() service.Handler {
 			}
 		}
 
-		if err := operation.PostRepositoryOperation(ctx, tx, *p, ope, nil); err != nil {
+		if err := operation.PostRepositoryOperation(ctx, tx, projIdent, p.Keys, ope, nil); err != nil {
 			return sdk.WrapError(err, "cannot create repository operation")
 		}
 
@@ -136,18 +138,22 @@ func (api *API) postPerformImportAsCodeHandler() service.Handler {
 			return sdk.NewErrorFrom(sdk.ErrWrongRequest, "invalid given operation uuid")
 		}
 
+		// Need Groups and Integratin for workflow Push + Keys for Template Modifiers
 		proj, err := project.Load(ctx, api.mustDB(), key,
 			project.LoadOptions.WithGroups,
-			project.LoadOptions.WithApplications,
-			project.LoadOptions.WithEnvironments,
-			project.LoadOptions.WithPipelines,
-			project.LoadOptions.WithClearIntegrations,
+			project.LoadOptions.WithKeys,
+			project.LoadOptions.WithIntegrations,
 		)
 		if err != nil {
 			return sdk.WrapError(err, "cannot load project %s", key)
 		}
 
 		projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
+		projPushData := sdk.ProjectForWorkflowPush{
+			ProjectGroups: proj.ProjectGroups,
+			Integrations:  proj.Integrations,
+		}
+
 		ope, err := operation.GetRepositoryOperation(ctx, api.mustDB(), uuid)
 		if err != nil {
 			return sdk.WrapError(err, "unable to get repository operation")
@@ -196,7 +202,7 @@ func (api *API) postPerformImportAsCodeHandler() service.Handler {
 		if err != nil {
 			return err
 		}
-		msgPush, wrkflw, _, _, err := workflow.Push(ctx, api.mustDB(), api.Cache, proj, data, opt, getAPIConsumer(ctx), project.DecryptWithBuiltinKey)
+		msgPush, wrkflw, _, _, err := workflow.Push(ctx, api.mustDB(), api.Cache, projIdent, projPushData, data, opt, getAPIConsumer(ctx), project.DecryptWithBuiltinKey)
 		allMsg = append(allMsg, msgPush...)
 		if err != nil {
 			return sdk.WrapError(err, "unable to push workflow")
@@ -214,11 +220,11 @@ func (api *API) postPerformImportAsCodeHandler() service.Handler {
 
 		// Grant CDS as a repository collaborator
 		// TODO for this moment, this step is not mandatory. If it's failed, continue the ascode process
-		vcsServer, err := repositoriesmanager.LoadProjectVCSServerLinkByProjectKeyAndVCSServerName(ctx, tx, proj.Key, ope.VCSServer)
+		vcsServer, err := repositoriesmanager.LoadProjectVCSServerLinkByProjectKeyAndVCSServerName(ctx, tx, projIdent.Key, ope.VCSServer)
 		if err != nil {
 			return err
 		}
-		client, erra := repositoriesmanager.AuthorizedClient(ctx, tx, api.Cache, proj.Key, vcsServer)
+		client, erra := repositoriesmanager.AuthorizedClient(ctx, tx, api.Cache, projIdent.Key, vcsServer)
 		if erra != nil {
 			log.Error(ctx, "postPerformImportAsCodeHandler> Cannot get client for %s %s : %s", projIdent.Key, ope.VCSServer, erra)
 		} else {

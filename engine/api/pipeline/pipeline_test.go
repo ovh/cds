@@ -148,12 +148,13 @@ func TestLoadByWorkflowID(t *testing.T) {
 	key := sdk.RandomString(10)
 
 	proj := assets.InsertTestProject(t, db, cache, key, key)
+	projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
 	app := sdk.Application{
 		Name:       "my-app",
 		ProjectKey: proj.Key,
 		ProjectID:  proj.ID,
 	}
-	test.NoError(t, application.Insert(db, *proj, &app))
+	test.NoError(t, application.Insert(db, projIdent, &app))
 
 	pip := sdk.Pipeline{
 		ProjectID:  proj.ID,
@@ -182,7 +183,6 @@ func TestLoadByWorkflowID(t *testing.T) {
 
 	proj, _ = project.LoadByID(db, proj.ID, project.LoadOptions.WithGroups)
 
-	projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
 	test.NoError(t, workflow.Insert(context.TODO(), db, cache, projIdent, proj.ProjectGroups, &w))
 
 	actuals, err := pipeline.LoadByWorkflowID(db, w.ID)

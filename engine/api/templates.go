@@ -359,13 +359,9 @@ func (api *API) postTemplateApplyHandler() service.Handler {
 			}
 		}
 
-		// load project with key
+		// Need Group and Integration for Workflow Push + Keys for update ascode
 		p, err := project.Load(ctx, api.mustDB(), req.ProjectKey,
 			project.LoadOptions.WithGroups,
-			project.LoadOptions.WithApplications,
-			project.LoadOptions.WithEnvironments,
-			project.LoadOptions.WithPipelines,
-			project.LoadOptions.WithApplicationWithDeploymentStrategies,
 			project.LoadOptions.WithIntegrations,
 			project.LoadOptions.WithClearKeys,
 		)
@@ -374,6 +370,10 @@ func (api *API) postTemplateApplyHandler() service.Handler {
 		}
 
 		projIdent := sdk.ProjectIdentifiers{ID: p.ID, Key: p.Key}
+		projPushData := sdk.ProjectForWorkflowPush{
+			Integrations:  p.Integrations,
+			ProjectGroups: p.ProjectGroups,
+		}
 		data := exportentities.WorkflowComponents{
 			Template: exportentities.TemplateInstance{
 				Name:       req.WorkflowName,
@@ -425,7 +425,7 @@ func (api *API) postTemplateApplyHandler() service.Handler {
 					}
 					defer tx.Rollback() // nolint
 
-					ope, err := operation.PushOperationUpdate(ctx, tx, api.Cache, *p, data, rootApp.VCSServer, rootApp.RepositoryFullname, branch, message, rootApp.RepositoryStrategy, consumer)
+					ope, err := operation.PushOperationUpdate(ctx, tx, api.Cache, projIdent, p.Keys, data, rootApp.VCSServer, rootApp.RepositoryFullname, branch, message, rootApp.RepositoryStrategy, consumer)
 					if err != nil {
 						return err
 					}
@@ -475,7 +475,7 @@ func (api *API) postTemplateApplyHandler() service.Handler {
 			return service.Write(w, buf.Bytes(), http.StatusOK, "application/tar")
 		}
 
-		msgs, wkf, oldWkf, _, err := workflow.Push(ctx, api.mustDB(), api.Cache, p, data, nil, consumer, project.DecryptWithBuiltinKey)
+		msgs, wkf, oldWkf, _, err := workflow.Push(ctx, api.mustDB(), api.Cache, projIdent, projPushData, data, nil, consumer, project.DecryptWithBuiltinKey)
 		if err != nil {
 			return sdk.WrapError(err, "cannot push generated workflow")
 		}
@@ -597,12 +597,8 @@ func (api *API) postTemplateBulkHandler() service.Handler {
 					}
 
 					// load project with key
-					p, err := project.Load(ctx, api.mustDB(), bulk.Operations[i].Request.ProjectKey,
+					proj, err := project.Load(ctx, api.mustDB(), bulk.Operations[i].Request.ProjectKey,
 						project.LoadOptions.WithGroups,
-						project.LoadOptions.WithApplications,
-						project.LoadOptions.WithEnvironments,
-						project.LoadOptions.WithPipelines,
-						project.LoadOptions.WithApplicationWithDeploymentStrategies,
 						project.LoadOptions.WithIntegrations,
 						project.LoadOptions.WithClearKeys,
 					)
@@ -614,7 +610,11 @@ func (api *API) postTemplateBulkHandler() service.Handler {
 						continue
 					}
 
-					projIdent := sdk.ProjectIdentifiers{ID: p.ID, Key: p.Key}
+					projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
+					projPushData := sdk.ProjectForWorkflowPush{
+						ProjectGroups: proj.ProjectGroups,
+						Integrations:  proj.Integrations,
+					}
 
 					// apply and import workflow
 					data := exportentities.WorkflowComponents{
@@ -679,7 +679,7 @@ func (api *API) postTemplateBulkHandler() service.Handler {
 								}
 								continue
 							}
-							ope, err := operation.PushOperationUpdate(ctx, tx, api.Cache, *p, data, rootApp.VCSServer, rootApp.RepositoryFullname, branch, message, rootApp.RepositoryStrategy, consumer)
+							ope, err := operation.PushOperationUpdate(ctx, tx, api.Cache, projIdent, proj.Keys, data, rootApp.VCSServer, rootApp.RepositoryFullname, branch, message, rootApp.RepositoryStrategy, consumer)
 							if err != nil {
 								tx.Rollback() // nolint
 								if errD := errorDefer(err); errD != nil {
@@ -717,7 +717,7 @@ func (api *API) postTemplateBulkHandler() service.Handler {
 					}
 
 					mods := []workflowtemplate.TemplateRequestModifierFunc{
-						workflowtemplate.TemplateRequestModifiers.DefaultKeys(*p),
+						workflowtemplate.TemplateRequestModifiers.DefaultKeys(*proj),
 					}
 					_, wti, err = workflowtemplate.CheckAndExecuteTemplate(ctx, api.mustDB(), api.Cache, *consumer, projIdent, &data, mods...)
 					if err != nil {
@@ -728,7 +728,7 @@ func (api *API) postTemplateBulkHandler() service.Handler {
 						continue
 					}
 
-					_, wkf, _, _, err := workflow.Push(ctx, api.mustDB(), api.Cache, p, data, nil, consumer, project.DecryptWithBuiltinKey)
+					_, wkf, _, _, err := workflow.Push(ctx, api.mustDB(), api.Cache, projIdent, projPushData, data, nil, consumer, project.DecryptWithBuiltinKey)
 					if err != nil {
 						if errD := errorDefer(sdk.WrapError(err, "cannot push generated workflow")); errD != nil {
 							log.Error(ctx, "%v", errD)

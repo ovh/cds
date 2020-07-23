@@ -163,13 +163,13 @@ func unwrap(db gorp.SqlExecutor, opts []LoadOptionFunc, dbApp *dbApplication) (*
 }
 
 // Insert add an application id database
-func Insert(db gorpmapping.SqlExecutorWithTx, proj sdk.Project, app *sdk.Application) error {
+func Insert(db gorpmapping.SqlExecutorWithTx, projIdent sdk.ProjectIdentifiers, app *sdk.Application) error {
 	if err := app.IsValid(); err != nil {
 		return sdk.WrapError(err, "application is not valid")
 	}
 
-	app.ProjectID = proj.ID
-	app.ProjectKey = proj.Key
+	app.ProjectID = projIdent.ID
+	app.ProjectKey = projIdent.Key
 	app.LastModified = time.Now()
 	copyVCSStrategy := app.RepositoryStrategy
 

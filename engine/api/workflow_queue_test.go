@@ -59,6 +59,7 @@ func testRunWorkflow(t *testing.T, api *API, db gorpmapping.SqlExecutorWithTx, r
 	u, pass := assets.InsertLambdaUser(t, db)
 	key := "proj-" + sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, api.Cache, key, key)
+	projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
 	require.NoError(t, group.InsertLinkGroupUser(context.TODO(), db, &group.LinkGroupUser{
 		GroupID:            proj.ProjectGroups[0].Group.ID,
 		AuthentifiedUserID: u.ID,
@@ -106,7 +107,7 @@ func testRunWorkflow(t *testing.T, api *API, db gorpmapping.SqlExecutorWithTx, r
 	app := &sdk.Application{
 		Name: "app-" + sdk.RandomString(10),
 	}
-	if err := application.Insert(db, *proj, app); err != nil {
+	if err := application.Insert(db, projIdent, app); err != nil {
 		t.Fatal(err)
 	}
 
@@ -177,8 +178,6 @@ func testRunWorkflow(t *testing.T, api *API, db gorpmapping.SqlExecutorWithTx, r
 
 	proj2, errP := project.Load(context.TODO(), api.mustDB(), proj.Key, project.LoadOptions.WithGroups)
 	require.NoError(t, errP)
-
-	projIdent := sdk.ProjectIdentifiers{ID: proj2.ID, Key: proj2.Key}
 
 	require.NoError(t, workflow.Insert(context.TODO(), db, api.Cache, projIdent, proj2.ProjectGroups, &w))
 	w1, err := workflow.Load(context.TODO(), api.mustDB(), projIdent, w.Name, workflow.LoadOptions{})
@@ -974,7 +973,7 @@ func TestWorkerPrivateKey(t *testing.T) {
 	// Create project
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, api.Cache, key, key)
-
+	projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
 	// add group
 	require.NoError(t, group.InsertLinkGroupUser(context.TODO(), db, &group.LinkGroupUser{
 		GroupID:            proj.ProjectGroups[0].Group.ID,
@@ -1022,7 +1021,7 @@ func TestWorkerPrivateKey(t *testing.T) {
 		ProjectID: proj.ID,
 		Name:      sdk.RandomString(10),
 	}
-	assert.NoError(t, application.Insert(db, *proj, &app))
+	assert.NoError(t, application.Insert(db, projIdent, &app))
 
 	// Create workflow
 	w := sdk.Workflow{
@@ -1045,7 +1044,6 @@ func TestWorkerPrivateKey(t *testing.T) {
 	p, err := project.Load(context.TODO(), db, proj.Key, project.LoadOptions.WithGroups)
 	assert.NoError(t, err)
 
-	projIdent := sdk.ProjectIdentifiers{ID: p.ID, Key: p.Key}
 	assert.NoError(t, workflow.Insert(context.TODO(), db, api.Cache, projIdent, proj.ProjectGroups, &w))
 
 	workflowDeepPipeline, err := workflow.LoadByID(context.TODO(), db, projIdent, w.ID, workflow.LoadOptions{DeepPipeline: true})
@@ -1088,7 +1086,7 @@ func TestPostVulnerabilityReportHandler(t *testing.T) {
 	// Create project
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, api.Cache, key, key)
-
+	projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
 	// add group
 	require.NoError(t, group.InsertLinkGroupUser(context.TODO(), db, &group.LinkGroupUser{
 		GroupID:            proj.ProjectGroups[0].Group.ID,
@@ -1136,7 +1134,7 @@ func TestPostVulnerabilityReportHandler(t *testing.T) {
 		ProjectID: proj.ID,
 		Name:      sdk.RandomString(10),
 	}
-	assert.NoError(t, application.Insert(db, *proj, &app))
+	assert.NoError(t, application.Insert(db, projIdent, &app))
 
 	// Create workflow
 	w := sdk.Workflow{
@@ -1159,7 +1157,6 @@ func TestPostVulnerabilityReportHandler(t *testing.T) {
 	p, err := project.Load(context.TODO(), db, proj.Key, project.LoadOptions.WithGroups)
 	assert.NoError(t, err)
 
-	projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
 	assert.NoError(t, workflow.Insert(context.TODO(), db, api.Cache, projIdent, p.ProjectGroups, &w))
 
 	workflowDeepPipeline, err := workflow.LoadByID(context.TODO(), db, projIdent, w.ID, workflow.LoadOptions{DeepPipeline: true})
@@ -1241,7 +1238,7 @@ func TestInsertNewCodeCoverageReport(t *testing.T) {
 	// Add repo manager
 	proj.VCSServers = make([]sdk.ProjectVCSServerLink, 0, 1)
 	proj.VCSServers = append(proj.VCSServers)
-
+	projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
 	vcsServer := sdk.ProjectVCSServerLink{
 		ProjectID: proj.ID,
 		Name:      "repoManServ",
@@ -1291,7 +1288,7 @@ func TestInsertNewCodeCoverageReport(t *testing.T) {
 		RepositoryFullname: "foo/bar",
 		VCSServer:          "repoManServ",
 	}
-	assert.NoError(t, application.Insert(db, *proj, &app))
+	assert.NoError(t, application.Insert(db, projIdent, &app))
 	assert.NoError(t, repositoriesmanager.InsertForApplication(db, &app))
 
 	// Create workflow
@@ -1314,7 +1311,6 @@ func TestInsertNewCodeCoverageReport(t *testing.T) {
 
 	p, err := project.Load(context.TODO(), db, proj.Key, project.LoadOptions.WithGroups)
 	require.NoError(t, err)
-	projIdent := sdk.ProjectIdentifiers{ID: p.ID, Key: p.Key}
 	assert.NoError(t, workflow.Insert(context.TODO(), db, api.Cache, projIdent, p.ProjectGroups, &w))
 
 	allSrv, err := services.LoadAll(context.TODO(), db)

@@ -141,6 +141,7 @@ func TestUpdateAsCodePipelineHandler(t *testing.T) {
 	// Create Project
 	pkey := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, api.Cache, pkey, pkey)
+	projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
 	vcsServer := sdk.ProjectVCSServerLink{
 		ProjectID: proj.ID,
 		Name:      "github",
@@ -171,7 +172,7 @@ func TestUpdateAsCodePipelineHandler(t *testing.T) {
 		VCSServer:          "github",
 		FromRepository:     "myrepofrom",
 	}
-	assert.NoError(t, application.Insert(db, *proj, &app))
+	assert.NoError(t, application.Insert(db, projIdent, &app))
 	assert.NoError(t, repositoriesmanager.InsertForApplication(db, &app))
 
 	repoModel, err := workflow.LoadHookModelByName(db, sdk.RepositoryWebHookModelName)
@@ -179,7 +180,6 @@ func TestUpdateAsCodePipelineHandler(t *testing.T) {
 
 	wk := initWorkflow(t, db, proj, &app, &pip, repoModel)
 	wk.FromRepository = "myrepofrom"
-	projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
 	require.NoError(t, workflow.Insert(context.Background(), db, api.Cache, projIdent, proj.ProjectGroups, wk))
 
 	chanMessageReceived := make(chan sdk.WebsocketEvent)

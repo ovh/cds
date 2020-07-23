@@ -18,20 +18,20 @@ import (
 )
 
 // Need proj with SSHKeys
-func pushOperation(ctx context.Context, db gorpmapping.SqlExecutorWithTx, store cache.Store, proj sdk.Project, data exportentities.WorkflowComponents, ope sdk.Operation) (*sdk.Operation, error) {
+func pushOperation(ctx context.Context, db gorpmapping.SqlExecutorWithTx, store cache.Store, projIdent sdk.ProjectIdentifiers, projKeys []sdk.ProjectKey, data exportentities.WorkflowComponents, ope sdk.Operation) (*sdk.Operation, error) {
 	if ope.RepositoryStrategy.SSHKey != "" {
-		key := proj.GetSSHKey(ope.RepositoryStrategy.SSHKey)
+		key := sdk.GetProjectKey(projKeys, ope.RepositoryStrategy.SSHKey, sdk.KeyTypeSSH)
 		if key == nil {
-			return nil, sdk.WithStack(fmt.Errorf("unable to find key %s on project %s", ope.RepositoryStrategy.SSHKey, proj.Key))
+			return nil, sdk.WithStack(fmt.Errorf("unable to find key %s on project %s", ope.RepositoryStrategy.SSHKey, projIdent.Key))
 		}
 		ope.RepositoryStrategy.SSHKeyContent = key.Private
 	}
 
-	vcsServer, err := repositoriesmanager.LoadProjectVCSServerLinkByProjectKeyAndVCSServerName(ctx, db, proj.Key, ope.VCSServer)
+	vcsServer, err := repositoriesmanager.LoadProjectVCSServerLinkByProjectKeyAndVCSServerName(ctx, db, projIdent.Key, ope.VCSServer)
 	if err != nil {
 		return nil, err
 	}
-	client, err := repositoriesmanager.AuthorizedClient(ctx, db, store, proj.Key, vcsServer)
+	client, err := repositoriesmanager.AuthorizedClient(ctx, db, store, projIdent.Key, vcsServer)
 	if err != nil {
 		return nil, err
 	}
@@ -54,7 +54,8 @@ func pushOperation(ctx context.Context, db gorpmapping.SqlExecutorWithTx, store 
 		Reader:      buf,
 		ContentType: "application/tar",
 	}
-	if err := PostRepositoryOperation(ctx, db, proj, &ope, multipartData); err != nil {
+
+	if err := PostRepositoryOperation(ctx, db, projIdent, projKeys, &ope, multipartData); err != nil {
 		return nil, sdk.WrapError(err, "unable to post repository operation")
 	}
 
@@ -64,7 +65,7 @@ func pushOperation(ctx context.Context, db gorpmapping.SqlExecutorWithTx, store 
 	return &ope, nil
 }
 
-func PushOperation(ctx context.Context, db gorpmapping.SqlExecutorWithTx, store cache.Store, proj sdk.Project, data exportentities.WorkflowComponents, vcsServerName, repoFullname, branch, message string, vcsStrategy sdk.RepositoryStrategy, u sdk.Identifiable) (*sdk.Operation, error) {
+func PushOperation(ctx context.Context, db gorpmapping.SqlExecutorWithTx, store cache.Store, projIdent sdk.ProjectIdentifiers, projKeys []sdk.ProjectKey, data exportentities.WorkflowComponents, vcsServerName, repoFullname, branch, message string, vcsStrategy sdk.RepositoryStrategy, u sdk.Identifiable) (*sdk.Operation, error) {
 	ope := sdk.Operation{
 		VCSServer:          vcsServerName,
 		RepoFullName:       repoFullname,
@@ -80,10 +81,10 @@ func PushOperation(ctx context.Context, db gorpmapping.SqlExecutorWithTx, store 
 	ope.User.Fullname = u.GetFullname()
 	ope.User.Username = u.GetUsername()
 
-	return pushOperation(ctx, db, store, proj, data, ope)
+	return pushOperation(ctx, db, store, projIdent, projKeys, data, ope)
 }
 
-func PushOperationUpdate(ctx context.Context, db gorpmapping.SqlExecutorWithTx, store cache.Store, proj sdk.Project, data exportentities.WorkflowComponents, vcsServerName, repoFullname, branch, message string, vcsStrategy sdk.RepositoryStrategy, u sdk.Identifiable) (*sdk.Operation, error) {
+func PushOperationUpdate(ctx context.Context, db gorpmapping.SqlExecutorWithTx, store cache.Store, projIdent sdk.ProjectIdentifiers, projClearKeys []sdk.ProjectKey, data exportentities.WorkflowComponents, vcsServerName, repoFullname, branch, message string, vcsStrategy sdk.RepositoryStrategy, u sdk.Identifiable) (*sdk.Operation, error) {
 	ope := sdk.Operation{
 		VCSServer:          vcsServerName,
 		RepoFullName:       repoFullname,
@@ -100,12 +101,12 @@ func PushOperationUpdate(ctx context.Context, db gorpmapping.SqlExecutorWithTx, 
 	ope.User.Fullname = u.GetFullname()
 	ope.User.Username = u.GetUsername()
 
-	return pushOperation(ctx, db, store, proj, data, ope)
+	return pushOperation(ctx, db, store, projIdent, projClearKeys, data, ope)
 }
 
 // PostRepositoryOperation creates a new repository operation
 // Need project with Keys
-func PostRepositoryOperation(ctx context.Context, db gorp.SqlExecutor, prj sdk.Project, ope *sdk.Operation, multipartData *services.MultiPartData) error {
+func PostRepositoryOperation(ctx context.Context, db gorp.SqlExecutor, prjIdent sdk.ProjectIdentifiers, prjKeys []sdk.ProjectKey, ope *sdk.Operation, multipartData *services.MultiPartData) error {
 	srvs, err := services.LoadAllByType(ctx, db, sdk.TypeRepositories)
 	if err != nil {
 		return sdk.WrapError(err, "Unable to found repositories service")
@@ -113,7 +114,7 @@ func PostRepositoryOperation(ctx context.Context, db gorp.SqlExecutor, prj sdk.P
 
 	if ope.RepositoryStrategy.ConnectionType == "ssh" {
 		found := false
-		for _, k := range prj.Keys {
+		for _, k := range prjKeys {
 			if k.Name == ope.RepositoryStrategy.SSHKey {
 				ope.RepositoryStrategy.SSHKeyContent = k.Private
 				found = true
@@ -121,7 +122,7 @@ func PostRepositoryOperation(ctx context.Context, db gorp.SqlExecutor, prj sdk.P
 			}
 		}
 		if !found {
-			return sdk.WithStack(fmt.Errorf("unable to find key %s on project %s", ope.RepositoryStrategy.SSHKey, prj.Key))
+			return sdk.WithStack(fmt.Errorf("unable to find key %s on project %s", ope.RepositoryStrategy.SSHKey, prjIdent.Key))
 		}
 		ope.RepositoryStrategy.User = ""
 		ope.RepositoryStrategy.Password = ""

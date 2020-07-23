@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"fmt"
+	"github.com/ovh/cds/engine/api/workflowtemplate"
 	"io"
 	"net/http"
 	"sort"
@@ -996,27 +997,29 @@ func (api *API) initWorkflowRun(ctx context.Context, projKey string, wf *sdk.Wor
 		if wf.FromRepository != "" && (workflowStartedByRepoWebHook || opts.Manual != nil) {
 			log.Debug("initWorkflowRun> rebuild workflow %s/%s from as code configuration", p.Key, wf.Name)
 			p1, err := project.Load(ctx, api.mustDB(), projKey,
-				project.LoadOptions.WithVariables,
 				project.LoadOptions.WithGroups,
-				project.LoadOptions.WithApplicationVariables,
-				project.LoadOptions.WithApplicationKeys,
-				project.LoadOptions.WithApplicationWithDeploymentStrategies,
-				project.LoadOptions.WithEnvironments,
-				project.LoadOptions.WithPipelines,
 				project.LoadOptions.WithClearKeys,
-				project.LoadOptions.WithClearIntegrations,
+				project.LoadOptions.WithIntegrations,
 			)
 			if err != nil {
 				r := failInitWorkflowRun(ctx, api.mustDB(), wfRun, sdk.WrapError(err, "cannot load project for as code workflow creation"))
 				report.Merge(ctx, r)
 				return
 			}
+			projPushData := sdk.ProjectForWorkflowPush{
+				ProjectGroups: p1.ProjectGroups,
+				Integrations: p1.Integrations,
+			}
 
 			// Get workflow from repository
 			log.Debug("workflow.CreateFromRepository> %s", wf.Name)
 			oldWf := *wf
 			var asCodeInfosMsg []sdk.Message
-			workflowSecrets, asCodeInfosMsg, err = workflow.CreateFromRepository(ctx, api.mustDB(), api.Cache, p1, wf, *opts, *u, project.DecryptWithBuiltinKey)
+			mods := []workflowtemplate.TemplateRequestModifierFunc{
+				workflowtemplate.TemplateRequestModifiers.DefaultKeys(*p1),
+				workflowtemplate.TemplateRequestModifiers.DefaultNameAndRepositories(*p1, wf.FromRepository),
+			}
+			workflowSecrets, asCodeInfosMsg, err = workflow.CreateFromRepository(ctx, api.mustDB(), api.Cache, projIdent, projPushData, p1.Keys, wf, *opts, *u, project.DecryptWithBuiltinKey, mods...)
 			infos := make([]sdk.SpawnMsg, len(asCodeInfosMsg))
 			for i, msg := range asCodeInfosMsg {
 				infos[i] = sdk.SpawnMsg{

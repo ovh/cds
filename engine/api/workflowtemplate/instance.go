@@ -70,10 +70,11 @@ func requestModifyDefaultKeysfunc(proj sdk.Project) TemplateRequestModifierFunc 
 
 func requestModifyDefaultNameAndRepositories(proj sdk.Project, repoURL string) TemplateRequestModifierFunc {
 	return func(ctx context.Context, db gorpmapping.SqlExecutorWithTx, store cache.Store, wt sdk.WorkflowTemplate, req *sdk.WorkflowTemplateRequest) error {
+		projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
 		var repoPath string
 	loopVCSServer:
 		for _, vcs := range proj.VCSServers {
-			repos, err := repositoriesmanager.GetReposForProjectVCSServer(ctx, db, store, proj, vcs.Name, repositoriesmanager.Options{})
+			repos, err := repositoriesmanager.GetReposForProjectVCSServer(ctx, db, store, projIdent, vcs.Name, repositoriesmanager.Options{})
 			if err != nil {
 				return err
 			}

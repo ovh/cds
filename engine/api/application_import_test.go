@@ -93,14 +93,14 @@ func Test_postApplicationImportHandler_NewAppFromYAMLWithKeysAndSecrets(t *testi
 	u, pass := assets.InsertAdminUser(t, db)
 	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
 	test.NotNil(t, proj)
-
+	projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
 	//We will create an app, with a pgp key, export it then import as a new application(with a different name)
 	//This is also a good test for export secrets
 
 	app := &sdk.Application{
 		Name: "myNewApp",
 	}
-	test.NoError(t, application.Insert(db, *proj, app))
+	test.NoError(t, application.Insert(db, projIdent, app))
 
 	k := &sdk.ApplicationKey{
 		Name:          "app-mykey",
@@ -204,11 +204,11 @@ func Test_postApplicationImportHandler_NewAppFromYAMLWithKeysAndSecretsAndReImpo
 	u, pass := assets.InsertAdminUser(t, db)
 	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
 	test.NotNil(t, proj)
-
+	projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
 	app := &sdk.Application{
 		Name: "myNewApp",
 	}
-	test.NoError(t, application.Insert(db, *proj, app))
+	test.NoError(t, application.Insert(db, projIdent, app))
 
 	k := &sdk.ApplicationKey{
 		Name:          "app-mykey",
@@ -367,11 +367,11 @@ func Test_postApplicationImportHandler_NewAppFromYAMLWithKeysAndSecretsAndReImpo
 	u, pass := assets.InsertAdminUser(t, db)
 	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
 	test.NotNil(t, proj)
-
+	projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
 	app := &sdk.Application{
 		Name: "myNewApp",
 	}
-	test.NoError(t, application.Insert(db, *proj, app))
+	test.NoError(t, application.Insert(db, projIdent, app))
 
 	// create password, pgp and ssh keys
 	k1 := &sdk.ApplicationKey{
@@ -569,11 +569,11 @@ func Test_postApplicationImportHandler_ExistingAppFromYAMLWithoutForce(t *testin
 	u, pass := assets.InsertAdminUser(t, db)
 	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
 	test.NotNil(t, proj)
-
+	projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
 	app := sdk.Application{
 		Name: "myNewApp",
 	}
-	test.NoError(t, application.Insert(db, *proj, &app))
+	test.NoError(t, application.Insert(db, projIdent, &app))
 
 	//Prepare request
 	vars := map[string]string{
@@ -603,11 +603,11 @@ func Test_postApplicationImportHandler_ExistingAppFromYAMLInheritPermissions(t *
 	u, pass := assets.InsertAdminUser(t, db)
 	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
 	test.NotNil(t, proj)
-
+	projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
 	app := sdk.Application{
 		Name: "myNewApp",
 	}
-	test.NoError(t, application.Insert(db, *proj, &app))
+	test.NoError(t, application.Insert(db, projIdent, &app))
 
 	//Prepare request
 	vars := map[string]string{
@@ -637,7 +637,7 @@ func Test_postApplicationImportHandler_ExistingAppWithDeploymentStrategy(t *test
 	u, pass := assets.InsertAdminUser(t, db)
 	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
 	test.NotNil(t, proj)
-
+	projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
 	pfname := sdk.RandomString(10)
 	pf := sdk.IntegrationModel{
 		Name:       pfname,
@@ -667,7 +667,7 @@ func Test_postApplicationImportHandler_ExistingAppWithDeploymentStrategy(t *test
 	app := sdk.Application{
 		Name: "myNewApp",
 	}
-	test.NoError(t, application.Insert(db, *proj, &app))
+	test.NoError(t, application.Insert(db, projIdent, &app))
 
 	test.NoError(t, application.SetDeploymentStrategy(db, proj.ID, app.ID, pf.ID, pp.Name, sdk.IntegrationConfig{
 		"token": sdk.IntegrationConfigValue{
@@ -748,7 +748,7 @@ func Test_postApplicationImportHandler_DontOverrideDeploymentPasswordIfNotGiven(
 	u, pass := assets.InsertAdminUser(t, db)
 	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
 	test.NotNil(t, proj)
-
+	projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
 	pfname := sdk.RandomString(10)
 	pf := sdk.IntegrationModel{
 		Name:       pfname,
@@ -778,7 +778,7 @@ func Test_postApplicationImportHandler_DontOverrideDeploymentPasswordIfNotGiven(
 	app := sdk.Application{
 		Name: "myNewApp",
 	}
-	test.NoError(t, application.Insert(db, *proj, &app))
+	test.NoError(t, application.Insert(db, projIdent, &app))
 
 	test.NoError(t, application.SetDeploymentStrategy(db, proj.ID, app.ID, pf.ID, pp.Name, sdk.IntegrationConfig{
 		"token": sdk.IntegrationConfigValue{

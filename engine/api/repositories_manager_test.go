@@ -153,6 +153,7 @@ func TestAPI_detachRepositoriesManagerHandler(t *testing.T) {
 
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, api.Cache, key, key)
+	projIdent := sdk.ProjectIdentifiers{ID: p.ID, Key: p.Key}
 	vcsServer := sdk.ProjectVCSServerLink{
 		ProjectID: proj.ID,
 		Name:      "github",
@@ -183,10 +184,10 @@ vcs_ssh_key: proj-blabla
 `
 	var eapp = new(exportentities.Application)
 	assert.NoError(t, yaml.Unmarshal([]byte(appS), eapp))
-	app, _, _, globalError := application.ParseAndImport(context.Background(), db, api.Cache, *proj, eapp, application.ImportOptions{Force: true}, nil, u)
+	app, _, _, globalError := application.ParseAndImport(context.Background(), db, projIdent, proj.Integrations, eapp, application.ImportOptions{Force: true}, nil, u)
 	assert.NoError(t, globalError)
 
-	proj, _ = project.LoadByID(db, proj.ID, project.LoadOptions.WithApplications, project.LoadOptions.WithPipelines, project.LoadOptions.WithEnvironments, project.LoadOptions.WithGroups)
+	proj, _ = project.LoadByID(db, proj.ID, project.LoadOptions.WithGroups)
 
 	repoModel, err := workflow.LoadHookModelByName(db, sdk.RepositoryWebHookModelName)
 	assert.NoError(t, err)
@@ -219,9 +220,6 @@ vcs_ssh_key: proj-blabla
 	}
 
 	t.Log("Inserting workflow=====")
-
-	projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
-
 	test.NoError(t, workflow.Insert(context.TODO(), db, api.Cache, projIdent, proj.ProjectGroups, &w))
 	w1, err := workflow.Load(context.TODO(), db, projIdent, "test_1", workflow.LoadOptions{
 		DeepPipeline: true,

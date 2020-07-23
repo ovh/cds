@@ -625,6 +625,7 @@ func Test_getWorkflowPushHandler(t *testing.T) {
 	u, pass := assets.InsertAdminUser(t, db)
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, api.Cache, key, key)
+	projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
 	require.NoError(t, group.InsertLinkGroupUser(context.TODO(), db, &group.LinkGroupUser{
 		GroupID:            proj.ProjectGroups[0].Group.ID,
 		AuthentifiedUserID: u.ID,
@@ -665,7 +666,7 @@ func Test_getWorkflowPushHandler(t *testing.T) {
 	app := &sdk.Application{
 		Name: appName,
 	}
-	if err := application.Insert(db, *proj, app); err != nil {
+	if err := application.Insert(db, projIdent, app); err != nil {
 		t.Fatal(err)
 	}
 
@@ -741,7 +742,6 @@ func Test_getWorkflowPushHandler(t *testing.T) {
 	}
 
 	proj, _ = project.Load(context.TODO(), api.mustDB(), proj.Key, project.LoadOptions.WithGroups)
-	projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
 
 	test.NoError(t, workflow.Insert(context.TODO(), db, api.Cache, projIdent, proj.ProjectGroups, &w))
 	test.NoError(t, workflow.RenameNode(context.TODO(), api.mustDB(), &w))

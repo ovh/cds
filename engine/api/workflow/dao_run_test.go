@@ -156,6 +156,7 @@ func TestPurgeWorkflowRun(t *testing.T) {
 
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, cache, key, key)
+	projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
 	vcsServer := sdk.ProjectVCSServerLink{
 		ProjectID: proj.ID,
 		Name:      "github",
@@ -186,7 +187,7 @@ vcs_ssh_key: proj-blabla
 `
 	var eapp = new(exportentities.Application)
 	assert.NoError(t, yaml.Unmarshal([]byte(appS), eapp))
-	app, _, _, globalError := application.ParseAndImport(context.TODO(), db, cache, *proj, eapp, application.ImportOptions{Force: true}, nil, u)
+	app, _, _, globalError := application.ParseAndImport(context.TODO(), db, projIdent, proj.Integrations, eapp, application.ImportOptions{Force: true}, nil, u)
 	assert.NoError(t, globalError)
 
 	proj, _ = project.LoadByID(db, proj.ID, project.LoadOptions.WithGroups)
@@ -222,10 +223,6 @@ vcs_ssh_key: proj-blabla
 		PurgeTags:     []string{"git.branch"},
 	}
 
-	projIdent := sdk.ProjectIdentifiers{
-		ID:  proj.ID,
-		Key: proj.Key,
-	}
 	test.NoError(t, workflow.Insert(context.TODO(), db, cache, projIdent, proj.ProjectGroups, &w))
 
 	w1, err := workflow.Load(context.TODO(), db, projIdent, "test_purge_1", workflow.LoadOptions{
@@ -439,6 +436,7 @@ func TestPurgeWorkflowRunWithOneSuccessWorkflowRun(t *testing.T) {
 
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, cache, key, key)
+	projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
 	vcsServer := sdk.ProjectVCSServerLink{
 		ProjectID: proj.ID,
 		Name:      "github",
@@ -469,7 +467,7 @@ vcs_ssh_key: proj-blabla
 `
 	var eapp = new(exportentities.Application)
 	assert.NoError(t, yaml.Unmarshal([]byte(appS), eapp))
-	app, _, _, globalError := application.ParseAndImport(context.TODO(), db, cache, *proj, eapp, application.ImportOptions{Force: true}, nil, u)
+	app, _, _, globalError := application.ParseAndImport(context.TODO(), db, projIdent, proj.Integrations, eapp, application.ImportOptions{Force: true}, nil, u)
 	assert.NoError(t, globalError)
 
 	proj, _ = project.LoadByID(db, proj.ID, project.LoadOptions.WithGroups)
@@ -505,10 +503,6 @@ vcs_ssh_key: proj-blabla
 		PurgeTags:     []string{"git.branch"},
 	}
 
-	projIdent := sdk.ProjectIdentifiers{
-		ID:  proj.ID,
-		Key: proj.Key,
-	}
 	test.NoError(t, workflow.Insert(context.TODO(), db, cache, projIdent, proj.ProjectGroups, &w))
 
 	w1, err := workflow.Load(context.TODO(), db, projIdent, "test_purge_1", workflow.LoadOptions{
@@ -634,6 +628,7 @@ func TestPurgeWorkflowRunWithNoSuccessWorkflowRun(t *testing.T) {
 
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, cache, key, key)
+	projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
 	vcsServer := sdk.ProjectVCSServerLink{
 		ProjectID: proj.ID,
 		Name:      "github",
@@ -664,7 +659,7 @@ vcs_ssh_key: proj-blabla
 `
 	var eapp = new(exportentities.Application)
 	assert.NoError(t, yaml.Unmarshal([]byte(appS), eapp))
-	app, _, _, globalError := application.ParseAndImport(context.TODO(), db, cache, *proj, eapp, application.ImportOptions{Force: true}, nil, u)
+	app, _, _, globalError := application.ParseAndImport(context.TODO(), db, projIdent, proj.Integrations, eapp, application.ImportOptions{Force: true}, nil, u)
 	assert.NoError(t, globalError)
 
 	proj, _ = project.LoadByID(db, proj.ID, project.LoadOptions.WithGroups)
@@ -698,11 +693,6 @@ vcs_ssh_key: proj-blabla
 		},
 		HistoryLength: 2,
 		PurgeTags:     []string{"git.branch"},
-	}
-
-	projIdent := sdk.ProjectIdentifiers{
-		ID:  proj.ID,
-		Key: proj.Key,
 	}
 	test.NoError(t, workflow.Insert(context.TODO(), db, cache, projIdent, proj.ProjectGroups, &w))
 

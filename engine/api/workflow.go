@@ -201,19 +201,12 @@ func (api *API) postWorkflowRollbackHandler() service.Handler {
 		db := api.mustDB()
 		u := getAPIConsumer(ctx)
 
-		proj, err := project.Load(ctx, db, key,
-			project.LoadOptions.WithGroups,
-			project.LoadOptions.WithApplications,
-			project.LoadOptions.WithEnvironments,
-			project.LoadOptions.WithPipelines,
-			project.LoadOptions.WithIntegrations,
-			project.LoadOptions.WithApplicationWithDeploymentStrategies,
-		)
+		p, err := project.Load(ctx, db, key, project.LoadOptions.WithGroups)
 		if err != nil {
 			return sdk.WrapError(err, "cannot load project %s", key)
 		}
 
-		projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
+		projIdent := sdk.ProjectIdentifiers{ID: p.ID, Key: p.Key}
 		wf, err := workflow.Load(ctx, db, projIdent, workflowName, workflow.LoadOptions{WithIcon: true})
 		if err != nil {
 			return sdk.WrapError(err, "cannot load workflow %s/%s", key, workflowName)
@@ -235,7 +228,7 @@ func (api *API) postWorkflowRollbackHandler() service.Handler {
 		}
 		defer tx.Rollback() // nolint
 
-		newWf, _, errP := workflow.ParseAndImport(ctx, tx, api.Cache, *proj, wf, exportWf, u, workflow.ImportOptions{Force: true, WorkflowName: workflowName})
+		newWf, _, errP := workflow.ParseAndImport(ctx, tx, api.Cache, projIdent, p.ProjectGroups, wf, exportWf, u, workflow.ImportOptions{Force: true, WorkflowName: workflowName})
 		if errP != nil {
 			return sdk.WrapError(errP, "cannot parse and import previous workflow")
 		}

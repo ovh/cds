@@ -64,3 +64,13 @@ type EnvironmentKey struct {
 	Type          KeyType `json:"type" db:"type" cli:"type"`
 	EnvironmentID int64   `json:"environment_id" db:"environment_id"`
 }
+
+// GetProjectKey returns a ssh key given his name
+func GetProjectKey(keys []ProjectKey, name string, t KeyType) *ProjectKey {
+	for _, k := range keys {
+		if k.Type == t && k.Name == name {
+			return &k
+		}
+	}
+	return nil
+}

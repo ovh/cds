@@ -1043,15 +1043,13 @@ func checkPipeline(ctx context.Context, db gorp.SqlExecutor, projIdent sdk.Proje
 }
 
 // Push push a workflow from cds files
-func Push(ctx context.Context, db *gorp.DbMap, store cache.Store, proj *sdk.Project, data exportentities.WorkflowComponents,
+func Push(ctx context.Context, db *gorp.DbMap, store cache.Store, projIdent sdk.ProjectIdentifiers, projData sdk.ProjectForWorkflowPush, data exportentities.WorkflowComponents,
 	opts *PushOption, u sdk.Identifiable, decryptFunc keys.DecryptFunc) ([]sdk.Message, *sdk.Workflow, *sdk.Workflow, *PushSecrets, error) {
 	ctx, end := telemetry.Span(ctx, "workflow.Push")
 	defer end()
 	if data.Workflow == nil {
 		return nil, nil, nil, nil, sdk.NewErrorFrom(sdk.ErrWrongRequest, "invalid given workflow components, missing workflow file")
 	}
-
-	projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
 
 	var err error
 	var workflowExists bool
@@ -1094,12 +1092,11 @@ func Push(ctx context.Context, db *gorp.DbMap, store cache.Store, proj *sdk.Proj
 		if opts != nil {
 			fromRepo = opts.FromRepository
 		}
-		appDB, appSecrets, msgList, err := application.ParseAndImport(ctx, tx, store, *proj, &app, application.ImportOptions{Force: true, FromRepository: fromRepo}, decryptFunc, u)
+		appDB, appSecrets, msgList, err := application.ParseAndImport(ctx, tx, projIdent, projData.Integrations, &app, application.ImportOptions{Force: true, FromRepository: fromRepo}, decryptFunc, u)
 		allMsg = append(allMsg, msgList...)
 		if err != nil {
-			return allMsg, nil, nil, nil, sdk.ErrorWithFallback(err, sdk.ErrWrongRequest, "unable to import application %s/%s", proj.Key, app.Name)
+			return allMsg, nil, nil, nil, sdk.ErrorWithFallback(err, sdk.ErrWrongRequest, "unable to import application %s/%s", projIdent.Key, app.Name)
 		}
-		proj.SetApplication(*appDB)
 		allSecrets.ApplicationsSecrets[appDB.ID] = appSecrets
 	}
 
@@ -1108,12 +1105,11 @@ func Push(ctx context.Context, db *gorp.DbMap, store cache.Store, proj *sdk.Proj
 		if opts != nil {
 			fromRepo = opts.FromRepository
 		}
-		envDB, envsSecrets, msgList, err := environment.ParseAndImport(tx, *proj, env, environment.ImportOptions{Force: true, FromRepository: fromRepo}, decryptFunc, u)
+		envDB, envsSecrets, msgList, err := environment.ParseAndImport(tx, projIdent, env, environment.ImportOptions{Force: true, FromRepository: fromRepo}, decryptFunc, u)
 		allMsg = append(allMsg, msgList...)
 		if err != nil {
-			return allMsg, nil, nil, nil, sdk.ErrorWithFallback(err, sdk.ErrWrongRequest, "unable to import environment %s/%s", proj.Key, env.Name)
+			return allMsg, nil, nil, nil, sdk.ErrorWithFallback(err, sdk.ErrWrongRequest, "unable to import environment %s/%s", projIdent.Key, env.Name)
 		}
-		proj.SetEnvironment(*envDB)
 		allSecrets.EnvironmentdSecrets[envDB.ID] = envsSecrets
 	}
 
@@ -1122,12 +1118,11 @@ func Push(ctx context.Context, db *gorp.DbMap, store cache.Store, proj *sdk.Proj
 		if opts != nil {
 			fromRepo = opts.FromRepository
 		}
-		pipDB, msgList, err := pipeline.ParseAndImport(ctx, tx, store, *proj, &pip, u, pipeline.ImportOptions{Force: true, FromRepository: fromRepo})
+		_, msgList, err := pipeline.ParseAndImport(ctx, tx, projIdent, projData.ProjectGroups, &pip, u, pipeline.ImportOptions{Force: true, FromRepository: fromRepo})
 		allMsg = append(allMsg, msgList...)
 		if err != nil {
-			return allMsg, nil, nil, nil, sdk.ErrorWithFallback(err, sdk.ErrWrongRequest, "unable to import pipeline %s/%s", proj.Key, pip.Name)
+			return allMsg, nil, nil, nil, sdk.ErrorWithFallback(err, sdk.ErrWrongRequest, "unable to import pipeline %s/%s", projIdent.Key, pip.Name)
 		}
-		proj.SetPipeline(*pipDB)
 	}
 
 	isDefaultBranch := true
@@ -1149,7 +1144,7 @@ func Push(ctx context.Context, db *gorp.DbMap, store cache.Store, proj *sdk.Proj
 		importOptions.HookUUID = opts.HookUUID
 	}
 
-	wf, msgList, err := ParseAndImport(ctx, tx, store, *proj, oldWf, data.Workflow, u, importOptions)
+	wf, msgList, err := ParseAndImport(ctx, tx, store, projIdent, projData.ProjectGroups, oldWf, data.Workflow, u, importOptions)
 	allMsg = append(allMsg, msgList...)
 	if err != nil {
 		return allMsg, nil, nil, nil, sdk.WrapError(err, "unable to import workflow %s", data.Workflow.GetName())

@@ -26,8 +26,8 @@ type ImportOptions struct {
 }
 
 // Parse parse an exportentities.workflow and return the parsed workflow
-func Parse(ctx context.Context, proj sdk.Project, ew exportentities.Workflow) (*sdk.Workflow, error) {
-	log.Info(ctx, "Parse>> Parse workflow %s in project %s", ew.GetName(), proj.Key)
+func Parse(ctx context.Context, projIdent sdk.ProjectIdentifiers, projGroups []sdk.GroupPermission, ew exportentities.Workflow) (*sdk.Workflow, error) {
+	log.Info(ctx, "Parse>> Parse workflow %s in project %s", ew.GetName(), projIdent.Key)
 	log.Debug("Parse>> Workflow: %+v", ew)
 
 	//Parse workflow
@@ -35,13 +35,13 @@ func Parse(ctx context.Context, proj sdk.Project, ew exportentities.Workflow) (*
 	if errW != nil {
 		return nil, sdk.NewError(sdk.ErrWrongRequest, errW)
 	}
-	w.ProjectID = proj.ID
-	w.ProjectKey = proj.Key
+	w.ProjectID = projIdent.ID
+	w.ProjectKey = projIdent.Key
 
 	// Get permission from project if needed
 	if len(w.Groups) == 0 {
-		w.Groups = make([]sdk.GroupPermission, 0, len(proj.ProjectGroups))
-		for _, gp := range proj.ProjectGroups {
+		w.Groups = make([]sdk.GroupPermission, 0, len(projGroups))
+		for _, gp := range projGroups {
 			perm := sdk.GroupPermission{Group: sdk.Group{Name: gp.Group.Name}, Permission: gp.Permission}
 			w.Groups = append(w.Groups, perm)
 		}
@@ -50,14 +50,13 @@ func Parse(ctx context.Context, proj sdk.Project, ew exportentities.Workflow) (*
 }
 
 // ParseAndImport parse an exportentities.workflow and insert or update the workflow in database
-func ParseAndImport(ctx context.Context, db gorpmapping.SqlExecutorWithTx, store cache.Store, proj sdk.Project, oldW *sdk.Workflow, ew exportentities.Workflow, u sdk.Identifiable, opts ImportOptions) (*sdk.Workflow, []sdk.Message, error) {
+func ParseAndImport(ctx context.Context, db gorpmapping.SqlExecutorWithTx, store cache.Store, projIdent sdk.ProjectIdentifiers, projGroups []sdk.GroupPermission, oldW *sdk.Workflow, ew exportentities.Workflow, u sdk.Identifiable, opts ImportOptions) (*sdk.Workflow, []sdk.Message, error) {
 	ctx, end := telemetry.Span(ctx, "workflow.ParseAndImport")
 	defer end()
-	projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
 	log.Info(ctx, "ParseAndImport>> Import workflow %s in project %s (force=%v)", ew.GetName(), projIdent.Key, opts.Force)
 
 	//Parse workflow
-	w, err := Parse(ctx, proj, ew)
+	w, err := Parse(ctx, projIdent, projGroups, ew)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -199,7 +198,7 @@ func ParseAndImport(ctx context.Context, db gorpmapping.SqlExecutorWithTx, store
 		}
 	}(&msgList)
 
-	globalError := Import(ctx, db, store, projIdent, proj.ProjectGroups, oldW, w, opts.Force, msgChan)
+	globalError := Import(ctx, db, store, projIdent, projGroups, oldW, w, opts.Force, msgChan)
 	close(msgChan)
 	done.Wait()
 

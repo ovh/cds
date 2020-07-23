@@ -25,6 +25,11 @@ type ProjectIdentifiers struct {
 	Key string
 }
 
+type ProjectForWorkflowPush struct {
+	ProjectGroups []GroupPermission
+	Integrations  []ProjectIntegration
+}
+
 // Project represent a team with group of users and pipelines
 type Project struct {
 	ID           int64     `json:"-" yaml:"-" db:"id" cli:"-"`

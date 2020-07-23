@@ -453,7 +453,8 @@ func createApplication(t *testing.T, db gorpmapping.SqlExecutorWithTx, api *API,
 		RepositoryFullname: "foo/myrepo",
 		VCSServer:          "github",
 	}
-	assert.NoError(t, application.Insert(db, *proj, &app))
+	projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
+	assert.NoError(t, application.Insert(db, projIdent, &app))
 	assert.NoError(t, repositoriesmanager.InsertForApplication(db, &app))
 	return &app
 }

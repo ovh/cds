@@ -91,7 +91,7 @@ func Test_getWorkflowHookModelsHandlerAsAdminUser(t *testing.T) {
 	admin, passAdmin := assets.InsertAdminUser(t, db)
 
 	proj := assets.InsertTestProject(t, db, cache, sdk.RandomString(10), sdk.RandomString(10))
-
+	projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
 	pip := sdk.Pipeline{
 		ProjectID:  proj.ID,
 		ProjectKey: proj.Key,
@@ -106,7 +106,7 @@ func Test_getWorkflowHookModelsHandlerAsAdminUser(t *testing.T) {
 		ProjectID:          proj.ID,
 		RepositoryFullname: "ovh/cds",
 	}
-	test.NoError(t, application.Insert(db, *proj, &app))
+	test.NoError(t, application.Insert(db, projIdent, &app))
 
 	proj, _ = project.LoadByID(db, proj.ID, project.LoadOptions.WithGroups)
 
@@ -126,7 +126,6 @@ func Test_getWorkflowHookModelsHandlerAsAdminUser(t *testing.T) {
 		},
 	}
 
-	projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
 	test.NoError(t, workflow.Insert(context.TODO(), db, cache, projIdent, proj.ProjectGroups, &w))
 
 	//Prepare request

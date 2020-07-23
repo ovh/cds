@@ -53,9 +53,10 @@ func testImportUpdate(t *testing.T, db gorp.SqlExecutor, store cache.Store, tt t
 	}
 
 	proj, err := project.Load(context.TODO(), db, tt.args.pip.ProjectKey, nil)
+	projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
 	test.NoError(t, err)
 
-	if err := pipeline.ImportUpdate(context.TODO(), db, *proj, tt.args.pip, msgChan); (err != nil) != tt.wantErr {
+	if err := pipeline.ImportUpdate(context.TODO(), db, projIdent, proj.ProjectGroups, tt.args.pip, msgChan); (err != nil) != tt.wantErr {
 		t.Errorf("%q. ImportUpdate() error = %v, wantErr %v", tt.name, err, tt.wantErr)
 	}
 

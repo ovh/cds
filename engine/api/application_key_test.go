@@ -25,12 +25,12 @@ func Test_getKeysInApplicationHandler(t *testing.T) {
 	//Insert Project
 	pkey := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, api.Cache, pkey, pkey)
-
+	projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
 	//Insert Application
 	app := &sdk.Application{
 		Name: sdk.RandomString(10),
 	}
-	if err := application.Insert(db, *proj, app); err != nil {
+	if err := application.Insert(db, projIdent, app); err != nil {
 		t.Fatal(err)
 	}
 
@@ -83,12 +83,12 @@ func Test_deleteKeyInApplicationHandler(t *testing.T) {
 	//Insert Project
 	pkey := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, api.Cache, pkey, pkey)
-
+	projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
 	//Insert Application
 	app := &sdk.Application{
 		Name: sdk.RandomString(10),
 	}
-	if err := application.Insert(db, *proj, app); err != nil {
+	if err := application.Insert(db, projIdent, app); err != nil {
 		t.Fatal(err)
 	}
 
@@ -135,12 +135,12 @@ func Test_addKeyInApplicationHandler(t *testing.T) {
 	//Insert Project
 	pkey := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, api.Cache, pkey, pkey)
-
+	projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
 	//Insert Application
 	app := &sdk.Application{
 		Name: sdk.RandomString(10),
 	}
-	if err := application.Insert(db, *proj, app); err != nil {
+	if err := application.Insert(db, projIdent, app); err != nil {
 		t.Fatal(err)
 	}
 

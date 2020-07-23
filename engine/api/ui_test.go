@@ -19,14 +19,15 @@ func Test_getNavbarHandler(t *testing.T) {
 	u, pass := assets.InsertAdminUser(t, db)
 
 	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
+	projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
 	app1 := sdk.Application{
 		Name: "my-app-1",
 	}
 	app2 := sdk.Application{
 		Name: "my-app-2",
 	}
-	test.NoError(t, application.Insert(db, *proj, &app1))
-	test.NoError(t, application.Insert(db, *proj, &app2))
+	test.NoError(t, application.Insert(db, projIdent, &app1))
+	test.NoError(t, application.Insert(db, projIdent, &app2))
 
 	//Prepare request
 	uri := api.Router.GetRoute("GET", api.getNavbarHandler, nil)

@@ -715,13 +715,14 @@ func Test_getWorkflowNodeRunHandler(t *testing.T) {
 
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, api.Cache, key, key)
+	projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
 
 	// Application
 	app := sdk.Application{
 		ProjectID: proj.ID,
 		Name:      "app",
 	}
-	require.NoError(t, application.Insert(db, *proj, &app))
+	require.NoError(t, application.Insert(db, projIdent, &app))
 
 	//First pipeline
 	pip := sdk.Pipeline{
@@ -795,11 +796,6 @@ func Test_getWorkflowNodeRunHandler(t *testing.T) {
 
 	proj2, errP := project.Load(context.TODO(), api.mustDB(), proj.Key, project.LoadOptions.WithGroups)
 	require.NoError(t, errP)
-
-	projIdent := sdk.ProjectIdentifiers{
-		ID:  proj2.ID,
-		Key: proj2.Key,
-	}
 
 	require.NoError(t, workflow.Insert(context.TODO(), db, api.Cache, projIdent, proj2.ProjectGroups, &w))
 	w1, err := workflow.Load(context.TODO(), api.mustDB(), projIdent, "test_1", workflow.LoadOptions{})
@@ -880,7 +876,7 @@ func Test_postWorkflowRunHandler(t *testing.T) {
 		KeyID:     "key-id-proj",
 	}
 	require.NoError(t, project.InsertKey(db, &projKey))
-
+	projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
 	pwdProject := sdk.ProjectVariable{
 		Name:  "projvar",
 		Type:  sdk.SecretVariable,
@@ -1016,7 +1012,7 @@ func Test_postWorkflowRunHandler(t *testing.T) {
 			},
 		},
 	}
-	require.NoError(t, application.Insert(db, *proj, &app))
+	require.NoError(t, application.Insert(db, projIdent, &app))
 	require.NoError(t, application.InsertVariable(db, app.ID, &app.Variables[0], u))
 	app.Keys[0].ApplicationID = app.ID
 	require.NoError(t, application.InsertKey(db, &app.Keys[0]))
@@ -1091,10 +1087,6 @@ func Test_postWorkflowRunHandler(t *testing.T) {
 		},
 	}
 
-	projIdent := sdk.ProjectIdentifiers{
-		ID:  proj.ID,
-		Key: proj.Key,
-	}
 	require.NoError(t, errP)
 
 	require.NoError(t, workflow.Insert(context.TODO(), db, api.Cache, projIdent, proj2.ProjectGroups, &w))
@@ -1218,7 +1210,7 @@ func Test_postWorkflowRunAsyncFailedHandler(t *testing.T) {
 	u, pass := assets.InsertAdminUser(t, db)
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, api.Cache, key, key)
-
+	projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
 	vcsServer := sdk.ProjectVCSServerLink{
 		ProjectID: proj.ID,
 		Name:      "github",
@@ -1245,7 +1237,7 @@ func Test_postWorkflowRunAsyncFailedHandler(t *testing.T) {
 			ConnectionType: "ssh",
 		},
 	}
-	require.NoError(t, application.Insert(db, *proj, &app))
+	require.NoError(t, application.Insert(db, projIdent, &app))
 	require.NoError(t, repositoriesmanager.InsertForApplication(db, &app))
 
 	w := sdk.Workflow{
@@ -1266,11 +1258,6 @@ func Test_postWorkflowRunAsyncFailedHandler(t *testing.T) {
 
 	proj2, errP := project.Load(context.TODO(), api.mustDB(), proj.Key, project.LoadOptions.WithGroups)
 	require.NoError(t, errP)
-
-	projIdent := sdk.ProjectIdentifiers{
-		ID:  proj2.ID,
-		Key: proj2.Key,
-	}
 
 	require.NoError(t, workflow.Insert(context.TODO(), db, api.Cache, projIdent, proj2.ProjectGroups, &w))
 	w1, err := workflow.Load(context.TODO(), api.mustDB(), projIdent, "test_1", workflow.LoadOptions{})

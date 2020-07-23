@@ -7,23 +7,22 @@ import (
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/action"
-	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
 
 //ImportUpdate import and update the pipeline in the project
-func ImportUpdate(ctx context.Context, db gorp.SqlExecutor, proj sdk.Project, pip *sdk.Pipeline, msgChan chan<- sdk.Message) error {
+func ImportUpdate(ctx context.Context, db gorp.SqlExecutor, projIdent sdk.ProjectIdentifiers, projectPermission []sdk.GroupPermission, pip *sdk.Pipeline, msgChan chan<- sdk.Message) error {
 	t := time.Now()
 	log.Debug("ImportUpdate> Begin")
 	defer log.Debug("ImportUpdate> End (%d ns)", time.Since(t).Nanoseconds())
 
 	oldPipeline, err := LoadPipeline(ctx, db,
-		proj.Key,
+		projIdent.Key,
 		pip.Name, true)
 	if err != nil {
-		return sdk.WrapError(err, "Unable to load pipeline %s %s", proj.Key, pip.Name)
+		return sdk.WrapError(err, "Unable to load pipeline %s %s", projIdent.Key, pip.Name)
 	}
 
 	if oldPipeline.FromRepository != "" && pip.FromRepository != oldPipeline.FromRepository {
@@ -31,10 +30,10 @@ func ImportUpdate(ctx context.Context, db gorp.SqlExecutor, proj sdk.Project, pi
 	}
 
 	// check that action used by job can be used by pipeline's project
-	groupIDs := make([]int64, 0, len(proj.ProjectGroups)+1)
+	groupIDs := make([]int64, 0, len(projectPermission)+1)
 	groupIDs = append(groupIDs, group.SharedInfraGroup.ID)
-	for i := range proj.ProjectGroups {
-		groupIDs = append(groupIDs, proj.ProjectGroups[i].Group.ID)
+	for i := range projectPermission {
+		groupIDs = append(groupIDs, projectPermission[i].Group.ID)
 	}
 
 	rx := sdk.NamePatternSpaceRegex
@@ -105,18 +104,18 @@ func ImportUpdate(ctx context.Context, db gorp.SqlExecutor, proj sdk.Project, pi
 }
 
 //Import insert the pipeline in the project
-func Import(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj sdk.Project, pip *sdk.Pipeline, msgChan chan<- sdk.Message, u sdk.Identifiable) error {
+func Import(ctx context.Context, db gorp.SqlExecutor, projIdent sdk.ProjectIdentifiers, projPermissions []sdk.GroupPermission, pip *sdk.Pipeline, msgChan chan<- sdk.Message, u sdk.Identifiable) error {
 	//Set projectID and Key in pipeline
-	pip.ProjectID = proj.ID
-	pip.ProjectKey = proj.Key
+	pip.ProjectID = projIdent.ID
+	pip.ProjectKey = projIdent.Key
 
 	//Check if pipeline exists
-	ok, errExist := ExistPipeline(db, proj.ID, pip.Name)
+	ok, errExist := ExistPipeline(db, projIdent.ID, pip.Name)
 	if errExist != nil {
-		return sdk.WrapError(errExist, "Import> Unable to check if pipeline %s %s exists", proj.Name, pip.Name)
+		return sdk.WrapError(errExist, "Import> Unable to check if pipeline %s %s exists", projIdent.Key, pip.Name)
 	}
 	if !ok {
-		if err := importNew(ctx, db, proj, pip, u); err != nil {
+		if err := importNew(ctx, db, projPermissions, pip); err != nil {
 			log.Error(ctx, "pipeline.Import> %s", err)
 			if msgChan != nil {
 				msgChan <- sdk.NewMessage(sdk.MsgPipelineCreationAborted, pip.Name)
@@ -129,9 +128,9 @@ func Import(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj sd
 	}
 
 	//Reload the pipeline
-	pip2, err := LoadPipeline(ctx, db, proj.Key, pip.Name, false)
+	pip2, err := LoadPipeline(ctx, db, projIdent.Key, pip.Name, false)
 	if err != nil {
-		return sdk.WrapError(err, "Unable to load imported pipeline project:%s pipeline:%s", proj.Name, pip.Name)
+		return sdk.WrapError(err, "Unable to load imported pipeline project:%s pipeline:%s", projIdent.Key, pip.Name)
 	}
 	//Be confident: use the pipeline
 	*pip = *pip2
@@ -142,12 +141,12 @@ func Import(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj sd
 	return nil
 }
 
-func importNew(ctx context.Context, db gorp.SqlExecutor, proj sdk.Project, pip *sdk.Pipeline, u sdk.Identifiable) error {
+func importNew(ctx context.Context, db gorp.SqlExecutor, projPermissions []sdk.GroupPermission, pip *sdk.Pipeline) error {
 	// check that action used by job can be used by pipeline's project
-	groupIDs := make([]int64, 0, len(proj.ProjectGroups)+1)
+	groupIDs := make([]int64, 0, len(projPermissions)+1)
 	groupIDs = append(groupIDs, group.SharedInfraGroup.ID)
-	for i := range proj.ProjectGroups {
-		groupIDs = append(groupIDs, proj.ProjectGroups[i].Group.ID)
+	for i := range projPermissions {
+		groupIDs = append(groupIDs, projPermissions[i].Group.ID)
 	}
 
 	log.Debug("pipeline.importNew> Creating pipeline %s", pip.Name)

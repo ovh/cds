@@ -27,11 +27,11 @@ func (api *API) postEnvironmentImportHandler() service.Handler {
 		key := vars[permProjectKey]
 		force := FormBool(r, "force")
 
-		proj, err := project.Load(ctx, api.mustDB(), key, project.LoadOptions.WithGroups)
+		p, err := project.Load(ctx, api.mustDB(), key)
 		if err != nil {
 			return sdk.WrapError(err, "unable load project")
 		}
-
+		projIdent := sdk.ProjectIdentifiers{ID: p.ID, Key: p.Key}
 		body, err := ioutil.ReadAll(r.Body)
 		if err != nil {
 			return sdk.NewError(sdk.ErrWrongRequest, err)
@@ -58,7 +58,7 @@ func (api *API) postEnvironmentImportHandler() service.Handler {
 		}
 		defer tx.Rollback() // nolint
 
-		_, _, msgList, globalError := environment.ParseAndImport(tx, *proj, data, environment.ImportOptions{Force: force}, project.DecryptWithBuiltinKey, getAPIConsumer(ctx))
+		_, _, msgList, globalError := environment.ParseAndImport(tx, projIdent, data, environment.ImportOptions{Force: force}, project.DecryptWithBuiltinKey, getAPIConsumer(ctx))
 		msgListString := translate(r, msgList)
 		if globalError != nil {
 			globalError = sdk.WrapError(globalError, "Unable to import environment %s", data.Name)
@@ -82,11 +82,11 @@ func (api *API) importNewEnvironmentHandler() service.Handler {
 		vars := mux.Vars(r)
 		key := vars[permProjectKey]
 
-		proj, err := project.Load(ctx, api.mustDB(), key, project.LoadOptions.Default,
-			project.LoadOptions.WithGroups, project.LoadOptions.WithPermission)
+		proj, err := project.Load(ctx, api.mustDB(), key)
 		if err != nil {
 			return sdk.WrapError(err, "cannot load %s", key)
 		}
+		projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
 
 		body, err := ioutil.ReadAll(r.Body)
 		if err != nil {
@@ -129,7 +129,7 @@ func (api *API) importNewEnvironmentHandler() service.Handler {
 		}
 		defer tx.Rollback() // nolint
 
-		if err := environment.Import(tx, *proj, env, msgChan, getAPIConsumer(ctx)); err != nil {
+		if err := environment.Import(tx, projIdent, env, msgChan, getAPIConsumer(ctx)); err != nil {
 			return sdk.WithStack(err)
 		}
 

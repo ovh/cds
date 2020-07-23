@@ -31,6 +31,7 @@ func TestResyncCommitStatusNotifDisabled(t *testing.T) {
 
 	pkey := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, cache, pkey, pkey)
+	projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
 	vcsServer := sdk.ProjectVCSServerLink{
 		ProjectID: proj.ID,
 		Name:      "gerrit",
@@ -49,7 +50,7 @@ func TestResyncCommitStatusNotifDisabled(t *testing.T) {
 			ConnectionType: "ssh",
 		},
 	}
-	assert.NoError(t, application.Insert(db, *proj, &app))
+	assert.NoError(t, application.Insert(db, projIdent, &app))
 	assert.NoError(t, repositoriesmanager.InsertForApplication(db, &app))
 
 	tr := true
@@ -114,7 +115,6 @@ func TestResyncCommitStatusNotifDisabled(t *testing.T) {
 			gomock.Any(), gomock.Any(), gomock.Any()).
 		Return(nil, 201, nil)
 
-	projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
 	require.NoError(t, workflow.ResyncCommitStatus(ctx, db.DbMap, cache, projIdent, wr))
 }
 
@@ -127,6 +127,7 @@ func TestResyncCommitStatusSetStatus(t *testing.T) {
 
 	pkey := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, cache, pkey, pkey)
+	projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
 	vcsServer := sdk.ProjectVCSServerLink{
 		ProjectID: proj.ID,
 		Name:      "gerrit",
@@ -145,7 +146,7 @@ func TestResyncCommitStatusSetStatus(t *testing.T) {
 			ConnectionType: "ssh",
 		},
 	}
-	assert.NoError(t, application.Insert(db, *proj, &app))
+	assert.NoError(t, application.Insert(db, projIdent, &app))
 	assert.NoError(t, repositoriesmanager.InsertForApplication(db, &app))
 
 	tr := true
@@ -217,7 +218,6 @@ func TestResyncCommitStatusSetStatus(t *testing.T) {
 			gomock.Any(), gomock.Any(), gomock.Any()).
 		Return(nil, 201, nil)
 
-	projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
 	require.NoError(t, workflow.ResyncCommitStatus(ctx, db.DbMap, cache, projIdent, wr))
 }
 
@@ -230,6 +230,7 @@ func TestResyncCommitStatusCommentPR(t *testing.T) {
 
 	pkey := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, cache, pkey, pkey)
+	projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
 	vcsServer := sdk.ProjectVCSServerLink{
 		ProjectID: proj.ID,
 		Name:      "gerrit",
@@ -248,7 +249,7 @@ func TestResyncCommitStatusCommentPR(t *testing.T) {
 			ConnectionType: "ssh",
 		},
 	}
-	assert.NoError(t, application.Insert(db, *proj, &app))
+	assert.NoError(t, application.Insert(db, projIdent, &app))
 	assert.NoError(t, repositoriesmanager.InsertForApplication(db, &app))
 
 	tr := true
@@ -334,7 +335,6 @@ func TestResyncCommitStatusCommentPR(t *testing.T) {
 			return nil, 200, nil
 		}).MaxTimes(1)
 
-	projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
 	require.NoError(t, workflow.ResyncCommitStatus(ctx, db.DbMap, cache, projIdent, wr))
 }
 
@@ -347,6 +347,7 @@ func TestResyncCommitStatusCommentPRNotTerminated(t *testing.T) {
 
 	pkey := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, cache, pkey, pkey)
+	projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
 	vcsServer := sdk.ProjectVCSServerLink{
 		ProjectID: proj.ID,
 		Name:      "gerrit",
@@ -365,7 +366,7 @@ func TestResyncCommitStatusCommentPRNotTerminated(t *testing.T) {
 			ConnectionType: "ssh",
 		},
 	}
-	assert.NoError(t, application.Insert(db, *proj, &app))
+	assert.NoError(t, application.Insert(db, projIdent, &app))
 	assert.NoError(t, repositoriesmanager.InsertForApplication(db, &app))
 
 	tr := true
@@ -442,7 +443,6 @@ func TestResyncCommitStatusCommentPRNotTerminated(t *testing.T) {
 			return nil, 200, nil
 		}).MaxTimes(1)
 
-	projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
 	require.NoError(t, workflow.ResyncCommitStatus(ctx, db.DbMap, cache, projIdent, wr))
 }
 
@@ -455,6 +455,7 @@ func TestResyncCommitStatusCommitCache(t *testing.T) {
 
 	pkey := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, cache, pkey, pkey)
+	projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
 	vcsServer := sdk.ProjectVCSServerLink{
 		ProjectID: proj.ID,
 		Name:      "gerrit",
@@ -473,7 +474,7 @@ func TestResyncCommitStatusCommitCache(t *testing.T) {
 			ConnectionType: "ssh",
 		},
 	}
-	assert.NoError(t, application.Insert(db, *proj, &app))
+	assert.NoError(t, application.Insert(db, projIdent, &app))
 	assert.NoError(t, repositoriesmanager.InsertForApplication(db, &app))
 
 	tr := true
@@ -568,7 +569,7 @@ func TestResyncCommitStatusCommitCache(t *testing.T) {
 			return nil, 200, nil
 		}).MaxTimes(1)
 	e := workflow.VCSEventMessenger{}
-	projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
+
 	err := e.SendVCSEvent(ctx, db.DbMap, cache, projIdent, *wr, wr.WorkflowNodeRuns[1][0])
 	require.NoError(t, err)
 }

@@ -24,8 +24,9 @@ func Test_LoadAllDeploymentAllApps(t *testing.T) {
 	app2 := sdk.Application{
 		Name: "my-app2",
 	}
-	require.NoError(t, application.Insert(db, *proj, &app1))
-	require.NoError(t, application.Insert(db, *proj, &app2))
+	projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
+	require.NoError(t, application.Insert(db, projIdent, &app1))
+	require.NoError(t, application.Insert(db, projIdent, &app2))
 
 	pfname := sdk.RandomString(10)
 	pf := sdk.IntegrationModel{

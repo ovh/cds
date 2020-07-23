@@ -25,7 +25,8 @@ func (api *API) postApplicationImportHandler() service.Handler {
 		key := vars[permProjectKey]
 		force := FormBool(r, "force")
 
-		proj, err := project.Load(ctx, api.mustDB(), key, project.LoadOptions.WithGroups, project.LoadOptions.WithIntegrations)
+		proj, err := project.Load(ctx, api.mustDB(), key, project.LoadOptions.WithIntegrations)
+		projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
 		if err != nil {
 			return sdk.WrapError(err, "unable load project")
 		}
@@ -62,7 +63,7 @@ func (api *API) postApplicationImportHandler() service.Handler {
 		}
 		defer tx.Rollback() // nolint
 
-		newApp, _, msgList, globalError := application.ParseAndImport(ctx, tx, api.Cache, *proj, eapp, application.ImportOptions{Force: force}, project.DecryptWithBuiltinKey, getAPIConsumer(ctx))
+		newApp, _, msgList, globalError := application.ParseAndImport(ctx, tx, projIdent, proj.Integrations, eapp, application.ImportOptions{Force: force}, project.DecryptWithBuiltinKey, getAPIConsumer(ctx))
 		msgListString := translate(r, msgList)
 		if globalError != nil {
 			globalError = sdk.WrapError(globalError, "Unable to import application %s", eapp.Name)

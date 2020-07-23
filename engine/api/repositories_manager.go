@@ -397,8 +397,8 @@ func (api *API) getReposFromRepositoriesManagerHandler() service.Handler {
 			return sdk.NewErrorWithStack(err, sdk.NewErrorFrom(sdk.ErrNoReposManagerClientAuth,
 				"cannot get client got %s %s", projectKey, vcsServerName))
 		}
-
-		repos, err := repositoriesmanager.GetReposForProjectVCSServer(ctx, tx, api.Cache, *proj, vcsServerName, repositoriesmanager.Options{
+		projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
+		repos, err := repositoriesmanager.GetReposForProjectVCSServer(ctx, tx, api.Cache, projIdent, vcsServerName, repositoriesmanager.Options{
 			Sync: sync,
 		})
 		if err != nil {

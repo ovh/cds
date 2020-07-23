@@ -24,11 +24,12 @@ func TestLoadByNameAsAdmin(t *testing.T) {
 	_ = event.Initialize(context.Background(), db.DbMap, cache)
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, cache, key, key)
+	projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
 	app := sdk.Application{
 		Name: "my-app",
 	}
 
-	test.NoError(t, application.Insert(db, *proj, &app))
+	test.NoError(t, application.Insert(db, projIdent, &app))
 
 	actual, err := application.LoadByName(db, key, "my-app")
 	test.NoError(t, err)
@@ -43,11 +44,12 @@ func TestLoadByNameAsUser(t *testing.T) {
 
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, cache, key, key)
+	projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
 	app := sdk.Application{
 		Name: "my-app",
 	}
 
-	require.NoError(t, application.Insert(db, *proj, &app))
+	require.NoError(t, application.Insert(db, projIdent, &app))
 
 	_, _ = assets.InsertLambdaUser(t, db, &proj.ProjectGroups[0].Group)
 
@@ -64,11 +66,12 @@ func TestLoadByIDAsAdmin(t *testing.T) {
 
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, cache, key, key)
+	projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
 	app := sdk.Application{
 		Name: "my-app",
 	}
 
-	require.NoError(t, application.Insert(db, *proj, &app))
+	require.NoError(t, application.Insert(db, projIdent, &app))
 
 	actual, err := application.LoadByID(db, app.ID)
 	require.NoError(t, err)
@@ -84,11 +87,12 @@ func TestLoadByIDAsUser(t *testing.T) {
 	key := sdk.RandomString(10)
 
 	proj := assets.InsertTestProject(t, db, cache, key, key)
+	projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
 	app := sdk.Application{
 		Name: "my-app",
 	}
 
-	require.NoError(t, application.Insert(db, *proj, &app))
+	require.NoError(t, application.Insert(db, projIdent, &app))
 
 	_, _ = assets.InsertLambdaUser(t, db, &proj.ProjectGroups[0].Group)
 
@@ -105,6 +109,7 @@ func TestLoadAllAsAdmin(t *testing.T) {
 
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, cache, key, key)
+	projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
 	app := sdk.Application{
 		Name: "my-app",
 		Metadata: sdk.Metadata{
@@ -119,8 +124,8 @@ func TestLoadAllAsAdmin(t *testing.T) {
 		},
 	}
 
-	require.NoError(t, application.Insert(db, *proj, &app))
-	require.NoError(t, application.Insert(db, *proj, &app2))
+	require.NoError(t, application.Insert(db, projIdent, &app))
+	require.NoError(t, application.Insert(db, projIdent, &app2))
 
 	actual, err := application.LoadAll(db, proj.Key)
 	require.NoError(t, err)
@@ -138,6 +143,7 @@ func TestLoadAllAsUser(t *testing.T) {
 
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, cache, key, key)
+	projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
 	app := sdk.Application{
 		Name: "my-app",
 	}
@@ -146,8 +152,8 @@ func TestLoadAllAsUser(t *testing.T) {
 		Name: "my-app2",
 	}
 
-	require.NoError(t, application.Insert(db, *proj, &app))
-	require.NoError(t, application.Insert(db, *proj, &app2))
+	require.NoError(t, application.Insert(db, projIdent, &app))
+	require.NoError(t, application.Insert(db, projIdent, &app2))
 
 	_, _ = assets.InsertLambdaUser(t, db, &proj.ProjectGroups[0].Group)
 
@@ -163,12 +169,13 @@ func TestLoadByWorkflowID(t *testing.T) {
 	key := sdk.RandomString(10)
 
 	proj := assets.InsertTestProject(t, db, cache, key, key)
+	projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
 	app := sdk.Application{
 		Name:       "my-app",
 		ProjectKey: proj.Key,
 		ProjectID:  proj.ID,
 	}
-	require.NoError(t, application.Insert(db, *proj, &app))
+	require.NoError(t, application.Insert(db, projIdent, &app))
 
 	pip := sdk.Pipeline{
 		ProjectID:  proj.ID,
@@ -196,7 +203,6 @@ func TestLoadByWorkflowID(t *testing.T) {
 	test.NoError(t, workflow.RenameNode(context.TODO(), db, &w))
 
 	proj, _ = project.LoadByID(db, proj.ID, project.LoadOptions.WithGroups)
-	projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
 	require.NoError(t, workflow.Insert(context.TODO(), db, cache, projIdent, proj.ProjectGroups, &w))
 
 	actuals, err := application.LoadByWorkflowID(db, w.ID)
@@ -214,12 +220,13 @@ func TestWithRepositoryStrategy(t *testing.T) {
 	key := sdk.RandomString(10)
 
 	proj := assets.InsertTestProject(t, db, cache, key, key)
+	projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
 	app := &sdk.Application{
 		Name:       "my-app",
 		ProjectKey: proj.Key,
 		ProjectID:  proj.ID,
 	}
-	require.NoError(t, application.Insert(db, *proj, app))
+	require.NoError(t, application.Insert(db, projIdent, app))
 
 	app.RepositoryStrategy = sdk.RepositoryStrategy{
 		Branch:         "{{.git.branch}}",
@@ -271,14 +278,15 @@ func Test_LoadAllVCStrategyAllApps(t *testing.T) {
 	key := sdk.RandomString(10)
 
 	proj := assets.InsertTestProject(t, db, cache, key, key)
+	projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
 	app1 := &sdk.Application{Name: "my-app1", ProjectKey: proj.Key, ProjectID: proj.ID, RepositoryStrategy: sdk.RepositoryStrategy{
 		Password: "secret1",
 	}}
 	app2 := &sdk.Application{Name: "my-app2", ProjectKey: proj.Key, ProjectID: proj.ID, RepositoryStrategy: sdk.RepositoryStrategy{
 		Password: "secret2",
 	}}
-	require.NoError(t, application.Insert(db, *proj, app1))
-	require.NoError(t, application.Insert(db, *proj, app2))
+	require.NoError(t, application.Insert(db, projIdent, app1))
+	require.NoError(t, application.Insert(db, projIdent, app2))
 
 	apps, err := application.LoadAllByIDsWithDecryption(db, []int64{app1.ID, app2.ID})
 	require.NoError(t, err)

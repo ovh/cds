@@ -21,8 +21,8 @@ func Test_DAOKey(t *testing.T) {
 	app := sdk.Application{
 		Name: "my-app",
 	}
-
-	require.NoError(t, application.Insert(db, *proj, &app))
+	projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
+	require.NoError(t, application.Insert(db, projIdent, &app))
 
 	k := &sdk.ApplicationKey{
 		Name:          "mykey-ssh",
@@ -56,14 +56,15 @@ func Test_DAOAllKeysAllApps(t *testing.T) {
 
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, cache, key, key)
+	projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
 	app1 := sdk.Application{
 		Name: "my-app1",
 	}
 	app2 := sdk.Application{
 		Name: "my-app2",
 	}
-	require.NoError(t, application.Insert(db, *proj, &app1))
-	require.NoError(t, application.Insert(db, *proj, &app2))
+	require.NoError(t, application.Insert(db, projIdent, &app1))
+	require.NoError(t, application.Insert(db, projIdent, &app2))
 
 	ssh1, err := keys.GenerateSSHKey("ssh1")
 	require.NoError(t, err)
