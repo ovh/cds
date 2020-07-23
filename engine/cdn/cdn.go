@@ -84,34 +84,36 @@ func (s *Service) Serve(c context.Context) error {
 
 	var err error
 
-	log.Info(ctx, "Initializing database connection...")
-	//Intialize database
-	s.DBConnectionFactory, err = database.Init(
-		ctx,
-		s.Cfg.Database.User,
-		s.Cfg.Database.Role,
-		s.Cfg.Database.Password,
-		s.Cfg.Database.Name,
-		s.Cfg.Database.Host,
-		s.Cfg.Database.Port,
-		s.Cfg.Database.SSLMode,
-		s.Cfg.Database.ConnectTimeout,
-		s.Cfg.Database.Timeout,
-		s.Cfg.Database.MaxConn)
-	if err != nil {
-		return fmt.Errorf("cannot connect to database: %v", err)
-	}
+	if s.Cfg.EnableLogProcessing {
+		log.Info(ctx, "Initializing database connection...")
+		//Intialize database
+		s.DBConnectionFactory, err = database.Init(
+			ctx,
+			s.Cfg.Database.User,
+			s.Cfg.Database.Role,
+			s.Cfg.Database.Password,
+			s.Cfg.Database.Name,
+			s.Cfg.Database.Host,
+			s.Cfg.Database.Port,
+			s.Cfg.Database.SSLMode,
+			s.Cfg.Database.ConnectTimeout,
+			s.Cfg.Database.Timeout,
+			s.Cfg.Database.MaxConn)
+		if err != nil {
+			return fmt.Errorf("cannot connect to database: %v", err)
+		}
 
-	log.Info(ctx, "Setting up database keys...")
-	s.Mapper = gorpmapper.New()
-	encryptionKeyConfig := s.Cfg.Database.EncryptionKey.GetKeys(gorpmapper.KeyEcnryptionIdentifier)
-	signatureKeyConfig := s.Cfg.Database.SignatureKey.GetKeys(gorpmapper.KeySignIdentifier)
-	if err := s.Mapper.ConfigureKeys(&signatureKeyConfig, &encryptionKeyConfig); err != nil {
-		return fmt.Errorf("cannot setup database keys: %v", err)
-	}
+		log.Info(ctx, "Setting up database keys...")
+		s.Mapper = gorpmapper.New()
+		encryptionKeyConfig := s.Cfg.Database.EncryptionKey.GetKeys(gorpmapper.KeyEcnryptionIdentifier)
+		signatureKeyConfig := s.Cfg.Database.SignatureKey.GetKeys(gorpmapper.KeySignIdentifier)
+		if err := s.Mapper.ConfigureKeys(&signatureKeyConfig, &encryptionKeyConfig); err != nil {
+			return fmt.Errorf("cannot setup database keys: %v", err)
+		}
 
-	// Init dao packages
-	index.Init(s.Mapper)
+		// Init dao packages
+		index.Init(s.Mapper)
+	}
 
 	log.Info(ctx, "Initializing redis cache on %s...", s.Cfg.Cache.Redis.Host)
 	s.Cache, err = cache.New(s.Cfg.Cache.Redis.Host, s.Cfg.Cache.Redis.Password, s.Cfg.Cache.TTL)

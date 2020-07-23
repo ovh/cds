@@ -30,11 +30,12 @@ type Configuration struct {
 		Addr string `toml:"addr" default:"" commented:"true" comment:"Listen address without port, example: 127.0.0.1" json:"addr"`
 		Port int    `toml:"port" default:"8089" json:"port"`
 	} `toml:"http" comment:"######################\n CDS CDN HTTP Configuration \n######################" json:"http"`
-	URL        string                                 `default:"http://localhost:8089" json:"url" comment:"Private URL for communication with API"`
-	PublicTCP  string                                 `toml:"publicTCP" default:"localhost:8090" comment:"Public address to access to CDN TCP server" json:"public_tcp"`
-	PublicHTTP string                                 `toml:"publicHTTP" default:"localhost:8089" comment:"Public address to access to CDN HTTP server" json:"public_http"`
-	Database   database.DBConfigurationWithEncryption `toml:"database" comment:"################################\n Postgresql Database settings \n###############################" json:"database"`
-	Cache      struct {
+	URL                 string                                 `default:"http://localhost:8089" json:"url" comment:"Private URL for communication with API"`
+	PublicTCP           string                                 `toml:"publicTCP" default:"localhost:8090" comment:"Public address to access to CDN TCP server" json:"public_tcp"`
+	PublicHTTP          string                                 `toml:"publicHTTP" default:"localhost:8089" comment:"Public address to access to CDN HTTP server" json:"public_http"`
+	EnableLogProcessing bool                                   `toml:"enableLogProcessing" comment:"Enable CDN preview feature that will index logs (this require a database)" json:"enableDatabaseFeatures"`
+	Database            database.DBConfigurationWithEncryption `toml:"database" comment:"################################\n Postgresql Database settings \n###############################" json:"database"`
+	Cache               struct {
 		TTL   int `toml:"ttl" default:"60" json:"ttl"`
 		Redis struct {
 			Host     string `toml:"host" default:"localhost:6379" comment:"If your want to use a redis-sentinel based cluster, follow this syntax ! <clustername>@sentinel1:26379,sentinel2:26379sentinel3:26379" json:"host"`
