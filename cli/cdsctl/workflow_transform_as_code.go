@@ -1,6 +1,8 @@
 package main
 
 import (
+	"context"
+	"encoding/json"
 	"fmt"
 	"strconv"
 	"strings"
@@ -25,7 +27,9 @@ var workflowTransformAsCodeCmd = cli.Command{
 }
 
 func workflowTransformAsCodeRun(v cli.Values) (interface{}, error) {
-	w, err := client.WorkflowGet(v.GetString(_ProjectKey), v.GetString(_WorkflowName))
+	projectKey := v.GetString(_ProjectKey)
+
+	w, err := client.WorkflowGet(projectKey, v.GetString(_WorkflowName))
 	if err != nil {
 		return nil, err
 	}
@@ -44,23 +48,45 @@ func workflowTransformAsCodeRun(v cli.Values) (interface{}, error) {
 		message = cli.AskValue("Give a commit message")
 	}
 
-	ope, err := client.WorkflowTransformAsCode(v.GetString(_ProjectKey), v.GetString(_WorkflowName), branch, message)
+	ctx := context.Background()
+	chanMessageReceived := make(chan sdk.WebsocketEvent)
+	chanMessageToSend := make(chan []sdk.WebsocketFilter)
+
+	sdk.GoRoutine(ctx, "WebsocketEventsListenCmd", func(ctx context.Context) {
+		client.WebsocketEventsListen(ctx, chanMessageToSend, chanMessageReceived)
+	})
+
+	ope, err := client.WorkflowTransformAsCode(projectKey, v.GetString(_WorkflowName), branch, message)
 	if err != nil {
 		return nil, err
 	}
 
+	chanMessageToSend <- []sdk.WebsocketFilter{{
+		Type:          sdk.WebsocketFilterTypeOperation,
+		ProjectKey:    projectKey,
+		OperationUUID: ope.UUID,
+	}}
+
 	if !v.GetBool("silent") {
 		fmt.Println("CDS is pushing files on your repository. A pull request will be created, please wait...")
 	}
+	ctx, cancel := context.WithTimeout(ctx, time.Minute)
+	defer cancel()
+forLoop:
 	for {
-		ope, err = client.WorkflowTransformAsCodeFollow(v.GetString(_ProjectKey), v.GetString(_WorkflowName), ope.UUID)
-		if err != nil {
-			return nil, err
+		select {
+		case <-ctx.Done():
+			return nil, fmt.Errorf("timeout waiting operation to complete")
+		case evt := <-chanMessageReceived:
+			if evt.Event.EventType == fmt.Sprintf("%T", sdk.EventOperation{}) {
+				if err := json.Unmarshal(evt.Event.Payload, &ope); err != nil {
+					return nil, fmt.Errorf("cannot parse operation from received event: %v", err)
+				}
+				if ope.Status > sdk.OperationStatusProcessing {
+					break forLoop
+				}
+			}
 		}
-		if ope.Status > sdk.OperationStatusProcessing {
-			break
-		}
-		time.Sleep(1 * time.Second)
 	}
 
 	if ope.Status == sdk.OperationStatusError {
