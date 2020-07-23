@@ -23,15 +23,6 @@ func (c *client) WorkflowTransformAsCode(projectKey, workflowName, branch, messa
 	return &ope, nil
 }
 
-func (c client) WorkflowTransformAsCodeFollow(projectKey, workflowName, opeUUID string) (*sdk.Operation, error) {
-	var ope sdk.Operation
-	path := fmt.Sprintf("/project/%s/workflows/%s/ascode/%s", projectKey, workflowName, opeUUID)
-	if _, err := c.GetJSON(context.Background(), path, &ope); err != nil {
-		return nil, err
-	}
-	return &ope, nil
-}
-
 func (c *client) WorkflowAsCodeStart(projectKey string, repoURL string, repoStrategy sdk.RepositoryStrategy) (*sdk.Operation, error) {
 	ope := new(sdk.Operation)
 	ope.URL = repoURL
