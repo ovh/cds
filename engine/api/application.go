@@ -533,11 +533,6 @@ func (api *API) updateApplicationHandler() service.Handler {
 		projectKey := vars[permProjectKey]
 		applicationName := vars["applicationName"]
 
-		p, err := project.Load(ctx, api.mustDB(), projectKey, project.LoadOptions.Default)
-		if err != nil {
-			return sdk.WrapError(err, "cannot load project %s", projectKey)
-		}
-
 		app, err := application.LoadByNameWithClearVCSStrategyPassword(api.mustDB(), projectKey, applicationName, application.LoadOptions.Default)
 		if err != nil {
 			return sdk.WrapError(err, "cannot load application %s", applicationName)
@@ -587,7 +582,7 @@ func (api *API) updateApplicationHandler() service.Handler {
 			return sdk.WithStack(err)
 		}
 
-		event.PublishUpdateApplication(ctx, p.Key, *app, old, getAPIConsumer(ctx))
+		event.PublishUpdateApplication(ctx, projectKey, *app, old, getAPIConsumer(ctx))
 
 		return service.WriteJSON(w, app, http.StatusOK)
 

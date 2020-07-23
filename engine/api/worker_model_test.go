@@ -244,9 +244,6 @@ func Test_WorkerModelUsage(t *testing.T) {
 	assert.NotZero(t, job.Action.ID)
 
 	proj, _ = project.LoadByID(db, proj.ID,
-		project.LoadOptions.WithApplications,
-		project.LoadOptions.WithPipelines,
-		project.LoadOptions.WithEnvironments,
 		project.LoadOptions.WithGroups,
 	)
 

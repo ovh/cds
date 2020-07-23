@@ -1050,11 +1050,7 @@ func Test_postWorkflowRunHandler(t *testing.T) {
 	require.NoError(t, environment.InsertKey(db, &env.Keys[0]))
 
 	proj2, errP := project.Load(context.TODO(), api.mustDB(), key,
-		project.LoadOptions.WithApplicationWithDeploymentStrategies,
-		project.LoadOptions.WithPipelines,
-		project.LoadOptions.WithEnvironments,
 		project.LoadOptions.WithGroups,
-		project.LoadOptions.WithIntegrations,
 	)
 	require.NoError(t, errP)
 
@@ -2529,7 +2525,7 @@ func Test_postWorkflowRunHandler_BadPayload(t *testing.T) {
 	}
 	require.NoError(t, environment.InsertEnvironment(api.mustDB(), env))
 
-	proj2, errp := project.Load(context.TODO(), api.mustDB(), proj.Key, project.LoadOptions.WithPipelines, project.LoadOptions.WithEnvironments)
+	proj2, errp := project.Load(context.TODO(), api.mustDB(), proj.Key)
 	require.NoError(t, errp)
 
 	w := sdk.Workflow{

@@ -39,7 +39,7 @@ func TestLoadAllShouldNotReturnAnyWorkflows(t *testing.T) {
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, cache, key, key)
 
-	proj, _ = project.LoadByID(db, proj.ID, project.LoadOptions.WithApplications, project.LoadOptions.WithPipelines, project.LoadOptions.WithEnvironments, project.LoadOptions.WithGroups)
+	proj, _ = project.LoadByID(db, proj.ID, project.LoadOptions.WithGroups)
 
 	ws, err := workflow.LoadAll(db, proj.Key)
 	test.NoError(t, err)

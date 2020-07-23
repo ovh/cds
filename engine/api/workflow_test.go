@@ -1396,11 +1396,7 @@ func TestBenchmarkGetWorkflowsWithoutAPIAsAdmin(t *testing.T) {
 
 	assert.NoError(t, application.Insert(db, projIdent, &app))
 
-	prj, err := project.Load(context.TODO(), db, proj.Key,
-		project.LoadOptions.WithPipelines,
-		project.LoadOptions.WithApplications,
-		project.LoadOptions.WithWorkflows,
-	)
+	prj, err := project.Load(context.TODO(), db, proj.Key)
 	assert.NoError(t, err)
 
 	for i := 0; i < 300; i++ {
