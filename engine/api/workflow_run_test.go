@@ -1066,7 +1066,7 @@ func Test_postWorkflowRunHandler(t *testing.T) {
 					PipelineID:           pip.ID,
 					ApplicationID:        app.ID,
 					EnvironmentID:        env.ID,
-					ProjectIntegrationID: proj2.Integrations[0].ID,
+					ProjectIntegrationID: projInt.ID,
 				},
 				Triggers: []sdk.NodeTrigger{
 					{
