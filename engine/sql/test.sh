@@ -1,5 +1,11 @@
 #!/bin/bash
 
+PGUSER=$1
+PGPASSWORD=$2
+PGNAME=$3
+PGHOST=$4
+PGPORT=$5
+
 cat << EOF > missing_pk.sql
 with cte as (
      select n.nspname as schema,
@@ -21,11 +27,11 @@ NC='\033[0m' # No Color
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 
-PGUSER=${CDS_API_DATABASE_USER:-cds}
-PGPASSWORD=${CDS_API_DATABASE_PASS:-cds}
-PGNAME=${CDS_API_DATABASE_NAME:-cds}
-PGHOST=${CDS_API_DATABASE_HOST:-localhost}
-PGPORT=${CDS_API_DATABASE_PORT:-5432}
+PGUSER=${PGUSER:-cds}
+PGPASSWORD=${PGPASSWORD:-cds}
+PGNAME=${PGNAME:-cds}
+PGHOST=${PGHOST:-localhost}
+PGPORT=${PGPORT:-5432}
 export PGUSER PGPASSWORD PGHOST PGPORT
 
 return_code=0
