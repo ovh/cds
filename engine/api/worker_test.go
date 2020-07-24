@@ -14,14 +14,14 @@ import (
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/api/test/assets"
 	"github.com/ovh/cds/engine/api/workermodel"
+	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/gorpmapping"
 	"github.com/ovh/cds/sdk/hatchery"
 	"github.com/ovh/cds/sdk/jws"
 	"github.com/ovh/cds/sdk/log"
 )
 
-func RegisterWorker(t *testing.T, api *API, db gorpmapping.SqlExecutorWithTx, groupID int64, existingWorkerModelName string, jobID int64, registerOnly bool) (*sdk.Worker, string) {
+func RegisterWorker(t *testing.T, api *API, db gorpmapper.SqlExecutorWithTx, groupID int64, existingWorkerModelName string, jobID int64, registerOnly bool) (*sdk.Worker, string) {
 	model, err := workermodel.LoadByNameAndGroupID(context.TODO(), api.mustDB(), existingWorkerModelName, groupID)
 	if err != nil {
 		t.Fatalf("RegisterWorker> Error getting worker model : %s", err)
@@ -80,7 +80,7 @@ func LoadSharedInfraGroup(t *testing.T, api *API) *sdk.Group {
 	return g
 }
 
-func LoadOrCreateWorkerModel(t *testing.T, api *API, db gorpmapping.SqlExecutorWithTx, groupID int64, workermodelName string) *sdk.Model {
+func LoadOrCreateWorkerModel(t *testing.T, api *API, db gorpmapper.SqlExecutorWithTx, groupID int64, workermodelName string) *sdk.Model {
 	model, _ := workermodel.LoadByNameAndGroupID(context.TODO(), api.mustDB(), workermodelName, groupID)
 	if model == nil {
 		model = &sdk.Model{

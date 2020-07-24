@@ -8,8 +8,8 @@ import (
 
 	"github.com/go-gorp/gorp"
 
+	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/gorpmapping"
 )
 
 // LoadEventByWorkflowIDAndPullRequest returns a as code event if exists for given workflow holder and pull request info.

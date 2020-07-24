@@ -2,9 +2,10 @@ package application_test
 
 import (
 	"context"
+	"testing"
+
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/integration"
-	"testing"
 
 	"github.com/stretchr/testify/require"
 

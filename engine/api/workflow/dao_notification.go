@@ -5,8 +5,8 @@ import (
 
 	"github.com/go-gorp/gorp"
 	"github.com/lib/pq"
+	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/gorpmapping"
 )
 
 func DeleteNotifications(db gorp.SqlExecutor, workflowID int64) error {
@@ -19,7 +19,7 @@ func DeleteNotifications(db gorp.SqlExecutor, workflowID int64) error {
 
 func LoadNotificationsByWorkflowIDs(db gorp.SqlExecutor, ids []int64) (map[int64][]sdk.WorkflowNotification, error) {
 	query := `
-		SELECT 
+		SELECT
 		workflow_notification.*,
 		array_remove(array_agg(workflow_notification_source.node_id::text), NULL)  "node_ids"
 		FROM workflow_notification

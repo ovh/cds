@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnInit, ViewChild } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
 import { IntegrationModel, ProjectIntegration } from 'app/model/integration.model';
@@ -18,7 +18,7 @@ import { Subscription } from 'rxjs/Subscription';
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 @AutoUnsubscribe()
-export class ProjectIntegrationFormComponent implements OnInit {
+export class ProjectIntegrationFormComponent implements OnInit, OnDestroy {
     @ViewChild('codeMirror') codemirror: any;
 
     @Input() project: Project;
@@ -45,6 +45,8 @@ export class ProjectIntegrationFormComponent implements OnInit {
             autoRefresh: true
         };
     }
+
+    ngOnDestroy(): void {} // Should be set to use @AutoUnsubscribe with AOT
 
     ngOnInit() {
         this._integrationService.getIntegrationModels()

@@ -6,13 +6,14 @@ import (
 	"github.com/go-gorp/gorp"
 	"github.com/lib/pq"
 
+	"github.com/ovh/cds/engine/api/database/gorpmapping"
+	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/gorpmapping"
 	"github.com/ovh/cds/sdk/log"
 )
 
 // InsertKey a new environment key in database
-func InsertKey(db gorpmapping.SqlExecutorWithTx, key *sdk.EnvironmentKey) error {
+func InsertKey(db gorpmapper.SqlExecutorWithTx, key *sdk.EnvironmentKey) error {
 	dbEnvironmentKey := dbEnvironmentKey{EnvironmentKey: *key}
 	if err := gorpmapping.InsertAndSign(context.Background(), db, &dbEnvironmentKey); err != nil {
 		return err

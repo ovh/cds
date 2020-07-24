@@ -3,12 +3,12 @@ package integration
 import (
 	"context"
 
+	"github.com/go-gorp/gorp"
 	"github.com/lib/pq"
 
-	"github.com/go-gorp/gorp"
-
+	"github.com/ovh/cds/engine/api/database/gorpmapping"
+	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/gorpmapping"
 	"github.com/ovh/cds/sdk/log"
 )
 
@@ -162,7 +162,7 @@ func LoadIntegrationsByIDs(db gorp.SqlExecutor, ids []int64) ([]sdk.ProjectInteg
 }
 
 // InsertIntegration inserts a integration
-func InsertIntegration(db gorpmapping.SqlExecutorWithTx, pp *sdk.ProjectIntegration) error {
+func InsertIntegration(db gorpmapper.SqlExecutorWithTx, pp *sdk.ProjectIntegration) error {
 	oldConfig := pp.Config.Clone()
 	ppDb := dbProjectIntegration{ProjectIntegration: *pp}
 	if err := gorpmapping.InsertAndSign(context.Background(), db, &ppDb); err != nil {
@@ -175,7 +175,7 @@ func InsertIntegration(db gorpmapping.SqlExecutorWithTx, pp *sdk.ProjectIntegrat
 }
 
 // UpdateIntegration Update a integration
-func UpdateIntegration(db gorpmapping.SqlExecutorWithTx, pp sdk.ProjectIntegration) error {
+func UpdateIntegration(db gorpmapper.SqlExecutorWithTx, pp sdk.ProjectIntegration) error {
 	var oldConfig *sdk.ProjectIntegration
 
 	givenConfig := pp.Config.Clone()

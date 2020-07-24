@@ -6,8 +6,9 @@ import (
 
 	"github.com/go-gorp/gorp"
 
+	"github.com/ovh/cds/engine/api/database/gorpmapping"
+	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/gorpmapping"
 	"github.com/ovh/cds/sdk/log"
 )
 
@@ -142,7 +143,7 @@ func ModelExists(db gorp.SqlExecutor, name string) (bool, error) {
 }
 
 // InsertModel inserts a integration model in database
-func InsertModel(db gorpmapping.SqlExecutorWithTx, m *sdk.IntegrationModel) error {
+func InsertModel(db gorpmapper.SqlExecutorWithTx, m *sdk.IntegrationModel) error {
 	givenPublicConfig := m.PublicConfigurations.Clone()
 	dbm := integrationModel{IntegrationModel: *m}
 	if err := gorpmapping.InsertAndSign(context.Background(), db, &dbm); err != nil {
@@ -155,7 +156,7 @@ func InsertModel(db gorpmapping.SqlExecutorWithTx, m *sdk.IntegrationModel) erro
 }
 
 // UpdateModel updates a integration model in database
-func UpdateModel(db gorpmapping.SqlExecutorWithTx, m *sdk.IntegrationModel) error {
+func UpdateModel(db gorpmapper.SqlExecutorWithTx, m *sdk.IntegrationModel) error {
 	// reload the previous config to encuse we don't store placeholder
 	var oldModel sdk.IntegrationModel
 

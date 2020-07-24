@@ -35,6 +35,7 @@ Create user `cds` and database `cds`
 $ psql -d postgres
 postgres=# create user cds with password 'cds';
 postgres=# create database cds owner cds;
+postgres=# create database cdn owner cds;
 postgres=\q
 ```
 

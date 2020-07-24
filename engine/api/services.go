@@ -71,6 +71,10 @@ func (api *API) postServiceRegisterHandler() service.Handler {
 		}
 		data.LastHeartbeat = time.Now()
 
+		if data.Name == "" {
+			return sdk.NewErrorFrom(sdk.ErrWrongRequest, "missing service name")
+		}
+
 		// Service that are not hatcheries should be started as an admin
 		if data.Type != sdk.TypeHatchery && !isAdmin(ctx) {
 			return sdk.WrapError(sdk.ErrForbidden, "cannot register service of type %s for consumer %s", data.Type, consumer.ID)

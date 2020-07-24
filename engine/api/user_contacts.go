@@ -4,7 +4,7 @@ import (
 	"context"
 	"net/http"
 
-  "github.com/gorilla/mux"
+	"github.com/gorilla/mux"
 
 	"github.com/ovh/cds/engine/api/user"
 	"github.com/ovh/cds/engine/service"

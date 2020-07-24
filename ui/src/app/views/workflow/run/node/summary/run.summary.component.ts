@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit, ViewChild } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { Select, Store } from '@ngxs/store';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
@@ -22,7 +22,7 @@ import { WorkflowNodeRunParamComponent } from '../../../../../shared/workflow/no
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 @AutoUnsubscribe()
-export class WorkflowNodeRunSummaryComponent implements OnInit {
+export class WorkflowNodeRunSummaryComponent implements OnInit, OnDestroy {
 
     duration: string;
 
@@ -57,6 +57,8 @@ export class WorkflowNodeRunSummaryComponent implements OnInit {
         this.project = this._store.selectSnapshot(ProjectState.projectSnapshot);
         this.workflow = (<WorkflowStateModel>this._store.selectSnapshot(WorkflowState)).workflowRun.workflow;
     }
+
+    ngOnDestroy(): void {} // Should be set to use @AutoUnsubscribe with AOT
 
     ngOnInit(): void {
         this.nodeRunSubs = this.nodeRun$.subscribe(nr => {

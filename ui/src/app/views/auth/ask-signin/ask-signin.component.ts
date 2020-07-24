@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { AuthenticationService } from 'app/service/authentication/authentication.service';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
@@ -13,7 +13,7 @@ import { finalize } from 'rxjs/operators';
 })
 
 @AutoUnsubscribe()
-export class AskSigninComponent implements OnInit {
+export class AskSigninComponent implements OnInit, OnDestroy {
     paramsSub: Subscription;
     showCTL: boolean;
     code: string;
@@ -28,6 +28,8 @@ export class AskSigninComponent implements OnInit {
     ) {
         this.loading = true;
     }
+
+    ngOnDestroy(): void {} // Should be set to use @AutoUnsubscribe with AOT
 
     ngOnInit() {
         this.paramsSub = this._route.params.subscribe(params => {

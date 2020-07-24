@@ -5,12 +5,12 @@ import (
 
 	"github.com/go-gorp/gorp"
 
+	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/gorpmapping"
 )
 
 // Create insert a new group in database and set user for given id as group admin.
-func Create(ctx context.Context, db gorpmapping.SqlExecutorWithTx, grp *sdk.Group, userID string) error {
+func Create(ctx context.Context, db gorpmapper.SqlExecutorWithTx, grp *sdk.Group, userID string) error {
 	if err := Insert(ctx, db, grp); err != nil {
 		return err
 	}

@@ -8,8 +8,8 @@ import (
 	"time"
 
 	"github.com/go-gorp/gorp"
+	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/gorpmapping"
 	"github.com/ovh/cds/sdk/log"
 )
 
@@ -62,7 +62,7 @@ func Pings(ctx context.Context, dbFunc func() *gorp.DbMap, ss []ExternalService)
 	}
 }
 
-func ping(ctx context.Context, db gorpmapping.SqlExecutorWithTx, s ExternalService) error {
+func ping(ctx context.Context, db gorpmapper.SqlExecutorWithTx, s ExternalService) error {
 	// Select for update
 	serv, err := LoadByNameForUpdateAndSkipLocked(context.Background(), db, s.Name)
 	if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {

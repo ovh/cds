@@ -1,17 +1,18 @@
 package services
 
 import (
+	"github.com/ovh/cds/engine/api/database/gorpmapping"
+	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/gorpmapping"
 )
 
 type service struct {
 	sdk.Service
-	gorpmapping.SignedEntity
+	gorpmapper.SignedEntity
 }
 
-func (s service) Canonical() gorpmapping.CanonicalForms {
-	return []gorpmapping.CanonicalForm{
+func (s service) Canonical() gorpmapper.CanonicalForms {
+	return []gorpmapper.CanonicalForm{
 		"{{.ID}}{{.Name}}{{.Type}}",
 	}
 }

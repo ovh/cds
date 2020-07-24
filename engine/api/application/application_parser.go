@@ -7,9 +7,9 @@ import (
 	"sync"
 
 	"github.com/ovh/cds/engine/api/keys"
+	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/exportentities"
-	"github.com/ovh/cds/sdk/gorpmapping"
 	"github.com/ovh/cds/sdk/log"
 )
 
@@ -20,8 +20,7 @@ type ImportOptions struct {
 }
 
 // ParseAndImport parse an exportentities.Application and insert or update the application in database
-func ParseAndImport(ctx context.Context, db gorpmapping.SqlExecutorWithTx, projIdent sdk.ProjectIdentifiers, projIntegrations []sdk.ProjectIntegration, eapp *exportentities.Application, opts ImportOptions, decryptFunc keys.DecryptFunc, u sdk.Identifiable) (*sdk.Application, []sdk.Variable, []sdk.Message, error) {
-
+func ParseAndImport(ctx context.Context, db gorpmapper.SqlExecutorWithTx, projIdent sdk.ProjectIdentifiers, projIntegrations []sdk.ProjectIntegration, eapp *exportentities.Application, opts ImportOptions, decryptFunc keys.DecryptFunc, u sdk.Identifiable) (*sdk.Application, []sdk.Variable, []sdk.Message, error) {
 	log.Info(ctx, "ParseAndImport>> Import application %s in project %s (force=%v)", eapp.Name, projIdent.Key, opts.Force)
 	msgList := []sdk.Message{}
 

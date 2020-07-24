@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	v2 "github.com/ovh/cds/sdk/exportentities/v2"
 	"net/http"
 	"reflect"
 
@@ -16,6 +15,7 @@ import (
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/exportentities"
+	v2 "github.com/ovh/cds/sdk/exportentities/v2"
 	"github.com/ovh/cds/sdk/slug"
 )
 

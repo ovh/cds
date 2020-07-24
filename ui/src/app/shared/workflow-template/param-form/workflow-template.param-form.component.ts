@@ -4,6 +4,7 @@ import {
     Component,
     EventEmitter,
     Input,
+    OnDestroy,
     OnInit,
     Output,
     ViewChild
@@ -29,7 +30,7 @@ import { finalize, first } from 'rxjs/operators';
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 @AutoUnsubscribe()
-export class WorkflowTemplateParamFormComponent implements OnInit {
+export class WorkflowTemplateParamFormComponent implements OnInit, OnDestroy {
     @ViewChild('codemirror') codemirror: any;
 
     _project: Project;
@@ -77,6 +78,8 @@ export class WorkflowTemplateParamFormComponent implements OnInit {
                 }
             });
     }
+
+    ngOnDestroy(): void {} // Should be set to use @AutoUnsubscribe with AOT
 
     ngOnInit(): void {
         this.initProject();

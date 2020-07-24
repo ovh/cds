@@ -27,9 +27,9 @@ import (
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/api/test/assets"
 	"github.com/ovh/cds/engine/api/workflow"
+	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
-	"github.com/ovh/cds/sdk/gorpmapping"
 	"github.com/ovh/cds/sdk/log"
 )
 
@@ -422,7 +422,7 @@ func TestPostMigrateWorkflowAsCodeHandler(t *testing.T) {
 	}
 }
 
-func createProject(t *testing.T, db gorpmapping.SqlExecutorWithTx, api *API) *sdk.Project {
+func createProject(t *testing.T, db gorpmapper.SqlExecutorWithTx, api *API) *sdk.Project {
 	// Create Project
 	pkey := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, api.Cache, pkey, pkey)
@@ -446,7 +446,7 @@ func createPipeline(t *testing.T, db gorp.SqlExecutor, api *API, proj *sdk.Proje
 	return &pip
 }
 
-func createApplication(t *testing.T, db gorpmapping.SqlExecutorWithTx, api *API, proj *sdk.Project) *sdk.Application {
+func createApplication(t *testing.T, db gorpmapper.SqlExecutorWithTx, api *API, proj *sdk.Project) *sdk.Application {
 	app := sdk.Application{
 		Name:               sdk.RandomString(10),
 		ProjectID:          proj.ID,

@@ -7,8 +7,9 @@ import (
 	"github.com/go-gorp/gorp"
 	"github.com/lib/pq"
 
+	"github.com/ovh/cds/engine/api/database/gorpmapping"
+	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/gorpmapping"
 	"github.com/ovh/cds/sdk/log"
 )
 
@@ -141,7 +142,7 @@ func DeleteAllVariables(db gorp.SqlExecutor, environmentID int64) error {
 }
 
 // InsertVariable Insert a new variable in the given environment
-func InsertVariable(db gorpmapping.SqlExecutorWithTx, envID int64, v *sdk.EnvironmentVariable, u sdk.Identifiable) error {
+func InsertVariable(db gorpmapper.SqlExecutorWithTx, envID int64, v *sdk.EnvironmentVariable, u sdk.Identifiable) error {
 	//Check variable name
 	rx := sdk.NamePatternRegex
 	if !rx.MatchString(v.Name) {
@@ -175,7 +176,7 @@ func InsertVariable(db gorpmapping.SqlExecutorWithTx, envID int64, v *sdk.Enviro
 }
 
 // UpdateVariable Update a variable in the given environment
-func UpdateVariable(db gorpmapping.SqlExecutorWithTx, envID int64, variable *sdk.EnvironmentVariable, variableBefore *sdk.EnvironmentVariable, u sdk.Identifiable) error {
+func UpdateVariable(db gorpmapper.SqlExecutorWithTx, envID int64, variable *sdk.EnvironmentVariable, variableBefore *sdk.EnvironmentVariable, u sdk.Identifiable) error {
 	rx := sdk.NamePatternRegex
 	if !rx.MatchString(variable.Name) {
 		return sdk.NewErrorFrom(sdk.ErrInvalidName, "variable name should match %s", sdk.NamePattern)

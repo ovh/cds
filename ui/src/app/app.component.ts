@@ -1,7 +1,7 @@
 import { registerLocaleData } from '@angular/common';
 import localeEN from '@angular/common/locales/en';
 import localeFR from '@angular/common/locales/fr';
-import { Component, ElementRef, NgZone, OnInit, ViewChild } from '@angular/core';
+import { Component, ElementRef, NgZone, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { Title } from '@angular/platform-browser';
 import { ActivatedRoute, NavigationEnd, NavigationStart, ResolveEnd, ResolveStart, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
@@ -32,7 +32,7 @@ declare var PACMAN: any;
     styleUrls: ['./app.component.scss']
 })
 @AutoUnsubscribe()
-export class AppComponent implements OnInit {
+export class AppComponent implements OnInit, OnDestroy {
     open: boolean;
     isConnected: boolean;
     hideNavBar: boolean;
@@ -110,6 +110,8 @@ export class AppComponent implements OnInit {
             }
         });
     }
+
+    ngOnDestroy(): void {} // Should be set to use @AutoUnsubscribe with AOT
 
     ngOnInit(): void {
         this._store.dispatch(new GetCDSStatus());

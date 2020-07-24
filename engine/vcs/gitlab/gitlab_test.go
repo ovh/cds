@@ -23,7 +23,7 @@ func TestNewClient(t *testing.T) {
 
 func getNewConsumer(t *testing.T) sdk.VCSServer {
 	log.SetLogger(t)
-	cfg := test.LoadTestingConf(t)
+	cfg := test.LoadTestingConf(t, sdk.TypeAPI)
 	appID := cfg["gitlabClientID"]
 	secret := cfg["gitlabClientSecret"]
 	redisHost := cfg["redisHost"]
@@ -45,7 +45,7 @@ func getNewConsumer(t *testing.T) sdk.VCSServer {
 
 func getNewAuthorizedClient(t *testing.T) sdk.VCSAuthorizedClient {
 	log.SetLogger(t)
-	cfg := test.LoadTestingConf(t)
+	cfg := test.LoadTestingConf(t, sdk.TypeAPI)
 	appID := cfg["gitlabClientID"]
 	secret := cfg["gitlabClientSecret"]
 	accessToken := cfg["gitlabAccessToken"]

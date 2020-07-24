@@ -33,8 +33,10 @@ func (s *SqlExecutorMock) Update(list ...interface{}) (int64, error) { return 0,
 func (s *SqlExecutorMock) UpdateColumns(columnFilter gorp.ColumnFilter, list ...interface{}) (int64, error) {
 	return 0, nil
 }
-func (s *SqlExecutorMock) Delete(list ...interface{}) (int64, error)                  { return 0, nil }
-func (s *SqlExecutorMock) Exec(query string, args ...interface{}) (sql.Result, error) { return nil, nil }
+func (s *SqlExecutorMock) Delete(list ...interface{}) (int64, error) { return 0, nil }
+func (s *SqlExecutorMock) Exec(query string, args ...interface{}) (sql.Result, error) {
+	return nil, nil
+}
 func (s *SqlExecutorMock) Select(i interface{}, query string, args ...interface{}) ([]interface{}, error) {
 	s.Queries = append(s.Queries, SqlExecutorMockQuery{
 		Query: query,

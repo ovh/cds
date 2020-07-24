@@ -20,9 +20,9 @@ import (
 	"github.com/ovh/cds/engine/api/integration"
 	"github.com/ovh/cds/engine/api/keys"
 	"github.com/ovh/cds/engine/api/pipeline"
+	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/exportentities"
-	"github.com/ovh/cds/sdk/gorpmapping"
 	"github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk/telemetry"
 )
@@ -267,7 +267,7 @@ func LoadByID(ctx context.Context, db gorp.SqlExecutor, projIdent sdk.ProjectIde
 }
 
 // Insert inserts a new workflow
-func Insert(ctx context.Context, db gorpmapping.SqlExecutorWithTx, store cache.Store, projIdent sdk.ProjectIdentifiers, projectGroups []sdk.GroupPermission, w *sdk.Workflow) error {
+func Insert(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store cache.Store, projIdent sdk.ProjectIdentifiers, projectGroups []sdk.GroupPermission, w *sdk.Workflow) error {
 	if err := CompleteWorkflow(ctx, db, w, projIdent, LoadOptions{}); err != nil {
 		return err
 	}
@@ -575,7 +575,7 @@ func RenameNode(ctx context.Context, db gorp.SqlExecutor, w *sdk.Workflow) error
 }
 
 // Update updates a workflow
-func Update(ctx context.Context, db gorpmapping.SqlExecutorWithTx, store cache.Store, projIdent sdk.ProjectIdentifiers, wf *sdk.Workflow, uptOption UpdateOptions) error {
+func Update(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store cache.Store, projIdent sdk.ProjectIdentifiers, wf *sdk.Workflow, uptOption UpdateOptions) error {
 	ctx, end := telemetry.Span(ctx, "workflow.Update")
 	defer end()
 
@@ -671,7 +671,7 @@ func MarkAsDelete(db gorp.SqlExecutor, key, name string) error {
 }
 
 // Delete workflow
-func Delete(ctx context.Context, db gorpmapping.SqlExecutorWithTx, store cache.Store, projIdent sdk.ProjectIdentifiers, w *sdk.Workflow) error {
+func Delete(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store cache.Store, projIdent sdk.ProjectIdentifiers, w *sdk.Workflow) error {
 	// Delete all hooks
 	if err := hookUnregistration(ctx, db, store, projIdent, w.WorkflowData.GetHooksMapRef()); err != nil {
 		return sdk.WrapError(err, "unable to delete hooks from workflow")

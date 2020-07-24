@@ -4,6 +4,7 @@ import {
     Component,
     EventEmitter,
     Input,
+    OnDestroy,
     OnInit,
     Output
 } from '@angular/core';
@@ -26,7 +27,7 @@ import { map } from 'rxjs/operators';
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 @AutoUnsubscribe()
-export class WorkflowWNodeMenuEditComponent implements OnInit {
+export class WorkflowWNodeMenuEditComponent implements OnInit, OnDestroy {
 
     // Project that contains the workflow
     @Input() popup: IPopup;
@@ -51,6 +52,8 @@ export class WorkflowWNodeMenuEditComponent implements OnInit {
         private _store: Store,
         private _cd: ChangeDetectorRef
     ) {}
+
+    ngOnDestroy(): void {} // Should be set to use @AutoUnsubscribe with AOT
 
     ngOnInit(): void {
         this.project = this._store.selectSnapshot(ProjectState.projectSnapshot);

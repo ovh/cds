@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
 import { Store } from '@ngxs/store';
 import { Broadcast } from 'app/model/broadcast.model';
 import { NavbarProjectData } from 'app/model/navbar.model';
@@ -18,7 +18,7 @@ import { AutoUnsubscribe } from '../../shared/decorator/autoUnsubscribe';
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 @AutoUnsubscribe()
-export class HomeComponent implements OnInit {
+export class HomeComponent implements OnInit, OnDestroy {
 
     selectedTab = 'heatmap';
     favorites: Array<NavbarProjectData> = [];
@@ -60,6 +60,8 @@ export class HomeComponent implements OnInit {
                 this._cd.markForCheck();
             }, () => this.loadingBroadcasts = false);
     }
+
+    ngOnDestroy(): void {} // Should be set to use @AutoUnsubscribe with AOT
 
     ngOnInit() {
         this.filterSub = this._timelineStore.getFilter().subscribe(f => {

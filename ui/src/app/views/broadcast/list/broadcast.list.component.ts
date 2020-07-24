@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy } from '@angular/core';
 import { Broadcast } from 'app/model/broadcast.model';
 import { Subscription } from 'rxjs';
 import { finalize } from 'rxjs/operators';
@@ -12,7 +12,7 @@ import { AutoUnsubscribe } from '../../../shared/decorator/autoUnsubscribe';
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 @AutoUnsubscribe()
-export class BroadcastListComponent {
+export class BroadcastListComponent implements OnDestroy {
     recentBroadcasts: Array<Broadcast> = [];
     oldBroadcasts: Array<Broadcast> = [];
     filteredBroadcasts: Array<Broadcast> = [];
@@ -42,6 +42,8 @@ export class BroadcastListComponent {
                 this._cd.markForCheck();
             });
     }
+
+    ngOnDestroy(): void {} // Should be set to use @AutoUnsubscribe with AOT
 
     switchToRecentView(recent: boolean) {
         let filterLower = '';

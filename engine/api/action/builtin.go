@@ -1,14 +1,14 @@
 package action
 
 import (
+	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/action"
-	"github.com/ovh/cds/sdk/gorpmapping"
 	"github.com/ovh/cds/sdk/log"
 )
 
 // CreateBuiltinActions add builtin actions in database if needed
-func CreateBuiltinActions(db gorpmapping.SqlExecutorWithTx) error {
+func CreateBuiltinActions(db gorpmapper.SqlExecutorWithTx) error {
 	for i := range action.List {
 		if err := checkBuiltinAction(db, &action.List[i].Action); err != nil {
 			return err
@@ -19,7 +19,7 @@ func CreateBuiltinActions(db gorpmapping.SqlExecutorWithTx) error {
 }
 
 // checkBuiltinAction add builtin actions in database if needed
-func checkBuiltinAction(db gorpmapping.SqlExecutorWithTx, a *sdk.Action) error {
+func checkBuiltinAction(db gorpmapper.SqlExecutorWithTx, a *sdk.Action) error {
 	a.Type = sdk.BuiltinAction
 
 	nb, err := db.SelectInt("SELECT COUNT(1) FROM action WHERE action.name = $1 and action.type = $2", a.Name, sdk.BuiltinAction)

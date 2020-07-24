@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy } from '@angular/core';
 import { Bookmark } from 'app/model/bookmark.model';
 import { NavbarProjectData } from 'app/model/navbar.model';
 import { UserService } from 'app/service/user/user.service';
@@ -14,7 +14,7 @@ import { AutoUnsubscribe } from '../../shared/decorator/autoUnsubscribe';
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 @AutoUnsubscribe()
-export class FavoriteComponent {
+export class FavoriteComponent implements OnDestroy {
 
     favorites: Array<Bookmark> = [];
     projects: Array<NavbarProjectData> = [];
@@ -44,6 +44,8 @@ export class FavoriteComponent {
             }
         });
     }
+
+    ngOnDestroy(): void {} // Should be set to use @AutoUnsubscribe with AOT
 
     loadBookmarks() {
       this.loading = true;

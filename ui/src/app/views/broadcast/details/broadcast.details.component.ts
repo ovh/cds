@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { Broadcast } from 'app/model/broadcast.model';
 import { Subscription } from 'rxjs';
@@ -12,7 +12,7 @@ import { AutoUnsubscribe } from '../../../shared/decorator/autoUnsubscribe';
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 @AutoUnsubscribe()
-export class BroadcastDetailsComponent {
+export class BroadcastDetailsComponent implements OnDestroy {
 
     broadcast: Broadcast;
     loading = true;
@@ -41,4 +41,5 @@ export class BroadcastDetailsComponent {
 
     }
 
+    ngOnDestroy(): void {} // Should be set to use @AutoUnsubscribe with AOT
 }

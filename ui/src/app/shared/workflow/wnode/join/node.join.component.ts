@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnDestroy } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
 import { PipelineStatus } from 'app/model/pipeline.model';
@@ -20,7 +20,7 @@ import { Subscription } from 'rxjs';
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 @AutoUnsubscribe()
-export class WorkflowWNodeJoinComponent {
+export class WorkflowWNodeJoinComponent implements OnDestroy {
     @Input() public node: WNode;
     @Input() public workflow: Workflow;
     @Input() noderunStatus: string;
@@ -45,6 +45,8 @@ export class WorkflowWNodeJoinComponent {
             this._cd.markForCheck();
         });
     }
+
+    ngOnDestroy(): void {} // Should be set to use @AutoUnsubscribe with AOT
 
     selectJoinToLink(): void {
         let cloneWorkflow = cloneDeep(this.workflow);

@@ -7,6 +7,7 @@ import (
 
 	"github.com/go-gorp/gorp"
 
+	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
@@ -122,7 +123,7 @@ func getAuthSession(c context.Context) *sdk.AuthSession {
 }
 
 func (a *API) mustDB() *gorp.DbMap {
-	db := a.DBConnectionFactory.GetDBMap()
+	db := a.DBConnectionFactory.GetDBMap(gorpmapping.Mapper)()
 	if db == nil {
 		panic(fmt.Errorf("Database unavailable"))
 	}
@@ -130,7 +131,7 @@ func (a *API) mustDB() *gorp.DbMap {
 }
 
 func (a *API) mustDBWithCtx(ctx context.Context) *gorp.DbMap {
-	db := a.DBConnectionFactory.GetDBMap()
+	db := a.DBConnectionFactory.GetDBMap(gorpmapping.Mapper)()
 	db = db.WithContext(ctx).(*gorp.DbMap)
 	if db == nil {
 		panic(fmt.Errorf("Database unavailable"))

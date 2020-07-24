@@ -5,23 +5,23 @@ import (
 	"time"
 
 	"github.com/ovh/cds/engine/api/authentication"
+	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/gorpmapping"
 )
 
 // NewConsumer returns a new local consumer for given data.
-func NewConsumer(ctx context.Context, db gorpmapping.SqlExecutorWithTx, userID string) (*sdk.AuthConsumer, error) {
+func NewConsumer(ctx context.Context, db gorpmapper.SqlExecutorWithTx, userID string) (*sdk.AuthConsumer, error) {
 	return newConsumerWithData(ctx, db, userID, nil)
 }
 
 // NewConsumerWithHash returns a new local consumer with given hash.
-func NewConsumerWithHash(ctx context.Context, db gorpmapping.SqlExecutorWithTx, userID, hash string) (*sdk.AuthConsumer, error) {
+func NewConsumerWithHash(ctx context.Context, db gorpmapper.SqlExecutorWithTx, userID, hash string) (*sdk.AuthConsumer, error) {
 	return newConsumerWithData(ctx, db, userID, map[string]string{
 		"hash": hash,
 	})
 }
 
-func newConsumerWithData(ctx context.Context, db gorpmapping.SqlExecutorWithTx, userID string, data map[string]string) (*sdk.AuthConsumer, error) {
+func newConsumerWithData(ctx context.Context, db gorpmapper.SqlExecutorWithTx, userID string, data map[string]string) (*sdk.AuthConsumer, error) {
 	c := sdk.AuthConsumer{
 		Name:               string(sdk.ConsumerLocal),
 		AuthentifiedUserID: userID,

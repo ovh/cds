@@ -9,6 +9,7 @@ import (
 
 	"github.com/go-gorp/gorp"
 	"github.com/ovh/cds/engine/api/cache"
+	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/engine/api/observability"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk/telemetry"
@@ -35,7 +36,7 @@ func TracingMiddlewareFunc(s service.Service, db gorp.SqlExecutor, store cache.S
 			Name: name,
 		}
 
-		ctx, err := observability.Start(ctx, s, w, req, opts, db, store)
+		ctx, err := observability.Start(ctx, s, w, req, opts, gorpmapping.Mapper, db, store)
 		newReq := req.WithContext(ctx)
 		*req = *newReq
 

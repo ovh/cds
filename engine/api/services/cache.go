@@ -9,7 +9,8 @@ import (
 
 	"github.com/lib/pq"
 
-	"github.com/ovh/cds/engine/api/database"
+	"github.com/ovh/cds/engine/api/database/gorpmapping"
+	"github.com/ovh/cds/engine/database"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
@@ -167,7 +168,7 @@ func (c *iCache) doListenDatabase(ctx context.Context) {
 			}
 
 			name := dataAsObject["name"].(string)
-			db := database.DBMap(c.dbConnFactory.DB())
+			db := database.DBMap(gorpmapping.Mapper, c.dbConnFactory.DB())
 
 			switch action {
 			case "UPDATE", "INSERT":

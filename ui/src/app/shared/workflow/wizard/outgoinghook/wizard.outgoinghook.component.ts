@@ -4,6 +4,7 @@ import {
     Component,
     EventEmitter,
     Input,
+    OnDestroy,
     OnInit,
     Output,
     ViewChild
@@ -32,7 +33,7 @@ import { finalize, first } from 'rxjs/operators';
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 @AutoUnsubscribe()
-export class WorkflowWizardOutgoingHookComponent implements OnInit {
+export class WorkflowWizardOutgoingHookComponent implements OnInit, OnDestroy {
     @ViewChild('textareaCodeMirror') codemirror: any;
 
     @Input() workflow: Workflow;
@@ -83,6 +84,8 @@ export class WorkflowWizardOutgoingHookComponent implements OnInit {
         this.project = this._store.selectSnapshot(ProjectState.projectSnapshot);
         this.editMode = this._store.selectSnapshot(WorkflowState).editMode;
     }
+
+    ngOnDestroy(): void {} // Should be set to use @AutoUnsubscribe with AOT
 
     ngOnInit(): void {
         if (this.mode !== 'create') {

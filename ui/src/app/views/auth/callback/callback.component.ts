@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
 import { NgForm } from '@angular/forms';
 import { ActivatedRoute, DefaultUrlSerializer, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
@@ -17,7 +17,7 @@ import { finalize } from 'rxjs/operators';
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 @AutoUnsubscribe()
-export class CallbackComponent implements OnInit {
+export class CallbackComponent implements OnInit, OnDestroy {
     paramsSub: Subscription;
     missingParams: boolean;
     showCTL: boolean;
@@ -42,6 +42,8 @@ export class CallbackComponent implements OnInit {
     ) {
         this.loading = true;
     }
+
+    ngOnDestroy(): void {} // Should be set to use @AutoUnsubscribe with AOT
 
     ngOnInit() {
         this.paramsSub = this._route.params.subscribe(params => {

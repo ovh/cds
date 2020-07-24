@@ -3,13 +3,13 @@ package environment
 import (
 	"strings"
 
+	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/gorpmapping"
 	"github.com/ovh/cds/sdk/log"
 )
 
 //Import import or reuser the provided environment
-func Import(db gorpmapping.SqlExecutorWithTx, projIdent sdk.ProjectIdentifiers, env *sdk.Environment, msgChan chan<- sdk.Message, u sdk.Identifiable) error {
+func Import(db gorpmapper.SqlExecutorWithTx, projIdent sdk.ProjectIdentifiers, env *sdk.Environment, msgChan chan<- sdk.Message, u sdk.Identifiable) error {
 	exists, err := Exists(db, projIdent.Key, env.Name)
 	if err != nil {
 		return err
@@ -64,7 +64,7 @@ func Import(db gorpmapping.SqlExecutorWithTx, projIdent sdk.ProjectIdentifiers, 
 }
 
 //ImportInto import variables and groups on an existing environment
-func ImportInto(db gorpmapping.SqlExecutorWithTx, env *sdk.Environment, into *sdk.Environment, msgChan chan<- sdk.Message, u sdk.Identifiable) error {
+func ImportInto(db gorpmapper.SqlExecutorWithTx, env *sdk.Environment, into *sdk.Environment, msgChan chan<- sdk.Message, u sdk.Identifiable) error {
 	var updateVar = func(v *sdk.EnvironmentVariable) {
 		log.Debug("ImportInto> Updating var %s", v.Name)
 

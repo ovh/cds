@@ -5,12 +5,12 @@ import (
 	"strings"
 
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
+	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/gorpmapping"
 )
 
 //Import is able to create a new application and all its components
-func Import(ctx context.Context, db gorpmapping.SqlExecutorWithTx, projIdent sdk.ProjectIdentifiers, projInts []sdk.ProjectIntegration, app *sdk.Application, repomanager string, u sdk.Identifiable, msgChan chan<- sdk.Message) error {
+func Import(ctx context.Context, db gorpmapper.SqlExecutorWithTx, projIdent sdk.ProjectIdentifiers, projInts []sdk.ProjectIntegration, app *sdk.Application, repomanager string, u sdk.Identifiable, msgChan chan<- sdk.Message) error {
 	doUpdate, erre := Exists(db, projIdent.Key, app.Name)
 	if erre != nil {
 		return sdk.WrapError(erre, "application.Import> Unable to check if application exists")
@@ -107,7 +107,7 @@ func Import(ctx context.Context, db gorpmapping.SqlExecutorWithTx, projIdent sdk
 }
 
 //importVariables is able to create variable on an existing application
-func importVariables(db gorpmapping.SqlExecutorWithTx, app *sdk.Application, u sdk.Identifiable, msgChan chan<- sdk.Message) error {
+func importVariables(db gorpmapper.SqlExecutorWithTx, app *sdk.Application, u sdk.Identifiable, msgChan chan<- sdk.Message) error {
 	for i := range app.Variables {
 		newVar := &app.Variables[i]
 		if !sdk.IsInArray(newVar.Type, sdk.AvailableVariableType) {

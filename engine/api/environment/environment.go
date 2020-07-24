@@ -8,8 +8,8 @@ import (
 	"github.com/go-gorp/gorp"
 	"github.com/lib/pq"
 
+	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/gorpmapping"
 )
 
 // LoadAllByIDs load all environment
@@ -238,7 +238,7 @@ func InsertEnvironment(db gorp.SqlExecutor, env *sdk.Environment) error {
 	if err != nil {
 		pqerr, ok := err.(*pq.Error)
 		if ok {
-			if pqerr.Code == "23000" || pqerr.Code == gorpmapping.ViolateUniqueKeyPGCode || pqerr.Code == "23514" {
+			if pqerr.Code == "23000" || pqerr.Code == gorpmapper.ViolateUniqueKeyPGCode || pqerr.Code == "23514" {
 				return sdk.WithStack(sdk.ErrEnvironmentExist)
 			}
 		}

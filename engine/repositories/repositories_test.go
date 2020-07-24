@@ -20,6 +20,7 @@ import (
 	"github.com/ovh/cds/engine/api"
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/test"
+	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/jws"
 	"github.com/ovh/cds/sdk/log"
 )
@@ -36,7 +37,7 @@ func init() {
 func newTestService(t *testing.T) (*Service, error) {
 	//Read the test config file
 	if RedisHost == "" {
-		cfg := test.LoadTestingConf(t)
+		cfg := test.LoadTestingConf(t, sdk.TypeAPI)
 		RedisHost = cfg["redisHost"]
 		RedisPassword = cfg["redisPassword"]
 	}

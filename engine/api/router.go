@@ -391,12 +391,12 @@ func (r *Router) handle(uri string, scope HandlerScope, handlers ...*service.Han
 		// Log request start
 		start := time.Now()
 		log.InfoWithFields(ctx, logrus.Fields{
-      "method":      req.Method,
-      "route":       cleanURL,
-      "request_uri": req.RequestURI,
-      "deprecated":  rc.IsDeprecated,
-      "handler":     rc.Name,
-    }, "%s | BEGIN | %s [%s]", req.Method, req.URL, rc.Name)
+			"method":      req.Method,
+			"route":       cleanURL,
+			"request_uri": req.RequestURI,
+			"deprecated":  rc.IsDeprecated,
+			"handler":     rc.Name,
+		}, "%s | BEGIN | %s [%s]", req.Method, req.URL, rc.Name)
 
 		// Defer log request end
 		deferFunc := func(ctx context.Context) {

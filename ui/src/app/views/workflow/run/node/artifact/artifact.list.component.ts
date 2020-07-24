@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
 import { Select } from '@ngxs/store';
 import { WorkflowNodeRun, WorkflowNodeRunArtifact, WorkflowNodeRunStaticFiles } from 'app/model/workflow.run.model';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
@@ -13,7 +13,7 @@ import { Observable, Subscription } from 'rxjs';
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 @AutoUnsubscribe()
-export class WorkflowRunArtifactListComponent implements OnInit  {
+export class WorkflowRunArtifactListComponent implements OnInit, OnDestroy {
     @Select(WorkflowState.getSelectedNodeRun()) nodeRun$: Observable<WorkflowNodeRun>;
     nodeRunSubs: Subscription;
 
@@ -55,7 +55,10 @@ export class WorkflowRunArtifactListComponent implements OnInit  {
             }
         ];
     }
-     ngOnInit(): void {
+
+    ngOnDestroy(): void {} // Should be set to use @AutoUnsubscribe with AOT
+
+    ngOnInit(): void {
         this.nodeRunSubs = this.nodeRun$.subscribe(nr => {
             if (!nr) {
                 return;
@@ -70,7 +73,7 @@ export class WorkflowRunArtifactListComponent implements OnInit  {
                 this._cd.markForCheck();
             }
         });
-     }
+    }
 
     getHumainFileSize(size: number): string {
         let i = Math.floor(Math.log(size) / Math.log(1024));

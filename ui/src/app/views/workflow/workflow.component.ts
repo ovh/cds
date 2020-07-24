@@ -1,7 +1,9 @@
 import {
     ChangeDetectionStrategy,
     ChangeDetectorRef,
-    Component, OnInit,
+    Component,
+    OnDestroy,
+    OnInit,
     ViewChild,
 } from '@angular/core';
 import { ActivatedRoute, NavigationStart, Router } from '@angular/router';
@@ -38,7 +40,7 @@ import { finalize } from 'rxjs/operators';
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 @AutoUnsubscribe()
-export class WorkflowComponent implements OnInit {
+export class WorkflowComponent implements OnInit, OnDestroy {
     @ViewChild('templateApplyModal')
     templateApplyModal: WorkflowTemplateApplyModalComponent;
 
@@ -86,6 +88,8 @@ export class WorkflowComponent implements OnInit {
         private _store: Store,
         private _cd: ChangeDetectorRef
     ) { }
+
+    ngOnDestroy(): void {} // Should be set to use @AutoUnsubscribe with AOT
 
     ngOnInit(): void {
         this.projectSubscription = this._store.select(ProjectState)

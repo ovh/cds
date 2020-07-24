@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnDestroy } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
 import { IdName, LoadOpts, Project } from 'app/model/project.model';
@@ -19,7 +19,7 @@ import { finalize, flatMap } from 'rxjs/operators';
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 @AutoUnsubscribe()
-export class HomeFilterComponent {
+export class HomeFilterComponent implements OnDestroy {
 
     _filter: TimelineFilter;
     filterToEdit: TimelineFilter;
@@ -56,6 +56,8 @@ export class HomeFilterComponent {
             }
         });
     }
+
+    ngOnDestroy(): void {} // Should be set to use @AutoUnsubscribe with AOT
 
     addProject(): void {
         if (!this.selectedProjectKey || this.selectedProjectKey === '') {

@@ -28,7 +28,7 @@ Configuration file OK
 Create your database relations
 
 ```bash
-$ $PATH_TO_CDS/engine database upgrade --db-host <host> --db-port <port> --db-user <user> --db-password <password> --db-name <database> --migrate-dir $PATH_TO_CDS/engine/sql --limit 0
+$ $PATH_TO_CDS/engine database upgrade --db-host <host> --db-port <port> --db-user <user> --db-password <password> --db-name <database> --migrate-dir $PATH_TO_CDS/engine/sql/api --limit 0
 ```
 
 Download workers binaries
