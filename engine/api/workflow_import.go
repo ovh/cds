@@ -299,10 +299,10 @@ func (api *API) postWorkflowPushHandler() service.Handler {
 		consumer := getAPIConsumer(ctx)
 
 		mods := []workflowtemplate.TemplateRequestModifierFunc{
-			workflowtemplate.TemplateRequestModifiers.DefaultKeys(*proj),
+			workflowtemplate.TemplateRequestModifiers.DefaultKeys(projIdent, proj.Keys),
 		}
 		if pushOptions != nil && pushOptions.FromRepository != "" {
-			mods = append(mods, workflowtemplate.TemplateRequestModifiers.DefaultNameAndRepositories(*proj, pushOptions.FromRepository))
+			mods = append(mods, workflowtemplate.TemplateRequestModifiers.DefaultNameAndRepositories(projIdent, proj.VCSServers, pushOptions.FromRepository))
 		}
 		var allMsg []sdk.Message
 		msgTemplate, wti, err := workflowtemplate.CheckAndExecuteTemplate(ctx, api.mustDB(), api.Cache, *consumer, projIdent, &data, mods...)

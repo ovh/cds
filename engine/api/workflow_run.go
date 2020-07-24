@@ -3,7 +3,6 @@ package api
 import (
 	"context"
 	"fmt"
-	"github.com/ovh/cds/engine/api/workflowtemplate"
 	"io"
 	"net/http"
 	"sort"
@@ -1009,11 +1008,7 @@ func (api *API) initWorkflowRun(ctx context.Context, projKey string, wf *sdk.Wor
 			log.Debug("workflow.CreateFromRepository> %s", wf.Name)
 			oldWf := *wf
 			var asCodeInfosMsg []sdk.Message
-			mods := []workflowtemplate.TemplateRequestModifierFunc{
-				workflowtemplate.TemplateRequestModifiers.DefaultKeys(*p1),
-				workflowtemplate.TemplateRequestModifiers.DefaultNameAndRepositories(*p1, wf.FromRepository),
-			}
-			workflowSecrets, asCodeInfosMsg, err = workflow.CreateFromRepository(ctx, api.mustDB(), api.Cache, projIdent, projPushData, p1.Keys, wf, *opts, *u, project.DecryptWithBuiltinKey, mods...)
+			workflowSecrets, asCodeInfosMsg, err = workflow.CreateFromRepository(ctx, api.mustDB(), api.Cache, projIdent, projPushData, p1.Keys, p1.VCSServers, wf, *opts, *u, project.DecryptWithBuiltinKey)
 			infos := make([]sdk.SpawnMsg, len(asCodeInfosMsg))
 			for i, msg := range asCodeInfosMsg {
 				infos[i] = sdk.SpawnMsg{

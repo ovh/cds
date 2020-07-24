@@ -36,8 +36,8 @@ type PushOption struct {
 }
 
 // CreateFromRepository a workflow from a repository.
-func CreateFromRepository(ctx context.Context, db *gorp.DbMap, store cache.Store, projIdent sdk.ProjectIdentifiers, projPushData sdk.ProjectForWorkflowPush, projKeys []sdk.ProjectKey, wf *sdk.Workflow,
-	opts sdk.WorkflowRunPostHandlerOption, u sdk.AuthConsumer, decryptFunc keys.DecryptFunc, mods ...workflowtemplate.TemplateRequestModifierFunc) (*PushSecrets, []sdk.Message, error) {
+func CreateFromRepository(ctx context.Context, db *gorp.DbMap, store cache.Store, projIdent sdk.ProjectIdentifiers, projPushData sdk.ProjectForWorkflowPush, projKeys []sdk.ProjectKey, vcsServers []sdk.ProjectVCSServerLink, wf *sdk.Workflow,
+	opts sdk.WorkflowRunPostHandlerOption, u sdk.AuthConsumer, decryptFunc keys.DecryptFunc) (*PushSecrets, []sdk.Message, error) {
 	ctx, end := telemetry.Span(ctx, "workflow.CreateFromRepository")
 	defer end()
 
@@ -68,11 +68,11 @@ func CreateFromRepository(ctx context.Context, db *gorp.DbMap, store cache.Store
 		}
 	}
 
-	return extractWorkflow(ctx, db, store, projIdent, projPushData, wf, *ope, u, decryptFunc, uuid, mods...)
+	return extractWorkflow(ctx, db, store, projIdent, projPushData, projKeys, vcsServers, wf, *ope, u, decryptFunc, uuid)
 }
 
-func extractWorkflow(ctx context.Context, db *gorp.DbMap, store cache.Store, projIdent sdk.ProjectIdentifiers, projPushData sdk.ProjectForWorkflowPush, wf *sdk.Workflow,
-	ope sdk.Operation, consumer sdk.AuthConsumer, decryptFunc keys.DecryptFunc, hookUUID string, mods ...workflowtemplate.TemplateRequestModifierFunc) (*PushSecrets, []sdk.Message, error) {
+func extractWorkflow(ctx context.Context, db *gorp.DbMap, store cache.Store, projIdent sdk.ProjectIdentifiers, projPushData sdk.ProjectForWorkflowPush, projKeys []sdk.ProjectKey, vcsServers []sdk.ProjectVCSServerLink, wf *sdk.Workflow,
+	ope sdk.Operation, consumer sdk.AuthConsumer, decryptFunc keys.DecryptFunc, hookUUID string) (*PushSecrets, []sdk.Message, error) {
 	ctx, end := telemetry.Span(ctx, "workflow.extractWorkflow")
 	defer end()
 
@@ -83,6 +83,7 @@ func extractWorkflow(ctx context.Context, db *gorp.DbMap, store cache.Store, pro
 		allMsgs = append(allMsgs, sdk.NewMessage(sdk.MsgWorkflowErrorBadCdsDir))
 		return nil, allMsgs, sdk.NewErrorWithStack(err, sdk.NewErrorFrom(sdk.ErrWorkflowInvalid, "unable to read cds files"))
 	}
+
 	ope.RepositoryStrategy.SSHKeyContent = sdk.PasswordPlaceholder
 	ope.RepositoryStrategy.Password = sdk.PasswordPlaceholder
 	opt := &PushOption{
@@ -101,8 +102,16 @@ func extractWorkflow(ctx context.Context, db *gorp.DbMap, store cache.Store, pro
 		return nil, allMsgs, err
 	}
 
+	mods := []workflowtemplate.TemplateRequestModifierFunc{
+		workflowtemplate.TemplateRequestModifiers.DefaultKeys(projIdent, projKeys),
+	}
+
 	if !opt.IsDefaultBranch {
 		mods = append(mods, workflowtemplate.TemplateRequestModifiers.Detached)
+	}
+
+	if opt.FromRepository != "" {
+		mods = append(mods, workflowtemplate.TemplateRequestModifiers.DefaultNameAndRepositories(projIdent, vcsServers, opt.FromRepository))
 	}
 
 	msgTemplate, wti, err := workflowtemplate.CheckAndExecuteTemplate(ctx, db, store, consumer, projIdent, &data, mods...)

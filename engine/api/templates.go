@@ -455,7 +455,7 @@ func (api *API) postTemplateApplyHandler() service.Handler {
 		}
 
 		mods := []workflowtemplate.TemplateRequestModifierFunc{
-			workflowtemplate.TemplateRequestModifiers.DefaultKeys(*p),
+			workflowtemplate.TemplateRequestModifiers.DefaultKeys(projIdent, p.Keys),
 		}
 		if req.Detached {
 			mods = append(mods, workflowtemplate.TemplateRequestModifiers.Detached)
@@ -717,7 +717,7 @@ func (api *API) postTemplateBulkHandler() service.Handler {
 					}
 
 					mods := []workflowtemplate.TemplateRequestModifierFunc{
-						workflowtemplate.TemplateRequestModifiers.DefaultKeys(*proj),
+						workflowtemplate.TemplateRequestModifiers.DefaultKeys(projIdent, proj.Keys),
 					}
 					_, wti, err = workflowtemplate.CheckAndExecuteTemplate(ctx, api.mustDB(), api.Cache, *consumer, projIdent, &data, mods...)
 					if err != nil {

@@ -188,13 +188,13 @@ func (api *API) postPerformImportAsCodeHandler() service.Handler {
 		consumer := getAPIConsumer(ctx)
 
 		mods := []workflowtemplate.TemplateRequestModifierFunc{
-			workflowtemplate.TemplateRequestModifiers.DefaultKeys(*proj),
+			workflowtemplate.TemplateRequestModifiers.DefaultKeys(projIdent, proj.Keys),
 		}
 		if !opt.IsDefaultBranch {
 			mods = append(mods, workflowtemplate.TemplateRequestModifiers.Detached)
 		}
 		if opt.FromRepository != "" {
-			mods = append(mods, workflowtemplate.TemplateRequestModifiers.DefaultNameAndRepositories(*proj, opt.FromRepository))
+			mods = append(mods, workflowtemplate.TemplateRequestModifiers.DefaultNameAndRepositories(projIdent, proj.VCSServers, opt.FromRepository))
 		}
 		var allMsg []sdk.Message
 		msgTemplate, wti, err := workflowtemplate.CheckAndExecuteTemplate(ctx, api.mustDB(), api.Cache, *consumer, projIdent, &data, mods...)

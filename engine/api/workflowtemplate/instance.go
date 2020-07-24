@@ -21,8 +21,8 @@ type TemplateRequestModifierFunc func(ctx context.Context, db gorpmapper.SqlExec
 
 var TemplateRequestModifiers = struct {
 	Detached                   TemplateRequestModifierFunc
-	DefaultKeys                func(proj sdk.Project) TemplateRequestModifierFunc
-	DefaultNameAndRepositories func(proj sdk.Project, repoURL string) TemplateRequestModifierFunc
+	DefaultKeys                func(projIdent sdk.ProjectIdentifiers, projKeys []sdk.ProjectKey) TemplateRequestModifierFunc
+	DefaultNameAndRepositories func(projIdent sdk.ProjectIdentifiers, vcsServers []sdk.ProjectVCSServerLink, repoURL string) TemplateRequestModifierFunc
 }{
 	Detached:                   requestModifyDetached,
 	DefaultKeys:                requestModifyDefaultKeysfunc,
@@ -34,12 +34,12 @@ func requestModifyDetached(ctx context.Context, db gorpmapper.SqlExecutorWithTx,
 	return nil
 }
 
-func requestModifyDefaultKeysfunc(proj sdk.Project) TemplateRequestModifierFunc {
+func requestModifyDefaultKeysfunc(projIdent sdk.ProjectIdentifiers, projKeys []sdk.ProjectKey) TemplateRequestModifierFunc {
 	return func(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store cache.Store, wt sdk.WorkflowTemplate, req *sdk.WorkflowTemplateRequest) error {
-		defaultSSHKey := sdk.GenerateProjectDefaultKeyName(proj.Key, sdk.KeyTypeSSH)
-		defaultPGPKey := sdk.GenerateProjectDefaultKeyName(proj.Key, sdk.KeyTypePGP)
+		defaultSSHKey := sdk.GenerateProjectDefaultKeyName(projIdent.Key, sdk.KeyTypeSSH)
+		defaultPGPKey := sdk.GenerateProjectDefaultKeyName(projIdent.Key, sdk.KeyTypePGP)
 		var defaultSSHKeyFound, defaultPGPKeyFound bool
-		for _, p := range proj.Keys {
+		for _, p := range projKeys {
 			if p.Type == sdk.KeyTypeSSH && p.Name == defaultSSHKey {
 				defaultSSHKeyFound = true
 			}
@@ -68,12 +68,12 @@ func requestModifyDefaultKeysfunc(proj sdk.Project) TemplateRequestModifierFunc 
 	}
 }
 
-func requestModifyDefaultNameAndRepositories(proj sdk.Project, repoURL string) TemplateRequestModifierFunc {
+func requestModifyDefaultNameAndRepositories(projIdent sdk.ProjectIdentifiers, vcsServers []sdk.ProjectVCSServerLink, repoURL string) TemplateRequestModifierFunc {
 	return func(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store cache.Store, wt sdk.WorkflowTemplate, req *sdk.WorkflowTemplateRequest) error {
 		var repoPath string
-		projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
+		projIdent := sdk.ProjectIdentifiers{ID: projIdent.ID, Key: projIdent.Key}
 	loopVCSServer:
-		for _, vcs := range proj.VCSServers {
+		for _, vcs := range vcsServers {
 			repos, err := repositoriesmanager.GetReposForProjectVCSServer(ctx, db, store, projIdent, vcs.Name, repositoriesmanager.Options{})
 			if err != nil {
 				return err
