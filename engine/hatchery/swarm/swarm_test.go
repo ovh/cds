@@ -2,17 +2,19 @@ package swarm
 
 import (
 	"context"
-	"github.com/docker/docker/api/types"
-	"github.com/docker/docker/api/types/container"
-	"github.com/docker/docker/api/types/network"
-	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/hatchery"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
-	"gopkg.in/h2non/gock.v1"
 	"net/http"
 	"testing"
 	"time"
+
+	"github.com/docker/docker/api/types"
+	"github.com/docker/docker/api/types/container"
+	"github.com/docker/docker/api/types/network"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"gopkg.in/h2non/gock.v1"
+
+	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/hatchery"
 )
 
 func TestHatcherySwarm_KillAwolNetwork(t *testing.T) {

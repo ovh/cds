@@ -7,9 +7,10 @@ import (
 	"github.com/go-gorp/gorp"
 	"github.com/lib/pq"
 
+	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/engine/api/group"
+	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/gorpmapping"
 	"github.com/ovh/cds/sdk/log"
 )
 
@@ -117,7 +118,7 @@ func LoadAllByGroupIDs(ctx context.Context, db gorp.SqlExecutor, groupIDs []int6
       WHERE worker_model.group_id = ANY(:groupIDs)
       AND ` + filter.SQL() + `
       ORDER BY worker_model.name
-    `).Args(filter.Args().Merge(gorpmapping.ArgsMap{
+    `).Args(filter.Args().Merge(gorpmapper.ArgsMap{
 			"groupIDs": pq.Int64Array(groupIDs),
 		}))
 	}
@@ -193,7 +194,7 @@ func LoadAllUsableByGroupIDs(ctx context.Context, db gorp.SqlExecutor, groupIDs 
 }
 
 // Insert a new worker model in database.
-func Insert(ctx context.Context, db gorpmapping.SqlExecutorWithTx, model *sdk.Model) error {
+func Insert(ctx context.Context, db gorpmapper.SqlExecutorWithTx, model *sdk.Model) error {
 	dbmodel := workerModel{Model: *model}
 
 	dbmodel.UserLastModified = time.Now()
@@ -227,7 +228,7 @@ func Insert(ctx context.Context, db gorpmapping.SqlExecutorWithTx, model *sdk.Mo
 
 // UpdateDB a worker model
 // if the worker model have SpawnErr -> clear them.
-func UpdateDB(ctx context.Context, db gorpmapping.SqlExecutorWithTx, model *sdk.Model) error {
+func UpdateDB(ctx context.Context, db gorpmapper.SqlExecutorWithTx, model *sdk.Model) error {
 	dbmodel := workerModel{Model: *model}
 
 	if err := DeleteCapabilitiesByModelID(db, dbmodel.ID); err != nil {

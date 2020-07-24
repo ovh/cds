@@ -6,9 +6,9 @@ import (
 	"sync"
 
 	"github.com/ovh/cds/engine/api/keys"
+	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/exportentities"
-	"github.com/ovh/cds/sdk/gorpmapping"
 	"github.com/ovh/cds/sdk/log"
 )
 
@@ -19,7 +19,7 @@ type ImportOptions struct {
 }
 
 // ParseAndImport parse an exportentities.Environment and insert or update the environment in database
-func ParseAndImport(db gorpmapping.SqlExecutorWithTx, proj sdk.Project, eenv exportentities.Environment, opts ImportOptions, decryptFunc keys.DecryptFunc, u sdk.Identifiable) (*sdk.Environment, []sdk.Variable, []sdk.Message, error) {
+func ParseAndImport(db gorpmapper.SqlExecutorWithTx, proj sdk.Project, eenv exportentities.Environment, opts ImportOptions, decryptFunc keys.DecryptFunc, u sdk.Identifiable) (*sdk.Environment, []sdk.Variable, []sdk.Message, error) {
 	log.Debug("ParseAndImport>> Import environment %s in project %s (force=%v)", eenv.Name, proj.Key, opts.Force)
 	log.Debug("ParseAndImport>> Env: %+v", eenv)
 

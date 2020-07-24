@@ -10,9 +10,9 @@ import (
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/mail"
 	"github.com/ovh/cds/engine/api/user"
+	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/gorpmapping"
 	"github.com/ovh/cds/sdk/log"
 )
 
@@ -105,7 +105,7 @@ func (api *API) postAuthLocalSignupHandler() service.Handler {
 	}
 }
 
-func initBuiltinConsumersFromStartupConfig(ctx context.Context, tx gorpmapping.SqlExecutorWithTx, consumer *sdk.AuthConsumer, initToken string) error {
+func initBuiltinConsumersFromStartupConfig(ctx context.Context, tx gorpmapper.SqlExecutorWithTx, consumer *sdk.AuthConsumer, initToken string) error {
 	// Deserialize the magic token to retrieve the startup configuration
 	var startupConfig StartupConfig
 	if err := authentication.VerifyJWS(initToken, &startupConfig); err != nil {

@@ -8,9 +8,9 @@ import (
 	"github.com/lib/pq"
 
 	"github.com/ovh/cds/engine/api/authentication"
-	"github.com/ovh/cds/engine/api/database"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/user"
+	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
@@ -119,7 +119,7 @@ func (api *API) putUserHandler() service.Handler {
 		}
 
 		if err := user.Update(ctx, tx, &newUser); err != nil {
-			if e, ok := sdk.Cause(err).(*pq.Error); ok && e.Code == database.ViolateUniqueKeyPGCode {
+			if e, ok := sdk.Cause(err).(*pq.Error); ok && e.Code == gorpmapper.ViolateUniqueKeyPGCode {
 				return sdk.NewErrorWithStack(e, sdk.ErrUsernamePresent)
 			}
 			return sdk.WrapError(err, "cannot update user")

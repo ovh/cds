@@ -2,13 +2,14 @@ package environment_test
 
 import (
 	"context"
+	"testing"
+
 	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/keys"
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/api/test/assets"
 	"github.com/ovh/cds/sdk"
 	"github.com/stretchr/testify/require"
-	"testing"
 )
 
 func Test_DAOAllKeysAllEnvs(t *testing.T) {

@@ -4,8 +4,9 @@ import (
 	"context"
 
 	"github.com/go-gorp/gorp"
+	"github.com/ovh/cds/engine/api/database/gorpmapping"
+	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/gorpmapping"
 	"github.com/ovh/cds/sdk/log"
 )
 
@@ -18,7 +19,7 @@ func ReleaseAllFromHatchery(db gorp.SqlExecutor, hatcheryID int64) error {
 }
 
 // ReAttachAllToHatchery search for workers without hatchery an re-attach workers if the hatchery consumer match worker consumer's parent.
-func ReAttachAllToHatchery(ctx context.Context, db gorpmapping.SqlExecutorWithTx, hatchery sdk.Service) error {
+func ReAttachAllToHatchery(ctx context.Context, db gorpmapper.SqlExecutorWithTx, hatchery sdk.Service) error {
 	query := gorpmapping.NewQuery(`
     SELECT worker.* FROM worker
     JOIN auth_consumer ON auth_consumer.id = worker.auth_consumer_id

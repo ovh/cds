@@ -1,8 +1,9 @@
 package hooks
 
 import (
-	"github.com/ovh/cds/sdk"
 	"time"
+
+	"github.com/ovh/cds/sdk"
 )
 
 // GitlabEvent represents payload send by gitlab on a push event

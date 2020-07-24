@@ -6,7 +6,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/ovh/cds/sdk/log/hook"
 	"io/ioutil"
 	"net"
 	"net/http"
@@ -25,6 +24,7 @@ import (
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/ovh/cds/sdk/log"
+	"github.com/ovh/cds/sdk/log/hook"
 )
 
 func init() {

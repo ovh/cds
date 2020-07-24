@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/application"

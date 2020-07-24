@@ -10,6 +10,7 @@ This component is responsible and is the entry point to several µServices such 
 * Repositories
 * ElasticSearch
 * Migrate
+* CDN
 * [Hatcheries](https://ovh.github.io/cds/docs/components/hatchery/)
 
 The API component is the core component and is mandatory in every setups.

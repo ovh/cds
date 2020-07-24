@@ -6,20 +6,21 @@ import (
 
 	"github.com/go-gorp/gorp"
 
+	"github.com/ovh/cds/engine/api/database/gorpmapping"
+	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/gorpmapping"
 )
 
 type dbProject sdk.Project
 type dbProjectVariableAudit sdk.ProjectVariableAudit
 type dbProjectKey struct {
-	gorpmapping.SignedEntity
+	gorpmapper.SignedEntity
 	sdk.ProjectKey
 }
 
-func (e dbProjectKey) Canonical() gorpmapping.CanonicalForms {
+func (e dbProjectKey) Canonical() gorpmapper.CanonicalForms {
 	var _ = []interface{}{e.ProjectID, e.ID, e.Name}
-	return gorpmapping.CanonicalForms{
+	return gorpmapper.CanonicalForms{
 		"{{print .ProjectID}}{{print .ID}}{{.Name}}",
 	}
 }
@@ -27,7 +28,7 @@ func (e dbProjectKey) Canonical() gorpmapping.CanonicalForms {
 type dbLabel sdk.Label
 
 type dbProjectVariable struct {
-	gorpmapping.SignedEntity
+	gorpmapper.SignedEntity
 	ID          int64  `db:"id"`
 	ProjectID   int64  `db:"project_id"`
 	Name        string `db:"var_name"`
@@ -36,9 +37,9 @@ type dbProjectVariable struct {
 	Type        string `db:"var_type"`
 }
 
-func (e dbProjectVariable) Canonical() gorpmapping.CanonicalForms {
+func (e dbProjectVariable) Canonical() gorpmapper.CanonicalForms {
 	var _ = []interface{}{e.ProjectID, e.ID, e.Name, e.Type}
-	return gorpmapping.CanonicalForms{
+	return gorpmapper.CanonicalForms{
 		"{{print .ProjectID}}{{print .ID}}{{.Name}}{{.Type}}",
 	}
 }

@@ -6,8 +6,8 @@ import (
 	"github.com/go-gorp/gorp"
 	"github.com/lib/pq"
 
+	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/gorpmapping"
 	"github.com/ovh/cds/sdk/telemetry"
 )
 
@@ -93,7 +93,7 @@ func UpdateParameterInPipeline(db gorp.SqlExecutor, pipelineID int64, oldParamNa
 	// update parameter
 	query := `UPDATE pipeline_parameter SET value=$1, type=$2, description=$3, name=$4 WHERE pipeline_id=$5 AND name=$6`
 	if _, err := db.Exec(query, param.Value, string(param.Type), param.Description, param.Name, pipelineID, oldParamName); err != nil {
-		if errPG, ok := err.(*pq.Error); ok && errPG.Code == gorpmapping.ViolateUniqueKeyPGCode {
+		if errPG, ok := err.(*pq.Error); ok && errPG.Code == gorpmapper.ViolateUniqueKeyPGCode {
 			return sdk.NewErrorWithStack(err, sdk.ErrParameterExists)
 		}
 		return sdk.WithStack(err)

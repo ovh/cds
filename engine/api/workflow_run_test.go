@@ -28,8 +28,8 @@ import (
 	"github.com/ovh/cds/engine/api/test/assets"
 	"github.com/ovh/cds/engine/api/user"
 	"github.com/ovh/cds/engine/api/workflow"
+	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/gorpmapping"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -2516,7 +2516,7 @@ func Test_postWorkflowRunHandler_BadPayload(t *testing.T) {
 	assert.Equal(t, 400, rec.Code)
 }
 
-func initGetWorkflowNodeRunJobTest(t *testing.T, api *API, db gorpmapping.SqlExecutorWithTx) (*sdk.AuthentifiedUser, string, *sdk.Project, *sdk.Workflow, *sdk.WorkflowRun, *sdk.WorkflowNodeJobRun) {
+func initGetWorkflowNodeRunJobTest(t *testing.T, api *API, db gorpmapper.SqlExecutorWithTx) (*sdk.AuthentifiedUser, string, *sdk.Project, *sdk.Workflow, *sdk.WorkflowRun, *sdk.WorkflowNodeJobRun) {
 	u, pass := assets.InsertAdminUser(t, db)
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, api.Cache, key, key)

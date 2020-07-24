@@ -6,26 +6,27 @@ import (
 
 	"github.com/go-gorp/gorp"
 
+	"github.com/ovh/cds/engine/api/database/gorpmapping"
+	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/gorpmapping"
 )
 
 type dbEnvironmentVariableAudit sdk.EnvironmentVariableAudit
 
 type dbEnvironmentKey struct {
-	gorpmapping.SignedEntity
+	gorpmapper.SignedEntity
 	sdk.EnvironmentKey
 }
 
-func (e dbEnvironmentKey) Canonical() gorpmapping.CanonicalForms {
+func (e dbEnvironmentKey) Canonical() gorpmapper.CanonicalForms {
 	var _ = []interface{}{e.EnvironmentID, e.ID, e.Name}
-	return gorpmapping.CanonicalForms{
+	return gorpmapper.CanonicalForms{
 		"{{print .EnvironmentID}}{{print .ID}}{{.Name}}",
 	}
 }
 
 type dbEnvironmentVariable struct {
-	gorpmapping.SignedEntity
+	gorpmapper.SignedEntity
 	ID            int64  `db:"id"`
 	EnvironmentID int64  `db:"environment_id"`
 	Name          string `db:"name"`
@@ -34,9 +35,9 @@ type dbEnvironmentVariable struct {
 	Type          string `db:"type"`
 }
 
-func (e dbEnvironmentVariable) Canonical() gorpmapping.CanonicalForms {
+func (e dbEnvironmentVariable) Canonical() gorpmapper.CanonicalForms {
 	var _ = []interface{}{e.EnvironmentID, e.ID, e.Name, e.Type}
-	return gorpmapping.CanonicalForms{
+	return gorpmapper.CanonicalForms{
 		"{{print .EnvironmentID}}{{print .ID}}{{.Name}}{{.Type}}",
 	}
 }

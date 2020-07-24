@@ -17,9 +17,10 @@ import (
 	"github.com/ovh/cds/engine/api"
 	"github.com/ovh/cds/engine/api/authentication"
 	"github.com/ovh/cds/engine/api/authentication/builtin"
-	"github.com/ovh/cds/engine/api/database"
 	"github.com/ovh/cds/engine/cdn"
+	"github.com/ovh/cds/engine/database"
 	"github.com/ovh/cds/engine/elasticsearch"
+	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/engine/hatchery/kubernetes"
 	"github.com/ovh/cds/engine/hatchery/local"
 	"github.com/ovh/cds/engine/hatchery/marathon"
@@ -32,7 +33,6 @@ import (
 	"github.com/ovh/cds/engine/ui"
 	"github.com/ovh/cds/engine/vcs"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/gorpmapping"
 	"github.com/ovh/cds/sdk/jws"
 	"github.com/ovh/cds/sdk/namesgenerator"
 )
@@ -67,6 +67,7 @@ func configBootstrap(args []string) Configuration {
 			conf.API = &api.Configuration{}
 			conf.API.Name = "cds-api-" + namesgenerator.GetRandomNameCDS(0)
 			defaults.SetDefaults(conf.API)
+			conf.API.Database.Name = "cds"
 			conf.API.Services = append(conf.API.Services, sdk.ServiceConfiguration{
 				Name:       "sample-service",
 				URL:        "https://ovh.github.io",
@@ -85,6 +86,8 @@ func configBootstrap(args []string) Configuration {
 			conf.DatabaseMigrate = &migrateservice.Configuration{}
 			defaults.SetDefaults(conf.DatabaseMigrate)
 			conf.DatabaseMigrate.Name = "cds-migrate-" + namesgenerator.GetRandomNameCDS(0)
+			conf.DatabaseMigrate.ServiceAPI.DB.Name = "cds"
+			conf.DatabaseMigrate.ServiceCDN.DB.Name = "cdn"
 		case sdk.TypeHatchery + ":local":
 			conf.Hatchery.Local = &local.HatcheryConfiguration{}
 			defaults.SetDefaults(conf.Hatchery.Local)
@@ -146,6 +149,7 @@ func configBootstrap(args []string) Configuration {
 		case sdk.TypeCDN:
 			conf.CDN = &cdn.Configuration{}
 			defaults.SetDefaults(conf.CDN)
+			conf.CDN.Database.Name = "cdn"
 		case sdk.TypeElasticsearch:
 			conf.ElasticSearch = &elasticsearch.Configuration{}
 			defaults.SetDefaults(conf.ElasticSearch)
@@ -270,16 +274,32 @@ func configSetStartupData(conf *Configuration) (string, error) {
 		conf.API.Auth.RSAPrivateKey = string(apiPrivateKeyPEM)
 		conf.API.Secrets.Key = sdk.RandomString(32)
 
-		key, _ := keyloader.GenerateKey("hmac", gorpmapping.KeySignIdentifier, false, time.Now())
+		key, _ := keyloader.GenerateKey("hmac", gorpmapper.KeySignIdentifier, false, time.Now())
 		conf.API.Database.SignatureKey = database.RollingKeyConfig{Cipher: "hmac"}
 		conf.API.Database.SignatureKey.Keys = append(conf.API.Database.SignatureKey.Keys, database.KeyConfig{
 			Key:       key.Key,
 			Timestamp: key.Timestamp,
 		})
 
-		key, _ = keyloader.GenerateKey("xchacha20-poly1305", gorpmapping.KeyEcnryptionIdentifier, false, time.Now())
+		key, _ = keyloader.GenerateKey("xchacha20-poly1305", gorpmapper.KeyEcnryptionIdentifier, false, time.Now())
 		conf.API.Database.EncryptionKey = database.RollingKeyConfig{Cipher: "xchacha20-poly1305"}
 		conf.API.Database.EncryptionKey.Keys = append(conf.API.Database.EncryptionKey.Keys, database.KeyConfig{
+			Key:       key.Key,
+			Timestamp: key.Timestamp,
+		})
+	}
+
+	if conf.CDN != nil {
+		key, _ := keyloader.GenerateKey("hmac", gorpmapper.KeySignIdentifier, false, time.Now())
+		conf.CDN.Database.SignatureKey = database.RollingKeyConfig{Cipher: "hmac"}
+		conf.CDN.Database.SignatureKey.Keys = append(conf.CDN.Database.SignatureKey.Keys, database.KeyConfig{
+			Key:       key.Key,
+			Timestamp: key.Timestamp,
+		})
+
+		key, _ = keyloader.GenerateKey("xchacha20-poly1305", gorpmapper.KeyEcnryptionIdentifier, false, time.Now())
+		conf.CDN.Database.EncryptionKey = database.RollingKeyConfig{Cipher: "xchacha20-poly1305"}
+		conf.CDN.Database.EncryptionKey.Keys = append(conf.CDN.Database.EncryptionKey.Keys, database.KeyConfig{
 			Key:       key.Key,
 			Timestamp: key.Timestamp,
 		})

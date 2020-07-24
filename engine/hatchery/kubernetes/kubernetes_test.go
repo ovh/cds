@@ -3,15 +3,15 @@ package kubernetes
 import (
 	"context"
 	"encoding/json"
-	"github.com/stretchr/testify/assert"
-	"gopkg.in/h2non/gock.v1"
 	"io/ioutil"
-	v1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"net/http"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"gopkg.in/h2non/gock.v1"
+	v1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/hatchery"

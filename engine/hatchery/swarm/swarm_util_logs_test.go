@@ -4,7 +4,6 @@ import (
 	"context"
 	"crypto/rand"
 	"crypto/rsa"
-	"github.com/ovh/cds/sdk"
 	"net/http"
 	"strings"
 	"testing"
@@ -14,6 +13,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/h2non/gock.v1"
+
+	"github.com/ovh/cds/sdk"
 )
 
 var loggerCall = 0

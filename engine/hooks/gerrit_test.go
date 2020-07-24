@@ -2,9 +2,10 @@ package hooks
 
 import (
 	"encoding/json"
+	"testing"
+
 	"github.com/ovh/cds/sdk"
 	"github.com/stretchr/testify/assert"
-	"testing"
 )
 
 func TestBuildHookMessage(t *testing.T) {

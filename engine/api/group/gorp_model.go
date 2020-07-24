@@ -1,18 +1,19 @@
 package group
 
 import (
+	"github.com/ovh/cds/engine/api/database/gorpmapping"
+	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/gorpmapping"
 )
 
 type group struct { // group_authentified_user
 	sdk.Group
-	gorpmapping.SignedEntity
+	gorpmapper.SignedEntity
 }
 
-func (g group) Canonical() gorpmapping.CanonicalForms {
+func (g group) Canonical() gorpmapper.CanonicalForms {
 	_ = []interface{}{g.ID, g.Name} // Checks that fields exists at compilation
-	return []gorpmapping.CanonicalForm{
+	return []gorpmapper.CanonicalForm{
 		"{{print .ID}}{{.Name}}",
 	}
 }
@@ -23,12 +24,12 @@ type LinkGroupUser struct {
 	GroupID            int64  `db:"group_id"`
 	AuthentifiedUserID string `db:"authentified_user_id"`
 	Admin              bool   `db:"group_admin"`
-	gorpmapping.SignedEntity
+	gorpmapper.SignedEntity
 }
 
-func (c LinkGroupUser) Canonical() gorpmapping.CanonicalForms {
+func (c LinkGroupUser) Canonical() gorpmapper.CanonicalForms {
 	_ = []interface{}{c.ID, c.AuthentifiedUserID, c.GroupID, c.Admin} // Checks that fields exists at compilation
-	return []gorpmapping.CanonicalForm{
+	return []gorpmapper.CanonicalForm{
 		"{{print .ID}}{{.AuthentifiedUserID}}{{print .GroupID}}{{print .Admin}}",
 	}
 }
@@ -56,16 +57,16 @@ func (l LinksGroupUser) ToGroupIDs() []int64 {
 
 // LinkGroupProject struct for database entity of project_group table.
 type LinkGroupProject struct {
-	gorpmapping.SignedEntity
+	gorpmapper.SignedEntity
 	ID        int64 `db:"id"`
 	GroupID   int64 `db:"group_id"`
 	ProjectID int64 `db:"project_id"`
 	Role      int   `db:"role"`
 }
 
-func (c LinkGroupProject) Canonical() gorpmapping.CanonicalForms {
+func (c LinkGroupProject) Canonical() gorpmapper.CanonicalForms {
 	_ = []interface{}{c.ID, c.ProjectID, c.GroupID, c.Role} // Checks that fields exists at compilation
-	return []gorpmapping.CanonicalForm{
+	return []gorpmapper.CanonicalForm{
 		"{{print .ID}}{{print .ProjectID}}{{print .GroupID}}{{print .Role}}",
 	}
 }

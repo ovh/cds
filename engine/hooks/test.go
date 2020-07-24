@@ -5,6 +5,7 @@ import (
 
 	"github.com/golang/mock/gomock"
 	"github.com/ovh/cds/engine/api/test"
+	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient/mock_cdsclient"
 
 	"github.com/ovh/cds/engine/api/cache"
@@ -12,7 +13,7 @@ import (
 
 func setupTestHookService(t *testing.T) (Service, func()) {
 	s := Service{}
-	cfg := test.LoadTestingConf(t)
+	cfg := test.LoadTestingConf(t, sdk.TypeAPI)
 	redisHost := cfg["redisHost"]
 	redisPassword := cfg["redisPassword"]
 

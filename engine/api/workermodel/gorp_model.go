@@ -1,8 +1,9 @@
 package workermodel
 
 import (
+	"github.com/ovh/cds/engine/api/database/gorpmapping"
+	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/gorpmapping"
 )
 
 func init() {
@@ -13,25 +14,25 @@ func init() {
 }
 
 type workerModel struct {
-	gorpmapping.SignedEntity
+	gorpmapper.SignedEntity
 	sdk.Model
 }
 
 type workerModelSecret struct {
-	gorpmapping.SignedEntity
+	gorpmapper.SignedEntity
 	sdk.WorkerModelSecret
 }
 
-func (w workerModel) Canonical() gorpmapping.CanonicalForms {
+func (w workerModel) Canonical() gorpmapper.CanonicalForms {
 	var _ = []interface{}{w.ID, w.Name}
-	return gorpmapping.CanonicalForms{
+	return gorpmapper.CanonicalForms{
 		"{{.ID}}{{.Name}}",
 	}
 }
 
-func (w workerModelSecret) Canonical() gorpmapping.CanonicalForms {
+func (w workerModelSecret) Canonical() gorpmapper.CanonicalForms {
 	var _ = []interface{}{w.ID, w.WorkerModelID, w.Name}
-	return gorpmapping.CanonicalForms{
+	return gorpmapper.CanonicalForms{
 		"{{.ID}}{{.WorkerModelID}}{{.Name}}",
 	}
 }

@@ -23,9 +23,9 @@ func VaultNewSecret(token, addr string) (*VaultSecret, error) {
 	}
 
 	client.SetToken(token)
-  if err := client.SetAddress(addr); err != nil {
-    return nil, sdk.WithStack(err)
-  }
+	if err := client.SetAddress(addr); err != nil {
+		return nil, sdk.WithStack(err)
+	}
 	return &VaultSecret{
 		Client: client,
 		Token:  token,

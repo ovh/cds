@@ -1,18 +1,18 @@
 package swarm
 
 import (
-	"github.com/ovh/cds/sdk"
 	"testing"
 	"time"
 
-	"github.com/ovh/cds/engine/hatchery"
-	"github.com/ovh/cds/sdk/cdsclient"
+	docker "github.com/docker/docker/client"
 	"github.com/stretchr/testify/require"
+	"golang.org/x/net/context"
 	"gopkg.in/h2non/gock.v1"
 
-	docker "github.com/docker/docker/client"
+	"github.com/ovh/cds/engine/hatchery"
+	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/ovh/cds/sdk/log"
-	"golang.org/x/net/context"
 )
 
 func init() {

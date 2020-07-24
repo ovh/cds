@@ -3,8 +3,9 @@ package internal
 import (
 	"context"
 	"fmt"
-	"github.com/gorilla/mux"
 	"net/http"
+
+	"github.com/gorilla/mux"
 
 	"github.com/ovh/cds/sdk/log"
 )

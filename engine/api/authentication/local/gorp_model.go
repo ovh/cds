@@ -1,18 +1,19 @@
 package local
 
 import (
+	"github.com/ovh/cds/engine/api/database/gorpmapping"
+	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/gorpmapping"
 )
 
 type userRegistration struct {
 	sdk.UserRegistration
-	gorpmapping.SignedEntity
+	gorpmapper.SignedEntity
 }
 
-func (u userRegistration) Canonical() gorpmapping.CanonicalForms {
+func (u userRegistration) Canonical() gorpmapper.CanonicalForms {
 	_ = []interface{}{u.ID, u.Username, u.Fullname, u.Email, u.Hash} // Checks that fields exists at compilation
-	return []gorpmapping.CanonicalForm{
+	return []gorpmapper.CanonicalForm{
 		"{{.ID}}{{.Username}}{{.Fullname}}{{.Email}}{{.Hash}}",
 	}
 }

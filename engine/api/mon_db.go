@@ -4,7 +4,7 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/rubenv/sql-migrate"
+	migrate "github.com/rubenv/sql-migrate"
 
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
