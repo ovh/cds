@@ -213,49 +213,38 @@ func (api *API) xsrfMiddleware(ctx context.Context, w http.ResponseWriter, req *
 	ctx, end := telemetry.Span(ctx, "router.xsrfMiddleware")
 	defer end()
 
-	jwtValue := ctx.Value(contextJWT)
-	if jwtValue == nil {
+	sessionValue := ctx.Value(contextSession)
+	if sessionValue == nil {
 		return ctx, sdk.WithStack(sdk.ErrUnauthorized)
 	}
 
-	jwt, ok := jwtValue.(*jwt.Token)
+	session, ok := sessionValue.(*sdk.AuthSession)
 	if !ok {
 		return ctx, sdk.WithStack(sdk.ErrUnauthorized)
 	}
 
-	claims := jwt.Claims.(*sdk.AuthSessionJWTClaims)
-	sessionID := claims.StandardClaims.Id
-
 	xsrfToken := req.Header.Get(xsrfHeaderName)
-	existingXSRFToken, existXSRFTokenInCache := authentication.GetSessionXSRFToken(api.Cache, sessionID)
+	existingXSRFToken, existXSRFTokenInCache := authentication.GetSessionXSRFToken(api.Cache, session.ID)
 
 	// If it's not a read request we want to check the xsrf token then generate a new one
-	// else if its a read request we want to reuse a cached XSRF token or generate one
+	// else if its a read request we want to reuse a cached XSRF token or generate one if not in cache or nothing given by the client
 	if rc.PermissionLevel > sdk.PermissionRead {
 		if !existXSRFTokenInCache || xsrfToken != existingXSRFToken {
 			// We want to return a forbidden to allow the user to retry with a new token.
 			return ctx, sdk.WithStack(sdk.ErrForbidden)
 		}
-
-		newXSRFToken, err := authentication.NewSessionXSRFToken(api.Cache, sessionID)
-		if err != nil {
-			return ctx, err
-		}
-		// Set a cookie with the jwt token
-		api.SetCookie(w, xsrfCookieName, newXSRFToken,
-			time.Now().Add(time.Duration(authentication.XSRFTokenDuration)*time.Second))
 	} else {
-		if !existXSRFTokenInCache {
+		if !existXSRFTokenInCache || xsrfToken == "" {
+			sessionSecondsBeforeExpiration := int(session.ExpireAt.Sub(time.Now()).Seconds())
 			var err error
-			existingXSRFToken, err = authentication.NewSessionXSRFToken(api.Cache, sessionID)
+			existingXSRFToken, err = authentication.NewSessionXSRFToken(api.Cache, session.ID, sessionSecondsBeforeExpiration)
 			if err != nil {
 				return ctx, err
 			}
 		}
 
 		// Set a cookie with the jwt token
-		api.SetCookie(w, xsrfCookieName, existingXSRFToken,
-			time.Now().Add(time.Duration(authentication.XSRFTokenDuration)*time.Second))
+		api.SetCookieSession(w, xsrfCookieName, existingXSRFToken)
 	}
 
 	return ctx, nil
