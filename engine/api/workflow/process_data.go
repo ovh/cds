@@ -19,6 +19,7 @@ type nodeRunContext struct {
 	Environment        sdk.Environment
 	ProjectIntegration sdk.ProjectIntegration
 	NodeGroups         []sdk.GroupPermission
+	IsRoot             bool
 }
 
 func processWorkflowDataRun(ctx context.Context, db gorpmapping.SqlExecutorWithTx, store cache.Store, proj sdk.Project, wr *sdk.WorkflowRun, hookEvent *sdk.WorkflowNodeRunHookEvent, manual *sdk.WorkflowNodeRunManual, startingFromNode *int64) (*ProcessorReport, bool, error) {

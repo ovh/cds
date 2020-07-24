@@ -150,6 +150,7 @@ func processNode(ctx context.Context, db gorpmapping.SqlExecutorWithTx, store ca
 	if n.Context.ProjectIntegrationID != 0 {
 		runContext.ProjectIntegration = wr.Workflow.ProjectIntegrations[n.Context.ProjectIntegrationID]
 	}
+	runContext.IsRoot = n.ID == wr.Workflow.WorkflowData.Node.ID
 
 	// NODE CONTEXT BUILD PARAMETER
 	computeNodeContextBuildParameters(ctx, proj, wr, nr, n, runContext)

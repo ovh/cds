@@ -372,7 +372,7 @@ func (api *API) postWorkflowJobResultHandler() service.Handler {
 		_, next := telemetry.Span(ctx, "project.LoadProjectByNodeJobRunID")
 
 		// Need Key and variable for process parameters
-		proj, err := project.LoadProjectByNodeJobRunID(ctx, dbWithCtx, api.Cache, id, project.LoadOptions.WithVariables, project.LoadOptions.WithKeys)
+		proj, err := project.LoadProjectByNodeJobRunID(ctx, dbWithCtx, api.Cache, id)
 		next()
 		if err != nil {
 			if sdk.ErrorIs(err, sdk.ErrNoProject) {
@@ -388,12 +388,11 @@ func (api *API) postWorkflowJobResultHandler() service.Handler {
 			}
 			return sdk.WrapError(err, "cannot load project from job %d", id)
 		}
+		projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
 
 		telemetry.Current(ctx,
-			telemetry.Tag(telemetry.TagProjectKey, proj.Key),
+			telemetry.Tag(telemetry.TagProjectKey, projIdent.Key),
 		)
-
-		projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
 
 		report, err := postJobResult(customCtx, api.mustDBWithCtx, api.Cache, proj, wk, &res)
 		if err != nil {

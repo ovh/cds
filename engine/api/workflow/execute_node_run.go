@@ -742,7 +742,7 @@ func NodeBuildParametersFromWorkflow(proj sdk.Project, wf *sdk.Workflow, refNode
 			}
 		}
 		runContext.NodeGroups = refNode.Groups
-
+		runContext.IsRoot = refNode.ID == wf.WorkflowData.Node.ID
 		var err error
 		res, err = getBuildParameterFromNodeContext(proj, wf, runContext, refNode.Context.DefaultPipelineParameters, refNode.Context.DefaultPayload, nil)
 		if err != nil {

@@ -21,7 +21,7 @@ func (api *API) getWorkflowTriggerConditionHandler() service.Handler {
 		id := FormInt(r, "nodeID")
 
 		// Need project Variable/Key/Integration for NodeBuildParametersFromWorkflow
-		proj, err := project.Load(ctx, api.mustDB(), key, project.LoadOptions.WithVariables, project.LoadOptions.WithIntegrations, project.LoadOptions.WithKeys)
+		proj, err := project.Load(ctx, api.mustDB(), key, project.LoadOptions.WithVariables, project.LoadOptions.WithKeys)
 		if err != nil {
 			return sdk.WrapError(err, "unable to load project")
 		}

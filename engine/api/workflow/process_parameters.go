@@ -37,15 +37,16 @@ func getNodeJobRunParameters(j sdk.Job, run *sdk.WorkflowNodeRun, stage *sdk.Sta
 
 // getBuildParameterFromNodeContext returns the parameters compute from  node context (project, application,  pipeline, pyaload)
 func getBuildParameterFromNodeContext(proj sdk.Project, w *sdk.Workflow, runContext nodeRunContext, pipelineParameters []sdk.Parameter, payload interface{}, hookEvent *sdk.WorkflowNodeRunHookEvent) ([]sdk.Parameter, error) {
-	tmpProj := sdk.ParametersFromProjectVariables(proj)
-	vars := make(map[string]string, len(tmpProj))
-	for k, v := range tmpProj {
-		vars[k] = v
-	}
-
-	tmpProj = sdk.ParametersFromProjectKeys(proj)
-	for k, v := range tmpProj {
-		vars[k] = v
+	vars := make(map[string]string, 0)
+	if runContext.IsRoot {
+		tmpProj := sdk.ParametersFromProjectVariables(proj)
+		for k, v := range tmpProj {
+			vars[k] = v
+		}
+		tmpProj = sdk.ParametersFromProjectKeys(proj)
+		for k, v := range tmpProj {
+			vars[k] = v
+		}
 	}
 
 	// COMPUTE APPLICATION VARIABLE
@@ -174,13 +175,16 @@ func getParentParameters(w *sdk.WorkflowRun, nodeRuns []*sdk.WorkflowNodeRun) ([
 		for _, param := range parentNodeRun.BuildParameters {
 			prefix := "workflow." + nodeName + "."
 			if param.Name == "" || param.Name == "cds.semver" || param.Name == "cds.release.version" ||
-				strings.HasPrefix(param.Name, "cds.proj") ||
 				strings.HasPrefix(param.Name, "cds.version") || strings.HasPrefix(param.Name, "cds.run.number") ||
 				strings.HasPrefix(param.Name, "cds.workflow") || strings.HasPrefix(param.Name, "job.requirement") {
 				continue
 			}
 
 			if strings.HasPrefix(param.Name, "workflow.") {
+				parentParams = append(parentParams, param)
+				continue
+			}
+			if strings.HasPrefix(param.Name, "cds.proj.") {
 				parentParams = append(parentParams, param)
 				continue
 			}

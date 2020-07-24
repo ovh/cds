@@ -514,12 +514,7 @@ func updateParentWorkflowRun(ctx context.Context, dbFunc func() *gorp.DbMap, sto
 	}
 
 	parentProj, err := project.Load(context.Background(),
-		dbFunc(), run.RootRun().HookEvent.ParentWorkflow.Key,
-		project.LoadOptions.WithVariables,
-		project.LoadOptions.WithIntegrations,
-		project.LoadOptions.WithApplicationVariables,
-		project.LoadOptions.WithApplicationWithDeploymentStrategies,
-	)
+		dbFunc(), run.RootRun().HookEvent.ParentWorkflow.Key)
 	if err != nil {
 		return nil, sdk.WrapError(err, "cannot load project")
 	}
@@ -688,7 +683,7 @@ func (api *API) stopWorkflowNodeRunHandler() service.Handler {
 			return err
 		}
 
-		p, err := project.Load(ctx, api.mustDB(), key, project.LoadOptions.WithVariables, project.LoadOptions.WithKeys, project.LoadOptions.WithIntegrations)
+		p, err := project.Load(ctx, api.mustDB(), key)
 		if err != nil {
 			return sdk.WrapError(err, "cannot load project")
 		}
@@ -955,7 +950,6 @@ func (api *API) initWorkflowRun(ctx context.Context, projKey string, wf *sdk.Wor
 	p, err := project.Load(ctx, api.mustDB(), projKey,
 		project.LoadOptions.WithVariables,
 		project.LoadOptions.WithKeys,
-		project.LoadOptions.WithIntegrations,
 	)
 	projIdent := sdk.ProjectIdentifiers{ID: p.ID, Key: p.Key}
 	if err != nil {
@@ -1008,7 +1002,7 @@ func (api *API) initWorkflowRun(ctx context.Context, projKey string, wf *sdk.Wor
 			}
 			projPushData := sdk.ProjectForWorkflowPush{
 				ProjectGroups: p1.ProjectGroups,
-				Integrations: p1.Integrations,
+				Integrations:  p1.Integrations,
 			}
 
 			// Get workflow from repository
