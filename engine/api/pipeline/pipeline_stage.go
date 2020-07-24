@@ -179,7 +179,7 @@ func LoadPipelineStage(ctx context.Context, db gorp.SqlExecutor, p *sdk.Pipeline
 			stepsIDs = append(stepsIDs, mapActionsStages[id][index].Action.ID)
 		}
 	}
-	as, err := action.LoadByIDs(ctx, db, stepsIDs,
+	as, err := action.LoadAllByIDs(ctx, db, stepsIDs,
 		action.LoadOptions.WithParameters,
 		action.LoadOptions.WithRequirements,
 		action.LoadOptions.WithChildren,
