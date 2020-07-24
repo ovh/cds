@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, Input, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, Input, OnDestroy, OnInit } from '@angular/core';
 import { Store } from '@ngxs/store';
 import { PipelineStatus } from 'app/model/pipeline.model';
 import { Project } from 'app/model/project.model';
@@ -15,7 +15,7 @@ import { ProjectState } from 'app/store/project.state';
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 @AutoUnsubscribe()
-export class WorkflowWNodeOutGoingHookComponent implements OnInit {
+export class WorkflowWNodeOutGoingHookComponent implements OnInit, OnDestroy {
     @Input() node: WNode;
     @Input() workflow: Workflow;
     @Input() noderun: WorkflowNodeRun;
@@ -29,6 +29,8 @@ export class WorkflowWNodeOutGoingHookComponent implements OnInit {
     constructor(private _store: Store) {
         this.project = this._store.selectSnapshot(ProjectState.projectSnapshot);
     }
+
+    ngOnDestroy(): void {} // Should be set to use @AutoUnsubscribe with AOT
 
     ngOnInit(): void {
         this.model = this.workflow.outgoing_hook_models[this.node.outgoing_hook.hook_model_id] || this.node.outgoing_hook.model;

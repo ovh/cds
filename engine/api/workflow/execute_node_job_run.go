@@ -9,8 +9,8 @@ import (
 
 	"github.com/go-gorp/gorp"
 	"github.com/ovh/cds/engine/api/cache"
+	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/gorpmapping"
 	"github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk/telemetry"
 )
@@ -116,7 +116,7 @@ func (r *ProcessorReport) Errors() []error {
 }
 
 // UpdateNodeJobRunStatus Update status of an workflow_node_run_job.
-func UpdateNodeJobRunStatus(ctx context.Context, db gorpmapping.SqlExecutorWithTx, store cache.Store, proj sdk.Project, job *sdk.WorkflowNodeJobRun, status string) (*ProcessorReport, error) {
+func UpdateNodeJobRunStatus(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store cache.Store, proj sdk.Project, job *sdk.WorkflowNodeJobRun, status string) (*ProcessorReport, error) {
 	var end func()
 	ctx, end = telemetry.Span(ctx, "workflow.UpdateNodeJobRunStatus",
 		telemetry.Tag(telemetry.TagWorkflowNodeJobRun, job.ID),
@@ -244,7 +244,7 @@ func PrepareSpawnInfos(infos []sdk.SpawnInfo) []sdk.SpawnInfo {
 }
 
 // TakeNodeJobRun Take an a job run for update
-func TakeNodeJobRun(ctx context.Context, db gorpmapping.SqlExecutorWithTx, store cache.Store, proj sdk.Project, jobID int64,
+func TakeNodeJobRun(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store cache.Store, proj sdk.Project, jobID int64,
 	workerModel, workerName, workerID string, infos []sdk.SpawnInfo, hatcheryName string) (*sdk.WorkflowNodeJobRun, *ProcessorReport, error) {
 	var end func()
 	ctx, end = telemetry.Span(ctx, "workflow.TakeNodeJobRun")
@@ -386,7 +386,6 @@ func FreeNodeJobRun(ctx context.Context, store cache.Store, id int64) error {
 	return sdk.WrapError(sdk.ErrJobNotBooked, "BookNodeJobRun> job %d already released", id)
 }
 
-// AppendLog adds a build log.
 func AppendLog(db gorp.SqlExecutor, jobID, nodeRunID, stepOrder int64, val string, maxLogSize int64) error {
 	// check if log exists without loading data but with log size
 	exists, size, err := ExistsStepLog(db, jobID, stepOrder)
@@ -415,12 +414,7 @@ func AppendLog(db gorp.SqlExecutor, jobID, nodeRunID, stepOrder int64, val strin
 }
 
 //AddServiceLog adds a service log
-func AddServiceLog(db gorp.SqlExecutor, job *sdk.WorkflowNodeJobRun, logs *sdk.ServiceLog, maxLogSize int64) error {
-	if job != nil {
-		logs.WorkflowNodeJobRunID = job.ID
-		logs.WorkflowNodeRunID = job.WorkflowNodeRunID
-	}
-
+func AddServiceLog(db gorp.SqlExecutor, logs *sdk.ServiceLog, maxLogSize int64) error {
 	// check if log exists without loading data but with log size
 	exists, size, err := ExistsServiceLog(db, logs.WorkflowNodeJobRunID, logs.ServiceRequirementName)
 	if err != nil {

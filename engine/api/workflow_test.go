@@ -647,11 +647,11 @@ func Test_putWorkflowHandler(t *testing.T) {
 	repoHookModel, err := workflow.LoadHookModelByName(db, sdk.RepositoryWebHookModel.Name)
 	assert.NoError(t, err)
 
-	mockVCSservice, _ := assets.InsertService(t, db, "Test_putWorkflowHandler_TypeVCS", services.TypeVCS)
+	mockVCSservice, _ := assets.InsertService(t, db, "Test_putWorkflowHandler_TypeVCS", sdk.TypeVCS)
 	defer func() {
 		_ = services.Delete(db, mockVCSservice)
 	}()
-	mockHookservice, _ := assets.InsertService(t, db, "Test_putWorkflowHandler_TypeHooks", services.TypeHooks)
+	mockHookservice, _ := assets.InsertService(t, db, "Test_putWorkflowHandler_TypeHooks", sdk.TypeHooks)
 	defer func() {
 		_ = services.Delete(db, mockHookservice)
 	}()
@@ -1521,7 +1521,7 @@ func TestBenchmarkGetWorkflowsWithAPI(t *testing.T) {
 func Test_putWorkflowShouldNotCallHOOKSIfHookDoesNotChange(t *testing.T) {
 	api, db, router := newTestAPI(t)
 
-	_, _ = assets.InsertService(t, db, t.Name()+"_HOOKS", services.TypeHooks)
+	_, _ = assets.InsertService(t, db, t.Name()+"_HOOKS", sdk.TypeHooks)
 
 	u, pass := assets.InsertAdminUser(t, db)
 	key := sdk.RandomString(10)
@@ -1630,7 +1630,7 @@ func Test_putWorkflowShouldNotCallHOOKSIfHookDoesNotChange(t *testing.T) {
 func Test_putWorkflowWithDuplicateHooksShouldRaiseAnError(t *testing.T) {
 	api, db, router := newTestAPI(t)
 
-	_, _ = assets.InsertService(t, db, t.Name()+"_HOOKS", services.TypeHooks)
+	_, _ = assets.InsertService(t, db, t.Name()+"_HOOKS", sdk.TypeHooks)
 
 	u, pass := assets.InsertAdminUser(t, db)
 	key := sdk.RandomString(10)

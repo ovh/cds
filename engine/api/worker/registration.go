@@ -11,8 +11,8 @@ import (
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/workermodel"
+	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/gorpmapping"
 	"github.com/ovh/cds/sdk/hatchery"
 	"github.com/ovh/cds/sdk/log"
 )
@@ -58,7 +58,7 @@ type TakeForm struct {
 }
 
 // RegisterWorker  Register new worker
-func RegisterWorker(ctx context.Context, db gorpmapping.SqlExecutorWithTx, store cache.Store, spawnArgs hatchery.SpawnArguments, hatcheryService sdk.Service, consumer *sdk.AuthConsumer, registrationForm sdk.WorkerRegistrationForm) (*sdk.Worker, error) {
+func RegisterWorker(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store cache.Store, spawnArgs hatchery.SpawnArguments, hatcheryService sdk.Service, consumer *sdk.AuthConsumer, registrationForm sdk.WorkerRegistrationForm) (*sdk.Worker, error) {
 	if spawnArgs.WorkerName == "" {
 		return nil, sdk.NewErrorFrom(sdk.ErrWrongRequest, "unauthorized to register a worker without a name")
 	}

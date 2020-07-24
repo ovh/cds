@@ -30,7 +30,7 @@ func Init(ctx context.Context, DBFunc func() *gorp.DbMap) {
 			}
 		case e := <-metricsChan:
 			db := DBFunc()
-			esServices, errS := services.LoadAllByType(ctx, db, services.TypeElasticsearch)
+			esServices, errS := services.LoadAllByType(ctx, db, sdk.TypeElasticsearch)
 			if errS != nil {
 				log.Error(ctx, "metrics.pushInElasticSearch> Unable to get elasticsearch service: %v", errS)
 				continue
@@ -57,7 +57,7 @@ func GetMetrics(ctx context.Context, db gorp.SqlExecutor, key string, appID int6
 		Key:           metricName,
 	}
 
-	srvs, err := services.LoadAllByType(ctx, db, services.TypeElasticsearch)
+	srvs, err := services.LoadAllByType(ctx, db, sdk.TypeElasticsearch)
 	if err != nil {
 		return nil, sdk.WrapError(err, "Unable to get elasticsearch service")
 	}

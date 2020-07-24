@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnInit, ViewChild } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
 import { ProjectIntegration } from 'app/model/integration.model';
@@ -18,7 +18,7 @@ import { finalize, first } from 'rxjs/operators';
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 @AutoUnsubscribe()
-export class ProjectIntegrationListComponent extends Table<ProjectIntegration> implements OnInit {
+export class ProjectIntegrationListComponent extends Table<ProjectIntegration> implements OnInit, OnDestroy {
     @ViewChild('codeMirror') codemirror: any;
 
     @Input() project: Project;
@@ -42,6 +42,8 @@ export class ProjectIntegrationListComponent extends Table<ProjectIntegration> i
             autoRefresh: true
         };
     }
+
+    ngOnDestroy(): void {} // Should be set to use @AutoUnsubscribe with AOT
 
     ngOnInit(): void {
         this.themeSubscription = this._theme.get().subscribe(t => {

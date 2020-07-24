@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnInit, ViewChild } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { Select } from '@ngxs/store';
 import { Project } from 'app/model/project.model';
 import { HookStatus, TaskExecution, WorkflowHookTask } from 'app/model/workflow.hook.model';
@@ -18,7 +18,7 @@ import { Subscription } from 'rxjs/Subscription';
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 @AutoUnsubscribe()
-export class WorkflowSidebarHookComponent implements OnInit {
+export class WorkflowSidebarHookComponent implements OnInit, OnDestroy {
 
     @Input() project: Project;
     @Input() workflow: Workflow;
@@ -40,6 +40,8 @@ export class WorkflowSidebarHookComponent implements OnInit {
         private _hookService: HookService,
         private _cd: ChangeDetectorRef
     ) {}
+
+    ngOnDestroy(): void {} // Should be set to use @AutoUnsubscribe with AOT
 
     ngOnInit(): void {
         this.subHook = this.hooks$.subscribe((h: WNodeHook) => {

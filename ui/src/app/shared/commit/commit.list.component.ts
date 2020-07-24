@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnDestroy, OnInit } from '@angular/core';
 import { Select } from '@ngxs/store';
 import { Commit } from 'app/model/repositories.model';
 import { WorkflowNodeRun } from 'app/model/workflow.run.model';
@@ -14,7 +14,7 @@ import { Column, ColumnType } from '../table/data-table.component';
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 @AutoUnsubscribe()
-export class CommitListComponent implements OnInit {
+export class CommitListComponent implements OnInit, OnDestroy {
 
     @Select(WorkflowState.getSelectedNodeRun()) nodeRun$: Observable<WorkflowNodeRun>;
     nodeRunSubs: Subscription;
@@ -62,6 +62,8 @@ export class CommitListComponent implements OnInit {
             },
         ];
     }
+
+    ngOnDestroy(): void {} // Should be set to use @AutoUnsubscribe with AOT
 
     ngOnInit(): void {
         // if commits are provided by input, do not look at the noderun

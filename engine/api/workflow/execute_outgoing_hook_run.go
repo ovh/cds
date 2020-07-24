@@ -8,14 +8,14 @@ import (
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/cache"
+	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/gorpmapping"
 	"github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk/telemetry"
 )
 
 // UpdateOutgoingHookRunStatus updates the status and callback of a outgoing hook run, and then it reprocess the whole workflow
-func UpdateOutgoingHookRunStatus(ctx context.Context, db gorpmapping.SqlExecutorWithTx, store cache.Store, proj sdk.Project, wr *sdk.WorkflowRun, hookRunID string, callback sdk.WorkflowNodeOutgoingHookRunCallback) (*ProcessorReport, error) {
+func UpdateOutgoingHookRunStatus(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store cache.Store, proj sdk.Project, wr *sdk.WorkflowRun, hookRunID string, callback sdk.WorkflowNodeOutgoingHookRunCallback) (*ProcessorReport, error) {
 	ctx, end := telemetry.Span(ctx, "workflow.UpdateOutgoingHookRunStatus")
 	defer end()
 

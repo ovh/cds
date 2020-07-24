@@ -4,6 +4,7 @@ import {
     Component,
     EventEmitter,
     Input,
+    OnDestroy,
     OnInit,
     Output
 } from '@angular/core';
@@ -31,7 +32,7 @@ import { Subscription } from 'rxjs/Subscription';
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 @AutoUnsubscribe()
-export class WorkflowRunSummaryComponent implements OnInit {
+export class WorkflowRunSummaryComponent implements OnInit, OnDestroy {
     @Input('direction')
     set direction(val) {
         this._direction = val;
@@ -73,6 +74,8 @@ export class WorkflowRunSummaryComponent implements OnInit {
         private router: Router,
         private _cd: ChangeDetectorRef
     ) {}
+
+    ngOnDestroy(): void {} // Should be set to use @AutoUnsubscribe with AOT
 
     ngOnInit(): void {
         this.subWorkflowRun = this.workflowRun$.subscribe(wr => {

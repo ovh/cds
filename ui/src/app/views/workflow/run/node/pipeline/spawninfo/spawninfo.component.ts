@@ -4,6 +4,7 @@ import {
     Component,
     EventEmitter,
     Input, NgZone,
+    OnDestroy,
     OnInit,
     Output,
     ViewChild
@@ -28,7 +29,7 @@ import { WorkflowRunJobVariableComponent } from '../variables/job.variables.comp
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 @AutoUnsubscribe()
-export class WorkflowRunJobSpawnInfoComponent implements OnInit {
+export class WorkflowRunJobSpawnInfoComponent implements OnInit, OnDestroy {
 
     @Input('displayServicesLogs')
     set displayServicesLogs(data: boolean) {
@@ -70,6 +71,9 @@ export class WorkflowRunJobSpawnInfoComponent implements OnInit {
     ) {
         this.zone = new NgZone({ enableLongStackTrace: false });
     }
+
+    ngOnDestroy(): void {} // Should be set to use @AutoUnsubscribe with AOT
+
     ngOnInit(): void {
         this.nodeJobRunSubs = this.nodeJobRun$.subscribe(njr => {
             if (!njr) {

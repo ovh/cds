@@ -5,11 +5,19 @@
 version: '3'
 
 services:
-  cds-db:
+  cds-db-api:
     image: postgres:9.6.2
     environment:
       POSTGRES_PASSWORD: cds
       POSTGRES_USER: cds
+      POSTGRES_DB: cds
+
+  cds-db-cdn:
+    image: postgres:9.6.2
+    environment:
+      POSTGRES_PASSWORD: cds
+      POSTGRES_USER: cds
+      POSTGRES_DB: cdn
 
   cds-cache:
     image: redis:alpine
@@ -31,9 +39,13 @@ services:
 
   cds-migrate:
     image: ${CDS_DOCKER_IMAGE:-ovhcom/cds-engine:latest}
-    command: /app/cds-engine-linux-amd64 database upgrade --db-host cds-db --db-user cds --db-password cds --db-name cds --db-sslmode disable  --migrate-dir /app/sql
+    command: >
+        sh -c "
+        /app/cds-engine-linux-amd64 database upgrade --db-host cds-db-api --db-user cds --db-password cds --db-name cds --db-sslmode disable --migrate-dir /app/sql/api;
+        /app/cds-engine-linux-amd64 database upgrade --db-host cds-db-cdn --db-user cds --db-password cds --db-name cdn --db-sslmode disable --migrate-dir /app/sql/cdn;"
     links:
-       - cds-db
+       - cds-db-api
+       - cds-db-cdn
 
   cds-prepare:
     image: ${CDS_DOCKER_IMAGE:-ovhcom/cds-engine:latest}
@@ -47,7 +59,7 @@ services:
             api.cache.redis.host=cds-cache:6379 \
             api.cache.redis.password=cds \
             api.database.connectTimeout=10 \
-            api.database.host=cds-db \
+            api.database.host=cds-db-api \
             api.database.name=cds \
             api.database.user=cds \
             api.database.password=cds \
@@ -59,6 +71,9 @@ services:
             api.smtp.disable=false \
             api.smtp.port=2023 \
             api.smtp.host=smtpmocksrv \
+            cdn.publicTCP=cds-cdn:8090 \
+            cdn.api.http.url=http://cds-api:8081 \
+            cdn.url=http://cds-cdn:8089 \
             hatchery.local.commonConfiguration.url=http://cds-hatchery-local:8086 \
             hatchery.local.commonConfiguration.api.http.url=http://cds-api:8081 \
             hatchery.local.basedir=/app/hatchery-local \
@@ -113,7 +128,7 @@ services:
     ports:
       - "8081:8081"
     links:
-       - cds-db
+       - cds-db-api
        - cds-cache
     healthcheck:
       test: ["CMD", "curl", "-f", "http://127.0.0.1:8081/mon/version"]
@@ -145,6 +160,20 @@ services:
 
     healthcheck:
       test: ["CMD", "curl", "-f", "http://127.0.0.1:8086/mon/version"]
+      interval: 30s
+      timeout: 10s
+      retries: 6
+
+  cds-cdn:
+    image: ${CDS_DOCKER_IMAGE:-ovhcom/cds-engine:latest}
+    command: sh -c "/app/cds-engine-linux-amd64 start cdn --config /app/conf/conf.toml"
+    volumes:
+      - cds-conf-volume:/app/conf
+    ports:
+      - "8089:8089"
+      - "8090:8090"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://127.0.0.1:8089/mon/version"]
       interval: 30s
       timeout: 10s
       retries: 6

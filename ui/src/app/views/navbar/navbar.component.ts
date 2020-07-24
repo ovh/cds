@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
 import { FormControl } from '@angular/forms';
 import { NavigationEnd, Router } from '@angular/router';
 import { Store } from '@ngxs/store';
@@ -30,7 +30,7 @@ import { filter } from 'rxjs/operators';
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 @AutoUnsubscribe()
-export class NavbarComponent implements OnInit {
+export class NavbarComponent implements OnInit, OnDestroy {
     // List of projects in the nav bar
     listFavs: Array<NavbarProjectData> = [];
     navRecentProjects: List<Project>;
@@ -98,6 +98,8 @@ export class NavbarComponent implements OnInit {
             this.currentRoute = this._routerService.getRouteParams({}, this._router.routerState.root);
         });
     }
+
+    ngOnDestroy(): void {} // Should be set to use @AutoUnsubscribe with AOT
 
     changeCountry() {
         this._language.set(this.currentCountry);

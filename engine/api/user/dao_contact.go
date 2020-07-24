@@ -7,8 +7,9 @@ import (
 
 	"github.com/go-gorp/gorp"
 
+	"github.com/ovh/cds/engine/api/database/gorpmapping"
+	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/gorpmapping"
 	"github.com/ovh/cds/sdk/log"
 )
 
@@ -83,7 +84,7 @@ func LoadContactByTypeAndValue(ctx context.Context, db gorp.SqlExecutor, contact
 var emailRegexp = regexp.MustCompile(`\w[+-._\w]*\w@\w[-._\w]*\w\.\w*`)
 
 // InsertContact in database.
-func InsertContact(ctx context.Context, db gorpmapping.SqlExecutorWithTx, c *sdk.UserContact) error {
+func InsertContact(ctx context.Context, db gorpmapper.SqlExecutorWithTx, c *sdk.UserContact) error {
 	if c.Type == sdk.UserContactTypeEmail {
 		if !emailRegexp.MatchString(c.Value) {
 			return sdk.WithStack(sdk.ErrInvalidEmail)
@@ -100,7 +101,7 @@ func InsertContact(ctx context.Context, db gorpmapping.SqlExecutorWithTx, c *sdk
 }
 
 // UpdateContact in database.
-func UpdateContact(ctx context.Context, db gorpmapping.SqlExecutorWithTx, c *sdk.UserContact) error {
+func UpdateContact(ctx context.Context, db gorpmapper.SqlExecutorWithTx, c *sdk.UserContact) error {
 	dbc := userContact{UserContact: *c}
 	if err := gorpmapping.UpdateAndSign(ctx, db, &dbc); err != nil {
 		return err

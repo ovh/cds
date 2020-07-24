@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
@@ -23,7 +23,7 @@ import { filter, finalize } from 'rxjs/operators';
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 @AutoUnsubscribe()
-export class ProjectShowComponent implements OnInit {
+export class ProjectShowComponent implements OnInit, OnDestroy {
     currentUser: AuthentifiedUser;
 
     project: Project;
@@ -69,6 +69,8 @@ export class ProjectShowComponent implements OnInit {
                 this._cd.markForCheck();
             });
     }
+
+    ngOnDestroy(): void {} // Should be set to use @AutoUnsubscribe with AOT
 
     ngOnInit() {
         this.tabs = [<Tab>{

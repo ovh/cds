@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"math/rand"
 	"net/http"
 	"strings"
 	"sync"
@@ -17,7 +18,6 @@ import (
 
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/permission"
-	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
@@ -110,15 +110,23 @@ func (b *websocketBroker) Start(ctx context.Context, panicCallback func(s string
 				continue
 			}
 
+			// Randomize the order of client to prevent the old client to always received new events in priority
+			clientIDs := make([]string, 0, len(b.clients))
 			for i := range b.clients {
-				c := b.clients[i]
+				clientIDs = append(clientIDs, i)
+			}
+			r := rand.New(rand.NewSource(time.Now().UnixNano()))
+			r.Shuffle(len(clientIDs), func(i, j int) { clientIDs[i], clientIDs[j] = clientIDs[j], clientIDs[i] })
+
+			for _, id := range clientIDs {
+				c := b.clients[id]
 				if c == nil {
-					delete(b.clients, i)
+					delete(b.clients, id)
 					continue
 				}
 
 				// Send the event to the client websocket within a goroutine
-				s := "websocket-" + b.clients[i].UUID
+				s := "websocket-" + c.UUID
 				sdk.GoRoutine(ctx, s, func(ctx context.Context) {
 					found, needCheckPermission := c.filters.HasOneKey(eventKeys...)
 					if !found {
@@ -148,9 +156,11 @@ func (b *websocketBroker) Start(ctx context.Context, panicCallback func(s string
 			}
 
 		case client := <-b.chanAddClient:
+			log.Debug("add new websocket client %s for consumer %s", client.UUID, client.AuthConsumer.GetUsername())
 			b.clients[client.UUID] = client
 
 		case uuid := <-b.chanRemoveClient:
+			log.Debug("remove websocket client %s", uuid)
 			client, has := b.clients[uuid]
 			if !has {
 				continue
@@ -214,6 +224,10 @@ func (b *websocketBroker) ServeHTTP() service.Handler {
 			inMessageChan: make(chan []byte, 10),
 		}
 		b.chanAddClient <- &client
+		defer func() {
+			close(client.inMessageChan)
+			b.chanRemoveClient <- client.UUID
+		}()
 
 		sdk.GoRoutine(ctx, fmt.Sprintf("readUpdateFilterChan-%s-%s", client.AuthConsumer.GetUsername(), client.UUID), func(ctx context.Context) {
 			for {
@@ -221,7 +235,10 @@ func (b *websocketBroker) ServeHTTP() service.Handler {
 				case <-ctx.Done():
 					log.Debug("events.Http: context done")
 					return
-				case m := <-client.inMessageChan:
+				case m, more := <-client.inMessageChan:
+					if !more {
+						return
+					}
 					if err := client.updateEventFilters(ctx, b.dbFunc(), m); err != nil {
 						err = sdk.WithStack(err)
 						log.WarningWithFields(ctx, logrus.Fields{
@@ -256,6 +273,7 @@ func (b *websocketBroker) ServeHTTP() service.Handler {
 
 			client.inMessageChan <- msg
 		}
+
 		return nil
 	}
 }
@@ -273,7 +291,7 @@ func (c *websocketClient) updateEventFilters(ctx context.Context, db gorp.SqlExe
 	}
 
 	var isMaintainer = c.AuthConsumer.Maintainer() || c.AuthConsumer.Admin()
-	var isHatchery = c.AuthConsumer.Service != nil && c.AuthConsumer.Service.Type == services.TypeHatchery
+	var isHatchery = c.AuthConsumer.Service != nil && c.AuthConsumer.Service.Type == sdk.TypeHatchery
 	var isHatcheryWithGroups = isHatchery && len(c.AuthConsumer.GroupIDs) > 0
 
 	// Check validity of given filters
@@ -432,7 +450,7 @@ func (b *websocketBroker) computeEventKeys(event sdk.Event) []string {
 // We need to check permission for some kind of events, when permission can't be verified at filter subscription.
 func (c *websocketClient) checkEventPermission(ctx context.Context, db gorp.SqlExecutor, event sdk.Event) (bool, error) {
 	var isMaintainer = c.AuthConsumer.Maintainer() || c.AuthConsumer.Admin()
-	var isHatchery = c.AuthConsumer.Service != nil && c.AuthConsumer.Service.Type == services.TypeHatchery
+	var isHatchery = c.AuthConsumer.Service != nil && c.AuthConsumer.Service.Type == sdk.TypeHatchery
 	var isHatcheryWithGroups = isHatchery && len(c.AuthConsumer.GroupIDs) > 0
 
 	if strings.HasPrefix(event.EventType, "sdk.EventBroadcast") {

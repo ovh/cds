@@ -13,3 +13,11 @@ func (c *client) ConfigUser() (sdk.ConfigUser, error) {
 	}
 	return res, nil
 }
+
+func (c *client) ConfigCDN() (sdk.CDNConfig, error) {
+	var res sdk.CDNConfig
+	if _, err := c.GetJSON(context.Background(), "/config/cdn", &res); err != nil {
+		return res, err
+	}
+	return res, nil
+}

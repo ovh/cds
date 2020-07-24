@@ -9,11 +9,11 @@ import (
 
 	"github.com/gorilla/mux"
 
+	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/engine/api/services"
+	"github.com/ovh/cds/engine/featureflipping"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/featureflipping"
-	"github.com/ovh/cds/sdk/gorpmapping"
 	"github.com/ovh/cds/sdk/log"
 )
 
@@ -23,7 +23,7 @@ func (api *API) postMaintenanceHandler() service.Handler {
 		hook := FormBool(r, "withHook")
 
 		if hook {
-			srvs, err := services.LoadAllByType(ctx, api.mustDB(), services.TypeHooks)
+			srvs, err := services.LoadAllByType(ctx, api.mustDB(), sdk.TypeHooks)
 			if err != nil {
 				return err
 			}
@@ -179,11 +179,11 @@ func putPostAdminServiceCallHandler(api *API, method string) service.Handler {
 
 func (api *API) getAdminDatabaseSignatureResume() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		var entities = gorpmapping.ListSignedEntities()
+		var entities = gorpmapping.Mapper.ListSignedEntities()
 		var resume = make(sdk.CanonicalFormUsageResume, len(entities))
 
 		for _, e := range entities {
-			data, err := gorpmapping.ListCanonicalFormsByEntity(api.mustDB(), e)
+			data, err := gorpmapping.Mapper.ListCanonicalFormsByEntity(api.mustDB(), e)
 			if err != nil {
 				return err
 			}
@@ -200,7 +200,7 @@ func (api *API) getAdminDatabaseSignatureTuplesBySigner() service.Handler {
 		entity := vars["entity"]
 		signer := vars["signer"]
 
-		pks, err := gorpmapping.ListTupleByCanonicalForm(api.mustDB(), entity, signer)
+		pks, err := gorpmapping.Mapper.ListTupleByCanonicalForm(api.mustDB(), entity, signer)
 		if err != nil {
 			return err
 		}
@@ -221,7 +221,7 @@ func (api *API) postAdminDatabaseSignatureRollEntityByPrimaryKey() service.Handl
 		}
 		defer tx.Rollback() // nolint
 
-		if err := gorpmapping.RollSignedTupleByPrimaryKey(ctx, tx, entity, pk); err != nil {
+		if err := gorpmapping.Mapper.RollSignedTupleByPrimaryKey(ctx, tx, entity, pk); err != nil {
 			return err
 		}
 
@@ -235,7 +235,7 @@ func (api *API) postAdminDatabaseSignatureRollEntityByPrimaryKey() service.Handl
 
 func (api *API) getAdminDatabaseEncryptedEntities() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		return service.WriteJSON(w, gorpmapping.ListEncryptedEntities(), http.StatusOK)
+		return service.WriteJSON(w, gorpmapping.Mapper.ListEncryptedEntities(), http.StatusOK)
 	}
 }
 
@@ -244,7 +244,7 @@ func (api *API) getAdminDatabaseEncryptedTuplesByEntity() service.Handler {
 		vars := mux.Vars(r)
 		entity := vars["entity"]
 
-		pks, err := gorpmapping.ListTuplesByEntity(api.mustDB(), entity)
+		pks, err := gorpmapping.Mapper.ListTuplesByEntity(api.mustDB(), entity)
 		if err != nil {
 			return err
 		}
@@ -259,7 +259,7 @@ func (api *API) postAdminDatabaseRollEncryptedEntityByPrimaryKey() service.Handl
 		entity := vars["entity"]
 		pk := vars["pk"]
 
-		if err := gorpmapping.RollEncryptedTupleByPrimaryKey(api.mustDB(), entity, pk); err != nil {
+		if err := gorpmapping.Mapper.RollEncryptedTupleByPrimaryKey(api.mustDB(), entity, pk); err != nil {
 			return err
 		}
 
@@ -269,7 +269,7 @@ func (api *API) postAdminDatabaseRollEncryptedEntityByPrimaryKey() service.Handl
 
 func (api *API) getAdminFeatureFlipping() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		all, err := featureflipping.LoadAll(ctx, api.mustDB())
+		all, err := featureflipping.LoadAll(ctx, gorpmapping.Mapper, api.mustDB())
 		if err != nil {
 			return err
 		}
@@ -282,7 +282,7 @@ func (api *API) getAdminFeatureFlippingByName() service.Handler {
 		vars := mux.Vars(r)
 		name := vars["name"]
 
-		f, err := featureflipping.LoadByName(ctx, api.mustDB(), name)
+		f, err := featureflipping.LoadByName(ctx, gorpmapping.Mapper, api.mustDB(), name)
 		if err != nil {
 			return err
 		}
@@ -297,7 +297,7 @@ func (api *API) postAdminFeatureFlipping() service.Handler {
 			return err
 		}
 
-		if err := featureflipping.Insert(ctx, api.mustDB(), &f); err != nil {
+		if err := featureflipping.Insert(ctx, gorpmapping.Mapper, api.mustDB(), &f); err != nil {
 			return err
 		}
 		return service.WriteJSON(w, f, http.StatusOK)
@@ -314,7 +314,7 @@ func (api *API) putAdminFeatureFlipping() service.Handler {
 			return err
 		}
 
-		oldF, err := featureflipping.LoadByName(ctx, api.mustDB(), name)
+		oldF, err := featureflipping.LoadByName(ctx, gorpmapping.Mapper, api.mustDB(), name)
 		if err != nil {
 			return err
 		}
@@ -324,7 +324,7 @@ func (api *API) putAdminFeatureFlipping() service.Handler {
 		}
 
 		f.ID = oldF.ID
-		if err := featureflipping.Update(ctx, api.mustDB(), &f); err != nil {
+		if err := featureflipping.Update(ctx, gorpmapping.Mapper, api.mustDB(), &f); err != nil {
 			return err
 		}
 
@@ -337,7 +337,7 @@ func (api *API) deleteAdminFeatureFlipping() service.Handler {
 		vars := mux.Vars(r)
 		name := vars["name"]
 
-		oldF, err := featureflipping.LoadByName(ctx, api.mustDB(), name)
+		oldF, err := featureflipping.LoadByName(ctx, gorpmapping.Mapper, api.mustDB(), name)
 		if err != nil {
 			return err
 		}

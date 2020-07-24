@@ -4,8 +4,10 @@ import (
 	"context"
 
 	"github.com/go-gorp/gorp"
+
+	"github.com/ovh/cds/engine/api/database/gorpmapping"
+	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/gorpmapping"
 	"github.com/ovh/cds/sdk/log"
 )
 
@@ -17,30 +19,30 @@ func init() {
 }
 
 type dbProjectVCSServerLink struct {
-	gorpmapping.SignedEntity
+	gorpmapper.SignedEntity
 	sdk.ProjectVCSServerLink
 }
 
-func (e dbProjectVCSServerLink) Canonical() gorpmapping.CanonicalForms {
+func (e dbProjectVCSServerLink) Canonical() gorpmapper.CanonicalForms {
 	var _ = []interface{}{e.ID, e.Name, e.ProjectID, e.VCSProject}
-	return gorpmapping.CanonicalForms{
+	return gorpmapper.CanonicalForms{
 		"{{.ID}}{{.Name}}{{.ProjectID}}{{.VCSProject}}",
 	}
 }
 
 type dbProjectVCSServerLinkData struct {
-	gorpmapping.SignedEntity
+	gorpmapper.SignedEntity
 	sdk.ProjectVCSServerLinkData
 }
 
-func (e dbProjectVCSServerLinkData) Canonical() gorpmapping.CanonicalForms {
+func (e dbProjectVCSServerLinkData) Canonical() gorpmapper.CanonicalForms {
 	var _ = []interface{}{e.ID, e.ProjectVCSServerLinkID, e.Key}
-	return gorpmapping.CanonicalForms{
+	return gorpmapper.CanonicalForms{
 		"{{.ID}}{{.ProjectVCSServerLinkID}}{{.Key}}",
 	}
 }
 
-func InsertProjectVCSServerLink(ctx context.Context, db gorpmapping.SqlExecutorWithTx, l *sdk.ProjectVCSServerLink) error {
+func InsertProjectVCSServerLink(ctx context.Context, db gorpmapper.SqlExecutorWithTx, l *sdk.ProjectVCSServerLink) error {
 	var dbProjectVCSServerLink = dbProjectVCSServerLink{ProjectVCSServerLink: *l}
 	if err := gorpmapping.InsertAndSign(ctx, db, &dbProjectVCSServerLink); err != nil {
 		return err
@@ -60,7 +62,7 @@ func InsertProjectVCSServerLink(ctx context.Context, db gorpmapping.SqlExecutorW
 	return nil
 }
 
-func UpdateProjectVCSServerLink(ctx context.Context, db gorpmapping.SqlExecutorWithTx, l *sdk.ProjectVCSServerLink) error {
+func UpdateProjectVCSServerLink(ctx context.Context, db gorpmapper.SqlExecutorWithTx, l *sdk.ProjectVCSServerLink) error {
 	var dbProjectVCSServerLink = dbProjectVCSServerLink{ProjectVCSServerLink: *l}
 	if err := gorpmapping.UpdateAndSign(ctx, db, &dbProjectVCSServerLink); err != nil {
 		return err

@@ -88,13 +88,13 @@ func (api *API) computeGlobalStatus(srvs []sdk.Service) sdk.MonitoringStatus {
 	linesGlobal := []sdk.MonitoringStatusLine{}
 
 	resume := map[string]computeGlobalNumbers{
-		services.TypeAPI:           {},
-		services.TypeRepositories:  {},
-		services.TypeVCS:           {},
-		services.TypeHooks:         {},
-		services.TypeHatchery:      {},
-		services.TypeDBMigrate:     {},
-		services.TypeElasticsearch: {},
+		sdk.TypeAPI:           {},
+		sdk.TypeRepositories:  {},
+		sdk.TypeVCS:           {},
+		sdk.TypeHooks:         {},
+		sdk.TypeHatchery:      {},
+		sdk.TypeDBMigrate:     {},
+		sdk.TypeElasticsearch: {},
 	}
 	var nbg computeGlobalNumbers
 	for _, s := range srvs {
@@ -247,7 +247,7 @@ func (api *API) initMetrics(ctx context.Context) error {
 		telemetry.NewViewLast("cds/queue", api.Metrics.queue, tagsRange),
 		telemetry.NewViewCount("cds/workflow_runs_started", api.Metrics.WorkflowRunStarted, tagsService),
 		telemetry.NewViewCount("cds/workflow_runs_failed", api.Metrics.WorkflowRunFailed, tagsService),
-		telemetry.NewViewCount("cds/workflow_runs_mark_to_delete", api.Metrics.WorkflowRunsMarkToDelete, tagsService),
+		telemetry.NewViewLast("cds/workflow_runs_mark_to_delete", api.Metrics.WorkflowRunsMarkToDelete, tagsService),
 		telemetry.NewViewCount("cds/workflow_runs_deleted", api.Metrics.WorkflowRunsDeleted, tagsService),
 		telemetry.NewViewLast("cds/database_conn", api.Metrics.DatabaseConns, tagsService),
 	)

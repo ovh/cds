@@ -1,11 +1,13 @@
 package internal_test
 
 import (
+	"bufio"
 	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"net"
 	"net/http"
 	"os"
 	"strings"
@@ -22,6 +24,7 @@ import (
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/ovh/cds/sdk/log"
+	"github.com/ovh/cds/sdk/log/hook"
 )
 
 func init() {
@@ -91,6 +94,7 @@ func TestStartWorkerWithABookedJob(t *testing.T) {
 						Value: "my very sensitive data",
 					},
 				},
+				GelfServiceAddr: "localhost:8090",
 				NodeJobRun: sdk.WorkflowNodeJobRun{
 					ID: 42,
 					Parameters: []sdk.Parameter{
@@ -208,11 +212,6 @@ func TestStartWorkerWithABookedJob(t *testing.T) {
 		Reply(200).
 		JSON(nil)
 
-	gock.New("http://lolcat.host").Post("/queue/workflows/42/log").Times(8).
-		HeaderPresent("Authorization").
-		Reply(200).
-		JSON(nil)
-
 	gock.New("http://lolcat.host").Post("/queue/workflows/42/result").
 		HeaderPresent("Authorization").
 		Reply(200).
@@ -224,6 +223,28 @@ func TestStartWorkerWithABookedJob(t *testing.T) {
 		JSON(nil)
 
 	var logBuffer = new(bytes.Buffer)
+	listener, err := net.Listen("tcp", "localhost:8090")
+	require.NoError(t, err)
+	defer listener.Close()
+	go func() {
+		conn, err := listener.Accept()
+		require.NoError(t, err)
+		bufReader := bufio.NewReader(conn)
+		defer conn.Close() //nolint
+		for {
+			bytes, err := bufReader.ReadBytes(byte(0))
+			if err != nil {
+				return
+			}
+			// remove byte(0)
+			bytes = bytes[:len(bytes)-1]
+			m := hook.Message{}
+			require.NoError(t, m.UnmarshalJSON(bytes))
+			logBuffer.WriteString(m.Full + "\n")
+		}
+
+	}()
+
 	var checkRequest gock.ObserverFunc = func(request *http.Request, mock gock.Mock) {
 		bodyContent, err := ioutil.ReadAll(request.Body)
 		assert.NoError(t, err)
@@ -262,11 +283,6 @@ func TestStartWorkerWithABookedJob(t *testing.T) {
 					t.Logf("This case should not happend")
 					t.Fail()
 				}
-			case "http://lolcat.host/queue/workflows/42/log":
-				var log sdk.Log
-				err := json.Unmarshal(bodyContent, &log)
-				assert.NoError(t, err)
-				logBuffer.WriteString(log.Val) // nolint
 			case "http://lolcat.host/queue/workflows/42/result":
 				var result sdk.Result
 				err := json.Unmarshal(bodyContent, &result)
@@ -302,7 +318,7 @@ func TestStartWorkerWithABookedJob(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancel()
 
-	err := internal.StartWorker(ctx, w, 42)
+	err = internal.StartWorker(ctx, w, 42)
 	assert.NoError(t, err)
 
 	var isDone bool
@@ -331,10 +347,10 @@ func TestStartWorkerWithABookedJob(t *testing.T) {
 	}
 
 	assert.Equal(t, 2, strings.Count(logBuffer.String(), "my password should not be displayed here: **********\n"))
-	assert.Equal(t, 1, strings.Count(logBuffer.String(), "[INFO] CDS_BUILD_NEWVAR=newval"))
-	assert.Equal(t, 1, strings.Count(logBuffer.String(), "[INFO] CDS_KEY=********"))
-	assert.Equal(t, 1, strings.Count(logBuffer.String(), "[INFO] CDS_API_URL=http://lolcat.host"))
-	assert.Equal(t, 1, strings.Count(logBuffer.String(), "[INFO] CDS_SEMVER=0.1.0+cds.1"))
-	assert.Equal(t, 1, strings.Count(logBuffer.String(), "[INFO] GIT_DESCRIBE=0.1.0"))
-	assert.Equal(t, 0, strings.Count(logBuffer.String(), "[INFO] CDS_BUILD_CDS_BUILD"))
+	assert.Equal(t, 1, strings.Count(logBuffer.String(), "CDS_BUILD_NEWVAR=newval"))
+	assert.Equal(t, 1, strings.Count(logBuffer.String(), "CDS_KEY=********"))
+	assert.Equal(t, 1, strings.Count(logBuffer.String(), "CDS_API_URL=http://lolcat.host"))
+	assert.Equal(t, 1, strings.Count(logBuffer.String(), "CDS_SEMVER=0.1.0+cds.1"))
+	assert.Equal(t, 1, strings.Count(logBuffer.String(), "GIT_DESCRIBE=0.1.0"))
+	assert.Equal(t, 0, strings.Count(logBuffer.String(), "CDS_BUILD_CDS_BUILD"))
 }

@@ -4,15 +4,12 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	"os"
 	"time"
 
-	"github.com/go-gorp/gorp"
 	"github.com/gorilla/mux"
 
 	"github.com/ovh/cds/engine/api"
-	"github.com/ovh/cds/engine/api/database"
-	"github.com/ovh/cds/engine/api/services"
+	"github.com/ovh/cds/engine/database"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
@@ -40,9 +37,16 @@ type Configuration struct {
 		Addr     string `toml:"addr" default:"" commented:"true" comment:"Listen address without port, example: 127.0.0.1" json:"addr"`
 		Port     int    `toml:"port" default:"8087" json:"port"`
 		Insecure bool   `toml:"insecure" default:"false" commented:"true" comment:"sslInsecureSkipVerify, set to true if you use a self-signed SSL on CDS API" json:"insecure"`
-	} `toml:"http" comment:"######################\n CDS DB Migrate HTTP Configuration \n######################" json:"http"`
-	API service.APIServiceConfiguration `toml:"api" comment:"######################\n CDS API Settings \n######################" json:"api"`
-	DB  database.DBConfiguration        `toml:"db" comment:"################################\n Postgresql Database settings \n###############################" json:"db"`
+	} `toml:"http" comment:"#####################################\n CDS DB Migrate HTTP configuration \n####################################" json:"http"`
+	API        service.APIServiceConfiguration `toml:"api" comment:"####################\n CDS API Settings \n###################" json:"api"`
+	ServiceAPI struct {
+		Enable bool                     `toml:"enable" default:"true" comment:"set to false to disable migration for API database" json:"enable"`
+		DB     database.DBConfiguration `toml:"db" comment:"################################\n Postgresql Database settings \n###############################" json:"db"`
+	} `toml:"serviceAPI" comment:"################################################\n CDS DB Migrate configuration for API service \n######################111######################" json:"service_api"`
+	ServiceCDN struct {
+		Enable bool                     `toml:"enable" default:"true" comment:"set to false to disable migration for CDN database" json:"enable"`
+		DB     database.DBConfiguration `toml:"db" comment:"################################\n Postgresql Database settings \n###############################" json:"db"`
+	} `toml:"serviceCDN" comment:"################################################\n CDS DB Migrate configuration for CDN service \n###############################################" json:"service_cdn"`
 }
 
 // New instanciates a new API object
@@ -81,7 +85,7 @@ func (s *dbmigservice) ApplyConfiguration(cfg interface{}) error {
 
 	s.cfg = dbCfg
 	s.ServiceName = s.cfg.Name
-	s.ServiceType = services.TypeDBMigrate
+	s.ServiceType = sdk.TypeDBMigrate
 	s.HTTPURL = s.cfg.URL
 
 	s.MaxHeartbeatFailures = s.cfg.API.MaxHeartbeatFailures
@@ -92,46 +96,17 @@ func (s *dbmigservice) ApplyConfiguration(cfg interface{}) error {
 }
 
 func (s *dbmigservice) BeforeStart(ctx context.Context) error {
-	log.Info(ctx, "DBMigrate> Starting Database migration...")
-	dbConn, err := database.Init(
-		ctx,
-		s.cfg.DB.User,
-		s.cfg.DB.Role,
-		s.cfg.DB.Password,
-		s.cfg.DB.Name,
-		s.cfg.DB.Host,
-		s.cfg.DB.Port,
-		s.cfg.DB.SSLMode,
-		s.cfg.DB.ConnectTimeout,
-		s.cfg.DB.Timeout,
-		s.cfg.DB.MaxConn)
+	status, err := doMigrateAll(ctx, s.cfg)
 	if err != nil {
-		return sdk.WrapError(fmt.Errorf("cannot connect to database: %v", err), "getMigrate")
-	}
-
-	upgradeTo := os.Getenv("UPGRADE_TO")     // Set this env variable to define the maximum migration file you want to upgrade
-	downgradeTo := os.Getenv("DOWNGRADE_TO") // Set this env variable to define the maximum migration file you want to downgrade
-
-	errDo := s.doMigrate(dbConn.DB, gorp.PostgresDialect{}, upgradeTo, downgradeTo)
-	if errDo != nil {
-		log.Error(ctx, "DBMigrate> Migration failed %v", errDo)
-		s.currentStatus.err = errDo
-	}
-
-	log.Info(ctx, "DBMigrate> Retrieving Database migration status...")
-	status, errGet := s.getMigrate(dbConn.DB, gorp.PostgresDialect{})
-	if errGet != nil {
-		log.Error(ctx, "DBMigrate> Migration status unavailable %v", errGet)
-	}
-	if errDo == nil && errGet != nil {
-		s.currentStatus.err = errGet
+		log.Error(ctx, "DBMigrate> Migration failed %v", err)
+		s.currentStatus.err = err
 	}
 	s.currentStatus.migrations = status
 
 	// From now the database access won't be used. Erase the configuration...
 	// This limits the attack surface
-	s.cfg.DB = database.DBConfiguration{}
-
+	s.cfg.ServiceAPI.DB = database.DBConfiguration{}
+	s.cfg.ServiceCDN.DB = database.DBConfiguration{}
 	return nil
 }
 

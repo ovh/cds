@@ -7,13 +7,13 @@ import (
 	jwt "github.com/dgrijalva/jwt-go"
 	"github.com/go-gorp/gorp"
 
+	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/gorpmapping"
 	"github.com/ovh/cds/sdk/log"
 )
 
 // NewSession returns a new session for a given auth consumer.
-func NewSession(ctx context.Context, db gorpmapping.SqlExecutorWithTx, c *sdk.AuthConsumer, duration time.Duration, mfaEnable bool) (*sdk.AuthSession, error) {
+func NewSession(ctx context.Context, db gorpmapper.SqlExecutorWithTx, c *sdk.AuthConsumer, duration time.Duration, mfaEnable bool) (*sdk.AuthSession, error) {
 	s := sdk.AuthSession{
 		ConsumerID: c.ID,
 		ExpireAt:   time.Now().Add(duration),

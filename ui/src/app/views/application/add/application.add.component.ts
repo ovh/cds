@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
@@ -21,7 +21,7 @@ import { finalize, first, flatMap } from 'rxjs/operators';
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 @AutoUnsubscribe()
-export class ApplicationAddComponent implements OnInit {
+export class ApplicationAddComponent implements OnInit, OnDestroy {
 
     ready = false;
     project: Project;
@@ -56,6 +56,8 @@ export class ApplicationAddComponent implements OnInit {
             this.project = datas['project'];
         });
     }
+
+    ngOnDestroy(): void {} // Should be set to use @AutoUnsubscribe with AOT
 
     ngOnInit(): void {
         this._varService.getContextVariable(this.project.key).pipe(first()).subscribe(s => {

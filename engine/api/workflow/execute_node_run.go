@@ -18,8 +18,8 @@ import (
 	"github.com/ovh/cds/engine/api/plugin"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/engine/api/services"
+	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/gorpmapping"
 	"github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk/telemetry"
 )
@@ -102,7 +102,7 @@ func syncTakeJobInNodeRun(ctx context.Context, db gorp.SqlExecutor, n *sdk.Workf
 	return report, nil
 }
 
-func executeNodeRun(ctx context.Context, db gorpmapping.SqlExecutorWithTx, store cache.Store, proj sdk.Project, workflowNodeRun *sdk.WorkflowNodeRun) (*ProcessorReport, error) {
+func executeNodeRun(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store cache.Store, proj sdk.Project, workflowNodeRun *sdk.WorkflowNodeRun) (*ProcessorReport, error) {
 	var end func()
 	ctx, end = telemetry.Span(ctx, "workflow.executeNodeRun",
 		telemetry.Tag(telemetry.TagWorkflowRun, workflowNodeRun.Number),
@@ -317,7 +317,7 @@ func executeNodeRun(ctx context.Context, db gorpmapping.SqlExecutorWithTx, store
 	return report, nil
 }
 
-func releaseMutex(ctx context.Context, db gorpmapping.SqlExecutorWithTx, store cache.Store, proj sdk.Project, workflowID int64, nodeName string) (*ProcessorReport, error) {
+func releaseMutex(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store cache.Store, proj sdk.Project, workflowID int64, nodeName string) (*ProcessorReport, error) {
 	_, next := telemetry.Span(ctx, "workflow.releaseMutex")
 	defer next()
 
@@ -528,7 +528,7 @@ jobLoop:
 				msg := sdk.SpawnMsg{
 					ID: sdk.MsgSpawnInfoJobError.ID,
 				}
-				msg.Args = []interface{}{sdk.Cause(e).Error()}
+				msg.Args = []interface{}{sdk.ExtractHTTPError(e, "").Error()}
 				wjob.SpawnInfos = append(wjob.SpawnInfos, sdk.SpawnInfo{
 					APITime:     time.Now(),
 					Message:     msg,
@@ -856,7 +856,7 @@ func stopWorkflowNodeOutGoingHook(ctx context.Context, dbFunc func() *gorp.DbMap
 	nodeRun.Callback.Status = sdk.StatusStopped
 	nodeRun.Status = nodeRun.Callback.Status
 
-	srvs, err := services.LoadAllByType(ctx, db, services.TypeHooks)
+	srvs, err := services.LoadAllByType(ctx, db, sdk.TypeHooks)
 	if err != nil {
 		return sdk.WrapError(err, "unable to get hooks services")
 	}
@@ -1045,7 +1045,7 @@ func (i vcsInfos) String() string {
 	return fmt.Sprintf("%s:%s:%s:%s", i.Server, i.Repository, i.Branch, i.Hash)
 }
 
-func getVCSInfos(ctx context.Context, db gorpmapping.SqlExecutorWithTx, store cache.Store, projectKey string, vcsServer sdk.ProjectVCSServerLink, gitValues map[string]string, applicationName, applicationVCSServer, applicationRepositoryFullname string) (*vcsInfos, error) {
+func getVCSInfos(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store cache.Store, projectKey string, vcsServer sdk.ProjectVCSServerLink, gitValues map[string]string, applicationName, applicationVCSServer, applicationRepositoryFullname string) (*vcsInfos, error) {
 	var vcsInfos vcsInfos
 	vcsInfos.Repository = gitValues[tagGitRepository]
 	vcsInfos.Branch = gitValues[tagGitBranch]

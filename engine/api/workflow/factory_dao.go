@@ -10,13 +10,14 @@ import (
 
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/ascode"
+	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/integration"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/workflowtemplate"
+	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/gorpmapping"
 	"github.com/ovh/cds/sdk/log"
 )
 
@@ -98,40 +99,40 @@ type WorkflowDAO struct {
 
 func (dao WorkflowDAO) Query() gorpmapping.Query {
 	var queryString = `
-    WITH 
+    WITH
     workflow_root_application_id AS (
-        SELECT 
-            id as "workflow_id", 
+        SELECT
+            id as "workflow_id",
             project_id,
             name as "workflow_name",
             (workflow_data -> 'node' -> 'context' ->> 'application_id')::BIGINT as "root_application_id"
         FROM workflow
     ),
     project_permission AS (
-        SELECT 
+        SELECT
             project_id,
             ARRAY_AGG(group_id) as "groups"
         FROM project_group
         GROUP BY project_id
     ),
     selected_workflow AS (
-        SELECT 
-        project.id, 
-            workflow_root_application_id.workflow_id, 
-            project.projectkey, 
-            workflow_name, 
-            application.id, 
-            application.name, 
-            application.vcs_server, 
-            application.repo_fullname, 
+        SELECT
+        project.id,
+            workflow_root_application_id.workflow_id,
+            project.projectkey,
+            workflow_name,
+            application.id,
+            application.name,
+            application.vcs_server,
+            application.repo_fullname,
             project_permission.groups
             FROM workflow_root_application_id
         LEFT OUTER JOIN application ON application.id = root_application_id
         JOIN project ON project.id = workflow_root_application_id.project_id
-        JOIN project_permission ON project_permission.project_id = project.id	
+        JOIN project_permission ON project_permission.project_id = project.id
     )
     SELECT workflow.* , selected_workflow.projectkey as "project_key"
-    FROM workflow 
+    FROM workflow
 	JOIN selected_workflow ON selected_workflow.workflow_id = workflow.id
 	JOIN project_permission ON project_permission.project_id = workflow.project_id
     `
@@ -212,40 +213,40 @@ func (dao WorkflowDAO) GetLoaders() []gorpmapping.GetOptionFunc {
 	var loaders = []gorpmapping.GetOptionFunc{}
 
 	if dao.Loaders.WithApplications {
-		loaders = append(loaders, func(db gorp.SqlExecutor, i interface{}) error {
+		loaders = append(loaders, func(m *gorpmapper.Mapper, db gorp.SqlExecutor, i interface{}) error {
 			ws := i.(*[]Workflow)
 			return dao.withApplications(db, ws)
 		})
 	}
 
 	if dao.Loaders.WithEnvironments {
-		loaders = append(loaders, func(db gorp.SqlExecutor, i interface{}) error {
+		loaders = append(loaders, func(m *gorpmapper.Mapper, db gorp.SqlExecutor, i interface{}) error {
 			ws := i.(*[]Workflow)
 			return dao.withEnvironments(db, ws)
 		})
 	}
 
 	if dao.Loaders.WithDeepPipelines {
-		loaders = append(loaders, func(db gorp.SqlExecutor, i interface{}) error {
+		loaders = append(loaders, func(m *gorpmapper.Mapper, db gorp.SqlExecutor, i interface{}) error {
 			ws := i.(*[]Workflow)
 			return dao.withPipelines(db, ws, true)
 		})
 	} else if dao.Loaders.WithPipelines {
-		loaders = append(loaders, func(db gorp.SqlExecutor, i interface{}) error {
+		loaders = append(loaders, func(m *gorpmapper.Mapper, db gorp.SqlExecutor, i interface{}) error {
 			ws := i.(*[]Workflow)
 			return dao.withPipelines(db, ws, false)
 		})
 	}
 
 	if dao.Loaders.WithAsCodeUpdateEvents {
-		loaders = append(loaders, func(db gorp.SqlExecutor, i interface{}) error {
+		loaders = append(loaders, func(m *gorpmapper.Mapper, db gorp.SqlExecutor, i interface{}) error {
 			ws := i.(*[]Workflow)
 			return dao.withAsCodeUpdateEvents(db, ws)
 		})
 	}
 
 	if !dao.Loaders.WithIcon {
-		loaders = append(loaders, func(db gorp.SqlExecutor, i interface{}) error {
+		loaders = append(loaders, func(m *gorpmapper.Mapper, db gorp.SqlExecutor, i interface{}) error {
 			ws := i.(*[]Workflow)
 			for j := range *ws {
 				w := (*ws)[j]
@@ -256,46 +257,46 @@ func (dao WorkflowDAO) GetLoaders() []gorpmapping.GetOptionFunc {
 	}
 
 	if dao.Loaders.WithIntegrations {
-		loaders = append(loaders, func(db gorp.SqlExecutor, i interface{}) error {
+		loaders = append(loaders, func(m *gorpmapper.Mapper, db gorp.SqlExecutor, i interface{}) error {
 			ws := i.(*[]Workflow)
 			return dao.withIntegrations(db, ws)
 		})
 	}
 
 	if dao.Loaders.WithTemplate {
-		loaders = append(loaders, func(db gorp.SqlExecutor, i interface{}) error {
+		loaders = append(loaders, func(m *gorpmapper.Mapper, db gorp.SqlExecutor, i interface{}) error {
 			ws := i.(*[]Workflow)
 			return dao.withTemplates(db, ws)
 		})
 	}
 
 	if dao.Loaders.WithLabels {
-		loaders = append(loaders, func(db gorp.SqlExecutor, i interface{}) error {
+		loaders = append(loaders, func(m *gorpmapper.Mapper, db gorp.SqlExecutor, i interface{}) error {
 			ws := i.(*[]Workflow)
 			return dao.withLabels(db, ws)
 		})
 	}
 
 	if dao.Loaders.WithFavoritesForUserID != "" {
-		loaders = append(loaders, func(db gorp.SqlExecutor, i interface{}) error {
+		loaders = append(loaders, func(m *gorpmapper.Mapper, db gorp.SqlExecutor, i interface{}) error {
 			ws := i.(*[]Workflow)
 			return dao.withFavorites(db, ws, dao.Loaders.WithFavoritesForUserID)
 		})
 	}
 
 	if dao.Loaders.WithRuns != 0 {
-		loaders = append(loaders, func(db gorp.SqlExecutor, i interface{}) error {
+		loaders = append(loaders, func(m *gorpmapper.Mapper, db gorp.SqlExecutor, i interface{}) error {
 			ws := i.(*[]Workflow)
 			return dao.withRuns(db, ws, dao.Loaders.WithRuns)
 		})
 	}
 
 	loaders = append(loaders,
-		func(db gorp.SqlExecutor, i interface{}) error {
+		func(m *gorpmapper.Mapper, db gorp.SqlExecutor, i interface{}) error {
 			ws := i.(*[]Workflow)
 			return dao.withGroups(db, ws)
 		},
-		func(db gorp.SqlExecutor, i interface{}) error {
+		func(m *gorpmapper.Mapper, db gorp.SqlExecutor, i interface{}) error {
 			ws := i.(*[]Workflow)
 			return dao.withNotifications(db, ws)
 		})

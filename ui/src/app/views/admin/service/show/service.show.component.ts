@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit, ViewChild } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { Service } from 'app/model/service.model';
 import { ServiceService } from 'app/service/service/service.service';
@@ -15,7 +15,7 @@ import { Subscription } from 'rxjs/Subscription';
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 @AutoUnsubscribe()
-export class ServiceShowComponent implements OnInit {
+export class ServiceShowComponent implements OnInit, OnDestroy {
     @ViewChild('textareaCodeMirror') codemirror: any;
 
     loading: boolean;
@@ -41,6 +41,8 @@ export class ServiceShowComponent implements OnInit {
             readOnly: true
         };
     }
+
+    ngOnDestroy(): void {} // Should be set to use @AutoUnsubscribe with AOT
 
     ngOnInit(): void {
         this.themeSubscription = this._theme.get().subscribe(t => {

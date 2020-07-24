@@ -163,3 +163,24 @@ func TestMultiError(t *testing.T) {
 	httpErr = ExtractHTTPError(stackErr, "fr")
 	assert.Equal(t, "erreur interne (from: internal server error, wrong request: my second error, internal server error, already exists: my fourth error)", httpErr.Error())
 }
+
+func Test_cause(t *testing.T) {
+	err1 := NewErrorFrom(fmt.Errorf("my lib error"), "my error")
+	assert.Equal(t, "my lib error", Cause(err1).Error())
+
+	err2 := NewErrorFrom(ErrWrongRequest, "my error")
+	assert.Equal(t, "my error", Cause(err2).Error())
+
+	err3 := NewError(ErrWrongRequest, fmt.Errorf("my error"))
+	assert.Equal(t, "my error", Cause(err3).Error())
+
+	err4 := WithStack(ErrWrongRequest)
+	assert.Equal(t, "wrong request", Cause(err4).Error())
+
+	mError := new(MultiError)
+	mError.Append(err1)
+	mError.Append(err2)
+	mError.Append(err3)
+	mError.Append(err4)
+	assert.Equal(t, "Test_cause: internal server error (from: my error) (caused by: my lib error), Test_cause: wrong request (from: my error), Test_cause: wrong request (from: my error), Test_cause: wrong request", Cause(mError).Error())
+}

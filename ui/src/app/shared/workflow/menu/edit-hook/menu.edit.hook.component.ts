@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, EventEmitter, Input, OnDestroy, Output } from '@angular/core';
 import { IPopup } from '@richardlt/ng2-semantic-ui';
 import { WNodeHook, Workflow } from 'app/model/workflow.model';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
@@ -10,7 +10,7 @@ import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 @AutoUnsubscribe()
-export class WorkflowHookMenuEditComponent {
+export class WorkflowHookMenuEditComponent implements OnDestroy {
 
     // Project that contains the workflow
     @Input() workflow: Workflow;
@@ -20,6 +20,8 @@ export class WorkflowHookMenuEditComponent {
     @Output() event = new EventEmitter<string>();
 
     constructor() {}
+
+    ngOnDestroy(): void {} // Should be set to use @AutoUnsubscribe with AOT
 
     sendEvent(e: string): void {
         this.popup.close();

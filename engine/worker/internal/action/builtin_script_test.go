@@ -67,7 +67,8 @@ echo "lol"`,
 					Name: "script",
 				},
 			},
-			shouldHaveError: true,
+			scriptShell: "/bin/sh",
+			scriptOpts:  []string{"-e"},
 		},
 	}
 

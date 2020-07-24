@@ -4,8 +4,8 @@ import (
 	"github.com/go-gorp/gorp"
 	"github.com/lib/pq"
 
+	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/gorpmapping"
 )
 
 // DeleteApplication Delete the given application
@@ -24,7 +24,7 @@ func DeleteApplication(db gorp.SqlExecutor, applicationID int64) error {
 	if _, err := db.Exec(query, applicationID); err != nil {
 		if e, ok := err.(*pq.Error); ok {
 			switch e.Code {
-			case gorpmapping.ViolateForeignKeyPGCode:
+			case gorpmapper.ViolateForeignKeyPGCode:
 				err = sdk.NewErrorWithStack(err, sdk.ErrApplicationUsedByWorkflow)
 			}
 		}

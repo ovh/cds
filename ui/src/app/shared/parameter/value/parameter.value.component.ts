@@ -1,4 +1,4 @@
-import { AfterViewChecked, ChangeDetectionStrategy, Component, EventEmitter, Input, OnInit, Output, ViewChild } from '@angular/core';
+import { AfterViewChecked, ChangeDetectionStrategy, Component, EventEmitter, Input, OnDestroy, OnInit, Output, ViewChild } from '@angular/core';
 import { AllKeys, Key } from 'app/model/keys.model';
 import { Parameter } from 'app/model/parameter.model';
 import { Project } from 'app/model/project.model';
@@ -20,7 +20,7 @@ declare var CodeMirror: any;
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 @AutoUnsubscribe()
-export class ParameterValueComponent implements OnInit, AfterViewChecked {
+export class ParameterValueComponent implements OnInit, AfterViewChecked, OnDestroy {
 
     editableValue: string | number | boolean;
     @Input() type: string;
@@ -99,6 +99,8 @@ export class ParameterValueComponent implements OnInit, AfterViewChecked {
             autoRefresh: true
         };
     }
+
+    ngOnDestroy(): void {} // Should be set to use @AutoUnsubscribe with AOT
 
     ngOnInit(): void {
         this.castValue(this.editableValue);

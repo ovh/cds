@@ -3,16 +3,16 @@ package action
 import (
 	"bytes"
 	"encoding/json"
-	"github.com/ovh/cds/sdk/cdsclient"
-	"github.com/stretchr/testify/require"
 	"io/ioutil"
 	"net/http"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"gopkg.in/h2non/gock.v1"
 
 	"github.com/ovh/cds/sdk"
-	"github.com/stretchr/testify/assert"
+	"github.com/ovh/cds/sdk/cdsclient"
 )
 
 func TestRunRelease(t *testing.T) {

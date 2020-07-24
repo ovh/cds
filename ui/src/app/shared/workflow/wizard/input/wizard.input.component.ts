@@ -4,6 +4,7 @@ import {
     Component,
     EventEmitter,
     Input,
+    OnDestroy,
     OnInit,
     Output,
     ViewChild
@@ -39,7 +40,7 @@ declare var CodeMirror: any;
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 @AutoUnsubscribe()
-export class WorkflowWizardNodeInputComponent implements OnInit {
+export class WorkflowWizardNodeInputComponent implements OnInit, OnDestroy {
 
     @Input() workflow: Workflow;
     @Input() readonly = true;
@@ -81,6 +82,8 @@ export class WorkflowWizardNodeInputComponent implements OnInit {
         this.project = this.store.selectSnapshot(ProjectState.projectSnapshot);
         this.editMode = this.store.selectSnapshot(WorkflowState).editMode;
     }
+
+    ngOnDestroy(): void {} // Should be set to use @AutoUnsubscribe with AOT
 
     ngOnInit(): void {
         this.noderun = this.store.selectSnapshot(WorkflowState).workflowNodeRun;

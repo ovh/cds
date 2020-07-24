@@ -4,6 +4,7 @@ import {
     Component,
     EventEmitter,
     Input,
+    OnDestroy,
     Output,
     ViewChild
 } from '@angular/core';
@@ -33,7 +34,7 @@ import { finalize } from 'rxjs/internal/operators/finalize';
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 @AutoUnsubscribe()
-export class WorkflowTemplateBulkModalComponent {
+export class WorkflowTemplateBulkModalComponent implements OnDestroy {
     @ViewChild('workflowTemplateBulkModal') workflowTemplateBulkModal: ModalTemplate<boolean, boolean, void>;
     modal: SuiActiveModal<boolean, boolean, void>;
     open: boolean;
@@ -102,6 +103,8 @@ export class WorkflowTemplateBulkModalComponent {
 
         this.parameters = {};
     }
+
+    ngOnDestroy(): void {} // Should be set to use @AutoUnsubscribe with AOT
 
     show() {
         if (this.open) {

@@ -5,7 +5,14 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/ovh/cds/engine/api/services"
+	"github.com/go-gorp/gorp"
+	"github.com/gorilla/mux"
+
+	"github.com/ovh/cds/engine/api"
+	"github.com/ovh/cds/engine/api/cache"
+	"github.com/ovh/cds/engine/cdn/index"
+	"github.com/ovh/cds/engine/database"
+	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/ovh/cds/sdk/log"
@@ -14,11 +21,11 @@ import (
 // New returns a new service
 func New() *Service {
 	s := new(Service)
-	/*
-		s.Router = &api.Router{
-			Mux: mux.NewRouter(),
-		}
-	*/
+
+	s.Router = &api.Router{
+		Mux: mux.NewRouter(),
+	}
+
 	return s
 }
 
@@ -46,9 +53,8 @@ func (s *Service) ApplyConfiguration(config interface{}) error {
 	if !ok {
 		return fmt.Errorf("invalid configuration")
 	}
-
 	s.ServiceName = s.Cfg.Name
-	s.ServiceType = services.TypeCDN
+	s.ServiceType = sdk.TypeCDN
 	s.HTTPURL = s.Cfg.URL
 	s.MaxHeartbeatFailures = s.Cfg.API.MaxHeartbeatFailures
 	return nil
@@ -76,13 +82,54 @@ func (s *Service) Serve(c context.Context) error {
 	ctx, cancel := context.WithCancel(c)
 	defer cancel()
 
+	var err error
+
+	if s.Cfg.EnableLogProcessing {
+		log.Info(ctx, "Initializing database connection...")
+		//Intialize database
+		s.DBConnectionFactory, err = database.Init(
+			ctx,
+			s.Cfg.Database.User,
+			s.Cfg.Database.Role,
+			s.Cfg.Database.Password,
+			s.Cfg.Database.Name,
+			s.Cfg.Database.Host,
+			s.Cfg.Database.Port,
+			s.Cfg.Database.SSLMode,
+			s.Cfg.Database.ConnectTimeout,
+			s.Cfg.Database.Timeout,
+			s.Cfg.Database.MaxConn)
+		if err != nil {
+			return fmt.Errorf("cannot connect to database: %v", err)
+		}
+
+		log.Info(ctx, "Setting up database keys...")
+		s.Mapper = gorpmapper.New()
+		encryptionKeyConfig := s.Cfg.Database.EncryptionKey.GetKeys(gorpmapper.KeyEcnryptionIdentifier)
+		signatureKeyConfig := s.Cfg.Database.SignatureKey.GetKeys(gorpmapper.KeySignIdentifier)
+		if err := s.Mapper.ConfigureKeys(&signatureKeyConfig, &encryptionKeyConfig); err != nil {
+			return fmt.Errorf("cannot setup database keys: %v", err)
+		}
+
+		// Init dao packages
+		index.Init(s.Mapper)
+	}
+
+	log.Info(ctx, "Initializing redis cache on %s...", s.Cfg.Cache.Redis.Host)
+	s.Cache, err = cache.New(s.Cfg.Cache.Redis.Host, s.Cfg.Cache.Redis.Password, s.Cfg.Cache.TTL)
+	if err != nil {
+		return fmt.Errorf("cannot connect to redis instance : %v", err)
+	}
+
+	s.initMetrics(ctx)
+
 	s.RunTcpLogServer(ctx)
 
-	//Init the http server
+	log.Info(ctx, "Initializing HTTP router")
 	s.initRouter(ctx)
 	server := &http.Server{
-		Addr: fmt.Sprintf("%s:%d", s.Cfg.HTTP.Addr, s.Cfg.HTTP.Port),
-		//Handler:        s.Router.Mux,
+		Addr:           fmt.Sprintf("%s:%d", s.Cfg.HTTP.Addr, s.Cfg.HTTP.Port),
+		Handler:        s.Router.Mux,
 		MaxHeaderBytes: 1 << 20,
 	}
 
@@ -99,4 +146,13 @@ func (s *Service) Serve(c context.Context) error {
 		log.Fatalf("CDN> Cannot start cds-cdn: %v", err)
 	}
 	return ctx.Err()
+}
+
+func (s *Service) mustDBWithCtx(ctx context.Context) *gorp.DbMap {
+	db := s.DBConnectionFactory.GetDBMap(s.Mapper)()
+	db = db.WithContext(ctx).(*gorp.DbMap)
+	if db == nil {
+		panic(fmt.Errorf("Database unavailable"))
+	}
+	return db
 }

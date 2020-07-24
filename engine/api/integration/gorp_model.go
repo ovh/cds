@@ -3,21 +3,21 @@ package integration
 import (
 	"context"
 
-	"github.com/ovh/cds/sdk/gorpmapping"
-	"github.com/ovh/cds/sdk/log"
-
+	"github.com/ovh/cds/engine/api/database/gorpmapping"
+	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/log"
 )
 
 // IntegrationModel is a gorp wrapper around sdk.IntegrationModel
 type integrationModel struct {
-	gorpmapping.SignedEntity
+	gorpmapper.SignedEntity
 	sdk.IntegrationModel
 }
 
-func (e integrationModel) Canonical() gorpmapping.CanonicalForms {
+func (e integrationModel) Canonical() gorpmapper.CanonicalForms {
 	var _ = []interface{}{e.Name}
-	return gorpmapping.CanonicalForms{
+	return gorpmapper.CanonicalForms{
 		"{{.Name}}",
 	}
 }
@@ -41,13 +41,13 @@ func (s integrationModelSlice) IntegrationModel() []sdk.IntegrationModel {
 }
 
 type dbProjectIntegration struct {
-	gorpmapping.SignedEntity
+	gorpmapper.SignedEntity
 	sdk.ProjectIntegration
 }
 
-func (e dbProjectIntegration) Canonical() gorpmapping.CanonicalForms {
+func (e dbProjectIntegration) Canonical() gorpmapper.CanonicalForms {
 	var _ = []interface{}{e.IntegrationModelID, e.ProjectID}
-	return gorpmapping.CanonicalForms{
+	return gorpmapper.CanonicalForms{
 		"{{.IntegrationModelID}}{{.ProjectID}}",
 	}
 }

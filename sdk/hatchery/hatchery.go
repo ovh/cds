@@ -133,6 +133,10 @@ func Create(ctx context.Context, h Interface) error {
 			if j.ID == 0 {
 				continue
 			}
+			if h.GetLogger() == nil {
+				log.Error(ctx, "Logger not found, don't spawn workers")
+				continue
+			}
 
 			var traceEnded *struct{}
 			currentCtx, currentCancel := context.WithTimeout(ctx, 10*time.Minute)

@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
 import { EventType } from 'app/model/event.model';
@@ -25,7 +25,7 @@ import { finalize } from 'rxjs/operators';
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 @AutoUnsubscribe()
-export class QueueComponent {
+export class QueueComponent implements OnDestroy {
     queueSubscription: Subscription;
     user: AuthentifiedUser;
     nodeJobRuns: Array<WorkflowNodeJobRun> = [];
@@ -105,6 +105,8 @@ export class QueueComponent {
 
         this.loadAll();
     }
+
+    ngOnDestroy(): void {} // Should be set to use @AutoUnsubscribe with AOT
 
     statusFilterChange() {
         this.loadAll();

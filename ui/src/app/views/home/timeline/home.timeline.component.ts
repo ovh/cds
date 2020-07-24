@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { AppService } from 'app/app.service';
 import { finalize, first } from 'rxjs/operators';
@@ -17,7 +17,7 @@ import { ToastService } from '../../../shared/toast/ToastService';
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 @AutoUnsubscribe()
-export class HomeTimelineComponent implements OnInit {
+export class HomeTimelineComponent implements OnInit, OnDestroy {
 
     loading = true;
     events: Array<Event>;
@@ -37,6 +37,8 @@ export class HomeTimelineComponent implements OnInit {
         private _appService: AppService,
         private _cd: ChangeDetectorRef
     ) { }
+
+    ngOnDestroy(): void {} // Should be set to use @AutoUnsubscribe with AOT
 
     ngOnInit(): void {
         this.filterSub = this._timelineStore.getFilter().subscribe(f => {

@@ -4,14 +4,15 @@ import (
 	"testing"
 	"time"
 
-	"github.com/ovh/cds/engine/hatchery"
-	"github.com/ovh/cds/sdk/cdsclient"
+	docker "github.com/docker/docker/client"
 	"github.com/stretchr/testify/require"
+	"golang.org/x/net/context"
 	"gopkg.in/h2non/gock.v1"
 
-	docker "github.com/docker/docker/client"
+	"github.com/ovh/cds/engine/hatchery"
+	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/ovh/cds/sdk/log"
-	"golang.org/x/net/context"
 )
 
 func init() {
@@ -62,6 +63,12 @@ func InitTestHatcherySwarm(t *testing.T) *HatcherySwarm {
 		dockerClients: map[string]*dockerClient{},
 		Config: HatcheryConfiguration{
 			DisableDockerOptsOnRequirements: false,
+		},
+	}
+	h.ServiceInstance = &sdk.Service{
+		CanonicalService: sdk.CanonicalService{
+			ID:   1,
+			Name: "my-hatchery",
 		},
 	}
 	h.dockerClients["default"] = &dockerClient{Client: *c, name: "default"}

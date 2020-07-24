@@ -20,7 +20,7 @@ func TestNewClient(t *testing.T) {
 
 func getNewConsumer(t *testing.T) sdk.VCSServer {
 	log.SetLogger(t)
-	cfg := test.LoadTestingConf(t)
+	cfg := test.LoadTestingConf(t, sdk.TypeAPI)
 	consumerKey := cfg["bitbucketConsumerKey"]
 	consumerPrivateKey := cfg["bitbucketPrivateKey"]
 	url := cfg["bitbucketURL"]
@@ -43,7 +43,7 @@ func getNewConsumer(t *testing.T) sdk.VCSServer {
 
 func getAuthorizedClient(t *testing.T) sdk.VCSAuthorizedClient {
 	log.SetLogger(t)
-	cfg := test.LoadTestingConf(t)
+	cfg := test.LoadTestingConf(t, sdk.TypeAPI)
 	consumerKey := cfg["bitbucketConsumerKey"]
 	privateKey := cfg["bitbucketPrivateKey"]
 	token := cfg["bitbucketToken"]

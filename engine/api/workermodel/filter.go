@@ -2,8 +2,8 @@ package workermodel
 
 import (
 	"github.com/ovh/cds/engine/api/group"
+	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/gorpmapping"
 )
 
 // LoadFilter struct for worker model query.
@@ -36,12 +36,12 @@ func (l LoadFilter) SQL() string {
 		conds = append(conds, "worker_model.group_id = :sharedInfraGroupID")
 	}
 
-	return gorpmapping.And(conds...)
+	return gorpmapper.And(conds...)
 }
 
 // Args returns sql args for current filter.
-func (l LoadFilter) Args() gorpmapping.ArgsMap {
-	return gorpmapping.ArgsMap{
+func (l LoadFilter) Args() gorpmapper.ArgsMap {
+	return gorpmapper.ArgsMap{
 		"binary":             l.Binary,
 		"sharedInfraGroupID": group.SharedInfraGroup.ID,
 	}

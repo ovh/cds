@@ -28,8 +28,8 @@ import (
 	"github.com/ovh/cds/engine/api/test/assets"
 	"github.com/ovh/cds/engine/api/user"
 	"github.com/ovh/cds/engine/api/workflow"
+	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/gorpmapping"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -1247,11 +1247,11 @@ func Test_postWorkflowRunAsyncFailedHandler(t *testing.T) {
 	}
 
 	// Prepare service mocks
-	mockVCSSservice, _ := assets.InsertService(t, db, t.Name()+"_VCS", services.TypeVCS)
+	mockVCSSservice, _ := assets.InsertService(t, db, t.Name()+"_VCS", sdk.TypeVCS)
 	defer func() { _ = services.Delete(db, mockVCSSservice) }()
-	mockRepoService, _ := assets.InsertService(t, db, t.Name()+"_REPOSITORIES", services.TypeRepositories)
+	mockRepoService, _ := assets.InsertService(t, db, t.Name()+"_REPOSITORIES", sdk.TypeRepositories)
 	defer func() { _ = services.Delete(db, mockRepoService) }()
-	mockHookService, _ := assets.InsertService(t, db, t.Name()+"_HOOKS", services.TypeHooks)
+	mockHookService, _ := assets.InsertService(t, db, t.Name()+"_HOOKS", sdk.TypeHooks)
 	defer func() { _ = services.Delete(db, mockHookService) }()
 
 	//This is a mock for the repositories service
@@ -1567,7 +1567,7 @@ func Test_postWorkflowRunHandlerWithoutRightConditionsOnHook(t *testing.T) {
 	test.NoError(t, pipeline.InsertJob(api.mustDB(), j, s.ID, &pip2))
 	s.Jobs = append(s.Jobs, *j)
 
-	mockHookService, _ := assets.InsertService(t, db, "Test_postWorkflowRunHandlerWithoutRightConditionsOnHook", services.TypeHooks)
+	mockHookService, _ := assets.InsertService(t, db, "Test_postWorkflowRunHandlerWithoutRightConditionsOnHook", sdk.TypeHooks)
 	defer func() {
 		_ = services.Delete(db, mockHookService) // nolint
 	}()
@@ -1726,7 +1726,7 @@ func Test_postWorkflowRunHandlerHookWithMutex(t *testing.T) {
 	test.NoError(t, pipeline.InsertJob(api.mustDB(), j, s.ID, &pip2))
 	s.Jobs = append(s.Jobs, *j)
 
-	mockServiceHook, _ := assets.InsertService(t, db, "Test_postWorkflowRunHandlerHookWithMutex", services.TypeHooks)
+	mockServiceHook, _ := assets.InsertService(t, db, "Test_postWorkflowRunHandlerHookWithMutex", sdk.TypeHooks)
 	defer func() {
 		_ = services.Delete(db, mockServiceHook) // nolint
 	}()
@@ -2164,7 +2164,7 @@ func Test_postWorkflowRunHandlerHook(t *testing.T) {
 	test.NoError(t, pipeline.InsertJob(api.mustDB(), j, s.ID, &pip2))
 	s.Jobs = append(s.Jobs, *j)
 
-	mockServiceHook, _ := assets.InsertService(t, db, "Test_postWorkflowRunHandlerHookWithMutex", services.TypeHooks)
+	mockServiceHook, _ := assets.InsertService(t, db, "Test_postWorkflowRunHandlerHookWithMutex", sdk.TypeHooks)
 	defer func() {
 		_ = services.Delete(db, mockServiceHook) // nolint
 	}()
@@ -2516,7 +2516,7 @@ func Test_postWorkflowRunHandler_BadPayload(t *testing.T) {
 	assert.Equal(t, 400, rec.Code)
 }
 
-func initGetWorkflowNodeRunJobTest(t *testing.T, api *API, db gorpmapping.SqlExecutorWithTx) (*sdk.AuthentifiedUser, string, *sdk.Project, *sdk.Workflow, *sdk.WorkflowRun, *sdk.WorkflowNodeJobRun) {
+func initGetWorkflowNodeRunJobTest(t *testing.T, api *API, db gorpmapper.SqlExecutorWithTx) (*sdk.AuthentifiedUser, string, *sdk.Project, *sdk.Workflow, *sdk.WorkflowRun, *sdk.WorkflowNodeJobRun) {
 	u, pass := assets.InsertAdminUser(t, db)
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, api.Cache, key, key)
@@ -2633,13 +2633,17 @@ func initGetWorkflowNodeRunJobTest(t *testing.T, api *API, db gorpmapping.SqlExe
 	require.NoError(t, workflow.AppendLog(api.mustDB(), jobRun.ID, jobRun.WorkflowNodeRunID, 1, "1234567890", 15))
 
 	// Add service log
-	require.NoError(t, workflow.AddServiceLog(api.mustDB(), jobRun, &sdk.ServiceLog{
-		Val: "0987654321",
+	require.NoError(t, workflow.AddServiceLog(api.mustDB(), &sdk.ServiceLog{
+		WorkflowNodeRunID:    jobRun.WorkflowNodeRunID,
+		WorkflowNodeJobRunID: jobRun.ID,
+		Val:                  "0987654321",
 	}, 15))
 
 	// Add truncated service log
-	require.NoError(t, workflow.AddServiceLog(api.mustDB(), jobRun, &sdk.ServiceLog{
-		Val: "0987654321",
+	require.NoError(t, workflow.AddServiceLog(api.mustDB(), &sdk.ServiceLog{
+		WorkflowNodeRunID:    jobRun.WorkflowNodeRunID,
+		WorkflowNodeJobRunID: jobRun.ID,
+		Val:                  "0987654321",
 	}, 15))
 
 	return u, pass, proj, w1, lastRun, jobRun
@@ -2799,7 +2803,7 @@ func Test_deleteWorkflowRunsBranchHandler(t *testing.T) {
 	}, consumer, nil)
 	require.NoError(t, err)
 
-	mockHookService, _ := assets.InsertService(t, db, "Test_deleteWorkflowRunsBranchHandler", services.TypeHooks, sdk.AuthConsumerScopeRun)
+	mockHookService, _ := assets.InsertService(t, db, "Test_deleteWorkflowRunsBranchHandler", sdk.TypeHooks, sdk.AuthConsumerScopeRun)
 	defer func() {
 		_ = services.Delete(db, mockHookService) // nolint
 	}()

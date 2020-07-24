@@ -4,6 +4,7 @@ import {
     ChangeDetectorRef,
     Component,
     Input,
+    OnDestroy,
     OnInit,
     ViewChild
 } from '@angular/core';
@@ -33,7 +34,7 @@ declare var CodeMirror: any;
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 @AutoUnsubscribe()
-export class PipelineAsCodeEditorComponent implements OnInit, AfterViewInit {
+export class PipelineAsCodeEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     @ViewChild('codeMirror') codemirror: any;
 
     // Project that contains the pipeline
@@ -103,12 +104,15 @@ export class PipelineAsCodeEditorComponent implements OnInit, AfterViewInit {
         })
     }
 
+    ngOnDestroy(): void {} // Should be set to use @AutoUnsubscribe with AOT
+
     ngAfterViewInit(): void {
         this.viewInit = true;
         if (this.pipelineSchema) {
             this.initCodeMirror();
         }
     }
+
     initCodeMirror(): void {
         this.codemirror.instance.on('keyup', (cm, event) => {
             // 32 : space ; 13: enter ; 8: backspace

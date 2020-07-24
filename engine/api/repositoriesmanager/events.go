@@ -7,9 +7,10 @@ import (
 	"time"
 
 	"github.com/go-gorp/gorp"
+
 	"github.com/ovh/cds/engine/api/cache"
+	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/gorpmapping"
 	"github.com/ovh/cds/sdk/log"
 )
 
@@ -59,7 +60,7 @@ func RetryEvent(e *sdk.Event, err error, store cache.Store) error {
 	return store.Enqueue("events_repositoriesmanager", e)
 }
 
-func processEvent(ctx context.Context, db gorpmapping.SqlExecutorWithTx, event sdk.Event, store cache.Store) error {
+func processEvent(ctx context.Context, db gorpmapper.SqlExecutorWithTx, event sdk.Event, store cache.Store) error {
 	if event.EventType != fmt.Sprintf("%T", sdk.EventRunWorkflowNode{}) {
 		return nil
 	}

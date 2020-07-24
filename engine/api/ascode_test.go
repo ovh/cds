@@ -69,8 +69,8 @@ func Test_postImportAsCodeHandler(t *testing.T) {
 
 	assert.NoError(t, repositoriesmanager.InsertProjectVCSServerLink(context.TODO(), db, &vcsServer))
 
-	a, _ := assets.InsertService(t, db, "Test_postImportAsCodeHandler", services.TypeRepositories)
-	b, _ := assets.InsertService(t, db, "Test_VCSService", services.TypeVCS)
+	a, _ := assets.InsertService(t, db, "Test_postImportAsCodeHandler", sdk.TypeRepositories)
+	b, _ := assets.InsertService(t, db, "Test_VCSService", sdk.TypeVCS)
 
 	defer func() {
 		_ = services.Delete(db, a)
@@ -153,9 +153,9 @@ func Test_postPerformImportAsCodeHandler(t *testing.T) {
 	vcsServer.Set("secret", "bar")
 	assert.NoError(t, repositoriesmanager.InsertProjectVCSServerLink(context.TODO(), db, &vcsServer))
 
-	a, _ := assets.InsertService(t, db, "Test_postPerformImportAsCodeHandler_Repo", services.TypeRepositories)
-	b, _ := assets.InsertService(t, db, "Test_postPerformImportAsCodeHandler_VCS", services.TypeVCS)
-	c, _ := assets.InsertService(t, db, "Test_postPerformImportAsCodeHandler_Hooks", services.TypeHooks)
+	a, _ := assets.InsertService(t, db, "Test_postPerformImportAsCodeHandler_Repo", sdk.TypeRepositories)
+	b, _ := assets.InsertService(t, db, "Test_postPerformImportAsCodeHandler_VCS", sdk.TypeVCS)
+	c, _ := assets.InsertService(t, db, "Test_postPerformImportAsCodeHandler_Hooks", sdk.TypeHooks)
 
 	defer func() {
 		_ = services.Delete(db, a)
@@ -348,7 +348,7 @@ vcs_ssh_key: proj-blabla
 	}
 
 	// Prepare VCS Mock
-	mockVCSSservice, _ := assets.InsertService(t, db, "Test_postResyncPRAsCodeHandler", services.TypeVCS)
+	mockVCSSservice, _ := assets.InsertService(t, db, "Test_postResyncPRAsCodeHandler", sdk.TypeVCS)
 	defer func() {
 		_ = services.Delete(db, mockVCSSservice) // nolint
 	}()

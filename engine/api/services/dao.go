@@ -5,9 +5,10 @@ import (
 	"time"
 
 	"github.com/go-gorp/gorp"
+	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/engine/api/worker"
+	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/gorpmapping"
 	"github.com/ovh/cds/sdk/log"
 )
 
@@ -52,10 +53,6 @@ func get(ctx context.Context, db gorp.SqlExecutor, q gorpmapping.Query) (*sdk.Se
 	}
 	if !isValid {
 		log.Error(ctx, "service.get> service %d data corrupted", s.ID)
-		return nil, sdk.WithStack(sdk.ErrNotFound)
-	}
-
-	if s.Name == "" {
 		return nil, sdk.WithStack(sdk.ErrNotFound)
 	}
 
@@ -124,7 +121,7 @@ func FindDeadServices(ctx context.Context, db gorp.SqlExecutor, t time.Duration)
 }
 
 // Insert a service in database.
-func Insert(ctx context.Context, db gorpmapping.SqlExecutorWithTx, s *sdk.Service) error {
+func Insert(ctx context.Context, db gorpmapper.SqlExecutorWithTx, s *sdk.Service) error {
 	sdb := service{Service: *s}
 	if err := gorpmapping.InsertAndSign(ctx, db, &sdb); err != nil {
 		return err
@@ -134,7 +131,7 @@ func Insert(ctx context.Context, db gorpmapping.SqlExecutorWithTx, s *sdk.Servic
 }
 
 // Update a service in database.
-func Update(ctx context.Context, db gorpmapping.SqlExecutorWithTx, s *sdk.Service) error {
+func Update(ctx context.Context, db gorpmapper.SqlExecutorWithTx, s *sdk.Service) error {
 	sdb := service{Service: *s}
 	if err := gorpmapping.UpdateAndSign(ctx, db, &sdb); err != nil {
 		return err
@@ -145,7 +142,7 @@ func Update(ctx context.Context, db gorpmapping.SqlExecutorWithTx, s *sdk.Servic
 
 // Delete a service.
 func Delete(db gorp.SqlExecutor, s *sdk.Service) error {
-	if s.Type == TypeHatchery {
+	if s.Type == sdk.TypeHatchery {
 		if err := worker.ReleaseAllFromHatchery(db, s.ID); err != nil {
 			return err
 		}

@@ -6,8 +6,9 @@ import (
 
 	"github.com/go-gorp/gorp"
 
+	"github.com/ovh/cds/engine/api/database/gorpmapping"
+	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/gorpmapping"
 	"github.com/ovh/cds/sdk/log"
 )
 
@@ -73,7 +74,7 @@ func LoadSecretByModelIDAndName(ctx context.Context, db gorp.SqlExecutor, worker
 }
 
 // InsertSecret in database.
-func InsertSecret(ctx context.Context, db gorpmapping.SqlExecutorWithTx, s *sdk.WorkerModelSecret) error {
+func InsertSecret(ctx context.Context, db gorpmapper.SqlExecutorWithTx, s *sdk.WorkerModelSecret) error {
 	s.ID = sdk.UUID()
 	s.Created = time.Now()
 	dbSecret := workerModelSecret{WorkerModelSecret: *s}
@@ -85,7 +86,7 @@ func InsertSecret(ctx context.Context, db gorpmapping.SqlExecutorWithTx, s *sdk.
 }
 
 // UpdateSecret in database.
-func UpdateSecret(ctx context.Context, db gorpmapping.SqlExecutorWithTx, s *sdk.WorkerModelSecret) error {
+func UpdateSecret(ctx context.Context, db gorpmapper.SqlExecutorWithTx, s *sdk.WorkerModelSecret) error {
 	dbSecret := workerModelSecret{WorkerModelSecret: *s}
 	if err := gorpmapping.UpdateAndSign(ctx, db, &dbSecret); err != nil {
 		return sdk.WrapError(err, "unable to update worker model secret with id: %s", s.ID)

@@ -309,6 +309,7 @@ func (c *client) Stream(ctx context.Context, method string, path string, body io
 		}
 
 		if resp.StatusCode == 409 || resp.StatusCode > 500 {
+			time.Sleep(250 * time.Millisecond)
 			savederror = extractBodyErrorFromResponse(resp)
 			continue
 		}

@@ -5,8 +5,9 @@ import (
 
 	"github.com/go-gorp/gorp"
 
+	"github.com/ovh/cds/engine/api/database/gorpmapping"
+	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/gorpmapping"
 	"github.com/ovh/cds/sdk/log"
 )
 
@@ -130,7 +131,7 @@ func LoadByID(ctx context.Context, db gorp.SqlExecutor, id int64, opts ...LoadOp
 }
 
 // Insert given group into database.
-func Insert(ctx context.Context, db gorpmapping.SqlExecutorWithTx, g *sdk.Group) error {
+func Insert(ctx context.Context, db gorpmapper.SqlExecutorWithTx, g *sdk.Group) error {
 	grp := *g
 	var groupDB = group{
 		Group: grp,
@@ -143,7 +144,7 @@ func Insert(ctx context.Context, db gorpmapping.SqlExecutorWithTx, g *sdk.Group)
 }
 
 // Update given group into database.
-func Update(ctx context.Context, db gorpmapping.SqlExecutorWithTx, g *sdk.Group) error {
+func Update(ctx context.Context, db gorpmapper.SqlExecutorWithTx, g *sdk.Group) error {
 	grp := *g
 	var groupDB = group{
 		Group: grp,

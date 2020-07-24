@@ -1238,7 +1238,7 @@ func TestInsertSimpleWorkflowWithHookAndExport(t *testing.T) {
 		}
 	}
 
-	mockHookSservice, _ := assets.InsertService(t, db, "TestManualRunBuildParameterMultiApplication", services.TypeHooks)
+	mockHookSservice, _ := assets.InsertService(t, db, "TestManualRunBuildParameterMultiApplication", sdk.TypeHooks)
 	defer func() {
 		services.Delete(db, mockHookSservice) // nolint
 	}()
@@ -1520,8 +1520,8 @@ func TestInsertAndDeleteMultiHook(t *testing.T) {
 		require.NoError(t, services.Delete(db, &srv))
 	}
 
-	a, _ := assets.InsertService(t, db, "TestInsertAndDeleteMultiHookVCS", services.TypeVCS)
-	b, _ := assets.InsertService(t, db, "TestInsertAndDeleteMultiHookHook", services.TypeHooks)
+	a, _ := assets.InsertService(t, db, "TestInsertAndDeleteMultiHookVCS", sdk.TypeVCS)
+	b, _ := assets.InsertService(t, db, "TestInsertAndDeleteMultiHookHook", sdk.TypeHooks)
 
 	defer func() {
 		_ = services.Delete(db, a)

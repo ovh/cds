@@ -15,8 +15,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/ovh/cds/engine/cdn"
-
 	"github.com/ovh/venom"
 
 	"github.com/sguiheux/go-coverage"
@@ -38,8 +36,8 @@ import (
 	"github.com/ovh/cds/engine/api/test/assets"
 	"github.com/ovh/cds/engine/api/worker"
 	"github.com/ovh/cds/engine/api/workflow"
+	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/gorpmapping"
 	"github.com/ovh/cds/sdk/log"
 )
 
@@ -57,7 +55,7 @@ type testRunWorkflowCtx struct {
 	model         *sdk.Model
 }
 
-func testRunWorkflow(t *testing.T, api *API, db gorpmapping.SqlExecutorWithTx, router *Router) testRunWorkflowCtx {
+func testRunWorkflow(t *testing.T, api *API, db gorpmapper.SqlExecutorWithTx, router *Router) testRunWorkflowCtx {
 	u, pass := assets.InsertLambdaUser(t, db)
 	key := "proj-" + sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, api.Cache, key, key)
@@ -288,7 +286,7 @@ func testGetWorkflowJobAsRegularUser(t *testing.T, api *API, router *Router, jwt
 	ctx.job = &jobs[len(jobs)-1]
 }
 
-func testGetWorkflowJobAsWorker(t *testing.T, api *API, db gorpmapping.SqlExecutorWithTx, router *Router, ctx *testRunWorkflowCtx) {
+func testGetWorkflowJobAsWorker(t *testing.T, api *API, db gorpmapper.SqlExecutorWithTx, router *Router, ctx *testRunWorkflowCtx) {
 	testRegisterWorker(t, api, db, router, ctx)
 
 	uri := router.GetRoute("GET", api.getWorkflowJobQueueHandler, nil)
@@ -310,7 +308,7 @@ func testGetWorkflowJobAsWorker(t *testing.T, api *API, db gorpmapping.SqlExecut
 	ctx.job = &jobs[0]
 }
 
-func testGetWorkflowJobAsHatchery(t *testing.T, api *API, db gorpmapping.SqlExecutorWithTx, router *Router, ctx *testRunWorkflowCtx) {
+func testGetWorkflowJobAsHatchery(t *testing.T, api *API, db gorpmapper.SqlExecutorWithTx, router *Router, ctx *testRunWorkflowCtx) {
 	uri := router.GetRoute("GET", api.getWorkflowJobQueueHandler, nil)
 	test.NotEmpty(t, uri)
 
@@ -332,7 +330,7 @@ func testGetWorkflowJobAsHatchery(t *testing.T, api *API, db gorpmapping.SqlExec
 	ctx.job = &jobs[0]
 }
 
-func testRegisterWorker(t *testing.T, api *API, db gorpmapping.SqlExecutorWithTx, router *Router, ctx *testRunWorkflowCtx) {
+func testRegisterWorker(t *testing.T, api *API, db gorpmapper.SqlExecutorWithTx, router *Router, ctx *testRunWorkflowCtx) {
 	g, err := group.LoadByID(context.TODO(), api.mustDB(), ctx.user.Groups[0].ID)
 	if err != nil {
 		t.Fatalf("Error getting group: %+v", err)
@@ -348,7 +346,7 @@ func testRegisterWorker(t *testing.T, api *API, db gorpmapping.SqlExecutorWithTx
 	ctx.model = model
 }
 
-func testRegisterHatchery(t *testing.T, api *API, db gorpmapping.SqlExecutorWithTx, router *Router, ctx *testRunWorkflowCtx) {
+func testRegisterHatchery(t *testing.T, api *API, db gorpmapper.SqlExecutorWithTx, router *Router, ctx *testRunWorkflowCtx) {
 	h, _, _, jwt := assets.InsertHatchery(t, db, ctx.user.Groups[0])
 	ctx.hatchery = h
 	ctx.hatcheryToken = jwt
@@ -443,17 +441,14 @@ func Test_postTakeWorkflowJobHandler(t *testing.T) {
 		"id":               fmt.Sprintf("%d", ctx.job.ID),
 	}
 
+	// Prepare VCS Mock
+	mockVCSSservice, _ := assets.InitCDNService(t, db)
+	defer func() {
+		_ = services.Delete(db, mockVCSSservice) // nolint
+	}()
+
 	//Register the worker
 	testRegisterWorker(t, api, db, router, &ctx)
-
-	// Add cdn config
-	api.Config.CDN = cdn.Configuration{
-		PublicTCP: "cdn.net:4545",
-		TCP: sdk.TCPServer{
-			Port: 8090,
-			Addr: "localhost",
-		},
-	}
 
 	uri := router.GetRoute("POST", api.postTakeWorkflowJobHandler, vars)
 	require.NotEmpty(t, uri)
@@ -481,14 +476,15 @@ func Test_postTakeWorkflowJobHandler(t *testing.T) {
 	assert.Equal(t, ctx.model.Name, run.Model)
 	assert.Equal(t, ctx.worker.Name, run.WorkerName)
 	assert.NotEmpty(t, run.HatcheryName)
-
-	wkrDB, err := worker.LoadWorkerByIDWithDecryptKey(context.TODO(), api.mustDB(), ctx.worker.ID)
-	assert.NoError(t, err)
-	assert.Len(t, wkrDB.PrivateKey, 32)
 }
 
 func Test_postTakeWorkflowInvalidJobHandler(t *testing.T) {
 	api, db, router := newTestAPI(t)
+
+	s, _ := assets.InitCDNService(t, db)
+	defer func() {
+		_ = services.Delete(db, s)
+	}()
 
 	ctx := testRunWorkflow(t, api, db, router)
 	testGetWorkflowJobAsWorker(t, api, db, router, &ctx)
@@ -552,6 +548,11 @@ func Test_postBookWorkflowJobHandler(t *testing.T) {
 func Test_postWorkflowJobResultHandler(t *testing.T) {
 	api, db, router := newTestAPI(t)
 
+	s, _ := assets.InitCDNService(t, db)
+	defer func() {
+		_ = services.Delete(db, s)
+	}()
+
 	ctx := testRunWorkflow(t, api, db, router)
 	testGetWorkflowJobAsWorker(t, api, db, router, &ctx)
 	assert.NotNil(t, ctx.job)
@@ -569,18 +570,6 @@ func Test_postWorkflowJobResultHandler(t *testing.T) {
 	rec := httptest.NewRecorder()
 	router.Mux.ServeHTTP(rec, req)
 	require.Equal(t, 200, rec.Code)
-
-	//Send logs
-	logs := sdk.Log{
-		Val: "This is a log",
-	}
-
-	uri = router.Prefix + fmt.Sprintf("/queue/workflows/%d/log", ctx.job.ID)
-
-	req = assets.NewJWTAuthentifiedRequest(t, ctx.workerToken, "POST", uri, logs)
-	rec = httptest.NewRecorder()
-	router.Mux.ServeHTTP(rec, req)
-	require.Equal(t, 204, rec.Code)
 
 	//Send result
 	res := sdk.Result{
@@ -642,6 +631,11 @@ func Test_postWorkflowJobResultHandler(t *testing.T) {
 
 func Test_postWorkflowJobTestsResultsHandler(t *testing.T) {
 	api, db, router := newTestAPI(t)
+
+	s, _ := assets.InitCDNService(t, db)
+	defer func() {
+		_ = services.Delete(db, s)
+	}()
 
 	ctx := testRunWorkflow(t, api, db, router)
 	testGetWorkflowJobAsWorker(t, api, db, router, &ctx)
@@ -746,6 +740,11 @@ func Test_postWorkflowJobTestsResultsHandler(t *testing.T) {
 
 func Test_postWorkflowJobArtifactHandler(t *testing.T) {
 	api, db, router := newTestAPI(t)
+
+	s, _ := assets.InitCDNService(t, db)
+	defer func() {
+		_ = services.Delete(db, s)
+	}()
 
 	ctx := testRunWorkflow(t, api, db, router)
 	testGetWorkflowJobAsWorker(t, api, db, router, &ctx)
@@ -892,6 +891,11 @@ func fileExists(filename string) bool {
 
 func Test_postWorkflowJobStaticFilesHandler(t *testing.T) {
 	api, db, router := newTestAPI(t)
+
+	s, _ := assets.InitCDNService(t, db)
+	defer func() {
+		_ = services.Delete(db, s)
+	}()
 
 	ctx := testRunWorkflow(t, api, db, router)
 	testGetWorkflowJobAsWorker(t, api, db, router, &ctx)
@@ -1065,11 +1069,7 @@ func TestWorkerPrivateKey(t *testing.T) {
 	ctx.worker.JobRunID = &wrDB.WorkflowNodeRuns[w.WorkflowData.Node.ID][0].Stages[0].RunJobs[0].ID
 	assert.NoError(t, worker.SetToBuilding(context.TODO(), db, ctx.worker.ID, *ctx.worker.JobRunID, []byte("mysecret")))
 
-	wkFromDB, err := worker.LoadWorkerByName(context.TODO(), db, ctx.worker.Name)
-	require.NoError(t, err)
-	require.NotEqual(t, "mysecret", string(wkFromDB.PrivateKey))
-
-	wkFromDB, err = worker.LoadWorkerByIDWithDecryptKey(context.TODO(), db, ctx.worker.ID)
+	wkFromDB, err := worker.LoadWorkerByNameWithDecryptKey(context.TODO(), db, ctx.worker.Name)
 	require.NoError(t, err)
 	require.Equal(t, "mysecret", string(wkFromDB.PrivateKey))
 }
@@ -1317,7 +1317,7 @@ func TestInsertNewCodeCoverageReport(t *testing.T) {
 		}
 	}
 
-	a, _ := assets.InsertService(t, db, "TestInsertNewCodeCoverageReport", services.TypeVCS)
+	a, _ := assets.InsertService(t, db, "TestInsertNewCodeCoverageReport", sdk.TypeVCS)
 
 	defer func() {
 		_ = services.Delete(db, a)

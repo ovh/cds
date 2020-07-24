@@ -8,6 +8,7 @@ import (
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 
+	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
 )
 
@@ -24,5 +25,11 @@ func NewHatcheryKubernetesTest(t *testing.T) *HatcheryKubernetes {
 
 	h.Config.Name = "kyubi"
 	h.Config.Namespace = "hachibi"
+	h.ServiceInstance = &sdk.Service{
+		CanonicalService: sdk.CanonicalService{
+			ID:   1,
+			Name: "kyubi",
+		},
+	}
 	return h
 }

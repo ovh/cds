@@ -9,16 +9,15 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/ovh/cds/sdk/cdsclient"
-
+	"github.com/gorilla/mux"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/spacemonkeygo/httpsig.v0"
-
-	"github.com/gorilla/mux"
 
 	"github.com/ovh/cds/engine/api"
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/test"
+	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/ovh/cds/sdk/jws"
 	"github.com/ovh/cds/sdk/log"
 )
@@ -37,7 +36,7 @@ func newTestService(t *testing.T) (*Service, error) {
 	defer fakeAPIPrivateKey.Unlock()
 	//Read the test config file
 	if RedisHost == "" {
-		cfg := test.LoadTestingConf(t)
+		cfg := test.LoadTestingConf(t, sdk.TypeAPI)
 		RedisHost = cfg["redisHost"]
 		RedisPassword = cfg["redisPassword"]
 	}

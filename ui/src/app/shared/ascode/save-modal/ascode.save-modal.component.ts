@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, ViewChild } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnDestroy, ViewChild } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
 import { ModalTemplate, SuiActiveModal, SuiModalService, TemplateModalConfig } from '@richardlt/ng2-semantic-ui';
@@ -27,7 +27,7 @@ import { ParamData } from '../save-form/ascode.save-form.component';
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 @AutoUnsubscribe()
-export class AsCodeSaveModalComponent {
+export class AsCodeSaveModalComponent implements OnDestroy {
     @ViewChild('updateAsCodeModal')
     public myModalTemplate: ModalTemplate<boolean, boolean, void>;
     modal: SuiActiveModal<boolean, boolean, void>;
@@ -59,6 +59,8 @@ export class AsCodeSaveModalComponent {
         private _eventService: EventService,
         private _envService: EnvironmentService
     ) { }
+
+    ngOnDestroy(): void {} // Should be set to use @AutoUnsubscribe with AOT
 
     show(data: any, type: string) {
         this.loading = false;

@@ -8,13 +8,14 @@ import (
 	"github.com/go-gorp/gorp"
 	"github.com/lib/pq"
 
+	"github.com/ovh/cds/engine/api/database/gorpmapping"
+	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/gorpmapping"
 	"github.com/ovh/cds/sdk/log"
 )
 
 type dbApplicationVariable struct {
-	gorpmapping.SignedEntity
+	gorpmapper.SignedEntity
 	ID            int64  `db:"id"`
 	ApplicationID int64  `db:"application_id"`
 	Name          string `db:"var_name"`
@@ -23,9 +24,9 @@ type dbApplicationVariable struct {
 	Type          string `db:"var_type"`
 }
 
-func (e dbApplicationVariable) Canonical() gorpmapping.CanonicalForms {
+func (e dbApplicationVariable) Canonical() gorpmapper.CanonicalForms {
 	var _ = []interface{}{e.ApplicationID, e.ID, e.Name, e.Type}
-	return gorpmapping.CanonicalForms{
+	return gorpmapper.CanonicalForms{
 		"{{print .ApplicationID}}{{print .ID}}{{.Name}}{{.Type}}",
 	}
 }
@@ -160,7 +161,7 @@ func DeleteAllVariables(db gorp.SqlExecutor, applicationID int64) error {
 }
 
 // InsertVariable Insert a new variable in the given application
-func InsertVariable(db gorpmapping.SqlExecutorWithTx, appID int64, v *sdk.ApplicationVariable, u sdk.Identifiable) error {
+func InsertVariable(db gorpmapper.SqlExecutorWithTx, appID int64, v *sdk.ApplicationVariable, u sdk.Identifiable) error {
 	//Check variable name
 	rx := sdk.NamePatternRegex
 	if !rx.MatchString(v.Name) {
@@ -193,7 +194,7 @@ func InsertVariable(db gorpmapping.SqlExecutorWithTx, appID int64, v *sdk.Applic
 }
 
 // UpdateVariable Update a variable in the given application
-func UpdateVariable(db gorpmapping.SqlExecutorWithTx, appID int64, variable *sdk.ApplicationVariable, variableBefore *sdk.ApplicationVariable, u sdk.Identifiable) error {
+func UpdateVariable(db gorpmapper.SqlExecutorWithTx, appID int64, variable *sdk.ApplicationVariable, variableBefore *sdk.ApplicationVariable, u sdk.Identifiable) error {
 	rx := sdk.NamePatternRegex
 	if !rx.MatchString(variable.Name) {
 		return sdk.NewErrorFrom(sdk.ErrInvalidName, "variable name should match pattern %s", sdk.NamePattern)

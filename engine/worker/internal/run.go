@@ -111,15 +111,21 @@ func (w *CurrentWorker) replaceVariablesPlaceholder(a *sdk.Action, params []sdk.
 
 func (w *CurrentWorker) runJob(ctx context.Context, a *sdk.Action, jobID int64, secrets []sdk.Variable) sdk.Result {
 	log.Info(ctx, "runJob> start job %s (%d)", a.Name, jobID)
-	defer func() { log.Info(ctx, "runJob> job %s (%d)", a.Name, jobID) }()
-
 	var jobResult = sdk.Result{
 		Status:  sdk.StatusSuccess,
 		BuildID: jobID,
 	}
 
+	defer func() {
+		w.SendEndOfJobLog(ctx, workerruntime.LevelInfo, "End of Job", jobResult.Status)
+		log.Info(ctx, "runJob> job %s (%d)", a.Name, jobID)
+	}()
+
 	var nDisabled, nCriticalFailed int
 	for jobStepIndex, step := range a.Actions {
+		// Reset step log line to 0
+		w.stepLogLine = 0
+
 		ctx = workerruntime.SetStepOrder(ctx, jobStepIndex)
 		if err := w.updateStepStatus(ctx, jobID, jobStepIndex, sdk.StatusBuilding); err != nil {
 			jobResult.Status = sdk.StatusFail
@@ -189,9 +195,7 @@ func (w *CurrentWorker) runAction(ctx context.Context, a sdk.Action, jobID int64
 	var t0 = time.Now()
 	defer func() {
 		w.SendLog(ctx, workerruntime.LevelInfo, fmt.Sprintf("End of step \"%s\" (%s)", actionName, sdk.Round(time.Since(t0), time.Second).String()))
-		if w.logger.gelfLogger != nil {
-			w.logger.gelfLogger.hook.Flush()
-		}
+		w.gelfLogger.hook.Flush()
 	}()
 
 	//If the action is disabled; skip it
@@ -517,18 +521,6 @@ func (w *CurrentWorker) ProcessJob(jobInfo sdk.WorkflowNodeJobRunData) (res sdk.
 	ctx = workerruntime.SetJobID(ctx, jobInfo.NodeJobRun.ID)
 	ctx = workerruntime.SetStepOrder(ctx, 0)
 
-	// start logger routine with a large buffer
-	w.logger.logChan = make(chan sdk.Log)
-	go func() {
-		if err := w.logProcessor(ctx, jobInfo.NodeJobRun.ID); err != nil {
-			log.Warning(ctx, "processJob> Logs processor error: %v", err)
-		}
-	}()
-	defer func() {
-		if err := w.drainLogsAndCloseLogger(ctx); err != nil {
-			log.Warning(ctx, "processJob> Drain logs error: %v", err)
-		}
-	}()
 	defer func() {
 		log.Warning(ctx, "processJob> Status: %s | Reason: %s", res.Status, res.Reason)
 	}()
@@ -624,10 +616,7 @@ func (w *CurrentWorker) ProcessJob(jobInfo sdk.WorkflowNodeJobRunData) (res sdk.
 	if err := teardownDirectory(w.basedir, ""); err != nil {
 		log.Error(ctx, "Cannot remove basedir content: %s", err)
 	}
-	// Flushing logs
-	if w.logger.gelfLogger != nil {
-		w.logger.gelfLogger.hook.Flush()
-	}
+	w.gelfLogger.hook.Flush()
 
 	return res
 }

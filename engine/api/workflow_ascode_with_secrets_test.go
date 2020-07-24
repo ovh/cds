@@ -7,6 +7,11 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/go-gorp/gorp"
+	"github.com/golang/mock/gomock"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/integration"
@@ -14,27 +19,21 @@ import (
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/plugin"
 	"github.com/ovh/cds/engine/api/project"
-	"github.com/ovh/cds/engine/api/test"
-	"github.com/ovh/cds/engine/api/workflow"
-
-	"github.com/go-gorp/gorp"
-	"github.com/golang/mock/gomock"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
-
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/engine/api/services/mock_services"
+	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/api/test/assets"
+	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/sdk"
 )
 
 func Test_RunNonDefaultBranchWithSecrets(t *testing.T) {
 	api, db, router := newTestAPI(t)
 
-	_, _ = assets.InsertService(t, db, t.Name()+"_HOOKS", services.TypeHooks)
-	_, _ = assets.InsertService(t, db, t.Name()+"_VCS", services.TypeVCS)
-	_, _ = assets.InsertService(t, db, t.Name()+"_REPO", services.TypeRepositories)
+	_, _ = assets.InsertService(t, db, t.Name()+"_HOOKS", sdk.TypeHooks)
+	_, _ = assets.InsertService(t, db, t.Name()+"_VCS", sdk.TypeVCS)
+	_, _ = assets.InsertService(t, db, t.Name()+"_REPO", sdk.TypeRepositories)
 
 	// Setup a mock for all services called by the API
 	ctrl := gomock.NewController(t)

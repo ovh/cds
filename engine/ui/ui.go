@@ -19,7 +19,6 @@ import (
 
 	"github.com/ovh/cds/cli"
 	"github.com/ovh/cds/engine/api"
-	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/ovh/cds/sdk/log"
@@ -60,7 +59,7 @@ func (s *Service) ApplyConfiguration(config interface{}) error {
 	}
 
 	s.ServiceName = s.Cfg.Name
-	s.ServiceType = services.TypeUI
+	s.ServiceType = sdk.TypeUI
 	s.HTTPURL = s.Cfg.URL
 	s.MaxHeartbeatFailures = s.Cfg.API.MaxHeartbeatFailures
 

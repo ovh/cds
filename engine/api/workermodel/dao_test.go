@@ -13,8 +13,8 @@ import (
 	"github.com/ovh/cds/engine/api/test/assets"
 	"github.com/ovh/cds/engine/api/worker"
 	"github.com/ovh/cds/engine/api/workermodel"
+	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/gorpmapping"
 )
 
 func TestInsertAndUpdate_WithRegistryPassword(t *testing.T) {
@@ -95,7 +95,7 @@ func TestInsertAndUpdate_WithRegistryPassword(t *testing.T) {
 	require.Error(t, err)
 }
 
-func insertWorkerModel(t *testing.T, db gorpmapping.SqlExecutorWithTx, name string, groupID int64, req ...sdk.Requirement) *sdk.Model {
+func insertWorkerModel(t *testing.T, db gorpmapper.SqlExecutorWithTx, name string, groupID int64, req ...sdk.Requirement) *sdk.Model {
 	m := sdk.Model{
 		Name: name,
 		Type: sdk.Docker,

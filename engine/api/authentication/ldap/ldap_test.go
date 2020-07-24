@@ -13,7 +13,7 @@ import (
 )
 
 /*
-  To setup the configuration of this unit test, you have to put it in the $HOME/.cds/tests.cfg.json file.
+  To setup the configuration of this unit test, you have to put it in the $HOME/.cds/api.tests.cfg.json file.
   Add the following attributes after the database configuration and set as you want
   	"ldapRootDN" : "",
     "ldapUserSearchBase" : "",
@@ -32,7 +32,7 @@ import (
 
 func TestGetUserInfo(t *testing.T) {
 	log.SetLogger(t)
-	cfg := test.LoadTestingConf(t)
+	cfg := test.LoadTestingConf(t, sdk.TypeAPI)
 	ldapConfig := Config{
 		RootDN:          cfg["ldapRootDN"],
 		UserSearchBase:  cfg["ldapUserSearchBase"],

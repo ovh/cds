@@ -2,9 +2,10 @@ package hooks
 
 import (
 	"encoding/json"
+	"testing"
+
 	"github.com/ovh/cds/sdk"
 	"github.com/stretchr/testify/assert"
-	"testing"
 )
 
 func TestBuildHookMessage(t *testing.T) {
@@ -30,7 +31,7 @@ func TestBuildHookMessage(t *testing.T) {
 	assert.Equal(t, hookEvent.Payload["git.hash"], "bb488dea35f140fcac3ffd04d2d01f0f29c75100")
 	assert.Equal(t, hookEvent.Payload["git.hash.before"], "70849c92d899f30f092ad74cd59a651e03a07902")
 	assert.Equal(t, hookEvent.Payload["git.message"], "fix\n\nChange-Id: Ied67a65d33f13d77c2d98540823a9eb0c887f35a\n")
-	assert.Equal(t, hookEvent.Payload["gerrit.change.id"], "Ied67a65d33f13d77c2d98540823a9eb0c887f35a")
+	assert.Equal(t, hookEvent.Payload["gerrit.change.id"], "CDS%2Fgerrit~master~Ied67a65d33f13d77c2d98540823a9eb0c887f35a")
 	assert.Equal(t, hookEvent.Payload["gerrit.change.ref"], "refs/changes/11/11/1")
 	assert.Equal(t, hookEvent.Payload["gerrit.change.status"], "NEW")
 	assert.Equal(t, hookEvent.Payload["gerrit.type"], "patchset-created")

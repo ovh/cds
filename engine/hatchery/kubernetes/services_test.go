@@ -4,8 +4,6 @@ import (
 	"context"
 	"crypto/rand"
 	"crypto/rsa"
-	v1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"net/http"
 	"strings"
 	"testing"
@@ -14,6 +12,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/h2non/gock.v1"
+	v1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/ovh/cds/sdk"
 )
@@ -22,15 +22,14 @@ var loggerCall = 0
 
 func Test_serviceLogs(t *testing.T) {
 	h := NewHatcheryKubernetesTest(t)
-	h.Common.ServiceInstance = &sdk.Service{
-		LogServerAdress: "tcphost:8090",
-	}
 	reader := rand.Reader
 	bitSize := 2048
 	key, err := rsa.GenerateKey(reader, bitSize)
 	require.NoError(t, err)
 	h.Common.PrivateKey = key
-	require.NoError(t, h.InitServiceLogger())
+
+	gock.New("http://lolcat.api").Get("/config/cdn").Reply(http.StatusOK).JSON(sdk.CDNConfig{TCPURL: "tcphost:8090"})
+	require.NoError(t, h.RefreshServiceLogger(context.TODO()))
 
 	podsList := v1.PodList{
 		Items: []v1.Pod{
@@ -39,7 +38,8 @@ func Test_serviceLogs(t *testing.T) {
 					Name:      "pod-name",
 					Namespace: "kyubi",
 					Labels: map[string]string{
-						LABEL_SERVICE_JOB_ID: "666",
+						LABEL_SERVICE_JOB_ID:      "666",
+						LABEL_SERVICE_NODE_RUN_ID: "999",
 					},
 				},
 				Spec: v1.PodSpec{

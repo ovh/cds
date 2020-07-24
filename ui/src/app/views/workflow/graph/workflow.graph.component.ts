@@ -1,5 +1,5 @@
 // tslint:disable-next-line: max-line-length
-import { AfterViewInit, ChangeDetectionStrategy, ChangeDetectorRef, Component, ComponentFactoryResolver, ComponentRef, EventEmitter, HostListener, Input, Output, ViewChild, ViewContainerRef } from '@angular/core';
+import { AfterViewInit, ChangeDetectionStrategy, ChangeDetectorRef, Component, ComponentFactoryResolver, ComponentRef, EventEmitter, HostListener, Input, OnDestroy, Output, ViewChild, ViewContainerRef } from '@angular/core';
 import * as d3 from 'd3';
 import * as dagreD3 from 'dagre-d3';
 import { Project } from '../../../model/project.model';
@@ -21,7 +21,7 @@ import { WorkflowWNodeComponent } from '../../../shared/workflow/wnode/wnode.com
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 @AutoUnsubscribe()
-export class WorkflowGraphComponent implements AfterViewInit {
+export class WorkflowGraphComponent implements AfterViewInit, OnDestroy {
     static margin = 80; // let 40px on top and bottom of the graph
     static maxScale = 2;
     static minScale = 1 / 4;
@@ -70,6 +70,8 @@ export class WorkflowGraphComponent implements AfterViewInit {
         private _workflowStore: WorkflowStore,
         private _workflowCore: WorkflowCoreService,
     ) { }
+
+    ngOnDestroy(): void {} // Should be set to use @AutoUnsubscribe with AOT
 
     ngAfterViewInit(): void {
         this.ready = true;

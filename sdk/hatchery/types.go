@@ -5,6 +5,7 @@ import (
 	"crypto/rsa"
 
 	"github.com/dgrijalva/jwt-go"
+	"github.com/sirupsen/logrus"
 	"go.opencensus.io/stats"
 
 	"github.com/ovh/cds/engine/service"
@@ -24,6 +25,7 @@ type SpawnArguments struct {
 	WorkerToken  string
 	Model        *sdk.Model        `json:"model"`
 	JobID        int64             `json:"job_id"`
+	NodeRunID    int64             `json:"node_run_id"`
 	Requirements []sdk.Requirement `json:"requirements"`
 	RegisterOnly bool              `json:"register_only"`
 	HatcheryName string            `json:"hatchery_name"`
@@ -60,6 +62,7 @@ type Interface interface {
 	Serve(ctx context.Context) error
 	PanicDumpDirectory() (string, error)
 	GetPrivateKey() *rsa.PrivateKey
+	GetLogger() *logrus.Logger
 }
 
 type InterfaceWithModels interface {

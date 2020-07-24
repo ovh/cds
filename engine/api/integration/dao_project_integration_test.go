@@ -2,8 +2,9 @@ package integration_test
 
 import (
 	"context"
-	"github.com/ovh/cds/engine/api/test/assets"
 	"testing"
+
+	"github.com/ovh/cds/engine/api/test/assets"
 
 	"github.com/ovh/cds/engine/api/integration"
 

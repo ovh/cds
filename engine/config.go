@@ -17,10 +17,10 @@ import (
 	"github.com/ovh/cds/engine/api"
 	"github.com/ovh/cds/engine/api/authentication"
 	"github.com/ovh/cds/engine/api/authentication/builtin"
-	"github.com/ovh/cds/engine/api/database"
-	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/engine/cdn"
+	"github.com/ovh/cds/engine/database"
 	"github.com/ovh/cds/engine/elasticsearch"
+	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/engine/hatchery/kubernetes"
 	"github.com/ovh/cds/engine/hatchery/local"
 	"github.com/ovh/cds/engine/hatchery/marathon"
@@ -33,7 +33,6 @@ import (
 	"github.com/ovh/cds/engine/ui"
 	"github.com/ovh/cds/engine/vcs"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/gorpmapping"
 	"github.com/ovh/cds/sdk/jws"
 	"github.com/ovh/cds/sdk/namesgenerator"
 )
@@ -49,7 +48,7 @@ func configBootstrap(args []string) Configuration {
 	// Default config if nothing is given
 	if len(args) == 0 {
 		args = []string{
-			"api", "ui", "migrate", "hooks", "vcs", "repositories", "elasticsearch",
+			"api", "ui", "migrate", "hooks", "vcs", "repositories", "elasticsearch", "cdn",
 			"hatchery:local", "hatchery:kubernetes", "hatchery:marathon", "hatchery:openstack", "hatchery:swarm", "hatchery:vsphere",
 		}
 	}
@@ -64,10 +63,11 @@ func configBootstrap(args []string) Configuration {
 	}
 	for _, a := range args {
 		switch a {
-		case services.TypeAPI:
+		case sdk.TypeAPI:
 			conf.API = &api.Configuration{}
 			conf.API.Name = "cds-api-" + namesgenerator.GetRandomNameCDS(0)
 			defaults.SetDefaults(conf.API)
+			conf.API.Database.Name = "cds"
 			conf.API.Services = append(conf.API.Services, sdk.ServiceConfiguration{
 				Name:       "sample-service",
 				URL:        "https://ovh.github.io",
@@ -78,7 +78,7 @@ func configBootstrap(args []string) Configuration {
 				HealthURL:  "https://ovh.github.io",
 				Type:       "doc",
 			})
-		case services.TypeUI:
+		case sdk.TypeUI:
 			conf.UI = &ui.Configuration{}
 			conf.UI.Name = "cds-ui-" + namesgenerator.GetRandomNameCDS(0)
 			defaults.SetDefaults(conf.UI)
@@ -86,23 +86,25 @@ func configBootstrap(args []string) Configuration {
 			conf.DatabaseMigrate = &migrateservice.Configuration{}
 			defaults.SetDefaults(conf.DatabaseMigrate)
 			conf.DatabaseMigrate.Name = "cds-migrate-" + namesgenerator.GetRandomNameCDS(0)
-		case services.TypeHatchery + ":local":
+			conf.DatabaseMigrate.ServiceAPI.DB.Name = "cds"
+			conf.DatabaseMigrate.ServiceCDN.DB.Name = "cdn"
+		case sdk.TypeHatchery + ":local":
 			conf.Hatchery.Local = &local.HatcheryConfiguration{}
 			defaults.SetDefaults(conf.Hatchery.Local)
 			conf.Hatchery.Local.Name = "cds-hatchery-local-" + namesgenerator.GetRandomNameCDS(0)
-		case services.TypeHatchery + ":kubernetes":
+		case sdk.TypeHatchery + ":kubernetes":
 			conf.Hatchery.Kubernetes = &kubernetes.HatcheryConfiguration{}
 			defaults.SetDefaults(conf.Hatchery.Kubernetes)
 			conf.Hatchery.Kubernetes.Name = "cds-hatchery-kubernetes-" + namesgenerator.GetRandomNameCDS(0)
-		case services.TypeHatchery + ":marathon":
+		case sdk.TypeHatchery + ":marathon":
 			conf.Hatchery.Marathon = &marathon.HatcheryConfiguration{}
 			defaults.SetDefaults(conf.Hatchery.Marathon)
 			conf.Hatchery.Marathon.Name = "cds-hatchery-marathon-" + namesgenerator.GetRandomNameCDS(0)
-		case services.TypeHatchery + ":openstack":
+		case sdk.TypeHatchery + ":openstack":
 			conf.Hatchery.Openstack = &openstack.HatcheryConfiguration{}
 			defaults.SetDefaults(conf.Hatchery.Openstack)
 			conf.Hatchery.Openstack.Name = "cds-hatchery-openstack-" + namesgenerator.GetRandomNameCDS(0)
-		case services.TypeHatchery + ":swarm":
+		case sdk.TypeHatchery + ":swarm":
 			conf.Hatchery.Swarm = &swarm.HatcheryConfiguration{}
 			defaults.SetDefaults(conf.Hatchery.Swarm)
 			conf.Hatchery.Swarm.DockerEngines = map[string]swarm.DockerEngineConfiguration{
@@ -111,15 +113,15 @@ func configBootstrap(args []string) Configuration {
 				},
 			}
 			conf.Hatchery.Swarm.Name = "cds-hatchery-swarm-" + namesgenerator.GetRandomNameCDS(0)
-		case services.TypeHatchery + ":vsphere":
+		case sdk.TypeHatchery + ":vsphere":
 			conf.Hatchery.VSphere = &vsphere.HatcheryConfiguration{}
 			defaults.SetDefaults(conf.Hatchery.VSphere)
 			conf.Hatchery.VSphere.Name = "cds-hatchery-vsphere-" + namesgenerator.GetRandomNameCDS(0)
-		case services.TypeHooks:
+		case sdk.TypeHooks:
 			conf.Hooks = &hooks.Configuration{}
 			defaults.SetDefaults(conf.Hooks)
 			conf.Hooks.Name = "cds-hooks-" + namesgenerator.GetRandomNameCDS(0)
-		case services.TypeVCS:
+		case sdk.TypeVCS:
 			conf.VCS = &vcs.Configuration{}
 			defaults.SetDefaults(conf.VCS)
 			var github vcs.GithubServerConfiguration
@@ -140,14 +142,15 @@ func configBootstrap(args []string) Configuration {
 				"gerrit":         {URL: "http://localhost:8080", Gerrit: &gerrit},
 			}
 			conf.VCS.Name = "cds-vcs-" + namesgenerator.GetRandomNameCDS(0)
-		case services.TypeRepositories:
+		case sdk.TypeRepositories:
 			conf.Repositories = &repositories.Configuration{}
 			defaults.SetDefaults(conf.Repositories)
 			conf.Repositories.Name = "cds-repositories-" + namesgenerator.GetRandomNameCDS(0)
-		case services.TypeCDN:
+		case sdk.TypeCDN:
 			conf.CDN = &cdn.Configuration{}
 			defaults.SetDefaults(conf.CDN)
-		case services.TypeElasticsearch:
+			conf.CDN.Database.Name = "cdn"
+		case sdk.TypeElasticsearch:
 			conf.ElasticSearch = &elasticsearch.Configuration{}
 			defaults.SetDefaults(conf.ElasticSearch)
 		default:
@@ -271,16 +274,32 @@ func configSetStartupData(conf *Configuration) (string, error) {
 		conf.API.Auth.RSAPrivateKey = string(apiPrivateKeyPEM)
 		conf.API.Secrets.Key = sdk.RandomString(32)
 
-		key, _ := keyloader.GenerateKey("hmac", gorpmapping.KeySignIdentifier, false, time.Now())
+		key, _ := keyloader.GenerateKey("hmac", gorpmapper.KeySignIdentifier, false, time.Now())
 		conf.API.Database.SignatureKey = database.RollingKeyConfig{Cipher: "hmac"}
 		conf.API.Database.SignatureKey.Keys = append(conf.API.Database.SignatureKey.Keys, database.KeyConfig{
 			Key:       key.Key,
 			Timestamp: key.Timestamp,
 		})
 
-		key, _ = keyloader.GenerateKey("xchacha20-poly1305", gorpmapping.KeyEcnryptionIdentifier, false, time.Now())
+		key, _ = keyloader.GenerateKey("xchacha20-poly1305", gorpmapper.KeyEcnryptionIdentifier, false, time.Now())
 		conf.API.Database.EncryptionKey = database.RollingKeyConfig{Cipher: "xchacha20-poly1305"}
 		conf.API.Database.EncryptionKey.Keys = append(conf.API.Database.EncryptionKey.Keys, database.KeyConfig{
+			Key:       key.Key,
+			Timestamp: key.Timestamp,
+		})
+	}
+
+	if conf.CDN != nil {
+		key, _ := keyloader.GenerateKey("hmac", gorpmapper.KeySignIdentifier, false, time.Now())
+		conf.CDN.Database.SignatureKey = database.RollingKeyConfig{Cipher: "hmac"}
+		conf.CDN.Database.SignatureKey.Keys = append(conf.CDN.Database.SignatureKey.Keys, database.KeyConfig{
+			Key:       key.Key,
+			Timestamp: key.Timestamp,
+		})
+
+		key, _ = keyloader.GenerateKey("xchacha20-poly1305", gorpmapper.KeyEcnryptionIdentifier, false, time.Now())
+		conf.CDN.Database.EncryptionKey = database.RollingKeyConfig{Cipher: "xchacha20-poly1305"}
+		conf.CDN.Database.EncryptionKey.Keys = append(conf.CDN.Database.EncryptionKey.Keys, database.KeyConfig{
 			Key:       key.Key,
 			Timestamp: key.Timestamp,
 		})
@@ -291,7 +310,7 @@ func configSetStartupData(conf *Configuration) (string, error) {
 			ID:          sdk.UUID(),
 			Name:        "ui",
 			Description: "Autogenerated configuration for ui service",
-			ServiceType: services.TypeUI,
+			ServiceType: sdk.TypeUI,
 		}
 
 		var c = sdk.AuthConsumer{
@@ -317,7 +336,7 @@ func configSetStartupData(conf *Configuration) (string, error) {
 				ID:          sdk.UUID(),
 				Name:        "hatchery:local",
 				Description: "Autogenerated configuration for local hatchery",
-				ServiceType: services.TypeHatchery,
+				ServiceType: sdk.TypeHatchery,
 			}
 
 			var c = sdk.AuthConsumer{
@@ -344,7 +363,7 @@ func configSetStartupData(conf *Configuration) (string, error) {
 				ID:          sdk.UUID(),
 				Name:        "hatchery:openstack",
 				Description: "Autogenerated configuration for openstack hatchery",
-				ServiceType: services.TypeHatchery,
+				ServiceType: sdk.TypeHatchery,
 			}
 
 			var c = sdk.AuthConsumer{
@@ -371,7 +390,7 @@ func configSetStartupData(conf *Configuration) (string, error) {
 				ID:          sdk.UUID(),
 				Name:        "hatchery:vsphere",
 				Description: "Autogenerated configuration for vsphere hatchery",
-				ServiceType: services.TypeHatchery,
+				ServiceType: sdk.TypeHatchery,
 			}
 
 			var c = sdk.AuthConsumer{
@@ -398,7 +417,7 @@ func configSetStartupData(conf *Configuration) (string, error) {
 				ID:          sdk.UUID(),
 				Name:        "hatchery:swarm",
 				Description: "Autogenerated configuration for swarm hatchery",
-				ServiceType: services.TypeHatchery,
+				ServiceType: sdk.TypeHatchery,
 			}
 
 			var c = sdk.AuthConsumer{
@@ -425,7 +444,7 @@ func configSetStartupData(conf *Configuration) (string, error) {
 				ID:          sdk.UUID(),
 				Name:        "hatchery:marathon",
 				Description: "Autogenerated configuration for marathon hatchery",
-				ServiceType: services.TypeHatchery,
+				ServiceType: sdk.TypeHatchery,
 			}
 
 			var c = sdk.AuthConsumer{
@@ -452,7 +471,7 @@ func configSetStartupData(conf *Configuration) (string, error) {
 				ID:          sdk.UUID(),
 				Name:        "hatchery:kubernetes",
 				Description: "Autogenerated configuration for kubernetes hatchery",
-				ServiceType: services.TypeHatchery,
+				ServiceType: sdk.TypeHatchery,
 			}
 
 			var c = sdk.AuthConsumer{
@@ -481,7 +500,7 @@ func configSetStartupData(conf *Configuration) (string, error) {
 			ID:          sdk.UUID(),
 			Name:        "hooks",
 			Description: "Autogenerated configuration for hooks service",
-			ServiceType: services.TypeHooks,
+			ServiceType: sdk.TypeHooks,
 		}
 
 		var c = sdk.AuthConsumer{
@@ -506,7 +525,7 @@ func configSetStartupData(conf *Configuration) (string, error) {
 			ID:          sdk.UUID(),
 			Name:        "repositories",
 			Description: "Autogenerated configuration for repositories service",
-			ServiceType: services.TypeHooks,
+			ServiceType: sdk.TypeHooks,
 		}
 
 		var c = sdk.AuthConsumer{
@@ -531,7 +550,7 @@ func configSetStartupData(conf *Configuration) (string, error) {
 			ID:          sdk.UUID(),
 			Name:        "migrate",
 			Description: "Autogenerated configuration for migrate service",
-			ServiceType: services.TypeDBMigrate,
+			ServiceType: sdk.TypeDBMigrate,
 		}
 
 		var c = sdk.AuthConsumer{
@@ -556,7 +575,7 @@ func configSetStartupData(conf *Configuration) (string, error) {
 			ID:          sdk.UUID(),
 			Name:        "vcs",
 			Description: "Autogenerated configuration for vcs service",
-			ServiceType: services.TypeVCS,
+			ServiceType: sdk.TypeVCS,
 		}
 
 		var c = sdk.AuthConsumer{
@@ -576,12 +595,35 @@ func configSetStartupData(conf *Configuration) (string, error) {
 		startupCfg.Consumers = append(startupCfg.Consumers, cfg)
 	}
 
+	if conf.CDN != nil {
+		var cfg = api.StartupConfigService{
+			ID:          sdk.UUID(),
+			Name:        "cdn",
+			Description: "Autogenerated configuration for cdn service",
+			ServiceType: sdk.TypeCDN,
+		}
+		var c = sdk.AuthConsumer{
+			ID:          cfg.ID,
+			Name:        cfg.Name,
+			Description: cfg.Description,
+			Type:        sdk.ConsumerBuiltin,
+			Data:        map[string]string{},
+			IssuedAt:    iat,
+		}
+		conf.CDN.API.Token, err = builtin.NewSigninConsumerToken(&c)
+		if err != nil {
+			return "", err
+		}
+
+		startupCfg.Consumers = append(startupCfg.Consumers, cfg)
+	}
+
 	if conf.ElasticSearch != nil {
 		var cfg = api.StartupConfigService{
 			ID:          sdk.UUID(),
 			Name:        "elasticsearch",
 			Description: "Autogenerated configuration for elasticSearch service",
-			ServiceType: services.TypeElasticsearch,
+			ServiceType: sdk.TypeElasticsearch,
 		}
 
 		var c = sdk.AuthConsumer{
@@ -630,7 +672,7 @@ func getInitTokenFromExistingConfiguration(conf Configuration) (string, error) {
 			ID:          consumerID,
 			Name:        "ui",
 			Description: "Autogenerated configuration for ui service",
-			ServiceType: services.TypeUI,
+			ServiceType: sdk.TypeUI,
 		}
 		startupCfg.Consumers = append(startupCfg.Consumers, cfg)
 	}
@@ -649,7 +691,7 @@ func getInitTokenFromExistingConfiguration(conf Configuration) (string, error) {
 				ID:          consumerID,
 				Name:        "hatchery:local",
 				Description: "Autogenerated configuration for local hatchery",
-				ServiceType: services.TypeHatchery,
+				ServiceType: sdk.TypeHatchery,
 			}
 
 			startupCfg.Consumers = append(startupCfg.Consumers, cfg)
@@ -667,7 +709,7 @@ func getInitTokenFromExistingConfiguration(conf Configuration) (string, error) {
 				ID:          consumerID,
 				Name:        "hatchery:openstack",
 				Description: "Autogenerated configuration for openstack hatchery",
-				ServiceType: services.TypeHatchery,
+				ServiceType: sdk.TypeHatchery,
 			}
 
 			startupCfg.Consumers = append(startupCfg.Consumers, cfg)
@@ -685,7 +727,7 @@ func getInitTokenFromExistingConfiguration(conf Configuration) (string, error) {
 				ID:          consumerID,
 				Name:        "hatchery:vsphere",
 				Description: "Autogenerated configuration for vsphere hatchery",
-				ServiceType: services.TypeHatchery,
+				ServiceType: sdk.TypeHatchery,
 			}
 			startupCfg.Consumers = append(startupCfg.Consumers, cfg)
 		}
@@ -702,7 +744,7 @@ func getInitTokenFromExistingConfiguration(conf Configuration) (string, error) {
 				ID:          consumerID,
 				Name:        "hatchery:swarm",
 				Description: "Autogenerated configuration for swarm hatchery",
-				ServiceType: services.TypeHatchery,
+				ServiceType: sdk.TypeHatchery,
 			}
 
 			startupCfg.Consumers = append(startupCfg.Consumers, cfg)
@@ -720,7 +762,7 @@ func getInitTokenFromExistingConfiguration(conf Configuration) (string, error) {
 				ID:          consumerID,
 				Name:        "hatchery:marathon",
 				Description: "Autogenerated configuration for marathon hatchery",
-				ServiceType: services.TypeHatchery,
+				ServiceType: sdk.TypeHatchery,
 			}
 
 			startupCfg.Consumers = append(startupCfg.Consumers, cfg)
@@ -738,7 +780,7 @@ func getInitTokenFromExistingConfiguration(conf Configuration) (string, error) {
 				ID:          consumerID,
 				Name:        "hatchery:kubernetes",
 				Description: "Autogenerated configuration for kubernetes hatchery",
-				ServiceType: services.TypeHatchery,
+				ServiceType: sdk.TypeHatchery,
 			}
 
 			startupCfg.Consumers = append(startupCfg.Consumers, cfg)
@@ -758,7 +800,7 @@ func getInitTokenFromExistingConfiguration(conf Configuration) (string, error) {
 			ID:          consumerID,
 			Name:        "hooks",
 			Description: "Autogenerated configuration for hooks service",
-			ServiceType: services.TypeHooks,
+			ServiceType: sdk.TypeHooks,
 		}
 
 		startupCfg.Consumers = append(startupCfg.Consumers, cfg)
@@ -777,7 +819,7 @@ func getInitTokenFromExistingConfiguration(conf Configuration) (string, error) {
 			ID:          consumerID,
 			Name:        "repositories",
 			Description: "Autogenerated configuration for repositories service",
-			ServiceType: services.TypeHooks,
+			ServiceType: sdk.TypeHooks,
 		}
 
 		startupCfg.Consumers = append(startupCfg.Consumers, cfg)
@@ -796,7 +838,7 @@ func getInitTokenFromExistingConfiguration(conf Configuration) (string, error) {
 			ID:          consumerID,
 			Name:        "migrate",
 			Description: "Autogenerated configuration for migrate service",
-			ServiceType: services.TypeDBMigrate,
+			ServiceType: sdk.TypeDBMigrate,
 		}
 
 		startupCfg.Consumers = append(startupCfg.Consumers, cfg)
@@ -815,7 +857,26 @@ func getInitTokenFromExistingConfiguration(conf Configuration) (string, error) {
 			ID:          consumerID,
 			Name:        "vcs",
 			Description: "Autogenerated configuration for vcs service",
-			ServiceType: services.TypeVCS,
+			ServiceType: sdk.TypeVCS,
+		}
+
+		startupCfg.Consumers = append(startupCfg.Consumers, cfg)
+	}
+
+	if conf.CDN != nil {
+		consumerID, iat, err := builtin.CheckSigninConsumerToken(conf.CDN.API.Token)
+		if err != nil {
+			return "", fmt.Errorf("cannot parse cdn token: %v", err)
+		}
+		if iat < globalIAT {
+			globalIAT = iat
+		}
+
+		var cfg = api.StartupConfigService{
+			ID:          consumerID,
+			Name:        "cdn",
+			Description: "Autogenerated configuration for cdn service",
+			ServiceType: sdk.TypeCDN,
 		}
 
 		startupCfg.Consumers = append(startupCfg.Consumers, cfg)
@@ -834,7 +895,7 @@ func getInitTokenFromExistingConfiguration(conf Configuration) (string, error) {
 			ID:          consumerID,
 			Name:        "elasticsearch",
 			Description: "Autogenerated configuration for elasticSearch service",
-			ServiceType: services.TypeElasticsearch,
+			ServiceType: sdk.TypeElasticsearch,
 		}
 
 		startupCfg.Consumers = append(startupCfg.Consumers, cfg)

@@ -2,9 +2,10 @@ package hooks
 
 import (
 	"encoding/json"
-	"github.com/ovh/cds/sdk"
 	"strconv"
 	"time"
+
+	"github.com/ovh/cds/sdk"
 )
 
 // GithubWebHookEvent represents payload send by github on a push event

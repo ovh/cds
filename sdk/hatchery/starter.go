@@ -172,6 +172,7 @@ func spawnWorkerForJob(ctx context.Context, h Interface, j workerStarterRequest)
 		WorkerName:   generateWorkerName(h.Service().Name, false, modelName),
 		Model:        j.model,
 		JobID:        j.id,
+		NodeRunID:    j.workflowNodeRunID,
 		Requirements: j.requirements,
 		HatcheryName: h.Service().Name,
 	}
@@ -198,7 +199,7 @@ func spawnWorkerForJob(ctx context.Context, h Interface, j workerStarterRequest)
 		ctxSendSpawnInfo, next = telemetry.Span(ctxJob, "hatchery.QueueJobSendSpawnInfo", telemetry.Tag("status", "errSpawn"), telemetry.Tag("msg", sdk.MsgSpawnInfoHatcheryErrorSpawn.ID))
 		SendSpawnInfo(ctxSendSpawnInfo, h, j.id, sdk.SpawnMsg{
 			ID:   sdk.MsgSpawnInfoHatcheryErrorSpawn.ID,
-			Args: []interface{}{h.Service().Name, modelName, sdk.Round(time.Since(start), time.Second).String(), errSpawn.Error()},
+			Args: []interface{}{h.Service().Name, modelName, sdk.Round(time.Since(start), time.Second).String(), sdk.ExtractHTTPError(errSpawn, "").Error()},
 		})
 		log.Error(ctx, "hatchery %s cannot spawn worker %s for job %d: %v", h.Service().Name, modelName, j.id, errSpawn)
 		next()

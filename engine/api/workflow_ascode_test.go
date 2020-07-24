@@ -27,9 +27,9 @@ import (
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/api/test/assets"
 	"github.com/ovh/cds/engine/api/workflow"
+	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
-	"github.com/ovh/cds/sdk/gorpmapping"
 	"github.com/ovh/cds/sdk/log"
 )
 
@@ -47,9 +47,9 @@ func TestPostUpdateWorkflowAsCodeHandler(t *testing.T) {
 		SessionToken:          jwt,
 	})
 
-	_, _ = assets.InsertService(t, db, t.Name()+"_HOOKS", services.TypeHooks)
-	_, _ = assets.InsertService(t, db, t.Name()+"_VCS", services.TypeVCS)
-	_, _ = assets.InsertService(t, db, t.Name()+"_REPO", services.TypeRepositories)
+	_, _ = assets.InsertService(t, db, t.Name()+"_HOOKS", sdk.TypeHooks)
+	_, _ = assets.InsertService(t, db, t.Name()+"_VCS", sdk.TypeVCS)
+	_, _ = assets.InsertService(t, db, t.Name()+"_REPO", sdk.TypeRepositories)
 
 	UUID := sdk.UUID()
 
@@ -59,9 +59,9 @@ func TestPostUpdateWorkflowAsCodeHandler(t *testing.T) {
 		_ = services.Delete(db, &s) // nolint
 	}
 
-	a, _ := assets.InsertService(t, db, "Test_postWorkflowAsCodeHandlerVCS", services.TypeVCS)
-	b, _ := assets.InsertService(t, db, "Test_postWorkflowAsCodeHandlerRepo", services.TypeRepositories)
-	c, _ := assets.InsertService(t, db, "Test_postWorkflowAsCodeHandlerHook", services.TypeHooks)
+	a, _ := assets.InsertService(t, db, "Test_postWorkflowAsCodeHandlerVCS", sdk.TypeVCS)
+	b, _ := assets.InsertService(t, db, "Test_postWorkflowAsCodeHandlerRepo", sdk.TypeRepositories)
+	c, _ := assets.InsertService(t, db, "Test_postWorkflowAsCodeHandlerHook", sdk.TypeHooks)
 
 	defer func() {
 		services.Delete(db, a)
@@ -249,9 +249,9 @@ func TestPostMigrateWorkflowAsCodeHandler(t *testing.T) {
 
 	UUID := sdk.UUID()
 
-	a, _ := assets.InsertService(t, db, "Test_postWorkflowAsCodeHandlerVCS", services.TypeVCS)
-	b, _ := assets.InsertService(t, db, "Test_postWorkflowAsCodeHandlerRepo", services.TypeRepositories)
-	c, _ := assets.InsertService(t, db, "Test_postWorkflowAsCodeHandlerHook", services.TypeHooks)
+	a, _ := assets.InsertService(t, db, "Test_postWorkflowAsCodeHandlerVCS", sdk.TypeVCS)
+	b, _ := assets.InsertService(t, db, "Test_postWorkflowAsCodeHandlerRepo", sdk.TypeRepositories)
+	c, _ := assets.InsertService(t, db, "Test_postWorkflowAsCodeHandlerHook", sdk.TypeHooks)
 
 	defer func() {
 		_ = services.Delete(db, a)
@@ -430,7 +430,7 @@ func TestPostMigrateWorkflowAsCodeHandler(t *testing.T) {
 	}
 }
 
-func createProject(t *testing.T, db gorpmapping.SqlExecutorWithTx, api *API) *sdk.Project {
+func createProject(t *testing.T, db gorpmapper.SqlExecutorWithTx, api *API) *sdk.Project {
 	// Create Project
 	pkey := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, api.Cache, pkey, pkey)
@@ -454,7 +454,7 @@ func createPipeline(t *testing.T, db gorp.SqlExecutor, api *API, proj *sdk.Proje
 	return &pip
 }
 
-func createApplication(t *testing.T, db gorpmapping.SqlExecutorWithTx, api *API, proj *sdk.Project) *sdk.Application {
+func createApplication(t *testing.T, db gorpmapper.SqlExecutorWithTx, api *API, proj *sdk.Project) *sdk.Application {
 	app := sdk.Application{
 		Name:               sdk.RandomString(10),
 		ProjectID:          proj.ID,
@@ -498,9 +498,9 @@ func initWorkflow(t *testing.T, db gorp.SqlExecutor, proj *sdk.Project, app *sdk
 func Test_WorkflowAsCodeWithNotifications(t *testing.T) {
 	api, db, _ := newTestAPI(t)
 
-	_, _ = assets.InsertService(t, db, t.Name()+"_HOOKS", services.TypeHooks)
-	_, _ = assets.InsertService(t, db, t.Name()+"_VCS", services.TypeVCS)
-	_, _ = assets.InsertService(t, db, t.Name()+"_REPO", services.TypeRepositories)
+	_, _ = assets.InsertService(t, db, t.Name()+"_HOOKS", sdk.TypeHooks)
+	_, _ = assets.InsertService(t, db, t.Name()+"_VCS", sdk.TypeVCS)
+	_, _ = assets.InsertService(t, db, t.Name()+"_REPO", sdk.TypeRepositories)
 
 	// Setup a mock for all services called by the API
 	ctrl := gomock.NewController(t)

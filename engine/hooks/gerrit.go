@@ -112,7 +112,7 @@ func (s *Service) doGerritExecution(e *sdk.TaskExecution) (*sdk.WorkflowNodeRunH
 		payload[CDS_TRIGGERED_BY_EMAIL] = gerritEvent.Change.Owner.Email
 
 		payload[GIT_MESSAGE] = gerritEvent.Change.CommitMessage
-		payload["gerrit.change.id"] = gerritEvent.Change.ID
+		payload["gerrit.change.id"] = fmt.Sprintf("%s~%s~%s", url.QueryEscape(gerritEvent.Change.Project), url.QueryEscape(gerritEvent.Change.Branch), gerritEvent.Change.ID)
 		payload["gerrit.change.url"] = gerritEvent.Change.URL
 		payload["gerrit.change.status"] = gerritEvent.Change.Status
 		payload["gerrit.change.branch"] = gerritEvent.Change.Branch
