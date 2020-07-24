@@ -345,7 +345,7 @@ port <code>5432</code>, with an existing empty database and user named <code>cds
 
 <pre><code class="language-bash">cd $HOME/cds
 ./cds-engine download sql --config conf.toml
-./cds-engine database upgrade --db-host localhost --db-user cds --db-password cds --db-name cds --db-sslmode disable --db-port 5432 --migrate-dir sql
+./cds-engine database upgrade --db-host localhost --db-user cds --db-password cds --db-name cds --db-sslmode disable --db-port 5432 --migrate-dir sql/api
 </code></pre>
 
 <h2 id="launch-cds-api">Launch CDS API</h2>

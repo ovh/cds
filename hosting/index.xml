@@ -54,7 +54,7 @@ Start CDS with local configuration file You can also generate a configuration fi
 $ $PATH_TO_CDS/engine config new &amp;gt; my_conf_file.toml  Edit this file.
 Check your configuration file with
 $ $PATH_TO_CDS/engine config check my_conf_file.toml Reading configuration file my_new_file.toml Configuration file OK  Create your database relations
-$ $PATH_TO_CDS/engine database upgrade --db-host &amp;lt;host&amp;gt; --db-port &amp;lt;port&amp;gt; --db-user &amp;lt;user&amp;gt; --db-password &amp;lt;password&amp;gt; --db-name &amp;lt;database&amp;gt; --migrate-dir $PATH_TO_CDS/engine/sql --limit 0  Download workers binaries</description>
+$ $PATH_TO_CDS/engine database upgrade --db-host &amp;lt;host&amp;gt; --db-port &amp;lt;port&amp;gt; --db-user &amp;lt;user&amp;gt; --db-password &amp;lt;password&amp;gt; --db-name &amp;lt;database&amp;gt; --migrate-dir $PATH_TO_CDS/engine/sql/api --limit 0  Download workers binaries</description>
     </item>
     
     <item>
@@ -66,7 +66,7 @@ $ $PATH_TO_CDS/engine database upgrade --db-host &amp;lt;host&amp;gt; --db-port 
       <description>CDS provides all needed tools scripts to perform Schema creation and auto-migration. Those tools are embedded inside the engine binary.
 The migration files are available to download on GitHub Releases and the archive is named sql.tar.gz. You have to download it and untar (tar xvzf sql.tar.gz).
 Creation On a brand new database run the following command:
-$ $PATH_TO_CDS/engine database upgrade --db-host &amp;lt;host&amp;gt; --db-port &amp;lt;port&amp;gt; --db-user &amp;lt;user&amp;gt; --db-password &amp;lt;password&amp;gt; --db-name &amp;lt;database&amp;gt; --migrate-dir $PATH_TO_CDS/engine/sql --limit 0  Upgrade On an existing database, run the following command on each CDS update:</description>
+$ $PATH_TO_CDS/engine database upgrade --db-host &amp;lt;host&amp;gt; --db-port &amp;lt;port&amp;gt; --db-user &amp;lt;user&amp;gt; --db-password &amp;lt;password&amp;gt; --db-name &amp;lt;database&amp;gt; --migrate-dir $PATH_TO_CDS/engine/sql/api --limit 0  Upgrade On an existing database, run the following command on each CDS update:</description>
     </item>
     
     <item>
@@ -88,7 +88,7 @@ Example:
       
       <guid>https://ovh.github.io/cds/hosting/upgrade/</guid>
       <description> Upgrade Binary Update your CDS Engine binary from latest Release from GitHub:
-./engine update --from-github  Database Migration # get the file sql.tar.gz from latest release from https://github.com/ovh/cds/releases # unzip sql.tar.gz inside a sql/ directory, then run this command: ./engine database upgrade --db-password=cds --db-sslmode=disable --db-name=cds --migrate-dir=sql --db-connect-timeout=20  Restart your CDS API ./engine start api ...  </description>
+./engine update --from-github  Database Migration # get the file sql.tar.gz from latest release from https://github.com/ovh/cds/releases # unzip sql.tar.gz inside a sql/ directory, then run this command: ./engine database upgrade --db-password=cds --db-sslmode=disable --db-name=cds --migrate-dir=sql/api --db-connect-timeout=20  Restart your CDS API ./engine start api ...  </description>
     </item>
     
     <item>
