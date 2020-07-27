@@ -108,7 +108,7 @@ func Test_websocketGetWorkflowEvent(t *testing.T) {
 			},
 		},
 	}
-	projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
+	projIdent := proj.Identifiers()
 	require.NoError(t, workflow.Insert(context.TODO(), db, api.Cache, projIdent, proj.ProjectGroups, &w))
 
 	chanMessageReceived := make(chan sdk.WebsocketEvent)
@@ -176,7 +176,7 @@ func Test_websocketDeconnection(t *testing.T) {
 			},
 		},
 	}
-	projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
+	projIdent := proj.Identifiers()
 	require.NoError(t, workflow.Insert(context.TODO(), db, api.Cache, projIdent, proj.ProjectGroups, &w))
 
 	_, jws, err := builtin.NewConsumer(context.TODO(), db, sdk.RandomString(10), sdk.RandomString(10), localConsumer, u.GetGroupIDs(),

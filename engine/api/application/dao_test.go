@@ -24,7 +24,7 @@ func TestLoadByNameAsAdmin(t *testing.T) {
 	_ = event.Initialize(context.Background(), db.DbMap, cache)
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, cache, key, key)
-	projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
+	projIdent := proj.Identifiers()
 	app := sdk.Application{
 		Name: "my-app",
 	}
@@ -44,7 +44,7 @@ func TestLoadByNameAsUser(t *testing.T) {
 
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, cache, key, key)
-	projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
+	projIdent := proj.Identifiers()
 	app := sdk.Application{
 		Name: "my-app",
 	}
@@ -66,7 +66,7 @@ func TestLoadByIDAsAdmin(t *testing.T) {
 
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, cache, key, key)
-	projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
+	projIdent := proj.Identifiers()
 	app := sdk.Application{
 		Name: "my-app",
 	}
@@ -87,7 +87,7 @@ func TestLoadByIDAsUser(t *testing.T) {
 	key := sdk.RandomString(10)
 
 	proj := assets.InsertTestProject(t, db, cache, key, key)
-	projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
+	projIdent := proj.Identifiers()
 	app := sdk.Application{
 		Name: "my-app",
 	}
@@ -109,7 +109,7 @@ func TestLoadAllAsAdmin(t *testing.T) {
 
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, cache, key, key)
-	projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
+	projIdent := proj.Identifiers()
 	app := sdk.Application{
 		Name: "my-app",
 		Metadata: sdk.Metadata{
@@ -143,7 +143,7 @@ func TestLoadAllAsUser(t *testing.T) {
 
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, cache, key, key)
-	projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
+	projIdent := proj.Identifiers()
 	app := sdk.Application{
 		Name: "my-app",
 	}
@@ -169,7 +169,7 @@ func TestLoadByWorkflowID(t *testing.T) {
 	key := sdk.RandomString(10)
 
 	proj := assets.InsertTestProject(t, db, cache, key, key)
-	projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
+	projIdent := proj.Identifiers()
 	app := sdk.Application{
 		Name:       "my-app",
 		ProjectKey: proj.Key,
@@ -220,7 +220,7 @@ func TestWithRepositoryStrategy(t *testing.T) {
 	key := sdk.RandomString(10)
 
 	proj := assets.InsertTestProject(t, db, cache, key, key)
-	projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
+	projIdent := proj.Identifiers()
 	app := &sdk.Application{
 		Name:       "my-app",
 		ProjectKey: proj.Key,
@@ -278,7 +278,7 @@ func Test_LoadAllVCStrategyAllApps(t *testing.T) {
 	key := sdk.RandomString(10)
 
 	proj := assets.InsertTestProject(t, db, cache, key, key)
-	projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
+	projIdent := proj.Identifiers()
 	app1 := &sdk.Application{Name: "my-app1", ProjectKey: proj.Key, ProjectID: proj.ID, RepositoryStrategy: sdk.RepositoryStrategy{
 		Password: "secret1",
 	}}

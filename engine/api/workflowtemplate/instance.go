@@ -71,7 +71,6 @@ func requestModifyDefaultKeysfunc(projIdent sdk.ProjectIdentifiers, projKeys []s
 func requestModifyDefaultNameAndRepositories(projIdent sdk.ProjectIdentifiers, vcsServers []sdk.ProjectVCSServerLink, repoURL string) TemplateRequestModifierFunc {
 	return func(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store cache.Store, wt sdk.WorkflowTemplate, req *sdk.WorkflowTemplateRequest) error {
 		var repoPath string
-		projIdent := sdk.ProjectIdentifiers{ID: projIdent.ID, Key: projIdent.Key}
 	loopVCSServer:
 		for _, vcs := range vcsServers {
 			repos, err := repositoriesmanager.GetReposForProjectVCSServer(ctx, db, store, projIdent, vcs.Name, repositoriesmanager.Options{})

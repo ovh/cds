@@ -302,7 +302,7 @@ version: v1.0`),
 	require.Equal(t, 200, w.Code)
 	t.Logf(w.Body.String())
 
-	projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
+	projIdent := proj.Identifiers()
 	wk, err := workflow.Load(context.Background(), db, projIdent, "w-go-repo", workflow.LoadOptions{})
 	require.NoError(t, err)
 	require.Len(t, wk.WorkflowData.GetHooks(), 1)

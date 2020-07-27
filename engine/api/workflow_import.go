@@ -47,7 +47,7 @@ func (api *API) postWorkflowPreviewHandler() service.Handler {
 			return sdk.WrapError(err, "unable load project")
 		}
 
-		projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
+		projIdent := proj.Identifiers()
 
 		ew, errw := exportentities.UnmarshalWorkflow(body, format)
 		if errw != nil {
@@ -106,7 +106,7 @@ func (api *API) postWorkflowImportHandler() service.Handler {
 			return sdk.WrapError(err, "unable load project")
 		}
 
-		projIdent := sdk.ProjectIdentifiers{ID: p.ID, Key: p.Key}
+		projIdent := p.Identifiers()
 		tx, err := api.mustDB().Begin()
 		if err != nil {
 			return sdk.WrapError(err, "unable to start transaction")
@@ -195,7 +195,7 @@ func (api *API) putWorkflowImportHandler() service.Handler {
 			return sdk.WrapError(err, "unable load project")
 		}
 
-		projIdent := sdk.ProjectIdentifiers{ID: p.ID, Key: p.Key}
+		projIdent := p.Identifiers()
 		u := getAPIConsumer(ctx)
 
 		wf, err := workflow.Load(ctx, api.mustDB(), projIdent, wfName, workflow.LoadOptions{WithIcon: true})
@@ -285,7 +285,7 @@ func (api *API) postWorkflowPushHandler() service.Handler {
 			return sdk.WrapError(err, "cannot load project %s", key)
 		}
 
-		projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
+		projIdent := proj.Identifiers()
 		projPushData := sdk.ProjectForWorkflowPush{
 			Integrations:  proj.Integrations,
 			ProjectGroups: proj.ProjectGroups,

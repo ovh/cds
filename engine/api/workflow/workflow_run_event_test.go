@@ -31,7 +31,7 @@ func TestResyncCommitStatusNotifDisabled(t *testing.T) {
 
 	pkey := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, cache, pkey, pkey)
-	projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
+	projIdent := proj.Identifiers()
 	vcsServer := sdk.ProjectVCSServerLink{
 		ProjectID: proj.ID,
 		Name:      "gerrit",
@@ -127,7 +127,7 @@ func TestResyncCommitStatusSetStatus(t *testing.T) {
 
 	pkey := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, cache, pkey, pkey)
-	projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
+	projIdent := proj.Identifiers()
 	vcsServer := sdk.ProjectVCSServerLink{
 		ProjectID: proj.ID,
 		Name:      "gerrit",
@@ -230,7 +230,7 @@ func TestResyncCommitStatusCommentPR(t *testing.T) {
 
 	pkey := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, cache, pkey, pkey)
-	projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
+	projIdent := proj.Identifiers()
 	vcsServer := sdk.ProjectVCSServerLink{
 		ProjectID: proj.ID,
 		Name:      "gerrit",
@@ -347,7 +347,7 @@ func TestResyncCommitStatusCommentPRNotTerminated(t *testing.T) {
 
 	pkey := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, cache, pkey, pkey)
-	projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
+	projIdent := proj.Identifiers()
 	vcsServer := sdk.ProjectVCSServerLink{
 		ProjectID: proj.ID,
 		Name:      "gerrit",
@@ -455,7 +455,7 @@ func TestResyncCommitStatusCommitCache(t *testing.T) {
 
 	pkey := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, cache, pkey, pkey)
-	projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
+	projIdent := proj.Identifiers()
 	vcsServer := sdk.ProjectVCSServerLink{
 		ProjectID: proj.ID,
 		Name:      "gerrit",

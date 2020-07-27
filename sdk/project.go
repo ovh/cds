@@ -61,6 +61,10 @@ type Project struct {
 	URLs             URL                    `json:"urls" yaml:"-" db:"-" cli:"-"`
 }
 
+func (p *Project) Identifiers() ProjectIdentifiers {
+	return ProjectIdentifiers{ID: p.ID, Key: p.Key}
+}
+
 type Permissions struct {
 	Readable   bool `json:"readable"`
 	Writable   bool `json:"writable"`

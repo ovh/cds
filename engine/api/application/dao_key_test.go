@@ -21,7 +21,7 @@ func Test_DAOKey(t *testing.T) {
 	app := sdk.Application{
 		Name: "my-app",
 	}
-	projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
+	projIdent := proj.Identifiers()
 	require.NoError(t, application.Insert(db, projIdent, &app))
 
 	k := &sdk.ApplicationKey{
@@ -56,7 +56,7 @@ func Test_DAOAllKeysAllApps(t *testing.T) {
 
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, cache, key, key)
-	projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
+	projIdent := proj.Identifiers()
 	app1 := sdk.Application{
 		Name: "my-app1",
 	}

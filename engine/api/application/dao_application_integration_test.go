@@ -25,7 +25,7 @@ func Test_LoadAllDeploymentAllApps(t *testing.T) {
 	app2 := sdk.Application{
 		Name: "my-app2",
 	}
-	projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
+	projIdent := proj.Identifiers()
 	require.NoError(t, application.Insert(db, projIdent, &app1))
 	require.NoError(t, application.Insert(db, projIdent, &app2))
 

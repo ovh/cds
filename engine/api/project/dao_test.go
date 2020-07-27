@@ -91,7 +91,7 @@ func TestLoadAllByRepo(t *testing.T) {
 		Role:      sdk.PermissionReadWriteExecute,
 	}))
 	proj, _ = project.LoadByID(db, proj.ID, project.LoadOptions.WithGroups)
-	projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
+	projIdent := proj.Identifiers()
 	u, _ := assets.InsertLambdaUser(t, db, &proj.ProjectGroups[0].Group)
 
 	test.NoError(t, application.Insert(db, projIdent, app))

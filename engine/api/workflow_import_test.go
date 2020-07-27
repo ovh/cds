@@ -70,7 +70,7 @@ metadata:
 	//Check result
 	t.Logf(">>%s", rec.Body.String())
 
-	projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
+	projIdent := proj.Identifiers()
 	w, err := workflow.Load(context.TODO(), db, projIdent, "test_1", workflow.LoadOptions{})
 	test.NoError(t, err)
 
@@ -134,7 +134,7 @@ metadata:
 	//Check result
 	t.Logf(">>%s", rec.Body.String())
 
-	projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
+	projIdent := proj.Identifiers()
 	w, err := workflow.Load(context.TODO(), db, projIdent, "test_1", workflow.LoadOptions{})
 	test.NoError(t, err)
 
@@ -625,7 +625,7 @@ func Test_getWorkflowPushHandler(t *testing.T) {
 	u, pass := assets.InsertAdminUser(t, db)
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, api.Cache, key, key)
-	projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
+	projIdent := proj.Identifiers()
 	require.NoError(t, group.InsertLinkGroupUser(context.TODO(), db, &group.LinkGroupUser{
 		GroupID:            proj.ProjectGroups[0].Group.ID,
 		AuthentifiedUserID: u.ID,
@@ -912,7 +912,7 @@ metadata:
 
 	p, errP := project.Load(context.TODO(), db, proj.Key)
 	assert.NoError(t, errP)
-	projIdent := sdk.ProjectIdentifiers{ID: p.ID, Key: p.Key}
+	projIdent := p.Identifiers()
 	wUpdated, err := workflow.Load(context.TODO(), db, projIdent, "test_1", workflow.LoadOptions{})
 	assert.NoError(t, err)
 
@@ -964,7 +964,7 @@ workflow:
 	require.Equal(t, 200, rec.Code)
 	t.Logf(">>%s", rec.Body.String())
 
-	projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
+	projIdent := proj.Identifiers()
 	w, err := workflow.Load(context.TODO(), db, projIdent, "test_1", workflow.LoadOptions{})
 	require.NoError(t, err)
 

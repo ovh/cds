@@ -57,7 +57,7 @@ func (api *API) updateAsCodePipelineHandler() service.Handler {
 			return err
 		}
 
-		projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
+		projIdent := proj.Identifiers()
 		pipelineDB, err := pipeline.LoadPipeline(ctx, tx, key, name, true)
 
 		if err != nil {
@@ -205,7 +205,7 @@ func (api *API) postPipelineRollbackHandler() service.Handler {
 		if errP != nil {
 			return sdk.WrapError(errP, "postPipelineRollbackHandler> Cannot load project")
 		}
-		projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
+		projIdent := proj.Identifiers()
 
 		audit, errA := pipeline.LoadAuditByID(db, auditID)
 		if errA != nil {
@@ -332,7 +332,7 @@ func (api *API) getPipelineHandler() service.Handler {
 			if err != nil {
 				return err
 			}
-			projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
+			projIdent := proj.Identifiers()
 
 			wkAscodeHolder, err := workflow.LoadByRepo(ctx, api.mustDB(), projIdent, p.FromRepository, workflow.LoadOptions{
 				WithTemplate: true,

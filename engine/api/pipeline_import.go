@@ -70,7 +70,7 @@ func (api *API) importPipelineHandler() service.Handler {
 		if err != nil {
 			return sdk.WrapError(err, "unable to load project %s", key)
 		}
-		projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
+		projIdent := proj.Identifiers()
 		data, err := exportentities.ParsePipeline(format, body)
 		if err != nil {
 			return err
@@ -128,7 +128,7 @@ func (api *API) putImportPipelineHandler() service.Handler {
 		if err != nil {
 			return sdk.WrapError(err, "unable to load project %s", key)
 		}
-		projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
+		projIdent := proj.Identifiers()
 		data, err := exportentities.ParsePipeline(format, body)
 		if err != nil {
 			return err

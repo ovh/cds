@@ -41,7 +41,7 @@ func (api *API) getWorkflowExportHandler() service.Handler {
 		if err != nil {
 			return sdk.WrapError(err, "unable to load projet")
 		}
-		projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
+		projIdent := proj.Identifiers()
 		wk, err := workflow.Export(ctx, api.mustDB(), projIdent, name, opts...)
 		if err != nil {
 			return err
@@ -77,7 +77,7 @@ func (api *API) getWorkflowPullHandler() service.Handler {
 			return sdk.WrapError(err, "unable to load projet")
 		}
 
-		projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
+		projIdent := proj.Identifiers()
 		pull, err := workflow.Pull(ctx, api.mustDB(), projIdent, name, project.EncryptWithBuiltinKey, opts...)
 		if err != nil {
 			return err

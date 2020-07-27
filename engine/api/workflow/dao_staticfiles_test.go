@@ -74,7 +74,7 @@ func TestInsertStaticFiles(t *testing.T) {
 		PurgeTags:     []string{"git.branch"},
 	}
 
-	projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
+	projIdent := proj.Identifiers()
 	test.NoError(t, workflow.Insert(context.TODO(), db, cache, projIdent, proj.ProjectGroups, &w))
 
 	w1, err := workflow.Load(context.TODO(), db, projIdent, "test_staticfiles_1", workflow.LoadOptions{

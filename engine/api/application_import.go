@@ -26,7 +26,7 @@ func (api *API) postApplicationImportHandler() service.Handler {
 		force := FormBool(r, "force")
 
 		proj, err := project.Load(ctx, api.mustDB(), key, project.LoadOptions.WithIntegrations)
-		projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
+		projIdent := proj.Identifiers()
 		if err != nil {
 			return sdk.WrapError(err, "unable load project")
 		}

@@ -261,7 +261,7 @@ func Test_WorkerModelUsage(t *testing.T) {
 		},
 	}
 
-	projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
+	projIdent := proj.Identifiers()
 	test.NoError(t, workflow.Insert(context.Background(), db, api.Cache, projIdent, proj.ProjectGroups, &wf))
 
 	//Prepare request

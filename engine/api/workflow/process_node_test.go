@@ -198,7 +198,7 @@ func TestHookRunWithoutPayloadProcessNodeBuildParameter(t *testing.T) {
 		"git.repository": "sguiheux/demo",
 	}
 
-	projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
+	projIdent := proj.Identifiers()
 	assert.NoError(t, workflow.Insert(context.TODO(), db, cache, projIdent, proj.ProjectGroups, &w))
 
 	// CREATE RUN
@@ -381,7 +381,7 @@ func TestHookRunWithHashOnlyProcessNodeBuildParameter(t *testing.T) {
 		"git.repository": "sguiheux/demo",
 	}
 
-	projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
+	projIdent := proj.Identifiers()
 	assert.NoError(t, workflow.Insert(context.TODO(), db, cache, projIdent, proj.ProjectGroups, &w))
 
 	// CREATE RUN
@@ -536,7 +536,7 @@ func TestManualRunWithPayloadProcessNodeBuildParameter(t *testing.T) {
 		},
 	}
 
-	projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
+	projIdent := proj.Identifiers()
 	assert.NoError(t, workflow.Insert(context.TODO(), db, cache, projIdent, proj.ProjectGroups, &w))
 
 	// CREATE RUN
@@ -682,7 +682,7 @@ func TestManualRunBranchAndCommitInPayloadProcessNodeBuildParameter(t *testing.T
 		},
 	}
 
-	projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
+	projIdent := proj.Identifiers()
 	assert.NoError(t, workflow.Insert(context.TODO(), db, cache, projIdent, proj.ProjectGroups, &w))
 
 	// CREATE RUN
@@ -910,7 +910,7 @@ func TestManualRunBranchAndRepositoryInPayloadProcessNodeBuildParameter(t *testi
 		},
 	}
 
-	projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
+	projIdent := proj.Identifiers()
 	assert.NoError(t, workflow.Insert(context.TODO(), db, cache, projIdent, proj.ProjectGroups, &w))
 
 	// CREATE RUN
@@ -1146,7 +1146,7 @@ func TestManualRunBuildParameterMultiApplication(t *testing.T) {
 		},
 	}
 
-	projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
+	projIdent := proj.Identifiers()
 	assert.NoError(t, workflow.Insert(context.TODO(), db, cache, projIdent, proj.ProjectGroups, &w))
 
 	// CREATE RUN
@@ -1392,7 +1392,7 @@ func TestManualRunBuildParameterNoApplicationOnRoot(t *testing.T) {
 		},
 	}
 
-	projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
+	projIdent := proj.Identifiers()
 	assert.NoError(t, workflow.Insert(context.TODO(), db, cache, projIdent, proj.ProjectGroups, &w))
 
 	// CREATE RUN
@@ -1584,7 +1584,7 @@ func TestGitParamOnPipelineWithoutApplication(t *testing.T) {
 		},
 	}
 
-	projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
+	projIdent := proj.Identifiers()
 	assert.NoError(t, workflow.Insert(context.TODO(), db, cache, projIdent, proj.ProjectGroups, &w))
 
 	// CREATE RUN
@@ -1771,7 +1771,7 @@ func TestGitParamOnApplicationWithoutRepo(t *testing.T) {
 		},
 	}
 
-	projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
+	projIdent := proj.Identifiers()
 	assert.NoError(t, workflow.Insert(context.TODO(), db, cache, projIdent, proj.ProjectGroups, &w))
 
 	// CREATE RUN
@@ -1968,7 +1968,7 @@ func TestGitParamOn2ApplicationSameRepo(t *testing.T) {
 		},
 	}
 
-	projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
+	projIdent := proj.Identifiers()
 	assert.NoError(t, workflow.Insert(context.TODO(), db, cache, projIdent, proj.ProjectGroups, &w))
 
 	// CREATE RUN
@@ -2180,7 +2180,7 @@ func TestGitParamWithJoin(t *testing.T) {
 		},
 	}
 
-	projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
+	projIdent := proj.Identifiers()
 	assert.NoError(t, workflow.Insert(context.TODO(), db, cache, projIdent, proj.ProjectGroups, &w))
 
 	// CREATE RUN
@@ -2399,7 +2399,7 @@ func TestGitParamOn2ApplicationSameRepoWithFork(t *testing.T) {
 		},
 	}
 
-	projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
+	projIdent := proj.Identifiers()
 	assert.NoError(t, workflow.Insert(context.TODO(), db, cache, projIdent, proj.ProjectGroups, &w))
 
 	// CREATE RUN
@@ -2592,7 +2592,7 @@ func TestManualRunWithPayloadAndRunCondition(t *testing.T) {
 		},
 	}
 
-	projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
+	projIdent := proj.Identifiers()
 	assert.NoError(t, workflow.Insert(context.TODO(), db, cache, projIdent, proj.ProjectGroups, &w))
 
 	// CREATE RUN
@@ -2635,7 +2635,7 @@ func createEmptyPipeline(t *testing.T, db gorp.SqlExecutor, cache cache.Store, p
 			},
 		},
 	}
-	projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
+	projIdent := proj.Identifiers()
 	assert.NoError(t, pipeline.Import(context.TODO(), db, projIdent, proj.ProjectGroups, pip, nil, u))
 	var errPip error
 	pip, errPip = pipeline.LoadPipeline(context.TODO(), db, proj.Key, pip.Name, true)
@@ -2704,7 +2704,7 @@ func createBuildPipeline(t *testing.T, db gorp.SqlExecutor, cache cache.Store, p
 			},
 		},
 	}
-	projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
+	projIdent := proj.Identifiers()
 	assert.NoError(t, pipeline.Import(context.TODO(), db, projIdent, proj.ProjectGroups, pip, nil, u))
 	var errPip error
 	pip, errPip = pipeline.LoadPipeline(context.TODO(), db, proj.Key, pip.Name, true)
@@ -2713,7 +2713,7 @@ func createBuildPipeline(t *testing.T, db gorp.SqlExecutor, cache cache.Store, p
 }
 
 func createApplication1(t *testing.T, db gorpmapper.SqlExecutorWithTx, cache cache.Store, proj *sdk.Project, u *sdk.AuthentifiedUser) *sdk.Application {
-	projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
+	projIdent := proj.Identifiers()
 	// Add application
 	appS := `version: v1.0
 name: blabla
@@ -2738,7 +2738,7 @@ vcs_ssh_key: proj-bloublou
 `
 	var eapp = new(exportentities.Application)
 	assert.NoError(t, yaml.Unmarshal([]byte(appS), eapp))
-	projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
+	projIdent := proj.Identifiers()
 	app, _, _, globalError := application.ParseAndImport(context.Background(), db, projIdent, proj.Integrations, eapp, application.ImportOptions{Force: true}, nil, u)
 	assert.NoError(t, globalError)
 	return app
@@ -2746,7 +2746,7 @@ vcs_ssh_key: proj-bloublou
 
 func createApplication3WithSameRepoAsA(t *testing.T, db gorpmapper.SqlExecutorWithTx, cache cache.Store, proj *sdk.Project, u *sdk.AuthentifiedUser) *sdk.Application {
 
-	projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
+	projIdent := proj.Identifiers()
 	// Add application
 	appS := `version: v1.0
 name: blabla2
@@ -2763,7 +2763,7 @@ vcs_ssh_key: proj-blabla
 
 func createApplicationWithoutRepo(t *testing.T, db gorpmapper.SqlExecutorWithTx, proj *sdk.Project, u *sdk.AuthentifiedUser) *sdk.Application {
 
-	projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
+	projIdent := proj.Identifiers()
 	// Add application
 	appS := `version: v1.0
 name: app-no-repo

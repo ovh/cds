@@ -52,7 +52,7 @@ func TestProcessJoinDefaultCondition(t *testing.T) {
 	}
 
 	// Insert workflow
-	projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
+	projIdent := proj.Identifiers()
 	assert.NoError(t, workflow.Insert(context.TODO(), db, cache, projIdent, proj.ProjectGroups, &wr.Workflow))
 
 	// Create run
@@ -123,7 +123,7 @@ func TestProcessJoinCustomCondition(t *testing.T) {
 	}
 
 	// Insert workflow
-	projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
+	projIdent := proj.Identifiers()
 	assert.NoError(t, workflow.Insert(context.TODO(), db, cache, projIdent, proj.ProjectGroups, &wr.Workflow))
 
 	// Create run

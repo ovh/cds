@@ -44,7 +44,7 @@ func (api *API) getHookPollingVCSEvents() service.Handler {
 			return err
 		}
 
-		projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
+		projIdent := proj.Identifiers()
 
 		tx, err := api.mustDB().Begin()
 		if err != nil {

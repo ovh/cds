@@ -156,7 +156,7 @@ func TestPurgeWorkflowRun(t *testing.T) {
 
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, cache, key, key)
-	projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
+	projIdent := proj.Identifiers()
 	vcsServer := sdk.ProjectVCSServerLink{
 		ProjectID: proj.ID,
 		Name:      "github",
@@ -310,10 +310,7 @@ func TestPurgeWorkflowRunWithRunningStatus(t *testing.T) {
 		PurgeTags:     []string{"git.branch"},
 	}
 
-	projIdent := sdk.ProjectIdentifiers{
-		ID:  proj.ID,
-		Key: proj.Key,
-	}
+	projIdent := proj.Identifiers()
 	test.NoError(t, workflow.Insert(context.TODO(), db, cache, projIdent, proj.ProjectGroups, &w))
 
 	w1, err := workflow.Load(context.TODO(), db, projIdent, "test_purge_1", workflow.LoadOptions{
@@ -436,7 +433,7 @@ func TestPurgeWorkflowRunWithOneSuccessWorkflowRun(t *testing.T) {
 
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, cache, key, key)
-	projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
+	projIdent := proj.Identifiers()
 	vcsServer := sdk.ProjectVCSServerLink{
 		ProjectID: proj.ID,
 		Name:      "github",
@@ -628,7 +625,7 @@ func TestPurgeWorkflowRunWithNoSuccessWorkflowRun(t *testing.T) {
 
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, cache, key, key)
-	projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
+	projIdent := proj.Identifiers()
 	vcsServer := sdk.ProjectVCSServerLink{
 		ProjectID: proj.ID,
 		Name:      "github",
@@ -785,10 +782,7 @@ func TestPurgeWorkflowRunWithoutTags(t *testing.T) {
 		},
 		HistoryLength: 2,
 	}
-	projIdent := sdk.ProjectIdentifiers{
-		ID:  proj.ID,
-		Key: proj.Key,
-	}
+	projIdent := proj.Identifiers()
 	test.NoError(t, workflow.Insert(context.TODO(), db, cache, projIdent, proj.ProjectGroups, &w))
 
 	w1, err := workflow.Load(context.TODO(), db, projIdent, "test_purge_1", workflow.LoadOptions{
@@ -876,10 +870,7 @@ func TestPurgeWorkflowRunWithoutTagsBiggerHistoryLength(t *testing.T) {
 		HistoryLength: 20,
 	}
 
-	projIdent := sdk.ProjectIdentifiers{
-		ID:  proj.ID,
-		Key: proj.Key,
-	}
+	projIdent := proj.Identifiers()
 	test.NoError(t, workflow.Insert(context.TODO(), db, cache, projIdent, proj.ProjectGroups, &w))
 
 	w1, err := workflow.Load(context.TODO(), db, projIdent, "test_purge_1", workflow.LoadOptions{

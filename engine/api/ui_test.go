@@ -19,7 +19,7 @@ func Test_getNavbarHandler(t *testing.T) {
 	u, pass := assets.InsertAdminUser(t, db)
 
 	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
-	projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
+	projIdent := proj.Identifiers()
 	app1 := sdk.Application{
 		Name: "my-app-1",
 	}

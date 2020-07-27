@@ -148,10 +148,7 @@ version: v2.0`)),
 			if c.Detached {
 				mods = append(mods, workflowtemplate.TemplateRequestModifiers.Detached)
 			}
-			projIdent := sdk.ProjectIdentifiers{
-				ID:  proj.ID,
-				Key: proj.Key,
-			}
+			projIdent := proj.Identifiers()
 			_, wti, err := workflowtemplate.CheckAndExecuteTemplate(context.TODO(), db.DbMap, cache, *consumer, projIdent, &c.Data, mods...)
 			if c.ErrorExists {
 				require.Error(t, err)
@@ -216,10 +213,7 @@ name: Pipeline-[[.id]]`)),
 			Parameters: map[string]string{"param1": "value1"},
 		},
 	}
-	projIdent := sdk.ProjectIdentifiers{
-		ID:  proj.ID,
-		Key: proj.Key,
-	}
+	projIdent := proj.Identifiers()
 	projPushData := sdk.ProjectForWorkflowPush{
 		Integrations:  proj.Integrations,
 		ProjectGroups: proj.ProjectGroups,

@@ -112,7 +112,7 @@ func (api *API) getWorkflowHandler() service.Handler {
 			return sdk.WrapError(err, "unable to load projet")
 		}
 
-		projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
+		projIdent := proj.Identifiers()
 		opts := workflow.LoadOptions{
 			Minimal:                minimal, // if true, load only data from table workflow, not pipelines, app, env...
 			DeepPipeline:           withDeepPipelines,
@@ -206,7 +206,7 @@ func (api *API) postWorkflowRollbackHandler() service.Handler {
 			return sdk.WrapError(err, "cannot load project %s", key)
 		}
 
-		projIdent := sdk.ProjectIdentifiers{ID: p.ID, Key: p.Key}
+		projIdent := p.Identifiers()
 		wf, err := workflow.Load(ctx, db, projIdent, workflowName, workflow.LoadOptions{WithIcon: true})
 		if err != nil {
 			return sdk.WrapError(err, "cannot load workflow %s/%s", key, workflowName)
@@ -269,7 +269,7 @@ func (api *API) postWorkflowLabelHandler() service.Handler {
 			return sdk.WrapError(err, "cannot create new transaction")
 		}
 		defer tx.Rollback() //nolint
-		projIdent := sdk.ProjectIdentifiers{ID: p.ID, Key: p.Key}
+		projIdent := p.Identifiers()
 		label.ProjectID = projIdent.ID
 
 		if label.ID == 0 {
@@ -322,7 +322,7 @@ func (api *API) deleteWorkflowLabelHandler() service.Handler {
 			return sdk.WrapError(err, "cannot load project %s", key)
 		}
 
-		projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
+		projIdent := proj.Identifiers()
 		wf, err := workflow.Load(ctx, db, projIdent, workflowName, workflow.LoadOptions{Minimal: true})
 		if err != nil {
 			return sdk.WrapError(err, "cannot load workflow %s/%s", key, workflowName)
@@ -347,7 +347,7 @@ func (api *API) postWorkflowHandler() service.Handler {
 			return err
 		}
 
-		projIdent := sdk.ProjectIdentifiers{ID: p.ID, Key: p.Key}
+		projIdent := p.Identifiers()
 		var data sdk.Workflow
 		if err := service.UnmarshalBody(r, &data); err != nil {
 			return err
@@ -404,7 +404,7 @@ func (api *API) putWorkflowHandler() service.Handler {
 			return sdk.WrapError(err, "cannot load Project %s", key)
 		}
 
-		projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
+		projIdent := proj.Identifiers()
 		oldW, err := workflow.Load(ctx, api.mustDB(), projIdent, name,
 			workflow.LoadOptions{WithIcon: true, WithIntegrations: true})
 		if err != nil {
@@ -487,7 +487,7 @@ func (api *API) putWorkflowIconHandler() service.Handler {
 			return errP
 		}
 
-		projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
+		projIdent := proj.Identifiers()
 		imageBts, errr := ioutil.ReadAll(r.Body)
 		if errr != nil {
 			return sdk.NewError(sdk.ErrWrongRequest, errr)
@@ -529,7 +529,7 @@ func (api *API) deleteWorkflowIconHandler() service.Handler {
 			return errP
 		}
 
-		projIdent := sdk.ProjectIdentifiers{ID: p.ID, Key: p.Key}
+		projIdent := p.Identifiers()
 		wf, err := workflow.Load(ctx, api.mustDB(), projIdent, name, workflow.LoadOptions{})
 		if err != nil {
 			return err
@@ -555,7 +555,7 @@ func (api *API) deleteWorkflowHandler() service.Handler {
 			return sdk.WrapError(errP, "Cannot load Project %s", key)
 		}
 
-		projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
+		projIdent := proj.Identifiers()
 		b, errW := workflow.Exists(api.mustDB(), key, name)
 		if errW != nil {
 			return sdk.WrapError(errW, "Cannot check Workflow %s", key)
@@ -636,7 +636,7 @@ func (api *API) deleteWorkflowEventsIntegrationHandler() service.Handler {
 			return sdk.WrapError(err, "cannot load Project %s", key)
 		}
 
-		projIdent := sdk.ProjectIdentifiers{ID: p.ID, Key: p.Key}
+		projIdent := p.Identifiers()
 		wf, err := workflow.Load(ctx, db, projIdent, name, workflow.LoadOptions{WithIntegrations: true})
 		if err != nil {
 			return sdk.WrapError(err, "cannot load Workflow %s", key)
@@ -662,7 +662,7 @@ func (api *API) getWorkflowHookHandler() service.Handler {
 			return sdk.WrapError(err, "cannot load Project %s", key)
 		}
 
-		projIdent := sdk.ProjectIdentifiers{ID: p.ID, Key: p.Key}
+		projIdent := p.Identifiers()
 		wf, err := workflow.Load(ctx, api.mustDB(), projIdent, name, workflow.LoadOptions{})
 		if err != nil {
 			return sdk.WrapError(err, "cannot load Workflow %s/%s", key, name)

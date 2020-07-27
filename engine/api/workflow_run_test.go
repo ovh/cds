@@ -115,11 +115,7 @@ func Test_getWorkflowNodeRunHistoryHandler(t *testing.T) {
 	proj2, errP := project.Load(context.TODO(), api.mustDB(), proj.Key, project.LoadOptions.WithGroups)
 	require.NoError(t, errP)
 
-	projIdent := sdk.ProjectIdentifiers{
-		ID:  proj2.ID,
-		Key: proj2.Key,
-	}
-
+	projIdent := proj2.Identifiers()
 	require.NoError(t, workflow.Insert(context.TODO(), db, api.Cache, projIdent, proj2.ProjectGroups, &w))
 	w1, err := workflow.Load(context.TODO(), db, projIdent, "test_1", workflow.LoadOptions{})
 	require.NoError(t, err)
@@ -247,10 +243,7 @@ func Test_getWorkflowRunsHandler(t *testing.T) {
 	proj2, errP := project.Load(context.TODO(), api.mustDB(), proj.Key, project.LoadOptions.WithGroups)
 	require.NoError(t, errP)
 
-	projIdent := sdk.ProjectIdentifiers{
-		ID:  proj2.ID,
-		Key: proj2.Key,
-	}
+	projIdent := proj2.Identifiers()
 	require.NoError(t, workflow.Insert(context.TODO(), db, api.Cache, projIdent, proj2.ProjectGroups, &w))
 	w1, err := workflow.Load(context.TODO(), api.mustDB(), projIdent, "test_1", workflow.LoadOptions{})
 	require.NoError(t, err)
@@ -406,10 +399,7 @@ func Test_getWorkflowRunsHandlerWithFilter(t *testing.T) {
 	proj2, errP := project.Load(context.TODO(), api.mustDB(), proj.Key, project.LoadOptions.WithGroups)
 	require.NoError(t, errP)
 
-	projIdent := sdk.ProjectIdentifiers{
-		ID:  proj2.ID,
-		Key: proj2.Key,
-	}
+	projIdent := proj2.Identifiers()
 
 	require.NoError(t, workflow.Insert(context.TODO(), db, api.Cache, projIdent, proj2.ProjectGroups, &w))
 	w1, err := workflow.Load(context.TODO(), api.mustDB(), projIdent, "test_1", workflow.LoadOptions{})
@@ -527,10 +517,7 @@ func Test_getLatestWorkflowRunHandler(t *testing.T) {
 	proj2, errP := project.Load(context.TODO(), api.mustDB(), proj.Key, project.LoadOptions.WithGroups)
 	require.NoError(t, errP)
 
-	projIdent := sdk.ProjectIdentifiers{
-		ID:  proj2.ID,
-		Key: proj2.Key,
-	}
+	projIdent := proj2.Identifiers()
 
 	require.NoError(t, workflow.Insert(context.TODO(), db, api.Cache, projIdent, proj2.ProjectGroups, &w))
 	w1, err := workflow.Load(context.TODO(), api.mustDB(), projIdent, "test_1", workflow.LoadOptions{})
@@ -666,10 +653,7 @@ func Test_getWorkflowRunHandler(t *testing.T) {
 	proj2, errP := project.Load(context.TODO(), api.mustDB(), proj.Key, project.LoadOptions.WithGroups)
 	require.NoError(t, errP)
 
-	projIdent := sdk.ProjectIdentifiers{
-		ID:  proj2.ID,
-		Key: proj2.Key,
-	}
+	projIdent := proj2.Identifiers()
 
 	require.NoError(t, workflow.Insert(context.TODO(), db, api.Cache, projIdent, proj2.ProjectGroups, &w))
 	w1, err := workflow.Load(context.TODO(), api.mustDB(), projIdent, "test_1", workflow.LoadOptions{})
@@ -715,7 +699,7 @@ func Test_getWorkflowNodeRunHandler(t *testing.T) {
 
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, api.Cache, key, key)
-	projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
+	projIdent := proj.Identifiers()
 
 	// Application
 	app := sdk.Application{
@@ -876,7 +860,7 @@ func Test_postWorkflowRunHandler(t *testing.T) {
 		KeyID:     "key-id-proj",
 	}
 	require.NoError(t, project.InsertKey(db, &projKey))
-	projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
+	projIdent := proj.Identifiers()
 	pwdProject := sdk.ProjectVariable{
 		Name:  "projvar",
 		Type:  sdk.SecretVariable,
@@ -1206,7 +1190,7 @@ func Test_postWorkflowRunAsyncFailedHandler(t *testing.T) {
 	u, pass := assets.InsertAdminUser(t, db)
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, api.Cache, key, key)
-	projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
+	projIdent := proj.Identifiers()
 	vcsServer := sdk.ProjectVCSServerLink{
 		ProjectID: proj.ID,
 		Name:      "github",
@@ -1516,10 +1500,7 @@ func Test_postWorkflowRunHandlerWithoutRightOnEnvironment(t *testing.T) {
 	proj2, errP := project.Load(context.TODO(), api.mustDB(), proj.Key, project.LoadOptions.WithGroups)
 	require.NoError(t, errP)
 
-	projIdent := sdk.ProjectIdentifiers{
-		ID:  proj2.ID,
-		Key: proj2.Key,
-	}
+	projIdent := proj2.Identifiers()
 
 	require.NoError(t, workflow.Insert(context.TODO(), db, api.Cache, projIdent, proj2.ProjectGroups, &w))
 	w1, err := workflow.Load(context.TODO(), api.mustDB(), projIdent, "test_1", workflow.LoadOptions{})
@@ -1671,10 +1652,7 @@ func Test_postWorkflowRunHandlerWithoutRightConditionsOnHook(t *testing.T) {
 	proj2, errP := project.Load(context.TODO(), api.mustDB(), proj.Key, project.LoadOptions.WithGroups)
 	require.NoError(t, errP)
 
-	projIdent := sdk.ProjectIdentifiers{
-		ID:  proj2.ID,
-		Key: proj2.Key,
-	}
+	projIdent := proj2.Identifiers()
 
 	require.NoError(t, workflow.Insert(context.TODO(), db, api.Cache, projIdent, proj2.ProjectGroups, &w))
 	w1, err := workflow.Load(context.TODO(), api.mustDB(), projIdent, "test_1", workflow.LoadOptions{})
@@ -1819,10 +1797,7 @@ func Test_postWorkflowRunHandlerHookWithMutex(t *testing.T) {
 	proj2, errP := project.Load(context.TODO(), api.mustDB(), proj.Key, project.LoadOptions.WithGroups)
 	require.NoError(t, errP)
 
-	projIdent := sdk.ProjectIdentifiers{
-		ID:  proj2.ID,
-		Key: proj2.Key,
-	}
+	projIdent := proj2.Identifiers()
 
 	require.NoError(t, workflow.Insert(context.TODO(), db, api.Cache, projIdent, proj2.ProjectGroups, &w))
 	w1, err := workflow.Load(context.TODO(), api.mustDB(), projIdent, "test_1", workflow.LoadOptions{})
@@ -1905,10 +1880,7 @@ func Test_postWorkflowRunHandlerMutexRelease(t *testing.T) {
 		},
 	}
 
-	projIdent := sdk.ProjectIdentifiers{
-		ID:  proj.ID,
-		Key: proj.Key,
-	}
+	projIdent := proj2.IDs()
 	require.NoError(t, workflow.Insert(context.TODO(), db, api.Cache, projIdent, proj.ProjectGroups, &wkf))
 
 	// Run workflow 1
@@ -2266,10 +2238,7 @@ func Test_postWorkflowRunHandlerHook(t *testing.T) {
 	proj2, errP := project.Load(context.TODO(), api.mustDB(), proj.Key, project.LoadOptions.WithGroups)
 	require.NoError(t, errP)
 
-	projIdent := sdk.ProjectIdentifiers{
-		ID:  proj2.ID,
-		Key: proj2.Key,
-	}
+	projIdent := proj2.Identifiers()
 
 	require.NoError(t, workflow.Insert(context.TODO(), db, api.Cache, projIdent, proj2.ProjectGroups, &w))
 	w1, err := workflow.Load(context.TODO(), api.mustDB(), projIdent, "test_1", workflow.LoadOptions{})
@@ -2379,10 +2348,7 @@ func Test_postWorkflowRunHandler_Forbidden(t *testing.T) {
 		},
 	}
 
-	projIdent := sdk.ProjectIdentifiers{
-		ID:  proj.ID,
-		Key: proj.Key,
-	}
+	projIdent := proj.Identifiers()
 	require.NoError(t, workflow.Insert(context.TODO(), db, api.Cache, projIdent, proj2.ProjectGroups, &w))
 
 	u.Ring = ""
@@ -2449,10 +2415,7 @@ func Test_postWorkflowRunHandler_ConditionNotOK(t *testing.T) {
 		},
 	}
 
-	projIdent := sdk.ProjectIdentifiers{
-		ID:  proj.ID,
-		Key: proj.Key,
-	}
+	projIdent := proj2.Identifiers()
 	require.NoError(t, workflow.Insert(context.TODO(), db, api.Cache, projIdent, proj2.ProjectGroups, &w))
 
 	//Prepare request
@@ -2544,10 +2507,7 @@ func Test_postWorkflowRunHandler_BadPayload(t *testing.T) {
 		},
 	}
 
-	projIdent := sdk.ProjectIdentifiers{
-		ID:  proj.ID,
-		Key: proj.Key,
-	}
+	projIdent := proj.Identifiers()
 	require.NoError(t, workflow.Insert(context.TODO(), db, api.Cache, projIdent, proj2.ProjectGroups, &w))
 
 	require.NoError(t, user.Update(context.TODO(), db, u))
@@ -2651,10 +2611,7 @@ func initGetWorkflowNodeRunJobTest(t *testing.T, api *API, db gorpmapper.SqlExec
 	require.NoError(t, errP)
 	consumer, _ := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
 
-	projIdent := sdk.ProjectIdentifiers{
-		ID:  proj2.ID,
-		Key: proj2.Key,
-	}
+	projIdent := proj2.Identifiers()
 	require.NoError(t, workflow.Insert(context.TODO(), db, api.Cache, projIdent, proj2.ProjectGroups, &w))
 	w1, err := workflow.Load(context.TODO(), api.mustDB(), projIdent, "test_1", workflow.LoadOptions{
 		DeepPipeline: true,
@@ -2847,10 +2804,7 @@ func Test_deleteWorkflowRunsBranchHandler(t *testing.T) {
 	proj2, errP := project.Load(context.TODO(), api.mustDB(), proj.Key, project.LoadOptions.WithGroups)
 	require.NoError(t, errP)
 
-	projIdent := sdk.ProjectIdentifiers{
-		ID:  proj2.ID,
-		Key: proj2.Key,
-	}
+	projIdent := proj2.Identifiers()
 
 	require.NoError(t, workflow.Insert(context.TODO(), db, api.Cache, projIdent, proj2.ProjectGroups, &w))
 	w1, err := workflow.Load(context.TODO(), api.mustDB(), projIdent, "test_1", workflow.LoadOptions{})
@@ -2996,10 +2950,7 @@ func Test_deleteWorkflowRunHandler(t *testing.T) {
 	proj2, errP := project.Load(context.TODO(), api.mustDB(), proj.Key, project.LoadOptions.WithGroups)
 	require.NoError(t, errP)
 
-	projIdent := sdk.ProjectIdentifiers{
-		ID:  proj2.ID,
-		Key: proj2.Key,
-	}
+	projIdent := proj2.Identifiers()
 
 	require.NoError(t, workflow.Insert(context.TODO(), db, api.Cache, projIdent, proj2.ProjectGroups, &w))
 	w1, err := workflow.Load(context.TODO(), api.mustDB(), projIdent, "test_1", workflow.LoadOptions{})
@@ -3123,10 +3074,7 @@ func Test_postWorkflowRunHandlerRestartOnlyFailed(t *testing.T) {
 	proj2, errP := project.Load(context.TODO(), api.mustDB(), proj.Key, project.LoadOptions.WithGroups)
 	require.NoError(t, errP)
 
-	projIdent := sdk.ProjectIdentifiers{
-		ID:  proj2.ID,
-		Key: proj2.Key,
-	}
+	projIdent := proj2.Identifiers()
 
 	require.NoError(t, workflow.Insert(context.TODO(), db, api.Cache, projIdent, proj2.ProjectGroups, &w))
 	w1, err := workflow.Load(context.TODO(), api.mustDB(), projIdent, "test_1", workflow.LoadOptions{})
@@ -3272,10 +3220,7 @@ func Test_postWorkflowRunHandlerRestartResync(t *testing.T) {
 	proj2, errP := project.Load(context.TODO(), api.mustDB(), proj.Key, project.LoadOptions.WithGroups)
 	require.NoError(t, errP)
 
-	projIdent := sdk.ProjectIdentifiers{
-		ID:  proj2.ID,
-		Key: proj2.Key,
-	}
+	projIdent := proj2.Identifiers()
 
 	require.NoError(t, workflow.Insert(context.TODO(), db, api.Cache, projIdent, proj2.ProjectGroups, &w))
 	w1, err := workflow.Load(context.TODO(), api.mustDB(), projIdent, "test_1", workflow.LoadOptions{})

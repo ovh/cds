@@ -102,10 +102,7 @@ func TestManualRun1(t *testing.T) {
 		},
 	}
 
-	projIdent := sdk.ProjectIdentifiers{
-		ID:  proj.ID,
-		Key: proj.Key,
-	}
+	projIdent := proj.Identifiers()
 	require.NoError(t, workflow.Insert(context.TODO(), db, cache, projIdent, proj.ProjectGroups, &w))
 
 	w1, err := workflow.Load(context.TODO(), db, projIdent, "test_1", workflow.LoadOptions{
@@ -266,10 +263,7 @@ func TestManualRun2(t *testing.T) {
 		},
 	}
 
-	projIdent := sdk.ProjectIdentifiers{
-		ID:  proj.ID,
-		Key: proj.Key,
-	}
+	projIdent := proj.Identifiers()
 	require.NoError(t, workflow.Insert(context.TODO(), db, cache, projIdent, proj.ProjectGroups, &w))
 
 	w1, err := workflow.Load(context.TODO(), db, projIdent, "test_1", workflow.LoadOptions{
@@ -543,10 +537,7 @@ func TestManualRun3(t *testing.T) {
 	proj, err = project.LoadByID(db, proj.ID, project.LoadOptions.WithGroups)
 	require.NoError(t, err)
 
-	projIdent := sdk.ProjectIdentifiers{
-		ID:  proj.ID,
-		Key: proj.Key,
-	}
+	projIdent := proj.Identifiers()
 	require.NoError(t, workflow.Insert(context.TODO(), db, cache, projIdent, proj.ProjectGroups, &w))
 
 	w1, err := workflow.Load(context.TODO(), db, projIdent, "test_1", workflow.LoadOptions{
@@ -856,10 +847,7 @@ func TestNoStage(t *testing.T) {
 		},
 	}
 
-	projIdent := sdk.ProjectIdentifiers{
-		ID:  proj.ID,
-		Key: proj.Key,
-	}
+	projIdent := proj.Identifiers()
 	require.NoError(t, workflow.Insert(context.TODO(), db, cache, projIdent, proj.ProjectGroups, &w))
 	w1, err := workflow.Load(context.TODO(), db, projIdent, "test_1", workflow.LoadOptions{
 		DeepPipeline: true,
@@ -937,10 +925,7 @@ func TestNoJob(t *testing.T) {
 		},
 	}
 
-	projIdent := sdk.ProjectIdentifiers{
-		ID:  proj.ID,
-		Key: proj.Key,
-	}
+	projIdent := proj.Identifiers()
 	require.NoError(t, workflow.Insert(context.TODO(), db, cache, projIdent, proj.ProjectGroups, &w))
 	w1, err := workflow.Load(context.TODO(), db, projIdent, "test_1", workflow.LoadOptions{
 		DeepPipeline: true,

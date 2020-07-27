@@ -85,7 +85,7 @@ func (api *API) getEnvironmentHandler() service.Handler {
 				return err
 			}
 
-			projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
+			projIdent := proj.Identifiers()
 			wkAscodeHolder, err := workflow.LoadByRepo(ctx, api.mustDB(), projIdent, env.FromRepository, workflow.LoadOptions{
 				WithTemplate: true,
 			})
@@ -256,7 +256,7 @@ func (api *API) updateAsCodeEnvironmentHandler() service.Handler {
 		if err != nil {
 			return err
 		}
-		projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
+		projIdent := proj.Identifiers()
 
 		envDB, err := environment.LoadEnvironmentByName(tx, key, environmentName)
 		if err != nil {

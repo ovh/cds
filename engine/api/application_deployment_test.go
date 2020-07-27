@@ -30,7 +30,7 @@ func Test_getApplicationDeploymentStrategiesConfigHandler(t *testing.T) {
 	app := &sdk.Application{
 		Name: sdk.RandomString(10),
 	}
-	projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
+	projIdent := proj.Identifiers()
 	test.NoError(t, application.Insert(db, projIdent, app))
 
 	vars := map[string]string{
@@ -58,7 +58,7 @@ func Test_postApplicationDeploymentStrategyConfigHandler(t *testing.T) {
 	app := &sdk.Application{
 		Name: sdk.RandomString(10),
 	}
-	projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
+	projIdent := proj.Identifiers()
 	test.NoError(t, application.Insert(db, projIdent, app))
 
 	pf := sdk.IntegrationModel{
@@ -182,7 +182,7 @@ func Test_postApplicationDeploymentStrategyConfigHandler_InsertTwoDifferentInteg
 	app := &sdk.Application{
 		Name: sdk.RandomString(10),
 	}
-	projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
+	projIdent := proj.Identifiers()
 	test.NoError(t, application.Insert(db, projIdent, app))
 
 	pf := sdk.IntegrationModel{
@@ -308,7 +308,7 @@ func Test_postApplicationDeploymentStrategyConfigHandlerAsProvider(t *testing.T)
 	app := &sdk.Application{
 		Name: sdk.RandomString(10),
 	}
-	projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
+	projIdent := proj.Identifiers()
 	test.NoError(t, application.Insert(db, projIdent, app))
 
 	pf := sdk.IntegrationModel{

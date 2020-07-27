@@ -287,7 +287,7 @@ func Test_postResyncPRAsCodeHandler(t *testing.T) {
 	u, pass := assets.InsertAdminUser(t, db)
 	pkey := sdk.RandomString(10)
 	p := assets.InsertTestProject(t, db, api.Cache, pkey, pkey)
-	projIdent := sdk.ProjectIdentifiers{ID: p.ID, Key: p.Key}
+	projIdent := p.Identifiers()
 	vcsServer := sdk.ProjectVCSServerLink{
 		ProjectID: p.ID,
 		Name:      "github",

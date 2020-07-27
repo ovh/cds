@@ -71,7 +71,7 @@ func (api *API) postTakeWorkflowJobHandler() service.Handler {
 			return sdk.WrapError(err, "cannot load project by nodeJobRunID: %d", id)
 		}
 
-		projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
+		projIdent := proj.Identifiers()
 		// Load worker model
 		var workerModelName string
 		if wk.ModelID != nil {
@@ -388,7 +388,7 @@ func (api *API) postWorkflowJobResultHandler() service.Handler {
 			}
 			return sdk.WrapError(err, "cannot load project from job %d", id)
 		}
-		projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
+		projIdent := proj.Identifiers()
 
 		telemetry.Current(ctx,
 			telemetry.Tag(telemetry.TagProjectKey, projIdent.Key),
@@ -535,10 +535,7 @@ func postJobResult(ctx context.Context, dbFunc func(context.Context) *gorp.DbMap
 			return nil, sdk.WithStack(err)
 		}
 
-		projIdent := sdk.ProjectIdentifiers{
-			ID:  proj.ID,
-			Key: proj.Key,
-		}
+		projIdent := proj.Identifiers()
 		go WorkflowSendEvent(context.Background(), dbFunc(ctx), store, projIdent, reportParent)
 	}
 

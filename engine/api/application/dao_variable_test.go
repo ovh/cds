@@ -18,7 +18,7 @@ func Test_DAOVariable(t *testing.T) {
 
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, cache, key, key)
-	projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
+	projIdent := proj.Identifiers()
 	app := sdk.Application{
 		Name: "my-app",
 	}
@@ -71,7 +71,7 @@ func Test_DAOAllVarsAllProjects(t *testing.T) {
 
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, cache, key, key)
-	projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
+	projIdent := proj.Identifiers()
 	u, _ := assets.InsertLambdaUser(t, db, &proj.ProjectGroups[0].Group)
 
 	app1 := sdk.Application{

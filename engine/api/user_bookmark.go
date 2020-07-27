@@ -27,7 +27,7 @@ func (api *API) postUserFavoriteHandler() service.Handler {
 			return sdk.WrapError(err, "unable to load projet")
 		}
 
-		projIdent := sdk.ProjectIdentifiers{ID: p.ID, Key: p.Key}
+		projIdent := p.Identifiers()
 		switch params.Type {
 		case "workflow":
 			wf, err := workflow.Load(ctx, api.mustDB(), projIdent, params.WorkflowName, workflow.LoadOptions{})

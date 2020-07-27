@@ -30,7 +30,7 @@ func (api *API) deleteWorkflowGroupHandler() service.Handler {
 			return sdk.WrapError(err, "unable to load projet")
 		}
 
-		projIdent := sdk.ProjectIdentifiers{ID: p.ID, Key: p.Key}
+		projIdent := p.Identifiers()
 		options := workflow.LoadOptions{}
 		wf, err := workflow.Load(ctx, api.mustDB(), projIdent, name, options)
 		if err != nil {
@@ -94,7 +94,7 @@ func (api *API) putWorkflowGroupHandler() service.Handler {
 			return sdk.WrapError(err, "unable to load projet")
 		}
 
-		projIdent := sdk.ProjectIdentifiers{ID: p.ID, Key: p.Key}
+		projIdent := p.Identifiers()
 		options := workflow.LoadOptions{}
 		wf, err := workflow.Load(ctx, api.mustDB(), projIdent, name, options)
 		if err != nil {
@@ -150,7 +150,7 @@ func (api *API) postWorkflowGroupHandler() service.Handler {
 			return sdk.WrapError(err, "unable to load projet")
 		}
 
-		projIdent := sdk.ProjectIdentifiers{ID: p.ID, Key: p.Key}
+		projIdent := p.Identifiers()
 		options := workflow.LoadOptions{}
 		wf, err := workflow.Load(ctx, api.mustDB(), projIdent, name, options)
 		if err != nil {

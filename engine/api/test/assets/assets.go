@@ -45,7 +45,7 @@ func InsertTestProject(t *testing.T, db gorpmapper.SqlExecutorWithTx, store cach
 		project.LoadOptions.WithWorkflows,
 	)
 	if oldProj != nil {
-		projIdent := sdk.ProjectIdentifiers{ID: oldProj.ID, Key: oldProj.Key}
+		projIdent := oldProj.Identifiers()
 		for _, w := range oldProj.Workflows {
 			require.NoError(t, workflow.Delete(context.TODO(), db, store, projIdent, &w))
 		}
@@ -582,7 +582,7 @@ func InsertTestWorkflow(t *testing.T, db gorpmapper.SqlExecutorWithTx, store cac
 		},
 	}
 
-	projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
+	projIdent := proj.Identifiers()
 	require.NoError(t, workflow.Insert(context.TODO(), db, store, projIdent, proj.ProjectGroups, &w))
 
 	return &w

@@ -59,7 +59,7 @@ func testRunWorkflow(t *testing.T, api *API, db gorpmapper.SqlExecutorWithTx, ro
 	u, pass := assets.InsertLambdaUser(t, db)
 	key := "proj-" + sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, api.Cache, key, key)
-	projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
+	projIdent := proj.Identifiers()
 	require.NoError(t, group.InsertLinkGroupUser(context.TODO(), db, &group.LinkGroupUser{
 		GroupID:            proj.ProjectGroups[0].Group.ID,
 		AuthentifiedUserID: u.ID,
@@ -973,7 +973,7 @@ func TestWorkerPrivateKey(t *testing.T) {
 	// Create project
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, api.Cache, key, key)
-	projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
+	projIdent := proj.Identifiers()
 	// add group
 	require.NoError(t, group.InsertLinkGroupUser(context.TODO(), db, &group.LinkGroupUser{
 		GroupID:            proj.ProjectGroups[0].Group.ID,
@@ -1086,7 +1086,7 @@ func TestPostVulnerabilityReportHandler(t *testing.T) {
 	// Create project
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, api.Cache, key, key)
-	projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
+	projIdent := proj.Identifiers()
 	// add group
 	require.NoError(t, group.InsertLinkGroupUser(context.TODO(), db, &group.LinkGroupUser{
 		GroupID:            proj.ProjectGroups[0].Group.ID,
@@ -1238,7 +1238,7 @@ func TestInsertNewCodeCoverageReport(t *testing.T) {
 	// Add repo manager
 	proj.VCSServers = make([]sdk.ProjectVCSServerLink, 0, 1)
 	proj.VCSServers = append(proj.VCSServers)
-	projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
+	projIdent := proj.Identifiers()
 	vcsServer := sdk.ProjectVCSServerLink{
 		ProjectID: proj.ID,
 		Name:      "repoManServ",

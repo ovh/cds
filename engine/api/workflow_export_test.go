@@ -105,7 +105,7 @@ func Test_getWorkflowExportHandler(t *testing.T) {
 
 	proj, _ = project.Load(context.TODO(), api.mustDB(), proj.Key, project.LoadOptions.WithGroups)
 
-	projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
+	projIdent := proj.Identifiers()
 	require.NoError(t, workflow.Insert(context.TODO(), db, api.Cache, projIdent, proj.ProjectGroups, &w))
 	w1, err := workflow.Load(context.TODO(), api.mustDB(), projIdent, "test_1", workflow.LoadOptions{})
 	test.NoError(t, err)
@@ -239,7 +239,7 @@ func Test_getWorkflowExportHandlerWithPermissions(t *testing.T) {
 	test.NoError(t, workflow.RenameNode(context.TODO(), db, &w))
 
 	proj, _ = project.Load(context.TODO(), api.mustDB(), proj.Key, project.LoadOptions.WithGroups)
-	projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
+	projIdent := proj.Identifiers()
 	require.NoError(t, workflow.Insert(context.TODO(), db, api.Cache, projIdent, proj.ProjectGroups, &w))
 
 	w1, err := workflow.Load(context.TODO(), api.mustDB(), projIdent, "test_1", workflow.LoadOptions{})
@@ -347,7 +347,7 @@ func Test_getWorkflowPullHandler(t *testing.T) {
 
 	proj, _ = project.Load(context.TODO(), api.mustDB(), proj.Key, project.LoadOptions.WithGroups)
 
-	projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
+	projIdent := proj.Identifiers()
 	require.NoError(t, workflow.Insert(context.TODO(), db, api.Cache, projIdent, proj.ProjectGroups, &w))
 	w1, err := workflow.Load(context.TODO(), api.mustDB(), projIdent, "test_1", workflow.LoadOptions{})
 	test.NoError(t, err)

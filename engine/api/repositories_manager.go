@@ -397,7 +397,7 @@ func (api *API) getReposFromRepositoriesManagerHandler() service.Handler {
 			return sdk.NewErrorWithStack(err, sdk.NewErrorFrom(sdk.ErrNoReposManagerClientAuth,
 				"cannot get client got %s %s", projectKey, vcsServerName))
 		}
-		projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
+		projIdent := proj.Identifiers()
 		repos, err := repositoriesmanager.GetReposForProjectVCSServer(ctx, tx, api.Cache, projIdent, vcsServerName, repositoriesmanager.Options{
 			Sync: sync,
 		})
@@ -544,7 +544,7 @@ func (api *API) attachRepositoriesManagerHandler() service.Handler {
 				return sdk.WrapError(errP, "attachRepositoriesManager> Cannot load project")
 			}
 
-			projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
+			projIdent := proj.Identifiers()
 			for _, wf := range usage.Workflows {
 				wfDB, err := workflow.LoadByID(ctx, db, projIdent, wf.ID, workflow.LoadOptions{})
 				if err != nil {

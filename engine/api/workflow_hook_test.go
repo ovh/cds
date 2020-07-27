@@ -59,7 +59,7 @@ func Test_getWorkflowHookModelsHandlerAsLambdaUser(t *testing.T) {
 		},
 	}
 
-	projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
+	projIdent := proj.Identifiers()
 	test.NoError(t, workflow.Insert(context.TODO(), db, cache, projIdent, proj.ProjectGroups, &w))
 
 	//Prepare request
@@ -91,7 +91,7 @@ func Test_getWorkflowHookModelsHandlerAsAdminUser(t *testing.T) {
 	admin, passAdmin := assets.InsertAdminUser(t, db)
 
 	proj := assets.InsertTestProject(t, db, cache, sdk.RandomString(10), sdk.RandomString(10))
-	projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
+	projIdent := proj.Identifiers()
 	pip := sdk.Pipeline{
 		ProjectID:  proj.ID,
 		ProjectKey: proj.Key,

@@ -42,7 +42,7 @@ func (api *API) getProjectsHandler_FilterByRepo(ctx context.Context, w http.Resp
 		p.Applications = apps
 		ws := []sdk.Workflow{}
 		//Filter the workflow by applications
-		projIdent := sdk.ProjectIdentifiers{ID: p.ID, Key: p.Key}
+		projIdent := p.Identifiers()
 		for i := range p.Workflows {
 			w, err := workflow.LoadByID(ctx, db, projIdent, p.Workflows[i].ID, workflow.LoadOptions{})
 			if err != nil {

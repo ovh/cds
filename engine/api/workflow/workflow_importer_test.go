@@ -35,7 +35,7 @@ func TestImport(t *testing.T) {
 	_, _ = assets.InsertAdminUser(t, db)
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, cache, key, key)
-	projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
+	projIdent := proj.Identifiers()
 	srvs, _ := services.LoadAll(context.TODO(), db)
 	for _, srv := range srvs {
 		if err := services.Delete(db, &srv); err != nil {
@@ -476,7 +476,7 @@ func TestImport(t *testing.T) {
 				t.Errorf("%s", err)
 			}
 			var wf *sdk.Workflow
-			projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
+			projIdent := proj.Identifiers()
 			if workflowExists {
 				wf, err = workflow.Load(context.TODO(), db, projIdent, tt.args.w.Name, workflow.LoadOptions{WithIcon: true})
 				if err != nil {

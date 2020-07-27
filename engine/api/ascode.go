@@ -59,7 +59,7 @@ func (api *API) postImportAsCodeHandler() service.Handler {
 		if err != nil {
 			return sdk.WrapError(err, "cannot load project")
 		}
-		projIdent := sdk.ProjectIdentifiers{ID: p.ID, Key: p.Key}
+		projIdent := p.Identifiers()
 
 		vcsServer, err := repositoriesmanager.LoadProjectVCSServerLinkByProjectKeyAndVCSServerName(ctx, tx, p.Key, ope.VCSServer)
 		if err != nil {
@@ -148,7 +148,7 @@ func (api *API) postPerformImportAsCodeHandler() service.Handler {
 			return sdk.WrapError(err, "cannot load project %s", key)
 		}
 
-		projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
+		projIdent := proj.Identifiers()
 		projPushData := sdk.ProjectForWorkflowPush{
 			ProjectGroups: proj.ProjectGroups,
 			Integrations:  proj.Integrations,
@@ -259,7 +259,7 @@ func (api *API) postWorkflowAsCodeEventsResyncHandler() service.Handler {
 			return err
 		}
 
-		projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
+		projIdent := proj.Identifiers()
 		wf, err := workflow.Load(ctx, api.mustDB(), projIdent, workflowName, workflow.LoadOptions{})
 		if err != nil {
 			return err

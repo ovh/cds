@@ -39,7 +39,7 @@ func (api *API) postWorkflowAsCodeHandler() service.Handler {
 			return err
 		}
 
-		projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
+		projIdent := proj.Identifiers()
 		wfDB, err := workflow.Load(ctx, api.mustDB(), projIdent, workflowName, workflow.LoadOptions{
 			DeepPipeline:          migrate,
 			WithAsCodeUpdateEvent: migrate,

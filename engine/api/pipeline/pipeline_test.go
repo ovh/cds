@@ -148,7 +148,7 @@ func TestLoadByWorkflowID(t *testing.T) {
 	key := sdk.RandomString(10)
 
 	proj := assets.InsertTestProject(t, db, cache, key, key)
-	projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
+	projIdent := proj.Identifiers()
 	app := sdk.Application{
 		Name:       "my-app",
 		ProjectKey: proj.Key,

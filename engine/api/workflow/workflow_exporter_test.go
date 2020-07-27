@@ -25,7 +25,7 @@ func TestPull(t *testing.T) {
 
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, cache, key, key)
-	projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
+	projIdent := proj.Identifiers()
 	//First pipeline
 	pip := sdk.Pipeline{
 		ProjectID:  proj.ID,

@@ -94,7 +94,7 @@ func workflows(ctx context.Context, db *gorp.DbMap, store cache.Store, workflowR
 				log.Error(ctx, "purge.Workflows> unable to load project %d: %v", r.ProjectID, err)
 				continue
 			}
-			projects[r.ProjectID] = sdk.ProjectIdentifiers{ID: p.ID, Key: p.Key}
+			projects[r.ProjectID] = p.Identifiers()
 			projIdent = projects[r.ProjectID]
 		}
 

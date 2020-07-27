@@ -369,7 +369,7 @@ func (api *API) postTemplateApplyHandler() service.Handler {
 			return err
 		}
 
-		projIdent := sdk.ProjectIdentifiers{ID: p.ID, Key: p.Key}
+		projIdent := p.Identifiers()
 		projPushData := sdk.ProjectForWorkflowPush{
 			Integrations:  p.Integrations,
 			ProjectGroups: p.ProjectGroups,
@@ -610,7 +610,7 @@ func (api *API) postTemplateBulkHandler() service.Handler {
 						continue
 					}
 
-					projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
+					projIdent := proj.Identifiers()
 					projPushData := sdk.ProjectForWorkflowPush{
 						ProjectGroups: proj.ProjectGroups,
 						Integrations:  proj.Integrations,

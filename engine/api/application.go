@@ -155,7 +155,7 @@ func (api *API) getApplicationHandler() service.Handler {
 				return err
 			}
 
-			projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
+			projIdent := proj.Identifiers()
 			wkAscodeHolder, err := workflow.LoadByRepo(ctx, api.mustDB(), projIdent, app.FromRepository, workflow.LoadOptions{
 				WithTemplate: true,
 			})
@@ -265,7 +265,7 @@ func (api *API) addApplicationHandler() service.Handler {
 		if errl != nil {
 			return sdk.WrapError(errl, "addApplicationHandler> Cannot load %s", key)
 		}
-		projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
+		projIdent := proj.Identifiers()
 
 		var app sdk.Application
 		if err := service.UnmarshalBody(r, &app); err != nil {
@@ -347,7 +347,7 @@ func (api *API) cloneApplicationHandler() service.Handler {
 		if errProj != nil {
 			return sdk.WrapError(sdk.ErrNoProject, "cloneApplicationHandler> Cannot load %s", projectKey)
 		}
-		projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
+		projIdent := proj.Identifiers()
 
 		var newApp sdk.Application
 		if err := service.UnmarshalBody(r, &newApp); err != nil {
@@ -456,7 +456,7 @@ func (api *API) updateAsCodeApplicationHandler() service.Handler {
 			return sdk.NewErrorFrom(sdk.ErrForbidden, "current application is not ascode")
 		}
 
-		projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
+		projIdent := proj.Identifiers()
 		wkHolder, err := workflow.LoadByRepo(ctx, tx, projIdent, appDB.FromRepository, workflow.LoadOptions{
 			WithTemplate: true,
 		})

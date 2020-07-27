@@ -34,7 +34,7 @@ func runFromHook(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store cac
 
 	report := new(ProcessorReport)
 
-	projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
+	projIdent := proj.Identifiers()
 	var h *sdk.NodeHook
 	if sdk.IsValidUUID(e.WorkflowNodeHookUUID) {
 		hooks := wr.Workflow.WorkflowData.GetHooks()
@@ -168,7 +168,7 @@ func manualRun(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store cache
 	ctx, end := telemetry.Span(ctx, "workflow.ManualRun", telemetry.Tag(telemetry.TagWorkflowRun, wr.Number))
 	defer end()
 
-	projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
+	projIdent := proj.Identifiers()
 	if err := CompleteWorkflow(ctx, db, &wr.Workflow, projIdent, LoadOptions{DeepPipeline: true}); err != nil {
 		return nil, sdk.WrapError(err, "unable to valid workflow")
 	}

@@ -52,7 +52,7 @@ func Test_RunNonDefaultBranchWithSecrets(t *testing.T) {
 	// Create a project with a repository manager
 	prjKey := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, api.Cache, prjKey, prjKey)
-	projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
+	projIdent := proj.Identifiers()
 	u, pass := assets.InsertLambdaUser(t, db, &proj.ProjectGroups[0].Group)
 
 	appVariable := sdk.Variable{

@@ -77,7 +77,7 @@ func TestInsertSimpleWorkflowAndExport(t *testing.T) {
 			},
 		},
 	}
-	projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
+	projIdent := proj.Identifiers()
 
 	test.NoError(t, workflow.Insert(context.TODO(), db, cache, projIdent, proj.ProjectGroups, &w))
 
@@ -140,7 +140,7 @@ func TestInsertSimpleWorkflowWithWrongName(t *testing.T) {
 		},
 	}
 
-	projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
+	projIdent := proj.Identifiers()
 	assert.Error(t, workflow.Insert(context.TODO(), db, cache, projIdent, proj.ProjectGroups, &w))
 }
 
@@ -149,7 +149,7 @@ func TestInsertSimpleWorkflowWithApplicationAndEnv(t *testing.T) {
 
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, cache, key, key)
-	projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
+	projIdent := proj.Identifiers()
 	pip := sdk.Pipeline{
 		ProjectID:  proj.ID,
 		ProjectKey: proj.Key,
@@ -323,7 +323,7 @@ func TestInsertComplexeWorkflowAndExport(t *testing.T) {
 			},
 		},
 	}
-	projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
+	projIdent := proj.Identifiers()
 	test.NoError(t, workflow.Insert(context.TODO(), db, cache, projIdent, proj.ProjectGroups, &w))
 
 	w1, err := workflow.Load(context.TODO(), db, projIdent, "test_1", workflow.LoadOptions{})
@@ -461,7 +461,7 @@ func TestInsertComplexeWorkflowWithBadOperator(t *testing.T) {
 		},
 	}
 
-	projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
+	projIdent := proj.Identifiers()
 	assert.Error(t, workflow.Insert(context.TODO(), db, cache, projIdent, proj.ProjectGroups, &w))
 }
 
@@ -486,7 +486,7 @@ func TestUpdateSimpleWorkflowWithApplicationEnvPipelineParametersAndPayload(t *t
 
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, cache, key, key)
-	projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
+	projIdent := proj.Identifiers()
 	pip := sdk.Pipeline{
 		ProjectID:  proj.ID,
 		ProjectKey: proj.Key,
@@ -768,7 +768,7 @@ func TestInsertComplexeWorkflowWithJoinsAndExport(t *testing.T) {
 		},
 	}
 
-	projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
+	projIdent := proj.Identifiers()
 	test.NoError(t, workflow.RenameNode(context.TODO(), db, &w))
 	test.NoError(t, workflow.Insert(context.TODO(), db, cache, projIdent, proj.ProjectGroups, &w))
 
@@ -1068,7 +1068,7 @@ func TestInsertComplexeWorkflowWithComplexeJoins(t *testing.T) {
 			},
 		},
 	}
-	projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
+	projIdent := proj.Identifiers()
 	test.NoError(t, workflow.RenameNode(context.TODO(), db, &w))
 	test.NoError(t, workflow.Insert(context.TODO(), db, cache, projIdent, proj.ProjectGroups, &w))
 
@@ -1158,7 +1158,7 @@ func TestUpdateWorkflowWithJoins(t *testing.T) {
 	}
 
 	proj, _ = project.LoadByID(db, proj.ID, project.LoadOptions.WithGroups)
-	projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
+	projIdent := proj.Identifiers()
 	test.NoError(t, workflow.RenameNode(context.TODO(), db, &w))
 	test.NoError(t, workflow.Insert(context.TODO(), db, cache, projIdent, proj.ProjectGroups, &w))
 
@@ -1451,7 +1451,7 @@ func TestInsertSimpleWorkflowWithHookAndExport(t *testing.T) {
 		},
 	}
 
-	projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
+	projIdent := proj.Identifiers()
 	test.NoError(t, workflow.RenameNode(context.TODO(), db, &w))
 	test.NoError(t, workflow.Insert(context.TODO(), db, cache, projIdent, proj.ProjectGroups, &w), "unable to insert workflow")
 
@@ -1510,7 +1510,7 @@ func TestInsertAndDeleteMultiHook(t *testing.T) {
 	// Create project
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, cache, key, key)
-	projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
+	projIdent := proj.Identifiers()
 	vcsServer := sdk.ProjectVCSServerLink{
 		ProjectID: proj.ID,
 		Name:      "github",

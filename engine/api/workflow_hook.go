@@ -63,7 +63,7 @@ func (api *API) getWorkflowHookModelsHandler() service.Handler {
 			return sdk.WithStack(err)
 		}
 
-		projIdent := sdk.ProjectIdentifiers{ID: p.ID, Key: p.Key}
+		projIdent := p.Identifiers()
 		wf, err := workflow.Load(ctx, tx, projIdent, workflowName, workflow.LoadOptions{})
 		if err != nil {
 			return sdk.WithStack(err)
@@ -258,10 +258,7 @@ func (api *API) postWorkflowJobHookCallbackHandler() service.Handler {
 			project.LoadOptions.WithIntegrations,
 			project.LoadOptions.WithKeys,
 		)
-		projIdent := sdk.ProjectIdentifiers{
-			ID:  proj.ID,
-			Key: proj.Key,
-		}
+		projIdent := proj.Identifiers()
 		next()
 		if err != nil {
 			return sdk.WrapError(err, "cannot load project")

@@ -31,7 +31,7 @@ func (api *API) postEnvironmentImportHandler() service.Handler {
 		if err != nil {
 			return sdk.WrapError(err, "unable load project")
 		}
-		projIdent := sdk.ProjectIdentifiers{ID: p.ID, Key: p.Key}
+		projIdent := p.Identifiers()
 		body, err := ioutil.ReadAll(r.Body)
 		if err != nil {
 			return sdk.NewError(sdk.ErrWrongRequest, err)
@@ -86,7 +86,7 @@ func (api *API) importNewEnvironmentHandler() service.Handler {
 		if err != nil {
 			return sdk.WrapError(err, "cannot load %s", key)
 		}
-		projIdent := sdk.ProjectIdentifiers{ID: proj.ID, Key: proj.Key}
+		projIdent := proj.Identifiers()
 
 		body, err := ioutil.ReadAll(r.Body)
 		if err != nil {
