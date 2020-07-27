@@ -48,6 +48,21 @@ func (s *Service) RunTcpLogServer(ctx context.Context) {
 		_ = listener.Close()
 	}()
 
+	for i := int64(0); i <= s.Cfg.NbJobWorkers; i++ {
+		sdk.GoRoutine(ctx, "cdn-worker-job-"+string(i), func(ctx context.Context) {
+			if err := s.dequeueJobLogs(ctx); err != nil {
+				log.Error(ctx, "dequeueJobLogs: unable to dequeue redis incoming job logs: %v", err)
+			}
+		})
+	}
+	for i := int64(0); i < s.Cfg.NbServiceWorkers; i++ {
+		sdk.GoRoutine(ctx, "cdn-worker-service-"+string(i), func(ctx context.Context) {
+			if err := s.dequeueServiceLogs(ctx); err != nil {
+				log.Error(ctx, "dequeueJobLogs: unable to dequeue redis incoming service logs: %v", err)
+			}
+		})
+	}
+
 	// Looking for something to dequeue
 	// DEPRECATED
 	sdk.GoRoutine(ctx, "cdn-waiting-job", func(ctx context.Context) {
@@ -355,4 +370,57 @@ func (s *Service) cdnEnabled(ctx context.Context, projectKey string) bool {
 		return resp.Enabled
 	}
 	return enabled.(bool)
+}
+
+func (s *Service) dequeueJobLogs(ctx context.Context) error {
+	log.Info(ctx, "dequeueJobLogs: start")
+	for {
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		default:
+			dequeuCtx, cancel := context.WithTimeout(ctx, 15*time.Second)
+			var hm handledMessage
+			if err := s.Cache.DequeueWithContext(dequeuCtx, keyJobLogIncomingQueue, 30*time.Millisecond, &hm); err != nil {
+				cancel()
+				if strings.Contains(err.Error(), "context deadline exceeded") {
+					return nil
+				}
+				log.Error(ctx, "dequeueJobLogs: unable to dequeue job logs queue: %v", err)
+				continue
+			}
+			cancel()
+			if hm.Signature.Worker == nil {
+				continue
+			}
+			currentLog := buildMessage(hm.Signature, hm.Msg)
+			log.Info(ctx, "Job log: %s", currentLog)
+		}
+	}
+}
+
+func (s *Service) dequeueServiceLogs(ctx context.Context) error {
+	log.Info(ctx, "dequeueServiceLogs: start")
+	for {
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		default:
+			dequeuCtx, cancel := context.WithTimeout(ctx, 15*time.Second)
+			var serviceLog sdk.ServiceLog
+			if err := s.Cache.DequeueWithContext(dequeuCtx, keyServiceLogIncomingQueue, 30*time.Millisecond, &serviceLog); err != nil {
+				cancel()
+				if strings.Contains(err.Error(), "context deadline exceeded") {
+					return nil
+				}
+				log.Error(ctx, "dequeueServiceLogs: unable to dequeue service logs queue: %v", err)
+				continue
+			}
+			cancel()
+			if serviceLog.Val == "" {
+				continue
+			}
+			log.Info(ctx, "Service log: %s", serviceLog.Val)
+		}
+	}
 }
