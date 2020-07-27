@@ -48,14 +48,14 @@ func (s *Service) RunTcpLogServer(ctx context.Context) {
 		_ = listener.Close()
 	}()
 
-	for i := int64(0); i <= s.Cfg.NbJobWorkers; i++ {
+	for i := int64(0); i <= s.Cfg.NbJobLogsGoroutines; i++ {
 		sdk.GoRoutine(ctx, "cdn-worker-job-"+string(i), func(ctx context.Context) {
 			if err := s.dequeueJobLogs(ctx); err != nil {
 				log.Error(ctx, "dequeueJobLogs: unable to dequeue redis incoming job logs: %v", err)
 			}
 		})
 	}
-	for i := int64(0); i < s.Cfg.NbServiceWorkers; i++ {
+	for i := int64(0); i < s.Cfg.NbServiceLogsGoroutines; i++ {
 		sdk.GoRoutine(ctx, "cdn-worker-service-"+string(i), func(ctx context.Context) {
 			if err := s.dequeueServiceLogs(ctx); err != nil {
 				log.Error(ctx, "dequeueJobLogs: unable to dequeue redis incoming service logs: %v", err)
