@@ -1880,7 +1880,7 @@ func Test_postWorkflowRunHandlerMutexRelease(t *testing.T) {
 		},
 	}
 
-	projIdent := proj2.IDs()
+	projIdent := proj.Identifiers()
 	require.NoError(t, workflow.Insert(context.TODO(), db, api.Cache, projIdent, proj.ProjectGroups, &wkf))
 
 	// Run workflow 1
