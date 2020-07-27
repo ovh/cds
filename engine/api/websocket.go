@@ -382,6 +382,14 @@ func (b *websocketBroker) computeEventKeys(event sdk.Event) []string {
 			WorkflowRunNumber: event.WorkflowRunNum,
 		}.Key())
 	}
+	if event.EventType == fmt.Sprintf("%T", sdk.EventRunWorkflowNode{}) {
+		keys = append(keys, sdk.WebsocketFilter{
+			Type:              sdk.WebsocketFilterTypeWorkflowRun,
+			ProjectKey:        event.ProjectKey,
+			WorkflowName:      event.WorkflowName,
+			WorkflowRunNumber: event.WorkflowRunNum,
+		}.Key())
+	}
 	// Event that match workflow node run filter
 	if event.EventType == fmt.Sprintf("%T", sdk.EventRunWorkflowNode{}) {
 		keys = append(keys, sdk.WebsocketFilter{
