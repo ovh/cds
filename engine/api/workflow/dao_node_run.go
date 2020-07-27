@@ -10,7 +10,7 @@ import (
 	"github.com/go-gorp/gorp"
 	"github.com/ovh/venom"
 
-	"github.com/ovh/cds/engine/api/cache"
+	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/engine/gorpmapper"

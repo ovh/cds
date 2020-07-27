@@ -8,17 +8,18 @@ import (
 	"net/http/httputil"
 	"testing"
 
+	"github.com/ovh/cds/engine/test"
 	"github.com/ovh/cds/sdk"
-
-	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/sdk/log"
+
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func Test_getAllVCSServersHandler(t *testing.T) {
 	//Bootstrap the service
 	s, err := newTestService(t)
-	test.NoError(t, err)
+	require.NoError(t, err)
 
 	err = s.addServerConfiguration("github", ServerConfiguration{
 		URL: "https://github.com",
@@ -27,7 +28,7 @@ func Test_getAllVCSServersHandler(t *testing.T) {
 			ClientSecret: "client_secret",
 		},
 	})
-	test.NoError(t, err)
+	require.NoError(t, err)
 
 	err = s.addServerConfiguration("gitlab", ServerConfiguration{
 		URL: "https://gitlab.com",
@@ -35,7 +36,7 @@ func Test_getAllVCSServersHandler(t *testing.T) {
 			Secret: "mysecret",
 		},
 	})
-	test.NoError(t, err)
+	require.NoError(t, err)
 
 	err = s.addServerConfiguration("bitbucket", ServerConfiguration{
 		URL: "https://bitbucket.com",
@@ -44,12 +45,12 @@ func Test_getAllVCSServersHandler(t *testing.T) {
 			PrivateKey:  "private key",
 		},
 	})
-	test.NoError(t, err)
+	require.NoError(t, err)
 
 	//Prepare request
 	vars := map[string]string{}
 	uri := s.Router.GetRoute("GET", s.getAllVCSServersHandler, vars)
-	test.NotEmpty(t, uri)
+	require.NotEmpty(t, uri)
 	req := newRequest(t, s, "GET", uri, nil)
 
 	//Do the request
@@ -60,7 +61,7 @@ func Test_getAllVCSServersHandler(t *testing.T) {
 	assert.Equal(t, 200, rec.Code)
 
 	var servers = map[string]ServerConfiguration{}
-	test.NoError(t, json.Unmarshal(rec.Body.Bytes(), &servers))
+	require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &servers))
 
 	assert.Len(t, servers, 3)
 
@@ -71,7 +72,7 @@ func Test_getAllVCSServersHandler(t *testing.T) {
 		"name": "github",
 	}
 	uri = s.Router.GetRoute("GET", s.getVCSServersHandler, vars)
-	test.NotEmpty(t, uri)
+	require.NotEmpty(t, uri)
 	req = newRequest(t, s, "GET", uri, nil)
 
 	//Do the request
@@ -82,7 +83,7 @@ func Test_getAllVCSServersHandler(t *testing.T) {
 	assert.Equal(t, 200, rec.Code)
 
 	var srv = ServerConfiguration{}
-	test.NoError(t, json.Unmarshal(rec.Body.Bytes(), &srv))
+	require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &srv))
 
 	t.Logf("%s", rec.Body.String())
 
@@ -91,7 +92,7 @@ func Test_getAllVCSServersHandler(t *testing.T) {
 		"name": "github",
 	}
 	uri = s.Router.GetRoute("GET", s.getVCSServersHooksHandler, vars)
-	test.NotEmpty(t, uri)
+	require.NotEmpty(t, uri)
 	req = newRequest(t, s, "GET", uri, nil)
 
 	//Do the request
@@ -106,7 +107,7 @@ func Test_getAllVCSServersHandler(t *testing.T) {
 		"name": "github",
 	}
 	uri = s.Router.GetRoute("GET", s.getVCSServersPollingHandler, vars)
-	test.NotEmpty(t, uri)
+	require.NotEmpty(t, uri)
 	req = newRequest(t, s, "GET", uri, nil)
 
 	//Do the request
@@ -122,7 +123,7 @@ func Test_accessTokenAuth(t *testing.T) {
 
 	//Bootstrap the service
 	s, err := newTestService(t)
-	test.NoError(t, err)
+	require.NoError(t, err)
 
 	checkConfigGithub(cfg, t)
 	err = s.addServerConfiguration("github", ServerConfiguration{
@@ -133,14 +134,14 @@ func Test_accessTokenAuth(t *testing.T) {
 			ClientSecret: "client_secret",
 		},
 	})
-	test.NoError(t, err)
+	require.NoError(t, err)
 
 	//Prepare request
 	vars := map[string]string{
 		"name": "github",
 	}
 	uri := s.Router.GetRoute("GET", s.getReposHandler, vars)
-	test.NotEmpty(t, uri)
+	require.NotEmpty(t, uri)
 	req := newRequest(t, s, "GET", uri, nil)
 
 	//Without any header, this should return 401
@@ -160,7 +161,7 @@ func Test_getReposHandler(t *testing.T) {
 
 	//Bootstrap the service
 	s, err := newTestService(t)
-	test.NoError(t, err)
+	require.NoError(t, err)
 
 	checkConfigGithub(cfg, t)
 	err = s.addServerConfiguration("github", ServerConfiguration{
@@ -171,14 +172,14 @@ func Test_getReposHandler(t *testing.T) {
 			ClientSecret: cfg["githubClientSecret"],
 		},
 	})
-	test.NoError(t, err)
+	require.NoError(t, err)
 
 	//Prepare request
 	vars := map[string]string{
 		"name": "github",
 	}
 	uri := s.Router.GetRoute("GET", s.getReposHandler, vars)
-	test.NotEmpty(t, uri)
+	require.NotEmpty(t, uri)
 	req := newRequest(t, s, "GET", uri, nil)
 
 	token := base64.StdEncoding.EncodeToString([]byte(cfg["githubAccessToken"]))
@@ -199,7 +200,7 @@ func Test_getRepoHandler(t *testing.T) {
 
 	//Bootstrap the service
 	s, err := newTestService(t)
-	test.NoError(t, err)
+	require.NoError(t, err)
 
 	checkConfigGithub(cfg, t)
 
@@ -211,7 +212,7 @@ func Test_getRepoHandler(t *testing.T) {
 			ClientSecret: cfg["githubClientSecret"],
 		},
 	})
-	test.NoError(t, err)
+	require.NoError(t, err)
 
 	//Prepare request
 	vars := map[string]string{
@@ -220,7 +221,7 @@ func Test_getRepoHandler(t *testing.T) {
 		"repo":  cfg["githubRepo"],
 	}
 	uri := s.Router.GetRoute("GET", s.getRepoHandler, vars)
-	test.NotEmpty(t, uri)
+	require.NotEmpty(t, uri)
 	req := newRequest(t, s, "GET", uri, nil)
 
 	token := base64.StdEncoding.EncodeToString([]byte(cfg["githubAccessToken"]))
@@ -241,7 +242,7 @@ func Test_getBranchesHandler(t *testing.T) {
 
 	//Bootstrap the service
 	s, err := newTestService(t)
-	test.NoError(t, err)
+	require.NoError(t, err)
 
 	checkConfigGithub(cfg, t)
 
@@ -253,7 +254,7 @@ func Test_getBranchesHandler(t *testing.T) {
 			ClientSecret: cfg["githubClientSecret"],
 		},
 	})
-	test.NoError(t, err)
+	require.NoError(t, err)
 
 	//Prepare request
 	vars := map[string]string{
@@ -262,7 +263,7 @@ func Test_getBranchesHandler(t *testing.T) {
 		"repo":  cfg["githubRepo"],
 	}
 	uri := s.Router.GetRoute("GET", s.getBranchesHandler, vars)
-	test.NotEmpty(t, uri)
+	require.NotEmpty(t, uri)
 	req := newRequest(t, s, "GET", uri, nil)
 
 	token := base64.StdEncoding.EncodeToString([]byte(cfg["githubAccessToken"]))
@@ -283,7 +284,7 @@ func Test_getBranchHandler(t *testing.T) {
 
 	//Bootstrap the service
 	s, err := newTestService(t)
-	test.NoError(t, err)
+	require.NoError(t, err)
 
 	checkConfigGithub(cfg, t)
 
@@ -295,7 +296,7 @@ func Test_getBranchHandler(t *testing.T) {
 			ClientSecret: cfg["githubClientSecret"],
 		},
 	})
-	test.NoError(t, err)
+	require.NoError(t, err)
 
 	//Prepare request
 	vars := map[string]string{
@@ -304,7 +305,7 @@ func Test_getBranchHandler(t *testing.T) {
 		"repo":  cfg["githubRepo"],
 	}
 	uri := s.Router.GetRoute("GET", s.getBranchHandler, vars)
-	test.NotEmpty(t, uri)
+	require.NotEmpty(t, uri)
 	f := func(req *http.Request) {
 		q := req.URL.Query()
 		q.Set("branch", cfg["githubBranch"])
@@ -333,7 +334,7 @@ func Test_getCommitsHandler(t *testing.T) {
 
 	//Bootstrap the service
 	s, err := newTestService(t)
-	test.NoError(t, err)
+	require.NoError(t, err)
 
 	checkConfigGithub(cfg, t)
 
@@ -345,7 +346,7 @@ func Test_getCommitsHandler(t *testing.T) {
 			ClientSecret: cfg["githubClientSecret"],
 		},
 	})
-	test.NoError(t, err)
+	require.NoError(t, err)
 
 	//Prepare request
 	vars := map[string]string{
@@ -355,7 +356,7 @@ func Test_getCommitsHandler(t *testing.T) {
 	}
 
 	uri := s.Router.GetRoute("GET", s.getCommitsHandler, vars)
-	test.NotEmpty(t, uri)
+	require.NotEmpty(t, uri)
 	req := newRequest(t, s, "GET", uri, nil, func(req *http.Request) {
 		q := req.URL.Query()
 		q.Set("since", cfg["githubCommitSince"])
@@ -381,7 +382,7 @@ func Test_getCommitHandler(t *testing.T) {
 
 	//Bootstrap the service
 	s, err := newTestService(t)
-	test.NoError(t, err)
+	require.NoError(t, err)
 
 	checkConfigGithub(cfg, t)
 
@@ -393,7 +394,7 @@ func Test_getCommitHandler(t *testing.T) {
 			ClientSecret: cfg["githubClientSecret"],
 		},
 	})
-	test.NoError(t, err)
+	require.NoError(t, err)
 
 	//Prepare request
 	vars := map[string]string{
@@ -403,7 +404,7 @@ func Test_getCommitHandler(t *testing.T) {
 		"commit": cfg["githubCommit"],
 	}
 	uri := s.Router.GetRoute("GET", s.getCommitHandler, vars)
-	test.NotEmpty(t, uri)
+	require.NotEmpty(t, uri)
 	req := newRequest(t, s, "GET", uri, nil)
 
 	token := base64.StdEncoding.EncodeToString([]byte(cfg["githubAccessToken"]))
@@ -424,7 +425,7 @@ func Test_getCommitStatusHandler(t *testing.T) {
 
 	//Bootstrap the service
 	s, err := newTestService(t)
-	test.NoError(t, err)
+	require.NoError(t, err)
 
 	checkConfigGithub(cfg, t)
 
@@ -436,7 +437,7 @@ func Test_getCommitStatusHandler(t *testing.T) {
 			ClientSecret: cfg["githubClientSecret"],
 		},
 	})
-	test.NoError(t, err)
+	require.NoError(t, err)
 
 	//Prepare request
 	vars := map[string]string{
@@ -446,7 +447,7 @@ func Test_getCommitStatusHandler(t *testing.T) {
 		"commit": cfg["githubCommit"],
 	}
 	uri := s.Router.GetRoute("GET", s.getCommitStatusHandler, vars)
-	test.NotEmpty(t, uri)
+	require.NotEmpty(t, uri)
 	req := newRequest(t, s, "GET", uri, nil)
 
 	token := base64.StdEncoding.EncodeToString([]byte(cfg["githubAccessToken"]))
@@ -507,7 +508,7 @@ func Test_postRepoGrantHandler(t *testing.T) {
 
 	//Bootstrap the service
 	s, err := newTestService(t)
-	test.NoError(t, err)
+	require.NoError(t, err)
 
 	checkConfigGithub(cfg, t)
 
@@ -523,7 +524,7 @@ func Test_postRepoGrantHandler(t *testing.T) {
 			Token:        cfg["githubPassword"],
 		},
 	})
-	test.NoError(t, err)
+	require.NoError(t, err)
 
 	//Prepare request
 	vars := map[string]string{
@@ -532,7 +533,7 @@ func Test_postRepoGrantHandler(t *testing.T) {
 		"repo":  cfg["githubCommitRepo"],
 	}
 	uri := s.Router.GetRoute("POST", s.postRepoGrantHandler, vars)
-	test.NotEmpty(t, uri)
+	require.NotEmpty(t, uri)
 	req := newRequest(t, s, "POST", uri, nil)
 
 	token := base64.StdEncoding.EncodeToString([]byte(cfg["githubAccessToken"]))

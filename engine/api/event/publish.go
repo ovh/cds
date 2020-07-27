@@ -6,11 +6,16 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/ovh/cds/engine/api/cache"
+	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/sdk"
 )
 
-var store cache.Store
+type Store interface {
+	cache.PubSubStore
+	cache.QueueStore
+}
+
+var store Store
 
 func publishEvent(ctx context.Context, e sdk.Event) error {
 	if store == nil {

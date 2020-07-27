@@ -11,7 +11,6 @@ import (
 	"github.com/go-gorp/gorp"
 	gocache "github.com/patrickmn/go-cache"
 
-	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/integration"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
@@ -110,7 +109,7 @@ func ResetEventIntegration(ctx context.Context, db gorp.SqlExecutor, eventIntegr
 }
 
 // Initialize initializes event system
-func Initialize(ctx context.Context, db *gorp.DbMap, cache cache.Store) error {
+func Initialize(ctx context.Context, db *gorp.DbMap, cache Store) error {
 	store = cache
 	var err error
 	hostname, err = os.Hostname()

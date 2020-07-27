@@ -19,7 +19,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"gopkg.in/h2non/gock.v1"
 
-	"github.com/ovh/cds/engine/api/test"
+	"github.com/ovh/cds/engine/test"
 	"github.com/ovh/cds/engine/worker/internal"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"

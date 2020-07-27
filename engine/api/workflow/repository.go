@@ -9,7 +9,7 @@ import (
 	"github.com/fsamin/go-dump"
 	"github.com/go-gorp/gorp"
 
-	"github.com/ovh/cds/engine/api/cache"
+	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/engine/api/keys"
 	"github.com/ovh/cds/engine/api/operation"
 	"github.com/ovh/cds/engine/api/workflowtemplate"

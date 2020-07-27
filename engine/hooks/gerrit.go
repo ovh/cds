@@ -15,7 +15,7 @@ import (
 	"github.com/fsamin/go-dump"
 	"golang.org/x/crypto/ssh"
 
-	"github.com/ovh/cds/engine/api/cache"
+	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )

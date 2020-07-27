@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/ovh/cds/engine/api/test"
+	"github.com/ovh/cds/engine/test"
 	"github.com/ovh/cds/engine/worker/pkg/workerruntime"
 	"github.com/ovh/cds/sdk"
 	"github.com/spf13/afero"
