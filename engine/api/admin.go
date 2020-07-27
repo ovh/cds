@@ -297,7 +297,7 @@ func (api *API) postAdminFeatureFlipping() service.Handler {
 			return err
 		}
 
-		if err := featureflipping.Insert(ctx, gorpmapping.Mapper, api.mustDB(), &f); err != nil {
+		if err := featureflipping.Insert(gorpmapping.Mapper, api.mustDB(), &f); err != nil {
 			return err
 		}
 		return service.WriteJSON(w, f, http.StatusOK)
@@ -324,7 +324,7 @@ func (api *API) putAdminFeatureFlipping() service.Handler {
 		}
 
 		f.ID = oldF.ID
-		if err := featureflipping.Update(ctx, gorpmapping.Mapper, api.mustDB(), &f); err != nil {
+		if err := featureflipping.Update(gorpmapping.Mapper, api.mustDB(), &f); err != nil {
 			return err
 		}
 
@@ -342,7 +342,7 @@ func (api *API) deleteAdminFeatureFlipping() service.Handler {
 			return err
 		}
 
-		if err := featureflipping.Delete(ctx, api.mustDB(), oldF.ID); err != nil {
+		if err := featureflipping.Delete(api.mustDB(), oldF.ID); err != nil {
 			return err
 		}
 
