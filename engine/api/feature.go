@@ -2,12 +2,14 @@ package api
 
 import (
 	"context"
+	"net/http"
+
 	"github.com/gorilla/mux"
+
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/engine/featureflipping"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
-	"net/http"
 )
 
 func (api *API) isFeatureEanbledHandler() service.Handler {
