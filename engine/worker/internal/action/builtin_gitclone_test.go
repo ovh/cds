@@ -4,7 +4,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/ovh/cds/engine/api/test"
+	"github.com/ovh/cds/engine/test"
 	"github.com/ovh/cds/sdk"
 	"github.com/stretchr/testify/assert"
 )

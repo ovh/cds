@@ -13,7 +13,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/ovh/cds/engine/api/test"
+	"github.com/ovh/cds/engine/test"
 	"github.com/ovh/cds/engine/worker/internal"
 	"github.com/ovh/cds/engine/worker/internal/action"
 	"github.com/ovh/cds/engine/worker/pkg/workerruntime"
