@@ -3,10 +3,10 @@ package featureflipping
 import (
 	"context"
 
-  "github.com/go-gorp/gorp"
+	"github.com/go-gorp/gorp"
 
-	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/engine/gorpmapper"
+	"github.com/ovh/cds/sdk"
 )
 
 func LoadAll(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlExecutor) ([]sdk.Feature, error) {
@@ -31,15 +31,15 @@ func LoadByName(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlExecutor, 
 	return f, nil
 }
 
-func Insert(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlExecutor, f *sdk.Feature) error {
+func Insert(m *gorpmapper.Mapper, db gorp.SqlExecutor, f *sdk.Feature) error {
 	return m.Insert(db, f)
 }
 
-func Update(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlExecutor, f *sdk.Feature) error {
+func Update(m *gorpmapper.Mapper, db gorp.SqlExecutor, f *sdk.Feature) error {
 	return m.Update(db, f)
 }
 
-func Delete(ctx context.Context, db gorp.SqlExecutor, id int64) error {
+func Delete(db gorp.SqlExecutor, id int64) error {
 	_, err := db.Exec("DELETE FROM feature_flipping WHERE id = $1", id)
 	if err != nil {
 		return sdk.WithStack(err)

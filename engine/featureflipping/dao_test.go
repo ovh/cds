@@ -21,7 +21,7 @@ func TestDAO(t *testing.T) {
 	all, err := featureflipping.LoadAll(context.TODO(), m, db)
 	require.NoError(t, err)
 	for _, f := range all {
-		require.NoError(t, featureflipping.Delete(context.TODO(), db, f.ID))
+		require.NoError(t, featureflipping.Delete(db, f.ID))
 	}
 
 	var f = sdk.Feature{
@@ -29,11 +29,11 @@ func TestDAO(t *testing.T) {
 		Rule: sdk.RandomString(10),
 	}
 
-	require.NoError(t, featureflipping.Insert(context.TODO(), m, db, &f))
-	require.NoError(t, featureflipping.Update(context.TODO(), m, db, &f))
+	require.NoError(t, featureflipping.Insert(m, db, &f))
+	require.NoError(t, featureflipping.Update(m, db, &f))
 
 	_, err = featureflipping.LoadByName(context.TODO(), m, db, f.Name)
 	require.NoError(t, err)
 
-	require.NoError(t, featureflipping.Delete(context.TODO(), db, f.ID))
+	require.NoError(t, featureflipping.Delete(db, f.ID))
 }

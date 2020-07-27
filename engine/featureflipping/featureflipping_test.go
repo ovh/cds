@@ -23,7 +23,7 @@ func TestIsEnabled(t *testing.T) {
 		Name: sdk.RandomString(10),
 		Rule: `return my_var == "true"`,
 	}
-	require.NoError(t, featureflipping.Insert(context.TODO(), m, db, &f))
+	require.NoError(t, featureflipping.Insert(m, db, &f))
 
 	assert.True(t, featureflipping.Exists(context.TODO(), m, db, f.Name))
 

@@ -2,6 +2,11 @@ package vcs
 
 import (
 	"context"
+	"github.com/ovh/cds/sdk/telemetry"
+	"net/http"
+	"reflect"
+	"runtime"
+	"strings"
 
 	"github.com/ovh/cds/engine/service"
 
@@ -15,7 +20,7 @@ func (s *Service) initRouter(ctx context.Context) {
 	r.Background = ctx
 	r.URL = s.Cfg.URL
 	r.SetHeaderFunc = api.DefaultHeaders
-	r.Middlewares = append(r.Middlewares, service.CheckRequestSignatureMiddleware(s.ParsedAPIPublicKey), s.authMiddleware, api.TracingMiddlewareFunc(s, nil, nil))
+	r.Middlewares = append(r.Middlewares, service.CheckRequestSignatureMiddleware(s.ParsedAPIPublicKey), s.authMiddleware, TracingMiddlewareFunc(s))
 	r.PostMiddlewares = append(r.PostMiddlewares, api.TracingPostMiddleware)
 
 	r.Handle("/mon/version", nil, r.GET(api.VersionHandler, api.Auth(false)))
@@ -50,4 +55,24 @@ func (s *Service) initRouter(ctx context.Context) {
 	r.Handle("/vcs/{name}/repos/{owner}/{repo}/forks", nil, r.GET(s.getListForks))
 
 	r.Handle("/vcs/{name}/status", nil, r.POST(s.postStatusHandler))
+}
+
+func TracingMiddlewareFunc(s service.Service) service.Middleware {
+	return func(ctx context.Context, w http.ResponseWriter, req *http.Request, rc *service.HandlerConfig) (context.Context, error) {
+		name := runtime.FuncForPC(reflect.ValueOf(rc.Handler).Pointer()).Name()
+		name = strings.Replace(name, ".func1", "", 1)
+
+		splittedName := strings.Split(name, ".")
+		name = splittedName[len(splittedName)-1]
+
+		opts := telemetry.Options{
+			Name: name,
+		}
+
+		ctx, err := telemetry.Start(ctx, s, w, req, opts)
+		newReq := req.WithContext(ctx)
+		*req = *newReq
+
+		return ctx, err
+	}
 }
