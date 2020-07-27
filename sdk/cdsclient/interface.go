@@ -368,6 +368,7 @@ type Interface interface {
 	EnvironmentClient
 	EventsClient
 	ExportImportInterface
+	FeatureEnabled(name string, params map[string]string) (sdk.FeatureEnabledResponse, error)
 	GroupClient
 	GRPCPluginsClient
 	BroadcastClient
