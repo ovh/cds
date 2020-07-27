@@ -185,6 +185,7 @@ func takeJob(ctx context.Context, dbFunc func() *gorp.DbMap, store cache.Store, 
 	}
 
 	// Feed the worker
+	wnjri.ProjectKey = p.Key
 	wnjri.NodeJobRun = *job
 	wnjri.Number = noderun.Number
 	wnjri.SubNumber = noderun.SubNumber
