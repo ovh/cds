@@ -31,20 +31,42 @@ type Store interface {
 	Delete(key string) error
 	DeleteAll(key string) error
 	Exist(key string) (bool, error)
+	LockStore
+	QueueStore
+	PubSubStore
+	ScoredSetStore
+	SetStore
+}
+
+type QueueStore interface {
 	Enqueue(queueName string, value interface{}) error
 	DequeueWithContext(c context.Context, queueName string, waitDuration time.Duration, value interface{}) error
 	QueueLen(queueName string) (int, error)
 	RemoveFromQueue(queueName string, memberKey string) error
-	Publish(ctx context.Context, queueName string, value interface{}) error
-	Subscribe(queueName string) (PubSub, error)
-	GetMessageFromSubscription(c context.Context, pb PubSub) (string, error)
+}
+
+type SetStore interface {
 	SetAdd(rootKey string, memberKey string, member interface{}) error
 	SetRemove(rootKey string, memberKey string, member interface{}) error
 	SetCard(key string) (int, error)
 	SetScan(ctx context.Context, key string, members ...interface{}) error
-	ZScan(key, pattern string) ([]string, error)
+	SetSearch(key, pattern string) ([]string, error)
+}
+
+type PubSubStore interface {
+	Publish(ctx context.Context, queueName string, value interface{}) error
+	Subscribe(queueName string) (PubSub, error)
+	GetMessageFromSubscription(c context.Context, pb PubSub) (string, error)
+}
+
+type LockStore interface {
 	Lock(key string, expiration time.Duration, retryWaitDurationMillisecond int, retryCount int) (bool, error)
 	Unlock(key string) error
+}
+
+type ScoredSetStore interface {
+	ScoredSetAdd(ctx context.Context, key string, value interface{}, score float64) error
+	ScoredSetScan(ctx context.Context, key string, from, to float64, dest interface{}) error
 }
 
 //New init a cache

@@ -3,12 +3,6 @@ package test
 import (
 	"context"
 	"encoding/base64"
-	"encoding/json"
-	"io/ioutil"
-	"net/http"
-	"os"
-	"os/user"
-	"path"
 	"strconv"
 	"testing"
 	"time"
@@ -16,10 +10,11 @@ import (
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/authentication"
-	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
+	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/engine/database"
 	"github.com/ovh/cds/engine/gorpmapper"
+	"github.com/ovh/cds/engine/test"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
@@ -106,7 +101,7 @@ func SetupPGWithMapper(t *testing.T, m *gorpmapper.Mapper, serviceType string, b
 // SetupPGToCancel setup PG DB for test
 func SetupPGToCancel(t log.Logger, m *gorpmapper.Mapper, serviceType string, bootstrapFunc ...Bootstrapf) (*FakeTransaction, cache.Store, func()) {
 	log.SetLogger(t)
-	cfg := LoadTestingConf(t, serviceType)
+	cfg := test.LoadTestingConf(t, serviceType)
 	DBDriver = cfg["dbDriver"]
 	dbUser = cfg["dbUser"]
 	dbRole = cfg["dbRole"]
@@ -192,54 +187,4 @@ func SetupPGToCancel(t log.Logger, m *gorpmapper.Mapper, serviceType string, boo
 	return &FakeTransaction{
 		DbMap: dbMap,
 	}, store, cancel
-}
-
-// LoadTestingConf loads test configuration tests.cfg.json
-func LoadTestingConf(t log.Logger, serviceType string) map[string]string {
-	var f string
-	u, _ := user.Current()
-	if u != nil {
-		f = path.Join(u.HomeDir, ".cds", serviceType+".tests.cfg.json")
-	}
-
-	if _, err := os.Stat(f); err == nil {
-		t.Logf("Tests configuration read from %s", f)
-		btes, err := ioutil.ReadFile(f)
-		if err != nil {
-			t.Fatalf("Error reading %s: %v", f, err)
-		}
-		if len(btes) != 0 {
-			cfg := map[string]string{}
-			if err := json.Unmarshal(btes, &cfg); err != nil {
-				t.Fatalf("Error reading %s: %v", f, err)
-			}
-			return cfg
-		}
-	} else {
-		t.Fatalf("Error reading %s: %v", f, err)
-	}
-	return nil
-}
-
-//GetTestName returns the name the test
-func GetTestName(t *testing.T) string {
-	return t.Name()
-}
-
-//FakeHTTPClient implements sdk.HTTPClient and returns always the same response
-type FakeHTTPClient struct {
-	T        *testing.T
-	Response *http.Response
-	Error    error
-}
-
-//Do implements sdk.HTTPClient and returns always the same response
-func (f *FakeHTTPClient) Do(r *http.Request) (*http.Response, error) {
-	b, err := ioutil.ReadAll(r.Body)
-	if err == nil {
-		r.Body.Close()
-	}
-
-	f.T.Logf("FakeHTTPClient> Do> %s %s: Payload %s", r.Method, r.URL.String(), string(b))
-	return f.Response, f.Error
 }

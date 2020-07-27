@@ -18,8 +18,8 @@ import (
 	"gopkg.in/spacemonkeygo/httpsig.v0"
 
 	"github.com/ovh/cds/engine/api"
-	"github.com/ovh/cds/engine/api/cache"
-	"github.com/ovh/cds/engine/api/test"
+	"github.com/ovh/cds/engine/cache"
+	"github.com/ovh/cds/engine/test"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/jws"
 	"github.com/ovh/cds/sdk/log"

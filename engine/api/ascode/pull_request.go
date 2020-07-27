@@ -8,7 +8,7 @@ import (
 	"github.com/go-gorp/gorp"
 	"github.com/sirupsen/logrus"
 
-	"github.com/ovh/cds/engine/api/cache"
+	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/operation"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"

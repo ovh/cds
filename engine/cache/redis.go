@@ -3,10 +3,13 @@ package cache
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
 	stdlog "log"
+	"math"
+	"reflect"
 	"strconv"
 	"strings"
 	"time"
@@ -420,7 +423,7 @@ func (s *RedisStore) SetScan(ctx context.Context, key string, members ...interfa
 	return nil
 }
 
-func (s *RedisStore) ZScan(key, pattern string) ([]string, error) {
+func (s *RedisStore) SetSearch(key, pattern string) ([]string, error) {
 	keys, _, err := s.Client.ZScan(key, 0, pattern, 0).Result()
 	if err != nil {
 		return nil, sdk.WithStack(err)
@@ -451,4 +454,65 @@ func (s *RedisStore) Lock(key string, expiration time.Duration, retrywdMilliseco
 // Unlock deletes a key from cache
 func (s *RedisStore) Unlock(key string) error {
 	return s.Delete(key)
+}
+
+func (s *RedisStore) ScoredSetAdd(ctx context.Context, key string, value interface{}, score float64) error {
+	btes, err := json.Marshal(value)
+	if err != nil {
+		return sdk.WithStack(err)
+	}
+
+	if err := s.Client.ZAdd(key, redis.Z{
+		Member: string(btes),
+		Score:  score,
+	}).Err(); err != nil {
+		return sdk.WithStack(err)
+	}
+	return nil
+}
+
+const (
+	MIN float64 = math.MaxFloat64 * -1
+	MAX float64 = math.MaxFloat64
+)
+
+func (s *RedisStore) ScoredSetScan(ctx context.Context, key string, from, to float64, dest interface{}) error {
+	min := "-inf"
+	if from != MIN {
+		min = strconv.FormatFloat(from, 'E', -1, 64)
+	}
+	max := "+inf"
+	if to != MAX {
+		max = strconv.FormatFloat(to, 'E', -1, 64)
+	}
+
+	values, err := s.Client.ZRangeByScore(key, redis.ZRangeBy{
+		Min: min,
+		Max: max,
+	}).Result()
+	if err != nil {
+		return fmt.Errorf("redis zrange error: %v", err)
+	}
+
+	v := reflect.ValueOf(dest)
+	if v.Kind() != reflect.Ptr {
+		return fmt.Errorf("non-pointer %v", v.Type())
+	}
+	v = v.Elem()
+	if v.Kind() != reflect.Slice {
+		return errors.New("the interface is not a slice.")
+	}
+
+	typ := reflect.TypeOf(v.Interface())
+	v.Set(reflect.MakeSlice(typ, len(values), len(values)))
+
+	for i := 0; i < v.Len(); i++ {
+		m := v.Index(i).Interface()
+		if err := json.Unmarshal([]byte(values[i]), &m); err != nil {
+			return sdk.WrapError(err, "redis> cannot unmarshal %s", values[i])
+		}
+		v.Index(i).Set(reflect.ValueOf(m))
+	}
+
+	return nil
 }

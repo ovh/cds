@@ -15,13 +15,14 @@ import (
 	"github.com/ovh/cds/engine/api/bootstrap"
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/service"
+	test1 "github.com/ovh/cds/engine/test"
 	"github.com/ovh/cds/sdk"
 )
 
 func newTestAPI(t *testing.T, bootstrapFunc ...test.Bootstrapf) (*API, *test.FakeTransaction, *Router) {
 	bootstrapFunc = append(bootstrapFunc, bootstrap.InitiliazeDB)
 	db, cache := test.SetupPG(t, bootstrapFunc...)
-	router := newRouter(mux.NewRouter(), "/"+test.GetTestName(t))
+	router := newRouter(mux.NewRouter(), "/"+test1.GetTestName(t))
 	var cancel context.CancelFunc
 	router.Background, cancel = context.WithCancel(context.Background())
 	api := &API{
