@@ -9,6 +9,7 @@ import { WarningModalComponent } from 'app/shared/modal/warning/warning.componen
 import { ToastService } from 'app/shared/toast/ToastService';
 import { DeleteApplication, UpdateApplication } from 'app/store/applications.action';
 import { AuthenticationState } from 'app/store/authentication.state';
+import { FetchIntegrationsInProject } from 'app/store/project.action';
 import cloneDeep from 'lodash-es/cloneDeep';
 import { finalize } from 'rxjs/operators';
 
@@ -40,6 +41,9 @@ export class ApplicationAdminComponent implements OnInit {
     ) { }
 
     ngOnInit() {
+        // Fetch project integration
+        this._store.dispatch(new FetchIntegrationsInProject({ projectKey: this.project.key }));
+
         this.user = this._store.selectSnapshot(AuthenticationState.user);
         this.newName = this.application.name;
         if (!this.project.permissions.writable) {

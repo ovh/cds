@@ -22,7 +22,6 @@ export class ProjectIntegrationsComponent implements OnInit {
             .pipe(finalize(() => {
                 this.loading = false;
                 this._cd.markForCheck();
-            }))
-            .subscribe();
+            }));
     }
 }
