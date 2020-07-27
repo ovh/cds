@@ -53,6 +53,7 @@ type CurrentWorker struct {
 		secrets      []sdk.Variable
 		context      context.Context
 		signer       jose.Signer
+		projectKey   string
 	}
 	status struct {
 		Name   string `json:"name"`
@@ -135,9 +136,10 @@ func (wk *CurrentWorker) prepareLog(ctx context.Context, level workerruntime.Lev
 			WorkerName: wk.Name(),
 			StepOrder:  int64(stepOrder),
 		},
-		JobID:     wk.currentJob.wJob.ID,
-		NodeRunID: wk.currentJob.wJob.WorkflowNodeRunID,
-		Timestamp: time.Now().UnixNano(),
+		ProjectKey: wk.currentJob.projectKey,
+		JobID:      wk.currentJob.wJob.ID,
+		NodeRunID:  wk.currentJob.wJob.WorkflowNodeRunID,
+		Timestamp:  time.Now().UnixNano(),
 	}
 	signature, err := jws.Sign(wk.currentJob.signer, dataToSign)
 	if err != nil {

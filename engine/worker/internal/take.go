@@ -32,6 +32,7 @@ func (w *CurrentWorker) Take(ctx context.Context, job sdk.WorkflowNodeJobRun) er
 	// Set build variables
 	w.currentJob.wJob = &info.NodeJobRun
 	w.currentJob.secrets = info.Secrets
+	w.currentJob.projectKey = info.ProjectKey
 	// Reset build variables
 	w.currentJob.newVariables = nil
 

@@ -47,4 +47,6 @@ type Configuration struct {
 		StepMaxSize    int64 `toml:"stepMaxSize" default:"15728640" comment:"Max step logs size in bytes (default: 15MB)" json:"stepMaxSize"`
 		ServiceMaxSize int64 `toml:"serviceMaxSize" default:"15728640" comment:"Max service logs size in bytes (default: 15MB)" json:"serviceMaxSize"`
 	} `toml:"log" json:"log" comment:"###########################\n Log settings.\n##########################"`
+	NbJobLogsGoroutines     int64 `toml:"nbJobLogsGoroutines" default:"45" comment:"Number of workers that dequeue the job log queue" json:"nbJobLogsGoroutines"`
+	NbServiceLogsGoroutines int64 `toml:"nbServiceLogsGoroutines" default:"5" comment:"Number of workers that dequeue the service log queue" json:"nbServiceLogsGoroutines"`
 }
