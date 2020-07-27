@@ -23,9 +23,9 @@ import (
 )
 
 var (
-	logCache                = gocache.New(20*time.Minute, 30*time.Minute)
-	keyJobLogIncomingQueue  = cache.Key("cdn", "log", "incoming", "job")
-	serviceLogIncomingQueue = cache.Key("cdn", "log", "incoming", "service")
+	logCache                   = gocache.New(20*time.Minute, 30*time.Minute)
+	keyJobLogIncomingQueue     = cache.Key("cdn", "log", "incoming", "job")
+	keyServiceLogIncomingQueue = cache.Key("cdn", "log", "incoming", "service")
 )
 
 func (s *Service) RunTcpLogServer(ctx context.Context) {
@@ -268,7 +268,7 @@ func (s *Service) handleServiceLog(ctx context.Context, hatcheryID int64, hatche
 	}
 
 	if s.cdnServiceLogsEnabled(ctx) {
-		if err := s.Cache.Enqueue(serviceLogIncomingQueue, logs); err != nil {
+		if err := s.Cache.Enqueue(keyServiceLogIncomingQueue, logs); err != nil {
 			return err
 		}
 	}
