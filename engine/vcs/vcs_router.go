@@ -2,16 +2,15 @@ package vcs
 
 import (
 	"context"
-	"github.com/ovh/cds/sdk/telemetry"
 	"net/http"
 	"reflect"
 	"runtime"
 	"strings"
 
-	"github.com/ovh/cds/engine/service"
-
 	"github.com/ovh/cds/engine/api"
+	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk/log"
+	"github.com/ovh/cds/sdk/telemetry"
 )
 
 func (s *Service) initRouter(ctx context.Context) {
