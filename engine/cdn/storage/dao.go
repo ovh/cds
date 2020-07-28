@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/go-gorp/gorp"
+	"github.com/ovh/cds/engine/cdn/index"
 	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
@@ -98,14 +99,34 @@ func getAll(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlExecutor, quer
 	return units, nil
 }
 
-func LoadItemByUnit(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlExecutor, unitID string, itemID string) (*ItemUnit, error) {
+func InsertItemUnit(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlExecutor, u Unit, i index.Item) (*ItemUnit, error) {
+	var iu = ItemUnit{
+		ID:           sdk.UUID(),
+		LastModified: i.Created,
+		ItemID:       i.ID,
+		UnitID:       u.ID,
+	}
+	if err := m.InsertAndSign(ctx, db, &iu); err != nil {
+		return nil, sdk.WrapError(err, "unable to insert storage unit iotem")
+	}
+	return &iu, nil
+}
+
+func UpdateItemUnit(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlExecutor, u *ItemUnit) error {
+	if err := m.UpdateAndSign(ctx, db, u); err != nil {
+		return sdk.WrapError(err, "unable to update storage unit item")
+	}
+	return nil
+}
+
+func LoadItemByUnit(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlExecutor, unitID string, itemID string, opts ...gorpmapper.GetOptionFunc) (*ItemUnit, error) {
 	query := gorpmapper.NewQuery("SELECT * FROM storage_unit_index WHERE unit_id = $1 and item_id = $2 LIMIT 1").Args(unitID, itemID)
 	return getItemUnit(ctx, m, db, query)
 }
 
-func getItemUnit(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlExecutor, q gorpmapper.Query) (*ItemUnit, error) {
+func getItemUnit(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlExecutor, q gorpmapper.Query, opts ...gorpmapper.GetOptionFunc) (*ItemUnit, error) {
 	var i ItemUnit
-	found, err := m.Get(ctx, db, q, &i)
+	found, err := m.Get(ctx, db, q, &i, opts...)
 	if err != nil {
 		return nil, sdk.WrapError(err, "cannot get storage_unit item")
 	}

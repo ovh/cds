@@ -65,6 +65,13 @@ func TestInit(t *testing.T) {
 	require.NoError(t, index.InsertItem(ctx, m, db, &i))
 
 	require.NoError(t, cdnUnits.Buffer.Add(i, 1.0, "this is first log"))
+	redisUnit, err := storage.LoadUnitByName(ctx, m, db, "redis_buffer")
+	require.NoError(t, err)
+
+	itemUnit, err := storage.InsertItemUnit(ctx, m, db, *redisUnit, i)
+	require.NoError(t, err)
+
+	require.NotNil(t, itemUnit)
 
 	<-ctx.Done()
 }

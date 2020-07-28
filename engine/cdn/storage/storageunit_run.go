@@ -6,7 +6,7 @@ import (
 )
 
 func Run(db gorp.SqlExecutor, s StorageUnit, i index.Item) error {
-	// Find a storage unit where the item is complexe
+	// Find a storage unit where the item is complete
 
 	// Read the Item one by one and pipe them in another storage unit
 
