@@ -125,5 +125,5 @@ func getItemUnit(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlExecutor,
 		return nil, sdk.WithStack(sdk.ErrNotFound)
 	}
 
-	return &u, nil
+	return &i, nil
 }
