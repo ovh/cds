@@ -999,6 +999,10 @@
   </url>
   
   <url>
+    <loc>https://ovh.github.io/cds/development/rest/feature/</loc>
+  </url>
+  
+  <url>
     <loc>https://ovh.github.io/cds/docs/components/cdsctl/admin/features/</loc>
   </url>
   

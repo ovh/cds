@@ -2,7 +2,7 @@
 <html id="docs" lang="en" class="">
 	<head>
 	<meta charset="utf-8">
-<title>parameter - CDS - Continuous Delivery Service</title>
+<title>feature - CDS - Continuous Delivery Service</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="shortcut icon" type="image/png" href="https://ovh.github.io/cds/images/favicon.png">
 
@@ -17,14 +17,14 @@
 <link rel="stylesheet" href="https://ovh.github.io/cds/css/solarized-light.css">
 
 <meta name="description"
-    content=" GET /parameter/type    URL /parameter/type     Method GET   Permissions Auth: true   Code getParameterTypeHandler    ">
+    content=" POST /feature/enabled/&lt;name&gt;    URL /feature/enabled/&lt;name&gt;     Method POST   Permissions Auth: true   Code isFeatureEanbledHandler    ">
 <meta property="og:description"
-    content=" GET /parameter/type    URL /parameter/type     Method GET   Permissions Auth: true   Code getParameterTypeHandler    ">
+    content=" POST /feature/enabled/&lt;name&gt;    URL /feature/enabled/&lt;name&gt;     Method POST   Permissions Auth: true   Code isFeatureEanbledHandler    ">
 <meta name="twitter:description"
-    content=" GET /parameter/type    URL /parameter/type     Method GET   Permissions Auth: true   Code getParameterTypeHandler    ">
-<meta property="og:url" content="https://ovh.github.io/cds/development/rest/parameter/">
-<meta property="og:title" content="parameter">
-<meta name="twitter:title" content="parameter">
+    content=" POST /feature/enabled/&lt;name&gt;    URL /feature/enabled/&lt;name&gt;     Method POST   Permissions Auth: true   Code isFeatureEanbledHandler    ">
+<meta property="og:url" content="https://ovh.github.io/cds/development/rest/feature/">
+<meta property="og:title" content="feature">
+<meta name="twitter:title" content="feature">
 <meta name="twitter:image:alt" content="CDS - Continuous Delivery Service">
 <meta property="og:image" content="/images/cds-transparent.png">
 <script type="text/javascript" src="https://ovh.github.io/cds/js/anchor-4.1.1.min.js"></script>
@@ -385,7 +385,7 @@
 			<div id="docsContent">
         		
 
-<h1>parameter</h1>
+<h1>feature</h1>
 
 
 
@@ -393,27 +393,27 @@
 <ul>
 <li>
 <ul>
-<li><a href="#get-parameter-type">GET <code>/parameter/type</code></a></li>
+<li><a href="#post-feature-enabled-name">POST <code>/feature/enabled/&lt;name&gt;</code></a></li>
 </ul></li>
 </ul>
 </nav>
 
 
 
-<h2 id="get-parameter-type">GET <code>/parameter/type</code></h2>
+<h2 id="post-feature-enabled-name">POST <code>/feature/enabled/&lt;name&gt;</code></h2>
 
 <table>
 <thead>
 <tr>
 <th>URL</th>
-<th><strong><code>/parameter/type</code></strong></th>
+<th><strong><code>/feature/enabled/&lt;name&gt;</code></strong></th>
 </tr>
 </thead>
 
 <tbody>
 <tr>
 <td>Method</td>
-<td>GET</td>
+<td>POST</td>
 </tr>
 
 <tr>
@@ -423,7 +423,7 @@
 
 <tr>
 <td>Code</td>
-<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getParameterTypeHandler%22">getParameterTypeHandler</a></td>
+<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+isFeatureEanbledHandler%22">isFeatureEanbledHandler</a></td>
 </tr>
 </tbody>
 </table>

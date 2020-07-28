@@ -83,6 +83,15 @@
     </item>
     
     <item>
+      <title>feature</title>
+      <link>https://ovh.github.io/cds/development/rest/feature/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/development/rest/feature/</guid>
+      <description> POST /feature/enabled/&amp;lt;name&amp;gt;    URL /feature/enabled/&amp;lt;name&amp;gt;     Method POST   Permissions Auth: true   Code isFeatureEanbledHandler    </description>
+    </item>
+    
+    <item>
       <title>group</title>
       <link>https://ovh.github.io/cds/development/rest/group/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
