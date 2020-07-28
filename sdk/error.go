@@ -198,6 +198,7 @@ var (
 	ErrUnsupportedMediaType                          = Error{ID: 188, Status: http.StatusUnsupportedMediaType}
 	ErrNothingToPush                                 = Error{ID: 189, Status: http.StatusBadRequest}
 	ErrWorkerErrorCommand                            = Error{ID: 190, Status: http.StatusBadRequest}
+	ErrConflictData                                  = Error{ID: 191, Status: http.StatusConflict}
 )
 
 var errorsAmericanEnglish = map[int]string{
@@ -378,6 +379,7 @@ var errorsAmericanEnglish = map[int]string{
 	ErrUnsupportedMediaType.ID:                          "Request format invalid",
 	ErrNothingToPush.ID:                                 "No diff to push",
 	ErrWorkerErrorCommand.ID:                            "Worker command in error",
+	ErrConflictData.ID:                                  "Data conflict",
 }
 
 var errorsFrench = map[int]string{
@@ -558,6 +560,7 @@ var errorsFrench = map[int]string{
 	ErrUnsupportedMediaType.ID:                          "Le format de la requête est invalide",
 	ErrNothingToPush.ID:                                 "Aucune modification à pousser",
 	ErrWorkerErrorCommand.ID:                            "Commande du worker en erreur",
+	ErrConflictData.ID:                                  "Donnée en conflit",
 }
 
 // Error type.

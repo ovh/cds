@@ -4,6 +4,8 @@ import (
 	"time"
 
 	"github.com/go-gorp/gorp"
+	"github.com/ovh/cds/sdk/log"
+	"github.com/ovh/cds/sdk/log/hook"
 
 	"github.com/ovh/cds/engine/api"
 	"github.com/ovh/cds/engine/cache"
@@ -13,6 +15,13 @@ import (
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 )
+
+type handledMessage struct {
+	Signature log.Signature
+	Msg       hook.Message
+	Line      int64
+	Status    string
+}
 
 // Service is the stuct representing a hooks µService
 type Service struct {
@@ -45,7 +54,7 @@ type Configuration struct {
 			Host     string `toml:"host" default:"localhost:6379" comment:"If your want to use a redis-sentinel based cluster, follow this syntax ! <clustername>@sentinel1:26379,sentinel2:26379sentinel3:26379" json:"host"`
 			Password string `toml:"password" json:"-"`
 		} `toml:"redis" json:"redis"`
-	} `toml:"cache" comment:"######################\n CDS VCS Cache Settings \n######################" json:"cache"`
+	} `toml:"cache" comment:"######################\n CDN Cache Settings \n######################" json:"cache"`
 	API service.APIServiceConfiguration `toml:"api" comment:"######################\n CDS API Settings \n######################" json:"api"`
 	Log struct {
 		StepMaxSize    int64 `toml:"stepMaxSize" default:"15728640" comment:"Max step logs size in bytes (default: 15MB)" json:"stepMaxSize"`

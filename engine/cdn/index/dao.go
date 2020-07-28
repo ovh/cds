@@ -44,8 +44,30 @@ func LoadItemByID(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlExecutor
 func InsertItem(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlExecutor, i *Item) error {
 	i.ID = sdk.UUID()
 	i.Created = time.Now()
+	i.LastModified = time.Now()
 	if err := m.InsertAndSign(ctx, db, i); err != nil {
 		return sdk.WrapError(err, "unable to insert index item")
 	}
 	return nil
+}
+
+// UpdateItem in database
+func UpdateItem(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlExecutor, i *Item) error {
+	i.LastModified = time.Now()
+	if err := m.UpdateAndSign(ctx, db, i); err != nil {
+		return sdk.WrapError(err, "unable to update index item")
+	}
+	return nil
+}
+
+// LoadItemByJobStepAndType load an item by his job id, step order and type
+func LoadItemByApiRefHashAndType(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlExecutor, hash string, typ string) (*Item, error) {
+	query := gorpmapper.NewQuery(`
+		SELECT * 
+		FROM index 
+		WHERE 
+			api_ref_hash = $1 AND
+			type = $2
+	`).Args(hash, typ)
+	return getItem(ctx, m, db, query)
 }

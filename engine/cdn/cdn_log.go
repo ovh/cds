@@ -26,6 +26,7 @@ var (
 	logCache                   = gocache.New(20*time.Minute, 30*time.Minute)
 	keyJobLogIncomingQueue     = cache.Key("cdn", "log", "incoming", "job")
 	keyServiceLogIncomingQueue = cache.Key("cdn", "log", "incoming", "service")
+	keyStoreJobPrefix          = cache.Key("cdn", "log", "job")
 )
 
 func (s *Service) RunTcpLogServer(ctx context.Context) {
@@ -188,13 +189,6 @@ func (s *Service) handleWorkerLog(ctx context.Context, workerName string, worker
 	///
 
 	return nil
-}
-
-type handledMessage struct {
-	Signature log.Signature
-	Msg       hook.Message
-	Line      int64
-	Status    string
 }
 
 func buildMessage(signature log.Signature, m hook.Message) string {
@@ -370,57 +364,4 @@ func (s *Service) cdnEnabled(ctx context.Context, projectKey string) bool {
 		return resp.Enabled
 	}
 	return enabled.(bool)
-}
-
-func (s *Service) dequeueJobLogs(ctx context.Context) error {
-	log.Info(ctx, "dequeueJobLogs: start")
-	for {
-		select {
-		case <-ctx.Done():
-			return ctx.Err()
-		default:
-			dequeuCtx, cancel := context.WithTimeout(ctx, 15*time.Second)
-			var hm handledMessage
-			if err := s.Cache.DequeueWithContext(dequeuCtx, keyJobLogIncomingQueue, 30*time.Millisecond, &hm); err != nil {
-				cancel()
-				if strings.Contains(err.Error(), "context deadline exceeded") {
-					return nil
-				}
-				log.Error(ctx, "dequeueJobLogs: unable to dequeue job logs queue: %v", err)
-				continue
-			}
-			cancel()
-			if hm.Signature.Worker == nil {
-				continue
-			}
-			currentLog := buildMessage(hm.Signature, hm.Msg)
-			log.Info(ctx, "Job log: %s", currentLog)
-		}
-	}
-}
-
-func (s *Service) dequeueServiceLogs(ctx context.Context) error {
-	log.Info(ctx, "dequeueServiceLogs: start")
-	for {
-		select {
-		case <-ctx.Done():
-			return ctx.Err()
-		default:
-			dequeuCtx, cancel := context.WithTimeout(ctx, 15*time.Second)
-			var serviceLog sdk.ServiceLog
-			if err := s.Cache.DequeueWithContext(dequeuCtx, keyServiceLogIncomingQueue, 30*time.Millisecond, &serviceLog); err != nil {
-				cancel()
-				if strings.Contains(err.Error(), "context deadline exceeded") {
-					return nil
-				}
-				log.Error(ctx, "dequeueServiceLogs: unable to dequeue service logs queue: %v", err)
-				continue
-			}
-			cancel()
-			if serviceLog.Val == "" {
-				continue
-			}
-			log.Info(ctx, "Service log: %s", serviceLog.Val)
-		}
-	}
 }

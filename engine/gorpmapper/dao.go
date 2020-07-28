@@ -36,7 +36,7 @@ func (m *Mapper) Insert(db gorp.SqlExecutor, i interface{}) error {
 	if e, ok := err.(*pq.Error); ok {
 		switch e.Code {
 		case ViolateUniqueKeyPGCode:
-			err = sdk.NewError(sdk.ErrInvalidData, e)
+			err = sdk.NewError(sdk.ErrConflictData, e)
 		case StringDataRightTruncation:
 			err = sdk.NewError(sdk.ErrInvalidData, e)
 		}

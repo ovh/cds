@@ -127,6 +127,7 @@ func (w *CurrentWorker) runJob(ctx context.Context, a *sdk.Action, jobID int64, 
 		w.stepLogLine = 0
 
 		ctx = workerruntime.SetStepOrder(ctx, jobStepIndex)
+		ctx = workerruntime.SetStepName(ctx, step.StepName)
 		if err := w.updateStepStatus(ctx, jobID, jobStepIndex, sdk.StatusBuilding); err != nil {
 			jobResult.Status = sdk.StatusFail
 			jobResult.Reason = fmt.Sprintf("Cannot update step (%d) status (%s): %v", jobStepIndex, sdk.StatusBuilding, err)
@@ -520,7 +521,6 @@ func (w *CurrentWorker) ProcessJob(jobInfo sdk.WorkflowNodeJobRunData) (res sdk.
 
 	ctx = workerruntime.SetJobID(ctx, jobInfo.NodeJobRun.ID)
 	ctx = workerruntime.SetStepOrder(ctx, 0)
-
 	defer func() {
 		log.Warning(ctx, "processJob> Status: %s | Reason: %s", res.Status, res.Reason)
 	}()
