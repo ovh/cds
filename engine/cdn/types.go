@@ -30,6 +30,7 @@ type Service struct {
 	Db                  *gorp.DbMap
 	Cache               cache.Store
 	Mapper              *gorpmapper.Mapper
+	StorageUnits        *storage.RunningStorageUnits
 }
 
 // Configuration is the hooks configuration structure

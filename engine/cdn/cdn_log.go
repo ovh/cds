@@ -26,7 +26,6 @@ var (
 	logCache                   = gocache.New(20*time.Minute, 30*time.Minute)
 	keyJobLogIncomingQueue     = cache.Key("cdn", "log", "incoming", "job")
 	keyServiceLogIncomingQueue = cache.Key("cdn", "log", "incoming", "service")
-	keyStoreJobPrefix          = cache.Key("cdn", "log", "job")
 )
 
 func (s *Service) RunTcpLogServer(ctx context.Context) {

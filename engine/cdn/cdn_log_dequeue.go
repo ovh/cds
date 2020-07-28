@@ -3,15 +3,15 @@ package cdn
 import (
 	"bytes"
 	"context"
+	"encoding/gob"
 	"encoding/hex"
+	"github.com/ovh/cds/engine/cache"
+	"github.com/ovh/symmecrypt/convergent"
 	"strconv"
 	"strings"
 	"time"
 
 	"github.com/mitchellh/hashstructure"
-	"github.com/ovh/symmecrypt/convergent"
-
-	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/engine/cdn/index"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
@@ -40,9 +40,18 @@ func (s *Service) dequeueJobLogs(ctx context.Context) error {
 				continue
 			}
 
-			if err := s.storeStepLogs(ctx, hm); err != nil {
-				log.Error(ctx, "dequeueJobLogs: unable to store step log: %v", err)
+			cpt := 0
+			for {
+				if err := s.storeStepLogs(ctx, hm); err != nil {
+					if sdk.ErrorIs(err, sdk.ErrLocked) && cpt < 10 {
+						cpt++
+						time.Sleep(250 * time.Millisecond)
+						continue
+					}
+					log.Error(ctx, "dequeueJobLogs: unable to store step log: %v", err)
+				}
 			}
+
 		}
 	}
 }
@@ -105,7 +114,7 @@ func (s *Service) storeStepLogs(ctx context.Context, hm handledMessage) error {
 			return err
 		}
 		// Insert data
-		item := &index.Item{
+		item = &index.Item{
 			ApiRef:     apiRef,
 			Type:       index.TypeItemStepLog,
 			ApiRefHash: hashRef,
@@ -115,35 +124,38 @@ func (s *Service) storeStepLogs(ctx context.Context, hm handledMessage) error {
 			if !sdk.ErrorIs(err, sdk.ErrConflictData) {
 				return err
 			}
+			item, err = index.LoadItemByApiRefHashAndType(ctx, s.Mapper, tx, hashRef, index.TypeItemStepLog)
+			if err != nil {
+				return err
+			}
 		}
 	}
-
-	// Use buffer backend previously loaded to store data
 	currentLog := buildMessage(hm.Signature, hm.Msg)
-	jobString := strconv.FormatInt(hm.Signature.JobID, 10)
-	stepString := strconv.FormatInt(hm.Signature.Worker.StepOrder, 10)
 
-	jobStepKey := cache.Key(keyStoreJobPrefix, jobString, "step", stepString)
-
-	// FIXME DO NOT USE s.CACHE but a REDIS BACKEND
-	if err := s.Cache.ScoredSetAdd(ctx, jobStepKey, currentLog, float64(hm.Line)); err != nil {
-		return err
-	}
-
-	item, err = index.LoadItemByApiRefHashAndType(ctx, s.Mapper, tx, hashRef, index.TypeItemStepLog)
-	if err != nil {
-		return err
-	}
-
+	// Do this before adding in buffer, to be able to rollback
 	// If last log or update of a complete step
 	if sdk.StatusIsTerminated(hm.Status) || item.Status == index.StatusItemCompleted {
+		// In this case, we need to lock item.
+		item, err = index.LoadAndLockItemByID(ctx, s.Mapper, tx, item.ID)
+		if err != nil {
+			if sdk.ErrorIs(err, sdk.ErrNotFound) {
+				return sdk.WrapError(sdk.ErrLocked, "item already locked")
+			}
+			return err
+		}
+
 		// Update index with final data
 		item.Status = index.StatusItemCompleted
 
-		// TODO Get all data from redis to compute hash.
-		var data []byte
-
-		h, err := convergent.NewHash(bytes.NewReader(data))
+		// Get all data from buffer and add manually last line
+		lines, err := s.StorageUnits.Buffer.Get(*item, cache.MIN, cache.MAX)
+		if err != nil {
+			return err
+		}
+		lines = append(lines, currentLog)
+		buf := &bytes.Buffer{}
+		gob.NewEncoder(buf).Encode(lines)
+		h, err := convergent.NewHash(bytes.NewReader(buf.Bytes()))
 		if err != nil {
 			return err
 		}
@@ -151,8 +163,13 @@ func (s *Service) storeStepLogs(ctx context.Context, hm handledMessage) error {
 		if err := index.UpdateItem(ctx, s.Mapper, tx, item); err != nil {
 			return err
 		}
-	}
-	log.Info(ctx, "Job log: %s", currentLog)
 
+		// TODO add association
+
+	}
+
+	if err := s.StorageUnits.Buffer.Add(*item, float64(hm.Line), currentLog); err != nil {
+		return err
+	}
 	return sdk.WithStack(tx.Commit())
 }

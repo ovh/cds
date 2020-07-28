@@ -40,6 +40,12 @@ func LoadItemByID(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlExecutor
 	return getItem(ctx, m, db, query)
 }
 
+// LoadAndLockItemByID returns an item from database for given id.
+func LoadAndLockItemByID(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlExecutor, id string) (*Item, error) {
+	query := gorpmapper.NewQuery("SELECT * FROM index WHERE id = $1 FOR UPDATE SKIP LOCKED").Args(id)
+	return getItem(ctx, m, db, query)
+}
+
 // InsertItem in database.
 func InsertItem(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlExecutor, i *Item) error {
 	i.ID = sdk.UUID()

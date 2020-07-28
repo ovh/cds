@@ -60,7 +60,7 @@ func TestInit(t *testing.T) {
 	require.NotEmpty(t, units)
 
 	i := index.Item{
-		Name: sdk.RandomString(10),
+		ID: sdk.UUID(),
 	}
 	require.NoError(t, index.InsertItem(ctx, m, db, &i))
 
