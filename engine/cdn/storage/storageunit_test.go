@@ -6,6 +6,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/ovh/cds/engine/cdn/index"
 	_ "github.com/ovh/cds/engine/cdn/storage/local"
 	_ "github.com/ovh/cds/engine/cdn/storage/redis"
 
@@ -20,9 +21,10 @@ import (
 
 func TestInit(t *testing.T) {
 	m := gorpmapper.New()
+	index.InitDBMapping(m)
+	storage.InitDBMapping(m)
 
 	db, _ := test.SetupPGWithMapper(t, m, sdk.TypeCDN)
-
 	cfg := commontest.LoadTestingConf(t, sdk.TypeCDN)
 
 	ctx, cancel := context.WithTimeout(context.TODO(), 5*time.Second)
@@ -56,6 +58,13 @@ func TestInit(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, units)
 	require.NotEmpty(t, units)
+
+	i := index.Item{
+		Name: sdk.RandomString(10),
+	}
+	require.NoError(t, index.InsertItem(ctx, m, db, &i))
+
+	require.NoError(t, cdnUnits.Buffer.Add(i, 1.0, "this is first log"))
 
 	<-ctx.Done()
 }

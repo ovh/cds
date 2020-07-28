@@ -54,16 +54,6 @@ type StorageUnit interface {
 	NewReader(i index.Item) (io.ReadCloser, error)
 }
 
-func Run(db gorp.SqlExecutor, s StorageUnit, i index.Item) error {
-	// Find a storage unit where the item is complexe
-
-	// Read the Item one by one and pipe them in another storage unit
-
-	// Save in database that the item is complete for the storage unit
-
-	return nil
-}
-
 type Configuration struct {
 	Buffer   BufferConfiguration    `toml:"buffer" json:"buffer"`
 	Storages []StorageConfiguration `toml:"storages" json:"storages"`
@@ -95,8 +85,6 @@ type RunningStorageUnits struct {
 }
 
 func Init(ctx context.Context, m *gorpmapper.Mapper, db *gorp.DbMap, config Configuration) (*RunningStorageUnits, error) {
-	initDBMapping(m)
-
 	var result RunningStorageUnits
 
 	// Start by initializing the buffer unit
@@ -125,9 +113,9 @@ func Init(ctx context.Context, m *gorpmapper.Mapper, db *gorp.DbMap, config Conf
 			json.Unmarshal(b, &srvConfig) // nolint
 
 			u = &Unit{
+				ID:      sdk.UUID(),
 				Created: time.Now(),
 				Name:    bd.Name(),
-				ID:      sdk.UUID(),
 				Config:  srvConfig,
 			}
 			err = InsertUnit(ctx, m, db, u)
