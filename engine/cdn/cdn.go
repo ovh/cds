@@ -11,6 +11,7 @@ import (
 	"github.com/ovh/cds/engine/api"
 	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/engine/cdn/index"
+	"github.com/ovh/cds/engine/cdn/storage"
 	"github.com/ovh/cds/engine/database"
 	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk"
@@ -113,6 +114,11 @@ func (s *Service) Serve(c context.Context) error {
 
 		// Init dao packages
 		index.Init(s.Mapper)
+
+		// Init storage units
+		if _, err := storage.Init(ctx, s.Mapper, s.Db, s.Units); err != nil {
+			return err
+		}
 	}
 
 	log.Info(ctx, "Initializing redis cache on %s...", s.Cfg.Cache.Redis.Host)

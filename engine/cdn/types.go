@@ -1,10 +1,13 @@
 package cdn
 
 import (
+	"time"
+
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api"
 	"github.com/ovh/cds/engine/cache"
+	"github.com/ovh/cds/engine/cdn/storage"
 	"github.com/ovh/cds/engine/database"
 	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/engine/service"
@@ -20,6 +23,7 @@ type Service struct {
 	Db                  *gorp.DbMap
 	Cache               cache.Store
 	Mapper              *gorpmapper.Mapper
+	Units               storage.Configuration
 }
 
 // Configuration is the hooks configuration structure
@@ -49,4 +53,11 @@ type Configuration struct {
 	} `toml:"log" json:"log" comment:"###########################\n Log settings.\n##########################"`
 	NbJobLogsGoroutines     int64 `toml:"nbJobLogsGoroutines" default:"45" comment:"Number of workers that dequeue the job log queue" json:"nbJobLogsGoroutines"`
 	NbServiceLogsGoroutines int64 `toml:"nbServiceLogsGoroutines" default:"5" comment:"Number of workers that dequeue the service log queue" json:"nbServiceLogsGoroutines"`
+}
+
+type Item struct {
+	gorpmapper.SignedEntity
+	ID      string    `json:"id" db:"id"`
+	Created time.Time `json:"created" db:"created"`
+	Name    string    `json:"name" db:"name"`
 }
