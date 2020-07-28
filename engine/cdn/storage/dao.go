@@ -100,10 +100,7 @@ func getAll(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlExecutor, quer
 
 func LoadItemByUnit(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlExecutor, unitID string, itemID string) (*ItemUnit, error) {
 	query := gorpmapper.NewQuery("SELECT * FROM storage_unit_index WHERE unit_id = $1 and item_id = $2 LIMIT 1").Args(unitID, itemID)
-	var i ItemUnit
-	_ = i
-	_ = query
-	return nil, nil
+	return getItemUnit(ctx, m, db, query)
 }
 
 func getItemUnit(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlExecutor, q gorpmapper.Query) (*ItemUnit, error) {
