@@ -97,3 +97,33 @@ func getAll(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlExecutor, quer
 
 	return units, nil
 }
+
+func LoadItemByUnit(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlExecutor, unitID string, itemID string) (*ItemUnit, error) {
+	query := gorpmapper.NewQuery("SELECT * FROM storage_unit_index WHERE unit_id = $1 and item_id = $2 LIMIT 1").Args(unitID, itemID)
+	var i ItemUnit
+	_ = i
+	_ = query
+	return nil, nil
+}
+
+func getItemUnit(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlExecutor, q gorpmapper.Query) (*ItemUnit, error) {
+	var i ItemUnit
+	found, err := m.Get(ctx, db, q, &i)
+	if err != nil {
+		return nil, sdk.WrapError(err, "cannot get storage_unit item")
+	}
+	if !found {
+		return nil, sdk.WithStack(sdk.ErrNotFound)
+	}
+
+	isValid, err := m.CheckSignature(i, i.Signature)
+	if err != nil {
+		return nil, err
+	}
+	if !isValid {
+		log.Error(ctx, "index.get> storage_unit_index %s data corrupted", i.ID)
+		return nil, sdk.WithStack(sdk.ErrNotFound)
+	}
+
+	return &u, nil
+}

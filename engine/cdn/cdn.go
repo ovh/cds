@@ -113,7 +113,8 @@ func (s *Service) Serve(c context.Context) error {
 		}
 
 		// Init dao packages
-		index.Init(s.Mapper)
+		index.InitDBMapping(s.Mapper)
+		storage.InitDBMapping(s.Mapper)
 
 		// Init storage units
 		if _, err := storage.Init(ctx, s.Mapper, s.Db, s.Units); err != nil {

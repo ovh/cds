@@ -14,7 +14,7 @@ import (
 
 func TestLoadItem(t *testing.T) {
 	m := gorpmapper.New()
-	index.Init(m)
+	index.InitDBMapping(m)
 
 	db, _ := test.SetupPGWithMapper(t, m, sdk.TypeCDN)
 
