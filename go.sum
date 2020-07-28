@@ -484,7 +484,6 @@ github.com/prometheus/tsdb v0.7.1/go.mod h1:qhTCs0VvXwvX/y3TZrWD7rabWM+ijKTux40T
 github.com/rcrowley/go-metrics v0.0.0-20181016184325-3113b8401b8a/go.mod h1:bCqnVzQkZxMG4s8nGwiZ5l3QUCyqpo9Y+/ZMZ9VjZe4=
 github.com/rcrowley/go-metrics v0.0.0-20190826022208-cac0b30c2563 h1:dY6ETXrvDG7Sa4vE8ZQG4yqWg6UnOcbqTAahkV813vQ=
 github.com/rcrowley/go-metrics v0.0.0-20190826022208-cac0b30c2563/go.mod h1:bCqnVzQkZxMG4s8nGwiZ5l3QUCyqpo9Y+/ZMZ9VjZe4=
-github.com/robfig/cron v1.2.0 h1:ZjScXvvxeQ63Dbyxy76Fj3AT3Ut0aKsyd2/tl3DTMuQ=
 github.com/robfig/cron/v3 v3.0.1 h1:WdRxkvbJztn8LMz/QEvLN5sBU+xKpSqwwUO1Pjr4qDs=
 github.com/robfig/cron/v3 v3.0.1/go.mod h1:eQICP3HwyT7UooqI/z+Ov+PtYAWygg1TEWWzGIFLtro=
 github.com/rogpeppe/fastuuid v0.0.0-20150106093220-6724a57986af/go.mod h1:XWv6SoW27p1b0cqNHllgS5HIMJraePCO15w5zCzIWYg=
@@ -574,9 +573,6 @@ github.com/yesnault/go-keychain v0.0.0-20190829085436-f78f7ae28786 h1:3i+IgAiigX
 github.com/yesnault/go-keychain v0.0.0-20190829085436-f78f7ae28786/go.mod h1:EzotOW21xnO2Lld4dB8qr2bSnzi3nGtE9FG33n/y2Q8=
 github.com/yesnault/go-toml v0.0.0-20191205182532-f5ef6cee7945 h1:icS0gqYJLvPFpni3gxPml7gCSdCcJx72RrbkVgmvw80=
 github.com/yesnault/go-toml v0.0.0-20191205182532-f5ef6cee7945/go.mod h1:SsMrIuedaKvK8GekjwjVv8gMnHNAuvoINpKCARzdsEQ=
-github.com/yesnault/gorp v1.7.1 h1:b+DG/UOuEqVqsxMnppfwg3nokRD8tsaoMItzFPWU2PY=
-github.com/yesnault/gorp v2.0.0+incompatible h1:4pwtvWrXQTAgGVnzAB0X5jX/mWRQEa8zmcdNT5U8jyg=
-github.com/yesnault/gorp v2.0.0+incompatible/go.mod h1:7nhqtxBPZoPXx86SqUzP/OFLd8prnhkydPk51uJthQc=
 github.com/yesnault/gorp v2.0.1-0.20200325154225-2dc6d8c2da37+incompatible h1:8M+L4IKModOdc0ZsH0kHJiqZ7CmWF4yH8yy4InZxKyY=
 github.com/yesnault/gorp v2.0.1-0.20200325154225-2dc6d8c2da37+incompatible/go.mod h1:7nhqtxBPZoPXx86SqUzP/OFLd8prnhkydPk51uJthQc=
 github.com/yuin/gluare v0.0.0-20170607022532-d7c94f1a80ed h1:I1vcLHWU9m30rA90rMrKPu0eD3NDA4FBlkB8WMaDyUw=

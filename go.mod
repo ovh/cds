@@ -175,7 +175,6 @@ require (
 	github.com/xanzy/go-gitlab v0.15.0
 	github.com/xi2/xz v0.0.0-20171230120015-48954b6210f8 // indirect
 	github.com/yesnault/go-toml v0.0.0-20191205182532-f5ef6cee7945
-	github.com/yesnault/gorp v2.0.0+incompatible
 	github.com/yuin/gluare v0.0.0-20170607022532-d7c94f1a80ed
 	github.com/yuin/gopher-lua v0.0.0-20170901023928-8c2befcd3908
 	github.com/ziutek/mymysql v1.5.4 // indirect
