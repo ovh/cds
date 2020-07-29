@@ -43,6 +43,10 @@ func (s *Redis) Add(i index.Item, index uint, value string) error {
 	return s.store.ScoredSetAdd(context.Background(), i.ID, value, float64(index))
 }
 
+func (s *Redis) Append(i index.Item, value string) error {
+	return s.store.ScoredAppend(context.Background(), i.ID, value)
+}
+
 func (s *Redis) Get(i index.Item, from, to uint) ([]string, error) {
 	var res = make([]string, to-from+1)
 	err := s.store.ScoredSetScan(context.Background(), i.ID, float64(from), float64(to), &res)

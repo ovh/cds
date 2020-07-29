@@ -79,7 +79,7 @@ func (s *Service) dequeueServiceLogs(ctx context.Context) error {
 			if !strings.HasSuffix(hm.Msg.Full, "\n") {
 				hm.Msg.Full += "\n"
 			}
-			if err := s.storeLogs(ctx, index.TypeItemServiceLog, hm.Signature, hm.Status, hm.Msg.Full, hm.Line); err != nil {
+			if err := s.storeLogs(ctx, index.TypeItemServiceLog, hm.Signature, hm.Status, hm.Msg.Full, 0); err != nil {
 				log.Error(ctx, "dequeueServiceLogs: unable to store service log: %v", err)
 			}
 		}
@@ -139,6 +139,16 @@ func (s *Service) storeLogs(ctx context.Context, typ string, signature log.Signa
 		}
 	}
 
+	switch typ {
+	case index.TypeItemStepLog:
+		if err := s.StorageUnits.Buffer.Add(*item, uint(line), content); err != nil {
+			return err
+		}
+	case index.TypeItemServiceLog:
+		if err := s.StorageUnits.Buffer.Append(*item, content); err != nil {
+			return err
+		}
+	}
 	if err := s.StorageUnits.Buffer.Add(*item, uint(line), content); err != nil {
 		return err
 	}

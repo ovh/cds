@@ -456,6 +456,22 @@ func (s *RedisStore) Unlock(key string) error {
 	return s.Delete(key)
 }
 
+func (s *RedisStore) ScoredAppend(ctx context.Context, key string, value interface{}) error {
+	highItem, err := s.Client.ZRevRange(key, 0, 0).Result()
+	if err != nil {
+		return sdk.WithStack(err)
+	}
+	if len(highItem) == 0 {
+		return s.ScoredSetAdd(ctx, key, value, 1)
+	}
+
+	maxScore, err := s.Client.ZScore(key, highItem[0]).Result()
+	if err != nil {
+		return sdk.WithStack(err)
+	}
+	return s.ScoredSetAdd(ctx, key, value, maxScore+1)
+}
+
 func (s *RedisStore) ScoredSetAdd(ctx context.Context, key string, value interface{}, score float64) error {
 	btes, err := json.Marshal(value)
 	if err != nil {
