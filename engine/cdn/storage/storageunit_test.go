@@ -36,7 +36,7 @@ func TestInit(t *testing.T) {
 	cdnUnits, err := storage.Init(ctx, m, db.DbMap, storage.Configuration{
 		Buffer: storage.BufferConfiguration{
 			Name: "redis_buffer",
-			Redis: &storage.RedisBufferConfiguration{
+			Redis: storage.RedisBufferConfiguration{
 				Host:     cfg["redisHost"],
 				Password: cfg["redisPassword"],
 			},

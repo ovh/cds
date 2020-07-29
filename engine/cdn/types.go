@@ -3,8 +3,6 @@ package cdn
 import (
 	"time"
 
-	"github.com/go-gorp/gorp"
-
 	"github.com/ovh/cds/engine/api"
 	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/engine/cdn/storage"
@@ -20,7 +18,6 @@ type Service struct {
 	Cfg                 Configuration
 	DBConnectionFactory *database.DBConnectionFactory
 	Router              *api.Router
-	Db                  *gorp.DbMap
 	Cache               cache.Store
 	Mapper              *gorpmapper.Mapper
 	Units               *storage.RunningStorageUnits
@@ -53,7 +50,7 @@ type Configuration struct {
 	} `toml:"log" json:"log" comment:"###########################\n Log settings.\n##########################"`
 	NbJobLogsGoroutines     int64                 `toml:"nbJobLogsGoroutines" default:"45" comment:"Number of workers that dequeue the job log queue" json:"nbJobLogsGoroutines"`
 	NbServiceLogsGoroutines int64                 `toml:"nbServiceLogsGoroutines" default:"5" comment:"Number of workers that dequeue the service log queue" json:"nbServiceLogsGoroutines"`
-	Units                   storage.Configuration `toml:"storage_units"  json:"storage_units"`
+	Units                   storage.Configuration `toml:"storageUnits"  json:"storageUnits" mapstructure:"storageUnits"`
 }
 
 type Item struct {
