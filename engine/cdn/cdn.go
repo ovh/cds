@@ -117,7 +117,8 @@ func (s *Service) Serve(c context.Context) error {
 		storage.InitDBMapping(s.Mapper)
 
 		// Init storage units
-		if _, err := storage.Init(ctx, s.Mapper, s.Db, s.Cfg.Units); err != nil {
+		s.Units, err = storage.Init(ctx, s.Mapper, s.Db, s.Cfg.Units)
+		if err != nil {
 			return err
 		}
 	}

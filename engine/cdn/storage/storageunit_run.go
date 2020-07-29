@@ -53,7 +53,10 @@ func (x *RunningStorageUnits) Run(ctx context.Context, s StorageUnit) error {
 		}
 
 		// Random pick a unit
-		idx := r.Intn(len(itemUnits))
+		idx := 0
+		if len(itemUnits) > 1 {
+			idx = r.Intn(len(itemUnits))
+		}
 		refUnitID := itemUnits[idx].UnitID
 		refUnit, err := LoadUnitByID(ctx, s.GorpMapper(), tx, refUnitID)
 		if err != nil {
