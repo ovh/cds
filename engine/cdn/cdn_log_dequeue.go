@@ -1,21 +1,19 @@
 package cdn
 
 import (
-	"bytes"
 	"context"
-	"encoding/gob"
 	"encoding/hex"
-	"github.com/ovh/cds/engine/cache"
-	"github.com/ovh/cds/engine/cdn/storage"
-	"github.com/ovh/symmecrypt/convergent"
 	"strconv"
 	"strings"
 	"time"
 
 	"github.com/mitchellh/hashstructure"
+
 	"github.com/ovh/cds/engine/cdn/index"
+	"github.com/ovh/cds/engine/cdn/storage"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
+	"github.com/ovh/symmecrypt/convergent"
 )
 
 func (s *Service) dequeueJobLogs(ctx context.Context) error {
@@ -141,7 +139,10 @@ func (s *Service) storeLogs(ctx context.Context, typ string, signature log.Signa
 		}
 	}
 
-	// Do this before adding in buffer, to be able to rollback
+	if err := s.StorageUnits.Buffer.Add(*item, uint(line), content); err != nil {
+		return err
+	}
+
 	// If last log or update of a complete step
 	if sdk.StatusIsTerminated(status) || item.Status == index.StatusItemCompleted {
 		// In this case, we need to lock item.
@@ -157,19 +158,12 @@ func (s *Service) storeLogs(ctx context.Context, typ string, signature log.Signa
 		item.Status = index.StatusItemCompleted
 
 		// Get all data from buffer and add manually last line
-		lines, err := s.StorageUnits.Buffer.Get(*item, cache.MIN, cache.MAX)
+		reader, err := s.StorageUnits.Buffer.NewReader(*item)
 		if err != nil {
 			return err
 		}
 
-		allLines := make([]string, 0, len(lines)+1)
-		allLines = append(allLines, lines[0:line-1]...)
-		allLines = append(allLines, content)
-		allLines = append(allLines, lines[line-1:]...)
-
-		buf := &bytes.Buffer{}
-		gob.NewEncoder(buf).Encode(lines)
-		h, err := convergent.NewHash(bytes.NewReader(buf.Bytes()))
+		h, err := convergent.NewHash(reader)
 		if err != nil {
 			return err
 		}
@@ -187,9 +181,6 @@ func (s *Service) storeLogs(ctx context.Context, typ string, signature log.Signa
 		}
 	}
 
-	if err := s.StorageUnits.Buffer.Add(*item, float64(line), content); err != nil {
-		return err
-	}
 	return sdk.WithStack(tx.Commit())
 
 }
