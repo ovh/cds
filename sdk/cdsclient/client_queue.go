@@ -225,10 +225,11 @@ func (c *client) QueueJobSendSpawnInfo(ctx context.Context, id int64, in []sdk.S
 }
 
 // QueueJobBook books a job for a Hatchery
-func (c *client) QueueJobBook(ctx context.Context, id int64) error {
+func (c *client) QueueJobBook(ctx context.Context, id int64) (sdk.WorkflowNodeJobRunBooked, error) {
+	var resp sdk.WorkflowNodeJobRunBooked
 	path := fmt.Sprintf("/queue/workflows/%d/book", id)
-	_, err := c.PostJSON(ctx, path, nil, nil)
-	return err
+	_, err := c.PostJSON(ctx, path, nil, &resp)
+	return resp, err
 }
 
 // QueueJobRelease release a job for a worker

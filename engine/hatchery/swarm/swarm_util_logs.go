@@ -9,6 +9,7 @@ import (
 	"github.com/docker/docker/api/types"
 
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/hatchery"
 	"github.com/ovh/cds/sdk/log"
 )
 
@@ -21,14 +22,23 @@ func (h *HatcherySwarm) getServicesLogs() error {
 
 		servicesLogs := make([]sdk.ServiceLog, 0, len(containers))
 		for _, cnt := range containers {
-			serviceJobIDStr, isWorkflowService := cnt.Labels["service_job_id"]
+			serviceJobIDStr, isWorkflowService := cnt.Labels[hatchery.LabelServiceJobID]
 			if !isWorkflowService {
 				continue
 			}
-			serviceNodeRunIDStr, ok := cnt.Labels["service_node_run_id"]
+			serviceNodeRunIDStr, ok := cnt.Labels[hatchery.LabelServiceNodeRunID]
 			if !ok {
 				continue
 			}
+			runIDStr, ok := cnt.Labels[hatchery.LabelServiceRunID]
+			if !ok {
+				continue
+			}
+			workflowIDStr, ok := cnt.Labels[hatchery.LabelServiceWorkflowID]
+			if !ok {
+				continue
+			}
+
 			workerName := cnt.Labels["service_worker"]
 			ctx, cancel := context.WithTimeout(context.Background(), time.Minute*2)
 			logsOpts := types.ContainerLogsOptions{
@@ -56,7 +66,7 @@ func (h *HatcherySwarm) getServicesLogs() error {
 			cancel()
 
 			if len(logs) > 0 {
-				serviceID, ok := cnt.Labels["service_id"]
+				serviceID, ok := cnt.Labels[hatchery.LabelServiceID]
 				if !ok {
 					log.Error(ctx, "hatchery> swarm> getServicesLogs> cannot find label service id for containers service %s %v", cnt.ID, cnt.Names)
 					continue
@@ -77,14 +87,30 @@ func (h *HatcherySwarm) getServicesLogs() error {
 					log.Error(ctx, "hatchery> swarm> getServicesLogs> cannot parse service node run id for containers service %s %v id : %s, err : %v", cnt.ID, cnt.Names, serviceNodeRunIDStr, errPj)
 					continue
 				}
+				serviceRunID, err := strconv.ParseInt(runIDStr, 10, 64)
+				if err != nil {
+					log.Error(ctx, "hatchery> swarm> getServicesLogs> cannot parse service run id for containers service %s %v id : %s, err : %v", cnt.ID, cnt.Names, serviceNodeRunIDStr, errPj)
+					continue
+				}
+				serviceWorkflowID, err := strconv.ParseInt(workflowIDStr, 10, 64)
+				if err != nil {
+					log.Error(ctx, "hatchery> swarm> getServicesLogs> cannot parse service workflow id for containers service %s %v id : %s, err : %v", cnt.ID, cnt.Names, serviceNodeRunIDStr, errPj)
+					continue
+				}
 
 				servicesLogs = append(servicesLogs, sdk.ServiceLog{
 					WorkflowNodeJobRunID:   serviceJobID,
 					WorkflowNodeRunID:      serviceNodeRunID,
 					ServiceRequirementID:   reqServiceID,
-					ServiceRequirementName: cnt.Labels["service_req_name"],
+					ServiceRequirementName: cnt.Labels[hatchery.LabelServiceReqName],
 					Val:                    string(logs),
 					WorkerName:             workerName,
+					JobName:                cnt.Labels[hatchery.LabelServiceJobName],
+					NodeRunName:            cnt.Labels[hatchery.LabelServiceNodeRunName],
+					WorkflowName:           cnt.Labels[hatchery.LabelServiceWorkflowName],
+					ProjectKey:             cnt.Labels[hatchery.LabelServiceProjectKey],
+					RunID:                  serviceRunID,
+					WorkflowID:             serviceWorkflowID,
 				})
 			}
 		}

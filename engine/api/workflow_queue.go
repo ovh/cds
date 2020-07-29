@@ -222,7 +222,29 @@ func (api *API) postBookWorkflowJobHandler() service.Handler {
 			return sdk.WrapError(err, "job already booked")
 		}
 
-		return service.WriteJSON(w, nil, http.StatusOK)
+		jobRun, err := workflow.LoadNodeJobRun(ctx, api.mustDB(), api.Cache, id)
+		if err != nil {
+			return err
+		}
+		wnr, err := workflow.LoadNodeRunByID(api.mustDB(), jobRun.WorkflowNodeRunID, workflow.LoadRunOptions{DisableDetailledNodeRun: true})
+		if err != nil {
+			return err
+		}
+		wr, err := workflow.LoadRunByID(api.mustDB(), wnr.WorkflowRunID, workflow.LoadRunOptions{})
+		if err != nil {
+			return err
+		}
+
+		resp := sdk.WorkflowNodeJobRunBooked{
+			ProjectKey:   wr.Workflow.ProjectKey,
+			WorkflowName: wr.Workflow.Name,
+			WorkflowID:   wr.WorkflowID,
+			RunID:        wr.ID,
+			NodeRunName:  wnr.WorkflowNodeName,
+			NodeRunID:    wnr.ID,
+			JobName:      jobRun.Job.Action.Name,
+		}
+		return service.WriteJSON(w, resp, http.StatusOK)
 	}
 }
 

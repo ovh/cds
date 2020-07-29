@@ -247,7 +247,7 @@ type QueueClient interface {
 	QueueCountWorkflowNodeJobRun(since *time.Time, until *time.Time, modelType string, ratioService *int) (sdk.WorkflowNodeJobRunCount, error)
 	QueuePolling(ctx context.Context, jobs chan<- sdk.WorkflowNodeJobRun, errs chan<- error, delay time.Duration, modelType string, ratioService *int) error
 	QueueTakeJob(ctx context.Context, job sdk.WorkflowNodeJobRun) (*sdk.WorkflowNodeJobRunData, error)
-	QueueJobBook(ctx context.Context, id int64) error
+	QueueJobBook(ctx context.Context, id int64) (sdk.WorkflowNodeJobRunBooked, error)
 	QueueJobRelease(ctx context.Context, id int64) error
 	QueueJobInfo(ctx context.Context, id int64) (*sdk.WorkflowNodeJobRun, error)
 	QueueJobSendSpawnInfo(ctx context.Context, id int64, in []sdk.SpawnInfo) error

@@ -40,10 +40,10 @@ func (s *Service) dequeueJobLogs(ctx context.Context) error {
 			if hm.Signature.Worker == nil {
 				continue
 			}
-
+			currentLog := buildMessage(hm.Signature, hm.Msg)
 			cpt := 0
 			for {
-				if err := s.storeStepLogs(ctx, hm); err != nil {
+				if err := s.storeLogs(ctx, index.TypeItemStepLog, hm.Signature, hm.Status, currentLog, hm.Line); err != nil {
 					if sdk.ErrorIs(err, sdk.ErrLocked) && cpt < 10 {
 						cpt++
 						time.Sleep(250 * time.Millisecond)
@@ -65,8 +65,8 @@ func (s *Service) dequeueServiceLogs(ctx context.Context) error {
 			return ctx.Err()
 		default:
 			dequeuCtx, cancel := context.WithTimeout(ctx, 15*time.Second)
-			var serviceLog sdk.ServiceLog
-			if err := s.Cache.DequeueWithContext(dequeuCtx, keyServiceLogIncomingQueue, 30*time.Millisecond, &serviceLog); err != nil {
+			var hm handledMessage
+			if err := s.Cache.DequeueWithContext(dequeuCtx, keyServiceLogIncomingQueue, 30*time.Millisecond, &hm); err != nil {
 				cancel()
 				if strings.Contains(err.Error(), "context deadline exceeded") {
 					return nil
@@ -75,16 +75,20 @@ func (s *Service) dequeueServiceLogs(ctx context.Context) error {
 				continue
 			}
 			cancel()
-			if serviceLog.Val == "" {
+			if hm.Msg.Full == "" {
 				continue
 			}
-			// TODO Store service logs
-			log.Info(ctx, "Service log: %s", serviceLog.Val)
+			if !strings.HasSuffix(hm.Msg.Full, "\n") {
+				hm.Msg.Full += "\n"
+			}
+			if err := s.storeLogs(ctx, index.TypeItemServiceLog, hm.Signature, hm.Status, hm.Msg.Full, hm.Line); err != nil {
+				log.Error(ctx, "dequeueServiceLogs: unable to store service log: %v", err)
+			}
 		}
 	}
 }
 
-func (s *Service) storeStepLogs(ctx context.Context, hm handledMessage) error {
+func (s *Service) storeLogs(ctx context.Context, typ string, signature log.Signature, status string, content string, line int64) error {
 	tx, err := s.Db.Begin()
 	if err != nil {
 		return sdk.WithStack(err)
@@ -93,24 +97,27 @@ func (s *Service) storeStepLogs(ctx context.Context, hm handledMessage) error {
 
 	// Build cds api ref
 	apiRef := index.ApiRef{
-		ProjectKey:     hm.Signature.ProjectKey,
-		WorkflowName:   hm.Signature.WorkflowName,
-		WorkflowID:     hm.Signature.WorkflowID,
-		RunID:          hm.Signature.RunID,
-		NodeRunName:    hm.Signature.NodeRunName,
-		NodeRunID:      hm.Signature.NodeRunID,
-		NodeRunJobName: hm.Signature.JobName,
-		NodeRunJobID:   hm.Signature.JobID,
-		StepName:       hm.Signature.Worker.StepName,
-		StepOrder:      hm.Signature.Worker.StepOrder,
+		ProjectKey:     signature.ProjectKey,
+		WorkflowName:   signature.WorkflowName,
+		WorkflowID:     signature.WorkflowID,
+		RunID:          signature.RunID,
+		NodeRunName:    signature.NodeRunName,
+		NodeRunID:      signature.NodeRunID,
+		NodeRunJobName: signature.JobName,
+		NodeRunJobID:   signature.JobID,
 	}
+	if signature.Worker != nil {
+		apiRef.StepName = signature.Worker.StepName
+		apiRef.StepOrder = signature.Worker.StepOrder
+	}
+
 	hashRefU, err := hashstructure.Hash(apiRef, nil)
 	if err != nil {
 		return sdk.WithStack(err)
 	}
 	hashRef := strconv.FormatUint(hashRefU, 10)
 
-	item, err := index.LoadItemByApiRefHashAndType(ctx, s.Mapper, tx, hashRef, index.TypeItemStepLog)
+	item, err := index.LoadItemByApiRefHashAndType(ctx, s.Mapper, tx, hashRef, typ)
 	if err != nil {
 		if !sdk.ErrorIs(err, sdk.ErrNotFound) {
 			return err
@@ -118,7 +125,7 @@ func (s *Service) storeStepLogs(ctx context.Context, hm handledMessage) error {
 		// Insert data
 		item = &index.Item{
 			ApiRef:     apiRef,
-			Type:       index.TypeItemStepLog,
+			Type:       typ,
 			ApiRefHash: hashRef,
 			Status:     index.StatusItemIncoming,
 		}
@@ -127,17 +134,16 @@ func (s *Service) storeStepLogs(ctx context.Context, hm handledMessage) error {
 				return err
 			}
 			// reload if item already exist
-			item, err = index.LoadItemByApiRefHashAndType(ctx, s.Mapper, tx, hashRef, index.TypeItemStepLog)
+			item, err = index.LoadItemByApiRefHashAndType(ctx, s.Mapper, tx, hashRef, typ)
 			if err != nil {
 				return err
 			}
 		}
 	}
-	currentLog := buildMessage(hm.Signature, hm.Msg)
 
 	// Do this before adding in buffer, to be able to rollback
 	// If last log or update of a complete step
-	if sdk.StatusIsTerminated(hm.Status) || item.Status == index.StatusItemCompleted {
+	if sdk.StatusIsTerminated(status) || item.Status == index.StatusItemCompleted {
 		// In this case, we need to lock item.
 		item, err = index.LoadAndLockItemByID(ctx, s.Mapper, tx, item.ID)
 		if err != nil {
@@ -155,7 +161,12 @@ func (s *Service) storeStepLogs(ctx context.Context, hm handledMessage) error {
 		if err != nil {
 			return err
 		}
-		lines = append(lines, currentLog)
+
+		allLines := make([]string, 0, len(lines)+1)
+		allLines = append(allLines, lines[0:line-1]...)
+		allLines = append(allLines, content)
+		allLines = append(allLines, lines[line-1:]...)
+
 		buf := &bytes.Buffer{}
 		gob.NewEncoder(buf).Encode(lines)
 		h, err := convergent.NewHash(bytes.NewReader(buf.Bytes()))
@@ -176,8 +187,9 @@ func (s *Service) storeStepLogs(ctx context.Context, hm handledMessage) error {
 		}
 	}
 
-	if err := s.StorageUnits.Buffer.Add(*item, float64(hm.Line), currentLog); err != nil {
+	if err := s.StorageUnits.Buffer.Add(*item, float64(line), content); err != nil {
 		return err
 	}
 	return sdk.WithStack(tx.Commit())
+
 }

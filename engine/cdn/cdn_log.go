@@ -264,6 +264,18 @@ func (s *Service) handleServiceLog(ctx context.Context, hatcheryID int64, hatche
 		return sdk.WrapError(sdk.ErrWrongRequest, "cannot send service log for worker %s from hatchery (expected: %d/actual: %d)", w.ID, *w.HatcheryID, signature.Service.HatcheryID)
 	}
 
+	// FIXME Status + Line ?
+	hm := handledMessage{
+		Signature: signature,
+		Msg:       m,
+	}
+	if s.cdnServiceLogsEnabled(ctx) {
+		if err := s.Cache.Enqueue(keyServiceLogIncomingQueue, hm); err != nil {
+			return err
+		}
+	}
+
+	// DEPRECATED: call CDS API
 	logs := sdk.ServiceLog{
 		ServiceRequirementName: signature.Service.RequirementName,
 		ServiceRequirementID:   signature.Service.RequirementID,
@@ -274,14 +286,6 @@ func (s *Service) handleServiceLog(ctx context.Context, hatcheryID int64, hatche
 	if !strings.HasSuffix(logs.Val, "\n") {
 		logs.Val += "\n"
 	}
-
-	if s.cdnServiceLogsEnabled(ctx) {
-		if err := s.Cache.Enqueue(keyServiceLogIncomingQueue, logs); err != nil {
-			return err
-		}
-	}
-
-	// DEPRECATED: call CDS API
 	if err := s.Client.QueueServiceLogs(ctx, []sdk.ServiceLog{logs}); err != nil {
 		return err
 	}

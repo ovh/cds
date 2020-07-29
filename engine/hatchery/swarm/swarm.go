@@ -315,10 +315,17 @@ func (h *HatcherySwarm) SpawnWorker(ctx context.Context, spawnArgs hatchery.Spaw
 				}
 
 				if spawnArgs.JobID > 0 {
-					labels["service_node_run_id"] = fmt.Sprintf("%d", spawnArgs.NodeRunID)
-					labels["service_job_id"] = fmt.Sprintf("%d", spawnArgs.JobID)
-					labels["service_id"] = fmt.Sprintf("%d", r.ID)
-					labels["service_req_name"] = r.Name
+					labels[hatchery.LabelServiceProjectKey] = spawnArgs.ProjectKey
+					labels[hatchery.LabelServiceWorkflowName] = spawnArgs.WorkflowName
+					labels[hatchery.LabelServiceWorkflowID] = fmt.Sprintf("%d", spawnArgs.WorkflowID)
+					labels[hatchery.LabelServiceRunID] = fmt.Sprintf("%d", spawnArgs.RunID)
+					labels[hatchery.LabelServiceNodeRunID] = fmt.Sprintf("%d", spawnArgs.NodeRunID)
+					labels[hatchery.LabelServiceNodeRunName] = spawnArgs.NodeRunName
+					labels[hatchery.LabelServiceJobName] = spawnArgs.JobName
+					labels[hatchery.LabelServiceJobID] = fmt.Sprintf("%d", spawnArgs.JobID)
+					labels[hatchery.LabelServiceID] = fmt.Sprintf("%d", r.ID)
+					labels[hatchery.LabelServiceReqName] = r.Name
+
 				}
 
 				//Start the services

@@ -8,6 +8,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/ovh/cds/sdk/hatchery"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -38,8 +39,14 @@ func Test_serviceLogs(t *testing.T) {
 					Name:      "pod-name",
 					Namespace: "kyubi",
 					Labels: map[string]string{
-						LABEL_SERVICE_JOB_ID:      "666",
-						LABEL_SERVICE_NODE_RUN_ID: "999",
+						hatchery.LabelServiceJobID:        "666",
+						hatchery.LabelServiceNodeRunID:    "999",
+						hatchery.LabelServiceWorkflowID:   "1",
+						hatchery.LabelServiceWorkflowName: "MyWorkflow",
+						hatchery.LabelServiceProjectKey:   "KEY",
+						hatchery.LabelServiceRunID:        "1",
+						hatchery.LabelServiceNodeRunName:  "Mypip",
+						hatchery.LabelServiceJobName:      "MyJob",
 					},
 				},
 				Spec: v1.PodSpec{

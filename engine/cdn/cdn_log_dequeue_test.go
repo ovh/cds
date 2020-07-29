@@ -65,7 +65,9 @@ func TestStoreNewStepLog(t *testing.T) {
 			},
 		},
 	}
-	err = s.storeStepLogs(context.TODO(), hm)
+
+	content := buildMessage(hm.Signature, hm.Msg)
+	err = s.storeLogs(context.TODO(), index.TypeItemStepLog, hm.Signature, hm.Status, content, hm.Line)
 	require.NoError(t, err)
 
 	apiRef := index.ApiRef{
@@ -157,7 +159,8 @@ func TestStoreLastStepLog(t *testing.T) {
 	}
 	require.NoError(t, index.InsertItem(context.TODO(), m, db, &item))
 
-	err = s.storeStepLogs(context.TODO(), hm)
+	content := buildMessage(hm.Signature, hm.Msg)
+	err = s.storeLogs(context.TODO(), index.TypeItemStepLog, hm.Signature, hm.Status, content, hm.Line)
 	require.NoError(t, err)
 
 	itemDB, err := index.LoadItemByID(context.TODO(), s.Mapper, db, item.ID)
