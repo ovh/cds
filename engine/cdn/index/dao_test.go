@@ -18,12 +18,12 @@ func TestLoadItem(t *testing.T) {
 	db, _ := test.SetupPGWithMapper(t, m, sdk.TypeCDN)
 
 	i := index.Item{
-		Name: sdk.RandomString(10),
+		Type: index.TypeItemStepLog,
 	}
 	require.NoError(t, index.InsertItem(context.TODO(), m, db, &i))
 
 	res, err := index.LoadItemByID(context.TODO(), m, db, i.ID)
 	require.NoError(t, err)
 	require.Equal(t, i.ID, res.ID)
-	require.Equal(t, i.Name, res.Name)
+	require.Equal(t, i.Type, res.Type)
 }
