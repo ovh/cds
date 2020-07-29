@@ -43,7 +43,7 @@ func TestInit(t *testing.T) {
 		},
 		Storages: []storage.StorageConfiguration{
 			{
-				Name:     commontest.GetTestName(t),
+				Name:     "local_storage",
 				CronExpr: "* * * * * ?",
 				Local: &storage.LocalStorageConfiguration{
 					Path: tmpDir,
@@ -64,14 +64,30 @@ func TestInit(t *testing.T) {
 	}
 	require.NoError(t, index.InsertItem(ctx, m, db, &i))
 
-	require.NoError(t, cdnUnits.Buffer.Add(i, 1.0, "this is first log"))
+	require.NoError(t, cdnUnits.Buffer.Add(i, 1.0, "this is the first log"))
+	require.NoError(t, cdnUnits.Buffer.Add(i, 1.0, "this is the second log"))
+
 	redisUnit, err := storage.LoadUnitByName(ctx, m, db, "redis_buffer")
 	require.NoError(t, err)
 
 	itemUnit, err := storage.InsertItemUnit(ctx, m, db, *redisUnit, i)
 	require.NoError(t, err)
-
 	require.NotNil(t, itemUnit)
 
+	localUnit, err := storage.LoadUnitByName(ctx, m, db, "local_storage")
+	require.NoError(t, err)
+
+	localUnitDriver := cdnUnits.Storage(localUnit.Name)
+	require.NotNil(t, localUnitDriver)
+
+	exists, err := localUnitDriver.ItemExists(i)
+	require.NoError(t, err)
+	require.False(t, exists)
+
 	<-ctx.Done()
+
+	exists, err = localUnitDriver.ItemExists(i)
+	require.NoError(t, err)
+	require.False(t, exists)
+
 }

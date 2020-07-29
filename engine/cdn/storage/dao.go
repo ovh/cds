@@ -41,12 +41,15 @@ func LoadUnitByID(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlExecutor
 
 // LoadUnitByName returns a unit from database for given name.
 func LoadUnitByName(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlExecutor, name string) (*Unit, error) {
+	log.Debug("storage.LoadUnitByName> name=%s", name)
+
 	query := gorpmapper.NewQuery("SELECT * FROM storage_unit WHERE name = $1").Args(name)
 	return getUnit(ctx, m, db, query)
 }
 
 // InsertUnit in database.
-func InsertUnit(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlExecutor, i *Unit) error {
+func InsertUnit(ctx context.Context, m *gorpmapper.Mapper, db gorpmapper.SqlExecutorWithTx, i *Unit) error {
+	log.Debug("storage.InsertUnit> %+v", i)
 	i.ID = sdk.UUID()
 	i.Created = time.Now()
 	if err := m.InsertAndSign(ctx, db, i); err != nil {
@@ -60,10 +63,10 @@ type LoadUnitOptionFunc func(context.Context, gorp.SqlExecutor, ...*Unit) error
 // LoadAllUnits loads all the units from the database
 func LoadAllUnits(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlExecutor, opts ...LoadUnitOptionFunc) ([]Unit, error) {
 	query := gorpmapper.NewQuery("SELECT * FROM storage_unit")
-	return getAll(ctx, m, db, query, opts...)
+	return getAllUnits(ctx, m, db, query, opts...)
 }
 
-func getAll(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlExecutor, query gorpmapper.Query, opts ...LoadUnitOptionFunc) ([]Unit, error) {
+func getAllUnits(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlExecutor, query gorpmapper.Query, opts ...LoadUnitOptionFunc) ([]Unit, error) {
 	var res []Unit
 	if err := m.GetAll(ctx, db, query, &res); err != nil {
 		return nil, err
@@ -99,7 +102,7 @@ func getAll(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlExecutor, quer
 	return units, nil
 }
 
-func InsertItemUnit(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlExecutor, u Unit, i index.Item) (*ItemUnit, error) {
+func InsertItemUnit(ctx context.Context, m *gorpmapper.Mapper, db gorpmapper.SqlExecutorWithTx, u Unit, i index.Item) (*ItemUnit, error) {
 	var iu = ItemUnit{
 		ID:           sdk.UUID(),
 		LastModified: i.Created,
@@ -112,7 +115,7 @@ func InsertItemUnit(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlExecut
 	return &iu, nil
 }
 
-func UpdateItemUnit(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlExecutor, u *ItemUnit) error {
+func UpdateItemUnit(ctx context.Context, m *gorpmapper.Mapper, db gorpmapper.SqlExecutorWithTx, u *ItemUnit) error {
 	if err := m.UpdateAndSign(ctx, db, u); err != nil {
 		return sdk.WrapError(err, "unable to update storage unit item")
 	}
@@ -144,4 +147,55 @@ func getItemUnit(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlExecutor,
 	}
 
 	return &i, nil
+}
+
+func LoadAllItemUnitsByItemID(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlExecutor, itemID string, opts ...gorpmapper.GetOptionFunc) ([]ItemUnit, error) {
+	query := gorpmapper.NewQuery("SELECT * FROM storage_unit_index WHERE item_id = $1").Args(itemID)
+	return getAllItemUnits(ctx, m, db, query, opts...)
+}
+
+func getAllItemUnits(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlExecutor, query gorpmapper.Query, opts ...gorpmapper.GetOptionFunc) ([]ItemUnit, error) {
+	var res []ItemUnit
+	if err := m.GetAll(ctx, db, query, &res, opts...); err != nil {
+		return nil, err
+	}
+
+	// Check signature of data, if invalid do not return it
+	verifiedItems := make([]*ItemUnit, 0, len(res))
+	for i := range res {
+		isValid, err := m.CheckSignature(res[i], res[i].Signature)
+		if err != nil {
+			return nil, err
+		}
+		if !isValid {
+			log.Error(ctx, "storage.getAllItemUnits> storage_unit_index %s data corrupted", res[i].ID)
+			continue
+		}
+		verifiedItems = append(verifiedItems, &res[i])
+	}
+
+	items := make([]ItemUnit, len(verifiedItems))
+	for i := range verifiedItems {
+		items[i] = *verifiedItems[i]
+	}
+
+	return items, nil
+}
+
+func LoadAllItemIDUnknownByUnit(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlExecutor, unitID string, limit int) ([]string, error) {
+	query := `SELECT id 
+		FROM index 
+		EXCEPT 
+		SELECT item_id
+		FROM storage_unit_index  
+		WHERE unit_id = $1
+		LIMIT $2
+	`
+
+	var res []string
+	if _, err := db.Select(&res, query, unitID, limit); err != nil {
+		return nil, sdk.WithStack(err)
+	}
+
+	return res, nil
 }
