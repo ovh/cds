@@ -6,6 +6,7 @@ import (
 	"encoding/gob"
 	"encoding/hex"
 	"github.com/ovh/cds/engine/cache"
+	"github.com/ovh/cds/engine/cdn/storage"
 	"github.com/ovh/symmecrypt/convergent"
 	"strconv"
 	"strings"
@@ -90,6 +91,7 @@ func (s *Service) storeStepLogs(ctx context.Context, hm handledMessage) error {
 	}
 	defer tx.Rollback()
 
+	// Build cds api ref
 	apiRef := index.ApiRef{
 		ProjectKey:     hm.Signature.ProjectKey,
 		WorkflowName:   hm.Signature.WorkflowName,
@@ -124,6 +126,7 @@ func (s *Service) storeStepLogs(ctx context.Context, hm handledMessage) error {
 			if !sdk.ErrorIs(err, sdk.ErrConflictData) {
 				return err
 			}
+			// reload if item already exist
 			item, err = index.LoadItemByApiRefHashAndType(ctx, s.Mapper, tx, hashRef, index.TypeItemStepLog)
 			if err != nil {
 				return err
@@ -164,8 +167,13 @@ func (s *Service) storeStepLogs(ctx context.Context, hm handledMessage) error {
 			return err
 		}
 
-		// TODO add association
-
+		unit, err := storage.LoadUnitByName(ctx, s.Mapper, tx, s.StorageUnits.Buffer.Name())
+		if err != nil {
+			return err
+		}
+		if _, err := storage.InsertItemUnit(ctx, s.Mapper, tx, *unit, *item); err != nil {
+			return err
+		}
 	}
 
 	if err := s.StorageUnits.Buffer.Add(*item, float64(hm.Line), currentLog); err != nil {

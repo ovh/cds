@@ -2,7 +2,6 @@ package cdn
 
 import (
 	"context"
-	"github.com/ovh/cds/engine/cdn/storage/redis"
 	"strconv"
 	"testing"
 
@@ -12,6 +11,8 @@ import (
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/cdn/index"
 	"github.com/ovh/cds/engine/cdn/storage"
+	_ "github.com/ovh/cds/engine/cdn/storage/local"
+	_ "github.com/ovh/cds/engine/cdn/storage/redis"
 	"github.com/ovh/cds/engine/gorpmapper"
 	commontest "github.com/ovh/cds/engine/test"
 	"github.com/ovh/cds/sdk"
@@ -23,7 +24,6 @@ func TestStoreNewStepLog(t *testing.T) {
 	m := gorpmapper.New()
 	index.InitDBMapping(m)
 	storage.InitDBMapping(m)
-	storage.RegisterDriver("redis", new(redis.Redis))
 	db, cache := test.SetupPGWithMapper(t, m, sdk.TypeCDN)
 	cfg := commontest.LoadTestingConf(t, sdk.TypeCDN)
 
@@ -93,7 +93,6 @@ func TestStoreLastStepLog(t *testing.T) {
 	m := gorpmapper.New()
 	index.InitDBMapping(m)
 	storage.InitDBMapping(m)
-	storage.RegisterDriver("redis", new(redis.Redis))
 	db, cache := test.SetupPGWithMapper(t, m, sdk.TypeCDN)
 	cfg := commontest.LoadTestingConf(t, sdk.TypeCDN)
 
@@ -166,4 +165,12 @@ func TestStoreLastStepLog(t *testing.T) {
 	require.NotNil(t, itemDB)
 	require.Equal(t, index.StatusItemCompleted, itemDB.Status)
 	require.NotEmpty(t, itemDB.Hash)
+
+	unit, err := storage.LoadUnitByName(context.TODO(), m, db, s.StorageUnits.Buffer.Name())
+	require.NoError(t, err)
+	require.NotNil(t, unit)
+
+	itemUnit, err := storage.LoadItemByUnit(context.TODO(), m, db, unit.ID, itemDB.ID)
+	require.NoError(t, err)
+	require.NotNil(t, itemUnit)
 }
