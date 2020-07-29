@@ -44,6 +44,13 @@ func (x *RunningStorageUnits) Run(ctx context.Context, s StorageUnit) error {
 			tx.Rollback() // nolint
 			continue
 		}
+
+		if len(itemUnits) == 0 {
+			log.Info(ctx, "item %s can't be sync. No unit knows it...", id)
+			tx.Rollback() // nolint
+			continue
+		}
+
 		// Load the item
 		item, err := index.LoadItemByID(ctx, s.GorpMapper(), tx, id)
 		if err != nil {
@@ -53,7 +60,10 @@ func (x *RunningStorageUnits) Run(ctx context.Context, s StorageUnit) error {
 		}
 
 		// Random pick a unit
-		idx := r.Intn(len(itemUnits))
+		idx := 0
+		if len(itemUnits) > 1 {
+			idx = r.Intn(len(itemUnits))
+		}
 		refUnitID := itemUnits[idx].UnitID
 		refUnit, err := LoadUnitByID(ctx, s.GorpMapper(), tx, refUnitID)
 		if err != nil {

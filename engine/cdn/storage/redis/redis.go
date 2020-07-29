@@ -25,11 +25,11 @@ func init() {
 }
 
 func (s *Redis) Init(cfg interface{}) error {
-	config, is := cfg.(*storage.RedisBufferConfiguration)
+	config, is := cfg.(storage.RedisBufferConfiguration)
 	if !is {
 		return sdk.WithStack(fmt.Errorf("invalid configuration: %T", cfg))
 	}
-	s.config = *config
+	s.config = config
 	var err error
 	s.store, err = cache.New(s.config.Host, s.config.Password, 60)
 	return err

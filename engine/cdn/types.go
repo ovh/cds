@@ -1,10 +1,6 @@
 package cdn
 
 import (
-	"github.com/go-gorp/gorp"
-	"github.com/ovh/cds/sdk/log"
-	"github.com/ovh/cds/sdk/log/hook"
-
 	"github.com/ovh/cds/engine/api"
 	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/engine/cdn/storage"
@@ -12,6 +8,8 @@ import (
 	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/log"
+	"github.com/ovh/cds/sdk/log/hook"
 )
 
 type handledMessage struct {
@@ -27,10 +25,9 @@ type Service struct {
 	Cfg                 Configuration
 	DBConnectionFactory *database.DBConnectionFactory
 	Router              *api.Router
-	Db                  *gorp.DbMap
 	Cache               cache.Store
 	Mapper              *gorpmapper.Mapper
-	StorageUnits        *storage.RunningStorageUnits
+	Units               *storage.RunningStorageUnits
 }
 
 // Configuration is the hooks configuration structure
@@ -60,5 +57,5 @@ type Configuration struct {
 	} `toml:"log" json:"log" comment:"###########################\n Log settings.\n##########################"`
 	NbJobLogsGoroutines     int64                 `toml:"nbJobLogsGoroutines" default:"45" comment:"Number of workers that dequeue the job log queue" json:"nbJobLogsGoroutines"`
 	NbServiceLogsGoroutines int64                 `toml:"nbServiceLogsGoroutines" default:"5" comment:"Number of workers that dequeue the service log queue" json:"nbServiceLogsGoroutines"`
-	Units                   storage.Configuration `toml:"storage_units"  json:"storage_units"`
+	Units                   storage.Configuration `toml:"storageUnits"  json:"storageUnits" mapstructure:"storageUnits"`
 }

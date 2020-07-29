@@ -87,11 +87,11 @@ func (s *Service) dequeueServiceLogs(ctx context.Context) error {
 }
 
 func (s *Service) storeLogs(ctx context.Context, typ string, signature log.Signature, status string, content string, line int64) error {
-	tx, err := s.Db.Begin()
+	tx, err := s.mustDBWithCtx(ctx).Begin()
 	if err != nil {
 		return sdk.WithStack(err)
 	}
-	defer tx.Rollback()
+	defer tx.Rollback() // nolint
 
 	// Build cds api ref
 	apiRef := index.ApiRef{
@@ -141,16 +141,13 @@ func (s *Service) storeLogs(ctx context.Context, typ string, signature log.Signa
 
 	switch typ {
 	case index.TypeItemStepLog:
-		if err := s.StorageUnits.Buffer.Add(*item, uint(line), content); err != nil {
+		if err := s.Units.Buffer.Add(*item, uint(line), content); err != nil {
 			return err
 		}
 	case index.TypeItemServiceLog:
-		if err := s.StorageUnits.Buffer.Append(*item, content); err != nil {
+		if err := s.Units.Buffer.Append(*item, content); err != nil {
 			return err
 		}
-	}
-	if err := s.StorageUnits.Buffer.Add(*item, uint(line), content); err != nil {
-		return err
 	}
 
 	// If last log or update of a complete step
@@ -168,7 +165,7 @@ func (s *Service) storeLogs(ctx context.Context, typ string, signature log.Signa
 		item.Status = index.StatusItemCompleted
 
 		// Get all data from buffer and add manually last line
-		reader, err := s.StorageUnits.Buffer.NewReader(*item)
+		reader, err := s.Units.Buffer.NewReader(*item)
 		if err != nil {
 			return err
 		}
@@ -182,7 +179,7 @@ func (s *Service) storeLogs(ctx context.Context, typ string, signature log.Signa
 			return err
 		}
 
-		unit, err := storage.LoadUnitByName(ctx, s.Mapper, tx, s.StorageUnits.Buffer.Name())
+		unit, err := storage.LoadUnitByName(ctx, s.Mapper, tx, s.Units.Buffer.Name())
 		if err != nil {
 			return err
 		}

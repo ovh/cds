@@ -22,7 +22,7 @@ import (
 func TestWorkerLogCDNEnabled(t *testing.T) {
 	defer gock.Off()
 	m := gorpmapper.New()
-	db, cache := test.SetupPGWithMapper(t, m, sdk.TypeCDN)
+	_, cache := test.SetupPGWithMapper(t, m, sdk.TypeCDN)
 	defer cache.Delete("cdn:log:job:1")
 	defer cache.Delete(keyJobLogIncomingQueue)
 	defer logCache.Flush()
@@ -36,7 +36,6 @@ func TestWorkerLogCDNEnabled(t *testing.T) {
 
 	// Create cdn service
 	s := Service{
-		Db:    db.DbMap,
 		Cache: cache,
 	}
 
@@ -108,7 +107,7 @@ func TestWorkerLogCDNEnabled(t *testing.T) {
 func TestWorkerLogCDNDisabled(t *testing.T) {
 	defer gock.Off()
 	m := gorpmapper.New()
-	db, cache := test.SetupPGWithMapper(t, m, sdk.TypeCDN)
+	_, cache := test.SetupPGWithMapper(t, m, sdk.TypeCDN)
 	defer cache.Delete(keyJobLogIncomingQueue)
 	defer cache.Delete("cdn:log:job:1")
 	defer logCache.Flush()
@@ -123,7 +122,6 @@ func TestWorkerLogCDNDisabled(t *testing.T) {
 
 	// Create cdn service
 	s := Service{
-		Db:    db.DbMap,
 		Cache: cache,
 	}
 
@@ -201,7 +199,7 @@ func TestWorkerLogCDNDisabled(t *testing.T) {
 func TestServiceLog(t *testing.T) {
 	defer gock.Off()
 	mCDN := gorpmapper.New()
-	dbCDN, cacheCDN := test.SetupPGWithMapper(t, mCDN, sdk.TypeCDN)
+	_, cacheCDN := test.SetupPGWithMapper(t, mCDN, sdk.TypeCDN)
 	defer cacheCDN.Delete(keyServiceLogIncomingQueue)
 	defer logCache.Flush()
 
@@ -215,7 +213,6 @@ func TestServiceLog(t *testing.T) {
 
 	// Create cdn service
 	s := Service{
-		Db:    dbCDN.DbMap,
 		Cache: cacheCDN,
 	}
 	s.Client = cdsclient.New(cdsclient.Config{

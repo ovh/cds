@@ -93,19 +93,19 @@ type StorageUnit interface {
 }
 
 type Configuration struct {
-	Buffer   BufferConfiguration    `toml:"buffer" json:"buffer"`
-	Storages []StorageConfiguration `toml:"storages" json:"storages"`
+	Buffer   BufferConfiguration    `toml:"buffer" json:"buffer" mapstructure:"buffer"`
+	Storages []StorageConfiguration `toml:"storages" json:"storages" mapstructure:"storages"`
 }
 
 type BufferConfiguration struct {
-	Name  string                    `toml:"name" json:"name"`
-	Redis *RedisBufferConfiguration `toml:"redis" json:"redis"`
+	Name  string                   `toml:"name" json:"name"`
+	Redis RedisBufferConfiguration `toml:"redisBuffer" json:"redis" mapstructure:"redis"`
 }
 
 type StorageConfiguration struct {
 	Name     string                     `toml:"name" json:"name"`
 	CronExpr string                     `toml:"cron" json:"cron"`
-	Local    *LocalStorageConfiguration `toml:"local" json:"local"`
+	Local    *LocalStorageConfiguration `toml:"local" json:"local" mapstructure:"local"`
 }
 
 type LocalStorageConfiguration struct {
@@ -135,49 +135,44 @@ func Init(ctx context.Context, m *gorpmapper.Mapper, db *gorp.DbMap, config Conf
 	var result RunningStorageUnits
 
 	// Start by initializing the buffer unit
-	switch {
-	case config.Buffer.Redis != nil:
-		d := GetDriver("redis")
-		if d == nil {
-			return nil, fmt.Errorf("redis driver is not available")
-		}
-		bd, is := d.(BufferUnit)
-		if !is {
-			return nil, fmt.Errorf("redis driver is not a buffer unit driver")
-		}
-		if err := bd.Init(config.Buffer.Redis); err != nil {
-			return nil, err
-		}
-		result.Buffer = bd
+	d := GetDriver("redis")
+	if d == nil {
+		return nil, fmt.Errorf("redis driver is not available")
+	}
+	bd, is := d.(BufferUnit)
+	if !is {
+		return nil, fmt.Errorf("redis driver is not a buffer unit driver")
+	}
+	if err := bd.Init(config.Buffer.Redis); err != nil {
+		return nil, err
+	}
+	result.Buffer = bd
 
-		tx, err := db.Begin()
-		if err != nil {
-			return nil, err
-		}
-		defer tx.Rollback()
+	tx, err := db.Begin()
+	if err != nil {
+		return nil, err
+	}
+	defer tx.Rollback()
 
-		u, err := LoadUnitByName(ctx, m, tx, config.Buffer.Name)
-		if sdk.ErrorIs(err, sdk.ErrNotFound) {
-			var srvConfig sdk.ServiceConfig
-			b, _ := json.Marshal(config.Buffer.Redis)
-			json.Unmarshal(b, &srvConfig) // nolint
-			u = &Unit{
-				ID:      sdk.UUID(),
-				Created: time.Now(),
-				Name:    config.Buffer.Name,
-				Config:  srvConfig,
-			}
-			err = InsertUnit(ctx, m, tx, u)
-		} else if err != nil {
-			return nil, err
+	u, err := LoadUnitByName(ctx, m, tx, config.Buffer.Name)
+	if sdk.ErrorIs(err, sdk.ErrNotFound) {
+		var srvConfig sdk.ServiceConfig
+		b, _ := json.Marshal(config.Buffer.Redis)
+		json.Unmarshal(b, &srvConfig) // nolint
+		u = &Unit{
+			ID:      sdk.UUID(),
+			Created: time.Now(),
+			Name:    config.Buffer.Name,
+			Config:  srvConfig,
 		}
-		bd.Set(m, db, *u)
+		err = InsertUnit(ctx, m, tx, u)
+	} else if err != nil {
+		return nil, err
+	}
+	bd.Set(m, db, *u)
 
-		if err := tx.Commit(); err != nil {
-			return nil, err
-		}
-	default:
-		return nil, errors.New("no buffer unit has been configuration")
+	if err := tx.Commit(); err != nil {
+		return nil, err
 	}
 
 	scheduler := cron.New(cron.WithLocation(time.UTC), cron.WithSeconds())

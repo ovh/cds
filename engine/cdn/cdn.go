@@ -12,6 +12,8 @@ import (
 	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/engine/cdn/index"
 	"github.com/ovh/cds/engine/cdn/storage"
+	_ "github.com/ovh/cds/engine/cdn/storage/local"
+	_ "github.com/ovh/cds/engine/cdn/storage/redis"
 	"github.com/ovh/cds/engine/database"
 	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk"
@@ -117,7 +119,8 @@ func (s *Service) Serve(c context.Context) error {
 		storage.InitDBMapping(s.Mapper)
 
 		// Init storage units
-		if s.StorageUnits, err = storage.Init(ctx, s.Mapper, s.Db, s.Cfg.Units); err != nil {
+		s.Units, err = storage.Init(ctx, s.Mapper, s.mustDBWithCtx(ctx), s.Cfg.Units)
+		if err != nil {
 			return err
 		}
 	}
@@ -128,7 +131,9 @@ func (s *Service) Serve(c context.Context) error {
 		return fmt.Errorf("cannot connect to redis instance : %v", err)
 	}
 
-	s.initMetrics(ctx)
+	if err := s.initMetrics(ctx); err != nil {
+		return err
+	}
 
 	s.RunTcpLogServer(ctx)
 
@@ -159,7 +164,7 @@ func (s *Service) mustDBWithCtx(ctx context.Context) *gorp.DbMap {
 	db := s.DBConnectionFactory.GetDBMap(s.Mapper)()
 	db = db.WithContext(ctx).(*gorp.DbMap)
 	if db == nil {
-		panic(fmt.Errorf("Database unavailable"))
+		panic(fmt.Errorf("database unavailable"))
 	}
 	return db
 }

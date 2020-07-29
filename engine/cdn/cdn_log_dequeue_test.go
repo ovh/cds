@@ -29,22 +29,22 @@ func TestStoreNewStepLog(t *testing.T) {
 
 	// Create cdn service
 	s := Service{
-		Db:     db.DbMap,
-		Cache:  cache,
-		Mapper: m,
+		DBConnectionFactory: test.DBConnectionFactory,
+		Cache:               cache,
+		Mapper:              m,
 	}
 
 	cdnUnits, err := storage.Init(context.TODO(), m, db.DbMap, storage.Configuration{
 		Buffer: storage.BufferConfiguration{
 			Name: "redis_buffer",
-			Redis: &storage.RedisBufferConfiguration{
+			Redis: storage.RedisBufferConfiguration{
 				Host:     cfg["redisHost"],
 				Password: cfg["redisPassword"],
 			},
 		},
 	})
 	require.NoError(t, err)
-	s.StorageUnits = cdnUnits
+	s.Units = cdnUnits
 
 	hm := handledMessage{
 		Msg: hook.Message{
@@ -106,22 +106,22 @@ func TestStoreLastStepLog(t *testing.T) {
 
 	// Create cdn service
 	s := Service{
-		Db:     db.DbMap,
-		Cache:  cache,
-		Mapper: m,
+		DBConnectionFactory: test.DBConnectionFactory,
+		Cache:               cache,
+		Mapper:              m,
 	}
 
 	cdnUnits, err := storage.Init(context.TODO(), m, db.DbMap, storage.Configuration{
 		Buffer: storage.BufferConfiguration{
 			Name: "redis_buffer",
-			Redis: &storage.RedisBufferConfiguration{
+			Redis: storage.RedisBufferConfiguration{
 				Host:     cfg["redisHost"],
 				Password: cfg["redisPassword"],
 			},
 		},
 	})
 	require.NoError(t, err)
-	s.StorageUnits = cdnUnits
+	s.Units = cdnUnits
 
 	hm := handledMessage{
 		Msg:    hook.Message{},
@@ -175,7 +175,7 @@ func TestStoreLastStepLog(t *testing.T) {
 	require.Equal(t, index.StatusItemCompleted, itemDB.Status)
 	require.NotEmpty(t, itemDB.Hash)
 
-	unit, err := storage.LoadUnitByName(context.TODO(), m, db, s.StorageUnits.Buffer.Name())
+	unit, err := storage.LoadUnitByName(context.TODO(), m, db, s.Units.Buffer.Name())
 	require.NoError(t, err)
 	require.NotNil(t, unit)
 
@@ -193,22 +193,22 @@ func TestStoreNewServiceLogAndAppend(t *testing.T) {
 
 	// Create cdn service
 	s := Service{
-		Db:     db.DbMap,
-		Cache:  cache,
-		Mapper: m,
+		DBConnectionFactory: test.DBConnectionFactory,
+		Cache:               cache,
+		Mapper:              m,
 	}
 
 	cdnUnits, err := storage.Init(context.TODO(), m, db.DbMap, storage.Configuration{
 		Buffer: storage.BufferConfiguration{
 			Name: "redis_buffer",
-			Redis: &storage.RedisBufferConfiguration{
+			Redis: storage.RedisBufferConfiguration{
 				Host:     cfg["redisHost"],
 				Password: cfg["redisPassword"],
 			},
 		},
 	})
 	require.NoError(t, err)
-	s.StorageUnits = cdnUnits
+	s.Units = cdnUnits
 
 	hm := handledMessage{
 		Msg: hook.Message{

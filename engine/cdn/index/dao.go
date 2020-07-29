@@ -41,13 +41,13 @@ func LoadItemByID(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlExecutor
 }
 
 // LoadAndLockItemByID returns an item from database for given id.
-func LoadAndLockItemByID(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlExecutor, id string) (*Item, error) {
+func LoadAndLockItemByID(ctx context.Context, m *gorpmapper.Mapper, db gorpmapper.SqlExecutorWithTx, id string) (*Item, error) {
 	query := gorpmapper.NewQuery("SELECT * FROM index WHERE id = $1 FOR UPDATE SKIP LOCKED").Args(id)
 	return getItem(ctx, m, db, query)
 }
 
 // InsertItem in database.
-func InsertItem(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlExecutor, i *Item) error {
+func InsertItem(ctx context.Context, m *gorpmapper.Mapper, db gorpmapper.SqlExecutorWithTx, i *Item) error {
 	i.ID = sdk.UUID()
 	i.Created = time.Now()
 	i.LastModified = time.Now()
@@ -58,7 +58,7 @@ func InsertItem(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlExecutor, 
 }
 
 // UpdateItem in database
-func UpdateItem(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlExecutor, i *Item) error {
+func UpdateItem(ctx context.Context, m *gorpmapper.Mapper, db gorpmapper.SqlExecutorWithTx, i *Item) error {
 	i.LastModified = time.Now()
 	if err := m.UpdateAndSign(ctx, db, i); err != nil {
 		return sdk.WrapError(err, "unable to update index item")
