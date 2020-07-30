@@ -435,7 +435,7 @@ type WorkflowNodeJobRunBooked struct {
 	RunID        int64  `json:"run_id"`
 	NodeRunName  string `json:"node_run_name"`
 	NodeRunID    int64  `json:"node_run_id"`
-	JobName      string `json:"node_run_id"`
+	JobName      string `json:"job_name"`
 }
 
 // Translate translates messages in WorkflowNodeJobRun

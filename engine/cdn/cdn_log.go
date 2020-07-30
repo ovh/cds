@@ -264,10 +264,16 @@ func (s *Service) handleServiceLog(ctx context.Context, hatcheryID int64, hatche
 		return sdk.WrapError(sdk.ErrWrongRequest, "cannot send service log for worker %s from hatchery (expected: %d/actual: %d)", w.ID, *w.HatcheryID, signature.Service.HatcheryID)
 	}
 
-	// FIXME Status + Line ?
+	var status string
+	statusI := m.Extra["_"+log.ExtraFieldJobStatus]
+	if statusI != nil {
+		status = statusI.(string)
+	}
+
 	hm := handledMessage{
 		Signature: signature,
 		Msg:       m,
+		Status:    status,
 	}
 	if s.cdnServiceLogsEnabled(ctx) {
 		if err := s.Cache.Enqueue(keyServiceLogIncomingQueue, hm); err != nil {

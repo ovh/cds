@@ -91,7 +91,7 @@ func (h *HatcheryKubernetes) getServicesLogs(ctx context.Context) error {
 	if len(servicesLogs) > 0 {
 		ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
 		defer cancel()
-		h.Common.SendServiceLog(ctx, servicesLogs)
+		h.Common.SendServiceLog(ctx, servicesLogs, sdk.StatusBuilding)
 	}
 	return nil
 }

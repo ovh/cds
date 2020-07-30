@@ -83,6 +83,11 @@ func (h *HatcherySwarm) killAndRemove(ctx context.Context, dockerClient *dockerC
 	}
 
 	for _, cnetwork := range container.NetworkSettings.Networks {
+		containers, err := h.getContainers(dockerClient, types.ContainerListOptions{All: true})
+		if err != nil {
+			return err
+		}
+
 		//Get the network
 		ctxList, cancelList := context.WithTimeout(context.Background(), 3*time.Second)
 		defer cancelList()
@@ -103,6 +108,32 @@ func (h *HatcherySwarm) killAndRemove(ctx context.Context, dockerClient *dockerC
 		if netname, ok := network.Labels["worker_net"]; ok {
 			log.Debug("hatchery> swarm> killAndRemove> Remove network %s", netname)
 			for id := range network.Containers {
+
+				c := h.getContainer(containers, id)
+				if c != nil {
+					// Send final logs before deleting service container
+					workflowID, runID, nodeRunID, jobID, serviceID := h.GetIdentifiersFromLabels(ctx, *c)
+					if workflowID == 0 || runID == 0 || nodeRunID == 0 || jobID == 0 || serviceID == 0 {
+						log.Error(ctx, "killAwolWorker> unable to get identifiers from containers labels [%d %d %d %d %d]", workflowID, runID, nodeRunID, jobID, serviceID)
+						continue
+					}
+					endLog := sdk.ServiceLog{
+						WorkflowNodeJobRunID:   jobID,
+						WorkflowNodeRunID:      nodeRunID,
+						ServiceRequirementID:   serviceID,
+						ServiceRequirementName: c.Labels[hatchery.LabelServiceReqName],
+						Val:                    "End of Job",
+						WorkerName:             c.Labels["service_worker"],
+						JobName:                c.Labels[hatchery.LabelServiceJobName],
+						NodeRunName:            c.Labels[hatchery.LabelServiceNodeRunName],
+						WorkflowName:           c.Labels[hatchery.LabelServiceWorkflowName],
+						ProjectKey:             c.Labels[hatchery.LabelServiceProjectKey],
+						RunID:                  runID,
+						WorkflowID:             workflowID,
+					}
+					h.Common.SendServiceLog(ctx, []sdk.ServiceLog{endLog}, sdk.StatusSuccess)
+				}
+
 				if err := h.killAndRemoveContainer(ctx, dockerClient, id); err != nil {
 					log.Error(ctx, "hatchery> swarm> killAndRemove> unable to kill and remove container %s on %s err:%s", id[:12], dockerClient.name, err)
 				}
