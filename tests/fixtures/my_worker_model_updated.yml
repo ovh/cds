@@ -12,7 +12,5 @@ envs:
   CDS_TTL: '{{.TTL}}'
   atest: this is an env test
 shell: sh -c
-cmd: worker --api={{.API}} --token={{.Token}} --basedir={{.BaseDir}} --model={{.Model}}
-  --name={{.Name}} --hatchery={{.Hatchery}} --hatchery-name={{.HatcheryName}} --insecure={{.HTTPInsecure}}
-  --single-use
+cmd: worker --api={{.API}} --token={{.Token}} --basedir={{.BaseDir}} --model={{.Model}} --name={{.Name}} --hatchery={{.Hatchery}} --hatchery-name={{.HatcheryName}} --insecure={{.HTTPInsecure}} --single-use
 
