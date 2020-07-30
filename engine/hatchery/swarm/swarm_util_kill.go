@@ -19,7 +19,7 @@ const (
 	docker0 = "docker0"
 )
 
-func (h *HatcherySwarm) killAndRemove(ctx context.Context, dockerClient *dockerClient, ID string) error {
+func (h *HatcherySwarm) killAndRemove(ctx context.Context, dockerClient *dockerClient, ID string, containers []types.Container) error {
 	ctxList, cancelList := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancelList()
 	container, err := dockerClient.ContainerInspect(ctxList, ID)
@@ -83,11 +83,6 @@ func (h *HatcherySwarm) killAndRemove(ctx context.Context, dockerClient *dockerC
 	}
 
 	for _, cnetwork := range container.NetworkSettings.Networks {
-		containers, err := h.getContainers(dockerClient, types.ContainerListOptions{All: true})
-		if err != nil {
-			return err
-		}
-
 		//Get the network
 		ctxList, cancelList := context.WithTimeout(context.Background(), 3*time.Second)
 		defer cancelList()

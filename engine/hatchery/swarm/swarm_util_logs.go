@@ -22,6 +22,10 @@ func (h *HatcherySwarm) getServicesLogs() error {
 
 		servicesLogs := make([]sdk.ServiceLog, 0, len(containers))
 		for _, cnt := range containers {
+			if _, has := cnt.Labels[hatchery.LabelServiceID]; !has {
+				continue
+			}
+
 			workerName := cnt.Labels["service_worker"]
 			ctx, cancel := context.WithTimeout(context.Background(), time.Minute*2)
 			logsOpts := types.ContainerLogsOptions{

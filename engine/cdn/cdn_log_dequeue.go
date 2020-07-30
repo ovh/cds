@@ -18,7 +18,9 @@ import (
 
 func (s *Service) dequeueJobLogs(ctx context.Context) error {
 	log.Info(ctx, "dequeueJobLogs: start")
-
+	defer func() {
+		log.Info(ctx, "cdn: leaving dequeue job logs")
+	}()
 	for {
 		select {
 		case <-ctx.Done():
@@ -29,7 +31,7 @@ func (s *Service) dequeueJobLogs(ctx context.Context) error {
 			if err := s.Cache.DequeueWithContext(dequeuCtx, keyJobLogIncomingQueue, 30*time.Millisecond, &hm); err != nil {
 				cancel()
 				if strings.Contains(err.Error(), "context deadline exceeded") {
-					return nil
+					continue
 				}
 				log.Error(ctx, "dequeueJobLogs: unable to dequeue job logs queue: %v", err)
 				continue
@@ -153,6 +155,8 @@ func (s *Service) storeLogs(ctx context.Context, typ string, signature log.Signa
 
 	// If last log or update of a complete step
 	if sdk.StatusIsTerminated(status) || item.Status == index.StatusItemCompleted {
+		alreadyExist := item.Status == index.StatusItemCompleted
+
 		// In this case, we need to lock item.
 		item, err = index.LoadAndLockItemByID(ctx, s.Mapper, tx, item.ID)
 		if err != nil {
@@ -176,6 +180,7 @@ func (s *Service) storeLogs(ctx context.Context, typ string, signature log.Signa
 			return err
 		}
 		item.Hash = hex.EncodeToString(h.Sum(nil))
+
 		if err := index.UpdateItem(ctx, s.Mapper, tx, item); err != nil {
 			return err
 		}
@@ -184,8 +189,11 @@ func (s *Service) storeLogs(ctx context.Context, typ string, signature log.Signa
 		if err != nil {
 			return err
 		}
-		if _, err := storage.InsertItemUnit(ctx, s.Mapper, tx, *unit, *item); err != nil {
-			return err
+
+		if !alreadyExist {
+			if _, err := storage.InsertItemUnit(ctx, s.Mapper, tx, *unit, *item); err != nil {
+				return err
+			}
 		}
 	}
 

@@ -712,7 +712,7 @@ func (h *HatcherySwarm) killAwolWorker(ctx context.Context) error {
 		// Delete the workers
 		for _, c := range oldContainers {
 			log.Debug("hatchery> swarm> killAwolWorker> Delete worker %s on %s", c.Names[0], dockerClient.name)
-			if err := h.killAndRemove(ctx, dockerClient, c.ID); err != nil {
+			if err := h.killAndRemove(ctx, dockerClient, c.ID, containers); err != nil {
 				log.Debug("hatchery> swarm> killAwolWorker> %v", err)
 			}
 		}
@@ -762,7 +762,7 @@ func (h *HatcherySwarm) killAwolWorker(ctx context.Context) error {
 			h.Common.SendServiceLog(ctx, []sdk.ServiceLog{endLog}, sdk.StatusSuccess)
 
 			log.Debug("hatchery> swarm> killAwolWorker> Delete worker (service) %s on %s", c.Names[0], dockerClient.name)
-			if err := h.killAndRemove(ctx, dockerClient, c.ID); err != nil {
+			if err := h.killAndRemove(ctx, dockerClient, c.ID, containers); err != nil {
 				log.Error(ctx, "hatchery> swarm> killAwolWorker> service %v on %s", err, dockerClient.name)
 			}
 			continue
