@@ -40,7 +40,7 @@ type ApiRef struct {
 	NodeRunJobName string `json:"node_run_job_name"`
 
 	// for workers
-	StepOrder int64  `json:"step_order,omitempty"`
+	StepOrder int64  `json:"step_order"`
 	StepName  string `json:"step_name,omitempty"`
 
 	// for hatcheries
