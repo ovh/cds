@@ -28,27 +28,9 @@ func (h *HatcheryKubernetes) getServicesLogs(ctx context.Context) error {
 			continue
 		}
 
-		serviceJobID, errPj := strconv.ParseInt(labels[hatchery.LabelServiceJobID], 10, 64)
-		if errPj != nil {
-			log.Error(ctx, "getServicesLogs> cannot parse service job id for pod service %s, err : %v", podName, errPj)
-			continue
-		}
-
-		runID, err := strconv.ParseInt(labels[hatchery.LabelServiceRunID], 10, 64)
-		if err != nil {
-			log.Error(ctx, "getServicesLogs> cannot parse service workflow run id for pod service %s, err : %v", podName, errPj)
-			continue
-		}
-
-		workflowID, err := strconv.ParseInt(labels[hatchery.LabelServiceWorkflowID], 10, 64)
-		if err != nil {
-			log.Error(ctx, "getServicesLogs> cannot parse service workflow id for pod service %s, err : %v", podName, errPj)
-			continue
-		}
-
-		nodeRunID, err := strconv.ParseInt(labels[hatchery.LabelServiceNodeRunID], 10, 64)
-		if err != nil {
-			log.Error(ctx, "getServicesLogs> cannot parse service workflow node run id for pod service %s, err : %v", podName, errPj)
+		// If no job identifier, no service on the pod
+		jobIdentifiers := h.getJobIdentiers(labels)
+		if jobIdentifiers == nil {
 			continue
 		}
 
@@ -72,7 +54,7 @@ func (h *HatcheryKubernetes) getServicesLogs(ctx context.Context) error {
 			reqServiceID, _ := strconv.ParseInt(subsStr[0][1], 10, 64)
 
 			servicesLogs = append(servicesLogs, sdk.ServiceLog{
-				WorkflowNodeJobRunID:   serviceJobID,
+				WorkflowNodeJobRunID:   jobIdentifiers.JobID,
 				ServiceRequirementID:   reqServiceID,
 				ServiceRequirementName: subsStr[0][2],
 				Val:                    string(logs),
@@ -81,9 +63,9 @@ func (h *HatcheryKubernetes) getServicesLogs(ctx context.Context) error {
 				NodeRunName:            labels[hatchery.LabelServiceNodeRunName],
 				WorkflowName:           labels[hatchery.LabelServiceWorkflowName],
 				ProjectKey:             labels[hatchery.LabelServiceProjectKey],
-				RunID:                  runID,
-				WorkflowID:             workflowID,
-				WorkflowNodeRunID:      nodeRunID,
+				RunID:                  jobIdentifiers.RunID,
+				WorkflowID:             jobIdentifiers.WorkflowID,
+				WorkflowNodeRunID:      jobIdentifiers.NodeRunID,
 			})
 		}
 	}
@@ -94,4 +76,32 @@ func (h *HatcheryKubernetes) getServicesLogs(ctx context.Context) error {
 		h.Common.SendServiceLog(ctx, servicesLogs, sdk.StatusBuilding)
 	}
 	return nil
+}
+
+func (h *HatcheryKubernetes) getJobIdentiers(labels map[string]string) *hatchery.JobIdentifiers {
+	serviceJobID, errPj := strconv.ParseInt(labels[hatchery.LabelServiceJobID], 10, 64)
+	if errPj != nil {
+		return nil
+	}
+
+	runID, err := strconv.ParseInt(labels[hatchery.LabelServiceRunID], 10, 64)
+	if err != nil {
+		return nil
+	}
+
+	workflowID, err := strconv.ParseInt(labels[hatchery.LabelServiceWorkflowID], 10, 64)
+	if err != nil {
+		return nil
+	}
+
+	nodeRunID, err := strconv.ParseInt(labels[hatchery.LabelServiceNodeRunID], 10, 64)
+	if err != nil {
+		return nil
+	}
+	return &hatchery.JobIdentifiers{
+		WorkflowID: workflowID,
+		RunID:      runID,
+		NodeRunID:  nodeRunID,
+		JobID:      serviceJobID,
+	}
 }

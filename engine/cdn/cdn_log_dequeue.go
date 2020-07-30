@@ -109,6 +109,10 @@ func (s *Service) storeLogs(ctx context.Context, typ string, signature log.Signa
 		apiRef.StepName = signature.Worker.StepName
 		apiRef.StepOrder = signature.Worker.StepOrder
 	}
+	if signature.Service != nil {
+		apiRef.RequirementServiceID = signature.Service.RequirementID
+		apiRef.RequirementServiceName = signature.Service.RequirementName
+	}
 
 	hashRefU, err := hashstructure.Hash(apiRef, nil)
 	if err != nil {

@@ -30,16 +30,22 @@ type Item struct {
 }
 
 type ApiRef struct {
-	ProjectKey     string `json:"project_key,omitempty"`
-	WorkflowName   string `json:"workflow_name,omitempty"`
-	WorkflowID     int64  `json:"workflow_id,omitempty"`
-	RunID          int64  `json:"run_id,omitempty"`
-	NodeRunID      int64  `json:"node_run_id,omitempty"`
-	NodeRunName    string `json:"node_run_name,omitempty"`
-	NodeRunJobID   int64  `json:"node_run_job_id,omitempty"`
-	NodeRunJobName string `json:"node_run_job_name,omitempty"`
-	StepOrder      int64  `json:"step_order,omitempty"`
-	StepName       string `json:"step_name,omitempty"`
+	ProjectKey     string `json:"project_key"`
+	WorkflowName   string `json:"workflow_name"`
+	WorkflowID     int64  `json:"workflow_id"`
+	RunID          int64  `json:"run_id"`
+	NodeRunID      int64  `json:"node_run_id"`
+	NodeRunName    string `json:"node_run_name"`
+	NodeRunJobID   int64  `json:"node_run_job_id"`
+	NodeRunJobName string `json:"node_run_job_name"`
+
+	// for workers
+	StepOrder int64  `json:"step_order,omitempty"`
+	StepName  string `json:"step_name,omitempty"`
+
+	// for hatcheries
+	RequirementServiceID   int64  `json:"service_id,omitempty"`
+	RequirementServiceName string `json:"service_name,omitempty"`
 }
 
 // Value returns driver.Value from ApiRef.
