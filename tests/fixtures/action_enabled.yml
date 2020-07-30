@@ -1,6 +1,7 @@
 version: v1.0
 name: CDS_TestIT_Enabled
 description: Download Artifacts which were uploaded using CDS_SplitUploadArtifact
+
   action.
 parameters:
   destinationFile:
@@ -9,6 +10,7 @@ parameters:
   pattern:
     type: string
     description: Prefix pattern to identify files to be downloaded. (Mandatory). (like
+
       bigfile-*)
   prefixHandle:
     type: string
@@ -16,6 +18,7 @@ parameters:
   tag:
     type: string
     description: Tag to identify uploaded artifacts. Default tag value is CDS run
+
       version number. (Optional)
     advanced: true
 requirements:
