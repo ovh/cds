@@ -1,10 +1,11 @@
 package cdn
 
 import (
-	"github.com/go-gorp/gorp"
+	"time"
 
 	"github.com/ovh/cds/engine/api"
 	"github.com/ovh/cds/engine/cache"
+	"github.com/ovh/cds/engine/cdn/storage"
 	"github.com/ovh/cds/engine/database"
 	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/engine/service"
@@ -17,9 +18,9 @@ type Service struct {
 	Cfg                 Configuration
 	DBConnectionFactory *database.DBConnectionFactory
 	Router              *api.Router
-	Db                  *gorp.DbMap
 	Cache               cache.Store
 	Mapper              *gorpmapper.Mapper
+	Units               *storage.RunningStorageUnits
 }
 
 // Configuration is the hooks configuration structure
@@ -47,6 +48,14 @@ type Configuration struct {
 		StepMaxSize    int64 `toml:"stepMaxSize" default:"15728640" comment:"Max step logs size in bytes (default: 15MB)" json:"stepMaxSize"`
 		ServiceMaxSize int64 `toml:"serviceMaxSize" default:"15728640" comment:"Max service logs size in bytes (default: 15MB)" json:"serviceMaxSize"`
 	} `toml:"log" json:"log" comment:"###########################\n Log settings.\n##########################"`
-	NbJobLogsGoroutines     int64 `toml:"nbJobLogsGoroutines" default:"45" comment:"Number of workers that dequeue the job log queue" json:"nbJobLogsGoroutines"`
-	NbServiceLogsGoroutines int64 `toml:"nbServiceLogsGoroutines" default:"5" comment:"Number of workers that dequeue the service log queue" json:"nbServiceLogsGoroutines"`
+	NbJobLogsGoroutines     int64                 `toml:"nbJobLogsGoroutines" default:"45" comment:"Number of workers that dequeue the job log queue" json:"nbJobLogsGoroutines"`
+	NbServiceLogsGoroutines int64                 `toml:"nbServiceLogsGoroutines" default:"5" comment:"Number of workers that dequeue the service log queue" json:"nbServiceLogsGoroutines"`
+	Units                   storage.Configuration `toml:"storageUnits"  json:"storageUnits" mapstructure:"storageUnits"`
+}
+
+type Item struct {
+	gorpmapper.SignedEntity
+	ID      string    `json:"id" db:"id"`
+	Created time.Time `json:"created" db:"created"`
+	Name    string    `json:"name" db:"name"`
 }

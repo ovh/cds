@@ -6,7 +6,7 @@ import (
 	"github.com/ovh/cds/engine/gorpmapper"
 )
 
-func Init(m *gorpmapper.Mapper) {
+func InitDBMapping(m *gorpmapper.Mapper) {
 	m.Register(m.NewTableMapping(Item{}, "index", false, "id"))
 }
 
