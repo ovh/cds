@@ -187,8 +187,7 @@ notifications:
     recipients:
     - a
     template:
-      subject: '{{.cds.project}}/{{.cds.application}} {{.cds.pipeline}} {{.cds.environment}}#{{.cds.version}}
-        {{.cds.status}}'
+      subject: '{{.cds.project}}/{{.cds.application}} {{.cds.pipeline}} {{.cds.environment}}#{{.cds.version}} {{.cds.status}}'
       body: |-
         Project : {{.cds.project}}
         Application : {{.cds.application}}
@@ -203,8 +202,7 @@ notifications:
   - test_2
   settings:
     template:
-      subject: '{{.cds.project}}/{{.cds.application}} {{.cds.pipeline}} {{.cds.environment}}#{{.cds.version}}
-        {{.cds.status}}'
+      subject: '{{.cds.project}}/{{.cds.application}} {{.cds.pipeline}} {{.cds.environment}}#{{.cds.version}} {{.cds.status}}'
       body: |-
         Project : {{.cds.project}}
         Application : {{.cds.application}}
