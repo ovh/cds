@@ -126,8 +126,13 @@ func (w *CurrentWorker) runJob(ctx context.Context, a *sdk.Action, jobID int64, 
 		// Reset step log line to 0
 		w.stepLogLine = 0
 
-		ctx = workerruntime.SetStepOrder(ctx, jobStepIndex)
-		ctx = workerruntime.SetStepName(ctx, step.StepName)
+		ctx = workerruntime.SetStepOrder(ctx, jobStepIndex+1)
+		if step.StepName != "" {
+			ctx = workerruntime.SetStepName(ctx, step.StepName)
+		} else {
+			ctx = workerruntime.SetStepName(ctx, step.Name)
+		}
+
 		if err := w.updateStepStatus(ctx, jobID, jobStepIndex, sdk.StatusBuilding); err != nil {
 			jobResult.Status = sdk.StatusFail
 			jobResult.Reason = fmt.Sprintf("Cannot update step (%d) status (%s): %v", jobStepIndex, sdk.StatusBuilding, err)
