@@ -27,7 +27,7 @@ func TestInit(t *testing.T) {
 	db, _ := test.SetupPGWithMapper(t, m, sdk.TypeCDN)
 	cfg := commontest.LoadTestingConf(t, sdk.TypeCDN)
 
-	ctx, cancel := context.WithTimeout(context.TODO(), 5*time.Second)
+	ctx, cancel := context.WithTimeout(context.TODO(), 2*time.Second)
 	defer cancel()
 
 	tmpDir, err := ioutil.TempDir("", t.Name()+"-cdn-*")
@@ -89,5 +89,13 @@ func TestInit(t *testing.T) {
 	exists, err = localUnitDriver.ItemExists(i)
 	require.NoError(t, err)
 	require.False(t, exists)
+
+	reader, err := localUnitDriver.NewReader(i)
+	require.NoError(t, err)
+	btes, err := ioutil.ReadAll(reader)
+	require.NoError(t, err)
+	require.NoError(t, reader.Close())
+	require.Equal(t, `this is the first log
+this is the second log`, string(btes))
 
 }

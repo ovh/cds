@@ -44,5 +44,5 @@ func (s *Local) NewWriter(i index.Item) (io.WriteCloser, error) {
 }
 func (s *Local) NewReader(i index.Item) (io.ReadCloser, error) {
 	// Open the file from the filesystem according to the locator
-	return nil, nil
+	return os.Open(filepath.Join(s.config.Path, i.ID))
 }
