@@ -53,16 +53,16 @@ func (h *HatcherySwarm) getServicesLogs() error {
 			cancel()
 
 			if len(logs) > 0 {
-				workflowID, runID, nodeRunID, jobID, serviceID := h.GetIdentifiersFromLabels(ctx, cnt)
-				if workflowID == 0 || runID == 0 || nodeRunID == 0 || jobID == 0 || serviceID == 0 {
+				jobIdentifiers := h.GetIdentifiersFromLabels(cnt)
+				if jobIdentifiers == nil {
 					logsReader.Close()
 					continue
 				}
 
 				servicesLogs = append(servicesLogs, sdk.ServiceLog{
-					WorkflowNodeJobRunID:   jobID,
-					WorkflowNodeRunID:      nodeRunID,
-					ServiceRequirementID:   serviceID,
+					WorkflowNodeJobRunID:   jobIdentifiers.JobID,
+					WorkflowNodeRunID:      jobIdentifiers.NodeRunID,
+					ServiceRequirementID:   jobIdentifiers.ServiceID,
 					ServiceRequirementName: cnt.Labels[hatchery.LabelServiceReqName],
 					Val:                    string(logs),
 					WorkerName:             workerName,
@@ -70,8 +70,8 @@ func (h *HatcherySwarm) getServicesLogs() error {
 					NodeRunName:            cnt.Labels[hatchery.LabelServiceNodeRunName],
 					WorkflowName:           cnt.Labels[hatchery.LabelServiceWorkflowName],
 					ProjectKey:             cnt.Labels[hatchery.LabelServiceProjectKey],
-					RunID:                  runID,
-					WorkflowID:             workflowID,
+					RunID:                  jobIdentifiers.RunID,
+					WorkflowID:             jobIdentifiers.WorkflowID,
 				})
 			}
 			logsReader.Close()
@@ -85,48 +85,54 @@ func (h *HatcherySwarm) getServicesLogs() error {
 	return nil
 }
 
-func (h *HatcherySwarm) GetIdentifiersFromLabels(ctx context.Context, cnt types.Container) (int64, int64, int64, int64, int64) {
-	serviceID, ok := cnt.Labels[hatchery.LabelServiceID]
+func (h *HatcherySwarm) GetIdentifiersFromLabels(cnt types.Container) *hatchery.JobIdentifiers {
+	serviceIDStr, ok := cnt.Labels[hatchery.LabelServiceID]
 	if !ok {
-		return 0, 0, 0, 0, 0
+		return nil
 	}
 	serviceJobIDStr, isWorkflowService := cnt.Labels[hatchery.LabelServiceJobID]
 	if !isWorkflowService {
-		return 0, 0, 0, 0, 0
+		return nil
 	}
 	serviceNodeRunIDStr, ok := cnt.Labels[hatchery.LabelServiceNodeRunID]
 	if !ok {
-		return 0, 0, 0, 0, 0
+		return nil
 	}
 	runIDStr, ok := cnt.Labels[hatchery.LabelServiceRunID]
 	if !ok {
-		return 0, 0, 0, 0, 0
+		return nil
 	}
 	workflowIDStr, ok := cnt.Labels[hatchery.LabelServiceWorkflowID]
 	if !ok {
-		return 0, 0, 0, 0, 0
+		return nil
 	}
 
-	reqServiceID, errP := strconv.ParseInt(serviceID, 10, 64)
+	serviceID, errP := strconv.ParseInt(serviceIDStr, 10, 64)
 	if errP != nil {
-		return 0, 0, 0, 0, 0
+		return nil
 	}
 	serviceJobID, errPj := strconv.ParseInt(serviceJobIDStr, 10, 64)
 	if errPj != nil {
-		return 0, 0, 0, 0, 0
+		return nil
 	}
 	serviceNodeRunID, err := strconv.ParseInt(serviceNodeRunIDStr, 10, 64)
 	if err != nil {
-		return 0, 0, 0, 0, 0
+		return nil
 	}
 	serviceRunID, err := strconv.ParseInt(runIDStr, 10, 64)
 	if err != nil {
-		return 0, 0, 0, 0, 0
+		return nil
 	}
 	serviceWorkflowID, err := strconv.ParseInt(workflowIDStr, 10, 64)
 	if err != nil {
-		return 0, 0, 0, 0, 0
+		return nil
 	}
 
-	return serviceWorkflowID, serviceRunID, serviceNodeRunID, serviceJobID, reqServiceID
+	return &hatchery.JobIdentifiers{
+		WorkflowID: serviceWorkflowID,
+		RunID:      serviceRunID,
+		NodeRunID:  serviceNodeRunID,
+		JobID:      serviceJobID,
+		ServiceID:  serviceID,
+	}
 }

@@ -104,3 +104,11 @@ type Metrics struct {
 	BuildingWorkers    *stats.Int64Measure
 	DisabledWorkers    *stats.Int64Measure
 }
+
+type JobIdentifiers struct {
+	ServiceID  int64
+	JobID      int64
+	NodeRunID  int64
+	RunID      int64
+	WorkflowID int64
+}

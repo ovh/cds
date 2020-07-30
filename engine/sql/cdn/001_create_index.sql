@@ -4,7 +4,7 @@ CREATE TABLE IF NOT EXISTS "index" (
   id VARCHAR(36) PRIMARY KEY, -- technical ID
   created TIMESTAMP WITH TIME ZONE, -- creation date
   last_modified TIMESTAMP WITH TIME ZONE, -- last modified date
-  hash BYTEA, --
+  cipher_hash BYTEA, --
   api_ref JSONB, -- reference for cds PI
   api_ref_hash TEXT, -- hash of reference
   sig BYTEA,

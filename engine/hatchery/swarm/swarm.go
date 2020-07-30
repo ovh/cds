@@ -741,14 +741,14 @@ func (h *HatcherySwarm) killAwolWorker(ctx context.Context) error {
 			}
 
 			// Send final logs before deleting service container
-			workflowID, runID, nodeRunID, jobID, serviceID := h.GetIdentifiersFromLabels(ctx, c)
-			if workflowID == 0 || runID == 0 || nodeRunID == 0 || jobID == 0 || serviceID == 0 {
+			jobIdentifiers := h.GetIdentifiersFromLabels(c)
+			if jobIdentifiers == nil {
 				continue
 			}
 			endLog := sdk.ServiceLog{
-				WorkflowNodeJobRunID:   jobID,
-				WorkflowNodeRunID:      nodeRunID,
-				ServiceRequirementID:   serviceID,
+				WorkflowNodeJobRunID:   jobIdentifiers.JobID,
+				WorkflowNodeRunID:      jobIdentifiers.NodeRunID,
+				ServiceRequirementID:   jobIdentifiers.ServiceID,
 				ServiceRequirementName: c.Labels[hatchery.LabelServiceReqName],
 				Val:                    "End of Job",
 				WorkerName:             c.Labels["service_worker"],
@@ -756,8 +756,8 @@ func (h *HatcherySwarm) killAwolWorker(ctx context.Context) error {
 				NodeRunName:            c.Labels[hatchery.LabelServiceNodeRunName],
 				WorkflowName:           c.Labels[hatchery.LabelServiceWorkflowName],
 				ProjectKey:             c.Labels[hatchery.LabelServiceProjectKey],
-				RunID:                  runID,
-				WorkflowID:             workflowID,
+				RunID:                  jobIdentifiers.RunID,
+				WorkflowID:             jobIdentifiers.WorkflowID,
 			}
 			h.Common.SendServiceLog(ctx, []sdk.ServiceLog{endLog}, sdk.StatusSuccess)
 

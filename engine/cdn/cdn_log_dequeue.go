@@ -30,10 +30,9 @@ func (s *Service) dequeueJobLogs(ctx context.Context) error {
 			var hm handledMessage
 			if err := s.Cache.DequeueWithContext(dequeuCtx, keyJobLogIncomingQueue, 30*time.Millisecond, &hm); err != nil {
 				cancel()
-				if strings.Contains(err.Error(), "context deadline exceeded") {
-					continue
+				if !strings.Contains(err.Error(), "context deadline exceeded") {
+					log.Error(ctx, "dequeueJobLogs: unable to dequeue job logs queue: %v", err)
 				}
-				log.Error(ctx, "dequeueJobLogs: unable to dequeue job logs queue: %v", err)
 				continue
 			}
 			cancel()
@@ -69,10 +68,9 @@ func (s *Service) dequeueServiceLogs(ctx context.Context) error {
 			var hm handledMessage
 			if err := s.Cache.DequeueWithContext(dequeuCtx, keyServiceLogIncomingQueue, 30*time.Millisecond, &hm); err != nil {
 				cancel()
-				if strings.Contains(err.Error(), "context deadline exceeded") {
-					return nil
+				if !strings.Contains(err.Error(), "context deadline exceeded") {
+					log.Error(ctx, "dequeueServiceLogs: unable to dequeue service logs queue: %v", err)
 				}
-				log.Error(ctx, "dequeueServiceLogs: unable to dequeue service logs queue: %v", err)
 				continue
 			}
 			cancel()

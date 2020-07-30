@@ -22,7 +22,7 @@ type Item struct {
 	ID           string    `json:"id" db:"id"`
 	Created      time.Time `json:"created" db:"created"`
 	LastModified time.Time `json:"last_modified" db:"last_modified"`
-	Hash         string    `json:"-" db:"hash"`
+	Hash         string    `json:"-" db:"cipher_hash" gorpmapping:"encrypted,ID,ApiRefHash,Type"`
 	ApiRef       ApiRef    `json:"api_ref" db:"api_ref"`
 	ApiRefHash   string    `json:"api_ref_hash" db:"api_ref_hash"`
 	Status       string    `json:"status" db:"status"`
