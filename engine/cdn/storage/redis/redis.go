@@ -81,7 +81,11 @@ func (r *reader) Read(p []byte) (n int, err error) {
 		return 0, err
 	}
 	if len(lines) > 0 {
-		r.currentBuffer += "\n" + strings.Join(lines, "\n")
+		if r.currentBuffer == "" {
+			r.currentBuffer += strings.Join(lines, "\n")
+		} else {
+			r.currentBuffer += "\n" + strings.Join(lines, "\n")
+		}
 	}
 
 	if len(buffer) < size && len(r.currentBuffer) > 0 {
