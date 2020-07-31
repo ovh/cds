@@ -229,7 +229,7 @@ vcs_ssh_key: proj-blabla
 	t.Log("Inserting workflow run=====")
 
 	// creates a run
-	wr, errWR := workflow.CreateRun(db.DbMap, w1, nil, u)
+	wr, errWR := workflow.CreateRun(db.DbMap, w1, sdk.WorkflowRunPostHandlerOption{AuthConsumer: consumer})
 	assert.NoError(t, errWR)
 	wr.Workflow = *w1
 	t.Log("Starting workflow run=====")

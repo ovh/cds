@@ -217,7 +217,7 @@ func Test_getWorkflowNotificationsConditionsHandler(t *testing.T) {
 	w1, err := workflow.Load(context.TODO(), db, api.Cache, *proj, "test_1", workflow.LoadOptions{})
 	test.NoError(t, err)
 
-	wrCreate, err := workflow.CreateRun(api.mustDB(), w1, nil, u)
+	wrCreate, err := workflow.CreateRun(api.mustDB(), w1, sdk.WorkflowRunPostHandlerOption{AuthConsumer: consumer})
 	assert.NoError(t, err)
 	wrCreate.Workflow = *w1
 	_, errMR := workflow.StartWorkflowRun(context.TODO(), db, api.Cache, *proj, wrCreate, &sdk.WorkflowRunPostHandlerOption{
@@ -1897,7 +1897,9 @@ func Test_getSearchWorkflowHandler(t *testing.T) {
 
 	// Run the workflow
 	consumer, _ := authentication.LoadConsumerByTypeAndUserID(context.TODO(), api.mustDB(), sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
-	wr, err := workflow.CreateRun(api.mustDB(), &wf, nil, admin)
+	consumerAdmin, _ := authentication.LoadConsumerByTypeAndUserID(context.TODO(), api.mustDB(), sdk.ConsumerLocal, admin.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
+
+	wr, err := workflow.CreateRun(api.mustDB(), &wf, sdk.WorkflowRunPostHandlerOption{AuthConsumer: consumerAdmin})
 	assert.NoError(t, err)
 	wr.Workflow = wf
 	wr.Tag("git.branch", "master")

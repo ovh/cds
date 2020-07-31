@@ -55,7 +55,10 @@ type testRunWorkflowCtx struct {
 	model         *sdk.Model
 }
 
-func testRunWorkflow(t *testing.T, api *API, db gorpmapper.SqlExecutorWithTx, router *Router) testRunWorkflowCtx {
+func testRunWorkflow(t *testing.T, api *API, router *Router) testRunWorkflowCtx {
+	db, err := api.mustDB().Begin()
+	require.NoError(t, err)
+
 	u, pass := assets.InsertLambdaUser(t, db)
 	key := "proj-" + sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, api.Cache, key, key)
@@ -80,14 +83,14 @@ func testRunWorkflow(t *testing.T, api *API, db gorpmapper.SqlExecutorWithTx, ro
 		ProjectKey: proj.Key,
 		Name:       "pip-" + sdk.RandomString(10),
 	}
-	require.NoError(t, pipeline.InsertPipeline(api.mustDB(), &pip))
+	require.NoError(t, pipeline.InsertPipeline(db, &pip))
 
-	script := assets.GetBuiltinOrPluginActionByName(t, api.mustDB(), sdk.ScriptAction)
+	script := assets.GetBuiltinOrPluginActionByName(t, db, sdk.ScriptAction)
 
 	s := sdk.NewStage("stage-" + sdk.RandomString(10))
 	s.Enabled = true
 	s.PipelineID = pip.ID
-	pipeline.InsertStage(api.mustDB(), s)
+	pipeline.InsertStage(db, s)
 	j := &sdk.Job{
 		Enabled: true,
 		Action: sdk.Action{
@@ -97,7 +100,7 @@ func testRunWorkflow(t *testing.T, api *API, db gorpmapper.SqlExecutorWithTx, ro
 			},
 		},
 	}
-	pipeline.InsertJob(api.mustDB(), j, s.ID, &pip)
+	pipeline.InsertJob(db, j, s.ID, &pip)
 	s.Jobs = append(s.Jobs, *j)
 
 	pip.Stages = append(pip.Stages, *s)
@@ -134,7 +137,7 @@ func testRunWorkflow(t *testing.T, api *API, db gorpmapper.SqlExecutorWithTx, ro
 		Name:      "env-" + sdk.RandomString(10),
 		ProjectID: proj.ID,
 	}
-	if err := environment.InsertEnvironment(api.mustDB(), env); err != nil {
+	if err := environment.InsertEnvironment(db, env); err != nil {
 		t.Fatal(err)
 	}
 
@@ -175,14 +178,15 @@ func testRunWorkflow(t *testing.T, api *API, db gorpmapper.SqlExecutorWithTx, ro
 		},
 	}
 
-	proj2, errP := project.Load(context.TODO(), api.mustDB(), proj.Key, project.LoadOptions.WithPipelines, project.LoadOptions.WithGroups)
+	proj2, errP := project.Load(context.TODO(), db, proj.Key, project.LoadOptions.WithPipelines, project.LoadOptions.WithGroups)
 	require.NoError(t, errP)
 
 	require.NoError(t, workflow.Insert(context.TODO(), db, api.Cache, *proj2, &w))
-	w1, err := workflow.Load(context.TODO(), api.mustDB(), api.Cache, *proj, w.Name, workflow.LoadOptions{})
+	w1, err := workflow.Load(context.TODO(), db, api.Cache, *proj, w.Name, workflow.LoadOptions{})
 	require.NoError(t, err)
 
 	log.Debug("workflow %d groups: %+v", w1.ID, w1.Groups)
+	require.NoError(t, db.Commit())
 
 	//Prepare request
 	vars := map[string]string{
@@ -207,6 +211,8 @@ func testRunWorkflow(t *testing.T, api *API, db gorpmapper.SqlExecutorWithTx, ro
 	if t.Failed() {
 		t.FailNow()
 	}
+
+	waitCraftinWorkflow(t, api, api.mustDB(), wr.ID)
 
 	// Wait building status
 	cpt := 0
@@ -372,7 +378,7 @@ func TestGetWorkflowJobQueueHandler(t *testing.T) {
 	_, jwt := assets.InsertAdminUser(t, db)
 	t.Log("checkin as a user")
 
-	ctx := testRunWorkflow(t, api, db, router)
+	ctx := testRunWorkflow(t, api, router)
 	testGetWorkflowJobAsRegularUser(t, api, router, jwt, &ctx)
 	assert.NotNil(t, ctx.job)
 
@@ -430,7 +436,7 @@ func TestGetWorkflowJobQueueHandler(t *testing.T) {
 func Test_postTakeWorkflowJobHandler(t *testing.T) {
 	api, db, router := newTestAPI(t)
 
-	ctx := testRunWorkflow(t, api, db, router)
+	ctx := testRunWorkflow(t, api, router)
 	testGetWorkflowJobAsWorker(t, api, db, router, &ctx)
 	require.NotNil(t, ctx.job)
 
@@ -486,7 +492,7 @@ func Test_postTakeWorkflowInvalidJobHandler(t *testing.T) {
 		_ = services.Delete(db, s)
 	}()
 
-	ctx := testRunWorkflow(t, api, db, router)
+	ctx := testRunWorkflow(t, api, router)
 	testGetWorkflowJobAsWorker(t, api, db, router, &ctx)
 	require.NotNil(t, ctx.job)
 
@@ -526,7 +532,7 @@ func Test_postTakeWorkflowInvalidJobHandler(t *testing.T) {
 func Test_postBookWorkflowJobHandler(t *testing.T) {
 	api, db, router := newTestAPI(t)
 
-	ctx := testRunWorkflow(t, api, db, router)
+	ctx := testRunWorkflow(t, api, router)
 	testGetWorkflowJobAsHatchery(t, api, db, router, &ctx)
 	assert.NotNil(t, ctx.job)
 
@@ -553,7 +559,7 @@ func Test_postWorkflowJobResultHandler(t *testing.T) {
 		_ = services.Delete(db, s)
 	}()
 
-	ctx := testRunWorkflow(t, api, db, router)
+	ctx := testRunWorkflow(t, api, router)
 	testGetWorkflowJobAsWorker(t, api, db, router, &ctx)
 	assert.NotNil(t, ctx.job)
 
@@ -637,7 +643,7 @@ func Test_postWorkflowJobTestsResultsHandler(t *testing.T) {
 		_ = services.Delete(db, s)
 	}()
 
-	ctx := testRunWorkflow(t, api, db, router)
+	ctx := testRunWorkflow(t, api, router)
 	testGetWorkflowJobAsWorker(t, api, db, router, &ctx)
 	assert.NotNil(t, ctx.job)
 
@@ -746,7 +752,7 @@ func Test_postWorkflowJobArtifactHandler(t *testing.T) {
 		_ = services.Delete(db, s)
 	}()
 
-	ctx := testRunWorkflow(t, api, db, router)
+	ctx := testRunWorkflow(t, api, router)
 	testGetWorkflowJobAsWorker(t, api, db, router, &ctx)
 
 	assert.NotNil(t, ctx.job)
@@ -897,7 +903,7 @@ func Test_postWorkflowJobStaticFilesHandler(t *testing.T) {
 		_ = services.Delete(db, s)
 	}()
 
-	ctx := testRunWorkflow(t, api, db, router)
+	ctx := testRunWorkflow(t, api, router)
 	testGetWorkflowJobAsWorker(t, api, db, router, &ctx)
 	require.NotNil(t, ctx.job)
 
@@ -1047,7 +1053,7 @@ func TestWorkerPrivateKey(t *testing.T) {
 	workflowDeepPipeline, err := workflow.LoadByID(context.TODO(), db, api.Cache, *p, w.ID, workflow.LoadOptions{DeepPipeline: true})
 	assert.NoError(t, err)
 
-	wrDB, errwr := workflow.CreateRun(api.mustDB(), workflowDeepPipeline, nil, u)
+	wrDB, errwr := workflow.CreateRun(api.mustDB(), workflowDeepPipeline, sdk.WorkflowRunPostHandlerOption{AuthConsumer: consumer})
 	assert.NoError(t, errwr)
 	wrDB.Workflow = *workflowDeepPipeline
 
@@ -1159,7 +1165,7 @@ func TestPostVulnerabilityReportHandler(t *testing.T) {
 	workflowDeepPipeline, err := workflow.LoadByID(context.TODO(), db, api.Cache, *p, w.ID, workflow.LoadOptions{DeepPipeline: true})
 	assert.NoError(t, err)
 
-	wrDB, errwr := workflow.CreateRun(api.mustDB(), workflowDeepPipeline, nil, u)
+	wrDB, errwr := workflow.CreateRun(api.mustDB(), workflowDeepPipeline, sdk.WorkflowRunPostHandlerOption{AuthConsumer: consumer})
 	assert.NoError(t, errwr)
 	wrDB.Workflow = *workflowDeepPipeline
 
@@ -1392,14 +1398,14 @@ func TestInsertNewCodeCoverageReport(t *testing.T) {
 		},
 	)
 
+	consumer, _ := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
+
 	// Create previous run on default branch
-	wrDB, errwr := workflow.CreateRun(api.mustDB(), &w, nil, u)
+	wrDB, errwr := workflow.CreateRun(api.mustDB(), &w, sdk.WorkflowRunPostHandlerOption{AuthConsumer: consumer})
 	assert.NoError(t, errwr)
 
 	workflowWithDeepPipeline, err := workflow.LoadByID(context.TODO(), db, api.Cache, *proj, w.ID, workflow.LoadOptions{DeepPipeline: true})
 	assert.NoError(t, err)
-
-	consumer, _ := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
 
 	wrDB.Workflow = *workflowWithDeepPipeline
 	_, errmr := workflow.StartWorkflowRun(context.Background(), db, api.Cache, *p, wrDB, &sdk.WorkflowRunPostHandlerOption{
@@ -1414,7 +1420,7 @@ func TestInsertNewCodeCoverageReport(t *testing.T) {
 	assert.NoError(t, errmr)
 
 	// Create previous run on a branch
-	wrCB, errwr2 := workflow.CreateRun(api.mustDB(), &w, nil, u)
+	wrCB, errwr2 := workflow.CreateRun(api.mustDB(), &w, sdk.WorkflowRunPostHandlerOption{AuthConsumer: consumer})
 	assert.NoError(t, errwr2)
 	wrCB.Workflow = w
 	_, errmr = workflow.StartWorkflowRun(context.Background(), db, api.Cache, *p, wrCB, &sdk.WorkflowRunPostHandlerOption{
@@ -1470,7 +1476,7 @@ func TestInsertNewCodeCoverageReport(t *testing.T) {
 	// Run test
 
 	// Create a workflow run
-	wrToTest, errwr3 := workflow.CreateRun(api.mustDB(), &w, nil, u)
+	wrToTest, errwr3 := workflow.CreateRun(api.mustDB(), &w, sdk.WorkflowRunPostHandlerOption{AuthConsumer: consumer})
 	assert.NoError(t, errwr3)
 	wrToTest.Workflow = *workflowWithDeepPipeline
 

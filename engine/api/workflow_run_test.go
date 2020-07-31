@@ -119,7 +119,7 @@ func Test_getWorkflowNodeRunHistoryHandler(t *testing.T) {
 	w1, err := workflow.Load(context.TODO(), db, api.Cache, *proj, "test_1", workflow.LoadOptions{})
 	require.NoError(t, err)
 
-	wrCreate, err := workflow.CreateRun(api.mustDB(), w1, nil, u)
+	wrCreate, err := workflow.CreateRun(api.mustDB(), w1, sdk.WorkflowRunPostHandlerOption{AuthConsumer: consumer})
 	assert.NoError(t, err)
 	wrCreate.Workflow = *w1
 	_, errMR := workflow.StartWorkflowRun(context.TODO(), db, api.Cache, *proj, wrCreate, &sdk.WorkflowRunPostHandlerOption{
@@ -247,7 +247,7 @@ func Test_getWorkflowRunsHandler(t *testing.T) {
 	require.NoError(t, err)
 
 	for i := 0; i < 10; i++ {
-		wr, err := workflow.CreateRun(api.mustDB(), w1, nil, u)
+		wr, err := workflow.CreateRun(api.mustDB(), w1, sdk.WorkflowRunPostHandlerOption{AuthConsumer: consumer})
 		assert.NoError(t, err)
 		wr.Workflow = *w1
 		_, err = workflow.StartWorkflowRun(context.TODO(), db, api.Cache, *proj, wr, &sdk.WorkflowRunPostHandlerOption{
@@ -401,7 +401,7 @@ func Test_getWorkflowRunsHandlerWithFilter(t *testing.T) {
 	w1, err := workflow.Load(context.TODO(), api.mustDB(), api.Cache, *proj, "test_1", workflow.LoadOptions{})
 	require.NoError(t, err)
 
-	wr, err := workflow.CreateRun(api.mustDB(), w1, nil, u)
+	wr, err := workflow.CreateRun(api.mustDB(), w1, sdk.WorkflowRunPostHandlerOption{AuthConsumer: consumer})
 	assert.NoError(t, err)
 	wr.Workflow = *w1
 	_, err = workflow.StartWorkflowRun(context.TODO(), db, api.Cache, *proj, wr, &sdk.WorkflowRunPostHandlerOption{
@@ -518,7 +518,7 @@ func Test_getLatestWorkflowRunHandler(t *testing.T) {
 	require.NoError(t, err)
 
 	for i := 0; i < 10; i++ {
-		wr, err := workflow.CreateRun(api.mustDB(), w1, nil, u)
+		wr, err := workflow.CreateRun(api.mustDB(), w1, sdk.WorkflowRunPostHandlerOption{AuthConsumer: consumer})
 		wr.Workflow = *w1
 		assert.NoError(t, err)
 		_, err = workflow.StartWorkflowRun(context.TODO(), db, api.Cache, *proj, wr, &sdk.WorkflowRunPostHandlerOption{
@@ -652,7 +652,7 @@ func Test_getWorkflowRunHandler(t *testing.T) {
 	require.NoError(t, err)
 
 	for i := 0; i < 10; i++ {
-		wr, err := workflow.CreateRun(api.mustDB(), w1, nil, u)
+		wr, err := workflow.CreateRun(api.mustDB(), w1, sdk.WorkflowRunPostHandlerOption{AuthConsumer: consumer})
 		assert.NoError(t, err)
 		wr.Workflow = *w1
 		_, err = workflow.StartWorkflowRun(context.TODO(), db, api.Cache, *proj, wr, &sdk.WorkflowRunPostHandlerOption{
@@ -776,7 +776,7 @@ func Test_getWorkflowNodeRunHandler(t *testing.T) {
 	w1, err := workflow.Load(context.TODO(), api.mustDB(), api.Cache, *proj, "test_1", workflow.LoadOptions{})
 	require.NoError(t, err)
 
-	wr, err := workflow.CreateRun(api.mustDB(), w1, nil, u)
+	wr, err := workflow.CreateRun(api.mustDB(), w1, sdk.WorkflowRunPostHandlerOption{AuthConsumer: consumer})
 	assert.NoError(t, err)
 	wr.Workflow = *w1
 	_, err = workflow.StartWorkflowRun(context.TODO(), db, api.Cache, *proj2, wr, &sdk.WorkflowRunPostHandlerOption{
@@ -1096,7 +1096,7 @@ func Test_postWorkflowRunHandler(t *testing.T) {
 	assert.Equal(t, int64(1), wr.Number)
 
 	// wait for the workflow to finish crafting
-	assert.NoError(t, waitCraftinWorkflow(t, db, wr.ID))
+	assert.NoError(t, waitCraftinWorkflow(t, api, db, wr.ID))
 
 	lastRun, err := workflow.LoadLastRun(api.mustDB(), proj.Key, w1.Name, workflow.LoadRunOptions{})
 	test.NoError(t, err)
@@ -1151,17 +1151,22 @@ func Test_postWorkflowRunHandler(t *testing.T) {
 
 }
 
-func waitCraftinWorkflow(t *testing.T, db gorp.SqlExecutor, id int64) error {
+func waitCraftinWorkflow(t *testing.T, api *API, db gorp.SqlExecutor, id int64) error {
+	t.Logf("(%v) waitCraftingWorkflow %d", time.Now(), id)
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
-	tick := time.NewTicker(100 * time.Millisecond)
+
+	go api.WorkflowRunCraft(ctx, 10*time.Millisecond)
+
+	tick := time.NewTicker(1 * time.Second)
 	defer tick.Stop()
 	for {
 		select {
 		case <-ctx.Done():
+			t.Logf("(%v) exiting waitCraftingWorkflow %d", time.Now(), id)
 			return ctx.Err()
 		case <-tick.C:
-			w, _ := workflow.LoadRunByID(db, id, workflow.LoadRunOptions{})
+			w, _ := workflow.LoadRunByID(api.mustDB(), id, workflow.LoadRunOptions{})
 			if w == nil {
 				continue
 			}
@@ -1171,7 +1176,6 @@ func waitCraftinWorkflow(t *testing.T, db gorp.SqlExecutor, id int64) error {
 			return nil
 		}
 	}
-
 }
 
 /**
@@ -1369,6 +1373,10 @@ func Test_postWorkflowRunAsyncFailedHandler(t *testing.T) {
 	rec := httptest.NewRecorder()
 	router.Mux.ServeHTTP(rec, req)
 	require.Equal(t, 202, rec.Code)
+
+	lastRun, err := workflow.LoadLastRun(api.mustDB(), proj.Key, w.Name, workflow.LoadRunOptions{})
+	test.NoError(t, err)
+	waitCraftinWorkflow(t, api, db, lastRun.ID)
 
 	cpt := 0
 	for {
@@ -1818,6 +1826,10 @@ func Test_postWorkflowRunHandlerHookWithMutex(t *testing.T) {
 	defer req.Body.Close()
 	assert.Equal(t, 202, rec.Code)
 
+	lastRun, err := workflow.LoadLastRun(api.mustDB(), proj.Key, w.Name, workflow.LoadRunOptions{})
+	test.NoError(t, err)
+	waitCraftinWorkflow(t, api, db, lastRun.ID)
+
 	req2 := assets.NewAuthentifiedRequest(t, u, pass, "POST", uri, opts)
 
 	//Do the request, start a new run
@@ -1829,10 +1841,14 @@ func Test_postWorkflowRunHandlerHookWithMutex(t *testing.T) {
 	defer req2.Body.Close()
 	assert.Equal(t, 202, rec2.Code)
 
+	lastRun, err = workflow.LoadLastRun(api.mustDB(), proj.Key, w.Name, workflow.LoadRunOptions{})
+	test.NoError(t, err)
+	waitCraftinWorkflow(t, api, db, lastRun.ID)
+
 	// it's an async call, wait a bit the let cds take care of the previous request
 	time.Sleep(3 * time.Second)
 
-	lastRun, err := workflow.LoadLastRun(api.mustDB(), proj.Key, w1.Name, workflow.LoadRunOptions{})
+	lastRun, err = workflow.LoadLastRun(api.mustDB(), proj.Key, w1.Name, workflow.LoadRunOptions{})
 	test.NoError(t, err)
 	assert.Equal(t, int64(2), lastRun.Number)
 	assert.Equal(t, sdk.StatusBuilding, lastRun.Status)
@@ -1882,6 +1898,10 @@ func Test_postWorkflowRunHandlerMutexRelease(t *testing.T) {
 	router.Mux.ServeHTTP(rec, req)
 	require.Equal(t, 202, rec.Code)
 
+	lastRun, err := workflow.LoadLastRun(api.mustDB(), proj.Key, wkf.Name, workflow.LoadRunOptions{})
+	test.NoError(t, err)
+	waitCraftinWorkflow(t, api, db, lastRun.ID)
+
 	var try int
 	for {
 		if try > 10 {
@@ -1923,6 +1943,10 @@ func Test_postWorkflowRunHandlerMutexRelease(t *testing.T) {
 	rec = httptest.NewRecorder()
 	router.Mux.ServeHTTP(rec, req)
 	require.Equal(t, 202, rec.Code)
+
+	lastRun, err = workflow.LoadLastRun(api.mustDB(), proj.Key, wkf.Name, workflow.LoadRunOptions{})
+	test.NoError(t, err)
+	waitCraftinWorkflow(t, api, db, lastRun.ID)
 
 	try = 0
 	for {
@@ -1968,6 +1992,10 @@ func Test_postWorkflowRunHandlerMutexRelease(t *testing.T) {
 	rec = httptest.NewRecorder()
 	router.Mux.ServeHTTP(rec, req)
 	require.Equal(t, 202, rec.Code)
+
+	lastRun, err = workflow.LoadLastRun(api.mustDB(), proj.Key, wkf.Name, workflow.LoadRunOptions{})
+	test.NoError(t, err)
+	waitCraftinWorkflow(t, api, db, lastRun.ID)
 
 	try = 0
 	for {
@@ -2261,7 +2289,7 @@ func Test_postWorkflowRunHandlerHook(t *testing.T) {
 	require.NoError(t, json.Unmarshal(rec.Body.Bytes(), wr))
 	assert.Equal(t, int64(1), wr.Number)
 
-	assert.NoError(t, waitCraftinWorkflow(t, db, wr.ID))
+	assert.NoError(t, waitCraftinWorkflow(t, api, db, wr.ID))
 	lastRun, err := workflow.LoadLastRun(api.mustDB(), proj.Key, w1.Name, workflow.LoadRunOptions{})
 	test.NoError(t, err)
 	assert.NotNil(t, lastRun.RootRun())
@@ -2423,10 +2451,14 @@ func Test_postWorkflowRunHandler_ConditionNotOK(t *testing.T) {
 
 	assert.Equal(t, 202, rec.Code)
 
+	lastRun, err := workflow.LoadLastRun(api.mustDB(), proj.Key, w.Name, workflow.LoadRunOptions{})
+	test.NoError(t, err)
+	waitCraftinWorkflow(t, api, db, lastRun.ID)
+
 	// it's an async call, wait a bit the let cds take care of the previous request
 	time.Sleep(3 * time.Second)
 
-	lastRun, err := workflow.LoadLastRun(api.mustDB(), proj.Key, w.Name, workflow.LoadRunOptions{})
+	lastRun, err = workflow.LoadLastRun(api.mustDB(), proj.Key, w.Name, workflow.LoadRunOptions{})
 	test.NoError(t, err)
 	assert.Equal(t, int64(1), lastRun.Number)
 	assert.Equal(t, sdk.StatusNeverBuilt, lastRun.Status)
@@ -2600,7 +2632,7 @@ func initGetWorkflowNodeRunJobTest(t *testing.T, api *API, db gorpmapper.SqlExec
 	})
 	require.NoError(t, err)
 
-	wr, err := workflow.CreateRun(api.mustDB(), w1, nil, u)
+	wr, err := workflow.CreateRun(api.mustDB(), w1, sdk.WorkflowRunPostHandlerOption{AuthConsumer: consumer})
 	assert.NoError(t, err)
 	wr.Workflow = *w1
 	_, err = workflow.StartWorkflowRun(context.TODO(), db, api.Cache, *proj, wr, &sdk.WorkflowRunPostHandlerOption{
@@ -2790,7 +2822,7 @@ func Test_deleteWorkflowRunsBranchHandler(t *testing.T) {
 	w1, err := workflow.Load(context.TODO(), api.mustDB(), api.Cache, *proj, "test_1", workflow.LoadOptions{})
 	require.NoError(t, err)
 
-	wr, err := workflow.CreateRun(api.mustDB(), w1, nil, u)
+	wr, err := workflow.CreateRun(api.mustDB(), w1, sdk.WorkflowRunPostHandlerOption{AuthConsumer: consumer})
 	assert.NoError(t, err)
 	wr.Workflow = *w1
 	wr.Tag("git.branch", "master")
@@ -2857,6 +2889,7 @@ func Test_deleteWorkflowRunHandler(t *testing.T) {
 	u, pass := assets.InsertAdminUser(t, db)
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, api.Cache, key, key)
+	consumer, _ := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
 
 	//First pipeline
 	pip := sdk.Pipeline{
@@ -2934,7 +2967,7 @@ func Test_deleteWorkflowRunHandler(t *testing.T) {
 	w1, err := workflow.Load(context.TODO(), api.mustDB(), api.Cache, *proj, "test_1", workflow.LoadOptions{})
 	require.NoError(t, err)
 
-	wr, err := workflow.CreateRun(api.mustDB(), w1, nil, u)
+	wr, err := workflow.CreateRun(api.mustDB(), w1, sdk.WorkflowRunPostHandlerOption{AuthConsumer: consumer})
 	assert.NoError(t, err)
 	//Prepare request
 	vars := map[string]string{
@@ -3003,6 +3036,7 @@ func Test_postWorkflowRunHandlerRestartOnlyFailed(t *testing.T) {
 	u, pass := assets.InsertAdminUser(t, db)
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, api.Cache, key, key)
+	consumer, _ := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
 
 	pip := sdk.Pipeline{
 		ProjectID:  proj.ID,
@@ -3064,7 +3098,7 @@ func Test_postWorkflowRunHandlerRestartOnlyFailed(t *testing.T) {
 	uri := router.GetRoute("POST", api.postWorkflowRunHandler, vars)
 	test.NotEmpty(t, uri)
 
-	opts := &sdk.WorkflowRunPostHandlerOption{
+	opts := sdk.WorkflowRunPostHandlerOption{
 		Manual: &sdk.WorkflowNodeRunManual{
 			OnlyFailedJobs: false,
 			Resync:         false,
@@ -3082,7 +3116,7 @@ func Test_postWorkflowRunHandlerRestartOnlyFailed(t *testing.T) {
 	assert.Equal(t, int64(1), wr.Number)
 
 	// wait for the workflow to finish crafting
-	assert.NoError(t, waitCraftinWorkflow(t, db, wr.ID))
+	assert.NoError(t, waitCraftinWorkflow(t, api, db, wr.ID))
 
 	wrr, _ := workflow.LoadRun(context.TODO(), db, proj2.Key, w1.Name, 1, workflow.LoadRunOptions{})
 	assert.Equal(t, sdk.StatusBuilding, wrr.Status)
@@ -3120,17 +3154,16 @@ func Test_postWorkflowRunHandlerRestartOnlyFailed(t *testing.T) {
 	}
 	assert.NoError(t, workflow.UpdateNodeRun(db, nr))
 
-	opts = &sdk.WorkflowRunPostHandlerOption{
+	opts = sdk.WorkflowRunPostHandlerOption{
 		Manual: &sdk.WorkflowNodeRunManual{
 			OnlyFailedJobs: true,
 			Resync:         false,
 		},
-		FromNodeIDs: []int64{w1.WorkflowData.Node.ID},
-		Number:      &wrr.Number,
+		FromNodeIDs:  []int64{w1.WorkflowData.Node.ID},
+		Number:       &wrr.Number,
+		AuthConsumer: consumer,
 	}
-	api.initWorkflowRun(context.TODO(), proj2.Key, &wrr.Workflow, wrr, opts, &sdk.AuthConsumer{
-		AuthentifiedUser: u,
-	})
+	api.initWorkflowRun(context.TODO(), proj2.Key, &wrr.Workflow, wrr, opts)
 
 	wrr, _ = workflow.LoadRun(context.TODO(), db, proj2.Key, w1.Name, 1, workflow.LoadRunOptions{})
 
@@ -3226,7 +3259,7 @@ func Test_postWorkflowRunHandlerRestartResync(t *testing.T) {
 	assert.Equal(t, int64(1), wr.Number)
 
 	// wait for the workflow to finish crafting
-	assert.NoError(t, waitCraftinWorkflow(t, db, wr.ID))
+	assert.NoError(t, waitCraftinWorkflow(t, api, db, wr.ID))
 
 	wrr, _ := workflow.LoadRun(context.TODO(), db, proj2.Key, w1.Name, 1, workflow.LoadRunOptions{})
 	assert.Equal(t, sdk.StatusBuilding, wrr.Status)

@@ -17,13 +17,13 @@ import (
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/authentication"
 	"github.com/ovh/cds/engine/api/bootstrap"
-	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/api/test/assets"
 	"github.com/ovh/cds/engine/api/workflow"
+	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
@@ -39,6 +39,7 @@ func TestHookRunWithoutPayloadProcessNodeBuildParameter(t *testing.T) {
 	db, cache := test.SetupPG(t, bootstrap.InitiliazeDB)
 
 	u, _ := assets.InsertAdminUser(t, db)
+	consumer, _ := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
 
 	webHookModel, err := workflow.LoadHookModelByName(db, sdk.WebHookModelName)
 	assert.NoError(t, err)
@@ -205,15 +206,15 @@ func TestHookRunWithoutPayloadProcessNodeBuildParameter(t *testing.T) {
 	hookEvent.WorkflowNodeHookUUID = w.WorkflowData.Node.Hooks[0].UUID
 	hookEvent.Payload = nil
 
-	opts := &sdk.WorkflowRunPostHandlerOption{
-		Hook: &hookEvent,
+	opts := sdk.WorkflowRunPostHandlerOption{
+		Hook:         &hookEvent,
+		AuthConsumer: consumer,
 	}
-	wr, err := workflow.CreateRun(db.DbMap, &w, opts, u)
+	wr, err := workflow.CreateRun(db.DbMap, &w, opts)
 	assert.NoError(t, err)
 	wr.Workflow = w
-	consumer, _ := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
 
-	_, errR := workflow.StartWorkflowRun(context.TODO(), db, cache, *proj, wr, opts, consumer, nil)
+	_, errR := workflow.StartWorkflowRun(context.TODO(), db, cache, *proj, wr, &opts, consumer, nil)
 	assert.NoError(t, errR)
 
 	assert.Equal(t, 1, len(wr.WorkflowNodeRuns))
@@ -231,6 +232,7 @@ func TestHookRunWithHashOnlyProcessNodeBuildParameter(t *testing.T) {
 	db, cache := test.SetupPG(t, bootstrap.InitiliazeDB)
 
 	u, _ := assets.InsertAdminUser(t, db)
+	consumer, _ := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
 
 	webHookModel, err := workflow.LoadHookModelByName(db, sdk.WebHookModelName)
 	assert.NoError(t, err)
@@ -390,12 +392,12 @@ func TestHookRunWithHashOnlyProcessNodeBuildParameter(t *testing.T) {
 	}
 
 	opts := &sdk.WorkflowRunPostHandlerOption{
-		Hook: &hookEvent,
+		Hook:         &hookEvent,
+		AuthConsumer: consumer,
 	}
-	wr, err := workflow.CreateRun(db.DbMap, &w, opts, u)
+	wr, err := workflow.CreateRun(db.DbMap, &w, *opts)
 	assert.NoError(t, err)
 	wr.Workflow = w
-	consumer, _ := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
 
 	_, errR := workflow.StartWorkflowRun(context.TODO(), db, cache, *proj, wr, opts, consumer, nil)
 	assert.NoError(t, errR)
@@ -541,14 +543,14 @@ func TestManualRunWithPayloadProcessNodeBuildParameter(t *testing.T) {
 	manualEvent.Payload = map[string]string{
 		"git.branch": "feat/branch",
 	}
-
+	consumer, _ := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
 	opts := &sdk.WorkflowRunPostHandlerOption{
-		Manual: &manualEvent,
+		Manual:       &manualEvent,
+		AuthConsumer: consumer,
 	}
-	wr, err := workflow.CreateRun(db.DbMap, &w, opts, u)
+	wr, err := workflow.CreateRun(db.DbMap, &w, *opts)
 	assert.NoError(t, err)
 	wr.Workflow = w
-	consumer, _ := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
 
 	_, errR := workflow.StartWorkflowRun(context.TODO(), db, cache, *proj, wr, opts, consumer, nil)
 	assert.NoError(t, errR)
@@ -688,13 +690,14 @@ func TestManualRunBranchAndCommitInPayloadProcessNodeBuildParameter(t *testing.T
 		"git.hash":   "currentcommit",
 	}
 
+	consumer, _ := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
 	opts := &sdk.WorkflowRunPostHandlerOption{
-		Manual: &manualEvent,
+		Manual:       &manualEvent,
+		AuthConsumer: consumer,
 	}
-	wr, err := workflow.CreateRun(db.DbMap, &w, opts, u)
+	wr, err := workflow.CreateRun(db.DbMap, &w, *opts)
 	assert.NoError(t, err)
 	wr.Workflow = w
-	consumer, _ := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
 
 	_, errR := workflow.StartWorkflowRun(context.TODO(), db, cache, *proj, wr, opts, consumer, nil)
 	assert.NoError(t, errR)
@@ -915,14 +918,15 @@ func TestManualRunBranchAndRepositoryInPayloadProcessNodeBuildParameter(t *testi
 		"git.repository": "richardlt/demo",
 	}
 
+	consumer, _ := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
 	opts := &sdk.WorkflowRunPostHandlerOption{
-		Manual: &manualEvent,
+		Manual:       &manualEvent,
+		AuthConsumer: consumer,
 	}
-	wr, err := workflow.CreateRun(db.DbMap, &w, opts, u)
+	wr, err := workflow.CreateRun(db.DbMap, &w, *opts)
 	assert.NoError(t, err)
 	wr.Workflow = w
 
-	consumer, _ := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
 	_, errR := workflow.StartWorkflowRun(context.TODO(), db, cache, *proj, wr, opts, consumer, nil)
 	assert.NoError(t, errR)
 
@@ -1149,14 +1153,14 @@ func TestManualRunBuildParameterMultiApplication(t *testing.T) {
 		"git.branch": "feat/branch",
 	}
 
+	consumer, _ := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
 	opts := &sdk.WorkflowRunPostHandlerOption{
-		Manual: &manualEvent,
+		Manual:       &manualEvent,
+		AuthConsumer: consumer,
 	}
-	wr, err := workflow.CreateRun(db.DbMap, &w, opts, u)
+	wr, err := workflow.CreateRun(db.DbMap, &w, *opts)
 	assert.NoError(t, err)
 	wr.Workflow = w
-
-	consumer, _ := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
 
 	_, errR := workflow.StartWorkflowRun(context.TODO(), db, cache, *proj, wr, opts, consumer, nil)
 	assert.NoError(t, errR)
@@ -1394,14 +1398,14 @@ func TestManualRunBuildParameterNoApplicationOnRoot(t *testing.T) {
 		"git.branch": "feat/branch",
 	}
 
+	consumer, _ := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
 	opts := &sdk.WorkflowRunPostHandlerOption{
-		Manual: &manualEvent,
+		Manual:       &manualEvent,
+		AuthConsumer: consumer,
 	}
-	wr, err := workflow.CreateRun(db.DbMap, &w, opts, u)
+	wr, err := workflow.CreateRun(db.DbMap, &w, *opts)
 	assert.NoError(t, err)
 	wr.Workflow = w
-
-	consumer, _ := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
 
 	_, errR := workflow.StartWorkflowRun(context.TODO(), db, cache, *proj, wr, opts, consumer, nil)
 	assert.NoError(t, errR)
@@ -1585,13 +1589,14 @@ func TestGitParamOnPipelineWithoutApplication(t *testing.T) {
 		"git.branch": "feat/branch",
 	}
 
+	consumer, _ := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
 	opts := &sdk.WorkflowRunPostHandlerOption{
-		Manual: &manualEvent,
+		Manual:       &manualEvent,
+		AuthConsumer: consumer,
 	}
-	wr, err := workflow.CreateRun(db.DbMap, &w, opts, u)
+	wr, err := workflow.CreateRun(db.DbMap, &w, *opts)
 	assert.NoError(t, err)
 	wr.Workflow = w
-	consumer, _ := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
 
 	_, errR := workflow.StartWorkflowRun(context.TODO(), db, cache, *proj, wr, opts, consumer, nil)
 	assert.NoError(t, errR)
@@ -1771,13 +1776,14 @@ func TestGitParamOnApplicationWithoutRepo(t *testing.T) {
 		"git.branch": "feat/branch",
 	}
 
+	consumer, _ := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
 	opts := &sdk.WorkflowRunPostHandlerOption{
-		Manual: &manualEvent,
+		Manual:       &manualEvent,
+		AuthConsumer: consumer,
 	}
-	wr, err := workflow.CreateRun(db.DbMap, &w, opts, u)
+	wr, err := workflow.CreateRun(db.DbMap, &w, *opts)
 	assert.NoError(t, err)
 	wr.Workflow = w
-	consumer, _ := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
 
 	_, errR := workflow.StartWorkflowRun(context.TODO(), db, cache, *proj, wr, opts, consumer, nil)
 	assert.NoError(t, errR)
@@ -1968,13 +1974,14 @@ func TestGitParamOn2ApplicationSameRepo(t *testing.T) {
 		"my.value":   "bar",
 	}
 
+	consumer, _ := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
 	opts := &sdk.WorkflowRunPostHandlerOption{
-		Manual: &manualEvent,
+		Manual:       &manualEvent,
+		AuthConsumer: consumer,
 	}
-	wr, err := workflow.CreateRun(db.DbMap, &w, opts, u)
+	wr, err := workflow.CreateRun(db.DbMap, &w, *opts)
 	assert.NoError(t, err)
 	wr.Workflow = w
-	consumer, _ := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
 
 	_, errR := workflow.StartWorkflowRun(context.TODO(), db, cache, *proj, wr, opts, consumer, nil)
 	assert.NoError(t, errR)
@@ -2179,13 +2186,14 @@ func TestGitParamWithJoin(t *testing.T) {
 		"my.value":   "bar",
 	}
 
+	consumer, _ := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
 	opts := &sdk.WorkflowRunPostHandlerOption{
-		Manual: &manualEvent,
+		Manual:       &manualEvent,
+		AuthConsumer: consumer,
 	}
-	wr, err := workflow.CreateRun(db.DbMap, &w, opts, u)
+	wr, err := workflow.CreateRun(db.DbMap, &w, *opts)
 	assert.NoError(t, err)
 	wr.Workflow = w
-	consumer, _ := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
 
 	_, errR := workflow.StartWorkflowRun(context.TODO(), db, cache, *proj, wr, opts, consumer, nil)
 	assert.NoError(t, errR)
@@ -2397,13 +2405,14 @@ func TestGitParamOn2ApplicationSameRepoWithFork(t *testing.T) {
 		"my.value":   "bar",
 	}
 
+	consumer, _ := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
 	opts := &sdk.WorkflowRunPostHandlerOption{
-		Manual: &manualEvent,
+		Manual:       &manualEvent,
+		AuthConsumer: consumer,
 	}
-	wr, err := workflow.CreateRun(db.DbMap, &w, opts, u)
+	wr, err := workflow.CreateRun(db.DbMap, &w, *opts)
 	assert.NoError(t, err)
 	wr.Workflow = w
-	consumer, _ := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
 
 	_, errR := workflow.StartWorkflowRun(context.TODO(), db, cache, *proj, wr, opts, consumer, nil)
 	assert.NoError(t, errR)
@@ -2588,13 +2597,14 @@ func TestManualRunWithPayloadAndRunCondition(t *testing.T) {
 		"git.branch": "feat/branch",
 	}
 
+	consumer, _ := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
 	opts := &sdk.WorkflowRunPostHandlerOption{
-		Manual: &manualEvent,
+		Manual:       &manualEvent,
+		AuthConsumer: consumer,
 	}
-	wr, err := workflow.CreateRun(db.DbMap, &w, opts, u)
+	wr, err := workflow.CreateRun(db.DbMap, &w, *opts)
 	assert.NoError(t, err)
 	wr.Workflow = w
-	consumer, _ := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
 
 	_, errR := workflow.StartWorkflowRun(context.TODO(), db, cache, *proj, wr, opts, consumer, nil)
 	assert.NoError(t, errR)

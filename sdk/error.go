@@ -198,6 +198,7 @@ var (
 	ErrUnsupportedMediaType                          = Error{ID: 188, Status: http.StatusUnsupportedMediaType}
 	ErrNothingToPush                                 = Error{ID: 189, Status: http.StatusBadRequest}
 	ErrWorkerErrorCommand                            = Error{ID: 190, Status: http.StatusBadRequest}
+	ErrRepoAnalyzeFailed                             = Error{ID: 192, Status: http.StatusInternalServerError}
 )
 
 var errorsAmericanEnglish = map[int]string{
@@ -378,6 +379,7 @@ var errorsAmericanEnglish = map[int]string{
 	ErrUnsupportedMediaType.ID:                          "Request format invalid",
 	ErrNothingToPush.ID:                                 "No diff to push",
 	ErrWorkerErrorCommand.ID:                            "Worker command in error",
+	ErrRepoAnalyzeFailed.ID:                             "Unable to analyse repository",
 }
 
 var errorsFrench = map[int]string{
@@ -558,6 +560,7 @@ var errorsFrench = map[int]string{
 	ErrUnsupportedMediaType.ID:                          "Le format de la requête est invalide",
 	ErrNothingToPush.ID:                                 "Aucune modification à pousser",
 	ErrWorkerErrorCommand.ID:                            "Commande du worker en erreur",
+	ErrRepoAnalyzeFailed.ID:                             "L'analyse du repository a echoué",
 }
 
 // Error type.

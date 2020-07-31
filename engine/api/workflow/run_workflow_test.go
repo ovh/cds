@@ -110,10 +110,10 @@ func TestManualRun1(t *testing.T) {
 	t.Logf("w1: %+v", w1)
 	require.NoError(t, err)
 
-	wr, errWR := workflow.CreateRun(db.DbMap, w1, nil, u)
+	consumer, _ := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
+	wr, errWR := workflow.CreateRun(db.DbMap, w1, sdk.WorkflowRunPostHandlerOption{AuthConsumer: consumer})
 	assert.NoError(t, errWR)
 	wr.Workflow = *w1
-	consumer, _ := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
 
 	_, errS := workflow.StartWorkflowRun(context.TODO(), db, cache, *proj, wr, &sdk.WorkflowRunPostHandlerOption{
 		Manual: &sdk.WorkflowNodeRunManual{
@@ -125,7 +125,7 @@ func TestManualRun1(t *testing.T) {
 	}, consumer, nil)
 	require.NoError(t, errS)
 
-	wr2, errWR := workflow.CreateRun(db.DbMap, w1, nil, u)
+	wr2, errWR := workflow.CreateRun(db.DbMap, w1, sdk.WorkflowRunPostHandlerOption{AuthConsumer: consumer})
 	assert.NoError(t, errWR)
 	wr2.Workflow = *w1
 	_, errS = workflow.StartWorkflowRun(context.TODO(), db, cache, *proj, wr2, &sdk.WorkflowRunPostHandlerOption{
@@ -270,7 +270,7 @@ func TestManualRun2(t *testing.T) {
 	require.NoError(t, err)
 	consumer, _ := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
 
-	wr, errWR := workflow.CreateRun(db.DbMap, w1, nil, u)
+	wr, errWR := workflow.CreateRun(db.DbMap, w1, sdk.WorkflowRunPostHandlerOption{AuthConsumer: consumer})
 	assert.NoError(t, errWR)
 	wr.Workflow = *w1
 	_, errS := workflow.StartWorkflowRun(context.TODO(), db, cache, *proj, wr, &sdk.WorkflowRunPostHandlerOption{
@@ -278,7 +278,7 @@ func TestManualRun2(t *testing.T) {
 	}, consumer, nil)
 	require.NoError(t, errS)
 
-	wr2, errWR := workflow.CreateRun(db.DbMap, w1, nil, u)
+	wr2, errWR := workflow.CreateRun(db.DbMap, w1, sdk.WorkflowRunPostHandlerOption{AuthConsumer: consumer})
 	assert.NoError(t, errWR)
 	wr2.Workflow = *w1
 	_, errS = workflow.StartWorkflowRun(context.TODO(), db, cache, *proj, wr2, &sdk.WorkflowRunPostHandlerOption{
@@ -542,7 +542,7 @@ func TestManualRun3(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	wr, errWR := workflow.CreateRun(db.DbMap, w1, nil, u)
+	wr, errWR := workflow.CreateRun(db.DbMap, w1, sdk.WorkflowRunPostHandlerOption{AuthConsumer: consumer})
 	require.NoError(t, errWR)
 	wr.Workflow = *w1
 	_, errS := workflow.StartWorkflowRun(context.TODO(), db, cache, *proj, wr, &sdk.WorkflowRunPostHandlerOption{
@@ -851,7 +851,7 @@ func TestNoStage(t *testing.T) {
 	require.NoError(t, err)
 	consumer, _ := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
 
-	wr, errWR := workflow.CreateRun(db.DbMap, w1, nil, u)
+	wr, errWR := workflow.CreateRun(db.DbMap, w1, sdk.WorkflowRunPostHandlerOption{AuthConsumer: consumer})
 	assert.NoError(t, errWR)
 	wr.Workflow = *w1
 	_, errS := workflow.StartWorkflowRun(context.TODO(), db, cache, *proj, wr, &sdk.WorkflowRunPostHandlerOption{
@@ -927,7 +927,7 @@ func TestNoJob(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	wr, errWR := workflow.CreateRun(db.DbMap, w1, nil, u)
+	wr, errWR := workflow.CreateRun(db.DbMap, w1, sdk.WorkflowRunPostHandlerOption{AuthConsumer: consumer})
 	assert.NoError(t, errWR)
 	wr.Workflow = *w1
 	_, errS := workflow.StartWorkflowRun(context.TODO(), db, cache, *proj, wr, &sdk.WorkflowRunPostHandlerOption{

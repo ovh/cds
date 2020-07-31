@@ -230,7 +230,7 @@ vcs_ssh_key: proj-blabla
 	test.NoError(t, err)
 
 	for i := 0; i < 5; i++ {
-		wr, errWR := workflow.CreateRun(db.DbMap, w1, nil, u)
+		wr, errWR := workflow.CreateRun(db.DbMap, w1, sdk.WorkflowRunPostHandlerOption{AuthConsumer: consumer})
 		assert.NoError(t, errWR)
 		wr.Workflow = *w1
 		_, errWr := workflow.StartWorkflowRun(context.TODO(), db, cache, *proj, wr, &sdk.WorkflowRunPostHandlerOption{
@@ -317,7 +317,7 @@ func TestPurgeWorkflowRunWithRunningStatus(t *testing.T) {
 	test.NoError(t, err)
 
 	for i := 0; i < 5; i++ {
-		wfr, errWR := workflow.CreateRun(db.DbMap, w1, nil, u)
+		wfr, errWR := workflow.CreateRun(db.DbMap, w1, sdk.WorkflowRunPostHandlerOption{AuthConsumer: consumer})
 		assert.NoError(t, errWR)
 		wfr.Workflow = *w1
 		_, errWr := workflow.StartWorkflowRun(context.TODO(), db, cache, *proj, wfr, &sdk.WorkflowRunPostHandlerOption{
@@ -504,7 +504,7 @@ vcs_ssh_key: proj-blabla
 	})
 	test.NoError(t, err)
 
-	wr, errWR := workflow.CreateRun(db.DbMap, w1, nil, u)
+	wr, errWR := workflow.CreateRun(db.DbMap, w1, sdk.WorkflowRunPostHandlerOption{AuthConsumer: consumer})
 	assert.NoError(t, errWR)
 	wr.Workflow = *w1
 	_, errWr := workflow.StartWorkflowRun(context.TODO(), db, cache, *proj, wr, &sdk.WorkflowRunPostHandlerOption{
@@ -519,7 +519,7 @@ vcs_ssh_key: proj-blabla
 	test.NoError(t, errWr)
 
 	for i := 0; i < 5; i++ {
-		wfr, errWR := workflow.CreateRun(db.DbMap, w1, nil, u)
+		wfr, errWR := workflow.CreateRun(db.DbMap, w1, sdk.WorkflowRunPostHandlerOption{AuthConsumer: consumer})
 		assert.NoError(t, errWR)
 		wfr.Workflow = *w1
 		_, errWr := workflow.StartWorkflowRun(context.TODO(), db, cache, *proj, wfr, &sdk.WorkflowRunPostHandlerOption{
@@ -696,7 +696,7 @@ vcs_ssh_key: proj-blabla
 	test.NoError(t, err)
 
 	for i := 0; i < 5; i++ {
-		wfr, errWR := workflow.CreateRun(db.DbMap, w1, nil, u)
+		wfr, errWR := workflow.CreateRun(db.DbMap, w1, sdk.WorkflowRunPostHandlerOption{AuthConsumer: consumer})
 		assert.NoError(t, errWR)
 		wfr.Workflow = *w1
 		_, errWr := workflow.StartWorkflowRun(context.TODO(), db, cache, *proj, wfr, &sdk.WorkflowRunPostHandlerOption{
@@ -788,7 +788,7 @@ func TestPurgeWorkflowRunWithoutTags(t *testing.T) {
 
 	branches := []string{"master", "master", "master", "develop", "develop", "testBr", "testBr", "testBr", "testBr", "test4"}
 	for i := 0; i < 10; i++ {
-		wr, errWR := workflow.CreateRun(db.DbMap, w1, nil, u)
+		wr, errWR := workflow.CreateRun(db.DbMap, w1, sdk.WorkflowRunPostHandlerOption{AuthConsumer: consumer})
 		assert.NoError(t, errWR)
 		wr.Workflow = *w1
 		_, errWr := workflow.StartWorkflowRun(context.TODO(), db, cache, *proj, wr, &sdk.WorkflowRunPostHandlerOption{
@@ -874,7 +874,7 @@ func TestPurgeWorkflowRunWithoutTagsBiggerHistoryLength(t *testing.T) {
 
 	branches := []string{"master", "master", "master", "develop", "develop", "testBr", "testBr", "testBr", "testBr", "test4"}
 	for i := 0; i < 10; i++ {
-		wr, errWR := workflow.CreateRun(db.DbMap, w1, nil, u)
+		wr, errWR := workflow.CreateRun(db.DbMap, w1, sdk.WorkflowRunPostHandlerOption{AuthConsumer: consumer})
 		assert.NoError(t, errWR)
 		wr.Workflow = *w1
 		_, errWr := workflow.StartWorkflowRun(context.TODO(), db, cache, *proj, wr, &sdk.WorkflowRunPostHandlerOption{

@@ -650,6 +650,9 @@ func (a *API) Serve(ctx context.Context) error {
 	sdk.GoRoutine(ctx, "authentication.SessionCleaner", func(ctx context.Context) {
 		authentication.SessionCleaner(ctx, a.mustDB, 10*time.Second)
 	}, a.PanicDump())
+	sdk.GoRoutine(ctx, "api.WorkflowRunCraft", func(ctx context.Context) {
+		a.WorkflowRunCraft(ctx, 100*time.Millisecond)
+	}, a.PanicDump())
 
 	migrate.Add(ctx, sdk.Migration{Name: "RunsSecrets", Release: "0.47.0", Blocker: false, Automatic: true, ExecFunc: func(ctx context.Context) error {
 		return migrate.RunsSecrets(ctx, a.DBConnectionFactory.GetDBMap(gorpmapping.Mapper))

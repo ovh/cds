@@ -81,7 +81,7 @@ func TestInsertStaticFiles(t *testing.T) {
 	})
 	test.NoError(t, err)
 
-	wfr, errWR := workflow.CreateRun(db.DbMap, w1, nil, u)
+	wfr, errWR := workflow.CreateRun(db.DbMap, w1, sdk.WorkflowRunPostHandlerOption{AuthConsumer: consumer})
 	assert.NoError(t, errWR)
 	wfr.Workflow = *w1
 	_, errWr := workflow.StartWorkflowRun(context.TODO(), db, cache, *proj, wfr, &sdk.WorkflowRunPostHandlerOption{

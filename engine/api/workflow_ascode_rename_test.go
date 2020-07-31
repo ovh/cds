@@ -349,7 +349,7 @@ version: v1.0`),
 	var wrun sdk.WorkflowRun
 	require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &wrun))
 
-	require.NoError(t, waitCraftinWorkflow(t, api.mustDB(), wrun.ID))
+	require.NoError(t, waitCraftinWorkflow(t, api, api.mustDB(), wrun.ID))
 	wr, _ := workflow.LoadRunByID(db, wrun.ID, workflow.LoadRunOptions{})
 
 	assert.NotEqual(t, "Fail", wr.Status)
