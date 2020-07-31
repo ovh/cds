@@ -1,8 +1,6 @@
 package cdn
 
 import (
-	"time"
-
 	"github.com/ovh/cds/engine/api"
 	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/engine/cdn/storage"
@@ -10,7 +8,16 @@ import (
 	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/log"
+	"github.com/ovh/cds/sdk/log/hook"
 )
+
+type handledMessage struct {
+	Signature log.Signature
+	Msg       hook.Message
+	Line      int64
+	Status    string
+}
 
 // Service is the stuct representing a hooks µService
 type Service struct {
@@ -42,20 +49,13 @@ type Configuration struct {
 			Host     string `toml:"host" default:"localhost:6379" comment:"If your want to use a redis-sentinel based cluster, follow this syntax ! <clustername>@sentinel1:26379,sentinel2:26379sentinel3:26379" json:"host"`
 			Password string `toml:"password" json:"-"`
 		} `toml:"redis" json:"redis"`
-	} `toml:"cache" comment:"######################\n CDS VCS Cache Settings \n######################" json:"cache"`
+	} `toml:"cache" comment:"######################\n CDN Cache Settings \n######################" json:"cache"`
 	API service.APIServiceConfiguration `toml:"api" comment:"######################\n CDS API Settings \n######################" json:"api"`
 	Log struct {
 		StepMaxSize    int64 `toml:"stepMaxSize" default:"15728640" comment:"Max step logs size in bytes (default: 15MB)" json:"stepMaxSize"`
 		ServiceMaxSize int64 `toml:"serviceMaxSize" default:"15728640" comment:"Max service logs size in bytes (default: 15MB)" json:"serviceMaxSize"`
 	} `toml:"log" json:"log" comment:"###########################\n Log settings.\n##########################"`
-	NbJobLogsGoroutines     int64                 `toml:"nbJobLogsGoroutines" default:"45" comment:"Number of workers that dequeue the job log queue" json:"nbJobLogsGoroutines"`
+	NbJobLogsGoroutines     int64                 `toml:"nbJobLogsGoroutines" default:"5" comment:"Number of workers that dequeue the job log queue" json:"nbJobLogsGoroutines"`
 	NbServiceLogsGoroutines int64                 `toml:"nbServiceLogsGoroutines" default:"5" comment:"Number of workers that dequeue the service log queue" json:"nbServiceLogsGoroutines"`
 	Units                   storage.Configuration `toml:"storageUnits"  json:"storageUnits" mapstructure:"storageUnits"`
-}
-
-type Item struct {
-	gorpmapper.SignedEntity
-	ID      string    `json:"id" db:"id"`
-	Created time.Time `json:"created" db:"created"`
-	Name    string    `json:"name" db:"name"`
 }

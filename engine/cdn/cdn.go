@@ -131,7 +131,9 @@ func (s *Service) Serve(c context.Context) error {
 		return fmt.Errorf("cannot connect to redis instance : %v", err)
 	}
 
-	s.initMetrics(ctx)
+	if err := s.initMetrics(ctx); err != nil {
+		return err
+	}
 
 	s.RunTcpLogServer(ctx)
 
@@ -162,7 +164,7 @@ func (s *Service) mustDBWithCtx(ctx context.Context) *gorp.DbMap {
 	db := s.DBConnectionFactory.GetDBMap(s.Mapper)()
 	db = db.WithContext(ctx).(*gorp.DbMap)
 	if db == nil {
-		panic(fmt.Errorf("Database unavailable"))
+		panic(fmt.Errorf("database unavailable"))
 	}
 	return db
 }

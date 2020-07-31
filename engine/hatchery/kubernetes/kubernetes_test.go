@@ -88,8 +88,8 @@ func TestHatcheryKubernetes_Status(t *testing.T) {
 		t.Logf("%s", string(bodyContent))
 		require.Equal(t, "hachibi", podRequest.ObjectMeta.Namespace)
 		require.Equal(t, "kyubi", podRequest.Labels["CDS_HATCHERY_NAME"])
-		require.Equal(t, "666", podRequest.Labels["CDS_SERVICE_JOB_ID"])
-		require.Equal(t, "999", podRequest.Labels[LABEL_SERVICE_NODE_RUN_ID])
+		require.Equal(t, "666", podRequest.Labels[hatchery.LabelServiceJobID])
+		require.Equal(t, "999", podRequest.Labels[hatchery.LabelServiceNodeRunID])
 		require.Equal(t, "execution", podRequest.Labels["CDS_WORKER"])
 		require.Equal(t, "model1", podRequest.Labels["CDS_WORKER_MODEL"])
 

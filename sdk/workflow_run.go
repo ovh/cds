@@ -466,6 +466,16 @@ type WorkflowNodeJobRunInfo struct {
 	Created              time.Time   `json:"created"`
 }
 
+type WorkflowNodeJobRunBooked struct {
+	ProjectKey   string `json:"project_key"`
+	WorkflowName string `json:"workflow_name"`
+	WorkflowID   int64  `json:"workflow_id"`
+	RunID        int64  `json:"run_id"`
+	NodeRunName  string `json:"node_run_name"`
+	NodeRunID    int64  `json:"node_run_id"`
+	JobName      string `json:"job_name"`
+}
+
 // Translate translates messages in WorkflowNodeJobRun
 func (wnjr *WorkflowNodeJobRun) Translate(lang string) {
 	for ki, info := range wnjr.SpawnInfos {

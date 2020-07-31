@@ -40,5 +40,13 @@ type ServiceLog struct {
 	ServiceRequirementID   int64      `json:"requirement_id" db:"-"`
 	ServiceRequirementName string     `json:"requirement_service_name" db:"requirement_service_name"`
 	Val                    string     `json:"val,omitempty" db:"value"`
-	WorkerName             string     `json:"worker_name" db:"-"`
+
+	// aggregate
+	ProjectKey   string `json:"project_key" db:"-"`
+	WorkflowName string `json:"workflow_name" db:"-"`
+	WorkflowID   int64  `json:"workflow_id" db:"-"`
+	RunID        int64  `json:"run_id" db:"-"`
+	NodeRunName  string `json:"node_run_name" db:"-"`
+	JobName      string `json:"job_name" db:"-"`
+	WorkerName   string `json:"worker_name" db:"-"`
 }

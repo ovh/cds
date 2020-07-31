@@ -84,4 +84,8 @@ type WorkflowNodeJobRunData struct {
 	SigningKey      string
 	GelfServiceAddr string
 	ProjectKey      string
+	WorkflowName    string
+	WorkflowID      int64
+	RunID           int64
+	NodeRunName     string
 }

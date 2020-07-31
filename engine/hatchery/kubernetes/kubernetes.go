@@ -422,8 +422,15 @@ func (h *HatcheryKubernetes) SpawnWorker(ctx context.Context, spawnArgs hatchery
 			}
 		}
 
-		podSchema.ObjectMeta.Labels[LABEL_SERVICE_JOB_ID] = fmt.Sprintf("%d", spawnArgs.JobID)
-		podSchema.ObjectMeta.Labels[LABEL_SERVICE_NODE_RUN_ID] = fmt.Sprintf("%d", spawnArgs.NodeRunID)
+		podSchema.ObjectMeta.Labels[hatchery.LabelServiceJobID] = fmt.Sprintf("%d", spawnArgs.JobID)
+		podSchema.ObjectMeta.Labels[hatchery.LabelServiceNodeRunID] = fmt.Sprintf("%d", spawnArgs.NodeRunID)
+		podSchema.ObjectMeta.Labels[hatchery.LabelServiceProjectKey] = spawnArgs.ProjectKey
+		podSchema.ObjectMeta.Labels[hatchery.LabelServiceWorkflowName] = spawnArgs.WorkflowName
+		podSchema.ObjectMeta.Labels[hatchery.LabelServiceWorkflowID] = fmt.Sprintf("%d", spawnArgs.WorkflowID)
+		podSchema.ObjectMeta.Labels[hatchery.LabelServiceRunID] = fmt.Sprintf("%d", spawnArgs.RunID)
+		podSchema.ObjectMeta.Labels[hatchery.LabelServiceNodeRunName] = spawnArgs.NodeRunName
+		podSchema.ObjectMeta.Labels[hatchery.LabelServiceJobName] = spawnArgs.JobName
+
 		podSchema.Spec.Containers = append(podSchema.Spec.Containers, servContainer)
 		podSchema.Spec.HostAliases[0].Hostnames[i+1] = strings.ToLower(serv.Name)
 	}

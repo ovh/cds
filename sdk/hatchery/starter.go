@@ -145,7 +145,8 @@ func spawnWorkerForJob(ctx context.Context, h Interface, j workerStarterRequest)
 
 	ctxQueueJobBook, next := telemetry.Span(ctxJob, "hatchery.QueueJobBook")
 	ctxQueueJobBook, cancel := context.WithTimeout(ctxQueueJobBook, 10*time.Second)
-	if err := h.CDSClient().QueueJobBook(ctxQueueJobBook, j.id); err != nil {
+	bookedInfos, err := h.CDSClient().QueueJobBook(ctxQueueJobBook, j.id)
+	if err != nil {
 		next()
 		// perhaps already booked by another hatchery
 		log.Info(ctx, "hatchery> spawnWorkerForJob> %d - cannot book job %d: %s", j.timestamp, j.id, err)
@@ -175,6 +176,12 @@ func spawnWorkerForJob(ctx context.Context, h Interface, j workerStarterRequest)
 		NodeRunID:    j.workflowNodeRunID,
 		Requirements: j.requirements,
 		HatcheryName: h.Service().Name,
+		NodeRunName:  bookedInfos.NodeRunName,
+		RunID:        bookedInfos.RunID,
+		WorkflowID:   bookedInfos.WorkflowID,
+		WorkflowName: bookedInfos.WorkflowName,
+		ProjectKey:   bookedInfos.ProjectKey,
+		JobName:      bookedInfos.JobName,
 	}
 
 	log.Info(ctx, "hatchery> spawnWorkerForJob> SpawnWorker> starting model %s for job %d with name %s", modelName, arg.JobID, arg.WorkerName)
