@@ -287,7 +287,7 @@
 <pre><code class="language-bash">mkdir $HOME/cds
 cd cds
 
-LAST_RELEASE=$(curl -s https://api.github.com/repos/ovh/cds/releases | grep tag_name | head -n 1 | cut -d '&quot;' -f 4)
+LAST_RELEASE=0.47.0
 OS=linux # could be linux, darwin, windows, freebsd, openbsd
 ARCH=amd64 # could be 386, arm, amd64, arm64, ppc64le
 
@@ -345,7 +345,7 @@ port <code>5432</code>, with an existing empty database and user named <code>cds
 
 <pre><code class="language-bash">cd $HOME/cds
 ./cds-engine download sql --config conf.toml
-./cds-engine database upgrade --db-host localhost --db-user cds --db-password cds --db-name cds --db-sslmode disable --db-port 5432 --migrate-dir sql/api
+./cds-engine database upgrade --db-host localhost --db-user cds --db-password cds --db-name cds --db-sslmode disable --db-port 5432 --migrate-dir sql
 </code></pre>
 
 <h2 id="launch-cds-api">Launch CDS API</h2>

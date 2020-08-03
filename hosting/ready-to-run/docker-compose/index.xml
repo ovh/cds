@@ -17,7 +17,7 @@
       
       <guid>https://ovh.github.io/cds/hosting/ready-to-run/docker-compose/docker-compose/</guid>
       <description>Run with Docker-Compose The docker-compose.yml contains:
- cds-db-api service with a PostgreSQL cds-db-cdn service with a PostgreSQL cds-cache service with a Redis elasticsearch service with an Elasticsearch dockerhost allows cds-hatchery-swarm service to communicate with the local docker daemon cds-migrate service to prepare databases for API and CDN cds-api service cds-ui service cds-elasticsearch service cds-hatchery-swarm service cds-vcs service cds-repositories service cds-cdn service  Docker compose is very convenient to launch CDS for testing it.</description>
+ cds-db service with a PostgreSQL cds-cache service with a Redis elasticsearch service with an Elasticsearch dockerhost allows cds-hatchery-swarm service to communicate with the local docker daemon cds-migrate service to prepare DB tables cds-api service cds-ui service cds-elasticsearch service cds-hatchery-swarm service cds-vcs service cds-repositories service  Docker compose is very convenient to launch CDS for testing it. But this is not recommended for a Production Installation.</description>
     </item>
     
     <item>
