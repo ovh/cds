@@ -1,4 +1,4 @@
-baseURL = "https://ovh.github.io/cds"
+baseURL = ""
 title = "CDS - Continuous Delivery Service"
 
 languageCode = "en-us"
@@ -7,7 +7,8 @@ defaultContentLanguageInSubdir = false
 contentDir = "content"
 
 disableKinds = ["taxonomy", "taxonomyTerm"]
-canonifyurls = true
+canonifyurls = false
+relativeURLs = true
 
 [outputs]
 home = [ "HTML", "RSS", "JSON"]
