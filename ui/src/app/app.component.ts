@@ -44,7 +44,6 @@ export class AppComponent implements OnInit, OnDestroy {
     versionWorkerSubscription: Subscription;
     _routerSubscription: Subscription;
     _routerNavEndSubscription: Subscription;
-    _sseSubscription: Subscription;
     displayResolver: boolean;
     toasterConfigDefault: any;
     toasterConfigErrorHTTP: any;
