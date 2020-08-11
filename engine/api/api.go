@@ -821,6 +821,15 @@ func (a *API) PanicDump() func(s string) (io.WriteCloser, error) {
 	}
 }
 
+// SetCookieSession on given response writter, automatically add domain and path based on api config.
+// This will returns a cookie with no expiration date that should be dropped by browser when closed.
+func (a *API) SetCookieSession(w http.ResponseWriter, name, value string) {
+	a.setCookie(w, &http.Cookie{
+		Name:  name,
+		Value: value,
+	})
+}
+
 // SetCookie on given response writter, automatically add domain and path based on api config.
 func (a *API) SetCookie(w http.ResponseWriter, name, value string, expires time.Time) {
 	a.setCookie(w, &http.Cookie{
