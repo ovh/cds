@@ -13,11 +13,9 @@ plugin-simple-darwin-amd64:
 build-plugin:
 	@docker run \
 	--mount type=bind,source=$$(pwd)/../../../,dst=/go/src/github.com/ovh/cds \
-	--mount type=bind,source=$$(pwd),dst=/go/src/plugin/build \
 	--rm \
-	-e "GO111MODULE=off" \
 	-e "GOOS=$(OS)" \
 	-e "GOARCH=$(ARCH)" \
-	golang:1.13 \
+	golang:1.14 \
 	/bin/bash -c \
-	"cd /go/src/plugin/build && go version &&  go get && CGO_ENABLED=0 go build -installsuffix cgo -ldflags '-extldflags "-static"' -o plugin-simple-$(OS)-$(ARCH) ."
+	"cd /go/src/github.com/ovh/cds/tests/fixtures/04SCWorkflowRunSimplePlugin && go version && CGO_ENABLED=0 go build -installsuffix cgo -ldflags '-extldflags "-static"' -o plugin-simple-$(OS)-$(ARCH) ."

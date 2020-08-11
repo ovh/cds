@@ -180,7 +180,6 @@ require (
 	github.com/xanzy/go-gitlab v0.15.0
 	github.com/xi2/xz v0.0.0-20171230120015-48954b6210f8 // indirect
 	github.com/yesnault/go-toml v0.0.0-20191205182532-f5ef6cee7945
-	github.com/yesnault/gorp v2.0.0+incompatible
 	github.com/yuin/gluare v0.0.0-20170607022532-d7c94f1a80ed
 	github.com/yuin/gopher-lua v0.0.0-20170901023928-8c2befcd3908
 	github.com/ziutek/mymysql v1.5.4 // indirect
@@ -199,7 +198,7 @@ require (
 	gopkg.in/go-playground/assert.v1 v1.2.1 // indirect
 	gopkg.in/go-playground/validator.v8 v8.18.2 // indirect
 	gopkg.in/gorethink/gorethink.v4 v4.1.0 // indirect
-	gopkg.in/gorp.v1 v1.7.1
+	gopkg.in/gorp.v1 v1.7.1 // indirect
 	gopkg.in/h2non/gock.v1 v1.0.14
 	gopkg.in/ldap.v2 v2.5.1
 	gopkg.in/mgo.v2 v2.0.0-20180705113604-9856a29383ce // indirect
