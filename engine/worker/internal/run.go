@@ -89,7 +89,15 @@ func processActionVariables(a *sdk.Action, parent *sdk.Action, jobParameters []s
 
 	// replaces placeholder in all children recursively
 	for i := range a.Actions {
-		if err := processActionVariables(&a.Actions[i], a, jobParameters, secrets); err != nil {
+		// Do not interpolate yet cds.version for child because the value can change during job execution
+		filterJobParameters := make([]sdk.Parameter, 0, len(jobParameters))
+		for i := range jobParameters {
+			if jobParameters[i].Name != "cds.version" {
+				filterJobParameters = append(filterJobParameters, jobParameters[i])
+			}
+		}
+
+		if err := processActionVariables(&a.Actions[i], a, filterJobParameters, secrets); err != nil {
 			return err
 		}
 	}

@@ -1526,3 +1526,68 @@ func TestInsertNewCodeCoverageReport(t *testing.T) {
 
 	require.Equal(t, coverateReportDefaultBranch.Report.CoveredBranches, covDB.Trend.DefaultBranch.CoveredBranches)
 }
+
+func Test_postWorkflowJobSetVersionHandler(t *testing.T) {
+	api, db, router := newTestAPI(t)
+
+	s, _ := assets.InitCDNService(t, db)
+	defer func() {
+		_ = services.Delete(db, s)
+	}()
+
+	ctx := testRunWorkflow(t, api, db, router)
+	testGetWorkflowJobAsWorker(t, api, db, router, &ctx)
+	require.NotNil(t, ctx.job)
+
+	// Register the worker
+	testRegisterWorker(t, api, db, router, &ctx)
+
+	// Take the job
+	uri := router.GetRoute("POST", api.postTakeWorkflowJobHandler, map[string]string{
+		"id": fmt.Sprintf("%d", ctx.job.ID),
+	})
+	require.NotEmpty(t, uri)
+	req := assets.NewJWTAuthentifiedRequest(t, ctx.workerToken, "POST", uri, nil)
+	rec := httptest.NewRecorder()
+	router.Mux.ServeHTTP(rec, req)
+	require.Equal(t, 200, rec.Code)
+
+	// Check that version is not set
+	run, err := workflow.LoadRun(context.TODO(), db, ctx.project.Key, ctx.workflow.Name, ctx.run.Number, workflow.LoadRunOptions{})
+	require.NoError(t, err)
+	require.Empty(t, "", run.Version)
+	nodeRun, err := workflow.LoadNodeRunByID(db, ctx.job.WorkflowNodeRunID, workflow.LoadRunOptions{})
+	require.NoError(t, err)
+	require.Equal(t, "1", sdk.ParameterValue(nodeRun.BuildParameters, "cds.version"))
+
+	// Set version from worker
+	uri = router.GetRoute("POST", api.postWorkflowJobSetVersionHandler, map[string]string{
+		"permJobID": fmt.Sprintf("%d", ctx.job.ID),
+	})
+	require.NotEmpty(t, uri)
+	req = assets.NewJWTAuthentifiedRequest(t, ctx.workerToken, "POST", uri, sdk.WorkflowRunVersion{
+		Value: "1.2.3",
+	})
+	rec = httptest.NewRecorder()
+	router.Mux.ServeHTTP(rec, req)
+	require.Equal(t, 204, rec.Code)
+
+	run, err = workflow.LoadRun(context.TODO(), db, ctx.project.Key, ctx.workflow.Name, ctx.run.Number, workflow.LoadRunOptions{})
+	require.NoError(t, err)
+	require.NotNil(t, run.Version)
+	require.Equal(t, "1.2.3", *run.Version)
+	nodeRun, err = workflow.LoadNodeRunByID(db, ctx.job.WorkflowNodeRunID, workflow.LoadRunOptions{})
+	require.NoError(t, err)
+	require.Equal(t, "1.2.3", sdk.ParameterValue(nodeRun.BuildParameters, "cds.version"))
+
+	uri = router.GetRoute("POST", api.postWorkflowJobSetVersionHandler, map[string]string{
+		"permJobID": fmt.Sprintf("%d", ctx.job.ID),
+	})
+	require.NotEmpty(t, uri)
+	req = assets.NewJWTAuthentifiedRequest(t, ctx.workerToken, "POST", uri, sdk.WorkflowRunVersion{
+		Value: "3.2.1",
+	})
+	rec = httptest.NewRecorder()
+	router.Mux.ServeHTTP(rec, req)
+	require.Equal(t, 403, rec.Code)
+}

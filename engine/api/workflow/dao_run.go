@@ -32,7 +32,8 @@ workflow_run.status,
 workflow_run.last_sub_num,
 workflow_run.last_execution,
 workflow_run.to_delete,
-workflow_run.read_only
+workflow_run.read_only,
+workflow_run.version
 `
 
 // LoadRunOptions are options for loading a run (node or workflow)

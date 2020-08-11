@@ -10,9 +10,9 @@ import (
 	"github.com/go-gorp/gorp"
 	"github.com/ovh/venom"
 
-	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
+	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
@@ -182,6 +182,29 @@ func LoadAndLockNodeRunByID(ctx context.Context, db gorp.SqlExecutor, id int64) 
 			return nil, sdk.WithStack(sdk.ErrLocked)
 		}
 		return nil, sdk.WrapError(err, "unable to load workflow_node_run node=%d", id)
+	}
+	return fromDBNodeRun(rr, LoadRunOptions{})
+}
+
+//LoadAndLockNodeRunByJobID load and lock a specific node run on a workflow
+func LoadAndLockNodeRunByJobID(ctx context.Context, db gorp.SqlExecutor, jobID int64) (*sdk.WorkflowNodeRun, error) {
+	var end func()
+	_, end = telemetry.Span(ctx, "workflow.LoadAndLockNodeRunByJobID")
+	defer end()
+
+	var rr = NodeRun{}
+
+	query := fmt.Sprintf(`
+    SELECT %s %s
+    FROM workflow_node_run
+    JOIN workflow_node_run_job on workflow_node_run.id = workflow_node_run_job.workflow_node_run_id
+    WHERE workflow_node_run_job.id = $1 FOR UPDATE SKIP LOCKED
+  `, nodeRunFields, nodeRunTestsField)
+	if err := db.SelectOne(&rr, query, jobID); err != nil {
+		if err == sql.ErrNoRows {
+			return nil, sdk.WithStack(sdk.ErrLocked)
+		}
+		return nil, sdk.WrapError(err, "unable to load workflow_node_run with jobID=%d", jobID)
 	}
 	return fromDBNodeRun(rr, LoadRunOptions{})
 }

@@ -41,6 +41,10 @@ type TmplPath struct {
 	Destination string `json:"destination"`
 }
 
+type CDSVersionSet struct {
+	Value string `json:"value"`
+}
+
 type Level string
 
 type (

@@ -13,7 +13,6 @@ import (
 	"github.com/sguiheux/go-coverage"
 
 	"github.com/ovh/cds/engine/api/authentication"
-	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/metrics"
@@ -24,6 +23,7 @@ import (
 	"github.com/ovh/cds/engine/api/worker"
 	"github.com/ovh/cds/engine/api/workermodel"
 	"github.com/ovh/cds/engine/api/workflow"
+	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/jws"
@@ -1029,6 +1029,70 @@ func (api *API) postWorkflowJobTagsHandler() service.Handler {
 
 		if err := workflow.UpdateWorkflowRunTags(tx, workflowRun); err != nil {
 			return sdk.WrapError(err, "unable to insert tags")
+		}
+
+		if err := tx.Commit(); err != nil {
+			return sdk.WrapError(err, "unable to commit transaction")
+		}
+
+		return nil
+	}
+}
+
+func (api *API) postWorkflowJobSetVersionHandler() service.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		if isWorker := isWorker(ctx); !isWorker {
+			return sdk.WithStack(sdk.ErrForbidden)
+		}
+
+		id, err := requestVarInt(r, "permJobID")
+		if err != nil {
+			return err
+		}
+
+		var data sdk.WorkflowRunVersion
+		if err := service.UnmarshalBody(r, &data); err != nil {
+			return sdk.WithStack(err)
+		}
+		if err := data.IsValid(); err != nil {
+			return err
+		}
+
+		tx, err := api.mustDB().Begin()
+		if err != nil {
+			return sdk.WrapError(err, "unable to start transaction")
+		}
+		defer tx.Rollback() // nolint
+
+		workflowRun, err := workflow.LoadAndLockRunByJobID(tx, id, workflow.LoadRunOptions{})
+		if err != nil {
+			if sdk.ErrorIs(err, sdk.ErrNotFound) {
+				return sdk.NewErrorFrom(sdk.ErrLocked, "workflow run is already locked")
+			}
+			return sdk.WrapError(err, "unable to load node run id %d", id)
+		}
+
+		if workflowRun.Version != nil && *workflowRun.Version != data.Value {
+			return sdk.NewErrorFrom(sdk.ErrForbidden, "cannot change existing workflow run version value")
+		}
+
+		workflowRun.Version = &data.Value
+		if err := workflow.UpdateWorkflowRun(ctx, tx, workflowRun); err != nil {
+			return err
+		}
+
+		nodeRun, err := workflow.LoadAndLockNodeRunByJobID(ctx, tx, id)
+		if err != nil {
+			return err
+		}
+		for i := range nodeRun.BuildParameters {
+			if nodeRun.BuildParameters[i].Name == "cds.version" {
+				nodeRun.BuildParameters[i].Value = data.Value
+				break
+			}
+		}
+		if err := workflow.UpdateNodeRunBuildParameters(tx, nodeRun.ID, nodeRun.BuildParameters); err != nil {
+			return err
 		}
 
 		if err := tx.Commit(); err != nil {

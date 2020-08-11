@@ -24,9 +24,9 @@ export class WorkflowRunRequest {
 }
 
 export class WorkflowRun {
-
     id: number;
     num: number;
+    version: string;
     last_subnumber: number;
     project_id: number;
     workflow_id: number;

@@ -261,6 +261,7 @@ type QueueClient interface {
 	QueueStaticFilesUpload(ctx context.Context, projectKey, integrationName string, nodeJobRunID int64, name, entrypoint, staticKey string, tarContent io.Reader) (string, bool, time.Duration, error)
 	QueueJobTag(ctx context.Context, jobID int64, tags []sdk.WorkflowRunTag) error
 	QueueServiceLogs(ctx context.Context, logs []sdk.ServiceLog) error
+	QueueJobSetVersion(ctx context.Context, jobID int64, version sdk.WorkflowRunVersion) error
 }
 
 // UserClient exposes users functions

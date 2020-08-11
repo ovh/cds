@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/blang/semver"
 	"github.com/ovh/venom"
 	"github.com/sguiheux/go-coverage"
 )
@@ -38,6 +39,7 @@ func (h *WorkflowRunHeaders) Get(k string) (string, bool) {
 type WorkflowRun struct {
 	ID               int64                            `json:"id" db:"id"`
 	Number           int64                            `json:"num" db:"num" cli:"num,key"`
+	Version          *string                          `json:"version,omitempty" db:"version" cli:"version"`
 	ProjectID        int64                            `json:"project_id,omitempty" db:"project_id"`
 	WorkflowID       int64                            `json:"workflow_id" db:"workflow_id"`
 	Status           string                           `json:"status" db:"status" cli:"status"`
@@ -84,6 +86,19 @@ type WorkflowRunPostHandlerOption struct {
 //WorkflowRunNumber contains a workflow run number
 type WorkflowRunNumber struct {
 	Num int64 `json:"num" cli:"run-number"`
+}
+
+// WorkflowRunVersion contains a workflow run version.
+type WorkflowRunVersion struct {
+	Value string `json:"value"`
+}
+
+func (w WorkflowRunVersion) IsValid() error {
+	_, err := semver.ParseTolerant(w.Value)
+	if err != nil {
+		return NewError(ErrWrongRequest, fmt.Errorf("value '%s' is not semver compatible: %v", w.Value, err))
+	}
+	return nil
 }
 
 // Translate translates messages in WorkflowNodeRun

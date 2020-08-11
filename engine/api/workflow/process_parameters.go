@@ -228,7 +228,11 @@ func getNodeRunBuildParameters(ctx context.Context, proj sdk.Project, wr *sdk.Wo
 	errm := &sdk.MultiError{}
 	//override default parameters value
 	tmp := sdk.ParametersToMap(params)
-	tmp["cds.version"] = fmt.Sprintf("%d", run.Number)
+	if wr.Version != nil {
+		tmp["cds.version"] = *wr.Version
+	} else {
+		tmp["cds.version"] = fmt.Sprintf("%d", run.Number)
+	}
 	tmp["cds.run"] = fmt.Sprintf("%d.%d", run.Number, run.SubNumber)
 	tmp["cds.run.number"] = fmt.Sprintf("%d", run.Number)
 	tmp["cds.run.subnumber"] = fmt.Sprintf("%d", run.SubNumber)
