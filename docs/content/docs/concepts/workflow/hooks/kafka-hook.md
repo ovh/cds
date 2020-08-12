@@ -9,6 +9,8 @@ This kind of hook will connect to a Kafka topic and consume messages. For each m
 
 The Kafka message have to be in JSON format. It will be used as a payload for your workflow. [See payload documentation]({{< relref "/docs/concepts/workflow/payload.md" >}}).
 
+Notice that Kafka communication is done using SASL and TLS enable only.
+
 ## Link your project to a Kafka platform
 
 On your CDS Project, select the platforms section then add a Kafka platform.
