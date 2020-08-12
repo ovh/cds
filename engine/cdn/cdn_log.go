@@ -394,7 +394,7 @@ func (s *Service) dequeueJobLogs(ctx context.Context) error {
 				continue
 			}
 			currentLog := buildMessage(hm.Signature, hm.Msg)
-			log.Info(ctx, "Job log: %s", currentLog)
+			log.Debug(ctx, "Job log: %s", currentLog)
 		}
 	}
 }
@@ -420,7 +420,7 @@ func (s *Service) dequeueServiceLogs(ctx context.Context) error {
 			if serviceLog.Val == "" {
 				continue
 			}
-			log.Info(ctx, "Service log: %s", serviceLog.Val)
+			log.Debug(ctx, "Service log: %s", serviceLog.Val)
 		}
 	}
 }
