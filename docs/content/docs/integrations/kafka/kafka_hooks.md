@@ -8,7 +8,9 @@ card:
 The Kafka Integration is a Self-Service integration that can be configured on a CDS Project.
 If you are a CDS Administrator, you can configue this integration to be available on all CDS Projects.
 
-This integration enables the [Kafka Hook feature]({{<relref "/docs/concepts/workflow/hooks/kafka-hook.md">}}):
+This integration enables the [Kafka Hook feature]({{<relref "/docs/concepts/workflow/hooks/kafka-hook.md">}}).
+
+Notice that Kafka communication is done using SASL and TLS enable only.
 
 ## Configure with WebUI
 
