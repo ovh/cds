@@ -309,7 +309,7 @@
             <a sm-item href="#" [routerLink]="['settings', 'queue']">{{ 'admin_queue_title' | translate }}</a>
             <div class="divider"></div>
             <a sm-item href="#" [routerLink]="['settings', 'downloads']">{{ 'navbar_downloads' | translate }}</a>
-            <a sm-item href="https://ovh.github.io/cds/" target="_blank" rel="noopener noreferrer">{{ 'navbar_documentation' | translate }}</a>
+            <a sm-item href="#" [routerLink]="['docs', '']" target="_blank" rel="noopener noreferrer">{{ 'navbar_documentation' | translate }}</a>
             <div class="divider"></div>
             <sm-checkbox class="theme-switch" name="switch-theme" [control]="themeSwitch" type="toggle"
                 label="{{'navbar_dark_mode' | translate}}" (change)="changeTheme()"></sm-checkbox>

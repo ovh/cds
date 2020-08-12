@@ -7,12 +7,8 @@ function endsWith(str, suffix) {
 
 // Initialize lunrjs using our generated index file
 function initLunr() {
-    if (!endsWith(baseurl,"/")){
-        baseurl = baseurl+'/'
-    };
-
     // First retrieve the index file
-    $.getJSON(baseurl +"index.json")
+    $.getJSON($('#indexJSON').attr('href'))
         .done(function(index) {
             pagesIndex =   index;
             // Set up lunrjs by declaring the fields we use
@@ -74,9 +70,6 @@ $( document ).ready(function() {
             item.context = text;
             
             var pathItem = item.uri;
-            if (pathItem.startsWith(baseurl)) {
-                pathItem = pathItem.slice(baseurl.length);
-            }
             if (endsWith(pathItem,"/")) {
                 pathItem = pathItem.substring(0, pathItem.length-1);
             };
