@@ -16,6 +16,7 @@ func main() {
 	cmd.AddCommand(cmdCache())
 	cmd.AddCommand(cmdKey())
 	cmd.AddCommand(cmdJunitParser())
+	cmd.AddCommand(cmdCDSVersionSet())
 
 	// last command: doc, this command is hidden
 	cmd.AddCommand(cmdDoc(cmd))

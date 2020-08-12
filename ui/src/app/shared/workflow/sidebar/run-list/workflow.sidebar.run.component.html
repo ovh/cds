@@ -17,10 +17,10 @@
                     <div class="info">
                         <div class="number">
                             <span class="hash">#</span>
-                            <span class="count" [class.success]="r.status === pipelineStatusEnum.SUCCESS"
+                            <span class="count" title="{{r.version ? r.version : r.num}}" [class.success]="r.status === pipelineStatusEnum.SUCCESS"
                                 [class.waiting]="r.status === pipelineStatusEnum.BUILDING || r.status === pipelineStatusEnum.WAITING || r.status === pipelineStatusEnum.PENDING"
                                 [class.fail]="r.status === pipelineStatusEnum.FAIL || r.status === pipelineStatusEnum.STOPPED"
-                                [class.never]="r.status === pipelineStatusEnum.NEVER_BUILT || r.status === pipelineStatusEnum.SKIPPED || r.status === pipelineStatusEnum.DISABLED">{{r.num}}</span>
+                                [class.never]="r.status === pipelineStatusEnum.NEVER_BUILT || r.status === pipelineStatusEnum.SKIPPED || r.status === pipelineStatusEnum.DISABLED">{{r.version ? r.version : r.num}}</span>
                         </div>
                         <ng-template let-popup #popupTemplate>
                             <div class="content">

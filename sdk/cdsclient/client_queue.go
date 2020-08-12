@@ -502,6 +502,12 @@ func (c *client) QueueJobTag(ctx context.Context, jobID int64, tags []sdk.Workfl
 	return err
 }
 
+func (c *client) QueueJobSetVersion(ctx context.Context, jobID int64, version sdk.WorkflowRunVersion) error {
+	path := fmt.Sprintf("/queue/workflows/%d/version", jobID)
+	_, err := c.PostJSON(ctx, path, version, nil)
+	return err
+}
+
 func (c *client) QueueServiceLogs(ctx context.Context, logs []sdk.ServiceLog) error {
 	status, err := c.PostJSON(ctx, "/queue/workflows/log/service", logs, nil)
 	if status >= 400 {

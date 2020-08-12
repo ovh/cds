@@ -57,6 +57,10 @@
           flex-direction: column;
 
           .number {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+
             .hash {
               font-size: 1.2em;
               line-height: 1em;

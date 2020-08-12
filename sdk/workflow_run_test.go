@@ -6,6 +6,7 @@ import (
 
 	"github.com/ovh/venom"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestWorkflowRunTag(t *testing.T) {
@@ -237,4 +238,10 @@ func TestWorkflowQueue_Sort(t *testing.T) {
 			assert.Equal(t, tt.expected, tt.q)
 		})
 	}
+}
+
+func TestWorkflowRunVersion_IsValid(t *testing.T) {
+	require.NoError(t, WorkflowRunVersion{Value: "1.2.3"}.IsValid())
+	require.NoError(t, WorkflowRunVersion{Value: "1.2.3-snapshot.1"}.IsValid())
+	require.Error(t, WorkflowRunVersion{Value: "1.2.3.4"}.IsValid())
 }
