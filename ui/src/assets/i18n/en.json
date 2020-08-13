@@ -756,6 +756,7 @@
   "worker_model_warning": "This worker model is in error. Please check it",
   "worker_model_os": "Operating System",
   "worker_model_arch": "Architecture",
+  "worker_model_pattern_help_line_1": "See Worker Model Pattern documentation:",
   "worker_model_pattern_title": "Patterns of configuration scripts",
   "worker_model_pre_cmd": "Pre worker command",
   "worker_model_cmd_docker": "Command",

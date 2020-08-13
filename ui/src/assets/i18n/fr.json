@@ -752,6 +752,7 @@
   "worker_model_official": "Modèle de worker vérifié (ajouté par un administrateur)",
   "worker_model_os": "Système d'exploitation",
   "worker_model_password": "Mot de passe",
+  "worker_model_pattern_help_line_1": "Worker Model Pattern documentation:",
   "worker_model_pattern_deleted": "Pattern supprimé",
   "worker_model_pattern_saved": "Pattern sauvegardé",
   "worker_model_pattern_title": "Patterns des scripts de configuration",
