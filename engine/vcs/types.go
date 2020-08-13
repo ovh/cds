@@ -45,16 +45,16 @@ type Configuration struct {
 // ServerConfiguration is the configuration for a VCS server
 type ServerConfiguration struct {
 	URL            string                        `toml:"url" comment:"URL of this VCS Server" json:"url"`
-	Github         *GithubServerConfiguration    `toml:"github" json:"github,omitempty"`
-	Gitlab         *GitlabServerConfiguration    `toml:"gitlab" json:"gitlab,omitempty"`
-	Bitbucket      *BitbucketServerConfiguration `toml:"bitbucket" json:"bitbucket,omitempty"`
-	BitbucketCloud *BitbucketCloudConfiguration  `toml:"bitbucketcloud" json:"bitbucketcloud,omitempty"`
-	Gerrit         *GerritServerConfiguration    `toml:"gerrit" json:"gerrit,omitempty"`
+	Github         *GithubServerConfiguration    `toml:"github" json:"github,omitempty" comment:"#######\n CDS <-> GitHub. Documentation on https://ovh.github.io/cds/docs/integrations/github/github_repository_manager/ \n#######"`
+	Gitlab         *GitlabServerConfiguration    `toml:"gitlab" json:"gitlab,omitempty" comment:"#######\n CDS <-> GitLab. Documentation on https://ovh.github.io/cds/docs/integrations/gitlab/gitlab_repository_manager/ \n#######"`
+	Bitbucket      *BitbucketServerConfiguration `toml:"bitbucket" json:"bitbucket,omitempty" comment:"#######\n CDS <-> Bitbucket Server. Documentation on https://ovh.github.io/cds/docs/integrations/bitbucket/ \n#######"`
+	BitbucketCloud *BitbucketCloudConfiguration  `toml:"bitbucketcloud" json:"bitbucketcloud,omitempty" comment:"#######\n CDS <-> Bitbucket Cloud. Documentation on https://ovh.github.io/cds/docs/integrations/bitbucketcloud/ \n#######"`
+	Gerrit         *GerritServerConfiguration    `toml:"gerrit" json:"gerrit,omitempty" comment:"#######\n CDS <-> Gerrit. Documentation on https://ovh.github.io/cds/docs/integrations/gerrit/ \n#######"`
 }
 
 // GithubServerConfiguration represents the github configuration
 type GithubServerConfiguration struct {
-	ClientID     string `toml:"clientId" json:"-" default:"xxxxx" comment:"#######\n CDS <-> Github. Documentation on https://ovh.github.io/cds/docs/integrations/github/ \n#######\n Github OAuth Application Client ID"`
+	ClientID     string `toml:"clientId" json:"-" default:"xxxxx" comment:"Github OAuth Application Client ID"`
 	ClientSecret string `toml:"clientSecret" json:"-" default:"xxxxx" comment:"Github OAuth Application Client Secret"`
 	APIURL       string `toml:"apiUrl" json:"-" default:"https://api.github.com" comment:"The URL for the GitHub API."`
 	Status       struct {
@@ -85,9 +85,9 @@ var errGithubConfigurationError = fmt.Errorf("Github configuration Error")
 
 // GitlabServerConfiguration represents the gitlab configuration
 type GitlabServerConfiguration struct {
-	AppID       string `toml:"appId" json:"-" default:"xxxxx" comment:"#######\n CDS <-> Gitlab. Documentation on https://ovh.github.io/cds/hosting/repositories-manager/gitlab/ \n#######"`
-	Secret      string `toml:"secret" json:"-" default:"xxxxx"`
-	CallbackURL string `toml:"callbackUrl" json:"callbackUrl" default:"http://localhost:8081/repositories_manager/oauth2/callback" comment:"OAuth Application Callback URL"`
+	AppID       string `toml:"appId" json:"-" default:"xxxxx" comment:"GitLab Application ID"`
+	Secret      string `toml:"secret" json:"-" default:"xxxxx" comment:"GitLab Application Secret"`
+	CallbackURL string `toml:"callbackUrl" json:"callbackUrl" default:"http://localhost:8080/cdsapi/repositories_manager/oauth2/callback" comment:"OAuth Application Callback URL"`
 	Status      struct {
 		Disable    bool `toml:"disable" default:"false" commented:"true" comment:"Set to true if you don't want CDS to push statuses on the VCS server" json:"disable"`
 		ShowDetail bool `toml:"showDetail" default:"false" commented:"true" comment:"Set to true if you don't want CDS to push CDS URL in statuses on the VCS server" json:"show_detail"`
@@ -106,7 +106,7 @@ func (s GitlabServerConfiguration) check() error {
 
 // BitbucketServerConfiguration represents the bitbucket configuration
 type BitbucketServerConfiguration struct {
-	ConsumerKey string `toml:"consumerKey" json:"-" default:"xxxxx" comment:"#######\n CDS <-> Bitbucket. Documentation on https://ovh.github.io/cds/hosting/repositories-manager/bitbucket/ \n#######\n You can change the consumeKey if you want"`
+	ConsumerKey string `toml:"consumerKey" json:"-" default:"xxxxx" comment:"You can change the consumeKey if you want"`
 	PrivateKey  string `toml:"privateKey" json:"-" default:"xxxxx"`
 	Status      struct {
 		Disable bool `toml:"disable" default:"false" commented:"true" comment:"Set to true if you don't want CDS to push statuses on the VCS server" json:"disable"`
@@ -127,7 +127,7 @@ func (s BitbucketServerConfiguration) check() error {
 
 // BitbucketCloudConfiguration represents the bitbucket configuration
 type BitbucketCloudConfiguration struct {
-	ClientID     string `toml:"clientId" json:"-" default:"xxxxx" comment:"#######\n CDS <-> Bitbucket cloud. Documentation on https://ovh.github.io/cds/hosting/repositories-manager/bitbucketcloud/ \n#######\n Bitbucket cloud OAuth Application Client ID"`
+	ClientID     string `toml:"clientId" json:"-" default:"xxxxx" comment:"Bitbucket cloud OAuth Application Client ID"`
 	ClientSecret string `toml:"clientSecret" json:"-" default:"xxxxx" comment:"Bitbucket Cloud OAuth Application Client Secret"`
 	Status       struct {
 		Disable    bool `toml:"disable" default:"false" commented:"true" comment:"Set to true if you don't want CDS to push statuses on the VCS server" json:"disable"`

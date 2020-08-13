@@ -30,7 +30,6 @@ import (
 	"github.com/ovh/cds/engine/api/authentication/local"
 	"github.com/ovh/cds/engine/api/bootstrap"
 	"github.com/ovh/cds/engine/api/broadcast"
-	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/integration"
@@ -46,6 +45,7 @@ import (
 	"github.com/ovh/cds/engine/api/worker"
 	"github.com/ovh/cds/engine/api/workermodel"
 	"github.com/ovh/cds/engine/api/workflow"
+	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/engine/database"
 	"github.com/ovh/cds/engine/featureflipping"
 	"github.com/ovh/cds/engine/gorpmapper"
@@ -124,18 +124,18 @@ type Configuration struct {
 		Github struct {
 			Enabled        bool   `toml:"enabled" default:"false" json:"enabled"`
 			SignupDisabled bool   `toml:"signupDisabled" default:"false" json:"signupDisabled"`
-			URL            string `toml:"url" json:"url" default:"https://github.com" comment:"#######\n Github URL"`
-			APIURL         string `toml:"apiUrl" json:"apiUrl" default:"https://api.github.com" comment:"#######\n Github API URL"`
-			ClientID       string `toml:"clientId" json:"-" comment:"#######\n Github OAuth Client ID"`
-			ClientSecret   string `toml:"clientSecret" json:"-"  comment:"Github OAuth Client Secret"`
-		} `toml:"github" json:"github"`
+			URL            string `toml:"url" json:"url" default:"https://github.com" comment:"Github URL"`
+			APIURL         string `toml:"apiUrl" json:"apiUrl" default:"https://api.github.com" comment:"Github API URL"`
+			ClientID       string `toml:"clientId" json:"-" comment:"Github OAuth Client ID"`
+			ClientSecret   string `toml:"clientSecret" json:"-" comment:"Github OAuth Client Secret"`
+		} `toml:"github" json:"github" comment:"#######\n CDS <-> GitHub Auth. Documentation on https://ovh.github.io/cds/docs/integrations/github/github_authentication/ \n######"`
 		Gitlab struct {
 			Enabled        bool   `toml:"enabled" default:"false" json:"enabled"`
 			SignupDisabled bool   `toml:"signupDisabled" default:"false" json:"signupDisabled"`
-			URL            string `toml:"url" json:"url" default:"https://gitlab.com" comment:"#######\n Gitlab URL"`
-			ApplicationID  string `toml:"applicationID" json:"-" comment:"#######\n Gitlab OAuth Application ID"`
-			Secret         string `toml:"secret" json:"-"  comment:"Gitlab OAuth Application Secret"`
-		} `toml:"gitlab" json:"gitlab"`
+			URL            string `toml:"url" json:"url" default:"https://gitlab.com" comment:"GitLab URL"`
+			ApplicationID  string `toml:"applicationID" json:"-" comment:"GitLab OAuth Application ID"`
+			Secret         string `toml:"secret" json:"-" comment:"GitLab OAuth Application Secret"`
+		} `toml:"gitlab" json:"gitlab" comment:"#######\n CDS <-> GitLab Auth. Documentation on https://ovh.github.io/cds/docs/integrations/gitlab/gitlab_authentication/ \n######"`
 	} `toml:"auth" comment:"##############################\n CDS Authentication Settings#\n#############################" json:"auth"`
 	SMTP struct {
 		Disable  bool   `toml:"disable" default:"true" json:"disable" comment:"Set to false to enable the internal SMTP client"`
