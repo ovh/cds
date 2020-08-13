@@ -135,13 +135,15 @@ func (api *API) repositoriesManagerOAuthCallbackHandler() service.Handler {
 			return sdk.WrapError(errP, "repositoriesManagerAuthorizeCallback> Cannot load project")
 		}
 
-		tx, err := api.mustDB().Begin()
+    // initialize a tx, but this tx is only used to READ.
+    // No commit done with this transaction
+		txRead, err := api.mustDB().Begin()
 		if err != nil {
 			return sdk.WithStack(err)
 		}
-		defer tx.Rollback() // nolint
+		defer txRead.Rollback() // nolint
 
-		vcsServer, errVCSServer := repositoriesmanager.NewVCSServerConsumer(tx, api.Cache, rmName)
+		vcsServer, errVCSServer := repositoriesmanager.NewVCSServerConsumer(txRead, api.Cache, rmName)
 		if errVCSServer != nil {
 			return sdk.WrapError(errVCSServer, "repositoriesManagerAuthorizeCallback> Cannot load project")
 		}
