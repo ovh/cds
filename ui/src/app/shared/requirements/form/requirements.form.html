@@ -82,7 +82,7 @@
     </div>
     <p>
         <i class="fa fa-book"></i>
-        <a href="/docs/docs/concepts/requirement/" target="_blank" rel="noopener noreferrer">
+        <a href="#" [routerLink]="['/docs', 'docs', 'concepts', 'requirement']" target="_blank" rel="noopener noreferrer">
         {{ 'requirement_documentation' | translate }} </a>
     </p>
     <p [innerHtml]="helpType[newRequirement.type]"></p>
