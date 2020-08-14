@@ -269,6 +269,41 @@ func (s *RedisStore) DequeueWithContext(c context.Context, queueName string, wai
 	return nil
 }
 
+// DequeueListWithContext gets from queue This is blocking while there is nothing in the queue, it can be cancelled with a context.Context
+func (s *RedisStore) DequeueJSONRawMessagesWithContext(c context.Context, queueName string, waitDuration time.Duration, maxElements int) ([]json.RawMessage, error) {
+	if s.Client == nil {
+		return nil, sdk.WithStack(fmt.Errorf("redis> cannot get redis client"))
+	}
+
+	msgs := make([]json.RawMessage, 0, maxElements)
+	ticker := time.NewTicker(waitDuration)
+	defer ticker.Stop()
+	for len(msgs) < maxElements {
+		select {
+		case <-ticker.C:
+			if c.Err() != nil {
+				return nil, c.Err()
+			}
+			res, err := s.Client.BRPop(time.Second, queueName).Result()
+			if err == redis.Nil {
+				return msgs, nil
+			}
+			if err == io.EOF {
+				time.Sleep(1 * time.Second)
+				return msgs, nil
+			}
+			if err == nil && len(res) == 2 {
+				msgs = append(msgs, json.RawMessage(res[1]))
+				break
+			}
+		case <-c.Done():
+			return msgs, nil
+		}
+	}
+
+	return msgs, nil
+}
+
 // Publish a msg in a channel
 func (s *RedisStore) Publish(ctx context.Context, channel string, value interface{}) error {
 	if s.Client == nil {
