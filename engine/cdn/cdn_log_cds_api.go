@@ -117,7 +117,7 @@ func (s *Service) dequeueJobMessages(ctx context.Context, jobLogsQueueKey string
 						if !strings.HasSuffix(full, "\n") {
 							full += "\n"
 						}
-						hm.Msg.Full = full + hm.Msg.Full
+						hm.Msg.Full = fmt.Sprintf("%s[%s] %s", full, getLevelString(hm.Msg.Level), hm.Msg.Full)
 						hms[k] = hm
 					} else {
 						hms[k] = hm

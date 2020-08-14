@@ -211,8 +211,13 @@ func buildMessage(signature log.Signature, m hook.Message) string {
 		logs.Val += "\n"
 	}
 
+	logs.Val = fmt.Sprintf("[%s] %s", getLevelString(m.Level), logs.Val)
+	return logs.Val
+}
+
+func getLevelString(level int32) string {
 	var lvl string
-	switch m.Level {
+	switch level {
 	case int32(hook.LOG_DEBUG):
 		lvl = "DEBUG"
 	case int32(hook.LOG_INFO):
@@ -230,8 +235,7 @@ func buildMessage(signature log.Signature, m hook.Message) string {
 	case int32(hook.LOG_EMERG):
 		lvl = "EMERGENCY"
 	}
-	logs.Val = fmt.Sprintf("[%s] %s", lvl, logs.Val)
-	return logs.Val
+	return lvl
 }
 
 func (s *Service) handleServiceLog(ctx context.Context, hatcheryID int64, hatcheryName string, workerName string, sig interface{}, m hook.Message) error {
