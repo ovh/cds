@@ -23,10 +23,14 @@ What you need to perform the following steps:
 
 ### Create a CDS application on GitLab
 
+Notice: if you have already a CDS Application in GitLab for Repository Manager, you can't reuse it for Authentication.
+
 In GitLab go to *Settings* / *Application* section. Create a new application with:
 
- - Name: **CDS**
+ - Name: **CDS AUTH**
  - Redirect URI: **http(s)://<your-cds-ui>/auth/callback/gitlab#**
+
+ Example for a local configuration: Redirect URI will be `http://localhost:8080/auth/callback/gitlab`
 
 Scopes:
 

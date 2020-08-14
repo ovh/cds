@@ -29,16 +29,21 @@ func (s *Service) doWebHookExecution(ctx context.Context, e *sdk.TaskExecution) 
 	return []sdk.WorkflowNodeRunHookEvent{*event}, nil
 }
 
-func getRepositoryHeader(whe *sdk.WebHookExecution, events []string) string {
-	if v, ok := whe.RequestHeader[GithubHeader]; ok && ((len(events) == 0 && v[0] == "push") || sdk.IsInArray(v[0], events)) {
+func getRepositoryHeader(t *sdk.TaskExecution, events []string) string {
+	if v, ok := t.WebHook.RequestHeader[GithubHeader]; ok && ((len(events) == 0 && v[0] == "push") || sdk.IsInArray(v[0], events)) {
 		return GithubHeader
-	} else if v, ok := whe.RequestHeader[GitlabHeader]; ok && ((len(events) == 0 && (v[0] == string(gitlab.EventTypePush) || v[0] == string(gitlab.EventTypeTagPush))) || sdk.IsInArray(v[0], events)) {
+	} else if v, ok := t.WebHook.RequestHeader[GitlabHeader]; ok && ((len(events) == 0 && (v[0] == string(gitlab.EventTypePush) || v[0] == string(gitlab.EventTypeTagPush))) || sdk.IsInArray(v[0], events)) {
 		return GitlabHeader
-	} else if v, ok := whe.RequestHeader[BitbucketHeader]; ok && ((len(events) == 0 && v[0] == "repo:refs_changed") || sdk.IsInArray(v[0], events)) {
-		return BitbucketHeader
-	} else if v, ok := whe.RequestHeader[BitbucketHeader]; ok && ((len(events) == 0 && v[0] == "repo:push") || sdk.IsInArray(v[0], events)) {
-		// We return a fake header to make a difference between server and cloud version
-		return BitbucketCloudHeader
+	} else if v, ok := t.WebHook.RequestHeader[BitbucketHeader]; ok {
+		if sdk.IsInArray(v[0], events) || (len(events) == 0 && (v[0] == "repo:refs_changed" || v[0] == "repo:push")) {
+			var request sdk.BitbucketServerWebhookEvent
+			if err := json.Unmarshal(t.WebHook.RequestBody, &request); err == nil && request.EventKey != "" {
+				return BitbucketHeader
+			} else {
+				// We return a fake header to make a difference between server and cloud version
+				return BitbucketCloudHeader
+			}
+		}
 	}
 	return ""
 }
@@ -52,7 +57,7 @@ func (s *Service) executeRepositoryWebHook(ctx context.Context, t *sdk.TaskExecu
 		events = strings.Split(t.Config[sdk.HookConfigEventFilter].Value, ";")
 	}
 
-	switch getRepositoryHeader(t.WebHook, events) {
+	switch getRepositoryHeader(t, events) {
 	case GithubHeader:
 		headerValue := t.WebHook.RequestHeader[GithubHeader][0]
 		payload, err := s.generatePayloadFromGithubRequest(ctx, t, headerValue)

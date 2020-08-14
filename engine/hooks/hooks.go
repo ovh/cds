@@ -53,6 +53,10 @@ func (s *Service) ApplyConfiguration(config interface{}) error {
 	s.ServiceType = sdk.TypeHooks
 	s.HTTPURL = s.Cfg.URL
 	s.MaxHeartbeatFailures = s.Cfg.API.MaxHeartbeatFailures
+
+	if !sdk.IsURL(s.Cfg.URLPublic) {
+		return fmt.Errorf("Invalid hooks configuration, urlPublic configuration is mandatory")
+	}
 	return nil
 }
 

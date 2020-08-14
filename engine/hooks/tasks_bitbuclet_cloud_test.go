@@ -30,7 +30,7 @@ func Test_doWebHookExecutionBitbucketCloud(t *testing.T) {
 
 	assert.Equal(t, 1, len(hs))
 	assert.Equal(t, "repo:push", hs[0].Payload[GIT_EVENT])
-	assert.Equal(t, "master", hs[0].Payload[GIT_BRANCH])
+	assert.Equal(t, "foo", hs[0].Payload[GIT_BRANCH])
 	assert.Equal(t, "Vv", hs[0].Payload[GIT_AUTHOR])
 	assert.Equal(t, "77d120bd9980621d506240832dbbd7b3a28c5717", hs[0].Payload[GIT_HASH])
 	assert.Equal(t, "repo1/testhook", hs[0].Payload[GIT_REPOSITORY])
@@ -48,7 +48,7 @@ var bitbucketCloudPush = `
             "href": "https://api.bitbucket.org/2.0/repositories/repo1/testhook/commits?include=77d120bd9980621d506240832dbbd7b3a28c5717"
           },
           "html": {
-            "href": "https://bitbucket.org/repo1/testhook/branch/master"
+            "href": "https://bitbucket.org/repo1/testhook/branch/foo"
           }
         },
         "created": true,
@@ -117,16 +117,16 @@ var bitbucketCloudPush = `
         "truncated": false,
         "closed": false,
         "new": {
-          "name": "master",
+          "name": "foo",
           "links": {
             "commits": {
-              "href": "https://api.bitbucket.org/2.0/repositories/repo1/testhook/commits/master"
+              "href": "https://api.bitbucket.org/2.0/repositories/repo1/testhook/commits/foo"
             },
             "self": {
-              "href": "https://api.bitbucket.org/2.0/repositories/repo1/testhook/refs/branches/master"
+              "href": "https://api.bitbucket.org/2.0/repositories/repo1/testhook/refs/branches/foo"
             },
             "html": {
-              "href": "https://bitbucket.org/repo1/testhook/branch/master"
+              "href": "https://bitbucket.org/repo1/testhook/branch/foo"
             }
           },
           "default_merge_strategy": "merge_commit",
