@@ -97,7 +97,7 @@ func (s *Service) dequeueJobMessages(ctx context.Context, jobLogsQueueKey string
 		default:
 			dequeuCtx, cancel := context.WithTimeout(ctx, 15*time.Second)
 
-			msgs, err := s.Cache.DequeueJSONRawMessagesWithContext(dequeuCtx, jobLogsQueueKey, 30*time.Millisecond, 100)
+			msgs, err := s.Cache.DequeueJSONRawMessagesWithContext(dequeuCtx, jobLogsQueueKey, 10*time.Millisecond, 100)
 			cancel()
 
 			if len(msgs) > 0 {
@@ -143,7 +143,7 @@ func (s *Service) dequeueJobMessages(ctx context.Context, jobLogsQueueKey string
 
 				t1 = time.Now()
 
-			} else {
+			} else if err != nil {
 				if strings.Contains(err.Error(), "context deadline exceeded") {
 					continue
 				}
