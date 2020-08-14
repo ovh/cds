@@ -286,15 +286,17 @@ func (s *RedisStore) DequeueJSONRawMessagesWithContext(c context.Context, queueN
 			}
 			res, err := s.Client.BRPop(time.Second, queueName).Result()
 			if err == redis.Nil {
-				return msgs, nil
+				continue
 			}
 			if err == io.EOF {
+				if len(msgs) > 0 {
+					return msgs, nil
+				}
 				time.Sleep(1 * time.Second)
-				return msgs, nil
+				continue
 			}
 			if err == nil && len(res) == 2 {
 				msgs = append(msgs, json.RawMessage(res[1]))
-				break
 			}
 		case <-c.Done():
 			return msgs, nil

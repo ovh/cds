@@ -3,6 +3,7 @@ package cache
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"io"
 	"strings"
 	"time"
@@ -41,6 +42,7 @@ type Store interface {
 type QueueStore interface {
 	Enqueue(queueName string, value interface{}) error
 	DequeueWithContext(c context.Context, queueName string, waitDuration time.Duration, value interface{}) error
+	DequeueJSONRawMessagesWithContext(c context.Context, queueName string, waitDuration time.Duration, maxElements int) ([]json.RawMessage, error)
 	QueueLen(queueName string) (int, error)
 	RemoveFromQueue(queueName string, memberKey string) error
 }

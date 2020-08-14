@@ -55,12 +55,13 @@ func TestDequeueJSONRawMessagesWithContext(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, 50, len(data2))
 
-	data3, err := s.DequeueJSONRawMessagesWithContext(context.TODO(), "test", 30*time.Millisecond, 50)
-	require.NoError(t, err)
+	ctx := context.TODO()
+	ctx2, _ := context.WithTimeout(ctx, 200*time.Millisecond)
+	data3, _ := s.DequeueJSONRawMessagesWithContext(ctx2, "test", 30*time.Millisecond, 50)
 	require.Equal(t, 00, len(data3))
 
-	data4, err := s.DequeueJSONRawMessagesWithContext(context.TODO(), "test", 30*time.Millisecond, 50)
-	require.NoError(t, err)
+	ctx3, _ := context.WithTimeout(ctx, 100*time.Millisecond)
+	data4, _ := s.DequeueJSONRawMessagesWithContext(ctx3, "test", 30*time.Millisecond, 50)
 	require.Equal(t, 00, len(data4))
 }
 
