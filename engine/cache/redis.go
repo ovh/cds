@@ -270,7 +270,7 @@ func (s *RedisStore) DequeueWithContext(c context.Context, queueName string, wai
 }
 
 // DequeueListWithContext gets from queue This is blocking while there is nothing in the queue, it can be cancelled with a context.Context
-func (s *RedisStore) DequeueJSONRawMessagesWithContext(c context.Context, queueName string, waitDuration time.Duration, maxElements int) ([]json.RawMessage, error) {
+func (s *RedisStore) DequeueJSONRawMessagesWithContext(ctx context.Context, queueName string, waitDuration time.Duration, maxElements int) ([]json.RawMessage, error) {
 	if s.Client == nil {
 		return nil, sdk.WithStack(fmt.Errorf("redis> cannot get redis client"))
 	}
@@ -281,11 +281,14 @@ func (s *RedisStore) DequeueJSONRawMessagesWithContext(c context.Context, queueN
 	for len(msgs) < maxElements {
 		select {
 		case <-ticker.C:
-			if c.Err() != nil {
-				return nil, c.Err()
+			if ctx.Err() != nil {
+				return nil, ctx.Err()
 			}
 			res, err := s.Client.BRPop(time.Second, queueName).Result()
 			if err == redis.Nil {
+				if len(msgs) > 0 {
+					return msgs, nil
+				}
 				continue
 			}
 			if err == io.EOF {
@@ -295,10 +298,15 @@ func (s *RedisStore) DequeueJSONRawMessagesWithContext(c context.Context, queueN
 				time.Sleep(1 * time.Second)
 				continue
 			}
+			if err == nil && len(res) == 0 {
+				if len(msgs) > 0 {
+					return msgs, nil
+				}
+			}
 			if err == nil && len(res) == 2 {
 				msgs = append(msgs, json.RawMessage(res[1]))
 			}
-		case <-c.Done():
+		case <-ctx.Done():
 			return msgs, nil
 		}
 	}
