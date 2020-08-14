@@ -82,8 +82,55 @@
     </div>
     <p>
         <i class="fa fa-book"></i>
-        <a href="/docs/docs/concepts/requirement/" target="_blank" rel="noopener noreferrer">
+        <a href="#" [routerLink]="['/docs', 'docs', 'concepts', 'requirement']" target="_blank" rel="noopener noreferrer">
         {{ 'requirement_documentation' | translate }} </a>
     </p>
-    <p [innerHtml]="helpType[newRequirement.type]"></p>
+
+    <div [ngSwitch]="newRequirement.type">
+        <div *ngSwitchCase="'binary'">
+            {{ 'requirement_help_binary_0' | translate }}
+        </div>
+        <div *ngSwitchCase="'hostname'">
+            {{ 'requirement_help_hostname_0' | translate }}
+        </div>
+        <div *ngSwitchCase="'os-architecture'">
+            {{ 'requirement_help_os-architecture_0' | translate }}
+        </div>
+        <div *ngSwitchCase="'model'">
+            {{ 'requirement_help_model_0' | translate }}
+            <ul>
+                <li>{{ 'requirement_help_model_1' | translate }}</li>
+                <li><a target="_blank" href="#" [routerLink]="['/docs', 'docs', 'tutorials', 'worker_model-docker']">{{ 'requirement_help_model_2' | translate }}</a></li>
+                <li><a target="_blank" href="#" [routerLink]="['/docs', 'docs', 'tutorials', 'worker_model-docker', 'docker-customized']">{{ 'requirement_help_model_3' | translate }}</a></li>
+                <li><a target="_blank" href="#" [routerLink]="['/docs', 'docs', 'tutorials', 'worker_model-openstack']">{{ 'requirement_help_model_4' | translate }}</a></li>
+                <li><a target="_blank" href="#" [routerLink]="['/docs', 'docs', 'concepts', 'worker-model']">{{ 'requirement_help_model_5' | translate }}</a></li>
+            </ul>        
+        </div>
+        <div *ngSwitchCase="'memory'">
+            {{ 'requirement_help_memory_0' | translate }}
+            <ul>
+                <li>{{ 'requirement_help_memory_1' | translate }}</li>
+                <li>{{ 'requirement_help_memory_2' | translate }}<a href="#" [routerLink]="['/docs', 'docs', 'concepts', 'worker-model']">Worker Model</a> type Docker</li>
+            </ul>
+        </div>
+        <div *ngSwitchCase="'service'">
+            {{ 'requirement_help_service_0' | translate }}
+            <ul>
+                <li><a target="_blank" href="#" [routerLink]="['/docs', 'docs', 'concepts', 'requirement']">{{ 'requirement_help_service_1' | translate }}</a></li>
+                <li><a target="_blank" href="#" [routerLink]="['/docs', 'docs', 'tutorials', 'service-requirement-nginx']">{{ 'requirement_help_service_2' | translate }}</a></li>
+                <li><a target="_blank" href="#" [routerLink]="['/docs', 'docs', 'tutorials', 'service-requirement-pg']">{{ 'requirement_help_service_3' | translate }}</a></li>
+                <li>{{ 'requirement_help_service_4' | translate }}</li>
+            </ul>
+        </div>
+        <div *ngSwitchCase="'volume'">
+            {{ 'requirement_help_volume_0' | translate }}
+            <ul>
+                <li>{{ 'requirement_help_volume_1' | translate }}</li>
+                <li>{{ 'requirement_help_volume_2' | translate }}</li>
+                <li>{{ 'requirement_help_volume_3' | translate }}</li>
+                <li>{{ 'requirement_help_volume_4' | translate }}</li>
+                <li>{{ 'requirement_help_volume_5' | translate }}</li>
+            </ul>
+        </div>
+    </div>
 </form>
