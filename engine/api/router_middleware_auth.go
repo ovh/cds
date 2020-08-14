@@ -226,6 +226,9 @@ func (api *API) xsrfMiddleware(ctx context.Context, w http.ResponseWriter, req *
 	xsrfToken := req.Header.Get(xsrfHeaderName)
 	existingXSRFToken, existXSRFTokenInCache := authentication.GetSessionXSRFToken(api.Cache, session.ID)
 
+	xsrfTokenCookie, _ := req.Cookie(xsrfCookieName)
+	xsrfTokenCookieExistInCookie := xsrfTokenCookie != nil
+
 	// If it's not a read request we want to check the xsrf token then generate a new one
 	// else if its a read request we want to reuse a cached XSRF token or generate one if not in cache or nothing given by the client
 	if rc.PermissionLevel > sdk.PermissionRead {
@@ -234,7 +237,7 @@ func (api *API) xsrfMiddleware(ctx context.Context, w http.ResponseWriter, req *
 			return ctx, sdk.WithStack(sdk.ErrForbidden)
 		}
 	} else {
-		if !existXSRFTokenInCache || xsrfToken == "" {
+		if !existXSRFTokenInCache || !xsrfTokenCookieExistInCookie {
 			sessionSecondsBeforeExpiration := int(session.ExpireAt.Sub(time.Now()).Seconds())
 			var err error
 			existingXSRFToken, err = authentication.NewSessionXSRFToken(api.Cache, session.ID, sessionSecondsBeforeExpiration)
