@@ -150,38 +150,6 @@ func (s *Service) dequeueJobMessages(ctx context.Context, jobLogsQueueKey string
 				log.Error(ctx, "dequeueJobMessages: unable to dequeue job logs queue %s: %v", jobLogsQueueKey, err)
 				continue
 			}
-
-			// dequeuCtx, cancel := context.WithTimeout(ctx, 15*time.Second)
-			// var hm handledMessage
-			// if err := s.Cache.DequeueWithContext(dequeuCtx, jobLogsQueueKey, 30*time.Millisecond, &hm); err != nil {
-			// 	cancel()
-			// 	if strings.Contains(err.Error(), "context deadline exceeded") {
-			// 		return nil
-			// 	}
-			// 	log.Error(ctx, "dequeueJobMessages: unable to dequeue job logs queue %s: %v", jobLogsQueueKey, err)
-			// 	continue
-			// }
-			// cancel()
-			// if hm.Signature.Worker == nil {
-			// 	continue
-			// }
-			// nbMessages++
-			// now := time.Now()
-			// t1 = now
-
-			// currentLog := buildMessage(hm.Signature, hm.Msg)
-
-			// l := sdk.Log{
-			// 	JobID:        hm.Signature.JobID,
-			// 	NodeRunID:    hm.Signature.NodeRunID,
-			// 	LastModified: &now,
-			// 	StepOrder:    hm.Signature.Worker.StepOrder,
-			// 	Val:          currentLog,
-			// }
-			// if err := s.Client.QueueSendLogs(ctx, hm.Signature.JobID, l); err != nil {
-			// 	log.Error(ctx, "dequeueJobMessages: unable to send log to API: %v", err)
-			// 	continue
-			// }
 		}
 	}
 }
