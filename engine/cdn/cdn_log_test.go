@@ -109,7 +109,7 @@ func TestWorkerLogCDNDisabled(t *testing.T) {
 	m := gorpmapper.New()
 	_, cache := test.SetupPGWithMapper(t, m, sdk.TypeCDN)
 	defer cache.Delete(keyJobLogIncomingQueue)
-	defer cache.Delete("cdn:log:job:1")
+	defer cache.Delete("cdn:log:job:2")
 	defer logCache.Flush()
 
 	// Create worker private key
@@ -159,6 +159,7 @@ func TestWorkerLogCDNDisabled(t *testing.T) {
 	gock.New("http://lolcat.host").Post("/queue/workflows/2/log").Reply(200)
 	gock.New("http://lolcat.host").Post("/feature/enabled/cdn-job-logs").Reply(200).JSON(sdk.FeatureEnabledResponse{Name: "cdn-job-logs", Enabled: false})
 
+	t0 := time.Now()
 	require.NoError(t, s.handleLogMessage(context.TODO(), []byte(message)))
 
 	ctx, cancel := context.WithCancel(context.TODO())
@@ -170,11 +171,11 @@ func TestWorkerLogCDNDisabled(t *testing.T) {
 		done := gock.IsDone()
 		if !done {
 			if cpt > 20 {
-				t.Logf("GOCK NOT ENDED")
+				t.Logf("GOCK NOT ENDED %s", time.Now().Sub(t0))
 				ps := gock.Pending()
 				for i := range ps {
 					r := ps[i]
-					t.Logf("[%s] %s", r.Request().Method, r.Request().URLStruct.String())
+					t.Logf("pending [%s] %s", r.Request().Method, r.Request().URLStruct.String())
 				}
 				t.Fail()
 				break

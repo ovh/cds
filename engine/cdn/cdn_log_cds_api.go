@@ -2,6 +2,8 @@ package cdn
 
 import (
 	"context"
+	"encoding/json"
+	"fmt"
 	"strings"
 	"time"
 
@@ -93,35 +95,59 @@ func (s *Service) dequeueJobMessages(ctx context.Context, jobLogsQueueKey string
 				continue
 			}
 		default:
-			dequeuCtx, cancel := context.WithTimeout(ctx, 15*time.Second)
-			var hm handledMessage
-			if err := s.Cache.DequeueWithContext(dequeuCtx, jobLogsQueueKey, 30*time.Millisecond, &hm); err != nil {
-				cancel()
+			dequeuCtx, cancel := context.WithTimeout(ctx, 1*time.Second)
+
+			msgs, err := s.Cache.DequeueJSONRawMessagesWithContext(dequeuCtx, jobLogsQueueKey, 5*time.Millisecond, 1000)
+			cancel()
+
+			if len(msgs) > 0 {
+				hms := make(map[string]handledMessage, len(msgs))
+				for _, msg := range msgs {
+					var hm handledMessage
+					if err := json.Unmarshal(msg, &hm); err != nil {
+						return sdk.WrapError(err, "redis.DequeueWithContext> error on unmarshal value on queue:%s", jobLogsQueueKey)
+					}
+					if hm.Signature.Worker == nil {
+						continue
+					}
+					nbMessages++
+					k := fmt.Sprintf("%d-%d-%d", hm.Signature.JobID, hm.Signature.NodeRunID, hm.Signature.Worker.StepOrder)
+					if _, ok := hms[k]; ok {
+						full := hms[k].Msg.Full
+						if !strings.HasSuffix(full, "\n") {
+							full += "\n"
+						}
+						hm.Msg.Full = fmt.Sprintf("%s[%s] %s", full, getLevelString(hm.Msg.Level), hm.Msg.Full)
+						hms[k] = hm
+					} else {
+						hms[k] = hm
+					}
+				}
+
+				for _, hm := range hms {
+					now := time.Now()
+
+					currentLog := buildMessage(hm.Signature, hm.Msg)
+					l := sdk.Log{
+						JobID:        hm.Signature.JobID,
+						NodeRunID:    hm.Signature.NodeRunID,
+						LastModified: &now,
+						StepOrder:    hm.Signature.Worker.StepOrder,
+						Val:          currentLog,
+					}
+					if err := s.Client.QueueSendLogs(ctx, hm.Signature.JobID, l); err != nil {
+						log.Error(ctx, "dequeueJobMessages: unable to send log to API: %v", err)
+						continue
+					}
+				}
+
+				t1 = time.Now()
+
+			} else if err != nil {
 				if strings.Contains(err.Error(), "context deadline exceeded") {
-					return nil
+					continue
 				}
 				log.Error(ctx, "dequeueJobMessages: unable to dequeue job logs queue %s: %v", jobLogsQueueKey, err)
-				continue
-			}
-			cancel()
-			if hm.Signature.Worker == nil {
-				continue
-			}
-			nbMessages++
-			now := time.Now()
-			t1 = now
-
-			currentLog := buildMessage(hm.Signature, hm.Msg)
-
-			l := sdk.Log{
-				JobID:        hm.Signature.JobID,
-				NodeRunID:    hm.Signature.NodeRunID,
-				LastModified: &now,
-				StepOrder:    hm.Signature.Worker.StepOrder,
-				Val:          currentLog,
-			}
-			if err := s.Client.QueueSendLogs(ctx, hm.Signature.JobID, l); err != nil {
-				log.Error(ctx, "dequeueJobMessages: unable to send log to API: %v", err)
 				continue
 			}
 		}
