@@ -4,6 +4,7 @@ module.exports = (robot) ->
     robot.logger.info "data IN"
     event = req.body
     defaultDomain = process.env.HUBOT_XMPP_DEFAULT_DOMAIN
+    replacedDomains = process.env.HUBOT_XMPP_REPLACED_DOMAINS.split ";"
 
     send = (event, dest) -> 
       robot.logger.info "recipient:#{dest} #{event.subject} #{event.body}"
@@ -19,6 +20,8 @@ module.exports = (robot) ->
         robot.adapter.joinRoom jid: dest
       else if /@/.test dest
         type = 'chat'
+        for d in replacedDomains
+            dest = dest.replace d, defaultDomain
       else if not /@/.test dest
         type = 'chat'
         dest = dest + defaultDomain
