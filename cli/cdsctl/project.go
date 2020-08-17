@@ -14,8 +14,9 @@ import (
 )
 
 var projectCmd = cli.Command{
-	Name:  "project",
-	Short: "Manage CDS project",
+	Name:    "project",
+	Aliases: []string{"projects"},
+	Short:   "Manage CDS project",
 }
 
 func projectCommands() []*cobra.Command {

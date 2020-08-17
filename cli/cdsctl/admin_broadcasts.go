@@ -12,8 +12,9 @@ import (
 )
 
 var adminBroadcastsCmd = cli.Command{
-	Name:  "broadcasts",
-	Short: "Manage CDS broadcasts",
+	Name:    "broadcasts",
+	Aliases: []string{"broadcast"},
+	Short:   "Manage CDS broadcasts",
 }
 
 func adminBroadcasts() *cobra.Command {

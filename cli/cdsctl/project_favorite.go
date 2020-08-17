@@ -8,8 +8,9 @@ import (
 )
 
 var projectFavoriteCmd = cli.Command{
-	Name:  "favorite",
-	Short: "Add or delete a CDS project to your personal bookmarks",
+	Name:    "favorite",
+	Aliases: []string{"favorites"},
+	Short:   "Add or delete a CDS project to your personal bookmarks",
 	Ctx: []cli.Arg{
 		{Name: _ProjectKey},
 	},

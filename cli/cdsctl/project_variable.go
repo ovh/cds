@@ -8,8 +8,9 @@ import (
 )
 
 var projectVariableCmd = cli.Command{
-	Name:  "variable",
-	Short: "Manage CDS project variables",
+	Name:    "variable",
+	Aliases: []string{"variables"},
+	Short:   "Manage CDS project variables",
 }
 
 func projectVariable() *cobra.Command {

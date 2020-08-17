@@ -10,8 +10,9 @@ import (
 )
 
 var adminMigrationsCmd = cli.Command{
-	Name:  "migration",
-	Short: "Manage CDS Migrations",
+	Name:    "migration",
+	Aliases: []string{"migrations"},
+	Short:   "Manage CDS Migrations",
 	Long: `Theses commands manage CDS Migration and DO NOT concern database migrations.
 	
 A CDS Migration is an internal routine. This helps manage a complex data migration with code included

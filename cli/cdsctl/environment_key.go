@@ -10,8 +10,9 @@ import (
 )
 
 var environmentKeyCmd = cli.Command{
-	Name:  "keys",
-	Short: "Manage CDS environment keys",
+	Name:    "keys",
+	Aliases: []string{"key"},
+	Short:   "Manage CDS environment keys",
 }
 
 func environmentKey() *cobra.Command {

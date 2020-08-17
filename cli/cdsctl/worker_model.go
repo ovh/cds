@@ -13,8 +13,9 @@ import (
 )
 
 var workerModelCmd = cli.Command{
-	Name:  "model",
-	Short: "Manage Worker Model",
+	Name:    "model",
+	Aliases: []string{"models"},
+	Short:   "Manage Worker Model",
 }
 
 func workerModel() *cobra.Command {

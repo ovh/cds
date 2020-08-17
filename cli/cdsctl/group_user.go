@@ -8,8 +8,9 @@ import (
 )
 
 var groupMemberCmd = cli.Command{
-	Name:  "member",
-	Short: "Manage group's member",
+	Name:    "member",
+	Aliases: []string{"members"},
+	Short:   "Manage group's member",
 }
 
 func groupMember() *cobra.Command {

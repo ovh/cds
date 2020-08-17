@@ -17,8 +17,9 @@ import (
 )
 
 var templateCmd = cli.Command{
-	Name:  "template",
-	Short: "Manage CDS workflow template",
+	Name:    "template",
+	Aliases: []string{"templates"},
+	Short:   "Manage CDS workflow template",
 }
 
 func template() *cobra.Command {

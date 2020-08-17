@@ -10,8 +10,9 @@ import (
 )
 
 var applicationKeyCmd = cli.Command{
-	Name:  "keys",
-	Short: "Manage CDS application keys",
+	Name:    "keys",
+	Aliases: []string{"key"},
+	Short:   "Manage CDS application keys",
 }
 
 func applicationKey() *cobra.Command {
