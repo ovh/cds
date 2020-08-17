@@ -1,4 +1,4 @@
-name: Create a simple workflow (04SCWorkflowRunNotif) that use all  worker command and run it
+name: Create a simple workflow (04SCWorkflowRunNotif) that use worker export command, then check notif send
 version: "2"
 
 vars :
@@ -31,14 +31,14 @@ testcases:
   - script:  {{.cdsctl}} -f {{.cdsctl.config}} workflow import --force 04SCWORKFLOWRUNNOTIF ./fixtures/04SCWorkflowRunNotif/workflow.yml
   - script:  {{.cdsctl}} -f {{.cdsctl.config}} workflow import --force 04SCWORKFLOWRUNNOTIF ./fixtures/04SCWorkflowRunNotif/workflow-empty.yml
 
-- name: run workflow
+- name: run workflow 04SCWorkflowRunNotif-WORKFLOW
   steps:
   - script:  {{.cdsctl}} -f {{.cdsctl.config}} workflow run 04SCWORKFLOWRUNNOTIF 04SCWorkflowRunNotif-WORKFLOW
     assertions:
     - result.code ShouldEqual 0
     - "result.systemout ShouldContainSubstring Workflow 04SCWorkflowRunNotif-WORKFLOW #1 has been launched"
 
-- name: check workflow
+- name: check workflow 04SCWorkflowRunNotif-WORKFLOW
   steps:
   - script:  {{.cdsctl}} -f {{.cdsctl.config}} workflow status 04SCWORKFLOWRUNNOTIF 04SCWorkflowRunNotif-WORKFLOW 1 --format json
     retry: 20
@@ -70,14 +70,14 @@ testcases:
         from: result.bodyjson.content
         regex: logcontent:foo2
 
-- name: run workflow
+- name: run workflow 04SCWorkflowRunNotif-WORKFLOW-EMPTY
   steps:
   - script:  {{.cdsctl}} -f {{.cdsctl.config}} workflow run 04SCWORKFLOWRUNNOTIF 04SCWorkflowRunNotif-WORKFLOW-EMPTY
     assertions:
     - result.code ShouldEqual 0
     - "result.systemout ShouldContainSubstring Workflow 04SCWorkflowRunNotif-WORKFLOW-EMPTY #1 has been launched"
 
-- name: check workflow
+- name: check workflow 04SCWorkflowRunNotif-WORKFLOW-EMPTY
   steps:
   - script:  {{.cdsctl}} -f {{.cdsctl.config}} workflow status 04SCWORKFLOWRUNNOTIF 04SCWorkflowRunNotif-WORKFLOW-EMPTY 1 --format json
     retry: 20
@@ -89,7 +89,7 @@ testcases:
     - result.systemoutjson.num ShouldContainSubstring 1
     - result.systemoutjson.status ShouldEqual Success
 
-- name: check-mail-notif
+- name: check-mail-notif-empty
   steps:
   - type: http
     method: GET
