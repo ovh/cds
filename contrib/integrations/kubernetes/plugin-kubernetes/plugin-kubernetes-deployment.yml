@@ -1,4 +1,4 @@
-name: 
+name: plugin-kubernetes-deployment
 type: integration-deploy_application
 integration: Kubernetes
 author: "OVH SAS"
