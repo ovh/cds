@@ -19,6 +19,13 @@ type GRPCPlugin struct {
 	Integration        string             `json:"integration" db:"-" yaml:"integration" cli:"integration"`
 }
 
+func (p *GRPCPlugin) Validate() error {
+	if p.Name == "" || p.Type == "" || p.Author == "" || p.Description == "" {
+		return NewErrorFrom(ErrPluginInvalid, "Invalid plugin: name, type, author and description are mandatory")
+	}
+	return nil
+}
+
 // GetBinary returns the binary for a specific os and arch
 func (p GRPCPlugin) GetBinary(os, arch string) *GRPCPluginBinary {
 	for _, b := range p.Binaries {
