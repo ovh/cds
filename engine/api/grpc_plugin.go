@@ -26,6 +26,9 @@ func (api *API) postGRPCluginHandler() service.Handler {
 		if err := service.UnmarshalBody(r, &p); err != nil {
 			return sdk.WithStack(err)
 		}
+		if err := p.Validate(); err != nil {
+			return sdk.WithStack(err)
+		}
 		p.Binaries = nil
 
 		tx, err := db.Begin()
@@ -101,6 +104,9 @@ func (api *API) putGRPCluginHandler() service.Handler {
 		db := api.mustDB()
 		var p sdk.GRPCPlugin
 		if err := service.UnmarshalBody(r, &p); err != nil {
+			return sdk.WithStack(err)
+		}
+		if err := p.Validate(); err != nil {
 			return sdk.WithStack(err)
 		}
 
