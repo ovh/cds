@@ -16,8 +16,9 @@ import (
 )
 
 var adminPluginsCmd = cli.Command{
-	Name:  "plugins",
-	Short: "Manage CDS Plugins",
+	Name:    "plugins",
+	Short:   "Manage CDS Plugins",
+	Aliases: []string{"plugin"},
 }
 
 func adminPlugins() *cobra.Command {

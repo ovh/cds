@@ -13,8 +13,9 @@ import (
 )
 
 var applicationCmd = cli.Command{
-	Name:  "application",
-	Short: "Manage CDS application",
+	Name:    "application",
+	Aliases: []string{"applications"},
+	Short:   "Manage CDS application",
 }
 
 func application() *cobra.Command {

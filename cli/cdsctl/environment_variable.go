@@ -8,8 +8,9 @@ import (
 )
 
 var environmentVariableCmd = cli.Command{
-	Name:  "variable",
-	Short: "Manage CDS environment variables",
+	Name:    "variable",
+	Aliases: []string{"variables"},
+	Short:   "Manage CDS environment variables",
 }
 
 func environmentVariable() *cobra.Command {

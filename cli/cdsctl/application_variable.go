@@ -8,8 +8,9 @@ import (
 )
 
 var applicationVariableCmd = cli.Command{
-	Name:  "variable",
-	Short: "Manage CDS application variables",
+	Name:    "variable",
+	Aliases: []string{"variables"},
+	Short:   "Manage CDS application variables",
 }
 
 func applicationVariable() *cobra.Command {

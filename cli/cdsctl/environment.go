@@ -17,6 +17,7 @@ var environmentCmd = cli.Command{
 	Short: "Manage CDS environment",
 	Aliases: []string{
 		"env",
+		"environments",
 	},
 }
 

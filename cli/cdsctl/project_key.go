@@ -10,8 +10,9 @@ import (
 )
 
 var projectKeyCmd = cli.Command{
-	Name:  "keys",
-	Short: "Manage CDS project keys",
+	Name:    "keys",
+	Aliases: []string{"key"},
+	Short:   "Manage CDS project keys",
 }
 
 func projectKey() *cobra.Command {

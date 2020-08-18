@@ -20,8 +20,9 @@ import (
 const actionPathArg = "action-path"
 
 var actionCmd = cli.Command{
-	Name:  "action",
-	Short: "Manage CDS action",
+	Name:    "action",
+	Aliases: []string{"actions"},
+	Short:   "Manage CDS action",
 }
 
 var actionBuiltinCmd = cli.Command{

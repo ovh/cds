@@ -11,8 +11,9 @@ import (
 )
 
 var workflowCmd = cli.Command{
-	Name:  "workflow",
-	Short: "Manage CDS workflow",
+	Name:    "workflow",
+	Aliases: []string{"workflows"},
+	Short:   "Manage CDS workflow",
 }
 
 func workflow() *cobra.Command {
