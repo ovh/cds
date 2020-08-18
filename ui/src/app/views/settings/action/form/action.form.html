@@ -125,7 +125,7 @@
                     </button>
                 </div>
                 <div class="eight wide column" *ngIf="action.id">
-                    <app-delete-button (event)="deleteAction()" [loading]="loading" [class]="'fluid'">
+                    <app-delete-button (event)="deleteAction()" [loading]="loading" [class]="'fluid'" title="action_delete">
                     </app-delete-button>
                 </div>
                 <div class="sixteen wide column" *ngIf="!action.id">

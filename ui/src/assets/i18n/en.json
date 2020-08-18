@@ -38,6 +38,7 @@
   "action_step_title": "Job steps",
   "action_list_title": "Actions",
   "action_deleted": "Action deleted",
+  "action_delete": "Delete action",
   "action_name": "Action name",
   "action_saved": "Action saved",
   "action_optional": "Optional",

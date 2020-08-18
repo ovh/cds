@@ -19,15 +19,16 @@
     </div>
     <div class="field" *ngIf="expended">
         <div class="ui buttons fluid">
-            <button class="ui green button" (click)="clickAddStep()" [disabled]="!selected"><i class="plus icon"></i>{{
-                'job_add_step' |
-                translate }}</button>
+            <button class="ui green button" (click)="clickAddStep()" [disabled]="!selected">
+                <i class="plus icon"></i>{{ 'job_add_step' | translate }}
+            </button>
             <div class="or"></div>
             <button class="ui grey button" (click)="clickCancel()">{{'btn_cancel' | translate}}</button>
         </div>
     </div>
     <div class="field" *ngIf="!expended">
-        <button class="ui fluid blue button" (click)="showActions()"><i class="plus icon"></i>{{
-            'job_add_step' | translate }}</button>
+        <button class="ui fluid blue button" (click)="showActions()">
+            <i class="plus icon"></i>{{ 'job_add_step' | translate }}
+        </button>
     </div>
 </div>
