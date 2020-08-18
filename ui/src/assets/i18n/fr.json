@@ -41,6 +41,7 @@
   "action_builtin": "Prédéfinie",
   "action_custom": "Personnalisée",
   "action_deleted": "Action supprimée",
+  "action_delete": "Supprimer l'action",
   "action_help_add_from": "L'action courante a été initialisée à partir des données du job \"{{jobName}}\" du pipeline \"{{pipelineName}}\" dans le projet \"{{projectKey}}\". Ces données ne seront pas enregistrées tant que l'action n'aura pas été sauvegardée.",
   "action_help_line_1": "Qu'est-ce qu'une action ?",
   "action_list_title": "Actions",
