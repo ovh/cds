@@ -58,6 +58,8 @@ testcases:
     assertions:
     - result.statuscode ShouldEqual 200
     - result.bodyjson.__len__ ShouldEqual 1
+    retry: 10
+    delay: 3
   - type: http
     method: GET
     url: '{{.smtpmock.url}}/messages/notif@localhost.local/latest'
@@ -97,3 +99,5 @@ testcases:
     assertions:
     - result.statuscode ShouldEqual 200
     - result.bodyjson.__len__ ShouldEqual 1
+    retry: 10
+    delay: 3
