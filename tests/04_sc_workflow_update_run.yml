@@ -84,7 +84,8 @@ testcases:
 
 - name: check log 2
   steps:
-    - script: {{.cdsctl}} -f {{.cdsctl.config}} workflow logs download ITSCWRKFLW2 ITSCWRKFLW2-WORKFLOW 2
-    - script: grep "ITSCWRKFLW2-ANOTHER-APPLICATION" *.log
+    - script: {{.cdsctl}} -f {{.cdsctl.config}} workflow logs download ITSCWRKFLW2 ITSCWRKFLW2-WORKFLOW 2; grep "ITSCWRKFLW2-ANOTHER-APPLICATION" *.log
+      retry: 10
+      delay: 3
       assertions:
       - result.code ShouldEqual 0
