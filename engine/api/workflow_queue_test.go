@@ -1541,7 +1541,7 @@ func Test_postWorkflowJobSetVersionHandler(t *testing.T) {
 		_ = services.Delete(db, s)
 	}()
 
-	ctx := testRunWorkflow(t, api, db, router)
+	ctx := testRunWorkflow(t, api, router)
 	testGetWorkflowJobAsWorker(t, api, db, router, &ctx)
 	require.NotNil(t, ctx.job)
 
