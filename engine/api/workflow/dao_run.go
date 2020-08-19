@@ -647,7 +647,7 @@ func CreateRun(db *gorp.DbMap, wf *sdk.Workflow, opts sdk.WorkflowRunPostHandler
 			wr.Tag(tagTriggeredBy, "cds.hook")
 		}
 	} else {
-		c, err := authentication.LoadConsumerByID(context.Background(), db, opts.AuthConsumerID, authentication.LoadConsumerOptions.Default)
+		c, err := authentication.LoadConsumerByID(context.Background(), db, opts.AuthConsumerID, authentication.LoadConsumerOptions.WithAuthentifiedUser, authentication.LoadConsumerOptions.WithConsumerGroups)
 		if err != nil {
 			return nil, err
 		}

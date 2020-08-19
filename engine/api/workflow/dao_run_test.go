@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"gopkg.in/yaml.v2"
 
 	"github.com/ovh/cds/engine/api/application"
@@ -231,7 +232,7 @@ vcs_ssh_key: proj-blabla
 
 	for i := 0; i < 5; i++ {
 		wr, errWR := workflow.CreateRun(db.DbMap, w1, sdk.WorkflowRunPostHandlerOption{AuthConsumerID: consumer.ID})
-		assert.NoError(t, errWR)
+		require.NoError(t, errWR)
 		wr.Workflow = *w1
 		_, errWr := workflow.StartWorkflowRun(context.TODO(), db, cache, *proj, wr, &sdk.WorkflowRunPostHandlerOption{
 			Manual: &sdk.WorkflowNodeRunManual{

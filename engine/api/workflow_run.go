@@ -949,7 +949,7 @@ func (api *API) initWorkflowRun(ctx context.Context, projKey string, wf *sdk.Wor
 	var asCodeInfosMsg []sdk.Message
 	var report = new(workflow.ProcessorReport)
 
-	u, err := authentication.LoadConsumerByID(ctx, api.mustDB(), opts.AuthConsumerID, authentication.LoadConsumerOptions.Default)
+	u, err := authentication.LoadConsumerByID(ctx, api.mustDB(), opts.AuthConsumerID, authentication.LoadConsumerOptions.WithAuthentifiedUser, authentication.LoadConsumerOptions.WithConsumerGroups)
 	if err != nil {
 		r := failInitWorkflowRun(ctx, api.mustDB(), wfRun, err)
 		report.Merge(ctx, r)
