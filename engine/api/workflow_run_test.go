@@ -119,7 +119,7 @@ func Test_getWorkflowNodeRunHistoryHandler(t *testing.T) {
 	w1, err := workflow.Load(context.TODO(), db, api.Cache, *proj, "test_1", workflow.LoadOptions{})
 	require.NoError(t, err)
 
-	wrCreate, err := workflow.CreateRun(api.mustDB(), w1, sdk.WorkflowRunPostHandlerOption{AuthConsumer: consumer})
+	wrCreate, err := workflow.CreateRun(api.mustDB(), w1, sdk.WorkflowRunPostHandlerOption{AuthConsumerID: consumer.ID})
 	assert.NoError(t, err)
 	wrCreate.Workflow = *w1
 	_, errMR := workflow.StartWorkflowRun(context.TODO(), db, api.Cache, *proj, wrCreate, &sdk.WorkflowRunPostHandlerOption{
@@ -247,7 +247,7 @@ func Test_getWorkflowRunsHandler(t *testing.T) {
 	require.NoError(t, err)
 
 	for i := 0; i < 10; i++ {
-		wr, err := workflow.CreateRun(api.mustDB(), w1, sdk.WorkflowRunPostHandlerOption{AuthConsumer: consumer})
+		wr, err := workflow.CreateRun(api.mustDB(), w1, sdk.WorkflowRunPostHandlerOption{AuthConsumerID: consumer.ID})
 		assert.NoError(t, err)
 		wr.Workflow = *w1
 		_, err = workflow.StartWorkflowRun(context.TODO(), db, api.Cache, *proj, wr, &sdk.WorkflowRunPostHandlerOption{
@@ -401,7 +401,7 @@ func Test_getWorkflowRunsHandlerWithFilter(t *testing.T) {
 	w1, err := workflow.Load(context.TODO(), api.mustDB(), api.Cache, *proj, "test_1", workflow.LoadOptions{})
 	require.NoError(t, err)
 
-	wr, err := workflow.CreateRun(api.mustDB(), w1, sdk.WorkflowRunPostHandlerOption{AuthConsumer: consumer})
+	wr, err := workflow.CreateRun(api.mustDB(), w1, sdk.WorkflowRunPostHandlerOption{AuthConsumerID: consumer.ID})
 	assert.NoError(t, err)
 	wr.Workflow = *w1
 	_, err = workflow.StartWorkflowRun(context.TODO(), db, api.Cache, *proj, wr, &sdk.WorkflowRunPostHandlerOption{
@@ -518,7 +518,7 @@ func Test_getLatestWorkflowRunHandler(t *testing.T) {
 	require.NoError(t, err)
 
 	for i := 0; i < 10; i++ {
-		wr, err := workflow.CreateRun(api.mustDB(), w1, sdk.WorkflowRunPostHandlerOption{AuthConsumer: consumer})
+		wr, err := workflow.CreateRun(api.mustDB(), w1, sdk.WorkflowRunPostHandlerOption{AuthConsumerID: consumer.ID})
 		wr.Workflow = *w1
 		assert.NoError(t, err)
 		_, err = workflow.StartWorkflowRun(context.TODO(), db, api.Cache, *proj, wr, &sdk.WorkflowRunPostHandlerOption{
@@ -652,7 +652,7 @@ func Test_getWorkflowRunHandler(t *testing.T) {
 	require.NoError(t, err)
 
 	for i := 0; i < 10; i++ {
-		wr, err := workflow.CreateRun(api.mustDB(), w1, sdk.WorkflowRunPostHandlerOption{AuthConsumer: consumer})
+		wr, err := workflow.CreateRun(api.mustDB(), w1, sdk.WorkflowRunPostHandlerOption{AuthConsumerID: consumer.ID})
 		assert.NoError(t, err)
 		wr.Workflow = *w1
 		_, err = workflow.StartWorkflowRun(context.TODO(), db, api.Cache, *proj, wr, &sdk.WorkflowRunPostHandlerOption{
@@ -776,7 +776,7 @@ func Test_getWorkflowNodeRunHandler(t *testing.T) {
 	w1, err := workflow.Load(context.TODO(), api.mustDB(), api.Cache, *proj, "test_1", workflow.LoadOptions{})
 	require.NoError(t, err)
 
-	wr, err := workflow.CreateRun(api.mustDB(), w1, sdk.WorkflowRunPostHandlerOption{AuthConsumer: consumer})
+	wr, err := workflow.CreateRun(api.mustDB(), w1, sdk.WorkflowRunPostHandlerOption{AuthConsumerID: consumer.ID})
 	assert.NoError(t, err)
 	wr.Workflow = *w1
 	_, err = workflow.StartWorkflowRun(context.TODO(), db, api.Cache, *proj2, wr, &sdk.WorkflowRunPostHandlerOption{
@@ -2632,7 +2632,7 @@ func initGetWorkflowNodeRunJobTest(t *testing.T, api *API, db gorpmapper.SqlExec
 	})
 	require.NoError(t, err)
 
-	wr, err := workflow.CreateRun(api.mustDB(), w1, sdk.WorkflowRunPostHandlerOption{AuthConsumer: consumer})
+	wr, err := workflow.CreateRun(api.mustDB(), w1, sdk.WorkflowRunPostHandlerOption{AuthConsumerID: consumer.ID})
 	assert.NoError(t, err)
 	wr.Workflow = *w1
 	_, err = workflow.StartWorkflowRun(context.TODO(), db, api.Cache, *proj, wr, &sdk.WorkflowRunPostHandlerOption{
@@ -2822,7 +2822,7 @@ func Test_deleteWorkflowRunsBranchHandler(t *testing.T) {
 	w1, err := workflow.Load(context.TODO(), api.mustDB(), api.Cache, *proj, "test_1", workflow.LoadOptions{})
 	require.NoError(t, err)
 
-	wr, err := workflow.CreateRun(api.mustDB(), w1, sdk.WorkflowRunPostHandlerOption{AuthConsumer: consumer})
+	wr, err := workflow.CreateRun(api.mustDB(), w1, sdk.WorkflowRunPostHandlerOption{AuthConsumerID: consumer.ID})
 	assert.NoError(t, err)
 	wr.Workflow = *w1
 	wr.Tag("git.branch", "master")
@@ -2967,7 +2967,7 @@ func Test_deleteWorkflowRunHandler(t *testing.T) {
 	w1, err := workflow.Load(context.TODO(), api.mustDB(), api.Cache, *proj, "test_1", workflow.LoadOptions{})
 	require.NoError(t, err)
 
-	wr, err := workflow.CreateRun(api.mustDB(), w1, sdk.WorkflowRunPostHandlerOption{AuthConsumer: consumer})
+	wr, err := workflow.CreateRun(api.mustDB(), w1, sdk.WorkflowRunPostHandlerOption{AuthConsumerID: consumer.ID})
 	assert.NoError(t, err)
 	//Prepare request
 	vars := map[string]string{
@@ -3159,9 +3159,9 @@ func Test_postWorkflowRunHandlerRestartOnlyFailed(t *testing.T) {
 			OnlyFailedJobs: true,
 			Resync:         false,
 		},
-		FromNodeIDs:  []int64{w1.WorkflowData.Node.ID},
-		Number:       &wrr.Number,
-		AuthConsumer: consumer,
+		FromNodeIDs:    []int64{w1.WorkflowData.Node.ID},
+		Number:         &wrr.Number,
+		AuthConsumerID: consumer.ID,
 	}
 	api.initWorkflowRun(context.TODO(), proj2.Key, &wrr.Workflow, wrr, opts)
 

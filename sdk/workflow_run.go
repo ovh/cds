@@ -81,11 +81,11 @@ type WorkflowNodeRunRelease struct {
 
 // WorkflowRunPostHandlerOption contains the body content for launch a workflow
 type WorkflowRunPostHandlerOption struct {
-	Hook         *WorkflowNodeRunHookEvent `json:"hook,omitempty"`
-	Manual       *WorkflowNodeRunManual    `json:"manual,omitempty"`
-	Number       *int64                    `json:"number,omitempty"`
-	FromNodeIDs  []int64                   `json:"from_nodes,omitempty"`
-	AuthConsumer *AuthConsumer             `json:"auth_consumer,omitempty"`
+	Hook           *WorkflowNodeRunHookEvent `json:"hook,omitempty"`
+	Manual         *WorkflowNodeRunManual    `json:"manual,omitempty"`
+	Number         *int64                    `json:"number,omitempty"`
+	FromNodeIDs    []int64                   `json:"from_nodes,omitempty"`
+	AuthConsumerID string                    `json:"auth_consumer,omitempty"`
 }
 
 // Value returns driver.Value from WorkflowRunPostHandlerOption.

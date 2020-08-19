@@ -16,6 +16,7 @@ import (
 	"github.com/sirupsen/logrus"
 
 	"github.com/ovh/cds/engine/api/ascode"
+	"github.com/ovh/cds/engine/api/authentication"
 	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/integration"
 	"github.com/ovh/cds/engine/api/objectstore"
@@ -823,7 +824,7 @@ func (api *API) postWorkflowRunHandler() service.Handler {
 		if err := service.UnmarshalBody(r, &opts); err != nil {
 			return err
 		}
-		opts.AuthConsumer = getAPIConsumer(ctx)
+		opts.AuthConsumerID = getAPIConsumer(ctx).ID
 
 		// Request check
 		if opts.Manual != nil && opts.Manual.OnlyFailedJobs && opts.Manual.Resync {
@@ -947,7 +948,13 @@ func (api *API) initWorkflowRun(ctx context.Context, projKey string, wf *sdk.Wor
 
 	var asCodeInfosMsg []sdk.Message
 	var report = new(workflow.ProcessorReport)
-	var u = opts.AuthConsumer
+
+	u, err := authentication.LoadConsumerByID(ctx, api.mustDB(), opts.AuthConsumerID, authentication.LoadConsumerOptions.Default)
+	if err != nil {
+		r := failInitWorkflowRun(ctx, api.mustDB(), wfRun, err)
+		report.Merge(ctx, r)
+		return
+	}
 
 	p, err := project.Load(ctx, api.mustDB(), projKey,
 		project.LoadOptions.WithVariables,

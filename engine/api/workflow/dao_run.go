@@ -15,6 +15,7 @@ import (
 	"github.com/lib/pq"
 	"go.opencensus.io/stats"
 
+	"github.com/ovh/cds/engine/api/authentication"
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
@@ -646,7 +647,11 @@ func CreateRun(db *gorp.DbMap, wf *sdk.Workflow, opts sdk.WorkflowRunPostHandler
 			wr.Tag(tagTriggeredBy, "cds.hook")
 		}
 	} else {
-		wr.Tag(tagTriggeredBy, opts.AuthConsumer.GetUsername())
+		c, err := authentication.LoadConsumerByID(context.Background(), db, opts.AuthConsumerID, authentication.LoadConsumerOptions.Default)
+		if err != nil {
+			return nil, err
+		}
+		wr.Tag(tagTriggeredBy, c.GetUsername())
 	}
 
 	tags := wf.Metadata["default_tags"]

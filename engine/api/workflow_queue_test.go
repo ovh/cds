@@ -1053,7 +1053,7 @@ func TestWorkerPrivateKey(t *testing.T) {
 	workflowDeepPipeline, err := workflow.LoadByID(context.TODO(), db, api.Cache, *p, w.ID, workflow.LoadOptions{DeepPipeline: true})
 	assert.NoError(t, err)
 
-	wrDB, errwr := workflow.CreateRun(api.mustDB(), workflowDeepPipeline, sdk.WorkflowRunPostHandlerOption{AuthConsumer: consumer})
+	wrDB, errwr := workflow.CreateRun(api.mustDB(), workflowDeepPipeline, sdk.WorkflowRunPostHandlerOption{AuthConsumerID: consumer.ID})
 	assert.NoError(t, errwr)
 	wrDB.Workflow = *workflowDeepPipeline
 
@@ -1165,7 +1165,7 @@ func TestPostVulnerabilityReportHandler(t *testing.T) {
 	workflowDeepPipeline, err := workflow.LoadByID(context.TODO(), db, api.Cache, *p, w.ID, workflow.LoadOptions{DeepPipeline: true})
 	assert.NoError(t, err)
 
-	wrDB, errwr := workflow.CreateRun(api.mustDB(), workflowDeepPipeline, sdk.WorkflowRunPostHandlerOption{AuthConsumer: consumer})
+	wrDB, errwr := workflow.CreateRun(api.mustDB(), workflowDeepPipeline, sdk.WorkflowRunPostHandlerOption{AuthConsumerID: consumer.ID})
 	assert.NoError(t, errwr)
 	wrDB.Workflow = *workflowDeepPipeline
 
@@ -1401,7 +1401,7 @@ func TestInsertNewCodeCoverageReport(t *testing.T) {
 	consumer, _ := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
 
 	// Create previous run on default branch
-	wrDB, errwr := workflow.CreateRun(api.mustDB(), &w, sdk.WorkflowRunPostHandlerOption{AuthConsumer: consumer})
+	wrDB, errwr := workflow.CreateRun(api.mustDB(), &w, sdk.WorkflowRunPostHandlerOption{AuthConsumerID: consumer.ID})
 	assert.NoError(t, errwr)
 
 	workflowWithDeepPipeline, err := workflow.LoadByID(context.TODO(), db, api.Cache, *proj, w.ID, workflow.LoadOptions{DeepPipeline: true})
@@ -1420,7 +1420,7 @@ func TestInsertNewCodeCoverageReport(t *testing.T) {
 	assert.NoError(t, errmr)
 
 	// Create previous run on a branch
-	wrCB, errwr2 := workflow.CreateRun(api.mustDB(), &w, sdk.WorkflowRunPostHandlerOption{AuthConsumer: consumer})
+	wrCB, errwr2 := workflow.CreateRun(api.mustDB(), &w, sdk.WorkflowRunPostHandlerOption{AuthConsumerID: consumer.ID})
 	assert.NoError(t, errwr2)
 	wrCB.Workflow = w
 	_, errmr = workflow.StartWorkflowRun(context.Background(), db, api.Cache, *p, wrCB, &sdk.WorkflowRunPostHandlerOption{
@@ -1476,7 +1476,7 @@ func TestInsertNewCodeCoverageReport(t *testing.T) {
 	// Run test
 
 	// Create a workflow run
-	wrToTest, errwr3 := workflow.CreateRun(api.mustDB(), &w, sdk.WorkflowRunPostHandlerOption{AuthConsumer: consumer})
+	wrToTest, errwr3 := workflow.CreateRun(api.mustDB(), &w, sdk.WorkflowRunPostHandlerOption{AuthConsumerID: consumer.ID})
 	assert.NoError(t, errwr3)
 	wrToTest.Workflow = *workflowWithDeepPipeline
 
