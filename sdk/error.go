@@ -198,7 +198,7 @@ var (
 	ErrUnsupportedMediaType                          = Error{ID: 188, Status: http.StatusUnsupportedMediaType}
 	ErrNothingToPush                                 = Error{ID: 189, Status: http.StatusBadRequest}
 	ErrWorkerErrorCommand                            = Error{ID: 190, Status: http.StatusBadRequest}
-	ErrRepoAnalyzeFailed                             = Error{ID: 192, Status: http.StatusInternalServerError}
+	ErrRepoAnalyzeFailed                             = Error{ID: 191, Status: http.StatusInternalServerError}
 )
 
 var errorsAmericanEnglish = map[int]string{
