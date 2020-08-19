@@ -51,8 +51,9 @@ testcases:
 
 - name: check log
   steps:
-    - script: {{.cdsctl}} -f {{.cdsctl.config}} workflow logs download ITSCWRKFLW2 ITSCWRKFLW2-WORKFLOW 1
-    - script: grep "ITSCWRKFLW2-APPLICATION" *.log
+    - script: {{.cdsctl}} -f {{.cdsctl.config}} workflow logs download ITSCWRKFLW2 ITSCWRKFLW2-WORKFLOW 1; grep "ITSCWRKFLW2-APPLICATION" *.log
+      retry: 10
+      delay: 3
       assertions:
       - result.code ShouldEqual 0
 
@@ -60,7 +61,7 @@ testcases:
   steps:
   - script:  {{.cdsctl}} -f {{.cdsctl.config}} workflow import --force ITSCWRKFLW2 ./fixtures/ITSCWRKFLW2/workflow_updated.yml
   - script: {{.cdsctl}} -f {{.cdsctl.config}} workflow export ITSCWRKFLW2 ITSCWRKFLW2-WORKFLOW > ITSCWRKFLW2-WORKFLOW.yml
-  
+
 - name: run workflow
   steps:
   - script: {{.cdsctl}} -f {{.cdsctl.config}} workflow run ITSCWRKFLW2 ITSCWRKFLW2-WORKFLOW
