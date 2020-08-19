@@ -207,8 +207,8 @@ func TestHookRunWithoutPayloadProcessNodeBuildParameter(t *testing.T) {
 	hookEvent.Payload = nil
 
 	opts := sdk.WorkflowRunPostHandlerOption{
-		Hook:         &hookEvent,
-		AuthConsumer: consumer,
+		Hook:           &hookEvent,
+		AuthConsumerID: consumer.ID,
 	}
 	wr, err := workflow.CreateRun(db.DbMap, &w, opts)
 	assert.NoError(t, err)
@@ -392,8 +392,8 @@ func TestHookRunWithHashOnlyProcessNodeBuildParameter(t *testing.T) {
 	}
 
 	opts := &sdk.WorkflowRunPostHandlerOption{
-		Hook:         &hookEvent,
-		AuthConsumer: consumer,
+		Hook:           &hookEvent,
+		AuthConsumerID: consumer.ID,
 	}
 	wr, err := workflow.CreateRun(db.DbMap, &w, *opts)
 	assert.NoError(t, err)
@@ -545,8 +545,8 @@ func TestManualRunWithPayloadProcessNodeBuildParameter(t *testing.T) {
 	}
 	consumer, _ := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
 	opts := &sdk.WorkflowRunPostHandlerOption{
-		Manual:       &manualEvent,
-		AuthConsumer: consumer,
+		Manual:         &manualEvent,
+		AuthConsumerID: consumer.ID,
 	}
 	wr, err := workflow.CreateRun(db.DbMap, &w, *opts)
 	assert.NoError(t, err)
@@ -692,8 +692,8 @@ func TestManualRunBranchAndCommitInPayloadProcessNodeBuildParameter(t *testing.T
 
 	consumer, _ := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
 	opts := &sdk.WorkflowRunPostHandlerOption{
-		Manual:       &manualEvent,
-		AuthConsumer: consumer,
+		Manual:         &manualEvent,
+		AuthConsumerID: consumer.ID,
 	}
 	wr, err := workflow.CreateRun(db.DbMap, &w, *opts)
 	assert.NoError(t, err)
@@ -920,8 +920,8 @@ func TestManualRunBranchAndRepositoryInPayloadProcessNodeBuildParameter(t *testi
 
 	consumer, _ := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
 	opts := &sdk.WorkflowRunPostHandlerOption{
-		Manual:       &manualEvent,
-		AuthConsumer: consumer,
+		Manual:         &manualEvent,
+		AuthConsumerID: consumer.ID,
 	}
 	wr, err := workflow.CreateRun(db.DbMap, &w, *opts)
 	assert.NoError(t, err)
@@ -1155,8 +1155,8 @@ func TestManualRunBuildParameterMultiApplication(t *testing.T) {
 
 	consumer, _ := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
 	opts := &sdk.WorkflowRunPostHandlerOption{
-		Manual:       &manualEvent,
-		AuthConsumer: consumer,
+		Manual:         &manualEvent,
+		AuthConsumerID: consumer.ID,
 	}
 	wr, err := workflow.CreateRun(db.DbMap, &w, *opts)
 	assert.NoError(t, err)
@@ -1400,8 +1400,8 @@ func TestManualRunBuildParameterNoApplicationOnRoot(t *testing.T) {
 
 	consumer, _ := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
 	opts := &sdk.WorkflowRunPostHandlerOption{
-		Manual:       &manualEvent,
-		AuthConsumer: consumer,
+		Manual:         &manualEvent,
+		AuthConsumerID: consumer.ID,
 	}
 	wr, err := workflow.CreateRun(db.DbMap, &w, *opts)
 	assert.NoError(t, err)
@@ -1591,8 +1591,8 @@ func TestGitParamOnPipelineWithoutApplication(t *testing.T) {
 
 	consumer, _ := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
 	opts := &sdk.WorkflowRunPostHandlerOption{
-		Manual:       &manualEvent,
-		AuthConsumer: consumer,
+		Manual:         &manualEvent,
+		AuthConsumerID: consumer.ID,
 	}
 	wr, err := workflow.CreateRun(db.DbMap, &w, *opts)
 	assert.NoError(t, err)
@@ -1778,8 +1778,8 @@ func TestGitParamOnApplicationWithoutRepo(t *testing.T) {
 
 	consumer, _ := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
 	opts := &sdk.WorkflowRunPostHandlerOption{
-		Manual:       &manualEvent,
-		AuthConsumer: consumer,
+		Manual:         &manualEvent,
+		AuthConsumerID: consumer.ID,
 	}
 	wr, err := workflow.CreateRun(db.DbMap, &w, *opts)
 	assert.NoError(t, err)
@@ -1976,8 +1976,8 @@ func TestGitParamOn2ApplicationSameRepo(t *testing.T) {
 
 	consumer, _ := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
 	opts := &sdk.WorkflowRunPostHandlerOption{
-		Manual:       &manualEvent,
-		AuthConsumer: consumer,
+		Manual:         &manualEvent,
+		AuthConsumerID: consumer.ID,
 	}
 	wr, err := workflow.CreateRun(db.DbMap, &w, *opts)
 	assert.NoError(t, err)
@@ -2188,8 +2188,8 @@ func TestGitParamWithJoin(t *testing.T) {
 
 	consumer, _ := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
 	opts := &sdk.WorkflowRunPostHandlerOption{
-		Manual:       &manualEvent,
-		AuthConsumer: consumer,
+		Manual:         &manualEvent,
+		AuthConsumerID: consumer.ID,
 	}
 	wr, err := workflow.CreateRun(db.DbMap, &w, *opts)
 	assert.NoError(t, err)
@@ -2407,8 +2407,8 @@ func TestGitParamOn2ApplicationSameRepoWithFork(t *testing.T) {
 
 	consumer, _ := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
 	opts := &sdk.WorkflowRunPostHandlerOption{
-		Manual:       &manualEvent,
-		AuthConsumer: consumer,
+		Manual:         &manualEvent,
+		AuthConsumerID: consumer.ID,
 	}
 	wr, err := workflow.CreateRun(db.DbMap, &w, *opts)
 	assert.NoError(t, err)
@@ -2599,8 +2599,8 @@ func TestManualRunWithPayloadAndRunCondition(t *testing.T) {
 
 	consumer, _ := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
 	opts := &sdk.WorkflowRunPostHandlerOption{
-		Manual:       &manualEvent,
-		AuthConsumer: consumer,
+		Manual:         &manualEvent,
+		AuthConsumerID: consumer.ID,
 	}
 	wr, err := workflow.CreateRun(db.DbMap, &w, *opts)
 	assert.NoError(t, err)

@@ -54,7 +54,7 @@ func TestProcessJoinDefaultCondition(t *testing.T) {
 	require.NoError(t, workflow.Insert(context.TODO(), db, cache, *proj, &wr.Workflow))
 
 	// Create run
-	wrr, err := workflow.CreateRun(db.DbMap, &wr.Workflow, sdk.WorkflowRunPostHandlerOption{AuthConsumer: consumer})
+	wrr, err := workflow.CreateRun(db.DbMap, &wr.Workflow, sdk.WorkflowRunPostHandlerOption{AuthConsumerID: consumer.ID})
 	require.NoError(t, err)
 	wr.ID = wrr.ID
 	wr.WorkflowID = wr.Workflow.ID
@@ -124,7 +124,7 @@ func TestProcessJoinCustomCondition(t *testing.T) {
 	require.NoError(t, workflow.Insert(context.TODO(), db, cache, *proj, &wr.Workflow))
 
 	// Create run
-	wrr, err := workflow.CreateRun(db.DbMap, &wr.Workflow, sdk.WorkflowRunPostHandlerOption{AuthConsumer: consumer})
+	wrr, err := workflow.CreateRun(db.DbMap, &wr.Workflow, sdk.WorkflowRunPostHandlerOption{AuthConsumerID: consumer.ID})
 	require.NoError(t, err)
 	wr.ID = wrr.ID
 	wr.WorkflowID = wr.Workflow.ID
