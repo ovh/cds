@@ -133,8 +133,9 @@ func recreateSessionToken(configFile string, cdsctx internal.CDSContext, context
 		"token": cdsctx.Token,
 	}
 	client := cdsclient.New(cdsclient.Config{
-		Host:    cdsctx.Host,
-		Verbose: os.Getenv("CDS_VERBOSE") == "true",
+		Host:                  cdsctx.Host,
+		Verbose:               os.Getenv("CDS_VERBOSE") == "true" || cdsctx.Verbose,
+		InsecureSkipVerifyTLS: os.Getenv("CDS_INSECURE") == "true" || cdsctx.InsecureSkipVerifyTLS,
 	})
 	res, err := client.AuthConsumerSignin(sdk.ConsumerBuiltin, req)
 	if err != nil {

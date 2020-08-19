@@ -75,8 +75,9 @@ func loginRun(v cli.Values) error {
 
 	// Load all drivers from given CDS instance
 	client := cdsclient.New(cdsclient.Config{
-		Host:    apiURL,
-		Verbose: os.Getenv("CDS_VERBOSE") == "true",
+		Host:                  apiURL,
+		Verbose:               os.Getenv("CDS_VERBOSE") == "true" || v.GetBool("verbose"),
+		InsecureSkipVerifyTLS: os.Getenv("CDS_INSECURE") == "true" || v.GetBool("insecure"),
 	})
 	drivers, err := client.AuthDriverList()
 	if err != nil {
@@ -194,8 +195,9 @@ func loginRunBuiltin(v cli.Values) (sdk.AuthConsumerSigninRequest, error) {
 
 func loginRunExternal(v cli.Values, consumerType sdk.AuthConsumerType, apiURL string) error {
 	client := cdsclient.New(cdsclient.Config{
-		Host:    apiURL,
-		Verbose: v.GetBool("verbose"),
+		Host:                  apiURL,
+		Verbose:               os.Getenv("CDS_VERBOSE") == "true" || v.GetBool("verbose"),
+		InsecureSkipVerifyTLS: os.Getenv("CDS_INSECURE") == "true" || v.GetBool("insecure"),
 	})
 	config, err := client.ConfigUser()
 	if err != nil {
@@ -234,7 +236,7 @@ func doAfterLogin(client cdsclient.Interface, v cli.Values, apiURL string, drive
 		sessionToken = res.Token
 	} else {
 		var err error
-		signinToken, sessionToken, err = createOrRegenConsumer(apiURL, res.User.Username, res.Token)
+		signinToken, sessionToken, err = createOrRegenConsumer(apiURL, res.User.Username, res.Token, v)
 		if err != nil {
 			return err
 		}
@@ -331,16 +333,17 @@ func doAfterLogin(client cdsclient.Interface, v cli.Values, apiURL string, drive
 }
 
 // return signin-token, session-token
-func createOrRegenConsumer(apiURL, username, sessionToken string) (string, string, error) {
+func createOrRegenConsumer(apiURL, username, sessionToken string, v cli.Values) (string, string, error) {
 	hostname, err := os.Hostname()
 	if err != nil {
 		return "", "", fmt.Errorf("cdsctl: cannot retrieve hostname: %s", err)
 	}
 
 	client := cdsclient.New(cdsclient.Config{
-		Host:         apiURL,
-		Verbose:      os.Getenv("CDS_VERBOSE") == "true",
-		SessionToken: sessionToken,
+		Host:                  apiURL,
+		Verbose:               os.Getenv("CDS_VERBOSE") == "true" || v.GetBool("verbose"),
+		InsecureSkipVerifyTLS: os.Getenv("CDS_INSECURE") == "true" || v.GetBool("insecure"),
+		SessionToken:          sessionToken,
 	})
 
 	consumers, err := client.AuthConsumerListByUser(username)
@@ -442,8 +445,9 @@ func loginVerifyFunc(v cli.Values) error {
 
 	// Load all drivers from given CDS instance
 	client := cdsclient.New(cdsclient.Config{
-		Host:    apiURL,
-		Verbose: os.Getenv("CDS_VERBOSE") == "true",
+		Host:                  apiURL,
+		Verbose:               os.Getenv("CDS_VERBOSE") == "true" || v.GetBool("verbose"),
+		InsecureSkipVerifyTLS: os.Getenv("CDS_INSECURE") == "true" || v.GetBool("insecure"),
 	})
 	drivers, err := client.AuthDriverList()
 	if err != nil {
