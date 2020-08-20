@@ -12,7 +12,7 @@ import (
 func (s *Service) processLoadFiles(ctx context.Context, op *sdk.Operation) error {
 	r := s.Repo(*op)
 
-	gitRepo, err := repo.New(r.Basedir)
+	gitRepo, err := repo.New(ctx, r.Basedir)
 	if err != nil {
 		return sdk.WithStack(err)
 	}
