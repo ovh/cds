@@ -44,5 +44,6 @@ testcases:
 
 - name: check workflow log
   steps:
-    - script: {{.cdsctl}} -f {{.cdsctl.config}} workflow logs download 04SCWORKFLOWTEMPLATERUN testtemplate 1 --pattern build
-    - script: grep "CDS_TEMPLATE_VERSION=1" *.log
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} workflow logs download 04SCWORKFLOWTEMPLATERUN testtemplate 1 --pattern build; grep "CDS_TEMPLATE_VERSION=1" *.log
+    retry: 20
+    delay: 10
