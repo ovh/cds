@@ -112,7 +112,7 @@ func prepareGitCloneCommands(repo, workdirPath, path string, opts *CloneOpts) (s
 			if path == "" {
 				t := strings.Split(repo, "/")
 				fetchCmd.workdir = filepath.Join(workdirPath, strings.TrimSuffix(t[len(t)-1], ".git"))
-			} else if strings.HasPrefix(path, "/") {
+			} else if sdk.PathIsAbs(path) {
 				fetchCmd.workdir = path
 			} else {
 				fetchCmd.workdir = filepath.Join(workdirPath, path)
@@ -131,7 +131,7 @@ func prepareGitCloneCommands(repo, workdirPath, path string, opts *CloneOpts) (s
 		if path == "" {
 			t := strings.Split(repo, "/")
 			resetCmd.workdir = filepath.Join(workdirPath, strings.TrimSuffix(t[len(t)-1], ".git"))
-		} else if strings.HasPrefix(path, "/") {
+		} else if sdk.PathIsAbs(path) {
 			resetCmd.workdir = path
 		} else {
 			resetCmd.workdir = filepath.Join(workdirPath, path)

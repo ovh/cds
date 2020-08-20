@@ -50,7 +50,9 @@ func prepareGitTagCreateCommands(repo string, opts *TagOpts) (cmds, error) {
 		allCmd = append(allCmd, importcmd)
 	}
 
-	allCmd = append(allCmd, gitConfigCommand("user.name", opts.Username))
+	if opts != nil {
+		allCmd = append(allCmd, gitConfigCommand("user.name", opts.Username))
+	}
 	allCmd = append(allCmd, gitConfigCommand("user.email", "cds@localhost"))
 
 	gitcmd := cmd{
