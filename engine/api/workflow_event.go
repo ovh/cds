@@ -5,9 +5,6 @@ import (
 
 	"github.com/ovh/cds/engine/api/notification"
 
-	"github.com/go-gorp/gorp"
-
-	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/sdk"
@@ -15,7 +12,7 @@ import (
 )
 
 // WorkflowSendEvent Send event on workflow run
-func WorkflowSendEvent(ctx context.Context, db *gorp.DbMap, store cache.Store, proj sdk.Project, report *workflow.ProcessorReport) {
+func (api *API) WorkflowSendEvent(ctx context.Context, proj sdk.Project, report *workflow.ProcessorReport) {
 	if report == nil {
 		return
 	}
@@ -23,7 +20,7 @@ func WorkflowSendEvent(ctx context.Context, db *gorp.DbMap, store cache.Store, p
 		event.PublishWorkflowRun(ctx, wr, proj.Key)
 	}
 	for _, wnr := range report.Nodes() {
-		wr, err := workflow.LoadRunByID(db, wnr.WorkflowRunID, workflow.LoadRunOptions{
+		wr, err := workflow.LoadRunByID(api.mustDB(), wnr.WorkflowRunID, workflow.LoadRunOptions{
 			DisableDetailledNodeRun: true,
 		})
 		if err != nil {
@@ -35,13 +32,13 @@ func WorkflowSendEvent(ctx context.Context, db *gorp.DbMap, store cache.Store, p
 		if wnr.SubNumber > 0 {
 			previousNodeRun = &wnr
 		} else {
-			previousNodeRun, err = workflow.PreviousNodeRun(db, wnr, wnr.WorkflowNodeName, wr.WorkflowID)
+			previousNodeRun, err = workflow.PreviousNodeRun(api.mustDB(), wnr, wnr.WorkflowNodeName, wr.WorkflowID)
 			if err != nil {
 				log.Warning(ctx, "workflowSendEvent> Cannot load previous node run: %v", err)
 			}
 		}
 
-		nr, err := workflow.LoadNodeRunByID(db, wnr.ID, workflow.LoadRunOptions{
+		nr, err := workflow.LoadNodeRunByID(api.mustDB(), wnr.ID, workflow.LoadRunOptions{
 			DisableDetailledNodeRun: false, // load build parameters, used in notif interpolate below
 		})
 		if err != nil {
@@ -49,26 +46,26 @@ func WorkflowSendEvent(ctx context.Context, db *gorp.DbMap, store cache.Store, p
 			continue
 		}
 
-		workDB, err := workflow.LoadWorkflowFromWorkflowRunID(db, wr.ID)
+		workDB, err := workflow.LoadWorkflowFromWorkflowRunID(api.mustDB(), wr.ID)
 		if err != nil {
 			log.Warning(ctx, "WorkflowSendEvent> Unable to load workflow for event: %v", err)
 			continue
 		}
-		eventsNotif := notification.GetUserWorkflowEvents(ctx, db, store, wr.Workflow.ProjectID, wr.Workflow.ProjectKey, workDB.Name, wr.Workflow.Notifications, previousNodeRun, *nr)
+		eventsNotif := notification.GetUserWorkflowEvents(ctx, api.mustDB(), api.Cache, wr.Workflow.ProjectID, wr.Workflow.ProjectKey, workDB.Name, wr.Workflow.Notifications, previousNodeRun, *nr)
 		event.PublishWorkflowNodeRun(ctx, *nr, wr.Workflow, eventsNotif)
 		e := &workflow.VCSEventMessenger{}
-		if err := e.SendVCSEvent(ctx, db, store, proj, *wr, wnr); err != nil {
+		if err := e.SendVCSEvent(ctx, api.mustDB(), api.Cache, proj, *wr, wnr); err != nil {
 			log.Warning(ctx, "WorkflowSendEvent> Cannot send vcs notification")
 		}
 	}
 
 	for _, jobrun := range report.Jobs() {
-		noderun, err := workflow.LoadNodeRunByID(db, jobrun.WorkflowNodeRunID, workflow.LoadRunOptions{})
+		noderun, err := workflow.LoadNodeRunByID(api.mustDB(), jobrun.WorkflowNodeRunID, workflow.LoadRunOptions{})
 		if err != nil {
 			log.Warning(ctx, "workflowSendEvent> Cannot load workflow node run %d: %s", jobrun.WorkflowNodeRunID, err)
 			continue
 		}
-		wr, err := workflow.LoadRunByID(db, noderun.WorkflowRunID, workflow.LoadRunOptions{
+		wr, err := workflow.LoadRunByID(api.mustDB(), noderun.WorkflowRunID, workflow.LoadRunOptions{
 			WithLightTests: true,
 		})
 		if err != nil {

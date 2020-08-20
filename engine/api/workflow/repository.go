@@ -4,15 +4,17 @@ import (
 	"archive/tar"
 	"bytes"
 	"context"
+	"fmt"
 	"path/filepath"
 
 	"github.com/fsamin/go-dump"
 	"github.com/go-gorp/gorp"
+	"github.com/sirupsen/logrus"
 
-	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/engine/api/keys"
 	"github.com/ovh/cds/engine/api/operation"
 	"github.com/ovh/cds/engine/api/workflowtemplate"
+	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/exportentities"
 	"github.com/ovh/cds/sdk/log"
@@ -50,9 +52,16 @@ func CreateFromRepository(ctx context.Context, db *gorp.DbMap, store cache.Store
 		return nil, nil, sdk.WrapError(err, "unable to post repository operation")
 	}
 
+	log.Info(ctx, "polling operation %v for workflow %s/%s", newOperation.UUID, p.Key, wf.Name)
 	ope, err := operation.Poll(ctx, db, newOperation.UUID)
 	if err != nil {
-		return nil, nil, sdk.WrapError(err, "cannot analyse repository")
+		isErrWithStack := sdk.IsErrorWithStack(err)
+		fields := logrus.Fields{}
+		if isErrWithStack {
+			fields["stack_trace"] = fmt.Sprintf("%+v", err)
+		}
+		log.ErrorWithFields(ctx, fields, "cannot analyse repository (operation %s for workflow %s/%s): %v", newOperation.UUID, p.Key, wf.Name, err)
+		return nil, nil, sdk.WithStack(sdk.ErrRepoAnalyzeFailed)
 	}
 
 	var uuid string

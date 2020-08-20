@@ -609,7 +609,6 @@ func (dao WorkflowDAO) withNotifications(db gorp.SqlExecutor, ws *[]Workflow) er
 	for x := range *ws {
 		w := &(*ws)[x]
 		w.Notifications = notificationsMap[w.ID]
-		log.Debug("workflow %d notifications: %+v", w.ID, w.Notifications)
 	}
 	return nil
 }

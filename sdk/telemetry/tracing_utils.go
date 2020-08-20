@@ -14,9 +14,15 @@ func New(ctx context.Context, s Service, name string, sampler trace.Sampler, spa
 	if exp == nil {
 		return ctx, nil
 	}
-	return trace.StartSpan(ctx, name,
+	ctx, span := trace.StartSpan(ctx, name,
 		trace.WithSampler(sampler),
 		trace.WithSpanKind(spanKind))
+	ctx = SpanContextToContext(ctx, span.SpanContext())
+	ctx = ContextWithTag(ctx,
+		TagServiceType, s.Type(),
+		TagServiceName, s.Name(),
+	)
+	return ctx, span
 }
 
 // Start may start a tracing span

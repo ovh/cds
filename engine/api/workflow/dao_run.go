@@ -15,6 +15,7 @@ import (
 	"github.com/lib/pq"
 	"go.opencensus.io/stats"
 
+	"github.com/ovh/cds/engine/api/authentication"
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
@@ -33,7 +34,9 @@ workflow_run.last_sub_num,
 workflow_run.last_execution,
 workflow_run.to_delete,
 workflow_run.read_only,
-workflow_run.version
+workflow_run.version,
+workflow_run.to_craft,
+workflow_run.to_craft_opts
 `
 
 // LoadRunOptions are options for loading a run (node or workflow)
@@ -590,8 +593,34 @@ func InsertRunNum(db gorp.SqlExecutor, w *sdk.Workflow, num int64) error {
 	return nil
 }
 
+func LoadCratingWorkflowRunIDs(db gorp.SqlExecutor) ([]int64, error) {
+	query := `
+		SELECT id 
+		FROM workflow_run
+		WHERE to_craft = true
+		LIMIT 10
+	`
+	var ids []int64
+	_, err := db.Select(&ids, query)
+	if err != nil {
+		return nil, sdk.WrapError(err, "unable to load crafting workflow runs")
+	}
+	return ids, nil
+}
+
+func UpdateCraftedWorkflowRun(db gorp.SqlExecutor, id int64) error {
+	query := `UPDATE workflow_run
+	SET to_craft = false
+	WHERE id = $1
+	`
+	if _, err := db.Exec(query, id); err != nil {
+		return sdk.WrapError(err, "unable to update crafting workflow run %d", id)
+	}
+	return nil
+}
+
 // CreateRun creates a new workflow run and insert it
-func CreateRun(db *gorp.DbMap, wf *sdk.Workflow, opts *sdk.WorkflowRunPostHandlerOption, ident sdk.Identifiable) (*sdk.WorkflowRun, error) {
+func CreateRun(db *gorp.DbMap, wf *sdk.Workflow, opts sdk.WorkflowRunPostHandlerOption) (*sdk.WorkflowRun, error) {
 	number, err := NextRunNumber(db, wf.ID)
 	if err != nil {
 		return nil, sdk.WrapError(err, "unable to get next run number")
@@ -606,25 +635,31 @@ func CreateRun(db *gorp.DbMap, wf *sdk.Workflow, opts *sdk.WorkflowRunPostHandle
 		Status:        sdk.StatusPending,
 		LastExecution: time.Now(),
 		Tags:          make([]sdk.WorkflowRunTag, 0),
-		Workflow:      sdk.Workflow{Name: wf.Name},
+		Workflow:      *wf, //sdk.Workflow{Name: wf.Name},
+		ToCraft:       true,
+		ToCraftOpts:   &opts,
 	}
 
-	if opts != nil && opts.Hook != nil {
+	if opts.Hook != nil {
 		if trigg, ok := opts.Hook.Payload["cds.triggered_by.username"]; ok {
 			wr.Tag(tagTriggeredBy, trigg)
 		} else {
 			wr.Tag(tagTriggeredBy, "cds.hook")
 		}
 	} else {
-		wr.Tag(tagTriggeredBy, ident.GetUsername())
+		c, err := authentication.LoadConsumerByID(context.Background(), db, opts.AuthConsumerID, authentication.LoadConsumerOptions.WithAuthentifiedUser, authentication.LoadConsumerOptions.WithConsumerGroups)
+		if err != nil {
+			return nil, err
+		}
+		wr.Tag(tagTriggeredBy, c.GetUsername())
 	}
 
 	tags := wf.Metadata["default_tags"]
 	var payload map[string]string
-	if opts != nil && opts.Hook != nil {
+	if opts.Hook != nil {
 		payload = opts.Hook.Payload
 	}
-	if opts != nil && opts.Manual != nil {
+	if opts.Manual != nil {
 		e := dump.NewDefaultEncoder()
 		e.Formatters = []dump.KeyFormatterFunc{dump.WithDefaultLowerCaseFormatter()}
 		e.ExtraFields.DetailedMap = false

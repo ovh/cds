@@ -112,7 +112,7 @@ func (api *API) postTakeWorkflowJobHandler() service.Handler {
 		}
 
 		workflow.ResyncNodeRunsWithCommits(ctx, api.mustDB(), api.Cache, *p, report)
-		go WorkflowSendEvent(context.Background(), api.mustDB(), api.Cache, *p, report)
+		go api.WorkflowSendEvent(context.Background(), *p, report)
 
 		return service.WriteJSON(w, pbji, http.StatusOK)
 	}
@@ -392,7 +392,7 @@ func (api *API) postWorkflowJobResultHandler() service.Handler {
 			telemetry.Tag(telemetry.TagProjectKey, proj.Key),
 		)
 
-		report, err := postJobResult(customCtx, api.mustDBWithCtx, api.Cache, proj, wk, &res)
+		report, err := api.postJobResult(customCtx, proj, wk, &res)
 		if err != nil {
 			return sdk.WrapError(err, "unable to post job result")
 		}
@@ -411,26 +411,26 @@ func (api *API) postWorkflowJobResultHandler() service.Handler {
 		workflow.ResyncNodeRunsWithCommits(ctx, api.mustDB(), api.Cache, *proj, report)
 		next()
 
-		go WorkflowSendEvent(context.Background(), api.mustDB(), api.Cache, *proj, report)
+		go api.WorkflowSendEvent(context.Background(), *proj, report)
 
 		return nil
 	}
 }
 
-func postJobResult(ctx context.Context, dbFunc func(context.Context) *gorp.DbMap, store cache.Store, proj *sdk.Project, wr *sdk.Worker, res *sdk.Result) (*workflow.ProcessorReport, error) {
+func (api *API) postJobResult(ctx context.Context, proj *sdk.Project, wr *sdk.Worker, res *sdk.Result) (*workflow.ProcessorReport, error) {
 	var end func()
 	ctx, end = telemetry.Span(ctx, "postJobResult")
 	defer end()
 
 	//Start the transaction
-	tx, errb := dbFunc(ctx).Begin()
+	tx, errb := api.mustDBWithCtx(ctx).Begin()
 	if errb != nil {
 		return nil, sdk.WrapError(errb, "postJobResult> Cannot begin tx")
 	}
 	defer tx.Rollback() // nolint
 
 	//Load workflow node job run
-	job, errj := workflow.LoadAndLockNodeJobRunSkipLocked(ctx, tx, store, res.BuildID)
+	job, errj := workflow.LoadAndLockNodeJobRunSkipLocked(ctx, tx, api.Cache, res.BuildID)
 	if errj != nil {
 		return nil, sdk.WrapError(errj, "cannot load node run job %d", res.BuildID)
 	}
@@ -513,10 +513,7 @@ func postJobResult(ctx context.Context, dbFunc func(context.Context) *gorp.DbMap
 
 	// Update action status
 	log.Debug("postJobResult> Updating %d to %s in queue", job.ID, res.Status)
-	newDBFunc := func() *gorp.DbMap {
-		return dbFunc(context.Background())
-	}
-	report, err := workflow.UpdateNodeJobRunStatus(ctx, tx, store, *proj, job, res.Status)
+	report, err := workflow.UpdateNodeJobRunStatus(ctx, tx, api.Cache, *proj, job, res.Status)
 	if err != nil {
 		return nil, sdk.WrapError(err, "cannot update NodeJobRun %d status", job.ID)
 	}
@@ -528,12 +525,12 @@ func postJobResult(ctx context.Context, dbFunc func(context.Context) *gorp.DbMap
 
 	for i := range report.WorkflowRuns() {
 		run := &report.WorkflowRuns()[i]
-		reportParent, err := updateParentWorkflowRun(ctx, newDBFunc, store, run)
+		reportParent, err := api.updateParentWorkflowRun(ctx, run)
 		if err != nil {
 			return nil, sdk.WithStack(err)
 		}
 
-		go WorkflowSendEvent(context.Background(), dbFunc(ctx), store, *proj, reportParent)
+		go api.WorkflowSendEvent(context.Background(), *proj, reportParent)
 	}
 
 	return report, nil

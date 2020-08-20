@@ -1,6 +1,8 @@
 package sdk
 
 import (
+	"database/sql/driver"
+	json "encoding/json"
 	"fmt"
 	"net/url"
 	"sort"
@@ -56,6 +58,8 @@ type WorkflowRun struct {
 	Header           WorkflowRunHeaders               `json:"header,omitempty" db:"-"`
 	URLs             URL                              `json:"urls" yaml:"-" db:"-" cli:"-"`
 	ReadOnly         bool                             `json:"read_only" yaml:"-" db:"read_only" cli:"-"`
+	ToCraft          bool                             `json:"-" yaml:"-" db:"to_craft" cli:"-"`
+	ToCraftOpts      *WorkflowRunPostHandlerOption    `json:"-" yaml:"-" db:"to_craft_opts" cli:"-"`
 }
 
 type WorkflowRunSecret struct {
@@ -77,10 +81,29 @@ type WorkflowNodeRunRelease struct {
 
 // WorkflowRunPostHandlerOption contains the body content for launch a workflow
 type WorkflowRunPostHandlerOption struct {
-	Hook        *WorkflowNodeRunHookEvent `json:"hook,omitempty"`
-	Manual      *WorkflowNodeRunManual    `json:"manual,omitempty"`
-	Number      *int64                    `json:"number,omitempty"`
-	FromNodeIDs []int64                   `json:"from_nodes,omitempty"`
+	Hook           *WorkflowNodeRunHookEvent `json:"hook,omitempty"`
+	Manual         *WorkflowNodeRunManual    `json:"manual,omitempty"`
+	Number         *int64                    `json:"number,omitempty"`
+	FromNodeIDs    []int64                   `json:"from_nodes,omitempty"`
+	AuthConsumerID string                    `json:"auth_consumer,omitempty"`
+}
+
+// Value returns driver.Value from WorkflowRunPostHandlerOption.
+func (a *WorkflowRunPostHandlerOption) Value() (driver.Value, error) {
+	j, err := json.Marshal(a)
+	return j, WrapError(err, "cannot marshal Author")
+}
+
+// Scan WorkflowRunPostHandlerOption.
+func (a *WorkflowRunPostHandlerOption) Scan(src interface{}) error {
+	if src == nil {
+		return nil
+	}
+	source, ok := src.([]byte)
+	if !ok {
+		return WithStack(fmt.Errorf("type assertion .([]byte) failed (%T)", src))
+	}
+	return WrapError(json.Unmarshal(source, a), "cannot unmarshal WorkflowRunPostHandlerOption")
 }
 
 //WorkflowRunNumber contains a workflow run number

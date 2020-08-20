@@ -23,7 +23,7 @@ import (
 func Test_checkWorkflowPermissions(t *testing.T) {
 	api, db, _ := newTestAPI(t)
 
-	wctx := testRunWorkflow(t, api, db, api.Router)
+	wctx := testRunWorkflow(t, api, api.Router)
 	user := wctx.user
 	admin, _ := assets.InsertAdminUser(t, db)
 	maintainer, _ := assets.InsertAdminUser(t, db)
