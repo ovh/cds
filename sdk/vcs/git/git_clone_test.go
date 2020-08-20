@@ -72,7 +72,7 @@ func TestExtractInfoAbsPath(t *testing.T) {
 	info, err := ExtractInfo(context.TODO(), myrepo, &CloneOpts{ForceGetGitDescribe: true})
 	require.NoError(t, err)
 	assert.NotEmpty(t, info.GitDescribe)
-	assert.Equal(t, "0.41.0-119-gf57e4c840s", info.GitDescribe)
+	assert.Equal(t, "0.41.0-119-gf57e4c840", info.GitDescribe)
 }
 func TestExtractInfoEmptyPath(t *testing.T) {
 	repo := "https://github.com/ovh/cds.git"
