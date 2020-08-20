@@ -44,17 +44,24 @@ testcases:
 
 - name: check result
   steps:
-    - script: {{.cdsctl}} -f {{.cdsctl.config}} workflow logs download 04SCWORKFLOWRUNWORKERCMD 04SCWorkflowRunWorkerCmd-WORKFLOW 1 --pattern CHECKSECRET
-    - script: grep "secret variable cds.app.password is used in file" *.log
-    - script: {{.cdsctl}} -f {{.cdsctl.config}} workflow logs download 04SCWORKFLOWRUNWORKERCMD 04SCWorkflowRunWorkerCmd-WORKFLOW 1 --pattern TMPL
-    - script: grep "this a a line in the file, with a CDS variable 1" *.log
-    - script: {{.cdsctl}} -f {{.cdsctl.config}} workflow logs download 04SCWORKFLOWRUNWORKERCMD 04SCWorkflowRunWorkerCmd-WORKFLOW 1 --pattern KEY
-    - script: grep "BEGIN RSA PRIVATE KEY" *.log
-    - script: {{.cdsctl}} -f {{.cdsctl.config}} workflow logs download 04SCWORKFLOWRUNWORKERCMD 04SCWorkflowRunWorkerCmd-WORKFLOW 1 --pattern ARTIFACTLIST
-    - script: grep "\"name\":\"myFileUploaded\"" *.log
-    - script: {{.cdsctl}} -f {{.cdsctl.config}} workflow logs download 04SCWORKFLOWRUNWORKERCMD 04SCWorkflowRunWorkerCmd-WORKFLOW 1 --pattern DOWNLOAD
-    - script: grep "Je suis un artifact" *.log
-    - script: {{.cdsctl}} -f {{.cdsctl.config}} workflow logs download 04SCWORKFLOWRUNWORKERCMD 04SCWorkflowRunWorkerCmd-WORKFLOW 1 --pattern EXPORTECHO
-    - script: grep "Export value bar" *.log
-    - script: {{.cdsctl}} -f {{.cdsctl.config}} workflow logs download 04SCWORKFLOWRUNWORKERCMD 04SCWorkflowRunWorkerCmd-WORKFLOW 1 --pattern CACHEPULL
-    - script: grep "cache push file content" *.log
+    - script: {{.cdsctl}} -f {{.cdsctl.config}} workflow logs download 04SCWORKFLOWRUNWORKERCMD 04SCWorkflowRunWorkerCmd-WORKFLOW 1 --pattern CHECKSECRET; grep "secret variable cds.app.password is used in file" *.log
+      retry: 10
+      delay: 10
+    - script: {{.cdsctl}} -f {{.cdsctl.config}} workflow logs download 04SCWORKFLOWRUNWORKERCMD 04SCWorkflowRunWorkerCmd-WORKFLOW 1 --pattern TMPL; grep "this a a line in the file, with a CDS variable 1" *.log
+      retry: 10
+      delay: 10
+    - script: {{.cdsctl}} -f {{.cdsctl.config}} workflow logs download 04SCWORKFLOWRUNWORKERCMD 04SCWorkflowRunWorkerCmd-WORKFLOW 1 --pattern KEY; grep "BEGIN RSA PRIVATE KEY" *.log
+      retry: 10
+      delay: 10
+    - script: {{.cdsctl}} -f {{.cdsctl.config}} workflow logs download 04SCWORKFLOWRUNWORKERCMD 04SCWorkflowRunWorkerCmd-WORKFLOW 1 --pattern ARTIFACTLIST; grep "\"name\":\"myFileUploaded\"" *.log
+      retry: 10
+      delay: 10
+    - script: {{.cdsctl}} -f {{.cdsctl.config}} workflow logs download 04SCWORKFLOWRUNWORKERCMD 04SCWorkflowRunWorkerCmd-WORKFLOW 1 --pattern DOWNLOAD; grep "Je suis un artifact" *.log
+      retry: 10
+      delay: 10
+    - script: {{.cdsctl}} -f {{.cdsctl.config}} workflow logs download 04SCWORKFLOWRUNWORKERCMD 04SCWorkflowRunWorkerCmd-WORKFLOW 1 --pattern EXPORTECHO; grep "Export value bar" *.log
+      retry: 10
+      delay: 10
+    - script: {{.cdsctl}} -f {{.cdsctl.config}} workflow logs download 04SCWORKFLOWRUNWORKERCMD 04SCWorkflowRunWorkerCmd-WORKFLOW 1 --pattern CACHEPULL; grep "cache push file content" *.log
+      retry: 10
+      delay: 10

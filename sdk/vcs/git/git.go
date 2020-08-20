@@ -99,17 +99,19 @@ func runGitCommandsOverSSH(commands []cmd, auth *AuthOpts, output *OutputOpts) e
 	gitSSHCmd += " -F /dev/null -o IdentitiesOnly=yes -o StrictHostKeyChecking=no"
 	gitSSHCmd += " -i " + pkAbsFileName
 
-	var wrapper string
+	var wrapper, wrapperPath string
 	if sdk.GOOS == "windows" {
-		gitSSHCmd += " %*"
-		wrapper = gitSSHCmd
+		gitSSHCmd += ` %*`
+		wrapper = `@echo off
+` + gitSSHCmd
+		wrapperPath = filepath.Join(keyDir, "gitwrapper.bat")
 	} else {
 		gitSSHCmd += ` "$@"`
 		wrapper = `#!/bin/sh
 ` + gitSSHCmd
+		wrapperPath = filepath.Join(keyDir, "gitwrapper")
 	}
 
-	wrapperPath := filepath.Join(keyDir, "gitwrapper")
 	if err := ioutil.WriteFile(wrapperPath, []byte(wrapper), os.FileMode(0700)); err != nil {
 		return sdk.WithStack(err)
 	}
@@ -119,9 +121,7 @@ func runGitCommandsOverSSH(commands []cmd, auth *AuthOpts, output *OutputOpts) e
 
 func runGitCommandRaw(cmds cmds, output *OutputOpts, envs ...string) error {
 	osEnv := os.Environ()
-	for _, e := range envs {
-		osEnv = append(osEnv, e)
-	}
+	osEnv = append(osEnv, envs...)
 	for _, c := range cmds {
 		for i, arg := range c.args {
 			c.args[i] = os.ExpandEnv(arg)
