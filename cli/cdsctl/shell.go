@@ -94,7 +94,7 @@ func shellRun(v cli.Values) error {
 
 	home := "/"
 
-	ctx := context.TODO()
+	ctx := context.Background()
 	// try to discover conf for existing .git repository
 	r, errR := repo.New(ctx, ".")
 	if errR == nil {

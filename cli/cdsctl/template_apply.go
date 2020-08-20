@@ -181,7 +181,7 @@ func templateApplyRun(v cli.Values) error {
 	// try to find existing .git repository
 	var localRepoURL string
 	var localRepoName string
-	ctx := context.TODO()
+	ctx := context.Background()
 	r, err := repo.New(ctx, ".")
 	if err == nil {
 		localRepoURL, err = r.FetchURL(ctx)

@@ -46,7 +46,7 @@ func workflowStatusRunWithTrack(v cli.Values) (interface{}, error) {
 	var currentDisplay = new(cli.Display)
 
 	// try to get the latest commit
-	ctx := context.TODO()
+	ctx := context.Background()
 	r, err := repo.New(ctx, ".")
 	if err != nil {
 		return nil, fmt.Errorf("unable to get latest commit: %v", err)

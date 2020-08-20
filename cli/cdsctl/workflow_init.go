@@ -91,7 +91,7 @@ func interactiveChooseProject(gitRepo repo.Repo, defaultValue string) (string, e
 	selected := cli.AskChoice("Choose the CDS project:", opts...)
 	chosenProj = &projs[selected]
 
-	if err := gitRepo.LocalConfigSet(context.TODO(), "cds", "project", chosenProj.Key); err != nil {
+	if err := gitRepo.LocalConfigSet(context.Background(), "cds", "project", chosenProj.Key); err != nil {
 		return "", err
 	}
 
@@ -106,7 +106,7 @@ func interactiveChooseVCSServer(proj *sdk.Project, gitRepo repo.Repo) (string, e
 	case 1:
 		return proj.VCSServers[0].Name, nil
 	default:
-		fetchURL, err := gitRepo.FetchURL(context.TODO())
+		fetchURL, err := gitRepo.FetchURL(context.Background())
 		if err != nil {
 			return "", fmt.Errorf("Unable to get remote URL: %v", err)
 		}
@@ -451,7 +451,7 @@ func craftPipelineFile(proj *sdk.Project, existingPip *sdk.Pipeline, pipName, de
 
 func workflowInitRun(c cli.Values) error {
 	path := "."
-	ctx := context.TODO()
+	ctx := context.Background()
 	gitRepo, err := repo.New(ctx, path)
 	if err != nil {
 		return err

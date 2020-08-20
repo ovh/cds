@@ -107,7 +107,7 @@ func workflowRunManualRun(v cli.Values) error {
 			return fmt.Errorf("Unable to get current path: %s", err)
 		}
 		var gitBranch, currentBranch, remoteURL string
-		ctx := context.TODO()
+		ctx := context.Background()
 		r, err := repo.New(ctx, dir)
 		if err == nil { // If the directory is a git repository
 			currentBranch, _ = r.CurrentBranch(ctx)

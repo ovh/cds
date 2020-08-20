@@ -42,7 +42,7 @@ func workflow() *cobra.Command {
 
 func workflowNodeForCurrentRepo(projectKey, workflowName string) (int64, error) {
 	//Try to get the latest commit
-	ctx := context.TODO()
+	ctx := context.Background()
 	r, err := repo.New(ctx, "")
 	if err != nil {
 		return 0, nil

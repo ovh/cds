@@ -218,7 +218,7 @@ func discoverConf(ctxArg []cli.Arg) ([]string, error) {
 	}
 
 	var projectKey, applicationName, workflowName string
-	ctx := context.TODO()
+	ctx := context.Background()
 
 	// try to find existing .git repository
 	var repoExists bool
