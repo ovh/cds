@@ -70,7 +70,7 @@ func TestInit(t *testing.T) {
 	redisUnit, err := storage.LoadUnitByName(ctx, m, db, "redis_buffer")
 	require.NoError(t, err)
 
-	itemUnit, err := storage.InsertItemUnit(ctx, m, db, *redisUnit, i)
+	itemUnit, err := storage.InsertItemUnit(ctx, m, db, redisUnit.ID, i.ID)
 	require.NoError(t, err)
 	require.NotNil(t, itemUnit)
 

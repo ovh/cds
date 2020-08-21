@@ -69,9 +69,9 @@ begin
     and tc.constraint_name = lower(fk_name);
 
   if l_count = 0 then
-     execute 'alter table "' || table_name_child || '" ADD CONSTRAINT ' || fk_name || ' FOREIGN KEY(' || column_name_child || ') REFERENCES "' || table_name_parent || '"(' || column_name_parent || ') ON DELETE CASCADE';   
+     execute 'alter table "' || table_name_child || '" ADD CONSTRAINT ' || fk_name || ' FOREIGN KEY(' || column_name_child || ') REFERENCES "' || table_name_parent || '"(' || column_name_parent || ') ON DELETE CASCADE';
      execute create_index(table_name_child, 'IDX_' || fk_name, column_name_child);
-  end if; 
+  end if;
 end;
 $$ LANGUAGE plpgsql;
 -- +migrate StatementEnd

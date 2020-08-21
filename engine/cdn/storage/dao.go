@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"github.com/go-gorp/gorp"
-	"github.com/ovh/cds/engine/cdn/index"
 	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
@@ -102,12 +101,11 @@ func getAllUnits(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlExecutor,
 	return units, nil
 }
 
-func InsertItemUnit(ctx context.Context, m *gorpmapper.Mapper, db gorpmapper.SqlExecutorWithTx, u Unit, i index.Item) (*ItemUnit, error) {
+func InsertItemUnit(ctx context.Context, m *gorpmapper.Mapper, db gorpmapper.SqlExecutorWithTx, unitID, itemID string) (*ItemUnit, error) {
 	var iu = ItemUnit{
-		ID:           sdk.UUID(),
-		LastModified: i.Created,
-		ItemID:       i.ID,
-		UnitID:       u.ID,
+		ID:     sdk.UUID(),
+		ItemID: itemID,
+		UnitID: unitID,
 	}
 	if err := m.InsertAndSign(ctx, db, &iu); err != nil {
 		return nil, sdk.WrapError(err, "unable to insert storage unit iotem")
@@ -123,7 +121,12 @@ func UpdateItemUnit(ctx context.Context, m *gorpmapper.Mapper, db gorpmapper.Sql
 }
 
 func LoadItemByUnit(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlExecutor, unitID string, itemID string, opts ...gorpmapper.GetOptionFunc) (*ItemUnit, error) {
-	query := gorpmapper.NewQuery("SELECT * FROM storage_unit_index WHERE unit_id = $1 and item_id = $2 LIMIT 1").Args(unitID, itemID)
+	query := gorpmapper.NewQuery("SELECT * FROM storage_unit_index WHERE unit_id = $1 and item_id = $2").Args(unitID, itemID)
+	return getItemUnit(ctx, m, db, query)
+}
+
+func LoadAndLockItemByUnit(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlExecutor, unitID string, itemID string, opts ...gorpmapper.GetOptionFunc) (*ItemUnit, error) {
+	query := gorpmapper.NewQuery("SELECT * FROM storage_unit_index WHERE unit_id = $1 and item_id = $2 FOR UPDATE SKIP LOCKED").Args(unitID, itemID)
 	return getItemUnit(ctx, m, db, query)
 }
 
@@ -183,11 +186,11 @@ func getAllItemUnits(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlExecu
 }
 
 func LoadAllItemIDUnknownByUnit(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlExecutor, unitID string, limit int) ([]string, error) {
-	query := `SELECT id 
-		FROM index 
-		EXCEPT 
+	query := `SELECT id
+		FROM index
+		EXCEPT
 		SELECT item_id
-		FROM storage_unit_index  
+		FROM storage_unit_index
 		WHERE unit_id = $1
 		LIMIT $2
 	`
