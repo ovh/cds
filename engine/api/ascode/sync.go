@@ -5,9 +5,9 @@ import (
 
 	"github.com/go-gorp/gorp"
 
-	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
+	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
