@@ -241,7 +241,7 @@ vcs_ssh_key: proj-blabla
 				"git.author": "test",
 			},
 		},
-	}, consumer, nil)
+	}, *consumer, nil)
 	test.NoError(t, errWr)
 
 	vars := map[string]string{

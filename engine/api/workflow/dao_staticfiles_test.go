@@ -86,7 +86,7 @@ func TestInsertStaticFiles(t *testing.T) {
 	wfr.Workflow = *w1
 	_, errWr := workflow.StartWorkflowRun(context.TODO(), db, cache, *proj, wfr, &sdk.WorkflowRunPostHandlerOption{
 		Manual: &sdk.WorkflowNodeRunManual{Username: u.Username},
-	}, consumer, nil)
+	}, *consumer, nil)
 	test.NoError(t, errWr)
 
 	var stFile sdk.StaticFiles

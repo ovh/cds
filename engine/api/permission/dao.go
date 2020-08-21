@@ -119,7 +119,7 @@ func scanPermissions(rows *sql.Rows) (sdk.EntitiesPermissions, error) {
 }
 
 // AccessToWorkflowNode check rights on the given workflow node
-func AccessToWorkflowNode(ctx context.Context, db gorp.SqlExecutor, wf *sdk.Workflow, wn *sdk.Node, u *sdk.AuthConsumer, access int) bool {
+func AccessToWorkflowNode(ctx context.Context, db gorp.SqlExecutor, wf *sdk.Workflow, wn *sdk.Node, u sdk.AuthConsumer, access int) bool {
 	if wn == nil {
 		return false
 	}

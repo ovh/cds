@@ -17,6 +17,7 @@ import (
 
 	"github.com/ovh/cds/engine/api/authentication"
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
+	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk/telemetry"
@@ -595,7 +596,7 @@ func InsertRunNum(db gorp.SqlExecutor, w *sdk.Workflow, num int64) error {
 
 func LoadCratingWorkflowRunIDs(db gorp.SqlExecutor) ([]int64, error) {
 	query := `
-		SELECT id 
+		SELECT id
 		FROM workflow_run
 		WHERE to_craft = true
 		LIMIT 10
@@ -647,10 +648,20 @@ func CreateRun(db *gorp.DbMap, wf *sdk.Workflow, opts sdk.WorkflowRunPostHandler
 			wr.Tag(tagTriggeredBy, "cds.hook")
 		}
 	} else {
-		c, err := authentication.LoadConsumerByID(context.Background(), db, opts.AuthConsumerID, authentication.LoadConsumerOptions.WithAuthentifiedUser, authentication.LoadConsumerOptions.WithConsumerGroups)
+		c, err := authentication.LoadConsumerByID(context.Background(), db, opts.AuthConsumerID,
+			authentication.LoadConsumerOptions.WithAuthentifiedUser,
+			authentication.LoadConsumerOptions.WithConsumerGroups)
 		if err != nil {
 			return nil, err
 		}
+
+		// Add service for consumer if exists
+		s, err := services.LoadByConsumerID(context.Background(), db, c.ID)
+		if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
+			return nil, err
+		}
+		c.Service = s
+
 		wr.Tag(tagTriggeredBy, c.GetUsername())
 	}
 

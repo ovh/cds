@@ -22,6 +22,7 @@ import (
 	"github.com/ovh/cds/engine/api/objectstore"
 	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/api/project"
+	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
@@ -801,7 +802,9 @@ func (api *API) postWorkflowRunHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		key := vars["key"]
-		name := vars["permWorkflowName"]
+    name := vars["permWorkflowName"]
+
+    consumer := getAPIConsumer(ctx)
 
 		telemetry.Current(ctx,
 			telemetry.Tag(telemetry.TagProjectKey, key),
@@ -898,7 +901,7 @@ func (api *API) postWorkflowRunHandler() service.Handler {
 					return sdk.WrapError(sdk.ErrWorkflowNodeNotFound, "unable to find node %d", id)
 				}
 
-				if !permission.AccessToWorkflowNode(ctx, api.mustDB(), &lastRun.Workflow, fromNode, getAPIConsumer(ctx), sdk.PermissionReadExecute) {
+				if !permission.AccessToWorkflowNode(ctx, api.mustDB(), &lastRun.Workflow, fromNode, *consumer, sdk.PermissionReadExecute) {
 					return sdk.WrapError(sdk.ErrNoPermExecution, "not enough right on node %s", fromNode.Name)
 				}
 			}
@@ -923,7 +926,7 @@ func (api *API) postWorkflowRunHandler() service.Handler {
 			}
 
 			// Check node permission
-			if isService := isService(ctx); !isService && !permission.AccessToWorkflowNode(ctx, api.mustDB(), wf, &wf.WorkflowData.Node, getAPIConsumer(ctx), sdk.PermissionReadExecute) {
+			if isService := isService(ctx); !isService && !permission.AccessToWorkflowNode(ctx, api.mustDB(), wf, &wf.WorkflowData.Node, *consumer, sdk.PermissionReadExecute) {
 				return sdk.WrapError(sdk.ErrNoPermExecution, "not enough right on node %s", wf.WorkflowData.Node.Name)
 			}
 
@@ -949,12 +952,23 @@ func (api *API) initWorkflowRun(ctx context.Context, projKey string, wf *sdk.Wor
 	var asCodeInfosMsg []sdk.Message
 	var report = new(workflow.ProcessorReport)
 
-	u, err := authentication.LoadConsumerByID(ctx, api.mustDB(), opts.AuthConsumerID, authentication.LoadConsumerOptions.WithAuthentifiedUser, authentication.LoadConsumerOptions.WithConsumerGroups)
+	c, err := authentication.LoadConsumerByID(ctx, api.mustDB(), opts.AuthConsumerID,
+		authentication.LoadConsumerOptions.WithAuthentifiedUser,
+		authentication.LoadConsumerOptions.WithConsumerGroups)
 	if err != nil {
 		r := failInitWorkflowRun(ctx, api.mustDB(), wfRun, err)
 		report.Merge(ctx, r)
 		return
 	}
+
+	// Add service for consumer if exists
+	s, err := services.LoadByConsumerID(context.Background(), api.mustDB(), c.ID)
+	if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
+		r := failInitWorkflowRun(ctx, api.mustDB(), wfRun, err)
+		report.Merge(ctx, r)
+		return
+	}
+	c.Service = s
 
 	p, err := project.Load(ctx, api.mustDB(), projKey,
 		project.LoadOptions.WithVariables,
@@ -975,7 +989,7 @@ func (api *API) initWorkflowRun(ctx context.Context, projKey string, wf *sdk.Wor
 	if wfRun.Status == sdk.StatusPending {
 		// Sync as code event to remove events in case where a PR was merged
 		if len(wf.AsCodeEvent) > 0 {
-			res, err := ascode.SyncEvents(ctx, api.mustDB(), api.Cache, *p, *wf, u.AuthentifiedUser)
+			res, err := ascode.SyncEvents(ctx, api.mustDB(), api.Cache, *p, *wf, c)
 			if err != nil {
 				r := failInitWorkflowRun(ctx, api.mustDB(), wfRun, sdk.WrapError(err, "unable to sync as code event"))
 				report.Merge(ctx, r)
@@ -988,7 +1002,7 @@ func (api *API) initWorkflowRun(ctx context.Context, projKey string, wf *sdk.Wor
 					return
 				}
 				wf.FromRepository = res.FromRepository
-				event.PublishWorkflowUpdate(ctx, p.Key, *wf, *wf, u)
+				event.PublishWorkflowUpdate(ctx, p.Key, *wf, *wf, c)
 			}
 		}
 
@@ -1020,7 +1034,7 @@ func (api *API) initWorkflowRun(ctx context.Context, projKey string, wf *sdk.Wor
 			log.Debug("workflow.CreateFromRepository> %s", wf.Name)
 			oldWf := *wf
 			var asCodeInfosMsg []sdk.Message
-			workflowSecrets, asCodeInfosMsg, err = workflow.CreateFromRepository(ctx, api.mustDB(), api.Cache, p1, wf, opts, *u, project.DecryptWithBuiltinKey)
+			workflowSecrets, asCodeInfosMsg, err = workflow.CreateFromRepository(ctx, api.mustDB(), api.Cache, p1, wf, opts, *c, project.DecryptWithBuiltinKey)
 			infos := make([]sdk.SpawnMsg, len(asCodeInfosMsg))
 			for i, msg := range asCodeInfosMsg {
 				infos[i] = sdk.SpawnMsg{
@@ -1036,7 +1050,7 @@ func (api *API) initWorkflowRun(ctx context.Context, projKey string, wf *sdk.Wor
 				return
 			}
 
-			event.PublishWorkflowUpdate(ctx, p.Key, *wf, oldWf, u)
+			event.PublishWorkflowUpdate(ctx, p.Key, *wf, oldWf, c)
 		} else {
 			// Get all secrets for non ascode run
 			workflowSecrets, err = workflow.RetrieveSecrets(api.mustDB(), *wf)
@@ -1063,7 +1077,7 @@ func (api *API) initWorkflowRun(ctx context.Context, projKey string, wf *sdk.Wor
 		return
 	}
 
-	r, err := workflow.StartWorkflowRun(ctx, tx, api.Cache, *p, wfRun, &opts, u, asCodeInfosMsg)
+	r, err := workflow.StartWorkflowRun(ctx, tx, api.Cache, *p, wfRun, &opts, *c, asCodeInfosMsg)
 	report.Merge(ctx, r)
 	if err != nil {
 		_ = tx.Rollback()
