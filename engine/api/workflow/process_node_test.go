@@ -214,7 +214,7 @@ func TestHookRunWithoutPayloadProcessNodeBuildParameter(t *testing.T) {
 	assert.NoError(t, err)
 	wr.Workflow = w
 
-	_, errR := workflow.StartWorkflowRun(context.TODO(), db, cache, *proj, wr, &opts, consumer, nil)
+	_, errR := workflow.StartWorkflowRun(context.TODO(), db, cache, *proj, wr, &opts, *consumer, nil)
 	assert.NoError(t, errR)
 
 	assert.Equal(t, 1, len(wr.WorkflowNodeRuns))
@@ -399,7 +399,7 @@ func TestHookRunWithHashOnlyProcessNodeBuildParameter(t *testing.T) {
 	assert.NoError(t, err)
 	wr.Workflow = w
 
-	_, errR := workflow.StartWorkflowRun(context.TODO(), db, cache, *proj, wr, opts, consumer, nil)
+	_, errR := workflow.StartWorkflowRun(context.TODO(), db, cache, *proj, wr, opts, *consumer, nil)
 	assert.NoError(t, errR)
 
 	assert.Equal(t, 1, len(wr.WorkflowNodeRuns))
@@ -552,7 +552,7 @@ func TestManualRunWithPayloadProcessNodeBuildParameter(t *testing.T) {
 	assert.NoError(t, err)
 	wr.Workflow = w
 
-	_, errR := workflow.StartWorkflowRun(context.TODO(), db, cache, *proj, wr, opts, consumer, nil)
+	_, errR := workflow.StartWorkflowRun(context.TODO(), db, cache, *proj, wr, opts, *consumer, nil)
 	assert.NoError(t, errR)
 
 	assert.Equal(t, 1, len(wr.WorkflowNodeRuns))
@@ -699,7 +699,7 @@ func TestManualRunBranchAndCommitInPayloadProcessNodeBuildParameter(t *testing.T
 	assert.NoError(t, err)
 	wr.Workflow = w
 
-	_, errR := workflow.StartWorkflowRun(context.TODO(), db, cache, *proj, wr, opts, consumer, nil)
+	_, errR := workflow.StartWorkflowRun(context.TODO(), db, cache, *proj, wr, opts, *consumer, nil)
 	assert.NoError(t, errR)
 
 	assert.Equal(t, 1, len(wr.WorkflowNodeRuns))
@@ -927,7 +927,7 @@ func TestManualRunBranchAndRepositoryInPayloadProcessNodeBuildParameter(t *testi
 	assert.NoError(t, err)
 	wr.Workflow = w
 
-	_, errR := workflow.StartWorkflowRun(context.TODO(), db, cache, *proj, wr, opts, consumer, nil)
+	_, errR := workflow.StartWorkflowRun(context.TODO(), db, cache, *proj, wr, opts, *consumer, nil)
 	assert.NoError(t, errR)
 
 	mapParams := sdk.ParametersToMap(wr.WorkflowNodeRuns[w.WorkflowData.Node.ID][0].BuildParameters)
@@ -1162,7 +1162,7 @@ func TestManualRunBuildParameterMultiApplication(t *testing.T) {
 	assert.NoError(t, err)
 	wr.Workflow = w
 
-	_, errR := workflow.StartWorkflowRun(context.TODO(), db, cache, *proj, wr, opts, consumer, nil)
+	_, errR := workflow.StartWorkflowRun(context.TODO(), db, cache, *proj, wr, opts, *consumer, nil)
 	assert.NoError(t, errR)
 
 	assert.Equal(t, 3, len(wr.WorkflowNodeRuns))
@@ -1407,7 +1407,7 @@ func TestManualRunBuildParameterNoApplicationOnRoot(t *testing.T) {
 	assert.NoError(t, err)
 	wr.Workflow = w
 
-	_, errR := workflow.StartWorkflowRun(context.TODO(), db, cache, *proj, wr, opts, consumer, nil)
+	_, errR := workflow.StartWorkflowRun(context.TODO(), db, cache, *proj, wr, opts, *consumer, nil)
 	assert.NoError(t, errR)
 
 	assert.Equal(t, 3, len(wr.WorkflowNodeRuns))
@@ -1598,7 +1598,7 @@ func TestGitParamOnPipelineWithoutApplication(t *testing.T) {
 	assert.NoError(t, err)
 	wr.Workflow = w
 
-	_, errR := workflow.StartWorkflowRun(context.TODO(), db, cache, *proj, wr, opts, consumer, nil)
+	_, errR := workflow.StartWorkflowRun(context.TODO(), db, cache, *proj, wr, opts, *consumer, nil)
 	assert.NoError(t, errR)
 
 	// Load run
@@ -1785,7 +1785,7 @@ func TestGitParamOnApplicationWithoutRepo(t *testing.T) {
 	assert.NoError(t, err)
 	wr.Workflow = w
 
-	_, errR := workflow.StartWorkflowRun(context.TODO(), db, cache, *proj, wr, opts, consumer, nil)
+	_, errR := workflow.StartWorkflowRun(context.TODO(), db, cache, *proj, wr, opts, *consumer, nil)
 	assert.NoError(t, errR)
 
 	assert.Equal(t, 2, len(wr.WorkflowNodeRuns))
@@ -1983,7 +1983,7 @@ func TestGitParamOn2ApplicationSameRepo(t *testing.T) {
 	assert.NoError(t, err)
 	wr.Workflow = w
 
-	_, errR := workflow.StartWorkflowRun(context.TODO(), db, cache, *proj, wr, opts, consumer, nil)
+	_, errR := workflow.StartWorkflowRun(context.TODO(), db, cache, *proj, wr, opts, *consumer, nil)
 	assert.NoError(t, errR)
 
 	assert.Equal(t, 2, len(wr.WorkflowNodeRuns))
@@ -2195,7 +2195,7 @@ func TestGitParamWithJoin(t *testing.T) {
 	assert.NoError(t, err)
 	wr.Workflow = w
 
-	_, errR := workflow.StartWorkflowRun(context.TODO(), db, cache, *proj, wr, opts, consumer, nil)
+	_, errR := workflow.StartWorkflowRun(context.TODO(), db, cache, *proj, wr, opts, *consumer, nil)
 	assert.NoError(t, errR)
 
 	assert.Equal(t, 3, len(wr.WorkflowNodeRuns))
@@ -2414,7 +2414,7 @@ func TestGitParamOn2ApplicationSameRepoWithFork(t *testing.T) {
 	assert.NoError(t, err)
 	wr.Workflow = w
 
-	_, errR := workflow.StartWorkflowRun(context.TODO(), db, cache, *proj, wr, opts, consumer, nil)
+	_, errR := workflow.StartWorkflowRun(context.TODO(), db, cache, *proj, wr, opts, *consumer, nil)
 	assert.NoError(t, errR)
 
 	assert.Equal(t, 3, len(wr.WorkflowNodeRuns))
@@ -2606,7 +2606,7 @@ func TestManualRunWithPayloadAndRunCondition(t *testing.T) {
 	assert.NoError(t, err)
 	wr.Workflow = w
 
-	_, errR := workflow.StartWorkflowRun(context.TODO(), db, cache, *proj, wr, opts, consumer, nil)
+	_, errR := workflow.StartWorkflowRun(context.TODO(), db, cache, *proj, wr, opts, *consumer, nil)
 	assert.NoError(t, errR)
 
 	assert.Equal(t, 2, len(wr.WorkflowNodeRuns))

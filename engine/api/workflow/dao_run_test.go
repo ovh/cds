@@ -242,7 +242,7 @@ vcs_ssh_key: proj-blabla
 					"git.author": "test",
 				},
 			},
-		}, consumer, nil)
+		}, *consumer, nil)
 		test.NoError(t, errWr)
 	}
 
@@ -329,7 +329,7 @@ func TestPurgeWorkflowRunWithRunningStatus(t *testing.T) {
 					"git.author": "test",
 				},
 			},
-		}, consumer, nil)
+		}, *consumer, nil)
 		test.NoError(t, errWr)
 		wfr.Status = sdk.StatusBuilding
 		test.NoError(t, workflow.UpdateWorkflowRunStatus(db, wfr))
@@ -516,7 +516,7 @@ vcs_ssh_key: proj-blabla
 				"git.author": "test",
 			},
 		},
-	}, consumer, nil)
+	}, *consumer, nil)
 	test.NoError(t, errWr)
 
 	for i := 0; i < 5; i++ {
@@ -531,7 +531,7 @@ vcs_ssh_key: proj-blabla
 					"git.author": "test",
 				},
 			},
-		}, consumer, nil)
+		}, *consumer, nil)
 		test.NoError(t, errWr)
 
 		wfr.Status = sdk.StatusFail
@@ -708,7 +708,7 @@ vcs_ssh_key: proj-blabla
 					"git.author": "test",
 				},
 			},
-		}, consumer, nil)
+		}, *consumer, nil)
 		test.NoError(t, errWr)
 
 		wfr.Status = sdk.StatusFail
@@ -800,7 +800,7 @@ func TestPurgeWorkflowRunWithoutTags(t *testing.T) {
 					"git.author": "test",
 				},
 			},
-		}, consumer, nil)
+		}, *consumer, nil)
 		test.NoError(t, errWr)
 	}
 
@@ -886,7 +886,7 @@ func TestPurgeWorkflowRunWithoutTagsBiggerHistoryLength(t *testing.T) {
 					"git.author": "test",
 				},
 			},
-		}, consumer, nil)
+		}, *consumer, nil)
 		test.NoError(t, errWr)
 	}
 

@@ -126,7 +126,7 @@ func Test_getWorkflowNodeRunHistoryHandler(t *testing.T) {
 		Manual: &sdk.WorkflowNodeRunManual{
 			Username: u.GetUsername(),
 		},
-	}, consumer, nil)
+	}, *consumer, nil)
 	if errMR != nil {
 		require.NoError(t, errMR)
 	}
@@ -136,7 +136,7 @@ func Test_getWorkflowNodeRunHistoryHandler(t *testing.T) {
 			Username: u.GetUsername(),
 		},
 		FromNodeIDs: []int64{wrCreate.Workflow.WorkflowData.Node.ID},
-	}, consumer, nil)
+	}, *consumer, nil)
 	assert.NoError(t, errMR2)
 
 	//Prepare request
@@ -254,7 +254,7 @@ func Test_getWorkflowRunsHandler(t *testing.T) {
 			Manual: &sdk.WorkflowNodeRunManual{
 				Username: u.GetUsername(),
 			},
-		}, consumer, nil)
+		}, *consumer, nil)
 		require.NoError(t, err)
 	}
 
@@ -408,7 +408,7 @@ func Test_getWorkflowRunsHandlerWithFilter(t *testing.T) {
 		Manual: &sdk.WorkflowNodeRunManual{
 			Username: u.GetUsername(),
 		},
-	}, consumer, nil)
+	}, *consumer, nil)
 	require.NoError(t, err)
 
 	//Prepare request
@@ -529,7 +529,7 @@ func Test_getLatestWorkflowRunHandler(t *testing.T) {
 					"git.hash":   fmt.Sprintf("%d", i),
 				},
 			},
-		}, consumer, nil)
+		}, *consumer, nil)
 		require.NoError(t, err)
 	}
 
@@ -659,7 +659,7 @@ func Test_getWorkflowRunHandler(t *testing.T) {
 			Manual: &sdk.WorkflowNodeRunManual{
 				Username: u.GetUsername(),
 			},
-		}, consumer, nil)
+		}, *consumer, nil)
 		require.NoError(t, err)
 	}
 
@@ -783,7 +783,7 @@ func Test_getWorkflowNodeRunHandler(t *testing.T) {
 		Manual: &sdk.WorkflowNodeRunManual{
 			Username: u.GetUsername(),
 		},
-	}, consumer, nil)
+	}, *consumer, nil)
 	require.NoError(t, err)
 
 	lastrun, err := workflow.LoadLastRun(api.mustDB(), proj.Key, w1.Name, workflow.LoadRunOptions{WithArtifacts: true, WithTests: true})
@@ -2639,7 +2639,7 @@ func initGetWorkflowNodeRunJobTest(t *testing.T, api *API, db gorpmapper.SqlExec
 		Manual: &sdk.WorkflowNodeRunManual{
 			Username: u.GetUsername(),
 		},
-	}, consumer, nil)
+	}, *consumer, nil)
 	require.NoError(t, err)
 
 	lastRun, err := workflow.LoadLastRun(api.mustDB(), proj.Key, w1.Name, workflow.LoadRunOptions{WithArtifacts: true})
@@ -2832,7 +2832,7 @@ func Test_deleteWorkflowRunsBranchHandler(t *testing.T) {
 			Username: u.GetUsername(),
 			Payload:  `{"git.branch": "master"}`,
 		},
-	}, consumer, nil)
+	}, *consumer, nil)
 	require.NoError(t, err)
 
 	mockHookService, _ := assets.InsertService(t, db, "Test_deleteWorkflowRunsBranchHandler", sdk.TypeHooks, sdk.AuthConsumerScopeRun)

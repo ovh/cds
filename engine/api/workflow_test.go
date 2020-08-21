@@ -222,7 +222,7 @@ func Test_getWorkflowNotificationsConditionsHandler(t *testing.T) {
 	wrCreate.Workflow = *w1
 	_, errMR := workflow.StartWorkflowRun(context.TODO(), db, api.Cache, *proj, wrCreate, &sdk.WorkflowRunPostHandlerOption{
 		Manual: &sdk.WorkflowNodeRunManual{Username: u.GetUsername()},
-	}, consumer, nil)
+	}, *consumer, nil)
 	if errMR != nil {
 		test.NoError(t, errMR)
 	}
@@ -1908,7 +1908,7 @@ func Test_getSearchWorkflowHandler(t *testing.T) {
 			Username: u.GetUsername(),
 			Payload:  `{"git.branch": "master"}`,
 		},
-	}, consumer, nil)
+	}, *consumer, nil)
 	require.NoError(t, err)
 
 	// Call with an admin

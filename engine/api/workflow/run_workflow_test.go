@@ -122,7 +122,7 @@ func TestManualRun1(t *testing.T) {
 				"git.branch": "master",
 			},
 		},
-	}, consumer, nil)
+	}, *consumer, nil)
 	require.NoError(t, errS)
 
 	wr2, errWR := workflow.CreateRun(db.DbMap, w1, sdk.WorkflowRunPostHandlerOption{AuthConsumerID: consumer.ID})
@@ -132,7 +132,7 @@ func TestManualRun1(t *testing.T) {
 		Manual: &sdk.WorkflowNodeRunManual{
 			Username: u.Username,
 		},
-	}, consumer, nil)
+	}, *consumer, nil)
 	require.NoError(t, errS)
 
 	//LoadLastRun
@@ -165,7 +165,7 @@ func TestManualRun1(t *testing.T) {
 			Username: u.Username,
 		},
 		FromNodeIDs: []int64{wr2.Workflow.WorkflowData.Node.ID},
-	}, consumer, nil)
+	}, *consumer, nil)
 	require.NoError(t, errS)
 
 	//TestLoadRuns
@@ -275,7 +275,7 @@ func TestManualRun2(t *testing.T) {
 	wr.Workflow = *w1
 	_, errS := workflow.StartWorkflowRun(context.TODO(), db, cache, *proj, wr, &sdk.WorkflowRunPostHandlerOption{
 		Manual: &sdk.WorkflowNodeRunManual{Username: u.Username},
-	}, consumer, nil)
+	}, *consumer, nil)
 	require.NoError(t, errS)
 
 	wr2, errWR := workflow.CreateRun(db.DbMap, w1, sdk.WorkflowRunPostHandlerOption{AuthConsumerID: consumer.ID})
@@ -283,13 +283,13 @@ func TestManualRun2(t *testing.T) {
 	wr2.Workflow = *w1
 	_, errS = workflow.StartWorkflowRun(context.TODO(), db, cache, *proj, wr2, &sdk.WorkflowRunPostHandlerOption{
 		Manual: &sdk.WorkflowNodeRunManual{Username: u.Username},
-	}, consumer, nil)
+	}, *consumer, nil)
 	require.NoError(t, errS)
 
 	_, errS = workflow.StartWorkflowRun(context.TODO(), db, cache, *proj, wr, &sdk.WorkflowRunPostHandlerOption{
 		Manual:      &sdk.WorkflowNodeRunManual{Username: u.Username},
 		FromNodeIDs: []int64{wr.Workflow.WorkflowData.Node.ID},
-	}, consumer, nil)
+	}, *consumer, nil)
 	require.NoError(t, errS)
 
 	filter := workflow.NewQueueFilter()
@@ -547,7 +547,7 @@ func TestManualRun3(t *testing.T) {
 	wr.Workflow = *w1
 	_, errS := workflow.StartWorkflowRun(context.TODO(), db, cache, *proj, wr, &sdk.WorkflowRunPostHandlerOption{
 		Manual: &sdk.WorkflowNodeRunManual{Username: u.Username},
-	}, consumer, nil)
+	}, *consumer, nil)
 	require.NoError(t, errS)
 
 	filter := workflow.NewQueueFilter()
@@ -856,7 +856,7 @@ func TestNoStage(t *testing.T) {
 	wr.Workflow = *w1
 	_, errS := workflow.StartWorkflowRun(context.TODO(), db, cache, *proj, wr, &sdk.WorkflowRunPostHandlerOption{
 		Manual: &sdk.WorkflowNodeRunManual{Username: u.Username},
-	}, consumer, nil)
+	}, *consumer, nil)
 	require.NoError(t, errS)
 
 	lastrun, err := workflow.LoadLastRun(db, proj.Key, "test_1", workflow.LoadRunOptions{})
@@ -932,7 +932,7 @@ func TestNoJob(t *testing.T) {
 	wr.Workflow = *w1
 	_, errS := workflow.StartWorkflowRun(context.TODO(), db, cache, *proj, wr, &sdk.WorkflowRunPostHandlerOption{
 		Manual: &sdk.WorkflowNodeRunManual{Username: u.Username},
-	}, consumer, nil)
+	}, *consumer, nil)
 	require.NoError(t, errS)
 
 	lastrun, err := workflow.LoadLastRun(db, proj.Key, "test_1", workflow.LoadRunOptions{})

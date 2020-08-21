@@ -1061,7 +1061,7 @@ func TestWorkerPrivateKey(t *testing.T) {
 		&sdk.WorkflowRunPostHandlerOption{
 			Manual: &sdk.WorkflowNodeRunManual{Username: u.Username},
 		},
-		consumer, nil)
+		*consumer, nil)
 	assert.NoError(t, errmr)
 
 	ctx := testRunWorkflowCtx{
@@ -1173,7 +1173,7 @@ func TestPostVulnerabilityReportHandler(t *testing.T) {
 		&sdk.WorkflowRunPostHandlerOption{
 			Manual: &sdk.WorkflowNodeRunManual{Username: u.Username},
 		},
-		consumer, nil)
+		*consumer, nil)
 	assert.NoError(t, errmr)
 
 	log.Debug("%+v", wrDB.WorkflowNodeRuns)
@@ -1415,7 +1415,7 @@ func TestInsertNewCodeCoverageReport(t *testing.T) {
 				"git.branch": "master",
 			},
 		},
-	}, consumer, nil)
+	}, *consumer, nil)
 
 	assert.NoError(t, errmr)
 
@@ -1430,7 +1430,7 @@ func TestInsertNewCodeCoverageReport(t *testing.T) {
 				"git.branch": "my-branch",
 			},
 		},
-	}, consumer, nil)
+	}, *consumer, nil)
 	assert.NoError(t, errmr)
 
 	// Add a coverage report on default branch node run
@@ -1487,7 +1487,7 @@ func TestInsertNewCodeCoverageReport(t *testing.T) {
 				"git.branch": "my-branch",
 			},
 		},
-	}, consumer, nil)
+	}, *consumer, nil)
 	assert.NoError(t, errT)
 
 	wrr, err := workflow.LoadRunByID(db, wrToTest.ID, workflow.LoadRunOptions{})
