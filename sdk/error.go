@@ -808,10 +808,20 @@ func WrapError(err error, format string, args ...interface{}) error {
 		}
 	}
 
+	httpError := ErrUnknownError
+
+	if e, ok := err.(*MultiError); ok {
+		var ss []string
+		for i := range *e {
+			ss = append(ss, ExtractHTTPError((*e)[i], "").printLight())
+		}
+		httpError.From = strings.Join(ss, ", ")
+	}
+
 	return errorWithStack{
 		root:      errors.Wrap(err, m),
 		stack:     callers(),
-		httpError: ErrUnknownError,
+		httpError: httpError,
 	}
 }
 
