@@ -26,6 +26,12 @@
                             </span>
                         </div>
                     </div>
+                    <div class="one fields">
+                        <div class="field">
+                            <label>{{'common_id' | translate}}</label>
+                            {{consumer.id}}
+                        </div>
+                    </div>
                     <div class="field">
                         <app-menu class="menu" [items]="menuItems" (onSelect)="selectMenuItem($event)"></app-menu>
                     </div>
