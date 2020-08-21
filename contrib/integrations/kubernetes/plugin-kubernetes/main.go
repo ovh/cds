@@ -120,6 +120,10 @@ contexts:
   name: default-context
 current-context: default-context`, k8sToken, certb64, k8sAPIURL)
 
+	if _, err := os.Stat(".kube"); !os.IsNotExist(err) {
+		return fail(".kube directory already exists, you have to delete it before using this action")
+	}
+
 	if err := os.Mkdir(".kube", 0755); err != nil {
 		return fail("Cannot create directory .kube : %v", err)
 	}
