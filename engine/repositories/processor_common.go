@@ -28,21 +28,21 @@ func (s *Service) processGitClone(ctx context.Context, op *sdk.Operation) (repo.
 		opts = append(opts, repo.WithHTTPAuth(op.RepositoryStrategy.User, op.RepositoryStrategy.Password))
 	}
 
-	gitRepo, err := repo.New(r.Basedir, opts...)
+	gitRepo, err := repo.New(ctx, r.Basedir, opts...)
 	if err != nil {
 		log.Info(ctx, "processGitClone> cloning %s into %s", r.URL, r.Basedir)
-		gitRepo, err = repo.Clone(r.Basedir, r.URL, opts...)
+		gitRepo, err = repo.Clone(ctx, r.Basedir, r.URL, opts...)
 		if err != nil {
 			return gitRepo, "", "", sdk.NewErrorFrom(err, "cannot clone repository at given url: %s", r.URL)
 		}
 	}
 
-	f, err := gitRepo.FetchURL()
+	f, err := gitRepo.FetchURL(ctx)
 	if err != nil {
 		return gitRepo, "", "", sdk.WithStack(err)
 	}
 
-	d, err := gitRepo.DefaultBranch()
+	d, err := gitRepo.DefaultBranch(ctx)
 	if err != nil {
 		return gitRepo, "", "", sdk.WithStack(err)
 	}
@@ -54,7 +54,7 @@ func (s *Service) processGitClone(ctx context.Context, op *sdk.Operation) (repo.
 	}
 
 	//Check branch
-	currentBranch, err := gitRepo.CurrentBranch()
+	currentBranch, err := gitRepo.CurrentBranch(ctx)
 	if err != nil {
 		return gitRepo, "", "", sdk.WithStack(err)
 	}

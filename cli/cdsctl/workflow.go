@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 
 	repo "github.com/fsamin/go-repo"
@@ -41,12 +42,13 @@ func workflow() *cobra.Command {
 
 func workflowNodeForCurrentRepo(projectKey, workflowName string) (int64, error) {
 	//Try to get the latest commit
-	r, err := repo.New("")
+	ctx := context.Background()
+	r, err := repo.New(ctx, "")
 	if err != nil {
 		return 0, nil
 	}
 
-	latestCommit, err := r.LatestCommit()
+	latestCommit, err := r.LatestCommit(ctx)
 	if err != nil {
 		return 0, fmt.Errorf("unable to get latest commit: %v", err)
 	}

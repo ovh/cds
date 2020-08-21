@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"os"
 	"path"
@@ -195,12 +196,12 @@ func withAutoConf() cli.CommandModifier {
 	)
 }
 
-func discoverConf(ctx []cli.Arg) ([]string, error) {
+func discoverConf(ctxArg []cli.Arg) ([]string, error) {
 	var needProject, needApplication, needWorkflow bool
 
-	// populates needs from ctx
-	mctx := make(map[string]cli.Arg, len(ctx))
-	for _, arg := range ctx {
+	// populates needs from ctxArg
+	mctx := make(map[string]cli.Arg, len(ctxArg))
+	for _, arg := range ctxArg {
 		mctx[arg.Name] = arg
 		switch arg.Name {
 		case _ProjectKey:
@@ -217,29 +218,30 @@ func discoverConf(ctx []cli.Arg) ([]string, error) {
 	}
 
 	var projectKey, applicationName, workflowName string
+	ctx := context.Background()
 
 	// try to find existing .git repository
 	var repoExists bool
-	r, err := repo.New(".")
+	r, err := repo.New(ctx, ".")
 	if err == nil {
 		repoExists = true
 	}
 
 	// if repo exists ask for usage
 	if repoExists {
-		gitProjectKey, _ := r.LocalConfigGet("cds", "project")
-		gitApplicationName, _ := r.LocalConfigGet("cds", "application")
-		gitWorkflowName, _ := r.LocalConfigGet("cds", "workflow")
+		gitProjectKey, _ := r.LocalConfigGet(ctx, "cds", "project")
+		gitApplicationName, _ := r.LocalConfigGet(ctx, "cds", "application")
+		gitWorkflowName, _ := r.LocalConfigGet(ctx, "cds", "workflow")
 
 		// if all needs were found in git do not ask for confirmation and use the config
 		needConfirmation := (needProject && gitProjectKey == "") || (needApplication && gitApplicationName == "") || (needWorkflow && gitWorkflowName == "")
 
 		if needConfirmation {
-			fetchURL, err := r.FetchURL()
+			fetchURL, err := r.FetchURL(ctx)
 			if err != nil {
 				return nil, errors.Wrap(err, "cannot get url from local git repository")
 			}
-			name, err := r.Name()
+			name, err := r.Name(ctx)
 			if err != nil {
 				return nil, errors.Wrap(err, "cannot get name from local git repository")
 			}
@@ -250,13 +252,13 @@ func discoverConf(ctx []cli.Arg) ([]string, error) {
 	// if repo exists and is correct get existing config from it's config
 	if repoExists {
 		if needProject {
-			projectKey, _ = r.LocalConfigGet("cds", "project")
+			projectKey, _ = r.LocalConfigGet(ctx, "cds", "project")
 		}
 		if needApplication {
-			applicationName, _ = r.LocalConfigGet("cds", "application")
+			applicationName, _ = r.LocalConfigGet(ctx, "cds", "application")
 		}
 		if needWorkflow {
-			workflowName, _ = r.LocalConfigGet("cds", "workflow")
+			workflowName, _ = r.LocalConfigGet(ctx, "cds", "workflow")
 		}
 	}
 
@@ -270,7 +272,7 @@ func discoverConf(ctx []cli.Arg) ([]string, error) {
 		var projects []sdk.Project
 
 		if repoExists {
-			name, err := r.Name()
+			name, err := r.Name(ctx)
 			if err != nil {
 				return nil, errors.Wrap(err, "cannot get name from current repository")
 			}
@@ -340,7 +342,7 @@ func discoverConf(ctx []cli.Arg) ([]string, error) {
 		// set project key and override repository config if exists
 		projectKey = project.Key
 		if repoExists {
-			if err := r.LocalConfigSet("cds", "project", projectKey); err != nil {
+			if err := r.LocalConfigSet(ctx, "cds", "project", projectKey); err != nil {
 				return nil, errors.Wrap(err, "cannot set local git configuration")
 			}
 		}
@@ -377,7 +379,7 @@ func discoverConf(ctx []cli.Arg) ([]string, error) {
 			if application != nil {
 				applicationName = application.Name
 				if repoExists {
-					if err := r.LocalConfigSet("cds", "application", applicationName); err != nil {
+					if err := r.LocalConfigSet(ctx, "cds", "application", applicationName); err != nil {
 						return nil, errors.Wrap(err, "cannot set local git configuration")
 					}
 				}
@@ -416,7 +418,7 @@ func discoverConf(ctx []cli.Arg) ([]string, error) {
 			if workflow != nil {
 				workflowName = workflow.Name
 				if repoExists {
-					if err := r.LocalConfigSet("cds", "workflow", workflowName); err != nil {
+					if err := r.LocalConfigSet(ctx, "cds", "workflow", workflowName); err != nil {
 						return nil, errors.Wrap(err, "cannot set local git configuration")
 					}
 				}
@@ -425,8 +427,8 @@ func discoverConf(ctx []cli.Arg) ([]string, error) {
 	}
 
 	// for all required context args override or add the value in cli args
-	preargs := make([]string, len(ctx))
-	for i, arg := range ctx {
+	preargs := make([]string, len(ctxArg))
+	for i, arg := range ctxArg {
 		switch arg.Name {
 		case _ProjectKey:
 			preargs[i] = projectKey

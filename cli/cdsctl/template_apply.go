@@ -3,6 +3,7 @@ package main
 import (
 	"archive/tar"
 	"bytes"
+	"context"
 	"fmt"
 	"io"
 	"net/http"
@@ -180,13 +181,14 @@ func templateApplyRun(v cli.Values) error {
 	// try to find existing .git repository
 	var localRepoURL string
 	var localRepoName string
-	r, err := repo.New(".")
+	ctx := context.Background()
+	r, err := repo.New(ctx, ".")
 	if err == nil {
-		localRepoURL, err = r.FetchURL()
+		localRepoURL, err = r.FetchURL(ctx)
 		if err != nil {
 			return err
 		}
-		localRepoName, err = r.Name()
+		localRepoName, err = r.Name(ctx)
 		if err != nil {
 			return err
 		}
@@ -364,7 +366,7 @@ func templateApplyRun(v cli.Values) error {
 
 		// store the chosen workflow name to git config
 		if localRepoName != "" {
-			if err := r.LocalConfigSet("cds", "workflow", workflowName); err != nil {
+			if err := r.LocalConfigSet(ctx, "cds", "workflow", workflowName); err != nil {
 				return err
 			}
 		}

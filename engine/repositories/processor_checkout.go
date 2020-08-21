@@ -15,14 +15,14 @@ func (s *Service) processCheckout(ctx context.Context, op *sdk.Operation) error 
 	log.Debug("processCheckout> repo cloned with current branch: %s", currentBranch)
 
 	// Clean no commited changes if exists
-	if err := gitRepo.ResetHard("HEAD"); err != nil {
+	if err := gitRepo.ResetHard(ctx, "HEAD"); err != nil {
 		return sdk.WithStack(err)
 	}
 	log.Debug("processCheckout> repo reset to HEAD")
 
 	if op.Setup.Checkout.Tag != "" {
 		log.Debug("processCheckout> fetching tag %s from %s", op.Setup.Checkout.Tag, op.URL)
-		if err := gitRepo.FetchRemoteTag("origin", op.Setup.Checkout.Tag); err != nil {
+		if err := gitRepo.FetchRemoteTag(ctx, "origin", op.Setup.Checkout.Tag); err != nil {
 			return sdk.WithStack(err)
 		}
 		log.Info(ctx, "processCheckout> repository %s ready on tag '%s'", op.URL, op.Setup.Checkout.Tag)
@@ -33,7 +33,7 @@ func (s *Service) processCheckout(ctx context.Context, op *sdk.Operation) error 
 		op.Setup.Checkout.Branch = op.RepositoryInfo.DefaultBranch
 	}
 	log.Debug("processCheckout> fetching branch %s from %s", op.Setup.Checkout.Branch, op.URL)
-	if err := gitRepo.FetchRemoteBranch("origin", op.Setup.Checkout.Branch); err != nil {
+	if err := gitRepo.FetchRemoteBranch(ctx, "origin", op.Setup.Checkout.Branch); err != nil {
 		return sdk.WithStack(err)
 	}
 
@@ -41,23 +41,23 @@ func (s *Service) processCheckout(ctx context.Context, op *sdk.Operation) error 
 	if op.Setup.Checkout.Commit == "" {
 		// Reset HARD to the latest commit of the remote branch (don't use pull because there can be conflicts if the remote was forced)
 		log.Debug("processCheckout> resetting the branch %s from remote", op.Setup.Checkout.Branch)
-		if err := gitRepo.ResetHard("origin/" + op.Setup.Checkout.Branch); err != nil {
+		if err := gitRepo.ResetHard(ctx, "origin/"+op.Setup.Checkout.Branch); err != nil {
 			return sdk.WithStack(err)
 		}
 	} else {
-		currentCommit, err := gitRepo.LatestCommit()
+		currentCommit, err := gitRepo.LatestCommit(ctx)
 		if err != nil {
 			return sdk.WithStack(err)
 		}
 		if currentCommit.LongHash != op.Setup.Checkout.Commit {
 			// Not the same commit, pull and reset HARD the commit
 			log.Debug("processCheckout> resetting the branch %s from remote", op.Setup.Checkout.Branch)
-			if err := gitRepo.ResetHard("origin/" + op.Setup.Checkout.Branch); err != nil {
+			if err := gitRepo.ResetHard(ctx, "origin/"+op.Setup.Checkout.Branch); err != nil {
 				return sdk.WithStack(err)
 			}
 
 			log.Debug("Repositories> processCheckout> resetting commit %s", op.Setup.Checkout.Commit)
-			if err := gitRepo.ResetHard(op.Setup.Checkout.Commit); err != nil {
+			if err := gitRepo.ResetHard(ctx, op.Setup.Checkout.Commit); err != nil {
 				return sdk.WithStack(err)
 			}
 		}

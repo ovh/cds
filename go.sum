@@ -111,8 +111,8 @@ github.com/frankban/quicktest v1.6.0 h1:Cd62nl66vQsx8Uv1t8M0eICyxIwZG7MxiAOrdnnU
 github.com/frankban/quicktest v1.6.0/go.mod h1:jaStnuzAqU1AJdCO0l53JDCJrVDKcS03DbaAcR7Ks/o=
 github.com/fsamin/go-dump v1.0.9 h1:3MAneAJLnGfKTJtFEAdgrD+QqqK2Hwj7EJUQMQZcDls=
 github.com/fsamin/go-dump v1.0.9/go.mod h1:ZgKd2aOXAFFbbFuUgvQhu7mwTlI3d3qnTICMWdvAa9o=
-github.com/fsamin/go-repo v0.1.7 h1:cQ+ALKxDzxuNAqbvn8gT7yQSb9iO7ax15QgTGLfFaU8=
-github.com/fsamin/go-repo v0.1.7/go.mod h1:JRLbo6sPXvAwwGs5RgifFk1pXiefeGf0hyHifEg1Vw4=
+github.com/fsamin/go-repo v0.1.8 h1:xwJj+3VFbsn1aa7mP9+NUebrJ1AXqgcqVzxQbtk2OpE=
+github.com/fsamin/go-repo v0.1.8/go.mod h1:JRLbo6sPXvAwwGs5RgifFk1pXiefeGf0hyHifEg1Vw4=
 github.com/fsamin/go-shredder v0.0.0-20180118184739-b2488aedb5be h1:UhjSvwE1gxUYfekK9BXZ/LL55we9Avg+2Pt0PIlMYCk=
 github.com/fsamin/go-shredder v0.0.0-20180118184739-b2488aedb5be/go.mod h1:kuiNcf1lKxl4isIY6bHxbBatpLD43c2RKWIV/AGlhXY=
 github.com/fsnotify/fsnotify v1.4.7 h1:IXs+QLmnXW2CcXuY+8Mzv/fWEsPGWxqefPtCP5CnV9I=
