@@ -162,6 +162,11 @@ func TestMultiError(t *testing.T) {
 	assert.Equal(t, "TestMultiError: internal server error (from: internal server error, wrong request: my second error, internal server error, already exists: my fourth error) (caused by: TestMultiError: internal server error (caused by: my first error), TestMultiError: wrong request (from: my second error), TestMultiError: internal server error (caused by: hidden info: my third error), TestMultiError: already exists (from: my fourth error))", stackErr.Error())
 	httpErr = ExtractHTTPError(stackErr, "fr")
 	assert.Equal(t, "erreur interne (from: internal server error, wrong request: my second error, internal server error, already exists: my fourth error)", httpErr.Error())
+
+	stackErr = WrapError(mError, "more info")
+	assert.Equal(t, "TestMultiError: internal server error (from: internal server error, wrong request: my second error, internal server error, already exists: my fourth error) (caused by: more info: TestMultiError: internal server error (caused by: my first error), TestMultiError: wrong request (from: my second error), TestMultiError: internal server error (caused by: hidden info: my third error), TestMultiError: already exists (from: my fourth error))", stackErr.Error())
+	httpErr = ExtractHTTPError(stackErr, "fr")
+	assert.Equal(t, "erreur interne (from: internal server error, wrong request: my second error, internal server error, already exists: my fourth error)", httpErr.Error())
 }
 
 func Test_cause(t *testing.T) {
