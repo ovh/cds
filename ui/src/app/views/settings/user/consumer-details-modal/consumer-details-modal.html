@@ -8,11 +8,17 @@
         <div class="ui grid">
             <div class="ui wide column">
                 <div class="ui form">
-                    <div class="three fields">
+                    <div class="two fields">
+                        <div class="field">
+                            <label>{{'common_id' | translate}}</label>
+                            {{consumer.id}}
+                        </div>
                         <div class="field">
                             <label>{{'common_description' | translate}}</label>
                             {{consumer.description}}
                         </div>
+                    </div>
+                    <div class="two fields">
                         <div class="field">
                             <label>{{'user_auth_scopes' | translate}}</label>
                             {{scopes}}
