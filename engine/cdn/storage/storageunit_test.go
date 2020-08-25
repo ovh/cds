@@ -20,6 +20,7 @@ import (
 )
 
 func TestInit(t *testing.T) {
+	t.SkipNow()
 	m := gorpmapper.New()
 	index.InitDBMapping(m)
 	storage.InitDBMapping(m)

@@ -1,5 +1,5 @@
 package cdn
 
 const (
-	ItemLogGC = 3600
+	ItemLogGC = 24 * 3600
 )
