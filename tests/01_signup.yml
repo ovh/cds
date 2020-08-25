@@ -9,7 +9,7 @@ vars:
   username: cds.integration.tests.rw
   ring: 
   email: it-user-rw@localhost.local
-  fullname: cds.integration.tests.rw
+  fullname: 'cds integration tests rw'
   password: "123456&éçà(§"
 
 
