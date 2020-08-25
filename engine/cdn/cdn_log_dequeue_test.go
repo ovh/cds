@@ -91,9 +91,9 @@ func TestStoreNewStepLog(t *testing.T) {
 	require.NotNil(t, item)
 	require.Equal(t, index.StatusItemIncoming, item.Status)
 
-	var logs []string
-	err = cache.ScoredSetScan(context.Background(), item.ID, 0, 1, &logs)
+	logs, err := s.Units.Buffer.Get(*item, 0, 1)
 	require.NoError(t, err)
+	require.Len(t, logs, 1)
 	require.Equal(t, "[EMERGENCY] coucou\n", logs[0])
 }
 
