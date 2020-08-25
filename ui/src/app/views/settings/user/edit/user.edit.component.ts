@@ -263,6 +263,9 @@ export class UserEditComponent implements OnInit {
                             case 'corporate-sso':
                                 icon['class'] = ['shield', 'alternate', 'icon'];
                                 break;
+                            case 'openid-connect':
+                                icon['class'] = ['openid', 'icon'];
+                                break;
                             default:
                                 icon['class'] = [consumer.type, 'icon'];
                                 break;
