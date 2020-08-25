@@ -591,13 +591,16 @@ func (a *API) Serve(ctx context.Context) error {
 		)
 	}
 	if a.Config.Auth.OIDC.Enabled {
-		a.AuthenticationDrivers[sdk.ConsumerOIDC] = oidc.NewDriver(
+		a.AuthenticationDrivers[sdk.ConsumerOIDC], err = oidc.NewDriver(
 			a.Config.Auth.OIDC.SignupDisabled,
 			a.Config.URL.UI,
 			a.Config.Auth.OIDC.URL,
 			a.Config.Auth.OIDC.ClientID,
 			a.Config.Auth.OIDC.ClientSecret,
 		)
+		if err != nil {
+			return err
+		}
 	}
 
 	if a.Config.Auth.CorporateSSO.Enabled {

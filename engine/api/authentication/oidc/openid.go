@@ -17,8 +17,11 @@ var _ sdk.AuthDriverWithRedirect = (*authDriver)(nil)
 var _ sdk.AuthDriverWithSigninStateToken = (*authDriver)(nil)
 
 // NewDriver returns a new OIDC auth driver for given config.
-func NewDriver(signupDisabled bool, cdsURL, url, clientID, clientSecret string) sdk.AuthDriver {
-	provider, _ := oidc.NewProvider(context.Background(), url)
+func NewDriver(signupDisabled bool, cdsURL, url, clientID, clientSecret string) (sdk.AuthDriver, error) {
+	provider, err := oidc.NewProvider(context.Background(), url)
+	if err != nil {
+		return nil, sdk.WrapError(err, "Failed to initialize OIDC driver")
+	}
 	// Configure an OpenID Connect aware OAuth2 client.
 	oauth2Config := oauth2.Config{
 		ClientID:     clientID,
@@ -39,7 +42,7 @@ func NewDriver(signupDisabled bool, cdsURL, url, clientID, clientSecret string) 
 		cdsURL:         cdsURL,
 		OAuth2Config:   oauth2Config,
 		Verifier:       verifier,
-	}
+	}, nil
 }
 
 type authDriver struct {
