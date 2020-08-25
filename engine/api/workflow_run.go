@@ -802,9 +802,9 @@ func (api *API) postWorkflowRunHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		key := vars["key"]
-    name := vars["permWorkflowName"]
+		name := vars["permWorkflowName"]
 
-    consumer := getAPIConsumer(ctx)
+		consumer := getAPIConsumer(ctx)
 
 		telemetry.Current(ctx,
 			telemetry.Tag(telemetry.TagProjectKey, key),
@@ -953,7 +953,7 @@ func (api *API) initWorkflowRun(ctx context.Context, projKey string, wf *sdk.Wor
 	var report = new(workflow.ProcessorReport)
 
 	c, err := authentication.LoadConsumerByID(ctx, api.mustDB(), opts.AuthConsumerID,
-		authentication.LoadConsumerOptions.WithAuthentifiedUser,
+		authentication.LoadConsumerOptions.WithAuthentifiedUserWithContacts,
 		authentication.LoadConsumerOptions.WithConsumerGroups)
 	if err != nil {
 		r := failInitWorkflowRun(ctx, api.mustDB(), wfRun, err)
