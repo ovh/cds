@@ -42,3 +42,13 @@ testcases:
     assertions:
     - result.err ShouldEqual ""
     - result.md5sum.fixtures_template_simple_export_itcliwkf.yml ShouldEqual "{{.readWorkflowSourceFiles.result.md5sum.fixtures_template_simple_workflow_itcliwkf.yml}}"
+
+- name: cdsctl template instances
+  steps:
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} template instances shared.infra/example-simple --format json
+    assertions:
+    - result.code ShouldEqual 0
+    - result.systemoutjson.systemoutjson0.project ShouldEqual "Test Project"
+    - result.systemoutjson.systemoutjson0.workflow ShouldEqual "ITCLIWKF"
+    - result.systemoutjson.systemoutjson0.uptodate ShouldEqual "true"
+    - result.systemoutjson.systemoutjson0.version ShouldEqual "1"
