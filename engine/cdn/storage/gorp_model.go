@@ -32,9 +32,7 @@ type ItemUnit struct {
 	ID           string    `json:"id" db:"id"`
 	ItemID       string    `json:"item_id" db:"item_id"`
 	UnitID       string    `json:"unit_id" db:"unit_id"`
-	Created      time.Time `json:"created" db:"created"`
 	LastModified time.Time `json:"last_modified" db:"last_modified"`
-	Complete     bool      `json:"complete" db:"complete"`
 	Locator      string    `json:"-" db:"cipher_locator" gorpmapping:"encrypted,UnitID,ItemID"`
 }
 

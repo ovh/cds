@@ -68,7 +68,7 @@ func TestStoreNewStepLog(t *testing.T) {
 		},
 	}
 
-	content := buildMessage(hm.Signature, hm.Msg)
+	content := buildMessage(hm)
 	err = s.storeLogs(context.TODO(), index.TypeItemStepLog, hm.Signature, hm.Status, content, hm.Line)
 	require.NoError(t, err)
 
@@ -165,7 +165,7 @@ func TestStoreLastStepLog(t *testing.T) {
 	}
 	require.NoError(t, index.InsertItem(context.TODO(), m, db, &item))
 
-	content := buildMessage(hm.Signature, hm.Msg)
+	content := buildMessage(hm)
 	err = s.storeLogs(context.TODO(), index.TypeItemStepLog, hm.Signature, hm.Status, content, hm.Line)
 	require.NoError(t, err)
 
@@ -182,6 +182,120 @@ func TestStoreLastStepLog(t *testing.T) {
 	itemUnit, err := storage.LoadItemByUnit(context.TODO(), m, db, unit.ID, itemDB.ID)
 	require.NoError(t, err)
 	require.NotNil(t, itemUnit)
+}
+
+func TestStoreLogWrongOrder(t *testing.T) {
+	m := gorpmapper.New()
+	index.InitDBMapping(m)
+	storage.InitDBMapping(m)
+	db, cache := test.SetupPGWithMapper(t, m, sdk.TypeCDN)
+	cfg := commontest.LoadTestingConf(t, sdk.TypeCDN)
+
+	// Create cdn service
+	s := Service{
+		DBConnectionFactory: test.DBConnectionFactory,
+		Cache:               cache,
+		Mapper:              m,
+	}
+
+	cdnUnits, err := storage.Init(context.TODO(), m, db.DbMap, storage.Configuration{
+		Buffer: storage.BufferConfiguration{
+			Name: "redis_buffer",
+			Redis: storage.RedisBufferConfiguration{
+				Host:     cfg["redisHost"],
+				Password: cfg["redisPassword"],
+			},
+		},
+	})
+	require.NoError(t, err)
+	s.Units = cdnUnits
+
+	hm := handledMessage{
+		Msg: hook.Message{
+			Full: "voici un message",
+		},
+		Status: sdk.StatusSuccess,
+		Line:   2,
+		Signature: log.Signature{
+			ProjectKey:   sdk.RandomString(10),
+			WorkflowID:   1,
+			WorkflowName: "MyWorklow",
+			RunID:        1,
+			NodeRunID:    1,
+			NodeRunName:  "MyPipeline",
+			JobName:      "MyJob",
+			JobID:        1,
+			Worker: &log.SignatureWorker{
+				StepName:  "script1",
+				StepOrder: 1,
+			},
+		},
+	}
+	apiRef := index.ApiRef{
+		ProjectKey:     hm.Signature.ProjectKey,
+		WorkflowName:   hm.Signature.WorkflowName,
+		WorkflowID:     hm.Signature.WorkflowID,
+		RunID:          hm.Signature.RunID,
+		NodeRunName:    hm.Signature.NodeRunName,
+		NodeRunID:      hm.Signature.NodeRunID,
+		NodeRunJobName: hm.Signature.JobName,
+		NodeRunJobID:   hm.Signature.JobID,
+		StepName:       hm.Signature.Worker.StepName,
+		StepOrder:      hm.Signature.Worker.StepOrder,
+	}
+	hashRef, err := hashstructure.Hash(apiRef, nil)
+	require.NoError(t, err)
+
+	item := index.Item{
+		Status:     index.StatusItemIncoming,
+		ApiRefHash: strconv.FormatUint(hashRef, 10),
+		ApiRef:     apiRef,
+		Type:       index.TypeItemStepLog,
+	}
+	require.NoError(t, index.InsertItem(context.TODO(), m, db, &item))
+
+	content := buildMessage(hm)
+	err = s.storeLogs(context.TODO(), index.TypeItemStepLog, hm.Signature, hm.Status, content, hm.Line)
+	require.NoError(t, err)
+
+	itemDB, err := index.LoadItemByID(context.TODO(), s.Mapper, db, item.ID)
+	require.NoError(t, err)
+	require.NotNil(t, itemDB)
+	require.Equal(t, index.StatusItemIncoming, itemDB.Status)
+	require.NotEmpty(t, itemDB.Hash)
+
+	unit, err := storage.LoadUnitByName(context.TODO(), m, db, s.Units.Buffer.Name())
+	require.NoError(t, err)
+	require.NotNil(t, unit)
+
+	// Must received not found
+	_, err = storage.LoadItemByUnit(context.TODO(), m, db, unit.ID, itemDB.ID)
+	require.Error(t, err)
+	require.True(t, sdk.ErrorIs(err, sdk.ErrNotFound))
+
+	// Received Missing log
+	hm.Line = 1
+	hm.Status = ""
+	content = buildMessage(hm)
+
+	err = s.storeLogs(context.TODO(), index.TypeItemStepLog, hm.Signature, hm.Status, content, hm.Line)
+	require.NoError(t, err)
+
+	itemDB2, err := index.LoadItemByID(context.TODO(), s.Mapper, db, item.ID)
+	require.NoError(t, err)
+	require.NotNil(t, itemDB2)
+	require.Equal(t, index.StatusItemCompleted, itemDB2.Status)
+	require.NotEmpty(t, itemDB2.Hash)
+
+	iu, err := storage.LoadItemByUnit(context.TODO(), m, db, unit.ID, itemDB2.ID)
+	require.NoError(t, err)
+	require.NotNil(t, iu)
+
+	lines, err := s.Units.Buffer.Get(item, 0, 2)
+	require.NoError(t, err)
+	require.Len(t, lines, 2)
+	require.Equal(t, "[EMERGENCY] voici un message\n", lines[0])
+	require.Equal(t, "[EMERGENCY] voici un message\n", lines[1])
 }
 
 func TestStoreNewServiceLogAndAppend(t *testing.T) {

@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/mitchellh/hashstructure"
+	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/engine/cdn/index"
 	"github.com/ovh/cds/engine/cdn/storage"
 	"github.com/ovh/cds/sdk"
@@ -38,7 +39,7 @@ func (s *Service) dequeueJobLogs(ctx context.Context) error {
 			if hm.Signature.Worker == nil {
 				continue
 			}
-			currentLog := buildMessage(hm.Signature, hm.Msg)
+			currentLog := buildMessage(hm)
 			cpt := 0
 			for {
 				if err := s.storeLogs(ctx, index.TypeItemStepLog, hm.Signature, hm.Status, currentLog, hm.Line); err != nil {
@@ -92,15 +93,9 @@ func (s *Service) storeLogs(ctx context.Context, typ string, signature log.Signa
 	}
 
 	// In case where the item was marked as complete we don't allow append of other logs
-	// TODO set to complete should be delayed when receiving status complete to prevent losing last logs if they are processed in disorder
 	if item.Status == index.StatusItemCompleted {
 		log.Warning(ctx, "storeLogs> a log was received for item %s but status in already complete", item.Hash)
 		return nil
-	}
-
-	itemUnitBuffer, err := s.loadOrCreateIndexItemUnitBuffer(ctx, item.ID)
-	if err != nil {
-		return err
 	}
 
 	switch typ {
@@ -114,27 +109,32 @@ func (s *Service) storeLogs(ctx context.Context, typ string, signature log.Signa
 		}
 	}
 
-	// If last log
-	// TODO ? (or update of a complete step)
+	maxLineKey := cache.Key("cdn", "log", "size", item.ID)
+	var maxLine int
 	if sdk.StatusIsTerminated(status) {
+		maxLine = int(line)
+		// store the score of last line
+		if err := s.Cache.SetWithTTL(maxLineKey, maxLine, ItemLogGC); err != nil {
+			return err
+		}
+	} else {
+		_, err = s.Cache.Get(maxLineKey, &maxLine)
+		if err != nil {
+			log.Warning(ctx, "cdn: unable to get max line expected for current job: %v", err)
+		}
+	}
+
+	logsSize, err := s.Units.Buffer.Card(*item)
+	if err != nil {
+		return err
+	}
+	// If we have all lines
+	if maxLine > 0 && maxLine == logsSize {
 		tx, err := s.mustDBWithCtx(ctx).Begin()
 		if err != nil {
 			return sdk.WithStack(err)
 		}
 		defer tx.Rollback() // nolint
-
-		// We need to lock the unit item and set its complete flag
-		itemUnitBuffer, err = storage.LoadAndLockItemByUnit(ctx, s.Mapper, tx, itemUnitBuffer.UnitID, item.ID)
-		if err != nil {
-			if sdk.ErrorIs(err, sdk.ErrNotFound) {
-				return sdk.WrapError(sdk.ErrLocked, "item unit already locked")
-			}
-			return err
-		}
-		itemUnitBuffer.Complete = true
-		if err := storage.UpdateItemUnit(ctx, s.Mapper, tx, itemUnitBuffer); err != nil {
-			return err
-		}
 
 		// We need to lock the item and set its status to complete and also generate data hash
 		item, err = index.LoadAndLockItemByID(ctx, s.Mapper, tx, item.ID)
@@ -163,11 +163,16 @@ func (s *Service) storeLogs(ctx context.Context, typ string, signature log.Signa
 			return err
 		}
 
+		if _, err := storage.InsertItemUnit(ctx, s.Mapper, tx, s.Units.Buffer.ID(), item.ID); err != nil {
+			return err
+		}
+
 		if err := tx.Commit(); err != nil {
 			return sdk.WithStack(err)
 		}
-	}
 
+		_ = s.Cache.Delete(maxLineKey)
+	}
 	return nil
 }
 

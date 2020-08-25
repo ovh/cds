@@ -190,21 +190,21 @@ func (s *Service) handleWorkerLog(ctx context.Context, workerName string, worker
 	return nil
 }
 
-func buildMessage(signature log.Signature, m hook.Message) string {
-	logDate := time.Unix(0, int64(m.Time*1e9))
+func buildMessage(hm handledMessage) string {
+	logDate := time.Unix(0, int64(hm.Msg.Time*1e9))
 	logs := sdk.Log{
-		JobID:        signature.JobID,
+		JobID:        hm.Signature.JobID,
 		LastModified: &logDate,
-		NodeRunID:    signature.NodeRunID,
+		NodeRunID:    hm.Signature.NodeRunID,
 		Start:        &logDate,
-		StepOrder:    signature.Worker.StepOrder,
-		Val:          m.Full,
+		StepOrder:    hm.Signature.Worker.StepOrder,
+		Val:          hm.Msg.Full,
 	}
 	if !strings.HasSuffix(logs.Val, "\n") {
 		logs.Val += "\n"
 	}
 
-	logs.Val = fmt.Sprintf("[%s] %s", getLevelString(m.Level), logs.Val)
+	logs.Val = fmt.Sprintf("%d#[%s] %s", hm.Line, getLevelString(hm.Msg.Level), logs.Val)
 	return logs.Val
 }
 

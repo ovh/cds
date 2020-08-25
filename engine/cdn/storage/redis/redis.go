@@ -47,10 +47,22 @@ func (s *Redis) Append(i index.Item, value string) error {
 	return s.store.ScoredAppend(context.Background(), i.ID, value)
 }
 
+func (s *Redis) Card(i index.Item) (int, error) {
+	return s.store.SetCard(i.ID)
+}
+
 func (s *Redis) Get(i index.Item, from, to uint) ([]string, error) {
 	var res = make([]string, to-from+1)
-	err := s.store.ScoredSetScan(context.Background(), i.ID, float64(from), float64(to), &res)
-	return res, err
+	if err := s.store.ScoredSetScan(context.Background(), i.ID, float64(from), float64(to), &res); err != nil {
+		return res, err
+	}
+	for i := range res {
+		linesSplitted := strings.SplitAfterN(res[i], "#", 2)
+		if len(linesSplitted) == 2 {
+			res[i] = linesSplitted[1]
+		}
+	}
+	return res, nil
 }
 
 // NewReader instanciate a reader that it able to iterate over Redis storage unit
@@ -80,11 +92,19 @@ func (r *reader) Read(p []byte) (n int, err error) {
 	if err != nil {
 		return 0, err
 	}
+
 	if len(lines) > 0 {
+		cleanedLines := make([]string, 0, len(lines))
+		for _, s := range lines {
+			linesSplitted := strings.SplitAfterN(s, "#", 2)
+			if len(linesSplitted) == 2 {
+				cleanedLines = append(cleanedLines, linesSplitted[1])
+			}
+		}
 		if r.currentBuffer == "" {
-			r.currentBuffer += strings.Join(lines, "\n")
+			r.currentBuffer += strings.Join(cleanedLines, "\n")
 		} else {
-			r.currentBuffer += "\n" + strings.Join(lines, "\n")
+			r.currentBuffer += "\n" + strings.Join(cleanedLines, "\n")
 		}
 	}
 
