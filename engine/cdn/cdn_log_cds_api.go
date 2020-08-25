@@ -127,7 +127,7 @@ func (s *Service) dequeueJobMessages(ctx context.Context, jobLogsQueueKey string
 				for _, hm := range hms {
 					now := time.Now()
 
-					currentLog := buildMessageForCDSAPI(hm)
+					currentLog := buildMessage(hm)
 					l := sdk.Log{
 						JobID:        hm.Signature.JobID,
 						NodeRunID:    hm.Signature.NodeRunID,
@@ -186,22 +186,4 @@ func (s *Service) canDequeue(jobID string) (string, error) {
 		return "", err
 	}
 	return jobQueueKey, nil
-}
-
-func buildMessageForCDSAPI(hm handledMessage) string {
-	logDate := time.Unix(0, int64(hm.Msg.Time*1e9))
-	logs := sdk.Log{
-		JobID:        hm.Signature.JobID,
-		LastModified: &logDate,
-		NodeRunID:    hm.Signature.NodeRunID,
-		Start:        &logDate,
-		StepOrder:    hm.Signature.Worker.StepOrder,
-		Val:          hm.Msg.Full,
-	}
-	if !strings.HasSuffix(logs.Val, "\n") {
-		logs.Val += "\n"
-	}
-
-	logs.Val = fmt.Sprintf("[%s] %s", getLevelString(hm.Msg.Level), logs.Val)
-	return logs.Val
 }

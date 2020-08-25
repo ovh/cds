@@ -176,7 +176,7 @@ func (s *Service) handleWorkerLog(ctx context.Context, workerName string, worker
 
 	if s.cdnEnabled(ctx, signature.ProjectKey) {
 		if err := s.Cache.Enqueue(keyJobLogIncomingQueue, hm); err != nil {
-			return err
+			log.Error(ctx, "cdn:handleWorkerLog: unable to enqueue in %s: %v", keyJobLogIncomingQueue, err)
 		}
 	}
 
@@ -204,7 +204,7 @@ func buildMessage(hm handledMessage) string {
 		logs.Val += "\n"
 	}
 
-	logs.Val = fmt.Sprintf("%d#[%s] %s", hm.Line, getLevelString(hm.Msg.Level), logs.Val)
+	logs.Val = fmt.Sprintf("[%s] %s", getLevelString(hm.Msg.Level), logs.Val)
 	return logs.Val
 }
 

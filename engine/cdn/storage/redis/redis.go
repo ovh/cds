@@ -40,6 +40,7 @@ func (s *Redis) ItemExists(i index.Item) (bool, error) {
 }
 
 func (s *Redis) Add(i index.Item, index uint, value string) error {
+	value = fmt.Sprintf("%d#%s", index, value)
 	return s.store.ScoredSetAdd(context.Background(), i.ID, value, float64(index))
 }
 
