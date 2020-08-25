@@ -10,9 +10,11 @@ import (
 	"github.com/gorilla/mux"
 
 	"github.com/ovh/cds/engine/api/application"
+	"github.com/ovh/cds/engine/api/authentication"
 	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
+	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/engine/service"
@@ -86,6 +88,7 @@ func (api *API) repositoriesManagerAuthorizeHandler() service.Handler {
 			"url":                  url,
 			"request_token":        token,
 			"username":             getAPIConsumer(ctx).AuthentifiedUser.Username,
+			"consumer_id":          getAPIConsumer(ctx).ID,
 		}
 
 		if token != "" {
@@ -129,14 +132,29 @@ func (api *API) repositoriesManagerOAuthCallbackHandler() service.Handler {
 		projectKey := data["project_key"]
 		rmName := data["repositories_manager"]
 		username := data["username"]
+		consumerID := data["consumer_id"]
+
+		authConsumer, err := authentication.LoadConsumerByID(ctx, api.mustDB(), consumerID,
+			authentication.LoadConsumerOptions.WithAuthentifiedUser,
+			authentication.LoadConsumerOptions.WithConsumerGroups)
+		if err != nil {
+			return sdk.WrapError(sdk.ErrForbidden, "repositoriesManagerAuthorizeCallback> Error")
+		}
+
+		// Add service for consumer if exists
+		s, err := services.LoadByConsumerID(context.Background(), api.mustDB(), authConsumer.ID)
+		if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
+			return sdk.WrapError(sdk.ErrForbidden, "repositoriesManagerAuthorizeCallback> Error")
+		}
+		authConsumer.Service = s
 
 		proj, errP := project.Load(ctx, api.mustDB(), projectKey)
 		if errP != nil {
 			return sdk.WrapError(errP, "repositoriesManagerAuthorizeCallback> Cannot load project")
 		}
 
-    // initialize a tx, but this tx is only used to READ.
-    // No commit done with this transaction
+		// initialize a tx, but this tx is only used to READ.
+		// No commit done with this transaction
 		txRead, err := api.mustDB().Begin()
 		if err != nil {
 			return sdk.WithStack(err)
@@ -180,7 +198,7 @@ func (api *API) repositoriesManagerOAuthCallbackHandler() service.Handler {
 			return sdk.WrapError(errT, "repositoriesManagerAuthorizeCallback> Cannot commit transaction")
 		}
 
-		event.PublishAddVCSServer(ctx, proj, vcsServerForProject.Name, getAPIConsumer(ctx))
+		event.PublishAddVCSServer(ctx, proj, vcsServerForProject.Name, authConsumer)
 
 		//Redirect on UI advanced project page
 		url := fmt.Sprintf("%s/project/%s?tab=advanced", api.Config.URL.UI, projectKey)

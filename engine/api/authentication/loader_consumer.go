@@ -15,17 +15,34 @@ type LoadConsumerOptionFunc func(context.Context, gorp.SqlExecutor, ...*sdk.Auth
 
 // LoadConsumerOptions provides all options on auth consumer loads functions.
 var LoadConsumerOptions = struct {
-	Default              LoadConsumerOptionFunc
-	WithAuthentifiedUser LoadConsumerOptionFunc
-	WithConsumerGroups   LoadConsumerOptionFunc
+	Default                          LoadConsumerOptionFunc
+	WithAuthentifiedUser             LoadConsumerOptionFunc
+	WithAuthentifiedUserWithContacts LoadConsumerOptionFunc
+	WithConsumerGroups               LoadConsumerOptionFunc
 }{
-	Default:              loadDefault,
-	WithAuthentifiedUser: loadAuthentifiedUser,
-	WithConsumerGroups:   loadConsumerGroups,
+	Default:                          loadDefault,
+	WithAuthentifiedUser:             loadAuthentifiedUser,
+	WithAuthentifiedUserWithContacts: loadAuthentifiedUserWithContacts,
+	WithConsumerGroups:               loadConsumerGroups,
 }
 
 func loadDefault(ctx context.Context, db gorp.SqlExecutor, cs ...*sdk.AuthConsumer) error {
 	return loadConsumerGroups(ctx, db, cs...)
+}
+
+func loadAuthentifiedUserWithContacts(ctx context.Context, db gorp.SqlExecutor, cs ...*sdk.AuthConsumer) error {
+	if err := loadAuthentifiedUser(ctx, db, cs...); err != nil {
+		return err
+	}
+
+	for i := range cs {
+		// Add contacts for consumer's user
+		if err := user.LoadOptions.WithContacts(ctx, db, cs[i].AuthentifiedUser); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 func loadAuthentifiedUser(ctx context.Context, db gorp.SqlExecutor, cs ...*sdk.AuthConsumer) error {

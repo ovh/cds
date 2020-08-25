@@ -44,4 +44,8 @@ testcases:
   - script: rm -f thefile
   - script: {{.cdsctl}} -f {{.cdsctl.config}} workflow artifact download ITSCWRKFLW8 ITSCWRKFLW8-WORKFLOW 1
   - script: cat thefile|grep PAYLOAD
+  - script: cat thefile|grep CDS_TRIGGERED
+  - script: cat thefile|grep CDS_TRIGGERED_BY_FULLNAME|grep IT_User_RW
+  - script: cat thefile|grep CDS_TRIGGERED_BY_USERNAME|grep 'cds.integration.tests.rw'
+  - script: cat thefile|grep CDS_TRIGGERED_BY_EMAIL|grep 'it-user-rw@localhost.local'
   - script: cat thefile|grep PAYLOAD|grep '{"aa":"bb","cc":\["dd","ee"\],"ff":{"gg":"hh"}}'
