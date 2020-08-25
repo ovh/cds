@@ -202,6 +202,6 @@ func buildMessageForCDSAPI(hm handledMessage) string {
 		logs.Val += "\n"
 	}
 
-	logs.Val = fmt.Sprintf("[%s] %s", hm.Line, getLevelString(hm.Msg.Level), logs.Val)
+	logs.Val = fmt.Sprintf("[%s] %s", getLevelString(hm.Msg.Level), logs.Val)
 	return logs.Val
 }
