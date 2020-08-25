@@ -166,5 +166,8 @@ func signupVerifyFunc(v cli.Values) error {
 		return err
 	}
 
-	return doAfterLogin(client, v, signupresponse.APIURL, sdk.ConsumerLocal, signupresponse)
+	if apiURL != signupresponse.APIURL {
+		fmt.Println("WARNING: The advertised API URL differs from the provided URL")
+	}
+	return doAfterLogin(client, v, apiURL, sdk.ConsumerLocal, signupresponse)
 }
