@@ -143,8 +143,8 @@ type Configuration struct {
 			URL            string `toml:"url" json:"url" default:"" comment:"Open ID connect config URL"`
 			ClientID       string `toml:"clientId" json:"-" comment:"OIDC Client ID"`
 			ClientSecret   string `toml:"clientSecret" json:"-" comment:"OIDC Client Secret"`
-		} `toml:"oidc" json:"oidc" comment:"#######\n CDS <-> Open ID Connect Auth \n######"`
-	} `toml:"auth" comment:"##############################\n CDS Authentication Settings. Documentation on https://ovh.github.io/cds/docs/integrations/openid-connect/ \n#############################" json:"auth"`
+		} `toml:"oidc" json:"oidc" comment:"#######\n CDS <-> Open ID Connect Auth. Documentation on https://ovh.github.io/cds/docs/integrations/openid-connect/ \n######"`
+	} `toml:"auth" comment:"##############################\n CDS Authentication Settings# \n#############################" json:"auth"`
 	SMTP struct {
 		Disable  bool   `toml:"disable" default:"true" json:"disable" comment:"Set to false to enable the internal SMTP client"`
 		Host     string `toml:"host" json:"host" comment:"smtp host"`
