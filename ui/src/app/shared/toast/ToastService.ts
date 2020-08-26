@@ -50,15 +50,9 @@ export class ToastService {
     }
 
     error(title: string, msg: string) {
-        this._helpService.getHelp().subscribe(c => {
-            let text = msg
-            if (c.content && c.content !== '') {
-                text += c.error
-            }
-            this._toasterService.pop(
-                { type: 'error', title: title, body: text, toastContainerId: 1 }
-            );
-        });
+        this._toasterService.pop(
+            { type: 'error', title: title, body: msg, toastContainerId: 1 }
+        );
     }
 
     errorHTTP(status: number, message: string, from: string, request_id: string) {
