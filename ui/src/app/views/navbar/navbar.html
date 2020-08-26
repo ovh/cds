@@ -289,7 +289,7 @@
             </div>
         </ng-template>
 
-        <button *ngIf="help && help.content && help.content.length > 0"
+        <button *ngIf="help?.content?.length > 0"
             class="ui icon button link item" suiPopup popupPlacement="bottom right"
             [popupTemplate]="popupTemplateHelp" popupTrigger="outsideClick" #popup="suiPopup">
             <div>
