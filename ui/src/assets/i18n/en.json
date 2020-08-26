@@ -653,7 +653,7 @@
   "timeline_filter_project": "Mute events on: ",
   "timeline_filter_updated": "Filter updated",
   "timeline_filter_project_select": "Select a project",
-  "toast_http_error_request_id": "Request ID",
+  "toast_http_error_request_id": "with this request ID:",
   "variable_added": "Variable added",
   "variable_deleted": "Variable deleted",
   "variable_no": "There is no variable",

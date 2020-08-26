@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
 import { BodyOutputType, ToasterConfig, ToasterService } from 'angular2-toaster/angular2-toaster';
+import { HelpService } from 'app/service/services.module';
 import { ToastHTTPErrorComponent, ToastHTTPErrorData } from './toast-http-error.component';
 
 @Injectable()
@@ -19,7 +20,10 @@ export class ToastService {
         toastContainerId: 3
     });
 
-    constructor(private _toasterService: ToasterService) { }
+    constructor(
+        private _toasterService: ToasterService,
+        private _helpService: HelpService
+    ) { }
 
     getConfigDefault(): ToasterConfig {
         return this.configDefault;
@@ -46,26 +50,35 @@ export class ToastService {
     }
 
     error(title: string, msg: string) {
-        this._toasterService.pop(
-            { type: 'error', title: title, body: msg, toastContainerId: 1 }
-        );
+        this._helpService.getHelp().subscribe(c => {
+            let text = msg
+            if (c.content && c.content !== '') {
+                text += c.error
+            }
+            this._toasterService.pop(
+                { type: 'error', title: title, body: text, toastContainerId: 1 }
+            );
+        });
     }
 
     errorHTTP(status: number, message: string, from: string, request_id: string) {
-        this._toasterService.pop(
-            {
-                type: 'error',
-                title: message,
-                body: ToastHTTPErrorComponent,
-                bodyOutputType: BodyOutputType.Component,
-                toastContainerId: status < 500 ? 2 : 3,
-                data: <ToastHTTPErrorData>{
-                    status,
-                    from,
-                    request_id
+        this._helpService.getHelp().subscribe(c => {
+            this._toasterService.pop(
+                {
+                    type: 'error',
+                    title: message,
+                    body: ToastHTTPErrorComponent,
+                    bodyOutputType: BodyOutputType.Component,
+                    toastContainerId: status < 500 ? 2 : 3,
+                    data: <ToastHTTPErrorData>{
+                        status: status,
+                        from: from,
+                        request_id: request_id,
+                        help: c.error
+                    }
                 }
-            }
-        );
+            );
+        });
     }
 }
 

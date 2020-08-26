@@ -651,7 +651,7 @@
   "timeline_loading": "Chargement du fil d'actualité...",
   "timeline_no": "Le fil d'actualité est vide",
   "timeline_title": "Fil d'actualité",
-  "toast_http_error_request_id": "Identifiant de la requête",
+  "toast_http_error_request_id": "avec cet identifiant de requête:",
   "ui_updated": "L'interface vient d'être mise à jour. Merci de cliquer ici pour rafraîchir votre page.",
   "usage_application_list": "Applications utilisées",
   "usage_environment_list": "Environnements utilisés",

@@ -188,6 +188,10 @@ type Configuration struct {
 		StepMaxSize    int64 `toml:"stepMaxSize" default:"15728640" comment:"Max step logs size in bytes (default: 15MB)" json:"stepMaxSize"`
 		ServiceMaxSize int64 `toml:"serviceMaxSize" default:"15728640" comment:"Max service logs size in bytes (default: 15MB)" json:"serviceMaxSize"`
 	} `toml:"log" json:"log" comment:"###########################\n Log settings.\n##########################"`
+	Help struct {
+		Content string `toml:"content" comment:"Help Content" json:"content" default:"**CDS Contact**\n\n- Tel: 00.00.00.00.00"`
+		Error   string `toml:"error" comment:"Help displayed to user on each error" json:"error" default:"\n\nYou can request CDS Administrators to investigate about this error"`
+	} `toml:"help" comment:"######################\n 'Help' informations \n######################" json:"help"`
 }
 
 // DefaultValues is the struc for API Default configuration default values

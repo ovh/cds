@@ -26,6 +26,7 @@ import { DownloadService } from './download/download.service';
 import { EnvironmentAuditService } from './environment/environment.audit.service';
 import { EnvironmentService } from './environment/environment.service';
 import { GroupService } from './group/group.service';
+import { HelpService } from './help/help.service';
 import { HelpersService } from './helpers/helpers.service';
 import { HookService } from './hook/hook.service';
 import { ImportAsCodeService } from './import-as-code/import.service';
@@ -93,6 +94,7 @@ export class ServicesModule {
                 EnvironmentAuditService,
                 EnvironmentService,
                 GroupService,
+                HelpService,
                 HookService,
                 HelpersService,
                 ImportAsCodeService,
@@ -164,8 +166,9 @@ export {
     DownloadService,
     EnvironmentAuditService,
     GroupService,
-    HookService,
+    HelpService,
     HelpersService,
+    HookService,
     ImportAsCodeService,
     BroadcastStore,
     KeyService,
