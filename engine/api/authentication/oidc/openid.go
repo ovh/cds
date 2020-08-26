@@ -117,6 +117,11 @@ func (d authDriver) GetUserInfo(ctx context.Context, req sdk.AuthConsumerSigninR
 		return info, sdk.WrapError(err, "Cannot unmarshal OIDC claim")
 	}
 
+	// Check if email is verified.
+	// See standard claims at https://openid.net/specs/openid-connect-core-1_0.html#StandardClaims
+	if verified, ok := tokenClaim["email_verified"].(bool); !ok || !verified {
+		return info, sdk.WrapError(sdk.ErrInvalidUser, "OIDC user's email not verified")
+	}
 	if info.ExternalID, ok = tokenClaim["sub"].(string); !ok {
 		return info, sdk.WrapError(sdk.ErrInvalidUser, "Missing OIDC user ID in token claim")
 	}
