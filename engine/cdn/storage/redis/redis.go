@@ -41,25 +41,24 @@ func (s *Redis) ItemExists(i index.Item) (bool, error) {
 	return false, nil
 }
 
-func (s *Redis) Add(i index.Item, index uint, value string) error {
+func (s *Redis) Add(i storage.ItemUnit, index uint, value string) error {
 	value = strconv.Itoa(int(index)) + "#" + value
-	return s.store.ScoredSetAdd(context.Background(), i.ID, value, float64(index))
+	return s.store.ScoredSetAdd(context.Background(), i.ItemID, value, float64(index))
 }
 
-func (s *Redis) Append(i index.Item, value string) error {
-	return s.store.ScoredSetAppend(context.Background(), i.ID, value)
+func (s *Redis) Append(i storage.ItemUnit, value string) error {
+	return s.store.ScoredSetAppend(context.Background(), i.ItemID, value)
 }
 
-func (s *Redis) Card(i index.Item) (int, error) {
-	return s.store.SetCard(i.ID)
+func (s *Redis) Card(i storage.ItemUnit) (int, error) {
+	return s.store.SetCard(i.ItemID)
 }
 
-func (s *Redis) Get(i index.Item, from, to uint) ([]string, error) {
+func (s *Redis) Get(i storage.ItemUnit, from, to uint) ([]string, error) {
 	var res = make([]string, to-from+1)
-	if err := s.store.ScoredSetScan(context.Background(), i.ID, float64(from), float64(to), &res); err != nil {
+	if err := s.store.ScoredSetScan(context.Background(), i.ItemID, float64(from), float64(to), &res); err != nil {
 		return res, err
 	}
-
 	for i := range res {
 		res[i] = strings.TrimFunc(res[i], unicode.IsNumber)
 		res[i] = strings.TrimPrefix(res[i], "#")
@@ -69,13 +68,18 @@ func (s *Redis) Get(i index.Item, from, to uint) ([]string, error) {
 
 // NewReader instanciate a reader that it able to iterate over Redis storage unit
 // with a score step of 100.0, starting at score 0
-func (s *Redis) NewReader(i index.Item) (io.ReadCloser, error) {
+func (s *Redis) NewReader(i storage.ItemUnit) (io.ReadCloser, error) {
 	return &reader{s: s, i: i}, nil
+}
+
+func (s *Redis) Read(i storage.ItemUnit, r io.Reader, w io.Writer) error {
+	_, err := io.Copy(w, r)
+	return err
 }
 
 type reader struct {
 	s             *Redis
-	i             index.Item
+	i             storage.ItemUnit
 	lastIndex     uint
 	currentBuffer string
 }

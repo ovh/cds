@@ -20,6 +20,7 @@ var (
 
 func (s *Service) waitingJobs(ctx context.Context) {
 	for {
+		time.Sleep(250 * time.Millisecond)
 		select {
 		case <-ctx.Done():
 			return
@@ -52,7 +53,6 @@ func (s *Service) waitingJobs(ctx context.Context) {
 					}
 				})
 			}
-			time.Sleep(250 * time.Millisecond)
 		}
 	}
 }

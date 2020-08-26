@@ -91,7 +91,10 @@ func TestStoreNewStepLog(t *testing.T) {
 	require.NotNil(t, item)
 	require.Equal(t, index.StatusItemIncoming, item.Status)
 
-	logs, err := s.Units.Buffer.Get(*item, 0, 1)
+	iu, err := storage.LoadItemUnitByUnit(context.TODO(), s.Mapper, db, s.Units.Buffer.ID(), item.ID, gorpmapper.GetOptions.WithDecryption)
+	require.NoError(t, err)
+
+	logs, err := s.Units.Buffer.Get(*iu, 0, 1)
 	require.NoError(t, err)
 	require.Len(t, logs, 1)
 	require.Equal(t, "[EMERGENCY] coucou\n", logs[0])
@@ -179,7 +182,7 @@ func TestStoreLastStepLog(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, unit)
 
-	itemUnit, err := storage.LoadItemByUnit(context.TODO(), m, db, unit.ID, itemDB.ID)
+	itemUnit, err := storage.LoadItemUnitByUnit(context.TODO(), m, db, unit.ID, itemDB.ID)
 	require.NoError(t, err)
 	require.NotNil(t, itemUnit)
 }
@@ -268,10 +271,10 @@ func TestStoreLogWrongOrder(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, unit)
 
-	// Must received not found
-	_, err = storage.LoadItemByUnit(context.TODO(), m, db, unit.ID, itemDB.ID)
-	require.Error(t, err)
-	require.True(t, sdk.ErrorIs(err, sdk.ErrNotFound))
+	// Must exist
+	iu, err := storage.LoadItemUnitByUnit(context.TODO(), m, db, unit.ID, itemDB.ID)
+	require.NoError(t, err)
+	require.NotNil(t, iu)
 
 	// Received Missing log
 	hm.Line = 1
@@ -287,11 +290,11 @@ func TestStoreLogWrongOrder(t *testing.T) {
 	require.Equal(t, index.StatusItemCompleted, itemDB2.Status)
 	require.NotEmpty(t, itemDB2.Hash)
 
-	iu, err := storage.LoadItemByUnit(context.TODO(), m, db, unit.ID, itemDB2.ID)
+	iu, err = storage.LoadItemUnitByUnit(context.TODO(), m, db, unit.ID, itemDB2.ID)
 	require.NoError(t, err)
 	require.NotNil(t, iu)
 
-	lines, err := s.Units.Buffer.Get(item, 0, 2)
+	lines, err := s.Units.Buffer.Get(*iu, 0, 2)
 	require.NoError(t, err)
 	require.Len(t, lines, 2)
 	require.Equal(t, "[EMERGENCY] voici un message\n", lines[0])

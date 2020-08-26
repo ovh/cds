@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/go-gorp/gorp"
+	"github.com/ovh/symmecrypt/convergent"
 	"github.com/robfig/cron/v3"
 
 	"github.com/ovh/cds/engine/cdn/index"
@@ -48,12 +49,23 @@ type Interface interface {
 	DB() *gorp.DbMap
 	Init(cfg interface{}) error
 	ItemExists(i index.Item) (bool, error)
+	Lock()
+	Unlock()
 }
 
 type AbstractUnit struct {
+	sync.Mutex
 	u  Unit
 	m  *gorpmapper.Mapper
 	db *gorp.DbMap
+}
+
+func (a *AbstractUnit) ExistsInDatabase(id string) (*ItemUnit, error) {
+	iu, err := LoadItemUnitByUnit(context.Background(), a.GorpMapper(), a.DB(), a.ID(), id, gorpmapper.GetOptions.WithDecryption)
+	if err != nil {
+		return nil, err
+	}
+	return iu, nil
 }
 
 func (a *AbstractUnit) Name() string {
@@ -80,17 +92,25 @@ func (a *AbstractUnit) Set(m *gorpmapper.Mapper, db *gorp.DbMap, u Unit) {
 
 type BufferUnit interface {
 	Interface
-	Add(i index.Item, score uint, value string) error
-	Append(i index.Item, value string) error
-	Card(i index.Item) (int, error)
-	Get(i index.Item, from, to uint) ([]string, error)
-	NewReader(i index.Item) (io.ReadCloser, error)
+	Add(i ItemUnit, score uint, value string) error
+	Append(i ItemUnit, value string) error
+	Card(i ItemUnit) (int, error)
+	Get(i ItemUnit, from, to uint) ([]string, error)
+	NewReader(i ItemUnit) (io.ReadCloser, error)
+	Read(i ItemUnit, r io.Reader, w io.Writer) error
 }
 
 type StorageUnit interface {
 	Interface
-	NewWriter(i index.Item) (io.WriteCloser, error)
-	NewReader(i index.Item) (io.ReadCloser, error)
+	NewWriter(i ItemUnit) (io.WriteCloser, error)
+	NewReader(i ItemUnit) (io.ReadCloser, error)
+	Write(i ItemUnit, r io.Reader, w io.Writer) error
+	Read(i ItemUnit, r io.Reader, w io.Writer) error
+}
+
+type StorageUnitWithLocator interface {
+	StorageUnit
+	NewLocator(s string) (string, error)
 }
 
 type Configuration struct {
@@ -110,7 +130,27 @@ type StorageConfiguration struct {
 }
 
 type LocalStorageConfiguration struct {
-	Path string `toml:"path" json:"path"`
+	Path       string                                  `toml:"path" json:"path"`
+	Encryption []convergent.ConvergentEncryptionConfig `toml:"encryption" json:"encryption" mapstructure:"encryption"`
+}
+
+type SwiftStorageConfiguration struct {
+	Address         string                                  `toml:"address" json:"address"`
+	Username        string                                  `toml:"username" json:"username"`
+	Password        string                                  `toml:"password" json:"password"`
+	Tenant          string                                  `toml:"tenant" json:"tenant"`
+	Domain          string                                  `toml:"domain" json:"domain"`
+	Region          string                                  `toml:"region" json:"region"`
+	ContainerPrefix string                                  `toml:"container_prefix" json:"container_prefix"`
+	Encryption      []convergent.ConvergentEncryptionConfig `toml:"encryption" json:"encryption" mapstructure:"encryption"`
+}
+
+type WebdavStorageConfiguration struct {
+	Address    string                                  `toml:"address" json:"address"`
+	Username   string                                  `toml:"username" json:"username"`
+	Password   string                                  `toml:"password" json:"password"`
+	Path       string                                  `toml:"path" json:"path"`
+	Encryption []convergent.ConvergentEncryptionConfig `toml:"encryption" json:"encryption" mapstructure:"encryption"`
 }
 
 type RedisBufferConfiguration struct {
@@ -153,7 +193,7 @@ func Init(ctx context.Context, m *gorpmapper.Mapper, db *gorp.DbMap, config Conf
 	if err != nil {
 		return nil, err
 	}
-	defer tx.Rollback()
+	defer tx.Rollback() // nolint
 
 	u, err := LoadUnitByName(ctx, m, tx, config.Buffer.Name)
 	if sdk.ErrorIs(err, sdk.ErrNotFound) {
@@ -166,7 +206,9 @@ func Init(ctx context.Context, m *gorpmapper.Mapper, db *gorp.DbMap, config Conf
 			Name:    config.Buffer.Name,
 			Config:  srvConfig,
 		}
-		err = InsertUnit(ctx, m, tx, u)
+		if err := InsertUnit(ctx, m, tx, u); err != nil {
+			return nil, err
+		}
 	} else if err != nil {
 		return nil, err
 	}
@@ -205,8 +247,7 @@ func Init(ctx context.Context, m *gorpmapper.Mapper, db *gorp.DbMap, config Conf
 			}
 		}
 
-		schedulerEntry, err := scheduler.AddFunc(cfg.CronExpr, runFunc)
-		if err != nil {
+		if _, err := scheduler.AddFunc(cfg.CronExpr, runFunc); err != nil {
 			return nil, err
 		}
 
@@ -235,7 +276,6 @@ func Init(ctx context.Context, m *gorpmapper.Mapper, db *gorp.DbMap, config Conf
 		storageUnit.Set(m, db, *u)
 
 		result.Storages = append(result.Storages, storageUnit)
-		log.Debug("cdn.storage.Init> storage scheduled: %v", schedulerEntry)
 		if err := tx.Commit(); err != nil {
 			return nil, err
 		}
