@@ -2,18 +2,17 @@ package cdn
 
 import (
 	"context"
-	"encoding/hex"
 	"strconv"
 	"strings"
 	"time"
 
 	"github.com/mitchellh/hashstructure"
+
 	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/engine/cdn/index"
 	"github.com/ovh/cds/engine/cdn/storage"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
-	"github.com/ovh/symmecrypt/convergent"
 )
 
 func (s *Service) dequeueJobLogs(ctx context.Context) error {
@@ -130,47 +129,9 @@ func (s *Service) storeLogs(ctx context.Context, typ string, signature log.Signa
 	}
 	// If we have all lines
 	if maxLine > 0 && maxLine == logsSize {
-		tx, err := s.mustDBWithCtx(ctx).Begin()
-		if err != nil {
-			return sdk.WithStack(err)
-		}
-		defer tx.Rollback() // nolint
-
-		// We need to lock the item and set its status to complete and also generate data hash
-		item, err = index.LoadAndLockItemByID(ctx, s.Mapper, tx, item.ID)
-		if err != nil {
-			if sdk.ErrorIs(err, sdk.ErrNotFound) {
-				return sdk.WrapError(sdk.ErrLocked, "item already locked")
-			}
+		if err := s.completeItem(ctx, item.ID); err != nil {
 			return err
 		}
-
-		// Update index with final data
-		item.Status = index.StatusItemCompleted
-
-		// Get all data from buffer and add manually last line
-		reader, err := s.Units.Buffer.NewReader(*item)
-		if err != nil {
-			return err
-		}
-		h, err := convergent.NewHash(reader)
-		if err != nil {
-			return err
-		}
-		item.Hash = hex.EncodeToString(h.Sum(nil))
-
-		if err := index.UpdateItem(ctx, s.Mapper, tx, item); err != nil {
-			return err
-		}
-
-		if _, err := storage.InsertItemUnit(ctx, s.Mapper, tx, s.Units.Buffer.ID(), item.ID); err != nil {
-			return err
-		}
-
-		if err := tx.Commit(); err != nil {
-			return sdk.WithStack(err)
-		}
-
 		_ = s.Cache.Delete(maxLineKey)
 	}
 	return nil

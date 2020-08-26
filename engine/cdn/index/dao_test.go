@@ -2,8 +2,10 @@ package index_test
 
 import (
 	"context"
-	"github.com/stretchr/testify/require"
 	"testing"
+	"time"
+
+	"github.com/stretchr/testify/require"
 
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/cdn/index"
@@ -26,4 +28,39 @@ func TestLoadItem(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, i.ID, res.ID)
 	require.Equal(t, i.Type, res.Type)
+}
+
+func TestLoadOldItemIDsByStatusAndDuration(t *testing.T) {
+	m := gorpmapper.New()
+	index.InitDBMapping(m)
+	db, _ := test.SetupPGWithMapper(t, m, sdk.TypeCDN)
+
+	i1 := &index.Item{
+		ID:         sdk.UUID(),
+		ApiRefHash: sdk.UUID(),
+		Type:       index.TypeItemStepLog,
+		Status:     index.StatusItemCompleted,
+	}
+	err := index.InsertItem(context.TODO(), m, db, i1)
+	require.NoError(t, err)
+
+	i2 := &index.Item{
+		ID:         sdk.UUID(),
+		ApiRefHash: sdk.UUID(),
+		Type:       index.TypeItemStepLog,
+		Status:     index.StatusItemIncoming,
+	}
+	err = index.InsertItem(context.TODO(), m, db, i2)
+	require.NoError(t, err)
+	defer func() {
+		_ = index.DeleteItem(m, db, i2)
+
+	}()
+
+	time.Sleep(2 * time.Second)
+
+	ids, err := index.LoadOldItemIDsByStatusAndDuration(db, index.StatusItemIncoming, 1)
+	require.NoError(t, err)
+	require.Len(t, ids, 1)
+	require.Equal(t, i2.ID, ids[0])
 }

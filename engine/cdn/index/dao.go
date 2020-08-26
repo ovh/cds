@@ -34,6 +34,14 @@ func getItem(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlExecutor, q g
 	return &i, nil
 }
 
+func getItemIDs(db gorp.SqlExecutor, q gorpmapper.Query) ([]string, error) {
+	var ids []string
+	if _, err := db.Select(&ids, q.Query, q.Arguments...); err != nil {
+		return nil, err
+	}
+	return ids, nil
+}
+
 // LoadItemByID returns an item from database for given id.
 func LoadItemByID(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlExecutor, id string) (*Item, error) {
 	query := gorpmapper.NewQuery("SELECT * FROM index WHERE id = $1").Args(id)
@@ -52,7 +60,7 @@ func InsertItem(ctx context.Context, m *gorpmapper.Mapper, db gorpmapper.SqlExec
 	i.Created = time.Now()
 	i.LastModified = time.Now()
 	if err := m.InsertAndSign(ctx, db, i); err != nil {
-		return sdk.WrapError(err, "unable to insert index item")
+		return sdk.WrapError(err, "unable to insert index item %s", i.ID)
 	}
 	return nil
 }
@@ -62,6 +70,13 @@ func UpdateItem(ctx context.Context, m *gorpmapper.Mapper, db gorpmapper.SqlExec
 	i.LastModified = time.Now()
 	if err := m.UpdateAndSign(ctx, db, i); err != nil {
 		return sdk.WrapError(err, "unable to update index item")
+	}
+	return nil
+}
+
+func DeleteItem(m *gorpmapper.Mapper, db gorpmapper.SqlExecutorWithTx, i *Item) error {
+	if err := m.Delete(db, i); err != nil {
+		return sdk.WrapError(err, "unable to delete item %s", i.ID)
 	}
 	return nil
 }
@@ -76,4 +91,15 @@ func LoadItemByApiRefHashAndType(ctx context.Context, m *gorpmapper.Mapper, db g
 			type = $2
 	`).Args(hash, typ)
 	return getItem(ctx, m, db, query)
+}
+
+func LoadOldItemIDsByStatusAndDuration(db gorp.SqlExecutor, status string, duration int) ([]string, error) {
+	query := gorpmapper.NewQuery(`
+		SELECT id
+		FROM index
+		WHERE
+			status = $1 AND
+            last_modified < NOW() - $2 * INTERVAL '1 second'
+	`).Args(status, duration)
+	return getItemIDs(db, query)
 }
