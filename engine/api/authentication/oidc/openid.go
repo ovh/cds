@@ -2,6 +2,7 @@ package oidc
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"time"
@@ -106,7 +107,7 @@ func (d authDriver) GetUserInfo(ctx context.Context, req sdk.AuthConsumerSigninR
 	}
 	rawIDToken, ok := oauth2Token.Extra("id_token").(string)
 	if !ok {
-		return info, sdk.WrapError(err, "No id_token field in oauth2 token")
+		return info, sdk.WithStack(fmt.Errorf("no id_token field in oauth2 token"))
 	}
 	idToken, err := d.Verifier.Verify(ctx, rawIDToken)
 	if err != nil {
@@ -120,19 +121,19 @@ func (d authDriver) GetUserInfo(ctx context.Context, req sdk.AuthConsumerSigninR
 	// Check if email is verified.
 	// See standard claims at https://openid.net/specs/openid-connect-core-1_0.html#StandardClaims
 	if verified, ok := tokenClaim["email_verified"].(bool); !ok || !verified {
-		return info, sdk.WrapError(sdk.ErrInvalidUser, "OIDC user's email not verified")
+		return info, sdk.NewErrorFrom(sdk.ErrInvalidUser, "OIDC user's email not verified")
 	}
 	if info.ExternalID, ok = tokenClaim["sub"].(string); !ok {
-		return info, sdk.WrapError(sdk.ErrInvalidUser, "Missing OIDC user ID in token claim")
+		return info, sdk.WithStack(errors.New("missing OIDC user ID in token claim"))
 	}
 
 	if info.Username, ok = tokenClaim["preferred_username"].(string); !ok {
-		return info, sdk.WrapError(sdk.ErrInvalidUser, "Missing username in OIDC token claim")
+		return info, sdk.WithStack(errors.New("Missing username in OIDC token claim"))
 	}
 
 	info.Fullname, _ = tokenClaim["name"].(string)
 	if info.Email, ok = tokenClaim["email"].(string); !ok {
-		return info, sdk.WrapError(sdk.ErrInvalidUser, "Missing user's email in OIDC token claim")
+		return info, sdk.WithStack(errors.New("Missing user's email in OIDC token claim"))
 	}
 
 	return info, nil
