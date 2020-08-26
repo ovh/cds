@@ -81,6 +81,8 @@ func (a *AbstractUnit) Set(m *gorpmapper.Mapper, db *gorp.DbMap, u Unit) {
 type BufferUnit interface {
 	Interface
 	Add(i index.Item, score uint, value string) error
+	Append(i index.Item, value string) error
+	Card(i index.Item) (int, error)
 	Get(i index.Item, from, to uint) ([]string, error)
 	NewReader(i index.Item) (io.ReadCloser, error)
 }

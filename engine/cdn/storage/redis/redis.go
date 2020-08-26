@@ -4,7 +4,9 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"strconv"
 	"strings"
+	"unicode"
 
 	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/engine/cdn/index"
@@ -40,13 +42,29 @@ func (s *Redis) ItemExists(i index.Item) (bool, error) {
 }
 
 func (s *Redis) Add(i index.Item, index uint, value string) error {
+	value = strconv.Itoa(int(index)) + "#" + value
 	return s.store.ScoredSetAdd(context.Background(), i.ID, value, float64(index))
+}
+
+func (s *Redis) Append(i index.Item, value string) error {
+	return s.store.ScoredSetAppend(context.Background(), i.ID, value)
+}
+
+func (s *Redis) Card(i index.Item) (int, error) {
+	return s.store.SetCard(i.ID)
 }
 
 func (s *Redis) Get(i index.Item, from, to uint) ([]string, error) {
 	var res = make([]string, to-from+1)
-	err := s.store.ScoredSetScan(context.Background(), i.ID, float64(from), float64(to), &res)
-	return res, err
+	if err := s.store.ScoredSetScan(context.Background(), i.ID, float64(from), float64(to), &res); err != nil {
+		return res, err
+	}
+
+	for i := range res {
+		res[i] = strings.TrimFunc(res[i], unicode.IsNumber)
+		res[i] = strings.TrimPrefix(res[i], "#")
+	}
+	return res, nil
 }
 
 // NewReader instanciate a reader that it able to iterate over Redis storage unit
@@ -76,6 +94,7 @@ func (r *reader) Read(p []byte) (n int, err error) {
 	if err != nil {
 		return 0, err
 	}
+
 	if len(lines) > 0 {
 		if r.currentBuffer == "" {
 			r.currentBuffer += strings.Join(lines, "\n")

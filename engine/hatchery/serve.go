@@ -234,7 +234,7 @@ func (c *Common) RefreshServiceLogger(ctx context.Context) error {
 	return nil
 }
 
-func (c *Common) SendServiceLog(ctx context.Context, servicesLogs []sdk.ServiceLog) {
+func (c *Common) SendServiceLog(ctx context.Context, servicesLogs []sdk.ServiceLog, status string) {
 	for _, s := range servicesLogs {
 		dataToSign := log.Signature{
 			Service: &log.SignatureService{
@@ -244,9 +244,15 @@ func (c *Common) SendServiceLog(ctx context.Context, servicesLogs []sdk.ServiceL
 				RequirementName: s.ServiceRequirementName,
 				WorkerName:      s.WorkerName,
 			},
-			JobID:     s.WorkflowNodeJobRunID,
-			NodeRunID: s.WorkflowNodeRunID,
-			Timestamp: time.Now().UnixNano(),
+			ProjectKey:   s.ProjectKey,
+			WorkflowName: s.WorkflowName,
+			WorkflowID:   s.WorkflowID,
+			RunID:        s.RunID,
+			NodeRunName:  s.NodeRunName,
+			JobName:      s.JobName,
+			JobID:        s.WorkflowNodeJobRunID,
+			NodeRunID:    s.WorkflowNodeRunID,
+			Timestamp:    time.Now().UnixNano(),
 		}
 		signature, err := jws.Sign(c.Signer, dataToSign)
 		if err != nil {
@@ -254,7 +260,7 @@ func (c *Common) SendServiceLog(ctx context.Context, servicesLogs []sdk.ServiceL
 			continue
 		}
 		if c.ServiceLogger != nil {
-			c.ServiceLogger.WithField("Signature", signature).Log(logrus.InfoLevel, s.Val)
+			c.ServiceLogger.WithField("Signature", signature).WithField(log.ExtraFieldJobStatus, status).Log(logrus.InfoLevel, s.Val)
 		}
 	}
 }

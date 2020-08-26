@@ -11,7 +11,6 @@ require (
 	github.com/Microsoft/go-winio v0.4.7 // indirect
 	github.com/Netflix/go-expect v0.0.0-20180928190340-9d1f4485533b // indirect
 	github.com/Nvveen/Gotty v0.0.0-20120604004816-cd527374f1e5 // indirect
-	github.com/SSSaaS/sssa-golang v0.0.0-20170502204618-d37d7782d752 // indirect
 	github.com/Shopify/sarama v1.19.0
 	github.com/alecthomas/jsonschema v0.0.0-20200123075451-43663a393755
 	github.com/andygrunwald/go-gerrit v0.0.0-20181207071854-19ef3e9332a4
@@ -61,9 +60,6 @@ require (
 	github.com/inconshreveable/go-update v0.0.0-20160112193335-8152e7eb6ccf
 	github.com/inconshreveable/mousetrap v1.0.0 // indirect
 	github.com/itsjamie/gin-cors v0.0.0-20160420130702-97b4a9da7933
-	github.com/juju/errors v0.0.0-20190207033735-e65537c515d7 // indirect
-	github.com/juju/loggo v0.0.0-20190526231331-6e530bcce5d8 // indirect
-	github.com/juju/testing v0.0.0-20190429233213-dfc56b8c09fc // indirect
 	github.com/kardianos/osext v0.0.0-20170510131534-ae77be60afb1
 	github.com/kballard/go-shellquote v0.0.0-20180428030007-95032a82bc51 // indirect
 	github.com/keybase/go-crypto v0.0.0-20181127160227-255a5089e85a
@@ -81,7 +77,6 @@ require (
 	github.com/mcuadros/go-defaults v0.0.0-20161116231230-e1c978be3307
 	github.com/mgutz/ansi v0.0.0-20170206155736-9520e82c474b
 	github.com/mholt/archiver v3.1.1+incompatible
-	github.com/miscreant/miscreant-go v0.0.0-20181010193435-325cbd69228b // indirect
 	github.com/mitchellh/hashstructure v0.0.0-20170609045927-2bca23e0e452
 	github.com/mitchellh/mapstructure v1.1.2
 	github.com/mndrix/tap-go v0.0.0-20170113192335-56cca451570b // indirect
@@ -95,8 +90,8 @@ require (
 	github.com/opencontainers/go-digest v1.0.0-rc1 // indirect
 	github.com/opencontainers/image-spec v1.0.1 // indirect
 	github.com/ovh/cds/sdk/interpolate v0.0.0-20190319104452-71125b036b25
-	github.com/ovh/configstore v0.3.2
-	github.com/ovh/symmecrypt v0.4.0
+	github.com/ovh/configstore v0.3.3-0.20200701085609-a539fcf61db5
+	github.com/ovh/symmecrypt v0.4.4-0.20200727114100-27d0827d75e8
 	github.com/ovh/venom v0.25.0
 	github.com/patrickmn/go-cache v2.1.0+incompatible
 	github.com/pborman/uuid v0.0.0-20170612153648-e790cca94e6c
@@ -136,10 +131,10 @@ require (
 	github.com/ziutek/mymysql v1.5.4 // indirect
 	go.etcd.io/bbolt v1.3.3 // indirect
 	go.opencensus.io v0.22.0
-	golang.org/x/crypto v0.0.0-20190829043050-9756ffdc2472
+	golang.org/x/crypto v0.0.0-20200709230013-948cd5f35899
 	golang.org/x/net v0.0.0-20190620200207-3b0461eec859
 	golang.org/x/oauth2 v0.0.0-20190604053449-0f29369cfe45
-	golang.org/x/sys v0.0.0-20190813064441-fde4db37ae7a
+	golang.org/x/sys v0.0.0-20200724161237-0e2f3a69832c
 	golang.org/x/text v0.3.2
 	google.golang.org/genproto v0.0.0-20190817000702-55e96fffbd48 // indirect
 	google.golang.org/grpc v1.23.0
@@ -151,7 +146,6 @@ require (
 	gopkg.in/h2non/gock.v1 v1.0.14
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/ldap.v2 v2.5.1
-	gopkg.in/mgo.v2 v2.0.0-20190816093944-a6b53ec6cb22 // indirect
 	gopkg.in/olivere/elastic.v6 v6.2.17
 	gopkg.in/spacemonkeygo/httpsig.v0 v0.0.0-20170228231032-6732593ec966
 	gopkg.in/square/go-jose.v2 v2.3.1

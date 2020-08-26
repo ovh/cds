@@ -54,6 +54,10 @@ type CurrentWorker struct {
 		context      context.Context
 		signer       jose.Signer
 		projectKey   string
+		workflowName string
+		workflowID   int64
+		runID        int64
+		nodeRunName  string
 	}
 	status struct {
 		Name   string `json:"name"`
@@ -118,6 +122,7 @@ func (wk *CurrentWorker) prepareLog(ctx context.Context, level workerruntime.Lev
 	}
 
 	stepOrder, _ := workerruntime.StepOrder(ctx)
+	stepName, _ := workerruntime.StepName(ctx)
 	var logLevel logrus.Level
 	switch level {
 	case workerruntime.LevelDebug:
@@ -129,17 +134,22 @@ func (wk *CurrentWorker) prepareLog(ctx context.Context, level workerruntime.Lev
 	case workerruntime.LevelError:
 		logLevel = logrus.ErrorLevel
 	}
-
 	dataToSign := log.Signature{
 		Worker: &log.SignatureWorker{
 			WorkerID:   wk.id,
 			WorkerName: wk.Name(),
 			StepOrder:  int64(stepOrder),
+			StepName:   stepName,
 		},
-		ProjectKey: wk.currentJob.projectKey,
-		JobID:      wk.currentJob.wJob.ID,
-		NodeRunID:  wk.currentJob.wJob.WorkflowNodeRunID,
-		Timestamp:  time.Now().UnixNano(),
+		ProjectKey:   wk.currentJob.projectKey,
+		JobID:        wk.currentJob.wJob.ID,
+		NodeRunID:    wk.currentJob.wJob.WorkflowNodeRunID,
+		Timestamp:    time.Now().UnixNano(),
+		WorkflowID:   wk.currentJob.workflowID,
+		WorkflowName: wk.currentJob.workflowName,
+		NodeRunName:  wk.currentJob.nodeRunName,
+		RunID:        wk.currentJob.runID,
+		JobName:      wk.currentJob.wJob.Job.Action.Name,
 	}
 	signature, err := jws.Sign(wk.currentJob.signer, dataToSign)
 	if err != nil {

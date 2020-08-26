@@ -18,3 +18,13 @@ func (h *HatcherySwarm) getContainers(dockerClient *dockerClient, options types.
 	}
 	return s, nil
 }
+
+func (h *HatcherySwarm) getContainer(ctns []types.Container, id string) *types.Container {
+	for i := range ctns {
+		ctn := &ctns[i]
+		if ctn.ID == id {
+			return ctn
+		}
+	}
+	return nil
+}

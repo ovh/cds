@@ -68,7 +68,9 @@ type LockStore interface {
 
 type ScoredSetStore interface {
 	ScoredSetAdd(ctx context.Context, key string, value interface{}, score float64) error
+	ScoredSetAppend(ctx context.Context, key string, value interface{}) error
 	ScoredSetScan(ctx context.Context, key string, from, to float64, dest interface{}) error
+	SetCard(key string) (int, error)
 }
 
 //New init a cache

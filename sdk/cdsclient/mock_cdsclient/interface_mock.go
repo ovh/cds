@@ -3013,11 +3013,12 @@ func (mr *MockQueueClientMockRecorder) QueueTakeJob(ctx, job interface{}) *gomoc
 }
 
 // QueueJobBook mocks base method
-func (m *MockQueueClient) QueueJobBook(ctx context.Context, id int64) error {
+func (m *MockQueueClient) QueueJobBook(ctx context.Context, id int64) (sdk.WorkflowNodeJobRunBooked, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "QueueJobBook", ctx, id)
-	ret0, _ := ret[0].(error)
-	return ret0
+	ret0, _ := ret[0].(sdk.WorkflowNodeJobRunBooked)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
 // QueueJobBook indicates an expected call of QueueJobBook
@@ -6897,11 +6898,12 @@ func (mr *MockInterfaceMockRecorder) QueueTakeJob(ctx, job interface{}) *gomock.
 }
 
 // QueueJobBook mocks base method
-func (m *MockInterface) QueueJobBook(ctx context.Context, id int64) error {
+func (m *MockInterface) QueueJobBook(ctx context.Context, id int64) (sdk.WorkflowNodeJobRunBooked, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "QueueJobBook", ctx, id)
-	ret0, _ := ret[0].(error)
-	return ret0
+	ret0, _ := ret[0].(sdk.WorkflowNodeJobRunBooked)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
 // QueueJobBook indicates an expected call of QueueJobBook
@@ -8444,11 +8446,12 @@ func (mr *MockWorkerInterfaceMockRecorder) QueueTakeJob(ctx, job interface{}) *g
 }
 
 // QueueJobBook mocks base method
-func (m *MockWorkerInterface) QueueJobBook(ctx context.Context, id int64) error {
+func (m *MockWorkerInterface) QueueJobBook(ctx context.Context, id int64) (sdk.WorkflowNodeJobRunBooked, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "QueueJobBook", ctx, id)
-	ret0, _ := ret[0].(error)
-	return ret0
+	ret0, _ := ret[0].(sdk.WorkflowNodeJobRunBooked)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
 // QueueJobBook indicates an expected call of QueueJobBook

@@ -123,7 +123,7 @@ func (x *RunningStorageUnits) Run(ctx context.Context, s StorageUnit) error {
 		log.Debug("%d bytes copied", n)
 
 		// Save in database that the item is complete for the storage unit
-		if _, err := InsertItemUnit(ctx, s.GorpMapper(), tx, *su, *item); err != nil {
+		if _, err := InsertItemUnit(ctx, s.GorpMapper(), tx, su.ID, item.ID); err != nil {
 			log.Error(ctx, "unable to insert item unit: %v", err)
 			tx.Rollback() // nolint
 			continue

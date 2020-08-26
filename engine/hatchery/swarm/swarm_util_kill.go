@@ -19,7 +19,7 @@ const (
 	docker0 = "docker0"
 )
 
-func (h *HatcherySwarm) killAndRemove(ctx context.Context, dockerClient *dockerClient, ID string) error {
+func (h *HatcherySwarm) killAndRemove(ctx context.Context, dockerClient *dockerClient, ID string, containers []types.Container) error {
 	ctxList, cancelList := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancelList()
 	container, err := dockerClient.ContainerInspect(ctxList, ID)
@@ -103,6 +103,32 @@ func (h *HatcherySwarm) killAndRemove(ctx context.Context, dockerClient *dockerC
 		if netname, ok := network.Labels["worker_net"]; ok {
 			log.Debug("hatchery> swarm> killAndRemove> Remove network %s", netname)
 			for id := range network.Containers {
+
+				c := h.getContainer(containers, id)
+				if c != nil {
+					// Send final logs before deleting service container
+					jobIdentifiers := h.GetIdentifiersFromLabels(*c)
+					if jobIdentifiers == nil {
+						log.Error(ctx, "killAwolWorker> unable to get identifiers from containers labels")
+						continue
+					}
+					endLog := sdk.ServiceLog{
+						WorkflowNodeJobRunID:   jobIdentifiers.JobID,
+						WorkflowNodeRunID:      jobIdentifiers.NodeRunID,
+						ServiceRequirementID:   jobIdentifiers.ServiceID,
+						ServiceRequirementName: c.Labels[hatchery.LabelServiceReqName],
+						Val:                    "End of Job",
+						WorkerName:             c.Labels["service_worker"],
+						JobName:                c.Labels[hatchery.LabelServiceJobName],
+						NodeRunName:            c.Labels[hatchery.LabelServiceNodeRunName],
+						WorkflowName:           c.Labels[hatchery.LabelServiceWorkflowName],
+						ProjectKey:             c.Labels[hatchery.LabelServiceProjectKey],
+						RunID:                  jobIdentifiers.RunID,
+						WorkflowID:             jobIdentifiers.WorkflowID,
+					}
+					h.Common.SendServiceLog(ctx, []sdk.ServiceLog{endLog}, sdk.StatusSuccess)
+				}
+
 				if err := h.killAndRemoveContainer(ctx, dockerClient, id); err != nil {
 					log.Error(ctx, "hatchery> swarm> killAndRemove> unable to kill and remove container %s on %s err:%s", id[:12], dockerClient.name, err)
 				}

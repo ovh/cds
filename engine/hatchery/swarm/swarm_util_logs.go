@@ -9,6 +9,7 @@ import (
 	"github.com/docker/docker/api/types"
 
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/hatchery"
 	"github.com/ovh/cds/sdk/log"
 )
 
@@ -21,14 +22,10 @@ func (h *HatcherySwarm) getServicesLogs() error {
 
 		servicesLogs := make([]sdk.ServiceLog, 0, len(containers))
 		for _, cnt := range containers {
-			serviceJobIDStr, isWorkflowService := cnt.Labels["service_job_id"]
-			if !isWorkflowService {
+			if _, has := cnt.Labels[hatchery.LabelServiceID]; !has {
 				continue
 			}
-			serviceNodeRunIDStr, ok := cnt.Labels["service_node_run_id"]
-			if !ok {
-				continue
-			}
+
 			workerName := cnt.Labels["service_worker"]
 			ctx, cancel := context.WithTimeout(context.Background(), time.Minute*2)
 			logsOpts := types.ContainerLogsOptions{
@@ -46,8 +43,8 @@ func (h *HatcherySwarm) getServicesLogs() error {
 			}
 
 			logs, errR := ioutil.ReadAll(logsReader)
-			defer logsReader.Close()
 			if errR != nil {
+				logsReader.Close()
 				log.Error(ctx, "hatchery> swarm> getServicesLogs> cannot read logs for containers service %s %v : %v", cnt.ID, cnt.Names, errR)
 				cancel()
 				continue
@@ -56,43 +53,86 @@ func (h *HatcherySwarm) getServicesLogs() error {
 			cancel()
 
 			if len(logs) > 0 {
-				serviceID, ok := cnt.Labels["service_id"]
-				if !ok {
-					log.Error(ctx, "hatchery> swarm> getServicesLogs> cannot find label service id for containers service %s %v", cnt.ID, cnt.Names)
-					continue
-				}
-
-				reqServiceID, errP := strconv.ParseInt(serviceID, 10, 64)
-				if errP != nil {
-					log.Error(ctx, "hatchery> swarm> getServicesLogs> cannot parse service id for containers service %s %v id : %s, err : %v", cnt.ID, cnt.Names, serviceID, errP)
-					continue
-				}
-				serviceJobID, errPj := strconv.ParseInt(serviceJobIDStr, 10, 64)
-				if errPj != nil {
-					log.Error(ctx, "hatchery> swarm> getServicesLogs> cannot parse service job id for containers service %s %v id : %s, err : %v", cnt.ID, cnt.Names, serviceJobIDStr, errPj)
-					continue
-				}
-				serviceNodeRunID, err := strconv.ParseInt(serviceNodeRunIDStr, 10, 64)
-				if err != nil {
-					log.Error(ctx, "hatchery> swarm> getServicesLogs> cannot parse service node run id for containers service %s %v id : %s, err : %v", cnt.ID, cnt.Names, serviceNodeRunIDStr, errPj)
+				jobIdentifiers := h.GetIdentifiersFromLabels(cnt)
+				if jobIdentifiers == nil {
+					logsReader.Close()
 					continue
 				}
 
 				servicesLogs = append(servicesLogs, sdk.ServiceLog{
-					WorkflowNodeJobRunID:   serviceJobID,
-					WorkflowNodeRunID:      serviceNodeRunID,
-					ServiceRequirementID:   reqServiceID,
-					ServiceRequirementName: cnt.Labels["service_req_name"],
+					WorkflowNodeJobRunID:   jobIdentifiers.JobID,
+					WorkflowNodeRunID:      jobIdentifiers.NodeRunID,
+					ServiceRequirementID:   jobIdentifiers.ServiceID,
+					ServiceRequirementName: cnt.Labels[hatchery.LabelServiceReqName],
 					Val:                    string(logs),
 					WorkerName:             workerName,
+					JobName:                cnt.Labels[hatchery.LabelServiceJobName],
+					NodeRunName:            cnt.Labels[hatchery.LabelServiceNodeRunName],
+					WorkflowName:           cnt.Labels[hatchery.LabelServiceWorkflowName],
+					ProjectKey:             cnt.Labels[hatchery.LabelServiceProjectKey],
+					RunID:                  jobIdentifiers.RunID,
+					WorkflowID:             jobIdentifiers.WorkflowID,
 				})
 			}
+			logsReader.Close()
 		}
 		if len(servicesLogs) > 0 {
 			ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-			h.Common.SendServiceLog(ctx, servicesLogs)
+			h.Common.SendServiceLog(ctx, servicesLogs, sdk.StatusBuilding)
 			cancel()
 		}
 	}
 	return nil
+}
+
+func (h *HatcherySwarm) GetIdentifiersFromLabels(cnt types.Container) *hatchery.JobIdentifiers {
+	serviceIDStr, ok := cnt.Labels[hatchery.LabelServiceID]
+	if !ok {
+		return nil
+	}
+	serviceJobIDStr, isWorkflowService := cnt.Labels[hatchery.LabelServiceJobID]
+	if !isWorkflowService {
+		return nil
+	}
+	serviceNodeRunIDStr, ok := cnt.Labels[hatchery.LabelServiceNodeRunID]
+	if !ok {
+		return nil
+	}
+	runIDStr, ok := cnt.Labels[hatchery.LabelServiceRunID]
+	if !ok {
+		return nil
+	}
+	workflowIDStr, ok := cnt.Labels[hatchery.LabelServiceWorkflowID]
+	if !ok {
+		return nil
+	}
+
+	serviceID, errP := strconv.ParseInt(serviceIDStr, 10, 64)
+	if errP != nil {
+		return nil
+	}
+	serviceJobID, errPj := strconv.ParseInt(serviceJobIDStr, 10, 64)
+	if errPj != nil {
+		return nil
+	}
+	serviceNodeRunID, err := strconv.ParseInt(serviceNodeRunIDStr, 10, 64)
+	if err != nil {
+		return nil
+	}
+	serviceRunID, err := strconv.ParseInt(runIDStr, 10, 64)
+	if err != nil {
+		return nil
+	}
+	serviceWorkflowID, err := strconv.ParseInt(workflowIDStr, 10, 64)
+	if err != nil {
+		return nil
+	}
+
+	return &hatchery.JobIdentifiers{
+		WorkflowID: serviceWorkflowID,
+		RunID:      serviceRunID,
+		NodeRunID:  serviceNodeRunID,
+		JobID:      serviceJobID,
+		ServiceID:  serviceID,
+	}
 }

@@ -176,7 +176,7 @@ func (s *Service) handleWorkerLog(ctx context.Context, workerName string, worker
 
 	if s.cdnEnabled(ctx, signature.ProjectKey) {
 		if err := s.Cache.Enqueue(keyJobLogIncomingQueue, hm); err != nil {
-			return err
+			log.Error(ctx, "cdn:handleWorkerLog: unable to enqueue in %s: %v", keyJobLogIncomingQueue, err)
 		}
 	}
 
@@ -190,28 +190,21 @@ func (s *Service) handleWorkerLog(ctx context.Context, workerName string, worker
 	return nil
 }
 
-type handledMessage struct {
-	Signature log.Signature
-	Msg       hook.Message
-	Line      int64
-	Status    string
-}
-
-func buildMessage(signature log.Signature, m hook.Message) string {
-	logDate := time.Unix(0, int64(m.Time*1e9))
+func buildMessage(hm handledMessage) string {
+	logDate := time.Unix(0, int64(hm.Msg.Time*1e9))
 	logs := sdk.Log{
-		JobID:        signature.JobID,
+		JobID:        hm.Signature.JobID,
 		LastModified: &logDate,
-		NodeRunID:    signature.NodeRunID,
+		NodeRunID:    hm.Signature.NodeRunID,
 		Start:        &logDate,
-		StepOrder:    signature.Worker.StepOrder,
-		Val:          m.Full,
+		StepOrder:    hm.Signature.Worker.StepOrder,
+		Val:          hm.Msg.Full,
 	}
 	if !strings.HasSuffix(logs.Val, "\n") {
 		logs.Val += "\n"
 	}
 
-	logs.Val = fmt.Sprintf("[%s] %s", getLevelString(m.Level), logs.Val)
+	logs.Val = fmt.Sprintf("[%s] %s", getLevelString(hm.Msg.Level), logs.Val)
 	return logs.Val
 }
 
@@ -275,6 +268,24 @@ func (s *Service) handleServiceLog(ctx context.Context, hatcheryID int64, hatche
 		return sdk.WrapError(sdk.ErrWrongRequest, "cannot send service log for worker %s from hatchery (expected: %d/actual: %d)", w.ID, *w.HatcheryID, signature.Service.HatcheryID)
 	}
 
+	var status string
+	statusI := m.Extra["_"+log.ExtraFieldJobStatus]
+	if statusI != nil {
+		status = statusI.(string)
+	}
+
+	hm := handledMessage{
+		Signature: signature,
+		Msg:       m,
+		Status:    status,
+	}
+	if s.cdnServiceLogsEnabled(ctx) {
+		if err := s.Cache.Enqueue(keyServiceLogIncomingQueue, hm); err != nil {
+			return err
+		}
+	}
+
+	// DEPRECATED: call CDS API
 	logs := sdk.ServiceLog{
 		ServiceRequirementName: signature.Service.RequirementName,
 		ServiceRequirementID:   signature.Service.RequirementID,
@@ -285,14 +296,6 @@ func (s *Service) handleServiceLog(ctx context.Context, hatcheryID int64, hatche
 	if !strings.HasSuffix(logs.Val, "\n") {
 		logs.Val += "\n"
 	}
-
-	if s.cdnServiceLogsEnabled(ctx) {
-		if err := s.Cache.Enqueue(keyServiceLogIncomingQueue, logs); err != nil {
-			return err
-		}
-	}
-
-	// DEPRECATED: call CDS API
 	if err := s.Client.QueueServiceLogs(ctx, []sdk.ServiceLog{logs}); err != nil {
 		return err
 	}
@@ -374,57 +377,4 @@ func (s *Service) cdnEnabled(ctx context.Context, projectKey string) bool {
 		return resp.Enabled
 	}
 	return enabled.(bool)
-}
-
-func (s *Service) dequeueJobLogs(ctx context.Context) error {
-	log.Info(ctx, "dequeueJobLogs: start")
-	for {
-		select {
-		case <-ctx.Done():
-			return ctx.Err()
-		default:
-			dequeuCtx, cancel := context.WithTimeout(ctx, 15*time.Second)
-			var hm handledMessage
-			if err := s.Cache.DequeueWithContext(dequeuCtx, keyJobLogIncomingQueue, 30*time.Millisecond, &hm); err != nil {
-				cancel()
-				if strings.Contains(err.Error(), "context deadline exceeded") {
-					return nil
-				}
-				log.Error(ctx, "dequeueJobLogs: unable to dequeue job logs queue: %v", err)
-				continue
-			}
-			cancel()
-			if hm.Signature.Worker == nil {
-				continue
-			}
-			currentLog := buildMessage(hm.Signature, hm.Msg)
-			log.Debug("Job log: %s", currentLog)
-		}
-	}
-}
-
-func (s *Service) dequeueServiceLogs(ctx context.Context) error {
-	log.Info(ctx, "dequeueServiceLogs: start")
-	for {
-		select {
-		case <-ctx.Done():
-			return ctx.Err()
-		default:
-			dequeuCtx, cancel := context.WithTimeout(ctx, 15*time.Second)
-			var serviceLog sdk.ServiceLog
-			if err := s.Cache.DequeueWithContext(dequeuCtx, keyServiceLogIncomingQueue, 30*time.Millisecond, &serviceLog); err != nil {
-				cancel()
-				if strings.Contains(err.Error(), "context deadline exceeded") {
-					return nil
-				}
-				log.Error(ctx, "dequeueServiceLogs: unable to dequeue service logs queue: %v", err)
-				continue
-			}
-			cancel()
-			if serviceLog.Val == "" {
-				continue
-			}
-			log.Debug("Service log: %s", serviceLog.Val)
-		}
-	}
 }

@@ -127,7 +127,7 @@ func (s *Service) dequeueJobMessages(ctx context.Context, jobLogsQueueKey string
 				for _, hm := range hms {
 					now := time.Now()
 
-					currentLog := buildMessage(hm.Signature, hm.Msg)
+					currentLog := buildMessage(hm)
 					l := sdk.Log{
 						JobID:        hm.Signature.JobID,
 						NodeRunID:    hm.Signature.NodeRunID,
