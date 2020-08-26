@@ -500,7 +500,7 @@ func (s *RedisStore) Unlock(key string) error {
 	return s.Delete(key)
 }
 
-func (s *RedisStore) ScoredAppend(ctx context.Context, key string, value interface{}) error {
+func (s *RedisStore) ScoredSetAppend(ctx context.Context, key string, value interface{}) error {
 	highItem, err := s.Client.ZRevRange(key, 0, 0).Result()
 	if err != nil {
 		return sdk.WithStack(err)

@@ -4,7 +4,9 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"strconv"
 	"strings"
+	"unicode"
 
 	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/engine/cdn/index"
@@ -40,12 +42,12 @@ func (s *Redis) ItemExists(i index.Item) (bool, error) {
 }
 
 func (s *Redis) Add(i index.Item, index uint, value string) error {
-	value = fmt.Sprintf("%d#%s", index, value)
+	value = strconv.Itoa(int(index)) + "#" + value
 	return s.store.ScoredSetAdd(context.Background(), i.ID, value, float64(index))
 }
 
 func (s *Redis) Append(i index.Item, value string) error {
-	return s.store.ScoredAppend(context.Background(), i.ID, value)
+	return s.store.ScoredSetAppend(context.Background(), i.ID, value)
 }
 
 func (s *Redis) Card(i index.Item) (int, error) {
@@ -57,11 +59,10 @@ func (s *Redis) Get(i index.Item, from, to uint) ([]string, error) {
 	if err := s.store.ScoredSetScan(context.Background(), i.ID, float64(from), float64(to), &res); err != nil {
 		return res, err
 	}
+
 	for i := range res {
-		linesSplitted := strings.SplitAfterN(res[i], "#", 2)
-		if len(linesSplitted) == 2 {
-			res[i] = linesSplitted[1]
-		}
+		res[i] = strings.TrimFunc(res[i], unicode.IsNumber)
+		res[i] = strings.TrimPrefix(res[i], "#")
 	}
 	return res, nil
 }
@@ -95,17 +96,10 @@ func (r *reader) Read(p []byte) (n int, err error) {
 	}
 
 	if len(lines) > 0 {
-		cleanedLines := make([]string, 0, len(lines))
-		for _, s := range lines {
-			linesSplitted := strings.SplitAfterN(s, "#", 2)
-			if len(linesSplitted) == 2 {
-				cleanedLines = append(cleanedLines, linesSplitted[1])
-			}
-		}
 		if r.currentBuffer == "" {
-			r.currentBuffer += strings.Join(cleanedLines, "\n")
+			r.currentBuffer += strings.Join(lines, "\n")
 		} else {
-			r.currentBuffer += "\n" + strings.Join(cleanedLines, "\n")
+			r.currentBuffer += "\n" + strings.Join(lines, "\n")
 		}
 	}
 
