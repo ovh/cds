@@ -169,6 +169,12 @@ export class BuildResult {
     step_logs: Log;
 }
 
+export class CDNLogAccess {
+    exists: boolean;
+    token: string;
+    download_url: string;
+}
+
 export interface Log {
     id: number;
     workflow_node_run_id: number;

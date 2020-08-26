@@ -86,7 +86,7 @@ func TestRun(t *testing.T) {
 	require.NotNil(t, units)
 	require.NotEmpty(t, units)
 
-	apiRef := index.ApiRef{
+	apiRef := sdk.CDNLogAPIRef{
 		ProjectKey: sdk.RandomString(5),
 	}
 
@@ -94,8 +94,8 @@ func TestRun(t *testing.T) {
 	require.NoError(t, err)
 
 	i := &index.Item{
-		ApiRef:     apiRef,
-		ApiRefHash: apiRefHash,
+		APIRef:     apiRef,
+		APIRefHash: apiRefHash,
 		Created:    time.Now(),
 		Type:       index.TypeItemStepLog,
 		Status:     index.StatusItemIncoming,

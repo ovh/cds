@@ -3,13 +3,14 @@ package cds
 import (
 	"bytes"
 	"fmt"
+	"io"
+	"io/ioutil"
+
 	"github.com/ovh/cds/engine/cdn/index"
 	"github.com/ovh/cds/engine/cdn/storage"
 	"github.com/ovh/cds/engine/cdn/storage/encryption"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
-	"io"
-	"io/ioutil"
 )
 
 type CDS struct {
@@ -56,19 +57,19 @@ func (c *CDS) NewWriter(i storage.ItemUnit) (io.WriteCloser, error) {
 func (c *CDS) NewReader(i storage.ItemUnit) (io.ReadCloser, error) {
 	switch i.Item.Type {
 	case index.TypeItemStepLog:
-		bs, err := c.client.WorkflowNodeRunJobStep(i.Item.ApiRef.ProjectKey, i.Item.ApiRef.WorkflowName, 0, i.Item.ApiRef.NodeRunID, i.Item.ApiRef.NodeRunJobID, int(i.Item.ApiRef.StepOrder))
+		bs, err := c.client.WorkflowNodeRunJobStep(i.Item.APIRef.ProjectKey, i.Item.APIRef.WorkflowName, 0, i.Item.APIRef.NodeRunID, i.Item.APIRef.NodeRunJobID, int(i.Item.APIRef.StepOrder))
 		if err != nil {
 			return nil, err
 		}
 		rc := ioutil.NopCloser(bytes.NewReader([]byte(bs.StepLogs.Val)))
 		return rc, nil
 	case index.TypeItemServiceLog:
-		logs, err := c.ServiceLogs(i.Item.ApiRef.ProjectKey, i.Item.ApiRef.WorkflowName, i.Item.ApiRef.NodeRunID, i.Item.ApiRef.NodeRunJobID)
+		logs, err := c.ServiceLogs(i.Item.APIRef.ProjectKey, i.Item.APIRef.WorkflowName, i.Item.APIRef.NodeRunID, i.Item.APIRef.NodeRunJobID)
 		if err != nil {
 			return nil, err
 		}
 		for _, l := range logs {
-			if l.ServiceRequirementName != i.Item.ApiRef.RequirementServiceName {
+			if l.ServiceRequirementName != i.Item.APIRef.RequirementServiceName {
 				continue
 			}
 			rc := ioutil.NopCloser(bytes.NewReader([]byte(l.Val)))
@@ -77,7 +78,7 @@ func (c *CDS) NewReader(i storage.ItemUnit) (io.ReadCloser, error) {
 	default:
 		return nil, sdk.WithStack(fmt.Errorf("unable to read type %s", i.Item.Type))
 	}
-	return nil, sdk.WithStack(fmt.Errorf("unable to find data for ref: %+v", i.Item.ApiRef))
+	return nil, sdk.WithStack(fmt.Errorf("unable to find data for ref: %+v", i.Item.APIRef))
 }
 
 func (c *CDS) ServiceLogs(pKey string, wkfName string, nodeRunID int64, jobID int64) ([]sdk.ServiceLog, error) {

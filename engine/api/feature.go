@@ -12,7 +12,7 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-func (api *API) isFeatureEanbledHandler() service.Handler {
+func (api *API) isFeatureEnabledHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		name := vars["name"]
@@ -23,6 +23,10 @@ func (api *API) isFeatureEanbledHandler() service.Handler {
 		}
 
 		enabled := featureflipping.IsEnabled(ctx, gorpmapping.Mapper, api.mustDB(), name, params)
-		return service.WriteJSON(w, sdk.FeatureEnabledResponse{Name: name, Enabled: enabled}, http.StatusOK)
+
+		return service.WriteJSON(w, sdk.FeatureEnabledResponse{
+			Name:    name,
+			Enabled: enabled,
+		}, http.StatusOK)
 	}
 }

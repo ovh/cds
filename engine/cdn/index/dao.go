@@ -105,12 +105,12 @@ func DeleteItem(m *gorpmapper.Mapper, db gorpmapper.SqlExecutorWithTx, i *Item) 
 	return nil
 }
 
-// LoadItemByJobStepAndType load an item by his job id, step order and type
-func LoadItemByApiRefHashAndType(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlExecutor, hash string, typ string, opts ...gorpmapper.GetOptionFunc) (*Item, error) {
+// LoadItemByAPIRefHashAndType load an item by his job id, step order and type
+func LoadItemByAPIRefHashAndType(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlExecutor, hash string, typ string, opts ...gorpmapper.GetOptionFunc) (*Item, error) {
 	query := gorpmapper.NewQuery(`
-		SELECT * 
-		FROM index 
-		WHERE 
+		SELECT *
+		FROM index
+		WHERE
 			api_ref_hash = $1 AND
 			type = $2
 	`).Args(hash, typ)

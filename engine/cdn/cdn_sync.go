@@ -145,7 +145,7 @@ func (s *Service) syncServiceLogs(ctx context.Context, tx gorpmapper.SqlExecutor
 		if !ok {
 			continue
 		}
-		apiRef := index.ApiRef{
+		apiRef := sdk.CDNLogAPIRef{
 			NodeRunID:              nodeRun.ID,
 			WorkflowName:           nodeRunIdentifier.WorkflowName,
 			WorkflowID:             nodeRunIdentifier.WorkflowID,
@@ -165,7 +165,7 @@ func (s *Service) syncServiceLogs(ctx context.Context, tx gorpmapper.SqlExecutor
 }
 
 func (s *Service) syncStepLog(ctx context.Context, tx gorpmapper.SqlExecutorWithTx, su storage.Interface, pKey string, nodeRun *sdk.WorkflowNodeRun, nodeRunIdentifier sdk.WorkflowNodeRunIdentifiers, rj sdk.WorkflowNodeJobRun, ss sdk.StepStatus, stepName string) error {
-	apiRef := index.ApiRef{
+	apiRef := sdk.CDNLogAPIRef{
 		StepOrder:      int64(ss.StepOrder),
 		NodeRunID:      nodeRun.ID,
 		WorkflowName:   nodeRunIdentifier.WorkflowName,
@@ -180,19 +180,19 @@ func (s *Service) syncStepLog(ctx context.Context, tx gorpmapper.SqlExecutorWith
 	return s.syncItem(ctx, tx, su, index.TypeItemStepLog, apiRef)
 }
 
-func (s *Service) syncItem(ctx context.Context, tx gorpmapper.SqlExecutorWithTx, su storage.Interface, itemType string, apiRef index.ApiRef) error {
+func (s *Service) syncItem(ctx context.Context, tx gorpmapper.SqlExecutorWithTx, su storage.Interface, itemType string, apiRef sdk.CDNLogAPIRef) error {
 	apirefHash, err := apiRef.ToHash()
 	if err != nil {
 		return err
 	}
 	item := &index.Item{
 		Type:       itemType,
-		ApiRef:     apiRef,
+		APIRef:     apiRef,
 		Status:     index.StatusItemIncoming,
-		ApiRefHash: apirefHash,
+		APIRefHash: apirefHash,
 	}
 	// check if item exist
-	_, err = index.LoadItemByApiRefHashAndType(ctx, s.Mapper, tx, apirefHash, itemType)
+	_, err = index.LoadItemByAPIRefHashAndType(ctx, s.Mapper, tx, apirefHash, itemType)
 	if err == nil {
 		return nil
 	}

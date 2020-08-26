@@ -56,7 +56,8 @@
                 <div class="log animated fadeIn" *ngIf="currentJob && mapJobStatus">
                     <ul>
                         <li>
-                            <app-workflow-run-job-spawn-info [(displayServicesLogs)]="displayServiceLogs"></app-workflow-run-job-spawn-info>
+                            <app-workflow-run-job-spawn-info [(displayServicesLogs)]="displayServiceLogs">
+                            </app-workflow-run-job-spawn-info>
                         </li>
                         <ng-container *ngIf="!displayServiceLogs">
                             <li *ngFor="let step of currentJob.action.actions; let i = index">

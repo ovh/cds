@@ -70,7 +70,7 @@ func InitMock(t *testing.T, url string) {
 	privKeyPEM, _ := jws.ExportPrivateKey(privKey)
 	pubKey, _ := jws.ExportPublicKey(privKey)
 
-	require.NoError(t, authentication.Init("cds-test", privKeyPEM))
+	require.NoError(t, authentication.Init("cds-api-test", privKeyPEM))
 	id := sdk.UUID()
 	consumerID := sdk.UUID()
 	hatcheryAuthenticationToken, _ := authentication.NewSessionJWT(&sdk.AuthSession{

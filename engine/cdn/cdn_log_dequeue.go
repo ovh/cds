@@ -157,7 +157,7 @@ func (s *Service) loadOrCreateIndexItem(ctx context.Context, typ string, signatu
 	defer tx.Rollback() // nolint
 
 	// Build cds api ref
-	apiRef := index.ApiRef{
+	apiRef := sdk.CDNLogAPIRef{
 		ProjectKey:     signature.ProjectKey,
 		WorkflowName:   signature.WorkflowName,
 		WorkflowID:     signature.WorkflowID,
@@ -181,16 +181,16 @@ func (s *Service) loadOrCreateIndexItem(ctx context.Context, typ string, signatu
 		return nil, err
 	}
 
-	item, err := index.LoadItemByApiRefHashAndType(ctx, s.Mapper, tx, hashRef, typ)
+	item, err := index.LoadItemByAPIRefHashAndType(ctx, s.Mapper, tx, hashRef, typ)
 	if err != nil {
 		if !sdk.ErrorIs(err, sdk.ErrNotFound) {
 			return nil, err
 		}
 		// Insert data
 		item = &index.Item{
-			ApiRef:     apiRef,
+			APIRef:     apiRef,
 			Type:       typ,
-			ApiRefHash: hashRef,
+			APIRefHash: hashRef,
 			Status:     index.StatusItemIncoming,
 		}
 		if err := index.InsertItem(ctx, s.Mapper, tx, item); err != nil {
@@ -198,7 +198,7 @@ func (s *Service) loadOrCreateIndexItem(ctx context.Context, typ string, signatu
 				return nil, err
 			}
 			// reload if item already exist
-			item, err = index.LoadItemByApiRefHashAndType(ctx, s.Mapper, tx, hashRef, typ)
+			item, err = index.LoadItemByAPIRefHashAndType(ctx, s.Mapper, tx, hashRef, typ)
 			if err != nil {
 				return nil, err
 			}

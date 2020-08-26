@@ -78,7 +78,7 @@ func TestStoreNewStepLog(t *testing.T) {
 	err = s.storeLogs(context.TODO(), index.TypeItemStepLog, hm.Signature, hm.Status, content, hm.Line)
 	require.NoError(t, err)
 
-	apiRef := index.ApiRef{
+	apiRef := sdk.CDNLogAPIRef{
 		ProjectKey:     hm.Signature.ProjectKey,
 		WorkflowName:   hm.Signature.WorkflowName,
 		WorkflowID:     hm.Signature.WorkflowID,
@@ -92,7 +92,7 @@ func TestStoreNewStepLog(t *testing.T) {
 	}
 	hashRef, err := hashstructure.Hash(apiRef, nil)
 	require.NoError(t, err)
-	item, err := index.LoadItemByApiRefHashAndType(context.TODO(), s.Mapper, db, strconv.FormatUint(hashRef, 10), index.TypeItemStepLog)
+	item, err := index.LoadItemByAPIRefHashAndType(context.TODO(), s.Mapper, db, strconv.FormatUint(hashRef, 10), index.TypeItemStepLog)
 	require.NoError(t, err)
 	require.NotNil(t, item)
 	defer func() {
@@ -160,7 +160,7 @@ func TestStoreLastStepLog(t *testing.T) {
 			},
 		},
 	}
-	apiRef := index.ApiRef{
+	apiRef := sdk.CDNLogAPIRef{
 		ProjectKey:     hm.Signature.ProjectKey,
 		WorkflowName:   hm.Signature.WorkflowName,
 		WorkflowID:     hm.Signature.WorkflowID,
@@ -177,8 +177,8 @@ func TestStoreLastStepLog(t *testing.T) {
 
 	item := index.Item{
 		Status:     index.StatusItemIncoming,
-		ApiRefHash: strconv.FormatUint(hashRef, 10),
-		ApiRef:     apiRef,
+		APIRefHash: strconv.FormatUint(hashRef, 10),
+		APIRef:     apiRef,
 		Type:       index.TypeItemStepLog,
 	}
 	require.NoError(t, index.InsertItem(context.TODO(), m, db, &item))
@@ -259,7 +259,7 @@ func TestStoreLogWrongOrder(t *testing.T) {
 			},
 		},
 	}
-	apiRef := index.ApiRef{
+	apiRef := sdk.CDNLogAPIRef{
 		ProjectKey:     hm.Signature.ProjectKey,
 		WorkflowName:   hm.Signature.WorkflowName,
 		WorkflowID:     hm.Signature.WorkflowID,
@@ -276,8 +276,8 @@ func TestStoreLogWrongOrder(t *testing.T) {
 
 	item := index.Item{
 		Status:     index.StatusItemIncoming,
-		ApiRefHash: strconv.FormatUint(hashRef, 10),
-		ApiRef:     apiRef,
+		APIRefHash: strconv.FormatUint(hashRef, 10),
+		APIRef:     apiRef,
 		Type:       index.TypeItemStepLog,
 	}
 	require.NoError(t, index.InsertItem(context.TODO(), m, db, &item))
@@ -382,7 +382,7 @@ func TestStoreNewServiceLogAndAppend(t *testing.T) {
 	err = s.storeLogs(context.TODO(), index.TypeItemServiceLog, hm.Signature, hm.Status, hm.Msg.Full, 0)
 	require.NoError(t, err)
 
-	apiRef := index.ApiRef{
+	apiRef := sdk.CDNLogAPIRef{
 		ProjectKey:     hm.Signature.ProjectKey,
 		WorkflowName:   hm.Signature.WorkflowName,
 		WorkflowID:     hm.Signature.WorkflowID,
@@ -394,7 +394,7 @@ func TestStoreNewServiceLogAndAppend(t *testing.T) {
 	}
 	hashRef, err := hashstructure.Hash(apiRef, nil)
 	require.NoError(t, err)
-	item, err := index.LoadItemByApiRefHashAndType(context.TODO(), s.Mapper, db, strconv.FormatUint(hashRef, 10), index.TypeItemServiceLog)
+	item, err := index.LoadItemByAPIRefHashAndType(context.TODO(), s.Mapper, db, strconv.FormatUint(hashRef, 10), index.TypeItemServiceLog)
 	require.NoError(t, err)
 	require.NotNil(t, item)
 	defer func() {

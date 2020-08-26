@@ -2,8 +2,9 @@ package cdn
 
 import (
 	"context"
-	"gopkg.in/h2non/gock.v1"
 	"testing"
+
+	"gopkg.in/h2non/gock.v1"
 
 	"github.com/stretchr/testify/require"
 
@@ -245,7 +246,7 @@ func TestSyncLog(t *testing.T) {
 	})
 
 	// Insert index for wkf1, 1000
-	apiRef1000 := index.ApiRef{
+	apiRef1000 := sdk.CDNLogAPIRef{
 		ProjectKey:     "key2",
 		WorkflowName:   "wkf1",
 		WorkflowID:     1000,
@@ -260,8 +261,8 @@ func TestSyncLog(t *testing.T) {
 	hash, err := apiRef1000.ToHash()
 	require.NoError(t, err)
 	itm := index.Item{
-		ApiRef:     apiRef1000,
-		ApiRefHash: hash,
+		APIRef:     apiRef1000,
+		APIRefHash: hash,
 		Type:       index.TypeItemStepLog,
 	}
 	err = index.InsertItem(context.TODO(), s.Mapper, db, &itm)

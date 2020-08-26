@@ -179,6 +179,10 @@ export class WorkflowStepLogComponent implements OnInit, OnDestroy {
         }
         let stepOrder = this.stepOrder < this.job.step_status.length ? this.stepOrder : this.job.step_status.length - 1;
 
+        this._workflowService.getStepLogAccess(projectKey, workflowName, runNumber, nodeRunId, runJobId, stepOrder).subscribe(access => {
+
+        });
+
         let callback = (b: BuildResult) => {
             if (b.step_logs.id) {
                 this.logs = b.step_logs;

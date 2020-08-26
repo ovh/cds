@@ -13,6 +13,7 @@ import (
 
 	"github.com/go-gorp/gorp"
 	"github.com/gorilla/mux"
+	"github.com/mitchellh/hashstructure"
 	"github.com/sirupsen/logrus"
 
 	"github.com/ovh/cds/engine/api/ascode"
@@ -1512,7 +1513,7 @@ func (api *API) getWorkflowNodeRunJobServiceLogsHandler() service.Handler {
 	}
 }
 
-func (api *API) getWorkflowNodeRunJobStepHandler() service.Handler {
+func (api *API) getWorkflowNodeRunJobStepDeprecatedHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		projectKey := vars["key"]
@@ -1575,6 +1576,112 @@ func (api *API) getWorkflowNodeRunJobStepHandler() service.Handler {
 		}
 
 		return service.WriteJSON(w, result, http.StatusOK)
+	}
+}
+
+func (api *API) getWorkflowNodeRunJobStepHandler() service.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		vars := mux.Vars(r)
+		projectKey := vars["key"]
+		workflowName := vars["permWorkflowName"]
+		number, err := requestVarInt(r, "number")
+		if err != nil {
+			return sdk.NewErrorFrom(err, "invalid run number")
+		}
+		nodeRunID, err := requestVarInt(r, "nodeRunID")
+		if err != nil {
+			return sdk.NewErrorFrom(err, "invalid node run id")
+		}
+		runJobID, err := requestVarInt(r, "runJobId")
+		if err != nil {
+			return sdk.NewErrorFrom(err, "invalid node job id")
+		}
+		stepOrder, err := requestVarInt(r, "stepOrder")
+		if err != nil {
+			return sdk.NewErrorFrom(err, "invalid step order")
+		}
+
+		httpURL, err := services.GetCDNPublicHTTPAdress(ctx, api.mustDB())
+		if err != nil {
+			return err
+		}
+
+		// Try to load node run from given data
+		nodeRun, err := workflow.LoadNodeRun(api.mustDB(), projectKey, workflowName, nodeRunID, workflow.LoadRunOptions{DisableDetailledNodeRun: true})
+		if err != nil {
+			return sdk.WrapError(err, "cannot find nodeRun %d/%d for workflow %s in project %s", nodeRunID, number, workflowName, projectKey)
+		}
+
+		// Find job/step in nodeRun
+		var stepStatus string
+		var runJob sdk.WorkflowNodeJobRun
+	stageLoop:
+		for _, s := range nodeRun.Stages {
+			for _, rj := range s.RunJobs {
+				if rj.ID != runJobID {
+					continue
+				}
+				runJob = rj
+				ss := rj.Job.StepStatus
+				for _, sss := range ss {
+					if int64(sss.StepOrder) == stepOrder {
+						stepStatus = sss.Status
+						break
+					}
+				}
+				break stageLoop
+			}
+		}
+
+		if stepStatus == "" {
+			return sdk.WrapError(sdk.ErrStepNotFound, "cannot find step %d on job %d in nodeRun %d/%d for workflow %s in project %s",
+				stepOrder, runJobID, nodeRunID, number, workflowName, projectKey)
+		}
+
+		apiRef := sdk.CDNLogAPIRef{
+			ProjectKey:     projectKey,
+			WorkflowName:   workflowName,
+			WorkflowID:     nodeRun.WorkflowID,
+			RunID:          nodeRun.WorkflowRunID,
+			NodeRunName:    nodeRun.WorkflowNodeName,
+			NodeRunID:      nodeRun.ID,
+			NodeRunJobName: runJob.Job.Action.Name,
+			NodeRunJobID:   runJob.Job.Action.ID,
+			StepName:       runJob.Job.Action.Actions[stepOrder].Name,
+			StepOrder:      stepOrder,
+		}
+		apiRefHashU, err := hashstructure.Hash(apiRef, nil)
+		if err != nil {
+			return sdk.WithStack(err)
+		}
+		apiRefHash := strconv.FormatUint(apiRefHashU, 10)
+
+		srvs, err := services.LoadAllByType(ctx, api.mustDB(), sdk.TypeCDN)
+		if err != nil {
+			return err
+		}
+		if len(srvs) == 0 {
+			return sdk.WrapError(sdk.ErrNotFound, "no cdn service found")
+		}
+		_, code, err := services.NewClient(api.mustDB(), srvs).DoJSONRequest(ctx, http.MethodGet, "/item/logs/"+apiRefHash, nil, nil)
+		if err != nil {
+			return err
+		}
+
+		if code != http.StatusOK {
+			return service.WriteJSON(w, sdk.CDNLogAccess{}, http.StatusOK)
+		}
+
+		tokenRaw, err := authentication.SignJWS(sdk.CDNAuthToken{APIRefHash: apiRefHash}, time.Hour)
+		if err != nil {
+			return err
+		}
+
+		return service.WriteJSON(w, sdk.CDNLogAccess{
+			Exists:      true,
+			Token:       tokenRaw,
+			DownloadURL: fmt.Sprintf("%s/item/logs/%s/download", httpURL, apiRefHash),
+		}, http.StatusOK)
 	}
 }
 
