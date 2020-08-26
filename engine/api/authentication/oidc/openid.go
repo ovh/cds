@@ -21,7 +21,7 @@ var _ sdk.AuthDriverWithSigninStateToken = (*authDriver)(nil)
 func NewDriver(signupDisabled bool, cdsURL, url, clientID, clientSecret string) (sdk.AuthDriver, error) {
 	provider, err := oidc.NewProvider(context.Background(), url)
 	if err != nil {
-		return nil, sdk.WrapError(err, "Failed to initialize OIDC driver")
+		return nil, sdk.WrapError(err, "failed to initialize OIDC driver")
 	}
 	// Configure an OpenID Connect aware OAuth2 client.
 	oauth2Config := oauth2.Config{
@@ -103,7 +103,7 @@ func (d authDriver) GetUserInfo(ctx context.Context, req sdk.AuthConsumerSigninR
 	ctx2 := context.WithValue(context.Background(), oauth2.HTTPClient, http.DefaultClient)
 	oauth2Token, err := d.OAuth2Config.Exchange(ctx2, req["code"])
 	if err != nil {
-		return info, sdk.WrapError(err, "Failed to exchange token")
+		return info, sdk.WrapError(err, "failed to exchange token")
 	}
 	rawIDToken, ok := oauth2Token.Extra("id_token").(string)
 	if !ok {
@@ -111,11 +111,11 @@ func (d authDriver) GetUserInfo(ctx context.Context, req sdk.AuthConsumerSigninR
 	}
 	idToken, err := d.Verifier.Verify(ctx, rawIDToken)
 	if err != nil {
-		return info, sdk.WrapError(err, "Failed to verify ID Token")
+		return info, sdk.WrapError(err, "failed to verify ID Token")
 	}
 	tokenClaim := make(map[string]interface{})
 	if err := idToken.Claims(&tokenClaim); err != nil {
-		return info, sdk.WrapError(err, "Cannot unmarshal OIDC claim")
+		return info, sdk.WrapError(err, "cannot unmarshal OIDC claim")
 	}
 
 	// Check if email is verified.
@@ -128,12 +128,12 @@ func (d authDriver) GetUserInfo(ctx context.Context, req sdk.AuthConsumerSigninR
 	}
 
 	if info.Username, ok = tokenClaim["preferred_username"].(string); !ok {
-		return info, sdk.WithStack(errors.New("Missing username in OIDC token claim"))
+		return info, sdk.WithStack(errors.New("missing username in OIDC token claim"))
 	}
 
 	info.Fullname, _ = tokenClaim["name"].(string)
 	if info.Email, ok = tokenClaim["email"].(string); !ok {
-		return info, sdk.WithStack(errors.New("Missing user's email in OIDC token claim"))
+		return info, sdk.WithStack(errors.New("missing user's email in OIDC token claim"))
 	}
 
 	return info, nil
