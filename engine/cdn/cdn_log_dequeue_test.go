@@ -177,6 +177,8 @@ func TestStoreLastStepLog(t *testing.T) {
 	require.NotNil(t, itemDB)
 	require.Equal(t, index.StatusItemCompleted, itemDB.Status)
 	require.NotEmpty(t, itemDB.Hash)
+	require.NotEmpty(t, itemDB.MD5)
+	require.NotZero(t, itemDB.Size)
 
 	unit, err := storage.LoadUnitByName(context.TODO(), m, db, s.Units.Buffer.Name())
 	require.NoError(t, err)

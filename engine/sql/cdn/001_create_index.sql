@@ -10,7 +10,10 @@ CREATE TABLE IF NOT EXISTS "index" (
   sig BYTEA,
   signer TEXT,
   status VARCHAR(64), -- status of item
-  type VARCHAR(64) -- type of item
+  type VARCHAR(64), -- type of item
+  size BIGINT,
+  md5 TEXT,
+  last_read TIMESTAMP WITH TIME ZONE -- last read date
 );
 CREATE INDEX api_ref_index ON "index" USING GIN (api_ref);
 select create_unique_index('index', 'IDX_UNIQ_ITEM', 'api_ref_hash,type');

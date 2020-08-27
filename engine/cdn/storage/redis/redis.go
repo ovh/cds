@@ -38,7 +38,8 @@ func (s *Redis) Init(cfg interface{}) error {
 }
 
 func (s *Redis) ItemExists(i index.Item) (bool, error) {
-	return false, nil
+	size, _ := s.store.SetCard(i.ID)
+	return size > 0, nil
 }
 
 func (s *Redis) Add(i storage.ItemUnit, index uint, value string) error {

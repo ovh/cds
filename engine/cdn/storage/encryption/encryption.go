@@ -72,7 +72,7 @@ func (s *convergentEncryption) Write(i storage.ItemUnit, r io.Reader, w io.Write
 	if err != nil {
 		return err
 	}
-	err = k.EncryptPipe(r, w)
+	err = k.EncryptPipe(r, w, []byte(i.ID))
 	return sdk.WrapError(err, "[%T] unable to write item %s", s, i.ID)
 }
 
@@ -81,6 +81,6 @@ func (s *convergentEncryption) Read(i storage.ItemUnit, r io.Reader, w io.Writer
 	if err != nil {
 		return err
 	}
-	err = k.DecryptPipe(r, w)
+	err = k.DecryptPipe(r, w, []byte(i.ID))
 	return sdk.WrapError(err, "[%T] unable to read item %s", s, i.ItemID)
 }

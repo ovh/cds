@@ -1,7 +1,13 @@
 package cdn
 
 import (
+	"bufio"
 	"context"
+	"crypto/md5"
+	"crypto/sha512"
+	"encoding/hex"
+	"io"
+	"os"
 	"strconv"
 	"strings"
 	"time"
@@ -14,7 +20,6 @@ import (
 	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
-	"github.com/ovh/symmecrypt/convergent"
 )
 
 func (s *Service) dequeueJobLogs(ctx context.Context) error {
@@ -159,10 +164,27 @@ func (s *Service) storeLogs(ctx context.Context, typ string, signature log.Signa
 		if err != nil {
 			return err
 		}
-		item.Hash, err = convergent.NewHash(reader)
+
+		// Compte md5 and sha512
+		md5 := md5.New()
+		sha512 := sha512.New()
+		// For optimum speed, Getpagesize returns the underlying system's memory page size.
+		pagesize := os.Getpagesize()
+		// wraps the Reader object into a new buffered reader to read the files in chunks
+		// and buffering them for performance.
+		mreader := bufio.NewReaderSize(reader, pagesize)
+		multiWriter := io.MultiWriter(md5, sha512)
+		size, err := io.Copy(multiWriter, mreader)
 		if err != nil {
-			return err
+			return sdk.WithStack(err)
 		}
+
+		sha512Hash := hex.EncodeToString(sha512.Sum(nil))
+		md5Hash := hex.EncodeToString(md5.Sum(nil))
+
+		item.Hash = sha512Hash
+		item.MD5 = md5Hash
+		item.Size = size
 
 		if err := index.UpdateItem(ctx, s.Mapper, tx, item); err != nil {
 			return err

@@ -77,6 +77,6 @@ func (s *Local) NewReader(i storage.ItemUnit) (io.ReadCloser, error) {
 	if err != nil {
 		return nil, err
 	}
-	log.Debug("[%T] reading to %s", s, path)
+	log.Debug("[%T] reading from %s", s, path)
 	return os.Open(path)
 }

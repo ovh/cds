@@ -78,7 +78,6 @@ func InsertItem(ctx context.Context, m *gorpmapper.Mapper, db gorpmapper.SqlExec
 	i.ID = sdk.UUID()
 	i.Created = time.Now()
 	i.LastModified = time.Now()
-	log.Debug("index.InsertItem> %s : %+v", i.ID, i)
 	if err := m.InsertAndSign(ctx, db, i); err != nil {
 		return sdk.WrapError(err, "unable to insert index item")
 	}

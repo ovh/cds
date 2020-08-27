@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"math/rand"
 	"reflect"
 	"sync"
 	"time"
@@ -159,6 +160,8 @@ type RedisBufferConfiguration struct {
 }
 
 type RunningStorageUnits struct {
+	m        *gorpmapper.Mapper
+	db       *gorp.DbMap
 	Buffer   BufferUnit
 	Storages []StorageUnit
 }
@@ -173,7 +176,10 @@ func (r RunningStorageUnits) Storage(name string) StorageUnit {
 }
 
 func Init(ctx context.Context, m *gorpmapper.Mapper, db *gorp.DbMap, config Configuration) (*RunningStorageUnits, error) {
-	var result RunningStorageUnits
+	var result = RunningStorageUnits{
+		m:  m,
+		db: db,
+	}
 
 	// Start by initializing the buffer unit
 	d := GetDriver("redis")
@@ -270,7 +276,8 @@ func Init(ctx context.Context, m *gorpmapper.Mapper, db *gorp.DbMap, config Conf
 				Config:  srvConfig,
 			}
 			err = InsertUnit(ctx, m, tx, u)
-		} else if err != nil {
+		}
+		if err != nil {
 			return nil, err
 		}
 		storageUnit.Set(m, db, *u)
@@ -289,4 +296,82 @@ func Init(ctx context.Context, m *gorpmapper.Mapper, db *gorp.DbMap, config Conf
 	}()
 
 	return &result, nil
+}
+
+var (
+	rs  = rand.NewSource(time.Now().Unix())
+	rnd = rand.New(rs)
+)
+
+type Source interface {
+	NewReader() (io.ReadCloser, error)
+	Read(io.Reader, io.Writer) error
+	Name() string
+}
+
+type source interface {
+	NewReader(ItemUnit) (io.ReadCloser, error)
+	Read(ItemUnit, io.Reader, io.Writer) error
+	Name() string
+}
+
+type iuSource struct {
+	iu     ItemUnit
+	source source
+}
+
+func (s *iuSource) NewReader() (io.ReadCloser, error) {
+	return s.source.NewReader(s.iu)
+}
+func (s *iuSource) Read(r io.Reader, w io.Writer) error {
+	return s.source.Read(s.iu, r, w)
+}
+func (s *iuSource) Name() string {
+	return s.source.Name()
+}
+
+func (r RunningStorageUnits) GetSource(ctx context.Context, i *index.Item) (Source, error) {
+	ok, err := r.Buffer.ItemExists(*i)
+	if err != nil {
+		return nil, err
+	}
+
+	if ok {
+		iu, err := LoadItemUnitByUnit(ctx, r.Buffer.GorpMapper(), r.Buffer.DB(), r.Buffer.ID(), i.ID, gorpmapper.GetOptions.WithDecryption)
+		if err != nil {
+			return nil, err
+		}
+		return &iuSource{iu: *iu, source: r.Buffer}, nil
+	}
+
+	// Find a storage unit where the item is complete
+	itemUnits, err := LoadAllItemUnitsByItemID(ctx, r.m, r.db, i.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(itemUnits) == 0 {
+		log.Warning(ctx, "item %s can't be found. No unit knows it...", i.ID)
+		return nil, sdk.ErrNotFound
+	}
+
+	// Random pick a unit
+	idx := 0
+	if len(itemUnits) > 1 {
+		idx = rnd.Intn(len(itemUnits))
+	}
+	refItemUnit := itemUnits[idx]
+	refUnitID := refItemUnit.UnitID
+	refUnit, err := LoadUnitByID(ctx, r.m, r.db, refUnitID)
+	if err != nil {
+		return nil, err
+	}
+
+	unit := r.Storage(refUnit.Name)
+	if unit == nil {
+		log.Error(ctx, "unable to find unit %s", refUnit.Name)
+		return nil, sdk.WithStack(fmt.Errorf("unable to find unit %s", refUnit.Name))
+	}
+
+	return &iuSource{iu: *&refItemUnit, source: unit}, nil
 }

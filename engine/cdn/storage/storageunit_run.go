@@ -3,7 +3,6 @@ package storage
 import (
 	"context"
 	"io"
-	"math/rand"
 	"time"
 
 	"github.com/go-gorp/gorp"
@@ -12,12 +11,6 @@ import (
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
-
-type withNewReader interface {
-	NewReader(ItemUnit) (io.ReadCloser, error)
-	Read(ItemUnit, io.Reader, io.Writer) error
-	Name() string
-}
 
 func (x *RunningStorageUnits) Run(ctx context.Context, s StorageUnit) error {
 	s.Lock()
@@ -58,11 +51,6 @@ func (x *RunningStorageUnits) Run(ctx context.Context, s StorageUnit) error {
 	return nil
 }
 
-var (
-	rs = rand.NewSource(time.Now().Unix())
-	r  = rand.New(rs)
-)
-
 func (x *RunningStorageUnits) runItem(ctx context.Context, tx gorpmapper.SqlExecutorWithTx, dest StorageUnit, id string) error {
 	t0 := time.Now()
 	log.Debug("storage.runItem(%s, %s)", dest.Name(), id)
@@ -71,46 +59,10 @@ func (x *RunningStorageUnits) runItem(ctx context.Context, tx gorpmapper.SqlExec
 	}()
 	var m = dest.GorpMapper()
 
-	// Find a storage unit where the item is complete
-	itemUnits, err := LoadAllItemUnitsByItemID(ctx, m, tx, id)
-	if err != nil {
-		log.Error(ctx, "unable to load item unit index: %v", err)
-		return err
-	}
-
-	if len(itemUnits) == 0 {
-		log.Info(ctx, "item %s can't be sync. No unit knows it...", id)
-		return err
-	}
-
 	// Load the item
 	item, err := index.LoadItemByID(ctx, m, tx, id, gorpmapper.GetOptions.WithDecryption)
 	if err != nil {
 		log.Error(ctx, "unable to load item index: %v", err)
-		return err
-	}
-
-	// Random pick a unit
-	idx := 0
-	if len(itemUnits) > 1 {
-		idx = r.Intn(len(itemUnits))
-	}
-	refUnitID := itemUnits[idx].UnitID
-	refUnit, err := LoadUnitByID(ctx, m, tx, refUnitID)
-	if err != nil {
-		log.Error(ctx, "unable to load unit %s: %v", refUnitID, err)
-		return err
-	}
-
-	// Read & Write the content
-	var source withNewReader
-	source = x.Storage(refUnit.Name)
-	if source == nil {
-		source = x.Buffer
-	}
-
-	if source == nil {
-		log.Error(ctx, "unable to find unit %s", refUnit.Name)
 		return err
 	}
 
@@ -119,7 +71,6 @@ func (x *RunningStorageUnits) runItem(ctx context.Context, tx gorpmapper.SqlExec
 		log.Error(ctx, "unable to create new item unit: %v", err)
 		return err
 	}
-
 	iu.Item = item
 
 	// Save in database that the item is complete for the storage unit
@@ -134,13 +85,6 @@ func (x *RunningStorageUnits) runItem(ctx context.Context, tx gorpmapper.SqlExec
 		return err
 	}
 
-	// Prepare the reader from the reference storage
-	reader, err := source.NewReader(*iu)
-	if err != nil {
-		log.Error(ctx, "unable to get reader for item %s: %v", item.ID, err)
-		return err
-	}
-
 	// Prepare the destination
 	writer, err := dest.NewWriter(*iu)
 	if err != nil {
@@ -148,12 +92,24 @@ func (x *RunningStorageUnits) runItem(ctx context.Context, tx gorpmapper.SqlExec
 		return err
 	}
 
-	chanError := make(chan error)
+	source, err := x.GetSource(ctx, iu.Item)
+	if err != nil {
+		log.Error(ctx, "unable to get source for item %s: %v", item.ID, err)
+		return err
+	}
 
+	reader, err := source.NewReader()
+	if err != nil {
+		log.Error(ctx, "unable to get reader for item %s: %v", item.ID, err)
+		return err
+	}
+
+	chanError := make(chan error)
 	pr, pw := io.Pipe()
+
 	go func() {
 		defer pw.Close()
-		if err := source.Read(*iu, reader, pw); err != nil {
+		if err := source.Read(reader, pw); err != nil {
 			chanError <- err
 		}
 		close(chanError)
@@ -178,7 +134,7 @@ func (x *RunningStorageUnits) runItem(ctx context.Context, tx gorpmapper.SqlExec
 		}
 	}
 
-	log.Info(ctx, "item %s has been pushed to %s (from %s)", item.ID, dest.Name(), source.Name())
+	log.Info(ctx, "item %s has been pushed to %s", item.ID, dest.Name())
 	return nil
 }
 
@@ -198,6 +154,7 @@ func (x *RunningStorageUnits) NewItemUnit(ctx context.Context, m *gorpmapper.Map
 		UnitID:       su.ID(),
 		LastModified: time.Now(),
 		Locator:      loc,
+		Item:         i,
 	}
 
 	return &iu, nil
