@@ -189,8 +189,8 @@ type Configuration struct {
 		ServiceMaxSize int64 `toml:"serviceMaxSize" default:"15728640" comment:"Max service logs size in bytes (default: 15MB)" json:"serviceMaxSize"`
 	} `toml:"log" json:"log" comment:"###########################\n Log settings.\n##########################"`
 	Help struct {
-		Content string `toml:"content" comment:"Help Content" json:"content" default:"**CDS Contact**\n\n- Tel: 00.00.00.00.00"`
-		Error   string `toml:"error" comment:"Help displayed to user on each error" json:"error" default:"\n\nYou can request CDS Administrators to investigate about this error"`
+		Content string `toml:"content" comment:"Help Content. Warning: this message could be view by anonymous user. Markdown accepted." json:"content" default:""`
+		Error   string `toml:"error" comment:"Help displayed to user on each error. Warning: this message could be view by anonymous user. Markdown accepted." json:"error" default:""`
 	} `toml:"help" comment:"######################\n 'Help' informations \n######################" json:"help"`
 }
 
