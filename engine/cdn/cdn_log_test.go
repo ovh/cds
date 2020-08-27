@@ -12,6 +12,7 @@ import (
 	"gopkg.in/h2non/gock.v1"
 
 	"github.com/ovh/cds/engine/api/test"
+	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
@@ -22,10 +23,15 @@ import (
 func TestWorkerLogCDNEnabled(t *testing.T) {
 	defer gock.Off()
 	m := gorpmapper.New()
-	_, cache := test.SetupPGWithMapper(t, m, sdk.TypeCDN)
-	defer cache.Delete("cdn:log:job:1")
-	defer cache.Delete(keyJobLogIncomingQueue)
+	_, store := test.SetupPGWithMapper(t, m, sdk.TypeCDN)
+	defer store.Delete(keyJobLogIncomingQueue)
+	jobQueueKey := cache.Key(keyJobLogQueue, "1")
+	defer store.Delete(jobQueueKey)
+	heatbeatKey := cache.Key(keyJobHearbeat, "1")
+	defer store.Delete(heatbeatKey)
+
 	defer logCache.Flush()
+
 	// Create worker private key
 	key, err := jws.NewRandomSymmetricKey(32)
 	require.NoError(t, err)
@@ -36,7 +42,7 @@ func TestWorkerLogCDNEnabled(t *testing.T) {
 
 	// Create cdn service
 	s := Service{
-		Cache: cache,
+		Cache: store,
 	}
 
 	signature := log.Signature{
@@ -73,25 +79,22 @@ func TestWorkerLogCDNEnabled(t *testing.T) {
 	gock.New("http://lolcat.host").Post("/queue/workflows/1/log").Reply(200)
 	gock.New("http://lolcat.host").Post("/feature/enabled/cdn-job-logs").Reply(200).JSON(sdk.FeatureEnabledResponse{Name: "cdn-job-logs", Enabled: true})
 
-	require.NoError(t, s.handleLogMessage(context.TODO(), []byte(message)))
-
-	ctx, cancel := context.WithCancel(context.TODO())
+	ctx, cancel := context.WithTimeout(context.TODO(), 2*time.Second)
 	defer cancel()
+
 	go s.waitingJobs(ctx)
 
-	cpt := 0
-	for {
-		done := gock.IsDone()
-		if !done {
-			if cpt > 20 {
-				t.Fail()
-				break
-			}
-			cpt++
-			time.Sleep(250 * time.Millisecond)
-			continue
+	require.NoError(t, s.handleLogMessage(context.TODO(), []byte(message)))
+
+	<-ctx.Done()
+
+	done := gock.IsDone()
+	if !done {
+		t.Error("Gock is not done")
+		for _, m := range gock.Pending() {
+			t.Errorf("PENDING %s %s", m.Request().Method, m.Request().URLStruct.String())
 		}
-		break
+		t.Fail()
 	}
 
 	// Check that service log is disabled
@@ -107,9 +110,12 @@ func TestWorkerLogCDNEnabled(t *testing.T) {
 func TestWorkerLogCDNDisabled(t *testing.T) {
 	defer gock.Off()
 	m := gorpmapper.New()
-	_, cache := test.SetupPGWithMapper(t, m, sdk.TypeCDN)
-	defer cache.Delete(keyJobLogIncomingQueue)
-	defer cache.Delete("cdn:log:job:2")
+	_, store := test.SetupPGWithMapper(t, m, sdk.TypeCDN)
+	defer store.Delete(keyJobLogIncomingQueue)
+	jobQueueKey := cache.Key(keyJobLogQueue, "1")
+	defer store.Delete(jobQueueKey)
+	heatbeatKey := cache.Key(keyJobHearbeat, "1")
+	defer store.Delete(heatbeatKey)
 	defer logCache.Flush()
 
 	// Create worker private key
@@ -122,7 +128,7 @@ func TestWorkerLogCDNDisabled(t *testing.T) {
 
 	// Create cdn service
 	s := Service{
-		Cache: cache,
+		Cache: store,
 	}
 
 	signature := log.Signature{
@@ -162,29 +168,21 @@ func TestWorkerLogCDNDisabled(t *testing.T) {
 	t0 := time.Now()
 	require.NoError(t, s.handleLogMessage(context.TODO(), []byte(message)))
 
-	ctx, cancel := context.WithCancel(context.TODO())
+	ctx, cancel := context.WithTimeout(context.TODO(), 2*time.Second)
 	defer cancel()
+
 	go s.waitingJobs(ctx)
 
-	cpt := 0
-	for {
-		done := gock.IsDone()
-		if !done {
-			if cpt > 20 {
-				t.Logf("GOCK NOT ENDED %s", time.Now().Sub(t0))
-				ps := gock.Pending()
-				for i := range ps {
-					r := ps[i]
-					t.Logf("pending [%s] %s", r.Request().Method, r.Request().URLStruct.String())
-				}
-				t.Fail()
-				break
-			}
-			cpt++
-			time.Sleep(250 * time.Millisecond)
-			continue
+	<-ctx.Done()
+
+	done := gock.IsDone()
+	if !done {
+		t.Logf("GOCK NOT ENDED %s", time.Now().Sub(t0))
+		ps := gock.Pending()
+		for i := range ps {
+			r := ps[i]
+			t.Logf("pending [%s] %s", r.Request().Method, r.Request().URLStruct.String())
 		}
-		break
 	}
 
 	// Check that service log is disabled

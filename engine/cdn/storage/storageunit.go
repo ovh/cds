@@ -6,11 +6,13 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"math/rand"
 	"reflect"
 	"sync"
 	"time"
 
 	"github.com/go-gorp/gorp"
+	"github.com/ovh/symmecrypt/convergent"
 	"github.com/robfig/cron/v3"
 
 	"github.com/ovh/cds/engine/cdn/index"
@@ -48,12 +50,23 @@ type Interface interface {
 	DB() *gorp.DbMap
 	Init(cfg interface{}) error
 	ItemExists(i index.Item) (bool, error)
+	Lock()
+	Unlock()
 }
 
 type AbstractUnit struct {
+	sync.Mutex
 	u  Unit
 	m  *gorpmapper.Mapper
 	db *gorp.DbMap
+}
+
+func (a *AbstractUnit) ExistsInDatabase(id string) (*ItemUnit, error) {
+	iu, err := LoadItemUnitByUnit(context.Background(), a.GorpMapper(), a.DB(), a.ID(), id, gorpmapper.GetOptions.WithDecryption)
+	if err != nil {
+		return nil, err
+	}
+	return iu, nil
 }
 
 func (a *AbstractUnit) Name() string {
@@ -80,17 +93,25 @@ func (a *AbstractUnit) Set(m *gorpmapper.Mapper, db *gorp.DbMap, u Unit) {
 
 type BufferUnit interface {
 	Interface
-	Add(i index.Item, score uint, value string) error
-	Append(i index.Item, value string) error
-	Card(i index.Item) (int, error)
-	Get(i index.Item, from, to uint) ([]string, error)
-	NewReader(i index.Item) (io.ReadCloser, error)
+	Add(i ItemUnit, score uint, value string) error
+	Append(i ItemUnit, value string) error
+	Card(i ItemUnit) (int, error)
+	Get(i ItemUnit, from, to uint) ([]string, error)
+	NewReader(i ItemUnit) (io.ReadCloser, error)
+	Read(i ItemUnit, r io.Reader, w io.Writer) error
 }
 
 type StorageUnit interface {
 	Interface
-	NewWriter(i index.Item) (io.WriteCloser, error)
-	NewReader(i index.Item) (io.ReadCloser, error)
+	NewWriter(i ItemUnit) (io.WriteCloser, error)
+	NewReader(i ItemUnit) (io.ReadCloser, error)
+	Write(i ItemUnit, r io.Reader, w io.Writer) error
+	Read(i ItemUnit, r io.Reader, w io.Writer) error
+}
+
+type StorageUnitWithLocator interface {
+	StorageUnit
+	NewLocator(s string) (string, error)
 }
 
 type Configuration struct {
@@ -104,13 +125,35 @@ type BufferConfiguration struct {
 }
 
 type StorageConfiguration struct {
-	Name     string                     `toml:"name" json:"name"`
-	CronExpr string                     `toml:"cron" json:"cron"`
-	Local    *LocalStorageConfiguration `toml:"local" json:"local" mapstructure:"local"`
+	Name     string                      `toml:"name" json:"name"`
+	CronExpr string                      `toml:"cron" json:"cron"`
+	Local    *LocalStorageConfiguration  `toml:"local" json:"local" mapstructure:"local"`
+	Swift    *SwiftStorageConfiguration  `toml:"swift" json:"swift" mapstructure:"swift"`
+	Webdav   *WebdavStorageConfiguration `toml:"webdav" json:"webdav" mapstructure:"webdav"`
 }
 
 type LocalStorageConfiguration struct {
-	Path string `toml:"path" json:"path"`
+	Path       string                                  `toml:"path" json:"path"`
+	Encryption []convergent.ConvergentEncryptionConfig `toml:"encryption" json:"encryption" mapstructure:"encryption"`
+}
+
+type SwiftStorageConfiguration struct {
+	Address         string                                  `toml:"address" json:"address"`
+	Username        string                                  `toml:"username" json:"username"`
+	Password        string                                  `toml:"password" json:"password"`
+	Tenant          string                                  `toml:"tenant" json:"tenant"`
+	Domain          string                                  `toml:"domain" json:"domain"`
+	Region          string                                  `toml:"region" json:"region"`
+	ContainerPrefix string                                  `toml:"container_prefix" json:"container_prefix"`
+	Encryption      []convergent.ConvergentEncryptionConfig `toml:"encryption" json:"encryption" mapstructure:"encryption"`
+}
+
+type WebdavStorageConfiguration struct {
+	Address    string                                  `toml:"address" json:"address"`
+	Username   string                                  `toml:"username" json:"username"`
+	Password   string                                  `toml:"password" json:"password"`
+	Path       string                                  `toml:"path" json:"path"`
+	Encryption []convergent.ConvergentEncryptionConfig `toml:"encryption" json:"encryption" mapstructure:"encryption"`
 }
 
 type RedisBufferConfiguration struct {
@@ -119,6 +162,8 @@ type RedisBufferConfiguration struct {
 }
 
 type RunningStorageUnits struct {
+	m        *gorpmapper.Mapper
+	db       *gorp.DbMap
 	Buffer   BufferUnit
 	Storages []StorageUnit
 }
@@ -133,7 +178,10 @@ func (r RunningStorageUnits) Storage(name string) StorageUnit {
 }
 
 func Init(ctx context.Context, m *gorpmapper.Mapper, db *gorp.DbMap, config Configuration) (*RunningStorageUnits, error) {
-	var result RunningStorageUnits
+	var result = RunningStorageUnits{
+		m:  m,
+		db: db,
+	}
 
 	// Start by initializing the buffer unit
 	d := GetDriver("redis")
@@ -153,7 +201,7 @@ func Init(ctx context.Context, m *gorpmapper.Mapper, db *gorp.DbMap, config Conf
 	if err != nil {
 		return nil, err
 	}
-	defer tx.Rollback()
+	defer tx.Rollback() // nolint
 
 	u, err := LoadUnitByName(ctx, m, tx, config.Buffer.Name)
 	if sdk.ErrorIs(err, sdk.ErrNotFound) {
@@ -166,7 +214,9 @@ func Init(ctx context.Context, m *gorpmapper.Mapper, db *gorp.DbMap, config Conf
 			Name:    config.Buffer.Name,
 			Config:  srvConfig,
 		}
-		err = InsertUnit(ctx, m, tx, u)
+		if err := InsertUnit(ctx, m, tx, u); err != nil {
+			return nil, err
+		}
 	} else if err != nil {
 		return nil, err
 	}
@@ -195,6 +245,26 @@ func Init(ctx context.Context, m *gorpmapper.Mapper, db *gorp.DbMap, config Conf
 				return nil, err
 			}
 			storageUnit = sd
+		case cfg.Swift != nil:
+			d := GetDriver("swift")
+			sd, is := d.(StorageUnit)
+			if !is {
+				return nil, fmt.Errorf("swift driver is not a storage unit driver")
+			}
+			if err := sd.Init(cfg.Swift); err != nil {
+				return nil, err
+			}
+			storageUnit = sd
+		case cfg.Webdav != nil:
+			d := GetDriver("webdav")
+			sd, is := d.(StorageUnit)
+			if !is {
+				return nil, fmt.Errorf("webdav driver is not a storage unit driver")
+			}
+			if err := sd.Init(cfg.Webdav); err != nil {
+				return nil, err
+			}
+			storageUnit = sd
 		default:
 			return nil, errors.New("unsupported storage unit")
 		}
@@ -205,8 +275,7 @@ func Init(ctx context.Context, m *gorpmapper.Mapper, db *gorp.DbMap, config Conf
 			}
 		}
 
-		schedulerEntry, err := scheduler.AddFunc(cfg.CronExpr, runFunc)
-		if err != nil {
+		if _, err := scheduler.AddFunc(cfg.CronExpr, runFunc); err != nil {
 			return nil, err
 		}
 
@@ -229,13 +298,13 @@ func Init(ctx context.Context, m *gorpmapper.Mapper, db *gorp.DbMap, config Conf
 				Config:  srvConfig,
 			}
 			err = InsertUnit(ctx, m, tx, u)
-		} else if err != nil {
+		}
+		if err != nil {
 			return nil, err
 		}
 		storageUnit.Set(m, db, *u)
 
 		result.Storages = append(result.Storages, storageUnit)
-		log.Debug("cdn.storage.Init> storage scheduled: %v", schedulerEntry)
 		if err := tx.Commit(); err != nil {
 			return nil, err
 		}
@@ -249,4 +318,82 @@ func Init(ctx context.Context, m *gorpmapper.Mapper, db *gorp.DbMap, config Conf
 	}()
 
 	return &result, nil
+}
+
+var (
+	rs  = rand.NewSource(time.Now().Unix())
+	rnd = rand.New(rs)
+)
+
+type Source interface {
+	NewReader() (io.ReadCloser, error)
+	Read(io.Reader, io.Writer) error
+	Name() string
+}
+
+type source interface {
+	NewReader(ItemUnit) (io.ReadCloser, error)
+	Read(ItemUnit, io.Reader, io.Writer) error
+	Name() string
+}
+
+type iuSource struct {
+	iu     ItemUnit
+	source source
+}
+
+func (s *iuSource) NewReader() (io.ReadCloser, error) {
+	return s.source.NewReader(s.iu)
+}
+func (s *iuSource) Read(r io.Reader, w io.Writer) error {
+	return s.source.Read(s.iu, r, w)
+}
+func (s *iuSource) Name() string {
+	return s.source.Name()
+}
+
+func (r RunningStorageUnits) GetSource(ctx context.Context, i *index.Item) (Source, error) {
+	ok, err := r.Buffer.ItemExists(*i)
+	if err != nil {
+		return nil, err
+	}
+
+	if ok {
+		iu, err := LoadItemUnitByUnit(ctx, r.Buffer.GorpMapper(), r.Buffer.DB(), r.Buffer.ID(), i.ID, gorpmapper.GetOptions.WithDecryption)
+		if err != nil {
+			return nil, err
+		}
+		return &iuSource{iu: *iu, source: r.Buffer}, nil
+	}
+
+	// Find a storage unit where the item is complete
+	itemUnits, err := LoadAllItemUnitsByItemID(ctx, r.m, r.db, i.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(itemUnits) == 0 {
+		log.Warning(ctx, "item %s can't be found. No unit knows it...", i.ID)
+		return nil, sdk.ErrNotFound
+	}
+
+	// Random pick a unit
+	idx := 0
+	if len(itemUnits) > 1 {
+		idx = rnd.Intn(len(itemUnits))
+	}
+	refItemUnit := itemUnits[idx]
+	refUnitID := refItemUnit.UnitID
+	refUnit, err := LoadUnitByID(ctx, r.m, r.db, refUnitID)
+	if err != nil {
+		return nil, err
+	}
+
+	unit := r.Storage(refUnit.Name)
+	if unit == nil {
+		log.Error(ctx, "unable to find unit %s", refUnit.Name)
+		return nil, sdk.WithStack(fmt.Errorf("unable to find unit %s", refUnit.Name))
+	}
+
+	return &iuSource{iu: *&refItemUnit, source: unit}, nil
 }

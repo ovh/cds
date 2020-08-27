@@ -28,6 +28,9 @@ type Item struct {
 	ApiRefHash   string    `json:"api_ref_hash" db:"api_ref_hash"`
 	Status       string    `json:"status" db:"status"`
 	Type         string    `json:"type" db:"type"`
+	Size         int64     `json:"size" db:"size"`
+	MD5          string    `json:"md5" db:"md5"`
+	LastRead     time.Time `json:"last_read" db:"last_read"`
 }
 
 type ApiRef struct {
