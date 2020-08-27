@@ -115,6 +115,14 @@
                                             Corporate SSO
                                         </div>
                                     </ng-container>
+                                    <ng-container *ngSwitchCase="'openid-connect'">
+                                        <div class="center aligned header">
+                                            <i class="ui openid icon huge"></i>
+                                        </div>
+                                        <div class="center aligned description">
+                                            OpenID Connect
+                                        </div>
+                                    </ng-container>
                                     <ng-container *ngSwitchDefault>
                                         <div class="center aligned header">
                                             <i class="ui {{d.type}} icon huge"></i>

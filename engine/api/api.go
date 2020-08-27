@@ -28,6 +28,7 @@ import (
 	"github.com/ovh/cds/engine/api/authentication/gitlab"
 	"github.com/ovh/cds/engine/api/authentication/ldap"
 	"github.com/ovh/cds/engine/api/authentication/local"
+	"github.com/ovh/cds/engine/api/authentication/oidc"
 	"github.com/ovh/cds/engine/api/bootstrap"
 	"github.com/ovh/cds/engine/api/broadcast"
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
@@ -136,7 +137,14 @@ type Configuration struct {
 			ApplicationID  string `toml:"applicationID" json:"-" comment:"GitLab OAuth Application ID"`
 			Secret         string `toml:"secret" json:"-" comment:"GitLab OAuth Application Secret"`
 		} `toml:"gitlab" json:"gitlab" comment:"#######\n CDS <-> GitLab Auth. Documentation on https://ovh.github.io/cds/docs/integrations/gitlab/gitlab_authentication/ \n######"`
-	} `toml:"auth" comment:"##############################\n CDS Authentication Settings#\n#############################" json:"auth"`
+		OIDC struct {
+			Enabled        bool   `toml:"enabled" default:"false" json:"enabled"`
+			SignupDisabled bool   `toml:"signupDisabled" default:"false" json:"signupDisabled"`
+			URL            string `toml:"url" json:"url" default:"" comment:"Open ID connect config URL"`
+			ClientID       string `toml:"clientId" json:"-" comment:"OIDC Client ID"`
+			ClientSecret   string `toml:"clientSecret" json:"-" comment:"OIDC Client Secret"`
+		} `toml:"oidc" json:"oidc" comment:"#######\n CDS <-> Open ID Connect Auth. Documentation on https://ovh.github.io/cds/docs/integrations/openid-connect/ \n######"`
+	} `toml:"auth" comment:"##############################\n CDS Authentication Settings# \n#############################" json:"auth"`
 	SMTP struct {
 		Disable  bool   `toml:"disable" default:"true" json:"disable" comment:"Set to false to enable the internal SMTP client"`
 		Host     string `toml:"host" json:"host" comment:"smtp host"`
@@ -581,6 +589,18 @@ func (a *API) Serve(ctx context.Context) error {
 			a.Config.Auth.Gitlab.ApplicationID,
 			a.Config.Auth.Gitlab.Secret,
 		)
+	}
+	if a.Config.Auth.OIDC.Enabled {
+		a.AuthenticationDrivers[sdk.ConsumerOIDC], err = oidc.NewDriver(
+			a.Config.Auth.OIDC.SignupDisabled,
+			a.Config.URL.UI,
+			a.Config.Auth.OIDC.URL,
+			a.Config.Auth.OIDC.ClientID,
+			a.Config.Auth.OIDC.ClientSecret,
+		)
+		if err != nil {
+			return err
+		}
 	}
 
 	if a.Config.Auth.CorporateSSO.Enabled {
