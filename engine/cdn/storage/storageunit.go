@@ -130,11 +130,19 @@ type StorageConfiguration struct {
 	Local    *LocalStorageConfiguration  `toml:"local" json:"local" mapstructure:"local"`
 	Swift    *SwiftStorageConfiguration  `toml:"swift" json:"swift" mapstructure:"swift"`
 	Webdav   *WebdavStorageConfiguration `toml:"webdav" json:"webdav" mapstructure:"webdav"`
+	CDS      *CDSStorageConfiguration    `toml:"cds" json:"cds" mapstructure:"cds"`
 }
 
 type LocalStorageConfiguration struct {
 	Path       string                                  `toml:"path" json:"path"`
 	Encryption []convergent.ConvergentEncryptionConfig `toml:"encryption" json:"encryption" mapstructure:"encryption"`
+}
+
+type CDSStorageConfiguration struct {
+	Host                  string                                  `toml:"host" json:"host"`
+	InsecureSkipVerifyTLS bool                                    `toml:"insecureSkipVerifyTLS" json:"insecureSkipVerifyTLS"`
+	Token                 string                                  `toml:"token" json:"token"`
+	Encryption            []convergent.ConvergentEncryptionConfig `toml:"encryption" json:"encryption" mapstructure:"encryption"`
 }
 
 type SwiftStorageConfiguration struct {
@@ -232,6 +240,19 @@ func Init(ctx context.Context, m *gorpmapper.Mapper, db *gorp.DbMap, config Conf
 	for _, cfg := range config.Storages {
 		var storageUnit StorageUnit
 		switch {
+		case cfg.CDS != nil:
+			d := GetDriver("cds")
+			if d == nil {
+				return nil, fmt.Errorf("cds driver is not available")
+			}
+			sd, is := d.(StorageUnit)
+			if !is {
+				return nil, fmt.Errorf("cds driver is not a storage unit driver")
+			}
+			if err := sd.Init(cfg.CDS); err != nil {
+				return nil, err
+			}
+			storageUnit = sd
 		case cfg.Local != nil:
 			d := GetDriver("local")
 			if d == nil {

@@ -35,6 +35,24 @@ const (
 	defaultLimit = 10
 )
 
+func (api *API) getWorkflowsRunsIDshandler() service.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		vars := mux.Vars(r)
+		key := vars["key"]
+
+		p, err := project.Load(ctx, api.mustDB(), key, project.LoadOptions.WithWorkflowNames)
+		if err != nil {
+			return err
+		}
+
+		mapRunsIDs, err := workflow.LoadRunIDs(api.mustDB(), p.WorkflowNames.IDs())
+		if err != nil {
+			return nil
+		}
+		return service.WriteJSON(w, mapRunsIDs, http.StatusOK)
+	}
+}
+
 func (api *API) searchWorkflowRun(w http.ResponseWriter, r *http.Request, route, key, name string) error {
 	// About pagination: [FR] http://blog.octo.com/designer-une-api-rest/#pagination
 	var limit, offset int
@@ -694,7 +712,7 @@ func (api *API) stopWorkflowNodeRunHandler() service.Handler {
 			return sdk.WrapError(err, "unable to load workflow run with number %d for workflow %s", workflowRunNumber, workflowName)
 		}
 
-		workflowNodeRun, err := workflow.LoadNodeRun(api.mustDB(), key, workflowName, workflowRun.Number, workflowNodeRunID, workflow.LoadRunOptions{
+		workflowNodeRun, err := workflow.LoadNodeRun(api.mustDB(), key, workflowName, workflowNodeRunID, workflow.LoadRunOptions{
 			WithDeleted: true,
 		})
 		if err != nil {
@@ -774,15 +792,11 @@ func (api *API) getWorkflowNodeRunHandler() service.Handler {
 		vars := mux.Vars(r)
 		key := vars["key"]
 		name := vars["permWorkflowName"]
-		number, err := requestVarInt(r, "number")
-		if err != nil {
-			return err
-		}
 		id, err := requestVarInt(r, "nodeRunID")
 		if err != nil {
 			return err
 		}
-		run, err := workflow.LoadNodeRun(api.mustDB(), key, name, number, id, workflow.LoadRunOptions{
+		run, err := workflow.LoadNodeRun(api.mustDB(), key, name, id, workflow.LoadRunOptions{
 			WithTests:           true,
 			WithArtifacts:       true,
 			WithStaticFiles:     true,
@@ -1503,10 +1517,6 @@ func (api *API) getWorkflowNodeRunJobStepHandler() service.Handler {
 		vars := mux.Vars(r)
 		projectKey := vars["key"]
 		workflowName := vars["permWorkflowName"]
-		number, errN := requestVarInt(r, "number")
-		if errN != nil {
-			return sdk.WrapError(errN, "number: invalid number")
-		}
 		nodeRunID, errNI := requestVarInt(r, "nodeRunID")
 		if errNI != nil {
 			return sdk.WrapError(errNI, "id: invalid number")
@@ -1521,9 +1531,9 @@ func (api *API) getWorkflowNodeRunJobStepHandler() service.Handler {
 		}
 
 		// Check nodeRunID is link to workflow
-		nodeRun, errNR := workflow.LoadNodeRun(api.mustDB(), projectKey, workflowName, number, nodeRunID, workflow.LoadRunOptions{DisableDetailledNodeRun: true})
+		nodeRun, errNR := workflow.LoadNodeRun(api.mustDB(), projectKey, workflowName, nodeRunID, workflow.LoadRunOptions{DisableDetailledNodeRun: true})
 		if errNR != nil {
-			return sdk.WrapError(errNR, "cannot find nodeRun %d/%d for workflow %s in project %s", nodeRunID, number, workflowName, projectKey)
+			return sdk.WrapError(errNR, "cannot find nodeRun %d for workflow %s in project %s", nodeRunID, workflowName, projectKey)
 		}
 
 		var stepStatus string
@@ -1546,8 +1556,8 @@ func (api *API) getWorkflowNodeRunJobStepHandler() service.Handler {
 		}
 
 		if stepStatus == "" {
-			return sdk.WrapError(sdk.ErrStepNotFound, "cannot find step %d on job %d in nodeRun %d/%d for workflow %s in project %s",
-				stepOrder, runJobID, nodeRunID, number, workflowName, projectKey)
+			return sdk.WrapError(sdk.ErrStepNotFound, "cannot find step %d on job %d in nodeRun %d for workflow %s in project %s",
+				stepOrder, runJobID, nodeRunID, workflowName, projectKey)
 		}
 
 		logs, errL := workflow.LoadStepLogs(api.mustDB(), runJobID, stepOrder)

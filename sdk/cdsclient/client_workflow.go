@@ -203,7 +203,6 @@ func (c *client) WorkflowNodeRunJobStep(projectKey string, workflowName string, 
 	}
 	return &buildState, nil
 }
-
 func (c *client) WorkflowNodeRunArtifactDownload(projectKey string, workflowName string, a sdk.WorkflowNodeRunArtifact, w io.Writer) error {
 	var url = fmt.Sprintf("/project/%s/workflows/%s/artifact/%d", projectKey, workflowName, a.ID)
 	var reader io.ReadCloser
