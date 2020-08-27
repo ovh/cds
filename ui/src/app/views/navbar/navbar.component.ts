@@ -20,10 +20,10 @@ import { WorkflowStore } from 'app/service/workflow/workflow.store';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { SignoutCurrentUser } from 'app/store/authentication.action';
 import { AuthenticationState } from 'app/store/authentication.state';
+import { HelpState } from 'app/store/help.state';
 import { List } from 'immutable';
 import { Subscription } from 'rxjs';
 import { filter } from 'rxjs/operators';
-
 
 @Component({
     selector: 'app-navbar',
@@ -74,7 +74,6 @@ export class NavbarComponent implements OnInit, OnDestroy {
         private _appStore: ApplicationStore,
         private _workflowStore: WorkflowStore,
         private _broadcastStore: BroadcastStore,
-        private _helpService: HelpService,
         private _router: Router,
         private _language: LanguageStore,
         private _theme: ThemeStore,
@@ -96,8 +95,12 @@ export class NavbarComponent implements OnInit, OnDestroy {
             this._cd.markForCheck();
         });
 
-        this._helpService.getHelp().subscribe(c => {
-            this.help = c;
+        this._store.select(HelpState.last)
+        .pipe(
+            filter((help) => help != null),
+        )
+        .subscribe(help => {
+            this.help = help;
             this._cd.markForCheck();
         });
 

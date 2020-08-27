@@ -1,6 +1,8 @@
 import { Injectable } from '@angular/core';
+import { Store } from '@ngxs/store';
 import { BodyOutputType, ToasterConfig, ToasterService } from 'angular2-toaster/angular2-toaster';
-import { HelpService } from 'app/service/services.module';
+import { HelpState } from 'app/store/help.state';
+import { filter } from 'rxjs/operators';
 import { ToastHTTPErrorComponent, ToastHTTPErrorData } from './toast-http-error.component';
 
 @Injectable()
@@ -22,7 +24,7 @@ export class ToastService {
 
     constructor(
         private _toasterService: ToasterService,
-        private _helpService: HelpService
+        private _store: Store,
     ) { }
 
     getConfigDefault(): ToasterConfig {
@@ -56,7 +58,11 @@ export class ToastService {
     }
 
     errorHTTP(status: number, message: string, from: string, request_id: string) {
-        this._helpService.getHelp().subscribe(c => {
+        this._store.select(HelpState.last)
+        .pipe(
+            filter((help) => help != null),
+        )
+        .subscribe(help => {
             this._toasterService.pop(
                 {
                     type: 'error',
@@ -68,7 +74,7 @@ export class ToastService {
                         status: status,
                         from: from,
                         request_id: request_id,
-                        help: c.error
+                        help: help.error
                     }
                 }
             );
