@@ -114,7 +114,8 @@ export class QueueComponent implements OnDestroy {
 
     loadAll() {
         this.loading = true;
-        this._queueService.getWorkflows().pipe(finalize(() => {
+        let status = this.status.length > 0 ? this.status : this.statusOptions;
+        this._queueService.getWorkflows(status).pipe(finalize(() => {
             this.loading = false;
             this._cd.markForCheck();
         })).subscribe(js => {

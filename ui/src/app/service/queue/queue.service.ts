@@ -1,4 +1,4 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { WorkflowNodeJobRun } from 'app/model/workflow.run.model';
 import { Observable } from 'rxjs';
@@ -7,8 +7,14 @@ import { Observable } from 'rxjs';
 export class QueueService {
     constructor(private _http: HttpClient) { }
 
-    getWorkflows(): Observable<Array<WorkflowNodeJobRun>> {
-        return this._http.get<Array<WorkflowNodeJobRun>>('/queue/workflows');
+    getWorkflows(status: Array<string>): Observable<Array<WorkflowNodeJobRun>> {
+        let params = new HttpParams();
+        if (status && status.length > 0) {
+            status.forEach(s => {
+                params = params.append('status', s);
+            });
+        }
+        return this._http.get<Array<WorkflowNodeJobRun>>('/queue/workflows', { params: params });
     }
 
     getJobInfos(jobID: number): Observable<WorkflowNodeJobRun> {
