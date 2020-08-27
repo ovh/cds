@@ -125,9 +125,11 @@ type BufferConfiguration struct {
 }
 
 type StorageConfiguration struct {
-	Name     string                     `toml:"name" json:"name"`
-	CronExpr string                     `toml:"cron" json:"cron"`
-	Local    *LocalStorageConfiguration `toml:"local" json:"local" mapstructure:"local"`
+	Name     string                      `toml:"name" json:"name"`
+	CronExpr string                      `toml:"cron" json:"cron"`
+	Local    *LocalStorageConfiguration  `toml:"local" json:"local" mapstructure:"local"`
+	Swift    *SwiftStorageConfiguration  `toml:"swift" json:"swift" mapstructure:"swift"`
+	Webdav   *WebdavStorageConfiguration `toml:"webdav" json:"webdav" mapstructure:"webdav"`
 }
 
 type LocalStorageConfiguration struct {
@@ -240,6 +242,26 @@ func Init(ctx context.Context, m *gorpmapper.Mapper, db *gorp.DbMap, config Conf
 				return nil, fmt.Errorf("local driver is not a storage unit driver")
 			}
 			if err := sd.Init(cfg.Local); err != nil {
+				return nil, err
+			}
+			storageUnit = sd
+		case cfg.Swift != nil:
+			d := GetDriver("swift")
+			sd, is := d.(StorageUnit)
+			if !is {
+				return nil, fmt.Errorf("swift driver is not a storage unit driver")
+			}
+			if err := sd.Init(cfg.Swift); err != nil {
+				return nil, err
+			}
+			storageUnit = sd
+		case cfg.Webdav != nil:
+			d := GetDriver("webdav")
+			sd, is := d.(StorageUnit)
+			if !is {
+				return nil, fmt.Errorf("webdav driver is not a storage unit driver")
+			}
+			if err := sd.Init(cfg.Webdav); err != nil {
 				return nil, err
 			}
 			storageUnit = sd

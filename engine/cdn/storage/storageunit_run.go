@@ -36,7 +36,14 @@ func (x *RunningStorageUnits) Run(ctx context.Context, s StorageUnit) error {
 			return err
 		}
 
-		if err := x.runItem(ctx, tx, s, id); err != nil {
+		item, err := index.LoadAndLockItemByID(ctx, s.GorpMapper(), tx, id, gorpmapper.GetOptions.WithDecryption)
+		if err != nil {
+			log.Error(ctx, "error: %v", err)
+			tx.Rollback() // nolint
+			continue
+		}
+
+		if err := x.runItem(ctx, tx, s, item); err != nil {
 			log.Error(ctx, "error: %v", err)
 			tx.Rollback() // nolint
 			continue
@@ -51,20 +58,13 @@ func (x *RunningStorageUnits) Run(ctx context.Context, s StorageUnit) error {
 	return nil
 }
 
-func (x *RunningStorageUnits) runItem(ctx context.Context, tx gorpmapper.SqlExecutorWithTx, dest StorageUnit, id string) error {
+func (x *RunningStorageUnits) runItem(ctx context.Context, tx gorpmapper.SqlExecutorWithTx, dest StorageUnit, item *index.Item) error {
 	t0 := time.Now()
-	log.Debug("storage.runItem(%s, %s)", dest.Name(), id)
+	log.Debug("storage.runItem(%s, %s)", dest.Name(), item.ID)
 	defer func() {
-		log.Debug("storage.runItem(%s, %s): %fs", dest.Name(), id, time.Since(t0).Seconds())
+		log.Debug("storage.runItem(%s, %s): %fs", dest.Name(), item.ID, time.Since(t0).Seconds())
 	}()
 	var m = dest.GorpMapper()
-
-	// Load the item
-	item, err := index.LoadItemByID(ctx, m, tx, id, gorpmapper.GetOptions.WithDecryption)
-	if err != nil {
-		log.Error(ctx, "unable to load item index: %v", err)
-		return err
-	}
 
 	iu, err := x.NewItemUnit(ctx, m, tx, dest, item)
 	if err != nil {

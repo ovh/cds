@@ -31,7 +31,7 @@ func TestRun(t *testing.T) {
 	db, _ := test.SetupPGWithMapper(t, m, sdk.TypeCDN)
 	cfg := commontest.LoadTestingConf(t, sdk.TypeCDN)
 
-	ctx, cancel := context.WithTimeout(context.TODO(), 2*time.Second)
+	ctx, cancel := context.WithTimeout(context.TODO(), 3*time.Second)
 	defer cancel()
 
 	tmpDir, err := ioutil.TempDir("", t.Name()+"-cdn-1-*")
