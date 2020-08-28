@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/ovh/cds/engine/cdn/index"
+	"github.com/ovh/cds/engine/cdn/storage"
 	"github.com/ovh/cds/sdk/log"
 )
 
@@ -23,15 +24,15 @@ func (s *Service) CompleteWaitingItems(ctx context.Context) {
 			}
 			return
 		case <-tick.C:
-			ids, err := index.LoadOldItemIDsByStatusAndDuration(s.mustDBWithCtx(ctx), index.StatusItemIncoming, ItemLogGC)
+			itemUnits, err := storage.LoadOldItemUnitByItemStatusAndDuration(ctx, s.Mapper, s.mustDBWithCtx(ctx), index.StatusItemIncoming, ItemLogGC)
 			if err != nil {
 				log.Warning(ctx, "cdn:CompleteWaitingItems: unable to get items ids: %v", err)
 				continue
 			}
-			log.Debug("cdn:CompleteWaitingItems: %d items to complete", len(ids))
-			for _, id := range ids {
-				if err := s.completeItem(ctx, id); err != nil {
-					log.Warning(ctx, "cdn:CompleteWaitingItems: unable to complete item %s: %v", id, err)
+			log.Debug("cdn:CompleteWaitingItems: %d items to complete", len(itemUnits))
+			for _, itemUnit := range itemUnits {
+				if err := s.completeItem(ctx, itemUnit); err != nil {
+					log.Warning(ctx, "cdn:CompleteWaitingItems: unable to complete item %s: %v", itemUnit.ItemID, err)
 					continue
 				}
 			}

@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/go-gorp/gorp"
+	"github.com/ovh/cds/engine/cdn/index"
 	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
@@ -40,15 +41,12 @@ func LoadUnitByID(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlExecutor
 
 // LoadUnitByName returns a unit from database for given name.
 func LoadUnitByName(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlExecutor, name string) (*Unit, error) {
-	log.Debug("storage.LoadUnitByName> name=%s", name)
-
 	query := gorpmapper.NewQuery("SELECT * FROM storage_unit WHERE name = $1").Args(name)
 	return getUnit(ctx, m, db, query)
 }
 
 // InsertUnit in database.
 func InsertUnit(ctx context.Context, m *gorpmapper.Mapper, db gorpmapper.SqlExecutorWithTx, i *Unit) error {
-	log.Debug("storage.InsertUnit> %+v", i)
 	i.ID = sdk.UUID()
 	i.Created = time.Now()
 	if err := m.InsertAndSign(ctx, db, i); err != nil {
@@ -101,16 +99,14 @@ func getAllUnits(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlExecutor,
 	return units, nil
 }
 
-func InsertItemUnit(ctx context.Context, m *gorpmapper.Mapper, db gorpmapper.SqlExecutorWithTx, unitID, itemID string) (*ItemUnit, error) {
-	var iu = ItemUnit{
-		ID:     sdk.UUID(),
-		ItemID: itemID,
-		UnitID: unitID,
+func InsertItemUnit(ctx context.Context, m *gorpmapper.Mapper, db gorpmapper.SqlExecutorWithTx, iu *ItemUnit) error {
+	if iu.ID == "" {
+		iu.ID = sdk.UUID()
 	}
-	if err := m.InsertAndSign(ctx, db, &iu); err != nil {
-		return nil, sdk.WrapError(err, "unable to insert storage unit iotem")
+	if err := m.InsertAndSign(ctx, db, iu); err != nil {
+		return sdk.WrapError(err, "unable to insert storage unit iotem")
 	}
-	return &iu, nil
+	return nil
 }
 
 func UpdateItemUnit(ctx context.Context, m *gorpmapper.Mapper, db gorpmapper.SqlExecutorWithTx, u *ItemUnit) error {
@@ -120,14 +116,26 @@ func UpdateItemUnit(ctx context.Context, m *gorpmapper.Mapper, db gorpmapper.Sql
 	return nil
 }
 
-func LoadItemByUnit(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlExecutor, unitID string, itemID string, opts ...gorpmapper.GetOptionFunc) (*ItemUnit, error) {
-	query := gorpmapper.NewQuery("SELECT * FROM storage_unit_index WHERE unit_id = $1 and item_id = $2").Args(unitID, itemID)
-	return getItemUnit(ctx, m, db, query)
+func LoadOldItemUnitByItemStatusAndDuration(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlExecutor, status string, duration int, opts ...gorpmapper.GetOptionFunc) ([]ItemUnit, error) {
+	query := gorpmapper.NewQuery(`
+		SELECT storage_unit_index.*
+		FROM storage_unit_index
+		LEFT JOIN index ON index.id = storage_unit_index.item_id
+		WHERE
+			index.status = $1 AND
+            index.last_modified < NOW() - $2 * INTERVAL '1 second'
+	`).Args(status, duration)
+	return getAllItemUnits(ctx, m, db, query, opts...)
 }
 
-func LoadAndLockItemByUnit(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlExecutor, unitID string, itemID string, opts ...gorpmapper.GetOptionFunc) (*ItemUnit, error) {
-	query := gorpmapper.NewQuery("SELECT * FROM storage_unit_index WHERE unit_id = $1 and item_id = $2 FOR UPDATE SKIP LOCKED").Args(unitID, itemID)
-	return getItemUnit(ctx, m, db, query)
+func LoadItemUnitByUnit(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlExecutor, unitID string, itemID string, opts ...gorpmapper.GetOptionFunc) (*ItemUnit, error) {
+	query := gorpmapper.NewQuery("SELECT * FROM storage_unit_index WHERE unit_id = $1 and item_id = $2 LIMIT 1").Args(unitID, itemID)
+	return getItemUnit(ctx, m, db, query, opts...)
+}
+
+func LoadItemUnitByID(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlExecutor, id string, opts ...gorpmapper.GetOptionFunc) (*ItemUnit, error) {
+	query := gorpmapper.NewQuery("SELECT * FROM storage_unit_index WHERE id = $1").Args(id)
+	return getItemUnit(ctx, m, db, query, opts...)
 }
 
 func getItemUnit(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlExecutor, q gorpmapper.Query, opts ...gorpmapper.GetOptionFunc) (*ItemUnit, error) {
@@ -147,6 +155,11 @@ func getItemUnit(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlExecutor,
 	if !isValid {
 		log.Error(ctx, "index.get> storage_unit_index %s data corrupted", i.ID)
 		return nil, sdk.WithStack(sdk.ErrNotFound)
+	}
+
+	i.Item, err = index.LoadItemByID(ctx, m, db, i.ItemID, opts...)
+	if err != nil {
+		return nil, err
 	}
 
 	return &i, nil
@@ -177,26 +190,48 @@ func getAllItemUnits(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlExecu
 		verifiedItems = append(verifiedItems, &res[i])
 	}
 
-	items := make([]ItemUnit, len(verifiedItems))
+	itemUnits := make([]ItemUnit, len(verifiedItems))
+	itemIDs := make([]string, len(verifiedItems))
 	for i := range verifiedItems {
-		items[i] = *verifiedItems[i]
+		itemUnits[i] = *verifiedItems[i]
+		itemIDs = append(itemIDs, itemUnits[i].ItemID)
 	}
 
-	return items, nil
+	items, err := index.LoadItemByIDs(ctx, m, db, itemIDs, opts...)
+	if err != nil {
+		return nil, err
+	}
+
+	for x := range itemUnits {
+		for y := range items {
+			if itemUnits[x].ItemID == items[y].ID {
+				itemUnits[x].Item = &items[y]
+				break
+			}
+		}
+	}
+
+	return itemUnits, nil
 }
 
 func LoadAllItemIDUnknownByUnit(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlExecutor, unitID string, limit int) ([]string, error) {
-	query := `SELECT id
-		FROM index
-		EXCEPT
-		SELECT item_id
-		FROM storage_unit_index
-		WHERE unit_id = $1
+	query := `
+		SELECT * 
+		FROM (
+			SELECT index.id 
+			FROM index
+			JOIN storage_unit_index ON index.id = storage_unit_index.item_id
+			WHERE index.status = $3
+			EXCEPT 
+			SELECT item_id
+			FROM storage_unit_index  
+			WHERE unit_id = $1
+		) IDS
 		LIMIT $2
 	`
 
 	var res []string
-	if _, err := db.Select(&res, query, unitID, limit); err != nil {
+	if _, err := db.Select(&res, query, unitID, limit, index.StatusItemCompleted); err != nil {
 		return nil, sdk.WithStack(err)
 	}
 

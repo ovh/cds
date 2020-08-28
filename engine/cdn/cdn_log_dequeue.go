@@ -11,6 +11,7 @@ import (
 	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/engine/cdn/index"
 	"github.com/ovh/cds/engine/cdn/storage"
+	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
@@ -91,6 +92,11 @@ func (s *Service) storeLogs(ctx context.Context, typ string, signature log.Signa
 		return err
 	}
 
+	iu, err := s.loadOrCreateIndexItemUnitBuffer(ctx, item.ID)
+	if err != nil {
+		return err
+	}
+
 	// In case where the item was marked as complete we don't allow append of other logs
 	if item.Status == index.StatusItemCompleted {
 		log.Warning(ctx, "storeLogs> a log was received for item %s but status in already complete", item.Hash)
@@ -99,11 +105,11 @@ func (s *Service) storeLogs(ctx context.Context, typ string, signature log.Signa
 
 	switch typ {
 	case index.TypeItemStepLog:
-		if err := s.Units.Buffer.Add(*item, uint(line), content); err != nil {
+		if err := s.Units.Buffer.Add(*iu, uint(line), content); err != nil {
 			return err
 		}
 	case index.TypeItemServiceLog:
-		if err := s.Units.Buffer.Append(*item, content); err != nil {
+		if err := s.Units.Buffer.Append(*iu, content); err != nil {
 			return err
 		}
 	}
@@ -123,13 +129,13 @@ func (s *Service) storeLogs(ctx context.Context, typ string, signature log.Signa
 		}
 	}
 
-	logsSize, err := s.Units.Buffer.Card(*item)
+	logsSize, err := s.Units.Buffer.Card(*iu)
 	if err != nil {
 		return err
 	}
 	// If we have all lines
 	if maxLine > 0 && maxLine == logsSize {
-		if err := s.completeItem(ctx, item.ID); err != nil {
+		if err := s.completeItem(ctx, *iu); err != nil {
 			return err
 		}
 		_ = s.Cache.Delete(maxLineKey)
@@ -213,19 +219,29 @@ func (s *Service) loadOrCreateIndexItemUnitBuffer(ctx context.Context, itemID st
 		return nil, err
 	}
 
-	itemUnit, err := storage.LoadItemByUnit(ctx, s.Mapper, tx, unit.ID, itemID)
+	item, err := index.LoadItemByID(ctx, s.Mapper, tx, itemID, gorpmapper.GetOptions.WithDecryption)
+	if err != nil {
+		return nil, err
+	}
+
+	itemUnit, err := storage.LoadItemUnitByUnit(ctx, s.Mapper, tx, unit.ID, itemID, gorpmapper.GetOptions.WithDecryption)
 	if err != nil {
 		if !sdk.ErrorIs(err, sdk.ErrNotFound) {
 			return nil, err
 		}
 
-		if _, err := storage.InsertItemUnit(ctx, s.Mapper, tx, unit.ID, itemID); err != nil {
+		itemUnit, err = s.Units.NewItemUnit(ctx, s.Mapper, tx, s.Units.Buffer, item)
+		if err != nil {
 			if !sdk.ErrorIs(err, sdk.ErrConflictData) {
 				return nil, err
 			}
 		}
 
-		itemUnit, err = storage.LoadItemByUnit(ctx, s.Mapper, tx, unit.ID, itemID)
+		if err := storage.InsertItemUnit(ctx, s.Mapper, tx, itemUnit); err != nil {
+			return nil, err
+		}
+
+		itemUnit, err = storage.LoadItemUnitByID(ctx, s.Mapper, tx, itemUnit.ID, gorpmapper.GetOptions.WithDecryption)
 		if err != nil {
 			return nil, err
 		}

@@ -12,6 +12,7 @@ import (
 
 var templateInstancesCmd = cli.Command{
 	Name:    "instances",
+	Aliases: []string{"instances"},
 	Short:   "Get instances for a CDS workflow template",
 	Example: "cdsctl template instances group-name/template-slug",
 	OptionalArgs: []cli.Arg{
@@ -42,6 +43,8 @@ func templateInstancesRun(v cli.Values) (cli.ListResult, error) {
 		Project  string `cli:"project"`
 		Workflow string `cli:"workflow"`
 		Params   string `cli:"params"`
+		Version  int64  `cli:"version"`
+		UpToDate bool   `cli:"uptodate"`
 	}
 
 	tids := make([]TemplateInstanceDisplay, len(wtis))
@@ -58,6 +61,8 @@ func templateInstancesRun(v cli.Values) (cli.ListResult, error) {
 		for k, v := range wtis[i].Request.Parameters {
 			tids[i].Params = fmt.Sprintf("%s%s:%s\n", tids[i].Params, k, v)
 		}
+		tids[i].Version = wtis[i].WorkflowTemplateVersion
+		tids[i].UpToDate = wtis[i].WorkflowTemplateVersion == wt.Version
 	}
 
 	return cli.AsListResult(tids), nil
