@@ -2,18 +2,14 @@ package cds
 
 import (
 	"bytes"
-	"context"
 	"fmt"
-	"io"
-	"io/ioutil"
-	"time"
-
 	"github.com/ovh/cds/engine/cdn/index"
 	"github.com/ovh/cds/engine/cdn/storage"
 	"github.com/ovh/cds/engine/cdn/storage/encryption"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
-	"github.com/ovh/cds/sdk/log"
+	"io"
+	"io/ioutil"
 )
 
 type CDS struct {
@@ -69,59 +65,14 @@ func (c *CDS) NewReader(i storage.ItemUnit) (io.ReadCloser, error) {
 	return rc, nil
 }
 
-func (c *CDS) Sync(ctx context.Context) {
-	log.Info(ctx, "cdn: Start CDS sync")
-	tick := time.NewTicker(time.Second)
-	for {
-		select {
-		case <-ctx.Done():
-			if ctx.Err() != nil {
-				log.Error(ctx, "cdn:sync: %v", ctx.Err())
-			}
-			return
-		case <-tick.C:
-			projects, err := c.client.ProjectList(false, true)
-			if err != nil {
-				log.Error(ctx, "cdn:cds:sync: unable to list projects")
-				continue
-			}
-			for _, p := range projects {
-				// Check feature enable
-				resp, err := c.client.FeatureEnabled("cdn-job-logs", map[string]string{"project_key": p.Key})
-				if err != nil {
-					log.Error(ctx, "unable to check feature %s for %s", "cdn-job-logs", "project_key")
-					continue
-				}
-				if !resp.Enabled {
-					continue
-				}
+func (c *CDS) ListProjects() ([]sdk.Project, error) {
+	return c.client.ProjectList(false, false)
+}
 
-				wkflws, err := c.client.WorkflowList(p.Key)
-				if err != nil {
-					log.Error(ctx, "unable to list workflow: %v", err)
-					continue
-				}
-				for _, w := range wkflws {
-					runs, err := c.client.WorkflowRunList(p.Key, w.Name, 0, 1000)
-					if err != nil {
-						log.Error(ctx, "unable to list workflow run: %v", err)
-						continue
-					}
+func (c *CDS) ListNodeRunIdentifiers(pKey string) ([]sdk.WorkflowNodeRunIdentifiers, error) {
+	return c.client.WorkflowRunsAndNodesIDs(pKey)
+}
 
-					for _, r := range runs {
-						for _, nrs := range r.WorkflowNodeRuns {
-							if len(nrs) > 0 {
-								nr := nrs[0]
-								for _, s := range nr.Stages {
-									for _, j := range s.RunJobs {
-
-									}
-								}
-							}
-						}
-					}
-				}
-			}
-		}
-	}
+func (c *CDS) GetWorkflowNodeRun(pKey string, nodeRunIdentifier sdk.WorkflowNodeRunIdentifiers) (*sdk.WorkflowNodeRun, error) {
+	return c.client.WorkflowNodeRun(pKey, nodeRunIdentifier.WorkflowName, nodeRunIdentifier.RunNumber, nodeRunIdentifier.NodeRunID)
 }

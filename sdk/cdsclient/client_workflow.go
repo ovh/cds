@@ -150,6 +150,15 @@ func (c *client) WorkflowRunList(projectKey string, workflowName string, offset,
 	return runs, nil
 }
 
+func (c *client) WorkflowRunsAndNodesIDs(projectKey string) ([]sdk.WorkflowNodeRunIdentifiers, error) {
+	url := fmt.Sprintf("/project/%s/workflows/runs/nodes/ids", projectKey)
+	var resp []sdk.WorkflowNodeRunIdentifiers
+	if _, err := c.GetJSON(context.Background(), url, &resp); err != nil {
+		return nil, err
+	}
+	return resp, nil
+}
+
 func (c *client) WorkflowDelete(projectKey string, workflowName string) error {
 	_, err := c.DeleteJSON(context.Background(), fmt.Sprintf("/project/%s/workflows/%s", projectKey, workflowName), nil)
 	return err

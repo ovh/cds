@@ -307,6 +307,7 @@ type ServiceClient interface {
 // WorkflowClient exposes workflows functions
 type WorkflowClient interface {
 	WorkflowSearch(opts ...RequestModifier) ([]sdk.Workflow, error)
+	WorkflowRunsAndNodesIDs(projectkey string) ([]sdk.WorkflowNodeRunIdentifiers, error)
 	WorkflowList(projectKey string, opts ...RequestModifier) ([]sdk.Workflow, error)
 	WorkflowGet(projectKey, name string, opts ...RequestModifier) (*sdk.Workflow, error)
 	WorkflowUpdate(projectKey, name string, wf *sdk.Workflow) error

@@ -8,11 +8,8 @@ import (
 	"encoding/hex"
 	"io"
 	"os"
-	"strconv"
 	"strings"
 	"time"
-
-	"github.com/mitchellh/hashstructure"
 
 	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/engine/cdn/index"
@@ -226,11 +223,10 @@ func (s *Service) loadOrCreateIndexItem(ctx context.Context, typ string, signatu
 		apiRef.RequirementServiceName = signature.Service.RequirementName
 	}
 
-	hashRefU, err := hashstructure.Hash(apiRef, nil)
+	hashRef, err := apiRef.ToHash()
 	if err != nil {
-		return nil, sdk.WithStack(err)
+		return nil, err
 	}
-	hashRef := strconv.FormatUint(hashRefU, 10)
 
 	item, err := index.LoadItemByApiRefHashAndType(ctx, s.Mapper, tx, hashRef, typ)
 	if err != nil {

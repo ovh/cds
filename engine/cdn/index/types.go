@@ -4,7 +4,10 @@ import (
 	"database/sql/driver"
 	"encoding/json"
 	"fmt"
+	"strconv"
 	"time"
+
+	"github.com/mitchellh/hashstructure"
 
 	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk"
@@ -50,6 +53,14 @@ type ApiRef struct {
 	// for hatcheries
 	RequirementServiceID   int64  `json:"service_id,omitempty"`
 	RequirementServiceName string `json:"service_name,omitempty"`
+}
+
+func (a ApiRef) ToHash() (string, error) {
+	hashRefU, err := hashstructure.Hash(a, nil)
+	if err != nil {
+		return "", sdk.WithStack(err)
+	}
+	return strconv.FormatUint(hashRefU, 10), nil
 }
 
 // Value returns driver.Value from ApiRef.

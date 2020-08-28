@@ -35,7 +35,7 @@ const (
 	defaultLimit = 10
 )
 
-func (api *API) getWorkflowsRunsIDshandler() service.Handler {
+func (api *API) getWorkflowsRunsAndNodesIDshandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		key := vars["key"]
@@ -45,11 +45,11 @@ func (api *API) getWorkflowsRunsIDshandler() service.Handler {
 			return err
 		}
 
-		mapRunsIDs, err := workflow.LoadRunIDs(api.mustDB(), p.WorkflowNames.IDs())
+		ids, err := workflow.LoadNodeRunIDs(api.mustDB(), p.WorkflowNames.IDs())
 		if err != nil {
 			return nil
 		}
-		return service.WriteJSON(w, mapRunsIDs, http.StatusOK)
+		return service.WriteJSON(w, ids, http.StatusOK)
 	}
 }
 

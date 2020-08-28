@@ -160,7 +160,9 @@ func (s *Service) Serve(c context.Context) error {
 			continue
 		}
 		sdk.GoRoutine(ctx, "cdn-cds-backend-migration", func(ctx context.Context) {
-			cdsStorage.Sync(ctx)
+			if err := s.SyncLogs(ctx, cdsStorage); err != nil {
+				log.Error(ctx, "unable to sync logs: %v", err)
+			}
 		})
 	}
 

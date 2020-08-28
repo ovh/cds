@@ -62,6 +62,14 @@ type WorkflowRun struct {
 	ToCraftOpts      *WorkflowRunPostHandlerOption    `json:"-" yaml:"-" db:"to_craft_opts" cli:"-"`
 }
 
+type WorkflowNodeRunIdentifiers struct {
+	WorkflowRunID int64  `db:"id"`
+	WorkflowID    int64  `db:"workflow_id"`
+	WorkflowName  string `db:"name"`
+	RunNumber     int64  `db:"num"`
+	NodeRunID     int64  `db:"node_run_id"`
+}
+
 type WorkflowRunSecret struct {
 	ID            string `json:"-" db:"id"`
 	WorkflowRunID int64  `json:"-" db:"workflow_run_id"`
