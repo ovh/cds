@@ -17,6 +17,7 @@ import { ProjectService } from 'app/service/project/project.service';
 import { ProjectStore } from 'app/service/project/project.store';
 import { RepoManagerService } from 'app/service/repomanager/project.repomanager.service';
 import { RouterService } from 'app/service/router/router.service';
+import { HelpService } from 'app/service/services.module';
 import { UserService } from 'app/service/user/user.service';
 import { VariableService } from 'app/service/variable/variable.service';
 import { WorkflowRunService } from 'app/service/workflow/run/workflow.run.service';
@@ -46,6 +47,7 @@ describe('CDS: Project RepoManager List Component', () => {
                 EnvironmentService,
                 VariableService,
                 ToasterService,
+                HelpService,
                 TranslateService,
                 MonitoringService,
                 ApplicationService,

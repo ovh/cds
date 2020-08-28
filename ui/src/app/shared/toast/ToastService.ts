@@ -1,5 +1,8 @@
 import { Injectable } from '@angular/core';
+import { Store } from '@ngxs/store';
 import { BodyOutputType, ToasterConfig, ToasterService } from 'angular2-toaster/angular2-toaster';
+import { HelpState } from 'app/store/help.state';
+import { filter } from 'rxjs/operators';
 import { ToastHTTPErrorComponent, ToastHTTPErrorData } from './toast-http-error.component';
 
 @Injectable()
@@ -19,7 +22,10 @@ export class ToastService {
         toastContainerId: 3
     });
 
-    constructor(private _toasterService: ToasterService) { }
+    constructor(
+        private _toasterService: ToasterService,
+        private _store: Store,
+    ) { }
 
     getConfigDefault(): ToasterConfig {
         return this.configDefault;
@@ -52,20 +58,27 @@ export class ToastService {
     }
 
     errorHTTP(status: number, message: string, from: string, request_id: string) {
-        this._toasterService.pop(
-            {
-                type: 'error',
-                title: message,
-                body: ToastHTTPErrorComponent,
-                bodyOutputType: BodyOutputType.Component,
-                toastContainerId: status < 500 ? 2 : 3,
-                data: <ToastHTTPErrorData>{
-                    status,
-                    from,
-                    request_id
+        this._store.select(HelpState.last)
+        .pipe(
+            filter((help) => help != null),
+        )
+        .subscribe(help => {
+            this._toasterService.pop(
+                {
+                    type: 'error',
+                    title: message,
+                    body: ToastHTTPErrorComponent,
+                    bodyOutputType: BodyOutputType.Component,
+                    toastContainerId: status < 500 ? 2 : 3,
+                    data: <ToastHTTPErrorData>{
+                        status: status,
+                        from: from,
+                        request_id: request_id,
+                        help: help.error
+                    }
                 }
-            }
-        );
+            );
+        });
     }
 }
 

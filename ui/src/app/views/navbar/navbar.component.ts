@@ -4,11 +4,13 @@ import { NavigationEnd, Router } from '@angular/router';
 import { Store } from '@ngxs/store';
 import { Application } from 'app/model/application.model';
 import { Broadcast } from 'app/model/broadcast.model';
+import { Help } from 'app/model/help.model';
 import { NavbarProjectData, NavbarRecentData, NavbarSearchItem } from 'app/model/navbar.model';
 import { Project } from 'app/model/project.model';
 import { AuthentifiedUser } from 'app/model/user.model';
 import { ApplicationStore } from 'app/service/application/application.store';
 import { BroadcastStore } from 'app/service/broadcast/broadcast.store';
+import { HelpService } from 'app/service/help/help.service';
 import { LanguageStore } from 'app/service/language/language.store';
 import { NavbarService } from 'app/service/navbar/navbar.service';
 import { RouterService } from 'app/service/router/router.service';
@@ -18,10 +20,10 @@ import { WorkflowStore } from 'app/service/workflow/workflow.store';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { SignoutCurrentUser } from 'app/store/authentication.action';
 import { AuthenticationState } from 'app/store/authentication.state';
+import { HelpState } from 'app/store/help.state';
 import { List } from 'immutable';
 import { Subscription } from 'rxjs';
 import { filter } from 'rxjs/operators';
-
 
 @Component({
     selector: 'app-navbar',
@@ -40,6 +42,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
     recentItems: Array<NavbarSearchItem> = [];
     items: Array<NavbarSearchItem> = [];
     broadcasts: Array<Broadcast> = new Array<Broadcast>();
+    help: Help = new Help();
     recentBroadcastsToDisplay: Array<Broadcast> = new Array<Broadcast>();
     previousBroadcastsToDisplay: Array<Broadcast> = new Array<Broadcast>();
     loading = true;
@@ -89,6 +92,15 @@ export class NavbarComponent implements OnInit, OnDestroy {
 
         this.themeSubscription = this._theme.get().subscribe(t => {
             this.themeSwitch.setValue(t === 'night');
+            this._cd.markForCheck();
+        });
+
+        this._store.select(HelpState.last)
+        .pipe(
+            filter((help) => help != null),
+        )
+        .subscribe(help => {
+            this.help = help;
             this._cd.markForCheck();
         });
 
