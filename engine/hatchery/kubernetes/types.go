@@ -48,6 +48,8 @@ type HatcheryConfiguration struct {
 	KubernetesClientCertData string `mapstructure:"clientCertData" toml:"clientCertData" default:"" commented:"true" comment:"Client certificate data (content, not path and not base64 encoded) for tls kubernetes (optional if no tls needed)" json:"-"`
 	// KubernetesKeyData Client certificate data for tls kubernetes (optional if no tls needed)
 	KubernetesClientKeyData string `mapstructure:"clientKeyData" toml:"clientKeyData" default:"" commented:"true" comment:"Client certificate data (content, not path and not base64 encoded) for tls kubernetes (optional if no tls needed)" json:"-"`
+	// DefaultPullPolicy describes the policy for if/when to pull a container image
+	DefaultPullPolicy string `mapstructure:"defaultPullPolicy" toml:"defaultPullPolicy" default:"Always" commented:"true" comment:"Describes the policy for if/when to pull a container image (Always, Never, IfNotPresent)" json:"defaultPullPolicy"`
 }
 
 // HatcheryKubernetes implements HatcheryMode interface for local usage

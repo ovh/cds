@@ -348,11 +348,12 @@ func (h *HatcheryKubernetes) SpawnWorker(ctx context.Context, spawnArgs hatchery
 			TerminationGracePeriodSeconds: &gracePeriodSecs,
 			Containers: []apiv1.Container{
 				{
-					Name:    spawnArgs.WorkerName,
-					Image:   spawnArgs.Model.ModelDocker.Image,
-					Env:     envs,
-					Command: strings.Fields(spawnArgs.Model.ModelDocker.Shell),
-					Args:    []string{cmd},
+					Name:            spawnArgs.WorkerName,
+					Image:           spawnArgs.Model.ModelDocker.Image,
+					ImagePullPolicy: apiv1.PullPolicy(h.Config.DefaultPullPolicy),
+					Env:             envs,
+					Command:         strings.Fields(spawnArgs.Model.ModelDocker.Shell),
+					Args:            []string{cmd},
 					Resources: apiv1.ResourceRequirements{
 						Requests: apiv1.ResourceList{
 							apiv1.ResourceMemory: resource.MustParse(fmt.Sprintf("%d", memory)),
