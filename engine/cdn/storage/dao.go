@@ -124,6 +124,7 @@ func LoadOldItemUnitByItemStatusAndDuration(ctx context.Context, m *gorpmapper.M
 		WHERE
 			index.status = $1 AND
             index.last_modified < NOW() - $2 * INTERVAL '1 second'
+		ORDER BY index.last_modified ASC
 	`).Args(status, duration)
 	return getAllItemUnits(ctx, m, db, query, opts...)
 }
