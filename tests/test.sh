@@ -98,6 +98,11 @@ initialization_tests() {
     ${CMD} >01_signup_user.yml.output 2>&1
 
     check_failure $? 01_signup_user.yml.output
+
+    CMD="${VENOM} run ${VENOM_OPTS} 01_queue_stopall.yml --var cdsctl=${CDSCTL} --var api.url=${CDS_API_URL}"
+    echo -e "  ${YELLOW}01_queue_stopall.yml ${DARKGRAY}[${CMD}]${NOCOLOR}"
+    ${CMD} >01_queue_stopall.yml.output 2>&1
+    check_failure $? 01_queue_stopall.yml.output
 }
 
 smoke_tests_services() {
