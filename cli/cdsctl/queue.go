@@ -43,8 +43,8 @@ var queueStopAllCmd = cli.Command{
 	Short:   "Stop all job from the queue",
 	Example: "cdsctl queue stopall",
 	OptionalArgs: []cli.Arg{
-		{Name: _ProjectKey, AllowEmpty: true},
-		{Name: _WorkflowName, AllowEmpty: true},
+		{Name: _ProjectKey},
+		{Name: _WorkflowName},
 	},
 	Flags: []cli.Flag{
 		{
