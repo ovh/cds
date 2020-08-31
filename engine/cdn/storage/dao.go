@@ -116,6 +116,19 @@ func UpdateItemUnit(ctx context.Context, m *gorpmapper.Mapper, db gorpmapper.Sql
 	return nil
 }
 
+func LoadOldItemUnitByItemStatusAndDuration(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlExecutor, status string, duration int, opts ...gorpmapper.GetOptionFunc) ([]ItemUnit, error) {
+	query := gorpmapper.NewQuery(`
+		SELECT storage_unit_index.*
+		FROM storage_unit_index
+		LEFT JOIN index ON index.id = storage_unit_index.item_id
+		WHERE
+			index.status = $1 AND
+            index.last_modified < NOW() - $2 * INTERVAL '1 second'
+		ORDER BY index.last_modified ASC
+	`).Args(status, duration)
+	return getAllItemUnits(ctx, m, db, query, opts...)
+}
+
 func LoadItemUnitByUnit(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlExecutor, unitID string, itemID string, opts ...gorpmapper.GetOptionFunc) (*ItemUnit, error) {
 	query := gorpmapper.NewQuery("SELECT * FROM storage_unit_index WHERE unit_id = $1 and item_id = $2 LIMIT 1").Args(unitID, itemID)
 	return getItemUnit(ctx, m, db, query, opts...)
@@ -202,7 +215,7 @@ func getAllItemUnits(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlExecu
 	return itemUnits, nil
 }
 
-func LoadAllItemIDUnknownByUnit(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlExecutor, unitID string, limit int) ([]string, error) {
+func LoadAllItemIDUnknownByUnit(db gorp.SqlExecutor, unitID string, limit int) ([]string, error) {
 	query := `
 		SELECT * 
 		FROM (

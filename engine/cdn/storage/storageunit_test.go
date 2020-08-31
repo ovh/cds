@@ -100,6 +100,9 @@ func TestRun(t *testing.T) {
 		Status:     index.StatusItemIncoming,
 	}
 	require.NoError(t, index.InsertItem(ctx, m, db, i))
+	defer func() {
+		_ = index.DeleteItem(m, db, i)
+	}()
 
 	log.Debug("item ID: %v", i.ID)
 
@@ -170,7 +173,7 @@ func TestRun(t *testing.T) {
 	require.Equal(t, `this is the first log
 this is the second log`, actual, "item %s content should match", i.ID)
 
-	itemIDs, err := storage.LoadAllItemIDUnknownByUnit(ctx, m, db, localUnitDriver.ID(), 100)
+	itemIDs, err := storage.LoadAllItemIDUnknownByUnit(db, localUnitDriver.ID(), 100)
 	require.NoError(t, err)
 	require.Len(t, itemIDs, 0)
 
@@ -189,7 +192,7 @@ this is the second log`, actual, "item %s content should match", i.ID)
 	require.Equal(t, `this is the first log
 this is the second log`, actual, "item %s content should match", i.ID)
 
-	itemIDs, err = storage.LoadAllItemIDUnknownByUnit(ctx, m, db, localUnitDriver2.ID(), 100)
+	itemIDs, err = storage.LoadAllItemIDUnknownByUnit(db, localUnitDriver2.ID(), 100)
 	require.NoError(t, err)
 	require.Len(t, itemIDs, 0)
 
