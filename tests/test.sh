@@ -151,6 +151,12 @@ workflow_with_integration_tests() {
 }
 
 workflow_with_third_parties() {
+    echo "Stopping all jobs in queue:"
+    CMD="${VENOM} run ${VENOM_OPTS} 01_queue_stopall.yml --var cdsctl.config=${CDSCTL_CONFIG}_admin --var cdsctl=${CDSCTL} --var api.url=${CDS_API_URL}"
+    echo -e "  ${YELLOW}01_queue_stopall.yml ${DARKGRAY}[${CMD}]${NOCOLOR}"
+    ${CMD} >01_queue_stopall.yml.output 2>&1
+    check_failure $? 01_queue_stopall.yml.output
+
     if [ -z "$CDS_MODEL_REQ" ]; then echo "missing CDS_MODEL_REQ variable"; exit 1; fi
     if [ -z "$CDS_REGION_REQ" ]; then echo "missing CDS_REGION_REQ variable"; exit 1; fi
     echo "Running Workflow with third parties:"
