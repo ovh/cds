@@ -42,6 +42,10 @@ var queueStopAllCmd = cli.Command{
 	Name:    "stopall",
 	Short:   "Stop all job from the queue",
 	Example: "cdsctl queue stopall",
+	OptionalArgs: []cli.Arg{
+		{Name: _ProjectKey, AllowEmpty: true},
+		{Name: _WorkflowName, AllowEmpty: true},
+	},
 	Flags: []cli.Flag{
 		{
 			Name:  "force",
@@ -69,7 +73,21 @@ func queueStopAllRun(v cli.Values) error {
 		return err
 	}
 
-	wantToStopAllSure := v.GetBool("force") || cli.AskConfirm(fmt.Sprintf("There are %d worfklows to stop, confirm stopping workflows?", len(jobs)))
+	var nbToStop int64
+	for _, jr := range jobs {
+		projectKey := getVarsInPbj("cds.project", jr.Parameters)
+		workflowName := getVarsInPbj("cds.workflow", jr.Parameters)
+
+		if v.GetString(_ProjectKey) != "" && projectKey != v.GetString(_ProjectKey) {
+			continue
+		}
+		if v.GetString(_WorkflowName) != "" && workflowName != v.GetString(_WorkflowName) {
+			continue
+		}
+		nbToStop++
+	}
+
+	wantToStopAllSure := v.GetBool("force") || cli.AskConfirm(fmt.Sprintf("There are %d worfklows to stop, confirm stopping workflows?", nbToStop))
 	if !wantToStopAllSure {
 		return nil
 	}
@@ -79,6 +97,13 @@ func queueStopAllRun(v cli.Values) error {
 		run := getVarsInPbj("cds.run.number", jr.Parameters)
 		projectKey := getVarsInPbj("cds.project", jr.Parameters)
 		workflowName := getVarsInPbj("cds.workflow", jr.Parameters)
+
+		if v.GetString(_ProjectKey) != "" && projectKey != v.GetString(_ProjectKey) {
+			continue
+		}
+		if v.GetString(_WorkflowName) != "" && workflowName != v.GetString(_WorkflowName) {
+			continue
+		}
 
 		runNumber, err := strconv.ParseInt(run, 10, 64)
 		if err != nil {
