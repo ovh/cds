@@ -12,6 +12,7 @@ import { PipelinesState } from 'app/store/pipelines.state';
 import { environment as env } from '../../environments/environment';
 import { AuthenticationState } from './authentication.state';
 import { EventState } from './event.state';
+import { HelpState } from './help.state';
 import { ProjectState } from './project.state';
 import { QueueState } from './queue.state';
 import { WorkflowState } from './workflow.state';
@@ -29,6 +30,7 @@ import { WorkflowState } from './workflow.state';
             CDSState,
             EnvironmentState,
             EventState,
+            HelpState,
             PipelinesState,
             ProjectState,
             QueueState,

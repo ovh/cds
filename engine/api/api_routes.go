@@ -148,6 +148,8 @@ func (api *API) InitRouter() {
 	r.Handle("/mon/errors/{uuid}", ScopeNone(), r.GET(api.getErrorHandler, NeedAdmin(true)))
 	r.Handle("/mon/panic/{uuid}", ScopeNone(), r.GET(api.getPanicDumpHandler, Auth(false)))
 
+	r.Handle("/help", ScopeNone(), r.GET(api.getHelpHandler, Auth(false)))
+
 	r.Handle("/ui/navbar", ScopeNone(), r.GET(api.getNavbarHandler))
 	r.Handle("/ui/project/{permProjectKey}/application/{applicationName}/overview", ScopeNone(), r.GET(api.getApplicationOverviewHandler))
 

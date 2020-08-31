@@ -2,11 +2,10 @@ package index_test
 
 import (
 	"context"
-	"strconv"
-	"testing"
-
 	"github.com/mitchellh/hashstructure"
 	"github.com/stretchr/testify/require"
+	"strconv"
+	"testing"
 
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/cdn/index"
@@ -33,6 +32,9 @@ func TestLoadItem(t *testing.T) {
 		Type:       index.TypeItemStepLog,
 	}
 	require.NoError(t, index.InsertItem(context.TODO(), m, db, &i))
+	defer func() {
+		_ = index.DeleteItem(m, db, &i)
+	}()
 
 	res, err := index.LoadItemByID(context.TODO(), m, db, i.ID)
 	require.NoError(t, err)

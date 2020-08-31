@@ -124,6 +124,10 @@ func (s *Service) Serve(c context.Context) error {
 		if err != nil {
 			return err
 		}
+
+		sdk.GoRoutine(ctx, "cdn-gc-items", func(ctx context.Context) {
+			s.CompleteWaitingItems(ctx)
+		})
 	}
 
 	log.Info(ctx, "Initializing redis cache on %s...", s.Cfg.Cache.Redis.Host)

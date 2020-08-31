@@ -20,10 +20,10 @@ func TestCRUD(t *testing.T) {
 
 	grp1 := assets.InsertTestGroup(t, db, sdk.RandomString(10))
 	grp2 := assets.InsertTestGroup(t, db, sdk.RandomString(10))
-	defer func() {
+	t.Cleanup(func() {
 		assets.DeleteTestGroup(t, db, grp1)
 		assets.DeleteTestGroup(t, db, grp2)
-	}()
+	})
 
 	scriptAction := assets.GetBuiltinOrPluginActionByName(t, db, "Script")
 
@@ -72,9 +72,7 @@ func TestCRUD(t *testing.T) {
 
 	// Insert
 	for i := range acts {
-		if !assert.Nil(t, action.Insert(db, &acts[i]), "No err should be returned when inserting an action") {
-			t.FailNow()
-		}
+		require.NoError(t, action.Insert(db, &acts[i]), "No err should be returned when inserting an action")
 	}
 
 	// Update
@@ -82,48 +80,48 @@ func TestCRUD(t *testing.T) {
 		Name: "my-number",
 		Type: sdk.NumberParameter,
 	})
-	assert.Nil(t, action.Update(db, &acts[0]), "No err should be returned when updating an action")
-	assert.Equal(t, 3, len(acts[0].Parameters))
+	require.NoError(t, action.Update(db, &acts[0]), "No err should be returned when updating an action")
+	assert.Len(t, acts[0].Parameters, 3)
 
 	// LoadByID
 	result, err := action.LoadByID(context.TODO(), db, 0)
-	assert.Nil(t, err)
+	require.NoError(t, err)
 	assert.Nil(t, result)
 	result, err = action.LoadByID(context.TODO(), db, acts[0].ID, action.LoadOptions.Default)
-	assert.Nil(t, err)
+	require.NoError(t, err)
 	assert.Equal(t, acts[0].Name, result.Name)
-	assert.Equal(t, 3, len(result.Parameters))
-	assert.Equal(t, 1, len(result.Requirements))
-	assert.Equal(t, 1, len(result.Actions))
-	assert.Equal(t, 1, len(result.Actions[0].Parameters))
+	assert.Len(t, result.Parameters, 3)
+	assert.Len(t, result.Requirements, 1)
+	assert.Len(t, result.Actions, 1)
+	require.Len(t, result.Actions[0].Parameters, 1)
 	assert.Equal(t, "echo \"test\"", result.Actions[0].Parameters[0].Value)
 
 	// LoadAllByTypes
 	results, err := action.LoadAllByTypes(context.TODO(), db, []string{sdk.PluginAction, sdk.BuiltinAction})
-	assert.Nil(t, err)
+	require.NoError(t, err)
 	lengthExistingBuiltinAndPlugin := len(results)
 
 	// LoadAllTypeBuiltInOrPluginOrDefaultForGroupIDs
 	results, err = action.LoadAllTypeBuiltInOrPluginOrDefaultForGroupIDs(context.TODO(), db, []int64{grp1.ID})
-	assert.Nil(t, err)
-	assert.Equal(t, lengthExistingBuiltinAndPlugin+1, len(results))
+	require.NoError(t, err)
+	assert.Len(t, results, lengthExistingBuiltinAndPlugin+1)
 
 	// LoadAllTypeBuiltInOrPLoadAllTypeDefaultByGroupIDsluginOrDefaultForGroupIDs
 	results, err = action.LoadAllTypeDefaultByGroupIDs(context.TODO(), db, []int64{grp2.ID}, action.LoadOptions.Default)
-	assert.Nil(t, err)
-	assert.Equal(t, 1, len(results))
+	require.NoError(t, err)
+	require.Len(t, results, 1)
 	assert.Equal(t, acts[1].ID, results[0].ID)
 	results, err = action.LoadAllTypeDefaultByGroupIDs(context.TODO(), db, []int64{grp1.ID, grp2.ID})
-	assert.Nil(t, err)
-	assert.Equal(t, 2, len(results))
+	require.NoError(t, err)
+	require.Len(t, results, 2)
 	sort.Slice(results, func(i, j int) bool { return results[i].ID < results[j].ID })
 	assert.Equal(t, acts[0].ID, results[0].ID)
 	assert.Equal(t, acts[1].ID, results[1].ID)
 
 	// LoadAllByIDsWithTypeBuiltinOrPluginOrDefaultInGroupIDs
 	results, err = action.LoadAllByIDsWithTypeBuiltinOrPluginOrDefaultInGroupIDs(context.TODO(), db, []int64{scriptAction.ID, acts[0].ID, acts[1].ID}, []int64{grp1.ID, grp2.ID})
-	assert.Nil(t, err)
-	assert.Equal(t, 3, len(results))
+	require.NoError(t, err)
+	require.Len(t, results, 3)
 	sort.Slice(results, func(i, j int) bool { return results[i].ID < results[j].ID })
 	assert.Equal(t, scriptAction.ID, results[0].ID)
 	assert.Equal(t, acts[0].ID, results[1].ID)
@@ -131,25 +129,41 @@ func TestCRUD(t *testing.T) {
 
 	// LoadByTypesAndName
 	result, err = action.LoadByTypesAndName(context.TODO(), db, []string{sdk.DefaultAction}, "Action 0")
-	assert.Nil(t, err)
+	require.NoError(t, err)
 	assert.Nil(t, result)
 	result, err = action.LoadByTypesAndName(context.TODO(), db, []string{sdk.DefaultAction}, acts[0].Name)
-	assert.Nil(t, err)
+	require.NoError(t, err)
 	assert.NotNil(t, result)
 	assert.Equal(t, acts[0].ID, result.ID)
 
 	// LoadTypeDefaultByNameAndGroupID
 	result, err = action.LoadTypeDefaultByNameAndGroupID(context.TODO(), db, acts[1].Name, grp1.ID)
-	assert.Nil(t, err)
+	require.NoError(t, err)
 	assert.Nil(t, result)
 	result, err = action.LoadTypeDefaultByNameAndGroupID(context.TODO(), db, acts[1].Name, grp2.ID)
-	assert.Nil(t, err)
+	require.NoError(t, err)
 	assert.NotNil(t, result)
 	assert.Equal(t, acts[1].ID, result.ID)
 
+	// LoadByIDs
+	results, err = action.LoadAllByIDs(context.TODO(), db, []int64{acts[0].ID, acts[1].ID}, action.LoadOptions.Default)
+	require.NoError(t, err)
+	require.Len(t, results, 2)
+	sort.Slice(results, func(i, j int) bool { return results[i].ID < results[j].ID })
+	assert.Equal(t, acts[0].Name, results[0].Name)
+	assert.Len(t, results[0].Parameters, 3)
+	assert.Len(t, results[0].Requirements, 1)
+	assert.Len(t, results[0].Actions, 1)
+	require.Len(t, results[0].Actions[0].Parameters, 1)
+	assert.Equal(t, "echo \"test\"", results[0].Actions[0].Parameters[0].Value)
+	results, err = action.LoadAllByIDs(context.TODO(), db, []int64{acts[1].ID})
+	require.NoError(t, err)
+	require.Len(t, results, 1)
+	assert.Equal(t, acts[1].Name, results[0].Name)
+
 	// Delete
 	for i := range acts {
-		assert.Nil(t, action.Delete(db, &acts[i]), "No err should be returned when removing an action")
+		require.NoError(t, action.Delete(db, &acts[i]), "No err should be returned when removing an action")
 	}
 }
 

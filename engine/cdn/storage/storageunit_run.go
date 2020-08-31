@@ -21,7 +21,7 @@ func (x *RunningStorageUnits) Run(ctx context.Context, s StorageUnit) error {
 	}
 
 	// Load items to sync
-	itemIDs, err := LoadAllItemIDUnknownByUnit(ctx, s.GorpMapper(), s.DB(), s.ID(), 100)
+	itemIDs, err := LoadAllItemIDUnknownByUnit(s.DB(), s.ID(), 100)
 	if err != nil {
 		return err
 	}

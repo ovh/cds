@@ -196,6 +196,10 @@ type Configuration struct {
 		StepMaxSize    int64 `toml:"stepMaxSize" default:"15728640" comment:"Max step logs size in bytes (default: 15MB)" json:"stepMaxSize"`
 		ServiceMaxSize int64 `toml:"serviceMaxSize" default:"15728640" comment:"Max service logs size in bytes (default: 15MB)" json:"serviceMaxSize"`
 	} `toml:"log" json:"log" comment:"###########################\n Log settings.\n##########################"`
+	Help struct {
+		Content string `toml:"content" comment:"Help Content. Warning: this message could be view by anonymous user. Markdown accepted." json:"content" default:""`
+		Error   string `toml:"error" comment:"Help displayed to user on each error. Warning: this message could be view by anonymous user. Markdown accepted." json:"error" default:""`
+	} `toml:"help" comment:"######################\n 'Help' informations \n######################" json:"help"`
 }
 
 // DefaultValues is the struc for API Default configuration default values
