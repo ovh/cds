@@ -32,6 +32,9 @@ func TestLoadItem(t *testing.T) {
 		Type:       index.TypeItemStepLog,
 	}
 	require.NoError(t, index.InsertItem(context.TODO(), m, db, &i))
+	defer func() {
+		_ = index.DeleteItem(m, db, &i)
+	}()
 
 	res, err := index.LoadItemByID(context.TODO(), m, db, i.ID)
 	require.NoError(t, err)

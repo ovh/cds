@@ -47,6 +47,9 @@ func TestLoadOldItemUnitByItemStatusAndDuration(t *testing.T) {
 	}
 	err = index.InsertItem(context.TODO(), m, db, i1)
 	require.NoError(t, err)
+	defer func() {
+		_ = index.DeleteItem(m, db, i1)
+	}()
 
 	itemUnit1, err := cdnUnits.NewItemUnit(context.TODO(), m, db, cdnUnits.Buffer, i1)
 	require.NoError(t, err)

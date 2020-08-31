@@ -89,6 +89,9 @@ func TestStoreNewStepLog(t *testing.T) {
 	item, err := index.LoadItemByApiRefHashAndType(context.TODO(), s.Mapper, db, strconv.FormatUint(hashRef, 10), index.TypeItemStepLog)
 	require.NoError(t, err)
 	require.NotNil(t, item)
+	defer func() {
+		_ = index.DeleteItem(m, db, item)
+	}()
 	require.Equal(t, index.StatusItemIncoming, item.Status)
 
 	iu, err := storage.LoadItemUnitByUnit(context.TODO(), s.Mapper, db, s.Units.Buffer.ID(), item.ID, gorpmapper.GetOptions.WithDecryption)
@@ -167,7 +170,9 @@ func TestStoreLastStepLog(t *testing.T) {
 		Type:       index.TypeItemStepLog,
 	}
 	require.NoError(t, index.InsertItem(context.TODO(), m, db, &item))
-
+	defer func() {
+		_ = index.DeleteItem(m, db, &item)
+	}()
 	content := buildMessage(hm)
 	err = s.storeLogs(context.TODO(), index.TypeItemStepLog, hm.Signature, hm.Status, content, hm.Line)
 	require.NoError(t, err)
@@ -258,6 +263,9 @@ func TestStoreLogWrongOrder(t *testing.T) {
 		Type:       index.TypeItemStepLog,
 	}
 	require.NoError(t, index.InsertItem(context.TODO(), m, db, &item))
+	defer func() {
+		_ = index.DeleteItem(m, db, &item)
+	}()
 
 	content := buildMessage(hm)
 	err = s.storeLogs(context.TODO(), index.TypeItemStepLog, hm.Signature, hm.Status, content, hm.Line)
@@ -365,6 +373,9 @@ func TestStoreNewServiceLogAndAppend(t *testing.T) {
 	item, err := index.LoadItemByApiRefHashAndType(context.TODO(), s.Mapper, db, strconv.FormatUint(hashRef, 10), index.TypeItemServiceLog)
 	require.NoError(t, err)
 	require.NotNil(t, item)
+	defer func() {
+		_ = index.DeleteItem(m, db, item)
+	}()
 	require.Equal(t, index.StatusItemIncoming, item.Status)
 
 	var logs []string
