@@ -58,11 +58,7 @@ func (c *CDS) NewReader(i storage.ItemUnit) (io.ReadCloser, error) {
 	if err != nil {
 		return nil, err
 	}
-	btsData := make([]byte, 0)
-	for _, l := range bs.Logs {
-		btsData = append(btsData, []byte(l.Val)...)
-	}
-	rc := ioutil.NopCloser(bytes.NewReader(btsData))
+	rc := ioutil.NopCloser(bytes.NewReader([]byte(bs.StepLogs.Val)))
 	return rc, nil
 }
 
