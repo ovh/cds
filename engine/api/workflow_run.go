@@ -38,7 +38,7 @@ const (
 func (api *API) getWorkflowsRunsAndNodesIDshandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
-		key := vars["key"]
+		key := vars["permProjectKey"]
 
 		p, err := project.Load(ctx, api.mustDB(), key, project.LoadOptions.WithWorkflowNames)
 		if err != nil {

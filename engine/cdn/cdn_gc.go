@@ -31,8 +31,19 @@ func (s *Service) CompleteWaitingItems(ctx context.Context) {
 			}
 			log.Debug("cdn:CompleteWaitingItems: %d items to complete", len(itemUnits))
 			for _, itemUnit := range itemUnits {
-				if err := s.completeItem(ctx, itemUnit); err != nil {
+				tx, err := s.mustDBWithCtx(ctx).Begin()
+				if err != nil {
+					log.Error(ctx, "cdn:CompleteWaitingItems: unable to start transaction: %v", err)
+					continue
+				}
+				if err := s.completeItem(ctx, tx, itemUnit); err != nil {
+					_ = tx.Rollback()
 					log.Warning(ctx, "cdn:CompleteWaitingItems: unable to complete item %s: %v", itemUnit.ItemID, err)
+					continue
+				}
+				if err := tx.Commit(); err != nil {
+					_ = tx.Rollback()
+					log.Warning(ctx, "cdn:CompleteWaitingItems: unable to commit transaction: %v", err)
 					continue
 				}
 			}

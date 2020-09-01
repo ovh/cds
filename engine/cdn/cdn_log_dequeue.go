@@ -96,7 +96,7 @@ func (s *Service) storeLogs(ctx context.Context, typ string, signature log.Signa
 
 	// In case where the item was marked as complete we don't allow append of other logs
 	if item.Status == index.StatusItemCompleted {
-		log.Warning(ctx, "storeLogs> a log was received for item %s but status in already complete", item.Hash)
+		log.Warning(ctx, "cdn:storeLogs: a log was received for item %s but status in already complete", item.Hash)
 		return nil
 	}
 
@@ -122,7 +122,7 @@ func (s *Service) storeLogs(ctx context.Context, typ string, signature log.Signa
 	} else {
 		_, err = s.Cache.Get(maxLineKey, &maxLine)
 		if err != nil {
-			log.Warning(ctx, "cdn: unable to get max line expected for current job: %v", err)
+			log.Warning(ctx, "cdn:storeLogs: unable to get max line expected for current job: %v", err)
 		}
 	}
 
@@ -132,8 +132,16 @@ func (s *Service) storeLogs(ctx context.Context, typ string, signature log.Signa
 	}
 	// If we have all lines
 	if maxLine > 0 && maxLine == logsSize {
-		if err := s.completeItem(ctx, *iu); err != nil {
+		tx, err := s.mustDBWithCtx(ctx).Begin()
+		if err != nil {
+			return sdk.WithStack(err)
+		}
+		defer tx.Rollback()
+		if err := s.completeItem(ctx, tx, *iu); err != nil {
 			return err
+		}
+		if err := tx.Commit(); err != nil {
+			return sdk.WithStack(err)
 		}
 		_ = s.Cache.Delete(maxLineKey)
 	}

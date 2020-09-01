@@ -24,4 +24,5 @@ SELECT create_foreign_key('FK_storage_unit_index_unit', 'storage_unit_index', 's
 SELECT create_unique_index('storage_unit_index', 'IDX_storage_unit_index_unit_id_item_id', 'unit_id,item_id');
 
 -- +migrate Down
+DROP TABLE IF EXISTS "storage_unit_index";
 DROP TABLE IF EXISTS "storage_unit";

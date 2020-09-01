@@ -25,6 +25,10 @@ func init() {
 	storage.RegisterDriver("cds", new(CDS))
 }
 
+func (c *CDS) GetClient() cdsclient.Interface {
+	return c.client
+}
+
 func (c *CDS) Init(cfg interface{}) error {
 	config, is := cfg.(*storage.CDSStorageConfiguration)
 	if !is {
@@ -32,15 +36,12 @@ func (c *CDS) Init(cfg interface{}) error {
 	}
 	c.config = *config
 	c.ConvergentEncryption = encryption.New(config.Encryption)
-	cdsClient, _, err := cdsclient.NewServiceClient(cdsclient.ServiceConfig{
-		Host:                  config.Host,
-		InsecureSkipVerifyTLS: config.InsecureSkipVerifyTLS,
-		Token:                 config.Token,
+
+	c.client = cdsclient.New(cdsclient.Config{
+		Host:                              config.Host,
+		InsecureSkipVerifyTLS:             config.InsecureSkipVerifyTLS,
+		BuitinConsumerAuthenticationToken: config.Token,
 	})
-	if err != nil {
-		return sdk.WithStack(err)
-	}
-	c.client = cdsClient
 	return nil
 }
 
@@ -71,6 +72,10 @@ func (c *CDS) ListProjects() ([]sdk.Project, error) {
 
 func (c *CDS) ListNodeRunIdentifiers(pKey string) ([]sdk.WorkflowNodeRunIdentifiers, error) {
 	return c.client.WorkflowRunsAndNodesIDs(pKey)
+}
+
+func (c *CDS) FeatureEnabled(name string, params map[string]string) (sdk.FeatureEnabledResponse, error) {
+	return c.client.FeatureEnabled(name, params)
 }
 
 func (c *CDS) GetWorkflowNodeRun(pKey string, nodeRunIdentifier sdk.WorkflowNodeRunIdentifiers) (*sdk.WorkflowNodeRun, error) {

@@ -11,16 +11,11 @@ import (
 
 	"github.com/ovh/cds/engine/cdn/index"
 	"github.com/ovh/cds/engine/cdn/storage"
+	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk"
 )
 
-func (s *Service) completeItem(ctx context.Context, itemUnit storage.ItemUnit) error {
-	tx, err := s.mustDBWithCtx(ctx).Begin()
-	if err != nil {
-		return sdk.WithStack(err)
-	}
-	defer tx.Rollback() // nolint
-
+func (s *Service) completeItem(ctx context.Context, tx gorpmapper.SqlExecutorWithTx, itemUnit storage.ItemUnit) error {
 	// We need to lock the item and set its status to complete and also generate data hash
 	item, err := index.LoadAndLockItemByID(ctx, s.Mapper, tx, itemUnit.ItemID)
 	if err != nil {
@@ -71,8 +66,5 @@ func (s *Service) completeItem(ctx context.Context, itemUnit storage.ItemUnit) e
 		return err
 	}
 
-	if err := tx.Commit(); err != nil {
-		return sdk.WithStack(err)
-	}
 	return nil
 }

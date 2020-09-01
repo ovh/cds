@@ -49,8 +49,8 @@ func TestRun(t *testing.T) {
 		},
 		Storages: []storage.StorageConfiguration{
 			{
-				Name:     "local_storage",
-				CronExpr: "* * * * * ?",
+				Name: "local_storage",
+				Cron: "* * * * * ?",
 				Local: &storage.LocalStorageConfiguration{
 					Path: tmpDir,
 					Encryption: []convergent.ConvergentEncryptionConfig{
@@ -62,8 +62,8 @@ func TestRun(t *testing.T) {
 					},
 				},
 			}, {
-				Name:     "local_storage_2",
-				CronExpr: "* * * * * ?",
+				Name: "local_storage_2",
+				Cron: "* * * * * ?",
 				Local: &storage.LocalStorageConfiguration{
 					Path: tmpDir2,
 					Encryption: []convergent.ConvergentEncryptionConfig{
