@@ -64,11 +64,9 @@ func Pings(ctx context.Context, dbFunc func() *gorp.DbMap, ss []ExternalService)
 
 func ping(ctx context.Context, db gorpmapper.SqlExecutorWithTx, s ExternalService) error {
 	// Select for update
-	serv, err := LoadByNameForUpdateAndSkipLocked(context.Background(), db, s.Name)
-	if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
+	serv, err := LoadByName(context.Background(), db, s.Name)
+	if err != nil {
 		return sdk.WithStack(err)
-	} else if sdk.ErrorIs(err, sdk.ErrNotFound) {
-		return nil
 	}
 
 	mon := sdk.MonitoringStatus{
@@ -115,40 +113,51 @@ func ping(ctx context.Context, db gorpmapper.SqlExecutorWithTx, s ExternalServic
 // InitExternal initializes external services
 func InitExternal(ctx context.Context, db *gorp.DbMap, ss []ExternalService) error {
 	for _, s := range ss {
-		tx, err := db.Begin()
-		if err != nil {
-			return sdk.WrapError(err, "Unable to start transaction")
-		}
-
-		log.Debug("services.InitExternal> Initializing service %s", s.Name)
-
-		oldSrv, errOldSrv := LoadByNameForUpdateAndSkipLocked(ctx, tx, s.Name)
-		if errOldSrv != nil && !sdk.ErrorIs(errOldSrv, sdk.ErrNotFound) {
-			_ = tx.Rollback()
-			return sdk.WithStack(fmt.Errorf("Unable to find service %s: %v", s.Name, errOldSrv))
-		}
-
-		if oldSrv == nil {
-			s.Service.LastHeartbeat = time.Now()
-			s.Service.Config = s.ServiceConfig()
-			if err := Insert(ctx, tx, &s.Service); err != nil {
-				_ = tx.Rollback()
-				return sdk.WrapError(err, "Unable to insert external service")
-			}
-		} else {
-			s.Service.ID = oldSrv.ID
-			s.Service.LastHeartbeat = oldSrv.LastHeartbeat
-			s.Service.MonitoringStatus = oldSrv.MonitoringStatus
-			s.Service.Config = s.ServiceConfig()
-			if err := Update(ctx, tx, &s.Service); err != nil {
-				_ = tx.Rollback()
-				return sdk.WrapError(err, "Unable to update external service")
-			}
-		}
-
-		if err := tx.Commit(); err != nil {
-			_ = tx.Rollback()
+		if err := initExternal(ctx, db, s); err != nil {
+			return err
 		}
 	}
+	return nil
+}
+
+func initExternal(ctx context.Context, db *gorp.DbMap, s ExternalService) error {
+	tx, err := db.Begin()
+	if err != nil {
+		return sdk.WrapError(err, "unable to start transaction")
+	}
+	defer tx.Rollback() // nolint
+
+	log.Debug("services.InitExternal> Initializing service %s", s.Name)
+
+	old, err := LoadByName(ctx, tx, s.Name)
+	if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
+		return sdk.WrapError(err, "unable to find service %s", s.Name)
+	}
+	exists := old != nil
+
+	if old.ConsumerID != nil {
+		return sdk.WithStack(fmt.Errorf("can't save an external service as one no external service already exists for given name %s", s.Name))
+	}
+
+	if exists {
+		s.Service.LastHeartbeat = time.Now()
+		s.Service.Config = s.ServiceConfig()
+		if err := Insert(ctx, tx, &s.Service); err != nil {
+			return sdk.WrapError(err, "unable to insert external service")
+		}
+	} else {
+		s.Service.ID = old.ID
+		s.Service.LastHeartbeat = old.LastHeartbeat
+		s.Service.MonitoringStatus = old.MonitoringStatus
+		s.Service.Config = s.ServiceConfig()
+		if err := Update(ctx, tx, &s.Service); err != nil {
+			return sdk.WrapError(err, "unable to update external service")
+		}
+	}
+
+	if err := tx.Commit(); err != nil {
+		return sdk.WithStack(err)
+	}
+
 	return nil
 }
