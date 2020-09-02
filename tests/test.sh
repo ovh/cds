@@ -152,7 +152,7 @@ workflow_with_integration_tests() {
 
 workflow_with_third_parties() {
     echo "Stopping all jobs in queue:"
-    CMD="${VENOM} run ${VENOM_OPTS} 01_queue_stopall.yml --var cdsctl.config=${CDSCTL_CONFIG}_admin --var cdsctl=${CDSCTL} --var api.url=${CDS_API_URL}"
+    CMD="${VENOM} run ${VENOM_OPTS} 01_queue_stopall.yml --var cdsctl=${CDSCTL} --var cdsctl.config=${CDSCTL_CONFIG}"
     echo -e "  ${YELLOW}01_queue_stopall.yml ${DARKGRAY}[${CMD}]${NOCOLOR}"
     ${CMD} >01_queue_stopall.yml.output 2>&1
     check_failure $? 01_queue_stopall.yml.output
