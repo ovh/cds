@@ -67,7 +67,6 @@ func configBootstrap(args []string) Configuration {
 			conf.API = &api.Configuration{}
 			conf.API.Name = "cds-api-" + namesgenerator.GetRandomNameCDS(0)
 			defaults.SetDefaults(conf.API)
-			conf.API.Database.Name = "cds"
 			conf.API.Database.Schema = "public"
 			conf.API.Services = append(conf.API.Services, sdk.ServiceConfiguration{
 				Name:       "sample-service",
@@ -87,9 +86,7 @@ func configBootstrap(args []string) Configuration {
 			conf.DatabaseMigrate = &migrateservice.Configuration{}
 			defaults.SetDefaults(conf.DatabaseMigrate)
 			conf.DatabaseMigrate.Name = "cds-migrate-" + namesgenerator.GetRandomNameCDS(0)
-			conf.DatabaseMigrate.ServiceAPI.DB.Name = "cds"
 			conf.DatabaseMigrate.ServiceAPI.DB.Schema = "public"
-			conf.DatabaseMigrate.ServiceCDN.DB.Name = "cdn"
 			conf.DatabaseMigrate.ServiceCDN.DB.Schema = "cdn"
 		case sdk.TypeHatchery + ":local":
 			conf.Hatchery.Local = &local.HatcheryConfiguration{}
@@ -152,7 +149,6 @@ func configBootstrap(args []string) Configuration {
 		case sdk.TypeCDN:
 			conf.CDN = &cdn.Configuration{}
 			defaults.SetDefaults(conf.CDN)
-			conf.CDN.Database.Name = "cdn"
 			conf.CDN.Database.Schema = "cdn"
 		case sdk.TypeElasticsearch:
 			conf.ElasticSearch = &elasticsearch.Configuration{}

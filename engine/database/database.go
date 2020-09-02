@@ -72,12 +72,17 @@ func (f *DBConnectionFactory) Set(d *sql.DB) {
 
 // Init initialize sql.DB object by checking environment variables and connecting to database
 func Init(ctx context.Context, user, role, password, name, schema, host string, port int, sslmode string, connectTimeout, timeout, maxconn int) (*DBConnectionFactory, error) {
+	if schema == "" {
+		schema = "public"
+	}
+
 	f := &DBConnectionFactory{
 		DBDriver:         "postgres",
 		DBRole:           role,
 		DBUser:           user,
 		DBPassword:       password,
 		DBName:           name,
+		DBSchema:         schema,
 		DBHost:           host,
 		DBPort:           port,
 		DBSSLMode:        sslmode,
@@ -138,15 +143,6 @@ func Init(ctx context.Context, user, role, password, name, schema, host string, 
 		return nil, sdk.WrapError(err, "unable to set statement_timeout with %d", f.DBTimeout)
 	}
 
-	if schema == "" {
-		schema = "public"
-	}
-	log.Debug("database> setting schema %s on database", schema)
-	if _, err := f.Database.Exec("SET SCHEMA '" + schema + "'"); err != nil {
-		log.Error(ctx, "unable to set schema %s on database: %v", schema, err)
-		return nil, sdk.WrapError(err, "unable to set schema %s", schema)
-	}
-
 	// Set role if specified
 	if role != "" {
 		log.Debug("database> setting role %s on database", role)
@@ -160,7 +156,7 @@ func Init(ctx context.Context, user, role, password, name, schema, host string, 
 }
 
 func (f *DBConnectionFactory) dsn() string {
-	return fmt.Sprintf("user=%s password=%s dbname=%s host=%s port=%d sslmode=%s connect_timeout=%d", f.DBUser, f.DBPassword, f.DBName, f.DBHost, f.DBPort, f.DBSSLMode, f.DBConnectTimeout)
+	return fmt.Sprintf("user=%s password=%s dbname=%s host=%s port=%d sslmode=%s connect_timeout=%d search_path=%s", f.DBUser, f.DBPassword, f.DBName, f.DBHost, f.DBPort, f.DBSSLMode, f.DBConnectTimeout, f.DBSchema)
 }
 
 // Status returns database driver and status in a printable string
