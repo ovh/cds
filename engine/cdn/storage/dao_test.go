@@ -2,14 +2,15 @@ package storage
 
 import (
 	"context"
-	"github.com/ovh/cds/engine/api/test"
-	"github.com/ovh/cds/engine/cdn/index"
-	"github.com/ovh/cds/engine/gorpmapper"
-	commontest "github.com/ovh/cds/engine/test"
-	"github.com/ovh/cds/sdk"
-	"github.com/stretchr/testify/require"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/require"
+
+	"github.com/ovh/cds/engine/cdn/index"
+	"github.com/ovh/cds/engine/gorpmapper"
+	"github.com/ovh/cds/engine/test"
+	"github.com/ovh/cds/sdk"
 )
 
 func TestLoadOldItemUnitByItemStatusAndDuration(t *testing.T) {
@@ -17,7 +18,7 @@ func TestLoadOldItemUnitByItemStatusAndDuration(t *testing.T) {
 	index.InitDBMapping(m)
 	InitDBMapping(m)
 	db, _ := test.SetupPGWithMapper(t, m, sdk.TypeCDN)
-	cfg := commontest.LoadTestingConf(t, sdk.TypeCDN)
+	cfg := test.LoadTestingConf(t, sdk.TypeCDN)
 
 	cdnUnits, err := Init(context.TODO(), m, db.DbMap, Configuration{
 		Buffer: BufferConfiguration{
