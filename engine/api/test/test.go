@@ -25,6 +25,7 @@ var (
 	dbRole        string
 	dbPassword    string
 	dbName        string
+	dbSchema      string
 	dbHost        string
 	dbPort        int64
 	dbSSLMode     string
@@ -99,6 +100,7 @@ func SetupPGToCancel(t log.Logger, m *gorpmapper.Mapper, serviceType string, boo
 	dbRole = cfg["dbRole"]
 	dbPassword = cfg["dbPassword"]
 	dbName = cfg["dbName"]
+	dbSchema = cfg["dbSchema"]
 	dbHost = cfg["dbHost"]
 	var err error
 	dbPort, err = strconv.ParseInt(cfg["dbPort"], 10, 64)
@@ -147,7 +149,7 @@ func SetupPGToCancel(t log.Logger, m *gorpmapper.Mapper, serviceType string, boo
 	}
 	if DBConnectionFactory == nil {
 		var err error
-		DBConnectionFactory, err = database.Init(context.TODO(), dbUser, dbRole, dbPassword, dbName, dbHost, int(dbPort), dbSSLMode, 10, 2000, 100)
+		DBConnectionFactory, err = database.Init(context.TODO(), dbUser, dbRole, dbPassword, dbName, dbSchema, dbHost, int(dbPort), dbSSLMode, 10, 2000, 100)
 		if err != nil {
 			t.Fatalf("Cannot open database: %s", err)
 			return nil, nil, func() {}

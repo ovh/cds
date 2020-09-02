@@ -9,6 +9,7 @@ import (
 
 	"github.com/go-gorp/gorp"
 	"github.com/lib/pq"
+	"github.com/sirupsen/logrus"
 
 	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk"
@@ -22,6 +23,7 @@ type DBConnectionFactory struct {
 	DBUser           string
 	DBPassword       string
 	DBName           string
+	DBSchema         string
 	DBHost           string
 	DBPort           int
 	DBSSLMode        string
@@ -38,9 +40,12 @@ func (f *DBConnectionFactory) DB() *sql.DB {
 		if f.DBName == "" {
 			return nil
 		}
-		newF, err := Init(context.TODO(), f.DBUser, f.DBRole, f.DBPassword, f.DBName, f.DBHost, f.DBPort, f.DBSSLMode, f.DBConnectTimeout, f.DBTimeout, f.DBMaxConn)
+		newF, err := Init(context.TODO(), f.DBUser, f.DBRole, f.DBPassword, f.DBName, f.DBSchema, f.DBHost, f.DBPort, f.DBSSLMode, f.DBConnectTimeout, f.DBTimeout, f.DBMaxConn)
 		if err != nil {
-			log.Error(context.TODO(), "Database> cannot init db connection : %s", err)
+			err = sdk.WrapError(err, "cannot init db connection")
+			log.ErrorWithFields(context.TODO(), logrus.Fields{
+				"stack_trace": fmt.Sprintf("%+v", err),
+			}, "%s", err)
 			return nil
 		}
 		*f = *newF
@@ -66,7 +71,7 @@ func (f *DBConnectionFactory) Set(d *sql.DB) {
 }
 
 // Init initialize sql.DB object by checking environment variables and connecting to database
-func Init(ctx context.Context, user, role, password, name, host string, port int, sslmode string, connectTimeout, timeout, maxconn int) (*DBConnectionFactory, error) {
+func Init(ctx context.Context, user, role, password, name, schema, host string, port int, sslmode string, connectTimeout, timeout, maxconn int) (*DBConnectionFactory, error) {
 	f := &DBConnectionFactory{
 		DBDriver:         "postgres",
 		DBRole:           role,
@@ -133,11 +138,20 @@ func Init(ctx context.Context, user, role, password, name, host string, port int
 		return nil, sdk.WrapError(err, "unable to set statement_timeout with %d", f.DBTimeout)
 	}
 
+	if schema == "" {
+		schema = "public"
+	}
+	log.Debug("database> setting schema %s on database", schema)
+	if _, err := f.Database.Exec("SET SCHEMA '" + schema + "'"); err != nil {
+		log.Error(ctx, "unable to set schema %s on database: %v", schema, err)
+		return nil, sdk.WrapError(err, "unable to set schema %s", schema)
+	}
+
 	// Set role if specified
 	if role != "" {
 		log.Debug("database> setting role %s on database", role)
 		if _, err := f.Database.Exec("SET ROLE '" + role + "'"); err != nil {
-			log.Error(ctx, "unable to set role %s on database: %s", role, err)
+			log.Error(ctx, "unable to set role %s on database: %v", role, err)
 			return nil, sdk.WrapError(err, "unable to set role %s", role)
 		}
 	}

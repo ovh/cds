@@ -22,7 +22,7 @@ func Do(DBFunc func() *sql.DB, dialect gorp.Dialect, sqlMigrateDir string, dir m
 	if dryrun {
 		migrations, _, err := migrate.PlanMigration(DBFunc(), "postgres", source, dir, limit)
 		if err != nil {
-			return nil, fmt.Errorf("Cannot plan migration: %v", err)
+			return nil, sdk.WrapError(err, "cannot plan migration")
 		}
 
 		return migrations, nil
@@ -40,7 +40,7 @@ func Do(DBFunc func() *sql.DB, dialect gorp.Dialect, sqlMigrateDir string, dir m
 	_, errExec := migrate.ExecMax(DBFunc(), "postgres", source, dir, limit)
 
 	if err := UnlockMigrate(DBFunc(), hostname, dialect); err != nil {
-		return nil, fmt.Errorf("Cannot unlock migration: %v", err)
+		return nil, sdk.WrapError(err, "cannot unlock migration")
 	}
 
 	return nil, errExec
@@ -89,7 +89,7 @@ func lockMigrate(db *sql.DB, id string, dialect gorp.Dialect) error {
 	}
 
 	if len(pendingMigration) > 0 {
-		return fmt.Errorf("Migration is locked by %s since %v", pendingMigration[0].ID, pendingMigration[0].Locked)
+		return sdk.WithStack(fmt.Errorf("Migration is locked by %s since %v", pendingMigration[0].ID, pendingMigration[0].Locked))
 	}
 
 	t := time.Now()

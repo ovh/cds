@@ -10,6 +10,7 @@ type DBConfigurationWithEncryption struct {
 	Role           string           `toml:"role" default:"" commented:"true" comment:"Set a specific role to run SET ROLE for each connection" json:"role"`
 	Password       string           `toml:"password" default:"cds" json:"-"`
 	Name           string           `toml:"name" json:"name"`
+	Schema         string           `toml:"schema" json:"schema" comment:"Database schema name, default value is 'public'"`
 	Host           string           `toml:"host" default:"localhost" json:"host"`
 	Port           int              `toml:"port" default:"5432" json:"port"`
 	SSLMode        string           `toml:"sslmode" default:"disable" comment:"DB SSL Mode: require (default), verify-full, or disable" json:"sslmode"`
@@ -26,6 +27,7 @@ type DBConfiguration struct {
 	Role           string `toml:"role" default:"" commented:"true" comment:"Set a specific role to run SET ROLE for each connection" json:"role"`
 	Password       string `toml:"password" default:"cds" json:"-"`
 	Name           string `toml:"name" json:"name"`
+	Schema         string `toml:"schema" json:"schema"`
 	Host           string `toml:"host" default:"localhost" json:"host"`
 	Port           int    `toml:"port" default:"5432" json:"port"`
 	SSLMode        string `toml:"sslmode" default:"disable" comment:"DB SSL Mode: require (default), verify-full, or disable" json:"sslmode"`
