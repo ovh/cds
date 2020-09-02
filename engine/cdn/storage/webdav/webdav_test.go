@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"testing"
+	"time"
 
 	"github.com/ovh/cds/engine/cdn/storage"
 	"github.com/ovh/cds/sdk/log"
@@ -35,6 +36,28 @@ func TestWebdav(t *testing.T) {
 			log.Fatalf("Error with WebDAV server: %v", err)
 		}
 	}()
+
+	var ok bool
+	for i := 0; i < 10; i++ {
+		time.Sleep(time.Second)
+
+		t.Logf("Checking if webdav server is started...\n")
+		resp, err := http.Get("http://localhost:8091")
+		if err != nil {
+			t.Logf("webdav not started yet, err: %v\n", err)
+			continue
+		}
+		resp.Body.Close()
+		if resp.StatusCode != http.StatusMethodNotAllowed {
+			t.Logf("webdav not started yet code: %d\n", resp.StatusCode)
+			continue
+		}
+		ok = true
+		break
+	}
+	require.True(t, ok, "webdav server is not running")
+
+	t.Logf("webdav server running\n")
 
 	var driver = new(Webdav)
 	err = driver.Init(&storage.WebdavStorageConfiguration{
