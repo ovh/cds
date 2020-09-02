@@ -278,7 +278,8 @@ See $ engine config command for more details.
 
 		var wg sync.WaitGroup
 		//Configure the services
-		for _, s := range serviceConfs {
+		for i := range serviceConfs {
+			s := serviceConfs[i]
 			if err := s.service.ApplyConfiguration(s.cfg); err != nil {
 				sdk.Exit("Unable to init service %s: %v", s.arg, err)
 			}
@@ -297,10 +298,10 @@ See $ engine config command for more details.
 			}
 
 			wg.Add(1)
-			go func() {
-				start(ctx, s.service, s.cfg, s.arg)
+			go func(srv serviceConf) {
+				start(ctx, srv.service, srv.cfg, srv.arg)
 				wg.Done()
-			}()
+			}(s)
 
 			// Stupid trick: when API is starting wait a bit before start the other
 			if s.arg == "API" || s.arg == "api" {

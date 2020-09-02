@@ -275,15 +275,19 @@ func (r *Router) HandlePrefix(uri string, scope HandlerScope, handlers ...*servi
 	r.Mux.PathPrefix(uri).HandlerFunc(r.pprofLabel(config, r.compress(r.setRequestID(r.recoverWrap(f)))))
 }
 
+var mutex = &sync.Mutex{}
+
 // Handle adds all handler for their specific verb in gorilla router for given uri
 func (r *Router) handle(uri string, scope HandlerScope, handlers ...*service.HandlerConfig) (map[string]*service.HandlerConfig, http.HandlerFunc) {
 	cfg := &service.RouterConfig{
 		Config: map[string]*service.HandlerConfig{},
 	}
+	mutex.Lock()
 	if r.mapRouterConfigs == nil {
 		r.mapRouterConfigs = map[string]*service.RouterConfig{}
 	}
 	r.mapRouterConfigs[uri] = cfg
+	mutex.Unlock()
 
 	cleanURL := doc.CleanURL(uri)
 	for i := range handlers {
