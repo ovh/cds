@@ -115,64 +115,116 @@ func (s *Service) syncNodeRun(ctx context.Context, cdsStorage *cds.CDS, pKey str
 				if stepName == "" {
 					stepName = rj.Job.Action.Actions[ss.StepOrder].Name
 				}
-
-				apiRef := index.ApiRef{
-					StepOrder:      int64(ss.StepOrder),
-					NodeRunID:      nodeRun.ID,
-					WorkflowName:   nodeRunIdentifier.WorkflowName,
-					WorkflowID:     nodeRunIdentifier.WorkflowID,
-					NodeRunJobID:   rj.ID,
-					ProjectKey:     pKey,
-					RunID:          nodeRunIdentifier.WorkflowRunID,
-					StepName:       stepName,
-					NodeRunJobName: rj.Job.Action.Name,
-					NodeRunName:    nodeRun.WorkflowNodeName,
-				}
-				apirefHash, err := apiRef.ToHash()
-				if err != nil {
-					return err
-				}
-				item := &index.Item{
-					Type:       index.TypeItemStepLog,
-					ApiRef:     apiRef,
-					Status:     index.StatusItemIncoming,
-					ApiRefHash: apirefHash,
-				}
-				// check if item exist
-				_, err = index.LoadItemByApiRefHashAndType(ctx, s.Mapper, tx, apirefHash, index.TypeItemStepLog)
-				if err == nil {
-					continue
-				}
-				if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
-					return err
-				}
-
-				if err := index.InsertItem(ctx, s.Mapper, tx, item); err != nil {
-					return err
-				}
-				// Can't call NewItemUnit because need to complete item first to have hash, to be able to compute locator
-				tmpItemUnit := storage.ItemUnit{
-					ItemID:       item.ID,
-					UnitID:       cdsStorage.ID(),
-					LastModified: time.Now(),
-					Item:         item,
-				}
-				if err := s.completeItem(ctx, tx, tmpItemUnit); err != nil {
-					return err
-				}
-				clearItem, err := index.LoadItemByID(ctx, s.Mapper, tx, item.ID, gorpmapper.GetOptions.WithDecryption)
-				if err != nil {
-					return err
-				}
-				itemUnit, err := s.Units.NewItemUnit(ctx, s.Mapper, tx, cdsStorage, clearItem)
-				if err != nil {
-					return err
-				}
-				if err := storage.InsertItemUnit(ctx, s.Mapper, tx, itemUnit); err != nil {
+				if err := s.syncStepLog(ctx, tx, cdsStorage, pKey, nodeRun, nodeRunIdentifier, rj, ss, stepName); err != nil {
 					return err
 				}
 			}
+
+			dictRequirement := make(map[string]int64, 0)
+			for _, r := range rj.Job.Action.Requirements {
+				if r.Type == sdk.ServiceRequirement {
+					dictRequirement[r.Name] = r.ID
+				}
+			}
+			if len(dictRequirement) > 0 {
+				if err := s.syncServiceLogs(ctx, tx, cdsStorage, pKey, nodeRun, nodeRunIdentifier, rj, dictRequirement); err != nil {
+					return err
+				}
+			}
+
 		}
 	}
 	return sdk.WithStack(tx.Commit())
+}
+
+func (s *Service) syncServiceLogs(ctx context.Context, tx gorpmapper.SqlExecutorWithTx, cdsStorage *cds.CDS, pKey string, nodeRun *sdk.WorkflowNodeRun, nodeRunIdentifier sdk.WorkflowNodeRunIdentifiers, rj sdk.WorkflowNodeJobRun, dict map[string]int64) error {
+	servicesLogs, err := cdsStorage.ServiceLogs(pKey, nodeRunIdentifier.WorkflowName, nodeRun.ID, rj.ID)
+	if err != nil {
+		return err
+	}
+	for _, sl := range servicesLogs {
+		reqID, ok := dict[sl.ServiceRequirementName]
+		if !ok {
+			continue
+		}
+		apiRef := index.ApiRef{
+			NodeRunID:              nodeRun.ID,
+			WorkflowName:           nodeRunIdentifier.WorkflowName,
+			WorkflowID:             nodeRunIdentifier.WorkflowID,
+			NodeRunJobID:           rj.ID,
+			ProjectKey:             pKey,
+			RunID:                  nodeRunIdentifier.WorkflowRunID,
+			NodeRunJobName:         rj.Job.Action.Name,
+			NodeRunName:            nodeRun.WorkflowNodeName,
+			RequirementServiceName: sl.ServiceRequirementName,
+			RequirementServiceID:   reqID,
+		}
+		if err := s.syncItem(ctx, tx, cdsStorage, index.TypeItemServiceLog, apiRef); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (s *Service) syncStepLog(ctx context.Context, tx gorpmapper.SqlExecutorWithTx, su storage.Interface, pKey string, nodeRun *sdk.WorkflowNodeRun, nodeRunIdentifier sdk.WorkflowNodeRunIdentifiers, rj sdk.WorkflowNodeJobRun, ss sdk.StepStatus, stepName string) error {
+	apiRef := index.ApiRef{
+		StepOrder:      int64(ss.StepOrder),
+		NodeRunID:      nodeRun.ID,
+		WorkflowName:   nodeRunIdentifier.WorkflowName,
+		WorkflowID:     nodeRunIdentifier.WorkflowID,
+		NodeRunJobID:   rj.ID,
+		ProjectKey:     pKey,
+		RunID:          nodeRunIdentifier.WorkflowRunID,
+		StepName:       stepName,
+		NodeRunJobName: rj.Job.Action.Name,
+		NodeRunName:    nodeRun.WorkflowNodeName,
+	}
+	return s.syncItem(ctx, tx, su, index.TypeItemStepLog, apiRef)
+}
+
+func (s *Service) syncItem(ctx context.Context, tx gorpmapper.SqlExecutorWithTx, su storage.Interface, itemType string, apiRef index.ApiRef) error {
+	apirefHash, err := apiRef.ToHash()
+	if err != nil {
+		return err
+	}
+	item := &index.Item{
+		Type:       itemType,
+		ApiRef:     apiRef,
+		Status:     index.StatusItemIncoming,
+		ApiRefHash: apirefHash,
+	}
+	// check if item exist
+	_, err = index.LoadItemByApiRefHashAndType(ctx, s.Mapper, tx, apirefHash, itemType)
+	if err == nil {
+		return nil
+	}
+	if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
+		return err
+	}
+
+	if err := index.InsertItem(ctx, s.Mapper, tx, item); err != nil {
+		return err
+	}
+	// Can't call NewItemUnit because need to complete item first to have hash, to be able to compute locator
+	tmpItemUnit := storage.ItemUnit{
+		ItemID:       item.ID,
+		UnitID:       su.ID(),
+		LastModified: time.Now(),
+		Item:         item,
+	}
+	if err := s.completeItem(ctx, tx, tmpItemUnit); err != nil {
+		return err
+	}
+	clearItem, err := index.LoadItemByID(ctx, s.Mapper, tx, item.ID, gorpmapper.GetOptions.WithDecryption)
+	if err != nil {
+		return err
+	}
+	itemUnit, err := s.Units.NewItemUnit(ctx, s.Mapper, tx, su, clearItem)
+	if err != nil {
+		return err
+	}
+	if err := storage.InsertItemUnit(ctx, s.Mapper, tx, itemUnit); err != nil {
+		return err
+	}
+	return nil
 }

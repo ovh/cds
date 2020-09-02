@@ -54,12 +54,34 @@ func (c *CDS) NewWriter(i storage.ItemUnit) (io.WriteCloser, error) {
 }
 
 func (c *CDS) NewReader(i storage.ItemUnit) (io.ReadCloser, error) {
-	bs, err := c.client.WorkflowNodeRunJobStep(i.Item.ApiRef.ProjectKey, i.Item.ApiRef.WorkflowName, 0, i.Item.ApiRef.NodeRunID, i.Item.ApiRef.NodeRunJobID, int(i.Item.ApiRef.StepOrder))
-	if err != nil {
-		return nil, err
+	switch i.Item.Type {
+	case index.TypeItemStepLog:
+		bs, err := c.client.WorkflowNodeRunJobStep(i.Item.ApiRef.ProjectKey, i.Item.ApiRef.WorkflowName, 0, i.Item.ApiRef.NodeRunID, i.Item.ApiRef.NodeRunJobID, int(i.Item.ApiRef.StepOrder))
+		if err != nil {
+			return nil, err
+		}
+		rc := ioutil.NopCloser(bytes.NewReader([]byte(bs.StepLogs.Val)))
+		return rc, nil
+	case index.TypeItemServiceLog:
+		logs, err := c.ServiceLogs(i.Item.ApiRef.ProjectKey, i.Item.ApiRef.WorkflowName, i.Item.ApiRef.NodeRunID, i.Item.ApiRef.NodeRunJobID)
+		if err != nil {
+			return nil, err
+		}
+		for _, l := range logs {
+			if l.ServiceRequirementName != i.Item.ApiRef.RequirementServiceName {
+				continue
+			}
+			rc := ioutil.NopCloser(bytes.NewReader([]byte(l.Val)))
+			return rc, nil
+		}
+	default:
+		return nil, sdk.WithStack(fmt.Errorf("unable to read type %s", i.Item.Type))
 	}
-	rc := ioutil.NopCloser(bytes.NewReader([]byte(bs.StepLogs.Val)))
-	return rc, nil
+	return nil, sdk.WithStack(fmt.Errorf("unable to find data for ref: %+v", i.Item.ApiRef))
+}
+
+func (c *CDS) ServiceLogs(pKey string, wkfName string, nodeRunID int64, jobID int64) ([]sdk.ServiceLog, error) {
+	return c.client.WorkflowNodeRunJobServiceLog(pKey, wkfName, 0, nodeRunID, jobID)
 }
 
 func (c *CDS) ListProjects() ([]sdk.Project, error) {
