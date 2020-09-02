@@ -6,6 +6,7 @@ import (
 	"crypto/md5"
 	"crypto/sha512"
 	"encoding/hex"
+	"fmt"
 	"io"
 	"os"
 
@@ -29,16 +30,26 @@ func (s *Service) completeItem(ctx context.Context, tx gorpmapper.SqlExecutorWit
 	item.Status = index.StatusItemCompleted
 
 	var reader io.ReadCloser
-	switch item.Type {
-	case index.TypeItemStepLog, index.TypeItemServiceLog:
+	switch itemUnit.UnitID {
+	case s.Units.Buffer.ID():
 		// Get all data from buffer and add manually last line
 		reader, err = s.Units.Buffer.NewReader(itemUnit)
 		if err != nil {
 			return err
 		}
 	default:
-		return sdk.NewErrorFrom(sdk.ErrInvalidData, "unable to complete item: unknown item type %s", item.Type)
-
+		for _, unit := range s.Units.Storages {
+			if unit.ID() == itemUnit.UnitID {
+				reader, err = unit.NewReader(itemUnit)
+				if err != nil {
+					return err
+				}
+				break
+			}
+		}
+		if reader == nil {
+			return sdk.WithStack(fmt.Errorf("unable to find unit storage %s", itemUnit.ID))
+		}
 	}
 
 	// Compte md5 and sha512

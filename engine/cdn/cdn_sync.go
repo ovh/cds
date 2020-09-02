@@ -10,6 +10,7 @@ import (
 	"github.com/ovh/cds/engine/cdn/index"
 	"github.com/ovh/cds/engine/cdn/storage"
 	"github.com/ovh/cds/engine/cdn/storage/cds"
+	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
@@ -86,6 +87,7 @@ func (s *Service) syncNodeRun(ctx context.Context, cdsStorage *cds.CDS, pKey str
 		return err
 	}
 	if !b {
+		log.Debug("cd:syncNodeRun: already lock %d", nodeRunIdentifier.NodeRunID)
 		return nil
 	}
 	defer s.Cache.Unlock(lockKey)
@@ -148,14 +150,25 @@ func (s *Service) syncNodeRun(ctx context.Context, cdsStorage *cds.CDS, pKey str
 				if err := index.InsertItem(ctx, s.Mapper, tx, item); err != nil {
 					return err
 				}
-				itemUnit, err := s.Units.NewItemUnit(ctx, s.Mapper, tx, cdsStorage, item)
+				// Can't call NewItemUnit because need to complete item first to have hash, to be able to compute locator
+				tmpItemUnit := storage.ItemUnit{
+					ItemID:       item.ID,
+					UnitID:       cdsStorage.ID(),
+					LastModified: time.Now(),
+					Item:         item,
+				}
+				if err := s.completeItem(ctx, tx, tmpItemUnit); err != nil {
+					return err
+				}
+				clearItem, err := index.LoadItemByID(ctx, s.Mapper, tx, item.ID, gorpmapper.GetOptions.WithDecryption)
+				if err != nil {
+					return err
+				}
+				itemUnit, err := s.Units.NewItemUnit(ctx, s.Mapper, tx, cdsStorage, clearItem)
 				if err != nil {
 					return err
 				}
 				if err := storage.InsertItemUnit(ctx, s.Mapper, tx, itemUnit); err != nil {
-					return err
-				}
-				if err := s.completeItem(ctx, tx, *itemUnit); err != nil {
 					return err
 				}
 			}

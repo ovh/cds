@@ -48,6 +48,7 @@ func (s *Service) dequeueJobLogs(ctx context.Context) error {
 					log.Error(ctx, "dequeueJobLogs: unable to store step log: %v", err)
 					break
 				}
+				break
 			}
 		}
 	}

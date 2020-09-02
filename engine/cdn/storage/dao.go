@@ -135,7 +135,7 @@ func LoadItemUnitByUnit(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlEx
 }
 
 func LoadItemUnitsByUnit(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlExecutor, unitID string, size int, opts ...gorpmapper.GetOptionFunc) ([]ItemUnit, error) {
-	query := gorpmapper.NewQuery("SELECT * FROM storage_unit_index WHERE unit_id = $1 ORDER BY id LIMIT $2").Args(unitID, size)
+	query := gorpmapper.NewQuery("SELECT * FROM storage_unit_index WHERE unit_id = $1 ORDER BY last_modified ASC LIMIT $2").Args(unitID, size)
 	return getAllItemUnits(ctx, m, db, query, opts...)
 }
 

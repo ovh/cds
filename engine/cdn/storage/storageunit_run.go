@@ -38,19 +38,21 @@ func (x *RunningStorageUnits) Run(ctx context.Context, s StorageUnit) error {
 
 		item, err := index.LoadAndLockItemByID(ctx, s.GorpMapper(), tx, id, gorpmapper.GetOptions.WithDecryption)
 		if err != nil {
-			log.Error(ctx, "error: %v", err)
+			if !sdk.ErrorIs(err, sdk.ErrNotFound) {
+				log.Error(ctx, "storage.Run.LoadAndLockItemByID> error: %v", err)
+			}
 			tx.Rollback() // nolint
 			continue
 		}
 
 		if err := x.runItem(ctx, tx, s, item); err != nil {
-			log.Error(ctx, "error: %v", err)
+			log.Error(ctx, "storage.Run.runItem> error: %v", err)
 			tx.Rollback() // nolint
 			continue
 		}
 
 		if err := tx.Commit(); err != nil {
-			log.Error(ctx, "unable to commit txt: %v", err)
+			log.Error(ctx, "storage.Run> unable to commit txt: %v", err)
 			tx.Rollback() // nolint
 			continue
 		}
@@ -68,14 +70,12 @@ func (x *RunningStorageUnits) runItem(ctx context.Context, tx gorpmapper.SqlExec
 
 	iu, err := x.NewItemUnit(ctx, m, tx, dest, item)
 	if err != nil {
-		log.Error(ctx, "unable to create new item unit: %v", err)
 		return err
 	}
 	iu.Item = item
 
 	// Save in database that the item is complete for the storage unit
 	if err := InsertItemUnit(ctx, m, tx, iu); err != nil {
-		log.Error(ctx, "unable to insert item unit: %v", err)
 		return err
 	}
 
@@ -88,19 +88,19 @@ func (x *RunningStorageUnits) runItem(ctx context.Context, tx gorpmapper.SqlExec
 	// Prepare the destination
 	writer, err := dest.NewWriter(*iu)
 	if err != nil {
-		log.Error(ctx, "unable to get writer for item %s: %v", item.ID, err)
 		return err
+	}
+	if writer == nil {
+		return nil
 	}
 
 	source, err := x.GetSource(ctx, iu.Item)
 	if err != nil {
-		log.Error(ctx, "unable to get source for item %s: %v", item.ID, err)
 		return err
 	}
 
 	reader, err := source.NewReader()
 	if err != nil {
-		log.Error(ctx, "unable to get reader for item %s: %v", item.ID, err)
 		return err
 	}
 
@@ -129,7 +129,6 @@ func (x *RunningStorageUnits) runItem(ctx context.Context, tx gorpmapper.SqlExec
 
 	for err := range chanError {
 		if err != nil {
-			log.Error(ctx, "an error has occured: %v", err)
 			return err
 		}
 	}

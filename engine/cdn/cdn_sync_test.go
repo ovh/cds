@@ -114,6 +114,7 @@ func TestSyncLog(t *testing.T) {
 		},
 	})
 
+	// List node run
 	gock.New("http://lolcat.host:8081").Get("/project/key2/workflows/wkf1/runs/1000/nodes/1000").Reply(200).JSON(sdk.WorkflowNodeRun{
 		WorkflowRunID:    1000,
 		ID:               1000,
@@ -217,6 +218,14 @@ func TestSyncLog(t *testing.T) {
 		},
 	})
 
+	// Get log
+	gock.New("http://lolcat.host:8081").Get("/project/key2/workflows/wkf1/runs/0/nodes/1001/job/1001/step/0").Reply(200).JSON(sdk.BuildState{
+		StepLogs: sdk.Log{Val: "Je suis ton log step 1"},
+	})
+	gock.New("http://lolcat.host:8081").Get("/project/key2/workflows/wkf1/runs/0/nodes/1001/job/1001/step/1").Reply(200).JSON(sdk.BuildState{
+		StepLogs: sdk.Log{Val: "Je suis ton log step 2 et je suis plus long"},
+	})
+
 	// Insert index for wkf1, 1000
 	apiRef1000 := index.ApiRef{
 		ProjectKey:     "key2",
@@ -262,6 +271,14 @@ func TestSyncLog(t *testing.T) {
 	itemUnits, err := storage.LoadItemUnitsByUnit(context.TODO(), s.Mapper, db, unit.ID, 100)
 	require.NoError(t, err)
 	require.Len(t, itemUnits, 2)
+
+	item1, err := index.LoadItemByID(context.TODO(), s.Mapper, db, itemUnits[0].ItemID)
+	require.NoError(t, err)
+	require.Equal(t, int64(22), item1.Size)
+
+	item2, err := index.LoadItemByID(context.TODO(), s.Mapper, db, itemUnits[1].ItemID)
+	require.NoError(t, err)
+	require.Equal(t, int64(43), item2.Size)
 
 	_ = index.DeleteItem(s.Mapper, db, &index.Item{ID: itemUnits[0].ItemID})
 	_ = index.DeleteItem(s.Mapper, db, &index.Item{ID: itemUnits[1].ItemID})
