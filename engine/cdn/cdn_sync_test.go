@@ -169,6 +169,14 @@ func TestSyncLog(t *testing.T) {
 											StepName: "step11",
 										},
 									},
+									Requirements: sdk.RequirementList{
+										{
+											ID:    666,
+											Name:  "pg",
+											Type:  sdk.ServiceRequirement,
+											Value: "postgres:5.1.12",
+										},
+									},
 								},
 							},
 							StepStatus: []sdk.StepStatus{
@@ -226,6 +234,14 @@ func TestSyncLog(t *testing.T) {
 		StepLogs: sdk.Log{Val: "Je suis ton log step 2 et je suis plus long"},
 	})
 
+	// Get Service log ( call twice )
+	gock.New("http://lolcat.host:8081").Times(2).Get("/project/key2/workflows/wkf1/runs/0/nodes/1001/job/1001/log/service").Reply(200).JSON([]sdk.ServiceLog{
+		{
+			ServiceRequirementName: "pg",
+			Val:                    "Je suis un log de service",
+		},
+	})
+
 	// Insert index for wkf1, 1000
 	apiRef1000 := index.ApiRef{
 		ProjectKey:     "key2",
@@ -270,17 +286,28 @@ func TestSyncLog(t *testing.T) {
 
 	itemUnits, err := storage.LoadItemUnitsByUnit(context.TODO(), s.Mapper, db, unit.ID, 100)
 	require.NoError(t, err)
-	require.Len(t, itemUnits, 2)
+	require.Len(t, itemUnits, 3)
+
+	for _, i := range itemUnits {
+		defer func() {
+			_ = index.DeleteItem(s.Mapper, db, &index.Item{ID: i.ItemID})
+		}()
+
+	}
 
 	item1, err := index.LoadItemByID(context.TODO(), s.Mapper, db, itemUnits[0].ItemID)
 	require.NoError(t, err)
 	require.Equal(t, int64(22), item1.Size)
+	require.Equal(t, index.TypeItemStepLog, item1.Type)
 
 	item2, err := index.LoadItemByID(context.TODO(), s.Mapper, db, itemUnits[1].ItemID)
 	require.NoError(t, err)
 	require.Equal(t, int64(43), item2.Size)
+	require.Equal(t, index.TypeItemStepLog, item2.Type)
 
-	_ = index.DeleteItem(s.Mapper, db, &index.Item{ID: itemUnits[0].ItemID})
-	_ = index.DeleteItem(s.Mapper, db, &index.Item{ID: itemUnits[1].ItemID})
+	item3, err := index.LoadItemByID(context.TODO(), s.Mapper, db, itemUnits[2].ItemID)
+	require.NoError(t, err)
+	require.Equal(t, int64(25), item3.Size)
+	require.Equal(t, index.TypeItemServiceLog, item3.Type)
 
 }
