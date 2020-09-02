@@ -13,6 +13,7 @@ import (
 	"github.com/ovh/cds/engine/cdn/storage"
 	_ "github.com/ovh/cds/engine/cdn/storage/local"
 	_ "github.com/ovh/cds/engine/cdn/storage/redis"
+	cdntest "github.com/ovh/cds/engine/cdn/test"
 	"github.com/ovh/cds/engine/gorpmapper"
 	commontest "github.com/ovh/cds/engine/test"
 	"github.com/ovh/cds/sdk"
@@ -26,6 +27,8 @@ func TestStoreNewStepLog(t *testing.T) {
 	storage.InitDBMapping(m)
 	db, cache := test.SetupPGWithMapper(t, m, sdk.TypeCDN)
 	cfg := commontest.LoadTestingConf(t, sdk.TypeCDN)
+
+	cdntest.ClearIndex(t, context.TODO(), m, db)
 
 	// Create cdn service
 	s := Service{
@@ -109,6 +112,8 @@ func TestStoreLastStepLog(t *testing.T) {
 	storage.InitDBMapping(m)
 	db, cache := test.SetupPGWithMapper(t, m, sdk.TypeCDN)
 	cfg := commontest.LoadTestingConf(t, sdk.TypeCDN)
+
+	cdntest.ClearIndex(t, context.TODO(), m, db)
 
 	// Create cdn service
 	s := Service{
@@ -200,6 +205,8 @@ func TestStoreLogWrongOrder(t *testing.T) {
 	storage.InitDBMapping(m)
 	db, cache := test.SetupPGWithMapper(t, m, sdk.TypeCDN)
 	cfg := commontest.LoadTestingConf(t, sdk.TypeCDN)
+
+	cdntest.ClearIndex(t, context.TODO(), m, db)
 
 	// Create cdn service
 	s := Service{
@@ -317,6 +324,8 @@ func TestStoreNewServiceLogAndAppend(t *testing.T) {
 	storage.InitDBMapping(m)
 	db, cache := test.SetupPGWithMapper(t, m, sdk.TypeCDN)
 	cfg := commontest.LoadTestingConf(t, sdk.TypeCDN)
+
+	cdntest.ClearIndex(t, context.TODO(), m, db)
 
 	// Create cdn service
 	s := Service{

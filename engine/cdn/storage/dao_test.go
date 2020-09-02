@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/cdn/index"
+	cdntest "github.com/ovh/cds/engine/cdn/test"
 	"github.com/ovh/cds/engine/gorpmapper"
 	commontest "github.com/ovh/cds/engine/test"
 	"github.com/ovh/cds/sdk"
@@ -18,6 +19,8 @@ func TestLoadOldItemUnitByItemStatusAndDuration(t *testing.T) {
 	InitDBMapping(m)
 	db, _ := test.SetupPGWithMapper(t, m, sdk.TypeCDN)
 	cfg := commontest.LoadTestingConf(t, sdk.TypeCDN)
+
+	cdntest.ClearIndex(t, context.TODO(), m, db)
 
 	cdnUnits, err := Init(context.TODO(), m, db.DbMap, Configuration{
 		Buffer: BufferConfiguration{

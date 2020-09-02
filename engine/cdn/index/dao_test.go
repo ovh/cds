@@ -9,6 +9,7 @@ import (
 
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/cdn/index"
+	cdntest "github.com/ovh/cds/engine/cdn/test"
 	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk"
 )
@@ -18,6 +19,7 @@ func TestLoadItem(t *testing.T) {
 	index.InitDBMapping(m)
 
 	db, _ := test.SetupPGWithMapper(t, m, sdk.TypeCDN)
+	cdntest.ClearIndex(t, context.TODO(), m, db)
 
 	apiRef := index.ApiRef{
 		ProjectKey: sdk.RandomString(10),

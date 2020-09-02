@@ -55,12 +55,9 @@ func getItem(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlExecutor, q g
 	return &i, nil
 }
 
-func getItemIDs(db gorp.SqlExecutor, q gorpmapper.Query) ([]string, error) {
-	var ids []string
-	if _, err := db.Select(&ids, q.Query, q.Arguments...); err != nil {
-		return nil, err
-	}
-	return ids, nil
+func LoadAllItems(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlExecutor, size int, opts ...gorpmapper.GetOptionFunc) ([]Item, error) {
+	query := gorpmapper.NewQuery("SELECT * FROM index ORDER BY created LIMIT $1").Args(size)
+	return getItems(ctx, m, db, query, opts...)
 }
 
 // LoadItemByID returns an item from database for given id.

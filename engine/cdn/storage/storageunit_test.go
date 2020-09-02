@@ -15,6 +15,7 @@ import (
 	"github.com/ovh/symmecrypt/ciphers/aesgcm"
 	"github.com/ovh/symmecrypt/convergent"
 
+	cdntest "github.com/ovh/cds/engine/cdn/test"
 	commontest "github.com/ovh/cds/engine/test"
 
 	"github.com/ovh/cds/engine/cdn/storage"
@@ -30,6 +31,8 @@ func TestRun(t *testing.T) {
 
 	db, _ := test.SetupPGWithMapper(t, m, sdk.TypeCDN)
 	cfg := commontest.LoadTestingConf(t, sdk.TypeCDN)
+
+	cdntest.ClearIndex(t, context.TODO(), m, db)
 
 	ctx, cancel := context.WithTimeout(context.TODO(), 3*time.Second)
 	defer cancel()
