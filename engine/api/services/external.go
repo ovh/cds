@@ -135,23 +135,23 @@ func initExternal(ctx context.Context, db *gorp.DbMap, s ExternalService) error 
 	}
 	exists := old != nil
 
-	if old.ConsumerID != nil {
+	if exists && old.ConsumerID != nil {
 		return sdk.WithStack(fmt.Errorf("can't save an external service as one no external service already exists for given name %s", s.Name))
 	}
 
 	if exists {
-		s.Service.LastHeartbeat = time.Now()
-		s.Service.Config = s.ServiceConfig()
-		if err := Insert(ctx, tx, &s.Service); err != nil {
-			return sdk.WrapError(err, "unable to insert external service")
-		}
-	} else {
 		s.Service.ID = old.ID
 		s.Service.LastHeartbeat = old.LastHeartbeat
 		s.Service.MonitoringStatus = old.MonitoringStatus
 		s.Service.Config = s.ServiceConfig()
 		if err := Update(ctx, tx, &s.Service); err != nil {
 			return sdk.WrapError(err, "unable to update external service")
+		}
+	} else {
+		s.Service.LastHeartbeat = time.Now()
+		s.Service.Config = s.ServiceConfig()
+		if err := Insert(ctx, tx, &s.Service); err != nil {
+			return sdk.WrapError(err, "unable to insert external service")
 		}
 	}
 

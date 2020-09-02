@@ -233,7 +233,7 @@ func (api *API) serviceAPIHeartbeatUpdate(ctx context.Context, db *gorp.DbMap) {
 	}
 	exists := old != nil
 
-	if old.ConsumerID != nil {
+	if exists && old.ConsumerID != nil {
 		log.Error(ctx, "serviceAPIHeartbeat> Can't save an api service as one service already exists for given name %s", srv.Name)
 		return
 	}
