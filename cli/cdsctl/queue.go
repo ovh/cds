@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"strconv"
 	"strings"
 	"time"
 
@@ -28,12 +29,97 @@ var queueCmd = cli.Command{
 func queue() *cobra.Command {
 	return cli.NewListCommand(queueCmd, queueRun, []*cobra.Command{
 		cli.NewCommand(queueUICmd, queueUIRun, nil, withAllCommandModifiers()...),
+		cli.NewCommand(queueStopAllCmd, queueStopAllRun, nil, withAllCommandModifiers()...),
 	})
 }
 
 var queueUICmd = cli.Command{
 	Name:  "interactive",
 	Short: "Show the current queue",
+}
+
+var queueStopAllCmd = cli.Command{
+	Name:    "stopall",
+	Short:   "Stop all job from the queue",
+	Example: "cdsctl queue stopall",
+	OptionalArgs: []cli.Arg{
+		{Name: _ProjectKey},
+		{Name: _WorkflowName},
+	},
+	Flags: []cli.Flag{
+		{
+			Name:  "force",
+			Usage: "if true, do not ask user before stopping all workflows",
+			IsValid: func(s string) bool {
+				if s != "true" && s != "false" {
+					return false
+				}
+				return true
+			},
+			Default: "false",
+			Type:    cli.FlagBool,
+		},
+	},
+}
+
+func queueStopAllRun(v cli.Values) error {
+	wantToStopAll := v.GetBool("force") || cli.AskConfirm("Are you sure to want to stop all jobs in the queue?")
+	if !wantToStopAll {
+		return nil
+	}
+
+	jobs, err := client.QueueWorkflowNodeJobRun(sdk.StatusWaiting, sdk.StatusBuilding)
+	if err != nil {
+		return err
+	}
+
+	var nbToStop int64
+	for _, jr := range jobs {
+		projectKey := getVarsInPbj("cds.project", jr.Parameters)
+		workflowName := getVarsInPbj("cds.workflow", jr.Parameters)
+
+		if v.GetString(_ProjectKey) != "" && projectKey != v.GetString(_ProjectKey) {
+			continue
+		}
+		if v.GetString(_WorkflowName) != "" && workflowName != v.GetString(_WorkflowName) {
+			continue
+		}
+		nbToStop++
+	}
+
+	wantToStopAllSure := v.GetBool("force") || cli.AskConfirm(fmt.Sprintf("There are %d worfklows to stop, confirm stopping workflows?", nbToStop))
+	if !wantToStopAllSure {
+		return nil
+	}
+
+	var stopped int64
+	for _, jr := range jobs {
+		run := getVarsInPbj("cds.run.number", jr.Parameters)
+		projectKey := getVarsInPbj("cds.project", jr.Parameters)
+		workflowName := getVarsInPbj("cds.workflow", jr.Parameters)
+
+		if v.GetString(_ProjectKey) != "" && projectKey != v.GetString(_ProjectKey) {
+			continue
+		}
+		if v.GetString(_WorkflowName) != "" && workflowName != v.GetString(_WorkflowName) {
+			continue
+		}
+
+		runNumber, err := strconv.ParseInt(run, 10, 64)
+		if err != nil {
+			return fmt.Errorf("%s invalid: not a integer for a workflow run. err: %v", run, err)
+		}
+
+		w, err := client.WorkflowStop(projectKey, workflowName, runNumber)
+		if err != nil {
+			fmt.Printf("ERROR while stopping Workflow %s #%d: %v\n", v.GetString(_WorkflowName), w.Number, err)
+			continue
+		}
+		fmt.Printf("Workflow %s #%d has been stopped\n", v.GetString(_WorkflowName), w.Number)
+		stopped++
+	}
+	fmt.Printf("Nb workflows stopped: %d\n", stopped)
+	return nil
 }
 
 func queueRun(v cli.Values) (cli.ListResult, error) {
@@ -78,7 +164,7 @@ func getJobQueue(status ...string) ([]jobCLI, error) {
 			NodeName:     getVarsInPbj("cds.node", jr.Parameters),
 			Status:       jr.Status,
 			URL:          generateQueueJobURL(baseURL, jr.Parameters),
-			Since:        fmt.Sprintf(sdk.Round(time.Since(jr.Queued), time.Second).String()),
+			Since:        sdk.Round(time.Since(jr.Queued), time.Second).String(),
 			Duration:     time.Since(jr.Queued),
 			BookedBy:     jr.BookedBy.Name,
 			TriggeredBy:  getVarsInPbj("cds.triggered_by.username", jr.Parameters),
