@@ -39,9 +39,6 @@ export class WorkflowAdminComponent implements OnInit, OnDestroy {
     set workflow(data: Workflow) {
         if (data) {
             this._workflow = cloneDeep(data);
-            if (this._workflow.purge_tags && this._workflow.purge_tags.length) {
-                this.purgeTag = this._workflow.purge_tags[0];
-            }
         }
     }
     get workflow() { return this._workflow }
@@ -56,9 +53,11 @@ export class WorkflowAdminComponent implements OnInit, OnDestroy {
     allTags = new Array<string>();
     existingTags = new Array<string>();
     selectedTags = new Array<string>();
-    purgeTag: string;
+    existingTagsPurge = new Array<string>();
+    selectedTagsPurge = new Array<string>();
     iconUpdated = false;
     tagsToAdd = new Array<string>();
+    tagsToAddPurge = new Array<string>();
 
     @ViewChild('updateWarning')
     private warningUpdateModal: WarningModalComponent;
@@ -103,6 +102,9 @@ export class WorkflowAdminComponent implements OnInit, OnDestroy {
         if (this._workflow.metadata['default_tags']) {
             this.selectedTags = this._workflow.metadata['default_tags'].split(',');
         }
+        if (this._workflow.purge_tags && this._workflow.purge_tags.length) {
+            this.selectedTagsPurge = this._workflow.purge_tags;
+        }
 
         if (!this.project.permissions.writable) {
             this._router.navigate(['/project', this.project.key], { queryParams: { tab: 'applications' } });
@@ -116,8 +118,6 @@ export class WorkflowAdminComponent implements OnInit, OnDestroy {
                     this.allTags = Object.keys(tags);
                     this.initExistingtags();
                 }
-
-
             });
         this._workflowRunService.getRunNumber(this.project.key, this.workflow)
             .pipe(first(), finalize(() => this._cd.markForCheck())).subscribe(n => {
@@ -128,9 +128,14 @@ export class WorkflowAdminComponent implements OnInit, OnDestroy {
 
     initExistingtags(): void {
         this.existingTags = [];
+        this.existingTagsPurge = [];
         this.allTags.forEach(t => {
             if (this.selectedTags.indexOf(t) === -1) {
                 this.existingTags.push(t);
+            }
+            if (this.selectedTagsPurge.indexOf(t) === -1) {
+                this.existingTagsPurge.push(t);
+                console.log('this.existingTagsPurge:', this.existingTagsPurge);
             }
         });
     }
@@ -173,10 +178,29 @@ export class WorkflowAdminComponent implements OnInit, OnDestroy {
         this.tagsToAdd = [];
     }
 
+    updateTagPurge(): void {
+        if (this.tagsToAddPurge && this.tagsToAddPurge.length > 0) {
+            if (!this.selectedTagsPurge) {
+                this.selectedTagsPurge = new Array();
+            }
+            this.selectedTagsPurge.push(...this.tagsToAddPurge);
+            this.initExistingtags();
+        }
+
+        this._workflow.purge_tags = this.selectedTagsPurge;
+        this.tagsToAddPurge = [];
+    }
+
     removeFromSelectedTags(ind: number): void {
         this.selectedTags.splice(ind, 1);
         this.initExistingtags();
         this.updateTagMetadata();
+    }
+
+    removeFromSelectedTagsPurge(ind: number): void {
+        this.selectedTagsPurge.splice(ind, 1);
+        this.initExistingtags();
+        this.updateTagPurge();
     }
 
     onSubmitWorkflowUpdate(skip?: boolean) {
@@ -188,8 +212,8 @@ export class WorkflowAdminComponent implements OnInit, OnDestroy {
             if (this.runnumber !== this.originalRunNumber) {
                 actions.push(this._workflowRunService.updateRunNumber(this.project.key, this.workflow, this.runnumber));
             }
-            if (this.purgeTag) {
-                this._workflow.purge_tags = [this.purgeTag];
+            if (this.selectedTagsPurge) {
+                this._workflow.purge_tags = this.selectedTagsPurge;
             }
 
             if (!this._workflow.purge_tags || this._workflow.purge_tags.length === 0) {

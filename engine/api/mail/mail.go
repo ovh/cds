@@ -51,15 +51,6 @@ Regards,
 CDS Team
 `
 
-const templateReset = `Hi {{.Username}},
-
-Your password was successfully reset.
-
-Regards,
---
-CDS Team
-`
-
 // Init initializes configuration
 func Init(user, password, from, host, port string, tls, disable bool) {
 	smtpUser = user

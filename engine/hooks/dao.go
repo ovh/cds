@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"sync/atomic"
 
-	"github.com/ovh/cds/engine/api/cache"
+	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
@@ -55,7 +55,7 @@ func (d *dao) FindAllTasks(ctx context.Context) ([]sdk.Task, error) {
 }
 
 func (d *dao) FindAllKeysMatchingPattern(pattern string) ([]string, error) {
-	return d.store.ZScan(rootKey, pattern)
+	return d.store.SetSearch(rootKey, pattern)
 }
 
 func (d *dao) FindTask(ctx context.Context, uuid string) *sdk.Task {

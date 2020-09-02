@@ -39,8 +39,9 @@ func resetFunc(v cli.Values) error {
 
 	// Load all drivers from given CDS instance
 	client := cdsclient.New(cdsclient.Config{
-		Host:    apiURL,
-		Verbose: os.Getenv("CDS_VERBOSE") == "true",
+		Host:                  apiURL,
+		Verbose:               os.Getenv("CDS_VERBOSE") == "true" || v.GetBool("verbose"),
+		InsecureSkipVerifyTLS: os.Getenv("CDS_INSECURE") == "true" || v.GetBool("insecure"),
 	})
 	drivers, err := client.AuthDriverList()
 	if err != nil {
@@ -121,8 +122,9 @@ func resetConfirmFunc(v cli.Values) error {
 	}
 
 	client := cdsclient.New(cdsclient.Config{
-		Host:    apiURL,
-		Verbose: os.Getenv("CDS_VERBOSE") == "true",
+		Host:                  apiURL,
+		Verbose:               os.Getenv("CDS_VERBOSE") == "true" || v.GetBool("verbose"),
+		InsecureSkipVerifyTLS: os.Getenv("CDS_INSECURE") == "true" || v.GetBool("insecure"),
 	})
 
 	password := v.GetString("password")

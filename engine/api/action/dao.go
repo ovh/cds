@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/go-gorp/gorp"
+	"github.com/lib/pq"
 
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/sdk"
@@ -51,6 +52,14 @@ func get(ctx context.Context, db gorp.SqlExecutor, q gorpmapping.Query, opts ...
 	}
 
 	return &a, nil
+}
+
+// LoadAllByIDs retrieves in database action with given ids.
+func LoadAllByIDs(ctx context.Context, db gorp.SqlExecutor, ids []int64, opts ...LoadOptionFunc) ([]sdk.Action, error) {
+	query := gorpmapping.NewQuery(
+		"SELECT * FROM action WHERE id = ANY($1)",
+	).Args(pq.Int64Array(ids))
+	return getAll(ctx, db, query, opts...)
 }
 
 // LoadAllByTypes actions from database.

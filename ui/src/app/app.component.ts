@@ -18,11 +18,12 @@ import { AppService } from './app.service';
 import { AuthentifiedUser } from './model/user.model';
 import { LanguageStore } from './service/language/language.store';
 import { NotificationService } from './service/notification/notification.service';
-import { MonitoringService } from './service/services.module';
+import { HelpService, MonitoringService } from './service/services.module';
 import { ThemeStore } from './service/theme/theme.store';
 import { AutoUnsubscribe } from './shared/decorator/autoUnsubscribe';
 import { ToastService } from './shared/toast/ToastService';
 import { AuthenticationState } from './store/authentication.state';
+import { AddHelp } from './store/help.action';
 
 declare var PACMAN: any;
 
@@ -44,7 +45,6 @@ export class AppComponent implements OnInit, OnDestroy {
     versionWorkerSubscription: Subscription;
     _routerSubscription: Subscription;
     _routerNavEndSubscription: Subscription;
-    _sseSubscription: Subscription;
     displayResolver: boolean;
     toasterConfigDefault: any;
     toasterConfigErrorHTTP: any;
@@ -73,6 +73,7 @@ export class AppComponent implements OnInit, OnDestroy {
         private _toastService: ToastService,
         private _store: Store,
         private _eventService: EventService,
+        private _helpService: HelpService,
         private _ngZone: NgZone,
         private _monitoringService: MonitoringService
     ) {
@@ -108,6 +109,10 @@ export class AppComponent implements OnInit, OnDestroy {
             if (e instanceof NavigationStart) {
                 this.hideNavBar = e.url.startsWith('/auth')
             }
+        });
+
+        this._helpService.getHelp().subscribe(h => {
+            this._store.dispatch(new AddHelp(h));
         });
     }
 

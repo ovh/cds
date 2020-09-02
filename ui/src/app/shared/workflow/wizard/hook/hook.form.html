@@ -3,7 +3,7 @@
         <div class="ui form">
             <h3 class="inline">{{ 'workflow_node_hook_form_title' | translate }}</h3>
             <div class="right floated mb15">
-                <i class="book icon"></i><a href="https://ovh.github.io/cds/docs/concepts/workflow/hooks/" target="_blank" rel="noopener noreferrer">{{'common_documentation' | translate}}</a>
+                <i class="book icon"></i><a href="#" [routerLink]="['/docs', 'docs', 'workflow', 'hooks']" target="_blank" rel="noopener noreferrer">{{'common_documentation' | translate}}</a>
             </div>
             <ng-container *ngIf="isRun">
                 <input class="ui fluid input" [value]="hook?.hook_model_name" [readOnly]="true">

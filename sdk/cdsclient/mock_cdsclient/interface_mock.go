@@ -3013,11 +3013,12 @@ func (mr *MockQueueClientMockRecorder) QueueTakeJob(ctx, job interface{}) *gomoc
 }
 
 // QueueJobBook mocks base method
-func (m *MockQueueClient) QueueJobBook(ctx context.Context, id int64) error {
+func (m *MockQueueClient) QueueJobBook(ctx context.Context, id int64) (sdk.WorkflowNodeJobRunBooked, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "QueueJobBook", ctx, id)
-	ret0, _ := ret[0].(error)
-	return ret0
+	ret0, _ := ret[0].(sdk.WorkflowNodeJobRunBooked)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
 // QueueJobBook indicates an expected call of QueueJobBook
@@ -3212,6 +3213,20 @@ func (m *MockQueueClient) QueueServiceLogs(ctx context.Context, logs []sdk.Servi
 func (mr *MockQueueClientMockRecorder) QueueServiceLogs(ctx, logs interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "QueueServiceLogs", reflect.TypeOf((*MockQueueClient)(nil).QueueServiceLogs), ctx, logs)
+}
+
+// QueueJobSetVersion mocks base method
+func (m *MockQueueClient) QueueJobSetVersion(ctx context.Context, jobID int64, version sdk.WorkflowRunVersion) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "QueueJobSetVersion", ctx, jobID, version)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// QueueJobSetVersion indicates an expected call of QueueJobSetVersion
+func (mr *MockQueueClientMockRecorder) QueueJobSetVersion(ctx, jobID, version interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "QueueJobSetVersion", reflect.TypeOf((*MockQueueClient)(nil).QueueJobSetVersion), ctx, jobID, version)
 }
 
 // MockUserClient is a mock of UserClient interface
@@ -5994,6 +6009,21 @@ func (mr *MockInterfaceMockRecorder) WorkflowAsCodePerform(projectKey, operation
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkflowAsCodePerform", reflect.TypeOf((*MockInterface)(nil).WorkflowAsCodePerform), projectKey, operationID)
 }
 
+// FeatureEnabled mocks base method
+func (m *MockInterface) FeatureEnabled(name string, params map[string]string) (sdk.FeatureEnabledResponse, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "FeatureEnabled", name, params)
+	ret0, _ := ret[0].(sdk.FeatureEnabledResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// FeatureEnabled indicates an expected call of FeatureEnabled
+func (mr *MockInterfaceMockRecorder) FeatureEnabled(name, params interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FeatureEnabled", reflect.TypeOf((*MockInterface)(nil).FeatureEnabled), name, params)
+}
+
 // GroupList mocks base method
 func (m *MockInterface) GroupList() ([]sdk.Group, error) {
 	m.ctrl.T.Helper()
@@ -6868,11 +6898,12 @@ func (mr *MockInterfaceMockRecorder) QueueTakeJob(ctx, job interface{}) *gomock.
 }
 
 // QueueJobBook mocks base method
-func (m *MockInterface) QueueJobBook(ctx context.Context, id int64) error {
+func (m *MockInterface) QueueJobBook(ctx context.Context, id int64) (sdk.WorkflowNodeJobRunBooked, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "QueueJobBook", ctx, id)
-	ret0, _ := ret[0].(error)
-	return ret0
+	ret0, _ := ret[0].(sdk.WorkflowNodeJobRunBooked)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
 // QueueJobBook indicates an expected call of QueueJobBook
@@ -7067,6 +7098,20 @@ func (m *MockInterface) QueueServiceLogs(ctx context.Context, logs []sdk.Service
 func (mr *MockInterfaceMockRecorder) QueueServiceLogs(ctx, logs interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "QueueServiceLogs", reflect.TypeOf((*MockInterface)(nil).QueueServiceLogs), ctx, logs)
+}
+
+// QueueJobSetVersion mocks base method
+func (m *MockInterface) QueueJobSetVersion(ctx context.Context, jobID int64, version sdk.WorkflowRunVersion) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "QueueJobSetVersion", ctx, jobID, version)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// QueueJobSetVersion indicates an expected call of QueueJobSetVersion
+func (mr *MockInterfaceMockRecorder) QueueJobSetVersion(ctx, jobID, version interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "QueueJobSetVersion", reflect.TypeOf((*MockInterface)(nil).QueueJobSetVersion), ctx, jobID, version)
 }
 
 // Navbar mocks base method
@@ -8401,11 +8446,12 @@ func (mr *MockWorkerInterfaceMockRecorder) QueueTakeJob(ctx, job interface{}) *g
 }
 
 // QueueJobBook mocks base method
-func (m *MockWorkerInterface) QueueJobBook(ctx context.Context, id int64) error {
+func (m *MockWorkerInterface) QueueJobBook(ctx context.Context, id int64) (sdk.WorkflowNodeJobRunBooked, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "QueueJobBook", ctx, id)
-	ret0, _ := ret[0].(error)
-	return ret0
+	ret0, _ := ret[0].(sdk.WorkflowNodeJobRunBooked)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
 // QueueJobBook indicates an expected call of QueueJobBook
@@ -8600,6 +8646,20 @@ func (m *MockWorkerInterface) QueueServiceLogs(ctx context.Context, logs []sdk.S
 func (mr *MockWorkerInterfaceMockRecorder) QueueServiceLogs(ctx, logs interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "QueueServiceLogs", reflect.TypeOf((*MockWorkerInterface)(nil).QueueServiceLogs), ctx, logs)
+}
+
+// QueueJobSetVersion mocks base method
+func (m *MockWorkerInterface) QueueJobSetVersion(ctx context.Context, jobID int64, version sdk.WorkflowRunVersion) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "QueueJobSetVersion", ctx, jobID, version)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// QueueJobSetVersion indicates an expected call of QueueJobSetVersion
+func (mr *MockWorkerInterfaceMockRecorder) QueueJobSetVersion(ctx, jobID, version interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "QueueJobSetVersion", reflect.TypeOf((*MockWorkerInterface)(nil).QueueJobSetVersion), ctx, jobID, version)
 }
 
 // Requirements mocks base method

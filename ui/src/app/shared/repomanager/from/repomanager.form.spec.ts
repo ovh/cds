@@ -5,7 +5,9 @@ import { fakeAsync, getTestBed, TestBed, tick } from '@angular/core/testing';
 import { RouterTestingModule } from '@angular/router/testing';
 import { TranslateLoader, TranslateModule, TranslateParser, TranslateService } from '@ngx-translate/core';
 import { ToasterService } from 'angular2-toaster/angular2-toaster';
+import { ApplicationService } from 'app/service/application/application.service';
 import { AuthenticationService } from 'app/service/authentication/authentication.service';
+import { HelpService } from 'app/service/help/help.service';
 import { MonitoringService, RouterService } from 'app/service/services.module';
 import { UserService } from 'app/service/user/user.service';
 import { WorkflowRunService } from 'app/service/workflow/run/workflow.run.service';
@@ -22,7 +24,6 @@ import { RepoManagerService } from '../../../service/repomanager/project.repoman
 import { VariableService } from '../../../service/variable/variable.service';
 import { SharedModule } from '../../shared.module';
 import { RepoManagerFormComponent } from './repomanager.form.component';
-import { ApplicationService } from 'app/service/application/application.service';
 
 
 describe('CDS: Project RepoManager Form Component', () => {
@@ -42,6 +43,7 @@ describe('CDS: Project RepoManager Form Component', () => {
                 EnvironmentService,
                 VariableService,
                 ToasterService,
+                HelpService,
                 TranslateService,
                 TranslateParser,
                 NavbarService,

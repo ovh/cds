@@ -9,8 +9,11 @@ import (
 	"github.com/gorilla/mux"
 
 	"github.com/ovh/cds/engine/api"
-	"github.com/ovh/cds/engine/api/cache"
+	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/engine/cdn/index"
+	"github.com/ovh/cds/engine/cdn/storage"
+	_ "github.com/ovh/cds/engine/cdn/storage/local"
+	_ "github.com/ovh/cds/engine/cdn/storage/redis"
 	"github.com/ovh/cds/engine/database"
 	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk"
@@ -112,7 +115,18 @@ func (s *Service) Serve(c context.Context) error {
 		}
 
 		// Init dao packages
-		index.Init(s.Mapper)
+		index.InitDBMapping(s.Mapper)
+		storage.InitDBMapping(s.Mapper)
+
+		// Init storage units
+		s.Units, err = storage.Init(ctx, s.Mapper, s.mustDBWithCtx(ctx), s.Cfg.Units)
+		if err != nil {
+			return err
+		}
+
+		sdk.GoRoutine(ctx, "cdn-gc-items", func(ctx context.Context) {
+			s.CompleteWaitingItems(ctx)
+		})
 	}
 
 	log.Info(ctx, "Initializing redis cache on %s...", s.Cfg.Cache.Redis.Host)
@@ -121,7 +135,9 @@ func (s *Service) Serve(c context.Context) error {
 		return fmt.Errorf("cannot connect to redis instance : %v", err)
 	}
 
-	s.initMetrics(ctx)
+	if err := s.initMetrics(ctx); err != nil {
+		return err
+	}
 
 	s.RunTcpLogServer(ctx)
 
@@ -152,7 +168,7 @@ func (s *Service) mustDBWithCtx(ctx context.Context) *gorp.DbMap {
 	db := s.DBConnectionFactory.GetDBMap(s.Mapper)()
 	db = db.WithContext(ctx).(*gorp.DbMap)
 	if db == nil {
-		panic(fmt.Errorf("Database unavailable"))
+		panic(fmt.Errorf("database unavailable"))
 	}
 	return db
 }

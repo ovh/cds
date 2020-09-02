@@ -1,10 +1,10 @@
 <div class="KeyForm">
     <div class="ui form">
         <div class="ui info message" *ngIf="newKey.type == 'ssh'">
-            {{ 'keys_ssh_key_help' | translate }} <a href="https://ovh.github.io/cds/docs/components/worker/key/install/">Worker Install Key</a>
+            {{ 'keys_ssh_key_help' | translate }} <a href="#" [routerLink]="['/docs', 'docs', 'components', 'worker', 'key', 'install']">Worker Install Key</a>
         </div>
         <div class="ui info message" *ngIf="newKey.type == 'pgp'">
-            {{ 'keys_pgp_key_help' | translate }} <a href="https://ovh.github.io/cds/docs/components/worker/key/install/">Worker Install Key</a>
+            {{ 'keys_pgp_key_help' | translate }} <a href="#" [routerLink]="['/docs', 'docs', 'components', 'worker', 'key', 'install']">Worker Install Key</a>
         </div>
         <div class="fields">
             <div class="seven wide field">

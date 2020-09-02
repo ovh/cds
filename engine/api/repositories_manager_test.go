@@ -229,7 +229,7 @@ vcs_ssh_key: proj-blabla
 	t.Log("Inserting workflow run=====")
 
 	// creates a run
-	wr, errWR := workflow.CreateRun(db.DbMap, w1, nil, u)
+	wr, errWR := workflow.CreateRun(db.DbMap, w1, sdk.WorkflowRunPostHandlerOption{AuthConsumerID: consumer.ID})
 	assert.NoError(t, errWR)
 	wr.Workflow = *w1
 	t.Log("Starting workflow run=====")
@@ -241,7 +241,7 @@ vcs_ssh_key: proj-blabla
 				"git.author": "test",
 			},
 		},
-	}, consumer, nil)
+	}, *consumer, nil)
 	test.NoError(t, errWr)
 
 	vars := map[string]string{

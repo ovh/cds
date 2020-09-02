@@ -103,7 +103,7 @@
                           <div class="ui toggle checkbox ml10">
                             <input type="checkbox" id="mutex" name="mutex" [(ngModel)]="node.context.mutex">
                             <label for="mutex">
-                              <a href="https://ovh.github.io/cds/docs/concepts/workflow/mutex" target="_blank" rel="noopener noreferrer">
+                              <a href="#" [routerLink]="['/docs', 'docs', 'workflow', 'mutex']" target="_blank" rel="noopener noreferrer">
                                 {{ 'workflow_root_context_mutex' | translate }}
                                 <i class="external icon"></i>
                               </a>

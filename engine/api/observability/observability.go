@@ -10,7 +10,7 @@ import (
 	"github.com/gorilla/mux"
 	"go.opencensus.io/trace"
 
-	"github.com/ovh/cds/engine/api/cache"
+	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/engine/featureflipping"
 	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk/log"

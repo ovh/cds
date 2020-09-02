@@ -89,7 +89,15 @@ func processActionVariables(a *sdk.Action, parent *sdk.Action, jobParameters []s
 
 	// replaces placeholder in all children recursively
 	for i := range a.Actions {
-		if err := processActionVariables(&a.Actions[i], a, jobParameters, secrets); err != nil {
+		// Do not interpolate yet cds.version for child because the value can change during job execution
+		filterJobParameters := make([]sdk.Parameter, 0, len(jobParameters))
+		for i := range jobParameters {
+			if jobParameters[i].Name != "cds.version" {
+				filterJobParameters = append(filterJobParameters, jobParameters[i])
+			}
+		}
+
+		if err := processActionVariables(&a.Actions[i], a, filterJobParameters, secrets); err != nil {
 			return err
 		}
 	}
@@ -127,6 +135,12 @@ func (w *CurrentWorker) runJob(ctx context.Context, a *sdk.Action, jobID int64, 
 		w.stepLogLine = 0
 
 		ctx = workerruntime.SetStepOrder(ctx, jobStepIndex)
+		if step.StepName != "" {
+			ctx = workerruntime.SetStepName(ctx, step.StepName)
+		} else {
+			ctx = workerruntime.SetStepName(ctx, step.Name)
+		}
+
 		if err := w.updateStepStatus(ctx, jobID, jobStepIndex, sdk.StatusBuilding); err != nil {
 			jobResult.Status = sdk.StatusFail
 			jobResult.Reason = fmt.Sprintf("Cannot update step (%d) status (%s): %v", jobStepIndex, sdk.StatusBuilding, err)
@@ -520,7 +534,6 @@ func (w *CurrentWorker) ProcessJob(jobInfo sdk.WorkflowNodeJobRunData) (res sdk.
 
 	ctx = workerruntime.SetJobID(ctx, jobInfo.NodeJobRun.ID)
 	ctx = workerruntime.SetStepOrder(ctx, 0)
-
 	defer func() {
 		log.Warning(ctx, "processJob> Status: %s | Reason: %s", res.Status, res.Reason)
 	}()

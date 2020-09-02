@@ -204,14 +204,14 @@
         </ng-template>
 
         <button class="ui icon button link item notification" suiPopup popupPlacement="bottom right"
-            [popupTemplate]="popupTemplate" popupTrigger="outsideClick" #popup="suiPopup">
+            [popupTemplate]="popupTemplateBroadcasts" popupTrigger="outsideClick" #popup="suiPopup">
             <div>
                 <i class="bell icon" [ngClass]="{'animated bounceIn': broadcasts && broadcasts.length > 0}"></i>
                 <div class="ui floating red circular label animated bounceIn"
                     *ngIf="broadcasts && broadcasts.length > 0">{{broadcasts.length}}</div>
             </div>
         </button>
-        <ng-template let-popup #popupTemplate>
+        <ng-template let-popup #popupTemplateBroadcasts>
             <div class="content notifpopup">
                 <div class="ui secondary pointing menu">
                     <a class="item" [class.active]="recentView" (click)="recentView = true">
@@ -289,6 +289,19 @@
             </div>
         </ng-template>
 
+        <button *ngIf="help?.content?.length > 0"
+            class="ui icon button link item" suiPopup popupPlacement="bottom right"
+            [popupTemplate]="popupTemplateHelp" popupTrigger="outsideClick" #popup="suiPopup">
+            <div>
+                <i class="phone icon"></i>
+            </div>
+        </button>
+        <ng-template let-popup #popupTemplateHelp>
+            <div class="content helppopup">
+                <markdown [data]="help.content"></markdown>
+            </div>
+        </ng-template>
+
         <sm-select class="languageSelect" [options]="{'fullTextSearch': true}" [(model)]="currentCountry"
             (modelChange)="changeCountry()">
             <option value="fr"><i class="france flag"></i></option>
@@ -309,7 +322,7 @@
             <a sm-item href="#" [routerLink]="['settings', 'queue']">{{ 'admin_queue_title' | translate }}</a>
             <div class="divider"></div>
             <a sm-item href="#" [routerLink]="['settings', 'downloads']">{{ 'navbar_downloads' | translate }}</a>
-            <a sm-item href="https://ovh.github.io/cds/" target="_blank" rel="noopener noreferrer">{{ 'navbar_documentation' | translate }}</a>
+            <a sm-item href="#" [routerLink]="['docs', '']" target="_blank" rel="noopener noreferrer">{{ 'navbar_documentation' | translate }}</a>
             <div class="divider"></div>
             <sm-checkbox class="theme-switch" name="switch-theme" [control]="themeSwitch" type="toggle"
                 label="{{'navbar_dark_mode' | translate}}" (change)="changeTheme()"></sm-checkbox>

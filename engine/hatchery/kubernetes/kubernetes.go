@@ -331,6 +331,11 @@ func (h *HatcheryKubernetes) SpawnWorker(ctx context.Context, spawnArgs hatchery
 		i++
 	}
 
+	pullPolicy := "IfNotPresent"
+	if strings.HasSuffix(spawnArgs.Model.ModelDocker.Image, ":latest") {
+		pullPolicy = "Always"
+	}
+
 	var gracePeriodSecs int64
 	podSchema := apiv1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
@@ -348,11 +353,12 @@ func (h *HatcheryKubernetes) SpawnWorker(ctx context.Context, spawnArgs hatchery
 			TerminationGracePeriodSeconds: &gracePeriodSecs,
 			Containers: []apiv1.Container{
 				{
-					Name:    spawnArgs.WorkerName,
-					Image:   spawnArgs.Model.ModelDocker.Image,
-					Env:     envs,
-					Command: strings.Fields(spawnArgs.Model.ModelDocker.Shell),
-					Args:    []string{cmd},
+					Name:            spawnArgs.WorkerName,
+					Image:           spawnArgs.Model.ModelDocker.Image,
+					ImagePullPolicy: apiv1.PullPolicy(pullPolicy),
+					Env:             envs,
+					Command:         strings.Fields(spawnArgs.Model.ModelDocker.Shell),
+					Args:            []string{cmd},
 					Resources: apiv1.ResourceRequirements{
 						Requests: apiv1.ResourceList{
 							apiv1.ResourceMemory: resource.MustParse(fmt.Sprintf("%d", memory)),
@@ -422,8 +428,15 @@ func (h *HatcheryKubernetes) SpawnWorker(ctx context.Context, spawnArgs hatchery
 			}
 		}
 
-		podSchema.ObjectMeta.Labels[LABEL_SERVICE_JOB_ID] = fmt.Sprintf("%d", spawnArgs.JobID)
-		podSchema.ObjectMeta.Labels[LABEL_SERVICE_NODE_RUN_ID] = fmt.Sprintf("%d", spawnArgs.NodeRunID)
+		podSchema.ObjectMeta.Labels[hatchery.LabelServiceJobID] = fmt.Sprintf("%d", spawnArgs.JobID)
+		podSchema.ObjectMeta.Labels[hatchery.LabelServiceNodeRunID] = fmt.Sprintf("%d", spawnArgs.NodeRunID)
+		podSchema.ObjectMeta.Labels[hatchery.LabelServiceProjectKey] = spawnArgs.ProjectKey
+		podSchema.ObjectMeta.Labels[hatchery.LabelServiceWorkflowName] = spawnArgs.WorkflowName
+		podSchema.ObjectMeta.Labels[hatchery.LabelServiceWorkflowID] = fmt.Sprintf("%d", spawnArgs.WorkflowID)
+		podSchema.ObjectMeta.Labels[hatchery.LabelServiceRunID] = fmt.Sprintf("%d", spawnArgs.RunID)
+		podSchema.ObjectMeta.Labels[hatchery.LabelServiceNodeRunName] = spawnArgs.NodeRunName
+		podSchema.ObjectMeta.Labels[hatchery.LabelServiceJobName] = spawnArgs.JobName
+
 		podSchema.Spec.Containers = append(podSchema.Spec.Containers, servContainer)
 		podSchema.Spec.HostAliases[0].Hostnames[i+1] = strings.ToLower(serv.Name)
 	}

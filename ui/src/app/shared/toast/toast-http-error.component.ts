@@ -5,6 +5,7 @@ export class ToastHTTPErrorData {
     status: number;
     from: string;
     request_id: string;
+    help: string;
 }
 
 @Component({

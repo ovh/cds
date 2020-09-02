@@ -117,6 +117,9 @@ func (api *API) InitRouter() {
 
 	r.Handle("/download/{name}/{os}/{arch}", ScopeNone(), r.GET(api.downloadHandler, Auth(false)))
 
+	// feature
+	r.Handle("/feature/enabled/{name}", ScopeNone(), r.POST(api.isFeatureEanbledHandler))
+
 	// Group
 	r.Handle("/group", Scope(sdk.AuthConsumerScopeGroup), r.GET(api.getGroupsHandler), r.POST(api.postGroupHandler))
 	r.Handle("/group/{permGroupName}", Scope(sdk.AuthConsumerScopeGroup), r.GET(api.getGroupHandler), r.PUT(api.putGroupHandler), r.DELETE(api.deleteGroupHandler))
@@ -144,6 +147,8 @@ func (api *API) InitRouter() {
 	r.HandlePrefix("/mon/metrics/detail/", ScopeNone(), r.GET(service.GetMetricHandler("/mon/metrics/detail/"), Auth(false)))
 	r.Handle("/mon/errors/{uuid}", ScopeNone(), r.GET(api.getErrorHandler, NeedAdmin(true)))
 	r.Handle("/mon/panic/{uuid}", ScopeNone(), r.GET(api.getPanicDumpHandler, Auth(false)))
+
+	r.Handle("/help", ScopeNone(), r.GET(api.getHelpHandler, Auth(false)))
 
 	r.Handle("/ui/navbar", ScopeNone(), r.GET(api.getNavbarHandler))
 	r.Handle("/ui/project/{permProjectKey}/application/{applicationName}/overview", ScopeNone(), r.GET(api.getApplicationOverviewHandler))
@@ -327,6 +332,7 @@ func (api *API) InitRouter() {
 	r.Handle("/queue/workflows/{permJobID}/test", Scope(sdk.AuthConsumerScopeRunExecution), r.POSTEXECUTE(api.postWorkflowJobTestsResultsHandler, MaintenanceAware()))
 	r.Handle("/queue/workflows/{permJobID}/tag", Scope(sdk.AuthConsumerScopeRunExecution), r.POSTEXECUTE(api.postWorkflowJobTagsHandler, MaintenanceAware()))
 	r.Handle("/queue/workflows/{permJobID}/step", Scope(sdk.AuthConsumerScopeRunExecution), r.POSTEXECUTE(api.postWorkflowJobStepStatusHandler, MaintenanceAware()))
+	r.Handle("/queue/workflows/{permJobID}/version", Scope(sdk.AuthConsumerScopeRunExecution), r.POSTEXECUTE(api.postWorkflowJobSetVersionHandler, MaintenanceAware()))
 
 	r.Handle("/variable/type", ScopeNone(), r.GET(api.getVariableTypeHandler))
 	r.Handle("/parameter/type", ScopeNone(), r.GET(api.getParameterTypeHandler))

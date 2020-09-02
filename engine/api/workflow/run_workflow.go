@@ -4,8 +4,8 @@ import (
 	"context"
 	"time"
 
-	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/permission"
+	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/telemetry"
@@ -94,7 +94,7 @@ func manualRunFromNode(ctx context.Context, db gorpmapper.SqlExecutorWithTx, sto
 }
 
 func StartWorkflowRun(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store cache.Store, proj sdk.Project, wr *sdk.WorkflowRun,
-	opts *sdk.WorkflowRunPostHandlerOption, u *sdk.AuthConsumer, asCodeInfos []sdk.Message) (*ProcessorReport, error) {
+	opts *sdk.WorkflowRunPostHandlerOption, u sdk.AuthConsumer, asCodeInfos []sdk.Message) (*ProcessorReport, error) {
 	ctx, end := telemetry.Span(ctx, "api.startWorkflowRun")
 	defer end()
 

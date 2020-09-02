@@ -56,7 +56,20 @@ export class SigninComponent implements OnInit {
                     .filter(d => d.type !== 'local' && d.type !== 'ldap' && d.type !== 'builtin')
                     .sort((a, b) => a.type < b.type ? -1 : 1)
                     .map(d => {
-                        d.icon = d.type === 'corporate-sso' ? 'shield alternate' : d.type;
+                        switch (d.type) {
+                            case 'corporate-sso': {
+                                d.icon = 'shield alternate';
+                                break;
+                            }
+                            case 'openid-connect': {
+                                d.icon = 'openid';
+                                break;
+                            }
+                            default: {
+                                d.icon = d.type;
+                                break;
+                            }
+                        }
                         return d;
                     });
 

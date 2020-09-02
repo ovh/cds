@@ -13,6 +13,19 @@ import (
 	"github.com/ovh/cds/sdk/cdsclient"
 )
 
+const (
+	LabelServiceJobID        = "CDS_JOB_ID"
+	LabelServiceProjectKey   = "CDS_PROJECT_KEY"
+	LabelServiceWorkflowName = "CDS_WORKFLOW_NAME"
+	LabelServiceWorkflowID   = "CDS_WORKFLOW_ID"
+	LabelServiceRunID        = "CDS_WORKFLOW_RUN_ID"
+	LabelServiceNodeRunName  = "CDS_NODE_RUN_NAME"
+	LabelServiceNodeRunID    = "CDS_NODE_RUN_ID"
+	LabelServiceJobName      = "CDS_JOB_NAME"
+	LabelServiceID           = "CDS_SERVICE_ID"
+	LabelServiceReqName      = "CDS_SERVICE_NAME"
+)
+
 // WorkerJWTClaims is the specific claims format for Worker JWT
 type WorkerJWTClaims struct {
 	jwt.StandardClaims
@@ -24,11 +37,17 @@ type SpawnArguments struct {
 	WorkerName   string `json:"worker_model"`
 	WorkerToken  string
 	Model        *sdk.Model        `json:"model"`
+	JobName      string            `json:"job_name"`
 	JobID        int64             `json:"job_id"`
 	NodeRunID    int64             `json:"node_run_id"`
+	NodeRunName  string            `json:"node_run_name"`
 	Requirements []sdk.Requirement `json:"requirements"`
 	RegisterOnly bool              `json:"register_only"`
 	HatcheryName string            `json:"hatchery_name"`
+	ProjectKey   string            `json:"project_key"`
+	WorkflowName string            `json:"workflow_name"`
+	WorkflowID   int64             `json:"workflow_id"`
+	RunID        int64             `json:"run_id"`
 }
 
 func (s *SpawnArguments) ModelName() string {
@@ -84,4 +103,12 @@ type Metrics struct {
 	WaitingWorkers     *stats.Int64Measure
 	BuildingWorkers    *stats.Int64Measure
 	DisabledWorkers    *stats.Int64Measure
+}
+
+type JobIdentifiers struct {
+	ServiceID  int64
+	JobID      int64
+	NodeRunID  int64
+	RunID      int64
+	WorkflowID int64
 }

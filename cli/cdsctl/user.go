@@ -10,8 +10,9 @@ import (
 )
 
 var userCmd = cli.Command{
-	Name:  "user",
-	Short: "Manage CDS user",
+	Name:    "user",
+	Aliases: []string{"users"},
+	Short:   "Manage CDS user",
 }
 
 func usr() *cobra.Command {

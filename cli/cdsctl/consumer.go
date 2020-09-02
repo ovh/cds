@@ -14,8 +14,9 @@ const consumerIDArg = "consumer-id"
 
 func consumer() *cobra.Command {
 	cmd := cli.Command{
-		Name:  "consumer",
-		Short: "Manage CDS auth consumers",
+		Name:    "consumer",
+		Aliases: []string{"consumers"},
+		Short:   "Manage CDS auth consumers",
 	}
 
 	return cli.NewCommand(cmd, nil,

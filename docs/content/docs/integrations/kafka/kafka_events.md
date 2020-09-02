@@ -13,6 +13,8 @@ An example of use case could be that you want to generate some svg badge. Then y
 integration for your workflow and plug the 
 [badge microservice](https://github.com/ovh/cds/tree/master/contrib/uservices/badge) on this kafka topic.
 
+Notice that Kafka communication is done using SASL and TLS enable only.
+
 ## Configure with WebUI
 
 You can add a Kafka Integration on your CDS Project.

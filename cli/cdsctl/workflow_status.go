@@ -46,11 +46,12 @@ func workflowStatusRunWithTrack(v cli.Values) (interface{}, error) {
 	var currentDisplay = new(cli.Display)
 
 	// try to get the latest commit
-	r, err := repo.New(".")
+	ctx := context.Background()
+	r, err := repo.New(ctx, ".")
 	if err != nil {
 		return nil, fmt.Errorf("unable to get latest commit: %v", err)
 	}
-	latestCommit, err := r.LatestCommit()
+	latestCommit, err := r.LatestCommit(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("unable to get latest commit: %v", err)
 	}
@@ -74,13 +75,8 @@ func workflowStatusRunWithTrack(v cli.Values) (interface{}, error) {
 		runNumber = runs[0].Number
 	}
 
-	run, err := client.WorkflowRunGet(v.GetString(_ProjectKey), v.GetString(_WorkflowName), runNumber)
-	if err != nil {
-		return nil, err
-	}
-
 	for {
-		run, err = client.WorkflowRunGet(v.GetString(_ProjectKey), v.GetString(_WorkflowName), runNumber)
+		run, err := client.WorkflowRunGet(v.GetString(_ProjectKey), v.GetString(_WorkflowName), runNumber)
 		if err != nil {
 			return nil, err
 		}

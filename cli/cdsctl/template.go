@@ -6,7 +6,6 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-	"time"
 
 	"github.com/spf13/cobra"
 
@@ -17,8 +16,9 @@ import (
 )
 
 var templateCmd = cli.Command{
-	Name:  "template",
-	Short: "Manage CDS workflow template",
+	Name:    "template",
+	Aliases: []string{"templates"},
+	Short:   "Manage CDS workflow template",
 }
 
 func template() *cobra.Command {
@@ -29,7 +29,9 @@ func template() *cobra.Command {
 		cli.NewCommand(templatePullCmd, templatePullRun, nil, withAllCommandModifiers()...),
 		cli.NewCommand(templatePushCmd, templatePushRun, nil, withAllCommandModifiers()...),
 		cli.NewDeleteCommand(templateDeleteCmd, templateDeleteRun, nil, withAllCommandModifiers()...),
-		cli.NewListCommand(templateInstancesCmd, templateInstancesRun, nil, withAllCommandModifiers()...),
+		cli.NewListCommand(templateInstancesCmd, templateInstancesRun, []*cobra.Command{
+			cli.NewCommand(templateInstancesExportCmd, templateInstancesExportRun, nil, withAllCommandModifiers()...),
+		}),
 		cli.NewCommand(templateDetachCmd, templateDetachRun, nil, withAllCommandModifiers()...),
 	})
 }
@@ -236,59 +238,6 @@ func templateDeleteRun(v cli.Values) error {
 	}
 
 	return nil
-}
-
-var templateInstancesCmd = cli.Command{
-	Name:    "instances",
-	Short:   "Get instances for a CDS workflow template",
-	Example: "cdsctl template instances group-name/template-slug",
-	OptionalArgs: []cli.Arg{
-		{Name: "template-path"},
-	},
-}
-
-func templateInstancesRun(v cli.Values) (cli.ListResult, error) {
-	wt, err := getTemplateFromCLI(v)
-	if err != nil {
-		return nil, err
-	}
-	if wt == nil {
-		wt, err = suggestTemplate()
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	wtis, err := client.TemplateGetInstances(wt.Group.Name, wt.Slug)
-	if err != nil {
-		return nil, err
-	}
-
-	type TemplateInstanceDisplay struct {
-		ID       int64  `cli:"id,key"`
-		Created  string `cli:"created"`
-		Project  string `cli:"project"`
-		Workflow string `cli:"workflow"`
-		Params   string `cli:"params"`
-	}
-
-	tids := make([]TemplateInstanceDisplay, len(wtis))
-	for i := range wtis {
-		tids[i].ID = wtis[i].ID
-		tids[i].Created = fmt.Sprintf("On %s by %s", wtis[i].FirstAudit.Created.Format(time.RFC3339),
-			wtis[i].FirstAudit.AuditCommon.TriggeredBy)
-		tids[i].Project = wtis[i].Project.Name
-		if wtis[i].Workflow != nil {
-			tids[i].Workflow = wtis[i].Workflow.Name
-		} else {
-			tids[i].Workflow = fmt.Sprintf("%s (not imported)", wtis[i].WorkflowName)
-		}
-		for k, v := range wtis[i].Request.Parameters {
-			tids[i].Params = fmt.Sprintf("%s%s:%s\n", tids[i].Params, k, v)
-		}
-	}
-
-	return cli.AsListResult(tids), nil
 }
 
 var templateDetachCmd = cli.Command{

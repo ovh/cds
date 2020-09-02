@@ -315,10 +315,17 @@ func (h *HatcherySwarm) SpawnWorker(ctx context.Context, spawnArgs hatchery.Spaw
 				}
 
 				if spawnArgs.JobID > 0 {
-					labels["service_node_run_id"] = fmt.Sprintf("%d", spawnArgs.NodeRunID)
-					labels["service_job_id"] = fmt.Sprintf("%d", spawnArgs.JobID)
-					labels["service_id"] = fmt.Sprintf("%d", r.ID)
-					labels["service_req_name"] = r.Name
+					labels[hatchery.LabelServiceProjectKey] = spawnArgs.ProjectKey
+					labels[hatchery.LabelServiceWorkflowName] = spawnArgs.WorkflowName
+					labels[hatchery.LabelServiceWorkflowID] = fmt.Sprintf("%d", spawnArgs.WorkflowID)
+					labels[hatchery.LabelServiceRunID] = fmt.Sprintf("%d", spawnArgs.RunID)
+					labels[hatchery.LabelServiceNodeRunID] = fmt.Sprintf("%d", spawnArgs.NodeRunID)
+					labels[hatchery.LabelServiceNodeRunName] = spawnArgs.NodeRunName
+					labels[hatchery.LabelServiceJobName] = spawnArgs.JobName
+					labels[hatchery.LabelServiceJobID] = fmt.Sprintf("%d", spawnArgs.JobID)
+					labels[hatchery.LabelServiceID] = fmt.Sprintf("%d", r.ID)
+					labels[hatchery.LabelServiceReqName] = r.Name
+
 				}
 
 				//Start the services
@@ -705,7 +712,7 @@ func (h *HatcherySwarm) killAwolWorker(ctx context.Context) error {
 		// Delete the workers
 		for _, c := range oldContainers {
 			log.Debug("hatchery> swarm> killAwolWorker> Delete worker %s on %s", c.Names[0], dockerClient.name)
-			if err := h.killAndRemove(ctx, dockerClient, c.ID); err != nil {
+			if err := h.killAndRemove(ctx, dockerClient, c.ID, containers); err != nil {
 				log.Debug("hatchery> swarm> killAwolWorker> %v", err)
 			}
 		}
@@ -733,8 +740,29 @@ func (h *HatcherySwarm) killAwolWorker(ctx context.Context) error {
 				continue
 			}
 
+			// Send final logs before deleting service container
+			jobIdentifiers := h.GetIdentifiersFromLabels(c)
+			if jobIdentifiers == nil {
+				continue
+			}
+			endLog := sdk.ServiceLog{
+				WorkflowNodeJobRunID:   jobIdentifiers.JobID,
+				WorkflowNodeRunID:      jobIdentifiers.NodeRunID,
+				ServiceRequirementID:   jobIdentifiers.ServiceID,
+				ServiceRequirementName: c.Labels[hatchery.LabelServiceReqName],
+				Val:                    "End of Job",
+				WorkerName:             c.Labels["service_worker"],
+				JobName:                c.Labels[hatchery.LabelServiceJobName],
+				NodeRunName:            c.Labels[hatchery.LabelServiceNodeRunName],
+				WorkflowName:           c.Labels[hatchery.LabelServiceWorkflowName],
+				ProjectKey:             c.Labels[hatchery.LabelServiceProjectKey],
+				RunID:                  jobIdentifiers.RunID,
+				WorkflowID:             jobIdentifiers.WorkflowID,
+			}
+			h.Common.SendServiceLog(ctx, []sdk.ServiceLog{endLog}, sdk.StatusSuccess)
+
 			log.Debug("hatchery> swarm> killAwolWorker> Delete worker (service) %s on %s", c.Names[0], dockerClient.name)
-			if err := h.killAndRemove(ctx, dockerClient, c.ID); err != nil {
+			if err := h.killAndRemove(ctx, dockerClient, c.ID, containers); err != nil {
 				log.Error(ctx, "hatchery> swarm> killAwolWorker> service %v on %s", err, dockerClient.name)
 			}
 			continue

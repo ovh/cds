@@ -13,8 +13,9 @@ import (
 )
 
 var workflowArtifactCmd = cli.Command{
-	Name:  "artifact",
-	Short: "Manage Workflow Artifact",
+	Name:    "artifact",
+	Aliases: []string{"artifacts"},
+	Short:   "Manage Workflow Artifact",
 }
 
 func workflowArtifact() *cobra.Command {

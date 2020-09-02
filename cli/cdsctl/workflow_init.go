@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"context"
 	"errors"
 	"fmt"
 	"io/ioutil"
@@ -90,7 +91,7 @@ func interactiveChooseProject(gitRepo repo.Repo, defaultValue string) (string, e
 	selected := cli.AskChoice("Choose the CDS project:", opts...)
 	chosenProj = &projs[selected]
 
-	if err := gitRepo.LocalConfigSet("cds", "project", chosenProj.Key); err != nil {
+	if err := gitRepo.LocalConfigSet(context.Background(), "cds", "project", chosenProj.Key); err != nil {
 		return "", err
 	}
 
@@ -105,8 +106,7 @@ func interactiveChooseVCSServer(proj *sdk.Project, gitRepo repo.Repo) (string, e
 	case 1:
 		return proj.VCSServers[0].Name, nil
 	default:
-
-		fetchURL, err := gitRepo.FetchURL()
+		fetchURL, err := gitRepo.FetchURL(context.Background())
 		if err != nil {
 			return "", fmt.Errorf("Unable to get remote URL: %v", err)
 		}
@@ -451,7 +451,8 @@ func craftPipelineFile(proj *sdk.Project, existingPip *sdk.Pipeline, pipName, de
 
 func workflowInitRun(c cli.Values) error {
 	path := "."
-	gitRepo, err := repo.New(path)
+	ctx := context.Background()
+	gitRepo, err := repo.New(ctx, path)
 	if err != nil {
 		return err
 	}
@@ -469,7 +470,7 @@ func workflowInitRun(c cli.Values) error {
 
 	repoFullname := c.GetString("repository-fullname")
 	if repoFullname == "" {
-		repoFullname, err = gitRepo.Name()
+		repoFullname, err = gitRepo.Name(ctx)
 		if err != nil {
 			return fmt.Errorf("unable to retrieve repository name: %v", err)
 		}
@@ -480,7 +481,7 @@ func workflowInitRun(c cli.Values) error {
 
 	fetchURL := c.GetString("repository-url")
 	if fetchURL == "" {
-		fetchURL, err = gitRepo.FetchURL()
+		fetchURL, err = gitRepo.FetchURL(ctx)
 		if err != nil {
 			return fmt.Errorf("unable to retrieve origin URL: %v", err)
 		}
@@ -600,11 +601,11 @@ func workflowInitRun(c cli.Values) error {
 	}
 
 	//Configure local git
-	if err := gitRepo.LocalConfigSet("cds", "project", proj.Key); err != nil {
+	if err := gitRepo.LocalConfigSet(ctx, "cds", "project", proj.Key); err != nil {
 		fmt.Printf("error: unable to setup git local config to store cds project key: %v\n", err)
 	}
 
-	if err := gitRepo.LocalConfigSet("cds", "workflow", workflowName); err != nil {
+	if err := gitRepo.LocalConfigSet(ctx, "cds", "workflow", workflowName); err != nil {
 		fmt.Printf("error: unable to setup git local config to store cds workflow name: %v\n", err)
 	}
 

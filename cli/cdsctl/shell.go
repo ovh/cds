@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"io"
 	"path"
@@ -93,19 +94,20 @@ func shellRun(v cli.Values) error {
 
 	home := "/"
 
+	ctx := context.Background()
 	// try to discover conf for existing .git repository
-	r, errR := repo.New(".")
+	r, errR := repo.New(ctx, ".")
 	if errR == nil {
 		if _, err := discoverConf([]cli.Arg{
 			{Name: _ProjectKey},
 			{Name: _ApplicationName, AllowEmpty: true},
 			{Name: _WorkflowName, AllowEmpty: true},
 		}); err == nil {
-			if proj, _ := r.LocalConfigGet("cds", "project"); proj != "" {
+			if proj, _ := r.LocalConfigGet(ctx, "cds", "project"); proj != "" {
 				home = "/project/" + proj
-				if wf, _ := r.LocalConfigGet("cds", "workflow"); wf != "" {
+				if wf, _ := r.LocalConfigGet(ctx, "cds", "workflow"); wf != "" {
 					home += "/workflow/" + wf
-				} else if app, _ := r.LocalConfigGet("cds", "application"); app != "" {
+				} else if app, _ := r.LocalConfigGet(ctx, "cds", "application"); app != "" {
 					home += "/application/" + app
 				}
 			}

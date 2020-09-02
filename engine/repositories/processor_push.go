@@ -31,7 +31,7 @@ func (s *Service) processPush(ctx context.Context, op *sdk.Operation) error {
 	}
 
 	// FIXME create Fetch and FetchTags method in go repo
-	if err := gitRepo.FetchRemoteBranch("origin", op.RepositoryInfo.DefaultBranch); err != nil {
+	if err := gitRepo.FetchRemoteBranch(ctx, "origin", op.RepositoryInfo.DefaultBranch); err != nil {
 		return sdk.WrapError(err, "cannot fetch changes from remote at %s", op.RepositoryInfo.FetchURL)
 	}
 
@@ -41,25 +41,25 @@ func (s *Service) processPush(ctx context.Context, op *sdk.Operation) error {
 
 	// Switch to target branch
 	if currentBranch != op.Setup.Push.FromBranch {
-		if err := gitRepo.CheckoutNewBranch(op.Setup.Push.FromBranch); err != nil {
+		if err := gitRepo.CheckoutNewBranch(ctx, op.Setup.Push.FromBranch); err != nil {
 			if !strings.Contains(err.Error(), "already exists") {
 				return sdk.WrapError(err, "cannot checkout new branch %s", op.Setup.Push.FromBranch)
 			}
-			if err := gitRepo.Checkout(op.Setup.Push.FromBranch); err != nil {
+			if err := gitRepo.Checkout(ctx, op.Setup.Push.FromBranch); err != nil {
 				return sdk.WrapError(err, "cannot checkout existing branch %s", op.Setup.Push.FromBranch)
 			}
 		}
 	}
 
 	// Reset hard to remote branch or default if no remote exists
-	_, hasUpstream := gitRepo.LocalBranchExists(op.Setup.Push.FromBranch)
+	_, hasUpstream := gitRepo.LocalBranchExists(ctx, op.Setup.Push.FromBranch)
 	if hasUpstream {
-		if err := gitRepo.ResetHard("origin/" + op.Setup.Push.FromBranch); err != nil {
+		if err := gitRepo.ResetHard(ctx, "origin/"+op.Setup.Push.FromBranch); err != nil {
 			return sdk.WithStack(err)
 		}
 	} else {
 		// Reset hard default branch
-		if err := gitRepo.ResetHard("origin/" + op.RepositoryInfo.DefaultBranch); err != nil {
+		if err := gitRepo.ResetHard(ctx, "origin/"+op.RepositoryInfo.DefaultBranch); err != nil {
 			return sdk.WithStack(err)
 		}
 	}
@@ -99,12 +99,12 @@ func (s *Service) processPush(ctx context.Context, op *sdk.Operation) error {
 			return sdk.WrapError(err, "closing file %s", fname)
 		}
 	}
-	if err := gitRepo.Add(path + "/.cds/*"); err != nil {
+	if err := gitRepo.Add(ctx, path+"/.cds/*"); err != nil {
 		return sdk.WrapError(err, "git add file %s", path+"/.cds/*")
 	}
 
 	// In case that there are no changes (ex: push changes on an existing branch that was not merged)
-	if !gitRepo.ExistsDiff() {
+	if !gitRepo.ExistsDiff(ctx) {
 		return sdk.WrapError(sdk.ErrNothingToPush, "processPush> %s : no files changes", op.UUID)
 	}
 
@@ -113,12 +113,12 @@ func (s *Service) processPush(ctx context.Context, op *sdk.Operation) error {
 	if op.User.Username != "" && op.User.Email != "" {
 		opts = append(opts, repo.WithUser(op.User.Email, op.User.Username))
 	}
-	if err := gitRepo.Commit(op.Setup.Push.Message, opts...); err != nil {
+	if err := gitRepo.Commit(ctx, op.Setup.Push.Message, opts...); err != nil {
 		return sdk.WithStack(err)
 	}
 
 	// Push branch
-	if err := gitRepo.Push("origin", op.Setup.Push.FromBranch); err != nil {
+	if err := gitRepo.Push(ctx, "origin", op.Setup.Push.FromBranch); err != nil {
 		return sdk.WrapError(err, "push %s", op.Setup.Push.FromBranch)
 	}
 

@@ -74,8 +74,9 @@ func signupFunc(v cli.Values) error {
 
 	// Load all drivers from given CDS instance
 	client := cdsclient.New(cdsclient.Config{
-		Host:    apiURL,
-		Verbose: os.Getenv("CDS_VERBOSE") == "true",
+		Host:                  apiURL,
+		Verbose:               os.Getenv("CDS_VERBOSE") == "true" || v.GetBool("verbose"),
+		InsecureSkipVerifyTLS: os.Getenv("CDS_INSECURE") == "true" || v.GetBool("insecure"),
 	})
 	drivers, err := client.AuthDriverList()
 	if err != nil {
@@ -154,8 +155,9 @@ func signupVerifyFunc(v cli.Values) error {
 	}
 
 	client := cdsclient.New(cdsclient.Config{
-		Verbose: os.Getenv("CDS_VERBOSE") == "true",
-		Host:    apiURL,
+		Verbose:               os.Getenv("CDS_VERBOSE") == "true" || v.GetBool("verbose"),
+		InsecureSkipVerifyTLS: os.Getenv("CDS_INSECURE") == "true" || v.GetBool("insecure"),
+		Host:                  apiURL,
 	})
 
 	signupresponse, err := client.AuthConsumerLocalSignupVerify(v.GetString("token"),
@@ -164,5 +166,8 @@ func signupVerifyFunc(v cli.Values) error {
 		return err
 	}
 
-	return doAfterLogin(client, v, signupresponse.APIURL, sdk.ConsumerLocal, signupresponse)
+	if apiURL != signupresponse.APIURL {
+		fmt.Println("WARNING: The advertised API URL differs from the provided URL")
+	}
+	return doAfterLogin(client, v, apiURL, sdk.ConsumerLocal, signupresponse)
 }

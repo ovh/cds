@@ -12,8 +12,9 @@ import (
 )
 
 var projectIntegrationCmd = cli.Command{
-	Name:  "integration",
-	Short: "Manage CDS integrations",
+	Name:    "integration",
+	Aliases: []string{"integrations"},
+	Short:   "Manage CDS integrations",
 }
 
 func projectIntegration() *cobra.Command {

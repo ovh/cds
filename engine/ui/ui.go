@@ -66,6 +66,7 @@ func (s *Service) ApplyConfiguration(config interface{}) error {
 	// HTMLDir must contains the ui dist directory.
 	// ui.tar.gz contains the dist directory
 	s.HTMLDir = filepath.Join(s.Cfg.Staticdir, "dist")
+	s.DocsDir = filepath.Join(s.Cfg.Staticdir, "docs")
 	s.Cfg.BaseURL = strings.TrimSpace(s.Cfg.BaseURL)
 	if s.Cfg.BaseURL == "" { // s.Cfg.BaseURL could not be empty
 		s.Cfg.BaseURL = "/"
@@ -257,7 +258,7 @@ func (s *Service) askForGettingStaticFiles(ctx context.Context, version string) 
 
 	opts = append(opts, answerDoNothing)
 
-	ask := fmt.Sprintf("What do you want to do?")
+	ask := "What do you want to do?"
 
 	selected := cli.AskChoice(ask, opts...)
 

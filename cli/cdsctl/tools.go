@@ -17,8 +17,9 @@ const (
 )
 
 var toolsCmd = cli.Command{
-	Name:  "tools",
-	Short: "Some tooling for CDS",
+	Name:    "tools",
+	Aliases: []string{"tool"},
+	Short:   "Some tooling for CDS",
 }
 
 func tools() *cobra.Command {

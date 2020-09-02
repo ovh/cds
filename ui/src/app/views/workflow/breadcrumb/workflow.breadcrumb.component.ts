@@ -36,16 +36,16 @@ export class WorkflowBreadCrumbComponent implements OnInit, OnDestroy {
 
     path: Array<PathItem>;
 
-    constructor(private _cd: ChangeDetectorRef) {}
+    constructor(private _cd: ChangeDetectorRef) { }
 
-    ngOnDestroy(): void {} // Should be set to use @AutoUnsubscribe with AOT
+    ngOnDestroy(): void { } // Should be set to use @AutoUnsubscribe with AOT
 
     ngOnInit(): void {
         this.workflowRunSub = this.workflowRun$.subscribe(wr => {
             if (!wr && !this.workflowRun) {
                 return;
             }
-            if (wr && this.workflowRun && wr.id === this.workflowRun.id) {
+            if (wr && this.workflowRun && wr.id === this.workflowRun.id && wr.version === this.workflowRun.version) {
                 return;
             }
             this.workflowRun = wr;
@@ -76,7 +76,7 @@ export class WorkflowBreadCrumbComponent implements OnInit, OnDestroy {
                 if (this.workflowRun) {
                     path.push(<PathItem>{
                         icon: 'tag',
-                        text: '' + this.workflowRun.num,
+                        text: '' + (this.workflowRun.version ? this.workflowRun.version : this.workflowRun.num),
                         active: !!this._workflow.name && !!this.workflowRun.num,
                         routerLink: ['/project', this._project.key, 'workflow', this._workflow.name, 'run', this.workflowRun.num]
                     })

@@ -5,16 +5,17 @@ import (
 	"database/sql"
 	"reflect"
 	"runtime"
+	"strings"
 	"time"
 
 	"github.com/go-gorp/gorp"
 
-	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/keys"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
+	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
@@ -310,6 +311,8 @@ func unwrap(ctx context.Context, db gorp.SqlExecutor, p *dbProject, opts []LoadO
 			continue
 		}
 		name := runtime.FuncForPC(reflect.ValueOf(f).Pointer()).Name()
+		nameSplitted := strings.Split(name, "/")
+		name = nameSplitted[len(nameSplitted)-1]
 		_, end = telemetry.Span(ctx, name)
 		if err := f(db, &proj); err != nil && sdk.Cause(err) != sql.ErrNoRows {
 			end()

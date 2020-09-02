@@ -1,18 +1,15 @@
 package authentication
 
 import (
-	"github.com/ovh/cds/engine/api/cache"
+	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/sdk"
 )
 
-// XSRFTokenDuration is set to 10 minutes.
-var XSRFTokenDuration = 60 * 10
-
 // NewSessionXSRFToken generate and store a XSRF token for a given session id.
-func NewSessionXSRFToken(store cache.Store, sessionID string) (string, error) {
+func NewSessionXSRFToken(store cache.Store, sessionID string, sessionExpirationDelaySecond int) (string, error) {
 	var XSRFToken = sdk.UUID()
 	var k = cache.Key("token", "xsrf", sessionID)
-	if err := store.SetWithTTL(k, &XSRFToken, XSRFTokenDuration); err != nil {
+	if err := store.SetWithTTL(k, &XSRFToken, sessionExpirationDelaySecond); err != nil {
 		return "", err
 	}
 	return XSRFToken, nil

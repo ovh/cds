@@ -10,9 +10,10 @@ import (
 
 	"github.com/pkg/browser"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
-	"github.com/ovh/cds/engine/api/cache"
-	"github.com/ovh/cds/engine/api/test"
+	"github.com/ovh/cds/engine/cache"
+	"github.com/ovh/cds/engine/test"
 	"github.com/ovh/cds/sdk/log"
 )
 
@@ -81,7 +82,7 @@ func TestClientAuthorizeToken(t *testing.T) {
 	t.Logf("url: %s", url)
 	assert.NotEmpty(t, token)
 	assert.NotEmpty(t, url)
-	test.NoError(t, err)
+	require.NoError(t, err)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
 	defer cancel()
@@ -90,7 +91,7 @@ func TestClientAuthorizeToken(t *testing.T) {
 
 	go callbackServer(ctx, t, out)
 	err = browser.OpenURL(url)
-	test.NoError(t, err)
+	require.NoError(t, err)
 
 	r, ok := <-out
 	t.Logf("Chan request closed? %v", !ok)
@@ -112,14 +113,14 @@ func TestClientAuthorizeToken(t *testing.T) {
 	accessToken, refreshToken, err := bbConsumer.AuthorizeToken(context.Background(), "", code)
 	assert.NotEmpty(t, accessToken)
 	assert.NotEmpty(t, refreshToken)
-	test.NoError(t, err)
+	require.NoError(t, err)
 
 	currentAccessToken = accessToken
 	currentRefreshToken = refreshToken
 	t.Logf("Token is %s", accessToken)
 
 	bbClient, err := bbConsumer.GetAuthorizedClient(context.Background(), accessToken, refreshToken, time.Now().Unix())
-	test.NoError(t, err)
+	require.NoError(t, err)
 	assert.NotNil(t, bbClient)
 }
 
@@ -133,7 +134,7 @@ func TestRepos(t *testing.T) {
 	assert.NotNil(t, bbClient)
 
 	repos, err := bbClient.Repos(context.Background())
-	test.NoError(t, err)
+	require.NoError(t, err)
 	assert.NotEmpty(t, repos)
 }
 
@@ -142,7 +143,7 @@ func TestRepoByFullname(t *testing.T) {
 	assert.NotNil(t, bbClient)
 
 	repo, err := bbClient.RepoByFullname(context.Background(), "bnjjj/test")
-	test.NoError(t, err)
+	require.NoError(t, err)
 	assert.NotNil(t, repo)
 }
 
@@ -151,7 +152,7 @@ func TestBranches(t *testing.T) {
 	assert.NotNil(t, bbClient)
 
 	branches, err := bbClient.Branches(context.Background(), "bnjjj/test")
-	test.NoError(t, err)
+	require.NoError(t, err)
 	assert.NotEmpty(t, branches)
 }
 
@@ -160,7 +161,7 @@ func TestBranch(t *testing.T) {
 	assert.NotNil(t, bbClient)
 
 	branch, err := bbClient.Branch(context.Background(), "bnjjj/test", "master")
-	test.NoError(t, err)
+	require.NoError(t, err)
 	assert.NotNil(t, branch)
 }
 
@@ -169,6 +170,6 @@ func TestCommits(t *testing.T) {
 	assert.NotNil(t, bbClient)
 
 	commits, err := bbClient.Commits(context.Background(), "bnjjj/test", "master", "HEAD", "HEAD")
-	test.NoError(t, err)
+	require.NoError(t, err)
 	assert.NotNil(t, commits)
 }

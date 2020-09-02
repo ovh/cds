@@ -8,9 +8,10 @@ import (
 
 	"github.com/pkg/browser"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
-	"github.com/ovh/cds/engine/api/cache"
-	"github.com/ovh/cds/engine/api/test"
+	"github.com/ovh/cds/engine/cache"
+	"github.com/ovh/cds/engine/test"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
@@ -78,7 +79,7 @@ func TestClientAuthorizeToken(t *testing.T) {
 	t.Logf("url: %s", url)
 	assert.NotEmpty(t, token)
 	assert.NotEmpty(t, url)
-	test.NoError(t, err)
+	require.NoError(t, err)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
 	defer cancel()
@@ -88,7 +89,7 @@ func TestClientAuthorizeToken(t *testing.T) {
 	go callbackServer(ctx, t, out)
 
 	err = browser.OpenURL(url)
-	test.NoError(t, err)
+	require.NoError(t, err)
 
 	r, ok := <-out
 	t.Logf("Chan request closed? %v", !ok)
@@ -112,12 +113,12 @@ func TestClientAuthorizeToken(t *testing.T) {
 	accessToken, accessTokenSecret, err := glConsumer.AuthorizeToken(context.Background(), state, code)
 	assert.NotEmpty(t, accessToken)
 	assert.NotEmpty(t, accessTokenSecret)
-	test.NoError(t, err)
+	require.NoError(t, err)
 
 	t.Logf("Token is %s", accessToken)
 
 	ghClient, err := glConsumer.GetAuthorizedClient(context.Background(), accessToken, accessTokenSecret, 0)
-	test.NoError(t, err)
+	require.NoError(t, err)
 	assert.NotNil(t, ghClient)
 }
 
@@ -131,7 +132,7 @@ func TestRepos(t *testing.T) {
 	assert.NotNil(t, ghClient)
 
 	repos, err := ghClient.Repos(context.Background())
-	test.NoError(t, err)
+	require.NoError(t, err)
 	assert.NotEmpty(t, repos)
 }
 
@@ -141,7 +142,7 @@ func TestRepoByFullname(t *testing.T) {
 
 	repo, err := ghClient.RepoByFullname(context.Background(), "vaevictis35/proj1")
 
-	test.NoError(t, err)
+	require.NoError(t, err)
 	t.Logf("%+v", repo)
 	assert.NotNil(t, repo)
 }
@@ -151,7 +152,7 @@ func TestBranches(t *testing.T) {
 	assert.NotNil(t, ghClient)
 
 	branches, err := ghClient.Branches(context.Background(), "vaevictis35/proj1")
-	test.NoError(t, err)
+	require.NoError(t, err)
 	t.Logf("%+v", branches)
 	assert.NotEmpty(t, branches)
 }
@@ -161,7 +162,7 @@ func TestBranch(t *testing.T) {
 	assert.NotNil(t, ghClient)
 
 	branch, err := ghClient.Branch(context.Background(), "vaevictis35/proj1", "master")
-	test.NoError(t, err)
+	require.NoError(t, err)
 	t.Logf("%+v", branch)
 	assert.NotNil(t, branch)
 }
@@ -171,7 +172,7 @@ func TestCommits(t *testing.T) {
 	assert.NotNil(t, ghClient)
 
 	commits, err := ghClient.Commits(context.Background(), "vaevictis35/proj1", "master", "", "")
-	test.NoError(t, err)
+	require.NoError(t, err)
 	t.Logf("%+v", commits)
 	assert.NotNil(t, commits)
 }

@@ -4,7 +4,7 @@ import (
 	"context"
 
 	g "github.com/andygrunwald/go-gerrit"
-	"github.com/ovh/cds/engine/api/cache"
+	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/sdk"
 )
 

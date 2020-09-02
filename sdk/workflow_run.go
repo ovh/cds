@@ -1,12 +1,15 @@
 package sdk
 
 import (
+	"database/sql/driver"
+	json "encoding/json"
 	"fmt"
 	"net/url"
 	"sort"
 	"strings"
 	"time"
 
+	"github.com/blang/semver"
 	"github.com/ovh/venom"
 	"github.com/sguiheux/go-coverage"
 )
@@ -38,6 +41,7 @@ func (h *WorkflowRunHeaders) Get(k string) (string, bool) {
 type WorkflowRun struct {
 	ID               int64                            `json:"id" db:"id"`
 	Number           int64                            `json:"num" db:"num" cli:"num,key"`
+	Version          *string                          `json:"version,omitempty" db:"version" cli:"version"`
 	ProjectID        int64                            `json:"project_id,omitempty" db:"project_id"`
 	WorkflowID       int64                            `json:"workflow_id" db:"workflow_id"`
 	Status           string                           `json:"status" db:"status" cli:"status"`
@@ -54,6 +58,8 @@ type WorkflowRun struct {
 	Header           WorkflowRunHeaders               `json:"header,omitempty" db:"-"`
 	URLs             URL                              `json:"urls" yaml:"-" db:"-" cli:"-"`
 	ReadOnly         bool                             `json:"read_only" yaml:"-" db:"read_only" cli:"-"`
+	ToCraft          bool                             `json:"-" yaml:"-" db:"to_craft" cli:"-"`
+	ToCraftOpts      *WorkflowRunPostHandlerOption    `json:"-" yaml:"-" db:"to_craft_opts" cli:"-"`
 }
 
 type WorkflowRunSecret struct {
@@ -75,15 +81,47 @@ type WorkflowNodeRunRelease struct {
 
 // WorkflowRunPostHandlerOption contains the body content for launch a workflow
 type WorkflowRunPostHandlerOption struct {
-	Hook        *WorkflowNodeRunHookEvent `json:"hook,omitempty"`
-	Manual      *WorkflowNodeRunManual    `json:"manual,omitempty"`
-	Number      *int64                    `json:"number,omitempty"`
-	FromNodeIDs []int64                   `json:"from_nodes,omitempty"`
+	Hook           *WorkflowNodeRunHookEvent `json:"hook,omitempty"`
+	Manual         *WorkflowNodeRunManual    `json:"manual,omitempty"`
+	Number         *int64                    `json:"number,omitempty"`
+	FromNodeIDs    []int64                   `json:"from_nodes,omitempty"`
+	AuthConsumerID string                    `json:"auth_consumer,omitempty"`
+}
+
+// Value returns driver.Value from WorkflowRunPostHandlerOption.
+func (a *WorkflowRunPostHandlerOption) Value() (driver.Value, error) {
+	j, err := json.Marshal(a)
+	return j, WrapError(err, "cannot marshal Author")
+}
+
+// Scan WorkflowRunPostHandlerOption.
+func (a *WorkflowRunPostHandlerOption) Scan(src interface{}) error {
+	if src == nil {
+		return nil
+	}
+	source, ok := src.([]byte)
+	if !ok {
+		return WithStack(fmt.Errorf("type assertion .([]byte) failed (%T)", src))
+	}
+	return WrapError(json.Unmarshal(source, a), "cannot unmarshal WorkflowRunPostHandlerOption")
 }
 
 //WorkflowRunNumber contains a workflow run number
 type WorkflowRunNumber struct {
 	Num int64 `json:"num" cli:"run-number"`
+}
+
+// WorkflowRunVersion contains a workflow run version.
+type WorkflowRunVersion struct {
+	Value string `json:"value"`
+}
+
+func (w WorkflowRunVersion) IsValid() error {
+	_, err := semver.ParseTolerant(w.Value)
+	if err != nil {
+		return NewError(ErrWrongRequest, fmt.Errorf("value '%s' is not semver compatible: %v", w.Value, err))
+	}
+	return nil
 }
 
 // Translate translates messages in WorkflowNodeRun
@@ -426,6 +464,16 @@ type WorkflowNodeJobRunInfo struct {
 	WorkflowNodeRunID    int64       `json:"workflow_node_run_id,omitempty"`
 	SpawnInfos           []SpawnInfo `json:"info"`
 	Created              time.Time   `json:"created"`
+}
+
+type WorkflowNodeJobRunBooked struct {
+	ProjectKey   string `json:"project_key"`
+	WorkflowName string `json:"workflow_name"`
+	WorkflowID   int64  `json:"workflow_id"`
+	RunID        int64  `json:"run_id"`
+	NodeRunName  string `json:"node_run_name"`
+	NodeRunID    int64  `json:"node_run_id"`
+	JobName      string `json:"job_name"`
 }
 
 // Translate translates messages in WorkflowNodeJobRun

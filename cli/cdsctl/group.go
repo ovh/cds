@@ -11,8 +11,9 @@ import (
 )
 
 var groupCmd = cli.Command{
-	Name:  "group",
-	Short: "Manage CDS group",
+	Name:    "group",
+	Aliases: []string{"groups"},
+	Short:   "Manage CDS group",
 }
 
 func group() *cobra.Command {

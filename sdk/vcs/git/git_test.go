@@ -7,8 +7,9 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/ovh/cds/engine/api/test"
+	"github.com/ovh/cds/engine/test"
 	"github.com/ovh/cds/sdk/vcs"
+	"github.com/stretchr/testify/require"
 )
 
 func TestClone(t *testing.T) {
@@ -106,7 +107,7 @@ func Test_gitCloneOverHTTPS(t *testing.T) {
 
 func Test_gitCloneOverSSH(t *testing.T) {
 	u, err := user.Current()
-	test.NoError(t, err)
+	require.NoError(t, err)
 	homedir := u.HomeDir
 
 	type args struct {

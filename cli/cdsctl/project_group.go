@@ -13,8 +13,9 @@ import (
 )
 
 var projectGroupCmd = cli.Command{
-	Name:  "group",
-	Short: "Manage CDS group linked to a project",
+	Name:    "group",
+	Aliases: []string{"groups"},
+	Short:   "Manage CDS group linked to a project",
 }
 
 func projectGroup() *cobra.Command {

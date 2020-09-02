@@ -8,6 +8,7 @@ import (
 	"os/signal"
 	"sort"
 	"strings"
+	"sync"
 	"syscall"
 	"time"
 
@@ -275,8 +276,10 @@ See $ engine config command for more details.
 			return serviceConfs[i].arg < serviceConfs[j].arg
 		})
 
+		var wg sync.WaitGroup
 		//Configure the services
-		for _, s := range serviceConfs {
+		for i := range serviceConfs {
+			s := serviceConfs[i]
 			if err := s.service.ApplyConfiguration(s.cfg); err != nil {
 				sdk.Exit("Unable to init service %s: %v", s.arg, err)
 			}
@@ -294,13 +297,19 @@ See $ engine config command for more details.
 				sdk.Exit("Unable to start tracing exporter: %v", err)
 			}
 
-			go start(ctx, s.service, s.cfg, s.arg)
+			wg.Add(1)
+			go func(srv serviceConf) {
+				start(ctx, srv.service, srv.cfg, srv.arg)
+				wg.Done()
+			}(s)
 
 			// Stupid trick: when API is starting wait a bit before start the other
 			if s.arg == "API" || s.arg == "api" {
 				time.Sleep(2 * time.Second)
 			}
 		}
+
+		wg.Wait()
 
 		//Wait for the end
 		<-ctx.Done()
@@ -312,7 +321,7 @@ See $ engine config command for more details.
 
 func start(c context.Context, s service.Service, cfg interface{}, serviceName string) {
 	if err := serve(c, s, serviceName, cfg); err != nil {
-		sdk.Exit("Service has been stopped: %s %+v", serviceName, err)
+		fmt.Printf("Service has been stopped: %s %+v", serviceName, err)
 	}
 }
 

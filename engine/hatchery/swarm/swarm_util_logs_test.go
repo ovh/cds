@@ -15,6 +15,7 @@ import (
 	"gopkg.in/h2non/gock.v1"
 
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/hatchery"
 )
 
 var loggerCall = 0
@@ -44,11 +45,17 @@ func Test_serviceLogs(t *testing.T) {
 			ID:    "service-1",
 			Names: []string{"swarmy-model1-w1"},
 			Labels: map[string]string{
-				"hatchery":            "swarmy",
-				"worker_name":         "swarmy-model1-w1",
-				"service_node_run_id": "999",
-				"service_job_id":      "666",
-				"service_id":          "1",
+				"hatchery":                        "swarmy",
+				"worker_name":                     "swarmy-model1-w1",
+				hatchery.LabelServiceNodeRunID:    "999",
+				hatchery.LabelServiceJobID:        "666",
+				hatchery.LabelServiceID:           "1",
+				hatchery.LabelServiceWorkflowID:   "1",
+				hatchery.LabelServiceWorkflowName: "MyWorkflow",
+				hatchery.LabelServiceProjectKey:   "KEY",
+				hatchery.LabelServiceRunID:        "1",
+				hatchery.LabelServiceNodeRunName:  "Mypip",
+				hatchery.LabelServiceJobName:      "MyJob",
 			},
 		},
 	}

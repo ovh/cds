@@ -66,8 +66,8 @@
                         <div class="fifteen wide field center ui info message"
                             *ngIf="!eventIntegrations || eventIntegrations.length === 0">
                             {{'workflow_no_event_integration' | translate }} <a
-                                href="https://ovh.github.io/cds/docs/concepts/workflow/notifications/" target="_blank"
-                                rel="noopener noreferrer">{{'common_click_more_informations' | translate }}</a>
+                                href="#" [routerLink]="['/docs', 'docs', 'concepts', 'workflow', 'notifications']"
+                                target="_blank" rel="noopener noreferrer">{{'common_click_more_informations' | translate }}</a>
                         </div>
                         <div class="one wide field" *ngIf="eventIntegrations && eventIntegrations.length > 0">
                             <button class="ui blue icon button right floated" [class.loading]="loading"

@@ -3,10 +3,13 @@ package cache
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
 	stdlog "log"
+	"math"
+	"reflect"
 	"strconv"
 	"strings"
 	"time"
@@ -60,7 +63,7 @@ func NewRedisStore(host, password string, ttl int) (*RedisStore, error) {
 
 	pong, err := client.Ping().Result()
 	if err != nil {
-		return nil, err
+		return nil, sdk.WithStack(err)
 	}
 	if pong != "PONG" {
 		return nil, fmt.Errorf("Cannot ping Redis on %s", host)
@@ -266,6 +269,50 @@ func (s *RedisStore) DequeueWithContext(c context.Context, queueName string, wai
 	return nil
 }
 
+// DequeueListWithContext gets from queue This is blocking while there is nothing in the queue, it can be cancelled with a context.Context
+func (s *RedisStore) DequeueJSONRawMessagesWithContext(ctx context.Context, queueName string, waitDuration time.Duration, maxElements int) ([]json.RawMessage, error) {
+	if s.Client == nil {
+		return nil, sdk.WithStack(fmt.Errorf("redis> cannot get redis client"))
+	}
+
+	msgs := make([]json.RawMessage, 0, maxElements)
+	ticker := time.NewTicker(waitDuration)
+	defer ticker.Stop()
+	for len(msgs) < maxElements {
+		select {
+		case <-ticker.C:
+			if ctx.Err() != nil {
+				return msgs, ctx.Err()
+			}
+			res, err := s.Client.BRPop(time.Second, queueName).Result()
+			if err == redis.Nil {
+				continue
+			}
+			if err == io.EOF {
+				if len(msgs) > 0 {
+					return msgs, nil
+				}
+				time.Sleep(1 * time.Second)
+				continue
+			}
+			if err == nil {
+				if len(res) == 0 {
+					if len(msgs) > 0 {
+						return msgs, nil
+					}
+				} else if len(res) == 2 {
+					msgs = append(msgs, json.RawMessage(res[1]))
+					continue
+				}
+			}
+		case <-ctx.Done():
+			return msgs, nil
+		}
+	}
+
+	return msgs, nil
+}
+
 // Publish a msg in a channel
 func (s *RedisStore) Publish(ctx context.Context, channel string, value interface{}) error {
 	if s.Client == nil {
@@ -420,7 +467,7 @@ func (s *RedisStore) SetScan(ctx context.Context, key string, members ...interfa
 	return nil
 }
 
-func (s *RedisStore) ZScan(key, pattern string) ([]string, error) {
+func (s *RedisStore) SetSearch(key, pattern string) ([]string, error) {
 	keys, _, err := s.Client.ZScan(key, 0, pattern, 0).Result()
 	if err != nil {
 		return nil, sdk.WithStack(err)
@@ -451,4 +498,81 @@ func (s *RedisStore) Lock(key string, expiration time.Duration, retrywdMilliseco
 // Unlock deletes a key from cache
 func (s *RedisStore) Unlock(key string) error {
 	return s.Delete(key)
+}
+
+func (s *RedisStore) ScoredSetAppend(ctx context.Context, key string, value interface{}) error {
+	highItem, err := s.Client.ZRevRange(key, 0, 0).Result()
+	if err != nil {
+		return sdk.WithStack(err)
+	}
+	if len(highItem) == 0 {
+		return s.ScoredSetAdd(ctx, key, value, 1)
+	}
+
+	maxScore, err := s.Client.ZScore(key, highItem[0]).Result()
+	if err != nil {
+		return sdk.WithStack(err)
+	}
+	return s.ScoredSetAdd(ctx, key, value, maxScore+1)
+}
+
+func (s *RedisStore) ScoredSetAdd(ctx context.Context, key string, value interface{}, score float64) error {
+	btes, err := json.Marshal(value)
+	if err != nil {
+		return sdk.WithStack(err)
+	}
+
+	if err := s.Client.ZAdd(key, redis.Z{
+		Member: string(btes),
+		Score:  score,
+	}).Err(); err != nil {
+		return sdk.WithStack(err)
+	}
+	return nil
+}
+
+const (
+	MIN float64 = math.MaxFloat64 * -1
+	MAX float64 = math.MaxFloat64
+)
+
+func (s *RedisStore) ScoredSetScan(ctx context.Context, key string, from, to float64, dest interface{}) error {
+	min := "-inf"
+	if from != MIN {
+		min = strconv.FormatFloat(from, 'E', -1, 64)
+	}
+	max := "+inf"
+	if to != MAX {
+		max = strconv.FormatFloat(to, 'E', -1, 64)
+	}
+
+	values, err := s.Client.ZRangeByScore(key, redis.ZRangeBy{
+		Min: min,
+		Max: max,
+	}).Result()
+	if err != nil {
+		return fmt.Errorf("redis zrange error: %v", err)
+	}
+
+	v := reflect.ValueOf(dest)
+	if v.Kind() != reflect.Ptr {
+		return fmt.Errorf("non-pointer %v", v.Type())
+	}
+	v = v.Elem()
+	if v.Kind() != reflect.Slice {
+		return errors.New("the interface is not a slice.")
+	}
+
+	typ := reflect.TypeOf(v.Interface())
+	v.Set(reflect.MakeSlice(typ, len(values), len(values)))
+
+	for i := 0; i < v.Len(); i++ {
+		m := v.Index(i).Interface()
+		if err := json.Unmarshal([]byte(values[i]), &m); err != nil {
+			return sdk.WrapError(err, "redis> cannot unmarshal %s", values[i])
+		}
+		v.Index(i).Set(reflect.ValueOf(m))
+	}
+
+	return nil
 }

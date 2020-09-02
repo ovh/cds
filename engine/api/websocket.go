@@ -16,7 +16,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/tevino/abool"
 
-	"github.com/ovh/cds/engine/api/cache"
+	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
@@ -375,6 +375,14 @@ func (b *websocketBroker) computeEventKeys(event sdk.Event) []string {
 	}
 	// Event that match workflow run filter
 	if event.EventType == fmt.Sprintf("%T", sdk.EventRunWorkflow{}) {
+		keys = append(keys, sdk.WebsocketFilter{
+			Type:              sdk.WebsocketFilterTypeWorkflowRun,
+			ProjectKey:        event.ProjectKey,
+			WorkflowName:      event.WorkflowName,
+			WorkflowRunNumber: event.WorkflowRunNum,
+		}.Key())
+	}
+	if event.EventType == fmt.Sprintf("%T", sdk.EventRunWorkflowNode{}) {
 		keys = append(keys, sdk.WebsocketFilter{
 			Type:              sdk.WebsocketFilterTypeWorkflowRun,
 			ProjectKey:        event.ProjectKey,

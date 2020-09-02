@@ -14,8 +14,9 @@ import (
 )
 
 var pipelineCmd = cli.Command{
-	Name:  "pipeline",
-	Short: "Manage CDS pipeline",
+	Name:    "pipeline",
+	Aliases: []string{"pipelines"},
+	Short:   "Manage CDS pipeline",
 }
 
 func pipeline() *cobra.Command {

@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"gopkg.in/yaml.v2"
 
 	"github.com/ovh/cds/engine/api/application"
@@ -231,8 +232,8 @@ vcs_ssh_key: proj-blabla
 	test.NoError(t, err)
 
 	for i := 0; i < 5; i++ {
-		wr, errWR := workflow.CreateRun(db.DbMap, w1, nil, u)
-		assert.NoError(t, errWR)
+		wr, errWR := workflow.CreateRun(db.DbMap, w1, sdk.WorkflowRunPostHandlerOption{AuthConsumerID: consumer.ID})
+		require.NoError(t, errWR)
 		wr.Workflow = *w1
 		_, errWr := workflow.StartWorkflowRun(context.TODO(), db, cache, *proj, wr, &sdk.WorkflowRunPostHandlerOption{
 			Manual: &sdk.WorkflowNodeRunManual{
@@ -242,7 +243,7 @@ vcs_ssh_key: proj-blabla
 					"git.author": "test",
 				},
 			},
-		}, consumer, nil)
+		}, *consumer, nil)
 		test.NoError(t, errWr)
 	}
 
@@ -319,7 +320,7 @@ func TestPurgeWorkflowRunWithRunningStatus(t *testing.T) {
 	test.NoError(t, err)
 
 	for i := 0; i < 5; i++ {
-		wfr, errWR := workflow.CreateRun(db.DbMap, w1, nil, u)
+		wfr, errWR := workflow.CreateRun(db.DbMap, w1, sdk.WorkflowRunPostHandlerOption{AuthConsumerID: consumer.ID})
 		assert.NoError(t, errWR)
 		wfr.Workflow = *w1
 		_, errWr := workflow.StartWorkflowRun(context.TODO(), db, cache, *proj, wfr, &sdk.WorkflowRunPostHandlerOption{
@@ -330,7 +331,7 @@ func TestPurgeWorkflowRunWithRunningStatus(t *testing.T) {
 					"git.author": "test",
 				},
 			},
-		}, consumer, nil)
+		}, *consumer, nil)
 		test.NoError(t, errWr)
 		wfr.Status = sdk.StatusBuilding
 		test.NoError(t, workflow.UpdateWorkflowRunStatus(db, wfr))
@@ -507,7 +508,7 @@ vcs_ssh_key: proj-blabla
 	})
 	test.NoError(t, err)
 
-	wr, errWR := workflow.CreateRun(db.DbMap, w1, nil, u)
+	wr, errWR := workflow.CreateRun(db.DbMap, w1, sdk.WorkflowRunPostHandlerOption{AuthConsumerID: consumer.ID})
 	assert.NoError(t, errWR)
 	wr.Workflow = *w1
 	_, errWr := workflow.StartWorkflowRun(context.TODO(), db, cache, *proj, wr, &sdk.WorkflowRunPostHandlerOption{
@@ -518,11 +519,11 @@ vcs_ssh_key: proj-blabla
 				"git.author": "test",
 			},
 		},
-	}, consumer, nil)
+	}, *consumer, nil)
 	test.NoError(t, errWr)
 
 	for i := 0; i < 5; i++ {
-		wfr, errWR := workflow.CreateRun(db.DbMap, w1, nil, u)
+		wfr, errWR := workflow.CreateRun(db.DbMap, w1, sdk.WorkflowRunPostHandlerOption{AuthConsumerID: consumer.ID})
 		assert.NoError(t, errWR)
 		wfr.Workflow = *w1
 		_, errWr := workflow.StartWorkflowRun(context.TODO(), db, cache, *proj, wfr, &sdk.WorkflowRunPostHandlerOption{
@@ -533,7 +534,7 @@ vcs_ssh_key: proj-blabla
 					"git.author": "test",
 				},
 			},
-		}, consumer, nil)
+		}, *consumer, nil)
 		test.NoError(t, errWr)
 
 		wfr.Status = sdk.StatusFail
@@ -699,7 +700,7 @@ vcs_ssh_key: proj-blabla
 	test.NoError(t, err)
 
 	for i := 0; i < 5; i++ {
-		wfr, errWR := workflow.CreateRun(db.DbMap, w1, nil, u)
+		wfr, errWR := workflow.CreateRun(db.DbMap, w1, sdk.WorkflowRunPostHandlerOption{AuthConsumerID: consumer.ID})
 		assert.NoError(t, errWR)
 		wfr.Workflow = *w1
 		_, errWr := workflow.StartWorkflowRun(context.TODO(), db, cache, *proj, wfr, &sdk.WorkflowRunPostHandlerOption{
@@ -710,7 +711,7 @@ vcs_ssh_key: proj-blabla
 					"git.author": "test",
 				},
 			},
-		}, consumer, nil)
+		}, *consumer, nil)
 		test.NoError(t, errWr)
 
 		wfr.Status = sdk.StatusFail
@@ -792,7 +793,7 @@ func TestPurgeWorkflowRunWithoutTags(t *testing.T) {
 
 	branches := []string{"master", "master", "master", "develop", "develop", "testBr", "testBr", "testBr", "testBr", "test4"}
 	for i := 0; i < 10; i++ {
-		wr, errWR := workflow.CreateRun(db.DbMap, w1, nil, u)
+		wr, errWR := workflow.CreateRun(db.DbMap, w1, sdk.WorkflowRunPostHandlerOption{AuthConsumerID: consumer.ID})
 		assert.NoError(t, errWR)
 		wr.Workflow = *w1
 		_, errWr := workflow.StartWorkflowRun(context.TODO(), db, cache, *proj, wr, &sdk.WorkflowRunPostHandlerOption{
@@ -803,7 +804,7 @@ func TestPurgeWorkflowRunWithoutTags(t *testing.T) {
 					"git.author": "test",
 				},
 			},
-		}, consumer, nil)
+		}, *consumer, nil)
 		test.NoError(t, errWr)
 	}
 
@@ -880,7 +881,7 @@ func TestPurgeWorkflowRunWithoutTagsBiggerHistoryLength(t *testing.T) {
 
 	branches := []string{"master", "master", "master", "develop", "develop", "testBr", "testBr", "testBr", "testBr", "test4"}
 	for i := 0; i < 10; i++ {
-		wr, errWR := workflow.CreateRun(db.DbMap, w1, nil, u)
+		wr, errWR := workflow.CreateRun(db.DbMap, w1, sdk.WorkflowRunPostHandlerOption{AuthConsumerID: consumer.ID})
 		assert.NoError(t, errWR)
 		wr.Workflow = *w1
 		_, errWr := workflow.StartWorkflowRun(context.TODO(), db, cache, *proj, wr, &sdk.WorkflowRunPostHandlerOption{
@@ -891,7 +892,7 @@ func TestPurgeWorkflowRunWithoutTagsBiggerHistoryLength(t *testing.T) {
 					"git.author": "test",
 				},
 			},
-		}, consumer, nil)
+		}, *consumer, nil)
 		test.NoError(t, errWr)
 	}
 

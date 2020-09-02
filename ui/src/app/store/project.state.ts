@@ -770,9 +770,8 @@ export class ProjectState {
     @Action(ProjectAction.FetchIntegrationsInProject)
     fetchIntegrations(ctx: StateContext<ProjectStateModel>, action: ProjectAction.FetchIntegrationsInProject) {
         const state = ctx.getState();
-
         if (state.currentProjectKey && state.currentProjectKey === action.payload.projectKey &&
-            state.project && state.project.key && state.project.keys) {
+            state.project && state.project.key && state.project.integrations) {
             return ctx.dispatch(new ProjectAction.LoadProject(state.project));
         }
         if (state.currentProjectKey && state.currentProjectKey !== action.payload.projectKey) {

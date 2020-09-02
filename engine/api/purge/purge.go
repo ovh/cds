@@ -8,7 +8,7 @@ import (
 	"github.com/go-gorp/gorp"
 	"go.opencensus.io/stats"
 
-	"github.com/ovh/cds/engine/api/cache"
+	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/engine/api/integration"
 	"github.com/ovh/cds/engine/api/objectstore"
 	"github.com/ovh/cds/engine/api/project"

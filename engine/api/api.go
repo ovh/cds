@@ -28,9 +28,9 @@ import (
 	"github.com/ovh/cds/engine/api/authentication/gitlab"
 	"github.com/ovh/cds/engine/api/authentication/ldap"
 	"github.com/ovh/cds/engine/api/authentication/local"
+	"github.com/ovh/cds/engine/api/authentication/oidc"
 	"github.com/ovh/cds/engine/api/bootstrap"
 	"github.com/ovh/cds/engine/api/broadcast"
-	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/integration"
@@ -46,6 +46,7 @@ import (
 	"github.com/ovh/cds/engine/api/worker"
 	"github.com/ovh/cds/engine/api/workermodel"
 	"github.com/ovh/cds/engine/api/workflow"
+	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/engine/database"
 	"github.com/ovh/cds/engine/featureflipping"
 	"github.com/ovh/cds/engine/gorpmapper"
@@ -124,19 +125,26 @@ type Configuration struct {
 		Github struct {
 			Enabled        bool   `toml:"enabled" default:"false" json:"enabled"`
 			SignupDisabled bool   `toml:"signupDisabled" default:"false" json:"signupDisabled"`
-			URL            string `toml:"url" json:"url" default:"https://github.com" comment:"#######\n Github URL"`
-			APIURL         string `toml:"apiUrl" json:"apiUrl" default:"https://api.github.com" comment:"#######\n Github API URL"`
-			ClientID       string `toml:"clientId" json:"-" comment:"#######\n Github OAuth Client ID"`
-			ClientSecret   string `toml:"clientSecret" json:"-"  comment:"Github OAuth Client Secret"`
-		} `toml:"github" json:"github"`
+			URL            string `toml:"url" json:"url" default:"https://github.com" comment:"Github URL"`
+			APIURL         string `toml:"apiUrl" json:"apiUrl" default:"https://api.github.com" comment:"Github API URL"`
+			ClientID       string `toml:"clientId" json:"-" comment:"Github OAuth Client ID"`
+			ClientSecret   string `toml:"clientSecret" json:"-" comment:"Github OAuth Client Secret"`
+		} `toml:"github" json:"github" comment:"#######\n CDS <-> GitHub Auth. Documentation on https://ovh.github.io/cds/docs/integrations/github/github_authentication/ \n######"`
 		Gitlab struct {
 			Enabled        bool   `toml:"enabled" default:"false" json:"enabled"`
 			SignupDisabled bool   `toml:"signupDisabled" default:"false" json:"signupDisabled"`
-			URL            string `toml:"url" json:"url" default:"https://gitlab.com" comment:"#######\n Gitlab URL"`
-			ApplicationID  string `toml:"applicationID" json:"-" comment:"#######\n Gitlab OAuth Application ID"`
-			Secret         string `toml:"secret" json:"-"  comment:"Gitlab OAuth Application Secret"`
-		} `toml:"gitlab" json:"gitlab"`
-	} `toml:"auth" comment:"##############################\n CDS Authentication Settings#\n#############################" json:"auth"`
+			URL            string `toml:"url" json:"url" default:"https://gitlab.com" comment:"GitLab URL"`
+			ApplicationID  string `toml:"applicationID" json:"-" comment:"GitLab OAuth Application ID"`
+			Secret         string `toml:"secret" json:"-" comment:"GitLab OAuth Application Secret"`
+		} `toml:"gitlab" json:"gitlab" comment:"#######\n CDS <-> GitLab Auth. Documentation on https://ovh.github.io/cds/docs/integrations/gitlab/gitlab_authentication/ \n######"`
+		OIDC struct {
+			Enabled        bool   `toml:"enabled" default:"false" json:"enabled"`
+			SignupDisabled bool   `toml:"signupDisabled" default:"false" json:"signupDisabled"`
+			URL            string `toml:"url" json:"url" default:"" comment:"Open ID connect config URL"`
+			ClientID       string `toml:"clientId" json:"-" comment:"OIDC Client ID"`
+			ClientSecret   string `toml:"clientSecret" json:"-" comment:"OIDC Client Secret"`
+		} `toml:"oidc" json:"oidc" comment:"#######\n CDS <-> Open ID Connect Auth. Documentation on https://ovh.github.io/cds/docs/integrations/openid-connect/ \n######"`
+	} `toml:"auth" comment:"##############################\n CDS Authentication Settings# \n#############################" json:"auth"`
 	SMTP struct {
 		Disable  bool   `toml:"disable" default:"true" json:"disable" comment:"Set to false to enable the internal SMTP client"`
 		Host     string `toml:"host" json:"host" comment:"smtp host"`
@@ -188,6 +196,10 @@ type Configuration struct {
 		StepMaxSize    int64 `toml:"stepMaxSize" default:"15728640" comment:"Max step logs size in bytes (default: 15MB)" json:"stepMaxSize"`
 		ServiceMaxSize int64 `toml:"serviceMaxSize" default:"15728640" comment:"Max service logs size in bytes (default: 15MB)" json:"serviceMaxSize"`
 	} `toml:"log" json:"log" comment:"###########################\n Log settings.\n##########################"`
+	Help struct {
+		Content string `toml:"content" comment:"Help Content. Warning: this message could be view by anonymous user. Markdown accepted." json:"content" default:""`
+		Error   string `toml:"error" comment:"Help displayed to user on each error. Warning: this message could be view by anonymous user. Markdown accepted." json:"error" default:""`
+	} `toml:"help" comment:"######################\n 'Help' informations \n######################" json:"help"`
 }
 
 // DefaultValues is the struc for API Default configuration default values
@@ -582,6 +594,18 @@ func (a *API) Serve(ctx context.Context) error {
 			a.Config.Auth.Gitlab.Secret,
 		)
 	}
+	if a.Config.Auth.OIDC.Enabled {
+		a.AuthenticationDrivers[sdk.ConsumerOIDC], err = oidc.NewDriver(
+			a.Config.Auth.OIDC.SignupDisabled,
+			a.Config.URL.UI,
+			a.Config.Auth.OIDC.URL,
+			a.Config.Auth.OIDC.ClientID,
+			a.Config.Auth.OIDC.ClientSecret,
+		)
+		if err != nil {
+			return err
+		}
+	}
 
 	if a.Config.Auth.CorporateSSO.Enabled {
 		driverConfig := corpsso.Config{
@@ -649,6 +673,9 @@ func (a *API) Serve(ctx context.Context) error {
 	}, a.PanicDump())
 	sdk.GoRoutine(ctx, "authentication.SessionCleaner", func(ctx context.Context) {
 		authentication.SessionCleaner(ctx, a.mustDB, 10*time.Second)
+	}, a.PanicDump())
+	sdk.GoRoutine(ctx, "api.WorkflowRunCraft", func(ctx context.Context) {
+		a.WorkflowRunCraft(ctx, 100*time.Millisecond)
 	}, a.PanicDump())
 
 	migrate.Add(ctx, sdk.Migration{Name: "RunsSecrets", Release: "0.47.0", Blocker: false, Automatic: true, ExecFunc: func(ctx context.Context) error {
@@ -819,6 +846,15 @@ func (a *API) PanicDump() func(s string) (io.WriteCloser, error) {
 		log.Error(context.TODO(), "API Panic stacktrace: %s", s)
 		return cache.NewWriteCloser(a.Cache, cache.Key("api", "panic_dump", s), panicDumpTTL), nil
 	}
+}
+
+// SetCookieSession on given response writter, automatically add domain and path based on api config.
+// This will returns a cookie with no expiration date that should be dropped by browser when closed.
+func (a *API) SetCookieSession(w http.ResponseWriter, name, value string) {
+	a.setCookie(w, &http.Cookie{
+		Name:  name,
+		Value: value,
+	})
 }
 
 // SetCookie on given response writter, automatically add domain and path based on api config.

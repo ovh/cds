@@ -4,12 +4,13 @@ import (
 	"context"
 	"testing"
 
-	"github.com/ovh/cds/engine/api/cache"
-	"github.com/ovh/cds/engine/api/test"
+	"github.com/ovh/cds/engine/cache"
+	"github.com/ovh/cds/engine/test"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 	"github.com/pkg/browser"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 // TestNew needs githubClientID and githubClientSecret
@@ -66,7 +67,7 @@ func getAuthorizedClient(t *testing.T) sdk.VCSAuthorizedClient {
 
 	consumer := New(consumerKey, []byte(privateKey), url, "", "", "", username, password, cache, true)
 	cli, err := consumer.GetAuthorizedClient(context.Background(), token, secret, 0)
-	test.NoError(t, err)
+	require.NoError(t, err)
 	return cli
 }
 
@@ -78,10 +79,10 @@ func TestClientAuthorizeToken(t *testing.T) {
 
 	t.Logf("url: %s", url)
 	assert.NotEmpty(t, url)
-	test.NoError(t, err)
+	require.NoError(t, err)
 
 	err = browser.OpenURL(url)
-	test.NoError(t, err)
+	require.NoError(t, err)
 }
 
 func TestAuthorizedClient(t *testing.T) {

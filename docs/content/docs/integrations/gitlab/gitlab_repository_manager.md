@@ -24,10 +24,16 @@ What you need to perform the following steps:
  - GitLab admin privileges
 
 ### Create a CDS application on GitLab
+
+Notice: if you have already a CDS Application in GitLab for CDS Authentication, you can't reuse it for Repository Manager.
+
 In GitLab go to *Settings* / *Application* section. Create a new application with:
 
- - Name: **CDS**
+ - Name: **CDS VCS**
  - Redirect URI: **https://your-cds-api/repositories_manager/oauth2/callback**
+
+Example for a local configuration:
+- with API through /cdsapi proxy on ui, Redirect URI will be `http://localhost:8080/cdsapi/repositories_manager/oauth2/callback`
 
 Scopes:
 
@@ -73,7 +79,6 @@ Set value to `appId` and `secret`
 ```
 
 
-
 ## Start the vcs µService
 
 ```bash
@@ -82,7 +87,3 @@ $ engine start vcs
 # you can also start CDS api and vcs in the same process:
 $ engine start api vcs
 ```
-
-## Vcs events
-
-For now, CDS supports push events. CDS uses this push event to remove existing runs for deleted branches (24h after branch deletion).

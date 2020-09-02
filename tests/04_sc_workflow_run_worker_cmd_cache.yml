@@ -38,12 +38,15 @@ testcases:
 
 - name: check result
   steps:
-    - script: {{.cdsctl}} -f {{.cdsctl.config}} workflow logs download 04SCWORKFLOWRUNWORKERCMDCACHE 04SCWorkflowRunWorkerCmdCache-WORKFLOW 1 --pattern PULLRELATIVEFROMWORKSPACE
-    - script: grep "my file content" *.log
-    - script: {{.cdsctl}} -f {{.cdsctl.config}} workflow logs download 04SCWORKFLOWRUNWORKERCMDCACHE 04SCWorkflowRunWorkerCmdCache-WORKFLOW 1 --pattern PULLABSOLUTEFROMWORKSPACE
-    - script: grep "my file content" *.log
-    - script: {{.cdsctl}} -f {{.cdsctl.config}} workflow logs download 04SCWORKFLOWRUNWORKERCMDCACHE 04SCWorkflowRunWorkerCmdCache-WORKFLOW 1 --pattern PULLRELATIVEFROMTMP
-    - script: grep "my file content" *.log
-    - script: {{.cdsctl}} -f {{.cdsctl.config}} workflow logs download 04SCWORKFLOWRUNWORKERCMDCACHE 04SCWorkflowRunWorkerCmdCache-WORKFLOW 1 --pattern PULLABSOLUTEFROMTMP
-    - script: grep "my file content" *.log
-
+    - script: {{.cdsctl}} -f {{.cdsctl.config}} workflow logs download 04SCWORKFLOWRUNWORKERCMDCACHE 04SCWorkflowRunWorkerCmdCache-WORKFLOW 1 --pattern PULLRELATIVEFROMWORKSPACE; grep "my file content" *.log
+      retry: 10
+      delay: 3
+    - script: {{.cdsctl}} -f {{.cdsctl.config}} workflow logs download 04SCWORKFLOWRUNWORKERCMDCACHE 04SCWorkflowRunWorkerCmdCache-WORKFLOW 1 --pattern PULLABSOLUTEFROMWORKSPACE; grep "my file content" *.log
+      retry: 10
+      delay: 3
+    - script: {{.cdsctl}} -f {{.cdsctl.config}} workflow logs download 04SCWORKFLOWRUNWORKERCMDCACHE 04SCWorkflowRunWorkerCmdCache-WORKFLOW 1 --pattern PULLRELATIVEFROMTMP; grep "my file content" *.log
+      retry: 10
+      delay: 3
+    - script: {{.cdsctl}} -f {{.cdsctl.config}} workflow logs download 04SCWORKFLOWRUNWORKERCMDCACHE 04SCWorkflowRunWorkerCmdCache-WORKFLOW 1 --pattern PULLABSOLUTEFROMTMP; grep "my file content" *.log
+      retry: 10
+      delay: 3

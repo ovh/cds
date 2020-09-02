@@ -148,6 +148,7 @@ export class UserEditComponent implements OnInit {
             return (c: AuthConsumer) => {
                 return c.name.toLowerCase().indexOf(lowerFilter) !== -1 ||
                     c.description.toLowerCase().indexOf(lowerFilter) !== -1 ||
+                    c.id.toLowerCase().indexOf(lowerFilter) !== -1 ||
                     c.scope_details.map(s => s.scope).join(' ').toLowerCase().indexOf(lowerFilter) !== -1 ||
                     (c.groups && c.groups.map(g => g.name).join(' ').toLowerCase().indexOf(lowerFilter) !== -1) ||
                     (!c.groups && lowerFilter === '*');
@@ -228,6 +229,7 @@ export class UserEditComponent implements OnInit {
             const lowerFilter = f.toLowerCase();
             return (s: AuthSession) => {
                 return s.consumer.name.toLowerCase().indexOf(lowerFilter) !== -1 ||
+                    s.id.toLowerCase().indexOf(lowerFilter) !== -1 ||
                     s.consumer_id.toLowerCase().indexOf(lowerFilter) !== -1 ||
                     s.created.toLowerCase().indexOf(lowerFilter) !== -1 ||
                     s.expire_at.toLowerCase().indexOf(lowerFilter) !== -1;
@@ -260,6 +262,9 @@ export class UserEditComponent implements OnInit {
                                 break;
                             case 'corporate-sso':
                                 icon['class'] = ['shield', 'alternate', 'icon'];
+                                break;
+                            case 'openid-connect':
+                                icon['class'] = ['openid', 'icon'];
                                 break;
                             default:
                                 icon['class'] = [consumer.type, 'icon'];

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -106,10 +107,11 @@ func workflowRunManualRun(v cli.Values) error {
 			return fmt.Errorf("Unable to get current path: %s", err)
 		}
 		var gitBranch, currentBranch, remoteURL string
-		r, err := repo.New(dir)
+		ctx := context.Background()
+		r, err := repo.New(ctx, dir)
 		if err == nil { // If the directory is a git repository
-			currentBranch, _ = r.CurrentBranch()
-			remoteURL, err = r.FetchURL()
+			currentBranch, _ = r.CurrentBranch(ctx)
+			remoteURL, err = r.FetchURL(ctx)
 			if err != nil {
 				return sdk.WrapError(err, "cannot fetch the remote url")
 			}

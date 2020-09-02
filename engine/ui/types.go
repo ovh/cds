@@ -11,6 +11,7 @@ type Service struct {
 	Cfg     Configuration
 	Router  *api.Router
 	HTMLDir string
+	DocsDir string
 }
 
 // Configuration is the ui configuration structure

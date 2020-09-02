@@ -14,12 +14,12 @@ import (
 	"github.com/lib/pq"
 
 	"github.com/ovh/cds/engine/api/application"
-	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/integration"
 	"github.com/ovh/cds/engine/api/keys"
 	"github.com/ovh/cds/engine/api/pipeline"
+	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/exportentities"
@@ -596,7 +596,7 @@ func Update(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store cache.St
 	}
 
 	// reload workflow to delete the current workflow data
-	oldWf, err := LoadByID(ctx, db, projIdent, wf.ID, LoadOptions{})
+	oldWf, err := LoadByID(ctx, db, projIdent, wf.ID, LoadOptions{Minimal: true})
 	if err != nil {
 		return sdk.WrapError(err, "Unable to load existing workflow with proj:%s ID:%d", projIdent.Key, wf.ID)
 	}

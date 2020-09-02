@@ -6,18 +6,18 @@
 
         <i class="fa fa-question-circle"></i> {{'worker_model_help_howtos' | translate}}
         <div class="ui list">
+            <a class="item" target="_blank" rel="noopener noreferrer" 
+                href="#" [routerLink]="['/docs', 'docs', 'tutorials', 'worker_model-docker']">
+                {{'worker_model_help_howto_link_1' | translate}}</a>
             <a class="item" target="_blank" rel="noopener noreferrer"
-                href="https://ovh.github.io/cds/docs/tutorials/worker_model-docker/">{{'worker_model_help_howto_link_1'
-                    | translate}}</a>
+                href="#" [routerLink]="['/docs', 'docs', 'tutorials', 'worker_model-docker', 'docker-customized']">
+                {{'worker_model_help_howto_link_2' | translate}}</a>
             <a class="item" target="_blank" rel="noopener noreferrer"
-                href="https://ovh.github.io/cds/docs/tutorials/worker_model-docker/docker-customized/">{{'worker_model_help_howto_link_2'
-                    | translate}}</a>
+                href="#" [routerLink]="['/docs', 'docs', 'tutorials', 'worker_model-openstack']">
+                {{'worker_model_help_howto_link_3' | translate}}</a>
             <a class="item" target="_blank" rel="noopener noreferrer"
-                href="https://ovh.github.io/cds/docs/tutorials/worker_model-openstack/">{{'worker_model_help_howto_link_3'
-                    | translate}}</a>
-            <a class="item" target="_blank" rel="noopener noreferrer"
-                href="https://ovh.github.io/cds/docs/concepts/worker-model/">{{'common_read_more'
-                    | translate}}</a>
+                href="#" [routerLink]="['/docs', 'docs', 'concepts', 'worker-model']">
+                {{'common_read_more' | translate}}</a>
         </div>
     </div>
 </div>

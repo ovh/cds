@@ -172,20 +172,33 @@ func LoadPipelineStage(ctx context.Context, db gorp.SqlExecutor, p *sdk.Pipeline
 		}
 	}
 
+	// load all steps
+	var stepsIDs []int64
+	for id := range mapStages {
+		for index := range mapActionsStages[id] {
+			stepsIDs = append(stepsIDs, mapActionsStages[id][index].Action.ID)
+		}
+	}
+	as, err := action.LoadAllByIDs(ctx, db, stepsIDs,
+		action.LoadOptions.WithParameters,
+		action.LoadOptions.WithRequirements,
+		action.LoadOptions.WithChildren,
+	)
+	if err != nil {
+		return sdk.WrapError(err, "cannot load pipeline steps")
+	}
+	mSteps := make(map[int64]sdk.Action, len(as))
+	for i := range as {
+		mSteps[as[i].ID] = as[i]
+	}
+
 	//load job
 	for id := range mapStages {
 		for index := range mapActionsStages[id] {
 			job := mapActionsStages[id][index]
 
-			var a *sdk.Action
-			a, err = action.LoadByID(ctx, db, mapActionsStages[id][index].Action.ID,
-				action.LoadOptions.WithParameters,
-				action.LoadOptions.WithRequirements,
-				action.LoadOptions.WithChildren,
-			)
-			if err != nil {
-				return sdk.WrapError(err, "cannot action.LoadActionByID %d", mapActionsStages[id][index].Action.ID)
-			}
+			a := mSteps[mapActionsStages[id][index].Action.ID]
+
 			var pipelineActionParameter []sdk.Parameter
 			var isUpdated bool
 			err = json.Unmarshal([]byte(mapArgs[id][index]), &pipelineActionParameter)
@@ -200,7 +213,7 @@ func LoadPipelineStage(ctx context.Context, db gorp.SqlExecutor, p *sdk.Pipeline
 				}
 			}
 
-			job.Action = *a
+			job.Action = a
 
 			// Insert job also
 			mapStages[id].Jobs = append(mapStages[id].Jobs, job)

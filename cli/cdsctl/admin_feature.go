@@ -11,8 +11,9 @@ import (
 )
 
 var adminFeaturesCmd = cli.Command{
-	Name:  "features",
-	Short: "Manage CDS feature flipping rules",
+	Name:    "features",
+	Aliases: []string{"feature"},
+	Short:   "Manage CDS feature flipping rules",
 }
 
 func adminFeatures() *cobra.Command {

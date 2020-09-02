@@ -57,7 +57,6 @@ export class RequirementsFormComponent implements OnInit {
     isFormValid = false;
     modelTypeClass: string;
     popupText: string;
-    helpType = {};
     placeholderTypeName: {};
     placeholderTypeValue: {};
 
@@ -77,43 +76,33 @@ export class RequirementsFormComponent implements OnInit {
             this.availableRequirements.forEach(a => {
                 let placeHolderName = '';
                 let placeHolderValue = '';
-                let helpMsg = '';
                 switch (a) {
                     case 'binary':
                         placeHolderValue = 'bash';
-                        helpMsg = this._translate.instant('requirement_help_binary');
                         break;
                     case 'service':
                         placeHolderName = this._translate.instant('requirement_placeholder_name_service');
                         placeHolderValue = 'postgres:9.5.3';
-                        helpMsg = this._translate.instant('requirement_help_service');
                         break;
                     case 'hostname':
                         placeHolderValue = this._translate.instant('requirement_placeholder_value_hostname');
-                        helpMsg = this._translate.instant('requirement_help_hostname');
                         break;
                     case 'volume':
                         placeHolderValue = 'type=bind,source=/hostDir/sourceDir,destination=/dirInJob';
-                        helpMsg = this._translate.instant('requirement_help_volume');
                         break;
                     case 'memory':
                         placeHolderValue = '4096';
-                        helpMsg = this._translate.instant('requirement_help_memory');
                         break;
                     case 'os-architecture':
                         placeHolderName = this._translate.instant('requirement_placeholder_name_os-architecture');
                         placeHolderValue = 'linux-amd64';
-                        helpMsg = this._translate.instant('requirement_help_os-architecture');
                         break;
                     case 'model':
-                        helpMsg = this._translate.instant('requirement_help_model');
                         break;
                 }
                 this.placeholderTypeName[a] = placeHolderName;
                 this.placeholderTypeValue[a] = placeHolderValue;
-                this.helpType[a] = helpMsg;
             });
-
         });
     }
 

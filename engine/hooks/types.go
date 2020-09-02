@@ -2,7 +2,7 @@ package hooks
 
 import (
 	"github.com/ovh/cds/engine/api"
-	"github.com/ovh/cds/engine/api/cache"
+	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/engine/service"
 )
 
@@ -32,7 +32,7 @@ type Configuration struct {
 		Port int    `toml:"port" default:"8083" json:"port"`
 	} `toml:"http" comment:"######################\n CDS Hooks HTTP Configuration \n######################" json:"http"`
 	URL              string                          `toml:"url" default:"http://localhost:8083" json:"url"`
-	URLPublic        string                          `toml:"urlPublic" comment:"Public url for external call (webhook)" json:"urlPublic"`
+	URLPublic        string                          `toml:"urlPublic" default:"http://localhost:8080/cdshooks" comment:"Public url for external call (webhook)" json:"urlPublic"`
 	RetryDelay       int64                           `toml:"retryDelay" default:"120" comment:"Execution retry delay in seconds" json:"retryDelay"`
 	RetryError       int64                           `toml:"retryError" default:"3" comment:"Retry execution while this number of error is not reached" json:"retryError"`
 	ExecutionHistory int                             `toml:"executionHistory" default:"10" comment:"Number of execution to keep" json:"executionHistory"`

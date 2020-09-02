@@ -537,7 +537,11 @@ func listItem(i interface{}, filters map[string]string, quiet bool, fields []str
 
 				// if not quiet mode add the key:value to result else if quiet add only the key
 				if !quiet {
-					res[tag] = fmt.Sprintf("%v", f.Interface())
+					if !f.IsValid() {
+						res[tag] = ""
+					} else {
+						res[tag] = fmt.Sprintf("%v", f.Interface())
+					}
 				} else if isKey {
 					res["key"] = fmt.Sprintf("%v", f.Interface())
 				}
