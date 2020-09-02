@@ -206,6 +206,8 @@ func (r *Router) computeScopeDetails() {
 	// create temporary map of scopes, for each scope we will create a map of routes with methods.
 	m := make(map[sdk.AuthConsumerScope]map[string]map[string]struct{})
 
+	mutex.Lock()
+	defer mutex.Unlock()
 	for uri, cfg := range r.mapRouterConfigs {
 		var err error
 		uri, err = docSDK.CleanAndCheckURL(uri)
