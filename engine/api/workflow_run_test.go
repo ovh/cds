@@ -11,8 +11,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/go-gorp/gorp"
-
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/ascode"
 	"github.com/ovh/cds/engine/api/authentication"
@@ -54,14 +52,14 @@ func Test_getWorkflowNodeRunHistoryHandler(t *testing.T) {
 	s := sdk.NewStage("stage 1")
 	s.Enabled = true
 	s.PipelineID = pip.ID
-	pipeline.InsertStage(db, s)
+	require.NoError(t, pipeline.InsertStage(db, s))
 	j := &sdk.Job{
 		Enabled: true,
 		Action: sdk.Action{
 			Enabled: true,
 		},
 	}
-	pipeline.InsertJob(db, j, s.ID, &pip)
+	require.NoError(t, pipeline.InsertJob(db, j, s.ID, &pip))
 	s.Jobs = append(s.Jobs, *j)
 
 	pip.Stages = append(pip.Stages, *s)
@@ -76,14 +74,14 @@ func Test_getWorkflowNodeRunHistoryHandler(t *testing.T) {
 	s = sdk.NewStage("stage 1")
 	s.Enabled = true
 	s.PipelineID = pip2.ID
-	pipeline.InsertStage(db, s)
+	require.NoError(t, pipeline.InsertStage(db, s))
 	j = &sdk.Job{
 		Enabled: true,
 		Action: sdk.Action{
 			Enabled: true,
 		},
 	}
-	pipeline.InsertJob(db, j, s.ID, &pip2)
+	require.NoError(t, pipeline.InsertJob(db, j, s.ID, &pip2))
 	s.Jobs = append(s.Jobs, *j)
 
 	w := sdk.Workflow{
@@ -182,14 +180,14 @@ func Test_getWorkflowRunsHandler(t *testing.T) {
 	s := sdk.NewStage("stage 1")
 	s.Enabled = true
 	s.PipelineID = pip.ID
-	pipeline.InsertStage(api.mustDB(), s)
+	require.NoError(t, pipeline.InsertStage(api.mustDB(), s))
 	j := &sdk.Job{
 		Enabled: true,
 		Action: sdk.Action{
 			Enabled: true,
 		},
 	}
-	pipeline.InsertJob(api.mustDB(), j, s.ID, &pip)
+	require.NoError(t, pipeline.InsertJob(api.mustDB(), j, s.ID, &pip))
 	s.Jobs = append(s.Jobs, *j)
 
 	pip.Stages = append(pip.Stages, *s)
@@ -204,14 +202,14 @@ func Test_getWorkflowRunsHandler(t *testing.T) {
 	s = sdk.NewStage("stage 1")
 	s.Enabled = true
 	s.PipelineID = pip2.ID
-	pipeline.InsertStage(api.mustDB(), s)
+	require.NoError(t, pipeline.InsertStage(api.mustDB(), s))
 	j = &sdk.Job{
 		Enabled: true,
 		Action: sdk.Action{
 			Enabled: true,
 		},
 	}
-	pipeline.InsertJob(api.mustDB(), j, s.ID, &pip2)
+	require.NoError(t, pipeline.InsertJob(api.mustDB(), j, s.ID, &pip2))
 	s.Jobs = append(s.Jobs, *j)
 
 	w := sdk.Workflow{
@@ -338,14 +336,14 @@ func Test_getWorkflowRunsHandlerWithFilter(t *testing.T) {
 	s := sdk.NewStage("stage 1")
 	s.Enabled = true
 	s.PipelineID = pip.ID
-	pipeline.InsertStage(api.mustDB(), s)
+	require.NoError(t, pipeline.InsertStage(api.mustDB(), s))
 	j := &sdk.Job{
 		Enabled: true,
 		Action: sdk.Action{
 			Enabled: true,
 		},
 	}
-	pipeline.InsertJob(api.mustDB(), j, s.ID, &pip)
+	require.NoError(t, pipeline.InsertJob(api.mustDB(), j, s.ID, &pip))
 	s.Jobs = append(s.Jobs, *j)
 
 	pip.Stages = append(pip.Stages, *s)
@@ -360,14 +358,14 @@ func Test_getWorkflowRunsHandlerWithFilter(t *testing.T) {
 	s = sdk.NewStage("stage 1")
 	s.Enabled = true
 	s.PipelineID = pip2.ID
-	pipeline.InsertStage(api.mustDB(), s)
+	require.NoError(t, pipeline.InsertStage(api.mustDB(), s))
 	j = &sdk.Job{
 		Enabled: true,
 		Action: sdk.Action{
 			Enabled: true,
 		},
 	}
-	pipeline.InsertJob(api.mustDB(), j, s.ID, &pip2)
+	require.NoError(t, pipeline.InsertJob(api.mustDB(), j, s.ID, &pip2))
 	s.Jobs = append(s.Jobs, *j)
 
 	w := sdk.Workflow{
@@ -456,14 +454,14 @@ func Test_getLatestWorkflowRunHandler(t *testing.T) {
 	s := sdk.NewStage("stage 1")
 	s.Enabled = true
 	s.PipelineID = pip.ID
-	pipeline.InsertStage(api.mustDB(), s)
+	require.NoError(t, pipeline.InsertStage(api.mustDB(), s))
 	j := &sdk.Job{
 		Enabled: true,
 		Action: sdk.Action{
 			Enabled: true,
 		},
 	}
-	pipeline.InsertJob(api.mustDB(), j, s.ID, &pip)
+	require.NoError(t, pipeline.InsertJob(api.mustDB(), j, s.ID, &pip))
 	s.Jobs = append(s.Jobs, *j)
 
 	pip.Stages = append(pip.Stages, *s)
@@ -478,14 +476,14 @@ func Test_getLatestWorkflowRunHandler(t *testing.T) {
 	s = sdk.NewStage("stage 1")
 	s.Enabled = true
 	s.PipelineID = pip2.ID
-	pipeline.InsertStage(api.mustDB(), s)
+	require.NoError(t, pipeline.InsertStage(api.mustDB(), s))
 	j = &sdk.Job{
 		Enabled: true,
 		Action: sdk.Action{
 			Enabled: true,
 		},
 	}
-	pipeline.InsertJob(api.mustDB(), j, s.ID, &pip2)
+	require.NoError(t, pipeline.InsertJob(api.mustDB(), j, s.ID, &pip2))
 	s.Jobs = append(s.Jobs, *j)
 
 	w := sdk.Workflow{
@@ -525,8 +523,8 @@ func Test_getLatestWorkflowRunHandler(t *testing.T) {
 
 	for i := 0; i < 10; i++ {
 		wr, err := workflow.CreateRun(api.mustDB(), w1, sdk.WorkflowRunPostHandlerOption{AuthConsumerID: consumer.ID})
-		wr.Workflow = *w1
 		assert.NoError(t, err)
+		wr.Workflow = *w1
 		_, err = workflow.StartWorkflowRun(context.TODO(), db, api.Cache, *proj, wr, &sdk.WorkflowRunPostHandlerOption{
 			Manual: &sdk.WorkflowNodeRunManual{
 				Username: u.GetUsername(),
@@ -592,14 +590,14 @@ func Test_getWorkflowRunHandler(t *testing.T) {
 	s := sdk.NewStage("stage 1")
 	s.Enabled = true
 	s.PipelineID = pip.ID
-	pipeline.InsertStage(api.mustDB(), s)
+	require.NoError(t, pipeline.InsertStage(api.mustDB(), s))
 	j := &sdk.Job{
 		Enabled: true,
 		Action: sdk.Action{
 			Enabled: true,
 		},
 	}
-	pipeline.InsertJob(api.mustDB(), j, s.ID, &pip)
+	require.NoError(t, pipeline.InsertJob(api.mustDB(), j, s.ID, &pip))
 	s.Jobs = append(s.Jobs, *j)
 
 	pip.Stages = append(pip.Stages, *s)
@@ -614,14 +612,14 @@ func Test_getWorkflowRunHandler(t *testing.T) {
 	s = sdk.NewStage("stage 1")
 	s.Enabled = true
 	s.PipelineID = pip2.ID
-	pipeline.InsertStage(api.mustDB(), s)
+	require.NoError(t, pipeline.InsertStage(api.mustDB(), s))
 	j = &sdk.Job{
 		Enabled: true,
 		Action: sdk.Action{
 			Enabled: true,
 		},
 	}
-	pipeline.InsertJob(api.mustDB(), j, s.ID, &pip2)
+	require.NoError(t, pipeline.InsertJob(api.mustDB(), j, s.ID, &pip2))
 	s.Jobs = append(s.Jobs, *j)
 
 	w := sdk.Workflow{
@@ -719,14 +717,14 @@ func Test_getWorkflowNodeRunHandler(t *testing.T) {
 	s := sdk.NewStage("stage 1")
 	s.Enabled = true
 	s.PipelineID = pip.ID
-	pipeline.InsertStage(api.mustDB(), s)
+	require.NoError(t, pipeline.InsertStage(api.mustDB(), s))
 	j := &sdk.Job{
 		Enabled: true,
 		Action: sdk.Action{
 			Enabled: true,
 		},
 	}
-	pipeline.InsertJob(api.mustDB(), j, s.ID, &pip)
+	require.NoError(t, pipeline.InsertJob(api.mustDB(), j, s.ID, &pip))
 	s.Jobs = append(s.Jobs, *j)
 
 	pip.Stages = append(pip.Stages, *s)
@@ -741,14 +739,14 @@ func Test_getWorkflowNodeRunHandler(t *testing.T) {
 	s = sdk.NewStage("stage 1")
 	s.Enabled = true
 	s.PipelineID = pip2.ID
-	pipeline.InsertStage(api.mustDB(), s)
+	require.NoError(t, pipeline.InsertStage(api.mustDB(), s))
 	j = &sdk.Job{
 		Enabled: true,
 		Action: sdk.Action{
 			Enabled: true,
 		},
 	}
-	pipeline.InsertJob(api.mustDB(), j, s.ID, &pip2)
+	require.NoError(t, pipeline.InsertJob(api.mustDB(), j, s.ID, &pip2))
 	s.Jobs = append(s.Jobs, *j)
 
 	w := sdk.Workflow{
@@ -879,14 +877,14 @@ func Test_postWorkflowRunHandler(t *testing.T) {
 	s := sdk.NewStage("stage 1")
 	s.Enabled = true
 	s.PipelineID = pip.ID
-	pipeline.InsertStage(api.mustDB(), s)
+	require.NoError(t, pipeline.InsertStage(api.mustDB(), s))
 	j := &sdk.Job{
 		Enabled: true,
 		Action: sdk.Action{
 			Enabled: true,
 		},
 	}
-	pipeline.InsertJob(api.mustDB(), j, s.ID, &pip)
+	require.NoError(t, pipeline.InsertJob(api.mustDB(), j, s.ID, &pip))
 	s.Jobs = append(s.Jobs, *j)
 
 	pip.Stages = append(pip.Stages, *s)
@@ -901,14 +899,14 @@ func Test_postWorkflowRunHandler(t *testing.T) {
 	s = sdk.NewStage("stage 1")
 	s.Enabled = true
 	s.PipelineID = pip2.ID
-	pipeline.InsertStage(api.mustDB(), s)
+	require.NoError(t, pipeline.InsertStage(api.mustDB(), s))
 	j = &sdk.Job{
 		Enabled: true,
 		Action: sdk.Action{
 			Enabled: true,
 		},
 	}
-	pipeline.InsertJob(api.mustDB(), j, s.ID, &pip2)
+	require.NoError(t, pipeline.InsertJob(api.mustDB(), j, s.ID, &pip2))
 	s.Jobs = append(s.Jobs, *j)
 
 	modelIntegration := sdk.IntegrationModel{
@@ -1100,7 +1098,7 @@ func Test_postWorkflowRunHandler(t *testing.T) {
 	assert.Equal(t, int64(1), wr.Number)
 
 	// wait for the workflow to finish crafting
-	assert.NoError(t, waitCraftinWorkflow(t, api, db, wr.ID))
+	assert.NoError(t, waitCraftinWorkflow(t, api, wr.ID))
 
 	lastRun, err := workflow.LoadLastRun(api.mustDB(), proj.Key, w1.Name, workflow.LoadRunOptions{})
 	test.NoError(t, err)
@@ -1155,7 +1153,7 @@ func Test_postWorkflowRunHandler(t *testing.T) {
 
 }
 
-func waitCraftinWorkflow(t *testing.T, api *API, db gorp.SqlExecutor, id int64) error {
+func waitCraftinWorkflow(t *testing.T, api *API, id int64) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
@@ -1379,7 +1377,7 @@ func Test_postWorkflowRunAsyncFailedHandler(t *testing.T) {
 
 	lastRun, err := workflow.LoadLastRun(api.mustDB(), proj.Key, w.Name, workflow.LoadRunOptions{})
 	test.NoError(t, err)
-	waitCraftinWorkflow(t, api, db, lastRun.ID)
+	require.NoError(t, waitCraftinWorkflow(t, api, lastRun.ID))
 
 	cpt := 0
 	for {
@@ -1433,14 +1431,14 @@ func Test_postWorkflowRunHandlerWithoutRightOnEnvironment(t *testing.T) {
 	s := sdk.NewStage("stage 1")
 	s.Enabled = true
 	s.PipelineID = pip.ID
-	pipeline.InsertStage(api.mustDB(), s)
+	require.NoError(t, pipeline.InsertStage(api.mustDB(), s))
 	j := &sdk.Job{
 		Enabled: true,
 		Action: sdk.Action{
 			Enabled: true,
 		},
 	}
-	pipeline.InsertJob(api.mustDB(), j, s.ID, &pip)
+	require.NoError(t, pipeline.InsertJob(api.mustDB(), j, s.ID, &pip))
 	s.Jobs = append(s.Jobs, *j)
 
 	pip.Stages = append(pip.Stages, *s)
@@ -1455,14 +1453,14 @@ func Test_postWorkflowRunHandlerWithoutRightOnEnvironment(t *testing.T) {
 	s = sdk.NewStage("stage 1")
 	s.Enabled = true
 	s.PipelineID = pip2.ID
-	pipeline.InsertStage(api.mustDB(), s)
+	require.NoError(t, pipeline.InsertStage(api.mustDB(), s))
 	j = &sdk.Job{
 		Enabled: true,
 		Action: sdk.Action{
 			Enabled: true,
 		},
 	}
-	pipeline.InsertJob(api.mustDB(), j, s.ID, &pip2)
+	require.NoError(t, pipeline.InsertJob(api.mustDB(), j, s.ID, &pip2))
 	s.Jobs = append(s.Jobs, *j)
 	env := sdk.Environment{
 		Name:       "envtest",
@@ -1837,7 +1835,7 @@ func Test_postWorkflowRunHandlerHookWithMutex(t *testing.T) {
 
 	lastRun, err := workflow.LoadLastRun(api.mustDB(), proj.Key, w.Name, workflow.LoadRunOptions{})
 	test.NoError(t, err)
-	waitCraftinWorkflow(t, api, db, lastRun.ID)
+	require.NoError(t, waitCraftinWorkflow(t, api, lastRun.ID))
 
 	req2 := assets.NewAuthentifiedRequest(t, u, pass, "POST", uri, opts)
 
@@ -1852,7 +1850,7 @@ func Test_postWorkflowRunHandlerHookWithMutex(t *testing.T) {
 
 	lastRun, err = workflow.LoadLastRun(api.mustDB(), proj.Key, w.Name, workflow.LoadRunOptions{})
 	test.NoError(t, err)
-	waitCraftinWorkflow(t, api, db, lastRun.ID)
+	require.NoError(t, waitCraftinWorkflow(t, api, lastRun.ID))
 
 	// it's an async call, wait a bit the let cds take care of the previous request
 	time.Sleep(3 * time.Second)
@@ -1911,7 +1909,7 @@ func Test_postWorkflowRunHandlerMutexRelease(t *testing.T) {
 
 	lastRun, err := workflow.LoadLastRun(api.mustDB(), proj.Key, wkf.Name, workflow.LoadRunOptions{})
 	test.NoError(t, err)
-	waitCraftinWorkflow(t, api, db, lastRun.ID)
+	require.NoError(t, waitCraftinWorkflow(t, api, lastRun.ID))
 
 	var try int
 	for {
@@ -1957,7 +1955,7 @@ func Test_postWorkflowRunHandlerMutexRelease(t *testing.T) {
 
 	lastRun, err = workflow.LoadLastRun(api.mustDB(), proj.Key, wkf.Name, workflow.LoadRunOptions{})
 	test.NoError(t, err)
-	waitCraftinWorkflow(t, api, db, lastRun.ID)
+	require.NoError(t, waitCraftinWorkflow(t, api, lastRun.ID))
 
 	try = 0
 	for {
@@ -2006,7 +2004,7 @@ func Test_postWorkflowRunHandlerMutexRelease(t *testing.T) {
 
 	lastRun, err = workflow.LoadLastRun(api.mustDB(), proj.Key, wkf.Name, workflow.LoadRunOptions{})
 	test.NoError(t, err)
-	waitCraftinWorkflow(t, api, db, lastRun.ID)
+	require.NoError(t, waitCraftinWorkflow(t, api, lastRun.ID))
 
 	try = 0
 	for {
@@ -2302,7 +2300,7 @@ func Test_postWorkflowRunHandlerHook(t *testing.T) {
 	require.NoError(t, json.Unmarshal(rec.Body.Bytes(), wr))
 	assert.Equal(t, int64(1), wr.Number)
 
-	assert.NoError(t, waitCraftinWorkflow(t, api, db, wr.ID))
+	assert.NoError(t, waitCraftinWorkflow(t, api, wr.ID))
 	lastRun, err := workflow.LoadLastRun(api.mustDB(), proj.Key, w1.Name, workflow.LoadRunOptions{})
 	test.NoError(t, err)
 	assert.NotNil(t, lastRun.RootRun())
@@ -2468,7 +2466,7 @@ func Test_postWorkflowRunHandler_ConditionNotOK(t *testing.T) {
 
 	lastRun, err := workflow.LoadLastRun(api.mustDB(), proj.Key, w.Name, workflow.LoadRunOptions{})
 	test.NoError(t, err)
-	waitCraftinWorkflow(t, api, db, lastRun.ID)
+	require.NoError(t, waitCraftinWorkflow(t, api, lastRun.ID))
 
 	// it's an async call, wait a bit the let cds take care of the previous request
 	time.Sleep(3 * time.Second)
@@ -2580,14 +2578,14 @@ func initGetWorkflowNodeRunJobTest(t *testing.T, api *API, db gorpmapper.SqlExec
 	s := sdk.NewStage("stage 1")
 	s.Enabled = true
 	s.PipelineID = pip.ID
-	pipeline.InsertStage(api.mustDB(), s)
+	require.NoError(t, pipeline.InsertStage(api.mustDB(), s))
 	j := &sdk.Job{
 		Enabled: true,
 		Action: sdk.Action{
 			Enabled: true,
 		},
 	}
-	pipeline.InsertJob(api.mustDB(), j, s.ID, &pip)
+	require.NoError(t, pipeline.InsertJob(api.mustDB(), j, s.ID, &pip))
 	s.Jobs = append(s.Jobs, *j)
 
 	pip.Stages = append(pip.Stages, *s)
@@ -2602,14 +2600,14 @@ func initGetWorkflowNodeRunJobTest(t *testing.T, api *API, db gorpmapper.SqlExec
 	s = sdk.NewStage("stage 1")
 	s.Enabled = true
 	s.PipelineID = pip2.ID
-	pipeline.InsertStage(api.mustDB(), s)
+	require.NoError(t, pipeline.InsertStage(api.mustDB(), s))
 	j = &sdk.Job{
 		Enabled: true,
 		Action: sdk.Action{
 			Enabled: true,
 		},
 	}
-	pipeline.InsertJob(api.mustDB(), j, s.ID, &pip2)
+	require.NoError(t, pipeline.InsertJob(api.mustDB(), j, s.ID, &pip2))
 	s.Jobs = append(s.Jobs, *j)
 
 	w := sdk.Workflow{
@@ -3068,14 +3066,14 @@ func Test_postWorkflowRunHandlerRestartOnlyFailed(t *testing.T) {
 	s := sdk.NewStage("stage 1")
 	s.Enabled = true
 	s.PipelineID = pip.ID
-	pipeline.InsertStage(api.mustDB(), s)
+	require.NoError(t, pipeline.InsertStage(api.mustDB(), s))
 	j := &sdk.Job{
 		Enabled: true,
 		Action: sdk.Action{
 			Enabled: true,
 		},
 	}
-	pipeline.InsertJob(api.mustDB(), j, s.ID, &pip)
+	require.NoError(t, pipeline.InsertJob(api.mustDB(), j, s.ID, &pip))
 	s.Jobs = append(s.Jobs, *j)
 
 	j2 := &sdk.Job{
@@ -3084,7 +3082,7 @@ func Test_postWorkflowRunHandlerRestartOnlyFailed(t *testing.T) {
 			Enabled: true,
 		},
 	}
-	pipeline.InsertJob(api.mustDB(), j2, s.ID, &pip)
+	require.NoError(t, pipeline.InsertJob(api.mustDB(), j2, s.ID, &pip))
 	s.Jobs = append(s.Jobs, *j2)
 
 	pip.Stages = append(pip.Stages, *s)
@@ -3139,7 +3137,7 @@ func Test_postWorkflowRunHandlerRestartOnlyFailed(t *testing.T) {
 	assert.Equal(t, int64(1), wr.Number)
 
 	// wait for the workflow to finish crafting
-	assert.NoError(t, waitCraftinWorkflow(t, api, db, wr.ID))
+	assert.NoError(t, waitCraftinWorkflow(t, api, wr.ID))
 
 	wrr, _ := workflow.LoadRun(context.TODO(), db, proj2.Key, w1.Name, 1, workflow.LoadRunOptions{})
 	assert.Equal(t, sdk.StatusBuilding, wrr.Status)
@@ -3213,14 +3211,14 @@ func Test_postWorkflowRunHandlerRestartResync(t *testing.T) {
 	s := sdk.NewStage("stage 1")
 	s.Enabled = true
 	s.PipelineID = pip.ID
-	pipeline.InsertStage(api.mustDB(), s)
+	require.NoError(t, pipeline.InsertStage(api.mustDB(), s))
 	j := &sdk.Job{
 		Enabled: true,
 		Action: sdk.Action{
 			Enabled: true,
 		},
 	}
-	pipeline.InsertJob(api.mustDB(), j, s.ID, &pip)
+	require.NoError(t, pipeline.InsertJob(api.mustDB(), j, s.ID, &pip))
 	s.Jobs = append(s.Jobs, *j)
 
 	j2 := &sdk.Job{
@@ -3229,7 +3227,7 @@ func Test_postWorkflowRunHandlerRestartResync(t *testing.T) {
 			Enabled: true,
 		},
 	}
-	pipeline.InsertJob(api.mustDB(), j2, s.ID, &pip)
+	require.NoError(t, pipeline.InsertJob(api.mustDB(), j2, s.ID, &pip))
 	s.Jobs = append(s.Jobs, *j2)
 
 	pip.Stages = append(pip.Stages, *s)
@@ -3284,7 +3282,7 @@ func Test_postWorkflowRunHandlerRestartResync(t *testing.T) {
 	assert.Equal(t, int64(1), wr.Number)
 
 	// wait for the workflow to finish crafting
-	assert.NoError(t, waitCraftinWorkflow(t, api, db, wr.ID))
+	assert.NoError(t, waitCraftinWorkflow(t, api, wr.ID))
 
 	wrr, _ := workflow.LoadRun(context.TODO(), db, proj2.Key, w1.Name, 1, workflow.LoadRunOptions{})
 	assert.Equal(t, sdk.StatusBuilding, wrr.Status)
@@ -3330,7 +3328,7 @@ func Test_postWorkflowRunHandlerRestartResync(t *testing.T) {
 			Enabled: true,
 		},
 	}
-	pipeline.InsertJob(api.mustDB(), j3, s.ID, &pip)
+	require.NoError(t, pipeline.InsertJob(api.mustDB(), j3, s.ID, &pip))
 
 	uri = router.GetRoute("POST", api.postWorkflowRunHandler, vars)
 	test.NotEmpty(t, uri)
