@@ -256,6 +256,21 @@ func LoadProjectByWorkflowID(db gorp.SqlExecutor, workflowID int64, opts ...Load
 	return load(context.Background(), db, opts, query, workflowID)
 }
 
+// LoadFavorites returns all favorites projects for one user
+func LoadFavorites(ctx context.Context, db gorp.SqlExecutor, u *sdk.AuthentifiedUser) ([]sdk.Project, error) {
+	var end func()
+	_, end = telemetry.Span(ctx, "project.LoadFavorites")
+	defer end()
+
+	query := `SELECT project.*
+			FROM project
+			JOIN project_favorite ON project.id = project_id
+			WHERE authentified_user_id = $1`
+
+	args := []interface{}{u.ID}
+	return loadprojects(ctx, db, nil, query, args...)
+}
+
 func loadprojects(ctx context.Context, db gorp.SqlExecutor, opts []LoadOptionFunc, query string, args ...interface{}) ([]sdk.Project, error) {
 	var end func()
 	ctx, end = telemetry.Span(ctx, "project.loadprojects")

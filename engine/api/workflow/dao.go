@@ -14,12 +14,12 @@ import (
 	"github.com/lib/pq"
 
 	"github.com/ovh/cds/engine/api/application"
-	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/integration"
 	"github.com/ovh/cds/engine/api/keys"
 	"github.com/ovh/cds/engine/api/pipeline"
+	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/exportentities"
@@ -32,7 +32,7 @@ type PushSecrets struct {
 	EnvironmentdSecrets map[int64][]sdk.Variable
 }
 
-// LoadAllByProjectIDs returns all workflow for given project ids.
+// LoadAllNamesByProjectIDs returns all workflow for given project ids.
 func LoadAllNamesByProjectIDs(ctx context.Context, db gorp.SqlExecutor, projectIDs []int64) ([]sdk.WorkflowName, error) {
 	query := `
     SELECT workflow.*, project.projectkey

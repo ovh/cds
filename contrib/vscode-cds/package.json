@@ -1,0 +1,284 @@
+{
+  "name": "vscode-cds",
+  "displayName": "CDS",
+  "description": "CDS VSCode Extension",
+  "version": "0.1.0",
+  "publisher": "OVHcloud",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ovh/cds.git"
+  },
+  "bugs": {
+    "url": "https://github.com/ovh/cds/issues",
+    "email": "opensource@ovh.net"
+  },
+  "engines": {
+    "vscode": "^1.42.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "onCommand:extension.vsCdsAddNewConfig",
+    "onView:extension.vsCdsExplorer",
+    "onView:extension.vsCdsExplorerQueue",
+    "extension.vsCdsOpenBrowserWorkflow",
+    "extension.vsCdsOpenBrowserWorkflowRun",
+    "extension.vsCdsOpenBrowserProject",
+    "extension.vsCdsOpenBrowserApplication",
+    "extension.vsCdsOpenBrowserPipeline",
+    "extension.vsCdsShowStepLogs"
+  ],
+  "keywords": [
+    "cds",
+    "cdsctl"
+  ],
+  "main": "./out/index.js",
+  "license": "BSD 3-Clause License",
+  "homepage": "https://github.com/ovh/ovh/blob/master/README.md",
+  "contributes": {
+    "configuration": {
+      "type": "object",
+      "title": "CDS",
+      "properties": {
+        "cds.cdsrcs": {
+          "type": "array",
+          "default": [
+            "~/.cdsrc"
+          ],
+          "items": {
+            "type": "string"
+          },
+          "markdownDescription": "List of cdsrc files."
+        },
+        "cds.logLevel": {
+          "type": "string",
+          "enum": [
+            "info",
+            "error",
+            "critical"
+          ],
+          "default": "info",
+          "description": "Logging for CDS extension. The log is emitted to the output channel named as CDS."
+        },
+        "cds.statusBarPositionPriority": {
+          "type": "number",
+          "default": 1,
+          "description": "Priority where the status bar view should be placed"
+        },
+        "cds.autoRefreshQueueSeconds": {
+          "type": "number",
+          "default": "-1",
+          "description": "If > 0, CDS queue is auto refresh each n seconds."
+        },
+        "cds.showQueueExplorer": {
+            "type": "boolean",
+            "default": true,
+            "description": "When true, show CDS Queue Explorer."
+        },
+        "cds.showExplorer": {
+            "type": "boolean",
+            "default": true,
+            "description": "When true, show CDS Explorer."
+        }
+      }
+    },
+    "views": {
+      "cdsView": [
+        {
+          "id": "extension.vsCdsExplorer",
+          "name": "Explorer",
+          "when": "config.cds.showExplorer"
+        },
+        {
+          "id": "extension.vsCdsExplorerQueue",
+          "name": "Queue",
+          "when": "config.cds.showQueueExplorer"
+        }
+      ]
+    },
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "cdsView",
+          "title": "CDS",
+          "icon": "images/cds.svg"
+        }
+      ]
+    },
+    "menus": {
+      "view/title": [
+        {
+          "command": "extension.vsCdsRefreshExplorer",
+          "when": "config.cds.showExplorer && view == extension.vsCdsExplorer",
+          "group": "navigation"
+        },
+        {
+          "command": "extension.vsCdsAddNewConfig",
+          "when": "view == extension.vsCdsExplorer",
+          "group": "0"
+        },
+        {
+          "command": "extension.vsCdsRefreshExplorerQueue",
+          "when": "config.cds.showQueueExplorer && view == extension.vsCdsExplorerQueue",
+          "group": "navigation"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "extension.vsCdsRemoveConfigFile",
+          "when": "view == extension.vsCdsExplorer && viewItem =~ /vsCds\\.\\w*context/i",
+          "group": "0@1"
+        },
+        {
+          "command": "extension.vsCdsSetAsCurrentContext",
+          "when": "view == extension.vsCdsExplorer && viewItem =~ /vsCds\\.\\w*context/i",
+          "group": "0@1"
+        },
+        {
+          "command": "extension.vsCdsOpenBrowserWorkflow",
+          "group": "0@1",
+          "when": "view == extension.vsCdsExplorer && viewItem =~ /vsCds\\.\\w*workflowEdit/i"
+        },
+        {
+          "command": "extension.vsCdsOpenBrowserWorkflowRun",
+          "group": "0@1",
+          "when": "view == extension.vsCdsExplorer && viewItem =~ /vsCds\\.\\w*workflowRun/i"
+        },
+        {
+          "command": "extension.vsCdsOpenBrowserWorkflowRun",
+          "group": "0@1",
+          "when": "view == extension.vsCdsExplorerQueue && viewItem =~ /vsCds\\.\\w*workflowRun/i"
+        },
+        {
+          "command": "extension.vsCdsOpenBrowserProject",
+          "group": "0@1",
+          "when": "view == extension.vsCdsExplorer && viewItem =~ /vsCds\\.\\w*project/i"
+        },
+        {
+          "command": "extension.vsCdsOpenBrowserApplication",
+          "group": "0@1",
+          "when": "view == extension.vsCdsExplorer && viewItem =~ /vsCds\\.\\w*application/i"
+        },
+        {
+          "command": "extension.vsCdsOpenBrowserPipeline",
+          "group": "0@1",
+          "when": "view == extension.vsCdsExplorer && viewItem =~ /vsCds\\.\\w*pipeline/i"
+        },
+        {
+          "command": "extension.vsCdsShowStepLogs",
+          "group": "0@1",
+          "when": "view == extension.vsCdsExplorer && viewItem =~ /vsCds\\.\\w*step/i"
+        }
+      ]
+    },
+    "commandPalette": [
+      {
+        "command": "extension.vsCdsRemoveConfigFile",
+        "when": "view == extension.vsCdsExplorer"
+      },
+      {
+        "command": "extension.vsCdsSetAsCurrentContext",
+        "when": "view == extension.vsCdsExplorer"
+      }
+    ],
+    "commands": [
+      {
+        "command": "extension.vsCdsRemoveConfigFile",
+        "title": "Remove CDS Config file",
+        "category": "CDS"
+      },
+      {
+        "command": "extension.vsCdsSetAsCurrentContext",
+        "title": "Set as current context",
+        "category": "CDS"
+      },
+      {
+        "command": "extension.vsCdsInfo",
+        "title": "Show CDS Info",
+        "category": "CDS"
+      },
+      {
+        "command": "extension.vsCdsAddNewConfig",
+        "title": "Add CDS config file (.cdsrc)",
+        "category": "CDS"
+      },
+      {
+        "command": "extension.vsCdsRefreshExplorer",
+        "title": "Refresh",
+        "category": "CDS",
+        "icon": {
+          "light": "images/light/refresh.svg",
+          "dark": "images/dark/refresh.svg"
+        }
+      },
+      {
+        "command": "extension.vsCdsOpenBrowserWorkflow",
+        "title": "Open Workflow (browser)",
+        "description": "Open Workflow in your browser",
+        "category": "CDS"
+      },
+      {
+        "command": "extension.vsCdsOpenBrowserWorkflowRun",
+        "title": "Open Workflow Run (browser)",
+        "description": "Open Workflow Run in your browser",
+        "category": "CDS"
+      },
+      {
+        "command": "extension.vsCdsOpenBrowserProject",
+        "title": "Open Project (browser)",
+        "description": "Open Project in your browser",
+        "category": "CDS"
+      },
+      {
+        "command": "extension.vsCdsOpenBrowserApplication",
+        "title": "Open Application (browser)",
+        "description": "Open Application in your browser",
+        "category": "CDS"
+      },
+      {
+        "command": "extension.vsCdsOpenBrowserPipeline",
+        "title": "Open Pipeline (browser)",
+        "description": "Open Pipeline in your browser",
+        "category": "CDS"
+      },
+      {
+        "command": "extension.vsCdsShowStepLogs",
+        "title": "Show step log",
+        "description": "Show step log",
+        "category": "CDS"
+      },
+      {
+        "command": "extension.vsCdsRefreshExplorerQueue",
+        "title": "Refresh",
+        "category": "CDS",
+        "icon": {
+          "light": "images/light/refresh.svg",
+          "dark": "images/dark/refresh.svg"
+        }
+      }
+    ]
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "postinstall": "node ./node_modules/vscode/bin/install",
+    "test": "npm run compile && node ./node_modules/vscode/bin/test"
+  },
+  "extensionDependencies": [
+    "redhat.vscode-yaml"
+  ],
+  "dependencies": {
+    "@types/concat-stream": "^1.6.0",
+    "concat-stream": "^2.0.0",
+    "toml": "^3.0.0"
+  },
+  "devDependencies": {
+    "typescript": "^3.3.1",
+    "vscode": "^1.1.28",
+    "tslint": "^5.12.1",
+    "@types/node": "^10.12.21",
+    "@types/mocha": "^2.2.42"
+  }
+}

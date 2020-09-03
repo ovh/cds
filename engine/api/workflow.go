@@ -158,6 +158,11 @@ func (api *API) getWorkflowHandler() service.Handler {
 
 		api.setWorkflowURLs(w1)
 
+		w1.Favorite, err = workflow.IsFavorite(api.mustDB(), w1, getAPIConsumer(ctx).AuthentifiedUser.ID)
+		if err != nil {
+			return sdk.WrapError(err, "Cannot load workflow favorite %s/%s", w1.ProjectKey, w1.Name)
+		}
+
 		//We filter project and workflow configuration key, because they are always set on insertHooks
 		w1.FilterHooksConfig(sdk.HookConfigProject, sdk.HookConfigWorkflow)
 		return service.WriteJSON(w, w1, http.StatusOK)

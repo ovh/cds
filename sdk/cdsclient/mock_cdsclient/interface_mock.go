@@ -3342,6 +3342,36 @@ func (mr *MockUserClientMockRecorder) UserGetSchema() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UserGetSchema", reflect.TypeOf((*MockUserClient)(nil).UserGetSchema))
 }
 
+// ProjectFavoritesList mocks base method
+func (m *MockUserClient) ProjectFavoritesList(username string) ([]sdk.Project, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ProjectFavoritesList", username)
+	ret0, _ := ret[0].([]sdk.Project)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ProjectFavoritesList indicates an expected call of ProjectFavoritesList
+func (mr *MockUserClientMockRecorder) ProjectFavoritesList(username interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectFavoritesList", reflect.TypeOf((*MockUserClient)(nil).ProjectFavoritesList), username)
+}
+
+// WorkflowFavoritesList mocks base method
+func (m *MockUserClient) WorkflowFavoritesList(username string) ([]sdk.WorkflowName, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "WorkflowFavoritesList", username)
+	ret0, _ := ret[0].([]sdk.WorkflowName)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// WorkflowFavoritesList indicates an expected call of WorkflowFavoritesList
+func (mr *MockUserClientMockRecorder) WorkflowFavoritesList(username interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkflowFavoritesList", reflect.TypeOf((*MockUserClient)(nil).WorkflowFavoritesList), username)
+}
+
 // MockWorkerClient is a mock of WorkerClient interface
 type MockWorkerClient struct {
 	ctrl     *gomock.Controller
@@ -7291,6 +7321,36 @@ func (m *MockInterface) UserGetSchema() (sdk.SchemaResponse, error) {
 func (mr *MockInterfaceMockRecorder) UserGetSchema() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UserGetSchema", reflect.TypeOf((*MockInterface)(nil).UserGetSchema))
+}
+
+// ProjectFavoritesList mocks base method
+func (m *MockInterface) ProjectFavoritesList(username string) ([]sdk.Project, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ProjectFavoritesList", username)
+	ret0, _ := ret[0].([]sdk.Project)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ProjectFavoritesList indicates an expected call of ProjectFavoritesList
+func (mr *MockInterfaceMockRecorder) ProjectFavoritesList(username interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectFavoritesList", reflect.TypeOf((*MockInterface)(nil).ProjectFavoritesList), username)
+}
+
+// WorkflowFavoritesList mocks base method
+func (m *MockInterface) WorkflowFavoritesList(username string) ([]sdk.WorkflowName, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "WorkflowFavoritesList", username)
+	ret0, _ := ret[0].([]sdk.WorkflowName)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// WorkflowFavoritesList indicates an expected call of WorkflowFavoritesList
+func (mr *MockInterfaceMockRecorder) WorkflowFavoritesList(username interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkflowFavoritesList", reflect.TypeOf((*MockInterface)(nil).WorkflowFavoritesList), username)
 }
 
 // WorkerGet mocks base method

@@ -60,7 +60,7 @@ testcases:
 
 - name: project favorite add
   steps:
-  - script: {{.cdsctl}} -f {{.cdsctl.config}} project favorite ITCLIAPPPRJ
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} project favorite toggle ITCLIAPPPRJ
     assertions:
       - result.code ShouldEqual 0
       - result.systemout ShouldContainSubstring added
@@ -72,9 +72,16 @@ testcases:
       - result.code ShouldEqual 0
       - result.systemout ShouldContainSubstring true
 
+- name: project favorite list
+  steps:
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} project favorites list
+    assertions:
+      - result.code ShouldEqual 0
+      - result.systemout ShouldContainSubstring ITCLIAPPPRJ
+
 - name: project favorite delete
   steps:
-  - script: {{.cdsctl}} -f {{.cdsctl.config}} project favorite ITCLIAPPPRJ
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} project favorite toggle ITCLIAPPPRJ
     assertions:
       - result.code ShouldEqual 0
       - result.systemout ShouldContainSubstring deleted

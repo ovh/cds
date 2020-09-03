@@ -35,7 +35,7 @@ func (api *API) postUserFavoriteHandler() service.Handler {
 				return sdk.WrapError(err, "cannot load workflow %s/%s", params.ProjectKey, params.WorkflowName)
 			}
 
-			wf.Favorite, err = workflow.IsFavorite(api.mustDB(), wf, consumer.AuthentifiedUserID)
+			wf.Favorite, err = workflow.IsFavorite(api.mustDB(), wf, consumer.AuthentifiedUser.ID)
 			if err != nil {
 				return sdk.WrapError(err, "cannot load workflow favorite %s/%s", params.ProjectKey, params.WorkflowName)
 			}

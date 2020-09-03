@@ -272,6 +272,8 @@ type UserClient interface {
 	UserGetGroups(username string) (map[string][]sdk.Group, error)
 	UpdateFavorite(params sdk.FavoriteParams) (interface{}, error)
 	UserGetSchema() (sdk.SchemaResponse, error)
+	ProjectFavoritesList(username string) ([]sdk.Project, error)
+	WorkflowFavoritesList(username string) ([]sdk.WorkflowName, error)
 }
 
 // WorkerClient exposes workers functions
