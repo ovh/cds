@@ -214,7 +214,7 @@ func testRunWorkflow(t *testing.T, api *API, router *Router) testRunWorkflowCtx 
 		t.FailNow()
 	}
 
-	waitCraftinWorkflow(t, api.mustDB(), wr.ID)
+	waitCraftinWorkflow(t, api, wr.ID)
 
 	// Wait building status
 	cpt := 0
