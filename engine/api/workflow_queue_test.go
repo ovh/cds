@@ -91,7 +91,7 @@ func testRunWorkflow(t *testing.T, api *API, router *Router) testRunWorkflowCtx 
 	s := sdk.NewStage("stage-" + sdk.RandomString(10))
 	s.Enabled = true
 	s.PipelineID = pip.ID
-	pipeline.InsertStage(db, s)
+	require.NoError(t, pipeline.InsertStage(db, s))
 	j := &sdk.Job{
 		Enabled: true,
 		Action: sdk.Action{
@@ -101,7 +101,7 @@ func testRunWorkflow(t *testing.T, api *API, router *Router) testRunWorkflowCtx 
 			},
 		},
 	}
-	pipeline.InsertJob(db, j, s.ID, &pip)
+	require.NoError(t, pipeline.InsertJob(db, j, s.ID, &pip))
 	s.Jobs = append(s.Jobs, *j)
 
 	pip.Stages = append(pip.Stages, *s)
@@ -179,11 +179,11 @@ func testRunWorkflow(t *testing.T, api *API, router *Router) testRunWorkflowCtx 
 		},
 	}
 
-	proj2, errP := project.Load(context.TODO(), api.mustDB(), proj.Key, project.LoadOptions.WithGroups)
+	proj2, errP := project.Load(context.TODO(), db, proj.Key, project.LoadOptions.WithGroups)
 	require.NoError(t, errP)
 
 	require.NoError(t, workflow.Insert(context.TODO(), db, api.Cache, projIdent, proj2.ProjectGroups, &w))
-	w1, err := workflow.Load(context.TODO(), api.mustDB(), projIdent, w.Name, workflow.LoadOptions{})
+	w1, err := workflow.Load(context.TODO(), db, projIdent, w.Name, workflow.LoadOptions{})
 
 	require.NoError(t, err)
 
@@ -214,7 +214,7 @@ func testRunWorkflow(t *testing.T, api *API, router *Router) testRunWorkflowCtx 
 		t.FailNow()
 	}
 
-	waitCraftinWorkflow(t, api, wr.ID)
+	require.NoError(t, waitCraftinWorkflow(t, api, wr.ID))
 
 	// Wait building status
 	cpt := 0
