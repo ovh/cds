@@ -2,8 +2,10 @@ package index_test
 
 import (
 	"context"
+	"strconv"
 	"testing"
 
+	"github.com/mitchellh/hashstructure"
 	"github.com/stretchr/testify/require"
 
 	"github.com/ovh/cds/engine/cdn/index"
@@ -18,10 +20,20 @@ func TestLoadItem(t *testing.T) {
 
 	db, _ := test.SetupPGWithMapper(t, m, sdk.TypeCDN)
 
+	apiRef := index.ApiRef{
+		ProjectKey: sdk.RandomString(10),
+	}
+	hashRefU, err := hashstructure.Hash(apiRef, nil)
+	require.NoError(t, err)
+	hashRef := strconv.FormatUint(hashRefU, 10)
+
 	i := index.Item{
-		Type: index.TypeItemStepLog,
+		ApiRef:     apiRef,
+		ApiRefHash: hashRef,
+		Type:       index.TypeItemStepLog,
 	}
 	require.NoError(t, index.InsertItem(context.TODO(), m, db, &i))
+	t.Cleanup(func() { _ = index.DeleteItem(m, db, &i) })
 
 	res, err := index.LoadItemByID(context.TODO(), m, db, i.ID)
 	require.NoError(t, err)
