@@ -44,7 +44,6 @@ func (s *Service) SyncLogs(ctx context.Context, cdsStorage *cds.CDS) error {
 }
 
 func (s *Service) syncProjectLogs(ctx context.Context, cdsStorage *cds.CDS, pKey string) error {
-	hasFailed := false
 	// Check feature enable
 	resp, err := cdsStorage.FeatureEnabled("cdn-job-logs", map[string]string{"project_key": pKey})
 	if err != nil {
@@ -66,7 +65,6 @@ func (s *Service) syncProjectLogs(ctx context.Context, cdsStorage *cds.CDS, pKey
 	for _, nodeRunIdentifier := range nodeRunIds {
 		log.Info(ctx, "cdn:cds:sync:log: node run done for project %s:  %d/%d (+%d failed)", pKey, nodeRunDone, len(nodeRunIds), nodeRunFailed)
 		if err := s.syncNodeRun(ctx, cdsStorage, pKey, nodeRunIdentifier); err != nil {
-			hasFailed = true
 			nodeRunFailed++
 			log.Error(ctx, "cdn:cds:sync:log: unable to sync node runs: %v", err)
 			continue
@@ -74,7 +72,7 @@ func (s *Service) syncProjectLogs(ctx context.Context, cdsStorage *cds.CDS, pKey
 		nodeRunDone++
 	}
 	log.Info(ctx, "cdn:cds:sync:log: node run done for project %s:  %d/%d (+%d failed)", pKey, nodeRunDone, len(nodeRunIds), nodeRunFailed)
-	if hasFailed {
+	if nodeRunFailed > 0 {
 		return sdk.WithStack(fmt.Errorf("failed during node run sync on project %s", pKey))
 	}
 	return nil

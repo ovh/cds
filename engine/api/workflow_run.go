@@ -47,7 +47,7 @@ func (api *API) getWorkflowsRunsAndNodesIDshandler() service.Handler {
 
 		ids, err := workflow.LoadNodeRunIDs(api.mustDB(), p.WorkflowNames.IDs())
 		if err != nil {
-			return nil
+			return err
 		}
 		return service.WriteJSON(w, ids, http.StatusOK)
 	}
