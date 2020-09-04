@@ -138,7 +138,21 @@ func (s *Service) initGerritStreamEvent(ctx context.Context, vcsName string, vcs
 	gerritEventChan := make(chan GerritEvent, 20)
 	// Listen to gerrit event stream
 	sdk.GoRoutine(ctx, "gerrit.EventStream."+vcsName, func(ctx context.Context) {
-		ListenGerritStreamEvent(ctx, s.Cache, vcsConfig[vcsName], gerritEventChan)
+		for {
+			select {
+			case <-ctx.Done():
+				if ctx.Err() != nil {
+					log.Error(ctx, "hook:initGerritStreamEvent: %v", ctx.Err())
+				}
+				return
+			default:
+				if err := ListenGerritStreamEvent(ctx, s.Cache, vcsConfig[vcsName], gerritEventChan); err != nil {
+					log.Error(ctx, "hook:initGerritStreamEvent: failed listening gerrit event stream: %v", err)
+				}
+				time.Sleep(10 * time.Second)
+			}
+		}
+
 	})
 	// Listen to gerrit event stream
 	sdk.GoRoutine(ctx, "gerrit.EventStreamCompute."+vcsName, func(ctx context.Context) {
