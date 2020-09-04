@@ -28,7 +28,9 @@ Configuration file OK
 Create your database relations
 
 ```bash
-$ $PATH_TO_CDS/engine database upgrade --db-host <host> --db-port <port> --db-user <user> --db-password <password> --db-name <database> --migrate-dir $PATH_TO_CDS/engine/sql/api --limit 0
+$ $PATH_TO_CDS/engine database upgrade --db-host <host> --db-port <port> --db-user <user> --db-password <password> --db-name <database> --db-schema=public --migrate-dir $PATH_TO_CDS/engine/sql/api --limit 0
+$ PGPASSWORD=<password> psql -h <host> -p <port> -U <user> -d <database> -c "CREATE SCHEMA IF NOT EXISTS cdn AUTHORIZATION <user>;"
+$ $PATH_TO_CDS/engine database upgrade --db-host <host> --db-port <port> --db-user <user> --db-password <password> --db-name <database> --db-schema=cdn --migrate-dir $PATH_TO_CDS/engine/sql/cdn --limit 0
 ```
 
 Download workers binaries

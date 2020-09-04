@@ -74,7 +74,7 @@ var databaseUpgradeCmd = &cobra.Command{
 	Use:   "upgrade",
 	Short: "Upgrade schema",
 	Long:  `Migrates the database to the most recent version available.`,
-	Example: `engine database upgrade --db-password=your-password --db-sslmode=disable --db-name=cds --migrate-dir=./sql
+	Example: `engine database upgrade --db-password=your-password --db-sslmode=disable --db-name=cds --db-schema=public --migrate-dir=./sql/api
 
 # If the directory --migrate-dir is not up to date with the current version, this
 # directory will be automatically updated with the release from https://github.com/ovh/cds/releases
