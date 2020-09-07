@@ -156,7 +156,11 @@ func Init(ctx context.Context, user, role, password, name, schema, host string, 
 }
 
 func (f *DBConnectionFactory) dsn() string {
-	return fmt.Sprintf("user=%s password=%s dbname=%s host=%s port=%d sslmode=%s connect_timeout=%d search_path=%s", f.DBUser, f.DBPassword, f.DBName, f.DBHost, f.DBPort, f.DBSSLMode, f.DBConnectTimeout, f.DBSchema)
+	dsn := fmt.Sprintf("user=%s password=%s dbname=%s host=%s port=%d sslmode=%s connect_timeout=%d", f.DBUser, f.DBPassword, f.DBName, f.DBHost, f.DBPort, f.DBSSLMode, f.DBConnectTimeout)
+	if f.DBSchema != "public" {
+		dsn += fmt.Sprintf(" search_path=%s", f.DBSchema)
+	}
+	return dsn
 }
 
 // Status returns database driver and status in a printable string
