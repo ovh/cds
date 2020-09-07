@@ -2,28 +2,30 @@ package cdn
 
 import (
 	"context"
-	"github.com/ovh/cds/engine/api/test"
+	"gopkg.in/h2non/gock.v1"
+	"testing"
+
+	"github.com/stretchr/testify/require"
+
 	"github.com/ovh/cds/engine/cdn/index"
 	"github.com/ovh/cds/engine/cdn/storage"
 	"github.com/ovh/cds/engine/cdn/storage/cds"
 	"github.com/ovh/cds/engine/gorpmapper"
 	commontest "github.com/ovh/cds/engine/test"
 	"github.com/ovh/cds/sdk"
-	"github.com/stretchr/testify/require"
-	"gopkg.in/h2non/gock.v1"
-	"testing"
 )
 
 func TestSyncLog(t *testing.T) {
 	m := gorpmapper.New()
 	index.InitDBMapping(m)
 	storage.InitDBMapping(m)
-	db, cache := test.SetupPGWithMapper(t, m, sdk.TypeCDN)
+	db, factory, cache, end := commontest.SetupPGToCancel(t, m, sdk.TypeCDN)
+	t.Cleanup(end)
 	cfg := commontest.LoadTestingConf(t, sdk.TypeCDN)
 
 	// Create cdn service
 	s := Service{
-		DBConnectionFactory: test.DBConnectionFactory,
+		DBConnectionFactory: factory,
 		Cache:               cache,
 		Mapper:              m,
 		Cfg: Configuration{
