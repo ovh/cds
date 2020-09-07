@@ -21,30 +21,28 @@ PKGS_COMMA_SEP = go list -f '{{ join .Deps "\n" }}{{"\n"}}{{.ImportPath}}' . | g
 
 TEST_PKGS = $(shell go list ./...)
 
-TEST_API_DB_HOST = $(if ${CDS_API_DATABASE_HOST},${CDS_API_DATABASE_HOST},localhost)
-TEST_API_DB_PORT = $(if ${CDS_API_DATABASE_PORT},${CDS_API_DATABASE_PORT},5432)
-TEST_API_DB_USER = $(if ${CDS_API_DATABASE_USER},${CDS_API_DATABASE_USER},cds)
-TEST_API_DB_PASS = $(if ${CDS_API_DATABASE_PASS},${CDS_API_DATABASE_PASS},cds)
-TEST_API_DB_NAME = $(if ${CDS_API_DATABASE_NAME},${CDS_API_DATABASE_NAME},cds)
-TEST_API_DB_DROP_DATABASE = PGPASSWORD=${TEST_API_DB_PASS} psql -h ${TEST_API_DB_HOST} -p ${TEST_API_DB_PORT} -U ${TEST_API_DB_USER} -d postgres -c "drop database ${TEST_API_DB_NAME}"
-TEST_API_DB_CREATE_DATABASE = PGPASSWORD=${TEST_API_DB_PASS} psql -h ${TEST_API_DB_HOST} -p ${TEST_API_DB_PORT} -U ${TEST_API_DB_USER} -d postgres -c "create database ${TEST_API_DB_NAME} owner ${TEST_API_DB_USER}"
-TEST_API_DB_INIT = ./engine database upgrade --db-host $(TEST_API_DB_HOST) --db-port $(TEST_API_DB_PORT) --db-user $(TEST_API_DB_USER) --db-password $(TEST_API_DB_PASS) --db-name $(TEST_API_DB_NAME) --db-sslmode disable --migrate-dir ./sql/api
+TEST_DB_HOST = $(if ${CDS_DATABASE_HOST},${CDS_DATABASE_HOST},localhost)
+TEST_DB_PORT = $(if ${CDS_DATABASE_PORT},${CDS_DATABASE_PORT},5432)
+TEST_DB_USER = $(if ${CDS_DATABASE_USER},${CDS_DATABASE_USER},cds)
+TEST_DB_PASS = $(if ${CDS_DATABASE_PASS},${CDS_DATABASE_PASS},cds)
+TEST_DB_NAME = $(if ${CDS_DATABASE_NAME},${CDS_DATABASE_NAME},cds)
+TEST_DB_DROP_DATABASE = PGPASSWORD=${TEST_DB_PASS} psql -h ${TEST_DB_HOST} -p ${TEST_DB_PORT} -U ${TEST_DB_USER} -d postgres -c "drop database ${TEST_DB_NAME}"
+TEST_DB_CREATE_DATABASE = PGPASSWORD=${TEST_DB_PASS} psql -h ${TEST_DB_HOST} -p ${TEST_DB_PORT} -U ${TEST_DB_USER} -d postgres -c "create database ${TEST_DB_NAME} owner ${TEST_DB_USER}"
 
-TEST_CDN_DB_HOST = $(if ${CDS_CDN_DATABASE_HOST},${CDS_CDN_DATABASE_HOST},localhost)
-TEST_CDN_DB_PORT = $(if ${CDS_CDN_DATABASE_PORT},${CDS_CDN_DATABASE_PORT},5432)
-TEST_CDN_DB_USER = $(if ${CDS_CDN_DATABASE_USER},${CDS_CDN_DATABASE_USER},cds)
-TEST_CDN_DB_PASS = $(if ${CDS_CDN_DATABASE_PASS},${CDS_CDN_DATABASE_PASS},cds)
-TEST_CDN_DB_NAME = $(if ${CDS_CDN_DATABASE_NAME},${CDS_CDN_DATABASE_NAME},cdn)
-TEST_CDN_DB_DROP_DATABASE = PGPASSWORD=${TEST_CDN_DB_PASS} psql -h ${TEST_CDN_DB_HOST} -p ${TEST_CDN_DB_PORT} -U ${TEST_CDN_DB_USER} -d postgres -c "drop database ${TEST_CDN_DB_NAME}"
-TEST_CDN_DB_CREATE_DATABASE = PGPASSWORD=${TEST_CDN_DB_PASS} psql -h ${TEST_CDN_DB_HOST} -p ${TEST_CDN_DB_PORT} -U ${TEST_CDN_DB_USER} -d postgres -c "create database ${TEST_CDN_DB_NAME} owner ${TEST_CDN_DB_USER}"
-TEST_CDN_DB_INIT = ./engine database upgrade --db-host $(TEST_CDN_DB_HOST) --db-port $(TEST_CDN_DB_PORT) --db-user $(TEST_CDN_DB_USER) --db-password $(TEST_CDN_DB_PASS) --db-name $(TEST_CDN_DB_NAME) --db-sslmode disable --migrate-dir ./sql/cdn
+TEST_API_DB_SCHEMA = $(if ${CDS_API_DATABASE_SCHEMA},${CDS_API_DATABASE_SCHEMA},public)
+TEST_API_DB_CREATE_SCHEMA = PGPASSWORD=${TEST_DB_PASS} psql -h ${TEST_DB_HOST} -p ${TEST_DB_PORT} -U ${TEST_DB_USER} -d ${TEST_DB_USER} -c "CREATE SCHEMA IF NOT EXISTS ${TEST_API_DB_SCHEMA} AUTHORIZATION ${TEST_DB_USER};"
+TEST_API_DB_INIT = ./engine database upgrade --db-host $(TEST_DB_HOST) --db-port $(TEST_DB_PORT) --db-user $(TEST_DB_USER) --db-password $(TEST_DB_PASS) --db-name $(TEST_DB_NAME) --db-schema $(TEST_API_DB_SCHEMA) --db-sslmode disable --migrate-dir ./sql/api
+
+TEST_CDN_DB_SCHEMA = $(if ${CDS_CDN_DATABASE_SCHEMA},${CDS_CDN_DATABASE_SCHEMA},cdn)
+TEST_CDN_DB_CREATE_SCHEMA = PGPASSWORD=${TEST_DB_PASS} psql -h ${TEST_DB_HOST} -p ${TEST_DB_PORT} -U ${TEST_DB_USER} -d ${TEST_DB_USER} -c "CREATE SCHEMA IF NOT EXISTS ${TEST_CDN_DB_SCHEMA} AUTHORIZATION ${TEST_DB_USER};"
+TEST_CDN_DB_INIT = ./engine database upgrade --db-host $(TEST_DB_HOST) --db-port $(TEST_DB_PORT) --db-user $(TEST_DB_USER) --db-password $(TEST_DB_PASS) --db-name $(TEST_DB_NAME) --db-schema $(TEST_CDN_DB_SCHEMA) --db-sslmode disable --migrate-dir ./sql/cdn
 
 TEST_DB_STOP_DOCKER = docker rm -f postgres-cds
-TEST_DB_START_DOCKER = docker run -d -p $(TEST_API_DB_PORT):5432 -e POSTGRES_PASSWORD=$(TEST_API_DB_PASS) -e POSTGRES_USER=$(TEST_API_DB_USER) -e POSTGRES_DB=$(TEST_API_DB_NAME) --name postgres-cds postgres
+TEST_DB_START_DOCKER = docker run -d -p $(TEST_DB_PORT):5432 -e POSTGRES_PASSWORD=$(TEST_DB_PASS) -e POSTGRES_USER=$(TEST_DB_USER) -e POSTGRES_DB=$(TEST_DB_NAME) --name postgres-cds postgres
 
 TEST_REDIS_PORT = 6379
-TEST_REDIS_HOST = $(if ${CDS_API_CACHE_REDIS_HOST},${CDS_API_CACHE_REDIS_HOST},localhost:$(TEST_REDIS_PORT))
-TEST_REDIS_PASS = $(if ${CDS_API_CACHE_REDIS_PASS},${CDS_API_CACHE_REDIS_PASS},)
+TEST_REDIS_HOST = $(if ${CDS_CACHE_REDIS_HOST},${CDS_CACHE_REDIS_HOST},localhost:$(TEST_REDIS_PORT))
+TEST_REDIS_PASS = $(if ${CDS_CACHE_REDIS_PASS},${CDS_CACHE_REDIS_PASS},)
 TEST_REDIS_START_DOCKER = docker run -d -p $(TEST_REDIS_PORT):6379 --name redis-cds redis
 
 TEST_CMD = go test -tags skipkeychaintests -v -timeout 600s -coverprofile=profile.coverprofile
@@ -112,38 +110,30 @@ test-db-stop-docker:
 test-db-start-docker:
 	$(TEST_DB_START_DOCKER)
 	@sleep 5
-	$(TEST_API_DB_INIT)
+	$(MAKE) test-api-db-create
 	$(MAKE) test-cdn-db-create
 
 test-api-db-create:
-	$(TEST_API_DB_CREATE_DATABASE)
+	$(TEST_API_DB_CREATE_SCHEMA)
 	$(TEST_API_DB_INIT)
 
 test-cdn-db-create:
-	$(TEST_CDN_DB_CREATE_DATABASE)
+	$(TEST_CDN_DB_CREATE_SCHEMA)
 	$(TEST_CDN_DB_INIT)
 
-test-api-db-recreate:
-	$(TEST_API_DB_DROP_DATABASE)
-	$(MAKE) test-api-db-create
-
-test-cdn-db-recreate:
-	$(TEST_CDN_DB_DROP_DATABASE)
-	$(MAKE) test-cdn-db-create
-
 test-db-init: test-config
-	$(TEST_API_DB_INIT)
+	$(MAKE) test-api-db-create
 	$(MAKE) test-cdn-db-create
 
 test-config: ${HOME}/.cds/api.tests.cfg.json ${HOME}/.cds/cdn.tests.cfg.json
 
 ${HOME}/.cds/api.tests.cfg.json:
 		@mkdir -p ${HOME}/.cds
-		@echo "{\"dbDriver\": \"postgres\", \"dbUser\" :\"$(TEST_API_DB_USER)\",  \"dbPassword\" :\"$(TEST_API_DB_PASS)\"  ,\"dbName\": \"$(TEST_API_DB_NAME)\", \"dbHost\": \"$(TEST_API_DB_HOST)\", \"dbPort\" : \"$(TEST_API_DB_PORT)\", \"sslMode\": \"disable\", \"redisHost\" : \"$(TEST_REDIS_HOST)\", \"redisPassword\" : \"$(TEST_REDIS_PASSWORD)\"}" > ${HOME}/.cds/api.tests.cfg.json
+		@echo "{\"dbDriver\": \"postgres\", \"dbUser\" :\"$(TEST_DB_USER)\", \"dbPassword\" :\"$(TEST_DB_PASS)\" ,\"dbName\": \"$(TEST_DB_NAME)\", \"dbSchema\": \"$(TEST_API_DB_SCHEMA)\", \"dbHost\": \"$(TEST_DB_HOST)\", \"dbPort\" : \"$(TEST_DB_PORT)\", \"sslMode\": \"disable\", \"redisHost\" : \"$(TEST_REDIS_HOST)\", \"redisPassword\" : \"$(TEST_REDIS_PASSWORD)\"}" > ${HOME}/.cds/api.tests.cfg.json
 
 ${HOME}/.cds/cdn.tests.cfg.json:
 		@mkdir -p ${HOME}/.cds
-		@echo "{\"dbDriver\": \"postgres\", \"dbUser\" :\"$(TEST_CDN_DB_USER)\",  \"dbPassword\" :\"$(TEST_CDN_DB_PASS)\"  ,\"dbName\": \"$(TEST_CDN_DB_NAME)\", \"dbHost\": \"$(TEST_CDN_DB_HOST)\", \"dbPort\" : \"$(TEST_CDN_DB_PORT)\", \"sslMode\": \"disable\", \"redisHost\" : \"$(TEST_REDIS_HOST)\", \"redisPassword\" : \"$(TEST_REDIS_PASSWORD)\"}" > ${HOME}/.cds/cdn.tests.cfg.json
+		@echo "{\"dbDriver\": \"postgres\", \"dbUser\" :\"$(TEST_DB_USER)\", \"dbPassword\" :\"$(TEST_DB_PASS)\" ,\"dbName\": \"$(TEST_DB_NAME)\", \"dbSchema\": \"$(TEST_CDN_DB_SCHEMA)\", \"dbHost\": \"$(TEST_DB_HOST)\", \"dbPort\" : \"$(TEST_DB_PORT)\", \"sslMode\": \"disable\", \"redisHost\" : \"$(TEST_REDIS_HOST)\", \"redisPassword\" : \"$(TEST_REDIS_PASSWORD)\"}" > ${HOME}/.cds/cdn.tests.cfg.json
 
 test: test-config clean
 	@for PKG in $(TEST_PKGS); do \

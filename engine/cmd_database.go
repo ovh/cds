@@ -35,6 +35,7 @@ func init() {
 		pflags.StringVarP(&connFactory.DBRole, "db-role", "", "", "DB Role")
 		pflags.StringVarP(&connFactory.DBPassword, "db-password", "", "", "DB Password")
 		pflags.StringVarP(&connFactory.DBName, "db-name", "", "cds", "DB Name")
+		pflags.StringVarP(&connFactory.DBSchema, "db-schema", "", "public", "DB Schema")
 		pflags.StringVarP(&connFactory.DBHost, "db-host", "", "localhost", "DB Host")
 		pflags.IntVarP(&connFactory.DBPort, "db-port", "", 5432, "DB Port")
 		pflags.StringVarP(&sqlMigrateDir, "migrate-dir", "", "./engine/sql/api", "CDS SQL Migration directory")
@@ -73,7 +74,7 @@ var databaseUpgradeCmd = &cobra.Command{
 	Use:   "upgrade",
 	Short: "Upgrade schema",
 	Long:  `Migrates the database to the most recent version available.`,
-	Example: `engine database upgrade --db-password=your-password --db-sslmode=disable --db-name=cds --migrate-dir=./sql
+	Example: `engine database upgrade --db-password=your-password --db-sslmode=disable --db-name=cds --db-schema=public --migrate-dir=./sql/api
 
 # If the directory --migrate-dir is not up to date with the current version, this
 # directory will be automatically updated with the release from https://github.com/ovh/cds/releases
@@ -212,7 +213,8 @@ func databaseDowngradeCmdFunc(cmd *cobra.Command, args []string) {
 
 func databaseStatusCmdFunc(cmd *cobra.Command, args []string) {
 	var err error
-	connFactory, err = database.Init(context.TODO(), connFactory.DBUser, connFactory.DBRole, connFactory.DBPassword, connFactory.DBName, connFactory.DBHost, connFactory.DBPort, connFactory.DBSSLMode, connFactory.DBConnectTimeout, connFactory.DBTimeout, connFactory.DBMaxConn)
+	connFactory, err = database.Init(context.TODO(), connFactory.DBUser, connFactory.DBRole, connFactory.DBPassword, connFactory.DBName, connFactory.DBSchema,
+		connFactory.DBHost, connFactory.DBPort, connFactory.DBSSLMode, connFactory.DBConnectTimeout, connFactory.DBTimeout, connFactory.DBMaxConn)
 	if err != nil {
 		sdk.Exit("Error: %v\n", err)
 	}
@@ -279,14 +281,15 @@ func databaseStatusCmdFunc(cmd *cobra.Command, args []string) {
 //ApplyMigrations applies migration (or not depending on dryrun flag)
 func ApplyMigrations(dir migrate.MigrationDirection, dryrun bool, limit int) error {
 	var err error
-	connFactory, err = database.Init(context.TODO(), connFactory.DBUser, connFactory.DBRole, connFactory.DBPassword, connFactory.DBName, connFactory.DBHost, connFactory.DBPort, connFactory.DBSSLMode, connFactory.DBConnectTimeout, connFactory.DBTimeout, connFactory.DBMaxConn)
+	connFactory, err = database.Init(context.TODO(), connFactory.DBUser, connFactory.DBRole, connFactory.DBPassword, connFactory.DBName, connFactory.DBSchema,
+		connFactory.DBHost, connFactory.DBPort, connFactory.DBSSLMode, connFactory.DBConnectTimeout, connFactory.DBTimeout, connFactory.DBMaxConn)
 	if err != nil {
-		sdk.Exit("Error: %v\n", err)
+		sdk.Exit("Error: %+v\n", err)
 	}
 
 	migrations, err := dbmigrate.Do(connFactory.DB, gorp.PostgresDialect{}, sqlMigrateDir, dir, dryrun, limit)
 	if err != nil {
-		sdk.Exit("Error: %v\n", err)
+		sdk.Exit("Error: %+v\n", err)
 	}
 
 	if dryrun {

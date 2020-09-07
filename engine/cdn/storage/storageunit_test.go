@@ -7,20 +7,19 @@ import (
 	"testing"
 	"time"
 
-	"github.com/ovh/cds/engine/api/test"
-	"github.com/ovh/cds/engine/cdn/index"
-	_ "github.com/ovh/cds/engine/cdn/storage/local"
-	_ "github.com/ovh/cds/engine/cdn/storage/redis"
-	"github.com/ovh/cds/sdk/log"
 	"github.com/ovh/symmecrypt/ciphers/aesgcm"
 	"github.com/ovh/symmecrypt/convergent"
+	"github.com/stretchr/testify/require"
 
-	commontest "github.com/ovh/cds/engine/test"
+	_ "github.com/ovh/cds/engine/cdn/storage/local"
+	_ "github.com/ovh/cds/engine/cdn/storage/redis"
 
+	"github.com/ovh/cds/engine/cdn/index"
 	"github.com/ovh/cds/engine/cdn/storage"
 	"github.com/ovh/cds/engine/gorpmapper"
+	"github.com/ovh/cds/engine/test"
 	"github.com/ovh/cds/sdk"
-	"github.com/stretchr/testify/require"
+	"github.com/ovh/cds/sdk/log"
 )
 
 func TestRun(t *testing.T) {
@@ -29,7 +28,7 @@ func TestRun(t *testing.T) {
 	storage.InitDBMapping(m)
 
 	db, _ := test.SetupPGWithMapper(t, m, sdk.TypeCDN)
-	cfg := commontest.LoadTestingConf(t, sdk.TypeCDN)
+	cfg := test.LoadTestingConf(t, sdk.TypeCDN)
 
 	ctx, cancel := context.WithTimeout(context.TODO(), 3*time.Second)
 	defer cancel()

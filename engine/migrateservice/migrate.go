@@ -66,6 +66,7 @@ func doMigrate(ctx context.Context, dbConfig database.DBConfiguration, directory
 		dbConfig.Role,
 		dbConfig.Password,
 		dbConfig.Name,
+		dbConfig.Schema,
 		dbConfig.Host,
 		dbConfig.Port,
 		dbConfig.SSLMode,

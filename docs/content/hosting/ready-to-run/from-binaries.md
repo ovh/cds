@@ -86,7 +86,9 @@ docker run --name cds-db -e POSTGRES_PASSWORD=cds -e POSTGRES_USER=cds -e POSTGR
 ```bash
 cd $HOME/cds
 ./cds-engine download sql --config conf.toml
-./cds-engine database upgrade --db-host localhost --db-user cds --db-password cds --db-name cds --db-sslmode disable --db-port 5432 --migrate-dir sql/api
+./cds-engine database upgrade --db-host localhost --db-user cds --db-password cds --db-name cds --dh-schema public --db-sslmode disable --db-port 5432 --migrate-dir sql/api
+PGPASSWORD=cds psql -h localhost -U cds -d cds -c "CREATE SCHEMA IF NOT EXISTS cdn AUTHORIZATION cds;"
+./cds-engine database upgrade --db-host localhost --db-user cds --db-password cds --db-name cds --dh-schema cdn --db-sslmode disable --db-port 5432 --migrate-dir sql/cdn
 ```
 
 ## Launch CDS API
@@ -128,6 +130,12 @@ cd $HOME/cds
 
 Then, open a browser on http://localhost:8080/ .
 
+## Launch CDS cdn
+
+```bash
+./cds-engine start cdn --config $HOME/cds/conf.toml
+```
+
 ## Launch CDS Local Hatchery
 
 Start the local hatchery:
@@ -135,8 +143,8 @@ Start the local hatchery:
 ```bash
 ./cds-engine start hatchery:local --config $HOME/cds/conf.toml
 
-# notice that you can run api and hatchery with one common only:
-# ./cds-engine start api hatchery:local --config $HOME/cds/conf.toml
+# notice that you can run api, ui, cdn and hatchery with one common only:
+# ./cds-engine start api ui cdn hatchery:local --config $HOME/cds/conf.toml
 ```
 
 ## Note about CDS Engine

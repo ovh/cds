@@ -6,6 +6,13 @@ PGNAME=$3
 PGHOST=$4
 PGPORT=$5
 
+PGUSER=${PGUSER:-cds}
+PGPASSWORD=${PGPASSWORD:-cds}
+PGNAME=${PGNAME:-cds}
+PGHOST=${PGHOST:-localhost}
+PGPORT=${PGPORT:-5432}
+export PGUSER PGPASSWORD PGHOST PGPORT
+
 cat << EOF > missing_pk.sql
 with cte as (
      select n.nspname as schema,
@@ -26,13 +33,6 @@ EOF
 NC='\033[0m' # No Color
 RED='\033[0;31m'
 GREEN='\033[0;32m'
-
-PGUSER=${PGUSER:-cds}
-PGPASSWORD=${PGPASSWORD:-cds}
-PGNAME=${PGNAME:-cds}
-PGHOST=${PGHOST:-localhost}
-PGPORT=${PGPORT:-5432}
-export PGUSER PGPASSWORD PGHOST PGPORT
 
 return_code=0
 echo "Checking missing primary key"

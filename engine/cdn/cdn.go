@@ -96,6 +96,7 @@ func (s *Service) Serve(c context.Context) error {
 			s.Cfg.Database.Role,
 			s.Cfg.Database.Password,
 			s.Cfg.Database.Name,
+			s.Cfg.Database.Schema,
 			s.Cfg.Database.Host,
 			s.Cfg.Database.Port,
 			s.Cfg.Database.SSLMode,

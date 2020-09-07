@@ -48,19 +48,18 @@ var (
 
 // Router is a wrapper around mux.Router
 type Router struct {
-	Background             context.Context
-	Mux                    *mux.Router
-	SetHeaderFunc          func() map[string]string
-	Prefix                 string
-	URL                    string
-	Middlewares            []service.Middleware
-	PostMiddlewares        []service.Middleware
-	mapRouterConfigs       map[string]*service.RouterConfig
-	mapAsynchronousHandler map[string]service.HandlerFunc
-	panicked               bool
-	nbPanic                int
-	lastPanic              *time.Time
-	scopeDetails           []sdk.AuthConsumerScopeDetail
+	Background       context.Context
+	Mux              *mux.Router
+	SetHeaderFunc    func() map[string]string
+	Prefix           string
+	URL              string
+	Middlewares      []service.Middleware
+	PostMiddlewares  []service.Middleware
+	mapRouterConfigs map[string]*service.RouterConfig
+	panicked         bool
+	nbPanic          int
+	lastPanic        *time.Time
+	scopeDetails     []sdk.AuthConsumerScopeDetail
 }
 
 // HandlerConfigParam is a type used in handler configuration, to set specific config on a route given a method

@@ -46,7 +46,7 @@ func NewSessionJWT(s *sdk.AuthSession) (string, error) {
 	jwtToken := jwt.NewWithClaims(jwt.SigningMethodRS512, sdk.AuthSessionJWTClaims{
 		ID: s.ID,
 		StandardClaims: jwt.StandardClaims{
-			Issuer:    IssuerName,
+			Issuer:    GetIssuerName(),
 			Subject:   s.ConsumerID,
 			Id:        s.ID,
 			IssuedAt:  time.Now().Unix(),

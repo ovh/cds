@@ -494,6 +494,7 @@ func (a *API) Serve(ctx context.Context) error {
 		a.Config.Database.Role,
 		a.Config.Database.Password,
 		a.Config.Database.Name,
+		a.Config.Database.Schema,
 		a.Config.Database.Host,
 		a.Config.Database.Port,
 		a.Config.Database.SSLMode,

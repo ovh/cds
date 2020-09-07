@@ -7,8 +7,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/gorpmapper"
+	"github.com/ovh/cds/engine/test"
 	"github.com/ovh/cds/sdk"
 )
 
@@ -33,10 +33,10 @@ func Test_GetSignedEntities(t *testing.T) {
 }
 
 func Test_ListCanonicalFormsByEntity(t *testing.T) {
-	db, _ := test.SetupPG(t)
-
 	m := gorpmapper.New()
 	m.Register(m.NewTableMapping(testAuthentifiedUser{}, "authentified_user", false, "id"))
+
+	db, _ := test.SetupPGWithMapper(t, m, sdk.TypeAPI)
 
 	res, err := m.ListCanonicalFormsByEntity(db, "gorpmapper_test.testAuthentifiedUser")
 	require.NoError(t, err)
@@ -44,10 +44,10 @@ func Test_ListCanonicalFormsByEntity(t *testing.T) {
 }
 
 func Test_ListTupleByCanonicalForm(t *testing.T) {
-	db, _ := test.SetupPG(t)
-
 	m := gorpmapper.New()
 	m.Register(m.NewTableMapping(testAuthentifiedUser{}, "authentified_user", false, "id"))
+
+	db, _ := test.SetupPGWithMapper(t, m, sdk.TypeAPI)
 
 	res, err := m.ListCanonicalFormsByEntity(db, "gorpmapper_test.testAuthentifiedUser")
 	require.NoError(t, err)
