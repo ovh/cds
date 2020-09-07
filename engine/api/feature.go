@@ -17,10 +17,6 @@ func (api *API) isFeatureEanbledHandler() service.Handler {
 		vars := mux.Vars(r)
 		name := vars["name"]
 
-		if !isService(ctx) {
-			return sdk.NewErrorFrom(sdk.ErrForbidden, "not allowed")
-		}
-
 		var params map[string]string
 		if err := service.UnmarshalBody(r, &params); err != nil {
 			return err

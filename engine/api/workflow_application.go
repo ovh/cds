@@ -26,11 +26,6 @@ func (api *API) releaseApplicationWorkflowHandler() service.Handler {
 			return errN
 		}
 
-		number, errNRI := requestVarInt(r, "number")
-		if errNRI != nil {
-			return errNRI
-		}
-
 		var req sdk.WorkflowNodeRunRelease
 		if errU := service.UnmarshalBody(r, &req); errU != nil {
 			return errU
@@ -41,7 +36,7 @@ func (api *API) releaseApplicationWorkflowHandler() service.Handler {
 			return sdk.WrapError(errprod, "releaseApplicationWorkflowHandler")
 		}
 		loadOpts := workflow.LoadRunOptions{WithArtifacts: true}
-		wNodeRun, errWNR := workflow.LoadNodeRun(api.mustDB(), key, name, number, nodeRunID, loadOpts)
+		wNodeRun, errWNR := workflow.LoadNodeRun(api.mustDB(), key, name, nodeRunID, loadOpts)
 		if errWNR != nil {
 			return sdk.WrapError(errWNR, "releaseApplicationWorkflowHandler")
 		}

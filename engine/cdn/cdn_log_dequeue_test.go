@@ -12,6 +12,7 @@ import (
 	"github.com/ovh/cds/engine/cdn/storage"
 	_ "github.com/ovh/cds/engine/cdn/storage/local"
 	_ "github.com/ovh/cds/engine/cdn/storage/redis"
+	cdntest "github.com/ovh/cds/engine/cdn/test"
 	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/engine/test"
 	"github.com/ovh/cds/sdk"
@@ -29,6 +30,8 @@ func TestStoreNewStepLog(t *testing.T) {
 	t.Cleanup(cancel)
 
 	cfg := test.LoadTestingConf(t, sdk.TypeCDN)
+
+	cdntest.ClearIndex(t, context.TODO(), m, db)
 
 	// Create cdn service
 	s := Service{
@@ -116,6 +119,8 @@ func TestStoreLastStepLog(t *testing.T) {
 	t.Cleanup(cancel)
 
 	cfg := test.LoadTestingConf(t, sdk.TypeCDN)
+
+	cdntest.ClearIndex(t, context.TODO(), m, db)
 
 	// Create cdn service
 	s := Service{
@@ -211,6 +216,8 @@ func TestStoreLogWrongOrder(t *testing.T) {
 	t.Cleanup(cancel)
 
 	cfg := test.LoadTestingConf(t, sdk.TypeCDN)
+
+	cdntest.ClearIndex(t, context.TODO(), m, db)
 
 	// Create cdn service
 	s := Service{
@@ -332,6 +339,8 @@ func TestStoreNewServiceLogAndAppend(t *testing.T) {
 	t.Cleanup(cancel)
 
 	cfg := test.LoadTestingConf(t, sdk.TypeCDN)
+
+	cdntest.ClearIndex(t, context.TODO(), m, db)
 
 	// Create cdn service
 	s := Service{

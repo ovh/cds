@@ -125,16 +125,24 @@ type BufferConfiguration struct {
 }
 
 type StorageConfiguration struct {
-	Name     string                      `toml:"name" json:"name"`
-	CronExpr string                      `toml:"cron" json:"cron"`
-	Local    *LocalStorageConfiguration  `toml:"local" json:"local" mapstructure:"local"`
-	Swift    *SwiftStorageConfiguration  `toml:"swift" json:"swift" mapstructure:"swift"`
-	Webdav   *WebdavStorageConfiguration `toml:"webdav" json:"webdav" mapstructure:"webdav"`
+	Name   string                      `toml:"name" json:"name"`
+	Cron   string                      `toml:"cron" json:"cron"`
+	Local  *LocalStorageConfiguration  `toml:"local" json:"local" mapstructure:"local"`
+	Swift  *SwiftStorageConfiguration  `toml:"swift" json:"swift" mapstructure:"swift"`
+	Webdav *WebdavStorageConfiguration `toml:"webdav" json:"webdav" mapstructure:"webdav"`
+	CDS    *CDSStorageConfiguration    `toml:"cds" json:"cds" mapstructure:"cds"`
 }
 
 type LocalStorageConfiguration struct {
 	Path       string                                  `toml:"path" json:"path"`
 	Encryption []convergent.ConvergentEncryptionConfig `toml:"encryption" json:"encryption" mapstructure:"encryption"`
+}
+
+type CDSStorageConfiguration struct {
+	Host                  string                                  `toml:"host" json:"host"`
+	InsecureSkipVerifyTLS bool                                    `toml:"insecureSkipVerifyTLS" json:"insecureSkipVerifyTLS"`
+	Token                 string                                  `toml:"token" json:"token"`
+	Encryption            []convergent.ConvergentEncryptionConfig `toml:"encryption" json:"encryption" mapstructure:"encryption"`
 }
 
 type SwiftStorageConfiguration struct {
@@ -232,14 +240,27 @@ func Init(ctx context.Context, m *gorpmapper.Mapper, db *gorp.DbMap, config Conf
 	for _, cfg := range config.Storages {
 		var storageUnit StorageUnit
 		switch {
-		case cfg.Local != nil:
-			d := GetDriver("local")
+		case cfg.CDS != nil:
+			d := GetDriver("cds")
 			if d == nil {
-				return nil, fmt.Errorf("local driver is not available")
+				return nil, sdk.WithStack(fmt.Errorf("cds driver is not available"))
 			}
 			sd, is := d.(StorageUnit)
 			if !is {
-				return nil, fmt.Errorf("local driver is not a storage unit driver")
+				return nil, sdk.WithStack(fmt.Errorf("cds driver is not a storage unit driver"))
+			}
+			if err := sd.Init(cfg.CDS); err != nil {
+				return nil, err
+			}
+			storageUnit = sd
+		case cfg.Local != nil:
+			d := GetDriver("local")
+			if d == nil {
+				return nil, sdk.WithStack(fmt.Errorf("local driver is not available"))
+			}
+			sd, is := d.(StorageUnit)
+			if !is {
+				return nil, sdk.WithStack(fmt.Errorf("local driver is not a storage unit driver"))
 			}
 			if err := sd.Init(cfg.Local); err != nil {
 				return nil, err
@@ -249,7 +270,7 @@ func Init(ctx context.Context, m *gorpmapper.Mapper, db *gorp.DbMap, config Conf
 			d := GetDriver("swift")
 			sd, is := d.(StorageUnit)
 			if !is {
-				return nil, fmt.Errorf("swift driver is not a storage unit driver")
+				return nil, sdk.WithStack(fmt.Errorf("swift driver is not a storage unit driver"))
 			}
 			if err := sd.Init(cfg.Swift); err != nil {
 				return nil, err
@@ -259,29 +280,29 @@ func Init(ctx context.Context, m *gorpmapper.Mapper, db *gorp.DbMap, config Conf
 			d := GetDriver("webdav")
 			sd, is := d.(StorageUnit)
 			if !is {
-				return nil, fmt.Errorf("webdav driver is not a storage unit driver")
+				return nil, sdk.WithStack(fmt.Errorf("webdav driver is not a storage unit driver"))
 			}
 			if err := sd.Init(cfg.Webdav); err != nil {
 				return nil, err
 			}
 			storageUnit = sd
 		default:
-			return nil, errors.New("unsupported storage unit")
+			return nil, sdk.WithStack(errors.New("unsupported storage unit"))
 		}
 
 		runFunc := func() {
 			if err := result.Run(ctx, storageUnit); err != nil {
-				log.Error(ctx, err.Error())
+				log.Error(ctx, "cdn:storageunit: %v", err.Error())
 			}
 		}
 
-		if _, err := scheduler.AddFunc(cfg.CronExpr, runFunc); err != nil {
-			return nil, err
+		if _, err := scheduler.AddFunc(cfg.Cron, runFunc); err != nil {
+			return nil, sdk.WithStack(err)
 		}
 
 		tx, err := db.Begin()
 		if err != nil {
-			return nil, err
+			return nil, sdk.WithStack(err)
 		}
 		defer tx.Rollback()
 
@@ -306,7 +327,7 @@ func Init(ctx context.Context, m *gorpmapper.Mapper, db *gorp.DbMap, config Conf
 
 		result.Storages = append(result.Storages, storageUnit)
 		if err := tx.Commit(); err != nil {
-			return nil, err
+			return nil, sdk.WithStack(err)
 		}
 	}
 

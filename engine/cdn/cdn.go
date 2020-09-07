@@ -3,6 +3,7 @@ package cdn
 import (
 	"context"
 	"fmt"
+	"github.com/ovh/cds/engine/cdn/storage/cds"
 	"net/http"
 
 	"github.com/go-gorp/gorp"
@@ -128,6 +129,19 @@ func (s *Service) Serve(c context.Context) error {
 		sdk.GoRoutine(ctx, "cdn-gc-items", func(ctx context.Context) {
 			s.CompleteWaitingItems(ctx)
 		})
+
+		// Start CDS Backend migration
+		for _, storage := range s.Units.Storages {
+			cdsStorage, ok := storage.(*cds.CDS)
+			if !ok {
+				continue
+			}
+			sdk.GoRoutine(ctx, "cdn-cds-backend-migration", func(ctx context.Context) {
+				if err := s.SyncLogs(ctx, cdsStorage); err != nil {
+					log.Error(ctx, "unable to sync logs: %v", err)
+				}
+			})
+		}
 	}
 
 	log.Info(ctx, "Initializing redis cache on %s...", s.Cfg.Cache.Redis.Host)

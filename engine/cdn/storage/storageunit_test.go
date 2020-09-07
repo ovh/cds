@@ -11,13 +11,13 @@ import (
 	"github.com/ovh/symmecrypt/convergent"
 	"github.com/stretchr/testify/require"
 
-	_ "github.com/ovh/cds/engine/cdn/storage/local"
-	_ "github.com/ovh/cds/engine/cdn/storage/redis"
-
 	"github.com/ovh/cds/engine/cdn/index"
 	"github.com/ovh/cds/engine/cdn/storage"
+	_ "github.com/ovh/cds/engine/cdn/storage/local"
+	_ "github.com/ovh/cds/engine/cdn/storage/redis"
+	cdntest "github.com/ovh/cds/engine/cdn/test"
 	"github.com/ovh/cds/engine/gorpmapper"
-	"github.com/ovh/cds/engine/test"
+	commontest "github.com/ovh/cds/engine/test"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
@@ -27,8 +27,10 @@ func TestRun(t *testing.T) {
 	index.InitDBMapping(m)
 	storage.InitDBMapping(m)
 
-	db, _ := test.SetupPGWithMapper(t, m, sdk.TypeCDN)
-	cfg := test.LoadTestingConf(t, sdk.TypeCDN)
+	db, _ := commontest.SetupPGWithMapper(t, m, sdk.TypeCDN)
+	cfg := commontest.LoadTestingConf(t, sdk.TypeCDN)
+
+	cdntest.ClearIndex(t, context.TODO(), m, db)
 
 	ctx, cancel := context.WithTimeout(context.TODO(), 3*time.Second)
 	defer cancel()
@@ -48,8 +50,8 @@ func TestRun(t *testing.T) {
 		},
 		Storages: []storage.StorageConfiguration{
 			{
-				Name:     "local_storage",
-				CronExpr: "* * * * * ?",
+				Name: "local_storage",
+				Cron: "* * * * * ?",
 				Local: &storage.LocalStorageConfiguration{
 					Path: tmpDir,
 					Encryption: []convergent.ConvergentEncryptionConfig{
@@ -61,8 +63,8 @@ func TestRun(t *testing.T) {
 					},
 				},
 			}, {
-				Name:     "local_storage_2",
-				CronExpr: "* * * * * ?",
+				Name: "local_storage_2",
+				Cron: "* * * * * ?",
 				Local: &storage.LocalStorageConfiguration{
 					Path: tmpDir2,
 					Encryption: []convergent.ConvergentEncryptionConfig{

@@ -150,6 +150,15 @@ func (c *client) WorkflowRunList(projectKey string, workflowName string, offset,
 	return runs, nil
 }
 
+func (c *client) WorkflowRunsAndNodesIDs(projectKey string) ([]sdk.WorkflowNodeRunIdentifiers, error) {
+	url := fmt.Sprintf("/project/%s/workflows/runs/nodes/ids", projectKey)
+	var resp []sdk.WorkflowNodeRunIdentifiers
+	if _, err := c.GetJSON(context.Background(), url, &resp); err != nil {
+		return nil, err
+	}
+	return resp, nil
+}
+
 func (c *client) WorkflowDelete(projectKey string, workflowName string) error {
 	_, err := c.DeleteJSON(context.Background(), fmt.Sprintf("/project/%s/workflows/%s", projectKey, workflowName), nil)
 	return err
@@ -202,6 +211,15 @@ func (c *client) WorkflowNodeRunJobStep(projectKey string, workflowName string, 
 		return nil, err
 	}
 	return &buildState, nil
+}
+
+func (c *client) WorkflowNodeRunJobServiceLog(projectKey string, workflowName string, number int64, nodeRunID, job int64) ([]sdk.ServiceLog, error) {
+	url := fmt.Sprintf("/project/%s/workflows/%s/runs/%d/nodes/%d/job/%d/log/service", projectKey, workflowName, number, nodeRunID, job)
+	var serviceLogs []sdk.ServiceLog
+	if _, err := c.GetJSON(context.Background(), url, &serviceLogs); err != nil {
+		return nil, err
+	}
+	return serviceLogs, nil
 }
 
 func (c *client) WorkflowNodeRunArtifactDownload(projectKey string, workflowName string, a sdk.WorkflowNodeRunArtifact, w io.Writer) error {
