@@ -7,21 +7,19 @@ import (
 	"testing"
 	"time"
 
-	"github.com/ovh/cds/engine/api/test"
-	"github.com/ovh/cds/engine/cdn/index"
-	_ "github.com/ovh/cds/engine/cdn/storage/local"
-	_ "github.com/ovh/cds/engine/cdn/storage/redis"
-	"github.com/ovh/cds/sdk/log"
 	"github.com/ovh/symmecrypt/ciphers/aesgcm"
 	"github.com/ovh/symmecrypt/convergent"
-
-	cdntest "github.com/ovh/cds/engine/cdn/test"
-	commontest "github.com/ovh/cds/engine/test"
-
-	"github.com/ovh/cds/engine/cdn/storage"
-	"github.com/ovh/cds/engine/gorpmapper"
-	"github.com/ovh/cds/sdk"
 	"github.com/stretchr/testify/require"
+
+	"github.com/ovh/cds/engine/cdn/index"
+	"github.com/ovh/cds/engine/cdn/storage"
+	_ "github.com/ovh/cds/engine/cdn/storage/local"
+	_ "github.com/ovh/cds/engine/cdn/storage/redis"
+	cdntest "github.com/ovh/cds/engine/cdn/test"
+	"github.com/ovh/cds/engine/gorpmapper"
+	commontest "github.com/ovh/cds/engine/test"
+	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/log"
 )
 
 func TestRun(t *testing.T) {
@@ -29,7 +27,7 @@ func TestRun(t *testing.T) {
 	index.InitDBMapping(m)
 	storage.InitDBMapping(m)
 
-	db, _ := test.SetupPGWithMapper(t, m, sdk.TypeCDN)
+	db, _ := commontest.SetupPGWithMapper(t, m, sdk.TypeCDN)
 	cfg := commontest.LoadTestingConf(t, sdk.TypeCDN)
 
 	cdntest.ClearIndex(t, context.TODO(), m, db)

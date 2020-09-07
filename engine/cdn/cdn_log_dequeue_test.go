@@ -8,14 +8,13 @@ import (
 	"github.com/mitchellh/hashstructure"
 	"github.com/stretchr/testify/require"
 
-	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/cdn/index"
 	"github.com/ovh/cds/engine/cdn/storage"
 	_ "github.com/ovh/cds/engine/cdn/storage/local"
 	_ "github.com/ovh/cds/engine/cdn/storage/redis"
 	cdntest "github.com/ovh/cds/engine/cdn/test"
 	"github.com/ovh/cds/engine/gorpmapper"
-	commontest "github.com/ovh/cds/engine/test"
+	"github.com/ovh/cds/engine/test"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk/log/hook"
@@ -25,14 +24,18 @@ func TestStoreNewStepLog(t *testing.T) {
 	m := gorpmapper.New()
 	index.InitDBMapping(m)
 	storage.InitDBMapping(m)
-	db, cache := test.SetupPGWithMapper(t, m, sdk.TypeCDN)
-	cfg := commontest.LoadTestingConf(t, sdk.TypeCDN)
+
+	log.SetLogger(t)
+	db, factory, cache, cancel := test.SetupPGToCancel(t, m, sdk.TypeCDN)
+	t.Cleanup(cancel)
+
+	cfg := test.LoadTestingConf(t, sdk.TypeCDN)
 
 	cdntest.ClearIndex(t, context.TODO(), m, db)
 
 	// Create cdn service
 	s := Service{
-		DBConnectionFactory: test.DBConnectionFactory,
+		DBConnectionFactory: factory,
 		Cache:               cache,
 		Mapper:              m,
 	}
@@ -110,14 +113,18 @@ func TestStoreLastStepLog(t *testing.T) {
 	m := gorpmapper.New()
 	index.InitDBMapping(m)
 	storage.InitDBMapping(m)
-	db, cache := test.SetupPGWithMapper(t, m, sdk.TypeCDN)
-	cfg := commontest.LoadTestingConf(t, sdk.TypeCDN)
+
+	log.SetLogger(t)
+	db, factory, cache, cancel := test.SetupPGToCancel(t, m, sdk.TypeCDN)
+	t.Cleanup(cancel)
+
+	cfg := test.LoadTestingConf(t, sdk.TypeCDN)
 
 	cdntest.ClearIndex(t, context.TODO(), m, db)
 
 	// Create cdn service
 	s := Service{
-		DBConnectionFactory: test.DBConnectionFactory,
+		DBConnectionFactory: factory,
 		Cache:               cache,
 		Mapper:              m,
 	}
@@ -203,14 +210,18 @@ func TestStoreLogWrongOrder(t *testing.T) {
 	m := gorpmapper.New()
 	index.InitDBMapping(m)
 	storage.InitDBMapping(m)
-	db, cache := test.SetupPGWithMapper(t, m, sdk.TypeCDN)
-	cfg := commontest.LoadTestingConf(t, sdk.TypeCDN)
+
+	log.SetLogger(t)
+	db, factory, cache, cancel := test.SetupPGToCancel(t, m, sdk.TypeCDN)
+	t.Cleanup(cancel)
+
+	cfg := test.LoadTestingConf(t, sdk.TypeCDN)
 
 	cdntest.ClearIndex(t, context.TODO(), m, db)
 
 	// Create cdn service
 	s := Service{
-		DBConnectionFactory: test.DBConnectionFactory,
+		DBConnectionFactory: factory,
 		Cache:               cache,
 		Mapper:              m,
 	}
@@ -322,14 +333,18 @@ func TestStoreNewServiceLogAndAppend(t *testing.T) {
 	m := gorpmapper.New()
 	index.InitDBMapping(m)
 	storage.InitDBMapping(m)
-	db, cache := test.SetupPGWithMapper(t, m, sdk.TypeCDN)
-	cfg := commontest.LoadTestingConf(t, sdk.TypeCDN)
+
+	log.SetLogger(t)
+	db, factory, cache, cancel := test.SetupPGToCancel(t, m, sdk.TypeCDN)
+	t.Cleanup(cancel)
+
+	cfg := test.LoadTestingConf(t, sdk.TypeCDN)
 
 	cdntest.ClearIndex(t, context.TODO(), m, db)
 
 	// Create cdn service
 	s := Service{
-		DBConnectionFactory: test.DBConnectionFactory,
+		DBConnectionFactory: factory,
 		Cache:               cache,
 		Mapper:              m,
 	}

@@ -15,7 +15,9 @@ The migration files are available to download on [GitHub Releases](https://githu
 On a brand new database run the following command:
 
 ```bash
-$ $PATH_TO_CDS/engine database upgrade --db-host <host> --db-port <port> --db-user <user> --db-password <password> --db-name <database> --migrate-dir $PATH_TO_CDS/engine/sql/api --limit 0
+$ $PATH_TO_CDS/engine database upgrade --db-host <host> --db-port <port> --db-user <user> --db-password <password> --db-name <database> --db-schema=public --migrate-dir $PATH_TO_CDS/engine/sql/api --limit 0
+$ PGPASSWORD=<password> psql -h <host> -p <port> -U <user> -d <database> -c "CREATE SCHEMA IF NOT EXISTS cdn AUTHORIZATION <user>;"
+$ $PATH_TO_CDS/engine database upgrade --db-host <host> --db-port <port> --db-user <user> --db-password <password> --db-name <database> --db-schema=cdn --migrate-dir $PATH_TO_CDS/engine/sql/cdn --limit 0
 ```
 
 ## Upgrade
@@ -23,7 +25,8 @@ $ $PATH_TO_CDS/engine database upgrade --db-host <host> --db-port <port> --db-us
 On an existing database, run the following command on each CDS update:
 
 ```bash
-$ $PATH_TO_CDS/engine database upgrade --db-host <host> --db-port <port> --db-user <user> --db-password <password> --db-name <database> --migrate-dir $PATH_TO_CDS/engine/sql/api
+$ $PATH_TO_CDS/engine database upgrade --db-host <host> --db-port <port> --db-user <user> --db-password <password> --db-name <database> --db-schema=public --migrate-dir $PATH_TO_CDS/engine/sql/api
+$ $PATH_TO_CDS/engine database upgrade --db-host <host> --db-port <port> --db-user <user> --db-password <password> --db-name <database> --db-schema=cdn --migrate-dir $PATH_TO_CDS/engine/sql/cdn
 ```
 
 ## More details

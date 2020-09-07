@@ -275,7 +275,7 @@ func doRequestFromURL(ctx context.Context, db gorp.SqlExecutor, method string, c
 	}
 
 	if HTTPSigner == nil {
-		HTTPSigner = httpsig.NewRSASHA256Signer(authentication.IssuerName, authentication.GetSigningKey(), []string{"(request-target)", "host", "date"})
+		HTTPSigner = httpsig.NewRSASHA256Signer(authentication.GetIssuerName(), authentication.GetSigningKey(), []string{"(request-target)", "host", "date"})
 	}
 
 	var requestError error

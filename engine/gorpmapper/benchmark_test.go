@@ -7,9 +7,10 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
-	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/gorpmapper"
+	"github.com/ovh/cds/engine/test"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/log"
 )
 
 /**
@@ -37,8 +38,9 @@ func BenchmarkGetWithoutDecryption(b *testing.B) {
 
 	m.Register(m.NewTableMapping(gorpmapper.TestEncryptedData{}, "test_encrypted_data", true, "id"))
 
-	db, _, end := test.SetupPGToCancel(b, m, sdk.TypeAPI)
-	defer end()
+	log.SetLogger(b)
+	db, _, _, end := test.SetupPGToCancel(b, m, sdk.TypeAPI)
+	b.Cleanup(end)
 
 	var d = gorpmapper.TestEncryptedData{
 		Data:                 "data",
@@ -61,8 +63,9 @@ func BenchmarkGetWithDecryption(b *testing.B) {
 
 	m.Register(m.NewTableMapping(gorpmapper.TestEncryptedData{}, "test_encrypted_data", true, "id"))
 
-	db, _, end := test.SetupPGToCancel(b, m, sdk.TypeAPI)
-	defer end()
+	log.SetLogger(b)
+	db, _, _, end := test.SetupPGToCancel(b, m, sdk.TypeAPI)
+	b.Cleanup(end)
 
 	var d = gorpmapper.TestEncryptedData{
 		Data:                 "data",
@@ -85,8 +88,9 @@ func BenchmarkInsertWithoutSignature(b *testing.B) {
 
 	m.Register(m.NewTableMapping(gorpmapper.TestEncryptedData{}, "test_encrypted_data", true, "id"))
 
-	db, _, end := test.SetupPGToCancel(b, m, sdk.TypeAPI)
-	defer end()
+	log.SetLogger(b)
+	db, _, _, end := test.SetupPGToCancel(b, m, sdk.TypeAPI)
+	b.Cleanup(end)
 
 	for n := 0; n < b.N; n++ {
 		var d = gorpmapper.TestEncryptedData{
@@ -104,8 +108,9 @@ func BenchmarkInsertWithSignature(b *testing.B) {
 
 	m.Register(m.NewTableMapping(gorpmapper.TestEncryptedData{}, "test_encrypted_data", true, "id"))
 
-	db, _, end := test.SetupPGToCancel(b, m, sdk.TypeAPI)
-	defer end()
+	log.SetLogger(b)
+	db, _, _, end := test.SetupPGToCancel(b, m, sdk.TypeAPI)
+	b.Cleanup(end)
 
 	for n := 0; n < b.N; n++ {
 		var d = gorpmapper.TestEncryptedData{
@@ -123,8 +128,9 @@ func BenchmarkCheckSignature(b *testing.B) {
 
 	m.Register(m.NewTableMapping(gorpmapper.TestEncryptedData{}, "test_encrypted_data", true, "id"))
 
-	db, _, end := test.SetupPGToCancel(b, m, sdk.TypeAPI)
-	defer end()
+	log.SetLogger(b)
+	db, _, _, end := test.SetupPGToCancel(b, m, sdk.TypeAPI)
+	b.Cleanup(end)
 
 	var d = gorpmapper.TestEncryptedData{
 		Data:                 "data",

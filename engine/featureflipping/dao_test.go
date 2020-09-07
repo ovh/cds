@@ -6,9 +6,9 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/featureflipping"
 	"github.com/ovh/cds/engine/gorpmapper"
+	"github.com/ovh/cds/engine/test"
 	"github.com/ovh/cds/sdk"
 )
 
