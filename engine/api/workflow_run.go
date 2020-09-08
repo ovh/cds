@@ -1584,10 +1584,7 @@ func (api *API) getWorkflowNodeRunJobStepHandler() service.Handler {
 		vars := mux.Vars(r)
 		projectKey := vars["key"]
 		workflowName := vars["permWorkflowName"]
-		number, err := requestVarInt(r, "number")
-		if err != nil {
-			return sdk.NewErrorFrom(err, "invalid run number")
-		}
+
 		nodeRunID, err := requestVarInt(r, "nodeRunID")
 		if err != nil {
 			return sdk.NewErrorFrom(err, "invalid node run id")
@@ -1609,7 +1606,7 @@ func (api *API) getWorkflowNodeRunJobStepHandler() service.Handler {
 		// Try to load node run from given data
 		nodeRun, err := workflow.LoadNodeRun(api.mustDB(), projectKey, workflowName, nodeRunID, workflow.LoadRunOptions{DisableDetailledNodeRun: true})
 		if err != nil {
-			return sdk.WrapError(err, "cannot find nodeRun %d/%d for workflow %s in project %s", nodeRunID, number, workflowName, projectKey)
+			return sdk.WrapError(err, "cannot find nodeRun %d for workflow %s in project %s", nodeRunID, workflowName, projectKey)
 		}
 
 		// Find job/step in nodeRun
@@ -1634,8 +1631,8 @@ func (api *API) getWorkflowNodeRunJobStepHandler() service.Handler {
 		}
 
 		if stepStatus == "" {
-			return sdk.WrapError(sdk.ErrStepNotFound, "cannot find step %d on job %d in nodeRun %d/%d for workflow %s in project %s",
-				stepOrder, runJobID, nodeRunID, number, workflowName, projectKey)
+			return sdk.WrapError(sdk.ErrStepNotFound, "cannot find step %d on job %d in nodeRun %d for workflow %s in project %s",
+				stepOrder, runJobID, nodeRunID, workflowName, projectKey)
 		}
 
 		apiRef := sdk.CDNLogAPIRef{

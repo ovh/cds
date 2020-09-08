@@ -60,9 +60,9 @@ export class WorkflowService {
         return this._http.get<BuildResult>(`/project/${projectKey}/workflows/${workflowName}/runs/${runNumber}/nodes/${nodeRunID}/job/${jobRunID}/step/${stepOrder}`);
     }
 
-    getStepLogAccess(projectKey: string, workflowName: string, runNumber: number,
-        nodeRunID: number, jobRunID: number, stepOrder: number): Observable<CDNLogAccess> {
-        return this._http.get<CDNLogAccess>(`/project/${projectKey}/workflows/${workflowName}/runs/${runNumber}/nodes/${nodeRunID}/job/${jobRunID}/step/${stepOrder}/log`);
+    getStepLogAccess(projectKey: string, workflowName: string, nodeRunID: number,
+        jobRunID: number, stepOrder: number): Observable<CDNLogAccess> {
+        return this._http.get<CDNLogAccess>(`/project/${projectKey}/workflows/${workflowName}/nodes/${nodeRunID}/job/${jobRunID}/step/${stepOrder}/log`);
     }
 
     getServiceLog(projectKey: string, workflowName: string, runNumber: number,

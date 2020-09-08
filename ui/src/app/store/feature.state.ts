@@ -16,7 +16,7 @@ export class FeatureStateModel {
     public features: Array<FeatureResults>;
 }
 @State<FeatureStateModel>({
-    name: 'event',
+    name: 'feature',
     defaults: {
         features: [],
     }
