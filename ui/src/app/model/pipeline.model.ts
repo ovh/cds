@@ -172,7 +172,7 @@ export class BuildResult {
 export class CDNLogAccess {
     exists: boolean;
     token: string;
-    download_url: string;
+    download_path: string;
 }
 
 export interface Log {

@@ -217,7 +217,7 @@ func (s *Service) syncItem(ctx context.Context, tx gorpmapper.SqlExecutorWithTx,
 	if err != nil {
 		return err
 	}
-	itemUnit, err := s.Units.NewItemUnit(ctx, s.Mapper, tx, su, clearItem)
+	itemUnit, err := s.Units.NewItemUnit(ctx, su, clearItem)
 	if err != nil {
 		return err
 	}

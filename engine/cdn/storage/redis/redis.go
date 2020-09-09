@@ -14,6 +14,8 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
+var keyBuffer = cache.Key("cdn", "buffer")
+
 type Redis struct {
 	storage.AbstractUnit
 	config storage.RedisBufferConfiguration
@@ -38,26 +40,26 @@ func (s *Redis) Init(cfg interface{}) error {
 }
 
 func (s *Redis) ItemExists(i index.Item) (bool, error) {
-	size, _ := s.store.SetCard(i.ID)
+	size, _ := s.store.SetCard(cache.Key(keyBuffer, i.ID))
 	return size > 0, nil
 }
 
 func (s *Redis) Add(i storage.ItemUnit, index uint, value string) error {
 	value = strconv.Itoa(int(index)) + "#" + value
-	return s.store.ScoredSetAdd(context.Background(), i.ItemID, value, float64(index))
+	return s.store.ScoredSetAdd(context.Background(), cache.Key(keyBuffer, i.ItemID), value, float64(index))
 }
 
 func (s *Redis) Append(i storage.ItemUnit, value string) error {
-	return s.store.ScoredSetAppend(context.Background(), i.ItemID, value)
+	return s.store.ScoredSetAppend(context.Background(), cache.Key(keyBuffer, i.ItemID), value)
 }
 
 func (s *Redis) Card(i storage.ItemUnit) (int, error) {
-	return s.store.SetCard(i.ItemID)
+	return s.store.SetCard(cache.Key(keyBuffer, i.ItemID))
 }
 
 func (s *Redis) Get(i storage.ItemUnit, from, to uint) ([]string, error) {
 	var res = make([]string, to-from+1)
-	if err := s.store.ScoredSetScan(context.Background(), i.ItemID, float64(from), float64(to), &res); err != nil {
+	if err := s.store.ScoredSetScan(context.Background(), cache.Key(keyBuffer, i.ItemID), float64(from), float64(to), &res); err != nil {
 		return res, err
 	}
 	for i := range res {
@@ -101,11 +103,7 @@ func (r *reader) Read(p []byte) (n int, err error) {
 	}
 
 	if len(lines) > 0 {
-		if r.currentBuffer == "" {
-			r.currentBuffer += strings.Join(lines, "\n")
-		} else {
-			r.currentBuffer += "\n" + strings.Join(lines, "\n")
-		}
+		r.currentBuffer += strings.Join(lines, "")
 	}
 
 	if len(buffer) < size && len(r.currentBuffer) > 0 {

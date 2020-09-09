@@ -55,7 +55,7 @@ func TestLoadOldItemUnitByItemStatusAndDuration(t *testing.T) {
 		_ = index.DeleteItem(m, db, i1)
 	}()
 
-	itemUnit1, err := cdnUnits.NewItemUnit(context.TODO(), m, db, cdnUnits.Buffer, i1)
+	itemUnit1, err := cdnUnits.NewItemUnit(context.TODO(), cdnUnits.Buffer, i1)
 	require.NoError(t, err)
 	require.NoError(t, InsertItemUnit(context.TODO(), m, db, itemUnit1))
 
@@ -70,7 +70,7 @@ func TestLoadOldItemUnitByItemStatusAndDuration(t *testing.T) {
 	defer func() {
 		_ = index.DeleteItem(m, db, i2)
 	}()
-	itemUnit2, err := cdnUnits.NewItemUnit(context.TODO(), m, db, cdnUnits.Buffer, i2)
+	itemUnit2, err := cdnUnits.NewItemUnit(context.TODO(), cdnUnits.Buffer, i2)
 	require.NoError(t, err)
 
 	require.NoError(t, InsertItemUnit(context.TODO(), m, db, itemUnit2))

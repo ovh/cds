@@ -18,6 +18,7 @@ import { ApplicationWorkflowService } from './application/application.workflow.s
 import { AuthenticationService } from './authentication/authentication.service';
 import { ErrorInterceptor } from './authentication/error.interceptor';
 import { LogoutInterceptor } from './authentication/logout.interceptor';
+import { ProxyInterceptor } from './authentication/proxy.interceptor';
 import { XSRFInterceptor } from './authentication/xsrf.interceptor';
 import { BroadcastService } from './broadcast/broadcast.service';
 import { BroadcastStore } from './broadcast/broadcast.store';
@@ -132,6 +133,11 @@ export class ServicesModule {
                 WorkflowTemplateService,
                 WorkflowService,
                 WorkflowStore, WorkflowRunService, WorkflowCoreService,
+                {
+                    provide: HTTP_INTERCEPTORS,
+                    useClass: ProxyInterceptor,
+                    multi: true
+                },
                 {
                     provide: HTTP_INTERCEPTORS,
                     useClass: XSRFInterceptor,

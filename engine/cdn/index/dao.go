@@ -38,7 +38,7 @@ func getItem(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlExecutor, q g
 	var i Item
 	found, err := m.Get(ctx, db, q, &i, opts...)
 	if err != nil {
-		return nil, sdk.WrapError(err, "cannot get auth consumer")
+		return nil, sdk.WrapError(err, "cannot get item")
 	}
 	if !found {
 		return nil, sdk.WithStack(sdk.ErrNotFound)

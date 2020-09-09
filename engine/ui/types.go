@@ -28,4 +28,5 @@ type Configuration struct {
 	URL      string                          `toml:"url" comment:"Public URL of this UI service." default:"http://localhost:8080" json:"url"`
 	API      service.APIServiceConfiguration `toml:"api" comment:"######################\n CDS API Settings \n######################" json:"api"`
 	HooksURL string                          `toml:"hooksURL" comment:"Hooks µService URL" default:"http://localhost:8083" json:"hooksURL"`
+	CDNURL   string                          `toml:"cdnURL" comment:"CDN µService URL" default:"http://localhost:8089" json:"cdnURL"`
 }

@@ -1643,7 +1643,7 @@ func (api *API) getWorkflowNodeRunJobStepHandler() service.Handler {
 			NodeRunName:    nodeRun.WorkflowNodeName,
 			NodeRunID:      nodeRun.ID,
 			NodeRunJobName: runJob.Job.Action.Name,
-			NodeRunJobID:   runJob.Job.Action.ID,
+			NodeRunJobID:   runJob.ID,
 			StepName:       runJob.Job.Action.Actions[stepOrder].Name,
 			StepOrder:      stepOrder,
 		}
@@ -1661,10 +1661,9 @@ func (api *API) getWorkflowNodeRunJobStepHandler() service.Handler {
 			return sdk.WrapError(sdk.ErrNotFound, "no cdn service found")
 		}
 		_, code, err := services.NewClient(api.mustDB(), srvs).DoJSONRequest(ctx, http.MethodGet, "/item/logs/"+apiRefHash, nil, nil)
-		if err != nil {
+		if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
 			return err
 		}
-
 		if code != http.StatusOK {
 			return service.WriteJSON(w, sdk.CDNLogAccess{}, http.StatusOK)
 		}
@@ -1675,9 +1674,10 @@ func (api *API) getWorkflowNodeRunJobStepHandler() service.Handler {
 		}
 
 		return service.WriteJSON(w, sdk.CDNLogAccess{
-			Exists:      true,
-			Token:       tokenRaw,
-			DownloadURL: fmt.Sprintf("%s/item/logs/%s/download", httpURL, apiRefHash),
+			Exists:       true,
+			Token:        tokenRaw,
+			DownloadPath: fmt.Sprintf("/item/logs/%s/download", apiRefHash),
+			CDNURL:       httpURL,
 		}, http.StatusOK)
 	}
 }

@@ -41,7 +41,7 @@ func (s *Service) getItemLogsDownloadHandler() service.Handler {
 		var token sdk.CDNAuthToken
 		v := authentication.NewVerifier(s.ParsedAPIPublicKey)
 		if err := v.VerifyJWS(tokenRaw, &token); err != nil {
-			return err
+			return sdk.NewErrorWithStack(err, sdk.ErrUnauthorized)
 		}
 		if token.APIRefHash != apiRef {
 			return sdk.WithStack(sdk.ErrNotFound)

@@ -5,7 +5,6 @@ import (
 	"io"
 	"time"
 
-	"github.com/go-gorp/gorp"
 	"github.com/ovh/cds/engine/cdn/index"
 	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk"
@@ -68,7 +67,7 @@ func (x *RunningStorageUnits) runItem(ctx context.Context, tx gorpmapper.SqlExec
 	}()
 	var m = dest.GorpMapper()
 
-	iu, err := x.NewItemUnit(ctx, m, tx, dest, item)
+	iu, err := x.NewItemUnit(ctx, dest, item)
 	if err != nil {
 		return err
 	}
@@ -137,7 +136,7 @@ func (x *RunningStorageUnits) runItem(ctx context.Context, tx gorpmapper.SqlExec
 	return nil
 }
 
-func (x *RunningStorageUnits) NewItemUnit(ctx context.Context, m *gorpmapper.Mapper, tx gorp.SqlExecutor, su Interface, i *index.Item) (*ItemUnit, error) {
+func (x *RunningStorageUnits) NewItemUnit(ctx context.Context, su Interface, i *index.Item) (*ItemUnit, error) {
 	suloc, is := su.(StorageUnitWithLocator)
 	var loc string
 	if is {

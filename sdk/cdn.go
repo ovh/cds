@@ -14,9 +14,10 @@ type CDNAuthToken struct {
 }
 
 type CDNLogAccess struct {
-	Exists      bool   `json:"exists"`
-	Token       string `json:"token,omitempty"`
-	DownloadURL string `json:"download_url,omitempty"`
+	Exists       bool   `json:"exists"`
+	Token        string `json:"token,omitempty"`
+	DownloadPath string `json:"download_path,omitempty"`
+	CDNURL       string `json:"cdn_url,omitempty"`
 }
 
 type CDNLogAPIRef struct {

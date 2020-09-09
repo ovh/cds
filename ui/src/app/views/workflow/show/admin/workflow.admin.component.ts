@@ -135,7 +135,6 @@ export class WorkflowAdminComponent implements OnInit, OnDestroy {
             }
             if (this.selectedTagsPurge.indexOf(t) === -1) {
                 this.existingTagsPurge.push(t);
-                console.log('this.existingTagsPurge:', this.existingTagsPurge);
             }
         });
     }

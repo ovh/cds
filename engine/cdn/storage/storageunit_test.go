@@ -107,7 +107,7 @@ func TestRun(t *testing.T) {
 
 	log.Debug("item ID: %v", i.ID)
 
-	itemUnit, err := cdnUnits.NewItemUnit(ctx, m, db, cdnUnits.Buffer, i)
+	itemUnit, err := cdnUnits.NewItemUnit(ctx, cdnUnits.Buffer, i)
 	require.NoError(t, err)
 
 	err = storage.InsertItemUnit(ctx, m, db, itemUnit)

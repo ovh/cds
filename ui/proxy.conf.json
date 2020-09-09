@@ -7,6 +7,14 @@
       "^/cdsapi": ""
     }
   },
+  "/cdscdn": {
+    "target": "http://localhost:8089",
+    "secure": false,
+    "ws": true,
+    "pathRewrite": {
+      "^/cdscdn": ""
+    }
+  },
   "/mon/version": {
     "target": "http://localhost:8080",
     "secure": false,

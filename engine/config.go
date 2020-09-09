@@ -18,6 +18,7 @@ import (
 	"github.com/ovh/cds/engine/api/authentication"
 	"github.com/ovh/cds/engine/api/authentication/builtin"
 	"github.com/ovh/cds/engine/cdn"
+	"github.com/ovh/cds/engine/cdn/storage"
 	"github.com/ovh/cds/engine/database"
 	"github.com/ovh/cds/engine/elasticsearch"
 	"github.com/ovh/cds/engine/gorpmapper"
@@ -150,6 +151,15 @@ func configBootstrap(args []string) Configuration {
 			conf.CDN = &cdn.Configuration{}
 			defaults.SetDefaults(conf.CDN)
 			conf.CDN.Database.Schema = "cdn"
+			conf.CDN.Units.Storages = []storage.StorageConfiguration{
+				{
+					Name: "local",
+					Cron: "* * * * * ?",
+					Local: &storage.LocalStorageConfiguration{
+						Path: "/var/lib/cds-engine/logs",
+					},
+				},
+			}
 		case sdk.TypeElasticsearch:
 			conf.ElasticSearch = &elasticsearch.Configuration{}
 			defaults.SetDefaults(conf.ElasticSearch)

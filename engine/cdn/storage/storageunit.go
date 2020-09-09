@@ -120,8 +120,8 @@ type Configuration struct {
 }
 
 type BufferConfiguration struct {
-	Name  string                   `toml:"name" json:"name"`
-	Redis RedisBufferConfiguration `toml:"redisBuffer" json:"redis" mapstructure:"redis"`
+	Name  string                   `toml:"name" default:"redis" json:"name"`
+	Redis RedisBufferConfiguration `toml:"redis" json:"redis" mapstructure:"redis"`
 }
 
 type StorageConfiguration struct {

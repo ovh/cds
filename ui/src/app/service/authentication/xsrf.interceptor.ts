@@ -8,14 +8,13 @@ export class XSRFInterceptor implements HttpInterceptor {
     constructor() { }
 
     intercept(req: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
-        // Assets and version calls shoudl not be redirect to CDS api
-        if (req.url.indexOf('assets/i18n') !== -1 || req.url.indexOf('mon/version') !== -1) {
+        if (req.url.indexOf('cdsapi') === -1) {
             return next.handle(req);
         }
 
         return next.handle(req.clone({
             setHeaders: this.addHeader(),
-            url: './cdsapi' + req.url
+            url: req.url
         }));
     }
 
