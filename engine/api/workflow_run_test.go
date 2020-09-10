@@ -2666,16 +2666,18 @@ func initGetWorkflowNodeRunJobTest(t *testing.T, api *API, db gorpmapper.SqlExec
 
 	// Add service log
 	require.NoError(t, workflow.AddServiceLog(api.mustDB(), &sdk.ServiceLog{
-		WorkflowNodeRunID:    jobRun.WorkflowNodeRunID,
-		WorkflowNodeJobRunID: jobRun.ID,
-		Val:                  "0987654321",
+		WorkflowNodeRunID:      jobRun.WorkflowNodeRunID,
+		WorkflowNodeJobRunID:   jobRun.ID,
+		Val:                    "0987654321",
+		ServiceRequirementName: "postgres",
 	}, 15))
 
 	// Add truncated service log
 	require.NoError(t, workflow.AddServiceLog(api.mustDB(), &sdk.ServiceLog{
-		WorkflowNodeRunID:    jobRun.WorkflowNodeRunID,
-		WorkflowNodeJobRunID: jobRun.ID,
-		Val:                  "0987654321",
+		WorkflowNodeRunID:      jobRun.WorkflowNodeRunID,
+		WorkflowNodeJobRunID:   jobRun.ID,
+		Val:                    "0987654321",
+		ServiceRequirementName: "postgres",
 	}, 15))
 
 	return u, pass, proj, w1, lastRun, jobRun
@@ -2722,8 +2724,9 @@ func Test_getWorkflowNodeRunJobServiceLogsDeprecatedHandler(t *testing.T) {
 		"number":           fmt.Sprintf("%d", lastRun.Number),
 		"nodeRunID":        fmt.Sprintf("%d", lastRun.WorkflowNodeRuns[w1.WorkflowData.Node.ID][0].ID),
 		"runJobID":         fmt.Sprintf("%d", jobRun.ID),
+		"serviceName":      "postgres",
 	}
-	uri := router.GetRoute("GET", api.getWorkflowNodeRunJobServiceLogsDeprecatedHandler, vars)
+	uri := router.GetRoute("GET", api.getWorkflowNodeRunJobServiceLogDeprecatedHandler, vars)
 	require.NotEmpty(t, uri)
 	req := assets.NewAuthentifiedRequest(t, u, pass, "GET", uri, vars)
 
@@ -2731,10 +2734,10 @@ func Test_getWorkflowNodeRunJobServiceLogsDeprecatedHandler(t *testing.T) {
 	rec := httptest.NewRecorder()
 	router.Mux.ServeHTTP(rec, req)
 
-	var logs []sdk.ServiceLog
-	require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &logs))
+	var log sdk.ServiceLog
+	require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &log))
 	require.Equal(t, 200, rec.Code)
-	require.Equal(t, "098765432109876... truncated\n", logs[0].Val)
+	require.Equal(t, "098765432109876... truncated\n", log.Val)
 }
 
 func Test_deleteWorkflowRunsBranchHandler(t *testing.T) {

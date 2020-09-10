@@ -8,6 +8,7 @@ import (
 	"github.com/mitchellh/hashstructure"
 	"github.com/stretchr/testify/require"
 
+	cacheP "github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/engine/cdn/index"
 	"github.com/ovh/cds/engine/cdn/storage"
 	_ "github.com/ovh/cds/engine/cdn/storage/local"
@@ -397,36 +398,25 @@ func TestStoreNewServiceLogAndAppend(t *testing.T) {
 	item, err := index.LoadItemByAPIRefHashAndType(context.TODO(), s.Mapper, db, strconv.FormatUint(hashRef, 10), index.TypeItemServiceLog)
 	require.NoError(t, err)
 	require.NotNil(t, item)
-	defer func() {
-		_ = index.DeleteItem(m, db, item)
-	}()
+	t.Cleanup(func() { _ = index.DeleteItem(m, db, item) })
 	require.Equal(t, index.StatusItemIncoming, item.Status)
 
 	var logs []string
-	err = cache.ScoredSetScan(context.Background(), item.ID, 0, 1, &logs)
-	require.NoError(t, err)
+	require.NoError(t, cache.ScoredSetScan(context.Background(), cacheP.Key("cdn", "buffer", item.ID), 0, 1, &logs))
+	require.Len(t, logs, 1)
+	require.Equal(t, "log1", logs[0])
 
 	hm2 := handledMessage{
 		Msg: hook.Message{
 			Full: "log2",
 		},
-		Status: "Building",
-		Signature: log.Signature{
-			ProjectKey:   sdk.RandomString(10),
-			WorkflowID:   1,
-			WorkflowName: "MyWorklow",
-			RunID:        1,
-			NodeRunID:    1,
-			NodeRunName:  "MyPipeline",
-			JobName:      "MyJob",
-			JobID:        1,
-		},
+		Status:    "Building",
+		Signature: hm.Signature,
 	}
-	err = s.storeLogs(context.TODO(), index.TypeItemServiceLog, hm.Signature, hm.Status, hm2.Msg.Full, 0)
-	require.NoError(t, err)
+	require.NoError(t, s.storeLogs(context.TODO(), index.TypeItemServiceLog, hm2.Signature, hm2.Status, hm2.Msg.Full, 0))
 
-	err = cache.ScoredSetScan(context.TODO(), item.ID, 0, 2, &logs)
-	require.NoError(t, err)
+	require.NoError(t, cache.ScoredSetScan(context.TODO(), cacheP.Key("cdn", "buffer", item.ID), 0, 2, &logs))
 	require.Len(t, logs, 2)
+	require.Equal(t, "log1", logs[0])
 	require.Equal(t, "log2", logs[1])
 }

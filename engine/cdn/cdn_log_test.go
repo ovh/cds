@@ -227,9 +227,10 @@ func TestServiceLog(t *testing.T) {
 			RequirementID:   1,
 			RequirementName: "service-1",
 		},
-		JobID:     1,
-		NodeRunID: 1,
-		Timestamp: time.Now().UnixNano(),
+		ProjectKey: "PKEY",
+		JobID:      1,
+		NodeRunID:  1,
+		Timestamp:  time.Now().UnixNano(),
 	}
 
 	// Create worker private key
@@ -258,7 +259,7 @@ func TestServiceLog(t *testing.T) {
 	require.NoError(t, s.handleLogMessage(context.TODO(), []byte(message)))
 
 	// Check that service log is disabled
-	featureEnabled, has := logCache.Get("cdn-job-logs-enabled")
+	featureEnabled, has := logCache.Get("cdn-job-logs-enabled-project-PKEY")
 	require.True(t, has)
 	require.False(t, featureEnabled.(bool))
 

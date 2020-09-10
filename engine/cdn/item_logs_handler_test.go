@@ -87,13 +87,14 @@ func TestGetItemLogsDownloadHandler(t *testing.T) {
 	require.NoError(t, err)
 
 	uri := s.Router.GetRoute("GET", s.getItemLogsDownloadHandler, map[string]string{
+		"type":   string(index.TypeItemStepLog),
 		"apiRef": apiRefHash,
 	})
 	require.NotEmpty(t, uri)
 	req := assets.NewJWTAuthentifiedRequest(t, tokenRaw, "GET", uri, nil)
 	rec := httptest.NewRecorder()
 	s.Router.Mux.ServeHTTP(rec, req)
-	assert.Equal(t, 200, rec.Code)
+	require.Equal(t, 200, rec.Code)
 
 	assert.Equal(t, "[EMERGENCY] this is a message\n", string(rec.Body.Bytes()))
 }
