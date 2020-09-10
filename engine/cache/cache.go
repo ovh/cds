@@ -32,11 +32,17 @@ type Store interface {
 	Delete(key string) error
 	DeleteAll(key string) error
 	Exist(key string) (bool, error)
+	HealthStore
 	LockStore
 	QueueStore
 	PubSubStore
 	ScoredSetStore
 	SetStore
+}
+
+type HealthStore interface {
+	Ping() error
+	DBSize() (int64, error)
 }
 
 type QueueStore interface {
@@ -71,6 +77,7 @@ type ScoredSetStore interface {
 	ScoredSetAppend(ctx context.Context, key string, value interface{}) error
 	ScoredSetScan(ctx context.Context, key string, from, to float64, dest interface{}) error
 	SetCard(key string) (int, error)
+	HealthStore
 }
 
 //New init a cache

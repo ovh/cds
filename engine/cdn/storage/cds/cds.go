@@ -2,14 +2,16 @@ package cds
 
 import (
 	"bytes"
+	"context"
 	"fmt"
+	"io"
+	"io/ioutil"
+
 	"github.com/ovh/cds/engine/cdn/index"
 	"github.com/ovh/cds/engine/cdn/storage"
 	"github.com/ovh/cds/engine/cdn/storage/encryption"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
-	"io"
-	"io/ioutil"
 )
 
 type CDS struct {
@@ -29,7 +31,7 @@ func (c *CDS) GetClient() cdsclient.Interface {
 	return c.client
 }
 
-func (c *CDS) Init(cfg interface{}) error {
+func (c *CDS) Init(ctx context.Context, cfg interface{}) error {
 	config, is := cfg.(*storage.CDSStorageConfiguration)
 	if !is {
 		return sdk.WithStack(fmt.Errorf("invalid configuration: %T", cfg))
@@ -98,4 +100,15 @@ func (c *CDS) FeatureEnabled(name string, params map[string]string) (sdk.Feature
 
 func (c *CDS) GetWorkflowNodeRun(pKey string, nodeRunIdentifier sdk.WorkflowNodeRunIdentifiers) (*sdk.WorkflowNodeRun, error) {
 	return c.client.WorkflowNodeRun(pKey, nodeRunIdentifier.WorkflowName, nodeRunIdentifier.RunNumber, nodeRunIdentifier.NodeRunID)
+}
+
+func (c *CDS) Status() []sdk.MonitoringStatusLine {
+	if _, err := c.client.Version(); err != nil {
+		return []sdk.MonitoringStatusLine{{Component: "backend/cds", Value: "cds KO" + err.Error(), Status: sdk.MonitoringStatusAlert}}
+	}
+	return []sdk.MonitoringStatusLine{{
+		Component: "backend/cds",
+		Value:     "connect OK",
+		Status:    sdk.MonitoringStatusOK,
+	}}
 }

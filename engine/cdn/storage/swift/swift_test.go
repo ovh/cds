@@ -1,6 +1,7 @@
 package swift
 
 import (
+	"context"
 	"io/ioutil"
 	"testing"
 
@@ -15,7 +16,7 @@ import (
 func TestSwift(t *testing.T) {
 	log.SetLogger(t)
 	var driver = new(Swift)
-	err := driver.Init(&storage.SwiftStorageConfiguration{
+	err := driver.Init(context.TODO(), &storage.SwiftStorageConfiguration{
 		Encryption: []convergent.ConvergentEncryptionConfig{
 			{
 				Cipher:      aesgcm.CipherName,

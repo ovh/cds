@@ -1,10 +1,12 @@
 package local
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"os"
 	"path/filepath"
+	"time"
 
 	"github.com/ovh/cds/engine/cdn/index"
 	"github.com/ovh/cds/engine/cdn/storage"
@@ -17,6 +19,7 @@ type Local struct {
 	storage.AbstractUnit
 	encryption.ConvergentEncryption
 	config storage.LocalStorageConfiguration
+	size   int64
 }
 
 var _ storage.StorageUnit = new(Local)
@@ -25,14 +28,23 @@ func init() {
 	storage.RegisterDriver("local", new(Local))
 }
 
-func (s *Local) Init(cfg interface{}) error {
+func (s *Local) Init(ctx context.Context, cfg interface{}) error {
 	config, is := cfg.(*storage.LocalStorageConfiguration)
 	if !is {
 		return sdk.WithStack(fmt.Errorf("invalid configuration: %T", cfg))
 	}
 	s.config = *config
 	s.ConvergentEncryption = encryption.New(config.Encryption)
-	return os.MkdirAll(s.config.Path, os.FileMode(0755))
+
+	if err := os.MkdirAll(s.config.Path, os.FileMode(0700)); err != nil {
+		return err
+	}
+
+	sdk.GoRoutine(ctx, "cdn-local-compute-size", func(ctx context.Context) {
+		s.computeSize(ctx)
+	})
+
+	return nil
 }
 
 func (s *Local) filename(i storage.ItemUnit) (string, error) {
@@ -68,7 +80,7 @@ func (s *Local) NewWriter(i storage.ItemUnit) (io.WriteCloser, error) {
 		return nil, err
 	}
 	log.Debug("[%T] writing to %s", s, path)
-	return os.OpenFile(path, os.O_CREATE|os.O_RDWR, os.FileMode(0644))
+	return os.OpenFile(path, os.O_CREATE|os.O_RDWR, os.FileMode(0640))
 }
 
 func (s *Local) NewReader(i storage.ItemUnit) (io.ReadCloser, error) {
@@ -79,4 +91,68 @@ func (s *Local) NewReader(i storage.ItemUnit) (io.ReadCloser, error) {
 	}
 	log.Debug("[%T] reading from %s", s, path)
 	return os.Open(path)
+}
+
+func (s *Local) Status() []sdk.MonitoringStatusLine {
+	var lines []sdk.MonitoringStatusLine
+	if finfo, err := os.Stat(s.config.Path); os.IsNotExist(err) {
+		lines = append(lines, sdk.MonitoringStatusLine{
+			Component: "backend/local",
+			Value:     fmt.Sprintf("directory: %v does not exist", s.config.Path),
+			Status:    sdk.MonitoringStatusAlert,
+		})
+	} else if !finfo.IsDir() {
+		lines = append(lines, sdk.MonitoringStatusLine{
+			Component: "backend/local",
+			Value:     fmt.Sprintf("%v is not a directory", s.config.Path),
+			Status:    sdk.MonitoringStatusAlert,
+		})
+	}
+
+	status := sdk.MonitoringStatusOK
+	for _, v := range lines {
+		if v.Status != sdk.MonitoringStatusOK {
+			status = v.Status
+		}
+	}
+	lines = append(lines, sdk.MonitoringStatusLine{
+		Component: "backend/local",
+		Value:     fmt.Sprintf("size: %d bytes", s.size),
+		Status:    status,
+	})
+	return lines
+}
+
+func (s *Local) computeSize(ctx context.Context) {
+	tick := time.NewTicker(1 * time.Minute)
+	defer tick.Stop()
+	for {
+		select {
+		case <-ctx.Done():
+			if ctx.Err() != nil {
+				log.Error(ctx, "cdn:backend:local:computeSize: %v", ctx.Err())
+			}
+			return
+		case <-tick.C:
+			var err error
+			s.size, err = s.dirSize(s.config.Path)
+			if err != nil {
+				log.Error(ctx, "cdn:backend:local:computeSize:dirSize: %v", ctx.Err())
+			}
+		}
+	}
+}
+
+func (s *Local) dirSize(path string) (int64, error) {
+	var size int64
+	err := filepath.Walk(path, func(_ string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+		if !info.IsDir() {
+			size += info.Size()
+		}
+		return err
+	})
+	return size, err
 }

@@ -74,7 +74,25 @@ func NewRedisStore(host, password string, ttl int) (*RedisStore, error) {
 	}, nil
 }
 
-// Keys List keys from pattern
+func (s *RedisStore) DBSize() (int64, error) {
+	size, err := s.Client.DBSize().Result()
+	if err != nil {
+		return 0, sdk.WithStack(err)
+	}
+	return size, nil
+}
+
+func (s *RedisStore) Ping() error {
+	pong, err := s.Client.Ping().Result()
+	if err != nil {
+		return sdk.WithStack(err)
+	}
+	if pong != "PONG" {
+		return fmt.Errorf("Cannot ping Redis")
+	}
+	return nil
+}
+
 func (s *RedisStore) Keys(pattern string) ([]string, error) {
 	if s.Client == nil {
 		return nil, sdk.WithStack(fmt.Errorf("redis> cannot get redis client"))
