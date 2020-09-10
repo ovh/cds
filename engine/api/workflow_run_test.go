@@ -2681,7 +2681,7 @@ func initGetWorkflowNodeRunJobTest(t *testing.T, api *API, db gorpmapper.SqlExec
 	return u, pass, proj, w1, lastRun, jobRun
 }
 
-func Test_getWorkflowNodeRunJobStepHandler(t *testing.T) {
+func Test_getWorkflowNodeRunJobStepDeprecatedHandler(t *testing.T) {
 	api, db, router := newTestAPI(t)
 
 	u, pass, proj, w1, lastRun, jobRun := initGetWorkflowNodeRunJobTest(t, api, db)
@@ -2695,8 +2695,8 @@ func Test_getWorkflowNodeRunJobStepHandler(t *testing.T) {
 		"runJobId":         fmt.Sprintf("%d", jobRun.ID),
 		"stepOrder":        "1",
 	}
-	uri := router.GetRoute("GET", api.getWorkflowNodeRunJobStepHandler, vars)
-	test.NotEmpty(t, uri)
+	uri := router.GetRoute("GET", api.getWorkflowNodeRunJobStepDeprecatedHandler, vars)
+	require.NotEmpty(t, uri)
 	req := assets.NewAuthentifiedRequest(t, u, pass, "GET", uri, vars)
 
 	//Do the request
@@ -2705,9 +2705,9 @@ func Test_getWorkflowNodeRunJobStepHandler(t *testing.T) {
 
 	stepState := &sdk.BuildState{}
 	require.NoError(t, json.Unmarshal(rec.Body.Bytes(), stepState))
-	assert.Equal(t, 200, rec.Code)
-	assert.Equal(t, "123456789012345... truncated\n", stepState.StepLogs.Val)
-	assert.Equal(t, sdk.StatusBuilding, stepState.Status)
+	require.Equal(t, 200, rec.Code)
+	require.Equal(t, "123456789012345... truncated\n", stepState.StepLogs.Val)
+	require.Equal(t, sdk.StatusBuilding, stepState.Status)
 }
 
 func Test_getWorkflowNodeRunJobServiceLogsHandler(t *testing.T) {
@@ -2724,7 +2724,7 @@ func Test_getWorkflowNodeRunJobServiceLogsHandler(t *testing.T) {
 		"runJobId":         fmt.Sprintf("%d", jobRun.ID),
 	}
 	uri := router.GetRoute("GET", api.getWorkflowNodeRunJobServiceLogsHandler, vars)
-	test.NotEmpty(t, uri)
+	require.NotEmpty(t, uri)
 	req := assets.NewAuthentifiedRequest(t, u, pass, "GET", uri, vars)
 
 	//Do the request
@@ -2733,8 +2733,8 @@ func Test_getWorkflowNodeRunJobServiceLogsHandler(t *testing.T) {
 
 	var logs []sdk.ServiceLog
 	require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &logs))
-	assert.Equal(t, 200, rec.Code)
-	assert.Equal(t, "098765432109876... truncated\n", logs[0].Val)
+	require.Equal(t, 200, rec.Code)
+	require.Equal(t, "098765432109876... truncated\n", logs[0].Val)
 }
 
 func Test_deleteWorkflowRunsBranchHandler(t *testing.T) {
@@ -2856,7 +2856,7 @@ func Test_deleteWorkflowRunsBranchHandler(t *testing.T) {
 		"branch":           "master",
 	}
 	uri := router.GetRoute("DELETE", api.deleteWorkflowRunsBranchHandler, vars)
-	test.NotEmpty(t, uri)
+	require.NotEmpty(t, uri)
 	req := assets.NewAuthentifiedRequest(t, nil, jwt, "DELETE", uri, vars)
 
 	//Do the request
@@ -2870,7 +2870,7 @@ func Test_deleteWorkflowRunsBranchHandler(t *testing.T) {
 		"permWorkflowName": w1.Name,
 	}
 	uri = router.GetRoute("GET", api.getWorkflowRunsHandler, vars)
-	test.NotEmpty(t, uri)
+	require.NotEmpty(t, uri)
 	req = assets.NewAuthentifiedRequest(t, u, pass, "GET", uri, vars)
 
 	//Do the request

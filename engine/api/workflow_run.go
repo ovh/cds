@@ -1690,7 +1690,7 @@ func (api *API) getWorkflowRunTagsHandler() service.Handler {
 
 		res, err := workflow.GetTagsAndValue(api.mustDB(), projectKey, workflowName)
 		if err != nil {
-			return sdk.WrapError(err, "Error")
+			return err
 		}
 
 		return service.WriteJSON(w, res, http.StatusOK)
