@@ -469,6 +469,8 @@ func (dao WorkflowDAO) withTemplates(db gorp.SqlExecutor, ws *[]Workflow) error 
 
 func (dao WorkflowDAO) withIntegrations(db gorp.SqlExecutor, ws *[]Workflow) error {
 	var mapIDs = map[int64]*sdk.ProjectIntegration{}
+	var eventsIntegration = []sdk.ProjectIntegration{}
+	var projectID int64
 	for _, w := range *ws {
 		nodesArray := w.WorkflowData.Array()
 		for _, n := range nodesArray {
@@ -479,6 +481,7 @@ func (dao WorkflowDAO) withIntegrations(db gorp.SqlExecutor, ws *[]Workflow) err
 				}
 			}
 		}
+		projectID = w.ProjectID
 	}
 
 	var ids = make([]int64, 0, len(mapIDs))
@@ -486,21 +489,26 @@ func (dao WorkflowDAO) withIntegrations(db gorp.SqlExecutor, ws *[]Workflow) err
 		ids = append(ids, id)
 	}
 
-	projectIntegrations, err := integration.LoadIntegrationsByIDs(db, ids)
+	projectIntegrations, err := integration.LoadIntegrationsByProjectID(db, projectID)
 	if err != nil {
 		return err
 	}
 
-	for id := range mapIDs {
-		for i := range projectIntegrations {
-			if id == projectIntegrations[i].ID {
-				mapIDs[id] = &projectIntegrations[i]
+	for i := range projectIntegrations {
+		pi := &projectIntegrations[i]
+		for id := range mapIDs {
+			if id == pi.ID {
+				mapIDs[id] = pi
 			}
+		}
+		if pi.Model.Event {
+			eventsIntegration = append(eventsIntegration, *pi)
 		}
 	}
 
 	for x := range *ws {
 		w := &(*ws)[x]
+		w.EventIntegrations = eventsIntegration
 		w.InitMaps()
 		nodesArray := w.WorkflowData.Array()
 		for i := range nodesArray {
