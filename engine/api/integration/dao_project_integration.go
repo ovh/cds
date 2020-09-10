@@ -149,6 +149,12 @@ func LoadIntegrationsByProjectIDWithClearPassword(db gorp.SqlExecutor, id int64)
 	return loadAllWithClearPassword(db, query)
 }
 
+// LoadIntegrationsByProjectIDs load integration integrations by project ids
+func LoadIntegrationsByProjectIDs(db gorp.SqlExecutor, ids []int64) ([]sdk.ProjectIntegration, error) {
+	query := gorpmapping.NewQuery("SELECT * from project_integration WHERE project_id = ANY($1)").Args(pq.Int64Array(ids))
+	return loadAll(db, query)
+}
+
 // LoadIntegrationsByProjectID load integration integrations by project id
 func LoadIntegrationsByProjectID(db gorp.SqlExecutor, id int64) ([]sdk.ProjectIntegration, error) {
 	query := gorpmapping.NewQuery("SELECT * from project_integration WHERE project_id = $1").Args(id)
