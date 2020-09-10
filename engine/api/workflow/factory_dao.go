@@ -484,11 +484,6 @@ func (dao WorkflowDAO) withIntegrations(db gorp.SqlExecutor, ws *[]Workflow) err
 		projectID = w.ProjectID
 	}
 
-	var ids = make([]int64, 0, len(mapIDs))
-	for id := range mapIDs {
-		ids = append(ids, id)
-	}
-
 	projectIntegrations, err := integration.LoadIntegrationsByProjectID(db, projectID)
 	if err != nil {
 		return err
