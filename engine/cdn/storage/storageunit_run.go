@@ -97,7 +97,7 @@ func (x *RunningStorageUnits) runItem(ctx context.Context, tx gorpmapper.SqlExec
 		return nil
 	}
 
-	source, err := x.GetSource(ctx, iu.Item)
+	source, err := x.GetSource(ctx, item)
 	if err != nil {
 		return err
 	}

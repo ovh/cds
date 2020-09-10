@@ -3,7 +3,6 @@ package cdn
 import (
 	"context"
 	"fmt"
-	"github.com/ovh/cds/engine/cdn/storage/cds"
 	"net/http"
 
 	"github.com/go-gorp/gorp"
@@ -12,7 +11,9 @@ import (
 	"github.com/ovh/cds/engine/api"
 	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/engine/cdn/index"
+	"github.com/ovh/cds/engine/cdn/lru"
 	"github.com/ovh/cds/engine/cdn/storage"
+	"github.com/ovh/cds/engine/cdn/storage/cds"
 	_ "github.com/ovh/cds/engine/cdn/storage/local"
 	_ "github.com/ovh/cds/engine/cdn/storage/redis"
 	"github.com/ovh/cds/engine/database"
@@ -149,6 +150,15 @@ func (s *Service) Serve(c context.Context) error {
 	if err != nil {
 		return fmt.Errorf("cannot connect to redis instance : %v", err)
 	}
+
+	log.Info(ctx, "Initializing log cache on %s", s.Cfg.Cache.Redis.Host)
+	s.LogCache, err = lru.NewLRU(s.Cfg.Cache.Redis.Host, s.Cfg.Cache.Redis.Password, s.Cfg.Cache.LruSize)
+	if err != nil {
+		return fmt.Errorf("cannot connect to redis instance : %v", err)
+	}
+	sdk.GoRoutine(ctx, "log-cache-eviction", func(ctx context.Context) {
+		lru.Evict(ctx, s.LogCache)
+	})
 
 	if err := s.initMetrics(ctx); err != nil {
 		return err

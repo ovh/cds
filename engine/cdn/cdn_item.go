@@ -8,13 +8,123 @@ import (
 	"encoding/hex"
 	"fmt"
 	"io"
+	"math/rand"
 	"os"
+	"time"
 
 	"github.com/ovh/cds/engine/cdn/index"
 	"github.com/ovh/cds/engine/cdn/storage"
 	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/log"
 )
+
+var (
+	rs  = rand.NewSource(time.Now().Unix())
+	rnd = rand.New(rs)
+)
+
+func (s *Service) getItemLogValue(ctx context.Context, t string, apiRefHash string, from, to uint) (io.ReadCloser, error) {
+	item, err := index.LoadItemByAPIRefHashAndType(ctx, s.Mapper, s.mustDBWithCtx(ctx), apiRefHash, t)
+	if err != nil {
+		return nil, err
+	}
+
+	itemUnit, err := storage.LoadItemUnitByUnit(ctx, s.Mapper, s.mustDBWithCtx(ctx), s.Units.Buffer.ID(), item.ID)
+	if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
+		return nil, err
+	}
+
+	// If item is in Buffer, get from it
+	if itemUnit != nil {
+		return s.Units.Buffer.NewReader(*itemUnit)
+	}
+
+	// Get from cache
+	ok, _ := s.LogCache.Exist(item.ID)
+	if ok {
+		return s.LogCache.NewReader(item.ID, from, to), nil
+	}
+
+	// Retrieve item and push it into the cache
+	if err := s.pushItemLogIntoCache(ctx, *item); err != nil {
+		return nil, err
+	}
+
+	// Get from cache
+	return s.LogCache.NewReader(item.ID, from, to), nil
+
+}
+
+func (s *Service) pushItemLogIntoCache(ctx context.Context, item index.Item) error {
+	// Search item in a storage unit
+	itemUnits, err := storage.LoadAllItemUnitsByItemID(ctx, s.Mapper, s.mustDBWithCtx(ctx), item.ID)
+	if err != nil {
+		return err
+	}
+	// Random pick a unit
+	idx := 0
+	if len(itemUnits) > 1 {
+		idx = rnd.Intn(len(itemUnits))
+	}
+	refItemUnit, err := storage.LoadItemUnitByID(ctx, s.Mapper, s.mustDBWithCtx(ctx), itemUnits[idx].ID, gorpmapper.GetOptions.WithDecryption)
+	if err != nil {
+		return err
+	}
+
+	// Load Unit
+	unit, err := storage.LoadUnitByID(ctx, s.Mapper, s.mustDBWithCtx(ctx), refItemUnit.UnitID)
+	if err != nil {
+		return err
+	}
+
+	// Get Storage unit
+	unitStorage := s.Units.Storage(unit.Name)
+	if unitStorage == nil {
+		return sdk.WithStack(fmt.Errorf("unable to find unit %s", unit.Name))
+	}
+
+	// Create a reader
+	reader, err := unitStorage.NewReader(*refItemUnit)
+	if err != nil {
+		return err
+	}
+
+	// Create a writer for the cache
+	cacheWriter := s.LogCache.NewWriter(item.ID)
+
+	// Write data in cache
+	chanError := make(chan error)
+	pr, pw := io.Pipe()
+
+	go func() {
+		defer pw.Close()
+		if err := unitStorage.Read(*refItemUnit, reader, pw); err != nil {
+			chanError <- err
+		}
+		close(chanError)
+	}()
+	if _, err := io.Copy(cacheWriter, pr); err != nil {
+		return err
+	}
+
+	if err := pr.Close(); err != nil {
+		return sdk.WithStack(err)
+	}
+
+	if err := reader.Close(); err != nil {
+		return sdk.WithStack(err)
+	}
+
+	for err := range chanError {
+		if err != nil {
+			return sdk.WithStack(err)
+		}
+	}
+
+	log.Info(ctx, "log %d has been pushed to cache", item.ID)
+	return nil
+}
 
 func (s *Service) completeItem(ctx context.Context, tx gorpmapper.SqlExecutorWithTx, itemUnit storage.ItemUnit) error {
 	// We need to lock the item and set its status to complete and also generate data hash

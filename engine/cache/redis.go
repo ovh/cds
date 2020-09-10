@@ -536,6 +536,39 @@ const (
 	MAX float64 = math.MaxFloat64
 )
 
+func (s *RedisStore) ScoredSetRem(ctx context.Context, key string, members ...string) error {
+	_, err := s.Client.ZRem(key, members).Result()
+	return sdk.WithStack(err)
+}
+
+func (s *RedisStore) ScoredSetRange(ctx context.Context, key string, from, to int64, dest interface{}) error {
+	values, err := s.Client.ZRange(key, from, to).Result()
+	if err != nil {
+		return sdk.WithStack(fmt.Errorf("redis zrange error: %v", err))
+	}
+
+	v := reflect.ValueOf(dest)
+	if v.Kind() != reflect.Ptr {
+		return sdk.WithStack(fmt.Errorf("non-pointer %v", v.Type()))
+	}
+	v = v.Elem()
+	if v.Kind() != reflect.Slice {
+		return sdk.WithStack(errors.New("the interface is not a slice"))
+	}
+
+	typ := reflect.TypeOf(v.Interface())
+	v.Set(reflect.MakeSlice(typ, len(values), len(values)))
+
+	for i := 0; i < v.Len(); i++ {
+		m := v.Index(i).Interface()
+		if err := json.Unmarshal([]byte(values[i]), &m); err != nil {
+			return sdk.WrapError(err, "redis> cannot unmarshal %s", values[i])
+		}
+		v.Index(i).Set(reflect.ValueOf(m))
+	}
+	return nil
+}
+
 func (s *RedisStore) ScoredSetScan(ctx context.Context, key string, from, to float64, dest interface{}) error {
 	min := "-inf"
 	if from != MIN {
