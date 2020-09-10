@@ -412,7 +412,6 @@ func (r RunningStorageUnits) GetSource(ctx context.Context, i *index.Item) (Sour
 
 	unit := r.Storage(refUnit.Name)
 	if unit == nil {
-		log.Error(ctx, "unable to find unit %s", refUnit.Name)
 		return nil, sdk.WithStack(fmt.Errorf("unable to find unit %s", refUnit.Name))
 	}
 

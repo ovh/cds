@@ -93,8 +93,8 @@ func (s *Service) dequeueServiceLogs(ctx context.Context) error {
 	}
 }
 
-func (s *Service) storeLogs(ctx context.Context, typ string, signature log.Signature, status string, content string, line int64) error {
-	item, err := s.loadOrCreateIndexItem(ctx, typ, signature)
+func (s *Service) storeLogs(ctx context.Context, itemType index.ItemType, signature log.Signature, status string, content string, line int64) error {
+	item, err := s.loadOrCreateIndexItem(ctx, itemType, signature)
 	if err != nil {
 		return err
 	}
@@ -110,7 +110,7 @@ func (s *Service) storeLogs(ctx context.Context, typ string, signature log.Signa
 		return nil
 	}
 
-	switch typ {
+	switch itemType {
 	case index.TypeItemStepLog:
 		if err := s.Units.Buffer.Add(*iu, uint(line), content); err != nil {
 			return err
@@ -158,7 +158,7 @@ func (s *Service) storeLogs(ctx context.Context, typ string, signature log.Signa
 	return nil
 }
 
-func (s *Service) loadOrCreateIndexItem(ctx context.Context, typ string, signature log.Signature) (*index.Item, error) {
+func (s *Service) loadOrCreateIndexItem(ctx context.Context, itemType index.ItemType, signature log.Signature) (*index.Item, error) {
 	// Build cds api ref
 	apiRef := sdk.CDNLogAPIRef{
 		ProjectKey:     signature.ProjectKey,
@@ -184,7 +184,7 @@ func (s *Service) loadOrCreateIndexItem(ctx context.Context, typ string, signatu
 		return nil, err
 	}
 
-	item, err := index.LoadItemByAPIRefHashAndType(ctx, s.Mapper, s.mustDBWithCtx(ctx), hashRef, typ)
+	item, err := index.LoadItemByAPIRefHashAndType(ctx, s.Mapper, s.mustDBWithCtx(ctx), hashRef, itemType)
 	if err != nil {
 		if !sdk.ErrorIs(err, sdk.ErrNotFound) {
 			return nil, err
@@ -192,7 +192,7 @@ func (s *Service) loadOrCreateIndexItem(ctx context.Context, typ string, signatu
 		// Insert data
 		item = &index.Item{
 			APIRef:     apiRef,
-			Type:       typ,
+			Type:       itemType,
 			APIRefHash: hashRef,
 			Status:     index.StatusItemIncoming,
 		}
@@ -213,7 +213,7 @@ func (s *Service) loadOrCreateIndexItem(ctx context.Context, typ string, signatu
 		}
 
 		// reload if item already exist
-		item, err = index.LoadItemByAPIRefHashAndType(ctx, s.Mapper, s.mustDBWithCtx(ctx), hashRef, typ)
+		item, err = index.LoadItemByAPIRefHashAndType(ctx, s.Mapper, s.mustDBWithCtx(ctx), hashRef, itemType)
 		if err != nil {
 			return nil, err
 		}

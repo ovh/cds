@@ -253,12 +253,12 @@ func TestServiceLog(t *testing.T) {
 	message = fmt.Sprintf(message, signatureField)
 
 	gock.New("http://lolcat.host").Post("/queue/workflows/log/service").Reply(200)
-	gock.New("http://lolcat.host").Post("/feature/enabled/cdn-service-logs").Reply(200).JSON(sdk.FeatureEnabledResponse{Name: "cdn-service-logs", Enabled: false})
+	gock.New("http://lolcat.host").Post("/feature/enabled/cdn-job-logs").Reply(200).JSON(sdk.FeatureEnabledResponse{Name: "cdn-job-logs", Enabled: false})
 
 	require.NoError(t, s.handleLogMessage(context.TODO(), []byte(message)))
 
 	// Check that service log is disabled
-	featureEnabled, has := logCache.Get("cdn-service-logs-enabled")
+	featureEnabled, has := logCache.Get("cdn-job-logs-enabled")
 	require.True(t, has)
 	require.False(t, featureEnabled.(bool))
 

@@ -19,10 +19,14 @@ import (
 func (s *Service) getItemLogsHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
+		itemType := index.ItemType(vars["type"])
+		if err := itemType.Validate(); err != nil {
+			return err
+		}
 		apiRef := vars["apiRef"]
 
 		// Try to load item and item units for given api ref
-		item, err := index.LoadItemByAPIRefHashAndType(ctx, s.Mapper, s.mustDBWithCtx(ctx), apiRef, index.TypeItemStepLog)
+		item, err := index.LoadItemByAPIRefHashAndType(ctx, s.Mapper, s.mustDBWithCtx(ctx), apiRef, itemType)
 		if err != nil {
 			return err
 		}
@@ -34,6 +38,10 @@ func (s *Service) getItemLogsHandler() service.Handler {
 func (s *Service) getItemLogsDownloadHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
+		itemType := index.ItemType(vars["type"])
+		if err := itemType.Validate(); err != nil {
+			return err
+		}
 		apiRef := vars["apiRef"]
 		tokenRaw := strings.TrimPrefix(r.Header.Get("Authorization"), "Bearer ")
 
@@ -48,7 +56,7 @@ func (s *Service) getItemLogsDownloadHandler() service.Handler {
 		}
 
 		// Try to load item and item units for given api ref
-		item, err := index.LoadItemByAPIRefHashAndType(ctx, s.Mapper, s.mustDBWithCtx(ctx), token.APIRefHash, index.TypeItemStepLog)
+		item, err := index.LoadItemByAPIRefHashAndType(ctx, s.Mapper, s.mustDBWithCtx(ctx), token.APIRefHash, itemType)
 		if err != nil {
 			return err
 		}
@@ -69,7 +77,7 @@ func (s *Service) getItemLogsDownloadHandler() service.Handler {
 			}
 		}
 		if item.Status != index.StatusItemCompleted && itemUnitBuffer == nil {
-			return sdk.WrapError(sdk.ErrNotFound, "missing item unit buffer for incoming step log %s", token.APIRefHash)
+			return sdk.WrapError(sdk.ErrNotFound, "missing item unit buffer for incoming log %s", token.APIRefHash)
 		}
 
 		// Always load from buffer if possible, if not in buffer try to load from another available storage unit
@@ -103,7 +111,7 @@ func (s *Service) getItemLogsDownloadHandler() service.Handler {
 			}
 		}
 		if rc == nil {
-			return sdk.WrapError(sdk.ErrNotFound, "no storage found that contains item step log %s", token.APIRefHash)
+			return sdk.WrapError(sdk.ErrNotFound, "no storage found that contains given item %s", token.APIRefHash)
 		}
 
 		w.Header().Add("Content-Type", "text/plain")

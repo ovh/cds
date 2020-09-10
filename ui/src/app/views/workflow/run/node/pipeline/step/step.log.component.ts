@@ -16,11 +16,12 @@ import {
 } from 'ansi_up';
 import { Action } from 'app/model/action.model';
 import { Job, StepStatus } from 'app/model/job.model';
-import { BuildResult, Log, PipelineStatus } from 'app/model/pipeline.model';
+import { BuildResult, CDNLogAccess, Log, PipelineStatus } from 'app/model/pipeline.model';
 import { WorkflowNodeJobRun } from 'app/model/workflow.run.model';
 import { WorkflowService } from 'app/service/workflow/workflow.service';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { DurationService } from 'app/shared/duration/duration.service';
+import { FeatureState } from 'app/store/feature.state';
 import { ProjectState } from 'app/store/project.state';
 import { WorkflowState, WorkflowStateModel } from 'app/store/workflow.state';
 import cloneDeep from 'lodash-es/cloneDeep';
@@ -185,7 +186,14 @@ export class WorkflowStepLogComponent implements OnInit, OnDestroy {
         }
         let stepOrder = this.stepOrder < this.job.step_status.length ? this.stepOrder : this.job.step_status.length - 1;
 
-        const logAccess = await this._workflowService.getStepLogAccess(projectKey, workflowName, nodeRunId, runJobId, stepOrder).toPromise()
+        const cdnEnabled = !!this._store.selectSnapshot(FeatureState.feature('cdn-job-logs')).find(f => {
+            return !!f.results.find(r => r.enabled && r.paramString === JSON.stringify({ 'project_key': projectKey }));
+        });
+
+        let logAccess: CDNLogAccess;
+        if (cdnEnabled) {
+            logAccess = await this._workflowService.getStepLogAccess(projectKey, workflowName, nodeRunId, runJobId, stepOrder).toPromise();
+        }
 
         let callback = (b: BuildResult) => {
             if (b.step_logs.id) {
@@ -199,16 +207,14 @@ export class WorkflowStepLogComponent implements OnInit, OnDestroy {
             this._cd.markForCheck();
         };
 
-        if (!logAccess.exists) {
+        if (!cdnEnabled || !logAccess.exists) {
             const stepLog = await this._workflowService.getStepLog(projectKey, workflowName, runNumber,
                 nodeRunId, runJobId, stepOrder).toPromise();
             callback(stepLog);
         } else {
             const data = await this._http.get('./cdscdn' + logAccess.download_path, {
                 responseType: 'text',
-                headers: new HttpHeaders({
-                    'Authorization': `Bearer ${logAccess.token}`
-                })
+                headers: new HttpHeaders({ 'Authorization': `Bearer ${logAccess.token}` })
             }).toPromise();
             callback(<BuildResult>{ status: PipelineStatus.BUILDING, step_logs: { id: 1, val: data } });
         }
@@ -221,14 +227,12 @@ export class WorkflowStepLogComponent implements OnInit, OnDestroy {
         this._ngZone.runOutsideAngular(() => {
             this.pollingSubscription = Observable.interval(2000)
                 .mergeMap(_ => {
-                    if (!logAccess.exists) {
+                    if (!cdnEnabled || !logAccess.exists) {
                         return this._workflowService.getStepLog(projectKey, workflowName, runNumber, nodeRunId, runJobId, stepOrder);
                     }
                     return this._http.get('./cdscdn' + logAccess.download_path, {
                         responseType: 'text',
-                        headers: new HttpHeaders({
-                            'Authorization': `Bearer ${logAccess.token}`
-                        })
+                        headers: new HttpHeaders({ 'Authorization': `Bearer ${logAccess.token}` })
                     }).map(data => <BuildResult>{ status: PipelineStatus.BUILDING, step_logs: { id: 1, val: data } });
                 })
                 .subscribe(build => {

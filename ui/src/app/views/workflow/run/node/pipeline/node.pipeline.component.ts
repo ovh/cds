@@ -65,11 +65,12 @@ export class WorkflowRunNodePipelineComponent implements OnInit, OnDestroy {
     }
 
     ngOnInit() {
-        this._featureService.isEnabled('cdn-job-logs', { 'project_key': this.project.key }).subscribe(f => {
+        let data = { 'project_key': this.project.key };
+        this._featureService.isEnabled('cdn-job-logs', data).subscribe(f => {
             this._store.dispatch(new AddFeatureResult(<FeaturePayload>{
                 key: f.name,
-                result: <FeatureResult>{
-                    paramString: this.project.key,
+                result: {
+                    paramString: JSON.stringify(data),
                     enabled: f.enabled
                 }
             }));

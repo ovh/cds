@@ -66,8 +66,13 @@ export class WorkflowService {
     }
 
     getServiceLog(projectKey: string, workflowName: string, runNumber: number,
-        nodeRunID: number, jobRunID: number): Observable<Array<ServiceLog>> {
-        return this._http.get<Array<ServiceLog>>(`/project/${projectKey}/workflows/${workflowName}/runs/${runNumber}/nodes/${nodeRunID}/job/${jobRunID}/log/service`);
+        nodeRunID: number, jobRunID: number, serviceName: string): Observable<ServiceLog> {
+        return this._http.get<ServiceLog>(`/project/${projectKey}/workflows/${workflowName}/runs/${runNumber}/nodes/${nodeRunID}/job/${jobRunID}/service/${serviceName}`);
+    }
+
+    getServiceLogAccess(projectKey: string, workflowName: string, nodeRunID: number,
+         jobRunID: number, serviceName: string): Observable<CDNLogAccess> {
+        return this._http.get<CDNLogAccess>(`/project/${projectKey}/workflows/${workflowName}/nodes/${nodeRunID}/job/${jobRunID}/service/${serviceName}/log`);
     }
 
     getNodeJobRunInfo(projectKey: string, workflowName: string, runNumber: number,

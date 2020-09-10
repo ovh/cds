@@ -2,10 +2,14 @@ package cdn
 
 import (
 	"context"
+	"fmt"
 	"time"
+
+	"github.com/sirupsen/logrus"
 
 	"github.com/ovh/cds/engine/cdn/index"
 	"github.com/ovh/cds/engine/cdn/storage"
+	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
 
@@ -33,7 +37,8 @@ func (s *Service) CompleteWaitingItems(ctx context.Context) {
 			for _, itemUnit := range itemUnits {
 				tx, err := s.mustDBWithCtx(ctx).Begin()
 				if err != nil {
-					log.Error(ctx, "cdn:CompleteWaitingItems: unable to start transaction: %v", err)
+					err = sdk.WrapError(err, "unable to start transaction")
+					log.ErrorWithFields(ctx, logrus.Fields{"stack_trace": fmt.Sprintf("%+v", err)}, "%s", err)
 					continue
 				}
 				if err := s.completeItem(ctx, tx, itemUnit); err != nil {

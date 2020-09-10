@@ -2,8 +2,11 @@ package storage
 
 import (
 	"context"
+	"fmt"
 	"io"
 	"time"
+
+	"github.com/sirupsen/logrus"
 
 	"github.com/ovh/cds/engine/cdn/index"
 	"github.com/ovh/cds/engine/gorpmapper"
@@ -38,20 +41,21 @@ func (x *RunningStorageUnits) Run(ctx context.Context, s StorageUnit) error {
 		item, err := index.LoadAndLockItemByID(ctx, s.GorpMapper(), tx, id, gorpmapper.GetOptions.WithDecryption)
 		if err != nil {
 			if !sdk.ErrorIs(err, sdk.ErrNotFound) {
-				log.Error(ctx, "storage.Run.LoadAndLockItemByID> error: %v", err)
+				log.ErrorWithFields(ctx, logrus.Fields{"stack_trace": fmt.Sprintf("%+v", err)}, "%s", err)
 			}
 			tx.Rollback() // nolint
 			continue
 		}
 
 		if err := x.runItem(ctx, tx, s, item); err != nil {
-			log.Error(ctx, "storage.Run.runItem> error: %v", err)
+			log.ErrorWithFields(ctx, logrus.Fields{"stack_trace": fmt.Sprintf("%+v", err)}, "%s", err)
 			tx.Rollback() // nolint
 			continue
 		}
 
 		if err := tx.Commit(); err != nil {
-			log.Error(ctx, "storage.Run> unable to commit txt: %v", err)
+			err = sdk.WrapError(err, "unable to commit txt")
+			log.ErrorWithFields(ctx, logrus.Fields{"stack_trace": fmt.Sprintf("%+v", err)}, "%s", err)
 			tx.Rollback() // nolint
 			continue
 		}

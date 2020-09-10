@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { Action, Selector, State, StateContext } from '@ngxs/store';
+import { Action, createSelector, State, StateContext } from '@ngxs/store';
 import * as actionFeature from './feature.action';
 
 export class FeatureResults {
@@ -25,9 +25,10 @@ export class FeatureStateModel {
 export class FeatureState {
     constructor() { }
 
-    @Selector()
-    static features(state: FeatureStateModel) {
-        return state.features
+    static feature(key: string) {
+        return createSelector([FeatureState], (state: FeatureStateModel) => {
+            return state.features.filter(f => f.key === key);
+        });
     }
 
     @Action(actionFeature.AddFeatureResult)
@@ -38,7 +39,7 @@ export class FeatureState {
         if (!feature) {
             feature = <FeatureResults>{ key: action.payload.key, results: [] };
         }
-        feature.results.filter(r => r.paramString !== action.payload.result.paramString).push(action.payload.result);
+        feature.results = feature.results.filter(r => r.paramString !== action.payload.result.paramString).concat(action.payload.result);
 
         ctx.setState({
             ...state,

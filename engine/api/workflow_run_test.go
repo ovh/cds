@@ -2692,7 +2692,7 @@ func Test_getWorkflowNodeRunJobStepDeprecatedHandler(t *testing.T) {
 		"permWorkflowName": w1.Name,
 		"number":           fmt.Sprintf("%d", lastRun.Number),
 		"nodeRunID":        fmt.Sprintf("%d", lastRun.WorkflowNodeRuns[w1.WorkflowData.Node.ID][0].ID),
-		"runJobId":         fmt.Sprintf("%d", jobRun.ID),
+		"runJobID":         fmt.Sprintf("%d", jobRun.ID),
 		"stepOrder":        "1",
 	}
 	uri := router.GetRoute("GET", api.getWorkflowNodeRunJobStepDeprecatedHandler, vars)
@@ -2710,7 +2710,7 @@ func Test_getWorkflowNodeRunJobStepDeprecatedHandler(t *testing.T) {
 	require.Equal(t, sdk.StatusBuilding, stepState.Status)
 }
 
-func Test_getWorkflowNodeRunJobServiceLogsHandler(t *testing.T) {
+func Test_getWorkflowNodeRunJobServiceLogsDeprecatedHandler(t *testing.T) {
 	api, db, router := newTestAPI(t)
 
 	u, pass, proj, w1, lastRun, jobRun := initGetWorkflowNodeRunJobTest(t, api, db)
@@ -2721,9 +2721,9 @@ func Test_getWorkflowNodeRunJobServiceLogsHandler(t *testing.T) {
 		"permWorkflowName": w1.Name,
 		"number":           fmt.Sprintf("%d", lastRun.Number),
 		"nodeRunID":        fmt.Sprintf("%d", lastRun.WorkflowNodeRuns[w1.WorkflowData.Node.ID][0].ID),
-		"runJobId":         fmt.Sprintf("%d", jobRun.ID),
+		"runJobID":         fmt.Sprintf("%d", jobRun.ID),
 	}
-	uri := router.GetRoute("GET", api.getWorkflowNodeRunJobServiceLogsHandler, vars)
+	uri := router.GetRoute("GET", api.getWorkflowNodeRunJobServiceLogsDeprecatedHandler, vars)
 	require.NotEmpty(t, uri)
 	req := assets.NewAuthentifiedRequest(t, u, pass, "GET", uri, vars)
 

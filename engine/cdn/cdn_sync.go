@@ -180,7 +180,7 @@ func (s *Service) syncStepLog(ctx context.Context, tx gorpmapper.SqlExecutorWith
 	return s.syncItem(ctx, tx, su, index.TypeItemStepLog, apiRef)
 }
 
-func (s *Service) syncItem(ctx context.Context, tx gorpmapper.SqlExecutorWithTx, su storage.Interface, itemType string, apiRef sdk.CDNLogAPIRef) error {
+func (s *Service) syncItem(ctx context.Context, tx gorpmapper.SqlExecutorWithTx, su storage.Interface, itemType index.ItemType, apiRef sdk.CDNLogAPIRef) error {
 	apirefHash, err := apiRef.ToHash()
 	if err != nil {
 		return err

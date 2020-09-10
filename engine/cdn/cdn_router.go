@@ -19,6 +19,6 @@ func (s *Service) initRouter(ctx context.Context) {
 	r.Handle("/mon/metrics", nil, r.GET(service.GetPrometheustMetricsHandler(s), api.Auth(false)))
 	r.Handle("/mon/metrics/all", nil, r.GET(service.GetMetricsHandler, api.Auth(false)))
 
-	r.Handle("/item/logs/{apiRef}", nil, r.GET(s.getItemLogsHandler))
-	r.Handle("/item/logs/{apiRef}/download", nil, r.GET(s.getItemLogsDownloadHandler, api.Auth(false)))
+	r.Handle("/item/{type}/{apiRef}", nil, r.GET(s.getItemLogsHandler))
+	r.Handle("/item/{type}/{apiRef}/download", nil, r.GET(s.getItemLogsDownloadHandler, api.Auth(false)))
 }
