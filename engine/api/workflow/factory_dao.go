@@ -2,6 +2,7 @@ package workflow
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"time"
 
@@ -503,8 +504,8 @@ func (dao WorkflowDAO) withIntegrations(db gorp.SqlExecutor, ws *[]Workflow) err
 		w := &(*ws)[x]
 		var err error
 		w.EventIntegrations, err = integration.LoadWorkflowIntegrationsByWorkflowID(db, w.ID)
-		if err != nil {
-			return err
+		if err != nil && sdk.Cause(err) != sql.ErrNoRows && !sdk.ErrorIs(err, sdk.ErrNotFound) {
+			return sdk.WithStack(err)
 		}
 
 		w.InitMaps()
