@@ -23,7 +23,6 @@ import (
 	"github.com/ovh/cds/engine/api/authentication"
 	"github.com/ovh/cds/engine/api/authentication/builtin"
 	"github.com/ovh/cds/engine/api/authentication/local"
-	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/project"
@@ -31,6 +30,7 @@ import (
 	"github.com/ovh/cds/engine/api/user"
 	"github.com/ovh/cds/engine/api/workermodel"
 	"github.com/ovh/cds/engine/api/workflow"
+	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/jws"
@@ -526,7 +526,8 @@ func InitCDNService(t *testing.T, db gorpmapper.SqlExecutorWithTx, scopes ...sdk
 			PublicKey:  publicKey,
 			ConsumerID: &hConsumer.ID,
 			Config: map[string]interface{}{
-				"public_tcp": "cdn.net:4545",
+				"public_tcp":  "cdn.net:4545",
+				"public_http": "http://cdn.net:8080",
 			},
 		},
 	}

@@ -282,7 +282,7 @@ func (api *API) InitRouter() {
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/runs/{number}/nodes/{nodeRunID}/job/{runJobID}/service/{serviceName}", Scope(sdk.AuthConsumerScopeRun), r.GET(api.getWorkflowNodeRunJobServiceLogDeprecatedHandler))
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/runs/{number}/nodes/{nodeRunID}/job/{runJobID}/step/{stepOrder}", Scope(sdk.AuthConsumerScopeRun), r.GET(api.getWorkflowNodeRunJobStepDeprecatedHandler))
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/nodes/{nodeRunID}/job/{runJobID}/service/{serviceName}/log", Scope(sdk.AuthConsumerScopeRun), r.GET(api.getWorkflowNodeRunJobServiceLogHandler))
-	r.Handle("/project/{key}/workflows/{permWorkflowName}/nodes/{nodeRunID}/job/{runJobID}/step/{stepOrder}/log", Scope(sdk.AuthConsumerScopeRun), r.GET(api.getWorkflowNodeRunJobStepHandler))
+	r.Handle("/project/{key}/workflows/{permWorkflowName}/nodes/{nodeRunID}/job/{runJobID}/step/{stepOrder}/log", Scope(sdk.AuthConsumerScopeRun), r.GET(api.getWorkflowNodeRunJobStepLogHandler))
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/node/{nodeID}/triggers/condition", Scope(sdk.AuthConsumerScopeRun), r.GET(api.getWorkflowTriggerConditionHandler))
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/hook/triggers/condition", Scope(sdk.AuthConsumerScopeRun), r.GET(api.getWorkflowTriggerHookConditionHandler))
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/triggers/condition", Scope(sdk.AuthConsumerScopeRun), r.GET(api.getWorkflowTriggerConditionHandler))

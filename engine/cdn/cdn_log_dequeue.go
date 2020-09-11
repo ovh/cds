@@ -42,7 +42,7 @@ func (s *Service) dequeueJobLogs(ctx context.Context) error {
 			currentLog := buildMessage(hm)
 			cpt := 0
 			for {
-				if err := s.storeLogs(ctx, index.TypeItemStepLog, hm.Signature, hm.Status, currentLog, hm.Line); err != nil {
+				if err := s.storeLogs(ctx, sdk.CDNTypeItemStepLog, hm.Signature, hm.Status, currentLog, hm.Line); err != nil {
 					if sdk.ErrorIs(err, sdk.ErrLocked) && cpt < 10 {
 						cpt++
 						time.Sleep(250 * time.Millisecond)
@@ -83,7 +83,7 @@ func (s *Service) dequeueServiceLogs(ctx context.Context) error {
 			if !strings.HasSuffix(hm.Msg.Full, "\n") {
 				hm.Msg.Full += "\n"
 			}
-			if err := s.storeLogs(ctx, index.TypeItemServiceLog, hm.Signature, hm.Status, hm.Msg.Full, 0); err != nil {
+			if err := s.storeLogs(ctx, sdk.CDNTypeItemServiceLog, hm.Signature, hm.Status, hm.Msg.Full, 0); err != nil {
 				err = sdk.WrapError(err, "unable to store service log")
 				log.ErrorWithFields(ctx, logrus.Fields{
 					"stack_trace": fmt.Sprintf("%+v", err),
@@ -93,7 +93,7 @@ func (s *Service) dequeueServiceLogs(ctx context.Context) error {
 	}
 }
 
-func (s *Service) storeLogs(ctx context.Context, itemType index.ItemType, signature log.Signature, status string, content string, line int64) error {
+func (s *Service) storeLogs(ctx context.Context, itemType sdk.CDNItemType, signature log.Signature, status string, content string, line int64) error {
 	item, err := s.loadOrCreateIndexItem(ctx, itemType, signature)
 	if err != nil {
 		return err
@@ -111,11 +111,11 @@ func (s *Service) storeLogs(ctx context.Context, itemType index.ItemType, signat
 	}
 
 	switch itemType {
-	case index.TypeItemStepLog:
+	case sdk.CDNTypeItemStepLog:
 		if err := s.Units.Buffer.Add(*iu, uint(line), content); err != nil {
 			return err
 		}
-	case index.TypeItemServiceLog:
+	case sdk.CDNTypeItemServiceLog:
 		if err := s.Units.Buffer.Append(*iu, content); err != nil {
 			return err
 		}
@@ -158,7 +158,7 @@ func (s *Service) storeLogs(ctx context.Context, itemType index.ItemType, signat
 	return nil
 }
 
-func (s *Service) loadOrCreateIndexItem(ctx context.Context, itemType index.ItemType, signature log.Signature) (*index.Item, error) {
+func (s *Service) loadOrCreateIndexItem(ctx context.Context, itemType sdk.CDNItemType, signature log.Signature) (*index.Item, error) {
 	// Build cds api ref
 	apiRef := sdk.CDNLogAPIRef{
 		ProjectKey:     signature.ProjectKey,

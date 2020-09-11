@@ -76,7 +76,7 @@ func TestStoreNewStepLog(t *testing.T) {
 	}
 
 	content := buildMessage(hm)
-	err = s.storeLogs(context.TODO(), index.TypeItemStepLog, hm.Signature, hm.Status, content, hm.Line)
+	err = s.storeLogs(context.TODO(), sdk.CDNTypeItemStepLog, hm.Signature, hm.Status, content, hm.Line)
 	require.NoError(t, err)
 
 	apiRef := sdk.CDNLogAPIRef{
@@ -93,7 +93,7 @@ func TestStoreNewStepLog(t *testing.T) {
 	}
 	hashRef, err := hashstructure.Hash(apiRef, nil)
 	require.NoError(t, err)
-	item, err := index.LoadItemByAPIRefHashAndType(context.TODO(), s.Mapper, db, strconv.FormatUint(hashRef, 10), index.TypeItemStepLog)
+	item, err := index.LoadItemByAPIRefHashAndType(context.TODO(), s.Mapper, db, strconv.FormatUint(hashRef, 10), sdk.CDNTypeItemStepLog)
 	require.NoError(t, err)
 	require.NotNil(t, item)
 	defer func() {
@@ -180,14 +180,14 @@ func TestStoreLastStepLog(t *testing.T) {
 		Status:     index.StatusItemIncoming,
 		APIRefHash: strconv.FormatUint(hashRef, 10),
 		APIRef:     apiRef,
-		Type:       index.TypeItemStepLog,
+		Type:       sdk.CDNTypeItemStepLog,
 	}
 	require.NoError(t, index.InsertItem(context.TODO(), m, db, &item))
 	defer func() {
 		_ = index.DeleteItem(m, db, &item)
 	}()
 	content := buildMessage(hm)
-	err = s.storeLogs(context.TODO(), index.TypeItemStepLog, hm.Signature, hm.Status, content, hm.Line)
+	err = s.storeLogs(context.TODO(), sdk.CDNTypeItemStepLog, hm.Signature, hm.Status, content, hm.Line)
 	require.NoError(t, err)
 
 	itemDB, err := index.LoadItemByID(context.TODO(), s.Mapper, db, item.ID)
@@ -279,7 +279,7 @@ func TestStoreLogWrongOrder(t *testing.T) {
 		Status:     index.StatusItemIncoming,
 		APIRefHash: strconv.FormatUint(hashRef, 10),
 		APIRef:     apiRef,
-		Type:       index.TypeItemStepLog,
+		Type:       sdk.CDNTypeItemStepLog,
 	}
 	require.NoError(t, index.InsertItem(context.TODO(), m, db, &item))
 	defer func() {
@@ -287,7 +287,7 @@ func TestStoreLogWrongOrder(t *testing.T) {
 	}()
 
 	content := buildMessage(hm)
-	err = s.storeLogs(context.TODO(), index.TypeItemStepLog, hm.Signature, hm.Status, content, hm.Line)
+	err = s.storeLogs(context.TODO(), sdk.CDNTypeItemStepLog, hm.Signature, hm.Status, content, hm.Line)
 	require.NoError(t, err)
 
 	itemDB, err := index.LoadItemByID(context.TODO(), s.Mapper, db, item.ID)
@@ -310,7 +310,7 @@ func TestStoreLogWrongOrder(t *testing.T) {
 	hm.Status = ""
 	content = buildMessage(hm)
 
-	err = s.storeLogs(context.TODO(), index.TypeItemStepLog, hm.Signature, hm.Status, content, hm.Line)
+	err = s.storeLogs(context.TODO(), sdk.CDNTypeItemStepLog, hm.Signature, hm.Status, content, hm.Line)
 	require.NoError(t, err)
 
 	itemDB2, err := index.LoadItemByID(context.TODO(), s.Mapper, db, item.ID)
@@ -380,7 +380,7 @@ func TestStoreNewServiceLogAndAppend(t *testing.T) {
 		},
 	}
 
-	err = s.storeLogs(context.TODO(), index.TypeItemServiceLog, hm.Signature, hm.Status, hm.Msg.Full, 0)
+	err = s.storeLogs(context.TODO(), sdk.CDNTypeItemServiceLog, hm.Signature, hm.Status, hm.Msg.Full, 0)
 	require.NoError(t, err)
 
 	apiRef := sdk.CDNLogAPIRef{
@@ -395,7 +395,7 @@ func TestStoreNewServiceLogAndAppend(t *testing.T) {
 	}
 	hashRef, err := hashstructure.Hash(apiRef, nil)
 	require.NoError(t, err)
-	item, err := index.LoadItemByAPIRefHashAndType(context.TODO(), s.Mapper, db, strconv.FormatUint(hashRef, 10), index.TypeItemServiceLog)
+	item, err := index.LoadItemByAPIRefHashAndType(context.TODO(), s.Mapper, db, strconv.FormatUint(hashRef, 10), sdk.CDNTypeItemServiceLog)
 	require.NoError(t, err)
 	require.NotNil(t, item)
 	t.Cleanup(func() { _ = index.DeleteItem(m, db, item) })
@@ -413,7 +413,7 @@ func TestStoreNewServiceLogAndAppend(t *testing.T) {
 		Status:    "Building",
 		Signature: hm.Signature,
 	}
-	require.NoError(t, s.storeLogs(context.TODO(), index.TypeItemServiceLog, hm2.Signature, hm2.Status, hm2.Msg.Full, 0))
+	require.NoError(t, s.storeLogs(context.TODO(), sdk.CDNTypeItemServiceLog, hm2.Signature, hm2.Status, hm2.Msg.Full, 0))
 
 	require.NoError(t, cache.ScoredSetScan(context.TODO(), cacheP.Key("cdn", "buffer", item.ID), 0, 2, &logs))
 	require.Len(t, logs, 2)

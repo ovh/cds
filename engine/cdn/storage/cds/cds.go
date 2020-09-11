@@ -56,14 +56,14 @@ func (c *CDS) NewWriter(i storage.ItemUnit) (io.WriteCloser, error) {
 
 func (c *CDS) NewReader(i storage.ItemUnit) (io.ReadCloser, error) {
 	switch i.Item.Type {
-	case index.TypeItemStepLog:
+	case sdk.CDNTypeItemStepLog:
 		bs, err := c.client.WorkflowNodeRunJobStep(i.Item.APIRef.ProjectKey, i.Item.APIRef.WorkflowName, 0, i.Item.APIRef.NodeRunID, i.Item.APIRef.NodeRunJobID, int(i.Item.APIRef.StepOrder))
 		if err != nil {
 			return nil, err
 		}
 		rc := ioutil.NopCloser(bytes.NewReader([]byte(bs.StepLogs.Val)))
 		return rc, nil
-	case index.TypeItemServiceLog:
+	case sdk.CDNTypeItemServiceLog:
 		logs, err := c.ServiceLogs(i.Item.APIRef.ProjectKey, i.Item.APIRef.WorkflowName, i.Item.APIRef.NodeRunID, i.Item.APIRef.NodeRunJobID)
 		if err != nil {
 			return nil, err

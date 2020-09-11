@@ -64,3 +64,18 @@ func (a *CDNLogAPIRef) Scan(src interface{}) error {
 	}
 	return WrapError(json.Unmarshal(source, a), "cannot unmarshal CDNLogAPIRef")
 }
+
+type CDNItemType string
+
+func (t CDNItemType) Validate() error {
+	switch t {
+	case CDNTypeItemStepLog, CDNTypeItemServiceLog:
+		return nil
+	}
+	return NewErrorFrom(ErrWrongRequest, "invalid item type")
+}
+
+const (
+	CDNTypeItemStepLog    CDNItemType = "step-log"
+	CDNTypeItemServiceLog CDNItemType = "service-log"
+)

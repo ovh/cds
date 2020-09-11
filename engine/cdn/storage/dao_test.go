@@ -46,7 +46,7 @@ func TestLoadOldItemUnitByItemStatusAndDuration(t *testing.T) {
 	i1 := &index.Item{
 		ID:         sdk.UUID(),
 		APIRefHash: sdk.UUID(),
-		Type:       index.TypeItemStepLog,
+		Type:       sdk.CDNTypeItemStepLog,
 		Status:     index.StatusItemCompleted,
 	}
 	err = index.InsertItem(context.TODO(), m, db, i1)
@@ -62,7 +62,7 @@ func TestLoadOldItemUnitByItemStatusAndDuration(t *testing.T) {
 	i2 := &index.Item{
 		ID:         sdk.UUID(),
 		APIRefHash: sdk.UUID(),
-		Type:       index.TypeItemStepLog,
+		Type:       sdk.CDNTypeItemStepLog,
 		Status:     index.StatusItemIncoming,
 	}
 	err = index.InsertItem(context.TODO(), m, db, i2)

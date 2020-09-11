@@ -32,7 +32,7 @@ func TestLoadItem(t *testing.T) {
 	i := index.Item{
 		APIRef:     apiRef,
 		APIRefHash: hashRef,
-		Type:       index.TypeItemStepLog,
+		Type:       sdk.CDNTypeItemStepLog,
 	}
 	require.NoError(t, index.InsertItem(context.TODO(), m, db, &i))
 	t.Cleanup(func() { _ = index.DeleteItem(m, db, &i) })

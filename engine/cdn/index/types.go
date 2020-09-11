@@ -7,21 +7,6 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-type ItemType string
-
-func (t ItemType) Validate() error {
-	switch t {
-	case TypeItemStepLog, TypeItemServiceLog:
-		return nil
-	}
-	return sdk.NewErrorFrom(sdk.ErrWrongRequest, "invalid item type")
-}
-
-const (
-	TypeItemStepLog    ItemType = "step-log"
-	TypeItemServiceLog ItemType = "service-log"
-)
-
 const (
 	StatusItemIncoming  = "Incoming"
 	StatusItemCompleted = "Completed"
@@ -36,7 +21,7 @@ type Item struct {
 	APIRef       sdk.CDNLogAPIRef `json:"api_ref" db:"api_ref"`
 	APIRefHash   string           `json:"api_ref_hash" db:"api_ref_hash"`
 	Status       string           `json:"status" db:"status"`
-	Type         ItemType         `json:"type" db:"type"`
+	Type         sdk.CDNItemType  `json:"type" db:"type"`
 	Size         int64            `json:"size" db:"size"`
 	MD5          string           `json:"md5" db:"md5"`
 }

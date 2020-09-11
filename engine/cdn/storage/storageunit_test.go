@@ -97,7 +97,7 @@ func TestRun(t *testing.T) {
 		APIRef:     apiRef,
 		APIRefHash: apiRefHash,
 		Created:    time.Now(),
-		Type:       index.TypeItemStepLog,
+		Type:       sdk.CDNTypeItemStepLog,
 		Status:     index.StatusItemIncoming,
 	}
 	require.NoError(t, index.InsertItem(ctx, m, db, i))

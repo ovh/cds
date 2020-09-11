@@ -13,7 +13,6 @@ import (
 
 	"github.com/ovh/cds/engine/api/test/assets"
 	"github.com/ovh/cds/engine/authentication"
-	"github.com/ovh/cds/engine/cdn/index"
 	"github.com/ovh/cds/engine/cdn/storage"
 	"github.com/ovh/cds/engine/test"
 	"github.com/ovh/cds/sdk"
@@ -61,7 +60,7 @@ func TestGetItemLogsDownloadHandler(t *testing.T) {
 	}
 
 	content := buildMessage(hm)
-	err = s.storeLogs(context.TODO(), index.TypeItemStepLog, hm.Signature, hm.Status, content, hm.Line)
+	err = s.storeLogs(context.TODO(), sdk.CDNTypeItemStepLog, hm.Signature, hm.Status, content, hm.Line)
 	require.NoError(t, err)
 
 	signer, err := authentication.NewSigner("cdn-test", test.SigningKey)
@@ -87,7 +86,7 @@ func TestGetItemLogsDownloadHandler(t *testing.T) {
 	require.NoError(t, err)
 
 	uri := s.Router.GetRoute("GET", s.getItemLogsDownloadHandler, map[string]string{
-		"type":   string(index.TypeItemStepLog),
+		"type":   string(sdk.CDNTypeItemStepLog),
 		"apiRef": apiRefHash,
 	})
 	require.NotEmpty(t, uri)

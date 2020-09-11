@@ -157,7 +157,7 @@ func (s *Service) syncServiceLogs(ctx context.Context, tx gorpmapper.SqlExecutor
 			RequirementServiceName: sl.ServiceRequirementName,
 			RequirementServiceID:   reqID,
 		}
-		if err := s.syncItem(ctx, tx, cdsStorage, index.TypeItemServiceLog, apiRef); err != nil {
+		if err := s.syncItem(ctx, tx, cdsStorage, sdk.CDNTypeItemServiceLog, apiRef); err != nil {
 			return err
 		}
 	}
@@ -177,10 +177,10 @@ func (s *Service) syncStepLog(ctx context.Context, tx gorpmapper.SqlExecutorWith
 		NodeRunJobName: rj.Job.Action.Name,
 		NodeRunName:    nodeRun.WorkflowNodeName,
 	}
-	return s.syncItem(ctx, tx, su, index.TypeItemStepLog, apiRef)
+	return s.syncItem(ctx, tx, su, sdk.CDNTypeItemStepLog, apiRef)
 }
 
-func (s *Service) syncItem(ctx context.Context, tx gorpmapper.SqlExecutorWithTx, su storage.Interface, itemType index.ItemType, apiRef sdk.CDNLogAPIRef) error {
+func (s *Service) syncItem(ctx context.Context, tx gorpmapper.SqlExecutorWithTx, su storage.Interface, itemType sdk.CDNItemType, apiRef sdk.CDNLogAPIRef) error {
 	apirefHash, err := apiRef.ToHash()
 	if err != nil {
 		return err

@@ -263,7 +263,7 @@ func TestSyncLog(t *testing.T) {
 	itm := index.Item{
 		APIRef:     apiRef1000,
 		APIRefHash: hash,
-		Type:       index.TypeItemStepLog,
+		Type:       sdk.CDNTypeItemStepLog,
 	}
 	err = index.InsertItem(context.TODO(), s.Mapper, db, &itm)
 	if !sdk.ErrorIs(err, sdk.ErrConflictData) {
@@ -301,16 +301,16 @@ func TestSyncLog(t *testing.T) {
 	item1, err := index.LoadItemByID(context.TODO(), s.Mapper, db, itemUnits[0].ItemID)
 	require.NoError(t, err)
 	require.Equal(t, int64(22), item1.Size)
-	require.Equal(t, index.TypeItemStepLog, item1.Type)
+	require.Equal(t, sdk.CDNTypeItemStepLog, item1.Type)
 
 	item2, err := index.LoadItemByID(context.TODO(), s.Mapper, db, itemUnits[1].ItemID)
 	require.NoError(t, err)
 	require.Equal(t, int64(43), item2.Size)
-	require.Equal(t, index.TypeItemStepLog, item2.Type)
+	require.Equal(t, sdk.CDNTypeItemStepLog, item2.Type)
 
 	item3, err := index.LoadItemByID(context.TODO(), s.Mapper, db, itemUnits[2].ItemID)
 	require.NoError(t, err)
 	require.Equal(t, int64(25), item3.Size)
-	require.Equal(t, index.TypeItemServiceLog, item3.Type)
+	require.Equal(t, sdk.CDNTypeItemServiceLog, item3.Type)
 
 }

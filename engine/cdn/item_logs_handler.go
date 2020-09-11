@@ -18,7 +18,7 @@ import (
 func (s *Service) getItemLogsHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
-		itemType := index.ItemType(vars["type"])
+		itemType := sdk.CDNItemType(vars["type"])
 		if err := itemType.Validate(); err != nil {
 			return err
 		}
@@ -37,7 +37,7 @@ func (s *Service) getItemLogsHandler() service.Handler {
 func (s *Service) getItemLogsDownloadHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
-		itemType := index.ItemType(vars["type"])
+		itemType := sdk.CDNItemType(vars["type"])
 		if err := itemType.Validate(); err != nil {
 			return err
 		}
