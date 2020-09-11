@@ -2,7 +2,6 @@ package workflow
 
 import (
 	"context"
-	"database/sql"
 	"fmt"
 	"time"
 
