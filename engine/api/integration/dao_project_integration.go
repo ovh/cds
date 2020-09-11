@@ -149,12 +149,6 @@ func LoadIntegrationsByProjectIDWithClearPassword(db gorp.SqlExecutor, id int64)
 	return loadAllWithClearPassword(db, query)
 }
 
-// LoadIntegrationsByProjectIDs load integration integrations by project ids
-func LoadIntegrationsByProjectIDs(db gorp.SqlExecutor, ids []int64) ([]sdk.ProjectIntegration, error) {
-	query := gorpmapping.NewQuery("SELECT * from project_integration WHERE project_id = ANY($1)").Args(pq.Int64Array(ids))
-	return loadAll(db, query)
-}
-
 // LoadIntegrationsByProjectID load integration integrations by project id
 func LoadIntegrationsByProjectID(db gorp.SqlExecutor, id int64) ([]sdk.ProjectIntegration, error) {
 	query := gorpmapping.NewQuery("SELECT * from project_integration WHERE project_id = $1").Args(id)
@@ -219,14 +213,14 @@ func AddOnWorkflow(db gorp.SqlExecutor, workflowID int64, projectIntegrationID i
 	return nil
 }
 
-// LoadWorkflowIntegrationsByWorkflowIDs load integration integrations by id
-func LoadWorkflowIntegrationsByWorkflowIDs(db gorp.SqlExecutor, ids []int64) ([]sdk.ProjectIntegration, error) {
+// LoadWorkflowIntegrationsByWorkflowID load workflow integrations by workflowid
+func LoadWorkflowIntegrationsByWorkflowID(db gorp.SqlExecutor, id int64) ([]sdk.ProjectIntegration, error) {
 	query := gorpmapping.NewQuery(`
 		SELECT project_integration.*
 		FROM project_integration
 		JOIN workflow_project_integration ON project_integration.id = workflow_project_integration.project_integration_id
-		WHERE workflow_project_integration.workflow_id = ANY($1)
-	`).Args(pq.Int64Array(ids))
+		WHERE workflow_project_integration.workflow_id = $1
+	`).Args(id)
 	return loadAll(db, query)
 }
 

@@ -469,8 +469,6 @@ func (dao WorkflowDAO) withTemplates(db gorp.SqlExecutor, ws *[]Workflow) error 
 
 func (dao WorkflowDAO) withIntegrations(db gorp.SqlExecutor, ws *[]Workflow) error {
 	var mapIDs = map[int64]*sdk.ProjectIntegration{}
-	var projectIds = map[int64]int64{}
-	var workflowIds = map[int64]int64{}
 	for _, w := range *ws {
 		nodesArray := w.WorkflowData.Array()
 		for _, n := range nodesArray {
@@ -481,48 +479,34 @@ func (dao WorkflowDAO) withIntegrations(db gorp.SqlExecutor, ws *[]Workflow) err
 				}
 			}
 		}
-		projectIds[w.ProjectID] = w.ProjectID
-		workflowIds[w.ID] = w.ID
 	}
 
-	pIds := []int64{}
-	for _, p := range projectIds {
-		pIds = append(pIds, p)
-	}
-	wIds := []int64{}
-	for _, p := range workflowIds {
-		wIds = append(wIds, p)
+	var ids = make([]int64, 0, len(mapIDs))
+	for id := range mapIDs {
+		ids = append(ids, id)
 	}
 
-	projectIntegrations, err := integration.LoadIntegrationsByProjectIDs(db, pIds)
-	if err != nil {
-		return err
-	}
-	workflowIntegrations, err := integration.LoadWorkflowIntegrationsByWorkflowIDs(db, wIds)
+	projectIntegrations, err := integration.LoadIntegrationsByIDs(db, ids)
 	if err != nil {
 		return err
 	}
 
-	for i := range projectIntegrations {
-		pi := &projectIntegrations[i]
-		for id := range mapIDs {
-			if id == pi.ID {
-				mapIDs[id] = pi
+	for id := range mapIDs {
+		for i := range projectIntegrations {
+			if id == projectIntegrations[i].ID {
+				mapIDs[id] = &projectIntegrations[i]
 			}
-		}
-	}
-
-	var eventsIntegration = map[int64][]sdk.ProjectIntegration{}
-	for i := range workflowIntegrations {
-		pi := &projectIntegrations[i]
-		if pi.Model.Event {
-			eventsIntegration[pi.ProjectID] = append(eventsIntegration[pi.ProjectID], *pi)
 		}
 	}
 
 	for x := range *ws {
 		w := &(*ws)[x]
-		w.EventIntegrations = eventsIntegration[w.ProjectID]
+		var err error
+		w.EventIntegrations, err = integration.LoadWorkflowIntegrationsByWorkflowID(db, w.ID)
+		if err != nil {
+			return err
+		}
+
 		w.InitMaps()
 		nodesArray := w.WorkflowData.Array()
 		for i := range nodesArray {
