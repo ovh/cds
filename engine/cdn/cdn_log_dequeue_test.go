@@ -2,7 +2,10 @@ package cdn
 
 import (
 	"context"
+	"github.com/ovh/cds/engine/cdn/redis"
+	"io"
 	"strconv"
+	"strings"
 	"testing"
 
 	"github.com/mitchellh/hashstructure"
@@ -58,7 +61,7 @@ func TestStoreNewStepLog(t *testing.T) {
 			Full: "coucou",
 		},
 		Status: "Building",
-		Line:   1,
+		Line:   0,
 		Signature: log.Signature{
 			ProjectKey:   sdk.RandomString(10),
 			WorkflowID:   1,
@@ -104,10 +107,15 @@ func TestStoreNewStepLog(t *testing.T) {
 	iu, err := storage.LoadItemUnitByUnit(context.TODO(), s.Mapper, db, s.Units.Buffer.ID(), item.ID, gorpmapper.GetOptions.WithDecryption)
 	require.NoError(t, err)
 
-	logs, err := s.Units.Buffer.Get(*iu, 0, 1)
+	bufferReader, err := s.Units.Buffer.NewReader(*iu)
 	require.NoError(t, err)
-	require.Len(t, logs, 1)
-	require.Equal(t, "[EMERGENCY] coucou\n", logs[0])
+
+	buf := new(strings.Builder)
+	_, err = io.Copy(buf, bufferReader)
+	require.NoError(t, err)
+
+	require.NoError(t, err)
+	require.Equal(t, "[EMERGENCY] coucou\n", buf.String())
 }
 
 func TestStoreLastStepLog(t *testing.T) {
@@ -145,7 +153,7 @@ func TestStoreLastStepLog(t *testing.T) {
 	hm := handledMessage{
 		Msg:    hook.Message{},
 		Status: sdk.StatusSuccess,
-		Line:   1,
+		Line:   0,
 		Signature: log.Signature{
 			ProjectKey:   sdk.RandomString(10),
 			WorkflowID:   1,
@@ -244,7 +252,7 @@ func TestStoreLogWrongOrder(t *testing.T) {
 			Full: "voici un message",
 		},
 		Status: sdk.StatusSuccess,
-		Line:   2,
+		Line:   1,
 		Signature: log.Signature{
 			ProjectKey:   sdk.RandomString(10),
 			WorkflowID:   1,
@@ -306,7 +314,7 @@ func TestStoreLogWrongOrder(t *testing.T) {
 	require.NotNil(t, iu)
 
 	// Received Missing log
-	hm.Line = 1
+	hm.Line = 0
 	hm.Status = ""
 	content = buildMessage(hm)
 
@@ -323,11 +331,17 @@ func TestStoreLogWrongOrder(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, iu)
 
-	lines, err := s.Units.Buffer.Get(*iu, 0, 2)
+	bufferReader, err := s.Units.Buffer.NewReader(*iu)
 	require.NoError(t, err)
-	require.Len(t, lines, 2)
-	require.Equal(t, "[EMERGENCY] voici un message\n", lines[0])
-	require.Equal(t, "[EMERGENCY] voici un message\n", lines[1])
+	bufferReader.(*redis.Reader).From = 0
+	bufferReader.(*redis.Reader).Size = 2
+
+	buf := new(strings.Builder)
+	_, err = io.Copy(buf, bufferReader)
+	require.NoError(t, err)
+
+	require.Equal(t, "[EMERGENCY] voici un message\n[EMERGENCY] voici un message\n", buf.String())
+
 }
 
 func TestStoreNewServiceLogAndAppend(t *testing.T) {
@@ -367,7 +381,7 @@ func TestStoreNewServiceLogAndAppend(t *testing.T) {
 			Full: "log1",
 		},
 		Status: "Building",
-		Line:   1,
+		Line:   0,
 		Signature: log.Signature{
 			ProjectKey:   sdk.RandomString(10),
 			WorkflowID:   1,

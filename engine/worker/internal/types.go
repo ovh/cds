@@ -110,6 +110,7 @@ func (wk *CurrentWorker) SendLog(ctx context.Context, level workerruntime.Level,
 		log.Error(wk.GetContext(), "unable to prepare log: %v", err)
 	}
 	wk.gelfLogger.logger.WithField(log.ExtraFieldSignature, signature).WithField(log.ExtraFieldLine, wk.stepLogLine).Log(logLevel, msg)
+	wk.stepLogLine++
 }
 
 func (wk *CurrentWorker) prepareLog(ctx context.Context, level workerruntime.Level, s string) (string, string, logrus.Level, error) {
@@ -155,7 +156,6 @@ func (wk *CurrentWorker) prepareLog(ctx context.Context, level workerruntime.Lev
 	if err != nil {
 		return s, "", logrus.ErrorLevel, err
 	}
-	wk.stepLogLine++
 	return s, signature, logLevel, nil
 }
 

@@ -5,11 +5,10 @@ import (
 	"fmt"
 	"io"
 	"strconv"
-	"strings"
-	"unicode"
 
 	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/engine/cdn/index"
+	"github.com/ovh/cds/engine/cdn/redis"
 	"github.com/ovh/cds/engine/cdn/storage"
 	"github.com/ovh/cds/sdk"
 )
@@ -57,75 +56,24 @@ func (s *Redis) Card(i storage.ItemUnit) (int, error) {
 	return s.store.SetCard(cache.Key(keyBuffer, i.ItemID))
 }
 
-func (s *Redis) Get(i storage.ItemUnit, from, to uint) ([]string, error) {
-	var res = make([]string, to-from+1)
-	if err := s.store.ScoredSetScan(context.Background(), cache.Key(keyBuffer, i.ItemID), float64(from), float64(to), &res); err != nil {
-		return res, err
-	}
-	for i := range res {
-		res[i] = strings.TrimFunc(res[i], unicode.IsNumber)
-		res[i] = strings.TrimPrefix(res[i], "#")
-	}
-	return res, nil
-}
-
 // NewReader instanciate a reader that it able to iterate over Redis storage unit
 // with a score step of 100.0, starting at score 0
 func (s *Redis) NewReader(i storage.ItemUnit) (io.ReadCloser, error) {
-	return &reader{s: s, i: i}, nil
+	return &redis.Reader{
+		ReadWrite: redis.ReadWrite{
+			Store:     s.store,
+			PrefixKey: keyBuffer,
+			ItemID:    i.ItemID,
+			UsageKey:  "",
+		},
+		CurrentBuffer: "",
+		LastIndex:     0,
+		From:          0,
+		Size:          0,
+	}, nil
 }
 
 func (s *Redis) Read(i storage.ItemUnit, r io.Reader, w io.Writer) error {
 	_, err := io.Copy(w, r)
 	return err
-}
-
-type reader struct {
-	s             *Redis
-	i             storage.ItemUnit
-	lastIndex     uint
-	currentBuffer string
-}
-
-func (r *reader) Read(p []byte) (n int, err error) {
-	size := len(p)
-	var buffer string
-	if len(r.currentBuffer) > 0 {
-		if len(r.currentBuffer) <= size {
-			buffer = r.currentBuffer
-		}
-	}
-
-	newIndex := r.lastIndex + 100
-	lines, err := r.s.Get(r.i, r.lastIndex, newIndex)
-	if err != nil {
-		return 0, err
-	}
-
-	if len(lines) > 0 {
-		r.currentBuffer += strings.Join(lines, "")
-	}
-
-	if len(buffer) < size && len(r.currentBuffer) > 0 {
-		x := size - len(buffer)
-		if x < len(r.currentBuffer) {
-			buffer += r.currentBuffer[:x]
-			r.currentBuffer = r.currentBuffer[x:]
-		} else {
-			buffer += r.currentBuffer
-			r.currentBuffer = ""
-		}
-	}
-
-	r.lastIndex = newIndex
-	err = nil
-	if len(lines) == 0 {
-		err = io.EOF
-	}
-
-	return copy(p, buffer), err
-}
-
-func (r *reader) Close() error {
-	return nil
 }

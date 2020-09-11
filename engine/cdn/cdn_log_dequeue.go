@@ -122,15 +122,15 @@ func (s *Service) storeLogs(ctx context.Context, itemType sdk.CDNItemType, signa
 	}
 
 	maxLineKey := cache.Key("cdn", "log", "size", item.ID)
-	var maxLine int
+	maxIndexLine := -1
 	if sdk.StatusIsTerminated(status) {
-		maxLine = int(line)
+		maxIndexLine = int(line)
 		// store the score of last line
-		if err := s.Cache.SetWithTTL(maxLineKey, maxLine, ItemLogGC); err != nil {
+		if err := s.Cache.SetWithTTL(maxLineKey, maxIndexLine, ItemLogGC); err != nil {
 			return err
 		}
 	} else {
-		_, err = s.Cache.Get(maxLineKey, &maxLine)
+		_, err = s.Cache.Get(maxLineKey, &maxIndexLine)
 		if err != nil {
 			log.Warning(ctx, "cdn:storeLogs: unable to get max line expected for current job: %v", err)
 		}
@@ -141,7 +141,7 @@ func (s *Service) storeLogs(ctx context.Context, itemType sdk.CDNItemType, signa
 		return err
 	}
 	// If we have all lines
-	if maxLine > 0 && maxLine == logsSize {
+	if maxIndexLine >= 0 && maxIndexLine+1 == logsSize {
 		tx, err := s.mustDBWithCtx(ctx).Begin()
 		if err != nil {
 			return sdk.WithStack(err)

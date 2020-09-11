@@ -96,7 +96,6 @@ type BufferUnit interface {
 	Add(i ItemUnit, score uint, value string) error
 	Append(i ItemUnit, value string) error
 	Card(i ItemUnit) (int, error)
-	Get(i ItemUnit, from, to uint) ([]string, error)
 	NewReader(i ItemUnit) (io.ReadCloser, error)
 	Read(i ItemUnit, r io.Reader, w io.Writer) error
 }

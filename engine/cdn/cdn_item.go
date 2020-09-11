@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/ovh/cds/engine/cdn/index"
+	"github.com/ovh/cds/engine/cdn/redis"
 	"github.com/ovh/cds/engine/cdn/storage"
 	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk"
@@ -38,7 +39,16 @@ func (s *Service) getItemLogValue(ctx context.Context, t sdk.CDNItemType, apiRef
 	// If item is in Buffer, get from it
 	if itemUnit != nil {
 		log.Debug("Getting logs from buffer")
-		return s.Units.Buffer.NewReader(*itemUnit)
+		rc, err := s.Units.Buffer.NewReader(*itemUnit)
+		if err != nil {
+			return nil, err
+		}
+		redisReader, ok := rc.(*redis.Reader)
+		if ok {
+			redisReader.From = from
+			redisReader.Size = size
+		}
+		return redisReader, nil
 	}
 
 	// Get from cache

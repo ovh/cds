@@ -8,13 +8,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/ovh/cds/engine/cdn/lru"
-
-	"github.com/ovh/symmecrypt/ciphers/aesgcm"
-	"github.com/ovh/symmecrypt/convergent"
 	"github.com/stretchr/testify/require"
 
 	"github.com/ovh/cds/engine/cdn/index"
+	"github.com/ovh/cds/engine/cdn/lru"
 	"github.com/ovh/cds/engine/cdn/storage"
 	cdntest "github.com/ovh/cds/engine/cdn/test"
 	"github.com/ovh/cds/engine/gorpmapper"
@@ -60,13 +57,6 @@ func TestGetItemValue(t *testing.T) {
 				Cron: "* * * * * ?",
 				Local: &storage.LocalStorageConfiguration{
 					Path: tmpDir,
-					Encryption: []convergent.ConvergentEncryptionConfig{
-						{
-							Cipher:      aesgcm.CipherName,
-							LocatorSalt: "secret_locator_salt",
-							SecretValue: "secret_value",
-						},
-					},
 				},
 			},
 		},
@@ -105,16 +95,16 @@ func TestGetItemValue(t *testing.T) {
 		ItemID: item.ID,
 		UnitID: s.Units.Buffer.ID(),
 	}
-	require.NoError(t, s.Units.Buffer.Append(iu, "Ligne 1\n"))
-	require.NoError(t, s.Units.Buffer.Append(iu, "Ligne 2\n"))
-	require.NoError(t, s.Units.Buffer.Append(iu, "Ligne 3\n"))
-	require.NoError(t, s.Units.Buffer.Append(iu, "Ligne 4\n"))
-	require.NoError(t, s.Units.Buffer.Append(iu, "Ligne 5\n"))
-	require.NoError(t, s.Units.Buffer.Append(iu, "Ligne 6\n"))
-	require.NoError(t, s.Units.Buffer.Append(iu, "Ligne 7\n"))
-	require.NoError(t, s.Units.Buffer.Append(iu, "Ligne 8\n"))
-	require.NoError(t, s.Units.Buffer.Append(iu, "Ligne 9\n"))
-	require.NoError(t, s.Units.Buffer.Append(iu, "Ligne 10\n"))
+	require.NoError(t, s.Units.Buffer.Add(iu, 1, "Ligne 1\n"))
+	require.NoError(t, s.Units.Buffer.Add(iu, 2, "Ligne 2\n"))
+	require.NoError(t, s.Units.Buffer.Add(iu, 3, "Ligne 3\n"))
+	require.NoError(t, s.Units.Buffer.Add(iu, 4, "Ligne 4\n"))
+	require.NoError(t, s.Units.Buffer.Add(iu, 5, "Ligne 5\n"))
+	require.NoError(t, s.Units.Buffer.Add(iu, 6, "Ligne 6\n"))
+	require.NoError(t, s.Units.Buffer.Add(iu, 7, "Ligne 7\n"))
+	require.NoError(t, s.Units.Buffer.Add(iu, 8, "Ligne 8\n"))
+	require.NoError(t, s.Units.Buffer.Add(iu, 9, "Ligne 9\n"))
+	require.NoError(t, s.Units.Buffer.Add(iu, 10, "Ligne 10\n"))
 
 	require.NoError(t, s.completeItem(context.TODO(), db, iu))
 	itemDB, err := index.LoadItemByID(context.TODO(), s.Mapper, db, item.ID, gorpmapper.GetOptions.WithDecryption)
@@ -131,7 +121,7 @@ func TestGetItemValue(t *testing.T) {
 	_, err = io.Copy(buf, rc)
 	require.NoError(t, err)
 
-	require.Equal(t, "Ligne 1\nLigne 2\nLigne 3\nLigne 4\nLigne 5\nLigne 6\nLigne 7\nLigne 8\nLigne 9\nLigne 10\n", buf.String())
+	require.Equal(t, "Ligne 3\nLigne 4\nLigne 5\nLigne 6\nLigne 7\n", buf.String())
 	n, err := s.LogCache.Len()
 	require.NoError(t, err)
 	require.Equal(t, 0, n)
@@ -159,6 +149,7 @@ func TestGetItemValue(t *testing.T) {
 	buf2 := new(strings.Builder)
 	_, err = io.Copy(buf2, rc2)
 	require.NoError(t, err)
+
 	require.Equal(t, "Ligne 4\nLigne 5\nLigne 6\n", buf2.String())
 	n, err = s.LogCache.Len()
 	require.NoError(t, err)

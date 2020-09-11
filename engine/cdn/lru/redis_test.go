@@ -18,15 +18,13 @@ import (
 func TestRedisLRU(t *testing.T) {
 	m := gorpmapper.New()
 	index.InitDBMapping(m)
-	db, cache := test.SetupPGWithMapper(t, m, sdk.TypeCDN)
+	db, _ := test.SetupPGWithMapper(t, m, sdk.TypeCDN)
 
 	cdntest.ClearIndex(t, context.TODO(), m, db)
 
-	a := AbstractLRU{
-		db:      db.DbMap,
-		maxSize: 100,
-	}
-	r := NewRedisLRU(a, cache)
+	cfg := test.LoadTestingConf(t, sdk.TypeCDN)
+	r, err := NewRedisLRU(db.DbMap, 1000, cfg["redisHost"], cfg["redisPassword"])
+	require.NoError(t, err)
 
 	l, _ := r.Len()
 	for i := 0; i < l; i++ {
@@ -57,7 +55,7 @@ func TestRedisLRU(t *testing.T) {
 
 	// Add first item
 	writer := r.NewWriter(item1.ID)
-	_, err := io.Copy(writer, strings.NewReader("je suis la valeur"))
+	_, err = io.Copy(writer, strings.NewReader("je suis la valeur"))
 	writer.Close()
 	require.NoError(t, err)
 
@@ -98,10 +96,10 @@ func TestRedisLRU(t *testing.T) {
 	require.NoError(t, err)
 
 	// Remove oldest
-	cont, err := eviction(r)
+	cont, err := r.eviction()
 	require.NoError(t, err)
 	require.True(t, cont)
-	cont, err = eviction(r)
+	cont, err = r.eviction()
 	require.NoError(t, err)
 	require.False(t, cont)
 
