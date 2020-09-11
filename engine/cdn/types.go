@@ -47,7 +47,7 @@ type Configuration struct {
 	Database            database.DBConfigurationWithEncryption `toml:"database" comment:"################################\n Postgresql Database settings \n###############################" json:"database"`
 	Cache               struct {
 		TTL     int   `toml:"ttl" default:"60" json:"ttl"`
-		LruSize int64 `toml:"lruSize" default:"512000000" json:"lruSize"`
+		LruSize int64 `toml:"lruSize" default:"128000000" json:"lruSize"`
 		Redis   struct {
 			Host     string `toml:"host" default:"localhost:6379" comment:"If your want to use a redis-sentinel based cluster, follow this syntax ! <clustername>@sentinel1:26379,sentinel2:26379sentinel3:26379" json:"host"`
 			Password string `toml:"password" json:"-"`

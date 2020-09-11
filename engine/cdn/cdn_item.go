@@ -125,7 +125,7 @@ func (s *Service) pushItemLogIntoCache(ctx context.Context, item index.Item) err
 		}
 	}
 
-	log.Info(ctx, "log %d has been pushed to cache", item.ID)
+	log.Info(ctx, "log %s has been pushed to cache", item.ID)
 	return nil
 }
 
