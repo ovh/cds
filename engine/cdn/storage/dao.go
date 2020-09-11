@@ -116,6 +116,13 @@ func UpdateItemUnit(ctx context.Context, m *gorpmapper.Mapper, db gorpmapper.Sql
 	return nil
 }
 
+func DeleteItemUnit(m *gorpmapper.Mapper, db gorpmapper.SqlExecutorWithTx, u *ItemUnit) error {
+	if err := m.Delete(db, u); err != nil {
+		return sdk.WrapError(err, "unable to delete item unit %s", u.ID)
+	}
+	return nil
+}
+
 func LoadOldItemUnitByItemStatusAndDuration(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlExecutor, status string, duration int, opts ...gorpmapper.GetOptionFunc) ([]ItemUnit, error) {
 	query := gorpmapper.NewQuery(`
 		SELECT storage_unit_index.*

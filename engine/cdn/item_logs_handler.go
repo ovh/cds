@@ -54,7 +54,7 @@ func (s *Service) getItemLogsDownloadHandler() service.Handler {
 			return sdk.WithStack(sdk.ErrNotFound)
 		}
 
-		rc, err := s.getItemLogValue(ctx, itemType, token.APIRefHash, 0, 100000)
+		rc, err := s.getItemLogValue(ctx, itemType, token.APIRefHash, 0, 0)
 		if err != nil {
 			return err
 		}

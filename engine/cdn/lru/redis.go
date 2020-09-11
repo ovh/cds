@@ -7,9 +7,12 @@ import (
 	"strings"
 	"time"
 
+	"github.com/go-gorp/gorp"
+
 	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/engine/cdn/index"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/log"
 )
 
 var (
@@ -18,12 +21,17 @@ var (
 )
 
 type Redis struct {
-	a     AbstractLRU
-	store cache.Store
+	maxSize int64
+	db      *gorp.DbMap
+	store   cache.Store
 }
 
-func NewRedisLRU(a AbstractLRU, store cache.Store) Interface {
-	return &Redis{a: a, store: store}
+func NewRedisLRU(db *gorp.DbMap, maxSize int64, host string, password string) (*Redis, error) {
+	c, err := cache.New(host, password, -1)
+	if err != nil {
+		return nil, err
+	}
+	return &Redis{db: db, maxSize: maxSize, store: c}, nil
 }
 
 func (r *Redis) Exist(itemID string) (bool, error) {
@@ -73,11 +81,11 @@ func (r *Redis) Size() (int64, error) {
 	}
 
 	// DB Request
-	return index.ComputeSizeByItemIDs(r.a.db, itemIDs)
+	return index.ComputeSizeByItemIDs(r.db, itemIDs)
 }
 
 func (r *Redis) MaxSize() int64 {
-	return r.a.maxSize
+	return r.maxSize
 }
 
 func (r *Redis) Clear() error {
@@ -92,10 +100,55 @@ func (r *Redis) NewWriter(itemID string) io.WriteCloser {
 	return &writer{redis: r, itemID: itemID}
 }
 
-// NewReader instanciate a reader that it able to iterate over Redis
-// with a score step of 100.0, starting at score 0
-func (r *Redis) NewReader(itemID string, from, to uint) io.ReadCloser {
-	return &reader{redis: r, itemID: itemID, from: from, to: to}
+// NewReader
+func (r *Redis) NewReader(itemID string, from uint, s int) io.ReadCloser {
+	return &reader{redis: r, itemID: itemID, from: from, size: s - 1}
+}
+
+func (r *Redis) Evict(ctx context.Context) {
+	tick := time.NewTicker(15 * time.Second)
+	for {
+		select {
+		case <-ctx.Done():
+			if ctx.Err() != nil {
+				log.Error(ctx, "cdn:lru:evict: %v", ctx.Err())
+			}
+			return
+		case <-tick.C:
+			for {
+				loop, err := r.eviction()
+				if err != nil {
+					log.Error(ctx, "cdn:lru:evict: %v", err)
+					break
+				}
+				if !loop {
+					break
+				}
+			}
+
+		}
+	}
+}
+
+func (r *Redis) eviction() (bool, error) {
+	lenght, err := r.Len()
+	if err != nil {
+		return false, err
+	}
+	if lenght == 0 {
+		return false, nil
+	}
+	size, err := r.Size()
+	if err != nil {
+		return false, err
+	}
+	if size <= r.MaxSize() {
+		return false, err
+	}
+	if err := r.RemoveOldest(); err != nil {
+		return false, err
+	}
+	return true, nil
 }
 
 // Add new item in cache + update last usage
@@ -128,7 +181,7 @@ type reader struct {
 	itemID        string
 	lastIndex     uint
 	from          uint
-	to            uint
+	size          int
 	currentBuffer string
 }
 
@@ -148,8 +201,8 @@ func (r *reader) Read(p []byte) (n int, err error) {
 	if r.from > 0 && r.lastIndex == 0 {
 		r.lastIndex = r.from
 	}
-	if newFromIndex+100 > r.to {
-		newToIndex = r.to
+	if size >= 0 && newFromIndex+100 > (r.from+uint(r.size)) {
+		newToIndex = r.from + uint(r.size)
 	} else {
 		newToIndex = newFromIndex + 100
 	}
@@ -176,7 +229,7 @@ func (r *reader) Read(p []byte) (n int, err error) {
 
 	r.lastIndex = newToIndex
 	err = nil
-	if len(lines) == 0 {
+	if len(lines) == 0 || (r.size >= 0 && r.lastIndex == (r.from+uint(r.size))) {
 		err = io.EOF
 	}
 

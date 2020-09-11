@@ -24,7 +24,7 @@ var (
 	rnd = rand.New(rs)
 )
 
-func (s *Service) getItemLogValue(ctx context.Context, t index.ItemType, apiRefHash string, from, to uint) (io.ReadCloser, error) {
+func (s *Service) getItemLogValue(ctx context.Context, t index.ItemType, apiRefHash string, from uint, size int) (io.ReadCloser, error) {
 	item, err := index.LoadItemByAPIRefHashAndType(ctx, s.Mapper, s.mustDBWithCtx(ctx), apiRefHash, t)
 	if err != nil {
 		return nil, err
@@ -45,7 +45,7 @@ func (s *Service) getItemLogValue(ctx context.Context, t index.ItemType, apiRefH
 	ok, _ := s.LogCache.Exist(item.ID)
 	if ok {
 		log.Debug("Getting logs from cache")
-		return s.LogCache.NewReader(item.ID, from, to), nil
+		return s.LogCache.NewReader(item.ID, from, size), nil
 	}
 
 	log.Debug("Getting logs from storage")
@@ -55,7 +55,7 @@ func (s *Service) getItemLogValue(ctx context.Context, t index.ItemType, apiRefH
 	}
 
 	// Get from cache
-	return s.LogCache.NewReader(item.ID, from, to), nil
+	return s.LogCache.NewReader(item.ID, from, size), nil
 
 }
 
@@ -111,11 +111,15 @@ func (s *Service) pushItemLogIntoCache(ctx context.Context, item index.Item) err
 		return err
 	}
 
-	if err := pr.Close(); err != nil {
+	if err := reader.Close(); err != nil {
 		return sdk.WithStack(err)
 	}
 
-	if err := reader.Close(); err != nil {
+	if err := cacheWriter.Close(); err != nil {
+		return sdk.WithStack(err)
+	}
+
+	if err := pr.Close(); err != nil {
 		return sdk.WithStack(err)
 	}
 

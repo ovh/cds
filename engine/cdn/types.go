@@ -27,7 +27,7 @@ type Service struct {
 	DBConnectionFactory *database.DBConnectionFactory
 	Router              *api.Router
 	Cache               cache.Store
-	LogCache            lru.Interface
+	LogCache            *lru.Redis
 	Mapper              *gorpmapper.Mapper
 	Units               *storage.RunningStorageUnits
 }

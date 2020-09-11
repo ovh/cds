@@ -132,8 +132,8 @@ func (s *Service) Serve(c context.Context) error {
 		})
 
 		// Start CDS Backend migration
-		for _, storage := range s.Units.Storages {
-			cdsStorage, ok := storage.(*cds.CDS)
+		for _, st := range s.Units.Storages {
+			cdsStorage, ok := st.(*cds.CDS)
 			if !ok {
 				continue
 			}
@@ -152,12 +152,12 @@ func (s *Service) Serve(c context.Context) error {
 	}
 
 	log.Info(ctx, "Initializing log cache on %s", s.Cfg.Cache.Redis.Host)
-	s.LogCache, err = lru.NewLRU(s.mustDBWithCtx(ctx), s.Cfg.Cache.Redis.Host, s.Cfg.Cache.Redis.Password, s.Cfg.Cache.LruSize)
+	s.LogCache, err = lru.NewRedisLRU(s.mustDBWithCtx(ctx), s.Cfg.Cache.LruSize, s.Cfg.Cache.Redis.Host, s.Cfg.Cache.Redis.Password)
 	if err != nil {
-		return fmt.Errorf("cannot connect to redis instance : %v", err)
+		return fmt.Errorf("cannot connect to redis instance for lru : %v", err)
 	}
 	sdk.GoRoutine(ctx, "log-cache-eviction", func(ctx context.Context) {
-		lru.Evict(ctx, s.LogCache)
+		s.LogCache.Evict(ctx)
 	})
 
 	if err := s.initMetrics(ctx); err != nil {

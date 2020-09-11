@@ -39,5 +39,4 @@ type Item struct {
 	Type         ItemType         `json:"type" db:"type"`
 	Size         int64            `json:"size" db:"size"`
 	MD5          string           `json:"md5" db:"md5"`
-	LastRead     time.Time        `json:"last_read" db:"last_read"`
 }
