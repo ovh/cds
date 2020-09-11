@@ -24,7 +24,7 @@ var (
 	rnd = rand.New(rs)
 )
 
-func (s *Service) getItemLogValue(ctx context.Context, t string, apiRefHash string, from, to uint) (io.ReadCloser, error) {
+func (s *Service) getItemLogValue(ctx context.Context, t index.ItemType, apiRefHash string, from, to uint) (io.ReadCloser, error) {
 	item, err := index.LoadItemByAPIRefHashAndType(ctx, s.Mapper, s.mustDBWithCtx(ctx), apiRefHash, t)
 	if err != nil {
 		return nil, err
@@ -37,15 +37,18 @@ func (s *Service) getItemLogValue(ctx context.Context, t string, apiRefHash stri
 
 	// If item is in Buffer, get from it
 	if itemUnit != nil {
+		log.Debug("Getting logs from buffer")
 		return s.Units.Buffer.NewReader(*itemUnit)
 	}
 
 	// Get from cache
 	ok, _ := s.LogCache.Exist(item.ID)
 	if ok {
+		log.Debug("Getting logs from cache")
 		return s.LogCache.NewReader(item.ID, from, to), nil
 	}
 
+	log.Debug("Getting logs from storage")
 	// Retrieve item and push it into the cache
 	if err := s.pushItemLogIntoCache(ctx, *item); err != nil {
 		return nil, err

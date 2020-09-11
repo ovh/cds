@@ -31,13 +31,13 @@ type Interface interface {
 }
 
 //New init a cache
-func NewLRU(redisHost string, redisPassword string, size int64) (Interface, error) {
+func NewLRU(db *gorp.DbMap, redisHost string, redisPassword string, size int64) (Interface, error) {
 	store, err := cache.New(redisHost, redisPassword, -1)
 	if err != nil {
 		return nil, err
 	}
 	a := AbstractLRU{
-		db:      nil,
+		db:      db,
 		maxSize: size,
 	}
 	r := NewRedisLRU(a, store)
@@ -70,6 +70,13 @@ func Evict(ctx context.Context, lru Interface) {
 }
 
 func eviction(lru Interface) (bool, error) {
+	len, err := lru.Len()
+	if err != nil {
+		return false, err
+	}
+	if len == 0 {
+		return false, nil
+	}
 	size, err := lru.Size()
 	if err != nil {
 		return false, err

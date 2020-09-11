@@ -160,11 +160,7 @@ func (r *reader) Read(p []byte) (n int, err error) {
 	}
 
 	if len(lines) > 0 {
-		if r.currentBuffer == "" {
-			r.currentBuffer += strings.Join(lines, "\n")
-		} else {
-			r.currentBuffer += "\n" + strings.Join(lines, "\n")
-		}
+		r.currentBuffer += strings.Join(lines, "")
 	}
 
 	if len(buffer) < size && len(r.currentBuffer) > 0 {
@@ -216,6 +212,7 @@ func (w *writer) Write(p []byte) (int, error) {
 				return 0, err
 			}
 			w.currentScore++
+			currentLine = ""
 		}
 	}
 

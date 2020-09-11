@@ -152,7 +152,7 @@ func (s *Service) Serve(c context.Context) error {
 	}
 
 	log.Info(ctx, "Initializing log cache on %s", s.Cfg.Cache.Redis.Host)
-	s.LogCache, err = lru.NewLRU(s.Cfg.Cache.Redis.Host, s.Cfg.Cache.Redis.Password, s.Cfg.Cache.LruSize)
+	s.LogCache, err = lru.NewLRU(s.mustDBWithCtx(ctx), s.Cfg.Cache.Redis.Host, s.Cfg.Cache.Redis.Password, s.Cfg.Cache.LruSize)
 	if err != nil {
 		return fmt.Errorf("cannot connect to redis instance : %v", err)
 	}
