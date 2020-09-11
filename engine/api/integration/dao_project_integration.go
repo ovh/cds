@@ -210,8 +210,6 @@ func UpdateIntegration(db gorpmapper.SqlExecutorWithTx, pp sdk.ProjectIntegratio
 	return nil
 }
 
-// LoadIntegrationsByWorkflowID load integration integrations by Workflow id
-
 // AddOnWorkflow link a project integration on a workflow
 func AddOnWorkflow(db gorp.SqlExecutor, workflowID int64, projectIntegrationID int64) error {
 	query := "INSERT INTO workflow_project_integration (workflow_id, project_integration_id) VALUES ($1, $2) ON CONFLICT DO NOTHING"
@@ -219,6 +217,17 @@ func AddOnWorkflow(db gorp.SqlExecutor, workflowID int64, projectIntegrationID i
 		return sdk.WithStack(err)
 	}
 	return nil
+}
+
+// LoadWorkflowIntegrationsByWorkflowIDs load integration integrations by id
+func LoadWorkflowIntegrationsByWorkflowIDs(db gorp.SqlExecutor, ids []int64) ([]sdk.ProjectIntegration, error) {
+	query := gorpmapping.NewQuery(`
+		SELECT project_integration.*
+		FROM project_integration
+		JOIN workflow_project_integration ON project_integration.id = workflow_project_integration.project_integration_id
+		WHERE workflow_project_integration.workflow_id = ANY($1)
+	`).Args(pq.Int64Array(ids))
+	return loadAll(db, query)
 }
 
 // RemoveFromWorkflow remove a project integration on a workflow
