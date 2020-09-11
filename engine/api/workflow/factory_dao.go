@@ -504,7 +504,7 @@ func (dao WorkflowDAO) withIntegrations(db gorp.SqlExecutor, ws *[]Workflow) err
 		w := &(*ws)[x]
 		var err error
 		w.EventIntegrations, err = integration.LoadWorkflowIntegrationsByWorkflowID(db, w.ID)
-		if err != nil && sdk.Cause(err) != sql.ErrNoRows && !sdk.ErrorIs(err, sdk.ErrNotFound) {
+		if err != nil {
 			return sdk.WithStack(err)
 		}
 
