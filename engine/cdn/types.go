@@ -3,6 +3,7 @@ package cdn
 import (
 	"github.com/ovh/cds/engine/api"
 	"github.com/ovh/cds/engine/cache"
+	"github.com/ovh/cds/engine/cdn/lru"
 	"github.com/ovh/cds/engine/cdn/storage"
 	"github.com/ovh/cds/engine/database"
 	"github.com/ovh/cds/engine/gorpmapper"
@@ -26,6 +27,7 @@ type Service struct {
 	DBConnectionFactory *database.DBConnectionFactory
 	Router              *api.Router
 	Cache               cache.Store
+	LogCache            lru.Interface
 	Mapper              *gorpmapper.Mapper
 	Units               *storage.RunningStorageUnits
 }
@@ -44,8 +46,9 @@ type Configuration struct {
 	EnableLogProcessing bool                                   `toml:"enableLogProcessing" comment:"Enable CDN preview feature that will index logs (this require a database)" json:"enableDatabaseFeatures"`
 	Database            database.DBConfigurationWithEncryption `toml:"database" comment:"################################\n Postgresql Database settings \n###############################" json:"database"`
 	Cache               struct {
-		TTL   int `toml:"ttl" default:"60" json:"ttl"`
-		Redis struct {
+		TTL     int   `toml:"ttl" default:"60" json:"ttl"`
+		LruSize int64 `toml:"lruSize" default:"512000000" json:"lruSize"`
+		Redis   struct {
 			Host     string `toml:"host" default:"localhost:6379" comment:"If your want to use a redis-sentinel based cluster, follow this syntax ! <clustername>@sentinel1:26379,sentinel2:26379sentinel3:26379" json:"host"`
 			Password string `toml:"password" json:"-"`
 		} `toml:"redis" json:"redis"`

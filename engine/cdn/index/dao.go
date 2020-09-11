@@ -116,3 +116,15 @@ func LoadItemByAPIRefHashAndType(ctx context.Context, m *gorpmapper.Mapper, db g
 	`).Args(hash, itemType)
 	return getItem(ctx, m, db, query)
 }
+
+func ComputeSizeByItemIDs(db gorp.SqlExecutor, itemIDs []string) (int64, error) {
+	query := `
+		SELECT SUM(size) FROM index
+		WHERE id = ANY($1) 
+	`
+	size, err := db.SelectInt(query, pq.StringArray(itemIDs))
+	if err != nil {
+		return 0, sdk.WithStack(err)
+	}
+	return size, nil
+}
