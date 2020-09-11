@@ -2,12 +2,13 @@ package cdn
 
 import (
 	"context"
-	"github.com/ovh/cds/engine/cdn/lru"
 	"io"
 	"io/ioutil"
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/ovh/cds/engine/cdn/lru"
 
 	"github.com/ovh/symmecrypt/ciphers/aesgcm"
 	"github.com/ovh/symmecrypt/convergent"
@@ -94,7 +95,7 @@ func TestGetItemValue(t *testing.T) {
 	item := index.Item{
 		ID:         sdk.UUID(),
 		APIRefHash: apiRefhash,
-		Type:       index.TypeItemStepLog,
+		Type:       sdk.CDNTypeItemStepLog,
 		Status:     index.StatusItemIncoming,
 		APIRef:     apiRef,
 	}
@@ -123,7 +124,7 @@ func TestGetItemValue(t *testing.T) {
 	require.NoError(t, storage.InsertItemUnit(context.TODO(), s.Mapper, db, itemUnit))
 
 	// Get From Buffer
-	rc, err := s.getItemLogValue(context.Background(), index.TypeItemStepLog, apiRefhash, 3, 5)
+	rc, err := s.getItemLogValue(context.Background(), sdk.CDNTypeItemStepLog, apiRefhash, 3, 5)
 	require.NoError(t, err)
 
 	buf := new(strings.Builder)
@@ -152,7 +153,7 @@ func TestGetItemValue(t *testing.T) {
 	require.NoError(t, storage.DeleteItemUnit(s.Mapper, db, itemUnit))
 
 	// Get From Storage
-	rc2, err := s.getItemLogValue(context.Background(), index.TypeItemStepLog, apiRefhash, 3, 3)
+	rc2, err := s.getItemLogValue(context.Background(), sdk.CDNTypeItemStepLog, apiRefhash, 3, 3)
 	require.NoError(t, err)
 
 	buf2 := new(strings.Builder)
@@ -164,7 +165,7 @@ func TestGetItemValue(t *testing.T) {
 	require.Equal(t, 1, n)
 
 	// Get all from cache
-	rc3, err := s.getItemLogValue(context.Background(), index.TypeItemStepLog, apiRefhash, 0, 0)
+	rc3, err := s.getItemLogValue(context.Background(), sdk.CDNTypeItemStepLog, apiRefhash, 0, 0)
 	require.NoError(t, err)
 
 	buf3 := new(strings.Builder)

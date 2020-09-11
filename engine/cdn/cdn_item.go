@@ -24,7 +24,7 @@ var (
 	rnd = rand.New(rs)
 )
 
-func (s *Service) getItemLogValue(ctx context.Context, t index.ItemType, apiRefHash string, from uint, size int) (io.ReadCloser, error) {
+func (s *Service) getItemLogValue(ctx context.Context, t sdk.CDNItemType, apiRefHash string, from uint, size int) (io.ReadCloser, error) {
 	item, err := index.LoadItemByAPIRefHashAndType(ctx, s.Mapper, s.mustDBWithCtx(ctx), apiRefHash, t)
 	if err != nil {
 		return nil, err

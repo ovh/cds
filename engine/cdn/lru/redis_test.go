@@ -36,21 +36,21 @@ func TestRedisLRU(t *testing.T) {
 	item1 := index.Item{
 		Size:       45,
 		ID:         sdk.UUID(),
-		Type:       index.TypeItemStepLog,
+		Type:       sdk.CDNTypeItemStepLog,
 		APIRefHash: sdk.UUID(),
 	}
 	require.NoError(t, index.InsertItem(context.TODO(), m, db, &item1))
 	item2 := index.Item{
 		Size:       43,
 		ID:         sdk.UUID(),
-		Type:       index.TypeItemStepLog,
+		Type:       sdk.CDNTypeItemStepLog,
 		APIRefHash: sdk.UUID(),
 	}
 	require.NoError(t, index.InsertItem(context.TODO(), m, db, &item2))
 	item3 := index.Item{
 		Size:       20,
 		ID:         sdk.UUID(),
-		Type:       index.TypeItemStepLog,
+		Type:       sdk.CDNTypeItemStepLog,
 		APIRefHash: sdk.UUID(),
 	}
 	require.NoError(t, index.InsertItem(context.TODO(), m, db, &item3))
