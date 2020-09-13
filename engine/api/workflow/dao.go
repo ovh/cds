@@ -14,12 +14,12 @@ import (
 	"github.com/lib/pq"
 
 	"github.com/ovh/cds/engine/api/application"
-	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/integration"
 	"github.com/ovh/cds/engine/api/keys"
 	"github.com/ovh/cds/engine/api/pipeline"
+	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/exportentities"
@@ -708,6 +708,11 @@ func CompleteWorkflow(ctx context.Context, db gorp.SqlExecutor, w *sdk.Workflow,
 	w.AssignEmptyType()
 
 	nodesArray := w.WorkflowData.Array()
+
+	if err := checkEventIntegration(proj, w); err != nil {
+		return err
+	}
+
 	for i := range nodesArray {
 		n := nodesArray[i]
 		if n.Context == nil {
@@ -724,9 +729,6 @@ func CompleteWorkflow(ctx context.Context, db gorp.SqlExecutor, w *sdk.Workflow,
 			return err
 		}
 		if err := checkProjectIntegration(proj, w, n); err != nil {
-			return err
-		}
-		if err := checkEventIntegration(proj, w); err != nil {
 			return err
 		}
 		if err := checkHooks(db, w, n); err != nil {
