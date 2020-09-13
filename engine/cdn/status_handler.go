@@ -49,6 +49,10 @@ func addMonitoringLine(nb int64, text string, err error, status string) sdk.Moni
 
 func (s *Service) Status(ctx context.Context) sdk.MonitoringStatus {
 	m := s.CommonMonitoring()
+
+	if !s.Cfg.EnableLogProcessing {
+		return m
+	}
 	db := s.mustDBWithCtx(ctx)
 
 	nbCompleted, err := storage.CountItemCompleted(db)
