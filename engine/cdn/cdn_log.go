@@ -128,7 +128,7 @@ func (s *Service) handleLogMessage(ctx context.Context, messageReceived []byte) 
 
 	switch {
 	case signature.Worker != nil:
-		telemetry.Record(ctx, metricsWorkerLogReceived, 1)
+		telemetry.Record(ctx, metricsStepLogReceived, 1)
 		return s.handleWorkerLog(ctx, signature.Worker.WorkerName, signature.Worker.WorkerID, sig, m)
 	case signature.Service != nil:
 		telemetry.Record(ctx, metricsServiceLogReceived, 1)

@@ -19,7 +19,7 @@ var (
 	onceMetrics               sync.Once
 	metricsErrors             *stats.Int64Measure
 	metricsHits               *stats.Int64Measure
-	metricsWorkerLogReceived  *stats.Int64Measure
+	metricsStepLogReceived    *stats.Int64Measure
 	metricsServiceLogReceived *stats.Int64Measure
 	metricsItemCompletedByGC  *stats.Int64Measure
 )
@@ -81,7 +81,7 @@ func (s *Service) initMetrics(ctx context.Context) error {
 	onceMetrics.Do(func() {
 		metricsErrors = stats.Int64("cdn/tcp/router_errors", "number of errors", stats.UnitDimensionless)
 		metricsHits = stats.Int64("cdn/tcp/router_hits", "number of hits", stats.UnitDimensionless)
-		metricsWorkerLogReceived = stats.Int64("cdn/tcp/step/log/count", "Number of worker log received", stats.UnitDimensionless)
+		metricsStepLogReceived = stats.Int64("cdn/tcp/step/log/count", "Number of worker log received", stats.UnitDimensionless)
 		metricsServiceLogReceived = stats.Int64("cdn/tcp/service/log/count", "Number of service log received", stats.UnitDimensionless)
 		metricsItemCompletedByGC = stats.Int64("cdn/items/completed_by_gc", "Nb Items completed by GC", stats.UnitDimensionless)
 
