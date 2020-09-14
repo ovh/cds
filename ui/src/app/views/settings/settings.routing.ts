@@ -1,6 +1,7 @@
 import { ModuleWithProviders } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 import { AuthenticationGuard } from 'app/guard/authentication.guard';
+import { SettingsModule } from 'app/views/settings/settings.module';
 import { ActionAddComponent } from './action/add/action.add.component';
 import { ActionEditComponent } from './action/edit/action.edit.component';
 import { ActionListComponent } from './action/list/action.list.component';
@@ -65,4 +66,4 @@ const routes: Routes = [
     }
 ];
 
-export const SettingsRouting: ModuleWithProviders = RouterModule.forChild(routes);
+export const SettingsRouting: ModuleWithProviders<SettingsModule> = RouterModule.forChild(routes);

@@ -1,6 +1,7 @@
 import { ModuleWithProviders } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 import { AuthenticationGuard } from 'app/guard/authentication.guard';
+import { ProjectModule } from 'app/views/project/project.module';
 import { ProjectAddComponent } from './add/project.add.component';
 import { ProjectListComponent } from './list/project.list.component';
 import { ProjectShowComponent } from './show/project.component';
@@ -34,4 +35,4 @@ const projectRoutes: Routes = [
     }
 ];
 
-export const projectRouting: ModuleWithProviders = RouterModule.forChild(projectRoutes);
+export const projectRouting: ModuleWithProviders<ProjectModule> = RouterModule.forChild(projectRoutes);

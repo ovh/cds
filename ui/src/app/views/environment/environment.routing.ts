@@ -2,6 +2,7 @@ import { ModuleWithProviders } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 import { AuthenticationGuard } from 'app/guard/authentication.guard';
 import { ProjectResolver } from 'app/service/project/project.resolver';
+import { EnvironmentModule } from 'app/views/environment/environment.module';
 import { EnvironmentAddComponent } from './add/environment.add.component';
 import { EnvironmentShowComponent } from './show/environment.show.component';
 
@@ -30,4 +31,4 @@ const environmentRoutes: Routes = [
     }
 ];
 
-export const environmentRouting: ModuleWithProviders = RouterModule.forChild(environmentRoutes);
+export const environmentRouting: ModuleWithProviders<EnvironmentModule> = RouterModule.forChild(environmentRoutes);
