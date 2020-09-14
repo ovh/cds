@@ -213,6 +213,15 @@ func (c *client) WorkflowNodeRunJobStep(projectKey string, workflowName string, 
 	return &buildState, nil
 }
 
+func (c *client) WorkflowNodeRunJobServiceLogDeprecated(projectKey string, workflowName string, num int64, nodeRunID int64, jobID int64, serviceName string) (sdk.ServiceLog, error) {
+	url := fmt.Sprintf("/project/%s/workflows/%s/runs/%d/nodes/%d/job/%d/service/%s", projectKey, workflowName, num, nodeRunID, jobID, serviceName)
+	var serviceLog sdk.ServiceLog
+	if _, err := c.GetJSON(context.Background(), url, &serviceLog); err != nil {
+		return serviceLog, err
+	}
+	return serviceLog, nil
+}
+
 func (c *client) WorkflowNodeRunJobServiceLog(projectKey string, workflowName string, nodeRunID, job int64, serviceName string) (sdk.ServiceLog, error) {
 	url := fmt.Sprintf("/project/%s/workflows/%s/nodes/%d/job/%d/service/%s/log", projectKey, workflowName, nodeRunID, job, serviceName)
 	var serviceLog sdk.ServiceLog

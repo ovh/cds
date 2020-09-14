@@ -4089,6 +4089,21 @@ func (mr *MockWorkflowClientMockRecorder) WorkflowNodeRunJobStep(projectKey, wor
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkflowNodeRunJobStep", reflect.TypeOf((*MockWorkflowClient)(nil).WorkflowNodeRunJobStep), projectKey, workflowName, number, nodeRunID, job, step)
 }
 
+// WorkflowNodeRunJobServiceLogDeprecated mocks base method
+func (m *MockWorkflowClient) WorkflowNodeRunJobServiceLogDeprecated(projectKey, workflowName string, num, nodeRunID, job int64, serviceName string) (sdk.ServiceLog, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "WorkflowNodeRunJobServiceLogDeprecated", projectKey, workflowName, num, nodeRunID, job, serviceName)
+	ret0, _ := ret[0].(sdk.ServiceLog)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// WorkflowNodeRunJobServiceLogDeprecated indicates an expected call of WorkflowNodeRunJobServiceLogDeprecated
+func (mr *MockWorkflowClientMockRecorder) WorkflowNodeRunJobServiceLogDeprecated(projectKey, workflowName, num, nodeRunID, job, serviceName interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkflowNodeRunJobServiceLogDeprecated", reflect.TypeOf((*MockWorkflowClient)(nil).WorkflowNodeRunJobServiceLogDeprecated), projectKey, workflowName, num, nodeRunID, job, serviceName)
+}
+
 // WorkflowNodeRunJobServiceLog mocks base method
 func (m *MockWorkflowClient) WorkflowNodeRunJobServiceLog(projectKey, workflowName string, nodeRunID, job int64, serviceName string) (sdk.ServiceLog, error) {
 	m.ctrl.T.Helper()
@@ -7930,6 +7945,21 @@ func (m *MockInterface) WorkflowNodeRunJobStep(projectKey, workflowName string, 
 func (mr *MockInterfaceMockRecorder) WorkflowNodeRunJobStep(projectKey, workflowName, number, nodeRunID, job, step interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkflowNodeRunJobStep", reflect.TypeOf((*MockInterface)(nil).WorkflowNodeRunJobStep), projectKey, workflowName, number, nodeRunID, job, step)
+}
+
+// WorkflowNodeRunJobServiceLogDeprecated mocks base method
+func (m *MockInterface) WorkflowNodeRunJobServiceLogDeprecated(projectKey, workflowName string, num, nodeRunID, job int64, serviceName string) (sdk.ServiceLog, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "WorkflowNodeRunJobServiceLogDeprecated", projectKey, workflowName, num, nodeRunID, job, serviceName)
+	ret0, _ := ret[0].(sdk.ServiceLog)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// WorkflowNodeRunJobServiceLogDeprecated indicates an expected call of WorkflowNodeRunJobServiceLogDeprecated
+func (mr *MockInterfaceMockRecorder) WorkflowNodeRunJobServiceLogDeprecated(projectKey, workflowName, num, nodeRunID, job, serviceName interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkflowNodeRunJobServiceLogDeprecated", reflect.TypeOf((*MockInterface)(nil).WorkflowNodeRunJobServiceLogDeprecated), projectKey, workflowName, num, nodeRunID, job, serviceName)
 }
 
 // WorkflowNodeRunJobServiceLog mocks base method

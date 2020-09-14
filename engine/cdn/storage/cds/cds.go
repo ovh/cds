@@ -77,7 +77,7 @@ func (c *CDS) NewReader(i storage.ItemUnit) (io.ReadCloser, error) {
 }
 
 func (c *CDS) ServiceLogs(pKey string, wkfName string, nodeRunID int64, jobID int64, serviceName string) (sdk.ServiceLog, error) {
-	return c.client.WorkflowNodeRunJobServiceLog(pKey, wkfName, nodeRunID, jobID, serviceName)
+	return c.client.WorkflowNodeRunJobServiceLogDeprecated(pKey, wkfName, 0, nodeRunID, jobID, serviceName)
 }
 
 func (c *CDS) ListProjects() ([]sdk.Project, error) {
