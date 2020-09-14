@@ -8,12 +8,14 @@ import (
 	"strings"
 
 	"github.com/ncw/swift"
+	"go.opencensus.io/stats"
 
 	"github.com/ovh/cds/engine/cdn/index"
 	"github.com/ovh/cds/engine/cdn/storage"
 	"github.com/ovh/cds/engine/cdn/storage/encryption"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
+	"github.com/ovh/cds/sdk/telemetry"
 )
 
 type Swift struct {
@@ -23,7 +25,14 @@ type Swift struct {
 	config storage.SwiftStorageConfiguration
 }
 
-var _ storage.StorageUnit = new(Swift)
+var (
+	_                 storage.StorageUnit = new(Swift)
+	metricsContainers                     = stats.Int64("cdn/storage/swift/containers", "nb containers", stats.UnitDimensionless)
+	metricsObjects                        = stats.Int64("cdn/storage/swift/objects", "nb objects", stats.UnitDimensionless)
+	metricsSize                           = stats.Int64("cdn/storage/swift/size", "swift bytes used", stats.UnitDimensionless)
+	metricsReaders                        = stats.Int64("cdn/storage/swift/readers", "nb readers", stats.UnitDimensionless)
+	metricsWriters                        = stats.Int64("cdn/storage/swift/writers", "nb writers", stats.UnitDimensionless)
+)
 
 func init() {
 	storage.RegisterDriver("swift", new(Swift))
@@ -43,6 +52,10 @@ func (s *Swift) Init(ctx context.Context, cfg interface{}) error {
 		Domain:   config.Domain,
 		UserName: config.Username,
 		ApiKey:   config.Password,
+	}
+
+	if err := telemetry.InitMetricsInt64(ctx, metricsContainers, metricsObjects, metricsSize, metricsReaders, metricsWriters); err != nil {
+		return err
 	}
 	return nil
 }
@@ -70,7 +83,7 @@ func (s *Swift) ItemExists(i index.Item) (bool, error) {
 	return false, nil
 }
 
-func (s *Swift) NewWriter(i storage.ItemUnit) (io.WriteCloser, error) {
+func (s *Swift) NewWriter(ctx context.Context, i storage.ItemUnit) (io.WriteCloser, error) {
 	container, object, err := s.getItemPath(i)
 	if err != nil {
 		return nil, err
@@ -85,10 +98,11 @@ func (s *Swift) NewWriter(i storage.ItemUnit) (io.WriteCloser, error) {
 		return nil, sdk.WrapError(err, "SwiftStore> Unable to create object %s", object)
 	}
 
+	telemetry.Record(ctx, metricsWriters, 1)
 	return file, nil
 }
 
-func (s *Swift) NewReader(i storage.ItemUnit) (io.ReadCloser, error) {
+func (s *Swift) NewReader(ctx context.Context, i storage.ItemUnit) (io.ReadCloser, error) {
 	container, object, err := s.getItemPath(i)
 	if err != nil {
 		return nil, err
@@ -106,6 +120,7 @@ func (s *Swift) NewReader(i storage.ItemUnit) (io.ReadCloser, error) {
 		}
 	}()
 
+	telemetry.Record(ctx, metricsReaders, 1)
 	return pr, nil
 }
 
@@ -126,14 +141,18 @@ func escape(container, object string) (string, string) {
 }
 
 // Status returns the status of swift account
-func (s *Swift) Status() []sdk.MonitoringStatusLine {
+func (s *Swift) Status(ctx context.Context) []sdk.MonitoringStatusLine {
 	info, _, err := s.client.Account()
 	if err != nil {
 		return []sdk.MonitoringStatusLine{{Component: "backend/swift", Value: "Swift KO" + err.Error(), Status: sdk.MonitoringStatusAlert}}
 	}
+	telemetry.Record(ctx, metricsContainers, info.Containers)
+	telemetry.Record(ctx, metricsObjects, info.Objects)
+	telemetry.Record(ctx, metricsSize, info.BytesUsed)
 	return []sdk.MonitoringStatusLine{{
 		Component: "backend/swift",
 		Value:     fmt.Sprintf("Swift OK (%d containers, %d objects, %d bytes used", info.Containers, info.Objects, info.BytesUsed),
 		Status:    sdk.MonitoringStatusOK,
 	}}
+
 }

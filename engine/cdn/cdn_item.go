@@ -33,14 +33,14 @@ func (s *Service) completeItem(ctx context.Context, tx gorpmapper.SqlExecutorWit
 	switch itemUnit.UnitID {
 	case s.Units.Buffer.ID():
 		// Get all data from buffer and add manually last line
-		reader, err = s.Units.Buffer.NewReader(itemUnit)
+		reader, err = s.Units.Buffer.NewReader(ctx, itemUnit)
 		if err != nil {
 			return err
 		}
 	default:
 		for _, unit := range s.Units.Storages {
 			if unit.ID() == itemUnit.UnitID {
-				reader, err = unit.NewReader(itemUnit)
+				reader, err = unit.NewReader(ctx, itemUnit)
 				if err != nil {
 					return err
 				}

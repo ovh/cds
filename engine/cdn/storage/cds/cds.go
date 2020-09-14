@@ -12,6 +12,8 @@ import (
 	"github.com/ovh/cds/engine/cdn/storage/encryption"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
+	"github.com/ovh/cds/sdk/telemetry"
+	"go.opencensus.io/stats"
 )
 
 type CDS struct {
@@ -21,7 +23,13 @@ type CDS struct {
 	config storage.CDSStorageConfiguration
 }
 
-var _ storage.StorageUnit = new(CDS)
+var (
+	_                         storage.StorageUnit = new(CDS)
+	metricsReaders                                = stats.Int64("cdn/storage/cds/readers", "nb readers", stats.UnitDimensionless)
+	metricsReadersStepLogs                        = stats.Int64("cdn/storage/cds/readers/steps", "nb readers for steps logs", stats.UnitDimensionless)
+	metricsReadersServiceLogs                     = stats.Int64("cdn/storage/cds/readers/services", "nb readers for service slogs", stats.UnitDimensionless)
+	metricsWriters                                = stats.Int64("cdn/storage/cds/writers", "nb writers", stats.UnitDimensionless)
+)
 
 func init() {
 	storage.RegisterDriver("cds", new(CDS))
@@ -44,6 +52,11 @@ func (c *CDS) Init(ctx context.Context, cfg interface{}) error {
 		InsecureSkipVerifyTLS:             config.InsecureSkipVerifyTLS,
 		BuitinConsumerAuthenticationToken: config.Token,
 	})
+
+	if err := telemetry.InitMetricsInt64(ctx, metricsReaders, metricsWriters, metricsReadersStepLogs, metricsReadersServiceLogs); err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -51,11 +64,12 @@ func (c *CDS) ItemExists(i index.Item) (bool, error) {
 	return true, nil
 }
 
-func (c *CDS) NewWriter(i storage.ItemUnit) (io.WriteCloser, error) {
+func (c *CDS) NewWriter(ctx context.Context, i storage.ItemUnit) (io.WriteCloser, error) {
 	return nil, nil
 }
 
-func (c *CDS) NewReader(i storage.ItemUnit) (io.ReadCloser, error) {
+func (c *CDS) NewReader(ctx context.Context, i storage.ItemUnit) (io.ReadCloser, error) {
+	telemetry.Record(ctx, metricsReaders, 1)
 	switch i.Item.Type {
 	case index.TypeItemStepLog:
 		bs, err := c.client.WorkflowNodeRunJobStep(i.Item.ApiRef.ProjectKey, i.Item.ApiRef.WorkflowName, 0, i.Item.ApiRef.NodeRunID, i.Item.ApiRef.NodeRunJobID, int(i.Item.ApiRef.StepOrder))
@@ -63,6 +77,7 @@ func (c *CDS) NewReader(i storage.ItemUnit) (io.ReadCloser, error) {
 			return nil, err
 		}
 		rc := ioutil.NopCloser(bytes.NewReader([]byte(bs.StepLogs.Val)))
+		telemetry.Record(ctx, metricsReadersStepLogs, 1)
 		return rc, nil
 	case index.TypeItemServiceLog:
 		logs, err := c.ServiceLogs(i.Item.ApiRef.ProjectKey, i.Item.ApiRef.WorkflowName, i.Item.ApiRef.NodeRunID, i.Item.ApiRef.NodeRunJobID)
@@ -74,6 +89,7 @@ func (c *CDS) NewReader(i storage.ItemUnit) (io.ReadCloser, error) {
 				continue
 			}
 			rc := ioutil.NopCloser(bytes.NewReader([]byte(l.Val)))
+			telemetry.Record(ctx, metricsReadersServiceLogs, 1)
 			return rc, nil
 		}
 	default:
@@ -102,7 +118,7 @@ func (c *CDS) GetWorkflowNodeRun(pKey string, nodeRunIdentifier sdk.WorkflowNode
 	return c.client.WorkflowNodeRun(pKey, nodeRunIdentifier.WorkflowName, nodeRunIdentifier.RunNumber, nodeRunIdentifier.NodeRunID)
 }
 
-func (c *CDS) Status() []sdk.MonitoringStatusLine {
+func (c *CDS) Status(ctx context.Context) []sdk.MonitoringStatusLine {
 	if _, err := c.client.Version(); err != nil {
 		return []sdk.MonitoringStatusLine{{Component: "backend/cds", Value: "cds KO" + err.Error(), Status: sdk.MonitoringStatusAlert}}
 	}

@@ -104,7 +104,7 @@ func (s *Service) syncNodeRun(ctx context.Context, cdsStorage *cds.CDS, pKey str
 	if err != nil {
 		return sdk.WithStack(err)
 	}
-	defer tx.Rollback()
+	defer tx.Rollback() // nolint
 
 	for _, st := range nodeRun.Stages {
 		for _, rj := range st.RunJobs {
@@ -118,7 +118,7 @@ func (s *Service) syncNodeRun(ctx context.Context, cdsStorage *cds.CDS, pKey str
 				}
 			}
 
-			dictRequirement := make(map[string]int64, 0)
+			dictRequirement := make(map[string]int64)
 			for _, r := range rj.Job.Action.Requirements {
 				if r.Type == sdk.ServiceRequirement {
 					dictRequirement[r.Name] = r.ID

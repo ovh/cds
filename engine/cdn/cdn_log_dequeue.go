@@ -137,7 +137,7 @@ func (s *Service) storeLogs(ctx context.Context, typ string, signature log.Signa
 		if err != nil {
 			return sdk.WithStack(err)
 		}
-		defer tx.Rollback()
+		defer tx.Rollback() // nolint
 		if err := s.completeItem(ctx, tx, *iu); err != nil {
 			return err
 		}

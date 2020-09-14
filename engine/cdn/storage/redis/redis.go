@@ -12,6 +12,9 @@ import (
 	"github.com/ovh/cds/engine/cdn/index"
 	"github.com/ovh/cds/engine/cdn/storage"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/telemetry"
+
+	"go.opencensus.io/stats"
 )
 
 type Redis struct {
@@ -20,7 +23,10 @@ type Redis struct {
 	store  cache.ScoredSetStore
 }
 
-var _ storage.BufferUnit = new(Redis)
+var (
+	_           storage.BufferUnit = new(Redis)
+	metricsSize                    = stats.Int64("cdn/storage/redis/size", "redis size", stats.UnitDimensionless)
+)
 
 func init() {
 	storage.RegisterDriver("redis", new(Redis))
@@ -34,7 +40,15 @@ func (s *Redis) Init(ctx context.Context, cfg interface{}) error {
 	s.config = config
 	var err error
 	s.store, err = cache.New(s.config.Host, s.config.Password, 60)
-	return err
+	if err != nil {
+		return err
+	}
+
+	if err := telemetry.InitMetricsInt64(ctx, metricsSize); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (s *Redis) ItemExists(i index.Item) (bool, error) {
@@ -69,7 +83,7 @@ func (s *Redis) Get(i storage.ItemUnit, from, to uint) ([]string, error) {
 
 // NewReader instanciate a reader that it able to iterate over Redis storage unit
 // with a score step of 100.0, starting at score 0
-func (s *Redis) NewReader(i storage.ItemUnit) (io.ReadCloser, error) {
+func (s *Redis) NewReader(ctx context.Context, i storage.ItemUnit) (io.ReadCloser, error) {
 	return &reader{s: s, i: i}, nil
 }
 
@@ -132,7 +146,7 @@ func (r *reader) Close() error {
 	return nil
 }
 
-func (s *Redis) Status() []sdk.MonitoringStatusLine {
+func (s *Redis) Status(ctx context.Context) []sdk.MonitoringStatusLine {
 	if err := s.store.Ping(); err != nil {
 		return []sdk.MonitoringStatusLine{{
 			Component: "storage/redis/ping",
