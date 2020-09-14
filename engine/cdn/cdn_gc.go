@@ -7,6 +7,7 @@ import (
 	"github.com/ovh/cds/engine/cdn/index"
 	"github.com/ovh/cds/engine/cdn/storage"
 	"github.com/ovh/cds/sdk/log"
+	"github.com/ovh/cds/sdk/telemetry"
 )
 
 const (
@@ -41,6 +42,7 @@ func (s *Service) CompleteWaitingItems(ctx context.Context) {
 					log.Warning(ctx, "cdn:CompleteWaitingItems: unable to complete item %s: %v", itemUnit.ItemID, err)
 					continue
 				}
+				telemetry.Record(ctx, metricsItemCompletedByGC, 1)
 				if err := tx.Commit(); err != nil {
 					_ = tx.Rollback()
 					log.Warning(ctx, "cdn:CompleteWaitingItems: unable to commit transaction: %v", err)

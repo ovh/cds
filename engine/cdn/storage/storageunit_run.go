@@ -86,7 +86,7 @@ func (x *RunningStorageUnits) runItem(ctx context.Context, tx gorpmapper.SqlExec
 	}
 
 	// Prepare the destination
-	writer, err := dest.NewWriter(*iu)
+	writer, err := dest.NewWriter(ctx, *iu)
 	if err != nil {
 		return err
 	}
@@ -99,7 +99,7 @@ func (x *RunningStorageUnits) runItem(ctx context.Context, tx gorpmapper.SqlExec
 		return err
 	}
 
-	reader, err := source.NewReader()
+	reader, err := source.NewReader(ctx)
 	if err != nil {
 		return err
 	}

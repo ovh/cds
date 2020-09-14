@@ -119,7 +119,7 @@ func TestRun(t *testing.T) {
 	require.NoError(t, cdnUnits.Buffer.Add(*itemUnit, 1.0, "this is the first log"))
 	require.NoError(t, cdnUnits.Buffer.Add(*itemUnit, 1.0, "this is the second log"))
 
-	reader, err := cdnUnits.Buffer.NewReader(*itemUnit)
+	reader, err := cdnUnits.Buffer.NewReader(context.TODO(), *itemUnit)
 	require.NoError(t, err)
 
 	h, err := convergent.NewHash(reader)
@@ -163,7 +163,7 @@ func TestRun(t *testing.T) {
 	itemUnit, err = storage.LoadItemUnitByUnit(ctx, m, db, localUnitDriver.ID(), i.ID, gorpmapper.GetOptions.WithDecryption)
 	require.NoError(t, err)
 
-	reader, err = localUnitDriver.NewReader(*itemUnit)
+	reader, err = localUnitDriver.NewReader(context.TODO(), *itemUnit)
 	btes := new(bytes.Buffer)
 	err = localUnitDriver.Read(*itemUnit, reader, btes)
 	require.NoError(t, err)
@@ -182,7 +182,7 @@ this is the second log`, actual, "item %s content should match", i.ID)
 	itemUnit, err = storage.LoadItemUnitByUnit(ctx, m, db, localUnitDriver2.ID(), i.ID, gorpmapper.GetOptions.WithDecryption)
 	require.NoError(t, err)
 
-	reader, err = localUnitDriver2.NewReader(*itemUnit)
+	reader, err = localUnitDriver2.NewReader(context.TODO(), *itemUnit)
 	btes = new(bytes.Buffer)
 	err = localUnitDriver2.Read(*itemUnit, reader, btes)
 	require.NoError(t, err)

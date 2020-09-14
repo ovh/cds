@@ -52,7 +52,7 @@ type Interface interface {
 	ItemExists(i index.Item) (bool, error)
 	Lock()
 	Unlock()
-	Status() []sdk.MonitoringStatusLine
+	Status(ctx context.Context) []sdk.MonitoringStatusLine
 }
 
 type AbstractUnit struct {
@@ -98,14 +98,14 @@ type BufferUnit interface {
 	Append(i ItemUnit, value string) error
 	Card(i ItemUnit) (int, error)
 	Get(i ItemUnit, from, to uint) ([]string, error)
-	NewReader(i ItemUnit) (io.ReadCloser, error)
+	NewReader(ctx context.Context, i ItemUnit) (io.ReadCloser, error)
 	Read(i ItemUnit, r io.Reader, w io.Writer) error
 }
 
 type StorageUnit interface {
 	Interface
-	NewWriter(i ItemUnit) (io.WriteCloser, error)
-	NewReader(i ItemUnit) (io.ReadCloser, error)
+	NewWriter(ctx context.Context, i ItemUnit) (io.WriteCloser, error)
+	NewReader(ctx context.Context, i ItemUnit) (io.ReadCloser, error)
 	Write(i ItemUnit, r io.Reader, w io.Writer) error
 	Read(i ItemUnit, r io.Reader, w io.Writer) error
 }
@@ -305,7 +305,7 @@ func Init(ctx context.Context, m *gorpmapper.Mapper, db *gorp.DbMap, config Conf
 		if err != nil {
 			return nil, sdk.WithStack(err)
 		}
-		defer tx.Rollback()
+		defer tx.Rollback() // nolint
 
 		u, err := LoadUnitByName(ctx, m, tx, cfg.Name)
 		if sdk.ErrorIs(err, sdk.ErrNotFound) {
@@ -348,13 +348,13 @@ var (
 )
 
 type Source interface {
-	NewReader() (io.ReadCloser, error)
+	NewReader(context.Context) (io.ReadCloser, error)
 	Read(io.Reader, io.Writer) error
 	Name() string
 }
 
 type source interface {
-	NewReader(ItemUnit) (io.ReadCloser, error)
+	NewReader(context.Context, ItemUnit) (io.ReadCloser, error)
 	Read(ItemUnit, io.Reader, io.Writer) error
 	Name() string
 }
@@ -364,8 +364,8 @@ type iuSource struct {
 	source source
 }
 
-func (s *iuSource) NewReader() (io.ReadCloser, error) {
-	return s.source.NewReader(s.iu)
+func (s *iuSource) NewReader(ctx context.Context) (io.ReadCloser, error) {
+	return s.source.NewReader(ctx, s.iu)
 }
 func (s *iuSource) Read(r io.Reader, w io.Writer) error {
 	return s.source.Read(s.iu, r, w)

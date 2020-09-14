@@ -81,7 +81,7 @@ func (s *Service) dequeueJobMessages(ctx context.Context, jobLogsQueueKey string
 		case <-tick.C:
 			b, err := s.Cache.Exist(jobLogsQueueKey)
 			if err != nil {
-				log.Error(ctx, "dequeueJobMessages: unable to check if queue still exist: %v", err)
+				log.Error(ctx, "dequeueJobMessages: unable to check if queue still exists: %v", err)
 				continue
 			} else if !b {
 				// leave dequeue if queue does not exist anymore
