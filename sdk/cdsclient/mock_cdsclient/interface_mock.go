@@ -4090,18 +4090,18 @@ func (mr *MockWorkflowClientMockRecorder) WorkflowNodeRunJobStep(projectKey, wor
 }
 
 // WorkflowNodeRunJobServiceLog mocks base method
-func (m *MockWorkflowClient) WorkflowNodeRunJobServiceLog(projectKey, workflowName string, number, nodeRunID, job int64) ([]sdk.ServiceLog, error) {
+func (m *MockWorkflowClient) WorkflowNodeRunJobServiceLog(projectKey, workflowName string, nodeRunID, job int64, serviceName string) (sdk.ServiceLog, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "WorkflowNodeRunJobServiceLog", projectKey, workflowName, number, nodeRunID, job)
-	ret0, _ := ret[0].([]sdk.ServiceLog)
+	ret := m.ctrl.Call(m, "WorkflowNodeRunJobServiceLog", projectKey, workflowName, nodeRunID, job, serviceName)
+	ret0, _ := ret[0].(sdk.ServiceLog)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // WorkflowNodeRunJobServiceLog indicates an expected call of WorkflowNodeRunJobServiceLog
-func (mr *MockWorkflowClientMockRecorder) WorkflowNodeRunJobServiceLog(projectKey, workflowName, number, nodeRunID, job interface{}) *gomock.Call {
+func (mr *MockWorkflowClientMockRecorder) WorkflowNodeRunJobServiceLog(projectKey, workflowName, nodeRunID, job, serviceName interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkflowNodeRunJobServiceLog", reflect.TypeOf((*MockWorkflowClient)(nil).WorkflowNodeRunJobServiceLog), projectKey, workflowName, number, nodeRunID, job)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkflowNodeRunJobServiceLog", reflect.TypeOf((*MockWorkflowClient)(nil).WorkflowNodeRunJobServiceLog), projectKey, workflowName, nodeRunID, job, serviceName)
 }
 
 // WorkflowNodeRunRelease mocks base method
@@ -7933,18 +7933,18 @@ func (mr *MockInterfaceMockRecorder) WorkflowNodeRunJobStep(projectKey, workflow
 }
 
 // WorkflowNodeRunJobServiceLog mocks base method
-func (m *MockInterface) WorkflowNodeRunJobServiceLog(projectKey, workflowName string, number, nodeRunID, job int64) ([]sdk.ServiceLog, error) {
+func (m *MockInterface) WorkflowNodeRunJobServiceLog(projectKey, workflowName string, nodeRunID, job int64, serviceName string) (sdk.ServiceLog, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "WorkflowNodeRunJobServiceLog", projectKey, workflowName, number, nodeRunID, job)
-	ret0, _ := ret[0].([]sdk.ServiceLog)
+	ret := m.ctrl.Call(m, "WorkflowNodeRunJobServiceLog", projectKey, workflowName, nodeRunID, job, serviceName)
+	ret0, _ := ret[0].(sdk.ServiceLog)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // WorkflowNodeRunJobServiceLog indicates an expected call of WorkflowNodeRunJobServiceLog
-func (mr *MockInterfaceMockRecorder) WorkflowNodeRunJobServiceLog(projectKey, workflowName, number, nodeRunID, job interface{}) *gomock.Call {
+func (mr *MockInterfaceMockRecorder) WorkflowNodeRunJobServiceLog(projectKey, workflowName, nodeRunID, job, serviceName interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkflowNodeRunJobServiceLog", reflect.TypeOf((*MockInterface)(nil).WorkflowNodeRunJobServiceLog), projectKey, workflowName, number, nodeRunID, job)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkflowNodeRunJobServiceLog", reflect.TypeOf((*MockInterface)(nil).WorkflowNodeRunJobServiceLog), projectKey, workflowName, nodeRunID, job, serviceName)
 }
 
 // WorkflowNodeRunRelease mocks base method

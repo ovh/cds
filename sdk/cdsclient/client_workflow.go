@@ -213,13 +213,13 @@ func (c *client) WorkflowNodeRunJobStep(projectKey string, workflowName string, 
 	return &buildState, nil
 }
 
-func (c *client) WorkflowNodeRunJobServiceLog(projectKey string, workflowName string, number int64, nodeRunID, job int64) ([]sdk.ServiceLog, error) {
-	url := fmt.Sprintf("/project/%s/workflows/%s/runs/%d/nodes/%d/job/%d/log/service", projectKey, workflowName, number, nodeRunID, job)
-	var serviceLogs []sdk.ServiceLog
-	if _, err := c.GetJSON(context.Background(), url, &serviceLogs); err != nil {
-		return nil, err
+func (c *client) WorkflowNodeRunJobServiceLog(projectKey string, workflowName string, nodeRunID, job int64, serviceName string) (sdk.ServiceLog, error) {
+	url := fmt.Sprintf("/project/%s/workflows/%s/nodes/%d/job/%d/service/%s/log", projectKey, workflowName, nodeRunID, job, serviceName)
+	var serviceLog sdk.ServiceLog
+	if _, err := c.GetJSON(context.Background(), url, &serviceLog); err != nil {
+		return serviceLog, err
 	}
-	return serviceLogs, nil
+	return serviceLog, nil
 }
 
 func (c *client) WorkflowNodeRunArtifactDownload(projectKey string, workflowName string, a sdk.WorkflowNodeRunArtifact, w io.Writer) error {

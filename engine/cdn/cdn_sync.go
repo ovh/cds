@@ -136,15 +136,7 @@ func (s *Service) syncNodeRun(ctx context.Context, cdsStorage *cds.CDS, pKey str
 }
 
 func (s *Service) syncServiceLogs(ctx context.Context, tx gorpmapper.SqlExecutorWithTx, cdsStorage *cds.CDS, pKey string, nodeRun *sdk.WorkflowNodeRun, nodeRunIdentifier sdk.WorkflowNodeRunIdentifiers, rj sdk.WorkflowNodeJobRun, dict map[string]int64) error {
-	servicesLogs, err := cdsStorage.ServiceLogs(pKey, nodeRunIdentifier.WorkflowName, nodeRun.ID, rj.ID)
-	if err != nil {
-		return err
-	}
-	for _, sl := range servicesLogs {
-		reqID, ok := dict[sl.ServiceRequirementName]
-		if !ok {
-			continue
-		}
+	for k, v := range dict {
 		apiRef := sdk.CDNLogAPIRef{
 			NodeRunID:              nodeRun.ID,
 			WorkflowName:           nodeRunIdentifier.WorkflowName,
@@ -154,8 +146,8 @@ func (s *Service) syncServiceLogs(ctx context.Context, tx gorpmapper.SqlExecutor
 			RunID:                  nodeRunIdentifier.WorkflowRunID,
 			NodeRunJobName:         rj.Job.Action.Name,
 			NodeRunName:            nodeRun.WorkflowNodeName,
-			RequirementServiceName: sl.ServiceRequirementName,
-			RequirementServiceID:   reqID,
+			RequirementServiceName: k,
+			RequirementServiceID:   v,
 		}
 		if err := s.syncItem(ctx, tx, cdsStorage, sdk.CDNTypeItemServiceLog, apiRef); err != nil {
 			return err

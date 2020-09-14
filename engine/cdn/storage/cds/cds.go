@@ -64,25 +64,20 @@ func (c *CDS) NewReader(i storage.ItemUnit) (io.ReadCloser, error) {
 		rc := ioutil.NopCloser(bytes.NewReader([]byte(bs.StepLogs.Val)))
 		return rc, nil
 	case sdk.CDNTypeItemServiceLog:
-		logs, err := c.ServiceLogs(i.Item.APIRef.ProjectKey, i.Item.APIRef.WorkflowName, i.Item.APIRef.NodeRunID, i.Item.APIRef.NodeRunJobID)
+		log, err := c.ServiceLogs(i.Item.APIRef.ProjectKey, i.Item.APIRef.WorkflowName, i.Item.APIRef.NodeRunID, i.Item.APIRef.NodeRunJobID, i.Item.APIRef.RequirementServiceName)
 		if err != nil {
 			return nil, err
 		}
-		for _, l := range logs {
-			if l.ServiceRequirementName != i.Item.APIRef.RequirementServiceName {
-				continue
-			}
-			rc := ioutil.NopCloser(bytes.NewReader([]byte(l.Val)))
-			return rc, nil
-		}
+		return ioutil.NopCloser(bytes.NewReader([]byte(log.Val))), nil
+
 	default:
 		return nil, sdk.WithStack(fmt.Errorf("unable to read type %s", i.Item.Type))
 	}
 	return nil, sdk.WithStack(fmt.Errorf("unable to find data for ref: %+v", i.Item.APIRef))
 }
 
-func (c *CDS) ServiceLogs(pKey string, wkfName string, nodeRunID int64, jobID int64) ([]sdk.ServiceLog, error) {
-	return c.client.WorkflowNodeRunJobServiceLog(pKey, wkfName, 0, nodeRunID, jobID)
+func (c *CDS) ServiceLogs(pKey string, wkfName string, nodeRunID int64, jobID int64, serviceName string) (sdk.ServiceLog, error) {
+	return c.client.WorkflowNodeRunJobServiceLog(pKey, wkfName, nodeRunID, jobID, serviceName)
 }
 
 func (c *CDS) ListProjects() ([]sdk.Project, error) {
