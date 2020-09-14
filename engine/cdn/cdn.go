@@ -143,6 +143,15 @@ func (s *Service) Serve(c context.Context) error {
 				}
 			})
 		}
+
+		log.Info(ctx, "Initializing log cache on %s", s.Cfg.Cache.Redis.Host)
+		s.LogCache, err = lru.NewRedisLRU(s.mustDBWithCtx(ctx), s.Cfg.Cache.LruSize, s.Cfg.Cache.Redis.Host, s.Cfg.Cache.Redis.Password)
+		if err != nil {
+			return fmt.Errorf("cannot connect to redis instance for lru : %v", err)
+		}
+		sdk.GoRoutine(ctx, "log-cache-eviction", func(ctx context.Context) {
+			s.LogCache.Evict(ctx)
+		})
 	}
 
 	log.Info(ctx, "Initializing redis cache on %s...", s.Cfg.Cache.Redis.Host)
@@ -150,15 +159,6 @@ func (s *Service) Serve(c context.Context) error {
 	if err != nil {
 		return fmt.Errorf("cannot connect to redis instance : %v", err)
 	}
-
-	log.Info(ctx, "Initializing log cache on %s", s.Cfg.Cache.Redis.Host)
-	s.LogCache, err = lru.NewRedisLRU(s.mustDBWithCtx(ctx), s.Cfg.Cache.LruSize, s.Cfg.Cache.Redis.Host, s.Cfg.Cache.Redis.Password)
-	if err != nil {
-		return fmt.Errorf("cannot connect to redis instance for lru : %v", err)
-	}
-	sdk.GoRoutine(ctx, "log-cache-eviction", func(ctx context.Context) {
-		s.LogCache.Evict(ctx)
-	})
 
 	if err := s.initMetrics(ctx); err != nil {
 		return err

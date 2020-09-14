@@ -31,7 +31,6 @@ var workflowLogCmd = cli.Command{
 	# download only one file, for run number 1
 	$ cdsctl workflow logs download KEY WF 1 --pattern="MyJob"
 	# this will download file WF-1.0-pipeline.myPipeline-stage.MyStage-job.MyJob-status.Success-step.0.log
-
 `,
 }
 
@@ -52,7 +51,6 @@ var workflowLogListCmd = cli.Command{
 
 	# list all logs files from projet KEY, with workflow named WD on run 1
 	$ cdsctl workflow logs list KEY WF 1
-
 `,
 	Ctx: []cli.Arg{
 		{Name: _ProjectKey},
@@ -70,29 +68,29 @@ var workflowLogListCmd = cli.Command{
 }
 
 func workflowLogSearchNumber(v cli.Values) (int64, error) {
-	runNumber, errRunNumber := v.GetInt64("run-number")
-	if errRunNumber != nil {
-		return 0, errRunNumber
+	num, err := v.GetInt64("run-number")
+	if err != nil {
+		return 0, err
 	}
-	if runNumber == 0 {
-		filters := []cdsclient.Filter{
-			{
-				Name:  "workflow",
-				Value: v.GetString(_WorkflowName),
-			},
-		}
+	if num > 0 {
+		return num, nil
+	}
 
-		fmt.Printf("Searching latest run on workflow %s...\n", v.GetString(_WorkflowName))
-		runs, err := client.WorkflowRunSearch(v.GetString(_ProjectKey), 0, 0, filters...)
-		if err != nil {
-			return 0, err
-		}
-		if len(runs) < 1 {
-			return 0, fmt.Errorf("workflow run not found")
-		}
-		runNumber = runs[0].Number
+	projectKey := v.GetString(_ProjectKey)
+	workflowName := v.GetString(_WorkflowName)
+
+	fmt.Printf("Searching latest run for workflow %s/%s...\n", projectKey, workflowName)
+	runs, err := client.WorkflowRunSearch(projectKey, 0, 0, cdsclient.Filter{
+		Name:  "workflow",
+		Value: workflowName,
+	})
+	if err != nil {
+		return 0, err
 	}
-	return runNumber, nil
+	if len(runs) < 1 {
+		return 0, sdk.WithStack(fmt.Errorf("no run found for workflow %s/%s", projectKey, workflowName))
+	}
+	return runs[0].Number, nil
 }
 
 func workflowLogListRun(v cli.Values) error {
@@ -182,7 +180,6 @@ var workflowLogDownloadCmd = cli.Command{
 	# download only one file:
 	$ cdsctl workflow logs download KEY WF 1 --pattern="MyStage"
 	# this will download WF-1.0-pipeline.myPipeline-stage.MyStage-job.MyJob-status.Success-step.0.log for example
-
 `,
 	Ctx: []cli.Arg{
 		{Name: _ProjectKey},
@@ -211,7 +208,7 @@ func workflowLogDownloadRun(v cli.Values) error {
 		return err
 	}
 
-	fmt.Printf("Downloding logs files from workflow %s run %d\n", v.GetString(_WorkflowName), runNumber)
+	fmt.Printf("Downloading logs files from workflow %s run %d\n", v.GetString(_WorkflowName), runNumber)
 
 	wr, err := client.WorkflowRunGet(v.GetString(_ProjectKey), v.GetString(_WorkflowName), runNumber)
 	if err != nil {
