@@ -238,11 +238,9 @@ func TestSyncLog(t *testing.T) {
 	})
 
 	// Get Service log ( call twice )
-	gock.New("http://lolcat.host:8081").Times(2).Get("/project/key2/workflows/wkf1/runs/0/nodes/1001/job/1001/log/service").Reply(200).JSON([]sdk.ServiceLog{
-		{
-			ServiceRequirementName: "pg",
-			Val:                    "Je suis un log de service",
-		},
+	gock.New("http://lolcat.host:8081").Times(2).Get("/project/key2/workflows/wkf1/runs/0/nodes/1001/job/1001/service/pg").Reply(200).JSON(sdk.ServiceLog{
+		ServiceRequirementName: "pg",
+		Val:                    "Je suis un log de service",
 	})
 
 	// Insert index for wkf1, 1000
