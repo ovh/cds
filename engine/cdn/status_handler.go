@@ -2,12 +2,14 @@ package cdn
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"sync"
 
 	"go.opencensus.io/stats"
 	"go.opencensus.io/tag"
 
+	"github.com/ovh/cds/engine/cdn/storage"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
@@ -29,10 +31,48 @@ func (s *Service) statusHandler() service.Handler {
 	}
 }
 
+func addMonitoringLine(nb int64, text string, err error, status string) sdk.MonitoringStatusLine {
+	if err != nil {
+		return sdk.MonitoringStatusLine{
+			Component: text,
+			Value:     fmt.Sprintf("Error: %v", err),
+			Status:    sdk.MonitoringStatusAlert,
+		}
+	} else {
+		return sdk.MonitoringStatusLine{
+			Component: text,
+			Value:     fmt.Sprintf("%d", nb),
+			Status:    status,
+		}
+	}
+}
+
 func (s *Service) Status(ctx context.Context) sdk.MonitoringStatus {
 	m := s.CommonMonitoring()
-	status := sdk.MonitoringStatusOK
-	m.Lines = append(m.Lines, sdk.MonitoringStatusLine{Component: "CDN", Value: status, Status: status})
+
+	if !s.Cfg.EnableLogProcessing {
+		return m
+	}
+	db := s.mustDBWithCtx(ctx)
+
+	nbCompleted, err := storage.CountItemCompleted(db)
+	m.Lines = append(m.Lines, addMonitoringLine(nbCompleted, "index/items/completed", err, sdk.MonitoringStatusOK))
+
+	nbIncoming, err := storage.CountItemIncoming(db)
+	m.Lines = append(m.Lines, addMonitoringLine(nbIncoming, "index/items/incoming", err, sdk.MonitoringStatusOK))
+
+	for _, st := range s.Units.Storages {
+		m.Lines = append(m.Lines, st.Status()...)
+		size, err := storage.CountItemUnitByUnit(db, st.ID())
+		if nbCompleted-size >= 100 {
+			m.Lines = append(m.Lines, addMonitoringLine(size, "backend/"+st.Name()+"/index/items", err, sdk.MonitoringStatusWarn))
+		} else {
+			m.Lines = append(m.Lines, addMonitoringLine(size, "backend/"+st.Name()+"/index/items", err, sdk.MonitoringStatusOK))
+		}
+	}
+
+	m.Lines = append(m.Lines, s.DBConnectionFactory.Status(ctx))
+
 	return m
 }
 

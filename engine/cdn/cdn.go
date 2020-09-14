@@ -3,8 +3,9 @@ package cdn
 import (
 	"context"
 	"fmt"
-	"github.com/ovh/cds/engine/cdn/storage/cds"
 	"net/http"
+
+	"github.com/ovh/cds/engine/cdn/storage/cds"
 
 	"github.com/go-gorp/gorp"
 	"github.com/gorilla/mux"

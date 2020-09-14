@@ -26,7 +26,7 @@ func init() {
 	storage.RegisterDriver("redis", new(Redis))
 }
 
-func (s *Redis) Init(cfg interface{}) error {
+func (s *Redis) Init(ctx context.Context, cfg interface{}) error {
 	config, is := cfg.(storage.RedisBufferConfiguration)
 	if !is {
 		return sdk.WithStack(fmt.Errorf("invalid configuration: %T", cfg))
@@ -130,4 +130,29 @@ func (r *reader) Read(p []byte) (n int, err error) {
 
 func (r *reader) Close() error {
 	return nil
+}
+
+func (s *Redis) Status() []sdk.MonitoringStatusLine {
+	if err := s.store.Ping(); err != nil {
+		return []sdk.MonitoringStatusLine{{
+			Component: "storage/redis/ping",
+			Value:     "connect OK",
+			Status:    sdk.MonitoringStatusAlert,
+		}}
+	}
+
+	size, err := s.store.DBSize()
+	if err != nil {
+		return []sdk.MonitoringStatusLine{{
+			Component: "storage/redis/size",
+			Value:     fmt.Sprintf("ERROR while getting dbsize: %v", size),
+			Status:    sdk.MonitoringStatusAlert,
+		}}
+	}
+
+	return []sdk.MonitoringStatusLine{{
+		Component: "storage/redis/size",
+		Value:     fmt.Sprintf("%d keys", size),
+		Status:    sdk.MonitoringStatusOK,
+	}}
 }

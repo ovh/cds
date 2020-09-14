@@ -48,10 +48,11 @@ type Interface interface {
 	Set(m *gorpmapper.Mapper, db *gorp.DbMap, u Unit)
 	GorpMapper() *gorpmapper.Mapper
 	DB() *gorp.DbMap
-	Init(cfg interface{}) error
+	Init(ctx context.Context, cfg interface{}) error
 	ItemExists(i index.Item) (bool, error)
 	Lock()
 	Unlock()
+	Status() []sdk.MonitoringStatusLine
 }
 
 type AbstractUnit struct {
@@ -127,33 +128,33 @@ type BufferConfiguration struct {
 type StorageConfiguration struct {
 	Name   string                      `toml:"name" json:"name"`
 	Cron   string                      `toml:"cron" json:"cron"`
-	Local  *LocalStorageConfiguration  `toml:"local" json:"local" mapstructure:"local"`
-	Swift  *SwiftStorageConfiguration  `toml:"swift" json:"swift" mapstructure:"swift"`
-	Webdav *WebdavStorageConfiguration `toml:"webdav" json:"webdav" mapstructure:"webdav"`
-	CDS    *CDSStorageConfiguration    `toml:"cds" json:"cds" mapstructure:"cds"`
+	Local  *LocalStorageConfiguration  `toml:"local" json:"local,omitempty" mapstructure:"local"`
+	Swift  *SwiftStorageConfiguration  `toml:"swift" json:"swift,omitempty" mapstructure:"swift"`
+	Webdav *WebdavStorageConfiguration `toml:"webdav" json:"webdav,omitempty" mapstructure:"webdav"`
+	CDS    *CDSStorageConfiguration    `toml:"cds" json:"cds,omitempty" mapstructure:"cds"`
 }
 
 type LocalStorageConfiguration struct {
 	Path       string                                  `toml:"path" json:"path"`
-	Encryption []convergent.ConvergentEncryptionConfig `toml:"encryption" json:"encryption" mapstructure:"encryption"`
+	Encryption []convergent.ConvergentEncryptionConfig `toml:"encryption" json:"-" mapstructure:"encryption"`
 }
 
 type CDSStorageConfiguration struct {
 	Host                  string                                  `toml:"host" json:"host"`
 	InsecureSkipVerifyTLS bool                                    `toml:"insecureSkipVerifyTLS" json:"insecureSkipVerifyTLS"`
-	Token                 string                                  `toml:"token" json:"token"`
-	Encryption            []convergent.ConvergentEncryptionConfig `toml:"encryption" json:"encryption" mapstructure:"encryption"`
+	Token                 string                                  `toml:"token" json:"-" comment:"consumer token must have the scopes Project (READ) and Run (READ)"`
+	Encryption            []convergent.ConvergentEncryptionConfig `toml:"encryption" json:"-" mapstructure:"encryption"`
 }
 
 type SwiftStorageConfiguration struct {
 	Address         string                                  `toml:"address" json:"address"`
 	Username        string                                  `toml:"username" json:"username"`
-	Password        string                                  `toml:"password" json:"password"`
+	Password        string                                  `toml:"password" json:"-"`
 	Tenant          string                                  `toml:"tenant" json:"tenant"`
 	Domain          string                                  `toml:"domain" json:"domain"`
 	Region          string                                  `toml:"region" json:"region"`
 	ContainerPrefix string                                  `toml:"container_prefix" json:"container_prefix"`
-	Encryption      []convergent.ConvergentEncryptionConfig `toml:"encryption" json:"encryption" mapstructure:"encryption"`
+	Encryption      []convergent.ConvergentEncryptionConfig `toml:"encryption" json:"-" mapstructure:"encryption"`
 }
 
 type WebdavStorageConfiguration struct {
@@ -161,7 +162,7 @@ type WebdavStorageConfiguration struct {
 	Username   string                                  `toml:"username" json:"username"`
 	Password   string                                  `toml:"password" json:"password"`
 	Path       string                                  `toml:"path" json:"path"`
-	Encryption []convergent.ConvergentEncryptionConfig `toml:"encryption" json:"encryption" mapstructure:"encryption"`
+	Encryption []convergent.ConvergentEncryptionConfig `toml:"encryption" json:"-" mapstructure:"encryption"`
 }
 
 type RedisBufferConfiguration struct {
@@ -200,7 +201,7 @@ func Init(ctx context.Context, m *gorpmapper.Mapper, db *gorp.DbMap, config Conf
 	if !is {
 		return nil, fmt.Errorf("redis driver is not a buffer unit driver")
 	}
-	if err := bd.Init(config.Buffer.Redis); err != nil {
+	if err := bd.Init(ctx, config.Buffer.Redis); err != nil {
 		return nil, err
 	}
 	result.Buffer = bd
@@ -249,7 +250,7 @@ func Init(ctx context.Context, m *gorpmapper.Mapper, db *gorp.DbMap, config Conf
 			if !is {
 				return nil, sdk.WithStack(fmt.Errorf("cds driver is not a storage unit driver"))
 			}
-			if err := sd.Init(cfg.CDS); err != nil {
+			if err := sd.Init(ctx, cfg.CDS); err != nil {
 				return nil, err
 			}
 			storageUnit = sd
@@ -262,7 +263,7 @@ func Init(ctx context.Context, m *gorpmapper.Mapper, db *gorp.DbMap, config Conf
 			if !is {
 				return nil, sdk.WithStack(fmt.Errorf("local driver is not a storage unit driver"))
 			}
-			if err := sd.Init(cfg.Local); err != nil {
+			if err := sd.Init(ctx, cfg.Local); err != nil {
 				return nil, err
 			}
 			storageUnit = sd
@@ -272,7 +273,7 @@ func Init(ctx context.Context, m *gorpmapper.Mapper, db *gorp.DbMap, config Conf
 			if !is {
 				return nil, sdk.WithStack(fmt.Errorf("swift driver is not a storage unit driver"))
 			}
-			if err := sd.Init(cfg.Swift); err != nil {
+			if err := sd.Init(ctx, cfg.Swift); err != nil {
 				return nil, err
 			}
 			storageUnit = sd
@@ -282,7 +283,7 @@ func Init(ctx context.Context, m *gorpmapper.Mapper, db *gorp.DbMap, config Conf
 			if !is {
 				return nil, sdk.WithStack(fmt.Errorf("webdav driver is not a storage unit driver"))
 			}
-			if err := sd.Init(cfg.Webdav); err != nil {
+			if err := sd.Init(ctx, cfg.Webdav); err != nil {
 				return nil, err
 			}
 			storageUnit = sd
