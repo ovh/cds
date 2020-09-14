@@ -19,7 +19,7 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-func (api *API) getWorkflowNodeRunJobServiceLogDeprecatedHandler() service.Handler {
+func (api *API) getWorkflowNodeRunJobServiceLogHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		runJobID, err := requestVarInt(r, "runJobID")
@@ -42,7 +42,7 @@ func (api *API) getWorkflowNodeRunJobServiceLogDeprecatedHandler() service.Handl
 	}
 }
 
-func (api *API) getWorkflowNodeRunJobStepDeprecatedHandler() service.Handler {
+func (api *API) getWorkflowNodeRunJobStepLogHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		projectKey := vars["key"]
@@ -109,13 +109,13 @@ func (api *API) getWorkflowNodeRunJobStepDeprecatedHandler() service.Handler {
 	}
 }
 
-func (api *API) getWorkflowNodeRunJobServiceLogHandler() service.Handler {
+func (api *API) getWorkflowNodeRunJobServiceAccessHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		return api.getWorkflowNodeRunJobLogHandler(ctx, w, r, sdk.CDNTypeItemServiceLog)
 	}
 }
 
-func (api *API) getWorkflowNodeRunJobStepLogHandler() service.Handler {
+func (api *API) getWorkflowNodeRunJobStepAccessHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		return api.getWorkflowNodeRunJobLogHandler(ctx, w, r, sdk.CDNTypeItemStepLog)
 	}

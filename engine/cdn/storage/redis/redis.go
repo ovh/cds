@@ -66,10 +66,8 @@ func (s *Redis) NewReader(i storage.ItemUnit) (io.ReadCloser, error) {
 			ItemID:    i.ItemID,
 			UsageKey:  "",
 		},
-		CurrentBuffer: "",
-		LastIndex:     0,
-		From:          0,
-		Size:          0,
+		From: 0,
+		Size: 0,
 	}, nil
 }
 

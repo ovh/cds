@@ -112,10 +112,8 @@ func (r *Redis) NewReader(itemID string, from uint, s int) io.ReadCloser {
 			PrefixKey: redisLruItemCacheKey,
 			UsageKey:  redisLruKeyCacheKey,
 		},
-		Size:          s,
-		From:          from,
-		CurrentBuffer: "",
-		LastIndex:     0,
+		Size: s,
+		From: from,
 	}
 }
 

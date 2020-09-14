@@ -204,31 +204,40 @@ func (c *client) WorkflowRunNumberSet(projectKey string, workflowName string, nu
 	return nil
 }
 
-func (c *client) WorkflowNodeRunJobStep(projectKey string, workflowName string, number int64, nodeRunID, job int64, step int) (*sdk.BuildState, error) {
-	url := fmt.Sprintf("/project/%s/workflows/%s/runs/%d/nodes/%d/job/%d/step/%d", projectKey, workflowName, number, nodeRunID, job, step)
-	buildState := sdk.BuildState{}
+func (c *client) WorkflowNodeRunJobStepLog(projectKey string, workflowName string, nodeRunID, job int64, step int64) (*sdk.BuildState, error) {
+	url := fmt.Sprintf("/project/%s/workflows/%s/nodes/%d/job/%d/step/%d/log", projectKey, workflowName, nodeRunID, job, step)
+	var buildState sdk.BuildState
 	if _, err := c.GetJSON(context.Background(), url, &buildState); err != nil {
 		return nil, err
 	}
 	return &buildState, nil
 }
 
-func (c *client) WorkflowNodeRunJobServiceLogDeprecated(projectKey string, workflowName string, num int64, nodeRunID int64, jobID int64, serviceName string) (sdk.ServiceLog, error) {
-	url := fmt.Sprintf("/project/%s/workflows/%s/runs/%d/nodes/%d/job/%d/service/%s", projectKey, workflowName, num, nodeRunID, jobID, serviceName)
-	var serviceLog sdk.ServiceLog
-	if _, err := c.GetJSON(context.Background(), url, &serviceLog); err != nil {
-		return serviceLog, err
+func (c *client) WorkflowNodeRunJobStepAccess(projectKey string, workflowName string, nodeRunID, job int64, step int64) (*sdk.CDNLogAccess, error) {
+	url := fmt.Sprintf("/project/%s/workflows/%s/nodes/%d/job/%d/step/%d/access", projectKey, workflowName, nodeRunID, job, step)
+	var a sdk.CDNLogAccess
+	if _, err := c.GetJSON(context.Background(), url, &a); err != nil {
+		return nil, err
 	}
-	return serviceLog, nil
+	return &a, nil
 }
 
-func (c *client) WorkflowNodeRunJobServiceLog(projectKey string, workflowName string, nodeRunID, job int64, serviceName string) (sdk.ServiceLog, error) {
-	url := fmt.Sprintf("/project/%s/workflows/%s/nodes/%d/job/%d/service/%s/log", projectKey, workflowName, nodeRunID, job, serviceName)
+func (c *client) WorkflowNodeRunJobServiceLog(projectKey string, workflowName string, nodeRunID int64, jobID int64, serviceName string) (*sdk.ServiceLog, error) {
+	url := fmt.Sprintf("/project/%s/workflows/%s/nodes/%d/job/%d/service/%s/log", projectKey, workflowName, nodeRunID, jobID, serviceName)
 	var serviceLog sdk.ServiceLog
 	if _, err := c.GetJSON(context.Background(), url, &serviceLog); err != nil {
-		return serviceLog, err
+		return nil, err
 	}
-	return serviceLog, nil
+	return &serviceLog, nil
+}
+
+func (c *client) WorkflowNodeRunJobServiceAccess(projectKey string, workflowName string, nodeRunID, job int64, serviceName string) (*sdk.CDNLogAccess, error) {
+	url := fmt.Sprintf("/project/%s/workflows/%s/nodes/%d/job/%d/service/%s/access", projectKey, workflowName, nodeRunID, job, serviceName)
+	var a sdk.CDNLogAccess
+	if _, err := c.GetJSON(context.Background(), url, &a); err != nil {
+		return nil, err
+	}
+	return &a, nil
 }
 
 func (c *client) WorkflowNodeRunArtifactDownload(projectKey string, workflowName string, a sdk.WorkflowNodeRunArtifact, w io.Writer) error {

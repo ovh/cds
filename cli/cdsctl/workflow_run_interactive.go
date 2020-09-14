@@ -1,7 +1,9 @@
 package main
 
 import (
+	"context"
 	"fmt"
+	"net/http"
 	"strings"
 	"time"
 
@@ -15,9 +17,19 @@ func workflowRunInteractive(v cli.Values, w *sdk.WorkflowRun, baseURL string) er
 	var wo *sdk.WorkflowRun
 	var failedOn, output string
 
+	projectKey := v.GetString(_ProjectKey)
+	workflowName := v.GetString(_WorkflowName)
+
+	feature, err := client.FeatureEnabled("cdn-job-logs", map[string]string{
+		"project_key": projectKey,
+	})
+	if err != nil {
+		return err
+	}
+
 	for {
 		var errrg error
-		wo, errrg = client.WorkflowRunGet(v.GetString(_ProjectKey), v.GetString(_WorkflowName), w.Number)
+		wo, errrg = client.WorkflowRunGet(projectKey, v.GetString(_WorkflowName), w.Number)
 		if errrg != nil {
 			return errrg
 		}
@@ -51,12 +63,32 @@ func workflowRunInteractive(v cli.Values, w *sdk.WorkflowRun, baseURL string) er
 						newOutput += fmt.Sprintf("\n")
 
 						for _, step := range job.Job.StepStatus {
-							buildState, errb := client.WorkflowNodeRunJobStep(v.GetString(_ProjectKey), v.GetString(_WorkflowName), wo.Number, wnr.ID, job.ID, step.StepOrder)
-							if errb != nil {
-								return errb
+							var access *sdk.CDNLogAccess
+							if feature.Enabled {
+								access, err = client.WorkflowNodeRunJobStepAccess(projectKey, workflowName, wnr.ID, job.ID, int64(step.StepOrder))
+								if err != nil {
+									return err
+								}
 							}
 
-							vSplitted := strings.Split(buildState.StepLogs.Val, "\n")
+							var data string
+							if access != nil && access.Exists {
+								buf, _, _, err := client.Request(context.Background(), http.MethodGet, access.CDNURL+access.DownloadPath, nil, func(r *http.Request) {
+									r.Header.Add("Authorization", "Bearer "+access.Token)
+								})
+								if err != nil {
+									return err
+								}
+								data = string(buf)
+							} else {
+								buildState, err := client.WorkflowNodeRunJobStepLog(projectKey, workflowName, wnr.ID, job.ID, int64(step.StepOrder))
+								if err != nil {
+									return err
+								}
+								data = buildState.StepLogs.Val
+							}
+
+							vSplitted := strings.Split(data, "\n")
 							failedOnStepKnowned := false
 							for _, line := range vSplitted {
 								line = strings.Trim(line, " ")

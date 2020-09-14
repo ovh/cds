@@ -110,7 +110,7 @@ export class WorkflowServiceLogComponent implements OnInit, OnDestroy {
 
         let logAccess: CDNLogAccess;
         if (cdnEnabled) {
-            logAccess = await this._workflowService.getServiceLogAccess(projectKey, workflowName, nodeRunId, runJobId,
+            logAccess = await this._workflowService.getServiceAccess(projectKey, workflowName, nodeRunId, runJobId,
                 this.serviceName).toPromise();
         }
 
@@ -124,7 +124,7 @@ export class WorkflowServiceLogComponent implements OnInit, OnDestroy {
         };
 
         if (!cdnEnabled || !logAccess.exists) {
-            const serviceLog = await this._workflowService.getServiceLog(projectKey, workflowName, runNumber,
+            const serviceLog = await this._workflowService.getServiceLog(projectKey, workflowName,
                 nodeRunId, runJobId, this.serviceName).toPromise();
             callback(serviceLog);
         } else {
@@ -146,7 +146,7 @@ export class WorkflowServiceLogComponent implements OnInit, OnDestroy {
             this.pollingSubscription = Observable.interval(2000)
                 .mergeMap(_ => {
                     if (!cdnEnabled || !logAccess.exists) {
-                        return this._workflowService.getServiceLog(projectKey, workflowName, runNumber, nodeRunId,
+                        return this._workflowService.getServiceLog(projectKey, workflowName, nodeRunId,
                             runJobId, this.serviceName);
                     }
                     return this._http.get('./cdscdn' + logAccess.download_path, {

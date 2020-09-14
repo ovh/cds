@@ -20,15 +20,14 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-func Test_getWorkflowNodeRunJobStepDeprecatedHandler(t *testing.T) {
+func Test_getWorkflowNodeRunJobStepLogHandler(t *testing.T) {
 	api, db, router := newTestAPI(t)
 
 	u, pass, proj, w1, lastRun, jobRun := initGetWorkflowNodeRunJobTest(t, api, db)
 
-	uri := router.GetRoute("GET", api.getWorkflowNodeRunJobStepDeprecatedHandler, map[string]string{
+	uri := router.GetRoute("GET", api.getWorkflowNodeRunJobStepLogHandler, map[string]string{
 		"key":              proj.Key,
 		"permWorkflowName": w1.Name,
-		"number":           fmt.Sprintf("%d", lastRun.Number),
 		"nodeRunID":        fmt.Sprintf("%d", lastRun.WorkflowNodeRuns[w1.WorkflowData.Node.ID][0].ID),
 		"runJobID":         fmt.Sprintf("%d", jobRun.ID),
 		"stepOrder":        "0",
@@ -45,15 +44,14 @@ func Test_getWorkflowNodeRunJobStepDeprecatedHandler(t *testing.T) {
 	require.Equal(t, sdk.StatusBuilding, stepState.Status)
 }
 
-func Test_getWorkflowNodeRunJobServiceLogsDeprecatedHandler(t *testing.T) {
+func Test_getWorkflowNodeRunJobServiceLogHandler(t *testing.T) {
 	api, db, router := newTestAPI(t)
 
 	u, pass, proj, w1, lastRun, jobRun := initGetWorkflowNodeRunJobTest(t, api, db)
 
-	uri := router.GetRoute("GET", api.getWorkflowNodeRunJobServiceLogDeprecatedHandler, map[string]string{
+	uri := router.GetRoute("GET", api.getWorkflowNodeRunJobServiceLogHandler, map[string]string{
 		"key":              proj.Key,
 		"permWorkflowName": w1.Name,
-		"number":           fmt.Sprintf("%d", lastRun.Number),
 		"nodeRunID":        fmt.Sprintf("%d", lastRun.WorkflowNodeRuns[w1.WorkflowData.Node.ID][0].ID),
 		"runJobID":         fmt.Sprintf("%d", jobRun.ID),
 		"serviceName":      "postgres",
@@ -69,7 +67,7 @@ func Test_getWorkflowNodeRunJobServiceLogsDeprecatedHandler(t *testing.T) {
 	require.Equal(t, "098765432109876... truncated\n", log.Val)
 }
 
-func Test_getWorkflowNodeRunJobLogHandler(t *testing.T) {
+func Test_getWorkflowNodeRunJobAccessHandler(t *testing.T) {
 	featureflipping.Init(gorpmapping.Mapper)
 
 	api, db, router := newTestAPI(t)
@@ -113,7 +111,7 @@ func Test_getWorkflowNodeRunJobLogHandler(t *testing.T) {
 		},
 	)
 
-	uri := router.GetRoute("GET", api.getWorkflowNodeRunJobStepLogHandler, map[string]string{
+	uri := router.GetRoute("GET", api.getWorkflowNodeRunJobStepAccessHandler, map[string]string{
 		"key":              proj.Key,
 		"permWorkflowName": w1.Name,
 		"nodeRunID":        fmt.Sprintf("%d", lastRun.WorkflowNodeRuns[w1.WorkflowData.Node.ID][0].ID),

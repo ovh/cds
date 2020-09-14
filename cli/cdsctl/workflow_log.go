@@ -1,8 +1,10 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"io/ioutil"
+	"net/http"
 	"regexp"
 	"strings"
 
@@ -11,6 +13,7 @@ import (
 	"github.com/ovh/cds/cli"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
+	"github.com/ovh/cds/sdk/slug"
 )
 
 var workflowLogCmd = cli.Command{
@@ -99,11 +102,15 @@ func workflowLogListRun(v cli.Values) error {
 		return err
 	}
 
-	wr, err := client.WorkflowRunGet(v.GetString(_ProjectKey), v.GetString(_WorkflowName), runNumber)
+	projectKey := v.GetString(_ProjectKey)
+	workflowName := v.GetString(_WorkflowName)
+
+	wr, err := client.WorkflowRunGet(projectKey, workflowName, runNumber)
 	if err != nil {
 		return err
 	}
-	fmt.Printf("List logs files on workflow %s run %d\n", v.GetString(_WorkflowName), runNumber)
+
+	fmt.Printf("List logs files on workflow %s/%s run %d\n", projectKey, workflowName, runNumber)
 	logs := workflowLogProcess(wr)
 	for _, log := range logs {
 		fmt.Println(log.getFilename())
@@ -111,53 +118,100 @@ func workflowLogListRun(v cli.Values) error {
 	return nil
 }
 
+type workflowLogDetailType string
+
+const (
+	workflowLogDetailTypeStep    workflowLogDetailType = "step"
+	workflowLogDetailTypeService workflowLogDetailType = "service"
+)
+
 type workflowLogDetail struct {
-	workflowName string
-	pipelineName string
-	stageName    string
-	status       string
-	jobName      string
-	runID        int64
-	jobID        int64
-	stepOrder    int
-	number       int64
-	subNumber    int64
+	detailType        workflowLogDetailType
+	workflowName      string
+	pipelineName      string
+	stageName         string
+	jobName           string
+	runID             int64
+	jobID             int64
+	number            int64
+	subNumber         int64
+	countUsageJobName int64
+	status            string
+
+	// for step log
+	stepOrder int64
+
+	// for service log
+	serviceName string
 }
 
 func (w workflowLogDetail) getFilename() string {
-	return fmt.Sprintf("%s-%d.%d-pipeline.%s-stage.%s-job.%s-status.%s-step.%d.log",
+	jobName := strings.Replace(w.jobName, " ", "", -1)
+	if w.countUsageJobName > 0 {
+		jobName = fmt.Sprintf("%s.%d", jobName, w.countUsageJobName)
+	}
+
+	var suffix string
+	if w.detailType == workflowLogDetailTypeService {
+		suffix = fmt.Sprintf("service.%s", w.serviceName)
+	} else {
+		suffix = fmt.Sprintf("step.%d", w.stepOrder)
+	}
+
+	return fmt.Sprintf("%s-%d.%d-pipeline.%s-stage.%s-job.%s-status.%s-%s.log",
 		w.workflowName,
 		w.number,
 		w.subNumber,
 		w.pipelineName,
 		strings.Replace(w.stageName, " ", "", -1),
-		strings.Replace(w.jobName, " ", "", -1),
+		jobName,
 		w.status,
-		w.stepOrder,
+		suffix,
 	)
 }
 
 func workflowLogProcess(wr *sdk.WorkflowRun) []workflowLogDetail {
-	logs := []workflowLogDetail{}
-	for _, noderuns := range wr.WorkflowNodeRuns {
-		for _, node := range noderuns {
-			for _, stage := range node.Stages {
-				for _, job := range stage.RunJobs {
+	var logs []workflowLogDetail
+	for _, nodeRuns := range wr.WorkflowNodeRuns {
+		for _, nodeRun := range nodeRuns {
+			for _, stage := range nodeRun.Stages {
+				jobNames := map[string]int64{}
+				for _, runJob := range stage.RunJobs {
+					jobName := slug.Convert(runJob.Job.Job.Action.Name)
+					countUsageJobName, ok := jobNames[jobName]
+					if !ok {
+						jobNames[jobName] = 1
+					} else {
+						jobNames[jobName]++
+					}
 
-					for _, step := range job.Job.StepStatus {
-						logs = append(logs,
-							workflowLogDetail{
-								workflowName: wr.Workflow.Name,
-								pipelineName: node.WorkflowNodeName,
-								stageName:    stage.Name,
-								jobName:      job.Job.Job.Action.Name,
-								jobID:        job.ID,
-								status:       job.Status,
-								stepOrder:    step.StepOrder,
-								runID:        node.ID,
-								number:       wr.Number,
-								subNumber:    wr.LastSubNumber,
-							})
+					commonLogDetail := workflowLogDetail{
+						workflowName:      wr.Workflow.Name,
+						pipelineName:      nodeRun.WorkflowNodeName,
+						stageName:         stage.Name,
+						jobName:           runJob.Job.Job.Action.Name,
+						jobID:             runJob.ID,
+						runID:             nodeRun.ID,
+						number:            wr.Number,
+						subNumber:         nodeRun.SubNumber,
+						countUsageJobName: countUsageJobName,
+						status:            runJob.Status,
+					}
+
+					for _, req := range runJob.Job.Action.Requirements {
+						if req.Type == sdk.ServiceRequirement {
+							detail := commonLogDetail
+							detail.detailType = workflowLogDetailTypeService
+							detail.serviceName = req.Name
+							logs = append(logs, detail)
+						}
+					}
+
+					for _, step := range runJob.Job.StepStatus {
+						detail := commonLogDetail
+						detail.detailType = workflowLogDetailTypeStep
+						detail.stepOrder = int64(step.StepOrder)
+						logs = append(logs, detail)
 					}
 				}
 			}
@@ -208,9 +262,12 @@ func workflowLogDownloadRun(v cli.Values) error {
 		return err
 	}
 
-	fmt.Printf("Downloading logs files from workflow %s run %d\n", v.GetString(_WorkflowName), runNumber)
+	projectKey := v.GetString(_ProjectKey)
+	workflowName := v.GetString(_WorkflowName)
 
-	wr, err := client.WorkflowRunGet(v.GetString(_ProjectKey), v.GetString(_WorkflowName), runNumber)
+	fmt.Printf("Downloading logs files from workflow %s/%s run %d\n", projectKey, workflowName, runNumber)
+
+	wr, err := client.WorkflowRunGet(projectKey, workflowName, runNumber)
 	if err != nil {
 		return err
 	}
@@ -218,40 +275,72 @@ func workflowLogDownloadRun(v cli.Values) error {
 
 	var reg *regexp.Regexp
 	if v.GetString("pattern") != "" {
-		var errp error
-		reg, errp = regexp.Compile(v.GetString("pattern"))
-		if errp != nil {
-			return fmt.Errorf("Invalid pattern %s: %v", v.GetString("pattern"), errp)
+		reg, err = regexp.Compile(v.GetString("pattern"))
+		if err != nil {
+			return sdk.NewErrorFrom(err, "invalid pattern %s", v.GetString("pattern"))
 		}
+	}
+
+	feature, err := client.FeatureEnabled("cdn-job-logs", map[string]string{
+		"project_key": projectKey,
+	})
+	if err != nil {
+		return err
 	}
 
 	var ok bool
 	for _, log := range logs {
-		if v.GetString("pattern") != "" && !reg.MatchString(log.getFilename()) {
+		if reg != nil && !reg.MatchString(log.getFilename()) {
 			continue
 		}
 
-		buildState, err := client.WorkflowNodeRunJobStep(v.GetString(_ProjectKey),
-			v.GetString(_WorkflowName),
-			runNumber,
-			log.runID,
-			log.jobID,
-			log.stepOrder,
-		)
-		if err != nil {
-			return err
+		// If cdn logs is enabled for current project, first check if logs can be downloaded from it
+		var access *sdk.CDNLogAccess
+		if feature.Enabled {
+			if log.detailType == workflowLogDetailTypeService {
+				access, err = client.WorkflowNodeRunJobServiceAccess(projectKey, workflowName, log.runID, log.jobID, log.serviceName)
+			} else {
+				access, err = client.WorkflowNodeRunJobStepAccess(projectKey, workflowName, log.runID, log.jobID, log.stepOrder)
+			}
+			if err != nil {
+				return err
+			}
 		}
 
-		d1 := []byte(buildState.StepLogs.Val)
-		if err := ioutil.WriteFile(log.getFilename(), d1, 0644); err != nil {
+		var data []byte
+		if access != nil && access.Exists {
+			data, _, _, err = client.Request(context.Background(), http.MethodGet, access.CDNURL+access.DownloadPath, nil, func(r *http.Request) {
+				r.Header.Add("Authorization", "Bearer "+access.Token)
+			})
+			if err != nil {
+				return err
+			}
+		} else {
+			if log.detailType == workflowLogDetailTypeService {
+				serviceLog, err := client.WorkflowNodeRunJobServiceLog(projectKey, workflowName, log.runID, log.jobID, log.serviceName)
+				if err != nil {
+					return err
+				}
+				data = []byte(serviceLog.Val)
+			} else {
+				buildState, err := client.WorkflowNodeRunJobStepLog(projectKey, workflowName, log.runID, log.jobID, log.stepOrder)
+				if err != nil {
+					return err
+				}
+				data = []byte(buildState.StepLogs.Val)
+			}
+		}
+
+		if err := ioutil.WriteFile(log.getFilename(), data, 0644); err != nil {
 			return err
 		}
 		fmt.Printf("file %s created\n", log.getFilename())
+
 		ok = true
 	}
 
 	if !ok {
-		return fmt.Errorf("No log downloaded")
+		return sdk.WithStack(fmt.Errorf("no log downloaded"))
 	}
 	return nil
 }
