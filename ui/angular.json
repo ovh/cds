@@ -30,7 +30,7 @@
               "node_modules/codemirror/addon/lint/lint.css",
               "node_modules/codemirror/theme/darcula.css",
               "node_modules/fomantic-ui/dist/semantic.css",
-              "node_modules/angular2-toaster/toaster.css",
+              "node_modules/angular2-toaster-sgu/toaster.css",
               "node_modules/font-awesome/css/font-awesome.css",
               "node_modules/animate.css/animate.min.css",
               "node_modules/prismjs/themes/prism-okaidia.css",
@@ -158,7 +158,7 @@
               "node_modules/codemirror/lib/codemirror.css",
               "node_modules/codemirror/addon/hint/show-hint.css",
               "node_modules/fomantic-ui/dist/semantic.css",
-              "node_modules/angular2-toaster/toaster.css",
+              "node_modules/angular2-toaster-sgu/toaster.css",
               "node_modules/font-awesome/css/font-awesome.css",
               "node_modules/animate.css/animate.min.css",
               "src/styles.scss"

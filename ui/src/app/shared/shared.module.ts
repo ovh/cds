@@ -20,7 +20,7 @@ import { WorkflowWizardNodeConditionComponent } from 'app/shared/workflow/wizard
 import { WorkflowWizardOutgoingHookComponent } from 'app/shared/workflow/wizard/outgoinghook/wizard.outgoinghook.component';
 import { NgSemanticModule } from 'ng-semantic/ng-semantic';
 import { CodemirrorModule } from 'ng2-codemirror-typescript/Codemirror';
-import { DragulaModule } from 'ng2-dragula';
+import { DragulaModule } from 'ng2-dragula-sgu';
 import { NgxAutoScroll, NgxAutoScrollModule } from 'ngx-auto-scroll';
 import { ClipboardModule } from 'ngx-clipboard';
 import { InfiniteScrollModule } from 'ngx-infinite-scroll';

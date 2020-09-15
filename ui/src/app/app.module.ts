@@ -4,7 +4,7 @@ import { BrowserModule } from '@angular/platform-browser';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
 import { TranslateHttpLoader } from '@ngx-translate/http-loader';
-import { ToasterModule } from 'angular2-toaster/angular2-toaster';
+import { ToasterModule } from 'angular2-toaster-sgu';
 import { EventService } from 'app/event.service';
 import { NgxsStoreModule } from 'app/store/store.module';
 import * as Raven from 'raven-js';
