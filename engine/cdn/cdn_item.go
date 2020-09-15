@@ -66,7 +66,6 @@ func (s *Service) getItemLogValue(ctx context.Context, t sdk.CDNItemType, apiRef
 
 	// Get from cache
 	return s.LogCache.NewReader(item.ID, from, size), nil
-
 }
 
 func (s *Service) pushItemLogIntoCache(ctx context.Context, item index.Item) error {

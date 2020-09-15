@@ -6,7 +6,6 @@ import (
 	"io/ioutil"
 	"strings"
 	"testing"
-	"time"
 
 	"github.com/stretchr/testify/require"
 
@@ -95,6 +94,7 @@ func TestGetItemValue(t *testing.T) {
 		ItemID: item.ID,
 		UnitID: s.Units.Buffer.ID(),
 	}
+	require.NoError(t, s.Units.Buffer.Add(iu, 0, "Ligne 0\n"))
 	require.NoError(t, s.Units.Buffer.Add(iu, 1, "Ligne 1\n"))
 	require.NoError(t, s.Units.Buffer.Add(iu, 2, "Ligne 2\n"))
 	require.NoError(t, s.Units.Buffer.Add(iu, 3, "Ligne 3\n"))
@@ -126,19 +126,11 @@ func TestGetItemValue(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, 0, n)
 
-	// Wait sync of FS storage
-	cpt := 0
-	for {
-		itemUnit, err := storage.LoadItemUnitByUnit(context.TODO(), s.Mapper, db, s.Units.Storages[0].ID(), item.ID)
-		if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
-			require.Fail(t, "cannot load item unit")
-		}
-		if itemUnit != nil || cpt > 5 {
-			break
-		}
-		cpt++
-		time.Sleep(1 * time.Second)
-	}
+	// Sync FS
+	require.NoError(t, cdnUnits.Run(context.TODO(), cdnUnits.Storages[0]))
+
+	_, err = storage.LoadItemUnitByUnit(context.TODO(), s.Mapper, db, s.Units.Storages[0].ID(), item.ID)
+	require.NoError(t, err)
 	// remove from buffer
 	require.NoError(t, storage.DeleteItemUnit(s.Mapper, db, itemUnit))
 
@@ -150,7 +142,7 @@ func TestGetItemValue(t *testing.T) {
 	_, err = io.Copy(buf2, rc2)
 	require.NoError(t, err)
 
-	require.Equal(t, "Ligne 4\nLigne 5\nLigne 6\n", buf2.String())
+	require.Equal(t, "Ligne 3\nLigne 4\nLigne 5\n", buf2.String())
 	n, err = s.LogCache.Len()
 	require.NoError(t, err)
 	require.Equal(t, 1, n)
@@ -162,5 +154,5 @@ func TestGetItemValue(t *testing.T) {
 	buf3 := new(strings.Builder)
 	_, err = io.Copy(buf3, rc3)
 	require.NoError(t, err)
-	require.Equal(t, "Ligne 1\nLigne 2\nLigne 3\nLigne 4\nLigne 5\nLigne 6\nLigne 7\nLigne 8\nLigne 9\nLigne 10\n", buf3.String())
+	require.Equal(t, "Ligne 0\nLigne 1\nLigne 2\nLigne 3\nLigne 4\nLigne 5\nLigne 6\nLigne 7\nLigne 8\nLigne 9\nLigne 10\n", buf3.String())
 }

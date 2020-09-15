@@ -4,9 +4,8 @@ import (
 	"context"
 	"testing"
 
-	"gopkg.in/h2non/gock.v1"
-
 	"github.com/stretchr/testify/require"
+	"gopkg.in/h2non/gock.v1"
 
 	"github.com/ovh/cds/engine/cdn/index"
 	"github.com/ovh/cds/engine/cdn/storage"
@@ -56,6 +55,7 @@ func TestSyncLog(t *testing.T) {
 		},
 	})
 	require.NoError(t, err)
+	require.NoError(t, cdnUnits.Start(context.TODO()))
 	s.Units = cdnUnits
 
 	cdsStorage, ok := s.Units.Storages[0].(*cds.CDS)
@@ -230,15 +230,15 @@ func TestSyncLog(t *testing.T) {
 	})
 
 	// Get log
-	gock.New("http://lolcat.host:8081").Get("/project/key2/workflows/wkf1/runs/0/nodes/1001/job/1001/step/0").Reply(200).JSON(sdk.BuildState{
+	gock.New("http://lolcat.host:8081").Get("/project/key2/workflows/wkf1/nodes/1001/job/1001/step/0/log").Reply(200).JSON(sdk.BuildState{
 		StepLogs: sdk.Log{Val: "Je suis ton log step 1"},
 	})
-	gock.New("http://lolcat.host:8081").Get("/project/key2/workflows/wkf1/runs/0/nodes/1001/job/1001/step/1").Reply(200).JSON(sdk.BuildState{
+	gock.New("http://lolcat.host:8081").Get("/project/key2/workflows/wkf1/nodes/1001/job/1001/step/1/log").Reply(200).JSON(sdk.BuildState{
 		StepLogs: sdk.Log{Val: "Je suis ton log step 2 et je suis plus long"},
 	})
 
 	// Get Service log ( call twice )
-	gock.New("http://lolcat.host:8081").Times(2).Get("/project/key2/workflows/wkf1/runs/0/nodes/1001/job/1001/service/pg").Reply(200).JSON(sdk.ServiceLog{
+	gock.New("http://lolcat.host:8081").Times(2).Get("/project/key2/workflows/wkf1/nodes/1001/job/1001/service/pg/log").Reply(200).JSON(sdk.ServiceLog{
 		ServiceRequirementName: "pg",
 		Val:                    "Je suis un log de service",
 	})
@@ -278,8 +278,7 @@ func TestSyncLog(t *testing.T) {
 	ius, err := storage.LoadItemUnitsByUnit(context.TODO(), s.Mapper, db, unit.ID, 100)
 	require.NoError(t, err)
 	for _, iu := range ius {
-		err = index.DeleteItem(s.Mapper, db, &index.Item{ID: iu.ItemID})
-		require.NoError(t, err)
+		require.NoError(t, index.DeleteItem(s.Mapper, db, &index.Item{ID: iu.ItemID}))
 	}
 
 	// Run Test
@@ -290,10 +289,9 @@ func TestSyncLog(t *testing.T) {
 	require.Len(t, itemUnits, 3)
 
 	for _, i := range itemUnits {
-		defer func() {
+		t.Cleanup(func() {
 			_ = index.DeleteItem(s.Mapper, db, &index.Item{ID: i.ItemID})
-		}()
-
+		})
 	}
 
 	item1, err := index.LoadItemByID(context.TODO(), s.Mapper, db, itemUnits[0].ItemID)
@@ -310,5 +308,4 @@ func TestSyncLog(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, int64(25), item3.Size)
 	require.Equal(t, sdk.CDNTypeItemServiceLog, item3.Type)
-
 }
