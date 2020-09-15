@@ -5,7 +5,7 @@ import { ActivatedRoute } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
 import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
-import { ToasterModule } from 'angular2-toaster/src/toaster.module';
+import { ToasterModule } from 'angular2-toaster-sgu';
 import { WorkflowRunService } from 'app/service/workflow/run/workflow.run.service';
 import { WorkflowService } from 'app/service/workflow/workflow.service';
 import { of } from 'rxjs';
