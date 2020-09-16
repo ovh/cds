@@ -5,6 +5,8 @@ import (
 	"time"
 
 	"github.com/go-gorp/gorp"
+	"github.com/lib/pq"
+
 	"github.com/ovh/cds/engine/cdn/index"
 	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk"
@@ -121,6 +123,34 @@ func DeleteItemUnit(m *gorpmapper.Mapper, db gorpmapper.SqlExecutorWithTx, u *It
 		return sdk.WrapError(err, "unable to delete item unit %s", u.ID)
 	}
 	return nil
+}
+
+func DeleteItemsUnit(db gorp.SqlExecutor, unitID string, itemIDs []string) error {
+	query := `
+		DELETE FROM storage_unit_index
+		WHERE unit_id = $1 AND item_id = ANY($2)
+	`
+	_, err := db.Exec(query, unitID, pq.StringArray(itemIDs))
+	return sdk.WrapError(err, "unable to remove items from unit %s", itemIDs)
+}
+
+// LoadAllItemsIDInBufferAndAllUnitsExceptCDS loads all that are presents in all backend ( except cds backend )
+func LoadAllItemsIDInBufferAndAllUnitsExceptCDS(db gorp.SqlExecutor, cdsBackendID string) ([]string, error) {
+	var itemIDs []string
+	query := `
+		SELECT item_id 
+		FROM (
+			SELECT COUNT(*) as nb, item_id 
+			FROM storage_unit_index
+			WHERE unit_id != $1
+			GROUP BY item_id
+		) as cc
+		WHERE nb = (SELECT COUNT(*) FROM storage_unit WHERE id != $1)
+	`
+	if _, err := db.Select(&itemIDs, query, cdsBackendID); err != nil {
+		return nil, sdk.WrapError(err, "unable to get item ids")
+	}
+	return itemIDs, nil
 }
 
 func LoadOldItemUnitByItemStatusAndDuration(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlExecutor, status string, duration int, opts ...gorpmapper.GetOptionFunc) ([]ItemUnit, error) {

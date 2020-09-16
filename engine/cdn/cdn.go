@@ -128,7 +128,7 @@ func (s *Service) Serve(c context.Context) error {
 		}
 
 		sdk.GoRoutine(ctx, "cdn-gc-items", func(ctx context.Context) {
-			s.CompleteWaitingItems(ctx)
+			s.ItemsGC(ctx)
 		})
 
 		// Start CDS Backend migration
