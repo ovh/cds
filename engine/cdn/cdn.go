@@ -126,6 +126,9 @@ func (s *Service) Serve(c context.Context) error {
 		if err != nil {
 			return err
 		}
+		if err := s.Units.Start(ctx); err != nil {
+			return err
+		}
 
 		sdk.GoRoutine(ctx, "cdn-gc-items", func(ctx context.Context) {
 			s.ItemsGC(ctx)
