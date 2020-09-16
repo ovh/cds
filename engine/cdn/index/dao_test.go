@@ -35,7 +35,7 @@ func TestLoadItem(t *testing.T) {
 		Type:       sdk.CDNTypeItemStepLog,
 	}
 	require.NoError(t, index.InsertItem(context.TODO(), m, db, &i))
-	t.Cleanup(func() { _ = index.DeleteItem(m, db, &i) })
+	t.Cleanup(func() { _ = index.DeleteItemByIDs(db, []string{i.ID}) })
 
 	res, err := index.LoadItemByID(context.TODO(), m, db, i.ID)
 	require.NoError(t, err)

@@ -14,7 +14,7 @@ func ClearIndex(t *testing.T, ctx context.Context, m *gorpmapper.Mapper, db gorp
 	items, err := index.LoadAllItems(ctx, m, db, 500)
 	require.NoError(t, err)
 	for _, i := range items {
-		_ = index.DeleteItem(m, db, &i)
+		_ = index.DeleteItemByIDs(db, []string{i.ID})
 	}
 }
 

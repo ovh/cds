@@ -19,8 +19,26 @@ const (
 	ItemLogGC = 24 * 3600
 )
 
+func (s *Service) itemPurge(ctx context.Context) {
+	tickPurge := time.NewTicker(1 * time.Minute)
+	defer tickPurge.Stop()
+	for {
+		select {
+		case <-ctx.Done():
+			if ctx.Err() != nil {
+				log.Error(ctx, "cdn:ItemPurge: %v", ctx.Err())
+			}
+			return
+		case <-tickPurge.C:
+			if err := s.cleanItemToDelete(ctx); err != nil {
+				log.ErrorWithFields(ctx, logrus.Fields{"stack_trace": fmt.Sprintf("%+v", err)}, "%s", err)
+			}
+		}
+	}
+}
+
 // ItemsGC clean long incoming item + delete item from buffer when synchronized everywhere
-func (s *Service) ItemsGC(ctx context.Context) {
+func (s *Service) itemsGC(ctx context.Context) {
 	tickGC := time.NewTicker(1 * time.Minute)
 	defer tickGC.Stop()
 	for {
@@ -39,6 +57,22 @@ func (s *Service) ItemsGC(ctx context.Context) {
 			}
 		}
 	}
+}
+
+func (s *Service) cleanItemToDelete(ctx context.Context) error {
+	for {
+		ids, err := index.LoadItemIDsToDelete(s.mustDBWithCtx(ctx), 100)
+		if err != nil {
+			return err
+		}
+		if len(ids) == 0 {
+			break
+		}
+		if err := index.DeleteItemByIDs(s.mustDBWithCtx(ctx), ids); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func (s *Service) cleanBuffer(ctx context.Context) error {

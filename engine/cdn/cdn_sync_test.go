@@ -268,7 +268,7 @@ func TestSyncLog(t *testing.T) {
 		require.NoError(t, err)
 	}
 	defer func() {
-		_ = index.DeleteItem(s.Mapper, db, &itm)
+		_ = index.DeleteItemByIDs(db, []string{itm.ID})
 	}()
 
 	unit, err := storage.LoadUnitByName(context.TODO(), s.Mapper, db, "test-cds-backend")
@@ -278,7 +278,7 @@ func TestSyncLog(t *testing.T) {
 	ius, err := storage.LoadItemUnitsByUnit(context.TODO(), s.Mapper, db, unit.ID, 100)
 	require.NoError(t, err)
 	for _, iu := range ius {
-		require.NoError(t, index.DeleteItem(s.Mapper, db, &index.Item{ID: iu.ItemID}))
+		require.NoError(t, index.DeleteItemByIDs(db, []string{iu.ItemID}))
 	}
 
 	// Run Test
@@ -290,7 +290,7 @@ func TestSyncLog(t *testing.T) {
 
 	for _, i := range itemUnits {
 		t.Cleanup(func() {
-			_ = index.DeleteItem(s.Mapper, db, &index.Item{ID: i.ItemID})
+			_ = index.DeleteItemByIDs(db, []string{i.ItemID})
 		})
 	}
 

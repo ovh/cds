@@ -100,7 +100,7 @@ func TestStoreNewStepLog(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, item)
 	defer func() {
-		_ = index.DeleteItem(m, db, item)
+		_ = index.DeleteItemByIDs(db, []string{item.ID})
 	}()
 	require.Equal(t, index.StatusItemIncoming, item.Status)
 
@@ -192,7 +192,8 @@ func TestStoreLastStepLog(t *testing.T) {
 	}
 	require.NoError(t, index.InsertItem(context.TODO(), m, db, &item))
 	defer func() {
-		_ = index.DeleteItem(m, db, &item)
+		_ = index.DeleteItemByIDs(db, []string{item.ID})
+
 	}()
 	content := buildMessage(hm)
 	err = s.storeLogs(context.TODO(), sdk.CDNTypeItemStepLog, hm.Signature, hm.Status, content, hm.Line)
@@ -291,7 +292,7 @@ func TestStoreLogWrongOrder(t *testing.T) {
 	}
 	require.NoError(t, index.InsertItem(context.TODO(), m, db, &item))
 	defer func() {
-		_ = index.DeleteItem(m, db, &item)
+		_ = index.DeleteItemByIDs(db, []string{item.ID})
 	}()
 
 	content := buildMessage(hm)
@@ -412,7 +413,7 @@ func TestStoreNewServiceLogAndAppend(t *testing.T) {
 	item, err := index.LoadItemByAPIRefHashAndType(context.TODO(), s.Mapper, db, strconv.FormatUint(hashRef, 10), sdk.CDNTypeItemServiceLog)
 	require.NoError(t, err)
 	require.NotNil(t, item)
-	t.Cleanup(func() { _ = index.DeleteItem(m, db, item) })
+	t.Cleanup(func() { _ = index.DeleteItemByIDs(db, []string{item.ID}) })
 	require.Equal(t, index.StatusItemIncoming, item.Status)
 
 	var logs []string

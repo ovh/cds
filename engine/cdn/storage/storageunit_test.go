@@ -103,7 +103,7 @@ func TestRun(t *testing.T) {
 	}
 	require.NoError(t, index.InsertItem(ctx, m, db, i))
 	defer func() {
-		_ = index.DeleteItem(m, db, i)
+		_ = index.DeleteItemByIDs(db, []string{i.ID})
 	}()
 
 	log.Debug("item ID: %v", i.ID)
