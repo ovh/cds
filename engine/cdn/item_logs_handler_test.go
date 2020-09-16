@@ -25,7 +25,7 @@ import (
 
 func TestMarkItemToDeleteHandler(t *testing.T) {
 	s, db := newTestService(t)
-
+	s.Cfg.EnableLogProcessing = true
 	cdntest.ClearIndex(t, context.TODO(), s.Mapper, db)
 
 	item1 := index.Item{
