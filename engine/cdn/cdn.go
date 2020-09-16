@@ -150,7 +150,7 @@ func (s *Service) Serve(c context.Context) error {
 		log.Info(ctx, "Initializing log cache on %s", s.Cfg.Cache.Redis.Host)
 		s.LogCache, err = lru.NewRedisLRU(s.mustDBWithCtx(ctx), s.Cfg.Cache.LruSize, s.Cfg.Cache.Redis.Host, s.Cfg.Cache.Redis.Password)
 		if err != nil {
-			return fmt.Errorf("cannot connect to redis instance for lru : %v", err)
+			return sdk.WrapError(err, "cannot connect to redis instance for lru")
 		}
 		sdk.GoRoutine(ctx, "log-cache-eviction", func(ctx context.Context) {
 			s.LogCache.Evict(ctx)
