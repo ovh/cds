@@ -16,9 +16,10 @@ var (
 
 // NotificationEntry represents a notification set on a nodeEntry
 type NotificationEntry struct {
-	Type      string                        `json:"type" yaml:"type"`
-	Pipelines []string                      `json:"pipelines" yaml:"pipelines,omitempty"`
-	Settings  *sdk.UserNotificationSettings `json:"settings,omitempty" yaml:"settings,omitempty"`
+	Type        string                        `json:"type" yaml:"type"`
+	Pipelines   []string                      `json:"pipelines" yaml:"pipelines,omitempty"`
+	Settings    *sdk.UserNotificationSettings `json:"settings,omitempty" yaml:"settings,omitempty"`
+	Integration string                        `json:"integration,omitempty" yaml:"integration,omitempty"`
 }
 
 // craftNotificationEntry returns the NotificationEntry and the name of the nodeEntries concerned
@@ -98,6 +99,16 @@ func craftNotifications(ctx context.Context, w sdk.Workflow, exportedWorkflow *W
 			exportedWorkflow.Notifications = make([]NotificationEntry, len(w.Notifications))
 		}
 		exportedWorkflow.Notifications[i] = notifEntry
+	}
+	for _, e := range w.EventIntegrations {
+		entry := NotificationEntry{
+			Integration: e.Name,
+			Type:        sdk.EventsNotification,
+		}
+		if exportedWorkflow.Notifications == nil {
+			exportedWorkflow.Notifications = make([]NotificationEntry, len(w.Notifications))
+		}
+		exportedWorkflow.Notifications = append(exportedWorkflow.Notifications, entry)
 
 	}
 	return nil
@@ -174,13 +185,19 @@ func ProcessNotificationValues(notif NotificationEntry) (sdk.WorkflowNotificatio
 
 func (w *Workflow) processNotifications(wrkflw *sdk.Workflow) error {
 	for _, notif := range w.Notifications {
+		if notif.Type == sdk.EventsNotification {
+			if notif.Integration == "" {
+				return sdk.NewErrorFrom(sdk.ErrWrongRequest, "notification of type event must be linked to an integration")
+			}
+			wrkflw.EventIntegrations = append(wrkflw.EventIntegrations, sdk.ProjectIntegration{Name: notif.Integration})
+			continue
+		}
 		n, err := ProcessNotificationValues(notif)
 		if err != nil {
 			return sdk.WrapError(err, "unable to process notification")
 		}
 		n.SourceNodeRefs = notif.Pipelines
 		wrkflw.Notifications = append(wrkflw.Notifications, n)
-
 	}
 	return nil
 }

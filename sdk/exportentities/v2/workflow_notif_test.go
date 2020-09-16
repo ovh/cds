@@ -94,6 +94,8 @@ notifications:
   settings:
     template:
       disable_comment: true
+- type: event
+  integration: my-integration
 `,
 			},
 		},
@@ -211,6 +213,8 @@ notifications:
         Details : {{.cds.buildURL}}
         Triggered by : {{.cds.triggered_by.username}}
         Branch : {{.git.branch}}
+- type: event
+  integration: my-integration
 `,
 		},
 		{
@@ -228,6 +232,8 @@ workflow:
     pipeline: test
 notifications:
 - type: jabber
+- type: event
+  integration: my-integration
 `,
 		},
 	}
