@@ -24,4 +24,5 @@ type Item struct {
 	Type         sdk.CDNItemType  `json:"type" db:"type"`
 	Size         int64            `json:"size" db:"size"`
 	MD5          string           `json:"md5" db:"md5"`
+	ToDelete     bool             `json:"to_delete" db:"to_delete"`
 }

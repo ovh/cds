@@ -2,6 +2,7 @@ package cdn
 
 import (
 	"context"
+
 	"net/http/httptest"
 	"strconv"
 	"testing"
@@ -13,12 +14,94 @@ import (
 
 	"github.com/ovh/cds/engine/api/test/assets"
 	"github.com/ovh/cds/engine/authentication"
+	"github.com/ovh/cds/engine/cdn/index"
 	"github.com/ovh/cds/engine/cdn/storage"
+	cdntest "github.com/ovh/cds/engine/cdn/test"
 	"github.com/ovh/cds/engine/test"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk/log/hook"
 )
+
+func TestMarkItemToDeleteHandler(t *testing.T) {
+	s, db := newTestService(t)
+
+	cdntest.ClearIndex(t, context.TODO(), s.Mapper, db)
+
+	item1 := index.Item{
+		ID:   sdk.UUID(),
+		Type: sdk.CDNTypeItemStepLog,
+		APIRef: sdk.CDNLogAPIRef{
+			RunID:      1,
+			WorkflowID: 1,
+		},
+		APIRefHash: sdk.RandomString(10),
+	}
+	require.NoError(t, index.InsertItem(context.TODO(), s.Mapper, db, &item1))
+	item2 := index.Item{
+		ID:   sdk.UUID(),
+		Type: sdk.CDNTypeItemStepLog,
+		APIRef: sdk.CDNLogAPIRef{
+			RunID:      2,
+			WorkflowID: 2,
+		},
+		APIRefHash: sdk.RandomString(10),
+	}
+	require.NoError(t, index.InsertItem(context.TODO(), s.Mapper, db, &item2))
+
+	item3 := index.Item{
+		ID:   sdk.UUID(),
+		Type: sdk.CDNTypeItemStepLog,
+		APIRef: sdk.CDNLogAPIRef{
+			RunID:      3,
+			WorkflowID: 2,
+		},
+		APIRefHash: sdk.RandomString(10),
+	}
+	require.NoError(t, index.InsertItem(context.TODO(), s.Mapper, db, &item3))
+
+	vars := map[string]string{}
+	uri := s.Router.GetRoute("POST", s.markItemToDeleteHandler, vars)
+	require.NotEmpty(t, uri)
+	req := newRequest(t, "POST", uri, sdk.CDNMarkDelete{RunID: 2})
+
+	rec := httptest.NewRecorder()
+	s.Router.Mux.ServeHTTP(rec, req)
+	require.Equal(t, 204, rec.Code)
+
+	item3DB, err := index.LoadItemByID(context.TODO(), s.Mapper, db, item3.ID)
+	require.NoError(t, err)
+	require.False(t, item3DB.ToDelete)
+
+	item2DB, err := index.LoadItemByID(context.TODO(), s.Mapper, db, item2.ID)
+	require.NoError(t, err)
+	require.True(t, item2DB.ToDelete)
+
+	item1DB, err := index.LoadItemByID(context.TODO(), s.Mapper, db, item1.ID)
+	require.NoError(t, err)
+	require.False(t, item1DB.ToDelete)
+
+	vars2 := map[string]string{}
+	uri2 := s.Router.GetRoute("POST", s.markItemToDeleteHandler, vars2)
+	require.NotEmpty(t, uri2)
+	req2 := newRequest(t, "POST", uri, sdk.CDNMarkDelete{WorkflowID: 1})
+
+	rec2 := httptest.NewRecorder()
+	s.Router.Mux.ServeHTTP(rec2, req2)
+	require.Equal(t, 204, rec2.Code)
+
+	item3DBAfter, err := index.LoadItemByID(context.TODO(), s.Mapper, db, item3.ID)
+	require.NoError(t, err)
+	require.False(t, item3DBAfter.ToDelete)
+
+	item2DBAfter, err := index.LoadItemByID(context.TODO(), s.Mapper, db, item2.ID)
+	require.NoError(t, err)
+	require.True(t, item2DBAfter.ToDelete)
+
+	item1DBAfter, err := index.LoadItemByID(context.TODO(), s.Mapper, db, item1.ID)
+	require.NoError(t, err)
+	require.True(t, item1DBAfter.ToDelete)
+}
 
 func TestGetItemLogsDownloadHandler(t *testing.T) {
 	cfg := test.LoadTestingConf(t, sdk.TypeCDN)

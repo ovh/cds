@@ -3,16 +3,18 @@ package purge
 import (
 	"context"
 	"database/sql"
+	"net/http"
 	"time"
 
 	"github.com/go-gorp/gorp"
 	"go.opencensus.io/stats"
 
-	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/engine/api/integration"
 	"github.com/ovh/cds/engine/api/objectstore"
 	"github.com/ovh/cds/engine/api/project"
+	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/engine/api/workflow"
+	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk/telemetry"
@@ -145,23 +147,51 @@ func workflows(ctx context.Context, db *gorp.DbMap, store cache.Store, workflowR
 }
 
 // deleteWorkflowRunsHistory is useful to delete all the workflow run marked with to delete flag in db
-func deleteWorkflowRunsHistory(ctx context.Context, db gorp.SqlExecutor, store cache.Store, sharedStorage objectstore.Driver, workflowRunsDeleted *stats.Int64Measure) error {
+func deleteWorkflowRunsHistory(ctx context.Context, db *gorp.DbMap, store cache.Store, sharedStorage objectstore.Driver, workflowRunsDeleted *stats.Int64Measure) error {
 	var workflowRunIDs []int64
 	if _, err := db.Select(&workflowRunIDs, "SELECT id FROM workflow_run WHERE to_delete = true ORDER BY id ASC LIMIT 2000"); err != nil {
 		return err
 	}
 
+	//Load service "CDN"
+	srvs, err := services.LoadAllByType(ctx, db, sdk.TypeCDN)
+	if err != nil {
+		return err
+	}
+	cdnClient := services.NewClient(db, srvs)
+
 	for _, workflowRunID := range workflowRunIDs {
-		if err := DeleteArtifacts(ctx, db, store, sharedStorage, workflowRunID); err != nil {
-			log.Error(ctx, "DeleteArtifacts> error while deleting artifacts: %v", err)
+		tx, err := db.Begin()
+		if err != nil {
+			log.Error(ctx, "deleteWorkflowRunsHistory> error while opening transaction : %v", err)
+			continue
+		}
+		if err := DeleteArtifacts(ctx, tx, store, sharedStorage, workflowRunID); err != nil {
+			log.Error(ctx, "deleteWorkflowRunsHistory> error while deleting artifacts: %v", err)
+			_ = tx.Rollback()
 			continue
 		}
 
-		res, err := db.Exec("DELETE FROM workflow_run WHERE workflow_run.id = $1", workflowRunID)
+		res, err := tx.Exec("DELETE FROM workflow_run WHERE workflow_run.id = $1", workflowRunID)
 		if err != nil {
 			log.Error(ctx, "deleteWorkflowRunsHistory> unable to delete workflow run %d: %v", workflowRunID, err)
+			_ = tx.Rollback()
 			continue
 		}
+
+		_, code, err := cdnClient.DoJSONRequest(ctx, http.MethodPatch, "/item/delete", sdk.CDNMarkDelete{RunID: workflowRunID}, nil)
+		if err != nil || code >= 400 {
+			log.Error(ctx, "deleteWorkflowRunsHistory> unable to mark logs to delete [%d]: %s", code, err)
+			_ = tx.Rollback()
+			continue
+		}
+
+		if err := tx.Commit(); err != nil {
+			log.Error(ctx, "deleteWorkflowRunsHistory> error while commiting transaction : %v", err)
+			_ = tx.Rollback()
+			continue
+		}
+
 		n, _ := res.RowsAffected()
 		if workflowRunsDeleted != nil {
 			telemetry.Record(ctx, workflowRunsDeleted, n)

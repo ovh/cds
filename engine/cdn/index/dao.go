@@ -2,6 +2,7 @@ package index
 
 import (
 	"context"
+	"strconv"
 	"time"
 
 	"github.com/go-gorp/gorp"
@@ -103,6 +104,22 @@ func DeleteItem(m *gorpmapper.Mapper, db gorpmapper.SqlExecutorWithTx, i *Item) 
 		return sdk.WrapError(err, "unable to delete item %s", i.ID)
 	}
 	return nil
+}
+
+func MarkItemToDeleteByWorkflowID(db gorpmapper.SqlExecutorWithTx, workflowID int64) error {
+	query := `
+		UPDATE index SET to_delete = true WHERE (api_ref->>'workflow_id')::int = $1 
+	`
+	_, err := db.Exec(query, workflowID)
+	return sdk.WrapError(err, "unable to mark item to delete for workflow %s", strconv.Itoa(int(workflowID)))
+}
+
+func MarkItemToDeleteByRunIDs(db gorpmapper.SqlExecutorWithTx, runID int64) error {
+	query := `
+		UPDATE index SET to_delete = true WHERE (api_ref->>'run_id')::int = $1 
+	`
+	_, err := db.Exec(query, runID)
+	return sdk.WrapError(err, "unable to mark item to delete for run %d", runID)
 }
 
 // LoadItemByAPIRefHashAndType load an item by his job id, step order and type
