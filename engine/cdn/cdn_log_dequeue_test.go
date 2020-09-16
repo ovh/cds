@@ -107,7 +107,7 @@ func TestStoreNewStepLog(t *testing.T) {
 	iu, err := storage.LoadItemUnitByUnit(context.TODO(), s.Mapper, db, s.Units.Buffer.ID(), item.ID, gorpmapper.GetOptions.WithDecryption)
 	require.NoError(t, err)
 
-	bufferReader, err := s.Units.Buffer.NewReader(*iu)
+	bufferReader, err := s.Units.Buffer.NewReader(context.TODO(), *iu)
 	require.NoError(t, err)
 
 	buf := new(strings.Builder)
@@ -331,7 +331,7 @@ func TestStoreLogWrongOrder(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, iu)
 
-	bufferReader, err := s.Units.Buffer.NewReader(*iu)
+	bufferReader, err := s.Units.Buffer.NewReader(context.TODO(), *iu)
 	require.NoError(t, err)
 	bufferReader.(*redis.Reader).From = 0
 	bufferReader.(*redis.Reader).Size = 2
