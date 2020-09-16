@@ -144,10 +144,6 @@ func (api *API) postWorkflowImportHandler() service.Handler {
 				sdkErr := sdk.ExtractHTTPError(globalError, r.Header.Get("Accept-Language"))
 				return service.WriteJSON(w, append(msgListString, sdkErr.Message), sdkErr.Status)
 			}
-			if len(msgListString) != 0 {
-				sdkErr := sdk.ExtractHTTPError(globalError, r.Header.Get("Accept-Language"))
-				return service.WriteJSON(w, append(msgListString, sdkErr.Message), sdkErr.Status)
-			}
 			return sdk.WrapError(globalError, "Unable to import workflow %s", ew.GetName())
 		}
 

@@ -72,7 +72,6 @@ func ParseAndImport(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store 
 		}
 		return nil, nil, sdk.WrapError(err, "workflow is not valid")
 	}
-
 	if err := RenameNode(ctx, db, w); err != nil {
 		return nil, nil, sdk.WrapError(err, "Unable to rename node")
 	}

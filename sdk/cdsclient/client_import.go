@@ -74,11 +74,7 @@ func (c *client) WorkflowImport(projectKey string, content io.Reader, mods ...Re
 	url := fmt.Sprintf("/project/%s/import/workflows", projectKey)
 
 	btes, _, _, err := c.Request(context.Background(), "POST", url, content, mods...)
-	if err != nil {
-		return nil, err
-	}
-
-	messages := []string{}
+	messages := []string{} // could contains msg even if there is a 400 returned
 	_ = json.Unmarshal(btes, &messages)
 	return messages, err
 }

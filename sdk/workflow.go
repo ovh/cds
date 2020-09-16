@@ -167,6 +167,7 @@ type WorkflowNotification struct {
 	NodeIDs        []int64                  `json:"node_id,omitempty" db:"-"`
 	Type           string                   `json:"type" db:"type"`
 	Settings       UserNotificationSettings `json:"settings" db:"-"`
+	Integration    string                   `json:"integration,omitempty" db:"-"`
 }
 
 // ResetIDs resets all nodes and joins ids
