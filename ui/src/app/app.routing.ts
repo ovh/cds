@@ -1,5 +1,6 @@
 import { ModuleWithProviders } from '@angular/core';
 import { PreloadAllModules, RouterModule, Routes } from '@angular/router';
+import { AppModule } from 'app/app.module';
 
 const routes: Routes = [
     { path: '', redirectTo: 'home', pathMatch: 'full' },
@@ -33,7 +34,7 @@ const routes: Routes = [
     }
 ];
 
-export const routing: ModuleWithProviders = RouterModule.forRoot(routes, {
+export const routing: ModuleWithProviders<AppModule> = RouterModule.forRoot(routes, {
     initialNavigation: true,
     preloadingStrategy: PreloadAllModules
 });

@@ -1,6 +1,7 @@
 import { ModuleWithProviders } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 import { NoAuthenticationGuard } from 'app/guard/no-authentication.guard';
+import { AuthModule } from 'app/views/auth/auth.module';
 import { AskResetComponent } from './ask-reset/ask-reset';
 import { AskSigninComponent } from './ask-signin/ask-signin.component';
 import { AuthComponent } from './auth.component';
@@ -50,4 +51,4 @@ const routes: Routes = [
     }
 ];
 
-export const authRouting: ModuleWithProviders = RouterModule.forChild(routes);
+export const authRouting: ModuleWithProviders<AuthModule> = RouterModule.forChild(routes);

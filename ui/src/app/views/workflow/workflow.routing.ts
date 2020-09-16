@@ -1,6 +1,7 @@
 import { ModuleWithProviders } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 import { AuthenticationGuard } from 'app/guard/authentication.guard';
+import { WorkflowModule } from 'app/views/workflow/workflow.module';
 import { ProjectForWorkflowResolver, ProjectResolver } from '../../service/project/project.resolver';
 import { WorkflowAddComponent } from './add/workflow.add.component';
 import { WorkflowNodeRunComponent } from './run/node/workflow.run.node.component';
@@ -59,4 +60,4 @@ const workflowRoutes: Routes = [
 ];
 
 
-export const workflowRouting: ModuleWithProviders = RouterModule.forChild(workflowRoutes);
+export const workflowRouting: ModuleWithProviders<WorkflowModule> = RouterModule.forChild(workflowRoutes);
