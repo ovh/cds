@@ -187,10 +187,14 @@ export class WorkflowNotificationListComponent {
 
     addEvent(integration: ProjectIntegration) {
         this.loading = true;
+        let eventIntegrations = new Array<ProjectIntegration>(integration);
+        if (this.workflow.event_integrations) {
+            eventIntegrations = [integration].concat(this.workflow.event_integrations)
+        }
         this.store.dispatch(new UpdateEventIntegrationsWorkflow({
             projectKey: this.project.key,
             workflowName: this.workflow.name,
-            eventIntegrations: [integration].concat(this.workflow.event_integrations)
+            eventIntegrations: eventIntegrations
         })).pipe(finalize(() => {
             this.loading = false;
             this._cd.markForCheck();

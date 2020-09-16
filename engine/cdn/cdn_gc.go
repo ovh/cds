@@ -12,6 +12,7 @@ import (
 	"github.com/ovh/cds/engine/cdn/storage/cds"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
+	"github.com/ovh/cds/sdk/telemetry"
 )
 
 const (
@@ -87,6 +88,7 @@ func (s *Service) cleanWaitingItem(ctx context.Context) error {
 			_ = tx.Rollback()
 			return err
 		}
+		telemetry.Record(ctx, metricsItemCompletedByGC, 1)
 	}
 	return nil
 }

@@ -39,7 +39,7 @@ func (s *Service) getItemLogValue(ctx context.Context, t sdk.CDNItemType, apiRef
 	// If item is in Buffer, get from it
 	if itemUnit != nil {
 		log.Debug("Getting logs from buffer")
-		rc, err := s.Units.Buffer.NewReader(*itemUnit)
+		rc, err := s.Units.Buffer.NewReader(ctx, *itemUnit)
 		if err != nil {
 			return nil, err
 		}
@@ -97,7 +97,7 @@ func (s *Service) pushItemLogIntoCache(ctx context.Context, item index.Item) err
 	}
 
 	// Create a reader
-	reader, err := unitStorage.NewReader(*refItemUnit)
+	reader, err := unitStorage.NewReader(ctx, *refItemUnit)
 	if err != nil {
 		return err
 	}
@@ -159,14 +159,14 @@ func (s *Service) completeItem(ctx context.Context, tx gorpmapper.SqlExecutorWit
 	switch itemUnit.UnitID {
 	case s.Units.Buffer.ID():
 		// Get all data from buffer and add manually last line
-		reader, err = s.Units.Buffer.NewReader(itemUnit)
+		reader, err = s.Units.Buffer.NewReader(ctx, itemUnit)
 		if err != nil {
 			return err
 		}
 	default:
 		for _, unit := range s.Units.Storages {
 			if unit.ID() == itemUnit.UnitID {
-				reader, err = unit.NewReader(itemUnit)
+				reader, err = unit.NewReader(ctx, itemUnit)
 				if err != nil {
 					return err
 				}

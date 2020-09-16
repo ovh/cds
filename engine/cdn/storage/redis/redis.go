@@ -11,6 +11,9 @@ import (
 	"github.com/ovh/cds/engine/cdn/redis"
 	"github.com/ovh/cds/engine/cdn/storage"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/telemetry"
+
+	"go.opencensus.io/stats"
 )
 
 var keyBuffer = cache.Key("cdn", "buffer")
@@ -21,13 +24,16 @@ type Redis struct {
 	store  cache.ScoredSetStore
 }
 
-var _ storage.BufferUnit = new(Redis)
+var (
+	_           storage.BufferUnit = new(Redis)
+	metricsSize                    = stats.Int64("cdn/storage/redis/size", "redis size", stats.UnitDimensionless)
+)
 
 func init() {
 	storage.RegisterDriver("redis", new(Redis))
 }
 
-func (s *Redis) Init(cfg interface{}) error {
+func (s *Redis) Init(ctx context.Context, cfg interface{}) error {
 	config, is := cfg.(storage.RedisBufferConfiguration)
 	if !is {
 		return sdk.WithStack(fmt.Errorf("invalid configuration: %T", cfg))
@@ -35,7 +41,15 @@ func (s *Redis) Init(cfg interface{}) error {
 	s.config = config
 	var err error
 	s.store, err = cache.New(s.config.Host, s.config.Password, 60)
-	return err
+	if err != nil {
+		return err
+	}
+
+	if err := telemetry.InitMetricsInt64(ctx, metricsSize); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (s *Redis) ItemExists(i index.Item) (bool, error) {
@@ -58,7 +72,7 @@ func (s *Redis) Card(i storage.ItemUnit) (int, error) {
 
 // NewReader instanciate a reader that it able to iterate over Redis storage unit
 // with a score step of 100.0, starting at score 0
-func (s *Redis) NewReader(i storage.ItemUnit) (io.ReadCloser, error) {
+func (s *Redis) NewReader(ctx context.Context, i storage.ItemUnit) (io.ReadCloser, error) {
 	return &redis.Reader{
 		ReadWrite: redis.ReadWrite{
 			Store:     s.store,
@@ -74,4 +88,29 @@ func (s *Redis) NewReader(i storage.ItemUnit) (io.ReadCloser, error) {
 func (s *Redis) Read(i storage.ItemUnit, r io.Reader, w io.Writer) error {
 	_, err := io.Copy(w, r)
 	return err
+}
+
+func (s *Redis) Status(ctx context.Context) []sdk.MonitoringStatusLine {
+	if err := s.store.Ping(); err != nil {
+		return []sdk.MonitoringStatusLine{{
+			Component: "storage/redis/ping",
+			Value:     "connect OK",
+			Status:    sdk.MonitoringStatusAlert,
+		}}
+	}
+
+	size, err := s.store.DBSize()
+	if err != nil {
+		return []sdk.MonitoringStatusLine{{
+			Component: "storage/redis/size",
+			Value:     fmt.Sprintf("ERROR while getting dbsize: %v", size),
+			Status:    sdk.MonitoringStatusAlert,
+		}}
+	}
+
+	return []sdk.MonitoringStatusLine{{
+		Component: "storage/redis/size",
+		Value:     fmt.Sprintf("%d keys", size),
+		Status:    sdk.MonitoringStatusOK,
+	}}
 }

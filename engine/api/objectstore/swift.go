@@ -61,7 +61,7 @@ func (s *SwiftStore) Status(ctx context.Context) sdk.MonitoringStatusLine {
 	}
 	return sdk.MonitoringStatusLine{
 		Component: "Object-Store",
-		Value:     fmt.Sprintf("Swift OK (%d containers, %d objects, %d bytes used", info.Containers, info.Containers, info.BytesUsed),
+		Value:     fmt.Sprintf("Swift OK (%d containers, %d objects, %d bytes used", info.Containers, info.Objects, info.BytesUsed),
 		Status:    sdk.MonitoringStatusOK,
 	}
 }

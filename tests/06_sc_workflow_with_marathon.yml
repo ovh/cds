@@ -30,20 +30,11 @@ testcases:
     - result.code ShouldEqual 0
     - "result.systemout ShouldContainSubstring Workflow ITSCWRKFLW17-WORKFLOW #1 has been launched"
 
-- name: check_workflow_has_been_started
-  steps:
-  - script:  {{.cdsctl}} -f {{.cdsctl.config}} workflow status ITSCWRKFLW17 ITSCWRKFLW17-WORKFLOW 1 --format json
-    retry: 10
-    delay: 3
-    assertions:
-    - result.code ShouldEqual 0
-    - result.systemoutjson.status ShouldEqual Building
-
 - name: check_workflow_is_success
   steps:
   - script: {{.cdsctl}} -f {{.cdsctl.config}} workflow status ITSCWRKFLW17 ITSCWRKFLW17-WORKFLOW 1 --format json
-    retry: 10
-    delay: 3
+    retry: 120
+    delay: 5
     assertions:
     - result.code ShouldEqual 0
     - result.systemoutjson.status ShouldEqual Success

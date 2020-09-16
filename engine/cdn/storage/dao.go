@@ -257,6 +257,18 @@ func getAllItemUnits(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlExecu
 	return itemUnits, nil
 }
 
+func CountItemCompleted(db gorp.SqlExecutor) (int64, error) {
+	return db.SelectInt("SELECT COUNT(*) from index WHERE index.status = $1", index.StatusItemCompleted)
+}
+
+func CountItemIncoming(db gorp.SqlExecutor) (int64, error) {
+	return db.SelectInt("SELECT COUNT(*) from index WHERE index.status <> $1", index.StatusItemCompleted)
+}
+
+func CountItemUnitByUnit(db gorp.SqlExecutor, unitID string) (int64, error) {
+	return db.SelectInt("SELECT COUNT(*) from storage_unit_index WHERE unit_id = $1", unitID)
+}
+
 func LoadAllItemIDUnknownByUnit(db gorp.SqlExecutor, unitID string, limit int) ([]string, error) {
 	query := `
 		SELECT * 

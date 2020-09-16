@@ -15,7 +15,8 @@ CREATE TABLE IF NOT EXISTS "index" (
   md5 TEXT
 );
 CREATE INDEX api_ref_index ON "index" USING GIN (api_ref);
-select create_unique_index('index', 'IDX_UNIQ_ITEM', 'api_ref_hash,type');
+select create_unique_index('index', 'IDX_INDEX_UNIQ_ITEM', 'api_ref_hash,type');
+select create_index('index', 'IDX_INDEX_STATUS', 'status');
 
 -- Index to get a log
 CREATE INDEX IDX_LOG_ITEM ON index(type, (api_ref->>'job_id'), (api_ref->>'step_order'));

@@ -1,6 +1,7 @@
 package webdav
 
 import (
+	"context"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -60,7 +61,7 @@ func TestWebdav(t *testing.T) {
 	t.Logf("webdav server running\n")
 
 	var driver = new(Webdav)
-	err = driver.Init(&storage.WebdavStorageConfiguration{
+	err = driver.Init(context.TODO(), &storage.WebdavStorageConfiguration{
 		Address:  "http://localhost:8091",
 		Username: "username",
 		Password: "password",
@@ -78,7 +79,7 @@ func TestWebdav(t *testing.T) {
 	itemUnit := storage.ItemUnit{
 		Locator: "a_locator",
 	}
-	w, err := driver.NewWriter(itemUnit)
+	w, err := driver.NewWriter(context.TODO(), itemUnit)
 	require.NoError(t, err)
 	require.NotNil(t, w)
 
@@ -88,7 +89,7 @@ func TestWebdav(t *testing.T) {
 	err = w.Close()
 	require.NoError(t, err)
 
-	r, err := driver.NewReader(itemUnit)
+	r, err := driver.NewReader(context.TODO(), itemUnit)
 	require.NoError(t, err)
 	require.NotNil(t, r)
 

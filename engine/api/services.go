@@ -92,12 +92,14 @@ func (api *API) postServiceRegisterHandler() service.Handler {
 		if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
 			return err
 		}
-		if srv != nil && !(srv.Type == data.Type) {
+		exists := srv != nil
+
+		if exists && srv.Type != data.Type {
 			return sdk.WrapError(sdk.ErrForbidden, "cannot register service %s of type %s for consumer %s while existing service type is different", data.Name, data.Type, consumer.ID)
 		}
 
 		// Update or create the service
-		if srv != nil {
+		if exists {
 			srv.Update(data)
 			if err := services.Update(ctx, tx, srv); err != nil {
 				return err
@@ -224,15 +226,20 @@ func (api *API) serviceAPIHeartbeatUpdate(ctx context.Context, db *gorp.DbMap) {
 		LastHeartbeat:    time.Now(),
 	}
 
-	//Try to find the service, and keep; else generate a new one
-	oldSrv, errOldSrv := services.LoadByName(ctx, tx, srv.Name)
-	if errOldSrv != nil && !sdk.ErrorIs(errOldSrv, sdk.ErrNotFound) {
-		log.Error(ctx, "serviceAPIHeartbeat> Unable to find by name:%v", errOldSrv)
+	old, err := services.LoadByName(ctx, tx, srv.Name)
+	if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
+		log.Error(ctx, "serviceAPIHeartbeat> Unable to find service by name: %v", err)
+		return
+	}
+	exists := old != nil
+
+	if exists && old.ConsumerID != nil {
+		log.Error(ctx, "serviceAPIHeartbeat> Can't save an api service as one service already exists for given name %s", srv.Name)
 		return
 	}
 
-	if oldSrv != nil {
-		srv.ID = oldSrv.ID
+	if exists {
+		srv.ID = old.ID
 		if err := services.Update(ctx, tx, srv); err != nil {
 			log.Error(ctx, "serviceAPIHeartbeat> Unable to update service %s: %v", srv.Name, err)
 			return
@@ -245,7 +252,7 @@ func (api *API) serviceAPIHeartbeatUpdate(ctx context.Context, db *gorp.DbMap) {
 	}
 
 	if err := tx.Commit(); err != nil {
-		log.Error(ctx, "serviceAPIHeartbeat> error on repo.Commit: %v", err)
+		log.Error(ctx, "serviceAPIHeartbeat> error tx commit: %v", err)
 		return
 	}
 }

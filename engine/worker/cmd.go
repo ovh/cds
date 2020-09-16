@@ -19,7 +19,6 @@ import (
 
 const (
 	envFlagPrefix           = "cds_"
-	flagFromGithub          = "from-github"
 	flagBaseDir             = "basedir"
 	flagBookedWorkflowJobID = "booked-workflow-job-id"
 	flagGraylogProtocol     = "graylog-protocol"
@@ -38,7 +37,6 @@ const (
 
 func initFlagsRun(cmd *cobra.Command) {
 	flags := cmd.Flags()
-	flags.Bool(flagFromGithub, false, "Update binary from latest github release")
 	flags.String(flagBaseDir, "", "This directory (default TMPDIR os environment var) will contains worker working directory and temporary files")
 	flags.Int64(flagBookedWorkflowJobID, 0, "Booked Workflow job id")
 	flags.String(flagGraylogProtocol, "", "Ex: --graylog-protocol=xxxx-yyyy")
