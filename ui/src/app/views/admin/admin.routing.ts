@@ -2,6 +2,7 @@ import { ModuleWithProviders } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 import { AdminGuard } from 'app/guard/admin.guard';
 import { AuthenticationGuard } from 'app/guard/authentication.guard';
+import { AdminModule } from 'app/views/admin/admin.module';
 import { AdminComponent } from './admin.component';
 import { BroadcastAddComponent } from './broadcast/add/broadcast.add.component';
 import { BroadcastEditComponent } from './broadcast/edit/broadcast.edit.component';
@@ -75,4 +76,4 @@ const routes: Routes = [
     }
 ];
 
-export const AdminRouting: ModuleWithProviders = RouterModule.forChild(routes);
+export const AdminRouting: ModuleWithProviders<AdminModule> = RouterModule.forChild(routes);

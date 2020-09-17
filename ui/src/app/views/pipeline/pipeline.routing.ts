@@ -1,6 +1,7 @@
 import { ModuleWithProviders } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 import { AuthenticationGuard } from 'app/guard/authentication.guard';
+import { PipelineModule } from 'app/views/pipeline/pipeline.module';
 import { ApplicationQueryParamResolver } from '../../service/application/application.resolver';
 import { ProjectResolver } from '../../service/project/project.resolver';
 import { PipelineAddComponent } from './add/pipeline.add.component';
@@ -33,4 +34,4 @@ const pipelineRoutes: Routes = [
     }
 ];
 
-export const pipelineRouting: ModuleWithProviders = RouterModule.forChild(pipelineRoutes);
+export const pipelineRouting: ModuleWithProviders<PipelineModule> = RouterModule.forChild(pipelineRoutes);

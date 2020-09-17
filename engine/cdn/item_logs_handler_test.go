@@ -2,7 +2,6 @@ package cdn
 
 import (
 	"context"
-
 	"net/http/httptest"
 	"strconv"
 	"testing"

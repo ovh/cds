@@ -11,7 +11,7 @@
       "dom"
     ],
     "outDir": "../out-tsc/spec",
-    "module": "esnext",
+    "module": "es2020",
     "baseUrl": "",
     "types": [
       "jasmine",

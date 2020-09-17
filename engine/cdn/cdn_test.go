@@ -5,13 +5,12 @@ import (
 	"context"
 	"crypto/rsa"
 	"encoding/json"
-	"net/http"
-	"sync"
-	"testing"
-
 	"github.com/gorilla/mux"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/spacemonkeygo/httpsig.v0"
+	"net/http"
+	"sync"
+	"testing"
 
 	"github.com/ovh/cds/engine/api"
 	"github.com/ovh/cds/engine/cdn/index"

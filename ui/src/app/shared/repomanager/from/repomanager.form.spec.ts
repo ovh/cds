@@ -4,7 +4,7 @@ import { CUSTOM_ELEMENTS_SCHEMA, Injector } from '@angular/core';
 import { fakeAsync, getTestBed, TestBed, tick } from '@angular/core/testing';
 import { RouterTestingModule } from '@angular/router/testing';
 import { TranslateLoader, TranslateModule, TranslateParser, TranslateService } from '@ngx-translate/core';
-import { ToasterService } from 'angular2-toaster/angular2-toaster';
+import { ToasterService } from 'angular2-toaster-sgu';
 import { ApplicationService } from 'app/service/application/application.service';
 import { AuthenticationService } from 'app/service/authentication/authentication.service';
 import { HelpService } from 'app/service/help/help.service';

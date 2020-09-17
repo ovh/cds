@@ -5,7 +5,7 @@ import { Router } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
 import { TranslateLoader, TranslateModule, TranslateParser, TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
-import { ToasterService } from 'angular2-toaster/angular2-toaster';
+import { ToasterService } from 'angular2-toaster-sgu';
 import { ApplicationService } from 'app/service/application/application.service';
 import { AuthenticationService } from 'app/service/authentication/authentication.service';
 import { MonitoringService } from 'app/service/monitoring/monitoring.service';

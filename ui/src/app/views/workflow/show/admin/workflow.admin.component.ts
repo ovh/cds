@@ -18,7 +18,7 @@ import { WarningModalComponent } from 'app/shared/modal/warning/warning.componen
 import { ToastService } from 'app/shared/toast/ToastService';
 import { DeleteWorkflow, DeleteWorkflowIcon, UpdateWorkflow, UpdateWorkflowIcon } from 'app/store/workflow.action';
 import cloneDeep from 'lodash-es/cloneDeep';
-import { DragulaService } from 'ng2-dragula';
+import { DragulaService } from 'ng2-dragula-sgu';
 import { forkJoin, Subscription } from 'rxjs';
 import { finalize, first } from 'rxjs/operators';
 

@@ -25,7 +25,7 @@ import { ParameterEvent } from 'app/shared/parameter/parameter.event.model';
 import { RequirementEvent } from 'app/shared/requirements/requirement.event.model';
 import { SharedService } from 'app/shared/shared.service';
 import cloneDeep from 'lodash-es/cloneDeep';
-import { DragulaService } from 'ng2-dragula';
+import { DragulaService } from 'ng2-dragula-sgu';
 import { finalize } from 'rxjs/operators';
 
 @Component({

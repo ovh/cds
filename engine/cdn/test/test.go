@@ -25,3 +25,11 @@ func ClearUnits(t *testing.T, ctx context.Context, m *gorpmapper.Mapper, db gorp
 		require.NoError(t, m.Delete(db, &u))
 	}
 }
+
+func ClearUnits(t *testing.T, ctx context.Context, m *gorpmapper.Mapper, db gorpmapper.SqlExecutorWithTx) {
+	units, err := storage.LoadAllUnits(ctx, m, db)
+	require.NoError(t, err)
+	for _, u := range units {
+		require.NoError(t, m.Delete(db, &u))
+	}
+}

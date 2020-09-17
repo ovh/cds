@@ -18,6 +18,7 @@ const (
 	EmailUserNotification  = "email"
 	JabberUserNotification = "jabber"
 	VCSUserNotification    = "vcs"
+	EventsNotification     = "event"
 )
 
 //const

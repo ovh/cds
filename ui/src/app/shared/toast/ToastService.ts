@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { Store } from '@ngxs/store';
-import { BodyOutputType, ToasterConfig, ToasterService } from 'angular2-toaster/angular2-toaster';
+import { BodyOutputType, ToasterConfig, ToasterService } from 'angular2-toaster-sgu';
 import { HelpState } from 'app/store/help.state';
 import { filter } from 'rxjs/operators';
 import { ToastHTTPErrorComponent, ToastHTTPErrorData } from './toast-http-error.component';
