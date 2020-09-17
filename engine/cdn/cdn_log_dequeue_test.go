@@ -2,12 +2,16 @@ package cdn
 
 import (
 	"context"
+	"github.com/ovh/cds/engine/cdn/redis"
+	"io"
 	"strconv"
+	"strings"
 	"testing"
 
 	"github.com/mitchellh/hashstructure"
 	"github.com/stretchr/testify/require"
 
+	cacheP "github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/engine/cdn/index"
 	"github.com/ovh/cds/engine/cdn/storage"
 	_ "github.com/ovh/cds/engine/cdn/storage/local"
@@ -57,7 +61,7 @@ func TestStoreNewStepLog(t *testing.T) {
 			Full: "coucou",
 		},
 		Status: "Building",
-		Line:   1,
+		Line:   0,
 		Signature: log.Signature{
 			ProjectKey:   sdk.RandomString(10),
 			WorkflowID:   1,
@@ -75,10 +79,10 @@ func TestStoreNewStepLog(t *testing.T) {
 	}
 
 	content := buildMessage(hm)
-	err = s.storeLogs(context.TODO(), index.TypeItemStepLog, hm.Signature, hm.Status, content, hm.Line)
+	err = s.storeLogs(context.TODO(), sdk.CDNTypeItemStepLog, hm.Signature, hm.Status, content, hm.Line)
 	require.NoError(t, err)
 
-	apiRef := index.ApiRef{
+	apiRef := sdk.CDNLogAPIRef{
 		ProjectKey:     hm.Signature.ProjectKey,
 		WorkflowName:   hm.Signature.WorkflowName,
 		WorkflowID:     hm.Signature.WorkflowID,
@@ -92,7 +96,7 @@ func TestStoreNewStepLog(t *testing.T) {
 	}
 	hashRef, err := hashstructure.Hash(apiRef, nil)
 	require.NoError(t, err)
-	item, err := index.LoadItemByApiRefHashAndType(context.TODO(), s.Mapper, db, strconv.FormatUint(hashRef, 10), index.TypeItemStepLog)
+	item, err := index.LoadItemByAPIRefHashAndType(context.TODO(), s.Mapper, db, strconv.FormatUint(hashRef, 10), sdk.CDNTypeItemStepLog)
 	require.NoError(t, err)
 	require.NotNil(t, item)
 	defer func() {
@@ -103,10 +107,15 @@ func TestStoreNewStepLog(t *testing.T) {
 	iu, err := storage.LoadItemUnitByUnit(context.TODO(), s.Mapper, db, s.Units.Buffer.ID(), item.ID, gorpmapper.GetOptions.WithDecryption)
 	require.NoError(t, err)
 
-	logs, err := s.Units.Buffer.Get(*iu, 0, 1)
+	bufferReader, err := s.Units.Buffer.NewReader(context.TODO(), *iu)
 	require.NoError(t, err)
-	require.Len(t, logs, 1)
-	require.Equal(t, "[EMERGENCY] coucou\n", logs[0])
+
+	buf := new(strings.Builder)
+	_, err = io.Copy(buf, bufferReader)
+	require.NoError(t, err)
+
+	require.NoError(t, err)
+	require.Equal(t, "[EMERGENCY] coucou\n", buf.String())
 }
 
 func TestStoreLastStepLog(t *testing.T) {
@@ -144,7 +153,7 @@ func TestStoreLastStepLog(t *testing.T) {
 	hm := handledMessage{
 		Msg:    hook.Message{},
 		Status: sdk.StatusSuccess,
-		Line:   1,
+		Line:   0,
 		Signature: log.Signature{
 			ProjectKey:   sdk.RandomString(10),
 			WorkflowID:   1,
@@ -160,7 +169,7 @@ func TestStoreLastStepLog(t *testing.T) {
 			},
 		},
 	}
-	apiRef := index.ApiRef{
+	apiRef := sdk.CDNLogAPIRef{
 		ProjectKey:     hm.Signature.ProjectKey,
 		WorkflowName:   hm.Signature.WorkflowName,
 		WorkflowID:     hm.Signature.WorkflowID,
@@ -177,16 +186,16 @@ func TestStoreLastStepLog(t *testing.T) {
 
 	item := index.Item{
 		Status:     index.StatusItemIncoming,
-		ApiRefHash: strconv.FormatUint(hashRef, 10),
-		ApiRef:     apiRef,
-		Type:       index.TypeItemStepLog,
+		APIRefHash: strconv.FormatUint(hashRef, 10),
+		APIRef:     apiRef,
+		Type:       sdk.CDNTypeItemStepLog,
 	}
 	require.NoError(t, index.InsertItem(context.TODO(), m, db, &item))
 	defer func() {
 		_ = index.DeleteItem(m, db, &item)
 	}()
 	content := buildMessage(hm)
-	err = s.storeLogs(context.TODO(), index.TypeItemStepLog, hm.Signature, hm.Status, content, hm.Line)
+	err = s.storeLogs(context.TODO(), sdk.CDNTypeItemStepLog, hm.Signature, hm.Status, content, hm.Line)
 	require.NoError(t, err)
 
 	itemDB, err := index.LoadItemByID(context.TODO(), s.Mapper, db, item.ID)
@@ -243,7 +252,7 @@ func TestStoreLogWrongOrder(t *testing.T) {
 			Full: "voici un message",
 		},
 		Status: sdk.StatusSuccess,
-		Line:   2,
+		Line:   1,
 		Signature: log.Signature{
 			ProjectKey:   sdk.RandomString(10),
 			WorkflowID:   1,
@@ -259,7 +268,7 @@ func TestStoreLogWrongOrder(t *testing.T) {
 			},
 		},
 	}
-	apiRef := index.ApiRef{
+	apiRef := sdk.CDNLogAPIRef{
 		ProjectKey:     hm.Signature.ProjectKey,
 		WorkflowName:   hm.Signature.WorkflowName,
 		WorkflowID:     hm.Signature.WorkflowID,
@@ -276,9 +285,9 @@ func TestStoreLogWrongOrder(t *testing.T) {
 
 	item := index.Item{
 		Status:     index.StatusItemIncoming,
-		ApiRefHash: strconv.FormatUint(hashRef, 10),
-		ApiRef:     apiRef,
-		Type:       index.TypeItemStepLog,
+		APIRefHash: strconv.FormatUint(hashRef, 10),
+		APIRef:     apiRef,
+		Type:       sdk.CDNTypeItemStepLog,
 	}
 	require.NoError(t, index.InsertItem(context.TODO(), m, db, &item))
 	defer func() {
@@ -286,7 +295,7 @@ func TestStoreLogWrongOrder(t *testing.T) {
 	}()
 
 	content := buildMessage(hm)
-	err = s.storeLogs(context.TODO(), index.TypeItemStepLog, hm.Signature, hm.Status, content, hm.Line)
+	err = s.storeLogs(context.TODO(), sdk.CDNTypeItemStepLog, hm.Signature, hm.Status, content, hm.Line)
 	require.NoError(t, err)
 
 	itemDB, err := index.LoadItemByID(context.TODO(), s.Mapper, db, item.ID)
@@ -305,11 +314,11 @@ func TestStoreLogWrongOrder(t *testing.T) {
 	require.NotNil(t, iu)
 
 	// Received Missing log
-	hm.Line = 1
+	hm.Line = 0
 	hm.Status = ""
 	content = buildMessage(hm)
 
-	err = s.storeLogs(context.TODO(), index.TypeItemStepLog, hm.Signature, hm.Status, content, hm.Line)
+	err = s.storeLogs(context.TODO(), sdk.CDNTypeItemStepLog, hm.Signature, hm.Status, content, hm.Line)
 	require.NoError(t, err)
 
 	itemDB2, err := index.LoadItemByID(context.TODO(), s.Mapper, db, item.ID)
@@ -322,11 +331,17 @@ func TestStoreLogWrongOrder(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, iu)
 
-	lines, err := s.Units.Buffer.Get(*iu, 0, 2)
+	bufferReader, err := s.Units.Buffer.NewReader(context.TODO(), *iu)
 	require.NoError(t, err)
-	require.Len(t, lines, 2)
-	require.Equal(t, "[EMERGENCY] voici un message\n", lines[0])
-	require.Equal(t, "[EMERGENCY] voici un message\n", lines[1])
+	bufferReader.(*redis.Reader).From = 0
+	bufferReader.(*redis.Reader).Size = 2
+
+	buf := new(strings.Builder)
+	_, err = io.Copy(buf, bufferReader)
+	require.NoError(t, err)
+
+	require.Equal(t, "[EMERGENCY] voici un message\n[EMERGENCY] voici un message\n", buf.String())
+
 }
 
 func TestStoreNewServiceLogAndAppend(t *testing.T) {
@@ -366,7 +381,7 @@ func TestStoreNewServiceLogAndAppend(t *testing.T) {
 			Full: "log1",
 		},
 		Status: "Building",
-		Line:   1,
+		Line:   0,
 		Signature: log.Signature{
 			ProjectKey:   sdk.RandomString(10),
 			WorkflowID:   1,
@@ -379,10 +394,10 @@ func TestStoreNewServiceLogAndAppend(t *testing.T) {
 		},
 	}
 
-	err = s.storeLogs(context.TODO(), index.TypeItemServiceLog, hm.Signature, hm.Status, hm.Msg.Full, 0)
+	err = s.storeLogs(context.TODO(), sdk.CDNTypeItemServiceLog, hm.Signature, hm.Status, hm.Msg.Full, 0)
 	require.NoError(t, err)
 
-	apiRef := index.ApiRef{
+	apiRef := sdk.CDNLogAPIRef{
 		ProjectKey:     hm.Signature.ProjectKey,
 		WorkflowName:   hm.Signature.WorkflowName,
 		WorkflowID:     hm.Signature.WorkflowID,
@@ -394,39 +409,28 @@ func TestStoreNewServiceLogAndAppend(t *testing.T) {
 	}
 	hashRef, err := hashstructure.Hash(apiRef, nil)
 	require.NoError(t, err)
-	item, err := index.LoadItemByApiRefHashAndType(context.TODO(), s.Mapper, db, strconv.FormatUint(hashRef, 10), index.TypeItemServiceLog)
+	item, err := index.LoadItemByAPIRefHashAndType(context.TODO(), s.Mapper, db, strconv.FormatUint(hashRef, 10), sdk.CDNTypeItemServiceLog)
 	require.NoError(t, err)
 	require.NotNil(t, item)
-	defer func() {
-		_ = index.DeleteItem(m, db, item)
-	}()
+	t.Cleanup(func() { _ = index.DeleteItem(m, db, item) })
 	require.Equal(t, index.StatusItemIncoming, item.Status)
 
 	var logs []string
-	err = cache.ScoredSetScan(context.Background(), item.ID, 0, 1, &logs)
-	require.NoError(t, err)
+	require.NoError(t, cache.ScoredSetScan(context.Background(), cacheP.Key("cdn", "buffer", item.ID), 0, 1, &logs))
+	require.Len(t, logs, 1)
+	require.Equal(t, "log1", logs[0])
 
 	hm2 := handledMessage{
 		Msg: hook.Message{
 			Full: "log2",
 		},
-		Status: "Building",
-		Signature: log.Signature{
-			ProjectKey:   sdk.RandomString(10),
-			WorkflowID:   1,
-			WorkflowName: "MyWorklow",
-			RunID:        1,
-			NodeRunID:    1,
-			NodeRunName:  "MyPipeline",
-			JobName:      "MyJob",
-			JobID:        1,
-		},
+		Status:    "Building",
+		Signature: hm.Signature,
 	}
-	err = s.storeLogs(context.TODO(), index.TypeItemServiceLog, hm.Signature, hm.Status, hm2.Msg.Full, 0)
-	require.NoError(t, err)
+	require.NoError(t, s.storeLogs(context.TODO(), sdk.CDNTypeItemServiceLog, hm2.Signature, hm2.Status, hm2.Msg.Full, 0))
 
-	err = cache.ScoredSetScan(context.TODO(), item.ID, 0, 2, &logs)
-	require.NoError(t, err)
+	require.NoError(t, cache.ScoredSetScan(context.TODO(), cacheP.Key("cdn", "buffer", item.ID), 0, 2, &logs))
 	require.Len(t, logs, 2)
+	require.Equal(t, "log1", logs[0])
 	require.Equal(t, "log2", logs[1])
 }

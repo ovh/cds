@@ -12,8 +12,7 @@ CREATE TABLE IF NOT EXISTS "index" (
   status VARCHAR(64), -- status of item
   type VARCHAR(64), -- type of item
   size BIGINT,
-  md5 TEXT,
-  last_read TIMESTAMP WITH TIME ZONE -- last read date
+  md5 TEXT
 );
 CREATE INDEX api_ref_index ON "index" USING GIN (api_ref);
 select create_unique_index('index', 'IDX_INDEX_UNIQ_ITEM', 'api_ref_hash,type');

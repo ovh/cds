@@ -1,3 +1,4 @@
+import { HttpClient, HttpHeaders } from '@angular/common/http';
 import {
     ChangeDetectionStrategy, ChangeDetectorRef,
     Component,
@@ -15,11 +16,12 @@ import {
 } from 'ansi_up';
 import { Action } from 'app/model/action.model';
 import { Job, StepStatus } from 'app/model/job.model';
-import { BuildResult, Log, PipelineStatus } from 'app/model/pipeline.model';
+import { BuildResult, CDNLogAccess, Log, PipelineStatus } from 'app/model/pipeline.model';
 import { WorkflowNodeJobRun } from 'app/model/workflow.run.model';
 import { WorkflowService } from 'app/service/workflow/workflow.service';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { DurationService } from 'app/shared/duration/duration.service';
+import { FeatureState } from 'app/store/feature.state';
 import { ProjectState } from 'app/store/project.state';
 import { WorkflowState, WorkflowStateModel } from 'app/store/workflow.state';
 import cloneDeep from 'lodash-es/cloneDeep';
@@ -80,7 +82,8 @@ export class WorkflowStepLogComponent implements OnInit, OnDestroy {
         private _cd: ChangeDetectorRef,
         private _store: Store,
         private _ngZone: NgZone,
-        private _workflowService: WorkflowService
+        private _workflowService: WorkflowService,
+        private _http: HttpClient
     ) {
         this.ansi_up.escape_for_html = !this.htmlViewSelected;
     }
@@ -89,53 +92,7 @@ export class WorkflowStepLogComponent implements OnInit, OnDestroy {
 
     ngOnInit(): void {
         this.nodeJobRunSubs = this.nodeJobRun$.subscribe(nrj => {
-            if (!nrj || !nrj.job.step_status) {
-                return;
-            }
-
-            this.job = nrj.job;
-
-            let invalidStepOrder = !(this.stepOrder < this.job.action.actions.length) || !(this.stepOrder < this.job.step_status.length);
-            if (invalidStepOrder) {
-                return;
-            }
-
-            this.step = this.job.action.actions[this.stepOrder];
-            let oldStepStatus = this.stepStatus;
-            this.stepStatus = this.job.step_status[this.stepOrder];
-
-            if (this.currentNodeJobRunID !== nrj.id) {
-                this.currentNodeJobRunID = nrj.id;
-
-                this.computeDuration();
-                this.showLogs = false;
-                if (this.stepStatus.status === this.pipelineBuildStatusEnum.BUILDING ||
-                    this.stepStatus.status === this.pipelineBuildStatusEnum.WAITING ||
-                    (this.stepStatus.status === this.pipelineBuildStatusEnum.FAIL && !this.step.optional)) {
-                    this.showLogs = true;
-                    this.initWorker();
-                }
-
-                this._cd.markForCheck();
-
-                return;
-            }
-
-            // check if step status change
-            if (this.stepStatus.status === oldStepStatus.status) {
-                return;
-            }
-
-            if (!oldStepStatus) {
-                this.computeDuration();
-                this.initWorker();
-                this.showLogs = true;
-            } else if (this.pipelineBuildStatusEnum.isActive(this.stepStatus.status) &&
-                this.pipelineBuildStatusEnum.isDone(status)) {
-                this.showLogs = false;
-            }
-
-            this._cd.markForCheck();
+            this.onNodeJobRunChange(nrj);
         });
 
         this.queryParamsSubscription = this._route.queryParams.subscribe((qps) => {
@@ -158,13 +115,63 @@ export class WorkflowStepLogComponent implements OnInit, OnDestroy {
         });
     }
 
+    async onNodeJobRunChange(nrj: WorkflowNodeJobRun) {
+        if (!nrj || !nrj.job.step_status) {
+            return;
+        }
+
+        this.job = nrj.job;
+
+        let invalidStepOrder = !(this.stepOrder < this.job.action.actions.length) || !(this.stepOrder < this.job.step_status.length);
+        if (invalidStepOrder) {
+            return;
+        }
+
+        this.step = this.job.action.actions[this.stepOrder];
+        let oldStepStatus = this.stepStatus;
+        this.stepStatus = this.job.step_status[this.stepOrder];
+
+        if (this.currentNodeJobRunID !== nrj.id) {
+            this.currentNodeJobRunID = nrj.id;
+
+            this.computeDuration();
+            this.showLogs = false;
+            if (this.stepStatus.status === this.pipelineBuildStatusEnum.BUILDING ||
+                this.stepStatus.status === this.pipelineBuildStatusEnum.WAITING ||
+                (this.stepStatus.status === this.pipelineBuildStatusEnum.FAIL && !this.step.optional)) {
+                this.showLogs = true;
+                await this.initWorker();
+            }
+
+            this._cd.markForCheck();
+
+            return;
+        }
+
+        // check if step status change
+        if (this.stepStatus.status === oldStepStatus.status) {
+            return;
+        }
+
+        if (!oldStepStatus) {
+            this.computeDuration();
+            await this.initWorker();
+            this.showLogs = true;
+        } else if (this.pipelineBuildStatusEnum.isActive(this.stepStatus.status) &&
+            this.pipelineBuildStatusEnum.isDone(status)) {
+            this.showLogs = false;
+        }
+
+        this._cd.markForCheck();
+    }
+
     copyRawLog() {
         this.logsElt.nativeElement.value = this.logs.val;
         this.logsElt.nativeElement.select();
         document.execCommand('copy');
     }
 
-    initWorker(): void {
+    async initWorker() {
         if (!this.logs) {
             this.loading = true;
         }
@@ -179,6 +186,15 @@ export class WorkflowStepLogComponent implements OnInit, OnDestroy {
         }
         let stepOrder = this.stepOrder < this.job.step_status.length ? this.stepOrder : this.job.step_status.length - 1;
 
+        const cdnEnabled = !!this._store.selectSnapshot(FeatureState.feature('cdn-job-logs')).find(f => {
+            return !!f.results.find(r => r.enabled && r.paramString === JSON.stringify({ 'project_key': projectKey }));
+        });
+
+        let logAccess: CDNLogAccess;
+        if (cdnEnabled) {
+            logAccess = await this._workflowService.getStepAccess(projectKey, workflowName, nodeRunId, runJobId, stepOrder).toPromise();
+        }
+
         let callback = (b: BuildResult) => {
             if (b.step_logs.id) {
                 this.logs = b.step_logs;
@@ -188,9 +204,20 @@ export class WorkflowStepLogComponent implements OnInit, OnDestroy {
                 this.loading = false;
                 this.focusToLine();
             }
+            this._cd.markForCheck();
         };
 
-        this._workflowService.getStepLog(projectKey, workflowName, runNumber, nodeRunId, runJobId, stepOrder).subscribe(callback);
+        if (!cdnEnabled || !logAccess.exists) {
+            const stepLog = await this._workflowService.getStepLog(projectKey, workflowName,
+                nodeRunId, runJobId, stepOrder).toPromise();
+            callback(stepLog);
+        } else {
+            const data = await this._http.get('./cdscdn' + logAccess.download_path, {
+                responseType: 'text',
+                headers: new HttpHeaders({ 'Authorization': `Bearer ${logAccess.token}` })
+            }).toPromise();
+            callback(<BuildResult>{ status: PipelineStatus.BUILDING, step_logs: { id: 1, val: data } });
+        }
 
         if (!PipelineStatus.isActive(this.stepStatus.status)) {
             return;
@@ -199,7 +226,15 @@ export class WorkflowStepLogComponent implements OnInit, OnDestroy {
         this.stopWorker();
         this._ngZone.runOutsideAngular(() => {
             this.pollingSubscription = Observable.interval(2000)
-                .mergeMap(_ => this._workflowService.getStepLog(projectKey, workflowName, runNumber, nodeRunId, runJobId, stepOrder))
+                .mergeMap(_ => {
+                    if (!cdnEnabled || !logAccess.exists) {
+                        return this._workflowService.getStepLog(projectKey, workflowName, nodeRunId, runJobId, stepOrder);
+                    }
+                    return this._http.get('./cdscdn' + logAccess.download_path, {
+                        responseType: 'text',
+                        headers: new HttpHeaders({ 'Authorization': `Bearer ${logAccess.token}` })
+                    }).map(data => <BuildResult>{ status: PipelineStatus.BUILDING, step_logs: { id: 1, val: data } });
+                })
                 .subscribe(build => {
                     this._ngZone.run(() => {
                         callback(build);
@@ -269,7 +304,6 @@ export class WorkflowStepLogComponent implements OnInit, OnDestroy {
             this.limitTo = this.splittedLogs.length - 40;
             this.splittedLogsToDisplay.splice(this.limitFrom, this.limitTo - this.limitFrom);
         }
-        this._cd.markForCheck();
     }
 
     focusToLine() {
@@ -306,7 +340,7 @@ export class WorkflowStepLogComponent implements OnInit, OnDestroy {
         }
     }
 
-    toggleLogs() {
+    async toggleLogs() {
         this._force = true;
         if (!this.showLogs && (!this.stepStatus || PipelineStatus.neverRun(this.stepStatus.status))) {
             return;
@@ -315,7 +349,7 @@ export class WorkflowStepLogComponent implements OnInit, OnDestroy {
         if (!this.showLogs) {
             this.stopWorker();
         } else {
-            this.initWorker();
+            await this.initWorker();
         }
     }
 

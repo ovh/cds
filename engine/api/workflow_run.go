@@ -1473,13 +1473,12 @@ func (api *API) getWorkflowRunArtifactsHandler() service.Handler {
 
 func (api *API) getWorkflowNodeRunJobSpawnInfosHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		runJobID, errJ := requestVarInt(r, "runJobId")
-		if errJ != nil {
-			return sdk.WrapError(errJ, "getWorkflowNodeRunJobSpawnInfosHandler> runJobId: invalid number")
+		runJobID, err := requestVarInt(r, "runJobID")
+		if err != nil {
+			return sdk.WrapError(err, "invalid number run job id")
 		}
-		db := api.mustDB()
 
-		spawnInfos, err := workflow.LoadNodeRunJobInfo(ctx, db, runJobID)
+		spawnInfos, err := workflow.LoadNodeRunJobInfo(ctx, api.mustDB(), runJobID)
 		if err != nil {
 			return sdk.WrapError(err, "cannot load spawn infos for node run job id %d", runJobID)
 		}
@@ -1495,89 +1494,6 @@ func (api *API) getWorkflowNodeRunJobSpawnInfosHandler() service.Handler {
 	}
 }
 
-func (api *API) getWorkflowNodeRunJobServiceLogsHandler() service.Handler {
-	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		runJobID, errJ := requestVarInt(r, "runJobId")
-		if errJ != nil {
-			return sdk.WrapError(errJ, "runJobId: invalid number")
-		}
-		db := api.mustDB()
-
-		logsServices, err := workflow.LoadServicesLogsByJob(db, runJobID)
-		if err != nil {
-			return sdk.WrapError(err, "cannot load service logs for node run job id %d", runJobID)
-		}
-
-		return service.WriteJSON(w, logsServices, http.StatusOK)
-	}
-}
-
-func (api *API) getWorkflowNodeRunJobStepHandler() service.Handler {
-	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		vars := mux.Vars(r)
-		projectKey := vars["key"]
-		workflowName := vars["permWorkflowName"]
-		nodeRunID, errNI := requestVarInt(r, "nodeRunID")
-		if errNI != nil {
-			return sdk.WrapError(errNI, "id: invalid number")
-		}
-		runJobID, errJ := requestVarInt(r, "runJobId")
-		if errJ != nil {
-			return sdk.WrapError(errJ, "runJobId: invalid number")
-		}
-		stepOrder, errS := requestVarInt(r, "stepOrder")
-		if errS != nil {
-			return sdk.WrapError(errS, "stepOrder: invalid number")
-		}
-
-		// Check nodeRunID is link to workflow
-		nodeRun, errNR := workflow.LoadNodeRun(api.mustDB(), projectKey, workflowName, nodeRunID, workflow.LoadRunOptions{DisableDetailledNodeRun: true})
-		if errNR != nil {
-			return sdk.WrapError(errNR, "cannot find nodeRun %d for workflow %s in project %s", nodeRunID, workflowName, projectKey)
-		}
-
-		var stepStatus string
-		// Find job/step in nodeRun
-	stageLoop:
-		for _, s := range nodeRun.Stages {
-			for _, rj := range s.RunJobs {
-				if rj.ID != runJobID {
-					continue
-				}
-				ss := rj.Job.StepStatus
-				for _, sss := range ss {
-					if int64(sss.StepOrder) == stepOrder {
-						stepStatus = sss.Status
-						break
-					}
-				}
-				break stageLoop
-			}
-		}
-
-		if stepStatus == "" {
-			return sdk.WrapError(sdk.ErrStepNotFound, "cannot find step %d on job %d in nodeRun %d for workflow %s in project %s",
-				stepOrder, runJobID, nodeRunID, workflowName, projectKey)
-		}
-
-		logs, errL := workflow.LoadStepLogs(api.mustDB(), runJobID, stepOrder)
-		if errL != nil {
-			return sdk.WrapError(errL, "cannot load log for runJob %d on step %d", runJobID, stepOrder)
-		}
-
-		ls := &sdk.Log{}
-		if logs != nil {
-			ls = logs
-		}
-		result := &sdk.BuildState{
-			Status:   stepStatus,
-			StepLogs: *ls,
-		}
-
-		return service.WriteJSON(w, result, http.StatusOK)
-	}
-}
-
 func (api *API) getWorkflowRunTagsHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
@@ -1586,7 +1502,7 @@ func (api *API) getWorkflowRunTagsHandler() service.Handler {
 
 		res, err := workflow.GetTagsAndValue(api.mustDB(), projectKey, workflowName)
 		if err != nil {
-			return sdk.WrapError(err, "Error")
+			return err
 		}
 
 		return service.WriteJSON(w, res, http.StatusOK)

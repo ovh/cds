@@ -381,7 +381,6 @@ export class ApplicationsState {
             if (!appToupdate.deployment_strategies) {
                 appToupdate.deployment_strategies = {};
             }
-            console.log(integration);
             appToupdate.deployment_strategies[integration.name] = cloneDeep(integration.model.deployment_default_config);
             appToupdate.editModeChanged = true;
             ctx.setState({

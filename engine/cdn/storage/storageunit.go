@@ -14,6 +14,7 @@ import (
 	"github.com/go-gorp/gorp"
 	"github.com/ovh/symmecrypt/convergent"
 	"github.com/robfig/cron/v3"
+	"github.com/sirupsen/logrus"
 
 	"github.com/ovh/cds/engine/cdn/index"
 	"github.com/ovh/cds/engine/gorpmapper"
@@ -97,7 +98,6 @@ type BufferUnit interface {
 	Add(i ItemUnit, score uint, value string) error
 	Append(i ItemUnit, value string) error
 	Card(i ItemUnit) (int, error)
-	Get(i ItemUnit, from, to uint) ([]string, error)
 	NewReader(ctx context.Context, i ItemUnit) (io.ReadCloser, error)
 	Read(i ItemUnit, r io.Reader, w io.Writer) error
 }
@@ -121,8 +121,8 @@ type Configuration struct {
 }
 
 type BufferConfiguration struct {
-	Name  string                   `toml:"name" json:"name"`
-	Redis RedisBufferConfiguration `toml:"redisBuffer" json:"redis" mapstructure:"redis"`
+	Name  string                   `toml:"name" default:"redis" json:"name"`
+	Redis RedisBufferConfiguration `toml:"redis" json:"redis" mapstructure:"redis"`
 }
 
 type StorageConfiguration struct {
@@ -173,6 +173,7 @@ type RedisBufferConfiguration struct {
 type RunningStorageUnits struct {
 	m        *gorpmapper.Mapper
 	db       *gorp.DbMap
+	config   Configuration
 	Buffer   BufferUnit
 	Storages []StorageUnit
 }
@@ -186,10 +187,48 @@ func (r RunningStorageUnits) Storage(name string) StorageUnit {
 	return nil
 }
 
+func (r *RunningStorageUnits) Start(ctx context.Context) error {
+	scheduler := cron.New(cron.WithLocation(time.UTC), cron.WithSeconds())
+
+	for i := range r.Storages {
+		var cron string
+		for j := range r.config.Storages {
+			if r.config.Storages[j].Name == r.Storages[i].Name() {
+				cron = r.config.Storages[j].Cron
+				break
+			}
+		}
+		if cron == "" {
+			return sdk.WithStack(fmt.Errorf("missing cron config for storage %s", r.Storages[i].Name()))
+		}
+		f := func(i int) error {
+			_, err := scheduler.AddFunc(cron, func() {
+				if err := r.Run(ctx, r.Storages[i]); err != nil {
+					log.ErrorWithFields(ctx, logrus.Fields{"stack_trace": fmt.Sprintf("%+v", err)}, "%s", err)
+				}
+			})
+			return sdk.WithStack(err)
+		}
+		if err := f(i); err != nil {
+			return err
+		}
+	}
+
+	scheduler.Start()
+
+	go func() {
+		<-ctx.Done()
+		<-scheduler.Stop().Done()
+	}()
+
+	return nil
+}
+
 func Init(ctx context.Context, m *gorpmapper.Mapper, db *gorp.DbMap, config Configuration) (*RunningStorageUnits, error) {
 	var result = RunningStorageUnits{
-		m:  m,
-		db: db,
+		m:      m,
+		db:     db,
+		config: config,
 	}
 
 	// Start by initializing the buffer unit
@@ -234,8 +273,6 @@ func Init(ctx context.Context, m *gorpmapper.Mapper, db *gorp.DbMap, config Conf
 	if err := tx.Commit(); err != nil {
 		return nil, err
 	}
-
-	scheduler := cron.New(cron.WithLocation(time.UTC), cron.WithSeconds())
 
 	// Then initialize the storages unit
 	for _, cfg := range config.Storages {
@@ -291,16 +328,6 @@ func Init(ctx context.Context, m *gorpmapper.Mapper, db *gorp.DbMap, config Conf
 			return nil, sdk.WithStack(errors.New("unsupported storage unit"))
 		}
 
-		runFunc := func() {
-			if err := result.Run(ctx, storageUnit); err != nil {
-				log.Error(ctx, "cdn:storageunit: %v", err.Error())
-			}
-		}
-
-		if _, err := scheduler.AddFunc(cfg.Cron, runFunc); err != nil {
-			return nil, sdk.WithStack(err)
-		}
-
 		tx, err := db.Begin()
 		if err != nil {
 			return nil, sdk.WithStack(err)
@@ -331,13 +358,6 @@ func Init(ctx context.Context, m *gorpmapper.Mapper, db *gorp.DbMap, config Conf
 			return nil, sdk.WithStack(err)
 		}
 	}
-
-	scheduler.Start()
-
-	go func() {
-		<-ctx.Done()
-		<-scheduler.Stop().Done()
-	}()
 
 	return &result, nil
 }
@@ -413,7 +433,6 @@ func (r RunningStorageUnits) GetSource(ctx context.Context, i *index.Item) (Sour
 
 	unit := r.Storage(refUnit.Name)
 	if unit == nil {
-		log.Error(ctx, "unable to find unit %s", refUnit.Name)
 		return nil, sdk.WithStack(fmt.Errorf("unable to find unit %s", refUnit.Name))
 	}
 

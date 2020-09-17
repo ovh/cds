@@ -126,7 +126,7 @@ func (s *Swift) NewReader(ctx context.Context, i storage.ItemUnit) (io.ReadClose
 
 func (s *Swift) getItemPath(i storage.ItemUnit) (container string, object string, err error) {
 	loc := i.Locator
-	container = s.config.ContainerPrefix + "-" + i.Item.Type + "-" + loc[:3]
+	container = fmt.Sprintf("%s-%s-%s", s.config.ContainerPrefix, i.Item.Type, loc[:3])
 	object = loc
 	container, object = escape(container, object)
 	return container, object, nil

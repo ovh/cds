@@ -169,6 +169,12 @@ export class BuildResult {
     step_logs: Log;
 }
 
+export class CDNLogAccess {
+    exists: boolean;
+    token: string;
+    download_path: string;
+}
+
 export interface Log {
     id: number;
     workflow_node_run_id: number;
@@ -189,9 +195,6 @@ export interface ServiceLog {
     val: string;
     start: LogDate;
     last_modified: LogDate;
-
-    // UI
-    logsSplitted: Array<string>;
 }
 
 export class LogDate {

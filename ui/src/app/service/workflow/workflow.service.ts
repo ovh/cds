@@ -1,7 +1,7 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Operation } from 'app/model/operation.model';
-import { BuildResult, ServiceLog, SpawnInfo } from 'app/model/pipeline.model';
+import { BuildResult, CDNLogAccess, ServiceLog, SpawnInfo } from 'app/model/pipeline.model';
 import { Workflow, WorkflowPull, WorkflowTriggerConditionCache } from 'app/model/workflow.model';
 import { Observable } from 'rxjs';
 
@@ -55,14 +55,23 @@ export class WorkflowService {
         );
     }
 
-    getStepLog(projectKey: string, workflowName: string, runNumber: number,
-        nodeRunID: number, jobRunID: number, stepOrder: number): Observable<BuildResult> {
-        return this._http.get<BuildResult>(`/project/${projectKey}/workflows/${workflowName}/runs/${runNumber}/nodes/${nodeRunID}/job/${jobRunID}/step/${stepOrder}`);
+    getStepLog(projectKey: string, workflowName: string, nodeRunID: number, jobRunID: number, stepOrder: number): Observable<BuildResult> {
+        return this._http.get<BuildResult>(`/project/${projectKey}/workflows/${workflowName}/nodes/${nodeRunID}/job/${jobRunID}/step/${stepOrder}/log`);
     }
 
-    getServiceLog(projectKey: string, workflowName: string, runNumber: number,
-        nodeRunID: number, jobRunID: number): Observable<Array<ServiceLog>> {
-        return this._http.get<Array<ServiceLog>>(`/project/${projectKey}/workflows/${workflowName}/runs/${runNumber}/nodes/${nodeRunID}/job/${jobRunID}/log/service`);
+    getStepAccess(projectKey: string, workflowName: string, nodeRunID: number,
+        jobRunID: number, stepOrder: number): Observable<CDNLogAccess> {
+        return this._http.get<CDNLogAccess>(`/project/${projectKey}/workflows/${workflowName}/nodes/${nodeRunID}/job/${jobRunID}/step/${stepOrder}/access`);
+    }
+
+    getServiceLog(projectKey: string, workflowName: string, nodeRunID: number,
+        jobRunID: number, serviceName: string): Observable<ServiceLog> {
+        return this._http.get<ServiceLog>(`/project/${projectKey}/workflows/${workflowName}/nodes/${nodeRunID}/job/${jobRunID}/service/${serviceName}/log`);
+    }
+
+    getServiceAccess(projectKey: string, workflowName: string, nodeRunID: number,
+        jobRunID: number, serviceName: string): Observable<CDNLogAccess> {
+        return this._http.get<CDNLogAccess>(`/project/${projectKey}/workflows/${workflowName}/nodes/${nodeRunID}/job/${jobRunID}/service/${serviceName}/access`);
     }
 
     getNodeJobRunInfo(projectKey: string, workflowName: string, runNumber: number,

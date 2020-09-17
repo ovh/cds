@@ -2,10 +2,15 @@ package cdn
 
 import (
 	"context"
+	"fmt"
 	"time"
+
+	"github.com/sirupsen/logrus"
 
 	"github.com/ovh/cds/engine/cdn/index"
 	"github.com/ovh/cds/engine/cdn/storage"
+	"github.com/ovh/cds/engine/cdn/storage/cds"
+	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk/telemetry"
 )
@@ -14,9 +19,10 @@ const (
 	ItemLogGC = 24 * 3600
 )
 
-func (s *Service) CompleteWaitingItems(ctx context.Context) {
-	tick := time.NewTicker(1 * time.Minute)
-	defer tick.Stop()
+// ItemsGC clean long incoming item + delete item from buffer when synchronized everywhere
+func (s *Service) ItemsGC(ctx context.Context) {
+	tickGC := time.NewTicker(1 * time.Minute)
+	defer tickGC.Stop()
 	for {
 		select {
 		case <-ctx.Done():
@@ -24,31 +30,65 @@ func (s *Service) CompleteWaitingItems(ctx context.Context) {
 				log.Error(ctx, "cdn:CompleteWaitingItems: %v", ctx.Err())
 			}
 			return
-		case <-tick.C:
-			itemUnits, err := storage.LoadOldItemUnitByItemStatusAndDuration(ctx, s.Mapper, s.mustDBWithCtx(ctx), index.StatusItemIncoming, ItemLogGC)
-			if err != nil {
-				log.Warning(ctx, "cdn:CompleteWaitingItems: unable to get items ids: %v", err)
-				continue
+		case <-tickGC.C:
+			if err := s.cleanBuffer(ctx); err != nil {
+				log.ErrorWithFields(ctx, logrus.Fields{"stack_trace": fmt.Sprintf("%+v", err)}, "%s", err)
 			}
-			log.Debug("cdn:CompleteWaitingItems: %d items to complete", len(itemUnits))
-			for _, itemUnit := range itemUnits {
-				tx, err := s.mustDBWithCtx(ctx).Begin()
-				if err != nil {
-					log.Error(ctx, "cdn:CompleteWaitingItems: unable to start transaction: %v", err)
-					continue
-				}
-				if err := s.completeItem(ctx, tx, itemUnit); err != nil {
-					_ = tx.Rollback()
-					log.Warning(ctx, "cdn:CompleteWaitingItems: unable to complete item %s: %v", itemUnit.ItemID, err)
-					continue
-				}
-				telemetry.Record(ctx, metricsItemCompletedByGC, 1)
-				if err := tx.Commit(); err != nil {
-					_ = tx.Rollback()
-					log.Warning(ctx, "cdn:CompleteWaitingItems: unable to commit transaction: %v", err)
-					continue
-				}
+			if err := s.cleanWaitingItem(ctx); err != nil {
+				log.ErrorWithFields(ctx, logrus.Fields{"stack_trace": fmt.Sprintf("%+v", err)}, "%s", err)
 			}
 		}
 	}
+}
+
+func (s *Service) cleanBuffer(ctx context.Context) error {
+	var cdsBackendID string
+	for _, sto := range s.Units.Storages {
+		_, ok := sto.(*cds.CDS)
+		if !ok {
+			continue
+		}
+		cdsBackendID = sto.ID()
+		break
+	}
+	if cdsBackendID == "" {
+		return nil
+	}
+	itemIDs, err := storage.LoadAllItemsIDInBufferAndAllUnitsExceptCDS(s.mustDBWithCtx(ctx), cdsBackendID)
+	if err != nil {
+		return err
+	}
+	tx, err := s.mustDBWithCtx(ctx).Begin()
+	if err != nil {
+		return sdk.WrapError(err, "unable to start transaction")
+	}
+	defer tx.Rollback() //nolint
+	if err := storage.DeleteItemsUnit(tx, s.Units.Buffer.ID(), itemIDs); err != nil {
+		return err
+	}
+	return sdk.WithStack(tx.Commit())
+}
+
+func (s *Service) cleanWaitingItem(ctx context.Context) error {
+	itemUnits, err := storage.LoadOldItemUnitByItemStatusAndDuration(ctx, s.Mapper, s.mustDBWithCtx(ctx), index.StatusItemIncoming, ItemLogGC)
+	if err != nil {
+		return err
+	}
+	log.Debug("cdn:CompleteWaitingItems: %d items to complete", len(itemUnits))
+	for _, itemUnit := range itemUnits {
+		tx, err := s.mustDBWithCtx(ctx).Begin()
+		if err != nil {
+			return sdk.WrapError(err, "unable to start transaction")
+		}
+		if err := s.completeItem(ctx, tx, itemUnit); err != nil {
+			_ = tx.Rollback()
+			return err
+		}
+		if err := tx.Commit(); err != nil {
+			_ = tx.Rollback()
+			return err
+		}
+		telemetry.Record(ctx, metricsItemCompletedByGC, 1)
+	}
+	return nil
 }

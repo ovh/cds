@@ -330,8 +330,10 @@ type WorkflowClient interface {
 	WorkflowNodeStop(projectKey string, workflowName string, number, fromNodeID int64) (*sdk.WorkflowNodeRun, error)
 	WorkflowNodeRun(projectKey string, name string, number int64, nodeRunID int64) (*sdk.WorkflowNodeRun, error)
 	WorkflowNodeRunArtifactDownload(projectKey string, name string, a sdk.WorkflowNodeRunArtifact, w io.Writer) error
-	WorkflowNodeRunJobStep(projectKey string, workflowName string, number int64, nodeRunID, job int64, step int) (*sdk.BuildState, error)
-	WorkflowNodeRunJobServiceLog(projectKey string, workflowName string, number int64, nodeRunID, job int64) ([]sdk.ServiceLog, error)
+	WorkflowNodeRunJobStepAccess(projectKey string, workflowName string, nodeRunID, job int64, step int64) (*sdk.CDNLogAccess, error)
+	WorkflowNodeRunJobStepLog(projectKey string, workflowName string, nodeRunID, job int64, step int64) (*sdk.BuildState, error)
+	WorkflowNodeRunJobServiceAccess(projectKey string, workflowName string, nodeRunID, job int64, serviceName string) (*sdk.CDNLogAccess, error)
+	WorkflowNodeRunJobServiceLog(projectKey string, workflowName string, nodeRunID, job int64, serviceName string) (*sdk.ServiceLog, error)
 	WorkflowNodeRunRelease(projectKey string, workflowName string, runNumber int64, nodeRunID int64, release sdk.WorkflowNodeRunRelease) error
 	WorkflowAllHooksList() ([]sdk.NodeHook, error)
 	WorkflowCachePush(projectKey, integrationName, ref string, tarContent io.Reader, size int) error

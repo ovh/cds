@@ -9,8 +9,8 @@ func InitDBMapping(m *gorpmapper.Mapper) {
 }
 
 func (i Item) Canonical() gorpmapper.CanonicalForms {
-	_ = []interface{}{i.ID, i.ApiRefHash, i.Type} // Checks that fields exists at compilation
+	_ = []interface{}{i.ID, i.APIRefHash, i.Type} // Checks that fields exists at compilation
 	return []gorpmapper.CanonicalForm{
-		"{{.ID}}{{.ApiRefHash}}{{.Type}}",
+		"{{.ID}}{{.APIRefHash}}{{.Type}}",
 	}
 }

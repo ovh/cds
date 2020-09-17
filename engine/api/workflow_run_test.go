@@ -2561,6 +2561,8 @@ func initGetWorkflowNodeRunJobTest(t *testing.T, api *API, db gorpmapper.SqlExec
 	}
 	require.NoError(t, pipeline.InsertPipeline(api.mustDB(), &pip))
 
+	script := assets.GetBuiltinOrPluginActionByName(t, db, sdk.ScriptAction)
+
 	s := sdk.NewStage("stage 1")
 	s.Enabled = true
 	s.PipelineID = pip.ID
@@ -2569,6 +2571,8 @@ func initGetWorkflowNodeRunJobTest(t *testing.T, api *API, db gorpmapper.SqlExec
 		Enabled: true,
 		Action: sdk.Action{
 			Enabled: true,
+			Actions: []sdk.Action{
+				assets.NewAction(script.ID, sdk.Parameter{Name: "script", Value: "echo lol"})},
 		},
 	}
 	pipeline.InsertJob(api.mustDB(), j, s.ID, &pip)
@@ -2591,6 +2595,9 @@ func initGetWorkflowNodeRunJobTest(t *testing.T, api *API, db gorpmapper.SqlExec
 		Enabled: true,
 		Action: sdk.Action{
 			Enabled: true,
+			Actions: []sdk.Action{
+				assets.NewAction(script.ID, sdk.Parameter{Name: "script", Value: "echo lol"}),
+			},
 		},
 	}
 	pipeline.InsertJob(api.mustDB(), j, s.ID, &pip2)
@@ -2649,92 +2656,37 @@ func initGetWorkflowNodeRunJobTest(t *testing.T, api *API, db gorpmapper.SqlExec
 	jobRun := &lastRun.WorkflowNodeRuns[w1.WorkflowData.Node.ID][0].Stages[0].RunJobs[0]
 	jobRun.Job.StepStatus = []sdk.StepStatus{
 		{
-			StepOrder: 1,
+			StepOrder: 0,
 			Status:    sdk.StatusBuilding,
 		},
 	}
 
 	// Update node job run
-	errUJ := workflow.UpdateNodeRun(api.mustDB(), &lastRun.WorkflowNodeRuns[w1.WorkflowData.Node.ID][0])
-	require.NoError(t, errUJ)
+	require.NoError(t, workflow.UpdateNodeRun(api.mustDB(), &lastRun.WorkflowNodeRuns[w1.WorkflowData.Node.ID][0]))
 
 	// Add log
-	require.NoError(t, workflow.AppendLog(api.mustDB(), jobRun.ID, jobRun.WorkflowNodeRunID, 1, "1234567890", 15))
+	require.NoError(t, workflow.AppendLog(api.mustDB(), jobRun.ID, jobRun.WorkflowNodeRunID, 0, "1234567890", 15))
 
 	// Add truncated log
-	require.NoError(t, workflow.AppendLog(api.mustDB(), jobRun.ID, jobRun.WorkflowNodeRunID, 1, "1234567890", 15))
+	require.NoError(t, workflow.AppendLog(api.mustDB(), jobRun.ID, jobRun.WorkflowNodeRunID, 0, "1234567890", 15))
 
 	// Add service log
 	require.NoError(t, workflow.AddServiceLog(api.mustDB(), &sdk.ServiceLog{
-		WorkflowNodeRunID:    jobRun.WorkflowNodeRunID,
-		WorkflowNodeJobRunID: jobRun.ID,
-		Val:                  "0987654321",
+		WorkflowNodeRunID:      jobRun.WorkflowNodeRunID,
+		WorkflowNodeJobRunID:   jobRun.ID,
+		Val:                    "0987654321",
+		ServiceRequirementName: "postgres",
 	}, 15))
 
 	// Add truncated service log
 	require.NoError(t, workflow.AddServiceLog(api.mustDB(), &sdk.ServiceLog{
-		WorkflowNodeRunID:    jobRun.WorkflowNodeRunID,
-		WorkflowNodeJobRunID: jobRun.ID,
-		Val:                  "0987654321",
+		WorkflowNodeRunID:      jobRun.WorkflowNodeRunID,
+		WorkflowNodeJobRunID:   jobRun.ID,
+		Val:                    "0987654321",
+		ServiceRequirementName: "postgres",
 	}, 15))
 
 	return u, pass, proj, w1, lastRun, jobRun
-}
-
-func Test_getWorkflowNodeRunJobStepHandler(t *testing.T) {
-	api, db, router := newTestAPI(t)
-
-	u, pass, proj, w1, lastRun, jobRun := initGetWorkflowNodeRunJobTest(t, api, db)
-
-	//Prepare request
-	vars := map[string]string{
-		"key":              proj.Key,
-		"permWorkflowName": w1.Name,
-		"number":           fmt.Sprintf("%d", lastRun.Number),
-		"nodeRunID":        fmt.Sprintf("%d", lastRun.WorkflowNodeRuns[w1.WorkflowData.Node.ID][0].ID),
-		"runJobId":         fmt.Sprintf("%d", jobRun.ID),
-		"stepOrder":        "1",
-	}
-	uri := router.GetRoute("GET", api.getWorkflowNodeRunJobStepHandler, vars)
-	test.NotEmpty(t, uri)
-	req := assets.NewAuthentifiedRequest(t, u, pass, "GET", uri, vars)
-
-	//Do the request
-	rec := httptest.NewRecorder()
-	router.Mux.ServeHTTP(rec, req)
-
-	stepState := &sdk.BuildState{}
-	require.NoError(t, json.Unmarshal(rec.Body.Bytes(), stepState))
-	assert.Equal(t, 200, rec.Code)
-	assert.Equal(t, "123456789012345... truncated\n", stepState.StepLogs.Val)
-	assert.Equal(t, sdk.StatusBuilding, stepState.Status)
-}
-
-func Test_getWorkflowNodeRunJobServiceLogsHandler(t *testing.T) {
-	api, db, router := newTestAPI(t)
-
-	u, pass, proj, w1, lastRun, jobRun := initGetWorkflowNodeRunJobTest(t, api, db)
-
-	//Prepare request
-	vars := map[string]string{
-		"key":              proj.Key,
-		"permWorkflowName": w1.Name,
-		"number":           fmt.Sprintf("%d", lastRun.Number),
-		"nodeRunID":        fmt.Sprintf("%d", lastRun.WorkflowNodeRuns[w1.WorkflowData.Node.ID][0].ID),
-		"runJobId":         fmt.Sprintf("%d", jobRun.ID),
-	}
-	uri := router.GetRoute("GET", api.getWorkflowNodeRunJobServiceLogsHandler, vars)
-	test.NotEmpty(t, uri)
-	req := assets.NewAuthentifiedRequest(t, u, pass, "GET", uri, vars)
-
-	//Do the request
-	rec := httptest.NewRecorder()
-	router.Mux.ServeHTTP(rec, req)
-
-	var logs []sdk.ServiceLog
-	require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &logs))
-	assert.Equal(t, 200, rec.Code)
-	assert.Equal(t, "098765432109876... truncated\n", logs[0].Val)
 }
 
 func Test_deleteWorkflowRunsBranchHandler(t *testing.T) {
@@ -2856,7 +2808,7 @@ func Test_deleteWorkflowRunsBranchHandler(t *testing.T) {
 		"branch":           "master",
 	}
 	uri := router.GetRoute("DELETE", api.deleteWorkflowRunsBranchHandler, vars)
-	test.NotEmpty(t, uri)
+	require.NotEmpty(t, uri)
 	req := assets.NewAuthentifiedRequest(t, nil, jwt, "DELETE", uri, vars)
 
 	//Do the request
@@ -2870,7 +2822,7 @@ func Test_deleteWorkflowRunsBranchHandler(t *testing.T) {
 		"permWorkflowName": w1.Name,
 	}
 	uri = router.GetRoute("GET", api.getWorkflowRunsHandler, vars)
-	test.NotEmpty(t, uri)
+	require.NotEmpty(t, uri)
 	req = assets.NewAuthentifiedRequest(t, u, pass, "GET", uri, vars)
 
 	//Do the request

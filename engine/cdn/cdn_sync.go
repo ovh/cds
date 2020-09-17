@@ -136,16 +136,8 @@ func (s *Service) syncNodeRun(ctx context.Context, cdsStorage *cds.CDS, pKey str
 }
 
 func (s *Service) syncServiceLogs(ctx context.Context, tx gorpmapper.SqlExecutorWithTx, cdsStorage *cds.CDS, pKey string, nodeRun *sdk.WorkflowNodeRun, nodeRunIdentifier sdk.WorkflowNodeRunIdentifiers, rj sdk.WorkflowNodeJobRun, dict map[string]int64) error {
-	servicesLogs, err := cdsStorage.ServiceLogs(pKey, nodeRunIdentifier.WorkflowName, nodeRun.ID, rj.ID)
-	if err != nil {
-		return err
-	}
-	for _, sl := range servicesLogs {
-		reqID, ok := dict[sl.ServiceRequirementName]
-		if !ok {
-			continue
-		}
-		apiRef := index.ApiRef{
+	for k, v := range dict {
+		apiRef := sdk.CDNLogAPIRef{
 			NodeRunID:              nodeRun.ID,
 			WorkflowName:           nodeRunIdentifier.WorkflowName,
 			WorkflowID:             nodeRunIdentifier.WorkflowID,
@@ -154,10 +146,10 @@ func (s *Service) syncServiceLogs(ctx context.Context, tx gorpmapper.SqlExecutor
 			RunID:                  nodeRunIdentifier.WorkflowRunID,
 			NodeRunJobName:         rj.Job.Action.Name,
 			NodeRunName:            nodeRun.WorkflowNodeName,
-			RequirementServiceName: sl.ServiceRequirementName,
-			RequirementServiceID:   reqID,
+			RequirementServiceName: k,
+			RequirementServiceID:   v,
 		}
-		if err := s.syncItem(ctx, tx, cdsStorage, index.TypeItemServiceLog, apiRef); err != nil {
+		if err := s.syncItem(ctx, tx, cdsStorage, sdk.CDNTypeItemServiceLog, apiRef); err != nil {
 			return err
 		}
 	}
@@ -165,7 +157,7 @@ func (s *Service) syncServiceLogs(ctx context.Context, tx gorpmapper.SqlExecutor
 }
 
 func (s *Service) syncStepLog(ctx context.Context, tx gorpmapper.SqlExecutorWithTx, su storage.Interface, pKey string, nodeRun *sdk.WorkflowNodeRun, nodeRunIdentifier sdk.WorkflowNodeRunIdentifiers, rj sdk.WorkflowNodeJobRun, ss sdk.StepStatus, stepName string) error {
-	apiRef := index.ApiRef{
+	apiRef := sdk.CDNLogAPIRef{
 		StepOrder:      int64(ss.StepOrder),
 		NodeRunID:      nodeRun.ID,
 		WorkflowName:   nodeRunIdentifier.WorkflowName,
@@ -177,22 +169,22 @@ func (s *Service) syncStepLog(ctx context.Context, tx gorpmapper.SqlExecutorWith
 		NodeRunJobName: rj.Job.Action.Name,
 		NodeRunName:    nodeRun.WorkflowNodeName,
 	}
-	return s.syncItem(ctx, tx, su, index.TypeItemStepLog, apiRef)
+	return s.syncItem(ctx, tx, su, sdk.CDNTypeItemStepLog, apiRef)
 }
 
-func (s *Service) syncItem(ctx context.Context, tx gorpmapper.SqlExecutorWithTx, su storage.Interface, itemType string, apiRef index.ApiRef) error {
+func (s *Service) syncItem(ctx context.Context, tx gorpmapper.SqlExecutorWithTx, su storage.Interface, itemType sdk.CDNItemType, apiRef sdk.CDNLogAPIRef) error {
 	apirefHash, err := apiRef.ToHash()
 	if err != nil {
 		return err
 	}
 	item := &index.Item{
 		Type:       itemType,
-		ApiRef:     apiRef,
+		APIRef:     apiRef,
 		Status:     index.StatusItemIncoming,
-		ApiRefHash: apirefHash,
+		APIRefHash: apirefHash,
 	}
 	// check if item exist
-	_, err = index.LoadItemByApiRefHashAndType(ctx, s.Mapper, tx, apirefHash, itemType)
+	_, err = index.LoadItemByAPIRefHashAndType(ctx, s.Mapper, tx, apirefHash, itemType)
 	if err == nil {
 		return nil
 	}
@@ -217,7 +209,7 @@ func (s *Service) syncItem(ctx context.Context, tx gorpmapper.SqlExecutorWithTx,
 	if err != nil {
 		return err
 	}
-	itemUnit, err := s.Units.NewItemUnit(ctx, s.Mapper, tx, su, clearItem)
+	itemUnit, err := s.Units.NewItemUnit(ctx, su, clearItem)
 	if err != nil {
 		return err
 	}

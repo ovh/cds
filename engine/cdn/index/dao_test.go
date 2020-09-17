@@ -22,7 +22,7 @@ func TestLoadItem(t *testing.T) {
 	db, _ := test.SetupPGWithMapper(t, m, sdk.TypeCDN)
 	cdntest.ClearIndex(t, context.TODO(), m, db)
 
-	apiRef := index.ApiRef{
+	apiRef := sdk.CDNLogAPIRef{
 		ProjectKey: sdk.RandomString(10),
 	}
 	hashRefU, err := hashstructure.Hash(apiRef, nil)
@@ -30,9 +30,9 @@ func TestLoadItem(t *testing.T) {
 	hashRef := strconv.FormatUint(hashRefU, 10)
 
 	i := index.Item{
-		ApiRef:     apiRef,
-		ApiRefHash: hashRef,
-		Type:       index.TypeItemStepLog,
+		APIRef:     apiRef,
+		APIRefHash: hashRef,
+		Type:       sdk.CDNTypeItemStepLog,
 	}
 	require.NoError(t, index.InsertItem(context.TODO(), m, db, &i))
 	t.Cleanup(func() { _ = index.DeleteItem(m, db, &i) })

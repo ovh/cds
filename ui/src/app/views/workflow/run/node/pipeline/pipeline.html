@@ -1,73 +1,75 @@
-<div id="NodeRunPipeline">
-    <div class="ui grid">
-        <div class="row">
-            <div class="column">
-                <ul *ngIf="stages">
-                    <li *ngFor="let stage of stages" class="stage" [class.one]="stages.length === 1"
-                        [class.two]="stages.length === 2" [class.three]="stages.length === 3"
-                        [class.four]="stages.length === 4" [class.five]="stages.length === 5"
-                        [class.six]="stages.length === 6" [class.seven]="stages.length === 7">
-                        <div class="stageItem">
-                            {{stage.name}}
-                            <ul>
-                                <li *ngFor="let j of stage.jobs">
-                                    <div class="job ui segment pointing"
-                                        [class.active]="currentJob?.pipeline_action_id === j.pipeline_action_id"
-                                        [class.success]="mapJobStatus?.get(j.pipeline_action_id) && mapJobStatus?.get(j.pipeline_action_id).status === pipelineStatusEnum.SUCCESS"
-                                        [class.inactive]="mapJobStatus?.get(j.pipeline_action_id) && (mapJobStatus?.get(j.pipeline_action_id).status === pipelineStatusEnum.DISABLED || mapJobStatus?.get(j.pipeline_action_id).status === pipelineStatusEnum.SKIPPED)"
-                                        [class.fail]="mapJobStatus?.get(j.pipeline_action_id) && mapJobStatus?.get(j.pipeline_action_id).status === pipelineStatusEnum.FAIL"
-                                        [class.building]="mapJobStatus?.get(j.pipeline_action_id) && (mapJobStatus?.get(j.pipeline_action_id).status === pipelineStatusEnum.BUILDING || mapJobStatus?.get(j.pipeline_action_id).status === pipelineStatusEnum.WAITING)"
-                                        (click)="selectedJobManual(j.pipeline_action_id)">
-                                        <div class="warningPip"
-                                            *ngIf="mapJobStatus?.get(j.pipeline_action_id)?.warnings > 0"
-                                            [smDirTooltip]="'warning_build_title' | translate: {nb: mapJobStatus?.get(j.pipeline_action_id)?.warnings}">
-                                            <i class="warning sign icon orange"></i>
-                                        </div>
-                                        <div class="title">
-                                            <app-status-icon [status]="mapJobStatus?.get(j.pipeline_action_id)?.status">
-                                            </app-status-icon>
-                                            <span class="ellipsis" title="{{j.action.name}}">{{j.action.name}}</span>
-                                        </div>
-                                        <div class="duration"
-                                            *ngIf="mapJobStatus?.get(j.pipeline_action_id)?.status !== pipelineStatusEnum.DISABLED && mapJobStatus?.get(j.pipeline_action_id)?.status !== pipelineStatusEnum.SKIPPED">
-                                            <span
-                                                *ngIf="mapJobStatus?.get(j.pipeline_action_id)?.status === pipelineStatusEnum.WAITING">
-                                                {{ 'workflow_run_node_job_queued' | translate: {time: jobTime?.get(j.pipeline_action_id)} }}
-                                            </span>
-                                            <span
-                                                *ngIf="mapJobStatus?.get(j.pipeline_action_id)?.status !== pipelineStatusEnum.WAITING">
-                                                {{jobTime?.get(j.pipeline_action_id)}}
-                                            </span>
-                                        </div>
+<div class="ui grid">
+    <div class="row">
+        <div class="column">
+            <ul *ngIf="stages">
+                <li *ngFor="let stage of stages" class="stage" [class.one]="stages.length === 1"
+                    [class.two]="stages.length === 2" [class.three]="stages.length === 3"
+                    [class.four]="stages.length === 4" [class.five]="stages.length === 5"
+                    [class.six]="stages.length === 6" [class.seven]="stages.length === 7">
+                    <div class="stageItem">
+                        {{stage.name}}
+                        <ul>
+                            <li *ngFor="let j of stage.jobs">
+                                <div class="job ui segment pointing"
+                                    [class.active]="currentJob?.pipeline_action_id === j.pipeline_action_id"
+                                    [class.success]="mapJobStatus?.get(j.pipeline_action_id) && mapJobStatus?.get(j.pipeline_action_id).status === pipelineStatusEnum.SUCCESS"
+                                    [class.inactive]="mapJobStatus?.get(j.pipeline_action_id) && (mapJobStatus?.get(j.pipeline_action_id).status === pipelineStatusEnum.DISABLED || mapJobStatus?.get(j.pipeline_action_id).status === pipelineStatusEnum.SKIPPED)"
+                                    [class.fail]="mapJobStatus?.get(j.pipeline_action_id) && mapJobStatus?.get(j.pipeline_action_id).status === pipelineStatusEnum.FAIL"
+                                    [class.building]="mapJobStatus?.get(j.pipeline_action_id) && (mapJobStatus?.get(j.pipeline_action_id).status === pipelineStatusEnum.BUILDING || mapJobStatus?.get(j.pipeline_action_id).status === pipelineStatusEnum.WAITING)"
+                                    (click)="selectedJobManual(j.pipeline_action_id)">
+                                    <div class="warningPip"
+                                        *ngIf="mapJobStatus?.get(j.pipeline_action_id)?.warnings > 0"
+                                        [smDirTooltip]="'warning_build_title' | translate: {nb: mapJobStatus?.get(j.pipeline_action_id)?.warnings}">
+                                        <i class="warning sign icon orange"></i>
                                     </div>
-                                </li>
-                            </ul>
-
-                        </div>
-                    </li>
-                    <div class="ui info message" *ngIf="!stages || stages.length === 0">
-                        {{ 'pipeline_stage_no' | translate }}
-                    </div>
-                </ul>
-            </div>
-        </div>
-        <div class="row">
-            <div class="column">
-                <div class="log animated fadeIn" *ngIf="currentJob && mapJobStatus">
-                    <ul>
-                        <li>
-                            <app-workflow-run-job-spawn-info [(displayServicesLogs)]="displayServiceLogs"></app-workflow-run-job-spawn-info>
-                        </li>
-                        <ng-container *ngIf="!displayServiceLogs">
-                            <li *ngFor="let step of currentJob.action.actions; let i = index">
-                                <app-workflow-step-log [stepOrder]="i"></app-workflow-step-log>
+                                    <div class="title">
+                                        <app-status-icon [status]="mapJobStatus?.get(j.pipeline_action_id)?.status">
+                                        </app-status-icon>
+                                        <span class="ellipsis" title="{{j.action.name}}">{{j.action.name}}</span>
+                                    </div>
+                                    <div class="duration"
+                                        *ngIf="mapJobStatus?.get(j.pipeline_action_id)?.status !== pipelineStatusEnum.DISABLED && mapJobStatus?.get(j.pipeline_action_id)?.status !== pipelineStatusEnum.SKIPPED">
+                                        <span
+                                            *ngIf="mapJobStatus?.get(j.pipeline_action_id)?.status === pipelineStatusEnum.WAITING">
+                                            {{ 'workflow_run_node_job_queued' | translate: {time: jobTime?.get(j.pipeline_action_id)} }}
+                                        </span>
+                                        <span
+                                            *ngIf="mapJobStatus?.get(j.pipeline_action_id)?.status !== pipelineStatusEnum.WAITING">
+                                            {{jobTime?.get(j.pipeline_action_id)}}
+                                        </span>
+                                    </div>
+                                </div>
                             </li>
-                        </ng-container>
-                        <ng-container *ngIf="displayServiceLogs">
-                            <app-workflow-service-log></app-workflow-service-log>
-                        </ng-container>
-                    </ul>
+                        </ul>
+
+                    </div>
+                </li>
+                <div class="ui info message" *ngIf="!stages || stages.length === 0">
+                    {{ 'pipeline_stage_no' | translate }}
                 </div>
+            </ul>
+        </div>
+    </div>
+    <div class="row">
+        <div class="column">
+            <div class="log animated fadeIn" *ngIf="currentJob && mapJobStatus">
+                <ul>
+                    <li>
+                        <app-workflow-run-job-spawn-info [(displayServicesLogs)]="displayServiceLogs">
+                        </app-workflow-run-job-spawn-info>
+                    </li>
+                    <ng-container *ngIf="!displayServiceLogs">
+                        <li *ngFor="let step of currentJob.action.actions; let i = index">
+                            <app-workflow-step-log [stepOrder]="i"></app-workflow-step-log>
+                        </li>
+                    </ng-container>
+                    <ng-container *ngIf="displayServiceLogs">
+                        <li *ngFor="let req of currentJob.action.requirements; let i = index">
+                            <app-workflow-service-log *ngIf="req.type === 'service'" [serviceName]="req.name">
+                            </app-workflow-service-log>
+                        </li>
+                    </ng-container>
+                </ul>
             </div>
         </div>
     </div>

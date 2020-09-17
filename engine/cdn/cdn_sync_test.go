@@ -2,10 +2,10 @@ package cdn
 
 import (
 	"context"
-	"gopkg.in/h2non/gock.v1"
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	"gopkg.in/h2non/gock.v1"
 
 	"github.com/ovh/cds/engine/cdn/index"
 	"github.com/ovh/cds/engine/cdn/storage"
@@ -55,6 +55,7 @@ func TestSyncLog(t *testing.T) {
 		},
 	})
 	require.NoError(t, err)
+	require.NoError(t, cdnUnits.Start(context.TODO()))
 	s.Units = cdnUnits
 
 	cdsStorage, ok := s.Units.Storages[0].(*cds.CDS)
@@ -229,23 +230,21 @@ func TestSyncLog(t *testing.T) {
 	})
 
 	// Get log
-	gock.New("http://lolcat.host:8081").Get("/project/key2/workflows/wkf1/runs/0/nodes/1001/job/1001/step/0").Reply(200).JSON(sdk.BuildState{
+	gock.New("http://lolcat.host:8081").Get("/project/key2/workflows/wkf1/nodes/1001/job/1001/step/0/log").Reply(200).JSON(sdk.BuildState{
 		StepLogs: sdk.Log{Val: "Je suis ton log step 1"},
 	})
-	gock.New("http://lolcat.host:8081").Get("/project/key2/workflows/wkf1/runs/0/nodes/1001/job/1001/step/1").Reply(200).JSON(sdk.BuildState{
+	gock.New("http://lolcat.host:8081").Get("/project/key2/workflows/wkf1/nodes/1001/job/1001/step/1/log").Reply(200).JSON(sdk.BuildState{
 		StepLogs: sdk.Log{Val: "Je suis ton log step 2 et je suis plus long"},
 	})
 
 	// Get Service log ( call twice )
-	gock.New("http://lolcat.host:8081").Times(2).Get("/project/key2/workflows/wkf1/runs/0/nodes/1001/job/1001/log/service").Reply(200).JSON([]sdk.ServiceLog{
-		{
-			ServiceRequirementName: "pg",
-			Val:                    "Je suis un log de service",
-		},
+	gock.New("http://lolcat.host:8081").Times(2).Get("/project/key2/workflows/wkf1/nodes/1001/job/1001/service/pg/log").Reply(200).JSON(sdk.ServiceLog{
+		ServiceRequirementName: "pg",
+		Val:                    "Je suis un log de service",
 	})
 
 	// Insert index for wkf1, 1000
-	apiRef1000 := index.ApiRef{
+	apiRef1000 := sdk.CDNLogAPIRef{
 		ProjectKey:     "key2",
 		WorkflowName:   "wkf1",
 		WorkflowID:     1000,
@@ -260,9 +259,9 @@ func TestSyncLog(t *testing.T) {
 	hash, err := apiRef1000.ToHash()
 	require.NoError(t, err)
 	itm := index.Item{
-		ApiRef:     apiRef1000,
-		ApiRefHash: hash,
-		Type:       index.TypeItemStepLog,
+		APIRef:     apiRef1000,
+		APIRefHash: hash,
+		Type:       sdk.CDNTypeItemStepLog,
 	}
 	err = index.InsertItem(context.TODO(), s.Mapper, db, &itm)
 	if !sdk.ErrorIs(err, sdk.ErrConflictData) {
@@ -279,8 +278,7 @@ func TestSyncLog(t *testing.T) {
 	ius, err := storage.LoadItemUnitsByUnit(context.TODO(), s.Mapper, db, unit.ID, 100)
 	require.NoError(t, err)
 	for _, iu := range ius {
-		err = index.DeleteItem(s.Mapper, db, &index.Item{ID: iu.ItemID})
-		require.NoError(t, err)
+		require.NoError(t, index.DeleteItem(s.Mapper, db, &index.Item{ID: iu.ItemID}))
 	}
 
 	// Run Test
@@ -291,25 +289,23 @@ func TestSyncLog(t *testing.T) {
 	require.Len(t, itemUnits, 3)
 
 	for _, i := range itemUnits {
-		defer func() {
+		t.Cleanup(func() {
 			_ = index.DeleteItem(s.Mapper, db, &index.Item{ID: i.ItemID})
-		}()
-
+		})
 	}
 
 	item1, err := index.LoadItemByID(context.TODO(), s.Mapper, db, itemUnits[0].ItemID)
 	require.NoError(t, err)
 	require.Equal(t, int64(22), item1.Size)
-	require.Equal(t, index.TypeItemStepLog, item1.Type)
+	require.Equal(t, sdk.CDNTypeItemStepLog, item1.Type)
 
 	item2, err := index.LoadItemByID(context.TODO(), s.Mapper, db, itemUnits[1].ItemID)
 	require.NoError(t, err)
 	require.Equal(t, int64(43), item2.Size)
-	require.Equal(t, index.TypeItemStepLog, item2.Type)
+	require.Equal(t, sdk.CDNTypeItemStepLog, item2.Type)
 
 	item3, err := index.LoadItemByID(context.TODO(), s.Mapper, db, itemUnits[2].ItemID)
 	require.NoError(t, err)
 	require.Equal(t, int64(25), item3.Size)
-	require.Equal(t, index.TypeItemServiceLog, item3.Type)
-
+	require.Equal(t, sdk.CDNTypeItemServiceLog, item3.Type)
 }

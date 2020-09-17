@@ -38,7 +38,7 @@ func getItem(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlExecutor, q g
 	var i Item
 	found, err := m.Get(ctx, db, q, &i, opts...)
 	if err != nil {
-		return nil, sdk.WrapError(err, "cannot get auth consumer")
+		return nil, sdk.WrapError(err, "cannot get item")
 	}
 	if !found {
 		return nil, sdk.WithStack(sdk.ErrNotFound)
@@ -105,14 +105,26 @@ func DeleteItem(m *gorpmapper.Mapper, db gorpmapper.SqlExecutorWithTx, i *Item) 
 	return nil
 }
 
-// LoadItemByJobStepAndType load an item by his job id, step order and type
-func LoadItemByApiRefHashAndType(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlExecutor, hash string, typ string, opts ...gorpmapper.GetOptionFunc) (*Item, error) {
+// LoadItemByAPIRefHashAndType load an item by his job id, step order and type
+func LoadItemByAPIRefHashAndType(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlExecutor, hash string, itemType sdk.CDNItemType, opts ...gorpmapper.GetOptionFunc) (*Item, error) {
 	query := gorpmapper.NewQuery(`
-		SELECT * 
-		FROM index 
-		WHERE 
+		SELECT *
+		FROM index
+		WHERE
 			api_ref_hash = $1 AND
 			type = $2
-	`).Args(hash, typ)
+	`).Args(hash, itemType)
 	return getItem(ctx, m, db, query)
+}
+
+func ComputeSizeByItemIDs(db gorp.SqlExecutor, itemIDs []string) (int64, error) {
+	query := `
+		SELECT SUM(size) FROM index
+		WHERE id = ANY($1) 
+	`
+	size, err := db.SelectInt(query, pq.StringArray(itemIDs))
+	if err != nil {
+		return 0, sdk.WithStack(err)
+	}
+	return size, nil
 }

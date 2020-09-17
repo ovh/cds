@@ -8,7 +8,7 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-func ComputeApiRef(x ApiRef) (string, error) {
+func ComputeApiRef(x sdk.CDNLogAPIRef) (string, error) {
 	hashRefU, err := hashstructure.Hash(x, nil)
 	if err != nil {
 		return "", sdk.WithStack(err)

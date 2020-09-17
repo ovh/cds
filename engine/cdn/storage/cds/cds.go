@@ -7,13 +7,14 @@ import (
 	"io"
 	"io/ioutil"
 
+	"go.opencensus.io/stats"
+
 	"github.com/ovh/cds/engine/cdn/index"
 	"github.com/ovh/cds/engine/cdn/storage"
 	"github.com/ovh/cds/engine/cdn/storage/encryption"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/ovh/cds/sdk/telemetry"
-	"go.opencensus.io/stats"
 )
 
 type CDS struct {
@@ -71,35 +72,28 @@ func (c *CDS) NewWriter(ctx context.Context, i storage.ItemUnit) (io.WriteCloser
 func (c *CDS) NewReader(ctx context.Context, i storage.ItemUnit) (io.ReadCloser, error) {
 	telemetry.Record(ctx, metricsReaders, 1)
 	switch i.Item.Type {
-	case index.TypeItemStepLog:
-		bs, err := c.client.WorkflowNodeRunJobStep(i.Item.ApiRef.ProjectKey, i.Item.ApiRef.WorkflowName, 0, i.Item.ApiRef.NodeRunID, i.Item.ApiRef.NodeRunJobID, int(i.Item.ApiRef.StepOrder))
+	case sdk.CDNTypeItemStepLog:
+		bs, err := c.client.WorkflowNodeRunJobStepLog(i.Item.APIRef.ProjectKey, i.Item.APIRef.WorkflowName, i.Item.APIRef.NodeRunID, i.Item.APIRef.NodeRunJobID, i.Item.APIRef.StepOrder)
 		if err != nil {
 			return nil, err
 		}
 		rc := ioutil.NopCloser(bytes.NewReader([]byte(bs.StepLogs.Val)))
 		telemetry.Record(ctx, metricsReadersStepLogs, 1)
 		return rc, nil
-	case index.TypeItemServiceLog:
-		logs, err := c.ServiceLogs(i.Item.ApiRef.ProjectKey, i.Item.ApiRef.WorkflowName, i.Item.ApiRef.NodeRunID, i.Item.ApiRef.NodeRunJobID)
+	case sdk.CDNTypeItemServiceLog:
+		log, err := c.ServiceLogs(i.Item.APIRef.ProjectKey, i.Item.APIRef.WorkflowName, i.Item.APIRef.NodeRunID, i.Item.APIRef.NodeRunJobID, i.Item.APIRef.RequirementServiceName)
 		if err != nil {
 			return nil, err
 		}
-		for _, l := range logs {
-			if l.ServiceRequirementName != i.Item.ApiRef.RequirementServiceName {
-				continue
-			}
-			rc := ioutil.NopCloser(bytes.NewReader([]byte(l.Val)))
-			telemetry.Record(ctx, metricsReadersServiceLogs, 1)
-			return rc, nil
-		}
-	default:
-		return nil, sdk.WithStack(fmt.Errorf("unable to read type %s", i.Item.Type))
+		rc := ioutil.NopCloser(bytes.NewReader([]byte(log.Val)))
+		telemetry.Record(ctx, metricsReadersServiceLogs, 1)
+		return rc, nil
 	}
-	return nil, sdk.WithStack(fmt.Errorf("unable to find data for ref: %+v", i.Item.ApiRef))
+	return nil, sdk.WithStack(fmt.Errorf("unable to find data for ref: %+v", i.Item.APIRef))
 }
 
-func (c *CDS) ServiceLogs(pKey string, wkfName string, nodeRunID int64, jobID int64) ([]sdk.ServiceLog, error) {
-	return c.client.WorkflowNodeRunJobServiceLog(pKey, wkfName, 0, nodeRunID, jobID)
+func (c *CDS) ServiceLogs(pKey string, wkfName string, nodeRunID int64, jobID int64, serviceName string) (*sdk.ServiceLog, error) {
+	return c.client.WorkflowNodeRunJobServiceLog(pKey, wkfName, nodeRunID, jobID, serviceName)
 }
 
 func (c *CDS) ListProjects() ([]sdk.Project, error) {

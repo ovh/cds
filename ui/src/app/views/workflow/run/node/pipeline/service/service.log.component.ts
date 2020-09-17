@@ -1,8 +1,10 @@
+import { HttpClient, HttpHeaders } from '@angular/common/http';
 import {
     ChangeDetectionStrategy,
     ChangeDetectorRef,
     Component,
     ElementRef,
+    Input,
     NgZone,
     OnDestroy,
     OnInit,
@@ -10,10 +12,11 @@ import {
 } from '@angular/core';
 import { Select, Store } from '@ngxs/store';
 import * as AU from 'ansi_up';
-import { PipelineStatus, ServiceLog } from 'app/model/pipeline.model';
+import { CDNLogAccess, PipelineStatus, ServiceLog } from 'app/model/pipeline.model';
 import { WorkflowNodeJobRun } from 'app/model/workflow.run.model';
 import { WorkflowService } from 'app/service/workflow/workflow.service';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
+import { FeatureState } from 'app/store/feature.state';
 import { ProjectState } from 'app/store/project.state';
 import { WorkflowState, WorkflowStateModel } from 'app/store/workflow.state';
 import { Observable, Subscription } from 'rxjs';
@@ -31,9 +34,10 @@ export class WorkflowServiceLogComponent implements OnInit, OnDestroy {
 
     @ViewChild('logsContent') logsElt: ElementRef;
 
-    logsSplitted: Array<string> = [];
+    @Input() serviceName: string;
 
-    serviceLogs: Array<ServiceLog>;
+    logsSplitted: Array<string> = [];
+    serviceLog: ServiceLog;
 
     pollingSubscription: Subscription;
 
@@ -50,7 +54,8 @@ export class WorkflowServiceLogComponent implements OnInit, OnDestroy {
         private _store: Store,
         private _cd: ChangeDetectorRef,
         private _ngZone: NgZone,
-        private _workflowService: WorkflowService
+        private _workflowService: WorkflowService,
+        private _http: HttpClient
     ) {
         this.zone = new NgZone({ enableLongStackTrace: false });
     }
@@ -66,9 +71,15 @@ export class WorkflowServiceLogComponent implements OnInit, OnDestroy {
             if (this.currentRunJobID && njr.id === this.currentRunJobID && this.currentRunJobStatus === njr.status) {
                 return;
             }
+
+            let invalidServiceName = !njr.job.action.requirements.find(r => r.type === 'service' && r.name === this.serviceName);
+            if (invalidServiceName) {
+                return;
+            }
+
             this.currentRunJobID = njr.id;
             this.currentRunJobStatus = njr.status;
-            if (!this.pollingSubscription && (!this.serviceLogs || this.serviceLogs.length === 0)) {
+            if (!this.pollingSubscription) {
                 this.initWorker();
             }
             this._cd.markForCheck();
@@ -82,8 +93,8 @@ export class WorkflowServiceLogComponent implements OnInit, OnDestroy {
         return '';
     }
 
-    initWorker(): void {
-        if (!this.serviceLogs) {
+    async initWorker() {
+        if (!this.serviceLog) {
             this.loading = true;
         }
 
@@ -93,19 +104,36 @@ export class WorkflowServiceLogComponent implements OnInit, OnDestroy {
         let nodeRunId = (<WorkflowStateModel>this._store.selectSnapshot(WorkflowState)).workflowNodeRun.id;
         let runJobId = this.currentRunJobID;
 
-        let callback = (serviceLogs: Array<ServiceLog>) => {
-            this.serviceLogs = serviceLogs.map((log, id) => {
-                this.showLog[id] = this.showLog[id] || false;
-                log.logsSplitted = this.getLogs(log).split('\n');
-                return log;
-            });
+        const cdnEnabled = !!this._store.selectSnapshot(FeatureState.feature('cdn-job-logs')).find(f => {
+            return !!f.results.find(r => r.enabled && r.paramString === JSON.stringify({ 'project_key': projectKey }));
+        });
+
+        let logAccess: CDNLogAccess;
+        if (cdnEnabled) {
+            logAccess = await this._workflowService.getServiceAccess(projectKey, workflowName, nodeRunId, runJobId,
+                this.serviceName).toPromise();
+        }
+
+        let callback = (serviceLog: ServiceLog) => {
+            this.serviceLog = serviceLog;
+            this.logsSplitted = this.getLogs(serviceLog).split('\n');
             if (this.loading) {
                 this.loading = false;
             }
             this._cd.markForCheck();
         };
 
-        this._workflowService.getServiceLog(projectKey, workflowName, runNumber, nodeRunId, runJobId).subscribe(callback);
+        if (!cdnEnabled || !logAccess.exists) {
+            const serviceLog = await this._workflowService.getServiceLog(projectKey, workflowName,
+                nodeRunId, runJobId, this.serviceName).toPromise();
+            callback(serviceLog);
+        } else {
+            const data = await this._http.get('./cdscdn' + logAccess.download_path, {
+                responseType: 'text',
+                headers: new HttpHeaders({ 'Authorization': `Bearer ${logAccess.token}` })
+            }).toPromise();
+            callback(<ServiceLog>{ val: data });
+        }
 
         if (this.currentRunJobStatus === PipelineStatus.SUCCESS
             || this.currentRunJobStatus === PipelineStatus.FAIL
@@ -116,7 +144,16 @@ export class WorkflowServiceLogComponent implements OnInit, OnDestroy {
         this.stopPolling();
         this._ngZone.runOutsideAngular(() => {
             this.pollingSubscription = Observable.interval(2000)
-                .mergeMap(_ => this._workflowService.getServiceLog(projectKey, workflowName, runNumber, nodeRunId, runJobId))
+                .mergeMap(_ => {
+                    if (!cdnEnabled || !logAccess.exists) {
+                        return this._workflowService.getServiceLog(projectKey, workflowName, nodeRunId,
+                            runJobId, this.serviceName);
+                    }
+                    return this._http.get('./cdscdn' + logAccess.download_path, {
+                        responseType: 'text',
+                        headers: new HttpHeaders({ 'Authorization': `Bearer ${logAccess.token}` })
+                    }).map(data => <ServiceLog>{ val: data });
+                })
                 .subscribe(serviceLogs => {
                     this.zone.run(() => {
                         callback(serviceLogs);

@@ -80,16 +80,17 @@ func ExistsServiceLog(db gorp.SqlExecutor, nodeRunJobID int64, serviceName strin
 func LoadServiceLog(db gorp.SqlExecutor, nodeRunJobID int64, serviceName string) (*sdk.ServiceLog, error) {
 	query := `
 		SELECT id, workflow_node_run_job_id, workflow_node_run_id, requirement_service_name, start, last_modified, value
-			FROM requirement_service_logs
+		FROM requirement_service_logs
 		WHERE workflow_node_run_job_id = $1 AND requirement_service_name = $2
 	`
 	var log sdk.ServiceLog
 	var s, m pq.NullTime
-	err := db.QueryRow(query, nodeRunJobID, serviceName).Scan(&log.ID, &log.WorkflowNodeJobRunID, &log.WorkflowNodeRunID, &log.ServiceRequirementName, &s, &m, &log.Val)
-	if err != nil {
-		return nil, sdk.WithStack(err)
+	if err := db.QueryRow(query, nodeRunJobID, serviceName).Scan(&log.ID, &log.WorkflowNodeJobRunID, &log.WorkflowNodeRunID, &log.ServiceRequirementName, &s, &m, &log.Val); err != nil {
+		if err == sql.ErrNoRows {
+			return nil, nil
+		}
+		return nil, err
 	}
-
 	if s.Valid {
 		log.Start = &s.Time
 	}
@@ -98,40 +99,4 @@ func LoadServiceLog(db gorp.SqlExecutor, nodeRunJobID int64, serviceName string)
 	}
 
 	return &log, nil
-}
-
-// LoadServicesLogsByJob retrieves services logs for a run
-func LoadServicesLogsByJob(db gorp.SqlExecutor, nodeJobRunID int64) ([]sdk.ServiceLog, error) {
-	query := `
-		SELECT id, workflow_node_run_job_id, workflow_node_run_id, requirement_service_name, start, last_modified, value
-			FROM requirement_service_logs
-		WHERE workflow_node_run_job_id = $1
-	`
-	rows, err := db.Query(query, nodeJobRunID)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close() // nolint
-
-	logs := []sdk.ServiceLog{}
-	for rows.Next() {
-		var log sdk.ServiceLog
-		var s, m pq.NullTime
-
-		errS := rows.Scan(&log.ID, &log.WorkflowNodeJobRunID, &log.WorkflowNodeRunID, &log.ServiceRequirementName, &s, &m, &log.Val)
-		if errS != nil {
-			return nil, sdk.WithStack(errS)
-		}
-
-		if s.Valid {
-			log.Start = &s.Time
-		}
-		if m.Valid {
-			log.LastModified = &m.Time
-		}
-
-		logs = append(logs, log)
-	}
-
-	return logs, nil
 }

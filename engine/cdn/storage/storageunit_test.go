@@ -80,13 +80,14 @@ func TestRun(t *testing.T) {
 	})
 	require.NoError(t, err)
 	require.NotNil(t, cdnUnits)
+	require.NoError(t, cdnUnits.Start(ctx))
 
 	units, err := storage.LoadAllUnits(ctx, m, db.DbMap)
 	require.NoError(t, err)
 	require.NotNil(t, units)
 	require.NotEmpty(t, units)
 
-	apiRef := index.ApiRef{
+	apiRef := sdk.CDNLogAPIRef{
 		ProjectKey: sdk.RandomString(5),
 	}
 
@@ -94,10 +95,10 @@ func TestRun(t *testing.T) {
 	require.NoError(t, err)
 
 	i := &index.Item{
-		ApiRef:     apiRef,
-		ApiRefHash: apiRefHash,
+		APIRef:     apiRef,
+		APIRefHash: apiRefHash,
 		Created:    time.Now(),
-		Type:       index.TypeItemStepLog,
+		Type:       sdk.CDNTypeItemStepLog,
 		Status:     index.StatusItemIncoming,
 	}
 	require.NoError(t, index.InsertItem(ctx, m, db, i))
@@ -107,7 +108,7 @@ func TestRun(t *testing.T) {
 
 	log.Debug("item ID: %v", i.ID)
 
-	itemUnit, err := cdnUnits.NewItemUnit(ctx, m, db, cdnUnits.Buffer, i)
+	itemUnit, err := cdnUnits.NewItemUnit(ctx, cdnUnits.Buffer, i)
 	require.NoError(t, err)
 
 	err = storage.InsertItemUnit(ctx, m, db, itemUnit)
@@ -116,8 +117,8 @@ func TestRun(t *testing.T) {
 	itemUnit, err = storage.LoadItemUnitByID(ctx, m, db, itemUnit.ID, gorpmapper.GetOptions.WithDecryption)
 	require.NoError(t, err)
 
-	require.NoError(t, cdnUnits.Buffer.Add(*itemUnit, 1.0, "this is the first log"))
-	require.NoError(t, cdnUnits.Buffer.Add(*itemUnit, 1.0, "this is the second log"))
+	require.NoError(t, cdnUnits.Buffer.Add(*itemUnit, 1.0, "this is the first log\n"))
+	require.NoError(t, cdnUnits.Buffer.Add(*itemUnit, 1.0, "this is the second log\n"))
 
 	reader, err := cdnUnits.Buffer.NewReader(context.TODO(), *itemUnit)
 	require.NoError(t, err)
@@ -171,8 +172,7 @@ func TestRun(t *testing.T) {
 	require.NoError(t, reader.Close())
 
 	actual := btes.String()
-	require.Equal(t, `this is the first log
-this is the second log`, actual, "item %s content should match", i.ID)
+	require.Equal(t, "this is the first log\nthis is the second log\n", actual, "item %s content should match", i.ID)
 
 	itemIDs, err := storage.LoadAllItemIDUnknownByUnit(db, localUnitDriver.ID(), 100)
 	require.NoError(t, err)
@@ -190,11 +190,9 @@ this is the second log`, actual, "item %s content should match", i.ID)
 	require.NoError(t, reader.Close())
 
 	actual = btes.String()
-	require.Equal(t, `this is the first log
-this is the second log`, actual, "item %s content should match", i.ID)
+	require.Equal(t, "this is the first log\nthis is the second log\n", actual, "item %s content should match", i.ID)
 
 	itemIDs, err = storage.LoadAllItemIDUnknownByUnit(db, localUnitDriver2.ID(), 100)
 	require.NoError(t, err)
 	require.Len(t, itemIDs, 0)
-
 }

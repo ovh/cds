@@ -5,15 +5,15 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/ovh/cds/engine/cdn/storage/cds"
-
 	"github.com/go-gorp/gorp"
 	"github.com/gorilla/mux"
 
 	"github.com/ovh/cds/engine/api"
 	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/engine/cdn/index"
+	"github.com/ovh/cds/engine/cdn/lru"
 	"github.com/ovh/cds/engine/cdn/storage"
+	"github.com/ovh/cds/engine/cdn/storage/cds"
 	_ "github.com/ovh/cds/engine/cdn/storage/local"
 	_ "github.com/ovh/cds/engine/cdn/storage/redis"
 	"github.com/ovh/cds/engine/database"
@@ -126,14 +126,17 @@ func (s *Service) Serve(c context.Context) error {
 		if err != nil {
 			return err
 		}
+		if err := s.Units.Start(ctx); err != nil {
+			return err
+		}
 
 		sdk.GoRoutine(ctx, "cdn-gc-items", func(ctx context.Context) {
-			s.CompleteWaitingItems(ctx)
+			s.ItemsGC(ctx)
 		})
 
 		// Start CDS Backend migration
-		for _, storage := range s.Units.Storages {
-			cdsStorage, ok := storage.(*cds.CDS)
+		for _, st := range s.Units.Storages {
+			cdsStorage, ok := st.(*cds.CDS)
 			if !ok {
 				continue
 			}
@@ -143,6 +146,15 @@ func (s *Service) Serve(c context.Context) error {
 				}
 			})
 		}
+
+		log.Info(ctx, "Initializing log cache on %s", s.Cfg.Cache.Redis.Host)
+		s.LogCache, err = lru.NewRedisLRU(s.mustDBWithCtx(ctx), s.Cfg.Cache.LruSize, s.Cfg.Cache.Redis.Host, s.Cfg.Cache.Redis.Password)
+		if err != nil {
+			return sdk.WrapError(err, "cannot connect to redis instance for lru")
+		}
+		sdk.GoRoutine(ctx, "log-cache-eviction", func(ctx context.Context) {
+			s.LogCache.Evict(ctx)
+		})
 	}
 
 	log.Info(ctx, "Initializing redis cache on %s...", s.Cfg.Cache.Redis.Host)

@@ -279,7 +279,7 @@ func (s *Service) handleServiceLog(ctx context.Context, hatcheryID int64, hatche
 		Msg:       m,
 		Status:    status,
 	}
-	if s.cdnServiceLogsEnabled(ctx) {
+	if s.cdnEnabled(ctx, signature.ProjectKey) {
 		if err := s.Cache.Enqueue(keyServiceLogIncomingQueue, hm); err != nil {
 			return err
 		}
@@ -344,22 +344,6 @@ func (s *Service) refreshHatcheriesPK(ctx context.Context) error {
 		logCache.Set(fmt.Sprintf("hatchery-key-%d", s.ID), pk, gocache.DefaultExpiration)
 	}
 	return nil
-}
-
-func (s *Service) cdnServiceLogsEnabled(ctx context.Context) bool {
-	cacheKey := "cdn-service-logs-enabled"
-	enabled, has := logCache.Get(cacheKey)
-	if !has {
-		m := make(map[string]string)
-		resp, err := s.Client.FeatureEnabled("cdn-service-logs", m)
-		if err != nil {
-			log.Error(ctx, "unable to get cdn-service features: %v", err)
-			return false
-		}
-		logCache.Set(cacheKey, resp.Enabled, gocache.DefaultExpiration)
-		return resp.Enabled
-	}
-	return enabled.(bool)
 }
 
 func (s *Service) cdnEnabled(ctx context.Context, projectKey string) bool {
