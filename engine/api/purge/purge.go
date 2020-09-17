@@ -179,7 +179,7 @@ func deleteWorkflowRunsHistory(ctx context.Context, db *gorp.DbMap, store cache.
 			continue
 		}
 
-		_, code, err := cdnClient.DoJSONRequest(ctx, http.MethodPatch, "/item/delete", sdk.CDNMarkDelete{RunID: workflowRunID}, nil)
+		_, code, err := cdnClient.DoJSONRequest(ctx, http.MethodPost, "/item/delete", sdk.CDNMarkDelete{RunID: workflowRunID}, nil)
 		if err != nil || code >= 400 {
 			log.Error(ctx, "deleteWorkflowRunsHistory> unable to mark logs to delete [%d]: %s", code, err)
 			_ = tx.Rollback()

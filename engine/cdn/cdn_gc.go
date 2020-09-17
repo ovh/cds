@@ -68,6 +68,7 @@ func (s *Service) cleanItemToDelete(ctx context.Context) error {
 		if len(ids) == 0 {
 			break
 		}
+		log.Info(ctx, "cdn:purge:item: %d items to delete", len(ids))
 		if err := index.DeleteItemByIDs(s.mustDBWithCtx(ctx), ids); err != nil {
 			return err
 		}
