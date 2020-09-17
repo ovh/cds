@@ -12,7 +12,8 @@ CREATE TABLE IF NOT EXISTS "index" (
   status VARCHAR(64), -- status of item
   type VARCHAR(64), -- type of item
   size BIGINT,
-  md5 TEXT
+  md5 TEXT,
+  to_delete BOOLEAN
 );
 CREATE INDEX api_ref_index ON "index" USING GIN (api_ref);
 select create_unique_index('index', 'IDX_INDEX_UNIQ_ITEM', 'api_ref_hash,type');

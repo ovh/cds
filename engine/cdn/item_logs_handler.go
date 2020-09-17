@@ -15,6 +15,38 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
+func (s *Service) markItemToDeleteHandler() service.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		if !s.Cfg.EnableLogProcessing {
+			return nil
+		}
+		var req sdk.CDNMarkDelete
+		if err := service.UnmarshalBody(r, &req); err != nil {
+			return err
+		}
+
+		if req.WorkflowID > 0 && req.RunID > 0 {
+			return sdk.WrapError(sdk.ErrWrongRequest, "invalid data")
+		}
+		tx, err := s.mustDBWithCtx(ctx).Begin()
+		if err != nil {
+			return sdk.WrapError(err, "unable to start transaction")
+		}
+		defer tx.Rollback() //nolint
+
+		if req.WorkflowID > 0 {
+			if err := index.MarkItemToDeleteByWorkflowID(tx, req.WorkflowID); err != nil {
+				return err
+			}
+		} else {
+			if err := index.MarkItemToDeleteByRunIDs(tx, req.RunID); err != nil {
+				return err
+			}
+		}
+		return sdk.WrapError(tx.Commit(), "unable to commit transaction")
+	}
+}
+
 func (s *Service) getItemLogsHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)

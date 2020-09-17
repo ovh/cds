@@ -243,3 +243,56 @@ func TestCleanWaitingItem(t *testing.T) {
 
 	require.Equal(t, index.StatusItemCompleted, itemDB.Status)
 }
+
+func TestPurgeItem(t *testing.T) {
+	m := gorpmapper.New()
+	index.InitDBMapping(m)
+	storage.InitDBMapping(m)
+
+	log.SetLogger(t)
+	db, factory, cache, cancel := test.SetupPGToCancel(t, m, sdk.TypeCDN)
+	t.Cleanup(cancel)
+
+	cdntest.ClearIndex(t, context.TODO(), m, db)
+
+	// Create cdn service
+	s := Service{
+		DBConnectionFactory: factory,
+		Cache:               cache,
+		Mapper:              m,
+	}
+
+	// Add Item in CDS and FS
+	item1 := index.Item{
+		ID:         sdk.UUID(),
+		Type:       sdk.CDNTypeItemStepLog,
+		Status:     index.StatusItemCompleted,
+		APIRefHash: sdk.RandomString(10),
+		ToDelete:   true,
+	}
+	require.NoError(t, index.InsertItem(context.TODO(), s.Mapper, db, &item1))
+
+	item2 := index.Item{
+		ID:         sdk.UUID(),
+		Type:       sdk.CDNTypeItemStepLog,
+		Status:     index.StatusItemCompleted,
+		APIRefHash: sdk.RandomString(10),
+		ToDelete:   false,
+	}
+	require.NoError(t, index.InsertItem(context.TODO(), s.Mapper, db, &item2))
+
+	item3 := index.Item{
+		ID:         sdk.UUID(),
+		Type:       sdk.CDNTypeItemStepLog,
+		Status:     index.StatusItemCompleted,
+		APIRefHash: sdk.RandomString(10),
+		ToDelete:   true,
+	}
+	require.NoError(t, index.InsertItem(context.TODO(), s.Mapper, db, &item3))
+
+	require.NoError(t, s.cleanItemToDelete(context.TODO()))
+
+	items, err := index.LoadAllItems(context.TODO(), s.Mapper, db, 10)
+	require.NoError(t, err)
+	require.Equal(t, 1, len(items))
+}

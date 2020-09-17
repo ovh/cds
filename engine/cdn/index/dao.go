@@ -2,6 +2,7 @@ package index
 
 import (
 	"context"
+	"strconv"
 	"time"
 
 	"github.com/go-gorp/gorp"
@@ -55,6 +56,29 @@ func getItem(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlExecutor, q g
 	return &i, nil
 }
 
+func LoadItemIDsToDelete(db gorp.SqlExecutor, size int) ([]string, error) {
+	query := `
+		SELECT id
+		FROM index
+		WHERE to_delete = true
+		ORDER BY last_modified ASC
+		LIMIT $1
+	`
+	var ids []string
+	if _, err := db.Select(&ids, query, size); err != nil {
+		return nil, sdk.WithStack(err)
+	}
+	return ids, nil
+}
+
+func DeleteItemByIDs(db gorp.SqlExecutor, ids []string) error {
+	query := `
+		DELETE FROM index WHERE id = ANY($1)
+	`
+	_, err := db.Exec(query, pq.StringArray(ids))
+	return sdk.WithStack(err)
+}
+
 func LoadAllItems(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlExecutor, size int, opts ...gorpmapper.GetOptionFunc) ([]Item, error) {
 	query := gorpmapper.NewQuery("SELECT * FROM index ORDER BY created LIMIT $1").Args(size)
 	return getItems(ctx, m, db, query, opts...)
@@ -98,11 +122,20 @@ func UpdateItem(ctx context.Context, m *gorpmapper.Mapper, db gorpmapper.SqlExec
 	return nil
 }
 
-func DeleteItem(m *gorpmapper.Mapper, db gorpmapper.SqlExecutorWithTx, i *Item) error {
-	if err := m.Delete(db, i); err != nil {
-		return sdk.WrapError(err, "unable to delete item %s", i.ID)
-	}
-	return nil
+func MarkItemToDeleteByWorkflowID(db gorpmapper.SqlExecutorWithTx, workflowID int64) error {
+	query := `
+		UPDATE index SET to_delete = true WHERE (api_ref->>'workflow_id')::int = $1 
+	`
+	_, err := db.Exec(query, workflowID)
+	return sdk.WrapError(err, "unable to mark item to delete for workflow %s", strconv.Itoa(int(workflowID)))
+}
+
+func MarkItemToDeleteByRunIDs(db gorpmapper.SqlExecutorWithTx, runID int64) error {
+	query := `
+		UPDATE index SET to_delete = true WHERE (api_ref->>'run_id')::int = $1 
+	`
+	_, err := db.Exec(query, runID)
+	return sdk.WrapError(err, "unable to mark item to delete for run %d", runID)
 }
 
 // LoadItemByAPIRefHashAndType load an item by his job id, step order and type

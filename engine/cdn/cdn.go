@@ -131,7 +131,10 @@ func (s *Service) Serve(c context.Context) error {
 		}
 
 		sdk.GoRoutine(ctx, "cdn-gc-items", func(ctx context.Context) {
-			s.ItemsGC(ctx)
+			s.itemsGC(ctx)
+		})
+		sdk.GoRoutine(ctx, "cdn-purge-items", func(ctx context.Context) {
+			s.itemPurge(ctx)
 		})
 
 		// Start CDS Backend migration

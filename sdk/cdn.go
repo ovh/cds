@@ -39,6 +39,11 @@ type CDNLogAPIRef struct {
 	RequirementServiceName string `json:"service_name,omitempty"`
 }
 
+type CDNMarkDelete struct {
+	WorkflowID int64 `json:"workflow_id,omitempty"`
+	RunID      int64 `json:"run_id,omitempty"`
+}
+
 func (a CDNLogAPIRef) ToHash() (string, error) {
 	hashRefU, err := hashstructure.Hash(a, nil)
 	if err != nil {
