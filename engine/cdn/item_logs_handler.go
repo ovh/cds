@@ -10,7 +10,7 @@ import (
 	"github.com/gorilla/mux"
 
 	"github.com/ovh/cds/engine/authentication"
-	"github.com/ovh/cds/engine/cdn/index"
+	"github.com/ovh/cds/engine/cdn/item"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 )
@@ -35,11 +35,11 @@ func (s *Service) markItemToDeleteHandler() service.Handler {
 		defer tx.Rollback() //nolint
 
 		if req.WorkflowID > 0 {
-			if err := index.MarkItemToDeleteByWorkflowID(tx, req.WorkflowID); err != nil {
+			if err := item.MarkToDeleteByWorkflowID(tx, req.WorkflowID); err != nil {
 				return err
 			}
 		} else {
-			if err := index.MarkItemToDeleteByRunIDs(tx, req.RunID); err != nil {
+			if err := item.MarkToDeleteByRunIDs(tx, req.RunID); err != nil {
 				return err
 			}
 		}
@@ -57,12 +57,12 @@ func (s *Service) getItemLogsHandler() service.Handler {
 		apiRef := vars["apiRef"]
 
 		// Try to load item and item units for given api ref
-		item, err := index.LoadItemByAPIRefHashAndType(ctx, s.Mapper, s.mustDBWithCtx(ctx), apiRef, itemType)
+		it, err := item.LoadByAPIRefHashAndType(ctx, s.Mapper, s.mustDBWithCtx(ctx), apiRef, itemType)
 		if err != nil {
 			return err
 		}
 
-		return service.WriteJSON(w, item, http.StatusOK)
+		return service.WriteJSON(w, it, http.StatusOK)
 	}
 }
 

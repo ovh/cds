@@ -7,7 +7,6 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/ovh/cds/engine/cdn/index"
 	"github.com/ovh/cds/engine/cdn/storage"
 	"github.com/ovh/cds/engine/cdn/storage/encryption"
 	"github.com/ovh/cds/sdk"
@@ -53,7 +52,7 @@ func (s *Webdav) Init(ctx context.Context, cfg interface{}) error {
 	return s.client.MkdirAll(config.Path, os.FileMode(0600))
 }
 
-func (s *Webdav) filename(i storage.ItemUnit) (string, error) {
+func (s *Webdav) filename(i sdk.CDNItemUnit) (string, error) {
 	loc := i.Locator
 	if err := s.client.MkdirAll(filepath.Join(s.config.Path, loc[:3]), os.FileMode(0700)); err != nil {
 		return "", nil
@@ -61,7 +60,7 @@ func (s *Webdav) filename(i storage.ItemUnit) (string, error) {
 	return filepath.Join(s.config.Path, loc[:3], loc), nil
 }
 
-func (s *Webdav) ItemExists(i index.Item) (bool, error) {
+func (s *Webdav) ItemExists(i sdk.CDNItem) (bool, error) {
 	iu, err := s.ExistsInDatabase(i.ID)
 	if err != nil {
 		if sdk.ErrorIs(err, sdk.ErrNotFound) {
@@ -77,7 +76,7 @@ func (s *Webdav) ItemExists(i index.Item) (bool, error) {
 	return !os.IsNotExist(err), nil
 }
 
-func (s *Webdav) NewWriter(ctx context.Context, i storage.ItemUnit) (io.WriteCloser, error) {
+func (s *Webdav) NewWriter(_ context.Context, i sdk.CDNItemUnit) (io.WriteCloser, error) {
 	f, err := s.filename(i)
 	if err != nil {
 		return nil, err
@@ -92,7 +91,7 @@ func (s *Webdav) NewWriter(ctx context.Context, i storage.ItemUnit) (io.WriteClo
 	return pw, nil
 }
 
-func (s *Webdav) NewReader(ctx context.Context, i storage.ItemUnit) (io.ReadCloser, error) {
+func (s *Webdav) NewReader(_ context.Context, i sdk.CDNItemUnit) (io.ReadCloser, error) {
 	f, err := s.filename(i)
 	if err != nil {
 		return nil, err
@@ -100,7 +99,7 @@ func (s *Webdav) NewReader(ctx context.Context, i storage.ItemUnit) (io.ReadClos
 	return s.client.ReadStream(f)
 }
 
-func (s *Webdav) Status(ctx context.Context) []sdk.MonitoringStatusLine {
+func (s *Webdav) Status(_ context.Context) []sdk.MonitoringStatusLine {
 	if err := s.client.Connect(); err != nil {
 		return []sdk.MonitoringStatusLine{{Component: "backend/webdav", Value: "webdav KO" + err.Error(), Status: sdk.MonitoringStatusAlert}}
 	}

@@ -7,7 +7,7 @@ import (
 
 	"github.com/sirupsen/logrus"
 
-	"github.com/ovh/cds/engine/cdn/index"
+	"github.com/ovh/cds/engine/cdn/item"
 	"github.com/ovh/cds/engine/cdn/storage"
 	"github.com/ovh/cds/engine/cdn/storage/cds"
 	"github.com/ovh/cds/sdk"
@@ -52,7 +52,7 @@ func (s *Service) itemsGC(ctx context.Context) {
 			if err := s.cleanBuffer(ctx); err != nil {
 				log.ErrorWithFields(ctx, logrus.Fields{"stack_trace": fmt.Sprintf("%+v", err)}, "%s", err)
 			}
-			if err := s.cleanWaitingItem(ctx); err != nil {
+			if err := s.cleanWaitingItem(ctx, ItemLogGC); err != nil {
 				log.ErrorWithFields(ctx, logrus.Fields{"stack_trace": fmt.Sprintf("%+v", err)}, "%s", err)
 			}
 		}
@@ -61,7 +61,7 @@ func (s *Service) itemsGC(ctx context.Context) {
 
 func (s *Service) cleanItemToDelete(ctx context.Context) error {
 	for {
-		ids, err := index.LoadItemIDsToDelete(s.mustDBWithCtx(ctx), 100)
+		ids, err := item.LoadIDsToDelete(s.mustDBWithCtx(ctx), 100)
 		if err != nil {
 			return err
 		}
@@ -69,7 +69,7 @@ func (s *Service) cleanItemToDelete(ctx context.Context) error {
 			break
 		}
 		log.Info(ctx, "cdn:purge:item: %d items to delete", len(ids))
-		if err := index.DeleteItemByIDs(s.mustDBWithCtx(ctx), ids); err != nil {
+		if err := item.DeleteByIDs(s.mustDBWithCtx(ctx), ids); err != nil {
 			return err
 		}
 	}
@@ -104,8 +104,8 @@ func (s *Service) cleanBuffer(ctx context.Context) error {
 	return sdk.WithStack(tx.Commit())
 }
 
-func (s *Service) cleanWaitingItem(ctx context.Context) error {
-	itemUnits, err := storage.LoadOldItemUnitByItemStatusAndDuration(ctx, s.Mapper, s.mustDBWithCtx(ctx), index.StatusItemIncoming, ItemLogGC)
+func (s *Service) cleanWaitingItem(ctx context.Context, duration int) error {
+	itemUnits, err := storage.LoadOldItemUnitByItemStatusAndDuration(ctx, s.Mapper, s.mustDBWithCtx(ctx), sdk.CDNStatusItemIncoming, duration)
 	if err != nil {
 		return err
 	}

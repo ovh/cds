@@ -9,7 +9,6 @@ import (
 	"github.com/ovh/symmecrypt/convergent"
 	"github.com/stretchr/testify/require"
 
-	"github.com/ovh/cds/engine/cdn/index"
 	"github.com/ovh/cds/engine/cdn/storage"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
@@ -41,9 +40,9 @@ func TestSwift(t *testing.T) {
 		t.SkipNow()
 	}
 
-	itemUnit := storage.ItemUnit{
+	itemUnit := sdk.CDNItemUnit{
 		Locator: "a_locator",
-		Item: &index.Item{
+		Item: &sdk.CDNItem{
 			Type: sdk.CDNTypeItemStepLog,
 		},
 	}

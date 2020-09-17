@@ -5,9 +5,40 @@ import (
 	json "encoding/json"
 	"fmt"
 	"strconv"
+	"time"
 
 	"github.com/mitchellh/hashstructure"
 )
+
+type CDNItem struct {
+	ID           string       `json:"id" db:"id"`
+	Created      time.Time    `json:"created" db:"created"`
+	LastModified time.Time    `json:"last_modified" db:"last_modified"`
+	Hash         string       `json:"-" db:"cipher_hash" gorpmapping:"encrypted,ID,APIRefHash,Type"`
+	APIRef       CDNLogAPIRef `json:"api_ref" db:"api_ref"`
+	APIRefHash   string       `json:"api_ref_hash" db:"api_ref_hash"`
+	Status       string       `json:"status" db:"status"`
+	Type         CDNItemType  `json:"type" db:"type"`
+	Size         int64        `json:"size" db:"size"`
+	MD5          string       `json:"md5" db:"md5"`
+	ToDelete     bool         `json:"to_delete" db:"to_delete"`
+}
+
+type CDNItemUnit struct {
+	ID           string    `json:"id" db:"id"`
+	ItemID       string    `json:"item_id" db:"item_id"`
+	UnitID       string    `json:"unit_id" db:"unit_id"`
+	LastModified time.Time `json:"last_modified" db:"last_modified"`
+	Locator      string    `json:"-" db:"cipher_locator" gorpmapping:"encrypted,UnitID,ItemID"`
+	Item         *CDNItem  `json:"-" db:"-"`
+}
+
+type CDNUnit struct {
+	ID      string        `json:"id" db:"id"`
+	Created time.Time     `json:"created" db:"created"`
+	Name    string        `json:"name" db:"name"`
+	Config  ServiceConfig `json:"config" db:"config"`
+}
 
 type CDNAuthToken struct {
 	APIRefHash string `json:"api_ref_hash"`
@@ -81,6 +112,8 @@ func (t CDNItemType) Validate() error {
 }
 
 const (
-	CDNTypeItemStepLog    CDNItemType = "step-log"
-	CDNTypeItemServiceLog CDNItemType = "service-log"
+	CDNTypeItemStepLog     CDNItemType = "step-log"
+	CDNTypeItemServiceLog  CDNItemType = "service-log"
+	CDNStatusItemIncoming              = "Incoming"
+	CDNStatusItemCompleted             = "Completed"
 )

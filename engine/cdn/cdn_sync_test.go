@@ -7,7 +7,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"gopkg.in/h2non/gock.v1"
 
-	"github.com/ovh/cds/engine/cdn/index"
+	"github.com/ovh/cds/engine/cdn/item"
 	"github.com/ovh/cds/engine/cdn/storage"
 	"github.com/ovh/cds/engine/cdn/storage/cds"
 	"github.com/ovh/cds/engine/gorpmapper"
@@ -17,7 +17,7 @@ import (
 
 func TestSyncLog(t *testing.T) {
 	m := gorpmapper.New()
-	index.InitDBMapping(m)
+	item.InitDBMapping(m)
 	storage.InitDBMapping(m)
 	db, factory, cache, end := commontest.SetupPGToCancel(t, m, sdk.TypeCDN)
 	t.Cleanup(end)
@@ -243,7 +243,7 @@ func TestSyncLog(t *testing.T) {
 		Val:                    "Je suis un log de service",
 	})
 
-	// Insert index for wkf1, 1000
+	// Insert item for wkf1, 1000
 	apiRef1000 := sdk.CDNLogAPIRef{
 		ProjectKey:     "key2",
 		WorkflowName:   "wkf1",
@@ -258,17 +258,17 @@ func TestSyncLog(t *testing.T) {
 	}
 	hash, err := apiRef1000.ToHash()
 	require.NoError(t, err)
-	itm := index.Item{
+	itm := sdk.CDNItem{
 		APIRef:     apiRef1000,
 		APIRefHash: hash,
 		Type:       sdk.CDNTypeItemStepLog,
 	}
-	err = index.InsertItem(context.TODO(), s.Mapper, db, &itm)
+	err = item.Insert(context.TODO(), s.Mapper, db, &itm)
 	if !sdk.ErrorIs(err, sdk.ErrConflictData) {
 		require.NoError(t, err)
 	}
 	defer func() {
-		_ = index.DeleteItemByIDs(db, []string{itm.ID})
+		_ = item.DeleteByIDs(db, []string{itm.ID})
 	}()
 
 	unit, err := storage.LoadUnitByName(context.TODO(), s.Mapper, db, "test-cds-backend")
@@ -278,7 +278,7 @@ func TestSyncLog(t *testing.T) {
 	ius, err := storage.LoadItemUnitsByUnit(context.TODO(), s.Mapper, db, unit.ID, 100)
 	require.NoError(t, err)
 	for _, iu := range ius {
-		require.NoError(t, index.DeleteItemByIDs(db, []string{iu.ItemID}))
+		require.NoError(t, item.DeleteByIDs(db, []string{iu.ItemID}))
 	}
 
 	// Run Test
@@ -290,21 +290,21 @@ func TestSyncLog(t *testing.T) {
 
 	for _, i := range itemUnits {
 		t.Cleanup(func() {
-			_ = index.DeleteItemByIDs(db, []string{i.ItemID})
+			_ = item.DeleteByIDs(db, []string{i.ItemID})
 		})
 	}
 
-	item1, err := index.LoadItemByID(context.TODO(), s.Mapper, db, itemUnits[0].ItemID)
+	item1, err := item.LoadByID(context.TODO(), s.Mapper, db, itemUnits[0].ItemID)
 	require.NoError(t, err)
 	require.Equal(t, int64(22), item1.Size)
 	require.Equal(t, sdk.CDNTypeItemStepLog, item1.Type)
 
-	item2, err := index.LoadItemByID(context.TODO(), s.Mapper, db, itemUnits[1].ItemID)
+	item2, err := item.LoadByID(context.TODO(), s.Mapper, db, itemUnits[1].ItemID)
 	require.NoError(t, err)
 	require.Equal(t, int64(43), item2.Size)
 	require.Equal(t, sdk.CDNTypeItemStepLog, item2.Type)
 
-	item3, err := index.LoadItemByID(context.TODO(), s.Mapper, db, itemUnits[2].ItemID)
+	item3, err := item.LoadByID(context.TODO(), s.Mapper, db, itemUnits[2].ItemID)
 	require.NoError(t, err)
 	require.Equal(t, int64(25), item3.Size)
 	require.Equal(t, sdk.CDNTypeItemServiceLog, item3.Type)

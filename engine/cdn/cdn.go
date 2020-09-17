@@ -10,7 +10,7 @@ import (
 
 	"github.com/ovh/cds/engine/api"
 	"github.com/ovh/cds/engine/cache"
-	"github.com/ovh/cds/engine/cdn/index"
+	"github.com/ovh/cds/engine/cdn/item"
 	"github.com/ovh/cds/engine/cdn/lru"
 	"github.com/ovh/cds/engine/cdn/storage"
 	"github.com/ovh/cds/engine/cdn/storage/cds"
@@ -118,7 +118,7 @@ func (s *Service) Serve(c context.Context) error {
 		}
 
 		// Init dao packages
-		index.InitDBMapping(s.Mapper)
+		item.InitDBMapping(s.Mapper)
 		storage.InitDBMapping(s.Mapper)
 
 		// Init storage units

@@ -8,7 +8,6 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/ovh/cds/engine/cdn/index"
 	"github.com/ovh/cds/engine/cdn/storage"
 	"github.com/ovh/cds/engine/cdn/storage/encryption"
 	"github.com/ovh/cds/sdk"
@@ -59,7 +58,7 @@ func (s *Local) Init(ctx context.Context, cfg interface{}) error {
 	return nil
 }
 
-func (s *Local) filename(i storage.ItemUnit) (string, error) {
+func (s *Local) filename(i sdk.CDNItemUnit) (string, error) {
 	loc := i.Locator
 	if err := os.MkdirAll(filepath.Join(s.config.Path, loc[:3]), os.FileMode(0700)); err != nil {
 		return "", nil
@@ -67,7 +66,7 @@ func (s *Local) filename(i storage.ItemUnit) (string, error) {
 	return filepath.Join(s.config.Path, loc[:3], loc), nil
 }
 
-func (s *Local) ItemExists(i index.Item) (bool, error) {
+func (s *Local) ItemExists(i sdk.CDNItem) (bool, error) {
 	iu, err := s.ExistsInDatabase(i.ID)
 	if err != nil {
 		if sdk.ErrorIs(err, sdk.ErrNotFound) {
@@ -85,7 +84,7 @@ func (s *Local) ItemExists(i index.Item) (bool, error) {
 	return !os.IsNotExist(err), nil
 }
 
-func (s *Local) NewWriter(ctx context.Context, i storage.ItemUnit) (io.WriteCloser, error) {
+func (s *Local) NewWriter(ctx context.Context, i sdk.CDNItemUnit) (io.WriteCloser, error) {
 	// Open the file from the filesystem according to the locator
 	path, err := s.filename(i)
 	if err != nil {
@@ -96,7 +95,7 @@ func (s *Local) NewWriter(ctx context.Context, i storage.ItemUnit) (io.WriteClos
 	return os.OpenFile(path, os.O_CREATE|os.O_RDWR, os.FileMode(0640))
 }
 
-func (s *Local) NewReader(ctx context.Context, i storage.ItemUnit) (io.ReadCloser, error) {
+func (s *Local) NewReader(ctx context.Context, i sdk.CDNItemUnit) (io.ReadCloser, error) {
 	// Open the file from the filesystem according to the locator
 	path, err := s.filename(i)
 	if err != nil {
@@ -107,7 +106,7 @@ func (s *Local) NewReader(ctx context.Context, i storage.ItemUnit) (io.ReadClose
 	return os.Open(path)
 }
 
-func (s *Local) Status(ctx context.Context) []sdk.MonitoringStatusLine {
+func (s *Local) Status(_ context.Context) []sdk.MonitoringStatusLine {
 	var lines []sdk.MonitoringStatusLine
 	if finfo, err := os.Stat(s.config.Path); os.IsNotExist(err) {
 		lines = append(lines, sdk.MonitoringStatusLine{

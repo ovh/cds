@@ -9,7 +9,6 @@ import (
 
 	"go.opencensus.io/stats"
 
-	"github.com/ovh/cds/engine/cdn/index"
 	"github.com/ovh/cds/engine/cdn/storage"
 	"github.com/ovh/cds/engine/cdn/storage/encryption"
 	"github.com/ovh/cds/sdk"
@@ -61,15 +60,15 @@ func (c *CDS) Init(ctx context.Context, cfg interface{}) error {
 	return nil
 }
 
-func (c *CDS) ItemExists(i index.Item) (bool, error) {
+func (c *CDS) ItemExists(_ sdk.CDNItem) (bool, error) {
 	return true, nil
 }
 
-func (c *CDS) NewWriter(ctx context.Context, i storage.ItemUnit) (io.WriteCloser, error) {
+func (c *CDS) NewWriter(_ context.Context, _ sdk.CDNItemUnit) (io.WriteCloser, error) {
 	return nil, nil
 }
 
-func (c *CDS) NewReader(ctx context.Context, i storage.ItemUnit) (io.ReadCloser, error) {
+func (c *CDS) NewReader(ctx context.Context, i sdk.CDNItemUnit) (io.ReadCloser, error) {
 	telemetry.Record(ctx, metricsReaders, 1)
 	switch i.Item.Type {
 	case sdk.CDNTypeItemStepLog:
@@ -112,7 +111,7 @@ func (c *CDS) GetWorkflowNodeRun(pKey string, nodeRunIdentifier sdk.WorkflowNode
 	return c.client.WorkflowNodeRun(pKey, nodeRunIdentifier.WorkflowName, nodeRunIdentifier.RunNumber, nodeRunIdentifier.NodeRunID)
 }
 
-func (c *CDS) Status(ctx context.Context) []sdk.MonitoringStatusLine {
+func (c *CDS) Status(_ context.Context) []sdk.MonitoringStatusLine {
 	if _, err := c.client.Version(); err != nil {
 		return []sdk.MonitoringStatusLine{{Component: "backend/cds", Value: "cds KO" + err.Error(), Status: sdk.MonitoringStatusAlert}}
 	}

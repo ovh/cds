@@ -13,7 +13,7 @@ import (
 
 	"github.com/ovh/cds/engine/api/test/assets"
 	"github.com/ovh/cds/engine/authentication"
-	"github.com/ovh/cds/engine/cdn/index"
+	"github.com/ovh/cds/engine/cdn/item"
 	"github.com/ovh/cds/engine/cdn/storage"
 	cdntest "github.com/ovh/cds/engine/cdn/test"
 	"github.com/ovh/cds/engine/test"
@@ -25,9 +25,9 @@ import (
 func TestMarkItemToDeleteHandler(t *testing.T) {
 	s, db := newTestService(t)
 	s.Cfg.EnableLogProcessing = true
-	cdntest.ClearIndex(t, context.TODO(), s.Mapper, db)
+	cdntest.ClearItem(t, context.TODO(), s.Mapper, db)
 
-	item1 := index.Item{
+	item1 := sdk.CDNItem{
 		ID:   sdk.UUID(),
 		Type: sdk.CDNTypeItemStepLog,
 		APIRef: sdk.CDNLogAPIRef{
@@ -36,8 +36,8 @@ func TestMarkItemToDeleteHandler(t *testing.T) {
 		},
 		APIRefHash: sdk.RandomString(10),
 	}
-	require.NoError(t, index.InsertItem(context.TODO(), s.Mapper, db, &item1))
-	item2 := index.Item{
+	require.NoError(t, item.Insert(context.TODO(), s.Mapper, db, &item1))
+	item2 := sdk.CDNItem{
 		ID:   sdk.UUID(),
 		Type: sdk.CDNTypeItemStepLog,
 		APIRef: sdk.CDNLogAPIRef{
@@ -46,9 +46,9 @@ func TestMarkItemToDeleteHandler(t *testing.T) {
 		},
 		APIRefHash: sdk.RandomString(10),
 	}
-	require.NoError(t, index.InsertItem(context.TODO(), s.Mapper, db, &item2))
+	require.NoError(t, item.Insert(context.TODO(), s.Mapper, db, &item2))
 
-	item3 := index.Item{
+	item3 := sdk.CDNItem{
 		ID:   sdk.UUID(),
 		Type: sdk.CDNTypeItemStepLog,
 		APIRef: sdk.CDNLogAPIRef{
@@ -57,7 +57,7 @@ func TestMarkItemToDeleteHandler(t *testing.T) {
 		},
 		APIRefHash: sdk.RandomString(10),
 	}
-	require.NoError(t, index.InsertItem(context.TODO(), s.Mapper, db, &item3))
+	require.NoError(t, item.Insert(context.TODO(), s.Mapper, db, &item3))
 
 	vars := map[string]string{}
 	uri := s.Router.GetRoute("POST", s.markItemToDeleteHandler, vars)
@@ -68,15 +68,15 @@ func TestMarkItemToDeleteHandler(t *testing.T) {
 	s.Router.Mux.ServeHTTP(rec, req)
 	require.Equal(t, 204, rec.Code)
 
-	item3DB, err := index.LoadItemByID(context.TODO(), s.Mapper, db, item3.ID)
+	item3DB, err := item.LoadByID(context.TODO(), s.Mapper, db, item3.ID)
 	require.NoError(t, err)
 	require.False(t, item3DB.ToDelete)
 
-	item2DB, err := index.LoadItemByID(context.TODO(), s.Mapper, db, item2.ID)
+	item2DB, err := item.LoadByID(context.TODO(), s.Mapper, db, item2.ID)
 	require.NoError(t, err)
 	require.True(t, item2DB.ToDelete)
 
-	item1DB, err := index.LoadItemByID(context.TODO(), s.Mapper, db, item1.ID)
+	item1DB, err := item.LoadByID(context.TODO(), s.Mapper, db, item1.ID)
 	require.NoError(t, err)
 	require.False(t, item1DB.ToDelete)
 
@@ -89,15 +89,15 @@ func TestMarkItemToDeleteHandler(t *testing.T) {
 	s.Router.Mux.ServeHTTP(rec2, req2)
 	require.Equal(t, 204, rec2.Code)
 
-	item3DBAfter, err := index.LoadItemByID(context.TODO(), s.Mapper, db, item3.ID)
+	item3DBAfter, err := item.LoadByID(context.TODO(), s.Mapper, db, item3.ID)
 	require.NoError(t, err)
 	require.False(t, item3DBAfter.ToDelete)
 
-	item2DBAfter, err := index.LoadItemByID(context.TODO(), s.Mapper, db, item2.ID)
+	item2DBAfter, err := item.LoadByID(context.TODO(), s.Mapper, db, item2.ID)
 	require.NoError(t, err)
 	require.True(t, item2DBAfter.ToDelete)
 
-	item1DBAfter, err := index.LoadItemByID(context.TODO(), s.Mapper, db, item1.ID)
+	item1DBAfter, err := item.LoadByID(context.TODO(), s.Mapper, db, item1.ID)
 	require.NoError(t, err)
 	require.True(t, item1DBAfter.ToDelete)
 }

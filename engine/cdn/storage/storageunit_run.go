@@ -8,7 +8,7 @@ import (
 
 	"github.com/sirupsen/logrus"
 
-	"github.com/ovh/cds/engine/cdn/index"
+	"github.com/ovh/cds/engine/cdn/item"
 	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
@@ -38,7 +38,7 @@ func (x *RunningStorageUnits) Run(ctx context.Context, s StorageUnit) error {
 			return err
 		}
 
-		item, err := index.LoadAndLockItemByID(ctx, s.GorpMapper(), tx, id, gorpmapper.GetOptions.WithDecryption)
+		it, err := item.LoadAndLockByID(ctx, s.GorpMapper(), tx, id, gorpmapper.GetOptions.WithDecryption)
 		if err != nil {
 			if !sdk.ErrorIs(err, sdk.ErrNotFound) {
 				log.ErrorWithFields(ctx, logrus.Fields{"stack_trace": fmt.Sprintf("%+v", err)}, "%s", err)
@@ -47,7 +47,7 @@ func (x *RunningStorageUnits) Run(ctx context.Context, s StorageUnit) error {
 			continue
 		}
 
-		if err := x.runItem(ctx, tx, s, item); err != nil {
+		if err := x.runItem(ctx, tx, s, it); err != nil {
 			log.ErrorWithFields(ctx, logrus.Fields{"stack_trace": fmt.Sprintf("%+v", err)}, "%s", err)
 			tx.Rollback() // nolint
 			continue
@@ -63,7 +63,7 @@ func (x *RunningStorageUnits) Run(ctx context.Context, s StorageUnit) error {
 	return nil
 }
 
-func (x *RunningStorageUnits) runItem(ctx context.Context, tx gorpmapper.SqlExecutorWithTx, dest StorageUnit, item *index.Item) error {
+func (x *RunningStorageUnits) runItem(ctx context.Context, tx gorpmapper.SqlExecutorWithTx, dest StorageUnit, item *sdk.CDNItem) error {
 	t0 := time.Now()
 	log.Debug("storage.runItem(%s, %s)", dest.Name(), item.ID)
 	defer func() {
@@ -140,7 +140,7 @@ func (x *RunningStorageUnits) runItem(ctx context.Context, tx gorpmapper.SqlExec
 	return nil
 }
 
-func (x *RunningStorageUnits) NewItemUnit(ctx context.Context, su Interface, i *index.Item) (*ItemUnit, error) {
+func (x *RunningStorageUnits) NewItemUnit(_ context.Context, su Interface, i *sdk.CDNItem) (*sdk.CDNItemUnit, error) {
 	suloc, is := su.(StorageUnitWithLocator)
 	var loc string
 	if is {
@@ -151,7 +151,7 @@ func (x *RunningStorageUnits) NewItemUnit(ctx context.Context, su Interface, i *
 		}
 	}
 
-	var iu = ItemUnit{
+	var iu = sdk.CDNItemUnit{
 		ItemID:       i.ID,
 		UnitID:       su.ID(),
 		LastModified: time.Now(),

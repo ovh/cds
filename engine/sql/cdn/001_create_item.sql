@@ -1,6 +1,6 @@
 -- +migrate Up
 
-CREATE TABLE IF NOT EXISTS "index" (
+CREATE TABLE IF NOT EXISTS "item" (
   id VARCHAR(36) PRIMARY KEY, -- technical ID
   created TIMESTAMP WITH TIME ZONE, -- creation date
   last_modified TIMESTAMP WITH TIME ZONE, -- last modified date
@@ -15,12 +15,12 @@ CREATE TABLE IF NOT EXISTS "index" (
   md5 TEXT,
   to_delete BOOLEAN
 );
-CREATE INDEX api_ref_index ON "index" USING GIN (api_ref);
-select create_unique_index('index', 'IDX_INDEX_UNIQ_ITEM', 'api_ref_hash,type');
-select create_index('index', 'IDX_INDEX_STATUS', 'status');
+CREATE INDEX IDX_API_REF ON "item" USING GIN (api_ref);
+select create_unique_index('item', 'IDX_ITEM_UNIQ_ITEM', 'api_ref_hash,type');
+select create_index('item', 'IDX_ITEM_STATUS', 'status');
 
 -- Index to get a log
-CREATE INDEX IDX_LOG_ITEM ON index(type, (api_ref->>'job_id'), (api_ref->>'step_order'));
+CREATE INDEX IDX_LOG_ITEM ON item(type, (api_ref->>'job_id'), (api_ref->>'step_order'));
 
 -- +migrate Down
-DROP TABLE IF EXISTS "index";
+DROP TABLE IF EXISTS "item";

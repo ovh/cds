@@ -3,6 +3,7 @@ package webdav
 import (
 	"context"
 	"fmt"
+	"github.com/ovh/cds/sdk"
 	"io/ioutil"
 	"net/http"
 	"testing"
@@ -76,7 +77,7 @@ func TestWebdav(t *testing.T) {
 	})
 	require.NoError(t, err, "unable to initialiaze webdav driver")
 
-	itemUnit := storage.ItemUnit{
+	itemUnit := sdk.CDNItemUnit{
 		Locator: "a_locator",
 	}
 	w, err := driver.NewWriter(context.TODO(), itemUnit)

@@ -1,4 +1,4 @@
-package index_test
+package item_test
 
 import (
 	"context"
@@ -8,7 +8,7 @@ import (
 	"github.com/mitchellh/hashstructure"
 	"github.com/stretchr/testify/require"
 
-	"github.com/ovh/cds/engine/cdn/index"
+	"github.com/ovh/cds/engine/cdn/item"
 	cdntest "github.com/ovh/cds/engine/cdn/test"
 	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/engine/test"
@@ -17,10 +17,10 @@ import (
 
 func TestLoadItem(t *testing.T) {
 	m := gorpmapper.New()
-	index.InitDBMapping(m)
+	item.InitDBMapping(m)
 
 	db, _ := test.SetupPGWithMapper(t, m, sdk.TypeCDN)
-	cdntest.ClearIndex(t, context.TODO(), m, db)
+	cdntest.ClearItem(t, context.TODO(), m, db)
 
 	apiRef := sdk.CDNLogAPIRef{
 		ProjectKey: sdk.RandomString(10),
@@ -29,15 +29,15 @@ func TestLoadItem(t *testing.T) {
 	require.NoError(t, err)
 	hashRef := strconv.FormatUint(hashRefU, 10)
 
-	i := index.Item{
+	i := sdk.CDNItem{
 		APIRef:     apiRef,
 		APIRefHash: hashRef,
 		Type:       sdk.CDNTypeItemStepLog,
 	}
-	require.NoError(t, index.InsertItem(context.TODO(), m, db, &i))
-	t.Cleanup(func() { _ = index.DeleteItemByIDs(db, []string{i.ID}) })
+	require.NoError(t, item.Insert(context.TODO(), m, db, &i))
+	t.Cleanup(func() { _ = item.DeleteByIDs(db, []string{i.ID}) })
 
-	res, err := index.LoadItemByID(context.TODO(), m, db, i.ID)
+	res, err := item.LoadByID(context.TODO(), m, db, i.ID)
 	require.NoError(t, err)
 	require.Equal(t, i.ID, res.ID)
 	require.Equal(t, i.Type, res.Type)

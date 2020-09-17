@@ -11,7 +11,7 @@ import (
 	"github.com/ovh/symmecrypt/convergent"
 	"github.com/stretchr/testify/require"
 
-	"github.com/ovh/cds/engine/cdn/index"
+	"github.com/ovh/cds/engine/cdn/item"
 	"github.com/ovh/cds/engine/cdn/storage"
 	_ "github.com/ovh/cds/engine/cdn/storage/local"
 	_ "github.com/ovh/cds/engine/cdn/storage/redis"
@@ -24,13 +24,13 @@ import (
 
 func TestRun(t *testing.T) {
 	m := gorpmapper.New()
-	index.InitDBMapping(m)
+	item.InitDBMapping(m)
 	storage.InitDBMapping(m)
 
 	db, _ := commontest.SetupPGWithMapper(t, m, sdk.TypeCDN)
 	cfg := commontest.LoadTestingConf(t, sdk.TypeCDN)
 
-	cdntest.ClearIndex(t, context.TODO(), m, db)
+	cdntest.ClearItem(t, context.TODO(), m, db)
 
 	ctx, cancel := context.WithTimeout(context.TODO(), 3*time.Second)
 	defer cancel()
@@ -91,19 +91,19 @@ func TestRun(t *testing.T) {
 		ProjectKey: sdk.RandomString(5),
 	}
 
-	apiRefHash, err := index.ComputeApiRef(apiRef)
+	apiRefHash, err := item.ComputeApiRef(apiRef)
 	require.NoError(t, err)
 
-	i := &index.Item{
+	i := &sdk.CDNItem{
 		APIRef:     apiRef,
 		APIRefHash: apiRefHash,
 		Created:    time.Now(),
 		Type:       sdk.CDNTypeItemStepLog,
-		Status:     index.StatusItemIncoming,
+		Status:     sdk.CDNStatusItemIncoming,
 	}
-	require.NoError(t, index.InsertItem(ctx, m, db, i))
+	require.NoError(t, item.Insert(ctx, m, db, i))
 	defer func() {
-		_ = index.DeleteItemByIDs(db, []string{i.ID})
+		_ = item.DeleteByIDs(db, []string{i.ID})
 	}()
 
 	log.Debug("item ID: %v", i.ID)
@@ -126,12 +126,12 @@ func TestRun(t *testing.T) {
 	h, err := convergent.NewHash(reader)
 	require.NoError(t, err)
 	i.Hash = h
-	i.Status = index.StatusItemCompleted
+	i.Status = sdk.CDNStatusItemCompleted
 
-	err = index.UpdateItem(ctx, m, db, i)
+	err = item.Update(ctx, m, db, i)
 	require.NoError(t, err)
 
-	i, err = index.LoadItemByID(ctx, m, db, i.ID, gorpmapper.GetOptions.WithDecryption)
+	i, err = item.LoadByID(ctx, m, db, i.ID, gorpmapper.GetOptions.WithDecryption)
 	require.NoError(t, err)
 
 	localUnit, err := storage.LoadUnitByName(ctx, m, db, "local_storage")
