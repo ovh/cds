@@ -27,7 +27,7 @@ func Test_deleteWorkflowRunsHistory(t *testing.T) {
 	sharedStorage, errO := objectstore.Init(context.Background(), cfg)
 	test.NoError(t, errO)
 
-	err := deleteWorkflowRunsHistory(context.Background(), db, cache, sharedStorage, nil)
+	err := deleteWorkflowRunsHistory(context.Background(), db.DbMap, cache, sharedStorage, nil)
 	test.NoError(t, err)
 
 	// test on delete artifact from storage is done on Test_postWorkflowJobArtifactHandler
