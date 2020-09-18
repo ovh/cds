@@ -10,7 +10,6 @@ import (
 	"github.com/ncw/swift"
 	"go.opencensus.io/stats"
 
-	"github.com/ovh/cds/engine/cdn/index"
 	"github.com/ovh/cds/engine/cdn/storage"
 	"github.com/ovh/cds/engine/cdn/storage/encryption"
 	"github.com/ovh/cds/sdk"
@@ -60,7 +59,7 @@ func (s *Swift) Init(ctx context.Context, cfg interface{}) error {
 	return nil
 }
 
-func (s *Swift) ItemExists(i index.Item) (bool, error) {
+func (s *Swift) ItemExists(i sdk.CDNItem) (bool, error) {
 	iu, err := s.ExistsInDatabase(i.ID)
 	if err != nil {
 		if sdk.ErrorIs(err, sdk.ErrNotFound) {
@@ -83,7 +82,7 @@ func (s *Swift) ItemExists(i index.Item) (bool, error) {
 	return false, nil
 }
 
-func (s *Swift) NewWriter(ctx context.Context, i storage.ItemUnit) (io.WriteCloser, error) {
+func (s *Swift) NewWriter(ctx context.Context, i sdk.CDNItemUnit) (io.WriteCloser, error) {
 	container, object, err := s.getItemPath(i)
 	if err != nil {
 		return nil, err
@@ -102,7 +101,7 @@ func (s *Swift) NewWriter(ctx context.Context, i storage.ItemUnit) (io.WriteClos
 	return file, nil
 }
 
-func (s *Swift) NewReader(ctx context.Context, i storage.ItemUnit) (io.ReadCloser, error) {
+func (s *Swift) NewReader(ctx context.Context, i sdk.CDNItemUnit) (io.ReadCloser, error) {
 	container, object, err := s.getItemPath(i)
 	if err != nil {
 		return nil, err
@@ -124,7 +123,7 @@ func (s *Swift) NewReader(ctx context.Context, i storage.ItemUnit) (io.ReadClose
 	return pr, nil
 }
 
-func (s *Swift) getItemPath(i storage.ItemUnit) (container string, object string, err error) {
+func (s *Swift) getItemPath(i sdk.CDNItemUnit) (container string, object string, err error) {
 	loc := i.Locator
 	container = fmt.Sprintf("%s-%s-%s", s.config.ContainerPrefix, i.Item.Type, loc[:3])
 	object = loc

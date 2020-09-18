@@ -13,7 +13,7 @@ import (
 	"testing"
 
 	"github.com/ovh/cds/engine/api"
-	"github.com/ovh/cds/engine/cdn/index"
+	"github.com/ovh/cds/engine/cdn/item"
 	"github.com/ovh/cds/engine/cdn/storage"
 	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/engine/test"
@@ -38,7 +38,7 @@ func newTestService(t *testing.T) (*Service, *test.FakeTransaction) {
 	defer fakeAPIPrivateKey.Unlock()
 
 	m := gorpmapper.New()
-	index.InitDBMapping(m)
+	item.InitDBMapping(m)
 	storage.InitDBMapping(m)
 
 	log.SetLogger(t)

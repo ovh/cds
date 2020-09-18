@@ -9,7 +9,7 @@ import (
 	"github.com/sirupsen/logrus"
 
 	"github.com/ovh/cds/engine/cache"
-	"github.com/ovh/cds/engine/cdn/index"
+	"github.com/ovh/cds/engine/cdn/item"
 	"github.com/ovh/cds/engine/cdn/storage"
 	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk"
@@ -94,19 +94,19 @@ func (s *Service) dequeueServiceLogs(ctx context.Context) error {
 }
 
 func (s *Service) storeLogs(ctx context.Context, itemType sdk.CDNItemType, signature log.Signature, status string, content string, line int64) error {
-	item, err := s.loadOrCreateIndexItem(ctx, itemType, signature)
+	it, err := s.loadOrCreateItem(ctx, itemType, signature)
 	if err != nil {
 		return err
 	}
 
-	iu, err := s.loadOrCreateIndexItemUnitBuffer(ctx, item.ID)
+	iu, err := s.loadOrCreateItemUnitBuffer(ctx, it.ID)
 	if err != nil {
 		return err
 	}
 
 	// In case where the item was marked as complete we don't allow append of other logs
-	if item.Status == index.StatusItemCompleted {
-		log.Warning(ctx, "cdn:storeLogs: a log was received for item %s but status in already complete", item.Hash)
+	if it.Status == sdk.CDNStatusItemCompleted {
+		log.Warning(ctx, "cdn:storeLogs: a log was received for item %s but status in already complete", it.Hash)
 		return nil
 	}
 
@@ -121,16 +121,16 @@ func (s *Service) storeLogs(ctx context.Context, itemType sdk.CDNItemType, signa
 		}
 	}
 
-	maxLineKey := cache.Key("cdn", "log", "size", item.ID)
-	maxIndexLine := -1
+	maxLineKey := cache.Key("cdn", "log", "size", it.ID)
+	maxItemLine := -1
 	if sdk.StatusIsTerminated(status) {
-		maxIndexLine = int(line)
+		maxItemLine = int(line)
 		// store the score of last line
-		if err := s.Cache.SetWithTTL(maxLineKey, maxIndexLine, ItemLogGC); err != nil {
+		if err := s.Cache.SetWithTTL(maxLineKey, maxItemLine, ItemLogGC); err != nil {
 			return err
 		}
 	} else {
-		_, err = s.Cache.Get(maxLineKey, &maxIndexLine)
+		_, err = s.Cache.Get(maxLineKey, &maxItemLine)
 		if err != nil {
 			log.Warning(ctx, "cdn:storeLogs: unable to get max line expected for current job: %v", err)
 		}
@@ -141,7 +141,7 @@ func (s *Service) storeLogs(ctx context.Context, itemType sdk.CDNItemType, signa
 		return err
 	}
 	// If we have all lines
-	if maxIndexLine >= 0 && maxIndexLine+1 == logsSize {
+	if maxItemLine >= 0 && maxItemLine+1 == logsSize {
 		tx, err := s.mustDBWithCtx(ctx).Begin()
 		if err != nil {
 			return sdk.WithStack(err)
@@ -158,7 +158,7 @@ func (s *Service) storeLogs(ctx context.Context, itemType sdk.CDNItemType, signa
 	return nil
 }
 
-func (s *Service) loadOrCreateIndexItem(ctx context.Context, itemType sdk.CDNItemType, signature log.Signature) (*index.Item, error) {
+func (s *Service) loadOrCreateItem(ctx context.Context, itemType sdk.CDNItemType, signature log.Signature) (*sdk.CDNItem, error) {
 	// Build cds api ref
 	apiRef := sdk.CDNLogAPIRef{
 		ProjectKey:     signature.ProjectKey,
@@ -184,17 +184,17 @@ func (s *Service) loadOrCreateIndexItem(ctx context.Context, itemType sdk.CDNIte
 		return nil, err
 	}
 
-	item, err := index.LoadItemByAPIRefHashAndType(ctx, s.Mapper, s.mustDBWithCtx(ctx), hashRef, itemType)
+	it, err := item.LoadByAPIRefHashAndType(ctx, s.Mapper, s.mustDBWithCtx(ctx), hashRef, itemType)
 	if err != nil {
 		if !sdk.ErrorIs(err, sdk.ErrNotFound) {
 			return nil, err
 		}
 		// Insert data
-		item = &index.Item{
+		it = &sdk.CDNItem{
 			APIRef:     apiRef,
 			Type:       itemType,
 			APIRefHash: hashRef,
-			Status:     index.StatusItemIncoming,
+			Status:     sdk.CDNStatusItemIncoming,
 		}
 
 		tx, err := s.mustDBWithCtx(ctx).Begin()
@@ -203,32 +203,32 @@ func (s *Service) loadOrCreateIndexItem(ctx context.Context, itemType sdk.CDNIte
 		}
 		defer tx.Rollback() // nolint
 
-		if errInsert := index.InsertItem(ctx, s.Mapper, tx, item); errInsert == nil {
+		if errInsert := item.Insert(ctx, s.Mapper, tx, it); errInsert == nil {
 			if err := tx.Commit(); err != nil {
 				return nil, sdk.WithStack(err)
 			}
-			return item, nil
+			return it, nil
 		} else if !sdk.ErrorIs(errInsert, sdk.ErrConflictData) {
 			return nil, errInsert
 		}
 
 		// reload if item already exist
-		item, err = index.LoadItemByAPIRefHashAndType(ctx, s.Mapper, s.mustDBWithCtx(ctx), hashRef, itemType)
+		it, err = item.LoadByAPIRefHashAndType(ctx, s.Mapper, s.mustDBWithCtx(ctx), hashRef, itemType)
 		if err != nil {
 			return nil, err
 		}
 	}
 
-	return item, nil
+	return it, nil
 }
 
-func (s *Service) loadOrCreateIndexItemUnitBuffer(ctx context.Context, itemID string) (*storage.ItemUnit, error) {
+func (s *Service) loadOrCreateItemUnitBuffer(ctx context.Context, itemID string) (*sdk.CDNItemUnit, error) {
 	unit, err := storage.LoadUnitByName(ctx, s.Mapper, s.mustDBWithCtx(ctx), s.Units.Buffer.Name())
 	if err != nil {
 		return nil, err
 	}
 
-	item, err := index.LoadItemByID(ctx, s.Mapper, s.mustDBWithCtx(ctx), itemID, gorpmapper.GetOptions.WithDecryption)
+	it, err := item.LoadByID(ctx, s.Mapper, s.mustDBWithCtx(ctx), itemID, gorpmapper.GetOptions.WithDecryption)
 	if err != nil {
 		return nil, err
 	}
@@ -239,7 +239,7 @@ func (s *Service) loadOrCreateIndexItemUnitBuffer(ctx context.Context, itemID st
 			return nil, err
 		}
 
-		itemUnit, err = s.Units.NewItemUnit(ctx, s.Units.Buffer, item)
+		itemUnit, err = s.Units.NewItemUnit(ctx, s.Units.Buffer, it)
 		if err != nil {
 			return nil, err
 		}

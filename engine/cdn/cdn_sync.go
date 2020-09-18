@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/ovh/cds/engine/cache"
-	"github.com/ovh/cds/engine/cdn/index"
+	"github.com/ovh/cds/engine/cdn/item"
 	"github.com/ovh/cds/engine/cdn/storage"
 	"github.com/ovh/cds/engine/cdn/storage/cds"
 	"github.com/ovh/cds/engine/gorpmapper"
@@ -177,35 +177,35 @@ func (s *Service) syncItem(ctx context.Context, tx gorpmapper.SqlExecutorWithTx,
 	if err != nil {
 		return err
 	}
-	item := &index.Item{
+	it := &sdk.CDNItem{
 		Type:       itemType,
 		APIRef:     apiRef,
-		Status:     index.StatusItemIncoming,
+		Status:     sdk.CDNStatusItemIncoming,
 		APIRefHash: apirefHash,
 	}
 	// check if item exist
-	_, err = index.LoadItemByAPIRefHashAndType(ctx, s.Mapper, tx, apirefHash, itemType)
+	_, err = item.LoadByAPIRefHashAndType(ctx, s.Mapper, tx, apirefHash, itemType)
 	if err == nil {
 		return nil
 	}
-	if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
+	if !sdk.ErrorIs(err, sdk.ErrNotFound) {
 		return err
 	}
 
-	if err := index.InsertItem(ctx, s.Mapper, tx, item); err != nil {
+	if err := item.Insert(ctx, s.Mapper, tx, it); err != nil {
 		return err
 	}
 	// Can't call NewItemUnit because need to complete item first to have hash, to be able to compute locator
-	tmpItemUnit := storage.ItemUnit{
-		ItemID:       item.ID,
+	tmpItemUnit := sdk.CDNItemUnit{
+		ItemID:       it.ID,
 		UnitID:       su.ID(),
 		LastModified: time.Now(),
-		Item:         item,
+		Item:         it,
 	}
 	if err := s.completeItem(ctx, tx, tmpItemUnit); err != nil {
 		return err
 	}
-	clearItem, err := index.LoadItemByID(ctx, s.Mapper, tx, item.ID, gorpmapper.GetOptions.WithDecryption)
+	clearItem, err := item.LoadByID(ctx, s.Mapper, tx, it.ID, gorpmapper.GetOptions.WithDecryption)
 	if err != nil {
 		return err
 	}

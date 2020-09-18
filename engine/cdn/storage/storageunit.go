@@ -16,7 +16,6 @@ import (
 	"github.com/robfig/cron/v3"
 	"github.com/sirupsen/logrus"
 
-	"github.com/ovh/cds/engine/cdn/index"
 	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
@@ -46,11 +45,11 @@ var (
 type Interface interface {
 	Name() string
 	ID() string
-	Set(m *gorpmapper.Mapper, db *gorp.DbMap, u Unit)
+	Set(m *gorpmapper.Mapper, db *gorp.DbMap, u sdk.CDNUnit)
 	GorpMapper() *gorpmapper.Mapper
 	DB() *gorp.DbMap
 	Init(ctx context.Context, cfg interface{}) error
-	ItemExists(i index.Item) (bool, error)
+	ItemExists(i sdk.CDNItem) (bool, error)
 	Lock()
 	Unlock()
 	Status(ctx context.Context) []sdk.MonitoringStatusLine
@@ -58,12 +57,12 @@ type Interface interface {
 
 type AbstractUnit struct {
 	sync.Mutex
-	u  Unit
+	u  sdk.CDNUnit
 	m  *gorpmapper.Mapper
 	db *gorp.DbMap
 }
 
-func (a *AbstractUnit) ExistsInDatabase(id string) (*ItemUnit, error) {
+func (a *AbstractUnit) ExistsInDatabase(id string) (*sdk.CDNItemUnit, error) {
 	iu, err := LoadItemUnitByUnit(context.Background(), a.GorpMapper(), a.DB(), a.ID(), id, gorpmapper.GetOptions.WithDecryption)
 	if err != nil {
 		return nil, err
@@ -87,7 +86,7 @@ func (a *AbstractUnit) GorpMapper() *gorpmapper.Mapper {
 	return a.m
 }
 
-func (a *AbstractUnit) Set(m *gorpmapper.Mapper, db *gorp.DbMap, u Unit) {
+func (a *AbstractUnit) Set(m *gorpmapper.Mapper, db *gorp.DbMap, u sdk.CDNUnit) {
 	a.u = u
 	a.m = m
 	a.db = db
@@ -95,19 +94,19 @@ func (a *AbstractUnit) Set(m *gorpmapper.Mapper, db *gorp.DbMap, u Unit) {
 
 type BufferUnit interface {
 	Interface
-	Add(i ItemUnit, score uint, value string) error
-	Append(i ItemUnit, value string) error
-	Card(i ItemUnit) (int, error)
-	NewReader(ctx context.Context, i ItemUnit) (io.ReadCloser, error)
-	Read(i ItemUnit, r io.Reader, w io.Writer) error
+	Add(i sdk.CDNItemUnit, score uint, value string) error
+	Append(i sdk.CDNItemUnit, value string) error
+	Card(i sdk.CDNItemUnit) (int, error)
+	NewReader(ctx context.Context, i sdk.CDNItemUnit) (io.ReadCloser, error)
+	Read(i sdk.CDNItemUnit, r io.Reader, w io.Writer) error
 }
 
 type StorageUnit interface {
 	Interface
-	NewWriter(ctx context.Context, i ItemUnit) (io.WriteCloser, error)
-	NewReader(ctx context.Context, i ItemUnit) (io.ReadCloser, error)
-	Write(i ItemUnit, r io.Reader, w io.Writer) error
-	Read(i ItemUnit, r io.Reader, w io.Writer) error
+	NewWriter(ctx context.Context, i sdk.CDNItemUnit) (io.WriteCloser, error)
+	NewReader(ctx context.Context, i sdk.CDNItemUnit) (io.ReadCloser, error)
+	Write(i sdk.CDNItemUnit, r io.Reader, w io.Writer) error
+	Read(i sdk.CDNItemUnit, r io.Reader, w io.Writer) error
 }
 
 type StorageUnitWithLocator interface {
@@ -191,18 +190,18 @@ func (r *RunningStorageUnits) Start(ctx context.Context) error {
 	scheduler := cron.New(cron.WithLocation(time.UTC), cron.WithSeconds())
 
 	for i := range r.Storages {
-		var cron string
+		var cronSetting string
 		for j := range r.config.Storages {
 			if r.config.Storages[j].Name == r.Storages[i].Name() {
-				cron = r.config.Storages[j].Cron
+				cronSetting = r.config.Storages[j].Cron
 				break
 			}
 		}
-		if cron == "" {
+		if cronSetting == "" {
 			return sdk.WithStack(fmt.Errorf("missing cron config for storage %s", r.Storages[i].Name()))
 		}
 		f := func(i int) error {
-			_, err := scheduler.AddFunc(cron, func() {
+			_, err := scheduler.AddFunc(cronSetting, func() {
 				if err := r.Run(ctx, r.Storages[i]); err != nil {
 					log.ErrorWithFields(ctx, logrus.Fields{"stack_trace": fmt.Sprintf("%+v", err)}, "%s", err)
 				}
@@ -255,8 +254,8 @@ func Init(ctx context.Context, m *gorpmapper.Mapper, db *gorp.DbMap, config Conf
 	if sdk.ErrorIs(err, sdk.ErrNotFound) {
 		var srvConfig sdk.ServiceConfig
 		b, _ := json.Marshal(config.Buffer.Redis)
-		json.Unmarshal(b, &srvConfig) // nolint
-		u = &Unit{
+		_ = json.Unmarshal(b, &srvConfig) // nolint
+		u = &sdk.CDNUnit{
 			ID:      sdk.UUID(),
 			Created: time.Now(),
 			Name:    config.Buffer.Name,
@@ -338,9 +337,9 @@ func Init(ctx context.Context, m *gorpmapper.Mapper, db *gorp.DbMap, config Conf
 		if sdk.ErrorIs(err, sdk.ErrNotFound) {
 			var srvConfig sdk.ServiceConfig
 			b, _ := json.Marshal(cfg)
-			json.Unmarshal(b, &srvConfig) // nolint
+			_ = json.Unmarshal(b, &srvConfig) // nolint
 
-			u = &Unit{
+			u = &sdk.CDNUnit{
 				ID:      sdk.UUID(),
 				Created: time.Now(),
 				Name:    cfg.Name,
@@ -374,13 +373,13 @@ type Source interface {
 }
 
 type source interface {
-	NewReader(context.Context, ItemUnit) (io.ReadCloser, error)
-	Read(ItemUnit, io.Reader, io.Writer) error
+	NewReader(context.Context, sdk.CDNItemUnit) (io.ReadCloser, error)
+	Read(sdk.CDNItemUnit, io.Reader, io.Writer) error
 	Name() string
 }
 
 type iuSource struct {
-	iu     ItemUnit
+	iu     sdk.CDNItemUnit
 	source source
 }
 
@@ -394,7 +393,7 @@ func (s *iuSource) Name() string {
 	return s.source.Name()
 }
 
-func (r RunningStorageUnits) GetSource(ctx context.Context, i *index.Item) (Source, error) {
+func (r RunningStorageUnits) GetSource(ctx context.Context, i *sdk.CDNItem) (Source, error) {
 	ok, err := r.Buffer.ItemExists(*i)
 	if err != nil {
 		return nil, err

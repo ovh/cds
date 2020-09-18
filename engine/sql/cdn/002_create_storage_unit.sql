@@ -9,7 +9,7 @@ CREATE TABLE IF NOT EXISTS "storage_unit" (
   signer TEXT
 );
 
-CREATE TABLE IF NOT EXISTS "storage_unit_index" (
+CREATE TABLE IF NOT EXISTS "storage_unit_item" (
   id VARCHAR(36) PRIMARY KEY,
   unit_id VARCHAR(36) NOT NULL,
   item_id VARCHAR(36) NOT NULL,
@@ -19,10 +19,10 @@ CREATE TABLE IF NOT EXISTS "storage_unit_index" (
   signer TEXT
 );
 
-SELECT create_foreign_key_idx_cascade('FK_storage_unit_index_index', 'storage_unit_index', 'index', 'item_id', 'id');
-SELECT create_foreign_key('FK_storage_unit_index_unit', 'storage_unit_index', 'storage_unit', 'unit_id', 'id');
-SELECT create_unique_index('storage_unit_index', 'IDX_storage_unit_index_unit_id_item_id', 'unit_id,item_id');
+SELECT create_foreign_key_idx_cascade('FK_storage_unit_item_index', 'storage_unit_item', 'item', 'item_id', 'id');
+SELECT create_foreign_key('FK_storage_unit_item_unit', 'storage_unit_item', 'storage_unit', 'unit_id', 'id');
+SELECT create_unique_index('storage_unit_item', 'IDX_storage_unit_item_unit_id_item_id', 'unit_id,item_id');
 
 -- +migrate Down
-DROP TABLE IF EXISTS "storage_unit_index";
+DROP TABLE IF EXISTS "storage_unit_item";
 DROP TABLE IF EXISTS "storage_unit";

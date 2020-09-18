@@ -8,7 +8,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/ovh/cds/engine/cdn/index"
+	"github.com/ovh/cds/engine/cdn/item"
 	cdntest "github.com/ovh/cds/engine/cdn/test"
 	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/engine/test"
@@ -17,10 +17,10 @@ import (
 
 func TestRedisLRU(t *testing.T) {
 	m := gorpmapper.New()
-	index.InitDBMapping(m)
+	item.InitDBMapping(m)
 	db, _ := test.SetupPGWithMapper(t, m, sdk.TypeCDN)
 
-	cdntest.ClearIndex(t, context.TODO(), m, db)
+	cdntest.ClearItem(t, context.TODO(), m, db)
 
 	cfg := test.LoadTestingConf(t, sdk.TypeCDN)
 	r, err := NewRedisLRU(db.DbMap, 100, cfg["redisHost"], cfg["redisPassword"])
@@ -28,35 +28,35 @@ func TestRedisLRU(t *testing.T) {
 
 	l, _ := r.Len()
 	for i := 0; i < l; i++ {
-		r.RemoveOldest()
+		_ = r.RemoveOldest()
 	}
 
-	item1 := index.Item{
+	item1 := sdk.CDNItem{
 		Size:       45,
 		ID:         sdk.UUID(),
 		Type:       sdk.CDNTypeItemStepLog,
 		APIRefHash: sdk.UUID(),
 	}
-	require.NoError(t, index.InsertItem(context.TODO(), m, db, &item1))
-	item2 := index.Item{
+	require.NoError(t, item.Insert(context.TODO(), m, db, &item1))
+	item2 := sdk.CDNItem{
 		Size:       43,
 		ID:         sdk.UUID(),
 		Type:       sdk.CDNTypeItemStepLog,
 		APIRefHash: sdk.UUID(),
 	}
-	require.NoError(t, index.InsertItem(context.TODO(), m, db, &item2))
-	item3 := index.Item{
+	require.NoError(t, item.Insert(context.TODO(), m, db, &item2))
+	item3 := sdk.CDNItem{
 		Size:       20,
 		ID:         sdk.UUID(),
 		Type:       sdk.CDNTypeItemStepLog,
 		APIRefHash: sdk.UUID(),
 	}
-	require.NoError(t, index.InsertItem(context.TODO(), m, db, &item3))
+	require.NoError(t, item.Insert(context.TODO(), m, db, &item3))
 
 	// Add first item
 	writer := r.NewWriter(item1.ID)
 	_, err = io.Copy(writer, strings.NewReader("je suis la valeur"))
-	writer.Close()
+	_ = writer.Close()
 	require.NoError(t, err)
 
 	length, err := r.Len()
@@ -70,7 +70,7 @@ func TestRedisLRU(t *testing.T) {
 	// Add second item
 	writer = r.NewWriter(item2.ID)
 	_, err = io.Copy(writer, strings.NewReader("je suis la valeur 2"))
-	writer.Close()
+	_ = writer.Close()
 	require.NoError(t, err)
 
 	length, err = r.Len()
@@ -92,7 +92,7 @@ func TestRedisLRU(t *testing.T) {
 	// Add third item
 	writer = r.NewWriter(item3.ID)
 	_, err = io.Copy(writer, strings.NewReader("je suis la valeur 3"))
-	writer.Close()
+	_ = writer.Close()
 	require.NoError(t, err)
 
 	// Remove oldest

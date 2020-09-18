@@ -5,7 +5,6 @@ import (
 
 	"github.com/ovh/symmecrypt/convergent"
 
-	"github.com/ovh/cds/engine/cdn/storage"
 	"github.com/ovh/cds/sdk"
 )
 
@@ -18,8 +17,8 @@ func New(config []convergent.ConvergentEncryptionConfig) ConvergentEncryption {
 
 type ConvergentEncryption interface {
 	NewLocator(h string) (string, error)
-	Write(i storage.ItemUnit, r io.Reader, w io.Writer) error
-	Read(i storage.ItemUnit, r io.Reader, w io.Writer) error
+	Write(i sdk.CDNItemUnit, r io.Reader, w io.Writer) error
+	Read(i sdk.CDNItemUnit, r io.Reader, w io.Writer) error
 }
 
 type noEncryption struct{}
@@ -28,12 +27,12 @@ func (s *noEncryption) NewLocator(h string) (string, error) {
 	return h, nil
 }
 
-func (s *noEncryption) Write(i storage.ItemUnit, r io.Reader, w io.Writer) error {
+func (s *noEncryption) Write(_ sdk.CDNItemUnit, r io.Reader, w io.Writer) error {
 	_, err := io.Copy(w, r)
 	return err
 }
 
-func (*noEncryption) Read(i storage.ItemUnit, r io.Reader, w io.Writer) error {
+func (*noEncryption) Read(_ sdk.CDNItemUnit, r io.Reader, w io.Writer) error {
 	_, err := io.Copy(w, r)
 	return err
 }
@@ -67,7 +66,7 @@ func (s *convergentEncryption) NewLocator(h string) (string, error) {
 	return k.Locator()
 }
 
-func (s *convergentEncryption) Write(i storage.ItemUnit, r io.Reader, w io.Writer) error {
+func (s *convergentEncryption) Write(i sdk.CDNItemUnit, r io.Reader, w io.Writer) error {
 	k, err := s.getKey(i.Item.Hash)
 	if err != nil {
 		return err
@@ -76,7 +75,7 @@ func (s *convergentEncryption) Write(i storage.ItemUnit, r io.Reader, w io.Write
 	return sdk.WrapError(err, "[%T] unable to write item %s", s, i.ID)
 }
 
-func (s *convergentEncryption) Read(i storage.ItemUnit, r io.Reader, w io.Writer) error {
+func (s *convergentEncryption) Read(i sdk.CDNItemUnit, r io.Reader, w io.Writer) error {
 	k, err := s.getKey(i.Item.Hash)
 	if err != nil {
 		return err

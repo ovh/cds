@@ -9,7 +9,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/ovh/cds/engine/cdn/index"
+	"github.com/ovh/cds/engine/cdn/item"
 	"github.com/ovh/cds/engine/cdn/lru"
 	"github.com/ovh/cds/engine/cdn/storage"
 	cdntest "github.com/ovh/cds/engine/cdn/test"
@@ -21,7 +21,7 @@ import (
 
 func TestGetItemValue(t *testing.T) {
 	m := gorpmapper.New()
-	index.InitDBMapping(m)
+	item.InitDBMapping(m)
 	storage.InitDBMapping(m)
 
 	log.SetLogger(t)
@@ -30,7 +30,7 @@ func TestGetItemValue(t *testing.T) {
 
 	cfg := test.LoadTestingConf(t, sdk.TypeCDN)
 
-	cdntest.ClearIndex(t, context.TODO(), m, db)
+	cdntest.ClearItem(t, context.TODO(), m, db)
 
 	// Create cdn service
 	s := Service{
@@ -81,17 +81,17 @@ func TestGetItemValue(t *testing.T) {
 	apiRefhash, err := apiRef.ToHash()
 	require.NoError(t, err)
 
-	item := index.Item{
+	it := sdk.CDNItem{
 		ID:         sdk.UUID(),
 		APIRefHash: apiRefhash,
 		Type:       sdk.CDNTypeItemStepLog,
-		Status:     index.StatusItemIncoming,
+		Status:     sdk.CDNStatusItemIncoming,
 		APIRef:     apiRef,
 	}
-	require.NoError(t, index.InsertItem(context.TODO(), s.Mapper, db, &item))
-	iu := storage.ItemUnit{
-		Item:   &item,
-		ItemID: item.ID,
+	require.NoError(t, item.Insert(context.TODO(), s.Mapper, db, &it))
+	iu := sdk.CDNItemUnit{
+		Item:   &it,
+		ItemID: it.ID,
 		UnitID: s.Units.Buffer.ID(),
 	}
 	require.NoError(t, s.Units.Buffer.Add(iu, 0, "Ligne 0\n"))
@@ -107,7 +107,7 @@ func TestGetItemValue(t *testing.T) {
 	require.NoError(t, s.Units.Buffer.Add(iu, 10, "Ligne 10\n"))
 
 	require.NoError(t, s.completeItem(context.TODO(), db, iu))
-	itemDB, err := index.LoadItemByID(context.TODO(), s.Mapper, db, item.ID, gorpmapper.GetOptions.WithDecryption)
+	itemDB, err := item.LoadByID(context.TODO(), s.Mapper, db, it.ID, gorpmapper.GetOptions.WithDecryption)
 	require.NoError(t, err)
 	itemUnit, err := s.Units.NewItemUnit(context.TODO(), s.Units.Buffer, itemDB)
 	require.NoError(t, err)
@@ -129,7 +129,7 @@ func TestGetItemValue(t *testing.T) {
 	// Sync FS
 	require.NoError(t, cdnUnits.Run(context.TODO(), cdnUnits.Storages[0]))
 
-	_, err = storage.LoadItemUnitByUnit(context.TODO(), s.Mapper, db, s.Units.Storages[0].ID(), item.ID)
+	_, err = storage.LoadItemUnitByUnit(context.TODO(), s.Mapper, db, s.Units.Storages[0].ID(), it.ID)
 	require.NoError(t, err)
 	// remove from buffer
 	require.NoError(t, storage.DeleteItemUnit(s.Mapper, db, itemUnit))

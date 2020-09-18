@@ -2,7 +2,7 @@ package cdn
 
 import (
 	"context"
-	"github.com/ovh/cds/engine/cdn/index"
+	"github.com/ovh/cds/engine/cdn/item"
 	"github.com/ovh/cds/engine/cdn/storage"
 	cdntest "github.com/ovh/cds/engine/cdn/test"
 	"github.com/ovh/cds/engine/gorpmapper"
@@ -19,7 +19,7 @@ import (
 
 func TestCleanSynchronizedItem(t *testing.T) {
 	m := gorpmapper.New()
-	index.InitDBMapping(m)
+	item.InitDBMapping(m)
 	storage.InitDBMapping(m)
 
 	log.SetLogger(t)
@@ -28,7 +28,7 @@ func TestCleanSynchronizedItem(t *testing.T) {
 
 	cfg := test.LoadTestingConf(t, sdk.TypeCDN)
 
-	cdntest.ClearIndex(t, context.TODO(), m, db)
+	cdntest.ClearItem(t, context.TODO(), m, db)
 	cdntest.ClearUnits(t, context.TODO(), m, db)
 
 	// Create cdn service
@@ -78,77 +78,77 @@ func TestCleanSynchronizedItem(t *testing.T) {
 	s.Units = cdnUnits
 
 	// Add Item in CDS and FS
-	item1CDSFs := index.Item{
+	item1CDSFs := sdk.CDNItem{
 		ID:         sdk.UUID(),
 		Type:       sdk.CDNTypeItemStepLog,
-		Status:     index.StatusItemCompleted,
+		Status:     sdk.CDNStatusItemCompleted,
 		APIRefHash: sdk.RandomString(10),
 	}
-	require.NoError(t, index.InsertItem(context.TODO(), s.Mapper, db, &item1CDSFs))
-	iu1CDS := storage.ItemUnit{UnitID: s.Units.Storages[1].ID(), ItemID: item1CDSFs.ID}
+	require.NoError(t, item.Insert(context.TODO(), s.Mapper, db, &item1CDSFs))
+	iu1CDS := sdk.CDNItemUnit{UnitID: s.Units.Storages[1].ID(), ItemID: item1CDSFs.ID}
 	require.NoError(t, storage.InsertItemUnit(context.TODO(), s.Mapper, db, &iu1CDS))
-	iu1FS := storage.ItemUnit{UnitID: s.Units.Storages[0].ID(), ItemID: item1CDSFs.ID}
+	iu1FS := sdk.CDNItemUnit{UnitID: s.Units.Storages[0].ID(), ItemID: item1CDSFs.ID}
 	require.NoError(t, storage.InsertItemUnit(context.TODO(), s.Mapper, db, &iu1FS))
 
 	// Add Item in Redis and FS
-	item2RedisFs := index.Item{
+	item2RedisFs := sdk.CDNItem{
 		ID:         sdk.UUID(),
 		Type:       sdk.CDNTypeItemStepLog,
-		Status:     index.StatusItemCompleted,
+		Status:     sdk.CDNStatusItemCompleted,
 		APIRefHash: sdk.RandomString(10),
 	}
-	require.NoError(t, index.InsertItem(context.TODO(), s.Mapper, db, &item2RedisFs))
-	iu2Redis := storage.ItemUnit{UnitID: s.Units.Buffer.ID(), ItemID: item2RedisFs.ID}
+	require.NoError(t, item.Insert(context.TODO(), s.Mapper, db, &item2RedisFs))
+	iu2Redis := sdk.CDNItemUnit{UnitID: s.Units.Buffer.ID(), ItemID: item2RedisFs.ID}
 	require.NoError(t, storage.InsertItemUnit(context.TODO(), s.Mapper, db, &iu2Redis))
-	iu2FS := storage.ItemUnit{UnitID: s.Units.Storages[0].ID(), ItemID: item2RedisFs.ID}
+	iu2FS := sdk.CDNItemUnit{UnitID: s.Units.Storages[0].ID(), ItemID: item2RedisFs.ID}
 	require.NoError(t, storage.InsertItemUnit(context.TODO(), s.Mapper, db, &iu2FS))
 
 	// Add Item in FS only
-	item3Fs := index.Item{
+	item3Fs := sdk.CDNItem{
 		ID:         sdk.UUID(),
 		Type:       sdk.CDNTypeItemStepLog,
-		Status:     index.StatusItemCompleted,
+		Status:     sdk.CDNStatusItemCompleted,
 		APIRefHash: sdk.RandomString(10),
 	}
-	require.NoError(t, index.InsertItem(context.TODO(), s.Mapper, db, &item3Fs))
-	iu3FS := storage.ItemUnit{UnitID: s.Units.Storages[0].ID(), ItemID: item3Fs.ID}
+	require.NoError(t, item.Insert(context.TODO(), s.Mapper, db, &item3Fs))
+	iu3FS := sdk.CDNItemUnit{UnitID: s.Units.Storages[0].ID(), ItemID: item3Fs.ID}
 	require.NoError(t, storage.InsertItemUnit(context.TODO(), s.Mapper, db, &iu3FS))
 
 	// Add Item in redis only
-	item4Redis := index.Item{
+	item4Redis := sdk.CDNItem{
 		ID:         sdk.UUID(),
 		Type:       sdk.CDNTypeItemStepLog,
-		Status:     index.StatusItemCompleted,
+		Status:     sdk.CDNStatusItemCompleted,
 		APIRefHash: sdk.RandomString(10),
 	}
-	require.NoError(t, index.InsertItem(context.TODO(), s.Mapper, db, &item4Redis))
-	iu4Redis := storage.ItemUnit{UnitID: s.Units.Buffer.ID(), ItemID: item4Redis.ID}
+	require.NoError(t, item.Insert(context.TODO(), s.Mapper, db, &item4Redis))
+	iu4Redis := sdk.CDNItemUnit{UnitID: s.Units.Buffer.ID(), ItemID: item4Redis.ID}
 	require.NoError(t, storage.InsertItemUnit(context.TODO(), s.Mapper, db, &iu4Redis))
 
 	// Add Item in cds only
-	item5CDS := index.Item{
+	item5CDS := sdk.CDNItem{
 		ID:         sdk.UUID(),
 		Type:       sdk.CDNTypeItemStepLog,
-		Status:     index.StatusItemCompleted,
+		Status:     sdk.CDNStatusItemCompleted,
 		APIRefHash: sdk.RandomString(10),
 	}
-	require.NoError(t, index.InsertItem(context.TODO(), s.Mapper, db, &item5CDS))
-	iu5CDS := storage.ItemUnit{UnitID: s.Units.Storages[1].ID(), ItemID: item5CDS.ID}
+	require.NoError(t, item.Insert(context.TODO(), s.Mapper, db, &item5CDS))
+	iu5CDS := sdk.CDNItemUnit{UnitID: s.Units.Storages[1].ID(), ItemID: item5CDS.ID}
 	require.NoError(t, storage.InsertItemUnit(context.TODO(), s.Mapper, db, &iu5CDS))
 
 	// Add Item in redis / fs/ cds
-	item6RedisFSCDS := index.Item{
+	item6RedisFSCDS := sdk.CDNItem{
 		ID:         sdk.UUID(),
 		Type:       sdk.CDNTypeItemStepLog,
-		Status:     index.StatusItemCompleted,
+		Status:     sdk.CDNStatusItemCompleted,
 		APIRefHash: sdk.RandomString(10),
 	}
-	require.NoError(t, index.InsertItem(context.TODO(), s.Mapper, db, &item6RedisFSCDS))
-	iu6CDS := storage.ItemUnit{UnitID: s.Units.Storages[1].ID(), ItemID: item6RedisFSCDS.ID}
+	require.NoError(t, item.Insert(context.TODO(), s.Mapper, db, &item6RedisFSCDS))
+	iu6CDS := sdk.CDNItemUnit{UnitID: s.Units.Storages[1].ID(), ItemID: item6RedisFSCDS.ID}
 	require.NoError(t, storage.InsertItemUnit(context.TODO(), s.Mapper, db, &iu6CDS))
-	iu6Redis := storage.ItemUnit{UnitID: s.Units.Buffer.ID(), ItemID: item6RedisFSCDS.ID}
+	iu6Redis := sdk.CDNItemUnit{UnitID: s.Units.Buffer.ID(), ItemID: item6RedisFSCDS.ID}
 	require.NoError(t, storage.InsertItemUnit(context.TODO(), s.Mapper, db, &iu6Redis))
-	iu6FS := storage.ItemUnit{UnitID: s.Units.Storages[0].ID(), ItemID: item6RedisFSCDS.ID}
+	iu6FS := sdk.CDNItemUnit{UnitID: s.Units.Storages[0].ID(), ItemID: item6RedisFSCDS.ID}
 	require.NoError(t, storage.InsertItemUnit(context.TODO(), s.Mapper, db, &iu6FS))
 
 	iusRedis, err := storage.LoadItemUnitsByUnit(context.TODO(), s.Mapper, db, s.Units.Buffer.ID(), 100)
@@ -183,7 +183,7 @@ func TestCleanSynchronizedItem(t *testing.T) {
 
 func TestCleanWaitingItem(t *testing.T) {
 	m := gorpmapper.New()
-	index.InitDBMapping(m)
+	item.InitDBMapping(m)
 	storage.InitDBMapping(m)
 
 	log.SetLogger(t)
@@ -192,7 +192,7 @@ func TestCleanWaitingItem(t *testing.T) {
 
 	cfg := test.LoadTestingConf(t, sdk.TypeCDN)
 
-	cdntest.ClearIndex(t, context.TODO(), m, db)
+	cdntest.ClearItem(t, context.TODO(), m, db)
 
 	// Create cdn service
 	s := Service{
@@ -213,47 +213,42 @@ func TestCleanWaitingItem(t *testing.T) {
 	require.NoError(t, err)
 	s.Units = cdnUnits
 
-	now := time.Now()
-
-	item := index.Item{
+	it := sdk.CDNItem{
 		ID:     sdk.UUID(),
 		Size:   12,
 		Type:   sdk.CDNTypeItemStepLog,
-		Status: index.StatusItemIncoming,
+		Status: sdk.CDNStatusItemIncoming,
 
 		APIRefHash: sdk.RandomString(10),
 	}
-	require.NoError(t, err, index.InsertItem(context.TODO(), s.Mapper, db, &item))
+	require.NoError(t, err, item.Insert(context.TODO(), s.Mapper, db, &it))
 
-	item.LastModified = now.Add(-36 * time.Hour)
-	require.NoError(t, s.Mapper.UpdateAndSign(context.TODO(), db, &item))
-
-	iu := storage.ItemUnit{
-		ItemID: item.ID,
+	iu := sdk.CDNItemUnit{
+		ItemID: it.ID,
 		UnitID: s.Units.Buffer.ID(),
 	}
 	require.NoError(t, storage.InsertItemUnit(context.TODO(), s.Mapper, db, &iu))
 
-	t.Logf(">>>%+v", item)
+	time.Sleep(2 * time.Second)
 
-	require.NoError(t, s.cleanWaitingItem(context.TODO()))
+	require.NoError(t, s.cleanWaitingItem(context.TODO(), 1))
 
-	itemDB, err := index.LoadItemByID(context.TODO(), s.Mapper, db, item.ID)
+	itemDB, err := item.LoadByID(context.TODO(), s.Mapper, db, it.ID)
 	require.NoError(t, err)
 
-	require.Equal(t, index.StatusItemCompleted, itemDB.Status)
+	require.Equal(t, sdk.CDNStatusItemCompleted, itemDB.Status)
 }
 
 func TestPurgeItem(t *testing.T) {
 	m := gorpmapper.New()
-	index.InitDBMapping(m)
+	item.InitDBMapping(m)
 	storage.InitDBMapping(m)
 
 	log.SetLogger(t)
 	db, factory, cache, cancel := test.SetupPGToCancel(t, m, sdk.TypeCDN)
 	t.Cleanup(cancel)
 
-	cdntest.ClearIndex(t, context.TODO(), m, db)
+	cdntest.ClearItem(t, context.TODO(), m, db)
 
 	// Create cdn service
 	s := Service{
@@ -263,36 +258,36 @@ func TestPurgeItem(t *testing.T) {
 	}
 
 	// Add Item in CDS and FS
-	item1 := index.Item{
+	item1 := sdk.CDNItem{
 		ID:         sdk.UUID(),
 		Type:       sdk.CDNTypeItemStepLog,
-		Status:     index.StatusItemCompleted,
+		Status:     sdk.CDNStatusItemCompleted,
 		APIRefHash: sdk.RandomString(10),
 		ToDelete:   true,
 	}
-	require.NoError(t, index.InsertItem(context.TODO(), s.Mapper, db, &item1))
+	require.NoError(t, item.Insert(context.TODO(), s.Mapper, db, &item1))
 
-	item2 := index.Item{
+	item2 := sdk.CDNItem{
 		ID:         sdk.UUID(),
 		Type:       sdk.CDNTypeItemStepLog,
-		Status:     index.StatusItemCompleted,
+		Status:     sdk.CDNStatusItemCompleted,
 		APIRefHash: sdk.RandomString(10),
 		ToDelete:   false,
 	}
-	require.NoError(t, index.InsertItem(context.TODO(), s.Mapper, db, &item2))
+	require.NoError(t, item.Insert(context.TODO(), s.Mapper, db, &item2))
 
-	item3 := index.Item{
+	item3 := sdk.CDNItem{
 		ID:         sdk.UUID(),
 		Type:       sdk.CDNTypeItemStepLog,
-		Status:     index.StatusItemCompleted,
+		Status:     sdk.CDNStatusItemCompleted,
 		APIRefHash: sdk.RandomString(10),
 		ToDelete:   true,
 	}
-	require.NoError(t, index.InsertItem(context.TODO(), s.Mapper, db, &item3))
+	require.NoError(t, item.Insert(context.TODO(), s.Mapper, db, &item3))
 
 	require.NoError(t, s.cleanItemToDelete(context.TODO()))
 
-	items, err := index.LoadAllItems(context.TODO(), s.Mapper, db, 10)
+	items, err := item.LoadAll(context.TODO(), s.Mapper, db, 10)
 	require.NoError(t, err)
 	require.Equal(t, 1, len(items))
 }

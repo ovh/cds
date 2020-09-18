@@ -2,19 +2,19 @@ package test
 
 import (
 	"context"
-	"github.com/ovh/cds/engine/cdn/index"
+	"github.com/ovh/cds/engine/cdn/item"
 	"github.com/ovh/cds/engine/cdn/storage"
 	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/stretchr/testify/require"
 	"testing"
 )
 
-func ClearIndex(t *testing.T, ctx context.Context, m *gorpmapper.Mapper, db gorpmapper.SqlExecutorWithTx) {
+func ClearItem(t *testing.T, ctx context.Context, m *gorpmapper.Mapper, db gorpmapper.SqlExecutorWithTx) {
 	// clear datas
-	items, err := index.LoadAllItems(ctx, m, db, 500)
+	items, err := item.LoadAll(ctx, m, db, 500)
 	require.NoError(t, err)
 	for _, i := range items {
-		_ = index.DeleteItemByIDs(db, []string{i.ID})
+		_ = item.DeleteByIDs(db, []string{i.ID})
 	}
 }
 
@@ -22,6 +22,6 @@ func ClearUnits(t *testing.T, ctx context.Context, m *gorpmapper.Mapper, db gorp
 	units, err := storage.LoadAllUnits(ctx, m, db)
 	require.NoError(t, err)
 	for _, u := range units {
-		require.NoError(t, m.Delete(db, &u))
+		storage.DeleteUnit(t, m, db, &u)
 	}
 }

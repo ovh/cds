@@ -56,18 +56,18 @@ func (s *Service) Status(ctx context.Context) sdk.MonitoringStatus {
 	db := s.mustDBWithCtx(ctx)
 
 	nbCompleted, err := storage.CountItemCompleted(db)
-	m.Lines = append(m.Lines, addMonitoringLine(nbCompleted, "index/items/completed", err, sdk.MonitoringStatusOK))
+	m.Lines = append(m.Lines, addMonitoringLine(nbCompleted, "items/completed", err, sdk.MonitoringStatusOK))
 
 	nbIncoming, err := storage.CountItemIncoming(db)
-	m.Lines = append(m.Lines, addMonitoringLine(nbIncoming, "index/items/incoming", err, sdk.MonitoringStatusOK))
+	m.Lines = append(m.Lines, addMonitoringLine(nbIncoming, "items/incoming", err, sdk.MonitoringStatusOK))
 
 	for _, st := range s.Units.Storages {
 		m.Lines = append(m.Lines, st.Status(ctx)...)
 		size, err := storage.CountItemUnitByUnit(db, st.ID())
 		if nbCompleted-size >= 100 {
-			m.Lines = append(m.Lines, addMonitoringLine(size, "backend/"+st.Name()+"/index/items", err, sdk.MonitoringStatusWarn))
+			m.Lines = append(m.Lines, addMonitoringLine(size, "backend/"+st.Name()+"/items", err, sdk.MonitoringStatusWarn))
 		} else {
-			m.Lines = append(m.Lines, addMonitoringLine(size, "backend/"+st.Name()+"/index/items", err, sdk.MonitoringStatusOK))
+			m.Lines = append(m.Lines, addMonitoringLine(size, "backend/"+st.Name()+"/items", err, sdk.MonitoringStatusOK))
 		}
 	}
 

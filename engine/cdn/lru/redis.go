@@ -9,7 +9,7 @@ import (
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/cache"
-	"github.com/ovh/cds/engine/cdn/index"
+	"github.com/ovh/cds/engine/cdn/item"
 	"github.com/ovh/cds/engine/cdn/redis"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
@@ -77,7 +77,7 @@ func (r *Redis) Size() (int64, error) {
 	}
 
 	// DB Request
-	return index.ComputeSizeByItemIDs(r.db, itemIDs)
+	return item.ComputeSizeByIDs(r.db, itemIDs)
 }
 
 func (r *Redis) MaxSize() int64 {

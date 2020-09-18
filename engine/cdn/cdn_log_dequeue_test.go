@@ -12,7 +12,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	cacheP "github.com/ovh/cds/engine/cache"
-	"github.com/ovh/cds/engine/cdn/index"
+	"github.com/ovh/cds/engine/cdn/item"
 	"github.com/ovh/cds/engine/cdn/storage"
 	_ "github.com/ovh/cds/engine/cdn/storage/local"
 	_ "github.com/ovh/cds/engine/cdn/storage/redis"
@@ -26,7 +26,7 @@ import (
 
 func TestStoreNewStepLog(t *testing.T) {
 	m := gorpmapper.New()
-	index.InitDBMapping(m)
+	item.InitDBMapping(m)
 	storage.InitDBMapping(m)
 
 	log.SetLogger(t)
@@ -35,7 +35,7 @@ func TestStoreNewStepLog(t *testing.T) {
 
 	cfg := test.LoadTestingConf(t, sdk.TypeCDN)
 
-	cdntest.ClearIndex(t, context.TODO(), m, db)
+	cdntest.ClearItem(t, context.TODO(), m, db)
 
 	// Create cdn service
 	s := Service{
@@ -96,15 +96,15 @@ func TestStoreNewStepLog(t *testing.T) {
 	}
 	hashRef, err := hashstructure.Hash(apiRef, nil)
 	require.NoError(t, err)
-	item, err := index.LoadItemByAPIRefHashAndType(context.TODO(), s.Mapper, db, strconv.FormatUint(hashRef, 10), sdk.CDNTypeItemStepLog)
+	it, err := item.LoadByAPIRefHashAndType(context.TODO(), s.Mapper, db, strconv.FormatUint(hashRef, 10), sdk.CDNTypeItemStepLog)
 	require.NoError(t, err)
-	require.NotNil(t, item)
+	require.NotNil(t, it)
 	defer func() {
-		_ = index.DeleteItemByIDs(db, []string{item.ID})
+		_ = item.DeleteByIDs(db, []string{it.ID})
 	}()
-	require.Equal(t, index.StatusItemIncoming, item.Status)
+	require.Equal(t, sdk.CDNStatusItemIncoming, it.Status)
 
-	iu, err := storage.LoadItemUnitByUnit(context.TODO(), s.Mapper, db, s.Units.Buffer.ID(), item.ID, gorpmapper.GetOptions.WithDecryption)
+	iu, err := storage.LoadItemUnitByUnit(context.TODO(), s.Mapper, db, s.Units.Buffer.ID(), it.ID, gorpmapper.GetOptions.WithDecryption)
 	require.NoError(t, err)
 
 	bufferReader, err := s.Units.Buffer.NewReader(context.TODO(), *iu)
@@ -120,7 +120,7 @@ func TestStoreNewStepLog(t *testing.T) {
 
 func TestStoreLastStepLog(t *testing.T) {
 	m := gorpmapper.New()
-	index.InitDBMapping(m)
+	item.InitDBMapping(m)
 	storage.InitDBMapping(m)
 
 	log.SetLogger(t)
@@ -129,7 +129,7 @@ func TestStoreLastStepLog(t *testing.T) {
 
 	cfg := test.LoadTestingConf(t, sdk.TypeCDN)
 
-	cdntest.ClearIndex(t, context.TODO(), m, db)
+	cdntest.ClearItem(t, context.TODO(), m, db)
 
 	// Create cdn service
 	s := Service{
@@ -184,25 +184,25 @@ func TestStoreLastStepLog(t *testing.T) {
 	hashRef, err := hashstructure.Hash(apiRef, nil)
 	require.NoError(t, err)
 
-	item := index.Item{
-		Status:     index.StatusItemIncoming,
+	it := sdk.CDNItem{
+		Status:     sdk.CDNStatusItemIncoming,
 		APIRefHash: strconv.FormatUint(hashRef, 10),
 		APIRef:     apiRef,
 		Type:       sdk.CDNTypeItemStepLog,
 	}
-	require.NoError(t, index.InsertItem(context.TODO(), m, db, &item))
+	require.NoError(t, item.Insert(context.TODO(), m, db, &it))
 	defer func() {
-		_ = index.DeleteItemByIDs(db, []string{item.ID})
+		_ = item.DeleteByIDs(db, []string{it.ID})
 
 	}()
 	content := buildMessage(hm)
 	err = s.storeLogs(context.TODO(), sdk.CDNTypeItemStepLog, hm.Signature, hm.Status, content, hm.Line)
 	require.NoError(t, err)
 
-	itemDB, err := index.LoadItemByID(context.TODO(), s.Mapper, db, item.ID)
+	itemDB, err := item.LoadByID(context.TODO(), s.Mapper, db, it.ID)
 	require.NoError(t, err)
 	require.NotNil(t, itemDB)
-	require.Equal(t, index.StatusItemCompleted, itemDB.Status)
+	require.Equal(t, sdk.CDNStatusItemCompleted, itemDB.Status)
 	require.NotEmpty(t, itemDB.Hash)
 	require.NotEmpty(t, itemDB.MD5)
 	require.NotZero(t, itemDB.Size)
@@ -218,7 +218,7 @@ func TestStoreLastStepLog(t *testing.T) {
 
 func TestStoreLogWrongOrder(t *testing.T) {
 	m := gorpmapper.New()
-	index.InitDBMapping(m)
+	item.InitDBMapping(m)
 	storage.InitDBMapping(m)
 
 	log.SetLogger(t)
@@ -227,7 +227,7 @@ func TestStoreLogWrongOrder(t *testing.T) {
 
 	cfg := test.LoadTestingConf(t, sdk.TypeCDN)
 
-	cdntest.ClearIndex(t, context.TODO(), m, db)
+	cdntest.ClearItem(t, context.TODO(), m, db)
 
 	// Create cdn service
 	s := Service{
@@ -284,25 +284,25 @@ func TestStoreLogWrongOrder(t *testing.T) {
 	hashRef, err := hashstructure.Hash(apiRef, nil)
 	require.NoError(t, err)
 
-	item := index.Item{
-		Status:     index.StatusItemIncoming,
+	it := sdk.CDNItem{
+		Status:     sdk.CDNStatusItemIncoming,
 		APIRefHash: strconv.FormatUint(hashRef, 10),
 		APIRef:     apiRef,
 		Type:       sdk.CDNTypeItemStepLog,
 	}
-	require.NoError(t, index.InsertItem(context.TODO(), m, db, &item))
+	require.NoError(t, item.Insert(context.TODO(), m, db, &it))
 	defer func() {
-		_ = index.DeleteItemByIDs(db, []string{item.ID})
+		_ = item.DeleteByIDs(db, []string{it.ID})
 	}()
 
 	content := buildMessage(hm)
 	err = s.storeLogs(context.TODO(), sdk.CDNTypeItemStepLog, hm.Signature, hm.Status, content, hm.Line)
 	require.NoError(t, err)
 
-	itemDB, err := index.LoadItemByID(context.TODO(), s.Mapper, db, item.ID)
+	itemDB, err := item.LoadByID(context.TODO(), s.Mapper, db, it.ID)
 	require.NoError(t, err)
 	require.NotNil(t, itemDB)
-	require.Equal(t, index.StatusItemIncoming, itemDB.Status)
+	require.Equal(t, sdk.CDNStatusItemIncoming, itemDB.Status)
 	require.NotEmpty(t, itemDB.Hash)
 
 	unit, err := storage.LoadUnitByName(context.TODO(), m, db, s.Units.Buffer.Name())
@@ -322,10 +322,10 @@ func TestStoreLogWrongOrder(t *testing.T) {
 	err = s.storeLogs(context.TODO(), sdk.CDNTypeItemStepLog, hm.Signature, hm.Status, content, hm.Line)
 	require.NoError(t, err)
 
-	itemDB2, err := index.LoadItemByID(context.TODO(), s.Mapper, db, item.ID)
+	itemDB2, err := item.LoadByID(context.TODO(), s.Mapper, db, it.ID)
 	require.NoError(t, err)
 	require.NotNil(t, itemDB2)
-	require.Equal(t, index.StatusItemCompleted, itemDB2.Status)
+	require.Equal(t, sdk.CDNStatusItemCompleted, itemDB2.Status)
 	require.NotEmpty(t, itemDB2.Hash)
 
 	iu, err = storage.LoadItemUnitByUnit(context.TODO(), m, db, unit.ID, itemDB2.ID)
@@ -347,7 +347,7 @@ func TestStoreLogWrongOrder(t *testing.T) {
 
 func TestStoreNewServiceLogAndAppend(t *testing.T) {
 	m := gorpmapper.New()
-	index.InitDBMapping(m)
+	item.InitDBMapping(m)
 	storage.InitDBMapping(m)
 
 	log.SetLogger(t)
@@ -356,7 +356,7 @@ func TestStoreNewServiceLogAndAppend(t *testing.T) {
 
 	cfg := test.LoadTestingConf(t, sdk.TypeCDN)
 
-	cdntest.ClearIndex(t, context.TODO(), m, db)
+	cdntest.ClearItem(t, context.TODO(), m, db)
 
 	// Create cdn service
 	s := Service{
@@ -410,14 +410,14 @@ func TestStoreNewServiceLogAndAppend(t *testing.T) {
 	}
 	hashRef, err := hashstructure.Hash(apiRef, nil)
 	require.NoError(t, err)
-	item, err := index.LoadItemByAPIRefHashAndType(context.TODO(), s.Mapper, db, strconv.FormatUint(hashRef, 10), sdk.CDNTypeItemServiceLog)
+	it, err := item.LoadByAPIRefHashAndType(context.TODO(), s.Mapper, db, strconv.FormatUint(hashRef, 10), sdk.CDNTypeItemServiceLog)
 	require.NoError(t, err)
-	require.NotNil(t, item)
-	t.Cleanup(func() { _ = index.DeleteItemByIDs(db, []string{item.ID}) })
-	require.Equal(t, index.StatusItemIncoming, item.Status)
+	require.NotNil(t, it)
+	t.Cleanup(func() { _ = item.DeleteByIDs(db, []string{it.ID}) })
+	require.Equal(t, sdk.CDNStatusItemIncoming, it.Status)
 
 	var logs []string
-	require.NoError(t, cache.ScoredSetScan(context.Background(), cacheP.Key("cdn", "buffer", item.ID), 0, 1, &logs))
+	require.NoError(t, cache.ScoredSetScan(context.Background(), cacheP.Key("cdn", "buffer", it.ID), 0, 1, &logs))
 	require.Len(t, logs, 1)
 	require.Equal(t, "log1", logs[0])
 
@@ -430,7 +430,7 @@ func TestStoreNewServiceLogAndAppend(t *testing.T) {
 	}
 	require.NoError(t, s.storeLogs(context.TODO(), sdk.CDNTypeItemServiceLog, hm2.Signature, hm2.Status, hm2.Msg.Full, 0))
 
-	require.NoError(t, cache.ScoredSetScan(context.TODO(), cacheP.Key("cdn", "buffer", item.ID), 0, 2, &logs))
+	require.NoError(t, cache.ScoredSetScan(context.TODO(), cacheP.Key("cdn", "buffer", it.ID), 0, 2, &logs))
 	require.Len(t, logs, 2)
 	require.Equal(t, "log1", logs[0])
 	require.Equal(t, "log2", logs[1])
