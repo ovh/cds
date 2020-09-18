@@ -3,6 +3,9 @@ title: "CDN"
 weight: 3
 ---
 
+<b style="color: red">⚠ Do not activate CDN log processing in production yet. It's in active development.
+Be sure that config flag 'enableLogProcessing' is set to false</b>
+
 ## What's CDN
 
 CDN is a service dedicated to receice and retrieve logs. It replaces the old system that stored logs in the CDS database
