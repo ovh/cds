@@ -93,7 +93,7 @@ func (s *Redis) Status(_ context.Context) []sdk.MonitoringStatusLine {
 	if err := s.store.Ping(); err != nil {
 		return []sdk.MonitoringStatusLine{{
 			Component: "storage/redis/ping",
-			Value:     "connect OK",
+			Value:     "connect KO",
 			Status:    sdk.MonitoringStatusAlert,
 		}}
 	}
@@ -107,9 +107,15 @@ func (s *Redis) Status(_ context.Context) []sdk.MonitoringStatusLine {
 		}}
 	}
 
-	return []sdk.MonitoringStatusLine{{
-		Component: "storage/redis/size",
-		Value:     fmt.Sprintf("%d keys", size),
-		Status:    sdk.MonitoringStatusOK,
-	}}
+	return []sdk.MonitoringStatusLine{
+		{
+			Component: "storage/redis/ping",
+			Value:     "connect OK",
+			Status:    sdk.MonitoringStatusAlert,
+		},
+		{
+			Component: "storage/redis/size",
+			Value:     fmt.Sprintf("%d keys", size),
+			Status:    sdk.MonitoringStatusOK,
+		}}
 }
