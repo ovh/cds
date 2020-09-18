@@ -38,15 +38,15 @@ func addMonitoringLine(nb int64, text string, err error, status string) sdk.Moni
 			Value:     fmt.Sprintf("Error: %v", err),
 			Status:    sdk.MonitoringStatusAlert,
 		}
-	} else {
-		return sdk.MonitoringStatusLine{
-			Component: text,
-			Value:     fmt.Sprintf("%d", nb),
-			Status:    status,
-		}
+	}
+	return sdk.MonitoringStatusLine{
+		Component: text,
+		Value:     fmt.Sprintf("%d", nb),
+		Status:    status,
 	}
 }
 
+// Status returns the monitoring status for this service
 func (s *Service) Status(ctx context.Context) sdk.MonitoringStatus {
 	m := s.CommonMonitoring()
 
@@ -60,6 +60,8 @@ func (s *Service) Status(ctx context.Context) sdk.MonitoringStatus {
 
 	nbIncoming, err := storage.CountItemIncoming(db)
 	m.Lines = append(m.Lines, addMonitoringLine(nbIncoming, "items/incoming", err, sdk.MonitoringStatusOK))
+
+	m.Lines = append(m.Lines, s.LogCache.Status(ctx)...)
 
 	for _, st := range s.Units.Storages {
 		m.Lines = append(m.Lines, st.Status(ctx)...)
@@ -81,9 +83,9 @@ func (s *Service) initMetrics(ctx context.Context) error {
 	onceMetrics.Do(func() {
 		metricsErrors = stats.Int64("cdn/tcp/router_errors", "number of errors", stats.UnitDimensionless)
 		metricsHits = stats.Int64("cdn/tcp/router_hits", "number of hits", stats.UnitDimensionless)
-		metricsStepLogReceived = stats.Int64("cdn/tcp/step/log/count", "Number of worker log received", stats.UnitDimensionless)
-		metricsServiceLogReceived = stats.Int64("cdn/tcp/service/log/count", "Number of service log received", stats.UnitDimensionless)
-		metricsItemCompletedByGC = stats.Int64("cdn/items/completed_by_gc", "Nb Items completed by GC", stats.UnitDimensionless)
+		metricsStepLogReceived = stats.Int64("cdn/tcp/step/log/count", "number of worker log received", stats.UnitDimensionless)
+		metricsServiceLogReceived = stats.Int64("cdn/tcp/service/log/count", "number of service log received", stats.UnitDimensionless)
+		metricsItemCompletedByGC = stats.Int64("cdn/items/completed_by_gc", "number of items completed by GC", stats.UnitDimensionless)
 
 		err = telemetry.InitMetricsInt64(ctx, metricsErrors, metricsHits, metricsServiceLogReceived, metricsServiceLogReceived, metricsItemCompletedByGC)
 	})
