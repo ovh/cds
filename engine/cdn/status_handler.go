@@ -63,6 +63,7 @@ func (s *Service) Status(ctx context.Context) sdk.MonitoringStatus {
 
 	m.Lines = append(m.Lines, s.LogCache.Status(ctx)...)
 	m.Lines = append(m.Lines, sdk.GetGoRoutinesLoopStatus()...)
+	m.Lines = append(m.Lines, s.getStatusSyncLogs()...)
 
 	for _, st := range s.Units.Storages {
 		m.Lines = append(m.Lines, st.Status(ctx)...)
