@@ -22,6 +22,35 @@ import (
 	"github.com/pkg/errors"
 )
 
+var goRoutinesLoopStatus = make(map[string]bool)
+
+// GoRoutineLoop runs the function within a goroutine with a panic recovery, and keep GoRoutine status.
+func GoRoutineLoop(c context.Context, name string, fn func(ctx context.Context), writerFactories ...func(s string) (io.WriteCloser, error)) {
+	goRoutinesLoopStatus[name] = true
+	GoRoutine(c, name, fn, writerFactories...)
+}
+
+// GetGoRoutinesLoopStatus returns the monitoring status of goroutines that should be running
+func GetGoRoutinesLoopStatus() []MonitoringStatusLine {
+	lines := make([]MonitoringStatusLine, len(goRoutinesLoopStatus))
+	i := 0
+	for name, isActive := range goRoutinesLoopStatus {
+		status := MonitoringStatusAlert
+		value := "NOT running"
+		if isActive {
+			status = MonitoringStatusOK
+			value = "Running"
+		}
+		lines[i] = MonitoringStatusLine{
+			Status:    status,
+			Component: "goroutine/" + name + fmt.Sprintf("%t", isActive),
+			Value:     value,
+		}
+		i++
+	}
+	return lines
+}
+
 // GoRoutine runs the function within a goroutine with a panic recovery
 func GoRoutine(c context.Context, name string, fn func(ctx context.Context), writerFactories ...func(s string) (io.WriteCloser, error)) {
 	hostname, _ := os.Hostname()
@@ -52,6 +81,9 @@ func GoRoutine(c context.Context, name string, fn func(ctx context.Context), wri
 						log.Error(ctx, "unable to close %s ¯\\_(ツ)_/¯ (%v)", uuid, err)
 					}
 				}
+			}
+			if _, ok := goRoutinesLoopStatus[name]; ok {
+				goRoutinesLoopStatus[name] = false
 			}
 		}()
 
