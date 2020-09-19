@@ -2,7 +2,12 @@ package cdn
 
 import (
 	"context"
+	"io/ioutil"
+	"testing"
+	"time"
+
 	"github.com/ovh/cds/engine/cdn/item"
+	"github.com/ovh/cds/engine/cdn/lru"
 	"github.com/ovh/cds/engine/cdn/storage"
 	cdntest "github.com/ovh/cds/engine/cdn/test"
 	"github.com/ovh/cds/engine/gorpmapper"
@@ -12,9 +17,6 @@ import (
 	"github.com/ovh/symmecrypt/ciphers/aesgcm"
 	"github.com/ovh/symmecrypt/convergent"
 	"github.com/stretchr/testify/require"
-	"io/ioutil"
-	"testing"
-	"time"
 )
 
 func TestCleanSynchronizedItem(t *testing.T) {
@@ -256,6 +258,11 @@ func TestPurgeItem(t *testing.T) {
 		Cache:               cache,
 		Mapper:              m,
 	}
+
+	var err error
+	cfg := test.LoadTestingConf(t, sdk.TypeCDN)
+	s.LogCache, err = lru.NewRedisLRU(db.DbMap, 1000, cfg["redisHost"], cfg["redisPassword"])
+	require.NoError(t, err)
 
 	// Add Item in CDS and FS
 	item1 := sdk.CDNItem{
