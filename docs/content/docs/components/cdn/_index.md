@@ -21,9 +21,9 @@ CDN is linked to 2 types of storages:
 ## Use case
 
 Workers and hatcheries communicate with CDN, sending step logs and service log
-![CDN_RECEIVE](/images/cdn_receive.png#banner)
+![CDN_RECEIVE](/images/cdn_receive.png)
 
 
 CDS UI and CLI communicate with CDN to get entire logs, or stream them
-![CDN_GET](/images/cdn_get.png#banner)
+![CDN_GET](/images/cdn_get.png)
 

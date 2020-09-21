@@ -1,5 +1,5 @@
 ---
-title: "Migrate to CDN"
+title: "Migrate logs into CDN"
 weight: 1
 ---
 
@@ -37,3 +37,8 @@ enableLogProcessing = true
 
 ```
 
+* Start CDN: it will begin to migrate all your logs from all your projects
+
+* You can follow the migration from CDN logs or with the CDS command line:
+
+![CDN_STATUS](/images/cdn_status.png)
