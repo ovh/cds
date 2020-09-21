@@ -63,12 +63,6 @@ func (s *Service) syncProjectLogs(ctx context.Context, cdsStorage *cds.CDS, pKey
 	if err != nil {
 		return err
 	}
-
-	if len(listNodeRuns) == len(nodeRunIds) {
-		log.Info(ctx, "Project %s already synchronized", pKey)
-		return nil
-	}
-
 	nodeRunMap := make(map[int64]struct{}, len(listNodeRuns))
 	for _, id := range listNodeRuns {
 		nodeRunMap[id] = struct{}{}

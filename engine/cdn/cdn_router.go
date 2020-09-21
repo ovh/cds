@@ -22,4 +22,5 @@ func (s *Service) initRouter(ctx context.Context) {
 	r.Handle("/item/delete", nil, r.POST(s.markItemToDeleteHandler))
 	r.Handle("/item/{type}/{apiRef}", nil, r.GET(s.getItemLogsHandler))
 	r.Handle("/item/{type}/{apiRef}/download", nil, r.GET(s.getItemLogsDownloadHandler, api.Auth(false)))
+	r.Handle("/sync/projects", nil, r.POST(s.syncProjectsHandler))
 }
