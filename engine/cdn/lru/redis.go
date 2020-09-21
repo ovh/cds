@@ -205,7 +205,7 @@ func (r *Redis) Status(ctx context.Context) []sdk.MonitoringStatusLine {
 	dbsize, err := r.store.DBSize()
 	if err != nil {
 		return []sdk.MonitoringStatusLine{{
-			Component: "cache/log/dbsize",
+			Component: "cache/log/redis_dbsize",
 			Value:     fmt.Sprintf("ERROR while getting cache log db size: %v err:%v", dbsize, err),
 			Status:    sdk.MonitoringStatusAlert,
 		}}
@@ -239,8 +239,8 @@ func (r *Redis) Status(ctx context.Context) []sdk.MonitoringStatusLine {
 
 	return []sdk.MonitoringStatusLine{
 		{
-			Component: "cache/log/dbsize",
-			Value:     fmt.Sprintf("%d", dbsize),
+			Component: "cache/log/redis_dbsize",
+			Value:     fmt.Sprintf("%d keys", dbsize),
 			Status:    sdk.MonitoringStatusOK,
 		},
 		{
@@ -249,7 +249,7 @@ func (r *Redis) Status(ctx context.Context) []sdk.MonitoringStatusLine {
 			Status:    sdk.MonitoringStatusOK,
 		},
 		{
-			Component: "cache/log/len",
+			Component: "cache/log/items",
 			Value:     fmt.Sprintf("%d", len),
 			Status:    sdk.MonitoringStatusOK,
 		}, {

@@ -15,21 +15,25 @@ import (
 // CommonMonitoring returns common part of MonitoringStatus
 func (c *Common) CommonMonitoring() sdk.MonitoringStatus {
 	t := time.Now()
+	lines := []sdk.MonitoringStatusLine{{
+		Component: "Version",
+		Value:     sdk.VERSION,
+		Status:    sdk.MonitoringStatusOK,
+	}, {
+		Component: "Uptime",
+		Value:     time.Since(c.StartupTime).String(),
+		Status:    sdk.MonitoringStatusOK,
+	}, {
+		Component: "Time",
+		Value:     fmt.Sprintf("%dh%dm%ds", t.Hour(), t.Minute(), t.Second()),
+		Status:    sdk.MonitoringStatusOK,
+	}}
+
+	lines = append(lines, sdk.GetGoRoutinesLoopStatus()...)
+
 	return sdk.MonitoringStatus{
-		Now: t,
-		Lines: []sdk.MonitoringStatusLine{{
-			Component: "Version",
-			Value:     sdk.VERSION,
-			Status:    sdk.MonitoringStatusOK,
-		}, {
-			Component: "Uptime",
-			Value:     time.Since(c.StartupTime).String(),
-			Status:    sdk.MonitoringStatusOK,
-		}, {
-			Component: "Time",
-			Value:     fmt.Sprintf("%dh%dm%ds", t.Hour(), t.Minute(), t.Second()),
-			Status:    sdk.MonitoringStatusOK,
-		}},
+		Now:   t,
+		Lines: lines,
 	}
 }
 

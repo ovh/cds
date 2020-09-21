@@ -101,11 +101,11 @@ func (s *Webdav) NewReader(_ context.Context, i sdk.CDNItemUnit) (io.ReadCloser,
 
 func (s *Webdav) Status(_ context.Context) []sdk.MonitoringStatusLine {
 	if err := s.client.Connect(); err != nil {
-		return []sdk.MonitoringStatusLine{{Component: "backend/webdav", Value: "webdav KO" + err.Error(), Status: sdk.MonitoringStatusAlert}}
+		return []sdk.MonitoringStatusLine{{Component: "backend/" + s.Name(), Value: "webdav KO" + err.Error(), Status: sdk.MonitoringStatusAlert}}
 	}
 
 	return []sdk.MonitoringStatusLine{{
-		Component: "backend/webdav",
+		Component: "backend/" + s.Name(),
 		Value:     "connect OK",
 		Status:    sdk.MonitoringStatusOK,
 	}}

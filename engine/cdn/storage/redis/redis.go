@@ -92,7 +92,7 @@ func (s *Redis) Read(_ sdk.CDNItemUnit, r io.Reader, w io.Writer) error {
 func (s *Redis) Status(_ context.Context) []sdk.MonitoringStatusLine {
 	if err := s.store.Ping(); err != nil {
 		return []sdk.MonitoringStatusLine{{
-			Component: "storage/redis/ping",
+			Component: fmt.Sprintf("storage/%s/ping", s.Name()),
 			Value:     "connect KO",
 			Status:    sdk.MonitoringStatusAlert,
 		}}
@@ -101,7 +101,7 @@ func (s *Redis) Status(_ context.Context) []sdk.MonitoringStatusLine {
 	size, err := s.store.DBSize()
 	if err != nil {
 		return []sdk.MonitoringStatusLine{{
-			Component: "storage/redis/size",
+			Component: fmt.Sprintf("storage/%s/size", s.Name()),
 			Value:     fmt.Sprintf("ERROR while getting dbsize: %v", size),
 			Status:    sdk.MonitoringStatusAlert,
 		}}
@@ -109,12 +109,12 @@ func (s *Redis) Status(_ context.Context) []sdk.MonitoringStatusLine {
 
 	return []sdk.MonitoringStatusLine{
 		{
-			Component: "storage/redis/ping",
+			Component: fmt.Sprintf("storage/%s/ping", s.Name()),
 			Value:     "connect OK",
 			Status:    sdk.MonitoringStatusAlert,
 		},
 		{
-			Component: "storage/redis/size",
+			Component: fmt.Sprintf("storage/%s/redis_dbsize", s.Name()),
 			Value:     fmt.Sprintf("%d keys", size),
 			Status:    sdk.MonitoringStatusOK,
 		}}

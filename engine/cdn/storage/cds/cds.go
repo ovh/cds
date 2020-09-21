@@ -113,10 +113,10 @@ func (c *CDS) GetWorkflowNodeRun(pKey string, nodeRunIdentifier sdk.WorkflowNode
 
 func (c *CDS) Status(_ context.Context) []sdk.MonitoringStatusLine {
 	if _, err := c.client.Version(); err != nil {
-		return []sdk.MonitoringStatusLine{{Component: "backend/cds", Value: "cds KO" + err.Error(), Status: sdk.MonitoringStatusAlert}}
+		return []sdk.MonitoringStatusLine{{Component: "backend/" + c.Name(), Value: "cds KO" + err.Error(), Status: sdk.MonitoringStatusAlert}}
 	}
 	return []sdk.MonitoringStatusLine{{
-		Component: "backend/cds",
+		Component: "backend/" + c.Name(),
 		Value:     "connect OK",
 		Status:    sdk.MonitoringStatusOK,
 	}}

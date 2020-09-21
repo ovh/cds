@@ -110,13 +110,13 @@ func (s *Local) Status(_ context.Context) []sdk.MonitoringStatusLine {
 	var lines []sdk.MonitoringStatusLine
 	if finfo, err := os.Stat(s.config.Path); os.IsNotExist(err) {
 		lines = append(lines, sdk.MonitoringStatusLine{
-			Component: "backend/local",
+			Component: "backend/" + s.Name(),
 			Value:     fmt.Sprintf("directory: %v does not exist", s.config.Path),
 			Status:    sdk.MonitoringStatusAlert,
 		})
 	} else if !finfo.IsDir() {
 		lines = append(lines, sdk.MonitoringStatusLine{
-			Component: "backend/local",
+			Component: "backend/" + s.Name(),
 			Value:     fmt.Sprintf("%v is not a directory", s.config.Path),
 			Status:    sdk.MonitoringStatusAlert,
 		})
@@ -129,7 +129,7 @@ func (s *Local) Status(_ context.Context) []sdk.MonitoringStatusLine {
 		}
 	}
 	lines = append(lines, sdk.MonitoringStatusLine{
-		Component: "backend/local",
+		Component: "backend/" + s.Name(),
 		Value:     fmt.Sprintf("size: %d bytes", s.size),
 		Status:    status,
 	})

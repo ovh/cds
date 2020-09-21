@@ -22,16 +22,23 @@ import (
 	"github.com/pkg/errors"
 )
 
-var goRoutinesLoopStatus = make(map[string]bool)
+var (
+	goRoutinesLoopStatus = make(map[string]bool)
+	goRoutinesLoopMutex  sync.Mutex
+)
 
 // GoRoutineLoop runs the function within a goroutine with a panic recovery, and keep GoRoutine status.
 func GoRoutineLoop(c context.Context, name string, fn func(ctx context.Context), writerFactories ...func(s string) (io.WriteCloser, error)) {
+	goRoutinesLoopMutex.Lock()
 	goRoutinesLoopStatus[name] = true
+	goRoutinesLoopMutex.Unlock()
 	GoRoutine(c, name, fn, writerFactories...)
 }
 
 // GetGoRoutinesLoopStatus returns the monitoring status of goroutines that should be running
 func GetGoRoutinesLoopStatus() []MonitoringStatusLine {
+	goRoutinesLoopMutex.Lock()
+	defer goRoutinesLoopMutex.Unlock()
 	lines := make([]MonitoringStatusLine, len(goRoutinesLoopStatus))
 	i := 0
 	for name, isActive := range goRoutinesLoopStatus {
@@ -43,7 +50,7 @@ func GetGoRoutinesLoopStatus() []MonitoringStatusLine {
 		}
 		lines[i] = MonitoringStatusLine{
 			Status:    status,
-			Component: "goroutine/" + name + fmt.Sprintf("%t", isActive),
+			Component: "goroutine/" + name,
 			Value:     value,
 		}
 		i++
@@ -82,9 +89,11 @@ func GoRoutine(c context.Context, name string, fn func(ctx context.Context), wri
 					}
 				}
 			}
+			goRoutinesLoopMutex.Lock()
 			if _, ok := goRoutinesLoopStatus[name]; ok {
 				goRoutinesLoopStatus[name] = false
 			}
+			goRoutinesLoopMutex.Unlock()
 		}()
 
 		fn(goroutineCtx)

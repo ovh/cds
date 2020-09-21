@@ -89,6 +89,7 @@ func (s *Service) SyncLogs(ctx context.Context, cdsStorage *cds.CDS) error {
 			continue
 		}
 		statusSync.nbProjectsDone++
+		statusSync.currentProjectSync = ""
 	}
 	log.Info(ctx, "cdn:cds:sync:log: project done %d/%d (+%d failed)", statusSync.nbProjectsDone, len(projects), statusSync.nbProjectsFailed)
 	if statusSync.nbProjectsFailed > 0 {
