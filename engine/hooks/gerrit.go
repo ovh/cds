@@ -244,7 +244,7 @@ func (s *Service) ComputeGerritStreamEvent(ctx context.Context, vcsServer string
 }
 
 // ListenGerritStreamEvent listen the gerrit event stream
-func ListenGerritStreamEvent(ctx context.Context, store cache.Store, v sdk.VCSConfiguration, gerritEventChan chan<- GerritEvent) error {
+func ListenGerritStreamEvent(ctx context.Context, store cache.Store, goRoutines *sdk.GoRoutines, v sdk.VCSConfiguration, gerritEventChan chan<- GerritEvent) error {
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 	signer, err := ssh.ParsePrivateKey([]byte(v.Password))
@@ -283,7 +283,7 @@ func ListenGerritStreamEvent(ctx context.Context, store cache.Store, v sdk.VCSCo
 
 	stdoutreader := bufio.NewReader(r)
 
-	sdk.GoRoutine(ctx, "gerrit-ssh-run", func(ctx context.Context) {
+	goRoutines.Run(ctx, "gerrit-ssh-run", func(ctx context.Context) {
 		// Run command
 		log.Debug("Listening to gerrit event stream %s", v.URL)
 		if err := session.Run("gerrit stream-events"); err != nil {

@@ -23,7 +23,7 @@ func (s *Service) processor(ctx context.Context) error {
 			ctx = context.WithValue(ctx, log.ContextLoggingRequestIDKey, op.RequestID)
 			if err := s.do(ctx, *op); err != nil {
 				if err == errLockUnavailable {
-					sdk.GoRoutine(ctx, "operation "+uuid+" retry", func(ctx context.Context) {
+					s.GoRoutines.Run(ctx, "operation "+uuid+" retry", func(ctx context.Context) {
 						op.NbRetries++
 						log.Info(ctx, "repositories > processor > lock unavailable. retry")
 						time.Sleep(time.Duration(2*op.NbRetries) * time.Second)

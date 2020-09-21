@@ -51,7 +51,7 @@ func (s *Service) waitingJobs(ctx context.Context) {
 					continue
 				}
 
-				sdk.GoRoutine(ctx, "cdn-dequeue-job-message", func(ctx context.Context) {
+				s.GoRoutines.Run(ctx, "cdn-dequeue-job-message", func(ctx context.Context) {
 					if err := s.dequeueJobMessages(ctx, jobQueueKey, jobID); err != nil {
 						err = sdk.WrapError(err, "unable to dequeue redis incoming job queue")
 						log.ErrorWithFields(ctx, logrus.Fields{"stack_trace": fmt.Sprintf("%+v", err)}, "%s", err)

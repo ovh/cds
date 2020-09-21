@@ -75,7 +75,7 @@ func TestCleanSynchronizedItem(t *testing.T) {
 				},
 			},
 		},
-	})
+	}, sdk.NewGoRoutines())
 	require.NoError(t, err)
 	s.Units = cdnUnits
 
@@ -211,7 +211,7 @@ func TestCleanWaitingItem(t *testing.T) {
 				Password: cfg["redisPassword"],
 			},
 		},
-	})
+	}, sdk.NewGoRoutines())
 	require.NoError(t, err)
 	s.Units = cdnUnits
 

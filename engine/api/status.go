@@ -264,7 +264,7 @@ func (api *API) computeMetrics(ctx context.Context) {
 		log.Error(ctx, "api.computeMetrics> unable to tag observability context: %v", err)
 	}
 
-	sdk.GoRoutine(ctx, "api.computeMetrics", func(ctx context.Context) {
+	api.GoRoutines.Loop(ctx, "api.computeMetrics", func(ctx context.Context) {
 		tick := time.NewTicker(9 * time.Second).C
 		for {
 			select {

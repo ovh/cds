@@ -35,7 +35,7 @@ func init() {
 	storage.RegisterDriver("local", new(Local))
 }
 
-func (s *Local) Init(ctx context.Context, cfg interface{}) error {
+func (s *Local) Init(ctx context.Context, cfg interface{}, goRoutines *sdk.GoRoutines) error {
 	config, is := cfg.(*storage.LocalStorageConfiguration)
 	if !is {
 		return sdk.WithStack(fmt.Errorf("invalid configuration: %T", cfg))
@@ -51,7 +51,7 @@ func (s *Local) Init(ctx context.Context, cfg interface{}) error {
 		return err
 	}
 
-	sdk.GoRoutine(ctx, "cdn-local-compute-size", func(ctx context.Context) {
+	goRoutines.Loop(ctx, "cdn-local-compute-size", func(ctx context.Context) {
 		s.computeSize(ctx)
 	})
 

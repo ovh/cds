@@ -109,6 +109,7 @@ type Common struct {
 	Signer               jose.Signer
 	CDNLogsURL           string
 	ServiceLogger        *logrus.Logger
+	GoRoutines           *sdk.GoRoutines
 }
 
 // Service is the interface for a engine service

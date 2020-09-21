@@ -25,7 +25,7 @@ func TestSwift(t *testing.T) {
 				SecretValue: "secret_value",
 			},
 		},
-	})
+	}, sdk.NewGoRoutines())
 	require.NoError(t, err, "unable to initialiaze webdav driver")
 
 	err = driver.client.ApplyEnvironment()

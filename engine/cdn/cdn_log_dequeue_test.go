@@ -2,11 +2,12 @@ package cdn
 
 import (
 	"context"
-	"github.com/ovh/cds/engine/cdn/redis"
 	"io"
 	"strconv"
 	"strings"
 	"testing"
+
+	"github.com/ovh/cds/engine/cdn/redis"
 
 	"github.com/mitchellh/hashstructure"
 	"github.com/stretchr/testify/require"
@@ -52,7 +53,7 @@ func TestStoreNewStepLog(t *testing.T) {
 				Password: cfg["redisPassword"],
 			},
 		},
-	})
+	}, sdk.NewGoRoutines())
 	require.NoError(t, err)
 	s.Units = cdnUnits
 
@@ -146,7 +147,7 @@ func TestStoreLastStepLog(t *testing.T) {
 				Password: cfg["redisPassword"],
 			},
 		},
-	})
+	}, sdk.NewGoRoutines())
 	require.NoError(t, err)
 	s.Units = cdnUnits
 
@@ -244,7 +245,7 @@ func TestStoreLogWrongOrder(t *testing.T) {
 				Password: cfg["redisPassword"],
 			},
 		},
-	})
+	}, sdk.NewGoRoutines())
 	require.NoError(t, err)
 	s.Units = cdnUnits
 
@@ -373,7 +374,7 @@ func TestStoreNewServiceLogAndAppend(t *testing.T) {
 				Password: cfg["redisPassword"],
 			},
 		},
-	})
+	}, sdk.NewGoRoutines())
 	require.NoError(t, err)
 	s.Units = cdnUnits
 

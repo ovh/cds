@@ -52,8 +52,8 @@ func workflowTransformAsCodeRun(v cli.Values) (interface{}, error) {
 	chanMessageReceived := make(chan sdk.WebsocketEvent)
 	chanMessageToSend := make(chan []sdk.WebsocketFilter)
 
-	sdk.GoRoutine(ctx, "WebsocketEventsListenCmd", func(ctx context.Context) {
-		client.WebsocketEventsListen(ctx, chanMessageToSend, chanMessageReceived)
+	sdk.NewGoRoutines().Run(ctx, "WebsocketEventsListenCmd", func(ctx context.Context) {
+		client.WebsocketEventsListen(ctx, sdk.NewGoRoutines(), chanMessageToSend, chanMessageReceived)
 	})
 
 	ope, err := client.WorkflowTransformAsCode(projectKey, v.GetString(_WorkflowName), branch, message)

@@ -1782,15 +1782,15 @@ func (m *MockEventsClient) EXPECT() *MockEventsClientMockRecorder {
 }
 
 // WebsocketEventsListen mocks base method
-func (m *MockEventsClient) WebsocketEventsListen(ctx context.Context, chanMsgToSend <-chan []sdk.WebsocketFilter, chanMsgReceived chan<- sdk.WebsocketEvent) {
+func (m *MockEventsClient) WebsocketEventsListen(ctx context.Context, goRoutines *sdk.GoRoutines, chanMsgToSend <-chan []sdk.WebsocketFilter, chanMsgReceived chan<- sdk.WebsocketEvent) {
 	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "WebsocketEventsListen", ctx, chanMsgToSend, chanMsgReceived)
+	m.ctrl.Call(m, "WebsocketEventsListen", ctx, goRoutines, chanMsgToSend, chanMsgReceived)
 }
 
 // WebsocketEventsListen indicates an expected call of WebsocketEventsListen
-func (mr *MockEventsClientMockRecorder) WebsocketEventsListen(ctx, chanMsgToSend, chanMsgReceived interface{}) *gomock.Call {
+func (mr *MockEventsClientMockRecorder) WebsocketEventsListen(ctx, goRoutines, chanMsgToSend, chanMsgReceived interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WebsocketEventsListen", reflect.TypeOf((*MockEventsClient)(nil).WebsocketEventsListen), ctx, chanMsgToSend, chanMsgReceived)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WebsocketEventsListen", reflect.TypeOf((*MockEventsClient)(nil).WebsocketEventsListen), ctx, goRoutines, chanMsgToSend, chanMsgReceived)
 }
 
 // MockDownloadClient is a mock of DownloadClient interface
@@ -2984,17 +2984,17 @@ func (mr *MockQueueClientMockRecorder) QueueCountWorkflowNodeJobRun(since, until
 }
 
 // QueuePolling mocks base method
-func (m *MockQueueClient) QueuePolling(ctx context.Context, jobs chan<- sdk.WorkflowNodeJobRun, errs chan<- error, delay time.Duration, modelType string, ratioService *int) error {
+func (m *MockQueueClient) QueuePolling(ctx context.Context, goRoutines *sdk.GoRoutines, jobs chan<- sdk.WorkflowNodeJobRun, errs chan<- error, delay time.Duration, modelType string, ratioService *int) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "QueuePolling", ctx, jobs, errs, delay, modelType, ratioService)
+	ret := m.ctrl.Call(m, "QueuePolling", ctx, goRoutines, jobs, errs, delay, modelType, ratioService)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // QueuePolling indicates an expected call of QueuePolling
-func (mr *MockQueueClientMockRecorder) QueuePolling(ctx, jobs, errs, delay, modelType, ratioService interface{}) *gomock.Call {
+func (mr *MockQueueClientMockRecorder) QueuePolling(ctx, goRoutines, jobs, errs, delay, modelType, ratioService interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "QueuePolling", reflect.TypeOf((*MockQueueClient)(nil).QueuePolling), ctx, jobs, errs, delay, modelType, ratioService)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "QueuePolling", reflect.TypeOf((*MockQueueClient)(nil).QueuePolling), ctx, goRoutines, jobs, errs, delay, modelType, ratioService)
 }
 
 // QueueTakeJob mocks base method
@@ -5812,15 +5812,15 @@ func (mr *MockInterfaceMockRecorder) EnvironmentKeysDelete(projectKey, envName, 
 }
 
 // WebsocketEventsListen mocks base method
-func (m *MockInterface) WebsocketEventsListen(ctx context.Context, chanMsgToSend <-chan []sdk.WebsocketFilter, chanMsgReceived chan<- sdk.WebsocketEvent) {
+func (m *MockInterface) WebsocketEventsListen(ctx context.Context, goRoutines *sdk.GoRoutines, chanMsgToSend <-chan []sdk.WebsocketFilter, chanMsgReceived chan<- sdk.WebsocketEvent) {
 	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "WebsocketEventsListen", ctx, chanMsgToSend, chanMsgReceived)
+	m.ctrl.Call(m, "WebsocketEventsListen", ctx, goRoutines, chanMsgToSend, chanMsgReceived)
 }
 
 // WebsocketEventsListen indicates an expected call of WebsocketEventsListen
-func (mr *MockInterfaceMockRecorder) WebsocketEventsListen(ctx, chanMsgToSend, chanMsgReceived interface{}) *gomock.Call {
+func (mr *MockInterfaceMockRecorder) WebsocketEventsListen(ctx, goRoutines, chanMsgToSend, chanMsgReceived interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WebsocketEventsListen", reflect.TypeOf((*MockInterface)(nil).WebsocketEventsListen), ctx, chanMsgToSend, chanMsgReceived)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WebsocketEventsListen", reflect.TypeOf((*MockInterface)(nil).WebsocketEventsListen), ctx, goRoutines, chanMsgToSend, chanMsgReceived)
 }
 
 // PipelineExport mocks base method
@@ -6929,17 +6929,17 @@ func (mr *MockInterfaceMockRecorder) QueueCountWorkflowNodeJobRun(since, until, 
 }
 
 // QueuePolling mocks base method
-func (m *MockInterface) QueuePolling(ctx context.Context, jobs chan<- sdk.WorkflowNodeJobRun, errs chan<- error, delay time.Duration, modelType string, ratioService *int) error {
+func (m *MockInterface) QueuePolling(ctx context.Context, goRoutines *sdk.GoRoutines, jobs chan<- sdk.WorkflowNodeJobRun, errs chan<- error, delay time.Duration, modelType string, ratioService *int) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "QueuePolling", ctx, jobs, errs, delay, modelType, ratioService)
+	ret := m.ctrl.Call(m, "QueuePolling", ctx, goRoutines, jobs, errs, delay, modelType, ratioService)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // QueuePolling indicates an expected call of QueuePolling
-func (mr *MockInterfaceMockRecorder) QueuePolling(ctx, jobs, errs, delay, modelType, ratioService interface{}) *gomock.Call {
+func (mr *MockInterfaceMockRecorder) QueuePolling(ctx, goRoutines, jobs, errs, delay, modelType, ratioService interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "QueuePolling", reflect.TypeOf((*MockInterface)(nil).QueuePolling), ctx, jobs, errs, delay, modelType, ratioService)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "QueuePolling", reflect.TypeOf((*MockInterface)(nil).QueuePolling), ctx, goRoutines, jobs, errs, delay, modelType, ratioService)
 }
 
 // QueueTakeJob mocks base method
@@ -8537,17 +8537,17 @@ func (mr *MockWorkerInterfaceMockRecorder) QueueCountWorkflowNodeJobRun(since, u
 }
 
 // QueuePolling mocks base method
-func (m *MockWorkerInterface) QueuePolling(ctx context.Context, jobs chan<- sdk.WorkflowNodeJobRun, errs chan<- error, delay time.Duration, modelType string, ratioService *int) error {
+func (m *MockWorkerInterface) QueuePolling(ctx context.Context, goRoutines *sdk.GoRoutines, jobs chan<- sdk.WorkflowNodeJobRun, errs chan<- error, delay time.Duration, modelType string, ratioService *int) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "QueuePolling", ctx, jobs, errs, delay, modelType, ratioService)
+	ret := m.ctrl.Call(m, "QueuePolling", ctx, goRoutines, jobs, errs, delay, modelType, ratioService)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // QueuePolling indicates an expected call of QueuePolling
-func (mr *MockWorkerInterfaceMockRecorder) QueuePolling(ctx, jobs, errs, delay, modelType, ratioService interface{}) *gomock.Call {
+func (mr *MockWorkerInterfaceMockRecorder) QueuePolling(ctx, goRoutines, jobs, errs, delay, modelType, ratioService interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "QueuePolling", reflect.TypeOf((*MockWorkerInterface)(nil).QueuePolling), ctx, jobs, errs, delay, modelType, ratioService)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "QueuePolling", reflect.TypeOf((*MockWorkerInterface)(nil).QueuePolling), ctx, goRoutines, jobs, errs, delay, modelType, ratioService)
 }
 
 // QueueTakeJob mocks base method

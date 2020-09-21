@@ -116,7 +116,7 @@ func (api *API) postWorkflowAsCodeHandler() service.Handler {
 			return sdk.WithStack(err)
 		}
 
-		sdk.GoRoutine(context.Background(), fmt.Sprintf("UpdateAsCodeResult-%s", ope.UUID), func(ctx context.Context) {
+		api.GoRoutines.Run(context.Background(), fmt.Sprintf("UpdateAsCodeResult-%s", ope.UUID), func(ctx context.Context) {
 			ed := ascode.EntityData{
 				Name:          wfDB.Name,
 				ID:            wfDB.ID,
@@ -124,7 +124,7 @@ func (api *API) postWorkflowAsCodeHandler() service.Handler {
 				FromRepo:      wfDB.FromRepository,
 				OperationUUID: ope.UUID,
 			}
-			ascode.UpdateAsCodeResult(ctx, api.mustDB(), api.Cache, *p, *wfDB, *rootApp, ed, u)
+			ascode.UpdateAsCodeResult(ctx, api.mustDB(), api.Cache, api.GoRoutines, *p, *wfDB, *rootApp, ed, u)
 		}, api.PanicDump())
 
 		return service.WriteJSON(w, sdk.Operation{
@@ -181,7 +181,7 @@ func (api *API) migrateWorkflowAsCode(ctx context.Context, w http.ResponseWriter
 		return sdk.WithStack(err)
 	}
 
-	sdk.GoRoutine(context.Background(), fmt.Sprintf("MigrateWorkflowAsCodeResult-%s", ope.UUID), func(ctx context.Context) {
+	api.GoRoutines.Run(context.Background(), fmt.Sprintf("MigrateWorkflowAsCodeResult-%s", ope.UUID), func(ctx context.Context) {
 		ed := ascode.EntityData{
 			FromRepo:      ope.URL,
 			Type:          ascode.WorkflowEvent,
@@ -189,7 +189,7 @@ func (api *API) migrateWorkflowAsCode(ctx context.Context, w http.ResponseWriter
 			Name:          wf.Name,
 			OperationUUID: ope.UUID,
 		}
-		ascode.UpdateAsCodeResult(ctx, api.mustDB(), api.Cache, proj, *wf, app, ed, u)
+		ascode.UpdateAsCodeResult(ctx, api.mustDB(), api.Cache, api.GoRoutines, proj, *wf, app, ed, u)
 	}, api.PanicDump())
 
 	return service.WriteJSON(w, sdk.Operation{

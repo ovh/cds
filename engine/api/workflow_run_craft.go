@@ -30,7 +30,7 @@ func (api *API) WorkflowRunCraft(ctx context.Context, tick time.Duration) error 
 				continue
 			}
 			for _, id := range ids {
-				sdk.GoRoutine(
+				api.GoRoutines.Run(
 					ctx,
 					"workflowRunCraft-"+strconv.FormatInt(id, 10),
 					func(ctx context.Context) {

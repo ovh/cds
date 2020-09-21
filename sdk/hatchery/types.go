@@ -82,6 +82,7 @@ type Interface interface {
 	PanicDumpDirectory() (string, error)
 	GetPrivateKey() *rsa.PrivateKey
 	GetLogger() *logrus.Logger
+	GetGoRoutines() *sdk.GoRoutines
 }
 
 type InterfaceWithModels interface {

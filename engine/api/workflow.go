@@ -582,7 +582,7 @@ func (api *API) deleteWorkflowHandler() service.Handler {
 			return sdk.WrapError(errT, "Cannot commit transaction")
 		}
 		consumer := getAPIConsumer(ctx)
-		sdk.GoRoutine(api.Router.Background, "deleteWorkflowHandler",
+		api.GoRoutines.Run(api.Router.Background, "deleteWorkflowHandler",
 			func(ctx context.Context) {
 				txg, err := api.mustDB().Begin()
 				if err != nil {

@@ -57,6 +57,7 @@ func newTestService(t *testing.T) (*Service, error) {
 	}
 
 	service := new(Service)
+	service.GoRoutines = sdk.NewGoRoutines()
 	if fakeAPIPrivateKey.key == nil {
 		fakeAPIPrivateKey.key, _ = jws.NewRandomRSAKey()
 	}

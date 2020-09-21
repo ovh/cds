@@ -47,7 +47,7 @@ func Run(ctx context.Context, db gorp.SqlExecutor, panicDump func(s string) (io.
 				wg.Add(1)
 			}
 
-			sdk.GoRoutine(ctx, "migrate_"+currentMigration.Name, func(contex context.Context) {
+			sdk.NewGoRoutines().Run(ctx, "migrate_"+currentMigration.Name, func(contex context.Context) {
 				defer func() {
 					if currentMigration.Blocker {
 						wg.Done()

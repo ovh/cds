@@ -40,6 +40,7 @@ var _ hatchery.InterfaceWithModels = new(HatcheryOpenstack)
 // New instanciates a new Hatchery Openstack
 func New() *HatcheryOpenstack {
 	s := new(HatcheryOpenstack)
+	s.GoRoutines = sdk.NewGoRoutines()
 	s.Router = &api.Router{
 		Mux: mux.NewRouter(),
 	}

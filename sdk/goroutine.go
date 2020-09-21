@@ -22,26 +22,36 @@ import (
 	"github.com/pkg/errors"
 )
 
-var (
-	goRoutinesLoopStatus = make(map[string]bool)
-	goRoutinesLoopMutex  sync.Mutex
-)
-
-// GoRoutineLoop runs the function within a goroutine with a panic recovery, and keep GoRoutine status.
-func GoRoutineLoop(c context.Context, name string, fn func(ctx context.Context), writerFactories ...func(s string) (io.WriteCloser, error)) {
-	goRoutinesLoopMutex.Lock()
-	goRoutinesLoopStatus[name] = true
-	goRoutinesLoopMutex.Unlock()
-	GoRoutine(c, name, fn, writerFactories...)
+// GoRoutines contains list of routines that have to stay up
+type GoRoutines struct {
+	mutex    sync.Mutex
+	status   map[string]bool
+	routines []string
 }
 
-// GetGoRoutinesLoopStatus returns the monitoring status of goroutines that should be running
-func GetGoRoutinesLoopStatus() []MonitoringStatusLine {
-	goRoutinesLoopMutex.Lock()
-	defer goRoutinesLoopMutex.Unlock()
-	lines := make([]MonitoringStatusLine, len(goRoutinesLoopStatus))
+// NewGoRoutines instanciates a new GoRoutineManager
+func NewGoRoutines() *GoRoutines {
+	return &GoRoutines{
+		mutex:  sync.Mutex{},
+		status: make(map[string]bool),
+	}
+}
+
+// Loop runs the function within a goroutine with a panic recovery, and keep GoRoutine status.
+func (m *GoRoutines) Loop(c context.Context, name string, fn func(ctx context.Context), writerFactories ...func(s string) (io.WriteCloser, error)) {
+	m.mutex.Lock()
+	m.status[name] = true
+	m.mutex.Unlock()
+	m.Run(c, name, fn, writerFactories...)
+}
+
+// GetStatus returns the monitoring status of goroutines that should be running
+func (m *GoRoutines) GetStatus() []MonitoringStatusLine {
+	m.mutex.Lock()
+	defer m.mutex.Unlock()
+	lines := make([]MonitoringStatusLine, len(m.status))
 	i := 0
-	for name, isActive := range goRoutinesLoopStatus {
+	for name, isActive := range m.status {
 		status := MonitoringStatusAlert
 		value := "NOT running"
 		if isActive {
@@ -59,7 +69,7 @@ func GetGoRoutinesLoopStatus() []MonitoringStatusLine {
 }
 
 // GoRoutine runs the function within a goroutine with a panic recovery
-func GoRoutine(c context.Context, name string, fn func(ctx context.Context), writerFactories ...func(s string) (io.WriteCloser, error)) {
+func (m *GoRoutines) Run(c context.Context, name string, fn func(ctx context.Context), writerFactories ...func(s string) (io.WriteCloser, error)) {
 	hostname, _ := os.Hostname()
 	go func(ctx context.Context) {
 		labels := pprof.Labels("goroutine-name", name, "goroutine-hostname", hostname, "goroutine-id", fmt.Sprintf("%d", GoroutineID()))
@@ -89,11 +99,11 @@ func GoRoutine(c context.Context, name string, fn func(ctx context.Context), wri
 					}
 				}
 			}
-			goRoutinesLoopMutex.Lock()
-			if _, ok := goRoutinesLoopStatus[name]; ok {
-				goRoutinesLoopStatus[name] = false
+			m.mutex.Lock()
+			if _, ok := m.status[name]; ok {
+				m.status[name] = false
 			}
-			goRoutinesLoopMutex.Unlock()
+			m.mutex.Unlock()
 		}()
 
 		fn(goroutineCtx)
@@ -132,11 +142,10 @@ func GoroutineID() uint64 {
 
 func ListGoroutines() ([]*panicparsestack.Goroutine, error) {
 	var w = new(bytes.Buffer)
-	err := WriteGoroutineStacks(w)
-	if err != nil {
+	if err := writeGoroutineStacks(w); err != nil {
 		return nil, err
 	}
-	all, err := ParseGoRoutineStacks(w, nil)
+	all, err := parseGoRoutineStacks(w, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -237,7 +246,7 @@ func cutoff64(base int) uint64 {
 	return (1<<64-1)/uint64(base) + 1
 }
 
-func WriteGoroutineStacks(w io.Writer) error {
+func writeGoroutineStacks(w io.Writer) error {
 	buf := make([]byte, 1<<20)
 	for i := 0; ; i++ {
 		n := runtime.Stack(buf, true)
@@ -255,7 +264,7 @@ func WriteGoroutineStacks(w io.Writer) error {
 	return WithStack(err)
 }
 
-func ParseGoRoutineStacks(r io.Reader, w io.Writer) ([]*panicparsestack.Goroutine, error) {
+func parseGoRoutineStacks(r io.Reader, w io.Writer) ([]*panicparsestack.Goroutine, error) {
 	if w == nil {
 		w = ioutil.Discard
 	}

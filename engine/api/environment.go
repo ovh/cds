@@ -321,7 +321,7 @@ func (api *API) updateAsCodeEnvironmentHandler() service.Handler {
 			return sdk.WithStack(err)
 		}
 
-		sdk.GoRoutine(context.Background(), fmt.Sprintf("UpdateAsCodeEnvironmentHandler-%s", ope.UUID), func(ctx context.Context) {
+		api.GoRoutines.Run(context.Background(), fmt.Sprintf("UpdateAsCodeEnvironmentHandler-%s", ope.UUID), func(ctx context.Context) {
 			ed := ascode.EntityData{
 				FromRepo:      envDB.FromRepository,
 				Type:          ascode.EnvironmentEvent,
@@ -329,7 +329,7 @@ func (api *API) updateAsCodeEnvironmentHandler() service.Handler {
 				Name:          envDB.Name,
 				OperationUUID: ope.UUID,
 			}
-			ascode.UpdateAsCodeResult(ctx, api.mustDB(), api.Cache, *proj, *wkHolder, *rootApp, ed, u)
+			ascode.UpdateAsCodeResult(ctx, api.mustDB(), api.Cache, api.GoRoutines, *proj, *wkHolder, *rootApp, ed, u)
 		}, api.PanicDump())
 
 		return service.WriteJSON(w, sdk.Operation{

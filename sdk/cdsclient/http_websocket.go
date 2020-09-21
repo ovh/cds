@@ -15,7 +15,7 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
-func (c *client) RequestWebsocket(ctx context.Context, path string, msgToSend <-chan []sdk.WebsocketFilter, msgReceived chan<- sdk.WebsocketEvent) error {
+func (c *client) RequestWebsocket(ctx context.Context, goRoutines *sdk.GoRoutines, path string, msgToSend <-chan []sdk.WebsocketFilter, msgReceived chan<- sdk.WebsocketEvent) error {
 	wsContext, wsContextCancel := context.WithCancel(ctx)
 	defer wsContextCancel()
 
@@ -56,7 +56,7 @@ func (c *client) RequestWebsocket(ctx context.Context, path string, msgToSend <-
 	defer con.Close() // nolint
 
 	// Message to send
-	sdk.GoRoutine(wsContext, fmt.Sprintf("RequestWebsocket-%s-%s", c.config.User, sdk.UUID()), func(ctx context.Context) {
+	goRoutines.Run(wsContext, fmt.Sprintf("RequestWebsocket-%s-%s", c.config.User, sdk.UUID()), func(ctx context.Context) {
 		for {
 			select {
 			case <-ctx.Done():

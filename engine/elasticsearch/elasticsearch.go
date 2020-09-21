@@ -20,6 +20,7 @@ var esClient *elastic.Client
 // New returns a new service
 func New() *Service {
 	s := new(Service)
+	s.GoRoutines = sdk.NewGoRoutines()
 	s.Router = &api.Router{
 		Mux: mux.NewRouter(),
 	}

@@ -37,7 +37,7 @@ func init() {
 	storage.RegisterDriver("swift", new(Swift))
 }
 
-func (s *Swift) Init(ctx context.Context, cfg interface{}) error {
+func (s *Swift) Init(ctx context.Context, cfg interface{}, _ *sdk.GoRoutines) error {
 	config, is := cfg.(*storage.SwiftStorageConfiguration)
 	if !is {
 		return sdk.WithStack(fmt.Errorf("invalid configuration: %T", cfg))

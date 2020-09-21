@@ -24,6 +24,7 @@ import (
 // New instanciates a new Hatchery vsphere
 func New() *HatcheryVSphere {
 	s := new(HatcheryVSphere)
+	s.GoRoutines = sdk.NewGoRoutines()
 	s.Router = &api.Router{
 		Mux: mux.NewRouter(),
 	}

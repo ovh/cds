@@ -29,7 +29,7 @@ func (c *Common) CommonMonitoring() sdk.MonitoringStatus {
 		Status:    sdk.MonitoringStatusOK,
 	}}
 
-	lines = append(lines, sdk.GetGoRoutinesLoopStatus()...)
+	lines = append(lines, c.GoRoutines.GetStatus()...)
 
 	return sdk.MonitoringStatus{
 		Now:   t,
@@ -86,7 +86,7 @@ loop:
 		telemetry.TagServiceName, c.Name(),
 	)
 
-	RegisterCommonMetricsView(ctx)
+	c.RegisterCommonMetricsView(ctx)
 
 	return nil
 }
