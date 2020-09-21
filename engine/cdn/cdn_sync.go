@@ -58,16 +58,34 @@ func (s *Service) syncProjectLogs(ctx context.Context, cdsStorage *cds.CDS, pKey
 		return err
 	}
 
+	// Test if all noderun has been sync for this project
+	listNodeRuns, err := item.ListNodeRunByProject(s.mustDBWithCtx(ctx), pKey)
+	if err != nil {
+		return err
+	}
+
+	if len(listNodeRuns) == len(nodeRunIds) {
+		log.Info(ctx, "Project %s already synchronized", pKey)
+		return nil
+	}
+
+	nodeRunMap := make(map[int64]struct{}, len(listNodeRuns))
+	for _, id := range listNodeRuns {
+		nodeRunMap[id] = struct{}{}
+	}
+
 	nodeRunDone := 0
 	nodeRunFailed := 0
 	log.Info(ctx, "cdn:cds:sync:log: %d node run to sync for project %s", len(nodeRunIds), pKey)
 	// Browse node run
 	for _, nodeRunIdentifier := range nodeRunIds {
-		log.Info(ctx, "cdn:cds:sync:log: node run done for project %s:  %d/%d (+%d failed)", pKey, nodeRunDone, len(nodeRunIds), nodeRunFailed)
-		if err := s.syncNodeRun(ctx, cdsStorage, pKey, nodeRunIdentifier); err != nil {
-			nodeRunFailed++
-			log.Error(ctx, "cdn:cds:sync:log: unable to sync node runs: %v", err)
-			continue
+		if _, has := nodeRunMap[nodeRunIdentifier.NodeRunID]; !has {
+			log.Info(ctx, "cdn:cds:sync:log: node run done for project %s:  %d/%d (+%d failed)", pKey, nodeRunDone, len(nodeRunIds), nodeRunFailed)
+			if err := s.syncNodeRun(ctx, cdsStorage, pKey, nodeRunIdentifier); err != nil {
+				nodeRunFailed++
+				log.Error(ctx, "cdn:cds:sync:log: unable to sync node runs: %v", err)
+				continue
+			}
 		}
 		nodeRunDone++
 	}
