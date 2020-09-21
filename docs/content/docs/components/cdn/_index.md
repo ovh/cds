@@ -8,13 +8,13 @@ Be sure that config flag 'enableLogProcessing' is set to false</b>
 
 ## What's CDN
 
-CDN is a service dedicated to receice and retrieve logs. It replaces the old system that stored logs in the CDS database
+CDN is a service dedicated to receive and retrieve logs. 
 
 A CDN instance is started with scope Project and Run using token.
 
 CDN is linked to 2 types of storages:
 
-* Buffer Unit: to store step log temporarily during the execution
+* Buffer Unit: to store step log temporarily during the execution of a job
 
 * Storage Unit: to store complete step logs when it ends
 
@@ -26,4 +26,3 @@ Workers and hatcheries communicate with CDN, sending step logs and service log
 
 CDS UI and CLI communicate with CDN to get entire logs, or stream them
 ![CDN_GET](/images/cdn_get.png)
-
