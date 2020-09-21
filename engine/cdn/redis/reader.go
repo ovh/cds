@@ -8,19 +8,31 @@ import (
 type Reader struct {
 	ReadWrite
 	nextIndex     uint
-	From          uint // the offset that we want to use when reading lines from Redis
-	Size          int  // the count of lines that we want to read (0 means to the end)
+	From          int64 // the offset that we want to use when reading lines from Redis, allows negative value to get last lines
+	Size          uint  // the count of lines that we want to read (0 means to the end)
 	currentBuffer []byte
 }
 
 func (r *Reader) loadMoreLines() error {
+	// If from is less than 0 try to substract given value to lines count
+	if r.From < 0 {
+		lineCount, err := r.card()
+		if err != nil {
+			return err
+		}
+		r.From = int64(lineCount) - r.From
+		if r.From < 0 {
+			r.From = 0
+		}
+	}
+
 	// If its first read (next index == 0), init the next index with 'from' value
 	if r.nextIndex == 0 {
-		r.nextIndex = r.From // 'from' can be 0
+		r.nextIndex = uint(r.From) // 'from' can be 0 but not < 0 at this point
 	}
 
 	// Read 100 lines if possible or only the missing lines if less than 100
-	alreadyReadLinesLength := r.nextIndex - r.From
+	alreadyReadLinesLength := r.nextIndex - uint(r.From)
 	var newNextIndex uint
 	if r.Size > 0 {
 		linesLeftToRead := uint(r.Size) - alreadyReadLinesLength

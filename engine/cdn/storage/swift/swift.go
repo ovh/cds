@@ -7,11 +7,13 @@ import (
 	"net/url"
 	"strings"
 
+	"github.com/go-gorp/gorp"
 	"github.com/ncw/swift"
 	"go.opencensus.io/stats"
 
 	"github.com/ovh/cds/engine/cdn/storage"
 	"github.com/ovh/cds/engine/cdn/storage/encryption"
+	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk/telemetry"
@@ -59,8 +61,8 @@ func (s *Swift) Init(ctx context.Context, cfg interface{}, _ *sdk.GoRoutines) er
 	return nil
 }
 
-func (s *Swift) ItemExists(i sdk.CDNItem) (bool, error) {
-	iu, err := s.ExistsInDatabase(i.ID)
+func (s *Swift) ItemExists(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlExecutor, i sdk.CDNItem) (bool, error) {
+	iu, err := s.ExistsInDatabase(ctx, m, db, i.ID)
 	if err != nil {
 		if sdk.ErrorIs(err, sdk.ErrNotFound) {
 			return false, nil
@@ -153,5 +155,4 @@ func (s *Swift) Status(ctx context.Context) []sdk.MonitoringStatusLine {
 		Value:     fmt.Sprintf("Swift OK (%d containers, %d objects, %d bytes used", info.Containers, info.Objects, info.BytesUsed),
 		Status:    sdk.MonitoringStatusOK,
 	}}
-
 }

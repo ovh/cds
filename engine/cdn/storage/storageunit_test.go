@@ -146,18 +146,18 @@ func TestRun(t *testing.T) {
 	localUnitDriver2 := cdnUnits.Storage(localUnit2.Name)
 	require.NotNil(t, localUnitDriver)
 
-	exists, err := localUnitDriver.ItemExists(*i)
+	exists, err := localUnitDriver.ItemExists(context.TODO(), m, db, *i)
 	require.NoError(t, err)
 	require.False(t, exists)
 
 	<-ctx.Done()
 
 	// Check that the first unit has been resync
-	exists, err = localUnitDriver.ItemExists(*i)
+	exists, err = localUnitDriver.ItemExists(context.TODO(), m, db, *i)
 	require.NoError(t, err)
 	require.True(t, exists)
 
-	exists, err = localUnitDriver2.ItemExists(*i)
+	exists, err = localUnitDriver2.ItemExists(context.TODO(), m, db, *i)
 	require.NoError(t, err)
 	require.True(t, exists)
 

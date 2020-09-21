@@ -6,13 +6,15 @@ import (
 	"io"
 	"strconv"
 
+	"github.com/go-gorp/gorp"
+	"go.opencensus.io/stats"
+
 	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/engine/cdn/redis"
 	"github.com/ovh/cds/engine/cdn/storage"
+	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/telemetry"
-
-	"go.opencensus.io/stats"
 )
 
 var keyBuffer = cache.Key("cdn", "buffer")
@@ -51,7 +53,7 @@ func (s *Redis) Init(ctx context.Context, cfg interface{}, _ *sdk.GoRoutines) er
 	return nil
 }
 
-func (s *Redis) ItemExists(i sdk.CDNItem) (bool, error) {
+func (s *Redis) ItemExists(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlExecutor, i sdk.CDNItem) (bool, error) {
 	size, _ := s.store.SetCard(cache.Key(keyBuffer, i.ID))
 	return size > 0, nil
 }
@@ -79,14 +81,25 @@ func (s *Redis) NewReader(_ context.Context, i sdk.CDNItemUnit) (io.ReadCloser, 
 			ItemID:    i.ItemID,
 			UsageKey:  "",
 		},
-		From: 0,
-		Size: 0,
+	}, nil
+}
+
+func (s *Redis) NewAdvancedReader(_ context.Context, i sdk.CDNItemUnit, from int64, size uint) (io.ReadCloser, error) {
+	return &redis.Reader{
+		ReadWrite: redis.ReadWrite{
+			Store:     s.store,
+			PrefixKey: keyBuffer,
+			ItemID:    i.ItemID,
+			UsageKey:  "",
+		},
+		From: from,
+		Size: size,
 	}, nil
 }
 
 func (s *Redis) Read(_ sdk.CDNItemUnit, r io.Reader, w io.Writer) error {
 	_, err := io.Copy(w, r)
-	return err
+	return sdk.WithStack(err)
 }
 
 func (s *Redis) Status(_ context.Context) []sdk.MonitoringStatusLine {

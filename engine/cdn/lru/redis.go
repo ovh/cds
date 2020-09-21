@@ -76,6 +76,11 @@ func (r *Redis) Len() (int, error) {
 	return r.store.SetCard(redisLruKeyCacheKey)
 }
 
+func (s *Redis) Card(itemID string) (int, error) {
+	itemKey := cache.Key(redisLruItemCacheKey, itemID)
+	return s.store.SetCard(itemKey)
+}
+
 // Size of the cache
 func (r *Redis) Size() (int64, error) {
 	lenght, err := r.Len()
@@ -122,7 +127,7 @@ func (r *Redis) NewWriter(itemID string) io.WriteCloser {
 }
 
 // NewReader instanciates a new reader
-func (r *Redis) NewReader(itemID string, from uint, s int) io.ReadCloser {
+func (r *Redis) NewReader(itemID string, from int64, s uint) io.ReadCloser {
 	return &redis.Reader{
 		ReadWrite: redis.ReadWrite{
 			Store:     r.store,

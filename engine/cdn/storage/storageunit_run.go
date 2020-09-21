@@ -17,13 +17,13 @@ import (
 func (x *RunningStorageUnits) Run(ctx context.Context, s StorageUnit) error {
 	s.Lock()
 	defer s.Unlock()
-	_, err := LoadUnitByID(ctx, s.GorpMapper(), s.DB(), s.ID())
+	_, err := LoadUnitByID(ctx, x.m, x.db, s.ID())
 	if err != nil {
 		return err
 	}
 
 	// Load items to sync
-	itemIDs, err := LoadAllItemIDUnknownByUnit(s.DB(), s.ID(), 100)
+	itemIDs, err := LoadAllItemIDUnknownByUnit(x.db, s.ID(), 100)
 	if err != nil {
 		return err
 	}
@@ -33,12 +33,12 @@ func (x *RunningStorageUnits) Run(ctx context.Context, s StorageUnit) error {
 	}
 
 	for _, id := range itemIDs {
-		tx, err := s.DB().Begin()
+		tx, err := x.db.Begin()
 		if err != nil {
 			return err
 		}
 
-		it, err := item.LoadAndLockByID(ctx, s.GorpMapper(), tx, id, gorpmapper.GetOptions.WithDecryption)
+		it, err := item.LoadAndLockByID(ctx, x.m, tx, id, gorpmapper.GetOptions.WithDecryption)
 		if err != nil {
 			if !sdk.ErrorIs(err, sdk.ErrNotFound) {
 				log.ErrorWithFields(ctx, logrus.Fields{"stack_trace": fmt.Sprintf("%+v", err)}, "%s", err)
@@ -69,7 +69,6 @@ func (x *RunningStorageUnits) runItem(ctx context.Context, tx gorpmapper.SqlExec
 	defer func() {
 		log.Debug("storage.runItem(%s, %s): %fs", dest.Name(), item.ID, time.Since(t0).Seconds())
 	}()
-	var m = dest.GorpMapper()
 
 	iu, err := x.NewItemUnit(ctx, dest, item)
 	if err != nil {
@@ -78,12 +77,12 @@ func (x *RunningStorageUnits) runItem(ctx context.Context, tx gorpmapper.SqlExec
 	iu.Item = item
 
 	// Save in database that the item is complete for the storage unit
-	if err := InsertItemUnit(ctx, m, tx, iu); err != nil {
+	if err := InsertItemUnit(ctx, x.m, tx, iu); err != nil {
 		return err
 	}
 
 	// Reload with decryption
-	iu, err = LoadItemUnitByID(ctx, m, tx, iu.ID, gorpmapper.GetOptions.WithDecryption)
+	iu, err = LoadItemUnitByID(ctx, x.m, tx, iu.ID, gorpmapper.GetOptions.WithDecryption)
 	if err != nil {
 		return err
 	}

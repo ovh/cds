@@ -13,7 +13,6 @@ import (
 	"time"
 
 	"github.com/ovh/cds/engine/cdn/item"
-	"github.com/ovh/cds/engine/cdn/redis"
 	"github.com/ovh/cds/engine/cdn/storage"
 	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk"
@@ -25,7 +24,7 @@ var (
 	rnd = rand.New(rs)
 )
 
-func (s *Service) getItemLogValue(ctx context.Context, t sdk.CDNItemType, apiRefHash string, from uint, size int) (io.ReadCloser, error) {
+func (s *Service) getItemLogValue(ctx context.Context, t sdk.CDNItemType, apiRefHash string, from int64, size uint) (io.ReadCloser, error) {
 	it, err := item.LoadByAPIRefHashAndType(ctx, s.Mapper, s.mustDBWithCtx(ctx), apiRefHash, t)
 	if err != nil {
 		return nil, err
@@ -38,27 +37,22 @@ func (s *Service) getItemLogValue(ctx context.Context, t sdk.CDNItemType, apiRef
 
 	// If item is in Buffer, get from it
 	if itemUnit != nil {
-		log.Debug("Getting logs from buffer")
-		rc, err := s.Units.Buffer.NewReader(ctx, *itemUnit)
+		log.Debug("getItemLogValue> Getting logs from buffer")
+		rc, err := s.Units.Buffer.NewAdvancedReader(ctx, *itemUnit, from, size)
 		if err != nil {
 			return nil, err
 		}
-		redisReader, ok := rc.(*redis.Reader)
-		if ok {
-			redisReader.From = from
-			redisReader.Size = size
-		}
-		return redisReader, nil
+		return rc, nil
 	}
 
 	// Get from cache
 	ok, _ := s.LogCache.Exist(it.ID)
 	if ok {
-		log.Debug("Getting logs from cache")
+		log.Debug("getItemLogValue> Getting logs from cache")
 		return s.LogCache.NewReader(it.ID, from, size), nil
 	}
 
-	log.Debug("Getting logs from storage")
+	log.Debug("getItemLogValue> Getting logs from storage")
 	// Retrieve item and push it into the cache
 	if err := s.pushItemLogIntoCache(ctx, *it); err != nil {
 		return nil, err

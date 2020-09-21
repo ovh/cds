@@ -45,11 +45,9 @@ var (
 type Interface interface {
 	Name() string
 	ID() string
-	Set(m *gorpmapper.Mapper, db *gorp.DbMap, u sdk.CDNUnit)
-	GorpMapper() *gorpmapper.Mapper
-	DB() *gorp.DbMap
+	Set(u sdk.CDNUnit)
 	Init(ctx context.Context, cfg interface{}, goRoutines *sdk.GoRoutines) error
-	ItemExists(i sdk.CDNItem) (bool, error)
+	ItemExists(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlExecutor, i sdk.CDNItem) (bool, error)
 	Lock()
 	Unlock()
 	Status(ctx context.Context) []sdk.MonitoringStatusLine
@@ -57,13 +55,11 @@ type Interface interface {
 
 type AbstractUnit struct {
 	sync.Mutex
-	u  sdk.CDNUnit
-	m  *gorpmapper.Mapper
-	db *gorp.DbMap
+	u sdk.CDNUnit
 }
 
-func (a *AbstractUnit) ExistsInDatabase(id string) (*sdk.CDNItemUnit, error) {
-	iu, err := LoadItemUnitByUnit(context.Background(), a.GorpMapper(), a.DB(), a.ID(), id, gorpmapper.GetOptions.WithDecryption)
+func (a *AbstractUnit) ExistsInDatabase(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlExecutor, id string) (*sdk.CDNItemUnit, error) {
+	iu, err := LoadItemUnitByUnit(ctx, m, db, a.ID(), id, gorpmapper.GetOptions.WithDecryption)
 	if err != nil {
 		return nil, err
 	}
@@ -78,19 +74,7 @@ func (a *AbstractUnit) ID() string {
 	return a.u.ID
 }
 
-func (a *AbstractUnit) DB() *gorp.DbMap {
-	return a.db
-}
-
-func (a *AbstractUnit) GorpMapper() *gorpmapper.Mapper {
-	return a.m
-}
-
-func (a *AbstractUnit) Set(m *gorpmapper.Mapper, db *gorp.DbMap, u sdk.CDNUnit) {
-	a.u = u
-	a.m = m
-	a.db = db
-}
+func (a *AbstractUnit) Set(u sdk.CDNUnit) { a.u = u }
 
 type BufferUnit interface {
 	Interface
@@ -98,6 +82,7 @@ type BufferUnit interface {
 	Append(i sdk.CDNItemUnit, value string) error
 	Card(i sdk.CDNItemUnit) (int, error)
 	NewReader(ctx context.Context, i sdk.CDNItemUnit) (io.ReadCloser, error)
+	NewAdvancedReader(ctx context.Context, i sdk.CDNItemUnit, from int64, to uint) (io.ReadCloser, error)
 	Read(i sdk.CDNItemUnit, r io.Reader, w io.Writer) error
 }
 
@@ -267,7 +252,7 @@ func Init(ctx context.Context, m *gorpmapper.Mapper, db *gorp.DbMap, config Conf
 	} else if err != nil {
 		return nil, err
 	}
-	bd.Set(m, db, *u)
+	bd.Set(*u)
 
 	if err := tx.Commit(); err != nil {
 		return nil, err
@@ -350,7 +335,7 @@ func Init(ctx context.Context, m *gorpmapper.Mapper, db *gorp.DbMap, config Conf
 		if err != nil {
 			return nil, err
 		}
-		storageUnit.Set(m, db, *u)
+		storageUnit.Set(*u)
 
 		result.Storages = append(result.Storages, storageUnit)
 		if err := tx.Commit(); err != nil {
@@ -394,13 +379,13 @@ func (s *iuSource) Name() string {
 }
 
 func (r RunningStorageUnits) GetSource(ctx context.Context, i *sdk.CDNItem) (Source, error) {
-	ok, err := r.Buffer.ItemExists(*i)
+	ok, err := r.Buffer.ItemExists(ctx, r.m, r.db, *i)
 	if err != nil {
 		return nil, err
 	}
 
 	if ok {
-		iu, err := LoadItemUnitByUnit(ctx, r.Buffer.GorpMapper(), r.Buffer.DB(), r.Buffer.ID(), i.ID, gorpmapper.GetOptions.WithDecryption)
+		iu, err := LoadItemUnitByUnit(ctx, r.m, r.db, r.Buffer.ID(), i.ID, gorpmapper.GetOptions.WithDecryption)
 		if err != nil {
 			return nil, err
 		}
@@ -415,7 +400,7 @@ func (r RunningStorageUnits) GetSource(ctx context.Context, i *sdk.CDNItem) (Sou
 
 	if len(itemUnits) == 0 {
 		log.Warning(ctx, "item %s can't be found. No unit knows it...", i.ID)
-		return nil, sdk.ErrNotFound
+		return nil, sdk.WithStack(sdk.ErrNotFound)
 	}
 
 	// Random pick a unit

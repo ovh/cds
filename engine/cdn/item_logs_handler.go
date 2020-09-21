@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strconv"
 	"strings"
 
 	"github.com/gorilla/mux"
@@ -13,6 +14,7 @@ import (
 	"github.com/ovh/cds/engine/cdn/item"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/log"
 )
 
 func (s *Service) markItemToDeleteHandler() service.Handler {
@@ -51,7 +53,7 @@ func (s *Service) getItemLogsHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		itemType := sdk.CDNItemType(vars["type"])
-		if err := itemType.Validate(); err != nil {
+		if err := itemType.IsLog(); err != nil {
 			return err
 		}
 		apiRef := vars["apiRef"]
@@ -66,24 +68,43 @@ func (s *Service) getItemLogsHandler() service.Handler {
 	}
 }
 
+func (s *Service) getItemLogLinesHandler() service.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		vars := mux.Vars(r)
+		itemType := sdk.CDNItemType(vars["type"])
+		if err := itemType.IsLog(); err != nil {
+			return err
+		}
+		token, err := s.checkItemLogsAuth(r)
+		if err != nil {
+			return err
+		}
+
+		offset, err := strconv.ParseInt(r.FormValue("offset"), 10, 64)
+		if err != nil {
+			offset = 0 // offset can be lower than 0 if we want the n last lines
+		}
+		count, err := strconv.ParseInt(r.FormValue("count"), 10, 64)
+		if err != nil || count < 0 {
+			count = 100
+		}
+
+		log.Debug("%s %d %d", token.APIRefHash, offset, count)
+
+		return service.WriteJSON(w, []interface{}{}, http.StatusOK)
+	}
+}
+
 func (s *Service) getItemLogsDownloadHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		itemType := sdk.CDNItemType(vars["type"])
-		if err := itemType.Validate(); err != nil {
+		if err := itemType.IsLog(); err != nil {
 			return err
 		}
-		apiRef := vars["apiRef"]
-		tokenRaw := strings.TrimPrefix(r.Header.Get("Authorization"), "Bearer ")
-
-		// Check Authorization header
-		var token sdk.CDNAuthToken
-		v := authentication.NewVerifier(s.ParsedAPIPublicKey)
-		if err := v.VerifyJWS(tokenRaw, &token); err != nil {
-			return sdk.NewErrorWithStack(err, sdk.ErrUnauthorized)
-		}
-		if token.APIRefHash != apiRef {
-			return sdk.WithStack(sdk.ErrNotFound)
+		token, err := s.checkItemLogsAuth(r)
+		if err != nil {
+			return err
 		}
 
 		rc, err := s.getItemLogValue(ctx, itemType, token.APIRefHash, 0, 0)
@@ -119,4 +140,22 @@ func (s *Service) getSizeByProjectHandler() service.Handler {
 
 		return service.WriteJSON(w, size, http.StatusOK)
 	}
+}
+
+func (s *Service) checkItemLogsAuth(r *http.Request) (sdk.CDNAuthToken, error) {
+	vars := mux.Vars(r)
+	apiRef := vars["apiRef"]
+	tokenRaw := strings.TrimPrefix(r.Header.Get("Authorization"), "Bearer ")
+
+	// Check Authorization header
+	var token sdk.CDNAuthToken
+	v := authentication.NewVerifier(s.ParsedAPIPublicKey)
+	if err := v.VerifyJWS(tokenRaw, &token); err != nil {
+		return token, sdk.NewErrorWithStack(err, sdk.ErrUnauthorized)
+	}
+	if token.APIRefHash != apiRef {
+		return token, sdk.WithStack(sdk.ErrNotFound)
+	}
+
+	return token, nil
 }

@@ -29,6 +29,11 @@ func (rw *ReadWrite) get(from uint, to uint) ([]string, error) {
 	return res, nil
 }
 
+func (rw *ReadWrite) card() (int, error) {
+	itemKey := cache.Key(rw.PrefixKey, rw.ItemID)
+	return rw.Store.SetCard(itemKey)
+}
+
 func (rw *ReadWrite) UpdateUsage() error {
 	return rw.Store.ScoredSetAdd(context.Background(), rw.UsageKey, rw.ItemID, float64(time.Now().UnixNano()))
 }

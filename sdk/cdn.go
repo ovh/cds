@@ -103,7 +103,7 @@ func (a *CDNLogAPIRef) Scan(src interface{}) error {
 
 type CDNItemType string
 
-func (t CDNItemType) Validate() error {
+func (t CDNItemType) IsLog() error {
 	switch t {
 	case CDNTypeItemStepLog, CDNTypeItemServiceLog:
 		return nil
