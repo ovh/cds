@@ -7250,7 +7250,7 @@ func (mr *MockInterfaceMockRecorder) ServiceRegister(arg0, arg1 interface{}) *go
 }
 
 // ServiceHeartbeat mocks base method
-func (m *MockInterface) ServiceHeartbeat(arg0 sdk.MonitoringStatus) error {
+func (m *MockInterface) ServiceHeartbeat(arg0 *sdk.MonitoringStatus) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "ServiceHeartbeat", arg0)
 	ret0, _ := ret[0].(error)

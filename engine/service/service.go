@@ -12,9 +12,19 @@ import (
 	"github.com/ovh/cds/sdk/telemetry"
 )
 
-// CommonMonitoring returns common part of MonitoringStatus
-func (c *Common) CommonMonitoring() sdk.MonitoringStatus {
+// NewMonitoringStatus returns a MonitoringStatus for the current service
+func (c *Common) NewMonitoringStatus() *sdk.MonitoringStatus {
 	t := time.Now()
+	s := &sdk.MonitoringStatus{
+		Now:         t,
+		ServiceType: c.Type(),
+	}
+	s.AddLine(c.commonMonitoring(t)...)
+	return s
+}
+
+// CommonMonitoring returns common monitoring status lines
+func (c *Common) commonMonitoring(t time.Time) []sdk.MonitoringStatusLine {
 	lines := []sdk.MonitoringStatusLine{{
 		Component: "Version",
 		Value:     sdk.VERSION,
@@ -29,12 +39,7 @@ func (c *Common) CommonMonitoring() sdk.MonitoringStatus {
 		Status:    sdk.MonitoringStatusOK,
 	}}
 
-	lines = append(lines, c.GoRoutines.GetStatus()...)
-
-	return sdk.MonitoringStatus{
-		Now:   t,
-		Lines: lines,
-	}
+	return append(lines, c.GoRoutines.GetStatus()...)
 }
 
 func (c *Common) Type() string {
@@ -128,7 +133,7 @@ func (c *Common) Register(ctx context.Context, cfg sdk.ServiceConfig) error {
 }
 
 // Heartbeat have to be launch as a goroutine, call DoHeartBeat each 30s
-func (c *Common) Heartbeat(ctx context.Context, status func(ctx context.Context) sdk.MonitoringStatus) error {
+func (c *Common) Heartbeat(ctx context.Context, status func(ctx context.Context) *sdk.MonitoringStatus) error {
 	// no heartbeat for api
 	if c.ServiceType == "api" {
 		return nil

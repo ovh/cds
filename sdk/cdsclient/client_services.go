@@ -8,8 +8,8 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
-func (c *client) ServiceHeartbeat(s sdk.MonitoringStatus) error {
-	_, err := c.PostJSON(context.Background(), "/services/heartbeat", &s, nil)
+func (c *client) ServiceHeartbeat(s *sdk.MonitoringStatus) error {
+	_, err := c.PostJSON(context.Background(), "/services/heartbeat", s, nil)
 	if err != nil {
 		return err
 	}

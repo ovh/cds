@@ -85,10 +85,9 @@ func (h *HatcheryMarathon) ApplyConfiguration(cfg interface{}) error {
 }
 
 // Status returns sdk.MonitoringStatus, implements interface service.Service
-func (h *HatcheryMarathon) Status(ctx context.Context) sdk.MonitoringStatus {
-	m := h.CommonMonitoring()
-	m.Lines = append(m.Lines, sdk.MonitoringStatusLine{Component: "Workers", Value: fmt.Sprintf("%d/%d", len(h.WorkersStarted(ctx)), h.Config.Provision.MaxWorker), Status: sdk.MonitoringStatusOK})
-
+func (h *HatcheryMarathon) Status(ctx context.Context) *sdk.MonitoringStatus {
+	m := h.NewMonitoringStatus()
+	m.AddLine(sdk.MonitoringStatusLine{Component: "Workers", Value: fmt.Sprintf("%d/%d", len(h.WorkersStarted(ctx)), h.Config.Provision.MaxWorker), Status: sdk.MonitoringStatusOK})
 	return m
 }
 

@@ -1118,11 +1118,11 @@ func (s *Service) getListForks() service.Handler {
 }
 
 // Status returns sdk.MonitoringStatus, implements interface service.Service
-func (s *Service) Status(ctx context.Context) sdk.MonitoringStatus {
-	m := s.CommonMonitoring()
+func (s *Service) Status(ctx context.Context) *sdk.MonitoringStatus {
+	m := s.NewMonitoringStatus()
 
 	if s.Cfg.Servers["github"].URL != "" {
-		m.Lines = append(m.Lines, github.GetStatus()...)
+		m.AddLine(github.GetStatus()...)
 	}
 
 	return m
