@@ -56,14 +56,14 @@ func (c *Common) Start(ctx context.Context, cfg cdsclient.ServiceConfig) error {
 		return nil
 	}
 
-	ctx, cancel := context.WithTimeout(ctx, 5*time.Minute)
+	ctxTimeout, cancel := context.WithTimeout(ctx, 5*time.Minute)
 	defer cancel()
 	var err error
 	var firstAttempt = true
 loop:
 	for {
 		select {
-		case <-ctx.Done():
+		case <-ctxTimeout.Done():
 			fmt.Println()
 			return err
 		default:
