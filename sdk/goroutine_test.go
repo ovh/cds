@@ -23,7 +23,7 @@ func Test_GoroutineTools(t *testing.T) {
 		var wg = new(sync.WaitGroup)
 		ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
 		defer cancel()
-		NewGoRoutines().Run(ctx, "test_goroutine", func(ctx context.Context) {
+		NewGoRoutines().Exec(ctx, "test_goroutine", func(ctx context.Context) {
 			wg.Add(1)
 			<-ctx.Done()
 			wg.Done()
@@ -42,7 +42,7 @@ func Test_GoroutineTools(t *testing.T) {
 		ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
 		defer cancel()
 
-		NewGoRoutines().Run(ctx, "test_goroutine", func(ctx context.Context) {
+		NewGoRoutines().Exec(ctx, "test_goroutine", func(ctx context.Context) {
 			wg.Add(1)
 			<-ctx.Done()
 			wg.Done()
@@ -64,7 +64,7 @@ func Test_GoroutineTools(t *testing.T) {
 		defer cancel()
 
 		m := NewGoRoutines()
-		m.Loop(ctx, "test_goroutine_loop", func(ctx context.Context) {
+		m.Run(ctx, "test_goroutine_loop", func(ctx context.Context) {
 			wg.Add(1)
 			_, ok := m.status["test_goroutine_loop"]
 			require.True(t, ok)

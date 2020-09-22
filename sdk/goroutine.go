@@ -37,12 +37,12 @@ func NewGoRoutines() *GoRoutines {
 	}
 }
 
-// Loop runs the function within a goroutine with a panic recovery, and keep GoRoutine status.
-func (m *GoRoutines) Loop(c context.Context, name string, fn func(ctx context.Context), writerFactories ...func(s string) (io.WriteCloser, error)) {
+// Run runs the function within a goroutine with a panic recovery, and keep GoRoutine status.
+func (m *GoRoutines) Run(c context.Context, name string, fn func(ctx context.Context), writerFactories ...func(s string) (io.WriteCloser, error)) {
 	m.mutex.Lock()
 	m.status[name] = true
 	m.mutex.Unlock()
-	m.Run(c, name, fn, writerFactories...)
+	m.Exec(c, name, fn, writerFactories...)
 }
 
 // GetStatus returns the monitoring status of goroutines that should be running
@@ -68,8 +68,8 @@ func (m *GoRoutines) GetStatus() []MonitoringStatusLine {
 	return lines
 }
 
-// GoRoutine runs the function within a goroutine with a panic recovery
-func (m *GoRoutines) Run(c context.Context, name string, fn func(ctx context.Context), writerFactories ...func(s string) (io.WriteCloser, error)) {
+// Exec runs the function within a goroutine with a panic recovery
+func (m *GoRoutines) Exec(c context.Context, name string, fn func(ctx context.Context), writerFactories ...func(s string) (io.WriteCloser, error)) {
 	hostname, _ := os.Hostname()
 	go func(ctx context.Context) {
 		labels := pprof.Labels("goroutine-name", name, "goroutine-hostname", hostname, "goroutine-id", fmt.Sprintf("%d", GoroutineID()))
