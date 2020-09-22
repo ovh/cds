@@ -37,6 +37,7 @@ func newTestAPI(t *testing.T, bootstrapFunc ...test.Bootstrapf) (*API, *test.Fak
 	api.AuthenticationDrivers[sdk.ConsumerBuiltin] = builtin.NewDriver()
 	api.AuthenticationDrivers[sdk.ConsumerTest] = authdrivertest.NewDriver(t)
 	api.AuthenticationDrivers[sdk.ConsumerTest2] = authdrivertest.NewDriver(t)
+	api.GoRoutines = sdk.NewGoRoutines()
 
 	api.InitRouter()
 	t.Cleanup(func() {
