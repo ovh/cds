@@ -18,6 +18,7 @@ func (c *Common) NewMonitoringStatus() *sdk.MonitoringStatus {
 	s := &sdk.MonitoringStatus{
 		Now:         t,
 		ServiceType: c.Type(),
+		ServiceName: c.Name(),
 	}
 	s.AddLine(c.commonMonitoring(t)...)
 	return s

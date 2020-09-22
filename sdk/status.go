@@ -21,6 +21,7 @@ type MonitoringStatus struct {
 	Lines []MonitoringStatusLine `json:"lines"`
 
 	ServiceType string `json:"-"`
+	ServiceName string `json:"-"`
 }
 
 // Value returns driver.Value from workflow template request.
@@ -46,6 +47,7 @@ func (m *MonitoringStatus) AddLine(lines ...MonitoringStatusLine) {
 	for i := range lines {
 		l := lines[i]
 		l.Type = m.ServiceType
+		l.Service = m.ServiceName
 		m.Lines = append(m.Lines, l)
 	}
 }
@@ -56,6 +58,7 @@ type MonitoringStatusLine struct {
 	Component string `json:"component" cli:"component"`
 	Value     string `json:"value" cli:"value"`
 	Type      string `json:"type" cli:"type"`
+	Service   string `json:"service" cli:"service"`
 }
 
 // HTTPStatusCode returns the http status code
