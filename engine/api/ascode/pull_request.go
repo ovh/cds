@@ -65,7 +65,7 @@ func UpdateAsCodeResult(ctx context.Context, db *gorp.DbMap, store cache.Store, 
 			return sdk.WithStack(err)
 		}
 
-		goRoutines.Run(context.Background(), fmt.Sprintf("UpdateAsCodeResult-pusblish-as-code-event-%d", asCodeEvent.ID), func(ctx context.Context) {
+		goRoutines.Exec(context.Background(), fmt.Sprintf("UpdateAsCodeResult-pusblish-as-code-event-%d", asCodeEvent.ID), func(ctx context.Context) {
 			event.PublishAsCodeEvent(ctx, proj.Key, workflowHolder.Name, *asCodeEvent, u)
 		})
 
@@ -91,7 +91,7 @@ func UpdateAsCodeResult(ctx context.Context, db *gorp.DbMap, store cache.Store, 
 		globalOperation.Setup.Push.PRLink = asCodeEvent.PullRequestURL
 	}
 
-	goRoutines.Run(context.Background(), fmt.Sprintf("UpdateAsCodeResult-pusblish-operation-%s", globalOperation.UUID), func(ctx context.Context) {
+	goRoutines.Exec(context.Background(), fmt.Sprintf("UpdateAsCodeResult-pusblish-operation-%s", globalOperation.UUID), func(ctx context.Context) {
 		event.PublishOperation(ctx, proj.Key, globalOperation, u)
 	})
 }

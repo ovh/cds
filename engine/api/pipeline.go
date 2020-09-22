@@ -108,7 +108,7 @@ func (api *API) updateAsCodePipelineHandler() service.Handler {
 			return sdk.WithStack(err)
 		}
 
-		api.GoRoutines.Run(context.Background(), fmt.Sprintf("UpdateAsCodePipelineHandler-%s", ope.UUID), func(ctx context.Context) {
+		api.GoRoutines.Exec(context.Background(), fmt.Sprintf("UpdateAsCodePipelineHandler-%s", ope.UUID), func(ctx context.Context) {
 			ed := ascode.EntityData{
 				FromRepo:      pipelineDB.FromRepository,
 				Type:          ascode.PipelineEvent,

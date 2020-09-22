@@ -130,10 +130,10 @@ func (s *Service) Serve(c context.Context) error {
 			return err
 		}
 
-		s.GoRoutines.Loop(ctx, "cdn-gc-items", func(ctx context.Context) {
+		s.GoRoutines.Run(ctx, "cdn-gc-items", func(ctx context.Context) {
 			s.itemsGC(ctx)
 		})
-		s.GoRoutines.Loop(ctx, "cdn-purge-items", func(ctx context.Context) {
+		s.GoRoutines.Run(ctx, "cdn-purge-items", func(ctx context.Context) {
 			s.itemPurge(ctx)
 		})
 
@@ -143,7 +143,7 @@ func (s *Service) Serve(c context.Context) error {
 			if !ok {
 				continue
 			}
-			s.GoRoutines.Run(ctx, "cdn-cds-backend-migration", func(ctx context.Context) {
+			s.GoRoutines.Exec(ctx, "cdn-cds-backend-migration", func(ctx context.Context) {
 				if err := s.SyncLogs(ctx, cdsStorage); err != nil {
 					log.Error(ctx, "unable to sync logs: %v", err)
 				}
@@ -155,7 +155,7 @@ func (s *Service) Serve(c context.Context) error {
 		if err != nil {
 			return sdk.WrapError(err, "cannot connect to redis instance for lru")
 		}
-		s.GoRoutines.Loop(ctx, "log-cache-eviction", func(ctx context.Context) {
+		s.GoRoutines.Run(ctx, "log-cache-eviction", func(ctx context.Context) {
 			s.LogCache.Evict(ctx)
 		})
 	}

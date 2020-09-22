@@ -730,7 +730,7 @@ func (api *API) stopWorkflowNodeRunHandler() service.Handler {
 			return sdk.WrapError(err, "unable to stop workflow node run")
 		}
 
-		api.GoRoutines.Run(context.Background(), fmt.Sprintf("stopWorkflowNodeRunHandler-%d", workflowNodeRunID), func(ctx context.Context) {
+		api.GoRoutines.Exec(context.Background(), fmt.Sprintf("stopWorkflowNodeRunHandler-%d", workflowNodeRunID), func(ctx context.Context) {
 			api.WorkflowSendEvent(context.Background(), *p, r1)
 		})
 
@@ -764,7 +764,7 @@ func (api *API) stopWorkflowNodeRunHandler() service.Handler {
 			return sdk.WithStack(err)
 		}
 
-		api.GoRoutines.Run(context.Background(), fmt.Sprintf("stopWorkflowNodeRunHandler-%d-resync-run-%d", workflowNodeRunID, workflowRun.ID), func(ctx context.Context) {
+		api.GoRoutines.Exec(context.Background(), fmt.Sprintf("stopWorkflowNodeRunHandler-%d-resync-run-%d", workflowNodeRunID, workflowRun.ID), func(ctx context.Context) {
 			api.WorkflowSendEvent(context.Background(), *p, r2)
 		})
 
@@ -922,7 +922,7 @@ func (api *API) postWorkflowRunHandler() service.Handler {
 
 			lastRun.Status = sdk.StatusWaiting
 			// Workflow Run initialization
-			api.GoRoutines.Run(context.Background(), fmt.Sprintf("api.initWorkflowRun-%d", lastRun.ID), func(ctx context.Context) {
+			api.GoRoutines.Exec(context.Background(), fmt.Sprintf("api.initWorkflowRun-%d", lastRun.ID), func(ctx context.Context) {
 				api.initWorkflowRun(ctx, p.Key, wf, lastRun, opts)
 			}, api.PanicDump())
 
@@ -1108,7 +1108,7 @@ func (api *API) initWorkflowRun(ctx context.Context, projKey string, wf *sdk.Wor
 	workflow.ResyncNodeRunsWithCommits(ctx, api.mustDB(), api.Cache, *p, report)
 
 	// Purge workflow run
-	api.GoRoutines.Run(ctx, "workflow.PurgeWorkflowRun", func(ctx context.Context) {
+	api.GoRoutines.Exec(ctx, "workflow.PurgeWorkflowRun", func(ctx context.Context) {
 		tx, err := api.mustDB().Begin()
 		defer tx.Rollback() // nolint
 		if err != nil {

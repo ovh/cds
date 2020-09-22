@@ -56,7 +56,7 @@ func (c *client) RequestWebsocket(ctx context.Context, goRoutines *sdk.GoRoutine
 	defer con.Close() // nolint
 
 	// Message to send
-	goRoutines.Run(wsContext, fmt.Sprintf("RequestWebsocket-%s-%s", c.config.User, sdk.UUID()), func(ctx context.Context) {
+	goRoutines.Exec(wsContext, fmt.Sprintf("RequestWebsocket-%s-%s", c.config.User, sdk.UUID()), func(ctx context.Context) {
 		for {
 			select {
 			case <-ctx.Done():

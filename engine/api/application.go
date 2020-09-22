@@ -524,7 +524,7 @@ func (api *API) updateAsCodeApplicationHandler() service.Handler {
 			return sdk.WithStack(err)
 		}
 
-		api.GoRoutines.Run(context.Background(), fmt.Sprintf("UpdateAsCodeApplicationHandler-%s", ope.UUID), func(ctx context.Context) {
+		api.GoRoutines.Exec(context.Background(), fmt.Sprintf("UpdateAsCodeApplicationHandler-%s", ope.UUID), func(ctx context.Context) {
 			ed := ascode.EntityData{
 				FromRepo:      appDB.FromRepository,
 				Type:          ascode.ApplicationEvent,

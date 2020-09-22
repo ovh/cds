@@ -79,11 +79,11 @@ type websocketBroker struct {
 //Init the websocketBroker
 func (b *websocketBroker) Init(ctx context.Context, panicCallback func(s string) (io.WriteCloser, error), goRoutines *sdk.GoRoutines) {
 	// Start cache Subscription
-	goRoutines.Loop(ctx, "websocketBroker.Init.CacheSubscribe", func(ctx context.Context) {
+	goRoutines.Run(ctx, "websocketBroker.Init.CacheSubscribe", func(ctx context.Context) {
 		b.cacheSubscribe(ctx, b.messages, b.cache)
 	}, panicCallback)
 
-	goRoutines.Loop(ctx, "websocketBroker.Init.Start", func(ctx context.Context) {
+	goRoutines.Run(ctx, "websocketBroker.Init.Start", func(ctx context.Context) {
 		b.Start(ctx, panicCallback, goRoutines)
 	}, panicCallback)
 }
@@ -128,7 +128,7 @@ func (b *websocketBroker) Start(ctx context.Context, panicCallback func(s string
 
 				// Send the event to the client websocket within a goroutine
 				s := "websocket-" + c.UUID
-				goRoutines.Run(ctx, s, func(ctx context.Context) {
+				goRoutines.Exec(ctx, s, func(ctx context.Context) {
 					found, needCheckPermission := c.filters.HasOneKey(eventKeys...)
 					if !found {
 						return
@@ -230,7 +230,7 @@ func (b *websocketBroker) ServeHTTP() service.Handler {
 			b.chanRemoveClient <- client.UUID
 		}()
 
-		b.goRoutines.Run(ctx, fmt.Sprintf("readUpdateFilterChan-%s-%s", client.AuthConsumer.GetUsername(), client.UUID), func(ctx context.Context) {
+		b.goRoutines.Exec(ctx, fmt.Sprintf("readUpdateFilterChan-%s-%s", client.AuthConsumer.GetUsername(), client.UUID), func(ctx context.Context) {
 			for {
 				select {
 				case <-ctx.Done():

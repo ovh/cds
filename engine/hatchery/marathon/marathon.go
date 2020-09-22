@@ -470,7 +470,7 @@ func (h *HatcheryMarathon) InitHatchery(ctx context.Context) error {
 	if err := h.RefreshServiceLogger(ctx); err != nil {
 		log.Error(ctx, "Hatchery> marathon> Cannot get cdn configuration : %v", err)
 	}
-	h.GoRoutines.Loop(ctx, "marathon-routines", func(ctx context.Context) {
+	h.GoRoutines.Run(ctx, "marathon-routines", func(ctx context.Context) {
 		h.routines(ctx)
 	})
 	return nil
@@ -483,17 +483,17 @@ func (h *HatcheryMarathon) routines(ctx context.Context) {
 	for {
 		select {
 		case <-ticker.C:
-			h.GoRoutines.Run(ctx, "marathon-killDisabledWorker", func(ctx context.Context) {
+			h.GoRoutines.Exec(ctx, "marathon-killDisabledWorker", func(ctx context.Context) {
 				if err := h.killDisabledWorkers(); err != nil {
 					log.Warning(context.Background(), "Cannot kill disabled workers: %s", err)
 				}
 			})
-			h.GoRoutines.Run(ctx, "marathon-killAwolWorkers", func(ctx context.Context) {
+			h.GoRoutines.Exec(ctx, "marathon-killAwolWorkers", func(ctx context.Context) {
 				if err := h.killAwolWorkers(); err != nil {
 					log.Warning(context.Background(), "Cannot kill awol workers: %s", err)
 				}
 			})
-			h.GoRoutines.Run(ctx, "marathon-refreshCDNConfiguration", func(ctx context.Context) {
+			h.GoRoutines.Exec(ctx, "marathon-refreshCDNConfiguration", func(ctx context.Context) {
 				if err := h.RefreshServiceLogger(ctx); err != nil {
 					log.Error(ctx, "Hatchery> marathon> Cannot get cdn configuration : %v", err)
 				}

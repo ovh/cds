@@ -116,7 +116,7 @@ func (api *API) postWorkflowAsCodeHandler() service.Handler {
 			return sdk.WithStack(err)
 		}
 
-		api.GoRoutines.Run(context.Background(), fmt.Sprintf("UpdateAsCodeResult-%s", ope.UUID), func(ctx context.Context) {
+		api.GoRoutines.Exec(context.Background(), fmt.Sprintf("UpdateAsCodeResult-%s", ope.UUID), func(ctx context.Context) {
 			ed := ascode.EntityData{
 				Name:          wfDB.Name,
 				ID:            wfDB.ID,
@@ -181,7 +181,7 @@ func (api *API) migrateWorkflowAsCode(ctx context.Context, w http.ResponseWriter
 		return sdk.WithStack(err)
 	}
 
-	api.GoRoutines.Run(context.Background(), fmt.Sprintf("MigrateWorkflowAsCodeResult-%s", ope.UUID), func(ctx context.Context) {
+	api.GoRoutines.Exec(context.Background(), fmt.Sprintf("MigrateWorkflowAsCodeResult-%s", ope.UUID), func(ctx context.Context) {
 		ed := ascode.EntityData{
 			FromRepo:      ope.URL,
 			Type:          ascode.WorkflowEvent,

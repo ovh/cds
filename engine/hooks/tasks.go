@@ -137,7 +137,7 @@ func (s *Service) initGerritStreamEvent(ctx context.Context, vcsName string, vcs
 	// Create channel to store gerrit event
 	gerritEventChan := make(chan GerritEvent, 20)
 	// Listen to gerrit event stream
-	s.GoRoutines.Loop(ctx, "gerrit.EventStream."+vcsName, func(ctx context.Context) {
+	s.GoRoutines.Run(ctx, "gerrit.EventStream."+vcsName, func(ctx context.Context) {
 		for {
 			select {
 			case <-ctx.Done():
@@ -155,7 +155,7 @@ func (s *Service) initGerritStreamEvent(ctx context.Context, vcsName string, vcs
 
 	})
 	// Listen to gerrit event stream
-	s.GoRoutines.Loop(ctx, "gerrit.EventStreamCompute."+vcsName, func(ctx context.Context) {
+	s.GoRoutines.Run(ctx, "gerrit.EventStreamCompute."+vcsName, func(ctx context.Context) {
 		s.ComputeGerritStreamEvent(ctx, vcsName, gerritEventChan)
 	})
 	// Save the fact that we are listen the event stream for this gerrit

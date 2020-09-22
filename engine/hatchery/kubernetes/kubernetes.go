@@ -47,7 +47,7 @@ func (h *HatcheryKubernetes) InitHatchery(ctx context.Context) error {
 	if err := h.Common.RefreshServiceLogger(ctx); err != nil {
 		log.Error(ctx, "hatchery> kubernetes> cannot get cdn configuration : %v", err)
 	}
-	h.GoRoutines.Loop(context.Background(), "hatchery kubernetes routines", func(ctx context.Context) {
+	h.GoRoutines.Run(context.Background(), "hatchery kubernetes routines", func(ctx context.Context) {
 		h.routines(ctx)
 	})
 	return nil
@@ -505,23 +505,23 @@ func (h *HatcheryKubernetes) routines(ctx context.Context) {
 	for {
 		select {
 		case <-ticker.C:
-			h.GoRoutines.Run(ctx, "getCDNConfiguration", func(ctx context.Context) {
+			h.GoRoutines.Exec(ctx, "getCDNConfiguration", func(ctx context.Context) {
 				if err := h.Common.RefreshServiceLogger(ctx); err != nil {
 					log.Error(ctx, "hatchery> kubernetes> cannot get cdn configuration : %v", err)
 				}
 			})
 
-			h.GoRoutines.Run(ctx, "getServicesLogs", func(ctx context.Context) {
+			h.GoRoutines.Exec(ctx, "getServicesLogs", func(ctx context.Context) {
 				if err := h.getServicesLogs(ctx); err != nil {
 					log.Error(ctx, "Hatchery> Kubernetes> Cannot get service logs : %v", err)
 				}
 			})
 
-			h.GoRoutines.Run(ctx, "killAwolWorker", func(ctx context.Context) {
+			h.GoRoutines.Exec(ctx, "killAwolWorker", func(ctx context.Context) {
 				_ = h.killAwolWorkers(ctx)
 			})
 
-			h.GoRoutines.Run(ctx, "deleteSecrets", func(ctx context.Context) {
+			h.GoRoutines.Exec(ctx, "deleteSecrets", func(ctx context.Context) {
 				if err := h.deleteSecrets(ctx); err != nil {
 					log.Error(ctx, "hatchery> kubernetes> cannot handle secrets : %v", err)
 				}

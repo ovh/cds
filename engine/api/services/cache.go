@@ -37,8 +37,8 @@ func Initialize(c context.Context, dbF *database.DBConnectionFactory, goRoutines
 		dbConnFactory: dbF,
 		mutex:         sync.RWMutex{},
 	}
-	goRoutines.Loop(c, "service.internalCache.doUpdateData", internalCache.doUpdateData, panicCallback)
-	goRoutines.Loop(c, "service.internalCache.doListenDatabase", internalCache.doListenDatabase, panicCallback)
+	goRoutines.Run(c, "service.internalCache.doUpdateData", internalCache.doUpdateData, panicCallback)
+	goRoutines.Run(c, "service.internalCache.doListenDatabase", internalCache.doListenDatabase, panicCallback)
 }
 
 func (c *iCache) updateCache(s sdk.Service) {

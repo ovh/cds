@@ -433,7 +433,7 @@ func (api *API) postTemplateApplyHandler() service.Handler {
 						return sdk.WithStack(err)
 					}
 
-					api.GoRoutines.Run(context.Background(), fmt.Sprintf("UpdateAsCodeResult-%s", ope.UUID), func(ctx context.Context) {
+					api.GoRoutines.Exec(context.Background(), fmt.Sprintf("UpdateAsCodeResult-%s", ope.UUID), func(ctx context.Context) {
 						ed := ascode.EntityData{
 							Name:          existingWorkflow.Name,
 							ID:            existingWorkflow.ID,
@@ -569,7 +569,7 @@ func (api *API) postTemplateBulkHandler() service.Handler {
 		}
 
 		// start async bulk tasks
-		api.GoRoutines.Run(context.Background(), "api.templateBulkApply", func(ctx context.Context) {
+		api.GoRoutines.Exec(context.Background(), "api.templateBulkApply", func(ctx context.Context) {
 			for i := range bulk.Operations {
 				if bulk.Operations[i].Status == sdk.OperationStatusPending {
 					bulk.Operations[i].Status = sdk.OperationStatusProcessing

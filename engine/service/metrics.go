@@ -163,7 +163,7 @@ func (c *Common) RegisterCommonMetricsView(ctx context.Context) {
 			panic(fmt.Errorf("unable to register service metrics view: %v", err))
 		}
 
-		c.GoRoutines.Loop(ctx, "service_metrics", func(ctx context.Context) {
+		c.GoRoutines.Run(ctx, "service_metrics", func(ctx context.Context) {
 			var maxMemoryS = os.Getenv("CDS_MAX_HEAP_SIZE") // in bytes
 			var maxMemory uint64
 			var onceMaxMemorySignal = new(sync.Once)

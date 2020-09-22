@@ -631,52 +631,52 @@ func (a *API) Serve(ctx context.Context) error {
 	}
 
 	log.Info(ctx, "Initializing internal routines...")
-	a.GoRoutines.Loop(ctx, "maintenance.Subscribe", func(ctx context.Context) {
+	a.GoRoutines.Run(ctx, "maintenance.Subscribe", func(ctx context.Context) {
 		if err := a.listenMaintenance(ctx); err != nil {
 			log.Error(ctx, "error while initializing listen maintenance routine: %s", err)
 		}
 	}, a.PanicDump())
 
-	a.GoRoutines.Run(ctx, "workermodel.Initialize", func(ctx context.Context) {
+	a.GoRoutines.Exec(ctx, "workermodel.Initialize", func(ctx context.Context) {
 		if err := workermodel.Initialize(ctx, a.DBConnectionFactory.GetDBMap(gorpmapping.Mapper), a.Cache); err != nil {
 			log.Error(ctx, "error while initializing worker models routine: %s", err)
 		}
 	}, a.PanicDump())
-	a.GoRoutines.Loop(ctx, "worker.Initialize", func(ctx context.Context) {
+	a.GoRoutines.Run(ctx, "worker.Initialize", func(ctx context.Context) {
 		if err := worker.Initialize(ctx, a.DBConnectionFactory.GetDBMap(gorpmapping.Mapper), a.Cache); err != nil {
 			log.Error(ctx, "error while initializing workers routine: %s", err)
 		}
 	}, a.PanicDump())
-	a.GoRoutines.Loop(ctx, "action.ComputeAudit", func(ctx context.Context) {
+	a.GoRoutines.Run(ctx, "action.ComputeAudit", func(ctx context.Context) {
 		chanEvent := make(chan sdk.Event)
 		event.Subscribe(chanEvent)
 		action.ComputeAudit(ctx, a.DBConnectionFactory.GetDBMap(gorpmapping.Mapper), chanEvent)
 	}, a.PanicDump())
-	a.GoRoutines.Loop(ctx, "audit.ComputePipelineAudit", func(ctx context.Context) {
+	a.GoRoutines.Run(ctx, "audit.ComputePipelineAudit", func(ctx context.Context) {
 		audit.ComputePipelineAudit(ctx, a.DBConnectionFactory.GetDBMap(gorpmapping.Mapper))
 	}, a.PanicDump())
-	a.GoRoutines.Loop(ctx, "audit.ComputeWorkflowAudit", func(ctx context.Context) {
+	a.GoRoutines.Run(ctx, "audit.ComputeWorkflowAudit", func(ctx context.Context) {
 		audit.ComputeWorkflowAudit(ctx, a.DBConnectionFactory.GetDBMap(gorpmapping.Mapper))
 	}, a.PanicDump())
-	a.GoRoutines.Loop(ctx, "auditCleanerRoutine(ctx", func(ctx context.Context) {
+	a.GoRoutines.Run(ctx, "auditCleanerRoutine(ctx", func(ctx context.Context) {
 		auditCleanerRoutine(ctx, a.DBConnectionFactory.GetDBMap(gorpmapping.Mapper))
 	})
-	a.GoRoutines.Loop(ctx, "repositoriesmanager.ReceiveEvents", func(ctx context.Context) {
+	a.GoRoutines.Run(ctx, "repositoriesmanager.ReceiveEvents", func(ctx context.Context) {
 		repositoriesmanager.ReceiveEvents(ctx, a.DBConnectionFactory.GetDBMap(gorpmapping.Mapper), a.Cache)
 	}, a.PanicDump())
-	a.GoRoutines.Loop(ctx, "services.KillDeadServices", func(ctx context.Context) {
+	a.GoRoutines.Run(ctx, "services.KillDeadServices", func(ctx context.Context) {
 		services.KillDeadServices(ctx, a.mustDB)
 	}, a.PanicDump())
-	a.GoRoutines.Loop(ctx, "broadcast.Initialize", func(ctx context.Context) {
+	a.GoRoutines.Run(ctx, "broadcast.Initialize", func(ctx context.Context) {
 		broadcast.Initialize(ctx, a.DBConnectionFactory.GetDBMap(gorpmapping.Mapper))
 	}, a.PanicDump())
-	a.GoRoutines.Loop(ctx, "api.serviceAPIHeartbeat", func(ctx context.Context) {
+	a.GoRoutines.Run(ctx, "api.serviceAPIHeartbeat", func(ctx context.Context) {
 		a.serviceAPIHeartbeat(ctx)
 	}, a.PanicDump())
-	a.GoRoutines.Loop(ctx, "authentication.SessionCleaner", func(ctx context.Context) {
+	a.GoRoutines.Run(ctx, "authentication.SessionCleaner", func(ctx context.Context) {
 		authentication.SessionCleaner(ctx, a.mustDB, 10*time.Second)
 	}, a.PanicDump())
-	a.GoRoutines.Loop(ctx, "api.WorkflowRunCraft", func(ctx context.Context) {
+	a.GoRoutines.Run(ctx, "api.WorkflowRunCraft", func(ctx context.Context) {
 		a.WorkflowRunCraft(ctx, 100*time.Millisecond)
 	}, a.PanicDump())
 
@@ -765,23 +765,23 @@ func (a *API) Serve(ctx context.Context) error {
 	if err := services.InitExternal(ctx, a.mustDB(), externalServices); err != nil {
 		return fmt.Errorf("unable to init external service: %+v", err)
 	}
-	a.GoRoutines.Loop(ctx, "pings-external-services",
+	a.GoRoutines.Run(ctx, "pings-external-services",
 		func(ctx context.Context) {
 			services.Pings(ctx, a.mustDB, externalServices)
 		}, a.PanicDump())
-	a.GoRoutines.Loop(ctx, "workflow.Initialize",
+	a.GoRoutines.Run(ctx, "workflow.Initialize",
 		func(ctx context.Context) {
 			workflow.Initialize(ctx, a.DBConnectionFactory.GetDBMap(gorpmapping.Mapper), a.Cache, a.Config.URL.UI, a.Config.DefaultOS, a.Config.DefaultArch, a.Config.Log.StepMaxSize)
 		}, a.PanicDump())
-	a.GoRoutines.Loop(ctx, "PushInElasticSearch",
+	a.GoRoutines.Run(ctx, "PushInElasticSearch",
 		func(ctx context.Context) {
 			event.PushInElasticSearch(ctx, a.mustDB(), a.Cache)
 		}, a.PanicDump())
-	a.GoRoutines.Loop(ctx, "Metrics.pushInElasticSearch",
+	a.GoRoutines.Run(ctx, "Metrics.pushInElasticSearch",
 		func(ctx context.Context) {
 			metrics.Init(ctx, a.DBConnectionFactory.GetDBMap(gorpmapping.Mapper))
 		}, a.PanicDump())
-	a.GoRoutines.Loop(ctx, "Purge",
+	a.GoRoutines.Run(ctx, "Purge",
 		func(ctx context.Context) {
 			purge.Initialize(ctx, a.Cache, a.DBConnectionFactory.GetDBMap(gorpmapping.Mapper), a.SharedStorage, a.Metrics.WorkflowRunsMarkToDelete, a.Metrics.WorkflowRunsDeleted)
 		}, a.PanicDump())

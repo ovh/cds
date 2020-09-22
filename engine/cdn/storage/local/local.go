@@ -51,7 +51,7 @@ func (s *Local) Init(ctx context.Context, cfg interface{}, goRoutines *sdk.GoRou
 		return err
 	}
 
-	goRoutines.Loop(ctx, "cdn-local-compute-size", func(ctx context.Context) {
+	goRoutines.Run(ctx, "cdn-local-compute-size", func(ctx context.Context) {
 		s.computeSize(ctx)
 	})
 

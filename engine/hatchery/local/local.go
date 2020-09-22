@@ -236,7 +236,7 @@ func (h *HatcheryLocal) InitHatchery(ctx context.Context) error {
 	if err := h.RefreshServiceLogger(ctx); err != nil {
 		log.Error(ctx, "Hatchery> local> Cannot get cdn configuration : %v", err)
 	}
-	h.GoRoutines.Loop(context.Background(), "hatchery locale routines", func(ctx context.Context) {
+	h.GoRoutines.Run(context.Background(), "hatchery locale routines", func(ctx context.Context) {
 		h.routines(ctx)
 	})
 	return nil
@@ -254,12 +254,12 @@ func (h *HatcheryLocal) routines(ctx context.Context) {
 	for {
 		select {
 		case <-ticker.C:
-			h.GoRoutines.Run(ctx, "local-killAwolWorkers", func(ctx context.Context) {
+			h.GoRoutines.Exec(ctx, "local-killAwolWorkers", func(ctx context.Context) {
 				if err := h.killAwolWorkers(); err != nil {
 					log.Warning(ctx, "Cannot kill awol workers: %s", err)
 				}
 			})
-			h.GoRoutines.Run(ctx, "local-refreshCDNConfiguration", func(ctx context.Context) {
+			h.GoRoutines.Exec(ctx, "local-refreshCDNConfiguration", func(ctx context.Context) {
 				if err := h.RefreshServiceLogger(ctx); err != nil {
 					log.Error(ctx, "Hatchery> local> Cannot get cdn configuration : %v", err)
 				}

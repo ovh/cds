@@ -59,7 +59,7 @@ func (c *client) QueuePolling(ctx context.Context, goRoutines *sdk.GoRoutines, j
 	// This goroutine call the SSE route
 	chanMessageReceived := make(chan sdk.WebsocketEvent, 10)
 	chanMessageToSend := make(chan []sdk.WebsocketFilter, 10)
-	goRoutines.Run(ctx, "RequestWebsocket", func(ctx context.Context) {
+	goRoutines.Exec(ctx, "RequestWebsocket", func(ctx context.Context) {
 		for ctx.Err() == nil {
 			if err := c.RequestWebsocket(ctx, goRoutines, "/ws", chanMessageToSend, chanMessageReceived); err != nil {
 				log.Println("QueuePolling", err)

@@ -179,7 +179,7 @@ func (h *HatcherySwarm) InitHatchery(ctx context.Context) error {
 	if err := h.RefreshServiceLogger(ctx); err != nil {
 		log.Error(ctx, "Hatchery> swarm> Cannot get cdn configuration : %v", err)
 	}
-	h.GoRoutines.Loop(context.Background(), "swarm", func(ctx context.Context) {
+	h.GoRoutines.Run(context.Background(), "swarm", func(ctx context.Context) {
 		h.routines(ctx)
 	})
 
@@ -623,17 +623,17 @@ func (h *HatcherySwarm) routines(ctx context.Context) {
 	for {
 		select {
 		case <-ticker.C:
-			h.GoRoutines.Run(ctx, "getServicesLogs", func(ctx context.Context) {
+			h.GoRoutines.Exec(ctx, "getServicesLogs", func(ctx context.Context) {
 				if err := h.getServicesLogs(); err != nil {
 					log.Error(ctx, "Hatchery> swarm> Cannot get service logs : %v", err)
 				}
 			})
 
-			h.GoRoutines.Run(ctx, "killAwolWorker", func(ctx context.Context) {
+			h.GoRoutines.Exec(ctx, "killAwolWorker", func(ctx context.Context) {
 				_ = h.killAwolWorker(ctx)
 			})
 
-			h.GoRoutines.Run(ctx, "refreshCDNConfiguration", func(ctx context.Context) {
+			h.GoRoutines.Exec(ctx, "refreshCDNConfiguration", func(ctx context.Context) {
 				if err := h.RefreshServiceLogger(ctx); err != nil {
 					log.Error(ctx, "Hatchery> swarm> Cannot get cdn configuration : %v", err)
 				}
