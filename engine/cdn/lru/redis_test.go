@@ -110,5 +110,4 @@ func TestRedisLRU(t *testing.T) {
 	size, err = r.Size()
 	require.NoError(t, err)
 	require.Equal(t, int64(65), size)
-
 }

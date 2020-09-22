@@ -127,7 +127,7 @@ func (r *Redis) NewWriter(itemID string) io.WriteCloser {
 }
 
 // NewReader instanciates a new reader
-func (r *Redis) NewReader(itemID string, from int64, s uint) io.ReadCloser {
+func (r *Redis) NewReader(itemID string, format redis.ReaderFormat, from int64, s uint) io.ReadCloser {
 	return &redis.Reader{
 		ReadWrite: redis.ReadWrite{
 			Store:     r.store,
@@ -135,8 +135,9 @@ func (r *Redis) NewReader(itemID string, from int64, s uint) io.ReadCloser {
 			PrefixKey: redisLruItemCacheKey,
 			UsageKey:  redisLruKeyCacheKey,
 		},
-		Size: s,
-		From: from,
+		Size:   s,
+		From:   from,
+		Format: format,
 	}
 }
 

@@ -12,9 +12,9 @@ import (
 
 	"github.com/ovh/cds/engine/authentication"
 	"github.com/ovh/cds/engine/cdn/item"
+	"github.com/ovh/cds/engine/cdn/redis"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 )
 
 func (s *Service) markItemToDeleteHandler() service.Handler {
@@ -68,7 +68,7 @@ func (s *Service) getItemLogsHandler() service.Handler {
 	}
 }
 
-func (s *Service) getItemLogLinesHandler() service.Handler {
+func (s *Service) getItemLogsLinesHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		itemType := sdk.CDNItemType(vars["type"])
@@ -89,9 +89,15 @@ func (s *Service) getItemLogLinesHandler() service.Handler {
 			count = 100
 		}
 
-		log.Debug("%s %d %d", token.APIRefHash, offset, count)
+		rc, err := s.getItemLogValue(ctx, itemType, token.APIRefHash, redis.ReaderFormatJSON, offset, uint(count))
+		if err != nil {
+			return err
+		}
+		if rc == nil {
+			return sdk.WrapError(sdk.ErrNotFound, "no storage found that contains given item %s", token.APIRefHash)
+		}
 
-		return service.WriteJSON(w, []interface{}{}, http.StatusOK)
+		return service.Write(w, rc, http.StatusOK, "application/json")
 	}
 }
 
@@ -107,7 +113,7 @@ func (s *Service) getItemLogsDownloadHandler() service.Handler {
 			return err
 		}
 
-		rc, err := s.getItemLogValue(ctx, itemType, token.APIRefHash, 0, 0)
+		rc, err := s.getItemLogValue(ctx, itemType, token.APIRefHash, redis.ReaderFormatText, 0, 0)
 		if err != nil {
 			return err
 		}

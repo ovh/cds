@@ -2,7 +2,13 @@ package redis
 
 import (
 	"io"
-	"strings"
+)
+
+type ReaderFormat string
+
+const (
+	ReaderFormatJSON ReaderFormat = "json"
+	ReaderFormatText ReaderFormat = "text"
 )
 
 type Reader struct {
@@ -11,6 +17,8 @@ type Reader struct {
 	From          int64 // the offset that we want to use when reading lines from Redis, allows negative value to get last lines
 	Size          uint  // the count of lines that we want to read (0 means to the end)
 	currentBuffer []byte
+	Format        ReaderFormat
+	readEOF       bool
 }
 
 func (r *Reader) loadMoreLines() error {
@@ -20,15 +28,32 @@ func (r *Reader) loadMoreLines() error {
 		if err != nil {
 			return err
 		}
-		r.From = int64(lineCount) - r.From
+		r.From = int64(lineCount) + r.From
 		if r.From < 0 {
 			r.From = 0
 		}
 	}
 
-	// If its first read (next index == 0), init the next index with 'from' value
-	if r.nextIndex == 0 {
+	isFirstRead := r.nextIndex == 0
+	// If its first read, init the next index with 'from' value
+	if isFirstRead {
 		r.nextIndex = uint(r.From) // 'from' can be 0 but not < 0 at this point
+	}
+
+	// If first read and json format init json list, also define formatter to exec before append lines and at read end
+	if isFirstRead && r.Format == ReaderFormatJSON {
+		r.currentBuffer = []byte("[")
+	}
+	formatBeforeLine := func() {
+		// For json format, if not first read we should add a comma before each line object
+		if r.Format == ReaderFormatJSON {
+			r.currentBuffer = append(r.currentBuffer, []byte(",")...)
+		}
+	}
+	formatEnd := func() {
+		if r.Format == ReaderFormatJSON {
+			r.currentBuffer = append(r.currentBuffer, []byte("]")...)
+		}
 	}
 
 	// Read 100 lines if possible or only the missing lines if less than 100
@@ -37,6 +62,10 @@ func (r *Reader) loadMoreLines() error {
 	if r.Size > 0 {
 		linesLeftToRead := uint(r.Size) - alreadyReadLinesLength
 		if linesLeftToRead == 0 {
+			if !r.readEOF {
+				r.readEOF = true
+				formatEnd()
+			}
 			return nil
 		}
 		if linesLeftToRead > 100 {
@@ -53,9 +82,21 @@ func (r *Reader) loadMoreLines() error {
 	if err != nil {
 		return err
 	}
-	if len(lines) > 0 {
-		r.currentBuffer = append(r.currentBuffer, []byte(strings.Join(lines, ""))...)
+	for i := range lines {
+		buf, err := lines[i].Format(r.Format)
+		if err != nil {
+			return err
+		}
+		if !(isFirstRead && i == 0) {
+			formatBeforeLine()
+		}
+		r.currentBuffer = append(r.currentBuffer, buf...)
 	}
+	if len(lines) == 0 && !r.readEOF {
+		r.readEOF = true
+		formatEnd()
+	}
+
 	r.nextIndex = newNextIndex
 
 	return nil
@@ -78,7 +119,7 @@ func (r *Reader) Read(p []byte) (n int, err error) {
 
 	var buffer []byte
 	if len(r.currentBuffer) > lengthToRead { // more data, return a subset of current buffer
-		buffer = r.currentBuffer[:lengthToRead-1]
+		buffer = r.currentBuffer[:lengthToRead]
 		r.currentBuffer = r.currentBuffer[lengthToRead:]
 	} else { // return all the current buffer
 		buffer = append([]byte{}, r.currentBuffer...)

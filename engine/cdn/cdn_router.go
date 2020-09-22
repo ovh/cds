@@ -24,7 +24,7 @@ func (s *Service) initRouter(ctx context.Context) {
 	r.Handle("/cache/status", nil, r.GET(s.getStatusCacheHandler))
 
 	r.Handle("/item/{type}/{apiRef}", nil, r.GET(s.getItemLogsHandler))
-	r.Handle("/item/{type}/{apiRef}/lines", nil, r.GET(s.getItemLogLinesHandler))
+	r.Handle("/item/{type}/{apiRef}/lines", nil, r.GET(s.getItemLogsLinesHandler, api.Auth(false)))
 	r.Handle("/item/{type}/{apiRef}/download", nil, r.GET(s.getItemLogsDownloadHandler, api.Auth(false)))
 	r.Handle("/size/item/project/{projectKey}", nil, r.GET(s.getSizeByProjectHandler))
 }

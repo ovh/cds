@@ -159,7 +159,7 @@ checkImage:
 	_, next = telemetry.Span(ctx, "swarm.dockerClient.ContainerStart", telemetry.Tag(telemetry.TagWorker, cArgs.name), telemetry.Tag("network", fmt.Sprintf("%v", networkingConfig)))
 	if err := dockerClient.ContainerStart(ctx, c.ID, types.ContainerStartOptions{}); err != nil {
 		next()
-		return sdk.WrapError(err, "Unable to start container on %s: %s", dockerClient.name, c.ID[:12])
+		return sdk.WrapError(err, "Unable to start container on %s: %s", dockerClient.name, sdk.StringFirstN(c.ID, 12))
 	}
 	next()
 	return nil

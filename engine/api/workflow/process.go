@@ -30,11 +30,7 @@ func setValuesGitInBuildParameters(run *sdk.WorkflowNodeRun, vcsInfos vcsInfos) 
 
 	sdk.ParameterAddOrSetValue(&run.BuildParameters, tagGitTag, sdk.StringParameter, vcsInfos.Tag)
 	sdk.ParameterAddOrSetValue(&run.BuildParameters, tagGitHash, sdk.StringParameter, vcsInfos.Hash)
-	hashShort := run.VCSHash
-	if len(hashShort) >= 7 {
-		hashShort = hashShort[:7]
-	}
-	sdk.ParameterAddOrSetValue(&run.BuildParameters, tagGitHashShort, sdk.StringParameter, hashShort)
+	sdk.ParameterAddOrSetValue(&run.BuildParameters, tagGitHashShort, sdk.StringParameter, sdk.StringFirstN(run.VCSHash, 7))
 	sdk.ParameterAddOrSetValue(&run.BuildParameters, tagGitAuthor, sdk.StringParameter, vcsInfos.Author)
 	sdk.ParameterAddOrSetValue(&run.BuildParameters, tagGitMessage, sdk.StringParameter, vcsInfos.Message)
 	sdk.ParameterAddOrSetValue(&run.BuildParameters, tagGitURL, sdk.StringParameter, vcsInfos.URL)

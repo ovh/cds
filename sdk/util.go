@@ -55,3 +55,10 @@ func IntMapToSlice(m map[int64]struct{}) []int64 {
 	}
 	return slice
 }
+
+func StringFirstN(s string, i int) string {
+	if len(s) <= i {
+		return s
+	}
+	return s[:i]
+}

@@ -77,7 +77,7 @@ func (c *client) WorkerRegister(ctx context.Context, authToken string, form sdk.
 	c.config.SessionToken = headers.Get("X-CDS-JWT")
 
 	if c.config.Verbose {
-		fmt.Printf("Registering session %s for worker %s\n", c.config.SessionToken[:12], w.Name)
+		fmt.Printf("Registering session %s for worker %s\n", sdk.StringFirstN(c.config.SessionToken, 12), w.Name)
 	}
 
 	return &w, w.Uptodate, nil

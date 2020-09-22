@@ -81,10 +81,11 @@ func (s *Redis) NewReader(_ context.Context, i sdk.CDNItemUnit) (io.ReadCloser, 
 			ItemID:    i.ItemID,
 			UsageKey:  "",
 		},
+		Format: redis.ReaderFormatText,
 	}, nil
 }
 
-func (s *Redis) NewAdvancedReader(_ context.Context, i sdk.CDNItemUnit, from int64, size uint) (io.ReadCloser, error) {
+func (s *Redis) NewAdvancedReader(_ context.Context, i sdk.CDNItemUnit, format redis.ReaderFormat, from int64, size uint) (io.ReadCloser, error) {
 	return &redis.Reader{
 		ReadWrite: redis.ReadWrite{
 			Store:     s.store,
@@ -92,8 +93,9 @@ func (s *Redis) NewAdvancedReader(_ context.Context, i sdk.CDNItemUnit, from int
 			ItemID:    i.ItemID,
 			UsageKey:  "",
 		},
-		From: from,
-		Size: size,
+		From:   from,
+		Size:   size,
+		Format: format,
 	}, nil
 }
 

@@ -1,10 +1,12 @@
 package service
 
 import (
+	"bytes"
 	"context"
 	"crypto/rsa"
 	"encoding/json"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"strconv"
@@ -69,14 +71,20 @@ func Accepted(w http.ResponseWriter) error {
 }
 
 // Write is a helper function
-func Write(w http.ResponseWriter, btes []byte, status int, contentType string) error {
+func Write(w http.ResponseWriter, r io.Reader, status int, contentType string) error {
 	w.Header().Add("Content-Type", contentType)
-	w.Header().Add("Content-Length", fmt.Sprintf("%d", len(btes)))
 
 	WriteProcessTime(context.TODO(), w)
 	w.WriteHeader(status)
-	_, err := w.Write(btes)
-	return sdk.WithStack(err)
+
+	n, err := io.Copy(w, r)
+	if err != nil {
+		return sdk.WithStack(err)
+	}
+
+	w.Header().Add("Content-Length", fmt.Sprintf("%d", n))
+
+	return nil
 }
 
 // WriteJSON is a helper function to marshal json, handle errors and set Content-Type for the best
@@ -85,7 +93,7 @@ func WriteJSON(w http.ResponseWriter, data interface{}, status int) error {
 	if err != nil {
 		return sdk.WrapError(err, "Unable to marshal json data")
 	}
-	return sdk.WithStack(Write(w, b, status, "application/json"))
+	return sdk.WithStack(Write(w, bytes.NewReader(b), status, "application/json"))
 }
 
 // WriteProcessTime writes the duration of the call in the responsewriter

@@ -107,7 +107,7 @@ func (api *API) postRegisterWorkerHandler() service.Handler {
 		}
 
 		// Set the JWT token as a header
-		log.Debug("worker.registerWorkerHandler> X-CDS-JWT:%s", jwt[:12])
+		log.Debug("worker.registerWorkerHandler> X-CDS-JWT:%s", sdk.StringFirstN(jwt, 12))
 		w.Header().Add("X-CDS-JWT", jwt)
 
 		// Return worker info to worker itself
