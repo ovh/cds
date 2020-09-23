@@ -142,17 +142,17 @@ func (s *dbmigservice) Serve(ctx context.Context) error {
 	return ctx.Err()
 }
 
-func (s *dbmigservice) Status(ctx context.Context) sdk.MonitoringStatus {
-	response := s.CommonMonitoring()
+func (s *dbmigservice) Status(ctx context.Context) *sdk.MonitoringStatus {
+	m := s.NewMonitoringStatus()
 	if s.currentStatus.err != nil {
-		response.Lines = append(response.Lines,
+		m.AddLine(
 			sdk.MonitoringStatusLine{
 				Component: "SQL",
 				Value:     s.currentStatus.err.Error(),
 				Status:    sdk.MonitoringStatusAlert,
 			},
 		)
-		return response
+		return m
 	}
 
 	var theNumberOfSuccessfulMigations int
@@ -167,7 +167,7 @@ func (s *dbmigservice) Status(ctx context.Context) sdk.MonitoringStatus {
 		status = sdk.MonitoringStatusOK
 	}
 
-	response.Lines = append(response.Lines,
+	m.AddLine(
 		sdk.MonitoringStatusLine{
 			Component: "SQL",
 			Value:     fmt.Sprintf("%d/%d", theNumberOfSuccessfulMigations, len(s.currentStatus.migrations)),
@@ -175,7 +175,7 @@ func (s *dbmigservice) Status(ctx context.Context) sdk.MonitoringStatus {
 		},
 	)
 
-	return response
+	return m
 }
 
 func (s *dbmigservice) initRouter(ctx context.Context) {

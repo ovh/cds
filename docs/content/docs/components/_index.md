@@ -30,4 +30,9 @@ cards:
   description: "Engine is the core component of CDS"
   button: "engine reference"
   button_path: "/docs/components/engine"
+- name: CDN
+  title: "CDN"
+  description: "CDN is a service dedicated to receive and retrieve logs"
+  button: "Discover the CDN component"
+  button_path: "/docs/components/cdn"  
 ---

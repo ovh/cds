@@ -59,7 +59,7 @@ func TestGetItemValue(t *testing.T) {
 				},
 			},
 		},
-	})
+	}, sdk.NewGoRoutines())
 	require.NoError(t, err)
 	s.Units = cdnUnits
 	s.LogCache, err = lru.NewRedisLRU(db.DbMap, 1000, cfg["redisHost"], cfg["redisPassword"])

@@ -31,18 +31,18 @@ func VersionHandler() service.Handler {
 }
 
 // Status returns status, implements interface service.Service
-func (api *API) Status(ctx context.Context) sdk.MonitoringStatus {
-	m := api.CommonMonitoring()
+func (api *API) Status(ctx context.Context) *sdk.MonitoringStatus {
+	m := api.NewMonitoringStatus()
 
-	m.Lines = append(m.Lines, sdk.MonitoringStatusLine{Component: "Hostname", Value: event.GetHostname(), Status: sdk.MonitoringStatusOK})
-	m.Lines = append(m.Lines, sdk.MonitoringStatusLine{Component: "CDSName", Value: event.GetCDSName(), Status: sdk.MonitoringStatusOK})
-	m.Lines = append(m.Lines, api.Router.StatusPanic())
-	m.Lines = append(m.Lines, event.Status(ctx))
-	m.Lines = append(m.Lines, api.SharedStorage.Status(ctx))
-	m.Lines = append(m.Lines, mail.Status(ctx))
-	m.Lines = append(m.Lines, api.DBConnectionFactory.Status(ctx))
-	m.Lines = append(m.Lines, workermodel.Status(api.mustDB()))
-	m.Lines = append(m.Lines, migrate.Status(api.mustDB()))
+	m.AddLine(sdk.MonitoringStatusLine{Component: "Hostname", Value: event.GetHostname(), Status: sdk.MonitoringStatusOK})
+	m.AddLine(sdk.MonitoringStatusLine{Component: "CDSName", Value: event.GetCDSName(), Status: sdk.MonitoringStatusOK})
+	m.AddLine(api.Router.StatusPanic())
+	m.AddLine(event.Status(ctx))
+	m.AddLine(api.SharedStorage.Status(ctx))
+	m.AddLine(mail.Status(ctx))
+	m.AddLine(api.DBConnectionFactory.Status(ctx))
+	m.AddLine(workermodel.Status(api.mustDB()))
+	m.AddLine(migrate.Status(api.mustDB()))
 
 	return m
 }
@@ -264,7 +264,7 @@ func (api *API) computeMetrics(ctx context.Context) {
 		log.Error(ctx, "api.computeMetrics> unable to tag observability context: %v", err)
 	}
 
-	sdk.GoRoutine(ctx, "api.computeMetrics", func(ctx context.Context) {
+	api.GoRoutines.Run(ctx, "api.computeMetrics", func(ctx context.Context) {
 		tick := time.NewTicker(9 * time.Second).C
 		for {
 			select {

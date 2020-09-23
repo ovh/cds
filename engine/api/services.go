@@ -222,7 +222,7 @@ func (api *API) serviceAPIHeartbeatUpdate(ctx context.Context, db *gorp.DbMap) {
 			Type:   sdk.TypeAPI,
 			Config: srvConfig,
 		},
-		MonitoringStatus: api.Status(ctx),
+		MonitoringStatus: *api.Status(ctx),
 		LastHeartbeat:    time.Now(),
 	}
 

@@ -155,6 +155,7 @@ func LoadByAPIRefHashAndType(ctx context.Context, m *gorpmapper.Mapper, db gorp.
 	return getItem(ctx, m, db, query, opts...)
 }
 
+// ComputeSizeByIDs returns the size used by givenn item IDs
 func ComputeSizeByIDs(db gorp.SqlExecutor, itemIDs []string) (int64, error) {
 	query := `
 		SELECT SUM(size) FROM item
@@ -180,4 +181,16 @@ func ListNodeRunByProject(db gorp.SqlExecutor, projectKey string) ([]int64, erro
 		return nil, sdk.WithStack(err)
 	}
 	return IDs, nil
+}
+
+// ComputeSizeByProjectKey returns the size used by a project
+func ComputeSizeByProjectKey(db gorp.SqlExecutor, projectKey string) (int64, error) {
+	query := `
+		SELECT SUM(size) FROM item WHERE api_ref->>'project_key' = $1 
+	`
+	size, err := db.SelectInt(query, projectKey)
+	if err != nil {
+		return 0, sdk.WithStack(err)
+	}
+	return size, nil
 }

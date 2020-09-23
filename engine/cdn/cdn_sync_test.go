@@ -53,7 +53,7 @@ func TestSyncLog(t *testing.T) {
 				CDS:  cdsConfig,
 			},
 		},
-	})
+	}, sdk.NewGoRoutines())
 	require.NoError(t, err)
 	require.NoError(t, cdnUnits.Start(context.TODO()))
 	s.Units = cdnUnits

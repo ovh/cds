@@ -91,9 +91,9 @@ func Create(ctx context.Context, h Interface) error {
 	// purges expired items every minute
 	spawnIDs := cache.New(10*time.Second, 60*time.Second)
 
-	sdk.GoRoutine(ctx, "queuePolling",
+	h.GetGoRoutines().Run(ctx, "queuePolling",
 		func(ctx context.Context) {
-			if err := h.CDSClient().QueuePolling(ctx, wjobs, errs, 20*time.Second, modelType, h.Configuration().Provision.RatioService); err != nil {
+			if err := h.CDSClient().QueuePolling(ctx, h.GetGoRoutines(), wjobs, errs, 20*time.Second, modelType, h.Configuration().Provision.RatioService); err != nil {
 				log.Error(ctx, "Queues polling stopped: %v", err)
 				cancel()
 			}
@@ -110,7 +110,7 @@ func Create(ctx context.Context, h Interface) error {
 	}
 
 	// read the errs channel in another goroutine too
-	sdk.GoRoutine(ctx, "checkErrs", func(ctx context.Context) {
+	h.GetGoRoutines().Run(ctx, "checkErrs", func(ctx context.Context) {
 		for err := range errs {
 			log.Error(ctx, "%v", err)
 		}

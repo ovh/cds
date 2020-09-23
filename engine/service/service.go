@@ -12,25 +12,35 @@ import (
 	"github.com/ovh/cds/sdk/telemetry"
 )
 
-// CommonMonitoring returns common part of MonitoringStatus
-func (c *Common) CommonMonitoring() sdk.MonitoringStatus {
+// NewMonitoringStatus returns a MonitoringStatus for the current service
+func (c *Common) NewMonitoringStatus() *sdk.MonitoringStatus {
 	t := time.Now()
-	return sdk.MonitoringStatus{
-		Now: t,
-		Lines: []sdk.MonitoringStatusLine{{
-			Component: "Version",
-			Value:     sdk.VERSION,
-			Status:    sdk.MonitoringStatusOK,
-		}, {
-			Component: "Uptime",
-			Value:     time.Since(c.StartupTime).String(),
-			Status:    sdk.MonitoringStatusOK,
-		}, {
-			Component: "Time",
-			Value:     fmt.Sprintf("%dh%dm%ds", t.Hour(), t.Minute(), t.Second()),
-			Status:    sdk.MonitoringStatusOK,
-		}},
+	s := &sdk.MonitoringStatus{
+		Now:         t,
+		ServiceType: c.Type(),
+		ServiceName: c.Name(),
 	}
+	s.AddLine(c.commonMonitoring(t)...)
+	return s
+}
+
+// CommonMonitoring returns common monitoring status lines
+func (c *Common) commonMonitoring(t time.Time) []sdk.MonitoringStatusLine {
+	lines := []sdk.MonitoringStatusLine{{
+		Component: "Version",
+		Value:     sdk.VERSION,
+		Status:    sdk.MonitoringStatusOK,
+	}, {
+		Component: "Uptime",
+		Value:     time.Since(c.StartupTime).String(),
+		Status:    sdk.MonitoringStatusOK,
+	}, {
+		Component: "Time",
+		Value:     fmt.Sprintf("%dh%dm%ds", t.Hour(), t.Minute(), t.Second()),
+		Status:    sdk.MonitoringStatusOK,
+	}}
+
+	return append(lines, c.GoRoutines.GetStatus()...)
 }
 
 func (c *Common) Type() string {
@@ -47,14 +57,14 @@ func (c *Common) Start(ctx context.Context, cfg cdsclient.ServiceConfig) error {
 		return nil
 	}
 
-	ctx, cancel := context.WithTimeout(ctx, 5*time.Minute)
+	ctxTimeout, cancel := context.WithTimeout(ctx, 5*time.Minute)
 	defer cancel()
 	var err error
 	var firstAttempt = true
 loop:
 	for {
 		select {
-		case <-ctx.Done():
+		case <-ctxTimeout.Done():
 			fmt.Println()
 			return err
 		default:
@@ -82,7 +92,7 @@ loop:
 		telemetry.TagServiceName, c.Name(),
 	)
 
-	RegisterCommonMetricsView(ctx)
+	c.RegisterCommonMetricsView(ctx)
 
 	return nil
 }
@@ -124,7 +134,7 @@ func (c *Common) Register(ctx context.Context, cfg sdk.ServiceConfig) error {
 }
 
 // Heartbeat have to be launch as a goroutine, call DoHeartBeat each 30s
-func (c *Common) Heartbeat(ctx context.Context, status func(ctx context.Context) sdk.MonitoringStatus) error {
+func (c *Common) Heartbeat(ctx context.Context, status func(ctx context.Context) *sdk.MonitoringStatus) error {
 	// no heartbeat for api
 	if c.ServiceType == "api" {
 		return nil

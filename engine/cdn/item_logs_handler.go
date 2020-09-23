@@ -105,3 +105,18 @@ func (s *Service) getItemLogsDownloadHandler() service.Handler {
 		return nil
 	}
 }
+
+func (s *Service) getSizeByProjectHandler() service.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		vars := mux.Vars(r)
+		projectKey := vars["projectKey"]
+
+		// get size used by a project key
+		size, err := item.ComputeSizeByProjectKey(s.mustDBWithCtx(ctx), projectKey)
+		if err != nil {
+			return err
+		}
+
+		return service.WriteJSON(w, size, http.StatusOK)
+	}
+}

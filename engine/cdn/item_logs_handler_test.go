@@ -115,7 +115,7 @@ func TestGetItemLogsDownloadHandler(t *testing.T) {
 				Password: cfg["redisPassword"],
 			},
 		},
-	})
+	}, sdk.NewGoRoutines())
 	require.NoError(t, err)
 	s.Units = cdnUnits
 

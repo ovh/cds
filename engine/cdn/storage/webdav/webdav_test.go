@@ -3,11 +3,12 @@ package webdav
 import (
 	"context"
 	"fmt"
-	"github.com/ovh/cds/sdk"
 	"io/ioutil"
 	"net/http"
 	"testing"
 	"time"
+
+	"github.com/ovh/cds/sdk"
 
 	"github.com/ovh/cds/engine/cdn/storage"
 	"github.com/ovh/cds/sdk/log"
@@ -74,7 +75,7 @@ func TestWebdav(t *testing.T) {
 				SecretValue: "secret_value",
 			},
 		},
-	})
+	}, sdk.NewGoRoutines())
 	require.NoError(t, err, "unable to initialiaze webdav driver")
 
 	itemUnit := sdk.CDNItemUnit{

@@ -48,7 +48,7 @@ type Interface interface {
 	Set(m *gorpmapper.Mapper, db *gorp.DbMap, u sdk.CDNUnit)
 	GorpMapper() *gorpmapper.Mapper
 	DB() *gorp.DbMap
-	Init(ctx context.Context, cfg interface{}) error
+	Init(ctx context.Context, cfg interface{}, goRoutines *sdk.GoRoutines) error
 	ItemExists(i sdk.CDNItem) (bool, error)
 	Lock()
 	Unlock()
@@ -223,7 +223,7 @@ func (r *RunningStorageUnits) Start(ctx context.Context) error {
 	return nil
 }
 
-func Init(ctx context.Context, m *gorpmapper.Mapper, db *gorp.DbMap, config Configuration) (*RunningStorageUnits, error) {
+func Init(ctx context.Context, m *gorpmapper.Mapper, db *gorp.DbMap, config Configuration, goRoutines *sdk.GoRoutines) (*RunningStorageUnits, error) {
 	var result = RunningStorageUnits{
 		m:      m,
 		db:     db,
@@ -239,7 +239,7 @@ func Init(ctx context.Context, m *gorpmapper.Mapper, db *gorp.DbMap, config Conf
 	if !is {
 		return nil, fmt.Errorf("redis driver is not a buffer unit driver")
 	}
-	if err := bd.Init(ctx, config.Buffer.Redis); err != nil {
+	if err := bd.Init(ctx, config.Buffer.Redis, goRoutines); err != nil {
 		return nil, err
 	}
 	result.Buffer = bd
@@ -286,7 +286,7 @@ func Init(ctx context.Context, m *gorpmapper.Mapper, db *gorp.DbMap, config Conf
 			if !is {
 				return nil, sdk.WithStack(fmt.Errorf("cds driver is not a storage unit driver"))
 			}
-			if err := sd.Init(ctx, cfg.CDS); err != nil {
+			if err := sd.Init(ctx, cfg.CDS, goRoutines); err != nil {
 				return nil, err
 			}
 			storageUnit = sd
@@ -299,7 +299,7 @@ func Init(ctx context.Context, m *gorpmapper.Mapper, db *gorp.DbMap, config Conf
 			if !is {
 				return nil, sdk.WithStack(fmt.Errorf("local driver is not a storage unit driver"))
 			}
-			if err := sd.Init(ctx, cfg.Local); err != nil {
+			if err := sd.Init(ctx, cfg.Local, goRoutines); err != nil {
 				return nil, err
 			}
 			storageUnit = sd
@@ -309,7 +309,7 @@ func Init(ctx context.Context, m *gorpmapper.Mapper, db *gorp.DbMap, config Conf
 			if !is {
 				return nil, sdk.WithStack(fmt.Errorf("swift driver is not a storage unit driver"))
 			}
-			if err := sd.Init(ctx, cfg.Swift); err != nil {
+			if err := sd.Init(ctx, cfg.Swift, goRoutines); err != nil {
 				return nil, err
 			}
 			storageUnit = sd
@@ -319,7 +319,7 @@ func Init(ctx context.Context, m *gorpmapper.Mapper, db *gorp.DbMap, config Conf
 			if !is {
 				return nil, sdk.WithStack(fmt.Errorf("webdav driver is not a storage unit driver"))
 			}
-			if err := sd.Init(ctx, cfg.Webdav); err != nil {
+			if err := sd.Init(ctx, cfg.Webdav, goRoutines); err != nil {
 				return nil, err
 			}
 			storageUnit = sd

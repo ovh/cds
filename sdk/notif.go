@@ -106,7 +106,7 @@ Branch : {{.git.branch | default "n/a"}}`,
 	UserNotificationTemplateMap = map[string]UserNotificationTemplate{
 		EmailUserNotification:  UserNotificationTemplateEmail,
 		JabberUserNotification: UserNotificationTemplateJabber,
-		VCSUserNotification: UserNotificationTemplate{
+		VCSUserNotification: {
 			Body: DefaultWorkflowNodeRunReport,
 		},
 	}

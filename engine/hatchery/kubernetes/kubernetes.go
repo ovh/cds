@@ -33,6 +33,7 @@ import (
 // New instanciates a new hatchery local
 func New() *HatcheryKubernetes {
 	s := new(HatcheryKubernetes)
+	s.GoRoutines = sdk.NewGoRoutines()
 	s.Router = &api.Router{
 		Mux: mux.NewRouter(),
 	}
@@ -46,7 +47,7 @@ func (h *HatcheryKubernetes) InitHatchery(ctx context.Context) error {
 	if err := h.Common.RefreshServiceLogger(ctx); err != nil {
 		log.Error(ctx, "hatchery> kubernetes> cannot get cdn configuration : %v", err)
 	}
-	sdk.GoRoutine(context.Background(), "hatchery kubernetes routines", func(ctx context.Context) {
+	h.GoRoutines.Run(context.Background(), "hatchery kubernetes routines", func(ctx context.Context) {
 		h.routines(ctx)
 	})
 	return nil
@@ -153,9 +154,9 @@ func (h *HatcheryKubernetes) ApplyConfiguration(cfg interface{}) error {
 }
 
 // Status returns sdk.MonitoringStatus, implements interface service.Service
-func (h *HatcheryKubernetes) Status(ctx context.Context) sdk.MonitoringStatus {
-	m := h.CommonMonitoring()
-	m.Lines = append(m.Lines, sdk.MonitoringStatusLine{Component: "Workers", Value: fmt.Sprintf("%d/%d", len(h.WorkersStarted(ctx)), h.Config.Provision.MaxWorker), Status: sdk.MonitoringStatusOK})
+func (h *HatcheryKubernetes) Status(ctx context.Context) *sdk.MonitoringStatus {
+	m := h.NewMonitoringStatus()
+	m.AddLine(sdk.MonitoringStatusLine{Component: "Workers", Value: fmt.Sprintf("%d/%d", len(h.WorkersStarted(ctx)), h.Config.Provision.MaxWorker), Status: sdk.MonitoringStatusOK})
 
 	return m
 }
@@ -504,23 +505,23 @@ func (h *HatcheryKubernetes) routines(ctx context.Context) {
 	for {
 		select {
 		case <-ticker.C:
-			sdk.GoRoutine(ctx, "getCDNConfiguration", func(ctx context.Context) {
+			h.GoRoutines.Exec(ctx, "getCDNConfiguration", func(ctx context.Context) {
 				if err := h.Common.RefreshServiceLogger(ctx); err != nil {
 					log.Error(ctx, "hatchery> kubernetes> cannot get cdn configuration : %v", err)
 				}
 			})
 
-			sdk.GoRoutine(ctx, "getServicesLogs", func(ctx context.Context) {
+			h.GoRoutines.Exec(ctx, "getServicesLogs", func(ctx context.Context) {
 				if err := h.getServicesLogs(ctx); err != nil {
 					log.Error(ctx, "Hatchery> Kubernetes> Cannot get service logs : %v", err)
 				}
 			})
 
-			sdk.GoRoutine(ctx, "killAwolWorker", func(ctx context.Context) {
+			h.GoRoutines.Exec(ctx, "killAwolWorker", func(ctx context.Context) {
 				_ = h.killAwolWorkers(ctx)
 			})
 
-			sdk.GoRoutine(ctx, "deleteSecrets", func(ctx context.Context) {
+			h.GoRoutines.Exec(ctx, "deleteSecrets", func(ctx context.Context) {
 				if err := h.deleteSecrets(ctx); err != nil {
 					log.Error(ctx, "hatchery> kubernetes> cannot handle secrets : %v", err)
 				}

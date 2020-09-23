@@ -131,8 +131,8 @@ func (s *Service) getOperationsHandler() service.Handler {
 }
 
 // Status returns sdk.MonitoringStatus, implements interface service.Service
-func (s *Service) Status(ctx context.Context) sdk.MonitoringStatus {
-	m := s.CommonMonitoring()
+func (s *Service) Status(ctx context.Context) *sdk.MonitoringStatus {
+	m := s.NewMonitoringStatus()
 	return m
 }
 

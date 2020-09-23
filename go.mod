@@ -42,7 +42,7 @@ require (
 	github.com/go-gorp/gorp v2.0.0+incompatible
 	github.com/go-redis/redis v6.15.2+incompatible
 	github.com/go-sql-driver/mysql v1.4.1 // indirect
-	github.com/golang/mock v1.4.1
+	github.com/golang/mock v1.4.4
 	github.com/golang/protobuf v1.3.2
 	github.com/google/go-cmp v0.4.0 // indirect
 	github.com/googleapis/gnostic v0.1.0 // indirect
@@ -158,6 +158,7 @@ require (
 	k8s.io/apimachinery v0.0.0-20190223094358-dcb391cde5ca
 	k8s.io/client-go v10.0.0+incompatible
 	k8s.io/klog v0.2.0 // indirect
+	rsc.io/quote/v3 v3.1.0 // indirect
 	sigs.k8s.io/yaml v1.1.0 // indirect
 )
 

@@ -44,6 +44,7 @@ func TestWorkerLogCDNEnabled(t *testing.T) {
 	s := Service{
 		Cache: store,
 	}
+	s.GoRoutines = sdk.NewGoRoutines()
 
 	signature := log.Signature{
 		Worker: &log.SignatureWorker{
@@ -130,6 +131,7 @@ func TestWorkerLogCDNDisabled(t *testing.T) {
 	s := Service{
 		Cache: store,
 	}
+	s.GoRoutines = sdk.NewGoRoutines()
 
 	signature := log.Signature{
 		Worker: &log.SignatureWorker{

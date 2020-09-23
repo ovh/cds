@@ -433,7 +433,7 @@ func (api *API) postTemplateApplyHandler() service.Handler {
 						return sdk.WithStack(err)
 					}
 
-					sdk.GoRoutine(context.Background(), fmt.Sprintf("UpdateAsCodeResult-%s", ope.UUID), func(ctx context.Context) {
+					api.GoRoutines.Exec(context.Background(), fmt.Sprintf("UpdateAsCodeResult-%s", ope.UUID), func(ctx context.Context) {
 						ed := ascode.EntityData{
 							Name:          existingWorkflow.Name,
 							ID:            existingWorkflow.ID,
@@ -441,7 +441,7 @@ func (api *API) postTemplateApplyHandler() service.Handler {
 							FromRepo:      existingWorkflow.FromRepository,
 							OperationUUID: ope.UUID,
 						}
-						ascode.UpdateAsCodeResult(ctx, api.mustDB(), api.Cache, *p, *existingWorkflow, *rootApp, ed, consumer)
+						ascode.UpdateAsCodeResult(ctx, api.mustDB(), api.Cache, api.GoRoutines, *p, *existingWorkflow, *rootApp, ed, consumer)
 					}, api.PanicDump())
 
 					return service.WriteJSON(w, sdk.Operation{
@@ -569,7 +569,7 @@ func (api *API) postTemplateBulkHandler() service.Handler {
 		}
 
 		// start async bulk tasks
-		sdk.GoRoutine(context.Background(), "api.templateBulkApply", func(ctx context.Context) {
+		api.GoRoutines.Exec(context.Background(), "api.templateBulkApply", func(ctx context.Context) {
 			for i := range bulk.Operations {
 				if bulk.Operations[i].Status == sdk.OperationStatusPending {
 					bulk.Operations[i].Status = sdk.OperationStatusProcessing
@@ -700,7 +700,7 @@ func (api *API) postTemplateBulkHandler() service.Handler {
 								FromRepo:      existingWorkflow.FromRepository,
 								OperationUUID: ope.UUID,
 							}
-							ascode.UpdateAsCodeResult(ctx, api.mustDB(), api.Cache, *p, *existingWorkflow, *rootApp, ed, consumer)
+							ascode.UpdateAsCodeResult(ctx, api.mustDB(), api.Cache, api.GoRoutines, *p, *existingWorkflow, *rootApp, ed, consumer)
 
 							bulk.Operations[i].Status = sdk.OperationStatusDone
 							if err := workflowtemplate.UpdateBulk(api.mustDB(), &bulk); err != nil {

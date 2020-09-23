@@ -8,8 +8,8 @@ import (
 )
 
 // Status returns sdk.MonitoringStatus, implements interface service.Service
-func (s *Service) Status(ctx context.Context) sdk.MonitoringStatus {
-	m := s.CommonMonitoring()
+func (s *Service) Status(ctx context.Context) *sdk.MonitoringStatus {
+	m := s.NewMonitoringStatus()
 	var value, status string
 	if esClient == nil {
 		status = sdk.MonitoringStatusWarn
@@ -26,6 +26,6 @@ func (s *Service) Status(ctx context.Context) sdk.MonitoringStatus {
 			status = sdk.MonitoringStatusOK
 		}
 	}
-	m.Lines = append(m.Lines, sdk.MonitoringStatusLine{Component: "Elasticsearch", Value: value, Status: status})
+	m.AddLine(sdk.MonitoringStatusLine{Component: "Elasticsearch", Value: value, Status: status})
 	return m
 }
