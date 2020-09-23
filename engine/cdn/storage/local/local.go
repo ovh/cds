@@ -35,7 +35,7 @@ func init() {
 	storage.RegisterDriver("local", new(Local))
 }
 
-func (s *Local) Init(ctx context.Context, cfg interface{}) error {
+func (s *Local) Init(ctx context.Context, cfg interface{}, goRoutines *sdk.GoRoutines) error {
 	config, is := cfg.(*storage.LocalStorageConfiguration)
 	if !is {
 		return sdk.WithStack(fmt.Errorf("invalid configuration: %T", cfg))
@@ -51,7 +51,7 @@ func (s *Local) Init(ctx context.Context, cfg interface{}) error {
 		return err
 	}
 
-	sdk.GoRoutine(ctx, "cdn-local-compute-size", func(ctx context.Context) {
+	goRoutines.Run(ctx, "cdn-local-compute-size", func(ctx context.Context) {
 		s.computeSize(ctx)
 	})
 
@@ -110,13 +110,13 @@ func (s *Local) Status(_ context.Context) []sdk.MonitoringStatusLine {
 	var lines []sdk.MonitoringStatusLine
 	if finfo, err := os.Stat(s.config.Path); os.IsNotExist(err) {
 		lines = append(lines, sdk.MonitoringStatusLine{
-			Component: "backend/local",
+			Component: "backend/" + s.Name(),
 			Value:     fmt.Sprintf("directory: %v does not exist", s.config.Path),
 			Status:    sdk.MonitoringStatusAlert,
 		})
 	} else if !finfo.IsDir() {
 		lines = append(lines, sdk.MonitoringStatusLine{
-			Component: "backend/local",
+			Component: "backend/" + s.Name(),
 			Value:     fmt.Sprintf("%v is not a directory", s.config.Path),
 			Status:    sdk.MonitoringStatusAlert,
 		})
@@ -129,7 +129,7 @@ func (s *Local) Status(_ context.Context) []sdk.MonitoringStatusLine {
 		}
 	}
 	lines = append(lines, sdk.MonitoringStatusLine{
-		Component: "backend/local",
+		Component: "backend/" + s.Name(),
 		Value:     fmt.Sprintf("size: %d bytes", s.size),
 		Status:    status,
 	})

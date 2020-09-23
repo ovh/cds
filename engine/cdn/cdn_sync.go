@@ -19,6 +19,54 @@ const (
 	maxWorker = 5
 )
 
+var statusSync struct {
+	currentProjectSync  string
+	nbProjects          int
+	nbProjectsDone      int
+	nbProjectsFailed    int
+	runPerProjectDone   map[string]int
+	runPerProjectFailed map[string]int
+	runPerProjectTotal  map[string]int
+}
+
+// getStatusSyncLogs returns the monitoring of the sync CDS to CDN
+func (s *Service) getStatusSyncLogs() []sdk.MonitoringStatusLine {
+	lines := []sdk.MonitoringStatusLine{
+		{
+			Status:    sdk.MonitoringStatusOK,
+			Component: "sync/cds2cdn/current_project",
+			Value:     statusSync.currentProjectSync,
+		},
+	}
+
+	statusProject := sdk.MonitoringStatusOK
+	if statusSync.nbProjectsFailed > 0 {
+		statusProject = sdk.MonitoringStatusWarn
+	}
+
+	lines = append(lines, sdk.MonitoringStatusLine{
+		Status:    statusProject,
+		Component: "sync/cds2cdn/projects",
+		Value:     fmt.Sprintf("done:%d failed:%d total:%d", statusSync.nbProjectsDone, statusSync.nbProjectsFailed, statusSync.nbProjects),
+	})
+
+	for key := range statusSync.runPerProjectTotal {
+		status := sdk.MonitoringStatusOK
+		if statusSync.runPerProjectFailed[key] > 0 {
+			status = sdk.MonitoringStatusWarn
+		}
+
+		lines = append(lines, sdk.MonitoringStatusLine{
+			Status:    status,
+			Component: "sync/cds2cdn/project/" + key,
+			Value:     fmt.Sprintf("done:%d failed:%d total:%d", statusSync.runPerProjectDone[key], statusSync.runPerProjectFailed[key], statusSync.runPerProjectTotal[key]),
+		})
+	}
+
+	return lines
+}
+
+// SyncLogs syncs logs from CDS to CDN
 func (s *Service) SyncLogs(ctx context.Context, cdsStorage *cds.CDS) error {
 	log.Info(ctx, "cdn: Start CDS sync")
 
@@ -26,22 +74,29 @@ func (s *Service) SyncLogs(ctx context.Context, cdsStorage *cds.CDS) error {
 	if err != nil {
 		return err
 	}
+	statusSync.nbProjects = len(projects)
+	statusSync.nbProjectsDone = 0
+	statusSync.nbProjectsFailed = 0
+	statusSync.runPerProjectDone = make(map[string]int, len(projects))
+	statusSync.runPerProjectFailed = make(map[string]int, len(projects))
+	statusSync.runPerProjectTotal = make(map[string]int, len(projects))
+
 	log.Info(ctx, "cdn:cds:sync:log: %d projects to sync", len(projects))
 
-	projectDone := 0
-	projectFailed := 0
 	// Browse Project
 	for _, p := range projects {
-		log.Info(ctx, "cdn:cds:sync:log: project done %d/%d (+%d failed)", projectDone, len(projects), projectFailed)
+		log.Info(ctx, "cdn:cds:sync:log: project done %d/%d (+%d failed)", statusSync.nbProjectsDone, len(projects), statusSync.nbProjectsFailed)
+		statusSync.currentProjectSync = p.Key
 		if err := s.syncProjectLogs(ctx, cdsStorage, p.Key); err != nil {
-			projectFailed++
+			statusSync.nbProjectsFailed++
 			log.Error(ctx, "cdn:cds:sync:log  failed to sync project %s: %+v", p.Key, err)
 			continue
 		}
-		projectDone++
+		statusSync.nbProjectsDone++
+		statusSync.currentProjectSync = ""
 	}
-	log.Info(ctx, "cdn:cds:sync:log: project done %d/%d (+%d failed)", projectDone, len(projects), projectFailed)
-	if projectFailed > 0 {
+	log.Info(ctx, "cdn:cds:sync:log: project done %d/%d (+%d failed)", statusSync.nbProjectsDone, len(projects), statusSync.nbProjectsFailed)
+	if statusSync.nbProjectsFailed > 0 {
 		return sdk.WithStack(fmt.Errorf("failures during cds backend sync"))
 	}
 	return nil
@@ -56,14 +111,28 @@ func (s *Service) syncProjectLogs(ctx context.Context, cdsStorage *cds.CDS, pKey
 	if !resp.Enabled || !s.Cfg.EnableLogProcessing {
 		return nil
 	}
+
+	statusSync.runPerProjectDone[pKey] = 0
+	statusSync.runPerProjectFailed[pKey] = 0
+	statusSync.runPerProjectTotal[pKey] = 0
+
 	// List of node runs
 	nodeRunIds, err := cdsStorage.ListNodeRunIdentifiers(pKey)
 	if err != nil {
 		return err
 	}
 
-	nodeRunDone := 0
-	nodeRunFailed := 0
+	statusSync.runPerProjectTotal[pKey] = len(nodeRunIds)
+	// Test if all noderuns have been sync for this project
+	listNodeRuns, err := item.ListNodeRunByProject(s.mustDBWithCtx(ctx), pKey)
+	if err != nil {
+		return err
+	}
+	nodeRunMap := make(map[int64]struct{}, len(listNodeRuns))
+	for _, id := range listNodeRuns {
+		nodeRunMap[id] = struct{}{}
+	}
+
 	log.Info(ctx, "cdn:cds:sync:log: %d node run to sync for project %s", len(nodeRunIds), pKey)
 
 	// Nb of nodeRun
@@ -73,7 +142,7 @@ func (s *Service) syncProjectLogs(ctx context.Context, cdsStorage *cds.CDS, pKey
 
 	// Spawn worker
 	for i := 0; i < maxWorker; i++ {
-		sdk.GoRoutine(ctx, "migrate-noderun-"+strconv.Itoa(i), func(ctx context.Context) {
+		s.GoRoutines.Exec(ctx, "migrate-noderun-"+strconv.Itoa(i), func(ctx context.Context) {
 			s.syncNodeRunJob(ctx, cdsStorage, pKey, jobs, results)
 		})
 	}
@@ -86,15 +155,15 @@ func (s *Service) syncProjectLogs(ctx context.Context, cdsStorage *cds.CDS, pKey
 	for a := 1; a <= len(nodeRunIds); a++ {
 		err := <-results
 		if err != nil {
-			nodeRunFailed++
+			statusSync.runPerProjectFailed[pKey]++
 			log.Error(ctx, "cdn:cds:sync:log: unable to sync node runs: %v", err)
 		} else {
-			nodeRunDone++
+			statusSync.runPerProjectDone[pKey]++
 		}
-		log.Info(ctx, "cdn:cds:sync:log: node run done for project %s:  %d/%d (+%d failed)", pKey, nodeRunDone, len(nodeRunIds), nodeRunFailed)
+		log.Info(ctx, "cdn:cds:sync:log: node run done for project %s:  %d/%d (+%d failed)", pKey, statusSync.runPerProjectDone[pKey], len(nodeRunIds), statusSync.runPerProjectFailed[pKey])
 	}
 
-	if nodeRunFailed > 0 {
+	if statusSync.runPerProjectFailed[pKey] > 0 {
 		return sdk.WithStack(fmt.Errorf("failed during node run sync on project %s", pKey))
 	}
 	return nil

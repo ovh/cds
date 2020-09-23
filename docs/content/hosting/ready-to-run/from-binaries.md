@@ -132,6 +132,9 @@ Then, open a browser on http://localhost:8080/ .
 
 ## Launch CDS cdn
 
+<b style="color: red">⚠ Do not activate CDN log processing in production yet. It's in active development.
+Be sure that config flag 'enableLogProcessing' is set to false</b>
+
 ```bash
 ./cds-engine start cdn --config $HOME/cds/conf.toml
 ```

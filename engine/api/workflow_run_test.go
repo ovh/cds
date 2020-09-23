@@ -1362,7 +1362,7 @@ func Test_postWorkflowRunAsyncFailedHandler(t *testing.T) {
 		OperationUUID: ope.UUID,
 	}
 
-	ascode.UpdateAsCodeResult(context.TODO(), api.mustDB(), api.Cache, *proj, *w1, app, ed, u)
+	ascode.UpdateAsCodeResult(context.TODO(), api.mustDB(), api.Cache, sdk.NewGoRoutines(), *proj, *w1, app, ed, u)
 
 	// Prepare request
 	uri := router.GetRoute("POST", api.postWorkflowRunHandler, map[string]string{

@@ -2,9 +2,10 @@ package storage_test
 
 import (
 	"context"
-	"github.com/ovh/cds/engine/cdn/storage"
 	"testing"
 	"time"
+
+	"github.com/ovh/cds/engine/cdn/storage"
 
 	"github.com/stretchr/testify/require"
 
@@ -32,7 +33,7 @@ func TestLoadOldItemUnitByItemStatusAndDuration(t *testing.T) {
 				Password: cfg["redisPassword"],
 			},
 		},
-	})
+	}, sdk.NewGoRoutines())
 
 	// Clean old test
 	time.Sleep(1 * time.Second)

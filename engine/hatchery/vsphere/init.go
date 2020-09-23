@@ -37,9 +37,9 @@ func (h *HatcheryVSphere) InitHatchery(ctx context.Context) error {
 	}
 
 	if err := h.RefreshServiceLogger(ctx); err != nil {
-		fmt.Errorf("hatchery> vsphere> Cannot get cdn configuration : %v", err)
+		return fmt.Errorf("hatchery> vsphere> Cannot get cdn configuration : %v", err)
 	}
-	sdk.GoRoutine(context.Background(), "hatchery vsphere main", func(ctx context.Context) {
+	h.GoRoutines.Run(context.Background(), "hatchery vsphere main", func(ctx context.Context) {
 		h.main(ctx)
 	})
 

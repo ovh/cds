@@ -33,7 +33,7 @@ func init() {
 	storage.RegisterDriver("webdav", new(Webdav))
 }
 
-func (s *Webdav) Init(ctx context.Context, cfg interface{}) error {
+func (s *Webdav) Init(ctx context.Context, cfg interface{}, _ *sdk.GoRoutines) error {
 	config, is := cfg.(*storage.WebdavStorageConfiguration)
 	if !is {
 		return sdk.WithStack(fmt.Errorf("invalid configuration: %T", cfg))
@@ -101,11 +101,11 @@ func (s *Webdav) NewReader(_ context.Context, i sdk.CDNItemUnit) (io.ReadCloser,
 
 func (s *Webdav) Status(_ context.Context) []sdk.MonitoringStatusLine {
 	if err := s.client.Connect(); err != nil {
-		return []sdk.MonitoringStatusLine{{Component: "backend/webdav", Value: "webdav KO" + err.Error(), Status: sdk.MonitoringStatusAlert}}
+		return []sdk.MonitoringStatusLine{{Component: "backend/" + s.Name(), Value: "webdav KO" + err.Error(), Status: sdk.MonitoringStatusAlert}}
 	}
 
 	return []sdk.MonitoringStatusLine{{
-		Component: "backend/webdav",
+		Component: "backend/" + s.Name(),
 		Value:     "connect OK",
 		Status:    sdk.MonitoringStatusOK,
 	}}

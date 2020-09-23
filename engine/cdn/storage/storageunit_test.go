@@ -77,7 +77,7 @@ func TestRun(t *testing.T) {
 				},
 			},
 		},
-	})
+	}, sdk.NewGoRoutines())
 	require.NoError(t, err)
 	require.NotNil(t, cdnUnits)
 	require.NoError(t, cdnUnits.Start(ctx))

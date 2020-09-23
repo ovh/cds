@@ -32,7 +32,7 @@ func init() {
 	storage.RegisterDriver("redis", new(Redis))
 }
 
-func (s *Redis) Init(ctx context.Context, cfg interface{}) error {
+func (s *Redis) Init(ctx context.Context, cfg interface{}, _ *sdk.GoRoutines) error {
 	config, is := cfg.(storage.RedisBufferConfiguration)
 	if !is {
 		return sdk.WithStack(fmt.Errorf("invalid configuration: %T", cfg))
@@ -92,8 +92,8 @@ func (s *Redis) Read(_ sdk.CDNItemUnit, r io.Reader, w io.Writer) error {
 func (s *Redis) Status(_ context.Context) []sdk.MonitoringStatusLine {
 	if err := s.store.Ping(); err != nil {
 		return []sdk.MonitoringStatusLine{{
-			Component: "storage/redis/ping",
-			Value:     "connect OK",
+			Component: fmt.Sprintf("storage/%s/ping", s.Name()),
+			Value:     "connect KO",
 			Status:    sdk.MonitoringStatusAlert,
 		}}
 	}
@@ -101,15 +101,21 @@ func (s *Redis) Status(_ context.Context) []sdk.MonitoringStatusLine {
 	size, err := s.store.DBSize()
 	if err != nil {
 		return []sdk.MonitoringStatusLine{{
-			Component: "storage/redis/size",
+			Component: fmt.Sprintf("storage/%s/size", s.Name()),
 			Value:     fmt.Sprintf("ERROR while getting dbsize: %v", size),
 			Status:    sdk.MonitoringStatusAlert,
 		}}
 	}
 
-	return []sdk.MonitoringStatusLine{{
-		Component: "storage/redis/size",
-		Value:     fmt.Sprintf("%d keys", size),
-		Status:    sdk.MonitoringStatusOK,
-	}}
+	return []sdk.MonitoringStatusLine{
+		{
+			Component: fmt.Sprintf("storage/%s/ping", s.Name()),
+			Value:     "connect OK",
+			Status:    sdk.MonitoringStatusAlert,
+		},
+		{
+			Component: fmt.Sprintf("storage/%s/redis_dbsize", s.Name()),
+			Value:     fmt.Sprintf("%d keys", size),
+			Status:    sdk.MonitoringStatusOK,
+		}}
 }

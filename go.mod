@@ -42,7 +42,7 @@ require (
 	github.com/go-gorp/gorp v2.0.0+incompatible
 	github.com/go-redis/redis v6.15.2+incompatible
 	github.com/go-sql-driver/mysql v1.4.1 // indirect
-	github.com/golang/mock v1.4.1
+	github.com/golang/mock v1.4.4
 	github.com/golang/protobuf v1.3.2
 	github.com/google/go-cmp v0.4.0 // indirect
 	github.com/googleapis/gnostic v0.1.0 // indirect
@@ -92,7 +92,7 @@ require (
 	github.com/opencontainers/image-spec v1.0.1 // indirect
 	github.com/ovh/cds/sdk/interpolate v0.0.0-20190319104452-71125b036b25
 	github.com/ovh/configstore v0.3.3-0.20200701085609-a539fcf61db5
-	github.com/ovh/symmecrypt v0.4.4-0.20200820124314-275d3cb421b9
+	github.com/ovh/symmecrypt v0.4.4-0.20200921123357-53e411c7a769
 	github.com/ovh/venom v0.25.0
 	github.com/patrickmn/go-cache v2.1.0+incompatible
 	github.com/pborman/uuid v0.0.0-20170612153648-e790cca94e6c
@@ -158,6 +158,7 @@ require (
 	k8s.io/apimachinery v0.0.0-20190223094358-dcb391cde5ca
 	k8s.io/client-go v10.0.0+incompatible
 	k8s.io/klog v0.2.0 // indirect
+	rsc.io/quote/v3 v3.1.0 // indirect
 	sigs.k8s.io/yaml v1.1.0 // indirect
 )
 

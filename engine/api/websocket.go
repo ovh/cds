@@ -16,8 +16,8 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/tevino/abool"
 
-	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/engine/api/permission"
+	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
@@ -73,22 +73,23 @@ type websocketBroker struct {
 	messages         chan sdk.Event
 	chanAddClient    chan *websocketClient
 	chanRemoveClient chan string
+	goRoutines       *sdk.GoRoutines
 }
 
 //Init the websocketBroker
-func (b *websocketBroker) Init(ctx context.Context, panicCallback func(s string) (io.WriteCloser, error)) {
+func (b *websocketBroker) Init(ctx context.Context, panicCallback func(s string) (io.WriteCloser, error), goRoutines *sdk.GoRoutines) {
 	// Start cache Subscription
-	sdk.GoRoutine(ctx, "websocketBroker.Init.CacheSubscribe", func(ctx context.Context) {
+	goRoutines.Run(ctx, "websocketBroker.Init.CacheSubscribe", func(ctx context.Context) {
 		b.cacheSubscribe(ctx, b.messages, b.cache)
 	}, panicCallback)
 
-	sdk.GoRoutine(ctx, "websocketBroker.Init.Start", func(ctx context.Context) {
-		b.Start(ctx, panicCallback)
+	goRoutines.Run(ctx, "websocketBroker.Init.Start", func(ctx context.Context) {
+		b.Start(ctx, panicCallback, goRoutines)
 	}, panicCallback)
 }
 
 // Start the broker
-func (b *websocketBroker) Start(ctx context.Context, panicCallback func(s string) (io.WriteCloser, error)) {
+func (b *websocketBroker) Start(ctx context.Context, panicCallback func(s string) (io.WriteCloser, error), goRoutines *sdk.GoRoutines) {
 	tickerMetrics := time.NewTicker(10 * time.Second)
 	defer tickerMetrics.Stop()
 
@@ -127,7 +128,7 @@ func (b *websocketBroker) Start(ctx context.Context, panicCallback func(s string
 
 				// Send the event to the client websocket within a goroutine
 				s := "websocket-" + c.UUID
-				sdk.GoRoutine(ctx, s, func(ctx context.Context) {
+				goRoutines.Exec(ctx, s, func(ctx context.Context) {
 					found, needCheckPermission := c.filters.HasOneKey(eventKeys...)
 					if !found {
 						return
@@ -229,7 +230,7 @@ func (b *websocketBroker) ServeHTTP() service.Handler {
 			b.chanRemoveClient <- client.UUID
 		}()
 
-		sdk.GoRoutine(ctx, fmt.Sprintf("readUpdateFilterChan-%s-%s", client.AuthConsumer.GetUsername(), client.UUID), func(ctx context.Context) {
+		b.goRoutines.Exec(ctx, fmt.Sprintf("readUpdateFilterChan-%s-%s", client.AuthConsumer.GetUsername(), client.UUID), func(ctx context.Context) {
 			for {
 				select {
 				case <-ctx.Done():

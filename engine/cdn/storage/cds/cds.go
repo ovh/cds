@@ -39,7 +39,7 @@ func (c *CDS) GetClient() cdsclient.Interface {
 	return c.client
 }
 
-func (c *CDS) Init(ctx context.Context, cfg interface{}) error {
+func (c *CDS) Init(ctx context.Context, cfg interface{}, _ *sdk.GoRoutines) error {
 	config, is := cfg.(*storage.CDSStorageConfiguration)
 	if !is {
 		return sdk.WithStack(fmt.Errorf("invalid configuration: %T", cfg))
@@ -113,10 +113,10 @@ func (c *CDS) GetWorkflowNodeRun(pKey string, nodeRunIdentifier sdk.WorkflowNode
 
 func (c *CDS) Status(_ context.Context) []sdk.MonitoringStatusLine {
 	if _, err := c.client.Version(); err != nil {
-		return []sdk.MonitoringStatusLine{{Component: "backend/cds", Value: "cds KO" + err.Error(), Status: sdk.MonitoringStatusAlert}}
+		return []sdk.MonitoringStatusLine{{Component: "backend/" + c.Name(), Value: "cds KO" + err.Error(), Status: sdk.MonitoringStatusAlert}}
 	}
 	return []sdk.MonitoringStatusLine{{
-		Component: "backend/cds",
+		Component: "backend/" + c.Name(),
 		Value:     "connect OK",
 		Status:    sdk.MonitoringStatusOK,
 	}}

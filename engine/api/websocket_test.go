@@ -39,7 +39,7 @@ func Test_websocketWrongFilters(t *testing.T) {
 		InsecureSkipVerifyTLS:             true,
 		BuitinConsumerAuthenticationToken: jws,
 	})
-	go client.WebsocketEventsListen(context.TODO(), chanMessageToSend, chanMessageReceived)
+	go client.WebsocketEventsListen(context.TODO(), sdk.NewGoRoutines(), chanMessageToSend, chanMessageReceived)
 
 	// Subscribe to project without project key
 	chanMessageToSend <- []sdk.WebsocketFilter{{
@@ -119,7 +119,7 @@ func Test_websocketGetWorkflowEvent(t *testing.T) {
 		InsecureSkipVerifyTLS: true,
 		SessionToken:          jwt,
 	})
-	go client.WebsocketEventsListen(context.TODO(), chanMessageToSend, chanMessageReceived)
+	go client.WebsocketEventsListen(context.TODO(), sdk.NewGoRoutines(), chanMessageToSend, chanMessageReceived)
 	var lastResponse *sdk.WebsocketEvent
 	go func() {
 		for e := range chanMessageReceived {

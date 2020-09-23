@@ -497,8 +497,8 @@ func (s *Service) deleteTask(ctx context.Context, t *sdk.Task) error {
 }
 
 // Status returns sdk.MonitoringStatus, implements interface service.Service
-func (s *Service) Status(ctx context.Context) sdk.MonitoringStatus {
-	m := s.CommonMonitoring()
+func (s *Service) Status(ctx context.Context) *sdk.MonitoringStatus {
+	m := s.NewMonitoringStatus()
 
 	if s.Dao.store == nil {
 		return m
