@@ -19,11 +19,14 @@ func (s *Service) initRouter(ctx context.Context) {
 	r.Handle("/mon/metrics", nil, r.GET(service.GetPrometheustMetricsHandler(s), api.Auth(false)))
 	r.Handle("/mon/metrics/all", nil, r.GET(service.GetMetricsHandler, api.Auth(false)))
 
-	r.Handle("/item/delete", nil, r.POST(s.markItemToDeleteHandler))
 	r.Handle("/cache", nil, r.DELETE(s.deleteCacheHandler))
 	r.Handle("/cache/status", nil, r.GET(s.getStatusCacheHandler))
 
+	r.Handle("/item/delete", nil, r.POST(s.markItemToDeleteHandler))
 	r.Handle("/item/{type}/{apiRef}", nil, r.GET(s.getItemLogsHandler))
 	r.Handle("/item/{type}/{apiRef}/download", nil, r.GET(s.getItemLogsDownloadHandler, api.Auth(false)))
+
+	r.Handle("/sync/projects", nil, r.POST(s.syncProjectsHandler))
+
 	r.Handle("/size/item/project/{projectKey}", nil, r.GET(s.getSizeByProjectHandler))
 }

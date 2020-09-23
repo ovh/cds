@@ -168,6 +168,21 @@ func ComputeSizeByIDs(db gorp.SqlExecutor, itemIDs []string) (int64, error) {
 	return size, nil
 }
 
+func ListNodeRunByProject(db gorp.SqlExecutor, projectKey string) ([]int64, error) {
+	var IDs []int64
+	query := `
+		SELECT 
+			DISTINCT((api_ref->>'run_id')::int)
+		FROM item 
+		WHERE api_ref->>'project_key' = $1
+	`
+	_, err := db.Select(&IDs, query, projectKey)
+	if err != nil {
+		return nil, sdk.WithStack(err)
+	}
+	return IDs, nil
+}
+
 // ComputeSizeByProjectKey returns the size used by a project
 func ComputeSizeByProjectKey(db gorp.SqlExecutor, projectKey string) (int64, error) {
 	query := `
