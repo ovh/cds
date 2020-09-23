@@ -53,15 +53,15 @@ func shrinkQueue(queue *sdk.WorkflowQueue, nbJobsToKeep int) time.Time {
 	return t0
 }
 
-func (c *client) QueuePolling(ctx context.Context, jobs chan<- sdk.WorkflowNodeJobRun, errs chan<- error, delay time.Duration, modelType string, ratioService *int) error {
+func (c *client) QueuePolling(ctx context.Context, goRoutines *sdk.GoRoutines, jobs chan<- sdk.WorkflowNodeJobRun, errs chan<- error, delay time.Duration, modelType string, ratioService *int) error {
 	jobsTicker := time.NewTicker(delay)
 
 	// This goroutine call the SSE route
 	chanMessageReceived := make(chan sdk.WebsocketEvent, 10)
 	chanMessageToSend := make(chan []sdk.WebsocketFilter, 10)
-	sdk.GoRoutine(ctx, "RequestWebsocket", func(ctx context.Context) {
+	goRoutines.Exec(ctx, "RequestWebsocket", func(ctx context.Context) {
 		for ctx.Err() == nil {
-			if err := c.RequestWebsocket(ctx, "/ws", chanMessageToSend, chanMessageReceived); err != nil {
+			if err := c.RequestWebsocket(ctx, goRoutines, "/ws", chanMessageToSend, chanMessageReceived); err != nil {
 				log.Println("QueuePolling", err)
 			}
 			time.Sleep(1 * time.Second)

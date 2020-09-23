@@ -97,7 +97,7 @@ func (c *Common) CommonMetricsHandler() Handler {
 
 var onceMetrics sync.Once
 
-func RegisterCommonMetricsView(ctx context.Context) {
+func (c *Common) RegisterCommonMetricsView(ctx context.Context) {
 	onceMetrics.Do(func() {
 		allocStats := stats.Int64(
 			"cds/alloc",
@@ -163,7 +163,7 @@ func RegisterCommonMetricsView(ctx context.Context) {
 			panic(fmt.Errorf("unable to register service metrics view: %v", err))
 		}
 
-		sdk.GoRoutine(ctx, "service_metrics", func(ctx context.Context) {
+		c.GoRoutines.Run(ctx, "service_metrics", func(ctx context.Context) {
 			var maxMemoryS = os.Getenv("CDS_MAX_HEAP_SIZE") // in bytes
 			var maxMemory uint64
 			var onceMaxMemorySignal = new(sync.Once)

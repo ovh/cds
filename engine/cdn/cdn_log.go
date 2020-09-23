@@ -49,14 +49,14 @@ func (s *Service) RunTcpLogServer(ctx context.Context) {
 	}()
 
 	for i := int64(0); i <= s.Cfg.NbJobLogsGoroutines; i++ {
-		sdk.GoRoutine(ctx, fmt.Sprintf("cdn-worker-job-%d", i), func(ctx context.Context) {
+		s.GoRoutines.Run(ctx, fmt.Sprintf("cdn-worker-job-%d", i), func(ctx context.Context) {
 			if err := s.dequeueJobLogs(ctx); err != nil {
 				log.Error(ctx, "dequeueJobLogs: unable to dequeue redis incoming job logs: %v", err)
 			}
 		})
 	}
 	for i := int64(0); i < s.Cfg.NbServiceLogsGoroutines; i++ {
-		sdk.GoRoutine(ctx, fmt.Sprintf("cdn-worker-service-%d", i), func(ctx context.Context) {
+		s.GoRoutines.Run(ctx, fmt.Sprintf("cdn-worker-service-%d", i), func(ctx context.Context) {
 			if err := s.dequeueServiceLogs(ctx); err != nil {
 				log.Error(ctx, "dequeueJobLogs: unable to dequeue redis incoming service logs: %v", err)
 			}
@@ -65,7 +65,7 @@ func (s *Service) RunTcpLogServer(ctx context.Context) {
 
 	// Looking for something to dequeue
 	// DEPRECATED
-	sdk.GoRoutine(ctx, "cdn-waiting-job", func(ctx context.Context) {
+	s.GoRoutines.Run(ctx, "cdn-waiting-job", func(ctx context.Context) {
 		s.waitingJobs(ctx)
 	})
 
@@ -77,7 +77,7 @@ func (s *Service) RunTcpLogServer(ctx context.Context) {
 				log.Error(ctx, "unable to accept connection: %v", err)
 				return
 			}
-			sdk.GoRoutine(ctx, "cdn-logServer", func(ctx context.Context) {
+			s.GoRoutines.Exec(ctx, "cdn-logServer", func(ctx context.Context) {
 				telemetry.Record(ctx, metricsHits, 1)
 				s.handleConnection(ctx, conn)
 			})

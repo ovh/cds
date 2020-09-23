@@ -13,7 +13,6 @@ import (
 
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/ascode"
-	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/group"
@@ -24,6 +23,7 @@ import (
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/engine/api/user"
 	"github.com/ovh/cds/engine/api/workflow"
+	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
@@ -524,7 +524,7 @@ func (api *API) updateAsCodeApplicationHandler() service.Handler {
 			return sdk.WithStack(err)
 		}
 
-		sdk.GoRoutine(context.Background(), fmt.Sprintf("UpdateAsCodeApplicationHandler-%s", ope.UUID), func(ctx context.Context) {
+		api.GoRoutines.Exec(context.Background(), fmt.Sprintf("UpdateAsCodeApplicationHandler-%s", ope.UUID), func(ctx context.Context) {
 			ed := ascode.EntityData{
 				FromRepo:      appDB.FromRepository,
 				Type:          ascode.ApplicationEvent,
@@ -532,7 +532,7 @@ func (api *API) updateAsCodeApplicationHandler() service.Handler {
 				Name:          appDB.Name,
 				OperationUUID: ope.UUID,
 			}
-			ascode.UpdateAsCodeResult(ctx, api.mustDB(), api.Cache, *proj, *wkHolder, *rootApp, ed, u)
+			ascode.UpdateAsCodeResult(ctx, api.mustDB(), api.Cache, api.GoRoutines, *proj, *wkHolder, *rootApp, ed, u)
 		}, api.PanicDump())
 
 		return service.WriteJSON(w, sdk.Operation{

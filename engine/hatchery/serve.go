@@ -109,6 +109,11 @@ func (c *Common) CDSClient() cdsclient.Interface {
 	return c.Client
 }
 
+// GetGoRoutines returns the goRoutines manager
+func (c *Common) GetGoRoutines() *sdk.GoRoutines {
+	return c.GoRoutines
+}
+
 // CommonServe start the HatcheryLocal server
 func (c *Common) CommonServe(ctx context.Context, h hatchery.Interface) error {
 	log.Info(ctx, "%s> Starting service %s (%s)...", c.Name(), h.Configuration().Name, sdk.VERSION)

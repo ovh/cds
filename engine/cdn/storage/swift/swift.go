@@ -37,7 +37,7 @@ func init() {
 	storage.RegisterDriver("swift", new(Swift))
 }
 
-func (s *Swift) Init(ctx context.Context, cfg interface{}) error {
+func (s *Swift) Init(ctx context.Context, cfg interface{}, _ *sdk.GoRoutines) error {
 	config, is := cfg.(*storage.SwiftStorageConfiguration)
 	if !is {
 		return sdk.WithStack(fmt.Errorf("invalid configuration: %T", cfg))
@@ -143,13 +143,13 @@ func escape(container, object string) (string, string) {
 func (s *Swift) Status(ctx context.Context) []sdk.MonitoringStatusLine {
 	info, _, err := s.client.Account()
 	if err != nil {
-		return []sdk.MonitoringStatusLine{{Component: "backend/swift", Value: "Swift KO" + err.Error(), Status: sdk.MonitoringStatusAlert}}
+		return []sdk.MonitoringStatusLine{{Component: "backend/" + s.Name(), Value: "Swift KO" + err.Error(), Status: sdk.MonitoringStatusAlert}}
 	}
 	telemetry.Record(ctx, metricsContainers, info.Containers)
 	telemetry.Record(ctx, metricsObjects, info.Objects)
 	telemetry.Record(ctx, metricsSize, info.BytesUsed)
 	return []sdk.MonitoringStatusLine{{
-		Component: "backend/swift",
+		Component: "backend/" + s.Name(),
 		Value:     fmt.Sprintf("Swift OK (%d containers, %d objects, %d bytes used", info.Containers, info.Objects, info.BytesUsed),
 		Status:    sdk.MonitoringStatusOK,
 	}}

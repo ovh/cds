@@ -9,9 +9,8 @@ import (
 )
 
 // Status returns sdk.MonitoringStatus, implements interface service.Service
-func (s *Service) Status(ctx context.Context) sdk.MonitoringStatus {
-	m := s.CommonMonitoring()
-	return m
+func (s *Service) Status(ctx context.Context) *sdk.MonitoringStatus {
+	return s.NewMonitoringStatus()
 }
 
 func (s *Service) statusHandler() service.Handler {

@@ -30,15 +30,15 @@ type iCache struct {
 var internalCache iCache
 
 // Initialize the service package
-func Initialize(c context.Context, dbF *database.DBConnectionFactory, panicCallback func(s string) (io.WriteCloser, error)) {
+func Initialize(c context.Context, dbF *database.DBConnectionFactory, goRoutines *sdk.GoRoutines, panicCallback func(s string) (io.WriteCloser, error)) {
 	internalCache = iCache{
 		chanEvent:     make(chan event),
 		data:          make(map[string][]sdk.Service),
 		dbConnFactory: dbF,
 		mutex:         sync.RWMutex{},
 	}
-	sdk.GoRoutine(c, "service.internalCache.doUpdateData", internalCache.doUpdateData, panicCallback)
-	sdk.GoRoutine(c, "service.internalCache.doListenDatabase", internalCache.doListenDatabase, panicCallback)
+	goRoutines.Run(c, "service.internalCache.doUpdateData", internalCache.doUpdateData, panicCallback)
+	goRoutines.Run(c, "service.internalCache.doListenDatabase", internalCache.doListenDatabase, panicCallback)
 }
 
 func (c *iCache) updateCache(s sdk.Service) {

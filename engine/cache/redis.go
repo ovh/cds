@@ -74,6 +74,7 @@ func NewRedisStore(host, password string, ttl int) (*RedisStore, error) {
 	}, nil
 }
 
+// DBSize: Return the number of keys in the currently-selected database
 func (s *RedisStore) DBSize() (int64, error) {
 	size, err := s.Client.DBSize().Result()
 	if err != nil {

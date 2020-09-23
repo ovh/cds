@@ -529,9 +529,9 @@ func processAsyncRequests(ctx context.Context, chanRequest chan asynchronousRequ
 }
 
 // Asynchronous handles an AsynchronousHandlerFunc
-func (r *Router) Asynchronous(handler service.AsynchronousHandlerFunc, retry int) service.HandlerFunc {
+func (r *Router) Asynchronous(handler service.AsynchronousHandlerFunc, retry int, goRoutines *sdk.GoRoutines) service.HandlerFunc {
 	chanRequest := make(chan asynchronousRequest, 1000)
-	sdk.GoRoutine(r.Background, "", func(ctx context.Context) {
+	goRoutines.Exec(r.Background, "", func(ctx context.Context) {
 		processAsyncRequests(ctx, chanRequest, handler, retry)
 	})
 	return func() service.Handler {

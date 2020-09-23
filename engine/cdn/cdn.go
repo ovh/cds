@@ -27,7 +27,7 @@ import (
 // New returns a new service
 func New() *Service {
 	s := new(Service)
-
+	s.GoRoutines = sdk.NewGoRoutines()
 	s.Router = &api.Router{
 		Mux: mux.NewRouter(),
 	}
@@ -123,7 +123,7 @@ func (s *Service) Serve(c context.Context) error {
 		storage.InitDBMapping(s.Mapper)
 
 		// Init storage units
-		s.Units, err = storage.Init(ctx, s.Mapper, s.mustDBWithCtx(ctx), s.Cfg.Units)
+		s.Units, err = storage.Init(ctx, s.Mapper, s.mustDBWithCtx(ctx), s.Cfg.Units, s.GoRoutines)
 		if err != nil {
 			return err
 		}
@@ -131,10 +131,10 @@ func (s *Service) Serve(c context.Context) error {
 			return err
 		}
 
-		sdk.GoRoutine(ctx, "cdn-gc-items", func(ctx context.Context) {
+		s.GoRoutines.Run(ctx, "cdn-gc-items", func(ctx context.Context) {
 			s.itemsGC(ctx)
 		})
-		sdk.GoRoutine(ctx, "cdn-purge-items", func(ctx context.Context) {
+		s.GoRoutines.Run(ctx, "cdn-purge-items", func(ctx context.Context) {
 			s.itemPurge(ctx)
 		})
 
@@ -144,7 +144,7 @@ func (s *Service) Serve(c context.Context) error {
 			if !ok {
 				continue
 			}
-			sdk.GoRoutine(ctx, "cdn-cds-backend-migration", func(ctx context.Context) {
+			s.GoRoutines.Exec(ctx, "cdn-cds-backend-migration", func(ctx context.Context) {
 				if err := s.SyncLogs(ctx, cdsStorage); err != nil {
 					log.Error(ctx, "unable to sync logs: %v", err)
 				}
@@ -156,7 +156,7 @@ func (s *Service) Serve(c context.Context) error {
 		if err != nil {
 			return sdk.WrapError(err, "cannot connect to redis instance for lru")
 		}
-		sdk.GoRoutine(ctx, "log-cache-eviction", func(ctx context.Context) {
+		s.GoRoutines.Run(ctx, "log-cache-eviction", func(ctx context.Context) {
 			s.LogCache.Evict(ctx)
 		})
 	}

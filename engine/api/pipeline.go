@@ -108,7 +108,7 @@ func (api *API) updateAsCodePipelineHandler() service.Handler {
 			return sdk.WithStack(err)
 		}
 
-		sdk.GoRoutine(context.Background(), fmt.Sprintf("UpdateAsCodePipelineHandler-%s", ope.UUID), func(ctx context.Context) {
+		api.GoRoutines.Exec(context.Background(), fmt.Sprintf("UpdateAsCodePipelineHandler-%s", ope.UUID), func(ctx context.Context) {
 			ed := ascode.EntityData{
 				FromRepo:      pipelineDB.FromRepository,
 				Type:          ascode.PipelineEvent,
@@ -116,7 +116,7 @@ func (api *API) updateAsCodePipelineHandler() service.Handler {
 				Name:          pipelineDB.Name,
 				OperationUUID: ope.UUID,
 			}
-			ascode.UpdateAsCodeResult(ctx, api.mustDB(), api.Cache, *proj, *wkHolder, *rootApp, ed, u)
+			ascode.UpdateAsCodeResult(ctx, api.mustDB(), api.Cache, api.GoRoutines, *proj, *wkHolder, *rootApp, ed, u)
 		}, api.PanicDump())
 
 		return service.WriteJSON(w, sdk.Operation{

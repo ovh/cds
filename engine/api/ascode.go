@@ -90,7 +90,7 @@ func (api *API) postImportAsCodeHandler() service.Handler {
 
 		u := getAPIConsumer(ctx)
 
-		sdk.GoRoutine(context.Background(), fmt.Sprintf("postImportAsCodeHandler-%s", ope.UUID), func(ctx context.Context) {
+		api.GoRoutines.Exec(context.Background(), fmt.Sprintf("postImportAsCodeHandler-%s", ope.UUID), func(ctx context.Context) {
 			globalOperation := sdk.Operation{
 				UUID: ope.UUID,
 			}

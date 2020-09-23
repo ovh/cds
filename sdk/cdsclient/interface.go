@@ -149,7 +149,7 @@ type EnvironmentVariableClient interface {
 // EventsClient listen SSE Events from CDS API
 type EventsClient interface {
 	// Must be  run in a go routine
-	WebsocketEventsListen(ctx context.Context, chanMsgToSend <-chan []sdk.WebsocketFilter, chanMsgReceived chan<- sdk.WebsocketEvent)
+	WebsocketEventsListen(ctx context.Context, goRoutines *sdk.GoRoutines, chanMsgToSend <-chan []sdk.WebsocketFilter, chanMsgReceived chan<- sdk.WebsocketEvent)
 }
 
 // DownloadClient exposes download related functions
@@ -245,7 +245,7 @@ type ProjectVariablesClient interface {
 type QueueClient interface {
 	QueueWorkflowNodeJobRun(status ...string) ([]sdk.WorkflowNodeJobRun, error)
 	QueueCountWorkflowNodeJobRun(since *time.Time, until *time.Time, modelType string, ratioService *int) (sdk.WorkflowNodeJobRunCount, error)
-	QueuePolling(ctx context.Context, jobs chan<- sdk.WorkflowNodeJobRun, errs chan<- error, delay time.Duration, modelType string, ratioService *int) error
+	QueuePolling(ctx context.Context, goRoutines *sdk.GoRoutines, jobs chan<- sdk.WorkflowNodeJobRun, errs chan<- error, delay time.Duration, modelType string, ratioService *int) error
 	QueueTakeJob(ctx context.Context, job sdk.WorkflowNodeJobRun) (*sdk.WorkflowNodeJobRunData, error)
 	QueueJobBook(ctx context.Context, id int64) (sdk.WorkflowNodeJobRunBooked, error)
 	QueueJobRelease(ctx context.Context, id int64) error
@@ -387,7 +387,7 @@ type Interface interface {
 	RepositoriesManagerInterface
 	ServiceClient
 	ServiceRegister(context.Context, sdk.Service) (*sdk.Service, error)
-	ServiceHeartbeat(sdk.MonitoringStatus) error
+	ServiceHeartbeat(*sdk.MonitoringStatus) error
 	UserClient
 	WorkerClient
 	WorkflowClient
