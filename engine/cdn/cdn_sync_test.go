@@ -10,7 +10,9 @@ import (
 	"github.com/ovh/cds/engine/cdn/item"
 	"github.com/ovh/cds/engine/cdn/storage"
 	"github.com/ovh/cds/engine/cdn/storage/cds"
+	cdntest "github.com/ovh/cds/engine/cdn/test"
 	"github.com/ovh/cds/engine/gorpmapper"
+	"github.com/ovh/cds/engine/service"
 	commontest "github.com/ovh/cds/engine/test"
 	"github.com/ovh/cds/sdk"
 )
@@ -23,6 +25,9 @@ func TestSyncLog(t *testing.T) {
 	t.Cleanup(end)
 	cfg := commontest.LoadTestingConf(t, sdk.TypeCDN)
 
+	cdntest.ClearItem(t, context.Background(), m, db)
+	cdntest.ClearUnits(t, context.Background(), m, db)
+
 	// Create cdn service
 	s := Service{
 		DBConnectionFactory: factory,
@@ -30,6 +35,9 @@ func TestSyncLog(t *testing.T) {
 		Mapper:              m,
 		Cfg: Configuration{
 			EnableLogProcessing: true,
+		},
+		Common: service.Common{
+			GoRoutines: sdk.NewGoRoutines(),
 		},
 	}
 
