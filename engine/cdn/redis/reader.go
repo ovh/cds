@@ -2,13 +2,8 @@ package redis
 
 import (
 	"io"
-)
 
-type ReaderFormat string
-
-const (
-	ReaderFormatJSON ReaderFormat = "json"
-	ReaderFormatText ReaderFormat = "text"
+	"github.com/ovh/cds/sdk"
 )
 
 type Reader struct {
@@ -17,7 +12,7 @@ type Reader struct {
 	From          int64 // the offset that we want to use when reading lines from Redis, allows negative value to get last lines
 	Size          uint  // the count of lines that we want to read (0 means to the end)
 	currentBuffer []byte
-	Format        ReaderFormat
+	Format        sdk.CDNReaderFormat
 	readEOF       bool
 }
 
@@ -41,17 +36,17 @@ func (r *Reader) loadMoreLines() error {
 	}
 
 	// If first read and json format init json list, also define formatter to exec before append lines and at read end
-	if isFirstRead && r.Format == ReaderFormatJSON {
+	if isFirstRead && r.Format == sdk.CDNReaderFormatJSON {
 		r.currentBuffer = []byte("[")
 	}
 	formatBeforeLine := func() {
 		// For json format, if not first read we should add a comma before each line object
-		if r.Format == ReaderFormatJSON {
+		if r.Format == sdk.CDNReaderFormatJSON {
 			r.currentBuffer = append(r.currentBuffer, []byte(",")...)
 		}
 	}
 	formatEnd := func() {
-		if r.Format == ReaderFormatJSON {
+		if r.Format == sdk.CDNReaderFormatJSON {
 			r.currentBuffer = append(r.currentBuffer, []byte("]")...)
 		}
 	}

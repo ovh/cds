@@ -25,9 +25,9 @@ type Line struct {
 	Value        string `json:"value"`
 }
 
-func (l Line) Format(f ReaderFormat) ([]byte, error) {
+func (l Line) Format(f sdk.CDNReaderFormat) ([]byte, error) {
 	switch f {
-	case ReaderFormatJSON:
+	case sdk.CDNReaderFormatJSON:
 		var err error
 		l.Number, err = strconv.ParseInt(l.NumberString, 10, 64)
 		if err != nil {
@@ -35,7 +35,7 @@ func (l Line) Format(f ReaderFormat) ([]byte, error) {
 		}
 		bs, err := json.Marshal(l)
 		return bs, sdk.WithStack(err)
-	case ReaderFormatText:
+	case sdk.CDNReaderFormatText:
 		return []byte(l.Value), nil
 	}
 	return nil, sdk.WithStack(fmt.Errorf("invalid given reader format '%s'", f))

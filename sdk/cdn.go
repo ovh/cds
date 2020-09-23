@@ -117,3 +117,10 @@ const (
 	CDNStatusItemIncoming              = "Incoming"
 	CDNStatusItemCompleted             = "Completed"
 )
+
+type CDNReaderFormat string
+
+const (
+	CDNReaderFormatJSON CDNReaderFormat = "json"
+	CDNReaderFormatText CDNReaderFormat = "text"
+)

@@ -9,7 +9,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/ovh/cds/engine/cdn/item"
-	"github.com/ovh/cds/engine/cdn/redis"
 	cdntest "github.com/ovh/cds/engine/cdn/test"
 	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/engine/test"
@@ -83,7 +82,7 @@ func TestRedisLRU(t *testing.T) {
 	require.Equal(t, int64(88), size)
 
 	// Get Item 1
-	reader := r.NewReader(item1.ID, redis.ReaderFormatText, 0, 1)
+	reader := r.NewReader(item1.ID, sdk.CDNReaderFormatText, 0, 1)
 	buf := new(strings.Builder)
 	_, err = io.Copy(buf, reader)
 	reader.Close()

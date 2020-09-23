@@ -12,7 +12,6 @@ import (
 
 	"github.com/ovh/cds/engine/authentication"
 	"github.com/ovh/cds/engine/cdn/item"
-	"github.com/ovh/cds/engine/cdn/redis"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 )
@@ -89,7 +88,7 @@ func (s *Service) getItemLogsLinesHandler() service.Handler {
 			count = 100
 		}
 
-		rc, err := s.getItemLogValue(ctx, itemType, token.APIRefHash, redis.ReaderFormatJSON, offset, uint(count))
+		rc, err := s.getItemLogValue(ctx, itemType, token.APIRefHash, sdk.CDNReaderFormatJSON, offset, uint(count))
 		if err != nil {
 			return err
 		}
@@ -113,7 +112,7 @@ func (s *Service) getItemLogsDownloadHandler() service.Handler {
 			return err
 		}
 
-		rc, err := s.getItemLogValue(ctx, itemType, token.APIRefHash, redis.ReaderFormatText, 0, 0)
+		rc, err := s.getItemLogValue(ctx, itemType, token.APIRefHash, sdk.CDNReaderFormatText, 0, 0)
 		if err != nil {
 			return err
 		}

@@ -81,11 +81,12 @@ func (s *Redis) NewReader(_ context.Context, i sdk.CDNItemUnit) (io.ReadCloser, 
 			ItemID:    i.ItemID,
 			UsageKey:  "",
 		},
-		Format: redis.ReaderFormatText,
+		Format: sdk.CDNReaderFormatText,
 	}, nil
 }
 
-func (s *Redis) NewAdvancedReader(_ context.Context, i sdk.CDNItemUnit, format redis.ReaderFormat, from int64, size uint) (io.ReadCloser, error) {
+// NewAdvancedReader instanciate a reader from given option, format can be JSON or Text. If from is < 0, read end lines (ex: from=-100 size=0 means read the last 100 lines)
+func (s *Redis) NewAdvancedReader(_ context.Context, i sdk.CDNItemUnit, format sdk.CDNReaderFormat, from int64, size uint) (io.ReadCloser, error) {
 	return &redis.Reader{
 		ReadWrite: redis.ReadWrite{
 			Store:     s.store,

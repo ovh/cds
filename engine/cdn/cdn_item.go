@@ -13,7 +13,6 @@ import (
 	"time"
 
 	"github.com/ovh/cds/engine/cdn/item"
-	"github.com/ovh/cds/engine/cdn/redis"
 	"github.com/ovh/cds/engine/cdn/storage"
 	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk"
@@ -25,7 +24,7 @@ var (
 	rnd = rand.New(rs)
 )
 
-func (s *Service) getItemLogValue(ctx context.Context, t sdk.CDNItemType, apiRefHash string, format redis.ReaderFormat, from int64, size uint) (io.ReadCloser, error) {
+func (s *Service) getItemLogValue(ctx context.Context, t sdk.CDNItemType, apiRefHash string, format sdk.CDNReaderFormat, from int64, size uint) (io.ReadCloser, error) {
 	it, err := item.LoadByAPIRefHashAndType(ctx, s.Mapper, s.mustDBWithCtx(ctx), apiRefHash, t)
 	if err != nil {
 		return nil, err
