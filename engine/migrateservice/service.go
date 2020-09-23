@@ -51,7 +51,9 @@ type Configuration struct {
 
 // New instanciates a new API object
 func New() service.Service {
-	return &dbmigservice{}
+	s := &dbmigservice{}
+	s.GoRoutines = sdk.NewGoRoutines()
+	return s
 }
 
 func (s *dbmigservice) Init(config interface{}) (cdsclient.ServiceConfig, error) {
