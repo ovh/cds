@@ -119,8 +119,7 @@ func (s *Service) syncProjectLogs(ctx context.Context, cdsStorage *cds.CDS, pKey
 	}
 
 	statusSync.runPerProjectTotal[pKey] = len(nodeRunIds)
-
-	// Test if all noderun has been sync for this project
+	// Test if all noderuns have been sync for this project
 	listNodeRuns, err := item.ListNodeRunByProject(s.mustDBWithCtx(ctx), pKey)
 	if err != nil {
 		return err
