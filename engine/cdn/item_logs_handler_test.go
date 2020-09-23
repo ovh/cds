@@ -109,7 +109,7 @@ func TestGetItemLogsDownloadHandler(t *testing.T) {
 
 	// Create cdn service with need storage and test item
 	s, db := newTestService(t)
-	cdnUnits, err := storage.Init(context.TODO(), s.Mapper, db.DbMap, storage.Configuration{
+	cdnUnits, err := storage.Init(context.TODO(), s.Mapper, db.DbMap, sdk.NewGoRoutines(), storage.Configuration{
 		Buffer: storage.BufferConfiguration{
 			Name: "redis_buffer",
 			Redis: storage.RedisBufferConfiguration{
@@ -117,7 +117,7 @@ func TestGetItemLogsDownloadHandler(t *testing.T) {
 				Password: cfg["redisPassword"],
 			},
 		},
-	}, sdk.NewGoRoutines())
+	})
 	require.NoError(t, err)
 	s.Units = cdnUnits
 
@@ -187,7 +187,7 @@ func TestGetItemLogsLinesHandler(t *testing.T) {
 
 	// Create cdn service with need storage and test item
 	s, db := newTestService(t)
-	cdnUnits, err := storage.Init(context.TODO(), s.Mapper, db.DbMap, storage.Configuration{
+	cdnUnits, err := storage.Init(context.TODO(), s.Mapper, db.DbMap, sdk.NewGoRoutines(), storage.Configuration{
 		Buffer: storage.BufferConfiguration{
 			Name: "redis_buffer",
 			Redis: storage.RedisBufferConfiguration{

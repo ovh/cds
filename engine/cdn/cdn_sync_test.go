@@ -38,7 +38,7 @@ func TestSyncLog(t *testing.T) {
 		Token: "mytoken",
 	}
 
-	cdnUnits, err := storage.Init(context.TODO(), m, db.DbMap, storage.Configuration{
+	cdnUnits, err := storage.Init(context.TODO(), m, db.DbMap, sdk.NewGoRoutines(), storage.Configuration{
 		Buffer: storage.BufferConfiguration{
 			Name: "redis_buffer",
 			Redis: storage.RedisBufferConfiguration{
@@ -53,7 +53,7 @@ func TestSyncLog(t *testing.T) {
 				CDS:  cdsConfig,
 			},
 		},
-	}, sdk.NewGoRoutines())
+	})
 	require.NoError(t, err)
 	require.NoError(t, cdnUnits.Start(context.TODO()))
 	s.Units = cdnUnits

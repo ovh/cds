@@ -45,7 +45,7 @@ func TestStoreNewStepLog(t *testing.T) {
 		Mapper:              m,
 	}
 
-	cdnUnits, err := storage.Init(context.TODO(), m, db.DbMap, storage.Configuration{
+	cdnUnits, err := storage.Init(context.TODO(), m, db.DbMap, sdk.NewGoRoutines(), storage.Configuration{
 		Buffer: storage.BufferConfiguration{
 			Name: "redis_buffer",
 			Redis: storage.RedisBufferConfiguration{
@@ -53,7 +53,7 @@ func TestStoreNewStepLog(t *testing.T) {
 				Password: cfg["redisPassword"],
 			},
 		},
-	}, sdk.NewGoRoutines())
+	})
 	require.NoError(t, err)
 	s.Units = cdnUnits
 
@@ -139,7 +139,7 @@ func TestStoreLastStepLog(t *testing.T) {
 		Mapper:              m,
 	}
 
-	cdnUnits, err := storage.Init(context.TODO(), m, db.DbMap, storage.Configuration{
+	cdnUnits, err := storage.Init(context.TODO(), m, db.DbMap, sdk.NewGoRoutines(), storage.Configuration{
 		Buffer: storage.BufferConfiguration{
 			Name: "redis_buffer",
 			Redis: storage.RedisBufferConfiguration{
@@ -147,7 +147,7 @@ func TestStoreLastStepLog(t *testing.T) {
 				Password: cfg["redisPassword"],
 			},
 		},
-	}, sdk.NewGoRoutines())
+	})
 	require.NoError(t, err)
 	s.Units = cdnUnits
 
@@ -237,7 +237,7 @@ func TestStoreLogWrongOrder(t *testing.T) {
 		Mapper:              m,
 	}
 
-	cdnUnits, err := storage.Init(context.TODO(), m, db.DbMap, storage.Configuration{
+	cdnUnits, err := storage.Init(context.TODO(), m, db.DbMap, sdk.NewGoRoutines(), storage.Configuration{
 		Buffer: storage.BufferConfiguration{
 			Name: "redis_buffer",
 			Redis: storage.RedisBufferConfiguration{
@@ -245,7 +245,7 @@ func TestStoreLogWrongOrder(t *testing.T) {
 				Password: cfg["redisPassword"],
 			},
 		},
-	}, sdk.NewGoRoutines())
+	})
 	require.NoError(t, err)
 	s.Units = cdnUnits
 
@@ -366,7 +366,7 @@ func TestStoreNewServiceLogAndAppend(t *testing.T) {
 		Mapper:              m,
 	}
 
-	cdnUnits, err := storage.Init(context.TODO(), m, db.DbMap, storage.Configuration{
+	cdnUnits, err := storage.Init(context.TODO(), m, db.DbMap, sdk.NewGoRoutines(), storage.Configuration{
 		Buffer: storage.BufferConfiguration{
 			Name: "redis_buffer",
 			Redis: storage.RedisBufferConfiguration{
@@ -374,7 +374,7 @@ func TestStoreNewServiceLogAndAppend(t *testing.T) {
 				Password: cfg["redisPassword"],
 			},
 		},
-	}, sdk.NewGoRoutines())
+	})
 	require.NoError(t, err)
 	s.Units = cdnUnits
 

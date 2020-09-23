@@ -41,7 +41,7 @@ func (c *CDS) GetClient() cdsclient.Interface {
 	return c.client
 }
 
-func (c *CDS) Init(ctx context.Context, cfg interface{}, _ *sdk.GoRoutines) error {
+func (c *CDS) Init(ctx context.Context, _ *sdk.GoRoutines, cfg interface{}) error {
 	config, is := cfg.(*storage.CDSStorageConfiguration)
 	if !is {
 		return sdk.WithStack(fmt.Errorf("invalid configuration: %T", cfg))

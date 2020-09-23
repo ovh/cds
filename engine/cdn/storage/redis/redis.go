@@ -34,7 +34,7 @@ func init() {
 	storage.RegisterDriver("redis", new(Redis))
 }
 
-func (s *Redis) Init(ctx context.Context, cfg interface{}, _ *sdk.GoRoutines) error {
+func (s *Redis) Init(ctx context.Context, _ *sdk.GoRoutines, cfg interface{}) error {
 	config, is := cfg.(storage.RedisBufferConfiguration)
 	if !is {
 		return sdk.WithStack(fmt.Errorf("invalid configuration: %T", cfg))

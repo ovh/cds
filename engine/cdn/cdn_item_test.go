@@ -46,7 +46,7 @@ func TestGetItemValue(t *testing.T) {
 	tmpDir, err := ioutil.TempDir("", t.Name()+"-cdn-1-*")
 	require.NoError(t, err)
 
-	cdnUnits, err := storage.Init(context.TODO(), m, db.DbMap, storage.Configuration{
+	cdnUnits, err := storage.Init(context.TODO(), m, db.DbMap, sdk.NewGoRoutines(), storage.Configuration{
 		Buffer: storage.BufferConfiguration{
 			Name: "redis_buffer",
 			Redis: storage.RedisBufferConfiguration{
@@ -63,7 +63,7 @@ func TestGetItemValue(t *testing.T) {
 				},
 			},
 		},
-	}, sdk.NewGoRoutines())
+	})
 	require.NoError(t, err)
 	s.Units = cdnUnits
 	s.LogCache, err = lru.NewRedisLRU(db.DbMap, 1000, cfg["redisHost"], cfg["redisPassword"])
@@ -199,7 +199,7 @@ func TestGetItemValue_ThousandLines(t *testing.T) {
 		Mapper:              m,
 	}
 
-	cdnUnits, err := storage.Init(context.TODO(), m, db.DbMap, storage.Configuration{
+	cdnUnits, err := storage.Init(context.TODO(), m, db.DbMap, sdk.NewGoRoutines(), storage.Configuration{
 		Buffer: storage.BufferConfiguration{
 			Name: "redis_buffer",
 			Redis: storage.RedisBufferConfiguration{
