@@ -107,11 +107,14 @@ func Sign(signer jose.Signer, content interface{}) (string, error) {
 func Verify(key interface{}, s string, i interface{}) error {
 	object, err := jose.ParseSigned(s)
 	if err != nil {
+		if object != nil {
+			return sdk.WithStack(fmt.Errorf("unable to parse payload: %v signature: %v", string(object.UnsafePayloadWithoutVerification()), err))
+		}
 		return sdk.WithStack(err)
 	}
 	output, err := object.Verify(key)
 	if err != nil {
-		return sdk.WithStack(err)
+		return sdk.WithStack(fmt.Errorf("unable to verify payload: %v signature: %v", string(object.UnsafePayloadWithoutVerification()), err))
 	}
 	return sdk.WithStack(json.Unmarshal(output, i))
 }

@@ -12,6 +12,7 @@ import (
 	"time"
 
 	gocache "github.com/patrickmn/go-cache"
+	"github.com/sirupsen/logrus"
 
 	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/sdk"
@@ -102,7 +103,12 @@ func (s *Service) handleConnection(ctx context.Context, conn net.Conn) {
 
 		if err := s.handleLogMessage(ctx, bytes); err != nil {
 			telemetry.Record(ctx, metricsErrors, 1)
-			log.Error(ctx, "cdn.log> %v", err)
+			isErrWithStack := sdk.IsErrorWithStack(err)
+			fields := logrus.Fields{}
+			if isErrWithStack {
+				fields["stack_trace"] = fmt.Sprintf("%+v", err)
+			}
+			log.ErrorWithFields(ctx, fields, "cdn.log> %v", err)
 			continue
 		}
 	}
