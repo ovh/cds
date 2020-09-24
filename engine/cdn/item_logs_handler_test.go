@@ -169,7 +169,7 @@ func TestGetItemLogsDownloadHandler(t *testing.T) {
 	tokenRaw, err := signer.SignJWS(sdk.CDNAuthToken{APIRefHash: apiRefHash}, time.Minute)
 	require.NoError(t, err)
 
-	uri := s.Router.GetRoute("GET", s.getItemLogsDownloadHandler, map[string]string{
+	uri := s.Router.GetRoute("GET", s.getItemDownloadHandler, map[string]string{
 		"type":   string(sdk.CDNTypeItemStepLog),
 		"apiRef": apiRefHash,
 	})

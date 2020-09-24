@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"unicode"
 
 	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/sdk"
@@ -20,19 +21,13 @@ type ReadWrite struct {
 }
 
 type Line struct {
-	NumberString string `json:"-"`
-	Number       int64  `json:"number"`
-	Value        string `json:"value"`
+	Number int64  `json:"number"`
+	Value  string `json:"value"`
 }
 
 func (l Line) Format(f sdk.CDNReaderFormat) ([]byte, error) {
 	switch f {
 	case sdk.CDNReaderFormatJSON:
-		var err error
-		l.Number, err = strconv.ParseInt(l.NumberString, 10, 64)
-		if err != nil {
-			return nil, sdk.WrapError(err, "cannot parse line number with value %s", l.NumberString)
-		}
 		bs, err := json.Marshal(l)
 		return bs, sdk.WithStack(err)
 	case sdk.CDNReaderFormatText:
@@ -42,18 +37,19 @@ func (l Line) Format(f sdk.CDNReaderFormat) ([]byte, error) {
 }
 
 func (rw *ReadWrite) get(from uint, to uint) ([]Line, error) {
-	res := make([]string, to-from+1)
-	if err := rw.Store.ScoredSetScan(context.Background(), cache.Key(rw.PrefixKey, rw.ItemID), float64(from), float64(to), &res); err != nil {
+	res, err := rw.Store.ScoredSetScanWithScores(context.Background(), cache.Key(rw.PrefixKey, rw.ItemID), float64(from), float64(to))
+	if err != nil {
 		return nil, err
 	}
 	ls := make([]Line, len(res))
 	for i := range res {
-		tmp := strings.SplitN(res[i], "#", 2)
-		if len(tmp) != 2 {
-			return nil, sdk.WithStack(fmt.Errorf("cannot split line from redis set, length %d != 2 line start with %s...", len(tmp), sdk.StringFirstN(res[i], 10)))
+		ls[i].Number = int64(res[i].Score)
+		var value string
+		if err := json.Unmarshal(res[i].Value, &value); err != nil {
+			return nil, sdk.WrapError(err, "cannot unmarshal line value from store")
 		}
-		ls[i].NumberString = tmp[0]
-		ls[i].Value = tmp[1]
+		ls[i].Value = strings.TrimFunc(value, unicode.IsNumber)
+		ls[i].Value = strings.TrimPrefix(ls[i].Value, "#")
 	}
 	return ls, nil
 }

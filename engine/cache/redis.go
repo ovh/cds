@@ -628,3 +628,34 @@ func (s *RedisStore) ScoredSetScan(ctx context.Context, key string, from, to flo
 
 	return nil
 }
+
+func (s *RedisStore) ScoredSetScanWithScores(ctx context.Context, key string, from, to float64) ([]SetValueWithScore, error) {
+	min := "-inf"
+	if from != MIN {
+		min = strconv.FormatFloat(from, 'E', -1, 64)
+	}
+	max := "+inf"
+	if to != MAX {
+		max = strconv.FormatFloat(to, 'E', -1, 64)
+	}
+
+	values, err := s.Client.ZRangeByScoreWithScores(key, redis.ZRangeBy{
+		Min: min,
+		Max: max,
+	}).Result()
+	if err != nil {
+		return nil, sdk.WrapError(err, "redis zrange error")
+	}
+
+	res := make([]SetValueWithScore, len(values))
+	for i := range values {
+		res[i].Score = values[i].Score
+		s, ok := values[i].Member.(string)
+		if !ok {
+			return nil, sdk.WithStack(fmt.Errorf("set value of type %T can't be cast to json.RawMessage", values[i].Member))
+		}
+		res[i].Value = json.RawMessage(s)
+	}
+
+	return res, nil
+}
