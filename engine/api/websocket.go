@@ -213,7 +213,8 @@ func (b *websocketBroker) ServeHTTP() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) (err error) {
 		c, err := upgrader.Upgrade(w, r, nil)
 		if err != nil {
-			return sdk.WithStack(err)
+			service.WriteError(ctx, w, r, sdk.WithStack(sdk.ErrWebsocketUpgrade))
+			return nil
 		}
 		defer c.Close()
 

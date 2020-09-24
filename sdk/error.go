@@ -200,6 +200,7 @@ var (
 	ErrWorkerErrorCommand                            = Error{ID: 190, Status: http.StatusBadRequest}
 	ErrRepoAnalyzeFailed                             = Error{ID: 191, Status: http.StatusInternalServerError}
 	ErrConflictData                                  = Error{ID: 192, Status: http.StatusConflict}
+	ErrWebsocketUpgrade                              = Error{ID: 193, Status: http.StatusUpgradeRequired}
 )
 
 var errorsAmericanEnglish = map[int]string{
@@ -382,6 +383,7 @@ var errorsAmericanEnglish = map[int]string{
 	ErrWorkerErrorCommand.ID:                            "Worker command in error",
 	ErrRepoAnalyzeFailed.ID:                             "Unable to analyse repository",
 	ErrConflictData.ID:                                  "Data conflict",
+	ErrWebsocketUpgrade.ID:                              "Websocket upgrade required",
 }
 
 var errorsFrench = map[int]string{
@@ -564,6 +566,7 @@ var errorsFrench = map[int]string{
 	ErrWorkerErrorCommand.ID:                            "Commande du worker en erreur",
 	ErrRepoAnalyzeFailed.ID:                             "L'analyse du repository a echoué",
 	ErrConflictData.ID:                                  "Donnée en conflit",
+	ErrWebsocketUpgrade.ID:                              "Websocket upgrade requis",
 }
 
 // Error type.
