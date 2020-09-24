@@ -14,6 +14,7 @@ import (
 // PubSub represents a subscriber
 type PubSub interface {
 	Unsubscribe(channels ...string) error
+	GetMessage(c context.Context) (string, error)
 }
 
 //Key make a key as expected
@@ -64,7 +65,6 @@ type SetStore interface {
 type PubSubStore interface {
 	Publish(ctx context.Context, queueName string, value interface{}) error
 	Subscribe(queueName string) (PubSub, error)
-	GetMessageFromSubscription(c context.Context, pb PubSub) (string, error)
 }
 
 type LockStore interface {

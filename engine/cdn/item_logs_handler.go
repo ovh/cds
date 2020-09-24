@@ -8,6 +8,7 @@ import (
 
 	"github.com/ovh/cds/engine/cdn/item"
 	"github.com/ovh/cds/engine/service"
+	"github.com/ovh/cds/engine/websocket"
 	"github.com/ovh/cds/sdk"
 )
 
@@ -72,6 +73,34 @@ func (s *Service) getItemDownloadHandler() service.Handler {
 		refreshDelay := service.FormInt64(r, "refresh")
 
 		return s.downloadItem(ctx, itemType, apiRef, refreshDelay, w)
+	}
+}
+
+func (s *Service) getItemLogsStreamHandler() service.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		vars := mux.Vars(r)
+		itemType := sdk.CDNItemType(vars["type"])
+		if !itemType.IsLog() {
+			return sdk.NewErrorFrom(sdk.ErrWrongRequest, "invalid item log type")
+		}
+		token, err := s.checkAuth(r)
+		if err != nil {
+			return err
+		}
+
+		c, err := websocket.Upgrader.Upgrade(w, r, nil)
+		if err != nil {
+			service.WriteError(ctx, w, r, sdk.NewErrorWithStack(err, sdk.ErrWebsocketUpgrade))
+			return nil
+		}
+		defer c.Close()
+
+		wsClient := websocket.NewClient(sdk.UUID(), c)
+		wsClientData := &websocketClientData{token: token}
+		s.WSServer.AddClient(wsClient, wsClientData)
+		defer s.WSServer.RemoveClient(wsClient.UUID())
+
+		return wsClient.Listen(ctx, s.GoRoutines)
 	}
 }
 

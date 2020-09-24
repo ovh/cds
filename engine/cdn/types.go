@@ -8,6 +8,7 @@ import (
 	"github.com/ovh/cds/engine/database"
 	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/engine/service"
+	"github.com/ovh/cds/engine/websocket"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk/log/hook"
@@ -30,6 +31,8 @@ type Service struct {
 	LogCache            *lru.Redis
 	Mapper              *gorpmapper.Mapper
 	Units               *storage.RunningStorageUnits
+	WSServer            *websocketServer
+	WSBroker            *websocket.Broker
 }
 
 // Configuration is the hooks configuration structure

@@ -22,6 +22,8 @@ var (
 	metricsStepLogReceived    *stats.Int64Measure
 	metricsServiceLogReceived *stats.Int64Measure
 	metricsItemCompletedByGC  *stats.Int64Measure
+	metricsWSClients          *stats.Int64Measure
+	metricsWSEvents           *stats.Int64Measure
 )
 
 func (s *Service) statusHandler() service.Handler {
@@ -87,6 +89,8 @@ func (s *Service) initMetrics(ctx context.Context) error {
 		metricsStepLogReceived = stats.Int64("cdn/tcp/step/log/count", "number of worker log received", stats.UnitDimensionless)
 		metricsServiceLogReceived = stats.Int64("cdn/tcp/service/log/count", "number of service log received", stats.UnitDimensionless)
 		metricsItemCompletedByGC = stats.Int64("cdn/items/completed_by_gc", "number of items completed by GC", stats.UnitDimensionless)
+		metricsWSClients = stats.Int64("cdn/websocket_clients", "number of  websocket clients", stats.UnitDimensionless)
+		metricsWSEvents = stats.Int64("cdn/websocket_events", "number of websocket events", stats.UnitDimensionless)
 
 		err = telemetry.InitMetricsInt64(ctx, metricsErrors, metricsHits, metricsServiceLogReceived, metricsServiceLogReceived, metricsItemCompletedByGC)
 	})

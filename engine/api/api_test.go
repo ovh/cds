@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
+	"github.com/stretchr/testify/require"
 
 	"github.com/ovh/cds/engine/api/authentication/builtin"
 	"github.com/ovh/cds/engine/api/authentication/local"
@@ -39,10 +40,8 @@ func newTestAPI(t *testing.T, bootstrapFunc ...test.Bootstrapf) (*API, *test.Fak
 	api.AuthenticationDrivers[sdk.ConsumerTest2] = authdrivertest.NewDriver(t)
 	api.GoRoutines = sdk.NewGoRoutines()
 
-	api.InitRouter()
-	t.Cleanup(func() {
-		cancel()
-	})
+	require.NoError(t, api.InitRouter())
+	t.Cleanup(func() { cancel() })
 	return api, db, router
 }
 
@@ -75,7 +74,7 @@ func newTestServer(t *testing.T, bootstrapFunc ...test.Bootstrapf) (*API, *test.
 	api.AuthenticationDrivers[sdk.ConsumerBuiltin] = builtin.NewDriver()
 	api.GoRoutines = sdk.NewGoRoutines()
 
-	api.InitRouter()
+	require.NoError(t, api.InitRouter())
 	ts := httptest.NewServer(router.Mux)
 	url, _ := url.Parse(ts.URL)
 	t.Cleanup(func() {

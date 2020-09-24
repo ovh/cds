@@ -51,6 +51,7 @@ import (
 	"github.com/ovh/cds/engine/featureflipping"
 	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/engine/service"
+	"github.com/ovh/cds/engine/websocket"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/ovh/cds/sdk/jws"
@@ -244,7 +245,8 @@ type API struct {
 	SharedStorage       objectstore.Driver
 	StartupTime         time.Time
 	Maintenance         bool
-	websocketBroker     *websocketBroker
+	WSBroker            *websocket.Broker
+	WSServer            *websocketServer
 	Cache               cache.Store
 	Metrics             struct {
 		WorkflowRunFailed        *stats.Int64Measure
@@ -522,7 +524,7 @@ func (a *API) Serve(ctx context.Context) error {
 		a.Config.Cache.Redis.Password,
 		a.Config.Cache.TTL)
 	if err != nil {
-		return fmt.Errorf("cannot connect to cache store: %v", err)
+		return sdk.WrapError(err, "cannot connect to cache store")
 	}
 
 	log.Info(ctx, "Initializing HTTP router")
@@ -531,7 +533,9 @@ func (a *API) Serve(ctx context.Context) error {
 		Mux:        mux.NewRouter(),
 		Background: ctx,
 	}
-	a.InitRouter()
+	if err := a.InitRouter(); err != nil {
+		return err
+	}
 	if err := InitRouterMetrics(ctx, a); err != nil {
 		log.Error(ctx, "unable to init router metrics: %v", err)
 	}

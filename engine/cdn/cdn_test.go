@@ -59,7 +59,7 @@ func newTestService(t *testing.T) (*Service, *test.FakeTransaction) {
 		fakeAPIPrivateKey.key, _ = jws.NewRandomRSAKey()
 	}
 	s.ParsedAPIPublicKey = &fakeAPIPrivateKey.key.PublicKey
-	s.initRouter(context.TODO())
+	require.NoError(t, s.initRouter(context.TODO()))
 
 	t.Cleanup(func() { cancel() })
 	return s, db
