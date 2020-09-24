@@ -2,8 +2,6 @@ package cdn
 
 import (
 	"context"
-	"fmt"
-	"io"
 	"net/http"
 	"strconv"
 	"strings"
@@ -48,11 +46,11 @@ func (s *Service) markItemToDeleteHandler() service.Handler {
 	}
 }
 
-func (s *Service) getItemLogsHandler() service.Handler {
+func (s *Service) getItemHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		itemType := sdk.CDNItemType(vars["type"])
-		if err := itemType.IsLog(); err != nil {
+		if err := itemType.Validate(); err != nil {
 			return err
 		}
 		apiRef := vars["apiRef"]
@@ -67,14 +65,30 @@ func (s *Service) getItemLogsHandler() service.Handler {
 	}
 }
 
+func (s *Service) getItemDownloadHandler() service.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		vars := mux.Vars(r)
+		itemType := sdk.CDNItemType(vars["type"])
+		if err := itemType.Validate(); err != nil {
+			return err
+		}
+		token, err := s.checkAuth(r)
+		if err != nil {
+			return err
+		}
+
+		return s.downloadItem(ctx, itemType, token.APIRefHash, w)
+	}
+}
+
 func (s *Service) getItemLogsLinesHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		itemType := sdk.CDNItemType(vars["type"])
-		if err := itemType.IsLog(); err != nil {
-			return err
+		if !itemType.IsLog() {
+			return sdk.NewErrorFrom(sdk.ErrWrongRequest, "invalid item log type")
 		}
-		token, err := s.checkItemLogsAuth(r)
+		token, err := s.checkAuth(r)
 		if err != nil {
 			return err
 		}
@@ -88,7 +102,7 @@ func (s *Service) getItemLogsLinesHandler() service.Handler {
 			count = 100
 		}
 
-		rc, err := s.getItemLogValue(ctx, itemType, token.APIRefHash, sdk.CDNReaderFormatJSON, offset, uint(count))
+		rc, _, err := s.getItemLogValue(ctx, itemType, token.APIRefHash, sdk.CDNReaderFormatJSON, offset, uint(count))
 		if err != nil {
 			return err
 		}
@@ -97,38 +111,6 @@ func (s *Service) getItemLogsLinesHandler() service.Handler {
 		}
 
 		return service.Write(w, rc, http.StatusOK, "application/json")
-	}
-}
-
-func (s *Service) getItemLogsDownloadHandler() service.Handler {
-	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		vars := mux.Vars(r)
-		itemType := sdk.CDNItemType(vars["type"])
-		if err := itemType.IsLog(); err != nil {
-			return err
-		}
-		token, err := s.checkItemLogsAuth(r)
-		if err != nil {
-			return err
-		}
-
-		rc, err := s.getItemLogValue(ctx, itemType, token.APIRefHash, sdk.CDNReaderFormatText, 0, 0)
-		if err != nil {
-			return err
-		}
-
-		if rc == nil {
-			return sdk.WrapError(sdk.ErrNotFound, "no storage found that contains given item %s", token.APIRefHash)
-		}
-
-		w.Header().Add("Content-Type", "text/plain")
-		w.Header().Add("Content-Disposition", fmt.Sprintf("attachment; filename=\"%s.log\"", token.APIRefHash))
-
-		if _, err := io.Copy(w, rc); err != nil {
-			return sdk.WithStack(err)
-		}
-
-		return nil
 	}
 }
 
@@ -147,7 +129,7 @@ func (s *Service) getSizeByProjectHandler() service.Handler {
 	}
 }
 
-func (s *Service) checkItemLogsAuth(r *http.Request) (sdk.CDNAuthToken, error) {
+func (s *Service) checkAuth(r *http.Request) (sdk.CDNAuthToken, error) {
 	vars := mux.Vars(r)
 	apiRef := vars["apiRef"]
 	tokenRaw := strings.TrimPrefix(r.Header.Get("Authorization"), "Bearer ")
