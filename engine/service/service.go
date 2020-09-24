@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"fmt"
+	"os"
 	"time"
 
 	"github.com/ovh/cds/sdk"
@@ -15,10 +16,16 @@ import (
 // NewMonitoringStatus returns a MonitoringStatus for the current service
 func (c *Common) NewMonitoringStatus() *sdk.MonitoringStatus {
 	t := time.Now()
+	hostname, err := os.Hostname()
+	if err != nil {
+		log.Error(context.Background(), "NewMonitoringStatus: error on getting hostname")
+	}
+
 	s := &sdk.MonitoringStatus{
-		Now:         t,
-		ServiceType: c.Type(),
-		ServiceName: c.Name(),
+		Now:             t,
+		ServiceType:     c.Type(),
+		ServiceName:     c.Name(),
+		ServiceHostname: hostname,
 	}
 	s.AddLine(c.commonMonitoring(t)...)
 	return s

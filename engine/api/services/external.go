@@ -24,6 +24,7 @@ type ExternalService struct {
 	Path        string `json:"path"`
 }
 
+// ServiceConfig return sthe serviceConfig for the current ExternalService
 func (e ExternalService) ServiceConfig() sdk.ServiceConfig {
 	b, _ := json.Marshal(e)
 	var cfg sdk.ServiceConfig
@@ -64,7 +65,7 @@ func Pings(ctx context.Context, dbFunc func() *gorp.DbMap, ss []ExternalService)
 
 func ping(ctx context.Context, db gorpmapper.SqlExecutorWithTx, s ExternalService) error {
 	// Select for update
-	serv, err := LoadByName(context.Background(), db, s.Name)
+	srv, err := LoadByName(context.Background(), db, s.Name)
 	if err != nil {
 		return sdk.WithStack(err)
 	}
@@ -101,9 +102,9 @@ func ping(ctx context.Context, db gorpmapper.SqlExecutorWithTx, s ExternalServic
 		mon.Lines[0].Value = "Health: OK"
 	}
 
-	serv.LastHeartbeat = time.Now()
-	serv.MonitoringStatus = mon
-	if err := Update(ctx, db, serv); err != nil {
+	srv.LastHeartbeat = time.Now()
+	srv.MonitoringStatus = mon
+	if err := Update(ctx, db, srv, ""); err != nil {
 		log.Warning(ctx, "services.ping> unable to update monitoring status: %v", err)
 		return err
 	}
@@ -144,13 +145,13 @@ func initExternal(ctx context.Context, db *gorp.DbMap, s ExternalService) error 
 		s.Service.LastHeartbeat = old.LastHeartbeat
 		s.Service.MonitoringStatus = old.MonitoringStatus
 		s.Service.Config = s.ServiceConfig()
-		if err := Update(ctx, tx, &s.Service); err != nil {
+		if err := Update(ctx, tx, &s.Service, ""); err != nil {
 			return sdk.WrapError(err, "unable to update external service")
 		}
 	} else {
 		s.Service.LastHeartbeat = time.Now()
 		s.Service.Config = s.ServiceConfig()
-		if err := Insert(ctx, tx, &s.Service); err != nil {
+		if err := Insert(ctx, tx, &s.Service, ""); err != nil {
 			return sdk.WrapError(err, "unable to insert external service")
 		}
 	}

@@ -65,6 +65,32 @@ func LoadAll(ctx context.Context, db gorp.SqlExecutor) ([]sdk.Service, error) {
 	return getAll(ctx, db, query)
 }
 
+// LoadAllWithStatus returns all services in database with status
+func LoadAllWithStatus(ctx context.Context, db gorp.SqlExecutor) ([]sdk.Service, error) {
+	query := gorpmapping.NewQuery(`SELECT * FROM service`)
+	srvs, err := getAll(ctx, db, query)
+	if err != nil {
+		return nil, err
+	}
+
+	ss, err := loadAllServiceStatus(ctx, db)
+	if err != nil {
+		return nil, err
+	}
+	for i := range srvs {
+		srv := &srvs[i]
+		srv.MonitoringStatus = sdk.MonitoringStatus{Now: time.Now()}
+		for _, status := range ss {
+			if srv.ID == status.ServiceID {
+				srv.MonitoringStatus.Lines = append(srv.MonitoringStatus.Lines, status.MonitoringStatus.Lines...)
+			}
+		}
+		srvs[i] = *srv
+	}
+
+	return srvs, nil
+}
+
 // LoadAllByType returns all services with given type.
 func LoadAllByType(ctx context.Context, db gorp.SqlExecutor, typeService string) ([]sdk.Service, error) {
 	if ss, ok := internalCache.getFromCache(typeService); ok {
@@ -74,7 +100,7 @@ func LoadAllByType(ctx context.Context, db gorp.SqlExecutor, typeService string)
 	return getAll(ctx, db, query)
 }
 
-// LoadAllByType returns all services that users can see with given type.
+// LoadAllByTypeAndUserID returns all services that users can see with given type.
 func LoadAllByTypeAndUserID(ctx context.Context, db gorp.SqlExecutor, typeService string, userID string) ([]sdk.Service, error) {
 	query := gorpmapping.NewQuery(`
 		SELECT service.*
@@ -115,22 +141,45 @@ func FindDeadServices(ctx context.Context, db gorp.SqlExecutor, t time.Duration)
 }
 
 // Insert a service in database.
-func Insert(ctx context.Context, db gorpmapper.SqlExecutorWithTx, s *sdk.Service) error {
+func Insert(ctx context.Context, db gorpmapper.SqlExecutorWithTx, s *sdk.Service, authSessionID string) error {
 	sdb := service{Service: *s}
 	if err := gorpmapping.InsertAndSign(ctx, db, &sdb); err != nil {
 		return err
 	}
 	*s = sdb.Service
-	return nil
+	return upsertStatus(db, s, authSessionID)
 }
 
 // Update a service in database.
-func Update(ctx context.Context, db gorpmapper.SqlExecutorWithTx, s *sdk.Service) error {
+func Update(ctx context.Context, db gorpmapper.SqlExecutorWithTx, s *sdk.Service, authSessionID string) error {
 	sdb := service{Service: *s}
 	if err := gorpmapping.UpdateAndSign(ctx, db, &sdb); err != nil {
 		return err
 	}
 	*s = sdb.Service
+	return upsertStatus(db, s, authSessionID)
+}
+
+// loadAllServiceStatus returns all services status
+func loadAllServiceStatus(ctx context.Context, db gorp.SqlExecutor) ([]sdk.ServiceStatus, error) {
+	query := gorpmapping.NewQuery(`SELECT * FROM service_status`)
+	ss := []sdk.ServiceStatus{}
+	if err := gorpmapping.GetAll(ctx, db, query, &ss); err != nil {
+		return nil, sdk.WrapError(err, "cannot get services")
+	}
+	return ss, nil
+}
+
+func upsertStatus(db gorpmapper.SqlExecutorWithTx, s *sdk.Service, authSessionID string) error {
+	var sessionID *string
+	if authSessionID != "" {
+		sessionID = &authSessionID
+	}
+	query := `INSERT INTO service_status(monitoring_status, service_id, auth_session_id) VALUES($1,$2, $3)
+	ON CONFLICT (service_id, auth_session_id) DO UPDATE SET monitoring_status = $1, service_id = $2, auth_session_id = $3`
+	if _, err := db.Exec(query, s.MonitoringStatus, s.ID, sessionID); err != nil {
+		return sdk.WithStack(err)
+	}
 	return nil
 }
 

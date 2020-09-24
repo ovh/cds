@@ -34,9 +34,18 @@ type CanonicalService struct {
 type Service struct {
 	CanonicalService
 	LastHeartbeat    time.Time        `json:"last_heartbeat" db:"last_heartbeat" cli:"heartbeat"`
-	MonitoringStatus MonitoringStatus `json:"monitoring_status" db:"monitoring_status" cli:"-"`
+	MonitoringStatus MonitoringStatus `json:"monitoring_status" db:"-" cli:"-"`
 	Version          string           `json:"version" db:"-" cli:"version"`
 	Uptodate         bool             `json:"up_to_date" db:"-"`
+}
+
+// ServiceStatus contains the status for a service. The status can be attached to a sesion_id : all services except api
+// or a serviceId for API instance.
+type ServiceStatus struct {
+	ID               int64            `json:"-" db:"id"`
+	MonitoringStatus MonitoringStatus `json:"monitoring_status" db:"monitoring_status" cli:"-"`
+	ServiceID        int64            `json:"-" db:"service_id"`
+	SessionID        *string          `json:"-" db:"auth_session_id"`
 }
 
 // Update service field from new data.

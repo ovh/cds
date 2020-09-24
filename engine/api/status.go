@@ -54,7 +54,7 @@ func (api *API) statusHandler() service.Handler {
 			status = http.StatusServiceUnavailable
 		}
 
-		srvs, err := services.LoadAll(ctx, api.mustDB())
+		srvs, err := services.LoadAllWithStatus(ctx, api.mustDB())
 		if err != nil {
 			return err
 		}
@@ -333,7 +333,7 @@ func (api *API) countMetricRange(ctx context.Context, status string, timerange s
 }
 
 func (api *API) processStatusMetrics(ctx context.Context) {
-	srvs, err := services.LoadAll(ctx, api.mustDB())
+	srvs, err := services.LoadAllWithStatus(ctx, api.mustDB())
 	if err != nil {
 		log.Error(ctx, "Error while getting services list: %v", err)
 		return
