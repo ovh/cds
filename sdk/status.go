@@ -56,12 +56,14 @@ func (m *MonitoringStatus) AddLine(lines ...MonitoringStatusLine) {
 
 // MonitoringStatusLine represents a CDS Component Status
 type MonitoringStatusLine struct {
-	Status    string `json:"status" cli:"status"`
-	Component string `json:"component" cli:"component"`
-	Value     string `json:"value" cli:"value"`
-	Type      string `json:"type" cli:"type"`
-	Service   string `json:"service" cli:"service"`
-	Hostname  string `json:"hostname" cli:"hostname"`
+	Status     string `json:"status" cli:"status"`
+	Component  string `json:"component" cli:"component"`
+	Value      string `json:"value" cli:"value"`
+	Type       string `json:"type" cli:"type"`
+	Service    string `json:"service" cli:"service"`
+	Hostname   string `json:"hostname" cli:"hostname"`
+	SessionID  string `json:"session,omitempty" cli:"session"`
+	ConsumerID string `json:"consumer,omitempty" cli:"consumer"`
 }
 
 // HTTPStatusCode returns the http status code

@@ -40,8 +40,18 @@
                 <div class="column">
                     <h4>Status</h4>
                     <table class="ui definition table">
+                        <thead>
+                            <th>Service</th>
+                            <th>Component</th>
+                            <th>Status</th>
+                            <th>Value</th>
+                            <th>Hostname</th>
+                        </thead>
                         <tbody>
                             <tr *ngFor="let line of service.monitoring_status.lines" [ngClass]="{'error': line.status==='AL', 'warning': line.status==='WARN', 'positive': line.status==='WARN'}">
+                                <td>
+                                    {{line.service}}
+                                </td>
                                 <td>
                                     {{line.component}}
                                 </td>
@@ -50,6 +60,9 @@
                                 </td>
                                 <td>
                                     {{line.value}}
+                                </td>
+                                <td>
+                                    {{line.hostname}}
                                 </td>
                             </tr>
                         </tbody>

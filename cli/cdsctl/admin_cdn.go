@@ -30,13 +30,13 @@ var adminCdnStatusCmd = cli.Command{
 }
 
 func adminCdnStatusRun(v cli.Values) (cli.ListResult, error) {
-	btes, err := client.ServiceCallGET("cdn", "/mon/status")
+	services, err := client.ServicesByType("cdn")
 	if err != nil {
 		return nil, err
 	}
 	status := sdk.MonitoringStatus{}
-	if err := json.Unmarshal(btes, &status); err != nil {
-		return nil, err
+	for _, srv := range services {
+		status.Lines = append(status.Lines, srv.MonitoringStatus.Lines...)
 	}
 	return cli.AsListResult(status.Lines), nil
 }

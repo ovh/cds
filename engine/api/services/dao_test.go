@@ -37,7 +37,7 @@ func TestDAO(t *testing.T) {
 		},
 	}
 
-	test.NoError(t, services.Insert(context.TODO(), db, &srv, ""))
+	test.NoError(t, services.Insert(context.TODO(), db, &srv))
 
 	srv2, err := services.LoadByName(context.TODO(), db, srv.Name)
 	test.NoError(t, err)
@@ -95,7 +95,8 @@ func TestDAOWithStatus(t *testing.T) {
 		},
 	}
 
-	test.NoError(t, services.Insert(context.TODO(), db, &srv, ""))
+	test.NoError(t, services.Insert(context.TODO(), db, &srv))
+	test.NoError(t, services.UpsertStatus(db, srv, ""))
 
 	srv2, err := services.LoadByName(context.TODO(), db, srv.Name)
 	test.NoError(t, err)
@@ -108,7 +109,7 @@ func TestDAOWithStatus(t *testing.T) {
 
 	assert.True(t, len(all) >= 1)
 
-	all2, err := services.LoadAllWithStatus(context.TODO(), db)
+	all2, err := services.LoadAll(context.TODO(), db)
 	test.NoError(t, err)
 	var found bool
 	for _, s := range all2 {

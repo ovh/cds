@@ -460,7 +460,7 @@ func InsertHatchery(t *testing.T, db gorpmapper.SqlExecutorWithTx, grp sdk.Group
 		},
 	}
 
-	require.NoError(t, services.Insert(context.TODO(), db, &srv, ""))
+	require.NoError(t, services.Insert(context.TODO(), db, &srv))
 
 	session, err := authentication.NewSession(context.TODO(), db, hConsumer, 5*time.Minute, false)
 	require.NoError(t, err)
@@ -497,7 +497,7 @@ func InsertService(t *testing.T, db gorpmapper.SqlExecutorWithTx, name, serviceT
 		},
 	}
 
-	require.NoError(t, services.Insert(context.TODO(), db, &srv, ""))
+	require.NoError(t, services.Insert(context.TODO(), db, &srv))
 
 	return &srv, privateKey
 }
@@ -532,7 +532,7 @@ func InitCDNService(t *testing.T, db gorpmapper.SqlExecutorWithTx, scopes ...sdk
 		},
 	}
 
-	require.NoError(t, services.Insert(context.TODO(), db, &srv, ""))
+	require.NoError(t, services.Insert(context.TODO(), db, &srv))
 
 	return &srv, privateKey
 }

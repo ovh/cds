@@ -82,16 +82,41 @@
                         </div>
 
                         <table class="ui definition table">
+                            <thead>
+                                <th>Type</th>
+                                <th>service</th>
+                                <th>Component</th>
+                                <th>Hostname</th>
+                                <th>Status</th>
+                                <th>Value</th>
+                                <th>Consumer</th>
+                                <th>Session</th>
+                            </thead>
                             <tbody>
                                 <tr *ngFor="let line of filteredStatusLines" [ngClass]="{'error': line.status==='AL', 'warning': line.status==='WARN', 'positive': line.status==='WARN'}">
                                     <td>
+                                        {{line.type}}
+                                    </td>
+                                    <td>
+                                        {{line.service}}
+                                    </td>
+                                    <td>
                                         {{line.component}}
+                                    </td>
+                                    <td>
+                                        {{line.hostname}}
                                     </td>
                                     <td>
                                         {{line.status}}
                                     </td>
                                     <td>
                                         {{line.value}}
+                                    </td>
+                                    <td>
+                                        {{line.consumer}}
+                                    </td>
+                                    <td>
+                                        {{line.session}}
                                     </td>
                                 </tr>
                             </tbody>

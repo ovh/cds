@@ -86,7 +86,7 @@ func (api *API) getAdminServiceHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		name := vars["name"]
-		srv, err := services.LoadByName(ctx, api.mustDB(), name)
+		srv, err := services.LoadByNameWithStatus(ctx, api.mustDB(), name)
 		if err != nil {
 			return err
 		}

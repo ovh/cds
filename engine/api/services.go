@@ -106,7 +106,7 @@ func (api *API) postServiceRegisterHandler() service.Handler {
 		}
 		if exists {
 			srv.Update(data)
-			if err := services.Update(ctx, tx, srv, sessionID); err != nil {
+			if err := services.Update(ctx, tx, srv); err != nil {
 				return err
 			}
 			log.Debug("postServiceRegisterHandler> update existing service %s(%d) registered for consumer %s", srv.Name, srv.ID, *srv.ConsumerID)
@@ -114,10 +114,14 @@ func (api *API) postServiceRegisterHandler() service.Handler {
 			srv = &data
 			srv.ConsumerID = &consumer.ID
 
-			if err := services.Insert(ctx, tx, srv, sessionID); err != nil {
+			if err := services.Insert(ctx, tx, srv); err != nil {
 				return sdk.WithStack(err)
 			}
 			log.Debug("postServiceRegisterHandler> insert new service %s(%d) registered for consumer %s", srv.Name, srv.ID, *srv.ConsumerID)
+		}
+
+		if err := services.UpsertStatus(tx, *srv, sessionID); err != nil {
+			return sdk.WithStack(err)
 		}
 
 		if len(srv.PublicKey) > 0 {
@@ -183,7 +187,11 @@ func (api *API) postServiceHearbeatHandler() service.Handler {
 		if a := getAuthSession(ctx); a != nil {
 			sessionID = a.ID
 		}
-		if err := services.Update(ctx, tx, s, sessionID); err != nil {
+		if err := services.Update(ctx, tx, s); err != nil {
+			return err
+		}
+
+		if err := services.UpsertStatus(tx, *s, sessionID); err != nil {
 			return err
 		}
 
@@ -254,15 +262,20 @@ func (api *API) serviceAPIHeartbeatUpdate(ctx context.Context, db *gorp.DbMap) {
 	}
 	if exists {
 		srv.ID = old.ID
-		if err := services.Update(ctx, tx, srv, authSessionID); err != nil {
+		if err := services.Update(ctx, tx, srv); err != nil {
 			log.Error(ctx, "serviceAPIHeartbeat> Unable to update service %s: %v", srv.Name, err)
 			return
 		}
 	} else {
-		if err := services.Insert(ctx, tx, srv, authSessionID); err != nil {
+		if err := services.Insert(ctx, tx, srv); err != nil {
 			log.Error(ctx, "serviceAPIHeartbeat> Unable to insert service %s: %v", srv.Name, err)
 			return
 		}
+	}
+
+	if err := services.UpsertStatus(tx, *srv, authSessionID); err != nil {
+		log.Error(ctx, "serviceAPIHeartbeat> Unable to insert or update monitoring status %s: %v", srv.Name, err)
+		return
 	}
 
 	if err := tx.Commit(); err != nil {
