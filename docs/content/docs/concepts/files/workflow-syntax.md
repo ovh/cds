@@ -23,6 +23,7 @@ workflow:
     pipeline: deploy
     application: my-application
     environment: my-production
+    one_at_a_time: true
 hooks:
   build:
   - type: RepositoryWebHook
@@ -125,4 +126,20 @@ Example of vcs notification. Note that `pipelines` list is optional on every not
         [[- end]]
       disable_comment: false
       disable_status: false
+```
+
+## Mutex
+
+[Mutex documentation]({{<relref "/docs/concepts/workflow/mutex.md">}})
+
+Example of a pipeline limited to one execution at a time: deployments to production cannot be executed concurently.
+
+```yml
+name: my-workflow
+workflow:
+  # ...
+  deploy:
+    pipeline: deploy
+    # ...
+    one_at_a_time: true # No concurent deployments
 ```
