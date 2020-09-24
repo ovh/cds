@@ -21,6 +21,7 @@ select create_index('item', 'IDX_ITEM_STATUS', 'status');
 
 -- Index to get a log
 CREATE INDEX IDX_LOG_ITEM ON item(type, (api_ref->>'job_id'), (api_ref->>'step_order'));
+CREATE INDEX IDX_LOG_PROJECT_KEY ON item((api_ref->>'project_key'));
 
 -- +migrate Down
 DROP TABLE IF EXISTS "item";

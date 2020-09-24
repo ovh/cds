@@ -15,6 +15,10 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
+const (
+	maxWorker = 5
+)
+
 var statusSync struct {
 	currentProjectSync  string
 	nbProjects          int
@@ -119,23 +123,56 @@ func (s *Service) syncProjectLogs(ctx context.Context, cdsStorage *cds.CDS, pKey
 	}
 
 	statusSync.runPerProjectTotal[pKey] = len(nodeRunIds)
+	// Test if all noderuns have been sync for this project
+	listNodeRuns, err := item.ListNodeRunByProject(s.mustDBWithCtx(ctx), pKey)
+	if err != nil {
+		return err
+	}
+	nodeRunMap := make(map[int64]struct{}, len(listNodeRuns))
+	for _, id := range listNodeRuns {
+		nodeRunMap[id] = struct{}{}
+	}
 
 	log.Info(ctx, "cdn:cds:sync:log: %d node run to sync for project %s", len(nodeRunIds), pKey)
-	// Browse node run
-	for _, nodeRunIdentifier := range nodeRunIds {
-		log.Info(ctx, "cdn:cds:sync:log: node run done for project %s:  %d/%d (+%d failed)", pKey, statusSync.runPerProjectDone[pKey], len(nodeRunIds), statusSync.runPerProjectFailed[pKey])
-		if err := s.syncNodeRun(ctx, cdsStorage, pKey, nodeRunIdentifier); err != nil {
+
+	// Nb of nodeRun
+	maxNodeRun := len(nodeRunIds)
+	jobs := make(chan sdk.WorkflowNodeRunIdentifiers, maxNodeRun)
+	results := make(chan error, maxNodeRun)
+
+	// Spawn worker
+	for i := 0; i < maxWorker; i++ {
+		s.GoRoutines.Exec(ctx, "migrate-noderun-"+strconv.Itoa(i), func(ctx context.Context) {
+			s.syncNodeRunJob(ctx, cdsStorage, pKey, jobs, results)
+		})
+	}
+
+	for i := 0; i < len(nodeRunIds); i++ {
+		jobs <- nodeRunIds[i]
+	}
+	close(jobs)
+
+	for a := 1; a <= len(nodeRunIds); a++ {
+		err := <-results
+		if err != nil {
 			statusSync.runPerProjectFailed[pKey]++
 			log.Error(ctx, "cdn:cds:sync:log: unable to sync node runs: %v", err)
-			continue
+		} else {
+			statusSync.runPerProjectDone[pKey]++
 		}
-		statusSync.runPerProjectDone[pKey]++
+		log.Info(ctx, "cdn:cds:sync:log: node run done for project %s:  %d/%d (+%d failed)", pKey, statusSync.runPerProjectDone[pKey], len(nodeRunIds), statusSync.runPerProjectFailed[pKey])
 	}
-	log.Info(ctx, "cdn:cds:sync:log: node run done for project %s:  %d/%d (+%d failed)", pKey, statusSync.runPerProjectDone[pKey], len(nodeRunIds), statusSync.runPerProjectFailed[pKey])
+
 	if statusSync.runPerProjectFailed[pKey] > 0 {
 		return sdk.WithStack(fmt.Errorf("failed during node run sync on project %s", pKey))
 	}
 	return nil
+}
+
+func (s *Service) syncNodeRunJob(ctx context.Context, cdsStorage *cds.CDS, pKey string, jobs <-chan sdk.WorkflowNodeRunIdentifiers, results chan<- error) {
+	for j := range jobs {
+		results <- s.syncNodeRun(ctx, cdsStorage, pKey, j)
+	}
 }
 
 func (s *Service) syncNodeRun(ctx context.Context, cdsStorage *cds.CDS, pKey string, nodeRunIdentifier sdk.WorkflowNodeRunIdentifiers) error {

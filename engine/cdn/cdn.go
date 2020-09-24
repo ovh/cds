@@ -149,6 +149,7 @@ func (s *Service) Serve(c context.Context) error {
 					log.Error(ctx, "unable to sync logs: %v", err)
 				}
 			})
+			break
 		}
 
 		log.Info(ctx, "Initializing log cache on %s", s.Cfg.Cache.Redis.Host)

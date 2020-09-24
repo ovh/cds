@@ -48,8 +48,8 @@ In Bitbucket go to *Administration Settings* / *Application Links*. Create a new
 
  - Name: **CDS**
  - Type: **Generic Application**
- - Application URL: *Your CDS URL*
- - Display URL: *Your CDS URL*
+ - Application URL: *Your CDS API URL*
+ - Display URL: *Your CDS API URL*
 
 On this application, you just have to set up *OAuth Incoming Authentication*:
 
