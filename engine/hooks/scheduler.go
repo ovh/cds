@@ -323,7 +323,7 @@ func (s *Service) dequeueTaskExecutions(ctx context.Context) error {
 					}
 					continue
 				} else {
-					log.Error(ctx, "dequeueTaskExecutions> %s failed err[%d]: %v", t.UUID, t.NbErrors, err)
+					log.Warning(ctx, "dequeueTaskExecutions> %s failed err[%d]: %v", t.UUID, t.NbErrors, err)
 					t.LastError = err.Error()
 					t.NbErrors++
 					saveTaskExecution = true
