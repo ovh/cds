@@ -63,7 +63,7 @@ func TestWebdav(t *testing.T) {
 	t.Logf("webdav server running\n")
 
 	var driver = new(Webdav)
-	err = driver.Init(context.TODO(), &storage.WebdavStorageConfiguration{
+	err = driver.Init(context.TODO(), sdk.NewGoRoutines(), &storage.WebdavStorageConfiguration{
 		Address:  "http://localhost:8091",
 		Username: "username",
 		Password: "password",
@@ -75,7 +75,7 @@ func TestWebdav(t *testing.T) {
 				SecretValue: "secret_value",
 			},
 		},
-	}, sdk.NewGoRoutines())
+	})
 	require.NoError(t, err, "unable to initialiaze webdav driver")
 
 	itemUnit := sdk.CDNItemUnit{

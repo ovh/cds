@@ -40,7 +40,7 @@ func TestRun(t *testing.T) {
 	tmpDir2, err := ioutil.TempDir("", t.Name()+"-cdn-2-*")
 	require.NoError(t, err)
 
-	cdnUnits, err := storage.Init(ctx, m, db.DbMap, storage.Configuration{
+	cdnUnits, err := storage.Init(ctx, m, db.DbMap, sdk.NewGoRoutines(), storage.Configuration{
 		Buffer: storage.BufferConfiguration{
 			Name: "redis_buffer",
 			Redis: storage.RedisBufferConfiguration{
@@ -77,7 +77,7 @@ func TestRun(t *testing.T) {
 				},
 			},
 		},
-	}, sdk.NewGoRoutines())
+	})
 	require.NoError(t, err)
 	require.NotNil(t, cdnUnits)
 	require.NoError(t, cdnUnits.Start(ctx))
