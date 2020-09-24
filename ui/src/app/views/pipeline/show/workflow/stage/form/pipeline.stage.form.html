@@ -17,7 +17,7 @@
             </div>
         </div>
         <div class="field">
-            <app-conditions *ngIf="!loading" [project]="project" [readonly]="readOnly" [pipelineId]="pipeline.id"
+            <app-conditions *ngIf="!loading" [project]="project" [readonly]="readOnly"
                 [triggerConditions]="triggerConditions" [(conditions)]="stage.conditions">
             </app-conditions>
             <div class="ui active centered inline loader" *ngIf="loading"></div>

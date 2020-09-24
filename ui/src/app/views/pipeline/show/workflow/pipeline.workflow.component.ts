@@ -272,7 +272,13 @@ export class PipelineWorkflowComponent implements OnInit, OnDestroy {
                     this.selectedStage.conditions.plain = null;
                 } else {
                     this.selectedStage.conditions.lua_script = '';
+                    if (this.selectedStage.conditions.plain) {
+                        this.selectedStage.conditions.plain.forEach(cc => {
+                            cc.value = cc.value.toString();
+                        });
+                    }
                 }
+
                 this.store.dispatch(new pipelineActions.UpdatePipelineStage({
                     projectKey: this.project.key,
                     pipelineName: this.pipeline.name,
