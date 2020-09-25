@@ -12,15 +12,15 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
-func getAll(ctx context.Context, db gorp.SqlExecutor, q gorpmapping.Query) ([]sdk.Service, error) {
+func getAll(ctx context.Context, db gorp.SqlExecutor, q gorpmapping.Query, opts ...LoadOptionFunc) ([]sdk.Service, error) {
 	ss := []service{}
-
 	if err := gorpmapping.GetAll(ctx, db, q, &ss); err != nil {
 		return nil, sdk.WrapError(err, "cannot get services")
 	}
 
 	// Check signature of data, if invalid do not return it
 	verifiedServices := make([]sdk.Service, 0, len(ss))
+	servicesIDs := make([]int64, 0, len(ss))
 	for i := range ss {
 		isValid, err := gorpmapping.CheckSignature(ss[i], ss[i].Signature)
 		if err != nil {
@@ -31,12 +31,19 @@ func getAll(ctx context.Context, db gorp.SqlExecutor, q gorpmapping.Query) ([]sd
 			continue
 		}
 		verifiedServices = append(verifiedServices, ss[i].Service)
+		servicesIDs = append(servicesIDs, ss[i].Service.ID)
+	}
+
+	for _, f := range opts {
+		if err := f(ctx, db, verifiedServices, servicesIDs); err != nil {
+			return nil, err
+		}
 	}
 
 	return verifiedServices, nil
 }
 
-func get(ctx context.Context, db gorp.SqlExecutor, q gorpmapping.Query) (*sdk.Service, error) {
+func get(ctx context.Context, db gorp.SqlExecutor, q gorpmapping.Query, opts ...LoadOptionFunc) (*sdk.Service, error) {
 	var s service
 
 	found, err := gorpmapping.Get(ctx, db, q, &s)
@@ -56,61 +63,32 @@ func get(ctx context.Context, db gorp.SqlExecutor, q gorpmapping.Query) (*sdk.Se
 		return nil, sdk.WithStack(sdk.ErrNotFound)
 	}
 
+	if len(opts) > 0 {
+		services := []sdk.Service{s.Service}
+		for _, f := range opts {
+			if err := f(ctx, db, services, []int64{s.Service.ID}); err != nil {
+				return nil, err
+			}
+		}
+		s.Service = services[0]
+	}
+
 	return &s.Service, nil
 }
 
 // LoadAll returns all services in database.
-func LoadAll(ctx context.Context, db gorp.SqlExecutor) ([]sdk.Service, error) {
+func LoadAll(ctx context.Context, db gorp.SqlExecutor, opts ...LoadOptionFunc) ([]sdk.Service, error) {
 	query := gorpmapping.NewQuery(`SELECT * FROM service`)
-	services, err := getAll(ctx, db, query)
-	if err != nil {
-		return nil, err
-	}
-	return withServiceStatus(ctx, db, services)
+	return getAll(ctx, db, query, opts...)
 }
 
 // LoadAllByType returns all services with given type.
-func LoadAllByType(ctx context.Context, db gorp.SqlExecutor, typeService string) ([]sdk.Service, error) {
+func LoadAllByType(ctx context.Context, db gorp.SqlExecutor, typeService string, opts ...LoadOptionFunc) ([]sdk.Service, error) {
 	if ss, ok := internalCache.getFromCache(typeService); ok {
 		return ss, nil
 	}
 	query := gorpmapping.NewQuery(`SELECT * FROM service WHERE type = $1`).Args(typeService)
-	services, err := getAll(ctx, db, query)
-	if err != nil {
-		return nil, err
-	}
-	return withServiceStatus(ctx, db, services)
-}
-
-func withServiceStatus(ctx context.Context, db gorp.SqlExecutor, services []sdk.Service) ([]sdk.Service, error) {
-	ss, err := loadAllServiceStatus(ctx, db)
-	if err != nil {
-		return nil, err
-	}
-	for i := range services {
-		srv := &services[i]
-		srv.MonitoringStatus = sdk.MonitoringStatus{Now: time.Now()}
-		completeStatus(ss, srv)
-		services[i] = *srv
-	}
-
-	return services, nil
-}
-
-func completeStatus(ss []sdk.ServiceStatus, srv *sdk.Service) {
-	for _, status := range ss {
-		if srv.ID == status.ServiceID {
-			for _, line := range status.MonitoringStatus.Lines {
-				if status.SessionID != nil {
-					line.SessionID = *status.SessionID
-				}
-				if srv.ConsumerID != nil {
-					line.ConsumerID = *srv.ConsumerID
-				}
-				srv.MonitoringStatus.Lines = append(srv.MonitoringStatus.Lines, line)
-			}
-		}
-	}
+	return getAll(ctx, db, query, opts...)
 }
 
 // LoadAllByTypeAndUserID returns all services that users can see with given type.
@@ -136,28 +114,9 @@ func LoadByNameAndType(ctx context.Context, db gorp.SqlExecutor, name, stype str
 }
 
 // LoadByName returns a service by its name.
-func LoadByName(ctx context.Context, db gorp.SqlExecutor, name string) (*sdk.Service, error) {
+func LoadByName(ctx context.Context, db gorp.SqlExecutor, name string, opts ...LoadOptionFunc) (*sdk.Service, error) {
 	query := gorpmapping.NewQuery("SELECT * FROM service WHERE name = $1").Args(name)
-	return get(ctx, db, query)
-}
-
-// LoadByNameWithStatus returns a service by its name.
-func LoadByNameWithStatus(ctx context.Context, db gorp.SqlExecutor, name string) (*sdk.Service, error) {
-	query := gorpmapping.NewQuery("SELECT * FROM service WHERE name = $1").Args(name)
-	srv, err := get(ctx, db, query)
-
-	if err != nil {
-		return nil, err
-	}
-
-	ss, err := loadAllServiceStatusByServiceID(ctx, db, srv.ID)
-	if err != nil {
-		return nil, err
-	}
-
-	completeStatus(ss, srv)
-
-	return srv, nil
+	return get(ctx, db, query, opts...)
 }
 
 // LoadByID returns a service by its id.
@@ -195,16 +154,6 @@ func Update(ctx context.Context, db gorpmapper.SqlExecutorWithTx, s *sdk.Service
 // loadAllServiceStatusByServiceID returns all services status for a service ID
 func loadAllServiceStatusByServiceID(ctx context.Context, db gorp.SqlExecutor, serviceID int64) ([]sdk.ServiceStatus, error) {
 	query := gorpmapping.NewQuery(`SELECT * FROM service_status where service_id = $1`).Args(serviceID)
-	ss := []sdk.ServiceStatus{}
-	if err := gorpmapping.GetAll(ctx, db, query, &ss); err != nil {
-		return nil, sdk.WrapError(err, "cannot get services")
-	}
-	return ss, nil
-}
-
-// loadAllServiceStatus returns all services status
-func loadAllServiceStatus(ctx context.Context, db gorp.SqlExecutor) ([]sdk.ServiceStatus, error) {
-	query := gorpmapping.NewQuery(`SELECT * FROM service_status`)
 	ss := []sdk.ServiceStatus{}
 	if err := gorpmapping.GetAll(ctx, db, query, &ss); err != nil {
 		return nil, sdk.WrapError(err, "cannot get services")

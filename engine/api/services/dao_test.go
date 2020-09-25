@@ -109,7 +109,7 @@ func TestDAOWithStatus(t *testing.T) {
 
 	assert.True(t, len(all) >= 1)
 
-	all2, err := services.LoadAll(context.TODO(), db)
+	all2, err := services.LoadAll(context.TODO(), db, services.LoadOptions.WithStatus)
 	test.NoError(t, err)
 	var found bool
 	for _, s := range all2 {
@@ -124,6 +124,14 @@ func TestDAOWithStatus(t *testing.T) {
 	}
 
 	require.True(t, found)
+
+	srv3, err := services.LoadByName(context.TODO(), db, theServiceName)
+	test.NoError(t, err)
+	require.EqualValues(t, 0, len(srv3.MonitoringStatus.Lines))
+
+	srv4, err := services.LoadByName(context.TODO(), db, theServiceName, services.LoadOptions.WithStatus)
+	test.NoError(t, err)
+	require.EqualValues(t, 1, len(srv4.MonitoringStatus.Lines))
 
 	for _, s := range all {
 		test.NoError(t, services.Delete(db, &s))
