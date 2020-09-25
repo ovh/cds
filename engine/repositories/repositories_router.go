@@ -18,7 +18,7 @@ func (s *Service) initRouter(ctx context.Context) {
 	r.Middlewares = append(r.Middlewares, service.CheckRequestSignatureMiddleware(s.ParsedAPIPublicKey))
 
 	r.Handle("/mon/version", nil, r.GET(api.VersionHandler, api.Auth(false)))
-	r.Handle("/mon/status", nil, r.GET(s.getStatusHandler))
+	r.Handle("/mon/status", nil, r.GET(s.getStatusHandler, api.Auth(false)))
 	r.Handle("/mon/metrics", nil, r.GET(service.GetPrometheustMetricsHandler(s), api.Auth(false)))
 	r.Handle("/mon/metrics/all", nil, r.GET(service.GetMetricsHandler, api.Auth(false)))
 	r.Handle("/operations", nil, r.POST(s.postOperationHandler))
