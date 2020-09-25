@@ -99,6 +99,11 @@ func (api *API) postServiceRegisterHandler() service.Handler {
 		}
 
 		// Update or create the service
+
+		var sessionID string
+		if a := getAuthSession(ctx); a != nil {
+			sessionID = a.ID
+		}
 		if exists {
 			srv.Update(data)
 			if err := services.Update(ctx, tx, srv); err != nil {
@@ -108,10 +113,15 @@ func (api *API) postServiceRegisterHandler() service.Handler {
 		} else {
 			srv = &data
 			srv.ConsumerID = &consumer.ID
+
 			if err := services.Insert(ctx, tx, srv); err != nil {
 				return sdk.WithStack(err)
 			}
 			log.Debug("postServiceRegisterHandler> insert new service %s(%d) registered for consumer %s", srv.Name, srv.ID, *srv.ConsumerID)
+		}
+
+		if err := services.UpsertStatus(tx, *srv, sessionID); err != nil {
+			return sdk.WithStack(err)
 		}
 
 		if len(srv.PublicKey) > 0 {
@@ -173,7 +183,15 @@ func (api *API) postServiceHearbeatHandler() service.Handler {
 		s.LastHeartbeat = time.Now()
 		s.MonitoringStatus = mon
 
+		var sessionID string
+		if a := getAuthSession(ctx); a != nil {
+			sessionID = a.ID
+		}
 		if err := services.Update(ctx, tx, s); err != nil {
+			return err
+		}
+
+		if err := services.UpsertStatus(tx, *s, sessionID); err != nil {
 			return err
 		}
 
@@ -238,6 +256,10 @@ func (api *API) serviceAPIHeartbeatUpdate(ctx context.Context, db *gorp.DbMap) {
 		return
 	}
 
+	var authSessionID string
+	if a := getAuthSession(ctx); a != nil {
+		authSessionID = a.ID
+	}
 	if exists {
 		srv.ID = old.ID
 		if err := services.Update(ctx, tx, srv); err != nil {
@@ -249,6 +271,11 @@ func (api *API) serviceAPIHeartbeatUpdate(ctx context.Context, db *gorp.DbMap) {
 			log.Error(ctx, "serviceAPIHeartbeat> Unable to insert service %s: %v", srv.Name, err)
 			return
 		}
+	}
+
+	if err := services.UpsertStatus(tx, *srv, authSessionID); err != nil {
+		log.Error(ctx, "serviceAPIHeartbeat> Unable to insert or update monitoring status %s: %v", srv.Name, err)
+		return
 	}
 
 	if err := tx.Commit(); err != nil {

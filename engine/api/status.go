@@ -35,7 +35,7 @@ func (api *API) Status(ctx context.Context) *sdk.MonitoringStatus {
 	m := api.NewMonitoringStatus()
 
 	m.AddLine(sdk.MonitoringStatusLine{Component: "Hostname", Value: event.GetHostname(), Status: sdk.MonitoringStatusOK})
-	m.AddLine(sdk.MonitoringStatusLine{Component: "CDSName", Value: event.GetCDSName(), Status: sdk.MonitoringStatusOK})
+	m.AddLine(sdk.MonitoringStatusLine{Component: "CDSName", Value: api.Name(), Status: sdk.MonitoringStatusOK})
 	m.AddLine(api.Router.StatusPanic())
 	m.AddLine(event.Status(ctx))
 	m.AddLine(api.SharedStorage.Status(ctx))
@@ -89,6 +89,7 @@ func (api *API) computeGlobalStatus(srvs []sdk.Service) sdk.MonitoringStatus {
 
 	resume := map[string]computeGlobalNumbers{
 		sdk.TypeAPI:           {},
+		sdk.TypeCDN:           {},
 		sdk.TypeRepositories:  {},
 		sdk.TypeVCS:           {},
 		sdk.TypeHooks:         {},
@@ -125,19 +126,21 @@ func (api *API) computeGlobalStatus(srvs []sdk.Service) sdk.MonitoringStatus {
 					})
 				}
 			}
+
+			if strings.Contains(l.Component, "CDSName") {
+				t := resume[s.Type]
+				t.nbOK += nbOK
+				t.nbWarn += nbWarn
+				t.nbAlerts += nbAlert
+				t.nbSrv++
+				resume[s.Type] = t
+
+				nbg.nbOK += nbOK
+				nbg.nbWarn += nbWarn
+				nbg.nbAlerts += nbAlert
+				nbg.nbSrv++
+			}
 		}
-
-		t := resume[s.Type]
-		t.nbOK += nbOK
-		t.nbWarn += nbWarn
-		t.nbAlerts += nbAlert
-		t.nbSrv++
-		resume[s.Type] = t
-
-		nbg.nbOK += nbOK
-		nbg.nbWarn += nbWarn
-		nbg.nbAlerts += nbAlert
-		nbg.nbSrv++
 	}
 
 	if versionOk {

@@ -48,9 +48,9 @@ func (api *API) getAdminServicesHandler() service.Handler {
 
 		var err error
 		if r.FormValue("type") != "" {
-			srvs, err = services.LoadAllByType(ctx, api.mustDB(), r.FormValue("type"))
+			srvs, err = services.LoadAllByType(ctx, api.mustDB(), r.FormValue("type"), services.LoadOptions.WithStatus)
 		} else {
-			srvs, err = services.LoadAll(ctx, api.mustDB())
+			srvs, err = services.LoadAll(ctx, api.mustDB(), services.LoadOptions.WithStatus)
 		}
 		if err != nil {
 			return err
@@ -87,7 +87,7 @@ func (api *API) getAdminServiceHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		name := vars["name"]
-		srv, err := services.LoadByName(ctx, api.mustDB(), name)
+		srv, err := services.LoadByName(ctx, api.mustDB(), name, services.LoadOptions.WithStatus)
 		if err != nil {
 			return err
 		}
