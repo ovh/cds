@@ -30,7 +30,7 @@ var adminCdnStatusCmd = cli.Command{
 }
 
 func adminCdnStatusRun(v cli.Values) (cli.ListResult, error) {
-	services, err := client.ServicesByType("cdn")
+	services, err := client.ServicesByType(sdk.TypeCDN)
 	if err != nil {
 		return nil, err
 	}
@@ -61,7 +61,7 @@ var adminCdnCacheLogClearCmd = cli.Command{
 }
 
 func adminCdnCacheLogClearRun(v cli.Values) error {
-	return client.ServiceCallDELETE("cdn", "/cache")
+	return client.ServiceCallDELETE(sdk.TypeCDN, "/cache")
 }
 
 var adminCdnCacheLogStatusCmd = cli.Command{
@@ -71,7 +71,7 @@ var adminCdnCacheLogStatusCmd = cli.Command{
 }
 
 func adminCdnCacheLogStatusRun(v cli.Values) (cli.ListResult, error) {
-	btes, err := client.ServiceCallGET("cdn", "/cache/status")
+	btes, err := client.ServiceCallGET(sdk.TypeCDN, "/cache/status")
 	if err != nil {
 		return nil, err
 	}
@@ -104,7 +104,7 @@ var adminCdnItemSizeProjectCmd = cli.Command{
 }
 
 func adminCdnItemSizeProjectRun(v cli.Values) error {
-	btes, err := client.ServiceCallGET("cdn", "/size/item/project/"+v.GetString(_ProjectKey))
+	btes, err := client.ServiceCallGET(sdk.TypeCDN, "/size/item/project/"+v.GetString(_ProjectKey))
 	if err != nil {
 		return err
 	}
