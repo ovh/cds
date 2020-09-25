@@ -118,16 +118,24 @@ func (x *RunningStorageUnits) runItem(ctx context.Context, tx gorpmapper.SqlExec
 	}()
 
 	if err := dest.Write(*iu, pr, writer); err != nil {
+		_ = pr.Close()
+		_ = reader.Close()
+		_ = writer.Close()
 		return err
 	}
 
 	if err := pr.Close(); err != nil {
-		return err
+		_ = reader.Close()
+		_ = writer.Close()
+		return sdk.WithStack(err)
 	}
 
 	if err := reader.Close(); err != nil {
-		return err
+		_ = writer.Close()
+		return sdk.WithStack(err)
 	}
+
+	_ = writer.Close()
 
 	for err := range chanError {
 		if err != nil {
