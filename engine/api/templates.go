@@ -386,7 +386,7 @@ func (api *API) postTemplateApplyHandler() service.Handler {
 			if err := exportentities.TarWorkflowComponents(ctx, data, buf); err != nil {
 				return err
 			}
-			return service.Write(w, buf.Bytes(), http.StatusOK, "application/tar")
+			return service.Write(w, buf, http.StatusOK, "application/tar")
 		}
 
 		// In case we want to generated a workflow not detached from the template, we need to check if the template
@@ -470,7 +470,7 @@ func (api *API) postTemplateApplyHandler() service.Handler {
 			if err := exportentities.TarWorkflowComponents(ctx, data, buf); err != nil {
 				return err
 			}
-			return service.Write(w, buf.Bytes(), http.StatusOK, "application/tar")
+			return service.Write(w, buf, http.StatusOK, "application/tar")
 		}
 
 		msgs, wkf, oldWkf, _, err := workflow.Push(ctx, api.mustDB(), api.Cache, p, data, nil, consumer, project.DecryptWithBuiltinKey)

@@ -293,18 +293,11 @@ func extractInfo(ctx context.Context, w workerruntime.Runtime, basedir, dir stri
 					Name:  "git.hash",
 					Type:  sdk.StringVariable,
 					Value: info.Hash,
-				})
-
-				hashShort := info.Hash
-				if len(hashShort) >= 7 {
-					hashShort = hashShort[:7]
-				}
-				res = append(res, sdk.Variable{
+				}, sdk.Variable{
 					Name:  "git.hash.short",
 					Type:  sdk.StringVariable,
-					Value: hashShort,
+					Value: sdk.StringFirstN(info.Hash, 7),
 				})
-
 				w.SendLog(ctx, workerruntime.LevelInfo, fmt.Sprintf("git.hash: %s", info.Hash))
 			} else {
 				w.SendLog(ctx, workerruntime.LevelInfo, "git.hash: [empty]")

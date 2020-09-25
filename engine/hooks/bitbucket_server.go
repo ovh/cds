@@ -80,11 +80,7 @@ func getVariableFromBitbucketServerChange(payload map[string]interface{}, change
 	}
 	payload[GIT_HASH_BEFORE] = change.FromHash
 	payload[GIT_HASH] = change.ToHash
-	hashShort := change.ToHash
-	if len(hashShort) >= 7 {
-		hashShort = hashShort[:7]
-	}
-	payload[GIT_HASH_SHORT] = hashShort
+	payload[GIT_HASH_SHORT] = sdk.StringFirstN(change.ToHash, 7)
 }
 
 func getVariableFromBitbucketServerRepository(payload map[string]interface{}, repo *sdk.BitbucketServerRepository) {
@@ -123,11 +119,7 @@ func getVariableFromBitbucketServerPullRequest(payload map[string]interface{}, p
 	payload[GIT_HASH] = pr.FromRef.LatestCommit
 	payload[GIT_BRANCH_DEST] = pr.ToRef.DisplayID
 	payload[GIT_HASH_DEST] = pr.ToRef.LatestCommit
-	hashShort := pr.FromRef.LatestCommit
-	if len(hashShort) >= 7 {
-		hashShort = hashShort[:7]
-	}
-	payload[GIT_HASH_SHORT] = hashShort
+	payload[GIT_HASH_SHORT] = sdk.StringFirstN(pr.FromRef.LatestCommit, 7)
 
 	getVariableFromBitbucketServerRepository(payload, &pr.ToRef.Repository)
 	getVariableFromBitbucketServerSrcRepository(payload, &pr.FromRef.Repository)

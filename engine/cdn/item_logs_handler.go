@@ -2,9 +2,8 @@ package cdn
 
 import (
 	"context"
-	"fmt"
-	"io"
 	"net/http"
+	"strconv"
 	"strings"
 
 	"github.com/gorilla/mux"
@@ -47,7 +46,7 @@ func (s *Service) markItemToDeleteHandler() service.Handler {
 	}
 }
 
-func (s *Service) getItemLogsHandler() service.Handler {
+func (s *Service) getItemHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		itemType := sdk.CDNItemType(vars["type"])
@@ -66,43 +65,52 @@ func (s *Service) getItemLogsHandler() service.Handler {
 	}
 }
 
-func (s *Service) getItemLogsDownloadHandler() service.Handler {
+func (s *Service) getItemDownloadHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		itemType := sdk.CDNItemType(vars["type"])
 		if err := itemType.Validate(); err != nil {
 			return err
 		}
-		apiRef := vars["apiRef"]
-		tokenRaw := strings.TrimPrefix(r.Header.Get("Authorization"), "Bearer ")
-
-		// Check Authorization header
-		var token sdk.CDNAuthToken
-		v := authentication.NewVerifier(s.ParsedAPIPublicKey)
-		if err := v.VerifyJWS(tokenRaw, &token); err != nil {
-			return sdk.NewErrorWithStack(err, sdk.ErrUnauthorized)
-		}
-		if token.APIRefHash != apiRef {
-			return sdk.WithStack(sdk.ErrNotFound)
-		}
-
-		rc, err := s.getItemLogValue(ctx, itemType, token.APIRefHash, 0, 0)
+		token, err := s.checkAuth(r)
 		if err != nil {
 			return err
 		}
 
+		return s.downloadItem(ctx, itemType, token.APIRefHash, w)
+	}
+}
+
+func (s *Service) getItemLogsLinesHandler() service.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		vars := mux.Vars(r)
+		itemType := sdk.CDNItemType(vars["type"])
+		if !itemType.IsLog() {
+			return sdk.NewErrorFrom(sdk.ErrWrongRequest, "invalid item log type")
+		}
+		token, err := s.checkAuth(r)
+		if err != nil {
+			return err
+		}
+
+		offset, err := strconv.ParseInt(r.FormValue("offset"), 10, 64)
+		if err != nil {
+			offset = 0 // offset can be lower than 0 if we want the n last lines
+		}
+		count, err := strconv.ParseInt(r.FormValue("count"), 10, 64)
+		if err != nil || count < 0 {
+			count = 100
+		}
+
+		rc, _, err := s.getItemLogValue(ctx, itemType, token.APIRefHash, sdk.CDNReaderFormatJSON, offset, uint(count))
+		if err != nil {
+			return err
+		}
 		if rc == nil {
 			return sdk.WrapError(sdk.ErrNotFound, "no storage found that contains given item %s", token.APIRefHash)
 		}
 
-		w.Header().Add("Content-Type", "text/plain")
-		w.Header().Add("Content-Disposition", fmt.Sprintf("attachment; filename=\"%s.log\"", token.APIRefHash))
-
-		if _, err := io.Copy(w, rc); err != nil {
-			return sdk.WithStack(err)
-		}
-
-		return nil
+		return service.Write(w, rc, http.StatusOK, "application/json")
 	}
 }
 
@@ -119,4 +127,22 @@ func (s *Service) getSizeByProjectHandler() service.Handler {
 
 		return service.WriteJSON(w, size, http.StatusOK)
 	}
+}
+
+func (s *Service) checkAuth(r *http.Request) (sdk.CDNAuthToken, error) {
+	vars := mux.Vars(r)
+	apiRef := vars["apiRef"]
+	tokenRaw := strings.TrimPrefix(r.Header.Get("Authorization"), "Bearer ")
+
+	// Check Authorization header
+	var token sdk.CDNAuthToken
+	v := authentication.NewVerifier(s.ParsedAPIPublicKey)
+	if err := v.VerifyJWS(tokenRaw, &token); err != nil {
+		return token, sdk.NewErrorWithStack(err, sdk.ErrUnauthorized)
+	}
+	if token.APIRefHash != apiRef {
+		return token, sdk.WithStack(sdk.ErrNotFound)
+	}
+
+	return token, nil
 }

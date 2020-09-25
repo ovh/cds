@@ -7,13 +7,16 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/go-gorp/gorp"
+	"github.com/studio-b12/gowebdav"
+	"go.opencensus.io/stats"
+
 	"github.com/ovh/cds/engine/cdn/storage"
 	"github.com/ovh/cds/engine/cdn/storage/encryption"
+	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk/telemetry"
-	"github.com/studio-b12/gowebdav"
-	"go.opencensus.io/stats"
 )
 
 type Webdav struct {
@@ -33,7 +36,7 @@ func init() {
 	storage.RegisterDriver("webdav", new(Webdav))
 }
 
-func (s *Webdav) Init(ctx context.Context, cfg interface{}, _ *sdk.GoRoutines) error {
+func (s *Webdav) Init(ctx context.Context, _ *sdk.GoRoutines, cfg interface{}) error {
 	config, is := cfg.(*storage.WebdavStorageConfiguration)
 	if !is {
 		return sdk.WithStack(fmt.Errorf("invalid configuration: %T", cfg))
@@ -60,8 +63,8 @@ func (s *Webdav) filename(i sdk.CDNItemUnit) (string, error) {
 	return filepath.Join(s.config.Path, loc[:3], loc), nil
 }
 
-func (s *Webdav) ItemExists(i sdk.CDNItem) (bool, error) {
-	iu, err := s.ExistsInDatabase(i.ID)
+func (s *Webdav) ItemExists(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlExecutor, i sdk.CDNItem) (bool, error) {
+	iu, err := s.ExistsInDatabase(ctx, m, db, i.ID)
 	if err != nil {
 		if sdk.ErrorIs(err, sdk.ErrNotFound) {
 			return false, nil

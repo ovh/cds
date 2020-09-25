@@ -5,6 +5,7 @@ import (
 	json "encoding/json"
 	"fmt"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/mitchellh/hashstructure"
@@ -51,6 +52,11 @@ type CDNLogAccess struct {
 	CDNURL       string `json:"cdn_url,omitempty"`
 }
 
+type CDNMarkDelete struct {
+	WorkflowID int64 `json:"workflow_id,omitempty"`
+	RunID      int64 `json:"run_id,omitempty"`
+}
+
 type CDNLogAPIRef struct {
 	ProjectKey     string `json:"project_key"`
 	WorkflowName   string `json:"workflow_name"`
@@ -70,9 +76,24 @@ type CDNLogAPIRef struct {
 	RequirementServiceName string `json:"service_name,omitempty"`
 }
 
-type CDNMarkDelete struct {
-	WorkflowID int64 `json:"workflow_id,omitempty"`
-	RunID      int64 `json:"run_id,omitempty"`
+func (a CDNLogAPIRef) ToFilename() string {
+	jobName := strings.Replace(a.NodeRunJobName, " ", "", -1)
+
+	isService := a.RequirementServiceID > 0 && a.RequirementServiceName != ""
+	var suffix string
+	if isService {
+		suffix = fmt.Sprintf("service.%s", a.RequirementServiceName)
+	} else {
+		suffix = fmt.Sprintf("step.%d", a.StepOrder)
+	}
+
+	return fmt.Sprintf("project.%s-workflow.%s-pipeline.%s-job.%s-%s.log",
+		a.ProjectKey,
+		a.WorkflowName,
+		a.NodeRunName,
+		jobName,
+		suffix,
+	)
 }
 
 func (a CDNLogAPIRef) ToHash() (string, error) {
@@ -111,9 +132,24 @@ func (t CDNItemType) Validate() error {
 	return NewErrorFrom(ErrWrongRequest, "invalid item type")
 }
 
+func (t CDNItemType) IsLog() bool {
+	switch t {
+	case CDNTypeItemStepLog, CDNTypeItemServiceLog:
+		return true
+	}
+	return false
+}
+
 const (
 	CDNTypeItemStepLog     CDNItemType = "step-log"
 	CDNTypeItemServiceLog  CDNItemType = "service-log"
 	CDNStatusItemIncoming              = "Incoming"
 	CDNStatusItemCompleted             = "Completed"
+)
+
+type CDNReaderFormat string
+
+const (
+	CDNReaderFormatJSON CDNReaderFormat = "json"
+	CDNReaderFormatText CDNReaderFormat = "text"
 )

@@ -13,7 +13,7 @@ func (w *Writer) Write(p []byte) (int, error) {
 	}
 	var currentLine string
 	if len(lines) == 1 {
-		currentLine = lines[0]
+		currentLine = lines[0].Value
 	}
 
 	var n int

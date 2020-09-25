@@ -1,6 +1,7 @@
 package api
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"io/ioutil"
@@ -141,13 +142,14 @@ func selectDeleteAdminServiceCallHandler(api *API, method string) service.Handle
 				Message: err.Error(),
 			}, err)
 		}
+		reader := bytes.NewReader(btes)
 
 		log.Debug("selectDeleteAdminServiceCallHandler> %s : %s", query, string(btes))
 
 		if strings.HasPrefix(query, "/debug/pprof/") {
-			return service.Write(w, btes, code, "text/plain")
+			return service.Write(w, reader, code, "text/plain")
 		}
-		return service.Write(w, btes, code, "application/json")
+		return service.Write(w, reader, code, "application/json")
 	}
 }
 
@@ -173,7 +175,7 @@ func putPostAdminServiceCallHandler(api *API, method string) service.Handler {
 			}, err)
 		}
 
-		return service.Write(w, btes, code, "application/json")
+		return service.Write(w, bytes.NewReader(btes), code, "application/json")
 	}
 }
 

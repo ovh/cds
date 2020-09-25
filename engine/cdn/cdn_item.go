@@ -9,11 +9,11 @@ import (
 	"fmt"
 	"io"
 	"math/rand"
+	"net/http"
 	"os"
 	"time"
 
 	"github.com/ovh/cds/engine/cdn/item"
-	"github.com/ovh/cds/engine/cdn/redis"
 	"github.com/ovh/cds/engine/cdn/storage"
 	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk"
@@ -25,47 +25,65 @@ var (
 	rnd = rand.New(rs)
 )
 
-func (s *Service) getItemLogValue(ctx context.Context, t sdk.CDNItemType, apiRefHash string, from uint, size int) (io.ReadCloser, error) {
+func (s *Service) downloadItem(ctx context.Context, t sdk.CDNItemType, apiRefHash string, w http.ResponseWriter) error {
+	if !t.IsLog() {
+		return sdk.NewErrorFrom(sdk.ErrNotImplemented, "only log item can be download for now")
+	}
+
+	rc, filename, err := s.getItemLogValue(ctx, t, apiRefHash, sdk.CDNReaderFormatText, 0, 0)
+	if err != nil {
+		return err
+	}
+	if rc == nil {
+		return sdk.WrapError(sdk.ErrNotFound, "no storage found that contains given item %s", apiRefHash)
+	}
+	w.Header().Add("Content-Type", "text/plain")
+	w.Header().Add("Content-Disposition", fmt.Sprintf("attachment; filename=\"%s\"", filename))
+
+	if _, err := io.Copy(w, rc); err != nil {
+		return sdk.WithStack(err)
+	}
+
+	return nil
+}
+
+func (s *Service) getItemLogValue(ctx context.Context, t sdk.CDNItemType, apiRefHash string, format sdk.CDNReaderFormat, from int64, size uint) (io.ReadCloser, string, error) {
 	it, err := item.LoadByAPIRefHashAndType(ctx, s.Mapper, s.mustDBWithCtx(ctx), apiRefHash, t)
 	if err != nil {
-		return nil, err
+		return nil, "", err
 	}
+
+	filename := it.APIRef.ToFilename()
 
 	itemUnit, err := storage.LoadItemUnitByUnit(ctx, s.Mapper, s.mustDBWithCtx(ctx), s.Units.Buffer.ID(), it.ID)
 	if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
-		return nil, err
+		return nil, "", err
 	}
 
 	// If item is in Buffer, get from it
 	if itemUnit != nil {
-		log.Debug("Getting logs from buffer")
-		rc, err := s.Units.Buffer.NewReader(ctx, *itemUnit)
+		log.Debug("getItemLogValue> Getting logs from buffer")
+		rc, err := s.Units.Buffer.NewAdvancedReader(ctx, *itemUnit, format, from, size)
 		if err != nil {
-			return nil, err
+			return nil, "", err
 		}
-		redisReader, ok := rc.(*redis.Reader)
-		if ok {
-			redisReader.From = from
-			redisReader.Size = size
-		}
-		return redisReader, nil
+		return rc, filename, nil
 	}
 
 	// Get from cache
-	ok, _ := s.LogCache.Exist(it.ID)
-	if ok {
-		log.Debug("Getting logs from cache")
-		return s.LogCache.NewReader(it.ID, from, size), nil
+	if ok, _ := s.LogCache.Exist(it.ID); ok {
+		log.Debug("getItemLogValue> Getting logs from cache")
+		return s.LogCache.NewReader(it.ID, format, from, size), filename, nil
 	}
 
-	log.Debug("Getting logs from storage")
+	log.Debug("getItemLogValue> Getting logs from storage")
 	// Retrieve item and push it into the cache
 	if err := s.pushItemLogIntoCache(ctx, *it); err != nil {
-		return nil, err
+		return nil, "", err
 	}
 
 	// Get from cache
-	return s.LogCache.NewReader(it.ID, from, size), nil
+	return s.LogCache.NewReader(it.ID, format, from, size), filename, nil
 }
 
 func (s *Service) pushItemLogIntoCache(ctx context.Context, item sdk.CDNItem) error {

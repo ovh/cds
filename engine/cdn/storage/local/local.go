@@ -8,13 +8,15 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/go-gorp/gorp"
+	"go.opencensus.io/stats"
+
 	"github.com/ovh/cds/engine/cdn/storage"
 	"github.com/ovh/cds/engine/cdn/storage/encryption"
+	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk/telemetry"
-
-	"go.opencensus.io/stats"
 )
 
 type Local struct {
@@ -35,7 +37,7 @@ func init() {
 	storage.RegisterDriver("local", new(Local))
 }
 
-func (s *Local) Init(ctx context.Context, cfg interface{}, goRoutines *sdk.GoRoutines) error {
+func (s *Local) Init(ctx context.Context, gorts *sdk.GoRoutines, cfg interface{}) error {
 	config, is := cfg.(*storage.LocalStorageConfiguration)
 	if !is {
 		return sdk.WithStack(fmt.Errorf("invalid configuration: %T", cfg))
@@ -44,14 +46,14 @@ func (s *Local) Init(ctx context.Context, cfg interface{}, goRoutines *sdk.GoRou
 	s.ConvergentEncryption = encryption.New(config.Encryption)
 
 	if err := os.MkdirAll(s.config.Path, os.FileMode(0700)); err != nil {
-		return err
+		return sdk.WithStack(err)
 	}
 
 	if err := telemetry.InitMetricsInt64(ctx, metricsSize, metricsReaders, metricsWriters); err != nil {
 		return err
 	}
 
-	goRoutines.Run(ctx, "cdn-local-compute-size", func(ctx context.Context) {
+	gorts.Run(ctx, "cdn-local-compute-size", func(ctx context.Context) {
 		s.computeSize(ctx)
 	})
 
@@ -66,8 +68,8 @@ func (s *Local) filename(i sdk.CDNItemUnit) (string, error) {
 	return filepath.Join(s.config.Path, loc[:3], loc), nil
 }
 
-func (s *Local) ItemExists(i sdk.CDNItem) (bool, error) {
-	iu, err := s.ExistsInDatabase(i.ID)
+func (s *Local) ItemExists(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlExecutor, i sdk.CDNItem) (bool, error) {
+	iu, err := s.ExistsInDatabase(ctx, m, db, i.ID)
 	if err != nil {
 		if sdk.ErrorIs(err, sdk.ErrNotFound) {
 			return false, nil
@@ -167,7 +169,7 @@ func (s *Local) dirSize(path string) (int64, error) {
 		if !info.IsDir() {
 			size += info.Size()
 		}
-		return err
+		return sdk.WithStack(err)
 	})
 	return size, err
 }

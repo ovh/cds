@@ -19,11 +19,7 @@ func fillPayload(ctx context.Context, pushEvent sdk.VCSPushEvent) map[string]str
 	payload["git.author.email"] = pushEvent.Commit.Author.Email
 	payload["git.branch"] = strings.TrimPrefix(strings.TrimPrefix(pushEvent.Branch.DisplayID, "refs/heads/"), "refs/tags/")
 	payload["git.hash"] = pushEvent.Commit.Hash
-	hashShort := pushEvent.Commit.Hash
-	if len(hashShort) >= 7 {
-		hashShort = hashShort[:7]
-	}
-	payload["git.hash.short"] = hashShort
+	payload["git.hash.short"] = sdk.StringFirstN(pushEvent.Commit.Hash, 7)
 	payload["git.repository"] = pushEvent.Repo
 	payload["cds.triggered_by.username"] = pushEvent.Commit.Author.DisplayName
 	payload["cds.triggered_by.fullname"] = pushEvent.Commit.Author.Name

@@ -7,10 +7,12 @@ import (
 	"io"
 	"io/ioutil"
 
+	"github.com/go-gorp/gorp"
 	"go.opencensus.io/stats"
 
 	"github.com/ovh/cds/engine/cdn/storage"
 	"github.com/ovh/cds/engine/cdn/storage/encryption"
+	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/ovh/cds/sdk/telemetry"
@@ -39,7 +41,7 @@ func (c *CDS) GetClient() cdsclient.Interface {
 	return c.client
 }
 
-func (c *CDS) Init(ctx context.Context, cfg interface{}, _ *sdk.GoRoutines) error {
+func (c *CDS) Init(ctx context.Context, _ *sdk.GoRoutines, cfg interface{}) error {
 	config, is := cfg.(*storage.CDSStorageConfiguration)
 	if !is {
 		return sdk.WithStack(fmt.Errorf("invalid configuration: %T", cfg))
@@ -60,7 +62,7 @@ func (c *CDS) Init(ctx context.Context, cfg interface{}, _ *sdk.GoRoutines) erro
 	return nil
 }
 
-func (c *CDS) ItemExists(_ sdk.CDNItem) (bool, error) {
+func (c *CDS) ItemExists(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlExecutor, i sdk.CDNItem) (bool, error) {
 	return true, nil
 }
 

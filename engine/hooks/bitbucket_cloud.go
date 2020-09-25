@@ -68,11 +68,7 @@ func getVariableFromBitbucketCloudChange(ctx context.Context, payload map[string
 	}
 	payload[GIT_HASH_BEFORE] = change.Old.Target.Hash
 	payload[GIT_HASH] = change.New.Target.Hash
-	hashShort := change.New.Target.Hash
-	if len(hashShort) >= 7 {
-		hashShort = hashShort[:7]
-	}
-	payload[GIT_HASH_SHORT] = hashShort
+	payload[GIT_HASH_SHORT] = sdk.StringFirstN(change.New.Target.Hash, 7)
 }
 
 func getVariableFromBitbucketCloudRepository(payload map[string]interface{}, repo *BitbucketCloudRepository) {

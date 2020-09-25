@@ -76,10 +76,16 @@ type ScoredSetStore interface {
 	ScoredSetAdd(ctx context.Context, key string, value interface{}, score float64) error
 	ScoredSetAppend(ctx context.Context, key string, value interface{}) error
 	ScoredSetScan(ctx context.Context, key string, from, to float64, dest interface{}) error
+	ScoredSetScanWithScores(ctx context.Context, key string, from, to float64) ([]SetValueWithScore, error)
 	ScoredSetRange(ctx context.Context, key string, from, to int64, dest interface{}) error
 	ScoredSetRem(ctx context.Context, key string, members ...string) error
 	SetCard(key string) (int, error)
 	HealthStore
+}
+
+type SetValueWithScore struct {
+	Score float64
+	Value json.RawMessage
 }
 
 //New init a cache

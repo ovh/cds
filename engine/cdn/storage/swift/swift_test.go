@@ -17,7 +17,7 @@ import (
 func TestSwift(t *testing.T) {
 	log.SetLogger(t)
 	var driver = new(Swift)
-	err := driver.Init(context.TODO(), &storage.SwiftStorageConfiguration{
+	err := driver.Init(context.TODO(), sdk.NewGoRoutines(), &storage.SwiftStorageConfiguration{
 		Encryption: []convergent.ConvergentEncryptionConfig{
 			{
 				Cipher:      aesgcm.CipherName,
@@ -25,7 +25,7 @@ func TestSwift(t *testing.T) {
 				SecretValue: "secret_value",
 			},
 		},
-	}, sdk.NewGoRoutines())
+	})
 	require.NoError(t, err, "unable to initialiaze webdav driver")
 
 	err = driver.client.ApplyEnvironment()

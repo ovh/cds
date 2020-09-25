@@ -256,16 +256,7 @@ func generateWorkerName(hatcheryName string, isRegister bool, modelName string) 
 	if len(workerName) <= maxLength {
 		return slug.Convert(workerName)
 	}
-	if len(modelName) > 15 {
-		modelName = modelName[:15]
-	}
+	modelName = sdk.StringFirstN(modelName, 15)
 	workerName = fmt.Sprintf("%s%s%s-%s", prefix, hName, modelName, random)
-	if len(workerName) <= maxLength {
-		return slug.Convert(workerName)
-	}
-
-	if len(workerName) > maxLength {
-		return slug.Convert(workerName[:maxLength])
-	}
-	return slug.Convert(workerName)
+	return slug.Convert(sdk.StringFirstN(workerName, maxLength))
 }

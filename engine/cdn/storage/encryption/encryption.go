@@ -29,12 +29,12 @@ func (s *noEncryption) NewLocator(h string) (string, error) {
 
 func (s *noEncryption) Write(_ sdk.CDNItemUnit, r io.Reader, w io.Writer) error {
 	_, err := io.Copy(w, r)
-	return err
+	return sdk.WithStack(err)
 }
 
 func (*noEncryption) Read(_ sdk.CDNItemUnit, r io.Reader, w io.Writer) error {
 	_, err := io.Copy(w, r)
-	return err
+	return sdk.WithStack(err)
 }
 
 type convergentEncryption struct {

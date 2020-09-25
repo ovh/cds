@@ -198,7 +198,7 @@ func (c *client) Stream(ctx context.Context, method string, path string, body io
 			return nil, nil, -1, sdk.WithStack(err)
 		}
 		if c.config.Verbose {
-			log.Println("jwt: ", resp.Token[:12])
+			log.Println("jwt: ", sdk.StringFirstN(resp.Token, 12))
 		}
 		c.config.SessionToken = resp.Token
 	}

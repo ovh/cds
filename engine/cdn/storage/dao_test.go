@@ -25,7 +25,7 @@ func TestLoadOldItemUnitByItemStatusAndDuration(t *testing.T) {
 
 	cdntest.ClearItem(t, context.TODO(), m, db)
 
-	cdnUnits, err := storage.Init(context.TODO(), m, db.DbMap, storage.Configuration{
+	cdnUnits, err := storage.Init(context.TODO(), m, db.DbMap, sdk.NewGoRoutines(), storage.Configuration{
 		Buffer: storage.BufferConfiguration{
 			Name: "redis_buffer",
 			Redis: storage.RedisBufferConfiguration{
@@ -33,7 +33,7 @@ func TestLoadOldItemUnitByItemStatusAndDuration(t *testing.T) {
 				Password: cfg["redisPassword"],
 			},
 		},
-	}, sdk.NewGoRoutines())
+	})
 
 	// Clean old test
 	time.Sleep(1 * time.Second)

@@ -40,7 +40,7 @@ func TestRun(t *testing.T) {
 	tmpDir2, err := ioutil.TempDir("", t.Name()+"-cdn-2-*")
 	require.NoError(t, err)
 
-	cdnUnits, err := storage.Init(ctx, m, db.DbMap, storage.Configuration{
+	cdnUnits, err := storage.Init(ctx, m, db.DbMap, sdk.NewGoRoutines(), storage.Configuration{
 		Buffer: storage.BufferConfiguration{
 			Name: "redis_buffer",
 			Redis: storage.RedisBufferConfiguration{
@@ -77,7 +77,7 @@ func TestRun(t *testing.T) {
 				},
 			},
 		},
-	}, sdk.NewGoRoutines())
+	})
 	require.NoError(t, err)
 	require.NotNil(t, cdnUnits)
 	require.NoError(t, cdnUnits.Start(ctx))
@@ -146,18 +146,18 @@ func TestRun(t *testing.T) {
 	localUnitDriver2 := cdnUnits.Storage(localUnit2.Name)
 	require.NotNil(t, localUnitDriver)
 
-	exists, err := localUnitDriver.ItemExists(*i)
+	exists, err := localUnitDriver.ItemExists(context.TODO(), m, db, *i)
 	require.NoError(t, err)
 	require.False(t, exists)
 
 	<-ctx.Done()
 
 	// Check that the first unit has been resync
-	exists, err = localUnitDriver.ItemExists(*i)
+	exists, err = localUnitDriver.ItemExists(context.TODO(), m, db, *i)
 	require.NoError(t, err)
 	require.True(t, exists)
 
-	exists, err = localUnitDriver2.ItemExists(*i)
+	exists, err = localUnitDriver2.ItemExists(context.TODO(), m, db, *i)
 	require.NoError(t, err)
 	require.True(t, exists)
 
