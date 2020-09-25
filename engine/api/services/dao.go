@@ -19,8 +19,7 @@ func getAll(ctx context.Context, db gorp.SqlExecutor, q gorpmapping.Query, opts 
 	}
 
 	// Check signature of data, if invalid do not return it
-	verifiedServices := make([]sdk.Service, 0, len(ss))
-	servicesIDs := make([]int64, 0, len(ss))
+	verifiedServices := make([]*sdk.Service, 0, len(ss))
 	for i := range ss {
 		isValid, err := gorpmapping.CheckSignature(ss[i], ss[i].Signature)
 		if err != nil {
@@ -30,17 +29,24 @@ func getAll(ctx context.Context, db gorp.SqlExecutor, q gorpmapping.Query, opts 
 			log.Error(ctx, "service.getAll> service %d data corrupted", ss[i].ID)
 			continue
 		}
-		verifiedServices = append(verifiedServices, ss[i].Service)
-		servicesIDs = append(servicesIDs, ss[i].Service.ID)
+		s := ss[i].Service
+		verifiedServices = append(verifiedServices, &s)
 	}
 
-	for _, f := range opts {
-		if err := f(ctx, db, verifiedServices, servicesIDs); err != nil {
-			return nil, err
+	if len(verifiedServices) > 0 {
+		for _, f := range opts {
+			if err := f(ctx, db, verifiedServices...); err != nil {
+				return nil, err
+			}
 		}
 	}
 
-	return verifiedServices, nil
+	services := make([]sdk.Service, 0, len(ss))
+	for _, v := range verifiedServices {
+		services = append(services, *v)
+	}
+
+	return services, nil
 }
 
 func get(ctx context.Context, db gorp.SqlExecutor, q gorpmapping.Query, opts ...LoadOptionFunc) (*sdk.Service, error) {
@@ -64,13 +70,11 @@ func get(ctx context.Context, db gorp.SqlExecutor, q gorpmapping.Query, opts ...
 	}
 
 	if len(opts) > 0 {
-		services := []sdk.Service{s.Service}
 		for _, f := range opts {
-			if err := f(ctx, db, services, []int64{s.Service.ID}); err != nil {
+			if err := f(ctx, db, &s.Service); err != nil {
 				return nil, err
 			}
 		}
-		s.Service = services[0]
 	}
 
 	return &s.Service, nil

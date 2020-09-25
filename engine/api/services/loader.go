@@ -11,7 +11,7 @@ import (
 )
 
 // LoadOptionFunc is used as options to load services
-type LoadOptionFunc func(context.Context, gorp.SqlExecutor, []sdk.Service, []int64) error
+type LoadOptionFunc func(context.Context, gorp.SqlExecutor, ...*sdk.Service) error
 
 // LoadOptions provides all options on service loads functions
 var LoadOptions = struct {
@@ -20,16 +20,20 @@ var LoadOptions = struct {
 	WithStatus: loadServiceStatus,
 }
 
-func loadServiceStatus(ctx context.Context, db gorp.SqlExecutor, services []sdk.Service, servicesIDs []int64) error {
+func loadServiceStatus(ctx context.Context, db gorp.SqlExecutor, services ...*sdk.Service) error {
+	var servicesIDs []int64
+	for _, s := range services {
+		servicesIDs = append(servicesIDs, s.ID)
+	}
+
 	ss, err := loadAllServiceStatus(ctx, db, servicesIDs)
 	if err != nil {
 		return err
 	}
 	for i := range services {
-		srv := &services[i]
+		srv := services[i]
 		srv.MonitoringStatus = sdk.MonitoringStatus{Now: time.Now()}
 		completeStatus(ss, srv)
-		services[i] = *srv
 	}
 
 	return nil
