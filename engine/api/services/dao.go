@@ -151,16 +151,6 @@ func Update(ctx context.Context, db gorpmapper.SqlExecutorWithTx, s *sdk.Service
 	return nil
 }
 
-// loadAllServiceStatusByServiceID returns all services status for a service ID
-func loadAllServiceStatusByServiceID(ctx context.Context, db gorp.SqlExecutor, serviceID int64) ([]sdk.ServiceStatus, error) {
-	query := gorpmapping.NewQuery(`SELECT * FROM service_status where service_id = $1`).Args(serviceID)
-	ss := []sdk.ServiceStatus{}
-	if err := gorpmapping.GetAll(ctx, db, query, &ss); err != nil {
-		return nil, sdk.WrapError(err, "cannot get services")
-	}
-	return ss, nil
-}
-
 // UpsertStatus insert or update monitoring status
 func UpsertStatus(db gorpmapper.SqlExecutorWithTx, s sdk.Service, authSessionID string) error {
 	var sessionID *string
