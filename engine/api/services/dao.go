@@ -41,7 +41,7 @@ func getAll(ctx context.Context, db gorp.SqlExecutor, q gorpmapping.Query, opts 
 		}
 	}
 
-	services := make([]sdk.Service, 0, len(ss))
+	services := make([]sdk.Service, 0, len(verifiedServices))
 	for _, v := range verifiedServices {
 		services = append(services, *v)
 	}
