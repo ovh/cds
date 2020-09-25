@@ -47,9 +47,9 @@ func (api *API) getAdminServicesHandler() service.Handler {
 
 		var err error
 		if r.FormValue("type") != "" {
-			srvs, err = services.LoadAllByType(ctx, api.mustDB(), r.FormValue("type"))
+			srvs, err = services.LoadAllByType(ctx, api.mustDB(), r.FormValue("type"), services.LoadOptions.WithStatus)
 		} else {
-			srvs, err = services.LoadAll(ctx, api.mustDB())
+			srvs, err = services.LoadAll(ctx, api.mustDB(), services.LoadOptions.WithStatus)
 		}
 		if err != nil {
 			return err
