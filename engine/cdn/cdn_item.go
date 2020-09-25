@@ -135,18 +135,24 @@ func (s *Service) pushItemLogIntoCache(ctx context.Context, item sdk.CDNItem) er
 		close(chanError)
 	}()
 	if _, err := io.Copy(cacheWriter, pr); err != nil {
+		_ = pr.Close()
+		_ = reader.Close()
+		_ = cacheWriter.Close()
 		return err
 	}
 
+	if err := pr.Close(); err != nil {
+		_ = reader.Close()
+		_ = cacheWriter.Close()
+		return sdk.WithStack(err)
+	}
+
 	if err := reader.Close(); err != nil {
+		_ = cacheWriter.Close()
 		return sdk.WithStack(err)
 	}
 
 	if err := cacheWriter.Close(); err != nil {
-		return sdk.WithStack(err)
-	}
-
-	if err := pr.Close(); err != nil {
 		return sdk.WithStack(err)
 	}
 
@@ -207,6 +213,10 @@ func (s *Service) completeItem(ctx context.Context, tx gorpmapper.SqlExecutorWit
 	multiWriter := io.MultiWriter(md5Hash, sha512Hash)
 	size, err := io.Copy(multiWriter, mreader)
 	if err != nil {
+		_ = reader.Close()
+		return sdk.WithStack(err)
+	}
+	if err := reader.Close(); err != nil {
 		return sdk.WithStack(err)
 	}
 
