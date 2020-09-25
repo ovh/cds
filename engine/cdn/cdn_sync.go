@@ -148,6 +148,10 @@ func (s *Service) syncProjectLogs(ctx context.Context, cdsStorage *cds.CDS, pKey
 	}
 
 	for i := 0; i < len(nodeRunIds); i++ {
+		// test if node run already exists on CDN
+		if _, has := nodeRunMap[nodeRunIds[i].WorkflowRunID]; has {
+			results <- nil
+		}
 		jobs <- nodeRunIds[i]
 	}
 	close(jobs)
