@@ -23,7 +23,7 @@ func (x *RunningStorageUnits) Run(ctx context.Context, s StorageUnit) error {
 	}
 
 	// Load items to sync
-	itemIDs, err := LoadAllItemIDUnknownByUnit(x.db, s.ID(), 100)
+	itemIDs, err := LoadAllItemIDUnknownByUnitOrderByUnitID(x.db, s.ID(), "", 100)
 	if err != nil {
 		return err
 	}

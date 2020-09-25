@@ -267,24 +267,27 @@ func CountItemUnitByUnit(db gorp.SqlExecutor, unitID string) (int64, error) {
 	return db.SelectInt("SELECT COUNT(*) from storage_unit_item WHERE unit_id = $1", unitID)
 }
 
-func LoadAllItemIDUnknownByUnit(db gorp.SqlExecutor, unitID string, limit int) ([]string, error) {
+func LoadAllItemIDUnknownByUnitOrderByUnitID(db gorp.SqlExecutor, unitID string, orderUnitID string, limit int) ([]string, error) {
 	query := `
-		SELECT * 
+		SELECT id
 		FROM (
-			SELECT item.id 
+			SELECT item.id, storage_unit_item.unit_id
 			FROM item
-			JOIN storage_unit_item ON item.id = storage_unit_item.item_id
+			LEFT JOIN storage_unit_item ON item.id = storage_unit_item.item_id
 			WHERE item.status = $3
 			EXCEPT 
-			SELECT item_id
+			SELECT item_id, storage_unit_item.unit_id
 			FROM storage_unit_item  
 			WHERE unit_id = $1
 		) IDS
+		ORDER BY CASE WHEN unit_id = $4 THEN 1
+					  ELSE 2
+				 END
 		LIMIT $2
 	`
 
 	var res []string
-	if _, err := db.Select(&res, query, unitID, limit, sdk.CDNStatusItemCompleted); err != nil {
+	if _, err := db.Select(&res, query, unitID, limit, sdk.CDNStatusItemCompleted, orderUnitID); err != nil {
 		return nil, sdk.WithStack(err)
 	}
 

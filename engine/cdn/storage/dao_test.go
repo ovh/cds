@@ -2,6 +2,9 @@ package storage_test
 
 import (
 	"context"
+	"github.com/ovh/symmecrypt/ciphers/aesgcm"
+	"github.com/ovh/symmecrypt/convergent"
+	"io/ioutil"
 	"testing"
 	"time"
 
@@ -83,4 +86,66 @@ func TestLoadOldItemUnitByItemStatusAndDuration(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, itemUnits, 1)
 	require.Equal(t, i2.ID, itemUnits[0].ItemID)
+}
+
+func TestLoadAllItemIDUnknownByUnitOrderByUnitID(t *testing.T) {
+	m := gorpmapper.New()
+	item.InitDBMapping(m)
+	storage.InitDBMapping(m)
+	db, _ := test.SetupPGWithMapper(t, m, sdk.TypeCDN)
+	cfg := test.LoadTestingConf(t, sdk.TypeCDN)
+
+	cdntest.ClearItem(t, context.TODO(), m, db)
+	cdntest.ClearUnits(t, context.TODO(), m, db)
+
+	i1 := sdk.CDNItem{ID: sdk.UUID(), APIRefHash: sdk.RandomString(10), Status: sdk.CDNStatusItemCompleted}
+	require.NoError(t, item.Insert(context.TODO(), m, db, &i1))
+
+	i2 := sdk.CDNItem{ID: sdk.UUID(), APIRefHash: sdk.RandomString(10), Status: sdk.CDNStatusItemCompleted}
+	require.NoError(t, item.Insert(context.TODO(), m, db, &i2))
+
+	i3 := sdk.CDNItem{ID: sdk.UUID(), APIRefHash: sdk.RandomString(10), Status: sdk.CDNStatusItemCompleted}
+	require.NoError(t, item.Insert(context.TODO(), m, db, &i3))
+
+	tmpDir, err := ioutil.TempDir("", t.Name()+"-cdn-1-*")
+	require.NoError(t, err)
+	cdnUnits, err := storage.Init(context.TODO(), m, db.DbMap, sdk.NewGoRoutines(), storage.Configuration{
+		Buffer: storage.BufferConfiguration{
+			Name: "redis_buffer",
+			Redis: storage.RedisBufferConfiguration{
+				Host:     cfg["redisHost"],
+				Password: cfg["redisPassword"],
+			},
+		},
+		Storages: []storage.StorageConfiguration{
+			{
+				Name: "local_storage",
+				Cron: "0 0 12 * * *",
+				Local: &storage.LocalStorageConfiguration{
+					Path: tmpDir,
+					Encryption: []convergent.ConvergentEncryptionConfig{
+						{
+							Cipher:      aesgcm.CipherName,
+							LocatorSalt: "secret_locator_salt",
+							SecretValue: "secret_value",
+						},
+					},
+				},
+			},
+		},
+	})
+	require.NoError(t, err)
+
+	itemUnit := sdk.CDNItemUnit{
+		ID:     sdk.UUID(),
+		ItemID: i2.ID,
+		UnitID: cdnUnits.Buffer.ID(),
+	}
+	require.NoError(t, storage.InsertItemUnit(context.TODO(), m, db, &itemUnit))
+
+	itemIDS, err := storage.LoadAllItemIDUnknownByUnitOrderByUnitID(db, cdnUnits.Storages[0].ID(), cdnUnits.Buffer.ID(), 100)
+	require.NoError(t, err)
+
+	require.Equal(t, 3, len(itemIDS))
+	require.Equal(t, i2.ID, itemIDS[0])
 }
