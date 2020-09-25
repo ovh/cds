@@ -41,7 +41,7 @@ func CleanURL(url string) string {
 			u = "consumer-type"
 		case "key", "permProjectKey":
 			u = "project-key"
-		case "permWorkflowName":
+		case "permWorkflowName", "workflowName":
 			u = "workflow-name"
 		case "workflowID":
 			u = "workflow-id"

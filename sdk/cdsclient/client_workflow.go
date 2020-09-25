@@ -213,9 +213,9 @@ func (c *client) WorkflowNodeRunJobStepLog(projectKey string, workflowName strin
 	return &buildState, nil
 }
 
-func (c *client) WorkflowNodeRunJobStepAccess(projectKey string, workflowName string, nodeRunID, job int64, step int64) (*sdk.CDNLogAccess, error) {
-	url := fmt.Sprintf("/project/%s/workflows/%s/nodes/%d/job/%d/step/%d/access", projectKey, workflowName, nodeRunID, job, step)
-	var a sdk.CDNLogAccess
+func (c *client) WorkflowNodeRunJobStepLink(projectKey string, workflowName string, nodeRunID, job int64, step int64) (*sdk.CDNLogLink, error) {
+	url := fmt.Sprintf("/project/%s/workflows/%s/nodes/%d/job/%d/step/%d/link", projectKey, workflowName, nodeRunID, job, step)
+	var a sdk.CDNLogLink
 	if _, err := c.GetJSON(context.Background(), url, &a); err != nil {
 		return nil, err
 	}
@@ -231,13 +231,21 @@ func (c *client) WorkflowNodeRunJobServiceLog(projectKey string, workflowName st
 	return &serviceLog, nil
 }
 
-func (c *client) WorkflowNodeRunJobServiceAccess(projectKey string, workflowName string, nodeRunID, job int64, serviceName string) (*sdk.CDNLogAccess, error) {
-	url := fmt.Sprintf("/project/%s/workflows/%s/nodes/%d/job/%d/service/%s/access", projectKey, workflowName, nodeRunID, job, serviceName)
-	var a sdk.CDNLogAccess
+func (c *client) WorkflowNodeRunJobServiceLink(projectKey string, workflowName string, nodeRunID, job int64, serviceName string) (*sdk.CDNLogLink, error) {
+	url := fmt.Sprintf("/project/%s/workflows/%s/nodes/%d/job/%d/service/%s/link", projectKey, workflowName, nodeRunID, job, serviceName)
+	var a sdk.CDNLogLink
 	if _, err := c.GetJSON(context.Background(), url, &a); err != nil {
 		return nil, err
 	}
 	return &a, nil
+}
+
+func (c *client) WorkflowLogAccess(projectKey, workflowName, sessionID string) error {
+	url := fmt.Sprintf("/project/%s/workflows/%s/log/access", projectKey, workflowName)
+	if _, err := c.PostJSON(context.Background(), url, sdk.CDNLogAccessRequest{SessionID: sessionID}, nil); err != nil {
+		return err
+	}
+	return nil
 }
 
 func (c *client) WorkflowNodeRunArtifactDownload(projectKey string, workflowName string, a sdk.WorkflowNodeRunArtifact, w io.Writer) error {

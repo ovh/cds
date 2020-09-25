@@ -38,7 +38,7 @@ func (s *Service) downloadItem(ctx context.Context, t sdk.CDNItemType, apiRefHas
 		return sdk.WrapError(sdk.ErrNotFound, "no storage found that contains given item %s", apiRefHash)
 	}
 	w.Header().Add("Content-Type", "text/plain")
-	w.Header().Add("Content-Disposition", fmt.Sprintf("attachment; filename=\"%s\"", filename))
+	w.Header().Add("Content-Disposition", fmt.Sprintf("inline; filename=\"%s\"", filename))
 
 	if _, err := io.Copy(w, rc); err != nil {
 		return sdk.WithStack(err)

@@ -13,6 +13,7 @@ func (s *Service) deleteCacheHandler() service.Handler {
 		return sdk.WrapError(s.LogCache.Clear(), "unable to clear log cache")
 	}
 }
+
 func (s *Service) getStatusCacheHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		var status = http.StatusOK

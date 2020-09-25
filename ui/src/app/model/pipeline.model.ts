@@ -169,9 +169,8 @@ export class BuildResult {
     step_logs: Log;
 }
 
-export class CDNLogAccess {
+export class CDNLogLink {
     exists: boolean;
-    token: string;
     download_path: string;
 }
 
