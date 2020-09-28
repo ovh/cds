@@ -44,6 +44,9 @@ func tmplHandler(ctx context.Context, wk *CurrentWorker) http.HandlerFunc {
 		for _, v := range wk.currentJob.params {
 			tmpvars[v.Name] = v.Value
 		}
+		for _, v := range wk.currentJob.secrets {
+			tmpvars[v.Name] = v.Value
+		}
 
 		res, err := interpolate.Do(string(btes), tmpvars)
 		if err != nil {
