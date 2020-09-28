@@ -160,16 +160,16 @@ func (c *Common) initRouter(ctx context.Context, h hatchery.Interface) {
 	r := c.Router
 	r.Background = ctx
 	r.URL = h.Configuration().URL
-	r.SetHeaderFunc = api.DefaultHeaders
-	r.Middlewares = append(r.Middlewares, service.CheckRequestSignatureMiddleware(c.ParsedAPIPublicKey))
+	r.SetHeaderFunc = service.DefaultHeaders
+	r.DefaultAuthMiddleware = service.CheckRequestSignatureMiddleware(c.ParsedAPIPublicKey)
 
-	r.Handle("/mon/version", nil, r.GET(api.VersionHandler, api.Auth(false)))
-	r.Handle("/mon/status", nil, r.GET(getStatusHandler(h), api.Auth(false)))
-	r.Handle("/mon/workers", nil, r.GET(getWorkersPoolHandler(h), api.Auth(false)))
-	r.Handle("/mon/metrics", nil, r.GET(service.GetPrometheustMetricsHandler(c), api.Auth(false)))
-	r.Handle("/mon/metrics/all", nil, r.GET(service.GetMetricsHandler, api.Auth(false)))
-	r.Handle("/mon/errors", nil, r.GET(c.getPanicDumpListHandler, api.Auth(false)))
-	r.Handle("/mon/errors/{id}", nil, r.GET(c.getPanicDumpHandler, api.Auth(false)))
+	r.Handle("/mon/version", nil, r.GET(service.VersionHandler, service.OverrideAuth(service.NoAuthMiddleware)))
+	r.Handle("/mon/status", nil, r.GET(getStatusHandler(h), service.OverrideAuth(service.NoAuthMiddleware)))
+	r.Handle("/mon/workers", nil, r.GET(getWorkersPoolHandler(h), service.OverrideAuth(service.NoAuthMiddleware)))
+	r.Handle("/mon/metrics", nil, r.GET(service.GetPrometheustMetricsHandler(c), service.OverrideAuth(service.NoAuthMiddleware)))
+	r.Handle("/mon/metrics/all", nil, r.GET(service.GetMetricsHandler, service.OverrideAuth(service.NoAuthMiddleware)))
+	r.Handle("/mon/errors", nil, r.GET(c.getPanicDumpListHandler, service.OverrideAuth(service.NoAuthMiddleware)))
+	r.Handle("/mon/errors/{id}", nil, r.GET(c.getPanicDumpHandler, service.OverrideAuth(service.NoAuthMiddleware)))
 
 	r.Mux.HandleFunc("/debug/pprof/cmdline", pprof.Cmdline)
 	r.Mux.HandleFunc("/debug/pprof/profile", pprof.Profile)

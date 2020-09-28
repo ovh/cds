@@ -3,71 +3,75 @@ package cdn
 import (
 	"context"
 	"net/http"
-	"strings"
 
 	"github.com/dgrijalva/jwt-go"
-
+	"github.com/gorilla/mux"
 	"github.com/ovh/cds/engine/authentication"
 	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/engine/cdn/item"
+	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/telemetry"
 )
 
 var (
-	jwtCookieName = "jwt_token"
 	keyPermission = cache.Key("cdn", "permission")
 )
 
-func (s *Service) checkAuthJWT(req *http.Request) (*sdk.AuthSessionJWTClaims, error) {
-	var jwtRaw string
-
-	// Try to get the jwt from the cookie firstly then from the authorization bearer header, a XSRF token with cookie
-	jwtCookie, _ := req.Cookie(jwtCookieName)
-	if jwtCookie != nil {
-		jwtRaw = jwtCookie.Value
-	} else if strings.HasPrefix(req.Header.Get("Authorization"), "Bearer ") {
-		jwtRaw = strings.TrimPrefix(req.Header.Get("Authorization"), "Bearer ")
-	}
-	if jwtRaw == "" {
-		return nil, sdk.WithStack(sdk.ErrUnauthorized)
-	}
+func (s *Service) jwtMiddleware(ctx context.Context, w http.ResponseWriter, req *http.Request, rc *service.HandlerConfig) (context.Context, error) {
+	ctx, end := telemetry.Span(ctx, "router.jwtMiddleware")
+	defer end()
 
 	v := authentication.NewVerifier(s.ParsedAPIPublicKey)
-	token, err := jwt.ParseWithClaims(jwtRaw, &sdk.AuthSessionJWTClaims{}, v.VerifyJWT)
-	if err != nil {
-		return nil, sdk.NewErrorWithStack(err, sdk.ErrUnauthorized)
-	}
-	claims, ok := token.Claims.(*sdk.AuthSessionJWTClaims)
-	if !ok || !token.Valid {
-		return nil, sdk.NewErrorWithStack(err, sdk.ErrUnauthorized)
-	}
-
-	return claims, nil
+	return service.JWTMiddleware(ctx, w, req, rc, v.VerifyJWT)
 }
 
-func (s *Service) checkItemAccess(ctx context.Context, itemType sdk.CDNItemType, apiRef string, sessionID string) error {
+func (s *Service) itemAccessMiddleware(ctx context.Context, w http.ResponseWriter, req *http.Request, rc *service.HandlerConfig) (context.Context, error) {
+	// Check for session based on jwt from context
+	jwt, ok := ctx.Value(service.ContextJWT).(*jwt.Token)
+	if !ok {
+		return ctx, sdk.WithStack(sdk.ErrUnauthorized)
+	}
+	claims := jwt.Claims.(*sdk.AuthSessionJWTClaims)
+	sessionID := claims.StandardClaims.Id
+
+	vars := mux.Vars(req)
+
+	itemTypeRaw, ok := vars["type"]
+	if !ok {
+		return ctx, sdk.WithStack(sdk.ErrUnauthorized)
+	}
+	itemType := sdk.CDNItemType(itemTypeRaw)
+	if err := itemType.Validate(); err != nil {
+		return ctx, sdk.NewErrorWithStack(err, sdk.ErrUnauthorized)
+	}
+	apiRef, ok := vars["apiRef"]
+	if !ok {
+		return ctx, sdk.WithStack(sdk.ErrUnauthorized)
+	}
+
 	keyWorkflowPermissionForSession := cache.Key(keyPermission, apiRef, sessionID)
 
 	exists, err := s.Cache.Exist(keyWorkflowPermissionForSession)
 	if err != nil {
-		return sdk.WrapError(err, "unable to check if permission %s exists", keyWorkflowPermissionForSession)
+		return ctx, sdk.NewErrorWithStack(sdk.WrapError(err, "unable to check if permission %s exists", keyWorkflowPermissionForSession), sdk.ErrUnauthorized)
 	}
 	if exists {
-		return nil
+		return ctx, nil
 	}
 
 	item, err := item.LoadByAPIRefHashAndType(ctx, s.Mapper, s.mustDBWithCtx(ctx), apiRef, itemType)
 	if err != nil {
-		return sdk.NewErrorWithStack(err, sdk.ErrNotFound)
+		return ctx, sdk.NewErrorWithStack(err, sdk.ErrNotFound)
 	}
 
 	if err := s.Client.WorkflowLogAccess(item.APIRef.ProjectKey, item.APIRef.WorkflowName, sessionID); err != nil {
-		return sdk.NewErrorWithStack(err, sdk.ErrNotFound)
+		return ctx, sdk.NewErrorWithStack(err, sdk.ErrNotFound)
 	}
 
 	if err := s.Cache.SetWithTTL(keyWorkflowPermissionForSession, true, 3600); err != nil {
-		return sdk.WrapError(err, "unable to store permission %s", keyWorkflowPermissionForSession)
+		return ctx, sdk.NewErrorWithStack(sdk.WrapError(err, "unable to store permission %s", keyWorkflowPermissionForSession), sdk.ErrUnauthorized)
 	}
 
-	return nil
+	return ctx, nil
 }

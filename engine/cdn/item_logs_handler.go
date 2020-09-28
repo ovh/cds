@@ -67,20 +67,7 @@ func (s *Service) getItemDownloadHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		itemType := sdk.CDNItemType(vars["type"])
-		if err := itemType.Validate(); err != nil {
-			return err
-		}
-
-		claims, err := s.checkAuthJWT(r)
-		if err != nil {
-			return err
-		}
 		apiRef := vars["apiRef"]
-		sessionID := claims.StandardClaims.Id
-		if err := s.checkItemAccess(ctx, itemType, apiRef, sessionID); err != nil {
-			return err
-		}
-
 		return s.downloadItem(ctx, itemType, apiRef, w)
 	}
 }
@@ -93,15 +80,7 @@ func (s *Service) getItemLogsLinesHandler() service.Handler {
 			return sdk.NewErrorFrom(sdk.ErrWrongRequest, "invalid item log type")
 		}
 
-		claims, err := s.checkAuthJWT(r)
-		if err != nil {
-			return err
-		}
 		apiRef := vars["apiRef"]
-		sessionID := claims.StandardClaims.Id
-		if err := s.checkItemAccess(ctx, itemType, apiRef, sessionID); err != nil {
-			return err
-		}
 
 		offset, err := strconv.ParseInt(r.FormValue("offset"), 10, 64)
 		if err != nil {
@@ -112,7 +91,7 @@ func (s *Service) getItemLogsLinesHandler() service.Handler {
 			count = 100
 		}
 
-		rc, _, err := s.getItemLogValue(ctx, itemType, apiRef, sdk.CDNReaderFormatJSON, offset, uint(count))
+		_, rc, _, err := s.getItemLogValue(ctx, itemType, apiRef, sdk.CDNReaderFormatJSON, offset, uint(count))
 		if err != nil {
 			return err
 		}

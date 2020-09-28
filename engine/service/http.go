@@ -46,18 +46,15 @@ type RouterConfig struct {
 
 // HandlerConfig is the configuration for one handler
 type HandlerConfig struct {
-	Name             string
-	Method           string
-	Handler          Handler
-	IsDeprecated     bool
-	NeedAuth         bool
-	NeedAdmin        bool
-	MaintenanceAware bool
-	AllowProvider    bool
-	AllowedTokens    []string
-	AllowedScopes    []sdk.AuthConsumerScope
-	PermissionLevel  int
-	CleanURL         string
+	Name                   string
+	Method                 string
+	Handler                Handler
+	IsDeprecated           bool
+	OverrideAuthMiddleware Middleware
+	MaintenanceAware       bool
+	AllowedScopes          []sdk.AuthConsumerScope
+	PermissionLevel        int
+	CleanURL               string
 }
 
 // Accepted is a helper function used by asynchronous handlers
@@ -187,16 +184,11 @@ func CheckRequestSignatureMiddleware(pubKey *rsa.PublicKey) Middleware {
 	verifier.SetRequiredHeaders([]string{"(request-target)", "host", "date"})
 
 	return func(ctx context.Context, w http.ResponseWriter, req *http.Request, rc *HandlerConfig) (context.Context, error) {
-		if !rc.NeedAuth {
-			return ctx, nil
-		}
-
 		if err := verifier.Verify(req); err != nil {
 			return ctx, sdk.NewError(sdk.ErrUnauthorized, err)
 		}
 
 		log.Debug("Request has been successfully verified")
-
 		return ctx, nil
 	}
 }

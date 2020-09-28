@@ -56,20 +56,6 @@ func NewSessionJWT(s *sdk.AuthSession) (string, error) {
 	return SignJWT(jwtToken)
 }
 
-// CheckSessionJWT validate given session jwt token.
-func CheckSessionJWT(jwtToken string) (*jwt.Token, error) {
-	token, err := jwt.ParseWithClaims(jwtToken, &sdk.AuthSessionJWTClaims{}, VerifyJWT)
-	if err != nil {
-		return nil, sdk.NewErrorWithStack(err, sdk.ErrUnauthorized)
-	}
-
-	if _, ok := token.Claims.(*sdk.AuthSessionJWTClaims); ok && token.Valid {
-		return token, nil
-	}
-
-	return nil, sdk.WithStack(sdk.ErrUnauthorized)
-}
-
 // SessionCleaner must be run as a goroutine
 func SessionCleaner(ctx context.Context, dbFunc func() *gorp.DbMap, tickerDuration time.Duration) {
 	log.Info(ctx, "Initializing session cleaner...")
