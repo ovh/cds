@@ -580,18 +580,8 @@ export class PipelinesState {
             if (pip.from_repository) {
                 editMode = true;
                 editPipeline = cloneDeep(pip);
-                if (editPipeline.stages) {
-                    editPipeline.stages.forEach(s => {
-                       s.ref = new Date().getTime();
-                       if (s.jobs) {
-                           s.jobs.forEach(j => {
-                               j.ref = new Date().getTime();
-                           })
-                       }
-                    });
-                }
+                Pipeline.InitRef(editPipeline);
             }
-
             ctx.setState({
                 ...state,
                 pipeline: pip,
@@ -615,16 +605,7 @@ export class PipelinesState {
             editMode = true;
         }
         let editPipeline = cloneDeep(state.pipeline);
-        if (editPipeline.stages) {
-            editPipeline.stages.forEach(s => {
-                s.ref = new Date().getTime();
-                if (s.jobs) {
-                    s.jobs.forEach(j => {
-                        j.ref = new Date().getTime();
-                    })
-                }
-            });
-        }
+        Pipeline.InitRef(editPipeline);
         ctx.setState({
             ...state,
             editPipeline: editPipeline,
