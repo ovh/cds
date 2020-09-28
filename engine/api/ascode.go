@@ -91,9 +91,6 @@ func (api *API) postImportAsCodeHandler() service.Handler {
 		u := getAPIConsumer(ctx)
 
 		api.GoRoutines.Exec(context.Background(), fmt.Sprintf("postImportAsCodeHandler-%s", ope.UUID), func(ctx context.Context) {
-			globalOperation := sdk.Operation{
-				UUID: ope.UUID,
-			}
 
 			ope, err := operation.Poll(ctx, api.mustDB(), ope.UUID)
 			if err != nil {
@@ -103,15 +100,22 @@ func (api *API) postImportAsCodeHandler() service.Handler {
 					fields["stack_trace"] = fmt.Sprintf("%+v", err)
 				}
 				log.ErrorWithFields(ctx, fields, "%s", err)
-
-				globalOperation.Status = sdk.OperationStatusError
-				globalOperation.Error = sdk.ToOperationError(err)
-			} else {
-				globalOperation.Status = sdk.OperationStatusDone
-				globalOperation.LoadFiles = ope.LoadFiles
 			}
 
-			event.PublishOperation(ctx, p.Key, globalOperation, u)
+			if ope.Status == sdk.OperationStatusError {
+				log.Error(ctx, "repositories> operation %s error %+v", ope.UUID, ope.Error)
+			}
+
+			ope = &sdk.Operation{
+				UUID:         ope.UUID,
+				RepoFullName: ope.RepoFullName,
+				Date:         ope.Date,
+				LoadFiles:    ope.LoadFiles,
+				Status:       ope.Status,
+				Error:        ope.Error,
+			}
+
+			event.PublishOperation(ctx, p.Key, *ope, u)
 		}, api.PanicDump())
 
 		return service.WriteJSON(w, sdk.Operation{

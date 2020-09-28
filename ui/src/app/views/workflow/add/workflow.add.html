@@ -226,8 +226,8 @@
 
                                                             <div class="ui error message"
                                                                 *ngIf="pollingResponse.status === 3">
-                                                                {{pollingResponse.error}}
-                                                            </div>
+                                                                {{pollingResponse.error_details.message}} - 
+                                                                {{pollingResponse.error_details.from}}                                                            </div>
                                                             <ng-container
                                                                 *ngIf="pollingResponse && pollingResponse.load_files && pollingResponse.load_files.results">
                                                                 {{ 'wizard_repo_files' | translate}}
