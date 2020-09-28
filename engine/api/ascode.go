@@ -106,6 +106,15 @@ func (api *API) postImportAsCodeHandler() service.Handler {
 				log.Error(ctx, "repositories> operation %s error %+v", ope.UUID, ope.Error)
 			}
 
+			ope = &sdk.Operation{
+				UUID:         ope.UUID,
+				RepoFullName: ope.RepoFullName,
+				Date:         ope.Date,
+				LoadFiles:    ope.LoadFiles,
+				Status:       ope.Status,
+				Error:        ope.Error,
+			}
+
 			event.PublishOperation(ctx, p.Key, *ope, u)
 		}, api.PanicDump())
 
