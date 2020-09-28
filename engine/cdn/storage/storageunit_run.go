@@ -14,7 +14,7 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
-func (x *RunningStorageUnits) Run(ctx context.Context, s StorageUnit, bufferUnitID string) error {
+func (x *RunningStorageUnits) Run(ctx context.Context, s StorageUnit) error {
 	s.Lock()
 	defer s.Unlock()
 	_, err := LoadUnitByID(ctx, x.m, x.db, s.ID())
@@ -23,7 +23,7 @@ func (x *RunningStorageUnits) Run(ctx context.Context, s StorageUnit, bufferUnit
 	}
 
 	// Load items to sync
-	itemIDs, err := LoadAllItemIDUnknownByUnitOrderByUnitID(x.db, s.ID(), bufferUnitID, 100)
+	itemIDs, err := LoadAllItemIDUnknownByUnitOrderByUnitID(x.db, s.ID(), x.Buffer.ID(), 100)
 	if err != nil {
 		return err
 	}
