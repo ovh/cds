@@ -87,6 +87,75 @@ metadata:
 	assert.Equal(t, "git.branch,git.author,git.hash", m["Workflow.Metadata.default_tags"])
 }
 
+func Test_postWorkflowImportWithPermissionHandler(t *testing.T) {
+	api, db, _ := newTestAPI(t)
+
+	u, pass := assets.InsertAdminUser(t, db)
+	g1 := assets.InsertTestGroup(t, db, "b-"+sdk.RandomString(10))
+	g2 := assets.InsertTestGroup(t, db, "c-"+sdk.RandomString(10))
+
+	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), "a-"+sdk.RandomString(10))
+	require.NoError(t, group.InsertLinkGroupProject(context.TODO(), db, &group.LinkGroupProject{
+		GroupID:   g1.ID,
+		ProjectID: proj.ID,
+		Role:      sdk.PermissionReadExecute,
+	}))
+	require.NoError(t, group.InsertLinkGroupProject(context.TODO(), db, &group.LinkGroupProject{
+		GroupID:   g2.ID,
+		ProjectID: proj.ID,
+		Role:      sdk.PermissionReadExecute,
+	}))
+
+	pip := sdk.Pipeline{
+		ProjectID:  proj.ID,
+		ProjectKey: proj.Key,
+		Name:       "pip1",
+	}
+	require.NoError(t, pipeline.InsertPipeline(db, &pip))
+
+	//Prepare request
+	vars := map[string]string{
+		"permProjectKey": proj.Key,
+	}
+	uri := api.Router.GetRoute("POST", api.postWorkflowImportHandler, vars)
+	test.NotEmpty(t, uri)
+	req := assets.NewAuthentifiedRequest(t, u, pass, "POST", uri, nil)
+
+	body := `name: test2
+version: v2.0
+workflow:
+  test:
+    pipeline: pip1
+    permissions:
+      ` + g1.Name + `: 7
+permissions:
+  ` + g1.Name + `: 5
+  ` + g2.Name + `: 7`
+	req.Body = ioutil.NopCloser(strings.NewReader(body))
+	req.Header.Set("Content-Type", "application/x-yaml")
+
+	//Do the request
+	rec := httptest.NewRecorder()
+	api.Router.Mux.ServeHTTP(rec, req)
+	assert.Equal(t, 200, rec.Code)
+
+	//Check result
+	t.Logf(">>%s", rec.Body.String())
+
+	w, err := workflow.Load(context.TODO(), db, api.Cache, *proj, "test2", workflow.LoadOptions{})
+	test.NoError(t, err)
+
+	assert.NotNil(t, w)
+
+	m, _ := dump.ToStringMap(w)
+	t.Logf("%+v", m)
+	assert.Equal(t, "test2", m["Workflow.Name"])
+	assert.Equal(t, "test", m["Workflow.WorkflowData.Node.Name"])
+	assert.Equal(t, "pip1", m["Workflow.WorkflowData.Node.Context.PipelineName"])
+	assert.Equal(t, "7", m["Workflow.WorkflowData.Node.Groups.Groups0.Permission"])
+	assert.Equal(t, g1.Name, m["Workflow.WorkflowData.Node.Groups.Groups0.Group.Name"])
+}
+
 func Test_postWorkflowImportHandlerWithExistingIcon(t *testing.T) {
 	api, db, _ := newTestAPI(t)
 
