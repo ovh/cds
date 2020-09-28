@@ -102,9 +102,6 @@ func extractWorkflow(ctx context.Context, db *gorp.DbMap, store cache.Store, p *
 		allMsgs = append(allMsgs, sdk.NewMessage(sdk.MsgWorkflowErrorBadCdsDir))
 		return nil, allMsgs, sdk.NewErrorWithStack(err, sdk.NewErrorFrom(sdk.ErrWorkflowInvalid, "unable to read cds files"))
 	}
-	log.Debug("ope => %v", ope)
-	log.Debug("ope.Setup => %v", ope.Setup)
-	log.Debug("ope.Setup.Checkout => %v", ope.Setup.Checkout)
 
 	ope.RepositoryStrategy.SSHKeyContent = sdk.PasswordPlaceholder
 	ope.RepositoryStrategy.Password = sdk.PasswordPlaceholder
