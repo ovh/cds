@@ -54,7 +54,7 @@ func (api *API) statusHandler() service.Handler {
 			status = http.StatusServiceUnavailable
 		}
 
-		srvs, err := services.LoadAll(ctx, api.mustDB())
+		srvs, err := services.LoadAll(ctx, api.mustDB(), services.LoadOptions.WithStatus)
 		if err != nil {
 			return err
 		}
