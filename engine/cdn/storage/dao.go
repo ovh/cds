@@ -110,7 +110,7 @@ func InsertItemUnit(ctx context.Context, m *gorpmapper.Mapper, db gorpmapper.Sql
 	}
 	itemUnitDN := toItemUnitDB(*iu)
 	if err := m.InsertAndSign(ctx, db, itemUnitDN); err != nil {
-		return sdk.WrapError(err, "unable to insert storage unit iotem")
+		return sdk.WrapError(err, "unable to insert storage unit item")
 	}
 	return nil
 }
@@ -267,24 +267,22 @@ func CountItemUnitByUnit(db gorp.SqlExecutor, unitID string) (int64, error) {
 	return db.SelectInt("SELECT COUNT(*) from storage_unit_item WHERE unit_id = $1", unitID)
 }
 
-func LoadAllItemIDUnknownByUnit(db gorp.SqlExecutor, unitID string, limit int) ([]string, error) {
+func LoadAllItemIDUnknownByUnitOrderByUnitID(db gorp.SqlExecutor, unitID string, orderUnitID string, limit int) ([]string, error) {
 	query := `
-		SELECT * 
-		FROM (
-			SELECT item.id 
+	WITH filteredItem as (
+			SELECT item.id, sui.unit_id
 			FROM item
-			JOIN storage_unit_item ON item.id = storage_unit_item.item_id
-			WHERE item.status = $3
-			EXCEPT 
-			SELECT item_id
-			FROM storage_unit_item  
-			WHERE unit_id = $1
-		) IDS
-		LIMIT $2
-	`
-
+			JOIN storage_unit_item sui ON item.id = sui.item_id
+			LEFT JOIN storage_unit_item iu2 ON item.id = iu2.item_id AND iu2.unit_id = $1
+			WHERE item.status = $3 AND iu2.unit_id is null
+	)
+	SELECT id FROM filteredItem
+	ORDER BY CASE WHEN unit_id = $4 THEN 1
+				  ELSE 2
+			  END
+	LIMIT $2`
 	var res []string
-	if _, err := db.Select(&res, query, unitID, limit, sdk.CDNStatusItemCompleted); err != nil {
+	if _, err := db.Select(&res, query, unitID, limit, sdk.CDNStatusItemCompleted, orderUnitID); err != nil {
 		return nil, sdk.WithStack(err)
 	}
 
