@@ -13,6 +13,11 @@ export class MonitoringStatusLine {
     status: string;
     component: string;
     value: string;
+    type: string;
+    service: string;
+    hostname: string;
+    session: string;
+    consumer: string;
 }
 
 export interface MonitoringMetricsLabel {

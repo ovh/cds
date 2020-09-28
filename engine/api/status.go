@@ -127,7 +127,7 @@ func (api *API) computeGlobalStatus(srvs []sdk.Service) sdk.MonitoringStatus {
 				}
 			}
 
-			if strings.Contains(l.Component, "CDSName") {
+			if strings.Contains(l.Component, "Version") {
 				t := resume[s.Type]
 				t.nbOK += nbOK
 				t.nbWarn += nbWarn
