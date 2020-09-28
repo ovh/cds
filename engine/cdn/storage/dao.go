@@ -274,9 +274,8 @@ func LoadAllItemIDUnknownByUnitOrderByUnitID(db gorp.SqlExecutor, unitID string,
 			SELECT item.id, storage_unit_item.unit_id
 			FROM item
 			JOIN storage_unit_item ON item.id = storage_unit_item.item_id
-			WHERE 
-				item.status = $3 AND 
-				item.id NOT IN (SELECT item_id from storage_unit_item where unit_id = $1)
+			LEFT JOIN storage_unit_item ui2 ON item.id = ui2.item_id AND ui2.unit_id = $1
+			WHERE item.status = $3 AND ui2.unit_id is null
 		) IDS
 		ORDER BY CASE WHEN unit_id = $4 THEN 1
 					  ELSE 2
