@@ -12,3 +12,7 @@ Click on the pipeline  → Edit the pipeline context → enable  "Limit one run 
 ![Pipeline Mutex](/images/workflows.design.mutex.png)
 
 Examplary use case: run an integration test once on a particular environment.
+
+To configure a Mutex with the configuration as code, use the boolean property `one_at_a_time`
+in the workflow definition file, in a pipeline context section:
+[Mutex configuration as code example]({{<relref "/docs/concepts/files/workflow-syntax.md#mutex">}}).

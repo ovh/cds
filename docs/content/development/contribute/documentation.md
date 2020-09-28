@@ -21,4 +21,4 @@ GEN_PATH=${CDS_SOURCES}/docs/content/docs/components make doc
 cd ${CDS_SOURCES}/docs
 hugo server
 ```
-* go to http://localhost:1313/cds/
+* go to http://localhost:1313/
