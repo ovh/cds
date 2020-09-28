@@ -121,9 +121,3 @@ func NewEnvironment(name string) *Environment {
 	}
 	return e
 }
-
-// DefaultEnv Default environment for pipeline build
-var DefaultEnv = Environment{
-	ID:   1,
-	Name: "NoEnv",
-}
