@@ -107,6 +107,9 @@ func TestLoadAllItemIDUnknownByUnitOrderByUnitID(t *testing.T) {
 	i3 := sdk.CDNItem{ID: sdk.UUID(), APIRefHash: sdk.RandomString(10), Status: sdk.CDNStatusItemCompleted}
 	require.NoError(t, item.Insert(context.TODO(), m, db, &i3))
 
+	i4 := sdk.CDNItem{ID: sdk.UUID(), APIRefHash: sdk.RandomString(10), Status: sdk.CDNStatusItemCompleted}
+	require.NoError(t, item.Insert(context.TODO(), m, db, &i4))
+
 	tmpDir, err := ioutil.TempDir("", t.Name()+"-cdn-1-*")
 	require.NoError(t, err)
 	cdnUnits, err := storage.Init(context.TODO(), m, db.DbMap, sdk.NewGoRoutines(), storage.Configuration{
@@ -132,20 +135,56 @@ func TestLoadAllItemIDUnknownByUnitOrderByUnitID(t *testing.T) {
 					},
 				},
 			},
+			{
+				Name: "local_storage2",
+				Cron: "0 0 12 * * *",
+				Local: &storage.LocalStorageConfiguration{
+					Path: tmpDir,
+					Encryption: []convergent.ConvergentEncryptionConfig{
+						{
+							Cipher:      aesgcm.CipherName,
+							LocatorSalt: "secret_locator_salt",
+							SecretValue: "secret_value",
+						},
+					},
+				},
+			},
 		},
 	})
 	require.NoError(t, err)
 
-	itemUnit := sdk.CDNItemUnit{
+	iu1 := sdk.CDNItemUnit{
+		ID:     sdk.UUID(),
+		ItemID: i1.ID,
+		UnitID: cdnUnits.Storages[1].ID(),
+	}
+	require.NoError(t, storage.InsertItemUnit(context.TODO(), m, db, &iu1))
+
+	iu2 := sdk.CDNItemUnit{
 		ID:     sdk.UUID(),
 		ItemID: i2.ID,
 		UnitID: cdnUnits.Buffer.ID(),
 	}
-	require.NoError(t, storage.InsertItemUnit(context.TODO(), m, db, &itemUnit))
+	require.NoError(t, storage.InsertItemUnit(context.TODO(), m, db, &iu2))
+
+	iu3 := sdk.CDNItemUnit{
+		ID:     sdk.UUID(),
+		ItemID: i3.ID,
+		UnitID: cdnUnits.Storages[0].ID(),
+	}
+	require.NoError(t, storage.InsertItemUnit(context.TODO(), m, db, &iu3))
+
+	iu4 := sdk.CDNItemUnit{
+		ID:     sdk.UUID(),
+		ItemID: i4.ID,
+		UnitID: cdnUnits.Storages[1].ID(),
+	}
+	require.NoError(t, storage.InsertItemUnit(context.TODO(), m, db, &iu4))
 
 	itemIDS, err := storage.LoadAllItemIDUnknownByUnitOrderByUnitID(db, cdnUnits.Storages[0].ID(), cdnUnits.Buffer.ID(), 100)
 	require.NoError(t, err)
 
 	require.Equal(t, 3, len(itemIDS))
+	// Check that redis one is the first
 	require.Equal(t, i2.ID, itemIDS[0])
 }

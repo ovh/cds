@@ -187,7 +187,7 @@ func (r *RunningStorageUnits) Start(ctx context.Context) error {
 		}
 		f := func(i int) error {
 			_, err := scheduler.AddFunc(cronSetting, func() {
-				if err := r.Run(ctx, r.Storages[i]); err != nil {
+				if err := r.Run(ctx, r.Storages[i], r.Buffer.ID()); err != nil {
 					log.ErrorWithFields(ctx, logrus.Fields{"stack_trace": fmt.Sprintf("%+v", err)}, "%s", err)
 				}
 			})

@@ -110,7 +110,7 @@ func InsertItemUnit(ctx context.Context, m *gorpmapper.Mapper, db gorpmapper.Sql
 	}
 	itemUnitDN := toItemUnitDB(*iu)
 	if err := m.InsertAndSign(ctx, db, itemUnitDN); err != nil {
-		return sdk.WrapError(err, "unable to insert storage unit iotem")
+		return sdk.WrapError(err, "unable to insert storage unit item")
 	}
 	return nil
 }
@@ -273,12 +273,10 @@ func LoadAllItemIDUnknownByUnitOrderByUnitID(db gorp.SqlExecutor, unitID string,
 		FROM (
 			SELECT item.id, storage_unit_item.unit_id
 			FROM item
-			LEFT JOIN storage_unit_item ON item.id = storage_unit_item.item_id
-			WHERE item.status = $3
-			EXCEPT 
-			SELECT item_id, storage_unit_item.unit_id
-			FROM storage_unit_item  
-			WHERE unit_id = $1
+			JOIN storage_unit_item ON item.id = storage_unit_item.item_id
+			WHERE 
+				item.status = $3 AND 
+				item.id NOT IN (SELECT item_id from storage_unit_item where unit_id = $1)
 		) IDS
 		ORDER BY CASE WHEN unit_id = $4 THEN 1
 					  ELSE 2
