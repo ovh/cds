@@ -162,7 +162,15 @@ func Poll(ctx context.Context, db gorp.SqlExecutor, operationUUID string) (*sdk.
 		}
 		switch ope.Status {
 		case sdk.OperationStatusError, sdk.OperationStatusDone:
-			return ope, nil
+
+			return &sdk.Operation{
+				UUID:         ope.UUID,
+				Status:       ope.Status,
+				Date:         ope.Date,
+				RepoFullName: ope.RepoFullName,
+				RequestID:    ope.RequestID,
+				Error:        ope.Error,
+			}, nil
 		default:
 			return nil, nil
 		}
