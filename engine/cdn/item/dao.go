@@ -172,7 +172,7 @@ func ListNodeRunByProject(db gorp.SqlExecutor, projectKey string) ([]int64, erro
 	var IDs []int64
 	query := `
 		SELECT 
-			DISTINCT((api_ref->>'run_id')::int)
+			DISTINCT((api_ref->>'node_run_id')::int)
 		FROM item 
 		WHERE api_ref->>'project_key' = $1
 	`
