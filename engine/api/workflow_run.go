@@ -860,28 +860,28 @@ func (api *API) postWorkflowRunHandler() service.Handler {
 
 		// To handle conditions on hooks
 		if opts.Hook != nil {
-			hook, errH := workflow.LoadHookByUUID(api.mustDB(), opts.Hook.WorkflowNodeHookUUID)
-			if errH != nil {
-				return sdk.WrapError(errH, "cannot load hook for uuid %s", opts.Hook.WorkflowNodeHookUUID)
+			hook, err := workflow.LoadHookByUUID(api.mustDB(), opts.Hook.WorkflowNodeHookUUID)
+			if err != nil {
+				return sdk.WrapError(err, "cannot load hook for uuid %s", opts.Hook.WorkflowNodeHookUUID)
 			}
 			conditions := hook.Conditions
 			params := sdk.ParametersFromMap(opts.Hook.Payload)
 
-			var errc error
 			var conditionsOK bool
+			var conditionsError error
 			if conditions.LuaScript == "" {
-				conditionsOK, errc = sdk.WorkflowCheckConditions(conditions.PlainConditions, params)
+				conditionsOK, conditionsError = sdk.WorkflowCheckConditions(conditions.PlainConditions, params)
 			} else {
 				luacheck, err := luascript.NewCheck()
 				if err != nil {
 					return sdk.WrapError(err, "cannot check lua script")
 				}
 				luacheck.SetVariables(sdk.ParametersToMap(params))
-				errc = luacheck.Perform(conditions.LuaScript)
+				conditionsError = luacheck.Perform(conditions.LuaScript)
 				conditionsOK = luacheck.Result
 			}
-			if errc != nil {
-				return sdk.WrapError(errc, "cannot check conditions")
+			if conditionsError != nil {
+				return sdk.NewError(sdk.ErrWrongRequest, fmt.Errorf("cannot check conditions: %v", conditionsError))
 			}
 
 			if !conditionsOK {
