@@ -7,6 +7,17 @@ export class PerformAsCodeResponse {
     constructor() {
     }
 }
+export class OperationErrorDetails {
+    id: number;
+    status: number;
+    message: string;
+    from: string;
+
+    constructor() {
+    }
+}
+
+
 export class Operation {
     uuid: string;
     url: string;
@@ -17,7 +28,7 @@ export class Operation {
     setup: OperationSetup;
     load_files: OperationLoadFiles;
     status: number;
-    error: string;
+    error_details: OperationErrorDetails;
 
     constructor() {
         this.strategy = new VCSStrategy();

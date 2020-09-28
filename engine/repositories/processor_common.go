@@ -2,6 +2,7 @@ package repositories
 
 import (
 	"context"
+	"strings"
 
 	"github.com/fsamin/go-repo"
 
@@ -9,9 +10,7 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
-func (s *Service) processGitClone(ctx context.Context, op *sdk.Operation) (repo.Repo, string, string, error) {
-	var gitRepo repo.Repo
-
+func (s *Service) processGitClone(ctx context.Context, op *sdk.Operation) (gitRepo repo.Repo, basedir string, currentBranch string, err error) {
 	r := s.Repo(*op)
 	if err := s.checkOrCreateFS(r); err != nil {
 		return gitRepo, "", "", err
@@ -21,18 +20,23 @@ func (s *Service) processGitClone(ctx context.Context, op *sdk.Operation) (repo.
 	opts := []repo.Option{repo.WithVerbose(log.InfoWithoutCtx)}
 
 	if op.RepositoryStrategy.ConnectionType == "ssh" {
-		log.Debug("processGitClone> using ssh key %s", op.RepositoryStrategy.SSHKey)
+		log.Debug("processGitClone> %s > using ssh key %s", op.UUID, op.RepositoryStrategy.SSHKey)
 		opts = append(opts, repo.WithSSHAuth([]byte(op.RepositoryStrategy.SSHKeyContent)))
 	} else if op.RepositoryStrategy.User != "" && op.RepositoryStrategy.Password != "" {
-		log.Debug("processGitClone> using user %s", op.RepositoryStrategy.User)
+		log.Debug("processGitClone> %s > using user %s", op.UUID, op.RepositoryStrategy.User)
 		opts = append(opts, repo.WithHTTPAuth(op.RepositoryStrategy.User, op.RepositoryStrategy.Password))
 	}
 
-	gitRepo, err := repo.New(ctx, r.Basedir, opts...)
+	gitRepo, err = repo.New(ctx, r.Basedir, opts...)
 	if err != nil {
-		log.Info(ctx, "processGitClone> cloning %s into %s", r.URL, r.Basedir)
+		log.Info(ctx, "processGitClone> %s > cloning %s into %s", op.UUID, r.URL, r.Basedir)
 		gitRepo, err = repo.Clone(ctx, r.Basedir, r.URL, opts...)
 		if err != nil {
+			if strings.Contains(err.Error(), "Invalid username or password") ||
+				strings.Contains(err.Error(), "Permission denied (publickey)") ||
+				strings.Contains(err.Error(), "could not read Username for") {
+				return gitRepo, "", "", sdk.NewError(sdk.ErrForbidden, err)
+			}
 			return gitRepo, "", "", sdk.NewErrorFrom(err, "cannot clone repository at given url: %s", r.URL)
 		}
 	}
@@ -54,7 +58,7 @@ func (s *Service) processGitClone(ctx context.Context, op *sdk.Operation) (repo.
 	}
 
 	//Check branch
-	currentBranch, err := gitRepo.CurrentBranch(ctx)
+	currentBranch, err = gitRepo.CurrentBranch(ctx)
 	if err != nil {
 		return gitRepo, "", "", sdk.WithStack(err)
 	}

@@ -109,5 +109,11 @@ func (s *Service) do(ctx context.Context, op sdk.Operation) error {
 		op.Status = sdk.OperationStatusError
 	}
 
+	log.Debug("repositories > operation %s: %+v ", op.UUID, op.Error)
+	log.Info(ctx, "repositories > operation %s status: %v ", op.UUID, op.Status)
+	if op.Status == sdk.OperationStatusError {
+		log.Error(ctx, "repositories> operation %s error %s", op.UUID, op.Error.Message)
+	}
+
 	return s.dao.saveOperation(&op)
 }
