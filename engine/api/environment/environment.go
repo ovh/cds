@@ -2,7 +2,6 @@ package environment
 
 import (
 	"database/sql"
-	"fmt"
 	"time"
 
 	"github.com/go-gorp/gorp"
@@ -109,9 +108,6 @@ func Lock(db gorp.SqlExecutor, projectKey, envName string) error {
 
 // LoadEnvironmentByID load the given environment
 func LoadEnvironmentByID(db gorp.SqlExecutor, ID int64) (*sdk.Environment, error) {
-	if ID == sdk.DefaultEnv.ID {
-		return &sdk.DefaultEnv, nil
-	}
 	var env sdk.Environment
 	query := `
     SELECT environment.id, environment.name, environment.project_id, environment.created,
@@ -132,10 +128,6 @@ func LoadEnvironmentByID(db gorp.SqlExecutor, ID int64) (*sdk.Environment, error
 
 // LoadEnvironmentByName load the given environment
 func LoadEnvironmentByName(db gorp.SqlExecutor, projectKey, envName string) (*sdk.Environment, error) {
-	if envName == "" || envName == sdk.DefaultEnv.Name {
-		return &sdk.DefaultEnv, nil
-	}
-
 	var env sdk.Environment
 	query := `
     SELECT environment.id, environment.name, environment.project_id, environment.created,
@@ -184,28 +176,6 @@ func Exists(db gorp.SqlExecutor, projectKey, envName string) (bool, error) {
 		return false, err
 	}
 	return n == 1, nil
-}
-
-// CheckDefaultEnv create default env if not exists
-func CheckDefaultEnv(db gorp.SqlExecutor) error {
-	var env sdk.Environment
-	query := `SELECT environment.id, environment.name FROM environment WHERE environment.id = $1`
-	err := db.QueryRow(query, sdk.DefaultEnv.ID).Scan(&env.ID, &env.Name)
-	if err != nil {
-		if err == sql.ErrNoRows {
-			query := `INSERT INTO environment (name) VALUES($1) RETURNING id`
-			if err1 := db.QueryRow(query, sdk.DefaultEnv.Name).Scan(&env.ID); err1 != nil {
-				return err1
-			} else if env.ID != sdk.DefaultEnv.ID {
-				return sdk.WithStack(fmt.Errorf("default env created but with wrong id, please check db"))
-			}
-			return nil
-		}
-		return err
-	} else if env.ID != sdk.DefaultEnv.ID || env.Name != sdk.DefaultEnv.Name {
-		return sdk.WithStack(fmt.Errorf("default env exists but with wrong id or name, please check db"))
-	}
-	return nil
 }
 
 func loadDependencies(db gorp.SqlExecutor, env *sdk.Environment) error {

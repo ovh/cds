@@ -60,10 +60,6 @@ func InsertGroupsInNode(db gorp.SqlExecutor, groupPermission []sdk.GroupPermissi
 
 // insertGroupInNode add permissions on Node to Group
 func insertGroupInNode(db gorp.SqlExecutor, nodeID, groupID int64, role int) error {
-	// avoid insert default env
-	if sdk.DefaultEnv.ID == nodeID {
-		return nil
-	}
 	query := `INSERT INTO workflow_node_group (workflow_node_id, workflow_group_id, role)
 		VALUES(
 			$1,
