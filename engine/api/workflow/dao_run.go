@@ -37,7 +37,11 @@ workflow_run.to_delete,
 workflow_run.read_only,
 workflow_run.version,
 workflow_run.to_craft,
-workflow_run.to_craft_opts
+workflow_run.to_craft_opts,
+workflow_run.workflow,
+workflow_run.infos,
+workflow_run.join_triggers_run,
+workflow_run.header
 `
 
 // LoadRunOptions are options for loading a run (node or workflow)
@@ -116,30 +120,6 @@ func LoadWorkflowFromWorkflowRunID(db gorp.SqlExecutor, wrID int64) (sdk.Workflo
 
 //PostInsert is a db hook on WorkflowRun
 func (r *Run) PostInsert(db gorp.SqlExecutor) error {
-	w, errw := json.Marshal(r.Workflow)
-	if errw != nil {
-		return sdk.WrapError(errw, "Unable to marshal workflow")
-	}
-
-	jtr, erri := json.Marshal(r.JoinTriggersRun)
-	if erri != nil {
-		return sdk.WrapError(erri, "Unable to marshal JoinTriggersRun")
-	}
-
-	i, erri := json.Marshal(r.Infos)
-	if erri != nil {
-		return sdk.WrapError(erri, "Unable to marshal infos")
-	}
-
-	h, errh := json.Marshal(r.Header)
-	if errh != nil {
-		return sdk.WrapError(erri, "Unable to marshal header")
-	}
-
-	if _, err := db.Exec("update workflow_run set workflow = $3, infos = $2, join_triggers_run = $4, header = $5 where id = $1", r.ID, i, w, jtr, h); err != nil {
-		return sdk.WrapError(err, "Unable to store marshalled infos")
-	}
-
 	if err := updateTags(db, r); err != nil {
 		return sdk.WrapError(err, "Unable to store tags")
 	}
@@ -150,48 +130,6 @@ func (r *Run) PostInsert(db gorp.SqlExecutor) error {
 //PostUpdate is a db hook on WorkflowRun
 func (r *Run) PostUpdate(db gorp.SqlExecutor) error {
 	return r.PostInsert(db)
-}
-
-//PostGet is a db hook on WorkflowRun
-//It loads column workflow which is in JSONB in table workflow_run
-func (r *Run) PostGet(db gorp.SqlExecutor) error {
-	var res = struct {
-		W sql.NullString `db:"workflow"`
-		I sql.NullString `db:"infos"`
-		J sql.NullString `db:"join_triggers_run"`
-		H sql.NullString `db:"header"`
-		O sql.NullString `db:"outgoing_hook_runs"`
-	}{}
-
-	if err := db.SelectOne(&res, "select workflow, infos, join_triggers_run, header, outgoing_hook_runs from workflow_run where id = $1", r.ID); err != nil {
-		return sdk.WrapError(err, "Unable to load marshalled workflow")
-	}
-
-	w := sdk.Workflow{}
-	if err := gorpmapping.JSONNullString(res.W, &w); err != nil {
-		return sdk.WrapError(err, "Unable to unmarshal workflow")
-	}
-	r.Workflow = w
-
-	i := []sdk.WorkflowRunInfo{}
-	if err := gorpmapping.JSONNullString(res.I, &i); err != nil {
-		return sdk.WrapError(err, "Unable to unmarshal infos")
-	}
-	r.Infos = i
-
-	j := map[int64]sdk.WorkflowNodeTriggerRun{}
-	if err := gorpmapping.JSONNullString(res.J, &j); err != nil {
-		return sdk.WrapError(err, "Unable to unmarshal join_triggers_run")
-	}
-	r.JoinTriggersRun = j
-
-	h := sdk.WorkflowRunHeaders{}
-	if err := gorpmapping.JSONNullString(res.H, &h); err != nil {
-		return sdk.WrapError(err, "Unable to unmarshal header")
-	}
-	r.Header = h
-
-	return nil
 }
 
 // InsertWorkflowRunTags  inserts new tags in database
@@ -636,7 +574,7 @@ func CreateRun(db *gorp.DbMap, wf *sdk.Workflow, opts sdk.WorkflowRunPostHandler
 		Status:        sdk.StatusPending,
 		LastExecution: time.Now(),
 		Tags:          make([]sdk.WorkflowRunTag, 0),
-		Workflow:      *wf, //sdk.Workflow{Name: wf.Name},
+		Workflow:      *wf,
 		ToCraft:       true,
 		ToCraftOpts:   &opts,
 	}
