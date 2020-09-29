@@ -15,10 +15,10 @@
                 {{'service_ok' | translate}}
             </div>
 
-            <h4>Group</h4>
-            <p *ngIf="service.group">
-                <a sm-item href="#" [routerLink]="['/settings', 'group', service.group.name]">{{service.group.name}}</a>
-            </p>
+            <div *ngIf="service.group">
+                <h4>Group</h4>
+                <p><a sm-item href="#" [routerLink]="['/settings', 'group', service.group.name]">{{service.group.name}}</a></p>
+            </div>
 
             <h4>Heartbeat</h4>
             <p>
@@ -37,54 +37,13 @@
                     <codemirror [(ngModel)]="config" [config]="codeMirrorConfig" #textareaCodeMirror>
                     </codemirror>
                 </div>
-                <div class="column">
-                    <h4>Status</h4>
-
-                    <div class="ui grid">
-                        <div class="ui row">
-                            <div class="ui wide column">
-                                <div class="ui fluid input">
-                                    <input type="text" placeholder="{{ 'filter' | translate }}" [(ngModel)]="filter"
-                                        (keyup)="filterChange()">
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <table class="ui definition table">
-                        <thead>
-                            <th>Service</th>
-                            <th>Component</th>
-                            <th>Status</th>
-                            <th>Value</th>
-                            <th>Hostname</th>
-                            <th>Session</th>
-                        </thead>
-                        <tbody>
-                            <tr *ngFor="let line of filteredStatusLines" [ngClass]="{'error': line.status==='AL', 'warning': line.status==='WARN', 'positive': line.status==='WARN'}">
-                                <td>
-                                    {{line.service}}
-                                </td>
-                                <td>
-                                    {{line.component}}
-                                </td>
-                                <td>
-                                    {{line.status}}
-                                </td>
-                                <td>
-                                    {{line.value}}
-                                </td>
-                                <td>
-                                    {{line.hostname}}
-                                </td>
-                                <td>
-                                    {{line.session}}
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
             </div>
+
+            <h4>Status</h4>
+                
+            <app-data-table [filter]="filter" [withFilter]="filteredStatusLines" [withPagination]="25" [columns]="columns" [data]="service.monitoring_status.lines" [loading]="loading">
+            </app-data-table>
+            
         </ng-template>
         <ng-template #loadingPart>
             <div class="ui text active loader">{{ 'common_loading' | translate }}</div>

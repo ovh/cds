@@ -20,6 +20,20 @@ export class MonitoringStatusLine {
     consumer: string;
 }
 
+export class MonitoringStatusLineUtil {
+    public static color(monitoringMetricsLine: MonitoringStatusLine): string {
+        switch (monitoringMetricsLine.status) {
+            case 'OK':
+                return 'green';
+            case 'AL':
+                return 'red';
+            case 'WARN':
+                return 'orange';
+        }
+        return 'blue';
+    }
+}
+
 export interface MonitoringMetricsLabel {
     name: string;
     value: string;
@@ -40,3 +54,4 @@ export interface MonitoringMetricsLine {
     type: number;
     metric: MonitoringMetricsMetric[];
 }
+

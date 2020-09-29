@@ -126,21 +126,19 @@ func (api *API) computeGlobalStatus(srvs []sdk.Service) sdk.MonitoringStatus {
 					})
 				}
 			}
-
-			if strings.Contains(l.Component, "Version") {
-				t := resume[s.Type]
-				t.nbOK += nbOK
-				t.nbWarn += nbWarn
-				t.nbAlerts += nbAlert
-				t.nbSrv++
-				resume[s.Type] = t
-
-				nbg.nbOK += nbOK
-				nbg.nbWarn += nbWarn
-				nbg.nbAlerts += nbAlert
-				nbg.nbSrv++
-			}
 		}
+
+		t := resume[s.Type]
+		t.nbOK += nbOK
+		t.nbWarn += nbWarn
+		t.nbAlerts += nbAlert
+		t.nbSrv++
+		resume[s.Type] = t
+
+		nbg.nbOK += nbOK
+		nbg.nbWarn += nbWarn
+		nbg.nbAlerts += nbAlert
+		nbg.nbSrv++
 	}
 
 	if versionOk {
