@@ -172,7 +172,7 @@ func (s *Service) Serve(c context.Context) error {
 		return err
 	}
 
-	s.runTcpLogServer(ctx)
+	s.runTCPLogServer(ctx)
 
 	log.Info(ctx, "Initializing HTTP router")
 	s.initRouter(ctx)

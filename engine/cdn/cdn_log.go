@@ -29,7 +29,7 @@ var (
 	keyServiceLogIncomingQueue = cache.Key("cdn", "log", "incoming", "service")
 )
 
-func (s *Service) runTcpLogServer(ctx context.Context) {
+func (s *Service) runTCPLogServer(ctx context.Context) {
 	// Init hatcheries cache
 	if err := s.refreshHatcheriesPK(ctx); err != nil {
 		log.Error(ctx, "unable to init hatcheries cache: %v", err)
