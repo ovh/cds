@@ -39,7 +39,8 @@ func (api *API) authAdminMiddleware(ctx context.Context, w http.ResponseWriter, 
 		return ctx, err
 	}
 
-	if !isAdmin(ctx) {
+	// Excluse consumers not admin or admin that are used for services
+	if !isAdmin(ctx) || isService(ctx) {
 		return ctx, sdk.WithStack(sdk.ErrForbidden)
 	}
 

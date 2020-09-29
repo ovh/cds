@@ -27,16 +27,7 @@ func (s *Service) jwtMiddleware(ctx context.Context, w http.ResponseWriter, req 
 }
 
 func (s *Service) itemAccessMiddleware(ctx context.Context, w http.ResponseWriter, req *http.Request, rc *service.HandlerConfig) (context.Context, error) {
-	// Check for session based on jwt from context
-	jwt, ok := ctx.Value(service.ContextJWT).(*jwt.Token)
-	if !ok {
-		return ctx, sdk.WithStack(sdk.ErrUnauthorized)
-	}
-	claims := jwt.Claims.(*sdk.AuthSessionJWTClaims)
-	sessionID := claims.StandardClaims.Id
-
 	vars := mux.Vars(req)
-
 	itemTypeRaw, ok := vars["type"]
 	if !ok {
 		return ctx, sdk.WithStack(sdk.ErrUnauthorized)
@@ -49,6 +40,18 @@ func (s *Service) itemAccessMiddleware(ctx context.Context, w http.ResponseWrite
 	if !ok {
 		return ctx, sdk.WithStack(sdk.ErrUnauthorized)
 	}
+
+	return s.itemAccessCheck(ctx, itemType, apiRef)
+}
+
+func (s *Service) itemAccessCheck(ctx context.Context, itemType sdk.CDNItemType, apiRef string) (context.Context, error) {
+	// Check for session based on jwt from context
+	jwt, ok := ctx.Value(service.ContextJWT).(*jwt.Token)
+	if !ok {
+		return ctx, sdk.WithStack(sdk.ErrUnauthorized)
+	}
+	claims := jwt.Claims.(*sdk.AuthSessionJWTClaims)
+	sessionID := claims.StandardClaims.Id
 
 	keyWorkflowPermissionForSession := cache.Key(keyPermission, apiRef, sessionID)
 

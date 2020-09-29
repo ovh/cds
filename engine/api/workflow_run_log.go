@@ -239,7 +239,7 @@ func (api *API) getWorkflowNodeRunJobLogLinkHandler(ctx context.Context, w http.
 	}, http.StatusOK)
 }
 
-func (api *API) postWorkflowLogAccessHandler() service.Handler {
+func (api *API) getWorkflowLogAccessHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 
@@ -255,9 +255,9 @@ func (api *API) postWorkflowLogAccessHandler() service.Handler {
 			return sdk.WrapError(sdk.ErrForbidden, "only CDN can call this route")
 		}
 
-		var data sdk.CDNLogAccessRequest
-		if err := service.UnmarshalBody(r, &data); err != nil {
-			return sdk.WithStack(err)
+		sessionID := r.Header.Get("X-CDS-Session-ID")
+		if sessionID == "" {
+			return sdk.WrapError(sdk.ErrForbidden, "missing session id header")
 		}
 
 		workflowName := vars["workflowName"]
@@ -270,7 +270,7 @@ func (api *API) postWorkflowLogAccessHandler() service.Handler {
 			return sdk.WithStack(sdk.ErrNotFound)
 		}
 
-		session, err := authentication.LoadSessionByID(ctx, api.mustDBWithCtx(ctx), data.SessionID)
+		session, err := authentication.LoadSessionByID(ctx, api.mustDBWithCtx(ctx), sessionID)
 		if err != nil {
 			return err
 		}

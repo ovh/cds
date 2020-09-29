@@ -68,7 +68,7 @@ func (api *API) InitRouter() {
 	r.Handle("/action/{permGroupName}/{permActionName}/export", Scope(sdk.AuthConsumerScopeAction), r.GET(api.getActionExportHandler))
 	r.Handle("/action/{permGroupName}/{permActionName}/audit", Scope(sdk.AuthConsumerScopeAction), r.GET(api.getActionAuditHandler))
 	r.Handle("/action/{permGroupName}/{permActionName}/audit/{auditID}/rollback", Scope(sdk.AuthConsumerScopeAction), r.POST(api.postActionAuditRollbackHandler))
-	r.Handle("/action/requirement", Scope(sdk.AuthConsumerScopeAction), r.GET(api.getActionsRequirements, service.OverrideAuth(service.NoAuthMiddleware))) // FIXME add auth used by hatcheries
+	r.Handle("/action/requirement", Scope(sdk.AuthConsumerScopeAction), r.GET(api.getActionsRequirements, service.OverrideAuth(service.NoAuthMiddleware)))
 	r.Handle("/project/{permProjectKey}/action", Scope(sdk.AuthConsumerScopeProject), r.GET(api.getActionsForProjectHandler))
 	r.Handle("/group/{permGroupName}/action", Scope(sdk.AuthConsumerScopeGroup), r.GET(api.getActionsForGroupHandler))
 	r.Handle("/actionBuiltin", ScopeNone(), r.GET(api.getActionsBuiltinHandler))
@@ -285,7 +285,7 @@ func (api *API) InitRouter() {
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/nodes/{nodeRunID}/job/{runJobID}/service/{serviceName}/link", Scope(sdk.AuthConsumerScopeRun), r.GET(api.getWorkflowNodeRunJobServiceLinkHandler))
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/nodes/{nodeRunID}/job/{runJobID}/service/{serviceName}/log", Scope(sdk.AuthConsumerScopeRun), r.GET(api.getWorkflowNodeRunJobServiceLogHandler))
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/nodes/{nodeRunID}/job/{runJobID}/step/{stepOrder}/link", Scope(sdk.AuthConsumerScopeRun), r.GET(api.getWorkflowNodeRunJobStepLinkHandler))
-	r.Handle("/project/{key}/workflows/{workflowName}/log/access", ScopeNone(), r.POST(api.postWorkflowLogAccessHandler))
+	r.Handle("/project/{key}/workflows/{workflowName}/log/access", ScopeNone(), r.GET(api.getWorkflowLogAccessHandler))
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/nodes/{nodeRunID}/job/{runJobID}/step/{stepOrder}/log", Scope(sdk.AuthConsumerScopeRun), r.GET(api.getWorkflowNodeRunJobStepLogHandler))
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/node/{nodeID}/triggers/condition", Scope(sdk.AuthConsumerScopeRun), r.GET(api.getWorkflowTriggerConditionHandler))
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/hook/triggers/condition", Scope(sdk.AuthConsumerScopeRun), r.GET(api.getWorkflowTriggerHookConditionHandler))

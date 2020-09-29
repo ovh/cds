@@ -242,7 +242,7 @@ func (c *client) WorkflowNodeRunJobServiceLink(projectKey string, workflowName s
 
 func (c *client) WorkflowLogAccess(projectKey, workflowName, sessionID string) error {
 	url := fmt.Sprintf("/project/%s/workflows/%s/log/access", projectKey, workflowName)
-	if _, err := c.PostJSON(context.Background(), url, sdk.CDNLogAccessRequest{SessionID: sessionID}, nil); err != nil {
+	if _, err := c.GetJSON(context.Background(), url, nil, SetHeader("X-CDS-Session-ID", sessionID)); err != nil {
 		return err
 	}
 	return nil

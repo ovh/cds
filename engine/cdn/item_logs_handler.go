@@ -68,7 +68,14 @@ func (s *Service) getItemDownloadHandler() service.Handler {
 		vars := mux.Vars(r)
 		itemType := sdk.CDNItemType(vars["type"])
 		apiRef := vars["apiRef"]
-		return s.downloadItem(ctx, itemType, apiRef, w)
+
+		// User can give a refresh delay in seconds, Refresh header value will be set if item is not complete
+		refreshDelay, err := strconv.ParseInt(r.FormValue("refresh"), 10, 64)
+		if err != nil {
+			refreshDelay = 0
+		}
+
+		return s.downloadItem(ctx, itemType, apiRef, refreshDelay, w)
 	}
 }
 

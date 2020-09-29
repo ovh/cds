@@ -11,7 +11,6 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/stretchr/testify/require"
-	"gopkg.in/h2non/gock.v1"
 	"gopkg.in/spacemonkeygo/httpsig.v0"
 
 	"github.com/ovh/cds/engine/api"
@@ -61,9 +60,6 @@ func newTestService(t *testing.T) (*Service, *test.FakeTransaction) {
 	}
 	s.ParsedAPIPublicKey = &fakeAPIPrivateKey.key.PublicKey
 	s.initRouter(context.TODO())
-
-	s.Client = cdsclient.New(cdsclient.Config{Host: "http://lolcat.api", InsecureSkipVerifyTLS: false})
-	gock.InterceptClient(s.Client.(cdsclient.Raw).HTTPClient())
 
 	t.Cleanup(func() { cancel() })
 	return s, db

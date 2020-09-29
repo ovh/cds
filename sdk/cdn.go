@@ -47,10 +47,6 @@ type CDNLogLink struct {
 	CDNURL       string `json:"cdn_url,omitempty"`
 }
 
-type CDNLogAccessRequest struct {
-	SessionID string `json:"session_id"`
-}
-
 type CDNMarkDelete struct {
 	WorkflowID int64 `json:"workflow_id,omitempty"`
 	RunID      int64 `json:"run_id,omitempty"`

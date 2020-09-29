@@ -25,7 +25,7 @@ var (
 	rnd = rand.New(rs)
 )
 
-func (s *Service) downloadItem(ctx context.Context, t sdk.CDNItemType, apiRefHash string, w http.ResponseWriter) error {
+func (s *Service) downloadItem(ctx context.Context, t sdk.CDNItemType, apiRefHash string, refreshDelay int64, w http.ResponseWriter) error {
 	if !t.IsLog() {
 		return sdk.NewErrorFrom(sdk.ErrNotImplemented, "only log item can be download for now")
 	}
@@ -38,9 +38,9 @@ func (s *Service) downloadItem(ctx context.Context, t sdk.CDNItemType, apiRefHas
 		return sdk.WrapError(sdk.ErrNotFound, "no storage found that contains given item %s", apiRefHash)
 	}
 	w.Header().Add("Content-Type", "text/plain")
-	if it.Status != sdk.CDNStatusItemCompleted {
+	if it.Status != sdk.CDNStatusItemCompleted && refreshDelay > 0 {
 		// This will allows to refresh the browser when opening the logs int a new tab
-		w.Header().Add("Refresh", "5")
+		w.Header().Add("Refresh", fmt.Sprintf("%d", refreshDelay))
 	}
 	w.Header().Add("Content-Disposition", fmt.Sprintf("inline; filename=\"%s\"", filename))
 
