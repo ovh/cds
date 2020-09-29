@@ -3,14 +3,17 @@ package cdn
 import (
 	"context"
 	"encoding/json"
+	"net/http"
 	"net/http/httptest"
 	"strconv"
 	"testing"
 	"time"
 
+	"github.com/dgrijalva/jwt-go"
 	"github.com/mitchellh/hashstructure"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"gopkg.in/h2non/gock.v1"
 
 	"github.com/ovh/cds/engine/api/test/assets"
 	"github.com/ovh/cds/engine/authentication"
@@ -107,8 +110,12 @@ func TestMarkItemToDeleteHandler(t *testing.T) {
 func TestGetItemLogsDownloadHandler(t *testing.T) {
 	cfg := test.LoadTestingConf(t, sdk.TypeCDN)
 
+	projectKey := sdk.RandomString(10)
+
 	// Create cdn service with need storage and test item
 	s, db := newTestService(t)
+	gock.New("http://lolcat.api").Post("/project/" + projectKey + "/workflows/MyWorkflow/log/access").Reply(http.StatusOK).JSON(nil)
+
 	cdnUnits, err := storage.Init(context.TODO(), s.Mapper, db.DbMap, sdk.NewGoRoutines(), storage.Configuration{
 		Buffer: storage.BufferConfiguration{
 			Name: "redis_buffer",
@@ -128,9 +135,9 @@ func TestGetItemLogsDownloadHandler(t *testing.T) {
 		Status: sdk.StatusSuccess,
 		Line:   2,
 		Signature: log.Signature{
-			ProjectKey:   sdk.RandomString(10),
+			ProjectKey:   projectKey,
 			WorkflowID:   1,
-			WorkflowName: "MyWorklow",
+			WorkflowName: "MyWorkflow",
 			RunID:        1,
 			NodeRunID:    1,
 			NodeRunName:  "MyPipeline",
@@ -150,6 +157,18 @@ func TestGetItemLogsDownloadHandler(t *testing.T) {
 	signer, err := authentication.NewSigner("cdn-test", test.SigningKey)
 	require.NoError(t, err)
 	s.Common.ParsedAPIPublicKey = signer.GetVerifyKey()
+	jwtToken := jwt.NewWithClaims(jwt.SigningMethodRS512, sdk.AuthSessionJWTClaims{
+		ID: sdk.UUID(),
+		StandardClaims: jwt.StandardClaims{
+			Issuer:    "test",
+			Subject:   sdk.UUID(),
+			Id:        sdk.UUID(),
+			IssuedAt:  time.Now().Unix(),
+			ExpiresAt: time.Now().Add(time.Minute).Unix(),
+		},
+	})
+	jwtTokenRaw, err := signer.SignJWT(jwtToken)
+	require.NoError(t, err)
 
 	apiRef := sdk.CDNLogAPIRef{
 		ProjectKey:     hm.Signature.ProjectKey,
@@ -166,15 +185,13 @@ func TestGetItemLogsDownloadHandler(t *testing.T) {
 	apiRefHashU, err := hashstructure.Hash(apiRef, nil)
 	require.NoError(t, err)
 	apiRefHash := strconv.FormatUint(apiRefHashU, 10)
-	tokenRaw, err := signer.SignJWS(sdk.CDNAuthToken{APIRefHash: apiRefHash}, time.Minute)
-	require.NoError(t, err)
 
 	uri := s.Router.GetRoute("GET", s.getItemDownloadHandler, map[string]string{
 		"type":   string(sdk.CDNTypeItemStepLog),
 		"apiRef": apiRefHash,
 	})
 	require.NotEmpty(t, uri)
-	req := assets.NewJWTAuthentifiedRequest(t, tokenRaw, "GET", uri, nil)
+	req := assets.NewJWTAuthentifiedRequest(t, jwtTokenRaw, "GET", uri, nil)
 	rec := httptest.NewRecorder()
 	s.Router.Mux.ServeHTTP(rec, req)
 	require.Equal(t, 200, rec.Code)
@@ -185,8 +202,12 @@ func TestGetItemLogsDownloadHandler(t *testing.T) {
 func TestGetItemLogsLinesHandler(t *testing.T) {
 	cfg := test.LoadTestingConf(t, sdk.TypeCDN)
 
+	projectKey := sdk.RandomString(10)
+
 	// Create cdn service with need storage and test item
 	s, db := newTestService(t)
+	gock.New("http://lolcat.api").Post("/project/" + projectKey + "/workflows/MyWorkflow/log/access").Reply(http.StatusOK).JSON(nil)
+
 	cdnUnits, err := storage.Init(context.TODO(), s.Mapper, db.DbMap, sdk.NewGoRoutines(), storage.Configuration{
 		Buffer: storage.BufferConfiguration{
 			Name: "redis_buffer",
@@ -206,9 +227,9 @@ func TestGetItemLogsLinesHandler(t *testing.T) {
 		Status: sdk.StatusSuccess,
 		Line:   2,
 		Signature: log.Signature{
-			ProjectKey:   sdk.RandomString(10),
+			ProjectKey:   projectKey,
 			WorkflowID:   1,
-			WorkflowName: "MyWorklow",
+			WorkflowName: "MyWorkflow",
 			RunID:        1,
 			NodeRunID:    1,
 			NodeRunName:  "MyPipeline",
@@ -228,6 +249,18 @@ func TestGetItemLogsLinesHandler(t *testing.T) {
 	signer, err := authentication.NewSigner("cdn-test", test.SigningKey)
 	require.NoError(t, err)
 	s.Common.ParsedAPIPublicKey = signer.GetVerifyKey()
+	jwtToken := jwt.NewWithClaims(jwt.SigningMethodRS512, sdk.AuthSessionJWTClaims{
+		ID: sdk.UUID(),
+		StandardClaims: jwt.StandardClaims{
+			Issuer:    "test",
+			Subject:   sdk.UUID(),
+			Id:        sdk.UUID(),
+			IssuedAt:  time.Now().Unix(),
+			ExpiresAt: time.Now().Add(time.Minute).Unix(),
+		},
+	})
+	jwtTokenRaw, err := signer.SignJWT(jwtToken)
+	require.NoError(t, err)
 
 	apiRef := sdk.CDNLogAPIRef{
 		ProjectKey:     hm.Signature.ProjectKey,
@@ -244,15 +277,13 @@ func TestGetItemLogsLinesHandler(t *testing.T) {
 	apiRefHashU, err := hashstructure.Hash(apiRef, nil)
 	require.NoError(t, err)
 	apiRefHash := strconv.FormatUint(apiRefHashU, 10)
-	tokenRaw, err := signer.SignJWS(sdk.CDNAuthToken{APIRefHash: apiRefHash}, time.Minute)
-	require.NoError(t, err)
 
 	uri := s.Router.GetRoute("GET", s.getItemLogsLinesHandler, map[string]string{
 		"type":   string(sdk.CDNTypeItemStepLog),
 		"apiRef": apiRefHash,
 	})
 	require.NotEmpty(t, uri)
-	req := assets.NewJWTAuthentifiedRequest(t, tokenRaw, "GET", uri, nil)
+	req := assets.NewJWTAuthentifiedRequest(t, jwtTokenRaw, "GET", uri, nil)
 	rec := httptest.NewRecorder()
 	s.Router.Mux.ServeHTTP(rec, req)
 	require.Equal(t, 200, rec.Code)

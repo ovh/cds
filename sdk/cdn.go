@@ -41,10 +41,6 @@ type CDNUnit struct {
 	Config  ServiceConfig `json:"config" db:"config"`
 }
 
-type CDNAuthToken struct {
-	APIRefHash string `json:"api_ref_hash"`
-}
-
 type CDNLogLink struct {
 	Exists       bool   `json:"exists"`
 	DownloadPath string `json:"download_path,omitempty"`
