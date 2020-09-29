@@ -49,7 +49,7 @@ func (s *Service) RunTcpLogServer(ctx context.Context) {
 		_ = listener.Close()
 	}()
 
-	for i := int64(0); i <= s.Cfg.NbJobLogsGoroutines; i++ {
+	for i := int64(0); i < s.Cfg.NbJobLogsGoroutines; i++ {
 		s.GoRoutines.Run(ctx, fmt.Sprintf("cdn-worker-job-%d", i), func(ctx context.Context) {
 			if err := s.dequeueJobLogs(ctx); err != nil {
 				log.Error(ctx, "dequeueJobLogs: unable to dequeue redis incoming job logs: %v", err)
