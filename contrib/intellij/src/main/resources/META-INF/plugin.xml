@@ -1,0 +1,19 @@
+<idea-plugin>
+    <id>com.ovh</id>
+    <name>cds-ascode</name>
+    <vendor email="" url="http://www.ovh.com">OVH</vendor>
+
+    <description>Yaml auto complete plugin for CDS as code files</description>
+
+    <!-- please see https://www.jetbrains.org/intellij/sdk/docs/basics/getting_started/plugin_compatibility.html
+         on how to target different products -->
+    <depends>com.intellij.modules.platform</depends>
+    <depends>org.jetbrains.plugins.yaml</depends>
+
+
+    <extensions defaultExtensionNs="com.intellij">
+        <!-- Add your extensions here -->
+        <!--annotator implementationClass="com.ovh.cds.ascode.DuplicateKeyAnnotator" language="yaml" /-->
+        <completion.contributor language="yaml" implementationClass="com.ovh.cds.ascode.AsCodeCompletion" />
+    </extensions>
+</idea-plugin>
