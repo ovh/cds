@@ -47,6 +47,17 @@ func (x *RunningStorageUnits) Run(ctx context.Context, s StorageUnit) error {
 			continue
 		}
 
+		_, err = LoadItemUnitByUnit(ctx, x.m, tx, s.ID(), id)
+		if err == nil {
+			_ = tx.Rollback()
+			continue
+		}
+		if !sdk.ErrorIs(err, sdk.ErrNotFound) {
+			log.ErrorWithFields(ctx, logrus.Fields{"stack_trace": fmt.Sprintf("%+v", err)}, "%s", err)
+			_ = tx.Rollback()
+			continue
+		}
+
 		if err := x.runItem(ctx, tx, s, it); err != nil {
 			log.ErrorWithFields(ctx, logrus.Fields{"stack_trace": fmt.Sprintf("%+v", err)}, "%s", err)
 			tx.Rollback() // nolint
