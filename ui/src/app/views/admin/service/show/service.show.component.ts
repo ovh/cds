@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
+import { MonitoringStatusLine } from 'app/model/monitoring.model';
 import { Service } from 'app/model/service.model';
 import { ServiceService } from 'app/service/service/service.service';
 import { ThemeStore } from 'app/service/theme/theme.store';
@@ -19,6 +20,8 @@ export class ServiceShowComponent implements OnInit, OnDestroy {
     @ViewChild('textareaCodeMirror') codemirror: any;
 
     loading: boolean;
+    filteredStatusLines: Array<MonitoringStatusLine>;
+    filter: string;
     service: Service;
     codeMirrorConfig: any;
     config: any;
@@ -75,7 +78,7 @@ export class ServiceShowComponent implements OnInit, OnDestroy {
                         }
                     }
                 }
-
+                this.filterChange();
                 this.updatePath();
             });
         });
@@ -95,5 +98,39 @@ export class ServiceShowComponent implements OnInit, OnDestroy {
                 routerLink: ['/', 'admin', 'services', this.service.name]
             });
         }
+    }
+
+    filterChange(): void {
+        if (!this.filter) {
+            this.filteredStatusLines = this.service.monitoring_status.lines;
+            return;
+        }
+
+        if (this.filter === 'NOTICE') {
+            this.filteredStatusLines = this.service.monitoring_status.lines.filter(line => {
+                return line.status.indexOf('AL') !== -1 || line.status.indexOf('WARN') !== -1
+            });
+            return
+        }
+
+        if (this.filter === 'AL' || this.filter === 'WARN' || this.filter === 'OK') {
+            this.filteredStatusLines = this.service.monitoring_status.lines.filter(line => {
+                return line.status.indexOf(this.filter) !== -1
+            });
+            return
+        }
+
+        const lowerFilter = this.filter.toLowerCase();
+
+        this.filteredStatusLines = this.service.monitoring_status.lines.filter(line => {
+            return line.status.toLowerCase().indexOf(lowerFilter) !== -1 ||
+                line.component.toLowerCase().indexOf(lowerFilter) !== -1 ||
+                line.value.toLowerCase().indexOf(lowerFilter) !== -1 ||
+                line.type.toLowerCase().indexOf(lowerFilter) !== -1 ||
+                (line.service && line.service.toLowerCase().indexOf(lowerFilter) !== -1) ||
+                (line.hostname && line.hostname.toLowerCase().indexOf(lowerFilter) !== -1) ||
+                (line.session && line.session.toLowerCase().indexOf(lowerFilter) !== -1) ||
+                (line.consumer && line.consumer.toLowerCase().indexOf(lowerFilter) !== -1)
+        });
     }
 }

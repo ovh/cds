@@ -146,10 +146,10 @@ export class ServiceListComponent {
                 line.component.toLowerCase().indexOf(lowerFilter) !== -1 ||
                 line.value.toLowerCase().indexOf(lowerFilter) !== -1 ||
                 line.type.toLowerCase().indexOf(lowerFilter) !== -1 ||
-                line.service.toLowerCase().indexOf(lowerFilter) !== -1 ||
-                line.hostname.toLowerCase().indexOf(lowerFilter) !== -1 ||
-                line.session.toLowerCase().indexOf(lowerFilter) !== -1 ||
-                line.consumer.toLowerCase().indexOf(lowerFilter) !== -1
+                (line.service && line.service.toLowerCase().indexOf(lowerFilter) !== -1) ||
+                (line.hostname && line.hostname.toLowerCase().indexOf(lowerFilter) !== -1) ||
+                (line.session && line.session.toLowerCase().indexOf(lowerFilter) !== -1) ||
+                (line.consumer && line.consumer.toLowerCase().indexOf(lowerFilter) !== -1)
         });
     }
 }

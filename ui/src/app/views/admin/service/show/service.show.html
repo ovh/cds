@@ -39,6 +39,18 @@
                 </div>
                 <div class="column">
                     <h4>Status</h4>
+
+                    <div class="ui grid">
+                        <div class="ui row">
+                            <div class="ui wide column">
+                                <div class="ui fluid input">
+                                    <input type="text" placeholder="{{ 'filter' | translate }}" [(ngModel)]="filter"
+                                        (keyup)="filterChange()">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                     <table class="ui definition table">
                         <thead>
                             <th>Service</th>
@@ -46,9 +58,10 @@
                             <th>Status</th>
                             <th>Value</th>
                             <th>Hostname</th>
+                            <th>Session</th>
                         </thead>
                         <tbody>
-                            <tr *ngFor="let line of service.monitoring_status.lines" [ngClass]="{'error': line.status==='AL', 'warning': line.status==='WARN', 'positive': line.status==='WARN'}">
+                            <tr *ngFor="let line of filteredStatusLines" [ngClass]="{'error': line.status==='AL', 'warning': line.status==='WARN', 'positive': line.status==='WARN'}">
                                 <td>
                                     {{line.service}}
                                 </td>
@@ -63,6 +76,9 @@
                                 </td>
                                 <td>
                                     {{line.hostname}}
+                                </td>
+                                <td>
+                                    {{line.session}}
                                 </td>
                             </tr>
                         </tbody>

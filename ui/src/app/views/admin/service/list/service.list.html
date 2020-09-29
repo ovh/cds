@@ -40,7 +40,7 @@
                                         n/a
                                     </div>
                                     <div class="ui middle aligned divided list" *ngFor="let srv of g.services; index as idx; first as isFirst">
-                                        <div class="item" *ngIf="isFirst || displayAll">
+                                        <div class="item">
                                             <div class="right floated content">
                                                 <i class="filter icon pointer" suiPopup [popupText]="'filter_list_click' | translate"
                                                     popupPlacement="top left" (click)="filter=srv.name;filterChange()"></i>
@@ -60,10 +60,10 @@
                                     </div>
                                 </div>
                                 <div class="ui bottom attached button" *ngIf="g.value>1">
-                                    <div class="meta pointer" *ngIf="!displayAll" (click)="displayAll=!displayAll">
+                                    <div class="meta pointer" *ngIf="!g.displayAll" (click)="g.displayAll=!g.displayAll">
                                         {{g.value}} {{'services' | translate}} - {{'services_see_all' | translate}}
                                     </div>
-                                    <div class="meta pointer" *ngIf="displayAll" (click)="displayAll=!displayAll">
+                                    <div class="meta pointer" *ngIf="g.displayAll" (click)="g.displayAll=!g.displayAll">
                                         {{'services_minimize' | translate}}
                                     </div>
                                 </div>
