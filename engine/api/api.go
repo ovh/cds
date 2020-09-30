@@ -630,9 +630,6 @@ func (a *API) Serve(ctx context.Context) error {
 		go event.DequeueEvent(ctx, a.mustDB())
 	}
 
-	// here the generated name of API is ready, we set ServerName with that
-	a.Common.ServiceName = event.GetCDSName()
-
 	log.Info(ctx, "Initializing internal routines...")
 	a.GoRoutines.Run(ctx, "maintenance.Subscribe", func(ctx context.Context) {
 		if err := a.listenMaintenance(ctx); err != nil {
