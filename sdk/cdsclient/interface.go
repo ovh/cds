@@ -330,11 +330,11 @@ type WorkflowClient interface {
 	WorkflowNodeStop(projectKey string, workflowName string, number, fromNodeID int64) (*sdk.WorkflowNodeRun, error)
 	WorkflowNodeRun(projectKey string, name string, number int64, nodeRunID int64) (*sdk.WorkflowNodeRun, error)
 	WorkflowNodeRunArtifactDownload(projectKey string, name string, a sdk.WorkflowNodeRunArtifact, w io.Writer) error
-	WorkflowNodeRunJobStepLink(projectKey string, workflowName string, nodeRunID, job int64, step int64) (*sdk.CDNLogLink, error)
-	WorkflowNodeRunJobStepLog(projectKey string, workflowName string, nodeRunID, job int64, step int64) (*sdk.BuildState, error)
-	WorkflowNodeRunJobServiceLink(projectKey string, workflowName string, nodeRunID, job int64, serviceName string) (*sdk.CDNLogLink, error)
-	WorkflowNodeRunJobServiceLog(projectKey string, workflowName string, nodeRunID, job int64, serviceName string) (*sdk.ServiceLog, error)
-	WorkflowLogAccess(projectKey, workflowName, sessionID string) error
+	WorkflowNodeRunJobStepLink(ctx context.Context, projectKey string, workflowName string, nodeRunID, job int64, step int64) (*sdk.CDNLogLink, error)
+	WorkflowNodeRunJobStepLog(ctx context.Context, projectKey string, workflowName string, nodeRunID, job int64, step int64) (*sdk.BuildState, error)
+	WorkflowNodeRunJobServiceLink(ctx context.Context, projectKey string, workflowName string, nodeRunID, job int64, serviceName string) (*sdk.CDNLogLink, error)
+	WorkflowNodeRunJobServiceLog(ctx context.Context, projectKey string, workflowName string, nodeRunID, job int64, serviceName string) (*sdk.ServiceLog, error)
+	WorkflowLogAccess(ctx context.Context, projectKey, workflowName, sessionID string) error
 	WorkflowNodeRunRelease(projectKey string, workflowName string, runNumber int64, nodeRunID int64, release sdk.WorkflowNodeRunRelease) error
 	WorkflowAllHooksList() ([]sdk.NodeHook, error)
 	WorkflowCachePush(projectKey, integrationName, ref string, tarContent io.Reader, size int) error

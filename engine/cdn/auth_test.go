@@ -44,8 +44,8 @@ func Test_itemAccessMiddleware(t *testing.T) {
 
 	sessionID := sdk.UUID()
 	mockClient.EXPECT().
-		WorkflowLogAccess(gomock.Any(), gomock.Any(), sessionID).
-		DoAndReturn(func(projectKey, workflowName, sessionID string) error { return nil }).
+		WorkflowLogAccess(gomock.Any(), gomock.Any(), gomock.Any(), sessionID).
+		DoAndReturn(func(ctx context.Context, projectKey, workflowName, sessionID string) error { return nil }).
 		Times(1)
 
 	signer, err := authentication.NewSigner("cdn-test", test.SigningKey)

@@ -192,3 +192,24 @@ func CheckRequestSignatureMiddleware(pubKey *rsa.PublicKey) Middleware {
 		return ctx, nil
 	}
 }
+
+// FormInt64 return a int64.
+func FormInt64(r *http.Request, s string) int64 {
+	i, _ := strconv.ParseInt(r.FormValue(s), 10, 64)
+	return i
+}
+
+// FormInt return a int.
+func FormInt(r *http.Request, s string) int {
+	i, _ := strconv.Atoi(r.FormValue(s))
+	return i
+}
+
+// FormUInt return a uint.
+func FormUInt(r *http.Request, s string) uint {
+	i := FormInt(r, s)
+	if i < 0 {
+		return 0
+	}
+	return uint(i)
+}

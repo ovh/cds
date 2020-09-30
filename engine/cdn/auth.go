@@ -27,6 +27,9 @@ func (s *Service) jwtMiddleware(ctx context.Context, w http.ResponseWriter, req 
 }
 
 func (s *Service) itemAccessMiddleware(ctx context.Context, w http.ResponseWriter, req *http.Request, rc *service.HandlerConfig) (context.Context, error) {
+	ctx, end := telemetry.Span(ctx, "router.itemAccessMiddleware")
+	defer end()
+
 	vars := mux.Vars(req)
 	itemTypeRaw, ok := vars["type"]
 	if !ok {
@@ -45,6 +48,9 @@ func (s *Service) itemAccessMiddleware(ctx context.Context, w http.ResponseWrite
 }
 
 func (s *Service) itemAccessCheck(ctx context.Context, itemType sdk.CDNItemType, apiRef string) (context.Context, error) {
+	ctx, end := telemetry.Span(ctx, "router.itemAccessCheck")
+	defer end()
+
 	// Check for session based on jwt from context
 	jwt, ok := ctx.Value(service.ContextJWT).(*jwt.Token)
 	if !ok {
@@ -68,7 +74,7 @@ func (s *Service) itemAccessCheck(ctx context.Context, itemType sdk.CDNItemType,
 		return ctx, sdk.NewErrorWithStack(err, sdk.ErrNotFound)
 	}
 
-	if err := s.Client.WorkflowLogAccess(item.APIRef.ProjectKey, item.APIRef.WorkflowName, sessionID); err != nil {
+	if err := s.Client.WorkflowLogAccess(ctx, item.APIRef.ProjectKey, item.APIRef.WorkflowName, sessionID); err != nil {
 		return ctx, sdk.NewErrorWithStack(err, sdk.ErrNotFound)
 	}
 

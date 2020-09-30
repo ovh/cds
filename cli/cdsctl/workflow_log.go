@@ -298,9 +298,9 @@ func workflowLogDownloadRun(v cli.Values) error {
 		var link *sdk.CDNLogLink
 		if feature.Enabled {
 			if log.detailType == workflowLogDetailTypeService {
-				link, err = client.WorkflowNodeRunJobServiceLink(projectKey, workflowName, log.runID, log.jobID, log.serviceName)
+				link, err = client.WorkflowNodeRunJobServiceLink(context.Background(), projectKey, workflowName, log.runID, log.jobID, log.serviceName)
 			} else {
-				link, err = client.WorkflowNodeRunJobStepLink(projectKey, workflowName, log.runID, log.jobID, log.stepOrder)
+				link, err = client.WorkflowNodeRunJobStepLink(context.Background(), projectKey, workflowName, log.runID, log.jobID, log.stepOrder)
 			}
 			if err != nil {
 				return err
@@ -315,13 +315,13 @@ func workflowLogDownloadRun(v cli.Values) error {
 			}
 		} else {
 			if log.detailType == workflowLogDetailTypeService {
-				serviceLog, err := client.WorkflowNodeRunJobServiceLog(projectKey, workflowName, log.runID, log.jobID, log.serviceName)
+				serviceLog, err := client.WorkflowNodeRunJobServiceLog(context.Background(), projectKey, workflowName, log.runID, log.jobID, log.serviceName)
 				if err != nil {
 					return err
 				}
 				data = []byte(serviceLog.Val)
 			} else {
-				buildState, err := client.WorkflowNodeRunJobStepLog(projectKey, workflowName, log.runID, log.jobID, log.stepOrder)
+				buildState, err := client.WorkflowNodeRunJobStepLog(context.Background(), projectKey, workflowName, log.runID, log.jobID, log.stepOrder)
 				if err != nil {
 					return err
 				}

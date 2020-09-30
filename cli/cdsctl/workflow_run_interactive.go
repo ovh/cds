@@ -65,7 +65,7 @@ func workflowRunInteractive(v cli.Values, w *sdk.WorkflowRun, baseURL string) er
 						for _, step := range job.Job.StepStatus {
 							var access *sdk.CDNLogLink
 							if feature.Enabled {
-								access, err = client.WorkflowNodeRunJobStepLink(projectKey, workflowName, wnr.ID, job.ID, int64(step.StepOrder))
+								access, err = client.WorkflowNodeRunJobStepLink(context.Background(), projectKey, workflowName, wnr.ID, job.ID, int64(step.StepOrder))
 								if err != nil {
 									return err
 								}
@@ -79,7 +79,7 @@ func workflowRunInteractive(v cli.Values, w *sdk.WorkflowRun, baseURL string) er
 								}
 								data = string(buf)
 							} else {
-								buildState, err := client.WorkflowNodeRunJobStepLog(projectKey, workflowName, wnr.ID, job.ID, int64(step.StepOrder))
+								buildState, err := client.WorkflowNodeRunJobStepLog(context.Background(), projectKey, workflowName, wnr.ID, job.ID, int64(step.StepOrder))
 								if err != nil {
 									return err
 								}

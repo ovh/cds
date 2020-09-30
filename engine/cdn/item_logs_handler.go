@@ -3,7 +3,6 @@ package cdn
 import (
 	"context"
 	"net/http"
-	"strconv"
 
 	"github.com/gorilla/mux"
 
@@ -70,10 +69,7 @@ func (s *Service) getItemDownloadHandler() service.Handler {
 		apiRef := vars["apiRef"]
 
 		// User can give a refresh delay in seconds, Refresh header value will be set if item is not complete
-		refreshDelay, err := strconv.ParseInt(r.FormValue("refresh"), 10, 64)
-		if err != nil {
-			refreshDelay = 0
-		}
+		refreshDelay := service.FormInt64(r, "refresh")
 
 		return s.downloadItem(ctx, itemType, apiRef, refreshDelay, w)
 	}
@@ -89,16 +85,11 @@ func (s *Service) getItemLogsLinesHandler() service.Handler {
 
 		apiRef := vars["apiRef"]
 
-		offset, err := strconv.ParseInt(r.FormValue("offset"), 10, 64)
-		if err != nil {
-			offset = 0 // offset can be lower than 0 if we want the n last lines
-		}
-		count, err := strconv.ParseInt(r.FormValue("count"), 10, 64)
-		if err != nil || count < 0 {
-			count = 100
-		}
+		// offset can be lower than 0 if we want the n last lines
+		offset := service.FormInt64(r, "offset")
+		count := service.FormUInt(r, "count")
 
-		_, rc, _, err := s.getItemLogValue(ctx, itemType, apiRef, sdk.CDNReaderFormatJSON, offset, uint(count))
+		_, rc, _, err := s.getItemLogValue(ctx, itemType, apiRef, sdk.CDNReaderFormatJSON, offset, count)
 		if err != nil {
 			return err
 		}
