@@ -67,6 +67,22 @@ type Workflow struct {
 	Runs             []WorkflowRun             `json:"runs,omitempty" yaml:"-" db:"-" cli:"-"`
 }
 
+func (w Workflow) Value() (driver.Value, error) {
+	j, err := json.Marshal(w)
+	return j, WrapError(err, "cannot marshal Workflow")
+}
+
+func (w *Workflow) Scan(src interface{}) error {
+	if src == nil {
+		return nil
+	}
+	source, ok := src.([]byte)
+	if !ok {
+		return WithStack(fmt.Errorf("type assertion .([]byte) failed (%T)", src))
+	}
+	return WrapError(json.Unmarshal(source, w), "cannot unmarshal Workflow")
+}
+
 type PurgeTags []string
 
 // Value returns driver.Value from PurgeTags.

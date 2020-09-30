@@ -13,11 +13,11 @@ import (
 	"github.com/sirupsen/logrus"
 
 	"github.com/ovh/cds/engine/api/action"
-	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/plugin"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/engine/api/services"
+	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
@@ -744,7 +744,7 @@ func NodeBuildParametersFromWorkflow(proj sdk.Project, wf *sdk.Workflow, refNode
 		runContext.NodeGroups = refNode.Groups
 
 		var err error
-		res, err = getBuildParameterFromNodeContext(proj, wf, runContext, refNode.Context.DefaultPipelineParameters, refNode.Context.DefaultPayload, nil)
+		res, err = getBuildParameterFromNodeContext(proj, *wf, runContext, refNode.Context.DefaultPipelineParameters, refNode.Context.DefaultPayload, nil)
 		if err != nil {
 			return nil, sdk.WrapError(sdk.ErrWorkflowNodeNotFound, "getWorkflowTriggerConditionHandler> Unable to get workflow node parameters: %v", err)
 		}
