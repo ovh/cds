@@ -33,6 +33,7 @@ func VersionHandler() service.Handler {
 // Status returns status, implements interface service.Service
 func (api *API) Status(ctx context.Context) *sdk.MonitoringStatus {
 	m := api.NewMonitoringStatus()
+	m.ServiceName = event.GetCDSName()
 
 	m.AddLine(sdk.MonitoringStatusLine{Component: "Hostname", Value: event.GetHostname(), Status: sdk.MonitoringStatusOK})
 	m.AddLine(sdk.MonitoringStatusLine{Component: "CDSName", Value: api.Name(), Status: sdk.MonitoringStatusOK})
