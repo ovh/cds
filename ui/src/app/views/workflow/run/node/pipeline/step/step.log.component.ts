@@ -1,4 +1,4 @@
-import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { HttpClient } from '@angular/common/http';
 import {
     ChangeDetectionStrategy, ChangeDetectorRef,
     Component,
@@ -16,7 +16,7 @@ import {
 } from 'ansi_up';
 import { Action } from 'app/model/action.model';
 import { Job, StepStatus } from 'app/model/job.model';
-import { BuildResult, CDNLogAccess, Log, PipelineStatus } from 'app/model/pipeline.model';
+import { BuildResult, CDNLogLink, Log, PipelineStatus } from 'app/model/pipeline.model';
 import { WorkflowNodeJobRun } from 'app/model/workflow.run.model';
 import { WorkflowService } from 'app/service/workflow/workflow.service';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
@@ -190,9 +190,9 @@ export class WorkflowStepLogComponent implements OnInit, OnDestroy {
             return !!f.results.find(r => r.enabled && r.paramString === JSON.stringify({ 'project_key': projectKey }));
         });
 
-        let logAccess: CDNLogAccess;
+        let logLink: CDNLogLink;
         if (cdnEnabled) {
-            logAccess = await this._workflowService.getStepAccess(projectKey, workflowName, nodeRunId, runJobId, stepOrder).toPromise();
+            logLink = await this._workflowService.getStepLink(projectKey, workflowName, nodeRunId, runJobId, stepOrder).toPromise();
         }
 
         let callback = (b: BuildResult) => {
@@ -207,15 +207,12 @@ export class WorkflowStepLogComponent implements OnInit, OnDestroy {
             this._cd.markForCheck();
         };
 
-        if (!cdnEnabled || !logAccess.exists) {
+        if (!cdnEnabled || !logLink.exists) {
             const stepLog = await this._workflowService.getStepLog(projectKey, workflowName,
                 nodeRunId, runJobId, stepOrder).toPromise();
             callback(stepLog);
         } else {
-            const data = await this._http.get('./cdscdn' + logAccess.download_path, {
-                responseType: 'text',
-                headers: new HttpHeaders({ 'Authorization': `Bearer ${logAccess.token}` })
-            }).toPromise();
+            const data = await this._http.get('./cdscdn' + logLink.download_path, { responseType: 'text' }).toPromise();
             callback(<BuildResult>{ status: PipelineStatus.BUILDING, step_logs: { id: 1, val: data } });
         }
 
@@ -227,13 +224,11 @@ export class WorkflowStepLogComponent implements OnInit, OnDestroy {
         this._ngZone.runOutsideAngular(() => {
             this.pollingSubscription = Observable.interval(2000)
                 .mergeMap(_ => {
-                    if (!cdnEnabled || !logAccess.exists) {
+                    if (!cdnEnabled || !logLink.exists) {
                         return this._workflowService.getStepLog(projectKey, workflowName, nodeRunId, runJobId, stepOrder);
                     }
-                    return this._http.get('./cdscdn' + logAccess.download_path, {
-                        responseType: 'text',
-                        headers: new HttpHeaders({ 'Authorization': `Bearer ${logAccess.token}` })
-                    }).map(data => <BuildResult>{ status: PipelineStatus.BUILDING, step_logs: { id: 1, val: data } });
+                    return this._http.get('./cdscdn' + logLink.download_path, { responseType: 'text' })
+                        .map(data => <BuildResult>{ status: PipelineStatus.BUILDING, step_logs: { id: 1, val: data } });
                 })
                 .subscribe(build => {
                     this._ngZone.run(() => {

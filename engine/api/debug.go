@@ -73,14 +73,14 @@ func (api *API) getProfileHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		name := mux.Vars(r)["name"]
 		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
-		debug, _ := strconv.Atoi(r.FormValue("debug"))
+		debug := service.FormInt(r, "debug")
 		p := pprof.Lookup(name)
 		if p == nil {
 			w.WriteHeader(404)
 			fmt.Fprintf(w, "Unknown profile: %s\n", name)
 			return nil
 		}
-		gc, _ := strconv.Atoi(r.FormValue("gc"))
+		gc := service.FormInt(r, "gc")
 		if name == "heap" && gc > 0 {
 			runtime.GC()
 		}
@@ -144,7 +144,7 @@ func (api *API) getTraceHandler() service.Handler {
 // The package initialization registers it as /debug/pprof/profile.
 func (api *API) getCPUProfileHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		sec, _ := strconv.ParseInt(r.FormValue("seconds"), 10, 64)
+		sec := service.FormInt64(r, "seconds")
 		if sec == 0 {
 			sec = 30
 		}

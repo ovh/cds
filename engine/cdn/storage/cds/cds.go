@@ -74,7 +74,7 @@ func (c *CDS) NewReader(ctx context.Context, i sdk.CDNItemUnit) (io.ReadCloser, 
 	telemetry.Record(ctx, metricsReaders, 1)
 	switch i.Item.Type {
 	case sdk.CDNTypeItemStepLog:
-		bs, err := c.client.WorkflowNodeRunJobStepLog(i.Item.APIRef.ProjectKey, i.Item.APIRef.WorkflowName, i.Item.APIRef.NodeRunID, i.Item.APIRef.NodeRunJobID, i.Item.APIRef.StepOrder)
+		bs, err := c.client.WorkflowNodeRunJobStepLog(ctx, i.Item.APIRef.ProjectKey, i.Item.APIRef.WorkflowName, i.Item.APIRef.NodeRunID, i.Item.APIRef.NodeRunJobID, i.Item.APIRef.StepOrder)
 		if err != nil {
 			return nil, err
 		}
@@ -82,7 +82,7 @@ func (c *CDS) NewReader(ctx context.Context, i sdk.CDNItemUnit) (io.ReadCloser, 
 		telemetry.Record(ctx, metricsReadersStepLogs, 1)
 		return rc, nil
 	case sdk.CDNTypeItemServiceLog:
-		log, err := c.ServiceLogs(i.Item.APIRef.ProjectKey, i.Item.APIRef.WorkflowName, i.Item.APIRef.NodeRunID, i.Item.APIRef.NodeRunJobID, i.Item.APIRef.RequirementServiceName)
+		log, err := c.ServiceLogs(ctx, i.Item.APIRef.ProjectKey, i.Item.APIRef.WorkflowName, i.Item.APIRef.NodeRunID, i.Item.APIRef.NodeRunJobID, i.Item.APIRef.RequirementServiceName)
 		if err != nil {
 			return nil, err
 		}
@@ -93,8 +93,8 @@ func (c *CDS) NewReader(ctx context.Context, i sdk.CDNItemUnit) (io.ReadCloser, 
 	return nil, sdk.WithStack(fmt.Errorf("unable to find data for ref: %+v", i.Item.APIRef))
 }
 
-func (c *CDS) ServiceLogs(pKey string, wkfName string, nodeRunID int64, jobID int64, serviceName string) (*sdk.ServiceLog, error) {
-	return c.client.WorkflowNodeRunJobServiceLog(pKey, wkfName, nodeRunID, jobID, serviceName)
+func (c *CDS) ServiceLogs(ctx context.Context, pKey string, wkfName string, nodeRunID int64, jobID int64, serviceName string) (*sdk.ServiceLog, error) {
+	return c.client.WorkflowNodeRunJobServiceLog(ctx, pKey, wkfName, nodeRunID, jobID, serviceName)
 }
 
 func (c *CDS) ListProjects() ([]sdk.Project, error) {

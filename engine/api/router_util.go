@@ -81,13 +81,6 @@ func FormString(r *http.Request, s string) string {
 	return r.FormValue(s)
 }
 
-// FormIntr return a int
-func FormInt(r *http.Request, s string) int {
-	v := r.FormValue(s)
-	i, _ := strconv.Atoi(v)
-	return i
-}
-
 // QueryString return a string from a query parameter
 func QueryString(r *http.Request, s string) string {
 	return r.FormValue(s)

@@ -85,9 +85,7 @@ func (s *Service) dequeueServiceLogs(ctx context.Context) error {
 			}
 			if err := s.storeLogs(ctx, sdk.CDNTypeItemServiceLog, hm.Signature, hm.Status, hm.Msg.Full, 0); err != nil {
 				err = sdk.WrapError(err, "unable to store service log")
-				log.ErrorWithFields(ctx, logrus.Fields{
-					"stack_trace": fmt.Sprintf("%+v", err),
-				}, "%s", err)
+				log.ErrorWithFields(ctx, logrus.Fields{"stack_trace": fmt.Sprintf("%+v", err)}, "%s", err)
 			}
 		}
 	}
