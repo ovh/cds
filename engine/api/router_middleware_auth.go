@@ -169,21 +169,18 @@ func (api *API) xsrfMiddleware(ctx context.Context, w http.ResponseWriter, req *
 	ctx, end := telemetry.Span(ctx, "router.xsrfMiddleware")
 	defer end()
 
+	// If no consumer in the context, means that the route is not authentified, we don't need to check the xsrf token.
+	if getAPIConsumer(ctx) == nil {
+		return ctx, nil
+	}
+
 	jwtFromCookieVal := ctx.Value(service.ContextJWTFromCookie)
 	jwtFromCookie, _ := jwtFromCookieVal.(bool)
 	if !jwtFromCookie {
 		return ctx, nil
 	}
 
-	sessionValue := ctx.Value(contextSession)
-	if sessionValue == nil {
-		return ctx, sdk.WithStack(sdk.ErrUnauthorized)
-	}
-
-	session, ok := sessionValue.(*sdk.AuthSession)
-	if !ok {
-		return ctx, sdk.WithStack(sdk.ErrUnauthorized)
-	}
+	session := getAuthSession(ctx)
 
 	xsrfToken := req.Header.Get(xsrfHeaderName)
 	existingXSRFToken, existXSRFTokenInCache := authentication.GetSessionXSRFToken(api.Cache, session.ID)
