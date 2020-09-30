@@ -15,5 +15,8 @@
         <!-- Add your extensions here -->
         <!--annotator implementationClass="com.ovh.cds.ascode.DuplicateKeyAnnotator" language="yaml" /-->
         <completion.contributor language="yaml" implementationClass="com.ovh.cds.ascode.AsCodeCompletion" />
+        <projectConfigurable parentId="tools" instance="com.ovh.cds.ascode.ProjectSettingsConfigurable"
+                             id="com.ovh.cds.ascode.ProjectSettingsConfigurable" displayName="CDS Setings"
+                             nonDefaultProject="true"/>
     </extensions>
 </idea-plugin>
