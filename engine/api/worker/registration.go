@@ -8,9 +8,9 @@ import (
 
 	"github.com/go-gorp/gorp"
 
-	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/workermodel"
+	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/hatchery"
@@ -112,11 +112,13 @@ func RegisterWorker(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store 
 	}
 
 	//If the worker is registered for a model and it gave us BinaryCapabilities...
-	if model != nil && spawnArgs.RegisterOnly && len(registrationForm.BinaryCapabilities) > 0 && spawnArgs.Model.ID != 0 {
-		if err := workermodel.UpdateCapabilities(ctx, db, spawnArgs, registrationForm); err != nil {
-			log.Error(ctx, "updateWorkerModelCapabilities> %v", err)
+	if model != nil && spawnArgs.RegisterOnly {
+		if len(registrationForm.BinaryCapabilities) > 0 {
+			if err := workermodel.UpdateCapabilities(ctx, db, model.ID, registrationForm); err != nil {
+				log.Error(ctx, "updateWorkerModelCapabilities> %v", err)
+			}
 		}
-		if err := workermodel.UpdateRegistration(ctx, db, store, spawnArgs.Model.ID); err != nil {
+		if err := workermodel.UpdateRegistration(ctx, db, store, model.ID); err != nil {
 			log.Warning(ctx, "registerWorker> Unable to update registration: %s", err)
 		}
 	}
