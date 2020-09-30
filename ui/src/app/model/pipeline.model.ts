@@ -135,6 +135,31 @@ export class Pipeline {
             return idFound === -1 ? p : current[idFound];
         });
     }
+
+    static InitRef(editPipeline: Pipeline) {
+        if (editPipeline && editPipeline.stages) {
+            editPipeline.stages.forEach(s => {
+                let nextRef;
+                do {
+                    nextRef = Math.random();
+                } while (editPipeline.stages.findIndex(stg => stg.ref === nextRef) !== -1);
+                s.ref = nextRef;
+                if (s.jobs) {
+                    s.jobs.forEach(j => {
+                        let nextJobRef;
+                        let loopAgain = true;
+                        do {
+                            nextJobRef = Math.random();
+                            loopAgain = editPipeline.stages.findIndex(st => {
+                                return st.jobs.findIndex(jb => jb.ref === nextRef) !== -1
+                            }) !== -1;
+                        } while (loopAgain);
+                        j.ref = nextJobRef;
+                    })
+                }
+            });
+        }
+    }
 }
 
 export class PipelineRunRequest {
