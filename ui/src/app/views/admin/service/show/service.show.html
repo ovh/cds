@@ -31,19 +31,16 @@
                 {{service.version}}
             </p>
 
-            <div class="ui two column grid">
-                <div class="column">
-                    <h4>Configuration</h4>
-                    <codemirror [(ngModel)]="config" [config]="codeMirrorConfig" #textareaCodeMirror>
-                    </codemirror>
-                </div>
-            </div>
 
             <h4>Status</h4>
                 
             <app-data-table [filter]="filter" [withFilter]="filteredStatusLines" [withPagination]="25" [columns]="columns" [data]="service.monitoring_status.lines" [loading]="loading">
             </app-data-table>
-            
+
+            <h4>Configuration</h4>
+            <codemirror [(ngModel)]="config" [config]="codeMirrorConfig" #textareaCodeMirror>
+            </codemirror>
+
         </ng-template>
         <ng-template #loadingPart>
             <div class="ui text active loader">{{ 'common_loading' | translate }}</div>
