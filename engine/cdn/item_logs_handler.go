@@ -7,6 +7,7 @@ import (
 	"github.com/gorilla/mux"
 
 	"github.com/ovh/cds/engine/cdn/item"
+	"github.com/ovh/cds/engine/cdn/storage"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/engine/websocket"
 	"github.com/ovh/cds/sdk"
@@ -83,8 +84,13 @@ func (s *Service) getItemLogsStreamHandler() service.Handler {
 		if !itemType.IsLog() {
 			return sdk.NewErrorFrom(sdk.ErrWrongRequest, "invalid item log type")
 		}
-		token, err := s.checkAuth(r)
+		apiRef := vars["apiRef"]
+
+		it, err := item.LoadByAPIRefHashAndType(ctx, s.Mapper, s.mustDBWithCtx(ctx), apiRef, itemType)
 		if err != nil {
+			return err
+		}
+		if _, err := storage.LoadItemUnitByUnit(ctx, s.Mapper, s.mustDBWithCtx(ctx), s.Units.Buffer.ID(), it.ID); err != nil {
 			return err
 		}
 
@@ -95,8 +101,8 @@ func (s *Service) getItemLogsStreamHandler() service.Handler {
 		}
 		defer c.Close()
 
-		wsClient := websocket.NewClient(sdk.UUID(), c)
-		wsClientData := &websocketClientData{token: token}
+		wsClient := websocket.NewClient(c)
+		wsClientData := &websocketClientData{itemID: it.ID}
 		s.WSServer.AddClient(wsClient, wsClientData)
 		defer s.WSServer.RemoveClient(wsClient.UUID())
 

@@ -7,15 +7,15 @@ import (
 
 	"github.com/gorilla/websocket"
 	"github.com/sirupsen/logrus"
+	"github.com/tevino/abool"
 
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
-	"github.com/tevino/abool"
 )
 
-func NewClient(uuid string, conn *websocket.Conn) Client {
+func NewClient(conn *websocket.Conn) Client {
 	return &CommonClient{
-		uuid:     uuid,
+		uuid:     sdk.UUID(),
 		conn:     conn,
 		isClosed: abool.NewBool(false),
 	}

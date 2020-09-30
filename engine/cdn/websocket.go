@@ -4,7 +4,6 @@ import (
 	"sync"
 
 	"github.com/ovh/cds/engine/websocket"
-	"github.com/ovh/cds/sdk"
 )
 
 type websocketServer struct {
@@ -28,5 +27,5 @@ func (s *websocketServer) RemoveClient(uuid string) {
 }
 
 type websocketClientData struct {
-	token sdk.CDNAuthToken
+	itemID string
 }

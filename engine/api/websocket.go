@@ -191,7 +191,7 @@ func (a *API) getWebsocketHandler() service.Handler {
 		}
 		defer c.Close()
 
-		wsClient := websocket.NewClient(sdk.UUID(), c)
+		wsClient := websocket.NewClient(c)
 		wsClientData := &websocketClientData{
 			AuthConsumer: *getAPIConsumer(ctx),
 			filters:      make(webSocketFilters),
