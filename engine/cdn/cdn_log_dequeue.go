@@ -49,9 +49,7 @@ func (s *Service) dequeueJobLogs(ctx context.Context) error {
 						continue
 					}
 					err = sdk.WrapError(err, "unable to store step log")
-					log.ErrorWithFields(ctx, logrus.Fields{
-						"stack_trace": fmt.Sprintf("%+v", err),
-					}, "%s", err)
+					log.ErrorWithFields(ctx, logrus.Fields{"stack_trace": fmt.Sprintf("%+v", err)}, "%s", err)
 					break
 				}
 				break
@@ -117,6 +115,11 @@ func (s *Service) storeLogs(ctx context.Context, itemType sdk.CDNItemType, signa
 		if err := s.Units.Buffer.Append(*iu, content); err != nil {
 			return err
 		}
+	}
+
+	// Send an event in WS broker to refresh streams on current item
+	if err := s.publishWSEvent(ctx, *it); err != nil {
+		return err
 	}
 
 	maxLineKey := cache.Key("cdn", "log", "size", it.ID)

@@ -3,6 +3,7 @@ package cdsclient
 import (
 	"archive/tar"
 	"context"
+	"encoding/json"
 	"io"
 	"net/http"
 	"net/url"
@@ -148,8 +149,8 @@ type EnvironmentVariableClient interface {
 
 // EventsClient listen SSE Events from CDS API
 type EventsClient interface {
-	// Must be  run in a go routine
-	WebsocketEventsListen(ctx context.Context, goRoutines *sdk.GoRoutines, chanMsgToSend <-chan []sdk.WebsocketFilter, chanMsgReceived chan<- sdk.WebsocketEvent)
+	// Must be run in a go routine
+	WebsocketEventsListen(ctx context.Context, goRoutines *sdk.GoRoutines, chanMsgToSend <-chan []sdk.WebsocketFilter, chanMsgReceived chan<- sdk.WebsocketEvent, chanErrorReceived chan<- error)
 }
 
 // DownloadClient exposes download related functions
@@ -396,6 +397,7 @@ type Interface interface {
 	HookClient
 	Version() (*sdk.Version, error)
 	TemplateClient
+	WebsocketClient
 }
 
 type WorkerInterface interface {
@@ -569,4 +571,8 @@ type AuthClient interface {
 	AuthSessionListByUser(username string) (sdk.AuthSessions, error)
 	AuthSessionDelete(username, id string) error
 	AuthMe() (sdk.AuthCurrentConsumerResponse, error)
+}
+
+type WebsocketClient interface {
+	RequestWebsocket(ctx context.Context, goRoutines *sdk.GoRoutines, path string, msgToSend <-chan json.RawMessage, msgReceived chan<- json.RawMessage, errorReceived chan<- error) error
 }

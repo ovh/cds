@@ -178,6 +178,9 @@ func (s *Service) Serve(c context.Context) error {
 	if err := s.initRouter(ctx); err != nil {
 		return err
 	}
+	if err := s.initWebsocket(); err != nil {
+		return err
+	}
 	server := &http.Server{
 		Addr:           fmt.Sprintf("%s:%d", s.Cfg.HTTP.Addr, s.Cfg.HTTP.Port),
 		Handler:        s.Router.Mux,

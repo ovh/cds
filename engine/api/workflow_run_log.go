@@ -225,18 +225,25 @@ func (api *API) getWorkflowNodeRunJobLogLinkHandler(ctx context.Context, w http.
 	if len(srvs) == 0 {
 		return sdk.WrapError(sdk.ErrNotFound, "no cdn service found")
 	}
-	if _, _, err := services.NewClient(api.mustDB(), srvs).DoJSONRequest(ctx, http.MethodGet, fmt.Sprintf("/item/%s/%s", itemType, apiRefHash), nil, nil); err != nil {
+
+	var item sdk.CDNItem
+	if _, _, err := services.NewClient(api.mustDB(), srvs).DoJSONRequest(ctx, http.MethodGet, fmt.Sprintf("/item/%s/%s", itemType, apiRefHash), nil, &item); err != nil {
 		if sdk.ErrorIs(err, sdk.ErrNotFound) {
 			return service.WriteJSON(w, sdk.CDNLogLink{}, http.StatusOK)
 		}
 		return err
 	}
 
-	return service.WriteJSON(w, sdk.CDNLogLink{
+	link := sdk.CDNLogLink{
 		Exists:       true,
 		DownloadPath: fmt.Sprintf("/item/%s/%s/download", itemType, apiRefHash),
 		CDNURL:       httpURL,
-	}, http.StatusOK)
+	}
+	if item.Status == sdk.CDNStatusItemIncoming {
+		link.StreamPath = fmt.Sprintf("/item/%s/%s/stream", itemType, apiRefHash)
+	}
+
+	return service.WriteJSON(w, link, http.StatusOK)
 }
 
 func (api *API) getWorkflowLogAccessHandler() service.Handler {

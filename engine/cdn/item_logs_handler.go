@@ -3,14 +3,17 @@ package cdn
 import (
 	"context"
 	"net/http"
+	"time"
 
 	"github.com/gorilla/mux"
 
 	"github.com/ovh/cds/engine/cdn/item"
+	"github.com/ovh/cds/engine/cdn/redis"
 	"github.com/ovh/cds/engine/cdn/storage"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/engine/websocket"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/log"
 )
 
 func (s *Service) markItemToDeleteHandler() service.Handler {
@@ -86,6 +89,8 @@ func (s *Service) getItemLogsStreamHandler() service.Handler {
 		}
 		apiRef := vars["apiRef"]
 
+		offset := service.FormInt64(r, "offset")
+
 		it, err := item.LoadByAPIRefHashAndType(ctx, s.Mapper, s.mustDBWithCtx(ctx), apiRef, itemType)
 		if err != nil {
 			return err
@@ -102,9 +107,40 @@ func (s *Service) getItemLogsStreamHandler() service.Handler {
 		defer c.Close()
 
 		wsClient := websocket.NewClient(c)
-		wsClientData := &websocketClientData{itemID: it.ID}
+		wsClientData := &websocketClientData{
+			itemID:             it.ID,
+			chanItemUpdate:     make(chan struct{}, 10),
+			lastLineNumberSent: offset,
+		}
 		s.WSServer.AddClient(wsClient, wsClientData)
 		defer s.WSServer.RemoveClient(wsClient.UUID())
+
+		s.GoRoutines.Exec(ctx, "getItemLogsStreamHandler."+wsClient.UUID(), func(ctx context.Context) {
+			log.Debug("getItemLogsStreamHandler> start routine for client %s", wsClient.UUID())
+
+			tick := time.NewTicker(5 * time.Second)
+			defer tick.Stop()
+
+			send := func() error {
+				log.Debug("getItemLogsStreamHandler> send log to client %s", wsClient.UUID())
+				return wsClient.Send(redis.Line{})
+			}
+
+			for {
+				select {
+				case <-ctx.Done():
+					log.Debug("getItemLogsStreamHandler> stop routine for stream client %s", wsClient.UUID())
+					return
+				case <-tick.C:
+					wsClientData.chanItemUpdate <- struct{}{}
+				case <-wsClientData.chanItemUpdate:
+					if err := send(); err != nil {
+						log.Debug("getItemLogsStreamHandler> can't send to client %s it will be removed: %+v", wsClient.UUID(), err)
+						return
+					}
+				}
+			}
+		})
 
 		return wsClient.Listen(ctx, s.GoRoutines)
 	}

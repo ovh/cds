@@ -536,6 +536,9 @@ func (a *API) Serve(ctx context.Context) error {
 	if err := a.InitRouter(); err != nil {
 		return err
 	}
+	if err := a.initWebsocket(); err != nil {
+		return err
+	}
 	if err := InitRouterMetrics(ctx, a); err != nil {
 		log.Error(ctx, "unable to init router metrics: %v", err)
 	}

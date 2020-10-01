@@ -2,11 +2,13 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
 	"regexp"
 	"strings"
+	"time"
 
 	"github.com/spf13/cobra"
 
@@ -41,6 +43,7 @@ func workflowLog() *cobra.Command {
 	return cli.NewCommand(workflowLogCmd, nil, []*cobra.Command{
 		cli.NewCommand(workflowLogListCmd, workflowLogListRun, nil, withAllCommandModifiers()...),
 		cli.NewCommand(workflowLogDownloadCmd, workflowLogDownloadRun, nil, withAllCommandModifiers()...),
+		cli.NewCommand(workflowLogStreamCmd, workflowLogStreamRun, nil, withAllCommandModifiers()...),
 	})
 }
 
@@ -341,4 +344,129 @@ func workflowLogDownloadRun(v cli.Values) error {
 		return sdk.WithStack(fmt.Errorf("no log downloaded"))
 	}
 	return nil
+}
+
+var workflowLogStreamCmd = cli.Command{
+	Name:  "stream",
+	Short: "Stream logs for a job.",
+	Ctx: []cli.Arg{
+		{Name: _ProjectKey},
+		{Name: _WorkflowName},
+	},
+	OptionalArgs: []cli.Arg{
+		{
+			Name: "run-number",
+			IsValid: func(s string) bool {
+				match, _ := regexp.MatchString(`[0-9]?`, s)
+				return match
+			},
+		},
+	},
+}
+
+func workflowLogStreamRun(v cli.Values) error {
+	projectKey := v.GetString(_ProjectKey)
+	workflowName := v.GetString(_WorkflowName)
+
+	feature, err := client.FeatureEnabled("cdn-job-logs", map[string]string{
+		"project_key": projectKey,
+	})
+	if err != nil {
+		return err
+	}
+	if !feature.Enabled {
+		return sdk.WithStack(fmt.Errorf("cdn log processing is not active for given project"))
+	}
+
+	runNumber, err := workflowLogSearchNumber(v)
+	if err != nil {
+		return err
+	}
+
+	wr, err := client.WorkflowRunGet(projectKey, workflowName, runNumber)
+	if err != nil {
+		return err
+	}
+	logs := workflowLogProcess(wr)
+
+	mPipeline := make(map[string][]workflowLogDetail)
+	for i := range logs {
+		if _, ok := mPipeline[logs[i].pipelineName]; !ok {
+			mPipeline[logs[i].pipelineName] = nil
+		}
+		mPipeline[logs[i].pipelineName] = append(mPipeline[logs[i].pipelineName], logs[i])
+	}
+	pipelineNames := make([]string, 0, len(mPipeline))
+	for k := range mPipeline {
+		pipelineNames = append(pipelineNames, k)
+	}
+	choice := cli.AskChoice("Select a pipeline", pipelineNames...)
+	logs = mPipeline[pipelineNames[choice]]
+
+	mJob := make(map[string][]workflowLogDetail)
+	for i := range logs {
+		if _, ok := mJob[logs[i].jobName]; !ok {
+			mJob[logs[i].jobName] = nil
+		}
+		mJob[logs[i].jobName] = append(mJob[logs[i].jobName], logs[i])
+	}
+	jobNames := make([]string, 0, len(mJob))
+	for k := range mJob {
+		jobNames = append(jobNames, k)
+	}
+	choice = cli.AskChoice("Select a job", jobNames...)
+	logs = mJob[jobNames[choice]]
+
+	logNames := make([]string, len(logs))
+	for i := range logs {
+		logNames[i] = logs[i].getFilename()
+	}
+	choice = cli.AskChoice("Select a step or service", logNames...)
+
+	log := logs[choice]
+
+	// If cdn logs is enabled for current project, first check if logs can be downloaded from it
+	var link *sdk.CDNLogLink
+	if log.detailType == workflowLogDetailTypeService {
+		link, err = client.WorkflowNodeRunJobServiceLink(context.Background(), projectKey, workflowName, log.runID, log.jobID, log.serviceName)
+	} else {
+		link, err = client.WorkflowNodeRunJobStepLink(context.Background(), projectKey, workflowName, log.runID, log.jobID, log.stepOrder)
+	}
+	if err != nil {
+		return err
+	}
+	if !link.Exists {
+		return sdk.WithStack(fmt.Errorf("no log found for given job"))
+	}
+	if link.StreamPath == "" {
+		return sdk.WithStack(fmt.Errorf("can't stream log for given job"))
+	}
+
+	ctx := context.Background()
+	chanMsgReceived := make(chan json.RawMessage)
+	chanErrorReceived := make(chan error)
+
+	goRoutines := sdk.NewGoRoutines()
+	goRoutines.Exec(ctx, "WebsocketEventsListenCmd", func(ctx context.Context) {
+		for ctx.Err() == nil {
+			if err := client.RequestWebsocket(ctx, goRoutines, link.CDNURL+link.StreamPath, nil, chanMsgReceived, chanErrorReceived); err != nil {
+				fmt.Printf("Error: %s\n", err)
+			}
+			time.Sleep(1 * time.Second)
+		}
+	})
+
+	for {
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		case err, ok := <-chanErrorReceived:
+			if !ok {
+				continue
+			}
+			fmt.Printf("Error: %s\n", err)
+		case m := <-chanMsgReceived:
+			fmt.Printf("%s", string(m))
+		}
+	}
 }

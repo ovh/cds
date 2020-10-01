@@ -18,6 +18,7 @@ import (
 	"github.com/ovh/cds/engine/websocket"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
+	"github.com/ovh/cds/sdk/telemetry"
 )
 
 type websocketServer struct {
@@ -26,24 +27,24 @@ type websocketServer struct {
 	clientData map[string]*websocketClientData
 }
 
-func (b *websocketServer) AddClient(c websocket.Client, data *websocketClientData) {
-	b.server.AddClient(c)
-	b.mutex.Lock()
-	defer b.mutex.Unlock()
-	b.clientData[c.UUID()] = data
+func (s *websocketServer) AddClient(c websocket.Client, data *websocketClientData) {
+	s.server.AddClient(c)
+	s.mutex.Lock()
+	defer s.mutex.Unlock()
+	s.clientData[c.UUID()] = data
 }
 
-func (b *websocketServer) RemoveClient(uuid string) {
-	b.server.RemoveClient(uuid)
-	b.mutex.Lock()
-	defer b.mutex.Unlock()
-	delete(b.clientData, uuid)
+func (s *websocketServer) RemoveClient(uuid string) {
+	s.server.RemoveClient(uuid)
+	s.mutex.Lock()
+	defer s.mutex.Unlock()
+	delete(s.clientData, uuid)
 }
 
-func (b *websocketServer) GetClientData(uuid string) *websocketClientData {
-	b.mutex.RLock()
-	defer b.mutex.RUnlock()
-	data, ok := b.clientData[uuid]
+func (s *websocketServer) GetClientData(uuid string) *websocketClientData {
+	s.mutex.RLock()
+	defer s.mutex.RUnlock()
+	data, ok := s.clientData[uuid]
 	if !ok {
 		return nil
 	}
@@ -182,6 +183,50 @@ func (c *websocketClientData) checkEventPermission(ctx context.Context, db gorp.
 	return true, nil
 }
 
+const wbBrokerPubSubKey = "events_pubsub"
+
+func (a *API) initWebsocket() error {
+	log.Info(a.Router.Background, "Initializing WS server")
+	a.WSServer = &websocketServer{
+		server:     websocket.NewServer(),
+		clientData: make(map[string]*websocketClientData),
+	}
+	tickerMetrics := time.NewTicker(10 * time.Second)
+	defer tickerMetrics.Stop()
+	a.GoRoutines.Run(a.Router.Background, "api.InitRouter.WSServer", func(ctx context.Context) {
+		for {
+			select {
+			case <-tickerMetrics.C:
+				telemetry.Record(a.Router.Background, WebSocketClients, int64(len(a.WSServer.server.ClientIDs())))
+			case <-ctx.Done():
+				telemetry.Record(a.Router.Background, WebSocketClients, 0)
+				return
+			}
+		}
+	})
+
+	log.Info(a.Router.Background, "Initializing WS events broker")
+	pubSub, err := a.Cache.Subscribe(wbBrokerPubSubKey)
+	if err != nil {
+		return sdk.WrapError(err, "unable to subscribe to events_pubsub")
+	}
+	a.WSBroker = websocket.NewBroker()
+	a.WSBroker.OnMessage(func(m []byte) {
+		telemetry.Record(a.Router.Background, WebSocketEvents, 1)
+
+		var e sdk.Event
+		if err := json.Unmarshal(m, &e); err != nil {
+			err = sdk.WrapError(err, "cannot parse event from WS broker")
+			log.WarningWithFields(a.Router.Background, logrus.Fields{"stack_trace": fmt.Sprintf("%+v", err)}, "%s", err)
+			return
+		}
+
+		a.websocketOnMessage(e)
+	})
+	a.WSBroker.Init(a.Router.Background, a.GoRoutines, pubSub, a.PanicDump())
+	return nil
+}
+
 func (a *API) getWebsocketHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) (err error) {
 		c, err := websocket.Upgrader.Upgrade(w, r, nil)
@@ -222,13 +267,11 @@ func (a *API) websocketOnMessage(e sdk.Event) {
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
 	r.Shuffle(len(clientIDs), func(i, j int) { clientIDs[i], clientIDs[j] = clientIDs[j], clientIDs[i] })
 
-	log.Debug("send send send %v", clientIDs)
 	for _, id := range clientIDs {
 		c := a.WSServer.GetClientData(id)
 
 		// Send the event to the client websocket within a goroutine
-		s := "websocket-" + id
-		a.GoRoutines.Exec(context.Background(), s, func(ctx context.Context) {
+		a.GoRoutines.Exec(context.Background(), "websocket-"+id, func(ctx context.Context) {
 			found, needCheckPermission := c.filters.HasOneKey(eventKeys...)
 			if !found {
 				return

@@ -51,9 +51,10 @@ func workflowTransformAsCodeRun(v cli.Values) (interface{}, error) {
 	ctx := context.Background()
 	chanMessageReceived := make(chan sdk.WebsocketEvent)
 	chanMessageToSend := make(chan []sdk.WebsocketFilter)
+	chanErrorReceived := make(chan error)
 
 	sdk.NewGoRoutines().Run(ctx, "WebsocketEventsListenCmd", func(ctx context.Context) {
-		client.WebsocketEventsListen(ctx, sdk.NewGoRoutines(), chanMessageToSend, chanMessageReceived)
+		client.WebsocketEventsListen(ctx, sdk.NewGoRoutines(), chanMessageToSend, chanMessageReceived, chanErrorReceived)
 	})
 
 	ope, err := client.WorkflowTransformAsCode(projectKey, v.GetString(_WorkflowName), branch, message)
@@ -77,6 +78,8 @@ forLoop:
 		select {
 		case <-ctx.Done():
 			return nil, fmt.Errorf("timeout waiting operation to complete")
+		case err := <-chanErrorReceived:
+			fmt.Printf("Error: %v\n", err)
 		case evt := <-chanMessageReceived:
 			if evt.Event.EventType == fmt.Sprintf("%T", sdk.EventOperation{}) {
 				if err := json.Unmarshal(evt.Event.Payload, &ope); err != nil {

@@ -1,19 +1,10 @@
 package api
 
 import (
-	"context"
-	"encoding/json"
-	"fmt"
 	"net/http"
-	"time"
-
-	"github.com/sirupsen/logrus"
 
 	"github.com/ovh/cds/engine/service"
-	"github.com/ovh/cds/engine/websocket"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
-	"github.com/ovh/cds/sdk/telemetry"
 )
 
 type HandlerScope []sdk.AuthConsumerScope
@@ -37,46 +28,6 @@ func (api *API) InitRouter() error {
 	api.Router.PostMiddlewares = append(api.Router.PostMiddlewares, TracingPostMiddleware)
 
 	r := api.Router
-
-	log.Info(r.Background, "Initializing WS server")
-	api.WSServer = &websocketServer{
-		server:     websocket.NewServer(),
-		clientData: make(map[string]*websocketClientData),
-	}
-	tickerMetrics := time.NewTicker(10 * time.Second)
-	defer tickerMetrics.Stop()
-	api.GoRoutines.Run(r.Background, "api.InitRouter.WSServer", func(ctx context.Context) {
-		for {
-			select {
-			case <-tickerMetrics.C:
-				telemetry.Record(r.Background, WebSocketClients, int64(len(api.WSServer.server.ClientIDs())))
-			case <-ctx.Done():
-				telemetry.Record(r.Background, WebSocketClients, 0)
-				return
-			}
-		}
-	})
-
-	log.Info(r.Background, "Initializing WS events broker")
-	pubSub, err := api.Cache.Subscribe("events_pubsub")
-	if err != nil {
-		return sdk.WrapError(err, "unable to subscribe to events_pubsub")
-	}
-	api.WSBroker = websocket.NewBroker()
-	api.WSBroker.OnMessage(func(m []byte) {
-		telemetry.Record(r.Background, WebSocketEvents, 1)
-
-		var e sdk.Event
-		if err := json.Unmarshal(m, &e); err != nil {
-			// don't print the error as we doesn't care
-			err = sdk.WrapError(err, "cannot parse event from WS broker")
-			log.WarningWithFields(r.Background, logrus.Fields{"stack_trace": fmt.Sprintf("%+v", err)}, "%s", err)
-			return
-		}
-
-		api.websocketOnMessage(e)
-	})
-	api.WSBroker.Init(r.Background, api.GoRoutines, pubSub, api.PanicDump())
 
 	// Auth
 	r.Handle("/auth/driver", ScopeNone(), r.GET(api.getAuthDriversHandler, service.OverrideAuth(service.NoAuthMiddleware)))

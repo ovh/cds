@@ -7,6 +7,7 @@ package mock_cdsclient
 import (
 	tar "archive/tar"
 	context "context"
+	json "encoding/json"
 	gomock "github.com/golang/mock/gomock"
 	websocket "github.com/gorilla/websocket"
 	sdk "github.com/ovh/cds/sdk"
@@ -1782,15 +1783,15 @@ func (m *MockEventsClient) EXPECT() *MockEventsClientMockRecorder {
 }
 
 // WebsocketEventsListen mocks base method
-func (m *MockEventsClient) WebsocketEventsListen(ctx context.Context, goRoutines *sdk.GoRoutines, chanMsgToSend <-chan []sdk.WebsocketFilter, chanMsgReceived chan<- sdk.WebsocketEvent) {
+func (m *MockEventsClient) WebsocketEventsListen(ctx context.Context, goRoutines *sdk.GoRoutines, chanMsgToSend <-chan []sdk.WebsocketFilter, chanMsgReceived chan<- sdk.WebsocketEvent, chanErrorReceived chan<- error) {
 	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "WebsocketEventsListen", ctx, goRoutines, chanMsgToSend, chanMsgReceived)
+	m.ctrl.Call(m, "WebsocketEventsListen", ctx, goRoutines, chanMsgToSend, chanMsgReceived, chanErrorReceived)
 }
 
 // WebsocketEventsListen indicates an expected call of WebsocketEventsListen
-func (mr *MockEventsClientMockRecorder) WebsocketEventsListen(ctx, goRoutines, chanMsgToSend, chanMsgReceived interface{}) *gomock.Call {
+func (mr *MockEventsClientMockRecorder) WebsocketEventsListen(ctx, goRoutines, chanMsgToSend, chanMsgReceived, chanErrorReceived interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WebsocketEventsListen", reflect.TypeOf((*MockEventsClient)(nil).WebsocketEventsListen), ctx, goRoutines, chanMsgToSend, chanMsgReceived)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WebsocketEventsListen", reflect.TypeOf((*MockEventsClient)(nil).WebsocketEventsListen), ctx, goRoutines, chanMsgToSend, chanMsgReceived, chanErrorReceived)
 }
 
 // MockDownloadClient is a mock of DownloadClient interface
@@ -5826,15 +5827,15 @@ func (mr *MockInterfaceMockRecorder) EnvironmentKeysDelete(projectKey, envName, 
 }
 
 // WebsocketEventsListen mocks base method
-func (m *MockInterface) WebsocketEventsListen(ctx context.Context, goRoutines *sdk.GoRoutines, chanMsgToSend <-chan []sdk.WebsocketFilter, chanMsgReceived chan<- sdk.WebsocketEvent) {
+func (m *MockInterface) WebsocketEventsListen(ctx context.Context, goRoutines *sdk.GoRoutines, chanMsgToSend <-chan []sdk.WebsocketFilter, chanMsgReceived chan<- sdk.WebsocketEvent, chanErrorReceived chan<- error) {
 	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "WebsocketEventsListen", ctx, goRoutines, chanMsgToSend, chanMsgReceived)
+	m.ctrl.Call(m, "WebsocketEventsListen", ctx, goRoutines, chanMsgToSend, chanMsgReceived, chanErrorReceived)
 }
 
 // WebsocketEventsListen indicates an expected call of WebsocketEventsListen
-func (mr *MockInterfaceMockRecorder) WebsocketEventsListen(ctx, goRoutines, chanMsgToSend, chanMsgReceived interface{}) *gomock.Call {
+func (mr *MockInterfaceMockRecorder) WebsocketEventsListen(ctx, goRoutines, chanMsgToSend, chanMsgReceived, chanErrorReceived interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WebsocketEventsListen", reflect.TypeOf((*MockInterface)(nil).WebsocketEventsListen), ctx, goRoutines, chanMsgToSend, chanMsgReceived)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WebsocketEventsListen", reflect.TypeOf((*MockInterface)(nil).WebsocketEventsListen), ctx, goRoutines, chanMsgToSend, chanMsgReceived, chanErrorReceived)
 }
 
 // PipelineExport mocks base method
@@ -8363,6 +8364,20 @@ func (mr *MockInterfaceMockRecorder) TemplateDeleteInstance(groupName, templateS
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "TemplateDeleteInstance", reflect.TypeOf((*MockInterface)(nil).TemplateDeleteInstance), groupName, templateSlug, id)
 }
 
+// RequestWebsocket mocks base method
+func (m *MockInterface) RequestWebsocket(ctx context.Context, goRoutines *sdk.GoRoutines, path string, msgToSend <-chan json.RawMessage, msgReceived chan<- json.RawMessage, errorReceived chan<- error) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "RequestWebsocket", ctx, goRoutines, path, msgToSend, msgReceived, errorReceived)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// RequestWebsocket indicates an expected call of RequestWebsocket
+func (mr *MockInterfaceMockRecorder) RequestWebsocket(ctx, goRoutines, path, msgToSend, msgReceived, errorReceived interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RequestWebsocket", reflect.TypeOf((*MockInterface)(nil).RequestWebsocket), ctx, goRoutines, path, msgToSend, msgReceived, errorReceived)
+}
+
 // MockWorkerInterface is a mock of WorkerInterface interface
 type MockWorkerInterface struct {
 	ctrl     *gomock.Controller
@@ -9843,4 +9858,41 @@ func (m *MockAuthClient) AuthMe() (sdk.AuthCurrentConsumerResponse, error) {
 func (mr *MockAuthClientMockRecorder) AuthMe() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AuthMe", reflect.TypeOf((*MockAuthClient)(nil).AuthMe))
+}
+
+// MockWebsocketClient is a mock of WebsocketClient interface
+type MockWebsocketClient struct {
+	ctrl     *gomock.Controller
+	recorder *MockWebsocketClientMockRecorder
+}
+
+// MockWebsocketClientMockRecorder is the mock recorder for MockWebsocketClient
+type MockWebsocketClientMockRecorder struct {
+	mock *MockWebsocketClient
+}
+
+// NewMockWebsocketClient creates a new mock instance
+func NewMockWebsocketClient(ctrl *gomock.Controller) *MockWebsocketClient {
+	mock := &MockWebsocketClient{ctrl: ctrl}
+	mock.recorder = &MockWebsocketClientMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use
+func (m *MockWebsocketClient) EXPECT() *MockWebsocketClientMockRecorder {
+	return m.recorder
+}
+
+// RequestWebsocket mocks base method
+func (m *MockWebsocketClient) RequestWebsocket(ctx context.Context, goRoutines *sdk.GoRoutines, path string, msgToSend <-chan json.RawMessage, msgReceived chan<- json.RawMessage, errorReceived chan<- error) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "RequestWebsocket", ctx, goRoutines, path, msgToSend, msgReceived, errorReceived)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// RequestWebsocket indicates an expected call of RequestWebsocket
+func (mr *MockWebsocketClientMockRecorder) RequestWebsocket(ctx, goRoutines, path, msgToSend, msgReceived, errorReceived interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RequestWebsocket", reflect.TypeOf((*MockWebsocketClient)(nil).RequestWebsocket), ctx, goRoutines, path, msgToSend, msgReceived, errorReceived)
 }

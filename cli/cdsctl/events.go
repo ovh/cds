@@ -58,9 +58,10 @@ func eventsListenRun(v cli.Values) error {
 	ctx := context.Background()
 	chanMessageReceived := make(chan sdk.WebsocketEvent)
 	chanMessageToSend := make(chan []sdk.WebsocketFilter)
+	chanErrorReceived := make(chan error)
 
 	sdk.NewGoRoutines().Run(ctx, "WebsocketEventsListenCmd", func(ctx context.Context) {
-		client.WebsocketEventsListen(ctx, sdk.NewGoRoutines(), chanMessageToSend, chanMessageReceived)
+		client.WebsocketEventsListen(ctx, sdk.NewGoRoutines(), chanMessageToSend, chanMessageReceived, chanErrorReceived)
 	})
 
 	switch {
@@ -91,6 +92,8 @@ func eventsListenRun(v cli.Values) error {
 		select {
 		case <-ctx.Done():
 			return ctx.Err()
+		case err := <-chanErrorReceived:
+			fmt.Printf("Error: %v\n", err)
 		case evt := <-chanMessageReceived:
 			if evt.Event.EventType == "" {
 				continue

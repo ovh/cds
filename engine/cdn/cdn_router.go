@@ -6,7 +6,6 @@ import (
 
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/engine/websocket"
-	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk/telemetry"
 )
@@ -37,18 +36,6 @@ func (s *Service) initRouter(ctx context.Context) error {
 			}
 		}
 	})
-
-	log.Info(r.Background, "Initializing WS events broker")
-	pubSub, err := s.Cache.Subscribe("cdn_events_pubsub")
-	if err != nil {
-		return sdk.WrapError(err, "unable to subscribe to events_pubsub")
-	}
-	s.WSBroker = websocket.NewBroker()
-	s.WSBroker.OnMessage(func(m []byte) {
-		telemetry.Record(r.Background, metricsWSEvents, 1)
-		// TODO process message
-	})
-	s.WSBroker.Init(r.Background, s.GoRoutines, pubSub)
 
 	r.Handle("/mon/version", nil, r.GET(service.VersionHandler, service.OverrideAuth(service.NoAuthMiddleware)))
 	r.Handle("/mon/status", nil, r.GET(s.statusHandler, service.OverrideAuth(service.NoAuthMiddleware)))
