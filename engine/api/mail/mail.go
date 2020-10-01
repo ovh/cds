@@ -90,28 +90,30 @@ func smtpClient(ctx context.Context) (*smtp.Client, error) {
 		// Here is the key, you need to call tls.Dial instead of smtp.Dial
 		// for smtp servers running on 465 that require an ssl connection
 		// from the very beginning (no starttls)
-		conn, errc := tls.Dial("tcp", servername, tlsconfig)
-		if errc != nil {
-			log.Warning(ctx, "Error with c.Dial:%s\n", errc.Error())
-			return nil, errc
+		conn, err := tls.Dial("tcp", servername, tlsconfig)
+		if err != nil {
+			log.Warning(ctx, "Error with c.Dial:%s\n", err.Error())
+			return nil, sdk.WithStack(err)
 		}
 
 		c, err = smtp.NewClient(conn, smtpHost)
 		if err != nil {
 			log.Warning(ctx, "Error with c.NewClient:%s\n", err.Error())
-			return nil, err
+			return nil, sdk.WithStack(err)
 		}
 		// TLS config
 		tlsconfig := &tls.Config{
 			InsecureSkipVerify: false,
 			ServerName:         smtpHost,
 		}
-		c.StartTLS(tlsconfig)
+		if err := c.StartTLS(tlsconfig); err != nil {
+			return nil, sdk.WithStack(err)
+		}
 	} else {
 		c, err = smtp.Dial(servername)
 		if err != nil {
 			log.Warning(ctx, "Error with c.NewClient:%s\n", err.Error())
-			return nil, err
+			return nil, sdk.WithStack(err)
 		}
 	}
 
@@ -183,7 +185,12 @@ func SendEmail(ctx context.Context, subject string, mailContent *bytes.Buffer, u
 	headers := make(map[string]string)
 	headers["From"] = smtpFrom
 	headers["To"] = to.String()
-	headers["Subject"] = subject
+	if sdk.StringIsAscii(subject) {
+		headers["Subject"] = subject
+	} else {
+		// https://tools.ietf.org/html/rfc2047
+		headers["Subject"] = "=?UTF-8?Q?" + subject + "?="
+	}
 
 	// https://tools.ietf.org/html/rfc4021
 	headers["Date"] = time.Now().Format(time.RFC1123Z)
