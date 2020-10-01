@@ -19,7 +19,7 @@ func Initialize(c context.Context, DBFunc func() *gorp.DbMap, store cache.Store)
 		select {
 		case <-c.Done():
 			if c.Err() != nil {
-				log.Error(c, "Exiting workflow ticker: %v", c.Err())
+				log.Error(c, "Exiting worker ticker: %v", c.Err())
 				return nil
 			}
 		case <-tickHeart.C:
@@ -31,7 +31,7 @@ func Initialize(c context.Context, DBFunc func() *gorp.DbMap, store cache.Store)
 
 			go func() {
 				if err := DisableDeadWorkers(c, db); err != nil {
-					log.Warning(c, "workflow.disableDeadWorkers> Error on disableDeadWorkers : %v", err)
+					log.Warning(c, "worker.disableDeadWorkers> Error on disableDeadWorkers : %v", err)
 				}
 			}()
 		}

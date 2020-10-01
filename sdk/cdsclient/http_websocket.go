@@ -60,7 +60,7 @@ func (c *client) RequestWebsocket(ctx context.Context, goRoutines *sdk.GoRoutine
 		for {
 			select {
 			case <-ctx.Done():
-				log.Warning(wsContext, "Leaving....")
+				log.Warning(wsContext, "websocket goroutine leaving....")
 				return
 			case m := <-msgToSend:
 				if err := con.WriteJSON(m); err != nil {
