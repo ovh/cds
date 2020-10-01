@@ -56,6 +56,40 @@
         height: 450px;
         margin: auto;
     }
+
+    .loading {
+        background-color: $darkBackground;
+    
+        .column {
+            width: 600px;
+        }
+    
+        .logo {
+            margin: 60px auto;
+            height: 100px;
+        }
+
+
+        .grayscale {
+            animation: grayscale 10s infinite;
+            -webkit-animation: grayscale 10s infinite;
+        }
+        
+        @keyframes grayscale {
+            0%, 100%  { -webkit-filter: grayscale(0%); }
+            50% { -webkit-filter: grayscale(100%); }
+        }
+
+        @-webkit-keyframes grayscale {
+            0%, 100%  { -webkit-filter: grayscale(0%); }
+            50% { -webkit-filter: grayscale(100%); }
+        }
+
+        p {
+            text-align: center;
+            color: #e6e6e6;
+        }
+    }
 }
 
 @keyframes slidein {

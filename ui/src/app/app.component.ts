@@ -35,6 +35,7 @@ declare var PACMAN: any;
 @AutoUnsubscribe()
 export class AppComponent implements OnInit, OnDestroy {
     open: boolean;
+    isAPIAvailable: boolean;
     isConnected: boolean;
     hideNavBar: boolean;
     heartbeatToken: number;
@@ -77,6 +78,7 @@ export class AppComponent implements OnInit, OnDestroy {
         private _ngZone: NgZone,
         private _monitoringService: MonitoringService
     ) {
+        this.isAPIAvailable = false;
         this.zone = new NgZone({ enableLongStackTrace: false });
         this.toasterConfigDefault = this._toastService.getConfigDefault();
         this.toasterConfigErrorHTTP = this._toastService.getConfigErrorHTTP();
@@ -110,15 +112,25 @@ export class AppComponent implements OnInit, OnDestroy {
                 this.hideNavBar = e.url.startsWith('/auth')
             }
         });
-
-        this._helpService.getHelp().subscribe(h => {
-            this._store.dispatch(new AddHelp(h));
-        });
     }
 
     ngOnDestroy(): void {} // Should be set to use @AutoUnsubscribe with AOT
 
     ngOnInit(): void {
+        this._monitoringService.getStatus().subscribe(
+            (data) => {
+                this.isAPIAvailable = true;
+                this.load();
+            },
+            err => {
+                this.isAPIAvailable = false;
+                setTimeout(() => { window.location.reload() }, 30000);
+            }
+        );
+    }
+
+    load(): void {
+        this._helpService.getHelp().subscribe(h => this._store.dispatch(new AddHelp(h)));
         this._store.dispatch(new GetCDSStatus());
         this._store.select(AuthenticationState.user).subscribe(user => {
             if (!user) {
