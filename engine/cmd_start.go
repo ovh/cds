@@ -251,7 +251,7 @@ See $ engine config command for more details.
 		signal.Notify(c, os.Interrupt, syscall.SIGTERM)
 		go func(ctx context.Context) {
 			<-c
-			stopping(ctx, serviceConfs)
+			unregisterServices(ctx, serviceConfs)
 			signal.Stop(c)
 			cancel()
 		}(ctx)
@@ -318,7 +318,7 @@ See $ engine config command for more details.
 	},
 }
 
-func stopping(ctx context.Context, serviceConfs []serviceConf) {
+func unregisterServices(ctx context.Context, serviceConfs []serviceConf) {
 	// unregister all services
 	for i := range serviceConfs {
 		s := serviceConfs[i]
