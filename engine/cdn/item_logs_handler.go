@@ -1,7 +1,10 @@
 package cdn
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
+	"io"
 	"net/http"
 	"time"
 
@@ -95,7 +98,8 @@ func (s *Service) getItemLogsStreamHandler() service.Handler {
 		if err != nil {
 			return err
 		}
-		if _, err := storage.LoadItemUnitByUnit(ctx, s.Mapper, s.mustDBWithCtx(ctx), s.Units.Buffer.ID(), it.ID); err != nil {
+		iu, err := storage.LoadItemUnitByUnit(ctx, s.Mapper, s.mustDBWithCtx(ctx), s.Units.Buffer.ID(), it.ID)
+		if err != nil {
 			return err
 		}
 
@@ -108,9 +112,9 @@ func (s *Service) getItemLogsStreamHandler() service.Handler {
 
 		wsClient := websocket.NewClient(c)
 		wsClientData := &websocketClientData{
-			itemID:             it.ID,
-			chanItemUpdate:     make(chan struct{}, 10),
-			lastLineNumberSent: offset,
+			itemID:              it.ID,
+			chanItemUpdate:      make(chan struct{}, 10),
+			scoreNextLineToSend: offset,
 		}
 		s.WSServer.AddClient(wsClient, wsClientData)
 		defer s.WSServer.RemoveClient(wsClient.UUID())
@@ -123,7 +127,32 @@ func (s *Service) getItemLogsStreamHandler() service.Handler {
 
 			send := func() error {
 				log.Debug("getItemLogsStreamHandler> send log to client %s", wsClient.UUID())
-				return wsClient.Send(redis.Line{})
+
+				rc, err := s.Units.Buffer.NewAdvancedReader(ctx, *iu, sdk.CDNReaderFormatJSON, wsClientData.scoreNextLineToSend, 100)
+				if err != nil {
+					return err
+				}
+				defer rc.Close() // nolint
+				buf := new(bytes.Buffer)
+				if _, err := io.Copy(buf, rc); err != nil {
+					return sdk.WrapError(err, "cannot copy data from reader to memory buffer")
+				}
+				var lines []redis.Line
+				if err := json.Unmarshal(buf.Bytes(), &lines); err != nil {
+					return sdk.WrapError(err, "cannot unmarshal lines from buffer")
+				}
+
+				for i := range lines {
+					if wsClientData.scoreNextLineToSend != lines[i].Number {
+						break
+					}
+					if err := wsClient.Send(lines[i]); err != nil {
+						return err
+					}
+					wsClientData.scoreNextLineToSend++
+				}
+
+				return nil
 			}
 
 			for {

@@ -97,7 +97,7 @@ func (s *websocketServer) GetClientData(uuid string) *websocketClientData {
 }
 
 type websocketClientData struct {
-	itemID             string
-	chanItemUpdate     chan struct{}
-	lastLineNumberSent int64
+	itemID              string
+	chanItemUpdate      chan struct{}
+	scoreNextLineToSend int64
 }
