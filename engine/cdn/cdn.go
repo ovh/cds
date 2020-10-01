@@ -175,9 +175,7 @@ func (s *Service) Serve(c context.Context) error {
 	s.runTCPLogServer(ctx)
 
 	log.Info(ctx, "Initializing HTTP router")
-	if err := s.initRouter(ctx); err != nil {
-		return err
-	}
+	s.initRouter(ctx)
 	if err := s.initWebsocket(); err != nil {
 		return err
 	}

@@ -19,7 +19,7 @@ var (
 )
 
 // InitRouter initializes the router and all the routes
-func (api *API) InitRouter() error {
+func (api *API) InitRouter() {
 	api.Router.URL = api.Config.URL.API
 	api.Router.SetHeaderFunc = service.DefaultHeaders
 	api.Router.Middlewares = append(api.Router.Middlewares, api.tracingMiddleware, api.jwtMiddleware)
@@ -434,6 +434,4 @@ func (api *API) InitRouter() error {
 	r.Mux.NotFoundHandler = http.HandlerFunc(NotFoundHandler)
 
 	r.computeScopeDetails()
-
-	return nil
 }

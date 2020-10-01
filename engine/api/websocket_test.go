@@ -8,6 +8,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
 	"github.com/ovh/cds/engine/api/authentication"
 	"github.com/ovh/cds/engine/api/authentication/builtin"
 	"github.com/ovh/cds/engine/api/bootstrap"
@@ -16,12 +19,12 @@ import (
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 func Test_websocketWrongFilters(t *testing.T) {
 	api, db, tsURL := newTestServer(t)
+
+	require.NoError(t, api.initWebsocket())
 
 	u, _ := assets.InsertAdminUser(t, db)
 	localConsumer, err := authentication.LoadConsumerByTypeAndUserID(context.TODO(), api.mustDB(), sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
@@ -32,6 +35,7 @@ func Test_websocketWrongFilters(t *testing.T) {
 
 	chanMessageReceived := make(chan sdk.WebsocketEvent)
 	chanMessageToSend := make(chan []sdk.WebsocketFilter)
+	chanErrorReceived := make(chan error)
 
 	client := cdsclient.New(cdsclient.Config{
 		Host:                              tsURL,
@@ -39,7 +43,7 @@ func Test_websocketWrongFilters(t *testing.T) {
 		InsecureSkipVerifyTLS:             true,
 		BuitinConsumerAuthenticationToken: jws,
 	})
-	go client.WebsocketEventsListen(context.TODO(), sdk.NewGoRoutines(), chanMessageToSend, chanMessageReceived)
+	go client.WebsocketEventsListen(context.TODO(), sdk.NewGoRoutines(), chanMessageToSend, chanMessageReceived, chanErrorReceived)
 
 	// Subscribe to project without project key
 	chanMessageToSend <- []sdk.WebsocketFilter{{
@@ -92,6 +96,8 @@ func Test_websocketFilterRetroCompatibility(t *testing.T) {
 func Test_websocketGetWorkflowEvent(t *testing.T) {
 	api, db, tsURL := newTestServer(t)
 
+	require.NoError(t, api.initWebsocket())
+
 	u, jwt := assets.InsertAdminUser(t, db)
 
 	key := sdk.RandomString(10)
@@ -112,6 +118,7 @@ func Test_websocketGetWorkflowEvent(t *testing.T) {
 
 	chanMessageReceived := make(chan sdk.WebsocketEvent)
 	chanMessageToSend := make(chan []sdk.WebsocketFilter)
+	chanErrorReceived := make(chan error)
 
 	client := cdsclient.New(cdsclient.Config{
 		Host:                  tsURL,
@@ -119,7 +126,7 @@ func Test_websocketGetWorkflowEvent(t *testing.T) {
 		InsecureSkipVerifyTLS: true,
 		SessionToken:          jwt,
 	})
-	go client.WebsocketEventsListen(context.TODO(), sdk.NewGoRoutines(), chanMessageToSend, chanMessageReceived)
+	go client.WebsocketEventsListen(context.TODO(), sdk.NewGoRoutines(), chanMessageToSend, chanMessageReceived, chanErrorReceived)
 	var lastResponse *sdk.WebsocketEvent
 	go func() {
 		for e := range chanMessageReceived {
@@ -157,6 +164,8 @@ func Test_websocketGetWorkflowEvent(t *testing.T) {
 
 func Test_websocketDeconnection(t *testing.T) {
 	api, db, tsURL := newTestServer(t)
+
+	require.NoError(t, api.initWebsocket())
 
 	u, _ := assets.InsertAdminUser(t, db)
 	localConsumer, err := authentication.LoadConsumerByTypeAndUserID(context.TODO(), api.mustDB(), sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)

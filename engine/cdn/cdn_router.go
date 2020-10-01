@@ -2,40 +2,17 @@ package cdn
 
 import (
 	"context"
-	"time"
 
 	"github.com/ovh/cds/engine/service"
-	"github.com/ovh/cds/engine/websocket"
-	"github.com/ovh/cds/sdk/log"
-	"github.com/ovh/cds/sdk/telemetry"
 )
 
-func (s *Service) initRouter(ctx context.Context) error {
+func (s *Service) initRouter(ctx context.Context) {
 	r := s.Router
 	r.Background = ctx
 	r.URL = s.Cfg.URL
 	r.SetHeaderFunc = service.DefaultHeaders
 	r.Middlewares = append(r.Middlewares, s.jwtMiddleware)
 	r.DefaultAuthMiddleware = service.CheckRequestSignatureMiddleware(s.ParsedAPIPublicKey)
-
-	log.Info(r.Background, "Initializing WS server")
-	s.WSServer = &websocketServer{
-		server:     websocket.NewServer(),
-		clientData: make(map[string]*websocketClientData),
-	}
-	tickerMetrics := time.NewTicker(10 * time.Second)
-	defer tickerMetrics.Stop()
-	s.GoRoutines.Run(r.Background, "cdn.initRouter.WSServer", func(ctx context.Context) {
-		for {
-			select {
-			case <-tickerMetrics.C:
-				telemetry.Record(r.Background, metricsWSClients, int64(len(s.WSServer.server.ClientIDs())))
-			case <-ctx.Done():
-				telemetry.Record(r.Background, metricsWSClients, 0)
-				return
-			}
-		}
-	})
 
 	r.Handle("/mon/version", nil, r.GET(service.VersionHandler, service.OverrideAuth(service.NoAuthMiddleware)))
 	r.Handle("/mon/status", nil, r.GET(s.statusHandler, service.OverrideAuth(service.NoAuthMiddleware)))
@@ -54,6 +31,4 @@ func (s *Service) initRouter(ctx context.Context) error {
 	r.Handle("/sync/projects", nil, r.POST(s.syncProjectsHandler))
 
 	r.Handle("/size/item/project/{projectKey}", nil, r.GET(s.getSizeByProjectHandler))
-
-	return nil
 }

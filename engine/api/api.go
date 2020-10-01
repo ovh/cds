@@ -533,9 +533,7 @@ func (a *API) Serve(ctx context.Context) error {
 		Mux:        mux.NewRouter(),
 		Background: ctx,
 	}
-	if err := a.InitRouter(); err != nil {
-		return err
-	}
+	a.InitRouter()
 	if err := a.initWebsocket(); err != nil {
 		return err
 	}

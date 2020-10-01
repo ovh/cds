@@ -19,6 +19,25 @@ import (
 const wbBrokerPubSubKey = "cdn_ws_broker_pubsub"
 
 func (s *Service) initWebsocket() error {
+	log.Info(s.Router.Background, "Initializing WS server")
+	s.WSServer = &websocketServer{
+		server:     websocket.NewServer(),
+		clientData: make(map[string]*websocketClientData),
+	}
+	tickerMetrics := time.NewTicker(10 * time.Second)
+	defer tickerMetrics.Stop()
+	s.GoRoutines.Run(s.Router.Background, "cdn.initWebsocket.WSServer", func(ctx context.Context) {
+		for {
+			select {
+			case <-tickerMetrics.C:
+				telemetry.Record(s.Router.Background, metricsWSClients, int64(len(s.WSServer.server.ClientIDs())))
+			case <-ctx.Done():
+				telemetry.Record(s.Router.Background, metricsWSClients, 0)
+				return
+			}
+		}
+	})
+
 	log.Info(s.Router.Background, "Initializing WS events broker")
 	pubSub, err := s.Cache.Subscribe(wbBrokerPubSubKey)
 	if err != nil {
