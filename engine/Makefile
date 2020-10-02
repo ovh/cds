@@ -106,7 +106,7 @@ build_all_engine: $(TARGET_ENGINE_BINARIES)
 test-redis-start-docker:
 	$(TEST_REDIS_START_DOCKER)
 
-test-redis-start-kafka:
+test-kafka-start-docker:
 	$(TEST_KAFKA_START_DOCKER)
 
 test-db-stop-docker:
