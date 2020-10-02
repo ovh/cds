@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"io"
 	"net/http"
-	"time"
 
 	"github.com/gorilla/mux"
 
@@ -122,11 +121,8 @@ func (s *Service) getItemLogsStreamHandler() service.Handler {
 		s.GoRoutines.Exec(ctx, "getItemLogsStreamHandler."+wsClient.UUID(), func(ctx context.Context) {
 			log.Debug("getItemLogsStreamHandler> start routine for client %s", wsClient.UUID())
 
-			tick := time.NewTicker(5 * time.Second)
-			defer tick.Stop()
-
 			send := func() error {
-				log.Debug("getItemLogsStreamHandler> send log to client %s", wsClient.UUID())
+				log.Debug("getItemLogsStreamHandler> send log to client %s from %d", wsClient.UUID(), wsClientData.scoreNextLineToSend)
 
 				rc, err := s.Units.Buffer.NewAdvancedReader(ctx, *iu, sdk.CDNReaderFormatJSON, wsClientData.scoreNextLineToSend, 100)
 				if err != nil {
@@ -142,6 +138,8 @@ func (s *Service) getItemLogsStreamHandler() service.Handler {
 					return sdk.WrapError(err, "cannot unmarshal lines from buffer")
 				}
 
+				log.Debug("getItemLogsStreamHandler> iterate over %d lines to send for client %s", len(lines), wsClient.UUID())
+				oldNextLineToSend := wsClientData.scoreNextLineToSend
 				for i := range lines {
 					if wsClientData.scoreNextLineToSend != lines[i].Number {
 						break
@@ -152,16 +150,22 @@ func (s *Service) getItemLogsStreamHandler() service.Handler {
 					wsClientData.scoreNextLineToSend++
 				}
 
+				// If all the lines were sent, we can trigger another update
+				if len(lines) > 0 && wsClientData.scoreNextLineToSend-oldNextLineToSend == int64(len(lines)) {
+					wsClientData.chanItemUpdate <- struct{}{}
+				}
+
 				return nil
 			}
+
+			// Trigger one update at routine startup
+			wsClientData.chanItemUpdate <- struct{}{}
 
 			for {
 				select {
 				case <-ctx.Done():
 					log.Debug("getItemLogsStreamHandler> stop routine for stream client %s", wsClient.UUID())
 					return
-				case <-tick.C:
-					wsClientData.chanItemUpdate <- struct{}{}
 				case <-wsClientData.chanItemUpdate:
 					if err := send(); err != nil {
 						log.Debug("getItemLogsStreamHandler> can't send to client %s it will be removed: %+v", wsClient.UUID(), err)
