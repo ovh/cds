@@ -104,6 +104,7 @@ loop:
 	return nil
 }
 
+// Register registers a new service on API
 func (c *Common) Register(ctx context.Context, cfg sdk.ServiceConfig) error {
 	log.Info(ctx, "Registing service %s(%T) %s", c.Type(), c, c.Name())
 
@@ -138,6 +139,17 @@ func (c *Common) Register(ctx context.Context, cfg sdk.ServiceConfig) error {
 	c.ServiceInstance = srv2
 
 	return nil
+}
+
+// Unregister logout the service
+func (c *Common) Unregister(ctx context.Context) error {
+	// no logout needed for api
+	if c.ServiceType == "api" {
+		return nil
+	}
+
+	log.Info(ctx, "Unregisting service %s(%T) %s", c.Type(), c, c.Name())
+	return c.Client.AuthConsumerSignout()
 }
 
 // Heartbeat have to be launch as a goroutine, call DoHeartBeat each 30s
