@@ -37,6 +37,7 @@ func TestPostUpdateWorkflowAsCodeHandler(t *testing.T) {
 	api, db, tsURL := newTestServer(t)
 
 	require.NoError(t, event.Initialize(context.Background(), api.mustDB(), api.Cache))
+	require.NoError(t, api.initWebsocket())
 
 	u, jwt := assets.InsertAdminUser(t, db)
 
@@ -238,6 +239,7 @@ func TestPostMigrateWorkflowAsCodeHandler(t *testing.T) {
 	api, db, tsURL := newTestServer(t)
 
 	require.NoError(t, event.Initialize(context.Background(), api.mustDB(), api.Cache))
+	require.NoError(t, api.initWebsocket())
 
 	u, jwt := assets.InsertAdminUser(t, db)
 
