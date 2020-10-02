@@ -79,7 +79,6 @@ func (a *AbstractUnit) Set(u sdk.CDNUnit) { a.u = u }
 type BufferUnit interface {
 	Interface
 	Add(i sdk.CDNItemUnit, score uint, value string) error
-	Append(i sdk.CDNItemUnit, value string) error
 	Card(i sdk.CDNItemUnit) (int, error)
 	NewReader(ctx context.Context, i sdk.CDNItemUnit) (io.ReadCloser, error)
 	NewAdvancedReader(ctx context.Context, i sdk.CDNItemUnit, format sdk.CDNReaderFormat, from int64, to uint) (io.ReadCloser, error)

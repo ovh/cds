@@ -63,10 +63,6 @@ func (s *Redis) Add(i sdk.CDNItemUnit, index uint, value string) error {
 	return s.store.ScoredSetAdd(context.Background(), cache.Key(keyBuffer, i.ItemID), value, float64(index))
 }
 
-func (s *Redis) Append(i sdk.CDNItemUnit, value string) error {
-	return s.store.ScoredSetAppend(context.Background(), cache.Key(keyBuffer, i.ItemID), value)
-}
-
 func (s *Redis) Card(i sdk.CDNItemUnit) (int, error) {
 	return s.store.SetCard(cache.Key(keyBuffer, i.ItemID))
 }
