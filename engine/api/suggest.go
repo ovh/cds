@@ -8,8 +8,6 @@ import (
 
 	"github.com/gorilla/mux"
 
-	"github.com/ovh/cds/engine/api/application"
-	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/service"
@@ -20,7 +18,6 @@ func (api *API) getVariablesHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		projectKey := vars[permProjectKey]
-		appName := r.FormValue("appName")
 		pipID := r.FormValue("pipId")
 
 		var allVariables []string
@@ -35,42 +32,10 @@ func (api *API) getVariablesHandler() service.Handler {
 		}
 		allVariables = append(allVariables, projectVar...)
 
-		env, err := environment.LoadEnvironmentByName(api.mustDB(), projectKey, appName)
-		if err != nil {
-			return err
-		}
-
-		envVars, err := environment.LoadAllVariables(api.mustDB(), env.ID)
-		if err != nil {
-			return err
-		}
-
-		envVarNameArray := make([]string, len(envVars))
-		for i := range envVars {
-			envVarNameArray[i] = envVars[i].Name
-		}
-
-		for i := range envVarNameArray {
-			envVarNameArray[i] = fmt.Sprintf("{{.cds.env.%s}}", envVarNameArray[i])
-		}
-		allVariables = append(allVariables, envVarNameArray...)
-
-		// Load app
 		appVar := []string{}
-		if appName != "" {
-			// Check permission on application
-			app, err := application.LoadByName(api.mustDB(), projectKey, appName, application.LoadOptions.WithVariables)
-			if err != nil {
-				return sdk.WrapError(err, "Cannot Load application")
-			}
 
-			for _, v := range app.Variables {
-				appVar = append(appVar, fmt.Sprintf("{{.cds.app.%s}}", v.Name))
-			}
-
-		} else {
-			// Load all app variables
-			query := `
+		// Load all app variables
+		query := `
 			SELECT distinct var_name
 			FROM application_variable
 			LEFT JOIN application ON application.id = application_variable.application_id
@@ -78,20 +43,18 @@ func (api *API) getVariablesHandler() service.Handler {
 			WHERE project.projectkey = $1
 			ORDER BY var_name;
 		`
-			rows, err := api.mustDB().Query(query, projectKey)
+		rows, err := api.mustDB().Query(query, projectKey)
+		if err != nil {
+			return sdk.WrapError(err, "Cannot Load all applications variables")
+		}
+		defer rows.Close()
+		for rows.Next() {
+			var name string
+			err := rows.Scan(&name)
 			if err != nil {
-				return sdk.WrapError(err, "Cannot Load all applications variables")
+				return sdk.WrapError(err, "Cannot scan results")
 			}
-			defer rows.Close()
-			for rows.Next() {
-				var name string
-				err := rows.Scan(&name)
-				if err != nil {
-					return sdk.WrapError(err, "Cannot scan results")
-				}
-				appVar = append(appVar, fmt.Sprintf("{{.cds.app.%s}}", name))
-
-			}
+			appVar = append(appVar, fmt.Sprintf("{{.cds.app.%s}}", name))
 		}
 		allVariables = append(allVariables, appVar...)
 
