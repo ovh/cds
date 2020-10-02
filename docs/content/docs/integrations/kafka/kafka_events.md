@@ -43,6 +43,9 @@ config:
   username:
     value: kafka-username
     type: string
+  topic:
+    value: your-topic
+    type: string
 ```
 
 Import the integration on your CDS Project with:

@@ -45,7 +45,7 @@ func getBroker(ctx context.Context, t string, option interface{}) (Broker, error
 	return nil, fmt.Errorf("Invalid Broker Type %s", t)
 }
 
-func ResetPublicIntegrations(ctx context.Context, db *gorp.DbMap) error {
+func resetPublicIntegrations(ctx context.Context, db *gorp.DbMap) error {
 	filterType := sdk.IntegrationTypeEvent
 	integrations, err := integration.LoadPublicModelsByTypeWithDecryption(db, &filterType)
 	if err != nil {
@@ -63,9 +63,9 @@ func ResetPublicIntegrations(ctx context.Context, db *gorp.DbMap) error {
 				MaxMessageByte:  10000000,
 			}
 
-			kafkaBroker, errk := getBroker(ctx, "kafka", kafkaCfg)
-			if errk != nil {
-				return sdk.WrapError(errk, "cannot get broker for %s and user %s", cfg["broker url"].Value, cfg["username"].Value)
+			kafkaBroker, err := getBroker(ctx, "kafka", kafkaCfg)
+			if err != nil {
+				return sdk.WrapError(err, "cannot get broker for %s and user %s", cfg["broker url"].Value, cfg["username"].Value)
 			}
 
 			publicBrokersConnectionCache = append(publicBrokersConnectionCache, kafkaBroker)
@@ -98,9 +98,9 @@ func ResetEventIntegration(ctx context.Context, db gorp.SqlExecutor, eventIntegr
 		Topic:           projInt.Config["topic"].Value,
 		MaxMessageByte:  10000000,
 	}
-	kafkaBroker, errk := getBroker(ctx, "kafka", kafkaCfg)
-	if errk != nil {
-		return sdk.WrapError(sdk.ErrBadBrokerConfiguration, "cannot get broker for %s and user %s : %v", projInt.Config["broker url"].Value, projInt.Config["username"].Value, errk)
+	kafkaBroker, err := getBroker(ctx, "kafka", kafkaCfg)
+	if err != nil {
+		return sdk.WrapError(sdk.ErrBadBrokerConfiguration, "cannot get broker for %s and user %s : %v", projInt.Config["broker url"].Value, projInt.Config["username"].Value, err)
 	}
 	if err := brokersConnectionCache.Add(brokerConnectionKey, kafkaBroker, gocache.DefaultExpiration); err != nil {
 		return sdk.WrapError(sdk.ErrBadBrokerConfiguration, "cannot add broker in cache for %s and user %s : %v", projInt.Config["broker url"].Value, projInt.Config["username"].Value, err)
@@ -126,7 +126,7 @@ func Initialize(ctx context.Context, db *gorp.DbMap, cache Store) error {
 		}
 	}
 
-	return ResetPublicIntegrations(ctx, db)
+	return resetPublicIntegrations(ctx, db)
 }
 
 // Subscribe to CDS events
@@ -157,7 +157,6 @@ func DequeueEvent(ctx context.Context, db *gorp.DbMap) {
 				log.Warning(ctx, "Error while sending message [%s: %s/%s/%s/%s/%s]: %s", e.EventType, e.ProjectKey, e.WorkflowName, e.ApplicationName, e.PipelineName, e.EnvironmentName, err)
 			}
 		}
-
 		for _, eventIntegrationID := range e.EventIntegrationsID {
 			brokerConnectionKey := strconv.FormatInt(eventIntegrationID, 10)
 			brokerConnection, ok := brokersConnectionCache.Get(brokerConnectionKey)
@@ -180,9 +179,9 @@ func DequeueEvent(ctx context.Context, db *gorp.DbMap) {
 					Topic:           projInt.Config["topic"].Value,
 					MaxMessageByte:  10000000,
 				}
-				kafkaBroker, errk := getBroker(ctx, "kafka", kafkaCfg)
-				if errk != nil {
-					log.Error(ctx, "Event.DequeueEvent> cannot get broker for %s and user %s : %v", projInt.Config["broker url"].Value, projInt.Config["username"].Value, errk)
+				kafkaBroker, err := getBroker(ctx, "kafka", kafkaCfg)
+				if err != nil {
+					log.Error(ctx, "Event.DequeueEvent> cannot get broker for %s and user %s : %v", projInt.Config["broker url"].Value, projInt.Config["username"].Value, err)
 					continue
 				}
 				if err := brokersConnectionCache.Add(brokerConnectionKey, kafkaBroker, gocache.DefaultExpiration); err != nil {

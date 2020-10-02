@@ -1,0 +1,10 @@
+version: v1.0
+name: ITSCWRKFLW18-PIPELINE
+stages:
+- test
+jobs:
+- job: test
+  stage: test
+  steps:
+  - script:
+    - env
