@@ -1,5 +1,21 @@
 <div id="AppComponent">
-    <ng-container *ngIf="!isConnected || !maintenance || user?.ring === 'ADMIN'">
+    <ng-container *ngIf="!isAPIAvailable">
+        <div class="page">
+            <div class="content">
+                <div class="wrapper loading">
+                    <app-scrollview class="scrollview">
+                        <div class="ui padded centered grid">
+                            <div class="column">
+                                <img class="logo ui centered image grayscale" src="assets/images/cds.png" alt="CDS Logo">
+                                <p>{{ 'cdsapi_loading' | translate }}</p>
+                            </div>
+                        </div>
+                    </app-scrollview>
+                </div>                
+            </div>
+        </div>
+    </ng-container>
+    <ng-container *ngIf="isAPIAvailable && (!isConnected || !maintenance || user?.ring === 'ADMIN')">
         <ng-container *ngIf="isConnected && !hideNavBar">
             <app-navbar></app-navbar>
         </ng-container>
@@ -23,7 +39,7 @@
             </div>
         </div>
     </ng-container>
-    <ng-container *ngIf="maintenance && isConnected && user?.ring !== 'ADMIN'">
+    <ng-container *ngIf="isAPIAvailable && maintenance && isConnected && user?.ring !== 'ADMIN'">
         <div class="maintenance">
             <h2>{{ 'maintenance_title' | translate }}</h2>
             <div class="logo">

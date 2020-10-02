@@ -94,7 +94,7 @@ func (s *Service) CheckConfiguration(config interface{}) error {
 }
 
 // Serve will start the http ui server
-func (s *Service) Serve(ctx context.Context) error {
+func (s *Service) BeforeStart(ctx context.Context) error {
 	log.Info(ctx, "ui> Starting service %s %s...", s.Cfg.Name, sdk.VERSION)
 	s.StartupTime = time.Now()
 
@@ -121,7 +121,7 @@ func (s *Service) Serve(ctx context.Context) error {
 
 	//Init the http server
 	s.initRouter(ctx)
-	server := &http.Server{
+	s.Server = &http.Server{
 		Addr:           fmt.Sprintf("%s:%d", s.Cfg.HTTP.Addr, s.Cfg.HTTP.Port),
 		Handler:        s.Router.Mux,
 		ReadTimeout:    10 * time.Minute,
@@ -130,15 +130,21 @@ func (s *Service) Serve(ctx context.Context) error {
 	}
 
 	// Start the http server
-	log.Info(ctx, "ui> Starting HTTP Server on port %d", s.Cfg.HTTP.Port)
-	if err := server.ListenAndServe(); err != nil {
-		log.Error(ctx, "ui> Listen and serve failed: %s", err)
-	}
+	s.GoRoutines.Run(ctx, "ui-http-serve", func(ctx context.Context) {
+		log.Info(ctx, "ui> Starting HTTP Server on port %d", s.Cfg.HTTP.Port)
+		if err := s.Server.ListenAndServe(); err != nil {
+			log.Error(ctx, "ui> Listen and serve failed: %s", err)
+		}
+	})
 
+	return nil
+}
+
+func (s *Service) Serve(ctx context.Context) error {
 	// Gracefully shutdown the http server
 	<-ctx.Done()
 	log.Info(ctx, "ui> Shutdown HTTP Server")
-	if err := server.Shutdown(ctx); err != nil {
+	if err := s.Server.Shutdown(ctx); err != nil {
 		return fmt.Errorf("unable to shutdown server: %v", err)
 	}
 
