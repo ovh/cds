@@ -18,18 +18,7 @@ testcases:
   - script: {{.cdsctl}} -f {{.cdsctl.config}} admin integration-model import ./fixtures/integrations/kafka-public.yml
   - script: {{.cdsctl}} -f {{.cdsctl.config}} project integration import ITSCWRKFLW18 ./fixtures/integrations/kafka.yml
 
-- name: import workflow
-  steps:
-  - script:  {{.cdsctl}} -f {{.cdsctl.config}} workflow push ITSCWRKFLW18 ./fixtures/ITSCWRKFLW18/*.yml --skip-update-files
-
-- name: run workflow
-  steps:
-  - script: {{.cdsctl}} -f {{.cdsctl.config}} workflow run ITSCWRKFLW18 ITSCWRKFLW18-WORKFLOW
-    assertions:
-    - result.code ShouldEqual 0
-    - "result.systemout ShouldContainSubstring Workflow ITSCWRKFLW18-WORKFLOW #1 has been launched"
-
-- name: check event in topic test.eventsproject
+- name: init kafka groupID
   steps:
   - type: kafka
     clientType: consumer
@@ -41,20 +30,29 @@ testcases:
       - "localhost:9092"
     topics:
       - test.eventsproject
+      - test.eventspublic
+
+- name: import workflow
+  steps:
+  - script:  {{.cdsctl}} -f {{.cdsctl.config}} workflow push ITSCWRKFLW18 ./fixtures/ITSCWRKFLW18/*.yml --skip-update-files
+
+- name: run workflow
+  steps:
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} workflow run ITSCWRKFLW18 ITSCWRKFLW18-WORKFLOW && sleep 5
     assertions:
-    - result.messagesjson.messagesjson0.value.type_event ShouldEqual sdk.EventWorkflowAdd
+    - result.code ShouldEqual 0
+    - "result.systemout ShouldContainSubstring Workflow ITSCWRKFLW18-WORKFLOW #1 has been launched"
+
+- name: check event in topic test.eventsproject
+  steps:
+  - script: kafkacat -b localhost:9092 -t test.eventsproject -C -o -1 -c 1
+    assertions:
+    - result.code ShouldEqual 0
+    - "result.systemoutjson.type_event ShouldContainSubstring sdk.EventRunWorkflowJob"
 
 - name: check event in topic test.eventspublic
   steps:
-  - type: kafka
-    clientType: consumer
-    withTLS: false
-    withSASL: false
-    messageLimit: 1
-    groupID: venom
-    addrs:
-      - "localhost:9092"
-    topics:
-      - test.eventspublic
+  - script: kafkacat -b localhost:9092 -t test.eventspublic -C -o -1 -c 1
     assertions:
-    - result.messagesjson.messagesjson0.value.type_event ShouldEqual sdk.EventProjectIntegrationAddD
+    - result.code ShouldEqual 0
+    - "result.systemoutjson.type_event ShouldContainSubstring sdk.EventRunWorkflowJob"
