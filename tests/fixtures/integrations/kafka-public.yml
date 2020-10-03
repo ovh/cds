@@ -15,3 +15,9 @@ public_configurations:
     "password":
       type: password
       value: ""
+    "disableTLS":
+      type: string
+      value: "true"
+    "disableSASL":
+      type: string
+      value: "true"

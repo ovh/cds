@@ -16,4 +16,9 @@ config:
   topic:
     type: string
     value: test.eventsproject
-  
+  disableTLS:
+    type: string
+    value: "true"
+  disableSASL:
+    type: string
+    value: "true"

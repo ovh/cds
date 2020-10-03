@@ -15,8 +15,8 @@ testcases:
 
 - name: import integrations
   steps:
-  - script: {{.cdsctl}} -f {{.cdsctl.config}} project integration import ITSCWRKFLW18 ./fixtures/integrations/kafka.yml
   - script: {{.cdsctl}} -f {{.cdsctl.config}} admin integration-model import ./fixtures/integrations/kafka-public.yml
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} project integration import ITSCWRKFLW18 ./fixtures/integrations/kafka.yml
 
 - name: import workflow
   steps:
@@ -24,7 +24,37 @@ testcases:
 
 - name: run workflow
   steps:
-  - script:  {{.cdsctl}} -f {{.cdsctl.config}} workflow run ITSCWRKFLW18 ITSCWRKFLW18-WORKFLOW
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} workflow run ITSCWRKFLW18 ITSCWRKFLW18-WORKFLOW
     assertions:
     - result.code ShouldEqual 0
     - "result.systemout ShouldContainSubstring Workflow ITSCWRKFLW18-WORKFLOW #1 has been launched"
+
+- name: check event in topic test.eventsproject
+  steps:
+  - type: kafka
+    clientType: consumer
+    withTLS: false
+    withSASL: false
+    messageLimit: 1
+    groupID: venom
+    addrs:
+      - "localhost:9092"
+    topics:
+      - test.eventsproject
+    assertions:
+    - result.messagesjson.messagesjson0.value.type_event ShouldEqual sdk.EventWorkflowAdd
+
+- name: check event in topic test.eventspublic
+  steps:
+  - type: kafka
+    clientType: consumer
+    withTLS: false
+    withSASL: false
+    messageLimit: 1
+    groupID: venom
+    addrs:
+      - "localhost:9092"
+    topics:
+      - test.eventspublic
+    assertions:
+    - result.messagesjson.messagesjson0.value.type_event ShouldEqual sdk.EventProjectIntegrationAddD
