@@ -38,7 +38,7 @@ testcases:
 
 - name: run workflow
   steps:
-  - script: {{.cdsctl}} -f {{.cdsctl.config}} workflow run ITSCWRKFLW18 ITSCWRKFLW18-WORKFLOW && sleep 5
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} workflow run ITSCWRKFLW18 ITSCWRKFLW18-WORKFLOW
     assertions:
     - result.code ShouldEqual 0
     - "result.systemout ShouldContainSubstring Workflow ITSCWRKFLW18-WORKFLOW #1 has been launched"
@@ -49,6 +49,8 @@ testcases:
     assertions:
     - result.code ShouldEqual 0
     - "result.systemoutjson.type_event ShouldContainSubstring sdk.EventRunWorkflowJob"
+    retry: 10
+    delay: 2
 
 - name: check event in topic test.eventspublic
   steps:
@@ -56,3 +58,5 @@ testcases:
     assertions:
     - result.code ShouldEqual 0
     - "result.systemoutjson.type_event ShouldContainSubstring sdk.EventRunWorkflowJob"
+    retry: 10
+    delay: 2
