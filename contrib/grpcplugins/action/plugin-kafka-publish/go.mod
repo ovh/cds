@@ -7,7 +7,7 @@ replace github.com/go-gorp/gorp => github.com/yesnault/gorp v2.0.1-0.20200325154
 go 1.14
 
 require (
-	github.com/Shopify/sarama v1.24.1
+	github.com/Shopify/sarama v1.27.0
 	github.com/bgentry/speakeasy v0.1.0
 	github.com/facebookgo/ensure v0.0.0-20160127193407-b4ab57deab51 // indirect
 	github.com/facebookgo/freeport v0.0.0-20150612182905-d4adf43b75b9 // indirect
@@ -18,6 +18,6 @@ require (
 	github.com/klauspost/cpuid v1.2.1 // indirect
 	github.com/ovh/cds v0.0.0-00010101000000-000000000000
 	github.com/phayes/permbits v0.0.0-20190612203442-39d7c581d2ee
-	github.com/stretchr/testify v1.5.1
+	github.com/stretchr/testify v1.6.1
 	gopkg.in/urfave/cli.v1 v1.20.0
 )

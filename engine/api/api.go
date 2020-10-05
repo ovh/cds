@@ -626,9 +626,11 @@ func (a *API) Serve(ctx context.Context) error {
 	log.Info(ctx, "Initializing event broker...")
 	if err := event.Initialize(ctx, a.mustDB(), a.Cache); err != nil {
 		log.Error(ctx, "error while initializing event system: %s", err)
-	} else {
-		go event.DequeueEvent(ctx, a.mustDB())
 	}
+
+	a.GoRoutines.Run(ctx, "event.dequeue", func(ctx context.Context) {
+		event.DequeueEvent(ctx, a.mustDB())
+	}, a.PanicDump())
 
 	log.Info(ctx, "Initializing internal routines...")
 	a.GoRoutines.Run(ctx, "maintenance.Subscribe", func(ctx context.Context) {

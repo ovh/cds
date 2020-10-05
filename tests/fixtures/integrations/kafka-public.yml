@@ -1,0 +1,23 @@
+name: myPublicKafkaIntegration
+event: true
+public: true
+public_configurations:
+  myPublicKafkaIntegration:
+    "broker url":
+      type: string
+      value: "localhost:9092"
+    "topic":
+      type: string
+      value: "test.eventspublic"
+    "username":
+      type: string
+      value: ""
+    "password":
+      type: password
+      value: ""
+    "disableTLS":
+      type: string
+      value: "true"
+    "disableSASL":
+      type: string
+      value: "true"
