@@ -65,7 +65,11 @@ func (s *Service) initMetrics(ctx context.Context) error {
 		Aggregation: telemetry.DefaultSizeDistribution,
 	}
 
-	go s.ComputeMetrics(ctx)
+	if s.DBConnectionFactory != nil {
+		s.GoRoutines.Run(ctx, "cds-compute-metrics", func(ctx context.Context) {
+			s.ComputeMetrics(ctx)
+		})
+	}
 
 	return telemetry.RegisterView(ctx,
 		tcpServerErrorsCountView,
