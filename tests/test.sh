@@ -143,10 +143,9 @@ workflow_with_integration_tests() {
     if [ -z "$OS_TENANT_NAME" ]; then echo "missing OS_* variables"; exit 1; fi
     if [ -z "$OS_USERNAME" ]; then echo "missing OS_* variables"; exit 1; fi
     if [ -z "$OS_PASSWORD" ]; then echo "missing OS_* variables"; exit 1; fi
-    if [ -z "$HOSTNAME" ]; then echo "missing HOSTNAME variables"; exit 1; fi
     echo "Running Workflow with Storage integration tests:"
     for f in $(ls -1 05_*.yml); do
-        CMD="${VENOM} run ${VENOM_OPTS} ${f} --var cdsctl=${CDSCTL} --var cdsctl.config=${CDSCTL_CONFIG}_admin --var api.url=${CDS_API_URL} --var ui.url=${CDS_UI_URL} --var smtpmock.url=${SMTP_MOCK_URL} --var hostname=${HOSTNAME}"
+        CMD="${VENOM} run ${VENOM_OPTS} ${f} --var cdsctl=${CDSCTL} --var cdsctl.config=${CDSCTL_CONFIG}_admin --var api.url=${CDS_API_URL} --var ui.url=${CDS_UI_URL} --var smtpmock.url=${SMTP_MOCK_URL}"
         echo -e "  ${YELLOW}${f} ${DARKGRAY}[${CMD}]${NOCOLOR}"
         ${CMD} >${f}.output 2>&1
         check_failure $? ${f}.output
@@ -187,7 +186,6 @@ for target in $@; do
         workflow) 
             workflow_tests;;
         workflow_with_integration) 
-            export HOSTNAME
             export AWS_DEFAULT_REGION
             export S3_BUCKET
             export AWS_ACCESS_KEY_ID

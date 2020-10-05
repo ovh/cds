@@ -1,9 +1,6 @@
 name: Workflow (ITSCWRKFLW18) should use the kafka integration
 version: "2"
 
-vars:
-  hostname: 'localhost'
-
 testcases:
 - name: assert filepath, your current directory must be at the root of this project
   steps:
@@ -34,7 +31,7 @@ testcases:
 
 - name: check event in topic test.eventsproject
   steps:
-  - script: kafkacat -b {{.hostname}}:9092 -t test.eventsproject -C -o -1 -c 1
+  - script: kafkacat -b localhost:9092 -t test.eventsproject -C -o -1 -c 1
     assertions:
     - result.code ShouldEqual 0
     - "result.systemoutjson.type_event ShouldContainSubstring sdk.EventRunWorkflowJob"
@@ -43,7 +40,7 @@ testcases:
 
 - name: check event in topic test.eventspublic
   steps:
-  - script: kafkacat -b {{.hostname}}:9092 -t test.eventspublic -C -o -1 -c 1
+  - script: kafkacat -b localhost:9092 -t test.eventspublic -C -o -1 -c 1
     assertions:
     - result.code ShouldEqual 0
     - "result.systemoutjson.type_event ShouldContainSubstring sdk.EventRunWorkflowJob"

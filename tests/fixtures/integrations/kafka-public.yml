@@ -5,7 +5,7 @@ public_configurations:
   myPublicKafkaIntegration:
     "broker url":
       type: string
-      value: "$HOSTNAME:9092"
+      value: "localhost:9092"
     "topic":
       type: string
       value: "test.eventspublic"
