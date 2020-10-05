@@ -30,9 +30,9 @@ func (s *Service) initWebsocket() error {
 		for {
 			select {
 			case <-tickerMetrics.C:
-				telemetry.Record(s.Router.Background, metricsWSClients, int64(len(s.WSServer.server.ClientIDs())))
+				telemetry.Record(s.Router.Background, s.Metrics.metricsWSClients, int64(len(s.WSServer.server.ClientIDs())))
 			case <-ctx.Done():
-				telemetry.Record(s.Router.Background, metricsWSClients, 0)
+				telemetry.Record(s.Router.Background, s.Metrics.metricsWSClients, 0)
 				return
 			}
 		}
@@ -45,7 +45,7 @@ func (s *Service) initWebsocket() error {
 	}
 	s.WSBroker = websocket.NewBroker()
 	s.WSBroker.OnMessage(func(m []byte) {
-		telemetry.Record(s.Router.Background, metricsWSEvents, 1)
+		telemetry.Record(s.Router.Background, s.Metrics.metricsWSEvents, 1)
 
 		var i sdk.CDNItem
 		if err := json.Unmarshal(m, &i); err != nil {

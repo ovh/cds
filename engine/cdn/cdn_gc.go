@@ -127,7 +127,7 @@ func (s *Service) cleanWaitingItem(ctx context.Context, duration int) error {
 			_ = tx.Rollback()
 			return err
 		}
-		telemetry.Record(ctx, metricsItemCompletedByGC, 1)
+		telemetry.Record(ctx, s.Metrics.itemCompletedByGCCount, 1)
 	}
 	return nil
 }

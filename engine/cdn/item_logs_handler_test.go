@@ -21,7 +21,6 @@ import (
 	"github.com/ovh/cds/engine/authentication"
 	"github.com/ovh/cds/engine/cdn/item"
 	"github.com/ovh/cds/engine/cdn/redis"
-	"github.com/ovh/cds/engine/cdn/storage"
 	cdntest "github.com/ovh/cds/engine/cdn/test"
 	"github.com/ovh/cds/engine/test"
 	"github.com/ovh/cds/sdk"
@@ -111,26 +110,15 @@ func TestMarkItemToDeleteHandler(t *testing.T) {
 }
 
 func TestGetItemLogsDownloadHandler(t *testing.T) {
-	cfg := test.LoadTestingConf(t, sdk.TypeCDN)
-
 	projectKey := sdk.RandomString(10)
-
 	// Create cdn service with need storage and test item
-	s, db := newTestService(t)
+	s, _ := newTestService(t)
 	s.Client = cdsclient.New(cdsclient.Config{Host: "http://lolcat.api", InsecureSkipVerifyTLS: false})
 	gock.InterceptClient(s.Client.(cdsclient.Raw).HTTPClient())
 	gock.New("http://lolcat.api").Get("/project/" + projectKey + "/workflows/MyWorkflow/log/access").Reply(http.StatusOK).JSON(nil)
 
-	cdnUnits, err := storage.Init(context.TODO(), s.Mapper, db.DbMap, sdk.NewGoRoutines(), storage.Configuration{
-		Buffer: storage.BufferConfiguration{
-			Name: "redis_buffer",
-			Redis: storage.RedisBufferConfiguration{
-				Host:     cfg["redisHost"],
-				Password: cfg["redisPassword"],
-			},
-		},
-	})
-	require.NoError(t, err)
+	cdnUnits := newRunningStorageUnits(t, s.Mapper, s.mustDBWithCtx(context.TODO()))
+
 	s.Units = cdnUnits
 
 	hm := handledMessage{
@@ -156,7 +144,7 @@ func TestGetItemLogsDownloadHandler(t *testing.T) {
 	}
 
 	content := buildMessage(hm)
-	err = s.storeLogs(context.TODO(), sdk.CDNTypeItemStepLog, hm.Signature, hm.Status, content, hm.Line)
+	err := s.storeLogs(context.TODO(), sdk.CDNTypeItemStepLog, hm.Signature, hm.Status, content, hm.Line)
 	require.NoError(t, err)
 
 	signer, err := authentication.NewSigner("cdn-test", test.SigningKey)
@@ -205,26 +193,17 @@ func TestGetItemLogsDownloadHandler(t *testing.T) {
 }
 
 func TestGetItemLogsLinesHandler(t *testing.T) {
-	cfg := test.LoadTestingConf(t, sdk.TypeCDN)
 
 	projectKey := sdk.RandomString(10)
 
 	// Create cdn service with need storage and test item
-	s, db := newTestService(t)
+	s, _ := newTestService(t)
 	s.Client = cdsclient.New(cdsclient.Config{Host: "http://lolcat.api", InsecureSkipVerifyTLS: false})
 	gock.InterceptClient(s.Client.(cdsclient.Raw).HTTPClient())
 	gock.New("http://lolcat.api").Get("/project/" + projectKey + "/workflows/MyWorkflow/log/access").Reply(http.StatusOK).JSON(nil)
 
-	cdnUnits, err := storage.Init(context.TODO(), s.Mapper, db.DbMap, sdk.NewGoRoutines(), storage.Configuration{
-		Buffer: storage.BufferConfiguration{
-			Name: "redis_buffer",
-			Redis: storage.RedisBufferConfiguration{
-				Host:     cfg["redisHost"],
-				Password: cfg["redisPassword"],
-			},
-		},
-	})
-	require.NoError(t, err)
+	cdnUnits := newRunningStorageUnits(t, s.Mapper, s.mustDBWithCtx(context.TODO()))
+
 	s.Units = cdnUnits
 
 	hm := handledMessage{
@@ -250,7 +229,7 @@ func TestGetItemLogsLinesHandler(t *testing.T) {
 	}
 
 	content := buildMessage(hm)
-	err = s.storeLogs(context.TODO(), sdk.CDNTypeItemStepLog, hm.Signature, hm.Status, content, hm.Line)
+	err := s.storeLogs(context.TODO(), sdk.CDNTypeItemStepLog, hm.Signature, hm.Status, content, hm.Line)
 	require.NoError(t, err)
 
 	signer, err := authentication.NewSigner("cdn-test", test.SigningKey)

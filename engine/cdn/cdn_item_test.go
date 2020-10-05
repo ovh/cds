@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"strings"
 	"testing"
 
@@ -32,8 +31,6 @@ func TestGetItemValue(t *testing.T) {
 	db, factory, cache, cancel := test.SetupPGToCancel(t, m, sdk.TypeCDN)
 	t.Cleanup(cancel)
 
-	cfg := test.LoadTestingConf(t, sdk.TypeCDN)
-
 	cdntest.ClearItem(t, context.TODO(), m, db)
 
 	// Create cdn service
@@ -42,30 +39,10 @@ func TestGetItemValue(t *testing.T) {
 		Cache:               cache,
 		Mapper:              m,
 	}
-
-	tmpDir, err := ioutil.TempDir("", t.Name()+"-cdn-1-*")
-	require.NoError(t, err)
-
-	cdnUnits, err := storage.Init(context.TODO(), m, db.DbMap, sdk.NewGoRoutines(), storage.Configuration{
-		Buffer: storage.BufferConfiguration{
-			Name: "redis_buffer",
-			Redis: storage.RedisBufferConfiguration{
-				Host:     cfg["redisHost"],
-				Password: cfg["redisPassword"],
-			},
-		},
-		Storages: []storage.StorageConfiguration{
-			{
-				Name: "local_storage",
-				Cron: "* * * * * ?",
-				Local: &storage.LocalStorageConfiguration{
-					Path: tmpDir,
-				},
-			},
-		},
-	})
-	require.NoError(t, err)
+	cfg := test.LoadTestingConf(t, sdk.TypeCDN)
+	cdnUnits := newRunningStorageUnits(t, m, s.DBConnectionFactory.GetDBMap(m)())
 	s.Units = cdnUnits
+	var err error
 	s.LogCache, err = lru.NewRedisLRU(db.DbMap, 1000, cfg["redisHost"], cfg["redisPassword"])
 	require.NoError(t, err)
 	require.NoError(t, s.LogCache.Clear())
@@ -131,7 +108,7 @@ func TestGetItemValue(t *testing.T) {
 	require.Equal(t, 0, n)
 
 	// Sync FS
-	require.NoError(t, cdnUnits.Run(context.TODO(), cdnUnits.Storages[0]))
+	require.NoError(t, cdnUnits.Run(context.TODO(), cdnUnits.Storages[0], 100))
 
 	_, err = storage.LoadItemUnitByUnit(context.TODO(), s.Mapper, db, s.Units.Storages[0].ID(), it.ID)
 	require.NoError(t, err)
@@ -199,17 +176,9 @@ func TestGetItemValue_ThousandLines(t *testing.T) {
 		Mapper:              m,
 	}
 
-	cdnUnits, err := storage.Init(context.TODO(), m, db.DbMap, sdk.NewGoRoutines(), storage.Configuration{
-		Buffer: storage.BufferConfiguration{
-			Name: "redis_buffer",
-			Redis: storage.RedisBufferConfiguration{
-				Host:     cfg["redisHost"],
-				Password: cfg["redisPassword"],
-			},
-		},
-	})
-	require.NoError(t, err)
+	cdnUnits := newRunningStorageUnits(t, m, db.DbMap)
 	s.Units = cdnUnits
+	var err error
 	s.LogCache, err = lru.NewRedisLRU(db.DbMap, 1000, cfg["redisHost"], cfg["redisPassword"])
 	require.NoError(t, err)
 	require.NoError(t, s.LogCache.Clear())

@@ -12,6 +12,7 @@ import (
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk/log/hook"
+	"go.opencensus.io/stats"
 )
 
 type handledMessage struct {
@@ -33,6 +34,19 @@ type Service struct {
 	Units               *storage.RunningStorageUnits
 	WSServer            *websocketServer
 	WSBroker            *websocket.Broker
+	Metrics             struct {
+		tcpServerErrorsCount     *stats.Int64Measure
+		tcpServerHitsCount       *stats.Int64Measure
+		tcpServerStepLogCount    *stats.Int64Measure
+		tcpServerServiceLogCount *stats.Int64Measure
+		itemCompletedByGCCount   *stats.Int64Measure
+		itemInDatabaseCount      *stats.Int64Measure
+		itemPerStorageUnitCount  *stats.Int64Measure
+		ItemSize                 *stats.Float64Measure
+		StorageThroughput        *stats.Float64Measure
+		metricsWSClients         *stats.Int64Measure
+		metricsWSEvents          *stats.Int64Measure
+	}
 }
 
 // Configuration is the hooks configuration structure
