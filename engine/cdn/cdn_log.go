@@ -24,7 +24,7 @@ import (
 )
 
 var (
-	logCache                   = gocache.New(20*time.Minute, 30*time.Minute)
+	logCache                   = gocache.New(20*time.Minute, 20*time.Minute)
 	keyJobLogIncomingQueue     = cache.Key("cdn", "log", "incoming", "job")
 	keyServiceLogIncomingQueue = cache.Key("cdn", "log", "incoming", "service")
 )
@@ -155,7 +155,7 @@ func (s *Service) handleWorkerLog(ctx context.Context, workerName string, worker
 
 	// Verify Signature
 	if err := jws.Verify(workerData.PrivateKey, sig.(string), &signature); err != nil {
-		return err
+		return sdk.WrapError(err, "worker key: %d", len(workerData.PrivateKey))
 	}
 	if workerData.JobRunID == nil || *workerData.JobRunID != signature.JobID || workerData.ID != workerID {
 		return sdk.WithStack(sdk.ErrForbidden)
