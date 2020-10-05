@@ -152,9 +152,11 @@ func (x *RunningStorageUnits) runItem(ctx context.Context, tx gorpmapper.SqlExec
 		}
 	}
 
-	ctxMetrics := telemetry.ContextWithTag(ctx, "storage_source", source.Name(), "storage_dest", dest.Name())
 	var troughput = float64(item.Size/1024/2024) / t2.Sub(t1).Seconds()
-	telemetry.RecordFloat64(ctxMetrics, *x.Metrics.StorageThroughput, troughput)
+	if x.Metrics.StorageThroughput != nil {
+		ctxMetrics := telemetry.ContextWithTag(ctx, "storage_source", source.Name(), "storage_dest", dest.Name())
+		telemetry.RecordFloat64(ctxMetrics, *x.Metrics.StorageThroughput, troughput)
+	}
 
 	log.InfoWithFields(ctx, logrus.Fields{
 		"item_apiref":               item.APIRefHash,

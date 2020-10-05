@@ -192,8 +192,6 @@ func TestCleanWaitingItem(t *testing.T) {
 	db, factory, cache, cancel := test.SetupPGToCancel(t, m, sdk.TypeCDN)
 	t.Cleanup(cancel)
 
-	cfg := test.LoadTestingConf(t, sdk.TypeCDN)
-
 	cdntest.ClearItem(t, context.TODO(), m, db)
 
 	// Create cdn service
@@ -203,16 +201,7 @@ func TestCleanWaitingItem(t *testing.T) {
 		Mapper:              m,
 	}
 
-	cdnUnits, err := storage.Init(context.TODO(), m, db.DbMap, sdk.NewGoRoutines(), storage.Configuration{
-		Buffer: storage.BufferConfiguration{
-			Name: "redis_buffer",
-			Redis: storage.RedisBufferConfiguration{
-				Host:     cfg["redisHost"],
-				Password: cfg["redisPassword"],
-			},
-		},
-	})
-	require.NoError(t, err)
+	cdnUnits := newRunningStorageUnits(t, m, s.DBConnectionFactory.GetDBMap(m)())
 	s.Units = cdnUnits
 
 	it := sdk.CDNItem{
@@ -223,7 +212,7 @@ func TestCleanWaitingItem(t *testing.T) {
 
 		APIRefHash: sdk.RandomString(10),
 	}
-	require.NoError(t, err, item.Insert(context.TODO(), s.Mapper, db, &it))
+	require.NoError(t, item.Insert(context.TODO(), s.Mapper, db, &it))
 
 	iu := sdk.CDNItemUnit{
 		ItemID: it.ID,
