@@ -58,7 +58,7 @@ func runFromHook(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store cac
 
 		// Add add code spawn info
 		for _, msg := range asCodeMsg {
-			AddWorkflowRunInfo(wr, sdk.SpawnMsg{ID: msg.ID, Args: msg.Args, Type: msg.Type})
+			AddWorkflowRunInfo(wr, msg.ToSpawnMsg())
 		}
 
 		//Process it
@@ -100,7 +100,7 @@ func StartWorkflowRun(ctx context.Context, db gorpmapper.SqlExecutorWithTx, stor
 	report := new(ProcessorReport)
 
 	for _, msg := range asCodeInfos {
-		AddWorkflowRunInfo(wr, sdk.SpawnMsg{ID: msg.ID, Args: msg.Args, Type: msg.Type})
+		AddWorkflowRunInfo(wr, msg.ToSpawnMsg())
 	}
 
 	wr.Status = sdk.StatusWaiting

@@ -172,6 +172,10 @@ type Message struct {
 	Type   string
 }
 
+func (m Message) ToSpawnMsg() SpawnMsg {
+	return SpawnMsg{ID: m.ID, Args: m.Args, Type: m.Type}
+}
+
 //NewMessage instanciantes a new message
 func NewMessage(m *Message, args ...interface{}) Message {
 	return Message{
