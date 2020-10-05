@@ -878,6 +878,11 @@ func purgeWorkflowRunWithoutTags(ctx context.Context, db gorp.SqlExecutor, wf sd
 	return nil
 }
 
+func CountNotPendingWorkflowRunsByWorkflowID(db gorp.SqlExecutor, workflowID int64) (int64, error) {
+	n, err := db.SelectInt("SELECT COUNT(id) FROM workflow_run WHERE workflow_id = $1 AND to_delete = false AND status <> $2", workflowID, sdk.StatusPending)
+	return n, sdk.WithStack(err)
+}
+
 func CountWorkflowRunsMarkToDelete(ctx context.Context, db gorp.SqlExecutor, workflowRunsMarkToDelete *stats.Int64Measure) int64 {
 	n, err := db.SelectInt("select count(1) from workflow_run where to_delete = true")
 	if err != nil {

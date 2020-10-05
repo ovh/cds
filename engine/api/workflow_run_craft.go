@@ -5,14 +5,19 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/pkg/errors"
+	"go.opencensus.io/trace"
+
+	"github.com/ovh/cds/engine/api/database/gorpmapping"
+	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/project"
+	"github.com/ovh/cds/engine/api/purge"
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/engine/cache"
+	"github.com/ovh/cds/engine/featureflipping"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk/telemetry"
-	"github.com/pkg/errors"
-	"go.opencensus.io/trace"
 )
 
 func (api *API) WorkflowRunCraft(ctx context.Context, tick time.Duration) error {
@@ -105,6 +110,50 @@ func (api *API) workflowRunCraft(ctx context.Context, id int64) error {
 	})
 	if err != nil {
 		return sdk.WrapError(err, "unable to load workflow %d", run.WorkflowID)
+	}
+
+	enabled := featureflipping.IsEnabled(ctx, gorpmapping.Mapper, api.mustDB(), purge.FeaturePurgeName, map[string]string{"project_key": wf.ProjectKey})
+	if enabled {
+		countRuns, err := workflow.CountNotPendingWorkflowRunsByWorkflowID(api.mustDB(), run.WorkflowID)
+		if err != nil {
+			return sdk.WrapError(err, "unable to count workflow runs for workflow %d", run.WorkflowID)
+		}
+		if countRuns >= wf.MaxRuns {
+			// check spawn infos to know if we already check this run
+			for _, i := range run.Infos {
+				if i.Message.ID == sdk.MsgTooMuchWorkflowRun.ID {
+					return nil
+				}
+			}
+
+			info := sdk.SpawnMsg{
+				ID:   sdk.MsgTooMuchWorkflowRun.ID,
+				Type: sdk.MsgTooMuchWorkflowRun.Type,
+				Args: []interface{}{wf.MaxRuns},
+			}
+			workflow.AddWorkflowRunInfo(run, info)
+			if err := workflow.UpdateWorkflowRun(ctx, api.mustDB(), run); err != nil {
+				log.Error(ctx, "unable to star run %d/%d for workflow %s: %v", run.ID, run.Number, wf.Name, err)
+			}
+			event.PublishWorkflowRun(ctx, *run, wf.ProjectKey)
+			return nil
+		} else {
+			found := false
+			for i := range run.Infos {
+				if run.Infos[i].Message.ID == sdk.MsgTooMuchWorkflowRun.ID {
+					run.Infos[i].Type = sdk.RunInfoTypInfo
+					run.Infos[i].Message.Type = sdk.RunInfoTypInfo
+					found = true
+					break
+				}
+			}
+			if found {
+				if err := workflow.UpdateWorkflowRun(ctx, api.mustDB(), run); err != nil {
+					log.Error(ctx, "unable to star run %d/%d for workflow %s: %v", run.ID, run.Number, wf.Name, err)
+				}
+				event.PublishWorkflowRun(ctx, *run, wf.ProjectKey)
+			}
+		}
 	}
 
 	log.Debug("api.workflowRunCraft> crafting workflow %s/%s #%d.%d (%d)", proj.Key, wf.Name, run.Number, run.LastSubNumber, run.ID)

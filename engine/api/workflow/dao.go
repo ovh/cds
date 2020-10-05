@@ -288,14 +288,16 @@ func Insert(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store cache.St
 	if w.HistoryLength == 0 {
 		w.HistoryLength = sdk.DefaultHistoryLength
 	}
+	w.MaxRuns = maxRuns
+	w.RetentionPolicy = "return (git_branch_exist == \"false\" and run_date_before < 2) or run_date_before < 365"
 
 	w.LastModified = time.Now()
 	if err := db.QueryRow(`INSERT INTO workflow (
-		name, description, icon, project_id, history_length, from_repository, purge_tags, workflow_data, metadata
+		name, description, icon, project_id, history_length, from_repository, purge_tags, workflow_data, metadata, retention_policy, max_runs
 	)
-	VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+	VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
 	RETURNING id`,
-		w.Name, w.Description, w.Icon, w.ProjectID, w.HistoryLength, w.FromRepository, w.PurgeTags, w.WorkflowData, w.Metadata).Scan(&w.ID); err != nil {
+		w.Name, w.Description, w.Icon, w.ProjectID, w.HistoryLength, w.FromRepository, w.PurgeTags, w.WorkflowData, w.Metadata, w.RetentionPolicy, w.MaxRuns).Scan(&w.ID); err != nil {
 		return sdk.WrapError(err, "Unable to insert workflow %s/%s", w.ProjectKey, w.Name)
 	}
 
@@ -602,6 +604,10 @@ func Update(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store cache.St
 	if err != nil {
 		return sdk.WrapError(err, "Unable to load existing workflow with proj:%s ID:%d", proj.Key, wf.ID)
 	}
+
+	// Keep MaxRun
+	wf.MaxRuns = oldWf.MaxRuns
+
 	if err := DeleteWorkflowData(db, *oldWf); err != nil {
 		return sdk.WrapError(err, "unable to delete from old workflow data(%d - %s)", wf.ID, wf.Name)
 	}

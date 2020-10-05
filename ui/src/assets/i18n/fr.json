@@ -910,6 +910,7 @@
   "workflow_resync": "Resynchroniser le workflow",
   "workflow_retention_policy": "Politique de rétention des éxécutions du workflow",
   "workflow_retention_variables": "Variables disponibles: {{vars}}",
+  "workflow_run_delayed": "L'exécution du workflow a été reportée",
   "workflow_run_only_failed": "Uniquement les jobs en erreur",
   "workflow_root_context_application": "Application (facultatif)",
   "workflow_root_context_environment": "Environnement (facultatif)",
