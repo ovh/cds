@@ -125,7 +125,7 @@ func (w *CurrentWorker) runJob(ctx context.Context, a *sdk.Action, jobID int64, 
 	}
 
 	defer func() {
-		w.SendEndOfJobLog(ctx, workerruntime.LevelInfo, "End of Job", jobResult.Status)
+		w.SendLogWithStatus(ctx, workerruntime.LevelInfo, "End of Job", jobResult.Status)
 		log.Info(ctx, "runJob> job %s (%d)", a.Name, jobID)
 	}()
 

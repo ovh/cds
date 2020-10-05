@@ -2,11 +2,14 @@ package swarm
 
 import (
 	"context"
+	"fmt"
 	"io/ioutil"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/docker/docker/api/types"
+	"github.com/sirupsen/logrus"
 
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/hatchery"
@@ -20,7 +23,7 @@ func (h *HatcherySwarm) getServicesLogs() error {
 			return sdk.WrapError(err, "Cannot get containers list from %s", dockerClient.name)
 		}
 
-		servicesLogs := make([]sdk.ServiceLog, 0, len(containers))
+		servicesLogs := make([]log.Message, 0, len(containers))
 		for _, cnt := range containers {
 			if _, has := cnt.Labels[hatchery.LabelServiceID]; !has {
 				continue
@@ -32,20 +35,21 @@ func (h *HatcherySwarm) getServicesLogs() error {
 				Details:    true,
 				ShowStderr: true,
 				ShowStdout: true,
-				Timestamps: true,
 				Since:      "10s",
 			}
-			logsReader, errL := dockerClient.ContainerLogs(ctx, cnt.ID, logsOpts)
-			if errL != nil {
-				log.Error(ctx, "hatchery> swarm> getServicesLogs> cannot get logs from docker for containers service %s %v : %v", cnt.ID, cnt.Names, errL)
+			logsReader, err := dockerClient.ContainerLogs(ctx, cnt.ID, logsOpts)
+			if err != nil {
+				err = sdk.WrapError(err, "cannot get logs from docker for containers service %s %v", cnt.ID, cnt.Names)
+				log.ErrorWithFields(ctx, logrus.Fields{"stack_trace": fmt.Sprintf("%+v", err)}, "%s", err)
 				cancel()
 				continue
 			}
 
-			logs, errR := ioutil.ReadAll(logsReader)
-			if errR != nil {
-				logsReader.Close()
-				log.Error(ctx, "hatchery> swarm> getServicesLogs> cannot read logs for containers service %s %v : %v", cnt.ID, cnt.Names, errR)
+			logs, err := ioutil.ReadAll(logsReader)
+			if err != nil {
+				logsReader.Close() // nolint
+				err = sdk.WrapError(err, "cannot read logs for containers service %s %v", cnt.ID, cnt.Names)
+				log.ErrorWithFields(ctx, logrus.Fields{"stack_trace": fmt.Sprintf("%+v", err)}, "%s", err)
 				cancel()
 				continue
 			}
@@ -59,20 +63,37 @@ func (h *HatcherySwarm) getServicesLogs() error {
 					continue
 				}
 
-				servicesLogs = append(servicesLogs, sdk.ServiceLog{
-					WorkflowNodeJobRunID:   jobIdentifiers.JobID,
-					WorkflowNodeRunID:      jobIdentifiers.NodeRunID,
-					ServiceRequirementID:   jobIdentifiers.ServiceID,
-					ServiceRequirementName: cnt.Labels[hatchery.LabelServiceReqName],
-					Val:                    string(logs),
-					WorkerName:             workerName,
-					JobName:                cnt.Labels[hatchery.LabelServiceJobName],
-					NodeRunName:            cnt.Labels[hatchery.LabelServiceNodeRunName],
-					WorkflowName:           cnt.Labels[hatchery.LabelServiceWorkflowName],
-					ProjectKey:             cnt.Labels[hatchery.LabelServiceProjectKey],
-					RunID:                  jobIdentifiers.RunID,
-					WorkflowID:             jobIdentifiers.WorkflowID,
-				})
+				commonMessage := log.Message{
+					Level: logrus.InfoLevel,
+					Signature: log.Signature{
+						Service: &log.SignatureService{
+							HatcheryID:      h.Service().ID,
+							HatcheryName:    h.ServiceName(),
+							RequirementID:   jobIdentifiers.ServiceID,
+							RequirementName: cnt.Labels[hatchery.LabelServiceReqName],
+							WorkerName:      workerName,
+						},
+						ProjectKey:   cnt.Labels[hatchery.LabelServiceProjectKey],
+						WorkflowName: cnt.Labels[hatchery.LabelServiceWorkflowName],
+						WorkflowID:   jobIdentifiers.WorkflowID,
+						RunID:        jobIdentifiers.RunID,
+						NodeRunName:  cnt.Labels[hatchery.LabelServiceNodeRunName],
+						JobName:      cnt.Labels[hatchery.LabelServiceJobName],
+						JobID:        jobIdentifiers.JobID,
+						NodeRunID:    jobIdentifiers.NodeRunID,
+					},
+				}
+
+				logsSplitted := strings.Split(string(logs), "\n")
+				for i := range logsSplitted {
+					if i == len(logsSplitted)-1 && logsSplitted[i] == "" {
+						break
+					}
+					msg := commonMessage
+					msg.Signature.Timestamp = time.Now().UnixNano()
+					msg.Value = logsSplitted[i]
+					servicesLogs = append(servicesLogs, msg)
+				}
 			}
 			logsReader.Close()
 		}

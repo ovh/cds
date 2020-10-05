@@ -10,6 +10,7 @@ import (
 	"net/http/pprof"
 	"os"
 	"path/filepath"
+	"sync"
 	"time"
 
 	"github.com/gorilla/mux"
@@ -28,7 +29,9 @@ import (
 
 type Common struct {
 	service.Common
-	Router *api.Router
+	Router                        *api.Router
+	mapServiceNextLineNumberMutex sync.Mutex
+	mapServiceNextLineNumber      map[string]int64
 }
 
 const panicDumpDir = "panic_dumps"
@@ -239,33 +242,53 @@ func (c *Common) RefreshServiceLogger(ctx context.Context) error {
 	return nil
 }
 
-func (c *Common) SendServiceLog(ctx context.Context, servicesLogs []sdk.ServiceLog, status string) {
-	for _, s := range servicesLogs {
-		dataToSign := log.Signature{
-			Service: &log.SignatureService{
-				HatcheryID:      c.Service().ID,
-				HatcheryName:    c.ServiceName(),
-				RequirementID:   s.ServiceRequirementID,
-				RequirementName: s.ServiceRequirementName,
-				WorkerName:      s.WorkerName,
-			},
-			ProjectKey:   s.ProjectKey,
-			WorkflowName: s.WorkflowName,
-			WorkflowID:   s.WorkflowID,
-			RunID:        s.RunID,
-			NodeRunName:  s.NodeRunName,
-			JobName:      s.JobName,
-			JobID:        s.WorkflowNodeJobRunID,
-			NodeRunID:    s.WorkflowNodeRunID,
-			Timestamp:    time.Now().UnixNano(),
+func (c *Common) SendServiceLog(ctx context.Context, servicesLogs []log.Message, status string) {
+	if c.ServiceLogger == nil {
+		return
+	}
+
+	c.mapServiceNextLineNumberMutex.Lock()
+	defer c.mapServiceNextLineNumberMutex.Unlock()
+	if c.mapServiceNextLineNumber == nil {
+		c.mapServiceNextLineNumber = make(map[string]int64)
+	}
+
+	// Clean old service values from mapServiceNextLineNumber and add new counters
+	mListServiceToPreserve := make(map[string]struct{}, len(servicesLogs))
+	for i := range servicesLogs {
+		mListServiceToPreserve[servicesLogs[i].ServiceKey()] = struct{}{}
+	}
+	listServiceToRemove := make([]string, 0, len(c.mapServiceNextLineNumber))
+	for k := range c.mapServiceNextLineNumber {
+		if _, ok := mListServiceToPreserve[k]; !ok {
+			listServiceToRemove = append(listServiceToRemove, k)
 		}
-		signature, err := jws.Sign(c.Signer, dataToSign)
+	}
+	for i := range listServiceToRemove {
+		delete(c.mapServiceNextLineNumber, listServiceToRemove[i])
+	}
+	for k := range mListServiceToPreserve {
+		if _, ok := c.mapServiceNextLineNumber[k]; !ok {
+			c.mapServiceNextLineNumber[k] = 0
+		}
+	}
+
+	// Iterate over service log and send value
+	for _, s := range servicesLogs {
+		sign, err := jws.Sign(c.Signer, s.Signature)
 		if err != nil {
-			log.Error(ctx, "SendServiceLog> unable to sign service log message: %v", err)
+			err = sdk.WrapError(err, "unable to sign service log message")
+			log.ErrorWithFields(ctx, logrus.Fields{"stack_trace": fmt.Sprintf("%+v", err)}, "%s", err)
 			continue
 		}
+		lineNumber := c.mapServiceNextLineNumber[s.ServiceKey()]
+		c.mapServiceNextLineNumber[s.ServiceKey()]++
 		if c.ServiceLogger != nil {
-			c.ServiceLogger.WithField("Signature", signature).WithField(log.ExtraFieldJobStatus, status).Log(logrus.InfoLevel, s.Val)
+			c.ServiceLogger.
+				WithField(log.ExtraFieldSignature, sign).
+				WithField(log.ExtraFieldLine, lineNumber).
+				WithField(log.ExtraFieldJobStatus, status).
+				Log(s.Level, s.Value)
 		}
 	}
 }
