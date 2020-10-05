@@ -45,6 +45,8 @@ TEST_REDIS_HOST = $(if ${CDS_CACHE_REDIS_HOST},${CDS_CACHE_REDIS_HOST},localhost
 TEST_REDIS_PASS = $(if ${CDS_CACHE_REDIS_PASS},${CDS_CACHE_REDIS_PASS},)
 TEST_REDIS_START_DOCKER = docker run -d -p $(TEST_REDIS_PORT):6379 --name redis-cds redis
 
+TEST_KAFKA_START_DOCKER = docker run -d -p 2181:2181 -p 9092:9092 --env ADVERTISED_HOST=`hostname` --env ADVERTISED_PORT=9092 --name kafka-cds spotify/kafka
+
 TEST_CMD = go test -tags skipkeychaintests -v -timeout 600s -coverprofile=profile.coverprofile
 
 $(TARGET_DIR):
@@ -103,6 +105,9 @@ build_all_engine: $(TARGET_ENGINE_BINARIES)
 
 test-redis-start-docker:
 	$(TEST_REDIS_START_DOCKER)
+
+test-kafka-start-docker:
+	$(TEST_KAFKA_START_DOCKER)
 
 test-db-stop-docker:
 	$(TEST_DB_STOP_DOCKER)

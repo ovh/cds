@@ -14,7 +14,6 @@ import (
 	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
-	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/engine/service"
@@ -135,18 +134,10 @@ func (api *API) repositoriesManagerOAuthCallbackHandler() service.Handler {
 		consumerID := data["consumer_id"]
 
 		authConsumer, err := authentication.LoadConsumerByID(ctx, api.mustDB(), consumerID,
-			authentication.LoadConsumerOptions.WithAuthentifiedUser,
-			authentication.LoadConsumerOptions.WithConsumerGroups)
+			authentication.LoadConsumerOptions.WithAuthentifiedUser)
 		if err != nil {
 			return sdk.WrapError(sdk.ErrForbidden, "repositoriesManagerAuthorizeCallback> Error")
 		}
-
-		// Add service for consumer if exists
-		s, err := services.LoadByConsumerID(context.Background(), api.mustDB(), authConsumer.ID)
-		if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
-			return sdk.WrapError(sdk.ErrForbidden, "repositoriesManagerAuthorizeCallback> Error")
-		}
-		authConsumer.Service = s
 
 		proj, errP := project.Load(ctx, api.mustDB(), projectKey)
 		if errP != nil {
