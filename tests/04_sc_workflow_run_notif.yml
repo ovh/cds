@@ -69,7 +69,7 @@ testcases:
     delay: 3
     vars:
       verify: 
-        from: result.bodyjson.content-decoded
+        from: result.bodyjson.contentdecoded
         regex: logcontent:foo2
 
 - name: run workflow 04SCWorkflowRunNotif-WORKFLOW-EMPTY

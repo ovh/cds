@@ -46,7 +46,7 @@ testcases:
     delay: 3
     vars:
       verify: 
-        from: result.bodyjson.content-decoded
+        from: result.bodyjson.contentdecoded
         regex: cdsctl signup verify --api-url (?:.*) (.*)
 
 
