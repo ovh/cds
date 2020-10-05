@@ -133,7 +133,10 @@ func SendEmail(ctx context.Context, subject string, mailContent *bytes.Buffer, u
 		return nil
 	}
 	servername := fmt.Sprintf("%s:%s", smtpHost, smtpPort)
-	auth := smtp.PlainAuth("", smtpUser, smtpPassword, smtpHost)
+	var auth smtp.Auth
+	if smtpUser != "" && smtpPassword != "" {
+		auth = smtp.PlainAuth("", smtpUser, smtpPassword, smtpHost)
+	}
 	var err error
 	if smtpTLS {
 		tlsconfig := &tls.Config{
