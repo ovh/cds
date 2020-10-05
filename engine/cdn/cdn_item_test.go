@@ -131,7 +131,7 @@ func TestGetItemValue(t *testing.T) {
 	require.Equal(t, 0, n)
 
 	// Sync FS
-	require.NoError(t, cdnUnits.Run(context.TODO(), cdnUnits.Storages[0]))
+	require.NoError(t, cdnUnits.Run(context.TODO(), cdnUnits.Storages[0], 100))
 
 	_, err = storage.LoadItemUnitByUnit(context.TODO(), s.Mapper, db, s.Units.Storages[0].ID(), it.ID)
 	require.NoError(t, err)

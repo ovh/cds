@@ -267,7 +267,7 @@ func CountItemUnitByUnit(db gorp.SqlExecutor, unitID string) (int64, error) {
 	return db.SelectInt("SELECT COUNT(*) from storage_unit_item WHERE unit_id = $1", unitID)
 }
 
-func LoadAllItemIDUnknownByUnitOrderByUnitID(db gorp.SqlExecutor, unitID string, orderUnitID string, limit int) ([]string, error) {
+func LoadAllItemIDUnknownByUnitOrderByUnitID(db gorp.SqlExecutor, unitID string, orderUnitID string, limit int64) ([]string, error) {
 	query := `
 	WITH filteredItem as (
 			SELECT item.id, sui.unit_id
@@ -287,4 +287,19 @@ func LoadAllItemIDUnknownByUnitOrderByUnitID(db gorp.SqlExecutor, unitID string,
 	}
 
 	return res, nil
+}
+
+type Stat struct {
+	StorageName string `db:"storage_name"`
+	Type        string `db:"type"`
+	Number      int64  `db:"number"`
+}
+
+func CountItems(db gorp.SqlExecutor) (res []Stat, err error) {
+	_, err = db.Select(&res, `select storage_unit.name as "storage_name", item.type, count(storage_unit_item.id) as "number" 
+	from storage_unit_item 
+	join item on item.id = storage_unit_item.item_id
+	join storage_unit on storage_unit.id = storage_unit_item.unit_id
+	group by storage_unit.name, item.type`)
+	return res, sdk.WithStack(err)
 }

@@ -11,21 +11,6 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-func InitMetricsInt64(ctx context.Context, metrics ...*stats.Int64Measure) error {
-	tagServiceType := MustNewKey(TagServiceType)
-	tagServiceName := MustNewKey(TagServiceName)
-
-	for i := range metrics {
-		err := RegisterView(ctx,
-			NewViewCount(metrics[i].Name(), metrics[i], []tag.Key{tagServiceType, tagServiceName}),
-		)
-		if err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
 // RegisterView begins collecting data for the given views
 func RegisterView(ctx context.Context, views ...*view.View) error {
 	e := StatsExporter(ctx)
