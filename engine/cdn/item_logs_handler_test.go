@@ -117,9 +117,7 @@ func TestGetItemLogsDownloadHandler(t *testing.T) {
 	gock.InterceptClient(s.Client.(cdsclient.Raw).HTTPClient())
 	gock.New("http://lolcat.api").Get("/project/" + projectKey + "/workflows/MyWorkflow/log/access").Reply(http.StatusOK).JSON(nil)
 
-	cdnUnits := newRunningStorageUnits(t, s.Mapper, s.mustDBWithCtx(context.TODO()))
-
-	s.Units = cdnUnits
+	s.Units = newRunningStorageUnits(t, s.Mapper, s.mustDBWithCtx(context.TODO()))
 
 	hm := handledMessage{
 		Msg: hook.Message{
@@ -202,9 +200,7 @@ func TestGetItemLogsLinesHandler(t *testing.T) {
 	gock.InterceptClient(s.Client.(cdsclient.Raw).HTTPClient())
 	gock.New("http://lolcat.api").Get("/project/" + projectKey + "/workflows/MyWorkflow/log/access").Reply(http.StatusOK).JSON(nil)
 
-	cdnUnits := newRunningStorageUnits(t, s.Mapper, s.mustDBWithCtx(context.TODO()))
-
-	s.Units = cdnUnits
+	s.Units = newRunningStorageUnits(t, s.Mapper, s.mustDBWithCtx(context.TODO()))
 
 	hm := handledMessage{
 		Msg: hook.Message{
@@ -282,8 +278,6 @@ func TestGetItemLogsLinesHandler(t *testing.T) {
 }
 
 func TestGetItemLogsStreamHandler(t *testing.T) {
-	cfg := test.LoadTestingConf(t, sdk.TypeCDN)
-
 	projectKey := sdk.RandomString(10)
 
 	// Create cdn service with need storage and test item
@@ -295,17 +289,7 @@ func TestGetItemLogsStreamHandler(t *testing.T) {
 	gock.InterceptClient(s.Client.(cdsclient.Raw).HTTPClient())
 	gock.New("http://lolcat.api").Get("/project/" + projectKey + "/workflows/MyWorkflow/log/access").Reply(http.StatusOK).JSON(nil)
 
-	cdnUnits, err := storage.Init(context.TODO(), s.Mapper, db.DbMap, sdk.NewGoRoutines(), storage.Configuration{
-		Buffer: storage.BufferConfiguration{
-			Name: "redis_buffer",
-			Redis: storage.RedisBufferConfiguration{
-				Host:     cfg["redisHost"],
-				Password: cfg["redisPassword"],
-			},
-		},
-	})
-	require.NoError(t, err)
-	s.Units = cdnUnits
+	s.Units = newRunningStorageUnits(t, s.Mapper, db.DbMap)
 
 	signature := log.Signature{
 		ProjectKey:   projectKey,
@@ -470,5 +454,4 @@ func TestGetItemLogsStreamHandler(t *testing.T) {
 	require.Equal(t, int64(15), lines[0].Number)
 	require.Equal(t, "[EMERGENCY] message 19\n", lines[4].Value)
 	require.Equal(t, int64(19), lines[4].Number)
-
 }
