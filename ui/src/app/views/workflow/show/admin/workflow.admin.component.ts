@@ -10,7 +10,7 @@ import {
 import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
-import { ModalTemplate, SuiActiveModal, SuiModalService, SuiPopup, TemplateModalConfig } from '@richardlt/ng2-semantic-ui';
+import { ModalTemplate, SuiActiveModal, SuiModalService, TemplateModalConfig } from '@richardlt/ng2-semantic-ui';
 import { Project } from 'app/model/project.model';
 import { PurgeRunToDelete } from 'app/model/purge.model';
 import { Workflow } from 'app/model/workflow.model';
@@ -73,6 +73,7 @@ export class WorkflowAdminComponent implements OnInit, OnDestroy {
     themeSubscription: Subscription;
 
 
+    availableVariables: String;
     dryRunColumns = [];
     dryRunDatas: Array<PurgeRunToDelete>;
     @ViewChild('modalDryRun') dryRunModal: ModalTemplate<boolean, boolean, void>;
@@ -172,6 +173,11 @@ export class WorkflowAdminComponent implements OnInit, OnDestroy {
                 this.originalRunNumber = n.num;
                 this.runnumber = n.num;
             });
+
+        this._workflowService.retentionPolicySuggestion(this.workflow).subscribe(sg => {
+            this.availableVariables = sg.join(', ');
+            this._cd.markForCheck();
+        });
 
         let featResult = this.store.selectSnapshot(FeatureState.featureProject('workflow-retention-policy',
             JSON.stringify({ 'project_key': this.project.key })))

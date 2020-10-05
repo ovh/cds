@@ -85,7 +85,10 @@
                     </div>
                 </div>
                 <div class="field" *ngIf="workflowRetentionPolicyEnabled">
-                    <label>{{ 'workflow_retention_policy' | translate }}</label>
+                    <label>
+                        {{ 'workflow_retention_policy' | translate }}
+                        <i class="circle outline question icon" suiPopup [popupText]="'workflow_retention_variables' | translate: {vars: availableVariables}"></i>
+                    </label>
                     <codemirror name="policy" [(ngModel)]="workflow.retention_policy" [config]="codeMirrorConfig" #codemirrorRetentionPolicy></codemirror>
                 </div>
                 <div class="field" *ngIf="workflowRetentionPolicyEnabled">

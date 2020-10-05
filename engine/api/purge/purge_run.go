@@ -26,12 +26,13 @@ type MarkAsDeleteOptions struct {
 }
 
 const (
-	RunStatus     = "run_status"
-	RunDateBefore = "run_date_before"
+	RunStatus         = "run_status"
+	RunDateBefore     = "run_date_before"
+	RunGitBranchExist = "git_branch_exist"
 )
 
 func GetRetetionPolicyVariables() []string {
-	return []string{RunDateBefore, RunStatus}
+	return []string{RunDateBefore, RunStatus, RunGitBranchExist}
 }
 
 func markWorkflowRunsToDelete(ctx context.Context, store cache.Store, db *gorp.DbMap, workflowRunsMarkToDelete *stats.Int64Measure) error {
@@ -158,7 +159,7 @@ func purgeComputeVariables(luaCheck *luascript.Check, run sdk.WorkflowRun, branc
 	// If we have a branch in payload, check if it exists on repository branches list
 	if b, has := vars["git.branch"]; has {
 		_, exist := branchesMap[b]
-		vars["git.branch.exist"] = strconv.FormatBool(exist)
+		vars[RunGitBranchExist] = strconv.FormatBool(exist)
 	}
 	vars[RunStatus] = run.Status
 

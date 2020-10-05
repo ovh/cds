@@ -86,8 +86,7 @@ export class WorkflowService {
     }
 
     retentionPolicySuggestion(workflow: Workflow) {
-        return this._http.post<Array<String>>(`/project/${workflow.project_key}/workflows/${workflow.name}/retention/suggest`,
-            { retention_policy: workflow.retention_policy});
+        return this._http.get<Array<String>>(`/project/${workflow.project_key}/workflows/${workflow.name}/retention/suggest`);
     }
 
 
