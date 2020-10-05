@@ -47,8 +47,7 @@ func newTestService(t *testing.T) (*Service, *test.FakeTransaction) {
 	t.Cleanup(end)
 
 	router := newRouter(mux.NewRouter(), "/"+test.GetTestName(t))
-	var cancel context.CancelFunc
-	router.Background, cancel = context.WithCancel(context.Background())
+	ctx, cancel := context.WithCancel(context.Background())
 	s := &Service{
 		Router:              router,
 		DBConnectionFactory: factory,
@@ -60,7 +59,7 @@ func newTestService(t *testing.T) (*Service, *test.FakeTransaction) {
 		fakeAPIPrivateKey.key, _ = jws.NewRandomRSAKey()
 	}
 	s.ParsedAPIPublicKey = &fakeAPIPrivateKey.key.PublicKey
-	s.initRouter(context.TODO())
+	s.initRouter(ctx)
 
 	t.Cleanup(func() { cancel() })
 	return s, db

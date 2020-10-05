@@ -43,9 +43,10 @@ func (c *client) RequestWebsocket(ctx context.Context, goRoutines *sdk.GoRoutine
 		return sdk.WrapError(err, "wrong Host configuration")
 	}
 	urlWebsocket := url.URL{
-		Scheme: strings.Replace(uHost.Scheme, "http", "ws", -1),
-		Host:   uHost.Host,
-		Path:   uHost.Path,
+		Scheme:   strings.Replace(uHost.Scheme, "http", "ws", -1),
+		Host:     uHost.Host,
+		Path:     uHost.Path,
+		RawQuery: uHost.RawQuery,
 	}
 
 	headers := make(map[string][]string)
