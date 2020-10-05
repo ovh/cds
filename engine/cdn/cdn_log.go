@@ -24,7 +24,7 @@ import (
 )
 
 var (
-	logCache                   = gocache.New(20*time.Minute, 30*time.Minute)
+	logCache                   = gocache.New(20*time.Minute, 20*time.Minute)
 	keyJobLogIncomingQueue     = cache.Key("cdn", "log", "incoming", "job")
 	keyServiceLogIncomingQueue = cache.Key("cdn", "log", "incoming", "service")
 )
@@ -74,12 +74,12 @@ func (s *Service) runTCPLogServer(ctx context.Context) {
 		for {
 			conn, err := listener.Accept()
 			if err != nil {
-				telemetry.Record(ctx, metricsErrors, 1)
+				telemetry.Record(ctx, s.Metrics.tcpServerErrorsCount, 1)
 				log.Error(ctx, "unable to accept connection: %v", err)
 				return
 			}
 			s.GoRoutines.Exec(ctx, "cdn-logServer", func(ctx context.Context) {
-				telemetry.Record(ctx, metricsHits, 1)
+				telemetry.Record(ctx, s.Metrics.tcpServerHitsCount, 1)
 				s.handleConnection(ctx, conn)
 			})
 		}
@@ -102,7 +102,7 @@ func (s *Service) handleConnection(ctx context.Context, conn net.Conn) {
 		bytes = bytes[:len(bytes)-1]
 
 		if err := s.handleLogMessage(ctx, bytes); err != nil {
-			telemetry.Record(ctx, metricsErrors, 1)
+			telemetry.Record(ctx, s.Metrics.tcpServerErrorsCount, 1)
 			isErrWithStack := sdk.IsErrorWithStack(err)
 			fields := logrus.Fields{}
 			if isErrWithStack {
@@ -134,10 +134,10 @@ func (s *Service) handleLogMessage(ctx context.Context, messageReceived []byte) 
 
 	switch {
 	case signature.Worker != nil:
-		telemetry.Record(ctx, metricsStepLogReceived, 1)
+		telemetry.Record(ctx, s.Metrics.tcpServerStepLogCount, 1)
 		return s.handleWorkerLog(ctx, signature.Worker.WorkerName, signature.Worker.WorkerID, sig, m)
 	case signature.Service != nil:
-		telemetry.Record(ctx, metricsServiceLogReceived, 1)
+		telemetry.Record(ctx, s.Metrics.tcpServerServiceLogCount, 1)
 		return s.handleServiceLog(ctx, signature.Service.HatcheryID, signature.Service.HatcheryName, signature.Service.WorkerName, sig, m)
 	default:
 		return sdk.WithStack(sdk.ErrWrongRequest)
@@ -155,7 +155,7 @@ func (s *Service) handleWorkerLog(ctx context.Context, workerName string, worker
 
 	// Verify Signature
 	if err := jws.Verify(workerData.PrivateKey, sig.(string), &signature); err != nil {
-		return err
+		return sdk.WrapError(err, "worker key: %d", len(workerData.PrivateKey))
 	}
 	if workerData.JobRunID == nil || *workerData.JobRunID != signature.JobID || workerData.ID != workerID {
 		return sdk.WithStack(sdk.ErrForbidden)

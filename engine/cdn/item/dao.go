@@ -194,3 +194,14 @@ func ComputeSizeByProjectKey(db gorp.SqlExecutor, projectKey string) (int64, err
 	}
 	return size, nil
 }
+
+type Stat struct {
+	Status string `db:"status"`
+	Type   string `db:"type"`
+	Number int64  `db:"number"`
+}
+
+func CountItems(db gorp.SqlExecutor) (res []Stat, err error) {
+	_, err = db.Select(&res, `select status, type, count(id) as "number" from item group by status, type`)
+	return res, sdk.WithStack(err)
+}

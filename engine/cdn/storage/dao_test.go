@@ -2,11 +2,12 @@ package storage_test
 
 import (
 	"context"
-	"github.com/ovh/symmecrypt/ciphers/aesgcm"
-	"github.com/ovh/symmecrypt/convergent"
 	"io/ioutil"
 	"testing"
 	"time"
+
+	"github.com/ovh/symmecrypt/ciphers/aesgcm"
+	"github.com/ovh/symmecrypt/convergent"
 
 	"github.com/ovh/cds/engine/cdn/storage"
 
@@ -27,6 +28,7 @@ func TestLoadOldItemUnitByItemStatusAndDuration(t *testing.T) {
 	cfg := test.LoadTestingConf(t, sdk.TypeCDN)
 
 	cdntest.ClearItem(t, context.TODO(), m, db)
+	tmpDir, err := ioutil.TempDir("", t.Name()+"-cdn-1-*")
 
 	cdnUnits, err := storage.Init(context.TODO(), m, db.DbMap, sdk.NewGoRoutines(), storage.Configuration{
 		Buffer: storage.BufferConfiguration{
@@ -36,7 +38,17 @@ func TestLoadOldItemUnitByItemStatusAndDuration(t *testing.T) {
 				Password: cfg["redisPassword"],
 			},
 		},
+		Storages: []storage.StorageConfiguration{
+			{
+				Name: "local_storage",
+				Cron: "* * * * * ?",
+				Local: &storage.LocalStorageConfiguration{
+					Path: tmpDir,
+				},
+			},
+		},
 	})
+	require.NoError(t, err)
 
 	// Clean old test
 	time.Sleep(1 * time.Second)

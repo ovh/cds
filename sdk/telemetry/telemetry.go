@@ -114,6 +114,9 @@ const (
 	TagPipelineDeep       = "pipeline_deep"
 	TagWorker             = "worker"
 	TagPermission         = "permission"
+	TagStorage            = "storage"
+	TagType               = "type"
+	TagStatus             = "status"
 )
 
 func ContextWithTag(ctx context.Context, s ...interface{}) context.Context {

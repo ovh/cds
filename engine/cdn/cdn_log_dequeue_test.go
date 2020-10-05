@@ -32,8 +32,6 @@ func TestStoreNewStepLog(t *testing.T) {
 	db, factory, cache, cancel := test.SetupPGToCancel(t, m, sdk.TypeCDN)
 	t.Cleanup(cancel)
 
-	cfg := test.LoadTestingConf(t, sdk.TypeCDN)
-
 	cdntest.ClearItem(t, context.TODO(), m, db)
 
 	// Create cdn service
@@ -43,16 +41,7 @@ func TestStoreNewStepLog(t *testing.T) {
 		Mapper:              m,
 	}
 
-	cdnUnits, err := storage.Init(context.TODO(), m, db.DbMap, sdk.NewGoRoutines(), storage.Configuration{
-		Buffer: storage.BufferConfiguration{
-			Name: "redis_buffer",
-			Redis: storage.RedisBufferConfiguration{
-				Host:     cfg["redisHost"],
-				Password: cfg["redisPassword"],
-			},
-		},
-	})
-	require.NoError(t, err)
+	cdnUnits := newRunningStorageUnits(t, m, db.DbMap)
 	s.Units = cdnUnits
 
 	hm := handledMessage{
@@ -125,8 +114,6 @@ func TestStoreLastStepLog(t *testing.T) {
 	db, factory, cache, cancel := test.SetupPGToCancel(t, m, sdk.TypeCDN)
 	t.Cleanup(cancel)
 
-	cfg := test.LoadTestingConf(t, sdk.TypeCDN)
-
 	cdntest.ClearItem(t, context.TODO(), m, db)
 
 	// Create cdn service
@@ -136,16 +123,7 @@ func TestStoreLastStepLog(t *testing.T) {
 		Mapper:              m,
 	}
 
-	cdnUnits, err := storage.Init(context.TODO(), m, db.DbMap, sdk.NewGoRoutines(), storage.Configuration{
-		Buffer: storage.BufferConfiguration{
-			Name: "redis_buffer",
-			Redis: storage.RedisBufferConfiguration{
-				Host:     cfg["redisHost"],
-				Password: cfg["redisPassword"],
-			},
-		},
-	})
-	require.NoError(t, err)
+	cdnUnits := newRunningStorageUnits(t, m, db.DbMap)
 	s.Units = cdnUnits
 
 	hm := handledMessage{
@@ -223,8 +201,6 @@ func TestStoreLogWrongOrder(t *testing.T) {
 	db, factory, cache, cancel := test.SetupPGToCancel(t, m, sdk.TypeCDN)
 	t.Cleanup(cancel)
 
-	cfg := test.LoadTestingConf(t, sdk.TypeCDN)
-
 	cdntest.ClearItem(t, context.TODO(), m, db)
 
 	// Create cdn service
@@ -234,16 +210,8 @@ func TestStoreLogWrongOrder(t *testing.T) {
 		Mapper:              m,
 	}
 
-	cdnUnits, err := storage.Init(context.TODO(), m, db.DbMap, sdk.NewGoRoutines(), storage.Configuration{
-		Buffer: storage.BufferConfiguration{
-			Name: "redis_buffer",
-			Redis: storage.RedisBufferConfiguration{
-				Host:     cfg["redisHost"],
-				Password: cfg["redisPassword"],
-			},
-		},
-	})
-	require.NoError(t, err)
+	cdnUnits := newRunningStorageUnits(t, m, db.DbMap)
+
 	s.Units = cdnUnits
 
 	hm := handledMessage{
@@ -351,8 +319,6 @@ func TestStoreNewServiceLog(t *testing.T) {
 	db, factory, cache, cancel := test.SetupPGToCancel(t, m, sdk.TypeCDN)
 	t.Cleanup(cancel)
 
-	cfg := test.LoadTestingConf(t, sdk.TypeCDN)
-
 	cdntest.ClearItem(t, context.TODO(), m, db)
 
 	// Create cdn service
@@ -362,16 +328,7 @@ func TestStoreNewServiceLog(t *testing.T) {
 		Mapper:              m,
 	}
 
-	cdnUnits, err := storage.Init(context.TODO(), m, db.DbMap, sdk.NewGoRoutines(), storage.Configuration{
-		Buffer: storage.BufferConfiguration{
-			Name: "redis_buffer",
-			Redis: storage.RedisBufferConfiguration{
-				Host:     cfg["redisHost"],
-				Password: cfg["redisPassword"],
-			},
-		},
-	})
-	require.NoError(t, err)
+	cdnUnits := newRunningStorageUnits(t, m, db.DbMap)
 	s.Units = cdnUnits
 
 	hm := handledMessage{

@@ -18,6 +18,7 @@ import (
 	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
+	"github.com/ovh/cds/sdk/telemetry"
 )
 
 var (
@@ -234,6 +235,9 @@ func (s *Service) completeItem(ctx context.Context, tx gorpmapper.SqlExecutorWit
 	if err := item.Update(ctx, s.Mapper, tx, it); err != nil {
 		return err
 	}
+
+	ctxItem := telemetry.ContextWithTag(ctx, telemetry.TagType, string(it.Type))
+	telemetry.RecordFloat64(ctxItem, s.Metrics.ItemSize, float64(it.Size)/1024)
 
 	return nil
 }

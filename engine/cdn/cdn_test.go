@@ -5,10 +5,12 @@ import (
 	"context"
 	"crypto/rsa"
 	"encoding/json"
+	"io/ioutil"
 	"net/http"
 	"sync"
 	"testing"
 
+	"github.com/go-gorp/gorp"
 	"github.com/gorilla/mux"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/spacemonkeygo/httpsig.v0"
@@ -98,3 +100,29 @@ var fakeAPIPrivateKey = struct {
 	sync.Mutex
 	key *rsa.PrivateKey
 }{}
+
+func newRunningStorageUnits(t *testing.T, m *gorpmapper.Mapper, dbMap *gorp.DbMap) *storage.RunningStorageUnits {
+	cfg := test.LoadTestingConf(t, sdk.TypeCDN)
+	tmpDir, err := ioutil.TempDir("", t.Name()+"-cdn-1-*")
+	require.NoError(t, err)
+	cdnUnits, err := storage.Init(context.TODO(), m, dbMap, sdk.NewGoRoutines(), storage.Configuration{
+		Buffer: storage.BufferConfiguration{
+			Name: "redis_buffer",
+			Redis: storage.RedisBufferConfiguration{
+				Host:     cfg["redisHost"],
+				Password: cfg["redisPassword"],
+			},
+		},
+		Storages: []storage.StorageConfiguration{
+			{
+				Name: "local_storage",
+				Cron: "* * * * * ?",
+				Local: &storage.LocalStorageConfiguration{
+					Path: tmpDir,
+				},
+			},
+		},
+	})
+	require.NoError(t, err)
+	return cdnUnits
+}
