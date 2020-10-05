@@ -9,14 +9,12 @@ import (
 
 	"github.com/go-gorp/gorp"
 	"github.com/studio-b12/gowebdav"
-	"go.opencensus.io/stats"
 
 	"github.com/ovh/cds/engine/cdn/storage"
 	"github.com/ovh/cds/engine/cdn/storage/encryption"
 	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
-	"github.com/ovh/cds/sdk/telemetry"
 )
 
 type Webdav struct {
@@ -27,16 +25,14 @@ type Webdav struct {
 }
 
 var (
-	_              storage.StorageUnit = new(Webdav)
-	metricsReaders                     = stats.Int64("cdn/storage/webdav/readers", "nb readers", stats.UnitDimensionless)
-	metricsWriters                     = stats.Int64("cdn/storage/webdav/writers", "nb writers", stats.UnitDimensionless)
+	_ storage.StorageUnit = new(Webdav)
 )
 
 func init() {
 	storage.RegisterDriver("webdav", new(Webdav))
 }
 
-func (s *Webdav) Init(ctx context.Context, _ *sdk.GoRoutines, cfg interface{}) error {
+func (s *Webdav) Init(ctx context.Context, cfg interface{}) error {
 	config, is := cfg.(*storage.WebdavStorageConfiguration)
 	if !is {
 		return sdk.WithStack(fmt.Errorf("invalid configuration: %T", cfg))
@@ -45,10 +41,6 @@ func (s *Webdav) Init(ctx context.Context, _ *sdk.GoRoutines, cfg interface{}) e
 	s.ConvergentEncryption = encryption.New(config.Encryption)
 	s.client = gowebdav.NewClient(config.Address, config.Username, config.Password)
 	if err := s.client.Connect(); err != nil {
-		return err
-	}
-
-	if err := telemetry.InitMetricsInt64(ctx, metricsReaders, metricsWriters); err != nil {
 		return err
 	}
 
