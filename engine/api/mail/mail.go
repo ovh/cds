@@ -27,7 +27,7 @@ To verify your email address, follow this link:
 
 If you are using the command line, you can run:
 
-$ cdsctl signup verify --api-url {{.APIURL}} {{.Token}}
+$ cdsctl signup verify --api-url {{.APIURL}} {{.Token}} 
 
 Regards,
 --
@@ -44,7 +44,7 @@ Follow this link to set a new password on your account:
 
 If you are using the command line, you can run:
 
-$ cdsctl reset-password confirm --api-url {{.APIURL}} {{.Token}}
+$ cdsctl reset-password confirm --api-url {{.APIURL}} {{.Token}} 
 
 Regards,
 --
