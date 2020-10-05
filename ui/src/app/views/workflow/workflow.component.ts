@@ -12,12 +12,14 @@ import { Select, Store } from '@ngxs/store';
 import { SuiPopup } from '@richardlt/ng2-semantic-ui';
 import { Project } from 'app/model/project.model';
 import { Workflow } from 'app/model/workflow.model';
+import { FeatureService } from 'app/service/feature/feature.service';
 import { WorkflowCoreService } from 'app/service/workflow/workflow.core.service';
 import { WorkflowSidebarMode } from 'app/service/workflow/workflow.sidebar.store';
 import { AsCodeSaveModalComponent } from 'app/shared/ascode/save-modal/ascode.save-modal.component';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { ToastService } from 'app/shared/toast/ToastService';
 import { WorkflowTemplateApplyModalComponent } from 'app/shared/workflow-template/apply-modal/workflow-template.apply-modal.component';
+import { AddFeatureResult, FeaturePayload } from 'app/store/feature.action';
 import { ProjectState, ProjectStateModel } from 'app/store/project.state';
 import {
     CleanWorkflowRun,
@@ -86,8 +88,9 @@ export class WorkflowComponent implements OnInit, OnDestroy {
         private _toast: ToastService,
         private _translate: TranslateService,
         private _store: Store,
-        private _cd: ChangeDetectorRef
-    ) { }
+        private _cd: ChangeDetectorRef,
+        private _featureService: FeatureService
+    ) {}
 
     ngOnDestroy(): void {} // Should be set to use @AutoUnsubscribe with AOT
 
@@ -100,7 +103,16 @@ export class WorkflowComponent implements OnInit, OnDestroy {
                 }
                 this._cd.detectChanges();
             });
-
+        let data = { 'project_key': this.project.key }
+        this._featureService.isEnabled('workflow-retention-policy', data).subscribe(f => {
+            this._store.dispatch(new AddFeatureResult(<FeaturePayload>{
+                key: f.name,
+                result: {
+                    paramString: JSON.stringify(data),
+                    enabled: f.enabled
+                }
+            }));
+        });
         this.sidebarSubs = this.sibebar$.subscribe(m => {
             if (m === this.sidebarMode) {
                 return;

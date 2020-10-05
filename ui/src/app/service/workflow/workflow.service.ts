@@ -2,6 +2,7 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Operation } from 'app/model/operation.model';
 import { BuildResult, CDNLogAccess, ServiceLog, SpawnInfo } from 'app/model/pipeline.model';
+import { PurgeRunToDelete } from 'app/model/purge.model';
 import { Workflow, WorkflowPull, WorkflowTriggerConditionCache } from 'app/model/workflow.model';
 import { Observable } from 'rxjs';
 
@@ -78,4 +79,16 @@ export class WorkflowService {
         nodeRunID: number, nodeJobRunID: number): Observable<Array<SpawnInfo>> {
         return this._http.get<Array<SpawnInfo>>(`/project/${projectKey}/workflows/${workflowName}/runs/${runNumber}/nodes/${nodeRunID}/job/${nodeJobRunID}/info`);
     }
+
+    retentionPolicyDryRun(workflow: Workflow): Observable<Array<PurgeRunToDelete>> {
+        return this._http.post<Array<PurgeRunToDelete>>(`/project/${workflow.project_key}/workflows/${workflow.name}/retention/dryrun`,
+            { retention_policy: workflow.retention_policy});
+    }
+
+    retentionPolicySuggestion(workflow: Workflow) {
+        return this._http.post<Array<String>>(`/project/${workflow.project_key}/workflows/${workflow.name}/retention/suggest`,
+            { retention_policy: workflow.retention_policy});
+    }
+
+
 }

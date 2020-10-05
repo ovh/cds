@@ -1061,33 +1061,3 @@ func stopRunsBlocked(ctx context.Context, db *gorp.DbMap) error {
 	}
 	return nil
 }
-
-func PurgeWorkflowRuns(ctx context.Context, db *gorp.DbMap, workflowRunsMarkToDelete *stats.Int64Measure) error {
-	dao := new(WorkflowDAO)
-	dao.Filters.DisableFilterDeletedWorkflow = false
-	wfs, err := dao.LoadAll(ctx, db)
-	if err != nil {
-		return err
-	}
-	for _, wf := range wfs {
-		tx, err := db.Begin()
-		defer tx.Rollback() // nolint
-		if err != nil {
-			log.Error(ctx, "workflow.PurgeWorkflowRuns> error %v", err)
-			tx.Rollback() // nolint
-			continue
-		}
-		if err := PurgeWorkflowRun(ctx, tx, wf); err != nil {
-			log.Error(ctx, "workflow.PurgeWorkflowRuns> error %v", err)
-			tx.Rollback() // nolint
-			continue
-		}
-		if err := tx.Commit(); err != nil {
-			log.Error(ctx, "workflow.PurgeWorkflowRuns> unable to commit transaction:  %v", err)
-			continue
-		}
-	}
-
-	CountWorkflowRunsMarkToDelete(ctx, db, workflowRunsMarkToDelete)
-	return nil
-}

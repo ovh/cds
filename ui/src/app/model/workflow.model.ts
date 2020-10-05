@@ -52,6 +52,7 @@ export class Workflow {
     labels: Label[];
     workflow_data: WorkflowData;
     as_code_events: Array<AsCodeEvents>;
+    retention_policy: string;
 
     preview: Workflow;
     asCode: string;

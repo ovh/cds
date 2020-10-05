@@ -15,7 +15,6 @@ import (
 type Check struct {
 	state                    *lua.LState
 	exceptionHandlerFunction *lua.LFunction
-	variables                map[string]string
 	IsError                  bool
 	Result                   bool
 	ctx                      context.Context
@@ -71,11 +70,18 @@ func (c *Check) exceptionHandler(L *lua.LState) int {
 }
 
 func (c *Check) SetVariables(vars map[string]string) {
-	c.variables = vars
 	for k, v := range vars {
 		k = strings.Replace(k, ".", "_", -1)
 		k = strings.Replace(k, "-", "_", -1)
 		c.state.SetGlobal(k, lua.LString(v))
+	}
+}
+
+func (c *Check) SetFloatVariables(vars map[string]float64) {
+	for k, v := range vars {
+		k = strings.Replace(k, ".", "_", -1)
+		k = strings.Replace(k, "-", "_", -1)
+		c.state.SetGlobal(k, lua.LNumber(v))
 	}
 }
 

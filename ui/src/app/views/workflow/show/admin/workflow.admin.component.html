@@ -84,7 +84,32 @@
                         </div>
                     </div>
                 </div>
-                <div class="field">
+                <div class="field" *ngIf="workflowRetentionPolicyEnabled">
+                    <label>{{ 'workflow_retention_policy' | translate }}</label>
+                    <codemirror name="policy" [(ngModel)]="workflow.retention_policy" [config]="codeMirrorConfig" #codemirrorRetentionPolicy></codemirror>
+                </div>
+                <div class="field" *ngIf="workflowRetentionPolicyEnabled">
+                    <button class="ui blue button" type="button" name="dryrun"
+                            [class.loading]="loading" [disabled]="loading"
+                            (click)="retentionPolicyDryRun()">
+                        <span>{{'btn_dry_run' | translate}}</span>
+                    </button>
+                    <ng-template let-context let-modal="modal" #modalDryRun>
+                        <div class="header">{{ 'workflow_retention_policy' | translate }}</div>
+                        <div class="content">
+                            <ng-container *ngIf="!dryRunDatas || dryRunDatas.length === 0">
+                                <div class="ui info message">{{'workflow_purged_dry_run_empty' | translate }}</div>
+                            </ng-container>
+                            <ng-container *ngIf="dryRunDatas?.length > 0">
+                                <app-data-table [withFilter]="" [columns]="dryRunColumns" [data]="dryRunDatas"></app-data-table>
+                            </ng-container>
+                        </div>
+                        <div class="actions">
+                            <button class="ui green button" (click)="modal.approve('')" autofocus>{{'btn_close' | translate }}</button>
+                        </div>
+                    </ng-template>
+                </div>
+                <div class="field" *ngIf="!workflowRetentionPolicyEnabled">
                     <label>{{ 'workflow_history_length_title' | translate }}</label>
                         <div class="three wide field">
                             <input type="number" name="formWorkflowUpdateHistory"

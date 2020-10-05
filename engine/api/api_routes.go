@@ -233,6 +233,8 @@ func (api *API) InitRouter() {
 	r.Handle("/project/{permProjectKey}/workflows", Scope(sdk.AuthConsumerScopeProject), r.POST(api.postWorkflowHandler), r.GET(api.getWorkflowsHandler, AllowProvider(true)))
 	r.Handle("/project/{permProjectKey}/workflows/runs/nodes/ids", Scope(sdk.AuthConsumerScopeProject), r.GET(api.getWorkflowsRunsAndNodesIDshandler))
 	r.Handle("/project/{key}/workflows/{permWorkflowName}", Scope(sdk.AuthConsumerScopeProject), r.GET(api.getWorkflowHandler, AllowProvider(true)), r.PUT(api.putWorkflowHandler), r.DELETE(api.deleteWorkflowHandler))
+	r.Handle("/project/{key}/workflows/{permWorkflowName}/retention/dryrun", Scope(sdk.AuthConsumerScopeProject), r.POST(api.postWorkflowRetentionPolicyDryRun))
+	r.Handle("/project/{key}/workflows/{permWorkflowName}/retention/suggest", Scope(sdk.AuthConsumerScopeProject), r.GET(api.getRetentionPolicySuggestionHandler))
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/eventsintegration/{integrationID}", Scope(sdk.AuthConsumerScopeProject), r.DELETE(api.deleteWorkflowEventsIntegrationHandler))
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/icon", Scope(sdk.AuthConsumerScopeProject), r.PUT(api.putWorkflowIconHandler), r.DELETE(api.deleteWorkflowIconHandler))
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/ascode", Scope(sdk.AuthConsumerScopeProject), r.POST(api.postWorkflowAsCodeHandler))
