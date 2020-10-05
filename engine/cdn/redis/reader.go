@@ -19,10 +19,12 @@ type Reader struct {
 }
 
 func (r *Reader) loadMoreLines() error {
-	lineCount, err := r.card()
+	// Use max score to get line max count instead of card in case of missing rows
+	maxScore, err := r.maxScore()
 	if err != nil {
 		return err
 	}
+	lineCount := uint(maxScore) + 1
 
 	// If from is less than 0 try to substract given value to lines count
 	if r.From < 0 {

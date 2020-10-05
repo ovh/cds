@@ -191,7 +191,6 @@ func TestGetItemLogsDownloadHandler(t *testing.T) {
 }
 
 func TestGetItemLogsLinesHandler(t *testing.T) {
-
 	projectKey := sdk.RandomString(10)
 
 	// Create cdn service with need storage and test item
