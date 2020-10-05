@@ -45,6 +45,8 @@ CDS_MODEL_REQ="${CDS_MODEL_REQ:-buildpack-deps}"
 # If you want to run some tests with a specific region requirement, set CDS_REGION_REQ
 CDS_REGION_REQ="${CDS_REGION_REQ:-""}" 
 
+HOSTNAME="${HOSTNAME:-localhost}"
+
 # The default values below fit to default minio installation.
 # Run "make minio_start" to start a minio docker container 
 AWS_DEFAULT_REGION="${AWS_DEFAULT_REGION:-us-east-1}"
@@ -141,6 +143,7 @@ workflow_with_integration_tests() {
     if [ -z "$OS_TENANT_NAME" ]; then echo "missing OS_* variables"; exit 1; fi
     if [ -z "$OS_USERNAME" ]; then echo "missing OS_* variables"; exit 1; fi
     if [ -z "$OS_PASSWORD" ]; then echo "missing OS_* variables"; exit 1; fi
+    if [ -z "$HOSTNAME" ]; then echo "missing HOSTNAME variables"; exit 1; fi
     echo "Running Workflow with Storage integration tests:"
     for f in $(ls -1 05_*.yml); do
         CMD="${VENOM} run ${VENOM_OPTS} ${f} --var cdsctl=${CDSCTL} --var cdsctl.config=${CDSCTL_CONFIG}_admin --var api.url=${CDS_API_URL} --var ui.url=${CDS_UI_URL} --var smtpmock.url=${SMTP_MOCK_URL}"
@@ -184,6 +187,7 @@ for target in $@; do
         workflow) 
             workflow_tests;;
         workflow_with_integration) 
+            export HOSTNAME
             export AWS_DEFAULT_REGION
             export S3_BUCKET
             export AWS_ACCESS_KEY_ID

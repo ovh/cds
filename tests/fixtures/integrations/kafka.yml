@@ -6,7 +6,7 @@ model:
 config:
   broker url:
     type: string
-    value: localhost:9092
+    value: $HOSTNAME:9092
   password:
     type: password
     value: ""
