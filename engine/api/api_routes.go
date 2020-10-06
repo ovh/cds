@@ -99,6 +99,9 @@ func (api *API) InitRouter() {
 	r.Handle("/admin/services", Scope(sdk.AuthConsumerScopeAdmin), r.GET(api.getAdminServicesHandler, NeedAdmin(true)))
 	r.Handle("/admin/services/call", Scope(sdk.AuthConsumerScopeAdmin), r.GET(api.getAdminServiceCallHandler, NeedAdmin(true)), r.POST(api.postAdminServiceCallHandler, NeedAdmin(true)), r.PUT(api.putAdminServiceCallHandler, NeedAdmin(true)), r.DELETE(api.deleteAdminServiceCallHandler, NeedAdmin(true)))
 
+	// Admin workflow
+	r.Handle("/admin/project/{key}/workflows/{permWorkflowName}/retention/maxruns", Scope(sdk.AuthConsumerScopeAdmin), r.POST(api.postWorkflowMaxRunHandler))
+
 	// Admin database
 	r.Handle("/admin/database/signature", Scope(sdk.AuthConsumerScopeAdmin), r.GET(api.getAdminDatabaseSignatureResume, NeedAdmin(true)))
 	r.Handle("/admin/database/signature/{entity}/roll/{pk}", Scope(sdk.AuthConsumerScopeAdmin), r.POST(api.postAdminDatabaseSignatureRollEntityByPrimaryKey, NeedAdmin(true)))

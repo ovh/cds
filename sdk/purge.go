@@ -9,3 +9,7 @@ type PurgeRunToDelete struct {
 	Status string `json:"status"`
 	Num    int64  `json:"num"`
 }
+
+type UpdateMaxRunRequest struct {
+	MaxRuns int64 `json:"max_runs"`
+}

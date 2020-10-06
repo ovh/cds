@@ -268,6 +268,11 @@ func LoadByID(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj 
 	return &ws, nil
 }
 
+func UpdateMaxRunsByID(db gorp.SqlExecutor, workflowID int64, maxRuns int64) error {
+	_, err := db.Exec("UPDATE workflow set max_runs = $1 WHERE id = $2", maxRuns, workflowID)
+	return sdk.WithStack(err)
+}
+
 // Insert inserts a new workflow
 func Insert(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store cache.Store, proj sdk.Project, w *sdk.Workflow) error {
 	if err := CompleteWorkflow(ctx, db, w, proj, LoadOptions{}); err != nil {
