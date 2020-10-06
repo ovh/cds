@@ -16,18 +16,21 @@ import (
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/ascode"
 	"github.com/ovh/cds/engine/api/authentication"
+	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/integration"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/plugin"
 	"github.com/ovh/cds/engine/api/project"
+	"github.com/ovh/cds/engine/api/purge"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/api/test/assets"
 	"github.com/ovh/cds/engine/api/user"
 	"github.com/ovh/cds/engine/api/workflow"
+	"github.com/ovh/cds/engine/featureflipping"
 	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk"
 	"github.com/stretchr/testify/assert"
@@ -1176,6 +1179,49 @@ func waitCraftinWorkflow(t *testing.T, api *API, db gorp.SqlExecutor, id int64) 
 			return nil
 		}
 	}
+}
+
+func Test_workflowRunCraft(t *testing.T) {
+	featureflipping.Init(gorpmapping.Mapper)
+	api, db, _ := newTestAPI(t)
+	key := sdk.RandomString(10)
+
+	features, err := featureflipping.LoadAll(context.TODO(), gorpmapping.Mapper, db)
+	require.NoError(t, err)
+	for _, f := range features {
+		_ = featureflipping.Delete(db, f.ID)
+	}
+
+	proj := assets.InsertTestProject(t, db, api.Cache, key, key)
+	wf := assets.InsertTestWorkflow(t, db, api.Cache, proj, sdk.RandomString(10))
+
+	require.NoError(t, workflow.UpdateMaxRunsByID(db, wf.ID, 1))
+
+	wr, err := workflow.CreateRun(db.DbMap, wf, sdk.WorkflowRunPostHandlerOption{
+		Hook: &sdk.WorkflowNodeRunHookEvent{},
+	})
+	require.NoError(t, err)
+	wr.Status = sdk.StatusSuccess
+	require.NoError(t, workflow.UpdateWorkflowRunStatus(db, wr))
+
+	wrPending, err := workflow.CreateRun(db.DbMap, wf, sdk.WorkflowRunPostHandlerOption{
+		Hook: &sdk.WorkflowNodeRunHookEvent{},
+	})
+	require.NoError(t, err)
+
+	f := sdk.Feature{
+		Name: purge.FeaturePurgeName,
+		Rule: "return true",
+	}
+	require.NoError(t, featureflipping.Insert(gorpmapping.Mapper, api.mustDB(), &f))
+
+	require.NoError(t, api.workflowRunCraft(context.TODO(), wrPending.ID))
+
+	wrDB, err := workflow.LoadRunByID(db, wrPending.ID, workflow.LoadRunOptions{})
+	require.NoError(t, err)
+
+	require.Len(t, wrDB.Infos, 1)
+	require.Equal(t, sdk.MsgTooMuchWorkflowRun.ID, wrDB.Infos[0].Message.ID)
 }
 
 /**
