@@ -35,6 +35,7 @@ notifications:
     on_success: never
     recipients:
     - me@foo.bar
+retention_policy: return run_date_before < 7
 ```
 
 There are two major things to understand: `workflow` and `hooks`. A workflow is a kind of graph starting from a root pipeline, and other pipelines with dependencies. In this example, the `deploy` pipeline will be triggered after the `build` pipeline.
@@ -143,3 +144,7 @@ workflow:
     # ...
     one_at_a_time: true # No concurent deployments
 ```
+
+## Retention Policy
+
+[Retention documentation]({{<relref "/docs/concepts/workflow/retention.md">}})
