@@ -158,6 +158,6 @@ type RunningStorageUnits struct {
 	Buffer   BufferUnit
 	Storages []StorageUnit
 	Metrics  struct {
-		StorageThroughput **stats.Float64Measure
+		StorageThroughput **stats.Int64Measure
 	}
 }

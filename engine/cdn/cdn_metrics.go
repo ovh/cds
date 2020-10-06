@@ -41,7 +41,7 @@ func (s *Service) initMetrics(ctx context.Context) error {
 	s.Metrics.itemCompletedByGCCount = stats.Int64("cdn/items/completed_by_gc", "number of items completed by GC", stats.UnitDimensionless)
 	itemCompletedByGCCountView := telemetry.NewViewCount(s.Metrics.itemCompletedByGCCount.Name(), s.Metrics.itemCompletedByGCCount, []tag.Key{tagServiceName, tagServiceType})
 
-	s.Metrics.StorageThroughput = stats.Float64("cdn/storage/throughput", "read throughput per storages (in MBytes per seconds)", stats.UnitDimensionless)
+	s.Metrics.StorageThroughput = stats.Int64("cdn/storage/throughput", "read throughput per storages (in bytes per milliseconds)", stats.UnitDimensionless)
 	StorageThroughputView := &view.View{
 		Name:        s.Metrics.StorageThroughput.Name(),
 		Description: s.Metrics.StorageThroughput.Description(),
@@ -51,12 +51,12 @@ func (s *Service) initMetrics(ctx context.Context) error {
 	}
 
 	s.Metrics.itemInDatabaseCount = stats.Int64("cdn/items/count", "number of items in database by type and status", stats.UnitDimensionless)
-	itemInDatabaseCountView := telemetry.NewViewCount(s.Metrics.itemInDatabaseCount.Name(), s.Metrics.itemInDatabaseCount, []tag.Key{tagItemType, tagStatus})
+	itemInDatabaseCountView := telemetry.NewViewLast(s.Metrics.itemInDatabaseCount.Name(), s.Metrics.itemInDatabaseCount, []tag.Key{tagItemType, tagStatus})
 
 	s.Metrics.itemPerStorageUnitCount = stats.Int64("cdn/items/count_per_storage", "number of items per storage type", stats.UnitDimensionless)
-	itemPerStorageUnitCountView := telemetry.NewViewCount(s.Metrics.itemPerStorageUnitCount.Name(), s.Metrics.itemPerStorageUnitCount, []tag.Key{tagStorage, tagItemType})
+	itemPerStorageUnitCountView := telemetry.NewViewLast(s.Metrics.itemPerStorageUnitCount.Name(), s.Metrics.itemPerStorageUnitCount, []tag.Key{tagStorage, tagItemType})
 
-	s.Metrics.ItemSize = stats.Float64("cdn/items/size", "size items by types (in KBytes)", stats.UnitBytes)
+	s.Metrics.ItemSize = stats.Int64("cdn/items/size", "size items by types (in bytes)", stats.UnitBytes)
 	itemSizeView := &view.View{
 		Name:        s.Metrics.ItemSize.Name(),
 		Description: s.Metrics.ItemSize.Description(),

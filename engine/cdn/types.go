@@ -39,8 +39,8 @@ type Service struct {
 		itemCompletedByGCCount   *stats.Int64Measure
 		itemInDatabaseCount      *stats.Int64Measure
 		itemPerStorageUnitCount  *stats.Int64Measure
-		ItemSize                 *stats.Float64Measure
-		StorageThroughput        *stats.Float64Measure
+		ItemSize                 *stats.Int64Measure
+		StorageThroughput        *stats.Int64Measure
 	}
 }
 

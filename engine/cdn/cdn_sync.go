@@ -195,7 +195,7 @@ func (s *Service) syncNodeRun(ctx context.Context, cdsStorage *cds.CDS, pKey str
 		log.Debug("cd:syncNodeRun: already lock %d", nodeRunIdentifier.NodeRunID)
 		return nil
 	}
-	defer s.Cache.Unlock(lockKey)
+	defer s.Cache.Unlock(lockKey) // nolint
 
 	// Load node run
 	nodeRun, err := cdsStorage.GetWorkflowNodeRun(pKey, nodeRunIdentifier)
