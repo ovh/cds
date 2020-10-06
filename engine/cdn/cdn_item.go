@@ -237,7 +237,7 @@ func (s *Service) completeItem(ctx context.Context, tx gorpmapper.SqlExecutorWit
 	}
 
 	ctxItem := telemetry.ContextWithTag(ctx, telemetry.TagType, string(it.Type))
-	telemetry.RecordFloat64(ctxItem, s.Metrics.ItemSize, float64(it.Size)/1024)
+	telemetry.Record(ctxItem, s.Metrics.ItemSize, it.Size)
 
 	return nil
 }

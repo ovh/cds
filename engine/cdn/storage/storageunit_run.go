@@ -16,8 +16,8 @@ import (
 )
 
 func (x *RunningStorageUnits) Run(ctx context.Context, s StorageUnit, nbItem int64) error {
-	s.Lock()
-	defer s.Unlock()
+	// s.Lock()
+	// defer s.Unlock()
 	if _, err := LoadUnitByID(ctx, x.m, x.db, s.ID()); err != nil {
 		return err
 	}
@@ -152,10 +152,10 @@ func (x *RunningStorageUnits) runItem(ctx context.Context, tx gorpmapper.SqlExec
 		}
 	}
 
-	var troughput = float64(item.Size/1024/2024) / t2.Sub(t1).Seconds()
+	var throughput = item.Size / t2.Sub(t1).Milliseconds()
 	if x.Metrics.StorageThroughput != nil {
 		ctxMetrics := telemetry.ContextWithTag(ctx, "storage_source", source.Name(), "storage_dest", dest.Name())
-		telemetry.RecordFloat64(ctxMetrics, *x.Metrics.StorageThroughput, troughput)
+		telemetry.Record(ctxMetrics, *x.Metrics.StorageThroughput, throughput)
 	}
 
 	log.InfoWithFields(ctx, logrus.Fields{
@@ -164,7 +164,7 @@ func (x *RunningStorageUnits) runItem(ctx context.Context, tx gorpmapper.SqlExec
 		"destination":               dest.Name(),
 		"duration_milliseconds_num": t2.Sub(t1).Milliseconds(),
 		"item_size_num":             item.Size,
-		"throughput_num":            troughput,
+		"throughput_num":            throughput,
 	}, "item %s has been pushed to %s (%.3f s)", item.ID, dest.Name(), t2.Sub(t1).Seconds())
 	return nil
 }
