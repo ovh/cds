@@ -111,7 +111,7 @@ func Test_getWorkflowNodeRunJobAccessHandler(t *testing.T) {
 		},
 	)
 
-	uri := router.GetRoute("GET", api.getWorkflowNodeRunJobStepAccessHandler, map[string]string{
+	uri := router.GetRoute("GET", api.getWorkflowNodeRunJobStepLinkHandler, map[string]string{
 		"key":              proj.Key,
 		"permWorkflowName": w1.Name,
 		"nodeRunID":        fmt.Sprintf("%d", lastRun.WorkflowNodeRuns[w1.WorkflowData.Node.ID][0].ID),
@@ -124,10 +124,9 @@ func Test_getWorkflowNodeRunJobAccessHandler(t *testing.T) {
 	router.Mux.ServeHTTP(rec, req)
 	require.Equal(t, 200, rec.Code)
 
-	var access sdk.CDNLogAccess
-	require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &access))
-	require.True(t, access.Exists)
-	require.Equal(t, "http://cdn.net:8080", access.CDNURL)
-	require.NotEmpty(t, access.DownloadPath)
-	require.NotEmpty(t, access.Token)
+	var link sdk.CDNLogLink
+	require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &link))
+	require.True(t, link.Exists)
+	require.Equal(t, "http://cdn.net:8080", link.CDNURL)
+	require.NotEmpty(t, link.DownloadPath)
 }

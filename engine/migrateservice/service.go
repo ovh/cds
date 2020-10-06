@@ -183,12 +183,13 @@ func (s *dbmigservice) Status(ctx context.Context) *sdk.MonitoringStatus {
 func (s *dbmigservice) initRouter(ctx context.Context) {
 	log.Debug("DBMigrate> Router initialized")
 	r := s.Router
-	r.SetHeaderFunc = api.DefaultHeaders
-	r.Middlewares = append(r.Middlewares, service.CheckRequestSignatureMiddleware(s.ParsedAPIPublicKey))
+	r.SetHeaderFunc = service.DefaultHeaders
+	r.DefaultAuthMiddleware = service.CheckRequestSignatureMiddleware(s.ParsedAPIPublicKey)
 
-	r.Handle("/mon/version", nil, r.GET(api.VersionHandler, api.Auth(false)))
-	r.Handle("/mon/status", nil, r.GET(s.statusHandler, api.Auth(false)))
-	r.Handle("/mon/metrics", nil, r.GET(service.GetPrometheustMetricsHandler(s), api.Auth(false)))
-	r.Handle("/mon/metrics/all", nil, r.GET(service.GetMetricsHandler, api.Auth(false)))
-	r.Handle("/", nil, r.GET(s.getMigrationHandler, api.Auth(false)))
+	r.Handle("/mon/version", nil, r.GET(service.VersionHandler, service.OverrideAuth(service.NoAuthMiddleware)))
+	r.Handle("/mon/status", nil, r.GET(s.statusHandler, service.OverrideAuth(service.NoAuthMiddleware)))
+	r.Handle("/mon/metrics", nil, r.GET(service.GetPrometheustMetricsHandler(s), service.OverrideAuth(service.NoAuthMiddleware)))
+	r.Handle("/mon/metrics/all", nil, r.GET(service.GetMetricsHandler, service.OverrideAuth(service.NoAuthMiddleware)))
+
+	r.Handle("/", nil, r.GET(s.getMigrationHandler, service.OverrideAuth(service.NoAuthMiddleware)))
 }

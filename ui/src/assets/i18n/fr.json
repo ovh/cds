@@ -56,6 +56,7 @@
   "action_usage_warning_action": "L'action parente ne sera pas en mesure d'exécuter cette action car elles ne font pas parties du même groupe.",
   "action_usage_warning_pipeline": "Ce pipeline ne sera pas en mesure d'exécuter cette action car la permission pour le groupe n'existe pas.",
   "admin_queue_title": "File d'attente",
+  "cdsapi_loading": "CDS API est en cours de démarrage. Merci de patienter.",
   "application_ascode_updated": "Brouillon mis à jour",
   "application_create": "Créer une application",
   "application_created": "Application créée",

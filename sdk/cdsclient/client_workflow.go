@@ -204,40 +204,48 @@ func (c *client) WorkflowRunNumberSet(projectKey string, workflowName string, nu
 	return nil
 }
 
-func (c *client) WorkflowNodeRunJobStepLog(projectKey string, workflowName string, nodeRunID, job int64, step int64) (*sdk.BuildState, error) {
+func (c *client) WorkflowNodeRunJobStepLog(ctx context.Context, projectKey string, workflowName string, nodeRunID, job int64, step int64) (*sdk.BuildState, error) {
 	url := fmt.Sprintf("/project/%s/workflows/%s/nodes/%d/job/%d/step/%d/log", projectKey, workflowName, nodeRunID, job, step)
 	var buildState sdk.BuildState
-	if _, err := c.GetJSON(context.Background(), url, &buildState); err != nil {
+	if _, err := c.GetJSON(ctx, url, &buildState); err != nil {
 		return nil, err
 	}
 	return &buildState, nil
 }
 
-func (c *client) WorkflowNodeRunJobStepAccess(projectKey string, workflowName string, nodeRunID, job int64, step int64) (*sdk.CDNLogAccess, error) {
-	url := fmt.Sprintf("/project/%s/workflows/%s/nodes/%d/job/%d/step/%d/access", projectKey, workflowName, nodeRunID, job, step)
-	var a sdk.CDNLogAccess
-	if _, err := c.GetJSON(context.Background(), url, &a); err != nil {
+func (c *client) WorkflowNodeRunJobStepLink(ctx context.Context, projectKey string, workflowName string, nodeRunID, job int64, step int64) (*sdk.CDNLogLink, error) {
+	url := fmt.Sprintf("/project/%s/workflows/%s/nodes/%d/job/%d/step/%d/link", projectKey, workflowName, nodeRunID, job, step)
+	var a sdk.CDNLogLink
+	if _, err := c.GetJSON(ctx, url, &a); err != nil {
 		return nil, err
 	}
 	return &a, nil
 }
 
-func (c *client) WorkflowNodeRunJobServiceLog(projectKey string, workflowName string, nodeRunID int64, jobID int64, serviceName string) (*sdk.ServiceLog, error) {
+func (c *client) WorkflowNodeRunJobServiceLog(ctx context.Context, projectKey string, workflowName string, nodeRunID int64, jobID int64, serviceName string) (*sdk.ServiceLog, error) {
 	url := fmt.Sprintf("/project/%s/workflows/%s/nodes/%d/job/%d/service/%s/log", projectKey, workflowName, nodeRunID, jobID, serviceName)
 	var serviceLog sdk.ServiceLog
-	if _, err := c.GetJSON(context.Background(), url, &serviceLog); err != nil {
+	if _, err := c.GetJSON(ctx, url, &serviceLog); err != nil {
 		return nil, err
 	}
 	return &serviceLog, nil
 }
 
-func (c *client) WorkflowNodeRunJobServiceAccess(projectKey string, workflowName string, nodeRunID, job int64, serviceName string) (*sdk.CDNLogAccess, error) {
-	url := fmt.Sprintf("/project/%s/workflows/%s/nodes/%d/job/%d/service/%s/access", projectKey, workflowName, nodeRunID, job, serviceName)
-	var a sdk.CDNLogAccess
-	if _, err := c.GetJSON(context.Background(), url, &a); err != nil {
+func (c *client) WorkflowNodeRunJobServiceLink(ctx context.Context, projectKey string, workflowName string, nodeRunID, job int64, serviceName string) (*sdk.CDNLogLink, error) {
+	url := fmt.Sprintf("/project/%s/workflows/%s/nodes/%d/job/%d/service/%s/link", projectKey, workflowName, nodeRunID, job, serviceName)
+	var a sdk.CDNLogLink
+	if _, err := c.GetJSON(ctx, url, &a); err != nil {
 		return nil, err
 	}
 	return &a, nil
+}
+
+func (c *client) WorkflowLogAccess(ctx context.Context, projectKey, workflowName, sessionID string) error {
+	url := fmt.Sprintf("/project/%s/workflows/%s/log/access", projectKey, workflowName)
+	if _, err := c.GetJSON(ctx, url, nil, SetHeader("X-CDS-Session-ID", sessionID)); err != nil {
+		return err
+	}
+	return nil
 }
 
 func (c *client) WorkflowNodeRunArtifactDownload(projectKey string, workflowName string, a sdk.WorkflowNodeRunArtifact, w io.Writer) error {

@@ -31,6 +31,7 @@ export class WorkflowDeleteNodeComponent {
 
     deleteNode(): void {
         let clonedWorkflow = cloneDeep(this.workflow);
+        clonedWorkflow.notifications = cloneDeep(this.workflow.notifications);
         if (this.deleteAll === 'only') {
             Workflow.removeNodeOnly(clonedWorkflow, this.node.id);
         } else {

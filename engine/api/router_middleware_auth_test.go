@@ -17,30 +17,35 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-func Test_authMiddleware_WithAuth(t *testing.T) {
+func Test_authMiddleware(t *testing.T) {
 	api, db, _ := newTestAPI(t)
 
 	u, jwt := assets.InsertLambdaUser(t, db)
 
 	config := &service.HandlerConfig{}
-	Auth(true)(config)
 
 	req := assets.NewRequest(t, http.MethodGet, "", nil)
 	w := httptest.NewRecorder()
-	ctx, err := api.authMiddleware(context.TODO(), w, req, config)
-	assert.Error(t, err, "an error should be returned because no jwt was given and auth is required")
+	ctx, err := api.jwtMiddleware(context.TODO(), w, req, config)
+	require.NoError(t, err)
+	ctx, err = api.authMiddleware(ctx, w, req, config)
+	require.Error(t, err, "an error should be returned because no jwt was given and auth is required")
 
 	req = assets.NewJWTAuthentifiedRequest(t, jwt, http.MethodGet, "", nil)
 	w = httptest.NewRecorder()
-	ctx, err = api.authMiddleware(context.TODO(), w, req, config)
-	assert.NoError(t, err, "no error should be returned because a jwt was given and is valid")
+	ctx, err = api.jwtMiddleware(context.TODO(), w, req, config)
+	require.NoError(t, err)
+	ctx, err = api.authMiddleware(ctx, w, req, config)
+	require.NoError(t, err, "no error should be returned because a jwt was given and is valid")
 	require.NotNil(t, getAPIConsumer(ctx))
-	assert.Equal(t, u.ID, getAPIConsumer(ctx).AuthentifiedUserID)
+	require.Equal(t, u.ID, getAPIConsumer(ctx).AuthentifiedUserID)
 
 	req = assets.NewJWTAuthentifiedRequest(t, sdk.RandomString(10), http.MethodGet, "", nil)
 	w = httptest.NewRecorder()
-	ctx, err = api.authMiddleware(context.TODO(), w, req, config)
-	assert.Error(t, err, "an error should be returned because a jwt was given but no valid session matching")
+	ctx, err = api.jwtMiddleware(context.TODO(), w, req, config)
+	require.NoError(t, err)
+	ctx, err = api.authMiddleware(ctx, w, req, config)
+	require.Error(t, err, "an error should be returned because a jwt was given but no valid session matching")
 }
 
 func Test_authMiddleware_WithAuthConsumerDisabled(t *testing.T) {
@@ -60,71 +65,84 @@ func Test_authMiddleware_WithAuthConsumerDisabled(t *testing.T) {
 	require.NoError(t, err)
 
 	config := &service.HandlerConfig{}
-	Auth(true)(config)
 
 	req := assets.NewJWTAuthentifiedRequest(t, jwt, http.MethodGet, "", nil)
 	w := httptest.NewRecorder()
-	_, err = api.authMiddleware(context.TODO(), w, req, config)
+	ctx, err := api.jwtMiddleware(context.TODO(), w, req, config)
+	require.NoError(t, err)
+	_, err = api.authMiddleware(ctx, w, req, config)
 	assert.NoError(t, err, "no error should be returned because a valid jwt was given")
 
 	require.NoError(t, authentication.ConsumerRemoveGroup(context.TODO(), db, g))
 
 	req = assets.NewJWTAuthentifiedRequest(t, jwt, http.MethodGet, "", nil)
 	w = httptest.NewRecorder()
-	_, err = api.authMiddleware(context.TODO(), w, req, config)
+	ctx, err = api.jwtMiddleware(context.TODO(), w, req, config)
+	require.NoError(t, err)
+	_, err = api.authMiddleware(ctx, w, req, config)
 	assert.Error(t, err, "an error should be returned because the consumer should have been disabled")
 }
 
-func Test_authMiddleware_WithoutAuth(t *testing.T) {
+func Test_authOptionalMiddleware(t *testing.T) {
 	api, db, _ := newTestAPI(t)
 
 	u, jwt := assets.InsertLambdaUser(t, db)
 
 	config := &service.HandlerConfig{}
-	Auth(false)(config)
 
 	req := assets.NewRequest(t, http.MethodGet, "", nil)
 	w := httptest.NewRecorder()
-	ctx, err := api.authMiddleware(context.TODO(), w, req, config)
+	ctx, err := api.jwtMiddleware(context.TODO(), w, req, config)
+	require.NoError(t, err)
+	ctx, err = api.authOptionalMiddleware(ctx, w, req, config)
 	assert.NoError(t, err, "no error should be returned because no jwt was given and auth not required")
 	assert.Nil(t, getAPIConsumer(ctx))
 
 	req = assets.NewJWTAuthentifiedRequest(t, jwt, http.MethodGet, "", nil)
 	w = httptest.NewRecorder()
-	ctx, err = api.authMiddleware(context.TODO(), w, req, config)
+	ctx, err = api.jwtMiddleware(context.TODO(), w, req, config)
+	require.NoError(t, err)
+	ctx, err = api.authOptionalMiddleware(ctx, w, req, config)
 	assert.NoError(t, err, "no error should be returned because a jwt was given and is valid")
 	require.NotNil(t, getAPIConsumer(ctx))
 	assert.Equal(t, u.ID, getAPIConsumer(ctx).AuthentifiedUserID)
 
 	req = assets.NewJWTAuthentifiedRequest(t, sdk.RandomString(10), http.MethodGet, "", nil)
 	w = httptest.NewRecorder()
-	ctx, err = api.authMiddleware(context.TODO(), w, req, config)
+	ctx, err = api.jwtMiddleware(context.TODO(), w, req, config)
+	require.NoError(t, err)
+	ctx, err = api.authOptionalMiddleware(ctx, w, req, config)
 	assert.NoError(t, err, "no error should be returned for an invalid jwt when auth is not required")
 	assert.Nil(t, getAPIConsumer(ctx))
 }
 
-func Test_authMiddleware_NeedAdmin(t *testing.T) {
+func Test_authAdminMiddleware(t *testing.T) {
 	api, db, _ := newTestAPI(t)
 
 	_, jwtLambda := assets.InsertLambdaUser(t, db)
 	admin, jwtAdmin := assets.InsertAdminUser(t, db)
 
 	config := &service.HandlerConfig{}
-	NeedAdmin(true)(config)
 
 	req := assets.NewRequest(t, http.MethodGet, "", nil)
 	w := httptest.NewRecorder()
-	ctx, err := api.authMiddleware(context.TODO(), w, req, config)
+	ctx, err := api.jwtMiddleware(context.TODO(), w, req, config)
+	require.NoError(t, err)
+	ctx, err = api.authAdminMiddleware(ctx, w, req, config)
 	assert.Error(t, err, "an error should be returned because no jwt was given and admin auth is required")
 
 	req = assets.NewJWTAuthentifiedRequest(t, jwtLambda, http.MethodGet, "", nil)
 	w = httptest.NewRecorder()
-	ctx, err = api.authMiddleware(context.TODO(), w, req, config)
+	ctx, err = api.jwtMiddleware(context.TODO(), w, req, config)
+	require.NoError(t, err)
+	ctx, err = api.authAdminMiddleware(ctx, w, req, config)
 	assert.Error(t, err, "an error should be returned because a jwt was given for a lambda user")
 
 	req = assets.NewJWTAuthentifiedRequest(t, jwtAdmin, http.MethodGet, "", nil)
 	w = httptest.NewRecorder()
-	ctx, err = api.authMiddleware(context.TODO(), w, req, config)
+	ctx, err = api.jwtMiddleware(context.TODO(), w, req, config)
+	require.NoError(t, err)
+	ctx, err = api.authAdminMiddleware(ctx, w, req, config)
 	assert.NoError(t, err, "no error should be returned because a jwt was given for an admin user")
 	require.NotNil(t, getAPIConsumer(ctx))
 	assert.Equal(t, admin.ID, getAPIConsumer(ctx).AuthentifiedUserID)
@@ -167,10 +185,11 @@ func Test_authMiddleware_WithAuthConsumerScoped(t *testing.T) {
 		AllowedScopes: []sdk.AuthConsumerScope{sdk.AuthConsumerScopeAccessToken},
 		Method:        http.MethodGet,
 	}
-	Auth(true)(configHandler1)
 	req := assets.NewJWTAuthentifiedRequest(t, jwt, configHandler1.Method, configHandler1.CleanURL, nil)
 	w := httptest.NewRecorder()
-	_, err = api.authMiddleware(context.TODO(), w, req, configHandler1)
+	ctx, err := api.jwtMiddleware(context.TODO(), w, req, configHandler1)
+	require.NoError(t, err)
+	_, err = api.authMiddleware(ctx, w, req, configHandler1)
 	assert.Error(t, err, "an error should be returned because consumer can't do GET on /my-handler1 missing scope")
 
 	// GET /my-handler2 is authorized
@@ -179,10 +198,11 @@ func Test_authMiddleware_WithAuthConsumerScoped(t *testing.T) {
 		AllowedScopes: []sdk.AuthConsumerScope{sdk.AuthConsumerScopeAction},
 		Method:        http.MethodGet,
 	}
-	Auth(true)(configHandler2)
 	req = assets.NewJWTAuthentifiedRequest(t, jwt, configHandler2.Method, configHandler2.CleanURL, nil)
 	w = httptest.NewRecorder()
-	_, err = api.authMiddleware(context.TODO(), w, req, configHandler2)
+	ctx, err = api.jwtMiddleware(context.TODO(), w, req, configHandler2)
+	require.NoError(t, err)
+	_, err = api.authMiddleware(ctx, w, req, configHandler2)
 	assert.NoError(t, err, "no error should be returned because consumer can do GET on /my-handler2")
 
 	// POST /my-handler2 is forbidden (missing POST method in scope Action)
@@ -191,10 +211,11 @@ func Test_authMiddleware_WithAuthConsumerScoped(t *testing.T) {
 		AllowedScopes: []sdk.AuthConsumerScope{sdk.AuthConsumerScopeAction},
 		Method:        http.MethodPost,
 	}
-	Auth(true)(configHandler3)
 	req = assets.NewJWTAuthentifiedRequest(t, jwt, configHandler3.Method, configHandler3.CleanURL, nil)
 	w = httptest.NewRecorder()
-	_, err = api.authMiddleware(context.TODO(), w, req, configHandler3)
+	ctx, err = api.jwtMiddleware(context.TODO(), w, req, configHandler3)
+	require.NoError(t, err)
+	_, err = api.authMiddleware(ctx, w, req, configHandler3)
 	assert.Error(t, err, "an error should be returned because consumer can't do POST on /my-handler2")
 
 	// DELETE /my-handler3 is authorized as no method restriction set on route.
@@ -203,10 +224,11 @@ func Test_authMiddleware_WithAuthConsumerScoped(t *testing.T) {
 		AllowedScopes: []sdk.AuthConsumerScope{sdk.AuthConsumerScopeAction},
 		Method:        http.MethodDelete,
 	}
-	Auth(true)(configHandler4)
 	req = assets.NewJWTAuthentifiedRequest(t, jwt, configHandler4.Method, configHandler4.CleanURL, nil)
 	w = httptest.NewRecorder()
-	_, err = api.authMiddleware(context.TODO(), w, req, configHandler4)
+	ctx, err = api.jwtMiddleware(context.TODO(), w, req, configHandler4)
+	require.NoError(t, err)
+	_, err = api.authMiddleware(ctx, w, req, configHandler4)
 	assert.NoError(t, err, "no error should be returned because consumer can do any methods on /my-handler3")
 
 	// PUT /my-handler4 is authorized as no route restriction set on scope.
@@ -215,9 +237,10 @@ func Test_authMiddleware_WithAuthConsumerScoped(t *testing.T) {
 		AllowedScopes: []sdk.AuthConsumerScope{sdk.AuthConsumerScopeAdmin},
 		Method:        http.MethodPut,
 	}
-	Auth(true)(configHandler5)
 	req = assets.NewJWTAuthentifiedRequest(t, jwt, configHandler5.Method, configHandler5.CleanURL, nil)
 	w = httptest.NewRecorder()
-	_, err = api.authMiddleware(context.TODO(), w, req, configHandler5)
+	ctx, err = api.jwtMiddleware(context.TODO(), w, req, configHandler5)
+	require.NoError(t, err)
+	_, err = api.authMiddleware(ctx, w, req, configHandler5)
 	assert.NoError(t, err, "no error should be returned because consumer can access any routes for scope Admin")
 }

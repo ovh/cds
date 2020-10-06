@@ -9,14 +9,12 @@ import (
 	"time"
 
 	"github.com/go-gorp/gorp"
-	"go.opencensus.io/stats"
 
 	"github.com/ovh/cds/engine/cdn/storage"
 	"github.com/ovh/cds/engine/cdn/storage/encryption"
 	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
-	"github.com/ovh/cds/sdk/telemetry"
 )
 
 type Local struct {
@@ -26,18 +24,11 @@ type Local struct {
 	size   int64
 }
 
-var (
-	_              storage.StorageUnit = new(Local)
-	metricsSize                        = stats.Int64("cdn/storage/local/size", "local size", stats.UnitDimensionless)
-	metricsReaders                     = stats.Int64("cdn/storage/local/readers", "nb readers", stats.UnitDimensionless)
-	metricsWriters                     = stats.Int64("cdn/storage/local/writers", "nb writers", stats.UnitDimensionless)
-)
-
 func init() {
 	storage.RegisterDriver("local", new(Local))
 }
 
-func (s *Local) Init(ctx context.Context, gorts *sdk.GoRoutines, cfg interface{}) error {
+func (s *Local) Init(ctx context.Context, cfg interface{}) error {
 	config, is := cfg.(*storage.LocalStorageConfiguration)
 	if !is {
 		return sdk.WithStack(fmt.Errorf("invalid configuration: %T", cfg))
@@ -49,11 +40,7 @@ func (s *Local) Init(ctx context.Context, gorts *sdk.GoRoutines, cfg interface{}
 		return sdk.WithStack(err)
 	}
 
-	if err := telemetry.InitMetricsInt64(ctx, metricsSize, metricsReaders, metricsWriters); err != nil {
-		return err
-	}
-
-	gorts.Run(ctx, "cdn-local-compute-size", func(ctx context.Context) {
+	s.GoRoutines.Run(ctx, "cdn-local-compute-size", func(ctx context.Context) {
 		s.computeSize(ctx)
 	})
 
@@ -92,7 +79,6 @@ func (s *Local) NewWriter(ctx context.Context, i sdk.CDNItemUnit) (io.WriteClose
 	if err != nil {
 		return nil, err
 	}
-	telemetry.Record(ctx, metricsWriters, 1)
 	log.Debug("[%T] writing to %s", s, path)
 	return os.OpenFile(path, os.O_CREATE|os.O_RDWR, os.FileMode(0640))
 }
@@ -103,7 +89,6 @@ func (s *Local) NewReader(ctx context.Context, i sdk.CDNItemUnit) (io.ReadCloser
 	if err != nil {
 		return nil, err
 	}
-	telemetry.Record(ctx, metricsReaders, 1)
 	log.Debug("[%T] reading from %s", s, path)
 	return os.Open(path)
 }
@@ -155,7 +140,6 @@ func (s *Local) computeSize(ctx context.Context) {
 				log.Error(ctx, "cdn:backend:local:computeSize:dirSize: %v", ctx.Err())
 				continue
 			}
-			telemetry.Record(ctx, metricsSize, 1)
 		}
 	}
 }

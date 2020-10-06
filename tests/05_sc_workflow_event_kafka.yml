@@ -1,0 +1,48 @@
+name: Workflow (ITSCWRKFLW18) should use the kafka integration
+version: "2"
+
+testcases:
+- name: assert filepath, your current directory must be at the root of this project
+  steps:
+  - script: '[ -f ./fixtures/ITSCWRKFLW18/pipeline.pip.yml ]'
+  - script: '[ -f ./fixtures/ITSCWRKFLW18/workflow.yml ]'
+
+- name: prepare test
+  steps:
+  - script: "{{.cdsctl}} -f {{.cdsctl.config}} project remove --force ITSCWRKFLW18"
+  - script: "{{.cdsctl}} -f {{.cdsctl.config}} group remove --force itscwrkflw18"
+  - script: "{{.cdsctl}} -f {{.cdsctl.config}} project add ITSCWRKFLW18 ITSCWRKFLW18"
+
+- name: import integrations
+  steps:
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} admin integration-model import {{expandEnv ./fixtures/integrations/kafka-public.yml}}
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} project integration import ITSCWRKFLW18 {{expandEnv ./fixtures/integrations/kafka.yml}}
+
+- name: import workflow
+  steps:
+  - script:  {{.cdsctl}} -f {{.cdsctl.config}} workflow push ITSCWRKFLW18 ./fixtures/ITSCWRKFLW18/*.yml --skip-update-files
+
+- name: run workflow
+  steps:
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} workflow run ITSCWRKFLW18 ITSCWRKFLW18-WORKFLOW
+    assertions:
+    - result.code ShouldEqual 0
+    - "result.systemout ShouldContainSubstring Workflow ITSCWRKFLW18-WORKFLOW #1 has been launched"
+
+- name: check event in topic test.eventsproject
+  steps:
+  - script: kafkacat -b localhost:9092 -t test.eventsproject -C -o -1 -c 1
+    assertions:
+    - result.code ShouldEqual 0
+    - "result.systemoutjson.type_event ShouldContainSubstring sdk.EventRunWorkflowJob"
+    retry: 10
+    delay: 2
+
+- name: check event in topic test.eventspublic
+  steps:
+  - script: kafkacat -b localhost:9092 -t test.eventspublic -C -o -1 -c 1
+    assertions:
+    - result.code ShouldEqual 0
+    - "result.systemoutjson.type_event ShouldContainSubstring sdk.EventRunWorkflowJob"
+    retry: 10
+    delay: 2

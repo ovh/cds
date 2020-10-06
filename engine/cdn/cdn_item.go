@@ -18,6 +18,7 @@ import (
 	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
+	"github.com/ovh/cds/sdk/telemetry"
 )
 
 var (
@@ -25,12 +26,12 @@ var (
 	rnd = rand.New(rs)
 )
 
-func (s *Service) downloadItem(ctx context.Context, t sdk.CDNItemType, apiRefHash string, w http.ResponseWriter) error {
+func (s *Service) downloadItem(ctx context.Context, t sdk.CDNItemType, apiRefHash string, refreshDelay int64, w http.ResponseWriter) error {
 	if !t.IsLog() {
 		return sdk.NewErrorFrom(sdk.ErrNotImplemented, "only log item can be download for now")
 	}
 
-	rc, filename, err := s.getItemLogValue(ctx, t, apiRefHash, sdk.CDNReaderFormatText, 0, 0)
+	it, rc, filename, err := s.getItemLogValue(ctx, t, apiRefHash, sdk.CDNReaderFormatText, 0, 0)
 	if err != nil {
 		return err
 	}
@@ -38,7 +39,11 @@ func (s *Service) downloadItem(ctx context.Context, t sdk.CDNItemType, apiRefHas
 		return sdk.WrapError(sdk.ErrNotFound, "no storage found that contains given item %s", apiRefHash)
 	}
 	w.Header().Add("Content-Type", "text/plain")
-	w.Header().Add("Content-Disposition", fmt.Sprintf("attachment; filename=\"%s\"", filename))
+	if it.Status != sdk.CDNStatusItemCompleted && refreshDelay > 0 {
+		// This will allows to refresh the browser when opening the logs int a new tab
+		w.Header().Add("Refresh", fmt.Sprintf("%d", refreshDelay))
+	}
+	w.Header().Add("Content-Disposition", fmt.Sprintf("inline; filename=\"%s\"", filename))
 
 	if _, err := io.Copy(w, rc); err != nil {
 		return sdk.WithStack(err)
@@ -47,17 +52,17 @@ func (s *Service) downloadItem(ctx context.Context, t sdk.CDNItemType, apiRefHas
 	return nil
 }
 
-func (s *Service) getItemLogValue(ctx context.Context, t sdk.CDNItemType, apiRefHash string, format sdk.CDNReaderFormat, from int64, size uint) (io.ReadCloser, string, error) {
+func (s *Service) getItemLogValue(ctx context.Context, t sdk.CDNItemType, apiRefHash string, format sdk.CDNReaderFormat, from int64, size uint) (*sdk.CDNItem, io.ReadCloser, string, error) {
 	it, err := item.LoadByAPIRefHashAndType(ctx, s.Mapper, s.mustDBWithCtx(ctx), apiRefHash, t)
 	if err != nil {
-		return nil, "", err
+		return nil, nil, "", err
 	}
 
 	filename := it.APIRef.ToFilename()
 
 	itemUnit, err := storage.LoadItemUnitByUnit(ctx, s.Mapper, s.mustDBWithCtx(ctx), s.Units.Buffer.ID(), it.ID)
 	if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
-		return nil, "", err
+		return nil, nil, "", err
 	}
 
 	// If item is in Buffer, get from it
@@ -65,25 +70,25 @@ func (s *Service) getItemLogValue(ctx context.Context, t sdk.CDNItemType, apiRef
 		log.Debug("getItemLogValue> Getting logs from buffer")
 		rc, err := s.Units.Buffer.NewAdvancedReader(ctx, *itemUnit, format, from, size)
 		if err != nil {
-			return nil, "", err
+			return nil, nil, "", err
 		}
-		return rc, filename, nil
+		return it, rc, filename, nil
 	}
 
 	// Get from cache
 	if ok, _ := s.LogCache.Exist(it.ID); ok {
 		log.Debug("getItemLogValue> Getting logs from cache")
-		return s.LogCache.NewReader(it.ID, format, from, size), filename, nil
+		return it, s.LogCache.NewReader(it.ID, format, from, size), filename, nil
 	}
 
 	log.Debug("getItemLogValue> Getting logs from storage")
 	// Retrieve item and push it into the cache
 	if err := s.pushItemLogIntoCache(ctx, *it); err != nil {
-		return nil, "", err
+		return nil, nil, "", err
 	}
 
 	// Get from cache
-	return s.LogCache.NewReader(it.ID, format, from, size), filename, nil
+	return it, s.LogCache.NewReader(it.ID, format, from, size), filename, nil
 }
 
 func (s *Service) pushItemLogIntoCache(ctx context.Context, item sdk.CDNItem) error {
@@ -230,6 +235,9 @@ func (s *Service) completeItem(ctx context.Context, tx gorpmapper.SqlExecutorWit
 	if err := item.Update(ctx, s.Mapper, tx, it); err != nil {
 		return err
 	}
+
+	ctxItem := telemetry.ContextWithTag(ctx, telemetry.TagType, string(it.Type))
+	telemetry.Record(ctxItem, s.Metrics.ItemSize, it.Size)
 
 	return nil
 }

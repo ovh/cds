@@ -56,6 +56,7 @@
   "action_btn_init_from_job": "Init a new action from job",
   "action_help_add_from": "Current action was initialized with data from \"{{jobName}}\" job of \"{{pipelineName}}\" pipeline in \"{{projectKey}}\" project. The data will not be stored until you save the action.",
   "admin_queue_title": "Current CDS jobs queue",
+  "cdsapi_loading": "CDS API is starting. Please wait.",
   "application_ascode_updated": "Draft updated",
   "application_home_history": "History",
   "application_home_repo": "GIT repository",

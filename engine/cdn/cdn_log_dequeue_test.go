@@ -7,13 +7,11 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/ovh/cds/engine/cdn/redis"
-
 	"github.com/mitchellh/hashstructure"
 	"github.com/stretchr/testify/require"
 
-	cacheP "github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/engine/cdn/item"
+	"github.com/ovh/cds/engine/cdn/redis"
 	"github.com/ovh/cds/engine/cdn/storage"
 	_ "github.com/ovh/cds/engine/cdn/storage/local"
 	_ "github.com/ovh/cds/engine/cdn/storage/redis"
@@ -34,8 +32,6 @@ func TestStoreNewStepLog(t *testing.T) {
 	db, factory, cache, cancel := test.SetupPGToCancel(t, m, sdk.TypeCDN)
 	t.Cleanup(cancel)
 
-	cfg := test.LoadTestingConf(t, sdk.TypeCDN)
-
 	cdntest.ClearItem(t, context.TODO(), m, db)
 
 	// Create cdn service
@@ -45,21 +41,12 @@ func TestStoreNewStepLog(t *testing.T) {
 		Mapper:              m,
 	}
 
-	cdnUnits, err := storage.Init(context.TODO(), m, db.DbMap, sdk.NewGoRoutines(), storage.Configuration{
-		Buffer: storage.BufferConfiguration{
-			Name: "redis_buffer",
-			Redis: storage.RedisBufferConfiguration{
-				Host:     cfg["redisHost"],
-				Password: cfg["redisPassword"],
-			},
-		},
-	})
-	require.NoError(t, err)
+	cdnUnits := newRunningStorageUnits(t, m, db.DbMap)
 	s.Units = cdnUnits
 
 	hm := handledMessage{
 		Msg: hook.Message{
-			Full: "coucou",
+			Full: "this is a message",
 		},
 		Status: "Building",
 		Line:   0,
@@ -80,8 +67,7 @@ func TestStoreNewStepLog(t *testing.T) {
 	}
 
 	content := buildMessage(hm)
-	err = s.storeLogs(context.TODO(), sdk.CDNTypeItemStepLog, hm.Signature, hm.Status, content, hm.Line)
-	require.NoError(t, err)
+	require.NoError(t, s.storeLogs(context.TODO(), sdk.CDNTypeItemStepLog, hm.Signature, hm.Status, content, hm.Line))
 
 	apiRef := sdk.CDNLogAPIRef{
 		ProjectKey:     hm.Signature.ProjectKey,
@@ -116,7 +102,7 @@ func TestStoreNewStepLog(t *testing.T) {
 	require.NoError(t, err)
 
 	require.NoError(t, err)
-	require.Equal(t, "[EMERGENCY] coucou\n", buf.String())
+	require.Equal(t, "[EMERGENCY] this is a message\n", buf.String())
 }
 
 func TestStoreLastStepLog(t *testing.T) {
@@ -128,8 +114,6 @@ func TestStoreLastStepLog(t *testing.T) {
 	db, factory, cache, cancel := test.SetupPGToCancel(t, m, sdk.TypeCDN)
 	t.Cleanup(cancel)
 
-	cfg := test.LoadTestingConf(t, sdk.TypeCDN)
-
 	cdntest.ClearItem(t, context.TODO(), m, db)
 
 	// Create cdn service
@@ -139,16 +123,7 @@ func TestStoreLastStepLog(t *testing.T) {
 		Mapper:              m,
 	}
 
-	cdnUnits, err := storage.Init(context.TODO(), m, db.DbMap, sdk.NewGoRoutines(), storage.Configuration{
-		Buffer: storage.BufferConfiguration{
-			Name: "redis_buffer",
-			Redis: storage.RedisBufferConfiguration{
-				Host:     cfg["redisHost"],
-				Password: cfg["redisPassword"],
-			},
-		},
-	})
-	require.NoError(t, err)
+	cdnUnits := newRunningStorageUnits(t, m, db.DbMap)
 	s.Units = cdnUnits
 
 	hm := handledMessage{
@@ -226,8 +201,6 @@ func TestStoreLogWrongOrder(t *testing.T) {
 	db, factory, cache, cancel := test.SetupPGToCancel(t, m, sdk.TypeCDN)
 	t.Cleanup(cancel)
 
-	cfg := test.LoadTestingConf(t, sdk.TypeCDN)
-
 	cdntest.ClearItem(t, context.TODO(), m, db)
 
 	// Create cdn service
@@ -237,21 +210,13 @@ func TestStoreLogWrongOrder(t *testing.T) {
 		Mapper:              m,
 	}
 
-	cdnUnits, err := storage.Init(context.TODO(), m, db.DbMap, sdk.NewGoRoutines(), storage.Configuration{
-		Buffer: storage.BufferConfiguration{
-			Name: "redis_buffer",
-			Redis: storage.RedisBufferConfiguration{
-				Host:     cfg["redisHost"],
-				Password: cfg["redisPassword"],
-			},
-		},
-	})
-	require.NoError(t, err)
+	cdnUnits := newRunningStorageUnits(t, m, db.DbMap)
+
 	s.Units = cdnUnits
 
 	hm := handledMessage{
 		Msg: hook.Message{
-			Full: "voici un message",
+			Full: "this is a message",
 		},
 		Status: sdk.StatusSuccess,
 		Line:   1,
@@ -342,11 +307,10 @@ func TestStoreLogWrongOrder(t *testing.T) {
 	_, err = io.Copy(buf, bufferReader)
 	require.NoError(t, err)
 
-	require.Equal(t, "[EMERGENCY] voici un message\n[EMERGENCY] voici un message\n", buf.String())
-
+	require.Equal(t, "[EMERGENCY] this is a message\n[EMERGENCY] this is a message\n", buf.String())
 }
 
-func TestStoreNewServiceLogAndAppend(t *testing.T) {
+func TestStoreNewServiceLog(t *testing.T) {
 	m := gorpmapper.New()
 	item.InitDBMapping(m)
 	storage.InitDBMapping(m)
@@ -354,8 +318,6 @@ func TestStoreNewServiceLogAndAppend(t *testing.T) {
 	log.SetLogger(t)
 	db, factory, cache, cancel := test.SetupPGToCancel(t, m, sdk.TypeCDN)
 	t.Cleanup(cancel)
-
-	cfg := test.LoadTestingConf(t, sdk.TypeCDN)
 
 	cdntest.ClearItem(t, context.TODO(), m, db)
 
@@ -366,21 +328,12 @@ func TestStoreNewServiceLogAndAppend(t *testing.T) {
 		Mapper:              m,
 	}
 
-	cdnUnits, err := storage.Init(context.TODO(), m, db.DbMap, sdk.NewGoRoutines(), storage.Configuration{
-		Buffer: storage.BufferConfiguration{
-			Name: "redis_buffer",
-			Redis: storage.RedisBufferConfiguration{
-				Host:     cfg["redisHost"],
-				Password: cfg["redisPassword"],
-			},
-		},
-	})
-	require.NoError(t, err)
+	cdnUnits := newRunningStorageUnits(t, m, db.DbMap)
 	s.Units = cdnUnits
 
 	hm := handledMessage{
 		Msg: hook.Message{
-			Full: "log1",
+			Full: "this is a message",
 		},
 		Status: "Building",
 		Line:   0,
@@ -396,8 +349,8 @@ func TestStoreNewServiceLogAndAppend(t *testing.T) {
 		},
 	}
 
-	err = s.storeLogs(context.TODO(), sdk.CDNTypeItemServiceLog, hm.Signature, hm.Status, hm.Msg.Full, 0)
-	require.NoError(t, err)
+	content := buildMessage(hm)
+	require.NoError(t, s.storeLogs(context.TODO(), sdk.CDNTypeItemServiceLog, hm.Signature, hm.Status, content, 0))
 
 	apiRef := sdk.CDNLogAPIRef{
 		ProjectKey:     hm.Signature.ProjectKey,
@@ -414,25 +367,19 @@ func TestStoreNewServiceLogAndAppend(t *testing.T) {
 	it, err := item.LoadByAPIRefHashAndType(context.TODO(), s.Mapper, db, strconv.FormatUint(hashRef, 10), sdk.CDNTypeItemServiceLog)
 	require.NoError(t, err)
 	require.NotNil(t, it)
-	t.Cleanup(func() { _ = item.DeleteByIDs(db, []string{it.ID}) })
+	defer func() { _ = item.DeleteByIDs(db, []string{it.ID}) }()
 	require.Equal(t, sdk.CDNStatusItemIncoming, it.Status)
 
-	var logs []string
-	require.NoError(t, cache.ScoredSetScan(context.Background(), cacheP.Key("cdn", "buffer", it.ID), 0, 1, &logs))
-	require.Len(t, logs, 1)
-	require.Equal(t, "log1", logs[0])
+	iu, err := storage.LoadItemUnitByUnit(context.TODO(), s.Mapper, db, s.Units.Buffer.ID(), it.ID, gorpmapper.GetOptions.WithDecryption)
+	require.NoError(t, err)
 
-	hm2 := handledMessage{
-		Msg: hook.Message{
-			Full: "log2",
-		},
-		Status:    "Building",
-		Signature: hm.Signature,
-	}
-	require.NoError(t, s.storeLogs(context.TODO(), sdk.CDNTypeItemServiceLog, hm2.Signature, hm2.Status, hm2.Msg.Full, 0))
+	bufferReader, err := s.Units.Buffer.NewReader(context.TODO(), *iu)
+	require.NoError(t, err)
 
-	require.NoError(t, cache.ScoredSetScan(context.TODO(), cacheP.Key("cdn", "buffer", it.ID), 0, 2, &logs))
-	require.Len(t, logs, 2)
-	require.Equal(t, "log1", logs[0])
-	require.Equal(t, "log2", logs[1])
+	buf := new(strings.Builder)
+	_, err = io.Copy(buf, bufferReader)
+	require.NoError(t, err)
+
+	require.NoError(t, err)
+	require.Equal(t, "[EMERGENCY] this is a message\n", buf.String())
 }

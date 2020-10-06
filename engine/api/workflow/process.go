@@ -47,11 +47,7 @@ func checkCondition(ctx context.Context, wr *sdk.WorkflowRun, conditions sdk.Wor
 		luacheck, err := luascript.NewCheck()
 		if err != nil {
 			log.Warning(ctx, "processWorkflowNodeRun> WorkflowCheckConditions error: %s", err)
-			AddWorkflowRunInfo(wr, sdk.SpawnMsg{
-				ID:   sdk.MsgWorkflowError.ID,
-				Args: []interface{}{fmt.Sprintf("Error init LUA System: %v", err)},
-				Type: sdk.MsgWorkflowError.Type,
-			})
+			AddWorkflowRunInfo(wr, sdk.SpawnMsgNew(*sdk.MsgWorkflowError, fmt.Sprintf("Error init LUA System: %v", err)))
 		}
 		luacheck.SetVariables(sdk.ParametersToMap(params))
 		errc = luacheck.Perform(conditions.LuaScript)
@@ -59,11 +55,7 @@ func checkCondition(ctx context.Context, wr *sdk.WorkflowRun, conditions sdk.Wor
 	}
 	if errc != nil {
 		log.Warning(ctx, "processWorkflowNodeRun> WorkflowCheckConditions error: %s", errc)
-		AddWorkflowRunInfo(wr, sdk.SpawnMsg{
-			ID:   sdk.MsgWorkflowError.ID,
-			Args: []interface{}{fmt.Sprintf("Error on LUA Condition: %v", errc)},
-			Type: sdk.MsgWorkflowError.Type,
-		})
+		AddWorkflowRunInfo(wr, sdk.SpawnMsgNew(*sdk.MsgWorkflowError, fmt.Sprintf("Error on LUA Condition: %v", errc)))
 		return false
 	}
 	return conditionsOK

@@ -97,45 +97,49 @@ func (wk *CurrentWorker) Parameters() []sdk.Parameter {
 	return wk.currentJob.params
 }
 
-func (wk *CurrentWorker) SendEndOfJobLog(ctx context.Context, level workerruntime.Level, logLine string, status string) {
-	msg, signature, logLevel, err := wk.prepareLog(ctx, level, logLine)
-	if err != nil {
-		log.Error(wk.GetContext(), "unable to prepare end of job log: %v", err)
-	}
-	wk.gelfLogger.logger.WithField(log.ExtraFieldSignature, signature).WithField(log.ExtraFieldLine, wk.stepLogLine).WithField(log.ExtraFieldJobStatus, status).Log(logLevel, msg)
-}
-func (wk *CurrentWorker) SendLog(ctx context.Context, level workerruntime.Level, logLine string) {
-	msg, signature, logLevel, err := wk.prepareLog(ctx, level, logLine)
+func (wk *CurrentWorker) SendLogWithStatus(ctx context.Context, level workerruntime.Level, logLine string, status string) {
+	msg, sign, err := wk.prepareLog(ctx, level, logLine)
 	if err != nil {
 		log.Error(wk.GetContext(), "unable to prepare log: %v", err)
+		return
 	}
-	wk.gelfLogger.logger.WithField(log.ExtraFieldSignature, signature).WithField(log.ExtraFieldLine, wk.stepLogLine).Log(logLevel, msg)
+	wk.gelfLogger.logger.
+		WithField(log.ExtraFieldSignature, sign).
+		WithField(log.ExtraFieldLine, wk.stepLogLine).
+		WithField(log.ExtraFieldJobStatus, status).
+		Log(msg.Level, msg.Value)
 	wk.stepLogLine++
 }
 
-func (wk *CurrentWorker) prepareLog(ctx context.Context, level workerruntime.Level, s string) (string, string, logrus.Level, error) {
+func (wk *CurrentWorker) SendLog(ctx context.Context, level workerruntime.Level, logLine string) {
+	wk.SendLogWithStatus(ctx, level, logLine, sdk.StatusBuilding)
+}
+
+func (wk *CurrentWorker) prepareLog(ctx context.Context, level workerruntime.Level, s string) (log.Message, string, error) {
+	var res log.Message
+
 	if wk.currentJob.wJob == nil {
-		return s, "", logrus.ErrorLevel, sdk.WithStack(fmt.Errorf("job is nill"))
+		return res, "", sdk.WithStack(fmt.Errorf("job is nill"))
 	}
 	if err := wk.Blur(&s); err != nil {
-		log.Error(wk.GetContext(), "unable to blur log: %v", err)
-		return s, "", logrus.ErrorLevel, sdk.WithStack(err)
+		return res, "", sdk.WrapError(err, "unable to blur log")
+	}
+
+	switch level {
+	case workerruntime.LevelDebug:
+		res.Level = logrus.DebugLevel
+	case workerruntime.LevelInfo:
+		res.Level = logrus.InfoLevel
+	case workerruntime.LevelWarn:
+		res.Level = logrus.WarnLevel
+	case workerruntime.LevelError:
+		res.Level = logrus.ErrorLevel
 	}
 
 	stepOrder, _ := workerruntime.StepOrder(ctx)
 	stepName, _ := workerruntime.StepName(ctx)
-	var logLevel logrus.Level
-	switch level {
-	case workerruntime.LevelDebug:
-		logLevel = logrus.DebugLevel
-	case workerruntime.LevelInfo:
-		logLevel = logrus.InfoLevel
-	case workerruntime.LevelWarn:
-		logLevel = logrus.WarnLevel
-	case workerruntime.LevelError:
-		logLevel = logrus.ErrorLevel
-	}
-	dataToSign := log.Signature{
+
+	res.Signature = log.Signature{
 		Worker: &log.SignatureWorker{
 			WorkerID:   wk.id,
 			WorkerName: wk.Name(),
@@ -152,11 +156,15 @@ func (wk *CurrentWorker) prepareLog(ctx context.Context, level workerruntime.Lev
 		RunID:        wk.currentJob.runID,
 		JobName:      wk.currentJob.wJob.Job.Action.Name,
 	}
-	signature, err := jws.Sign(wk.currentJob.signer, dataToSign)
+
+	res.Value = s
+
+	signature, err := jws.Sign(wk.currentJob.signer, res.Signature)
 	if err != nil {
-		return s, "", logrus.ErrorLevel, err
+		return res, "", sdk.WrapError(err, "cannot sign log message")
 	}
-	return s, signature, logLevel, nil
+
+	return res, signature, nil
 }
 
 func (wk *CurrentWorker) Name() string {

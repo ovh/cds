@@ -12,24 +12,24 @@ import (
 	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
+	"github.com/ovh/cds/sdk/telemetry"
 )
 
-func (x *RunningStorageUnits) Run(ctx context.Context, s StorageUnit) error {
-	s.Lock()
-	defer s.Unlock()
-	_, err := LoadUnitByID(ctx, x.m, x.db, s.ID())
-	if err != nil {
+func (x *RunningStorageUnits) Run(ctx context.Context, s StorageUnit, nbItem int64) error {
+	// s.Lock()
+	// defer s.Unlock()
+	if _, err := LoadUnitByID(ctx, x.m, x.db, s.ID()); err != nil {
 		return err
 	}
 
 	// Load items to sync
-	itemIDs, err := LoadAllItemIDUnknownByUnitOrderByUnitID(x.db, s.ID(), x.Buffer.ID(), 100)
+	itemIDs, err := LoadAllItemIDUnknownByUnitOrderByUnitID(x.db, s.ID(), x.Buffer.ID(), nbItem)
 	if err != nil {
 		return err
 	}
 
 	if len(itemIDs) > 0 {
-		log.Info(ctx, "storage.Run> unit %s has %d items to sync", s.Name(), len(itemIDs))
+		log.Info(ctx, "storage.Run> unit %s has %d items to sync (max: %d)", s.Name(), len(itemIDs), nbItem)
 	}
 
 	for _, id := range itemIDs {
@@ -43,7 +43,7 @@ func (x *RunningStorageUnits) Run(ctx context.Context, s StorageUnit) error {
 			if !sdk.ErrorIs(err, sdk.ErrNotFound) {
 				log.ErrorWithFields(ctx, logrus.Fields{"stack_trace": fmt.Sprintf("%+v", err)}, "%s", err)
 			}
-			tx.Rollback() // nolint
+			_ = tx.Rollback()
 			continue
 		}
 
@@ -60,14 +60,14 @@ func (x *RunningStorageUnits) Run(ctx context.Context, s StorageUnit) error {
 
 		if err := x.runItem(ctx, tx, s, it); err != nil {
 			log.ErrorWithFields(ctx, logrus.Fields{"stack_trace": fmt.Sprintf("%+v", err)}, "%s", err)
-			tx.Rollback() // nolint
+			_ = tx.Rollback()
 			continue
 		}
 
 		if err := tx.Commit(); err != nil {
 			err = sdk.WrapError(err, "unable to commit txt")
 			log.ErrorWithFields(ctx, logrus.Fields{"stack_trace": fmt.Sprintf("%+v", err)}, "%s", err)
-			tx.Rollback() // nolint
+			_ = tx.Rollback()
 			continue
 		}
 	}
@@ -75,12 +75,6 @@ func (x *RunningStorageUnits) Run(ctx context.Context, s StorageUnit) error {
 }
 
 func (x *RunningStorageUnits) runItem(ctx context.Context, tx gorpmapper.SqlExecutorWithTx, dest StorageUnit, item *sdk.CDNItem) error {
-	t0 := time.Now()
-	log.Debug("storage.runItem(%s, %s)", dest.Name(), item.ID)
-	defer func() {
-		log.Debug("storage.runItem(%s, %s): %fs", dest.Name(), item.ID, time.Since(t0).Seconds())
-	}()
-
 	iu, err := x.NewItemUnit(ctx, dest, item)
 	if err != nil {
 		return err
@@ -97,6 +91,8 @@ func (x *RunningStorageUnits) runItem(ctx context.Context, tx gorpmapper.SqlExec
 	if err != nil {
 		return err
 	}
+
+	t1 := time.Now()
 
 	// Prepare the destination
 	writer, err := dest.NewWriter(ctx, *iu)
@@ -148,13 +144,28 @@ func (x *RunningStorageUnits) runItem(ctx context.Context, tx gorpmapper.SqlExec
 
 	_ = writer.Close()
 
+	t2 := time.Now()
+
 	for err := range chanError {
 		if err != nil {
 			return err
 		}
 	}
 
-	log.Info(ctx, "item %s has been pushed to %s", item.ID, dest.Name())
+	var throughput = item.Size / t2.Sub(t1).Milliseconds()
+	if x.Metrics.StorageThroughput != nil {
+		ctxMetrics := telemetry.ContextWithTag(ctx, "storage_source", source.Name(), "storage_dest", dest.Name())
+		telemetry.Record(ctxMetrics, *x.Metrics.StorageThroughput, throughput)
+	}
+
+	log.InfoWithFields(ctx, logrus.Fields{
+		"item_apiref":               item.APIRefHash,
+		"source":                    source.Name(),
+		"destination":               dest.Name(),
+		"duration_milliseconds_num": t2.Sub(t1).Milliseconds(),
+		"item_size_num":             item.Size,
+		"throughput_num":            throughput,
+	}, "item %s has been pushed to %s (%.3f s)", item.ID, dest.Name(), t2.Sub(t1).Seconds())
 	return nil
 }
 

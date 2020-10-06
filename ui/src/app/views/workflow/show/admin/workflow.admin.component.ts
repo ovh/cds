@@ -12,7 +12,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
 import { ModalTemplate, SuiActiveModal, SuiModalService, TemplateModalConfig } from '@richardlt/ng2-semantic-ui';
 import { Project } from 'app/model/project.model';
-import { PurgeRunToDelete } from 'app/model/purge.model';
+import { RunToKeep } from 'app/model/purge.model';
 import { Workflow } from 'app/model/workflow.model';
 import { ThemeStore } from 'app/service/theme/theme.store';
 import { WorkflowRunService } from 'app/service/workflow/run/workflow.run.service';
@@ -74,7 +74,7 @@ export class WorkflowAdminComponent implements OnInit, OnDestroy {
 
     availableVariables: String;
     dryRunColumns = [];
-    dryRunDatas: Array<PurgeRunToDelete>;
+    dryRunDatas: Array<RunToKeep>;
     @ViewChild('modalDryRun') dryRunModal: ModalTemplate<boolean, boolean, void>;
     modal: SuiActiveModal<boolean, boolean, void>;
 
@@ -106,16 +106,16 @@ export class WorkflowAdminComponent implements OnInit, OnDestroy {
             });
         });
         this.dryRunColumns = [
-            <Column<PurgeRunToDelete>>{
+            <Column<RunToKeep>>{
                 name: 'run_number',
                 class: 'two',
-                selector: (r: PurgeRunToDelete) => r.num
+                selector: (r: RunToKeep) => r.num
             },
-            <Column<PurgeRunToDelete>>{
+            <Column<RunToKeep>>{
                 type: ColumnType.TEXT,
                 name: 'status',
                 class: 'two',
-                selector: (r: PurgeRunToDelete) => r.status
+                selector: (r: RunToKeep) => r.status
             }
         ];
     }

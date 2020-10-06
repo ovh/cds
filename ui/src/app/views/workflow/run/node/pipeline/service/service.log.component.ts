@@ -1,4 +1,4 @@
-import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { HttpClient } from '@angular/common/http';
 import {
     ChangeDetectionStrategy,
     ChangeDetectorRef,
@@ -12,7 +12,7 @@ import {
 } from '@angular/core';
 import { Select, Store } from '@ngxs/store';
 import * as AU from 'ansi_up';
-import { CDNLogAccess, PipelineStatus, ServiceLog } from 'app/model/pipeline.model';
+import { CDNLogLink, PipelineStatus, ServiceLog } from 'app/model/pipeline.model';
 import { WorkflowNodeJobRun } from 'app/model/workflow.run.model';
 import { WorkflowService } from 'app/service/workflow/workflow.service';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
@@ -107,9 +107,9 @@ export class WorkflowServiceLogComponent implements OnInit, OnDestroy {
             return !!f.results.find(r => r.enabled && r.paramString === JSON.stringify({ 'project_key': projectKey }));
         });
 
-        let logAccess: CDNLogAccess;
+        let logLink: CDNLogLink;
         if (cdnEnabled) {
-            logAccess = await this._workflowService.getServiceAccess(projectKey, workflowName, nodeRunId, runJobId,
+            logLink = await this._workflowService.getServiceLink(projectKey, workflowName, nodeRunId, runJobId,
                 this.serviceName).toPromise();
         }
 
@@ -122,15 +122,12 @@ export class WorkflowServiceLogComponent implements OnInit, OnDestroy {
             this._cd.markForCheck();
         };
 
-        if (!cdnEnabled || !logAccess.exists) {
+        if (!cdnEnabled || !logLink.exists) {
             const serviceLog = await this._workflowService.getServiceLog(projectKey, workflowName,
                 nodeRunId, runJobId, this.serviceName).toPromise();
             callback(serviceLog);
         } else {
-            const data = await this._http.get('./cdscdn' + logAccess.download_path, {
-                responseType: 'text',
-                headers: new HttpHeaders({ 'Authorization': `Bearer ${logAccess.token}` })
-            }).toPromise();
+            const data = await this._http.get('./cdscdn' + logLink.download_path, { responseType: 'text' }).toPromise();
             callback(<ServiceLog>{ val: data });
         }
 
@@ -144,14 +141,12 @@ export class WorkflowServiceLogComponent implements OnInit, OnDestroy {
         this._ngZone.runOutsideAngular(() => {
             this.pollingSubscription = Observable.interval(2000)
                 .mergeMap(_ => {
-                    if (!cdnEnabled || !logAccess.exists) {
+                    if (!cdnEnabled || !logLink.exists) {
                         return this._workflowService.getServiceLog(projectKey, workflowName, nodeRunId,
                             runJobId, this.serviceName);
                     }
-                    return this._http.get('./cdscdn' + logAccess.download_path, {
-                        responseType: 'text',
-                        headers: new HttpHeaders({ 'Authorization': `Bearer ${logAccess.token}` })
-                    }).map(data => <ServiceLog>{ val: data });
+                    return this._http.get('./cdscdn' + logLink.download_path, { responseType: 'text' })
+                        .map(data => <ServiceLog>{ val: data });
                 })
                 .subscribe(serviceLogs => {
                     this.zone.run(() => {

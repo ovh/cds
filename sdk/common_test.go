@@ -7,6 +7,11 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func TestStringIsAscii(t *testing.T) {
+	assert.True(t, StringIsAscii("aaa"))
+	assert.False(t, StringIsAscii("aaa 🚀"))
+}
+
 func TestRemoveNotPrintableChar(t *testing.T) {
 	var tests = []struct {
 		in  string

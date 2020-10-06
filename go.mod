@@ -11,7 +11,7 @@ require (
 	github.com/Microsoft/go-winio v0.4.7 // indirect
 	github.com/Netflix/go-expect v0.0.0-20180928190340-9d1f4485533b // indirect
 	github.com/Nvveen/Gotty v0.0.0-20120604004816-cd527374f1e5 // indirect
-	github.com/Shopify/sarama v1.19.0
+	github.com/Shopify/sarama v1.27.0
 	github.com/alecthomas/jsonschema v0.0.0-20200123075451-43663a393755
 	github.com/andygrunwald/go-gerrit v0.0.0-20181207071854-19ef3e9332a4
 	github.com/aws/aws-sdk-go v1.19.11
@@ -29,10 +29,8 @@ require (
 	github.com/docker/go-units v0.3.2 // indirect
 	github.com/donovanhide/eventsource v0.0.0-20170630084216-b8f31a59085e // indirect
 	github.com/dsnet/compress v0.0.0-20171208185109-cc9eb1d7ad76 // indirect
-	github.com/eapache/go-resiliency v1.1.0
+	github.com/eapache/go-resiliency v1.2.0
 	github.com/fatih/color v1.7.0
-	github.com/fortytw2/leaktest v1.2.0 // indirect
-	github.com/frankban/quicktest v1.6.0 // indirect
 	github.com/fsamin/go-dump v1.0.9
 	github.com/fsamin/go-repo v0.1.8
 	github.com/fsamin/go-shredder v0.0.0-20180118184739-b2488aedb5be
@@ -44,7 +42,6 @@ require (
 	github.com/go-sql-driver/mysql v1.4.1 // indirect
 	github.com/golang/mock v1.4.4
 	github.com/golang/protobuf v1.3.2
-	github.com/google/go-cmp v0.4.0 // indirect
 	github.com/googleapis/gnostic v0.1.0 // indirect
 	github.com/gophercloud/gophercloud v0.0.0-20190504011306-6f9faf57fddc
 	github.com/gorhill/cronexpr v0.0.0-20161205141322-d520615e531a
@@ -61,6 +58,7 @@ require (
 	github.com/inconshreveable/go-update v0.0.0-20160112193335-8152e7eb6ccf
 	github.com/inconshreveable/mousetrap v1.0.0 // indirect
 	github.com/itsjamie/gin-cors v0.0.0-20160420130702-97b4a9da7933
+	github.com/jordan-wright/email v4.0.1-0.20200917010138-e1c00e156980+incompatible
 	github.com/kardianos/osext v0.0.0-20170510131534-ae77be60afb1
 	github.com/kballard/go-shellquote v0.0.0-20180428030007-95032a82bc51 // indirect
 	github.com/keybase/go-crypto v0.0.0-20181127160227-255a5089e85a
@@ -98,14 +96,12 @@ require (
 	github.com/pborman/uuid v0.0.0-20170612153648-e790cca94e6c
 	github.com/pelletier/go-toml v1.8.0
 	github.com/peterbourgon/diskv v2.0.1+incompatible // indirect
-	github.com/pierrec/lz4 v2.3.0+incompatible // indirect
 	github.com/pkg/browser v0.0.0-20170505125900-c90ca0c84f15
 	github.com/pkg/errors v0.8.1
 	github.com/poy/onpar v0.0.0-20190519213022-ee068f8ea4d1 // indirect
 	github.com/pquerna/cachecontrol v0.0.0-20200819021114-67c6ae64274f // indirect
 	github.com/prometheus/client_golang v1.1.0 // indirect
 	github.com/prometheus/client_model v0.0.0-20190812154241-14fe0d1b01d4 // indirect
-	github.com/rcrowley/go-metrics v0.0.0-20190826022208-cac0b30c2563 // indirect
 	github.com/robfig/cron/v3 v3.0.1
 	github.com/rubenv/sql-migrate v0.0.0-20160620083229-6f4757563362
 	github.com/satori/go.uuid v1.2.0
@@ -135,7 +131,7 @@ require (
 	go.etcd.io/bbolt v1.3.3 // indirect
 	go.opencensus.io v0.22.0
 	golang.org/x/crypto v0.0.0-20200709230013-948cd5f35899
-	golang.org/x/net v0.0.0-20190620200207-3b0461eec859
+	golang.org/x/net v0.0.0-20200528225125-3c3fba18258b
 	golang.org/x/oauth2 v0.0.0-20190604053449-0f29369cfe45
 	golang.org/x/sys v0.0.0-20200724161237-0e2f3a69832c
 	golang.org/x/text v0.3.2
@@ -176,3 +172,5 @@ replace github.com/ovh/cds/tools/smtpmock => ./tools/smtpmock
 replace github.com/keybase/go-keychain => github.com/yesnault/go-keychain v0.0.0-20190829085436-f78f7ae28786
 
 replace github.com/coreos/etcd v3.3.10+incompatible => github.com/coreos/etcd v3.3.13+incompatible
+
+replace github.com/jordan-wright/email => github.com/yesnault/email v0.0.0-20201006074758-5298d270ded2

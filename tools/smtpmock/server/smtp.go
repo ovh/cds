@@ -4,9 +4,11 @@ import (
 	"context"
 	"fmt"
 	"io/ioutil"
+	"mime/quotedprintable"
+	"strings"
 
 	"github.com/fsamin/smtp"
-	
+
 	"github.com/ovh/cds/tools/smtpmock"
 )
 
@@ -32,6 +34,13 @@ func smtpHandler(envelope *smtp.Envelope) error {
 	}
 
 	m.Content = string(btes)
+
+	r := quotedprintable.NewReader(strings.NewReader(m.Content))
+	b, err := ioutil.ReadAll(r)
+	if err != nil {
+		return err
+	}
+	m.ContentDecoded = string(b)
 
 	StoreAddMessage(m)
 

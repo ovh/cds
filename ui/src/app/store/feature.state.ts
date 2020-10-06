@@ -43,11 +43,14 @@ export class FeatureState {
     addFeatureResult(ctx: StateContext<FeatureStateModel>, action: actionFeature.AddFeatureResult) {
         const state = ctx.getState();
 
-        let feature = cloneDeep(state.features.find(f => f.key === action.payload.key));
-        if (!feature) {
-            feature = <FeatureResults>{ key: action.payload.key, results: [] };
+        let feature = <FeatureResults>{ key: action.payload.key, results: [] };
+
+        let existingFeature = state.features.find(f => f.key === action.payload.key);
+        if (existingFeature) {
+            feature.results = existingFeature.results.filter(r => r.paramString !== action.payload.result.paramString);
+
         }
-        feature.results = feature.results.filter(r => r.paramString !== action.payload.result.paramString).concat(action.payload.result);
+        feature.results.push(action.payload.result)
 
         ctx.setState({
             ...state,

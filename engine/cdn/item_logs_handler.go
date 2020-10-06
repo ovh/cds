@@ -3,12 +3,9 @@ package cdn
 import (
 	"context"
 	"net/http"
-	"strconv"
-	"strings"
 
 	"github.com/gorilla/mux"
 
-	"github.com/ovh/cds/engine/authentication"
 	"github.com/ovh/cds/engine/cdn/item"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
@@ -69,15 +66,12 @@ func (s *Service) getItemDownloadHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		itemType := sdk.CDNItemType(vars["type"])
-		if err := itemType.Validate(); err != nil {
-			return err
-		}
-		token, err := s.checkAuth(r)
-		if err != nil {
-			return err
-		}
+		apiRef := vars["apiRef"]
 
-		return s.downloadItem(ctx, itemType, token.APIRefHash, w)
+		// User can give a refresh delay in seconds, Refresh header value will be set if item is not complete
+		refreshDelay := service.FormInt64(r, "refresh")
+
+		return s.downloadItem(ctx, itemType, apiRef, refreshDelay, w)
 	}
 }
 
@@ -88,26 +82,19 @@ func (s *Service) getItemLogsLinesHandler() service.Handler {
 		if !itemType.IsLog() {
 			return sdk.NewErrorFrom(sdk.ErrWrongRequest, "invalid item log type")
 		}
-		token, err := s.checkAuth(r)
-		if err != nil {
-			return err
-		}
 
-		offset, err := strconv.ParseInt(r.FormValue("offset"), 10, 64)
-		if err != nil {
-			offset = 0 // offset can be lower than 0 if we want the n last lines
-		}
-		count, err := strconv.ParseInt(r.FormValue("count"), 10, 64)
-		if err != nil || count < 0 {
-			count = 100
-		}
+		apiRef := vars["apiRef"]
 
-		rc, _, err := s.getItemLogValue(ctx, itemType, token.APIRefHash, sdk.CDNReaderFormatJSON, offset, uint(count))
+		// offset can be lower than 0 if we want the n last lines
+		offset := service.FormInt64(r, "offset")
+		count := service.FormUInt(r, "count")
+
+		_, rc, _, err := s.getItemLogValue(ctx, itemType, apiRef, sdk.CDNReaderFormatJSON, offset, count)
 		if err != nil {
 			return err
 		}
 		if rc == nil {
-			return sdk.WrapError(sdk.ErrNotFound, "no storage found that contains given item %s", token.APIRefHash)
+			return sdk.WrapError(sdk.ErrNotFound, "no storage found that contains given item %s", apiRef)
 		}
 
 		return service.Write(w, rc, http.StatusOK, "application/json")
@@ -127,22 +114,4 @@ func (s *Service) getSizeByProjectHandler() service.Handler {
 
 		return service.WriteJSON(w, size, http.StatusOK)
 	}
-}
-
-func (s *Service) checkAuth(r *http.Request) (sdk.CDNAuthToken, error) {
-	vars := mux.Vars(r)
-	apiRef := vars["apiRef"]
-	tokenRaw := strings.TrimPrefix(r.Header.Get("Authorization"), "Bearer ")
-
-	// Check Authorization header
-	var token sdk.CDNAuthToken
-	v := authentication.NewVerifier(s.ParsedAPIPublicKey)
-	if err := v.VerifyJWS(tokenRaw, &token); err != nil {
-		return token, sdk.NewErrorWithStack(err, sdk.ErrUnauthorized)
-	}
-	if token.APIRefHash != apiRef {
-		return token, sdk.WithStack(sdk.ErrNotFound)
-	}
-
-	return token, nil
 }

@@ -7,14 +7,12 @@ import (
 	"strconv"
 
 	"github.com/go-gorp/gorp"
-	"go.opencensus.io/stats"
 
 	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/engine/cdn/redis"
 	"github.com/ovh/cds/engine/cdn/storage"
 	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/telemetry"
 )
 
 var keyBuffer = cache.Key("cdn", "buffer")
@@ -26,15 +24,14 @@ type Redis struct {
 }
 
 var (
-	_           storage.BufferUnit = new(Redis)
-	metricsSize                    = stats.Int64("cdn/storage/redis/size", "redis size", stats.UnitDimensionless)
+	_ storage.BufferUnit = new(Redis)
 )
 
 func init() {
 	storage.RegisterDriver("redis", new(Redis))
 }
 
-func (s *Redis) Init(ctx context.Context, _ *sdk.GoRoutines, cfg interface{}) error {
+func (s *Redis) Init(ctx context.Context, cfg interface{}) error {
 	config, is := cfg.(storage.RedisBufferConfiguration)
 	if !is {
 		return sdk.WithStack(fmt.Errorf("invalid configuration: %T", cfg))
@@ -43,10 +40,6 @@ func (s *Redis) Init(ctx context.Context, _ *sdk.GoRoutines, cfg interface{}) er
 	var err error
 	s.store, err = cache.New(s.config.Host, s.config.Password, 60)
 	if err != nil {
-		return err
-	}
-
-	if err := telemetry.InitMetricsInt64(ctx, metricsSize); err != nil {
 		return err
 	}
 
@@ -61,10 +54,6 @@ func (s *Redis) ItemExists(ctx context.Context, m *gorpmapper.Mapper, db gorp.Sq
 func (s *Redis) Add(i sdk.CDNItemUnit, index uint, value string) error {
 	value = strconv.Itoa(int(index)) + "#" + value
 	return s.store.ScoredSetAdd(context.Background(), cache.Key(keyBuffer, i.ItemID), value, float64(index))
-}
-
-func (s *Redis) Append(i sdk.CDNItemUnit, value string) error {
-	return s.store.ScoredSetAppend(context.Background(), cache.Key(keyBuffer, i.ItemID), value)
 }
 
 func (s *Redis) Card(i sdk.CDNItemUnit) (int, error) {

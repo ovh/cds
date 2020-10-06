@@ -65,7 +65,7 @@ func (api *API) postAuthBuiltinSigninHandler() service.Handler {
 		}
 
 		// Set a cookie with the jwt token
-		api.SetCookie(w, jwtCookieName, jwt, session.ExpireAt)
+		api.SetCookie(w, service.JWTCookieName, jwt, session.ExpireAt)
 
 		usr, err := user.LoadByID(ctx, tx, consumer.AuthentifiedUserID)
 		if err != nil {

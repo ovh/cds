@@ -282,7 +282,7 @@ func (api *API) postAuthSigninHandler() service.Handler {
 		}
 
 		// Set a cookie with the jwt token
-		api.SetCookie(w, jwtCookieName, jwt, session.ExpireAt)
+		api.SetCookie(w, service.JWTCookieName, jwt, session.ExpireAt)
 
 		// Prepare http response
 		resp := sdk.AuthConsumerSigninResponse{
@@ -304,7 +304,7 @@ func (api *API) postAuthSignoutHandler() service.Handler {
 		}
 
 		// Delete the jwt cookie value
-		api.UnsetCookie(w, jwtCookieName)
+		api.UnsetCookie(w, service.JWTCookieName)
 
 		return service.WriteJSON(w, nil, http.StatusOK)
 	}
@@ -347,7 +347,7 @@ func (api *API) postAuthDetachHandler() service.Handler {
 
 		// If we just removed the current consumer, clean http cookie.
 		if consumer.ID == currentConsumer.ID {
-			api.UnsetCookie(w, jwtCookieName)
+			api.UnsetCookie(w, service.JWTCookieName)
 		}
 
 		return service.WriteJSON(w, nil, http.StatusOK)

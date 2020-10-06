@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"strings"
 	"testing"
 
@@ -32,8 +31,6 @@ func TestGetItemValue(t *testing.T) {
 	db, factory, cache, cancel := test.SetupPGToCancel(t, m, sdk.TypeCDN)
 	t.Cleanup(cancel)
 
-	cfg := test.LoadTestingConf(t, sdk.TypeCDN)
-
 	cdntest.ClearItem(t, context.TODO(), m, db)
 
 	// Create cdn service
@@ -42,30 +39,10 @@ func TestGetItemValue(t *testing.T) {
 		Cache:               cache,
 		Mapper:              m,
 	}
-
-	tmpDir, err := ioutil.TempDir("", t.Name()+"-cdn-1-*")
-	require.NoError(t, err)
-
-	cdnUnits, err := storage.Init(context.TODO(), m, db.DbMap, sdk.NewGoRoutines(), storage.Configuration{
-		Buffer: storage.BufferConfiguration{
-			Name: "redis_buffer",
-			Redis: storage.RedisBufferConfiguration{
-				Host:     cfg["redisHost"],
-				Password: cfg["redisPassword"],
-			},
-		},
-		Storages: []storage.StorageConfiguration{
-			{
-				Name: "local_storage",
-				Cron: "* * * * * ?",
-				Local: &storage.LocalStorageConfiguration{
-					Path: tmpDir,
-				},
-			},
-		},
-	})
-	require.NoError(t, err)
+	cfg := test.LoadTestingConf(t, sdk.TypeCDN)
+	cdnUnits := newRunningStorageUnits(t, m, s.DBConnectionFactory.GetDBMap(m)())
 	s.Units = cdnUnits
+	var err error
 	s.LogCache, err = lru.NewRedisLRU(db.DbMap, 1000, cfg["redisHost"], cfg["redisPassword"])
 	require.NoError(t, err)
 	require.NoError(t, s.LogCache.Clear())
@@ -118,7 +95,7 @@ func TestGetItemValue(t *testing.T) {
 	require.NoError(t, storage.InsertItemUnit(context.TODO(), s.Mapper, db, itemUnit))
 
 	// Get From Buffer
-	rc, _, err := s.getItemLogValue(context.Background(), sdk.CDNTypeItemStepLog, apiRefhash, sdk.CDNReaderFormatText, 3, 5)
+	_, rc, _, err := s.getItemLogValue(context.Background(), sdk.CDNTypeItemStepLog, apiRefhash, sdk.CDNReaderFormatText, 3, 5)
 	require.NoError(t, err)
 
 	buf := new(strings.Builder)
@@ -131,7 +108,7 @@ func TestGetItemValue(t *testing.T) {
 	require.Equal(t, 0, n)
 
 	// Sync FS
-	require.NoError(t, cdnUnits.Run(context.TODO(), cdnUnits.Storages[0]))
+	require.NoError(t, cdnUnits.Run(context.TODO(), cdnUnits.Storages[0], 100))
 
 	_, err = storage.LoadItemUnitByUnit(context.TODO(), s.Mapper, db, s.Units.Storages[0].ID(), it.ID)
 	require.NoError(t, err)
@@ -139,7 +116,7 @@ func TestGetItemValue(t *testing.T) {
 	require.NoError(t, storage.DeleteItemUnit(s.Mapper, db, itemUnit))
 
 	// Get From Storage
-	rc2, _, err := s.getItemLogValue(context.Background(), sdk.CDNTypeItemStepLog, apiRefhash, sdk.CDNReaderFormatText, 3, 3)
+	_, rc2, _, err := s.getItemLogValue(context.Background(), sdk.CDNTypeItemStepLog, apiRefhash, sdk.CDNReaderFormatText, 3, 3)
 	require.NoError(t, err)
 
 	buf2 := new(strings.Builder)
@@ -152,7 +129,7 @@ func TestGetItemValue(t *testing.T) {
 	require.Equal(t, 1, n)
 
 	// Get all from cache
-	rc3, _, err := s.getItemLogValue(context.Background(), sdk.CDNTypeItemStepLog, apiRefhash, sdk.CDNReaderFormatText, 0, 0)
+	_, rc3, _, err := s.getItemLogValue(context.Background(), sdk.CDNTypeItemStepLog, apiRefhash, sdk.CDNReaderFormatText, 0, 0)
 	require.NoError(t, err)
 
 	buf3 := new(strings.Builder)
@@ -161,7 +138,7 @@ func TestGetItemValue(t *testing.T) {
 	require.Equal(t, "Line 0\nLine 1\nLine 2\nLine 3\nLine 4\nLine 5\nLine 6\nLine 7\nLine 8\nLine 9\nLine 10\n", buf3.String())
 
 	// Get lines from end
-	rc4, _, err := s.getItemLogValue(context.Background(), sdk.CDNTypeItemStepLog, apiRefhash, sdk.CDNReaderFormatText, -3, 2)
+	_, rc4, _, err := s.getItemLogValue(context.Background(), sdk.CDNTypeItemStepLog, apiRefhash, sdk.CDNReaderFormatText, -3, 2)
 	require.NoError(t, err)
 
 	buf4 := new(strings.Builder)
@@ -170,7 +147,7 @@ func TestGetItemValue(t *testing.T) {
 	require.Equal(t, "Line 8\nLine 9\n", buf4.String())
 
 	// Get lines from end in JSON
-	rc5, _, err := s.getItemLogValue(context.Background(), sdk.CDNTypeItemStepLog, apiRefhash, sdk.CDNReaderFormatJSON, -3, 2)
+	_, rc5, _, err := s.getItemLogValue(context.Background(), sdk.CDNTypeItemStepLog, apiRefhash, sdk.CDNReaderFormatJSON, -3, 2)
 	require.NoError(t, err)
 
 	buf5 := new(strings.Builder)
@@ -199,17 +176,9 @@ func TestGetItemValue_ThousandLines(t *testing.T) {
 		Mapper:              m,
 	}
 
-	cdnUnits, err := storage.Init(context.TODO(), m, db.DbMap, sdk.NewGoRoutines(), storage.Configuration{
-		Buffer: storage.BufferConfiguration{
-			Name: "redis_buffer",
-			Redis: storage.RedisBufferConfiguration{
-				Host:     cfg["redisHost"],
-				Password: cfg["redisPassword"],
-			},
-		},
-	})
-	require.NoError(t, err)
+	cdnUnits := newRunningStorageUnits(t, m, db.DbMap)
 	s.Units = cdnUnits
+	var err error
 	s.LogCache, err = lru.NewRedisLRU(db.DbMap, 1000, cfg["redisHost"], cfg["redisPassword"])
 	require.NoError(t, err)
 	require.NoError(t, s.LogCache.Clear())
@@ -254,7 +223,7 @@ func TestGetItemValue_ThousandLines(t *testing.T) {
 	require.NoError(t, storage.InsertItemUnit(context.TODO(), s.Mapper, db, itemUnit))
 
 	// Get From Buffer
-	rc, _, err := s.getItemLogValue(context.Background(), sdk.CDNTypeItemStepLog, apiRefhash, sdk.CDNReaderFormatJSON, 773, 200)
+	_, rc, _, err := s.getItemLogValue(context.Background(), sdk.CDNTypeItemStepLog, apiRefhash, sdk.CDNReaderFormatJSON, 773, 200)
 	require.NoError(t, err)
 
 	buf := new(bytes.Buffer)
@@ -269,7 +238,7 @@ func TestGetItemValue_ThousandLines(t *testing.T) {
 	require.Equal(t, int64(972), lines[199].Number)
 	require.Equal(t, "Line 972\n", lines[199].Value)
 
-	rc, _, err = s.getItemLogValue(context.Background(), sdk.CDNTypeItemStepLog, apiRefhash, sdk.CDNReaderFormatJSON, 773, 0)
+	_, rc, _, err = s.getItemLogValue(context.Background(), sdk.CDNTypeItemStepLog, apiRefhash, sdk.CDNReaderFormatJSON, 773, 0)
 	require.NoError(t, err)
 
 	buf = new(bytes.Buffer)

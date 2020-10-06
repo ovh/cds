@@ -1,6 +1,6 @@
 
 
-export class PurgeRunToDelete {
+export class RunToKeep {
     id: number;
     status: string;
     num: string;

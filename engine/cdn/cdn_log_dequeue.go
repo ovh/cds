@@ -39,23 +39,7 @@ func (s *Service) dequeueJobLogs(ctx context.Context) error {
 			if hm.Signature.Worker == nil {
 				continue
 			}
-			currentLog := buildMessage(hm)
-			cpt := 0
-			for {
-				if err := s.storeLogs(ctx, sdk.CDNTypeItemStepLog, hm.Signature, hm.Status, currentLog, hm.Line); err != nil {
-					if sdk.ErrorIs(err, sdk.ErrLocked) && cpt < 10 {
-						cpt++
-						time.Sleep(250 * time.Millisecond)
-						continue
-					}
-					err = sdk.WrapError(err, "unable to store step log")
-					log.ErrorWithFields(ctx, logrus.Fields{
-						"stack_trace": fmt.Sprintf("%+v", err),
-					}, "%s", err)
-					break
-				}
-				break
-			}
+			s.storeLogsWithRetry(ctx, sdk.CDNTypeItemStepLog, hm)
 		}
 	}
 }
@@ -77,19 +61,29 @@ func (s *Service) dequeueServiceLogs(ctx context.Context) error {
 				continue
 			}
 			cancel()
-			if hm.Msg.Full == "" {
+			if hm.Signature.Service == nil {
 				continue
 			}
-			if !strings.HasSuffix(hm.Msg.Full, "\n") {
-				hm.Msg.Full += "\n"
-			}
-			if err := s.storeLogs(ctx, sdk.CDNTypeItemServiceLog, hm.Signature, hm.Status, hm.Msg.Full, 0); err != nil {
-				err = sdk.WrapError(err, "unable to store service log")
-				log.ErrorWithFields(ctx, logrus.Fields{
-					"stack_trace": fmt.Sprintf("%+v", err),
-				}, "%s", err)
-			}
+			s.storeLogsWithRetry(ctx, sdk.CDNTypeItemServiceLog, hm)
 		}
+	}
+}
+
+func (s *Service) storeLogsWithRetry(ctx context.Context, itemType sdk.CDNItemType, hm handledMessage) {
+	currentLog := buildMessage(hm)
+	cpt := 0
+	for {
+		if err := s.storeLogs(ctx, itemType, hm.Signature, hm.Status, currentLog, hm.Line); err != nil {
+			if sdk.ErrorIs(err, sdk.ErrLocked) && cpt < 10 {
+				cpt++
+				time.Sleep(250 * time.Millisecond)
+				continue
+			}
+			err = sdk.WrapError(err, "unable to store log")
+			log.ErrorWithFields(ctx, logrus.Fields{"stack_trace": fmt.Sprintf("%+v", err)}, "%s", err)
+			break
+		}
+		break
 	}
 }
 
@@ -110,15 +104,8 @@ func (s *Service) storeLogs(ctx context.Context, itemType sdk.CDNItemType, signa
 		return nil
 	}
 
-	switch itemType {
-	case sdk.CDNTypeItemStepLog:
-		if err := s.Units.Buffer.Add(*iu, uint(line), content); err != nil {
-			return err
-		}
-	case sdk.CDNTypeItemServiceLog:
-		if err := s.Units.Buffer.Append(*iu, content); err != nil {
-			return err
-		}
+	if err := s.Units.Buffer.Add(*iu, uint(line), content); err != nil {
+		return err
 	}
 
 	maxLineKey := cache.Key("cdn", "log", "size", it.ID)

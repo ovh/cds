@@ -431,8 +431,7 @@ func (api *API) stopWorkflowRun(ctx context.Context, p *sdk.Project, run *sdk.Wo
 	}
 	defer tx.Rollback() //nolint
 
-	spwnMsg := sdk.SpawnMsg{ID: sdk.MsgWorkflowNodeStop.ID, Args: []interface{}{ident.GetUsername()}, Type: sdk.MsgWorkflowNodeStop.Type}
-
+	spwnMsg := sdk.SpawnMsgNew(*sdk.MsgWorkflowNodeStop, ident.GetUsername())
 	stopInfos := sdk.SpawnInfo{
 		APITime:     time.Now(),
 		RemoteTime:  time.Now(),
@@ -1051,11 +1050,7 @@ func (api *API) initWorkflowRun(ctx context.Context, projKey string, wf *sdk.Wor
 			workflowSecrets, asCodeInfosMsg, err = workflow.CreateFromRepository(ctx, api.mustDB(), api.Cache, p1, wf, opts, *c, project.DecryptWithBuiltinKey)
 			infos := make([]sdk.SpawnMsg, len(asCodeInfosMsg))
 			for i, msg := range asCodeInfosMsg {
-				infos[i] = sdk.SpawnMsg{
-					ID:   msg.ID,
-					Args: msg.Args,
-					Type: msg.Type,
-				}
+				infos[i] = msg.ToSpawnMsg()
 			}
 			workflow.AddWorkflowRunInfo(wfRun, infos...)
 			if err != nil {
@@ -1272,10 +1267,7 @@ func failInitWorkflowRun(ctx context.Context, db *gorp.DbMap, wfRun *sdk.Workflo
 
 	var info sdk.SpawnMsg
 	if sdk.ErrorIs(err, sdk.ErrConditionsNotOk) {
-		info = sdk.SpawnMsg{
-			ID:   sdk.MsgWorkflowConditionError.ID,
-			Type: sdk.MsgWorkflowConditionError.Type,
-		}
+		info = sdk.SpawnMsgNew(*sdk.MsgWorkflowConditionError)
 		if len(wfRun.WorkflowNodeRuns) == 0 {
 			wfRun.Status = sdk.StatusNeverBuilt
 		}
@@ -1288,11 +1280,7 @@ func failInitWorkflowRun(ctx context.Context, db *gorp.DbMap, wfRun *sdk.Workflo
 		}
 		log.ErrorWithFields(ctx, fields, "failInitWorkflowRun error: %v", err)
 		wfRun.Status = sdk.StatusFail
-		info = sdk.SpawnMsg{
-			ID:   sdk.MsgWorkflowError.ID,
-			Args: []interface{}{httpErr.Error()},
-			Type: sdk.MsgWorkflowError.Type,
-		}
+		info = sdk.SpawnMsgNew(*sdk.MsgWorkflowError, httpErr)
 	}
 
 	workflow.AddWorkflowRunInfo(wfRun, info)

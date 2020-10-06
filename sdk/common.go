@@ -267,6 +267,15 @@ func (s *Int64Slice) Remove(v int64) {
 	*s = filtered
 }
 
+func StringIsAscii(s string) bool {
+	for _, r := range s {
+		if r > unicode.MaxASCII {
+			return false
+		}
+	}
+	return true
+}
+
 func RemoveNotPrintableChar(in string) string {
 	m := func(r rune) rune {
 		switch {

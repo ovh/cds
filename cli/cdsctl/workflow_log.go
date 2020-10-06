@@ -295,12 +295,12 @@ func workflowLogDownloadRun(v cli.Values) error {
 		}
 
 		// If cdn logs is enabled for current project, first check if logs can be downloaded from it
-		var access *sdk.CDNLogAccess
+		var link *sdk.CDNLogLink
 		if feature.Enabled {
 			if log.detailType == workflowLogDetailTypeService {
-				access, err = client.WorkflowNodeRunJobServiceAccess(projectKey, workflowName, log.runID, log.jobID, log.serviceName)
+				link, err = client.WorkflowNodeRunJobServiceLink(context.Background(), projectKey, workflowName, log.runID, log.jobID, log.serviceName)
 			} else {
-				access, err = client.WorkflowNodeRunJobStepAccess(projectKey, workflowName, log.runID, log.jobID, log.stepOrder)
+				link, err = client.WorkflowNodeRunJobStepLink(context.Background(), projectKey, workflowName, log.runID, log.jobID, log.stepOrder)
 			}
 			if err != nil {
 				return err
@@ -308,22 +308,20 @@ func workflowLogDownloadRun(v cli.Values) error {
 		}
 
 		var data []byte
-		if access != nil && access.Exists {
-			data, _, _, err = client.Request(context.Background(), http.MethodGet, access.CDNURL+access.DownloadPath, nil, func(r *http.Request) {
-				r.Header.Add("Authorization", "Bearer "+access.Token)
-			})
+		if link != nil && link.Exists {
+			data, _, _, err = client.Request(context.Background(), http.MethodGet, link.CDNURL+link.DownloadPath, nil)
 			if err != nil {
 				return err
 			}
 		} else {
 			if log.detailType == workflowLogDetailTypeService {
-				serviceLog, err := client.WorkflowNodeRunJobServiceLog(projectKey, workflowName, log.runID, log.jobID, log.serviceName)
+				serviceLog, err := client.WorkflowNodeRunJobServiceLog(context.Background(), projectKey, workflowName, log.runID, log.jobID, log.serviceName)
 				if err != nil {
 					return err
 				}
 				data = []byte(serviceLog.Val)
 			} else {
-				buildState, err := client.WorkflowNodeRunJobStepLog(projectKey, workflowName, log.runID, log.jobID, log.stepOrder)
+				buildState, err := client.WorkflowNodeRunJobStepLog(context.Background(), projectKey, workflowName, log.runID, log.jobID, log.stepOrder)
 				if err != nil {
 					return err
 				}

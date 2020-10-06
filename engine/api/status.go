@@ -23,13 +23,6 @@ import (
 	"github.com/ovh/cds/sdk/telemetry"
 )
 
-// VersionHandler returns version of current uservice
-func VersionHandler() service.Handler {
-	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		return service.WriteJSON(w, sdk.VersionCurrent(), http.StatusOK)
-	}
-}
-
 // Status returns status, implements interface service.Service
 func (api *API) Status(ctx context.Context) *sdk.MonitoringStatus {
 	m := api.NewMonitoringStatus()

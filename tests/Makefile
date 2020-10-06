@@ -1,4 +1,5 @@
 define MINIO_CONFIG
+export HOSTNAME=$$(hostname)
 export AWS_DEFAULT_REGION=us-east-1
 export S3_BUCKET=cds-it
 export MINIO_ACCESS_KEY=AKIAIOSFODNN7EXAMPLE
@@ -37,7 +38,6 @@ minio_reset_bucket:
 
 
 test-docker-compose:
-	@export HOSTNAME=`hostname` && \
 	docker-compose up --no-recreate -d cds-db cds-cache elasticsearch smtpmocksrv && \
 	sleep 5	&& \
 	docker-compose up --no-recreate cds-migrate && \

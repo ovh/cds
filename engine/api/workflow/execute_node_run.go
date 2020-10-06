@@ -368,11 +368,7 @@ func releaseMutex(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store ca
 	}
 
 	// Add a spawn info on the workflow run
-	AddWorkflowRunInfo(workflowRun, sdk.SpawnMsg{
-		ID:   sdk.MsgWorkflowNodeMutexRelease.ID,
-		Args: []interface{}{waitingRun.WorkflowNodeName},
-		Type: sdk.MsgWorkflowNodeMutexRelease.Type,
-	})
+	AddWorkflowRunInfo(workflowRun, sdk.SpawnMsgNew(*sdk.MsgWorkflowNodeMutexRelease, waitingRun.WorkflowNodeName))
 	if err := UpdateWorkflowRun(ctx, db, workflowRun); err != nil {
 		return nil, sdk.WrapError(err, "unable to update workflow run %d after mutex release", workflowRun.ID)
 	}

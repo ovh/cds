@@ -21,7 +21,7 @@ func isGroupAdmin(ctx context.Context, g *sdk.Group) bool {
 	}
 	member := g.IsMember(c.GetGroupIDs())
 	admin := g.IsAdmin(*c.AuthentifiedUser)
-	log.Debug("api.isGroupAdmin> member: %t admin: %t", member, admin)
+	log.Debug("api.isGroupAdmin> member:%t admin:%t", member, admin)
 	return member && admin
 }
 

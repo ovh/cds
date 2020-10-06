@@ -26,6 +26,9 @@ type KafkaConfig struct {
 	Password        string
 	Topic           string
 	MaxMessageByte  int
+	DisableTLS      bool
+	DisableSASL     bool
+	ClientID        string
 }
 
 // initialize returns broker, isInit and err if
@@ -36,15 +39,13 @@ func (c *KafkaClient) initialize(ctx context.Context, options interface{}) (Brok
 	}
 
 	if conf.BrokerAddresses == "" ||
-		conf.User == "" ||
-		conf.Password == "" ||
 		conf.Topic == "" {
 		return nil, fmt.Errorf("initKafka> Invalid Kafka Configuration")
 	}
 	c.options = conf
 
 	if err := c.initProducer(); err != nil {
-		return nil, fmt.Errorf("initKafka> Error with init sarama:%s (newSyncProducer on %s user:%s)", err.Error(), conf.BrokerAddresses, conf.User)
+		return nil, fmt.Errorf("initKafka> Error with init sarama:%v (newSyncProducer on %s user:%s)", err, conf.BrokerAddresses, conf.User)
 	}
 
 	return c, nil
@@ -54,7 +55,7 @@ func (c *KafkaClient) initialize(ctx context.Context, options interface{}) (Brok
 func (c *KafkaClient) close(ctx context.Context) {
 	if c.producer != nil {
 		if err := c.producer.Close(); err != nil {
-			log.Warning(ctx, "closeKafka> Error while closing kafka producer:%s", err.Error())
+			log.Warning(ctx, "closeKafka> Error while closing kafka producer:%v", err)
 		}
 	}
 }
@@ -62,19 +63,23 @@ func (c *KafkaClient) close(ctx context.Context) {
 // initProducer initializes kafka producer
 func (c *KafkaClient) initProducer() error {
 	var config = sarama.NewConfig()
-	config.Net.TLS.Enable = true
-	config.Net.SASL.Enable = true
-	config.Net.SASL.User = c.options.User
-	config.Net.SASL.Password = c.options.Password
-	config.ClientID = c.options.User
+
+	config.Net.TLS.Enable = !c.options.DisableTLS
+	config.Net.SASL.Enable = !c.options.DisableSASL
+	if config.Net.SASL.Enable {
+		config.Net.SASL.User = c.options.User
+		config.Net.SASL.Password = c.options.Password
+	}
+
+	config.ClientID = c.options.ClientID
 	config.Producer.Return.Successes = true
 	if config.Producer.MaxMessageBytes != 0 {
 		config.Producer.MaxMessageBytes = c.options.MaxMessageByte
 	}
 
-	producer, errp := sarama.NewSyncProducer(strings.Split(c.options.BrokerAddresses, ","), config)
-	if errp != nil {
-		return fmt.Errorf("initKafka> Error with init sarama:%s (newSyncProducer on %s user:%s)", errp.Error(), c.options.BrokerAddresses, c.options.User)
+	producer, err := sarama.NewSyncProducer(strings.Split(c.options.BrokerAddresses, ","), config)
+	if err != nil {
+		return fmt.Errorf("initKafka> Error with init sarama:%v (newSyncProducer on %s user:%s)", err, c.options.BrokerAddresses, c.options.User)
 	}
 
 	log.Debug("initKafka> Kafka used at %s on topic:%s", c.options.BrokerAddresses, c.options.Topic)
@@ -90,8 +95,8 @@ func (c *KafkaClient) sendEvent(event *sdk.Event) error {
 	}
 
 	msg := &sarama.ProducerMessage{Topic: c.options.Topic, Value: sarama.ByteEncoder(data)}
-	if _, _, errs := c.producer.SendMessage(msg); errs != nil {
-		return errs
+	if _, _, err := c.producer.SendMessage(msg); err != nil {
+		return err
 	}
 	return nil
 }

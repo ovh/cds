@@ -63,9 +63,9 @@ func workflowRunInteractive(v cli.Values, w *sdk.WorkflowRun, baseURL string) er
 						newOutput += fmt.Sprintf("\n")
 
 						for _, step := range job.Job.StepStatus {
-							var access *sdk.CDNLogAccess
+							var access *sdk.CDNLogLink
 							if feature.Enabled {
-								access, err = client.WorkflowNodeRunJobStepAccess(projectKey, workflowName, wnr.ID, job.ID, int64(step.StepOrder))
+								access, err = client.WorkflowNodeRunJobStepLink(context.Background(), projectKey, workflowName, wnr.ID, job.ID, int64(step.StepOrder))
 								if err != nil {
 									return err
 								}
@@ -73,15 +73,13 @@ func workflowRunInteractive(v cli.Values, w *sdk.WorkflowRun, baseURL string) er
 
 							var data string
 							if access != nil && access.Exists {
-								buf, _, _, err := client.Request(context.Background(), http.MethodGet, access.CDNURL+access.DownloadPath, nil, func(r *http.Request) {
-									r.Header.Add("Authorization", "Bearer "+access.Token)
-								})
+								buf, _, _, err := client.Request(context.Background(), http.MethodGet, access.CDNURL+access.DownloadPath, nil)
 								if err != nil {
 									return err
 								}
 								data = string(buf)
 							} else {
-								buildState, err := client.WorkflowNodeRunJobStepLog(projectKey, workflowName, wnr.ID, job.ID, int64(step.StepOrder))
+								buildState, err := client.WorkflowNodeRunJobStepLog(context.Background(), projectKey, workflowName, wnr.ID, job.ID, int64(step.StepOrder))
 								if err != nil {
 									return err
 								}

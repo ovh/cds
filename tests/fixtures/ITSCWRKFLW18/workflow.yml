@@ -1,0 +1,8 @@
+name: ITSCWRKFLW18-WORKFLOW
+version: v2.0
+workflow:
+  pipeline:
+    pipeline: ITSCWRKFLW18-PIPELINE
+notifications:
+- type: event
+  integration: myKafkaIntegration

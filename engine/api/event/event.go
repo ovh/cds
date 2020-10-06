@@ -45,7 +45,9 @@ func getBroker(ctx context.Context, t string, option interface{}) (Broker, error
 	return nil, fmt.Errorf("Invalid Broker Type %s", t)
 }
 
+// ResetPublicIntegrations load all integration of type Event and creates kafka brokers
 func ResetPublicIntegrations(ctx context.Context, db *gorp.DbMap) error {
+	publicBrokersConnectionCache = []Broker{}
 	filterType := sdk.IntegrationTypeEvent
 	integrations, err := integration.LoadPublicModelsByTypeWithDecryption(db, &filterType)
 	if err != nil {
@@ -54,18 +56,10 @@ func ResetPublicIntegrations(ctx context.Context, db *gorp.DbMap) error {
 
 	for _, integration := range integrations {
 		for _, cfg := range integration.PublicConfigurations {
-			kafkaCfg := KafkaConfig{
-				Enabled:         true,
-				BrokerAddresses: cfg["broker url"].Value,
-				User:            cfg["username"].Value,
-				Password:        cfg["password"].Value,
-				Topic:           cfg["topic"].Value,
-				MaxMessageByte:  10000000,
-			}
-
-			kafkaBroker, errk := getBroker(ctx, "kafka", kafkaCfg)
-			if errk != nil {
-				return sdk.WrapError(errk, "cannot get broker for %s and user %s", cfg["broker url"].Value, cfg["username"].Value)
+			kafkaCfg := getKafkaConfig(cfg)
+			kafkaBroker, err := getBroker(ctx, "kafka", kafkaCfg)
+			if err != nil {
+				return sdk.WrapError(err, "cannot get broker for %s and user %s", cfg["broker url"].Value, cfg["username"].Value)
 			}
 
 			publicBrokersConnectionCache = append(publicBrokersConnectionCache, kafkaBroker)
@@ -73,6 +67,31 @@ func ResetPublicIntegrations(ctx context.Context, db *gorp.DbMap) error {
 	}
 
 	return nil
+}
+
+func getKafkaConfig(cfg sdk.IntegrationConfig) KafkaConfig {
+	kafkaCfg := KafkaConfig{
+		Enabled:         true,
+		BrokerAddresses: cfg["broker url"].Value,
+		Topic:           cfg["topic"].Value,
+		MaxMessageByte:  10000000,
+	}
+
+	if _, ok := cfg["disableTLS"]; ok && cfg["disableTLS"].Value == "true" {
+		kafkaCfg.DisableTLS = true
+	}
+	if _, ok := cfg["disableSASL"]; ok && cfg["disableSASL"].Value == "true" {
+		kafkaCfg.DisableSASL = true
+	} else {
+		kafkaCfg.User = cfg["username"].Value
+		kafkaCfg.Password = cfg["password"].Value
+	}
+	if _, ok := cfg["user"]; ok && cfg["user"].Value != "" {
+		kafkaCfg.ClientID = cfg["user"].Value
+	} else {
+		kafkaCfg.ClientID = "cds"
+	}
+	return kafkaCfg
 }
 
 // DeleteEventIntegration delete broker connection for this event integration
@@ -90,17 +109,10 @@ func ResetEventIntegration(ctx context.Context, db gorp.SqlExecutor, eventIntegr
 		return fmt.Errorf("cannot load project integration id %d and type event: %v", eventIntegrationID, err)
 	}
 
-	kafkaCfg := KafkaConfig{
-		Enabled:         true,
-		BrokerAddresses: projInt.Config["broker url"].Value,
-		User:            projInt.Config["username"].Value,
-		Password:        projInt.Config["password"].Value,
-		Topic:           projInt.Config["topic"].Value,
-		MaxMessageByte:  10000000,
-	}
-	kafkaBroker, errk := getBroker(ctx, "kafka", kafkaCfg)
-	if errk != nil {
-		return sdk.WrapError(sdk.ErrBadBrokerConfiguration, "cannot get broker for %s and user %s : %v", projInt.Config["broker url"].Value, projInt.Config["username"].Value, errk)
+	kafkaCfg := getKafkaConfig(projInt.Config)
+	kafkaBroker, err := getBroker(ctx, "kafka", kafkaCfg)
+	if err != nil {
+		return sdk.WrapError(sdk.ErrBadBrokerConfiguration, "cannot get broker for %s and user %s : %v", projInt.Config["broker url"].Value, projInt.Config["username"].Value, err)
 	}
 	if err := brokersConnectionCache.Add(brokerConnectionKey, kafkaBroker, gocache.DefaultExpiration); err != nil {
 		return sdk.WrapError(sdk.ErrBadBrokerConfiguration, "cannot add broker in cache for %s and user %s : %v", projInt.Config["broker url"].Value, projInt.Config["username"].Value, err)
@@ -114,7 +126,7 @@ func Initialize(ctx context.Context, db *gorp.DbMap, cache Store) error {
 	var err error
 	hostname, err = os.Hostname()
 	if err != nil {
-		hostname = fmt.Sprintf("Error while getting Hostname: %s", err.Error())
+		hostname = fmt.Sprintf("Error while getting Hostname: %v", err)
 	}
 	// generates an API name. api_foo_bar, only 3 first letters to have a readable status
 	cdsname = "api_"
@@ -157,7 +169,6 @@ func DequeueEvent(ctx context.Context, db *gorp.DbMap) {
 				log.Warning(ctx, "Error while sending message [%s: %s/%s/%s/%s/%s]: %s", e.EventType, e.ProjectKey, e.WorkflowName, e.ApplicationName, e.PipelineName, e.EnvironmentName, err)
 			}
 		}
-
 		for _, eventIntegrationID := range e.EventIntegrationsID {
 			brokerConnectionKey := strconv.FormatInt(eventIntegrationID, 10)
 			brokerConnection, ok := brokersConnectionCache.Get(brokerConnectionKey)
@@ -172,17 +183,10 @@ func DequeueEvent(ctx context.Context, db *gorp.DbMap) {
 					continue
 				}
 
-				kafkaCfg := KafkaConfig{
-					Enabled:         true,
-					BrokerAddresses: projInt.Config["broker url"].Value,
-					User:            projInt.Config["username"].Value,
-					Password:        projInt.Config["password"].Value,
-					Topic:           projInt.Config["topic"].Value,
-					MaxMessageByte:  10000000,
-				}
-				kafkaBroker, errk := getBroker(ctx, "kafka", kafkaCfg)
-				if errk != nil {
-					log.Error(ctx, "Event.DequeueEvent> cannot get broker for %s and user %s : %v", projInt.Config["broker url"].Value, projInt.Config["username"].Value, errk)
+				kafkaCfg := getKafkaConfig(projInt.Config)
+				kafkaBroker, err := getBroker(ctx, "kafka", kafkaCfg)
+				if err != nil {
+					log.Error(ctx, "Event.DequeueEvent> cannot get broker for %s and user %s : %v", projInt.Config["broker url"].Value, projInt.Config["username"].Value, err)
 					continue
 				}
 				if err := brokersConnectionCache.Add(brokerConnectionKey, kafkaBroker, gocache.DefaultExpiration); err != nil {

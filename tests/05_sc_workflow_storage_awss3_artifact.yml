@@ -22,7 +22,7 @@ testcases:
 
 - name: import integration
   steps:
-  - script: {{.cdsctl}} -f {{.cdsctl.config}} project integration import ITSCWRKFLW11 {{expandEnv ./fixtures//integrations/s3Integration.yml}}
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} project integration import ITSCWRKFLW11 {{expandEnv ./fixtures/integrations/s3Integration.yml}}
 
 - name: import workflow
   steps:

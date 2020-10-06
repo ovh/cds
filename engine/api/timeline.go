@@ -27,7 +27,7 @@ func (api *API) getTimelineHandler() service.Handler {
 		consumer := getAPIConsumer(ctx)
 
 		// Get index of the first element to return
-		currentItem := FormInt(r, "currentItem")
+		currentItem := service.FormInt(r, "currentItem")
 
 		// Get workflow to mute
 		timelineFilter, err := user.LoadTimelineFilter(api.mustDB(), consumer.AuthentifiedUser.ID)

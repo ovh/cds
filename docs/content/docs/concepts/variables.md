@@ -46,7 +46,7 @@ Here is the list of builtin variables, generated for every build:
 - `{{.cds.job}}` The name of the current job
 - `{{.cds.manual}}` true if current pipeline is manually run, false otherwise
 - `{{.cds.pipeline}}` The name of the current pipeline
-- `{{.cds.project}}` The name of the current project
+- `{{.cds.project}}` The key of the current project
 - `{{.cds.run}}` Run Number of current workflow, example: 3.0
 - `{{.cds.run.number}}` Number of current workflow, example: 3 if `{{.cds.run}} = 3.0`
 - `{{.cds.run.subnumber}}` Sub Number of current workflow, example: 4 if `{{.cds.run}} = 3.4`
