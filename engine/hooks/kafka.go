@@ -30,7 +30,7 @@ func (s *Service) saveKafkaExecution(t *sdk.Task, error string, nbError int64) {
 }
 
 func (s *Service) startKafkaHook(ctx context.Context, t *sdk.Task) error {
-	var kafkaIntegration, kafkaUser, kafkaVersion, projectKey, topic string
+	var kafkaIntegration, projectKey, topic string
 	for k, v := range t.Config {
 		switch k {
 		case sdk.HookModelIntegration:
@@ -47,43 +47,41 @@ func (s *Service) startKafkaHook(ctx context.Context, t *sdk.Task) error {
 		return sdk.WrapError(err, "Cannot get kafka configuration for %s/%s", projectKey, kafkaIntegration)
 	}
 
-	var password, broker string
-	for k, v := range pf.Config {
-		switch k {
-		case "password":
-			password = v.Value
-		case "broker url":
-			broker = v.Value
-		case "username":
-			kafkaUser = v.Value
-		case "version":
-			kafkaVersion = v.Value
-		}
+	var config = sarama.NewConfig()
+	if _, ok := pf.Config["disableTLS"]; ok && pf.Config["disableTLS"].Value == "true" {
+		config.Net.TLS.Enable = false
+	} else {
+		config.Net.TLS.Enable = true
+	}
+	if _, ok := pf.Config["disableSASL"]; ok && pf.Config["disableSASL"].Value == "true" {
+		config.Net.SASL.Enable = false
+	} else {
+		config.Net.SASL.Enable = true
+		config.Net.SASL.User = pf.Config["username"].Value
+		config.Net.SASL.Password = pf.Config["password"].Value
+	}
+	if _, ok := pf.Config["user"]; ok && pf.Config["user"].Value != "" {
+		config.ClientID = pf.Config["user"].Value
+	} else {
+		config.ClientID = "cds"
 	}
 
-	var config = sarama.NewConfig()
-	config.Net.TLS.Enable = true
-	config.Net.SASL.Enable = true
-	config.Net.SASL.User = kafkaUser
-	config.Net.SASL.Password = password
-	config.ClientID = kafkaUser
 	config.Consumer.Return.Errors = true
-
-	if kafkaVersion != "" {
-		kafkaVersion, err := sarama.ParseKafkaVersion(kafkaVersion)
+	if v, ok := pf.Config["version"]; ok && v.Value != "" {
+		kafkaVersion, err := sarama.ParseKafkaVersion(pf.Config["version"].Value)
 		if err != nil {
 			return fmt.Errorf("error parsing Kafka version %v err:%s", kafkaVersion, err)
 		}
 		config.Version = kafkaVersion
 	} else {
-		config.Version = sarama.V0_10_0_1
+		config.Version = sarama.V0_10_2_0
 	}
 
-	var group = fmt.Sprintf("%s.%s", kafkaUser, t.UUID)
-	consumerGroup, err := sarama.NewConsumerGroup([]string{broker}, group, config)
+	var group = fmt.Sprintf("%s.%s", config.Net.SASL.User, t.UUID)
+	consumerGroup, err := sarama.NewConsumerGroup([]string{pf.Config["broker url"].Value}, group, config)
 	if err != nil {
 		_ = s.stopTask(ctx, t)
-		return fmt.Errorf("startKafkaHook>Error creating consumer: (%s %s %s %s): %v", broker, consumerGroup, topic, kafkaUser, err)
+		return fmt.Errorf("startKafkaHook>Error creating consumer: (%s %s %s %s): %v", pf.Config["broker url"].Value, consumerGroup, topic, config.Net.SASL.User, err)
 	}
 
 	// Track errors
@@ -93,36 +91,32 @@ func (s *Service) startKafkaHook(ctx context.Context, t *sdk.Task) error {
 		}
 	}()
 
-	h := handler{
+	h := &handler{
 		task: t,
 		dao:  &s.Dao,
 	}
 
-	go func() {
+	s.GoRoutines.Exec(context.Background(), "kafka-consume-"+topic, func(ctx context.Context) {
 		atomic.AddInt64(&nbKafkaConsumers, 1)
 		defer atomic.AddInt64(&nbKafkaConsumers, -1)
 		for {
-			if err := consumerGroup.Consume(ctx, []string{topic}, &h); err != nil {
+			if err := consumerGroup.Consume(ctx, []string{topic}, h); err != nil {
 				log.Error(ctx, "error on consume:%s", err)
 			}
 		}
-	}()
-	<-h.ready // Await till the consumer has been set up
+	})
 
 	return nil
 }
 
 // handler represents a Sarama consumer group consumer
 type handler struct {
-	ready chan bool
-	task  *sdk.Task
-	dao   *dao
+	task *sdk.Task
+	dao  *dao
 }
 
 // Setup is run at the beginning of a new session, before ConsumeClaim
-func (h *handler) Setup(sarama.ConsumerGroupSession) error {
-	// Mark the consumer as ready
-	close(h.ready)
+func (h *handler) Setup(s sarama.ConsumerGroupSession) error {
 	return nil
 }
 

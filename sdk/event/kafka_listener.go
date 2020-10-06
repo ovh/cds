@@ -27,7 +27,7 @@ func ConsumeKafka(ctx context.Context, kafkaVersion, addr, topic, group, user, p
 		}
 		config.Version = kafkaVersion
 	} else {
-		config.Version = sarama.V0_10_0_1
+		config.Version = sarama.V0_10_2_0
 	}
 
 	consumerGroup, err := sarama.NewConsumerGroup([]string{addr}, group, config)
@@ -48,26 +48,22 @@ func ConsumeKafka(ctx context.Context, kafkaVersion, addr, topic, group, user, p
 	}
 	go func() {
 		for {
-			if err := consumerGroup.Consume(ctx, []string{topic}, &h); err != nil {
+			if err := consumerGroup.Consume(context.Background(), []string{topic}, &h); err != nil {
 				errorLogFunc("Error on ProcessEventFunc:%s", err)
 			}
 		}
 	}()
-	<-h.ready // Await till the consumer has been set up
 	return nil
 }
 
 // handler represents a Sarama consumer group consumer
 type handler struct {
-	ready            chan bool
 	processEventFunc func(sdk.Event) error
 	errorLogFunc     func(string, ...interface{})
 }
 
 // Setup is run at the beginning of a new session, before ConsumeClaim
 func (h *handler) Setup(sarama.ConsumerGroupSession) error {
-	// Mark the consumer as ready
-	close(h.ready)
 	return nil
 }
 
@@ -84,7 +80,6 @@ func (h *handler) ConsumeClaim(session sarama.ConsumerGroupSession, claim sarama
 		if err := h.processEventFunc(event); err != nil {
 			h.errorLogFunc("Error on ProcessEventFunc:%s", err)
 		}
-		//log.Printf("Message claimed: value = %s, timestamp = %v, topic = %s", string(message.Value), message.Timestamp, message.Topic)
 		session.MarkMessage(message, "delivered")
 	}
 	return nil
