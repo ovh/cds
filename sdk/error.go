@@ -623,13 +623,10 @@ func (e Error) Translate(al string) string {
 	switch tag {
 	case language.French:
 		msg, ok = errorsFrench[e.ID]
-		break
 	case language.AmericanEnglish:
 		msg, ok = errorsAmericanEnglish[e.ID]
-		break
 	default:
 		msg, ok = errorsAmericanEnglish[e.ID]
-		break
 	}
 	if !ok {
 		return errorsAmericanEnglish[ErrUnknownError.ID]
@@ -974,9 +971,7 @@ func (e *MultiError) Error() string {
 
 // Join joins errors from MultiError to another errors MultiError
 func (e *MultiError) Join(j MultiError) {
-	for _, err := range j {
-		*e = append(*e, err)
-	}
+	*e = append(*e, j...)
 }
 
 // Append appends an error to a MultiError

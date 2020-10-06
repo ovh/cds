@@ -7,8 +7,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
+	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
@@ -36,11 +36,7 @@ func processNodeTriggers(ctx context.Context, db gorpmapper.SqlExecutorWithTx, s
 			r1, _, errPwnr := processNodeRun(ctx, db, store, proj, wr, mapNodes, &t.ChildNode, int(parentSubNumber), parentNodeRun, nil, nil)
 			if errPwnr != nil {
 				log.Error(ctx, "processWorkflowRun> Unable to process node ID=%d: %s", t.ChildNode.ID, errPwnr)
-				AddWorkflowRunInfo(wr, sdk.SpawnMsg{
-					ID:   sdk.MsgWorkflowError.ID,
-					Args: []interface{}{sdk.ExtractHTTPError(errPwnr, "").Error()},
-					Type: sdk.MsgWorkflowError.Type,
-				})
+				AddWorkflowRunInfo(wr, sdk.SpawnMsgNew(*sdk.MsgWorkflowError, sdk.ExtractHTTPError(errPwnr, "")))
 			}
 			report.Merge(ctx, r1)
 			continue
@@ -246,11 +242,7 @@ func processNode(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store cac
 
 		vcsInf, errVcs = getVCSInfos(ctx, db, store, proj.Key, vcsServer, currentJobGitValues, app.Name, app.VCSServer, app.RepositoryFullname)
 		if errVcs != nil {
-			AddWorkflowRunInfo(wr, sdk.SpawnMsg{
-				ID:   sdk.MsgWorkflowError.ID,
-				Args: []interface{}{sdk.ExtractHTTPError(errVcs, "").Error()},
-				Type: sdk.MsgWorkflowError.Type,
-			})
+			AddWorkflowRunInfo(wr, sdk.SpawnMsgNew(*sdk.MsgWorkflowError, sdk.ExtractHTTPError(errVcs, "")))
 			return nil, false, sdk.WrapError(errVcs, "unable to get git informations")
 		}
 	}
@@ -376,11 +368,7 @@ func processNode(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store cac
 		}
 		if nbMutex > 0 {
 			log.Debug("Noderun %s processed but not executed because of mutex", n.Name)
-			AddWorkflowRunInfo(wr, sdk.SpawnMsg{
-				ID:   sdk.MsgWorkflowNodeMutex.ID,
-				Args: []interface{}{n.Name},
-				Type: sdk.MsgWorkflowNodeMutex.Type,
-			})
+			AddWorkflowRunInfo(wr, sdk.SpawnMsgNew(*sdk.MsgWorkflowNodeMutex, n.Name))
 			if err := UpdateWorkflowRun(ctx, db, wr); err != nil {
 				return nil, false, sdk.WrapError(err, "unable to update workflow run")
 			}
@@ -491,11 +479,7 @@ func computePayload(n *sdk.Node, hookEvent *sdk.WorkflowNodeRunHookEvent, manual
 func computeNodeContextBuildParameters(ctx context.Context, proj sdk.Project, wr *sdk.WorkflowRun, run *sdk.WorkflowNodeRun, n *sdk.Node, runContext nodeRunContext) {
 	nodeRunParams, errParam := getNodeRunBuildParameters(ctx, proj, wr, run, runContext)
 	if errParam != nil {
-		AddWorkflowRunInfo(wr, sdk.SpawnMsg{
-			ID:   sdk.MsgWorkflowError.ID,
-			Args: []interface{}{sdk.ExtractHTTPError(errParam, "").Error()},
-			Type: sdk.MsgWorkflowError.Type,
-		})
+		AddWorkflowRunInfo(wr, sdk.SpawnMsgNew(*sdk.MsgWorkflowError, sdk.ExtractHTTPError(errParam, "")))
 		// if there an error -> display it in workflowRunInfo and not stop the launch
 		log.Error(ctx, "processNode> getNodeRunBuildParameters failed. Project:%s [#%d.%d]%s.%d with payload %v err:%v", proj.Name, wr.Number, run.SubNumber, wr.Workflow.Name, n.ID, run.Payload, errParam)
 	}
