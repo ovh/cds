@@ -13,10 +13,17 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-var smtpUser, smtpPassword, smtpFrom, smtpHost, smtpPort string
-var smtpTLS, smtpEnable bool
+var smtpUser, smtpPassword, smtpFrom, smtpHost, smtpPort, smtpModeTLS string
+var smtpTLS, smtpEnable, smtpInsecureSkipVerify bool
 var lastError error
 var counter uint64
+
+const (
+	// modeTLS uses tls without starttls
+	modeTLS = "tls"
+	// modeStartTLS uses starttls
+	modeStartTLS = "starttls"
+)
 
 const templateSignedup = `Welcome to CDS,
 
@@ -52,13 +59,14 @@ CDS Team
 `
 
 // Init initializes configuration
-func Init(user, password, from, host, port string, tls, disable bool) {
+func Init(user, password, from, host, port, modeTLS string, insecureSkipVerify, disable bool) {
 	smtpUser = user
 	smtpPassword = password
 	smtpFrom = from
 	smtpHost = host
 	smtpPort = port
-	smtpTLS = tls
+	smtpModeTLS = modeTLS
+	smtpInsecureSkipVerify = insecureSkipVerify
 	smtpEnable = !disable
 }
 
@@ -137,14 +145,19 @@ func SendEmail(ctx context.Context, subject string, mailContent *bytes.Buffer, u
 	if smtpUser != "" && smtpPassword != "" {
 		auth = smtp.PlainAuth("", smtpUser, smtpPassword, smtpHost)
 	}
+
+	tlsconfig := &tls.Config{
+		InsecureSkipVerify: smtpInsecureSkipVerify,
+		ServerName:         smtpHost,
+	}
+
 	var err error
-	if smtpTLS {
-		tlsconfig := &tls.Config{
-			InsecureSkipVerify: false,
-			ServerName:         smtpHost,
-		}
+	switch smtpModeTLS {
+	case modeStartTLS:
 		err = e.SendWithStartTLS(servername, auth, tlsconfig)
-	} else {
+	case modeTLS:
+		err = e.SendWithTLS(servername, auth, tlsconfig)
+	default:
 		err = e.Send(servername, auth)
 	}
 	if err != nil {
