@@ -1210,7 +1210,7 @@ func Test_workflowRunCraft(t *testing.T) {
 	require.NoError(t, err)
 
 	f := sdk.Feature{
-		Name: purge.FeaturePurgeName,
+		Name: purge.FeatureMaxRuns,
 		Rule: "return true",
 	}
 	require.NoError(t, featureflipping.Insert(gorpmapping.Mapper, api.mustDB(), &f))

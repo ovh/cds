@@ -113,6 +113,15 @@ export class WorkflowComponent implements OnInit, OnDestroy {
                 }
             }));
         });
+        this._featureService.isEnabled('workflow-retention-maxruns', data).subscribe(f => {
+            this._store.dispatch(new AddFeatureResult(<FeaturePayload>{
+                key: f.name,
+                result: {
+                    paramString: JSON.stringify(data),
+                    enabled: f.enabled
+                }
+            }));
+        });
         this.sidebarSubs = this.sibebar$.subscribe(m => {
             if (m === this.sidebarMode) {
                 return;

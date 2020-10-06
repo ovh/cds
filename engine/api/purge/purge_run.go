@@ -55,8 +55,8 @@ func markWorkflowRunsToDelete(ctx context.Context, store cache.Store, db *gorp.D
 	return nil
 }
 
-func ApplyRetentionPolicyOnWorkflow(ctx context.Context, store cache.Store, db *gorp.DbMap, wf sdk.Workflow, opts MarkAsDeleteOptions) ([]sdk.PurgeRunToDelete, error) {
-	runsMarkedAsDelete := make([]sdk.PurgeRunToDelete, 0)
+func ApplyRetentionPolicyOnWorkflow(ctx context.Context, store cache.Store, db *gorp.DbMap, wf sdk.Workflow, opts MarkAsDeleteOptions) ([]sdk.WorkflowRunToKeep, error) {
+	runsTokeep := make([]sdk.WorkflowRunToKeep, 0)
 
 	limit := 50
 	offset := 0
@@ -81,8 +81,8 @@ func ApplyRetentionPolicyOnWorkflow(ctx context.Context, store cache.Store, db *
 			if err != nil {
 				return nil, err
 			}
-			if !keep {
-				runsMarkedAsDelete = append(runsMarkedAsDelete, sdk.PurgeRunToDelete{ID: run.ID, Num: run.Number, Status: run.Status})
+			if keep {
+				runsTokeep = append(runsTokeep, sdk.WorkflowRunToKeep{ID: run.ID, Num: run.Number, Status: run.Status})
 			}
 		}
 
@@ -92,7 +92,7 @@ func ApplyRetentionPolicyOnWorkflow(ctx context.Context, store cache.Store, db *
 		}
 		break
 	}
-	return runsMarkedAsDelete, nil
+	return runsTokeep, nil
 }
 
 func applyRetentionPolicyOnRun(db *gorp.DbMap, wf sdk.Workflow, run sdk.WorkflowRun, branchesMap map[string]struct{}, opts MarkAsDeleteOptions) (bool, error) {

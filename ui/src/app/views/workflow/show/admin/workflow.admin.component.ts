@@ -64,14 +64,13 @@ export class WorkflowAdminComponent implements OnInit, OnDestroy {
     iconUpdated = false;
     tagsToAdd = new Array<string>();
     tagsToAddPurge = new Array<string>();
-    workflowRetentionPolicyEnabled = false;
+    maxRunsEnabled = false;
     codeMirrorConfig: any;
 
     @ViewChild('updateWarning')
     private warningUpdateModal: WarningModalComponent;
     @ViewChild('codemirrorRetentionPolicy') codemirror: CodemirrorComponent;
     themeSubscription: Subscription;
-
 
     availableVariables: String;
     dryRunColumns = [];
@@ -179,9 +178,10 @@ export class WorkflowAdminComponent implements OnInit, OnDestroy {
             this._cd.markForCheck();
         });
 
-        let featResult = this.store.selectSnapshot(FeatureState.featureProject('workflow-retention-policy',
+        let featMaxRunsResult = this.store.selectSnapshot(FeatureState.featureProject('workflow-retention-maxruns',
             JSON.stringify({ 'project_key': this.project.key })))
-        this.workflowRetentionPolicyEnabled = featResult?.enabled;
+        this.maxRunsEnabled = featMaxRunsResult?.enabled;
+
         this._cd.markForCheck();
     }
 

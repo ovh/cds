@@ -26,6 +26,7 @@ import (
 
 const (
 	FeaturePurgeName = "workflow-retention-policy"
+	FeatureMaxRuns   = "workflow-retention-maxruns"
 )
 
 //Initialize starts goroutines for workflows
