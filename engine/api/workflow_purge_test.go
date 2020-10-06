@@ -83,7 +83,7 @@ func Test_purgeDryRunHandler(t *testing.T) {
 	api.Router.Mux.ServeHTTP(rec, req)
 	assert.Equal(t, 200, rec.Code)
 
-	var result []sdk.PurgeRunToDelete
+	var result []sdk.WorkflowRunToKeep
 	require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &result))
 
 	require.Len(t, result, 1)

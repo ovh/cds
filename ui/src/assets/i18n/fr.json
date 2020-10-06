@@ -822,8 +822,6 @@
   "workflow_from_repository": "Workflow importé depuis {{repo}}",
   "workflow_from_template_btn": "Génération du workflow depuis un modèle",
   "workflow_from_template": "Workflow importé depuis le modèle",
-  "workflow_history_length_title": "Nombre de builds à conserver par tag",
-  "workflow_history_length": "Nombre de builds",
   "workflow_hook_delete_msg": "Êtes-vous certain de vouloir supprimer ce hook ?",
   "workflow_hook_delete_title": "Supprimer le hook",
   "workflow_hook_log_title": "Logs du hook",
