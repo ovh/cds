@@ -3,17 +3,18 @@ package purge
 import (
 	"context"
 	"fmt"
-	"github.com/fsamin/go-dump"
-	"github.com/ovh/cds/engine/api/database/gorpmapping"
-	"github.com/ovh/cds/engine/api/repositoriesmanager"
-	"github.com/ovh/cds/engine/featureflipping"
 	"math"
 	"strconv"
 	"time"
 
+	"github.com/fsamin/go-dump"
 	"github.com/go-gorp/gorp"
+
+	"github.com/ovh/cds/engine/api/database/gorpmapping"
+	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/engine/cache"
+	"github.com/ovh/cds/engine/featureflipping"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk/luascript"
@@ -150,7 +151,7 @@ func purgeComputeVariables(luaCheck *luascript.Check, run sdk.WorkflowRun, branc
 					vars[k] = v
 				}
 			}
-		case run.ToCraftOpts.Hook != nil:
+		case run.ToCraftOpts.Hook != nil && run.ToCraftOpts.Hook.Payload != nil:
 			vars = run.ToCraftOpts.Hook.Payload
 		}
 
