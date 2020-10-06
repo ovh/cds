@@ -172,3 +172,5 @@ replace github.com/ovh/cds/tools/smtpmock => ./tools/smtpmock
 replace github.com/keybase/go-keychain => github.com/yesnault/go-keychain v0.0.0-20190829085436-f78f7ae28786
 
 replace github.com/coreos/etcd v3.3.10+incompatible => github.com/coreos/etcd v3.3.13+incompatible
+
+replace github.com/jordan-wright/email => github.com/yesnault/email v0.0.0-20201006074758-5298d270ded2
