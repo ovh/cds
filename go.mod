@@ -173,4 +173,4 @@ replace github.com/keybase/go-keychain => github.com/yesnault/go-keychain v0.0.0
 
 replace github.com/coreos/etcd v3.3.10+incompatible => github.com/coreos/etcd v3.3.13+incompatible
 
-replace github.com/jordan-wright/email => github.com/yesnault/email v0.0.0-20201006074758-5298d270ded2
+replace github.com/jordan-wright/email => github.com/yesnault/email v0.0.0-20201006155628-d88bfe11e7f1
