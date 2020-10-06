@@ -45,6 +45,9 @@ config:
   topic:
     value: your-topic
     type: string
+  version:
+    value: "2.1.1"
+    type: string
 ```
 
 Import the integration on your CDS Project with:
@@ -125,4 +128,11 @@ public_configurations:
     "disableSASL":
       type: string
       value: "true"
+    version:
+      value: "2.1.1"
+      type: string
 ```
+
+### Kafka Version
+
+If the attribute version could be not defined, default value is `0.10.0.1`
