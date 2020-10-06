@@ -166,5 +166,5 @@ func SendEmail(ctx context.Context, subject string, mailContent *bytes.Buffer, u
 		atomic.AddUint64(&counter, 1)
 		lastError = nil
 	}
-	return err
+	return sdk.WithStack(err)
 }

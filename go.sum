@@ -528,6 +528,8 @@ github.com/xordataexchange/crypt v0.0.3-0.20170626215501-b2862e3d0a77 h1:ESFSdwY
 github.com/xordataexchange/crypt v0.0.3-0.20170626215501-b2862e3d0a77/go.mod h1:aYKd//L2LvnjZzWKhF00oedf4jCCReLcmhLdhm1A27Q=
 github.com/yesnault/email v0.0.0-20201006074758-5298d270ded2 h1:2rMLhV576iJPi0vRO9C+y9NeHAQsFrKet9ZnDvHoVEE=
 github.com/yesnault/email v0.0.0-20201006074758-5298d270ded2/go.mod h1:bRXYCpmLE4hkO5gNs6Ldys/w1ylU294B9e09svyV9bo=
+github.com/yesnault/email v0.0.0-20201006155628-d88bfe11e7f1 h1:BeFAWGWHMpHFqcEOCtGzATBKxsXn/nH31isP/SBpIxg=
+github.com/yesnault/email v0.0.0-20201006155628-d88bfe11e7f1/go.mod h1:bRXYCpmLE4hkO5gNs6Ldys/w1ylU294B9e09svyV9bo=
 github.com/yesnault/go-keychain v0.0.0-20190829085436-f78f7ae28786 h1:3i+IgAiigXgopYWnrGo1QThWb8zL2622AJEXHqdlA5w=
 github.com/yesnault/go-keychain v0.0.0-20190829085436-f78f7ae28786/go.mod h1:EzotOW21xnO2Lld4dB8qr2bSnzi3nGtE9FG33n/y2Q8=
 github.com/yesnault/go-toml v0.0.0-20191205182532-f5ef6cee7945 h1:icS0gqYJLvPFpni3gxPml7gCSdCcJx72RrbkVgmvw80=
