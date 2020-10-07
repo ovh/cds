@@ -55,7 +55,7 @@ func TestRedisLRU(t *testing.T) {
 
 	// Add first item
 	writer := r.NewWriter(item1.ID)
-	_, err = io.Copy(writer, strings.NewReader("je suis la valeur"))
+	_, err = io.Copy(writer, strings.NewReader("this is the value"))
 	_ = writer.Close()
 	require.NoError(t, err)
 
@@ -69,7 +69,7 @@ func TestRedisLRU(t *testing.T) {
 
 	// Add second item
 	writer = r.NewWriter(item2.ID)
-	_, err = io.Copy(writer, strings.NewReader("je suis la valeur 2"))
+	_, err = io.Copy(writer, strings.NewReader("this is the value 2"))
 	_ = writer.Close()
 	require.NoError(t, err)
 
@@ -82,16 +82,16 @@ func TestRedisLRU(t *testing.T) {
 	require.Equal(t, int64(88), size)
 
 	// Get Item 1
-	reader := r.NewReader(item1.ID, sdk.CDNReaderFormatText, 0, 1)
+	reader := r.NewReader(item1.ID, sdk.CDNReaderFormatText, 0, 1, 0)
 	buf := new(strings.Builder)
 	_, err = io.Copy(buf, reader)
 	reader.Close()
 	require.NoError(t, err)
-	require.Equal(t, "je suis la valeur", buf.String())
+	require.Equal(t, "this is the value", buf.String())
 
 	// Add third item
 	writer = r.NewWriter(item3.ID)
-	_, err = io.Copy(writer, strings.NewReader("je suis la valeur 3"))
+	_, err = io.Copy(writer, strings.NewReader("this is the value 3"))
 	_ = writer.Close()
 	require.NoError(t, err)
 

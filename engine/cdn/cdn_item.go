@@ -26,12 +26,19 @@ var (
 	rnd = rand.New(rs)
 )
 
-func (s *Service) downloadItem(ctx context.Context, t sdk.CDNItemType, apiRefHash string, refreshDelay int64, w http.ResponseWriter) error {
+type downloadOpts struct {
+	Log struct {
+		Sort    int64
+		Refresh int64
+	}
+}
+
+func (s *Service) downloadItem(ctx context.Context, t sdk.CDNItemType, apiRefHash string, w http.ResponseWriter, opts downloadOpts) error {
 	if !t.IsLog() {
 		return sdk.NewErrorFrom(sdk.ErrNotImplemented, "only log item can be download for now")
 	}
 
-	it, rc, filename, err := s.getItemLogValue(ctx, t, apiRefHash, sdk.CDNReaderFormatText, 0, 0)
+	it, rc, filename, err := s.getItemLogValue(ctx, t, apiRefHash, sdk.CDNReaderFormatText, 0, 0, opts.Log.Sort)
 	if err != nil {
 		return err
 	}
@@ -39,9 +46,9 @@ func (s *Service) downloadItem(ctx context.Context, t sdk.CDNItemType, apiRefHas
 		return sdk.WrapError(sdk.ErrNotFound, "no storage found that contains given item %s", apiRefHash)
 	}
 	w.Header().Add("Content-Type", "text/plain")
-	if it.Status != sdk.CDNStatusItemCompleted && refreshDelay > 0 {
+	if it.Status != sdk.CDNStatusItemCompleted && opts.Log.Refresh > 0 {
 		// This will allows to refresh the browser when opening the logs int a new tab
-		w.Header().Add("Refresh", fmt.Sprintf("%d", refreshDelay))
+		w.Header().Add("Refresh", fmt.Sprintf("%d", opts.Log.Refresh))
 	}
 	w.Header().Add("Content-Disposition", fmt.Sprintf("inline; filename=\"%s\"", filename))
 
@@ -52,7 +59,7 @@ func (s *Service) downloadItem(ctx context.Context, t sdk.CDNItemType, apiRefHas
 	return nil
 }
 
-func (s *Service) getItemLogValue(ctx context.Context, t sdk.CDNItemType, apiRefHash string, format sdk.CDNReaderFormat, from int64, size uint) (*sdk.CDNItem, io.ReadCloser, string, error) {
+func (s *Service) getItemLogValue(ctx context.Context, t sdk.CDNItemType, apiRefHash string, format sdk.CDNReaderFormat, from int64, size uint, sort int64) (*sdk.CDNItem, io.ReadCloser, string, error) {
 	it, err := item.LoadByAPIRefHashAndType(ctx, s.Mapper, s.mustDBWithCtx(ctx), apiRefHash, t)
 	if err != nil {
 		return nil, nil, "", err
@@ -68,7 +75,7 @@ func (s *Service) getItemLogValue(ctx context.Context, t sdk.CDNItemType, apiRef
 	// If item is in Buffer, get from it
 	if itemUnit != nil {
 		log.Debug("getItemLogValue> Getting logs from buffer")
-		rc, err := s.Units.Buffer.NewAdvancedReader(ctx, *itemUnit, format, from, size)
+		rc, err := s.Units.Buffer.NewAdvancedReader(ctx, *itemUnit, format, from, size, sort)
 		if err != nil {
 			return nil, nil, "", err
 		}
@@ -78,7 +85,7 @@ func (s *Service) getItemLogValue(ctx context.Context, t sdk.CDNItemType, apiRef
 	// Get from cache
 	if ok, _ := s.LogCache.Exist(it.ID); ok {
 		log.Debug("getItemLogValue> Getting logs from cache")
-		return it, s.LogCache.NewReader(it.ID, format, from, size), filename, nil
+		return it, s.LogCache.NewReader(it.ID, format, from, size, sort), filename, nil
 	}
 
 	log.Debug("getItemLogValue> Getting logs from storage")
@@ -88,7 +95,7 @@ func (s *Service) getItemLogValue(ctx context.Context, t sdk.CDNItemType, apiRef
 	}
 
 	// Get from cache
-	return it, s.LogCache.NewReader(it.ID, format, from, size), filename, nil
+	return it, s.LogCache.NewReader(it.ID, format, from, size, sort), filename, nil
 }
 
 func (s *Service) pushItemLogIntoCache(ctx context.Context, item sdk.CDNItem) error {
