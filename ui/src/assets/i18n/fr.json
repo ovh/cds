@@ -901,7 +901,7 @@
   "workflow_permission_form_title": "Ajouter une permission sur le workflow",
   "workflow_permission_list_title": "Liste des permissions sur le workflow",
   "workflow_preview_mode": "Votre workflow est dans un état de prévisualisation",
-  "workflow_purged_dry_run_empty": "Aucune donnée ne sera supprimé",
+  "workflow_purged_dry_run_empty": "Aucune donnée ne sera supprimée",
   "workflow_repository_help_line_1": "Votre workflow n'a pas été importé depuis votre code.",
   "workflow_repository_help_line_2": "Gérez votre workflow \"as code\" depuis votre gestionnaire de dépôt pour modifier automatiquement celui-ci avec les changements sur vos branches.",
   "workflow_resync_vcs_tooltip": "Cette action va renvoyer les statuts de vos pipelines à votre gestionnaire de dépots distants",

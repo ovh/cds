@@ -203,7 +203,7 @@ type Configuration struct {
 	} `toml:"help" comment:"######################\n 'Help' informations \n######################" json:"help"`
 	Workflow struct {
 		MaxRuns int64 `toml:"maxRuns" comment:"Maximum of execution by workflow" json:"maxRuns" default:"255"`
-	} `toml:"workflow" comment:"######################\n 'Workflow' globla configuration \n######################" json:"workflow"`
+	} `toml:"workflow" comment:"######################\n 'Workflow' global configuration \n######################" json:"workflow"`
 }
 
 // DefaultValues is the struc for API Default configuration default values

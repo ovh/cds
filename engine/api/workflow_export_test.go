@@ -145,7 +145,7 @@ workflow:
     depends_on:
     - fork
     pipeline: pip1
-retention_policy: return (git_branch_exist == "false" and run_date_before < 2) or run_date_before < 365
+retention_policy: return (git_branch_exist == "false" and run_days_before < 2) or run_days_before < 365
 `, rec.Body.String())
 
 }
@@ -279,7 +279,7 @@ workflow:
     pipeline: pip1
 permissions:
   Test_getWorkflowExportHandlerWithPermissions-Group2: 7
-retention_policy: return (git_branch_exist == "false" and run_date_before < 2) or run_date_before < 365
+retention_policy: return (git_branch_exist == "false" and run_days_before < 2) or run_days_before < 365
 history_length: 25
 `, rec.Body.String())
 

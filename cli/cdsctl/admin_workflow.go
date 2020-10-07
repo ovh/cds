@@ -17,7 +17,6 @@ func adminWorkflows() *cobra.Command {
 	})
 }
 
-// list command
 var adminWorkflowUpdateMaxRunCmd = cli.Command{
 	Name:  "maxrun",
 	Short: "Update the maximum number of workflow executions",

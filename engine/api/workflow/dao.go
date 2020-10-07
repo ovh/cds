@@ -294,7 +294,7 @@ func Insert(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store cache.St
 		w.HistoryLength = sdk.DefaultHistoryLength
 	}
 	w.MaxRuns = maxRuns
-	w.RetentionPolicy = "return (git_branch_exist == \"false\" and run_date_before < 2) or run_date_before < 365"
+	w.RetentionPolicy = "return (git_branch_exist == \"false\" and run_days_before < 2) or run_days_before < 365"
 
 	w.LastModified = time.Now()
 	if err := db.QueryRow(`INSERT INTO workflow (

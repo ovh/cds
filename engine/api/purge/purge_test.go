@@ -39,7 +39,7 @@ func Test_deleteWorkflowRunsHistory(t *testing.T) {
 func Test_applyRetentionPolicyOnRun(t *testing.T) {
 	db, _ := test.SetupPG(t, bootstrap.InitiliazeDB)
 	wf := sdk.Workflow{
-		RetentionPolicy: "return run_date_before < 2",
+		RetentionPolicy: "return run_days_before < 2",
 	}
 	now := time.Now()
 	run1 := sdk.WorkflowRun{

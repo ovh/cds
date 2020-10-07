@@ -28,7 +28,7 @@ type MarkAsDeleteOptions struct {
 
 const (
 	RunStatus         = "run_status"
-	RunDateBefore     = "run_date_before"
+	RunDateBefore     = "run_days_before"
 	RunGitBranchExist = "git_branch_exist"
 )
 
