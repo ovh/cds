@@ -53,6 +53,7 @@ func Test_purgeDryRunHandler(t *testing.T) {
 	)
 
 	require.NoError(t, workflow.Insert(context.TODO(), db, api.Cache, *proj, &w))
+	require.NoError(t, workflow.UpdateMaxRunsByID(db, w.ID, 10))
 	w1, err := workflow.Load(context.TODO(), api.mustDB(), api.Cache, *proj, w.Name, workflow.LoadOptions{})
 	test.NoError(t, err)
 
@@ -87,10 +88,10 @@ func Test_purgeDryRunHandler(t *testing.T) {
 	require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &result))
 
 	require.Len(t, result, 1)
-	require.Equal(t, run2.ID, result[0].ID)
+	require.Equal(t, run1.ID, result[0].ID)
 
-	run2DB, err := workflow.LoadRunByID(api.mustDB(), run2.ID, workflow.LoadRunOptions{DisableDetailledNodeRun: true})
+	run1DB, err := workflow.LoadRunByID(api.mustDB(), run2.ID, workflow.LoadRunOptions{DisableDetailledNodeRun: true})
 	require.NoError(t, err)
-	require.False(t, run2DB.ToDelete)
+	require.False(t, run1DB.ToDelete)
 
 }
