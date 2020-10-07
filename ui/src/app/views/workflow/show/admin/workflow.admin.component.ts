@@ -72,7 +72,7 @@ export class WorkflowAdminComponent implements OnInit, OnDestroy {
     @ViewChild('codemirrorRetentionPolicy') codemirror: CodemirrorComponent;
     themeSubscription: Subscription;
 
-    availableVariables: String;
+    availableVariables: string;
     dryRunColumns = [];
     dryRunDatas: Array<RunToKeep>;
     @ViewChild('modalDryRun') dryRunModal: ModalTemplate<boolean, boolean, void>;
