@@ -202,7 +202,7 @@ type Configuration struct {
 		Error   string `toml:"error" comment:"Help displayed to user on each error. Warning: this message could be view by anonymous user. Markdown accepted." json:"error" default:""`
 	} `toml:"help" comment:"######################\n 'Help' informations \n######################" json:"help"`
 	Workflow struct {
-		MaxRuns int64 `toml:"maxRuns" comment:"Maximum of execution by workflow" json:"maxRuns" default:"255"`
+		MaxRuns int64 `toml:"maxRuns" comment:"Maximum of runs by workflow" json:"maxRuns" default:"255"`
 	} `toml:"workflow" comment:"######################\n 'Workflow' global configuration \n######################" json:"workflow"`
 }
 
