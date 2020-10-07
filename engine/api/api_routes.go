@@ -101,9 +101,6 @@ func (api *API) InitRouter() {
 	r.Handle("/admin/services", Scope(sdk.AuthConsumerScopeAdmin), r.GET(api.getAdminServicesHandler, service.OverrideAuth(api.authAdminMiddleware)))
 	r.Handle("/admin/services/call", Scope(sdk.AuthConsumerScopeAdmin), r.GET(api.getAdminServiceCallHandler, service.OverrideAuth(api.authAdminMiddleware)), r.POST(api.postAdminServiceCallHandler, service.OverrideAuth(api.authAdminMiddleware)), r.PUT(api.putAdminServiceCallHandler, service.OverrideAuth(api.authAdminMiddleware)), r.DELETE(api.deleteAdminServiceCallHandler, service.OverrideAuth(api.authAdminMiddleware)))
 
-	// Admin workflow
-	r.Handle("/admin/project/{key}/workflows/{permWorkflowName}/retention/maxruns", Scope(sdk.AuthConsumerScopeAdmin), r.POST(api.postWorkflowMaxRunHandler))
-
 	// Admin database
 	r.Handle("/admin/database/signature", Scope(sdk.AuthConsumerScopeAdmin), r.GET(api.getAdminDatabaseSignatureResume, service.OverrideAuth(api.authAdminMiddleware)))
 	r.Handle("/admin/database/signature/{entity}/roll/{pk}", Scope(sdk.AuthConsumerScopeAdmin), r.POST(api.postAdminDatabaseSignatureRollEntityByPrimaryKey, service.OverrideAuth(api.authAdminMiddleware)))
@@ -238,6 +235,7 @@ func (api *API) InitRouter() {
 	r.Handle("/project/{permProjectKey}/workflows", Scope(sdk.AuthConsumerScopeProject), r.POST(api.postWorkflowHandler), r.GET(api.getWorkflowsHandler))
 	r.Handle("/project/{permProjectKey}/workflows/runs/nodes/ids", Scope(sdk.AuthConsumerScopeProject), r.GET(api.getWorkflowsRunsAndNodesIDshandler))
 	r.Handle("/project/{key}/workflows/{permWorkflowName}", Scope(sdk.AuthConsumerScopeProject), r.GET(api.getWorkflowHandler), r.PUT(api.putWorkflowHandler), r.DELETE(api.deleteWorkflowHandler))
+	r.Handle("/project/{key}/workflows/{permWorkflowName}/retention/maxruns", Scope(sdk.AuthConsumerScopeProject), r.POST(api.postWorkflowMaxRunHandler, service.OverrideAuth(api.authAdminMiddleware)))
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/retention/dryrun", Scope(sdk.AuthConsumerScopeProject), r.POST(api.postWorkflowRetentionPolicyDryRun))
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/retention/suggest", Scope(sdk.AuthConsumerScopeProject), r.GET(api.getRetentionPolicySuggestionHandler))
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/eventsintegration/{integrationID}", Scope(sdk.AuthConsumerScopeProject), r.DELETE(api.deleteWorkflowEventsIntegrationHandler))

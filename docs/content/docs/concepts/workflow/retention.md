@@ -12,7 +12,7 @@ You can configure the workflow run retention in the workflow advanced section on
 
 * On the second line, you will be able to define your retention policy through a lua condition.
 You will be able to use these variables:
-  * run_date_before: to identify runs older than x days
+  * run_days_before: to identify runs older than x days
   * git_branch_exist: to identify if the git branch used for this run still exists on the git repository
   * run_status: to identidy run status
   * and all variables defined in your workflow payload
