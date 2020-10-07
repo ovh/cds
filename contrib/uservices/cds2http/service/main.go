@@ -79,6 +79,9 @@ func init() {
 	flags.String("event-kafka-topic", "", "Ex: --kafka-topic=your-kafka-topic")
 	viper.BindPFlag("event_kafka_topic", flags.Lookup("event-kafka-topic")) // nolint
 
+	flags.String("event-kafka-version", "", "Ex: --kafka-version=your-kafka-version")
+	viper.BindPFlag("event_kafka_version", flags.Lookup("event-kafka-version")) // nolint
+
 	flags.String("event-kafka-user", "", "Ex: --kafka-user=your-kafka-user")
 	viper.BindPFlag("event_kafka_user", flags.Lookup("event-kafka-user")) // nolint
 

@@ -15,19 +15,17 @@ testcases:
 
 - name: import integrations
   steps:
-  - script: {{.cdsctl}} -f {{.cdsctl.config}} admin integration-model import {{expandEnv ./fixtures/integrations/kafka-public.yml}}
-  - script: {{.cdsctl}} -f {{.cdsctl.config}} project integration import ITSCWRKFLW18 {{expandEnv ./fixtures/integrations/kafka.yml}}
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} admin integration-model import ./fixtures/integrations/kafka-public.yml
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} project integration import ITSCWRKFLW18 ./fixtures/integrations/kafka.yml
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} project integration import ITSCWRKFLW18 ./fixtures/integrations/kafka-hook.yml
 
 - name: import workflow
   steps:
   - script:  {{.cdsctl}} -f {{.cdsctl.config}} workflow push ITSCWRKFLW18 ./fixtures/ITSCWRKFLW18/*.yml --skip-update-files
 
-- name: run workflow
+- name: run workflow by sending a kafka event
   steps:
-  - script: {{.cdsctl}} -f {{.cdsctl.config}} workflow run ITSCWRKFLW18 ITSCWRKFLW18-WORKFLOW
-    assertions:
-    - result.code ShouldEqual 0
-    - "result.systemout ShouldContainSubstring Workflow ITSCWRKFLW18-WORKFLOW #1 has been launched"
+  - script: kafkacat -b localhost:9092 -t test.hook -T -P -l ./fixtures/ITSCWRKFLW18/input-kafka.json
 
 - name: check event in topic test.eventsproject
   steps:
@@ -46,3 +44,18 @@ testcases:
     - "result.systemoutjson.type_event ShouldContainSubstring sdk.EventRunWorkflowJob"
     retry: 10
     delay: 2
+
+- name: check workflow
+  steps:
+  - script:  {{.cdsctl}} -f {{.cdsctl.config}} workflow status ITSCWRKFLW18 ITSCWRKFLW18-WORKFLOW 1 --format json
+    retry: 10
+    delay: 3
+    assertions:
+    - result.code ShouldEqual 0
+    - result.systemoutjson.last_execution ShouldNotBeEmpty
+    - result.systemoutjson.start ShouldNotBeEmpty
+    - result.systemoutjson.payload ShouldNotBeEmpty
+    - result.systemoutjson.payload ShouldContainSubstring fookafka:barkafka
+    - result.systemoutjson.num ShouldContainSubstring 1
+    - result.systemoutjson.status ShouldEqual Success
+    - result.systemoutjson.tags ShouldContainSubstring triggered_by
