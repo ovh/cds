@@ -153,7 +153,7 @@ func (a Action) IsValid() error {
 // FlattenRequirements returns all requirements for an action and its children.
 func (a *Action) FlattenRequirements() RequirementList {
 	if !a.Enabled {
-		return nil
+		return a.Requirements
 	}
 
 	rs := a.Requirements
