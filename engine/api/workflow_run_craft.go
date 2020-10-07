@@ -133,27 +133,27 @@ func (api *API) workflowRunCraft(ctx context.Context, id int64) error {
 			}
 			workflow.AddWorkflowRunInfo(run, info)
 			if err := workflow.UpdateWorkflowRun(ctx, api.mustDB(), run); err != nil {
-				log.Error(ctx, "unable to star run %d/%d for workflow %s: %v", run.ID, run.Number, wf.Name, err)
+				return err
 			}
 			event.PublishWorkflowRun(ctx, *run, wf.ProjectKey)
 			return nil
-		} else {
-			found := false
-			for i := range run.Infos {
-				if run.Infos[i].Message.ID == sdk.MsgTooMuchWorkflowRun.ID {
-					run.Infos[i].Type = sdk.RunInfoTypInfo
-					run.Infos[i].Message.Type = sdk.RunInfoTypInfo
-					found = true
-					break
-				}
-			}
-			if found {
-				if err := workflow.UpdateWorkflowRun(ctx, api.mustDB(), run); err != nil {
-					log.Error(ctx, "unable to star run %d/%d for workflow %s: %v", run.ID, run.Number, wf.Name, err)
-				}
-				event.PublishWorkflowRun(ctx, *run, wf.ProjectKey)
+		}
+		found := false
+		for i := range run.Infos {
+			if run.Infos[i].Message.ID == sdk.MsgTooMuchWorkflowRun.ID {
+				run.Infos[i].Type = sdk.RunInfoTypInfo
+				run.Infos[i].Message.Type = sdk.RunInfoTypInfo
+				found = true
+				break
 			}
 		}
+		if found {
+			if err := workflow.UpdateWorkflowRun(ctx, api.mustDB(), run); err != nil {
+				return err
+			}
+			event.PublishWorkflowRun(ctx, *run, wf.ProjectKey)
+		}
+
 	}
 
 	log.Debug("api.workflowRunCraft> crafting workflow %s/%s #%d.%d (%d)", proj.Key, wf.Name, run.Number, run.LastSubNumber, run.ID)
