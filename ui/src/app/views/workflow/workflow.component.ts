@@ -95,41 +95,41 @@ export class WorkflowComponent implements OnInit, OnDestroy {
     ngOnDestroy(): void { } // Should be set to use @AutoUnsubscribe with AOT
 
     ngOnInit(): void {
-        let data = { 'project_key': this.project.key };
-        this.projectSubscription = this._store.select(ProjectState)
-            .subscribe((projectState: ProjectStateModel) => {
-                this.project = projectState.project;
-                if (this.project && this.workflow && this.project.key !== this.workflow.project_key) {
-                    delete this.workflow;
-                }
-                this._cd.detectChanges();
-                this._featureService.isEnabled('cdn-job-logs', data).subscribe(f => {
-                    this._store.dispatch(new AddFeatureResult(<FeaturePayload>{
-                        key: f.name,
-                        result: {
-                            paramString: JSON.stringify(data),
-                            enabled: f.enabled
-                        }
-                    }));
-                });
+        this.projectSubscription = this._store.select(ProjectState).subscribe((projectState: ProjectStateModel) => {
+            this.project = projectState.project;
+            if (this.project && this.workflow && this.project.key !== this.workflow.project_key) {
+                delete this.workflow;
+            }
+            this._cd.detectChanges();
+
+            let data = { 'project_key': this.project.key };
+            this._featureService.isEnabled('cdn-job-logs', data).subscribe(f => {
+                this._store.dispatch(new AddFeatureResult(<FeaturePayload>{
+                    key: f.name,
+                    result: {
+                        paramString: JSON.stringify(data),
+                        enabled: f.enabled
+                    }
+                }));
             });
-        this._featureService.isEnabled('workflow-retention-policy', data).subscribe(f => {
-            this._store.dispatch(new AddFeatureResult(<FeaturePayload>{
-                key: f.name,
-                result: {
-                    paramString: JSON.stringify(data),
-                    enabled: f.enabled
-                }
-            }));
-        });
-        this._featureService.isEnabled('workflow-retention-maxruns', data).subscribe(f => {
-            this._store.dispatch(new AddFeatureResult(<FeaturePayload>{
-                key: f.name,
-                result: {
-                    paramString: JSON.stringify(data),
-                    enabled: f.enabled
-                }
-            }));
+            this._featureService.isEnabled('workflow-retention-policy', data).subscribe(f => {
+                this._store.dispatch(new AddFeatureResult(<FeaturePayload>{
+                    key: f.name,
+                    result: {
+                        paramString: JSON.stringify(data),
+                        enabled: f.enabled
+                    }
+                }));
+            });
+            this._featureService.isEnabled('workflow-retention-maxruns', data).subscribe(f => {
+                this._store.dispatch(new AddFeatureResult(<FeaturePayload>{
+                    key: f.name,
+                    result: {
+                        paramString: JSON.stringify(data),
+                        enabled: f.enabled
+                    }
+                }));
+            });
         });
         this.sidebarSubs = this.sibebar$.subscribe(m => {
             if (m === this.sidebarMode) {
