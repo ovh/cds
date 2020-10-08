@@ -1274,7 +1274,6 @@ export class WorkflowState {
             canEdit: state.workflow.permissions.writable,
             sidebar: WorkflowSidebarMode.RUNS
         });
-
     }
 
     @Action(actionWorkflow.UpdateWorkflowRunList)

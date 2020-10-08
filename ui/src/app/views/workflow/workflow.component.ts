@@ -90,11 +90,12 @@ export class WorkflowComponent implements OnInit, OnDestroy {
         private _store: Store,
         private _cd: ChangeDetectorRef,
         private _featureService: FeatureService
-    ) {}
+    ) { }
 
-    ngOnDestroy(): void {} // Should be set to use @AutoUnsubscribe with AOT
+    ngOnDestroy(): void { } // Should be set to use @AutoUnsubscribe with AOT
 
     ngOnInit(): void {
+        let data = { 'project_key': this.project.key };
         this.projectSubscription = this._store.select(ProjectState)
             .subscribe((projectState: ProjectStateModel) => {
                 this.project = projectState.project;
@@ -102,8 +103,16 @@ export class WorkflowComponent implements OnInit, OnDestroy {
                     delete this.workflow;
                 }
                 this._cd.detectChanges();
+                this._featureService.isEnabled('cdn-job-logs', data).subscribe(f => {
+                    this._store.dispatch(new AddFeatureResult(<FeaturePayload>{
+                        key: f.name,
+                        result: {
+                            paramString: JSON.stringify(data),
+                            enabled: f.enabled
+                        }
+                    }));
+                });
             });
-        let data = { 'project_key': this.project.key }
         this._featureService.isEnabled('workflow-retention-policy', data).subscribe(f => {
             this._store.dispatch(new AddFeatureResult(<FeaturePayload>{
                 key: f.name,
@@ -198,7 +207,7 @@ export class WorkflowComponent implements OnInit, OnDestroy {
 
     initRuns(key: string, workflowName: string, filters?: {}): void {
         this._store.dispatch(
-            new GetWorkflowRuns({ projectKey: key, workflowName: workflowName, limit: '50', offset: '0', filters })
+            new GetWorkflowRuns({ projectKey: key, workflowName: workflowName, limit: '15', offset: '0', filters })
         );
     }
 
