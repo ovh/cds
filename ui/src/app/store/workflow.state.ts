@@ -1171,6 +1171,17 @@ export class WorkflowState {
         }));
     }
 
+    @Action(actionWorkflow.RemoveWorkflowRunFromList)
+    removeWorkflowRunFromList(ctx: StateContext<WorkflowStateModel>, action: actionWorkflow.RemoveWorkflowRunFromList) {
+        const state = ctx.getState();
+        ctx.setState({
+            ...state,
+            listRuns: state.listRuns.filter(r => r.num !== action.payload.num ||
+                r.workflow.name !== action.payload.workflowName ||
+                r.workflow.project_key !== action.payload.projectKey)
+        });
+    }
+
     @Action(actionWorkflow.GetWorkflowRuns)
     getWorkflowRuns(ctx: StateContext<WorkflowStateModel>, action: actionWorkflow.GetWorkflowRuns) {
         const state = ctx.getState();

@@ -41,6 +41,8 @@ type Workflow struct {
 	Usage                   *Usage                       `json:"usage,omitempty" db:"-" cli:"-"`
 	HistoryLength           int64                        `json:"history_length" db:"history_length" cli:"-"`
 	PurgeTags               PurgeTags                    `json:"purge_tags,omitempty" db:"purge_tags" cli:"-"`
+	RetentionPolicy         string                       `json:"retention_policy,omitempty" db:"retention_policy" cli:"-"`
+	MaxRuns                 int64                        `json:"max_runs,omitempty" db:"max_runs" cli:"-"`
 	Notifications           []WorkflowNotification       `json:"notifications,omitempty" db:"-" cli:"-"`
 	FromRepository          string                       `json:"from_repository,omitempty" db:"from_repository" cli:"from"`
 	DerivedFromWorkflowID   int64                        `json:"derived_from_workflow_id,omitempty" db:"derived_from_workflow_id" cli:"-"`

@@ -28,7 +28,14 @@ import { DeleteFromCachePipeline, ExternalChangePipeline, ResyncPipeline } from 
 import { PipelinesState, PipelinesStateModel } from './store/pipelines.state';
 import * as projectActions from './store/project.action';
 import { ProjectState, ProjectStateModel } from './store/project.state';
-import { ExternalChangeWorkflow, GetWorkflow, GetWorkflowNodeRun, GetWorkflowRun, UpdateWorkflowRunList } from './store/workflow.action';
+import {
+    ExternalChangeWorkflow,
+    GetWorkflow,
+    GetWorkflowNodeRun,
+    GetWorkflowRun,
+    RemoveWorkflowRunFromList,
+    UpdateWorkflowRunList
+} from './store/workflow.action';
 import { WorkflowState } from './store/workflow.state';
 
 @Injectable()
@@ -328,6 +335,19 @@ export class AppService {
         }
         switch (event.type_event) {
             case EventType.RUN_WORKFLOW_PREFIX:
+                if (event.payload['to_delete']) {
+                    this._store.dispatch(new RemoveWorkflowRunFromList({
+                        projectKey: event.project_key,
+                        workflowName: event.workflow_name,
+                        num: event.workflow_run_num
+                    }));
+
+                    if (this.routeParams['number'] === event.workflow_run_num.toString()) {
+                        this._toast.info('', 'This run has just been deleted')
+                        this._router.navigate(['/project', this.routeParams['key'], 'workflow', event.workflow_name]);
+                    }
+                    return;
+                }
                 if (this.routeParams['number'] === event.workflow_run_num.toString()) {
                     // if same run number , then update store
                     this._store.dispatch(

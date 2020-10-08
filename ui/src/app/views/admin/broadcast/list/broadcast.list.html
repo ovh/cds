@@ -3,7 +3,6 @@
         <a class="ui right floated green button small buttonBreadcrumb" [routerLink]="['add']">{{ 'btn_add' | translate
             }}</a></app-breadcrumb>
     <app-scrollview class="scrollview">
-        <app-data-table [withFilter]="filter" [columns]="columns" [data]="broadcasts">
-        </app-data-table>
+        <app-data-table [withFilter]="filter" [columns]="columns" [data]="broadcasts"></app-data-table>
     </app-scrollview>
 </div>

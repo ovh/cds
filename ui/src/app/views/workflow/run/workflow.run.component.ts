@@ -34,6 +34,8 @@ export class WorkflowRunComponent implements OnInit, OnDestroy {
     version: string;
     direction: string;
 
+    runDelayed: boolean;
+
     paramsSub: Subscription;
 
     pipelineStatusEnum = PipelineStatus;
@@ -85,7 +87,9 @@ export class WorkflowRunComponent implements OnInit, OnDestroy {
             }
 
             if (wr && this.workflowRunData && this.workflowRunData['id'] === wr.id && this.workflowRunData['status'] === wr.status) {
-                return;
+                if ((!this.workflowRunData['infos'] && !wr.infos) || (wr.infos.length === (<[]>this.workflowRunData['infos'])?.length)) {
+                    return;
+                }
             }
 
             if (!this.workflowRunData) {
@@ -115,6 +119,8 @@ export class WorkflowRunComponent implements OnInit, OnDestroy {
             )) {
                 this.displayError = wr.infos.some((info) => info.type === 'Error');
                 this.warnings = wr.infos.filter(i => i.type === 'Warning');
+
+                this.runDelayed = this.warnings.findIndex(w => w.message.id === 'MsgTooMuchWorkflowRun') !== -1;
             }
 
             this.workflowRunData['id'] = wr.id;

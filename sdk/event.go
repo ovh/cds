@@ -122,6 +122,7 @@ type EventRunWorkflow struct {
 	LastModified     int64            `json:"last_modified"`
 	LastModifiedNano int64            `json:"last_modified_nano"`
 	Tags             []WorkflowRunTag `json:"tags"`
+	ToDelete         bool             `json:"to_delete"`
 }
 
 // EventNotif contains event data for a job

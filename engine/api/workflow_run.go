@@ -355,8 +355,10 @@ func (api *API) deleteWorkflowRunHandler() service.Handler {
 		if err := workflow.MarkWorkflowRunsAsDelete(api.mustDB(), []int64{run.ID}); err != nil {
 			return sdk.WrapError(err, "cannot mark workflow run %d as delete", run.ID)
 		}
+		run.ToDelete = true
 
 		workflow.CountWorkflowRunsMarkToDelete(ctx, api.mustDB(), api.Metrics.WorkflowRunsMarkToDelete)
+		event.PublishWorkflowRun(ctx, *run, key)
 
 		return service.WriteJSON(w, nil, http.StatusAccepted)
 	}
