@@ -875,7 +875,7 @@ func Test_postWorkflowJobArtifactHandler(t *testing.T) {
 	assert.Equal(t, true, exists)
 
 	// then purge run to delete artifact
-	require.NoError(t, purge.DeleteArtifacts(router.Background, db, api.Cache, api.SharedStorage, ctx.run.ID))
+	require.NoError(t, purge.DeleteArtifacts(router.Background, db, api.SharedStorage, ctx.run.ID))
 
 	// check if file is deleted
 	exists = fileExists(artifactPath)

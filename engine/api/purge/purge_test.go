@@ -2,9 +2,12 @@ package purge
 
 import (
 	"context"
+	"github.com/ovh/cds/sdk"
+	"github.com/stretchr/testify/require"
 	"os"
 	"path"
 	"testing"
+	"time"
 
 	"github.com/ovh/cds/engine/api/bootstrap"
 	"github.com/ovh/cds/engine/api/objectstore"
@@ -12,7 +15,7 @@ import (
 )
 
 func Test_deleteWorkflowRunsHistory(t *testing.T) {
-	db, cache := test.SetupPG(t, bootstrap.InitiliazeDB)
+	db, _ := test.SetupPG(t, bootstrap.InitiliazeDB)
 
 	// Init store
 	cfg := objectstore.Config{
@@ -27,8 +30,29 @@ func Test_deleteWorkflowRunsHistory(t *testing.T) {
 	sharedStorage, errO := objectstore.Init(context.Background(), cfg)
 	test.NoError(t, errO)
 
-	err := deleteWorkflowRunsHistory(context.Background(), db.DbMap, cache, sharedStorage, nil)
+	err := deleteWorkflowRunsHistory(context.Background(), db.DbMap, sharedStorage, nil)
 	test.NoError(t, err)
 
 	// test on delete artifact from storage is done on Test_postWorkflowJobArtifactHandler
+}
+
+func Test_applyRetentionPolicyOnRun(t *testing.T) {
+	db, _ := test.SetupPG(t, bootstrap.InitiliazeDB)
+	wf := sdk.Workflow{
+		RetentionPolicy: "return run_days_before < 2",
+	}
+	now := time.Now()
+	run1 := sdk.WorkflowRun{
+		LastModified: now.Add(-49 * time.Hour),
+	}
+	keep, err := applyRetentionPolicyOnRun(db.DbMap, wf, run1, nil, MarkAsDeleteOptions{DryRun: true})
+	require.NoError(t, err)
+	require.False(t, keep)
+
+	run2 := sdk.WorkflowRun{
+		LastModified: now.Add(-47 * time.Hour),
+	}
+	keep, err = applyRetentionPolicyOnRun(db.DbMap, wf, run2, nil, MarkAsDeleteOptions{DryRun: true})
+	require.NoError(t, err)
+	require.True(t, keep)
 }
