@@ -13,7 +13,9 @@ import { Store } from '@ngxs/store';
 import { ModalTemplate, SuiActiveModal, SuiModalService, TemplateModalConfig } from '@richardlt/ng2-semantic-ui';
 import { Project } from 'app/model/project.model';
 import { RunToKeep } from 'app/model/purge.model';
+import { AuthentifiedUser } from 'app/model/user.model';
 import { Workflow } from 'app/model/workflow.model';
+import { AuthenticationService } from 'app/service/authentication/authentication.service';
 import { ThemeStore } from 'app/service/theme/theme.store';
 import { WorkflowRunService } from 'app/service/workflow/run/workflow.run.service';
 import { WorkflowService } from 'app/service/workflow/workflow.service';
@@ -21,6 +23,7 @@ import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { WarningModalComponent } from 'app/shared/modal/warning/warning.component';
 import { Column, ColumnType } from 'app/shared/table/data-table.component';
 import { ToastService } from 'app/shared/toast/ToastService';
+import { AuthenticationState } from 'app/store/authentication.state';
 import { FeatureState } from 'app/store/feature.state';
 import { DeleteWorkflow, DeleteWorkflowIcon, UpdateWorkflow, UpdateWorkflowIcon } from 'app/store/workflow.action';
 import cloneDeep from 'lodash-es/cloneDeep';
@@ -81,6 +84,7 @@ export class WorkflowAdminComponent implements OnInit, OnDestroy {
     loading = false;
     fileTooLarge = false;
     dragulaSubscription: Subscription;
+    currentUser: AuthentifiedUser;
 
     constructor(
         private store: Store,
@@ -92,8 +96,12 @@ export class WorkflowAdminComponent implements OnInit, OnDestroy {
         private _cd: ChangeDetectorRef,
         private _dragularService: DragulaService,
         private _theme: ThemeStore,
-        private _modalService: SuiModalService
+        private _modalService: SuiModalService,
+        private _authenticationService: AuthenticationService
     ) {
+        this.store.select(AuthenticationState.user).pipe(first()).subscribe(u => {
+            this.currentUser = u;
+        });
         this._dragularService.createGroup('bag-tag', {
             accepts: function (el, target, source, sibling) {
                 return sibling !== null;
@@ -262,13 +270,16 @@ export class WorkflowAdminComponent implements OnInit, OnDestroy {
     }
 
     retentionPolicyDryRun(): void {
-        this._workflowService.retentionPolicyDryRun(this.workflow).subscribe(wr => {
+        this.loading = true;
+        this._workflowService.retentionPolicyDryRun(this.workflow)
+            .subscribe(wr => {
             this.dryRunDatas = wr;
             const config = new TemplateModalConfig<boolean, boolean, void>(this.dryRunModal);
             config.mustScroll = true;
             this.modal = this._modalService.open(config);
             this._cd.markForCheck();
         });
+        this._cd.markForCheck();
     }
 
     onSubmitWorkflowUpdate(skip?: boolean) {
