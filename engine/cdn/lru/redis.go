@@ -236,11 +236,11 @@ func (r *Redis) Status(ctx context.Context) []sdk.MonitoringStatusLine {
 
 	statusSize := sdk.MonitoringStatusOK
 	// if size is > 10Mo than maxSize -> Warn
-	if r.maxSize-size > -10000000 {
+	if r.maxSize-size < -10000000 {
 		statusSize = sdk.MonitoringStatusWarn
 	}
 	// if size is > 20Mo than maxSize -> Warn
-	if r.maxSize-size > -20000000 {
+	if r.maxSize-size < -20000000 {
 		statusSize = sdk.MonitoringStatusAlert
 	}
 

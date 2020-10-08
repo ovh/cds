@@ -1,6 +1,8 @@
 package cdn
 
 import (
+	"sync"
+
 	"github.com/ovh/cds/engine/api"
 	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/engine/cdn/lru"
@@ -42,6 +44,7 @@ type Service struct {
 		ItemSize                 *stats.Int64Measure
 		StorageThroughput        *stats.Int64Measure
 	}
+	storageUnitLags sync.Map
 }
 
 // Configuration is the hooks configuration structure

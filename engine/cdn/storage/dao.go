@@ -256,7 +256,7 @@ func getAllItemUnits(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlExecu
 }
 
 func CountItemCompleted(db gorp.SqlExecutor) (int64, error) {
-	return db.SelectInt("SELECT COUNT(*) from item WHERE item.status = $1", sdk.CDNStatusItemCompleted)
+	return db.SelectInt("SELECT COUNT(*) from item WHERE item.status = $1 AND to_delete = false", sdk.CDNStatusItemCompleted)
 }
 
 func CountItemIncoming(db gorp.SqlExecutor) (int64, error) {
