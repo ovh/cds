@@ -54,7 +54,6 @@ func TestCleanSynchronizedItem(t *testing.T) {
 		Storages: []storage.StorageConfiguration{
 			{
 				Name: "fs-backend",
-				Cron: "* * * * * ?",
 				Local: &storage.LocalStorageConfiguration{
 					Path: tmpDir,
 					Encryption: []convergent.ConvergentEncryptionConfig{
@@ -68,7 +67,6 @@ func TestCleanSynchronizedItem(t *testing.T) {
 			},
 			{
 				Name: "cds-backend",
-				Cron: "* * * * * ?",
 				CDS: &storage.CDSStorageConfiguration{
 					Host:  "lolcat.host",
 					Token: "mytoken",

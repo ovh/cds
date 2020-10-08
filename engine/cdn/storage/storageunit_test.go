@@ -51,7 +51,6 @@ func TestRun(t *testing.T) {
 		Storages: []storage.StorageConfiguration{
 			{
 				Name: "local_storage",
-				Cron: "* * * * * ?",
 				Local: &storage.LocalStorageConfiguration{
 					Path: tmpDir,
 					Encryption: []convergent.ConvergentEncryptionConfig{
@@ -64,7 +63,6 @@ func TestRun(t *testing.T) {
 				},
 			}, {
 				Name: "local_storage_2",
-				Cron: "* * * * * ?",
 				Local: &storage.LocalStorageConfiguration{
 					Path: tmpDir2,
 					Encryption: []convergent.ConvergentEncryptionConfig{
@@ -80,7 +78,7 @@ func TestRun(t *testing.T) {
 	})
 	require.NoError(t, err)
 	require.NotNil(t, cdnUnits)
-	require.NoError(t, cdnUnits.Start(ctx))
+	cdnUnits.Start(ctx, sdk.NewGoRoutines())
 
 	units, err := storage.LoadAllUnits(ctx, m, db.DbMap)
 	require.NoError(t, err)

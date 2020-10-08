@@ -113,8 +113,8 @@ func (s *Service) cleanWaitingItem(ctx context.Context, duration int) error {
 	if err != nil {
 		return err
 	}
-	log.Debug("cdn:CompleteWaitingItems: %d items to complete", len(itemUnits))
 	for _, itemUnit := range itemUnits {
+		log.InfoWithFields(ctx, logrus.Fields{"item_apiref": itemUnit.Item.APIRef}, "cleanWaitingItem> cleaning item %s", itemUnit.ItemID)
 		tx, err := s.mustDBWithCtx(ctx).Begin()
 		if err != nil {
 			return sdk.WrapError(err, "unable to start transaction")

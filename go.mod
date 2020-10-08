@@ -34,6 +34,7 @@ require (
 	github.com/fsamin/go-dump v1.0.9
 	github.com/fsamin/go-repo v0.1.8
 	github.com/fsamin/go-shredder v0.0.0-20180118184739-b2488aedb5be
+	github.com/fujiwara/shapeio v0.0.0-20170602072123-c073257dd745
 	github.com/gambol99/go-marathon v0.0.0-20170922093320-ec4a50170df7
 	github.com/gin-contrib/sse v0.0.0-20190301062529-5545eab6dad3 // indirect
 	github.com/gin-gonic/gin v1.3.0
@@ -102,7 +103,6 @@ require (
 	github.com/pquerna/cachecontrol v0.0.0-20200819021114-67c6ae64274f // indirect
 	github.com/prometheus/client_golang v1.1.0 // indirect
 	github.com/prometheus/client_model v0.0.0-20190812154241-14fe0d1b01d4 // indirect
-	github.com/robfig/cron/v3 v3.0.1
 	github.com/rubenv/sql-migrate v0.0.0-20160620083229-6f4757563362
 	github.com/satori/go.uuid v1.2.0
 	github.com/sguiheux/go-coverage v0.0.0-20190710153556-287b082a7197
@@ -138,7 +138,6 @@ require (
 	google.golang.org/genproto v0.0.0-20190817000702-55e96fffbd48 // indirect
 	google.golang.org/grpc v1.23.0
 	gopkg.in/AlecAivazis/survey.v1 v1.7.1
-	gopkg.in/bsm/sarama-cluster.v2 v2.1.4
 	gopkg.in/go-playground/assert.v1 v1.2.1 // indirect
 	gopkg.in/go-playground/validator.v8 v8.18.2 // indirect
 	gopkg.in/gorp.v1 v1.7.1 // indirect

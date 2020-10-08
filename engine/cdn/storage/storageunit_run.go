@@ -2,22 +2,19 @@ package storage
 
 import (
 	"context"
-	"fmt"
 	"io"
 	"time"
 
+	"github.com/fujiwara/shapeio"
 	"github.com/sirupsen/logrus"
 
 	"github.com/ovh/cds/engine/cdn/item"
 	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
-	"github.com/ovh/cds/sdk/telemetry"
 )
 
 func (x *RunningStorageUnits) Run(ctx context.Context, s StorageUnit, nbItem int64) error {
-	// s.Lock()
-	// defer s.Unlock()
 	if _, err := LoadUnitByID(ctx, x.m, x.db, s.ID()); err != nil {
 		return err
 	}
@@ -28,49 +25,43 @@ func (x *RunningStorageUnits) Run(ctx context.Context, s StorageUnit, nbItem int
 		return err
 	}
 
-	if len(itemIDs) > 0 {
-		log.Info(ctx, "storage.Run> unit %s has %d items to sync (max: %d)", s.Name(), len(itemIDs), nbItem)
-	}
+	log.Debug("storage.Run> unit %s has %d items to sync (max: %d)", s.Name(), len(itemIDs), nbItem)
 
 	for _, id := range itemIDs {
-		tx, err := x.db.Begin()
-		if err != nil {
-			return err
-		}
-
-		it, err := item.LoadAndLockByID(ctx, x.m, tx, id, gorpmapper.GetOptions.WithDecryption)
-		if err != nil {
-			if !sdk.ErrorIs(err, sdk.ErrNotFound) {
-				log.ErrorWithFields(ctx, logrus.Fields{"stack_trace": fmt.Sprintf("%+v", err)}, "%s", err)
-			}
-			_ = tx.Rollback()
-			continue
-		}
-
-		_, err = LoadItemUnitByUnit(ctx, x.m, tx, s.ID(), id)
-		if err == nil {
-			_ = tx.Rollback()
-			continue
-		}
-		if !sdk.ErrorIs(err, sdk.ErrNotFound) {
-			log.ErrorWithFields(ctx, logrus.Fields{"stack_trace": fmt.Sprintf("%+v", err)}, "%s", err)
-			_ = tx.Rollback()
-			continue
-		}
-
-		if err := x.runItem(ctx, tx, s, it); err != nil {
-			log.ErrorWithFields(ctx, logrus.Fields{"stack_trace": fmt.Sprintf("%+v", err)}, "%s", err)
-			_ = tx.Rollback()
-			continue
-		}
-
-		if err := tx.Commit(); err != nil {
-			err = sdk.WrapError(err, "unable to commit txt")
-			log.ErrorWithFields(ctx, logrus.Fields{"stack_trace": fmt.Sprintf("%+v", err)}, "%s", err)
-			_ = tx.Rollback()
+		select {
+		case s.SyncItemChannel() <- id:
+		default:
 			continue
 		}
 	}
+	return nil
+}
+
+func (x *RunningStorageUnits) processItem(ctx context.Context, m *gorpmapper.Mapper, tx gorpmapper.SqlExecutorWithTx, s StorageUnit, id string) error {
+	it, err := item.LoadAndLockByID(ctx, x.m, tx, id, gorpmapper.GetOptions.WithDecryption)
+	if err != nil {
+		if !sdk.ErrorIs(err, sdk.ErrNotFound) {
+			return err
+		}
+		return nil
+	}
+
+	log.InfoWithFields(ctx, logrus.Fields{
+		"item_apiref":   it.APIRefHash,
+		"item_size_num": it.Size,
+	}, "processItem> processing item %s on %s", it.ID, s.Name())
+	if _, err = LoadItemUnitByUnit(ctx, x.m, tx, s.ID(), id); err == nil {
+		return err
+
+	}
+	if !sdk.ErrorIs(err, sdk.ErrNotFound) {
+		return err
+	}
+
+	if err := x.runItem(ctx, tx, s, it); err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -103,6 +94,10 @@ func (x *RunningStorageUnits) runItem(ctx context.Context, tx gorpmapper.SqlExec
 		return nil
 	}
 
+	rateLimitWriter := shapeio.NewWriter(writer)
+	rateLimitWriter.SetRateLimit(dest.SyncBandwidth())
+	log.Debug("%s write ratelimit: %v", dest.Name(), dest.SyncBandwidth())
+
 	source, err := x.GetSource(ctx, item)
 	if err != nil {
 		return err
@@ -113,18 +108,22 @@ func (x *RunningStorageUnits) runItem(ctx context.Context, tx gorpmapper.SqlExec
 		return err
 	}
 
+	rateLimitReader := shapeio.NewReader(reader)
+	rateLimitReader.SetRateLimit(source.SyncBandwidth())
+	log.Debug("%s read ratelimit: %v", source.Name(), source.SyncBandwidth())
+
 	chanError := make(chan error)
 	pr, pw := io.Pipe()
 
 	go func() {
 		defer pw.Close()
-		if err := source.Read(reader, pw); err != nil {
+		if err := source.Read(rateLimitReader, pw); err != nil {
 			chanError <- err
 		}
 		close(chanError)
 	}()
 
-	if err := dest.Write(*iu, pr, writer); err != nil {
+	if err := dest.Write(*iu, pr, rateLimitWriter); err != nil {
 		_ = pr.Close()
 		_ = reader.Close()
 		_ = writer.Close()
@@ -153,10 +152,6 @@ func (x *RunningStorageUnits) runItem(ctx context.Context, tx gorpmapper.SqlExec
 	}
 
 	var throughput = item.Size / t2.Sub(t1).Milliseconds()
-	if x.Metrics.StorageThroughput != nil {
-		ctxMetrics := telemetry.ContextWithTag(ctx, "storage_source", source.Name(), "storage_dest", dest.Name())
-		telemetry.Record(ctxMetrics, *x.Metrics.StorageThroughput, throughput)
-	}
 
 	log.InfoWithFields(ctx, logrus.Fields{
 		"item_apiref":               item.APIRefHash,
