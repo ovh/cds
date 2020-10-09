@@ -17,7 +17,6 @@ import (
 )
 
 func (s *Service) dequeueJobLogs(ctx context.Context) error {
-	log.Info(ctx, "dequeueJobLogs: start")
 	defer func() {
 		log.Info(ctx, "cdn: leaving dequeue job logs")
 	}()
@@ -45,7 +44,9 @@ func (s *Service) dequeueJobLogs(ctx context.Context) error {
 }
 
 func (s *Service) dequeueServiceLogs(ctx context.Context) error {
-	log.Info(ctx, "dequeueServiceLogs: start")
+	defer func() {
+		log.Info(ctx, "cdn: leaving dequeue service logs")
+	}()
 	for {
 		select {
 		case <-ctx.Done():
@@ -100,7 +101,7 @@ func (s *Service) storeLogs(ctx context.Context, itemType sdk.CDNItemType, signa
 
 	// In case where the item was marked as complete we don't allow append of other logs
 	if it.Status == sdk.CDNStatusItemCompleted {
-		log.Warning(ctx, "cdn:storeLogs: a log was received for item %s but status in already complete", it.Hash)
+		log.WarningWithFields(ctx, logrus.Fields{"item_apiref": it.APIRefHash}, "cdn:storeLogs: a log was received for item %s but status in already complete", it.ID)
 		return nil
 	}
 
@@ -194,6 +195,10 @@ func (s *Service) loadOrCreateItem(ctx context.Context, itemType sdk.CDNItemType
 			if err := tx.Commit(); err != nil {
 				return nil, sdk.WithStack(err)
 			}
+			log.InfoWithFields(ctx, logrus.Fields{
+				"item_apiref": it.APIRefHash,
+			}, "storeLogs> new item %s has been stored", it.ID)
+
 			return it, nil
 		} else if !sdk.ErrorIs(errInsert, sdk.ErrConflictData) {
 			return nil, errInsert

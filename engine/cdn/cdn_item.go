@@ -18,7 +18,7 @@ import (
 	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
-	"github.com/ovh/cds/sdk/telemetry"
+	"github.com/sirupsen/logrus"
 )
 
 var (
@@ -34,6 +34,8 @@ type downloadOpts struct {
 }
 
 func (s *Service) downloadItem(ctx context.Context, t sdk.CDNItemType, apiRefHash string, w http.ResponseWriter, opts downloadOpts) error {
+	t0 := time.Now()
+
 	if !t.IsLog() {
 		return sdk.NewErrorFrom(sdk.ErrNotImplemented, "only log item can be download for now")
 	}
@@ -55,6 +57,12 @@ func (s *Service) downloadItem(ctx context.Context, t sdk.CDNItemType, apiRefHas
 	if _, err := io.Copy(w, rc); err != nil {
 		return sdk.WithStack(err)
 	}
+	t1 := time.Now()
+
+	log.InfoWithFields(ctx, logrus.Fields{
+		"item_apiref":               it.APIRefHash,
+		"duration_milliseconds_num": t1.Sub(t0).Milliseconds(),
+	}, "downloadItem> item %s has been downloaded", it.ID)
 
 	return nil
 }
@@ -98,9 +106,10 @@ func (s *Service) getItemLogValue(ctx context.Context, t sdk.CDNItemType, apiRef
 	return it, s.LogCache.NewReader(it.ID, format, from, size, sort), filename, nil
 }
 
-func (s *Service) pushItemLogIntoCache(ctx context.Context, item sdk.CDNItem) error {
+func (s *Service) pushItemLogIntoCache(ctx context.Context, it sdk.CDNItem) error {
+	t0 := time.Now()
 	// Search item in a storage unit
-	itemUnits, err := storage.LoadAllItemUnitsByItemID(ctx, s.Mapper, s.mustDBWithCtx(ctx), item.ID)
+	itemUnits, err := storage.LoadAllItemUnitsByItemID(ctx, s.Mapper, s.mustDBWithCtx(ctx), it.ID)
 	if err != nil {
 		return err
 	}
@@ -133,7 +142,7 @@ func (s *Service) pushItemLogIntoCache(ctx context.Context, item sdk.CDNItem) er
 	}
 
 	// Create a writer for the cache
-	cacheWriter := s.LogCache.NewWriter(item.ID)
+	cacheWriter := s.LogCache.NewWriter(it.ID)
 
 	// Write data in cache
 	chanError := make(chan error)
@@ -174,11 +183,18 @@ func (s *Service) pushItemLogIntoCache(ctx context.Context, item sdk.CDNItem) er
 		}
 	}
 
-	log.Info(ctx, "log %s has been pushed to cache", item.ID)
+	t1 := time.Now()
+
+	log.InfoWithFields(ctx, logrus.Fields{
+		"item_apiref":               it.APIRefHash,
+		"duration_milliseconds_num": t1.Sub(t0).Milliseconds(),
+	}, "item %s has been pushed to cache", it.ID)
+
 	return nil
 }
 
 func (s *Service) completeItem(ctx context.Context, tx gorpmapper.SqlExecutorWithTx, itemUnit sdk.CDNItemUnit) error {
+	t0 := time.Now()
 	// We need to lock the item and set its status to complete and also generate data hash
 	it, err := item.LoadAndLockByID(ctx, s.Mapper, tx, itemUnit.ItemID)
 	if err != nil {
@@ -243,8 +259,13 @@ func (s *Service) completeItem(ctx context.Context, tx gorpmapper.SqlExecutorWit
 		return err
 	}
 
-	ctxItem := telemetry.ContextWithTag(ctx, telemetry.TagType, string(it.Type))
-	telemetry.Record(ctxItem, s.Metrics.ItemSize, it.Size)
+	t1 := time.Now()
+
+	log.InfoWithFields(ctx, logrus.Fields{
+		"item_apiref":               it.APIRefHash,
+		"duration_milliseconds_num": t1.Sub(t0).Milliseconds(),
+		"item_size_num":             it.Size,
+	}, "completeItem> item %s has been completed", it.ID)
 
 	return nil
 }

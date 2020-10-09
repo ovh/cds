@@ -57,13 +57,12 @@ func TestSyncLog(t *testing.T) {
 		Storages: []storage.StorageConfiguration{
 			{
 				Name: "test-cds-backend",
-				Cron: "* * * * * ?",
 				CDS:  cdsConfig,
 			},
 		},
 	})
 	require.NoError(t, err)
-	require.NoError(t, cdnUnits.Start(context.TODO()))
+	cdnUnits.Start(context.TODO(), sdk.NewGoRoutines())
 	s.Units = cdnUnits
 
 	cdsStorage, ok := s.Units.Storages[0].(*cds.CDS)

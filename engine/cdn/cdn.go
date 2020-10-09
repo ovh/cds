@@ -127,12 +127,8 @@ func (s *Service) Serve(c context.Context) error {
 		if err != nil {
 			return err
 		}
-		// Reference metrics counter
-		s.Units.Metrics.StorageThroughput = &s.Metrics.StorageThroughput
 
-		if err := s.Units.Start(ctx); err != nil {
-			return err
-		}
+		s.Units.Start(ctx, s.GoRoutines)
 
 		s.GoRoutines.Run(ctx, "cdn-gc-items", func(ctx context.Context) {
 			s.itemsGC(ctx)

@@ -42,7 +42,7 @@ type Service struct {
 		itemInDatabaseCount      *stats.Int64Measure
 		itemPerStorageUnitCount  *stats.Int64Measure
 		ItemSize                 *stats.Int64Measure
-		StorageThroughput        *stats.Int64Measure
+		ItemToSyncCount          *stats.Int64Measure
 	}
 	storageUnitLags sync.Map
 }

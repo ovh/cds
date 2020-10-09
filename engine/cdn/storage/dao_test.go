@@ -41,7 +41,6 @@ func TestLoadOldItemUnitByItemStatusAndDuration(t *testing.T) {
 		Storages: []storage.StorageConfiguration{
 			{
 				Name: "local_storage",
-				Cron: "* * * * * ?",
 				Local: &storage.LocalStorageConfiguration{
 					Path: tmpDir,
 				},
@@ -135,7 +134,6 @@ func TestLoadAllItemIDUnknownByUnitOrderByUnitID(t *testing.T) {
 		Storages: []storage.StorageConfiguration{
 			{
 				Name: "local_storage",
-				Cron: "0 0 12 * * *",
 				Local: &storage.LocalStorageConfiguration{
 					Path: tmpDir,
 					Encryption: []convergent.ConvergentEncryptionConfig{
@@ -149,7 +147,6 @@ func TestLoadAllItemIDUnknownByUnitOrderByUnitID(t *testing.T) {
 			},
 			{
 				Name: "local_storage2",
-				Cron: "0 0 12 * * *",
 				Local: &storage.LocalStorageConfiguration{
 					Path: tmpDir,
 					Encryption: []convergent.ConvergentEncryptionConfig{
