@@ -278,4 +278,6 @@ func TestGetItemLogsLinesHandler(t *testing.T) {
 	require.Len(t, lines, 1)
 	require.Equal(t, int64(2), lines[0].Number)
 	require.Equal(t, "[EMERGENCY] this is a message\n", lines[0].Value)
+
+	time.Sleep(1 * time.Second)
 }
