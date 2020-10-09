@@ -41,7 +41,8 @@ func TestGetItemValue(t *testing.T) {
 		Mapper:              m,
 	}
 	ctx, cancel := context.WithCancel(context.TODO())
-	defer cancel()
+	t.Cleanup(cancel)
+
 	cfg := test.LoadTestingConf(t, sdk.TypeCDN)
 	cdnUnits := newRunningStorageUnits(t, m, s.DBConnectionFactory.GetDBMap(m)(), ctx)
 	s.Units = cdnUnits
@@ -180,7 +181,7 @@ func TestGetItemValue_ThousandLines(t *testing.T) {
 		Mapper:              m,
 	}
 	ctx, cancel := context.WithCancel(context.TODO())
-	defer cancel()
+	t.Cleanup(cancel)
 	cdnUnits := newRunningStorageUnits(t, m, db.DbMap, ctx)
 	s.Units = cdnUnits
 	var err error
@@ -278,7 +279,7 @@ func TestGetItemValue_Reverse(t *testing.T) {
 		Mapper:              m,
 	}
 	ctx, cancel := context.WithCancel(context.TODO())
-	defer cancel()
+	t.Cleanup(cancel)
 	cdnUnits := newRunningStorageUnits(t, m, db.DbMap, ctx)
 	s.Units = cdnUnits
 	var err error
@@ -377,7 +378,7 @@ func TestGetItemValue_ThousandLinesReverse(t *testing.T) {
 		Mapper:              m,
 	}
 	ctx, cancel := context.WithCancel(context.TODO())
-	defer cancel()
+	t.Cleanup(cancel)
 	cdnUnits := newRunningStorageUnits(t, m, db.DbMap, ctx)
 	s.Units = cdnUnits
 	var err error

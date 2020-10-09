@@ -41,7 +41,7 @@ func TestStoreNewStepLog(t *testing.T) {
 		Mapper:              m,
 	}
 	ctx, cancel := context.WithCancel(context.TODO())
-	defer cancel()
+	t.Cleanup(cancel)
 	cdnUnits := newRunningStorageUnits(t, m, db.DbMap, ctx)
 	s.Units = cdnUnits
 
@@ -124,7 +124,7 @@ func TestStoreLastStepLog(t *testing.T) {
 		Mapper:              m,
 	}
 	ctx, cancel := context.WithCancel(context.TODO())
-	defer cancel()
+	t.Cleanup(cancel)
 	cdnUnits := newRunningStorageUnits(t, m, db.DbMap, ctx)
 	s.Units = cdnUnits
 
@@ -212,7 +212,7 @@ func TestStoreLogWrongOrder(t *testing.T) {
 		Mapper:              m,
 	}
 	ctx, cancel := context.WithCancel(context.TODO())
-	defer cancel()
+	t.Cleanup(cancel)
 	cdnUnits := newRunningStorageUnits(t, m, db.DbMap, ctx)
 
 	s.Units = cdnUnits
@@ -331,7 +331,7 @@ func TestStoreNewServiceLog(t *testing.T) {
 		Mapper:              m,
 	}
 	ctx, cancel := context.WithCancel(context.TODO())
-	defer cancel()
+	t.Cleanup(cancel)
 	cdnUnits := newRunningStorageUnits(t, m, db.DbMap, ctx)
 	s.Units = cdnUnits
 

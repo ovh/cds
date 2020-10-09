@@ -33,7 +33,7 @@ func TestRun(t *testing.T) {
 	cdntest.ClearItem(t, context.TODO(), m, db)
 
 	ctx, cancel := context.WithTimeout(context.TODO(), 3*time.Second)
-	defer cancel()
+	t.Cleanup(cancel)
 
 	tmpDir, err := ioutil.TempDir("", t.Name()+"-cdn-1-*")
 	require.NoError(t, err)
