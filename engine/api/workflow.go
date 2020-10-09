@@ -100,7 +100,7 @@ func (api *API) getRetentionPolicySuggestionHandler() service.Handler {
 		key := vars["key"]
 		name := vars["permWorkflowName"]
 
-		proj, err := project.Load(ctx, api.mustDBWithCtx(ctx), key)
+		proj, err := project.Load(ctx, api.mustDBWithCtx(ctx), key, project.LoadOptions.WithIntegrations)
 		if err != nil {
 			return err
 		}
@@ -171,7 +171,7 @@ func (api *API) postWorkflowRetentionPolicyDryRun() service.Handler {
 			return err
 		}
 
-		proj, err := project.Load(ctx, api.mustDBWithCtx(ctx), key)
+		proj, err := project.Load(ctx, api.mustDBWithCtx(ctx), key, project.LoadOptions.WithIntegrations)
 		if err != nil {
 			return err
 		}

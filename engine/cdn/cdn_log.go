@@ -95,7 +95,7 @@ func (s *Service) handleConnection(ctx context.Context, conn net.Conn) {
 	for {
 		bytes, err := bufReader.ReadBytes(byte(0))
 		if err != nil {
-			log.Info(ctx, "client left")
+			log.Debug("client left: %v", err)
 			return
 		}
 		// remove byte(0)

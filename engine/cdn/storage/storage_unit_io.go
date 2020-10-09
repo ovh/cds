@@ -21,12 +21,14 @@ type Source interface {
 	NewReader(context.Context) (io.ReadCloser, error)
 	Read(io.Reader, io.Writer) error
 	Name() string
+	SyncBandwidth() float64
 }
 
 type source interface {
 	NewReader(context.Context, sdk.CDNItemUnit) (io.ReadCloser, error)
 	Read(sdk.CDNItemUnit, io.Reader, io.Writer) error
 	Name() string
+	SyncBandwidth() float64
 }
 
 type iuSource struct {
@@ -42,6 +44,9 @@ func (s *iuSource) Read(r io.Reader, w io.Writer) error {
 }
 func (s *iuSource) Name() string {
 	return s.source.Name()
+}
+func (s *iuSource) SyncBandwidth() float64 {
+	return s.source.SyncBandwidth()
 }
 
 func (r RunningStorageUnits) GetSource(ctx context.Context, i *sdk.CDNItem) (Source, error) {

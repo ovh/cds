@@ -54,7 +54,6 @@ func TestCleanSynchronizedItem(t *testing.T) {
 		Storages: []storage.StorageConfiguration{
 			{
 				Name: "fs-backend",
-				Cron: "* * * * * ?",
 				Local: &storage.LocalStorageConfiguration{
 					Path: tmpDir,
 					Encryption: []convergent.ConvergentEncryptionConfig{
@@ -68,7 +67,6 @@ func TestCleanSynchronizedItem(t *testing.T) {
 			},
 			{
 				Name: "cds-backend",
-				Cron: "* * * * * ?",
 				CDS: &storage.CDSStorageConfiguration{
 					Host:  "lolcat.host",
 					Token: "mytoken",
@@ -200,7 +198,9 @@ func TestCleanWaitingItem(t *testing.T) {
 		Mapper:              m,
 	}
 
-	s.Units = newRunningStorageUnits(t, m, s.DBConnectionFactory.GetDBMap(m)())
+	ctx, cancel := context.WithCancel(context.TODO())
+	t.Cleanup(cancel)
+	s.Units = newRunningStorageUnits(t, m, s.DBConnectionFactory.GetDBMap(m)(), ctx)
 
 	it := sdk.CDNItem{
 		ID:     sdk.UUID(),

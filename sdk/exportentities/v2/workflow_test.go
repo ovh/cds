@@ -8,6 +8,7 @@ import (
 
 	"github.com/fsamin/go-dump"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"gopkg.in/yaml.v2"
 
 	"github.com/ovh/cds/sdk"
@@ -1115,4 +1116,35 @@ workflow:
 			assert.Equal(t, tst.yaml, string(b))
 		})
 	}
+}
+
+func TestWOrkflowWith2RootsShouldFail(t *testing.T) {
+	input := `name: qa-infra
+version: v2.0
+workflow:
+    qa-infra-lint:
+      pipeline: qa-infra-lint
+      application: qa-infra
+    qa-infra-build:
+      pipeline: qa-infra
+      application: qa-infra
+      # Execute only when a user triggered the workflow through the UI
+      conditions:
+        script: return cds_manual == "true"
+      one_at_a_time: true
+metadata:
+    default_tags: git.branch,git.author 
+notifications:
+- type: vcs
+  settings:
+  on_success: always`
+
+	yamlWorkflow, err := exportentities.UnmarshalWorkflow([]byte(input), exportentities.FormatYAML)
+	require.NoError(t, err)
+
+	t.Logf("yamlWorkflow> %+v", yamlWorkflow)
+	_, err = exportentities.ParseWorkflow(yamlWorkflow)
+	require.Error(t, err)
+	t.Log(err)
+
 }

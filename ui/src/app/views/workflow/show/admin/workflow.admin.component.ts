@@ -98,7 +98,6 @@ export class WorkflowAdminComponent implements OnInit, OnDestroy {
     loading = false;
     fileTooLarge = false;
     dragulaSubscription: Subscription;
-
     currentUser: AuthentifiedUser;
 
     constructor(
@@ -320,6 +319,7 @@ export class WorkflowAdminComponent implements OnInit, OnDestroy {
     }
 
     retentionPolicyDryRun(): void {
+
         this.store.dispatch(new CleanRetentionDryRun());
         this._eventService.subscribeToWorkflowPurgeDryRun(this.project.key, this.workflow.name, this.currentUser.username)
         this.loading = true;

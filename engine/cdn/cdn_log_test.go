@@ -81,7 +81,7 @@ func TestWorkerLogCDNEnabled(t *testing.T) {
 	gock.New("http://lolcat.host").Post("/feature/enabled/cdn-job-logs").Reply(200).JSON(sdk.FeatureEnabledResponse{Name: "cdn-job-logs", Enabled: true})
 
 	ctx, cancel := context.WithTimeout(context.TODO(), 2*time.Second)
-	defer cancel()
+	t.Cleanup(cancel)
 
 	go s.waitingJobs(ctx)
 
@@ -171,7 +171,7 @@ func TestWorkerLogCDNDisabled(t *testing.T) {
 	require.NoError(t, s.handleLogMessage(context.TODO(), []byte(message)))
 
 	ctx, cancel := context.WithTimeout(context.TODO(), 2*time.Second)
-	defer cancel()
+	t.Cleanup(cancel)
 
 	go s.waitingJobs(ctx)
 
