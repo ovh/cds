@@ -145,6 +145,7 @@ export class WorkflowAdminComponent implements OnInit, OnDestroy {
 
     ngOnDestroy() {
         this._dragularService.destroy('bag-tag');
+        this._eventService.unsubscribeWorkflowRetention();
     }
 
     ngOnInit(): void {
@@ -232,7 +233,6 @@ export class WorkflowAdminComponent implements OnInit, OnDestroy {
                 return;
             }
             this.dryRunDatas = rs;
-            console.log(this.dryRunDatas, rs)
             this._cd.markForCheck();
         })
         // Subscribe to dry run result status
@@ -241,7 +241,9 @@ export class WorkflowAdminComponent implements OnInit, OnDestroy {
                 return;
             }
             this.dryRunStatus = s;
-            console.log(this.dryRunStatus, s);
+            if (this.dryRunStatus === 'DONE') {
+               this._eventService.unsubscribeWorkflowRetention();
+            }
             this._cd.markForCheck();
         })
         this.dryRunProgressSub = this.dryRunProgress$.subscribe(nb => {
@@ -249,7 +251,6 @@ export class WorkflowAdminComponent implements OnInit, OnDestroy {
                 return;
             }
             this.dryRunAnalyzedRuns = nb;
-            console.log(this.dryRunAnalyzedRuns, nb);
             this._cd.markForCheck();
         });
 

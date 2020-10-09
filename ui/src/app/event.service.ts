@@ -76,6 +76,10 @@ export class EventService {
         }));
     }
 
+    unsubscribeWorkflowRetention() {
+        this.updateFilters(this.currentFilters.filter(f => f.type !== WebsocketFilterType.WORKFLOW_RETENTION_DRYRUN));
+    }
+
     subscribeToOperation(projectKey: string, operationUUID: string) {
         this.updateFilters(this.currentFilters.concat(<WebsocketFilter>{
             type: WebsocketFilterType.OPERATION,
