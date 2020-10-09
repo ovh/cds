@@ -6,6 +6,7 @@ export enum WebsocketFilterType {
     WORKFLOW = 'workflow',
     WORKFLOW_RUN = 'workflow-run',
     WORKFLOW_NODE_RUN = 'workflow-node-run',
+    WORKFLOW_RETENTION_DRYRUN = 'workflow-retention-dryrun',
     PIPELINE = 'pipeline',
     APPLICATION = 'application',
     ENVIRONMENT = 'environment',
@@ -13,6 +14,7 @@ export enum WebsocketFilterType {
     OPERATION = 'operation',
     TIMELINE = 'timeline',
     ASCODE_EVENT = 'ascode-event'
+
 }
 
 export class WebsocketFilter {
@@ -25,6 +27,7 @@ export class WebsocketFilter {
     workflow_run_num: number;
     workflow_node_run_id: number;
     operation_uuid: string;
+    username: string;
 }
 
 export class WebsocketEvent {

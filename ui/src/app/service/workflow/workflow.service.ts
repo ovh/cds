@@ -2,7 +2,7 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Operation } from 'app/model/operation.model';
 import { BuildResult, CDNLogLink, ServiceLog, SpawnInfo } from 'app/model/pipeline.model';
-import { RunToKeep } from 'app/model/purge.model';
+import { RunToKeep, WorkflowRetentoinDryRunResponse } from 'app/model/purge.model';
 import { Workflow, WorkflowPull, WorkflowTriggerConditionCache } from 'app/model/workflow.model';
 import { Observable } from 'rxjs';
 
@@ -80,8 +80,8 @@ export class WorkflowService {
         return this._http.get<Array<SpawnInfo>>(`/project/${projectKey}/workflows/${workflowName}/runs/${runNumber}/nodes/${nodeRunID}/job/${nodeJobRunID}/info`);
     }
 
-    retentionPolicyDryRun(workflow: Workflow): Observable<Array<RunToKeep>> {
-        return this._http.post<Array<RunToKeep>>(`/project/${workflow.project_key}/workflows/${workflow.name}/retention/dryrun`,
+    retentionPolicyDryRun(workflow: Workflow): Observable<WorkflowRetentoinDryRunResponse> {
+        return this._http.post<WorkflowRetentoinDryRunResponse>(`/project/${workflow.project_key}/workflows/${workflow.name}/retention/dryrun`,
             { retention_policy: workflow.retention_policy});
     }
 

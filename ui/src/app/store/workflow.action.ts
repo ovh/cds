@@ -1,5 +1,6 @@
 import { GroupPermission } from 'app/model/group.model';
 import { ProjectIntegration } from 'app/model/integration.model';
+import { RetentionDryRunEvent, RunToKeep } from 'app/model/purge.model';
 import { WNode, WNodeHook, WNodeTrigger, Workflow, WorkflowNotification } from 'app/model/workflow.model';
 import { WorkflowNodeRun, WorkflowRun } from 'app/model/workflow.run.model';
 
@@ -236,4 +237,14 @@ export class CleanWorkflowState {
 export class CancelWorkflowEditMode {
     static readonly type = '[Workflow] Cancel workflow edit modal';
     constructor() { }
+}
+
+export class CleanRetentionDryRun {
+    static readonly type = '[Workflow] Clean retention dry run';
+    constructor() { }
+}
+
+export class ComputeRetentionDryRunEvent {
+    static readonly type = '[Workflow] Retention dry run event';
+    constructor(public payload: { projectKey: string, workflowName: string, event: RetentionDryRunEvent }) { }
 }

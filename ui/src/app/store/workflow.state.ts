@@ -2,6 +2,7 @@ import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Router } from '@angular/router';
 import { Action, createSelector, Selector, State, StateContext } from '@ngxs/store';
+import { RunToKeep } from 'app/model/purge.model';
 import { WNode, WNodeHook, WNodeTrigger, Workflow } from 'app/model/workflow.model';
 import { WorkflowNodeJobRun, WorkflowNodeRun, WorkflowRun } from 'app/model/workflow.run.model';
 import { NavbarService } from 'app/service/navbar/navbar.service';
@@ -27,6 +28,10 @@ export class WorkflowStateModel {
     loadingWorkflowRun: boolean;
     loadingWorkflowNodeRun: boolean;
     canEdit: boolean; // user permission
+
+    retentionDryRunResults: Array<RunToKeep>;
+    retentionDryRunStatus: string;
+    retentionDryRunNbAnalyzedRuns: number;
 
     sidebar: string;
     workflowRun: WorkflowRun;
@@ -55,6 +60,9 @@ export function getInitialWorkflowState(): WorkflowStateModel {
         workflowRun: null,
         workflowNodeRun: null,
         workflowNodeJobRun: null,
+        retentionDryRunResults: new Array<RunToKeep>(),
+        retentionDryRunStatus: null,
+        retentionDryRunNbAnalyzedRuns: 0,
         listRuns: new Array<WorkflowRun>(),
         sidebar: WorkflowSidebarMode.RUNS,
         filters: {},
@@ -230,6 +238,27 @@ export class WorkflowState {
             }
             return j.job.step_status[stepNum];
         };
+    }
+
+    static getRetentionStatus() {
+        return createSelector(
+            [WorkflowState],
+            (state: WorkflowStateModel): string => state.retentionDryRunStatus
+        );
+    }
+
+    static getRetentionDryRunResults() {
+        return createSelector(
+            [WorkflowState],
+            (state: WorkflowStateModel): Array<RunToKeep> => state.retentionDryRunResults
+        );
+    }
+
+    static getRetentionProgress() {
+        return createSelector(
+            [WorkflowState],
+            (state: WorkflowStateModel): number => state.retentionDryRunNbAnalyzedRuns
+        );
     }
 
     @Action(actionWorkflow.OpenEditModal)
@@ -1419,5 +1448,28 @@ export class WorkflowState {
             return;
         }
         ctx.dispatch(new actionWorkflow.GetWorkflow({ projectKey: state.projectKey, workflowName: state.workflow.name }));
+    }
+
+    @Action(actionWorkflow.CleanRetentionDryRun)
+    cleanRetentionDryRunEvent(ctx: StateContext<WorkflowStateModel>, _: actionWorkflow.CleanRetentionDryRun) {
+        const state = ctx.getState();
+        ctx.setState({
+            ...state,
+            retentionDryRunResults: new Array<RunToKeep>(),
+            retentionDryRunStatus: null,
+            retentionDryRunNbAnalyzedRuns: 0
+        });
+    }
+
+
+    @Action(actionWorkflow.ComputeRetentionDryRunEvent)
+    receivedRetentionDryRunEvent(ctx: StateContext<WorkflowStateModel>, action: actionWorkflow.ComputeRetentionDryRunEvent) {
+        const state = ctx.getState();
+        ctx.setState({
+            ...state,
+            retentionDryRunResults: state.retentionDryRunResults.concat(action.payload.event.runs),
+            retentionDryRunStatus: action.payload.event.status,
+            retentionDryRunNbAnalyzedRuns: state.retentionDryRunNbAnalyzedRuns + action.payload.event.nb_runs_analyzed
+        });
     }
 }

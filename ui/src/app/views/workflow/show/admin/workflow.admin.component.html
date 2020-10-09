@@ -107,8 +107,20 @@
                     <ng-template let-context let-modal="modal" #modalDryRun>
                         <div class="header">{{ 'workflow_retention_policy' | translate }}</div>
                         <div class="content">
-                            <ng-container *ngIf="!dryRunDatas || dryRunDatas.length === 0">
-                                <div class="ui info message">{{'workflow_purged_dry_run_empty' | translate }}</div>
+                            <ng-container>
+                                <div class="ui right aligned field ">
+                                    <ng-container *ngIf="dryRunStatus === 'INCOMING'">
+                                        <img id="gifloader" height="24" width="24" src="./assets/images/loader.gif">
+                                    </ng-container>
+                                    <ng-container *ngIf="dryRunStatus === 'DONE'">
+                                        <i class="check green icon"></i>
+                                    </ng-container>
+                                    {{dryRunAnalyzedRuns + ' / ' + dryRunMaxDatas + ' run analyzed' }}
+                                </div>
+
+                            </ng-container>
+                            <ng-container *ngIf="dryRunStatus === 'DONE' && (!dryRunDatas || dryRunDatas.length === 0)">
+                                <div class="ui info message">All runs would be deleted</div>
                             </ng-container>
                             <ng-container *ngIf="dryRunDatas?.length > 0">
                                 <div class="dryrun">

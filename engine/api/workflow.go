@@ -182,11 +182,22 @@ func (api *API) postWorkflowRetentionPolicyDryRun() service.Handler {
 		}
 
 		wf.RetentionPolicy = request.RetentionPolicy
-		runs, err := purge.ApplyRetentionPolicyOnWorkflow(ctx, api.Cache, api.mustDBWithCtx(ctx), *wf, purge.MarkAsDeleteOptions{DryRun: true})
+
+		// Get the number of runs to analyze
+		_, _, _, count, err := workflow.LoadRuns(api.mustDB(), wf.ProjectKey, wf.Name, 0, 1, nil)
 		if err != nil {
 			return err
 		}
-		return service.WriteJSON(w, runs, http.StatusOK)
+
+		u := getAPIConsumer(ctx)
+		api.GoRoutines.Exec(api.Router.Background, "workflow-retention-dryrun", func(ctx context.Context) {
+			if err := purge.ApplyRetentionPolicyOnWorkflow(ctx, api.Cache, api.mustDBWithCtx(ctx), *wf, purge.MarkAsDeleteOptions{DryRun: true}, u.AuthentifiedUser); err != nil {
+				al := r.Header.Get("Accept-Language")
+				httpErr := sdk.ExtractHTTPError(err, al)
+				event.PublishWorkflowRetentionDryRun(ctx, key, name, "ERROR", httpErr.Error(), nil, 0, u.AuthentifiedUser)
+			}
+		})
+		return service.WriteJSON(w, sdk.PurgeDryRunResponse{NbRunsToAnalize: int64(count)}, http.StatusOK)
 	}
 }
 

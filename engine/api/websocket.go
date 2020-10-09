@@ -302,6 +302,18 @@ func (c *websocketClient) updateEventFilters(ctx context.Context, db gorp.SqlExe
 			return err
 		}
 		switch f.Type {
+		case sdk.WebsocketFilterTypeDryRunRetentionWorkflow:
+			if isMaintainer && !isHatcheryWithGroups {
+				continue
+			}
+			perms, err := permission.LoadWorkflowMaxLevelPermission(ctx, db, f.ProjectKey, []string{f.WorkflowName}, c.AuthConsumer.GetGroupIDs())
+			if err != nil {
+				return err
+			}
+			maxLevelPermission := perms.Level(f.WorkflowName)
+			if maxLevelPermission < sdk.PermissionRead || f.UserName != c.AuthConsumer.AuthentifiedUser.Username {
+				return sdk.WithStack(sdk.ErrForbidden)
+			}
 		case sdk.WebsocketFilterTypeProject,
 			sdk.WebsocketFilterTypeApplication,
 			sdk.WebsocketFilterTypePipeline,
@@ -365,6 +377,15 @@ func (b *websocketBroker) computeEventKeys(event sdk.Event) []string {
 		keys = append(keys, sdk.WebsocketFilter{
 			Type:       sdk.WebsocketFilterTypeProject,
 			ProjectKey: event.ProjectKey,
+		}.Key())
+	}
+	// Event that match Purge Filter
+	if strings.HasPrefix(event.EventType, "sdk.EventRetentionWorkflowDryRun") {
+		keys = append(keys, sdk.WebsocketFilter{
+			Type:         sdk.WebsocketFilterTypeDryRunRetentionWorkflow,
+			ProjectKey:   event.ProjectKey,
+			WorkflowName: event.WorkflowName,
+			UserName:     event.Username,
 		}.Key())
 	}
 	// Event that match workflow filter
