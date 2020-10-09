@@ -10,9 +10,13 @@ public class ProjectSettingsPanel {
 
     public JComponent getMainComponent() {
 
-        final LabeledComponent<JComboBox> component = new LabeledComponent<>();
-        component.setText("BLABLA");
+        final LabeledComponent<JFileChooser> component = new LabeledComponent<>();
+        component.setText("Json schema directory");
         component.setLabelLocation(BorderLayout.WEST);
+
+        JFileChooser directoryField = new JFileChooser();
+        directoryField.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+        component.setComponent(directoryField);
 
         /*
         component.setComponent(myProfilesComboBox);
