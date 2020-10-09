@@ -40,25 +40,22 @@ type websocketClient struct {
 	inMessageChan chan []byte
 }
 
-type webSocketFilters map[string]struct{}
+type webSocketFilters []sdk.WebsocketFilter
 
 func (f webSocketFilters) HasOneKey(keys ...string) (found bool, needCheckPermission bool) {
-	// For some kind of filter we need to check permission before sending to the client
-	globalFilterKey := sdk.WebsocketFilter{Type: sdk.WebsocketFilterTypeGlobal}.Key()
-	queueFilterKey := sdk.WebsocketFilter{Type: sdk.WebsocketFilterTypeQueue}.Key()
-	timelineFilterKey := sdk.WebsocketFilter{Type: sdk.WebsocketFilterTypeTimeline}.Key()
-
 	for i := range keys {
-		if _, ok := f[keys[i]]; ok {
-			found = true
-			switch keys[i] {
-			case globalFilterKey, queueFilterKey, timelineFilterKey:
-				needCheckPermission = true
-			}
-			// If we found a filter that don't need to check permission we can return directly
-			// If not we will check if another filter match the given keys, this will prevent from checking permission if not needed
-			if !needCheckPermission {
-				return
+		for _, filter := range f {
+			if keys[i] == filter.Key() {
+				found = true
+				switch filter.Type {
+				case sdk.WebsocketFilterTypeGlobal, sdk.WebsocketFilterTypeQueue, sdk.WebsocketFilterTypeTimeline, sdk.WebsocketFilterTypeDryRunRetentionWorkflow:
+					needCheckPermission = true
+				}
+				// If we found a filter that don't need to check permission we can return directly
+				// If not we will check if another filter match the given keys, this will prevent from checking permission if not needed
+				if !needCheckPermission {
+					return
+				}
 			}
 		}
 	}
@@ -311,7 +308,7 @@ func (c *websocketClient) updateEventFilters(ctx context.Context, db gorp.SqlExe
 				return err
 			}
 			maxLevelPermission := perms.Level(f.WorkflowName)
-			if maxLevelPermission < sdk.PermissionRead || f.UserName != c.AuthConsumer.AuthentifiedUser.Username {
+			if maxLevelPermission < sdk.PermissionRead {
 				return sdk.WithStack(sdk.ErrForbidden)
 			}
 		case sdk.WebsocketFilterTypeProject,
@@ -347,9 +344,9 @@ func (c *websocketClient) updateEventFilters(ctx context.Context, db gorp.SqlExe
 
 	// Update client filters
 	c.mutex.Lock()
-	c.filters = make(webSocketFilters)
+	c.filters = make(webSocketFilters, 0, len(fs))
 	for i := range fs {
-		c.filters[fs[i].Key()] = struct{}{}
+		c.filters = append(c.filters, fs[i])
 	}
 	c.mutex.Unlock()
 
@@ -385,7 +382,6 @@ func (b *websocketBroker) computeEventKeys(event sdk.Event) []string {
 			Type:         sdk.WebsocketFilterTypeDryRunRetentionWorkflow,
 			ProjectKey:   event.ProjectKey,
 			WorkflowName: event.WorkflowName,
-			UserName:     event.Username,
 		}.Key())
 	}
 	// Event that match workflow filter
@@ -483,6 +479,12 @@ func (c *websocketClient) checkEventPermission(ctx context.Context, db gorp.SqlE
 	var isMaintainer = c.AuthConsumer.Maintainer() || c.AuthConsumer.Admin()
 	var isHatchery = c.AuthConsumer.Service != nil && c.AuthConsumer.Service.Type == sdk.TypeHatchery
 	var isHatcheryWithGroups = isHatchery && len(c.AuthConsumer.GroupIDs) > 0
+
+	if strings.HasPrefix(event.EventType, "sdk.EventRetentionWorkflowDryRun") {
+		if event.Username == c.AuthConsumer.AuthentifiedUser.Username {
+			return true, nil
+		}
+	}
 
 	if strings.HasPrefix(event.EventType, "sdk.EventBroadcast") {
 		if event.ProjectKey == "" {

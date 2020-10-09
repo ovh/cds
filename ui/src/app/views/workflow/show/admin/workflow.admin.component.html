@@ -124,7 +124,7 @@
                             </ng-container>
                             <ng-container *ngIf="dryRunDatas?.length > 0">
                                 <div class="dryrun">
-                                    <label>{{'workflow_retention_result_title' | translate }}</label>
+                                    <h4>{{'workflow_retention_result_title' | translate }}</h4>
                                     <app-data-table [withFilter]="" [columns]="dryRunColumns" [data]="dryRunDatas" [withPagination]="10"></app-data-table>
                                 </div>
                             </ng-container>

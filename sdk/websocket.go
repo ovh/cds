@@ -52,7 +52,6 @@ type WebsocketFilter struct {
 	WorkflowRunNumber int64               `json:"workflow_run_num"`
 	WorkflowNodeRunID int64               `json:"workflow_node_run_id"`
 	OperationUUID     string              `json:"operation_uuid"`
-	UserName          string              `json:"username"`
 }
 
 // Key generates the unique key associated to given filter.
@@ -75,7 +74,7 @@ func (f WebsocketFilter) Key() string {
 	case WebsocketFilterTypeOperation:
 		return fmt.Sprintf("%s-%s-%s", f.Type, f.ProjectKey, f.OperationUUID)
 	case WebsocketFilterTypeDryRunRetentionWorkflow:
-		return fmt.Sprintf("%s-%s-%s", f.Type, f.ProjectKey, f.UserName)
+		return fmt.Sprintf("%s-%s-%s", f.Type, f.ProjectKey, f.WorkflowName)
 	default:
 		return string(f.Type)
 	}
