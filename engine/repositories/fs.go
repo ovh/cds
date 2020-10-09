@@ -1,11 +1,13 @@
 package repositories
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"path/filepath"
 
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/log"
 )
 
 func (s *Service) checkOrCreateRootFS() error {
@@ -33,4 +35,9 @@ func (s *Service) checkOrCreateFS(r *sdk.OperationRepo) error {
 	}
 	r.Basedir = path
 	return nil
+}
+
+func (s *Service) cleanFS(ctx context.Context, r *sdk.OperationRepo) error {
+	log.Info(ctx, "cleaning operation basedir: %v", r.Basedir)
+	return sdk.WithStack(os.RemoveAll(r.Basedir))
 }
