@@ -40,8 +40,9 @@ func TestStoreNewStepLog(t *testing.T) {
 		Cache:               cache,
 		Mapper:              m,
 	}
-
-	cdnUnits := newRunningStorageUnits(t, m, db.DbMap)
+	ctx, cancel := context.WithCancel(context.TODO())
+	defer cancel()
+	cdnUnits := newRunningStorageUnits(t, m, db.DbMap, ctx)
 	s.Units = cdnUnits
 
 	hm := handledMessage{
@@ -122,8 +123,9 @@ func TestStoreLastStepLog(t *testing.T) {
 		Cache:               cache,
 		Mapper:              m,
 	}
-
-	cdnUnits := newRunningStorageUnits(t, m, db.DbMap)
+	ctx, cancel := context.WithCancel(context.TODO())
+	defer cancel()
+	cdnUnits := newRunningStorageUnits(t, m, db.DbMap, ctx)
 	s.Units = cdnUnits
 
 	hm := handledMessage{
@@ -209,8 +211,9 @@ func TestStoreLogWrongOrder(t *testing.T) {
 		Cache:               cache,
 		Mapper:              m,
 	}
-
-	cdnUnits := newRunningStorageUnits(t, m, db.DbMap)
+	ctx, cancel := context.WithCancel(context.TODO())
+	defer cancel()
+	cdnUnits := newRunningStorageUnits(t, m, db.DbMap, ctx)
 
 	s.Units = cdnUnits
 
@@ -327,8 +330,9 @@ func TestStoreNewServiceLog(t *testing.T) {
 		Cache:               cache,
 		Mapper:              m,
 	}
-
-	cdnUnits := newRunningStorageUnits(t, m, db.DbMap)
+	ctx, cancel := context.WithCancel(context.TODO())
+	defer cancel()
+	cdnUnits := newRunningStorageUnits(t, m, db.DbMap, ctx)
 	s.Units = cdnUnits
 
 	hm := handledMessage{

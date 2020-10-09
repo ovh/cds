@@ -114,8 +114,9 @@ func TestGetItemLogsDownloadHandler(t *testing.T) {
 	s.Client = cdsclient.New(cdsclient.Config{Host: "http://lolcat.api", InsecureSkipVerifyTLS: false})
 	gock.InterceptClient(s.Client.(cdsclient.Raw).HTTPClient())
 	gock.New("http://lolcat.api").Get("/project/" + projectKey + "/workflows/MyWorkflow/log/access").Reply(http.StatusOK).JSON(nil)
-
-	cdnUnits := newRunningStorageUnits(t, s.Mapper, s.mustDBWithCtx(context.TODO()))
+	ctx, cancel := context.WithCancel(context.TODO())
+	defer cancel()
+	cdnUnits := newRunningStorageUnits(t, s.Mapper, s.mustDBWithCtx(ctx), ctx)
 
 	s.Units = cdnUnits
 
@@ -198,8 +199,9 @@ func TestGetItemLogsLinesHandler(t *testing.T) {
 	s.Client = cdsclient.New(cdsclient.Config{Host: "http://lolcat.api", InsecureSkipVerifyTLS: false})
 	gock.InterceptClient(s.Client.(cdsclient.Raw).HTTPClient())
 	gock.New("http://lolcat.api").Get("/project/" + projectKey + "/workflows/MyWorkflow/log/access").Reply(http.StatusOK).JSON(nil)
-
-	cdnUnits := newRunningStorageUnits(t, s.Mapper, s.mustDBWithCtx(context.TODO()))
+	ctx, cancel := context.WithCancel(context.TODO())
+	defer cancel()
+	cdnUnits := newRunningStorageUnits(t, s.Mapper, s.mustDBWithCtx(context.TODO()), ctx)
 
 	s.Units = cdnUnits
 

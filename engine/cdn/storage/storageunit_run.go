@@ -30,6 +30,7 @@ func (x *RunningStorageUnits) Run(ctx context.Context, s StorageUnit, nbItem int
 	for _, id := range itemIDs {
 		select {
 		case s.SyncItemChannel() <- id:
+			log.Debug("storage.Run> unit %s should sync item %s", s.Name(), id)
 		default:
 			continue
 		}

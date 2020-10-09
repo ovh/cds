@@ -8,6 +8,7 @@ import (
 	"io"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/require"
 
@@ -39,8 +40,10 @@ func TestGetItemValue(t *testing.T) {
 		Cache:               cache,
 		Mapper:              m,
 	}
+	ctx, cancel := context.WithCancel(context.TODO())
+	defer cancel()
 	cfg := test.LoadTestingConf(t, sdk.TypeCDN)
-	cdnUnits := newRunningStorageUnits(t, m, s.DBConnectionFactory.GetDBMap(m)())
+	cdnUnits := newRunningStorageUnits(t, m, s.DBConnectionFactory.GetDBMap(m)(), ctx)
 	s.Units = cdnUnits
 	var err error
 	s.LogCache, err = lru.NewRedisLRU(db.DbMap, 1000, cfg["redisHost"], cfg["redisPassword"])
@@ -109,6 +112,7 @@ func TestGetItemValue(t *testing.T) {
 
 	// Sync FS
 	require.NoError(t, cdnUnits.Run(context.TODO(), cdnUnits.Storages[0], 100))
+	time.Sleep(1 * time.Second)
 
 	_, err = storage.LoadItemUnitByUnit(context.TODO(), s.Mapper, db, s.Units.Storages[0].ID(), it.ID)
 	require.NoError(t, err)
@@ -175,8 +179,9 @@ func TestGetItemValue_ThousandLines(t *testing.T) {
 		Cache:               cache,
 		Mapper:              m,
 	}
-
-	cdnUnits := newRunningStorageUnits(t, m, db.DbMap)
+	ctx, cancel := context.WithCancel(context.TODO())
+	defer cancel()
+	cdnUnits := newRunningStorageUnits(t, m, db.DbMap, ctx)
 	s.Units = cdnUnits
 	var err error
 	s.LogCache, err = lru.NewRedisLRU(db.DbMap, 1000, cfg["redisHost"], cfg["redisPassword"])
@@ -272,8 +277,9 @@ func TestGetItemValue_Reverse(t *testing.T) {
 		Cache:               cache,
 		Mapper:              m,
 	}
-
-	cdnUnits := newRunningStorageUnits(t, m, db.DbMap)
+	ctx, cancel := context.WithCancel(context.TODO())
+	defer cancel()
+	cdnUnits := newRunningStorageUnits(t, m, db.DbMap, ctx)
 	s.Units = cdnUnits
 	var err error
 	s.LogCache, err = lru.NewRedisLRU(db.DbMap, 1000, cfg["redisHost"], cfg["redisPassword"])
@@ -370,8 +376,9 @@ func TestGetItemValue_ThousandLinesReverse(t *testing.T) {
 		Cache:               cache,
 		Mapper:              m,
 	}
-
-	cdnUnits := newRunningStorageUnits(t, m, db.DbMap)
+	ctx, cancel := context.WithCancel(context.TODO())
+	defer cancel()
+	cdnUnits := newRunningStorageUnits(t, m, db.DbMap, ctx)
 	s.Units = cdnUnits
 	var err error
 	s.LogCache, err = lru.NewRedisLRU(db.DbMap, 1000, cfg["redisHost"], cfg["redisPassword"])
