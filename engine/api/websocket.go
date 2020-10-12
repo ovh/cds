@@ -299,18 +299,6 @@ func (c *websocketClient) updateEventFilters(ctx context.Context, db gorp.SqlExe
 			return err
 		}
 		switch f.Type {
-		case sdk.WebsocketFilterTypeDryRunRetentionWorkflow:
-			if isMaintainer && !isHatcheryWithGroups {
-				continue
-			}
-			perms, err := permission.LoadWorkflowMaxLevelPermission(ctx, db, f.ProjectKey, []string{f.WorkflowName}, c.AuthConsumer.GetGroupIDs())
-			if err != nil {
-				return err
-			}
-			maxLevelPermission := perms.Level(f.WorkflowName)
-			if maxLevelPermission < sdk.PermissionRead {
-				return sdk.WithStack(sdk.ErrForbidden)
-			}
 		case sdk.WebsocketFilterTypeProject,
 			sdk.WebsocketFilterTypeApplication,
 			sdk.WebsocketFilterTypePipeline,
@@ -327,7 +315,7 @@ func (c *websocketClient) updateEventFilters(ctx context.Context, db gorp.SqlExe
 			if maxLevelPermission < sdk.PermissionRead {
 				return sdk.WithStack(sdk.ErrForbidden)
 			}
-		case sdk.WebsocketFilterTypeWorkflow, sdk.WebsocketFilterTypeAscodeEvent:
+		case sdk.WebsocketFilterTypeWorkflow, sdk.WebsocketFilterTypeAscodeEvent, sdk.WebsocketFilterTypeDryRunRetentionWorkflow:
 			if isMaintainer && !isHatcheryWithGroups {
 				continue
 			}
@@ -344,10 +332,7 @@ func (c *websocketClient) updateEventFilters(ctx context.Context, db gorp.SqlExe
 
 	// Update client filters
 	c.mutex.Lock()
-	c.filters = make(webSocketFilters, 0, len(fs))
-	for i := range fs {
-		c.filters = append(c.filters, fs[i])
-	}
+	c.filters = fs
 	c.mutex.Unlock()
 
 	return nil

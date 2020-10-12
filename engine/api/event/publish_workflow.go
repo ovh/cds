@@ -89,10 +89,10 @@ func PublishWorkflowPermissionDelete(ctx context.Context, projKey string, w sdk.
 
 func PublishWorkflowRetentionDryRun(ctx context.Context, projKey string, workflowName string, status string, error string, runsToKeep []sdk.WorkflowRunToKeep, nbRunsAnalyzed int64, u sdk.Identifiable) {
 	e := sdk.EventRetentionWorkflowDryRun{
-		Status:        status,
-		Error:         error,
-		Runs:          runsToKeep,
-		RunsAnalyszed: nbRunsAnalyzed,
+		Status:       status,
+		Error:        error,
+		Runs:         runsToKeep,
+		RunsAnalyzed: nbRunsAnalyzed,
 	}
 	publishWorkflowEvent(ctx, e, projKey, workflowName, nil, u)
 }

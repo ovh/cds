@@ -37,8 +37,8 @@ type EventWorkflowPermissionDelete struct {
 
 // EventRetentionWorkflowDryRun represents the vent when execution dry run on workflow retention
 type EventRetentionWorkflowDryRun struct {
-	Runs          []WorkflowRunToKeep `json:"runs"`
-	Status        string              `json:"status"`
-	Error         string              `json:"error"`
-	RunsAnalyszed int64               `json:"nb_runs_analyzed"`
+	Runs         []WorkflowRunToKeep `json:"runs"`
+	Status       string              `json:"status"`
+	Error        string              `json:"error"`
+	RunsAnalyzed int64               `json:"nb_runs_analyzed"`
 }
