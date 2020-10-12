@@ -1,6 +1,6 @@
 import { GroupPermission } from 'app/model/group.model';
 import { ProjectIntegration } from 'app/model/integration.model';
-import { RetentionDryRunEvent, RunToKeep } from 'app/model/purge.model';
+import { RetentionDryRunEvent } from 'app/model/purge.model';
 import { WNode, WNodeHook, WNodeTrigger, Workflow, WorkflowNotification } from 'app/model/workflow.model';
 import { WorkflowNodeRun, WorkflowRun } from 'app/model/workflow.run.model';
 

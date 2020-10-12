@@ -2,7 +2,7 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Operation } from 'app/model/operation.model';
 import { BuildResult, CDNLogLink, ServiceLog, SpawnInfo } from 'app/model/pipeline.model';
-import { RunToKeep, WorkflowRetentoinDryRunResponse } from 'app/model/purge.model';
+import { WorkflowRetentoinDryRunResponse } from 'app/model/purge.model';
 import { Workflow, WorkflowPull, WorkflowTriggerConditionCache } from 'app/model/workflow.model';
 import { Observable } from 'rxjs';
 
