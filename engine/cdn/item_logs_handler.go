@@ -120,7 +120,7 @@ func (s *Service) getItemLogsStreamHandler() service.Handler {
 		s.WSServer.AddClient(wsClient, wsClientData)
 		defer s.WSServer.RemoveClient(wsClient.UUID())
 
-		s.GoRoutines.Exec(ctx, "getItemLogsStreamHandler."+wsClient.UUID(), func(ctx context.Context) {
+		s.GoRoutines.Exec(s.Router.Background, "getItemLogsStreamHandler."+wsClient.UUID(), func(ctx context.Context) {
 			log.Debug("getItemLogsStreamHandler> start routine for client %s", wsClient.UUID())
 
 			send := func() error {
@@ -177,7 +177,7 @@ func (s *Service) getItemLogsStreamHandler() service.Handler {
 			}
 		})
 
-		return wsClient.Listen(ctx, s.GoRoutines)
+		return wsClient.Listen(s.Router.Background, s.GoRoutines)
 	}
 }
 

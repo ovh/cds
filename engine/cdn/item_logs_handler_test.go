@@ -295,7 +295,10 @@ func TestGetItemLogsStreamHandler(t *testing.T) {
 	gock.New("http://lolcat.api").Get("/project/" + projectKey + "/workflows/MyWorkflow/log/access").Reply(http.StatusOK).JSON(nil)
 
 	ctx, cancel := context.WithCancel(context.TODO())
-	t.Cleanup(cancel)
+	t.Cleanup(func() {
+		cancel()
+		time.Sleep(time.Second * 1) // delay to wait client to be disconnected
+	})
 	s.Units = newRunningStorageUnits(t, s.Mapper, db.DbMap, ctx)
 
 	signature := log.Signature{
