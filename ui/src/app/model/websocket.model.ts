@@ -27,7 +27,6 @@ export class WebsocketFilter {
     workflow_run_num: number;
     workflow_node_run_id: number;
     operation_uuid: string;
-    username: string;
 }
 
 export class WebsocketEvent {

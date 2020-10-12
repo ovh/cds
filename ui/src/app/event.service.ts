@@ -67,12 +67,11 @@ export class EventService {
         }
     }
 
-    subscribeToWorkflowPurgeDryRun(projectKey: string, workflowName: string, username: string) {
+    subscribeToWorkflowPurgeDryRun(projectKey: string, workflowName: string) {
         this.updateFilters(this.currentFilters.concat(<WebsocketFilter>{
             type: WebsocketFilterType.WORKFLOW_RETENTION_DRYRUN,
             project_key: projectKey,
-            workflow_name: workflowName,
-            username: username
+            workflow_name: workflowName
         }));
     }
 
