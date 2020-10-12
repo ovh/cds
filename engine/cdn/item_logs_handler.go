@@ -112,7 +112,7 @@ func (s *Service) getItemLogsStreamHandler() service.Handler {
 		wsClient := websocket.NewClient(c)
 		wsClientData := &websocketClientData{
 			itemID:              it.ID,
-			chanItemUpdate:      make(chan struct{}, 10),
+			chanItemUpdate:      make(chan struct{}),
 			scoreNextLineToSend: offset,
 		}
 		s.WSServer.AddClient(wsClient, wsClientData)
@@ -152,14 +152,14 @@ func (s *Service) getItemLogsStreamHandler() service.Handler {
 
 				// If all the lines were sent, we can trigger another update
 				if len(lines) > 0 && wsClientData.scoreNextLineToSend-oldNextLineToSend == int64(len(lines)) {
-					wsClientData.chanItemUpdate <- struct{}{}
+					go func() { wsClientData.chanItemUpdate <- struct{}{} }()
 				}
 
 				return nil
 			}
 
 			// Trigger one update at routine startup
-			wsClientData.chanItemUpdate <- struct{}{}
+			go func() { wsClientData.chanItemUpdate <- struct{}{} }()
 
 			for {
 				select {
