@@ -1,16 +1,22 @@
 import { HttpClient } from '@angular/common/http';
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnChanges, OnInit } from '@angular/core';
+import { Output } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, EventEmitter, Input, OnChanges, OnInit } from '@angular/core';
 import { Store } from '@ngxs/store';
 import { Job } from 'app/model/job.model';
 import { CDNLogLink } from 'app/model/pipeline.model';
 import { WorkflowService } from 'app/service/workflow/workflow.service';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { ProjectState } from 'app/store/project.state';
-import { WorkflowState, WorkflowStateModel } from 'app/store/workflow.state';
+import { WorkflowState } from 'app/store/workflow.state';
 
 export enum DisplayMode {
     ANSI = 'ansi',
     HTML = 'html',
+}
+
+export enum ScrollTarget {
+    BOTTOM = 'bottom',
+    TOP = 'top',
 }
 
 export class Tab {
@@ -43,11 +49,13 @@ export class Line {
 @AutoUnsubscribe()
 export class WorkflowRunJobComponent implements OnInit, OnChanges {
     @Input() job: Job;
+    @Output() onScroll = new EventEmitter<ScrollTarget>();
 
     mode = DisplayMode.ANSI;
     displayModes = DisplayMode;
     tabs: Array<Tab>;
     currentTabIndex = 0;
+    scrollTargets = ScrollTarget
 
     steps: Array<Step>;
 
@@ -108,8 +116,12 @@ export class WorkflowRunJobComponent implements OnInit, OnChanges {
                 line.value = l.value;
                 return line;
             });
+            this.steps[i].open = true;
         }
+
 
         this._cd.markForCheck();
     }
+
+    clickScroll(target: ScrollTarget): void { this.onScroll.emit(target); }
 }

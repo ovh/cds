@@ -1,11 +1,10 @@
 @import "../../../../../../../common";
 
 .job {
-    //margin-left: 25px;
-    display: flex;
-    flex-direction: column;
+    position: relative;
     background-color: #222222;
     color: #f1f1f1;
+    padding-bottom: 19px;
 
     .header {
         height: 40px;
@@ -106,6 +105,24 @@
                     color: #FFFF91;
                     overflow-wrap: break-word;
                 }
+            }
+        }
+    }
+
+    .footer {
+        position: sticky;
+        bottom: 0;
+        display: block;
+        float: right;
+
+        .goto {
+            display: inline-block;
+            padding-left: 7px;
+            cursor: pointer;
+            color: #999999;
+
+            &:hover {
+                background-color: #444444 !important;
             }
         }
     }

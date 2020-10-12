@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, ElementRef, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Select, Store } from '@ngxs/store';
 import { Job } from 'app/model/job.model';
@@ -14,6 +14,7 @@ import { SelectWorkflowNodeRunJob } from 'app/store/workflow.action';
 import { WorkflowState, WorkflowStateModel } from 'app/store/workflow.state';
 import cloneDeep from 'lodash-es/cloneDeep';
 import { Observable, Subscription } from 'rxjs';
+import { ScrollTarget } from './workflow-run-job/workflow-run-job.component';
 
 @Component({
     selector: 'app-node-run-pipeline',
@@ -23,6 +24,7 @@ import { Observable, Subscription } from 'rxjs';
 })
 @AutoUnsubscribe()
 export class WorkflowRunNodePipelineComponent implements OnInit, OnDestroy {
+    @ViewChild('scrollContent') scrollContent: ElementRef;
 
     @Select(WorkflowState.getSelectedNodeRun()) nodeRun$: Observable<WorkflowNodeRun>;
     nodeRunSubs: Subscription;
@@ -45,6 +47,7 @@ export class WorkflowRunNodePipelineComponent implements OnInit, OnDestroy {
     currentNodeRunID: number;
     currentNodeRunNum: number;
     currentJob: Job;
+    currentNodeRunStatus: string;
 
     displayServiceLogs = false;
     durationIntervalID: number;
@@ -129,6 +132,11 @@ export class WorkflowRunNodePipelineComponent implements OnInit, OnDestroy {
     refreshNodeRun(data: WorkflowNodeRun): boolean {
         let refresh = false;
         let currentNodeJobRun = (<WorkflowStateModel>this._store.selectSnapshot(WorkflowState)).workflowNodeJobRun;
+
+        if (this.currentNodeRunStatus !== data.status) {
+            this.currentNodeRunStatus = data.status;
+            refresh = true;
+        }
 
         if (data.stages) {
             data.stages.forEach((s, sIndex) => {
@@ -224,5 +232,9 @@ export class WorkflowRunNodePipelineComponent implements OnInit, OnDestroy {
             clearInterval(this.durationIntervalID);
             this.durationIntervalID = 0;
         }
+    }
+
+    onJobScroll(target: ScrollTarget): void {
+        this.scrollContent.nativeElement.scrollTop = target === ScrollTarget.TOP ? 0 : this.scrollContent.nativeElement.scrollHeight;
     }
 }
