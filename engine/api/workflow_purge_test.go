@@ -89,7 +89,9 @@ func Test_purgeDryRunHandler(t *testing.T) {
 		InsecureSkipVerifyTLS:             true,
 		BuitinConsumerAuthenticationToken: jws,
 	})
-	go client.WebsocketEventsListen(context.TODO(), sdk.NewGoRoutines(), chanMessageToSend, chanMessageReceived)
+	contextWS, cancel := context.WithCancel(context.Background())
+	t.Cleanup(cancel)
+	go client.WebsocketEventsListen(contextWS, sdk.NewGoRoutines(), chanMessageToSend, chanMessageReceived)
 
 	// Subscribe to workflow retention
 	chanMessageToSend <- []sdk.WebsocketFilter{{
