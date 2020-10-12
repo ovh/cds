@@ -34,3 +34,11 @@ type EventWorkflowPermissionDelete struct {
 	WorkflowID int64           `json:"workflow_id"`
 	Permission GroupPermission `json:"group_permission"`
 }
+
+// EventRetentionWorkflowDryRun represents the vent when execution dry run on workflow retention
+type EventRetentionWorkflowDryRun struct {
+	Runs         []WorkflowRunToKeep `json:"runs"`
+	Status       string              `json:"status"`
+	Error        string              `json:"error"`
+	RunsAnalyzed int64               `json:"nb_runs_analyzed"`
+}

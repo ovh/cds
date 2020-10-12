@@ -8,7 +8,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/ovh/cds/engine/api/authentication"
@@ -80,8 +79,7 @@ func Test_websocketFilterRetroCompatibility(t *testing.T) {
 	require.NoError(t, err)
 	require.NoError(t, c.updateEventFilters(context.TODO(), nil, buf))
 	require.Len(t, c.filters, 1)
-	_, ok := c.filters["global"]
-	assert.True(t, ok)
+	require.Equal(t, sdk.WebsocketFilterTypeGlobal, c.filters[0].Type)
 
 	buf, err = json.Marshal(sdk.WebsocketFilter{
 		Type: sdk.WebsocketFilterTypeQueue,
@@ -89,8 +87,7 @@ func Test_websocketFilterRetroCompatibility(t *testing.T) {
 	require.NoError(t, err)
 	require.NoError(t, c.updateEventFilters(context.TODO(), nil, buf))
 	require.Len(t, c.filters, 1)
-	_, ok = c.filters["queue"]
-	assert.True(t, ok)
+	require.Equal(t, sdk.WebsocketFilterTypeQueue, c.filters[0].Type)
 }
 
 func Test_websocketGetWorkflowEvent(t *testing.T) {
@@ -147,8 +144,7 @@ func Test_websocketGetWorkflowEvent(t *testing.T) {
 	for _, id := range api.WSServer.server.ClientIDs() {
 		data := api.WSServer.GetClientData(id)
 		require.Len(t, data.filters, 1)
-		_, ok := data.filters[f.Key()]
-		require.True(t, ok)
+		require.Equal(t, sdk.WebsocketFilterTypeWorkflow, c.filters[0].Type)
 	}
 
 	api.websocketOnMessage(sdk.Event{ProjectKey: "blabla", WorkflowName: "toto", EventType: "sdk.EventRunWorkflow"})

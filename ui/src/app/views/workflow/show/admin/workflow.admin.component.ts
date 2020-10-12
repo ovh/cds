@@ -9,13 +9,12 @@ import {
 } from '@angular/core';
 import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
-import { Store } from '@ngxs/store';
+import { Select, Store } from '@ngxs/store';
 import { ModalTemplate, SuiActiveModal, SuiModalService, TemplateModalConfig } from '@richardlt/ng2-semantic-ui';
+import { EventService } from 'app/event.service';
 import { Project } from 'app/model/project.model';
 import { RunToKeep } from 'app/model/purge.model';
-import { AuthentifiedUser } from 'app/model/user.model';
 import { Workflow } from 'app/model/workflow.model';
-import { AuthenticationService } from 'app/service/authentication/authentication.service';
 import { ThemeStore } from 'app/service/theme/theme.store';
 import { WorkflowRunService } from 'app/service/workflow/run/workflow.run.service';
 import { WorkflowService } from 'app/service/workflow/workflow.service';
@@ -23,13 +22,13 @@ import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { WarningModalComponent } from 'app/shared/modal/warning/warning.component';
 import { Column, ColumnType } from 'app/shared/table/data-table.component';
 import { ToastService } from 'app/shared/toast/ToastService';
-import { AuthenticationState } from 'app/store/authentication.state';
 import { FeatureState } from 'app/store/feature.state';
-import { DeleteWorkflow, DeleteWorkflowIcon, UpdateWorkflow, UpdateWorkflowIcon } from 'app/store/workflow.action';
+import { CleanRetentionDryRun, DeleteWorkflow, DeleteWorkflowIcon, UpdateWorkflow, UpdateWorkflowIcon } from 'app/store/workflow.action';
+import { WorkflowState } from 'app/store/workflow.state';
 import cloneDeep from 'lodash-es/cloneDeep';
 import { CodemirrorComponent } from 'ng2-codemirror-typescript/Codemirror';
 import { DragulaService } from 'ng2-dragula-sgu';
-import { forkJoin, Subscription } from 'rxjs';
+import { forkJoin, Observable, Subscription } from 'rxjs';
 import { finalize, first } from 'rxjs/operators';
 
 @Component({
@@ -75,16 +74,27 @@ export class WorkflowAdminComponent implements OnInit, OnDestroy {
     @ViewChild('codemirrorRetentionPolicy') codemirror: CodemirrorComponent;
     themeSubscription: Subscription;
 
-    availableVariables: string;
+
+    // Dry run datas
+    @Select(WorkflowState.getRetentionDryRunResults()) dryRunResults$: Observable<Array<RunToKeep>>;
+    dryRunsSubs: Subscription;
+    @Select(WorkflowState.getRetentionStatus()) dryRunStatus$: Observable<string>;
+    dryRunsStatusSubs: Subscription;
+    @Select(WorkflowState.getRetentionProgress()) dryRunProgress$: Observable<number>;
+    dryRunProgressSub: Subscription;
+    @ViewChild('modalDryRun') dryRunModal: ModalTemplate<boolean, boolean, void>;
     dryRunColumns = [];
     dryRunDatas: Array<RunToKeep>;
-    @ViewChild('modalDryRun') dryRunModal: ModalTemplate<boolean, boolean, void>;
+    dryRunMaxDatas: number;
+    dryRunStatus: string;
+    dryRunAnalyzedRuns: number;
+    availableVariables: string;
     modal: SuiActiveModal<boolean, boolean, void>;
+    //
 
     loading = false;
     fileTooLarge = false;
     dragulaSubscription: Subscription;
-    currentUser: AuthentifiedUser;
 
     constructor(
         private store: Store,
@@ -97,11 +107,8 @@ export class WorkflowAdminComponent implements OnInit, OnDestroy {
         private _dragularService: DragulaService,
         private _theme: ThemeStore,
         private _modalService: SuiModalService,
-        private _authenticationService: AuthenticationService
+        private _eventService: EventService
     ) {
-        this.store.select(AuthenticationState.user).pipe(first()).subscribe(u => {
-            this.currentUser = u;
-        });
         this._dragularService.createGroup('bag-tag', {
             accepts: function (el, target, source, sibling) {
                 return sibling !== null;
@@ -130,6 +137,7 @@ export class WorkflowAdminComponent implements OnInit, OnDestroy {
 
     ngOnDestroy() {
         this._dragularService.destroy('bag-tag');
+        this._eventService.unsubscribeWorkflowRetention();
     }
 
     ngOnInit(): void {
@@ -140,7 +148,6 @@ export class WorkflowAdminComponent implements OnInit, OnDestroy {
             lineWrapping: true,
             lineNumbers: true,
             autoRefresh: true,
-            readOnly: !this.editMode,
             gutters: ['CodeMirror-lint-markers'],
         };
 
@@ -181,10 +188,7 @@ export class WorkflowAdminComponent implements OnInit, OnDestroy {
                 this.runnumber = n.num;
             });
 
-        this._workflowService.retentionPolicySuggestion(this.workflow).subscribe(sg => {
-            this.availableVariables = sg.join(', ');
-            this._cd.markForCheck();
-        });
+        this.initDryRunSubscription();
 
         let featMaxRunsResult = this.store.selectSnapshot(FeatureState.featureProject('workflow-retention-maxruns',
             JSON.stringify({ 'project_key': this.project.key })))
@@ -204,6 +208,44 @@ export class WorkflowAdminComponent implements OnInit, OnDestroy {
                 this.existingTagsPurge.push(t);
             }
         });
+    }
+
+    initDryRunSubscription() {
+        this._workflowService.retentionPolicySuggestion(this.workflow).subscribe(sg => {
+            this.availableVariables = sg.join(', ');
+            this._cd.markForCheck();
+        });
+
+        // Subscribe to dry run result update
+        this.dryRunsSubs = this.dryRunResults$.subscribe(rs => {
+            if (!this.dryRunDatas) {
+                this.dryRunDatas = new Array<RunToKeep>();
+            }
+            if (this.dryRunDatas.length === rs.length) {
+                return;
+            }
+            this.dryRunDatas = rs;
+            this._cd.markForCheck();
+        })
+        // Subscribe to dry run result status
+        this.dryRunsStatusSubs = this.dryRunStatus$.subscribe(s => {
+            if (s === this.dryRunStatus) {
+                return;
+            }
+            this.dryRunStatus = s;
+            if (this.dryRunStatus === 'DONE') {
+               this._eventService.unsubscribeWorkflowRetention();
+            }
+            this._cd.markForCheck();
+        })
+        this.dryRunProgressSub = this.dryRunProgress$.subscribe(nb => {
+            if (nb === this.dryRunAnalyzedRuns) {
+                return;
+            }
+            this.dryRunAnalyzedRuns = nb;
+            this._cd.markForCheck();
+        });
+
     }
 
     deleteIcon(): void {
@@ -270,16 +312,22 @@ export class WorkflowAdminComponent implements OnInit, OnDestroy {
     }
 
     retentionPolicyDryRun(): void {
+
+        this.store.dispatch(new CleanRetentionDryRun());
+        this._eventService.subscribeToWorkflowPurgeDryRun(this.project.key, this.workflow.name)
         this.loading = true;
         this._workflowService.retentionPolicyDryRun(this.workflow)
-            .subscribe(wr => {
-            this.dryRunDatas = wr;
-            const config = new TemplateModalConfig<boolean, boolean, void>(this.dryRunModal);
-            config.mustScroll = true;
-            this.modal = this._modalService.open(config);
-            this._cd.markForCheck();
-        });
-        this._cd.markForCheck();
+            .pipe(finalize(() => {
+                this.loading = false;
+                this._cd.markForCheck();
+            }))
+            .subscribe(result => {
+                this.dryRunMaxDatas = result.nb_runs_to_analyze;
+                const config = new TemplateModalConfig<boolean, boolean, void>(this.dryRunModal);
+                config.mustScroll = true;
+                this.modal = this._modalService.open(config);
+                this._cd.markForCheck();
+            });
     }
 
     onSubmitWorkflowUpdate(skip?: boolean) {

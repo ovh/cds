@@ -5,18 +5,19 @@ import "fmt"
 type WebsocketFilterType string
 
 const (
-	WebsocketFilterTypeGlobal          WebsocketFilterType = "global"
-	WebsocketFilterTypeProject         WebsocketFilterType = "project"
-	WebsocketFilterTypeWorkflow        WebsocketFilterType = "workflow"
-	WebsocketFilterTypeWorkflowRun     WebsocketFilterType = "workflow-run"
-	WebsocketFilterTypeWorkflowNodeRun WebsocketFilterType = "workflow-node-run"
-	WebsocketFilterTypePipeline        WebsocketFilterType = "pipeline"
-	WebsocketFilterTypeApplication     WebsocketFilterType = "application"
-	WebsocketFilterTypeEnvironment     WebsocketFilterType = "environment"
-	WebsocketFilterTypeQueue           WebsocketFilterType = "queue"
-	WebsocketFilterTypeOperation       WebsocketFilterType = "operation"
-	WebsocketFilterTypeTimeline        WebsocketFilterType = "timeline"
-	WebsocketFilterTypeAscodeEvent     WebsocketFilterType = "ascode-event"
+	WebsocketFilterTypeGlobal                  WebsocketFilterType = "global"
+	WebsocketFilterTypeProject                 WebsocketFilterType = "project"
+	WebsocketFilterTypeWorkflow                WebsocketFilterType = "workflow"
+	WebsocketFilterTypeWorkflowRun             WebsocketFilterType = "workflow-run"
+	WebsocketFilterTypeWorkflowNodeRun         WebsocketFilterType = "workflow-node-run"
+	WebsocketFilterTypePipeline                WebsocketFilterType = "pipeline"
+	WebsocketFilterTypeApplication             WebsocketFilterType = "application"
+	WebsocketFilterTypeEnvironment             WebsocketFilterType = "environment"
+	WebsocketFilterTypeQueue                   WebsocketFilterType = "queue"
+	WebsocketFilterTypeOperation               WebsocketFilterType = "operation"
+	WebsocketFilterTypeTimeline                WebsocketFilterType = "timeline"
+	WebsocketFilterTypeAscodeEvent             WebsocketFilterType = "ascode-event"
+	WebsocketFilterTypeDryRunRetentionWorkflow WebsocketFilterType = "workflow-retention-dryrun"
 )
 
 func (f WebsocketFilterType) IsValid() bool {
@@ -32,6 +33,7 @@ func (f WebsocketFilterType) IsValid() bool {
 		WebsocketFilterTypeQueue,
 		WebsocketFilterTypeOperation,
 		WebsocketFilterTypeTimeline,
+		WebsocketFilterTypeDryRunRetentionWorkflow,
 		WebsocketFilterTypeAscodeEvent:
 		return true
 	}
@@ -71,6 +73,8 @@ func (f WebsocketFilter) Key() string {
 		return fmt.Sprintf("%s-%s", f.Type, f.EnvironmentName)
 	case WebsocketFilterTypeOperation:
 		return fmt.Sprintf("%s-%s-%s", f.Type, f.ProjectKey, f.OperationUUID)
+	case WebsocketFilterTypeDryRunRetentionWorkflow:
+		return fmt.Sprintf("%s-%s-%s", f.Type, f.ProjectKey, f.WorkflowName)
 	default:
 		return string(f.Type)
 	}

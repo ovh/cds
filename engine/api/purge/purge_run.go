@@ -11,6 +11,7 @@ import (
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
+	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/engine/cache"
@@ -47,7 +48,7 @@ func markWorkflowRunsToDelete(ctx context.Context, store cache.Store, db *gorp.D
 		if !enabled {
 			continue
 		}
-		if _, err := ApplyRetentionPolicyOnWorkflow(ctx, store, db, wf, MarkAsDeleteOptions{DryRun: false}); err != nil {
+		if err := ApplyRetentionPolicyOnWorkflow(ctx, store, db, wf, MarkAsDeleteOptions{DryRun: false}, nil); err != nil {
 			log.ErrorWithFields(ctx, logrus.Fields{"stack_trace": fmt.Sprintf("%+v", err)}, "%s", err)
 		}
 	}
@@ -55,50 +56,57 @@ func markWorkflowRunsToDelete(ctx context.Context, store cache.Store, db *gorp.D
 	return nil
 }
 
-func ApplyRetentionPolicyOnWorkflow(ctx context.Context, store cache.Store, db *gorp.DbMap, wf sdk.Workflow, opts MarkAsDeleteOptions) ([]sdk.WorkflowRunToKeep, error) {
-	runsTokeep := make([]sdk.WorkflowRunToKeep, 0)
-
+func ApplyRetentionPolicyOnWorkflow(ctx context.Context, store cache.Store, db *gorp.DbMap, wf sdk.Workflow, opts MarkAsDeleteOptions, u *sdk.AuthentifiedUser) error {
 	limit := 50
 	offset := 0
 
 	branches, err := getBranchesForWorkflow(ctx, store, db, wf)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	branchesMap := make(map[string]struct{})
 	for _, b := range branches {
 		branchesMap[b.DisplayID] = struct{}{}
 	}
-
+	runs := make([]sdk.WorkflowRunToKeep, 0)
+	var nbRunsAnalyzed int64
 	for {
 		wfRuns, _, _, count, err := workflow.LoadRuns(db, wf.ProjectKey, wf.Name, offset, limit, nil)
 		if err != nil {
-			return nil, err
+			return err
 		}
 
+		nbRunsAnalyzed = int64(len(wfRuns))
 		for _, run := range wfRuns {
 			keep, err := applyRetentionPolicyOnRun(db, wf, run, branchesMap, opts)
 			if err != nil {
-				return nil, err
+				return err
 			}
 			if keep {
-				runsTokeep = append(runsTokeep, sdk.WorkflowRunToKeep{ID: run.ID, Num: run.Number, Status: run.Status})
+				runs = append(runs, sdk.WorkflowRunToKeep{ID: run.ID, Num: run.Number, Status: run.Status})
 			}
 		}
 
 		if count > offset+limit {
 			offset += limit
+			if u != nil {
+				event.PublishWorkflowRetentionDryRun(ctx, wf.ProjectKey, wf.Name, "INCOMING", "", runs, nbRunsAnalyzed, u)
+				runs = runs[:0]
+			}
 			continue
 		}
 		break
 	}
-	return runsTokeep, nil
+	if u != nil {
+		event.PublishWorkflowRetentionDryRun(ctx, wf.ProjectKey, wf.Name, "DONE", "", runs, nbRunsAnalyzed, u)
+	}
+	return nil
 }
 
 func applyRetentionPolicyOnRun(db *gorp.DbMap, wf sdk.Workflow, run sdk.WorkflowRun, branchesMap map[string]struct{}, opts MarkAsDeleteOptions) (bool, error) {
 	if wf.ToDelete && !opts.DryRun {
 		if err := workflow.MarkWorkflowRunsAsDelete(db, []int64{run.ID}); err != nil {
-			return false, sdk.WithStack(err)
+			return true, sdk.WithStack(err)
 		}
 		return false, nil
 	}

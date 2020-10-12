@@ -297,7 +297,7 @@ func TestGetItemLogsStreamHandler(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.TODO())
 	t.Cleanup(func() {
 		cancel()
-		time.Sleep(time.Second * 1) // delay to wait client to be disconnected
+		time.Sleep(time.Second * 5) // delay to wait client to be disconnected
 	})
 	s.Units = newRunningStorageUnits(t, s.Mapper, db.DbMap, ctx)
 
