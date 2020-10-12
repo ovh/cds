@@ -110,12 +110,12 @@
                             <ng-container>
                                 <div class="ui right aligned field ">
                                     <ng-container *ngIf="dryRunStatus === 'INCOMING'">
-                                        <img id="gifloader" height="24" width="24" src="./assets/images/loader.gif">
+                                        <i class="circle notch loading blue icon"></i>
                                     </ng-container>
                                     <ng-container *ngIf="dryRunStatus === 'DONE'">
                                         <i class="check green icon"></i>
                                     </ng-container>
-                                    {{dryRunAnalyzedRuns + ' / ' + dryRunMaxDatas + ' run analyzed' }}
+                                    {{dryRunAnalyzedRuns + ' / ' + dryRunMaxDatas + ' run analyzed ( ' + dryRunDatas.length + ' runs kept )'}}
                                 </div>
 
                             </ng-container>
