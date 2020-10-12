@@ -52,21 +52,26 @@
     </div>
     <div class="row">
         <div class="column">
-            <div class="log animated fadeIn" *ngIf="currentJob && mapJobStatus">
-                <app-workflow-run-job-spawn-info [(displayServicesLogs)]="displayServiceLogs">
-                </app-workflow-run-job-spawn-info>
-                <ng-container *ngIf="!displayServiceLogs">
-                    <ng-container *ngFor="let step of currentJob.action.actions; let i = index">
-                        <app-workflow-step-log [stepOrder]="i"></app-workflow-step-log>
+            <ng-container *ngIf="!cdnEnabled">
+                <div class="log animated fadeIn" *ngIf="currentJob && mapJobStatus">
+                    <app-workflow-run-job-spawn-info [(displayServicesLogs)]="displayServiceLogs">
+                    </app-workflow-run-job-spawn-info>
+                    <ng-container *ngIf="!displayServiceLogs">
+                        <ng-container *ngFor="let step of currentJob.action.actions; let i = index">
+                            <app-workflow-step-log [stepOrder]="i"></app-workflow-step-log>
+                        </ng-container>
                     </ng-container>
-                </ng-container>
-                <ng-container *ngIf="displayServiceLogs">
-                    <ng-container *ngFor="let req of currentJob.action.requirements; let i = index">
-                        <app-workflow-service-log *ngIf="req.type === 'service'" [serviceName]="req.name">
-                        </app-workflow-service-log>
+                    <ng-container *ngIf="displayServiceLogs">
+                        <ng-container *ngFor="let req of currentJob.action.requirements; let i = index">
+                            <app-workflow-service-log *ngIf="req.type === 'service'" [serviceName]="req.name">
+                            </app-workflow-service-log>
+                        </ng-container>
                     </ng-container>
-                </ng-container>
-            </div>
+                </div>
+            </ng-container>
+            <ng-container *ngIf="cdnEnabled">
+                <app-workflow-run-job [job]="currentJob"></app-workflow-run-job>
+            </ng-container>
         </div>
     </div>
 </div>

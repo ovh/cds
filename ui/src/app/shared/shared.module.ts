@@ -53,6 +53,7 @@ import { ParameterValueComponent } from './parameter/value/parameter.value.compo
 import { PermissionFormComponent } from './permission/form/permission.form.component';
 import { PermissionListComponent } from './permission/list/permission.list.component';
 import { PermissionService } from './permission/permission.service';
+import { AnsiPipe } from './pipes/ansi.pipe';
 import { CutPipe } from './pipes/cut.pipe';
 import { KeysPipe } from './pipes/keys.pipe';
 import { ForMapPipe } from './pipes/map.pipe';
@@ -175,6 +176,7 @@ import { ZoneComponent } from './zone/zone.component';
         RequirementsListComponent,
         RepoManagerFormComponent,
         SafeHtmlPipe,
+        AnsiPipe,
         SelectFilterComponent,
         SelectorPipe,
         SelectPipe,
@@ -292,6 +294,7 @@ import { ZoneComponent } from './zone/zone.component';
         TranslateModule,
         TruncatePipe,
         SafeHtmlPipe,
+        AnsiPipe,
         AsCodeSaveModalComponent,
         AsCodeSaveFormComponent,
         VariableComponent,

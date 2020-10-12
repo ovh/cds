@@ -1,0 +1,25 @@
+<div class="job">
+    <div class="header">
+        <div class="menu left">
+            <button *ngFor="let tab of tabs; let i = index" [class.active]="i === currentTabIndex"
+                (click)="selectTab(i)">{{tab.name}}</button>
+        </div>
+        <div class="menu right">
+            <button [class.active]="mode === displayModes.ANSI" (click)="clickMode(displayModes.ANSI)">ANSI</button>
+            <button [class.active]="mode === displayModes.HTML" (click)="clickMode(displayModes.HTML)">HTML</button>
+        </div>
+    </div>
+    <div class="step" *ngFor="let step of steps">
+        <div class="line info" (click)="step.clickOpen()">
+            <div class="number" ng=""><i class="caret icon" [class.down]="step.open" [class.right]="!step.open"></i>0
+            </div>
+            <div class="value">{{step.name}}</div>
+        </div>
+        <ng-container *ngIf="step.open">
+            <div class="line" *ngFor="let line of step.lines; trackBy: trackLineElement">
+                <div class="number">{{line.display_number}}</div>
+                <div class="value" [innerHTML]="line.value | ansi:(this.mode !== displayModes.ANSI) | safeHtml"></div>
+            </div>
+        </ng-container>
+    </div>
+</div>
