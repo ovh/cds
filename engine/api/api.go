@@ -788,9 +788,17 @@ func (a *API) Serve(ctx context.Context) error {
 		func(ctx context.Context) {
 			metrics.Init(ctx, a.DBConnectionFactory.GetDBMap(gorpmapping.Mapper))
 		}, a.PanicDump())
-	a.GoRoutines.Run(ctx, "Purge",
+	a.GoRoutines.Run(ctx, "Purge-MarkRuns",
 		func(ctx context.Context) {
-			purge.Initialize(ctx, a.Cache, a.DBConnectionFactory.GetDBMap(gorpmapping.Mapper), a.SharedStorage, a.Metrics.WorkflowRunsMarkToDelete, a.Metrics.WorkflowRunsDeleted)
+			purge.MarkRunsAsDelete(ctx, a.Cache, a.DBConnectionFactory.GetDBMap(gorpmapping.Mapper), a.Metrics.WorkflowRunsMarkToDelete)
+		}, a.PanicDump())
+	a.GoRoutines.Run(ctx, "Purge-Runs",
+		func(ctx context.Context) {
+			purge.WorkflowRuns(ctx, a.DBConnectionFactory.GetDBMap(gorpmapping.Mapper), a.SharedStorage, a.Metrics.WorkflowRunsMarkToDelete, a.Metrics.WorkflowRunsDeleted)
+		}, a.PanicDump())
+	a.GoRoutines.Run(ctx, "Purge-Workflow",
+		func(ctx context.Context) {
+			purge.Workflow(ctx, a.Cache, a.DBConnectionFactory.GetDBMap(gorpmapping.Mapper), a.Metrics.WorkflowRunsMarkToDelete)
 		}, a.PanicDump())
 
 	// Check maintenance on redis

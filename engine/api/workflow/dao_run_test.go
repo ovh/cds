@@ -906,3 +906,47 @@ func TestPurgeWorkflowRunWithoutTagsBiggerHistoryLength(t *testing.T) {
 
 	test.Equal(t, 0, toDeleteNb, "Number of workflow runs to be purged isn't correct (because it should keep at least one in success)")
 }
+
+func TestLoadRunsIDsToDelete(t *testing.T) {
+	db, cache := test.SetupPG(t, bootstrap.InitiliazeDB)
+
+	_, _ = db.Exec("update workflow_run set to_delete=false ")
+
+	key := sdk.RandomString(10)
+	proj := assets.InsertTestProject(t, db, cache, key, key)
+
+	w := assets.InsertTestWorkflow(t, db, cache, proj, sdk.RandomString(10))
+
+	wr1, err := workflow.CreateRun(db.DbMap, w, sdk.WorkflowRunPostHandlerOption{Hook: &sdk.WorkflowNodeRunHookEvent{}})
+	assert.NoError(t, err)
+
+	wr2, err := workflow.CreateRun(db.DbMap, w, sdk.WorkflowRunPostHandlerOption{Hook: &sdk.WorkflowNodeRunHookEvent{}})
+	assert.NoError(t, err)
+
+	wr1.ToDelete = true
+	wr2.ToDelete = true
+
+	require.NoError(t, workflow.UpdateWorkflowRun(context.TODO(), db, wr1))
+	require.NoError(t, workflow.UpdateWorkflowRun(context.TODO(), db, wr2))
+
+	ids, offset, limit, count, err := workflow.LoadRunsIDsToDelete(db, 0, 1)
+	require.NoError(t, err)
+	require.Len(t, ids, 1)
+	require.Equal(t, ids[0], wr1.ID)
+	require.Equal(t, int64(0), offset)
+	require.Equal(t, int64(1), limit)
+	require.Equal(t, int64(2), count)
+
+	ids, offset, limit, count, err = workflow.LoadRunsIDsToDelete(db, 1, 1)
+	require.NoError(t, err)
+	require.Len(t, ids, 1)
+	require.Equal(t, ids[0], wr2.ID)
+	require.Equal(t, int64(1), offset)
+	require.Equal(t, int64(1), limit)
+	require.Equal(t, int64(2), count)
+
+	ids, offset, limit, count, err = workflow.LoadRunsIDsToDelete(db, 0, 50)
+	require.NoError(t, err)
+	require.Len(t, ids, 2)
+
+}
