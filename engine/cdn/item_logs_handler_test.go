@@ -273,6 +273,8 @@ func TestGetItemLogsLinesHandler(t *testing.T) {
 	s.Router.Mux.ServeHTTP(rec, req)
 	require.Equal(t, 200, rec.Code)
 
+	assert.Equal(t, "1", rec.Header().Get("X-Total-Count"))
+
 	var lines []redis.Line
 	require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &lines))
 	require.Len(t, lines, 1)

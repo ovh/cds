@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 
@@ -174,16 +175,18 @@ func (s *Service) getItemLogsLinesHandler() service.Handler {
 
 		// offset can be lower than 0 if we want the n last lines
 		offset := service.FormInt64(r, "offset")
-		count := service.FormUInt(r, "count")
+		limit := service.FormUInt(r, "limit")
 		sort := service.FormInt64(r, "sort") // < 0 for latest logs first, >= 0 for older logs first
 
-		_, rc, _, err := s.getItemLogValue(ctx, itemType, apiRef, sdk.CDNReaderFormatJSON, offset, count, sort)
+		_, linesCount, rc, _, err := s.getItemLogValue(ctx, itemType, apiRef, sdk.CDNReaderFormatJSON, offset, limit, sort)
 		if err != nil {
 			return err
 		}
 		if rc == nil {
 			return sdk.WrapError(sdk.ErrNotFound, "no storage found that contains given item %s", apiRef)
 		}
+
+		w.Header().Add("X-Total-Count", fmt.Sprintf("%d", linesCount))
 
 		return service.Write(w, rc, http.StatusOK, "application/json")
 	}
