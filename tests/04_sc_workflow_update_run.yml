@@ -60,7 +60,7 @@ testcases:
 - name: import an updated workflow
   steps:
   - script:  {{.cdsctl}} -f {{.cdsctl.config}} workflow import --force ITSCWRKFLW2 ./fixtures/ITSCWRKFLW2/workflow_updated.yml
-  - script: {{.cdsctl}} -f {{.cdsctl.config}} workflow export ITSCWRKFLW2 ITSCWRKFLW2-WORKFLOW > ITSCWRKFLW2-WORKFLOW.yml
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} workflow export ITSCWRKFLW2 ITSCWRKFLW2-WORKFLOW > ./fixtures/ITSCWRKFLW2/workflow_exported.yml
 
 - name: run workflow
   steps:

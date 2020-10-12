@@ -40,6 +40,9 @@ config:
   username:
     value: kafka-username
     type: string
+  version:
+    value: "2.1.1"
+    type: string
 ```
 
 Import the integration on your CDS Project with:
@@ -76,6 +79,9 @@ public_configurations:
     "password":
       type: password
       value: xxxxxxxx
+    "version":
+      value: "2.1.1"
+      type: string
 ```
 
 Import the integration with :
@@ -98,3 +104,7 @@ hook: true
 public: true
 ...
 ```
+
+### Version
+
+If the attribute version could be not defined, default value is `0.10.0.1`

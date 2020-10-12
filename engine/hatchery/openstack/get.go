@@ -124,14 +124,23 @@ func (h *HatcheryOpenstack) getServers(ctx context.Context) []servers.Server {
 	lservers.mu.RUnlock()
 
 	if nbServers == 0 {
-		all, err := servers.List(h.openstackClient, nil).AllPages()
-		if err != nil {
-			log.Error(ctx, "getServers> error on servers.List: %s", err)
-			return lservers.list
+		var serverList []servers.Server
+		var isOk bool
+		for i := 0; i <= 5; i++ {
+			all, err := servers.List(h.openstackClient, nil).AllPages()
+			if err != nil {
+				log.Error(ctx, "getServers> error on servers.List: %s", err)
+				continue
+			}
+			serverList, err = servers.ExtractServers(all)
+			if err != nil {
+				log.Error(ctx, "getServers> error on servers.ExtractServers: %s", err)
+				continue
+			}
+			isOk = true
+			break
 		}
-		serverList, err := servers.ExtractServers(all)
-		if err != nil {
-			log.Error(ctx, "getServers> error on servers.ExtractServers: %s", err)
+		if !isOk {
 			return lservers.list
 		}
 

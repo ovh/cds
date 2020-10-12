@@ -112,12 +112,14 @@ func TestMarkItemToDeleteHandler(t *testing.T) {
 func TestGetItemLogsDownloadHandler(t *testing.T) {
 	projectKey := sdk.RandomString(10)
 	// Create cdn service with need storage and test item
-	s, _ := newTestService(t)
+	s, db := newTestService(t)
 	s.Client = cdsclient.New(cdsclient.Config{Host: "http://lolcat.api", InsecureSkipVerifyTLS: false})
 	gock.InterceptClient(s.Client.(cdsclient.Raw).HTTPClient())
 	gock.New("http://lolcat.api").Get("/project/" + projectKey + "/workflows/MyWorkflow/log/access").Reply(http.StatusOK).JSON(nil)
 
-	s.Units = newRunningStorageUnits(t, s.Mapper, s.mustDBWithCtx(context.TODO()))
+	ctx, cancel := context.WithCancel(context.TODO())
+	t.Cleanup(cancel)
+	s.Units = newRunningStorageUnits(t, s.Mapper, db.DbMap, ctx)
 
 	hm := handledMessage{
 		Msg: hook.Message{
@@ -191,16 +193,17 @@ func TestGetItemLogsDownloadHandler(t *testing.T) {
 }
 
 func TestGetItemLogsLinesHandler(t *testing.T) {
-
 	projectKey := sdk.RandomString(10)
 
 	// Create cdn service with need storage and test item
-	s, _ := newTestService(t)
+	s, db := newTestService(t)
 	s.Client = cdsclient.New(cdsclient.Config{Host: "http://lolcat.api", InsecureSkipVerifyTLS: false})
 	gock.InterceptClient(s.Client.(cdsclient.Raw).HTTPClient())
 	gock.New("http://lolcat.api").Get("/project/" + projectKey + "/workflows/MyWorkflow/log/access").Reply(http.StatusOK).JSON(nil)
 
-	s.Units = newRunningStorageUnits(t, s.Mapper, s.mustDBWithCtx(context.TODO()))
+	ctx, cancel := context.WithCancel(context.TODO())
+	t.Cleanup(cancel)
+	s.Units = newRunningStorageUnits(t, s.Mapper, db.DbMap, ctx)
 
 	hm := handledMessage{
 		Msg: hook.Message{
@@ -275,6 +278,8 @@ func TestGetItemLogsLinesHandler(t *testing.T) {
 	require.Len(t, lines, 1)
 	require.Equal(t, int64(2), lines[0].Number)
 	require.Equal(t, "[EMERGENCY] this is a message\n", lines[0].Value)
+
+	time.Sleep(1 * time.Second)
 }
 
 func TestGetItemLogsStreamHandler(t *testing.T) {
@@ -289,7 +294,9 @@ func TestGetItemLogsStreamHandler(t *testing.T) {
 	gock.InterceptClient(s.Client.(cdsclient.Raw).HTTPClient())
 	gock.New("http://lolcat.api").Get("/project/" + projectKey + "/workflows/MyWorkflow/log/access").Reply(http.StatusOK).JSON(nil)
 
-	s.Units = newRunningStorageUnits(t, s.Mapper, db.DbMap)
+	ctx, cancel := context.WithCancel(context.TODO())
+	t.Cleanup(cancel)
+	s.Units = newRunningStorageUnits(t, s.Mapper, db.DbMap, ctx)
 
 	signature := log.Signature{
 		ProjectKey:   projectKey,
@@ -370,7 +377,7 @@ func TestGetItemLogsStreamHandler(t *testing.T) {
 	}
 
 	// Open connection
-	ctx, cancel := context.WithTimeout(context.TODO(), time.Second*10)
+	ctx, cancel = context.WithTimeout(context.TODO(), time.Second*10)
 	t.Cleanup(func() { cancel() })
 	chanMsgReceived := make(chan json.RawMessage, 10)
 	chanErrorReceived := make(chan error, 10)

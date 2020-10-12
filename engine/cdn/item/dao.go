@@ -80,7 +80,10 @@ func DeleteByIDs(db gorp.SqlExecutor, ids []string) error {
 }
 
 func LoadAll(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlExecutor, size int, opts ...gorpmapper.GetOptionFunc) ([]sdk.CDNItem, error) {
-	query := gorpmapper.NewQuery("SELECT * FROM item ORDER BY created LIMIT $1").Args(size)
+	var query = gorpmapper.NewQuery("SELECT * FROM item ORDER BY created")
+	if size > 0 {
+		query = gorpmapper.NewQuery("SELECT * FROM item ORDER BY created LIMIT $1").Args(size)
+	}
 	return getItems(ctx, m, db, query, opts...)
 }
 
@@ -203,5 +206,24 @@ type Stat struct {
 
 func CountItems(db gorp.SqlExecutor) (res []Stat, err error) {
 	_, err = db.Select(&res, `select status, type, count(id) as "number" from item group by status, type`)
+	return res, sdk.WithStack(err)
+}
+
+type StatItemPercentil struct {
+	Size       int64  `db:"size"`
+	Type       string `db:"type"`
+	Percentile int64  `db:"percentile"`
+}
+
+func CountItemSizePercentil(db gorp.SqlExecutor) (res []StatItemPercentil, err error) {
+	_, err = db.Select(&res, `
+	with bucket as (
+		select type, size, ntile(100) over (partition by type order by size) as percentile 
+		from item
+	)
+	select bucket.type, bucket.percentile, max(bucket.size) as size
+	from bucket
+	group by bucket.type, bucket.percentile
+	order by bucket.type, bucket.percentile`)
 	return res, sdk.WithStack(err)
 }

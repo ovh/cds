@@ -7,6 +7,7 @@ import (
 	"time"
 
 	types "github.com/docker/docker/api/types"
+	"github.com/sirupsen/logrus"
 	context "golang.org/x/net/context"
 
 	"github.com/ovh/cds/sdk"
@@ -112,21 +113,29 @@ func (h *HatcherySwarm) killAndRemove(ctx context.Context, dockerClient *dockerC
 						log.Error(ctx, "killAwolWorker> unable to get identifiers from containers labels")
 						continue
 					}
-					endLog := sdk.ServiceLog{
-						WorkflowNodeJobRunID:   jobIdentifiers.JobID,
-						WorkflowNodeRunID:      jobIdentifiers.NodeRunID,
-						ServiceRequirementID:   jobIdentifiers.ServiceID,
-						ServiceRequirementName: c.Labels[hatchery.LabelServiceReqName],
-						Val:                    "End of Job",
-						WorkerName:             c.Labels["service_worker"],
-						JobName:                c.Labels[hatchery.LabelServiceJobName],
-						NodeRunName:            c.Labels[hatchery.LabelServiceNodeRunName],
-						WorkflowName:           c.Labels[hatchery.LabelServiceWorkflowName],
-						ProjectKey:             c.Labels[hatchery.LabelServiceProjectKey],
-						RunID:                  jobIdentifiers.RunID,
-						WorkflowID:             jobIdentifiers.WorkflowID,
+					endLog := log.Message{
+						Level: logrus.InfoLevel,
+						Value: string("End of Job"),
+						Signature: log.Signature{
+							Service: &log.SignatureService{
+								HatcheryID:      h.Service().ID,
+								HatcheryName:    h.ServiceName(),
+								RequirementID:   jobIdentifiers.ServiceID,
+								RequirementName: c.Labels[hatchery.LabelServiceReqName],
+								WorkerName:      c.Labels["service_worker"],
+							},
+							ProjectKey:   c.Labels[hatchery.LabelServiceProjectKey],
+							WorkflowName: c.Labels[hatchery.LabelServiceWorkflowName],
+							WorkflowID:   jobIdentifiers.WorkflowID,
+							RunID:        jobIdentifiers.RunID,
+							NodeRunName:  c.Labels[hatchery.LabelServiceNodeRunName],
+							JobName:      c.Labels[hatchery.LabelServiceJobName],
+							JobID:        jobIdentifiers.JobID,
+							NodeRunID:    jobIdentifiers.NodeRunID,
+							Timestamp:    time.Now().UnixNano(),
+						},
 					}
-					h.Common.SendServiceLog(ctx, []sdk.ServiceLog{endLog}, sdk.StatusSuccess)
+					h.Common.SendServiceLog(ctx, []log.Message{endLog}, sdk.StatusSuccess)
 				}
 
 				if err := h.killAndRemoveContainer(ctx, dockerClient, id); err != nil {

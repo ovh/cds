@@ -37,6 +37,11 @@ export class GetWorkflowRun {
     constructor(public payload: { projectKey: string, workflowName: string, num: number }) { }
 }
 
+export class RemoveWorkflowRunFromList {
+    static readonly type = '[Workflow] Remove Workflow Run From List';
+    constructor(public payload: { projectKey: string, workflowName: string, num: number }) { }
+}
+
 export class GetWorkflowRuns {
     static readonly type = '[Workflow] Get Workflow Runs';
     constructor(public payload: { projectKey: string, workflowName: string, limit: string, offset: string, filters?: {}}) { }

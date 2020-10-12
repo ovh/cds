@@ -1,6 +1,8 @@
 package cdn
 
 import (
+	"sync"
+
 	"github.com/ovh/cds/engine/api"
 	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/engine/cdn/lru"
@@ -42,11 +44,12 @@ type Service struct {
 		itemCompletedByGCCount   *stats.Int64Measure
 		itemInDatabaseCount      *stats.Int64Measure
 		itemPerStorageUnitCount  *stats.Int64Measure
-		ItemSize                 *stats.Float64Measure
-		StorageThroughput        *stats.Float64Measure
-		metricsWSClients         *stats.Int64Measure
-		metricsWSEvents          *stats.Int64Measure
+		ItemSize                 *stats.Int64Measure
+		ItemToSyncCount          *stats.Int64Measure
+		WSClients                *stats.Int64Measure
+		WSEvents                 *stats.Int64Measure
 	}
+	storageUnitLags sync.Map
 }
 
 // Configuration is the hooks configuration structure

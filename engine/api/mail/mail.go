@@ -4,19 +4,26 @@ import (
 	"bytes"
 	"context"
 	"crypto/tls"
-	"errors"
 	"fmt"
-	"net/mail"
 	"net/smtp"
+	"sync/atomic"
 	"text/template"
-	"time"
 
+	"github.com/jordan-wright/email"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 )
 
-var smtpUser, smtpPassword, smtpFrom, smtpHost, smtpPort string
-var smtpTLS, smtpEnable bool
+var smtpUser, smtpPassword, smtpFrom, smtpHost, smtpPort, smtpModeTLS string
+var smtpTLS, smtpEnable, smtpInsecureSkipVerify bool
+var lastError error
+var counter uint64
+
+const (
+	// modeTLS uses tls without starttls
+	modeTLS = "tls"
+	// modeStartTLS uses starttls
+	modeStartTLS = "starttls"
+)
 
 const templateSignedup = `Welcome to CDS,
 
@@ -52,81 +59,26 @@ CDS Team
 `
 
 // Init initializes configuration
-func Init(user, password, from, host, port string, tls, disable bool) {
+func Init(user, password, from, host, port, modeTLS string, insecureSkipVerify, disable bool) {
 	smtpUser = user
 	smtpPassword = password
 	smtpFrom = from
 	smtpHost = host
 	smtpPort = port
-	smtpTLS = tls
+	smtpModeTLS = modeTLS
+	smtpInsecureSkipVerify = insecureSkipVerify
 	smtpEnable = !disable
 }
 
 // Status verification of smtp configuration, returns OK or KO
 func Status(ctx context.Context) sdk.MonitoringStatusLine {
-	if _, err := smtpClient(ctx); err != nil {
-		return sdk.MonitoringStatusLine{Component: "SMTP Ping", Value: "KO: " + err.Error(), Status: sdk.MonitoringStatusAlert}
+	if !smtpEnable {
+		return sdk.MonitoringStatusLine{Component: "SMTP Ping", Value: "Conf: SMTP Disabled", Status: sdk.MonitoringStatusWarn}
 	}
-	return sdk.MonitoringStatusLine{Component: "SMTP Ping", Value: "Connect OK", Status: sdk.MonitoringStatusOK}
-}
-
-func smtpClient(ctx context.Context) (*smtp.Client, error) {
-	if smtpHost == "" || smtpPort == "" || !smtpEnable {
-		return nil, errors.New("No SMTP configuration")
+	if lastError != nil {
+		return sdk.MonitoringStatusLine{Component: "SMTP Ping", Value: "KO: " + lastError.Error(), Status: sdk.MonitoringStatusAlert}
 	}
-
-	// Connect to the SMTP Server
-	servername := fmt.Sprintf("%s:%s", smtpHost, smtpPort)
-
-	// TLS config
-	tlsconfig := &tls.Config{
-		InsecureSkipVerify: false,
-		ServerName:         smtpHost,
-	}
-
-	var c *smtp.Client
-	var err error
-	if smtpTLS {
-		// Here is the key, you need to call tls.Dial instead of smtp.Dial
-		// for smtp servers running on 465 that require an ssl connection
-		// from the very beginning (no starttls)
-		conn, err := tls.Dial("tcp", servername, tlsconfig)
-		if err != nil {
-			log.Warning(ctx, "Error with c.Dial:%s\n", err.Error())
-			return nil, sdk.WithStack(err)
-		}
-
-		c, err = smtp.NewClient(conn, smtpHost)
-		if err != nil {
-			log.Warning(ctx, "Error with c.NewClient:%s\n", err.Error())
-			return nil, sdk.WithStack(err)
-		}
-		// TLS config
-		tlsconfig := &tls.Config{
-			InsecureSkipVerify: false,
-			ServerName:         smtpHost,
-		}
-		if err := c.StartTLS(tlsconfig); err != nil {
-			return nil, sdk.WithStack(err)
-		}
-	} else {
-		c, err = smtp.Dial(servername)
-		if err != nil {
-			log.Warning(ctx, "Error with c.NewClient:%s\n", err.Error())
-			return nil, sdk.WithStack(err)
-		}
-	}
-
-	// Auth
-	if smtpUser != "" && smtpPassword != "" {
-		auth := smtp.PlainAuth("", smtpUser, smtpPassword, smtpHost)
-		if err = c.Auth(auth); err != nil {
-			log.Warning(ctx, "Error with c.Auth:%s\n", err.Error())
-			c.Close()
-			return nil, err
-		}
-	}
-	return c, nil
+	return sdk.MonitoringStatusLine{Component: "SMTP Ping", Value: fmt.Sprintf("OK (%d sent)", counter), Status: sdk.MonitoringStatusOK}
 }
 
 // SendMailVerifyToken send mail to verify user account.
@@ -172,83 +124,47 @@ func createTemplate(templ, callbackURL, callbackAPIURL, username, token string) 
 
 //SendEmail is the core function to send an email
 func SendEmail(ctx context.Context, subject string, mailContent *bytes.Buffer, userMail string, isHTML bool) error {
-	from := mail.Address{
-		Name:    "",
-		Address: smtpFrom,
-	}
-	to := mail.Address{
-		Name:    "",
-		Address: userMail,
-	}
-
-	// Setup headers
-	headers := make(map[string]string)
-	headers["From"] = smtpFrom
-	headers["To"] = to.String()
-	if sdk.StringIsAscii(subject) {
-		headers["Subject"] = subject
-	} else {
-		// https://tools.ietf.org/html/rfc2047
-		headers["Subject"] = "=?UTF-8?Q?" + subject + "?="
-	}
-
-	// https://tools.ietf.org/html/rfc4021
-	headers["Date"] = time.Now().Format(time.RFC1123Z)
-
-	// https://tools.ietf.org/html/rfc2392
-	headers["Message-ID"] = fmt.Sprintf("<%d.%s>", time.Now().UnixNano(), smtpFrom)
-
+	e := email.NewEmail()
+	e.From = smtpFrom
+	e.To = []string{userMail}
+	e.Subject = subject
+	e.Text = mailContent.Bytes()
 	if isHTML {
-		headers["Content-Type"] = `text/html; charset="utf-8"`
+		e.HTML = mailContent.Bytes()
 	}
-
-	// Setup message
-	message := ""
-	for k, v := range headers {
-		message += fmt.Sprintf("%s: %s\r\n", k, v)
-	}
-	message += "\r\n" + mailContent.String()
 
 	if !smtpEnable {
 		fmt.Println("##### NO SMTP DISPLAY MAIL IN CONSOLE ######")
 		fmt.Printf("Subject:%s\n", subject)
-		fmt.Printf("Text:%s\n", message)
+		fmt.Printf("Text:%s\n", string(e.Text))
 		fmt.Println("##### END MAIL ######")
 		return nil
 	}
+	servername := fmt.Sprintf("%s:%s", smtpHost, smtpPort)
+	var auth smtp.Auth
+	if smtpUser != "" && smtpPassword != "" {
+		auth = smtp.PlainAuth("", smtpUser, smtpPassword, smtpHost)
+	}
 
-	c, err := smtpClient(ctx)
+	tlsconfig := &tls.Config{
+		InsecureSkipVerify: smtpInsecureSkipVerify,
+		ServerName:         smtpHost,
+	}
+
+	var err error
+	switch smtpModeTLS {
+	case modeStartTLS:
+		err = e.SendWithStartTLS(servername, auth, tlsconfig)
+	case modeTLS:
+		err = e.SendWithTLS(servername, auth, tlsconfig)
+	default:
+		err = e.Send(servername, auth)
+	}
 	if err != nil {
-		return sdk.WrapError(err, "Cannot get smtp client")
+		lastError = err
+	} else {
+		atomic.AddUint64(&counter, 1)
+		lastError = nil
 	}
-	defer c.Close()
-
-	// To && From
-	if err = c.Mail(from.Address); err != nil {
-		return sdk.WrapError(err, "Error with c.Mail")
-	}
-
-	if err = c.Rcpt(to.Address); err != nil {
-		return sdk.WrapError(err, "Error with c.Rcpt")
-	}
-
-	// Data
-	w, err := c.Data()
-	if err != nil {
-		return sdk.WrapError(err, "Error with c.Data")
-	}
-
-	_, err = w.Write([]byte(message))
-	if err != nil {
-		return sdk.WrapError(err, "Error with c.Write")
-	}
-
-	err = w.Close()
-	if err != nil {
-		return sdk.WrapError(err, "Error with c.Close")
-	}
-
-	c.Quit()
-
-	return nil
+	return sdk.WithStack(err)
 }

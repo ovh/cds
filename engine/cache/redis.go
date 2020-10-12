@@ -655,3 +655,29 @@ func (p *RedisPubSub) GetMessage(c context.Context) (string, error) {
 	}
 	return redisMsg.Payload, nil
 }
+
+func (s *RedisStore) ScoredSetScanMaxScore(ctx context.Context, key string) (*SetValueWithScore, error) {
+	values, err := s.Client.ZRevRangeByScoreWithScores(key, redis.ZRangeBy{
+		Min:    "-inf",
+		Max:    "+inf",
+		Offset: 0,
+		Count:  1,
+	}).Result()
+	if err != nil {
+		return nil, sdk.WrapError(err, "redis zrange error")
+	}
+
+	if len(values) == 0 {
+		return nil, nil
+	}
+
+	var res SetValueWithScore
+	res.Score = values[0].Score
+	rawValue, ok := values[0].Member.(string)
+	if !ok {
+		return nil, sdk.WithStack(fmt.Errorf("set value of type %T can't be cast to json.RawMessage", values[0].Member))
+	}
+	res.Value = json.RawMessage(rawValue)
+
+	return &res, nil
+}

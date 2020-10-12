@@ -5,10 +5,10 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"math"
 	"time"
 
 	"github.com/go-gorp/gorp"
-	"github.com/robfig/cron/v3"
 	"github.com/sirupsen/logrus"
 
 	"github.com/ovh/cds/engine/gorpmapper"
@@ -25,47 +25,10 @@ func (r RunningStorageUnits) Storage(name string) StorageUnit {
 	return nil
 }
 
-func (r *RunningStorageUnits) Start(ctx context.Context) error {
-	scheduler := cron.New(cron.WithLocation(time.UTC), cron.WithSeconds())
-
-	for i := range r.Storages {
-		var cronSetting string
-		for j := range r.config.Storages {
-			if r.config.Storages[j].Name == r.Storages[i].Name() {
-				cronSetting = r.config.Storages[j].Cron
-				break
-			}
-		}
-		if cronSetting == "" {
-			return sdk.WithStack(fmt.Errorf("missing cron config for storage %s", r.Storages[i].Name()))
-		}
-		f := func(i int) error {
-			_, err := scheduler.AddFunc(cronSetting, func() {
-				if err := r.Run(ctx, r.Storages[i], r.config.Storages[i].CronItemNumber); err != nil {
-					log.ErrorWithFields(ctx, logrus.Fields{"stack_trace": fmt.Sprintf("%+v", err)}, "%s", err)
-				}
-			})
-			return sdk.WithStack(err)
-		}
-		if err := f(i); err != nil {
-			return err
-		}
-	}
-
-	scheduler.Start()
-
-	go func() {
-		<-ctx.Done()
-		<-scheduler.Stop().Done()
-	}()
-
-	return nil
-}
-
 func Init(ctx context.Context, m *gorpmapper.Mapper, db *gorp.DbMap, gorts *sdk.GoRoutines, config Configuration) (*RunningStorageUnits, error) {
 	for i := range config.Storages {
-		if config.Storages[i].CronItemNumber == 0 {
-			config.Storages[i].CronItemNumber = 100
+		if config.Storages[i].SyncParallel <= 0 {
+			config.Storages[i].SyncParallel = 1
 		}
 	}
 
@@ -76,11 +39,11 @@ func Init(ctx context.Context, m *gorpmapper.Mapper, db *gorp.DbMap, gorts *sdk.
 	}
 
 	if config.Buffer.Name == "" {
-		return nil, fmt.Errorf("Invalid CDN configuration. Missing buffer name")
+		return nil, fmt.Errorf("invalid CDN configuration. Missing buffer name")
 	}
 
 	if len(config.Storages) == 0 {
-		return nil, fmt.Errorf("Invalid CDN configuration. Missing storage unit")
+		return nil, fmt.Errorf("invalid CDN configuration. Missing storage unit")
 	}
 
 	// Start by initializing the buffer unit
@@ -93,7 +56,7 @@ func Init(ctx context.Context, m *gorpmapper.Mapper, db *gorp.DbMap, gorts *sdk.
 		return nil, fmt.Errorf("redis driver is not a buffer unit driver")
 	}
 
-	bd.New(gorts)
+	bd.New(gorts, 1, math.MaxFloat64)
 
 	if err := bd.Init(ctx, config.Buffer.Redis); err != nil {
 		return nil, err
@@ -131,6 +94,10 @@ func Init(ctx context.Context, m *gorpmapper.Mapper, db *gorp.DbMap, gorts *sdk.
 
 	// Then initialize the storages unit
 	for _, cfg := range config.Storages {
+		if cfg.Name == "" {
+			return nil, sdk.WithStack(fmt.Errorf("invalid CDN configuration. Missing storage name"))
+		}
+
 		var storageUnit StorageUnit
 		switch {
 		case cfg.CDS != nil:
@@ -142,7 +109,7 @@ func Init(ctx context.Context, m *gorpmapper.Mapper, db *gorp.DbMap, gorts *sdk.
 			if !is {
 				return nil, sdk.WithStack(fmt.Errorf("cds driver is not a storage unit driver"))
 			}
-			sd.New(gorts)
+			sd.New(gorts, cfg.SyncParallel, float64(cfg.SyncBandwidth)*1024*1024) // convert from MBytes to Bytes
 
 			if err := sd.Init(ctx, cfg.CDS); err != nil {
 				return nil, err
@@ -157,7 +124,7 @@ func Init(ctx context.Context, m *gorpmapper.Mapper, db *gorp.DbMap, gorts *sdk.
 			if !is {
 				return nil, sdk.WithStack(fmt.Errorf("local driver is not a storage unit driver"))
 			}
-			sd.New(gorts)
+			sd.New(gorts, cfg.SyncParallel, float64(cfg.SyncBandwidth)*1024*1024) // convert from MBytes to Bytes
 
 			if err := sd.Init(ctx, cfg.Local); err != nil {
 				return nil, err
@@ -169,7 +136,7 @@ func Init(ctx context.Context, m *gorpmapper.Mapper, db *gorp.DbMap, gorts *sdk.
 			if !is {
 				return nil, sdk.WithStack(fmt.Errorf("swift driver is not a storage unit driver"))
 			}
-			sd.New(gorts)
+			sd.New(gorts, cfg.SyncParallel, float64(cfg.SyncBandwidth)*1024*1024) // convert from MBytes to Bytes
 
 			if err := sd.Init(ctx, cfg.Swift); err != nil {
 				return nil, err
@@ -181,7 +148,7 @@ func Init(ctx context.Context, m *gorpmapper.Mapper, db *gorp.DbMap, gorts *sdk.
 			if !is {
 				return nil, sdk.WithStack(fmt.Errorf("webdav driver is not a storage unit driver"))
 			}
-			sd.New(gorts)
+			sd.New(gorts, cfg.SyncParallel, float64(cfg.SyncBandwidth)*1024*1024) // convert from MBytes to Bytes
 
 			if err := sd.Init(ctx, cfg.Webdav); err != nil {
 				return nil, err
@@ -223,4 +190,61 @@ func Init(ctx context.Context, m *gorpmapper.Mapper, db *gorp.DbMap, gorts *sdk.
 	}
 
 	return &result, nil
+}
+
+func (r *RunningStorageUnits) Start(ctx context.Context, gorts *sdk.GoRoutines) {
+	// Start the sync processes
+	for i := range r.Storages {
+		s := r.Storages[i]
+		for x := 0; x < cap(s.SyncItemChannel()); x++ {
+			gorts.Run(ctx, fmt.Sprintf("RunningStorageUnits.Start.%s.%d", s.Name(), x),
+				func(ctx context.Context) {
+					for id := range s.SyncItemChannel() {
+						tx, err := r.db.Begin()
+						if err != nil {
+							err = sdk.WrapError(err, "unable to begin tx")
+							log.ErrorWithFields(ctx, logrus.Fields{"stack_trace": fmt.Sprintf("%+v", err)}, "%s", err)
+							continue
+						}
+
+						if err := r.processItem(ctx, r.m, tx, s, id); err != nil {
+							log.ErrorWithFields(ctx, logrus.Fields{"stack_trace": fmt.Sprintf("%+v", err)}, "%s", err)
+							continue
+						}
+
+						if err := tx.Commit(); err != nil {
+							err = sdk.WrapError(err, "unable to commit tx")
+							log.ErrorWithFields(ctx, logrus.Fields{"stack_trace": fmt.Sprintf("%+v", err)}, "%s", err)
+							_ = tx.Rollback()
+							continue
+						}
+					}
+				},
+			)
+		}
+	}
+
+	// 	Feed the sync processes with a ticker
+	gorts.Run(ctx, "RunningStorageUnits.Start", func(ctx context.Context) {
+		tickr := time.NewTicker(time.Second)
+		defer tickr.Stop()
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case <-tickr.C:
+				for i := range r.Storages {
+					s := r.Storages[i]
+					gorts.Exec(ctx, "RunningStorageUnits.Start."+s.Name(),
+						func(ctx context.Context) {
+							if err := r.Run(ctx, s, 100); err != nil {
+								log.ErrorWithFields(ctx, logrus.Fields{"stack_trace": fmt.Sprintf("%+v", err)}, "RunningStorageUnits.Start> error: %v", err)
+							}
+						},
+					)
+				}
+			}
+		}
+
+	})
 }

@@ -10,6 +10,7 @@ This µservice:
 go build
 ./service --log-level=debug \
 --event-kafka-broker-addresses=your-kafka-broker:9093 \
+--event-kafka-version=0.10.2.0 \
 --event-kafka-topic=cds-example.example-events \
 --event-kafka-user=cds-example.reader \
 --event-kafka-password=your-password \

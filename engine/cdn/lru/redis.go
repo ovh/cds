@@ -127,7 +127,7 @@ func (r *Redis) NewWriter(itemID string) io.WriteCloser {
 }
 
 // NewReader instanciates a new reader
-func (r *Redis) NewReader(itemID string, format sdk.CDNReaderFormat, from int64, s uint) io.ReadCloser {
+func (r *Redis) NewReader(itemID string, format sdk.CDNReaderFormat, from int64, size uint, sort int64) io.ReadCloser {
 	return &redis.Reader{
 		ReadWrite: redis.ReadWrite{
 			Store:     r.store,
@@ -135,9 +135,10 @@ func (r *Redis) NewReader(itemID string, format sdk.CDNReaderFormat, from int64,
 			PrefixKey: redisLruItemCacheKey,
 			UsageKey:  redisLruKeyCacheKey,
 		},
-		Size:   s,
+		Size:   size,
 		From:   from,
 		Format: format,
+		Sort:   sort,
 	}
 }
 
@@ -235,11 +236,11 @@ func (r *Redis) Status(ctx context.Context) []sdk.MonitoringStatusLine {
 
 	statusSize := sdk.MonitoringStatusOK
 	// if size is > 10Mo than maxSize -> Warn
-	if r.maxSize-size > -10000000 {
+	if r.maxSize-size < -10000000 {
 		statusSize = sdk.MonitoringStatusWarn
 	}
 	// if size is > 20Mo than maxSize -> Warn
-	if r.maxSize-size > -20000000 {
+	if r.maxSize-size < -20000000 {
 		statusSize = sdk.MonitoringStatusAlert
 	}
 

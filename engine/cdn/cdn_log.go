@@ -95,7 +95,7 @@ func (s *Service) handleConnection(ctx context.Context, conn net.Conn) {
 	for {
 		bytes, err := bufReader.ReadBytes(byte(0))
 		if err != nil {
-			log.Info(ctx, "client left")
+			log.Debug("client left: %v", err)
 			return
 		}
 		// remove byte(0)
@@ -197,21 +197,11 @@ func (s *Service) handleWorkerLog(ctx context.Context, workerName string, worker
 }
 
 func buildMessage(hm handledMessage) string {
-	logDate := time.Unix(0, int64(hm.Msg.Time*1e9))
-	logs := sdk.Log{
-		JobID:        hm.Signature.JobID,
-		LastModified: &logDate,
-		NodeRunID:    hm.Signature.NodeRunID,
-		Start:        &logDate,
-		StepOrder:    hm.Signature.Worker.StepOrder,
-		Val:          hm.Msg.Full,
+	val := hm.Msg.Full
+	if !strings.HasSuffix(val, "\n") {
+		val += "\n"
 	}
-	if !strings.HasSuffix(logs.Val, "\n") {
-		logs.Val += "\n"
-	}
-
-	logs.Val = fmt.Sprintf("[%s] %s", getLevelString(hm.Msg.Level), logs.Val)
-	return logs.Val
+	return fmt.Sprintf("[%s] %s", getLevelString(hm.Msg.Level), val)
 }
 
 func getLevelString(level int32) string {
@@ -252,7 +242,6 @@ func (s *Service) handleServiceLog(ctx context.Context, hatcheryID int64, hatche
 		if !ok {
 			return sdk.WrapError(sdk.ErrForbidden, "unable to find hatchery %d/%s", hatcheryID, hatcheryName)
 		}
-
 	}
 	pk = cacheData.(*rsa.PublicKey)
 
@@ -274,6 +263,12 @@ func (s *Service) handleServiceLog(ctx context.Context, hatcheryID int64, hatche
 		return sdk.WrapError(sdk.ErrWrongRequest, "cannot send service log for worker %s from hatchery (expected: %d/actual: %d)", w.ID, *w.HatcheryID, signature.Service.HatcheryID)
 	}
 
+	var line int64
+	lineI := m.Extra["_"+log.ExtraFieldLine]
+	if lineI != nil {
+		line = int64(lineI.(float64))
+	}
+
 	var status string
 	statusI := m.Extra["_"+log.ExtraFieldJobStatus]
 	if statusI != nil {
@@ -283,6 +278,7 @@ func (s *Service) handleServiceLog(ctx context.Context, hatcheryID int64, hatche
 	hm := handledMessage{
 		Signature: signature,
 		Msg:       m,
+		Line:      line,
 		Status:    status,
 	}
 	if s.cdnEnabled(ctx, signature.ProjectKey) {
@@ -297,10 +293,7 @@ func (s *Service) handleServiceLog(ctx context.Context, hatcheryID int64, hatche
 		ServiceRequirementID:   signature.Service.RequirementID,
 		WorkflowNodeJobRunID:   signature.JobID,
 		WorkflowNodeRunID:      signature.NodeRunID,
-		Val:                    m.Full,
-	}
-	if !strings.HasSuffix(logs.Val, "\n") {
-		logs.Val += "\n"
+		Val:                    buildMessage(hm),
 	}
 	if err := s.Client.QueueServiceLogs(ctx, []sdk.ServiceLog{logs}); err != nil {
 		return err

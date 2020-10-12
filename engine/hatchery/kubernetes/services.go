@@ -3,8 +3,10 @@ package kubernetes
 import (
 	"context"
 	"strconv"
+	"strings"
 	"time"
 
+	"github.com/sirupsen/logrus"
 	apiv1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
@@ -19,7 +21,7 @@ func (h *HatcheryKubernetes) getServicesLogs(ctx context.Context) error {
 		return err
 	}
 
-	servicesLogs := make([]sdk.ServiceLog, 0, len(pods.Items))
+	servicesLogs := make([]log.Message, 0, len(pods.Items))
 	for _, pod := range pods.Items {
 		podName := pod.GetName()
 		labels := pod.GetLabels()
@@ -53,20 +55,37 @@ func (h *HatcheryKubernetes) getServicesLogs(ctx context.Context) error {
 			// No check on error thanks to the regexp
 			reqServiceID, _ := strconv.ParseInt(subsStr[0][1], 10, 64)
 
-			servicesLogs = append(servicesLogs, sdk.ServiceLog{
-				WorkflowNodeJobRunID:   jobIdentifiers.JobID,
-				ServiceRequirementID:   reqServiceID,
-				ServiceRequirementName: subsStr[0][2],
-				Val:                    string(logs),
-				WorkerName:             pod.ObjectMeta.Name,
-				JobName:                labels[hatchery.LabelServiceJobName],
-				NodeRunName:            labels[hatchery.LabelServiceNodeRunName],
-				WorkflowName:           labels[hatchery.LabelServiceWorkflowName],
-				ProjectKey:             labels[hatchery.LabelServiceProjectKey],
-				RunID:                  jobIdentifiers.RunID,
-				WorkflowID:             jobIdentifiers.WorkflowID,
-				WorkflowNodeRunID:      jobIdentifiers.NodeRunID,
-			})
+			commonMessage := log.Message{
+				Level: logrus.InfoLevel,
+				Signature: log.Signature{
+					Service: &log.SignatureService{
+						HatcheryID:      h.Service().ID,
+						HatcheryName:    h.ServiceName(),
+						RequirementID:   reqServiceID,
+						RequirementName: subsStr[0][2],
+						WorkerName:      pod.ObjectMeta.Name,
+					},
+					ProjectKey:   labels[hatchery.LabelServiceProjectKey],
+					WorkflowName: labels[hatchery.LabelServiceWorkflowName],
+					WorkflowID:   jobIdentifiers.WorkflowID,
+					RunID:        jobIdentifiers.RunID,
+					NodeRunName:  labels[hatchery.LabelServiceNodeRunName],
+					JobName:      labels[hatchery.LabelServiceJobName],
+					JobID:        jobIdentifiers.JobID,
+					NodeRunID:    jobIdentifiers.NodeRunID,
+				},
+			}
+
+			logsSplitted := strings.Split(string(logs), "\n")
+			for i := range logsSplitted {
+				if i == len(logsSplitted)-1 && logsSplitted[i] == "" {
+					break
+				}
+				msg := commonMessage
+				msg.Signature.Timestamp = time.Now().UnixNano()
+				msg.Value = logsSplitted[i]
+				servicesLogs = append(servicesLogs, msg)
+			}
 		}
 	}
 

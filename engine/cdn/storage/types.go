@@ -3,6 +3,7 @@ package storage
 import (
 	"context"
 	"io"
+	"math"
 	"reflect"
 	"sync"
 
@@ -10,7 +11,6 @@ import (
 	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/symmecrypt/convergent"
-	"go.opencensus.io/stats"
 )
 
 func RegisterDriver(typ string, i Interface) {
@@ -37,19 +37,19 @@ var (
 type Interface interface {
 	Name() string
 	ID() string
-	New(gorts *sdk.GoRoutines)
+	New(gorts *sdk.GoRoutines, syncParrallel int64, syncBandwidth float64)
 	Set(u sdk.CDNUnit)
 	Init(ctx context.Context, cfg interface{}) error
 	ItemExists(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlExecutor, i sdk.CDNItem) (bool, error)
-	Lock()
-	Unlock()
 	Status(ctx context.Context) []sdk.MonitoringStatusLine
+	SyncBandwidth() float64
 }
 
 type AbstractUnit struct {
-	sync.Mutex
-	GoRoutines *sdk.GoRoutines
-	u          sdk.CDNUnit
+	GoRoutines    *sdk.GoRoutines
+	u             sdk.CDNUnit
+	syncChan      chan string
+	syncBandwidth float64
 }
 
 func (a *AbstractUnit) ExistsInDatabase(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlExecutor, id string) (*sdk.CDNItemUnit, error) {
@@ -70,20 +70,33 @@ func (a *AbstractUnit) ID() string {
 
 func (a *AbstractUnit) Set(u sdk.CDNUnit) { a.u = u }
 
-func (a *AbstractUnit) New(gorts *sdk.GoRoutines) { a.GoRoutines = gorts }
+func (a *AbstractUnit) New(gorts *sdk.GoRoutines, syncParrallel int64, syncBandwidth float64) {
+	a.GoRoutines = gorts
+	a.syncChan = make(chan string, syncParrallel)
+	if syncBandwidth <= 0 {
+		syncBandwidth = math.MaxFloat64
+	}
+	a.syncBandwidth = syncBandwidth / float64(syncParrallel)
+}
+
+func (a *AbstractUnit) SyncItemChannel() chan string { return a.syncChan }
+
+func (a *AbstractUnit) SyncBandwidth() float64 {
+	return a.syncBandwidth
+}
 
 type BufferUnit interface {
 	Interface
 	Add(i sdk.CDNItemUnit, score uint, value string) error
-	Append(i sdk.CDNItemUnit, value string) error
 	Card(i sdk.CDNItemUnit) (int, error)
 	NewReader(ctx context.Context, i sdk.CDNItemUnit) (io.ReadCloser, error)
-	NewAdvancedReader(ctx context.Context, i sdk.CDNItemUnit, format sdk.CDNReaderFormat, from int64, size uint) (io.ReadCloser, error)
+	NewAdvancedReader(ctx context.Context, i sdk.CDNItemUnit, format sdk.CDNReaderFormat, from int64, size uint, sort int64) (io.ReadCloser, error)
 	Read(i sdk.CDNItemUnit, r io.Reader, w io.Writer) error
 }
 
 type StorageUnit interface {
 	Interface
+	SyncItemChannel() chan string
 	NewWriter(ctx context.Context, i sdk.CDNItemUnit) (io.WriteCloser, error)
 	NewReader(ctx context.Context, i sdk.CDNItemUnit) (io.ReadCloser, error)
 	Write(i sdk.CDNItemUnit, r io.Reader, w io.Writer) error
@@ -106,13 +119,13 @@ type BufferConfiguration struct {
 }
 
 type StorageConfiguration struct {
-	Name           string                      `toml:"name" json:"name"`
-	Cron           string                      `toml:"cron" json:"cron" default:"*/30 * * * * ?"`
-	CronItemNumber int64                       `toml:"cron_item_number" json:"cron_item_number" default:"100"`
-	Local          *LocalStorageConfiguration  `toml:"local" json:"local,omitempty" mapstructure:"local"`
-	Swift          *SwiftStorageConfiguration  `toml:"swift" json:"swift,omitempty" mapstructure:"swift"`
-	Webdav         *WebdavStorageConfiguration `toml:"webdav" json:"webdav,omitempty" mapstructure:"webdav"`
-	CDS            *CDSStorageConfiguration    `toml:"cds" json:"cds,omitempty" mapstructure:"cds"`
+	Name          string                      `toml:"name" json:"name"`
+	SyncParallel  int64                       `toml:"syncParallel" json:"sync_parallel" default:"2" comment:"number of parallel sync processes"`
+	SyncBandwidth int64                       `toml:"syncBandwidth" json:"sync_bandwidth" default:"10" comment:"global bandwith shared by the sync processes"`
+	Local         *LocalStorageConfiguration  `toml:"local" json:"local,omitempty" mapstructure:"local"`
+	Swift         *SwiftStorageConfiguration  `toml:"swift" json:"swift,omitempty" mapstructure:"swift"`
+	Webdav        *WebdavStorageConfiguration `toml:"webdav" json:"webdav,omitempty" mapstructure:"webdav"`
+	CDS           *CDSStorageConfiguration    `toml:"cds" json:"cds,omitempty" mapstructure:"cds"`
 }
 
 type LocalStorageConfiguration struct {
@@ -157,7 +170,4 @@ type RunningStorageUnits struct {
 	config   Configuration
 	Buffer   BufferUnit
 	Storages []StorageUnit
-	Metrics  struct {
-		StorageThroughput **stats.Float64Measure
-	}
 }

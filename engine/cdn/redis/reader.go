@@ -2,6 +2,7 @@ package redis
 
 import (
 	"io"
+	"sort"
 
 	"github.com/ovh/cds/sdk"
 )
@@ -14,19 +15,28 @@ type Reader struct {
 	currentBuffer []byte
 	Format        sdk.CDNReaderFormat
 	readEOF       bool
+	Sort          int64 // < 0 for latest logs first, >= 0 for older logs first
 }
 
 func (r *Reader) loadMoreLines() error {
+	// Use max score to get line max count instead of card in case of missing rows
+	maxScore, err := r.maxScore()
+	if err != nil {
+		return err
+	}
+	lineCount := uint(maxScore) + 1
+
 	// If from is less than 0 try to substract given value to lines count
 	if r.From < 0 {
-		lineCount, err := r.card()
-		if err != nil {
-			return err
-		}
 		r.From = int64(lineCount) + r.From
 		if r.From < 0 {
 			r.From = 0
 		}
+	}
+
+	maxLinesToRead := uint(lineCount) - uint(r.From)
+	if r.Size == 0 || r.Size > maxLinesToRead {
+		r.Size = maxLinesToRead
 	}
 
 	isFirstRead := r.nextIndex == 0
@@ -53,30 +63,47 @@ func (r *Reader) loadMoreLines() error {
 
 	// Read 100 lines if possible or only the missing lines if less than 100
 	alreadyReadLinesLength := r.nextIndex - uint(r.From)
+	linesLeftToRead := uint(r.Size) - alreadyReadLinesLength
+	if linesLeftToRead == 0 {
+		if !r.readEOF {
+			r.readEOF = true
+			formatEnd()
+		}
+		return nil
+	}
 	var newNextIndex uint
-	if r.Size > 0 {
-		linesLeftToRead := uint(r.Size) - alreadyReadLinesLength
-		if linesLeftToRead == 0 {
-			if !r.readEOF {
-				r.readEOF = true
-				formatEnd()
-			}
-			return nil
-		}
-		if linesLeftToRead > 100 {
-			newNextIndex = r.nextIndex + 100
-		} else {
-			newNextIndex = r.nextIndex + linesLeftToRead
-		}
-	} else {
+	if linesLeftToRead > 100 {
 		newNextIndex = r.nextIndex + 100
+	} else {
+		newNextIndex = r.nextIndex + linesLeftToRead
 	}
 
 	// Get new lines from Redis and append it to current buffer
-	lines, err := r.get(r.nextIndex, newNextIndex-1)
+	var from, to uint
+	if r.Sort >= 0 {
+		from = r.nextIndex
+		to = newNextIndex - 1
+	} else {
+		if uint(lineCount) < newNextIndex {
+			from = 0
+		} else {
+			from = uint(lineCount) - newNextIndex
+		}
+		if uint(lineCount) < r.nextIndex {
+			to = uint(lineCount) - 1
+		} else {
+			to = uint(lineCount) - (r.nextIndex + 1)
+		}
+	}
+	lines, err := r.get(from, to)
 	if err != nil {
 		return err
 	}
+
+	if r.Sort < 0 {
+		sort.Slice(lines, func(i, j int) bool { return lines[i].Number > lines[j].Number })
+	}
+
 	for i := range lines {
 		buf, err := lines[i].Format(r.Format)
 		if err != nil {

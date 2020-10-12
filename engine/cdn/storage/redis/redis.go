@@ -56,10 +56,6 @@ func (s *Redis) Add(i sdk.CDNItemUnit, index uint, value string) error {
 	return s.store.ScoredSetAdd(context.Background(), cache.Key(keyBuffer, i.ItemID), value, float64(index))
 }
 
-func (s *Redis) Append(i sdk.CDNItemUnit, value string) error {
-	return s.store.ScoredSetAppend(context.Background(), cache.Key(keyBuffer, i.ItemID), value)
-}
-
 func (s *Redis) Card(i sdk.CDNItemUnit) (int, error) {
 	return s.store.SetCard(cache.Key(keyBuffer, i.ItemID))
 }
@@ -79,7 +75,7 @@ func (s *Redis) NewReader(_ context.Context, i sdk.CDNItemUnit) (io.ReadCloser, 
 }
 
 // NewAdvancedReader instanciate a reader from given option, format can be JSON or Text. If from is < 0, read end lines (ex: from=-100 size=0 means read the last 100 lines)
-func (s *Redis) NewAdvancedReader(_ context.Context, i sdk.CDNItemUnit, format sdk.CDNReaderFormat, from int64, size uint) (io.ReadCloser, error) {
+func (s *Redis) NewAdvancedReader(_ context.Context, i sdk.CDNItemUnit, format sdk.CDNReaderFormat, from int64, size uint, sort int64) (io.ReadCloser, error) {
 	return &redis.Reader{
 		ReadWrite: redis.ReadWrite{
 			Store:     s.store,
@@ -90,6 +86,7 @@ func (s *Redis) NewAdvancedReader(_ context.Context, i sdk.CDNItemUnit, format s
 		From:   from,
 		Size:   size,
 		Format: format,
+		Sort:   sort,
 	}, nil
 }
 

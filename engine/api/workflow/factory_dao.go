@@ -709,7 +709,7 @@ func (dao WorkflowDAO) LoadAll(ctx context.Context, db gorp.SqlExecutor) (sdk.Wo
 	}
 
 	delta := time.Since(t0).Seconds()
-	log.Info(ctx, "LoadAll - %d results in %.3f seconds", len(ws), delta)
+	log.Info(ctx, "WorkflowDAO> LoadAll - %d results in %.3f seconds", len(ws), delta)
 
 	return ws, nil
 }

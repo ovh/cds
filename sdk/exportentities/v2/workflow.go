@@ -23,11 +23,12 @@ type Workflow struct {
 	Hooks    map[string][]HookEntry `json:"hooks,omitempty" yaml:"hooks,omitempty" jsonschema_description:"Workflow hooks list."`
 
 	// extra workflow data
-	Permissions   map[string]int      `json:"permissions,omitempty" yaml:"permissions,omitempty" jsonschema_description:"The permissions for the workflow (ex: myGroup: 7).\nhttps://ovh.github.io/cds/docs/concepts/permissions"`
-	Metadata      map[string]string   `json:"metadata,omitempty" yaml:"metadata,omitempty"`
-	PurgeTags     []string            `json:"purge_tags,omitempty" yaml:"purge_tags,omitempty"`
-	Notifications []NotificationEntry `json:"notifications,omitempty" yaml:"notifications,omitempty"` // This is used when the workflow have only one pipeline
-	HistoryLength *int64              `json:"history_length,omitempty" yaml:"history_length,omitempty"`
+	Permissions     map[string]int      `json:"permissions,omitempty" yaml:"permissions,omitempty" jsonschema_description:"The permissions for the workflow (ex: myGroup: 7).\nhttps://ovh.github.io/cds/docs/concepts/permissions"`
+	Metadata        map[string]string   `json:"metadata,omitempty" yaml:"metadata,omitempty"`
+	PurgeTags       []string            `json:"purge_tags,omitempty" yaml:"purge_tags,omitempty"`
+	RetentionPolicy string              `json:"retention_policy,omitempty" yaml:"retention_policy,omitempty"`
+	Notifications   []NotificationEntry `json:"notifications,omitempty" yaml:"notifications,omitempty"` // This is used when the workflow have only one pipeline
+	HistoryLength   *int64              `json:"history_length,omitempty" yaml:"history_length,omitempty"`
 }
 
 // NodeEntry represents a node as code
@@ -103,6 +104,7 @@ func NewWorkflow(ctx context.Context, w sdk.Workflow, version string, opts ...Ex
 	exportedWorkflow.Version = version
 	exportedWorkflow.Workflow = map[string]NodeEntry{}
 	exportedWorkflow.Hooks = map[string][]HookEntry{}
+	exportedWorkflow.RetentionPolicy = w.RetentionPolicy
 	if len(w.Metadata) > 0 {
 		exportedWorkflow.Metadata = make(map[string]string, len(w.Metadata))
 		for k, v := range w.Metadata {
@@ -369,6 +371,7 @@ func (w Workflow) GetWorkflow() (*sdk.Workflow, error) {
 	wf.Pipelines = make(map[int64]sdk.Pipeline)
 	wf.Environments = make(map[int64]sdk.Environment)
 	wf.ProjectIntegrations = make(map[int64]sdk.ProjectIntegration)
+	wf.RetentionPolicy = w.RetentionPolicy
 
 	if err := w.CheckValidity(); err != nil {
 		return nil, sdk.WrapError(err, "unable to check validity")
@@ -535,6 +538,10 @@ func (e *NodeEntry) processNodeAncestors(name string, w *sdk.Workflow) (bool, er
 
 	switch len(ancestors) {
 	case 0:
+		// If there is already a root node, it is impossible have another one
+		if w.WorkflowData.Node.Name != "" {
+			return false, fmt.Errorf("invalid node dependencies. %s should have at least one dependency because the workflow already have a root", n.Name)
+		}
 		w.WorkflowData.Node = *n
 		return true, nil
 	case 1:

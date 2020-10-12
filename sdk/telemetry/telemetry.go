@@ -117,6 +117,7 @@ const (
 	TagStorage            = "storage"
 	TagType               = "type"
 	TagStatus             = "status"
+	TagPercentil          = "percentil"
 )
 
 func ContextWithTag(ctx context.Context, s ...interface{}) context.Context {

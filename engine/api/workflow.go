@@ -9,6 +9,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/fsamin/go-dump"
 	"github.com/go-gorp/gorp"
 	"github.com/gorilla/mux"
 
@@ -19,6 +20,7 @@ import (
 	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/project"
+	"github.com/ovh/cds/engine/api/purge"
 	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/engine/service"
@@ -89,6 +91,102 @@ func (api *API) setWorkflowURLs(w1 *sdk.Workflow) {
 		r1 := &w1.Runs[j]
 		r1.URLs.APIURL = api.Config.URL.API + api.Router.GetRoute("GET", api.getWorkflowRunHandler, map[string]string{"key": w1.ProjectKey, "permWorkflowName": w1.Name, "number": strconv.FormatInt(r1.Number, 10)})
 		r1.URLs.UIURL = api.Config.URL.UI + "/project/" + w1.ProjectKey + "/workflow/" + w1.Name + "/run/" + strconv.FormatInt(r1.Number, 10)
+	}
+}
+
+func (api *API) getRetentionPolicySuggestionHandler() service.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		vars := mux.Vars(r)
+		key := vars["key"]
+		name := vars["permWorkflowName"]
+
+		proj, err := project.Load(ctx, api.mustDBWithCtx(ctx), key, project.LoadOptions.WithIntegrations)
+		if err != nil {
+			return err
+		}
+
+		varsPayload := make(map[string]string, 0)
+		run, err := workflow.LoadLastRun(api.mustDB(), key, name, workflow.LoadRunOptions{DisableDetailledNodeRun: true})
+		if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
+			return err
+		}
+
+		e := dump.NewDefaultEncoder()
+		e.Formatters = []dump.KeyFormatterFunc{dump.WithDefaultLowerCaseFormatter()}
+		e.ExtraFields.DetailedMap = false
+		e.ExtraFields.DetailedStruct = false
+		e.ExtraFields.Len = false
+		e.ExtraFields.Type = false
+
+		if run != nil && run.ToCraftOpts != nil {
+			if run.ToCraftOpts.Hook != nil {
+				varsPayload = run.ToCraftOpts.Hook.Payload
+			}
+			if run.ToCraftOpts.Manual != nil {
+				payload := run.ToCraftOpts.Manual.Payload
+				if payload != nil {
+					tmpVars, err := e.ToStringMap(payload)
+					if err != nil {
+						return sdk.WithStack(err)
+					}
+					for k, v := range tmpVars {
+						varsPayload[k] = v
+					}
+				}
+			}
+		}
+		if len(varsPayload) == 0 {
+			wf, err := workflow.Load(ctx, api.mustDBWithCtx(ctx), api.Cache, *proj, name, workflow.LoadOptions{})
+			if err != nil {
+				return err
+			}
+			if wf.WorkflowData.Node.Context.DefaultPayload != nil {
+				tmpVars, err := e.ToStringMap(wf.WorkflowData.Node.Context.DefaultPayload)
+				if err != nil {
+					return sdk.WithStack(err)
+				}
+				for k, v := range tmpVars {
+					varsPayload[k] = v
+				}
+			}
+		}
+
+		retentionPolicySuggestion := purge.GetRetetionPolicyVariables()
+		for k := range varsPayload {
+			retentionPolicySuggestion = append(retentionPolicySuggestion, k)
+		}
+
+		return service.WriteJSON(w, retentionPolicySuggestion, http.StatusOK)
+	}
+}
+
+func (api *API) postWorkflowRetentionPolicyDryRun() service.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		vars := mux.Vars(r)
+		key := vars["key"]
+		name := vars["permWorkflowName"]
+
+		var request sdk.PurgeDryRunRequest
+		if err := service.UnmarshalBody(r, &request); err != nil {
+			return err
+		}
+
+		proj, err := project.Load(ctx, api.mustDBWithCtx(ctx), key, project.LoadOptions.WithIntegrations)
+		if err != nil {
+			return err
+		}
+
+		wf, err := workflow.Load(ctx, api.mustDBWithCtx(ctx), api.Cache, *proj, name, workflow.LoadOptions{})
+		if err != nil {
+			return err
+		}
+
+		wf.RetentionPolicy = request.RetentionPolicy
+		runs, err := purge.ApplyRetentionPolicyOnWorkflow(ctx, api.Cache, api.mustDBWithCtx(ctx), *wf, purge.MarkAsDeleteOptions{DryRun: true})
+		if err != nil {
+			return err
+		}
+		return service.WriteJSON(w, runs, http.StatusOK)
 	}
 }
 

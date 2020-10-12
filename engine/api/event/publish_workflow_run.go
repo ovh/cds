@@ -63,6 +63,7 @@ func PublishWorkflowRun(ctx context.Context, wr sdk.WorkflowRun, projectKey stri
 		LastModified:     wr.LastModified.Unix(),
 		LastModifiedNano: wr.LastModified.UnixNano(),
 		Tags:             wr.Tags,
+		ToDelete:         wr.ToDelete,
 	}
 	data := publishWorkflowRunData{
 		projectKey:        projectKey,

@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"encoding/json"
 	"net/http/httptest"
 	"testing"
@@ -10,6 +11,7 @@ import (
 
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/engine/api/test/assets"
+	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk"
 )
@@ -188,4 +190,40 @@ func Test_postAdminDatabaseRollEncryptedEntityByPrimaryKey(t *testing.T) {
 		api.Router.Mux.ServeHTTP(w, req)
 		assert.Equal(t, 204, w.Code)
 	}
+}
+
+func Test_postWorkflowMaxRunHandler(t *testing.T) {
+	api, db, _ := newTestAPI(t)
+	api.Config.Workflow.MaxRuns = 10
+	ctx, cancel := context.WithCancel(context.Background())
+	t.Cleanup(cancel)
+
+	go workflow.Initialize(ctx, api.DBConnectionFactory.GetDBMap(gorpmapping.Mapper), api.Cache, "", "", "", 15, api.Config.Workflow.MaxRuns)
+	_, jwt := assets.InsertAdminUser(t, db)
+
+	p := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
+	w := assets.InsertTestWorkflow(t, db, api.Cache, p, sdk.RandomString(10))
+
+	require.Equal(t, w.MaxRuns, api.Config.Workflow.MaxRuns)
+
+	uri := api.Router.GetRoute("POST", api.postWorkflowMaxRunHandler, map[string]string{"key": p.Key, "permWorkflowName": w.Name})
+	req := assets.NewJWTAuthentifiedRequest(t, jwt, "POST", uri, sdk.UpdateMaxRunRequest{MaxRuns: 5})
+
+	// Do the request
+	rec := httptest.NewRecorder()
+	api.Router.Mux.ServeHTTP(rec, req)
+	assert.Equal(t, 204, rec.Code)
+
+	wfDb, err := workflow.Load(context.TODO(), db, api.Cache, *p, w.Name, workflow.LoadOptions{})
+	require.NoError(t, err)
+	require.Equal(t, int64(5), wfDb.MaxRuns)
+
+	wfDb.MaxRuns = 20
+	require.NoError(t, workflow.Update(context.TODO(), db, api.Cache, *p, wfDb, workflow.UpdateOptions{}))
+
+	// Max runs must not be updated
+	wfDb2, err := workflow.Load(context.TODO(), db, api.Cache, *p, w.Name, workflow.LoadOptions{})
+	require.NoError(t, err)
+	require.Equal(t, int64(5), wfDb2.MaxRuns)
+
 }

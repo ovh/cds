@@ -153,9 +153,9 @@ func configBootstrap(args []string) Configuration {
 			conf.CDN.Database.Schema = "cdn"
 			conf.CDN.Units.Storages = []storage.StorageConfiguration{
 				{
-					Name:           "local",
-					Cron:           "*/30 * * * * ?",
-					CronItemNumber: 100,
+					Name:          "local",
+					SyncBandwidth: 100,
+					SyncParallel:  10,
 					Local: &storage.LocalStorageConfiguration{
 						Path: "/var/lib/cds-engine/logs",
 					},

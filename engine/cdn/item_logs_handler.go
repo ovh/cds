@@ -75,10 +75,12 @@ func (s *Service) getItemDownloadHandler() service.Handler {
 		itemType := sdk.CDNItemType(vars["type"])
 		apiRef := vars["apiRef"]
 
+		var opts downloadOpts
 		// User can give a refresh delay in seconds, Refresh header value will be set if item is not complete
-		refreshDelay := service.FormInt64(r, "refresh")
+		opts.Log.Refresh = service.FormInt64(r, "refresh")
+		opts.Log.Sort = service.FormInt64(r, "sort") // < 0 for latest logs first, >= 0 for older logs first
 
-		return s.downloadItem(ctx, itemType, apiRef, refreshDelay, w)
+		return s.downloadItem(ctx, itemType, apiRef, w, opts)
 	}
 }
 
@@ -124,7 +126,7 @@ func (s *Service) getItemLogsStreamHandler() service.Handler {
 			send := func() error {
 				log.Debug("getItemLogsStreamHandler> send log to client %s from %d", wsClient.UUID(), wsClientData.scoreNextLineToSend)
 
-				rc, err := s.Units.Buffer.NewAdvancedReader(ctx, *iu, sdk.CDNReaderFormatJSON, wsClientData.scoreNextLineToSend, 100)
+				rc, err := s.Units.Buffer.NewAdvancedReader(ctx, *iu, sdk.CDNReaderFormatJSON, wsClientData.scoreNextLineToSend, 100, 0)
 				if err != nil {
 					return err
 				}
@@ -192,8 +194,9 @@ func (s *Service) getItemLogsLinesHandler() service.Handler {
 		// offset can be lower than 0 if we want the n last lines
 		offset := service.FormInt64(r, "offset")
 		count := service.FormUInt(r, "count")
+		sort := service.FormInt64(r, "sort") // < 0 for latest logs first, >= 0 for older logs first
 
-		_, rc, _, err := s.getItemLogValue(ctx, itemType, apiRef, sdk.CDNReaderFormatJSON, offset, count)
+		_, rc, _, err := s.getItemLogValue(ctx, itemType, apiRef, sdk.CDNReaderFormatJSON, offset, count, sort)
 		if err != nil {
 			return err
 		}

@@ -184,3 +184,12 @@ func (c *client) AdminDatabaseRollAllEncryptedEntities() error {
 	}
 	return nil
 }
+
+func (c *client) AdminWorkflowUpdateMaxRuns(projectKey string, workflowName string, maxRuns int64) error {
+	request := sdk.UpdateMaxRunRequest{MaxRuns: maxRuns}
+	url := fmt.Sprintf("/project/%s/workflows/%s/retention/maxruns", projectKey, workflowName)
+	if _, err := c.PostJSON(context.Background(), url, &request, nil); err != nil {
+		return err
+	}
+	return nil
+}

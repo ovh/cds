@@ -3,21 +3,30 @@ package purge
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"net/http"
 	"time"
 
 	"github.com/go-gorp/gorp"
+	"github.com/sirupsen/logrus"
 	"go.opencensus.io/stats"
 
+	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/engine/api/integration"
 	"github.com/ovh/cds/engine/api/objectstore"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/engine/cache"
+	"github.com/ovh/cds/engine/featureflipping"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk/telemetry"
+)
+
+const (
+	FeaturePurgeName = "workflow-retention-policy"
+	FeatureMaxRuns   = "workflow-retention-maxruns"
 )
 
 //Initialize starts goroutines for workflows
@@ -33,13 +42,18 @@ func Initialize(ctx context.Context, store cache.Store, DBFunc func() *gorp.DbMa
 				return
 			}
 		case <-tickPurge.C:
+			// Mark workflow run to delete
+			if err := markWorkflowRunsToDelete(ctx, store, DBFunc(), workflowRunsMarkToDelete); err != nil {
+				log.ErrorWithFields(ctx, logrus.Fields{"stack_trace": fmt.Sprintf("%+v", err)}, "%s", err)
+			}
+
 			// Check all workflows to mark runs that should be deleted
-			if err := workflow.PurgeWorkflowRuns(ctx, DBFunc(), workflowRunsMarkToDelete); err != nil {
+			if err := MarkWorkflowRuns(ctx, DBFunc(), workflowRunsMarkToDelete); err != nil {
 				log.Warning(ctx, "purge> Error: %v", err)
 			}
 
 			log.Debug("purge> Deleting all workflow run marked to delete...")
-			if err := deleteWorkflowRunsHistory(ctx, DBFunc(), store, sharedStorage, workflowRunsDeleted); err != nil {
+			if err := deleteWorkflowRunsHistory(ctx, DBFunc(), sharedStorage, workflowRunsDeleted); err != nil {
 				log.Warning(ctx, "purge> Error on deleteWorkflowRunsHistory : %v", err)
 			}
 
@@ -51,13 +65,48 @@ func Initialize(ctx context.Context, store cache.Store, DBFunc func() *gorp.DbMa
 	}
 }
 
+// Deprecated: old method to mark runs to delete
+func MarkWorkflowRuns(ctx context.Context, db *gorp.DbMap, workflowRunsMarkToDelete *stats.Int64Measure) error {
+	dao := new(workflow.WorkflowDAO)
+	dao.Filters.DisableFilterDeletedWorkflow = false
+	wfs, err := dao.LoadAll(ctx, db)
+	if err != nil {
+		return err
+	}
+	for _, wf := range wfs {
+		enabled := featureflipping.IsEnabled(ctx, gorpmapping.Mapper, db, FeaturePurgeName, map[string]string{"project_key": wf.ProjectKey})
+		if enabled {
+			continue
+		}
+		tx, err := db.Begin()
+		if err != nil {
+			log.Error(ctx, "workflow.PurgeWorkflowRuns> error %v", err)
+			tx.Rollback() // nolint
+			continue
+		}
+		if err := workflow.PurgeWorkflowRun(ctx, tx, wf); err != nil {
+			log.Error(ctx, "workflow.PurgeWorkflowRuns> error %v", err)
+			tx.Rollback() // nolint
+			continue
+		}
+		if err := tx.Commit(); err != nil {
+			log.Error(ctx, "workflow.PurgeWorkflowRuns> unable to commit transaction:  %v", err)
+			_ = tx.Rollback()
+			continue
+		}
+	}
+
+	workflow.CountWorkflowRunsMarkToDelete(ctx, db, workflowRunsMarkToDelete)
+	return nil
+}
+
 // workflows purges all marked workflows
 func workflows(ctx context.Context, db *gorp.DbMap, store cache.Store, workflowRunsMarkToDelete *stats.Int64Measure) error {
 	query := "SELECT id, project_id FROM workflow WHERE to_delete = true ORDER BY id ASC"
-	res := []struct {
+	var res []struct {
 		ID        int64 `db:"id"`
 		ProjectID int64 `db:"project_id"`
-	}{}
+	}
 
 	if _, err := db.Select(&res, query); err != nil {
 		if err == sql.ErrNoRows {
@@ -147,7 +196,7 @@ func workflows(ctx context.Context, db *gorp.DbMap, store cache.Store, workflowR
 }
 
 // deleteWorkflowRunsHistory is useful to delete all the workflow run marked with to delete flag in db
-func deleteWorkflowRunsHistory(ctx context.Context, db *gorp.DbMap, store cache.Store, sharedStorage objectstore.Driver, workflowRunsDeleted *stats.Int64Measure) error {
+func deleteWorkflowRunsHistory(ctx context.Context, db *gorp.DbMap, sharedStorage objectstore.Driver, workflowRunsDeleted *stats.Int64Measure) error {
 	var workflowRunIDs []int64
 	if _, err := db.Select(&workflowRunIDs, "SELECT id FROM workflow_run WHERE to_delete = true ORDER BY id ASC LIMIT 2000"); err != nil {
 		return err
@@ -166,7 +215,7 @@ func deleteWorkflowRunsHistory(ctx context.Context, db *gorp.DbMap, store cache.
 			log.Error(ctx, "deleteWorkflowRunsHistory> error while opening transaction : %v", err)
 			continue
 		}
-		if err := DeleteArtifacts(ctx, tx, store, sharedStorage, workflowRunID); err != nil {
+		if err := DeleteArtifacts(ctx, tx, sharedStorage, workflowRunID); err != nil {
 			log.Error(ctx, "deleteWorkflowRunsHistory> error while deleting artifacts: %v", err)
 			_ = tx.Rollback()
 			continue
@@ -202,7 +251,7 @@ func deleteWorkflowRunsHistory(ctx context.Context, db *gorp.DbMap, store cache.
 }
 
 // DeleteArtifacts removes artifacts from storage
-func DeleteArtifacts(ctx context.Context, db gorp.SqlExecutor, store cache.Store, sharedStorage objectstore.Driver, workflowRunID int64) error {
+func DeleteArtifacts(ctx context.Context, db gorp.SqlExecutor, sharedStorage objectstore.Driver, workflowRunID int64) error {
 	wr, err := workflow.LoadRunByID(db, workflowRunID, workflow.LoadRunOptions{WithArtifacts: true, DisableDetailledNodeRun: false, WithDeleted: true})
 	if err != nil {
 		return sdk.WrapError(err, "error on load LoadRunByID:%d", workflowRunID)

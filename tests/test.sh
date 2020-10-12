@@ -45,6 +45,8 @@ CDS_MODEL_REQ="${CDS_MODEL_REQ:-buildpack-deps}"
 # If you want to run some tests with a specific region requirement, set CDS_REGION_REQ
 CDS_REGION_REQ="${CDS_REGION_REQ:-""}" 
 
+HOSTNAME="${HOSTNAME:-localhost}"
+
 # The default values below fit to default minio installation.
 # Run "make minio_start" to start a minio docker container 
 AWS_DEFAULT_REGION="${AWS_DEFAULT_REGION:-us-east-1}"

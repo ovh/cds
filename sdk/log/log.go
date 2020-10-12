@@ -272,6 +272,16 @@ func newEntry(ctx context.Context, fields log.Fields) *log.Entry {
 	return entry
 }
 
+type Message struct {
+	Value     string
+	Level     log.Level
+	Signature Signature
+}
+
+func (m Message) ServiceKey() string {
+	return fmt.Sprintf("%d-%d", m.Signature.NodeRunID, m.Signature.Service.RequirementID)
+}
+
 type Signature struct {
 	Worker       *SignatureWorker
 	Service      *SignatureService

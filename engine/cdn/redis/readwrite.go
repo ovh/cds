@@ -55,9 +55,15 @@ func (rw *ReadWrite) get(from uint, to uint) ([]Line, error) {
 	return ls, nil
 }
 
-func (rw *ReadWrite) card() (int, error) {
-	itemKey := cache.Key(rw.PrefixKey, rw.ItemID)
-	return rw.Store.SetCard(itemKey)
+func (rw *ReadWrite) maxScore() (float64, error) {
+	res, err := rw.Store.ScoredSetScanMaxScore(context.Background(), cache.Key(rw.PrefixKey, rw.ItemID))
+	if err != nil {
+		return 0, err
+	}
+	if res == nil {
+		return 0, nil
+	}
+	return res.Score, nil
 }
 
 func (rw *ReadWrite) UpdateUsage() error {

@@ -79,7 +79,7 @@ type Configuration struct {
 			Host     string `toml:"host" default:"localhost:6379" comment:"If your want to use a redis-sentinel based cluster, follow this syntax! <clustername>@sentinel1:26379,sentinel2:26379,sentinel3:26379" json:"host"`
 			Password string `toml:"password" json:"-"`
 		} `toml:"redis" comment:"Connect CDS to a redis cache If you more than one CDS instance and to avoid losing data at startup" json:"redis"`
-	} `toml:"cache" comment:"######################\n CDS Cache Settings \n#####################\n" json:"cache"`
+	} `toml:"cache" comment:"######################\n CDS Cache Settings \n#####################" json:"cache"`
 	Directories struct {
 		Download string `toml:"download" default:"/var/lib/cds-engine" json:"download"`
 	} `toml:"directories" json:"directories"`
@@ -147,13 +147,14 @@ type Configuration struct {
 		} `toml:"oidc" json:"oidc" comment:"#######\n CDS <-> Open ID Connect Auth. Documentation on https://ovh.github.io/cds/docs/integrations/openid-connect/ \n######"`
 	} `toml:"auth" comment:"##############################\n CDS Authentication Settings# \n#############################" json:"auth"`
 	SMTP struct {
-		Disable  bool   `toml:"disable" default:"true" json:"disable" comment:"Set to false to enable the internal SMTP client"`
-		Host     string `toml:"host" json:"host" comment:"smtp host"`
-		Port     string `toml:"port" json:"port" comment:"smtp port"`
-		TLS      bool   `toml:"tls" json:"tls"`
-		User     string `toml:"user" json:"user"`
-		Password string `toml:"password" json:"-"`
-		From     string `toml:"from" default:"no-reply@cds.local" json:"from"`
+		Disable               bool   `toml:"disable" default:"true" json:"disable" comment:"Set to false to enable the internal SMTP client. If false, emails will be displayed in CDS API Log."`
+		Host                  string `toml:"host" json:"host" comment:"smtp host"`
+		Port                  string `toml:"port" json:"port" comment:"smtp port"`
+		ModeTLS               string `toml:"modeTLS" json:"modeTLS" default:"" comment:"possible values: empty, tls, starttls"`
+		InsecureSkipVerifyTLS bool   `toml:"insecureSkipVerifyTLS" json:"insecureSkipVerifyTLS" default:"false" comment:"skip TLS verification with TLS / StartTLS mode"`
+		User                  string `toml:"user" json:"user" comment:"smtp username"`
+		Password              string `toml:"password" json:"-" comment:"smtp password"`
+		From                  string `toml:"from" default:"no-reply@cds.local" json:"from" comment:"smtp from"`
 	} `toml:"smtp" comment:"#####################\n# CDS SMTP Settings \n####################" json:"smtp"`
 	Artifact struct {
 		Mode  string `toml:"mode" default:"local" comment:"swift, awss3 or local" json:"mode"`
@@ -201,6 +202,9 @@ type Configuration struct {
 		Content string `toml:"content" comment:"Help Content. Warning: this message could be view by anonymous user. Markdown accepted." json:"content" default:""`
 		Error   string `toml:"error" comment:"Help displayed to user on each error. Warning: this message could be view by anonymous user. Markdown accepted." json:"error" default:""`
 	} `toml:"help" comment:"######################\n 'Help' informations \n######################" json:"help"`
+	Workflow struct {
+		MaxRuns int64 `toml:"maxRuns" comment:"Maximum of runs by workflow" json:"maxRuns" default:"255"`
+	} `toml:"workflow" comment:"######################\n 'Workflow' global configuration \n######################" json:"workflow"`
 }
 
 // DefaultValues is the struc for API Default configuration default values
@@ -429,7 +433,8 @@ func (a *API) Serve(ctx context.Context) error {
 		a.Config.SMTP.From,
 		a.Config.SMTP.Host,
 		a.Config.SMTP.Port,
-		a.Config.SMTP.TLS,
+		a.Config.SMTP.ModeTLS,
+		a.Config.SMTP.InsecureSkipVerifyTLS,
 		a.Config.SMTP.Disable)
 
 	//Initialize artifacts storage
@@ -631,9 +636,11 @@ func (a *API) Serve(ctx context.Context) error {
 	log.Info(ctx, "Initializing event broker...")
 	if err := event.Initialize(ctx, a.mustDB(), a.Cache); err != nil {
 		log.Error(ctx, "error while initializing event system: %s", err)
-	} else {
-		go event.DequeueEvent(ctx, a.mustDB())
 	}
+
+	a.GoRoutines.Run(ctx, "event.dequeue", func(ctx context.Context) {
+		event.DequeueEvent(ctx, a.mustDB())
+	}, a.PanicDump())
 
 	log.Info(ctx, "Initializing internal routines...")
 	a.GoRoutines.Run(ctx, "maintenance.Subscribe", func(ctx context.Context) {
@@ -776,7 +783,7 @@ func (a *API) Serve(ctx context.Context) error {
 		}, a.PanicDump())
 	a.GoRoutines.Run(ctx, "workflow.Initialize",
 		func(ctx context.Context) {
-			workflow.Initialize(ctx, a.DBConnectionFactory.GetDBMap(gorpmapping.Mapper), a.Cache, a.Config.URL.UI, a.Config.DefaultOS, a.Config.DefaultArch, a.Config.Log.StepMaxSize)
+			workflow.Initialize(ctx, a.DBConnectionFactory.GetDBMap(gorpmapping.Mapper), a.Cache, a.Config.URL.UI, a.Config.DefaultOS, a.Config.DefaultArch, a.Config.Log.StepMaxSize, a.Config.Workflow.MaxRuns)
 		}, a.PanicDump())
 	a.GoRoutines.Run(ctx, "PushInElasticSearch",
 		func(ctx context.Context) {
