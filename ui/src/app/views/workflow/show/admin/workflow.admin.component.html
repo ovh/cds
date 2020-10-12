@@ -84,21 +84,21 @@
                         </div>
                     </div>
                 </div>
-                <div class="field" *ngIf="maxRunsEnabled && currentUser?.isMaintainer()">
+                <div class="field" *ngIf="maxRunsEnabled">
                     <label>
                         {{ 'workflow_retention_maxruns' | translate }}
                         {{workflow.max_runs}}
                         <i class="circle outline question icon" suiPopup [popupText]="'workflow_retention_maxruns_admin' | translate"></i>
                     </label>
                 </div>
-                <div class="field" *ngIf="currentUser?.isMaintainer()">
+                <div class="field">
                     <label>
                         {{ 'workflow_retention_policy' | translate }}
                         <i class="circle outline question icon" suiPopup [popupText]="'workflow_retention_variables' | translate: {vars: availableVariables}"></i>
                     </label>
                     <codemirror name="policy" [(ngModel)]="workflow.retention_policy" [config]="codeMirrorConfig" #codemirrorRetentionPolicy></codemirror>
                 </div>
-                <div class="field" *ngIf="currentUser?.isMaintainer()">
+                <div class="field">
                     <button class="ui blue button" type="button" name="dryrun"
                             [class.loading]="loading" [disabled]="loading"
                             (click)="retentionPolicyDryRun()">
@@ -107,12 +107,24 @@
                     <ng-template let-context let-modal="modal" #modalDryRun>
                         <div class="header">{{ 'workflow_retention_policy' | translate }}</div>
                         <div class="content">
-                            <ng-container *ngIf="!dryRunDatas || dryRunDatas.length === 0">
-                                <div class="ui info message">{{'workflow_purged_dry_run_empty' | translate }}</div>
+                            <ng-container>
+                                <div class="ui right aligned field ">
+                                    <ng-container *ngIf="dryRunStatus === 'INCOMING'">
+                                        <i class="circle notch loading blue icon"></i>
+                                    </ng-container>
+                                    <ng-container *ngIf="dryRunStatus === 'DONE'">
+                                        <i class="check green icon"></i>
+                                    </ng-container>
+                                    {{dryRunAnalyzedRuns + ' / ' + dryRunMaxDatas + ' run analyzed ( ' + dryRunDatas.length + ' runs kept )'}}
+                                </div>
+
+                            </ng-container>
+                            <ng-container *ngIf="dryRunStatus === 'DONE' && (!dryRunDatas || dryRunDatas.length === 0)">
+                                <div class="ui info message">All runs would be deleted</div>
                             </ng-container>
                             <ng-container *ngIf="dryRunDatas?.length > 0">
                                 <div class="dryrun">
-                                    <label>{{'workflow_retention_result_title' | translate }}</label>
+                                    <h4>{{'workflow_retention_result_title' | translate }}</h4>
                                     <app-data-table [withFilter]="" [columns]="dryRunColumns" [data]="dryRunDatas" [withPagination]="10"></app-data-table>
                                 </div>
                             </ng-container>

@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
+import { RetentionDryRunEvent } from 'app/model/purge.model';
 import { WorkflowNodeRun, WorkflowRun } from 'app/model/workflow.run.model';
 import { AsCodeEvent } from 'app/store/ascode.action';
 import { UpdateMaintenance } from 'app/store/cds.action';
@@ -29,6 +30,7 @@ import { PipelinesState, PipelinesStateModel } from './store/pipelines.state';
 import * as projectActions from './store/project.action';
 import { ProjectState, ProjectStateModel } from './store/project.state';
 import {
+    ComputeRetentionDryRunEvent,
     ExternalChangeWorkflow,
     GetWorkflow,
     GetWorkflowNodeRun,
@@ -82,6 +84,18 @@ export class AppService {
         if (event.type_event.indexOf(EventType.ASCODE) === 0) {
             if (event.username === this._store.selectSnapshot(AuthenticationState.user).username) {
                 this._store.dispatch(new AsCodeEvent(event.payload['as_code_event']));
+            }
+            return;
+        }
+        if (event.type_event.indexOf(EventType.WORKFLOW_RETENTION_DRYRUN) === 0) {
+            if (this.routeParams['key'] && this.routeParams['key'] === event.project_key
+                && this.routeParams['workflowName'] === event.workflow_name) {
+                let retentionEvent = <RetentionDryRunEvent>event.payload;
+                if (retentionEvent.status === 'ERROR') {
+                    this._toast.error('', retentionEvent.error);
+                }
+                this._store.dispatch(new ComputeRetentionDryRunEvent(
+                    { projectKey: event.project_key, workflowName: event.workflow_name, event: retentionEvent }));
             }
             return;
         }

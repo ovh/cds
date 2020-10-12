@@ -820,7 +820,6 @@
   "workflow_name_error": "Workflow name must follow this pattern ^[a-zA-Z0-9._-]{1,}$",
   "workflow_name_error_duplicate": "This workflow name already exists in your project",
   "workflow_preview_mode": "Your workflow is in preview mode",
-  "workflow_purged_dry_run_empty": "No data will be deleted",
   "workflow_node_context_label": "Execution context",
   "workflow_node_input": "Inputs",
   "workflow_node_context_pipeline_parameter": "Pipeline parameters",

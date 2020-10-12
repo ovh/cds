@@ -3,6 +3,10 @@ package api
 import (
 	"context"
 	"encoding/json"
+	"github.com/ovh/cds/engine/api/authentication"
+	"github.com/ovh/cds/engine/api/authentication/builtin"
+	"github.com/ovh/cds/engine/api/event"
+	"github.com/ovh/cds/sdk/cdsclient"
 	"net/http/httptest"
 	"testing"
 
@@ -18,9 +22,15 @@ import (
 )
 
 func Test_purgeDryRunHandler(t *testing.T) {
-	api, db, _ := newTestAPI(t)
+	api, db, tsURL := newTestServer(t)
 
 	u, pass := assets.InsertAdminUser(t, db)
+	localConsumer, err := authentication.LoadConsumerByTypeAndUserID(context.TODO(), api.mustDB(), sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
+	require.NoError(t, err)
+
+	_, jws, err := builtin.NewConsumer(context.TODO(), db, sdk.RandomString(10), sdk.RandomString(10), localConsumer, u.GetGroupIDs(),
+		sdk.NewAuthConsumerScopeDetails(sdk.AuthConsumerScopeProject))
+
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, api.Cache, key, key)
 
@@ -69,6 +79,27 @@ func Test_purgeDryRunHandler(t *testing.T) {
 	run2.Status = sdk.StatusFail
 	require.NoError(t, workflow.UpdateWorkflowRunStatus(api.mustDB(), run2))
 
+	event.Initialize(context.TODO(), api.mustDB(), api.Cache)
+
+	chanMessageReceived := make(chan sdk.WebsocketEvent)
+	chanMessageToSend := make(chan []sdk.WebsocketFilter)
+	client := cdsclient.New(cdsclient.Config{
+		Host:                              tsURL,
+		User:                              u.Username,
+		InsecureSkipVerifyTLS:             true,
+		BuitinConsumerAuthenticationToken: jws,
+	})
+	contextWS, cancel := context.WithCancel(context.Background())
+	t.Cleanup(cancel)
+	go client.WebsocketEventsListen(contextWS, sdk.NewGoRoutines(), chanMessageToSend, chanMessageReceived)
+
+	// Subscribe to workflow retention
+	chanMessageToSend <- []sdk.WebsocketFilter{{
+		Type:         sdk.WebsocketFilterTypeDryRunRetentionWorkflow,
+		ProjectKey:   proj.Key,
+		WorkflowName: w1.Name,
+	}}
+
 	//Prepare request
 	vars := map[string]string{
 		"key":              proj.Key,
@@ -84,14 +115,20 @@ func Test_purgeDryRunHandler(t *testing.T) {
 	api.Router.Mux.ServeHTTP(rec, req)
 	assert.Equal(t, 200, rec.Code)
 
-	var result []sdk.WorkflowRunToKeep
+	var result sdk.PurgeDryRunResponse
 	require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &result))
 
-	require.Len(t, result, 1)
-	require.Equal(t, run1.ID, result[0].ID)
+	require.Equal(t, int64(2), result.NbRunsToAnalize)
 
 	run1DB, err := workflow.LoadRunByID(api.mustDB(), run2.ID, workflow.LoadRunOptions{DisableDetailledNodeRun: true})
 	require.NoError(t, err)
 	require.False(t, run1DB.ToDelete)
 
+	response := <-chanMessageReceived
+	require.Equal(t, "OK", response.Status)
+
+	var eventRun sdk.EventRetentionWorkflowDryRun
+	require.NoError(t, json.Unmarshal(response.Event.Payload, &eventRun))
+	require.Len(t, eventRun.Runs, 1)
+	require.Equal(t, eventRun.Runs[0].ID, run1.ID)
 }
