@@ -33,8 +33,8 @@ testcases:
     assertions:
     - result.code ShouldEqual 0
     - "result.systemoutjson.type_event ShouldContainSubstring sdk.EventRunWorkflowJob"
-    retry: 10
-    delay: 2
+    retry: 30
+    delay: 3
 
 - name: check event in topic test.eventspublic
   steps:
