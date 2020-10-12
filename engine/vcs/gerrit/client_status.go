@@ -12,7 +12,7 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
-//SetStatus set build status on Gitlab
+// SetStatus set build status on Gerrit
 func (c *gerritClient) SetStatus(ctx context.Context, event sdk.Event) error {
 	var eventNR sdk.EventRunWorkflowNode
 	if err := json.Unmarshal(event.Payload, &eventNR); err != nil {
@@ -73,7 +73,7 @@ func (c *gerritClient) buildMessage(eventNR sdk.EventRunWorkflowNode) string {
 		message += fmt.Sprintf("Build Skipped on %s\n%s", eventNR.NodeName, eventNR.GerritChange.URL)
 	case sdk.StatusFail, sdk.StatusStopped:
 		message += fmt.Sprintf("Build Failed on %s\n%s \n%s", eventNR.NodeName, eventNR.GerritChange.URL, eventNR.GerritChange.Report)
-	case sdk.StatusWaiting, sdk.StatusDisabled:
+	case sdk.StatusBuilding:
 		message += fmt.Sprintf("CDS starts working on %s\n%s", eventNR.NodeName, eventNR.GerritChange.URL)
 	}
 	return message
