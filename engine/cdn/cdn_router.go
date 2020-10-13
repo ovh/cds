@@ -23,7 +23,6 @@ func (s *Service) initRouter(ctx context.Context) {
 	r.Handle("/cache/status", nil, r.GET(s.getStatusCacheHandler))
 
 	r.Handle("/item/delete", nil, r.POST(s.markItemToDeleteHandler))
-	r.Handle("/item/{type}/{apiRef}", nil, r.GET(s.getItemHandler))
 	r.Handle("/item/{type}/{apiRef}/download", nil, r.GET(s.getItemDownloadHandler, service.OverrideAuth(s.itemAccessMiddleware)))
 	r.Handle("/item/{type}/{apiRef}/lines", nil, r.GET(s.getItemLogsLinesHandler, service.OverrideAuth(s.itemAccessMiddleware)))
 

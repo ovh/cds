@@ -29,9 +29,6 @@ import { Observable, Subscription } from 'rxjs';
 })
 @AutoUnsubscribe()
 export class WorkflowServiceLogComponent implements OnInit, OnDestroy {
-    @Select(WorkflowState.getSelectedWorkflowNodeJobRun()) nodeJobRun$: Observable<WorkflowNodeJobRun>;
-    nodeJobRunSubs: Subscription;
-
     @ViewChild('logsContent') logsElt: ElementRef;
 
     @Input() serviceName: string;
@@ -63,27 +60,26 @@ export class WorkflowServiceLogComponent implements OnInit, OnDestroy {
     ngOnDestroy(): void { } // Should be set to use @AutoUnsubscribe with AOT
 
     ngOnInit(): void {
-        this.nodeJobRunSubs = this.nodeJobRun$.subscribe(njr => {
-            if (!njr) {
-                this.stopPolling();
-                return
-            }
-            if (this.currentRunJobID && njr.id === this.currentRunJobID && this.currentRunJobStatus === njr.status) {
-                return;
-            }
+        let njr = this._store.selectSnapshot(WorkflowState.getSelectedWorkflowNodeJobRun());
+        if (!njr) {
+            this.stopPolling();
+            return
+        }
+        if (this.currentRunJobID && njr.id === this.currentRunJobID && this.currentRunJobStatus === njr.status) {
+            return;
+        }
 
-            let invalidServiceName = !njr.job.action.requirements.find(r => r.type === 'service' && r.name === this.serviceName);
-            if (invalidServiceName) {
-                return;
-            }
+        let invalidServiceName = !njr.job.action.requirements.find(r => r.type === 'service' && r.name === this.serviceName);
+        if (invalidServiceName) {
+            return;
+        }
 
-            this.currentRunJobID = njr.id;
-            this.currentRunJobStatus = njr.status;
-            if (!this.pollingSubscription) {
-                this.initWorker();
-            }
-            this._cd.markForCheck();
-        });
+        this.currentRunJobID = njr.id;
+        this.currentRunJobStatus = njr.status;
+        if (!this.pollingSubscription) {
+            this.initWorker();
+        }
+        this._cd.markForCheck();
     }
 
     getLogs(serviceLog: ServiceLog) {
@@ -122,7 +118,7 @@ export class WorkflowServiceLogComponent implements OnInit, OnDestroy {
             this._cd.markForCheck();
         };
 
-        if (!cdnEnabled || !logLink.exists) {
+        if (!cdnEnabled) {
             const serviceLog = await this._workflowService.getServiceLog(projectKey, workflowName,
                 nodeRunId, runJobId, this.serviceName).toPromise();
             callback(serviceLog);
@@ -141,7 +137,7 @@ export class WorkflowServiceLogComponent implements OnInit, OnDestroy {
         this._ngZone.runOutsideAngular(() => {
             this.pollingSubscription = Observable.interval(2000)
                 .mergeMap(_ => {
-                    if (!cdnEnabled || !logLink.exists) {
+                    if (!cdnEnabled) {
                         return this._workflowService.getServiceLog(projectKey, workflowName, nodeRunId,
                             runJobId, this.serviceName);
                     }

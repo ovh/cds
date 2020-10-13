@@ -6,10 +6,8 @@ import { PipelineStatus } from 'app/model/pipeline.model';
 import { Project } from 'app/model/project.model';
 import { Stage } from 'app/model/stage.model';
 import { WorkflowNodeJobRun, WorkflowNodeRun } from 'app/model/workflow.run.model';
-import { FeatureService } from 'app/service/feature/feature.service';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { DurationService } from 'app/shared/duration/duration.service';
-import { AddFeatureResult, FeaturePayload } from 'app/store/feature.action';
 import { ProjectState } from 'app/store/project.state';
 import { SelectWorkflowNodeRunJob } from 'app/store/workflow.action';
 import { WorkflowState, WorkflowStateModel } from 'app/store/workflow.state';
@@ -30,7 +28,6 @@ export class WorkflowRunNodePipelineComponent implements OnInit, OnDestroy {
 
     @Select(WorkflowState.getSelectedWorkflowNodeJobRun()) nodeJobRun$: Observable<WorkflowNodeJobRun>;
     nodeJobRunSubs: Subscription;
-
 
     workflowName: string;
     project: Project;
@@ -56,24 +53,13 @@ export class WorkflowRunNodePipelineComponent implements OnInit, OnDestroy {
         private _route: ActivatedRoute,
         private _router: Router,
         private _cd: ChangeDetectorRef,
-        private _store: Store,
-        private _featureService: FeatureService
+        private _store: Store
     ) {
         this.project = this._store.selectSnapshot(ProjectState.projectSnapshot);
         this.workflowName = (<WorkflowStateModel>this._store.selectSnapshot(WorkflowState)).workflowRun.workflow.name;
     }
 
     ngOnInit() {
-        let data = { 'project_key': this.project.key };
-        this._featureService.isEnabled('cdn-job-logs', data).subscribe(f => {
-            this._store.dispatch(new AddFeatureResult(<FeaturePayload>{
-                key: f.name,
-                result: {
-                    paramString: JSON.stringify(data),
-                    enabled: f.enabled
-                }
-            }));
-        });
         this.nodeJobRunSubs = this.nodeJobRun$.subscribe(rj => {
             if (!rj && !this.currentJob) {
                 return;
@@ -89,6 +75,7 @@ export class WorkflowRunNodePipelineComponent implements OnInit, OnDestroy {
             this.currentJob = rj.job;
             this._cd.markForCheck();
         });
+
         this.nodeRunSubs = this.nodeRun$.subscribe(nr => {
             if (!nr) {
                 return;

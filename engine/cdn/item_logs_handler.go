@@ -43,25 +43,6 @@ func (s *Service) markItemToDeleteHandler() service.Handler {
 	}
 }
 
-func (s *Service) getItemHandler() service.Handler {
-	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		vars := mux.Vars(r)
-		itemType := sdk.CDNItemType(vars["type"])
-		if err := itemType.Validate(); err != nil {
-			return err
-		}
-		apiRef := vars["apiRef"]
-
-		// Try to load item and item units for given api ref
-		it, err := item.LoadByAPIRefHashAndType(ctx, s.Mapper, s.mustDBWithCtx(ctx), apiRef, itemType)
-		if err != nil {
-			return err
-		}
-
-		return service.WriteJSON(w, it, http.StatusOK)
-	}
-}
-
 func (s *Service) getItemDownloadHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)

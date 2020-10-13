@@ -72,7 +72,7 @@ func workflowRunInteractive(v cli.Values, w *sdk.WorkflowRun, baseURL string) er
 							}
 
 							var data string
-							if access != nil && access.Exists {
+							if access != nil {
 								buf, _, _, err := client.Request(context.Background(), http.MethodGet, access.CDNURL+access.DownloadPath, nil)
 								if err != nil {
 									return err

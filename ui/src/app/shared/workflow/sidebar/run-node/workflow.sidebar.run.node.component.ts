@@ -120,15 +120,15 @@ export class WorkflowSidebarRunNodeComponent implements OnDestroy, OnInit {
             this._cd.markForCheck();
         });
 
-        this.nodeRunSubs = this.nodeRun$.subscribe( nrs => {
+        this.nodeRunSubs = this.nodeRun$.subscribe(nrs => {
             if (!nrs) {
                 return;
             }
             // If event on same noderun with same status, check if tests or artifacts changed
             if (nrs && nrs.id === this.currentNodeRunId && nrs.status === this.currentNodeRunStatus) {
-                if ( (!nrs.tests && !this.currentNodeRunTests) ||
+                if ((!nrs.tests && !this.currentNodeRunTests) ||
                     (nrs.tests && this.currentNodeRunTests && nrs.tests.total === this.currentNodeRunTests.total)) {
-                    if ( (!nrs.artifacts && !this.currentArtifactsNb) ||
+                    if ((!nrs.artifacts && !this.currentArtifactsNb) ||
                         (nrs.artifacts && nrs.artifacts.length === this.currentArtifactsNb)) {
                         return;
                     }
@@ -145,7 +145,7 @@ export class WorkflowSidebarRunNodeComponent implements OnDestroy, OnInit {
                 this.currentArtifactsNb = 0;
             }
             if (nrs.tests) {
-                this.currentNodeRunTests =  {
+                this.currentNodeRunTests = {
                     total: nrs.tests.total,
                     ko: nrs.tests.ko,
                     ok: nrs.tests.ok,
@@ -190,10 +190,10 @@ export class WorkflowSidebarRunNodeComponent implements OnDestroy, OnInit {
             return;
         }
         this._router.navigate([
-                '/project', this.project.key,
-                'workflow', this.workflow.name,
-                'run', this.runNumber,
-                'node', this.currentWorkflowNodeRun.id], { queryParams: { name: this.node.name } });
+            '/project', this.project.key,
+            'workflow', this.workflow.name,
+            'run', this.runNumber,
+            'node', this.currentWorkflowNodeRun.id], { queryParams: { name: this.node.name } });
     }
 
     runDurationLoop(): void {
@@ -312,5 +312,9 @@ export class WorkflowSidebarRunNodeComponent implements OnDestroy, OnInit {
             clearInterval(this.durationIntervalID);
             this.durationIntervalID = 0;
         }
+    }
+
+    trackStageElement(index: number, element: number) {
+        return element ? element : null
     }
 }

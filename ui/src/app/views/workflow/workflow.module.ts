@@ -47,7 +47,7 @@ import { workflowRouting } from './workflow.routing';
         WorkflowServiceLogComponent,
         WorkflowShowComponent,
         WorkflowSidebarCodeComponent,
-        WorkflowStepLogComponent,
+        WorkflowStepLogComponent
     ],
     imports: [
         SharedModule,
