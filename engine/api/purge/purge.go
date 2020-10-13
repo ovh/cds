@@ -29,8 +29,29 @@ const (
 	FeatureMaxRuns   = "workflow-retention-maxruns"
 )
 
-//Initialize starts goroutines for workflows
-func Initialize(ctx context.Context, store cache.Store, DBFunc func() *gorp.DbMap, sharedStorage objectstore.Driver, workflowRunsMarkToDelete, workflowRunsDeleted *stats.Int64Measure) {
+// MarkRunsAsDelete mark workflow run as delete
+func MarkRunsAsDelete(ctx context.Context, store cache.Store, DBFunc func() *gorp.DbMap, workflowRunsMarkToDelete *stats.Int64Measure) {
+	tickMark := time.NewTicker(15 * time.Minute)
+	defer tickMark.Stop()
+
+	for {
+		select {
+		case <-ctx.Done():
+			if ctx.Err() != nil {
+				log.Error(ctx, "Exiting mark runs as delete: %v", ctx.Err())
+				return
+			}
+		case <-tickMark.C:
+			// Mark workflow run to delete
+			if err := markWorkflowRunsToDelete(ctx, store, DBFunc(), workflowRunsMarkToDelete); err != nil {
+				log.ErrorWithFields(ctx, logrus.Fields{"stack_trace": fmt.Sprintf("%+v", err)}, "%s", err)
+			}
+		}
+	}
+}
+
+// PurgeWorkflow deletes workflow runs marked as to delete
+func WorkflowRuns(ctx context.Context, DBFunc func() *gorp.DbMap, sharedStorage objectstore.Driver, workflowRunsMarkToDelete, workflowRunsDeleted *stats.Int64Measure) {
 	tickPurge := time.NewTicker(15 * time.Minute)
 	defer tickPurge.Stop()
 
@@ -38,15 +59,10 @@ func Initialize(ctx context.Context, store cache.Store, DBFunc func() *gorp.DbMa
 		select {
 		case <-ctx.Done():
 			if ctx.Err() != nil {
-				log.Error(ctx, "Exiting purge: %v", ctx.Err())
+				log.Error(ctx, "Exiting purge workflow runs: %v", ctx.Err())
 				return
 			}
 		case <-tickPurge.C:
-			// Mark workflow run to delete
-			if err := markWorkflowRunsToDelete(ctx, store, DBFunc(), workflowRunsMarkToDelete); err != nil {
-				log.ErrorWithFields(ctx, logrus.Fields{"stack_trace": fmt.Sprintf("%+v", err)}, "%s", err)
-			}
-
 			// Check all workflows to mark runs that should be deleted
 			if err := MarkWorkflowRuns(ctx, DBFunc(), workflowRunsMarkToDelete); err != nil {
 				log.Warning(ctx, "purge> Error: %v", err)
@@ -56,7 +72,23 @@ func Initialize(ctx context.Context, store cache.Store, DBFunc func() *gorp.DbMa
 			if err := deleteWorkflowRunsHistory(ctx, DBFunc(), sharedStorage, workflowRunsDeleted); err != nil {
 				log.Warning(ctx, "purge> Error on deleteWorkflowRunsHistory : %v", err)
 			}
+		}
+	}
+}
 
+// Workflow deletes workflows marked as to delete
+func Workflow(ctx context.Context, store cache.Store, DBFunc func() *gorp.DbMap, workflowRunsMarkToDelete *stats.Int64Measure) {
+	tickPurge := time.NewTicker(15 * time.Minute)
+	defer tickPurge.Stop()
+
+	for {
+		select {
+		case <-ctx.Done():
+			if ctx.Err() != nil {
+				log.Error(ctx, "Exiting purge workflow: %v", ctx.Err())
+				return
+			}
+		case <-tickPurge.C:
 			log.Debug("purge> Deleting all workflow marked to delete....")
 			if err := workflows(ctx, DBFunc(), store, workflowRunsMarkToDelete); err != nil {
 				log.Warning(ctx, "purge> Error on workflows : %v", err)
@@ -197,11 +229,6 @@ func workflows(ctx context.Context, db *gorp.DbMap, store cache.Store, workflowR
 
 // deleteWorkflowRunsHistory is useful to delete all the workflow run marked with to delete flag in db
 func deleteWorkflowRunsHistory(ctx context.Context, db *gorp.DbMap, sharedStorage objectstore.Driver, workflowRunsDeleted *stats.Int64Measure) error {
-	var workflowRunIDs []int64
-	if _, err := db.Select(&workflowRunIDs, "SELECT id FROM workflow_run WHERE to_delete = true ORDER BY id ASC LIMIT 2000"); err != nil {
-		return err
-	}
-
 	//Load service "CDN"
 	srvs, err := services.LoadAllByType(ctx, db, sdk.TypeCDN)
 	if err != nil {
@@ -209,43 +236,57 @@ func deleteWorkflowRunsHistory(ctx context.Context, db *gorp.DbMap, sharedStorag
 	}
 	cdnClient := services.NewClient(db, srvs)
 
-	for _, workflowRunID := range workflowRunIDs {
-		tx, err := db.Begin()
+	limit := int64(2000)
+	offset := int64(0)
+	for {
+		workflowRunIDs, _, _, count, err := workflow.LoadRunsIDsToDelete(db, offset, limit)
 		if err != nil {
-			log.Error(ctx, "deleteWorkflowRunsHistory> error while opening transaction : %v", err)
-			continue
-		}
-		if err := DeleteArtifacts(ctx, tx, sharedStorage, workflowRunID); err != nil {
-			log.Error(ctx, "deleteWorkflowRunsHistory> error while deleting artifacts: %v", err)
-			_ = tx.Rollback()
-			continue
+			return err
 		}
 
-		res, err := tx.Exec("DELETE FROM workflow_run WHERE workflow_run.id = $1", workflowRunID)
-		if err != nil {
-			log.Error(ctx, "deleteWorkflowRunsHistory> unable to delete workflow run %d: %v", workflowRunID, err)
-			_ = tx.Rollback()
-			continue
+		for _, workflowRunID := range workflowRunIDs {
+			if err := deleteRunHistory(ctx, db, workflowRunID, cdnClient, sharedStorage, workflowRunsDeleted); err != nil {
+				log.Error(ctx, "unable to delete run history: %v", err)
+			}
+			time.Sleep(10 * time.Millisecond) // avoid DDOS the database
 		}
 
-		_, code, err := cdnClient.DoJSONRequest(ctx, http.MethodPost, "/item/delete", sdk.CDNMarkDelete{RunID: workflowRunID}, nil)
-		if err != nil || code >= 400 {
-			log.Error(ctx, "deleteWorkflowRunsHistory> unable to mark logs to delete [%d]: %s", code, err)
-			_ = tx.Rollback()
+		if count > offset+limit {
+			offset += limit
 			continue
 		}
+		break
+	}
+	return nil
+}
 
-		if err := tx.Commit(); err != nil {
-			log.Error(ctx, "deleteWorkflowRunsHistory> error while commiting transaction : %v", err)
-			_ = tx.Rollback()
-			continue
-		}
+func deleteRunHistory(ctx context.Context, db *gorp.DbMap, workflowRunID int64, cdnClient services.Client, sharedStorage objectstore.Driver, workflowRunsDeleted *stats.Int64Measure) error {
+	tx, err := db.Begin()
+	if err != nil {
+		return sdk.WithStack(err)
+	}
+	defer tx.Rollback() // nolint
+	if err := DeleteArtifacts(ctx, tx, sharedStorage, workflowRunID); err != nil {
+		return sdk.WithStack(err)
+	}
 
-		n, _ := res.RowsAffected()
-		if workflowRunsDeleted != nil {
-			telemetry.Record(ctx, workflowRunsDeleted, n)
-		}
-		time.Sleep(10 * time.Millisecond) // avoid DDOS the database
+	res, err := tx.Exec("DELETE FROM workflow_run WHERE workflow_run.id = $1", workflowRunID)
+	if err != nil {
+		return sdk.WithStack(err)
+	}
+
+	_, code, err := cdnClient.DoJSONRequest(ctx, http.MethodPost, "/item/delete", sdk.CDNMarkDelete{RunID: workflowRunID}, nil)
+	if err != nil || code >= 400 {
+		return sdk.WithStack(err)
+	}
+
+	if err := tx.Commit(); err != nil {
+		return sdk.WithStack(err)
+	}
+
+	n, _ := res.RowsAffected()
+	if workflowRunsDeleted != nil {
+		telemetry.Record(ctx, workflowRunsDeleted, n)
 	}
 	return nil
 }

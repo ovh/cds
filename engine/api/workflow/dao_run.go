@@ -262,6 +262,27 @@ func loadRuns(db gorp.SqlExecutor, query string, args ...interface{}) ([]sdk.Wor
 	return wruns, nil
 }
 
+func LoadRunsIDsToDelete(db gorp.SqlExecutor, offset int64, limit int64) ([]int64, int64, int64, int64, error) {
+	queryCount := `SELECT COUNT(id) FROM workflow_run WHERE to_delete = true`
+	count, err := db.SelectInt(queryCount)
+	if err != nil {
+		return nil, 0, 0, 0, sdk.WithStack(err)
+	}
+	if count == 0 {
+		return nil, 0, 0, 0, nil
+	}
+
+	var ids []int64
+	querySelect := `SELECT id FROM workflow_run 
+					WHERE to_delete = true
+					ORDER BY workflow_run.start ASC limit $1 offset $2`
+	_, err = db.Select(&ids, querySelect, limit, offset)
+	if err != nil {
+		return nil, 0, 0, 0, sdk.WithStack(err)
+	}
+	return ids, offset, limit, count, nil
+}
+
 //LoadRuns loads all runs
 //It returns runs, offset, limit count and an error
 func LoadRuns(db gorp.SqlExecutor, projectkey, workflowname string, offset, limit int, tagFilter map[string]string) ([]sdk.WorkflowRun, int, int, int, error) {
