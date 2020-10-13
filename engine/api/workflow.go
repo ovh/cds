@@ -679,14 +679,19 @@ func (api *API) deleteWorkflowHandler() service.Handler {
 			return sdk.WithStack(sdk.ErrNotFound)
 		}
 
+		wf, err := workflow.Load(ctx, api.mustDB(), api.Cache, *p, name, workflow.LoadOptions{})
+		if err != nil {
+			return err
+		}
+
 		tx, errT := api.mustDB().Begin()
 		if errT != nil {
 			return sdk.WrapError(errT, "Cannot start transaction")
 		}
 		defer tx.Rollback() // nolint
 
-		if err := workflow.MarkAsDelete(tx, key, name); err != nil {
-			return sdk.WrapError(err, "Cannot delete workflow")
+		if err := workflow.MarkAsDelete(ctx, tx, api.Cache, *p, wf); err != nil {
+			return err
 		}
 
 		if err := tx.Commit(); err != nil {
