@@ -5,7 +5,6 @@ import (
 
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 )
 
 type HandlerScope []sdk.AuthConsumerScope
@@ -29,19 +28,6 @@ func (api *API) InitRouter() {
 	api.Router.PostMiddlewares = append(api.Router.PostMiddlewares, TracingPostMiddleware)
 
 	r := api.Router
-
-	log.Info(api.Router.Background, "Initializing Events broker")
-	api.websocketBroker = &websocketBroker{
-		router:           api.Router,
-		cache:            api.Cache,
-		dbFunc:           api.mustDB,
-		clients:          make(map[string]*websocketClient),
-		messages:         make(chan sdk.Event),
-		chanAddClient:    make(chan *websocketClient),
-		chanRemoveClient: make(chan string),
-		goRoutines:       sdk.NewGoRoutines(),
-	}
-	api.websocketBroker.Init(r.Background, api.PanicDump(), api.GoRoutines)
 
 	// Auth
 	r.Handle("/auth/driver", ScopeNone(), r.GET(api.getAuthDriversHandler, service.OverrideAuth(service.NoAuthMiddleware)))
@@ -427,7 +413,7 @@ func (api *API) InitRouter() {
 	r.Handle("/workflow/hook/model/{model}", ScopeNone(), r.GET(api.getWorkflowHookModelHandler), r.POST(api.postWorkflowHookModelHandler, service.OverrideAuth(api.authAdminMiddleware)), r.PUT(api.putWorkflowHookModelHandler, service.OverrideAuth(api.authAdminMiddleware)))
 
 	// SSE
-	r.Handle("/ws", ScopeNone(), r.GET(api.websocketBroker.ServeHTTP))
+	r.Handle("/ws", ScopeNone(), r.GET(api.getWebsocketHandler))
 
 	// Engine µServices
 	r.Handle("/services/register", Scope(sdk.AuthConsumerScopeService), r.POST(api.postServiceRegisterHandler, MaintenanceAware()))

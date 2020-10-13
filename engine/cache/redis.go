@@ -364,47 +364,9 @@ func (s *RedisStore) Subscribe(channel string) (PubSub, error) {
 	if s.Client == nil {
 		return nil, fmt.Errorf("redis> cannot get redis client")
 	}
-	return s.Client.Subscribe(channel), nil
-}
-
-// GetMessageFromSubscription from a redis PubSub
-func (s *RedisStore) GetMessageFromSubscription(c context.Context, pb PubSub) (string, error) {
-	if s.Client == nil {
-		return "", sdk.WithStack(fmt.Errorf("redis> cannot get redis client"))
-	}
-
-	rps, ok := pb.(*redis.PubSub)
-	if !ok {
-		return "", fmt.Errorf("redis.GetMessage> PubSub is not a redis.PubSub. Got %T", pb)
-	}
-
-	msg, _ := rps.ReceiveTimeout(time.Second)
-	redisMsg, ok := msg.(*redis.Message)
-	if msg != nil {
-		if ok {
-			return redisMsg.Payload, nil
-		}
-	}
-
-	ticker := time.NewTicker(250 * time.Millisecond).C
-	for redisMsg == nil {
-		select {
-		case <-ticker:
-			msg, _ := rps.ReceiveTimeout(time.Second)
-			if msg == nil {
-				continue
-			}
-
-			var ok bool
-			redisMsg, ok = msg.(*redis.Message)
-			if !ok {
-				continue
-			}
-		case <-c.Done():
-			return "", nil
-		}
-	}
-	return redisMsg.Payload, nil
+	return &RedisPubSub{
+		PubSub: s.Client.Subscribe(channel),
+	}, nil
 }
 
 // RemoveFromQueue removes a member from a list
@@ -658,6 +620,40 @@ func (s *RedisStore) ScoredSetScanWithScores(ctx context.Context, key string, fr
 	}
 
 	return res, nil
+}
+
+type RedisPubSub struct {
+	*redis.PubSub
+}
+
+func (p *RedisPubSub) GetMessage(c context.Context) (string, error) {
+	msg, _ := p.PubSub.ReceiveTimeout(time.Second)
+	redisMsg, ok := msg.(*redis.Message)
+	if msg != nil {
+		if ok {
+			return redisMsg.Payload, nil
+		}
+	}
+
+	ticker := time.NewTicker(250 * time.Millisecond).C
+	for redisMsg == nil {
+		select {
+		case <-ticker:
+			msg, _ := p.PubSub.ReceiveTimeout(time.Second)
+			if msg == nil {
+				continue
+			}
+
+			var ok bool
+			redisMsg, ok = msg.(*redis.Message)
+			if !ok {
+				continue
+			}
+		case <-c.Done():
+			return "", nil
+		}
+	}
+	return redisMsg.Payload, nil
 }
 
 func (s *RedisStore) ScoredSetScanMaxScore(ctx context.Context, key string) (*SetValueWithScore, error) {

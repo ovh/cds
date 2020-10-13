@@ -51,6 +51,7 @@ import (
 	"github.com/ovh/cds/engine/featureflipping"
 	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/engine/service"
+	"github.com/ovh/cds/engine/websocket"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/ovh/cds/sdk/jws"
@@ -248,7 +249,8 @@ type API struct {
 	SharedStorage       objectstore.Driver
 	StartupTime         time.Time
 	Maintenance         bool
-	websocketBroker     *websocketBroker
+	WSBroker            *websocket.Broker
+	WSServer            *websocketServer
 	Cache               cache.Store
 	Metrics             struct {
 		WorkflowRunFailed        *stats.Int64Measure
@@ -527,7 +529,7 @@ func (a *API) Serve(ctx context.Context) error {
 		a.Config.Cache.Redis.Password,
 		a.Config.Cache.TTL)
 	if err != nil {
-		return fmt.Errorf("cannot connect to cache store: %v", err)
+		return sdk.WrapError(err, "cannot connect to cache store")
 	}
 
 	log.Info(ctx, "Initializing HTTP router")
@@ -537,6 +539,9 @@ func (a *API) Serve(ctx context.Context) error {
 		Background: ctx,
 	}
 	a.InitRouter()
+	if err := a.initWebsocket(); err != nil {
+		return err
+	}
 	if err := InitRouterMetrics(ctx, a); err != nil {
 		log.Error(ctx, "unable to init router metrics: %v", err)
 	}
@@ -788,9 +793,17 @@ func (a *API) Serve(ctx context.Context) error {
 		func(ctx context.Context) {
 			metrics.Init(ctx, a.DBConnectionFactory.GetDBMap(gorpmapping.Mapper))
 		}, a.PanicDump())
-	a.GoRoutines.Run(ctx, "Purge",
+	a.GoRoutines.Run(ctx, "Purge-MarkRuns",
 		func(ctx context.Context) {
-			purge.Initialize(ctx, a.Cache, a.DBConnectionFactory.GetDBMap(gorpmapping.Mapper), a.SharedStorage, a.Metrics.WorkflowRunsMarkToDelete, a.Metrics.WorkflowRunsDeleted)
+			purge.MarkRunsAsDelete(ctx, a.Cache, a.DBConnectionFactory.GetDBMap(gorpmapping.Mapper), a.Metrics.WorkflowRunsMarkToDelete)
+		}, a.PanicDump())
+	a.GoRoutines.Run(ctx, "Purge-Runs",
+		func(ctx context.Context) {
+			purge.WorkflowRuns(ctx, a.DBConnectionFactory.GetDBMap(gorpmapping.Mapper), a.SharedStorage, a.Metrics.WorkflowRunsMarkToDelete, a.Metrics.WorkflowRunsDeleted)
+		}, a.PanicDump())
+	a.GoRoutines.Run(ctx, "Purge-Workflow",
+		func(ctx context.Context) {
+			purge.Workflow(ctx, a.Cache, a.DBConnectionFactory.GetDBMap(gorpmapping.Mapper), a.Metrics.WorkflowRunsMarkToDelete)
 		}, a.PanicDump())
 
 	// Check maintenance on redis

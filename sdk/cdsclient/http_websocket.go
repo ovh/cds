@@ -12,10 +12,9 @@ import (
 	"github.com/gorilla/websocket"
 
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 )
 
-func (c *client) RequestWebsocket(ctx context.Context, goRoutines *sdk.GoRoutines, path string, msgToSend <-chan []sdk.WebsocketFilter, msgReceived chan<- sdk.WebsocketEvent) error {
+func (c *client) RequestWebsocket(ctx context.Context, goRoutines *sdk.GoRoutines, path string, msgToSend <-chan json.RawMessage, msgReceived chan<- json.RawMessage, errorReceived chan<- error) error {
 	wsContext, wsContextCancel := context.WithCancel(ctx)
 	defer wsContextCancel()
 
@@ -33,14 +32,21 @@ func (c *client) RequestWebsocket(ctx context.Context, goRoutines *sdk.GoRoutine
 	wsContext = pprof.WithLabels(wsContext, labels)
 	pprof.SetGoroutineLabels(wsContext)
 
-	uHost, err := url.Parse(c.config.Host)
+	host := c.config.Host
+	if strings.Contains(path, "http") {
+		host = path
+	} else {
+		host += path
+	}
+	uHost, err := url.Parse(host)
 	if err != nil {
 		return sdk.WrapError(err, "wrong Host configuration")
 	}
 	urlWebsocket := url.URL{
-		Scheme: strings.Replace(uHost.Scheme, "http", "ws", -1),
-		Host:   uHost.Host,
-		Path:   uHost.Path + "/ws",
+		Scheme:   strings.Replace(uHost.Scheme, "http", "ws", -1),
+		Host:     uHost.Host,
+		Path:     uHost.Path,
+		RawQuery: uHost.RawQuery,
 	}
 
 	headers := make(map[string][]string)
@@ -60,11 +66,10 @@ func (c *client) RequestWebsocket(ctx context.Context, goRoutines *sdk.GoRoutine
 		for {
 			select {
 			case <-ctx.Done():
-				log.Warning(wsContext, "websocket goroutine leaving....")
 				return
 			case m := <-msgToSend:
 				if err := con.WriteJSON(m); err != nil {
-					log.Error(wsContext, "ws: unable to send message: %v", err)
+					errorReceived <- sdk.WrapError(err, "unable to send message")
 				}
 			}
 		}
@@ -77,17 +82,11 @@ func (c *client) RequestWebsocket(ctx context.Context, goRoutines *sdk.GoRoutine
 		_, message, err := con.ReadMessage()
 		if err != nil {
 			if websocket.IsCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
-				log.Warning(ctx, "websocket error: %v", err)
 				return err
 			}
-			log.Error(ctx, "ws: unable to read message: %v", err)
+			errorReceived <- sdk.WrapError(err, "unable to send message")
 			continue
 		}
-		var wsEvent sdk.WebsocketEvent
-		if err := json.Unmarshal(message, &wsEvent); err != nil {
-			log.Error(ctx, "ws: unable to unmarshal message: %s : %v", string(message), err)
-			continue
-		}
-		msgReceived <- wsEvent
+		msgReceived <- message
 	}
 }

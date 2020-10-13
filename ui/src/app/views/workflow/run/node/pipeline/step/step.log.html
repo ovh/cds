@@ -38,12 +38,11 @@
                     <i class="copy icon"></i>
                 </button>
             </div>
-
         </div>
         <!-- Pay attention ! Don't write any spaces, tabs or line between <pre> and <table> -->
         <pre *ngIf="!loading && !basicView"><table class="ui very basic table">
             <tbody>
-              <ng-container *ngFor="let logLine of splittedLogsToDisplay">
+              <ng-container *ngFor="let logLine of splittedLogsToDisplay; trackBy: trackElement">
                 <tr
                   [class.active]="selectedLine === logLine.lineNumber"
                   id="L{{job.pipeline_stage_id}}-{{job.pipeline_action_id}}-{{stepOrder}}-{{logLine.lineNumber}}">

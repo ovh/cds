@@ -56,7 +56,6 @@ func LoadArtifactByIDs(db gorp.SqlExecutor, workflowID, artifactID int64) (*sdk.
 		FROM workflow_node_run_artifacts
 		JOIN workflow_run ON workflow_run.id = workflow_node_run_artifacts.workflow_run_id
 		WHERE workflow_run.workflow_id = $1 AND workflow_node_run_artifacts.id = $2
-
 	`
 	if err := db.SelectOne(&artGorp, query, workflowID, artifactID); err != nil {
 		return nil, err

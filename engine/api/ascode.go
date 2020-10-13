@@ -90,7 +90,6 @@ func (api *API) postImportAsCodeHandler() service.Handler {
 		u := getAPIConsumer(ctx)
 
 		api.GoRoutines.Exec(context.Background(), fmt.Sprintf("postImportAsCodeHandler-%s", ope.UUID), func(ctx context.Context) {
-
 			ope, err := operation.Poll(ctx, api.mustDB(), ope.UUID)
 			if err != nil {
 				isErrWithStack := sdk.IsErrorWithStack(err)

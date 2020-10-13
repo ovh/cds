@@ -42,10 +42,6 @@ export class WorkflowStepLogComponent implements OnInit, OnDestroy {
     job: Job;
     step: Action;
     stepStatus: StepStatus;
-
-    @Select(WorkflowState.getSelectedWorkflowNodeJobRun()) nodeJobRun$: Observable<WorkflowNodeJobRun>;
-    nodeJobRunSubs: Subscription;
-
     logs: Log;
     showLogs = false;
 
@@ -91,9 +87,8 @@ export class WorkflowStepLogComponent implements OnInit, OnDestroy {
     ngOnDestroy(): void { } // Should be set to use @AutoUnsubscribe with AOT
 
     ngOnInit(): void {
-        this.nodeJobRunSubs = this.nodeJobRun$.subscribe(nrj => {
-            this.onNodeJobRunChange(nrj);
-        });
+        let njr = this._store.selectSnapshot(WorkflowState.getSelectedWorkflowNodeJobRun());
+        this.onNodeJobRunChange(njr);
 
         this.queryParamsSubscription = this._route.queryParams.subscribe((qps) => {
             if (!this.job) {
@@ -115,12 +110,12 @@ export class WorkflowStepLogComponent implements OnInit, OnDestroy {
         });
     }
 
-    async onNodeJobRunChange(nrj: WorkflowNodeJobRun) {
-        if (!nrj || !nrj.job.step_status) {
+    onNodeJobRunChange(njr: WorkflowNodeJobRun) {
+        if (!njr || !njr.job.step_status) {
             return;
         }
 
-        this.job = nrj.job;
+        this.job = njr.job;
 
         let invalidStepOrder = !(this.stepOrder < this.job.action.actions.length) || !(this.stepOrder < this.job.step_status.length);
         if (invalidStepOrder) {
@@ -131,8 +126,8 @@ export class WorkflowStepLogComponent implements OnInit, OnDestroy {
         let oldStepStatus = this.stepStatus;
         this.stepStatus = this.job.step_status[this.stepOrder];
 
-        if (this.currentNodeJobRunID !== nrj.id) {
-            this.currentNodeJobRunID = nrj.id;
+        if (this.currentNodeJobRunID !== njr.id) {
+            this.currentNodeJobRunID = njr.id;
 
             this.computeDuration();
             this.showLogs = false;
@@ -140,7 +135,7 @@ export class WorkflowStepLogComponent implements OnInit, OnDestroy {
                 this.stepStatus.status === this.pipelineBuildStatusEnum.WAITING ||
                 (this.stepStatus.status === this.pipelineBuildStatusEnum.FAIL && !this.step.optional)) {
                 this.showLogs = true;
-                await this.initWorker();
+                this.initWorker();
             }
 
             this._cd.markForCheck();
@@ -155,7 +150,7 @@ export class WorkflowStepLogComponent implements OnInit, OnDestroy {
 
         if (!oldStepStatus) {
             this.computeDuration();
-            await this.initWorker();
+            this.initWorker();
             this.showLogs = true;
         } else if (this.pipelineBuildStatusEnum.isActive(this.stepStatus.status) &&
             this.pipelineBuildStatusEnum.isDone(status)) {
@@ -178,7 +173,6 @@ export class WorkflowStepLogComponent implements OnInit, OnDestroy {
 
         let projectKey = this._store.selectSnapshot(ProjectState.projectSnapshot).key;
         let workflowName = this._store.selectSnapshot(WorkflowState.workflowSnapshot).name;
-        let runNumber = (<WorkflowStateModel>this._store.selectSnapshot(WorkflowState)).workflowNodeRun.num;
         let nodeRunId = (<WorkflowStateModel>this._store.selectSnapshot(WorkflowState)).workflowNodeRun.id;
         let runJobId = this.currentNodeJobRunID;
         if (!this.job.step_status) {
@@ -207,7 +201,7 @@ export class WorkflowStepLogComponent implements OnInit, OnDestroy {
             this._cd.markForCheck();
         };
 
-        if (!cdnEnabled || !logLink.exists) {
+        if (!cdnEnabled) {
             const stepLog = await this._workflowService.getStepLog(projectKey, workflowName,
                 nodeRunId, runJobId, stepOrder).toPromise();
             callback(stepLog);
@@ -224,7 +218,7 @@ export class WorkflowStepLogComponent implements OnInit, OnDestroy {
         this._ngZone.runOutsideAngular(() => {
             this.pollingSubscription = Observable.interval(2000)
                 .mergeMap(_ => {
-                    if (!cdnEnabled || !logLink.exists) {
+                    if (!cdnEnabled) {
                         return this._workflowService.getStepLog(projectKey, workflowName, nodeRunId, runJobId, stepOrder);
                     }
                     return this._http.get('./cdscdn' + logLink.download_path, { responseType: 'text' })
@@ -239,6 +233,10 @@ export class WorkflowStepLogComponent implements OnInit, OnDestroy {
                     });
                 });
         });
+    }
+
+    trackElement(index: number, element: { lineNumber: number, value: string }) {
+        return element ? element.lineNumber : null
     }
 
     stopWorker() {
@@ -335,7 +333,7 @@ export class WorkflowStepLogComponent implements OnInit, OnDestroy {
         }
     }
 
-    async toggleLogs() {
+    toggleLogs() {
         this._force = true;
         if (!this.showLogs && (!this.stepStatus || PipelineStatus.neverRun(this.stepStatus.status))) {
             return;
@@ -344,7 +342,7 @@ export class WorkflowStepLogComponent implements OnInit, OnDestroy {
         if (!this.showLogs) {
             this.stopWorker();
         } else {
-            await this.initWorker();
+            this.initWorker();
         }
     }
 

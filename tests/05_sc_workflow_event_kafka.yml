@@ -34,7 +34,7 @@ testcases:
     - result.code ShouldEqual 0
     - "result.systemoutjson.type_event ShouldContainSubstring sdk.EventRunWorkflowJob"
     retry: 30
-    delay: 3
+    delay: 10
 
 - name: check event in topic test.eventspublic
   steps:
@@ -43,7 +43,7 @@ testcases:
     - result.code ShouldEqual 0
     - "result.systemoutjson.type_event ShouldContainSubstring sdk.EventRunWorkflowJob"
     retry: 30
-    delay: 3
+    delay: 10
 
 - name: check workflow
   steps:

@@ -75,7 +75,7 @@
         <ng-container *ngIf="stageIds && stageIds.length > 0">
             <div class="stageContainer">
                 <div class="ui vertical fluid steps">
-                    <ng-container *ngFor="let stageID of stageIds">
+                    <ng-container *ngFor="let stageID of stageIds; trackBy: trackStageElement">
                         <app-stage-step-summary [stageId]="stageID" [runNumber]="runNumber" [nodeName]="node.name"
                                                 [workflowNodeRunId]="currentNodeRunId">
                         </app-stage-step-summary>
