@@ -34,7 +34,8 @@ func (s *Service) processGitClone(ctx context.Context, op *sdk.Operation) (gitRe
 		if err != nil {
 			if strings.Contains(err.Error(), "Invalid username or password") ||
 				strings.Contains(err.Error(), "Permission denied (publickey)") ||
-				strings.Contains(err.Error(), "could not read Username for") {
+				strings.Contains(err.Error(), "could not read Username for") ||
+				strings.Contains(err.Error(), "you do not have permission to access it") {
 				return gitRepo, "", "", sdk.NewError(sdk.ErrForbidden, err)
 			}
 			return gitRepo, "", "", sdk.NewErrorFrom(err, "cannot clone repository at given url: %s", r.URL)

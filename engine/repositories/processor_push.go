@@ -119,6 +119,9 @@ func (s *Service) processPush(ctx context.Context, op *sdk.Operation) error {
 
 	// Push branch
 	if err := gitRepo.Push(ctx, "origin", op.Setup.Push.FromBranch); err != nil {
+		if strings.Contains(err.Error(), "Pushing requires write access") {
+			return sdk.NewError(sdk.ErrForbidden, err)
+		}
 		return sdk.WrapError(err, "push %s", op.Setup.Push.FromBranch)
 	}
 
