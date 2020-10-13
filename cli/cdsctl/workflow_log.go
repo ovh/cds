@@ -435,9 +435,6 @@ func workflowLogStreamRun(v cli.Values) error {
 	if err != nil {
 		return err
 	}
-	if !link.Exists {
-		return sdk.WithStack(fmt.Errorf("no log found for given job"))
-	}
 	if link.StreamPath == "" {
 		return sdk.WithStack(fmt.Errorf("can't stream log for given job"))
 	}
