@@ -35,7 +35,7 @@
                     <div *ngFor="let extra of line.extra">{{extra}}</div>
                 </div>
             </div>
-            <div class="line" *ngIf="step.lines.length !== step.totalLinesCount" (click)="clickExpandStep(i)">
+            <div class="line expand" *ngIf="step.lines.length !== step.totalLinesCount" (click)="clickExpandStep(i)">
                 <div class="number"><i
                         class="caret icon down"></i>{{step.firstDisplayedLineNumber + step.lines.length + 1}}
                 </div>

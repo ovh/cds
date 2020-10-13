@@ -23,6 +23,7 @@
                 color: #B5B7BD;
                 background: none;
                 border: 1px solid #B5B7BD;
+                border-radius: 2px;
                 cursor: pointer;
 
                 &:not(.active):hover {
@@ -105,6 +106,17 @@
                     color: #FFFF91;
                     overflow-wrap: break-word;
                 }
+
+                .extra {
+                    div {
+                        background-color: #666666;
+                        color: #dddddd;
+                    }
+                }
+            }
+
+            &.expand {
+                cursor: pointer;
             }
 
             .extra {
@@ -113,8 +125,8 @@
 
                 div {
                     height: 15px;
-                    background-color: #666666;
-                    color: #bbbbbb;
+                    background-color: #505050;
+                    color: #cccccc;
                     line-height: 11px;
                     font-size: 11px;
                     border-radius: 6px;
@@ -133,7 +145,7 @@
                     color: #999999;
 
                     &:hover {
-                        color: #ffffff !important;
+                        color: #dddddd !important;
                     }
                 }
             }

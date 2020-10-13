@@ -148,7 +148,7 @@ export class WorkflowRunJobComponent implements OnInit, OnChanges, OnDestroy {
             this.steps[i].link = await this._workflowService.getStepLink(projectKey, workflowName, nodeRunID, nodeJobRunID, i - 1)
                 .toPromise();
             let result = await this._http.get(`./cdscdn${this.steps[i].link.lines_path}`, {
-                params: { limit: '10' },
+                params: { limit: '5' },
                 observe: 'response'
             }).map(res => {
                 let headers: HttpHeaders = res.headers;
@@ -251,7 +251,7 @@ export class WorkflowRunJobComponent implements OnInit, OnChanges, OnDestroy {
         let step = this.steps[index];
 
         let result = await this._http.get(`./cdscdn${step.link.lines_path}`, {
-            params: { offset: `${step.lines[step.lines.length - 1].number + 1}`, limit: '10' },
+            params: { offset: `${step.lines[step.lines.length - 1].number + 1}`, limit: '20' },
             observe: 'response'
         }).map(res => {
             let headers: HttpHeaders = res.headers;
