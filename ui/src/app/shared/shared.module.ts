@@ -239,7 +239,6 @@ import { ZoneComponent } from './zone/zone.component';
         ToastHTTPErrorComponent
     ],
     providers: [
-        DurationService,
         PermissionService,
         SharedService,
         ToastService,

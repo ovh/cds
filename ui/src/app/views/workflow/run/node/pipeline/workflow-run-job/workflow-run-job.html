@@ -9,17 +9,37 @@
             <button [class.active]="mode === displayModes.HTML" (click)="clickMode(displayModes.HTML)">HTML</button>
         </div>
     </div>
-    <div class="step" *ngFor="let step of steps">
+    <div class="step" *ngFor="let step of steps; trackBy: trackStepElement; let i = index">
         <div class="line info" (click)="step.clickOpen()">
-            <div class="number" ng=""><i class="caret icon" [class.down]="step.open"
+            <div class="number"><i class="caret icon" [class.down]="step.open"
                     [class.right]="!step.open"></i>{{step.firstDisplayedLineNumber}}
             </div>
             <div class="value">{{step.name}}</div>
+            <div class="extra">
+                <div *ngIf="step.startDate && !step.duration">
+                    {{step.startDate | amTimeAgo: true : formatDuration }}
+                </div>
+                <div *ngIf="step.duration">{{step.duration}}</div>
+            </div>
+            <div class="action" *ngIf="i>0">
+                <a *ngIf="step?.link?.download_path" [href]="'/cdscdn' + step.link.download_path" target="_blank"
+                    rel="noopener noreferrer" title="Share/download the step" (click)="$event.stopPropagation()"><i
+                        class="square share icon"></i></a>
+            </div>
         </div>
         <ng-container *ngIf="step.open">
-            <div class="line" *ngFor="let line of step.lines; trackBy: trackLineElement; let i = index">
-                <div class="number">{{step.firstDisplayedLineNumber + i +1}}</div>
+            <div class="line" *ngFor="let line of step.lines; trackBy: trackLineElement; let j = index">
+                <div class="number">{{step.firstDisplayedLineNumber + j + 1}}</div>
                 <div class="value" [innerHTML]="line.value | ansi:(this.mode !== displayModes.ANSI) | safeHtml"></div>
+                <div class="extra" *ngIf="line.extra">
+                    <div *ngFor="let extra of line.extra">{{extra}}</div>
+                </div>
+            </div>
+            <div class="line" *ngIf="step.lines.length !== step.totalLinesCount" (click)="clickExpandStep(i)">
+                <div class="number"><i
+                        class="caret icon down"></i>{{step.firstDisplayedLineNumber + step.lines.length + 1}}
+                </div>
+                <div class="value">…</div>
             </div>
         </ng-container>
     </div>

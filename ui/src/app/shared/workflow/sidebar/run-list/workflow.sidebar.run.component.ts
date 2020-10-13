@@ -65,7 +65,7 @@ export class WorkflowSidebarRunListComponent implements OnDestroy {
     pipelineStatusEnum = PipelineStatus;
     ready = false;
     filteredTags: { [key: number]: WorkflowRunTags[] } = {};
-    durationMap: { [key: number]: string} = {};
+    durationMap: { [key: number]: string } = {};
 
     durationIntervalID: number;
 
@@ -74,7 +74,6 @@ export class WorkflowSidebarRunListComponent implements OnDestroy {
 
     constructor(
         private _workflowRunService: WorkflowRunService,
-        private _duration: DurationService,
         private _router: Router,
         private _routerActivated: ActivatedRoute,
         private _store: Store,
@@ -107,11 +106,11 @@ export class WorkflowSidebarRunListComponent implements OnDestroy {
             this._cd.markForCheck();
             return;
         });
-        this.loadingSubs = this.loadings$.subscribe( l => {
-           if (l !== !this.ready) {
-               this.ready = !l;
-               this._cd.markForCheck();
-           }
+        this.loadingSubs = this.loadings$.subscribe(l => {
+            if (l !== !this.ready) {
+                this.ready = !l;
+                this._cd.markForCheck();
+            }
         });
     }
 
@@ -165,12 +164,12 @@ export class WorkflowSidebarRunListComponent implements OnDestroy {
 
     getDuration(status: string, start: string, done: string): string {
         if (status === PipelineStatus.BUILDING || status === PipelineStatus.WAITING) {
-            return this._duration.duration(new Date(start), new Date());
+            return DurationService.duration(new Date(start), new Date());
         }
         if (!done) {
             done = new Date().toString();
         }
-        return this._duration.duration(new Date(start), new Date(done));
+        return DurationService.duration(new Date(start), new Date(done));
     }
 
     filterRuns(): void {
@@ -189,7 +188,7 @@ export class WorkflowSidebarRunListComponent implements OnDestroy {
         }
 
         this._store.dispatch(new GetWorkflowRuns(
-            {projectKey: this.project.key, workflowName: this.workflow.name, limit: '30', offset: '0', filters})
+            { projectKey: this.project.key, workflowName: this.workflow.name, limit: '30', offset: '0', filters })
         );
     }
 

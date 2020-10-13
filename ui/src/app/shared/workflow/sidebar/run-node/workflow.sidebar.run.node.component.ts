@@ -81,7 +81,6 @@ export class WorkflowSidebarRunNodeComponent implements OnDestroy, OnInit {
         private _wrService: WorkflowRunService,
         private _router: Router,
         private _activatedRoute: ActivatedRoute,
-        private _durationService: DurationService,
         private _store: Store,
         private _cd: ChangeDetectorRef
     ) {
@@ -219,7 +218,7 @@ export class WorkflowSidebarRunNodeComponent implements OnDestroy, OnInit {
             this.deleteInverval();
         }
 
-        return this._durationService.duration(new Date(this.currentWorkflowNodeRun.start), done);
+        return DurationService.duration(new Date(this.currentWorkflowNodeRun.start), done);
     }
 
     getCanBeRun(): boolean {

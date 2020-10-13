@@ -71,7 +71,6 @@ export class WorkflowStepLogComponent implements OnInit, OnDestroy {
     @ViewChild('logsContent') logsElt: ElementRef;
 
     constructor(
-        private _durationService: DurationService,
         private _router: Router,
         private _route: ActivatedRoute,
         private _hostElement: ElementRef,
@@ -329,7 +328,7 @@ export class WorkflowStepLogComponent implements OnInit, OnDestroy {
         }
 
         if (this.doneExec) {
-            this.duration = '(' + this._durationService.duration(this.startExec, this.doneExec) + ')';
+            this.duration = '(' + DurationService.duration(this.startExec, this.doneExec) + ')';
         }
     }
 

@@ -47,6 +47,7 @@ export class WorkflowRunNodePipelineComponent implements OnInit, OnDestroy {
     currentNodeRunID: number;
     currentNodeRunNum: number;
     currentJob: Job;
+    currentNodeJobRun: WorkflowNodeJobRun;
     currentNodeRunStatus: string;
 
     displayServiceLogs = false;
@@ -55,7 +56,6 @@ export class WorkflowRunNodePipelineComponent implements OnInit, OnDestroy {
     cdnEnabled: boolean;
 
     constructor(
-        private _durationService: DurationService,
         private _route: ActivatedRoute,
         private _router: Router,
         private _cd: ChangeDetectorRef,
@@ -74,6 +74,7 @@ export class WorkflowRunNodePipelineComponent implements OnInit, OnDestroy {
             if (!rj && !this.currentJob) {
                 return;
             }
+            this.currentNodeJobRun = rj;
             if (!rj) {
                 delete this.currentJob;
                 this._cd.markForCheck();
@@ -198,12 +199,12 @@ export class WorkflowRunNodePipelineComponent implements OnInit, OnDestroy {
                     refresh = true;
                     stillRunning = true;
                     this.jobTime.set(k,
-                        this._durationService.duration(new Date(v.start), new Date()));
+                        DurationService.duration(new Date(v.start), new Date()));
                     break;
                 case this.pipelineStatusEnum.SUCCESS:
                 case this.pipelineStatusEnum.FAIL:
                 case this.pipelineStatusEnum.STOPPED:
-                    let dd = this._durationService.duration(new Date(v.start), new Date(v.done));
+                    let dd = DurationService.duration(new Date(v.start), new Date(v.done));
                     let item = this.jobTime.get(k);
                     if (!item || item !== dd) {
                         this.jobTime.set(k, dd);

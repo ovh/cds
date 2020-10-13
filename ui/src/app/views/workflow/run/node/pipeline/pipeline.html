@@ -87,7 +87,7 @@
                             </div>
                         </ng-container>
                         <ng-container *ngIf="cdnEnabled">
-                            <app-workflow-run-job [job]="currentJob" (onScroll)="onJobScroll($event)">
+                            <app-workflow-run-job [nodeJobRun]="currentNodeJobRun" (onScroll)="onJobScroll($event)">
                             </app-workflow-run-job>
                         </ng-container>
                     </div>
