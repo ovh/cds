@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/fujiwara/shapeio"
-	"github.com/sirupsen/logrus"
 
 	"github.com/ovh/cds/engine/cdn/item"
 	"github.com/ovh/cds/engine/gorpmapper"
@@ -47,7 +46,7 @@ func (x *RunningStorageUnits) processItem(ctx context.Context, m *gorpmapper.Map
 		return nil
 	}
 
-	log.InfoWithFields(ctx, logrus.Fields{
+	log.InfoWithFields(ctx, log.Fields{
 		"item_apiref":   it.APIRefHash,
 		"item_size_num": it.Size,
 	}, "processItem> processing item %s on %s", it.ID, s.Name())
@@ -115,14 +114,15 @@ func (x *RunningStorageUnits) runItem(ctx context.Context, tx gorpmapper.SqlExec
 
 	chanError := make(chan error)
 	pr, pw := io.Pipe()
+	gr := sdk.NewGoRoutines()
 
-	go func() {
+	gr.Exec(ctx, "runningStorageUnits.runItem.read", func(ctx context.Context) {
 		defer pw.Close()
 		if err := source.Read(rateLimitReader, pw); err != nil {
 			chanError <- err
 		}
 		close(chanError)
-	}()
+	})
 
 	if err := dest.Write(*iu, pr, rateLimitWriter); err != nil {
 		_ = pr.Close()
@@ -154,7 +154,7 @@ func (x *RunningStorageUnits) runItem(ctx context.Context, tx gorpmapper.SqlExec
 
 	var throughput = item.Size / t2.Sub(t1).Milliseconds()
 
-	log.InfoWithFields(ctx, logrus.Fields{
+	log.InfoWithFields(ctx, log.Fields{
 		"item_apiref":               item.APIRefHash,
 		"source":                    source.Name(),
 		"destination":               dest.Name(),

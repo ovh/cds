@@ -71,18 +71,19 @@ func (s *Webdav) ItemExists(ctx context.Context, m *gorpmapper.Mapper, db gorp.S
 	return !os.IsNotExist(err), nil
 }
 
-func (s *Webdav) NewWriter(_ context.Context, i sdk.CDNItemUnit) (io.WriteCloser, error) {
+func (s *Webdav) NewWriter(ctx context.Context, i sdk.CDNItemUnit) (io.WriteCloser, error) {
 	f, err := s.filename(i)
 	if err != nil {
 		return nil, err
 	}
 	pr, pw := io.Pipe()
-	go func() {
+	gr := sdk.NewGoRoutines()
+	gr.Exec(ctx, "webdav.newWriter", func(ctx context.Context) {
 		if err := s.client.WriteStream(f, pr, os.FileMode(0600)); err != nil {
 			log.Error(context.Background(), "unable to write stream %s: %v", f, err)
 			return
 		}
-	}()
+	})
 	return pw, nil
 }
 

@@ -7,8 +7,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/sirupsen/logrus"
-
 	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
@@ -32,7 +30,7 @@ func (s *Service) waitingJobs(ctx context.Context) {
 			listKeys, err := s.Cache.Keys(keyListQueue)
 			if err != nil {
 				err = sdk.WrapError(err, "unable to list jobs queues %s", keyListQueue)
-				log.ErrorWithFields(ctx, logrus.Fields{"stack_trace": fmt.Sprintf("%+v", err)}, "%s", err)
+				log.ErrorWithFields(ctx, log.Fields{"stack_trace": fmt.Sprintf("%+v", err)}, "%s", err)
 				continue
 			}
 
@@ -44,7 +42,7 @@ func (s *Service) waitingJobs(ctx context.Context) {
 				jobQueueKey, err := s.canDequeue(jobID)
 				if err != nil {
 					err = sdk.WrapError(err, "unable to check canDequeue %s", jobQueueKey)
-					log.ErrorWithFields(ctx, logrus.Fields{"stack_trace": fmt.Sprintf("%+v", err)}, "%s", err)
+					log.ErrorWithFields(ctx, log.Fields{"stack_trace": fmt.Sprintf("%+v", err)}, "%s", err)
 					continue
 				}
 				if jobQueueKey == "" {
@@ -54,7 +52,7 @@ func (s *Service) waitingJobs(ctx context.Context) {
 				s.GoRoutines.Exec(ctx, "cdn-dequeue-job-message", func(ctx context.Context) {
 					if err := s.dequeueJobMessages(ctx, jobQueueKey, jobID); err != nil {
 						err = sdk.WrapError(err, "unable to dequeue redis incoming job queue")
-						log.ErrorWithFields(ctx, logrus.Fields{"stack_trace": fmt.Sprintf("%+v", err)}, "%s", err)
+						log.ErrorWithFields(ctx, log.Fields{"stack_trace": fmt.Sprintf("%+v", err)}, "%s", err)
 					}
 				})
 			}
@@ -87,7 +85,7 @@ func (s *Service) dequeueJobMessages(ctx context.Context, jobLogsQueueKey string
 			b, err := s.Cache.Exist(jobLogsQueueKey)
 			if err != nil {
 				err = sdk.WrapError(err, "unable to check if queue still exist")
-				log.ErrorWithFields(ctx, logrus.Fields{"stack_trace": fmt.Sprintf("%+v", err)}, "%s", err)
+				log.ErrorWithFields(ctx, log.Fields{"stack_trace": fmt.Sprintf("%+v", err)}, "%s", err)
 				continue
 			} else if !b {
 				// leave dequeue if queue does not exist anymore
@@ -98,7 +96,7 @@ func (s *Service) dequeueJobMessages(ctx context.Context, jobLogsQueueKey string
 			heartbeatKey := cache.Key(keyJobHearbeat, jobID)
 			if err := s.Cache.SetWithTTL(heartbeatKey, true, 30); err != nil {
 				err = sdk.WrapError(err, "unable to hearbeat %s", heartbeatKey)
-				log.ErrorWithFields(ctx, logrus.Fields{"stack_trace": fmt.Sprintf("%+v", err)}, "%s", err)
+				log.ErrorWithFields(ctx, log.Fields{"stack_trace": fmt.Sprintf("%+v", err)}, "%s", err)
 				continue
 			}
 		default:
@@ -144,7 +142,7 @@ func (s *Service) dequeueJobMessages(ctx context.Context, jobLogsQueueKey string
 					}
 					if err := s.Client.QueueSendLogs(ctx, hm.Signature.JobID, l); err != nil {
 						err = sdk.WrapError(err, "unable to send log to API")
-						log.ErrorWithFields(ctx, logrus.Fields{"stack_trace": fmt.Sprintf("%+v", err)}, "%s", err)
+						log.ErrorWithFields(ctx, log.Fields{"stack_trace": fmt.Sprintf("%+v", err)}, "%s", err)
 						continue
 					}
 				}
@@ -156,7 +154,7 @@ func (s *Service) dequeueJobMessages(ctx context.Context, jobLogsQueueKey string
 					continue
 				}
 				err = sdk.WrapError(err, "unable to dequeue job logs queue %s", jobLogsQueueKey)
-				log.ErrorWithFields(ctx, logrus.Fields{"stack_trace": fmt.Sprintf("%+v", err)}, "%s", err)
+				log.ErrorWithFields(ctx, log.Fields{"stack_trace": fmt.Sprintf("%+v", err)}, "%s", err)
 				continue
 			}
 		}

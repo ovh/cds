@@ -13,7 +13,6 @@ import (
 
 	"github.com/go-gorp/gorp"
 	"github.com/gorilla/websocket"
-	"github.com/sirupsen/logrus"
 	"github.com/tevino/abool"
 
 	"github.com/ovh/cds/engine/api/permission"
@@ -134,7 +133,7 @@ func (b *websocketBroker) Start(ctx context.Context, panicCallback func(s string
 						allowed, err := c.checkEventPermission(ctx, b.dbFunc(), receivedEvent)
 						if err != nil {
 							err = sdk.WrapError(err, "unable to check event permission for client %s with consumer id: %s", c.UUID, c.AuthConsumer.ID)
-							log.ErrorWithFields(ctx, logrus.Fields{
+							log.ErrorWithFields(ctx, log.Fields{
 								"stack_trace": fmt.Sprintf("%+v", err),
 							}, "%s", err)
 							return
@@ -240,7 +239,7 @@ func (b *websocketBroker) ServeHTTP() service.Handler {
 					}
 					if err := client.updateEventFilters(ctx, b.dbFunc(), m); err != nil {
 						err = sdk.WithStack(err)
-						log.WarningWithFields(ctx, logrus.Fields{
+						log.WarningWithFields(ctx, log.Fields{
 							"stack_trace": fmt.Sprintf("%+v", err),
 						}, "%s", err)
 						msg := sdk.WebsocketEvent{
@@ -262,7 +261,7 @@ func (b *websocketBroker) ServeHTTP() service.Handler {
 			if err != nil {
 				if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
 					err = sdk.WrapError(err, "websocket error occured")
-					log.WarningWithFields(ctx, logrus.Fields{
+					log.WarningWithFields(ctx, log.Fields{
 						"stack_trace": fmt.Sprintf("%+v", err),
 					}, "%s", err)
 				}

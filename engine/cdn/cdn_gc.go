@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/sirupsen/logrus"
-
 	"github.com/ovh/cds/engine/cdn/item"
 	"github.com/ovh/cds/engine/cdn/storage"
 	"github.com/ovh/cds/engine/cdn/storage/cds"
@@ -31,7 +29,7 @@ func (s *Service) itemPurge(ctx context.Context) {
 			return
 		case <-tickPurge.C:
 			if err := s.cleanItemToDelete(ctx); err != nil {
-				log.ErrorWithFields(ctx, logrus.Fields{"stack_trace": fmt.Sprintf("%+v", err)}, "%s", err)
+				log.ErrorWithFields(ctx, log.Fields{"stack_trace": fmt.Sprintf("%+v", err)}, "%s", err)
 			}
 		}
 	}
@@ -50,10 +48,10 @@ func (s *Service) itemsGC(ctx context.Context) {
 			return
 		case <-tickGC.C:
 			if err := s.cleanBuffer(ctx); err != nil {
-				log.ErrorWithFields(ctx, logrus.Fields{"stack_trace": fmt.Sprintf("%+v", err)}, "%s", err)
+				log.ErrorWithFields(ctx, log.Fields{"stack_trace": fmt.Sprintf("%+v", err)}, "%s", err)
 			}
 			if err := s.cleanWaitingItem(ctx, ItemLogGC); err != nil {
-				log.ErrorWithFields(ctx, logrus.Fields{"stack_trace": fmt.Sprintf("%+v", err)}, "%s", err)
+				log.ErrorWithFields(ctx, log.Fields{"stack_trace": fmt.Sprintf("%+v", err)}, "%s", err)
 			}
 		}
 	}
@@ -114,7 +112,7 @@ func (s *Service) cleanWaitingItem(ctx context.Context, duration int) error {
 		return err
 	}
 	for _, itemUnit := range itemUnits {
-		log.InfoWithFields(ctx, logrus.Fields{"item_apiref": itemUnit.Item.APIRef}, "cleanWaitingItem> cleaning item %s", itemUnit.ItemID)
+		log.InfoWithFields(ctx, log.Fields{"item_apiref": itemUnit.Item.APIRef}, "cleanWaitingItem> cleaning item %s", itemUnit.ItemID)
 		tx, err := s.mustDBWithCtx(ctx).Begin()
 		if err != nil {
 			return sdk.WrapError(err, "unable to start transaction")

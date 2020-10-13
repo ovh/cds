@@ -13,7 +13,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/sirupsen/logrus"
 	"gopkg.in/spacemonkeygo/httpsig.v0"
 
 	"github.com/ovh/cds/sdk"
@@ -115,7 +114,7 @@ func WriteError(ctx context.Context, w http.ResponseWriter, r *http.Request, err
 	httpErr := sdk.ExtractHTTPError(err, al)
 	isErrWithStack := sdk.IsErrorWithStack(err)
 
-	fields := logrus.Fields{}
+	fields := log.Fields{}
 	if isErrWithStack {
 		fields["stack_trace"] = fmt.Sprintf("%+v", err)
 	}

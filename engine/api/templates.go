@@ -12,7 +12,6 @@ import (
 	"strconv"
 
 	"github.com/gorilla/mux"
-	"github.com/sirupsen/logrus"
 
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/ascode"
@@ -581,7 +580,7 @@ func (api *API) postTemplateBulkHandler() service.Handler {
 					errorDefer := func(err error) error {
 						if err != nil {
 							err = sdk.WrapError(err, "error occurred in template bulk with id %d", bulk.ID)
-							log.ErrorWithFields(ctx, logrus.Fields{
+							log.ErrorWithFields(ctx, log.Fields{
 								"stack_trace": fmt.Sprintf("%+v", err),
 							}, "%s", err)
 							bulk.Operations[i].Status = sdk.OperationStatusError

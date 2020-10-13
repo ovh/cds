@@ -6,7 +6,6 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
-	"github.com/sirupsen/logrus"
 
 	"github.com/ovh/cds/engine/api/ascode"
 	"github.com/ovh/cds/engine/api/event"
@@ -95,7 +94,7 @@ func (api *API) postImportAsCodeHandler() service.Handler {
 			ope, err := operation.Poll(ctx, api.mustDB(), ope.UUID)
 			if err != nil {
 				isErrWithStack := sdk.IsErrorWithStack(err)
-				fields := logrus.Fields{}
+				fields := log.Fields{}
 				if isErrWithStack {
 					fields["stack_trace"] = fmt.Sprintf("%+v", err)
 				}

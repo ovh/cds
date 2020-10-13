@@ -130,10 +130,10 @@ func (s *Service) Serve(c context.Context) error {
 
 		s.Units.Start(ctx, s.GoRoutines)
 
-		s.GoRoutines.Run(ctx, "cdn-gc-items", func(ctx context.Context) {
+		s.GoRoutines.Run(ctx, "service.cdn-gc-items", func(ctx context.Context) {
 			s.itemsGC(ctx)
 		})
-		s.GoRoutines.Run(ctx, "cdn-purge-items", func(ctx context.Context) {
+		s.GoRoutines.Run(ctx, "service.cdn-purge-items", func(ctx context.Context) {
 			s.itemPurge(ctx)
 		})
 
@@ -156,7 +156,7 @@ func (s *Service) Serve(c context.Context) error {
 		if err != nil {
 			return sdk.WrapError(err, "cannot connect to redis instance for lru")
 		}
-		s.GoRoutines.Run(ctx, "log-cache-eviction", func(ctx context.Context) {
+		s.GoRoutines.Run(ctx, "service.log-cache-eviction", func(ctx context.Context) {
 			s.LogCache.Evict(ctx)
 		})
 	}
@@ -182,11 +182,11 @@ func (s *Service) Serve(c context.Context) error {
 	}
 
 	//Gracefully shutdown the http server
-	go func() {
+	s.GoRoutines.Run(ctx, "service.httpserver-shutdown", func(ctx context.Context) {
 		<-ctx.Done()
 		log.Info(ctx, "CDN> Shutdown HTTP Server")
 		_ = server.Shutdown(ctx)
-	}()
+	})
 
 	//Start the http server
 	log.Info(ctx, "CDN> Starting HTTP Server on port %d", s.Cfg.HTTP.Port)

@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/go-gorp/gorp"
-	"github.com/sirupsen/logrus"
 
 	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/operation"
@@ -79,7 +78,7 @@ func UpdateAsCodeResult(ctx context.Context, db *gorp.DbMap, store cache.Store, 
 
 	if globalErr != nil {
 		isErrWithStack := sdk.IsErrorWithStack(globalErr)
-		fields := logrus.Fields{}
+		fields := log.Fields{}
 		if isErrWithStack {
 			fields["stack_trace"] = fmt.Sprintf("%+v", globalErr)
 		}

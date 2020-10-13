@@ -10,7 +10,6 @@ import (
 
 	"github.com/fsamin/go-dump"
 	"github.com/go-gorp/gorp"
-	"github.com/sirupsen/logrus"
 
 	"github.com/ovh/cds/engine/api/action"
 	"github.com/ovh/cds/engine/api/group"
@@ -335,7 +334,7 @@ func releaseMutex(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store ca
 	waitingRunID, err := db.SelectInt(mutexQuery, workflowID, nodeName, string(sdk.StatusWaiting))
 	if err != nil && err != sql.ErrNoRows {
 		err = sdk.WrapError(err, "unable to load mutex-locked workflow node run id")
-		log.ErrorWithFields(ctx, logrus.Fields{
+		log.ErrorWithFields(ctx, log.Fields{
 			"stack_trace": fmt.Sprintf("%+v", err),
 		}, "%s", err)
 		return nil, nil
@@ -348,7 +347,7 @@ func releaseMutex(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store ca
 	waitingRun, errRun := LoadNodeRunByID(db, waitingRunID, LoadRunOptions{})
 	if errRun != nil && sdk.Cause(errRun) != sql.ErrNoRows {
 		err = sdk.WrapError(err, "unable to load mutex-locked workflow node run")
-		log.ErrorWithFields(ctx, logrus.Fields{
+		log.ErrorWithFields(ctx, log.Fields{
 			"stack_trace": fmt.Sprintf("%+v", err),
 		}, "%s", err)
 		return nil, nil
@@ -361,7 +360,7 @@ func releaseMutex(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store ca
 	workflowRun, err := LoadRunByID(db, waitingRun.WorkflowRunID, LoadRunOptions{})
 	if err != nil {
 		err = sdk.WrapError(err, "unable to load mutex-locked workflow run")
-		log.ErrorWithFields(ctx, logrus.Fields{
+		log.ErrorWithFields(ctx, log.Fields{
 			"stack_trace": fmt.Sprintf("%+v", err),
 		}, "%s", err)
 		return nil, nil

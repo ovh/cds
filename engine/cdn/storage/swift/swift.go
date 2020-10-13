@@ -99,7 +99,8 @@ func (s *Swift) NewReader(ctx context.Context, i sdk.CDNItemUnit) (io.ReadCloser
 	}
 
 	pr, pw := io.Pipe()
-	go func() {
+	gr := sdk.NewGoRoutines()
+	gr.Exec(ctx, "swift.newReader", func(ctx context.Context) {
 		if _, err = s.client.ObjectGet(container, object, pw, true, nil); err != nil {
 			log.Error(context.Background(), "unable to get object %s/%s: %v", container, object, err)
 			return
@@ -108,7 +109,7 @@ func (s *Swift) NewReader(ctx context.Context, i sdk.CDNItemUnit) (io.ReadCloser
 			log.Error(context.Background(), "unable to close pipewriter %s/%s: %v", container, object, err)
 			return
 		}
-	}()
+	})
 
 	return pr, nil
 }
