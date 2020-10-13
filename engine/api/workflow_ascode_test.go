@@ -37,6 +37,7 @@ func TestPostUpdateWorkflowAsCodeHandler(t *testing.T) {
 	api, db, tsURL := newTestServer(t)
 
 	require.NoError(t, event.Initialize(context.Background(), api.mustDB(), api.Cache))
+	require.NoError(t, api.initWebsocket())
 
 	u, jwt := assets.InsertAdminUser(t, db)
 
@@ -194,7 +195,8 @@ func TestPostUpdateWorkflowAsCodeHandler(t *testing.T) {
 
 	chanMessageReceived := make(chan sdk.WebsocketEvent)
 	chanMessageToSend := make(chan []sdk.WebsocketFilter)
-	go client.WebsocketEventsListen(context.TODO(), sdk.NewGoRoutines(), chanMessageToSend, chanMessageReceived)
+	chanErrorReceived := make(chan error)
+	go client.WebsocketEventsListen(context.TODO(), sdk.NewGoRoutines(), chanMessageToSend, chanMessageReceived, chanErrorReceived)
 	chanMessageToSend <- []sdk.WebsocketFilter{{
 		Type:         sdk.WebsocketFilterTypeAscodeEvent,
 		ProjectKey:   proj.Key,
@@ -237,6 +239,7 @@ func TestPostMigrateWorkflowAsCodeHandler(t *testing.T) {
 	api, db, tsURL := newTestServer(t)
 
 	require.NoError(t, event.Initialize(context.Background(), api.mustDB(), api.Cache))
+	require.NoError(t, api.initWebsocket())
 
 	u, jwt := assets.InsertAdminUser(t, db)
 
@@ -390,7 +393,8 @@ func TestPostMigrateWorkflowAsCodeHandler(t *testing.T) {
 
 	chanMessageReceived := make(chan sdk.WebsocketEvent)
 	chanMessageToSend := make(chan []sdk.WebsocketFilter)
-	go client.WebsocketEventsListen(context.TODO(), sdk.NewGoRoutines(), chanMessageToSend, chanMessageReceived)
+	chanErrorReceived := make(chan error)
+	go client.WebsocketEventsListen(context.TODO(), sdk.NewGoRoutines(), chanMessageToSend, chanMessageReceived, chanErrorReceived)
 	chanMessageToSend <- []sdk.WebsocketFilter{{
 		Type:         sdk.WebsocketFilterTypeAscodeEvent,
 		ProjectKey:   proj.Key,

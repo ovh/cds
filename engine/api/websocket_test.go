@@ -8,6 +8,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/ovh/cds/engine/api/authentication"
 	"github.com/ovh/cds/engine/api/authentication/builtin"
 	"github.com/ovh/cds/engine/api/bootstrap"
@@ -16,11 +18,12 @@ import (
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
-	"github.com/stretchr/testify/require"
 )
 
 func Test_websocketWrongFilters(t *testing.T) {
 	api, db, tsURL := newTestServer(t)
+
+	require.NoError(t, api.initWebsocket())
 
 	u, _ := assets.InsertAdminUser(t, db)
 	localConsumer, err := authentication.LoadConsumerByTypeAndUserID(context.TODO(), api.mustDB(), sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
@@ -31,6 +34,7 @@ func Test_websocketWrongFilters(t *testing.T) {
 
 	chanMessageReceived := make(chan sdk.WebsocketEvent)
 	chanMessageToSend := make(chan []sdk.WebsocketFilter)
+	chanErrorReceived := make(chan error)
 
 	client := cdsclient.New(cdsclient.Config{
 		Host:                              tsURL,
@@ -38,7 +42,7 @@ func Test_websocketWrongFilters(t *testing.T) {
 		InsecureSkipVerifyTLS:             true,
 		BuitinConsumerAuthenticationToken: jws,
 	})
-	go client.WebsocketEventsListen(context.TODO(), sdk.NewGoRoutines(), chanMessageToSend, chanMessageReceived)
+	go client.WebsocketEventsListen(context.TODO(), sdk.NewGoRoutines(), chanMessageToSend, chanMessageReceived, chanErrorReceived)
 
 	// Subscribe to project without project key
 	chanMessageToSend <- []sdk.WebsocketFilter{{
@@ -66,8 +70,8 @@ func Test_websocketFilterRetroCompatibility(t *testing.T) {
 	u, _ := assets.InsertLambdaUser(t, db)
 	localConsumer, err := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
 
-	c := &websocketClient{
-		AuthConsumer: localConsumer,
+	c := &websocketClientData{
+		AuthConsumer: *localConsumer,
 	}
 	buf, err := json.Marshal([]sdk.WebsocketFilter{{
 		Type: sdk.WebsocketFilterTypeGlobal,
@@ -89,6 +93,8 @@ func Test_websocketFilterRetroCompatibility(t *testing.T) {
 func Test_websocketGetWorkflowEvent(t *testing.T) {
 	api, db, tsURL := newTestServer(t)
 
+	require.NoError(t, api.initWebsocket())
+
 	u, jwt := assets.InsertAdminUser(t, db)
 
 	key := sdk.RandomString(10)
@@ -109,6 +115,7 @@ func Test_websocketGetWorkflowEvent(t *testing.T) {
 
 	chanMessageReceived := make(chan sdk.WebsocketEvent)
 	chanMessageToSend := make(chan []sdk.WebsocketFilter)
+	chanErrorReceived := make(chan error)
 
 	client := cdsclient.New(cdsclient.Config{
 		Host:                  tsURL,
@@ -116,7 +123,7 @@ func Test_websocketGetWorkflowEvent(t *testing.T) {
 		InsecureSkipVerifyTLS: true,
 		SessionToken:          jwt,
 	})
-	go client.WebsocketEventsListen(context.TODO(), sdk.NewGoRoutines(), chanMessageToSend, chanMessageReceived)
+	go client.WebsocketEventsListen(context.TODO(), sdk.NewGoRoutines(), chanMessageToSend, chanMessageReceived, chanErrorReceived)
 	var lastResponse *sdk.WebsocketEvent
 	go func() {
 		for e := range chanMessageReceived {
@@ -133,14 +140,15 @@ func Test_websocketGetWorkflowEvent(t *testing.T) {
 	// Waiting websocket to update filter
 	time.Sleep(1 * time.Second)
 	require.Nil(t, lastResponse)
-	require.Len(t, api.websocketBroker.clients, 1)
-	for _, c := range api.websocketBroker.clients {
-		require.Len(t, c.filters, 1)
-		require.Equal(t, sdk.WebsocketFilterTypeWorkflow, c.filters[0].Type)
+	require.Len(t, api.WSServer.server.ClientIDs(), 1)
+	for _, id := range api.WSServer.server.ClientIDs() {
+		data := api.WSServer.GetClientData(id)
+		require.Len(t, data.filters, 1)
+		require.Equal(t, sdk.WebsocketFilterTypeWorkflow, data.filters[0].Type)
 	}
 
-	api.websocketBroker.messages <- sdk.Event{ProjectKey: "blabla", WorkflowName: "toto", EventType: "sdk.EventRunWorkflow"}
-	api.websocketBroker.messages <- sdk.Event{ProjectKey: proj.Key, WorkflowName: w.Name, EventType: "sdk.EventRunWorkflow"}
+	api.websocketOnMessage(sdk.Event{ProjectKey: "blabla", WorkflowName: "toto", EventType: "sdk.EventRunWorkflow"})
+	api.websocketOnMessage(sdk.Event{ProjectKey: proj.Key, WorkflowName: w.Name, EventType: "sdk.EventRunWorkflow"})
 	time.Sleep(1 * time.Second)
 	require.NotNil(t, lastResponse)
 	require.Equal(t, "OK", lastResponse.Status)
@@ -152,6 +160,8 @@ func Test_websocketGetWorkflowEvent(t *testing.T) {
 
 func Test_websocketDeconnection(t *testing.T) {
 	api, db, tsURL := newTestServer(t)
+
+	require.NoError(t, api.initWebsocket())
 
 	u, _ := assets.InsertAdminUser(t, db)
 	localConsumer, err := authentication.LoadConsumerByTypeAndUserID(context.TODO(), api.mustDB(), sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
@@ -221,7 +231,7 @@ func Test_websocketDeconnection(t *testing.T) {
 	// Send message to client
 	go func() {
 		for i := 0; i < 100; i++ {
-			api.websocketBroker.messages <- sdk.Event{ProjectKey: proj.Key, WorkflowName: w.Name, EventType: "sdk.EventWorkflow"}
+			api.websocketOnMessage(sdk.Event{ProjectKey: proj.Key, WorkflowName: w.Name, EventType: "sdk.EventWorkflow"})
 			time.Sleep(200 * time.Millisecond)
 		}
 	}()
@@ -230,5 +240,5 @@ func Test_websocketDeconnection(t *testing.T) {
 
 	time.Sleep(1 * time.Second)
 
-	require.Len(t, api.websocketBroker.clients, 0)
+	require.Len(t, api.WSServer.server.ClientIDs(), 0)
 }

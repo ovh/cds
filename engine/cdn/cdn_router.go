@@ -24,6 +24,7 @@ func (s *Service) initRouter(ctx context.Context) {
 
 	r.Handle("/item/delete", nil, r.POST(s.markItemToDeleteHandler))
 	r.Handle("/item/{type}/{apiRef}/download", nil, r.GET(s.getItemDownloadHandler, service.OverrideAuth(s.itemAccessMiddleware)))
+	r.Handle("/item/{type}/{apiRef}/stream", nil, r.GET(s.getItemLogsStreamHandler, service.OverrideAuth(s.itemAccessMiddleware)))
 	r.Handle("/item/{type}/{apiRef}/lines", nil, r.GET(s.getItemLogsLinesHandler, service.OverrideAuth(s.itemAccessMiddleware)))
 
 	r.Handle("/sync/projects", nil, r.POST(s.syncProjectsHandler))

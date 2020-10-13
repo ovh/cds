@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
-	"log"
 	"mime/multipart"
 	"net/http"
 	"net/url"
@@ -60,12 +59,7 @@ func (c *client) QueuePolling(ctx context.Context, goRoutines *sdk.GoRoutines, j
 	chanMessageReceived := make(chan sdk.WebsocketEvent, 10)
 	chanMessageToSend := make(chan []sdk.WebsocketFilter, 10)
 	goRoutines.Exec(ctx, "RequestWebsocket", func(ctx context.Context) {
-		for ctx.Err() == nil {
-			if err := c.RequestWebsocket(ctx, goRoutines, "/ws", chanMessageToSend, chanMessageReceived); err != nil {
-				log.Println("QueuePolling", err)
-			}
-			time.Sleep(1 * time.Second)
-		}
+		c.WebsocketEventsListen(ctx, goRoutines, chanMessageToSend, chanMessageReceived, errs)
 	})
 	chanMessageToSend <- []sdk.WebsocketFilter{{
 		Type: sdk.WebsocketFilterTypeQueue,
@@ -149,7 +143,6 @@ func (c *client) QueuePolling(ctx context.Context, goRoutines *sdk.GoRoutines, j
 				jobs <- j
 			}
 		}
-
 	}
 }
 

@@ -220,6 +220,7 @@ func (api *API) getWorkflowNodeRunJobLogLinkHandler(ctx context.Context, w http.
 
 	return service.WriteJSON(w, sdk.CDNLogLink{
 		DownloadPath: fmt.Sprintf("/item/%s/%s/download", itemType, apiRefHash),
+		StreamPath:   fmt.Sprintf("/item/%s/%s/stream", itemType, apiRefHash),
 		CDNURL:       httpURL,
 	}, http.StatusOK)
 }

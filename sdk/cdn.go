@@ -43,6 +43,7 @@ type CDNUnit struct {
 
 type CDNLogLink struct {
 	DownloadPath string `json:"download_path,omitempty"`
+	StreamPath   string `json:"stream_path,omitempty"`
 	CDNURL       string `json:"cdn_url,omitempty"`
 }
 

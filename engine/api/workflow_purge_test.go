@@ -3,12 +3,14 @@ package api
 import (
 	"context"
 	"encoding/json"
+	"net/http/httptest"
+	"testing"
+	"time"
+
 	"github.com/ovh/cds/engine/api/authentication"
 	"github.com/ovh/cds/engine/api/authentication/builtin"
 	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/sdk/cdsclient"
-	"net/http/httptest"
-	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -23,6 +25,9 @@ import (
 
 func Test_purgeDryRunHandler(t *testing.T) {
 	api, db, tsURL := newTestServer(t)
+
+	require.NoError(t, event.Initialize(context.Background(), api.mustDB(), api.Cache))
+	require.NoError(t, api.initWebsocket())
 
 	u, pass := assets.InsertAdminUser(t, db)
 	localConsumer, err := authentication.LoadConsumerByTypeAndUserID(context.TODO(), api.mustDB(), sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
@@ -83,6 +88,7 @@ func Test_purgeDryRunHandler(t *testing.T) {
 
 	chanMessageReceived := make(chan sdk.WebsocketEvent)
 	chanMessageToSend := make(chan []sdk.WebsocketFilter)
+	chanErrorReceived := make(chan error)
 	client := cdsclient.New(cdsclient.Config{
 		Host:                              tsURL,
 		User:                              u.Username,
@@ -91,7 +97,7 @@ func Test_purgeDryRunHandler(t *testing.T) {
 	})
 	contextWS, cancel := context.WithCancel(context.Background())
 	t.Cleanup(cancel)
-	go client.WebsocketEventsListen(contextWS, sdk.NewGoRoutines(), chanMessageToSend, chanMessageReceived)
+	go client.WebsocketEventsListen(contextWS, sdk.NewGoRoutines(), chanMessageToSend, chanMessageReceived, chanErrorReceived)
 
 	// Subscribe to workflow retention
 	chanMessageToSend <- []sdk.WebsocketFilter{{
@@ -124,11 +130,17 @@ func Test_purgeDryRunHandler(t *testing.T) {
 	require.NoError(t, err)
 	require.False(t, run1DB.ToDelete)
 
-	response := <-chanMessageReceived
-	require.Equal(t, "OK", response.Status)
-
-	var eventRun sdk.EventRetentionWorkflowDryRun
-	require.NoError(t, json.Unmarshal(response.Event.Payload, &eventRun))
-	require.Len(t, eventRun.Runs, 1)
-	require.Equal(t, eventRun.Runs[0].ID, run1.ID)
+	timeout := time.NewTimer(5 * time.Second)
+	select {
+	case <-timeout.C:
+		t.Fatal("test timeout")
+	case err := <-chanErrorReceived:
+		t.Fatal(err)
+	case evt := <-chanMessageReceived:
+		require.Equal(t, "OK", evt.Status)
+		var eventRun sdk.EventRetentionWorkflowDryRun
+		require.NoError(t, json.Unmarshal(evt.Event.Payload, &eventRun))
+		require.Len(t, eventRun.Runs, 1)
+		require.Equal(t, eventRun.Runs[0].ID, run1.ID)
+	}
 }

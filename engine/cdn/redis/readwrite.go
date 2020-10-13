@@ -26,6 +26,7 @@ type Line struct {
 }
 
 func (l Line) Format(f sdk.CDNReaderFormat) ([]byte, error) {
+	l.Value = sdk.RemoveNotPrintableChar(l.Value)
 	switch f {
 	case sdk.CDNReaderFormatJSON:
 		bs, err := json.Marshal(l)
