@@ -60,6 +60,7 @@ func newTestService(t *testing.T) (*Service, *test.FakeTransaction) {
 	if fakeAPIPrivateKey.key == nil {
 		fakeAPIPrivateKey.key, _ = jws.NewRandomRSAKey()
 	}
+	s.Common.GoRoutines = sdk.NewGoRoutines()
 	s.ParsedAPIPublicKey = &fakeAPIPrivateKey.key.PublicKey
 	s.initRouter(context.TODO())
 
