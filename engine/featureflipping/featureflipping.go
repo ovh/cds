@@ -27,7 +27,7 @@ func IsEnabled(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlExecutor, n
 	if !has {
 		f, err := LoadByName(ctx, m, db, name)
 		if err != nil {
-			log.Error(ctx, "featureflipping.IsEnabled> error: unable to load Feature '%s' from database: %v", name, err)
+			log.Info(ctx, "featureflipping.IsEnabled> error: unable to load Feature '%s' from database: %v", name, err)
 			return false
 		}
 		cacheFeature.SetDefault(name, f)
