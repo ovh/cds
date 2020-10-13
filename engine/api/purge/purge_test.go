@@ -2,8 +2,15 @@ package purge
 
 import (
 	"context"
+	"github.com/go-gorp/gorp"
+	"github.com/golang/mock/gomock"
+	"github.com/ovh/cds/engine/api/services"
+	"github.com/ovh/cds/engine/api/services/mock_services"
+	"github.com/ovh/cds/engine/api/test/assets"
+	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/sdk"
 	"github.com/stretchr/testify/require"
+	"gopkg.in/h2non/gock.v1"
 	"os"
 	"path"
 	"testing"
@@ -15,7 +22,7 @@ import (
 )
 
 func Test_deleteWorkflowRunsHistory(t *testing.T) {
-	db, _ := test.SetupPG(t, bootstrap.InitiliazeDB)
+	db, cache := test.SetupPG(t, bootstrap.InitiliazeDB)
 
 	// Init store
 	cfg := objectstore.Config{
@@ -27,13 +34,44 @@ func Test_deleteWorkflowRunsHistory(t *testing.T) {
 		},
 	}
 
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+	servicesClients := mock_services.NewMockClient(ctrl)
+	services.NewClient = func(_ gorp.SqlExecutor, _ []sdk.Service) services.Client {
+		return servicesClients
+	}
+	defer func() {
+		services.NewClient = services.NewDefaultClient
+	}()
+
+	servicesClients.EXPECT().
+		DoJSONRequest(gomock.Any(), "POST", "/item/delete", gomock.Any(), gomock.Any(), gomock.Any()).MaxTimes(1)
+
 	sharedStorage, errO := objectstore.Init(context.Background(), cfg)
 	test.NoError(t, errO)
 
-	err := deleteWorkflowRunsHistory(context.Background(), db.DbMap, sharedStorage, nil)
-	test.NoError(t, err)
+	p := assets.InsertTestProject(t, db, cache, sdk.RandomString(10), sdk.RandomString(10))
+	w := assets.InsertTestWorkflow(t, db, cache, p, sdk.RandomString(10))
 
-	// test on delete artifact from storage is done on Test_postWorkflowJobArtifactHandler
+	wr, err := workflow.CreateRun(db.DbMap, w, sdk.WorkflowRunPostHandlerOption{
+		Hook: &sdk.WorkflowNodeRunHookEvent{},
+	})
+	require.NoError(t, err)
+
+	wr.ToDelete = true
+	require.NoError(t, workflow.UpdateWorkflowRun(context.TODO(), db, wr))
+
+	srvs, err := services.LoadAllByType(context.TODO(), db, sdk.TypeCDN)
+	require.NoError(t, err)
+	cdnClient := services.NewClient(db, srvs)
+
+	err = deleteRunHistory(context.Background(), db.DbMap, wr.ID, cdnClient, sharedStorage, nil)
+	require.NoError(t, err)
+
+	_, err = workflow.LoadRunByID(db, wr.ID, workflow.LoadRunOptions{})
+	require.NotNil(t, err)
+	require.True(t, sdk.ErrorIs(err, sdk.ErrNotFound))
+	require.True(t, gock.IsDone())
 }
 
 func Test_applyRetentionPolicyOnRun(t *testing.T) {

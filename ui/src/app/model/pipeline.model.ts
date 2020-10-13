@@ -195,8 +195,8 @@ export class BuildResult {
 }
 
 export class CDNLogLink {
-    exists: boolean;
     download_path: string;
+    stream_path: string;
 }
 
 export interface Log {

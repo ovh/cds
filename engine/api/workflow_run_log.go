@@ -129,7 +129,7 @@ func (api *API) getWorkflowNodeRunJobLogLinkHandler(ctx context.Context, w http.
 		"project_key": projectKey,
 	})
 	if !enabled {
-		return service.WriteJSON(w, sdk.CDNLogLink{}, http.StatusOK)
+		return sdk.NewErrorFrom(sdk.ErrNotFound, "cdn is not enable for project %s", projectKey)
 	}
 
 	workflowName := vars["permWorkflowName"]
@@ -218,32 +218,11 @@ func (api *API) getWorkflowNodeRunJobLogLinkHandler(ctx context.Context, w http.
 	}
 	apiRefHash := strconv.FormatUint(apiRefHashU, 10)
 
-	srvs, err := services.LoadAllByType(ctx, api.mustDB(), sdk.TypeCDN)
-	if err != nil {
-		return err
-	}
-	if len(srvs) == 0 {
-		return sdk.WrapError(sdk.ErrNotFound, "no cdn service found")
-	}
-
-	var item sdk.CDNItem
-	if _, _, err := services.NewClient(api.mustDB(), srvs).DoJSONRequest(ctx, http.MethodGet, fmt.Sprintf("/item/%s/%s", itemType, apiRefHash), nil, &item); err != nil {
-		if sdk.ErrorIs(err, sdk.ErrNotFound) {
-			return service.WriteJSON(w, sdk.CDNLogLink{}, http.StatusOK)
-		}
-		return err
-	}
-
-	link := sdk.CDNLogLink{
-		Exists:       true,
+	return service.WriteJSON(w, sdk.CDNLogLink{
 		DownloadPath: fmt.Sprintf("/item/%s/%s/download", itemType, apiRefHash),
+		StreamPath:   fmt.Sprintf("/item/%s/%s/stream", itemType, apiRefHash),
 		CDNURL:       httpURL,
-	}
-	if item.Status == sdk.CDNStatusItemIncoming {
-		link.StreamPath = fmt.Sprintf("/item/%s/%s/stream", itemType, apiRefHash)
-	}
-
-	return service.WriteJSON(w, link, http.StatusOK)
+	}, http.StatusOK)
 }
 
 func (api *API) getWorkflowLogAccessHandler() service.Handler {
