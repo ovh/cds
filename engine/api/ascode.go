@@ -71,7 +71,7 @@ func (api *API) postImportAsCodeHandler() service.Handler {
 
 		branches, err := client.Branches(ctx, ope.RepoFullName)
 		if err != nil {
-			return sdk.WrapError(err, "cannot list branches for %s/%s", ope.VCSServer, ope.RepoFullName)
+			return err
 		}
 		for _, b := range branches {
 			if b.Default {

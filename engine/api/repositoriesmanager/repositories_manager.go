@@ -343,7 +343,7 @@ func (c *vcsClient) Branches(ctx context.Context, fullname string) ([]sdk.VCSBra
 	branches := []sdk.VCSBranch{}
 	path := fmt.Sprintf("/vcs/%s/repos/%s/branches", c.name, fullname)
 	if _, err := c.doJSONRequest(ctx, "GET", path, nil, &branches); err != nil {
-		return nil, sdk.WrapError(err, "unable to find branches on repository %s from %s", fullname, c.name)
+		return nil, sdk.NewErrorFrom(err, "unable to find branches on repository %s from %s", fullname, c.name)
 	}
 
 	c.Cache().SetDefault("/branches/"+fullname, branches)
@@ -364,7 +364,7 @@ func (c *vcsClient) Branch(ctx context.Context, fullname string, branchName stri
 func DefaultBranch(ctx context.Context, c sdk.VCSAuthorizedClientCommon, fullname string) (sdk.VCSBranch, error) {
 	branches, err := c.Branches(ctx, fullname)
 	if err != nil {
-		return sdk.VCSBranch{}, sdk.WrapError(err, "Unable to list branches on repository %s", fullname)
+		return sdk.VCSBranch{}, err
 	}
 	for _, b := range branches {
 		if b.Default {

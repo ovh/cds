@@ -240,7 +240,7 @@ func (api *API) getApplicationVCSInfosHandler() service.Handler {
 		}
 		branches, errb := client.Branches(ctx, repositoryFullname)
 		if errb != nil {
-			return sdk.WrapError(errb, "getApplicationVCSInfosHandler> Cannot get branches from repository %s", repositoryFullname)
+			return err
 		}
 		resp.Branches = branches
 

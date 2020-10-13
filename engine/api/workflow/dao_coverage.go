@@ -7,10 +7,10 @@ import (
 	"github.com/go-gorp/gorp"
 	"github.com/sguiheux/go-coverage"
 
-	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/engine/api/metrics"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
+	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk"
 )
@@ -180,9 +180,9 @@ func ComputeLatestDefaultBranchReport(ctx context.Context, db gorpmapper.SqlExec
 		return sdk.WrapError(sdk.ErrNoReposManagerClientAuth, "ComputeLatestDefaultBranchReport> Cannot get repo client %s : %s", wnr.VCSServer, erra)
 	}
 
-	branches, errB := client.Branches(ctx, wnr.VCSRepository)
-	if errB != nil {
-		return sdk.WrapError(errB, "ComputeLatestDefaultBranchReport> Cannot list branches for %s/%s", wnr.VCSServer, wnr.VCSRepository)
+	branches, err := client.Branches(ctx, wnr.VCSRepository)
+	if err != nil {
+		return err
 	}
 	for _, b := range branches {
 		if b.Default {
