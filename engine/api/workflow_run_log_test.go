@@ -101,5 +101,4 @@ func Test_getWorkflowNodeRunJobLinkHandler(t *testing.T) {
 	require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &link))
 	require.Equal(t, "http://cdn.net:8080", link.CDNURL)
 	require.NotEmpty(t, link.DownloadPath)
-	require.NotEmpty(t, link.StreamPath)
 }

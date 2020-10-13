@@ -308,7 +308,7 @@ func workflowLogDownloadRun(v cli.Values) error {
 		}
 
 		var data []byte
-		if link != nil && link.Exists {
+		if link != nil {
 			data, _, _, err = client.Request(context.Background(), http.MethodGet, link.CDNURL+link.DownloadPath, nil)
 			if err != nil {
 				return err
