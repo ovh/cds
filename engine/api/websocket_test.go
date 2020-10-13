@@ -144,7 +144,7 @@ func Test_websocketGetWorkflowEvent(t *testing.T) {
 	for _, id := range api.WSServer.server.ClientIDs() {
 		data := api.WSServer.GetClientData(id)
 		require.Len(t, data.filters, 1)
-		require.Equal(t, sdk.WebsocketFilterTypeWorkflow, c.filters[0].Type)
+		require.Equal(t, sdk.WebsocketFilterTypeWorkflow, data.filters[0].Type)
 	}
 
 	api.websocketOnMessage(sdk.Event{ProjectKey: "blabla", WorkflowName: "toto", EventType: "sdk.EventRunWorkflow"})
