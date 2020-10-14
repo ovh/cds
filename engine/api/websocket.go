@@ -11,7 +11,6 @@ import (
 	"time"
 
 	"github.com/go-gorp/gorp"
-	"github.com/sirupsen/logrus"
 
 	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/service"
@@ -215,7 +214,7 @@ func (a *API) initWebsocket() error {
 		var e sdk.Event
 		if err := json.Unmarshal(m, &e); err != nil {
 			err = sdk.WrapError(err, "cannot parse event from WS broker")
-			log.WarningWithFields(a.Router.Background, logrus.Fields{"stack_trace": fmt.Sprintf("%+v", err)}, "%s", err)
+			log.WarningWithFields(a.Router.Background, log.Fields{"stack_trace": fmt.Sprintf("%+v", err)}, "%s", err)
 			return
 		}
 
@@ -241,7 +240,7 @@ func (a *API) getWebsocketHandler() service.Handler {
 		wsClient.OnMessage(func(m []byte) {
 			if err := wsClientData.updateEventFilters(ctx, a.mustDBWithCtx(ctx), m); err != nil {
 				err = sdk.WithStack(err)
-				log.WarningWithFields(ctx, logrus.Fields{"stack_trace": fmt.Sprintf("%+v", err)}, "%s", err)
+				log.WarningWithFields(ctx, log.Fields{"stack_trace": fmt.Sprintf("%+v", err)}, "%s", err)
 				wsClient.Send(sdk.WebsocketEvent{Status: "KO", Error: sdk.Cause(err).Error()})
 			}
 		})
@@ -277,7 +276,7 @@ func (a *API) websocketOnMessage(e sdk.Event) {
 				allowed, err := c.checkEventPermission(ctx, a.mustDBWithCtx(ctx), e)
 				if err != nil {
 					err = sdk.WrapError(err, "unable to check event permission for client %s with consumer id: %s", id, c.AuthConsumer.ID)
-					log.ErrorWithFields(ctx, logrus.Fields{"stack_trace": fmt.Sprintf("%+v", err)}, "%s", err)
+					log.ErrorWithFields(ctx, log.Fields{"stack_trace": fmt.Sprintf("%+v", err)}, "%s", err)
 					return
 				}
 				if !allowed {

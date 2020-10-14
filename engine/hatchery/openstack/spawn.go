@@ -11,7 +11,6 @@ import (
 	"time"
 
 	"github.com/gophercloud/gophercloud/openstack/compute/v2/servers"
-	"github.com/sirupsen/logrus"
 
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/hatchery"
@@ -33,7 +32,7 @@ func (h *HatcheryOpenstack) SpawnWorker(ctx context.Context, spawnArgs hatchery.
 
 	if err := h.checkSpawnLimits(ctx, *spawnArgs.Model); err != nil {
 		isErrWithStack := sdk.IsErrorWithStack(err)
-		fields := logrus.Fields{}
+		fields := log.Fields{}
 		if isErrWithStack {
 			fields["stack_trace"] = fmt.Sprintf("%+v", err)
 		}

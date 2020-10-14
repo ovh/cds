@@ -6,8 +6,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/sirupsen/logrus"
-
 	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/engine/cdn/item"
 	"github.com/ovh/cds/engine/cdn/storage"
@@ -81,7 +79,7 @@ func (s *Service) storeLogsWithRetry(ctx context.Context, itemType sdk.CDNItemTy
 				continue
 			}
 			err = sdk.WrapError(err, "unable to store log")
-			log.ErrorWithFields(ctx, logrus.Fields{"stack_trace": fmt.Sprintf("%+v", err)}, "%s", err)
+			log.ErrorWithFields(ctx, log.Fields{"stack_trace": fmt.Sprintf("%+v", err)}, "%s", err)
 			break
 		}
 		break
@@ -101,7 +99,7 @@ func (s *Service) storeLogs(ctx context.Context, itemType sdk.CDNItemType, signa
 
 	// In case where the item was marked as complete we don't allow append of other logs
 	if it.Status == sdk.CDNStatusItemCompleted {
-		log.WarningWithFields(ctx, logrus.Fields{"item_apiref": it.APIRefHash}, "cdn:storeLogs: a log was received for item %s but status in already complete", it.ID)
+		log.WarningWithFields(ctx, log.Fields{"item_apiref": it.APIRefHash}, "cdn:storeLogs: a log was received for item %s but status in already complete", it.ID)
 		return nil
 	}
 
@@ -200,7 +198,7 @@ func (s *Service) loadOrCreateItem(ctx context.Context, itemType sdk.CDNItemType
 			if err := tx.Commit(); err != nil {
 				return nil, sdk.WithStack(err)
 			}
-			log.InfoWithFields(ctx, logrus.Fields{
+			log.InfoWithFields(ctx, log.Fields{
 				"item_apiref": it.APIRefHash,
 			}, "storeLogs> new item %s has been stored", it.ID)
 

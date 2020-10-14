@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/sirupsen/logrus"
-
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
@@ -56,7 +54,7 @@ func (s *Service) do(ctx context.Context, op sdk.Operation) error {
 	case op.Setup.Checkout.Branch != "" || op.Setup.Checkout.Tag != "":
 		if err := s.processCheckout(ctx, &op); err != nil {
 			isErrWithStack := sdk.IsErrorWithStack(err)
-			fields := logrus.Fields{}
+			fields := log.Fields{}
 			if isErrWithStack {
 				fields["stack_trace"] = fmt.Sprintf("%+v", err)
 			}
@@ -71,7 +69,7 @@ func (s *Service) do(ctx context.Context, op sdk.Operation) error {
 			case op.LoadFiles.Pattern != "":
 				if err := s.processLoadFiles(ctx, &op); err != nil {
 					isErrWithStack := sdk.IsErrorWithStack(err)
-					fields := logrus.Fields{}
+					fields := log.Fields{}
 					if isErrWithStack {
 						fields["stack_trace"] = fmt.Sprintf("%+v", err)
 					}
@@ -92,7 +90,7 @@ func (s *Service) do(ctx context.Context, op sdk.Operation) error {
 	case op.Setup.Push.FromBranch != "":
 		if err := s.processPush(ctx, &op); err != nil {
 			isErrWithStack := sdk.IsErrorWithStack(err)
-			fields := logrus.Fields{}
+			fields := log.Fields{}
 			if isErrWithStack {
 				fields["stack_trace"] = fmt.Sprintf("%+v", err)
 			}

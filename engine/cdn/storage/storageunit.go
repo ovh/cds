@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/go-gorp/gorp"
-	"github.com/sirupsen/logrus"
 
 	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk"
@@ -203,18 +202,18 @@ func (r *RunningStorageUnits) Start(ctx context.Context, gorts *sdk.GoRoutines) 
 						tx, err := r.db.Begin()
 						if err != nil {
 							err = sdk.WrapError(err, "unable to begin tx")
-							log.ErrorWithFields(ctx, logrus.Fields{"stack_trace": fmt.Sprintf("%+v", err)}, "%s", err)
+							log.ErrorWithFields(ctx, log.Fields{"stack_trace": fmt.Sprintf("%+v", err)}, "%s", err)
 							continue
 						}
 
 						if err := r.processItem(ctx, r.m, tx, s, id); err != nil {
-							log.ErrorWithFields(ctx, logrus.Fields{"stack_trace": fmt.Sprintf("%+v", err)}, "%s", err)
+							log.ErrorWithFields(ctx, log.Fields{"stack_trace": fmt.Sprintf("%+v", err)}, "%s", err)
 							continue
 						}
 
 						if err := tx.Commit(); err != nil {
 							err = sdk.WrapError(err, "unable to commit tx")
-							log.ErrorWithFields(ctx, logrus.Fields{"stack_trace": fmt.Sprintf("%+v", err)}, "%s", err)
+							log.ErrorWithFields(ctx, log.Fields{"stack_trace": fmt.Sprintf("%+v", err)}, "%s", err)
 							_ = tx.Rollback()
 							continue
 						}
@@ -238,7 +237,7 @@ func (r *RunningStorageUnits) Start(ctx context.Context, gorts *sdk.GoRoutines) 
 					gorts.Exec(ctx, "RunningStorageUnits.Start."+s.Name(),
 						func(ctx context.Context) {
 							if err := r.Run(ctx, s, 100); err != nil {
-								log.ErrorWithFields(ctx, logrus.Fields{"stack_trace": fmt.Sprintf("%+v", err)}, "RunningStorageUnits.Start> error: %v", err)
+								log.ErrorWithFields(ctx, log.Fields{"stack_trace": fmt.Sprintf("%+v", err)}, "RunningStorageUnits.Start> error: %v", err)
 							}
 						},
 					)

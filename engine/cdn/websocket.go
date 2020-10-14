@@ -8,8 +8,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/sirupsen/logrus"
-
 	"github.com/ovh/cds/engine/websocket"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
@@ -50,7 +48,7 @@ func (s *Service) initWebsocket() error {
 		var i sdk.CDNItem
 		if err := json.Unmarshal(m, &i); err != nil {
 			err = sdk.WrapError(err, "cannot parse event from WS broker")
-			log.WarningWithFields(s.Router.Background, logrus.Fields{"stack_trace": fmt.Sprintf("%+v", err)}, "%s", err)
+			log.WarningWithFields(s.Router.Background, log.Fields{"stack_trace": fmt.Sprintf("%+v", err)}, "%s", err)
 			return
 		}
 

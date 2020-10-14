@@ -13,7 +13,6 @@ import (
 
 	"github.com/go-gorp/gorp"
 	"github.com/gorilla/mux"
-	"github.com/sirupsen/logrus"
 
 	"github.com/ovh/cds/engine/api/ascode"
 	"github.com/ovh/cds/engine/api/authentication"
@@ -1276,7 +1275,7 @@ func failInitWorkflowRun(ctx context.Context, db *gorp.DbMap, wfRun *sdk.Workflo
 	} else {
 		httpErr := sdk.ExtractHTTPError(err, "")
 		isErrWithStack := sdk.IsErrorWithStack(err)
-		fields := logrus.Fields{}
+		fields := log.Fields{}
 		if isErrWithStack {
 			fields["stack_trace"] = fmt.Sprintf("%+v", err)
 		}

@@ -6,7 +6,6 @@ import (
 	"strings"
 
 	"github.com/gorilla/websocket"
-	"github.com/sirupsen/logrus"
 	"github.com/tevino/abool"
 
 	"github.com/ovh/cds/sdk"
@@ -57,7 +56,7 @@ func (c *CommonClient) Send(m interface{}) (err error) {
 			return sdk.WithStack(err)
 		}
 		err = sdk.WrapError(err, "can't send to client %s", c.uuid)
-		log.ErrorWithFields(context.Background(), logrus.Fields{"stack_trace": fmt.Sprintf("%+v", err)}, "%s", err)
+		log.ErrorWithFields(context.Background(), log.Fields{"stack_trace": fmt.Sprintf("%+v", err)}, "%s", err)
 	}
 
 	return nil
@@ -95,7 +94,7 @@ func (c *CommonClient) Listen(ctx context.Context, gorts *sdk.GoRoutines) error 
 		if err != nil {
 			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
 				err = sdk.WrapError(err, "websocket unexpected error occured")
-				log.WarningWithFields(ctx, logrus.Fields{"stack_trace": fmt.Sprintf("%+v", err)}, "%s", err)
+				log.WarningWithFields(ctx, log.Fields{"stack_trace": fmt.Sprintf("%+v", err)}, "%s", err)
 			}
 			log.Debug("websocket.Client.Listen> client %s disconnected", c.uuid)
 			break

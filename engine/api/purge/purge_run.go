@@ -9,6 +9,7 @@ import (
 
 	"github.com/fsamin/go-dump"
 	"github.com/go-gorp/gorp"
+	"go.opencensus.io/stats"
 
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/engine/api/event"
@@ -19,8 +20,6 @@ import (
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk/luascript"
-	"github.com/sirupsen/logrus"
-	"go.opencensus.io/stats"
 )
 
 type MarkAsDeleteOptions struct {
@@ -49,7 +48,7 @@ func markWorkflowRunsToDelete(ctx context.Context, store cache.Store, db *gorp.D
 			continue
 		}
 		if err := ApplyRetentionPolicyOnWorkflow(ctx, store, db, wf, MarkAsDeleteOptions{DryRun: false}, nil); err != nil {
-			log.ErrorWithFields(ctx, logrus.Fields{"stack_trace": fmt.Sprintf("%+v", err)}, "%s", err)
+			log.ErrorWithFields(ctx, log.Fields{"stack_trace": fmt.Sprintf("%+v", err)}, "%s", err)
 		}
 	}
 	workflow.CountWorkflowRunsMarkToDelete(ctx, db, workflowRunsMarkToDelete)

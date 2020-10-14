@@ -18,7 +18,6 @@ import (
 	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
-	"github.com/sirupsen/logrus"
 )
 
 var (
@@ -59,7 +58,7 @@ func (s *Service) downloadItem(ctx context.Context, t sdk.CDNItemType, apiRefHas
 	}
 	t1 := time.Now()
 
-	log.InfoWithFields(ctx, logrus.Fields{
+	log.InfoWithFields(ctx, log.Fields{
 		"item_apiref":               it.APIRefHash,
 		"duration_milliseconds_num": t1.Sub(t0).Milliseconds(),
 	}, "downloadItem> item %s has been downloaded", it.ID)
@@ -148,13 +147,14 @@ func (s *Service) pushItemLogIntoCache(ctx context.Context, it sdk.CDNItem) erro
 	chanError := make(chan error)
 	pr, pw := io.Pipe()
 
-	go func() {
+	s.GoRoutines.Exec(ctx, "service.pushItemLogIntoCache.read", func(ctx context.Context) {
 		defer pw.Close()
 		if err := unitStorage.Read(*refItemUnit, reader, pw); err != nil {
 			chanError <- err
 		}
 		close(chanError)
-	}()
+	})
+
 	if _, err := io.Copy(cacheWriter, pr); err != nil {
 		_ = pr.Close()
 		_ = reader.Close()
@@ -185,7 +185,7 @@ func (s *Service) pushItemLogIntoCache(ctx context.Context, it sdk.CDNItem) erro
 
 	t1 := time.Now()
 
-	log.InfoWithFields(ctx, logrus.Fields{
+	log.InfoWithFields(ctx, log.Fields{
 		"item_apiref":               it.APIRefHash,
 		"duration_milliseconds_num": t1.Sub(t0).Milliseconds(),
 	}, "item %s has been pushed to cache", it.ID)
@@ -261,7 +261,7 @@ func (s *Service) completeItem(ctx context.Context, tx gorpmapper.SqlExecutorWit
 
 	t1 := time.Now()
 
-	log.InfoWithFields(ctx, logrus.Fields{
+	log.InfoWithFields(ctx, log.Fields{
 		"item_apiref":               it.APIRefHash,
 		"duration_milliseconds_num": t1.Sub(t0).Milliseconds(),
 		"item_size_num":             it.Size,

@@ -12,7 +12,6 @@ import (
 	"time"
 
 	gocache "github.com/patrickmn/go-cache"
-	"github.com/sirupsen/logrus"
 
 	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/sdk"
@@ -43,11 +42,11 @@ func (s *Service) runTCPLogServer(ctx context.Context) {
 	}
 
 	//Gracefully shutdown the tcp server
-	go func() {
+	s.GoRoutines.Run(ctx, "service.runTCPLogServer.shutdown", func(ctx context.Context) {
 		<-ctx.Done()
 		log.Info(ctx, "CDN> Shutdown tcp log Server")
 		_ = listener.Close()
-	}()
+	})
 
 	for i := int64(0); i < s.Cfg.NbJobLogsGoroutines; i++ {
 		s.GoRoutines.Run(ctx, fmt.Sprintf("cdn-worker-job-%d", i), func(ctx context.Context) {
@@ -70,7 +69,7 @@ func (s *Service) runTCPLogServer(ctx context.Context) {
 		s.waitingJobs(ctx)
 	})
 
-	go func() {
+	s.GoRoutines.Run(ctx, "service.runTCPLogServer.accept", func(ctx context.Context) {
 		for {
 			conn, err := listener.Accept()
 			if err != nil {
@@ -83,7 +82,7 @@ func (s *Service) runTCPLogServer(ctx context.Context) {
 				s.handleConnection(ctx, conn)
 			})
 		}
-	}()
+	})
 }
 
 func (s *Service) handleConnection(ctx context.Context, conn net.Conn) {
@@ -104,7 +103,7 @@ func (s *Service) handleConnection(ctx context.Context, conn net.Conn) {
 		if err := s.handleLogMessage(ctx, bytes); err != nil {
 			telemetry.Record(ctx, s.Metrics.tcpServerErrorsCount, 1)
 			isErrWithStack := sdk.IsErrorWithStack(err)
-			fields := logrus.Fields{}
+			fields := log.Fields{}
 			if isErrWithStack {
 				fields["stack_trace"] = fmt.Sprintf("%+v", err)
 			}

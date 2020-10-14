@@ -29,6 +29,7 @@ require (
 	github.com/docker/go-units v0.3.2 // indirect
 	github.com/donovanhide/eventsource v0.0.0-20170630084216-b8f31a59085e // indirect
 	github.com/dsnet/compress v0.0.0-20171208185109-cc9eb1d7ad76 // indirect
+	github.com/dustin/go-humanize v1.0.0 // indirect
 	github.com/eapache/go-resiliency v1.2.0
 	github.com/fatih/color v1.7.0
 	github.com/fsamin/go-dump v1.0.9

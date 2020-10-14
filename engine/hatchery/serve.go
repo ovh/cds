@@ -14,7 +14,6 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
-	"github.com/sirupsen/logrus"
 	"gopkg.in/square/go-jose.v2"
 
 	"github.com/ovh/cds/engine/api"
@@ -278,7 +277,7 @@ func (c *Common) SendServiceLog(ctx context.Context, servicesLogs []log.Message,
 		sign, err := jws.Sign(c.Signer, s.Signature)
 		if err != nil {
 			err = sdk.WrapError(err, "unable to sign service log message")
-			log.ErrorWithFields(ctx, logrus.Fields{"stack_trace": fmt.Sprintf("%+v", err)}, "%s", err)
+			log.ErrorWithFields(ctx, log.Fields{"stack_trace": fmt.Sprintf("%+v", err)}, "%s", err)
 			continue
 		}
 		lineNumber := c.mapServiceNextLineNumber[s.ServiceKey()]

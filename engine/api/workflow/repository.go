@@ -9,7 +9,6 @@ import (
 
 	"github.com/fsamin/go-dump"
 	"github.com/go-gorp/gorp"
-	"github.com/sirupsen/logrus"
 
 	"github.com/ovh/cds/engine/api/keys"
 	"github.com/ovh/cds/engine/api/operation"
@@ -57,7 +56,7 @@ func CreateFromRepository(ctx context.Context, db *gorp.DbMap, store cache.Store
 
 	if err != nil {
 		isErrWithStack := sdk.IsErrorWithStack(err)
-		fields := logrus.Fields{}
+		fields := log.Fields{}
 		if isErrWithStack {
 			fields["stack_trace"] = fmt.Sprintf("%+v", err)
 		}
@@ -68,7 +67,7 @@ func CreateFromRepository(ctx context.Context, db *gorp.DbMap, store cache.Store
 	if ope.Status == sdk.OperationStatusError {
 		err := ope.Error.ToError()
 		isErrWithStack := sdk.IsErrorWithStack(err)
-		fields := logrus.Fields{}
+		fields := log.Fields{}
 		if isErrWithStack {
 			fields["stack_trace"] = fmt.Sprintf("%+v", err)
 		}

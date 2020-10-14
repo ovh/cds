@@ -364,7 +364,7 @@ func (r *Router) handle(uri string, scope HandlerScope, handlers ...*service.Han
 
 		// Log request start
 		start := time.Now()
-		log.InfoWithFields(ctx, logrus.Fields{
+		log.InfoWithFields(ctx, log.Fields{
 			"method":      req.Method,
 			"route":       cleanURL,
 			"request_uri": req.RequestURI,
@@ -381,7 +381,7 @@ func (r *Router) handle(uri string, scope HandlerScope, handlers ...*service.Han
 			end := time.Now()
 			latency := end.Sub(start)
 
-			log.InfoWithFields(ctx, logrus.Fields{
+			log.InfoWithFields(ctx, log.Fields{
 				"method":      req.Method,
 				"latency_num": latency.Nanoseconds(),
 				"latency":     latency,
@@ -508,7 +508,7 @@ func processAsyncRequests(ctx context.Context, chanRequest chan asynchronousRequ
 			}
 			if err := req.do(ctx, handler); err != nil {
 				isErrWithStack := sdk.IsErrorWithStack(err)
-				fields := logrus.Fields{}
+				fields := log.Fields{}
 				if isErrWithStack {
 					fields["stack_trace"] = fmt.Sprintf("%+v", err)
 				}

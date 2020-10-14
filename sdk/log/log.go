@@ -9,7 +9,7 @@ import (
 	"strings"
 	"testing"
 
-	log "github.com/sirupsen/logrus"
+	"github.com/sirupsen/logrus"
 
 	"github.com/ovh/cds/sdk/log/hook"
 )
@@ -55,6 +55,8 @@ type TestingLogger struct {
 	t *testing.T
 }
 
+type Fields logrus.Fields
+
 var _ Logger = new(TestingLogger)
 
 func (t *TestingLogger) isDone() bool {
@@ -87,7 +89,7 @@ func SetLogger(l Logger) {
 	logger = l
 }
 
-func logWithLogger(level string, fields log.Fields, format string, values ...interface{}) {
+func logWithLogger(level string, fields Fields, format string, values ...interface{}) {
 	var fString string
 	for k, m := range fields {
 		if k != "stack_trace" {
@@ -106,17 +108,17 @@ func logWithLogger(level string, fields log.Fields, format string, values ...int
 func Initialize(ctx context.Context, conf *Conf) {
 	switch conf.Level {
 	case "debug":
-		log.SetLevel(log.DebugLevel)
+		logrus.SetLevel(logrus.DebugLevel)
 	case "info":
-		log.SetLevel(log.InfoLevel)
+		logrus.SetLevel(logrus.InfoLevel)
 	case "error":
-		log.SetLevel(log.ErrorLevel)
+		logrus.SetLevel(logrus.ErrorLevel)
 	case "warning":
-		log.SetLevel(log.WarnLevel)
+		logrus.SetLevel(logrus.WarnLevel)
 	default:
-		log.SetLevel(log.InfoLevel)
+		logrus.SetLevel(logrus.InfoLevel)
 	}
-	log.SetFormatter(&CDSFormatter{})
+	logrus.SetFormatter(&CDSFormatter{})
 
 	if conf.GraylogHost != "" && conf.GraylogPort != "" {
 		graylogcfg := &hook.Config{
@@ -130,7 +132,7 @@ func Initialize(ctx context.Context, conf *Conf) {
 			keys := strings.Split(conf.GraylogExtraKey, ",")
 			values := strings.Split(conf.GraylogExtraValue, ",")
 			if len(keys) != len(values) {
-				log.Errorf("Error while initialize log: extraKey (len:%d) does not have same corresponding number of values on extraValue (len:%d)", len(keys), len(values))
+				logrus.Errorf("Error while initialize log: extraKey (len:%d) does not have same corresponding number of values on extraValue (len:%d)", len(keys), len(values))
 			} else {
 				for i := range keys {
 					extra[keys[i]] = values[i]
@@ -162,10 +164,10 @@ func Initialize(ctx context.Context, conf *Conf) {
 		graylogHook, errhook = hook.NewHook(ctx, graylogcfg, extra)
 
 		if errhook != nil {
-			log.Errorf("Error while initialize graylog hook: %v", errhook)
+			logrus.Errorf("Error while initialize graylog hook: %v", errhook)
 		} else {
-			log.AddHook(graylogHook)
-			log.SetOutput(ioutil.Discard)
+			logrus.AddHook(graylogHook)
+			logrus.SetOutput(ioutil.Discard)
 		}
 	}
 
@@ -184,21 +186,21 @@ func Debug(format string, values ...interface{}) {
 		logWithLogger("DEBUG", nil, format, values...)
 		return
 	}
-	log.Debugf(format, values...)
+	logrus.Debugf(format, values...)
 }
 
-// InfoWithoutCtx prints information log.
+// InfoWithoutCtx prints information logrus.
 func InfoWithoutCtx(format string, values ...interface{}) {
 	Info(context.Background(), format, values...)
 }
 
-// Info prints information log.
+// Info prints information logrus.
 func Info(ctx context.Context, format string, values ...interface{}) {
 	InfoWithFields(ctx, nil, format, values...)
 }
 
 // InfoWithFields print info log with given logrus fields.
-func InfoWithFields(ctx context.Context, fields log.Fields, format string, values ...interface{}) {
+func InfoWithFields(ctx context.Context, fields Fields, format string, values ...interface{}) {
 	if logger != nil {
 		logWithLogger("INFO", fields, format, values...)
 		return
@@ -206,13 +208,13 @@ func InfoWithFields(ctx context.Context, fields log.Fields, format string, value
 	newEntry(ctx, fields).Infof(format, values...)
 }
 
-// Warning prints warnings log.
+// Warning prints warnings logrus.
 func Warning(ctx context.Context, format string, values ...interface{}) {
 	WarningWithFields(ctx, nil, format, values...)
 }
 
 // WarningWithFields print warning log with given logrus fields.
-func WarningWithFields(ctx context.Context, fields log.Fields, format string, values ...interface{}) {
+func WarningWithFields(ctx context.Context, fields Fields, format string, values ...interface{}) {
 	if logger != nil {
 		logWithLogger("WARN", fields, format, values...)
 		return
@@ -220,13 +222,13 @@ func WarningWithFields(ctx context.Context, fields log.Fields, format string, va
 	newEntry(ctx, fields).Warningf(format, values...)
 }
 
-// Error prints error log.
+// Error prints error logrus.
 func Error(ctx context.Context, format string, values ...interface{}) {
 	ErrorWithFields(ctx, nil, format, values...)
 }
 
 // ErrorWithFields print error log with given logrus fields.
-func ErrorWithFields(ctx context.Context, fields log.Fields, format string, values ...interface{}) {
+func ErrorWithFields(ctx context.Context, fields Fields, format string, values ...interface{}) {
 	if logger != nil {
 		logWithLogger("ERROR", fields, format, values...)
 		return
@@ -240,13 +242,13 @@ func Fatalf(format string, values ...interface{}) {
 		logWithLogger("FATAL", nil, format, values...)
 		return
 	}
-	log.Fatalf(format, values...)
+	logrus.Fatalf(format, values...)
 }
 
-func newEntry(ctx context.Context, fields log.Fields) *log.Entry {
-	entry := log.NewEntry(log.StandardLogger())
+func newEntry(ctx context.Context, fields Fields) *logrus.Entry {
+	entry := logrus.NewEntry(logrus.StandardLogger())
 	if fields != nil {
-		entry = entry.WithFields(fields)
+		entry = entry.WithFields(logrus.Fields(fields))
 	}
 	if ctx == nil {
 		return entry
@@ -263,7 +265,7 @@ func newEntry(ctx context.Context, fields log.Fields) *log.Entry {
 	// If a logging func exists in context, execute it
 	iFunc := ctx.Value(ContextLoggingFuncKey)
 	if iFunc != nil {
-		if f, ok := iFunc.(func(ctx context.Context) log.Fields); ok {
+		if f, ok := iFunc.(func(ctx context.Context) logrus.Fields); ok {
 			contextFields := f(ctx)
 			entry = entry.WithFields(contextFields)
 		}
@@ -274,7 +276,7 @@ func newEntry(ctx context.Context, fields log.Fields) *log.Entry {
 
 type Message struct {
 	Value     string
-	Level     log.Level
+	Level     logrus.Level
 	Signature Signature
 }
 
@@ -311,8 +313,8 @@ type SignatureService struct {
 	WorkerName      string
 }
 
-func New(ctx context.Context, graylogcfg *hook.Config) (*log.Logger, *hook.Hook, error) {
-	newLogger := log.New()
+func New(ctx context.Context, graylogcfg *hook.Config) (*logrus.Logger, *hook.Hook, error) {
+	newLogger := logrus.New()
 	extra := map[string]interface{}{}
 	hook, err := hook.NewHook(ctx, graylogcfg, extra)
 	if err != nil {
@@ -322,15 +324,15 @@ func New(ctx context.Context, graylogcfg *hook.Config) (*log.Logger, *hook.Hook,
 	return newLogger, hook, nil
 }
 
-func ReplaceAllHooks(ctx context.Context, l *log.Logger, graylogcfg *hook.Config) error {
-	emptyHooks := log.LevelHooks{}
+func ReplaceAllHooks(ctx context.Context, l *logrus.Logger, graylogcfg *hook.Config) error {
+	emptyHooks := logrus.LevelHooks{}
 	oldHooks := l.ReplaceHooks(emptyHooks)
 	for _, hooks := range oldHooks {
 		for _, h := range hooks {
 			varType := fmt.Sprintf("%T", h)
 
 			if varType == fmt.Sprintf("%T", &hook.Hook{}) {
-				log.Info("hatchery.ReplaceAllHooks> stopping previous hook")
+				logrus.Info("hatchery.ReplaceAllHooks> stopping previous hook")
 				h.(*hook.Hook).Stop()
 			}
 		}

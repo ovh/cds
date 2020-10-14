@@ -40,7 +40,7 @@ func (h *HatcherySwarm) getServicesLogs() error {
 			logsReader, err := dockerClient.ContainerLogs(ctx, cnt.ID, logsOpts)
 			if err != nil {
 				err = sdk.WrapError(err, "cannot get logs from docker for containers service %s %v", cnt.ID, cnt.Names)
-				log.ErrorWithFields(ctx, logrus.Fields{"stack_trace": fmt.Sprintf("%+v", err)}, "%s", err)
+				log.ErrorWithFields(ctx, log.Fields{"stack_trace": fmt.Sprintf("%+v", err)}, "%s", err)
 				cancel()
 				continue
 			}
@@ -49,7 +49,7 @@ func (h *HatcherySwarm) getServicesLogs() error {
 			if err != nil {
 				logsReader.Close() // nolint
 				err = sdk.WrapError(err, "cannot read logs for containers service %s %v", cnt.ID, cnt.Names)
-				log.ErrorWithFields(ctx, logrus.Fields{"stack_trace": fmt.Sprintf("%+v", err)}, "%s", err)
+				log.ErrorWithFields(ctx, log.Fields{"stack_trace": fmt.Sprintf("%+v", err)}, "%s", err)
 				cancel()
 				continue
 			}

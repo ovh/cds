@@ -40,6 +40,7 @@ func TestGetItemValue(t *testing.T) {
 		Cache:               cache,
 		Mapper:              m,
 	}
+	s.Common.GoRoutines = sdk.NewGoRoutines()
 	ctx, cancel := context.WithCancel(context.TODO())
 	t.Cleanup(cancel)
 
