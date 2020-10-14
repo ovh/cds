@@ -410,7 +410,7 @@ func DefaultPayload(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store 
 
 			branches, err := client.Branches(ctx, app.RepositoryFullname)
 			if err != nil {
-				return wf.WorkflowData.Node.Context.DefaultPayload, sdk.WrapError(err, "cannot get branches for %s", app.RepositoryFullname)
+				return wf.WorkflowData.Node.Context.DefaultPayload, err
 			}
 
 			for _, branch := range branches {

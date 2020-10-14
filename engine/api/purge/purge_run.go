@@ -200,7 +200,7 @@ func getBranchesForWorkflow(ctx context.Context, store cache.Store, db *gorp.DbM
 			}
 
 			branches, err := client.Branches(ctx, app.RepositoryFullname)
-			return branches, sdk.WithStack(err)
+			return branches, err
 		}
 	}
 	return nil, nil
