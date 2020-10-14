@@ -669,18 +669,16 @@ func Update(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store cache.St
 }
 
 // MarkAsDelete marks a workflow to be deleted
-func MarkAsDelete(db gorp.SqlExecutor, key, name string) error {
-	query := `UPDATE workflow
-			SET to_delete = true
-			FROM project
-			WHERE
-				workflow.name = $1 AND
-				project.id = workflow.project_id AND
-				project.projectkey = $2`
-	if _, err := db.Exec(query, name, key); err != nil {
-		return sdk.WrapError(err, "Unable to mark as delete workflow %s/%s", key, name)
+func MarkAsDelete(ctx context.Context, db gorpmapper.SqlExecutorWithTx, cache cache.Store, proj sdk.Project, wkf *sdk.Workflow) error {
+	nodes := wkf.WorkflowData.Array()
+	for _, n := range nodes {
+		n.Context.ApplicationID = 0
+		n.Context.PipelineID = 0
+		n.Context.EnvironmentID = 0
+		n.Context.ProjectIntegrationID = 0
 	}
-	return nil
+	wkf.ToDelete = true
+	return Update(ctx, db, cache, proj, wkf, UpdateOptions{DisableHookManagement: true})
 }
 
 // Delete workflow
