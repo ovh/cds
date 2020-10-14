@@ -2,6 +2,7 @@ package encryption
 
 import (
 	"io"
+	"sync"
 
 	"github.com/ovh/symmecrypt/convergent"
 
@@ -40,9 +41,13 @@ func (*noEncryption) Read(_ sdk.CDNItemUnit, r io.Reader, w io.Writer) error {
 type convergentEncryption struct {
 	keys   map[string]convergent.Key
 	config []convergent.ConvergentEncryptionConfig
+	mutex  sync.Mutex
 }
 
 func (s *convergentEncryption) getKey(h string) (convergent.Key, error) {
+	s.mutex.Lock()
+	defer s.mutex.Unlock()
+
 	if s.keys == nil {
 		s.keys = make(map[string]convergent.Key)
 	}
