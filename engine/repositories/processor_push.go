@@ -14,7 +14,7 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
-func (s *Service) processPush(ctx context.Context, op *sdk.Operation) error {
+func (s *Service) processPush(ctx context.Context, op *sdk.Operation) (globalErr error) {
 	var missingAuth bool
 	if op.RepositoryStrategy.ConnectionType == "ssh" {
 		missingAuth = op.RepositoryStrategy.SSHKey == "" || op.RepositoryStrategy.SSHKeyContent == ""
@@ -63,6 +63,16 @@ func (s *Service) processPush(ctx context.Context, op *sdk.Operation) error {
 			return sdk.WithStack(err)
 		}
 	}
+
+	// In case of error, we have to clean the filesystem, to avoid pending local branches or uncommited modification
+	defer func() {
+		if globalErr != nil {
+			r := s.Repo(*op)
+			if err := s.cleanFS(ctx, r); err != nil {
+				log.Error(ctx, "unable to clean FS: %v", err)
+			}
+		}
+	}()
 
 	// Erase existing cds directory for migration, if update make sure that the cds directory exists
 	if !op.Setup.Push.Update {
