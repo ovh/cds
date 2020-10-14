@@ -203,7 +203,7 @@ func hookRegistration(ctx context.Context, db gorpmapper.SqlExecutorWithTx, stor
 						if sdk.ErrorIs(err, sdk.ErrNotFound) {
 							log.Warning(ctx, "hook %s not found on %s/%s", v.Value, h.Config["vcsServer"].Value, h.Config["repoFullName"].Value)
 							if err := createVCSConfiguration(ctx, db, store, proj, h); err != nil {
-								return sdk.WithStack(err)
+								return err
 							}
 						} else {
 							return sdk.WithStack(err)
