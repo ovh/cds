@@ -100,6 +100,7 @@ func Init(ctx context.Context, cfg Configuration, s Service) (context.Context, e
 
 // Tags contants
 const (
+	TagHostname           = "hostname"
 	TagServiceType        = "service_type"
 	TagServiceName        = "service_name"
 	TagWorkflow           = "workflow"
