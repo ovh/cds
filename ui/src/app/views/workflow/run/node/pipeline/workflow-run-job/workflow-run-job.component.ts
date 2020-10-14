@@ -1,6 +1,7 @@
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { NgZone, OnDestroy, Output } from '@angular/core';
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, EventEmitter, Input, OnChanges, OnInit } from '@angular/core';
+import { Router } from '@angular/router';
 import { Store } from '@ngxs/store';
 import { CDNLogLink, PipelineStatus, SpawnInfo } from 'app/model/pipeline.model';
 import { WorkflowNodeJobRun } from 'app/model/workflow.run.model';
@@ -11,7 +12,8 @@ import { ProjectState } from 'app/store/project.state';
 import { WorkflowState } from 'app/store/workflow.state';
 import * as moment from 'moment';
 import { Observable, Subscription } from 'rxjs';
-import { Action } from 'rxjs/internal/scheduler/Action';
+import { delay, retryWhen } from 'rxjs/operators';
+import { webSocket, WebSocketSubject } from 'rxjs/webSocket';
 
 export enum DisplayMode {
     ANSI = 'ansi',
@@ -31,6 +33,7 @@ export class Step {
     id: number
     name: string;
     lines: Array<Line>;
+    endLines: Array<Line>;
     open: boolean;
     firstDisplayedLineNumber: number;
     totalLinesCount: number;
@@ -40,6 +43,8 @@ export class Step {
 
     constructor(name: string) {
         this.name = name;
+        this.lines = [];
+        this.endLines = [];
     }
 
     clickOpen(): void {
@@ -66,6 +71,9 @@ export class Line {
 })
 @AutoUnsubscribe()
 export class WorkflowRunJobComponent implements OnInit, OnChanges, OnDestroy {
+    readonly initLoadLinesCount = 5;
+    readonly expandLoadLinesCount = 20;
+
     @Input() nodeJobRun: WorkflowNodeJobRun;
     @Output() onScroll = new EventEmitter<ScrollTarget>();
 
@@ -75,6 +83,8 @@ export class WorkflowRunJobComponent implements OnInit, OnChanges, OnDestroy {
     currentTabIndex = 0;
     scrollTargets = ScrollTarget
     pollingSpawnInfoSubscription: Subscription;
+    websocket: WebSocketSubject<any>;
+    websocketSubscription: Subscription;
 
     previousNodeJobRun: WorkflowNodeJobRun;
     steps: Array<Step>;
@@ -84,7 +94,8 @@ export class WorkflowRunJobComponent implements OnInit, OnChanges, OnDestroy {
         private _store: Store,
         private _workflowService: WorkflowService,
         private _http: HttpClient,
-        private _ngZone: NgZone
+        private _ngZone: NgZone,
+        private _router: Router
     ) { }
 
     ngOnInit(): void { }
@@ -119,7 +130,10 @@ export class WorkflowRunJobComponent implements OnInit, OnChanges, OnDestroy {
 
         this.stopPollingSpawnInfo();
         this.startPollingSpawnInfo(); // async
-        this.loadStepLinks(); // async
+        this.loadEndedSteps(); // async
+
+        this.stopListenLastActiveStep();
+        this.startListenLastActiveStep(); // async
 
         this._cd.markForCheck();
     }
@@ -134,7 +148,7 @@ export class WorkflowRunJobComponent implements OnInit, OnChanges, OnDestroy {
         this._cd.markForCheck();
     }
 
-    async loadStepLinks() {
+    async loadEndedSteps() {
         let projectKey = this._store.selectSnapshot(ProjectState.projectSnapshot).key;
         let workflowName = this._store.selectSnapshot(WorkflowState.workflowSnapshot).name;
         let nodeRunID = this._store.selectSnapshot(WorkflowState).workflowNodeRun.id;
@@ -145,25 +159,31 @@ export class WorkflowRunJobComponent implements OnInit, OnChanges, OnDestroy {
         }
 
         for (let i = 1; i < this.steps.length; i++) {
+            if (PipelineStatus.isActive(this.nodeJobRun.job.step_status[i - 1].status)) {
+                break;
+            }
+
             this.steps[i].link = await this._workflowService.getStepLink(projectKey, workflowName, nodeRunID, nodeJobRunID, i - 1)
                 .toPromise();
-            let result = await this._http.get(`./cdscdn${this.steps[i].link.lines_path}`, {
-                params: { limit: '5' },
-                observe: 'response'
-            }).map(res => {
-                let headers: HttpHeaders = res.headers;
-                return <LinesResponse>{
-                    totalCount: parseInt(headers.get('X-Total-Count'), 10),
-                    lines: res.body as Array<Line>
-                }
-            }).toPromise();
-            this.steps[i].lines = result.lines.map(l => {
-                let line = new Line();
-                line.number = l.number;
-                line.value = l.value;
-                return line;
-            });
-            this.steps[i].totalLinesCount = result.totalCount;
+            let results = await Promise.all([
+                this._http.get(`./cdscdn${this.steps[i].link.lines_path}`, { params: { limit: `${this.initLoadLinesCount}` }, observe: 'response' }).map(res => {
+                    let headers: HttpHeaders = res.headers;
+                    return <LinesResponse>{
+                        totalCount: parseInt(headers.get('X-Total-Count'), 10),
+                        lines: res.body as Array<Line>
+                    }
+                }).toPromise(),
+                this._http.get(`./cdscdn${this.steps[i].link.lines_path}`, { params: { offset: `-${this.initLoadLinesCount}` }, observe: 'response' }).map(res => {
+                    let headers: HttpHeaders = res.headers;
+                    return <LinesResponse>{
+                        totalCount: parseInt(headers.get('X-Total-Count'), 10),
+                        lines: res.body as Array<Line>
+                    }
+                }).toPromise(),
+            ]);
+            this.steps[i].lines = results[0].lines;
+            this.steps[i].endLines = results[1].lines.filter(l => !results[0].lines.find(line => line.number === l.number));
+            this.steps[i].totalLinesCount = results[0].totalCount;
             this.steps[i].open = true;
         }
 
@@ -247,11 +267,11 @@ export class WorkflowRunJobComponent implements OnInit, OnChanges, OnDestroy {
         return DurationService.duration(from.toDate(), to ? to.toDate() : moment().toDate());
     }
 
-    async clickExpandStep(index: number) {
+    async clickExpandStepDown(index: number) {
         let step = this.steps[index];
 
         let result = await this._http.get(`./cdscdn${step.link.lines_path}`, {
-            params: { offset: `${step.lines[step.lines.length - 1].number + 1}`, limit: '20' },
+            params: { offset: `${step.lines[step.lines.length - 1].number + 1}`, limit: `${this.expandLoadLinesCount}` },
             observe: 'response'
         }).map(res => {
             let headers: HttpHeaders = res.headers;
@@ -260,13 +280,97 @@ export class WorkflowRunJobComponent implements OnInit, OnChanges, OnDestroy {
                 lines: res.body as Array<Line>
             }
         }).toPromise();
-        this.steps[index].lines = step.lines.concat(result.lines.map(l => {
-            let line = new Line();
-            line.number = l.number;
-            line.value = l.value;
-            return line;
-        }));
+        this.steps[index].totalLinesCount = result.totalCount;
+        this.steps[index].lines = step.lines.concat(result.lines.filter(l => !step.endLines.find(line => line.number === l.number)));
 
         this._cd.markForCheck();
+    }
+
+    async clickExpandStepUp(index: number) {
+        let step = this.steps[index];
+
+        let result = await this._http.get(`./cdscdn${step.link.lines_path}`, {
+            params: { offset: `-${step.endLines.length + this.expandLoadLinesCount}`, limit: `${this.expandLoadLinesCount}` },
+            observe: 'response'
+        }).map(res => {
+            let headers: HttpHeaders = res.headers;
+            return <LinesResponse>{
+                totalCount: parseInt(headers.get('X-Total-Count'), 10),
+                lines: res.body as Array<Line>
+            }
+        }).toPromise();
+        this.steps[index].totalLinesCount = result.totalCount;
+        this.steps[index].endLines = result.lines.filter(l => {
+            return !step.lines.find(line => line.number === l.number) && !step.endLines.find(line => line.number === l.number);
+        }).concat(step.endLines);
+
+        this._cd.markForCheck();
+    }
+
+    stopListenLastActiveStep(): void {
+        if (this.websocketSubscription) {
+            this.websocketSubscription.unsubscribe();
+        }
+    }
+
+    async startListenLastActiveStep() {
+        // Skip if only informations step exists
+        if (this.steps.length <= 1) {
+            return;
+        }
+        let lastStepStatus = this.nodeJobRun.job.step_status[this.nodeJobRun.job.step_status.length - 1];
+        if (!PipelineStatus.isActive(lastStepStatus.status)) {
+            return;
+        }
+
+        let projectKey = this._store.selectSnapshot(ProjectState.projectSnapshot).key;
+        let workflowName = this._store.selectSnapshot(WorkflowState.workflowSnapshot).name;
+        let nodeRunID = this._store.selectSnapshot(WorkflowState).workflowNodeRun.id;
+        let nodeJobRunID = this._store.selectSnapshot(WorkflowState.getSelectedWorkflowNodeJobRun()).id;
+
+        this.steps[this.steps.length - 1].link = await this._workflowService.getStepLink(projectKey, workflowName,
+            nodeRunID, nodeJobRunID, this.nodeJobRun.job.step_status.length - 1).toPromise();
+        let result = await this._http.get(
+            `./cdscdn${this.steps[this.steps.length - 1].link.lines_path}`,
+            { params: { limit: `${this.initLoadLinesCount}` }, observe: 'response' }
+        ).map(res => {
+            let headers: HttpHeaders = res.headers;
+            return <LinesResponse>{
+                totalCount: parseInt(headers.get('X-Total-Count'), 10),
+                lines: res.body as Array<Line>
+            }
+        }).toPromise();
+        this.steps[this.steps.length - 1].lines = result.lines;
+        this.steps[this.steps.length - 1].totalLinesCount = result.totalCount;
+        this.steps[this.steps.length - 1].open = true;
+        this._cd.markForCheck();
+
+        const protocol = window.location.protocol.replace('http', 'ws');
+        const host = window.location.host;
+        const href = this._router['location']._baseHref;
+
+        this.websocket = webSocket({
+            url: `${protocol}//${host}${href}/cdscdn${this.steps[this.steps.length - 1].link.stream_path}?offset=-5`,
+            openObserver: {
+                next: value => {
+                    if (value.type === 'open') { }
+                }
+            }
+        });
+
+        this.websocketSubscription = this.websocket
+            .pipe(retryWhen(errors => errors.pipe(delay(2000))))
+            .subscribe((l: Line) => {
+                if (!this.steps[this.steps.length - 1].lines.find(line => line.number === l.number)
+                    && !this.steps[this.steps.length - 1].endLines.find(line => line.number === l.number)) {
+                    this.steps[this.steps.length - 1].endLines.push(l);
+                    this.steps[this.steps.length - 1].totalLinesCount++;
+                    this._cd.markForCheck();
+                }
+            }, (err) => {
+                console.error('Error: ', err)
+            }, () => {
+                console.warn('Websocket Completed');
+            });
     }
 }

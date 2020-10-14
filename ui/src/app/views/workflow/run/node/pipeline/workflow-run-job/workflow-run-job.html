@@ -24,7 +24,7 @@
             <div class="action" *ngIf="i>0">
                 <a *ngIf="step?.link?.download_path" [href]="'/cdscdn' + step.link.download_path" target="_blank"
                     rel="noopener noreferrer" title="Share/download the step" (click)="$event.stopPropagation()"><i
-                        class="square share icon"></i></a>
+                        class="external alternate icon"></i></a>
             </div>
         </div>
         <ng-container *ngIf="step.open">
@@ -35,11 +35,27 @@
                     <div *ngFor="let extra of line.extra">{{extra}}</div>
                 </div>
             </div>
-            <div class="line expand" *ngIf="step.lines.length !== step.totalLinesCount" (click)="clickExpandStep(i)">
+            <div class="line expand" *ngIf="step.lines.length + step.endLines.length < step.totalLinesCount"
+                (click)="clickExpandStepDown(i)">
                 <div class="number"><i
                         class="caret icon down"></i>{{step.firstDisplayedLineNumber + step.lines.length + 1}}
                 </div>
                 <div class="value">…</div>
+            </div>
+            <div class="line expand" *ngIf="step.lines.length + step.endLines.length < (step.totalLinesCount - expandLoadLinesCount) - 1"
+                (click)="clickExpandStepUp(i)">
+                <div class="number"><i
+                        class="caret icon up"></i>{{(step.firstDisplayedLineNumber + step.totalLinesCount) - step.endLines.length}}
+                </div>
+                <div class="value">…</div>
+            </div>
+            <div class="line" *ngFor="let line of step.endLines; trackBy: trackLineElement; let j = index">
+                <div class="number">
+                    {{((step.firstDisplayedLineNumber + step.totalLinesCount) - step.endLines.length) + j + 1}}</div>
+                <div class="value" [innerHTML]="line.value | ansi:(this.mode !== displayModes.ANSI) | safeHtml"></div>
+                <div class="extra" *ngIf="line.extra">
+                    <div *ngFor="let extra of line.extra">{{extra}}</div>
+                </div>
             </div>
         </ng-container>
     </div>

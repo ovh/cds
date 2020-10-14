@@ -125,17 +125,21 @@ func (s *Service) getItemLogsStreamHandler() service.Handler {
 				log.Debug("getItemLogsStreamHandler> iterate over %d lines to send for client %s", len(lines), wsClient.UUID())
 				oldNextLineToSend := wsClientData.scoreNextLineToSend
 				for i := range lines {
-					if wsClientData.scoreNextLineToSend != lines[i].Number {
+					if wsClientData.scoreNextLineToSend > 0 && wsClientData.scoreNextLineToSend != lines[i].Number {
 						break
 					}
 					if err := wsClient.Send(lines[i]); err != nil {
 						return err
 					}
-					wsClientData.scoreNextLineToSend++
+					if wsClientData.scoreNextLineToSend < 0 {
+						wsClientData.scoreNextLineToSend = lines[i].Number + 1
+					} else {
+						wsClientData.scoreNextLineToSend++
+					}
 				}
 
 				// If all the lines were sent, we can trigger another update
-				if len(lines) > 0 && wsClientData.scoreNextLineToSend-oldNextLineToSend == int64(len(lines)) {
+				if len(lines) > 0 && (oldNextLineToSend < 0 || wsClientData.scoreNextLineToSend-oldNextLineToSend == int64(len(lines))) {
 					go func() { wsClientData.chanItemUpdate <- struct{}{} }()
 				}
 
