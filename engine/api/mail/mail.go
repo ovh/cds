@@ -73,12 +73,12 @@ func Init(user, password, from, host, port, modeTLS string, insecureSkipVerify, 
 // Status verification of smtp configuration, returns OK or KO
 func Status(ctx context.Context) sdk.MonitoringStatusLine {
 	if !smtpEnable {
-		return sdk.MonitoringStatusLine{Component: "SMTP Ping", Value: "Conf: SMTP Disabled", Status: sdk.MonitoringStatusWarn}
+		return sdk.MonitoringStatusLine{Component: "SMTP", Value: "Conf: SMTP Disabled", Status: sdk.MonitoringStatusWarn}
 	}
 	if lastError != nil {
-		return sdk.MonitoringStatusLine{Component: "SMTP Ping", Value: "KO: " + lastError.Error(), Status: sdk.MonitoringStatusAlert}
+		return sdk.MonitoringStatusLine{Component: "SMTP", Value: "KO: " + lastError.Error(), Status: sdk.MonitoringStatusAlert}
 	}
-	return sdk.MonitoringStatusLine{Component: "SMTP Ping", Value: fmt.Sprintf("OK (%d sent)", counter), Status: sdk.MonitoringStatusOK}
+	return sdk.MonitoringStatusLine{Component: "SMTP", Value: fmt.Sprintf("OK (%d sent)", counter), Status: sdk.MonitoringStatusOK}
 }
 
 // SendMailVerifyToken send mail to verify user account.
