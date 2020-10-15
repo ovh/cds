@@ -68,7 +68,7 @@ export class WorkflowShowComponent implements OnInit, OnDestroy {
         private activatedRoute: ActivatedRoute,
         private _workflowStore: WorkflowStore,
         private _router: Router,
-        private _translate: TranslateService,
+        public _translate: TranslateService,
         private _toast: ToastService,
         private _workflowCoreService: WorkflowCoreService,
         private _cd: ChangeDetectorRef
