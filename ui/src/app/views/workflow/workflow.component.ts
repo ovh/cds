@@ -101,6 +101,9 @@ export class WorkflowComponent implements OnInit, OnDestroy {
                 delete this.workflow;
             }
             this._cd.detectChanges();
+            if (!this.project) {
+                return;
+            }
 
             let data = { 'project_key': this.project.key };
             this._featureService.isEnabled('cdn-job-logs', data).subscribe(f => {
