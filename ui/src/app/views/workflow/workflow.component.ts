@@ -207,7 +207,7 @@ export class WorkflowComponent implements OnInit, OnDestroy {
 
     initRuns(key: string, workflowName: string, filters?: {}): void {
         this._store.dispatch(
-            new GetWorkflowRuns({ projectKey: key, workflowName: workflowName, limit: '15', offset: '0', filters })
+            new GetWorkflowRuns({ projectKey: key, workflowName: workflowName, limit: '30', offset: '0', filters })
         );
     }
 
