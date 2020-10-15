@@ -407,9 +407,9 @@ func (c *vcsClient) Commit(ctx context.Context, fullname, hash string) (sdk.VCSC
 	return commit, nil
 }
 
-func (c *vcsClient) PullRequest(ctx context.Context, fullname string, ID int) (sdk.VCSPullRequest, error) {
+func (c *vcsClient) PullRequest(ctx context.Context, fullname string, ID string) (sdk.VCSPullRequest, error) {
 	pr := sdk.VCSPullRequest{}
-	path := fmt.Sprintf("/vcs/%s/repos/%s/pullrequests/%d", c.name, fullname, ID)
+	path := fmt.Sprintf("/vcs/%s/repos/%s/pullrequests/%s", c.name, fullname, url.PathEscape(ID))
 	if code, err := c.doJSONRequest(ctx, "GET", path, nil, &pr); err != nil {
 		if code != http.StatusNotFound {
 			return pr, sdk.WrapError(err, "unable to find pullrequest %d on repository %s from %s", ID, fullname, c.name)

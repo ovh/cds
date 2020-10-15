@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"strconv"
 	"strings"
 
 	"github.com/ovh/cds/engine/cache"
@@ -14,13 +15,13 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
-func (g *githubClient) PullRequest(ctx context.Context, fullname string, id int) (sdk.VCSPullRequest, error) {
+func (g *githubClient) PullRequest(ctx context.Context, fullname string, id string) (sdk.VCSPullRequest, error) {
 	var pr PullRequest
-	cachePullRequestKey := cache.Key("vcs", "github", "pullrequests", g.OAuthToken, fmt.Sprintf("/repos/%s/pulls/%d", fullname, id))
+	cachePullRequestKey := cache.Key("vcs", "github", "pullrequests", g.OAuthToken, fmt.Sprintf("/repos/%s/pulls/%s", fullname, id))
 	opts := []getArgFunc{withETag}
 
 	for {
-		url := fmt.Sprintf("/repos/%s/pulls/%d", fullname, id)
+		url := fmt.Sprintf("/repos/%s/pulls/%s", fullname, id)
 
 		status, body, _, err := g.get(ctx, url, opts...)
 		if err != nil {
@@ -61,12 +62,12 @@ func (g *githubClient) PullRequest(ctx context.Context, fullname string, id int)
 			}
 		}
 
-		if pr.Number != id {
-			log.Warning(ctx, "githubClient.PullRequest> Cannot find pullrequest %d", id)
+		if strconv.Itoa(pr.Number) != id {
+			log.Warning(ctx, "githubClient.PullRequest> Cannot find pullrequest %s", id)
 			if err := g.Cache.Delete(cachePullRequestKey); err != nil {
 				log.Error(ctx, "githubclient.PullRequest > unable to delete cache key %v: %v", cachePullRequestKey, err)
 			}
-			return sdk.VCSPullRequest{}, sdk.WithStack(fmt.Errorf("cannot find pullrequest %d", id))
+			return sdk.VCSPullRequest{}, sdk.WithStack(fmt.Errorf("cannot find pullrequest %s", id))
 		}
 
 		//Put the body on cache for one hour and one minute
@@ -284,7 +285,8 @@ func (pullr PullRequest) ToVCSPullRequest() sdk.VCSPullRequest {
 			DisplayName: pullr.User.Login,
 			Name:        pullr.User.Name,
 		},
-		Closed: pullr.State == "closed",
-		Merged: pullr.Merged,
+		Closed:  pullr.State == "closed",
+		Merged:  pullr.Merged,
+		Updated: pullr.UpdatedAt,
 	}
 }

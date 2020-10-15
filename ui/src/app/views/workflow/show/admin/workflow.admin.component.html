@@ -94,9 +94,9 @@
                 <div class="field">
                     <label>
                         {{ 'workflow_retention_policy' | translate }}
-                        <i class="circle outline question icon" suiPopup [popupText]="'workflow_retention_variables' | translate: {vars: availableVariables}"></i>
+                        <i class="circle outline question icon" suiPopup [popupText]="'workflow_retention_variables' | translate: {vars: availableStringVariables}"></i>
                     </label>
-                    <codemirror name="policy" [(ngModel)]="workflow.retention_policy" [config]="codeMirrorConfig" #codemirrorRetentionPolicy></codemirror>
+                    <codemirror name="policy" (change)="changeCodeMirror(codemirrorRetentionPolicy)" [(ngModel)]="workflow.retention_policy" [config]="codeMirrorConfig" #codemirrorRetentionPolicy></codemirror>
                 </div>
                 <div class="field">
                     <button class="ui blue button" type="button" name="dryrun"
@@ -111,6 +111,9 @@
                                 <div class="ui right aligned field ">
                                     <ng-container *ngIf="dryRunStatus === 'INCOMING'">
                                         <i class="circle notch loading blue icon"></i>
+                                    </ng-container>
+                                    <ng-container *ngIf="dryRunStatus === 'ERROR'">
+                                        <i class="close red icon"></i>
                                     </ng-container>
                                     <ng-container *ngIf="dryRunStatus === 'DONE'">
                                         <i class="check green icon"></i>
