@@ -172,7 +172,7 @@ func (c *Common) RegisterCommonMetricsView(ctx context.Context) {
 				maxMemory, _ = strconv.ParseUint(maxMemoryS, 10, 64)
 			}
 			hostname, _ := os.Hostname()
-			ctx = telemetry.ContextWithTag(ctx, tagHostname, hostname)
+			ctx = telemetry.ContextWithTag(ctx, telemetry.TagHostname, hostname)
 
 			var tick = time.NewTicker(10 * time.Second)
 			defer tick.Stop()
