@@ -70,7 +70,7 @@ func ApplyRetentionPolicyOnWorkflow(ctx context.Context, store cache.Store, db *
 	runs := make([]sdk.WorkflowRunToKeep, 0)
 	var nbRunsAnalyzed int64
 	for {
-		wfRuns, _, _, count, err := workflow.LoadRuns(db, wf.ProjectKey, wf.Name, offset, limit, nil)
+		wfRuns, _, _, count, err := workflow.LoadRunsSummaries(db, wf.ProjectKey, wf.Name, offset, limit, nil)
 		if err != nil {
 			return err
 		}
@@ -102,7 +102,7 @@ func ApplyRetentionPolicyOnWorkflow(ctx context.Context, store cache.Store, db *
 	return nil
 }
 
-func applyRetentionPolicyOnRun(db *gorp.DbMap, wf sdk.Workflow, run sdk.WorkflowRun, branchesMap map[string]struct{}, opts MarkAsDeleteOptions) (bool, error) {
+func applyRetentionPolicyOnRun(db *gorp.DbMap, wf sdk.Workflow, run sdk.WorkflowRunSummary, branchesMap map[string]struct{}, opts MarkAsDeleteOptions) (bool, error) {
 	if wf.ToDelete && !opts.DryRun {
 		if err := workflow.MarkWorkflowRunsAsDelete(db, []int64{run.ID}); err != nil {
 			return true, sdk.WithStack(err)
@@ -133,7 +133,7 @@ func applyRetentionPolicyOnRun(db *gorp.DbMap, wf sdk.Workflow, run sdk.Workflow
 	return false, nil
 }
 
-func purgeComputeVariables(luaCheck *luascript.Check, run sdk.WorkflowRun, branchesMap map[string]struct{}) error {
+func purgeComputeVariables(luaCheck *luascript.Check, run sdk.WorkflowRunSummary, branchesMap map[string]struct{}) error {
 	vars := make(map[string]string)
 	varsFloats := make(map[string]float64)
 

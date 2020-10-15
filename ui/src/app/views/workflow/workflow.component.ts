@@ -25,7 +25,6 @@ import {
     CleanWorkflowRun,
     CleanWorkflowState,
     GetWorkflow,
-    GetWorkflowRuns,
     SelectHook,
     SidebarRunsMode,
     UpdateFavoriteWorkflow
@@ -172,9 +171,6 @@ export class WorkflowComponent implements OnInit, OnDestroy {
             if (!w) {
                 return;
             }
-            if (!this.workflow || (this.workflow && w.id !== this.workflow.id)) {
-                this.initRuns(this.project.key, w.name, this._store.selectSnapshot(WorkflowState).filters);
-            }
             this.workflow = w;
             if (this.selectecHookRef) {
                 let h = Workflow.getHookByRef(this.selectecHookRef, this.workflow);
@@ -206,12 +202,6 @@ export class WorkflowComponent implements OnInit, OnDestroy {
                 }
             }
         });
-    }
-
-    initRuns(key: string, workflowName: string, filters?: {}): void {
-        this._store.dispatch(
-            new GetWorkflowRuns({ projectKey: key, workflowName: workflowName, limit: '30', offset: '0', filters })
-        );
     }
 
     updateFav() {

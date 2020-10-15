@@ -2,7 +2,7 @@ import {HttpClient, HttpParams} from '@angular/common/http';
 import {Injectable} from '@angular/core';
 import {Commit} from 'app/model/repositories.model';
 import {Workflow} from 'app/model/workflow.model';
-import {RunNumber, WorkflowNodeRun, WorkflowRun, WorkflowRunRequest} from 'app/model/workflow.run.model';
+import { RunNumber, WorkflowNodeRun, WorkflowRun, WorkflowRunRequest, WorkflowRunSummary } from 'app/model/workflow.run.model';
 import {Observable} from 'rxjs';
 import {map} from 'rxjs/operators';
 
@@ -15,7 +15,7 @@ export class WorkflowRunService {
     /**
      * List workflow runs for the given workflow
      */
-    runs(key: string, workflowName: string, limit: string, offset?: string, filters?: {}): Observable<Array<WorkflowRun>> {
+    runs(key: string, workflowName: string, limit: string, offset?: string, filters?: {}): Observable<Array<WorkflowRunSummary>> {
         let url = '/project/' + key + '/workflows/' + workflowName + '/runs';
         let params = new HttpParams();
         params = params.append('limit', limit);
@@ -26,7 +26,7 @@ export class WorkflowRunService {
             Object.keys(filters).forEach((tag) => params = params.append(tag, filters[tag]));
         }
 
-        return this._http.get<Array<WorkflowRun>>(url, {params: params});
+        return this._http.get<Array<WorkflowRunSummary>>(url, {params: params});
     }
 
     /**
