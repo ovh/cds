@@ -334,7 +334,7 @@ func TestWebsocketNoEventLoose(t *testing.T) {
 	}
 
 	// Waiting client to receive all events
-	ctx, cancel = context.WithTimeout(context.TODO(), time.Second*10)
+	ctx, cancel = context.WithTimeout(context.TODO(), time.Second*20)
 	t.Cleanup(cancel)
 loop:
 	for {
