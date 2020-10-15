@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"time"
 
 	"github.com/gorilla/mux"
 
@@ -96,13 +97,15 @@ func (s *Service) getItemLogsStreamHandler() service.Handler {
 		wsClient := websocket.NewClient(c)
 		wsClientData := &websocketClientData{
 			itemID:              it.ID,
-			chanItemUpdate:      make(chan struct{}),
 			scoreNextLineToSend: offset,
 		}
 		s.WSServer.AddClient(wsClient, wsClientData)
 		defer s.WSServer.RemoveClient(wsClient.UUID())
 
-		s.GoRoutines.Exec(s.Router.Background, "getItemLogsStreamHandler."+wsClient.UUID(), func(ctx context.Context) {
+		ctx, cancel := context.WithCancel(s.Router.Background)
+		defer cancel()
+
+		s.GoRoutines.Exec(ctx, "getItemLogsStreamHandler."+wsClient.UUID(), func(ctx context.Context) {
 			log.Debug("getItemLogsStreamHandler> start routine for client %s", wsClient.UUID())
 
 			send := func() error {
@@ -119,7 +122,7 @@ func (s *Service) getItemLogsStreamHandler() service.Handler {
 				}
 				var lines []redis.Line
 				if err := json.Unmarshal(buf.Bytes(), &lines); err != nil {
-					return sdk.WrapError(err, "cannot unmarshal lines from buffer")
+					return sdk.WrapError(err, "cannot unmarshal lines from buffer %v", string(buf.Bytes()))
 				}
 
 				log.Debug("getItemLogsStreamHandler> iterate over %d lines to send for client %s", len(lines), wsClient.UUID())
@@ -138,32 +141,42 @@ func (s *Service) getItemLogsStreamHandler() service.Handler {
 					}
 				}
 
-				// If all the lines were sent, we can trigger another update
-				if len(lines) > 0 && (oldNextLineToSend < 0 || wsClientData.scoreNextLineToSend-oldNextLineToSend == int64(len(lines))) {
-					go func() { wsClientData.chanItemUpdate <- struct{}{} }()
+				// If all the lines were sent, we can trigger another update, if only one line was send do not trigger an update wait for next event from broker
+				if len(lines) > 1 && (oldNextLineToSend > 0 || wsClientData.scoreNextLineToSend-oldNextLineToSend == int64(len(lines))) {
+					wsClientData.TriggerUpdate()
 				}
 
 				return nil
 			}
 
 			// Trigger one update at routine startup
-			go func() { wsClientData.chanItemUpdate <- struct{}{} }()
+			wsClientData.TriggerUpdate()
 
+			// Create a ticker to periodically send logs if needed
+			sendTicker := time.NewTicker(time.Millisecond * 100)
+			defer sendTicker.Stop()
 			for {
 				select {
 				case <-ctx.Done():
 					log.Debug("getItemLogsStreamHandler> stop routine for stream client %s", wsClient.UUID())
 					return
-				case <-wsClientData.chanItemUpdate:
-					if err := send(); err != nil {
-						log.Debug("getItemLogsStreamHandler> can't send to client %s it will be removed: %+v", wsClient.UUID(), err)
-						return
+				case <-sendTicker.C:
+					if wsClientData.ConsumeTrigger() {
+						if err := send(); err != nil {
+							log.Debug("getItemLogsStreamHandler> can't send to client %s it will be removed: %+v", wsClient.UUID(), err)
+							return
+						}
 					}
 				}
 			}
 		})
 
-		return wsClient.Listen(s.Router.Background, s.GoRoutines)
+		if err := wsClient.Listen(ctx, s.GoRoutines); err != nil {
+			return err
+		}
+
+		log.Debug("getItemLogsStreamHandler> stop listenning for client %s", wsClient.UUID())
+		return nil
 	}
 }
 

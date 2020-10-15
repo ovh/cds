@@ -73,19 +73,18 @@ export class Line {
 export class WorkflowRunJobComponent implements OnInit, OnChanges, OnDestroy {
     readonly initLoadLinesCount = 5;
     readonly expandLoadLinesCount = 20;
+    readonly displayModes = DisplayMode;
+    readonly scrollTargets = ScrollTarget
 
     @Input() nodeJobRun: WorkflowNodeJobRun;
     @Output() onScroll = new EventEmitter<ScrollTarget>();
 
     mode = DisplayMode.ANSI;
-    displayModes = DisplayMode;
     tabs: Array<Tab>;
     currentTabIndex = 0;
-    scrollTargets = ScrollTarget
     pollingSpawnInfoSubscription: Subscription;
     websocket: WebSocketSubject<any>;
     websocketSubscription: Subscription;
-
     previousNodeJobRun: WorkflowNodeJobRun;
     steps: Array<Step>;
 
@@ -105,6 +104,10 @@ export class WorkflowRunJobComponent implements OnInit, OnChanges, OnDestroy {
     ngOnChanges(): void {
         if (!this.nodeJobRun) { return; }
 
+        if (this.previousNodeJobRun && this.previousNodeJobRun.id !== this.nodeJobRun.id) {
+            this.reset();
+        }
+
         if (this.previousNodeJobRun) {
             let statusChanged = this.previousNodeJobRun.status !== this.nodeJobRun.status;
             let requirementsChanged = this.previousNodeJobRun.job.action.requirements?.length
@@ -123,9 +126,17 @@ export class WorkflowRunJobComponent implements OnInit, OnChanges, OnDestroy {
                 .filter(r => r.type === 'service').map(r => <Tab>{ name: r.name }));
         }
 
-        this.steps = [new Step('Informations')].concat(this.nodeJobRun.job.action.actions
-            .filter((_, i) => this.nodeJobRun.job.step_status && this.nodeJobRun.job.step_status[i])
-            .map(a => new Step(a.step_name ? a.step_name : a.name)));
+        if (!this.steps) {
+            this.steps = [new Step('Informations')].concat(this.nodeJobRun.job.action.actions
+                .filter((_, i) => this.nodeJobRun.job.step_status && this.nodeJobRun.job.step_status[i])
+                .map(a => new Step(a.step_name ? a.step_name : a.name)));
+        } else {
+            // Only append new steps
+            this.steps = this.steps.concat(this.nodeJobRun.job.action.actions
+                .filter((_, i) => this.nodeJobRun.job.step_status && this.nodeJobRun.job.step_status[i])
+                .filter((_, i) => !this.steps[i + 1])
+                .map(a => new Step(a.step_name ? a.step_name : a.name)));
+        }
         this.computeStepsDuration();
 
         this.stopPollingSpawnInfo();
@@ -136,6 +147,15 @@ export class WorkflowRunJobComponent implements OnInit, OnChanges, OnDestroy {
         this.startListenLastActiveStep(); // async
 
         this._cd.markForCheck();
+    }
+
+    reset(): void {
+        this.previousNodeJobRun = null;
+        this.tabs = null;
+        this.steps = null;
+        this.currentTabIndex = 0;
+        this.stopPollingSpawnInfo();
+        this.stopListenLastActiveStep();
     }
 
     selectTab(i: number): void {
@@ -159,8 +179,12 @@ export class WorkflowRunJobComponent implements OnInit, OnChanges, OnDestroy {
         }
 
         for (let i = 1; i < this.steps.length; i++) {
+            // We want to load initial data (first 5 and last 5 lines) for ended steps never loaded
             if (PipelineStatus.isActive(this.nodeJobRun.job.step_status[i - 1].status)) {
                 break;
+            }
+            if (this.steps[i].link) {
+                continue;
             }
 
             this.steps[i].link = await this._workflowService.getStepLink(projectKey, workflowName, nodeRunID, nodeJobRunID, i - 1)

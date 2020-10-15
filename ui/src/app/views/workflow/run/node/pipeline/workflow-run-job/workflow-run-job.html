@@ -12,7 +12,7 @@
     <div class="step" *ngFor="let step of steps; trackBy: trackStepElement; let i = index">
         <div class="line info" (click)="step.clickOpen()">
             <div class="number"><i class="caret icon" [class.down]="step.open"
-                    [class.right]="!step.open"></i>{{step.firstDisplayedLineNumber}}
+                    [class.right]="!step.open"></i>{{step.firstDisplayedLineNumber ? step.firstDisplayedLineNumber : ''}}
             </div>
             <div class="value">{{step.name}}</div>
             <div class="extra">
@@ -42,7 +42,8 @@
                 </div>
                 <div class="value">…</div>
             </div>
-            <div class="line expand" *ngIf="step.lines.length + step.endLines.length < (step.totalLinesCount - expandLoadLinesCount) - 1"
+            <div class="line expand"
+                *ngIf="step.lines.length + step.endLines.length < (step.totalLinesCount - expandLoadLinesCount) - 1"
                 (click)="clickExpandStepUp(i)">
                 <div class="number"><i
                         class="caret icon up"></i>{{(step.firstDisplayedLineNumber + step.totalLinesCount) - step.endLines.length}}
