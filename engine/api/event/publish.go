@@ -10,6 +10,14 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
+const DefaultPubSubKey = "events_pubsub"
+
+var pubSubKey = DefaultPubSubKey
+
+func OverridePubSubKey(key string) {
+	pubSubKey = key
+}
+
 type Store interface {
 	cache.PubSubStore
 	cache.QueueStore
@@ -29,7 +37,7 @@ func publishEvent(ctx context.Context, e sdk.Event) error {
 	if err != nil {
 		return sdk.WrapError(err, "Cannot marshal event %+v", e)
 	}
-	return store.Publish(ctx, "events_pubsub", string(b))
+	return store.Publish(ctx, pubSubKey, string(b))
 }
 
 // Publish sends a event to a queue

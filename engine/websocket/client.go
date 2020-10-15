@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"sync"
 
 	"github.com/gorilla/websocket"
 	"github.com/tevino/abool"
@@ -30,6 +31,7 @@ type Client interface {
 
 type CommonClient struct {
 	uuid      string
+	mutex     sync.Mutex
 	conn      *websocket.Conn
 	isClosed  *abool.AtomicBool
 	onMessage func([]byte)
@@ -45,6 +47,10 @@ func (c *CommonClient) Send(m interface{}) (err error) {
 			err = sdk.WithStack(fmt.Errorf("websocketClient.Send recovered %v", r))
 		}
 	}()
+
+	// Lock avoid parallel write on same conn
+	c.mutex.Lock()
+	defer c.mutex.Unlock()
 
 	if c.conn == nil || c.isClosed.IsSet() {
 		return sdk.WithStack(fmt.Errorf("client deconnected"))

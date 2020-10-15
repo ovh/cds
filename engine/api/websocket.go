@@ -180,9 +180,7 @@ func (c *websocketClientData) checkEventPermission(ctx context.Context, db gorp.
 	return true, nil
 }
 
-const wbBrokerPubSubKey = "events_pubsub"
-
-func (a *API) initWebsocket() error {
+func (a *API) initWebsocket(pubSubKey string) error {
 	log.Info(a.Router.Background, "Initializing WS server")
 	a.WSServer = &websocketServer{
 		server:     websocket.NewServer(),
@@ -203,9 +201,9 @@ func (a *API) initWebsocket() error {
 	})
 
 	log.Info(a.Router.Background, "Initializing WS events broker")
-	pubSub, err := a.Cache.Subscribe(wbBrokerPubSubKey)
+	pubSub, err := a.Cache.Subscribe(pubSubKey)
 	if err != nil {
-		return sdk.WrapError(err, "unable to subscribe to events_pubsub")
+		return sdk.WrapError(err, "unable to subscribe to %s", pubSubKey)
 	}
 	a.WSBroker = websocket.NewBroker()
 	a.WSBroker.OnMessage(func(m []byte) {
@@ -264,10 +262,13 @@ func (a *API) websocketOnMessage(e sdk.Event) {
 	r.Shuffle(len(clientIDs), func(i, j int) { clientIDs[i], clientIDs[j] = clientIDs[j], clientIDs[i] })
 
 	for _, id := range clientIDs {
-		c := a.WSServer.GetClientData(id)
+		// Copy idx for goroutine
+		clientID := id
 
 		// Send the event to the client websocket within a goroutine
-		a.GoRoutines.Exec(context.Background(), "websocket-"+id, func(ctx context.Context) {
+		a.GoRoutines.Exec(context.Background(), "websocket-"+clientID, func(ctx context.Context) {
+			c := a.WSServer.GetClientData(clientID)
+
 			found, needCheckPermission := c.filters.HasOneKey(eventKeys...)
 			if !found {
 				return
@@ -275,7 +276,7 @@ func (a *API) websocketOnMessage(e sdk.Event) {
 			if needCheckPermission {
 				allowed, err := c.checkEventPermission(ctx, a.mustDBWithCtx(ctx), e)
 				if err != nil {
-					err = sdk.WrapError(err, "unable to check event permission for client %s with consumer id: %s", id, c.AuthConsumer.ID)
+					err = sdk.WrapError(err, "unable to check event permission for client %s with consumer id: %s", clientID, c.AuthConsumer.ID)
 					log.ErrorWithFields(ctx, log.Fields{"stack_trace": fmt.Sprintf("%+v", err)}, "%s", err)
 					return
 				}
@@ -283,13 +284,13 @@ func (a *API) websocketOnMessage(e sdk.Event) {
 					return
 				}
 			}
-			log.Debug("api.websocketOnMessage> send data to client %s for user %s", id, c.AuthConsumer.GetUsername())
-			if err := a.WSServer.server.SendToClient(id, sdk.WebsocketEvent{
+			log.Debug("api.websocketOnMessage> send data to client %s for user %s", clientID, c.AuthConsumer.GetUsername())
+			if err := a.WSServer.server.SendToClient(clientID, sdk.WebsocketEvent{
 				Status: "OK",
 				Event:  e,
 			}); err != nil {
-				log.Debug("websocketOnMessage> can't send to client %s it will be removed: %+v", id, err)
-				a.WSServer.RemoveClient(id)
+				log.Debug("websocketOnMessage> can't send to client %s it will be removed: %+v", clientID, err)
+				a.WSServer.RemoveClient(clientID)
 			}
 		}, a.PanicDump())
 	}
@@ -301,6 +302,11 @@ func (a *API) websocketComputeEventKeys(event sdk.Event) []string {
 	var keys []string
 
 	// Event that match global filter
+	if event.EventType == fmt.Sprintf("%T", sdk.EventFake{}) {
+		keys = append(keys, sdk.WebsocketFilter{
+			Type: sdk.WebsocketFilterTypeGlobal,
+		}.Key())
+	}
 	if event.EventType == fmt.Sprintf("%T", sdk.EventMaintenance{}) {
 		keys = append(keys, sdk.WebsocketFilter{
 			Type: sdk.WebsocketFilterTypeGlobal,
