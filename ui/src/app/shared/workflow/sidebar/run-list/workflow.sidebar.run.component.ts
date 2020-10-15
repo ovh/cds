@@ -12,7 +12,7 @@ import { Select, Store } from '@ngxs/store';
 import { PipelineStatus } from 'app/model/pipeline.model';
 import { Project } from 'app/model/project.model';
 import { Workflow } from 'app/model/workflow.model';
-import { WorkflowRunSummary, WorkflowRunTags } from 'app/model/workflow.run.model';
+import { WorkflowRun, WorkflowRunSummary, WorkflowRunTags } from 'app/model/workflow.run.model';
 import { WorkflowRunService } from 'app/service/workflow/run/workflow.run.service';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { DurationService } from 'app/shared/duration/duration.service';
@@ -49,6 +49,8 @@ export class WorkflowSidebarRunListComponent implements OnInit, OnDestroy {
     }
     get workflow() { return this._workflow; }
 
+    @Select(WorkflowState.getSelectedWorkflowRun()) wrun$: Observable<WorkflowRun>
+    wrunSub: Subscription;
     @Select(WorkflowState.getListRuns()) listRuns$: Observable<Array<WorkflowRunSummary>>;
     listRunSubs: Subscription;
     @Select(WorkflowState.getRunSidebarFilters()) filters$: Observable<{}>;
@@ -80,10 +82,17 @@ export class WorkflowSidebarRunListComponent implements OnInit, OnDestroy {
         private _cd: ChangeDetectorRef
     ) {
         this.project = this._store.selectSnapshot(ProjectState.projectSnapshot);
-        this._routerActivated.params.subscribe(p => {
-            if (p['number']) {
-                this.currentWorkflowRunNumber = p['number'];
+
+        this.wrunSub = this.wrun$.subscribe(wr => {
+            if (!wr && !this.currentWorkflowRunNumber) {
+                return;
             }
+            if (wr?.num === this.currentWorkflowRunNumber) {
+                return;
+            }
+            this.currentWorkflowRunNumber = wr?.num;
+            this._cd.markForCheck();
+
         });
 
         this.listRunSubs = this.listRuns$.subscribe(runs => {
