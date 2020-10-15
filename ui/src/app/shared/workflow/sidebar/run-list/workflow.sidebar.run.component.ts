@@ -117,8 +117,8 @@ export class WorkflowSidebarRunListComponent implements OnDestroy {
 
     scroll() {
         if (!Array.isArray(this.selectedTags) || !this.selectedTags.length) {
-            this.offset += 50;
-            this._workflowRunService.runs(this.project.key, this.workflow.name, '50', this.offset.toString())
+            this.offset += 30;
+            this._workflowRunService.runs(this.project.key, this.workflow.name, '30', this.offset.toString())
                 .pipe(finalize(() => this._cd.markForCheck()))
                 .subscribe((runs) => {
                     this.workflowRuns = this.workflowRuns.concat(runs);
@@ -189,7 +189,7 @@ export class WorkflowSidebarRunListComponent implements OnDestroy {
         }
 
         this._store.dispatch(new GetWorkflowRuns(
-            {projectKey: this.project.key, workflowName: this.workflow.name, limit: '50', offset: '0', filters})
+            {projectKey: this.project.key, workflowName: this.workflow.name, limit: '30', offset: '0', filters})
         );
     }
 
