@@ -412,7 +412,7 @@ func (c *vcsClient) PullRequest(ctx context.Context, fullname string, ID string)
 	path := fmt.Sprintf("/vcs/%s/repos/%s/pullrequests/%s", c.name, fullname, url.PathEscape(ID))
 	if code, err := c.doJSONRequest(ctx, "GET", path, nil, &pr); err != nil {
 		if code != http.StatusNotFound {
-			return pr, sdk.WrapError(err, "unable to find pullrequest %d on repository %s from %s", ID, fullname, c.name)
+			return pr, sdk.WrapError(err, "unable to find pullrequest %s on repository %s from %s", ID, fullname, c.name)
 		}
 		return pr, sdk.WithStack(sdk.ErrNotFound)
 	}
