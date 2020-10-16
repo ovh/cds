@@ -169,7 +169,7 @@ func TestManualRun1(t *testing.T) {
 	require.NoError(t, errS)
 
 	//TestLoadRuns
-	runs, offset, limit, count, err := workflow.LoadRunsNotDetailed(db, proj.Key, w1.Name, 0, 50, nil)
+	runs, offset, limit, count, err := workflow.LoadRunsSummaries(db, proj.Key, w1.Name, 0, 50, nil)
 	require.NoError(t, err)
 	assert.Equal(t, 0, offset)
 	assert.Equal(t, 50, limit)
