@@ -801,7 +801,7 @@ export class WorkflowState {
     @Action(actionWorkflow.SelectHook)
     selectHook(ctx: StateContext<WorkflowStateModel>, action: actionWorkflow.SelectHook) {
         const state = ctx.getState();
-        let sidebar = WorkflowSidebarMode.EDIT_HOOK;
+        let sidebar;
         if (state.workflowRun) {
             sidebar = WorkflowSidebarMode.RUN_HOOK;
         }

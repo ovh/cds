@@ -17,6 +17,7 @@ export class WorkflowHookMenuEditComponent implements OnDestroy {
     @Input() hook: WNodeHook;
     @Input() popup: IPopup;
     @Input() readonly = true;
+    @Input() hookEventUUID: string;
     @Output() event = new EventEmitter<string>();
 
     constructor() {}

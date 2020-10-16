@@ -12,8 +12,9 @@
     </ng-container>
 </div>
 <ng-template let-popup #popupHook>
-    <app-workflow-menu-hook-edit (event)="receivedEvent($event)" [readonly]="isReadOnly" [workflow]="workflow" [popup]="popup" [hook]="hook" #menuHook></app-workflow-menu-hook-edit>
+    <app-workflow-menu-hook-edit (event)="receivedEvent($event)" [readonly]="isReadOnly" [workflow]="workflow" [popup]="popup" [hook]="hook" [hookEventUUID]="hookEvent?.uuid" #menuHook></app-workflow-menu-hook-edit>
 </ng-template>
 <app-delete-modal [title]="'workflow_hook_delete_title' | translate" [msg]="'workflow_hook_delete_msg' | translate"
                   [autoclose]="false" (event)="deleteHook(deleteHookModal.modal)" #deleteHookModal>
 </app-delete-modal>
+<app-workflow-node-hook-details #workflowDetailsHook></app-workflow-node-hook-details>

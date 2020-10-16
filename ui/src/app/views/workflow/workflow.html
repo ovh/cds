@@ -90,10 +90,6 @@
         (click)="changeToRunsMode()"></i>
     <div class="sidebar-toggle">
         <ng-container *ngIf="project && workflow">
-            <ng-container *ngIf="sidebarMode === sidebarModes.EDIT_HOOK">
-                <app-workflow-sidebar-hook [project]="project" [workflow]="workflow">
-                </app-workflow-sidebar-hook>
-            </ng-container>
             <ng-container *ngIf="sidebarMode === sidebarModes.RUNS">
                 <app-workflow-sidebar-run-list [workflow]="workflow"></app-workflow-sidebar-run-list>
             </ng-container>
