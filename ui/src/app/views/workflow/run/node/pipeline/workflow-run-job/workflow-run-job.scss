@@ -23,7 +23,7 @@
                 color: #B5B7BD;
                 background: none;
                 border: 1px solid #B5B7BD;
-                border-radius: 2px;
+                border-radius: 3px;
                 cursor: pointer;
 
                 &:not(.active):hover {
@@ -67,7 +67,7 @@
         flex-direction: column;
         font-size: 12px;
         line-height: 19px;
-        font-family: Cousine, monospace;
+        font-family: monospace;
         font-weight: 400;
 
         .line {

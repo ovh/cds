@@ -87,6 +87,7 @@ export class WorkflowRunJobComponent implements OnInit, OnChanges, OnDestroy {
     websocketSubscription: Subscription;
     previousNodeJobRun: WorkflowNodeJobRun;
     steps: Array<Step>;
+    services: Array<Step>;
 
     constructor(
         private _cd: ChangeDetectorRef,
@@ -139,28 +140,44 @@ export class WorkflowRunJobComponent implements OnInit, OnChanges, OnDestroy {
         }
         this.computeStepsDuration();
 
-        this.stopPollingSpawnInfo();
-        this.startPollingSpawnInfo(); // async
-        this.loadEndedSteps(); // async
-
-        this.stopListenLastActiveStep();
-        this.startListenLastActiveStep(); // async
+        if (!this.services) {
+            this.services = this.nodeJobRun.job.action.requirements
+                .filter(r => r.type === 'service')
+                .map(r => new Step(r.name));
+        }
 
         this._cd.markForCheck();
+
+        this.loadDataForCurrentTab();
+    }
+
+    loadDataForCurrentTab(): void {
+        this.stopPollingSpawnInfo();
+        this.stopWebsocketSubscription();
+
+        if (this.currentTabIndex === 0) {
+            this.startPollingSpawnInfo(); // async
+            this.loadEndedSteps(); // async
+            this.startListenLastActiveStep(); // async
+        } else {
+            this.loadOrListenService(); // async
+        }
     }
 
     reset(): void {
         this.previousNodeJobRun = null;
         this.tabs = null;
         this.steps = null;
+        this.services = null;
         this.currentTabIndex = 0;
         this.stopPollingSpawnInfo();
-        this.stopListenLastActiveStep();
+        this.stopWebsocketSubscription();
     }
 
     selectTab(i: number): void {
         this.currentTabIndex = i;
         this._cd.markForCheck();
+        this.loadDataForCurrentTab();
     }
 
     clickMode(mode: DisplayMode): void {
@@ -331,7 +348,7 @@ export class WorkflowRunJobComponent implements OnInit, OnChanges, OnDestroy {
         this._cd.markForCheck();
     }
 
-    stopListenLastActiveStep(): void {
+    stopWebsocketSubscription(): void {
         if (this.websocketSubscription) {
             this.websocketSubscription.unsubscribe();
         }
@@ -396,5 +413,125 @@ export class WorkflowRunJobComponent implements OnInit, OnChanges, OnDestroy {
             }, () => {
                 console.warn('Websocket Completed');
             });
+    }
+
+    async loadOrListenService() {
+        let projectKey = this._store.selectSnapshot(ProjectState.projectSnapshot).key;
+        let workflowName = this._store.selectSnapshot(WorkflowState.workflowSnapshot).name;
+        let nodeRunID = this._store.selectSnapshot(WorkflowState).workflowNodeRun.id;
+        let nodeJobRunID = this._store.selectSnapshot(WorkflowState.getSelectedWorkflowNodeJobRun()).id;
+
+        this.services[this.currentTabIndex - 1].link = await this._workflowService.getServiceLink(projectKey, workflowName,
+            nodeRunID, nodeJobRunID, this.services[this.currentTabIndex - 1].name).toPromise();
+
+        if (!PipelineStatus.isActive(this.nodeJobRun.status)) {
+            let results = await Promise.all([
+                this._http.get(`./cdscdn${this.services[this.currentTabIndex - 1].link.lines_path}`, { params: { limit: `${this.initLoadLinesCount}` }, observe: 'response' }).map(res => {
+                    let headers: HttpHeaders = res.headers;
+                    return <LinesResponse>{
+                        totalCount: parseInt(headers.get('X-Total-Count'), 10),
+                        lines: res.body as Array<Line>
+                    }
+                }).toPromise(),
+                this._http.get(`./cdscdn${this.services[this.currentTabIndex - 1].link.lines_path}`, { params: { offset: `-${this.initLoadLinesCount}` }, observe: 'response' }).map(res => {
+                    let headers: HttpHeaders = res.headers;
+                    return <LinesResponse>{
+                        totalCount: parseInt(headers.get('X-Total-Count'), 10),
+                        lines: res.body as Array<Line>
+                    }
+                }).toPromise(),
+            ]);
+            this.services[this.currentTabIndex - 1].lines = results[0].lines;
+            this.services[this.currentTabIndex - 1].endLines = results[1].lines
+                .filter(l => !results[0].lines.find(line => line.number === l.number));
+            this.services[this.currentTabIndex - 1].totalLinesCount = results[0].totalCount;
+            this._cd.markForCheck();
+            return;
+        }
+
+
+        let result = await this._http.get(
+            `./cdscdn${this.services[this.currentTabIndex - 1].link.lines_path}`,
+            { params: { limit: `${this.initLoadLinesCount}` }, observe: 'response' }
+        ).map(res => {
+            let headers: HttpHeaders = res.headers;
+            return <LinesResponse>{
+                totalCount: parseInt(headers.get('X-Total-Count'), 10),
+                lines: res.body as Array<Line>
+            }
+        }).toPromise();
+        this.services[this.currentTabIndex - 1].lines = result.lines;
+        this.services[this.currentTabIndex - 1].totalLinesCount = result.totalCount;
+        this._cd.markForCheck();
+
+        const protocol = window.location.protocol.replace('http', 'ws');
+        const host = window.location.host;
+        const href = this._router['location']._baseHref;
+
+        this.websocket = webSocket({
+            url: `${protocol}//${host}${href}/cdscdn${this.services[this.currentTabIndex - 1].link.stream_path}?offset=-5`,
+            openObserver: {
+                next: value => {
+                    if (value.type === 'open') { }
+                }
+            }
+        });
+
+        this.websocketSubscription = this.websocket
+            .pipe(retryWhen(errors => errors.pipe(delay(2000))))
+            .subscribe((l: Line) => {
+                if (!this.services[this.currentTabIndex - 1].lines.find(line => line.number === l.number)
+                    && !this.services[this.currentTabIndex - 1].endLines.find(line => line.number === l.number)) {
+                    this.services[this.currentTabIndex - 1].endLines.push(l);
+                    this.services[this.currentTabIndex - 1].totalLinesCount++;
+                    this._cd.markForCheck();
+                }
+            }, (err) => {
+                console.error('Error: ', err)
+            }, () => {
+                console.warn('Websocket Completed');
+            });
+    }
+
+
+    async clickExpandServiceDown(index: number) {
+        let service = this.services[index];
+
+        let result = await this._http.get(`./cdscdn${service.link.lines_path}`, {
+            params: { offset: `${service.lines[service.lines.length - 1].number + 1}`, limit: `${this.expandLoadLinesCount}` },
+            observe: 'response'
+        }).map(res => {
+            let headers: HttpHeaders = res.headers;
+            return <LinesResponse>{
+                totalCount: parseInt(headers.get('X-Total-Count'), 10),
+                lines: res.body as Array<Line>
+            }
+        }).toPromise();
+        this.services[index].totalLinesCount = result.totalCount;
+        this.services[index].lines = service.lines.concat(result.lines
+            .filter(l => !service.endLines.find(line => line.number === l.number)));
+
+        this._cd.markForCheck();
+    }
+
+    async clickExpandServiceUp(index: number) {
+        let service = this.services[index];
+
+        let result = await this._http.get(`./cdscdn${service.link.lines_path}`, {
+            params: { offset: `-${service.endLines.length + this.expandLoadLinesCount}`, limit: `${this.expandLoadLinesCount}` },
+            observe: 'response'
+        }).map(res => {
+            let headers: HttpHeaders = res.headers;
+            return <LinesResponse>{
+                totalCount: parseInt(headers.get('X-Total-Count'), 10),
+                lines: res.body as Array<Line>
+            }
+        }).toPromise();
+        this.services[index].totalLinesCount = result.totalCount;
+        this.services[index].endLines = result.lines.filter(l => {
+            return !service.lines.find(line => line.number === l.number) && !service.endLines.find(line => line.number === l.number);
+        }).concat(service.endLines);
+
+        this._cd.markForCheck();
     }
 }
