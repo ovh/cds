@@ -1,3 +1,17 @@
 codemirror {
   width: 100%;
 }
+
+.content {
+  min-height: 400px;
+
+  .date {
+    font-size: 12px;
+    font-style: italic;
+    color: #8C8C8C;
+  }
+  .ui.form {
+    padding-top: 10px;
+  }
+
+}

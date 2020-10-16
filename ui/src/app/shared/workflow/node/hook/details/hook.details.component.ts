@@ -30,7 +30,7 @@ export class WorkflowNodeHookDetailsComponent implements OnInit, OnDestroy {
     themeSubscription: Subscription;
     body: string;
     loading = true;
-    runNumber: number;
+    runNumber = 0;
 
     constructor(
         private _modalService: SuiModalService,
@@ -78,16 +78,16 @@ export class WorkflowNodeHookDetailsComponent implements OnInit, OnDestroy {
                 this.loading = false;
                 this._cd.markForCheck();
             }))
-            .subscribe((hook) => {
-                if (Array.isArray(hook.executions) && hook.executions.length) {
-                    hook.executions = hook.executions.map((exec) => {
+            .subscribe((hk) => {
+                if (Array.isArray(hk.executions) && hk.executions.length) {
+                    hk.executions = hk.executions.map((exec) => {
                         if (exec.nb_errors > 0) {
                             exec.status = HookStatus.FAIL;
                         }
                         return exec;
                     });
-                    this.executions = hook.executions;
-                    this.task = hook.executions.find(t => t.workflow_run === this.runNumber);
+                    this.executions = hk.executions;
+                    this.task = hk.executions.find(t => t.workflow_run === this.runNumber);
                     this.initDiplayTask();
                     this._cd.markForCheck();
                 }
@@ -112,5 +112,11 @@ export class WorkflowNodeHookDetailsComponent implements OnInit, OnDestroy {
         } catch (e) {
             this.body = jsonBody;
         }
+    }
+
+    selectTask(exec: TaskExecution): void {
+        this.task = exec;
+        this.initDiplayTask();
+        this._cd.markForCheck();
     }
 }

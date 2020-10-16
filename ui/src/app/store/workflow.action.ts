@@ -21,12 +21,6 @@ export class UpdateModal {
     constructor(public payload: { workflow: Workflow }) { }
 }
 
-// ---------  Sidebar -----
-export class SidebarRunsMode {
-    static readonly type = '[Workflow] Sidebar run mode';
-    constructor(public payload: {}) { }
-}
-
 // ---------  Workflow Run ---
 export class ChangeToRunView {
     static readonly type = '[Workflow] Change to Run View';

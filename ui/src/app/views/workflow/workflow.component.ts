@@ -26,7 +26,6 @@ import {
     CleanWorkflowState,
     GetWorkflow,
     SelectHook,
-    SidebarRunsMode,
     UpdateFavoriteWorkflow
 } from 'app/store/workflow.action';
 import { WorkflowState } from 'app/store/workflow.state';
@@ -58,12 +57,6 @@ export class WorkflowComponent implements OnInit, OnDestroy {
 
     loading = true;
     loadingFav = false;
-
-    // Sidebar data
-    @Select(WorkflowState.getSidebarMode()) sibebar$: Observable<string>;
-    sidebarSubs: Subscription;
-    sidebarMode = WorkflowSidebarMode.RUNS;
-    sidebarModes = WorkflowSidebarMode;
 
     asCodeEditorSubscription: Subscription;
     asCodeEditorOpen = false;
@@ -132,13 +125,6 @@ export class WorkflowComponent implements OnInit, OnDestroy {
                     }
                 }));
             });
-        });
-        this.sidebarSubs = this.sibebar$.subscribe(m => {
-            if (m === this.sidebarMode) {
-                return;
-            }
-            this.sidebarMode = m;
-            this._cd.detectChanges();
         });
 
         this.asCodeEditorSubscription = this._workflowCore.getAsCodeEditor()
@@ -214,10 +200,6 @@ export class WorkflowComponent implements OnInit, OnDestroy {
             workflowName: this.workflow.name
         })).pipe(finalize(() => this.loadingFav = false))
             .subscribe(() => this._toast.success('', this._translate.instant('common_favorites_updated')))
-    }
-
-    changeToRunsMode(): void {
-        this._store.dispatch(new SidebarRunsMode({}));
     }
 
     showTemplateFrom(): void {

@@ -1,6 +1,6 @@
 <div class="sidebar-node-edit">
     <div class="ui list">
-        <a class="item" (click)="sendEvent('logs')" [class.disabled]="hookEventUUID !== hook.uuid">
+        <a class="item" (click)="sendEvent('logs')" [class.disabled]="isRun && (!hookEventUUID || hookEventUUID !== hook.uuid)">
                 {{ 'btn_logs' | translate }}
         </a>
         <hr>

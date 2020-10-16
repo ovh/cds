@@ -95,7 +95,6 @@ import { WorkflowTriggerComponent } from './workflow/modal/node-add/workflow.tri
 import { WorkflowNodeEditModalComponent } from './workflow/modal/node-edit/node.edit.modal.component';
 import { WorkflowNodeHookDetailsComponent } from './workflow/node/hook/details/hook.details.component';
 import { WorkflowNodeRunParamComponent } from './workflow/node/run/node.run.param.component';
-import { WorkflowSidebarRunHookComponent } from './workflow/sidebar/run-hook/workflow.sidebar.run.hook.component';
 import { WorkflowSidebarRunListComponent } from './workflow/sidebar/run-list/workflow.sidebar.run.component';
 import { WorkflowWizardNodeContextComponent } from './workflow/wizard/context/wizard.context.component';
 import { WorkflowNodeHookFormComponent } from './workflow/wizard/hook/hook.form.component';
@@ -202,7 +201,6 @@ import { ZoneComponent } from './zone/zone.component';
         WorkflowNodeHookFormComponent,
         WorkflowNodeRunParamComponent,
         WorkflowSidebarRunListComponent,
-        WorkflowSidebarRunHookComponent,
         WorkflowTemplateApplyFormComponent,
         WorkflowTemplateApplyModalComponent,
         WorkflowTemplateBulkModalComponent,
@@ -295,7 +293,6 @@ import { ZoneComponent } from './zone/zone.component';
         LabelsEditComponent,
         WorkflowWNodeComponent,
         WorkflowSidebarRunListComponent,
-        WorkflowSidebarRunHookComponent,
         WorkflowWNodeMenuEditComponent,
         WorkflowNodeAddWizardComponent,
         WorkflowDeleteNodeComponent,

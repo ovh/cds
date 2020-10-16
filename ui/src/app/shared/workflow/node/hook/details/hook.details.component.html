@@ -15,12 +15,19 @@
             <div class="ui info message">Hook execution has been deleted</div>
         </ng-container>
 
-        <ng-container *ngIf="!loading && !runNumber && !task">
-            <sui-select class="selection" name="selectExecution" [(ngModel)]="task" [options]="executions"
-                        [isSearchable]="true" #selectIntegration>
-                <sui-select-option *ngFor="let t of selectIntegration.filteredOptions" [value]="t.uuid">
+        <ng-container *ngIf="!loading && executions">
+            <h3>Hook executions</h3>
+            <sui-select class="selection" name="selectExecution" (ngModelChange)="selectTask($event)" [(ngModel)]="task" [options]="executions"
+                        [optionTemplate]="optionTemplate"
+                        [isSearchable]="true" #selectIntegration
+                        [isDisabled]="runNumber">
+                <sui-select-option *ngFor="let t of selectIntegration.filteredOptions" [value]="t">
                 </sui-select-option>
             </sui-select>
+            <ng-template let-option #optionTemplate>
+                {{ 'Workflow run n°' + option.workflow_run }}
+                <span class="date">{{' at '}}{{option.timestamp/1000000 | amDateFormat: 'YYYY-MM-DD HH:mm:ss' }}</span>
+            </ng-template>
         </ng-container>
 
         <ng-container *ngIf="task">
