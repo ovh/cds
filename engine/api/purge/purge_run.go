@@ -30,6 +30,7 @@ const (
 	RunStatus          = "run_status"
 	RunDaysBefore      = "run_days_before"
 	RunGitBranchExist  = "git_branch_exist"
+	RunChangeExist     = "gerrit_change_exist"
 	RunChangeMerged    = "gerrit_change_merged"
 	RunChangeAbandoned = "gerrit_change_abandoned"
 	RunChangeDayBefore = "gerrit_change_days_before"
@@ -197,11 +198,17 @@ func purgeComputeVariables(ctx context.Context, luaCheck *luascript.Check, run s
 	if changeID, ok := vars["gerrit.change.id"]; ok && vcsClient != nil {
 		ch, err := vcsClient.PullRequest(ctx, app.RepositoryFullname, changeID)
 		if err != nil {
-			return err
+			if !sdk.ErrorIs(err, sdk.ErrNotFound) {
+				return err
+			}
+			vars[RunChangeExist] = "false"
+		} else {
+			vars[RunChangeExist] = "true"
+			vars[RunChangeMerged] = strconv.FormatBool(ch.Merged)
+			vars[RunChangeAbandoned] = strconv.FormatBool(ch.Closed)
+			varsFloats[RunChangeDayBefore] = math.Floor(time.Now().Sub(ch.Updated).Hours())
 		}
-		vars[RunChangeMerged] = strconv.FormatBool(ch.Merged)
-		vars[RunChangeAbandoned] = strconv.FormatBool(ch.Closed)
-		varsFloats[RunChangeDayBefore] = math.Floor(time.Now().Sub(ch.Updated).Hours())
+
 	}
 
 	// If we have a branch in payload, check if it exists on repository branches list
