@@ -539,7 +539,7 @@ func (a *API) Serve(ctx context.Context) error {
 		Background: ctx,
 	}
 	a.InitRouter()
-	if err := a.initWebsocket(); err != nil {
+	if err := a.initWebsocket(event.DefaultPubSubKey); err != nil {
 		return err
 	}
 	if err := InitRouterMetrics(ctx, a); err != nil {

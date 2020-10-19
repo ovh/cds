@@ -27,13 +27,16 @@ type MarkAsDeleteOptions struct {
 }
 
 const (
-	RunStatus         = "run_status"
-	RunDateBefore     = "run_days_before"
-	RunGitBranchExist = "git_branch_exist"
+	RunStatus          = "run_status"
+	RunDaysBefore      = "run_days_before"
+	RunGitBranchExist  = "git_branch_exist"
+	RunChangeMerged    = "gerrit_change_merged"
+	RunChangeAbandoned = "gerrit_change_abandoned"
+	RunChangeDayBefore = "gerrit_change_days_before"
 )
 
 func GetRetetionPolicyVariables() []string {
-	return []string{RunDateBefore, RunStatus, RunGitBranchExist}
+	return []string{RunDaysBefore, RunStatus, RunGitBranchExist, RunChangeMerged, RunChangeAbandoned, RunChangeDayBefore}
 }
 
 func markWorkflowRunsToDelete(ctx context.Context, store cache.Store, db *gorp.DbMap, workflowRunsMarkToDelete *stats.Int64Measure) error {
@@ -56,19 +59,46 @@ func markWorkflowRunsToDelete(ctx context.Context, store cache.Store, db *gorp.D
 }
 
 func ApplyRetentionPolicyOnWorkflow(ctx context.Context, store cache.Store, db *gorp.DbMap, wf sdk.Workflow, opts MarkAsDeleteOptions, u *sdk.AuthentifiedUser) error {
-	limit := 50
-	offset := 0
+	var vcsClient sdk.VCSAuthorizedClientService
+	var app sdk.Application
+	appID := wf.WorkflowData.Node.Context.ApplicationID
+	if appID != 0 {
+		app = wf.Applications[appID]
+		if app.RepositoryFullname != "" {
+			tx, err := db.Begin()
+			if err != nil {
+				return sdk.WithStack(err)
+			}
+			//Get the RepositoriesManager Client
+			vcsServer, err := repositoriesmanager.LoadProjectVCSServerLinkByProjectKeyAndVCSServerName(ctx, tx, wf.ProjectKey, app.VCSServer)
+			if err != nil {
+				log.Debug("SendVCSEvent> No vcsServer found: %v", err)
+				_ = tx.Rollback()
+				return err
+			}
+			vcsClient, err = repositoriesmanager.AuthorizedClient(ctx, tx, store, wf.ProjectKey, vcsServer)
+			if err != nil {
+				_ = tx.Rollback()
+				return sdk.WithStack(err)
+			}
+		}
+	}
 
-	branches, err := getBranchesForWorkflow(ctx, store, db, wf)
-	if err != nil {
-		return err
-	}
 	branchesMap := make(map[string]struct{})
-	for _, b := range branches {
-		branchesMap[b.DisplayID] = struct{}{}
+	if vcsClient != nil {
+		branches, err := vcsClient.Branches(ctx, app.RepositoryFullname)
+		if err != nil {
+			return err
+		}
+		for _, b := range branches {
+			branchesMap[b.DisplayID] = struct{}{}
+		}
 	}
+
 	runs := make([]sdk.WorkflowRunToKeep, 0)
 	var nbRunsAnalyzed int64
+	limit := 50
+	offset := 0
 	for {
 		wfRuns, _, _, count, err := workflow.LoadRunsSummaries(db, wf.ProjectKey, wf.Name, offset, limit, nil)
 		if err != nil {
@@ -77,7 +107,7 @@ func ApplyRetentionPolicyOnWorkflow(ctx context.Context, store cache.Store, db *
 
 		nbRunsAnalyzed = int64(len(wfRuns))
 		for _, run := range wfRuns {
-			keep, err := applyRetentionPolicyOnRun(db, wf, run, branchesMap, opts)
+			keep, err := applyRetentionPolicyOnRun(ctx, db, wf, run, branchesMap, app, vcsClient, opts)
 			if err != nil {
 				return err
 			}
@@ -102,7 +132,7 @@ func ApplyRetentionPolicyOnWorkflow(ctx context.Context, store cache.Store, db *
 	return nil
 }
 
-func applyRetentionPolicyOnRun(db *gorp.DbMap, wf sdk.Workflow, run sdk.WorkflowRunSummary, branchesMap map[string]struct{}, opts MarkAsDeleteOptions) (bool, error) {
+func applyRetentionPolicyOnRun(ctx context.Context, db *gorp.DbMap, wf sdk.Workflow, run sdk.WorkflowRunSummary, branchesMap map[string]struct{}, app sdk.Application, vcsClient sdk.VCSAuthorizedClientService, opts MarkAsDeleteOptions) (bool, error) {
 	if wf.ToDelete && !opts.DryRun {
 		if err := workflow.MarkWorkflowRunsAsDelete(db, []int64{run.ID}); err != nil {
 			return true, sdk.WithStack(err)
@@ -114,7 +144,7 @@ func applyRetentionPolicyOnRun(db *gorp.DbMap, wf sdk.Workflow, run sdk.Workflow
 		return true, sdk.WithStack(err)
 	}
 
-	if err := purgeComputeVariables(luacheck, run, branchesMap); err != nil {
+	if err := purgeComputeVariables(ctx, luacheck, run, branchesMap, app, vcsClient); err != nil {
 		return true, err
 	}
 
@@ -133,7 +163,8 @@ func applyRetentionPolicyOnRun(db *gorp.DbMap, wf sdk.Workflow, run sdk.Workflow
 	return false, nil
 }
 
-func purgeComputeVariables(luaCheck *luascript.Check, run sdk.WorkflowRunSummary, branchesMap map[string]struct{}) error {
+func purgeComputeVariables(ctx context.Context, luaCheck *luascript.Check, run sdk.WorkflowRunSummary, branchesMap map[string]struct{}, app sdk.Application, vcsClient sdk.VCSAuthorizedClientService) error {
+
 	vars := make(map[string]string)
 	varsFloats := make(map[string]float64)
 
@@ -161,7 +192,17 @@ func purgeComputeVariables(luaCheck *luascript.Check, run sdk.WorkflowRunSummary
 		case run.ToCraftOpts.Hook != nil && run.ToCraftOpts.Hook.Payload != nil:
 			vars = run.ToCraftOpts.Hook.Payload
 		}
+	}
 
+	// If we have gerrit change id, check status
+	if changeID, ok := vars["gerrit.change.id"]; ok && vcsClient != nil {
+		ch, err := vcsClient.PullRequest(ctx, app.RepositoryFullname, changeID)
+		if err != nil {
+			return err
+		}
+		vars[RunChangeMerged] = strconv.FormatBool(ch.Merged)
+		vars[RunChangeAbandoned] = strconv.FormatBool(ch.Closed)
+		varsFloats[RunChangeDayBefore] = math.Floor(time.Now().Sub(ch.Updated).Hours())
 	}
 
 	// If we have a branch in payload, check if it exists on repository branches list
@@ -171,37 +212,9 @@ func purgeComputeVariables(luaCheck *luascript.Check, run sdk.WorkflowRunSummary
 	}
 	vars[RunStatus] = run.Status
 
-	varsFloats[RunDateBefore] = math.Floor(time.Now().Sub(run.LastModified).Hours() / 24)
+	varsFloats[RunDaysBefore] = math.Floor(time.Now().Sub(run.LastModified).Hours() / 24)
 
 	luaCheck.SetVariables(vars)
 	luaCheck.SetFloatVariables(varsFloats)
 	return nil
-}
-
-func getBranchesForWorkflow(ctx context.Context, store cache.Store, db *gorp.DbMap, wf sdk.Workflow) ([]sdk.VCSBranch, error) {
-	appID := wf.WorkflowData.Node.Context.ApplicationID
-	if appID != 0 {
-		app := wf.Applications[appID]
-		if app.RepositoryFullname != "" {
-			tx, err := db.Begin()
-			if err != nil {
-				return nil, sdk.WithStack(err)
-			}
-			defer tx.Rollback()
-			//Get the RepositoriesManager Client
-			vcsServer, err := repositoriesmanager.LoadProjectVCSServerLinkByProjectKeyAndVCSServerName(ctx, tx, wf.ProjectKey, app.VCSServer)
-			if err != nil {
-				log.Debug("SendVCSEvent> No vcsServer found: %v", err)
-				return nil, err
-			}
-			client, err := repositoriesmanager.AuthorizedClient(ctx, tx, store, wf.ProjectKey, vcsServer)
-			if err != nil {
-				return nil, sdk.WithStack(err)
-			}
-
-			branches, err := client.Branches(ctx, app.RepositoryFullname)
-			return branches, err
-		}
-	}
-	return nil, nil
 }

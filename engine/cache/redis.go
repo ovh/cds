@@ -626,34 +626,27 @@ type RedisPubSub struct {
 	*redis.PubSub
 }
 
-func (p *RedisPubSub) GetMessage(c context.Context) (string, error) {
-	msg, _ := p.PubSub.ReceiveTimeout(time.Second)
-	redisMsg, ok := msg.(*redis.Message)
-	if msg != nil {
-		if ok {
+func (p *RedisPubSub) GetMessage(ctx context.Context) (string, error) {
+	if msg, _ := p.PubSub.ReceiveTimeout(time.Second); msg != nil {
+		if redisMsg, ok := msg.(*redis.Message); ok {
 			return redisMsg.Payload, nil
 		}
 	}
 
-	ticker := time.NewTicker(250 * time.Millisecond).C
-	for redisMsg == nil {
+	ticker := time.NewTicker(50 * time.Millisecond)
+	defer ticker.Stop()
+	for {
 		select {
-		case <-ticker:
-			msg, _ := p.PubSub.ReceiveTimeout(time.Second)
-			if msg == nil {
-				continue
+		case <-ticker.C:
+			if msg, _ := p.PubSub.ReceiveTimeout(time.Second); msg != nil {
+				if redisMsg, ok := msg.(*redis.Message); ok {
+					return redisMsg.Payload, nil
+				}
 			}
-
-			var ok bool
-			redisMsg, ok = msg.(*redis.Message)
-			if !ok {
-				continue
-			}
-		case <-c.Done():
-			return "", nil
+		case <-ctx.Done():
+			return "", ctx.Err()
 		}
 	}
-	return redisMsg.Payload, nil
 }
 
 func (s *RedisStore) ScoredSetScanMaxScore(ctx context.Context, key string) (*SetValueWithScore, error) {

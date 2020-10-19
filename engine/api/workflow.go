@@ -156,6 +156,12 @@ func (api *API) getRetentionPolicySuggestionHandler() service.Handler {
 			retentionPolicySuggestion = append(retentionPolicySuggestion, k)
 		}
 
+		for i := range retentionPolicySuggestion {
+			v := retentionPolicySuggestion[i]
+			v = strings.Replace(v, ".", "_", -1)
+			retentionPolicySuggestion[i] = v
+		}
+
 		return service.WriteJSON(w, retentionPolicySuggestion, http.StatusOK)
 	}
 }

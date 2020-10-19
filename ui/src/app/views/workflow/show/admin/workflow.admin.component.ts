@@ -31,6 +31,8 @@ import { DragulaService } from 'ng2-dragula-sgu';
 import { forkJoin, Observable, Subscription } from 'rxjs';
 import { finalize, first } from 'rxjs/operators';
 
+declare var CodeMirror: any;
+
 @Component({
     selector: 'app-workflow-admin',
     templateUrl: 'workflow.admin.component.html',
@@ -88,7 +90,9 @@ export class WorkflowAdminComponent implements OnInit, OnDestroy {
     dryRunMaxDatas: number;
     dryRunStatus: string;
     dryRunAnalyzedRuns: number;
-    availableVariables: string;
+    availableVariables: Array<string>;
+    availableStringVariables: string;
+    _keyUpListener: any;
     modal: SuiActiveModal<boolean, boolean, void>;
     //
 
@@ -197,6 +201,21 @@ export class WorkflowAdminComponent implements OnInit, OnDestroy {
         this._cd.markForCheck();
     }
 
+    changeCodeMirror(codemirror) {
+        if (!this._keyUpListener) {
+            this._keyUpListener = codemirror.instance.on('keyup', (cm, event) => {
+                if (!cm.state.completionActive && (event.keyCode > 46 || event.keyCode === 32)) {
+                    CodeMirror.showHint(cm, CodeMirror.hint.textplain, {
+                        completeSingle: true,
+                        closeCharacters: / /,
+                        completionList: this.availableVariables,
+                        specialChars: ''
+                    });
+                }
+            });
+        }
+    }
+
     initExistingtags(): void {
         this.existingTags = [];
         this.existingTagsPurge = [];
@@ -212,7 +231,8 @@ export class WorkflowAdminComponent implements OnInit, OnDestroy {
 
     initDryRunSubscription() {
         this._workflowService.retentionPolicySuggestion(this.workflow).subscribe(sg => {
-            this.availableVariables = sg.join(', ');
+            this.availableVariables = sg;
+            this.availableStringVariables = sg.sort().join(', ');
             this._cd.markForCheck();
         });
 
