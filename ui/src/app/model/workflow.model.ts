@@ -201,7 +201,8 @@ export class Workflow {
             for (let i = 0; i < workflow.notifications.length; i++) {
                 if (workflow.notifications[i].source_node_ref) {
                     for (let j = 0; j < workflow.notifications[i].source_node_ref.length; j++) {
-                        if (-1 === nodes.findIndex(n => n.ref === workflow.notifications[i].source_node_ref[j])) {
+                        if (-1 === nodes.findIndex(n => n.ref === workflow.notifications[i].source_node_ref[j]) &&
+                            -1 === nodes.findIndex(n => n.name === workflow.notifications[i].source_node_ref[j])) {
                             workflow.notifications[i].source_node_ref.splice(j, 1);
                             j--;
                         }
