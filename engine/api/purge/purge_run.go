@@ -37,7 +37,7 @@ const (
 )
 
 func GetRetetionPolicyVariables() []string {
-	return []string{RunDaysBefore, RunStatus, RunGitBranchExist, RunChangeMerged, RunChangeAbandoned, RunChangeDayBefore}
+	return []string{RunDaysBefore, RunStatus, RunGitBranchExist, RunChangeMerged, RunChangeAbandoned, RunChangeDayBefore, RunChangeExist}
 }
 
 func markWorkflowRunsToDelete(ctx context.Context, store cache.Store, db *gorp.DbMap, workflowRunsMarkToDelete *stats.Int64Measure) error {
