@@ -190,7 +190,7 @@ func (b *bitbucketClient) ToVCSPullRequest(ctx context.Context, repo string, pul
 				LatestCommit: pullRequest.FromRef.LatestCommit,
 			},
 		},
-		Updated: time.Unix(int64(pullRequest.UpdatedDate), 0),
+		Updated: time.Unix(0, int64(pullRequest.UpdatedDate)*int64(time.Millisecond)),
 	}
 	if len(pullRequest.Links.Self) > 0 {
 		pr.URL = pullRequest.Links.Self[0].Href
