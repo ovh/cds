@@ -4,7 +4,7 @@ import { Usage } from './usage.model';
 import { Variable } from './variable.model';
 import { VCSStrategy } from './vcs.model';
 import { Notification, Workflow } from './workflow.model';
-import { WorkflowRun } from './workflow.run.model';
+import { WorkflowRunSummary } from './workflow.run.model';
 
 export const applicationNamePattern: RegExp = new RegExp('^[a-zA-Z0-9._-]+$');
 
@@ -103,7 +103,7 @@ export class Severity {
 export class Overview {
     graphs: Array<OverviewGraph>;
     git_url: string;
-    history: { [key: string]: Array<WorkflowRun>; };
+    history: { [key: string]: Array<WorkflowRunSummary>; };
 }
 
 export class OverviewGraph {

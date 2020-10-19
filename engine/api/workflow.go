@@ -190,7 +190,7 @@ func (api *API) postWorkflowRetentionPolicyDryRun() service.Handler {
 		wf.RetentionPolicy = request.RetentionPolicy
 
 		// Get the number of runs to analyze
-		_, _, _, count, err := workflow.LoadRuns(api.mustDB(), wf.ProjectKey, wf.Name, 0, 1, nil)
+		_, _, _, count, err := workflow.LoadRunsSummaries(api.mustDB(), wf.ProjectKey, wf.Name, 0, 1, nil)
 		if err != nil {
 			return err
 		}

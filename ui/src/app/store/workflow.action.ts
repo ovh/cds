@@ -2,7 +2,7 @@ import { GroupPermission } from 'app/model/group.model';
 import { ProjectIntegration } from 'app/model/integration.model';
 import { RetentionDryRunEvent } from 'app/model/purge.model';
 import { WNode, WNodeHook, WNodeTrigger, Workflow, WorkflowNotification } from 'app/model/workflow.model';
-import { WorkflowNodeRun, WorkflowRun } from 'app/model/workflow.run.model';
+import { WorkflowNodeRun, WorkflowRun, WorkflowRunSummary } from 'app/model/workflow.run.model';
 
 // ---------  MODAL  -----
 
@@ -43,9 +43,9 @@ export class RemoveWorkflowRunFromList {
     constructor(public payload: { projectKey: string, workflowName: string, num: number }) { }
 }
 
-export class GetWorkflowRuns {
-    static readonly type = '[Workflow] Get Workflow Runs';
-    constructor(public payload: { projectKey: string, workflowName: string, limit: string, offset: string, filters?: {}}) { }
+export class SetWorkflowRuns {
+    static readonly type = '[Workflow] Set Workflow Runs';
+    constructor(public payload: { projectKey: string, workflowName: string, runs: Array<WorkflowRunSummary>, filters?: {}}) { }
 }
 
 export class DeleteWorkflowRun {
