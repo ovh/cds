@@ -16,8 +16,7 @@ func (c *gerritClient) PullRequest(_ context.Context, _ string, id string) (sdk.
 	change, resp, err := c.client.Changes.GetChange(id, nil)
 	if err != nil {
 		if resp != nil && resp.StatusCode == http.StatusNotFound {
-				return sdk.VCSPullRequest{}, sdk.WrapError(sdk.ErrNotFound, "unable to find change %s", id)
-			}
+			return sdk.VCSPullRequest{}, sdk.WrapError(sdk.ErrNotFound, "unable to find change %s", id)
 		}
 		return sdk.VCSPullRequest{}, sdk.WithStack(err)
 	}
