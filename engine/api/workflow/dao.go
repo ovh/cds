@@ -670,6 +670,7 @@ func Update(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store cache.St
 
 // MarkAsDelete marks a workflow to be deleted
 func MarkAsDelete(ctx context.Context, db gorpmapper.SqlExecutorWithTx, cache cache.Store, proj sdk.Project, wkf *sdk.Workflow) error {
+	// Remove references of dependencies to be able to delete them before workflow deletion
 	nodes := wkf.WorkflowData.Array()
 	for _, n := range nodes {
 		n.Context.ApplicationID = 0

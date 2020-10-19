@@ -221,7 +221,7 @@ type VCSAuthorizedClientCommon interface {
 	CommitsBetweenRefs(ctx context.Context, repo, base, head string) ([]VCSCommit, error)
 
 	// PullRequests
-	PullRequest(ctx context.Context, repo string, id int) (VCSPullRequest, error)
+	PullRequest(ctx context.Context, repo string, id string) (VCSPullRequest, error)
 	PullRequestComment(ctx context.Context, repo string, c VCSPullRequestCommentRequest) error
 	PullRequestCreate(ctx context.Context, repo string, pr VCSPullRequest) (VCSPullRequest, error)
 

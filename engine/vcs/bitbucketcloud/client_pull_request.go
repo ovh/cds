@@ -12,8 +12,8 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
-func (client *bitbucketcloudClient) PullRequest(ctx context.Context, fullname string, id int) (sdk.VCSPullRequest, error) {
-	url := fmt.Sprintf("/repositories/%s/pullrequests/%d", fullname, id)
+func (client *bitbucketcloudClient) PullRequest(ctx context.Context, fullname string, id string) (sdk.VCSPullRequest, error) {
+	url := fmt.Sprintf("/repositories/%s/pullrequests/%s", fullname, id)
 	status, body, _, err := client.get(url)
 	if err != nil {
 		log.Warning(ctx, "bitbucketcloudClient.Pullrequest> Error %s", err)
@@ -173,7 +173,8 @@ func (pullr PullRequest) ToVCSPullRequest() sdk.VCSPullRequest {
 			DisplayName: pullr.Author.DisplayName,
 			Name:        pullr.Author.Username,
 		},
-		Closed: pullr.State == "SUPERSEDED",
-		Merged: pullr.State == "MERGED",
+		Closed:  pullr.State == "SUPERSEDED",
+		Merged:  pullr.State == "MERGED",
+		Updated: pullr.UpdatedOn,
 	}
 }

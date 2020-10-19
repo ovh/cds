@@ -2,6 +2,7 @@ package ascode
 
 import (
 	"context"
+	"strconv"
 
 	"github.com/go-gorp/gorp"
 
@@ -63,7 +64,7 @@ func SyncEvents(ctx context.Context, db *gorp.DbMap, store cache.Store, proj sdk
 	eventLeft := make([]sdk.AsCodeEvent, 0)
 	eventToDelete := make([]sdk.AsCodeEvent, 0)
 	for _, ascodeEvt := range asCodeEvents {
-		pr, err := client.PullRequest(ctx, rootApp.RepositoryFullname, int(ascodeEvt.PullRequestID))
+		pr, err := client.PullRequest(ctx, rootApp.RepositoryFullname, strconv.Itoa(int(ascodeEvt.PullRequestID)))
 		if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
 			return res, sdk.WrapError(err, "unable to check pull request status")
 		}

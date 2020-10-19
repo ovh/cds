@@ -1464,9 +1464,14 @@ export class WorkflowState {
     @Action(actionWorkflow.ComputeRetentionDryRunEvent)
     receivedRetentionDryRunEvent(ctx: StateContext<WorkflowStateModel>, action: actionWorkflow.ComputeRetentionDryRunEvent) {
         const state = ctx.getState();
+
+        let runsKept = state.retentionDryRunResults;
+        if (action.payload.event.runs && action.payload.event.runs.length > 0) {
+            runsKept = state.retentionDryRunResults.concat(action.payload.event.runs);
+        }
         ctx.setState({
             ...state,
-            retentionDryRunResults: state.retentionDryRunResults.concat(action.payload.event.runs),
+            retentionDryRunResults: runsKept,
             retentionDryRunStatus: action.payload.event.status,
             retentionDryRunNbAnalyzedRuns: state.retentionDryRunNbAnalyzedRuns + action.payload.event.nb_runs_analyzed
         });
