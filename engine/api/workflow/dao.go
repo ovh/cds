@@ -28,7 +28,7 @@ import (
 )
 
 const (
-	RetetionRule = "return (git_branch_exist == \"false\" and run_days_before < 2) or run_days_before < 365"
+	RetentionRule = "return (git_branch_exist == \"false\" and run_days_before < 2) or run_days_before < 365"
 )
 
 type PushSecrets struct {
@@ -298,7 +298,7 @@ func Insert(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store cache.St
 		w.HistoryLength = sdk.DefaultHistoryLength
 	}
 	w.MaxRuns = maxRuns
-	w.RetentionPolicy = RetetionRule
+	w.RetentionPolicy = RetentionRule
 
 	w.LastModified = time.Now()
 	if err := db.QueryRow(`INSERT INTO workflow (
@@ -597,7 +597,7 @@ func Update(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store cache.St
 	}
 
 	if wf.RetentionPolicy == "" {
-		wf.RetentionPolicy = RetetionRule
+		wf.RetentionPolicy = RetentionRule
 	}
 
 	if err := CheckValidity(ctx, db, wf); err != nil {
