@@ -2,6 +2,11 @@ package purge
 
 import (
 	"context"
+	"os"
+	"path"
+	"testing"
+	"time"
+
 	"github.com/go-gorp/gorp"
 	"github.com/golang/mock/gomock"
 	"github.com/ovh/cds/engine/api/services"
@@ -11,10 +16,6 @@ import (
 	"github.com/ovh/cds/sdk"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/h2non/gock.v1"
-	"os"
-	"path"
-	"testing"
-	"time"
 
 	"github.com/ovh/cds/engine/api/bootstrap"
 	"github.com/ovh/cds/engine/api/objectstore"
@@ -45,7 +46,7 @@ func Test_deleteWorkflowRunsHistory(t *testing.T) {
 	}()
 
 	servicesClients.EXPECT().
-		DoJSONRequest(gomock.Any(), "POST", "/item/delete", gomock.Any(), gomock.Any(), gomock.Any()).MaxTimes(1)
+		DoJSONRequest(gomock.Any(), "POST", "/bulk/item/delete", gomock.Any(), gomock.Any(), gomock.Any()).MaxTimes(1)
 
 	sharedStorage, errO := objectstore.Init(context.Background(), cfg)
 	test.NoError(t, errO)

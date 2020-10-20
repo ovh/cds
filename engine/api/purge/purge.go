@@ -274,7 +274,7 @@ func deleteRunHistory(ctx context.Context, db *gorp.DbMap, workflowRunID int64, 
 		return sdk.WithStack(err)
 	}
 
-	_, code, err := cdnClient.DoJSONRequest(ctx, http.MethodPost, "/item/delete", sdk.CDNMarkDelete{RunID: workflowRunID}, nil)
+	_, code, err := cdnClient.DoJSONRequest(ctx, http.MethodPost, "/bulk/item/delete", sdk.CDNMarkDelete{RunID: workflowRunID}, nil)
 	if err != nil || code >= 400 {
 		return sdk.WithStack(err)
 	}

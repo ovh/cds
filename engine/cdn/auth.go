@@ -47,17 +47,38 @@ func (s *Service) itemAccessMiddleware(ctx context.Context, w http.ResponseWrite
 	return s.itemAccessCheck(ctx, itemType, apiRef)
 }
 
-func (s *Service) itemAccessCheck(ctx context.Context, itemType sdk.CDNItemType, apiRef string) (context.Context, error) {
-	ctx, end := telemetry.Span(ctx, "router.itemAccessCheck")
-	defer end()
+func (s *Service) sessionID(ctx context.Context) (string, error) {
+	iSessionID := ctx.Value(service.ContextSessionID)
+	if iSessionID != nil {
+		sessionID, ok := iSessionID.(string)
+		if ok {
+			return sessionID, nil
+		}
+	}
 
 	// Check for session based on jwt from context
 	jwt, ok := ctx.Value(service.ContextJWT).(*jwt.Token)
 	if !ok {
-		return ctx, sdk.WithStack(sdk.ErrUnauthorized)
+		return "", sdk.WithStack(sdk.ErrUnauthorized)
 	}
-	claims := jwt.Claims.(*sdk.AuthSessionJWTClaims)
+	claims, ok := jwt.Claims.(*sdk.AuthSessionJWTClaims)
+	if !ok {
+		return "", sdk.WithStack(sdk.ErrUnauthorized)
+	}
 	sessionID := claims.StandardClaims.Id
+	return sessionID, nil
+}
+
+func (s *Service) itemAccessCheck(ctx context.Context, itemType sdk.CDNItemType, apiRef string) (context.Context, error) {
+	ctx, end := telemetry.Span(ctx, "router.itemAccessCheck")
+	defer end()
+
+	sessionID, err := s.sessionID(ctx)
+	if err != nil {
+		return ctx, err
+	}
+
+	ctx = context.WithValue(ctx, service.ContextSessionID, sessionID)
 
 	keyWorkflowPermissionForSession := cache.Key(keyPermission, apiRef, sessionID)
 

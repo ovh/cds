@@ -18,6 +18,7 @@ const (
 	ContextJWT contextKey = iota
 	ContextJWTRaw
 	ContextJWTFromCookie
+	ContextSessionID
 )
 
 func NoAuthMiddleware(ctx context.Context, w http.ResponseWriter, req *http.Request, rc *HandlerConfig) (context.Context, error) {

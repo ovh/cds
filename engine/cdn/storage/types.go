@@ -43,6 +43,7 @@ type Interface interface {
 	ItemExists(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlExecutor, i sdk.CDNItem) (bool, error)
 	Status(ctx context.Context) []sdk.MonitoringStatusLine
 	SyncBandwidth() float64
+	Remove(ctx context.Context, i sdk.CDNItemUnit) error
 }
 
 type AbstractUnit struct {
@@ -53,11 +54,9 @@ type AbstractUnit struct {
 }
 
 func (a *AbstractUnit) ExistsInDatabase(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlExecutor, id string) (*sdk.CDNItemUnit, error) {
-	iu, err := LoadItemUnitByUnit(ctx, m, db, a.ID(), id, gorpmapper.GetOptions.WithDecryption)
-	if err != nil {
-		return nil, err
-	}
-	return iu, nil
+	query := gorpmapper.NewQuery("SELECT * FROM storage_unit_item WHERE unit_id = $1 and item_id = $2 LIMIT 1").Args(a.ID(), id)
+	iu, err := getItemUnit(ctx, m, db, query, gorpmapper.GetOptions.WithDecryption)
+	return iu, err
 }
 
 func (a *AbstractUnit) Name() string {

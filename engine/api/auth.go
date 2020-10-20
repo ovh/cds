@@ -367,3 +367,33 @@ func (api *API) getAuthMe() service.Handler {
 		}, http.StatusOK)
 	}
 }
+
+func (api *API) getAuthSession() service.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		c := getAPIConsumer(ctx)
+		if c == nil {
+			return sdk.WithStack(sdk.ErrUnauthorized)
+		}
+
+		if !isAdmin(ctx) && !isService(ctx) {
+			return sdk.WithStack(sdk.ErrUnauthorized)
+		}
+
+		vars := mux.Vars(r)
+		sessionID := vars["sessionID"]
+		s, err := authentication.LoadSessionByID(ctx, api.mustDB(), sessionID)
+		if err != nil {
+			return err
+		}
+
+		c, err = authentication.LoadConsumerByID(ctx, api.mustDB(), s.ConsumerID, authentication.LoadConsumerOptions.WithAuthentifiedUserWithContacts, authentication.LoadConsumerOptions.WithConsumerGroups)
+		if err != nil {
+			return err
+		}
+
+		return service.WriteJSON(w, sdk.AuthCurrentConsumerResponse{
+			Consumer: *c,
+			Session:  *s,
+		}, http.StatusOK)
+	}
+}

@@ -45,6 +45,7 @@ func (api *API) InitRouter() {
 	r.Handle("/auth/consumer/{consumerType}/signin", Scope(sdk.AuthConsumerScopeAccessToken), r.POST(api.postAuthSigninHandler, service.OverrideAuth(api.authOptionalMiddleware), MaintenanceAware()))
 	r.Handle("/auth/consumer/{consumerType}/detach", Scope(sdk.AuthConsumerScopeAccessToken), r.POST(api.postAuthDetachHandler))
 	r.Handle("/auth/consumer/signout", ScopeNone(), r.POST(api.postAuthSignoutHandler))
+	r.Handle("/auth/session/{sessionID}", ScopeNone(), r.GET(api.getAuthSession))
 
 	// Action
 	r.Handle("/action", Scope(sdk.AuthConsumerScopeAction), r.GET(api.getActionsHandler), r.POST(api.postActionHandler))

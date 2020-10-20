@@ -93,3 +93,21 @@ func (r RunningStorageUnits) GetSource(ctx context.Context, i *sdk.CDNItem) (Sou
 
 	return &iuSource{iu: refItemUnit, source: unit}, nil
 }
+
+func (r RunningStorageUnits) GetItemUnitByLocatorByUnit(ctx context.Context, locator string, unitID string) ([]sdk.CDNItemUnit, error) {
+	// Load all the itemUnit for the unit
+	itemUnits, err := LoadItemUnitsByUnit(ctx, r.m, r.db, unitID, nil, gorpmapper.GetOptions.WithDecryption)
+	if err != nil {
+		return nil, err
+	}
+
+	// Return only itemUnits with the same locator
+	var res []sdk.CDNItemUnit
+	for i := range itemUnits {
+		if itemUnits[i].Locator == locator {
+			res = append(res, itemUnits[i])
+		}
+	}
+
+	return res, nil
+}
