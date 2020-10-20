@@ -14,7 +14,6 @@ import { Project } from 'app/model/project.model';
 import { Workflow } from 'app/model/workflow.model';
 import { FeatureService } from 'app/service/feature/feature.service';
 import { WorkflowCoreService } from 'app/service/workflow/workflow.core.service';
-import { WorkflowSidebarMode } from 'app/service/workflow/workflow.sidebar.store';
 import { AsCodeSaveModalComponent } from 'app/shared/ascode/save-modal/ascode.save-modal.component';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { ToastService } from 'app/shared/toast/ToastService';
@@ -23,7 +22,7 @@ import { AddFeatureResult, FeaturePayload } from 'app/store/feature.action';
 import { ProjectState, ProjectStateModel } from 'app/store/project.state';
 import {
     CleanWorkflowRun,
-    CleanWorkflowState,
+    CleanWorkflowState, ClearListRuns,
     GetWorkflow,
     SelectHook,
     UpdateFavoriteWorkflow
@@ -156,6 +155,9 @@ export class WorkflowComponent implements OnInit, OnDestroy {
         this.workflowSubscription = this.workflow$.subscribe(w => {
             if (!w) {
                 return;
+            }
+            if (this.workflow && this.workflow.id !== w.id) {
+                this._store.dispatch(new ClearListRuns())
             }
             this.workflow = w;
             if (this.selectecHookRef) {

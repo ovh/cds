@@ -1260,6 +1260,15 @@ export class WorkflowState {
         });
     }
 
+    @Action(actionWorkflow.ClearListRuns)
+    cleanListRuns(ctx: StateContext<WorkflowStateModel>, _: actionWorkflow.CleanWorkflowRun) {
+        const state = ctx.getState();
+        ctx.setState({
+            ...state,
+            listRuns: [],
+        });
+    }
+
     @Action(actionWorkflow.UpdateWorkflowRunList)
     updateWorkflowRunList(ctx: StateContext<WorkflowStateModel>, action: actionWorkflow.UpdateWorkflowRunList) {
         const state = ctx.getState();

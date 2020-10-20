@@ -52,6 +52,11 @@ export class CleanWorkflowRun {
     constructor(public payload: {}) { }
 }
 
+export class ClearListRuns {
+    static readonly type = '[Workflow] Clear List Workflow Run';
+    constructor() { }
+}
+
 export class GetWorkflowNodeRun {
     static readonly type = '[Workflow] Get Workflow Node Run';
     constructor(public payload: { projectKey: string, workflowName: string, num: number, nodeRunID: number }) { }

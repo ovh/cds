@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, ChangeDetectorRef, Component, EventEmitter, In
 import { Store } from '@ngxs/store';
 import { IPopup } from '@richardlt/ng2-semantic-ui';
 import { WNodeHook, Workflow } from 'app/model/workflow.model';
+import { WorkflowNodeRunHookEvent } from 'app/model/workflow.run.model';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { WorkflowState } from 'app/store/workflow.state';
 
@@ -22,6 +23,7 @@ export class WorkflowHookMenuEditComponent implements OnInit, OnDestroy {
     @Input() hookEventUUID: string;
     @Output() event = new EventEmitter<string>();
 
+    hookEvent: WorkflowNodeRunHookEvent;
     isRun: boolean;
 
     constructor(private _store: Store, private _cd: ChangeDetectorRef) {}
@@ -30,6 +32,10 @@ export class WorkflowHookMenuEditComponent implements OnInit, OnDestroy {
         let wr = this._store.selectSnapshot(WorkflowState.workflowRunSnapshot);
         if (wr) {
             this.isRun = true;
+            let rootNodeRun = wr.nodes[wr.workflow.workflow_data.node.id][0]
+            if (rootNodeRun && rootNodeRun?.hook_event ) {
+                this.hookEvent = rootNodeRun?.hook_event;
+            }
             this._cd.markForCheck();
         }
     }
