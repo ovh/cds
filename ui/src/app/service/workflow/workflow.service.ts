@@ -5,7 +5,6 @@ import { BuildResult, CDNLine, CDNLinesResponse, CDNLogLink, ServiceLog, SpawnIn
 import { WorkflowRetentoinDryRunResponse } from 'app/model/purge.model';
 import { Workflow, WorkflowPull, WorkflowTriggerConditionCache } from 'app/model/workflow.model';
 import { Observable } from 'rxjs';
-import { delay, tap } from 'rxjs/operators';
 
 @Injectable()
 export class WorkflowService {

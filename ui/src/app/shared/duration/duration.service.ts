@@ -1,5 +1,3 @@
-import { Injectable } from '@angular/core';
-
 declare var Duration: any;
 
 export class DurationService {
