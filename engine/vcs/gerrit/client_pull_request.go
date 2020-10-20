@@ -2,6 +2,7 @@ package gerrit
 
 import (
 	"context"
+	"net/http"
 
 	"github.com/andygrunwald/go-gerrit"
 
@@ -12,8 +13,11 @@ import (
 
 // PullRequest Get a gerrit change
 func (c *gerritClient) PullRequest(_ context.Context, _ string, id string) (sdk.VCSPullRequest, error) {
-	change, _, err := c.client.Changes.GetChange(id, nil)
+	change, resp, err := c.client.Changes.GetChange(id, nil)
 	if err != nil {
+		if resp != nil && resp.StatusCode == http.StatusNotFound {
+			return sdk.VCSPullRequest{}, sdk.WrapError(sdk.ErrNotFound, "unable to find change %s", id)
+		}
 		return sdk.VCSPullRequest{}, sdk.WithStack(err)
 	}
 	if change == nil {
