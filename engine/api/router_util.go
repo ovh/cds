@@ -65,17 +65,6 @@ func (r *Router) GetRoute(method string, handler service.HandlerFunc, vars map[s
 	return url
 }
 
-// FormBool return true if the form value is set to true|TRUE|yes|YES|1
-func FormBool(r *http.Request, s string) bool {
-	v := r.FormValue(s)
-	switch v {
-	case "true", "TRUE", "yes", "YES", "1":
-		return true
-	default:
-		return false
-	}
-}
-
 // FormString return a string
 func FormString(r *http.Request, s string) string {
 	return r.FormValue(s)
@@ -88,7 +77,7 @@ func QueryString(r *http.Request, s string) string {
 
 // QueryBool return a boolean from a query parameter
 func QueryBool(r *http.Request, s string) bool {
-	return FormBool(r, s)
+	return service.FormBool(r, s)
 }
 
 // QueryStrings returns the list of values for given query param key or nil if key no values.

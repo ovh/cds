@@ -23,7 +23,7 @@ func (api *API) getProjectIntegrationHandler() service.Handler {
 		var integ sdk.ProjectIntegration
 		var err error
 
-		clearPassword := FormBool(r, "clearPassword")
+		clearPassword := service.FormBool(r, "clearPassword")
 		if clearPassword {
 			if !isService(ctx) && !isWorker(ctx) {
 				return sdk.WithStack(sdk.ErrForbidden)

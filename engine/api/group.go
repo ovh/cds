@@ -20,7 +20,7 @@ func (api *API) getGroupsHandler() service.Handler {
 		var groups []sdk.Group
 		var err error
 
-		withoutDefault := FormBool(r, "withoutDefault")
+		withoutDefault := service.FormBool(r, "withoutDefault")
 		if isMaintainer(ctx) {
 			groups, err = group.LoadAll(ctx, api.mustDB())
 		} else {

@@ -319,8 +319,8 @@ func (api *API) getPipelineHandler() service.Handler {
 		vars := mux.Vars(r)
 		projectKey := vars[permProjectKey]
 		pipelineName := vars["pipelineKey"]
-		withWorkflows := FormBool(r, "withWorkflows")
-		withAsCodeEvent := FormBool(r, "withAsCodeEvents")
+		withWorkflows := service.FormBool(r, "withWorkflows")
+		withAsCodeEvent := service.FormBool(r, "withAsCodeEvents")
 
 		p, err := pipeline.LoadPipeline(ctx, api.mustDB(), projectKey, pipelineName, true)
 		if err != nil {

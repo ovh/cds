@@ -82,7 +82,7 @@ func (api *API) postWorkflowImportHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		key := vars[permProjectKey]
-		force := FormBool(r, "force")
+		force := service.FormBool(r, "force")
 
 		body, err := ioutil.ReadAll(r.Body)
 		if err != nil {
@@ -277,7 +277,7 @@ func (api *API) postWorkflowPushHandler() service.Handler {
 			pushOptions = &workflow.PushOption{
 				FromRepository:  r.Header.Get(sdk.WorkflowAsCodeHeader),
 				IsDefaultBranch: true,
-				Force:           FormBool(r, "force"),
+				Force:           service.FormBool(r, "force"),
 			}
 		}
 

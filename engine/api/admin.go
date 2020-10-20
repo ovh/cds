@@ -22,8 +22,8 @@ import (
 
 func (api *API) postMaintenanceHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		enable := FormBool(r, "enable")
-		hook := FormBool(r, "withHook")
+		enable := service.FormBool(r, "enable")
+		hook := service.FormBool(r, "withHook")
 
 		if hook {
 			srvs, err := services.LoadAllByType(ctx, api.mustDB(), sdk.TypeHooks)

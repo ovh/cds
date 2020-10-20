@@ -119,9 +119,9 @@ func (api *API) getProjectsHandler() service.Handler {
 			return api.getProjectsHandler_FilterByRepo(ctx, w, r)
 		}
 
-		withApplications := FormBool(r, "application")
-		withWorkflows := FormBool(r, "workflow")
-		withIcon := FormBool(r, "withIcon")
+		withApplications := service.FormBool(r, "application")
+		withWorkflows := service.FormBool(r, "workflow")
+		withIcon := service.FormBool(r, "withIcon")
 
 		requestedUserName := r.Header.Get("X-Cds-Username")
 		var requestedUser *sdk.AuthentifiedUser
@@ -262,21 +262,21 @@ func (api *API) getProjectHandler() service.Handler {
 		vars := mux.Vars(r)
 		key := vars[permProjectKey]
 
-		withVariables := FormBool(r, "withVariables")
-		withApplications := FormBool(r, "withApplications")
-		withApplicationNames := FormBool(r, "withApplicationNames")
-		withPipelines := FormBool(r, "withPipelines")
-		withPipelineNames := FormBool(r, "withPipelineNames")
-		withEnvironments := FormBool(r, "withEnvironments")
-		withEnvironmentNames := FormBool(r, "withEnvironmentNames")
-		withGroups := FormBool(r, "withGroups")
-		withPermission := FormBool(r, "withPermission")
-		withKeys := FormBool(r, "withKeys")
-		withWorkflows := FormBool(r, "withWorkflows")
-		withWorkflowNames := FormBool(r, "withWorkflowNames")
-		withIntegrations := FormBool(r, "withIntegrations")
-		withIcon := FormBool(r, "withIcon")
-		withLabels := FormBool(r, "withLabels")
+		withVariables := service.FormBool(r, "withVariables")
+		withApplications := service.FormBool(r, "withApplications")
+		withApplicationNames := service.FormBool(r, "withApplicationNames")
+		withPipelines := service.FormBool(r, "withPipelines")
+		withPipelineNames := service.FormBool(r, "withPipelineNames")
+		withEnvironments := service.FormBool(r, "withEnvironments")
+		withEnvironmentNames := service.FormBool(r, "withEnvironmentNames")
+		withGroups := service.FormBool(r, "withGroups")
+		withPermission := service.FormBool(r, "withPermission")
+		withKeys := service.FormBool(r, "withKeys")
+		withWorkflows := service.FormBool(r, "withWorkflows")
+		withWorkflowNames := service.FormBool(r, "withWorkflowNames")
+		withIntegrations := service.FormBool(r, "withIntegrations")
+		withIcon := service.FormBool(r, "withIcon")
+		withLabels := service.FormBool(r, "withLabels")
 
 		opts := []project.LoadOptionFunc{
 			project.LoadOptions.WithFavorites(getAPIConsumer(ctx).AuthentifiedUser.ID),

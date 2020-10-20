@@ -25,7 +25,7 @@ func (api *API) postWorkflowAsCodeHandler() service.Handler {
 		key := vars["key"]
 		workflowName := vars["permWorkflowName"]
 
-		migrate := FormBool(r, "migrate")
+		migrate := service.FormBool(r, "migrate")
 		branch := FormString(r, "branch")
 		message := FormString(r, "message")
 

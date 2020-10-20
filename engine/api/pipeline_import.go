@@ -49,7 +49,7 @@ func (api *API) importPipelineHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		key := vars[permProjectKey]
-		force := FormBool(r, "force")
+		force := service.FormBool(r, "force")
 
 		body, err := ioutil.ReadAll(r.Body)
 		if err != nil {

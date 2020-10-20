@@ -229,7 +229,7 @@ func (api *API) getGRPCluginBinaryHandler() service.Handler {
 			return sdk.WrapError(sdk.ErrNotFound, "getGRPCluginBinaryHandler")
 		}
 
-		acceptRedirect := FormBool(r, "accept-redirect")
+		acceptRedirect := service.FormBool(r, "accept-redirect")
 
 		s, temporaryURLSupported := api.SharedStorage.(objectstore.DriverWithRedirect)
 		if acceptRedirect && api.SharedStorage.TemporaryURLSupported() && temporaryURLSupported {

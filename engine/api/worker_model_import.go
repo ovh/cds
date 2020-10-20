@@ -23,7 +23,7 @@ func (api *API) postWorkerModelImportHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		consumer := getAPIConsumer(ctx)
 
-		force := FormBool(r, "force")
+		force := service.FormBool(r, "force")
 
 		body, errr := ioutil.ReadAll(r.Body)
 		if errr != nil {

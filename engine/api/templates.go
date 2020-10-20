@@ -324,7 +324,7 @@ func (api *API) postTemplateApplyHandler() service.Handler {
 			return err
 		}
 
-		withImport := FormBool(r, "import")
+		withImport := service.FormBool(r, "import")
 		branch := FormString(r, "branch")
 		message := FormString(r, "message")
 

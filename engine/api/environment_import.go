@@ -25,7 +25,7 @@ func (api *API) postEnvironmentImportHandler() service.Handler {
 		// Get project name in URL
 		vars := mux.Vars(r)
 		key := vars[permProjectKey]
-		force := FormBool(r, "force")
+		force := service.FormBool(r, "force")
 
 		proj, err := project.Load(ctx, api.mustDB(), key, project.LoadOptions.WithGroups)
 		if err != nil {
