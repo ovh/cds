@@ -25,8 +25,13 @@
                 </sui-select-option>
             </sui-select>
             <ng-template let-option #optionTemplate>
-                {{ 'Workflow run n°' + option.workflow_run }}
-                <span class="date">{{' at '}}{{option.timestamp/1000000 | amDateFormat: 'YYYY-MM-DD HH:mm:ss' }}</span>
+                <div class="hookItem">
+                    <div class="status" [class.done]="option.status === hookStatus.DONE"
+                         [class.doing]="option.status === hookStatus.DOING"
+                        [class.error]="option.status === hookStatus.FAIL"></div>
+                    {{ 'Workflow run n°' + option.workflow_run }}
+                    <span class="date">{{' at '}}{{option.timestamp/1000000 | amDateFormat: 'YYYY-MM-DD HH:mm:ss' }}</span>
+                </div>
             </ng-template>
         </ng-container>
 
@@ -35,7 +40,7 @@
                 <ng-container>
                     <h3>{{ 'workflow_node_hook_form_config' | translate }}</h3>
                     <ng-container *ngIf="task.config">
-                        <div class="inline fields" *ngFor="let k of task.config | keys">
+                        <div class="fields" *ngFor="let k of task.config | keys">
                             <div class="four wide field"><label>{{k}}</label></div>
                             <div class="twelve wide field">
                                 <input type="text" [ngModel]="task.config[k].value" [readonly]="true" *ngIf="k !== 'payload'">
@@ -51,33 +56,51 @@
                     </ng-container>
                     <div class="ui info message" *ngIf="!task.config">{{ 'workflow_node_hook_no_configuration' | translate }}</div>
                     <h3>{{'workflow_hook_log_title' | translate}}</h3>
-                    <div class="inline fields" *ngIf="task.workflow_run">
+                    <div class="fields" *ngIf="task.workflow_run">
                         <div class="four wide field"><label>{{'workflow_hook_log_workflow_run' | translate}}</label></div>
-                        <input type="text" [value]="task.workflow_run" [readonly]="true">
+                        <div class="twelve wide field">
+                            <input type="text" [value]="task.workflow_run" [readonly]="true">
+                        </div>
                     </div>
-                    <div class="inline fields">
+                    <div class="fields">
                         <div class="four wide field"><label>{{'worker_model_status' | translate}}</label></div>
-                        <input type="text" [value]="task.status" [readonly]="true">
+                        <div class="twelve wide field">
+                            <div class="ui icon read-only input">
+                                <i class="green check icon" *ngIf="task.status === hookStatus.DONE"></i>
+                                <i class="circle notch loading blue icon" *ngIf="task.status === hookStatus.DOING"></i>
+                                <i class="red close icon" *ngIf="task.status === hookStatus.FAIL"></i>
+                                <input type="text" [value]="task.status" readonly>
+                            </div>
+                        </div>
                     </div>
-                    <div class="inline fields">
+                    <div class="fields">
                         <div class="four wide field"><label>{{'common_begin' | translate}}</label></div>
-                        <input type="text" [value]="(task.timestamp / 1000000) | date:'short'" [readonly]="true">
+                        <div class="twelve wide field">
+                            <input type="text" [value]="(task.timestamp / 1000000) | date:'short'" [readonly]="true">
+
+                        </div>
                     </div>
-                    <div class="inline fields">
+                    <div class="fields">
                         <div class="four wide field"><label>{{'common_end' | translate}}</label></div>
-                        <input type="text" [value]="(task.processing_timestamp / 1000000) | date:'short'" [readonly]="true">
+                        <div class="twelve wide field">
+                            <input type="text" [value]="(task.processing_timestamp / 1000000) | date:'short'" [readonly]="true">
+                        </div>
                     </div>
-                    <div class="inline fields" *ngIf="task.last_error">
+                    <div class="fields" *ngIf="task.last_error">
                         <div class="four wide field"><label>{{'common_error' | translate}}</label></div>
-                        <input type="text" [value]="task.last_error" [readonly]="true">
+                        <div class="twelve wide field">
+                            <input type="text" [value]="task.last_error" [readonly]="true">
+                        </div>
                     </div>
-                    <div class="inline fields" *ngIf="body">
+                    <div class="fields" *ngIf="body">
                         <div class="four wide field"><label>Body</label></div>
-                        <codemirror
-                                [ngModel]="body"
-                                [config]="codeMirrorConfig"
-                                #code>
-                        </codemirror>
+                        <div class="twelve wide field">
+                            <codemirror
+                                    [ngModel]="body"
+                                    [config]="codeMirrorConfig"
+                                    #code>
+                            </codemirror>
+                        </div>
                     </div>
                 </ng-container>
             </div>

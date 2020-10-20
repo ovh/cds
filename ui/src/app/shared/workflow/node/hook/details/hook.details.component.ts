@@ -32,6 +32,8 @@ export class WorkflowNodeHookDetailsComponent implements OnInit, OnDestroy {
     loading = true;
     runNumber = 0;
 
+    hookStatus = HookStatus;
+
     constructor(
         private _modalService: SuiModalService,
         private _theme: ThemeStore,
