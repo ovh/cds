@@ -99,10 +99,6 @@ import { WorkflowNodeRunParamComponent } from './workflow/node/run/node.run.para
 import { WorkflowSidebarHookComponent } from './workflow/sidebar/edit-hook/workflow.sidebar.hook.component';
 import { WorkflowSidebarRunHookComponent } from './workflow/sidebar/run-hook/workflow.sidebar.run.hook.component';
 import { WorkflowSidebarRunListComponent } from './workflow/sidebar/run-list/workflow.sidebar.run.component';
-import { ActionStepSummaryComponent } from './workflow/sidebar/run-node/stage/job/action/action.summary.component';
-import { JobStepSummaryComponent } from './workflow/sidebar/run-node/stage/job/job.summary.component';
-import { StageStepSummaryComponent } from './workflow/sidebar/run-node/stage/stage.summary.component';
-import { WorkflowSidebarRunNodeComponent } from './workflow/sidebar/run-node/workflow.sidebar.run.node.component';
 import { WorkflowWizardNodeContextComponent } from './workflow/wizard/context/wizard.context.component';
 import { WorkflowNodeHookFormComponent } from './workflow/wizard/hook/hook.form.component';
 import { WorkflowWizardNodeInputComponent } from './workflow/wizard/input/wizard.input.component';
@@ -139,7 +135,6 @@ import { ZoneComponent } from './zone/zone.component';
         ActionComponent,
         ActionStepComponent,
         ActionStepFormComponent,
-        ActionStepSummaryComponent,
         AsCodeEventComponent,
         AuditListComponent,
         AutoFocusInputComponent,
@@ -159,7 +154,6 @@ import { ZoneComponent } from './zone/zone.component';
         FavoriteCardsComponent,
         ForMapPipe,
         GroupFormComponent,
-        JobStepSummaryComponent,
         KeysFormComponent,
         KeysListComponent,
         KeysPipe,
@@ -181,7 +175,6 @@ import { ZoneComponent } from './zone/zone.component';
         SelectorPipe,
         SelectPipe,
         ScrollviewComponent,
-        StageStepSummaryComponent,
         StatusIconComponent,
         TabsComponent,
         TruncatePipe,
@@ -214,7 +207,6 @@ import { ZoneComponent } from './zone/zone.component';
         WorkflowSidebarHookComponent,
         WorkflowSidebarRunListComponent,
         WorkflowSidebarRunHookComponent,
-        WorkflowSidebarRunNodeComponent,
         WorkflowTemplateApplyFormComponent,
         WorkflowTemplateApplyModalComponent,
         WorkflowTemplateBulkModalComponent,
@@ -308,7 +300,6 @@ import { ZoneComponent } from './zone/zone.component';
         WorkflowWNodeComponent,
         WorkflowSidebarHookComponent,
         WorkflowSidebarRunListComponent,
-        WorkflowSidebarRunNodeComponent,
         WorkflowSidebarRunHookComponent,
         WorkflowWNodeMenuEditComponent,
         WorkflowNodeAddWizardComponent,

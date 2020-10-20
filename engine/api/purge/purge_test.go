@@ -80,17 +80,17 @@ func Test_applyRetentionPolicyOnRun(t *testing.T) {
 		RetentionPolicy: "return run_days_before < 2",
 	}
 	now := time.Now()
-	run1 := sdk.WorkflowRun{
+	run1 := sdk.WorkflowRunSummary{
 		LastModified: now.Add(-49 * time.Hour),
 	}
-	keep, err := applyRetentionPolicyOnRun(db.DbMap, wf, run1, nil, MarkAsDeleteOptions{DryRun: true})
+	keep, err := applyRetentionPolicyOnRun(context.TODO(), db.DbMap, wf, run1, nil, sdk.Application{}, nil, MarkAsDeleteOptions{DryRun: true})
 	require.NoError(t, err)
 	require.False(t, keep)
 
-	run2 := sdk.WorkflowRun{
+	run2 := sdk.WorkflowRunSummary{
 		LastModified: now.Add(-47 * time.Hour),
 	}
-	keep, err = applyRetentionPolicyOnRun(db.DbMap, wf, run2, nil, MarkAsDeleteOptions{DryRun: true})
+	keep, err = applyRetentionPolicyOnRun(context.TODO(), db.DbMap, wf, run2, nil, sdk.Application{}, nil, MarkAsDeleteOptions{DryRun: true})
 	require.NoError(t, err)
 	require.True(t, keep)
 }

@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnIni
 import { Title } from '@angular/platform-browser';
 import { ActivatedRoute, NavigationExtras, Router } from '@angular/router';
 import { Select, Store } from '@ngxs/store';
+import { Tests } from 'app/model/pipeline.model';
 import { Project } from 'app/model/project.model';
 import { WorkflowNodeRun } from 'app/model/workflow.run.model';
 import { RouterService } from 'app/service/router/router.service';
@@ -35,7 +36,7 @@ export class WorkflowNodeRunComponent implements OnInit, OnDestroy {
     artifactLength = 0;
     staticFilesLength = 0;
     historyLength = 0;
-    testsTotal = 0;
+    nodeRunTests: Tests;
     hasVulnerability = false;
 
     pipelineName = '';
@@ -130,8 +131,8 @@ export class WorkflowNodeRunComponent implements OnInit, OnDestroy {
                     this.artifactLength = nr.artifacts.length;
                     refresh = true;
                 }
-                if (nr.tests && nr.tests.total !== this.testsTotal) {
-                    this.testsTotal = nr.tests.total;
+                if (nr.tests && nr.tests.total !== this.nodeRunTests?.total) {
+                    this.nodeRunTests = nr.tests;
                     refresh = true;
                 }
                 if (nr.vulnerabilities_report && nr.vulnerabilities_report.id !== 0) {
