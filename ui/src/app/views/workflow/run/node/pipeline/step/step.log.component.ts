@@ -205,7 +205,7 @@ export class WorkflowStepLogComponent implements OnInit, OnDestroy {
                 nodeRunId, runJobId, stepOrder).toPromise();
             callback(stepLog);
         } else {
-            const data = await this._http.get('./cdscdn' + logLink.download_path, { responseType: 'text' }).toPromise();
+            const data = await this._workflowService.getLogDownload(logLink).toPromise();
             callback(<BuildResult>{ status: PipelineStatus.BUILDING, step_logs: { id: 1, val: data } });
         }
 
@@ -220,7 +220,7 @@ export class WorkflowStepLogComponent implements OnInit, OnDestroy {
                     if (!cdnEnabled) {
                         return this._workflowService.getStepLog(projectKey, workflowName, nodeRunId, runJobId, stepOrder);
                     }
-                    return this._http.get('./cdscdn' + logLink.download_path, { responseType: 'text' })
+                    return this._workflowService.getLogDownload(logLink)
                         .map(data => <BuildResult>{ status: PipelineStatus.BUILDING, step_logs: { id: 1, val: data } });
                 })
                 .subscribe(build => {

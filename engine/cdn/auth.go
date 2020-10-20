@@ -26,6 +26,14 @@ func (s *Service) jwtMiddleware(ctx context.Context, w http.ResponseWriter, req 
 	return service.JWTMiddleware(ctx, w, req, rc, v.VerifyJWT)
 }
 
+func (s *Service) validJWTMiddleware(ctx context.Context, w http.ResponseWriter, req *http.Request, rc *service.HandlerConfig) (context.Context, error) {
+	// Check for valid session based on jwt from context
+	if _, ok := ctx.Value(service.ContextJWT).(*jwt.Token); !ok {
+		return ctx, sdk.WithStack(sdk.ErrUnauthorized)
+	}
+	return ctx, nil
+}
+
 func (s *Service) itemAccessMiddleware(ctx context.Context, w http.ResponseWriter, req *http.Request, rc *service.HandlerConfig) (context.Context, error) {
 	ctx, end := telemetry.Span(ctx, "router.itemAccessMiddleware")
 	defer end()
@@ -59,7 +67,7 @@ func (s *Service) itemAccessCheck(ctx context.Context, itemType sdk.CDNItemType,
 	claims := jwt.Claims.(*sdk.AuthSessionJWTClaims)
 	sessionID := claims.StandardClaims.Id
 
-	keyWorkflowPermissionForSession := cache.Key(keyPermission, apiRef, sessionID)
+	keyWorkflowPermissionForSession := cache.Key(keyPermission, string(itemType), apiRef, sessionID)
 
 	exists, err := s.Cache.Exist(keyWorkflowPermissionForSession)
 	if err != nil {

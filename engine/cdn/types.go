@@ -37,7 +37,7 @@ type Service struct {
 	WSServer            *websocketServer
 	WSBroker            *websocket.Broker
 	WSEventsMutex       sync.Mutex
-	WSEvents            map[string]struct{}
+	WSEvents            map[string]sdk.CDNWSEvent
 	Metrics             struct {
 		tcpServerErrorsCount     *stats.Int64Measure
 		tcpServerHitsCount       *stats.Int64Measure

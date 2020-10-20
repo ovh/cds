@@ -2,7 +2,6 @@ package api
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 	"strconv"
 
@@ -209,6 +208,9 @@ func (api *API) getWorkflowNodeRunJobLogLinkHandler(ctx context.Context, w http.
 				stepOrder, runJobID, nodeRunID, workflowName, projectKey)
 		}
 		apiRef.StepName = runJob.Job.Action.Actions[int64(ss.StepOrder)].Name
+		if runJob.Job.Action.Actions[int64(ss.StepOrder)].StepName != "" {
+			apiRef.StepName = runJob.Job.Action.Actions[int64(ss.StepOrder)].StepName
+		}
 		apiRef.StepOrder = int64(ss.StepOrder)
 	}
 
@@ -219,10 +221,9 @@ func (api *API) getWorkflowNodeRunJobLogLinkHandler(ctx context.Context, w http.
 	apiRefHash := strconv.FormatUint(apiRefHashU, 10)
 
 	return service.WriteJSON(w, sdk.CDNLogLink{
-		DownloadPath: fmt.Sprintf("/item/%s/%s/download", itemType, apiRefHash),
-		StreamPath:   fmt.Sprintf("/item/%s/%s/stream", itemType, apiRefHash),
-		LinesPath:    fmt.Sprintf("/item/%s/%s/lines", itemType, apiRefHash),
-		CDNURL:       httpURL,
+		CDNURL:   httpURL,
+		ItemType: itemType,
+		APIRef:   apiRefHash,
 	}, http.StatusOK)
 }
 

@@ -2,6 +2,7 @@ package cdn
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"math/rand"
 	"sync"
@@ -30,7 +31,15 @@ func (s *Service) initWebsocket() error {
 	s.WSBroker = websocket.NewBroker()
 	s.WSBroker.OnMessage(func(m []byte) {
 		telemetry.Record(s.Router.Background, s.Metrics.WSEvents, 1)
-		s.websocketOnMessage(string(m))
+
+		var e sdk.CDNWSEvent
+		if err := json.Unmarshal(m, &e); err != nil {
+			err = sdk.WrapError(err, "cannot parse event from WS broker")
+			log.WarningWithFields(s.Router.Background, log.Fields{"stack_trace": fmt.Sprintf("%+v", err)}, "%s", err)
+			return
+		}
+
+		s.websocketOnMessage(e)
 	})
 	s.WSBroker.Init(s.Router.Background, s.GoRoutines, pubSub)
 
@@ -56,26 +65,33 @@ func (s *Service) initWebsocket() error {
 	return nil
 }
 
-func (s *Service) publishWSEvent(itemID string) {
+func (s *Service) publishWSEvent(item sdk.CDNItem) {
 	s.WSEventsMutex.Lock()
 	defer s.WSEventsMutex.Unlock()
 	if s.WSEvents == nil {
-		s.WSEvents = make(map[string]struct{})
+		s.WSEvents = make(map[string]sdk.CDNWSEvent)
 	}
-	s.WSEvents[itemID] = struct{}{}
+	s.WSEvents[item.ID] = sdk.CDNWSEvent{
+		ItemType: item.Type,
+		APIRef:   item.APIRefHash,
+	}
 }
 
 func (s *Service) sendWSEvent(ctx context.Context) error {
 	s.WSEventsMutex.Lock()
-	itemIDs := make([]string, 0, len(s.WSEvents))
-	for k := range s.WSEvents {
-		itemIDs = append(itemIDs, k)
+	es := make([]sdk.CDNWSEvent, 0, len(s.WSEvents))
+	for _, v := range s.WSEvents {
+		es = append(es, v)
 	}
 	s.WSEvents = nil
 	s.WSEventsMutex.Unlock()
 
-	for _, itemID := range itemIDs {
-		if err := s.Cache.Publish(ctx, wbBrokerPubSubKey, itemID); err != nil {
+	for _, e := range es {
+		buf, err := json.Marshal(e)
+		if err != nil {
+			return sdk.WithStack(err)
+		}
+		if err := s.Cache.Publish(ctx, wbBrokerPubSubKey, string(buf)); err != nil {
 			return err
 		}
 	}
@@ -83,7 +99,7 @@ func (s *Service) sendWSEvent(ctx context.Context) error {
 	return nil
 }
 
-func (s *Service) websocketOnMessage(itemID string) {
+func (s *Service) websocketOnMessage(e sdk.CDNWSEvent) {
 	// Randomize the order of client to prevent the old client to always received new events in priority
 	clientIDs := s.WSServer.server.ClientIDs()
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
@@ -91,7 +107,7 @@ func (s *Service) websocketOnMessage(itemID string) {
 
 	for _, id := range clientIDs {
 		c := s.WSServer.GetClientData(id)
-		if c == nil || c.itemID != itemID {
+		if c == nil || c.itemFilter == nil || !(c.itemFilter.ItemType == e.ItemType && c.itemFilter.APIRef == e.APIRef) {
 			continue
 		}
 		c.TriggerUpdate()
@@ -129,22 +145,43 @@ func (s *websocketServer) GetClientData(uuid string) *websocketClientData {
 }
 
 type websocketClientData struct {
-	itemID              string
-	mutex               sync.Mutex
-	triggeredUpdate     bool
+	sessionID           string
+	mutexData           sync.Mutex
+	itemFilter          *sdk.CDNStreamFilter
+	itemUnit            *sdk.CDNItemUnit
 	scoreNextLineToSend int64
+	mutexTrigger        sync.Mutex
+	triggeredUpdate     bool
 }
 
 func (d *websocketClientData) TriggerUpdate() {
-	d.mutex.Lock()
-	defer d.mutex.Unlock()
+	d.mutexTrigger.Lock()
+	defer d.mutexTrigger.Unlock()
 	d.triggeredUpdate = true
 }
 
 func (d *websocketClientData) ConsumeTrigger() (triggered bool) {
-	d.mutex.Lock()
-	defer d.mutex.Unlock()
+	d.mutexTrigger.Lock()
+	defer d.mutexTrigger.Unlock()
 	triggered = d.triggeredUpdate
 	d.triggeredUpdate = false
 	return
+}
+
+func (d *websocketClientData) UpdateFilter(msg []byte) error {
+	var filter sdk.CDNStreamFilter
+	if err := json.Unmarshal(msg, &filter); err != nil {
+		return sdk.WithStack(err)
+	}
+	if err := filter.Validate(); err != nil {
+		return err
+	}
+
+	d.mutexData.Lock()
+	defer d.mutexData.Unlock()
+
+	d.itemFilter = &filter
+	d.scoreNextLineToSend = filter.Offset
+	d.itemUnit = nil // reset verified will trigger a new permission check
+	return nil
 }

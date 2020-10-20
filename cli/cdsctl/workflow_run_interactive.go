@@ -73,7 +73,7 @@ func workflowRunInteractive(v cli.Values, w *sdk.WorkflowRun, baseURL string) er
 
 							var data string
 							if access != nil {
-								buf, _, _, err := client.Request(context.Background(), http.MethodGet, access.CDNURL+access.DownloadPath, nil)
+								buf, _, _, err := client.Request(context.Background(), http.MethodGet, fmt.Sprintf("%s/item/%s/%s/download", access.CDNURL, access.ItemType, access.APIRef), nil)
 								if err != nil {
 									return err
 								}

@@ -9,7 +9,7 @@
             <button [class.active]="mode === displayModes.HTML" (click)="clickMode(displayModes.HTML)">HTML</button>
         </div>
         <div class="menu right">
-            <button>Variables</button>
+            <button (click)="clickVariables()">Job variables</button>
         </div>
     </div>
     <!-- Display job steps -->
@@ -106,3 +106,4 @@
         <div class="goto" (click)="clickScroll(scrollTargets.TOP)">Top<i class="caret icon up"></i></div>
     </div>
 </div>
+<app-workflow-run-job-variable [variables]="nodeJobRun.parameters" #jobVariable></app-workflow-run-job-variable>

@@ -195,9 +195,27 @@ export class BuildResult {
 }
 
 export class CDNLogLink {
-    download_path: string;
-    stream_path: string;
-    lines_path: string;
+    item_type: string;
+    api_ref: string;
+}
+
+export class CDNLinesResponse {
+    totalCount: number;
+    lines: Array<CDNLine>;
+}
+
+export class CDNLine {
+    number: number;
+    value: string;
+
+    // properties used by ui only
+    extra: Array<string>;
+}
+
+export class CDNStreamFilter  {
+    item_type: string;
+    api_ref: string;
+    offset: number;
 }
 
 export interface Log {

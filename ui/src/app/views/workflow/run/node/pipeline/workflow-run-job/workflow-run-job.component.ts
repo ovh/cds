@@ -1,9 +1,8 @@
-import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { NgZone, OnDestroy, Output } from '@angular/core';
+import { NgZone, OnDestroy, Output, ViewChild } from '@angular/core';
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, EventEmitter, Input, OnChanges, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { Store } from '@ngxs/store';
-import { CDNLogLink, PipelineStatus, SpawnInfo } from 'app/model/pipeline.model';
+import { CDNLine, CDNLogLink, CDNStreamFilter, PipelineStatus, SpawnInfo } from 'app/model/pipeline.model';
 import { WorkflowNodeJobRun } from 'app/model/workflow.run.model';
 import { WorkflowService } from 'app/service/workflow/workflow.service';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
@@ -14,6 +13,7 @@ import * as moment from 'moment';
 import { Observable, Subscription } from 'rxjs';
 import { delay, retryWhen } from 'rxjs/operators';
 import { webSocket, WebSocketSubject } from 'rxjs/webSocket';
+import { WorkflowRunJobVariableComponent } from '../variables/job.variables.component';
 
 export enum DisplayMode {
     ANSI = 'ansi',
@@ -32,8 +32,8 @@ export class Tab {
 export class Step {
     id: number
     name: string;
-    lines: Array<Line>;
-    endLines: Array<Line>;
+    lines: Array<CDNLine>;
+    endLines: Array<CDNLine>;
     open: boolean;
     firstDisplayedLineNumber: number;
     totalLinesCount: number;
@@ -52,17 +52,6 @@ export class Step {
     }
 }
 
-export class LinesResponse {
-    totalCount: number;
-    lines: Array<Line>;
-}
-
-export class Line {
-    number: number;
-    value: string;
-    extra: Array<string>;
-}
-
 @Component({
     selector: 'app-workflow-run-job',
     templateUrl: './workflow-run-job.html',
@@ -76,6 +65,8 @@ export class WorkflowRunJobComponent implements OnInit, OnChanges, OnDestroy {
     readonly displayModes = DisplayMode;
     readonly scrollTargets = ScrollTarget
 
+    @ViewChild('jobVariable') jobVariable: WorkflowRunJobVariableComponent;
+
     @Input() nodeJobRun: WorkflowNodeJobRun;
     @Output() onScroll = new EventEmitter<ScrollTarget>();
 
@@ -83,6 +74,7 @@ export class WorkflowRunJobComponent implements OnInit, OnChanges, OnDestroy {
     tabs: Array<Tab>;
     currentTabIndex = 0;
     pollingSpawnInfoSubscription: Subscription;
+    pollingLogLinesSubscription: Subscription;
     websocket: WebSocketSubject<any>;
     websocketSubscription: Subscription;
     previousNodeJobRun: WorkflowNodeJobRun;
@@ -93,7 +85,6 @@ export class WorkflowRunJobComponent implements OnInit, OnChanges, OnDestroy {
         private _cd: ChangeDetectorRef,
         private _store: Store,
         private _workflowService: WorkflowService,
-        private _http: HttpClient,
         private _ngZone: NgZone,
         private _router: Router
     ) { }
@@ -114,7 +105,8 @@ export class WorkflowRunJobComponent implements OnInit, OnChanges, OnDestroy {
             let requirementsChanged = this.previousNodeJobRun.job.action.requirements?.length
                 !== this.nodeJobRun.job.action.requirements?.length;
             let stepStatusChanged = this.previousNodeJobRun.job.step_status?.length !== this.nodeJobRun.job.step_status?.length;
-            let shouldUpdate = statusChanged || requirementsChanged || stepStatusChanged;
+            let parametersChanged = this.previousNodeJobRun?.parameters?.length !== this.nodeJobRun?.parameters?.length;
+            let shouldUpdate = statusChanged || requirementsChanged || stepStatusChanged || parametersChanged;
             if (!shouldUpdate) {
                 return;
             }
@@ -127,13 +119,14 @@ export class WorkflowRunJobComponent implements OnInit, OnChanges, OnDestroy {
                 .filter(r => r.type === 'service').map(r => <Tab>{ name: r.name }));
         }
 
+        let steps = (this.nodeJobRun.job.action.actions ? this.nodeJobRun.job.action.actions : []);
         if (!this.steps) {
-            this.steps = [new Step('Informations')].concat(this.nodeJobRun.job.action.actions
+            this.steps = [new Step('Informations')].concat(steps
                 .filter((_, i) => this.nodeJobRun.job.step_status && this.nodeJobRun.job.step_status[i])
                 .map(a => new Step(a.step_name ? a.step_name : a.name)));
         } else {
             // Only append new steps
-            this.steps = this.steps.concat(this.nodeJobRun.job.action.actions
+            this.steps = this.steps.concat(steps
                 .filter((_, i) => this.nodeJobRun.job.step_status && this.nodeJobRun.job.step_status[i])
                 .filter((_, i) => !this.steps[i + 1])
                 .map(a => new Step(a.step_name ? a.step_name : a.name)));
@@ -207,20 +200,8 @@ export class WorkflowRunJobComponent implements OnInit, OnChanges, OnDestroy {
             this.steps[i].link = await this._workflowService.getStepLink(projectKey, workflowName, nodeRunID, nodeJobRunID, i - 1)
                 .toPromise();
             let results = await Promise.all([
-                this._http.get(`./cdscdn${this.steps[i].link.lines_path}`, { params: { limit: `${this.initLoadLinesCount}` }, observe: 'response' }).map(res => {
-                    let headers: HttpHeaders = res.headers;
-                    return <LinesResponse>{
-                        totalCount: parseInt(headers.get('X-Total-Count'), 10),
-                        lines: res.body as Array<Line>
-                    }
-                }).toPromise(),
-                this._http.get(`./cdscdn${this.steps[i].link.lines_path}`, { params: { offset: `-${this.initLoadLinesCount}` }, observe: 'response' }).map(res => {
-                    let headers: HttpHeaders = res.headers;
-                    return <LinesResponse>{
-                        totalCount: parseInt(headers.get('X-Total-Count'), 10),
-                        lines: res.body as Array<Line>
-                    }
-                }).toPromise(),
+                this._workflowService.getLogLines(this.steps[i].link, { limit: `${this.initLoadLinesCount}` }).toPromise(),
+                this._workflowService.getLogLines(this.steps[i].link, { offset: `-${this.initLoadLinesCount}` }).toPromise()
             ]);
             this.steps[i].lines = results[0].lines;
             this.steps[i].endLines = results[1].lines.filter(l => !results[0].lines.find(line => line.number === l.number));
@@ -247,7 +228,7 @@ export class WorkflowRunJobComponent implements OnInit, OnChanges, OnDestroy {
         let runNumber = this._store.selectSnapshot(WorkflowState).workflowNodeRun.num;
 
         let callback = (is: Array<SpawnInfo>) => {
-            this.steps[0].lines = is.filter(i => !!i.user_message).map((info, i) => <Line>{
+            this.steps[0].lines = is.filter(i => !!i.user_message).map((info, i) => <CDNLine>{
                 number: i,
                 value: `${info.user_message}\n`,
                 extra: [moment(info.api_time).format('YYYY-MM-DD hh:mm:ss Z')]
@@ -278,7 +259,7 @@ export class WorkflowRunJobComponent implements OnInit, OnChanges, OnDestroy {
 
     trackStepElement(index: number, element: Step) { return index; }
 
-    trackLineElement(index: number, element: Line) { return element ? element.number : null; }
+    trackLineElement(index: number, element: CDNLine) { return element ? element.number : null; }
 
     computeStepFirstLineNumbers(): void {
         let nestFirstLineNumber = 1;
@@ -310,41 +291,23 @@ export class WorkflowRunJobComponent implements OnInit, OnChanges, OnDestroy {
 
     async clickExpandStepDown(index: number) {
         let step = this.steps[index];
-
-        let result = await this._http.get(`./cdscdn${step.link.lines_path}`, {
-            params: { offset: `${step.lines[step.lines.length - 1].number + 1}`, limit: `${this.expandLoadLinesCount}` },
-            observe: 'response'
-        }).map(res => {
-            let headers: HttpHeaders = res.headers;
-            return <LinesResponse>{
-                totalCount: parseInt(headers.get('X-Total-Count'), 10),
-                lines: res.body as Array<Line>
-            }
-        }).toPromise();
+        let result = await this._workflowService.getLogLines(step.link,
+            { offset: `${step.lines[step.lines.length - 1].number + 1}`, limit: `${this.expandLoadLinesCount}` }
+        ).toPromise()
         this.steps[index].totalLinesCount = result.totalCount;
         this.steps[index].lines = step.lines.concat(result.lines.filter(l => !step.endLines.find(line => line.number === l.number)));
-
         this._cd.markForCheck();
     }
 
     async clickExpandStepUp(index: number) {
         let step = this.steps[index];
-
-        let result = await this._http.get(`./cdscdn${step.link.lines_path}`, {
-            params: { offset: `-${step.endLines.length + this.expandLoadLinesCount}`, limit: `${this.expandLoadLinesCount}` },
-            observe: 'response'
-        }).map(res => {
-            let headers: HttpHeaders = res.headers;
-            return <LinesResponse>{
-                totalCount: parseInt(headers.get('X-Total-Count'), 10),
-                lines: res.body as Array<Line>
-            }
-        }).toPromise();
+        let result = await this._workflowService.getLogLines(step.link,
+            { offset: `-${step.endLines.length + this.expandLoadLinesCount}`, limit: `${this.expandLoadLinesCount}` }
+        ).toPromise();
         this.steps[index].totalLinesCount = result.totalCount;
         this.steps[index].endLines = result.lines.filter(l => {
             return !step.lines.find(line => line.number === l.number) && !step.endLines.find(line => line.number === l.number);
         }).concat(step.endLines);
-
         this._cd.markForCheck();
     }
 
@@ -371,16 +334,9 @@ export class WorkflowRunJobComponent implements OnInit, OnChanges, OnDestroy {
 
         this.steps[this.steps.length - 1].link = await this._workflowService.getStepLink(projectKey, workflowName,
             nodeRunID, nodeJobRunID, this.nodeJobRun.job.step_status.length - 1).toPromise();
-        let result = await this._http.get(
-            `./cdscdn${this.steps[this.steps.length - 1].link.lines_path}`,
-            { params: { limit: `${this.initLoadLinesCount}` }, observe: 'response' }
-        ).map(res => {
-            let headers: HttpHeaders = res.headers;
-            return <LinesResponse>{
-                totalCount: parseInt(headers.get('X-Total-Count'), 10),
-                lines: res.body as Array<Line>
-            }
-        }).toPromise();
+        let result = await this._workflowService.getLogLines(this.steps[this.steps.length - 1].link,
+            { limit: `${this.initLoadLinesCount}` }
+        ).toPromise();
         this.steps[this.steps.length - 1].lines = result.lines;
         this.steps[this.steps.length - 1].totalLinesCount = result.totalCount;
         this.steps[this.steps.length - 1].open = true;
@@ -391,17 +347,23 @@ export class WorkflowRunJobComponent implements OnInit, OnChanges, OnDestroy {
         const href = this._router['location']._baseHref;
 
         this.websocket = webSocket({
-            url: `${protocol}//${host}${href}/cdscdn${this.steps[this.steps.length - 1].link.stream_path}?offset=-5`,
+            url: `${protocol}//${host}${href}/cdscdn/item/stream`,
             openObserver: {
                 next: value => {
-                    if (value.type === 'open') { }
+                    if (value.type === 'open') {
+                        this.websocket.next(<CDNStreamFilter>{
+                            item_type: this.steps[this.steps.length - 1].link.item_type,
+                            api_ref: this.steps[this.steps.length - 1].link.api_ref,
+                            offset: this.steps[this.steps.length - 1].totalLinesCount > 0 ? -5 : 0
+                        });
+                    }
                 }
             }
         });
 
         this.websocketSubscription = this.websocket
             .pipe(retryWhen(errors => errors.pipe(delay(2000))))
-            .subscribe((l: Line) => {
+            .subscribe((l: CDNLine) => {
                 if (!this.steps[this.steps.length - 1].lines.find(line => line.number === l.number)
                     && !this.steps[this.steps.length - 1].endLines.find(line => line.number === l.number)) {
                     this.steps[this.steps.length - 1].endLines.push(l);
@@ -426,20 +388,12 @@ export class WorkflowRunJobComponent implements OnInit, OnChanges, OnDestroy {
 
         if (!PipelineStatus.isActive(this.nodeJobRun.status)) {
             let results = await Promise.all([
-                this._http.get(`./cdscdn${this.services[this.currentTabIndex - 1].link.lines_path}`, { params: { limit: `${this.initLoadLinesCount}` }, observe: 'response' }).map(res => {
-                    let headers: HttpHeaders = res.headers;
-                    return <LinesResponse>{
-                        totalCount: parseInt(headers.get('X-Total-Count'), 10),
-                        lines: res.body as Array<Line>
-                    }
-                }).toPromise(),
-                this._http.get(`./cdscdn${this.services[this.currentTabIndex - 1].link.lines_path}`, { params: { offset: `-${this.initLoadLinesCount}` }, observe: 'response' }).map(res => {
-                    let headers: HttpHeaders = res.headers;
-                    return <LinesResponse>{
-                        totalCount: parseInt(headers.get('X-Total-Count'), 10),
-                        lines: res.body as Array<Line>
-                    }
-                }).toPromise(),
+                this._workflowService.getLogLines(this.services[this.currentTabIndex - 1].link,
+                    { limit: `${this.initLoadLinesCount}` }
+                ).toPromise(),
+                this._workflowService.getLogLines(this.services[this.currentTabIndex - 1].link,
+                    { offset: `-${this.initLoadLinesCount}` }
+                ).toPromise(),
             ]);
             this.services[this.currentTabIndex - 1].lines = results[0].lines;
             this.services[this.currentTabIndex - 1].endLines = results[1].lines
@@ -449,17 +403,9 @@ export class WorkflowRunJobComponent implements OnInit, OnChanges, OnDestroy {
             return;
         }
 
-
-        let result = await this._http.get(
-            `./cdscdn${this.services[this.currentTabIndex - 1].link.lines_path}`,
-            { params: { limit: `${this.initLoadLinesCount}` }, observe: 'response' }
-        ).map(res => {
-            let headers: HttpHeaders = res.headers;
-            return <LinesResponse>{
-                totalCount: parseInt(headers.get('X-Total-Count'), 10),
-                lines: res.body as Array<Line>
-            }
-        }).toPromise();
+        let result = await this._workflowService.getLogLines(this.services[this.currentTabIndex - 1].link,
+            { limit: `${this.initLoadLinesCount}` }
+        ).toPromise();
         this.services[this.currentTabIndex - 1].lines = result.lines;
         this.services[this.currentTabIndex - 1].totalLinesCount = result.totalCount;
         this._cd.markForCheck();
@@ -468,18 +414,25 @@ export class WorkflowRunJobComponent implements OnInit, OnChanges, OnDestroy {
         const host = window.location.host;
         const href = this._router['location']._baseHref;
 
+
         this.websocket = webSocket({
-            url: `${protocol}//${host}${href}/cdscdn${this.services[this.currentTabIndex - 1].link.stream_path}?offset=-5`,
+            url: `${protocol}//${host}${href}/cdscdn/item/stream`,
             openObserver: {
                 next: value => {
-                    if (value.type === 'open') { }
+                    if (value.type === 'open') {
+                        this.websocket.next(<CDNStreamFilter>{
+                            item_type: this.services[this.currentTabIndex - 1].link.item_type,
+                            api_ref: this.services[this.currentTabIndex - 1].link.api_ref,
+                            offset: this.services[this.currentTabIndex - 1].totalLinesCount > 0 ? -5 : 0
+                        });
+                    }
                 }
             }
         });
 
         this.websocketSubscription = this.websocket
             .pipe(retryWhen(errors => errors.pipe(delay(2000))))
-            .subscribe((l: Line) => {
+            .subscribe((l: CDNLine) => {
                 if (!this.services[this.currentTabIndex - 1].lines.find(line => line.number === l.number)
                     && !this.services[this.currentTabIndex - 1].endLines.find(line => line.number === l.number)) {
                     this.services[this.currentTabIndex - 1].endLines.push(l);
@@ -493,45 +446,34 @@ export class WorkflowRunJobComponent implements OnInit, OnChanges, OnDestroy {
             });
     }
 
-
     async clickExpandServiceDown(index: number) {
         let service = this.services[index];
-
-        let result = await this._http.get(`./cdscdn${service.link.lines_path}`, {
-            params: { offset: `${service.lines[service.lines.length - 1].number + 1}`, limit: `${this.expandLoadLinesCount}` },
-            observe: 'response'
-        }).map(res => {
-            let headers: HttpHeaders = res.headers;
-            return <LinesResponse>{
-                totalCount: parseInt(headers.get('X-Total-Count'), 10),
-                lines: res.body as Array<Line>
-            }
+        let result = await this._workflowService.getLogLines(service.link, {
+            offset: `${service.lines[service.lines.length - 1].number + 1}`,
+            limit: `${this.expandLoadLinesCount}`
         }).toPromise();
         this.services[index].totalLinesCount = result.totalCount;
         this.services[index].lines = service.lines.concat(result.lines
             .filter(l => !service.endLines.find(line => line.number === l.number)));
-
         this._cd.markForCheck();
     }
 
     async clickExpandServiceUp(index: number) {
         let service = this.services[index];
-
-        let result = await this._http.get(`./cdscdn${service.link.lines_path}`, {
-            params: { offset: `-${service.endLines.length + this.expandLoadLinesCount}`, limit: `${this.expandLoadLinesCount}` },
-            observe: 'response'
-        }).map(res => {
-            let headers: HttpHeaders = res.headers;
-            return <LinesResponse>{
-                totalCount: parseInt(headers.get('X-Total-Count'), 10),
-                lines: res.body as Array<Line>
-            }
+        let result = await this._workflowService.getLogLines(service.link, {
+            offset: `-${service.endLines.length + this.expandLoadLinesCount}`,
+            limit: `${this.expandLoadLinesCount}`
         }).toPromise();
         this.services[index].totalLinesCount = result.totalCount;
         this.services[index].endLines = result.lines.filter(l => {
             return !service.lines.find(line => line.number === l.number) && !service.endLines.find(line => line.number === l.number);
         }).concat(service.endLines);
-
         this._cd.markForCheck();
+    }
+
+    clickVariables(): void {
+        if (this.jobVariable) {
+            this.jobVariable.show();
+        }
     }
 }
