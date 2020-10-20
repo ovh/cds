@@ -3,16 +3,19 @@ package api
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/url"
 	"strings"
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/ovh/cds/engine/api/authentication"
 	"github.com/ovh/cds/engine/api/authentication/builtin"
 	"github.com/ovh/cds/engine/api/bootstrap"
+	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/api/test/assets"
 	"github.com/ovh/cds/engine/api/workflow"
@@ -23,7 +26,7 @@ import (
 func Test_websocketWrongFilters(t *testing.T) {
 	api, db, tsURL := newTestServer(t)
 
-	require.NoError(t, api.initWebsocket())
+	require.NoError(t, api.initWebsocket("events_pubsub_test"))
 
 	u, _ := assets.InsertAdminUser(t, db)
 	localConsumer, err := authentication.LoadConsumerByTypeAndUserID(context.TODO(), api.mustDB(), sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
@@ -93,7 +96,7 @@ func Test_websocketFilterRetroCompatibility(t *testing.T) {
 func Test_websocketGetWorkflowEvent(t *testing.T) {
 	api, db, tsURL := newTestServer(t)
 
-	require.NoError(t, api.initWebsocket())
+	require.NoError(t, api.initWebsocket("events_pubsub_test"))
 
 	u, jwt := assets.InsertAdminUser(t, db)
 
@@ -161,7 +164,7 @@ func Test_websocketGetWorkflowEvent(t *testing.T) {
 func Test_websocketDeconnection(t *testing.T) {
 	api, db, tsURL := newTestServer(t)
 
-	require.NoError(t, api.initWebsocket())
+	require.NoError(t, api.initWebsocket("events_pubsub_test"))
 
 	u, _ := assets.InsertAdminUser(t, db)
 	localConsumer, err := authentication.LoadConsumerByTypeAndUserID(context.TODO(), api.mustDB(), sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
@@ -241,4 +244,112 @@ func Test_websocketDeconnection(t *testing.T) {
 	time.Sleep(1 * time.Second)
 
 	require.Len(t, api.WSServer.server.ClientIDs(), 0)
+}
+
+func TestWebsocketNoEventLoose(t *testing.T) {
+	api, db, tsURL := newTestServer(t)
+
+	pubSubKey := "events_pubsub_test_" + sdk.RandomString(10)
+	event.OverridePubSubKey(pubSubKey)
+	require.NoError(t, event.Initialize(context.TODO(), api.mustDB(), api.Cache))
+	require.NoError(t, api.initWebsocket(pubSubKey))
+
+	_, jwt := assets.InsertAdminUser(t, db)
+
+	ctx, cancel := context.WithCancel(context.TODO())
+	t.Cleanup(cancel)
+
+	// First client
+	chan1MessageReceived := make(chan sdk.WebsocketEvent)
+	chan1MessageToSend := make(chan []sdk.WebsocketFilter)
+	chan1ErrorReceived := make(chan error)
+	client1 := cdsclient.New(cdsclient.Config{
+		Host:                  tsURL,
+		InsecureSkipVerifyTLS: true,
+		SessionToken:          jwt,
+	})
+	go client1.WebsocketEventsListen(context.TODO(), sdk.NewGoRoutines(), chan1MessageToSend, chan1MessageReceived, chan1ErrorReceived)
+	var client1EventCount int64
+	go func() {
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case err := <-chan1ErrorReceived:
+				require.NoError(t, err)
+			case evt := <-chan1MessageReceived:
+				if evt.Event.EventType != fmt.Sprintf("%T", sdk.EventFake{}) {
+					continue
+				}
+				var f sdk.EventFake
+				require.NoError(t, json.Unmarshal(evt.Event.Payload, &f))
+				require.Equal(t, client1EventCount, f.Data)
+				client1EventCount++
+			}
+		}
+	}()
+
+	// Second client
+	chan2MessageReceived := make(chan sdk.WebsocketEvent)
+	chan2MessageToSend := make(chan []sdk.WebsocketFilter)
+	chan2ErrorReceived := make(chan error)
+	client2 := cdsclient.New(cdsclient.Config{
+		Host:                  tsURL,
+		InsecureSkipVerifyTLS: true,
+		SessionToken:          jwt,
+	})
+	var client2EventCount int64
+	go client2.WebsocketEventsListen(context.TODO(), sdk.NewGoRoutines(), chan2MessageToSend, chan2MessageReceived, chan2ErrorReceived)
+	go func() {
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case err := <-chan2ErrorReceived:
+				require.NoError(t, err)
+			case evt := <-chan2MessageReceived:
+				if evt.Event.EventType != fmt.Sprintf("%T", sdk.EventFake{}) {
+					continue
+				}
+				var f sdk.EventFake
+				require.NoError(t, json.Unmarshal(evt.Event.Payload, &f))
+				require.Equal(t, client2EventCount, f.Data)
+				client2EventCount++
+			}
+		}
+	}()
+
+	filterGlobal := sdk.WebsocketFilter{Type: sdk.WebsocketFilterTypeGlobal}
+	chan1MessageToSend <- []sdk.WebsocketFilter{filterGlobal}
+	chan2MessageToSend <- []sdk.WebsocketFilter{filterGlobal}
+
+	// Waiting websocket to update filter
+	time.Sleep(time.Second)
+
+	// Send events
+	countEvent := int64(100)
+	for i := int64(0); i < countEvent; i++ {
+		event.Publish(context.TODO(), sdk.EventFake{Data: i}, nil)
+		time.Sleep(time.Millisecond)
+	}
+
+	// Waiting client to receive all events
+	ctx, cancel = context.WithTimeout(context.TODO(), time.Second*20)
+	t.Cleanup(cancel)
+loop:
+	for {
+		select {
+		case <-ctx.Done():
+			break loop
+		default:
+			if client1EventCount == countEvent && client2EventCount == countEvent {
+				break loop
+			}
+			time.Sleep(time.Second)
+		}
+	}
+
+	// Let 1 second for clients to consume events
+	assert.Equal(t, int64(countEvent), client1EventCount, "client 1 loose some events")
+	assert.Equal(t, int64(countEvent), client2EventCount, "client 2 loose some events")
 }

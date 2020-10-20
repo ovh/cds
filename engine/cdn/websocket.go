@@ -39,7 +39,7 @@ func (s *Service) initWebsocket() error {
 	log.Info(s.Router.Background, "Initializing WS events broker")
 	pubSub, err := s.Cache.Subscribe(wbBrokerPubSubKey)
 	if err != nil {
-		return sdk.WrapError(err, "unable to subscribe to events_pubsub")
+		return sdk.WrapError(err, "unable to subscribe to %s", wbBrokerPubSubKey)
 	}
 	s.WSBroker = websocket.NewBroker()
 	s.WSBroker.OnMessage(func(m []byte) {

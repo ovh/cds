@@ -6,17 +6,18 @@ import (
 	"fmt"
 	"net/url"
 	"strings"
+	"time"
 
 	"github.com/ovh/cds/sdk"
 )
 
-func (b *bitbucketClient) PullRequest(ctx context.Context, repo string, id int) (sdk.VCSPullRequest, error) {
+func (b *bitbucketClient) PullRequest(ctx context.Context, repo string, id string) (sdk.VCSPullRequest, error) {
 	project, slug, err := getRepo(repo)
 	if err != nil {
 		return sdk.VCSPullRequest{}, sdk.WithStack(err)
 	}
 
-	path := fmt.Sprintf("/projects/%s/repos/%s/pull-requests/%d", project, slug, id)
+	path := fmt.Sprintf("/projects/%s/repos/%s/pull-requests/%s", project, slug, id)
 	params := url.Values{}
 
 	var response sdk.BitbucketServerPullRequest
@@ -189,6 +190,7 @@ func (b *bitbucketClient) ToVCSPullRequest(ctx context.Context, repo string, pul
 				LatestCommit: pullRequest.FromRef.LatestCommit,
 			},
 		},
+		Updated: time.Unix(0, int64(pullRequest.UpdatedDate)*int64(time.Millisecond)),
 	}
 	if len(pullRequest.Links.Self) > 0 {
 		pr.URL = pullRequest.Links.Self[0].Href

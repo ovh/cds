@@ -136,3 +136,8 @@ type EventNotif struct {
 type EventMaintenance struct {
 	Enable bool `json:"enable"`
 }
+
+// EventFake is used for test purpose
+type EventFake struct {
+	Data int64 `json:"data"`
+}
