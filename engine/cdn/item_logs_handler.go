@@ -148,14 +148,14 @@ func (s *Service) sendLogsToWSClient(ctx context.Context, wsClient websocket.Cli
 			}
 			return nil
 		}
+
+		if err := s.itemAccessCheck(ctx, *it, wsClientData.sessionID); err != nil {
+			return sdk.WrapError(err, "client %s can't access logs for workflow %s/%s", wsClient.UUID(), it.APIRef.ProjectKey, it.APIRef.WorkflowName)
+		}
+
 		iu, err := storage.LoadItemUnitByUnit(ctx, s.Mapper, s.mustDBWithCtx(ctx), s.Units.Buffer.ID(), it.ID)
 		if err != nil {
 			return err
-		}
-
-		// Call CDS api to validate access to target log
-		if err := s.Client.WorkflowLogAccess(ctx, it.APIRef.ProjectKey, it.APIRef.WorkflowName, wsClientData.sessionID); err != nil {
-			return sdk.WrapError(err, "client %s can't access logs for workflow %s/%s", wsClient.UUID(), it.APIRef.ProjectKey, it.APIRef.WorkflowName)
 		}
 
 		wsClientData.itemUnit = iu

@@ -22,6 +22,8 @@ import (
 var loggerCall = 0
 
 func Test_serviceLogs(t *testing.T) {
+	t.Cleanup(gock.Off)
+
 	h := NewHatcheryKubernetesTest(t)
 	reader := rand.Reader
 	bitSize := 2048

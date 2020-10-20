@@ -52,13 +52,6 @@ func (s *Service) itemAccessMiddleware(ctx context.Context, w http.ResponseWrite
 		return ctx, sdk.WithStack(sdk.ErrUnauthorized)
 	}
 
-	return s.itemAccessCheck(ctx, itemType, apiRef)
-}
-
-func (s *Service) itemAccessCheck(ctx context.Context, itemType sdk.CDNItemType, apiRef string) (context.Context, error) {
-	ctx, end := telemetry.Span(ctx, "router.itemAccessCheck")
-	defer end()
-
 	// Check for session based on jwt from context
 	jwt, ok := ctx.Value(service.ContextJWT).(*jwt.Token)
 	if !ok {
@@ -67,28 +60,32 @@ func (s *Service) itemAccessCheck(ctx context.Context, itemType sdk.CDNItemType,
 	claims := jwt.Claims.(*sdk.AuthSessionJWTClaims)
 	sessionID := claims.StandardClaims.Id
 
-	keyWorkflowPermissionForSession := cache.Key(keyPermission, string(itemType), apiRef, sessionID)
-
-	exists, err := s.Cache.Exist(keyWorkflowPermissionForSession)
-	if err != nil {
-		return ctx, sdk.NewErrorWithStack(sdk.WrapError(err, "unable to check if permission %s exists", keyWorkflowPermissionForSession), sdk.ErrUnauthorized)
-	}
-	if exists {
-		return ctx, nil
-	}
-
 	item, err := item.LoadByAPIRefHashAndType(ctx, s.Mapper, s.mustDBWithCtx(ctx), apiRef, itemType)
 	if err != nil {
 		return ctx, sdk.NewErrorWithStack(err, sdk.ErrNotFound)
 	}
 
+	return ctx, s.itemAccessCheck(ctx, *item, sessionID)
+}
+
+func (s *Service) itemAccessCheck(ctx context.Context, item sdk.CDNItem, sessionID string) error {
+	keyWorkflowPermissionForSession := cache.Key(keyPermission, string(item.Type), item.APIRefHash, sessionID)
+
+	exists, err := s.Cache.Exist(keyWorkflowPermissionForSession)
+	if err != nil {
+		return sdk.NewErrorWithStack(sdk.WrapError(err, "unable to check if permission %s exists", keyWorkflowPermissionForSession), sdk.ErrUnauthorized)
+	}
+	if exists {
+		return nil
+	}
+
 	if err := s.Client.WorkflowLogAccess(ctx, item.APIRef.ProjectKey, item.APIRef.WorkflowName, sessionID); err != nil {
-		return ctx, sdk.NewErrorWithStack(err, sdk.ErrNotFound)
+		return sdk.NewErrorWithStack(err, sdk.ErrNotFound)
 	}
 
 	if err := s.Cache.SetWithTTL(keyWorkflowPermissionForSession, true, 3600); err != nil {
-		return ctx, sdk.NewErrorWithStack(sdk.WrapError(err, "unable to store permission %s", keyWorkflowPermissionForSession), sdk.ErrUnauthorized)
+		return sdk.NewErrorWithStack(sdk.WrapError(err, "unable to store permission %s", keyWorkflowPermissionForSession), sdk.ErrUnauthorized)
 	}
 
-	return ctx, nil
+	return nil
 }

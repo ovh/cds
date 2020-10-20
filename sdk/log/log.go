@@ -59,24 +59,31 @@ type Fields logrus.Fields
 
 var _ Logger = new(TestingLogger)
 
-func (t *TestingLogger) isDone() bool {
-	return t.t.Failed() || t.t.Skipped()
+func (t *TestingLogger) Logf(fmt string, values ...interface{}) {
+	defer func() {
+		if r := recover(); r != nil {
+			logrus.StandardLogger().Logf(logrus.InfoLevel, fmt, values...)
+		}
+	}()
+	t.t.Logf(fmt, values...)
 }
 
-func (t *TestingLogger) Logf(fmt string, values ...interface{}) {
-	if !t.isDone() {
-		t.t.Logf(fmt, values...)
-	}
-}
 func (t *TestingLogger) Errorf(fmt string, values ...interface{}) {
-	if !t.isDone() {
-		t.t.Errorf(fmt, values...)
-	}
+	defer func() {
+		if r := recover(); r != nil {
+			logrus.StandardLogger().Logf(logrus.ErrorLevel, fmt, values...)
+		}
+	}()
+	t.t.Errorf(fmt, values...)
 }
+
 func (t *TestingLogger) Fatalf(fmt string, values ...interface{}) {
-	if !t.isDone() {
-		t.t.Fatalf(fmt, values...)
-	}
+	defer func() {
+		if r := recover(); r != nil {
+			logrus.StandardLogger().Fatalf(fmt, values...)
+		}
+	}()
+	t.t.Fatalf(fmt, values...)
 }
 
 // SetLogger replace logrus logger with custom one.
