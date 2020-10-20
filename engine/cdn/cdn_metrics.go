@@ -56,6 +56,12 @@ func (s *Service) initMetrics(ctx context.Context) error {
 	s.Metrics.WSEvents = stats.Int64("cdn/websocket_events", "number of websocket events", stats.UnitDimensionless)
 	metricsWSEvents := telemetry.NewViewCount(s.Metrics.WSEvents.Name(), s.Metrics.WSEvents, []tag.Key{tagServiceName, tagItemType})
 
+	s.Metrics.ItemToDelete = stats.Int64("cdn/items/to_delete", "number of items to delete per type", stats.UnitDimensionless)
+	itemToDeleteView := telemetry.NewViewLast(s.Metrics.ItemToDelete.Name(), s.Metrics.ItemToDelete, []tag.Key{tagItemType})
+
+	s.Metrics.ItemUnitToDelete = stats.Int64("cdn/item_units/to_delete", "number of item units to delete per storage and type", stats.UnitDimensionless)
+	itemUnitToDeleteView := telemetry.NewViewLast(s.Metrics.ItemUnitToDelete.Name(), s.Metrics.ItemUnitToDelete, []tag.Key{tagStorage, tagItemType})
+
 	if s.DBConnectionFactory != nil {
 		s.GoRoutines.Run(ctx, "cds-compute-metrics", func(ctx context.Context) {
 			s.ComputeMetrics(ctx)
@@ -74,6 +80,8 @@ func (s *Service) initMetrics(ctx context.Context) error {
 		metricsWSClients,
 		metricsWSEvents,
 		itemToSyncCountView,
+		itemToDeleteView,
+		itemUnitToDeleteView,
 	)
 }
 
@@ -131,6 +139,28 @@ func (s *Service) ComputeMetrics(ctx context.Context) {
 			for _, stat := range statsItemToSync {
 				ctxItem := telemetry.ContextWithTag(ctx, telemetry.TagStorage, stat.StorageName, telemetry.TagType, stat.Type)
 				telemetry.Record(ctxItem, s.Metrics.ItemToSyncCount, stat.Number)
+			}
+
+			stats, err = item.CountItemsToDelete(s.mustDBWithCtx(ctx))
+			if err != nil {
+				log.Error(ctx, "cdn> Unable to compute metrics: %v", err)
+				continue
+			}
+
+			for _, stat := range stats {
+				ctxItem := telemetry.ContextWithTag(ctx, telemetry.TagType, stat.Type)
+				telemetry.Record(ctxItem, s.Metrics.ItemToDelete, stat.Number)
+			}
+
+			storageStats, err = storage.CountItemUnitToDelete(s.mustDBWithCtx(ctx))
+			if err != nil {
+				log.Error(ctx, "cdn> Unable to compute metrics: %v", err)
+				continue
+			}
+
+			for _, stat := range storageStats {
+				ctxItem := telemetry.ContextWithTag(ctx, telemetry.TagType, stat.Type, telemetry.TagStorage, stat.StorageName)
+				telemetry.Record(ctxItem, s.Metrics.ItemUnitToDelete, stat.Number)
 			}
 		}
 	}

@@ -229,6 +229,7 @@ func (r *RunningStorageUnits) Start(ctx context.Context, gorts *sdk.GoRoutines) 
 		tickrPurge := time.NewTicker(time.Second)
 
 		defer tickr.Stop()
+		defer tickrPurge.Stop()
 		for {
 			select {
 			case <-ctx.Done():
