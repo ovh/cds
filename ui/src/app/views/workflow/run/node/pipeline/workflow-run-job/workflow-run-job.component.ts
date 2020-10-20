@@ -113,10 +113,13 @@ export class WorkflowRunJobComponent implements OnInit, OnChanges, OnDestroy {
         }
         this.previousNodeJobRun = this.nodeJobRun;
 
-        this.tabs = [{ name: 'Job' }];
-        if (this.nodeJobRun.job.action.requirements) {
-            this.tabs = this.tabs.concat(this.nodeJobRun.job.action.requirements
+        let requirements = (this.nodeJobRun.job.action.requirements ? this.nodeJobRun.job.action.requirements : []);
+        if (!this.tabs) {
+            this.tabs = [{ name: 'Job' }].concat(requirements
                 .filter(r => r.type === 'service').map(r => <Tab>{ name: r.name }));
+        }
+        if (!this.services) {
+            this.services = requirements.filter(r => r.type === 'service').map(r => new Step(r.name));
         }
 
         let steps = (this.nodeJobRun.job.action.actions ? this.nodeJobRun.job.action.actions : []);
@@ -132,12 +135,6 @@ export class WorkflowRunJobComponent implements OnInit, OnChanges, OnDestroy {
                 .map(a => new Step(a.step_name ? a.step_name : a.name)));
         }
         this.computeStepsDuration();
-
-        if (!this.services) {
-            this.services = this.nodeJobRun.job.action.requirements
-                .filter(r => r.type === 'service')
-                .map(r => new Step(r.name));
-        }
 
         this._cd.markForCheck();
 
