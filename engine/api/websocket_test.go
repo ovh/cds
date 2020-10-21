@@ -334,19 +334,11 @@ func TestWebsocketNoEventLoose(t *testing.T) {
 	}
 
 	// Waiting client to receive all events
-	ctx, cancel = context.WithTimeout(context.TODO(), time.Second*20)
-	t.Cleanup(cancel)
-loop:
 	for {
-		select {
-		case <-ctx.Done():
-			break loop
-		default:
-			if client1EventCount == countEvent && client2EventCount == countEvent {
-				break loop
-			}
-			time.Sleep(time.Second)
+		if client1EventCount == countEvent && client2EventCount == countEvent {
+			break
 		}
+		time.Sleep(time.Second)
 	}
 
 	// Let 1 second for clients to consume events
