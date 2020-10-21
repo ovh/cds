@@ -29,8 +29,8 @@ export class Tab {
     name: string;
 }
 
-export class Step {
-    id: number
+export class LogBlock {
+    id: number;
     name: string;
     lines: Array<CDNLine>;
     endLines: Array<CDNLine>;
@@ -40,11 +40,16 @@ export class Step {
     link: CDNLogLink;
     startDate: moment.Moment;
     duration: string;
+    optional: boolean;
+    disabled: boolean;
+    failed: boolean;
 
     constructor(name: string) {
         this.name = name;
         this.lines = [];
         this.endLines = [];
+        this.firstDisplayedLineNumber = 0;
+        this.totalLinesCount = 0;
     }
 
     clickOpen(): void {
@@ -78,8 +83,8 @@ export class WorkflowRunJobComponent implements OnInit, OnChanges, OnDestroy {
     websocket: WebSocketSubject<any>;
     websocketSubscription: Subscription;
     previousNodeJobRun: WorkflowNodeJobRun;
-    steps: Array<Step>;
-    services: Array<Step>;
+    steps: Array<LogBlock>;
+    services: Array<LogBlock>;
 
     constructor(
         private _cd: ChangeDetectorRef,
@@ -105,8 +110,13 @@ export class WorkflowRunJobComponent implements OnInit, OnChanges, OnDestroy {
             let requirementsChanged = this.previousNodeJobRun.job.action.requirements?.length
                 !== this.nodeJobRun.job.action.requirements?.length;
             let stepStatusChanged = this.previousNodeJobRun.job.step_status?.length !== this.nodeJobRun.job.step_status?.length;
+            let lastStepStatusChanged = this.previousNodeJobRun.job.step_status && this.nodeJobRun.job.step_status &&
+                this.previousNodeJobRun.job.step_status.length === this.nodeJobRun.job.step_status.length &&
+                this.previousNodeJobRun.job.step_status.length > 0 &&
+                (this.previousNodeJobRun.job.step_status[this.previousNodeJobRun.job.step_status.length - 1].status
+                    !== this.nodeJobRun.job.step_status[this.nodeJobRun.job.step_status.length - 1].status);
             let parametersChanged = this.previousNodeJobRun?.parameters?.length !== this.nodeJobRun?.parameters?.length;
-            let shouldUpdate = statusChanged || requirementsChanged || stepStatusChanged || parametersChanged;
+            let shouldUpdate = statusChanged || requirementsChanged || stepStatusChanged || parametersChanged || lastStepStatusChanged;
             if (!shouldUpdate) {
                 return;
             }
@@ -119,21 +129,26 @@ export class WorkflowRunJobComponent implements OnInit, OnChanges, OnDestroy {
                 .filter(r => r.type === 'service').map(r => <Tab>{ name: r.name }));
         }
         if (!this.services) {
-            this.services = requirements.filter(r => r.type === 'service').map(r => new Step(r.name));
+            this.services = requirements.filter(r => r.type === 'service').map(r => new LogBlock(r.name));
         }
 
-        let steps = (this.nodeJobRun.job.action.actions ? this.nodeJobRun.job.action.actions : []);
         if (!this.steps) {
-            this.steps = [new Step('Informations')].concat(steps
-                .filter((_, i) => this.nodeJobRun.job.step_status && this.nodeJobRun.job.step_status[i])
-                .map(a => new Step(a.step_name ? a.step_name : a.name)));
-        } else {
-            // Only append new steps
-            this.steps = this.steps.concat(steps
-                .filter((_, i) => this.nodeJobRun.job.step_status && this.nodeJobRun.job.step_status[i])
-                .filter((_, i) => !this.steps[i + 1])
-                .map(a => new Step(a.step_name ? a.step_name : a.name)));
+            this.steps = [new LogBlock('Informations')];
         }
+        let steps = (this.nodeJobRun.job.action.actions ? this.nodeJobRun.job.action.actions : []);
+        steps.forEach((a, i) => {
+            if (!this.nodeJobRun.job.step_status || !this.nodeJobRun.job.step_status[i]) {
+                return;
+            }
+            let exists = this.steps[i + 1];
+            if (!exists) {
+                let block = new LogBlock(a.step_name ? a.step_name : a.name);
+                block.disabled = !a.enabled;
+                block.optional = a.optional;
+                this.steps.push(block);
+            }
+            this.steps[i + 1].failed = PipelineStatus.FAIL === this.nodeJobRun.job.step_status[i].status;
+        });
         this.computeStepsDuration();
 
         this._cd.markForCheck();
@@ -191,6 +206,9 @@ export class WorkflowRunJobComponent implements OnInit, OnChanges, OnDestroy {
                 break;
             }
             if (this.steps[i].link) {
+                continue;
+            }
+            if (!this.nodeJobRun.job.action.actions[i - 1].enabled) {
                 continue;
             }
 
@@ -254,7 +272,7 @@ export class WorkflowRunJobComponent implements OnInit, OnChanges, OnDestroy {
         });
     }
 
-    trackStepElement(index: number, element: Step) { return index; }
+    trackStepElement(index: number, element: LogBlock) { return index; }
 
     trackLineElement(index: number, element: CDNLine) { return element ? element.number : null; }
 
@@ -320,7 +338,8 @@ export class WorkflowRunJobComponent implements OnInit, OnChanges, OnDestroy {
             return;
         }
         let lastStepStatus = this.nodeJobRun.job.step_status[this.nodeJobRun.job.step_status.length - 1];
-        if (!PipelineStatus.isActive(lastStepStatus.status)) {
+        let action = this.nodeJobRun.job.action.actions[this.nodeJobRun.job.step_status.length - 1];
+        if (!PipelineStatus.isActive(lastStepStatus.status) || !action.enabled) {
             return;
         }
 
@@ -329,11 +348,10 @@ export class WorkflowRunJobComponent implements OnInit, OnChanges, OnDestroy {
         let nodeRunID = this._store.selectSnapshot(WorkflowState).workflowNodeRun.id;
         let nodeJobRunID = this._store.selectSnapshot(WorkflowState.getSelectedWorkflowNodeJobRun()).id;
 
-        this.steps[this.steps.length - 1].link = await this._workflowService.getStepLink(projectKey, workflowName,
+        let link = await this._workflowService.getStepLink(projectKey, workflowName,
             nodeRunID, nodeJobRunID, this.nodeJobRun.job.step_status.length - 1).toPromise();
-        let result = await this._workflowService.getLogLines(this.steps[this.steps.length - 1].link,
-            { limit: `${this.initLoadLinesCount}` }
-        ).toPromise();
+        let result = await this._workflowService.getLogLines(link, { limit: `${this.initLoadLinesCount}` }).toPromise();
+        this.steps[this.steps.length - 1].link = link;
         this.steps[this.steps.length - 1].lines = result.lines;
         this.steps[this.steps.length - 1].totalLinesCount = result.totalCount;
         this.steps[this.steps.length - 1].open = true;
@@ -349,9 +367,9 @@ export class WorkflowRunJobComponent implements OnInit, OnChanges, OnDestroy {
                 next: value => {
                     if (value.type === 'open') {
                         this.websocket.next(<CDNStreamFilter>{
-                            item_type: this.steps[this.steps.length - 1].link.item_type,
-                            api_ref: this.steps[this.steps.length - 1].link.api_ref,
-                            offset: this.steps[this.steps.length - 1].totalLinesCount > 0 ? -5 : 0
+                            item_type: link.item_type,
+                            api_ref: link.api_ref,
+                            offset: result.totalCount > 0 ? -5 : 0
                         });
                     }
                 }

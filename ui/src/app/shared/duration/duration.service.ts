@@ -1,4 +1,4 @@
-declare var Duration: any;
+import { Duration } from '@icholy/duration';
 
 export class DurationService {
     public static duration(from: Date, to: Date): string {
@@ -8,6 +8,7 @@ export class DurationService {
         }
         let fromMs = Math.round(from.getTime() / 1000) * 1000;
         let toMs = Math.round(to.getTime() / 1000) * 1000;
-        return (new Duration(toMs - fromMs)).toString();
+        let sub = toMs - fromMs;
+        return sub === 0 ? '~0s' : (new Duration(sub)).toString();
     }
 }
