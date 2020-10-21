@@ -7,8 +7,9 @@ import { WorkflowNodeRunHookEvent, WorkflowRun } from 'app/model/workflow.run.mo
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { DeleteModalComponent } from 'app/shared/modal/delete/delete.component';
 import { ToastService } from 'app/shared/toast/ToastService';
+import { WorkflowNodeHookDetailsComponent } from 'app/shared/workflow/node/hook/details/hook.details.component';
 import { ProjectState } from 'app/store/project.state';
-import { DeleteHookWorkflow, OpenEditModal, SelectHook } from 'app/store/workflow.action';
+import { DeleteHookWorkflow, OpenEditModal } from 'app/store/workflow.action';
 import { WorkflowState } from 'app/store/workflow.state';
 import { Observable } from 'rxjs';
 import { Subscription } from 'rxjs/Subscription';
@@ -34,6 +35,8 @@ export class WorkflowNodeHookComponent implements OnInit, OnDestroy {
 
     @ViewChild('deleteHookModal')
     deleteHookModal: DeleteModalComponent;
+    @ViewChild('workflowDetailsHook')
+    workflowDetailsHook: WorkflowNodeHookDetailsComponent;
 
     projectKey: string;
     hookEvent: WorkflowNodeRunHookEvent;
@@ -85,8 +88,9 @@ export class WorkflowNodeHookComponent implements OnInit, OnDestroy {
 
     receivedEvent(e: string): void {
         switch (e) {
-            case 'details':
-                this._store.dispatch(new SelectHook({ hook: this.hook, node: this.node }));
+            case 'logs':
+                // display logs
+                this.workflowDetailsHook.show(this.hook);
                 break;
             case 'edit':
                 this._store.dispatch(new OpenEditModal({

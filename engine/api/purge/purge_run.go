@@ -165,7 +165,6 @@ func applyRetentionPolicyOnRun(ctx context.Context, db *gorp.DbMap, wf sdk.Workf
 }
 
 func purgeComputeVariables(ctx context.Context, luaCheck *luascript.Check, run sdk.WorkflowRunSummary, branchesMap map[string]struct{}, app sdk.Application, vcsClient sdk.VCSAuthorizedClientService) error {
-
 	vars := make(map[string]string)
 	varsFloats := make(map[string]float64)
 

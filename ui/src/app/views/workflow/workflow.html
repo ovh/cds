@@ -86,21 +86,9 @@
     </div>
 </app-workflow-breadcrumb>
 <aside class="sidebar expanded">
-    <i *ngIf="sidebarMode !== sidebarModes.RUNS" class="ui icon black close closeButton"
-        (click)="changeToRunsMode()"></i>
     <div class="sidebar-toggle">
         <ng-container *ngIf="project && workflow">
-            <ng-container *ngIf="sidebarMode === sidebarModes.EDIT_HOOK">
-                <app-workflow-sidebar-hook [project]="project" [workflow]="workflow">
-                </app-workflow-sidebar-hook>
-            </ng-container>
-            <ng-container *ngIf="sidebarMode === sidebarModes.RUNS">
-                <app-workflow-sidebar-run-list [workflow]="workflow"></app-workflow-sidebar-run-list>
-            </ng-container>
-            <ng-container *ngIf="sidebarMode === sidebarModes.RUN_HOOK">
-                <app-workflow-sidebar-run-hook [project]="project" [wname]="workflow.name">
-                </app-workflow-sidebar-run-hook>
-            </ng-container>
+            <app-workflow-sidebar-run-list [workflow]="workflow"></app-workflow-sidebar-run-list>
         </ng-container>
     </div>
 </aside>

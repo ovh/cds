@@ -1,8 +1,16 @@
 <div class="sidebar-node-edit">
     <div class="ui list">
-        <a class="item" (click)="sendEvent('details')">
+        <ng-container *ngIf="hook.hook_model_name !== 'Workflow'">
+            <a class="item" (click)="sendEvent('logs')" [class.disabled]="isRun && (!hookEventUUID || hookEventUUID !== hook.uuid)">
                 {{ 'btn_logs' | translate }}
-        </a>
+            </a>
+        </ng-container>
+        <ng-container *ngIf="hook.hook_model_name === 'Workflow' && hookEvent?.parent_workflow?.key">
+            <a
+               [routerLink]="['/project', hookEvent.parent_workflow.key, 'workflow', hookEvent.parent_workflow.name, 'run', hookEvent.parent_workflow.run]">
+                Display parent workflow run
+            </a>
+        </ng-container>
         <hr>
         <a class="item" (click)="sendEvent('edit')">
                 <span *ngIf="readonly">{{ 'workflow_node_menu_edit_ro' | translate }}</span>

@@ -9,7 +9,6 @@ import { NavbarService } from 'app/service/navbar/navbar.service';
 import { RouterService } from 'app/service/router/router.service';
 import { WorkflowRunService } from 'app/service/workflow/run/workflow.run.service';
 import { WorkflowService } from 'app/service/workflow/workflow.service';
-import { WorkflowSidebarMode } from 'app/service/workflow/workflow.sidebar.store';
 import * as actionAsCode from 'app/store/ascode.action';
 import cloneDeep from 'lodash-es/cloneDeep';
 import { finalize, first, tap } from 'rxjs/operators';
@@ -31,8 +30,6 @@ export class WorkflowStateModel {
     retentionDryRunResults: Array<RunToKeep>;
     retentionDryRunStatus: string;
     retentionDryRunNbAnalyzedRuns: number;
-
-    sidebar: string;
     workflowRun: WorkflowRun;
     workflowNodeRun: WorkflowNodeRun;
     workflowNodeJobRun: WorkflowNodeJobRun;
@@ -62,7 +59,6 @@ export function getInitialWorkflowState(): WorkflowStateModel {
         retentionDryRunStatus: null,
         retentionDryRunNbAnalyzedRuns: 0,
         listRuns: new Array<WorkflowRunSummary>(),
-        sidebar: WorkflowSidebarMode.RUNS,
         filters: {},
         editMode: false,
         editModeWorkflowChanged: false
@@ -144,13 +140,6 @@ export class WorkflowState {
         return createSelector(
             [WorkflowState],
             (state: WorkflowStateModel): {} => state.filters
-        );
-    }
-
-    static getSidebarMode() {
-        return createSelector(
-            [WorkflowState],
-            (state: WorkflowStateModel): string => state.sidebar
         );
     }
 
@@ -801,15 +790,10 @@ export class WorkflowState {
     @Action(actionWorkflow.SelectHook)
     selectHook(ctx: StateContext<WorkflowStateModel>, action: actionWorkflow.SelectHook) {
         const state = ctx.getState();
-        let sidebar = WorkflowSidebarMode.EDIT_HOOK;
-        if (state.workflowRun) {
-            sidebar = WorkflowSidebarMode.RUN_HOOK;
-        }
         ctx.setState({
             ...state,
             node: action.payload.node,
             hook: action.payload.hook,
-            sidebar: sidebar
         });
     }
 
@@ -1028,7 +1012,7 @@ export class WorkflowState {
     }
 
     @Action(actionWorkflow.ExternalChangeWorkflow)
-    externalChange(ctx: StateContext<WorkflowStateModel>, action: actionWorkflow.ExternalChangeWorkflow) {
+    externalChange(ctx: StateContext<WorkflowStateModel>, _: actionWorkflow.ExternalChangeWorkflow) {
         const state = ctx.getState();
         ctx.setState({
             ...state,
@@ -1077,7 +1061,6 @@ export class WorkflowState {
                     workflowRun: null,
                     workflowNodeRun: null,
                     canEdit: state.workflowRun ? false : canEdit,
-                    sidebar: WorkflowSidebarMode.RUNS,
                     editMode: editMode
                 });
             }));
@@ -1125,7 +1108,7 @@ export class WorkflowState {
     }
 
     @Action(actionWorkflow.CleanWorkflowState)
-    clearCache(ctx: StateContext<WorkflowStateModel>, action: actionWorkflow.CleanWorkflowState) {
+    clearCache(ctx: StateContext<WorkflowStateModel>, _: actionWorkflow.CleanWorkflowState) {
         ctx.setState(getInitialWorkflowState());
     }
 
@@ -1135,8 +1118,7 @@ export class WorkflowState {
         ctx.setState({
             ...state,
             workflowNodeRun: null,
-            canEdit: false,
-            sidebar: WorkflowSidebarMode.RUNS
+            canEdit: false
         });
     }
 
@@ -1266,7 +1248,7 @@ export class WorkflowState {
     }
 
     @Action(actionWorkflow.CleanWorkflowRun)
-    cleanWorkflowRun(ctx: StateContext<WorkflowStateModel>, action: actionWorkflow.CleanWorkflowRun) {
+    cleanWorkflowRun(ctx: StateContext<WorkflowStateModel>, _: actionWorkflow.CleanWorkflowRun) {
         const state = ctx.getState();
         ctx.setState({
             ...state,
@@ -1274,8 +1256,16 @@ export class WorkflowState {
             workflowNodeRun: null,
             workflowNodeJobRun: null,
             node: null,
-            canEdit: state.workflow.permissions.writable,
-            sidebar: WorkflowSidebarMode.RUNS
+            canEdit: state.workflow.permissions.writable
+        });
+    }
+
+    @Action(actionWorkflow.ClearListRuns)
+    cleanListRuns(ctx: StateContext<WorkflowStateModel>, _: actionWorkflow.CleanWorkflowRun) {
+        const state = ctx.getState();
+        ctx.setState({
+            ...state,
+            listRuns: [],
         });
     }
 
@@ -1313,8 +1303,7 @@ export class WorkflowState {
         ctx.setState({
             ...state,
             workflowNodeRun: null,
-            node: action.payload.node,
-            sidebar: WorkflowSidebarMode.RUNS
+            node: action.payload.node
         });
     }
 
@@ -1364,17 +1353,8 @@ export class WorkflowState {
         }
     }
 
-    @Action(actionWorkflow.SidebarRunsMode)
-    sidebarRunsMode(ctx: StateContext<WorkflowStateModel>, action: actionWorkflow.SidebarRunsMode) {
-        const state = ctx.getState();
-        ctx.setState({
-            ...state,
-            sidebar: WorkflowSidebarMode.RUNS
-        });
-    }
-
     @Action(actionWorkflow.CancelWorkflowEditMode)
-    cancelWorkflowEditMode(ctx: StateContext<WorkflowStateModel>, action: actionWorkflow.CancelWorkflowEditMode) {
+    cancelWorkflowEditMode(ctx: StateContext<WorkflowStateModel>, _: actionWorkflow.CancelWorkflowEditMode) {
         const state = ctx.getState();
         let editMode = false;
         if (state.workflow.from_repository) {

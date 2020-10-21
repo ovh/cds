@@ -3,56 +3,108 @@
         <span>{{ 'workflow_node_hook_details_modal_title' | translate }}</span>
     </div>
     <div class="content scrolling">
-        <div class="ui form">
-            <ng-container *ngIf="task">
-                <h3>{{ 'workflow_node_hook_form_config' | translate }}</h3>
-                <ng-container *ngIf="task.config">
-                    <div class="inline fields" *ngFor="let k of task.config | keys">
-                        <div class="four wide field"><label>{{k}}</label></div>
+        <ng-container *ngIf="loading">
+            <div class="ui center aligned field">
+                <i class="circle notch loading blue icon"></i>
+                Loading hook executions
+            </div>
+        </ng-container>
+
+        <!-- Not found message -->
+        <ng-container *ngIf="!loading && runNumber && !task">
+            <div class="ui info message">Hook execution has been deleted</div>
+        </ng-container>
+
+        <ng-container *ngIf="!loading && executions">
+            <h3>Hook executions</h3>
+            <sui-select class="selection" name="selectExecution" (ngModelChange)="selectTask($event)" [(ngModel)]="task" [options]="executions"
+                        [optionTemplate]="optionTemplate"
+                        [isSearchable]="true" #selectIntegration
+                        [isDisabled]="runNumber">
+                <sui-select-option *ngFor="let t of selectIntegration.filteredOptions" [value]="t">
+                </sui-select-option>
+            </sui-select>
+            <ng-template let-option #optionTemplate>
+                <div class="hookItem">
+                    <div class="status" [class.done]="option.status === hookStatus.DONE"
+                         [class.doing]="option.status === hookStatus.DOING"
+                        [class.error]="option.status === hookStatus.FAIL"></div>
+                    {{ 'Workflow run n°' + option.workflow_run }}
+                    <span class="date">{{' at '}}{{option.timestamp/1000000 | amDateFormat: 'YYYY-MM-DD HH:mm:ss' }}</span>
+                </div>
+            </ng-template>
+        </ng-container>
+
+        <ng-container *ngIf="task">
+            <div class="ui form">
+                <ng-container>
+                    <h3>{{ 'workflow_node_hook_form_config' | translate }}</h3>
+                    <ng-container *ngIf="task.config">
+                        <div class="fields" *ngFor="let k of task.config | keys">
+                            <div class="four wide field"><label>{{k}}</label></div>
+                            <div class="twelve wide field">
+                                <input type="text" [ngModel]="task.config[k].value" [readonly]="true" *ngIf="k !== 'payload'">
+                                <ng-container *ngIf="k === 'payload'">
+                                    <codemirror
+                                            [ngModel]="task.config[k].value"
+                                            [config]="codeMirrorConfig"
+                                            #textareaCodeMirror>
+                                    </codemirror>
+                                </ng-container>
+                            </div>
+                        </div>
+                    </ng-container>
+                    <div class="ui info message" *ngIf="!task.config">{{ 'workflow_node_hook_no_configuration' | translate }}</div>
+                    <h3>{{'workflow_hook_log_title' | translate}}</h3>
+                    <div class="fields" *ngIf="task.workflow_run">
+                        <div class="four wide field"><label>{{'workflow_hook_log_workflow_run' | translate}}</label></div>
                         <div class="twelve wide field">
-                          <input type="text" [ngModel]="task.config[k].value" [readonly]="true" *ngIf="k !== 'payload'">
-                          <ng-container *ngIf="k === 'payload'">
-                              <codemirror
-                                [ngModel]="task.config[k].value"
-                                [config]="codeMirrorConfig"
-                                #textareaCodeMirror>
-                              </codemirror>
-                          </ng-container>
+                            <input type="text" [value]="task.workflow_run" [readonly]="true">
+                        </div>
+                    </div>
+                    <div class="fields">
+                        <div class="four wide field"><label>{{'worker_model_status' | translate}}</label></div>
+                        <div class="twelve wide field">
+                            <div class="ui icon read-only input">
+                                <i class="green check icon" *ngIf="task.status === hookStatus.DONE"></i>
+                                <i class="circle notch loading blue icon" *ngIf="task.status === hookStatus.DOING"></i>
+                                <i class="red close icon" *ngIf="task.status === hookStatus.FAIL"></i>
+                                <input type="text" [value]="task.status" readonly>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="fields">
+                        <div class="four wide field"><label>{{'common_begin' | translate}}</label></div>
+                        <div class="twelve wide field">
+                            <input type="text" [value]="(task.timestamp / 1000000) | date:'short'" [readonly]="true">
+
+                        </div>
+                    </div>
+                    <div class="fields">
+                        <div class="four wide field"><label>{{'common_end' | translate}}</label></div>
+                        <div class="twelve wide field">
+                            <input type="text" [value]="(task.processing_timestamp / 1000000) | date:'short'" [readonly]="true">
+                        </div>
+                    </div>
+                    <div class="fields" *ngIf="task.last_error">
+                        <div class="four wide field"><label>{{'common_error' | translate}}</label></div>
+                        <div class="twelve wide field">
+                            <input type="text" [value]="task.last_error" [readonly]="true">
+                        </div>
+                    </div>
+                    <div class="fields" *ngIf="body">
+                        <div class="four wide field"><label>Body</label></div>
+                        <div class="twelve wide field">
+                            <codemirror
+                                    [ngModel]="body"
+                                    [config]="codeMirrorConfig"
+                                    #code>
+                            </codemirror>
                         </div>
                     </div>
                 </ng-container>
-                <div class="ui info message" *ngIf="!task.config">{{ 'workflow_node_hook_no_configuration' | translate }}</div>
-                <h3>{{'workflow_hook_log_title' | translate}}</h3>
-                <div class="inline fields" *ngIf="task.workflow_run">
-                    <div class="four wide field"><label>{{'workflow_hook_log_workflow_run' | translate}}</label></div>
-                    <input type="text" [value]="task.workflow_run" [readonly]="true">
-                </div>
-                <div class="inline fields">
-                    <div class="four wide field"><label>{{'worker_model_status' | translate}}</label></div>
-                    <input type="text" [value]="task.status" [readonly]="true">
-                </div>
-                <div class="inline fields">
-                    <div class="four wide field"><label>{{'common_begin' | translate}}</label></div>
-                    <input type="text" [value]="(task.timestamp / 1000000) | date:'short'" [readonly]="true">
-                </div>
-                <div class="inline fields">
-                    <div class="four wide field"><label>{{'common_end' | translate}}</label></div>
-                    <input type="text" [value]="(task.processing_timestamp / 1000000) | date:'short'" [readonly]="true">
-                </div>
-                <div class="inline fields" *ngIf="task.last_error">
-                    <div class="four wide field"><label>{{'common_error' | translate}}</label></div>
-                    <input type="text" [value]="task.last_error" [readonly]="true">
-                </div>
-                <div class="inline fields" *ngIf="body">
-                    <div class="four wide field"><label>Body</label></div>
-                    <codemirror
-                            [ngModel]="body"
-                            [config]="codeMirrorConfig"
-                            #code>
-                    </codemirror>
-                </div>
-            </ng-container>
-        </div>
+            </div>
+        </ng-container>
     </div>
     <div class="actions">
         <button class="ui grey button" (click)="modal.approve(true)">{{ 'common_close' | translate }}</button>
