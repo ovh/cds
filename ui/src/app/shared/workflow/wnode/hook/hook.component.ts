@@ -2,7 +2,6 @@ import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnDestroy
 import { TranslateService } from '@ngx-translate/core';
 import { Select, Store } from '@ngxs/store';
 import { SuiActiveModal } from '@richardlt/ng2-semantic-ui';
-import { TaskExecution } from 'app/model/workflow.hook.model';
 import { WNode, WNodeHook, Workflow, WorkflowNodeHookConfigValue } from 'app/model/workflow.model';
 import { WorkflowNodeRunHookEvent, WorkflowRun } from 'app/model/workflow.run.model';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
@@ -10,7 +9,7 @@ import { DeleteModalComponent } from 'app/shared/modal/delete/delete.component';
 import { ToastService } from 'app/shared/toast/ToastService';
 import { WorkflowNodeHookDetailsComponent } from 'app/shared/workflow/node/hook/details/hook.details.component';
 import { ProjectState } from 'app/store/project.state';
-import { DeleteHookWorkflow, OpenEditModal, SelectHook } from 'app/store/workflow.action';
+import { DeleteHookWorkflow, OpenEditModal } from 'app/store/workflow.action';
 import { WorkflowState } from 'app/store/workflow.state';
 import { Observable } from 'rxjs';
 import { Subscription } from 'rxjs/Subscription';
