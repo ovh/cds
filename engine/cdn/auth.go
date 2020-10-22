@@ -62,6 +62,9 @@ func (s *Service) itemAccessCheck(ctx context.Context, itemType sdk.CDNItemType,
 	defer end()
 
 	sessionID := s.sessionID(ctx)
+	if sessionID == "" {
+		return ctx, sdk.WithStack(sdk.ErrUnauthorized)
+	}
 	keyWorkflowPermissionForSession := cache.Key(keyPermission, apiRef, sessionID)
 
 	exists, err := s.Cache.Exist(keyWorkflowPermissionForSession)
