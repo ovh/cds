@@ -71,6 +71,9 @@ func (c *CommonClient) Send(m interface{}) (err error) {
 func (c *CommonClient) Close() { c.isClosed.Set() }
 
 func (c *CommonClient) Listen(ctx context.Context, gorts *sdk.GoRoutines) error {
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
+
 	inMessageChan := make(chan []byte, 10)
 	defer close(inMessageChan)
 
@@ -100,7 +103,7 @@ func (c *CommonClient) Listen(ctx context.Context, gorts *sdk.GoRoutines) error 
 		if err != nil {
 			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
 				err = sdk.WrapError(err, "websocket unexpected error occured")
-				log.WarningWithFields(ctx, log.Fields{"stack_trace": fmt.Sprintf("%+v", err)}, "%s", err)
+				log.InfoWithFields(ctx, log.Fields{"stack_trace": fmt.Sprintf("%+v", err)}, "%s", err)
 			}
 			log.Debug("websocket.Client.Listen> client %s disconnected", c.uuid)
 			break

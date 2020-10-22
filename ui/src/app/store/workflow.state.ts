@@ -1282,7 +1282,7 @@ export class WorkflowState {
 
         }
         if (state.listRuns[index].status === action.payload.workflowRun.status
-            && state.listRuns[index].tags.length === action.payload.workflowRun.tags.length) {
+            && state.listRuns[index].tags?.length === action.payload.workflowRun.tags?.length) {
             return;
         }
 

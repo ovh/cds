@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, ElementRef, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Select, Store } from '@ngxs/store';
 import { Job } from 'app/model/job.model';
@@ -8,11 +8,13 @@ import { Stage } from 'app/model/stage.model';
 import { WorkflowNodeJobRun, WorkflowNodeRun } from 'app/model/workflow.run.model';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { DurationService } from 'app/shared/duration/duration.service';
+import { FeatureState } from 'app/store/feature.state';
 import { ProjectState } from 'app/store/project.state';
 import { SelectWorkflowNodeRunJob } from 'app/store/workflow.action';
 import { WorkflowState, WorkflowStateModel } from 'app/store/workflow.state';
 import cloneDeep from 'lodash-es/cloneDeep';
 import { Observable, Subscription } from 'rxjs';
+import { ScrollTarget } from './workflow-run-job/workflow-run-job.component';
 
 @Component({
     selector: 'app-node-run-pipeline',
@@ -22,6 +24,7 @@ import { Observable, Subscription } from 'rxjs';
 })
 @AutoUnsubscribe()
 export class WorkflowRunNodePipelineComponent implements OnInit, OnDestroy {
+    @ViewChild('scrollContent') scrollContent: ElementRef;
 
     @Select(WorkflowState.getSelectedNodeRun()) nodeRun$: Observable<WorkflowNodeRun>;
     nodeRunSubs: Subscription;
@@ -44,12 +47,15 @@ export class WorkflowRunNodePipelineComponent implements OnInit, OnDestroy {
     currentNodeRunID: number;
     currentNodeRunNum: number;
     currentJob: Job;
+    currentNodeJobRun: WorkflowNodeJobRun;
+    currentNodeRunStatus: string;
 
     displayServiceLogs = false;
     durationIntervalID: number;
 
+    cdnEnabled: boolean;
+
     constructor(
-        private _durationService: DurationService,
         private _route: ActivatedRoute,
         private _router: Router,
         private _cd: ChangeDetectorRef,
@@ -60,10 +66,15 @@ export class WorkflowRunNodePipelineComponent implements OnInit, OnDestroy {
     }
 
     ngOnInit() {
+        let featCDN = this._store.selectSnapshot(FeatureState.featureProject('cdn-job-logs',
+            JSON.stringify({ 'project_key': this.project.key })))
+        this.cdnEnabled = featCDN?.enabled;
+
         this.nodeJobRunSubs = this.nodeJobRun$.subscribe(rj => {
             if (!rj && !this.currentJob) {
                 return;
             }
+            this.currentNodeJobRun = rj;
             if (!rj) {
                 delete this.currentJob;
                 this._cd.markForCheck();
@@ -122,6 +133,11 @@ export class WorkflowRunNodePipelineComponent implements OnInit, OnDestroy {
     refreshNodeRun(data: WorkflowNodeRun): boolean {
         let refresh = false;
         let currentNodeJobRun = (<WorkflowStateModel>this._store.selectSnapshot(WorkflowState)).workflowNodeJobRun;
+
+        if (this.currentNodeRunStatus !== data.status) {
+            this.currentNodeRunStatus = data.status;
+            refresh = true;
+        }
 
         if (data.stages) {
             data.stages.forEach((s, sIndex) => {
@@ -183,12 +199,12 @@ export class WorkflowRunNodePipelineComponent implements OnInit, OnDestroy {
                     refresh = true;
                     stillRunning = true;
                     this.jobTime.set(k,
-                        this._durationService.duration(new Date(v.start), new Date()));
+                        DurationService.duration(new Date(v.start), new Date()));
                     break;
                 case this.pipelineStatusEnum.SUCCESS:
                 case this.pipelineStatusEnum.FAIL:
                 case this.pipelineStatusEnum.STOPPED:
-                    let dd = this._durationService.duration(new Date(v.start), new Date(v.done));
+                    let dd = DurationService.duration(new Date(v.start), new Date(v.done));
                     let item = this.jobTime.get(k);
                     if (!item || item !== dd) {
                         this.jobTime.set(k, dd);
@@ -217,5 +233,9 @@ export class WorkflowRunNodePipelineComponent implements OnInit, OnDestroy {
             clearInterval(this.durationIntervalID);
             this.durationIntervalID = 0;
         }
+    }
+
+    onJobScroll(target: ScrollTarget): void {
+        this.scrollContent.nativeElement.scrollTop = target === ScrollTarget.TOP ? 0 : this.scrollContent.nativeElement.scrollHeight;
     }
 }

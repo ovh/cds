@@ -40,7 +40,8 @@ func TestGetItemValue(t *testing.T) {
 		Cache:               cache,
 		Mapper:              m,
 	}
-	s.Common.GoRoutines = sdk.NewGoRoutines()
+	s.GoRoutines = sdk.NewGoRoutines()
+
 	ctx, cancel := context.WithCancel(context.TODO())
 	t.Cleanup(cancel)
 
@@ -100,7 +101,7 @@ func TestGetItemValue(t *testing.T) {
 	require.NoError(t, storage.InsertItemUnit(context.TODO(), s.Mapper, db, itemUnit))
 
 	// Get From Buffer
-	_, rc, _, err := s.getItemLogValue(context.Background(), sdk.CDNTypeItemStepLog, apiRefhash, sdk.CDNReaderFormatText, 3, 5, 0)
+	_, _, rc, _, err := s.getItemLogValue(context.Background(), sdk.CDNTypeItemStepLog, apiRefhash, sdk.CDNReaderFormatText, 3, 5, 0)
 	require.NoError(t, err)
 
 	buf := new(strings.Builder)
@@ -122,7 +123,7 @@ func TestGetItemValue(t *testing.T) {
 	require.NoError(t, storage.DeleteItemUnit(s.Mapper, db, itemUnit))
 
 	// Get From Storage
-	_, rc2, _, err := s.getItemLogValue(context.Background(), sdk.CDNTypeItemStepLog, apiRefhash, sdk.CDNReaderFormatText, 3, 3, 0)
+	_, _, rc2, _, err := s.getItemLogValue(context.Background(), sdk.CDNTypeItemStepLog, apiRefhash, sdk.CDNReaderFormatText, 3, 3, 0)
 	require.NoError(t, err)
 
 	buf2 := new(strings.Builder)
@@ -135,7 +136,7 @@ func TestGetItemValue(t *testing.T) {
 	require.Equal(t, 1, n)
 
 	// Get all from cache
-	_, rc3, _, err := s.getItemLogValue(context.Background(), sdk.CDNTypeItemStepLog, apiRefhash, sdk.CDNReaderFormatText, 0, 0, 0)
+	_, _, rc3, _, err := s.getItemLogValue(context.Background(), sdk.CDNTypeItemStepLog, apiRefhash, sdk.CDNReaderFormatText, 0, 0, 0)
 	require.NoError(t, err)
 
 	buf3 := new(strings.Builder)
@@ -144,7 +145,7 @@ func TestGetItemValue(t *testing.T) {
 	require.Equal(t, "Line 0\nLine 1\nLine 2\nLine 3\nLine 4\nLine 5\nLine 6\nLine 7\nLine 8\nLine 9\nLine 10\n", buf3.String())
 
 	// Get lines from end
-	_, rc4, _, err := s.getItemLogValue(context.Background(), sdk.CDNTypeItemStepLog, apiRefhash, sdk.CDNReaderFormatText, -3, 2, 0)
+	_, _, rc4, _, err := s.getItemLogValue(context.Background(), sdk.CDNTypeItemStepLog, apiRefhash, sdk.CDNReaderFormatText, -3, 2, 0)
 	require.NoError(t, err)
 
 	buf4 := new(strings.Builder)
@@ -153,7 +154,7 @@ func TestGetItemValue(t *testing.T) {
 	require.Equal(t, "Line 8\nLine 9\n", buf4.String())
 
 	// Get lines from end in JSON
-	_, rc5, _, err := s.getItemLogValue(context.Background(), sdk.CDNTypeItemStepLog, apiRefhash, sdk.CDNReaderFormatJSON, -3, 2, 0)
+	_, _, rc5, _, err := s.getItemLogValue(context.Background(), sdk.CDNTypeItemStepLog, apiRefhash, sdk.CDNReaderFormatJSON, -3, 2, 0)
 	require.NoError(t, err)
 
 	buf5 := new(strings.Builder)
@@ -181,6 +182,8 @@ func TestGetItemValue_ThousandLines(t *testing.T) {
 		Cache:               cache,
 		Mapper:              m,
 	}
+	s.GoRoutines = sdk.NewGoRoutines()
+
 	ctx, cancel := context.WithCancel(context.TODO())
 	t.Cleanup(cancel)
 	cdnUnits := newRunningStorageUnits(t, m, db.DbMap, ctx)
@@ -230,7 +233,7 @@ func TestGetItemValue_ThousandLines(t *testing.T) {
 	require.NoError(t, storage.InsertItemUnit(context.TODO(), s.Mapper, db, itemUnit))
 
 	// Get From Buffer
-	_, rc, _, err := s.getItemLogValue(context.Background(), sdk.CDNTypeItemStepLog, apiRefhash, sdk.CDNReaderFormatJSON, 773, 200, 0)
+	_, _, rc, _, err := s.getItemLogValue(context.Background(), sdk.CDNTypeItemStepLog, apiRefhash, sdk.CDNReaderFormatJSON, 773, 200, 0)
 	require.NoError(t, err)
 
 	buf := new(bytes.Buffer)
@@ -245,7 +248,7 @@ func TestGetItemValue_ThousandLines(t *testing.T) {
 	require.Equal(t, int64(972), lines[199].Number)
 	require.Equal(t, "Line 972\n", lines[199].Value)
 
-	_, rc, _, err = s.getItemLogValue(context.Background(), sdk.CDNTypeItemStepLog, apiRefhash, sdk.CDNReaderFormatJSON, 773, 0, 0)
+	_, _, rc, _, err = s.getItemLogValue(context.Background(), sdk.CDNTypeItemStepLog, apiRefhash, sdk.CDNReaderFormatJSON, 773, 0, 0)
 	require.NoError(t, err)
 
 	buf = new(bytes.Buffer)
@@ -279,6 +282,8 @@ func TestGetItemValue_Reverse(t *testing.T) {
 		Cache:               cache,
 		Mapper:              m,
 	}
+	s.GoRoutines = sdk.NewGoRoutines()
+
 	ctx, cancel := context.WithCancel(context.TODO())
 	t.Cleanup(cancel)
 	cdnUnits := newRunningStorageUnits(t, m, db.DbMap, ctx)
@@ -328,7 +333,7 @@ func TestGetItemValue_Reverse(t *testing.T) {
 	require.NoError(t, storage.InsertItemUnit(context.TODO(), s.Mapper, db, itemUnit))
 
 	// Get From Buffer
-	_, rc, _, err := s.getItemLogValue(context.Background(), sdk.CDNTypeItemStepLog, apiRefhash, sdk.CDNReaderFormatJSON, 0, 0, -1)
+	_, _, rc, _, err := s.getItemLogValue(context.Background(), sdk.CDNTypeItemStepLog, apiRefhash, sdk.CDNReaderFormatJSON, 0, 0, -1)
 	require.NoError(t, err)
 
 	buf := new(bytes.Buffer)
@@ -344,7 +349,7 @@ func TestGetItemValue_Reverse(t *testing.T) {
 	require.Equal(t, "Line 0\n", lines[4].Value)
 
 	// Get From Buffer
-	_, rc, _, err = s.getItemLogValue(context.Background(), sdk.CDNTypeItemStepLog, apiRefhash, sdk.CDNReaderFormatJSON, 2, 2, -1)
+	_, _, rc, _, err = s.getItemLogValue(context.Background(), sdk.CDNTypeItemStepLog, apiRefhash, sdk.CDNReaderFormatJSON, 2, 2, -1)
 	require.NoError(t, err)
 
 	buf = new(bytes.Buffer)
@@ -378,6 +383,8 @@ func TestGetItemValue_ThousandLinesReverse(t *testing.T) {
 		Cache:               cache,
 		Mapper:              m,
 	}
+	s.GoRoutines = sdk.NewGoRoutines()
+
 	ctx, cancel := context.WithCancel(context.TODO())
 	t.Cleanup(cancel)
 	cdnUnits := newRunningStorageUnits(t, m, db.DbMap, ctx)
@@ -427,7 +434,7 @@ func TestGetItemValue_ThousandLinesReverse(t *testing.T) {
 	require.NoError(t, storage.InsertItemUnit(context.TODO(), s.Mapper, db, itemUnit))
 
 	// Get From Buffer
-	_, rc, _, err := s.getItemLogValue(context.Background(), sdk.CDNTypeItemStepLog, apiRefhash, sdk.CDNReaderFormatJSON, 773, 200, -1)
+	_, _, rc, _, err := s.getItemLogValue(context.Background(), sdk.CDNTypeItemStepLog, apiRefhash, sdk.CDNReaderFormatJSON, 773, 200, -1)
 	require.NoError(t, err)
 
 	buf := new(bytes.Buffer)
@@ -442,7 +449,7 @@ func TestGetItemValue_ThousandLinesReverse(t *testing.T) {
 	require.Equal(t, int64(27), lines[199].Number)
 	require.Equal(t, "Line 27\n", lines[199].Value)
 
-	_, rc, _, err = s.getItemLogValue(context.Background(), sdk.CDNTypeItemStepLog, apiRefhash, sdk.CDNReaderFormatJSON, 773, 0, -1)
+	_, _, rc, _, err = s.getItemLogValue(context.Background(), sdk.CDNTypeItemStepLog, apiRefhash, sdk.CDNReaderFormatJSON, 773, 0, -1)
 	require.NoError(t, err)
 
 	buf = new(bytes.Buffer)

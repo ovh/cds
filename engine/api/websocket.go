@@ -268,6 +268,9 @@ func (a *API) websocketOnMessage(e sdk.Event) {
 		// Send the event to the client websocket within a goroutine
 		a.GoRoutines.Exec(context.Background(), "websocket-"+clientID, func(ctx context.Context) {
 			c := a.WSServer.GetClientData(clientID)
+			if c == nil {
+				return
+			}
 
 			found, needCheckPermission := c.filters.HasOneKey(eventKeys...)
 			if !found {

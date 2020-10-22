@@ -252,23 +252,11 @@ func (c *Common) SendServiceLog(ctx context.Context, servicesLogs []log.Message,
 		c.mapServiceNextLineNumber = make(map[string]int64)
 	}
 
-	// Clean old service values from mapServiceNextLineNumber and add new counters
-	mListServiceToPreserve := make(map[string]struct{}, len(servicesLogs))
-	for i := range servicesLogs {
-		mListServiceToPreserve[servicesLogs[i].ServiceKey()] = struct{}{}
-	}
-	listServiceToRemove := make([]string, 0, len(c.mapServiceNextLineNumber))
-	for k := range c.mapServiceNextLineNumber {
-		if _, ok := mListServiceToPreserve[k]; !ok {
-			listServiceToRemove = append(listServiceToRemove, k)
-		}
-	}
-	for i := range listServiceToRemove {
-		delete(c.mapServiceNextLineNumber, listServiceToRemove[i])
-	}
-	for k := range mListServiceToPreserve {
-		if _, ok := c.mapServiceNextLineNumber[k]; !ok {
-			c.mapServiceNextLineNumber[k] = 0
+	// Init missing service line counters
+	for _, s := range servicesLogs {
+		key := s.ServiceKey()
+		if _, ok := c.mapServiceNextLineNumber[key]; !ok {
+			c.mapServiceNextLineNumber[key] = 0
 		}
 	}
 
@@ -288,6 +276,13 @@ func (c *Common) SendServiceLog(ctx context.Context, servicesLogs []log.Message,
 				WithField(log.ExtraFieldLine, lineNumber).
 				WithField(log.ExtraFieldJobStatus, status).
 				Log(s.Level, s.Value)
+		}
+	}
+
+	// If log status is terminated for given service, we can remove line counters
+	if sdk.StatusIsTerminated(status) {
+		for _, s := range servicesLogs {
+			delete(c.mapServiceNextLineNumber, s.ServiceKey())
 		}
 	}
 }

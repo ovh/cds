@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnIni
 import { Title } from '@angular/platform-browser';
 import { ActivatedRoute, NavigationExtras, Router } from '@angular/router';
 import { Select, Store } from '@ngxs/store';
-import { PipelineStatus, Tests } from 'app/model/pipeline.model';
+import { Tests } from 'app/model/pipeline.model';
 import { Project } from 'app/model/project.model';
 import { WorkflowNodeRun } from 'app/model/workflow.run.model';
 import { RouterService } from 'app/service/router/router.service';
@@ -31,7 +31,6 @@ export class WorkflowNodeRunComponent implements OnInit, OnDestroy {
 
     // data of the view
     currentNodeRunID: number;
-    currentNodeRunStatus: string;
     currentNodeRunNum: number;
     commitsLength = 0;
     artifactLength = 0;
@@ -41,7 +40,6 @@ export class WorkflowNodeRunComponent implements OnInit, OnDestroy {
     hasVulnerability = false;
 
     pipelineName = '';
-    pipelineStatus = PipelineStatus;
 
     // History
     nodeRunsHistory = new Array<WorkflowNodeRun>();
@@ -116,11 +114,6 @@ export class WorkflowNodeRunComponent implements OnInit, OnDestroy {
                 if (!this.currentNodeRunID) {
                     this.currentNodeRunID = nr.id;
                     this.currentNodeRunNum = nr.num;
-                    refresh = true;
-                }
-
-                if (this.currentNodeRunStatus !== nr.status) {
-                    this.currentNodeRunStatus = nr.status;
                     refresh = true;
                 }
 
