@@ -81,7 +81,6 @@ func Test_itemAccessMiddleware(t *testing.T) {
 	t.Log("sessionID:", s.sessionID(ctx))
 
 	err = s.itemAccessCheck(ctx, myItem)
-	err = s.itemAccessCheck(ctx, myItem)
 	assert.NoError(t, err, "no error should be returned because a valid jwt was given")
 
 	req = assets.NewJWTAuthentifiedRequest(t, jwtTokenRaw, http.MethodGet, "", nil)
