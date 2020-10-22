@@ -103,6 +103,8 @@ func CleanURL(url string) string {
 			u = "clone-name"
 		case "serviceName":
 			u = "service-name"
+		case "sessionID":
+			u = "session-id"
 		}
 
 		urlSplitted[i] = "<" + u + ">"

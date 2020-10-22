@@ -192,11 +192,11 @@ func Init(ctx context.Context, m *gorpmapper.Mapper, db *gorp.DbMap, gorts *sdk.
 }
 
 func (r *RunningStorageUnits) Start(ctx context.Context, gorts *sdk.GoRoutines) {
-	// Start the sync processes
 	for i := range r.Storages {
 		s := r.Storages[i]
+		// Start the sync processes
 		for x := 0; x < cap(s.SyncItemChannel()); x++ {
-			gorts.Run(ctx, fmt.Sprintf("RunningStorageUnits.Start.%s.%d", s.Name(), x),
+			gorts.Run(ctx, fmt.Sprintf("RunningStorageUnits.process.%s.%d", s.Name(), x),
 				func(ctx context.Context) {
 					for id := range s.SyncItemChannel() {
 						tx, err := r.db.Begin()
@@ -226,7 +226,10 @@ func (r *RunningStorageUnits) Start(ctx context.Context, gorts *sdk.GoRoutines) 
 	// 	Feed the sync processes with a ticker
 	gorts.Run(ctx, "RunningStorageUnits.Start", func(ctx context.Context) {
 		tickr := time.NewTicker(time.Second)
+		tickrPurge := time.NewTicker(time.Second)
+
 		defer tickr.Stop()
+		defer tickrPurge.Stop()
 		for {
 			select {
 			case <-ctx.Done():
@@ -234,10 +237,29 @@ func (r *RunningStorageUnits) Start(ctx context.Context, gorts *sdk.GoRoutines) 
 			case <-tickr.C:
 				for i := range r.Storages {
 					s := r.Storages[i]
-					gorts.Exec(ctx, "RunningStorageUnits.Start."+s.Name(),
+					gorts.Exec(ctx, "RunningStorageUnits.run."+s.Name(),
 						func(ctx context.Context) {
 							if err := r.Run(ctx, s, 100); err != nil {
-								log.ErrorWithFields(ctx, log.Fields{"stack_trace": fmt.Sprintf("%+v", err)}, "RunningStorageUnits.Start> error: %v", err)
+								log.ErrorWithFields(ctx, log.Fields{"stack_trace": fmt.Sprintf("%+v", err)}, "RunningStorageUnits.run> error: %v", err)
+							}
+						},
+					)
+				}
+			case <-tickrPurge.C:
+				gorts.Exec(ctx, "RunningStorageUnits.purge."+r.Buffer.Name(),
+					func(ctx context.Context) {
+						if err := r.Purge(ctx, r.Buffer); err != nil {
+							log.ErrorWithFields(ctx, log.Fields{"stack_trace": fmt.Sprintf("%+v", err)}, "RunningStorageUnits.purge> error: %v", err)
+						}
+					},
+				)
+
+				for i := range r.Storages {
+					s := r.Storages[i]
+					gorts.Exec(ctx, "RunningStorageUnits.purge."+s.Name(),
+						func(ctx context.Context) {
+							if err := r.Purge(ctx, s); err != nil {
+								log.ErrorWithFields(ctx, log.Fields{"stack_trace": fmt.Sprintf("%+v", err)}, "RunningStorageUnits.purge> error: %v", err)
 							}
 						},
 					)

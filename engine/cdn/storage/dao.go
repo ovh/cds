@@ -115,6 +115,15 @@ func InsertItemUnit(ctx context.Context, m *gorpmapper.Mapper, db gorpmapper.Sql
 	return nil
 }
 
+func MarkItemUnitToDelete(ctx context.Context, m *gorpmapper.Mapper, db gorpmapper.SqlExecutorWithTx, ids []string) (int, error) {
+	res, err := db.Exec(`UPDATE storage_unit_item SET to_delete = true WHERE id = ANY($1)`, pq.StringArray(ids))
+	if err != nil {
+		return 0, sdk.WithStack(err)
+	}
+	n, err := res.RowsAffected()
+	return int(n), sdk.WithStack(err)
+}
+
 func DeleteItemUnit(m *gorpmapper.Mapper, db gorpmapper.SqlExecutorWithTx, iu *sdk.CDNItemUnit) error {
 	itemUnitDN := toItemUnitDB(*iu)
 	if err := m.Delete(db, itemUnitDN); err != nil {
@@ -141,6 +150,7 @@ func LoadAllItemsIDInBufferAndAllUnitsExceptCDS(db gorp.SqlExecutor, cdsBackendI
 			SELECT COUNT(*) as nb, item_id 
 			FROM storage_unit_item
 			WHERE unit_id != $1
+			AND to_delete = false
 			GROUP BY item_id
 		) as cc
 		WHERE nb = (SELECT COUNT(*) FROM storage_unit WHERE id != $1)
@@ -165,17 +175,17 @@ func LoadOldItemUnitByItemStatusAndDuration(ctx context.Context, m *gorpmapper.M
 }
 
 func LoadItemUnitByUnit(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlExecutor, unitID string, itemID string, opts ...gorpmapper.GetOptionFunc) (*sdk.CDNItemUnit, error) {
-	query := gorpmapper.NewQuery("SELECT * FROM storage_unit_item WHERE unit_id = $1 and item_id = $2 LIMIT 1").Args(unitID, itemID)
+	query := gorpmapper.NewQuery("SELECT * FROM storage_unit_item WHERE unit_id = $1 and item_id = $2 AND to_delete = false LIMIT 1").Args(unitID, itemID)
 	return getItemUnit(ctx, m, db, query, opts...)
 }
 
-func LoadItemUnitsByUnit(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlExecutor, unitID string, size int, opts ...gorpmapper.GetOptionFunc) ([]sdk.CDNItemUnit, error) {
-	query := gorpmapper.NewQuery("SELECT * FROM storage_unit_item WHERE unit_id = $1 ORDER BY last_modified ASC LIMIT $2").Args(unitID, size)
+func LoadItemUnitsByUnit(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlExecutor, unitID string, size *int, opts ...gorpmapper.GetOptionFunc) ([]sdk.CDNItemUnit, error) {
+	query := gorpmapper.NewQuery("SELECT * FROM storage_unit_item WHERE unit_id = $1 AND to_delete = false ORDER BY last_modified ASC LIMIT $2").Args(unitID, size)
 	return getAllItemUnits(ctx, m, db, query, opts...)
 }
 
 func LoadItemUnitByID(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlExecutor, id string, opts ...gorpmapper.GetOptionFunc) (*sdk.CDNItemUnit, error) {
-	query := gorpmapper.NewQuery("SELECT * FROM storage_unit_item WHERE id = $1").Args(id)
+	query := gorpmapper.NewQuery("SELECT * FROM storage_unit_item WHERE id = $1 AND to_delete = false").Args(id)
 	return getItemUnit(ctx, m, db, query, opts...)
 }
 
@@ -206,8 +216,18 @@ func getItemUnit(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlExecutor,
 	return &i.CDNItemUnit, nil
 }
 
+func LoadAllItemUnitsToDeleteByID(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlExecutor, itemID string, opts ...gorpmapper.GetOptionFunc) ([]sdk.CDNItemUnit, error) {
+	query := gorpmapper.NewQuery("SELECT * FROM storage_unit_item WHERE item_id = $1 AND to_delete = true ORDER BY last_modified ASC").Args(itemID)
+	return getAllItemUnits(ctx, m, db, query, opts...)
+}
+
+func LoadAllItemUnitsToDeleteByUnit(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlExecutor, unitID string, opts ...gorpmapper.GetOptionFunc) ([]sdk.CDNItemUnit, error) {
+	query := gorpmapper.NewQuery("SELECT * FROM storage_unit_item WHERE unit_id = $1 AND to_delete = true ORDER BY last_modified ASC").Args(unitID)
+	return getAllItemUnits(ctx, m, db, query, opts...)
+}
+
 func LoadAllItemUnitsByItemID(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlExecutor, itemID string, opts ...gorpmapper.GetOptionFunc) ([]sdk.CDNItemUnit, error) {
-	query := gorpmapper.NewQuery("SELECT * FROM storage_unit_item WHERE item_id = $1").Args(itemID)
+	query := gorpmapper.NewQuery("SELECT * FROM storage_unit_item WHERE item_id = $1 AND to_delete = false").Args(itemID)
 	return getAllItemUnits(ctx, m, db, query, opts...)
 }
 
@@ -275,6 +295,7 @@ func LoadAllItemIDUnknownByUnitOrderByUnitID(db gorp.SqlExecutor, unitID string,
 			JOIN storage_unit_item sui ON item.id = sui.item_id
 			LEFT JOIN storage_unit_item iu2 ON item.id = iu2.item_id AND iu2.unit_id = $1
 			WHERE item.status = $3 AND iu2.unit_id is null
+			AND item.to_delete = false
 	)
 	SELECT id FROM filteredItem
 	ORDER BY CASE WHEN unit_id = $4 THEN 1
@@ -299,7 +320,16 @@ func CountItems(db gorp.SqlExecutor) (res []Stat, err error) {
 	_, err = db.Select(&res, `select storage_unit.name as "storage_name", item.type, count(storage_unit_item.id) as "number" 
 	from storage_unit_item 
 	join item on item.id = storage_unit_item.item_id
-	join storage_unit on storage_unit.id = storage_unit_item.unit_id
+	join storage_unit on storage_unit.id = storage_unit_item.unit_id AND storage_unit_item.to_delete = false
+	group by storage_unit.name, item.type`)
+	return res, sdk.WithStack(err)
+}
+
+func CountItemUnitToDelete(db gorp.SqlExecutor) (res []Stat, err error) {
+	_, err = db.Select(&res, `select storage_unit.name as "storage_name", item.type, count(storage_unit_item.id) as "number" 
+	from storage_unit_item 
+	join item on item.id = storage_unit_item.item_id
+	join storage_unit on storage_unit.id = storage_unit_item.unit_id AND storage_unit_item.to_delete = true
 	group by storage_unit.name, item.type`)
 	return res, sdk.WithStack(err)
 }
@@ -311,13 +341,14 @@ func CountUnknownItemsByStorage(db gorp.SqlExecutor) (res []Stat, err error) {
 			SELECT storage_unit.name, item.type, count(storage_unit_item.id) 
 			FROM storage_unit_item
 			JOIN storage_unit on storage_unit.id = storage_unit_item.unit_id
-			JOIN item on item.id = storage_unit_item.item_id
+			JOIN item on item.id = storage_unit_item.item_id AND storage_unit_item.to_delete = false
 			GROUP BY storage_unit.name, item.type
 		),
 		nb_item AS (
 			SELECT item.type, count(id)
 			FROM item
 			WHERE status = $1
+			AND to_delete = false
 			GROUP BY item.type
 		)
 	SELECT 	storage_unit.name as storage_name, nb_item.type as type, (nb_item.count - nb_item_by_unit.count) as number

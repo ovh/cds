@@ -57,23 +57,74 @@ func (s *Service) itemsGC(ctx context.Context) {
 	}
 }
 
-func (s *Service) cleanItemToDelete(ctx context.Context) error {
-	for {
-		ids, err := item.LoadIDsToDelete(s.mustDBWithCtx(ctx), 100)
-		if err != nil {
-			return err
-		}
-		if len(ids) == 0 {
-			break
-		}
-		log.Info(ctx, "cdn:purge:item: %d items to delete", len(ids))
+func (s *Service) markUnitItemToDeleteByItemID(ctx context.Context, itemID string) (int, error) {
+	db := s.mustDBWithCtx(ctx)
+	uis, err := storage.LoadAllItemUnitsByItemID(ctx, s.Mapper, db, itemID)
+	if err != nil {
+		return 0, err
+	}
 
-		if err := s.LogCache.Remove(ids); err != nil {
-			return err
+	ids := make([]string, len(uis))
+	for i := range uis {
+		ids[i] = uis[i].ID
+	}
+
+	tx, err := db.Begin()
+	if err != nil {
+		return 0, sdk.WithStack(err)
+	}
+
+	defer tx.Rollback() // nolint
+
+	n, err := storage.MarkItemUnitToDelete(ctx, s.Mapper, tx, ids)
+	if err != nil {
+		return 0, err
+	}
+
+	return n, sdk.WithStack(tx.Commit())
+}
+
+func (s *Service) cleanItemToDelete(ctx context.Context) error {
+	ids, err := item.LoadIDsToDelete(s.mustDBWithCtx(ctx), 100)
+	if err != nil {
+		return err
+	}
+
+	if len(ids) > 0 {
+		log.Info(ctx, "cdn:purge:item: %d items to delete", len(ids))
+	}
+
+	for _, id := range ids {
+		nbUnitItemToDelete, err := s.markUnitItemToDeleteByItemID(ctx, id)
+		if err != nil {
+			log.Error(ctx, "unable to mark unit item %q to delete: %v", id, err)
+			continue
 		}
-		if err := item.DeleteByIDs(s.mustDBWithCtx(ctx), ids); err != nil {
-			return err
+
+		// If and only If there is not more unit item to mark as delete,
+		// let's delete the item in database
+		if nbUnitItemToDelete == 0 {
+			itemUnits, err := storage.LoadAllItemUnitsToDeleteByID(ctx, s.Mapper, s.mustDBWithCtx(ctx), id)
+			if err != nil {
+				log.Error(ctx, "unable to count unit item %q to delete: %v", id, err)
+				continue
+			}
+
+			if len(itemUnits) > 0 {
+				log.Debug("cdn:purge:item: %d unit items to delete for item %s", len(itemUnits), id)
+			} else {
+				if err := s.LogCache.Remove([]string{id}); err != nil {
+					return err
+				}
+				if err := item.DeleteByID(s.mustDBWithCtx(ctx), id); err != nil {
+					return err
+				}
+				log.Debug("cdn:purge:item: %s item deleted", id)
+			}
+			continue
 		}
+
+		log.Debug("cdn:purge:item: %d unit items to delete for item %s", nbUnitItemToDelete, id)
 	}
 	return nil
 }

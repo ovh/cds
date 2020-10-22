@@ -106,3 +106,11 @@ func (s *Webdav) Status(_ context.Context) []sdk.MonitoringStatusLine {
 		Status:    sdk.MonitoringStatusOK,
 	}}
 }
+
+func (s *Webdav) Remove(ctx context.Context, i sdk.CDNItemUnit) error {
+	f, err := s.filename(i)
+	if err != nil {
+		return err
+	}
+	return sdk.WithStack(s.client.Remove(f))
+}

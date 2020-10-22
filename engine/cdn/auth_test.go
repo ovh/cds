@@ -52,7 +52,7 @@ func Test_itemAccessMiddleware(t *testing.T) {
 	require.NoError(t, err)
 	s.Common.ParsedAPIPublicKey = signer.GetVerifyKey()
 	jwtToken := jwt.NewWithClaims(jwt.SigningMethodRS512, sdk.AuthSessionJWTClaims{
-		ID: sdk.UUID(),
+		ID: sessionID,
 		StandardClaims: jwt.StandardClaims{
 			Issuer:    "test",
 			Subject:   sdk.UUID(),
@@ -77,13 +77,18 @@ func Test_itemAccessMiddleware(t *testing.T) {
 	w = httptest.NewRecorder()
 	ctx, err = s.jwtMiddleware(context.TODO(), w, req, config)
 	require.NoError(t, err)
-	err = s.itemAccessCheck(ctx, myItem, sessionID)
+	require.NotEmpty(t, s.sessionID(ctx))
+	t.Log("sessionID:", s.sessionID(ctx))
+
+	err = s.itemAccessCheck(ctx, myItem)
 	assert.NoError(t, err, "no error should be returned because a valid jwt was given")
 
 	req = assets.NewJWTAuthentifiedRequest(t, jwtTokenRaw, http.MethodGet, "", nil)
 	w = httptest.NewRecorder()
 	ctx, err = s.jwtMiddleware(context.TODO(), w, req, config)
+	require.NotEmpty(t, s.sessionID(ctx))
+
 	require.NoError(t, err)
-	err = s.itemAccessCheck(ctx, myItem, sessionID)
+	err = s.itemAccessCheck(ctx, myItem)
 	assert.NoError(t, err, "no error should be returned because a valid jwt was given and permission validated from cache")
 }

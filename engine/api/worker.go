@@ -120,7 +120,7 @@ func (api *API) getWorkerHandler() service.Handler {
 		vars := mux.Vars(r)
 		name := vars["name"]
 
-		withKey := FormBool(r, "withKey")
+		withKey := service.FormBool(r, "withKey")
 
 		if !isCDN(ctx) {
 			return sdk.WrapError(sdk.ErrForbidden, "only CDN can call this route")

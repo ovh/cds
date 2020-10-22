@@ -572,6 +572,7 @@ type AuthClient interface {
 	AuthConsumerCreateForUser(username string, request sdk.AuthConsumer) (sdk.AuthConsumerCreateResponse, error)
 	AuthSessionListByUser(username string) (sdk.AuthSessions, error)
 	AuthSessionDelete(username, id string) error
+	AuthSessionGet(id string) (sdk.AuthCurrentConsumerResponse, error)
 	AuthMe() (sdk.AuthCurrentConsumerResponse, error)
 }
 

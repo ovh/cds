@@ -95,6 +95,12 @@ func (c *client) AuthMe() (sdk.AuthCurrentConsumerResponse, error) {
 	return r, err
 }
 
+func (c *client) AuthSessionGet(id string) (sdk.AuthCurrentConsumerResponse, error) {
+	var r sdk.AuthCurrentConsumerResponse
+	_, err := c.GetJSON(context.Background(), "/auth/session/"+id, &r)
+	return r, err
+}
+
 func (c *client) AuthConsumerLocalAskResetPassword(r sdk.AuthConsumerSigninRequest) error {
 	_, err := c.PostJSON(context.Background(), "/auth/consumer/local/askReset", r, nil)
 	return err

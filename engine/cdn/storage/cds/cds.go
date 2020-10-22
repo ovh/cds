@@ -106,3 +106,7 @@ func (c *CDS) Status(_ context.Context) []sdk.MonitoringStatusLine {
 		Status:    sdk.MonitoringStatusOK,
 	}}
 }
+
+func (c *CDS) Remove(ctx context.Context, i sdk.CDNItemUnit) error {
+	return nil
+}

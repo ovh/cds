@@ -2,11 +2,12 @@ package test
 
 import (
 	"context"
+	"testing"
+
 	"github.com/ovh/cds/engine/cdn/item"
 	"github.com/ovh/cds/engine/cdn/storage"
 	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/stretchr/testify/require"
-	"testing"
 )
 
 func ClearItem(t *testing.T, ctx context.Context, m *gorpmapper.Mapper, db gorpmapper.SqlExecutorWithTx) {
@@ -14,7 +15,7 @@ func ClearItem(t *testing.T, ctx context.Context, m *gorpmapper.Mapper, db gorpm
 	items, err := item.LoadAll(ctx, m, db, 500)
 	require.NoError(t, err)
 	for _, i := range items {
-		_ = item.DeleteByIDs(db, []string{i.ID})
+		_ = item.DeleteByID(db, i.ID)
 	}
 }
 

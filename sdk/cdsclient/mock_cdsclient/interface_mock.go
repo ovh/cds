@@ -13,7 +13,7 @@ import (
 	sdk "github.com/ovh/cds/sdk"
 	cdsclient "github.com/ovh/cds/sdk/cdsclient"
 	venom "github.com/ovh/venom"
-	coverage "github.com/sguiheux/go-coverage"
+	go_coverage "github.com/sguiheux/go-coverage"
 	io "io"
 	http "net/http"
 	reflect "reflect"
@@ -3086,7 +3086,7 @@ func (mr *MockQueueClientMockRecorder) QueueJobSendSpawnInfo(ctx, id, in interfa
 }
 
 // QueueSendCoverage mocks base method
-func (m *MockQueueClient) QueueSendCoverage(ctx context.Context, id int64, report coverage.Report) error {
+func (m *MockQueueClient) QueueSendCoverage(ctx context.Context, id int64, report go_coverage.Report) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "QueueSendCoverage", ctx, id, report)
 	ret0, _ := ret[0].(error)
@@ -4806,6 +4806,21 @@ func (m *MockInterface) AuthSessionDelete(username, id string) error {
 func (mr *MockInterfaceMockRecorder) AuthSessionDelete(username, id interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AuthSessionDelete", reflect.TypeOf((*MockInterface)(nil).AuthSessionDelete), username, id)
+}
+
+// AuthSessionGet mocks base method
+func (m *MockInterface) AuthSessionGet(id string) (sdk.AuthCurrentConsumerResponse, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "AuthSessionGet", id)
+	ret0, _ := ret[0].(sdk.AuthCurrentConsumerResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// AuthSessionGet indicates an expected call of AuthSessionGet
+func (mr *MockInterfaceMockRecorder) AuthSessionGet(id interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AuthSessionGet", reflect.TypeOf((*MockInterface)(nil).AuthSessionGet), id)
 }
 
 // AuthMe mocks base method
@@ -7074,7 +7089,7 @@ func (mr *MockInterfaceMockRecorder) QueueJobSendSpawnInfo(ctx, id, in interface
 }
 
 // QueueSendCoverage mocks base method
-func (m *MockInterface) QueueSendCoverage(ctx context.Context, id int64, report coverage.Report) error {
+func (m *MockInterface) QueueSendCoverage(ctx context.Context, id int64, report go_coverage.Report) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "QueueSendCoverage", ctx, id, report)
 	ret0, _ := ret[0].(error)
@@ -8725,7 +8740,7 @@ func (mr *MockWorkerInterfaceMockRecorder) QueueJobSendSpawnInfo(ctx, id, in int
 }
 
 // QueueSendCoverage mocks base method
-func (m *MockWorkerInterface) QueueSendCoverage(ctx context.Context, id int64, report coverage.Report) error {
+func (m *MockWorkerInterface) QueueSendCoverage(ctx context.Context, id int64, report go_coverage.Report) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "QueueSendCoverage", ctx, id, report)
 	ret0, _ := ret[0].(error)
@@ -9901,6 +9916,21 @@ func (m *MockAuthClient) AuthSessionDelete(username, id string) error {
 func (mr *MockAuthClientMockRecorder) AuthSessionDelete(username, id interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AuthSessionDelete", reflect.TypeOf((*MockAuthClient)(nil).AuthSessionDelete), username, id)
+}
+
+// AuthSessionGet mocks base method
+func (m *MockAuthClient) AuthSessionGet(id string) (sdk.AuthCurrentConsumerResponse, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "AuthSessionGet", id)
+	ret0, _ := ret[0].(sdk.AuthCurrentConsumerResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// AuthSessionGet indicates an expected call of AuthSessionGet
+func (mr *MockAuthClientMockRecorder) AuthSessionGet(id interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AuthSessionGet", reflect.TypeOf((*MockAuthClient)(nil).AuthSessionGet), id)
 }
 
 // AuthMe mocks base method

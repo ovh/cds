@@ -212,3 +212,14 @@ func FormUInt(r *http.Request, s string) uint {
 	}
 	return uint(i)
 }
+
+// FormBool return true if the form value is set to true|TRUE|yes|YES|1
+func FormBool(r *http.Request, s string) bool {
+	v := r.FormValue(s)
+	switch v {
+	case "true", "TRUE", "yes", "YES", "1":
+		return true
+	default:
+		return false
+	}
+}

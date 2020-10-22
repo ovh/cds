@@ -142,3 +142,12 @@ func (s *Swift) Status(ctx context.Context) []sdk.MonitoringStatusLine {
 		Status:    sdk.MonitoringStatusOK,
 	}}
 }
+
+func (s *Swift) Remove(ctx context.Context, i sdk.CDNItemUnit) error {
+	container, object, err := s.getItemPath(i)
+	if err != nil {
+		return err
+	}
+
+	return sdk.WithStack(s.client.ObjectDelete(container, object))
+}

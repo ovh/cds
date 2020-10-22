@@ -24,12 +24,10 @@ func (x *RunningStorageUnits) Run(ctx context.Context, s StorageUnit, nbItem int
 		return err
 	}
 
-	log.Debug("storage.Run> unit %s has %d items to sync (max: %d)", s.Name(), len(itemIDs), nbItem)
-
 	for _, id := range itemIDs {
 		select {
 		case s.SyncItemChannel() <- id:
-			log.Debug("storage.Run> unit %s should sync item %s", s.Name(), id)
+			log.Debug("unit %s should sync item %s", s.Name(), id)
 		default:
 			continue
 		}
@@ -49,7 +47,7 @@ func (x *RunningStorageUnits) processItem(ctx context.Context, m *gorpmapper.Map
 	log.InfoWithFields(ctx, log.Fields{
 		"item_apiref":   it.APIRefHash,
 		"item_size_num": it.Size,
-	}, "processItem> processing item %s on %s", it.ID, s.Name())
+	}, "processing item %s on %s", it.ID, s.Name())
 	if _, err = LoadItemUnitByUnit(ctx, x.m, tx, s.ID(), id); err == nil {
 		return err
 
@@ -75,6 +73,20 @@ func (x *RunningStorageUnits) runItem(ctx context.Context, tx gorpmapper.SqlExec
 	// Save in database that the item is complete for the storage unit
 	if err := InsertItemUnit(ctx, x.m, tx, iu); err != nil {
 		return err
+	}
+
+	// Check if the content (based on the locator) is already known from the destination unit
+	otherItemUnits, err := x.GetItemUnitByLocatorByUnit(ctx, iu.Locator, dest.ID())
+	if err != nil {
+		return err
+	}
+
+	if len(otherItemUnits) > 0 {
+		log.InfoWithFields(ctx, log.Fields{
+			"item_apiref":   item.APIRefHash,
+			"item_size_num": item.Size,
+		}, "item %s has been pushed to %s with deduplication", item.ID, dest.Name())
+		return nil
 	}
 
 	// Reload with decryption

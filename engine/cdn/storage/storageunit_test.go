@@ -19,7 +19,6 @@ import (
 	"github.com/ovh/cds/engine/gorpmapper"
 	commontest "github.com/ovh/cds/engine/test"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 )
 
 func TestRun(t *testing.T) {
@@ -101,10 +100,8 @@ func TestRun(t *testing.T) {
 	}
 	require.NoError(t, item.Insert(ctx, m, db, i))
 	defer func() {
-		_ = item.DeleteByIDs(db, []string{i.ID})
+		_ = item.DeleteByID(db, i.ID)
 	}()
-
-	log.Debug("item ID: %v", i.ID)
 
 	itemUnit, err := cdnUnits.NewItemUnit(ctx, cdnUnits.Buffer, i)
 	require.NoError(t, err)

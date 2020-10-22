@@ -30,8 +30,9 @@ type CDNItemUnit struct {
 	ItemID       string    `json:"item_id" db:"item_id"`
 	UnitID       string    `json:"unit_id" db:"unit_id"`
 	LastModified time.Time `json:"last_modified" db:"last_modified"`
-	Locator      string    `json:"-" db:"cipher_locator" gorpmapping:"encrypted,UnitID,ItemID"`
+	Locator      string    `json:"locator" db:"cipher_locator" gorpmapping:"encrypted,UnitID,ItemID"`
 	Item         *CDNItem  `json:"-" db:"-"`
+	ToDelete     bool      `json:"to_delete" db:"to_delete"`
 }
 
 type CDNUnit struct {
@@ -48,8 +49,7 @@ type CDNLogLink struct {
 }
 
 type CDNMarkDelete struct {
-	WorkflowID int64 `json:"workflow_id,omitempty"`
-	RunID      int64 `json:"run_id,omitempty"`
+	RunID int64 `json:"run_id,omitempty"`
 }
 
 type CDNLogAPIRef struct {
@@ -69,6 +69,11 @@ type CDNLogAPIRef struct {
 	// for hatcheries
 	RequirementServiceID   int64  `json:"service_id,omitempty"`
 	RequirementServiceName string `json:"service_name,omitempty"`
+}
+
+type CDNItemResume struct {
+	CDNItem
+	Location map[string]CDNItemUnit
 }
 
 func (a CDNLogAPIRef) ToFilename() string {

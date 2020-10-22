@@ -43,32 +43,42 @@ func (s *Service) itemAccessMiddleware(ctx context.Context, w http.ResponseWrite
 	if !ok {
 		return ctx, sdk.WithStack(sdk.ErrUnauthorized)
 	}
+
 	itemType := sdk.CDNItemType(itemTypeRaw)
 	if err := itemType.Validate(); err != nil {
 		return ctx, sdk.NewErrorWithStack(err, sdk.ErrUnauthorized)
 	}
+
 	apiRef, ok := vars["apiRef"]
 	if !ok {
 		return ctx, sdk.WithStack(sdk.ErrUnauthorized)
 	}
-
-	// Check for session based on jwt from context
-	jwt, ok := ctx.Value(service.ContextJWT).(*jwt.Token)
-	if !ok {
-		return ctx, sdk.WithStack(sdk.ErrUnauthorized)
-	}
-	claims := jwt.Claims.(*sdk.AuthSessionJWTClaims)
-	sessionID := claims.StandardClaims.Id
 
 	item, err := item.LoadByAPIRefHashAndType(ctx, s.Mapper, s.mustDBWithCtx(ctx), apiRef, itemType)
 	if err != nil {
 		return ctx, sdk.NewErrorWithStack(err, sdk.ErrNotFound)
 	}
 
-	return ctx, s.itemAccessCheck(ctx, *item, sessionID)
+	return ctx, s.itemAccessCheck(ctx, *item)
 }
 
-func (s *Service) itemAccessCheck(ctx context.Context, item sdk.CDNItem, sessionID string) error {
+func (s *Service) sessionID(ctx context.Context) string {
+	iSessionID := ctx.Value(service.ContextSessionID)
+	if iSessionID != nil {
+		sessionID, ok := iSessionID.(string)
+		if ok {
+			return sessionID
+		}
+	}
+	return ""
+}
+
+func (s *Service) itemAccessCheck(ctx context.Context, item sdk.CDNItem) error {
+	sessionID := s.sessionID(ctx)
+	if sessionID == "" {
+		return sdk.WithStack(sdk.ErrUnauthorized)
+	}
+
 	keyWorkflowPermissionForSession := cache.Key(keyPermission, string(item.Type), item.APIRefHash, sessionID)
 
 	exists, err := s.Cache.Exist(keyWorkflowPermissionForSession)
