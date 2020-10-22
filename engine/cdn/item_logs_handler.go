@@ -49,10 +49,11 @@ func (s *Service) getItemLogsStreamHandler() service.Handler {
 		})
 
 		ctx, cancel := context.WithCancel(s.Router.Background)
+		ctx = context.WithValue(ctx, service.ContextSessionID, sessionID)
 		defer cancel()
 
 		s.GoRoutines.Exec(ctx, "getItemLogsStreamHandler."+wsClient.UUID(), func(ctx context.Context) {
-			log.Debug("getItemLogsStreamHandler> start routine for client %s", wsClient.UUID())
+			log.Debug("getItemLogsStreamHandler> start routine for client %s (session %s)", wsClient.UUID(), s.sessionID(ctx))
 
 			// Create a ticker to periodically send logs if needed
 			sendTicker := time.NewTicker(time.Millisecond * 100)
