@@ -42,7 +42,7 @@ func JWTMiddleware(ctx context.Context, w http.ResponseWriter, req *http.Request
 		return ctx, nil
 	}
 
-	jwt, err := CheckSessionJWT(jwtRaw, keyFunc)
+	jwt, claims, err := CheckSessionJWT(jwtRaw, keyFunc)
 	if err != nil {
 		// If the given JWT is not valid log the error and return
 		log.Warning(ctx, "service.JWTMiddleware> invalid given jwt token [%s]: %+v", req.URL.String(), err)
@@ -52,22 +52,24 @@ func JWTMiddleware(ctx context.Context, w http.ResponseWriter, req *http.Request
 	ctx = context.WithValue(ctx, ContextJWTRaw, jwt)
 	ctx = context.WithValue(ctx, ContextJWT, jwt)
 	ctx = context.WithValue(ctx, ContextJWTFromCookie, jwtFromCookie)
+	ctx = context.WithValue(ctx, ContextSessionID, claims.ID)
 
 	return ctx, nil
 }
 
 // CheckSessionJWT validate given session jwt token.
-func CheckSessionJWT(jwtToken string, keyFunc jwt.Keyfunc) (*jwt.Token, error) {
+func CheckSessionJWT(jwtToken string, keyFunc jwt.Keyfunc) (*jwt.Token, *sdk.AuthSessionJWTClaims, error) {
 	token, err := jwt.ParseWithClaims(jwtToken, &sdk.AuthSessionJWTClaims{}, keyFunc)
 	if err != nil {
-		return nil, sdk.NewErrorWithStack(err, sdk.ErrUnauthorized)
+		return nil, nil, sdk.NewErrorWithStack(err, sdk.ErrUnauthorized)
 	}
 
-	if _, ok := token.Claims.(*sdk.AuthSessionJWTClaims); ok && token.Valid {
-		return token, nil
+	claims, ok := token.Claims.(*sdk.AuthSessionJWTClaims)
+	if ok && token.Valid {
+		return token, claims, nil
 	}
 
-	return nil, sdk.WithStack(sdk.ErrUnauthorized)
+	return nil, nil, sdk.WithStack(sdk.ErrUnauthorized)
 }
 
 func OverrideAuth(m Middleware) HandlerConfigParam {

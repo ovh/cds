@@ -4,7 +4,6 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/dgrijalva/jwt-go"
 	"github.com/gorilla/mux"
 	"github.com/ovh/cds/engine/authentication"
 	"github.com/ovh/cds/engine/cache"
@@ -47,39 +46,22 @@ func (s *Service) itemAccessMiddleware(ctx context.Context, w http.ResponseWrite
 	return s.itemAccessCheck(ctx, itemType, apiRef)
 }
 
-func (s *Service) sessionID(ctx context.Context) (string, error) {
+func (s *Service) sessionID(ctx context.Context) string {
 	iSessionID := ctx.Value(service.ContextSessionID)
 	if iSessionID != nil {
 		sessionID, ok := iSessionID.(string)
 		if ok {
-			return sessionID, nil
+			return sessionID
 		}
 	}
-
-	// Check for session based on jwt from context
-	jwt, ok := ctx.Value(service.ContextJWT).(*jwt.Token)
-	if !ok {
-		return "", sdk.WithStack(sdk.ErrUnauthorized)
-	}
-	claims, ok := jwt.Claims.(*sdk.AuthSessionJWTClaims)
-	if !ok {
-		return "", sdk.WithStack(sdk.ErrUnauthorized)
-	}
-	sessionID := claims.StandardClaims.Id
-	return sessionID, nil
+	return ""
 }
 
 func (s *Service) itemAccessCheck(ctx context.Context, itemType sdk.CDNItemType, apiRef string) (context.Context, error) {
 	ctx, end := telemetry.Span(ctx, "router.itemAccessCheck")
 	defer end()
 
-	sessionID, err := s.sessionID(ctx)
-	if err != nil {
-		return ctx, err
-	}
-
-	ctx = context.WithValue(ctx, service.ContextSessionID, sessionID)
-
+	sessionID := s.sessionID(ctx)
 	keyWorkflowPermissionForSession := cache.Key(keyPermission, apiRef, sessionID)
 
 	exists, err := s.Cache.Exist(keyWorkflowPermissionForSession)

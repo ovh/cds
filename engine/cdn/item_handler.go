@@ -80,11 +80,7 @@ func (s *Service) getItemHandler() service.Handler {
 		// Only admin can use the parameter 'withDecryption'
 		var opts []gorpmapper.GetOptionFunc
 		if withDecryption {
-			sessionID, err := s.sessionID(ctx)
-			if err != nil {
-				return err
-			}
-
+			sessionID := s.sessionID(ctx)
 			data, err := s.Client.AuthSessionGet(sessionID)
 			if err != nil {
 				return err

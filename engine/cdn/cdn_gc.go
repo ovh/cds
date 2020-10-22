@@ -71,7 +71,7 @@ func (s *Service) markUnitItemToDeleteByItemID(ctx context.Context, itemID strin
 
 	tx, err := db.Begin()
 	if err != nil {
-		return 0, err
+		return 0, sdk.WithStack(err)
 	}
 
 	defer tx.Rollback() // nolint

@@ -55,8 +55,7 @@ type AbstractUnit struct {
 
 func (a *AbstractUnit) ExistsInDatabase(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlExecutor, id string) (*sdk.CDNItemUnit, error) {
 	query := gorpmapper.NewQuery("SELECT * FROM storage_unit_item WHERE unit_id = $1 and item_id = $2 LIMIT 1").Args(a.ID(), id)
-	iu, err := getItemUnit(ctx, m, db, query, gorpmapper.GetOptions.WithDecryption)
-	return iu, err
+	return getItemUnit(ctx, m, db, query, gorpmapper.GetOptions.WithDecryption)
 }
 
 func (a *AbstractUnit) Name() string {

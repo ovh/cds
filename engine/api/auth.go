@@ -375,7 +375,7 @@ func (api *API) getAuthSession() service.Handler {
 			return sdk.WithStack(sdk.ErrUnauthorized)
 		}
 
-		if !isAdmin(ctx) && !isService(ctx) {
+		if !isAdmin(ctx) {
 			return sdk.WithStack(sdk.ErrUnauthorized)
 		}
 
