@@ -91,14 +91,14 @@ var workflowRunManualCmd = cli.Command{
 
 func workflowRunManualRun(v cli.Values) error {
 	if v.GetBool("sync") && v.GetString("run-number") == "" {
-		return fmt.Errorf("Could not use flag --sync without flag --run-number")
+		return fmt.Errorf("could not use flag --sync without flag --run-number")
 	}
 
 	manual := sdk.WorkflowNodeRunManual{}
 	if strings.TrimSpace(v.GetString("data")) != "" {
 		data := map[string]interface{}{}
 		if err := json.Unmarshal([]byte(v.GetString("data")), &data); err != nil {
-			return fmt.Errorf("Error payload isn't a valid json")
+			return fmt.Errorf("error payload isn't a valid json")
 		}
 		manual.Payload = data
 	} else {

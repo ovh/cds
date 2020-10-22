@@ -216,6 +216,7 @@ func TestServiceLog(t *testing.T) {
 	s := Service{
 		Cache: cacheCDN,
 	}
+	s.GoRoutines = sdk.NewGoRoutines()
 	s.Client = cdsclient.New(cdsclient.Config{
 		Host: "http://lolcat.host",
 	})

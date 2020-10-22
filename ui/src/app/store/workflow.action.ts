@@ -2,7 +2,7 @@ import { GroupPermission } from 'app/model/group.model';
 import { ProjectIntegration } from 'app/model/integration.model';
 import { RetentionDryRunEvent } from 'app/model/purge.model';
 import { WNode, WNodeHook, WNodeTrigger, Workflow, WorkflowNotification } from 'app/model/workflow.model';
-import { WorkflowNodeRun, WorkflowRun } from 'app/model/workflow.run.model';
+import { WorkflowNodeRun, WorkflowRun, WorkflowRunSummary } from 'app/model/workflow.run.model';
 
 // ---------  MODAL  -----
 
@@ -21,12 +21,6 @@ export class UpdateModal {
     constructor(public payload: { workflow: Workflow }) { }
 }
 
-// ---------  Sidebar -----
-export class SidebarRunsMode {
-    static readonly type = '[Workflow] Sidebar run mode';
-    constructor(public payload: {}) { }
-}
-
 // ---------  Workflow Run ---
 export class ChangeToRunView {
     static readonly type = '[Workflow] Change to Run View';
@@ -43,9 +37,9 @@ export class RemoveWorkflowRunFromList {
     constructor(public payload: { projectKey: string, workflowName: string, num: number }) { }
 }
 
-export class GetWorkflowRuns {
-    static readonly type = '[Workflow] Get Workflow Runs';
-    constructor(public payload: { projectKey: string, workflowName: string, limit: string, offset: string, filters?: {}}) { }
+export class SetWorkflowRuns {
+    static readonly type = '[Workflow] Set Workflow Runs';
+    constructor(public payload: { projectKey: string, workflowName: string, runs: Array<WorkflowRunSummary>, filters?: {}}) { }
 }
 
 export class DeleteWorkflowRun {
@@ -56,6 +50,11 @@ export class DeleteWorkflowRun {
 export class CleanWorkflowRun {
     static readonly type = '[Workflow] Clean Workflow Run';
     constructor(public payload: {}) { }
+}
+
+export class ClearListRuns {
+    static readonly type = '[Workflow] Clear List Workflow Run';
+    constructor() { }
 }
 
 export class GetWorkflowNodeRun {

@@ -40,6 +40,8 @@ func TestStoreNewStepLog(t *testing.T) {
 		Cache:               cache,
 		Mapper:              m,
 	}
+	s.GoRoutines = sdk.NewGoRoutines()
+
 	ctx, cancel := context.WithCancel(context.TODO())
 	t.Cleanup(cancel)
 	cdnUnits := newRunningStorageUnits(t, m, db.DbMap, ctx)
@@ -123,6 +125,8 @@ func TestStoreLastStepLog(t *testing.T) {
 		Cache:               cache,
 		Mapper:              m,
 	}
+	s.GoRoutines = sdk.NewGoRoutines()
+
 	ctx, cancel := context.WithCancel(context.TODO())
 	t.Cleanup(cancel)
 	cdnUnits := newRunningStorageUnits(t, m, db.DbMap, ctx)
@@ -211,6 +215,8 @@ func TestStoreLogWrongOrder(t *testing.T) {
 		Cache:               cache,
 		Mapper:              m,
 	}
+	s.GoRoutines = sdk.NewGoRoutines()
+
 	ctx, cancel := context.WithCancel(context.TODO())
 	t.Cleanup(cancel)
 	cdnUnits := newRunningStorageUnits(t, m, db.DbMap, ctx)
@@ -330,6 +336,8 @@ func TestStoreNewServiceLog(t *testing.T) {
 		Cache:               cache,
 		Mapper:              m,
 	}
+	s.GoRoutines = sdk.NewGoRoutines()
+
 	ctx, cancel := context.WithCancel(context.TODO())
 	t.Cleanup(cancel)
 	cdnUnits := newRunningStorageUnits(t, m, db.DbMap, ctx)

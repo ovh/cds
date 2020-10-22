@@ -78,6 +78,19 @@ type WorkflowRun struct {
 	ToCraftOpts      *WorkflowRunPostHandlerOption `json:"-" yaml:"-" db:"to_craft_opts" cli:"-"`
 }
 
+type WorkflowRunSummary struct {
+	ID            int64                         `json:"id" db:"id" cli:"-"`
+	Version       *string                       `json:"version,omitempty" db:"version" cli:"version"`
+	Number        int64                         `json:"num" db:"num" cli:"num,key"`
+	Status        string                        `json:"status" db:"status" cli:"status"`
+	Start         time.Time                     `json:"start" db:"start" cli:"start"`
+	LastModified  time.Time                     `json:"last_modified" db:"last_modified" cli:"-"`
+	LastSubNumber int64                         `json:"last_subnumber" db:"last_sub_num" cli:"-"`
+	LastExecution time.Time                     `json:"last_execution" db:"last_execution" cli:"last_execution"`
+	ToCraftOpts   *WorkflowRunPostHandlerOption `json:"-" yaml:"-" db:"to_craft_opts" cli:"-"`
+	Tags          []WorkflowRunTag              `json:"tags,omitempty" db:"-" cli:"tags"`
+}
+
 type WorkflowRunInfos []WorkflowRunInfo
 
 func (a WorkflowRunInfos) Value() (driver.Value, error) {

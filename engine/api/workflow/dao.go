@@ -27,6 +27,10 @@ import (
 	"github.com/ovh/cds/sdk/telemetry"
 )
 
+const (
+	RetentionRule = "return (git_branch_exist == \"false\" and run_days_before < 2) or run_days_before < 365"
+)
+
 type PushSecrets struct {
 	ApplicationsSecrets map[int64][]sdk.Variable
 	EnvironmentdSecrets map[int64][]sdk.Variable
@@ -294,7 +298,7 @@ func Insert(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store cache.St
 		w.HistoryLength = sdk.DefaultHistoryLength
 	}
 	w.MaxRuns = maxRuns
-	w.RetentionPolicy = "return (git_branch_exist == \"false\" and run_days_before < 2) or run_days_before < 365"
+	w.RetentionPolicy = RetentionRule
 
 	w.LastModified = time.Now()
 	if err := db.QueryRow(`INSERT INTO workflow (
@@ -592,6 +596,10 @@ func Update(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store cache.St
 		return err
 	}
 
+	if wf.RetentionPolicy == "" {
+		wf.RetentionPolicy = RetentionRule
+	}
+
 	if err := CheckValidity(ctx, db, wf); err != nil {
 		return err
 	}
@@ -670,6 +678,7 @@ func Update(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store cache.St
 
 // MarkAsDelete marks a workflow to be deleted
 func MarkAsDelete(ctx context.Context, db gorpmapper.SqlExecutorWithTx, cache cache.Store, proj sdk.Project, wkf *sdk.Workflow) error {
+	// Remove references of dependencies to be able to delete them before workflow deletion
 	nodes := wkf.WorkflowData.Array()
 	for _, n := range nodes {
 		n.Context.ApplicationID = 0

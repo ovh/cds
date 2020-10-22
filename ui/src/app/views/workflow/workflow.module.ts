@@ -10,6 +10,7 @@ import { WorkflowServiceLogComponent } from './run/node/pipeline/service/service
 import { WorkflowRunJobSpawnInfoComponent } from './run/node/pipeline/spawninfo/spawninfo.component';
 import { WorkflowStepLogComponent } from './run/node/pipeline/step/step.log.component';
 import { WorkflowRunJobVariableComponent } from './run/node/pipeline/variables/job.variables.component';
+import { WorkflowRunJobComponent } from './run/node/pipeline/workflow-run-job/workflow-run-job.component';
 import { WorkflowNodeRunSummaryComponent } from './run/node/summary/run.summary.component';
 import { WorkflowRunTestTableComponent } from './run/node/test/table/test.table.component';
 import { WorkflowRunTestsResultComponent } from './run/node/test/tests.component';
@@ -47,7 +48,8 @@ import { workflowRouting } from './workflow.routing';
         WorkflowServiceLogComponent,
         WorkflowShowComponent,
         WorkflowSidebarCodeComponent,
-        WorkflowStepLogComponent
+        WorkflowStepLogComponent,
+        WorkflowRunJobComponent
     ],
     imports: [
         SharedModule,

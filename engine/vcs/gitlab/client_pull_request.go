@@ -2,17 +2,22 @@ package gitlab
 
 import (
 	"context"
+	"strconv"
 
 	"github.com/xanzy/go-gitlab"
 
 	"github.com/ovh/cds/sdk"
 )
 
-func (c *gitlabClient) PullRequest(ctx context.Context, repo string, id int) (sdk.VCSPullRequest, error) {
-	mr, _, err := c.client.MergeRequests.GetMergeRequest(repo, id, nil)
+func (c *gitlabClient) PullRequest(ctx context.Context, repo string, id string) (sdk.VCSPullRequest, error) {
+	gitlabPRID, err := strconv.Atoi(id)
+	if err != nil {
+		return sdk.VCSPullRequest{}, sdk.WrapError(sdk.ErrWrongRequest, "invalid merge request identifier: %s", id)
+	}
+	mr, _, err := c.client.MergeRequests.GetMergeRequest(repo, gitlabPRID, nil)
 	if err != nil {
 		return sdk.VCSPullRequest{}, sdk.NewErrorWithStack(err, sdk.NewErrorFrom(sdk.ErrNotFound,
-			"cannot found a merge request for repo %s with id %d", repo, id))
+			"cannot found a merge request for repo %s with id %d", repo, gitlabPRID))
 	}
 	return toSDKPullRequest(repo, *mr), nil
 }
@@ -60,7 +65,7 @@ func (c *gitlabClient) PullRequestCreate(ctx context.Context, repo string, pr sd
 }
 
 func toSDKPullRequest(repo string, mr gitlab.MergeRequest) sdk.VCSPullRequest {
-	return sdk.VCSPullRequest{
+	pr := sdk.VCSPullRequest{
 		ID: mr.IID,
 		Base: sdk.VCSPushEvent{
 			Repo: repo,
@@ -84,4 +89,9 @@ func toSDKPullRequest(repo string, mr gitlab.MergeRequest) sdk.VCSPullRequest {
 		Closed: mr.State == "closed",
 		Merged: mr.State == "merged",
 	}
+	if mr.UpdatedAt != nil {
+		pr.Updated = *mr.UpdatedAt
+	}
+	return pr
+
 }

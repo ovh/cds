@@ -43,9 +43,9 @@ type CDNUnit struct {
 }
 
 type CDNLogLink struct {
-	DownloadPath string `json:"download_path,omitempty"`
-	StreamPath   string `json:"stream_path,omitempty"`
-	CDNURL       string `json:"cdn_url,omitempty"`
+	CDNURL   string      `json:"cdn_url,omitempty"`
+	ItemType CDNItemType `json:"item_type"`
+	APIRef   string      `json:"api_ref"`
 }
 
 type CDNMarkDelete struct {
@@ -153,3 +153,24 @@ const (
 	CDNReaderFormatJSON CDNReaderFormat = "json"
 	CDNReaderFormatText CDNReaderFormat = "text"
 )
+
+type CDNWSEvent struct {
+	ItemType CDNItemType `json:"item_type"`
+	APIRef   string      `json:"api_ref"`
+}
+
+type CDNStreamFilter struct {
+	ItemType CDNItemType `json:"item_type"`
+	APIRef   string      `json:"api_ref"`
+	Offset   int64       `json:"offset"`
+}
+
+func (f CDNStreamFilter) Validate() error {
+	if !f.ItemType.IsLog() {
+		return NewErrorFrom(ErrWrongRequest, "invalid item log type")
+	}
+	if f.APIRef == "" {
+		return NewErrorFrom(ErrWrongRequest, "invalid given api ref")
+	}
+	return nil
+}

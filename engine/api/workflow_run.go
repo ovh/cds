@@ -52,124 +52,6 @@ func (api *API) getWorkflowsRunsAndNodesIDshandler() service.Handler {
 	}
 }
 
-func (api *API) searchWorkflowRun(w http.ResponseWriter, r *http.Request, route, key, name string) error {
-	// About pagination: [FR] http://blog.octo.com/designer-une-api-rest/#pagination
-	var limit, offset int
-
-	offsetS := r.FormValue("offset")
-	var errAtoi error
-	if offsetS != "" {
-		offset, errAtoi = strconv.Atoi(offsetS)
-		if errAtoi != nil {
-			return sdk.WithStack(sdk.ErrWrongRequest)
-		}
-	}
-	limitS := r.FormValue("limit")
-	if limitS != "" {
-		limit, errAtoi = strconv.Atoi(limitS)
-		if errAtoi != nil {
-			return sdk.WithStack(sdk.ErrWrongRequest)
-		}
-	}
-
-	if offset < 0 {
-		offset = 0
-	}
-	if limit == 0 {
-		limit = defaultLimit
-	}
-
-	//Parse all form values
-	mapFilters := map[string]string{}
-	for k := range r.Form {
-		if k != "offset" && k != "limit" && k != "workflow" {
-			mapFilters[k] = r.FormValue(k)
-		}
-	}
-
-	//Maximim range is set to 50
-	w.Header().Add("Accept-Range", "run 50")
-	runs, offset, limit, count, err := workflow.LoadRuns(api.mustDB(), key, name, offset, limit, mapFilters)
-	if err != nil {
-		return sdk.WrapError(err, "Unable to load workflow runs")
-	}
-
-	code := http.StatusOK
-
-	//RFC5988: Link : <https://api.fakecompany.com/v1/orders?range=0-7>; rel="first", <https://api.fakecompany.com/v1/orders?range=40-47>; rel="prev", <https://api.fakecompany.com/v1/orders?range=56-64>; rel="next", <https://api.fakecompany.com/v1/orders?range=968-975>; rel="last"
-	if len(runs) < count {
-		baseLinkURL := api.Router.URL + route
-		code = http.StatusPartialContent
-
-		//First page
-		firstLimit := limit - offset
-		if firstLimit > count {
-			firstLimit = count
-		}
-		firstLink := fmt.Sprintf(`<%s?offset=0&limit=%d>; rel="first"`, baseLinkURL, firstLimit)
-		link := firstLink
-
-		//Prev page
-		if offset != 0 {
-			prevOffset := offset - (limit - offset)
-			prevLimit := offset
-			if prevOffset < 0 {
-				prevOffset = 0
-			}
-			prevLink := fmt.Sprintf(`<%s?offset=%d&limit=%d>; rel="prev"`, baseLinkURL, prevOffset, prevLimit)
-			link = link + ", " + prevLink
-		}
-
-		//Next page
-		if limit < count {
-			nextOffset := limit
-			nextLimit := limit + (limit - offset)
-
-			if nextLimit >= count {
-				nextLimit = count
-			}
-
-			nextLink := fmt.Sprintf(`<%s?offset=%d&limit=%d>; rel="next"`, baseLinkURL, nextOffset, nextLimit)
-			link = link + ", " + nextLink
-		}
-
-		//Last page
-		lastOffset := count - (limit - offset)
-		if lastOffset < 0 {
-			lastOffset = 0
-		}
-		lastLimit := count
-		lastLink := fmt.Sprintf(`<%s?offset=%d&limit=%d>; rel="last"`, baseLinkURL, lastOffset, lastLimit)
-		link = link + ", " + lastLink
-
-		w.Header().Add("Link", link)
-	}
-
-	w.Header().Add("Content-Range", fmt.Sprintf("%d-%d/%d", offset, limit, count))
-
-	for i := range runs {
-		runs[i].Translate(r.Header.Get("Accept-Language"))
-	}
-
-	// Return empty array instead of nil
-	if runs == nil {
-		runs = []sdk.WorkflowRun{}
-	}
-	return service.WriteJSON(w, runs, code)
-}
-
-func (api *API) getWorkflowAllRunsHandler() service.Handler {
-	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		vars := mux.Vars(r)
-		key := vars[permProjectKey]
-		name := r.FormValue("workflow")
-		route := api.Router.GetRoute("GET", api.getWorkflowAllRunsHandler, map[string]string{
-			"permProjectKey": key,
-		})
-		return api.searchWorkflowRun(w, r, route, key, name)
-	}
-}
-
 func (api *API) getWorkflowRunsHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
@@ -179,7 +61,105 @@ func (api *API) getWorkflowRunsHandler() service.Handler {
 			"key":          key,
 			"workflowName": name,
 		})
-		return api.searchWorkflowRun(w, r, route, key, name)
+		// About pagination: [FR] http://blog.octo.com/designer-une-api-rest/#pagination
+		var limit, offset int
+
+		offsetS := r.FormValue("offset")
+		var errAtoi error
+		if offsetS != "" {
+			offset, errAtoi = strconv.Atoi(offsetS)
+			if errAtoi != nil {
+				return sdk.WithStack(sdk.ErrWrongRequest)
+			}
+		}
+		limitS := r.FormValue("limit")
+		if limitS != "" {
+			limit, errAtoi = strconv.Atoi(limitS)
+			if errAtoi != nil {
+				return sdk.WithStack(sdk.ErrWrongRequest)
+			}
+		}
+
+		if offset < 0 {
+			offset = 0
+		}
+		if limit == 0 {
+			limit = defaultLimit
+		}
+
+		//Parse all form values
+		mapFilters := map[string]string{}
+		for k := range r.Form {
+			if k != "offset" && k != "limit" && k != "workflow" {
+				mapFilters[k] = r.FormValue(k)
+			}
+		}
+
+		//Maximim range is set to 50
+		w.Header().Add("Accept-Range", "run 50")
+		runs, offset, limit, count, err := workflow.LoadRunsSummaries(api.mustDB(), key, name, offset, limit, mapFilters)
+		if err != nil {
+			return sdk.WrapError(err, "Unable to load workflow runs")
+		}
+
+		code := http.StatusOK
+
+		//RFC5988: Link : <https://api.fakecompany.com/v1/orders?range=0-7>; rel="first", <https://api.fakecompany.com/v1/orders?range=40-47>; rel="prev", <https://api.fakecompany.com/v1/orders?range=56-64>; rel="next", <https://api.fakecompany.com/v1/orders?range=968-975>; rel="last"
+		if len(runs) < count {
+			baseLinkURL := api.Router.URL + route
+			code = http.StatusPartialContent
+
+			//First page
+			firstLimit := limit - offset
+			if firstLimit > count {
+				firstLimit = count
+			}
+			firstLink := fmt.Sprintf(`<%s?offset=0&limit=%d>; rel="first"`, baseLinkURL, firstLimit)
+			link := firstLink
+
+			//Prev page
+			if offset != 0 {
+				prevOffset := offset - (limit - offset)
+				prevLimit := offset
+				if prevOffset < 0 {
+					prevOffset = 0
+				}
+				prevLink := fmt.Sprintf(`<%s?offset=%d&limit=%d>; rel="prev"`, baseLinkURL, prevOffset, prevLimit)
+				link = link + ", " + prevLink
+			}
+
+			//Next page
+			if limit < count {
+				nextOffset := limit
+				nextLimit := limit + (limit - offset)
+
+				if nextLimit >= count {
+					nextLimit = count
+				}
+
+				nextLink := fmt.Sprintf(`<%s?offset=%d&limit=%d>; rel="next"`, baseLinkURL, nextOffset, nextLimit)
+				link = link + ", " + nextLink
+			}
+
+			//Last page
+			lastOffset := count - (limit - offset)
+			if lastOffset < 0 {
+				lastOffset = 0
+			}
+			lastLimit := count
+			lastLink := fmt.Sprintf(`<%s?offset=%d&limit=%d>; rel="last"`, baseLinkURL, lastOffset, lastLimit)
+			link = link + ", " + lastLink
+
+			w.Header().Add("Link", link)
+		}
+
+		w.Header().Add("Content-Range", fmt.Sprintf("%d-%d/%d", offset, limit, count))
+
+		// Return empty array instead of nil
+		if runs == nil {
+			runs = []sdk.WorkflowRunSummary{}
+		}
+		return service.WriteJSON(w, runs, code)
 	}
 }
 

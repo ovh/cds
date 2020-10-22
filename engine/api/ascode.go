@@ -98,6 +98,7 @@ func (api *API) postImportAsCodeHandler() service.Handler {
 					fields["stack_trace"] = fmt.Sprintf("%+v", err)
 				}
 				log.ErrorWithFields(ctx, fields, "%s", err)
+				return
 			}
 
 			if ope.Status == sdk.OperationStatusError {

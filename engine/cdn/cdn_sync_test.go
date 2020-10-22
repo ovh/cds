@@ -70,6 +70,7 @@ func TestSyncLog(t *testing.T) {
 
 	// Mock Http route
 	gock.InterceptClient(cdsStorage.GetClient().HTTPClient())
+	t.Cleanup(gock.Off)
 
 	// 1 List project
 	// 3 features enabled

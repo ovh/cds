@@ -95,6 +95,7 @@ type VCSPullRequest struct {
 	Merged   bool         `json:"merged"`
 	Closed   bool         `json:"closed"`
 	Revision string       `json:"revision"`
+	Updated  time.Time    `json:"updated"`
 }
 
 type VCSPullRequestOptions struct {

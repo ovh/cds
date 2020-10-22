@@ -8,13 +8,15 @@
                 <i class="sitemap icon"></i>
                 {{ 'common_pipeline' | translate }}
             </a>
-            <a sm-item [class.active]="selectedTab === 'commit'" [class.disabled]="commitsLength === 0" (click)="commitsLength !== 0 && showTab('commit')">
+            <a sm-item [class.active]="selectedTab === 'commit'" [class.disabled]="commitsLength === 0"
+                (click)="commitsLength !== 0 && showTab('commit')">
                 {{ commitsLength + ' '}}
                 <span *ngIf="commitsLength > 1">{{ 'common_commits' | translate }}</span>
                 <span *ngIf="commitsLength < 2">{{ 'common_commit' | translate }}</span>
             </a>
-            <a sm-item [class.active]="selectedTab === 'vuln'" [class.disabled]="!hasVulnerability" (click)="showTab('vuln')">
-                <span  *ngIf="nbVuln > 0 || deltaVul !== 0">{{nbVuln + ' '}}</span>
+            <a sm-item [class.active]="selectedTab === 'vuln'" [class.disabled]="!hasVulnerability"
+                (click)="showTab('vuln')">
+                <span *ngIf="nbVuln > 0 || deltaVul !== 0">{{nbVuln + ' '}}</span>
                 <span>{{ 'common_vulnerabilities' | translate }}</span>
                 <span *ngIf="deltaVul !== 0">
                     (
@@ -24,46 +26,34 @@
                     )
                 </span>
             </a>
-            <a sm-item [class.active]="selectedTab === 'test'" (click)="testsTotal !== 0 && showTab('test')" [class.disabled]="testsTotal === 0">
-                <span *ngIf="testsTotal > 1">{{ 'common_tests' | translate }}</span>
-                <span *ngIf="testsTotal < 2">{{ 'common_test' | translate }}</span>
-                <span *ngIf="testsTotal">{{ ' (' +testsTotal + ')'}}</span>
+            <a sm-item [class.active]="selectedTab === 'test'" (click)="nodeRunTests?.total !== 0 && showTab('test')" [class.disabled]="!nodeRunTests?.total">
+                <span *ngIf="nodeRunTests?.total > 1">{{ 'common_tests' | translate }}</span>
+                <span *ngIf="nodeRunTests?.total < 2">{{ 'common_test' | translate }}</span>
+                <ng-container *ngIf="nodeRunTests?.total > 0">
+                (
+                    <ng-container *ngIf="nodeRunTests?.ok"><i class="green check icon no-mrr"></i>{{nodeRunTests.ok}}</ng-container>
+                    <ng-container *ngIf="nodeRunTests?.ko"><i class="red remove icon status"></i>{{nodeRunTests.ko}}</ng-container>
+                    <ng-container *ngIf="nodeRunTests?.skipped"><i class="grey ban icon status"></i>{{nodeRunTests.skipped}}</ng-container>
+                )
+                </ng-container>
             </a>
-            <a sm-item
-              [class.active]="selectedTab === 'artifact'"
-              (click)="(artifactLength !== 0 || staticFilesLength !== 0) && showTab('artifact')"
-              [class.disabled]="artifactLength === 0 && staticFilesLength === 0">
+            <a sm-item [class.active]="selectedTab === 'artifact'"
+                (click)="(artifactLength !== 0 || staticFilesLength !== 0) && showTab('artifact')"
+                [class.disabled]="artifactLength === 0 && staticFilesLength === 0">
                 <span *ngIf="artifactLength + staticFilesLength > 1">{{ 'common_artifacts' | translate }}</span>
                 <span *ngIf="artifactLength + staticFilesLength < 2">{{ 'common_artifact' | translate }}</span>
                 <span *ngIf="artifactLength">{{ ' (' + (staticFilesLength + artifactLength) + ')'}}</span>
             </a>
-            <a sm-item [class.active]="selectedTab === 'history'" (click)="historyLength !== 0 && showTab('history')" [class.disabled]="historyLength === 0">
+            <a sm-item [class.active]="selectedTab === 'history'" (click)="historyLength !== 0 && showTab('history')"
+                [class.disabled]="historyLength === 0">
                 {{ 'common_history' | translate }}
                 {{ ' (' + historyLength + ')'}}
             </a>
         </sm-menu>
     </div>
-    <!-- we want to autoscroll page only for building pipeline -->
-    <div *ngIf="selectedTab === 'pipeline' && this.currentNodeRunStatus === pipelineStatus.BUILDING; else notBuilding;" class="scrollingContent" ngx-auto-scroll>
-        <div class="paddingContent">
-            <div class="viewContent">
-                <div>
-                    <app-node-run-pipeline></app-node-run-pipeline>
-                </div>
-            </div>
-        </div>
+    <div class="pipeline" *ngIf="selectedTab === 'pipeline'">
+        <app-node-run-pipeline></app-node-run-pipeline>
     </div>
-    <ng-template #notBuilding>
-        <div *ngIf="selectedTab === 'pipeline'" class="scrollingContent">
-            <div class="paddingContent">
-                <div class="viewContent">
-                    <div>
-                        <app-node-run-pipeline></app-node-run-pipeline>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </ng-template>
     <div *ngIf="selectedTab !== 'pipeline'" class="scrollingContent">
         <div class="paddingContent">
             <div class="viewContent" [ngSwitch]="selectedTab">

@@ -248,6 +248,18 @@ func (c *client) WorkflowLogAccess(ctx context.Context, projectKey, workflowName
 	return nil
 }
 
+func (c *client) WorkflowLogDownload(ctx context.Context, link sdk.CDNLogLink) ([]byte, error) {
+	downloadURL := fmt.Sprintf("%s/item/%s/%s/download", link.CDNURL, link.ItemType, link.APIRef)
+	data, _, _, err := c.Request(context.Background(), http.MethodGet, downloadURL, nil, func(req *http.Request) {
+		auth := "Bearer " + c.config.SessionToken
+		req.Header.Add("Authorization", auth)
+	})
+	if err != nil {
+		return nil, sdk.WrapError(err, "can't download log from: %s", downloadURL)
+	}
+	return data, nil
+}
+
 func (c *client) WorkflowNodeRunArtifactDownload(projectKey string, workflowName string, a sdk.WorkflowNodeRunArtifact, w io.Writer) error {
 	var url = fmt.Sprintf("/project/%s/workflows/%s/artifact/%d", projectKey, workflowName, a.ID)
 	var reader io.ReadCloser

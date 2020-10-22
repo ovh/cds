@@ -6,13 +6,13 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
-	"net/url"
 	"strconv"
 	"testing"
 	"time"
 
 	"github.com/dgrijalva/jwt-go"
 	"github.com/mitchellh/hashstructure"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/h2non/gock.v1"
 
@@ -33,6 +33,7 @@ func TestGetItemLogsLinesHandler(t *testing.T) {
 	s, db := newTestService(t)
 	s.Client = cdsclient.New(cdsclient.Config{Host: "http://lolcat.api", InsecureSkipVerifyTLS: false})
 	gock.InterceptClient(s.Client.(cdsclient.Raw).HTTPClient())
+	t.Cleanup(gock.Off)
 	gock.New("http://lolcat.api").Get("/project/" + projectKey + "/workflows/MyWorkflow/log/access").Reply(http.StatusOK).JSON(nil)
 
 	ctx, cancel := context.WithCancel(context.TODO())
@@ -107,6 +108,8 @@ func TestGetItemLogsLinesHandler(t *testing.T) {
 	s.Router.Mux.ServeHTTP(rec, req)
 	require.Equal(t, 200, rec.Code)
 
+	assert.Equal(t, "1", rec.Header().Get("X-Total-Count"))
+
 	var lines []redis.Line
 	require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &lines))
 	require.Len(t, lines, 1)
@@ -126,13 +129,11 @@ func TestGetItemLogsStreamHandler(t *testing.T) {
 
 	s.Client = cdsclient.New(cdsclient.Config{Host: "http://lolcat.api", InsecureSkipVerifyTLS: false})
 	gock.InterceptClient(s.Client.(cdsclient.Raw).HTTPClient())
+	t.Cleanup(gock.Off)
 	gock.New("http://lolcat.api").Get("/project/" + projectKey + "/workflows/MyWorkflow/log/access").Reply(http.StatusOK).JSON(nil)
 
 	ctx, cancel := context.WithCancel(context.TODO())
-	t.Cleanup(func() {
-		cancel()
-		time.Sleep(time.Second * 5) // delay to wait client to be disconnected
-	})
+	t.Cleanup(cancel)
 	s.Units = newRunningStorageUnits(t, s.Mapper, db.DbMap, ctx)
 
 	signature := log.Signature{
@@ -202,10 +203,7 @@ func TestGetItemLogsStreamHandler(t *testing.T) {
 		SessionToken:          jwtTokenRaw,
 	})
 
-	uri := s.Router.GetRoute("GET", s.getItemLogsStreamHandler, map[string]string{
-		"type":   string(sdk.CDNTypeItemStepLog),
-		"apiRef": apiRefHash,
-	})
+	uri := s.Router.GetRoute("GET", s.getItemLogsStreamHandler, nil)
 	require.NotEmpty(t, uri)
 
 	// Send some messages before stream
@@ -216,11 +214,19 @@ func TestGetItemLogsStreamHandler(t *testing.T) {
 	// Open connection
 	ctx, cancel = context.WithTimeout(context.TODO(), time.Second*10)
 	t.Cleanup(func() { cancel() })
+	chanMsgToSend := make(chan json.RawMessage)
 	chanMsgReceived := make(chan json.RawMessage, 10)
 	chanErrorReceived := make(chan error, 10)
 	go func() {
-		chanErrorReceived <- client.RequestWebsocket(ctx, sdk.NewGoRoutines(), uri, nil, chanMsgReceived, chanErrorReceived)
+		chanErrorReceived <- client.RequestWebsocket(ctx, sdk.NewGoRoutines(), uri, chanMsgToSend, chanMsgReceived, chanErrorReceived)
 	}()
+	buf, err := json.Marshal(sdk.CDNStreamFilter{
+		ItemType: sdk.CDNTypeItemStepLog,
+		APIRef:   apiRefHash,
+		Offset:   0,
+	})
+	require.NoError(t, err)
+	chanMsgToSend <- buf
 
 	var lines []redis.Line
 	for ctx.Err() == nil && len(lines) < 10 {
@@ -269,14 +275,16 @@ func TestGetItemLogsStreamHandler(t *testing.T) {
 	// Try another connection with offset
 	ctx, cancel = context.WithTimeout(context.TODO(), time.Second*10)
 	t.Cleanup(func() { cancel() })
-	urlWithOffset, err := url.Parse(uri)
-	require.NoError(t, err)
-	q := urlWithOffset.Query()
-	q.Set("offset", "15")
-	urlWithOffset.RawQuery = q.Encode()
 	go func() {
-		chanErrorReceived <- client.RequestWebsocket(ctx, sdk.NewGoRoutines(), urlWithOffset.String(), nil, chanMsgReceived, chanErrorReceived)
+		chanErrorReceived <- client.RequestWebsocket(ctx, sdk.NewGoRoutines(), uri, chanMsgToSend, chanMsgReceived, chanErrorReceived)
 	}()
+	buf, err = json.Marshal(sdk.CDNStreamFilter{
+		ItemType: sdk.CDNTypeItemStepLog,
+		APIRef:   apiRefHash,
+		Offset:   15,
+	})
+	require.NoError(t, err)
+	chanMsgToSend <- buf
 
 	lines = make([]redis.Line, 0)
 	for ctx.Err() == nil && len(lines) < 5 {

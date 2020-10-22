@@ -36,6 +36,8 @@ type Service struct {
 	Units               *storage.RunningStorageUnits
 	WSServer            *websocketServer
 	WSBroker            *websocket.Broker
+	WSEventsMutex       sync.Mutex
+	WSEvents            map[string]sdk.CDNWSEvent
 	Metrics             struct {
 		tcpServerErrorsCount     *stats.Int64Measure
 		tcpServerHitsCount       *stats.Int64Measure

@@ -43,7 +43,7 @@ func (c *Common) commonMonitoring(t time.Time) []sdk.MonitoringStatusLine {
 		Status:    sdk.MonitoringStatusOK,
 	}, {
 		Component: "Time",
-		Value:     fmt.Sprintf("%dh%dm%ds", t.Hour(), t.Minute(), t.Second()),
+		Value:     t.Format(time.RFC3339),
 		Status:    sdk.MonitoringStatusOK,
 	}}
 

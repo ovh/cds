@@ -80,7 +80,8 @@ func Test_itemAccessMiddleware(t *testing.T) {
 	require.NotEmpty(t, s.sessionID(ctx))
 	t.Log("sessionID:", s.sessionID(ctx))
 
-	ctx, err = s.itemAccessCheck(ctx, sdk.CDNTypeItemStepLog, myItem.APIRefHash)
+	err = s.itemAccessCheck(ctx, myItem)
+	err = s.itemAccessCheck(ctx, myItem)
 	assert.NoError(t, err, "no error should be returned because a valid jwt was given")
 
 	req = assets.NewJWTAuthentifiedRequest(t, jwtTokenRaw, http.MethodGet, "", nil)
@@ -89,6 +90,6 @@ func Test_itemAccessMiddleware(t *testing.T) {
 	require.NotEmpty(t, s.sessionID(ctx))
 
 	require.NoError(t, err)
-	ctx, err = s.itemAccessCheck(ctx, sdk.CDNTypeItemStepLog, myItem.APIRefHash)
+	err = s.itemAccessCheck(ctx, myItem)
 	assert.NoError(t, err, "no error should be returned because a valid jwt was given and permission validated from cache")
 }

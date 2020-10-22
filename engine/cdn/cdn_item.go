@@ -39,7 +39,7 @@ func (s *Service) downloadItem(ctx context.Context, t sdk.CDNItemType, apiRefHas
 		return sdk.NewErrorFrom(sdk.ErrNotImplemented, "only log item can be download for now")
 	}
 
-	it, rc, filename, err := s.getItemLogValue(ctx, t, apiRefHash, sdk.CDNReaderFormatText, 0, 0, opts.Log.Sort)
+	it, _, rc, filename, err := s.getItemLogValue(ctx, t, apiRefHash, sdk.CDNReaderFormatText, 0, 0, opts.Log.Sort)
 	if err != nil {
 		return err
 	}
@@ -66,43 +66,51 @@ func (s *Service) downloadItem(ctx context.Context, t sdk.CDNItemType, apiRefHas
 	return nil
 }
 
-func (s *Service) getItemLogValue(ctx context.Context, t sdk.CDNItemType, apiRefHash string, format sdk.CDNReaderFormat, from int64, size uint, sort int64) (*sdk.CDNItem, io.ReadCloser, string, error) {
+func (s *Service) getItemLogValue(ctx context.Context, t sdk.CDNItemType, apiRefHash string, format sdk.CDNReaderFormat, from int64, size uint, sort int64) (*sdk.CDNItem, int64, io.ReadCloser, string, error) {
 	it, err := item.LoadByAPIRefHashAndType(ctx, s.Mapper, s.mustDBWithCtx(ctx), apiRefHash, t)
 	if err != nil {
-		return nil, nil, "", err
+		return nil, 0, nil, "", err
 	}
 
 	filename := it.APIRef.ToFilename()
 
 	itemUnit, err := storage.LoadItemUnitByUnit(ctx, s.Mapper, s.mustDBWithCtx(ctx), s.Units.Buffer.ID(), it.ID)
 	if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
-		return nil, nil, "", err
+		return nil, 0, nil, "", err
 	}
 
 	// If item is in Buffer, get from it
 	if itemUnit != nil {
 		log.Debug("getItemLogValue> Getting logs from buffer")
+		linesCount, err := s.Units.Buffer.Card(*itemUnit)
+		if err != nil {
+			return nil, 0, nil, "", err
+		}
+
 		rc, err := s.Units.Buffer.NewAdvancedReader(ctx, *itemUnit, format, from, size, sort)
 		if err != nil {
-			return nil, nil, "", err
+			return nil, 0, nil, "", err
 		}
-		return it, rc, filename, nil
+
+		return it, int64(linesCount), rc, filename, nil
 	}
 
 	// Get from cache
-	if ok, _ := s.LogCache.Exist(it.ID); ok {
-		log.Debug("getItemLogValue> Getting logs from cache")
-		return it, s.LogCache.NewReader(it.ID, format, from, size, sort), filename, nil
+	if ok, _ := s.LogCache.Exist(it.ID); !ok {
+		log.Debug("getItemLogValue> Getting logs from storage")
+		// Retrieve item and push it into the cache
+		if err := s.pushItemLogIntoCache(ctx, *it); err != nil {
+			return nil, 0, nil, "", err
+		}
 	}
 
-	log.Debug("getItemLogValue> Getting logs from storage")
-	// Retrieve item and push it into the cache
-	if err := s.pushItemLogIntoCache(ctx, *it); err != nil {
-		return nil, nil, "", err
+	linesCount, err := s.LogCache.Card(it.ID)
+	if err != nil {
+		return nil, 0, nil, "", err
 	}
 
-	// Get from cache
-	return it, s.LogCache.NewReader(it.ID, format, from, size, sort), filename, nil
+	log.Debug("getItemLogValue> Getting logs from cache")
+	return it, int64(linesCount), s.LogCache.NewReader(it.ID, format, from, size, sort), filename, nil
 }
 
 func (s *Service) pushItemLogIntoCache(ctx context.Context, it sdk.CDNItem) error {

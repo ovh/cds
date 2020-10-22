@@ -14,7 +14,6 @@ import { Project } from 'app/model/project.model';
 import { Workflow } from 'app/model/workflow.model';
 import { FeatureService } from 'app/service/feature/feature.service';
 import { WorkflowCoreService } from 'app/service/workflow/workflow.core.service';
-import { WorkflowSidebarMode } from 'app/service/workflow/workflow.sidebar.store';
 import { AsCodeSaveModalComponent } from 'app/shared/ascode/save-modal/ascode.save-modal.component';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { ToastService } from 'app/shared/toast/ToastService';
@@ -23,11 +22,9 @@ import { AddFeatureResult, FeaturePayload } from 'app/store/feature.action';
 import { ProjectState, ProjectStateModel } from 'app/store/project.state';
 import {
     CleanWorkflowRun,
-    CleanWorkflowState,
+    CleanWorkflowState, ClearListRuns,
     GetWorkflow,
-    GetWorkflowRuns,
     SelectHook,
-    SidebarRunsMode,
     UpdateFavoriteWorkflow
 } from 'app/store/workflow.action';
 import { WorkflowState } from 'app/store/workflow.state';
@@ -59,12 +56,6 @@ export class WorkflowComponent implements OnInit, OnDestroy {
 
     loading = true;
     loadingFav = false;
-
-    // Sidebar data
-    @Select(WorkflowState.getSidebarMode()) sibebar$: Observable<string>;
-    sidebarSubs: Subscription;
-    sidebarMode = WorkflowSidebarMode.RUNS;
-    sidebarModes = WorkflowSidebarMode;
 
     asCodeEditorSubscription: Subscription;
     asCodeEditorOpen = false;
@@ -134,13 +125,6 @@ export class WorkflowComponent implements OnInit, OnDestroy {
                 }));
             });
         });
-        this.sidebarSubs = this.sibebar$.subscribe(m => {
-            if (m === this.sidebarMode) {
-                return;
-            }
-            this.sidebarMode = m;
-            this._cd.detectChanges();
-        });
 
         this.asCodeEditorSubscription = this._workflowCore.getAsCodeEditor()
             .subscribe((state) => {
@@ -172,8 +156,8 @@ export class WorkflowComponent implements OnInit, OnDestroy {
             if (!w) {
                 return;
             }
-            if (!this.workflow || (this.workflow && w.id !== this.workflow.id)) {
-                this.initRuns(this.project.key, w.name, this._store.selectSnapshot(WorkflowState).filters);
+            if (this.workflow && this.workflow.id !== w.id) {
+                this._store.dispatch(new ClearListRuns())
             }
             this.workflow = w;
             if (this.selectecHookRef) {
@@ -208,12 +192,6 @@ export class WorkflowComponent implements OnInit, OnDestroy {
         });
     }
 
-    initRuns(key: string, workflowName: string, filters?: {}): void {
-        this._store.dispatch(
-            new GetWorkflowRuns({ projectKey: key, workflowName: workflowName, limit: '30', offset: '0', filters })
-        );
-    }
-
     updateFav() {
         if (this.loading || !this.workflow) {
             return;
@@ -224,10 +202,6 @@ export class WorkflowComponent implements OnInit, OnDestroy {
             workflowName: this.workflow.name
         })).pipe(finalize(() => this.loadingFav = false))
             .subscribe(() => this._toast.success('', this._translate.instant('common_favorites_updated')))
-    }
-
-    changeToRunsMode(): void {
-        this._store.dispatch(new SidebarRunsMode({}));
     }
 
     showTemplateFrom(): void {
