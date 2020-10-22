@@ -40,7 +40,8 @@ func TestGetItemValue(t *testing.T) {
 		Cache:               cache,
 		Mapper:              m,
 	}
-	s.Common.GoRoutines = sdk.NewGoRoutines()
+	s.GoRoutines = sdk.NewGoRoutines()
+
 	ctx, cancel := context.WithCancel(context.TODO())
 	t.Cleanup(cancel)
 
@@ -181,6 +182,8 @@ func TestGetItemValue_ThousandLines(t *testing.T) {
 		Cache:               cache,
 		Mapper:              m,
 	}
+	s.GoRoutines = sdk.NewGoRoutines()
+
 	ctx, cancel := context.WithCancel(context.TODO())
 	t.Cleanup(cancel)
 	cdnUnits := newRunningStorageUnits(t, m, db.DbMap, ctx)
@@ -279,6 +282,8 @@ func TestGetItemValue_Reverse(t *testing.T) {
 		Cache:               cache,
 		Mapper:              m,
 	}
+	s.GoRoutines = sdk.NewGoRoutines()
+
 	ctx, cancel := context.WithCancel(context.TODO())
 	t.Cleanup(cancel)
 	cdnUnits := newRunningStorageUnits(t, m, db.DbMap, ctx)
@@ -378,6 +383,8 @@ func TestGetItemValue_ThousandLinesReverse(t *testing.T) {
 		Cache:               cache,
 		Mapper:              m,
 	}
+	s.GoRoutines = sdk.NewGoRoutines()
+
 	ctx, cancel := context.WithCancel(context.TODO())
 	t.Cleanup(cancel)
 	cdnUnits := newRunningStorageUnits(t, m, db.DbMap, ctx)

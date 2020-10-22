@@ -39,6 +39,7 @@ func TestCleanSynchronizedItem(t *testing.T) {
 		Cache:               cache,
 		Mapper:              m,
 	}
+	s.GoRoutines = sdk.NewGoRoutines()
 
 	tmpDir, err := ioutil.TempDir("", t.Name()+"-cdn-1-*")
 	require.NoError(t, err)
@@ -197,6 +198,7 @@ func TestCleanWaitingItem(t *testing.T) {
 		Cache:               cache,
 		Mapper:              m,
 	}
+	s.GoRoutines = sdk.NewGoRoutines()
 
 	ctx, cancel := context.WithCancel(context.TODO())
 	t.Cleanup(cancel)
@@ -245,6 +247,7 @@ func TestPurgeItem(t *testing.T) {
 		Cache:               cache,
 		Mapper:              m,
 	}
+	s.GoRoutines = sdk.NewGoRoutines()
 
 	var err error
 	cfg := test.LoadTestingConf(t, sdk.TypeCDN)
