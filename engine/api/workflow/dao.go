@@ -652,6 +652,13 @@ func Update(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store cache.St
 				return err
 			}
 		}
+	} else {
+		for i := range wf.WorkflowData.Node.Hooks {
+			h := &wf.WorkflowData.Node.Hooks[i]
+			if h.UUID == "" {
+				h.UUID = sdk.UUID()
+			}
+		}
 	}
 
 	if err := InsertWorkflowData(db, wf); err != nil {

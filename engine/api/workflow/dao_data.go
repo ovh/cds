@@ -104,7 +104,7 @@ func insertNodeData(db gorp.SqlExecutor, w *sdk.Workflow, n *sdk.Node, skipDepen
 		return sdk.WrapError(err, "insertNodeData> Unable to insertNodeContextData %s-%s", n.Name, n.Ref)
 	}
 
-	if err := insertNodeHookData(db, w, n); err != nil {
+	if err := insertNodeHookData(db, n); err != nil {
 		return sdk.WrapError(err, "insertNodeData> Unable to insertNodeHookData %s-%s", n.Name, n.Ref)
 	}
 
