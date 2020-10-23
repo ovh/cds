@@ -31,7 +31,7 @@ const limitWorkflowRun = 30;
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 @AutoUnsubscribe()
-export class WorkflowSidebarRunListComponent implements OnInit, OnDestroy {
+export class WorkflowSidebarRunListComponent implements OnDestroy {
     @ViewChild('tagsList') tagsList: ElementRef;
 
     _workflow: Workflow;
@@ -43,6 +43,8 @@ export class WorkflowSidebarRunListComponent implements OnInit, OnDestroy {
                 this._workflow = data;
                 this.deleteInterval();
                 this.initSelectableTags();
+                this.offset = 0;
+                this.getRuns();
             }
             this._workflow = data;
         }
@@ -114,10 +116,6 @@ export class WorkflowSidebarRunListComponent implements OnInit, OnDestroy {
             this._cd.markForCheck();
             return;
         });
-    }
-
-    ngOnInit() {
-        this.getRuns();
     }
 
     getRuns(filter?: any): void {
