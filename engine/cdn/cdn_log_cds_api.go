@@ -102,7 +102,7 @@ func (s *Service) dequeueJobMessages(ctx context.Context, jobLogsQueueKey string
 		default:
 			dequeuCtx, cancel := context.WithTimeout(ctx, 1*time.Second)
 
-			msgs, err := s.Cache.DequeueJSONRawMessagesWithContext(dequeuCtx, jobLogsQueueKey, 5*time.Millisecond, 1000)
+			msgs, err := s.Cache.DequeueJSONRawMessagesWithContext(dequeuCtx, jobLogsQueueKey, 1*time.Millisecond, 1000)
 			cancel()
 
 			if len(msgs) > 0 {
