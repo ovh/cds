@@ -108,9 +108,9 @@ func (s *Service) storeLogs(ctx context.Context, itemType sdk.CDNItemType, signa
 	}
 
 	// Send an event in WS broker to refresh streams on current item
-	if err := s.publishWSEvent(ctx, *it); err != nil {
-		return err
-	}
+	s.GoRoutines.Exec(ctx, "storeLogsPublishWSEvent", func(ctx context.Context) {
+		s.publishWSEvent(*it)
+	})
 
 	maxLineKey := cache.Key("cdn", "log", "size", it.ID)
 	maxItemLine := -1

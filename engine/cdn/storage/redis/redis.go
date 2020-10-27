@@ -125,3 +125,7 @@ func (s *Redis) Status(_ context.Context) []sdk.MonitoringStatusLine {
 			Status:    sdk.MonitoringStatusOK,
 		}}
 }
+
+func (s *Redis) Remove(ctx context.Context, i sdk.CDNItemUnit) error {
+	return sdk.WithStack(s.store.Delete(cache.Key(keyBuffer, i.ItemID)))
+}

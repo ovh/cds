@@ -214,14 +214,14 @@ func (api *API) getWorkflowHandler() service.Handler {
 		vars := mux.Vars(r)
 		key := vars["key"]
 		name := vars["permWorkflowName"]
-		withUsage := FormBool(r, "withUsage")
-		withAudits := FormBool(r, "withAudits")
-		withLabels := FormBool(r, "withLabels")
-		withDeepPipelines := FormBool(r, "withDeepPipelines")
-		withTemplate := FormBool(r, "withTemplate")
-		withAsCodeEvents := FormBool(r, "withAsCodeEvents")
-		minimal := FormBool(r, "minimal")
-		withoutIcons := FormBool(r, "withoutIcons")
+		withUsage := service.FormBool(r, "withUsage")
+		withAudits := service.FormBool(r, "withAudits")
+		withLabels := service.FormBool(r, "withLabels")
+		withDeepPipelines := service.FormBool(r, "withDeepPipelines")
+		withTemplate := service.FormBool(r, "withTemplate")
+		withAsCodeEvents := service.FormBool(r, "withAsCodeEvents")
+		minimal := service.FormBool(r, "minimal")
+		withoutIcons := service.FormBool(r, "withoutIcons")
 
 		proj, err := project.Load(ctx, api.mustDB(), key, project.LoadOptions.WithIntegrations)
 		if err != nil {

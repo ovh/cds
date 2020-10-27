@@ -52,13 +52,13 @@ export class WorkflowNodeRunSummaryComponent implements OnInit, OnDestroy {
         private _toast: ToastService,
         private _translate: TranslateService,
         private _cd: ChangeDetectorRef,
-        private _durationService: DurationService,
-        private _store: Store) {
+        private _store: Store
+    ) {
         this.project = this._store.selectSnapshot(ProjectState.projectSnapshot);
         this.workflow = (<WorkflowStateModel>this._store.selectSnapshot(WorkflowState)).workflowRun.workflow;
     }
 
-    ngOnDestroy(): void {} // Should be set to use @AutoUnsubscribe with AOT
+    ngOnDestroy(): void { } // Should be set to use @AutoUnsubscribe with AOT
 
     ngOnInit(): void {
         this.nodeRunSubs = this.nodeRun$.subscribe(nr => {
@@ -73,13 +73,13 @@ export class WorkflowNodeRunSummaryComponent implements OnInit, OnDestroy {
                 this.nodeRunStart = nr.start;
                 this.nodeRunStatus = nr.status;
                 if (!PipelineStatus.isActive(nr.status)) {
-                    this.duration = this._durationService.duration(new Date(nr.start), new Date(nr.done));
+                    this.duration = DurationService.duration(new Date(nr.start), new Date(nr.done));
                 }
                 this._cd.markForCheck();
             } else if (this.nodeRunStatus !== nr.status) {
                 this.nodeRunStatus = nr.status;
                 if (!PipelineStatus.isActive(nr.status)) {
-                    this.duration = this._durationService.duration(new Date(nr.start), new Date(nr.done));
+                    this.duration = DurationService.duration(new Date(nr.start), new Date(nr.done));
                 }
                 this._cd.markForCheck();
             }
@@ -99,8 +99,8 @@ export class WorkflowNodeRunSummaryComponent implements OnInit, OnDestroy {
                     this._cd.markForCheck();
                 })
             ).subscribe(() => {
-            this._toast.success('', this._translate.instant('pipeline_stop'));
-        });
+                this._toast.success('', this._translate.instant('pipeline_stop'));
+            });
     }
 
     runNewWithParameter(): void {

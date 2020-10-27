@@ -56,7 +56,7 @@ func TestLoadOldItemUnitByItemStatusAndDuration(t *testing.T) {
 	for _, itemUnit := range itemUnits {
 		i, err := item.LoadByID(context.TODO(), m, db, itemUnit.ItemID)
 		require.NoError(t, err)
-		require.NoError(t, item.DeleteByIDs(db, []string{i.ID}))
+		require.NoError(t, item.DeleteByID(db, i.ID))
 	}
 
 	i1 := &sdk.CDNItem{
@@ -68,7 +68,7 @@ func TestLoadOldItemUnitByItemStatusAndDuration(t *testing.T) {
 	err = item.Insert(context.TODO(), m, db, i1)
 	require.NoError(t, err)
 	defer func() {
-		_ = item.DeleteByIDs(db, []string{i1.ID})
+		_ = item.DeleteByID(db, i1.ID)
 	}()
 
 	itemUnit1, err := cdnUnits.NewItemUnit(context.TODO(), cdnUnits.Buffer, i1)
@@ -84,7 +84,7 @@ func TestLoadOldItemUnitByItemStatusAndDuration(t *testing.T) {
 	err = item.Insert(context.TODO(), m, db, i2)
 	require.NoError(t, err)
 	defer func() {
-		_ = item.DeleteByIDs(db, []string{i2.ID})
+		_ = item.DeleteByID(db, i2.ID)
 	}()
 	itemUnit2, err := cdnUnits.NewItemUnit(context.TODO(), cdnUnits.Buffer, i2)
 	require.NoError(t, err)

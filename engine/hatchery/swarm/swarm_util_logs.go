@@ -91,7 +91,7 @@ func (h *HatcherySwarm) getServicesLogs() error {
 					}
 					msg := commonMessage
 					msg.Signature.Timestamp = time.Now().UnixNano()
-					msg.Value = logsSplitted[i]
+					msg.Value = sdk.RemoveNotPrintableChar(logsSplitted[i])
 					servicesLogs = append(servicesLogs, msg)
 				}
 			}

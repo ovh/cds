@@ -16,7 +16,8 @@ CREATE TABLE IF NOT EXISTS "storage_unit_item" (
   last_modified TIMESTAMP WITH TIME ZONE NOT NULL,
   cipher_locator BYTEA,
   sig BYTEA,
-  signer TEXT
+  signer TEXT,
+  to_delete BOOLEAN
 );
 
 SELECT create_foreign_key_idx_cascade('FK_storage_unit_item_index', 'storage_unit_item', 'item', 'item_id', 'id');

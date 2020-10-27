@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
-	"net/url"
 	"strconv"
 	"testing"
 	"time"
@@ -19,178 +18,13 @@ import (
 
 	"github.com/ovh/cds/engine/api/test/assets"
 	"github.com/ovh/cds/engine/authentication"
-	"github.com/ovh/cds/engine/cdn/item"
 	"github.com/ovh/cds/engine/cdn/redis"
-	cdntest "github.com/ovh/cds/engine/cdn/test"
 	"github.com/ovh/cds/engine/test"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk/log/hook"
 )
-
-func TestMarkItemToDeleteHandler(t *testing.T) {
-	s, db := newTestService(t)
-	s.Cfg.EnableLogProcessing = true
-	cdntest.ClearItem(t, context.TODO(), s.Mapper, db)
-
-	item1 := sdk.CDNItem{
-		ID:   sdk.UUID(),
-		Type: sdk.CDNTypeItemStepLog,
-		APIRef: sdk.CDNLogAPIRef{
-			RunID:      1,
-			WorkflowID: 1,
-		},
-		APIRefHash: sdk.RandomString(10),
-	}
-	require.NoError(t, item.Insert(context.TODO(), s.Mapper, db, &item1))
-	item2 := sdk.CDNItem{
-		ID:   sdk.UUID(),
-		Type: sdk.CDNTypeItemStepLog,
-		APIRef: sdk.CDNLogAPIRef{
-			RunID:      2,
-			WorkflowID: 2,
-		},
-		APIRefHash: sdk.RandomString(10),
-	}
-	require.NoError(t, item.Insert(context.TODO(), s.Mapper, db, &item2))
-
-	item3 := sdk.CDNItem{
-		ID:   sdk.UUID(),
-		Type: sdk.CDNTypeItemStepLog,
-		APIRef: sdk.CDNLogAPIRef{
-			RunID:      3,
-			WorkflowID: 2,
-		},
-		APIRefHash: sdk.RandomString(10),
-	}
-	require.NoError(t, item.Insert(context.TODO(), s.Mapper, db, &item3))
-
-	vars := map[string]string{}
-	uri := s.Router.GetRoute("POST", s.markItemToDeleteHandler, vars)
-	require.NotEmpty(t, uri)
-	req := newRequest(t, "POST", uri, sdk.CDNMarkDelete{RunID: 2})
-
-	rec := httptest.NewRecorder()
-	s.Router.Mux.ServeHTTP(rec, req)
-	require.Equal(t, 204, rec.Code)
-
-	item3DB, err := item.LoadByID(context.TODO(), s.Mapper, db, item3.ID)
-	require.NoError(t, err)
-	require.False(t, item3DB.ToDelete)
-
-	item2DB, err := item.LoadByID(context.TODO(), s.Mapper, db, item2.ID)
-	require.NoError(t, err)
-	require.True(t, item2DB.ToDelete)
-
-	item1DB, err := item.LoadByID(context.TODO(), s.Mapper, db, item1.ID)
-	require.NoError(t, err)
-	require.False(t, item1DB.ToDelete)
-
-	vars2 := map[string]string{}
-	uri2 := s.Router.GetRoute("POST", s.markItemToDeleteHandler, vars2)
-	require.NotEmpty(t, uri2)
-	req2 := newRequest(t, "POST", uri, sdk.CDNMarkDelete{WorkflowID: 1})
-
-	rec2 := httptest.NewRecorder()
-	s.Router.Mux.ServeHTTP(rec2, req2)
-	require.Equal(t, 204, rec2.Code)
-
-	item3DBAfter, err := item.LoadByID(context.TODO(), s.Mapper, db, item3.ID)
-	require.NoError(t, err)
-	require.False(t, item3DBAfter.ToDelete)
-
-	item2DBAfter, err := item.LoadByID(context.TODO(), s.Mapper, db, item2.ID)
-	require.NoError(t, err)
-	require.True(t, item2DBAfter.ToDelete)
-
-	item1DBAfter, err := item.LoadByID(context.TODO(), s.Mapper, db, item1.ID)
-	require.NoError(t, err)
-	require.True(t, item1DBAfter.ToDelete)
-}
-
-func TestGetItemLogsDownloadHandler(t *testing.T) {
-	projectKey := sdk.RandomString(10)
-	// Create cdn service with need storage and test item
-	s, db := newTestService(t)
-	s.Client = cdsclient.New(cdsclient.Config{Host: "http://lolcat.api", InsecureSkipVerifyTLS: false})
-	gock.InterceptClient(s.Client.(cdsclient.Raw).HTTPClient())
-	gock.New("http://lolcat.api").Get("/project/" + projectKey + "/workflows/MyWorkflow/log/access").Reply(http.StatusOK).JSON(nil)
-
-	ctx, cancel := context.WithCancel(context.TODO())
-	t.Cleanup(cancel)
-	s.Units = newRunningStorageUnits(t, s.Mapper, db.DbMap, ctx)
-
-	hm := handledMessage{
-		Msg: hook.Message{
-			Full: "this is a message",
-		},
-		Status: sdk.StatusSuccess,
-		Line:   2,
-		Signature: log.Signature{
-			ProjectKey:   projectKey,
-			WorkflowID:   1,
-			WorkflowName: "MyWorkflow",
-			RunID:        1,
-			NodeRunID:    1,
-			NodeRunName:  "MyPipeline",
-			JobName:      "MyJob",
-			JobID:        1,
-			Worker: &log.SignatureWorker{
-				StepName:  "script1",
-				StepOrder: 1,
-			},
-		},
-	}
-
-	content := buildMessage(hm)
-	err := s.storeLogs(context.TODO(), sdk.CDNTypeItemStepLog, hm.Signature, hm.Status, content, hm.Line)
-	require.NoError(t, err)
-
-	signer, err := authentication.NewSigner("cdn-test", test.SigningKey)
-	require.NoError(t, err)
-	s.Common.ParsedAPIPublicKey = signer.GetVerifyKey()
-	jwtToken := jwt.NewWithClaims(jwt.SigningMethodRS512, sdk.AuthSessionJWTClaims{
-		ID: sdk.UUID(),
-		StandardClaims: jwt.StandardClaims{
-			Issuer:    "test",
-			Subject:   sdk.UUID(),
-			Id:        sdk.UUID(),
-			IssuedAt:  time.Now().Unix(),
-			ExpiresAt: time.Now().Add(time.Minute).Unix(),
-		},
-	})
-	jwtTokenRaw, err := signer.SignJWT(jwtToken)
-	require.NoError(t, err)
-
-	apiRef := sdk.CDNLogAPIRef{
-		ProjectKey:     hm.Signature.ProjectKey,
-		WorkflowName:   hm.Signature.WorkflowName,
-		WorkflowID:     hm.Signature.WorkflowID,
-		RunID:          hm.Signature.RunID,
-		NodeRunName:    hm.Signature.NodeRunName,
-		NodeRunID:      hm.Signature.NodeRunID,
-		NodeRunJobName: hm.Signature.JobName,
-		NodeRunJobID:   hm.Signature.JobID,
-		StepName:       hm.Signature.Worker.StepName,
-		StepOrder:      hm.Signature.Worker.StepOrder,
-	}
-	apiRefHashU, err := hashstructure.Hash(apiRef, nil)
-	require.NoError(t, err)
-	apiRefHash := strconv.FormatUint(apiRefHashU, 10)
-
-	uri := s.Router.GetRoute("GET", s.getItemDownloadHandler, map[string]string{
-		"type":   string(sdk.CDNTypeItemStepLog),
-		"apiRef": apiRefHash,
-	})
-	require.NotEmpty(t, uri)
-	req := assets.NewJWTAuthentifiedRequest(t, jwtTokenRaw, "GET", uri, nil)
-	rec := httptest.NewRecorder()
-	s.Router.Mux.ServeHTTP(rec, req)
-	require.Equal(t, 200, rec.Code)
-
-	assert.Equal(t, "[EMERGENCY] this is a message\n", string(rec.Body.Bytes()))
-}
 
 func TestGetItemLogsLinesHandler(t *testing.T) {
 	projectKey := sdk.RandomString(10)
@@ -199,6 +33,7 @@ func TestGetItemLogsLinesHandler(t *testing.T) {
 	s, db := newTestService(t)
 	s.Client = cdsclient.New(cdsclient.Config{Host: "http://lolcat.api", InsecureSkipVerifyTLS: false})
 	gock.InterceptClient(s.Client.(cdsclient.Raw).HTTPClient())
+	t.Cleanup(gock.Off)
 	gock.New("http://lolcat.api").Get("/project/" + projectKey + "/workflows/MyWorkflow/log/access").Reply(http.StatusOK).JSON(nil)
 
 	ctx, cancel := context.WithCancel(context.TODO())
@@ -273,6 +108,8 @@ func TestGetItemLogsLinesHandler(t *testing.T) {
 	s.Router.Mux.ServeHTTP(rec, req)
 	require.Equal(t, 200, rec.Code)
 
+	assert.Equal(t, "1", rec.Header().Get("X-Total-Count"))
+
 	var lines []redis.Line
 	require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &lines))
 	require.Len(t, lines, 1)
@@ -292,13 +129,11 @@ func TestGetItemLogsStreamHandler(t *testing.T) {
 
 	s.Client = cdsclient.New(cdsclient.Config{Host: "http://lolcat.api", InsecureSkipVerifyTLS: false})
 	gock.InterceptClient(s.Client.(cdsclient.Raw).HTTPClient())
+	t.Cleanup(gock.Off)
 	gock.New("http://lolcat.api").Get("/project/" + projectKey + "/workflows/MyWorkflow/log/access").Reply(http.StatusOK).JSON(nil)
 
 	ctx, cancel := context.WithCancel(context.TODO())
-	t.Cleanup(func() {
-		cancel()
-		time.Sleep(time.Second * 5) // delay to wait client to be disconnected
-	})
+	t.Cleanup(cancel)
 	s.Units = newRunningStorageUnits(t, s.Mapper, db.DbMap, ctx)
 
 	signature := log.Signature{
@@ -368,10 +203,7 @@ func TestGetItemLogsStreamHandler(t *testing.T) {
 		SessionToken:          jwtTokenRaw,
 	})
 
-	uri := s.Router.GetRoute("GET", s.getItemLogsStreamHandler, map[string]string{
-		"type":   string(sdk.CDNTypeItemStepLog),
-		"apiRef": apiRefHash,
-	})
+	uri := s.Router.GetRoute("GET", s.getItemLogsStreamHandler, nil)
 	require.NotEmpty(t, uri)
 
 	// Send some messages before stream
@@ -382,11 +214,19 @@ func TestGetItemLogsStreamHandler(t *testing.T) {
 	// Open connection
 	ctx, cancel = context.WithTimeout(context.TODO(), time.Second*10)
 	t.Cleanup(func() { cancel() })
+	chanMsgToSend := make(chan json.RawMessage)
 	chanMsgReceived := make(chan json.RawMessage, 10)
 	chanErrorReceived := make(chan error, 10)
 	go func() {
-		chanErrorReceived <- client.RequestWebsocket(ctx, sdk.NewGoRoutines(), uri, nil, chanMsgReceived, chanErrorReceived)
+		chanErrorReceived <- client.RequestWebsocket(ctx, sdk.NewGoRoutines(), uri, chanMsgToSend, chanMsgReceived, chanErrorReceived)
 	}()
+	buf, err := json.Marshal(sdk.CDNStreamFilter{
+		ItemType: sdk.CDNTypeItemStepLog,
+		APIRef:   apiRefHash,
+		Offset:   0,
+	})
+	require.NoError(t, err)
+	chanMsgToSend <- buf
 
 	var lines []redis.Line
 	for ctx.Err() == nil && len(lines) < 10 {
@@ -435,14 +275,16 @@ func TestGetItemLogsStreamHandler(t *testing.T) {
 	// Try another connection with offset
 	ctx, cancel = context.WithTimeout(context.TODO(), time.Second*10)
 	t.Cleanup(func() { cancel() })
-	urlWithOffset, err := url.Parse(uri)
-	require.NoError(t, err)
-	q := urlWithOffset.Query()
-	q.Set("offset", "15")
-	urlWithOffset.RawQuery = q.Encode()
 	go func() {
-		chanErrorReceived <- client.RequestWebsocket(ctx, sdk.NewGoRoutines(), urlWithOffset.String(), nil, chanMsgReceived, chanErrorReceived)
+		chanErrorReceived <- client.RequestWebsocket(ctx, sdk.NewGoRoutines(), uri, chanMsgToSend, chanMsgReceived, chanErrorReceived)
 	}()
+	buf, err = json.Marshal(sdk.CDNStreamFilter{
+		ItemType: sdk.CDNTypeItemStepLog,
+		APIRef:   apiRefHash,
+		Offset:   15,
+	})
+	require.NoError(t, err)
+	chanMsgToSend <- buf
 
 	lines = make([]redis.Line, 0)
 	for ctx.Err() == nil && len(lines) < 5 {

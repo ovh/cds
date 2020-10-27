@@ -31,12 +31,12 @@ func Test_CheckSessionJWT(t *testing.T) {
 	jwtRaw, err := authentication.NewSessionJWT(session)
 	require.NoError(t, err)
 
-	_, err = service.CheckSessionJWT(jwtRaw, authentication.VerifyJWT)
+	_, _, err = service.CheckSessionJWT(jwtRaw, authentication.VerifyJWT)
 	require.NoError(t, err)
 
 	time.Sleep(5 * time.Second)
 
-	_, err = service.CheckSessionJWT(jwtRaw, authentication.VerifyJWT)
+	_, _, err = service.CheckSessionJWT(jwtRaw, authentication.VerifyJWT)
 	require.Error(t, err)
 	jwtErr, ok := sdk.Cause(err).(*jwt.ValidationError)
 	require.True(t, ok)

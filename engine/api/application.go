@@ -34,8 +34,8 @@ func (api *API) getApplicationsHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		projectKey := vars[permProjectKey]
-		withUsage := FormBool(r, "withUsage")
-		withIcon := FormBool(r, "withIcon")
+		withUsage := service.FormBool(r, "withUsage")
+		withIcon := service.FormBool(r, "withIcon")
 		withPermissions := r.FormValue("permission")
 
 		loadOpts := []application.LoadOptionFunc{}
@@ -116,11 +116,11 @@ func (api *API) getApplicationHandler() service.Handler {
 		projectKey := vars[permProjectKey]
 		applicationName := vars["applicationName"]
 
-		withKeys := FormBool(r, "withKeys")
-		withUsage := FormBool(r, "withUsage")
-		withIcon := FormBool(r, "withIcon")
-		withDeploymentStrategies := FormBool(r, "withDeploymentStrategies")
-		withVulnerabilities := FormBool(r, "withVulnerabilities")
+		withKeys := service.FormBool(r, "withKeys")
+		withUsage := service.FormBool(r, "withUsage")
+		withIcon := service.FormBool(r, "withIcon")
+		withDeploymentStrategies := service.FormBool(r, "withDeploymentStrategies")
+		withVulnerabilities := service.FormBool(r, "withVulnerabilities")
 
 		loadOptions := []application.LoadOptionFunc{
 			application.LoadOptions.WithVariables,

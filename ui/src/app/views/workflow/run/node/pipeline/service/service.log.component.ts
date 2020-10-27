@@ -123,7 +123,7 @@ export class WorkflowServiceLogComponent implements OnInit, OnDestroy {
                 nodeRunId, runJobId, this.serviceName).toPromise();
             callback(serviceLog);
         } else {
-            const data = await this._http.get('./cdscdn' + logLink.download_path, { responseType: 'text' }).toPromise();
+            const data = await this._workflowService.getLogDownload(logLink).toPromise();
             callback(<ServiceLog>{ val: data });
         }
 
@@ -141,8 +141,7 @@ export class WorkflowServiceLogComponent implements OnInit, OnDestroy {
                         return this._workflowService.getServiceLog(projectKey, workflowName, nodeRunId,
                             runJobId, this.serviceName);
                     }
-                    return this._http.get('./cdscdn' + logLink.download_path, { responseType: 'text' })
-                        .map(data => <ServiceLog>{ val: data });
+                    return this._workflowService.getLogDownload(logLink).map(data => <ServiceLog>{ val: data });
                 })
                 .subscribe(serviceLogs => {
                     this.zone.run(() => {

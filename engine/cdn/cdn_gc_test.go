@@ -39,6 +39,7 @@ func TestCleanSynchronizedItem(t *testing.T) {
 		Cache:               cache,
 		Mapper:              m,
 	}
+	s.GoRoutines = sdk.NewGoRoutines()
 
 	tmpDir, err := ioutil.TempDir("", t.Name()+"-cdn-1-*")
 	require.NoError(t, err)
@@ -150,32 +151,32 @@ func TestCleanSynchronizedItem(t *testing.T) {
 	require.NoError(t, storage.InsertItemUnit(context.TODO(), s.Mapper, db, &iu6Redis))
 	iu6FS := sdk.CDNItemUnit{UnitID: s.Units.Storages[0].ID(), ItemID: item6RedisFSCDS.ID}
 	require.NoError(t, storage.InsertItemUnit(context.TODO(), s.Mapper, db, &iu6FS))
-
-	iusRedis, err := storage.LoadItemUnitsByUnit(context.TODO(), s.Mapper, db, s.Units.Buffer.ID(), 100)
+	oneHundred := 100
+	iusRedis, err := storage.LoadItemUnitsByUnit(context.TODO(), s.Mapper, db, s.Units.Buffer.ID(), &oneHundred)
 	require.NoError(t, err)
 	require.Equal(t, 3, len(iusRedis))
 
-	iusFS, err := storage.LoadItemUnitsByUnit(context.TODO(), s.Mapper, db, s.Units.Storages[0].ID(), 100)
+	iusFS, err := storage.LoadItemUnitsByUnit(context.TODO(), s.Mapper, db, s.Units.Storages[0].ID(), &oneHundred)
 	require.NoError(t, err)
 	require.Equal(t, 4, len(iusFS))
 
-	iusCDS, err := storage.LoadItemUnitsByUnit(context.TODO(), s.Mapper, db, s.Units.Storages[1].ID(), 100)
+	iusCDS, err := storage.LoadItemUnitsByUnit(context.TODO(), s.Mapper, db, s.Units.Storages[1].ID(), &oneHundred)
 	require.NoError(t, err)
 	require.Equal(t, 3, len(iusCDS))
 
 	// RUN TEST
 	require.NoError(t, s.cleanBuffer(context.TODO()))
 
-	iusRedisAfter, err := storage.LoadItemUnitsByUnit(context.TODO(), s.Mapper, db, s.Units.Buffer.ID(), 100)
+	iusRedisAfter, err := storage.LoadItemUnitsByUnit(context.TODO(), s.Mapper, db, s.Units.Buffer.ID(), &oneHundred)
 	require.NoError(t, err)
 	require.Equal(t, 1, len(iusRedisAfter))
 	require.Equal(t, item4Redis.ID, iusRedisAfter[0].ItemID)
 
-	iusFS2After, err := storage.LoadItemUnitsByUnit(context.TODO(), s.Mapper, db, s.Units.Storages[0].ID(), 100)
+	iusFS2After, err := storage.LoadItemUnitsByUnit(context.TODO(), s.Mapper, db, s.Units.Storages[0].ID(), &oneHundred)
 	require.NoError(t, err)
 	require.Equal(t, 4, len(iusFS2After))
 
-	iusCDSAfter, err := storage.LoadItemUnitsByUnit(context.TODO(), s.Mapper, db, s.Units.Storages[1].ID(), 100)
+	iusCDSAfter, err := storage.LoadItemUnitsByUnit(context.TODO(), s.Mapper, db, s.Units.Storages[1].ID(), &oneHundred)
 	require.NoError(t, err)
 	require.Equal(t, 3, len(iusCDSAfter))
 }
@@ -197,6 +198,7 @@ func TestCleanWaitingItem(t *testing.T) {
 		Cache:               cache,
 		Mapper:              m,
 	}
+	s.GoRoutines = sdk.NewGoRoutines()
 
 	ctx, cancel := context.WithCancel(context.TODO())
 	t.Cleanup(cancel)
@@ -245,6 +247,7 @@ func TestPurgeItem(t *testing.T) {
 		Cache:               cache,
 		Mapper:              m,
 	}
+	s.GoRoutines = sdk.NewGoRoutines()
 
 	var err error
 	cfg := test.LoadTestingConf(t, sdk.TypeCDN)
@@ -279,9 +282,21 @@ func TestPurgeItem(t *testing.T) {
 	}
 	require.NoError(t, item.Insert(context.TODO(), s.Mapper, db, &item3))
 
+	// LoadAll filter only item with flag to_delete set to false
+	items, err := item.LoadAll(context.TODO(), s.Mapper, db, 10)
+	require.NoError(t, err)
+	require.Equal(t, 1, len(items))
+
+	// Check there are 2 item to delete
+	ids, err := item.LoadIDsToDelete(db, 10)
+	require.NoError(t, err)
+	require.GreaterOrEqual(t, len(ids), 2)
+
+	// Delete
 	require.NoError(t, s.cleanItemToDelete(context.TODO()))
 
-	items, err := item.LoadAll(context.TODO(), s.Mapper, db, 10)
+	// Only 1 item should remain
+	items, err = item.LoadAll(context.TODO(), s.Mapper, db, 10)
 	require.NoError(t, err)
 	require.Equal(t, 1, len(items))
 }

@@ -340,7 +340,7 @@ func (api *API) deleteRepositoriesManagerHandler() service.Handler {
 		projectKey := vars[permProjectKey]
 		rmName := vars["name"]
 
-		force := FormBool(r, "force")
+		force := service.FormBool(r, "force")
 
 		p, err := project.Load(ctx, api.mustDB(), projectKey)
 		if err != nil {
@@ -391,7 +391,7 @@ func (api *API) getReposFromRepositoriesManagerHandler() service.Handler {
 		vars := mux.Vars(r)
 		projectKey := vars[permProjectKey]
 		vcsServerName := vars["name"]
-		sync := FormBool(r, "synchronize")
+		sync := service.FormBool(r, "synchronize")
 
 		tx, err := api.mustDB().Begin()
 		if err != nil {

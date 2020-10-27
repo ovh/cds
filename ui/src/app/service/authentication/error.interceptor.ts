@@ -19,21 +19,27 @@ export class ErrorInterceptor implements HttpInterceptor {
                 if (e instanceof HttpErrorResponse) {
                     if (e.status === 0) {
                         this._toast.error('API Unreachable', '');
-                    } else if (req.url.indexOf('auth/me') === -1) { // ignore error on auth/me used for auth pages
-                        // error formatted from CDS API
-                        if (e.error) {
-                            if (e.error.message) {
-                                this._toast.errorHTTP(e.status, e.error.message, e.error.from, e.error.request_id);
-                            } else if (Array.isArray(e.error)) {
-                                try {
-                                    let messages = e.error as Array<string>;
-                                    this._toast.error(e.statusText, messages.join(', '));
-                                } catch (e) {
-                                    this._toast.error(e.statusText, this._translate.instant('common_error'));
-                                }
-                            } else {
+                        return observableThrowError(e);
+                    }
+
+                    // ignore error on auth/me used for auth pages and on cdscdn
+                    if (req.url.indexOf('auth/me') !== -1 || req.url.indexOf('cdscdn/item') !== -1) {
+                        return observableThrowError(e);
+                    }
+
+                    // error formatted from CDS API
+                    if (e.error) {
+                        if (e.error.message) {
+                            this._toast.errorHTTP(e.status, e.error.message, e.error.from, e.error.request_id);
+                        } else if (Array.isArray(e.error)) {
+                            try {
+                                let messages = e.error as Array<string>;
+                                this._toast.error(e.statusText, messages.join(', '));
+                            } catch (e) {
                                 this._toast.error(e.statusText, this._translate.instant('common_error'));
                             }
+                        } else {
+                            this._toast.error(e.statusText, this._translate.instant('common_error'));
                         }
                     }
                     return observableThrowError(e);

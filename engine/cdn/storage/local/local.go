@@ -70,6 +70,7 @@ func (s *Local) ItemExists(ctx context.Context, m *gorpmapper.Mapper, db gorp.Sq
 		return false, err
 	}
 	_, err = os.Stat(path)
+
 	return !os.IsNotExist(err), nil
 }
 
@@ -156,4 +157,13 @@ func (s *Local) dirSize(path string) (int64, error) {
 		return sdk.WithStack(err)
 	})
 	return size, err
+}
+
+func (s *Local) Remove(ctx context.Context, i sdk.CDNItemUnit) error {
+	path, err := s.filename(i)
+	if err != nil {
+		return err
+	}
+	log.Debug("[%T] remove %s", s, path)
+	return sdk.WithStack(os.Remove(path))
 }

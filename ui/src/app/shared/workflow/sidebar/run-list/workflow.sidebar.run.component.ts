@@ -31,7 +31,7 @@ const limitWorkflowRun = 30;
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 @AutoUnsubscribe()
-export class WorkflowSidebarRunListComponent implements OnInit, OnDestroy {
+export class WorkflowSidebarRunListComponent implements OnDestroy {
     @ViewChild('tagsList') tagsList: ElementRef;
 
     _workflow: Workflow;
@@ -43,6 +43,8 @@ export class WorkflowSidebarRunListComponent implements OnInit, OnDestroy {
                 this._workflow = data;
                 this.deleteInterval();
                 this.initSelectableTags();
+                this.offset = 0;
+                this.getRuns();
             }
             this._workflow = data;
         }
@@ -66,7 +68,7 @@ export class WorkflowSidebarRunListComponent implements OnInit, OnDestroy {
     pipelineStatusEnum = PipelineStatus;
     ready = false;
     filteredTags: { [key: number]: WorkflowRunTags[] } = {};
-    durationMap: { [key: number]: string} = {};
+    durationMap: { [key: number]: string } = {};
 
     durationIntervalID: number;
 
@@ -75,7 +77,6 @@ export class WorkflowSidebarRunListComponent implements OnInit, OnDestroy {
 
     constructor(
         private _workflowRunService: WorkflowRunService,
-        private _duration: DurationService,
         private _router: Router,
         private _routerActivated: ActivatedRoute,
         private _store: Store,
@@ -115,10 +116,6 @@ export class WorkflowSidebarRunListComponent implements OnInit, OnDestroy {
             this._cd.markForCheck();
             return;
         });
-    }
-
-    ngOnInit() {
-        this.getRuns();
     }
 
     getRuns(filter?: any): void {
@@ -179,12 +176,12 @@ export class WorkflowSidebarRunListComponent implements OnInit, OnDestroy {
 
     getDuration(status: string, start: string, done: string): string {
         if (status === PipelineStatus.BUILDING || status === PipelineStatus.WAITING) {
-            return this._duration.duration(new Date(start), new Date());
+            return DurationService.duration(new Date(start), new Date());
         }
         if (!done) {
             done = new Date().toString();
         }
-        return this._duration.duration(new Date(start), new Date(done));
+        return DurationService.duration(new Date(start), new Date(done));
     }
 
     filterRuns(): void {

@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"net/http"
 	"regexp"
 	"strings"
 	"time"
@@ -181,6 +180,9 @@ func workflowLogProcess(wr *sdk.WorkflowRun) []workflowLogDetail {
 				jobNames := map[string]int64{}
 				for _, runJob := range stage.RunJobs {
 					jobName := slug.Convert(runJob.Job.Job.Action.Name)
+					if runJob.Job.Job.Action.StepName != "" {
+						jobName = slug.Convert(runJob.Job.Job.Action.StepName)
+					}
 					countUsageJobName, ok := jobNames[jobName]
 					if !ok {
 						jobNames[jobName] = 1
@@ -312,7 +314,7 @@ func workflowLogDownloadRun(v cli.Values) error {
 
 		var data []byte
 		if link != nil {
-			data, _, _, err = client.Request(context.Background(), http.MethodGet, link.CDNURL+link.DownloadPath, nil)
+			data, err = client.WorkflowLogDownload(context.Background(), *link)
 			if err != nil {
 				return err
 			}
@@ -405,10 +407,14 @@ func workflowLogStreamRun(v cli.Values) error {
 
 	mJob := make(map[string][]workflowLogDetail)
 	for i := range logs {
-		if _, ok := mJob[logs[i].jobName]; !ok {
-			mJob[logs[i].jobName] = nil
+		key := logs[i].jobName
+		if logs[i].countUsageJobName > 0 {
+			key = fmt.Sprintf("%s-%d", key, logs[i].countUsageJobName)
 		}
-		mJob[logs[i].jobName] = append(mJob[logs[i].jobName], logs[i])
+		if _, ok := mJob[key]; !ok {
+			mJob[key] = nil
+		}
+		mJob[key] = append(mJob[key], logs[i])
 	}
 	jobNames := make([]string, 0, len(mJob))
 	for k := range mJob {
@@ -435,23 +441,30 @@ func workflowLogStreamRun(v cli.Values) error {
 	if err != nil {
 		return err
 	}
-	if link.StreamPath == "" {
-		return sdk.WithStack(fmt.Errorf("can't stream log for given job"))
-	}
 
 	ctx := context.Background()
+	chanMessageToSend := make(chan json.RawMessage)
 	chanMsgReceived := make(chan json.RawMessage)
 	chanErrorReceived := make(chan error)
 
 	goRoutines := sdk.NewGoRoutines()
 	goRoutines.Exec(ctx, "WebsocketEventsListenCmd", func(ctx context.Context) {
 		for ctx.Err() == nil {
-			if err := client.RequestWebsocket(ctx, goRoutines, link.CDNURL+link.StreamPath, nil, chanMsgReceived, chanErrorReceived); err != nil {
+			if err := client.RequestWebsocket(ctx, goRoutines, fmt.Sprintf("%s/item/stream", link.CDNURL), chanMessageToSend, chanMsgReceived, chanErrorReceived); err != nil {
 				fmt.Printf("Error: %s\n", err)
 			}
 			time.Sleep(1 * time.Second)
 		}
 	})
+
+	buf, err := json.Marshal(sdk.CDNStreamFilter{
+		ItemType: link.ItemType,
+		APIRef:   link.APIRef,
+	})
+	if err != nil {
+		return sdk.WithStack(err)
+	}
+	chanMessageToSend <- buf
 
 	for {
 		select {

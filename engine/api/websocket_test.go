@@ -324,7 +324,17 @@ func TestWebsocketNoEventLoose(t *testing.T) {
 	chan2MessageToSend <- []sdk.WebsocketFilter{filterGlobal}
 
 	// Waiting websocket to update filter
-	time.Sleep(time.Second)
+	for {
+		clientIDs := api.WSServer.server.ClientIDs()
+		if len(clientIDs) == 2 {
+			data1 := api.WSServer.GetClientData(clientIDs[0])
+			data2 := api.WSServer.GetClientData(clientIDs[1])
+			if data1 != nil && data2 != nil && len(data1.filters) == 1 && len(data2.filters) == 1 {
+				break
+			}
+		}
+		time.Sleep(time.Second)
+	}
 
 	// Send events
 	countEvent := int64(100)
@@ -334,19 +344,11 @@ func TestWebsocketNoEventLoose(t *testing.T) {
 	}
 
 	// Waiting client to receive all events
-	ctx, cancel = context.WithTimeout(context.TODO(), time.Second*20)
-	t.Cleanup(cancel)
-loop:
 	for {
-		select {
-		case <-ctx.Done():
-			break loop
-		default:
-			if client1EventCount == countEvent && client2EventCount == countEvent {
-				break loop
-			}
-			time.Sleep(time.Second)
+		if client1EventCount == countEvent && client2EventCount == countEvent {
+			break
 		}
+		time.Sleep(time.Second)
 	}
 
 	// Let 1 second for clients to consume events

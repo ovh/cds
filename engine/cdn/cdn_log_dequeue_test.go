@@ -40,6 +40,8 @@ func TestStoreNewStepLog(t *testing.T) {
 		Cache:               cache,
 		Mapper:              m,
 	}
+	s.GoRoutines = sdk.NewGoRoutines()
+
 	ctx, cancel := context.WithCancel(context.TODO())
 	t.Cleanup(cancel)
 	cdnUnits := newRunningStorageUnits(t, m, db.DbMap, ctx)
@@ -88,7 +90,7 @@ func TestStoreNewStepLog(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, it)
 	defer func() {
-		_ = item.DeleteByIDs(db, []string{it.ID})
+		_ = item.DeleteByID(db, it.ID)
 	}()
 	require.Equal(t, sdk.CDNStatusItemIncoming, it.Status)
 
@@ -123,6 +125,8 @@ func TestStoreLastStepLog(t *testing.T) {
 		Cache:               cache,
 		Mapper:              m,
 	}
+	s.GoRoutines = sdk.NewGoRoutines()
+
 	ctx, cancel := context.WithCancel(context.TODO())
 	t.Cleanup(cancel)
 	cdnUnits := newRunningStorageUnits(t, m, db.DbMap, ctx)
@@ -170,7 +174,7 @@ func TestStoreLastStepLog(t *testing.T) {
 	}
 	require.NoError(t, item.Insert(context.TODO(), m, db, &it))
 	defer func() {
-		_ = item.DeleteByIDs(db, []string{it.ID})
+		_ = item.DeleteByID(db, it.ID)
 
 	}()
 	content := buildMessage(hm)
@@ -211,6 +215,8 @@ func TestStoreLogWrongOrder(t *testing.T) {
 		Cache:               cache,
 		Mapper:              m,
 	}
+	s.GoRoutines = sdk.NewGoRoutines()
+
 	ctx, cancel := context.WithCancel(context.TODO())
 	t.Cleanup(cancel)
 	cdnUnits := newRunningStorageUnits(t, m, db.DbMap, ctx)
@@ -261,7 +267,7 @@ func TestStoreLogWrongOrder(t *testing.T) {
 	}
 	require.NoError(t, item.Insert(context.TODO(), m, db, &it))
 	defer func() {
-		_ = item.DeleteByIDs(db, []string{it.ID})
+		_ = item.DeleteByID(db, it.ID)
 	}()
 
 	content := buildMessage(hm)
@@ -330,6 +336,8 @@ func TestStoreNewServiceLog(t *testing.T) {
 		Cache:               cache,
 		Mapper:              m,
 	}
+	s.GoRoutines = sdk.NewGoRoutines()
+
 	ctx, cancel := context.WithCancel(context.TODO())
 	t.Cleanup(cancel)
 	cdnUnits := newRunningStorageUnits(t, m, db.DbMap, ctx)
@@ -371,7 +379,9 @@ func TestStoreNewServiceLog(t *testing.T) {
 	it, err := item.LoadByAPIRefHashAndType(context.TODO(), s.Mapper, db, strconv.FormatUint(hashRef, 10), sdk.CDNTypeItemServiceLog)
 	require.NoError(t, err)
 	require.NotNil(t, it)
-	defer func() { _ = item.DeleteByIDs(db, []string{it.ID}) }()
+	defer func() {
+		_ = item.DeleteByID(db, it.ID)
+	}()
 	require.Equal(t, sdk.CDNStatusItemIncoming, it.Status)
 
 	iu, err := storage.LoadItemUnitByUnit(context.TODO(), s.Mapper, db, s.Units.Buffer.ID(), it.ID, gorpmapper.GetOptions.WithDecryption)

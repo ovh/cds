@@ -101,4 +101,6 @@ func TestWebdav(t *testing.T) {
 	require.NoError(t, err)
 
 	require.Equal(t, "something", string(btes))
+
+	require.NoError(t, driver.Remove(context.TODO(), itemUnit))
 }

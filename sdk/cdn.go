@@ -30,8 +30,9 @@ type CDNItemUnit struct {
 	ItemID       string    `json:"item_id" db:"item_id"`
 	UnitID       string    `json:"unit_id" db:"unit_id"`
 	LastModified time.Time `json:"last_modified" db:"last_modified"`
-	Locator      string    `json:"-" db:"cipher_locator" gorpmapping:"encrypted,UnitID,ItemID"`
+	Locator      string    `json:"locator" db:"cipher_locator" gorpmapping:"encrypted,UnitID,ItemID"`
 	Item         *CDNItem  `json:"-" db:"-"`
+	ToDelete     bool      `json:"to_delete" db:"to_delete"`
 }
 
 type CDNUnit struct {
@@ -42,14 +43,13 @@ type CDNUnit struct {
 }
 
 type CDNLogLink struct {
-	DownloadPath string `json:"download_path,omitempty"`
-	StreamPath   string `json:"stream_path,omitempty"`
-	CDNURL       string `json:"cdn_url,omitempty"`
+	CDNURL   string      `json:"cdn_url,omitempty"`
+	ItemType CDNItemType `json:"item_type"`
+	APIRef   string      `json:"api_ref"`
 }
 
 type CDNMarkDelete struct {
-	WorkflowID int64 `json:"workflow_id,omitempty"`
-	RunID      int64 `json:"run_id,omitempty"`
+	RunID int64 `json:"run_id,omitempty"`
 }
 
 type CDNLogAPIRef struct {
@@ -69,6 +69,11 @@ type CDNLogAPIRef struct {
 	// for hatcheries
 	RequirementServiceID   int64  `json:"service_id,omitempty"`
 	RequirementServiceName string `json:"service_name,omitempty"`
+}
+
+type CDNItemResume struct {
+	CDNItem
+	Location map[string]CDNItemUnit
 }
 
 func (a CDNLogAPIRef) ToFilename() string {
@@ -148,3 +153,24 @@ const (
 	CDNReaderFormatJSON CDNReaderFormat = "json"
 	CDNReaderFormatText CDNReaderFormat = "text"
 )
+
+type CDNWSEvent struct {
+	ItemType CDNItemType `json:"item_type"`
+	APIRef   string      `json:"api_ref"`
+}
+
+type CDNStreamFilter struct {
+	ItemType CDNItemType `json:"item_type"`
+	APIRef   string      `json:"api_ref"`
+	Offset   int64       `json:"offset"`
+}
+
+func (f CDNStreamFilter) Validate() error {
+	if !f.ItemType.IsLog() {
+		return NewErrorFrom(ErrWrongRequest, "invalid item log type")
+	}
+	if f.APIRef == "" {
+		return NewErrorFrom(ErrWrongRequest, "invalid given api ref")
+	}
+	return nil
+}

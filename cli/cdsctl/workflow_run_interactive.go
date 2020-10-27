@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"fmt"
-	"net/http"
 	"strings"
 	"time"
 
@@ -63,17 +62,17 @@ func workflowRunInteractive(v cli.Values, w *sdk.WorkflowRun, baseURL string) er
 						newOutput += fmt.Sprintf("\n")
 
 						for _, step := range job.Job.StepStatus {
-							var access *sdk.CDNLogLink
+							var link *sdk.CDNLogLink
 							if feature.Enabled {
-								access, err = client.WorkflowNodeRunJobStepLink(context.Background(), projectKey, workflowName, wnr.ID, job.ID, int64(step.StepOrder))
+								link, err = client.WorkflowNodeRunJobStepLink(context.Background(), projectKey, workflowName, wnr.ID, job.ID, int64(step.StepOrder))
 								if err != nil {
 									return err
 								}
 							}
 
 							var data string
-							if access != nil {
-								buf, _, _, err := client.Request(context.Background(), http.MethodGet, access.CDNURL+access.DownloadPath, nil)
+							if link != nil {
+								buf, err := client.WorkflowLogDownload(context.Background(), *link)
 								if err != nil {
 									return err
 								}
