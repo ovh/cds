@@ -25,7 +25,7 @@ func (s *Service) dequeueJobLogs(ctx context.Context) error {
 		default:
 			dequeuCtx, cancel := context.WithTimeout(ctx, 15*time.Second)
 			var hm handledMessage
-			if err := s.Cache.DequeueWithContext(dequeuCtx, keyJobLogIncomingQueue, 30*time.Millisecond, &hm); err != nil {
+			if err := s.Cache.DequeueWithContext(dequeuCtx, keyJobLogIncomingQueue, 1*time.Millisecond, &hm); err != nil {
 				cancel()
 				if !strings.Contains(err.Error(), "context deadline exceeded") {
 					log.Error(ctx, "dequeueJobLogs: unable to dequeue job logs queue: %v", err)

@@ -28,11 +28,15 @@ var (
 	keyServiceLogIncomingQueue = cache.Key("cdn", "log", "incoming", "service")
 )
 
+var globalRateLimit *rateLimiter
+
 func (s *Service) runTCPLogServer(ctx context.Context) {
 	// Init hatcheries cache
 	if err := s.refreshHatcheriesPK(ctx); err != nil {
 		log.Error(ctx, "unable to init hatcheries cache: %v", err)
 	}
+
+	globalRateLimit = NewRateLimiter(ctx, s.Cfg.TCP.GlobalTCPRateLimit, 1024)
 
 	// Start TCP server
 	log.Info(ctx, "Starting tcp server %s:%d", s.Cfg.TCP.Addr, s.Cfg.TCP.Port)
@@ -48,14 +52,14 @@ func (s *Service) runTCPLogServer(ctx context.Context) {
 		_ = listener.Close()
 	})
 
-	for i := int64(0); i < s.Cfg.NbJobLogsGoroutines; i++ {
+	for i := int64(0); i < s.Cfg.Log.NbJobLogsGoroutines; i++ {
 		s.GoRoutines.Run(ctx, fmt.Sprintf("cdn-worker-job-%d", i), func(ctx context.Context) {
 			if err := s.dequeueJobLogs(ctx); err != nil {
 				log.Error(ctx, "dequeueJobLogs: unable to dequeue redis incoming job logs: %v", err)
 			}
 		})
 	}
-	for i := int64(0); i < s.Cfg.NbServiceLogsGoroutines; i++ {
+	for i := int64(0); i < s.Cfg.Log.NbServiceLogsGoroutines; i++ {
 		s.GoRoutines.Run(ctx, fmt.Sprintf("cdn-worker-service-%d", i), func(ctx context.Context) {
 			if err := s.dequeueServiceLogs(ctx); err != nil {
 				log.Error(ctx, "dequeueJobLogs: unable to dequeue redis incoming service logs: %v", err)
@@ -90,25 +94,51 @@ func (s *Service) handleConnection(ctx context.Context, conn net.Conn) {
 		_ = conn.Close()
 	}()
 
+	lineRateLimiter := NewRateLimiter(ctx, float64(s.Cfg.Log.StepLinesRateLimit), 1)
+
 	bufReader := bufio.NewReader(conn)
+
+	b := make([]byte, 1024)
+	currentBuffer := make([]byte, 0)
 	for {
-		bytes, err := bufReader.ReadBytes(byte(0))
+		// Can i try to read the next 1024B
+		if err := globalRateLimit.WaitN(1024); err != nil {
+			fields := log.Fields{}
+			fields["stack_trace"] = fmt.Sprintf("%+v", err)
+			log.ErrorWithFields(ctx, fields, "cdn.log> %v", err)
+			continue
+		}
+
+		n, err := bufReader.Read(b)
 		if err != nil {
 			log.Debug("client left: %v", err)
 			return
 		}
-		// remove byte(0)
-		bytes = bytes[:len(bytes)-1]
 
-		if err := s.handleLogMessage(ctx, bytes); err != nil {
-			telemetry.Record(ctx, s.Metrics.tcpServerErrorsCount, 1)
-			isErrWithStack := sdk.IsErrorWithStack(err)
-			fields := log.Fields{}
-			if isErrWithStack {
-				fields["stack_trace"] = fmt.Sprintf("%+v", err)
+		// Search for end of line separator
+		for i := 0; i < n; i++ {
+			if b[i] != byte(0) {
+				currentBuffer = append(currentBuffer, b[i])
+				continue
 			}
-			log.ErrorWithFields(ctx, fields, "cdn.log> %v", err)
-			continue
+
+			// Check if we can send line
+			if err := lineRateLimiter.WaitN(1); err != nil {
+				fields := log.Fields{}
+				fields["stack_trace"] = fmt.Sprintf("%+v", err)
+				log.ErrorWithFields(ctx, fields, "cdn.log> %v", err)
+				continue
+			}
+			if err := s.handleLogMessage(ctx, currentBuffer); err != nil {
+				telemetry.Record(ctx, s.Metrics.tcpServerErrorsCount, 1)
+				isErrWithStack := sdk.IsErrorWithStack(err)
+				fields := log.Fields{}
+				if isErrWithStack {
+					fields["stack_trace"] = fmt.Sprintf("%+v", err)
+				}
+				log.ErrorWithFields(ctx, fields, "cdn.log> %v", err)
+			}
+			currentBuffer = make([]byte, 0)
 		}
 	}
 }
