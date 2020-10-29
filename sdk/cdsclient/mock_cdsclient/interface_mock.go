@@ -13,7 +13,7 @@ import (
 	sdk "github.com/ovh/cds/sdk"
 	cdsclient "github.com/ovh/cds/sdk/cdsclient"
 	venom "github.com/ovh/venom"
-	go_coverage "github.com/sguiheux/go-coverage"
+	coverage "github.com/sguiheux/go-coverage"
 	io "io"
 	http "net/http"
 	reflect "reflect"
@@ -3086,7 +3086,7 @@ func (mr *MockQueueClientMockRecorder) QueueJobSendSpawnInfo(ctx, id, in interfa
 }
 
 // QueueSendCoverage mocks base method
-func (m *MockQueueClient) QueueSendCoverage(ctx context.Context, id int64, report go_coverage.Report) error {
+func (m *MockQueueClient) QueueSendCoverage(ctx context.Context, id int64, report coverage.Report) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "QueueSendCoverage", ctx, id, report)
 	ret0, _ := ret[0].(error)
@@ -7089,7 +7089,7 @@ func (mr *MockInterfaceMockRecorder) QueueJobSendSpawnInfo(ctx, id, in interface
 }
 
 // QueueSendCoverage mocks base method
-func (m *MockInterface) QueueSendCoverage(ctx context.Context, id int64, report go_coverage.Report) error {
+func (m *MockInterface) QueueSendCoverage(ctx context.Context, id int64, report coverage.Report) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "QueueSendCoverage", ctx, id, report)
 	ret0, _ := ret[0].(error)
@@ -8740,7 +8740,7 @@ func (mr *MockWorkerInterfaceMockRecorder) QueueJobSendSpawnInfo(ctx, id, in int
 }
 
 // QueueSendCoverage mocks base method
-func (m *MockWorkerInterface) QueueSendCoverage(ctx context.Context, id int64, report go_coverage.Report) error {
+func (m *MockWorkerInterface) QueueSendCoverage(ctx context.Context, id int64, report coverage.Report) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "QueueSendCoverage", ctx, id, report)
 	ret0, _ := ret[0].(error)
@@ -9196,24 +9196,19 @@ func (mr *MockWorkerInterfaceMockRecorder) WorkflowCachePull(projectKey, integra
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkflowCachePull", reflect.TypeOf((*MockWorkerInterface)(nil).WorkflowCachePull), projectKey, integrationName, ref)
 }
 
-// WorkflowRunSearch mocks base method
-func (m *MockWorkerInterface) WorkflowRunSearch(projectKey string, offset, limit int64, filter ...cdsclient.Filter) ([]sdk.WorkflowRun, error) {
+// WorkflowRunList mocks base method
+func (m *MockWorkerInterface) WorkflowRunList(projectKey, workflowName string, offset, limit int64) ([]sdk.WorkflowRun, error) {
 	m.ctrl.T.Helper()
-	varargs := []interface{}{projectKey, offset, limit}
-	for _, a := range filter {
-		varargs = append(varargs, a)
-	}
-	ret := m.ctrl.Call(m, "WorkflowRunSearch", varargs...)
+	ret := m.ctrl.Call(m, "WorkflowRunList", projectKey, workflowName, offset, limit)
 	ret0, _ := ret[0].([]sdk.WorkflowRun)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// WorkflowRunSearch indicates an expected call of WorkflowRunSearch
-func (mr *MockWorkerInterfaceMockRecorder) WorkflowRunSearch(projectKey, offset, limit interface{}, filter ...interface{}) *gomock.Call {
+// WorkflowRunList indicates an expected call of WorkflowRunList
+func (mr *MockWorkerInterfaceMockRecorder) WorkflowRunList(projectKey, workflowName, offset, limit interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	varargs := append([]interface{}{projectKey, offset, limit}, filter...)
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkflowRunSearch", reflect.TypeOf((*MockWorkerInterface)(nil).WorkflowRunSearch), varargs...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkflowRunList", reflect.TypeOf((*MockWorkerInterface)(nil).WorkflowRunList), projectKey, workflowName, offset, limit)
 }
 
 // WorkflowNodeRunArtifactDownload mocks base method

@@ -54,7 +54,7 @@ func downloadHandler(ctx context.Context, wk *CurrentWorker) http.HandlerFunc {
 			} else { // If this is another workflow, check the latest run
 				runs, err := wk.client.WorkflowRunList(currentProject, reqArgs.Workflow, 0, 0)
 				if err != nil {
-					writeError(w, r, sdk.WrapError(err, "cannot search run for project %s and filters: %v", currentProject, filters))
+					writeError(w, r, sdk.WrapError(err, "cannot search run for project %s and workflow: %s", currentProject, reqArgs.Workflow))
 					return
 				}
 				if len(runs) < 1 {
