@@ -184,6 +184,11 @@ func LoadItemUnitsByUnit(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlE
 	return getAllItemUnits(ctx, m, db, query, opts...)
 }
 
+func LoadItemUnitsByUnitAndHashLocator(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlExecutor, unitID string, hashLocator string, size *int, opts ...gorpmapper.GetOptionFunc) ([]sdk.CDNItemUnit, error) {
+	query := gorpmapper.NewQuery("SELECT * FROM storage_unit_item WHERE unit_id = $1 AND hash_locator = $2 AND to_delete = false ORDER BY last_modified ASC LIMIT $3").Args(unitID, hashLocator, size)
+	return getAllItemUnits(ctx, m, db, query, opts...)
+}
+
 func LoadItemUnitByID(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlExecutor, id string, opts ...gorpmapper.GetOptionFunc) (*sdk.CDNItemUnit, error) {
 	query := gorpmapper.NewQuery("SELECT * FROM storage_unit_item WHERE id = $1 AND to_delete = false").Args(id)
 	return getItemUnit(ctx, m, db, query, opts...)

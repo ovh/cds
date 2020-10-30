@@ -15,6 +15,7 @@ CREATE TABLE IF NOT EXISTS "storage_unit_item" (
   item_id VARCHAR(36) NOT NULL,
   last_modified TIMESTAMP WITH TIME ZONE NOT NULL,
   cipher_locator BYTEA,
+  hash_locator TEXT,
   sig BYTEA,
   signer TEXT,
   to_delete BOOLEAN

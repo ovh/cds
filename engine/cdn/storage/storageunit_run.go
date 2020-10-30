@@ -184,15 +184,17 @@ func (x *RunningStorageUnits) NewItemUnit(_ context.Context, su Interface, i *sd
 		var err error
 		loc, err = suloc.NewLocator(i.Hash)
 		if err != nil {
-			return nil, sdk.WrapError(err, "unable to compyte convergent locator")
+			return nil, sdk.WrapError(err, "unable to compute convergent locator")
 		}
 	}
 
+	hashLocator := x.HashLocator(loc)
 	var iu = sdk.CDNItemUnit{
 		ItemID:       i.ID,
 		UnitID:       su.ID(),
 		LastModified: time.Now(),
 		Locator:      loc,
+		HashLocator:  hashLocator,
 		Item:         i,
 	}
 
