@@ -364,12 +364,11 @@ export class AppService {
                 }
                 if (this.routeParams['number'] === event.workflow_run_num.toString()) {
                     // if same run number , then update store
-                    this._store.dispatch(
-                        new GetWorkflowRun({
-                            projectKey: event.project_key,
-                            workflowName: event.workflow_name,
-                            num: event.workflow_run_num
-                        }));
+                    this._store.dispatch(new GetWorkflowRun({
+                        projectKey: event.project_key,
+                        workflowName: event.workflow_name,
+                        num: event.workflow_run_num
+                    }));
                 } else {
                     this._workflowRunService
                         .getWorkflowRun(event.project_key, event.workflow_name, event.workflow_run_num)

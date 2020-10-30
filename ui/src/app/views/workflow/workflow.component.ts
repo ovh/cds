@@ -156,9 +156,6 @@ export class WorkflowComponent implements OnInit, OnDestroy {
             if (!w) {
                 return;
             }
-            if (this.workflow && this.workflow.id !== w.id) {
-                this._store.dispatch(new ClearListRuns())
-            }
             this.workflow = w;
             if (this.selectecHookRef) {
                 let h = Workflow.getHookByRef(this.selectecHookRef, this.workflow);
