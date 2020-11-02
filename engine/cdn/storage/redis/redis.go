@@ -67,6 +67,11 @@ func (s *Redis) ItemExists(_ context.Context, _ *gorpmapper.Mapper, _ gorp.SqlEx
 	return size > 0, nil
 }
 
+func (s *Redis) Size(i sdk.CDNItemUnit) (int64, error) {
+	k := cache.Key(keyBuffer, i.ItemID)
+	return s.store.Size(k)
+}
+
 func (s *Redis) Add(i sdk.CDNItemUnit, index uint, value string, options storage.WithOption) (int64, error) {
 	var maxsize int64
 	switch i.Item.Type {

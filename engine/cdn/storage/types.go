@@ -87,6 +87,7 @@ type BufferUnit interface {
 	Init(ctx context.Context, cfg interface{}, maxStepLog, maxServiceLog int64) error
 	Add(i sdk.CDNItemUnit, score uint, value string, options WithOption) (int64, error)
 	Card(i sdk.CDNItemUnit) (int, error)
+	Size(i sdk.CDNItemUnit) (int64, error)
 	NewReader(ctx context.Context, i sdk.CDNItemUnit) (io.ReadCloser, error)
 	NewAdvancedReader(ctx context.Context, i sdk.CDNItemUnit, format sdk.CDNReaderFormat, from int64, size uint, sort int64) (io.ReadCloser, error)
 	Read(i sdk.CDNItemUnit, r io.Reader, w io.Writer) error

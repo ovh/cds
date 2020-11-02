@@ -45,6 +45,7 @@ type Store interface {
 type HealthStore interface {
 	Ping() error
 	DBSize() (int64, error)
+	Size(key string) (int64, error)
 }
 
 type QueueStore interface {

@@ -115,8 +115,22 @@ func (s *Service) storeLogs(ctx context.Context, itemType sdk.CDNItemType, signa
 
 	maxLineKey := cache.Key("cdn", "log", "size", it.ID)
 	maxItemLine := -1
+	var bufferFull bool
 	if sdk.StatusIsTerminated(status) {
 		maxItemLine = int(line)
+		currentSize, err := s.Units.Buffer.Size(*iu)
+		if err != nil {
+			return err
+		}
+
+		// check if buffer is full
+		switch it.Type {
+		case sdk.CDNTypeItemStepLog:
+			bufferFull = currentSize >= s.Cfg.Log.StepMaxSize
+		case sdk.CDNTypeItemServiceLog:
+			bufferFull = currentSize >= s.Cfg.Log.ServiceMaxSize
+		}
+
 		// store the score of last line
 		if err := s.Cache.SetWithTTL(maxLineKey, maxItemLine, ItemLogGC); err != nil {
 			return err
@@ -133,7 +147,7 @@ func (s *Service) storeLogs(ctx context.Context, itemType sdk.CDNItemType, signa
 		return err
 	}
 	// If we have all lines
-	if maxItemLine >= 0 && maxItemLine+1 == logsSize {
+	if (sdk.StatusIsTerminated(status) && bufferFull) || (maxItemLine >= 0 && maxItemLine+1 == logsSize) {
 		tx, err := s.mustDBWithCtx(ctx).Begin()
 		if err != nil {
 			return sdk.WithStack(err)

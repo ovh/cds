@@ -481,6 +481,11 @@ func (s *RedisStore) Unlock(key string) error {
 	return s.Delete(key)
 }
 
+func (s *RedisStore) Size(key string) (int64, error) {
+	oct, err := s.Client.MemoryUsage(key).Result()
+	return oct, sdk.WithStack(err)
+}
+
 func (s *RedisStore) ScoredSetAppend(ctx context.Context, key string, value interface{}) error {
 	highItem, err := s.Client.ZRevRange(key, 0, 0).Result()
 	if err != nil {
