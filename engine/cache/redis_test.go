@@ -12,30 +12,6 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
-// ^.+serializedlength:([\d]+).*
-func TestPipeline(t *testing.T) {
-	log.SetLogger(t)
-	cfg := testConfig.LoadTestingConf(t, sdk.TypeAPI)
-	redisHost := cfg["redisHost"]
-	redisPassword := cfg["redisPassword"]
-	s, err := NewRedisStore(redisHost, redisPassword, 60)
-	require.NoError(t, err)
-
-	require.NoError(t, s.ScoredSetAdd(context.TODO(), "myzset", "coucou", 2))
-
-	luaExp := `
-		local size = redis.call('MEMORY', 'USAGE', KEYS[1]); 
-		if size < tonumber(KEYS[4]) then 
-		  redis.call('zadd', KEYS[1], tonumber(KEYS[3]), KEYS[2]); 
-		end 
-		return redis.call('MEMORY', 'USAGE', KEYS[1]);
-	`
-	e, err := s.Client.Eval(luaExp, []string{"myzset", "valueee333", "11", "220"}).Result()
-	require.NoError(t, err)
-
-	t.Logf(">>>%+v", e)
-}
-
 func TestSortedSet(t *testing.T) {
 	log.SetLogger(t)
 	cfg := testConfig.LoadTestingConf(t, sdk.TypeAPI)
