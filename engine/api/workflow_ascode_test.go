@@ -16,6 +16,7 @@ import (
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"gopkg.in/yaml.v2"
 
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/event"
@@ -30,6 +31,7 @@ import (
 	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
+	"github.com/ovh/cds/sdk/exportentities"
 	"github.com/ovh/cds/sdk/log"
 )
 
@@ -879,4 +881,324 @@ version: v1.0`),
 	assert.NotNil(t, wk)
 
 	require.Len(t, wk.Notifications, 4, "not the right number of notifications")
+}
+
+func Test_WorkflowAsCodeWithMultipleSchedulers(t *testing.T) {
+	api, db, _ := newTestAPI(t)
+
+	pip := `name: build
+version: v1.0`
+
+	app := `
+name: go-repo
+version: v1.0
+repo: fsamin/go-repo
+vcs_server: github
+`
+	wf := `
+name: w-go-repo
+version: v2.0
+workflow:
+  root:
+    pipeline: build
+    application: go-repo
+metadata:
+  default_tags: tag_version,git.branch,git.author
+retention_policy: return run_days_before < 2
+hooks:
+  root:
+  - type: RepositoryWebHook
+  - type: Scheduler
+    config:
+      cron: 0 6,13 * * *
+      payload: |-
+        {
+          "git.branch": "master",
+          "scope": "all"
+        }
+      timezone: UTC
+  - type: Scheduler
+    config:
+      cron: 0 7,13 * * *
+      payload: |-
+        {
+          "git.branch": "master",
+          "scope": "all2"
+        }
+      timezone: UTC
+`
+
+	_, _ = assets.InsertService(t, db, t.Name()+"_HOOKS", sdk.TypeHooks)
+	_, _ = assets.InsertService(t, db, t.Name()+"_VCS", sdk.TypeVCS)
+	_, _ = assets.InsertService(t, db, t.Name()+"_REPO", sdk.TypeRepositories)
+
+	// Setup a mock for all services called by the API
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+	// The mock has been geenrated by mockgen: go get github.com/golang/mock/mockgen
+	// If you have to regenerate thi mock you just have to run, from directory $GOPATH/src/github.com/ovh/cds/engine/api/services:
+	// mockgen -source=http.go -destination=mock_services/services_mock.go Client
+	servicesClients := mock_services.NewMockClient(ctrl)
+	services.NewClient = func(_ gorp.SqlExecutor, _ []sdk.Service) services.Client {
+		return servicesClients
+	}
+	defer func() {
+		services.NewClient = services.NewDefaultClient
+	}()
+
+	// Create a project with a repository manager
+	prjKey := sdk.RandomString(10)
+	proj := assets.InsertTestProject(t, db, api.Cache, prjKey, prjKey)
+	u, _ := assets.InsertLambdaUser(t, db, &proj.ProjectGroups[0].Group)
+
+	vcsServer := sdk.ProjectVCSServerLink{
+		ProjectID: proj.ID,
+		Name:      "github",
+	}
+	vcsServer.Set("token", "foo")
+	vcsServer.Set("secret", "bar")
+	assert.NoError(t, repositoriesmanager.InsertProjectVCSServerLink(context.TODO(), db, &vcsServer))
+
+	UUID := sdk.UUID()
+
+	servicesClients.EXPECT().
+		DoJSONRequest(gomock.Any(), "POST", "/operations", gomock.Any(), gomock.Any()).
+		DoAndReturn(
+			func(ctx context.Context, method, path string, in interface{}, out interface{}) (http.Header, int, error) {
+				ope := new(sdk.Operation)
+				ope.UUID = UUID
+				ope.Status = sdk.OperationStatusPending
+				*(out.(*sdk.Operation)) = *ope
+				return nil, 201, nil
+			}).Times(1)
+
+	servicesClients.EXPECT().
+		DoJSONRequest(gomock.Any(), "GET", "/vcs/github/repos/fsamin/go-repo", gomock.Any(), gomock.Any(), gomock.Any()).MinTimes(0)
+
+	servicesClients.EXPECT().
+		DoJSONRequest(gomock.Any(), "GET", "/vcs/github/repos/fsamin/go-repo/branches", gomock.Any(), gomock.Any(), gomock.Any()).
+		DoAndReturn(
+			func(ctx context.Context, method, path string, in interface{}, out interface{}, _ interface{}) (http.Header, int, error) {
+				bs := []sdk.VCSBranch{}
+				b := sdk.VCSBranch{
+					DisplayID:    "master",
+					LatestCommit: "aaaaaaa",
+					Default:      true,
+				}
+				b2 := sdk.VCSBranch{
+					DisplayID:    "non-default",
+					LatestCommit: "aaaaaaa",
+					Default:      false,
+				}
+				bs = append(bs, b, b2)
+				out = bs
+				return nil, 200, nil
+			},
+		).MaxTimes(10)
+
+	servicesClients.EXPECT().
+		DoJSONRequest(gomock.Any(), "GET", "/vcs/github/repos/fsamin/go-repo/branches/?branch=non-default", gomock.Any(), gomock.Any(), gomock.Any()).
+		DoAndReturn(
+			func(ctx context.Context, method, path string, in interface{}, out interface{}, _ interface{}) (http.Header, int, error) {
+				b := &sdk.VCSBranch{
+					DisplayID:    "non-default",
+					LatestCommit: "aaaaaaa",
+					Default:      false,
+				}
+				*(out.(*sdk.VCSBranch)) = *b
+				return nil, 200, nil
+			},
+		).MaxTimes(10)
+
+	servicesClients.EXPECT().
+		DoJSONRequest(gomock.Any(), "GET", "/vcs/github/repos/fsamin/go-repo/commits/aaaaaaa", gomock.Any(), gomock.Any(), gomock.Any()).
+		DoAndReturn(
+			func(ctx context.Context, method, path string, in interface{}, out interface{}, _ interface{}) (http.Header, int, error) {
+				c := &sdk.VCSCommit{
+					Author: sdk.VCSAuthor{
+						Avatar:      "me",
+						DisplayName: "me",
+						Name:        "me",
+					},
+					Hash:    "aaaaaaa",
+					Message: "this is it",
+				}
+				*(out.(*sdk.VCSCommit)) = *c
+				return nil, 200, nil
+			},
+		).MaxTimes(10)
+
+	servicesClients.EXPECT().
+		DoJSONRequest(gomock.Any(), "GET", "/vcs/github/repos/fsamin/go-repo/commits/aaaaaaa/statuses", gomock.Any(), gomock.Any(), gomock.Any()).
+		DoAndReturn(
+			func(ctx context.Context, method, path string, in interface{}, out interface{}, _ interface{}) (http.Header, int, error) {
+				return nil, 200, nil
+			},
+		).MaxTimes(10)
+
+	servicesClients.EXPECT().
+		DoJSONRequest(gomock.Any(), "GET", "/vcs/github", gomock.Any(), gomock.Any()).
+		DoAndReturn(
+			func(ctx context.Context, method, path string, in interface{}, out interface{}) (http.Header, int, error) {
+				return nil, 200, nil
+			},
+		).MaxTimes(10)
+
+	servicesClients.EXPECT().
+		DoJSONRequest(gomock.Any(), "POST", "/vcs/github/status", gomock.Any(), gomock.Any(), gomock.Any()).
+		DoAndReturn(
+			func(ctx context.Context, method, path string, in interface{}, out interface{}, _ interface{}) (http.Header, int, error) {
+				return nil, 200, nil
+			},
+		).MaxTimes(10)
+
+	servicesClients.EXPECT().
+		DoJSONRequest(gomock.Any(), "GET", gomock.Any(), gomock.Any(), gomock.Any()).
+		DoAndReturn(
+			func(ctx context.Context, method, path string, in interface{}, out interface{}) (http.Header, int, error) {
+				ope := new(sdk.Operation)
+				ope.URL = "https://github.com/fsamin/go-repo.git"
+				ope.UUID = UUID
+				ope.Status = sdk.OperationStatusDone
+				ope.VCSServer = "github"
+				ope.RepoFullName = "fsamin/go-repo"
+				ope.RepositoryStrategy.Branch = "master"
+				ope.Setup.Checkout.Branch = "non-default"
+				ope.RepositoryInfo = new(sdk.OperationRepositoryInfo)
+				ope.RepositoryInfo.Name = "fsamin/go-repo"
+				ope.RepositoryInfo.DefaultBranch = "master"
+				ope.RepositoryInfo.FetchURL = "https://github.com/fsamin/go-repo.git"
+				ope.LoadFiles.Pattern = workflow.WorkflowAsCodePattern
+				ope.LoadFiles.Results = map[string][]byte{
+					"w-go-repo.yml": []byte(`
+name: w-go-repo
+version: v2.0
+workflow:
+  root:
+    pipeline: build
+    application: go-repo
+metadata:
+  default_tags: tag_version,git.branch,git.author
+retention_policy: return run_days_before < 2
+hooks:
+  root:
+  - type: RepositoryWebHook
+  - type: Scheduler
+    config:
+      cron: 0 6,12 * * *
+      payload: |-
+        {
+          "git.branch": "master",
+          "scope": "all"
+        }
+      timezone: UTC
+  - type: Scheduler
+    config:
+      cron: 0 7,12 * * *
+      payload: |-
+        {
+          "git.branch": "master",
+          "scope": "all2"
+        }
+      timezone: UTC
+`),
+					"go-repo.app.yml": []byte(app),
+					"go-repo.pip.yml": []byte(pip),
+				}
+				*(out.(*sdk.Operation)) = *ope
+				return nil, 200, nil
+			},
+		).Times(1)
+
+	servicesClients.EXPECT().
+		DoJSONRequest(gomock.Any(), "POST", "/task/bulk", gomock.Any(), gomock.Any()).
+		DoAndReturn(
+			func(ctx context.Context, method, path string, in interface{}, out interface{}) (http.Header, int, error) {
+				actualHooks, ok := in.(map[string]sdk.NodeHook)
+				require.True(t, ok)
+
+				for k, h := range actualHooks {
+					if h.HookModelName == sdk.RepositoryWebHookModelName {
+						h.Config["webHookURL"] = sdk.WorkflowNodeHookConfigValue{
+							Value:        "http://lolcat.host",
+							Configurable: false,
+						}
+						actualHooks[k] = h
+					}
+				}
+
+				out = actualHooks
+				return nil, 200, nil
+			},
+		)
+
+	servicesClients.EXPECT().
+		DoJSONRequest(gomock.Any(), "GET", "/vcs/github/webhooks", gomock.Any(), gomock.Any(), gomock.Any()).
+		DoAndReturn(
+			func(ctx context.Context, method, path string, in interface{}, out interface{}, _ interface{}) (http.Header, int, error) {
+				*(out.(*repositoriesmanager.WebhooksInfos)) = repositoriesmanager.WebhooksInfos{
+					WebhooksSupported: true,
+					WebhooksDisabled:  false,
+					Icon:              sdk.GitHubIcon,
+					Events: []string{
+						"push",
+					},
+				}
+
+				return nil, 200, nil
+			},
+		)
+
+	servicesClients.EXPECT().
+		DoJSONRequest(gomock.Any(), "POST", "/vcs/github/repos/fsamin/go-repo/hooks", gomock.Any(), gomock.Any(), gomock.Any()).
+		DoAndReturn(
+			func(ctx context.Context, method, path string, in interface{}, out interface{}, _ interface{}) (http.Header, int, error) {
+				log.Debug("--> %T %+v", in, in)
+
+				vcsHooks, ok := in.(*sdk.VCSHook)
+				require.True(t, ok)
+
+				require.Len(t, vcsHooks.Events, 0, "events list should be empty, default value is set by vcs")
+				vcsHooks.Events = []string{"push"}
+
+				assert.Equal(t, "POST", vcsHooks.Method)
+				assert.Equal(t, "http://lolcat.host", vcsHooks.URL)
+				vcsHooks.ID = sdk.UUID()
+				*(out.(*sdk.VCSHook)) = *vcsHooks
+
+				return nil, 200, nil
+			},
+		)
+
+	// Import Pipeline
+	pipData, err := exportentities.ParsePipeline(exportentities.FormatYAML, []byte(pip))
+	require.NoError(t, err)
+	pipDB, _, err := pipeline.ParseAndImport(context.TODO(), db, api.Cache, *proj, pipData, u, pipeline.ImportOptions{Force: true, PipelineName: "build", FromRepository: "https://github.com/fsamin/go-repo.git"})
+	require.NoError(t, err)
+	require.Equal(t, pipDB.FromRepository, "https://github.com/fsamin/go-repo.git")
+
+	// Import Application
+	var eapp exportentities.Application
+	require.NoError(t, err, yaml.Unmarshal([]byte(app), &eapp))
+	appDB, _, _, err := application.ParseAndImport(context.TODO(), db, api.Cache, *proj, &eapp, application.ImportOptions{Force: true, FromRepository: "https://github.com/fsamin/go-repo.git"}, nil, u)
+	require.NoError(t, err)
+	require.Equal(t, appDB.FromRepository, "https://github.com/fsamin/go-repo.git")
+
+	// Import Workflow
+	ew, err := exportentities.UnmarshalWorkflow([]byte(wf), exportentities.FormatYAML)
+	require.NoError(t, err)
+	workflowInserted, _, err := workflow.ParseAndImport(context.TODO(), db, api.Cache, *proj, nil, ew, u, workflow.ImportOptions{Force: true, FromRepository: "https://github.com/fsamin/go-repo.git"})
+	require.NoError(t, err)
+	require.Equal(t, workflowInserted.FromRepository, "https://github.com/fsamin/go-repo.git")
+
+	opts := sdk.WorkflowRunPostHandlerOption{
+		Hook: &sdk.WorkflowNodeRunHookEvent{
+			WorkflowNodeHookUUID: workflowInserted.WorkflowData.Node.Hooks[0].UUID,
+			Payload: map[string]string{
+				"git.branch": "non-default",
+			},
+		},
+	}
+	_, _, err = workflow.CreateFromRepository(context.TODO(), api.mustDB(), api.Cache, proj, workflowInserted, opts, sdk.AuthConsumer{AuthentifiedUser: u}, project.DecryptWithBuiltinKey)
+	require.NoError(t, err)
 }

@@ -81,7 +81,7 @@ func LoadAllHooks(db gorp.SqlExecutor) ([]sdk.NodeHook, error) {
 	return nodes, nil
 }
 
-func insertNodeHookData(db gorp.SqlExecutor, w *sdk.Workflow, n *sdk.Node) error {
+func insertNodeHookData(db gorp.SqlExecutor, n *sdk.Node) error {
 	if n.Hooks == nil || len(n.Hooks) == 0 {
 		return nil
 	}
@@ -89,7 +89,6 @@ func insertNodeHookData(db gorp.SqlExecutor, w *sdk.Workflow, n *sdk.Node) error
 	for i := range n.Hooks {
 		h := &n.Hooks[i]
 		h.NodeID = n.ID
-
 		dbHook := dbNodeHookData(*h)
 		if err := db.Insert(&dbHook); err != nil {
 			return sdk.WrapError(err, "insertNodeHookData> Unable to insert workflow node hook")

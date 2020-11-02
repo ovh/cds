@@ -15,7 +15,6 @@ import (
 
 	"github.com/ovh/cds/engine/worker/pkg/workerruntime"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/cdsclient"
 )
 
 func downloadHandler(ctx context.Context, wk *CurrentWorker) http.HandlerFunc {
@@ -53,15 +52,9 @@ func downloadHandler(ctx context.Context, wk *CurrentWorker) http.HandlerFunc {
 					return
 				}
 			} else { // If this is another workflow, check the latest run
-				filters := []cdsclient.Filter{
-					{
-						Name:  "workflow",
-						Value: reqArgs.Workflow,
-					},
-				}
-				runs, err := wk.client.WorkflowRunSearch(currentProject, 0, 0, filters...)
+				runs, err := wk.client.WorkflowRunList(currentProject, reqArgs.Workflow, 0, 0)
 				if err != nil {
-					writeError(w, r, err)
+					writeError(w, r, sdk.WrapError(err, "cannot search run for project %s and workflow: %s", currentProject, reqArgs.Workflow))
 					return
 				}
 				if len(runs) < 1 {
