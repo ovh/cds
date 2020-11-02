@@ -216,9 +216,17 @@ func LoadAllItemUnitsToDeleteByUnit(ctx context.Context, m *gorpmapper.Mapper, d
 	return getAllItemUnits(ctx, m, db, query, opts...)
 }
 
-func LoadAllItemUnitsByItemIDs(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlExecutor, itemID []string, opts ...gorpmapper.GetOptionFunc) ([]sdk.CDNItemUnit, error) {
+func LoadAllItemUnitsByItemIDs(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlExecutor, itemID []string, opts ...gorpmapper.GetOptionFunc) (map[string][]sdk.CDNItemUnit, error) {
 	query := gorpmapper.NewQuery("SELECT * FROM storage_unit_item WHERE item_id = ANY($1) AND to_delete = false").Args(pq.StringArray(itemID))
-	return getAllItemUnits(ctx, m, db, query, opts...)
+	allItemUnits, err := getAllItemUnits(ctx, m, db, query, opts...)
+	if err != nil {
+		return nil, err
+	}
+	var res = make(map[string][]sdk.CDNItemUnit, len(itemID))
+	for _, itemUnit := range allItemUnits {
+		res[itemUnit.ItemID] = append(res[itemUnit.ItemID], itemUnit)
+	}
+	return res, nil
 }
 
 func getAllItemUnits(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlExecutor, query gorpmapper.Query, opts ...gorpmapper.GetOptionFunc) ([]sdk.CDNItemUnit, error) {

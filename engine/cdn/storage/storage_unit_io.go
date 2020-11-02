@@ -64,11 +64,12 @@ func (r RunningStorageUnits) GetSource(ctx context.Context, i *sdk.CDNItem) (Sou
 	}
 
 	// Find a storage unit where the item is complete
-	itemUnits, err := LoadAllItemUnitsByItemIDs(ctx, r.m, r.db, []string{i.ID})
+	mapItemUnits, err := LoadAllItemUnitsByItemIDs(ctx, r.m, r.db, []string{i.ID})
 	if err != nil {
 		return nil, err
 	}
 
+	var itemUnits = mapItemUnits[i.ID]
 	if len(itemUnits) == 0 {
 		log.Warning(ctx, "item %s can't be found. No unit knows it...", i.ID)
 		return nil, sdk.WithStack(sdk.ErrNotFound)

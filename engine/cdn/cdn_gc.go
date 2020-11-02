@@ -59,10 +59,11 @@ func (s *Service) itemsGC(ctx context.Context) {
 
 func (s *Service) markUnitItemToDeleteByItemID(ctx context.Context, itemID string) (int, error) {
 	db := s.mustDBWithCtx(ctx)
-	uis, err := storage.LoadAllItemUnitsByItemIDs(ctx, s.Mapper, db, []string{itemID})
+	mapItemUnits, err := storage.LoadAllItemUnitsByItemIDs(ctx, s.Mapper, db, []string{itemID})
 	if err != nil {
 		return 0, err
 	}
+	var uis = mapItemUnits[itemID]
 
 	ids := make([]string, len(uis))
 	for i := range uis {
@@ -146,23 +147,25 @@ func (s *Service) cleanBuffer(ctx context.Context) error {
 	}
 
 	var itemUnitIDsToRemove []string
-	itemunits, err := storage.LoadAllItemUnitsByItemIDs(ctx, s.Mapper, s.mustDBWithCtx(ctx), itemIDs)
+	mapItemunits, err := storage.LoadAllItemUnitsByItemIDs(ctx, s.Mapper, s.mustDBWithCtx(ctx), itemIDs)
 	if err != nil {
 		return err
 	}
 
-	var countWithoutCDSBackend = len(itemunits)
-	var bufferItemUnit string
-	for _, iu := range itemunits {
-		switch iu.UnitID {
-		case cdsBackendID:
-			countWithoutCDSBackend--
-		case s.Units.Buffer.ID():
-			bufferItemUnit = iu.ID
-		}
+	for _, itemunits := range mapItemunits {
+		var countWithoutCDSBackend = len(itemunits)
+		var bufferItemUnit string
+		for _, iu := range itemunits {
+			switch iu.UnitID {
+			case cdsBackendID:
+				countWithoutCDSBackend--
+			case s.Units.Buffer.ID():
+				bufferItemUnit = iu.ID
+			}
 
-		if countWithoutCDSBackend > 1 {
-			itemUnitIDsToRemove = append(itemUnitIDsToRemove, bufferItemUnit)
+			if countWithoutCDSBackend > 1 {
+				itemUnitIDsToRemove = append(itemUnitIDsToRemove, bufferItemUnit)
+			}
 		}
 	}
 
