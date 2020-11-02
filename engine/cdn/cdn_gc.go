@@ -140,22 +140,16 @@ func (s *Service) cleanBuffer(ctx context.Context) error {
 		break
 	}
 
-	log.Debug("cleanBuffer")
-
 	itemIDs, err := storage.LoadAllSynchronizedItemIDs(s.mustDBWithCtx(ctx))
 	if err != nil {
 		return err
 	}
-
-	log.Debug("cleanBuffer (items: %d)", len(itemIDs))
 
 	var itemUnitIDsToRemove []string
 	itemunits, err := storage.LoadAllItemUnitsByItemIDs(ctx, s.Mapper, s.mustDBWithCtx(ctx), itemIDs)
 	if err != nil {
 		return err
 	}
-
-	log.Debug("cleanBuffer (itemunits: %d)", len(itemunits))
 
 	var countWithoutCDSBackend = len(itemunits)
 	var bufferItemUnit string
