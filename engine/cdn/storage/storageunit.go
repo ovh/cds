@@ -230,7 +230,7 @@ func (r *RunningStorageUnits) Start(ctx context.Context, gorts *sdk.GoRoutines) 
 	// 	Feed the sync processes with a ticker
 	gorts.Run(ctx, "RunningStorageUnits.Start", func(ctx context.Context) {
 		tickr := time.NewTicker(time.Second)
-		tickrPurge := time.NewTicker(time.Second)
+		tickrPurge := time.NewTicker(30 * time.Second)
 
 		defer tickr.Stop()
 		defer tickrPurge.Stop()

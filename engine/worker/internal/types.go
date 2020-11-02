@@ -97,7 +97,7 @@ func (wk *CurrentWorker) Parameters() []sdk.Parameter {
 	return wk.currentJob.params
 }
 
-func (wk *CurrentWorker) SendLogWithStatus(ctx context.Context, level workerruntime.Level, logLine string, status string) {
+func (wk *CurrentWorker) SendTerminatedStepLog(ctx context.Context, level workerruntime.Level, logLine string) {
 	msg, sign, err := wk.prepareLog(ctx, level, logLine)
 	if err != nil {
 		log.Error(wk.GetContext(), "unable to prepare log: %v", err)
@@ -106,13 +106,23 @@ func (wk *CurrentWorker) SendLogWithStatus(ctx context.Context, level workerrunt
 	wk.gelfLogger.logger.
 		WithField(log.ExtraFieldSignature, sign).
 		WithField(log.ExtraFieldLine, wk.stepLogLine).
-		WithField(log.ExtraFieldJobStatus, status).
+		WithField(log.ExtraFieldTerminated, true).
 		Log(msg.Level, msg.Value)
 	wk.stepLogLine++
 }
 
 func (wk *CurrentWorker) SendLog(ctx context.Context, level workerruntime.Level, logLine string) {
-	wk.SendLogWithStatus(ctx, level, logLine, sdk.StatusBuilding)
+	msg, sign, err := wk.prepareLog(ctx, level, logLine)
+	if err != nil {
+		log.Error(wk.GetContext(), "unable to prepare log: %v", err)
+		return
+	}
+	wk.gelfLogger.logger.
+		WithField(log.ExtraFieldSignature, sign).
+		WithField(log.ExtraFieldLine, wk.stepLogLine).
+		WithField(log.ExtraFieldTerminated, false).
+		Log(msg.Level, msg.Value)
+	wk.stepLogLine++
 }
 
 func (wk *CurrentWorker) prepareLog(ctx context.Context, level workerruntime.Level, s string) (log.Message, string, error) {

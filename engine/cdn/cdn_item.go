@@ -116,7 +116,7 @@ func (s *Service) getItemLogValue(ctx context.Context, t sdk.CDNItemType, apiRef
 func (s *Service) pushItemLogIntoCache(ctx context.Context, it sdk.CDNItem) error {
 	t0 := time.Now()
 	// Search item in a storage unit
-	itemUnits, err := storage.LoadAllItemUnitsByItemID(ctx, s.Mapper, s.mustDBWithCtx(ctx), it.ID)
+	itemUnits, err := storage.LoadAllItemUnitsByItemIDs(ctx, s.Mapper, s.mustDBWithCtx(ctx), []string{it.ID})
 	if err != nil {
 		return err
 	}

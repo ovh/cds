@@ -135,7 +135,7 @@ func (h *HatcherySwarm) killAndRemove(ctx context.Context, dockerClient *dockerC
 							Timestamp:    time.Now().UnixNano(),
 						},
 					}
-					h.Common.SendServiceLog(ctx, []log.Message{endLog}, sdk.StatusSuccess)
+					h.Common.SendServiceLog(ctx, []log.Message{endLog}, sdk.StatusTerminated)
 				}
 
 				if err := h.killAndRemoveContainer(ctx, dockerClient, id); err != nil {

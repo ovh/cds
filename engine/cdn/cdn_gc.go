@@ -59,7 +59,7 @@ func (s *Service) itemsGC(ctx context.Context) {
 
 func (s *Service) markUnitItemToDeleteByItemID(ctx context.Context, itemID string) (int, error) {
 	db := s.mustDBWithCtx(ctx)
-	uis, err := storage.LoadAllItemUnitsByItemID(ctx, s.Mapper, db, itemID)
+	uis, err := storage.LoadAllItemUnitsByItemIDs(ctx, s.Mapper, db, []string{itemID})
 	if err != nil {
 		return 0, err
 	}
@@ -139,21 +139,51 @@ func (s *Service) cleanBuffer(ctx context.Context) error {
 		cdsBackendID = sto.ID()
 		break
 	}
-	if cdsBackendID == "" {
-		return nil
-	}
-	itemIDs, err := storage.LoadAllItemsIDInBufferAndAllUnitsExceptCDS(s.mustDBWithCtx(ctx), cdsBackendID)
+
+	log.Debug("cleanBuffer")
+
+	itemIDs, err := storage.LoadAllSynchronizedItemIDs(s.mustDBWithCtx(ctx))
 	if err != nil {
 		return err
 	}
+
+	log.Debug("cleanBuffer (items: %d)", len(itemIDs))
+
+	var itemUnitIDsToRemove []string
+	itemunits, err := storage.LoadAllItemUnitsByItemIDs(ctx, s.Mapper, s.mustDBWithCtx(ctx), itemIDs)
+	if err != nil {
+		return err
+	}
+
+	log.Debug("cleanBuffer (itemunits: %d)", len(itemunits))
+
+	var countWithoutCDSBackend = len(itemunits)
+	var bufferItemUnit string
+	for _, iu := range itemunits {
+		switch iu.UnitID {
+		case cdsBackendID:
+			countWithoutCDSBackend--
+		case s.Units.Buffer.ID():
+			bufferItemUnit = iu.ID
+		}
+
+		if countWithoutCDSBackend > 1 {
+			itemUnitIDsToRemove = append(itemUnitIDsToRemove, bufferItemUnit)
+		}
+	}
+
+	log.Debug("removing %d from buffer unit", len(itemUnitIDsToRemove))
+
 	tx, err := s.mustDBWithCtx(ctx).Begin()
 	if err != nil {
 		return sdk.WrapError(err, "unable to start transaction")
 	}
 	defer tx.Rollback() //nolint
-	if err := storage.DeleteItemsUnit(tx, s.Units.Buffer.ID(), itemIDs); err != nil {
+
+	if _, err := storage.MarkItemUnitToDelete(ctx, s.Mapper, tx, itemUnitIDsToRemove); err != nil {
 		return err
 	}
+
 	return sdk.WithStack(tx.Commit())
 }
 

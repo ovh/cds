@@ -241,7 +241,7 @@ func (c *Common) RefreshServiceLogger(ctx context.Context) error {
 	return nil
 }
 
-func (c *Common) SendServiceLog(ctx context.Context, servicesLogs []log.Message, status string) {
+func (c *Common) SendServiceLog(ctx context.Context, servicesLogs []log.Message, terminated bool) {
 	if c.ServiceLogger == nil {
 		return
 	}
@@ -274,13 +274,13 @@ func (c *Common) SendServiceLog(ctx context.Context, servicesLogs []log.Message,
 			c.ServiceLogger.
 				WithField(log.ExtraFieldSignature, sign).
 				WithField(log.ExtraFieldLine, lineNumber).
-				WithField(log.ExtraFieldJobStatus, status).
+				WithField(log.ExtraFieldTerminated, terminated).
 				Log(s.Level, s.Value)
 		}
 	}
 
 	// If log status is terminated for given service, we can remove line counters
-	if sdk.StatusIsTerminated(status) {
+	if terminated {
 		for _, s := range servicesLogs {
 			delete(c.mapServiceNextLineNumber, s.ServiceKey())
 		}

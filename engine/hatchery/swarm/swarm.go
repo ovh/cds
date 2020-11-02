@@ -770,7 +770,7 @@ func (h *HatcherySwarm) killAwolWorker(ctx context.Context) error {
 					Timestamp:    time.Now().UnixNano(),
 				},
 			}
-			h.Common.SendServiceLog(ctx, []log.Message{endLog}, sdk.StatusSuccess)
+			h.Common.SendServiceLog(ctx, []log.Message{endLog}, sdk.StatusTerminated)
 
 			log.Debug("hatchery> swarm> killAwolWorker> Delete worker (service) %s on %s", c.Names[0], dockerClient.name)
 			if err := h.killAndRemove(ctx, dockerClient, c.ID, containers); err != nil {

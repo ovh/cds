@@ -110,7 +110,7 @@ type StorageUnitWithLocator interface {
 }
 
 type Configuration struct {
-	HashLocatorSalt string                 `toml:"hashLocatorSalt" json:"hash_locator_salt" mapstructure:"hash_locator_salt"`
+	HashLocatorSalt string                 `toml:"hashLocatorSalt" json:"hash_locator_salt" mapstructure:"hashLocatorSalt"`
 	Buffer          BufferConfiguration    `toml:"buffer" json:"buffer" mapstructure:"buffer"`
 	Storages        []StorageConfiguration `toml:"storages" json:"storages" mapstructure:"storages"`
 }

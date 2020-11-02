@@ -132,30 +132,15 @@ func DeleteItemUnit(m *gorpmapper.Mapper, db gorpmapper.SqlExecutorWithTx, iu *s
 	return nil
 }
 
-func DeleteItemsUnit(db gorp.SqlExecutor, unitID string, itemIDs []string) error {
-	query := `
-		DELETE FROM storage_unit_item
-		WHERE unit_id = $1 AND item_id = ANY($2)
-	`
-	_, err := db.Exec(query, unitID, pq.StringArray(itemIDs))
-	return sdk.WrapError(err, "unable to remove items from unit %s", itemIDs)
-}
-
-// LoadAllItemsIDInBufferAndAllUnitsExceptCDS loads all that are presents in all backend ( except cds backend )
-func LoadAllItemsIDInBufferAndAllUnitsExceptCDS(db gorp.SqlExecutor, cdsBackendID string) ([]string, error) {
+func LoadAllSynchronizedItemIDs(db gorp.SqlExecutor) ([]string, error) {
 	var itemIDs []string
 	query := `
-		SELECT item_id 
-		FROM (
-			SELECT COUNT(*) as nb, item_id 
-			FROM storage_unit_item
-			WHERE unit_id != $1
-			AND to_delete = false
-			GROUP BY item_id
-		) as cc
-		WHERE nb = (SELECT COUNT(*) FROM storage_unit WHERE id != $1)
+	SELECT item_id 
+	FROM storage_unit_item
+	GROUP BY item_id
+	HAVING COUNT(unit_id) > 1
 	`
-	if _, err := db.Select(&itemIDs, query, cdsBackendID); err != nil {
+	if _, err := db.Select(&itemIDs, query); err != nil {
 		return nil, sdk.WrapError(err, "unable to get item ids")
 	}
 	return itemIDs, nil
@@ -231,8 +216,8 @@ func LoadAllItemUnitsToDeleteByUnit(ctx context.Context, m *gorpmapper.Mapper, d
 	return getAllItemUnits(ctx, m, db, query, opts...)
 }
 
-func LoadAllItemUnitsByItemID(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlExecutor, itemID string, opts ...gorpmapper.GetOptionFunc) ([]sdk.CDNItemUnit, error) {
-	query := gorpmapper.NewQuery("SELECT * FROM storage_unit_item WHERE item_id = $1 AND to_delete = false").Args(itemID)
+func LoadAllItemUnitsByItemIDs(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlExecutor, itemID []string, opts ...gorpmapper.GetOptionFunc) ([]sdk.CDNItemUnit, error) {
+	query := gorpmapper.NewQuery("SELECT * FROM storage_unit_item WHERE item_id = ANY($1) AND to_delete = false").Args(pq.StringArray(itemID))
 	return getAllItemUnits(ctx, m, db, query, opts...)
 }
 
