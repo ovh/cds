@@ -17,7 +17,7 @@ import { WorkflowRunService } from 'app/service/workflow/run/workflow.run.servic
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { DurationService } from 'app/shared/duration/duration.service';
 import { ProjectState } from 'app/store/project.state';
-import { CleanWorkflowRun, SetWorkflowRuns } from 'app/store/workflow.action';
+import { CleanWorkflowRun, ClearListRuns, SetWorkflowRuns } from 'app/store/workflow.action';
 import { WorkflowState } from 'app/store/workflow.state';
 import { Observable, Subscription } from 'rxjs';
 import { finalize, first } from 'rxjs/operators';
@@ -44,7 +44,9 @@ export class WorkflowSidebarRunListComponent implements OnDestroy {
                 this.deleteInterval();
                 this.initSelectableTags();
                 this.offset = 0;
-                this.getRuns();
+                this._store.dispatch(new ClearListRuns()).subscribe(() => {
+                    this.getRuns();
+                })
             }
             this._workflow = data;
         }
@@ -93,7 +95,6 @@ export class WorkflowSidebarRunListComponent implements OnDestroy {
             }
             this.currentWorkflowRunNumber = wr?.num;
             this._cd.markForCheck();
-
         });
 
         this.listRunSubs = this.listRuns$.subscribe(runs => {
@@ -126,7 +127,7 @@ export class WorkflowSidebarRunListComponent implements OnDestroy {
             }))
             .subscribe((runs) => {
                 this._store.dispatch(new SetWorkflowRuns(
-                    {projectKey: this.project.key, workflowName: this.workflow.name, runs: runs, filters: filter}))
+                    { projectKey: this.project.key, workflowName: this.workflow.name, runs: runs, filters: filter }))
             });
     }
 
