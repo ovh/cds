@@ -103,7 +103,7 @@ func (s *Service) storeLogs(ctx context.Context, itemType sdk.CDNItemType, signa
 		return nil
 	}
 
-	_, err = s.Units.Buffer.Add(*iu, uint(line), content, storage.WithOption{Force: sdk.StatusIsTerminated(status)})
+	_, err = s.Units.Buffer.Add(*iu, uint(line), content, storage.WithOption{IslastLine: sdk.StatusIsTerminated(status)})
 	if err != nil {
 		return err
 	}

@@ -21,10 +21,15 @@ var (
 	keyBuffer                           = cache.Key("cdn", "buffer")
 	luaAddLogLineExp                    = `
 		local size = redis.call('MEMORY', 'USAGE', KEYS[1]);
-		if KEYS[5] == "true" or not(size) or size < tonumber(KEYS[4]) then
+		if not(size) or size < tonumber(KEYS[4]) then
 			redis.call('zadd', KEYS[1], tonumber(KEYS[3]), KEYS[2]);
+
+			size = redis.call('MEMORY', 'USAGE', KEYS[1]);
+			if size > tonumber(KEYS[4]) and KEYS[5] ~= "true" then
+				redis.call('zadd', KEYS[1], tonumber(KEYS[3]), "\"" .. tonumber(KEYS[3])+1 .. "#...truncated\"");
+			end
 		end
-		return redis.call('MEMORY', 'USAGE', KEYS[1]);
+		return size;
 	`
 	maxStepLogSize    int64
 	maxServiceLogSize int64
@@ -82,7 +87,7 @@ func (s *Redis) Add(i sdk.CDNItemUnit, index uint, value string, options storage
 		string(btes),
 		strconv.FormatUint(uint64(index), 10),
 		strconv.Itoa(int(maxsize)),
-		strconv.FormatBool(options.Force),
+		strconv.FormatBool(options.IslastLine),
 	)
 	if err != nil {
 		return 0, err

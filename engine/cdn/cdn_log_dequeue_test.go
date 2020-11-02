@@ -1,6 +1,7 @@
 package cdn
 
 import (
+	"bytes"
 	"context"
 	"io"
 	"strconv"
@@ -44,7 +45,7 @@ func TestStoreNewStepLog(t *testing.T) {
 
 	ctx, cancel := context.WithCancel(context.TODO())
 	t.Cleanup(cancel)
-	cdnUnits := newRunningStorageUnits(t, m, db.DbMap, ctx)
+	cdnUnits := newRunningStorageUnits(t, m, db.DbMap, ctx, 1000)
 	s.Units = cdnUnits
 
 	hm := handledMessage{
@@ -129,7 +130,7 @@ func TestStoreLastStepLog(t *testing.T) {
 
 	ctx, cancel := context.WithCancel(context.TODO())
 	t.Cleanup(cancel)
-	cdnUnits := newRunningStorageUnits(t, m, db.DbMap, ctx)
+	cdnUnits := newRunningStorageUnits(t, m, db.DbMap, ctx, 1000)
 	s.Units = cdnUnits
 
 	hm := handledMessage{
@@ -219,7 +220,7 @@ func TestStoreLogWrongOrder(t *testing.T) {
 
 	ctx, cancel := context.WithCancel(context.TODO())
 	t.Cleanup(cancel)
-	cdnUnits := newRunningStorageUnits(t, m, db.DbMap, ctx)
+	cdnUnits := newRunningStorageUnits(t, m, db.DbMap, ctx, 1000)
 
 	s.Units = cdnUnits
 
@@ -340,7 +341,7 @@ func TestStoreNewServiceLog(t *testing.T) {
 
 	ctx, cancel := context.WithCancel(context.TODO())
 	t.Cleanup(cancel)
-	cdnUnits := newRunningStorageUnits(t, m, db.DbMap, ctx)
+	cdnUnits := newRunningStorageUnits(t, m, db.DbMap, ctx, 1000)
 	s.Units = cdnUnits
 
 	hm := handledMessage{
@@ -396,4 +397,112 @@ func TestStoreNewServiceLog(t *testing.T) {
 
 	require.NoError(t, err)
 	require.Equal(t, "[EMERGENCY] this is a message\n", buf.String())
+}
+
+func TestStoreTruncatedLogs(t *testing.T) {
+	m := gorpmapper.New()
+	item.InitDBMapping(m)
+	storage.InitDBMapping(m)
+
+	log.SetLogger(t)
+	db, factory, cache, cancel := test.SetupPGToCancel(t, m, sdk.TypeCDN)
+	t.Cleanup(cancel)
+
+	cdntest.ClearItem(t, context.TODO(), m, db)
+
+	// Create cdn service
+	s := Service{
+		DBConnectionFactory: factory,
+		Cache:               cache,
+		Mapper:              m,
+	}
+	s.GoRoutines = sdk.NewGoRoutines()
+
+	ctx, cancel := context.WithCancel(context.TODO())
+	t.Cleanup(cancel)
+	cdnUnits := newRunningStorageUnits(t, m, db.DbMap, ctx, 10)
+	s.Units = cdnUnits
+
+	hm := handledMessage{
+		Msg: hook.Message{
+			Full: "Bim bam boum",
+		},
+		Status: sdk.StatusBuilding,
+		Line:   0,
+		Signature: log.Signature{
+			ProjectKey:   sdk.RandomString(10),
+			WorkflowID:   1,
+			WorkflowName: "MyWorklow",
+			RunID:        1,
+			NodeRunID:    1,
+			NodeRunName:  "MyPipeline",
+			JobName:      "MyJob",
+			JobID:        1,
+			Worker: &log.SignatureWorker{
+				StepName:  "script1",
+				StepOrder: 1,
+			},
+		},
+	}
+	apiRef := sdk.CDNLogAPIRef{
+		ProjectKey:     hm.Signature.ProjectKey,
+		WorkflowName:   hm.Signature.WorkflowName,
+		WorkflowID:     hm.Signature.WorkflowID,
+		RunID:          hm.Signature.RunID,
+		NodeRunName:    hm.Signature.NodeRunName,
+		NodeRunID:      hm.Signature.NodeRunID,
+		NodeRunJobName: hm.Signature.JobName,
+		NodeRunJobID:   hm.Signature.JobID,
+		StepName:       hm.Signature.Worker.StepName,
+		StepOrder:      hm.Signature.Worker.StepOrder,
+	}
+	hashRef, err := hashstructure.Hash(apiRef, nil)
+	require.NoError(t, err)
+
+	it := sdk.CDNItem{
+		Status:     sdk.CDNStatusItemIncoming,
+		APIRefHash: strconv.FormatUint(hashRef, 10),
+		APIRef:     apiRef,
+		Type:       sdk.CDNTypeItemStepLog,
+	}
+	require.NoError(t, item.Insert(context.TODO(), m, db, &it))
+	defer func() {
+		_ = item.DeleteByID(db, it.ID)
+
+	}()
+	content := buildMessage(hm)
+	err = s.storeLogs(context.TODO(), sdk.CDNTypeItemStepLog, hm.Signature, hm.Status, content, hm.Line)
+	require.NoError(t, err)
+
+	hm.Status = sdk.StatusSuccess
+	hm.Msg.Full = "End of step"
+	hm.Line = 1
+
+	content = buildMessage(hm)
+	err = s.storeLogs(context.TODO(), sdk.CDNTypeItemStepLog, hm.Signature, hm.Status, content, hm.Line)
+	require.NoError(t, err)
+
+	itemDB, err := item.LoadByID(context.TODO(), s.Mapper, db, it.ID)
+	require.NoError(t, err)
+	require.NotNil(t, itemDB)
+	require.Equal(t, sdk.CDNStatusItemCompleted, itemDB.Status)
+	require.NotEmpty(t, itemDB.Hash)
+	require.NotEmpty(t, itemDB.MD5)
+	require.NotZero(t, itemDB.Size)
+
+	unit, err := storage.LoadUnitByName(context.TODO(), m, db, s.Units.Buffer.Name())
+	require.NoError(t, err)
+	require.NotNil(t, unit)
+
+	itemUnit, err := storage.LoadItemUnitByUnit(context.TODO(), m, db, unit.ID, itemDB.ID)
+	require.NoError(t, err)
+	require.NotNil(t, itemUnit)
+
+	_, lineCount, rc, _, err := s.getItemLogValue(ctx, sdk.CDNTypeItemStepLog, strconv.FormatUint(hashRef, 10), sdk.CDNReaderFormatText, 0, 10000, 1)
+	buf := new(bytes.Buffer)
+	_, err = io.Copy(buf, rc)
+	require.NoError(t, err)
+
+	require.Equal(t, "[EMERGENCY] Bim bam boum\n...truncated", buf.String())
+	require.Equal(t, int64(2), lineCount)
 }

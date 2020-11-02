@@ -183,5 +183,5 @@ type LogConfig struct {
 }
 
 type WithOption struct {
-	Force bool
+	IslastLine bool
 }

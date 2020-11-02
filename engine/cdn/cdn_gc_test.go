@@ -74,7 +74,7 @@ func TestCleanSynchronizedItem(t *testing.T) {
 				},
 			},
 		},
-	})
+	}, storage.LogConfig{StepLinesRateLimit: 1000, ServiceMaxSize: 1000, StepMaxSize: 10000, NbServiceLogsGoroutines: 1, NbJobLogsGoroutines: 1})
 	require.NoError(t, err)
 	s.Units = cdnUnits
 
@@ -202,7 +202,7 @@ func TestCleanWaitingItem(t *testing.T) {
 
 	ctx, cancel := context.WithCancel(context.TODO())
 	t.Cleanup(cancel)
-	s.Units = newRunningStorageUnits(t, m, s.DBConnectionFactory.GetDBMap(m)(), ctx)
+	s.Units = newRunningStorageUnits(t, m, s.DBConnectionFactory.GetDBMap(m)(), ctx, 1000)
 
 	it := sdk.CDNItem{
 		ID:     sdk.UUID(),

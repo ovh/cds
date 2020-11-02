@@ -574,7 +574,7 @@ func (s *RedisStore) ScoredSetScan(_ context.Context, key string, from, to float
 	}
 	v = v.Elem()
 	if v.Kind() != reflect.Slice {
-		return errors.New("he interface is not a slice")
+		return errors.New("the interface is not a slice")
 	}
 
 	typ := reflect.TypeOf(v.Interface())
