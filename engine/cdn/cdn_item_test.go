@@ -396,11 +396,12 @@ func TestGetItemValue_ThousandLinesReverse(t *testing.T) {
 		Cache:               cache,
 		Mapper:              m,
 	}
+	s.Cfg.Log.StepMaxSize = 200000
 	s.GoRoutines = sdk.NewGoRoutines()
 
 	ctx, cancel := context.WithCancel(context.TODO())
 	t.Cleanup(cancel)
-	cdnUnits := newRunningStorageUnits(t, m, db.DbMap, ctx, 100000)
+	cdnUnits := newRunningStorageUnits(t, m, db.DbMap, ctx, 200000)
 	s.Units = cdnUnits
 	var err error
 	s.LogCache, err = lru.NewRedisLRU(db.DbMap, 1000, cfg["redisHost"], cfg["redisPassword"])
@@ -448,6 +449,7 @@ func TestGetItemValue_ThousandLinesReverse(t *testing.T) {
 	require.NoError(t, storage.InsertItemUnit(context.TODO(), s.Mapper, db, itemUnit))
 
 	// Get From Buffer
+	require.NoError(t, err)
 	_, _, rc, _, err := s.getItemLogValue(context.Background(), sdk.CDNTypeItemStepLog, apiRefhash, sdk.CDNReaderFormatJSON, 773, 200, -1)
 	require.NoError(t, err)
 

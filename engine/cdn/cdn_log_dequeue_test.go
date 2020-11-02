@@ -223,6 +223,7 @@ func TestStoreLogWrongOrder(t *testing.T) {
 	cdnUnits := newRunningStorageUnits(t, m, db.DbMap, ctx, 1000)
 
 	s.Units = cdnUnits
+	s.Cfg.Log.StepMaxSize = 1000
 
 	hm := handledMessage{
 		Msg: hook.Message{

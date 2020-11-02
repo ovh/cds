@@ -60,7 +60,7 @@ func TestSyncLog(t *testing.T) {
 				CDS:  cdsConfig,
 			},
 		},
-	}, storage.LogConfig{NbJobLogsGoroutines: 1, NbServiceLogsGoroutines: 1, StepMaxSize: 100000, ServiceMaxSize: 10000, StepLinesRateLimit: 100})
+	}, storage.LogConfig{NbJobLogsGoroutines: 0, NbServiceLogsGoroutines: 0, StepMaxSize: 100000, ServiceMaxSize: 10000, StepLinesRateLimit: 100})
 	require.NoError(t, err)
 	cdnUnits.Start(context.TODO(), sdk.NewGoRoutines())
 	s.Units = cdnUnits

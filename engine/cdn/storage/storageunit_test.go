@@ -74,7 +74,7 @@ func TestRun(t *testing.T) {
 				},
 			},
 		},
-	}, storage.LogConfig{ServiceMaxSize: 3000, StepMaxSize: 3000, NbJobLogsGoroutines: 1, NbServiceLogsGoroutines: 1, StepLinesRateLimit: 10})
+	}, storage.LogConfig{ServiceMaxSize: 3000, StepMaxSize: 3000, NbJobLogsGoroutines: 0, NbServiceLogsGoroutines: 0, StepLinesRateLimit: 10})
 	require.NoError(t, err)
 	require.NotNil(t, cdnUnits)
 	cdnUnits.Start(ctx, sdk.NewGoRoutines())
