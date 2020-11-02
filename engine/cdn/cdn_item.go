@@ -120,7 +120,10 @@ func (s *Service) pushItemLogIntoCache(ctx context.Context, it sdk.CDNItem) erro
 	if err != nil {
 		return err
 	}
-	var itemUnits = mapItemUnits[it.ID]
+	itemUnits, has := mapItemUnits[it.ID]
+	if !has {
+		return sdk.WithStack(fmt.Errorf("unable to find item units"))
+	}
 
 	// Random pick a unit
 	idx := 0

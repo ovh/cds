@@ -63,7 +63,10 @@ func (s *Service) markUnitItemToDeleteByItemID(ctx context.Context, itemID strin
 	if err != nil {
 		return 0, err
 	}
-	var uis = mapItemUnits[itemID]
+	uis, has := mapItemUnits[itemID]
+	if !has {
+		return 0, nil
+	}
 
 	ids := make([]string, len(uis))
 	for i := range uis {
@@ -152,6 +155,10 @@ func (s *Service) cleanBuffer(ctx context.Context) error {
 		return err
 	}
 
+	if len(mapItemunits) == 0 {
+		return nil
+	}
+
 	for _, itemunits := range mapItemunits {
 		var countWithoutCDSBackend = len(itemunits)
 		var bufferItemUnit string
@@ -167,6 +174,10 @@ func (s *Service) cleanBuffer(ctx context.Context) error {
 				itemUnitIDsToRemove = append(itemUnitIDsToRemove, bufferItemUnit)
 			}
 		}
+	}
+
+	if len(itemUnitIDsToRemove) == 0 {
+		return nil
 	}
 
 	log.Debug("removing %d from buffer unit", len(itemUnitIDsToRemove))
