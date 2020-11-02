@@ -33,6 +33,7 @@ type Store interface {
 	Delete(key string) error
 	DeleteAll(key string) error
 	Exist(key string) (bool, error)
+	Eval(expr string, args ...string) (string, error)
 	HealthStore
 	LockStore
 	QueueStore
@@ -82,6 +83,7 @@ type ScoredSetStore interface {
 	ScoredSetRange(ctx context.Context, key string, from, to int64, dest interface{}) error
 	ScoredSetRem(ctx context.Context, key string, members ...string) error
 	SetCard(key string) (int, error)
+	Eval(expr string, args ...string) (string, error)
 	HealthStore
 }
 

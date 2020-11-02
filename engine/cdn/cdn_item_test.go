@@ -81,17 +81,28 @@ func TestGetItemValue(t *testing.T) {
 		ItemID: it.ID,
 		UnitID: s.Units.Buffer.ID(),
 	}
-	require.NoError(t, s.Units.Buffer.Add(iu, 0, "Line 0\n"))
-	require.NoError(t, s.Units.Buffer.Add(iu, 1, "Line 1\n"))
-	require.NoError(t, s.Units.Buffer.Add(iu, 2, "Line 2\n"))
-	require.NoError(t, s.Units.Buffer.Add(iu, 3, "Line 3\n"))
-	require.NoError(t, s.Units.Buffer.Add(iu, 4, "Line 4\n"))
-	require.NoError(t, s.Units.Buffer.Add(iu, 5, "Line 5\n"))
-	require.NoError(t, s.Units.Buffer.Add(iu, 6, "Line 6\n"))
-	require.NoError(t, s.Units.Buffer.Add(iu, 7, "Line 7\n"))
-	require.NoError(t, s.Units.Buffer.Add(iu, 8, "Line 8\n"))
-	require.NoError(t, s.Units.Buffer.Add(iu, 9, "Line 9\n"))
-	require.NoError(t, s.Units.Buffer.Add(iu, 10, "Line 10\n"))
+	_, err = s.Units.Buffer.Add(iu, 0, "Line 0\n", storage.WithOption{Force: false})
+	require.NoError(t, err)
+	_, err = s.Units.Buffer.Add(iu, 1, "Line 1\n", storage.WithOption{Force: false})
+	require.NoError(t, err)
+	_, err = s.Units.Buffer.Add(iu, 1, "Line 2\n", storage.WithOption{Force: false})
+	require.NoError(t, err)
+	_, err = s.Units.Buffer.Add(iu, 1, "Line 3\n", storage.WithOption{Force: false})
+	require.NoError(t, err)
+	_, err = s.Units.Buffer.Add(iu, 1, "Line 4\n", storage.WithOption{Force: false})
+	require.NoError(t, err)
+	_, err = s.Units.Buffer.Add(iu, 1, "Line 5\n", storage.WithOption{Force: false})
+	require.NoError(t, err)
+	_, err = s.Units.Buffer.Add(iu, 1, "Line 6\n", storage.WithOption{Force: false})
+	require.NoError(t, err)
+	_, err = s.Units.Buffer.Add(iu, 1, "Line 7\n", storage.WithOption{Force: false})
+	require.NoError(t, err)
+	_, err = s.Units.Buffer.Add(iu, 1, "Line 8\n", storage.WithOption{Force: false})
+	require.NoError(t, err)
+	_, err = s.Units.Buffer.Add(iu, 1, "Line 9\n", storage.WithOption{Force: false})
+	require.NoError(t, err)
+	_, err = s.Units.Buffer.Add(iu, 1, "Line 10\n", storage.WithOption{Force: false})
+	require.NoError(t, err)
 
 	require.NoError(t, s.completeItem(context.TODO(), db, iu))
 	itemDB, err := item.LoadByID(context.TODO(), s.Mapper, db, it.ID, gorpmapper.GetOptions.WithDecryption)
@@ -222,7 +233,8 @@ func TestGetItemValue_ThousandLines(t *testing.T) {
 		UnitID: s.Units.Buffer.ID(),
 	}
 	for i := 0; i < 1000; i++ {
-		require.NoError(t, s.Units.Buffer.Add(iu, uint(i), fmt.Sprintf("Line %d\n", i)))
+		_, err = s.Units.Buffer.Add(iu, uint(i), fmt.Sprintf("Line %d\n", i), storage.WithOption{Force: false})
+		require.NoError(t, err)
 	}
 
 	require.NoError(t, s.completeItem(context.TODO(), db, iu))
@@ -322,7 +334,8 @@ func TestGetItemValue_Reverse(t *testing.T) {
 		UnitID: s.Units.Buffer.ID(),
 	}
 	for i := 0; i < 5; i++ {
-		require.NoError(t, s.Units.Buffer.Add(iu, uint(i), fmt.Sprintf("Line %d\n", i)))
+		_, err = s.Units.Buffer.Add(iu, uint(i), fmt.Sprintf("Line %d\n", i), storage.WithOption{Force: false})
+		require.NoError(t, err)
 	}
 
 	require.NoError(t, s.completeItem(context.TODO(), db, iu))
@@ -423,7 +436,8 @@ func TestGetItemValue_ThousandLinesReverse(t *testing.T) {
 		UnitID: s.Units.Buffer.ID(),
 	}
 	for i := 0; i < 1000; i++ {
-		require.NoError(t, s.Units.Buffer.Add(iu, uint(i), fmt.Sprintf("Line %d\n", i)))
+		_, err = s.Units.Buffer.Add(iu, uint(i), fmt.Sprintf("Line %d\n", i), storage.WithOption{Force: false})
+		require.NoError(t, err)
 	}
 
 	require.NoError(t, s.completeItem(context.TODO(), db, iu))

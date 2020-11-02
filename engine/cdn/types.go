@@ -81,15 +81,9 @@ type Configuration struct {
 			Password string `toml:"password" json:"-"`
 		} `toml:"redis" json:"redis"`
 	} `toml:"cache" comment:"######################\n CDN Cache Settings \n######################" json:"cache"`
-	API service.APIServiceConfiguration `toml:"api" comment:"######################\n CDS API Settings \n######################" json:"api"`
-	Log struct {
-		StepMaxSize             int64 `toml:"stepMaxSize" default:"15728640" comment:"Max step logs size in bytes (default: 15MB)" json:"stepMaxSize"`
-		ServiceMaxSize          int64 `toml:"serviceMaxSize" default:"15728640" comment:"Max service logs size in bytes (default: 15MB)" json:"serviceMaxSize"`
-		StepLinesRateLimit      int64 `toml:"stepLinesRateLimit" default:"1800" comment:"Number of lines that a worker can send by seconds" json:"stepLinesRateLimit"`
-		NbJobLogsGoroutines     int64 `toml:"nbJobLogsGoroutines" default:"5" comment:"Number of workers that dequeue the job log queue" json:"nbJobLogsGoroutines"`
-		NbServiceLogsGoroutines int64 `toml:"nbServiceLogsGoroutines" default:"5" comment:"Number of workers that dequeue the service log queue" json:"nbServiceLogsGoroutines"`
-	} `toml:"log" json:"log" comment:"###########################\n Log settings.\n##########################"`
-	Units storage.Configuration `toml:"storageUnits" json:"storageUnits" mapstructure:"storageUnits"`
+	API   service.APIServiceConfiguration `toml:"api" comment:"######################\n CDS API Settings \n######################" json:"api"`
+	Log   storage.LogConfig               `toml:"log" json:"log" comment:"###########################\n Log settings.\n##########################"`
+	Units storage.Configuration           `toml:"storageUnits" json:"storageUnits" mapstructure:"storageUnits"`
 }
 
 type rateLimiter struct {

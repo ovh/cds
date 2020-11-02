@@ -24,7 +24,7 @@ func (r RunningStorageUnits) Storage(name string) StorageUnit {
 	return nil
 }
 
-func Init(ctx context.Context, m *gorpmapper.Mapper, db *gorp.DbMap, gorts *sdk.GoRoutines, config Configuration) (*RunningStorageUnits, error) {
+func Init(ctx context.Context, m *gorpmapper.Mapper, db *gorp.DbMap, gorts *sdk.GoRoutines, config Configuration, logConfig LogConfig) (*RunningStorageUnits, error) {
 	for i := range config.Storages {
 		if config.Storages[i].SyncParallel <= 0 {
 			config.Storages[i].SyncParallel = 1
@@ -57,7 +57,7 @@ func Init(ctx context.Context, m *gorpmapper.Mapper, db *gorp.DbMap, gorts *sdk.
 
 	bd.New(gorts, 1, math.MaxFloat64)
 
-	if err := bd.Init(ctx, config.Buffer.Redis); err != nil {
+	if err := bd.Init(ctx, config.Buffer.Redis, logConfig.StepMaxSize, logConfig.ServiceMaxSize); err != nil {
 		return nil, err
 	}
 	result.Buffer = bd

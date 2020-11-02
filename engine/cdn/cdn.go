@@ -123,7 +123,7 @@ func (s *Service) Serve(c context.Context) error {
 		storage.InitDBMapping(s.Mapper)
 
 		// Init storage units
-		s.Units, err = storage.Init(ctx, s.Mapper, s.mustDBWithCtx(ctx), s.GoRoutines, s.Cfg.Units)
+		s.Units, err = storage.Init(ctx, s.Mapper, s.mustDBWithCtx(ctx), s.GoRoutines, s.Cfg.Units, s.Cfg.Log)
 		if err != nil {
 			return err
 		}

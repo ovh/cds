@@ -2,6 +2,7 @@ package redis
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 	"strconv"
@@ -15,7 +16,19 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-var keyBuffer = cache.Key("cdn", "buffer")
+var (
+	_                storage.BufferUnit = new(Redis)
+	keyBuffer                           = cache.Key("cdn", "buffer")
+	luaAddLogLineExp                    = `
+		local size = redis.call('MEMORY', 'USAGE', KEYS[1]);
+		if KEYS[5] == "true" or not(size) or size < tonumber(KEYS[4]) then
+			redis.call('zadd', KEYS[1], tonumber(KEYS[3]), KEYS[2]);
+		end
+		return redis.call('MEMORY', 'USAGE', KEYS[1]);
+	`
+	maxStepLogSize    int64
+	maxServiceLogSize int64
+)
 
 type Redis struct {
 	storage.AbstractUnit
@@ -23,15 +36,13 @@ type Redis struct {
 	store  cache.ScoredSetStore
 }
 
-var (
-	_ storage.BufferUnit = new(Redis)
-)
-
 func init() {
 	storage.RegisterDriver("redis", new(Redis))
 }
 
-func (s *Redis) Init(ctx context.Context, cfg interface{}) error {
+func (s *Redis) Init(_ context.Context, cfg interface{}, maxStepLog, maxServiceLog int64) error {
+	maxStepLogSize = maxStepLog
+	maxServiceLogSize = maxServiceLog
 	config, is := cfg.(storage.RedisBufferConfiguration)
 	if !is {
 		return sdk.WithStack(fmt.Errorf("invalid configuration: %T", cfg))
@@ -46,14 +57,43 @@ func (s *Redis) Init(ctx context.Context, cfg interface{}) error {
 	return nil
 }
 
-func (s *Redis) ItemExists(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlExecutor, i sdk.CDNItem) (bool, error) {
+func (s *Redis) ItemExists(_ context.Context, _ *gorpmapper.Mapper, _ gorp.SqlExecutor, i sdk.CDNItem) (bool, error) {
 	size, _ := s.store.SetCard(cache.Key(keyBuffer, i.ID))
 	return size > 0, nil
 }
 
-func (s *Redis) Add(i sdk.CDNItemUnit, index uint, value string) error {
+func (s *Redis) Add(i sdk.CDNItemUnit, index uint, value string, options storage.WithOption) (int64, error) {
+	var maxsize int64
+	switch i.Item.Type {
+	case sdk.CDNTypeItemServiceLog:
+		maxsize = maxServiceLogSize
+	default:
+		maxsize = maxStepLogSize
+	}
+
 	value = strconv.Itoa(int(index)) + "#" + value
-	return s.store.ScoredSetAdd(context.Background(), cache.Key(keyBuffer, i.ItemID), value, float64(index))
+
+	btes, err := json.Marshal(value)
+	if err != nil {
+		return 0, sdk.WithStack(err)
+	}
+	result, err := s.store.Eval(luaAddLogLineExp,
+		cache.Key(keyBuffer, i.ItemID),
+		string(btes),
+		strconv.FormatUint(uint64(index), 10),
+		strconv.Itoa(int(maxsize)),
+		strconv.FormatBool(options.Force),
+	)
+	if err != nil {
+		return 0, err
+	}
+
+	resultInt, err := strconv.Atoi(result)
+	if err != nil {
+		return 0, sdk.WithStack(err)
+	}
+
+	return int64(resultInt), nil
 }
 
 func (s *Redis) Card(i sdk.CDNItemUnit) (int, error) {
@@ -126,6 +166,6 @@ func (s *Redis) Status(_ context.Context) []sdk.MonitoringStatusLine {
 		}}
 }
 
-func (s *Redis) Remove(ctx context.Context, i sdk.CDNItemUnit) error {
+func (s *Redis) Remove(_ context.Context, i sdk.CDNItemUnit) error {
 	return sdk.WithStack(s.store.Delete(cache.Key(keyBuffer, i.ItemID)))
 }
