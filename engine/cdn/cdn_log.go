@@ -26,6 +26,7 @@ var (
 	logCache                   = gocache.New(20*time.Minute, 20*time.Minute)
 	keyJobLogIncomingQueue     = cache.Key("cdn", "log", "incoming", "job")
 	keyServiceLogIncomingQueue = cache.Key("cdn", "log", "incoming", "service")
+	keyJobLogSize              = cache.Key("cdn", "log", "incoming", "size")
 )
 
 var globalRateLimit *rateLimiter
@@ -216,12 +217,25 @@ func (s *Service) handleWorkerLog(ctx context.Context, workerName string, worker
 	}
 
 	// DEPRECATED - Save in queue for cds api call
+	sizeKey := cache.Key(keyJobLogSize, strconv.Itoa(int(signature.JobID)))
+	var currentSize int64
+	if _, err := s.Cache.Get(sizeKey, &currentSize); err != nil {
+		return err
+	}
+	if currentSize >= s.Cfg.Log.StepMaxSize {
+		return nil
+	}
+
 	cacheKey := cache.Key(keyJobLogQueue, strconv.Itoa(int(signature.JobID)))
 	if err := s.Cache.Enqueue(cacheKey, hm); err != nil {
 		return err
 	}
-	///
 
+	// Update size for the job
+	newSize := currentSize + int64(len(hm.Msg.Full))
+	if err := s.Cache.SetWithTTL(sizeKey, newSize, 3600); err != nil {
+		return err
+	}
 	return nil
 }
 
