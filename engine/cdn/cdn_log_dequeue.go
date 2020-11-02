@@ -72,7 +72,7 @@ func (s *Service) storeLogsWithRetry(ctx context.Context, itemType sdk.CDNItemTy
 	currentLog := buildMessage(hm)
 	cpt := 0
 	for {
-		if err := s.storeLogs(ctx, itemType, hm.Signature, hm.Status, currentLog, hm.Line); err != nil {
+		if err := s.storeLogs(ctx, itemType, hm.Signature, hm.IsTerminated, currentLog, hm.Line); err != nil {
 			if sdk.ErrorIs(err, sdk.ErrLocked) && cpt < 10 {
 				cpt++
 				time.Sleep(250 * time.Millisecond)
@@ -86,7 +86,7 @@ func (s *Service) storeLogsWithRetry(ctx context.Context, itemType sdk.CDNItemTy
 	}
 }
 
-func (s *Service) storeLogs(ctx context.Context, itemType sdk.CDNItemType, signature log.Signature, status string, content string, line int64) error {
+func (s *Service) storeLogs(ctx context.Context, itemType sdk.CDNItemType, signature log.Signature, terminated bool, content string, line int64) error {
 	it, err := s.loadOrCreateItem(ctx, itemType, signature)
 	if err != nil {
 		return err
@@ -114,7 +114,7 @@ func (s *Service) storeLogs(ctx context.Context, itemType sdk.CDNItemType, signa
 
 	maxLineKey := cache.Key("cdn", "log", "size", it.ID)
 	maxItemLine := -1
-	if sdk.StatusIsTerminated(status) {
+	if terminated {
 		maxItemLine = int(line)
 		// store the score of last line
 		if err := s.Cache.SetWithTTL(maxLineKey, maxItemLine, ItemLogGC); err != nil {

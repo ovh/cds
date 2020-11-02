@@ -2,6 +2,8 @@ package storage
 
 import (
 	"context"
+	"crypto/sha1"
+	"encoding/hex"
 	"io"
 	"math"
 	"reflect"
@@ -11,6 +13,7 @@ import (
 	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/symmecrypt/convergent"
+	"golang.org/x/crypto/pbkdf2"
 )
 
 func RegisterDriver(typ string, i Interface) {
@@ -107,8 +110,9 @@ type StorageUnitWithLocator interface {
 }
 
 type Configuration struct {
-	Buffer   BufferConfiguration    `toml:"buffer" json:"buffer" mapstructure:"buffer"`
-	Storages []StorageConfiguration `toml:"storages" json:"storages" mapstructure:"storages"`
+	HashLocatorSalt string                 `toml:"hashLocatorSalt" json:"hash_locator_salt" mapstructure:"hashLocatorSalt"`
+	Buffer          BufferConfiguration    `toml:"buffer" json:"buffer" mapstructure:"buffer"`
+	Storages        []StorageConfiguration `toml:"storages" json:"storages" mapstructure:"storages"`
 }
 
 type BufferConfiguration struct {
@@ -168,4 +172,10 @@ type RunningStorageUnits struct {
 	config   Configuration
 	Buffer   BufferUnit
 	Storages []StorageUnit
+}
+
+func (x RunningStorageUnits) HashLocator(loc string) string {
+	salt := []byte(x.config.HashLocatorSalt)
+	hashLocator := hex.EncodeToString(pbkdf2.Key([]byte(loc), salt, 4096, 32, sha1.New))
+	return hashLocator
 }

@@ -72,7 +72,7 @@ func (h *HatcheryKubernetes) killAwolWorkers(ctx context.Context) error {
 				servicesLogs = append(servicesLogs, finalLog)
 			}
 			if len(servicesLogs) > 0 {
-				h.Common.SendServiceLog(ctx, servicesLogs, sdk.StatusSuccess)
+				h.Common.SendServiceLog(ctx, servicesLogs, sdk.StatusNotTerminated)
 			}
 		}
 

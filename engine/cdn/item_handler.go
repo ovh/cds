@@ -100,13 +100,18 @@ func (s *Service) getItemHandler() service.Handler {
 
 		var res sdk.CDNItemResume
 		res.CDNItem = *it
+		res.Location = make(map[string]sdk.CDNItemUnit)
 
 		iu, err := storage.LoadItemUnitByUnit(ctx, s.Mapper, s.mustDBWithCtx(ctx), s.Units.Buffer.ID(), it.ID, opts...)
 		if err != nil {
-			return err
+			if !sdk.ErrorIs(err, sdk.ErrNotFound) {
+				return err
+			}
 		}
-		res.Location = make(map[string]sdk.CDNItemUnit)
-		res.Location[s.Units.Buffer.Name()] = *iu
+
+		if iu != nil {
+			res.Location[s.Units.Buffer.Name()] = *iu
+		}
 
 		for _, strg := range s.Units.Storages {
 			iu, err := storage.LoadItemUnitByUnit(ctx, s.Mapper, s.mustDBWithCtx(ctx), strg.ID(), it.ID, opts...)

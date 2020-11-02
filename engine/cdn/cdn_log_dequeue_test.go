@@ -51,8 +51,7 @@ func TestStoreNewStepLog(t *testing.T) {
 		Msg: hook.Message{
 			Full: "this is a message",
 		},
-		Status: "Building",
-		Line:   0,
+		Line: 0,
 		Signature: log.Signature{
 			ProjectKey:   sdk.RandomString(10),
 			WorkflowID:   1,
@@ -70,7 +69,7 @@ func TestStoreNewStepLog(t *testing.T) {
 	}
 
 	content := buildMessage(hm)
-	require.NoError(t, s.storeLogs(context.TODO(), sdk.CDNTypeItemStepLog, hm.Signature, hm.Status, content, hm.Line))
+	require.NoError(t, s.storeLogs(context.TODO(), sdk.CDNTypeItemStepLog, hm.Signature, false, content, hm.Line))
 
 	apiRef := sdk.CDNLogAPIRef{
 		ProjectKey:     hm.Signature.ProjectKey,
@@ -133,9 +132,9 @@ func TestStoreLastStepLog(t *testing.T) {
 	s.Units = cdnUnits
 
 	hm := handledMessage{
-		Msg:    hook.Message{},
-		Status: sdk.StatusSuccess,
-		Line:   0,
+		Msg:          hook.Message{},
+		IsTerminated: sdk.StatusTerminated,
+		Line:         0,
 		Signature: log.Signature{
 			ProjectKey:   sdk.RandomString(10),
 			WorkflowID:   1,
@@ -178,7 +177,7 @@ func TestStoreLastStepLog(t *testing.T) {
 
 	}()
 	content := buildMessage(hm)
-	err = s.storeLogs(context.TODO(), sdk.CDNTypeItemStepLog, hm.Signature, hm.Status, content, hm.Line)
+	err = s.storeLogs(context.TODO(), sdk.CDNTypeItemStepLog, hm.Signature, hm.IsTerminated, content, hm.Line)
 	require.NoError(t, err)
 
 	itemDB, err := item.LoadByID(context.TODO(), s.Mapper, db, it.ID)
@@ -227,8 +226,8 @@ func TestStoreLogWrongOrder(t *testing.T) {
 		Msg: hook.Message{
 			Full: "this is a message",
 		},
-		Status: sdk.StatusSuccess,
-		Line:   1,
+		IsTerminated: sdk.StatusTerminated,
+		Line:         1,
 		Signature: log.Signature{
 			ProjectKey:   sdk.RandomString(10),
 			WorkflowID:   1,
@@ -271,7 +270,7 @@ func TestStoreLogWrongOrder(t *testing.T) {
 	}()
 
 	content := buildMessage(hm)
-	err = s.storeLogs(context.TODO(), sdk.CDNTypeItemStepLog, hm.Signature, hm.Status, content, hm.Line)
+	err = s.storeLogs(context.TODO(), sdk.CDNTypeItemStepLog, hm.Signature, hm.IsTerminated, content, hm.Line)
 	require.NoError(t, err)
 
 	itemDB, err := item.LoadByID(context.TODO(), s.Mapper, db, it.ID)
@@ -291,10 +290,10 @@ func TestStoreLogWrongOrder(t *testing.T) {
 
 	// Received Missing log
 	hm.Line = 0
-	hm.Status = ""
+	hm.IsTerminated = false
 	content = buildMessage(hm)
 
-	err = s.storeLogs(context.TODO(), sdk.CDNTypeItemStepLog, hm.Signature, hm.Status, content, hm.Line)
+	err = s.storeLogs(context.TODO(), sdk.CDNTypeItemStepLog, hm.Signature, hm.IsTerminated, content, hm.Line)
 	require.NoError(t, err)
 
 	itemDB2, err := item.LoadByID(context.TODO(), s.Mapper, db, it.ID)
@@ -347,8 +346,7 @@ func TestStoreNewServiceLog(t *testing.T) {
 		Msg: hook.Message{
 			Full: "this is a message",
 		},
-		Status: "Building",
-		Line:   0,
+		Line: 0,
 		Signature: log.Signature{
 			ProjectKey:   sdk.RandomString(10),
 			WorkflowID:   1,
@@ -362,7 +360,7 @@ func TestStoreNewServiceLog(t *testing.T) {
 	}
 
 	content := buildMessage(hm)
-	require.NoError(t, s.storeLogs(context.TODO(), sdk.CDNTypeItemServiceLog, hm.Signature, hm.Status, content, 0))
+	require.NoError(t, s.storeLogs(context.TODO(), sdk.CDNTypeItemServiceLog, hm.Signature, hm.IsTerminated, content, 0))
 
 	apiRef := sdk.CDNLogAPIRef{
 		ProjectKey:     hm.Signature.ProjectKey,
