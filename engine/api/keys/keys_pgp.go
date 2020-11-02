@@ -34,7 +34,7 @@ func GetOpenPGPEntity(r io.Reader) (*openpgp.Entity, error) {
 
 //NewOpenPGPEntity create an openpgp Entity
 func NewOpenPGPEntity(keyname string) (*openpgp.Entity, error) {
-	key, errE := openpgp.NewEntity(keyname, keyname, "cds@locahost", nil)
+	key, errE := openpgp.NewEntity(keyname, keyname, keyname+"@cds", nil)
 	if errE != nil {
 		return nil, sdk.WrapError(errE, "NewOpenPGPEntity> Cannot create new entity")
 	}
