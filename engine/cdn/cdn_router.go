@@ -18,6 +18,8 @@ func (s *Service) initRouter(ctx context.Context) {
 	r.Handle("/mon/status", nil, r.GET(s.statusHandler, service.OverrideAuth(service.NoAuthMiddleware)))
 	r.Handle("/mon/metrics", nil, r.GET(service.GetPrometheustMetricsHandler(s), service.OverrideAuth(service.NoAuthMiddleware)))
 	r.Handle("/mon/metrics/all", nil, r.GET(service.GetMetricsHandler, service.OverrideAuth(service.NoAuthMiddleware)))
+	r.Handle("/mon/profile", nil, r.GET(service.GetAllProfilesHandler, service.OverrideAuth(service.NoAuthMiddleware)))
+	r.Handle("/mon/profile/{name}", nil, r.GET(service.GetProfileHandler, service.OverrideAuth(service.NoAuthMiddleware)))
 
 	r.Handle("/cache", nil, r.DELETE(s.deleteCacheHandler))
 	r.Handle("/cache/status", nil, r.GET(s.getStatusCacheHandler))
