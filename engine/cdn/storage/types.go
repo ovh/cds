@@ -122,8 +122,8 @@ type BufferConfiguration struct {
 
 type StorageConfiguration struct {
 	Name          string                      `toml:"name" json:"name"`
-	SyncParallel  int64                       `toml:"syncParallel" json:"sync_parallel" default:"2" comment:"number of parallel sync processes"`
-	SyncBandwidth int64                       `toml:"syncBandwidth" json:"sync_bandwidth" default:"10" comment:"global bandwith shared by the sync processes"`
+	SyncParallel  int64                       `toml:"syncParallel" json:"sync_parallel" comment:"number of parallel sync processes"`
+	SyncBandwidth int64                       `toml:"syncBandwidth" json:"sync_bandwidth" comment:"global bandwith shared by the sync processes (in Mb)"`
 	Local         *LocalStorageConfiguration  `toml:"local" json:"local,omitempty" mapstructure:"local"`
 	Swift         *SwiftStorageConfiguration  `toml:"swift" json:"swift,omitempty" mapstructure:"swift"`
 	Webdav        *WebdavStorageConfiguration `toml:"webdav" json:"webdav,omitempty" mapstructure:"webdav"`
@@ -136,10 +136,9 @@ type LocalStorageConfiguration struct {
 }
 
 type CDSStorageConfiguration struct {
-	Host                  string                                  `toml:"host" json:"host"`
-	InsecureSkipVerifyTLS bool                                    `toml:"insecureSkipVerifyTLS" json:"insecureSkipVerifyTLS"`
-	Token                 string                                  `toml:"token" json:"-" comment:"consumer token must have the scopes Project (READ) and Run (READ)"`
-	Encryption            []convergent.ConvergentEncryptionConfig `toml:"encryption" json:"-" mapstructure:"encryption"`
+	Host                  string `toml:"host" json:"host"`
+	InsecureSkipVerifyTLS bool   `toml:"insecureSkipVerifyTLS" json:"insecureSkipVerifyTLS"`
+	Token                 string `toml:"token" json:"-" comment:"consumer token must have the scopes Project (READ) and Run (READ)"`
 }
 
 type SwiftStorageConfiguration struct {

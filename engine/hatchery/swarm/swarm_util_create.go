@@ -247,7 +247,6 @@ func (h *HatcherySwarm) computeDockerOptsOnVolumeRequirement(d *dockerOpts, req 
 				return err
 			}
 		}
-
 	}
 	return nil
 }

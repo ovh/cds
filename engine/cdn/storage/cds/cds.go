@@ -10,7 +10,6 @@ import (
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/cdn/storage"
-	"github.com/ovh/cds/engine/cdn/storage/encryption"
 	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
@@ -19,7 +18,6 @@ import (
 type CDS struct {
 	client cdsclient.Interface
 	storage.AbstractUnit
-	encryption.ConvergentEncryption
 	config storage.CDSStorageConfiguration
 }
 
@@ -37,7 +35,6 @@ func (c *CDS) Init(ctx context.Context, cfg interface{}) error {
 		return sdk.WithStack(fmt.Errorf("invalid configuration: %T", cfg))
 	}
 	c.config = *config
-	c.ConvergentEncryption = encryption.New(config.Encryption)
 
 	c.client = cdsclient.New(cdsclient.Config{
 		Host:                              config.Host,
@@ -109,4 +106,14 @@ func (c *CDS) Status(_ context.Context) []sdk.MonitoringStatusLine {
 
 func (c *CDS) Remove(ctx context.Context, i sdk.CDNItemUnit) error {
 	return nil
+}
+
+func (c *CDS) Read(_ sdk.CDNItemUnit, r io.Reader, w io.Writer) error {
+	_, err := io.Copy(w, r)
+	return sdk.WithStack(err)
+}
+
+func (c *CDS) Write(_ sdk.CDNItemUnit, r io.Reader, w io.Writer) error {
+	_, err := io.Copy(w, r)
+	return sdk.WithStack(err)
 }
