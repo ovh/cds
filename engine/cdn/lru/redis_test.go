@@ -54,46 +54,51 @@ func TestRedisLRU(t *testing.T) {
 	require.NoError(t, item.Insert(context.TODO(), m, db, &item3))
 
 	// Add first item
-	writer := r.NewWriter(item1.ID)
-	_, err = io.Copy(writer, strings.NewReader("this is the value"))
-	_ = writer.Close()
+	writer1 := r.NewWriter(item1.ID)
+	_, err = io.Copy(writer1, strings.NewReader("this is the first line\nthis is the second line\nthis is the third line\n"))
+	_ = writer1.Close()
 	require.NoError(t, err)
-
 	length, err := r.Len()
 	require.NoError(t, err)
 	require.Equal(t, 1, length)
-
 	size, err := r.Size()
 	require.NoError(t, err)
 	require.Equal(t, int64(45), size)
 
-	// Add second item
-	writer = r.NewWriter(item2.ID)
-	_, err = io.Copy(writer, strings.NewReader("this is the value 2"))
-	_ = writer.Close()
+	// Get first item
+	reader1 := r.NewReader(item1.ID, sdk.CDNReaderFormatText, 0, 2, 0)
+	buf1 := new(strings.Builder)
+	_, err = io.Copy(buf1, reader1)
+	reader1.Close()
 	require.NoError(t, err)
+	require.Equal(t, "this is the first line\nthis is the second line\n", buf1.String())
+	reader2 := r.NewReader(item1.ID, sdk.CDNReaderFormatText, 0, 0, 0)
+	buf2 := new(strings.Builder)
+	_, err = io.Copy(buf2, reader2)
+	_ = reader2.Close()
+	require.NoError(t, err)
+	require.Equal(t, "this is the first line\nthis is the second line\nthis is the third line\n", buf2.String())
 
+	// Add second item
+	writer2 := r.NewWriter(item2.ID)
+	_, err = io.Copy(writer2, strings.NewReader("this is the second value\n"))
+	_ = writer2.Close()
+	require.NoError(t, err)
 	length, err = r.Len()
 	require.NoError(t, err)
 	require.Equal(t, 2, length)
-
 	size, err = r.Size()
 	require.NoError(t, err)
 	require.Equal(t, int64(88), size)
 
-	// Get Item 1
-	reader := r.NewReader(item1.ID, sdk.CDNReaderFormatText, 0, 1, 0)
-	buf := new(strings.Builder)
-	_, err = io.Copy(buf, reader)
-	reader.Close()
-	require.NoError(t, err)
-	require.Equal(t, "this is the value", buf.String())
-
 	// Add third item
-	writer = r.NewWriter(item3.ID)
-	_, err = io.Copy(writer, strings.NewReader("this is the value 3"))
-	_ = writer.Close()
+	writer3 := r.NewWriter(item3.ID)
+	_, err = io.Copy(writer3, strings.NewReader("this is the third value\n"))
+	_ = writer3.Close()
 	require.NoError(t, err)
+	length, err = r.Len()
+	require.NoError(t, err)
+	require.Equal(t, 3, length)
 
 	// Remove oldest
 	cont, err := r.eviction()
@@ -109,5 +114,5 @@ func TestRedisLRU(t *testing.T) {
 
 	size, err = r.Size()
 	require.NoError(t, err)
-	require.Equal(t, int64(65), size)
+	require.Equal(t, int64(63), size)
 }

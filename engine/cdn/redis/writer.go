@@ -1,42 +1,36 @@
 package redis
 
+import (
+	"strings"
+)
+
 type Writer struct {
 	ReadWrite
-	CurrentScore uint
+	currentScore  uint
+	currentBuffer []byte
 }
 
 func (w *Writer) Write(p []byte) (int, error) {
-	// Get data at the current score
-	lines, err := w.ReadWrite.get(w.CurrentScore, w.CurrentScore)
-	if err != nil {
-		return 0, err
-	}
-	var currentLine string
-	if len(lines) == 1 {
-		currentLine = lines[0].Value
-	}
+	// Append cnew buffer to current one
+	w.currentBuffer = append(w.currentBuffer, p...)
 
-	var n int
+	// Split current buffer by lines
+	bufferString := string(w.currentBuffer)
+	bufferSplitted := strings.Split(bufferString, "\n")
 
-	for _, bch := range p {
-		charact := string(bch)
-		currentLine = currentLine + charact
-		n++
-		if charact == "\n" {
-			if err := w.ReadWrite.add(w.CurrentScore, currentLine); err != nil {
-				return 0, err
-			}
-			w.CurrentScore++
-			currentLine = ""
+	// Save all lines except the last one
+	for i := 0; i < len(bufferSplitted); i++ {
+		// For last part we add the bytes to the current buffer as it can be a partial line
+		if i == len(bufferSplitted)-1 {
+			w.currentBuffer = []byte(bufferSplitted[i])
+			break
 		}
-	}
-
-	// Save into redis current non-finished line
-	if len(currentLine) > 0 {
-		if err := w.ReadWrite.add(w.CurrentScore, currentLine); err != nil {
+		if err := w.ReadWrite.add(w.currentScore, bufferSplitted[i]+"\n"); err != nil {
 			return 0, err
 		}
+		w.currentScore++
 	}
 
-	return n, nil
+	// We directly return the length of the given buffer cause all given bytes will be stored in redis or in the current buffer
+	return len(p), nil
 }

@@ -147,56 +147,23 @@ func (s *Service) pushItemLogIntoCache(ctx context.Context, it sdk.CDNItem) erro
 		return sdk.WithStack(fmt.Errorf("unable to find unit %s", unit.Name))
 	}
 
+	t1 := time.Now()
+
 	// Create a reader
-	reader, err := unitStorage.NewReader(ctx, *refItemUnit)
+	storageReader, err := unitStorage.NewReader(ctx, *refItemUnit)
 	if err != nil {
 		return err
 	}
+	defer storageReader.Close()
 
 	// Create a writer for the cache
 	cacheWriter := s.LogCache.NewWriter(it.ID)
+	defer cacheWriter.Close()
 
 	// Write data in cache
-	chanError := make(chan error)
-	pr, pw := io.Pipe()
-
-	s.GoRoutines.Exec(ctx, "service.pushItemLogIntoCache.read", func(ctx context.Context) {
-		defer pw.Close()
-		if err := unitStorage.Read(*refItemUnit, reader, pw); err != nil {
-			chanError <- err
-		}
-		close(chanError)
-	})
-
-	if _, err := io.Copy(cacheWriter, pr); err != nil {
-		_ = pr.Close()
-		_ = reader.Close()
-		_ = cacheWriter.Close()
+	if err := unitStorage.Read(*refItemUnit, storageReader, cacheWriter); err != nil {
 		return err
 	}
-
-	if err := pr.Close(); err != nil {
-		_ = reader.Close()
-		_ = cacheWriter.Close()
-		return sdk.WithStack(err)
-	}
-
-	if err := reader.Close(); err != nil {
-		_ = cacheWriter.Close()
-		return sdk.WithStack(err)
-	}
-
-	if err := cacheWriter.Close(); err != nil {
-		return sdk.WithStack(err)
-	}
-
-	for err := range chanError {
-		if err != nil {
-			return sdk.WithStack(err)
-		}
-	}
-
-	t1 := time.Now()
 
 	log.InfoWithFields(ctx, log.Fields{
 		"item_apiref":               it.APIRefHash,
