@@ -419,8 +419,8 @@ func TestStoreTruncatedLogs(t *testing.T) {
 	}
 	s.GoRoutines = sdk.NewGoRoutines()
 
-	ctx, cancel := context.WithCancel(context.TODO())
-	t.Cleanup(cancel)
+	ctx, ccl := context.WithCancel(context.TODO())
+	t.Cleanup(ccl)
 	cdnUnits := newRunningStorageUnits(t, m, db.DbMap, ctx, 10)
 	s.Units = cdnUnits
 

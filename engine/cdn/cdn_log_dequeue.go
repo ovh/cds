@@ -146,7 +146,7 @@ func (s *Service) storeLogs(ctx context.Context, itemType sdk.CDNItemType, signa
 	if err != nil {
 		return err
 	}
-	// If we have all lines
+	// If we have all lines or buffer is full and we received the last line
 	if (sdk.StatusIsTerminated(status) && bufferFull) || (maxItemLine >= 0 && maxItemLine+1 == logsSize) {
 		tx, err := s.mustDBWithCtx(ctx).Begin()
 		if err != nil {
