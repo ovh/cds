@@ -43,6 +43,7 @@ export class LogBlock {
     optional: boolean;
     disabled: boolean;
     failed: boolean;
+    loading: boolean;
 
     constructor(name: string) {
         this.name = name;
@@ -145,6 +146,7 @@ export class WorkflowRunJobComponent implements OnInit, OnChanges, OnDestroy {
                 let block = new LogBlock(a.step_name ? a.step_name : a.name);
                 block.disabled = !a.enabled;
                 block.optional = a.optional;
+                block.loading = a.enabled;
                 this.steps.push(block);
             }
             this.steps[i + 1].failed = PipelineStatus.FAIL === this.nodeJobRun.job.step_status[i].status;
@@ -208,7 +210,7 @@ export class WorkflowRunJobComponent implements OnInit, OnChanges, OnDestroy {
             if (this.steps[i].link) {
                 continue;
             }
-            if (!this.nodeJobRun.job.action.actions[i - 1].enabled) {
+            if (this.steps[i].disabled) {
                 continue;
             }
 
@@ -222,6 +224,7 @@ export class WorkflowRunJobComponent implements OnInit, OnChanges, OnDestroy {
             this.steps[i].endLines = results[1].lines.filter(l => !results[0].lines.find(line => line.number === l.number));
             this.steps[i].totalLinesCount = results[0].totalCount;
             this.steps[i].open = true;
+            this.steps[i].loading = false;
         }
 
         this.computeStepFirstLineNumbers();
