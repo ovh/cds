@@ -179,7 +179,6 @@ func (r *Redis) eviction() (bool, error) {
 	if err != nil {
 		return false, err
 	}
-	log.Debug("cdn:lru:  %d/%d", size, r.MaxSize())
 	if size <= r.MaxSize() {
 		return false, err
 	}

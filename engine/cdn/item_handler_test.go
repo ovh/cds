@@ -116,8 +116,8 @@ func TestGetItemLogsDownloadHandler(t *testing.T) {
 		Msg: hook.Message{
 			Full: "this is a message",
 		},
-		Status: sdk.StatusSuccess,
-		Line:   2,
+		IsTerminated: sdk.StatusTerminated,
+		Line:         2,
 		Signature: log.Signature{
 			ProjectKey:   projectKey,
 			WorkflowID:   1,
@@ -135,7 +135,7 @@ func TestGetItemLogsDownloadHandler(t *testing.T) {
 	}
 
 	content := buildMessage(hm)
-	err := s.storeLogs(context.TODO(), sdk.CDNTypeItemStepLog, hm.Signature, hm.Status, content, hm.Line)
+	err := s.storeLogs(context.TODO(), sdk.CDNTypeItemStepLog, hm.Signature, hm.IsTerminated, content, hm.Line)
 	require.NoError(t, err)
 
 	signer, err := authentication.NewSigner("cdn-test", test.SigningKey)

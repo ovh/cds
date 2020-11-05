@@ -92,7 +92,7 @@ func (s *Service) Serve(c context.Context) error {
 
 	if s.Cfg.EnableLogProcessing {
 		log.Info(ctx, "Initializing database connection...")
-		//Intialize database
+		// Intialize database
 		s.DBConnectionFactory, err = database.Init(
 			ctx,
 			s.Cfg.Database.User,
@@ -184,14 +184,14 @@ func (s *Service) Serve(c context.Context) error {
 		MaxHeaderBytes: 1 << 20,
 	}
 
-	//Gracefully shutdown the http server
-	s.GoRoutines.Run(ctx, "service.httpserver-shutdown", func(ctx context.Context) {
+	// Gracefully shutdown the http server
+	s.GoRoutines.Exec(ctx, "service.httpserver-shutdown", func(ctx context.Context) {
 		<-ctx.Done()
 		log.Info(ctx, "CDN> Shutdown HTTP Server")
 		_ = server.Shutdown(ctx)
 	})
 
-	//Start the http server
+	// Start the http server
 	log.Info(ctx, "CDN> Starting HTTP Server on port %d", s.Cfg.HTTP.Port)
 	if err := server.ListenAndServe(); err != nil {
 		log.Fatalf("CDN> Cannot start cds-cdn: %v", err)

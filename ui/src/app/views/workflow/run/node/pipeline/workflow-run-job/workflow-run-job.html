@@ -1,8 +1,10 @@
 <div class="job">
     <div class="header">
         <div class="menu left">
-            <button *ngFor="let tab of tabs; let i = index" [class.active]="i === currentTabIndex"
-                (click)="selectTab(i)">{{tab.name}}</button>
+            <ng-container *ngIf="tabs && tabs.length > 1">
+                <button *ngFor="let tab of tabs; let i = index" [class.active]="i === currentTabIndex"
+                    (click)="selectTab(i)">{{tab.name}}</button>
+            </ng-container>
         </div>
         <div class="menu right">
             <button [class.active]="mode === displayModes.ANSI" (click)="clickMode(displayModes.ANSI)">ANSI</button>

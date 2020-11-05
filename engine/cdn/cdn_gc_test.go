@@ -45,6 +45,7 @@ func TestCleanSynchronizedItem(t *testing.T) {
 	require.NoError(t, err)
 
 	cdnUnits, err := storage.Init(context.TODO(), m, db.DbMap, sdk.NewGoRoutines(), storage.Configuration{
+		HashLocatorSalt: "thisismysalt",
 		Buffer: storage.BufferConfiguration{
 			Name: "redis_buffer",
 			Redis: storage.RedisBufferConfiguration{

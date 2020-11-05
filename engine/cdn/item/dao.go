@@ -152,7 +152,7 @@ func LoadByAPIRefHashAndType(ctx context.Context, m *gorpmapper.Mapper, db gorp.
 // ComputeSizeByIDs returns the size used by givenn item IDs
 func ComputeSizeByIDs(db gorp.SqlExecutor, itemIDs []string) (int64, error) {
 	query := `
-		SELECT SUM(size) FROM item
+		SELECT COALESCE(SUM(size), 0) FROM item
 		WHERE id = ANY($1) 
 	`
 	size, err := db.SelectInt(query, pq.StringArray(itemIDs))

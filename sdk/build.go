@@ -134,6 +134,11 @@ const (
 	StatusWorkerRegistering = "Registering"
 )
 
+var (
+	StatusTerminated    = True
+	StatusNotTerminated = False
+)
+
 // StatusIsTerminated returns if status is terminated (nothing related to building or waiting, ...)
 func StatusIsTerminated(status string) bool {
 	switch status {

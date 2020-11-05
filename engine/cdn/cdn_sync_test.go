@@ -47,6 +47,7 @@ func TestSyncLog(t *testing.T) {
 	}
 
 	cdnUnits, err := storage.Init(context.TODO(), m, db.DbMap, sdk.NewGoRoutines(), storage.Configuration{
+		HashLocatorSalt: "thisismysalt",
 		Buffer: storage.BufferConfiguration{
 			Name: "redis_buffer",
 			Redis: storage.RedisBufferConfiguration{

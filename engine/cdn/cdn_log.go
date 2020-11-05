@@ -12,6 +12,7 @@ import (
 	"time"
 
 	gocache "github.com/patrickmn/go-cache"
+	"github.com/spf13/cast"
 
 	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/sdk"
@@ -54,6 +55,7 @@ func (s *Service) runTCPLogServer(ctx context.Context) {
 	})
 
 	for i := int64(0); i < s.Cfg.Log.NbJobLogsGoroutines; i++ {
+		log.Info(ctx, "CDN> Starting dequeueJobLogs - cdn-worker-job-%d", i)
 		s.GoRoutines.Run(ctx, fmt.Sprintf("cdn-worker-job-%d", i), func(ctx context.Context) {
 			if err := s.dequeueJobLogs(ctx); err != nil {
 				log.Error(ctx, "dequeueJobLogs: unable to dequeue redis incoming job logs: %v", err)
@@ -61,6 +63,7 @@ func (s *Service) runTCPLogServer(ctx context.Context) {
 		})
 	}
 	for i := int64(0); i < s.Cfg.Log.NbServiceLogsGoroutines; i++ {
+		log.Info(ctx, "CDN> Starting dequeueServiceLogs - cdn-worker-service-%d", i)
 		s.GoRoutines.Run(ctx, fmt.Sprintf("cdn-worker-service-%d", i), func(ctx context.Context) {
 			if err := s.dequeueServiceLogs(ctx); err != nil {
 				log.Error(ctx, "dequeueJobLogs: unable to dequeue redis incoming service logs: %v", err)
@@ -112,7 +115,7 @@ func (s *Service) handleConnection(ctx context.Context, conn net.Conn) {
 
 		n, err := bufReader.Read(b)
 		if err != nil {
-			log.Debug("client left: %v", err)
+			log.Debug("client left: (%v) %v", conn.RemoteAddr(), err)
 			return
 		}
 
@@ -197,17 +200,14 @@ func (s *Service) handleWorkerLog(ctx context.Context, workerName string, worker
 		line = int64(lineI.(float64))
 	}
 
-	var status string
-	statusI := m.Extra["_"+log.ExtraFieldJobStatus]
-	if statusI != nil {
-		status = statusI.(string)
-	}
+	terminatedI := m.Extra["_"+log.ExtraFieldTerminated]
+	terminated := cast.ToBool(terminatedI)
 
 	hm := handledMessage{
-		Signature: signature,
-		Msg:       m,
-		Line:      line,
-		Status:    status,
+		Signature:    signature,
+		Msg:          m,
+		Line:         line,
+		IsTerminated: terminated,
 	}
 
 	if s.cdnEnabled(ctx, signature.ProjectKey) {
@@ -312,17 +312,17 @@ func (s *Service) handleServiceLog(ctx context.Context, hatcheryID int64, hatche
 		line = int64(lineI.(float64))
 	}
 
-	var status string
-	statusI := m.Extra["_"+log.ExtraFieldJobStatus]
-	if statusI != nil {
-		status = statusI.(string)
+	var terminated bool
+	terminatedI := m.Extra["_"+log.ExtraFieldTerminated]
+	if terminatedI != nil {
+		terminated = terminatedI.(bool)
 	}
 
 	hm := handledMessage{
-		Signature: signature,
-		Msg:       m,
-		Line:      line,
-		Status:    status,
+		Signature:    signature,
+		Msg:          m,
+		Line:         line,
+		IsTerminated: terminated,
 	}
 	if s.cdnEnabled(ctx, signature.ProjectKey) {
 		if err := s.Cache.Enqueue(keyServiceLogIncomingQueue, hm); err != nil {

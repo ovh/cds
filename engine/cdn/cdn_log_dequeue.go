@@ -72,7 +72,7 @@ func (s *Service) storeLogsWithRetry(ctx context.Context, itemType sdk.CDNItemTy
 	currentLog := buildMessage(hm)
 	cpt := 0
 	for {
-		if err := s.storeLogs(ctx, itemType, hm.Signature, hm.Status, currentLog, hm.Line); err != nil {
+		if err := s.storeLogs(ctx, itemType, hm.Signature, hm.IsTerminated, currentLog, hm.Line); err != nil {
 			if sdk.ErrorIs(err, sdk.ErrLocked) && cpt < 10 {
 				cpt++
 				time.Sleep(250 * time.Millisecond)
@@ -86,7 +86,7 @@ func (s *Service) storeLogsWithRetry(ctx context.Context, itemType sdk.CDNItemTy
 	}
 }
 
-func (s *Service) storeLogs(ctx context.Context, itemType sdk.CDNItemType, signature log.Signature, status string, content string, line int64) error {
+func (s *Service) storeLogs(ctx context.Context, itemType sdk.CDNItemType, signature log.Signature, terminated bool, content string, line int64) error {
 	it, err := s.loadOrCreateItem(ctx, itemType, signature)
 	if err != nil {
 		return err
@@ -103,7 +103,7 @@ func (s *Service) storeLogs(ctx context.Context, itemType sdk.CDNItemType, signa
 		return nil
 	}
 
-	_, err = s.Units.Buffer.Add(*iu, uint(line), content, storage.WithOption{IslastLine: sdk.StatusIsTerminated(status)})
+	_, err = s.Units.Buffer.Add(*iu, uint(line), content, storage.WithOption{IslastLine: terminated})
 	if err != nil {
 		return err
 	}
@@ -116,7 +116,7 @@ func (s *Service) storeLogs(ctx context.Context, itemType sdk.CDNItemType, signa
 	maxLineKey := cache.Key("cdn", "log", "size", it.ID)
 	maxItemLine := -1
 	var bufferFull bool
-	if sdk.StatusIsTerminated(status) {
+	if terminated {
 		maxItemLine = int(line)
 		currentSize, err := s.Units.Buffer.Size(*iu)
 		if err != nil {
@@ -147,7 +147,7 @@ func (s *Service) storeLogs(ctx context.Context, itemType sdk.CDNItemType, signa
 		return err
 	}
 	// If we have all lines or buffer is full and we received the last line
-	if (sdk.StatusIsTerminated(status) && bufferFull) || (maxItemLine >= 0 && maxItemLine+1 == logsSize) {
+	if (terminated && bufferFull) || (maxItemLine >= 0 && maxItemLine+1 == logsSize) {
 		tx, err := s.mustDBWithCtx(ctx).Begin()
 		if err != nil {
 			return sdk.WithStack(err)

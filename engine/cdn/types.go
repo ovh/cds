@@ -22,10 +22,10 @@ import (
 )
 
 type handledMessage struct {
-	Signature log.Signature
-	Msg       hook.Message
-	Line      int64
-	Status    string
+	Signature    log.Signature
+	Msg          hook.Message
+	Line         int64
+	IsTerminated bool
 }
 
 // Service is the stuct representing a hooks µService

@@ -99,7 +99,7 @@ func (h *HatcherySwarm) getServicesLogs() error {
 		}
 		if len(servicesLogs) > 0 {
 			ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-			h.Common.SendServiceLog(ctx, servicesLogs, sdk.StatusBuilding)
+			h.Common.SendServiceLog(ctx, servicesLogs, sdk.StatusNotTerminated)
 			cancel()
 		}
 	}

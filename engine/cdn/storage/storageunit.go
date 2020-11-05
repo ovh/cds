@@ -37,6 +37,10 @@ func Init(ctx context.Context, m *gorpmapper.Mapper, db *gorp.DbMap, gorts *sdk.
 		config: config,
 	}
 
+	if len(config.HashLocatorSalt) < 8 {
+		return nil, fmt.Errorf("invalid CDN configuration. HashLocatorSalt is too short")
+	}
+
 	if config.Buffer.Name == "" {
 		return nil, fmt.Errorf("invalid CDN configuration. Missing buffer name")
 	}
@@ -199,6 +203,7 @@ func (r *RunningStorageUnits) Start(ctx context.Context, gorts *sdk.GoRoutines) 
 			gorts.Run(ctx, fmt.Sprintf("RunningStorageUnits.process.%s.%d", s.Name(), x),
 				func(ctx context.Context) {
 					for id := range s.SyncItemChannel() {
+						t0 := time.Now()
 						tx, err := r.db.Begin()
 						if err != nil {
 							err = sdk.WrapError(err, "unable to begin tx")
@@ -207,7 +212,12 @@ func (r *RunningStorageUnits) Start(ctx context.Context, gorts *sdk.GoRoutines) 
 						}
 
 						if err := r.processItem(ctx, r.m, tx, s, id); err != nil {
-							log.ErrorWithFields(ctx, log.Fields{"stack_trace": fmt.Sprintf("%+v", err)}, "%s", err)
+							t1 := time.Now()
+							log.ErrorWithFields(ctx, log.Fields{
+								"stack_trace":               fmt.Sprintf("%+v", err),
+								"duration_milliseconds_num": t1.Sub(t0).Milliseconds(),
+							}, "error processing item id=%q: %v", id, err)
+							_ = tx.Rollback()
 							continue
 						}
 
@@ -226,7 +236,7 @@ func (r *RunningStorageUnits) Start(ctx context.Context, gorts *sdk.GoRoutines) 
 	// 	Feed the sync processes with a ticker
 	gorts.Run(ctx, "RunningStorageUnits.Start", func(ctx context.Context) {
 		tickr := time.NewTicker(time.Second)
-		tickrPurge := time.NewTicker(time.Second)
+		tickrPurge := time.NewTicker(30 * time.Second)
 
 		defer tickr.Stop()
 		defer tickrPurge.Stop()
