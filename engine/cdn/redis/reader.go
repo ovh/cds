@@ -7,6 +7,8 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
+var _ io.ReadCloser = new(Reader)
+
 type Reader struct {
 	ReadWrite
 	nextIndex     uint

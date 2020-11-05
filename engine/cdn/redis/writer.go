@@ -1,8 +1,11 @@
 package redis
 
 import (
+	"io"
 	"strings"
 )
+
+var _ io.WriteCloser = new(Writer)
 
 type Writer struct {
 	ReadWrite
@@ -33,4 +36,14 @@ func (w *Writer) Write(p []byte) (int, error) {
 
 	// We directly return the length of the given buffer cause all given bytes will be stored in redis or in the current buffer
 	return len(p), nil
+}
+
+func (w *Writer) Close() error {
+	if len(w.currentBuffer) > 0 {
+		if err := w.ReadWrite.add(w.currentScore, string(w.currentBuffer)+"\n"); err != nil {
+			return err
+		}
+	}
+
+	return w.ReadWrite.Close()
 }
