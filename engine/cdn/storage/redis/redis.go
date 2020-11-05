@@ -26,7 +26,7 @@ var (
 
 			size = redis.call('MEMORY', 'USAGE', KEYS[1]);
 			if size > tonumber(KEYS[4]) and KEYS[5] ~= "true" then
-				redis.call('zadd', KEYS[1], tonumber(KEYS[3]), "\"" .. tonumber(KEYS[3])+1 .. "#...truncated\"");
+				redis.call('zadd', KEYS[1], tonumber(KEYS[3]), "\"" .. tonumber(KEYS[3])+1 .. "#...truncated\n\"");
 			end
 		end
 		return size;
