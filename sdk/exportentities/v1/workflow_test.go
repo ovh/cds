@@ -229,8 +229,7 @@ func TestWorkflow_GetWorkflow(t *testing.T) {
 			},
 			wantErr: false,
 			want: sdk.Workflow{
-				Name:          "myworkflow",
-				HistoryLength: sdk.DefaultHistoryLength,
+				Name: "myworkflow",
 				WorkflowData: sdk.WorkflowData{
 					Node: sdk.Node{
 						Name: "pipeline",
@@ -266,9 +265,8 @@ func TestWorkflow_GetWorkflow(t *testing.T) {
 			},
 			wantErr: false,
 			want: sdk.Workflow{
-				Name:          "myworkflow",
-				HistoryLength: sdk.DefaultHistoryLength,
-				Description:   "this is my description",
+				Name:        "myworkflow",
+				Description: "this is my description",
 				WorkflowData: sdk.WorkflowData{
 					Node: sdk.Node{
 						Name: "pipeline",
@@ -331,8 +329,7 @@ func TestWorkflow_GetWorkflow(t *testing.T) {
 			},
 			wantErr: false,
 			want: sdk.Workflow{
-				Name:          "myworkflow",
-				HistoryLength: sdk.DefaultHistoryLength,
+				Name: "myworkflow",
 				WorkflowData: sdk.WorkflowData{
 					Node: sdk.Node{
 						Name: "root",
@@ -396,8 +393,7 @@ func TestWorkflow_GetWorkflow(t *testing.T) {
 			},
 			wantErr: false,
 			want: sdk.Workflow{
-				Name:          "myworkflow",
-				HistoryLength: sdk.DefaultHistoryLength,
+				Name: "myworkflow",
 				WorkflowData: sdk.WorkflowData{
 					Node: sdk.Node{
 						Name: "root",
@@ -463,8 +459,7 @@ func TestWorkflow_GetWorkflow(t *testing.T) {
 			},
 			wantErr: false,
 			want: sdk.Workflow{
-				Name:          "myworkflow",
-				HistoryLength: 25,
+				Name: "myworkflow",
 				WorkflowData: sdk.WorkflowData{
 					Node: sdk.Node{
 						Name: "root",
@@ -511,8 +506,7 @@ func TestWorkflow_GetWorkflow(t *testing.T) {
 			},
 			wantErr: false,
 			want: sdk.Workflow{
-				Name:          "myworkflow",
-				HistoryLength: sdk.DefaultHistoryLength,
+				Name: "myworkflow",
 				WorkflowData: sdk.WorkflowData{
 					Node: sdk.Node{
 						Name: "root",
@@ -601,8 +595,7 @@ func TestWorkflow_GetWorkflow(t *testing.T) {
 			},
 			wantErr: false,
 			want: sdk.Workflow{
-				Name:          "myworkflow",
-				HistoryLength: sdk.DefaultHistoryLength,
+				Name: "myworkflow",
 				WorkflowData: sdk.WorkflowData{
 					Node: sdk.Node{
 						Name: "A",
@@ -732,8 +725,7 @@ func TestWorkflow_GetWorkflow(t *testing.T) {
 			},
 			wantErr: false,
 			want: sdk.Workflow{
-				Name:          "myworkflow",
-				HistoryLength: sdk.DefaultHistoryLength,
+				Name: "myworkflow",
 				WorkflowData: sdk.WorkflowData{
 					Node: sdk.Node{
 						Name: "pipeline",
@@ -767,8 +759,7 @@ func TestWorkflow_GetWorkflow(t *testing.T) {
 			},
 			wantErr: false,
 			want: sdk.Workflow{
-				Name:          "myworkflow",
-				HistoryLength: sdk.DefaultHistoryLength,
+				Name: "myworkflow",
 				WorkflowData: sdk.WorkflowData{
 					Node: sdk.Node{
 						Name: "A",
@@ -816,7 +807,6 @@ func TestWorkflow_GetWorkflow(t *testing.T) {
 				ProjectIntegrationName: tt.fields.ProjectIntegrationName,
 				PipelineHooks:          tt.fields.PipelineHooks,
 				Permissions:            tt.fields.Permissions,
-				HistoryLength:          &tt.fields.HistoryLength,
 				OneAtATime:             tt.fields.OneAtATime,
 			}
 

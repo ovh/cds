@@ -39,8 +39,6 @@ type Workflow struct {
 	Permissions             Permissions                  `json:"permissions" db:"-" cli:"-"`
 	Metadata                Metadata                     `json:"metadata,omitempty" yaml:"metadata" db:"metadata"`
 	Usage                   *Usage                       `json:"usage,omitempty" db:"-" cli:"-"`
-	HistoryLength           int64                        `json:"history_length" db:"history_length" cli:"-"`
-	PurgeTags               PurgeTags                    `json:"purge_tags,omitempty" db:"purge_tags" cli:"-"`
 	RetentionPolicy         string                       `json:"retention_policy,omitempty" db:"retention_policy" cli:"-"`
 	MaxRuns                 int64                        `json:"max_runs,omitempty" db:"max_runs" cli:"-"`
 	Notifications           []WorkflowNotification       `json:"notifications,omitempty" db:"-" cli:"-"`
@@ -83,26 +81,6 @@ func (w *Workflow) Scan(src interface{}) error {
 		return WithStack(fmt.Errorf("type assertion .([]byte) failed (%T)", src))
 	}
 	return WrapError(json.Unmarshal(source, w), "cannot unmarshal Workflow")
-}
-
-type PurgeTags []string
-
-// Value returns driver.Value from PurgeTags.
-func (a PurgeTags) Value() (driver.Value, error) {
-	j, err := json.Marshal(a)
-	return j, WrapError(err, "cannot marshal Metadata")
-}
-
-// Scan PurgeTags.
-func (a *PurgeTags) Scan(src interface{}) error {
-	if src == nil {
-		return nil
-	}
-	source, ok := src.([]byte)
-	if !ok {
-		return WithStack(fmt.Errorf("type assertion .([]byte) failed (%T)", src))
-	}
-	return WrapError(json.Unmarshal(source, a), "cannot unmarshal PurgeTags")
 }
 
 // Value returns driver.Value from WorkflowData.

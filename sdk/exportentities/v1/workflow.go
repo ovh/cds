@@ -30,9 +30,7 @@ type Workflow struct {
 	// extra workflow data
 	Permissions      map[string]int                 `json:"permissions,omitempty" yaml:"permissions,omitempty" jsonschema_description:"The permissions for the workflow (ex: myGroup: 7).\nhttps://ovh.github.io/cds/docs/concepts/permissions"`
 	Metadata         map[string]string              `json:"metadata,omitempty" yaml:"metadata,omitempty"`
-	PurgeTags        []string                       `json:"purge_tags,omitempty" yaml:"purge_tags,omitempty"`
-	Notifications    []NotificationEntry            `json:"notify,omitempty" yaml:"notify,omitempty"` // This is used when the workflow have only one pipeline
-	HistoryLength    *int64                         `json:"history_length,omitempty" yaml:"history_length,omitempty"`
+	Notifications    []NotificationEntry            `json:"notify,omitempty" yaml:"notify,omitempty"`               // This is used when the workflow have only one pipeline
 	MapNotifications map[string][]NotificationEntry `json:"notifications,omitempty" yaml:"notifications,omitempty"` // This is used when the workflow have more than one pipeline
 }
 
@@ -196,17 +194,11 @@ func (w Workflow) GetWorkflow() (*sdk.Workflow, error) {
 	if err := w.CheckDependencies(); err != nil {
 		return nil, sdk.WrapError(err, "unable to check dependencies")
 	}
-	wf.PurgeTags = w.PurgeTags
 	if len(w.Metadata) > 0 {
 		wf.Metadata = make(map[string]string, len(w.Metadata))
 		for k, v := range w.Metadata {
 			wf.Metadata[k] = v
 		}
-	}
-	if w.HistoryLength != nil && *w.HistoryLength > 0 {
-		wf.HistoryLength = *w.HistoryLength
-	} else {
-		wf.HistoryLength = sdk.DefaultHistoryLength
 	}
 
 	rand.Seed(time.Now().Unix())

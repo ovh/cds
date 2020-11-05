@@ -69,9 +69,6 @@ func TestInsertStaticFiles(t *testing.T) {
 				},
 			},
 		},
-
-		HistoryLength: 2,
-		PurgeTags:     []string{"git.branch"},
 	}
 
 	test.NoError(t, workflow.Insert(context.TODO(), db, cache, *proj, &w))

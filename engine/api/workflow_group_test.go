@@ -521,7 +521,6 @@ func Test_PermissionOnWorkflowInferiorOfProject(t *testing.T) {
 	uri = router.GetRoute("PUT", api.putWorkflowHandler, vars)
 	test.NotEmpty(t, uri)
 
-	wfLoaded.HistoryLength = 300
 	req = assets.NewAuthentifiedRequest(t, u, pass, "PUT", uri, &wfLoaded)
 	//Do the request
 	w = httptest.NewRecorder()
@@ -531,7 +530,6 @@ func Test_PermissionOnWorkflowInferiorOfProject(t *testing.T) {
 	wfLoaded, errL = workflow.Load(context.Background(), db, api.Cache, *proj2, newWf.Name, workflow.LoadOptions{})
 	test.NoError(t, errL)
 	assert.Equal(t, 2, len(wfLoaded.Groups))
-	assert.Equal(t, int64(300), wfLoaded.HistoryLength)
 
 	// Try to run workflow
 	vars = map[string]string{
@@ -689,7 +687,6 @@ func Test_PermissionOnWorkflowWithRestrictionOnNode(t *testing.T) {
 	uri = router.GetRoute("PUT", api.putWorkflowHandler, vars)
 	test.NotEmpty(t, uri)
 
-	wfLoaded.HistoryLength = 300
 	wfLoaded.WorkflowData.Node.Groups = []sdk.GroupPermission{
 		{
 			Group:      proj.ProjectGroups[0].Group,
@@ -705,7 +702,6 @@ func Test_PermissionOnWorkflowWithRestrictionOnNode(t *testing.T) {
 	wfLoaded, errL = workflow.Load(context.Background(), db, api.Cache, *proj2, newWf.Name, workflow.LoadOptions{})
 	test.NoError(t, errL)
 	assert.Equal(t, 2, len(wfLoaded.Groups))
-	assert.Equal(t, int64(300), wfLoaded.HistoryLength)
 
 	// Try to run workflow
 	vars = map[string]string{

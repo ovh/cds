@@ -214,8 +214,6 @@ vcs_ssh_key: proj-blabla
 				},
 			},
 		},
-		HistoryLength: 2,
-		PurgeTags:     []string{"git.branch"},
 	}
 
 	t.Log("Inserting workflow=====")

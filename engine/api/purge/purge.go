@@ -10,22 +10,19 @@ import (
 	"github.com/go-gorp/gorp"
 	"go.opencensus.io/stats"
 
-	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/engine/api/integration"
 	"github.com/ovh/cds/engine/api/objectstore"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/engine/cache"
-	"github.com/ovh/cds/engine/featureflipping"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk/telemetry"
 )
 
 const (
-	FeaturePurgeName = "workflow-retention-policy"
-	FeatureMaxRuns   = "workflow-retention-maxruns"
+	FeatureMaxRuns = "workflow-retention-maxruns"
 )
 
 // MarkRunsAsDelete mark workflow run as delete
@@ -62,11 +59,6 @@ func WorkflowRuns(ctx context.Context, DBFunc func() *gorp.DbMap, sharedStorage 
 				return
 			}
 		case <-tickPurge.C:
-			// Check all workflows to mark runs that should be deleted
-			if err := MarkWorkflowRuns(ctx, DBFunc(), workflowRunsMarkToDelete); err != nil {
-				log.Warning(ctx, "purge> Error: %v", err)
-			}
-
 			log.Debug("purge> Deleting all workflow run marked to delete...")
 			if err := deleteWorkflowRunsHistory(ctx, DBFunc(), sharedStorage, workflowRunsDeleted); err != nil {
 				log.Warning(ctx, "purge> Error on deleteWorkflowRunsHistory : %v", err)
@@ -94,41 +86,6 @@ func Workflow(ctx context.Context, store cache.Store, DBFunc func() *gorp.DbMap,
 			}
 		}
 	}
-}
-
-// Deprecated: old method to mark runs to delete
-func MarkWorkflowRuns(ctx context.Context, db *gorp.DbMap, workflowRunsMarkToDelete *stats.Int64Measure) error {
-	dao := new(workflow.WorkflowDAO)
-	dao.Filters.DisableFilterDeletedWorkflow = false
-	wfs, err := dao.LoadAll(ctx, db)
-	if err != nil {
-		return err
-	}
-	for _, wf := range wfs {
-		enabled := featureflipping.IsEnabled(ctx, gorpmapping.Mapper, db, FeaturePurgeName, map[string]string{"project_key": wf.ProjectKey})
-		if enabled {
-			continue
-		}
-		tx, err := db.Begin()
-		if err != nil {
-			log.Error(ctx, "workflow.PurgeWorkflowRuns> error %v", err)
-			tx.Rollback() // nolint
-			continue
-		}
-		if err := workflow.PurgeWorkflowRun(ctx, tx, wf); err != nil {
-			log.Error(ctx, "workflow.PurgeWorkflowRuns> error %v", err)
-			tx.Rollback() // nolint
-			continue
-		}
-		if err := tx.Commit(); err != nil {
-			log.Error(ctx, "workflow.PurgeWorkflowRuns> unable to commit transaction:  %v", err)
-			_ = tx.Rollback()
-			continue
-		}
-	}
-
-	workflow.CountWorkflowRunsMarkToDelete(ctx, db, workflowRunsMarkToDelete)
-	return nil
 }
 
 // workflows purges all marked workflows

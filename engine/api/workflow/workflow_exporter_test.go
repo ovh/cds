@@ -89,7 +89,6 @@ func TestPull(t *testing.T) {
 		ProjectID:  proj.ID,
 		ProjectKey: proj.Key,
 		Metadata:   sdk.Metadata{"triggered_by": "bla"},
-		PurgeTags:  []string{"aa", "bb"},
 		WorkflowData: sdk.WorkflowData{
 			Node: sdk.Node{
 				Name: "node1",
@@ -123,7 +122,6 @@ func TestPull(t *testing.T) {
 	w1, err := workflow.Load(context.TODO(), db, cache, *proj, "test_1", workflow.LoadOptions{})
 	test.NoError(t, err)
 	test.Equal(t, w.Metadata, w1.Metadata)
-	test.Equal(t, w.PurgeTags, w1.PurgeTags)
 
 	pull, err := workflow.Pull(context.TODO(), db, cache, *proj, w1.Name, project.EncryptWithBuiltinKey)
 	test.NoError(t, err)

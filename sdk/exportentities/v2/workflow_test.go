@@ -188,8 +188,7 @@ func TestWorkflow_GetWorkflow(t *testing.T) {
 			},
 			wantErr: false,
 			want: sdk.Workflow{
-				Name:          "myWorkflow",
-				HistoryLength: sdk.DefaultHistoryLength,
+				Name: "myWorkflow",
 				WorkflowData: sdk.WorkflowData{
 					Node: sdk.Node{
 						Name: "root",
@@ -254,8 +253,7 @@ func TestWorkflow_GetWorkflow(t *testing.T) {
 			},
 			wantErr: false,
 			want: sdk.Workflow{
-				Name:          "myWorkflow",
-				HistoryLength: sdk.DefaultHistoryLength,
+				Name: "myWorkflow",
 				WorkflowData: sdk.WorkflowData{
 					Node: sdk.Node{
 						Name: "root",
@@ -321,8 +319,7 @@ func TestWorkflow_GetWorkflow(t *testing.T) {
 			},
 			wantErr: false,
 			want: sdk.Workflow{
-				Name:          "myWorkflow",
-				HistoryLength: 25,
+				Name: "myWorkflow",
 				WorkflowData: sdk.WorkflowData{
 					Node: sdk.Node{
 						Name: "root",
@@ -369,8 +366,7 @@ func TestWorkflow_GetWorkflow(t *testing.T) {
 			},
 			wantErr: false,
 			want: sdk.Workflow{
-				Name:          "myWorkflow",
-				HistoryLength: sdk.DefaultHistoryLength,
+				Name: "myWorkflow",
 				WorkflowData: sdk.WorkflowData{
 					Node: sdk.Node{
 						Name: "root",
@@ -459,8 +455,7 @@ func TestWorkflow_GetWorkflow(t *testing.T) {
 			},
 			wantErr: false,
 			want: sdk.Workflow{
-				Name:          "myWorkflow",
-				HistoryLength: sdk.DefaultHistoryLength,
+				Name: "myWorkflow",
 				WorkflowData: sdk.WorkflowData{
 					Node: sdk.Node{
 						Name: "A",
@@ -600,8 +595,7 @@ func TestWorkflow_GetWorkflow(t *testing.T) {
 			},
 			wantErr: false,
 			want: sdk.Workflow{
-				Name:          "myWorkflow",
-				HistoryLength: sdk.DefaultHistoryLength,
+				Name: "myWorkflow",
 				WorkflowData: sdk.WorkflowData{
 					Node: sdk.Node{
 						Name: "A",
@@ -642,7 +636,6 @@ func TestWorkflow_GetWorkflow(t *testing.T) {
 				Workflow:        tt.fields.Workflow,
 				Hooks:           tt.fields.Hooks,
 				Permissions:     tt.fields.Permissions,
-				HistoryLength:   &tt.fields.HistoryLength,
 				RetentionPolicy: tt.fields.RetentionPolicy,
 			}
 			got, err := exportentities.ParseWorkflow(w)

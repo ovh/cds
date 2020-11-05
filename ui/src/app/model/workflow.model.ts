@@ -35,7 +35,6 @@ export class Workflow {
     metadata: Map<string, string>;
     usage: Usage;
     history_length: number;
-    purge_tags: Array<string>;
     notifications: Array<WorkflowNotification>;
     from_repository: string;
     from_template: string;
