@@ -681,6 +681,7 @@ func (s *RedisStore) ScoredSetScanMaxScore(_ context.Context, key string) (*SetV
 }
 
 func (s *RedisStore) Eval(expr string, args ...string) (string, error) {
+	log.Info(context.TODO(), "Eval: %s  %v", expr, args)
 	result, err := s.Client.Eval(expr, args).Result()
 	if err != nil {
 		return "", sdk.WithStack(err)

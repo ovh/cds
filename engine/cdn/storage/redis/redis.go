@@ -31,14 +31,14 @@ var (
 		end
 		return size;
 	`
-	maxStepLogSize    int64
-	maxServiceLogSize int64
 )
 
 type Redis struct {
 	storage.AbstractUnit
-	config storage.RedisBufferConfiguration
-	store  cache.ScoredSetStore
+	config            storage.RedisBufferConfiguration
+	store             cache.ScoredSetStore
+	maxStepLogSize    int64
+	maxServiceLogSize int64
 }
 
 func init() {
@@ -46,8 +46,8 @@ func init() {
 }
 
 func (s *Redis) Init(_ context.Context, cfg interface{}, maxStepLog, maxServiceLog int64) error {
-	maxStepLogSize = maxStepLog
-	maxServiceLogSize = maxServiceLog
+	s.maxStepLogSize = maxStepLog
+	s.maxServiceLogSize = maxServiceLog
 	config, is := cfg.(storage.RedisBufferConfiguration)
 	if !is {
 		return sdk.WithStack(fmt.Errorf("invalid configuration: %T", cfg))
@@ -76,9 +76,9 @@ func (s *Redis) Add(i sdk.CDNItemUnit, index uint, value string, options storage
 	var maxsize int64
 	switch i.Item.Type {
 	case sdk.CDNTypeItemServiceLog:
-		maxsize = maxServiceLogSize
+		maxsize = s.maxServiceLogSize
 	default:
-		maxsize = maxStepLogSize
+		maxsize = s.maxStepLogSize
 	}
 
 	value = strconv.Itoa(int(index)) + "#" + value
