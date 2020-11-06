@@ -36,7 +36,7 @@
                 </div>
                 <div class="action" *ngIf="i>0">
                     <a *ngIf="step?.link"
-                        [href]="'/cdscdn/item/' + step.link.item_type + '/' + step.link.api_ref + '/download'"
+                        [href]="'./cdscdn/item/' + step.link.item_type + '/' + step.link.api_ref + '/download?refresh=5'"
                         target="_blank" rel="noopener noreferrer" title="Share/download the step"
                         (click)="$event.stopPropagation()"><i class="external alternate icon"></i></a>
                 </div>
