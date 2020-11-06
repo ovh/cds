@@ -114,6 +114,5 @@ func (c *CDS) Read(_ sdk.CDNItemUnit, r io.Reader, w io.Writer) error {
 }
 
 func (c *CDS) Write(_ sdk.CDNItemUnit, r io.Reader, w io.Writer) error {
-	_, err := io.Copy(w, r)
-	return sdk.WithStack(err)
+	return nil
 }
