@@ -60,6 +60,7 @@ func markWorkflowRunsToDelete(ctx context.Context, store cache.Store, db *gorp.D
 }
 
 func ApplyRetentionPolicyOnWorkflow(ctx context.Context, store cache.Store, db *gorp.DbMap, wf sdk.Workflow, opts MarkAsDeleteOptions, u *sdk.AuthentifiedUser) error {
+	log.Info(ctx, "ApplyRetentionPolicyOnWorkflow> check retention policy for workflow %s/%s", wf.ProjectKey, wf.Name)
 	var vcsClient sdk.VCSAuthorizedClientService
 	var app sdk.Application
 	appID := wf.WorkflowData.Node.Context.ApplicationID
@@ -73,7 +74,7 @@ func ApplyRetentionPolicyOnWorkflow(ctx context.Context, store cache.Store, db *
 			//Get the RepositoriesManager Client
 			vcsServer, err := repositoriesmanager.LoadProjectVCSServerLinkByProjectKeyAndVCSServerName(ctx, tx, wf.ProjectKey, app.VCSServer)
 			if err != nil {
-				log.Debug("SendVCSEvent> No vcsServer found: %v", err)
+				log.Error(ctx, "SendVCSEvent> No vcsServer found: %v", err)
 				_ = tx.Rollback()
 				return err
 			}
