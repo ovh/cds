@@ -24,6 +24,9 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
+// Default size for LRU cache is 128Mo
+const defaultLruSize = 128 * 1024 * 1024
+
 // New returns a new service
 func New() *Service {
 	s := new(Service)
@@ -152,7 +155,11 @@ func (s *Service) Serve(c context.Context) error {
 		}
 
 		log.Info(ctx, "Initializing log cache on %s", s.Cfg.Cache.Redis.Host)
-		s.LogCache, err = lru.NewRedisLRU(s.mustDBWithCtx(ctx), s.Cfg.Cache.LruSize, s.Cfg.Cache.Redis.Host, s.Cfg.Cache.Redis.Password)
+		lruSize := s.Cfg.Cache.LruSize
+		if lruSize == 0 {
+			lruSize = defaultLruSize
+		}
+		s.LogCache, err = lru.NewRedisLRU(s.mustDBWithCtx(ctx), lruSize, s.Cfg.Cache.Redis.Host, s.Cfg.Cache.Redis.Password)
 		if err != nil {
 			return sdk.WrapError(err, "cannot connect to redis instance for lru")
 		}
