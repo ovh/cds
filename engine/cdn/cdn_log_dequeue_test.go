@@ -426,8 +426,8 @@ func TestStoreTruncatedLogs(t *testing.T) {
 		Msg: hook.Message{
 			Full: "Bim bam boum",
 		},
-		Status: sdk.StatusBuilding,
-		Line:   0,
+		IsTerminated: false,
+		Line:         0,
 		Signature: log.Signature{
 			ProjectKey:   sdk.RandomString(10),
 			WorkflowID:   1,
@@ -470,15 +470,15 @@ func TestStoreTruncatedLogs(t *testing.T) {
 
 	}()
 	content := buildMessage(hm)
-	err = s.storeLogs(context.TODO(), sdk.CDNTypeItemStepLog, hm.Signature, hm.Status, content, hm.Line)
+	err = s.storeLogs(context.TODO(), sdk.CDNTypeItemStepLog, hm.Signature, hm.IsTerminated, content, hm.Line)
 	require.NoError(t, err)
 
-	hm.Status = sdk.StatusSuccess
+	hm.IsTerminated = true
 	hm.Msg.Full = "End of step"
 	hm.Line = 1
 
 	content = buildMessage(hm)
-	err = s.storeLogs(context.TODO(), sdk.CDNTypeItemStepLog, hm.Signature, hm.Status, content, hm.Line)
+	err = s.storeLogs(context.TODO(), sdk.CDNTypeItemStepLog, hm.Signature, hm.IsTerminated, content, hm.Line)
 	require.NoError(t, err)
 
 	itemDB, err := item.LoadByID(context.TODO(), s.Mapper, db, it.ID)
@@ -502,7 +502,7 @@ func TestStoreTruncatedLogs(t *testing.T) {
 	_, err = io.Copy(buf, rc)
 	require.NoError(t, err)
 
-	require.Equal(t, "[EMERGENCY] Bim bam boum\n...truncated", buf.String())
+	require.Equal(t, "[EMERGENCY] Bim bam boum\n...truncated\n", buf.String())
 	require.Equal(t, int64(2), lineCount)
 }
 
@@ -534,8 +534,8 @@ func TestStoreTruncatedNotWaitingLinesLogs(t *testing.T) {
 		Msg: hook.Message{
 			Full: "Bim bam boum",
 		},
-		Status: sdk.StatusBuilding,
-		Line:   0,
+		IsTerminated: false,
+		Line:         0,
 		Signature: log.Signature{
 			ProjectKey:   sdk.RandomString(10),
 			WorkflowID:   1,
@@ -578,15 +578,15 @@ func TestStoreTruncatedNotWaitingLinesLogs(t *testing.T) {
 
 	}()
 	content := buildMessage(hm)
-	err = s.storeLogs(context.TODO(), sdk.CDNTypeItemStepLog, hm.Signature, hm.Status, content, hm.Line)
+	err = s.storeLogs(context.TODO(), sdk.CDNTypeItemStepLog, hm.Signature, hm.IsTerminated, content, hm.Line)
 	require.NoError(t, err)
 
-	hm.Status = sdk.StatusSuccess
+	hm.IsTerminated = true
 	hm.Msg.Full = "End of step"
 	hm.Line = 2
 
 	content = buildMessage(hm)
-	err = s.storeLogs(context.TODO(), sdk.CDNTypeItemStepLog, hm.Signature, hm.Status, content, hm.Line)
+	err = s.storeLogs(context.TODO(), sdk.CDNTypeItemStepLog, hm.Signature, hm.IsTerminated, content, hm.Line)
 	require.NoError(t, err)
 
 	itemDB, err := item.LoadByID(context.TODO(), s.Mapper, db, it.ID)
@@ -610,6 +610,6 @@ func TestStoreTruncatedNotWaitingLinesLogs(t *testing.T) {
 	_, err = io.Copy(buf, rc)
 	require.NoError(t, err)
 
-	require.Equal(t, "[EMERGENCY] Bim bam boum\n...truncated", buf.String())
+	require.Equal(t, "[EMERGENCY] Bim bam boum\n...truncated\n", buf.String())
 	require.Equal(t, int64(2), lineCount)
 }
