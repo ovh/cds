@@ -42,7 +42,6 @@ type Interface interface {
 	ID() string
 	New(gorts *sdk.GoRoutines, syncParrallel int64, syncBandwidth float64)
 	Set(u sdk.CDNUnit)
-	Init(ctx context.Context, cfg interface{}) error
 	ItemExists(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlExecutor, i sdk.CDNItem) (bool, error)
 	Status(ctx context.Context) []sdk.MonitoringStatusLine
 	SyncBandwidth() float64
@@ -88,8 +87,10 @@ func (a *AbstractUnit) SyncBandwidth() float64 {
 
 type BufferUnit interface {
 	Interface
-	Add(i sdk.CDNItemUnit, score uint, value string) error
+	Init(ctx context.Context, cfg interface{}, maxStepLog, maxServiceLog int64) error
+	Add(i sdk.CDNItemUnit, score uint, value string, options WithOption) (int64, error)
 	Card(i sdk.CDNItemUnit) (int, error)
+	Size(i sdk.CDNItemUnit) (int64, error)
 	NewReader(ctx context.Context, i sdk.CDNItemUnit) (io.ReadCloser, error)
 	NewAdvancedReader(ctx context.Context, i sdk.CDNItemUnit, format sdk.CDNReaderFormat, from int64, size uint, sort int64) (io.ReadCloser, error)
 	Read(i sdk.CDNItemUnit, r io.Reader, w io.Writer) error
@@ -97,6 +98,7 @@ type BufferUnit interface {
 
 type StorageUnit interface {
 	Interface
+	Init(ctx context.Context, cfg interface{}) error
 	SyncItemChannel() chan string
 	NewWriter(ctx context.Context, i sdk.CDNItemUnit) (io.WriteCloser, error)
 	NewReader(ctx context.Context, i sdk.CDNItemUnit) (io.ReadCloser, error)
@@ -178,4 +180,19 @@ func (x RunningStorageUnits) HashLocator(loc string) string {
 	salt := []byte(x.config.HashLocatorSalt)
 	hashLocator := hex.EncodeToString(pbkdf2.Key([]byte(loc), salt, 4096, 32, sha1.New))
 	return hashLocator
+}
+
+type LogConfig struct {
+	// Step logs
+	StepMaxSize         int64 `toml:"stepMaxSize" default:"15728640" comment:"Max step logs size in bytes (default: 15MB)" json:"stepMaxSize"`
+	StepLinesRateLimit  int64 `toml:"stepLinesRateLimit" default:"1800" comment:"Number of lines that a worker can send by seconds" json:"stepLinesRateLimit"`
+	NbJobLogsGoroutines int64 `toml:"nbJobLogsGoroutines" default:"5" comment:"Number of workers that dequeue the job log queue" json:"nbJobLogsGoroutines"`
+
+	// Service logs
+	ServiceMaxSize          int64 `toml:"serviceMaxSize" default:"15728640" comment:"Max service logs size in bytes (default: 15MB)" json:"serviceMaxSize"`
+	NbServiceLogsGoroutines int64 `toml:"nbServiceLogsGoroutines" default:"5" comment:"Number of workers that dequeue the service log queue" json:"nbServiceLogsGoroutines"`
+}
+
+type WithOption struct {
+	IslastLine bool
 }

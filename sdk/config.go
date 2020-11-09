@@ -12,6 +12,7 @@ type ConfigUser struct {
 }
 
 type TCPServer struct {
-	Addr string `toml:"addr" default:"" comment:"Listen address without port, example: 127.0.0.1" json:"addr"`
-	Port int    `toml:"port" default:"8090" json:"port"`
+	Addr               string  `toml:"addr" default:"" comment:"Listen address without port, example: 127.0.0.1" json:"addr"`
+	Port               int     `toml:"port" default:"8090" json:"port"`
+	GlobalTCPRateLimit float64 `toml:"globalTCPRateLimit" default:"2048000" comment:"Rate limit (B/s) for incoming logs" json:"globalTCPRateLimit"`
 }

@@ -3,6 +3,7 @@ package cdn
 import (
 	"context"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/require"
 	"gopkg.in/h2non/gock.v1"
@@ -46,7 +47,10 @@ func TestSyncLog(t *testing.T) {
 		Token: "mytoken",
 	}
 
-	cdnUnits, err := storage.Init(context.TODO(), m, db.DbMap, sdk.NewGoRoutines(), storage.Configuration{
+	ctx, cancel := context.WithTimeout(context.TODO(), 5*time.Second)
+	t.Cleanup(cancel)
+
+	cdnUnits, err := storage.Init(ctx, m, db.DbMap, sdk.NewGoRoutines(), storage.Configuration{
 		HashLocatorSalt: "thisismysalt",
 		Buffer: storage.BufferConfiguration{
 			Name: "redis_buffer",
@@ -61,7 +65,7 @@ func TestSyncLog(t *testing.T) {
 				CDS:  cdsConfig,
 			},
 		},
-	})
+	}, storage.LogConfig{NbJobLogsGoroutines: 0, NbServiceLogsGoroutines: 0, StepMaxSize: 100000, ServiceMaxSize: 10000, StepLinesRateLimit: 100})
 	require.NoError(t, err)
 	cdnUnits.Start(context.TODO(), sdk.NewGoRoutines())
 	s.Units = cdnUnits

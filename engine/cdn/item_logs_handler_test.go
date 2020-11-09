@@ -38,7 +38,7 @@ func TestGetItemLogsLinesHandler(t *testing.T) {
 
 	ctx, cancel := context.WithCancel(context.TODO())
 	t.Cleanup(cancel)
-	s.Units = newRunningStorageUnits(t, s.Mapper, db.DbMap, ctx)
+	s.Units = newRunningStorageUnits(t, s.Mapper, db.DbMap, ctx, 1000)
 
 	hm := handledMessage{
 		Msg: hook.Message{
@@ -134,7 +134,7 @@ func TestGetItemLogsStreamHandler(t *testing.T) {
 
 	ctx, cancel := context.WithCancel(context.TODO())
 	t.Cleanup(cancel)
-	s.Units = newRunningStorageUnits(t, s.Mapper, db.DbMap, ctx)
+	s.Units = newRunningStorageUnits(t, s.Mapper, db.DbMap, ctx, 1000)
 
 	signature := log.Signature{
 		ProjectKey:   projectKey,

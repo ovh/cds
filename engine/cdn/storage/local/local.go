@@ -74,7 +74,7 @@ func (s *Local) ItemExists(ctx context.Context, m *gorpmapper.Mapper, db gorp.Sq
 	return !os.IsNotExist(err), nil
 }
 
-func (s *Local) NewWriter(ctx context.Context, i sdk.CDNItemUnit) (io.WriteCloser, error) {
+func (s *Local) NewWriter(_ context.Context, i sdk.CDNItemUnit) (io.WriteCloser, error) {
 	// Open the file from the filesystem according to the locator
 	path, err := s.filename(i)
 	if err != nil {
@@ -84,7 +84,7 @@ func (s *Local) NewWriter(ctx context.Context, i sdk.CDNItemUnit) (io.WriteClose
 	return os.OpenFile(path, os.O_CREATE|os.O_RDWR, os.FileMode(0640))
 }
 
-func (s *Local) NewReader(ctx context.Context, i sdk.CDNItemUnit) (io.ReadCloser, error) {
+func (s *Local) NewReader(_ context.Context, i sdk.CDNItemUnit) (io.ReadCloser, error) {
 	// Open the file from the filesystem according to the locator
 	path, err := s.filename(i)
 	if err != nil {
@@ -159,7 +159,7 @@ func (s *Local) dirSize(path string) (int64, error) {
 	return size, err
 }
 
-func (s *Local) Remove(ctx context.Context, i sdk.CDNItemUnit) error {
+func (s *Local) Remove(_ context.Context, i sdk.CDNItemUnit) error {
 	path, err := s.filename(i)
 	if err != nil {
 		return err

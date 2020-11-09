@@ -44,7 +44,10 @@ func TestCleanSynchronizedItem(t *testing.T) {
 	tmpDir, err := ioutil.TempDir("", t.Name()+"-cdn-1-*")
 	require.NoError(t, err)
 
-	cdnUnits, err := storage.Init(context.TODO(), m, db.DbMap, sdk.NewGoRoutines(), storage.Configuration{
+	ctx, cancel := context.WithTimeout(context.TODO(), 5*time.Second)
+	t.Cleanup(cancel)
+
+	cdnUnits, err := storage.Init(ctx, m, db.DbMap, sdk.NewGoRoutines(), storage.Configuration{
 		HashLocatorSalt: "thisismysalt",
 		Buffer: storage.BufferConfiguration{
 			Name: "redis_buffer",
@@ -75,7 +78,7 @@ func TestCleanSynchronizedItem(t *testing.T) {
 				},
 			},
 		},
-	})
+	}, storage.LogConfig{StepLinesRateLimit: 1000, ServiceMaxSize: 1000, StepMaxSize: 10000, NbServiceLogsGoroutines: 0, NbJobLogsGoroutines: 0})
 	require.NoError(t, err)
 	s.Units = cdnUnits
 
@@ -203,7 +206,7 @@ func TestCleanWaitingItem(t *testing.T) {
 
 	ctx, cancel := context.WithCancel(context.TODO())
 	t.Cleanup(cancel)
-	s.Units = newRunningStorageUnits(t, m, s.DBConnectionFactory.GetDBMap(m)(), ctx)
+	s.Units = newRunningStorageUnits(t, m, s.DBConnectionFactory.GetDBMap(m)(), ctx, 1000)
 
 	it := sdk.CDNItem{
 		ID:     sdk.UUID(),

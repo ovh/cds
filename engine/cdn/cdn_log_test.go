@@ -44,6 +44,7 @@ func TestWorkerLogCDNEnabled(t *testing.T) {
 	s := Service{
 		Cache: store,
 	}
+	s.Cfg.Log.StepMaxSize = 1000
 	s.GoRoutines = sdk.NewGoRoutines()
 
 	signature := log.Signature{
