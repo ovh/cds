@@ -32,19 +32,19 @@ var (
 
 var globalRateLimit *rateLimiter
 
-func (s *Service) runTCPLogServer(ctx context.Context) {
+func (s *Service) runTCPLogServer(ctx context.Context) error {
 	// Init hatcheries cache
 	if err := s.refreshHatcheriesPK(ctx); err != nil {
-		log.Error(ctx, "unable to init hatcheries cache: %v", err)
+		return sdk.WrapError(err, "unable to init hatcheries cache")
 	}
 
-	globalRateLimit = NewRateLimiter(ctx, s.Cfg.TCP.GlobalTCPRateLimit, 1024)
+	globalRateLimit = NewRateLimiter(ctx, float64(s.Cfg.TCP.GlobalTCPRateLimit), 1024)
 
 	// Start TCP server
 	log.Info(ctx, "Starting tcp server %s:%d", s.Cfg.TCP.Addr, s.Cfg.TCP.Port)
 	listener, err := net.Listen("tcp", fmt.Sprintf("%s:%d", s.Cfg.TCP.Addr, s.Cfg.TCP.Port))
 	if err != nil {
-		log.Fatalf("unable to start tcp log server: %v", err)
+		return sdk.WrapError(err, "unable to start tcp log server")
 	}
 
 	//Gracefully shutdown the tcp server
@@ -91,6 +91,8 @@ func (s *Service) runTCPLogServer(ctx context.Context) {
 			})
 		}
 	})
+
+	return nil
 }
 
 func (s *Service) handleConnection(ctx context.Context, conn net.Conn) {
