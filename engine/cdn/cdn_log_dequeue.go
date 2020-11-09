@@ -33,42 +33,20 @@ func (s *Service) dequeueJobLogs(ctx context.Context) error {
 				continue
 			}
 			cancel()
-			if hm.Signature.Worker == nil {
-				continue
-			}
-			s.storeLogsWithRetry(ctx, sdk.CDNTypeItemStepLog, hm)
+
+			s.storeLogsWithRetry(ctx, hm)
 		}
 	}
 }
 
-func (s *Service) dequeueServiceLogs(ctx context.Context) error {
-	defer func() {
-		log.Info(ctx, "cdn: leaving dequeue service logs")
-	}()
-	for {
-		select {
-		case <-ctx.Done():
-			return ctx.Err()
-		default:
-			dequeuCtx, cancel := context.WithTimeout(ctx, 15*time.Second)
-			var hm handledMessage
-			if err := s.Cache.DequeueWithContext(dequeuCtx, keyServiceLogIncomingQueue, 30*time.Millisecond, &hm); err != nil {
-				cancel()
-				if !strings.Contains(err.Error(), "context deadline exceeded") {
-					log.Error(ctx, "dequeueServiceLogs: unable to dequeue service logs queue: %v", err)
-				}
-				continue
-			}
-			cancel()
-			if hm.Signature.Service == nil {
-				continue
-			}
-			s.storeLogsWithRetry(ctx, sdk.CDNTypeItemServiceLog, hm)
-		}
+func (s *Service) storeLogsWithRetry(ctx context.Context, hm handledMessage) {
+	var itemType sdk.CDNItemType
+	if hm.Signature.Service != nil {
+		itemType = sdk.CDNTypeItemServiceLog
+	} else {
+		itemType = sdk.CDNTypeItemStepLog
 	}
-}
 
-func (s *Service) storeLogsWithRetry(ctx context.Context, itemType sdk.CDNItemType, hm handledMessage) {
 	currentLog := buildMessage(hm)
 	cpt := 0
 	for {
@@ -124,12 +102,7 @@ func (s *Service) storeLogs(ctx context.Context, itemType sdk.CDNItemType, signa
 		}
 
 		// check if buffer is full
-		switch it.Type {
-		case sdk.CDNTypeItemStepLog:
-			bufferFull = currentSize >= s.Cfg.Log.StepMaxSize
-		case sdk.CDNTypeItemServiceLog:
-			bufferFull = currentSize >= s.Cfg.Log.ServiceMaxSize
-		}
+		bufferFull = currentSize >= s.Cfg.Log.StepMaxSize
 
 		// store the score of last line
 		if err := s.Cache.SetWithTTL(maxLineKey, maxItemLine, ItemLogGC); err != nil {

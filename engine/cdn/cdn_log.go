@@ -24,10 +24,9 @@ import (
 )
 
 var (
-	logCache                   = gocache.New(20*time.Minute, 20*time.Minute)
-	keyJobLogIncomingQueue     = cache.Key("cdn", "log", "incoming", "job")
-	keyServiceLogIncomingQueue = cache.Key("cdn", "log", "incoming", "service")
-	keyJobLogSize              = cache.Key("cdn", "log", "incoming", "size")
+	logCache               = gocache.New(20*time.Minute, 20*time.Minute)
+	keyJobLogIncomingQueue = cache.Key("cdn", "log", "incoming", "job")
+	keyJobLogSize          = cache.Key("cdn", "log", "incoming", "size")
 )
 
 var globalRateLimit *rateLimiter
@@ -59,14 +58,6 @@ func (s *Service) runTCPLogServer(ctx context.Context) error {
 		s.GoRoutines.Run(ctx, fmt.Sprintf("cdn-worker-job-%d", i), func(ctx context.Context) {
 			if err := s.dequeueJobLogs(ctx); err != nil {
 				log.Error(ctx, "dequeueJobLogs: unable to dequeue redis incoming job logs: %v", err)
-			}
-		})
-	}
-	for i := int64(0); i < s.Cfg.Log.NbServiceLogsGoroutines; i++ {
-		log.Info(ctx, "CDN> Starting dequeueServiceLogs - cdn-worker-service-%d", i)
-		s.GoRoutines.Run(ctx, fmt.Sprintf("cdn-worker-service-%d", i), func(ctx context.Context) {
-			if err := s.dequeueServiceLogs(ctx); err != nil {
-				log.Error(ctx, "dequeueJobLogs: unable to dequeue redis incoming service logs: %v", err)
 			}
 		})
 	}
@@ -324,7 +315,7 @@ func (s *Service) handleServiceLog(ctx context.Context, hatcheryID int64, hatche
 		IsTerminated: terminated,
 	}
 	if s.cdnEnabled(ctx, signature.ProjectKey) {
-		if err := s.Cache.Enqueue(keyServiceLogIncomingQueue, hm); err != nil {
+		if err := s.Cache.Enqueue(keyJobLogIncomingQueue, hm); err != nil {
 			return err
 		}
 	}

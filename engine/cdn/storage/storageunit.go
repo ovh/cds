@@ -61,7 +61,7 @@ func Init(ctx context.Context, m *gorpmapper.Mapper, db *gorp.DbMap, gorts *sdk.
 
 	bd.New(gorts, 1, math.MaxFloat64)
 
-	if err := bd.Init(ctx, config.Buffer.Redis, logConfig.StepMaxSize, logConfig.ServiceMaxSize); err != nil {
+	if err := bd.Init(ctx, config.Buffer.Redis, logConfig.StepMaxSize); err != nil {
 		return nil, err
 	}
 	result.Buffer = bd

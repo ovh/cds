@@ -78,7 +78,7 @@ func TestCleanSynchronizedItem(t *testing.T) {
 				},
 			},
 		},
-	}, storage.LogConfig{StepLinesRateLimit: 1000, ServiceMaxSize: 1000, StepMaxSize: 10000, NbServiceLogsGoroutines: 0, NbJobLogsGoroutines: 0})
+	}, storage.LogConfig{StepLinesRateLimit: 1000, StepMaxSize: 10000, NbJobLogsGoroutines: 0})
 	require.NoError(t, err)
 	s.Units = cdnUnits
 

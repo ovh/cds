@@ -35,19 +35,17 @@ var (
 
 type Redis struct {
 	storage.AbstractUnit
-	config            storage.RedisBufferConfiguration
-	store             cache.ScoredSetStore
-	maxStepLogSize    int64
-	maxServiceLogSize int64
+	config         storage.RedisBufferConfiguration
+	store          cache.ScoredSetStore
+	maxStepLogSize int64
 }
 
 func init() {
 	storage.RegisterDriver("redis", new(Redis))
 }
 
-func (s *Redis) Init(_ context.Context, cfg interface{}, maxStepLog, maxServiceLog int64) error {
+func (s *Redis) Init(_ context.Context, cfg interface{}, maxStepLog int64) error {
 	s.maxStepLogSize = maxStepLog
-	s.maxServiceLogSize = maxServiceLog
 	config, is := cfg.(storage.RedisBufferConfiguration)
 	if !is {
 		return sdk.WithStack(fmt.Errorf("invalid configuration: %T", cfg))
@@ -73,14 +71,6 @@ func (s *Redis) Size(i sdk.CDNItemUnit) (int64, error) {
 }
 
 func (s *Redis) Add(i sdk.CDNItemUnit, index uint, value string, options storage.WithOption) (int64, error) {
-	var maxsize int64
-	switch i.Item.Type {
-	case sdk.CDNTypeItemServiceLog:
-		maxsize = s.maxServiceLogSize
-	default:
-		maxsize = s.maxStepLogSize
-	}
-
 	value = strconv.Itoa(int(index)) + "#" + value
 
 	btes, err := json.Marshal(value)
@@ -91,7 +81,7 @@ func (s *Redis) Add(i sdk.CDNItemUnit, index uint, value string, options storage
 		cache.Key(keyBuffer, i.ItemID),
 		string(btes),
 		strconv.FormatUint(uint64(index), 10),
-		strconv.Itoa(int(maxsize)),
+		strconv.Itoa(int(s.maxStepLogSize)),
 		strconv.FormatBool(options.IslastLine),
 	)
 	if err != nil {

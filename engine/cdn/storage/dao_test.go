@@ -50,7 +50,7 @@ func TestLoadOldItemUnitByItemStatusAndDuration(t *testing.T) {
 				},
 			},
 		},
-	}, storage.LogConfig{NbServiceLogsGoroutines: 0, NbJobLogsGoroutines: 0, StepMaxSize: 300000000, ServiceMaxSize: 3000000, StepLinesRateLimit: 10})
+	}, storage.LogConfig{NbJobLogsGoroutines: 0, StepMaxSize: 300000000, StepLinesRateLimit: 10})
 	require.NoError(t, err)
 
 	// Clean old test
@@ -168,7 +168,7 @@ func TestLoadAllItemIDUnknownByUnitOrderByUnitID(t *testing.T) {
 				},
 			},
 		},
-	}, storage.LogConfig{NbServiceLogsGoroutines: 0, NbJobLogsGoroutines: 0, StepMaxSize: 300000000, ServiceMaxSize: 3000000, StepLinesRateLimit: 10})
+	}, storage.LogConfig{NbJobLogsGoroutines: 0, StepMaxSize: 300000000, StepLinesRateLimit: 10})
 	require.NoError(t, err)
 
 	iu1 := sdk.CDNItemUnit{
