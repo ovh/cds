@@ -79,35 +79,6 @@ func Test_computeDockerOpts(t *testing.T) {
 			wantErr: false,
 		},
 		{
-			name: "Simple Test with volume",
-			args: args{requirements: []sdk.Requirement{{Name: "go-official-1.9.1", Type: sdk.VolumeRequirement, Value: "type=bind,source=/hostDir/sourceDir,destination=/dirInJob"}}},
-			want: &dockerOpts{
-				mounts: []mount.Mount{
-					{
-						Type:   mount.TypeBind,
-						Source: "/hostDir/sourceDir",
-						Target: "/dirInJob",
-					},
-				},
-			},
-			wantErr: false,
-		},
-		{
-			name: "Simple Test with readonly volume",
-			args: args{requirements: []sdk.Requirement{{Name: "go-official-1.9.1", Type: sdk.VolumeRequirement, Value: "type=bind,source=/hostDir/sourceDir,destination=/dirInJob,readonly"}}},
-			want: &dockerOpts{
-				mounts: []mount.Mount{
-					{
-						Type:     mount.TypeBind,
-						Source:   "/hostDir/sourceDir",
-						Target:   "/dirInJob",
-						ReadOnly: true,
-					},
-				},
-			},
-			wantErr: false,
-		},
-		{
 			name: "Extra hosts",
 			args: args{requirements: []sdk.Requirement{{Name: "go-official-1.9.1", Type: sdk.ModelRequirement, Value: "golang:1.9.1 --port=8080:8081/tcp --privileged --port=9080:9081/tcp --add-host=aaa:1.2.3.4 --add-host=bbb:5.6.7.8"}}},
 			want: &dockerOpts{

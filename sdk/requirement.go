@@ -13,8 +13,6 @@ const (
 	ServiceRequirement = "service"
 	//MemoryRequirement set memory limit on a container
 	MemoryRequirement = "memory"
-	// VolumeRequirement set Volume limit on a container
-	VolumeRequirement = "volume"
 	// OSArchRequirement checks the 'dist' of a worker eg {GOOS}/{GOARCH}
 	OSArchRequirement = "os-architecture"
 	// RegionRequirement lets a use to force a job running in a hatchery's region
@@ -90,7 +88,6 @@ var (
 		PluginRequirement,
 		RegionRequirement,
 		ServiceRequirement,
-		VolumeRequirement,
 	}
 
 	// OSArchRequirementValues comes from go tool dist list

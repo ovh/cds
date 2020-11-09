@@ -90,8 +90,6 @@ export class RequirementsListComponent extends Table<Requirement> implements OnI
             case 'model':
                 req.name = req.value;
                 break
-            case 'volume':
-                break;
             case OSArchitecture:
                 req.name = OSArchitecture;
                 break;
