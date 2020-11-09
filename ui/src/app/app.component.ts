@@ -114,10 +114,12 @@ export class AppComponent implements OnInit, OnDestroy {
         this._monitoringService.getStatus().subscribe(
             (data) => {
                 this.isAPIAvailable = true;
+                this.loading = false;
                 this.load();
             },
             err => {
                 this.isAPIAvailable = false;
+                this.loading = false;
                 setTimeout(() => { window.location.reload() }, 30000);
             }
         );
@@ -187,8 +189,6 @@ export class AppComponent implements OnInit, OnDestroy {
         this.cdsstateSub = this._store.select(CDSState.getCurrentState()).subscribe(m => {
             this.maintenance = m.maintenance;
         });
-
-        this.loading = false;
     }
 
     startVersionWorker(): void {
