@@ -77,8 +77,8 @@
                     <div *ngIf="ldapDriver" class="ui bottom attached tab segment" [class.active]="ldapSigninActive">
                         <form class="ui form" (ngSubmit)="ldapSignin(signinForm)" #signinForm="ngForm">
                             <div class="field">
-                                <label>LDAP Bind*</label>
-                                <input type="text" name="bind" ngModel required>
+                                <label>{{ 'user_label_user_ldap' | translate }}*</label>
+                                <input type="text" name="user" ngModel required>
                             </div>
                             <div class="field">
                                 <label>{{ 'user_label_password' | translate }}*</label>
