@@ -25,13 +25,11 @@ import (
 )
 
 const (
-	defaultLruSize                 = 128 * 1024 * 1024 // 128Mb
-	defaultNbJobLogsGoroutines     = 5
-	defaultNbServiceLogsGoroutines = 5
-	defaultStepMaxSize             = 15 * 1024 * 1024 // 15Mb
-	defaultServiceMaxSize          = 15 * 1024 * 1024 // 15Mb
-	defaultStepLinesRateLimit      = 1800
-	defaultGlobalTCPRateLimit      = 2 * 1024 * 1024 // 2Mb
+	defaultLruSize             = 128 * 1024 * 1024 // 128Mb
+	defaultNbJobLogsGoroutines = 10
+	defaultStepMaxSize         = 15 * 1024 * 1024 // 15Mb
+	defaultStepLinesRateLimit  = 1800
+	defaultGlobalTCPRateLimit  = 2 * 1024 * 1024 // 2Mb
 )
 
 // New returns a new service
@@ -81,14 +79,8 @@ func (s *Service) ApplyConfiguration(config interface{}) error {
 	if s.Cfg.Log.NbJobLogsGoroutines == 0 {
 		s.Cfg.Log.NbJobLogsGoroutines = defaultNbJobLogsGoroutines
 	}
-	if s.Cfg.Log.NbServiceLogsGoroutines == 0 {
-		s.Cfg.Log.NbServiceLogsGoroutines = 5
-	}
 	if s.Cfg.Log.StepMaxSize == 0 {
 		s.Cfg.Log.StepMaxSize = defaultStepMaxSize
-	}
-	if s.Cfg.Log.ServiceMaxSize == 0 {
-		s.Cfg.Log.StepMaxSize = defaultServiceMaxSize
 	}
 	if s.Cfg.TCP.GlobalTCPRateLimit == 0 {
 		s.Cfg.TCP.GlobalTCPRateLimit = defaultGlobalTCPRateLimit

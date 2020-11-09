@@ -128,7 +128,7 @@ func newRunningStorageUnits(t *testing.T, m *gorpmapper.Mapper, dbMap *gorp.DbMa
 				},
 			},
 		},
-	}, storage.LogConfig{NbJobLogsGoroutines: 0, NbServiceLogsGoroutines: 0, StepMaxSize: maxStepSize, ServiceMaxSize: 10000, StepLinesRateLimit: 10000})
+	}, storage.LogConfig{NbJobLogsGoroutines: 0, StepMaxSize: maxStepSize, StepLinesRateLimit: 10000})
 	require.NoError(t, err)
 	cdnUnits.Start(ctx, sdk.NewGoRoutines())
 	return cdnUnits

@@ -202,7 +202,7 @@ func TestServiceLog(t *testing.T) {
 	defer gock.Off()
 	mCDN := gorpmapper.New()
 	_, cacheCDN := test.SetupPGWithMapper(t, mCDN, sdk.TypeCDN)
-	defer cacheCDN.Delete(keyServiceLogIncomingQueue)
+	defer cacheCDN.Delete(keyJobLogIncomingQueue)
 	defer logCache.Flush()
 
 	// Create hatchery private key
@@ -267,7 +267,7 @@ func TestServiceLog(t *testing.T) {
 	require.True(t, has)
 	require.False(t, featureEnabled.(bool))
 
-	b, err := s.Cache.Exist(keyServiceLogIncomingQueue)
+	b, err := s.Cache.Exist(keyJobLogIncomingQueue)
 	require.NoError(t, err)
 	require.False(t, b)
 }
