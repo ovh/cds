@@ -266,7 +266,7 @@ func deleteRunHistory(ctx context.Context, db *gorp.DbMap, workflowRunID int64, 
 	}
 	defer tx.Rollback() // nolint
 
-	if _, err := workflow.LoadAndLockRunByID(tx, workflowRunID, workflow.LoadRunOptions{DisableDetailledNodeRun: true}); err != nil {
+	if _, err := workflow.LoadAndLockRunByID(tx, workflowRunID, workflow.LoadRunOptions{DisableDetailledNodeRun: true, WithDeleted: true}); err != nil {
 		if sdk.ErrorIs(err, sdk.ErrNotFound) {
 			return nil
 		}
