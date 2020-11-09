@@ -355,6 +355,7 @@ export class WorkflowRunJobComponent implements OnInit, OnDestroy {
         this.steps[this.steps.length - 1].lines = result.lines;
         this.steps[this.steps.length - 1].totalLinesCount = result.totalCount;
         this.steps[this.steps.length - 1].open = true;
+        this.steps[this.steps.length - 1].loading = false;
         this._cd.markForCheck();
 
         const protocol = window.location.protocol.replace('http', 'ws');
