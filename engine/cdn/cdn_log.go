@@ -268,11 +268,8 @@ func (s *Service) handleServiceLog(ctx context.Context, hatcheryID int64, hatche
 		line = int64(lineI.(float64))
 	}
 
-	var terminated bool
 	terminatedI := m.Extra["_"+log.ExtraFieldTerminated]
-	if terminatedI != nil {
-		terminated = terminatedI.(bool)
-	}
+	terminated := cast.ToBool(terminatedI)
 
 	hm := handledMessage{
 		Signature:    signature,

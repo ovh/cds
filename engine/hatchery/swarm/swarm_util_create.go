@@ -194,10 +194,6 @@ func (h *HatcherySwarm) computeDockerOpts(requirements []sdk.Requirement) (*dock
 			if err := h.computeDockerOptsOnModelRequirement(dockerOpts, r); err != nil {
 				return nil, err
 			}
-		case sdk.VolumeRequirement:
-			if err := h.computeDockerOptsOnVolumeRequirement(dockerOpts, r); err != nil {
-				return nil, err
-			}
 		}
 	}
 
@@ -230,71 +226,6 @@ func (h *HatcherySwarm) computeDockerOptsOnModelRequirement(d *dockerOpts, req s
 			return fmt.Errorf("Options not supported: %s", opt)
 		}
 	}
-	return nil
-}
-
-func (h *HatcherySwarm) computeDockerOptsOnVolumeRequirement(d *dockerOpts, req sdk.Requirement) error {
-	// args are separated by a space
-	// example: type=bind,source=/hostDir/sourceDir,destination=/dirInJob
-	for idx, opt := range strings.Split(req.Value, " ") {
-		if h.Config.DisableDockerOptsOnRequirements {
-			return fmt.Errorf("you could not use this docker options '%s' with a 'shared.infra' hatchery. Please use you own hatchery or remove this option", opt)
-		}
-
-		if idx == 0 {
-			// it's --mount flag
-			if err := d.computeDockerOptsOnVolumeMountRequirement(opt); err != nil {
-				return err
-			}
-		}
-	}
-	return nil
-}
-
-// computeDockerOptsOnVolumeMountRequirement compute Mount struct from value of requirement
-func (d *dockerOpts) computeDockerOptsOnVolumeMountRequirement(opt string) error {
-	// check that value begin with type= and contains source= / destination=
-	if !strings.HasPrefix(opt, "type=") || !strings.Contains(opt, "source=") || !strings.Contains(opt, "destination=") {
-		return fmt.Errorf("Invalid mount option. Example:type=bind,source=/hostDir/sourceDir,destination=/dirInJob current:%s", opt)
-	}
-
-	var mtype, source, destination, bindPropagation string
-	var readonly bool
-
-	// iterate over arg separated by ','
-	// type=bind,source=/hostDir/sourceDir,destination=/dirInJob ->
-	// [type=bind] [source=/hostDir/sourceDir] [destination=/dirInJob]
-	for _, o := range strings.Split(opt, ",") {
-		if strings.HasPrefix(o, "type=") {
-			mtype = strings.Split(o, "=")[1]
-		} else if strings.HasPrefix(o, "source=") {
-			source = strings.Split(o, "=")[1]
-		} else if strings.HasPrefix(o, "destination=") {
-			destination = strings.Split(o, "=")[1]
-		} else if strings.HasPrefix(o, "bind-propagation=") {
-			bindPropagation = strings.Split(o, "=")[1]
-		} else if o == "readonly" {
-			readonly = true
-		}
-	}
-	if mtype == "" || source == "" || destination == "" {
-		return fmt.Errorf("Invalid mount option - one arg is empty. Example:type=bind,source=/hostDir/sourceDir,destination=/dirInJob current:%s", opt)
-	}
-
-	m := mount.Mount{
-		Target:   destination,
-		Source:   source,
-		Type:     mount.Type(mtype),
-		ReadOnly: readonly,
-	}
-	// rprivate is the default value
-	// see https://docs.docker.com/engine/admin/volumes/bind-mounts/#choosing-the--v-or-mount-flag
-	if bindPropagation != "" {
-		m.BindOptions = &mount.BindOptions{Propagation: mount.Propagation(bindPropagation)}
-	}
-
-	d.mounts = append(d.mounts, m)
-
 	return nil
 }
 

@@ -87,9 +87,6 @@ export class RequirementsFormComponent implements OnInit {
                     case 'hostname':
                         placeHolderValue = this._translate.instant('requirement_placeholder_value_hostname');
                         break;
-                    case 'volume':
-                        placeHolderValue = 'type=bind,source=/hostDir/sourceDir,destination=/dirInJob';
-                        break;
                     case 'memory':
                         placeHolderValue = '4096';
                         break;
@@ -157,9 +154,6 @@ export class RequirementsFormComponent implements OnInit {
                 this.workerModelLinked = this.computeDisplayLinkWorkerModel();
                 this.newRequirement.name = this.newRequirement.value;
                 break;
-            case 'volume':
-                this.newRequirement.name = this.getVolumeName();
-                break;
             case OSArchitecture:
                 this.newRequirement.name = OSArchitecture;
                 break;
@@ -174,22 +168,6 @@ export class RequirementsFormComponent implements OnInit {
         if (this.modal) {
             this.modal.hide();
         }
-    }
-
-    getVolumeName(): string {
-        let parts = this.newRequirement.value.split(',');
-        for (let p of parts) {
-            // example: type=bind,source=/hostDir/sourceDir,destination=/dirInJob
-            // we want /dirInJob for volume name
-            if (p.startsWith('destination=')) {
-                let value = p.split('=');
-                if (value.length === 2) {
-                    // keep only a-zA-Z - and / in name, '_' for others characters
-                    return value[1].replace(/([^a-zA-Z\-/])/gi, '_');
-                }
-            }
-        }
-        return '';
     }
 
     computeDisplayLinkWorkerModel(): WorkerModel {

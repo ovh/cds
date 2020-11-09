@@ -39,7 +39,5 @@ This hatchery offers some features on job pre-requisites, usable only on user's 
     * Privileged flag: `--privileged`
     * Add host flag: `--add-host=aaa:1.2.3.4 --add-host=bbb:5.6.7.8`
     * Use all: `--port=8080:8081/tcp --privileged --port=9080:9081/tcp --add-host=aaa:1.2.3.4 --add-host=bbb:5.6.7.8`
-* options on volume prerequisite
-    * Bind: `type=bind,source=/hostDir/sourceDir,destination=/dirInJob,readonly`
 
 ![Job Prerequisites](/images/workflows.pipelines.requirements.docker.worker-model.docker.png)

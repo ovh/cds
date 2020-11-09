@@ -74,7 +74,7 @@ type CDNLogAPIRef struct {
 
 type CDNItemResume struct {
 	CDNItem
-	Location map[string]CDNItemUnit
+	Location map[string]CDNItemUnit `json:"location,omitempty"`
 }
 
 func (a CDNLogAPIRef) ToFilename() string {

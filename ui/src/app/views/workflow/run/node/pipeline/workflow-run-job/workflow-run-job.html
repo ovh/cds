@@ -18,8 +18,11 @@
     <ng-container *ngIf="currentTabIndex === 0">
         <div class="step" *ngFor="let step of steps; trackBy: trackStepElement; let i = index">
             <div class="line info" (click)="step.clickOpen()">
-                <div class="number"><i *ngIf="step.lines.length > 0" class="caret icon" [class.down]="step.open"
-                        [class.right]="!step.open"></i>{{step.firstDisplayedLineNumber ? step.firstDisplayedLineNumber : ''}}
+                <div class="number">
+                    <i *ngIf="step.lines.length > 0" class="caret icon" [class.down]="step.open"
+                        [class.right]="!step.open"></i>
+                    <div *ngIf="step.lines.length === 0 && step.loading" class="ui mini loader"></div>
+                    {{step.firstDisplayedLineNumber ? step.firstDisplayedLineNumber : ''}}
                 </div>
                 <div class="value">{{step.name}}</div>
                 <div class="extra">
@@ -33,7 +36,7 @@
                 </div>
                 <div class="action" *ngIf="i>0">
                     <a *ngIf="step?.link"
-                        [href]="'/cdscdn/item/' + step.link.item_type + '/' + step.link.api_ref + '/download'"
+                        [href]="'./cdscdn/item/' + step.link.item_type + '/' + step.link.api_ref + '/download?refresh=5'"
                         target="_blank" rel="noopener noreferrer" title="Share/download the step"
                         (click)="$event.stopPropagation()"><i class="external alternate icon"></i></a>
                 </div>

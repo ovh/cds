@@ -250,4 +250,8 @@ export class ConsumerCreateModalComponent {
         }
         this.selectedScopeDetails.push(detail);
     }
+
+    clickClose() {
+        this.modal.approve(true);
+    }
 }
