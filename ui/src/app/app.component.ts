@@ -25,8 +25,6 @@ import { ToastService } from './shared/toast/ToastService';
 import { AuthenticationState } from './store/authentication.state';
 import { AddHelp } from './store/help.action';
 
-declare var PACMAN: any;
-
 @Component({
     selector: 'app-root',
     templateUrl: './app.component.html',
@@ -55,12 +53,9 @@ export class AppComponent implements OnInit, OnDestroy {
     maintenance: boolean;
     cdsstateSub: Subscription;
     user: AuthentifiedUser;
-    previousURL: string
-
-    @ViewChild('gamification')
-    eltGamification: ElementRef;
-    gameInit: boolean;
+    previousURL: string;
     websocket: WebSocketSubject<any>;
+    loading = true;
 
     constructor(
         _translate: TranslateService,
@@ -78,7 +73,6 @@ export class AppComponent implements OnInit, OnDestroy {
         private _ngZone: NgZone,
         private _monitoringService: MonitoringService
     ) {
-        this.isAPIAvailable = false;
         this.zone = new NgZone({ enableLongStackTrace: false });
         this.toasterConfigDefault = this._toastService.getConfigDefault();
         this.toasterConfigErrorHTTP = this._toastService.getConfigErrorHTTP();
@@ -114,7 +108,7 @@ export class AppComponent implements OnInit, OnDestroy {
         });
     }
 
-    ngOnDestroy(): void {} // Should be set to use @AutoUnsubscribe with AOT
+    ngOnDestroy(): void { } // Should be set to use @AutoUnsubscribe with AOT
 
     ngOnInit(): void {
         this._monitoringService.getStatus().subscribe(
@@ -191,15 +185,10 @@ export class AppComponent implements OnInit, OnDestroy {
             });
 
         this.cdsstateSub = this._store.select(CDSState.getCurrentState()).subscribe(m => {
-            // Switch maintenance ON
-            if (!this.maintenance && m.maintenance && !this.gameInit && this.isConnected && !this.user.isAdmin()) {
-                setTimeout(() => {
-                    this.gameInit = true;
-                    PACMAN.init(this.eltGamification.nativeElement, '/assets/js/');
-                }, 1000);
-            }
             this.maintenance = m.maintenance;
         });
+
+        this.loading = false;
     }
 
     startVersionWorker(): void {
@@ -217,8 +206,6 @@ export class AppComponent implements OnInit, OnDestroy {
     }
 
     refresh(): void {
-        this.zone.runOutsideAngular(() => {
-            location.reload(true);
-        });
+        this.zone.runOutsideAngular(() => { location.reload(); });
     }
 }

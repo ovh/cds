@@ -62,8 +62,7 @@
               "resources/cds-hint.js",
               "node_modules/ansi_up/ansi_up.js",
               "node_modules/sanitize-html/dist/sanitize-html.min.js",
-              "node_modules/prismjs/prism.js",
-              "src/assets/js/pacman.js"
+              "node_modules/prismjs/prism.js"
             ]
           },
           "configurations": {
@@ -148,8 +147,7 @@
               "node_modules/codemirror/addon/display/autorefresh.js",
               "resources/cds-hint.js",
               "node_modules/ansi_up/ansi_up.js",
-              "node_modules/sanitize-html/dist/sanitize-html.min.js",
-              "src/assets/js/pacman.js"
+              "node_modules/sanitize-html/dist/sanitize-html.min.js"
             ],
             "styles": [
               "node_modules/dragula/dist/dragula.css",

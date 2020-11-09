@@ -1,88 +1,73 @@
 @import "../common";
 
-#AppComponent {
+.app {
     height: 100%;
-    .maintenance.banner {
-        margin-top: 0;
-        img {
-            position: absolute;
-            left: 0;
-            animation: slideinbanner 10s infinite;
-            height: 50px;
-        }
-    }
-    .maintenance.banner.mt50 {
-        margin-top: 50px;
-    }
-    .banner {
-        height: 50px;
-        margin-top: $navbarHeight;
-        background-color: $cds_color_red;
-        text-align: center;
-        line-height: 50px;
-        color: white;
-        font-weight: 600;
-    }
-    .page.connected {
-        padding-top: $navbarHeight;
-    }
+    display: flex;
+    flex-direction: column;
+
     .page {
-        height: inherit;
+        flex: 1;
+        overflow: hidden;
+
         .content {
-            height: inherit;
+            height: 100%;
             margin-left: $sidebarCloseWidth;
             transition: all 0.4s ease 0s;
             padding-top: 0px;
         }
     }
 
-    .maintenance {
-        h2 {
-            margin: 20px 0;
-            text-align: center;
-        }
+    .banner {
+        height: 50px;
+        background-color: $cds_color_red;
+        text-align: center;
+        line-height: 50px;
+        color: white;
+        font-weight: 600;
 
-        .logo {
-            width: 400px;
-            margin: auto;
-            img {
-                height: 150px;
-                animation: slidein 10s infinite;
-            }
+        &.update {
+            background-color: $cds_color_orange;
+            cursor: pointer;
         }
-    }
-    .gamification {
-        width: 450px;
-        height: 450px;
-        margin: auto;
     }
 
     .loading {
         background-color: $darkBackground;
-    
+
         .column {
             width: 600px;
         }
-    
+
         .logo {
             margin: 60px auto;
             height: 100px;
         }
 
-
         .grayscale {
             animation: grayscale 10s infinite;
             -webkit-animation: grayscale 10s infinite;
         }
-        
+
         @keyframes grayscale {
-            0%, 100%  { -webkit-filter: grayscale(0%); }
-            50% { -webkit-filter: grayscale(100%); }
+            0%,
+            100% {
+                -webkit-filter: grayscale(0%);
+            }
+
+            50% {
+                -webkit-filter: grayscale(100%);
+            }
         }
 
         @-webkit-keyframes grayscale {
-            0%, 100%  { -webkit-filter: grayscale(0%); }
-            50% { -webkit-filter: grayscale(100%); }
+            0%,
+            100% {
+                -webkit-filter: grayscale(0%);
+            }
+
+            50% {
+                -webkit-filter: grayscale(100%);
+            }
         }
 
         p {
@@ -102,6 +87,7 @@
         margin-left: 100%;
         transform: scaleX(1);
     }
+
     51% {
         margin-left: 100%;
         transform: scaleX(-1);
@@ -123,6 +109,7 @@
         left: 96%;
         transform: scaleX(1);
     }
+
     51% {
         left: 96%;
         transform: scaleX(-1);
