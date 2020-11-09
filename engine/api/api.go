@@ -368,15 +368,30 @@ func (a *API) CheckConfiguration(config interface{}) error {
 	return nil
 }
 
+type StartupConfigConsumerType string
+
+const (
+	StartupConfigConsumerTypeUI            StartupConfigConsumerType = "ui"
+	StartupConfigConsumerTypeHatchery      StartupConfigConsumerType = "hatchery"
+	StartupConfigConsumerTypeHooks         StartupConfigConsumerType = "hooks"
+	StartupConfigConsumerTypeRepositories  StartupConfigConsumerType = "repositories"
+	StartupConfigConsumerTypeDBMigrate     StartupConfigConsumerType = "db-migrate"
+	StartupConfigConsumerTypeVCS           StartupConfigConsumerType = "vcs"
+	StartupConfigConsumerTypeCDN           StartupConfigConsumerType = "cdn"
+	StartupConfigConsumerTypeCDNStorageCDS StartupConfigConsumerType = "cdn-storage-cds"
+	StartupConfigConsumerTypeElasticsearch StartupConfigConsumerType = "elasticsearch"
+)
+
 type StartupConfig struct {
-	Consumers []StartupConfigService `json:"consumers"`
-	IAT       int64                  `json:"iat"`
+	Consumers []StartupConfigConsumer `json:"consumers"`
+	IAT       int64                   `json:"iat"`
 }
-type StartupConfigService struct {
-	ID          string `json:"id"`
-	Name        string `json:"name"`
-	Description string `json:"description"`
-	ServiceType string `json:"service_type"`
+
+type StartupConfigConsumer struct {
+	ID          string                    `json:"id"`
+	Name        string                    `json:"name"`
+	Description string                    `json:"description"`
+	Type        StartupConfigConsumerType `json:"type"`
 }
 
 // Serve will start the http api server
