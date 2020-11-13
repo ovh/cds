@@ -2,6 +2,7 @@
 
 .ui.menu.navbar {
     background-color: $polar_grey_0;
+    border-radius: 0;
 
     :host-context(.night) & {
         background-color: $darkTheme_grey_0;
