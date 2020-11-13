@@ -111,14 +111,6 @@ func (s *Service) dequeueMessages(ctx context.Context, jobLogsQueueKey string, q
 			dequeuCtx, cancel := context.WithTimeout(ctx, 1*time.Second)
 			msgs, err := s.Cache.DequeueJSONRawMessagesWithContext(dequeuCtx, jobLogsQueueKey, 1*time.Millisecond, 1000)
 			cancel()
-			if err != nil {
-				if strings.Contains(err.Error(), "context deadline exceeded") {
-					continue
-				}
-				err = sdk.WrapError(err, "unable to dequeue job logs queue %s", jobLogsQueueKey)
-				log.ErrorWithFields(ctx, log.Fields{"stack_trace": fmt.Sprintf("%+v", err)}, "%s", err)
-				continue
-			}
 			if len(msgs) > 0 {
 				hms := make([]handledMessage, 0, len(msgs))
 				for _, m := range msgs {
@@ -144,6 +136,14 @@ func (s *Service) dequeueMessages(ctx context.Context, jobLogsQueueKey string, q
 				}
 				nbMessages += len(msgs)
 				t1 = time.Now()
+			}
+			if err != nil {
+				if strings.Contains(err.Error(), "context deadline exceeded") {
+					continue
+				}
+				err = sdk.WrapError(err, "unable to dequeue job logs queue %s", jobLogsQueueKey)
+				log.ErrorWithFields(ctx, log.Fields{"stack_trace": fmt.Sprintf("%+v", err)}, "%s", err)
+				continue
 			}
 		}
 	}

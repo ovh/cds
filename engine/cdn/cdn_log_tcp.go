@@ -190,6 +190,7 @@ func (s *Service) handleWorkerLog(ctx context.Context, workerName string, worker
 
 	sizeQueueKey := cache.Key(keyJobLogSize, strconv.Itoa(int(hm.Signature.JobID)))
 	jobQueue := cache.Key(keyJobLogQueue, strconv.Itoa(int(hm.Signature.JobID)))
+
 	if err := s.sendIntoIncomingQueue(hm, jobQueue, sizeQueueKey); err != nil {
 		return err
 	}

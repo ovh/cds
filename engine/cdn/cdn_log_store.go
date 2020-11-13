@@ -87,7 +87,6 @@ func (s *Service) sendToBufferWithRetry(ctx context.Context, hms []handledMessag
 	}
 	// Browse all messages
 	for _, hm := range hms {
-
 		var itemType sdk.CDNItemType
 		if hm.Signature.Service != nil {
 			itemType = sdk.CDNTypeItemServiceLog
