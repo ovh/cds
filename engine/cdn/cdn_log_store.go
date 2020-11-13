@@ -106,9 +106,13 @@ func (s *Service) sendToBufferWithRetry(ctx context.Context, hms []handledMessag
 			}
 			break
 		}
-		currentLine++
-		if err := s.Cache.SetWithTTL(lineKey, &currentLine, 3600*24); err != nil {
-			return err
+		if hm.IsTerminated {
+			_ = s.Cache.Delete(lineKey)
+		} else {
+			currentLine++
+			if err := s.Cache.SetWithTTL(lineKey, &currentLine, 3600*24); err != nil {
+				return err
+			}
 		}
 	}
 	return nil

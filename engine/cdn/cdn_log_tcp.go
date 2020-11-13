@@ -214,10 +214,14 @@ func (s *Service) sendIntoIncomingQueue(hm handledMessage, incomingQueue string,
 		return err
 	}
 
-	// Update size for the job
-	newSize := currentSize + int64(len(hm.Msg.Full))
-	if err := s.Cache.SetWithTTL(sizeKey, newSize, 3600*24); err != nil {
-		return err
+	if hm.IsTerminated {
+		_ = s.Cache.Delete(sizeKey)
+	} else {
+		// Update size for the job
+		newSize := currentSize + int64(len(hm.Msg.Full))
+		if err := s.Cache.SetWithTTL(sizeKey, newSize, 3600*24); err != nil {
+			return err
+		}
 	}
 	return nil
 }
