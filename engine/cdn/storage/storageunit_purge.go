@@ -60,11 +60,12 @@ func (x *RunningStorageUnits) Purge(ctx context.Context, s Interface) error {
 				"item_size_num": ui.Item.Size,
 				"stack_trace":   fmt.Sprintf("%+v", err),
 			}, "unable to delete item unit %s: %v", ui.ID, err)
-			tx.Rollback() // nolint
+			_ = tx.Rollback() // nolint
 			continue
 		}
 
 		if err := tx.Commit(); err != nil {
+			_ = tx.Rollback() // nolint
 			return sdk.WithStack(err)
 		}
 
