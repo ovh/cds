@@ -7,17 +7,31 @@ import (
 	"strings"
 	"time"
 
+	gocache "github.com/patrickmn/go-cache"
+
 	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
 
 var (
-	keyJobLogQueue = cache.Key("cdn", "log", "job")
+	keyJobLogQueue     = cache.Key("cdn", "log", "job")
+	keyServiceLogQueue = cache.Key("cdn", "log", "job", "service")
+
+	// Lines keys
+	keyJobLogLines     = cache.Key("cdn", "log", "lines")
+	keyServiceLogLines = cache.Key("cdn", "log", "service", "lines")
+
+	// Size keys
+	keyJobLogSize     = cache.Key("cdn", "log", "incoming", "size")
+	keyServiceLogSize = cache.Key("cdn", "log", "incoming", "service", "size")
+
+	// Dequeue keys
 	keyJobHearbeat = cache.Key("cdn", "log", "heartbeat")
 	keyJobLock     = cache.Key("cdn", "log", "lock")
 )
 
+// Check all job queues to know and start dequeue if needed
 func (s *Service) waitingJobs(ctx context.Context) {
 	for {
 		time.Sleep(250 * time.Millisecond)
@@ -50,7 +64,7 @@ func (s *Service) waitingJobs(ctx context.Context) {
 				}
 
 				s.GoRoutines.Exec(ctx, "cdn-dequeue-job-message", func(ctx context.Context) {
-					if err := s.dequeueJobMessages(ctx, jobQueueKey, jobID); err != nil {
+					if err := s.dequeueMessages(ctx, jobQueueKey, jobID); err != nil {
 						err = sdk.WrapError(err, "unable to dequeue redis incoming job queue")
 						log.ErrorWithFields(ctx, log.Fields{"stack_trace": fmt.Sprintf("%+v", err)}, "%s", err)
 					}
@@ -60,7 +74,8 @@ func (s *Service) waitingJobs(ctx context.Context) {
 	}
 }
 
-func (s *Service) dequeueJobMessages(ctx context.Context, jobLogsQueueKey string, jobID string) error {
+// Run dequeue of a job log
+func (s *Service) dequeueMessages(ctx context.Context, jobLogsQueueKey string, jobID string) error {
 	log.Info(ctx, "dequeueJobMessages: Dequeue %s", jobLogsQueueKey)
 	var t0 = time.Now()
 	var t1 = time.Now()
@@ -101,55 +116,9 @@ func (s *Service) dequeueJobMessages(ctx context.Context, jobLogsQueueKey string
 			}
 		default:
 			dequeuCtx, cancel := context.WithTimeout(ctx, 1*time.Second)
-
 			msgs, err := s.Cache.DequeueJSONRawMessagesWithContext(dequeuCtx, jobLogsQueueKey, 1*time.Millisecond, 1000)
 			cancel()
-
-			if len(msgs) > 0 {
-				hms := make(map[string]handledMessage, len(msgs))
-				for _, msg := range msgs {
-					var hm handledMessage
-					if err := json.Unmarshal(msg, &hm); err != nil {
-						return sdk.WrapError(err, "redis.DequeueWithContext> error on unmarshal value on queue:%s", jobLogsQueueKey)
-					}
-					if hm.Signature.Worker == nil {
-						continue
-					}
-					nbMessages++
-					k := fmt.Sprintf("%d-%d-%d", hm.Signature.JobID, hm.Signature.NodeRunID, hm.Signature.Worker.StepOrder)
-					if _, ok := hms[k]; ok {
-						full := hms[k].Msg.Full
-						if !strings.HasSuffix(full, "\n") {
-							full += "\n"
-						}
-						hm.Msg.Full = fmt.Sprintf("%s[%s] %s", full, getLevelString(hm.Msg.Level), hm.Msg.Full)
-						hms[k] = hm
-					} else {
-						hms[k] = hm
-					}
-				}
-
-				for _, hm := range hms {
-					now := time.Now()
-
-					currentLog := buildMessage(hm)
-					l := sdk.Log{
-						JobID:        hm.Signature.JobID,
-						NodeRunID:    hm.Signature.NodeRunID,
-						LastModified: &now,
-						StepOrder:    hm.Signature.Worker.StepOrder,
-						Val:          currentLog,
-					}
-					if err := s.Client.QueueSendLogs(ctx, hm.Signature.JobID, l); err != nil {
-						err = sdk.WrapError(err, "unable to send log to API")
-						log.ErrorWithFields(ctx, log.Fields{"stack_trace": fmt.Sprintf("%+v", err)}, "%s", err)
-						continue
-					}
-				}
-
-				t1 = time.Now()
-
-			} else if err != nil {
+			if err != nil {
 				if strings.Contains(err.Error(), "context deadline exceeded") {
 					continue
 				}
@@ -157,10 +126,37 @@ func (s *Service) dequeueJobMessages(ctx context.Context, jobLogsQueueKey string
 				log.ErrorWithFields(ctx, log.Fields{"stack_trace": fmt.Sprintf("%+v", err)}, "%s", err)
 				continue
 			}
+			if len(msgs) > 0 {
+				hms := make([]handledMessage, 0, len(msgs))
+				for _, m := range msgs {
+					var hm handledMessage
+					if err := json.Unmarshal(m, &hm); err != nil {
+						return sdk.WithStack(err)
+					}
+					hms = append(hms, hm)
+				}
+
+				// Send TO CDS API
+				if err := s.sendToCDS(ctx, hms); err != nil {
+					err = sdk.WrapError(err, "unable to send log to API")
+					log.ErrorWithFields(ctx, log.Fields{"stack_trace": fmt.Sprintf("%+v", err)}, "%s", err)
+				}
+
+				// Send TO CDN Buffer
+				if s.cdnEnabled(ctx, hms[0].Signature.ProjectKey) {
+					if err := s.sendToBufferWithRetry(ctx, hms); err != nil {
+						err = sdk.WrapError(err, "unable to send log into buffer")
+						log.ErrorWithFields(ctx, log.Fields{"stack_trace": fmt.Sprintf("%+v", err)}, "%s", err)
+					}
+				}
+				nbMessages += len(msgs)
+				t1 = time.Now()
+			}
 		}
 	}
 }
 
+// Return queue name if jobID need to be dequeue or empty
 func (s *Service) canDequeue(jobID string) (string, error) {
 	jobQueueKey := cache.Key(keyJobLogQueue, jobID)
 	heatbeatKey := cache.Key(keyJobHearbeat, jobID)
@@ -193,4 +189,22 @@ func (s *Service) canDequeue(jobID string) (string, error) {
 		return "", err
 	}
 	return jobQueueKey, nil
+}
+
+// Check if storage on CDN is enabled
+func (s *Service) cdnEnabled(ctx context.Context, projectKey string) bool {
+	cacheKey := fmt.Sprintf("cdn-job-logs-enabled-project-%s", projectKey)
+	enabled, has := logCache.Get(cacheKey)
+	if !has {
+		m := make(map[string]string, 1)
+		m["project_key"] = projectKey
+		resp, err := s.Client.FeatureEnabled("cdn-job-logs", m)
+		if err != nil {
+			log.Error(ctx, "unable to get job logs feature for project %s: %v", projectKey, err)
+			return false
+		}
+		logCache.Set(cacheKey, resp.Enabled, gocache.DefaultExpiration)
+		return resp.Enabled
+	}
+	return enabled.(bool)
 }

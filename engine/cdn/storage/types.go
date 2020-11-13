@@ -87,8 +87,8 @@ func (a *AbstractUnit) SyncBandwidth() float64 {
 
 type BufferUnit interface {
 	Interface
-	Init(ctx context.Context, cfg interface{}, maxStepLog int64) error
-	Add(i sdk.CDNItemUnit, score uint, value string, options WithOption) (int64, error)
+	Init(ctx context.Context, cfg interface{}) error
+	Add(i sdk.CDNItemUnit, score uint, value string) error
 	Card(i sdk.CDNItemUnit) (int, error)
 	Size(i sdk.CDNItemUnit) (int64, error)
 	NewReader(ctx context.Context, i sdk.CDNItemUnit) (io.ReadCloser, error)
@@ -183,11 +183,6 @@ func (x RunningStorageUnits) HashLocator(loc string) string {
 
 type LogConfig struct {
 	// Step logs
-	StepMaxSize         int64 `toml:"stepMaxSize" default:"15728640" comment:"Max step logs size in bytes (default: 15MB)" json:"stepMaxSize"`
-	StepLinesRateLimit  int64 `toml:"stepLinesRateLimit" default:"1800" comment:"Number of lines that a worker can send by seconds" json:"stepLinesRateLimit"`
-	NbJobLogsGoroutines int64 `toml:"nbJobLogsGoroutines" default:"10" comment:"Number of workers that dequeue the job log queue" json:"nbJobLogsGoroutines"`
-}
-
-type WithOption struct {
-	IslastLine bool
+	StepMaxSize        int64 `toml:"stepMaxSize" default:"15728640" comment:"Max step logs size in bytes (default: 15MB)" json:"stepMaxSize"`
+	StepLinesRateLimit int64 `toml:"stepLinesRateLimit" default:"1800" comment:"Number of lines that a worker can send by seconds" json:"stepLinesRateLimit"`
 }
