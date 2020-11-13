@@ -38,12 +38,12 @@ TEST_CDN_DB_CREATE_SCHEMA = PGPASSWORD=${TEST_DB_PASS} psql -h ${TEST_DB_HOST} -
 TEST_CDN_DB_INIT = ./engine database upgrade --db-host $(TEST_DB_HOST) --db-port $(TEST_DB_PORT) --db-user $(TEST_DB_USER) --db-password $(TEST_DB_PASS) --db-name $(TEST_DB_NAME) --db-schema $(TEST_CDN_DB_SCHEMA) --db-sslmode disable --migrate-dir ./sql/cdn
 
 TEST_DB_STOP_DOCKER = docker rm -f postgres-cds
-TEST_DB_START_DOCKER = docker run -d -p $(TEST_DB_PORT):5432 -e POSTGRES_PASSWORD=$(TEST_DB_PASS) -e POSTGRES_USER=$(TEST_DB_USER) -e POSTGRES_DB=$(TEST_DB_NAME) --name postgres-cds postgres
+TEST_DB_START_DOCKER = docker run -d -p $(TEST_DB_PORT):5432 -e POSTGRES_PASSWORD=$(TEST_DB_PASS) -e POSTGRES_USER=$(TEST_DB_USER) -e POSTGRES_DB=$(TEST_DB_NAME) --name postgres-cds postgres:9.6
 
 TEST_REDIS_PORT = 6379
 TEST_REDIS_HOST = $(if ${CDS_CACHE_REDIS_HOST},${CDS_CACHE_REDIS_HOST},localhost:$(TEST_REDIS_PORT))
 TEST_REDIS_PASS = $(if ${CDS_CACHE_REDIS_PASS},${CDS_CACHE_REDIS_PASS},)
-TEST_REDIS_START_DOCKER = docker run -d -p $(TEST_REDIS_PORT):6379 --name redis-cds redis
+TEST_REDIS_START_DOCKER = docker run -d -p $(TEST_REDIS_PORT):6379 --name redis-cds redis:5
 
 TEST_KAFKA_START_DOCKER = docker run -d -p 2181:2181 -p 9092:9092 --env ADVERTISED_HOST=localhost --env ADVERTISED_PORT=9092 --name kafka-cds spotify/kafka
 
