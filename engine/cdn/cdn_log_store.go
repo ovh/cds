@@ -79,7 +79,7 @@ func (s *Service) sendToBufferWithRetry(ctx context.Context, hms []handledMessag
 	jobID := strconv.Itoa(int(hms[0].Signature.JobID))
 	lineKey := cache.Key(keyJobLogLines, jobID)
 	if hms[0].Signature.Service != nil {
-		lineKey = cache.Key(keyServiceLogLines, jobID, strconv.Itoa(int(hms[0].Signature.Service.RequirementID)))
+		lineKey = cache.Key(keyJobLogLines, fmt.Sprintf("%s-%d", jobID, hms[0].Signature.Service.RequirementID))
 	}
 	var currentLine int64
 	if _, err := s.Cache.Get(lineKey, &currentLine); err != nil {

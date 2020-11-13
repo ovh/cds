@@ -298,8 +298,10 @@ func (s *Service) handleServiceLog(ctx context.Context, hatcheryID int64, hatche
 		IsTerminated: terminated,
 	}
 
-	sizeQueueKey := cache.Key(keyServiceLogSize, strconv.Itoa(int(signature.JobID)), strconv.Itoa(int(signature.Service.RequirementID)))
-	jobQueue := cache.Key(keyServiceLogQueue, strconv.Itoa(int(signature.JobID)), strconv.Itoa(int(signature.Service.RequirementID)))
+	reqKey := fmt.Sprintf("%d-%d", signature.JobID, signature.Service.RequirementID)
+	sizeQueueKey := cache.Key(keyJobLogSize, reqKey)
+	jobQueue := cache.Key(keyJobLogQueue, reqKey)
+
 	if err := s.sendIntoIncomingQueue(hm, jobQueue, sizeQueueKey); err != nil {
 		return err
 	}

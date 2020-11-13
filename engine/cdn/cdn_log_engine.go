@@ -15,16 +15,9 @@ import (
 )
 
 var (
-	keyJobLogQueue     = cache.Key("cdn", "log", "job")
-	keyServiceLogQueue = cache.Key("cdn", "log", "job", "service")
-
-	// Lines keys
-	keyJobLogLines     = cache.Key("cdn", "log", "lines")
-	keyServiceLogLines = cache.Key("cdn", "log", "service", "lines")
-
-	// Size keys
-	keyJobLogSize     = cache.Key("cdn", "log", "incoming", "size")
-	keyServiceLogSize = cache.Key("cdn", "log", "incoming", "service", "size")
+	keyJobLogQueue = cache.Key("cdn", "log", "job")
+	keyJobLogLines = cache.Key("cdn", "log", "lines")
+	keyJobLogSize  = cache.Key("cdn", "log", "incoming", "size")
 
 	// Dequeue keys
 	keyJobHearbeat = cache.Key("cdn", "log", "heartbeat")
@@ -51,9 +44,9 @@ func (s *Service) waitingJobs(ctx context.Context) {
 			// For each key, check if heartbeat key exist
 			for _, k := range listKeys {
 				keyParts := strings.Split(k, ":")
-				jobID := keyParts[len(keyParts)-1]
+				queueIdentifier := keyParts[len(keyParts)-1]
 
-				jobQueueKey, err := s.canDequeue(jobID)
+				jobQueueKey, err := s.canDequeue(queueIdentifier)
 				if err != nil {
 					err = sdk.WrapError(err, "unable to check canDequeue %s", jobQueueKey)
 					log.ErrorWithFields(ctx, log.Fields{"stack_trace": fmt.Sprintf("%+v", err)}, "%s", err)
@@ -64,7 +57,7 @@ func (s *Service) waitingJobs(ctx context.Context) {
 				}
 
 				s.GoRoutines.Exec(ctx, "cdn-dequeue-job-message", func(ctx context.Context) {
-					if err := s.dequeueMessages(ctx, jobQueueKey, jobID); err != nil {
+					if err := s.dequeueMessages(ctx, jobQueueKey, queueIdentifier); err != nil {
 						err = sdk.WrapError(err, "unable to dequeue redis incoming job queue")
 						log.ErrorWithFields(ctx, log.Fields{"stack_trace": fmt.Sprintf("%+v", err)}, "%s", err)
 					}
@@ -75,7 +68,7 @@ func (s *Service) waitingJobs(ctx context.Context) {
 }
 
 // Run dequeue of a job log
-func (s *Service) dequeueMessages(ctx context.Context, jobLogsQueueKey string, jobID string) error {
+func (s *Service) dequeueMessages(ctx context.Context, jobLogsQueueKey string, queueIdentifier string) error {
 	log.Info(ctx, "dequeueJobMessages: Dequeue %s", jobLogsQueueKey)
 	var t0 = time.Now()
 	var t1 = time.Now()
@@ -87,7 +80,7 @@ func (s *Service) dequeueMessages(ctx context.Context, jobLogsQueueKey string, j
 
 	defer func() {
 		// Remove heartbeat
-		_ = s.Cache.Delete(cache.Key(keyJobHearbeat, jobID))
+		_ = s.Cache.Delete(cache.Key(keyJobHearbeat, queueIdentifier))
 	}()
 
 	tick := time.NewTicker(5 * time.Second)
@@ -108,7 +101,7 @@ func (s *Service) dequeueMessages(ctx context.Context, jobLogsQueueKey string, j
 				return nil
 			}
 			// heartbeat
-			heartbeatKey := cache.Key(keyJobHearbeat, jobID)
+			heartbeatKey := cache.Key(keyJobHearbeat, queueIdentifier)
 			if err := s.Cache.SetWithTTL(heartbeatKey, true, 30); err != nil {
 				err = sdk.WrapError(err, "unable to hearbeat %s", heartbeatKey)
 				log.ErrorWithFields(ctx, log.Fields{"stack_trace": fmt.Sprintf("%+v", err)}, "%s", err)
