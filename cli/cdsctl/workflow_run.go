@@ -66,7 +66,7 @@ var workflowRunManualCmd = cli.Command{
 		},
 		{
 			Name:  "node-name",
-			Usage: "Node Name to relaunch; Flag run-number is mandatory",
+			Usage: "Node Name to launch; Flag run-number is mandatory",
 		},
 		{
 			Name:      "interactive",
@@ -175,14 +175,14 @@ func workflowRunManualRun(v cli.Values) error {
 		if err != nil {
 			return err
 		}
-		for _, wnrs := range wr.WorkflowNodeRuns {
-			for _, wnr := range wnrs {
-				wn := wr.Workflow.WorkflowData.NodeByID(wnr.WorkflowNodeID)
-				if wn.Name == v.GetString("node-name") {
-					fromNodeID = wnr.WorkflowNodeID
-					break
-				}
+		wr.Workflow.VisitNode(func(node *sdk.Node, wf *sdk.Workflow) {
+			if node.Name == v.GetString("node-name") {
+				fromNodeID = node.ID
 			}
+		})
+
+		if fromNodeID == 0 {
+			return fmt.Errorf("--node-name %v node found", v.GetString("node-name"))
 		}
 	}
 
