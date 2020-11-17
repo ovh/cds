@@ -5,7 +5,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/ovh/cds/sdk/log"
 	"io/ioutil"
 	"net/http"
 	"net/url"
@@ -20,6 +19,7 @@ import (
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/ovh/cds/sdk/exportentities"
+	"github.com/ovh/cds/sdk/log"
 )
 
 var workflowInitCmd = cli.Command{
