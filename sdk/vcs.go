@@ -23,6 +23,7 @@ var (
 		"repo:comment:added",
 		"repo:comment:edited",
 		"repo:comment:deleted",
+		"pr:from_ref_updated",
 		"pr:opened",
 		"pr:modified",
 		"pr:reviewer:updated",

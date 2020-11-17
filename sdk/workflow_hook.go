@@ -119,6 +119,8 @@ func (h NodeHook) Equals(h1 NodeHook) bool {
 		if areRepoWebHook && isEventFilter(k) {
 			if isEmptyEventFilter(cfg.Value) && !isDefaultEventFilter(cfg1.Value) {
 				return false
+			} else if cfg.Value != cfg1.Value {
+				return false
 			}
 		} else if cfg.Value != cfg1.Value {
 			return false
