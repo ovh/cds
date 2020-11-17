@@ -33,6 +33,32 @@ func TestEqualHook(t *testing.T) {
 	}
 	require.False(t, h1.Equals(h2))
 }
+func TestEqualDefaultEventHook(t *testing.T) {
+	h1 := NodeHook{
+		UUID:          UUID(),
+		HookModelName: RepositoryWebHookModelName,
+		Config: WorkflowNodeHookConfig{
+			HookConfigEventFilter: {
+				Type:         HookConfigTypeMultiChoice,
+				Configurable: true,
+				Value:        "",
+			},
+		},
+	}
+	h2 := NodeHook{
+		UUID:          h1.UUID,
+		HookModelName: RepositoryWebHookModelName,
+		Config: WorkflowNodeHookConfig{
+			HookConfigEventFilter: {
+				Type:         HookConfigTypeMultiChoice,
+				Configurable: true,
+				Value:        "push",
+			},
+		},
+	}
+	require.True(t, h1.Equals(h2))
+	require.True(t, h2.Equals(h1))
+}
 func TestNodeHook_ConfigValueContainsEventsDefault(t *testing.T) {
 	var tests = []struct {
 		given    []string
