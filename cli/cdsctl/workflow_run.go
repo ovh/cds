@@ -175,11 +175,12 @@ func workflowRunManualRun(v cli.Values) error {
 		if err != nil {
 			return err
 		}
-		wr.Workflow.VisitNode(func(node *sdk.Node, wf *sdk.Workflow) {
+		for _, node := range wr.Workflow.WorkflowData.Array() {
 			if node.Name == v.GetString("node-name") {
 				fromNodeID = node.ID
+				break
 			}
-		})
+		}
 
 		if fromNodeID == 0 {
 			return fmt.Errorf("--node-name %v node found", v.GetString("node-name"))
