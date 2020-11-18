@@ -161,8 +161,7 @@ func ParseAndImport(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store 
 					hasARepoWebHook = true
 					break
 				}
-				if h.HookModelName == newRepoWebHook.HookModelName &&
-					h.ConfigValueContainsEventsDefault() {
+				if h.HookModelName == newRepoWebHook.HookModelName {
 					hasARepoWebHook = true
 					break
 				}
