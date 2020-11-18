@@ -2,7 +2,6 @@ package redis
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"io"
 	"strconv"
@@ -17,35 +16,21 @@ import (
 )
 
 var (
-	_                storage.BufferUnit = new(Redis)
-	keyBuffer                           = cache.Key("cdn", "buffer")
-	luaAddLogLineExp                    = `
-		local size = redis.call('MEMORY', 'USAGE', KEYS[1]);
-		if not(size) or size < tonumber(KEYS[4]) then
-			redis.call('zadd', KEYS[1], tonumber(KEYS[3]), KEYS[2]);
-
-			size = redis.call('MEMORY', 'USAGE', KEYS[1]);
-			if size > tonumber(KEYS[4]) and KEYS[5] ~= 'true' then
-				redis.call('zadd', KEYS[1], tonumber(KEYS[3]), '\"' .. tonumber(KEYS[3])+1 .. '#...truncated\\n\"');
-			end
-		end
-		return size;
-	`
+	_         storage.BufferUnit = new(Redis)
+	keyBuffer                    = cache.Key("cdn", "buffer")
 )
 
 type Redis struct {
 	storage.AbstractUnit
-	config         storage.RedisBufferConfiguration
-	store          cache.ScoredSetStore
-	maxStepLogSize int64
+	config storage.RedisBufferConfiguration
+	store  cache.ScoredSetStore
 }
 
 func init() {
 	storage.RegisterDriver("redis", new(Redis))
 }
 
-func (s *Redis) Init(_ context.Context, cfg interface{}, maxStepLog int64) error {
-	s.maxStepLogSize = maxStepLog
+func (s *Redis) Init(_ context.Context, cfg interface{}) error {
 	config, is := cfg.(storage.RedisBufferConfiguration)
 	if !is {
 		return sdk.WithStack(fmt.Errorf("invalid configuration: %T", cfg))
@@ -70,30 +55,9 @@ func (s *Redis) Size(i sdk.CDNItemUnit) (int64, error) {
 	return s.store.Size(k)
 }
 
-func (s *Redis) Add(i sdk.CDNItemUnit, index uint, value string, options storage.WithOption) (int64, error) {
+func (s *Redis) Add(i sdk.CDNItemUnit, index uint, value string) error {
 	value = strconv.Itoa(int(index)) + "#" + value
-
-	btes, err := json.Marshal(value)
-	if err != nil {
-		return 0, sdk.WithStack(err)
-	}
-	result, err := s.store.Eval(luaAddLogLineExp,
-		cache.Key(keyBuffer, i.ItemID),
-		string(btes),
-		strconv.FormatUint(uint64(index), 10),
-		strconv.Itoa(int(s.maxStepLogSize)),
-		strconv.FormatBool(options.IslastLine),
-	)
-	if err != nil {
-		return 0, err
-	}
-
-	resultInt, err := strconv.Atoi(result)
-	if err != nil {
-		return 0, sdk.WithStack(err)
-	}
-
-	return int64(resultInt), nil
+	return s.store.ScoredSetAdd(context.Background(), cache.Key(keyBuffer, i.ItemID), value, float64(index))
 }
 
 func (s *Redis) Card(i sdk.CDNItemUnit) (int, error) {

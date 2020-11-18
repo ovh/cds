@@ -24,7 +24,6 @@ import (
 type handledMessage struct {
 	Signature    log.Signature
 	Msg          hook.Message
-	Line         int64
 	IsTerminated bool
 }
 

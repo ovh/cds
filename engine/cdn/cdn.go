@@ -76,9 +76,6 @@ func (s *Service) ApplyConfiguration(config interface{}) error {
 	if s.Cfg.Cache.LruSize == 0 {
 		s.Cfg.Cache.LruSize = defaultLruSize
 	}
-	if s.Cfg.Log.NbJobLogsGoroutines == 0 {
-		s.Cfg.Log.NbJobLogsGoroutines = defaultNbJobLogsGoroutines
-	}
 	if s.Cfg.Log.StepMaxSize == 0 {
 		s.Cfg.Log.StepMaxSize = defaultStepMaxSize
 	}
@@ -146,7 +143,7 @@ func (s *Service) Serve(c context.Context) error {
 		storage.InitDBMapping(s.Mapper)
 
 		// Init storage units
-		s.Units, err = storage.Init(ctx, s.Mapper, s.mustDBWithCtx(ctx), s.GoRoutines, s.Cfg.Units, s.Cfg.Log)
+		s.Units, err = storage.Init(ctx, s.Mapper, s.mustDBWithCtx(ctx), s.GoRoutines, s.Cfg.Units)
 		if err != nil {
 			return err
 		}

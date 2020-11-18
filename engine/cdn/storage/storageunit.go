@@ -24,7 +24,7 @@ func (r RunningStorageUnits) Storage(name string) StorageUnit {
 	return nil
 }
 
-func Init(ctx context.Context, m *gorpmapper.Mapper, db *gorp.DbMap, gorts *sdk.GoRoutines, config Configuration, logConfig LogConfig) (*RunningStorageUnits, error) {
+func Init(ctx context.Context, m *gorpmapper.Mapper, db *gorp.DbMap, gorts *sdk.GoRoutines, config Configuration) (*RunningStorageUnits, error) {
 	for i := range config.Storages {
 		if config.Storages[i].SyncParallel <= 0 {
 			config.Storages[i].SyncParallel = 1
@@ -61,7 +61,7 @@ func Init(ctx context.Context, m *gorpmapper.Mapper, db *gorp.DbMap, gorts *sdk.
 
 	bd.New(gorts, 1, math.MaxFloat64)
 
-	if err := bd.Init(ctx, config.Buffer.Redis, logConfig.StepMaxSize); err != nil {
+	if err := bd.Init(ctx, config.Buffer.Redis); err != nil {
 		return nil, err
 	}
 	result.Buffer = bd
@@ -165,7 +165,6 @@ func Init(ctx context.Context, m *gorpmapper.Mapper, db *gorp.DbMap, gorts *sdk.
 		if err != nil {
 			return nil, sdk.WithStack(err)
 		}
-		defer tx.Rollback() // nolint
 
 		u, err := LoadUnitByName(ctx, m, tx, cfg.Name)
 		if sdk.ErrorIs(err, sdk.ErrNotFound) {
@@ -182,12 +181,14 @@ func Init(ctx context.Context, m *gorpmapper.Mapper, db *gorp.DbMap, gorts *sdk.
 			err = InsertUnit(ctx, m, tx, u)
 		}
 		if err != nil {
+			_ = tx.Rollback() // nolint
 			return nil, err
 		}
 		storageUnit.Set(*u)
 
 		result.Storages = append(result.Storages, storageUnit)
 		if err := tx.Commit(); err != nil {
+			_ = tx.Rollback() // nolint
 			return nil, sdk.WithStack(err)
 		}
 	}

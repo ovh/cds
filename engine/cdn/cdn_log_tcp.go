@@ -24,13 +24,12 @@ import (
 )
 
 var (
-	logCache               = gocache.New(20*time.Minute, 20*time.Minute)
-	keyJobLogIncomingQueue = cache.Key("cdn", "log", "incoming", "job")
-	keyJobLogSize          = cache.Key("cdn", "log", "incoming", "size")
+	logCache = gocache.New(20*time.Minute, 20*time.Minute)
 )
 
 var globalRateLimit *rateLimiter
 
+// Start TCP Server
 func (s *Service) runTCPLogServer(ctx context.Context) error {
 	// Init hatcheries cache
 	if err := s.refreshHatcheriesPK(ctx); err != nil {
@@ -53,17 +52,7 @@ func (s *Service) runTCPLogServer(ctx context.Context) error {
 		_ = listener.Close()
 	})
 
-	for i := int64(0); i < s.Cfg.Log.NbJobLogsGoroutines; i++ {
-		log.Info(ctx, "CDN> Starting dequeueJobLogs - cdn-worker-job-%d", i)
-		s.GoRoutines.Run(ctx, fmt.Sprintf("cdn-worker-job-%d", i), func(ctx context.Context) {
-			if err := s.dequeueJobLogs(ctx); err != nil {
-				log.Error(ctx, "dequeueJobLogs: unable to dequeue redis incoming job logs: %v", err)
-			}
-		})
-	}
-
 	// Looking for something to dequeue
-	// DEPRECATED
 	s.GoRoutines.Run(ctx, "cdn-waiting-job", func(ctx context.Context) {
 		s.waitingJobs(ctx)
 	})
@@ -86,6 +75,7 @@ func (s *Service) runTCPLogServer(ctx context.Context) error {
 	return nil
 }
 
+// Handle TCP Connection: Global Rate Limit + Line Rate Limit
 func (s *Service) handleConnection(ctx context.Context, conn net.Conn) {
 	defer func() {
 		_ = conn.Close()
@@ -140,6 +130,7 @@ func (s *Service) handleConnection(ctx context.Context, conn net.Conn) {
 	}
 }
 
+// Handle Message: Worker/Hatchery
 func (s *Service) handleLogMessage(ctx context.Context, messageReceived []byte) error {
 	m := hook.Message{}
 	if err := m.UnmarshalJSON(messageReceived); err != nil {
@@ -170,6 +161,7 @@ func (s *Service) handleLogMessage(ctx context.Context, messageReceived []byte) 
 	}
 }
 
+// Handle Message from worker (job logs). Enqueue in Redis
 func (s *Service) handleWorkerLog(ctx context.Context, workerName string, workerID string, sig interface{}, m hook.Message) error {
 	var signature log.Signature
 
@@ -187,47 +179,49 @@ func (s *Service) handleWorkerLog(ctx context.Context, workerName string, worker
 		return sdk.WithStack(sdk.ErrForbidden)
 	}
 
-	var line int64
-	lineI := m.Extra["_"+log.ExtraFieldLine]
-	if lineI != nil {
-		line = int64(lineI.(float64))
-	}
-
 	terminatedI := m.Extra["_"+log.ExtraFieldTerminated]
 	terminated := cast.ToBool(terminatedI)
 
 	hm := handledMessage{
 		Signature:    signature,
 		Msg:          m,
-		Line:         line,
 		IsTerminated: terminated,
 	}
 
-	if s.cdnEnabled(ctx, signature.ProjectKey) {
-		if err := s.Cache.Enqueue(keyJobLogIncomingQueue, hm); err != nil {
-			log.Error(ctx, "cdn:handleWorkerLog: unable to enqueue in %s: %v", keyJobLogIncomingQueue, err)
-		}
-	}
+	sizeQueueKey := cache.Key(keyJobLogSize, strconv.Itoa(int(hm.Signature.JobID)))
+	jobQueue := cache.Key(keyJobLogQueue, strconv.Itoa(int(hm.Signature.JobID)))
 
-	// DEPRECATED - Save in queue for cds api call
-	sizeKey := cache.Key(keyJobLogSize, strconv.Itoa(int(signature.JobID)))
+	if err := s.sendIntoIncomingQueue(hm, jobQueue, sizeQueueKey); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (s *Service) sendIntoIncomingQueue(hm handledMessage, incomingQueue string, sizeKey string) error {
 	var currentSize int64
 	if _, err := s.Cache.Get(sizeKey, &currentSize); err != nil {
 		return err
 	}
-	if currentSize >= s.Cfg.Log.StepMaxSize {
+	if currentSize >= s.Cfg.Log.StepMaxSize && !hm.IsTerminated {
 		return nil
 	}
+	if currentSize >= s.Cfg.Log.StepMaxSize && hm.IsTerminated {
+		hm.Msg.Full = "...truncated\n"
+		hm.Msg.Level = int32(hook.LOG_WARNING)
+	}
 
-	cacheKey := cache.Key(keyJobLogQueue, strconv.Itoa(int(signature.JobID)))
-	if err := s.Cache.Enqueue(cacheKey, hm); err != nil {
+	if err := s.Cache.Enqueue(incomingQueue, hm); err != nil {
 		return err
 	}
 
-	// Update size for the job
-	newSize := currentSize + int64(len(hm.Msg.Full))
-	if err := s.Cache.SetWithTTL(sizeKey, newSize, 3600); err != nil {
-		return err
+	if hm.IsTerminated {
+		_ = s.Cache.Delete(sizeKey)
+	} else {
+		// Update size for the job
+		newSize := currentSize + int64(len(hm.Msg.Full))
+		if err := s.Cache.SetWithTTL(sizeKey, newSize, 3600*24); err != nil {
+			return err
+		}
 	}
 	return nil
 }
@@ -263,6 +257,7 @@ func getLevelString(level int32) string {
 	return lvl
 }
 
+//
 func (s *Service) handleServiceLog(ctx context.Context, hatcheryID int64, hatcheryName string, workerName string, sig interface{}, m hook.Message) error {
 	var signature log.Signature
 	var pk *rsa.PublicKey
@@ -299,39 +294,22 @@ func (s *Service) handleServiceLog(ctx context.Context, hatcheryID int64, hatche
 		return sdk.WrapError(sdk.ErrWrongRequest, "cannot send service log for worker %s from hatchery (expected: %d/actual: %d)", w.ID, *w.HatcheryID, signature.Service.HatcheryID)
 	}
 
-	var line int64
-	lineI := m.Extra["_"+log.ExtraFieldLine]
-	if lineI != nil {
-		line = int64(lineI.(float64))
-	}
-
 	terminatedI := m.Extra["_"+log.ExtraFieldTerminated]
 	terminated := cast.ToBool(terminatedI)
 
 	hm := handledMessage{
 		Signature:    signature,
 		Msg:          m,
-		Line:         line,
 		IsTerminated: terminated,
 	}
-	if s.cdnEnabled(ctx, signature.ProjectKey) {
-		if err := s.Cache.Enqueue(keyJobLogIncomingQueue, hm); err != nil {
-			return err
-		}
-	}
 
-	// DEPRECATED: call CDS API
-	logs := sdk.ServiceLog{
-		ServiceRequirementName: signature.Service.RequirementName,
-		ServiceRequirementID:   signature.Service.RequirementID,
-		WorkflowNodeJobRunID:   signature.JobID,
-		WorkflowNodeRunID:      signature.NodeRunID,
-		Val:                    buildMessage(hm),
-	}
-	if err := s.Client.QueueServiceLogs(ctx, []sdk.ServiceLog{logs}); err != nil {
+	reqKey := fmt.Sprintf("%d-%d", signature.JobID, signature.Service.RequirementID)
+	sizeQueueKey := cache.Key(keyJobLogSize, reqKey)
+	jobQueue := cache.Key(keyJobLogQueue, reqKey)
+
+	if err := s.sendIntoIncomingQueue(hm, jobQueue, sizeQueueKey); err != nil {
 		return err
 	}
-	///
 	return nil
 }
 
@@ -376,21 +354,4 @@ func (s *Service) refreshHatcheriesPK(ctx context.Context) error {
 		logCache.Set(fmt.Sprintf("hatchery-key-%d", s.ID), pk, gocache.DefaultExpiration)
 	}
 	return nil
-}
-
-func (s *Service) cdnEnabled(ctx context.Context, projectKey string) bool {
-	cacheKey := fmt.Sprintf("cdn-job-logs-enabled-project-%s", projectKey)
-	enabled, has := logCache.Get(cacheKey)
-	if !has {
-		m := make(map[string]string, 1)
-		m["project_key"] = projectKey
-		resp, err := s.Client.FeatureEnabled("cdn-job-logs", m)
-		if err != nil {
-			log.Error(ctx, "unable to get job logs feature for project %s: %v", projectKey, err)
-			return false
-		}
-		logCache.Set(cacheKey, resp.Enabled, gocache.DefaultExpiration)
-		return resp.Enabled
-	}
-	return enabled.(bool)
 }
