@@ -141,7 +141,10 @@ export class AsCodeSaveModalComponent implements OnDestroy {
             }))
             .subscribe(o => {
                 this.asCodeOperation = o;
-                this.displayCloseButton = true;
+                if (this.asCodeOperation.status === 2) {
+                    this.displayCloseButton = true;
+                }
+
             });
         this._eventService.subscribeToOperation(this.project.key, this.asCodeOperation.uuid);
     }

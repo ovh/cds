@@ -471,6 +471,9 @@ func (api *API) updateAsCodeApplicationHandler() service.Handler {
 		if appDB.FromRepository == "" {
 			return sdk.NewErrorFrom(sdk.ErrForbidden, "current application is not ascode")
 		}
+		if appDB.FromRepository != a.FromRepository {
+			return sdk.NewErrorFrom(sdk.ErrForbidden, "you can't use this repository to update your application: %s", a.FromRepository)
+		}
 
 		wkHolder, err := workflow.LoadByRepo(ctx, tx, *proj, appDB.FromRepository, workflow.LoadOptions{
 			WithTemplate: true,
@@ -505,6 +508,10 @@ func (api *API) updateAsCodeApplicationHandler() service.Handler {
 			k.KeyID = newKey.KeyID
 		}
 
+		if a.RepositoryStrategy.ConnectionType == "https" && a.RepositoryStrategy.Password == sdk.PasswordPlaceholder {
+			a.RepositoryStrategy.Password = rootApp.RepositoryStrategy.Password
+		}
+
 		u := getAPIConsumer(ctx)
 		a.ProjectID = proj.ID
 		app, err := application.ExportApplication(tx, a, project.EncryptWithBuiltinKey, fmt.Sprintf("app:%d:%s", appDB.ID, branch))
@@ -515,7 +522,7 @@ func (api *API) updateAsCodeApplicationHandler() service.Handler {
 			Applications: []exportentities.Application{app},
 		}
 
-		ope, err := operation.PushOperationUpdate(ctx, tx, api.Cache, *proj, wp, rootApp.VCSServer, rootApp.RepositoryFullname, branch, message, rootApp.RepositoryStrategy, u)
+		ope, err := operation.PushOperationUpdate(ctx, tx, api.Cache, *proj, wp, rootApp.VCSServer, rootApp.RepositoryFullname, branch, message, a.RepositoryStrategy, u)
 		if err != nil {
 			return err
 		}
