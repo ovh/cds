@@ -44,13 +44,13 @@ type NodeContext struct {
 	ID                        int64                  `json:"id" db:"id"`
 	NodeID                    int64                  `json:"node_id" db:"node_id"`
 	PipelineID                int64                  `json:"pipeline_id" db:"pipeline_id"`
-	PipelineName              string                 `json:"-" db:"-"`
+	PipelineName              string                 `json:"pipeline_name" db:"-"`
 	ApplicationID             int64                  `json:"application_id" db:"application_id"`
-	ApplicationName           string                 `json:"-" db:"-"`
+	ApplicationName           string                 `json:"application_name" db:"-"`
 	EnvironmentID             int64                  `json:"environment_id" db:"environment_id"`
-	EnvironmentName           string                 `json:"-" db:"-"`
+	EnvironmentName           string                 `json:"environment_name" db:"-"`
 	ProjectIntegrationID      int64                  `json:"project_integration_id" db:"project_integration_id"`
-	ProjectIntegrationName    string                 `json:"-" db:"-"`
+	ProjectIntegrationName    string                 `json:"project_integration_name" db:"-"`
 	DefaultPayload            interface{}            `json:"default_payload,omitempty" db:"-"`
 	DefaultPipelineParameters []Parameter            `json:"default_pipeline_parameters" db:"-"`
 	Conditions                WorkflowNodeConditions `json:"conditions" db:"-"`
