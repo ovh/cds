@@ -77,7 +77,7 @@ func (g *githubClient) SetStatus(ctx context.Context, event sdk.Event) error {
 		return sdk.WrapError(err, "Unable to read body")
 	}
 
-	log.Debug("SetStatus> github response %v", string(body))
+	log.Debug("SetStatus> github response for %v body:%v", path, string(body))
 
 	if res.StatusCode != 201 {
 		return sdk.WrapError(err, "Unable to create status on github. Status code : %d - Body: %s - target:%s", res.StatusCode, body, data.urlPipeline)
