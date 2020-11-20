@@ -19,6 +19,7 @@ import (
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/ovh/cds/sdk/exportentities"
+	"github.com/ovh/cds/sdk/log"
 )
 
 var workflowInitCmd = cli.Command{
@@ -202,10 +203,12 @@ func searchRepository(pkey, repoManagerName, repoFullname string) (string, error
 func checkRepositoryExists(proj sdk.Project, repoURL string) error {
 	for _, vcs := range proj.VCSServers {
 		var resync bool
+	vcs:
 		for {
 			repos, err := client.RepositoriesList(proj.Key, vcs.Name, resync)
 			if err != nil {
-				return fmt.Errorf("unable to list repositories from %s: %v", vcs.Name, err)
+				log.Warning(context.Background(), "unable to list repositories from %s: %v", vcs.Name, err)
+				break vcs
 			}
 			for _, r := range repos {
 				if repoURL == r.HTTPCloneURL || repoURL == r.SSHCloneURL {

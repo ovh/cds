@@ -42,7 +42,6 @@ type Interface interface {
 	ID() string
 	New(gorts *sdk.GoRoutines, syncParrallel int64, syncBandwidth float64)
 	Set(u sdk.CDNUnit)
-	Init(ctx context.Context, cfg interface{}) error
 	ItemExists(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlExecutor, i sdk.CDNItem) (bool, error)
 	Status(ctx context.Context) []sdk.MonitoringStatusLine
 	SyncBandwidth() float64
@@ -88,8 +87,10 @@ func (a *AbstractUnit) SyncBandwidth() float64 {
 
 type BufferUnit interface {
 	Interface
+	Init(ctx context.Context, cfg interface{}) error
 	Add(i sdk.CDNItemUnit, score uint, value string) error
 	Card(i sdk.CDNItemUnit) (int, error)
+	Size(i sdk.CDNItemUnit) (int64, error)
 	NewReader(ctx context.Context, i sdk.CDNItemUnit) (io.ReadCloser, error)
 	NewAdvancedReader(ctx context.Context, i sdk.CDNItemUnit, format sdk.CDNReaderFormat, from int64, size uint, sort int64) (io.ReadCloser, error)
 	Read(i sdk.CDNItemUnit, r io.Reader, w io.Writer) error
@@ -97,6 +98,7 @@ type BufferUnit interface {
 
 type StorageUnit interface {
 	Interface
+	Init(ctx context.Context, cfg interface{}) error
 	SyncItemChannel() chan string
 	NewWriter(ctx context.Context, i sdk.CDNItemUnit) (io.WriteCloser, error)
 	NewReader(ctx context.Context, i sdk.CDNItemUnit) (io.ReadCloser, error)
@@ -122,8 +124,8 @@ type BufferConfiguration struct {
 
 type StorageConfiguration struct {
 	Name          string                      `toml:"name" json:"name"`
-	SyncParallel  int64                       `toml:"syncParallel" json:"sync_parallel" default:"2" comment:"number of parallel sync processes"`
-	SyncBandwidth int64                       `toml:"syncBandwidth" json:"sync_bandwidth" default:"10" comment:"global bandwith shared by the sync processes"`
+	SyncParallel  int64                       `toml:"syncParallel" json:"sync_parallel" comment:"number of parallel sync processes"`
+	SyncBandwidth int64                       `toml:"syncBandwidth" json:"sync_bandwidth" comment:"global bandwith shared by the sync processes (in Mb)"`
 	Local         *LocalStorageConfiguration  `toml:"local" json:"local,omitempty" mapstructure:"local"`
 	Swift         *SwiftStorageConfiguration  `toml:"swift" json:"swift,omitempty" mapstructure:"swift"`
 	Webdav        *WebdavStorageConfiguration `toml:"webdav" json:"webdav,omitempty" mapstructure:"webdav"`
@@ -136,10 +138,9 @@ type LocalStorageConfiguration struct {
 }
 
 type CDSStorageConfiguration struct {
-	Host                  string                                  `toml:"host" json:"host"`
-	InsecureSkipVerifyTLS bool                                    `toml:"insecureSkipVerifyTLS" json:"insecureSkipVerifyTLS"`
-	Token                 string                                  `toml:"token" json:"-" comment:"consumer token must have the scopes Project (READ) and Run (READ)"`
-	Encryption            []convergent.ConvergentEncryptionConfig `toml:"encryption" json:"-" mapstructure:"encryption"`
+	Host                  string `toml:"host" json:"host"`
+	InsecureSkipVerifyTLS bool   `toml:"insecureSkipVerifyTLS" json:"insecureSkipVerifyTLS"`
+	Token                 string `toml:"token" json:"-" comment:"consumer token must have the scopes Project (READ) and Run (READ)"`
 }
 
 type SwiftStorageConfiguration struct {
@@ -178,4 +179,10 @@ func (x RunningStorageUnits) HashLocator(loc string) string {
 	salt := []byte(x.config.HashLocatorSalt)
 	hashLocator := hex.EncodeToString(pbkdf2.Key([]byte(loc), salt, 4096, 32, sha1.New))
 	return hashLocator
+}
+
+type LogConfig struct {
+	// Step logs
+	StepMaxSize        int64 `toml:"stepMaxSize" default:"15728640" comment:"Max step logs size in bytes (default: 15MB)" json:"stepMaxSize"`
+	StepLinesRateLimit int64 `toml:"stepLinesRateLimit" default:"1800" comment:"Number of lines that a worker can send by seconds" json:"stepLinesRateLimit"`
 }

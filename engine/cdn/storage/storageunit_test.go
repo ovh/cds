@@ -114,7 +114,8 @@ func TestRun(t *testing.T) {
 	require.NoError(t, err)
 
 	require.NoError(t, cdnUnits.Buffer.Add(*itemUnit, 1.0, "this is the first log\n"))
-	require.NoError(t, cdnUnits.Buffer.Add(*itemUnit, 1.0, "this is the second log\n"))
+
+	require.NoError(t, cdnUnits.Buffer.Add(*itemUnit, 2.0, "this is the second log\n"))
 
 	reader, err := cdnUnits.Buffer.NewReader(context.TODO(), *itemUnit)
 	require.NoError(t, err)

@@ -165,7 +165,6 @@ func Init(ctx context.Context, m *gorpmapper.Mapper, db *gorp.DbMap, gorts *sdk.
 		if err != nil {
 			return nil, sdk.WithStack(err)
 		}
-		defer tx.Rollback() // nolint
 
 		u, err := LoadUnitByName(ctx, m, tx, cfg.Name)
 		if sdk.ErrorIs(err, sdk.ErrNotFound) {
@@ -182,12 +181,14 @@ func Init(ctx context.Context, m *gorpmapper.Mapper, db *gorp.DbMap, gorts *sdk.
 			err = InsertUnit(ctx, m, tx, u)
 		}
 		if err != nil {
+			_ = tx.Rollback() // nolint
 			return nil, err
 		}
 		storageUnit.Set(*u)
 
 		result.Storages = append(result.Storages, storageUnit)
 		if err := tx.Commit(); err != nil {
+			_ = tx.Rollback() // nolint
 			return nil, sdk.WithStack(err)
 		}
 	}

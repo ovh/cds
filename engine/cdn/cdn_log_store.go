@@ -3,7 +3,7 @@ package cdn
 import (
 	"context"
 	"fmt"
-	"strings"
+	"strconv"
 	"time"
 
 	"github.com/ovh/cds/engine/cache"
@@ -14,76 +14,108 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
-func (s *Service) dequeueJobLogs(ctx context.Context) error {
-	defer func() {
-		log.Info(ctx, "cdn: leaving dequeue job logs")
-	}()
-	for {
-		select {
-		case <-ctx.Done():
-			return ctx.Err()
-		default:
-			dequeuCtx, cancel := context.WithTimeout(ctx, 15*time.Second)
-			var hm handledMessage
-			if err := s.Cache.DequeueWithContext(dequeuCtx, keyJobLogIncomingQueue, 30*time.Millisecond, &hm); err != nil {
-				cancel()
-				if !strings.Contains(err.Error(), "context deadline exceeded") {
-					log.Error(ctx, "dequeueJobLogs: unable to dequeue job logs queue: %v", err)
+func (s *Service) sendToCDS(ctx context.Context, msgs []handledMessage) error {
+	switch {
+	case msgs[0].Signature.Service != nil:
+		for _, msg := range msgs {
+			// Format line
+			msg.Msg.Full = buildMessage(msg)
+			if msg.Signature.Service != nil {
+				logs := sdk.ServiceLog{
+					ServiceRequirementName: msg.Signature.Service.RequirementName,
+					ServiceRequirementID:   msg.Signature.Service.RequirementID,
+					WorkflowNodeJobRunID:   msg.Signature.JobID,
+					WorkflowNodeRunID:      msg.Signature.NodeRunID,
+					Val:                    msg.Msg.Full,
 				}
-				continue
+				if err := s.Client.QueueServiceLogs(ctx, []sdk.ServiceLog{logs}); err != nil {
+					return err
+				}
 			}
-			cancel()
-			if hm.Signature.Worker == nil {
-				continue
+		}
+		return nil
+	default:
+		// Aggregate messages by step
+		hms := make(map[string]handledMessage, len(msgs))
+		for _, msg := range msgs {
+			// Format line
+			msg.Msg.Full = buildMessage(msg)
+
+			k := fmt.Sprintf("%d-%d-%d", msg.Signature.JobID, msg.Signature.NodeRunID, msg.Signature.Worker.StepOrder)
+			// Aggregates lines in a single message
+			if _, ok := hms[k]; ok {
+				full := hms[k].Msg.Full
+				msg.Msg.Full = fmt.Sprintf("%s%s", full, msg.Msg.Full)
+				hms[k] = msg
+			} else {
+				hms[k] = msg
 			}
-			s.storeLogsWithRetry(ctx, sdk.CDNTypeItemStepLog, hm)
+		}
+
+		// Send logs to CDS API by step
+		for _, hm := range hms {
+			now := time.Now()
+			l := sdk.Log{
+				JobID:        hm.Signature.JobID,
+				NodeRunID:    hm.Signature.NodeRunID,
+				LastModified: &now,
+				StepOrder:    hm.Signature.Worker.StepOrder,
+				Val:          hm.Msg.Full,
+			}
+			if err := s.Client.QueueSendLogs(ctx, hm.Signature.JobID, l); err != nil {
+				return err
+			}
 		}
 	}
+
+	return nil
 }
 
-func (s *Service) dequeueServiceLogs(ctx context.Context) error {
-	defer func() {
-		log.Info(ctx, "cdn: leaving dequeue service logs")
-	}()
-	for {
-		select {
-		case <-ctx.Done():
-			return ctx.Err()
-		default:
-			dequeuCtx, cancel := context.WithTimeout(ctx, 15*time.Second)
-			var hm handledMessage
-			if err := s.Cache.DequeueWithContext(dequeuCtx, keyServiceLogIncomingQueue, 30*time.Millisecond, &hm); err != nil {
-				cancel()
-				if !strings.Contains(err.Error(), "context deadline exceeded") {
-					log.Error(ctx, "dequeueServiceLogs: unable to dequeue service logs queue: %v", err)
-				}
-				continue
-			}
-			cancel()
-			if hm.Signature.Service == nil {
-				continue
-			}
-			s.storeLogsWithRetry(ctx, sdk.CDNTypeItemServiceLog, hm)
-		}
+func (s *Service) sendToBufferWithRetry(ctx context.Context, hms []handledMessage) error {
+	if len(hms) == 0 {
+		return nil
 	}
-}
 
-func (s *Service) storeLogsWithRetry(ctx context.Context, itemType sdk.CDNItemType, hm handledMessage) {
-	currentLog := buildMessage(hm)
-	cpt := 0
-	for {
-		if err := s.storeLogs(ctx, itemType, hm.Signature, hm.IsTerminated, currentLog, hm.Line); err != nil {
-			if sdk.ErrorIs(err, sdk.ErrLocked) && cpt < 10 {
-				cpt++
-				time.Sleep(250 * time.Millisecond)
-				continue
+	jobID := strconv.Itoa(int(hms[0].Signature.JobID))
+	lineKey := cache.Key(keyJobLogLines, jobID)
+	if hms[0].Signature.Service != nil {
+		lineKey = cache.Key(keyJobLogLines, fmt.Sprintf("%s-%d", jobID, hms[0].Signature.Service.RequirementID))
+	}
+	var currentLine int64
+	if _, err := s.Cache.Get(lineKey, &currentLine); err != nil {
+		return sdk.WithStack(err)
+	}
+	// Browse all messages
+	for _, hm := range hms {
+		var itemType sdk.CDNItemType
+		if hm.Signature.Service != nil {
+			itemType = sdk.CDNTypeItemServiceLog
+		} else {
+			itemType = sdk.CDNTypeItemStepLog
+		}
+		currentLog := buildMessage(hm)
+		cpt := 0
+		for {
+			if err := s.storeLogs(ctx, itemType, hm.Signature, hm.IsTerminated, currentLog, currentLine); err != nil {
+				if sdk.ErrorIs(err, sdk.ErrLocked) && cpt < 10 {
+					cpt++
+					time.Sleep(250 * time.Millisecond)
+					continue
+				}
+				return err
 			}
-			err = sdk.WrapError(err, "unable to store log")
-			log.ErrorWithFields(ctx, log.Fields{"stack_trace": fmt.Sprintf("%+v", err)}, "%s", err)
 			break
 		}
-		break
+		if hm.IsTerminated {
+			_ = s.Cache.Delete(lineKey)
+		} else {
+			currentLine++
+			if err := s.Cache.SetWithTTL(lineKey, &currentLine, 3600*24); err != nil {
+				return err
+			}
+		}
 	}
+	return nil
 }
 
 func (s *Service) storeLogs(ctx context.Context, itemType sdk.CDNItemType, signature log.Signature, terminated bool, content string, line int64) error {
@@ -116,6 +148,7 @@ func (s *Service) storeLogs(ctx context.Context, itemType sdk.CDNItemType, signa
 	maxItemLine := -1
 	if terminated {
 		maxItemLine = int(line)
+
 		// store the score of last line
 		if err := s.Cache.SetWithTTL(maxLineKey, maxItemLine, ItemLogGC); err != nil {
 			return err
@@ -127,16 +160,13 @@ func (s *Service) storeLogs(ctx context.Context, itemType sdk.CDNItemType, signa
 		}
 	}
 
-	logsSize, err := s.Units.Buffer.Card(*iu)
-	if err != nil {
-		return err
-	}
-	// If we have all lines
-	if maxItemLine >= 0 && maxItemLine+1 == logsSize {
+	// If we have all lines or buffer is full and we received the last line
+	if terminated {
 		tx, err := s.mustDBWithCtx(ctx).Begin()
 		if err != nil {
 			return sdk.WithStack(err)
 		}
+
 		defer tx.Rollback() // nolint
 		if err := s.completeItem(ctx, tx, *iu); err != nil {
 			return err

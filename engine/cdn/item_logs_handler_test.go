@@ -38,14 +38,13 @@ func TestGetItemLogsLinesHandler(t *testing.T) {
 
 	ctx, cancel := context.WithCancel(context.TODO())
 	t.Cleanup(cancel)
-	s.Units = newRunningStorageUnits(t, s.Mapper, db.DbMap, ctx)
+	s.Units = newRunningStorageUnits(t, s.Mapper, db.DbMap, ctx, 1000)
 
 	hm := handledMessage{
 		Msg: hook.Message{
 			Full: "this is a message",
 		},
 		IsTerminated: sdk.StatusTerminated,
-		Line:         2,
 		Signature: log.Signature{
 			ProjectKey:   projectKey,
 			WorkflowID:   1,
@@ -63,7 +62,7 @@ func TestGetItemLogsLinesHandler(t *testing.T) {
 	}
 
 	content := buildMessage(hm)
-	err := s.storeLogs(context.TODO(), sdk.CDNTypeItemStepLog, hm.Signature, hm.IsTerminated, content, hm.Line)
+	err := s.storeLogs(context.TODO(), sdk.CDNTypeItemStepLog, hm.Signature, hm.IsTerminated, content, 2)
 	require.NoError(t, err)
 
 	signer, err := authentication.NewSigner("cdn-test", test.SigningKey)
@@ -134,7 +133,7 @@ func TestGetItemLogsStreamHandler(t *testing.T) {
 
 	ctx, cancel := context.WithCancel(context.TODO())
 	t.Cleanup(cancel)
-	s.Units = newRunningStorageUnits(t, s.Mapper, db.DbMap, ctx)
+	s.Units = newRunningStorageUnits(t, s.Mapper, db.DbMap, ctx, 1000)
 
 	signature := log.Signature{
 		ProjectKey:   projectKey,
@@ -188,11 +187,10 @@ func TestGetItemLogsStreamHandler(t *testing.T) {
 		hm := handledMessage{
 			Msg:          hook.Message{Full: fmt.Sprintf("message %d", messageCounter)},
 			IsTerminated: sdk.StatusNotTerminated,
-			Line:         messageCounter,
 			Signature:    signature,
 		}
 		content := buildMessage(hm)
-		err = s.storeLogs(context.TODO(), sdk.CDNTypeItemStepLog, hm.Signature, hm.IsTerminated, content, hm.Line)
+		err = s.storeLogs(context.TODO(), sdk.CDNTypeItemStepLog, hm.Signature, hm.IsTerminated, content, messageCounter)
 		require.NoError(t, err)
 		messageCounter++
 	}

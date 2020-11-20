@@ -24,6 +24,14 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
+const (
+	defaultLruSize             = 128 * 1024 * 1024 // 128Mb
+	defaultNbJobLogsGoroutines = 10
+	defaultStepMaxSize         = 15 * 1024 * 1024 // 15Mb
+	defaultStepLinesRateLimit  = 1800
+	defaultGlobalTCPRateLimit  = 2 * 1024 * 1024 // 2Mb
+)
+
 // New returns a new service
 func New() *Service {
 	s := new(Service)
@@ -46,6 +54,7 @@ func (s *Service) Init(config interface{}) (cdsclient.ServiceConfig, error) {
 	cfg.Token = sConfig.API.Token
 	cfg.InsecureSkipVerifyTLS = sConfig.API.HTTP.Insecure
 	cfg.RequestSecondsTimeout = sConfig.API.RequestTimeout
+
 	return cfg, nil
 }
 
@@ -63,6 +72,17 @@ func (s *Service) ApplyConfiguration(config interface{}) error {
 	s.ServiceType = sdk.TypeCDN
 	s.HTTPURL = s.Cfg.URL
 	s.MaxHeartbeatFailures = s.Cfg.API.MaxHeartbeatFailures
+
+	if s.Cfg.Cache.LruSize == 0 {
+		s.Cfg.Cache.LruSize = defaultLruSize
+	}
+	if s.Cfg.Log.StepMaxSize == 0 {
+		s.Cfg.Log.StepMaxSize = defaultStepMaxSize
+	}
+	if s.Cfg.TCP.GlobalTCPRateLimit == 0 {
+		s.Cfg.TCP.GlobalTCPRateLimit = defaultGlobalTCPRateLimit
+	}
+
 	return nil
 }
 
@@ -171,7 +191,9 @@ func (s *Service) Serve(c context.Context) error {
 		return err
 	}
 
-	s.runTCPLogServer(ctx)
+	if err := s.runTCPLogServer(ctx); err != nil {
+		return err
+	}
 
 	log.Info(ctx, "Initializing HTTP router")
 	s.initRouter(ctx)

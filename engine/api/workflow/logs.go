@@ -6,7 +6,7 @@ import (
 
 // max size of a log in database in bytes
 const (
-	DefaultMaxLogSize = 15728640 // 15MB
+	DefaultMaxLogSize = 15 * 1024 * 1024 // 15MB
 	maxLogMarker      = "... truncated\n"
 )
 

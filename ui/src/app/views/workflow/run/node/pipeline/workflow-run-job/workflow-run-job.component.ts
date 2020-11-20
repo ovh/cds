@@ -1,4 +1,4 @@
-import { NgZone, OnDestroy, Output, ViewChild } from '@angular/core';
+import { OnDestroy, Output, ViewChild } from '@angular/core';
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, EventEmitter, Input, OnChanges, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { Store } from '@ngxs/store';
@@ -10,7 +10,7 @@ import { DurationService } from 'app/shared/duration/duration.service';
 import { ProjectState } from 'app/store/project.state';
 import { WorkflowState } from 'app/store/workflow.state';
 import * as moment from 'moment';
-import { Observable, Subscription } from 'rxjs';
+import { Observable, Subject, Subscription } from 'rxjs';
 import { delay, retryWhen } from 'rxjs/operators';
 import { webSocket, WebSocketSubject } from 'rxjs/webSocket';
 import { WorkflowRunJobVariableComponent } from '../variables/job.variables.component';
@@ -65,7 +65,7 @@ export class LogBlock {
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 @AutoUnsubscribe()
-export class WorkflowRunJobComponent implements OnInit, OnChanges, OnDestroy {
+export class WorkflowRunJobComponent implements OnInit, OnDestroy {
     readonly initLoadLinesCount = 5;
     readonly expandLoadLinesCount = 20;
     readonly displayModes = DisplayMode;
@@ -73,34 +73,47 @@ export class WorkflowRunJobComponent implements OnInit, OnChanges, OnDestroy {
 
     @ViewChild('jobVariable') jobVariable: WorkflowRunJobVariableComponent;
 
-    @Input() nodeJobRun: WorkflowNodeJobRun;
+    @Input() set nodeJobRun(data: WorkflowNodeJobRun) { this.subjectChannel.next(data); }
+    get nodeJobRun(): WorkflowNodeJobRun { return this._nodeJobRun; }
+    _nodeJobRun: WorkflowNodeJobRun;
     @Output() onScroll = new EventEmitter<ScrollTarget>();
 
     mode = DisplayMode.ANSI;
     tabs: Array<Tab>;
     currentTabIndex = 0;
     pollingSpawnInfoSubscription: Subscription;
-    pollingLogLinesSubscription: Subscription;
     websocket: WebSocketSubject<any>;
     websocketSubscription: Subscription;
     previousNodeJobRun: WorkflowNodeJobRun;
     steps: Array<LogBlock>;
     services: Array<LogBlock>;
 
+    // The following subject and subscription are used as a channel to serialize changes on polling and websocket subscription.
+    subjectChannel: Subject<WorkflowNodeJobRun>;
+    subscriptionChannel: Subscription;
+
     constructor(
         private _cd: ChangeDetectorRef,
         private _store: Store,
         private _workflowService: WorkflowService,
-        private _ngZone: NgZone,
         private _router: Router
-    ) { }
+    ) {
+        this.subjectChannel = new Subject<WorkflowNodeJobRun>();
+        this.subscriptionChannel = this.subjectChannel.mergeMap(data => {
+            return Observable.from(this.onNodeJobRunChange(data));
+        }).subscribe();
+    }
 
-    ngOnInit(): void { }
+    ngOnInit(): void {
+        this.pollingSpawnInfoSubscription = Observable.interval(2000)
+            .mergeMap(_ => Observable.from(this.loadSpawnInfo())).subscribe();
+    }
 
     ngOnDestroy(): void { } // Should be set to use @AutoUnsubscribe with AOT
 
-    ngOnChanges(): void {
-        if (!this.nodeJobRun) { return; }
+    async onNodeJobRunChange(data: WorkflowNodeJobRun) {
+        if (!data) { return; }
+        this._nodeJobRun = data;
 
         if (this.previousNodeJobRun && this.previousNodeJobRun.id !== this.nodeJobRun.id) {
             this.reset();
@@ -155,19 +168,22 @@ export class WorkflowRunJobComponent implements OnInit, OnChanges, OnDestroy {
 
         this._cd.markForCheck();
 
-        this.loadDataForCurrentTab();
+        await this.loadDataForCurrentTab();
     }
 
-    loadDataForCurrentTab(): void {
-        this.stopPollingSpawnInfo();
+    async loadDataForCurrentTab() {
         this.stopWebsocketSubscription();
 
         if (this.currentTabIndex === 0) {
-            this.startPollingSpawnInfo(); // async
-            this.loadEndedSteps(); // async
-            this.startListenLastActiveStep(); // async
+            if (PipelineStatus.isDone(this.nodeJobRun.status)) {
+                this.setSpawnInfos(this.nodeJobRun.spawninfos);
+            } else {
+                await this.loadSpawnInfo();
+            }
+            await this.loadEndedSteps();
+            await this.startListenLastActiveStep();
         } else {
-            this.loadOrListenService(); // async
+            await this.loadOrListenService();
         }
     }
 
@@ -177,7 +193,6 @@ export class WorkflowRunJobComponent implements OnInit, OnChanges, OnDestroy {
         this.steps = null;
         this.services = null;
         this.currentTabIndex = 0;
-        this.stopPollingSpawnInfo();
         this.stopWebsocketSubscription();
     }
 
@@ -195,8 +210,6 @@ export class WorkflowRunJobComponent implements OnInit, OnChanges, OnDestroy {
     async loadEndedSteps() {
         let projectKey = this._store.selectSnapshot(ProjectState.projectSnapshot).key;
         let workflowName = this._store.selectSnapshot(WorkflowState.workflowSnapshot).name;
-        let nodeRunID = this._store.selectSnapshot(WorkflowState).workflowNodeRun.id;
-        let nodeJobRunID = this._store.selectSnapshot(WorkflowState.getSelectedWorkflowNodeJobRun()).id;
 
         if (!this.nodeJobRun.job.step_status) {
             return;
@@ -214,7 +227,8 @@ export class WorkflowRunJobComponent implements OnInit, OnChanges, OnDestroy {
                 continue;
             }
 
-            this.steps[i].link = await this._workflowService.getStepLink(projectKey, workflowName, nodeRunID, nodeJobRunID, i - 1)
+            this.steps[i].link = await this._workflowService
+                .getStepLink(projectKey, workflowName, this.nodeJobRun.workflow_node_run_id, this.nodeJobRun.id, i - 1)
                 .toPromise();
             let results = await Promise.all([
                 this._workflowService.getLogLines(this.steps[i].link, { limit: `${this.initLoadLinesCount}` }).toPromise(),
@@ -234,45 +248,30 @@ export class WorkflowRunJobComponent implements OnInit, OnChanges, OnDestroy {
 
     clickScroll(target: ScrollTarget): void { this.onScroll.emit(target); }
 
-    stopPollingSpawnInfo(): void {
-        if (this.pollingSpawnInfoSubscription) { this.pollingSpawnInfoSubscription.unsubscribe(); }
-    }
-
-    async startPollingSpawnInfo() {
-        let projectKey = this._store.selectSnapshot(ProjectState.projectSnapshot).key;
-        let workflowName = this._store.selectSnapshot(WorkflowState.workflowSnapshot).name;
-        let nodeRunID = this._store.selectSnapshot(WorkflowState).workflowNodeRun.id;
-        let nodeJobRunID = this._store.selectSnapshot(WorkflowState.getSelectedWorkflowNodeJobRun()).id;
-        let runNumber = this._store.selectSnapshot(WorkflowState).workflowNodeRun.num;
-
-        let callback = (is: Array<SpawnInfo>) => {
-            this.steps[0].lines = is.filter(i => !!i.user_message).map((info, i) => <CDNLine>{
-                number: i,
-                value: `${info.user_message}\n`,
-                extra: [moment(info.api_time).format('YYYY-MM-DD hh:mm:ss Z')]
-            });
-            this.steps[0].totalLinesCount = this.steps[0].lines.length;
-            this.steps[0].open = true;
-            this.computeStepFirstLineNumbers();
-            this._cd.markForCheck();
-        }
-
-        if (PipelineStatus.isDone(this.nodeJobRun.status)) {
-            callback(this.nodeJobRun.spawninfos);
+    async loadSpawnInfo() {
+        if (!this.nodeJobRun || PipelineStatus.isDone(this.nodeJobRun.status)) {
             return;
         }
 
-        let result = await this._workflowService.getNodeJobRunInfo(projectKey, workflowName,
-            runNumber, nodeRunID, nodeJobRunID).toPromise();
-        callback(result);
+        let projectKey = this._store.selectSnapshot(ProjectState.projectSnapshot).key;
+        let workflowName = this._store.selectSnapshot(WorkflowState.workflowSnapshot).name;
+        let runNumber = this._store.selectSnapshot(WorkflowState).workflowNodeRun.num;
 
-        this._ngZone.runOutsideAngular(() => {
-            this.pollingSpawnInfoSubscription = Observable.interval(2000)
-                .mergeMap(_ => this._workflowService.getNodeJobRunInfo(projectKey, workflowName,
-                    runNumber, nodeRunID, nodeJobRunID)).subscribe(spawnInfos => {
-                        this._ngZone.run(() => { callback(spawnInfos); });
-                    });
+        let result = await this._workflowService.getNodeJobRunInfo(projectKey, workflowName,
+            runNumber, this.nodeJobRun.workflow_node_run_id, this.nodeJobRun.id).toPromise();
+        this.setSpawnInfos(result);
+    }
+
+    setSpawnInfos(is: Array<SpawnInfo>): void {
+        this.steps[0].lines = is.filter(i => !!i.user_message).map((info, i) => <CDNLine>{
+            number: i,
+            value: `${info.user_message}\n`,
+            extra: [moment(info.api_time).format('YYYY-MM-DD hh:mm:ss Z')]
         });
+        this.steps[0].totalLinesCount = this.steps[0].lines.length;
+        this.steps[0].open = true;
+        this.computeStepFirstLineNumbers();
+        this._cd.markForCheck();
     }
 
     trackStepElement(index: number, element: LogBlock) { return index; }
@@ -348,16 +347,15 @@ export class WorkflowRunJobComponent implements OnInit, OnChanges, OnDestroy {
 
         let projectKey = this._store.selectSnapshot(ProjectState.projectSnapshot).key;
         let workflowName = this._store.selectSnapshot(WorkflowState.workflowSnapshot).name;
-        let nodeRunID = this._store.selectSnapshot(WorkflowState).workflowNodeRun.id;
-        let nodeJobRunID = this._store.selectSnapshot(WorkflowState.getSelectedWorkflowNodeJobRun()).id;
 
         let link = await this._workflowService.getStepLink(projectKey, workflowName,
-            nodeRunID, nodeJobRunID, this.nodeJobRun.job.step_status.length - 1).toPromise();
+            this.nodeJobRun.workflow_node_run_id, this.nodeJobRun.id, this.nodeJobRun.job.step_status.length - 1).toPromise();
         let result = await this._workflowService.getLogLines(link, { limit: `${this.initLoadLinesCount}` }).toPromise();
         this.steps[this.steps.length - 1].link = link;
         this.steps[this.steps.length - 1].lines = result.lines;
         this.steps[this.steps.length - 1].totalLinesCount = result.totalCount;
         this.steps[this.steps.length - 1].open = true;
+        this.steps[this.steps.length - 1].loading = false;
         this._cd.markForCheck();
 
         const protocol = window.location.protocol.replace('http', 'ws');
@@ -398,11 +396,9 @@ export class WorkflowRunJobComponent implements OnInit, OnChanges, OnDestroy {
     async loadOrListenService() {
         let projectKey = this._store.selectSnapshot(ProjectState.projectSnapshot).key;
         let workflowName = this._store.selectSnapshot(WorkflowState.workflowSnapshot).name;
-        let nodeRunID = this._store.selectSnapshot(WorkflowState).workflowNodeRun.id;
-        let nodeJobRunID = this._store.selectSnapshot(WorkflowState.getSelectedWorkflowNodeJobRun()).id;
 
         this.services[this.currentTabIndex - 1].link = await this._workflowService.getServiceLink(projectKey, workflowName,
-            nodeRunID, nodeJobRunID, this.services[this.currentTabIndex - 1].name).toPromise();
+            this.nodeJobRun.workflow_node_run_id, this.nodeJobRun.id, this.services[this.currentTabIndex - 1].name).toPromise();
 
         if (!PipelineStatus.isActive(this.nodeJobRun.status)) {
             let results = await Promise.all([

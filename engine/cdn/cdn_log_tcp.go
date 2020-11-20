@@ -24,22 +24,25 @@ import (
 )
 
 var (
-	logCache                   = gocache.New(20*time.Minute, 20*time.Minute)
-	keyJobLogIncomingQueue     = cache.Key("cdn", "log", "incoming", "job")
-	keyServiceLogIncomingQueue = cache.Key("cdn", "log", "incoming", "service")
+	logCache = gocache.New(20*time.Minute, 20*time.Minute)
 )
 
-func (s *Service) runTCPLogServer(ctx context.Context) {
+var globalRateLimit *rateLimiter
+
+// Start TCP Server
+func (s *Service) runTCPLogServer(ctx context.Context) error {
 	// Init hatcheries cache
 	if err := s.refreshHatcheriesPK(ctx); err != nil {
-		log.Error(ctx, "unable to init hatcheries cache: %v", err)
+		return sdk.WrapError(err, "unable to init hatcheries cache")
 	}
+
+	globalRateLimit = NewRateLimiter(ctx, float64(s.Cfg.TCP.GlobalTCPRateLimit), 1024)
 
 	// Start TCP server
 	log.Info(ctx, "Starting tcp server %s:%d", s.Cfg.TCP.Addr, s.Cfg.TCP.Port)
 	listener, err := net.Listen("tcp", fmt.Sprintf("%s:%d", s.Cfg.TCP.Addr, s.Cfg.TCP.Port))
 	if err != nil {
-		log.Fatalf("unable to start tcp log server: %v", err)
+		return sdk.WrapError(err, "unable to start tcp log server")
 	}
 
 	//Gracefully shutdown the tcp server
@@ -49,25 +52,7 @@ func (s *Service) runTCPLogServer(ctx context.Context) {
 		_ = listener.Close()
 	})
 
-	for i := int64(0); i < s.Cfg.NbJobLogsGoroutines; i++ {
-		log.Info(ctx, "CDN> Starting dequeueJobLogs - cdn-worker-job-%d", i)
-		s.GoRoutines.Run(ctx, fmt.Sprintf("cdn-worker-job-%d", i), func(ctx context.Context) {
-			if err := s.dequeueJobLogs(ctx); err != nil {
-				log.Error(ctx, "dequeueJobLogs: unable to dequeue redis incoming job logs: %v", err)
-			}
-		})
-	}
-	for i := int64(0); i < s.Cfg.NbServiceLogsGoroutines; i++ {
-		log.Info(ctx, "CDN> Starting dequeueServiceLogs - cdn-worker-service-%d", i)
-		s.GoRoutines.Run(ctx, fmt.Sprintf("cdn-worker-service-%d", i), func(ctx context.Context) {
-			if err := s.dequeueServiceLogs(ctx); err != nil {
-				log.Error(ctx, "dequeueJobLogs: unable to dequeue redis incoming service logs: %v", err)
-			}
-		})
-	}
-
 	// Looking for something to dequeue
-	// DEPRECATED
 	s.GoRoutines.Run(ctx, "cdn-waiting-job", func(ctx context.Context) {
 		s.waitingJobs(ctx)
 	})
@@ -86,36 +71,66 @@ func (s *Service) runTCPLogServer(ctx context.Context) {
 			})
 		}
 	})
+
+	return nil
 }
 
+// Handle TCP Connection: Global Rate Limit + Line Rate Limit
 func (s *Service) handleConnection(ctx context.Context, conn net.Conn) {
 	defer func() {
 		_ = conn.Close()
 	}()
 
+	lineRateLimiter := NewRateLimiter(ctx, float64(s.Cfg.Log.StepLinesRateLimit), 1)
+
 	bufReader := bufio.NewReader(conn)
+
+	b := make([]byte, 1024)
+	currentBuffer := make([]byte, 0)
 	for {
-		bytes, err := bufReader.ReadBytes(byte(0))
+		// Can i try to read the next 1024B
+		if err := globalRateLimit.WaitN(1024); err != nil {
+			fields := log.Fields{}
+			fields["stack_trace"] = fmt.Sprintf("%+v", err)
+			log.ErrorWithFields(ctx, fields, "cdn.log> %v", err)
+			continue
+		}
+
+		n, err := bufReader.Read(b)
 		if err != nil {
 			log.Debug("client left: (%v) %v", conn.RemoteAddr(), err)
 			return
 		}
-		// remove byte(0)
-		bytes = bytes[:len(bytes)-1]
 
-		if err := s.handleLogMessage(ctx, bytes); err != nil {
-			telemetry.Record(ctx, s.Metrics.tcpServerErrorsCount, 1)
-			isErrWithStack := sdk.IsErrorWithStack(err)
-			fields := log.Fields{}
-			if isErrWithStack {
-				fields["stack_trace"] = fmt.Sprintf("%+v", err)
+		// Search for end of line separator
+		for i := 0; i < n; i++ {
+			if b[i] != byte(0) {
+				currentBuffer = append(currentBuffer, b[i])
+				continue
 			}
-			log.ErrorWithFields(ctx, fields, "cdn.log> %v", err)
-			continue
+
+			// Check if we can send line
+			if err := lineRateLimiter.WaitN(1); err != nil {
+				fields := log.Fields{}
+				fields["stack_trace"] = fmt.Sprintf("%+v", err)
+				log.ErrorWithFields(ctx, fields, "cdn.log> %v", err)
+				continue
+			}
+			if err := s.handleLogMessage(ctx, currentBuffer); err != nil {
+				telemetry.Record(ctx, s.Metrics.tcpServerErrorsCount, 1)
+				isErrWithStack := sdk.IsErrorWithStack(err)
+				fields := log.Fields{}
+				if isErrWithStack {
+					fields["stack_trace"] = fmt.Sprintf("%+v", err)
+				}
+				log.ErrorWithFields(ctx, fields, "cdn.log> %v", err)
+			}
+			currentBuffer = make([]byte, 0)
 		}
 	}
 }
 
+// Handle Message: Worker/Hatchery
 func (s *Service) handleLogMessage(ctx context.Context, messageReceived []byte) error {
 	m := hook.Message{}
 	if err := m.UnmarshalJSON(messageReceived); err != nil {
@@ -146,6 +161,7 @@ func (s *Service) handleLogMessage(ctx context.Context, messageReceived []byte) 
 	}
 }
 
+// Handle Message from worker (job logs). Enqueue in Redis
 func (s *Service) handleWorkerLog(ctx context.Context, workerName string, workerID string, sig interface{}, m hook.Message) error {
 	var signature log.Signature
 
@@ -163,35 +179,50 @@ func (s *Service) handleWorkerLog(ctx context.Context, workerName string, worker
 		return sdk.WithStack(sdk.ErrForbidden)
 	}
 
-	var line int64
-	lineI := m.Extra["_"+log.ExtraFieldLine]
-	if lineI != nil {
-		line = int64(lineI.(float64))
-	}
-
 	terminatedI := m.Extra["_"+log.ExtraFieldTerminated]
 	terminated := cast.ToBool(terminatedI)
 
 	hm := handledMessage{
 		Signature:    signature,
 		Msg:          m,
-		Line:         line,
 		IsTerminated: terminated,
 	}
 
-	if s.cdnEnabled(ctx, signature.ProjectKey) {
-		if err := s.Cache.Enqueue(keyJobLogIncomingQueue, hm); err != nil {
-			log.Error(ctx, "cdn:handleWorkerLog: unable to enqueue in %s: %v", keyJobLogIncomingQueue, err)
-		}
-	}
+	sizeQueueKey := cache.Key(keyJobLogSize, strconv.Itoa(int(hm.Signature.JobID)))
+	jobQueue := cache.Key(keyJobLogQueue, strconv.Itoa(int(hm.Signature.JobID)))
 
-	// DEPRECATED - Save in queue for cds api call
-	cacheKey := cache.Key(keyJobLogQueue, strconv.Itoa(int(signature.JobID)))
-	if err := s.Cache.Enqueue(cacheKey, hm); err != nil {
+	if err := s.sendIntoIncomingQueue(hm, jobQueue, sizeQueueKey); err != nil {
 		return err
 	}
-	///
+	return nil
+}
 
+func (s *Service) sendIntoIncomingQueue(hm handledMessage, incomingQueue string, sizeKey string) error {
+	var currentSize int64
+	if _, err := s.Cache.Get(sizeKey, &currentSize); err != nil {
+		return err
+	}
+	if currentSize >= s.Cfg.Log.StepMaxSize && !hm.IsTerminated {
+		return nil
+	}
+	if currentSize >= s.Cfg.Log.StepMaxSize && hm.IsTerminated {
+		hm.Msg.Full = "...truncated\n"
+		hm.Msg.Level = int32(hook.LOG_WARNING)
+	}
+
+	if err := s.Cache.Enqueue(incomingQueue, hm); err != nil {
+		return err
+	}
+
+	if hm.IsTerminated {
+		_ = s.Cache.Delete(sizeKey)
+	} else {
+		// Update size for the job
+		newSize := currentSize + int64(len(hm.Msg.Full))
+		if err := s.Cache.SetWithTTL(sizeKey, newSize, 3600*24); err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
@@ -226,6 +257,7 @@ func getLevelString(level int32) string {
 	return lvl
 }
 
+//
 func (s *Service) handleServiceLog(ctx context.Context, hatcheryID int64, hatcheryName string, workerName string, sig interface{}, m hook.Message) error {
 	var signature log.Signature
 	var pk *rsa.PublicKey
@@ -262,42 +294,22 @@ func (s *Service) handleServiceLog(ctx context.Context, hatcheryID int64, hatche
 		return sdk.WrapError(sdk.ErrWrongRequest, "cannot send service log for worker %s from hatchery (expected: %d/actual: %d)", w.ID, *w.HatcheryID, signature.Service.HatcheryID)
 	}
 
-	var line int64
-	lineI := m.Extra["_"+log.ExtraFieldLine]
-	if lineI != nil {
-		line = int64(lineI.(float64))
-	}
-
-	var terminated bool
 	terminatedI := m.Extra["_"+log.ExtraFieldTerminated]
-	if terminatedI != nil {
-		terminated = terminatedI.(bool)
-	}
+	terminated := cast.ToBool(terminatedI)
 
 	hm := handledMessage{
 		Signature:    signature,
 		Msg:          m,
-		Line:         line,
 		IsTerminated: terminated,
 	}
-	if s.cdnEnabled(ctx, signature.ProjectKey) {
-		if err := s.Cache.Enqueue(keyServiceLogIncomingQueue, hm); err != nil {
-			return err
-		}
-	}
 
-	// DEPRECATED: call CDS API
-	logs := sdk.ServiceLog{
-		ServiceRequirementName: signature.Service.RequirementName,
-		ServiceRequirementID:   signature.Service.RequirementID,
-		WorkflowNodeJobRunID:   signature.JobID,
-		WorkflowNodeRunID:      signature.NodeRunID,
-		Val:                    buildMessage(hm),
-	}
-	if err := s.Client.QueueServiceLogs(ctx, []sdk.ServiceLog{logs}); err != nil {
+	reqKey := fmt.Sprintf("%d-%d", signature.JobID, signature.Service.RequirementID)
+	sizeQueueKey := cache.Key(keyJobLogSize, reqKey)
+	jobQueue := cache.Key(keyJobLogQueue, reqKey)
+
+	if err := s.sendIntoIncomingQueue(hm, jobQueue, sizeQueueKey); err != nil {
 		return err
 	}
-	///
 	return nil
 }
 
@@ -342,21 +354,4 @@ func (s *Service) refreshHatcheriesPK(ctx context.Context) error {
 		logCache.Set(fmt.Sprintf("hatchery-key-%d", s.ID), pk, gocache.DefaultExpiration)
 	}
 	return nil
-}
-
-func (s *Service) cdnEnabled(ctx context.Context, projectKey string) bool {
-	cacheKey := fmt.Sprintf("cdn-job-logs-enabled-project-%s", projectKey)
-	enabled, has := logCache.Get(cacheKey)
-	if !has {
-		m := make(map[string]string, 1)
-		m["project_key"] = projectKey
-		resp, err := s.Client.FeatureEnabled("cdn-job-logs", m)
-		if err != nil {
-			log.Error(ctx, "unable to get job logs feature for project %s: %v", projectKey, err)
-			return false
-		}
-		logCache.Set(cacheKey, resp.Enabled, gocache.DefaultExpiration)
-		return resp.Enabled
-	}
-	return enabled.(bool)
 }

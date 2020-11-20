@@ -1,7 +1,12 @@
 package cdn
 
 import (
+	"context"
 	"sync"
+	"time"
+
+	"go.opencensus.io/stats"
+	"golang.org/x/time/rate"
 
 	"github.com/ovh/cds/engine/api"
 	"github.com/ovh/cds/engine/cache"
@@ -14,13 +19,11 @@ import (
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk/log/hook"
-	"go.opencensus.io/stats"
 )
 
 type handledMessage struct {
 	Signature    log.Signature
 	Msg          hook.Message
-	Line         int64
 	IsTerminated bool
 }
 
@@ -71,18 +74,31 @@ type Configuration struct {
 	Database            database.DBConfigurationWithEncryption `toml:"database" comment:"################################\n Postgresql Database settings \n###############################" json:"database"`
 	Cache               struct {
 		TTL     int   `toml:"ttl" default:"60" json:"ttl"`
-		LruSize int64 `toml:"lruSize" default:"128000000" json:"lruSize"`
+		LruSize int64 `toml:"lruSize" default:"134217728" json:"lruSize" comment:"Redis LRU cache for logs items in bytes (default: 128MB)"`
 		Redis   struct {
 			Host     string `toml:"host" default:"localhost:6379" comment:"If your want to use a redis-sentinel based cluster, follow this syntax ! <clustername>@sentinel1:26379,sentinel2:26379sentinel3:26379" json:"host"`
 			Password string `toml:"password" json:"-"`
 		} `toml:"redis" json:"redis"`
 	} `toml:"cache" comment:"######################\n CDN Cache Settings \n######################" json:"cache"`
-	API service.APIServiceConfiguration `toml:"api" comment:"######################\n CDS API Settings \n######################" json:"api"`
-	Log struct {
-		StepMaxSize    int64 `toml:"stepMaxSize" default:"15728640" comment:"Max step logs size in bytes (default: 15MB)" json:"stepMaxSize"`
-		ServiceMaxSize int64 `toml:"serviceMaxSize" default:"15728640" comment:"Max service logs size in bytes (default: 15MB)" json:"serviceMaxSize"`
-	} `toml:"log" json:"log" comment:"###########################\n Log settings.\n##########################"`
-	NbJobLogsGoroutines     int64                 `toml:"nbJobLogsGoroutines" default:"5" comment:"Number of workers that dequeue the job log queue" json:"nbJobLogsGoroutines"`
-	NbServiceLogsGoroutines int64                 `toml:"nbServiceLogsGoroutines" default:"5" comment:"Number of workers that dequeue the service log queue" json:"nbServiceLogsGoroutines"`
-	Units                   storage.Configuration `toml:"storageUnits" json:"storageUnits" mapstructure:"storageUnits"`
+	API   service.APIServiceConfiguration `toml:"api" comment:"######################\n CDS API Settings \n######################" json:"api"`
+	Log   storage.LogConfig               `toml:"log" json:"log" comment:"###########################\n Log settings.\n##########################"`
+	Units storage.Configuration           `toml:"storageUnits" json:"storageUnits" mapstructure:"storageUnits"`
+}
+
+type rateLimiter struct {
+	limiter *rate.Limiter
+	mutex   *sync.Mutex
+	ctx     context.Context
+}
+
+func NewRateLimiter(ctx context.Context, nbPerSecond float64, burst int) *rateLimiter {
+	limit := rate.NewLimiter(rate.Limit(nbPerSecond), burst)
+	limit.AllowN(time.Now(), burst)
+	return &rateLimiter{ctx: ctx, limiter: limit, mutex: &sync.Mutex{}}
+}
+
+func (r *rateLimiter) WaitN(n int) error {
+	r.mutex.Lock()
+	defer r.mutex.Unlock()
+	return sdk.WithStack(r.limiter.WaitN(r.ctx, n))
 }

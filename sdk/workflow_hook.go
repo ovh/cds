@@ -95,7 +95,6 @@ func (h NodeHook) ConfigValueContainsEventsDefault() bool {
 func (h NodeHook) Equals(h1 NodeHook) bool {
 	var areRepoWebHook = (h1.HookModelID == h.HookModelID) && (h.HookModelID == RepositoryWebHookModel.ID)
 	var isEventFilter = func(s string) bool { return s == HookConfigEventFilter }
-	var isEmptyEventFilter = func(s string) bool { return s == "" }
 	var isDefaultEventFilter = func(v string) bool {
 		return v == "" ||
 			v == strings.Join(BitbucketCloudEventsDefault, ";") ||
@@ -117,7 +116,9 @@ func (h NodeHook) Equals(h1 NodeHook) bool {
 			return false
 		}
 		if areRepoWebHook && isEventFilter(k) {
-			if isEmptyEventFilter(cfg.Value) && !isDefaultEventFilter(cfg1.Value) {
+			if isDefaultEventFilter(cfg.Value) && isDefaultEventFilter(cfg1.Value) {
+				continue
+			} else if cfg.Value != cfg1.Value {
 				return false
 			}
 		} else if cfg.Value != cfg1.Value {
@@ -130,7 +131,9 @@ func (h NodeHook) Equals(h1 NodeHook) bool {
 			return false
 		}
 		if areRepoWebHook && isEventFilter(k) {
-			if isEmptyEventFilter(cfg1.Value) && !isDefaultEventFilter(cfg.Value) {
+			if isDefaultEventFilter(cfg1.Value) && isDefaultEventFilter(cfg.Value) {
+				continue
+			} else if cfg.Value != cfg1.Value {
 				return false
 			}
 		} else if cfg.Value != cfg1.Value {
