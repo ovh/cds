@@ -16,7 +16,8 @@ import (
 )
 
 const (
-	maxWorker = 5
+	maxWorker    = 5
+	cdsSyncQueue = "cdn:cds:sync"
 )
 
 var statusSync struct {
@@ -27,6 +28,37 @@ var statusSync struct {
 	runPerProjectDone   map[string]int
 	runPerProjectFailed map[string]int
 	runPerProjectTotal  map[string]int
+}
+
+func (s *Service) startCDSSync(ctx context.Context) error {
+	return s.Cache.Publish(ctx, cdsSyncQueue, "true")
+}
+
+func (s *Service) listenCDSSync(ctx context.Context, cdsStorage *cds.CDS) error {
+	pubsub, err := s.Cache.Subscribe(cdsSyncQueue)
+	if err != nil {
+		return err
+	}
+	tick := time.NewTicker(1 * time.Second)
+	defer tick.Stop()
+	for {
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		case <-tick.C:
+			if ctx.Err() != nil {
+				continue
+			}
+			msg, err := pubsub.GetMessage(ctx)
+			if err != nil {
+				log.Warning(ctx, "cdn.listenCDSSync> cannot get message from pubsub %s: %s", msg, err)
+				continue
+			}
+			if err := s.SyncLogs(ctx, cdsStorage); err != nil {
+				log.ErrorWithFields(ctx, log.Fields{"stack_trace": fmt.Sprintf("%+v", err)}, "%s", err)
+			}
+		}
+	}
 }
 
 // getStatusSyncLogs returns the monitoring of the sync CDS to CDN

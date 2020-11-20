@@ -20,13 +20,14 @@ func adminCdn() *cobra.Command {
 		adminCdnCache(),
 		adminCdnItem(),
 		cli.NewListCommand(adminCdnStatusCmd, adminCdnStatusRun, nil),
+		cli.NewCommand(adminCdnMigFromCDSCmd, adminCdnMigFromCDS, nil),
 	})
 }
 
-var adminCdnStatusCmd = cli.Command{
-	Name:    "status",
-	Short:   "display the status of cdn",
-	Example: "cdsctl admin cdn status",
+var adminCdnMigFromCDSCmd = cli.Command{
+	Name:    "migrate",
+	Short:   "run migration from cds to cdn",
+	Example: "cdsctl admin cdn migrate",
 }
 
 func adminCdnStatusRun(v cli.Values) (cli.ListResult, error) {
@@ -39,6 +40,19 @@ func adminCdnStatusRun(v cli.Values) (cli.ListResult, error) {
 		status.Lines = append(status.Lines, srv.MonitoringStatus.Lines...)
 	}
 	return cli.AsListResult(status.Lines), nil
+}
+
+var adminCdnStatusCmd = cli.Command{
+	Name:    "status",
+	Short:   "display the status of cdn",
+	Example: "cdsctl admin cdn status",
+}
+
+func adminCdnMigFromCDS(_ cli.Values) error {
+	if _, err := client.ServiceCallPOST(sdk.TypeCDN, "/sync/projects", nil); err != nil {
+		return err
+	}
+	return nil
 }
 
 var adminCdnCacheCmd = cli.Command{

@@ -25,11 +25,10 @@ import (
 )
 
 const (
-	defaultLruSize             = 128 * 1024 * 1024 // 128Mb
-	defaultNbJobLogsGoroutines = 10
-	defaultStepMaxSize         = 15 * 1024 * 1024 // 15Mb
-	defaultStepLinesRateLimit  = 1800
-	defaultGlobalTCPRateLimit  = 2 * 1024 * 1024 // 2Mb
+	defaultLruSize            = 128 * 1024 * 1024 // 128Mb
+	defaultStepMaxSize        = 15 * 1024 * 1024  // 15Mb
+	defaultStepLinesRateLimit = 1800
+	defaultGlobalTCPRateLimit = 2 * 1024 * 1024 // 2Mb
 )
 
 // New returns a new service
@@ -79,6 +78,9 @@ func (s *Service) ApplyConfiguration(config interface{}) error {
 	if s.Cfg.Log.StepMaxSize == 0 {
 		s.Cfg.Log.StepMaxSize = defaultStepMaxSize
 	}
+	if s.Cfg.Log.StepLinesRateLimit == 0 {
+		s.Cfg.Log.StepLinesRateLimit = defaultStepLinesRateLimit
+	}
 	if s.Cfg.TCP.GlobalTCPRateLimit == 0 {
 		s.Cfg.TCP.GlobalTCPRateLimit = defaultGlobalTCPRateLimit
 	}
@@ -109,6 +111,11 @@ func (s *Service) Serve(c context.Context) error {
 	defer cancel()
 
 	var err error
+	log.Info(ctx, "Initializing redis cache on %s...", s.Cfg.Cache.Redis.Host)
+	s.Cache, err = cache.New(s.Cfg.Cache.Redis.Host, s.Cfg.Cache.Redis.Password, s.Cfg.Cache.TTL)
+	if err != nil {
+		return fmt.Errorf("cannot connect to redis instance : %v", err)
+	}
 
 	if s.Cfg.EnableLogProcessing {
 		log.Info(ctx, "Initializing database connection...")
@@ -142,6 +149,11 @@ func (s *Service) Serve(c context.Context) error {
 		item.InitDBMapping(s.Mapper)
 		storage.InitDBMapping(s.Mapper)
 
+		s.LogCache, err = lru.NewRedisLRU(s.mustDBWithCtx(ctx), s.Cfg.Cache.LruSize, s.Cfg.Cache.Redis.Host, s.Cfg.Cache.Redis.Password)
+		if err != nil {
+			return sdk.WrapError(err, "cannot connect to redis instance for lru")
+		}
+
 		// Init storage units
 		s.Units, err = storage.Init(ctx, s.Mapper, s.mustDBWithCtx(ctx), s.GoRoutines, s.Cfg.Units)
 		if err != nil {
@@ -164,27 +176,15 @@ func (s *Service) Serve(c context.Context) error {
 				continue
 			}
 			s.GoRoutines.Exec(ctx, "cdn-cds-backend-migration", func(ctx context.Context) {
-				if err := s.SyncLogs(ctx, cdsStorage); err != nil {
-					log.Error(ctx, "unable to sync logs: %v", err)
+				if err := s.listenCDSSync(ctx, cdsStorage); err != nil {
+					log.Error(ctx, "unable to listen pubsub for cds sync: %v", err)
 				}
 			})
-			break
 		}
 
-		log.Info(ctx, "Initializing log cache on %s", s.Cfg.Cache.Redis.Host)
-		s.LogCache, err = lru.NewRedisLRU(s.mustDBWithCtx(ctx), s.Cfg.Cache.LruSize, s.Cfg.Cache.Redis.Host, s.Cfg.Cache.Redis.Password)
-		if err != nil {
-			return sdk.WrapError(err, "cannot connect to redis instance for lru")
-		}
 		s.GoRoutines.Run(ctx, "service.log-cache-eviction", func(ctx context.Context) {
 			s.LogCache.Evict(ctx)
 		})
-	}
-
-	log.Info(ctx, "Initializing redis cache on %s...", s.Cfg.Cache.Redis.Host)
-	s.Cache, err = cache.New(s.Cfg.Cache.Redis.Host, s.Cfg.Cache.Redis.Password, s.Cfg.Cache.TTL)
-	if err != nil {
-		return fmt.Errorf("cannot connect to redis instance : %v", err)
 	}
 
 	if err := s.initMetrics(ctx); err != nil {
