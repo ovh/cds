@@ -33,7 +33,7 @@ func (h *HatcherySwarm) killAndRemove(ctx context.Context, dockerClient *dockerC
 		log.Info(ctx, "hatchery> swarm> killAndRemove> cannot InspectContainer: %v on %s", err, dockerClient.name)
 	} else {
 		// If its a worker "register", check registration before deleting it
-		if strings.HasPrefix(container.Name, "register-") {
+		if strings.HasPrefix(container.Name, "/register-") {
 			modelPath := container.Config.Labels["worker_model_path"]
 
 			if err := hatchery.CheckWorkerModelRegister(h, modelPath); err != nil {
