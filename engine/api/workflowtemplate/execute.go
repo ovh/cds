@@ -80,7 +80,7 @@ func executeTemplate(tmpl *template.Template, data map[string]interface{}) (stri
 	}
 	var buffer bytes.Buffer
 	if err := tmpl.Execute(&buffer, data); err != nil {
-		return "", sdk.NewError(sdk.ErrWrongRequest, sdk.WithStack(err))
+		return "", sdk.NewError(sdk.ErrWrongRequest, err)
 	}
 	return buffer.String(), nil
 }
