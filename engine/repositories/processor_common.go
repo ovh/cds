@@ -49,6 +49,9 @@ func (s *Service) processGitClone(ctx context.Context, op *sdk.Operation) (gitRe
 
 	d, err := gitRepo.DefaultBranch(ctx)
 	if err != nil {
+		if strings.Contains(err.Error(), "you do not have permission to access it") {
+			return gitRepo, "", "", sdk.NewError(sdk.ErrForbidden, err)
+		}
 		return gitRepo, "", "", sdk.WithStack(err)
 	}
 
