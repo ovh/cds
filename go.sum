@@ -362,8 +362,8 @@ github.com/nbio/st v0.0.0-20140626010706-e9e8d9816f32 h1:W6apQkHrMkS0Muv8G/TipAy
 github.com/nbio/st v0.0.0-20140626010706-e9e8d9816f32/go.mod h1:9wM+0iRr9ahx58uYLpLIr5fm8diHn0JbqRycJi6w0Ms=
 github.com/nbutton23/zxcvbn-go v0.0.0-20180912185939-ae427f1e4c1d h1:AREM5mwr4u1ORQBMvzfzBgpsctsbQikCVpvC+tX285E=
 github.com/nbutton23/zxcvbn-go v0.0.0-20180912185939-ae427f1e4c1d/go.mod h1:o96djdrsSGy3AWPyBgZMAGfxZNfgntdJG+11KU4QvbU=
-github.com/ncw/swift v0.0.0-20171019114456-c95c6e5c2d1a h1:SAjW6pL/9NssyKM1Qvyy5/V4kR3z76qlTbaqJLixhP4=
-github.com/ncw/swift v0.0.0-20171019114456-c95c6e5c2d1a/go.mod h1:23YIA4yWVnGwv2dQlN4bB7egfYX6YLn0Yo/S6zZO/ZM=
+github.com/ncw/swift v1.0.52 h1:ACF3JufDGgeKp/9mrDgQlEgS8kRYC4XKcuzj/8EJjQU=
+github.com/ncw/swift v1.0.52/go.mod h1:23YIA4yWVnGwv2dQlN4bB7egfYX6YLn0Yo/S6zZO/ZM=
 github.com/niemeyer/pretty v0.0.0-20200227124842-a10e7caefd8e h1:fD57ERR4JtEqsWbfPhv4DMiApHyliiK5xCTNVSPiaAs=
 github.com/niemeyer/pretty v0.0.0-20200227124842-a10e7caefd8e/go.mod h1:zD1mROLANZcx1PVRCS0qkT7pwLkGfwJo4zjcN/Tysno=
 github.com/nsf/termbox-go v0.0.0-20190817171036-93860e161317 h1:hhGN4SFXgXo61Q4Sjj/X9sBjyeSa2kdpaOzCO+8EVQw=
@@ -390,6 +390,8 @@ github.com/ovh/configstore v0.3.3-0.20200701085609-a539fcf61db5 h1:E5fS/QLKUEcIn
 github.com/ovh/configstore v0.3.3-0.20200701085609-a539fcf61db5/go.mod h1:IXY5qFC5mqMIFPXZjeZiAz/qIt+mO6F6SmsOCf/yits=
 github.com/ovh/symmecrypt v0.5.0 h1:M+SDVV2QfJyO4LwXPekFjK/y1DFLgUgKi4mfmldDBvQ=
 github.com/ovh/symmecrypt v0.5.0/go.mod h1:566sFU1+ZRapOXcGeM4H8o+5/2l2zZcTN7bG1FvNWkE=
+github.com/ovh/symmecrypt v0.5.1-0.20201124134903-1feee6b7f285 h1:3eSIDRXFhpR4l71VexFSBTTyw323P8HDRsvT8UlU/hg=
+github.com/ovh/symmecrypt v0.5.1-0.20201124134903-1feee6b7f285/go.mod h1:566sFU1+ZRapOXcGeM4H8o+5/2l2zZcTN7bG1FvNWkE=
 github.com/ovh/venom v0.25.0 h1:q0NC8KHuG1UoWNYXqhZUM/VbOnS8ciQJr6Afn230OIw=
 github.com/ovh/venom v0.25.0/go.mod h1:vf+2wztk/hOPS9AU32/B9XhwVPxKZ97wBJLu+AGXhYQ=
 github.com/pascaldekloe/goe v0.1.0/go.mod h1:lzWF7FIEvWOWxwDKqyGYQf6ZUaNfKdP144TG7ZOy1lc=
