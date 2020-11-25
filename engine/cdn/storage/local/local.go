@@ -88,10 +88,11 @@ func (s *Local) NewReader(_ context.Context, i sdk.CDNItemUnit) (io.ReadCloser, 
 	// Open the file from the filesystem according to the locator
 	path, err := s.filename(i)
 	if err != nil {
-		return nil, err
+		return nil, sdk.WithStack(err)
 	}
 	log.Debug("[%T] reading from %s", s, path)
-	return os.Open(path)
+	f, err := os.Open(path)
+	return f, sdk.WithStack(err)
 }
 
 func (s *Local) Status(_ context.Context) []sdk.MonitoringStatusLine {

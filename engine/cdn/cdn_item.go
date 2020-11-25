@@ -32,6 +32,48 @@ type downloadOpts struct {
 	}
 }
 
+func (s *Service) downloadItemFromUnit(ctx context.Context, t sdk.CDNItemType, apiRefHash string, unitName string, w http.ResponseWriter) error {
+	// Load Item
+	it, err := item.LoadByAPIRefHashAndType(ctx, s.Mapper, s.mustDBWithCtx(ctx), apiRefHash, t)
+	if err != nil {
+		return err
+	}
+
+	// Load Unit
+	unit, err := storage.LoadUnitByName(ctx, s.Mapper, s.mustDBWithCtx(ctx), unitName)
+	if err != nil {
+		return err
+	}
+	// Get Storage unit
+	unitStorage := s.Units.Storage(unit.Name)
+	if unitStorage == nil {
+		return sdk.WithStack(fmt.Errorf("unable to find unit %s", unit.Name))
+	}
+
+	// Load item unit
+	itemUnit, err := storage.LoadItemUnitByUnit(ctx, s.Mapper, s.mustDBWithCtx(ctx), unit.ID, it.ID, gorpmapper.GetOptions.WithDecryption)
+	if err != nil {
+		return err
+	}
+
+	storageReader, err := unitStorage.NewReader(ctx, *itemUnit)
+	if err != nil {
+		return err
+	}
+	defer func() {
+		if err := storageReader.Close(); err != nil {
+			log.Error(ctx, "downloadItemFromUnit> can't close reader: %+v", err)
+		}
+	}()
+
+	if err := unitStorage.Read(*itemUnit, storageReader, w); err != nil {
+		return err
+	}
+	w.Header().Add("Content-Type", "text/plain")
+	w.Header().Add("Content-Disposition", fmt.Sprintf("inline; filename=\"%s\"", it.APIRef.ToFilename()))
+	return nil
+}
+
 func (s *Service) downloadItem(ctx context.Context, t sdk.CDNItemType, apiRefHash string, w http.ResponseWriter, opts downloadOpts) error {
 	t0 := time.Now()
 
@@ -154,11 +196,19 @@ func (s *Service) pushItemLogIntoCache(ctx context.Context, it sdk.CDNItem) erro
 	if err != nil {
 		return err
 	}
-	defer storageReader.Close()
+	defer func() {
+		if err := storageReader.Close(); err != nil {
+			log.Error(ctx, "pushItemLogIntoCache> can't close reader: %+v", err)
+		}
+	}()
 
 	// Create a writer for the cache
 	cacheWriter := s.LogCache.NewWriter(it.ID)
-	defer cacheWriter.Close()
+	defer func() {
+		if err := cacheWriter.Close(); err != nil {
+			log.Error(ctx, "pushItemLogIntoCache> can't close writer: %+v", err)
+		}
+	}()
 
 	// Write data in cache
 	if err := unitStorage.Read(*refItemUnit, storageReader, cacheWriter); err != nil {

@@ -15,7 +15,7 @@ type CDNItem struct {
 	ID           string       `json:"id" db:"id"`
 	Created      time.Time    `json:"created" db:"created"`
 	LastModified time.Time    `json:"last_modified" db:"last_modified"`
-	Hash         string       `json:"-" db:"cipher_hash" gorpmapping:"encrypted,ID,APIRefHash,Type"`
+	Hash         string       `json:"hash" db:"cipher_hash" gorpmapping:"encrypted,ID,APIRefHash,Type"`
 	APIRef       CDNLogAPIRef `json:"api_ref" db:"api_ref"`
 	APIRefHash   string       `json:"api_ref_hash" db:"api_ref_hash"`
 	Status       string       `json:"status" db:"status"`

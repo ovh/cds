@@ -14,7 +14,6 @@ import (
 	"github.com/ovh/cds/engine/cdn/storage/encryption"
 	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 )
 
 type Swift struct {
@@ -32,7 +31,7 @@ func init() {
 	storage.RegisterDriver("swift", new(Swift))
 }
 
-func (s *Swift) Init(ctx context.Context, cfg interface{}) error {
+func (s *Swift) Init(_ context.Context, cfg interface{}) error {
 	config, is := cfg.(*storage.SwiftStorageConfiguration)
 	if !is {
 		return sdk.WithStack(fmt.Errorf("invalid configuration: %T", cfg))
@@ -47,8 +46,7 @@ func (s *Swift) Init(ctx context.Context, cfg interface{}) error {
 		UserName: config.Username,
 		ApiKey:   config.Password,
 	}
-
-	return nil
+	return sdk.WithStack(s.client.Authenticate())
 }
 
 func (s *Swift) ItemExists(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlExecutor, i sdk.CDNItem) (bool, error) {
@@ -60,11 +58,7 @@ func (s *Swift) ItemExists(ctx context.Context, m *gorpmapper.Mapper, db gorp.Sq
 		return false, err
 	}
 
-	container, object, err := s.getItemPath(*iu)
-	if err != nil {
-		return false, err
-	}
-
+	container, object := s.getItemPath(*iu)
 	allObjs, _ := s.client.ObjectNamesAll(container, nil)
 	for i := range allObjs {
 		if allObjs[i] == object {
@@ -75,10 +69,7 @@ func (s *Swift) ItemExists(ctx context.Context, m *gorpmapper.Mapper, db gorp.Sq
 }
 
 func (s *Swift) NewWriter(ctx context.Context, i sdk.CDNItemUnit) (io.WriteCloser, error) {
-	container, object, err := s.getItemPath(i)
-	if err != nil {
-		return nil, err
-	}
+	container, object := s.getItemPath(i)
 
 	if err := s.client.ContainerCreate(container, nil); err != nil {
 		return nil, sdk.WrapError(err, "Unable to create container %s", container)
@@ -92,34 +83,21 @@ func (s *Swift) NewWriter(ctx context.Context, i sdk.CDNItemUnit) (io.WriteClose
 	return file, nil
 }
 
-func (s *Swift) NewReader(ctx context.Context, i sdk.CDNItemUnit) (io.ReadCloser, error) {
-	container, object, err := s.getItemPath(i)
+func (s *Swift) NewReader(_ context.Context, i sdk.CDNItemUnit) (io.ReadCloser, error) {
+	container, object := s.getItemPath(i)
+	file, _, err := s.client.ObjectOpen(container, object, true, nil)
 	if err != nil {
-		return nil, err
+		return nil, sdk.WithStack(err)
 	}
-
-	pr, pw := io.Pipe()
-	gr := sdk.NewGoRoutines()
-	gr.Exec(ctx, "swift.newReader", func(ctx context.Context) {
-		if _, err = s.client.ObjectGet(container, object, pw, true, nil); err != nil {
-			log.Error(context.Background(), "unable to get object %s/%s: %v", container, object, err)
-			return
-		}
-		if err := pw.Close(); err != nil {
-			log.Error(context.Background(), "unable to close pipewriter %s/%s: %v", container, object, err)
-			return
-		}
-	})
-
-	return pr, nil
+	return file, nil
 }
 
-func (s *Swift) getItemPath(i sdk.CDNItemUnit) (container string, object string, err error) {
+func (s *Swift) getItemPath(i sdk.CDNItemUnit) (container string, object string) {
 	loc := i.Locator
 	container = fmt.Sprintf("%s-%s-%s", s.config.ContainerPrefix, i.Item.Type, loc[:3])
 	object = loc
 	container, object = escape(container, object)
-	return container, object, nil
+	return container, object
 }
 
 func escape(container, object string) (string, string) {
@@ -144,10 +122,6 @@ func (s *Swift) Status(ctx context.Context) []sdk.MonitoringStatusLine {
 }
 
 func (s *Swift) Remove(ctx context.Context, i sdk.CDNItemUnit) error {
-	container, object, err := s.getItemPath(i)
-	if err != nil {
-		return err
-	}
-
+	container, object := s.getItemPath(i)
 	return sdk.WithStack(s.client.ObjectDelete(container, object))
 }

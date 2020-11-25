@@ -40,6 +40,17 @@ func (s *Service) bulkDeleteItemsHandler() service.Handler {
 	}
 }
 
+func (s *Service) getItemDownloadInUnitHandler() service.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		vars := mux.Vars(r)
+		itemType := sdk.CDNItemType(vars["type"])
+		apiRef := vars["apiRef"]
+		unitName := vars["unit"]
+
+		return s.downloadItemFromUnit(ctx, itemType, apiRef, unitName, w)
+	}
+}
+
 func (s *Service) getItemDownloadHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)

@@ -3,6 +3,7 @@ package swift
 import (
 	"context"
 	"io/ioutil"
+	"strings"
 	"testing"
 
 	"github.com/ovh/symmecrypt/ciphers/aesgcm"
@@ -26,6 +27,10 @@ func TestSwift(t *testing.T) {
 			},
 		},
 	})
+	if err != nil && strings.Contains(err.Error(), "Can't find AuthVersion in AuthUrl") {
+		t.Logf("skipping this test: %v", err)
+		t.SkipNow()
+	}
 	require.NoError(t, err, "unable to initialiaze webdav driver")
 
 	err = driver.client.ApplyEnvironment()
