@@ -47,7 +47,7 @@ func (s *Service) downloadItemFromUnit(ctx context.Context, t sdk.CDNItemType, a
 	// Get Storage unit
 	unitStorage := s.Units.Storage(unit.Name)
 	if unitStorage == nil {
-		return sdk.WithStack(fmt.Errorf("unable to find unit %s", unit.Name))
+		return sdk.NewErrorFrom(sdk.ErrNotFound, "unable to find unit %s", unit.Name)
 	}
 
 	// Load item unit
