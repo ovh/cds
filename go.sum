@@ -388,10 +388,8 @@ github.com/opencontainers/image-spec v1.0.1/go.mod h1:BtxoFyWECRxE4U/7sNtV5W15zM
 github.com/openzipkin/zipkin-go v0.1.6/go.mod h1:QgAqvLzwWbR/WpD4A3cGpPtJrZXNIiJc5AZX7/PBEpw=
 github.com/ovh/configstore v0.3.3-0.20200701085609-a539fcf61db5 h1:E5fS/QLKUEcInoJFtM3K5+6pVVTqKxwR5boVb5oZ02c=
 github.com/ovh/configstore v0.3.3-0.20200701085609-a539fcf61db5/go.mod h1:IXY5qFC5mqMIFPXZjeZiAz/qIt+mO6F6SmsOCf/yits=
-github.com/ovh/symmecrypt v0.5.0 h1:M+SDVV2QfJyO4LwXPekFjK/y1DFLgUgKi4mfmldDBvQ=
-github.com/ovh/symmecrypt v0.5.0/go.mod h1:566sFU1+ZRapOXcGeM4H8o+5/2l2zZcTN7bG1FvNWkE=
-github.com/ovh/symmecrypt v0.5.1-0.20201124134903-1feee6b7f285 h1:3eSIDRXFhpR4l71VexFSBTTyw323P8HDRsvT8UlU/hg=
-github.com/ovh/symmecrypt v0.5.1-0.20201124134903-1feee6b7f285/go.mod h1:566sFU1+ZRapOXcGeM4H8o+5/2l2zZcTN7bG1FvNWkE=
+github.com/ovh/symmecrypt v0.5.1-0.20201126101809-0194ee087ebf h1:fzkFcrxy5DTvqEdeKNqvgh6oN3ZpApmLnEeyGYPKNNg=
+github.com/ovh/symmecrypt v0.5.1-0.20201126101809-0194ee087ebf/go.mod h1:566sFU1+ZRapOXcGeM4H8o+5/2l2zZcTN7bG1FvNWkE=
 github.com/ovh/venom v0.25.0 h1:q0NC8KHuG1UoWNYXqhZUM/VbOnS8ciQJr6Afn230OIw=
 github.com/ovh/venom v0.25.0/go.mod h1:vf+2wztk/hOPS9AU32/B9XhwVPxKZ97wBJLu+AGXhYQ=
 github.com/pascaldekloe/goe v0.1.0/go.mod h1:lzWF7FIEvWOWxwDKqyGYQf6ZUaNfKdP144TG7ZOy1lc=
