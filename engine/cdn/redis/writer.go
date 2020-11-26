@@ -1,16 +1,32 @@
 package redis
 
 import (
+	"context"
 	"io"
+	"strconv"
 	"strings"
+
+	"github.com/ovh/cds/engine/cache"
 )
 
 var _ io.WriteCloser = new(Writer)
 
 type Writer struct {
-	ReadWrite
+	Store         cache.ScoredSetStore
+	ItemID        string
+	PrefixKey     string
 	currentScore  uint
 	currentBuffer []byte
+}
+
+// Add new item in cache + update last usage
+func (w *Writer) add(score uint, value string) error {
+	itemKey := cache.Key(w.PrefixKey, w.ItemID)
+	value = strconv.Itoa(int(score)) + "#" + value
+	if err := w.Store.ScoredSetAdd(context.Background(), itemKey, value, float64(score)); err != nil {
+		return err
+	}
+	return nil
 }
 
 func (w *Writer) Write(p []byte) (int, error) {
@@ -28,7 +44,7 @@ func (w *Writer) Write(p []byte) (int, error) {
 			w.currentBuffer = []byte(bufferSplitted[i])
 			break
 		}
-		if err := w.ReadWrite.add(w.currentScore, bufferSplitted[i]+"\n"); err != nil {
+		if err := w.add(w.currentScore, bufferSplitted[i]+"\n"); err != nil {
 			return 0, err
 		}
 		w.currentScore++
@@ -38,12 +54,12 @@ func (w *Writer) Write(p []byte) (int, error) {
 	return len(p), nil
 }
 
+// Close will write the end of the buffer to store in case the last line is not ended by \n
 func (w *Writer) Close() error {
 	if len(w.currentBuffer) > 0 {
-		if err := w.ReadWrite.add(w.currentScore, string(w.currentBuffer)+"\n"); err != nil {
+		if err := w.add(w.currentScore, string(w.currentBuffer)+"\n"); err != nil {
 			return err
 		}
 	}
-
-	return w.ReadWrite.Close()
+	return nil
 }

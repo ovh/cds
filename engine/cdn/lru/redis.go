@@ -38,7 +38,7 @@ func NewRedisLRU(db *gorp.DbMap, maxSize int64, host string, password string) (*
 
 // Exist returns true is the item ID exists
 func (r *Redis) Exist(itemID string) (bool, error) {
-	itemKey := cache.Key(redisLruItemCacheKey, itemID)
+	itemKey := cache.Key(redisLruKeyCacheKey, itemID)
 	return r.store.Exist(itemKey)
 }
 
@@ -116,12 +116,11 @@ func (r *Redis) Clear() error {
 
 // NewWriter instanciates a new writer
 func (r *Redis) NewWriter(itemID string) io.WriteCloser {
-	return &redis.Writer{
-		ReadWrite: redis.ReadWrite{
+	return &writer{
+		redis.Writer{
 			Store:     r.store,
 			ItemID:    itemID,
 			PrefixKey: redisLruItemCacheKey,
-			UsageKey:  redisLruKeyCacheKey,
 		},
 	}
 }
@@ -129,16 +128,13 @@ func (r *Redis) NewWriter(itemID string) io.WriteCloser {
 // NewReader instanciates a new reader
 func (r *Redis) NewReader(itemID string, format sdk.CDNReaderFormat, from int64, size uint, sort int64) io.ReadCloser {
 	return &redis.Reader{
-		ReadWrite: redis.ReadWrite{
-			Store:     r.store,
-			ItemID:    itemID,
-			PrefixKey: redisLruItemCacheKey,
-			UsageKey:  redisLruKeyCacheKey,
-		},
-		Size:   size,
-		From:   from,
-		Format: format,
-		Sort:   sort,
+		Store:     r.store,
+		ItemID:    itemID,
+		PrefixKey: redisLruItemCacheKey,
+		Size:      size,
+		From:      from,
+		Format:    format,
+		Sort:      sort,
 	}
 }
 

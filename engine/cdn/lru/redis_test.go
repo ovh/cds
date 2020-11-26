@@ -79,7 +79,7 @@ func TestRedisLRU(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, "this is the first line\nthis is the second line\nthis is the third line\n", buf2.String())
 
-	// Add second item with lzast line not ending by end of line char
+	// Add second item with last line not ending by end of line char
 	writer2 := r.NewWriter(item2.ID)
 	_, err = io.Copy(writer2, strings.NewReader("this is the first line\nthis is the second line"))
 	require.NoError(t, err)
