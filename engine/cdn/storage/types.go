@@ -85,25 +85,29 @@ func (a *AbstractUnit) SyncBandwidth() float64 {
 	return a.syncBandwidth
 }
 
+type Unit interface {
+	Read(i sdk.CDNItemUnit, r io.Reader, w io.Writer) error
+	NewReader(ctx context.Context, i sdk.CDNItemUnit) (io.ReadCloser, error)
+}
+
 type BufferUnit interface {
 	Interface
+	Unit
 	Init(ctx context.Context, cfg interface{}) error
 	Add(i sdk.CDNItemUnit, score uint, value string) error
 	Card(i sdk.CDNItemUnit) (int, error)
 	Size(i sdk.CDNItemUnit) (int64, error)
-	NewReader(ctx context.Context, i sdk.CDNItemUnit) (io.ReadCloser, error)
 	NewAdvancedReader(ctx context.Context, i sdk.CDNItemUnit, format sdk.CDNReaderFormat, from int64, size uint, sort int64) (io.ReadCloser, error)
 	Read(i sdk.CDNItemUnit, r io.Reader, w io.Writer) error
 }
 
 type StorageUnit interface {
 	Interface
+	Unit
 	Init(ctx context.Context, cfg interface{}) error
 	SyncItemChannel() chan string
 	NewWriter(ctx context.Context, i sdk.CDNItemUnit) (io.WriteCloser, error)
-	NewReader(ctx context.Context, i sdk.CDNItemUnit) (io.ReadCloser, error)
 	Write(i sdk.CDNItemUnit, r io.Reader, w io.Writer) error
-	Read(i sdk.CDNItemUnit, r io.Reader, w io.Writer) error
 }
 
 type StorageUnitWithLocator interface {
