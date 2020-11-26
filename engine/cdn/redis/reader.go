@@ -1,16 +1,23 @@
 package redis
 
 import (
+	"context"
+	"encoding/json"
 	"io"
 	"sort"
+	"strings"
+	"unicode"
 
+	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/sdk"
 )
 
 var _ io.ReadCloser = new(Reader)
 
 type Reader struct {
-	ReadWrite
+	Store         cache.ScoredSetStore
+	ItemID        string
+	PrefixKey     string
 	nextIndex     uint
 	From          int64 // the offset that we want to use when reading lines from Redis, allows negative value to get last lines
 	Size          uint  // the count of lines that we want to read (0 means to the end)
@@ -18,6 +25,35 @@ type Reader struct {
 	Format        sdk.CDNReaderFormat
 	readEOF       bool
 	Sort          int64 // < 0 for latest logs first, >= 0 for older logs first
+}
+
+func (r *Reader) get(from uint, to uint) ([]Line, error) {
+	res, err := r.Store.ScoredSetScanWithScores(context.Background(), cache.Key(r.PrefixKey, r.ItemID), float64(from), float64(to))
+	if err != nil {
+		return nil, err
+	}
+	ls := make([]Line, len(res))
+	for i := range res {
+		ls[i].Number = int64(res[i].Score)
+		var value string
+		if err := json.Unmarshal(res[i].Value, &value); err != nil {
+			return nil, sdk.WrapError(err, "cannot unmarshal line value from store")
+		}
+		ls[i].Value = strings.TrimFunc(value, unicode.IsNumber)
+		ls[i].Value = strings.TrimPrefix(ls[i].Value, "#")
+	}
+	return ls, nil
+}
+
+func (r *Reader) maxScore() (float64, error) {
+	res, err := r.Store.ScoredSetScanMaxScore(context.Background(), cache.Key(r.PrefixKey, r.ItemID))
+	if err != nil {
+		return 0, err
+	}
+	if res == nil {
+		return 0, nil
+	}
+	return res.Score, nil
 }
 
 func (r *Reader) loadMoreLines() error {
@@ -151,4 +187,9 @@ func (r *Reader) Read(p []byte) (n int, err error) {
 	}
 
 	return copy(p, buffer), nil
+}
+
+// Close is declared ot match buffer unit interface
+func (r *Reader) Close() error {
+	return nil
 }
