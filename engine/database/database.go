@@ -9,7 +9,6 @@ import (
 
 	"github.com/go-gorp/gorp"
 	"github.com/lib/pq"
-	"github.com/sirupsen/logrus"
 
 	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk"
@@ -43,7 +42,7 @@ func (f *DBConnectionFactory) DB() *sql.DB {
 		newF, err := Init(context.TODO(), f.DBUser, f.DBRole, f.DBPassword, f.DBName, f.DBSchema, f.DBHost, f.DBPort, f.DBSSLMode, f.DBConnectTimeout, f.DBTimeout, f.DBMaxConn)
 		if err != nil {
 			err = sdk.WrapError(err, "cannot init db connection")
-			log.ErrorWithFields(context.TODO(), logrus.Fields{
+			log.ErrorWithFields(context.TODO(), log.Fields{
 				"stack_trace": fmt.Sprintf("%+v", err),
 			}, "%s", err)
 			return nil

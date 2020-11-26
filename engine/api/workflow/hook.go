@@ -198,7 +198,16 @@ func hookRegistration(ctx context.Context, db gorpmapper.SqlExecutorWithTx, stor
 				}
 				if ok && v.Value != "" {
 					if err := updateVCSConfiguration(ctx, db, store, proj, h); err != nil {
-						return sdk.WithStack(err)
+						// hook not found on VCS, perhaps manually deleted on vcs
+						// we try to create a new hook
+						if sdk.ErrorIs(err, sdk.ErrNotFound) {
+							log.Warning(ctx, "hook %s not found on %s/%s", v.Value, h.Config["vcsServer"].Value, h.Config["repoFullName"].Value)
+							if err := createVCSConfiguration(ctx, db, store, proj, h); err != nil {
+								return err
+							}
+						} else {
+							return sdk.WithStack(err)
+						}
 					}
 				}
 			}
@@ -410,7 +419,7 @@ func DefaultPayload(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store 
 
 			branches, err := client.Branches(ctx, app.RepositoryFullname)
 			if err != nil {
-				return wf.WorkflowData.Node.Context.DefaultPayload, sdk.WrapError(err, "cannot get branches for %s", app.RepositoryFullname)
+				return wf.WorkflowData.Node.Context.DefaultPayload, err
 			}
 
 			for _, branch := range branches {

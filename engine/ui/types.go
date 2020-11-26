@@ -1,6 +1,8 @@
 package ui
 
 import (
+	"net/http"
+
 	"github.com/ovh/cds/engine/api"
 	"github.com/ovh/cds/engine/service"
 )
@@ -10,6 +12,7 @@ type Service struct {
 	service.Common
 	Cfg     Configuration
 	Router  *api.Router
+	Server  *http.Server
 	HTMLDir string
 	DocsDir string
 }

@@ -23,7 +23,6 @@ var requirementCheckFuncs = map[string]func(w *CurrentWorker, r sdk.Requirement)
 	sdk.PluginRequirement:   checkPluginRequirement,
 	sdk.ServiceRequirement:  checkServiceRequirement,
 	sdk.MemoryRequirement:   checkMemoryRequirement,
-	sdk.VolumeRequirement:   checkVolumeRequirement,
 	sdk.OSArchRequirement:   checkOSArchRequirement,
 	sdk.RegionRequirement:   checkRegionRequirement,
 }
@@ -176,23 +175,6 @@ func checkMemoryRequirement(w *CurrentWorker, r sdk.Requirement) (bool, error) {
 	//Assuming memory is in megabytes
 	//If we have more than 90% of neededMemory, lets do it
 	return totalMemory >= (neededMemory*1024*1024)*90/100, nil
-}
-
-func checkVolumeRequirement(w *CurrentWorker, r sdk.Requirement) (bool, error) {
-	// volume are supported only for Model Docker
-	if w.model.Type != sdk.Docker {
-		return false, nil
-	}
-
-	for _, v := range strings.Split(r.Value, ",") {
-		if strings.HasPrefix(v, "destination=") {
-			theMountedDir := strings.Split(v, "=")[1]
-			if stat, err := os.Stat(theMountedDir); err != nil || !stat.IsDir() {
-				return true, nil
-			}
-		}
-	}
-	return false, nil
 }
 
 func checkOSArchRequirement(w *CurrentWorker, r sdk.Requirement) (bool, error) {

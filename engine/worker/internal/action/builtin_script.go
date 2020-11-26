@@ -55,7 +55,10 @@ func prepareScriptContent(parameters []sdk.Parameter, basedir afero.Fs, workdir 
 		if isShell(script.shell) && len(splittedShell) == 1 {
 			script.opts = append(script.opts, "-e")
 		}
-		scriptContent = t[1]
+		if len(t) > 1 {
+			scriptContent = t[1]
+		}
+
 	} else {
 		script.opts = []string{"-e"}
 	}

@@ -1,10 +1,12 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
+import { MonitoringStatusLine, MonitoringStatusLineUtil } from 'app/model/monitoring.model';
 import { Service } from 'app/model/service.model';
 import { ServiceService } from 'app/service/service/service.service';
 import { ThemeStore } from 'app/service/theme/theme.store';
 import { PathItem } from 'app/shared/breadcrumb/breadcrumb.component';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
+import { Column, ColumnType, Filter } from 'app/shared/table/data-table.component';
 import { finalize } from 'rxjs/operators';
 import { Subscription } from 'rxjs/Subscription';
 
@@ -17,8 +19,10 @@ import { Subscription } from 'rxjs/Subscription';
 @AutoUnsubscribe()
 export class ServiceShowComponent implements OnInit, OnDestroy {
     @ViewChild('textareaCodeMirror') codemirror: any;
-
     loading: boolean;
+    columns: Array<Column<MonitoringStatusLine>>;
+    filteredStatusLines: Filter<MonitoringStatusLine>;
+    filter = 'NOTICE';
     service: Service;
     codeMirrorConfig: any;
     config: any;
@@ -39,6 +43,67 @@ export class ServiceShowComponent implements OnInit, OnDestroy {
             lineWrapping: true,
             autoRefresh: true,
             readOnly: true
+        };
+
+        this.columns = [
+            <Column<MonitoringStatusLine>>{
+                name: 'common_type',
+                selector: (c: MonitoringStatusLine) => c.type
+            },
+            <Column<MonitoringStatusLine>>{
+                name: 'common_service',
+                selector: (c: MonitoringStatusLine) => c.service
+            },
+            <Column<MonitoringStatusLine>>{
+                name: 'common_component',
+                selector: (c: MonitoringStatusLine) => c.component
+            },
+            <Column<MonitoringStatusLine>>{
+                name: 'common_hostname',
+                selector: (c: MonitoringStatusLine) => c.hostname
+            },
+            <Column<MonitoringStatusLine>>{
+                name: 'common_status',
+                type: ColumnType.LABEL,
+                selector: (c: MonitoringStatusLine) => {
+                    return {
+                        class: MonitoringStatusLineUtil.color(c),
+                        value: c.status
+                    };
+                }
+            },
+            <Column<MonitoringStatusLine>>{
+                name: 'common_value',
+                selector: (c: MonitoringStatusLine) => c.value
+            },
+            <Column<MonitoringStatusLine>>{
+                name: 'common_consumer',
+                selector: (c: MonitoringStatusLine) => c.consumer
+            },
+            <Column<MonitoringStatusLine>>{
+                name: 'common_session',
+                selector: (c: MonitoringStatusLine) => c.session
+            }
+        ];
+
+        this.filteredStatusLines = f => {
+            const lowerFilter = f.toLowerCase();
+            return (line: MonitoringStatusLine) => {
+                if (f === 'NOTICE') {
+                    return line.status.indexOf('AL') !== -1 || line.status.indexOf('WARN') !== -1;
+                }
+                if (f === 'AL' || f === 'WARN' || f === 'OK') {
+                    return line.status.toLowerCase().indexOf(lowerFilter) !== -1;
+                }
+                return line.status.toLowerCase().indexOf(lowerFilter) !== -1 ||
+                line.component.toLowerCase().indexOf(lowerFilter) !== -1 ||
+                line.value.toLowerCase().indexOf(lowerFilter) !== -1 ||
+                line.type.toLowerCase().indexOf(lowerFilter) !== -1 ||
+                (line.service && line.service.toLowerCase().indexOf(lowerFilter) !== -1) ||
+                (line.hostname && line.hostname.toLowerCase().indexOf(lowerFilter) !== -1) ||
+                (line.session && line.session.toLowerCase().indexOf(lowerFilter) !== -1) ||
+                (line.consumer && line.consumer.toLowerCase().indexOf(lowerFilter) !== -1);
+            }
         };
     }
 
@@ -75,7 +140,6 @@ export class ServiceShowComponent implements OnInit, OnDestroy {
                         }
                     }
                 }
-
                 this.updatePath();
             });
         });

@@ -47,6 +47,13 @@ type CDSVersionSet struct {
 
 type Level string
 
+const (
+	LevelDebug Level = "DEBUG"
+	LevelInfo  Level = "INFO"
+	LevelWarn  Level = "WARN"
+	LevelError Level = "ERROR"
+)
+
 type (
 	contextKey int
 )
@@ -58,10 +65,6 @@ const (
 	workDir
 	keysDir
 	tmpDir
-	LevelDebug Level = "DEBUG"
-	LevelInfo  Level = "INFO"
-	LevelWarn  Level = "WARN"
-	LevelError Level = "ERROR"
 )
 
 type Runtime interface {

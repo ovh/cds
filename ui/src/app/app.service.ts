@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
+import { RetentionDryRunEvent } from 'app/model/purge.model';
 import { WorkflowNodeRun, WorkflowRun } from 'app/model/workflow.run.model';
 import { AsCodeEvent } from 'app/store/ascode.action';
 import { UpdateMaintenance } from 'app/store/cds.action';
@@ -28,7 +29,15 @@ import { DeleteFromCachePipeline, ExternalChangePipeline, ResyncPipeline } from 
 import { PipelinesState, PipelinesStateModel } from './store/pipelines.state';
 import * as projectActions from './store/project.action';
 import { ProjectState, ProjectStateModel } from './store/project.state';
-import { ExternalChangeWorkflow, GetWorkflow, GetWorkflowNodeRun, GetWorkflowRun, UpdateWorkflowRunList } from './store/workflow.action';
+import {
+    ComputeRetentionDryRunEvent,
+    ExternalChangeWorkflow,
+    GetWorkflow,
+    GetWorkflowNodeRun,
+    GetWorkflowRun,
+    RemoveWorkflowRunFromList,
+    UpdateWorkflowRunList
+} from './store/workflow.action';
 import { WorkflowState } from './store/workflow.state';
 
 @Injectable()
@@ -75,6 +84,18 @@ export class AppService {
         if (event.type_event.indexOf(EventType.ASCODE) === 0) {
             if (event.username === this._store.selectSnapshot(AuthenticationState.user).username) {
                 this._store.dispatch(new AsCodeEvent(event.payload['as_code_event']));
+            }
+            return;
+        }
+        if (event.type_event.indexOf(EventType.WORKFLOW_RETENTION_DRYRUN) === 0) {
+            if (this.routeParams['key'] && this.routeParams['key'] === event.project_key
+                && this.routeParams['workflowName'] === event.workflow_name) {
+                let retentionEvent = <RetentionDryRunEvent>event.payload;
+                if (retentionEvent.status === 'ERROR') {
+                    this._toast.error('', retentionEvent.error);
+                }
+                this._store.dispatch(new ComputeRetentionDryRunEvent(
+                    { projectKey: event.project_key, workflowName: event.workflow_name, event: retentionEvent }));
             }
             return;
         }
@@ -328,14 +349,26 @@ export class AppService {
         }
         switch (event.type_event) {
             case EventType.RUN_WORKFLOW_PREFIX:
+                if (event.payload['to_delete']) {
+                    this._store.dispatch(new RemoveWorkflowRunFromList({
+                        projectKey: event.project_key,
+                        workflowName: event.workflow_name,
+                        num: event.workflow_run_num
+                    }));
+
+                    if (this.routeParams['number'] === event.workflow_run_num.toString()) {
+                        this._toast.info('', 'This run has just been deleted')
+                        this._router.navigate(['/project', this.routeParams['key'], 'workflow', event.workflow_name]);
+                    }
+                    return;
+                }
                 if (this.routeParams['number'] === event.workflow_run_num.toString()) {
                     // if same run number , then update store
-                    this._store.dispatch(
-                        new GetWorkflowRun({
-                            projectKey: event.project_key,
-                            workflowName: event.workflow_name,
-                            num: event.workflow_run_num
-                        }));
+                    this._store.dispatch(new GetWorkflowRun({
+                        projectKey: event.project_key,
+                        workflowName: event.workflow_name,
+                        num: event.workflow_run_num
+                    }));
                 } else {
                     this._workflowRunService
                         .getWorkflowRun(event.project_key, event.workflow_name, event.workflow_run_num)

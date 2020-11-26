@@ -14,6 +14,7 @@ import (
 // PubSub represents a subscriber
 type PubSub interface {
 	Unsubscribe(channels ...string) error
+	GetMessage(c context.Context) (string, error)
 }
 
 //Key make a key as expected
@@ -32,6 +33,7 @@ type Store interface {
 	Delete(key string) error
 	DeleteAll(key string) error
 	Exist(key string) (bool, error)
+	Eval(expr string, args ...string) (string, error)
 	HealthStore
 	LockStore
 	QueueStore
@@ -43,6 +45,7 @@ type Store interface {
 type HealthStore interface {
 	Ping() error
 	DBSize() (int64, error)
+	Size(key string) (int64, error)
 }
 
 type QueueStore interface {
@@ -64,7 +67,6 @@ type SetStore interface {
 type PubSubStore interface {
 	Publish(ctx context.Context, queueName string, value interface{}) error
 	Subscribe(queueName string) (PubSub, error)
-	GetMessageFromSubscription(c context.Context, pb PubSub) (string, error)
 }
 
 type LockStore interface {
@@ -73,13 +75,16 @@ type LockStore interface {
 }
 
 type ScoredSetStore interface {
+	Delete(key string) error
 	ScoredSetAdd(ctx context.Context, key string, value interface{}, score float64) error
 	ScoredSetAppend(ctx context.Context, key string, value interface{}) error
 	ScoredSetScan(ctx context.Context, key string, from, to float64, dest interface{}) error
 	ScoredSetScanWithScores(ctx context.Context, key string, from, to float64) ([]SetValueWithScore, error)
+	ScoredSetScanMaxScore(ctx context.Context, key string) (*SetValueWithScore, error)
 	ScoredSetRange(ctx context.Context, key string, from, to int64, dest interface{}) error
 	ScoredSetRem(ctx context.Context, key string, members ...string) error
 	SetCard(key string) (int, error)
+	Eval(expr string, args ...string) (string, error)
 	HealthStore
 }
 

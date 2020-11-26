@@ -70,7 +70,7 @@ func (w *CurrentWorker) Unregister(ctx context.Context) error {
 	return nil
 }
 
-// LoopPath return the list of evailable command in path
+// LoopPath returns the list of available binaries in path
 func LoopPath(w *CurrentWorker, reqs []sdk.Requirement) []string {
 	binaries := []string{}
 	for _, req := range reqs {

@@ -41,6 +41,8 @@ type Workflow struct {
 	Usage                   *Usage                       `json:"usage,omitempty" db:"-" cli:"-"`
 	HistoryLength           int64                        `json:"history_length" db:"history_length" cli:"-"`
 	PurgeTags               PurgeTags                    `json:"purge_tags,omitempty" db:"purge_tags" cli:"-"`
+	RetentionPolicy         string                       `json:"retention_policy,omitempty" db:"retention_policy" cli:"-"`
+	MaxRuns                 int64                        `json:"max_runs,omitempty" db:"max_runs" cli:"-"`
 	Notifications           []WorkflowNotification       `json:"notifications,omitempty" db:"-" cli:"-"`
 	FromRepository          string                       `json:"from_repository,omitempty" db:"from_repository" cli:"from"`
 	DerivedFromWorkflowID   int64                        `json:"derived_from_workflow_id,omitempty" db:"derived_from_workflow_id" cli:"-"`
@@ -65,6 +67,22 @@ type Workflow struct {
 	TemplateUpToDate bool                      `json:"template_up_to_date,omitempty" db:"-" cli:"-"`
 	URLs             URL                       `json:"urls" yaml:"-" db:"-" cli:"-"`
 	Runs             []WorkflowRun             `json:"runs,omitempty" yaml:"-" db:"-" cli:"-"`
+}
+
+func (w Workflow) Value() (driver.Value, error) {
+	j, err := json.Marshal(w)
+	return j, WrapError(err, "cannot marshal Workflow")
+}
+
+func (w *Workflow) Scan(src interface{}) error {
+	if src == nil {
+		return nil
+	}
+	source, ok := src.([]byte)
+	if !ok {
+		return WithStack(fmt.Errorf("type assertion .([]byte) failed (%T)", src))
+	}
+	return WrapError(json.Unmarshal(source, w), "cannot unmarshal Workflow")
 }
 
 type PurgeTags []string

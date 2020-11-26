@@ -9,15 +9,13 @@ import (
 	"testing"
 	"time"
 
-	"github.com/ovh/cds/engine/api/environment"
-	"github.com/ovh/cds/engine/api/event"
-	"github.com/ovh/cds/sdk/cdsclient"
-
 	"github.com/go-gorp/gorp"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
 
 	"github.com/ovh/cds/engine/api/application"
+	"github.com/ovh/cds/engine/api/environment"
+	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/engine/api/services"
@@ -26,12 +24,15 @@ import (
 	"github.com/ovh/cds/engine/api/test/assets"
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/cdsclient"
 )
 
 func TestUpdateAsCodeEnvironmentHandler(t *testing.T) {
 	api, db, tsURL := newTestServer(t)
 
+	event.OverridePubSubKey("events_pubsub_test")
 	require.NoError(t, event.Initialize(context.Background(), api.mustDB(), api.Cache))
+	require.NoError(t, api.initWebsocket("events_pubsub_test"))
 
 	u, jwt := assets.InsertAdminUser(t, db)
 
@@ -216,7 +217,8 @@ func TestUpdateAsCodeEnvironmentHandler(t *testing.T) {
 
 	chanMessageReceived := make(chan sdk.WebsocketEvent)
 	chanMessageToSend := make(chan []sdk.WebsocketFilter)
-	go client.WebsocketEventsListen(context.TODO(), sdk.NewGoRoutines(), chanMessageToSend, chanMessageReceived)
+	chanErrorReceived := make(chan error)
+	go client.WebsocketEventsListen(context.TODO(), sdk.NewGoRoutines(), chanMessageToSend, chanMessageReceived, chanErrorReceived)
 	chanMessageToSend <- []sdk.WebsocketFilter{{
 		Type:         sdk.WebsocketFilterTypeAscodeEvent,
 		ProjectKey:   proj.Key,
@@ -245,6 +247,8 @@ func TestUpdateAsCodeEnvironmentHandler(t *testing.T) {
 	select {
 	case <-timeout.C:
 		t.Fatal("test timeout")
+	case err := <-chanErrorReceived:
+		t.Fatal(err)
 	case evt := <-chanMessageReceived:
 		require.Equal(t, fmt.Sprintf("%T", sdk.EventAsCodeEvent{}), evt.Event.EventType)
 		var ae sdk.EventAsCodeEvent

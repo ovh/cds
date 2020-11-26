@@ -25,8 +25,6 @@ import { ToastService } from './shared/toast/ToastService';
 import { AuthenticationState } from './store/authentication.state';
 import { AddHelp } from './store/help.action';
 
-declare var PACMAN: any;
-
 @Component({
     selector: 'app-root',
     templateUrl: './app.component.html',
@@ -35,6 +33,7 @@ declare var PACMAN: any;
 @AutoUnsubscribe()
 export class AppComponent implements OnInit, OnDestroy {
     open: boolean;
+    isAPIAvailable: boolean;
     isConnected: boolean;
     hideNavBar: boolean;
     heartbeatToken: number;
@@ -54,12 +53,9 @@ export class AppComponent implements OnInit, OnDestroy {
     maintenance: boolean;
     cdsstateSub: Subscription;
     user: AuthentifiedUser;
-    previousURL: string
-
-    @ViewChild('gamification')
-    eltGamification: ElementRef;
-    gameInit: boolean;
+    previousURL: string;
     websocket: WebSocketSubject<any>;
+    loading = true;
 
     constructor(
         _translate: TranslateService,
@@ -110,15 +106,27 @@ export class AppComponent implements OnInit, OnDestroy {
                 this.hideNavBar = e.url.startsWith('/auth')
             }
         });
-
-        this._helpService.getHelp().subscribe(h => {
-            this._store.dispatch(new AddHelp(h));
-        });
     }
 
-    ngOnDestroy(): void {} // Should be set to use @AutoUnsubscribe with AOT
+    ngOnDestroy(): void { } // Should be set to use @AutoUnsubscribe with AOT
 
     ngOnInit(): void {
+        this._monitoringService.getStatus().subscribe(
+            (data) => {
+                this.isAPIAvailable = true;
+                this.loading = false;
+                this.load();
+            },
+            err => {
+                this.isAPIAvailable = false;
+                this.loading = false;
+                setTimeout(() => { window.location.reload() }, 30000);
+            }
+        );
+    }
+
+    load(): void {
+        this._helpService.getHelp().subscribe(h => this._store.dispatch(new AddHelp(h)));
         this._store.dispatch(new GetCDSStatus());
         this._store.select(AuthenticationState.user).subscribe(user => {
             if (!user) {
@@ -179,13 +187,6 @@ export class AppComponent implements OnInit, OnDestroy {
             });
 
         this.cdsstateSub = this._store.select(CDSState.getCurrentState()).subscribe(m => {
-            // Switch maintenance ON
-            if (!this.maintenance && m.maintenance && !this.gameInit && this.isConnected && !this.user.isAdmin()) {
-                setTimeout(() => {
-                    this.gameInit = true;
-                    PACMAN.init(this.eltGamification.nativeElement, '/assets/js/');
-                }, 1000);
-            }
             this.maintenance = m.maintenance;
         });
     }
@@ -205,8 +206,6 @@ export class AppComponent implements OnInit, OnDestroy {
     }
 
     refresh(): void {
-        this.zone.runOutsideAngular(() => {
-            location.reload(true);
-        });
+        this.zone.runOutsideAngular(() => { location.reload(); });
     }
 }

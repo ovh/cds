@@ -51,6 +51,23 @@ func TestLuaCheckWeekOfDay(t *testing.T) {
 	assert.True(t, l.Result)
 }
 
+func TestLuaNilVariables(t *testing.T) {
+	script := `local re = require("re")
+	return 
+		(git_branch ~= nil and re.match(git_branch,"integration") == "integration") or 
+		(git_repository ~= nil and re.match(git_repository,"integration") == "integration") or 
+		(git_pr_title ~= nil and re.match(git_pr_title,"integration") == "integration")`
+
+	l, err := NewCheck()
+	test.NoError(t, err)
+	l.SetVariables(map[string]string{
+		"git_repository": "PROJECT/integration",
+	})
+	test.NoError(t, l.Perform(script))
+	assert.False(t, l.IsError)
+	assert.True(t, l.Result)
+}
+
 func TestLuaCheckRegularExpression(t *testing.T) {
 	l, err := NewCheck()
 	test.NoError(t, err)

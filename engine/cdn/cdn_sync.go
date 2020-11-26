@@ -16,7 +16,8 @@ import (
 )
 
 const (
-	maxWorker = 5
+	maxWorker    = 5
+	cdsSyncQueue = "cdn:cds:sync"
 )
 
 var statusSync struct {
@@ -27,6 +28,37 @@ var statusSync struct {
 	runPerProjectDone   map[string]int
 	runPerProjectFailed map[string]int
 	runPerProjectTotal  map[string]int
+}
+
+func (s *Service) startCDSSync(ctx context.Context) error {
+	return s.Cache.Publish(ctx, cdsSyncQueue, "true")
+}
+
+func (s *Service) listenCDSSync(ctx context.Context, cdsStorage *cds.CDS) error {
+	pubsub, err := s.Cache.Subscribe(cdsSyncQueue)
+	if err != nil {
+		return err
+	}
+	tick := time.NewTicker(1 * time.Second)
+	defer tick.Stop()
+	for {
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		case <-tick.C:
+			if ctx.Err() != nil {
+				continue
+			}
+			msg, err := pubsub.GetMessage(ctx)
+			if err != nil {
+				log.Warning(ctx, "cdn.listenCDSSync> cannot get message from pubsub %s: %s", msg, err)
+				continue
+			}
+			if err := s.SyncLogs(ctx, cdsStorage); err != nil {
+				log.ErrorWithFields(ctx, log.Fields{"stack_trace": fmt.Sprintf("%+v", err)}, "%s", err)
+			}
+		}
+	}
 }
 
 // getStatusSyncLogs returns the monitoring of the sync CDS to CDN
@@ -117,26 +149,36 @@ func (s *Service) syncProjectLogs(ctx context.Context, cdsStorage *cds.CDS, pKey
 	statusSync.runPerProjectTotal[pKey] = 0
 
 	// List of node runs
-	nodeRunIds, err := cdsStorage.ListNodeRunIdentifiers(pKey)
+	nodeRunIdsFromCDS, err := cdsStorage.ListNodeRunIdentifiers(pKey)
 	if err != nil {
 		return err
 	}
 
-	statusSync.runPerProjectTotal[pKey] = len(nodeRunIds)
+	statusSync.runPerProjectTotal[pKey] = len(nodeRunIdsFromCDS)
+
 	// Test if all noderuns have been sync for this project
-	listNodeRuns, err := item.ListNodeRunByProject(s.mustDBWithCtx(ctx), pKey)
+	listNodeRunsInCDN, err := item.ListNodeRunByProject(s.mustDBWithCtx(ctx), pKey)
 	if err != nil {
 		return err
 	}
-	nodeRunMap := make(map[int64]struct{}, len(listNodeRuns))
-	for _, id := range listNodeRuns {
-		nodeRunMap[id] = struct{}{}
+	nodeRunMapInCDN := make(map[int64]struct{}, len(listNodeRunsInCDN))
+	for _, id := range listNodeRunsInCDN {
+		nodeRunMapInCDN[id] = struct{}{}
 	}
 
-	log.Info(ctx, "cdn:cds:sync:log: %d node run to sync for project %s", len(nodeRunIds), pKey)
+	nodeRunToMigrate := make([]sdk.WorkflowNodeRunIdentifiers, 0, len(nodeRunIdsFromCDS))
+	for _, identifiers := range nodeRunIdsFromCDS {
+		if _, has := nodeRunMapInCDN[identifiers.NodeRunID]; !has {
+			nodeRunToMigrate = append(nodeRunToMigrate, identifiers)
+		}
+	}
+	statusSync.runPerProjectDone[pKey] = len(nodeRunIdsFromCDS) - len(nodeRunToMigrate)
+
+	log.Info(ctx, "cdn:cds:sync:log: %d node run were already sync for project %s", len(nodeRunIdsFromCDS)-len(nodeRunToMigrate), pKey)
+	log.Info(ctx, "cdn:cds:sync:log: %d node run to sync for project %s", len(nodeRunToMigrate), pKey)
 
 	// Nb of nodeRun
-	maxNodeRun := len(nodeRunIds)
+	maxNodeRun := len(nodeRunToMigrate)
 	jobs := make(chan sdk.WorkflowNodeRunIdentifiers, maxNodeRun)
 	results := make(chan error, maxNodeRun)
 
@@ -147,17 +189,12 @@ func (s *Service) syncProjectLogs(ctx context.Context, cdsStorage *cds.CDS, pKey
 		})
 	}
 
-	for i := 0; i < len(nodeRunIds); i++ {
-		// test if node run already exists on CDN
-		if _, has := nodeRunMap[nodeRunIds[i].NodeRunID]; has {
-			results <- nil
-			continue
-		}
-		jobs <- nodeRunIds[i]
+	for i := 0; i < maxNodeRun; i++ {
+		jobs <- nodeRunToMigrate[i]
 	}
 	close(jobs)
 
-	for a := 1; a <= len(nodeRunIds); a++ {
+	for a := 1; a <= maxNodeRun; a++ {
 		err := <-results
 		if err != nil {
 			statusSync.runPerProjectFailed[pKey]++
@@ -165,7 +202,7 @@ func (s *Service) syncProjectLogs(ctx context.Context, cdsStorage *cds.CDS, pKey
 		} else {
 			statusSync.runPerProjectDone[pKey]++
 		}
-		log.Info(ctx, "cdn:cds:sync:log: node run done for project %s:  %d/%d (+%d failed)", pKey, statusSync.runPerProjectDone[pKey], len(nodeRunIds), statusSync.runPerProjectFailed[pKey])
+		log.Info(ctx, "cdn:cds:sync:log: node run done for project %s:  %d/%d (+%d failed)", pKey, statusSync.runPerProjectDone[pKey], statusSync.runPerProjectTotal[pKey], statusSync.runPerProjectFailed[pKey])
 	}
 
 	if statusSync.runPerProjectFailed[pKey] > 0 {
@@ -190,7 +227,7 @@ func (s *Service) syncNodeRun(ctx context.Context, cdsStorage *cds.CDS, pKey str
 		log.Debug("cd:syncNodeRun: already lock %d", nodeRunIdentifier.NodeRunID)
 		return nil
 	}
-	defer s.Cache.Unlock(lockKey)
+	defer s.Cache.Unlock(lockKey) // nolint
 
 	// Load node run
 	nodeRun, err := cdsStorage.GetWorkflowNodeRun(pKey, nodeRunIdentifier)

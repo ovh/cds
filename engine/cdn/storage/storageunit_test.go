@@ -19,7 +19,6 @@ import (
 	"github.com/ovh/cds/engine/gorpmapper"
 	commontest "github.com/ovh/cds/engine/test"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 )
 
 func TestRun(t *testing.T) {
@@ -33,7 +32,7 @@ func TestRun(t *testing.T) {
 	cdntest.ClearItem(t, context.TODO(), m, db)
 
 	ctx, cancel := context.WithTimeout(context.TODO(), 3*time.Second)
-	defer cancel()
+	t.Cleanup(cancel)
 
 	tmpDir, err := ioutil.TempDir("", t.Name()+"-cdn-1-*")
 	require.NoError(t, err)
@@ -41,6 +40,7 @@ func TestRun(t *testing.T) {
 	require.NoError(t, err)
 
 	cdnUnits, err := storage.Init(ctx, m, db.DbMap, sdk.NewGoRoutines(), storage.Configuration{
+		HashLocatorSalt: "thisismysalt",
 		Buffer: storage.BufferConfiguration{
 			Name: "redis_buffer",
 			Redis: storage.RedisBufferConfiguration{
@@ -51,7 +51,6 @@ func TestRun(t *testing.T) {
 		Storages: []storage.StorageConfiguration{
 			{
 				Name: "local_storage",
-				Cron: "* * * * * ?",
 				Local: &storage.LocalStorageConfiguration{
 					Path: tmpDir,
 					Encryption: []convergent.ConvergentEncryptionConfig{
@@ -64,7 +63,6 @@ func TestRun(t *testing.T) {
 				},
 			}, {
 				Name: "local_storage_2",
-				Cron: "* * * * * ?",
 				Local: &storage.LocalStorageConfiguration{
 					Path: tmpDir2,
 					Encryption: []convergent.ConvergentEncryptionConfig{
@@ -80,7 +78,7 @@ func TestRun(t *testing.T) {
 	})
 	require.NoError(t, err)
 	require.NotNil(t, cdnUnits)
-	require.NoError(t, cdnUnits.Start(ctx))
+	cdnUnits.Start(ctx, sdk.NewGoRoutines())
 
 	units, err := storage.LoadAllUnits(ctx, m, db.DbMap)
 	require.NoError(t, err)
@@ -103,10 +101,8 @@ func TestRun(t *testing.T) {
 	}
 	require.NoError(t, item.Insert(ctx, m, db, i))
 	defer func() {
-		_ = item.DeleteByIDs(db, []string{i.ID})
+		_ = item.DeleteByID(db, i.ID)
 	}()
-
-	log.Debug("item ID: %v", i.ID)
 
 	itemUnit, err := cdnUnits.NewItemUnit(ctx, cdnUnits.Buffer, i)
 	require.NoError(t, err)
@@ -118,7 +114,8 @@ func TestRun(t *testing.T) {
 	require.NoError(t, err)
 
 	require.NoError(t, cdnUnits.Buffer.Add(*itemUnit, 1.0, "this is the first log\n"))
-	require.NoError(t, cdnUnits.Buffer.Add(*itemUnit, 1.0, "this is the second log\n"))
+
+	require.NoError(t, cdnUnits.Buffer.Add(*itemUnit, 2.0, "this is the second log\n"))
 
 	reader, err := cdnUnits.Buffer.NewReader(context.TODO(), *itemUnit)
 	require.NoError(t, err)

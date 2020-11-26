@@ -25,7 +25,6 @@ import (
 
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/ovh/cds/sdk/doc"
 	docSDK "github.com/ovh/cds/sdk/doc"
 	"github.com/ovh/cds/sdk/log"
@@ -48,25 +47,24 @@ var (
 
 // Router is a wrapper around mux.Router
 type Router struct {
-	Background       context.Context
-	Mux              *mux.Router
-	SetHeaderFunc    func() map[string]string
-	Prefix           string
-	URL              string
-	Middlewares      []service.Middleware
-	PostMiddlewares  []service.Middleware
-	mapRouterConfigs map[string]*service.RouterConfig
-	panicked         bool
-	nbPanic          int
-	lastPanic        *time.Time
-	scopeDetails     []sdk.AuthConsumerScopeDetail
+	Background            context.Context
+	Mux                   *mux.Router
+	SetHeaderFunc         func() map[string]string
+	Prefix                string
+	URL                   string
+	Middlewares           []service.Middleware
+	DefaultAuthMiddleware service.Middleware
+	PostAuthMiddlewares   []service.Middleware
+	PostMiddlewares       []service.Middleware
+	mapRouterConfigs      map[string]*service.RouterConfig
+	panicked              bool
+	nbPanic               int
+	lastPanic             *time.Time
+	scopeDetails          []sdk.AuthConsumerScopeDetail
 }
 
-// HandlerConfigParam is a type used in handler configuration, to set specific config on a route given a method
-type HandlerConfigParam func(*service.HandlerConfig)
-
 // HandlerConfigFunc is a type used in the router configuration fonction "Handle"
-type HandlerConfigFunc func(service.Handler, ...HandlerConfigParam) *service.HandlerConfig
+type HandlerConfigFunc func(service.Handler, ...service.HandlerConfigParam) *service.HandlerConfig
 
 func (r *Router) pprofLabel(config map[string]*service.HandlerConfig, fn http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, req *http.Request) {
@@ -175,29 +173,6 @@ func (r *Router) recoverWrap(h http.HandlerFunc) http.HandlerFunc {
 		}()
 		h.ServeHTTP(w, req)
 	})
-}
-
-var headers = []string{
-	http.CanonicalHeaderKey(telemetry.TraceIDHeader),
-	http.CanonicalHeaderKey(telemetry.SpanIDHeader),
-	http.CanonicalHeaderKey(telemetry.SampledHeader),
-	http.CanonicalHeaderKey(sdk.WorkflowAsCodeHeader),
-	http.CanonicalHeaderKey(sdk.ResponseWorkflowIDHeader),
-	http.CanonicalHeaderKey(sdk.ResponseWorkflowNameHeader),
-}
-
-// DefaultHeaders is a set of default header for the router
-func DefaultHeaders() map[string]string {
-	now := time.Now()
-	return map[string]string{
-		"Access-Control-Allow-Origin":              "*",
-		"Access-Control-Allow-Methods":             "GET,OPTIONS,PUT,POST,DELETE",
-		"Access-Control-Allow-Headers":             "Accept, Origin, Referer, User-Agent, Content-Type, Authorization, Session-Token, Last-Event-Id, If-Modified-Since, Content-Disposition, " + strings.Join(headers, ", "),
-		"Access-Control-Expose-Headers":            "Accept, Origin, Referer, User-Agent, Content-Type, Authorization, Session-Token, Last-Event-Id, ETag, Content-Disposition, " + strings.Join(headers, ", "),
-		cdsclient.ResponseAPINanosecondsTimeHeader: fmt.Sprintf("%d", now.UnixNano()),
-		cdsclient.ResponseAPITimeHeader:            now.Format(time.RFC3339),
-		cdsclient.ResponseEtagHeader:               fmt.Sprintf("%d", now.Unix()),
-	}
 }
 
 // computeScopeDetails iterate over declared handlers for routers and populate router scope details.
@@ -389,7 +364,7 @@ func (r *Router) handle(uri string, scope HandlerScope, handlers ...*service.Han
 
 		// Log request start
 		start := time.Now()
-		log.InfoWithFields(ctx, logrus.Fields{
+		log.InfoWithFields(ctx, log.Fields{
 			"method":      req.Method,
 			"route":       cleanURL,
 			"request_uri": req.RequestURI,
@@ -406,7 +381,7 @@ func (r *Router) handle(uri string, scope HandlerScope, handlers ...*service.Han
 			end := time.Now()
 			latency := end.Sub(start)
 
-			log.InfoWithFields(ctx, logrus.Fields{
+			log.InfoWithFields(ctx, log.Fields{
 				"method":      req.Method,
 				"latency_num": latency.Nanoseconds(),
 				"latency":     latency,
@@ -427,6 +402,32 @@ func (r *Router) handle(uri string, scope HandlerScope, handlers ...*service.Han
 		telemetry.Record(ctx, ServerRequestCount, 1)
 
 		for _, m := range r.Middlewares {
+			var err error
+			ctx, err = m(ctx, responseWriter, req, rc)
+			if err != nil {
+				telemetry.Record(r.Background, Errors, 1)
+				service.WriteError(ctx, responseWriter, req, err)
+				deferFunc(ctx)
+				return
+			}
+		}
+
+		authMiddleware := r.DefaultAuthMiddleware
+		if rc.OverrideAuthMiddleware != nil {
+			authMiddleware = rc.OverrideAuthMiddleware
+		}
+		if authMiddleware != nil {
+			var err error
+			ctx, err = authMiddleware(ctx, responseWriter, req, rc)
+			if err != nil {
+				telemetry.Record(r.Background, Errors, 1)
+				service.WriteError(ctx, responseWriter, req, err)
+				deferFunc(ctx)
+				return
+			}
+		}
+
+		for _, m := range r.PostAuthMiddlewares {
 			var err error
 			ctx, err = m(ctx, responseWriter, req, rc)
 			if err != nil {
@@ -507,7 +508,7 @@ func processAsyncRequests(ctx context.Context, chanRequest chan asynchronousRequ
 			}
 			if err := req.do(ctx, handler); err != nil {
 				isErrWithStack := sdk.IsErrorWithStack(err)
-				fields := logrus.Fields{}
+				fields := log.Fields{}
 				if isErrWithStack {
 					fields["stack_trace"] = fmt.Sprintf("%+v", err)
 				}
@@ -541,9 +542,9 @@ func (r *Router) Asynchronous(handler service.AsynchronousHandlerFunc, retry int
 					log.ContextLoggingRequestIDKey: ctx.Value(log.ContextLoggingRequestIDKey),
 					contextSession:                 ctx.Value(contextSession),
 					contextAPIConsumer:             ctx.Value(contextAPIConsumer),
-					contextJWT:                     ctx.Value(contextJWT),
-					contextJWTRaw:                  ctx.Value(contextJWTRaw),
-					contextJWTFromCookie:           ctx.Value(contextJWTFromCookie),
+					service.ContextJWT:             ctx.Value(service.ContextJWT),
+					service.ContextJWTRaw:          ctx.Value(service.ContextJWTRaw),
+					service.ContextJWTFromCookie:   ctx.Value(service.ContextJWTFromCookie),
 				},
 				request: *r,
 				vars:    mux.Vars(r),
@@ -564,10 +565,9 @@ var DEPRECATED = func(rc *service.HandlerConfig) {
 }
 
 // GET will set given handler only for GET request
-func (r *Router) GET(h service.HandlerFunc, cfg ...HandlerConfigParam) *service.HandlerConfig {
+func (r *Router) GET(h service.HandlerFunc, cfg ...service.HandlerConfigParam) *service.HandlerConfig {
 	var rc service.HandlerConfig
 	rc.Handler = h()
-	rc.NeedAuth = true
 	rc.Method = "GET"
 	rc.PermissionLevel = sdk.PermissionRead
 	for _, c := range cfg {
@@ -577,10 +577,9 @@ func (r *Router) GET(h service.HandlerFunc, cfg ...HandlerConfigParam) *service.
 }
 
 // POST will set given handler only for POST request
-func (r *Router) POST(h service.HandlerFunc, cfg ...HandlerConfigParam) *service.HandlerConfig {
+func (r *Router) POST(h service.HandlerFunc, cfg ...service.HandlerConfigParam) *service.HandlerConfig {
 	var rc service.HandlerConfig
 	rc.Handler = h()
-	rc.NeedAuth = true
 	rc.Method = "POST"
 	rc.PermissionLevel = sdk.PermissionReadWriteExecute
 	for _, c := range cfg {
@@ -590,10 +589,9 @@ func (r *Router) POST(h service.HandlerFunc, cfg ...HandlerConfigParam) *service
 }
 
 // POSTEXECUTE will set given handler only for POST request and add a flag for execution permission
-func (r *Router) POSTEXECUTE(h service.HandlerFunc, cfg ...HandlerConfigParam) *service.HandlerConfig {
+func (r *Router) POSTEXECUTE(h service.HandlerFunc, cfg ...service.HandlerConfigParam) *service.HandlerConfig {
 	var rc service.HandlerConfig
 	rc.Handler = h()
-	rc.NeedAuth = true
 	rc.Method = "POST"
 	rc.PermissionLevel = sdk.PermissionReadExecute
 	for _, c := range cfg {
@@ -603,10 +601,9 @@ func (r *Router) POSTEXECUTE(h service.HandlerFunc, cfg ...HandlerConfigParam) *
 }
 
 // PUT will set given handler only for PUT request
-func (r *Router) PUT(h service.HandlerFunc, cfg ...HandlerConfigParam) *service.HandlerConfig {
+func (r *Router) PUT(h service.HandlerFunc, cfg ...service.HandlerConfigParam) *service.HandlerConfig {
 	var rc service.HandlerConfig
 	rc.Handler = h()
-	rc.NeedAuth = true
 	rc.Method = "PUT"
 	rc.PermissionLevel = sdk.PermissionReadWriteExecute
 	for _, c := range cfg {
@@ -616,10 +613,9 @@ func (r *Router) PUT(h service.HandlerFunc, cfg ...HandlerConfigParam) *service.
 }
 
 // DELETE will set given handler only for DELETE request
-func (r *Router) DELETE(h service.HandlerFunc, cfg ...HandlerConfigParam) *service.HandlerConfig {
+func (r *Router) DELETE(h service.HandlerFunc, cfg ...service.HandlerConfigParam) *service.HandlerConfig {
 	var rc service.HandlerConfig
 	rc.Handler = h()
-	rc.NeedAuth = true
 	rc.Method = "DELETE"
 	rc.PermissionLevel = sdk.PermissionReadWriteExecute
 	for _, c := range cfg {
@@ -628,41 +624,8 @@ func (r *Router) DELETE(h service.HandlerFunc, cfg ...HandlerConfigParam) *servi
 	return &rc
 }
 
-// NeedAdmin set the route for cds admin only (or not)
-func NeedAdmin(admin bool) HandlerConfigParam {
-	f := func(rc *service.HandlerConfig) {
-		rc.NeedAdmin = admin
-	}
-	return f
-}
-
-// AllowProvider set the route for external providers
-func AllowProvider(need bool) HandlerConfigParam {
-	f := func(rc *service.HandlerConfig) {
-		rc.AllowProvider = need
-	}
-	return f
-}
-
-// NeedToken set the route for requests that have the given header
-func NeedToken(k, v string) HandlerConfigParam {
-	f := func(rc *service.HandlerConfig) {
-		rc.AllowedTokens = append(rc.AllowedTokens, fmt.Sprintf("%s:%s", k, v))
-	}
-	return f
-}
-
-// Auth set manually whether authorisation layer should be applied
-// Authorization is enabled by default
-func Auth(v bool) HandlerConfigParam {
-	f := func(rc *service.HandlerConfig) {
-		rc.NeedAuth = v
-	}
-	return f
-}
-
 // MaintenanceAware route need CDS maintenance off
-func MaintenanceAware() HandlerConfigParam {
+func MaintenanceAware() service.HandlerConfigParam {
 	f := func(rc *service.HandlerConfig) {
 		rc.MaintenanceAware = true
 	}

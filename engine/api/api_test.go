@@ -40,9 +40,7 @@ func newTestAPI(t *testing.T, bootstrapFunc ...test.Bootstrapf) (*API, *test.Fak
 	api.GoRoutines = sdk.NewGoRoutines()
 
 	api.InitRouter()
-	t.Cleanup(func() {
-		cancel()
-	})
+	t.Cleanup(func() { cancel() })
 	return api, db, router
 }
 

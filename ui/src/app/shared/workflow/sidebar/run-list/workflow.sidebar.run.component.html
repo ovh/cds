@@ -4,7 +4,7 @@
         <sui-select-option *ngFor="let option of multiSelect.filteredOptions" [value]="option">
         </sui-select-option>
     </sui-multi-select>
-    <div class="runs scrollable" #tagsList infiniteScroll [infiniteScrollDistance]="2" [infiniteScrollThrottle]="50"
+    <div class="runs" #tagsList infiniteScroll [infiniteScrollDistance]="2" [infiniteScrollThrottle]="50"
         [scrollWindow]="false" (scrolled)="scroll()">
         <ng-container *ngIf="workflowRuns.length > 0">
             <div class="item pointing" *ngFor="let r of workflowRuns" (click)="changeRun(r.num)"
@@ -17,7 +17,8 @@
                     <div class="info">
                         <div class="number">
                             <span class="hash">#</span>
-                            <span class="count" title="{{r.version ? r.version : r.num}}" [class.success]="r.status === pipelineStatusEnum.SUCCESS"
+                            <span class="count" title="{{r.version ? r.version : r.num}}"
+                                [class.success]="r.status === pipelineStatusEnum.SUCCESS"
                                 [class.waiting]="r.status === pipelineStatusEnum.BUILDING || r.status === pipelineStatusEnum.WAITING || r.status === pipelineStatusEnum.PENDING"
                                 [class.fail]="r.status === pipelineStatusEnum.FAIL || r.status === pipelineStatusEnum.STOPPED"
                                 [class.never]="r.status === pipelineStatusEnum.NEVER_BUILT || r.status === pipelineStatusEnum.SKIPPED || r.status === pipelineStatusEnum.DISABLED">{{r.version ? r.version : r.num}}</span>

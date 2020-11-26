@@ -37,7 +37,11 @@ workflow_run.to_delete,
 workflow_run.read_only,
 workflow_run.version,
 workflow_run.to_craft,
-workflow_run.to_craft_opts
+workflow_run.to_craft_opts,
+workflow_run.workflow,
+workflow_run.infos,
+workflow_run.join_triggers_run,
+workflow_run.header
 `
 
 // LoadRunOptions are options for loading a run (node or workflow)
@@ -116,30 +120,6 @@ func LoadWorkflowFromWorkflowRunID(db gorp.SqlExecutor, wrID int64) (sdk.Workflo
 
 //PostInsert is a db hook on WorkflowRun
 func (r *Run) PostInsert(db gorp.SqlExecutor) error {
-	w, errw := json.Marshal(r.Workflow)
-	if errw != nil {
-		return sdk.WrapError(errw, "Unable to marshal workflow")
-	}
-
-	jtr, erri := json.Marshal(r.JoinTriggersRun)
-	if erri != nil {
-		return sdk.WrapError(erri, "Unable to marshal JoinTriggersRun")
-	}
-
-	i, erri := json.Marshal(r.Infos)
-	if erri != nil {
-		return sdk.WrapError(erri, "Unable to marshal infos")
-	}
-
-	h, errh := json.Marshal(r.Header)
-	if errh != nil {
-		return sdk.WrapError(erri, "Unable to marshal header")
-	}
-
-	if _, err := db.Exec("update workflow_run set workflow = $3, infos = $2, join_triggers_run = $4, header = $5 where id = $1", r.ID, i, w, jtr, h); err != nil {
-		return sdk.WrapError(err, "Unable to store marshalled infos")
-	}
-
 	if err := updateTags(db, r); err != nil {
 		return sdk.WrapError(err, "Unable to store tags")
 	}
@@ -150,48 +130,6 @@ func (r *Run) PostInsert(db gorp.SqlExecutor) error {
 //PostUpdate is a db hook on WorkflowRun
 func (r *Run) PostUpdate(db gorp.SqlExecutor) error {
 	return r.PostInsert(db)
-}
-
-//PostGet is a db hook on WorkflowRun
-//It loads column workflow which is in JSONB in table workflow_run
-func (r *Run) PostGet(db gorp.SqlExecutor) error {
-	var res = struct {
-		W sql.NullString `db:"workflow"`
-		I sql.NullString `db:"infos"`
-		J sql.NullString `db:"join_triggers_run"`
-		H sql.NullString `db:"header"`
-		O sql.NullString `db:"outgoing_hook_runs"`
-	}{}
-
-	if err := db.SelectOne(&res, "select workflow, infos, join_triggers_run, header, outgoing_hook_runs from workflow_run where id = $1", r.ID); err != nil {
-		return sdk.WrapError(err, "Unable to load marshalled workflow")
-	}
-
-	w := sdk.Workflow{}
-	if err := gorpmapping.JSONNullString(res.W, &w); err != nil {
-		return sdk.WrapError(err, "Unable to unmarshal workflow")
-	}
-	r.Workflow = w
-
-	i := []sdk.WorkflowRunInfo{}
-	if err := gorpmapping.JSONNullString(res.I, &i); err != nil {
-		return sdk.WrapError(err, "Unable to unmarshal infos")
-	}
-	r.Infos = i
-
-	j := map[int64]sdk.WorkflowNodeTriggerRun{}
-	if err := gorpmapping.JSONNullString(res.J, &j); err != nil {
-		return sdk.WrapError(err, "Unable to unmarshal join_triggers_run")
-	}
-	r.JoinTriggersRun = j
-
-	h := sdk.WorkflowRunHeaders{}
-	if err := gorpmapping.JSONNullString(res.H, &h); err != nil {
-		return sdk.WrapError(err, "Unable to unmarshal header")
-	}
-	r.Header = h
-
-	return nil
 }
 
 // InsertWorkflowRunTags  inserts new tags in database
@@ -316,71 +254,75 @@ func loadRuns(db gorp.SqlExecutor, query string, args ...interface{}) ([]sdk.Wor
 	wruns := make([]sdk.WorkflowRun, len(runs))
 	for i := range runs {
 		wr := sdk.WorkflowRun(runs[i])
-		if err := loadRunTags(db, &wr); err != nil {
-			return nil, sdk.WrapError(err, "Unable to load tags")
+		tags, err := loadRunTags(db, wr.ID)
+		if err != nil {
+			return nil, err
 		}
+		wr.Tags = tags
 		wruns[i] = wr
 	}
 	return wruns, nil
 }
 
-//LoadRuns loads all runs
-//It returns runs, offset, limit count and an error
-func LoadRuns(db gorp.SqlExecutor, projectkey, workflowname string, offset, limit int, tagFilter map[string]string) ([]sdk.WorkflowRun, int, int, int, error) {
-	var args = []interface{}{projectkey}
-	queryCount := `select count(workflow_run.id)
-				from workflow_run
-				join project on workflow_run.project_id = project.id
-				join workflow on workflow_run.workflow_id = workflow.id
-				where project.projectkey = $1 AND workflow_run.to_delete = false`
+func LoadRunsIDsToDelete(db gorp.SqlExecutor, offset int64, limit int64) ([]int64, int64, int64, int64, error) {
+	queryCount := `SELECT COUNT(id) FROM workflow_run WHERE to_delete = true`
+	count, err := db.SelectInt(queryCount)
+	if err != nil {
+		return nil, 0, 0, 0, sdk.WithStack(err)
+	}
+	if count == 0 {
+		return nil, 0, 0, 0, nil
+	}
 
-	if workflowname != "" {
-		args = []interface{}{projectkey, workflowname}
-		queryCount = `select count(workflow_run.id)
+	var ids []int64
+	querySelect := `SELECT id FROM workflow_run 
+					WHERE to_delete = true
+					ORDER BY workflow_run.start ASC limit $1 offset $2`
+	_, err = db.Select(&ids, querySelect, limit, offset)
+	if err != nil {
+		return nil, 0, 0, 0, sdk.WithStack(err)
+	}
+	return ids, offset, limit, count, nil
+}
+
+//LoadRunsSummaries loads a short version of workflow runs
+//It returns runs, offset, limit count and an error
+func LoadRunsSummaries(db gorp.SqlExecutor, projectkey, workflowname string, offset, limit int, tagFilter map[string]string) ([]sdk.WorkflowRunSummary, int, int, int, error) {
+	queryCount := `select count(workflow_run.id)
 					from workflow_run
 					join project on workflow_run.project_id = project.id
 					join workflow on workflow_run.workflow_id = workflow.id
 					where project.projectkey = $1
 					and workflow.name = $2
 					AND workflow_run.to_delete = false`
-	}
 
-	count, errc := db.SelectInt(queryCount, args...)
+	count, errc := db.SelectInt(queryCount, projectkey, workflowname)
 	if errc != nil {
-		return nil, 0, 0, 0, sdk.WrapError(errc, "Unable to load runs")
+		return nil, 0, 0, 0, sdk.WrapError(errc, "unable to load short runs")
 	}
 	if count == 0 {
 		return nil, 0, 0, 0, nil
 	}
 
-	args = []interface{}{projectkey, limit, offset}
-	query := fmt.Sprintf(`select %s
-	from workflow_run
-	join project on workflow_run.project_id = project.id
-	join workflow on workflow_run.workflow_id = workflow.id
-	where project.projectkey = $1 AND workflow_run.to_delete = false
-	order by workflow_run.start desc
-	limit $2 offset $3`, wfRunfields)
-
-	if workflowname != "" {
-		args = []interface{}{projectkey, workflowname, limit, offset}
-		query = fmt.Sprintf(`select %s
-			from workflow_run
-			join project on workflow_run.project_id = project.id
-			join workflow on workflow_run.workflow_id = workflow.id
-			where project.projectkey = $1
-			and workflow.name = $2
-			AND workflow_run.to_delete = false
-			order by workflow_run.start desc
-			limit $3 offset $4`, wfRunfields)
-	}
+	selectedColumn := "wr.id, wr.num, wr.status, wr.start, wr.last_modified, wr.last_sub_num, wr.last_execution, wr.version, wr.to_craft_opts"
+	args := []interface{}{projectkey, workflowname, limit, offset}
+	query := fmt.Sprintf(`
+			SELECT %s
+			FROM workflow_run wr
+			JOIN project ON wr.project_id = project.id
+			JOIN workflow ON wr.workflow_id = workflow.id
+			WHERE project.projectkey = $1
+			AND workflow.name = $2
+			AND wr.to_delete = false
+			ORDER BY wr.start desc
+			LIMIT $3 OFFSET $4`, selectedColumn)
 
 	if len(tagFilter) > 0 {
 		// Posgres operator: '<@' means 'is contained by' eg. 'ARRAY[2,7] <@ ARRAY[1,7,4,2,6]' ==> returns true
 		query = fmt.Sprintf(`select %s
-		from workflow_run
-		join project on workflow_run.project_id = project.id
-		join workflow on workflow_run.workflow_id = workflow.id
+		from workflow_run wr
+		join project on wr.project_id = project.id
+		join workflow on wr.workflow_id = workflow.id
 		join (
 			select workflow_run_id, string_agg(all_tags, ',') as tags
 			from (
@@ -389,13 +331,13 @@ func LoadRuns(db gorp.SqlExecutor, projectkey, workflowname string, offset, limi
 				order by tag
 			) as all_wr_tags
 			group by workflow_run_id
-		) as tags on workflow_run.id = tags.workflow_run_id
+		) as tags on wr.id = tags.workflow_run_id
 		where project.projectkey = $1
 		and workflow.name = $2
-		AND workflow_run.to_delete = false
+		AND wr.to_delete = false
 		and string_to_array($5, ',') <@ string_to_array(tags.tags, ',')
-		order by workflow_run.start desc
-		limit $3 offset $4`, wfRunfields)
+		order by wr.start desc
+		limit $3 offset $4`, selectedColumn)
 
 		var tags []string
 		for k, v := range tagFilter {
@@ -407,12 +349,20 @@ func LoadRuns(db gorp.SqlExecutor, projectkey, workflowname string, offset, limi
 		args = append(args, strings.Join(tags, ","))
 	}
 
-	wruns, err := loadRuns(db, query, args...)
+	var shortRuns []sdk.WorkflowRunSummary
+	_, err := db.Select(&shortRuns, query, args...)
 	if err != nil {
-		return nil, 0, 0, 0, err
+		return nil, 0, 0, 0, sdk.WithStack(err)
 	}
-
-	return wruns, offset, limit, int(count), nil
+	for i := range shortRuns {
+		run := &shortRuns[i]
+		tags, err := loadRunTags(db, run.ID)
+		if err != nil {
+			return nil, 0, 0, 0, err
+		}
+		run.Tags = tags
+	}
+	return shortRuns, offset, limit, int(count), nil
 }
 
 // LoadRunsIDByTag load workflow run ids for given tag and his value
@@ -453,17 +403,17 @@ func LoadRunsIDByTag(db gorp.SqlExecutor, projectKey, workflowName, tag, tagValu
 	return ids, nil
 }
 
-func loadRunTags(db gorp.SqlExecutor, run *sdk.WorkflowRun) error {
+func loadRunTags(db gorp.SqlExecutor, runID int64) ([]sdk.WorkflowRunTag, error) {
 	dbRunTags := []RunTag{}
-	if _, err := db.Select(&dbRunTags, "SELECT * from workflow_run_tag WHERE workflow_run_id=$1", run.ID); err != nil {
-		return sdk.WithStack(err)
+	if _, err := db.Select(&dbRunTags, "SELECT * from workflow_run_tag WHERE workflow_run_id=$1", runID); err != nil {
+		return nil, sdk.WithStack(err)
 	}
 
-	run.Tags = make([]sdk.WorkflowRunTag, len(dbRunTags))
+	tags := make([]sdk.WorkflowRunTag, 0, len(dbRunTags))
 	for i := range dbRunTags {
-		run.Tags[i] = sdk.WorkflowRunTag(dbRunTags[i])
+		tags = append(tags, sdk.WorkflowRunTag(dbRunTags[i]))
 	}
-	return nil
+	return tags, nil
 }
 
 func loadRun(db gorp.SqlExecutor, loadOpts LoadRunOptions, query string, args ...interface{}) (*sdk.WorkflowRun, error) {
@@ -636,7 +586,7 @@ func CreateRun(db *gorp.DbMap, wf *sdk.Workflow, opts sdk.WorkflowRunPostHandler
 		Status:        sdk.StatusPending,
 		LastExecution: time.Now(),
 		Tags:          make([]sdk.WorkflowRunTag, 0),
-		Workflow:      *wf, //sdk.Workflow{Name: wf.Name},
+		Workflow:      *wf,
 		ToCraft:       true,
 		ToCraftOpts:   &opts,
 	}
@@ -940,6 +890,11 @@ func purgeWorkflowRunWithoutTags(ctx context.Context, db gorp.SqlExecutor, wf sd
 	return nil
 }
 
+func CountNotPendingWorkflowRunsByWorkflowID(db gorp.SqlExecutor, workflowID int64) (int64, error) {
+	n, err := db.SelectInt("SELECT COUNT(id) FROM workflow_run WHERE workflow_id = $1 AND to_delete = false AND status <> $2", workflowID, sdk.StatusPending)
+	return n, sdk.WithStack(err)
+}
+
 func CountWorkflowRunsMarkToDelete(ctx context.Context, db gorp.SqlExecutor, workflowRunsMarkToDelete *stats.Int64Measure) int64 {
 	n, err := db.SelectInt("select count(1) from workflow_run where to_delete = true")
 	if err != nil {
@@ -1121,35 +1076,5 @@ func stopRunsBlocked(ctx context.Context, db *gorp.DbMap) error {
 	if err := tx.Commit(); err != nil {
 		return sdk.WrapError(err, "Unable to commit transaction")
 	}
-	return nil
-}
-
-func PurgeWorkflowRuns(ctx context.Context, db *gorp.DbMap, workflowRunsMarkToDelete *stats.Int64Measure) error {
-	dao := new(WorkflowDAO)
-	dao.Filters.DisableFilterDeletedWorkflow = false
-	wfs, err := dao.LoadAll(ctx, db)
-	if err != nil {
-		return err
-	}
-	for _, wf := range wfs {
-		tx, err := db.Begin()
-		defer tx.Rollback() // nolint
-		if err != nil {
-			log.Error(ctx, "workflow.PurgeWorkflowRuns> error %v", err)
-			tx.Rollback() // nolint
-			continue
-		}
-		if err := PurgeWorkflowRun(ctx, tx, wf); err != nil {
-			log.Error(ctx, "workflow.PurgeWorkflowRuns> error %v", err)
-			tx.Rollback() // nolint
-			continue
-		}
-		if err := tx.Commit(); err != nil {
-			log.Error(ctx, "workflow.PurgeWorkflowRuns> unable to commit transaction:  %v", err)
-			continue
-		}
-	}
-
-	CountWorkflowRunsMarkToDelete(ctx, db, workflowRunsMarkToDelete)
 	return nil
 }

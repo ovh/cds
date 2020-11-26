@@ -24,6 +24,13 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
+const (
+	defaultLruSize            = 128 * 1024 * 1024 // 128Mb
+	defaultStepMaxSize        = 15 * 1024 * 1024  // 15Mb
+	defaultStepLinesRateLimit = 1800
+	defaultGlobalTCPRateLimit = 2 * 1024 * 1024 // 2Mb
+)
+
 // New returns a new service
 func New() *Service {
 	s := new(Service)
@@ -46,6 +53,7 @@ func (s *Service) Init(config interface{}) (cdsclient.ServiceConfig, error) {
 	cfg.Token = sConfig.API.Token
 	cfg.InsecureSkipVerifyTLS = sConfig.API.HTTP.Insecure
 	cfg.RequestSecondsTimeout = sConfig.API.RequestTimeout
+
 	return cfg, nil
 }
 
@@ -63,6 +71,20 @@ func (s *Service) ApplyConfiguration(config interface{}) error {
 	s.ServiceType = sdk.TypeCDN
 	s.HTTPURL = s.Cfg.URL
 	s.MaxHeartbeatFailures = s.Cfg.API.MaxHeartbeatFailures
+
+	if s.Cfg.Cache.LruSize == 0 {
+		s.Cfg.Cache.LruSize = defaultLruSize
+	}
+	if s.Cfg.Log.StepMaxSize == 0 {
+		s.Cfg.Log.StepMaxSize = defaultStepMaxSize
+	}
+	if s.Cfg.Log.StepLinesRateLimit == 0 {
+		s.Cfg.Log.StepLinesRateLimit = defaultStepLinesRateLimit
+	}
+	if s.Cfg.TCP.GlobalTCPRateLimit == 0 {
+		s.Cfg.TCP.GlobalTCPRateLimit = defaultGlobalTCPRateLimit
+	}
+
 	return nil
 }
 
@@ -89,10 +111,15 @@ func (s *Service) Serve(c context.Context) error {
 	defer cancel()
 
 	var err error
+	log.Info(ctx, "Initializing redis cache on %s...", s.Cfg.Cache.Redis.Host)
+	s.Cache, err = cache.New(s.Cfg.Cache.Redis.Host, s.Cfg.Cache.Redis.Password, s.Cfg.Cache.TTL)
+	if err != nil {
+		return fmt.Errorf("cannot connect to redis instance : %v", err)
+	}
 
 	if s.Cfg.EnableLogProcessing {
 		log.Info(ctx, "Initializing database connection...")
-		//Intialize database
+		// Intialize database
 		s.DBConnectionFactory, err = database.Init(
 			ctx,
 			s.Cfg.Database.User,
@@ -122,19 +149,23 @@ func (s *Service) Serve(c context.Context) error {
 		item.InitDBMapping(s.Mapper)
 		storage.InitDBMapping(s.Mapper)
 
+		s.LogCache, err = lru.NewRedisLRU(s.mustDBWithCtx(ctx), s.Cfg.Cache.LruSize, s.Cfg.Cache.Redis.Host, s.Cfg.Cache.Redis.Password)
+		if err != nil {
+			return sdk.WrapError(err, "cannot connect to redis instance for lru")
+		}
+
 		// Init storage units
 		s.Units, err = storage.Init(ctx, s.Mapper, s.mustDBWithCtx(ctx), s.GoRoutines, s.Cfg.Units)
 		if err != nil {
 			return err
 		}
-		if err := s.Units.Start(ctx); err != nil {
-			return err
-		}
 
-		s.GoRoutines.Run(ctx, "cdn-gc-items", func(ctx context.Context) {
+		s.Units.Start(ctx, s.GoRoutines)
+
+		s.GoRoutines.Run(ctx, "service.cdn-gc-items", func(ctx context.Context) {
 			s.itemsGC(ctx)
 		})
-		s.GoRoutines.Run(ctx, "cdn-purge-items", func(ctx context.Context) {
+		s.GoRoutines.Run(ctx, "service.cdn-purge-items", func(ctx context.Context) {
 			s.itemPurge(ctx)
 		})
 
@@ -145,51 +176,44 @@ func (s *Service) Serve(c context.Context) error {
 				continue
 			}
 			s.GoRoutines.Exec(ctx, "cdn-cds-backend-migration", func(ctx context.Context) {
-				if err := s.SyncLogs(ctx, cdsStorage); err != nil {
-					log.Error(ctx, "unable to sync logs: %v", err)
+				if err := s.listenCDSSync(ctx, cdsStorage); err != nil {
+					log.Error(ctx, "unable to listen pubsub for cds sync: %v", err)
 				}
 			})
-			break
 		}
 
-		log.Info(ctx, "Initializing log cache on %s", s.Cfg.Cache.Redis.Host)
-		s.LogCache, err = lru.NewRedisLRU(s.mustDBWithCtx(ctx), s.Cfg.Cache.LruSize, s.Cfg.Cache.Redis.Host, s.Cfg.Cache.Redis.Password)
-		if err != nil {
-			return sdk.WrapError(err, "cannot connect to redis instance for lru")
-		}
-		s.GoRoutines.Run(ctx, "log-cache-eviction", func(ctx context.Context) {
+		s.GoRoutines.Run(ctx, "service.log-cache-eviction", func(ctx context.Context) {
 			s.LogCache.Evict(ctx)
 		})
-	}
-
-	log.Info(ctx, "Initializing redis cache on %s...", s.Cfg.Cache.Redis.Host)
-	s.Cache, err = cache.New(s.Cfg.Cache.Redis.Host, s.Cfg.Cache.Redis.Password, s.Cfg.Cache.TTL)
-	if err != nil {
-		return fmt.Errorf("cannot connect to redis instance : %v", err)
 	}
 
 	if err := s.initMetrics(ctx); err != nil {
 		return err
 	}
 
-	s.RunTcpLogServer(ctx)
+	if err := s.runTCPLogServer(ctx); err != nil {
+		return err
+	}
 
 	log.Info(ctx, "Initializing HTTP router")
 	s.initRouter(ctx)
+	if err := s.initWebsocket(); err != nil {
+		return err
+	}
 	server := &http.Server{
 		Addr:           fmt.Sprintf("%s:%d", s.Cfg.HTTP.Addr, s.Cfg.HTTP.Port),
 		Handler:        s.Router.Mux,
 		MaxHeaderBytes: 1 << 20,
 	}
 
-	//Gracefully shutdown the http server
-	go func() {
+	// Gracefully shutdown the http server
+	s.GoRoutines.Exec(ctx, "service.httpserver-shutdown", func(ctx context.Context) {
 		<-ctx.Done()
 		log.Info(ctx, "CDN> Shutdown HTTP Server")
 		_ = server.Shutdown(ctx)
-	}()
+	})
 
-	//Start the http server
+	// Start the http server
 	log.Info(ctx, "CDN> Starting HTTP Server on port %d", s.Cfg.HTTP.Port)
 	if err := server.ListenAndServe(); err != nil {
 		log.Fatalf("CDN> Cannot start cds-cdn: %v", err)

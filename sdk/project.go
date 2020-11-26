@@ -77,8 +77,8 @@ func (p Permissions) IsMaxLevel() bool {
 }
 
 type URL struct {
-	APIURL string `json:"api_url"`
-	UIURL  string `json:"ui_url"`
+	APIURL string `json:"api_url,omitempty"`
+	UIURL  string `json:"ui_url,omitempty"`
 }
 
 // SetApplication data on project

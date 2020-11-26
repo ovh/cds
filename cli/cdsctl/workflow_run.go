@@ -66,7 +66,7 @@ var workflowRunManualCmd = cli.Command{
 		},
 		{
 			Name:  "node-name",
-			Usage: "Node Name to relaunch; Flag run-number is mandatory",
+			Usage: "Node Name to launch; Flag run-number is mandatory",
 		},
 		{
 			Name:      "interactive",
@@ -91,14 +91,14 @@ var workflowRunManualCmd = cli.Command{
 
 func workflowRunManualRun(v cli.Values) error {
 	if v.GetBool("sync") && v.GetString("run-number") == "" {
-		return fmt.Errorf("Could not use flag --sync without flag --run-number")
+		return fmt.Errorf("could not use flag --sync without flag --run-number")
 	}
 
 	manual := sdk.WorkflowNodeRunManual{}
 	if strings.TrimSpace(v.GetString("data")) != "" {
 		data := map[string]interface{}{}
 		if err := json.Unmarshal([]byte(v.GetString("data")), &data); err != nil {
-			return fmt.Errorf("Error payload isn't a valid json")
+			return fmt.Errorf("error payload isn't a valid json")
 		}
 		manual.Payload = data
 	} else {
@@ -175,14 +175,15 @@ func workflowRunManualRun(v cli.Values) error {
 		if err != nil {
 			return err
 		}
-		for _, wnrs := range wr.WorkflowNodeRuns {
-			for _, wnr := range wnrs {
-				wn := wr.Workflow.WorkflowData.NodeByID(wnr.WorkflowNodeID)
-				if wn.Name == v.GetString("node-name") {
-					fromNodeID = wnr.WorkflowNodeID
-					break
-				}
+		for _, node := range wr.Workflow.WorkflowData.Array() {
+			if node.Name == v.GetString("node-name") {
+				fromNodeID = node.ID
+				break
 			}
+		}
+
+		if fromNodeID == 0 {
+			return fmt.Errorf("--node-name %v node found", v.GetString("node-name"))
 		}
 	}
 

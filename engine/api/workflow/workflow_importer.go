@@ -77,12 +77,12 @@ func Import(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store cache.St
 		DisableHookManagement: w.DerivationBranch != "",
 	}
 
-	if err := Update(ctx, db, store, proj, w, uptOptions); err != nil {
-		return sdk.WrapError(err, "Unable to update workflow")
-	}
-
 	if err := importWorkflowGroups(db, w); err != nil {
 		return err
+	}
+
+	if err := Update(ctx, db, store, proj, w, uptOptions); err != nil {
+		return sdk.WrapError(err, "Unable to update workflow")
 	}
 
 	if msgChan != nil {

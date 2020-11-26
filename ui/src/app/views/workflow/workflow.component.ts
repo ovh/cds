@@ -12,20 +12,19 @@ import { Select, Store } from '@ngxs/store';
 import { SuiPopup } from '@richardlt/ng2-semantic-ui';
 import { Project } from 'app/model/project.model';
 import { Workflow } from 'app/model/workflow.model';
+import { FeatureService } from 'app/service/feature/feature.service';
 import { WorkflowCoreService } from 'app/service/workflow/workflow.core.service';
-import { WorkflowSidebarMode } from 'app/service/workflow/workflow.sidebar.store';
 import { AsCodeSaveModalComponent } from 'app/shared/ascode/save-modal/ascode.save-modal.component';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { ToastService } from 'app/shared/toast/ToastService';
 import { WorkflowTemplateApplyModalComponent } from 'app/shared/workflow-template/apply-modal/workflow-template.apply-modal.component';
+import { AddFeatureResult, FeaturePayload } from 'app/store/feature.action';
 import { ProjectState, ProjectStateModel } from 'app/store/project.state';
 import {
     CleanWorkflowRun,
-    CleanWorkflowState,
+    CleanWorkflowState, ClearListRuns,
     GetWorkflow,
-    GetWorkflowRuns,
     SelectHook,
-    SidebarRunsMode,
     UpdateFavoriteWorkflow
 } from 'app/store/workflow.action';
 import { WorkflowState } from 'app/store/workflow.state';
@@ -58,12 +57,6 @@ export class WorkflowComponent implements OnInit, OnDestroy {
     loading = true;
     loadingFav = false;
 
-    // Sidebar data
-    @Select(WorkflowState.getSidebarMode()) sibebar$: Observable<string>;
-    sidebarSubs: Subscription;
-    sidebarMode = WorkflowSidebarMode.RUNS;
-    sidebarModes = WorkflowSidebarMode;
-
     asCodeEditorSubscription: Subscription;
     asCodeEditorOpen = false;
 
@@ -86,27 +79,51 @@ export class WorkflowComponent implements OnInit, OnDestroy {
         private _toast: ToastService,
         private _translate: TranslateService,
         private _store: Store,
-        private _cd: ChangeDetectorRef
+        private _cd: ChangeDetectorRef,
+        private _featureService: FeatureService
     ) { }
 
-    ngOnDestroy(): void {} // Should be set to use @AutoUnsubscribe with AOT
+    ngOnDestroy(): void { } // Should be set to use @AutoUnsubscribe with AOT
 
     ngOnInit(): void {
-        this.projectSubscription = this._store.select(ProjectState)
-            .subscribe((projectState: ProjectStateModel) => {
-                this.project = projectState.project;
-                if (this.project && this.workflow && this.project.key !== this.workflow.project_key) {
-                    delete this.workflow;
-                }
-                this._cd.detectChanges();
-            });
-
-        this.sidebarSubs = this.sibebar$.subscribe(m => {
-            if (m === this.sidebarMode) {
+        this.projectSubscription = this._store.select(ProjectState).subscribe((projectState: ProjectStateModel) => {
+            this.project = projectState.project;
+            if (this.project && this.workflow && this.project.key !== this.workflow.project_key) {
+                delete this.workflow;
+            }
+            this._cd.detectChanges();
+            if (!this.project) {
                 return;
             }
-            this.sidebarMode = m;
-            this._cd.detectChanges();
+
+            let data = { 'project_key': this.project.key };
+            this._featureService.isEnabled('cdn-job-logs', data).subscribe(f => {
+                this._store.dispatch(new AddFeatureResult(<FeaturePayload>{
+                    key: f.name,
+                    result: {
+                        paramString: JSON.stringify(data),
+                        enabled: f.enabled
+                    }
+                }));
+            });
+            this._featureService.isEnabled('workflow-retention-policy', data).subscribe(f => {
+                this._store.dispatch(new AddFeatureResult(<FeaturePayload>{
+                    key: f.name,
+                    result: {
+                        paramString: JSON.stringify(data),
+                        enabled: f.enabled
+                    }
+                }));
+            });
+            this._featureService.isEnabled('workflow-retention-maxruns', data).subscribe(f => {
+                this._store.dispatch(new AddFeatureResult(<FeaturePayload>{
+                    key: f.name,
+                    result: {
+                        paramString: JSON.stringify(data),
+                        enabled: f.enabled
+                    }
+                }));
+            });
         });
 
         this.asCodeEditorSubscription = this._workflowCore.getAsCodeEditor()
@@ -138,9 +155,6 @@ export class WorkflowComponent implements OnInit, OnDestroy {
         this.workflowSubscription = this.workflow$.subscribe(w => {
             if (!w) {
                 return;
-            }
-            if (!this.workflow || (this.workflow && w.id !== this.workflow.id)) {
-                this.initRuns(this.project.key, w.name, this._store.selectSnapshot(WorkflowState).filters);
             }
             this.workflow = w;
             if (this.selectecHookRef) {
@@ -175,12 +189,6 @@ export class WorkflowComponent implements OnInit, OnDestroy {
         });
     }
 
-    initRuns(key: string, workflowName: string, filters?: {}): void {
-        this._store.dispatch(
-            new GetWorkflowRuns({ projectKey: key, workflowName: workflowName, limit: '50', offset: '0', filters })
-        );
-    }
-
     updateFav() {
         if (this.loading || !this.workflow) {
             return;
@@ -191,10 +199,6 @@ export class WorkflowComponent implements OnInit, OnDestroy {
             workflowName: this.workflow.name
         })).pipe(finalize(() => this.loadingFav = false))
             .subscribe(() => this._toast.success('', this._translate.instant('common_favorites_updated')))
-    }
-
-    changeToRunsMode(): void {
-        this._store.dispatch(new SidebarRunsMode({}));
     }
 
     showTemplateFrom(): void {

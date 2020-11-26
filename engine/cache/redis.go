@@ -66,7 +66,7 @@ func NewRedisStore(host, password string, ttl int) (*RedisStore, error) {
 		return nil, sdk.WithStack(err)
 	}
 	if pong != "PONG" {
-		return nil, fmt.Errorf("Cannot ping Redis on %s", host)
+		return nil, fmt.Errorf("cannot ping Redis on %s", host)
 	}
 	return &RedisStore{
 		ttl:    ttl,
@@ -89,7 +89,7 @@ func (s *RedisStore) Ping() error {
 		return sdk.WithStack(err)
 	}
 	if pong != "PONG" {
-		return fmt.Errorf("Cannot ping Redis")
+		return fmt.Errorf("cannot ping Redis")
 	}
 	return nil
 }
@@ -364,47 +364,9 @@ func (s *RedisStore) Subscribe(channel string) (PubSub, error) {
 	if s.Client == nil {
 		return nil, fmt.Errorf("redis> cannot get redis client")
 	}
-	return s.Client.Subscribe(channel), nil
-}
-
-// GetMessageFromSubscription from a redis PubSub
-func (s *RedisStore) GetMessageFromSubscription(c context.Context, pb PubSub) (string, error) {
-	if s.Client == nil {
-		return "", sdk.WithStack(fmt.Errorf("redis> cannot get redis client"))
-	}
-
-	rps, ok := pb.(*redis.PubSub)
-	if !ok {
-		return "", fmt.Errorf("redis.GetMessage> PubSub is not a redis.PubSub. Got %T", pb)
-	}
-
-	msg, _ := rps.ReceiveTimeout(time.Second)
-	redisMsg, ok := msg.(*redis.Message)
-	if msg != nil {
-		if ok {
-			return redisMsg.Payload, nil
-		}
-	}
-
-	ticker := time.NewTicker(250 * time.Millisecond).C
-	for redisMsg == nil {
-		select {
-		case <-ticker:
-			msg, _ := rps.ReceiveTimeout(time.Second)
-			if msg == nil {
-				continue
-			}
-
-			var ok bool
-			redisMsg, ok = msg.(*redis.Message)
-			if !ok {
-				continue
-			}
-		case <-c.Done():
-			return "", nil
-		}
-	}
-	return redisMsg.Payload, nil
+	return &RedisPubSub{
+		PubSub: s.Client.Subscribe(channel),
+	}, nil
 }
 
 // RemoveFromQueue removes a member from a list
@@ -428,7 +390,7 @@ func (s *RedisStore) SetAdd(rootKey string, memberKey string, member interface{}
 }
 
 // SetRemove removes a member from a set
-func (s *RedisStore) SetRemove(rootKey string, memberKey string, member interface{}) error {
+func (s *RedisStore) SetRemove(rootKey string, memberKey string, _ interface{}) error {
 	if err := s.Client.ZRem(rootKey, memberKey).Err(); err != nil {
 		return sdk.WrapError(err, "error on SetRemove")
 	}
@@ -519,6 +481,11 @@ func (s *RedisStore) Unlock(key string) error {
 	return s.Delete(key)
 }
 
+func (s *RedisStore) Size(key string) (int64, error) {
+	oct, err := s.Client.MemoryUsage(key).Result()
+	return oct, sdk.WithStack(err)
+}
+
 func (s *RedisStore) ScoredSetAppend(ctx context.Context, key string, value interface{}) error {
 	highItem, err := s.Client.ZRevRange(key, 0, 0).Result()
 	if err != nil {
@@ -535,7 +502,7 @@ func (s *RedisStore) ScoredSetAppend(ctx context.Context, key string, value inte
 	return s.ScoredSetAdd(ctx, key, value, maxScore+1)
 }
 
-func (s *RedisStore) ScoredSetAdd(ctx context.Context, key string, value interface{}, score float64) error {
+func (s *RedisStore) ScoredSetAdd(_ context.Context, key string, value interface{}, score float64) error {
 	btes, err := json.Marshal(value)
 	if err != nil {
 		return sdk.WithStack(err)
@@ -555,12 +522,12 @@ const (
 	MAX float64 = math.MaxFloat64
 )
 
-func (s *RedisStore) ScoredSetRem(ctx context.Context, key string, members ...string) error {
+func (s *RedisStore) ScoredSetRem(_ context.Context, key string, members ...string) error {
 	_, err := s.Client.ZRem(key, members).Result()
 	return sdk.WithStack(err)
 }
 
-func (s *RedisStore) ScoredSetRange(ctx context.Context, key string, from, to int64, dest interface{}) error {
+func (s *RedisStore) ScoredSetRange(_ context.Context, key string, from, to int64, dest interface{}) error {
 	values, err := s.Client.ZRange(key, from, to).Result()
 	if err != nil {
 		return sdk.WithStack(fmt.Errorf("redis zrange error: %v", err))
@@ -588,7 +555,7 @@ func (s *RedisStore) ScoredSetRange(ctx context.Context, key string, from, to in
 	return nil
 }
 
-func (s *RedisStore) ScoredSetScan(ctx context.Context, key string, from, to float64, dest interface{}) error {
+func (s *RedisStore) ScoredSetScan(_ context.Context, key string, from, to float64, dest interface{}) error {
 	min := "-inf"
 	if from != MIN {
 		min = strconv.FormatFloat(from, 'E', -1, 64)
@@ -612,7 +579,7 @@ func (s *RedisStore) ScoredSetScan(ctx context.Context, key string, from, to flo
 	}
 	v = v.Elem()
 	if v.Kind() != reflect.Slice {
-		return errors.New("the interface is not a slice.")
+		return errors.New("the interface is not a slice")
 	}
 
 	typ := reflect.TypeOf(v.Interface())
@@ -629,7 +596,7 @@ func (s *RedisStore) ScoredSetScan(ctx context.Context, key string, from, to flo
 	return nil
 }
 
-func (s *RedisStore) ScoredSetScanWithScores(ctx context.Context, key string, from, to float64) ([]SetValueWithScore, error) {
+func (s *RedisStore) ScoredSetScanWithScores(_ context.Context, key string, from, to float64) ([]SetValueWithScore, error) {
 	min := "-inf"
 	if from != MIN {
 		min = strconv.FormatFloat(from, 'E', -1, 64)
@@ -658,4 +625,65 @@ func (s *RedisStore) ScoredSetScanWithScores(ctx context.Context, key string, fr
 	}
 
 	return res, nil
+}
+
+type RedisPubSub struct {
+	*redis.PubSub
+}
+
+func (p *RedisPubSub) GetMessage(ctx context.Context) (string, error) {
+	if msg, _ := p.PubSub.ReceiveTimeout(time.Second); msg != nil {
+		if redisMsg, ok := msg.(*redis.Message); ok {
+			return redisMsg.Payload, nil
+		}
+	}
+
+	ticker := time.NewTicker(50 * time.Millisecond)
+	defer ticker.Stop()
+	for {
+		select {
+		case <-ticker.C:
+			if msg, _ := p.PubSub.ReceiveTimeout(time.Second); msg != nil {
+				if redisMsg, ok := msg.(*redis.Message); ok {
+					return redisMsg.Payload, nil
+				}
+			}
+		case <-ctx.Done():
+			return "", ctx.Err()
+		}
+	}
+}
+
+func (s *RedisStore) ScoredSetScanMaxScore(_ context.Context, key string) (*SetValueWithScore, error) {
+	values, err := s.Client.ZRevRangeByScoreWithScores(key, redis.ZRangeBy{
+		Min:    "-inf",
+		Max:    "+inf",
+		Offset: 0,
+		Count:  1,
+	}).Result()
+	if err != nil {
+		return nil, sdk.WrapError(err, "redis zrange error")
+	}
+
+	if len(values) == 0 {
+		return nil, nil
+	}
+
+	var res SetValueWithScore
+	res.Score = values[0].Score
+	rawValue, ok := values[0].Member.(string)
+	if !ok {
+		return nil, sdk.WithStack(fmt.Errorf("set value of type %T can't be cast to json.RawMessage", values[0].Member))
+	}
+	res.Value = json.RawMessage(rawValue)
+
+	return &res, nil
+}
+
+func (s *RedisStore) Eval(expr string, args ...string) (string, error) {
+	result, err := s.Client.Eval(expr, args).Result()
+	if err != nil {
+		return "", sdk.WithStack(err)
+	}
+	return fmt.Sprintf("%v", result), nil
 }

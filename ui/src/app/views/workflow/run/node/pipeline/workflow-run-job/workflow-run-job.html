@@ -1,0 +1,118 @@
+<div class="job">
+    <div class="header">
+        <div class="menu left">
+            <ng-container *ngIf="tabs && tabs.length > 1">
+                <button *ngFor="let tab of tabs; let i = index" [class.active]="i === currentTabIndex"
+                    (click)="selectTab(i)">{{tab.name}}</button>
+            </ng-container>
+        </div>
+        <div class="menu right">
+            <button [class.active]="mode === displayModes.ANSI" (click)="clickMode(displayModes.ANSI)">ANSI</button>
+            <button [class.active]="mode === displayModes.HTML" (click)="clickMode(displayModes.HTML)">HTML</button>
+        </div>
+        <div class="menu right">
+            <button (click)="clickVariables()">Job variables</button>
+        </div>
+    </div>
+    <!-- Display job steps -->
+    <ng-container *ngIf="currentTabIndex === 0">
+        <div class="step" *ngFor="let step of steps; trackBy: trackStepElement; let i = index">
+            <div class="line info" (click)="step.clickOpen()">
+                <div class="number">
+                    <i *ngIf="step.lines.length > 0" class="caret icon" [class.down]="step.open"
+                        [class.right]="!step.open"></i>
+                    <div *ngIf="step.lines.length === 0 && step.loading" class="ui mini loader"></div>
+                    {{step.firstDisplayedLineNumber ? step.firstDisplayedLineNumber : ''}}
+                </div>
+                <div class="value">{{step.name}}</div>
+                <div class="extra">
+                    <div *ngIf="!step.disabled && step.startDate && !step.duration">
+                        {{step.startDate | amTimeAgo: true : formatDuration }}
+                    </div>
+                    <div *ngIf="step.duration">{{step.duration}}</div>
+                    <div [class.orange]="step.optional && step.failed" *ngIf="step.optional">Optional</div>
+                    <div *ngIf="step.disabled">Disabled</div>
+                    <div class="red" *ngIf="step.failed && !step.optional">Failed</div>
+                </div>
+                <div class="action" *ngIf="i>0">
+                    <a *ngIf="step?.link"
+                        [href]="'./cdscdn/item/' + step.link.item_type + '/' + step.link.api_ref + '/download?refresh=5'"
+                        target="_blank" rel="noopener noreferrer" title="Share/download the step"
+                        (click)="$event.stopPropagation()"><i class="external alternate icon"></i></a>
+                </div>
+            </div>
+            <ng-container *ngIf="step.open">
+                <div class="line" *ngFor="let line of step.lines; trackBy: trackLineElement; let j = index">
+                    <div class="number">{{step.firstDisplayedLineNumber + j + 1}}</div>
+                    <div class="value" [innerHTML]="line.value | ansi:(this.mode !== displayModes.ANSI) | safeHtml">
+                    </div>
+                    <div class="extra" *ngIf="line.extra">
+                        <div *ngFor="let extra of line.extra">{{extra}}</div>
+                    </div>
+                </div>
+                <div class="line expand" *ngIf="step.lines.length + step.endLines.length < step.totalLinesCount"
+                    (click)="clickExpandStepDown(i)">
+                    <div class="number"><i
+                            class="caret icon down"></i>{{step.firstDisplayedLineNumber + step.lines.length + 1}}
+                    </div>
+                    <div class="value">…</div>
+                </div>
+                <div class="line expand"
+                    *ngIf="step.lines.length + step.endLines.length < (step.totalLinesCount - expandLoadLinesCount) - 1"
+                    (click)="clickExpandStepUp(i)">
+                    <div class="number"><i
+                            class="caret icon up"></i>{{(step.firstDisplayedLineNumber + step.totalLinesCount) - step.endLines.length}}
+                    </div>
+                    <div class="value">…</div>
+                </div>
+                <div class="line" *ngFor="let line of step.endLines; trackBy: trackLineElement; let j = index">
+                    <div class="number">
+                        {{((step.firstDisplayedLineNumber + step.totalLinesCount) - step.endLines.length) + j + 1}}
+                    </div>
+                    <div class="value" [innerHTML]="line.value | ansi:(this.mode !== displayModes.ANSI) | safeHtml">
+                    </div>
+                    <div class="extra" *ngIf="line.extra">
+                        <div *ngFor="let extra of line.extra">{{extra}}</div>
+                    </div>
+                </div>
+            </ng-container>
+        </div>
+    </ng-container>
+    <!-- Display service logs -->
+    <div class="step" *ngIf="currentTabIndex > 0">
+        <div class="line"
+            *ngFor="let line of services[currentTabIndex-1].lines; trackBy: trackLineElement; let j = index">
+            <div class="number">{{j + 1}}</div>
+            <div class="value" [innerHTML]="line.value | ansi:(this.mode !== displayModes.ANSI) | safeHtml">
+            </div>
+        </div>
+        <div class="line expand"
+            *ngIf="services[currentTabIndex-1].lines.length + services[currentTabIndex-1].endLines.length < services[currentTabIndex-1].totalLinesCount"
+            (click)="clickExpandServiceDown(currentTabIndex-1)">
+            <div class="number"><i class="caret icon down"></i>{{services[currentTabIndex-1].lines.length + 1}}
+            </div>
+            <div class="value">…</div>
+        </div>
+        <div class="line expand"
+            *ngIf="services[currentTabIndex-1].lines.length + services[currentTabIndex-1].endLines.length < (services[currentTabIndex-1].totalLinesCount - expandLoadLinesCount) - 1"
+            (click)="clickExpandServiceUp(currentTabIndex-1)">
+            <div class="number"><i
+                    class="caret icon up"></i>{{(services[currentTabIndex-1].totalLinesCount) - services[currentTabIndex-1].endLines.length}}
+            </div>
+            <div class="value">…</div>
+        </div>
+        <div class="line"
+            *ngFor="let line of services[currentTabIndex-1].endLines; trackBy: trackLineElement; let j = index">
+            <div class="number">
+                {{((services[currentTabIndex-1].totalLinesCount) - services[currentTabIndex-1].endLines.length) + j + 1}}
+            </div>
+            <div class="value" [innerHTML]="line.value | ansi:(this.mode !== displayModes.ANSI) | safeHtml">
+            </div>
+        </div>
+    </div>
+    <div class="footer">
+        <div class="goto" (click)="clickScroll(scrollTargets.BOTTOM)">Bottom<i class="caret icon down"></i></div>
+        <div class="goto" (click)="clickScroll(scrollTargets.TOP)">Top<i class="caret icon up"></i></div>
+    </div>
+</div>
+<app-workflow-run-job-variable [variables]="nodeJobRun.parameters" #jobVariable></app-workflow-run-job-variable>

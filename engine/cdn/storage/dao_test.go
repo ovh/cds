@@ -2,11 +2,12 @@ package storage_test
 
 import (
 	"context"
-	"github.com/ovh/symmecrypt/ciphers/aesgcm"
-	"github.com/ovh/symmecrypt/convergent"
 	"io/ioutil"
 	"testing"
 	"time"
+
+	"github.com/ovh/symmecrypt/ciphers/aesgcm"
+	"github.com/ovh/symmecrypt/convergent"
 
 	"github.com/ovh/cds/engine/cdn/storage"
 
@@ -27,8 +28,13 @@ func TestLoadOldItemUnitByItemStatusAndDuration(t *testing.T) {
 	cfg := test.LoadTestingConf(t, sdk.TypeCDN)
 
 	cdntest.ClearItem(t, context.TODO(), m, db)
+	tmpDir, err := ioutil.TempDir("", t.Name()+"-cdn-1-*")
 
-	cdnUnits, err := storage.Init(context.TODO(), m, db.DbMap, sdk.NewGoRoutines(), storage.Configuration{
+	ctx, cancel := context.WithTimeout(context.TODO(), 5*time.Second)
+	t.Cleanup(cancel)
+
+	cdnUnits, err := storage.Init(ctx, m, db.DbMap, sdk.NewGoRoutines(), storage.Configuration{
+		HashLocatorSalt: "thisismysalt",
 		Buffer: storage.BufferConfiguration{
 			Name: "redis_buffer",
 			Redis: storage.RedisBufferConfiguration{
@@ -36,7 +42,16 @@ func TestLoadOldItemUnitByItemStatusAndDuration(t *testing.T) {
 				Password: cfg["redisPassword"],
 			},
 		},
+		Storages: []storage.StorageConfiguration{
+			{
+				Name: "local_storage",
+				Local: &storage.LocalStorageConfiguration{
+					Path: tmpDir,
+				},
+			},
+		},
 	})
+	require.NoError(t, err)
 
 	// Clean old test
 	time.Sleep(1 * time.Second)
@@ -45,7 +60,7 @@ func TestLoadOldItemUnitByItemStatusAndDuration(t *testing.T) {
 	for _, itemUnit := range itemUnits {
 		i, err := item.LoadByID(context.TODO(), m, db, itemUnit.ItemID)
 		require.NoError(t, err)
-		require.NoError(t, item.DeleteByIDs(db, []string{i.ID}))
+		require.NoError(t, item.DeleteByID(db, i.ID))
 	}
 
 	i1 := &sdk.CDNItem{
@@ -57,7 +72,7 @@ func TestLoadOldItemUnitByItemStatusAndDuration(t *testing.T) {
 	err = item.Insert(context.TODO(), m, db, i1)
 	require.NoError(t, err)
 	defer func() {
-		_ = item.DeleteByIDs(db, []string{i1.ID})
+		_ = item.DeleteByID(db, i1.ID)
 	}()
 
 	itemUnit1, err := cdnUnits.NewItemUnit(context.TODO(), cdnUnits.Buffer, i1)
@@ -73,7 +88,7 @@ func TestLoadOldItemUnitByItemStatusAndDuration(t *testing.T) {
 	err = item.Insert(context.TODO(), m, db, i2)
 	require.NoError(t, err)
 	defer func() {
-		_ = item.DeleteByIDs(db, []string{i2.ID})
+		_ = item.DeleteByID(db, i2.ID)
 	}()
 	itemUnit2, err := cdnUnits.NewItemUnit(context.TODO(), cdnUnits.Buffer, i2)
 	require.NoError(t, err)
@@ -112,7 +127,12 @@ func TestLoadAllItemIDUnknownByUnitOrderByUnitID(t *testing.T) {
 
 	tmpDir, err := ioutil.TempDir("", t.Name()+"-cdn-1-*")
 	require.NoError(t, err)
-	cdnUnits, err := storage.Init(context.TODO(), m, db.DbMap, sdk.NewGoRoutines(), storage.Configuration{
+
+	ctx, cancel := context.WithTimeout(context.TODO(), 5*time.Second)
+	t.Cleanup(cancel)
+
+	cdnUnits, err := storage.Init(ctx, m, db.DbMap, sdk.NewGoRoutines(), storage.Configuration{
+		HashLocatorSalt: "thisismysalt",
 		Buffer: storage.BufferConfiguration{
 			Name: "redis_buffer",
 			Redis: storage.RedisBufferConfiguration{
@@ -123,7 +143,6 @@ func TestLoadAllItemIDUnknownByUnitOrderByUnitID(t *testing.T) {
 		Storages: []storage.StorageConfiguration{
 			{
 				Name: "local_storage",
-				Cron: "0 0 12 * * *",
 				Local: &storage.LocalStorageConfiguration{
 					Path: tmpDir,
 					Encryption: []convergent.ConvergentEncryptionConfig{
@@ -137,7 +156,6 @@ func TestLoadAllItemIDUnknownByUnitOrderByUnitID(t *testing.T) {
 			},
 			{
 				Name: "local_storage2",
-				Cron: "0 0 12 * * *",
 				Local: &storage.LocalStorageConfiguration{
 					Path: tmpDir,
 					Encryption: []convergent.ConvergentEncryptionConfig{

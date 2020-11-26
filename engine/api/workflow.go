@@ -9,6 +9,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/fsamin/go-dump"
 	"github.com/go-gorp/gorp"
 	"github.com/gorilla/mux"
 
@@ -19,6 +20,7 @@ import (
 	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/project"
+	"github.com/ovh/cds/engine/api/purge"
 	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/engine/service"
@@ -92,20 +94,134 @@ func (api *API) setWorkflowURLs(w1 *sdk.Workflow) {
 	}
 }
 
+func (api *API) getRetentionPolicySuggestionHandler() service.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		vars := mux.Vars(r)
+		key := vars["key"]
+		name := vars["permWorkflowName"]
+
+		proj, err := project.Load(ctx, api.mustDBWithCtx(ctx), key, project.LoadOptions.WithIntegrations)
+		if err != nil {
+			return err
+		}
+
+		varsPayload := make(map[string]string, 0)
+		run, err := workflow.LoadLastRun(api.mustDB(), key, name, workflow.LoadRunOptions{DisableDetailledNodeRun: true})
+		if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
+			return err
+		}
+
+		e := dump.NewDefaultEncoder()
+		e.Formatters = []dump.KeyFormatterFunc{dump.WithDefaultLowerCaseFormatter()}
+		e.ExtraFields.DetailedMap = false
+		e.ExtraFields.DetailedStruct = false
+		e.ExtraFields.Len = false
+		e.ExtraFields.Type = false
+
+		if run != nil && run.ToCraftOpts != nil {
+			if run.ToCraftOpts.Hook != nil {
+				varsPayload = run.ToCraftOpts.Hook.Payload
+			}
+			if run.ToCraftOpts.Manual != nil {
+				payload := run.ToCraftOpts.Manual.Payload
+				if payload != nil {
+					tmpVars, err := e.ToStringMap(payload)
+					if err != nil {
+						return sdk.WithStack(err)
+					}
+					for k, v := range tmpVars {
+						varsPayload[k] = v
+					}
+				}
+			}
+		}
+		if len(varsPayload) == 0 {
+			wf, err := workflow.Load(ctx, api.mustDBWithCtx(ctx), api.Cache, *proj, name, workflow.LoadOptions{})
+			if err != nil {
+				return err
+			}
+			if wf.WorkflowData.Node.Context.DefaultPayload != nil {
+				tmpVars, err := e.ToStringMap(wf.WorkflowData.Node.Context.DefaultPayload)
+				if err != nil {
+					return sdk.WithStack(err)
+				}
+				for k, v := range tmpVars {
+					varsPayload[k] = v
+				}
+			}
+		}
+
+		retentionPolicySuggestion := purge.GetRetetionPolicyVariables()
+		for k := range varsPayload {
+			retentionPolicySuggestion = append(retentionPolicySuggestion, k)
+		}
+
+		for i := range retentionPolicySuggestion {
+			v := retentionPolicySuggestion[i]
+			v = strings.Replace(v, ".", "_", -1)
+			retentionPolicySuggestion[i] = v
+		}
+
+		return service.WriteJSON(w, retentionPolicySuggestion, http.StatusOK)
+	}
+}
+
+func (api *API) postWorkflowRetentionPolicyDryRun() service.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		vars := mux.Vars(r)
+		key := vars["key"]
+		name := vars["permWorkflowName"]
+
+		var request sdk.PurgeDryRunRequest
+		if err := service.UnmarshalBody(r, &request); err != nil {
+			return err
+		}
+
+		proj, err := project.Load(ctx, api.mustDBWithCtx(ctx), key, project.LoadOptions.WithIntegrations)
+		if err != nil {
+			return err
+		}
+
+		wf, err := workflow.Load(ctx, api.mustDBWithCtx(ctx), api.Cache, *proj, name, workflow.LoadOptions{})
+		if err != nil {
+			return err
+		}
+
+		wf.RetentionPolicy = request.RetentionPolicy
+
+		// Get the number of runs to analyze
+		_, _, _, count, err := workflow.LoadRunsSummaries(api.mustDB(), wf.ProjectKey, wf.Name, 0, 1, nil)
+		if err != nil {
+			return err
+		}
+
+		u := getAPIConsumer(ctx)
+		api.GoRoutines.Exec(api.Router.Background, "workflow-retention-dryrun", func(ctx context.Context) {
+			if err := purge.ApplyRetentionPolicyOnWorkflow(ctx, api.Cache, api.mustDBWithCtx(ctx), *wf, purge.MarkAsDeleteOptions{DryRun: true}, u.AuthentifiedUser); err != nil {
+				log.ErrorWithFields(ctx, log.Fields{"stack_trace": fmt.Sprintf("%+v", err)}, "%s", err)
+				al := r.Header.Get("Accept-Language")
+				httpErr := sdk.ExtractHTTPError(err, al)
+				event.PublishWorkflowRetentionDryRun(ctx, key, name, "ERROR", httpErr.Error(), nil, 0, u.AuthentifiedUser)
+			}
+		})
+		return service.WriteJSON(w, sdk.PurgeDryRunResponse{NbRunsToAnalize: int64(count)}, http.StatusOK)
+	}
+}
+
 // getWorkflowHandler returns a full workflow
 func (api *API) getWorkflowHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		key := vars["key"]
 		name := vars["permWorkflowName"]
-		withUsage := FormBool(r, "withUsage")
-		withAudits := FormBool(r, "withAudits")
-		withLabels := FormBool(r, "withLabels")
-		withDeepPipelines := FormBool(r, "withDeepPipelines")
-		withTemplate := FormBool(r, "withTemplate")
-		withAsCodeEvents := FormBool(r, "withAsCodeEvents")
-		minimal := FormBool(r, "minimal")
-		withoutIcons := FormBool(r, "withoutIcons")
+		withUsage := service.FormBool(r, "withUsage")
+		withAudits := service.FormBool(r, "withAudits")
+		withLabels := service.FormBool(r, "withLabels")
+		withDeepPipelines := service.FormBool(r, "withDeepPipelines")
+		withTemplate := service.FormBool(r, "withTemplate")
+		withAsCodeEvents := service.FormBool(r, "withAsCodeEvents")
+		minimal := service.FormBool(r, "minimal")
+		withoutIcons := service.FormBool(r, "withoutIcons")
 
 		proj, err := project.Load(ctx, api.mustDB(), key, project.LoadOptions.WithIntegrations)
 		if err != nil {
@@ -568,14 +684,19 @@ func (api *API) deleteWorkflowHandler() service.Handler {
 			return sdk.WithStack(sdk.ErrNotFound)
 		}
 
+		wf, err := workflow.Load(ctx, api.mustDB(), api.Cache, *p, name, workflow.LoadOptions{})
+		if err != nil {
+			return err
+		}
+
 		tx, errT := api.mustDB().Begin()
 		if errT != nil {
 			return sdk.WrapError(errT, "Cannot start transaction")
 		}
 		defer tx.Rollback() // nolint
 
-		if err := workflow.MarkAsDelete(tx, key, name); err != nil {
-			return sdk.WrapError(err, "Cannot delete workflow")
+		if err := workflow.MarkAsDelete(ctx, tx, api.Cache, *p, wf); err != nil {
+			return err
 		}
 
 		if err := tx.Commit(); err != nil {
@@ -757,7 +878,7 @@ func (api *API) getSearchWorkflowHandler() service.Handler {
 		dao.Filters.WorkflowName = FormString(r, "name")
 		dao.Filters.VCSServer = FormString(r, "vcs")
 		dao.Filters.ApplicationRepository = FormString(r, "repository")
-		dao.Loaders.WithRuns = FormInt(r, "runs")
+		dao.Loaders.WithRuns = service.FormInt(r, "runs")
 		dao.Loaders.WithFavoritesForUserID = getAPIConsumer(ctx).AuthentifiedUserID
 
 		groupIDS := getAPIConsumer(ctx).GetGroupIDs()

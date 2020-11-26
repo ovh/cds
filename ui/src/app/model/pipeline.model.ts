@@ -135,6 +135,31 @@ export class Pipeline {
             return idFound === -1 ? p : current[idFound];
         });
     }
+
+    static InitRef(editPipeline: Pipeline) {
+        if (editPipeline && editPipeline.stages) {
+            editPipeline.stages.forEach(s => {
+                let nextRef;
+                do {
+                    nextRef = Math.random();
+                } while (editPipeline.stages.findIndex(stg => stg.ref === nextRef) !== -1);
+                s.ref = nextRef;
+                if (s.jobs) {
+                    s.jobs.forEach(j => {
+                        let nextJobRef;
+                        let loopAgain = true;
+                        do {
+                            nextJobRef = Math.random();
+                            loopAgain = editPipeline.stages.findIndex(st => {
+                                return st.jobs.findIndex(jb => jb.ref === nextRef) !== -1
+                            }) !== -1;
+                        } while (loopAgain);
+                        j.ref = nextJobRef;
+                    })
+                }
+            });
+        }
+    }
 }
 
 export class PipelineRunRequest {
@@ -169,10 +194,28 @@ export class BuildResult {
     step_logs: Log;
 }
 
-export class CDNLogAccess {
-    exists: boolean;
-    token: string;
-    download_path: string;
+export class CDNLogLink {
+    item_type: string;
+    api_ref: string;
+}
+
+export class CDNLinesResponse {
+    totalCount: number;
+    lines: Array<CDNLine>;
+}
+
+export class CDNLine {
+    number: number;
+    value: string;
+
+    // properties used by ui only
+    extra: Array<string>;
+}
+
+export class CDNStreamFilter  {
+    item_type: string;
+    api_ref: string;
+    offset: number;
 }
 
 export interface Log {

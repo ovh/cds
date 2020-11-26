@@ -63,7 +63,7 @@ func TestWebdav(t *testing.T) {
 	t.Logf("webdav server running\n")
 
 	var driver = new(Webdav)
-	err = driver.Init(context.TODO(), sdk.NewGoRoutines(), &storage.WebdavStorageConfiguration{
+	err = driver.Init(context.TODO(), &storage.WebdavStorageConfiguration{
 		Address:  "http://localhost:8091",
 		Username: "username",
 		Password: "password",
@@ -101,4 +101,6 @@ func TestWebdav(t *testing.T) {
 	require.NoError(t, err)
 
 	require.Equal(t, "something", string(btes))
+
+	require.NoError(t, driver.Remove(context.TODO(), itemUnit))
 }

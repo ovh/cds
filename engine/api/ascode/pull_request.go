@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/go-gorp/gorp"
-	"github.com/sirupsen/logrus"
 
 	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/operation"
@@ -39,14 +38,15 @@ type EntityData struct {
 // UpdateAsCodeResult pulls repositories operation and the create pullrequest + update workflow
 func UpdateAsCodeResult(ctx context.Context, db *gorp.DbMap, store cache.Store, goRoutines *sdk.GoRoutines, proj sdk.Project, workflowHolder sdk.Workflow, rootApp sdk.Application, ed EntityData, u sdk.Identifiable) {
 	var asCodeEvent *sdk.AsCodeEvent
-	globalOperation := sdk.Operation{
-		UUID: ed.OperationUUID,
-	}
 	var globalErr error
 
 	ope, err := operation.Poll(ctx, db, ed.OperationUUID)
 	if err != nil {
 		globalErr = err
+	}
+
+	if ope.Status == sdk.OperationStatusError {
+		globalErr = ope.Error.ToError()
 	}
 
 	var callback = func() error {
@@ -78,21 +78,33 @@ func UpdateAsCodeResult(ctx context.Context, db *gorp.DbMap, store cache.Store, 
 
 	if globalErr != nil {
 		isErrWithStack := sdk.IsErrorWithStack(globalErr)
-		fields := logrus.Fields{}
+		fields := log.Fields{}
 		if isErrWithStack {
 			fields["stack_trace"] = fmt.Sprintf("%+v", globalErr)
 		}
 		log.ErrorWithFields(ctx, fields, "%s", globalErr)
-
-		globalOperation.Status = sdk.OperationStatusError
-		globalOperation.Error = sdk.ToOperationError(globalErr)
-	} else {
-		globalOperation.Status = sdk.OperationStatusDone
-		globalOperation.Setup.Push.PRLink = asCodeEvent.PullRequestURL
 	}
 
-	goRoutines.Exec(context.Background(), fmt.Sprintf("UpdateAsCodeResult-pusblish-operation-%s", globalOperation.UUID), func(ctx context.Context) {
-		event.PublishOperation(ctx, proj.Key, globalOperation, u)
+	if ope == nil {
+		ope = &sdk.Operation{
+			UUID:   ed.OperationUUID,
+			Status: sdk.OperationStatusError,
+			Error:  sdk.ToOperationError(globalErr),
+		}
+	}
+
+	if asCodeEvent != nil {
+		ope.Setup.Push.PRLink = asCodeEvent.PullRequestURL
+	}
+
+	goRoutines.Exec(context.Background(), fmt.Sprintf("UpdateAsCodeResult-pusblish-operation-%s", ope.UUID), func(ctx context.Context) {
+		event.PublishOperation(ctx, proj.Key, sdk.Operation{
+			UUID:           ope.UUID,
+			Setup:          ope.Setup,
+			RepositoryInfo: ope.RepositoryInfo,
+			Status:         ope.Status,
+			Error:          ope.Error,
+		}, u)
 	})
 }
 

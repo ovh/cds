@@ -37,29 +37,94 @@ func (h *WorkflowRunHeaders) Get(k string) (string, bool) {
 	return v, has
 }
 
+func (h WorkflowRunHeaders) Value() (driver.Value, error) {
+	j, err := json.Marshal(h)
+	return j, WrapError(err, "cannot marshal WorkflowRunHeaders")
+}
+
+func (h *WorkflowRunHeaders) Scan(src interface{}) error {
+	if src == nil {
+		return nil
+	}
+	source, ok := src.([]byte)
+	if !ok {
+		return WithStack(fmt.Errorf("type assertion .([]byte) failed (%T)", src))
+	}
+	return WrapError(json.Unmarshal(source, h), "cannot unmarshal WorkflowRunHeaders")
+}
+
 //WorkflowRun is an execution instance of a run
 type WorkflowRun struct {
-	ID               int64                            `json:"id" db:"id"`
-	Number           int64                            `json:"num" db:"num" cli:"num,key"`
-	Version          *string                          `json:"version,omitempty" db:"version" cli:"version"`
-	ProjectID        int64                            `json:"project_id,omitempty" db:"project_id"`
-	WorkflowID       int64                            `json:"workflow_id" db:"workflow_id"`
-	Status           string                           `json:"status" db:"status" cli:"status"`
-	Workflow         Workflow                         `json:"workflow" db:"-"`
-	Start            time.Time                        `json:"start" db:"start" cli:"start"`
-	LastModified     time.Time                        `json:"last_modified" db:"last_modified"`
-	WorkflowNodeRuns map[int64][]WorkflowNodeRun      `json:"nodes,omitempty" db:"-"`
-	Infos            []WorkflowRunInfo                `json:"infos,omitempty" db:"-"`
-	Tags             []WorkflowRunTag                 `json:"tags,omitempty" db:"-" cli:"tags"`
-	LastSubNumber    int64                            `json:"last_subnumber" db:"last_sub_num"`
-	LastExecution    time.Time                        `json:"last_execution" db:"last_execution" cli:"last_execution"`
-	ToDelete         bool                             `json:"to_delete" db:"to_delete" cli:"-"`
-	JoinTriggersRun  map[int64]WorkflowNodeTriggerRun `json:"join_triggers_run,omitempty" db:"-"`
-	Header           WorkflowRunHeaders               `json:"header,omitempty" db:"-"`
-	URLs             URL                              `json:"urls" yaml:"-" db:"-" cli:"-"`
-	ReadOnly         bool                             `json:"read_only" yaml:"-" db:"read_only" cli:"-"`
-	ToCraft          bool                             `json:"-" yaml:"-" db:"to_craft" cli:"-"`
-	ToCraftOpts      *WorkflowRunPostHandlerOption    `json:"-" yaml:"-" db:"to_craft_opts" cli:"-"`
+	ID               int64                         `json:"id" db:"id"`
+	Number           int64                         `json:"num" db:"num" cli:"num,key"`
+	Version          *string                       `json:"version,omitempty" db:"version" cli:"version"`
+	ProjectID        int64                         `json:"project_id,omitempty" db:"project_id"`
+	WorkflowID       int64                         `json:"workflow_id" db:"workflow_id"`
+	Status           string                        `json:"status" db:"status" cli:"status"`
+	Workflow         Workflow                      `json:"workflow" db:"workflow"`
+	Start            time.Time                     `json:"start" db:"start" cli:"start"`
+	LastModified     time.Time                     `json:"last_modified" db:"last_modified"`
+	WorkflowNodeRuns map[int64][]WorkflowNodeRun   `json:"nodes,omitempty" db:"-"`
+	Infos            WorkflowRunInfos              `json:"infos,omitempty" db:"infos"`
+	Tags             []WorkflowRunTag              `json:"tags,omitempty" db:"-" cli:"tags"`
+	LastSubNumber    int64                         `json:"last_subnumber" db:"last_sub_num"`
+	LastExecution    time.Time                     `json:"last_execution" db:"last_execution" cli:"last_execution"`
+	ToDelete         bool                          `json:"to_delete" db:"to_delete" cli:"-"`
+	JoinTriggersRun  WorkflowNodeTriggerRuns       `json:"join_triggers_run,omitempty" db:"join_triggers_run"`
+	Header           WorkflowRunHeaders            `json:"header,omitempty" db:"header"`
+	URLs             URL                           `json:"urls" yaml:"-" db:"-" cli:"-"`
+	ReadOnly         bool                          `json:"read_only" yaml:"-" db:"read_only" cli:"-"`
+	ToCraft          bool                          `json:"-" yaml:"-" db:"to_craft" cli:"-"`
+	ToCraftOpts      *WorkflowRunPostHandlerOption `json:"-" yaml:"-" db:"to_craft_opts" cli:"-"`
+}
+
+type WorkflowRunSummary struct {
+	ID            int64                         `json:"id" db:"id" cli:"-"`
+	Version       *string                       `json:"version,omitempty" db:"version" cli:"version"`
+	Number        int64                         `json:"num" db:"num" cli:"num,key"`
+	Status        string                        `json:"status" db:"status" cli:"status"`
+	Start         time.Time                     `json:"start" db:"start" cli:"start"`
+	LastModified  time.Time                     `json:"last_modified" db:"last_modified" cli:"-"`
+	LastSubNumber int64                         `json:"last_subnumber" db:"last_sub_num" cli:"-"`
+	LastExecution time.Time                     `json:"last_execution" db:"last_execution" cli:"last_execution"`
+	ToCraftOpts   *WorkflowRunPostHandlerOption `json:"-" yaml:"-" db:"to_craft_opts" cli:"-"`
+	Tags          []WorkflowRunTag              `json:"tags,omitempty" db:"-" cli:"tags"`
+}
+
+type WorkflowRunInfos []WorkflowRunInfo
+
+func (a WorkflowRunInfos) Value() (driver.Value, error) {
+	j, err := json.Marshal(a)
+	return j, WrapError(err, "cannot marshal WorkflowRunInfos")
+}
+
+func (a *WorkflowRunInfos) Scan(src interface{}) error {
+	if src == nil {
+		return nil
+	}
+	source, ok := src.([]byte)
+	if !ok {
+		return WithStack(fmt.Errorf("type assertion .([]byte) failed (%T)", src))
+	}
+	return WrapError(json.Unmarshal(source, a), "cannot unmarshal WorkflowRunInfos")
+}
+
+type WorkflowNodeTriggerRuns map[int64]WorkflowNodeTriggerRun
+
+func (a WorkflowNodeTriggerRuns) Value() (driver.Value, error) {
+	j, err := json.Marshal(a)
+	return j, WrapError(err, "cannot marshal WorkflowNodeTriggerRuns")
+}
+
+func (a *WorkflowNodeTriggerRuns) Scan(src interface{}) error {
+	if src == nil {
+		return nil
+	}
+	source, ok := src.([]byte)
+	if !ok {
+		return WithStack(fmt.Errorf("type assertion .([]byte) failed (%T)", src))
+	}
+	return WrapError(json.Unmarshal(source, a), "cannot unmarshal WorkflowNodeTriggerRuns")
 }
 
 type WorkflowNodeRunIdentifiers struct {

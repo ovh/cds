@@ -12,6 +12,7 @@ import (
 	"github.com/ovh/cds/engine/api/authentication"
 	"github.com/ovh/cds/engine/api/bootstrap"
 	"github.com/ovh/cds/engine/api/test"
+	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 )
 
@@ -30,12 +31,12 @@ func Test_CheckSessionJWT(t *testing.T) {
 	jwtRaw, err := authentication.NewSessionJWT(session)
 	require.NoError(t, err)
 
-	_, err = authentication.CheckSessionJWT(jwtRaw)
+	_, _, err = service.CheckSessionJWT(jwtRaw, authentication.VerifyJWT)
 	require.NoError(t, err)
 
 	time.Sleep(5 * time.Second)
 
-	_, err = authentication.CheckSessionJWT(jwtRaw)
+	_, _, err = service.CheckSessionJWT(jwtRaw, authentication.VerifyJWT)
 	require.Error(t, err)
 	jwtErr, ok := sdk.Cause(err).(*jwt.ValidationError)
 	require.True(t, ok)

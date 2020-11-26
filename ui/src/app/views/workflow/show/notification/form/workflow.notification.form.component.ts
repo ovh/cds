@@ -15,21 +15,16 @@ import { finalize, first } from 'rxjs/operators';
 export class WorkflowNotificationFormComponent implements OnInit {
 
     _notification: WorkflowNotification;
-    @Input('notification')
-    set notification(data: WorkflowNotification) {
+    @Input() set notification(data: WorkflowNotification) {
         if (data) {
             this._notification = cloneDeep(data);
             if (this._notification.settings.recipients) {
                 this.selectedUsers = this._notification.settings.recipients.join(',');
             }
-
             this.initNotif();
         }
     }
-
-    get notification() {
-        return this._notification;
-    }
+    get notification() { return this._notification; }
 
     @Input() editMode: boolean;
     @Input() readOnly: boolean;
@@ -46,20 +41,17 @@ export class WorkflowNotificationFormComponent implements OnInit {
 
     nodes: Array<WNode>;
     _workflow: Workflow;
-    @Input('workflow')
-    set workflow(data: Workflow) {
+    @Input() set workflow(data: Workflow) {
         if (data) {
             this._workflow = data;
             this.nodes = Workflow.getAllNodes(data);
             if (this.nodes) {
                 this.nodes = this.nodes.filter(n => n.type === WNodeType.PIPELINE);
             }
-            this.initNotif()
+            this.initNotif();
         }
     }
-    get workflow() {
-        return this._workflow;
-    }
+    get workflow() { return this._workflow; }
 
     @Output() updatedNotification = new EventEmitter<WorkflowNotification>();
     @Output() deleteNotificationEvent = new EventEmitter<WorkflowNotification>();
@@ -88,45 +80,48 @@ export class WorkflowNotificationFormComponent implements OnInit {
     }
 
     initNotif(): void {
-        if (this.nodes && this.notification && !this.notification.id) {
-            this.notification.source_node_ref = this.nodes.map(n => {
+        if (this.nodes && this._notification && !this._notification.id) {
+            this._notification.source_node_ref = this.nodes.map(n => {
                 return n.name;
             });
         }
 
-        if (this.notification && this.notification.type === 'vcs') {
-            this.statusEnabled = !this.notification.settings.template.disable_status;
-            this.commentEnabled = !this.notification.settings.template.disable_comment;
-            this.alwaysSend = this.notification.settings.on_success === 'always';
+        if (this._notification && this._notification.type === 'vcs') {
+            this.statusEnabled = !this._notification.settings.template.disable_status;
+            this.commentEnabled = !this._notification.settings.template.disable_comment;
+            this.alwaysSend = this._notification.settings.on_success === 'always';
         }
-
     }
 
     formatNode(): void {
         this.setNotificationTemplate();
-        this.notification.source_node_ref = this.notification.source_node_ref.map(id => id.toString());
     }
 
     deleteNotification(): void {
-        this.deleteNotificationEvent.emit(this.notification);
+        this.deleteNotificationEvent.emit(cloneDeep(this._notification));
     }
 
     createNotification(): void {
         this.loading = true;
+        this._notification.node_id = [];
+        this._notification.source_node_ref.forEach(source => {
+            let n = Workflow.getAllNodes(this.workflow).find(p => p.name === source);
+            this._notification.node_id.push(n.id);
+        });
 
         if (this.selectedUsers != null) {
-            this.notification.settings.recipients = this.selectedUsers.split(',');
+            this._notification.settings.recipients = this.selectedUsers.split(',');
         }
-        if (this.notification.type === 'vcs') {
-            this.notification.settings.template.disable_comment = !this.commentEnabled;
-            this.notification.settings.template.disable_status = !this.statusEnabled;
+        if (this._notification.type === 'vcs') {
+            this._notification.settings.template.disable_comment = !this.commentEnabled;
+            this._notification.settings.template.disable_status = !this.statusEnabled;
             if (this.alwaysSend) {
-                this.notification.settings.on_success = 'always';
+                this._notification.settings.on_success = 'always';
             } else {
-                this.notification.settings.on_success = null;
+                this._notification.settings.on_success = null;
             }
         }
-        this.updatedNotification.emit(this.notification);
+        this.updatedNotification.emit(cloneDeep(this._notification));
     }
 
     setNotificationTemplate() {
@@ -135,8 +130,8 @@ export class WorkflowNotificationFormComponent implements OnInit {
             this.loadingNotifTemplate = false;
             this._cd.markForCheck();
         })).subscribe(data => {
-            if (data && data[this.notification.type]) {
-                this.notification.settings = data[this.notification.type];
+            if (data && data[this._notification.type]) {
+                this._notification.settings = data[this._notification.type];
             }
         });
     }

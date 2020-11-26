@@ -8,7 +8,6 @@ import (
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/action"
-	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/integration"
 	"github.com/ovh/cds/engine/api/workflow"
@@ -39,10 +38,6 @@ func InitiliazeDB(ctx context.Context, defaultValues sdk.DefaultValues, DBFunc f
 
 	if err := action.CreateBuiltinActions(tx); err != nil {
 		return sdk.WrapError(err, "Cannot setup builtin actions")
-	}
-
-	if err := environment.CreateBuiltinEnvironments(tx); err != nil {
-		return sdk.WrapError(err, "Cannot setup builtin environments")
 	}
 
 	if err := tx.Commit(); err != nil {

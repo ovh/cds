@@ -12,6 +12,40 @@
 })(function (CodeMirror) {
     "use strict";
 
+    CodeMirror.registerHelper("hint", "textplain", function(cm, options) {
+        // Get cursor position
+        let cur = cm.getCursor(0);
+
+        // Get currentWord
+        let currentWord = '';
+        let worldFrom = 0;
+        let text = cm.getLine(cur.line);
+        if (cur.ch > 0) {
+            let currentChar = '';
+            let idx = cur.ch;
+            do {
+                worldFrom = idx;
+                currentWord = currentChar + currentWord;
+                idx--;
+                if (idx < 0) {
+                    break;
+                }
+                currentChar = text.substr(idx, 1)
+            } while(currentChar !== ' ' && currentChar !== '(' )
+        }
+        let suggestions = options.completionList.filter(function (l) {
+            return l.indexOf(currentWord) === 0;
+        })
+        return {
+            list: suggestions,
+            from: {
+                line: cur.line,
+                ch: worldFrom
+            },
+            to: CodeMirror.Pos(cur.line, worldFrom + currentWord.length)
+        };
+    });
+
     CodeMirror.registerHelper("hint", "cds", function (cm, options) {
         // Suggest list
         let cdsCompletionList = options.cdsCompletionList;
@@ -152,6 +186,7 @@
             to: CodeMirror.Pos(cur.line, lastIndexOfComma)
         };
     });
+
     CodeMirror.registerHelper("hint", "asCode", function (cm, options) {
 
         // Get cursor position

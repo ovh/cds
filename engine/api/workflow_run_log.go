@@ -2,16 +2,15 @@ package api
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 	"strconv"
-	"time"
 
 	"github.com/gorilla/mux"
 	"github.com/mitchellh/hashstructure"
 
 	"github.com/ovh/cds/engine/api/authentication"
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
+	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/engine/featureflipping"
@@ -109,19 +108,19 @@ func (api *API) getWorkflowNodeRunJobStepLogHandler() service.Handler {
 	}
 }
 
-func (api *API) getWorkflowNodeRunJobServiceAccessHandler() service.Handler {
+func (api *API) getWorkflowNodeRunJobServiceLinkHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		return api.getWorkflowNodeRunJobLogHandler(ctx, w, r, sdk.CDNTypeItemServiceLog)
+		return api.getWorkflowNodeRunJobLogLinkHandler(ctx, w, r, sdk.CDNTypeItemServiceLog)
 	}
 }
 
-func (api *API) getWorkflowNodeRunJobStepAccessHandler() service.Handler {
+func (api *API) getWorkflowNodeRunJobStepLinkHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		return api.getWorkflowNodeRunJobLogHandler(ctx, w, r, sdk.CDNTypeItemStepLog)
+		return api.getWorkflowNodeRunJobLogLinkHandler(ctx, w, r, sdk.CDNTypeItemStepLog)
 	}
 }
 
-func (api *API) getWorkflowNodeRunJobLogHandler(ctx context.Context, w http.ResponseWriter, r *http.Request, itemType sdk.CDNItemType) error {
+func (api *API) getWorkflowNodeRunJobLogLinkHandler(ctx context.Context, w http.ResponseWriter, r *http.Request, itemType sdk.CDNItemType) error {
 	vars := mux.Vars(r)
 
 	projectKey := vars["key"]
@@ -129,7 +128,7 @@ func (api *API) getWorkflowNodeRunJobLogHandler(ctx context.Context, w http.Resp
 		"project_key": projectKey,
 	})
 	if !enabled {
-		return service.WriteJSON(w, sdk.CDNLogAccess{}, http.StatusOK)
+		return sdk.NewErrorFrom(sdk.ErrNotFound, "cdn is not enable for project %s", projectKey)
 	}
 
 	workflowName := vars["permWorkflowName"]
@@ -209,6 +208,9 @@ func (api *API) getWorkflowNodeRunJobLogHandler(ctx context.Context, w http.Resp
 				stepOrder, runJobID, nodeRunID, workflowName, projectKey)
 		}
 		apiRef.StepName = runJob.Job.Action.Actions[int64(ss.StepOrder)].Name
+		if runJob.Job.Action.Actions[int64(ss.StepOrder)].StepName != "" {
+			apiRef.StepName = runJob.Job.Action.Actions[int64(ss.StepOrder)].StepName
+		}
 		apiRef.StepOrder = int64(ss.StepOrder)
 	}
 
@@ -218,29 +220,68 @@ func (api *API) getWorkflowNodeRunJobLogHandler(ctx context.Context, w http.Resp
 	}
 	apiRefHash := strconv.FormatUint(apiRefHashU, 10)
 
-	srvs, err := services.LoadAllByType(ctx, api.mustDB(), sdk.TypeCDN)
-	if err != nil {
-		return err
-	}
-	if len(srvs) == 0 {
-		return sdk.WrapError(sdk.ErrNotFound, "no cdn service found")
-	}
-	if _, _, err := services.NewClient(api.mustDB(), srvs).DoJSONRequest(ctx, http.MethodGet, fmt.Sprintf("/item/%s/%s", itemType, apiRefHash), nil, nil); err != nil {
-		if sdk.ErrorIs(err, sdk.ErrNotFound) {
-			return service.WriteJSON(w, sdk.CDNLogAccess{}, http.StatusOK)
-		}
-		return err
-	}
-
-	tokenRaw, err := authentication.SignJWS(sdk.CDNAuthToken{APIRefHash: apiRefHash}, time.Hour)
-	if err != nil {
-		return err
-	}
-
-	return service.WriteJSON(w, sdk.CDNLogAccess{
-		Exists:       true,
-		Token:        tokenRaw,
-		DownloadPath: fmt.Sprintf("/item/%s/%s/download", itemType, apiRefHash),
-		CDNURL:       httpURL,
+	return service.WriteJSON(w, sdk.CDNLogLink{
+		CDNURL:   httpURL,
+		ItemType: itemType,
+		APIRef:   apiRefHash,
 	}, http.StatusOK)
+}
+
+func (api *API) getWorkflowLogAccessHandler() service.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		vars := mux.Vars(r)
+
+		projectKey := vars["key"]
+		enabled := featureflipping.IsEnabled(ctx, gorpmapping.Mapper, api.mustDB(), "cdn-job-logs", map[string]string{
+			"project_key": projectKey,
+		})
+		if !enabled {
+			return sdk.WrapError(sdk.ErrForbidden, "cdn is not enabled for project %s", projectKey)
+		}
+
+		if !isCDN(ctx) {
+			return sdk.WrapError(sdk.ErrForbidden, "only CDN can call this route")
+		}
+
+		sessionID := r.Header.Get("X-CDS-Session-ID")
+		if sessionID == "" {
+			return sdk.WrapError(sdk.ErrForbidden, "missing session id header")
+		}
+
+		workflowName := vars["workflowName"]
+
+		exists, err := workflow.Exists(api.mustDB(), projectKey, workflowName)
+		if err != nil {
+			return err
+		}
+		if !exists {
+			return sdk.WithStack(sdk.ErrNotFound)
+		}
+
+		session, err := authentication.LoadSessionByID(ctx, api.mustDBWithCtx(ctx), sessionID)
+		if err != nil {
+			return err
+		}
+		consumer, err := authentication.LoadConsumerByID(ctx, api.mustDB(), session.ConsumerID,
+			authentication.LoadConsumerOptions.WithAuthentifiedUser)
+		if err != nil {
+			return sdk.NewErrorWithStack(err, sdk.ErrUnauthorized)
+		}
+		if consumer.Disabled {
+			return sdk.WrapError(sdk.ErrUnauthorized, "consumer (%s) is disabled", consumer.ID)
+		}
+
+		maintainerOrAdmin := consumer.Maintainer() || consumer.Admin()
+
+		perms, err := permission.LoadWorkflowMaxLevelPermission(ctx, api.mustDB(), projectKey, []string{workflowName}, consumer.GetGroupIDs())
+		if err != nil {
+			return sdk.NewErrorWithStack(err, sdk.ErrUnauthorized)
+		}
+		maxLevelPermission := perms.Level(workflowName)
+		if maxLevelPermission < sdk.PermissionRead && !maintainerOrAdmin {
+			return sdk.WrapError(sdk.ErrUnauthorized, "not authorized for workflow %s/%s", projectKey, workflowName)
+		}
+
+		return service.WriteJSON(w, nil, http.StatusOK)
+	}
 }

@@ -21,6 +21,17 @@ type SpawnMsg struct {
 	Type string        `json:"type" db:"-"`
 }
 
+func SpawnMsgNew(msg Message, args ...interface{}) SpawnMsg {
+	for i := range args {
+		args[i] = fmt.Sprintf("%v", args[i])
+	}
+	return SpawnMsg{
+		ID:   msg.ID,
+		Type: msg.Type,
+		Args: args,
+	}
+}
+
 func (s SpawnMsg) DefaultUserMessage() string {
 	if _, ok := Messages[s.ID]; ok {
 		m := Messages[s.ID]
@@ -121,6 +132,11 @@ const (
 	StatusStopped           = "Stopped"
 	StatusWorkerPending     = "Pending"
 	StatusWorkerRegistering = "Registering"
+)
+
+var (
+	StatusTerminated    = True
+	StatusNotTerminated = False
 )
 
 // StatusIsTerminated returns if status is terminated (nothing related to building or waiting, ...)

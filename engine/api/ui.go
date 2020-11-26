@@ -60,7 +60,7 @@ func (api *API) getApplicationOverviewHandler() service.Handler {
 
 		appOverview := sdk.ApplicationOverview{
 			Graphs:  make([]sdk.ApplicationOverviewGraph, 0, 3),
-			History: make(map[string][]sdk.WorkflowRun, len(app.Usage.Workflows)),
+			History: make(map[string][]sdk.WorkflowRunSummary, len(app.Usage.Workflows)),
 		}
 
 		// Get metrics
@@ -114,7 +114,7 @@ func (api *API) getApplicationOverviewHandler() service.Handler {
 			tagFilter := make(map[string]string, 1)
 			tagFilter["git.branch"] = defaultBranch.DisplayID
 			for _, w := range app.Usage.Workflows {
-				runs, _, _, _, err := workflow.LoadRuns(tx, projectKey, w.Name, 0, 5, tagFilter)
+				runs, _, _, _, err := workflow.LoadRunsSummaries(tx, projectKey, w.Name, 0, 5, tagFilter)
 				if err != nil {
 					return sdk.WrapError(err, "unable to load runs")
 				}

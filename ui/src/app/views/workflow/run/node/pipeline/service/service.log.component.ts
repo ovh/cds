@@ -1,4 +1,4 @@
-import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { HttpClient } from '@angular/common/http';
 import {
     ChangeDetectionStrategy,
     ChangeDetectorRef,
@@ -12,7 +12,7 @@ import {
 } from '@angular/core';
 import { Select, Store } from '@ngxs/store';
 import * as AU from 'ansi_up';
-import { CDNLogAccess, PipelineStatus, ServiceLog } from 'app/model/pipeline.model';
+import { CDNLogLink, PipelineStatus, ServiceLog } from 'app/model/pipeline.model';
 import { WorkflowNodeJobRun } from 'app/model/workflow.run.model';
 import { WorkflowService } from 'app/service/workflow/workflow.service';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
@@ -29,9 +29,6 @@ import { Observable, Subscription } from 'rxjs';
 })
 @AutoUnsubscribe()
 export class WorkflowServiceLogComponent implements OnInit, OnDestroy {
-    @Select(WorkflowState.getSelectedWorkflowNodeJobRun()) nodeJobRun$: Observable<WorkflowNodeJobRun>;
-    nodeJobRunSubs: Subscription;
-
     @ViewChild('logsContent') logsElt: ElementRef;
 
     @Input() serviceName: string;
@@ -63,27 +60,26 @@ export class WorkflowServiceLogComponent implements OnInit, OnDestroy {
     ngOnDestroy(): void { } // Should be set to use @AutoUnsubscribe with AOT
 
     ngOnInit(): void {
-        this.nodeJobRunSubs = this.nodeJobRun$.subscribe(njr => {
-            if (!njr) {
-                this.stopPolling();
-                return
-            }
-            if (this.currentRunJobID && njr.id === this.currentRunJobID && this.currentRunJobStatus === njr.status) {
-                return;
-            }
+        let njr = this._store.selectSnapshot(WorkflowState.getSelectedWorkflowNodeJobRun());
+        if (!njr) {
+            this.stopPolling();
+            return
+        }
+        if (this.currentRunJobID && njr.id === this.currentRunJobID && this.currentRunJobStatus === njr.status) {
+            return;
+        }
 
-            let invalidServiceName = !njr.job.action.requirements.find(r => r.type === 'service' && r.name === this.serviceName);
-            if (invalidServiceName) {
-                return;
-            }
+        let invalidServiceName = !njr.job.action.requirements.find(r => r.type === 'service' && r.name === this.serviceName);
+        if (invalidServiceName) {
+            return;
+        }
 
-            this.currentRunJobID = njr.id;
-            this.currentRunJobStatus = njr.status;
-            if (!this.pollingSubscription) {
-                this.initWorker();
-            }
-            this._cd.markForCheck();
-        });
+        this.currentRunJobID = njr.id;
+        this.currentRunJobStatus = njr.status;
+        if (!this.pollingSubscription) {
+            this.initWorker();
+        }
+        this._cd.markForCheck();
     }
 
     getLogs(serviceLog: ServiceLog) {
@@ -100,7 +96,6 @@ export class WorkflowServiceLogComponent implements OnInit, OnDestroy {
 
         let projectKey = this._store.selectSnapshot(ProjectState.projectSnapshot).key;
         let workflowName = this._store.selectSnapshot(WorkflowState.workflowSnapshot).name;
-        let runNumber = (<WorkflowStateModel>this._store.selectSnapshot(WorkflowState)).workflowNodeRun.num;
         let nodeRunId = (<WorkflowStateModel>this._store.selectSnapshot(WorkflowState)).workflowNodeRun.id;
         let runJobId = this.currentRunJobID;
 
@@ -108,9 +103,9 @@ export class WorkflowServiceLogComponent implements OnInit, OnDestroy {
             return !!f.results.find(r => r.enabled && r.paramString === JSON.stringify({ 'project_key': projectKey }));
         });
 
-        let logAccess: CDNLogAccess;
+        let logLink: CDNLogLink;
         if (cdnEnabled) {
-            logAccess = await this._workflowService.getServiceAccess(projectKey, workflowName, nodeRunId, runJobId,
+            logLink = await this._workflowService.getServiceLink(projectKey, workflowName, nodeRunId, runJobId,
                 this.serviceName).toPromise();
         }
 
@@ -123,15 +118,12 @@ export class WorkflowServiceLogComponent implements OnInit, OnDestroy {
             this._cd.markForCheck();
         };
 
-        if (!cdnEnabled || !logAccess.exists) {
+        if (!cdnEnabled) {
             const serviceLog = await this._workflowService.getServiceLog(projectKey, workflowName,
                 nodeRunId, runJobId, this.serviceName).toPromise();
             callback(serviceLog);
         } else {
-            const data = await this._http.get('./cdscdn' + logAccess.download_path, {
-                responseType: 'text',
-                headers: new HttpHeaders({ 'Authorization': `Bearer ${logAccess.token}` })
-            }).toPromise();
+            const data = await this._workflowService.getLogDownload(logLink).toPromise();
             callback(<ServiceLog>{ val: data });
         }
 
@@ -145,14 +137,11 @@ export class WorkflowServiceLogComponent implements OnInit, OnDestroy {
         this._ngZone.runOutsideAngular(() => {
             this.pollingSubscription = Observable.interval(2000)
                 .mergeMap(_ => {
-                    if (!cdnEnabled || !logAccess.exists) {
+                    if (!cdnEnabled) {
                         return this._workflowService.getServiceLog(projectKey, workflowName, nodeRunId,
                             runJobId, this.serviceName);
                     }
-                    return this._http.get('./cdscdn' + logAccess.download_path, {
-                        responseType: 'text',
-                        headers: new HttpHeaders({ 'Authorization': `Bearer ${logAccess.token}` })
-                    }).map(data => <ServiceLog>{ val: data });
+                    return this._workflowService.getLogDownload(logLink).map(data => <ServiceLog>{ val: data });
                 })
                 .subscribe(serviceLogs => {
                     this.zone.run(() => {

@@ -161,8 +161,7 @@ func ParseAndImport(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store 
 					hasARepoWebHook = true
 					break
 				}
-				if h.HookModelName == newRepoWebHook.HookModelName &&
-					h.ConfigValueContainsEventsDefault() {
+				if h.HookModelName == newRepoWebHook.HookModelName {
 					hasARepoWebHook = true
 					break
 				}
@@ -173,7 +172,7 @@ func ParseAndImport(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store 
 
 			var err error
 			if w.WorkflowData.Node.Context.DefaultPayload, err = DefaultPayload(ctx, db, store, proj, w); err != nil {
-				return nil, nil, sdk.WrapError(err, "Unable to get default payload")
+				return nil, nil, err
 			}
 		}
 	}

@@ -143,11 +143,11 @@ func (c *githubClient) post(path string, bodyType string, body io.Reader, opts *
 	req.Header.Add("Accept", "application/json")
 	if opts.asUser && c.token != "" {
 		req.SetBasicAuth(c.username, c.token)
+		log.Debug("Github API>> Request URL %s with basicAuth username:%v len:%d", req.URL.String(), c.username, len(c.token))
 	} else {
 		req.Header.Add("Authorization", fmt.Sprintf("token %s", c.OAuthToken))
+		log.Debug("Github API>> Request URL %s with Authorization", req.URL.String())
 	}
-
-	log.Debug("Github API>> Request URL %s", req.URL.String())
 
 	return httpClient.Do(req)
 }

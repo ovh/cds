@@ -13,17 +13,19 @@ import (
 
 	"github.com/go-gorp/gorp"
 	"github.com/gorilla/mux"
-	"github.com/sirupsen/logrus"
 
 	"github.com/ovh/cds/engine/api/ascode"
 	"github.com/ovh/cds/engine/api/authentication"
+	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/integration"
 	"github.com/ovh/cds/engine/api/objectstore"
 	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/api/project"
+	"github.com/ovh/cds/engine/api/purge"
 	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/engine/api/workflow"
+	"github.com/ovh/cds/engine/featureflipping"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
@@ -53,7 +55,7 @@ func (api *API) getWorkflowsRunsAndNodesIDshandler() service.Handler {
 	}
 }
 
-func (api *API) searchWorkflowRun(w http.ResponseWriter, r *http.Request, route, key, name string) error {
+func (api *API) searchWorkflowRun(ctx context.Context, w http.ResponseWriter, r *http.Request, route, key, name string) error {
 	// About pagination: [FR] http://blog.octo.com/designer-une-api-rest/#pagination
 	var limit, offset int
 
@@ -90,7 +92,7 @@ func (api *API) searchWorkflowRun(w http.ResponseWriter, r *http.Request, route,
 
 	//Maximim range is set to 50
 	w.Header().Add("Accept-Range", "run 50")
-	runs, offset, limit, count, err := workflow.LoadRuns(api.mustDB(), key, name, offset, limit, mapFilters)
+	runs, offset, limit, count, err := workflow.LoadRunsSummaries(api.mustDB(), key, name, offset, limit, mapFilters)
 	if err != nil {
 		return sdk.WrapError(err, "Unable to load workflow runs")
 	}
@@ -148,13 +150,9 @@ func (api *API) searchWorkflowRun(w http.ResponseWriter, r *http.Request, route,
 
 	w.Header().Add("Content-Range", fmt.Sprintf("%d-%d/%d", offset, limit, count))
 
-	for i := range runs {
-		runs[i].Translate(r.Header.Get("Accept-Language"))
-	}
-
 	// Return empty array instead of nil
 	if runs == nil {
-		runs = []sdk.WorkflowRun{}
+		runs = []sdk.WorkflowRunSummary{}
 	}
 	return service.WriteJSON(w, runs, code)
 }
@@ -167,7 +165,7 @@ func (api *API) getWorkflowAllRunsHandler() service.Handler {
 		route := api.Router.GetRoute("GET", api.getWorkflowAllRunsHandler, map[string]string{
 			"permProjectKey": key,
 		})
-		return api.searchWorkflowRun(w, r, route, key, name)
+		return api.searchWorkflowRun(ctx, w, r, route, key, name)
 	}
 }
 
@@ -180,7 +178,7 @@ func (api *API) getWorkflowRunsHandler() service.Handler {
 			"key":          key,
 			"workflowName": name,
 		})
-		return api.searchWorkflowRun(w, r, route, key, name)
+		return api.searchWorkflowRun(ctx, w, r, route, key, name)
 	}
 }
 
@@ -355,8 +353,10 @@ func (api *API) deleteWorkflowRunHandler() service.Handler {
 		if err := workflow.MarkWorkflowRunsAsDelete(api.mustDB(), []int64{run.ID}); err != nil {
 			return sdk.WrapError(err, "cannot mark workflow run %d as delete", run.ID)
 		}
+		run.ToDelete = true
 
 		workflow.CountWorkflowRunsMarkToDelete(ctx, api.mustDB(), api.Metrics.WorkflowRunsMarkToDelete)
+		event.PublishWorkflowRun(ctx, *run, key)
 
 		return service.WriteJSON(w, nil, http.StatusAccepted)
 	}
@@ -431,8 +431,7 @@ func (api *API) stopWorkflowRun(ctx context.Context, p *sdk.Project, run *sdk.Wo
 	}
 	defer tx.Rollback() //nolint
 
-	spwnMsg := sdk.SpawnMsg{ID: sdk.MsgWorkflowNodeStop.ID, Args: []interface{}{ident.GetUsername()}, Type: sdk.MsgWorkflowNodeStop.Type}
-
+	spwnMsg := sdk.SpawnMsgNew(*sdk.MsgWorkflowNodeStop, ident.GetUsername())
 	stopInfos := sdk.SpawnInfo{
 		APITime:     time.Now(),
 		RemoteTime:  time.Now(),
@@ -673,7 +672,7 @@ func (api *API) getWorkflowCommitsHandler() service.Handler {
 		defer tx.Rollback() // nolint
 
 		log.Debug("getWorkflowCommitsHandler> VCSHash: %s VCSBranch: %s", wfNodeRun.VCSHash, wfNodeRun.VCSBranch)
-		commits, _, err := workflow.GetNodeRunBuildCommits(ctx, tx, api.Cache, *proj, wf, nodeName, number, wfNodeRun, &app, &env)
+		commits, _, err := workflow.GetNodeRunBuildCommits(ctx, tx, api.Cache, *proj, *wf, nodeName, number, wfNodeRun, &app, &env)
 		if err != nil {
 			return sdk.WrapError(err, "unable to load commits")
 		}
@@ -860,28 +859,28 @@ func (api *API) postWorkflowRunHandler() service.Handler {
 
 		// To handle conditions on hooks
 		if opts.Hook != nil {
-			hook, errH := workflow.LoadHookByUUID(api.mustDB(), opts.Hook.WorkflowNodeHookUUID)
-			if errH != nil {
-				return sdk.WrapError(errH, "cannot load hook for uuid %s", opts.Hook.WorkflowNodeHookUUID)
+			hook, err := workflow.LoadHookByUUID(api.mustDB(), opts.Hook.WorkflowNodeHookUUID)
+			if err != nil {
+				return sdk.WrapError(err, "cannot load hook for uuid %s", opts.Hook.WorkflowNodeHookUUID)
 			}
 			conditions := hook.Conditions
 			params := sdk.ParametersFromMap(opts.Hook.Payload)
 
-			var errc error
 			var conditionsOK bool
+			var conditionsError error
 			if conditions.LuaScript == "" {
-				conditionsOK, errc = sdk.WorkflowCheckConditions(conditions.PlainConditions, params)
+				conditionsOK, conditionsError = sdk.WorkflowCheckConditions(conditions.PlainConditions, params)
 			} else {
 				luacheck, err := luascript.NewCheck()
 				if err != nil {
 					return sdk.WrapError(err, "cannot check lua script")
 				}
 				luacheck.SetVariables(sdk.ParametersToMap(params))
-				errc = luacheck.Perform(conditions.LuaScript)
+				conditionsError = luacheck.Perform(conditions.LuaScript)
 				conditionsOK = luacheck.Result
 			}
-			if errc != nil {
-				return sdk.WrapError(errc, "cannot check conditions")
+			if conditionsError != nil {
+				return sdk.NewError(sdk.ErrWrongRequest, fmt.Errorf("cannot check conditions: %v", conditionsError))
 			}
 
 			if !conditionsOK {
@@ -1051,11 +1050,7 @@ func (api *API) initWorkflowRun(ctx context.Context, projKey string, wf *sdk.Wor
 			workflowSecrets, asCodeInfosMsg, err = workflow.CreateFromRepository(ctx, api.mustDB(), api.Cache, p1, wf, opts, *c, project.DecryptWithBuiltinKey)
 			infos := make([]sdk.SpawnMsg, len(asCodeInfosMsg))
 			for i, msg := range asCodeInfosMsg {
-				infos[i] = sdk.SpawnMsg{
-					ID:   msg.ID,
-					Args: msg.Args,
-					Type: msg.Type,
-				}
+				infos[i] = msg.ToSpawnMsg()
 			}
 			workflow.AddWorkflowRunInfo(wfRun, infos...)
 			if err != nil {
@@ -1107,24 +1102,27 @@ func (api *API) initWorkflowRun(ctx context.Context, projKey string, wf *sdk.Wor
 	}
 	workflow.ResyncNodeRunsWithCommits(ctx, api.mustDB(), api.Cache, *p, report)
 
-	// Purge workflow run
-	api.GoRoutines.Exec(ctx, "workflow.PurgeWorkflowRun", func(ctx context.Context) {
-		tx, err := api.mustDB().Begin()
-		defer tx.Rollback() // nolint
-		if err != nil {
-			log.Error(ctx, "workflow.PurgeWorkflowRun> error %v", err)
-			return
-		}
-		if err := workflow.PurgeWorkflowRun(ctx, tx, *wf); err != nil {
-			log.Error(ctx, "workflow.PurgeWorkflowRun> error %v", err)
-			return
-		}
-		if err := tx.Commit(); err != nil {
-			log.Error(ctx, "workflow.PurgeWorkflowRun> unable to commit transaction:  %v", err)
-			return
-		}
-		workflow.CountWorkflowRunsMarkToDelete(ctx, api.mustDB(), api.Metrics.WorkflowRunsMarkToDelete)
-	}, api.PanicDump())
+	enabled := featureflipping.IsEnabled(ctx, gorpmapping.Mapper, api.mustDB(), purge.FeaturePurgeName, map[string]string{"project_key": wf.ProjectKey})
+	if !enabled {
+		// Purge workflow run
+		api.GoRoutines.Exec(ctx, "workflow.PurgeWorkflowRun", func(ctx context.Context) {
+			tx, err := api.mustDB().Begin()
+			defer tx.Rollback() // nolint
+			if err != nil {
+				log.Error(ctx, "workflow.PurgeWorkflowRun> error %v", err)
+				return
+			}
+			if err := workflow.PurgeWorkflowRun(ctx, tx, *wf); err != nil {
+				log.Error(ctx, "workflow.PurgeWorkflowRun> error %v", err)
+				return
+			}
+			if err := tx.Commit(); err != nil {
+				log.Error(ctx, "workflow.PurgeWorkflowRun> unable to commit transaction:  %v", err)
+				return
+			}
+			workflow.CountWorkflowRunsMarkToDelete(ctx, api.mustDB(), api.Metrics.WorkflowRunsMarkToDelete)
+		}, api.PanicDump())
+	}
 
 	// Update parent
 	for i := range report.WorkflowRuns() {
@@ -1272,27 +1270,20 @@ func failInitWorkflowRun(ctx context.Context, db *gorp.DbMap, wfRun *sdk.Workflo
 
 	var info sdk.SpawnMsg
 	if sdk.ErrorIs(err, sdk.ErrConditionsNotOk) {
-		info = sdk.SpawnMsg{
-			ID:   sdk.MsgWorkflowConditionError.ID,
-			Type: sdk.MsgWorkflowConditionError.Type,
-		}
+		info = sdk.SpawnMsgNew(*sdk.MsgWorkflowConditionError)
 		if len(wfRun.WorkflowNodeRuns) == 0 {
 			wfRun.Status = sdk.StatusNeverBuilt
 		}
 	} else {
 		httpErr := sdk.ExtractHTTPError(err, "")
 		isErrWithStack := sdk.IsErrorWithStack(err)
-		fields := logrus.Fields{}
+		fields := log.Fields{}
 		if isErrWithStack {
 			fields["stack_trace"] = fmt.Sprintf("%+v", err)
 		}
 		log.ErrorWithFields(ctx, fields, "failInitWorkflowRun error: %v", err)
 		wfRun.Status = sdk.StatusFail
-		info = sdk.SpawnMsg{
-			ID:   sdk.MsgWorkflowError.ID,
-			Args: []interface{}{httpErr.Error()},
-			Type: sdk.MsgWorkflowError.Type,
-		}
+		info = sdk.SpawnMsgNew(*sdk.MsgWorkflowError, httpErr)
 	}
 
 	workflow.AddWorkflowRunInfo(wfRun, info)

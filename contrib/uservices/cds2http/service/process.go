@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -20,7 +21,10 @@ import (
 func do() {
 	httpClient := cdsclient.NewHTTPClient(10*time.Second, false)
 	log.Debugf("do> consume kafka: %s", viper.GetString("event_kafka_topic"))
-	if err := event.ConsumeKafka(viper.GetString("event_kafka_broker_addresses"),
+	if err := event.ConsumeKafka(
+		context.Background(),
+		viper.GetString("event_kafka_version"),
+		viper.GetString("event_kafka_broker_addresses"),
 		viper.GetString("event_kafka_topic"),
 		viper.GetString("event_kafka_group"),
 		viper.GetString("event_kafka_user"),

@@ -4,7 +4,9 @@ import (
 	"context"
 	"strconv"
 	"strings"
+	"time"
 
+	"github.com/sirupsen/logrus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/ovh/cds/sdk"
@@ -34,7 +36,7 @@ func (h *HatcheryKubernetes) killAwolWorkers(ctx context.Context) error {
 		jobIdentifiers := h.getJobIdentiers(labels)
 		if jobIdentifiers != nil {
 			// Browse container to send end log for each service
-			servicesLogs := make([]sdk.ServiceLog, 0)
+			servicesLogs := make([]log.Message, 0)
 			for _, container := range pod.Spec.Containers {
 				subsStr := containerServiceNameRegexp.FindAllStringSubmatch(container.Name, -1)
 				if len(subsStr) < 1 {
@@ -45,24 +47,32 @@ func (h *HatcheryKubernetes) killAwolWorkers(ctx context.Context) error {
 					continue
 				}
 				reqServiceID, _ := strconv.ParseInt(subsStr[0][1], 10, 64)
-				finalLog := sdk.ServiceLog{
-					WorkflowNodeJobRunID:   jobIdentifiers.JobID,
-					ServiceRequirementID:   reqServiceID,
-					ServiceRequirementName: subsStr[0][2],
-					Val:                    "End of Job",
-					WorkerName:             pod.ObjectMeta.Name,
-					JobName:                labels[hatchery.LabelServiceJobName],
-					NodeRunName:            labels[hatchery.LabelServiceNodeRunName],
-					WorkflowName:           labels[hatchery.LabelServiceWorkflowName],
-					ProjectKey:             labels[hatchery.LabelServiceProjectKey],
-					RunID:                  jobIdentifiers.RunID,
-					WorkflowID:             jobIdentifiers.WorkflowID,
-					WorkflowNodeRunID:      jobIdentifiers.NodeRunID,
+				finalLog := log.Message{
+					Level: logrus.InfoLevel,
+					Value: string("End of Job"),
+					Signature: log.Signature{
+						Service: &log.SignatureService{
+							HatcheryID:      h.Service().ID,
+							HatcheryName:    h.ServiceName(),
+							RequirementID:   reqServiceID,
+							RequirementName: subsStr[0][2],
+							WorkerName:      pod.ObjectMeta.Name,
+						},
+						ProjectKey:   labels[hatchery.LabelServiceProjectKey],
+						WorkflowName: labels[hatchery.LabelServiceWorkflowName],
+						WorkflowID:   jobIdentifiers.WorkflowID,
+						RunID:        jobIdentifiers.RunID,
+						NodeRunName:  labels[hatchery.LabelServiceNodeRunName],
+						JobName:      labels[hatchery.LabelServiceJobName],
+						JobID:        jobIdentifiers.JobID,
+						NodeRunID:    jobIdentifiers.NodeRunID,
+						Timestamp:    time.Now().UnixNano(),
+					},
 				}
 				servicesLogs = append(servicesLogs, finalLog)
 			}
 			if len(servicesLogs) > 0 {
-				h.Common.SendServiceLog(ctx, servicesLogs, sdk.StatusSuccess)
+				h.Common.SendServiceLog(ctx, servicesLogs, sdk.StatusNotTerminated)
 			}
 		}
 

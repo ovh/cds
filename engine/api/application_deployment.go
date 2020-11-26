@@ -177,7 +177,7 @@ func (api *API) getApplicationDeploymentStrategyConfigHandler() service.Handler 
 		key := vars[permProjectKey]
 		appName := vars["applicationName"]
 		pfName := vars["integration"]
-		withClearPassword := FormBool(r, "withClearPassword")
+		withClearPassword := service.FormBool(r, "withClearPassword")
 
 		opts := []application.LoadOptionFunc{
 			application.LoadOptions.WithDeploymentStrategies,

@@ -7,17 +7,18 @@ import (
 	"strconv"
 
 	"github.com/go-gorp/gorp"
-	"go.opencensus.io/stats"
 
 	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/engine/cdn/redis"
 	"github.com/ovh/cds/engine/cdn/storage"
 	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/telemetry"
 )
 
-var keyBuffer = cache.Key("cdn", "buffer")
+var (
+	_         storage.BufferUnit = new(Redis)
+	keyBuffer                    = cache.Key("cdn", "buffer")
+)
 
 type Redis struct {
 	storage.AbstractUnit
@@ -25,16 +26,11 @@ type Redis struct {
 	store  cache.ScoredSetStore
 }
 
-var (
-	_           storage.BufferUnit = new(Redis)
-	metricsSize                    = stats.Int64("cdn/storage/redis/size", "redis size", stats.UnitDimensionless)
-)
-
 func init() {
 	storage.RegisterDriver("redis", new(Redis))
 }
 
-func (s *Redis) Init(ctx context.Context, _ *sdk.GoRoutines, cfg interface{}) error {
+func (s *Redis) Init(_ context.Context, cfg interface{}) error {
 	config, is := cfg.(storage.RedisBufferConfiguration)
 	if !is {
 		return sdk.WithStack(fmt.Errorf("invalid configuration: %T", cfg))
@@ -46,25 +42,22 @@ func (s *Redis) Init(ctx context.Context, _ *sdk.GoRoutines, cfg interface{}) er
 		return err
 	}
 
-	if err := telemetry.InitMetricsInt64(ctx, metricsSize); err != nil {
-		return err
-	}
-
 	return nil
 }
 
-func (s *Redis) ItemExists(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlExecutor, i sdk.CDNItem) (bool, error) {
+func (s *Redis) ItemExists(_ context.Context, _ *gorpmapper.Mapper, _ gorp.SqlExecutor, i sdk.CDNItem) (bool, error) {
 	size, _ := s.store.SetCard(cache.Key(keyBuffer, i.ID))
 	return size > 0, nil
+}
+
+func (s *Redis) Size(i sdk.CDNItemUnit) (int64, error) {
+	k := cache.Key(keyBuffer, i.ItemID)
+	return s.store.Size(k)
 }
 
 func (s *Redis) Add(i sdk.CDNItemUnit, index uint, value string) error {
 	value = strconv.Itoa(int(index)) + "#" + value
 	return s.store.ScoredSetAdd(context.Background(), cache.Key(keyBuffer, i.ItemID), value, float64(index))
-}
-
-func (s *Redis) Append(i sdk.CDNItemUnit, value string) error {
-	return s.store.ScoredSetAppend(context.Background(), cache.Key(keyBuffer, i.ItemID), value)
 }
 
 func (s *Redis) Card(i sdk.CDNItemUnit) (int, error) {
@@ -86,7 +79,7 @@ func (s *Redis) NewReader(_ context.Context, i sdk.CDNItemUnit) (io.ReadCloser, 
 }
 
 // NewAdvancedReader instanciate a reader from given option, format can be JSON or Text. If from is < 0, read end lines (ex: from=-100 size=0 means read the last 100 lines)
-func (s *Redis) NewAdvancedReader(_ context.Context, i sdk.CDNItemUnit, format sdk.CDNReaderFormat, from int64, size uint) (io.ReadCloser, error) {
+func (s *Redis) NewAdvancedReader(_ context.Context, i sdk.CDNItemUnit, format sdk.CDNReaderFormat, from int64, size uint, sort int64) (io.ReadCloser, error) {
 	return &redis.Reader{
 		ReadWrite: redis.ReadWrite{
 			Store:     s.store,
@@ -97,6 +90,7 @@ func (s *Redis) NewAdvancedReader(_ context.Context, i sdk.CDNItemUnit, format s
 		From:   from,
 		Size:   size,
 		Format: format,
+		Sort:   sort,
 	}, nil
 }
 
@@ -134,4 +128,8 @@ func (s *Redis) Status(_ context.Context) []sdk.MonitoringStatusLine {
 			Value:     fmt.Sprintf("%d keys", size),
 			Status:    sdk.MonitoringStatusOK,
 		}}
+}
+
+func (s *Redis) Remove(_ context.Context, i sdk.CDNItemUnit) error {
+	return sdk.WithStack(s.store.Delete(cache.Key(keyBuffer, i.ItemID)))
 }

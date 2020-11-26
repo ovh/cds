@@ -125,8 +125,8 @@ func (w *CurrentWorker) runJob(ctx context.Context, a *sdk.Action, jobID int64, 
 	}
 
 	defer func() {
-		w.SendEndOfJobLog(ctx, workerruntime.LevelInfo, "End of Job", jobResult.Status)
-		log.Info(ctx, "runJob> job %s (%d)", a.Name, jobID)
+		w.gelfLogger.hook.Flush()
+		log.Info(ctx, "runJob> end of job %s (%d)", a.Name, jobID)
 	}()
 
 	var nDisabled, nCriticalFailed int
@@ -205,10 +205,9 @@ func (w *CurrentWorker) runAction(ctx context.Context, a sdk.Action, jobID int64
 	log.Info(ctx, "runAction> start action %s %s %d", a.StepName, actionName, jobID)
 	defer func() { log.Info(ctx, "runAction> end action %s %s run %d", a.StepName, actionName, jobID) }()
 
-	w.SendLog(ctx, workerruntime.LevelInfo, fmt.Sprintf("Starting step \"%s\"", actionName))
-	var t0 = time.Now()
+	w.SendLog(ctx, workerruntime.LevelInfo, fmt.Sprintf("Starting step %q", actionName))
 	defer func() {
-		w.SendLog(ctx, workerruntime.LevelInfo, fmt.Sprintf("End of step \"%s\" (%s)", actionName, sdk.Round(time.Since(t0), time.Second).String()))
+		w.SendTerminatedStepLog(ctx, workerruntime.LevelInfo, fmt.Sprintf("End of step %q", actionName))
 		w.gelfLogger.hook.Flush()
 	}()
 
@@ -629,7 +628,6 @@ func (w *CurrentWorker) ProcessJob(jobInfo sdk.WorkflowNodeJobRunData) (res sdk.
 	if err := teardownDirectory(w.basedir, ""); err != nil {
 		log.Error(ctx, "Cannot remove basedir content: %s", err)
 	}
-	w.gelfLogger.hook.Flush()
 
 	return res
 }

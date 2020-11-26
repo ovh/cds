@@ -122,15 +122,17 @@ func initBuiltinConsumersFromStartupConfig(ctx context.Context, tx gorpmapper.Sq
 	for _, cfg := range startupConfig.Consumers {
 		var scopes sdk.AuthConsumerScopeDetails
 
-		switch cfg.ServiceType {
-		case sdk.TypeHatchery:
+		switch cfg.Type {
+		case StartupConfigConsumerTypeHatchery:
 			scopes = sdk.NewAuthConsumerScopeDetails(sdk.AuthConsumerScopeService, sdk.AuthConsumerScopeHatchery, sdk.AuthConsumerScopeRunExecution, sdk.AuthConsumerScopeWorkerModel)
-		case sdk.TypeHooks:
+		case StartupConfigConsumerTypeHooks:
 			scopes = sdk.NewAuthConsumerScopeDetails(sdk.AuthConsumerScopeService, sdk.AuthConsumerScopeHooks, sdk.AuthConsumerScopeProject, sdk.AuthConsumerScopeRun)
-		case sdk.TypeCDN:
+		case StartupConfigConsumerTypeCDN:
+			scopes = sdk.NewAuthConsumerScopeDetails(sdk.AuthConsumerScopeService, sdk.AuthConsumerScopeWorker, sdk.AuthConsumerScopeRunExecution)
+		case StartupConfigConsumerTypeCDNStorageCDS:
 			scopes = sdk.NewAuthConsumerScopeDetails(sdk.AuthConsumerScopeService, sdk.AuthConsumerScopeWorker, sdk.AuthConsumerScopeRunExecution)
 		default:
-			scopes = sdk.NewAuthConsumerScopeDetails(sdk.AuthConsumerScopeService)
+			scopes = sdk.NewAuthConsumerScopeDetails(sdk.AuthConsumerScopeProject, sdk.AuthConsumerScopeRun)
 		}
 
 		var c = sdk.AuthConsumer{
@@ -213,7 +215,7 @@ func (api *API) postAuthLocalSigninHandler() service.Handler {
 		}
 
 		// Set a cookie with the jwt token
-		api.SetCookie(w, jwtCookieName, jwt, session.ExpireAt)
+		api.SetCookie(w, service.JWTCookieName, jwt, session.ExpireAt)
 
 		// Prepare http response
 		resp := sdk.AuthConsumerSigninResponse{
@@ -346,7 +348,7 @@ func (api *API) postAuthLocalVerifyHandler() service.Handler {
 		local.CleanVerifyConsumerToken(api.Cache, consumer.ID)
 
 		// Set a cookie with the jwt token
-		api.SetCookie(w, jwtCookieName, jwt, session.ExpireAt)
+		api.SetCookie(w, service.JWTCookieName, jwt, session.ExpireAt)
 
 		// Prepare http response
 		resp := sdk.AuthConsumerSigninResponse{
@@ -514,7 +516,7 @@ func (api *API) postAuthLocalResetHandler() service.Handler {
 		local.CleanResetConsumerToken(api.Cache, consumer.ID)
 
 		// Set a cookie with the jwt token
-		api.SetCookie(w, jwtCookieName, jwt, session.ExpireAt)
+		api.SetCookie(w, service.JWTCookieName, jwt, session.ExpireAt)
 
 		// Prepare http response
 		resp := sdk.AuthConsumerSigninResponse{

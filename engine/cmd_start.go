@@ -50,6 +50,12 @@ var (
 	flagStartVaultToken      string
 )
 
+type serviceConf struct {
+	arg     string
+	service service.Service
+	cfg     interface{}
+}
+
 var startCmd = &cobra.Command{
 	Use:   "start",
 	Short: "Start CDS",
@@ -112,21 +118,6 @@ See $ engine config command for more details.
 
 		// initialize context
 		defer cancel()
-
-		// gracefully shutdown all
-		c := make(chan os.Signal, 1)
-		signal.Notify(c, os.Interrupt, syscall.SIGTERM)
-		go func() {
-			<-c
-			signal.Stop(c)
-			cancel()
-		}()
-
-		type serviceConf struct {
-			arg     string
-			service service.Service
-			cfg     interface{}
-		}
 
 		var (
 			serviceConfs []serviceConf
@@ -255,6 +246,16 @@ See $ engine config command for more details.
 			}
 		}
 
+		// gracefully shutdown all
+		c := make(chan os.Signal, 1)
+		signal.Notify(c, os.Interrupt, syscall.SIGTERM)
+		go func(ctx context.Context) {
+			<-c
+			unregisterServices(ctx, serviceConfs)
+			signal.Stop(c)
+			cancel()
+		}(ctx)
+
 		//Initialize logs
 		logConf := log.Conf{
 			Level:                      conf.Log.Level,
@@ -313,10 +314,23 @@ See $ engine config command for more details.
 
 		//Wait for the end
 		<-ctx.Done()
-		if ctx.Err() != nil {
-			fmt.Printf("Exiting (%v)\n", ctx.Err())
-		}
+
 	},
+}
+
+func unregisterServices(ctx context.Context, serviceConfs []serviceConf) {
+	// unregister all services
+	for i := range serviceConfs {
+		s := serviceConfs[i]
+		fmt.Printf("Unregister (%v)\n", s.service.Name())
+		if err := s.service.Unregister(ctx); err != nil {
+			log.Error(ctx, "%s> Unable to unregister: %v", s.service.Name(), err)
+		}
+	}
+
+	if ctx.Err() != nil {
+		fmt.Printf("Exiting (%v)\n", ctx.Err())
+	}
 }
 
 func start(c context.Context, s service.Service, cfg interface{}, serviceName string) {

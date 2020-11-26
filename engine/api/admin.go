@@ -11,7 +11,9 @@ import (
 	"github.com/gorilla/mux"
 
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
+	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/services"
+	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/engine/featureflipping"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
@@ -20,8 +22,8 @@ import (
 
 func (api *API) postMaintenanceHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		enable := FormBool(r, "enable")
-		hook := FormBool(r, "withHook")
+		enable := service.FormBool(r, "enable")
+		hook := service.FormBool(r, "withHook")
 
 		if hook {
 			srvs, err := services.LoadAllByType(ctx, api.mustDB(), sdk.TypeHooks)
@@ -345,6 +347,35 @@ func (api *API) deleteAdminFeatureFlipping() service.Handler {
 		}
 
 		if err := featureflipping.Delete(api.mustDB(), oldF.ID); err != nil {
+			return err
+		}
+
+		return nil
+	}
+}
+
+func (api *API) postWorkflowMaxRunHandler() service.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		vars := mux.Vars(r)
+		key := vars["key"]
+		name := vars["permWorkflowName"]
+
+		var request sdk.UpdateMaxRunRequest
+		if err := service.UnmarshalBody(r, &request); err != nil {
+			return err
+		}
+
+		proj, err := project.Load(ctx, api.mustDBWithCtx(ctx), key)
+		if err != nil {
+			return err
+		}
+
+		wf, err := workflow.Load(ctx, api.mustDBWithCtx(ctx), api.Cache, *proj, name, workflow.LoadOptions{})
+		if err != nil {
+			return err
+		}
+
+		if err := workflow.UpdateMaxRunsByID(api.mustDBWithCtx(ctx), wf.ID, request.MaxRuns); err != nil {
 			return err
 		}
 

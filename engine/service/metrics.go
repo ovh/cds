@@ -125,12 +125,13 @@ func (c *Common) RegisterCommonMetricsView(ctx context.Context) {
 
 		tagServiceType := telemetry.MustNewKey(telemetry.TagServiceType)
 		tagServiceName := telemetry.MustNewKey(telemetry.TagServiceName)
+		tagHostname := telemetry.MustNewKey(telemetry.TagHostname)
 
 		allocView := view.View{
 			Name:        "cds/mem/alloc",
 			Description: allocStats.Description(),
 			Measure:     allocStats,
-			TagKeys:     []tag.Key{tagServiceType, tagServiceName},
+			TagKeys:     []tag.Key{tagServiceType, tagServiceName, tagHostname},
 			Aggregation: view.LastValue(),
 		}
 
@@ -138,7 +139,7 @@ func (c *Common) RegisterCommonMetricsView(ctx context.Context) {
 			Name:        "cds/mem/total_alloc",
 			Description: totalAllocStats.Description(),
 			Measure:     totalAllocStats,
-			TagKeys:     []tag.Key{tagServiceType, tagServiceName},
+			TagKeys:     []tag.Key{tagServiceType, tagServiceName, tagHostname},
 			Aggregation: view.LastValue(),
 		}
 
@@ -146,7 +147,7 @@ func (c *Common) RegisterCommonMetricsView(ctx context.Context) {
 			Name:        "cds/mem/sys",
 			Description: sysStats.Description(),
 			Measure:     sysStats,
-			TagKeys:     []tag.Key{tagServiceType, tagServiceName},
+			TagKeys:     []tag.Key{tagServiceType, tagServiceName, tagHostname},
 			Aggregation: view.LastValue(),
 		}
 
@@ -154,7 +155,7 @@ func (c *Common) RegisterCommonMetricsView(ctx context.Context) {
 			Name:        "cds/mem/gc",
 			Description: gcStats.Description(),
 			Measure:     gcStats,
-			TagKeys:     []tag.Key{tagServiceType, tagServiceName},
+			TagKeys:     []tag.Key{tagServiceType, tagServiceName, tagHostname},
 			Aggregation: view.LastValue(),
 		}
 
@@ -170,6 +171,8 @@ func (c *Common) RegisterCommonMetricsView(ctx context.Context) {
 			if maxMemoryS != "" {
 				maxMemory, _ = strconv.ParseUint(maxMemoryS, 10, 64)
 			}
+			hostname, _ := os.Hostname()
+			ctx = telemetry.ContextWithTag(ctx, telemetry.TagHostname, hostname)
 
 			var tick = time.NewTicker(10 * time.Second)
 			defer tick.Stop()

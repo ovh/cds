@@ -1,0 +1,186 @@
+@import "../../../../../../../common";
+
+.job {
+    position: relative;
+    background-color: #222222;
+    color: #f1f1f1;
+    padding-bottom: 19px;
+
+    .header {
+        height: 40px;
+        width: 100%;
+        background-color: #4D4D4D;
+        display: flex;
+        flex-direction: row;
+
+        .menu {
+            display: flex;
+            flex-direction: row;
+            margin: 7px;
+
+            button {
+                margin: 0 2px;
+                color: #B5B7BD;
+                background: none;
+                border: 1px solid #B5B7BD;
+                border-radius: 3px;
+                cursor: pointer;
+
+                &:not(.active):hover {
+                    background-color: #B5B7BD;
+                    color: #222222;
+                }
+
+                &.active {
+                    color: #222222;
+                    border-color: #a39797;
+                    background-color: #FFFFFF;
+                }
+            }
+
+            button:focus,
+            button:active {
+                outline: none;
+            }
+
+            .item {
+                min-width: 150px;
+                margin: auto;
+                text-align: center;
+            }
+
+            &.left {
+                flex: 1;
+            }
+
+            &.right {
+                .item {
+                    min-width: unset !important;
+                    flex: 1;
+                }
+            }
+        }
+    }
+
+    .step {
+        display: flex;
+        flex-direction: column;
+        font-size: 12px;
+        line-height: 19px;
+        font-family: monospace;
+        font-weight: 400;
+
+        .line {
+            min-height: 19px;
+            display: flex;
+            flex-direction: row;
+
+            &:hover {
+                background-color: #444444 !important;
+            }
+
+            .number {
+                position: relative;
+                width: 65px;
+                user-select: none;
+                text-align: right;
+                padding-right: 12px;
+                color: #B4B4B4;
+                cursor: pointer;
+
+                i {
+                    position: absolute;
+                    left: 5px;
+                }
+
+                .loader {
+                    position: absolute;
+                    left: 15px;
+                    display: block;
+                }
+            }
+
+            .value {
+                flex: 1;
+                overflow-wrap: anywhere;
+            }
+
+            &.info {
+                background-color: #2B2B2B;
+                cursor: pointer;
+
+                .value {
+                    color: #FFFF91;
+                }
+
+                .extra {
+                    div {
+                        background-color: #666666;
+                        color: #dddddd;
+                    }
+
+                    .orange {
+                        background-color: #F2711C;
+                    }
+
+                    .red {
+                        background-color: #e42805;
+                    }
+                }
+            }
+
+            &.expand {
+                cursor: pointer;
+            }
+
+            .extra {
+                display: flex;
+                flex-direction: row;
+
+                div {
+                    height: 15px;
+                    background-color: #505050;
+                    color: #cccccc;
+                    line-height: 11px;
+                    font-size: 11px;
+                    border-radius: 6px;
+                    padding: 2px 4px;
+                    margin-top: 2px;
+                    margin-right: 4px;
+                }
+            }
+
+            .action {
+                display: flex;
+                flex-direction: row;
+
+                a {
+                    cursor: pointer;
+                    color: #999999;
+
+                    &:hover {
+                        color: #dddddd !important;
+                    }
+                }
+            }
+        }
+    }
+
+    .footer {
+        position: sticky;
+        bottom: 0;
+        display: block;
+        float: right;
+
+        .goto {
+            display: inline-block;
+            padding-left: 7px;
+            cursor: pointer;
+            color: #999999;
+
+            &:hover {
+                background-color: #444444 !important;
+            }
+        }
+    }
+}

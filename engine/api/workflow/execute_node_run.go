@@ -10,14 +10,13 @@ import (
 
 	"github.com/fsamin/go-dump"
 	"github.com/go-gorp/gorp"
-	"github.com/sirupsen/logrus"
 
 	"github.com/ovh/cds/engine/api/action"
-	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/plugin"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/engine/api/services"
+	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
@@ -335,7 +334,7 @@ func releaseMutex(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store ca
 	waitingRunID, err := db.SelectInt(mutexQuery, workflowID, nodeName, string(sdk.StatusWaiting))
 	if err != nil && err != sql.ErrNoRows {
 		err = sdk.WrapError(err, "unable to load mutex-locked workflow node run id")
-		log.ErrorWithFields(ctx, logrus.Fields{
+		log.ErrorWithFields(ctx, log.Fields{
 			"stack_trace": fmt.Sprintf("%+v", err),
 		}, "%s", err)
 		return nil, nil
@@ -348,7 +347,7 @@ func releaseMutex(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store ca
 	waitingRun, errRun := LoadNodeRunByID(db, waitingRunID, LoadRunOptions{})
 	if errRun != nil && sdk.Cause(errRun) != sql.ErrNoRows {
 		err = sdk.WrapError(err, "unable to load mutex-locked workflow node run")
-		log.ErrorWithFields(ctx, logrus.Fields{
+		log.ErrorWithFields(ctx, log.Fields{
 			"stack_trace": fmt.Sprintf("%+v", err),
 		}, "%s", err)
 		return nil, nil
@@ -361,18 +360,14 @@ func releaseMutex(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store ca
 	workflowRun, err := LoadRunByID(db, waitingRun.WorkflowRunID, LoadRunOptions{})
 	if err != nil {
 		err = sdk.WrapError(err, "unable to load mutex-locked workflow run")
-		log.ErrorWithFields(ctx, logrus.Fields{
+		log.ErrorWithFields(ctx, log.Fields{
 			"stack_trace": fmt.Sprintf("%+v", err),
 		}, "%s", err)
 		return nil, nil
 	}
 
 	// Add a spawn info on the workflow run
-	AddWorkflowRunInfo(workflowRun, sdk.SpawnMsg{
-		ID:   sdk.MsgWorkflowNodeMutexRelease.ID,
-		Args: []interface{}{waitingRun.WorkflowNodeName},
-		Type: sdk.MsgWorkflowNodeMutexRelease.Type,
-	})
+	AddWorkflowRunInfo(workflowRun, sdk.SpawnMsgNew(*sdk.MsgWorkflowNodeMutexRelease, waitingRun.WorkflowNodeName))
 	if err := UpdateWorkflowRun(ctx, db, workflowRun); err != nil {
 		return nil, sdk.WrapError(err, "unable to update workflow run %d after mutex release", workflowRun.ID)
 	}
@@ -744,7 +739,7 @@ func NodeBuildParametersFromWorkflow(proj sdk.Project, wf *sdk.Workflow, refNode
 		runContext.NodeGroups = refNode.Groups
 
 		var err error
-		res, err = getBuildParameterFromNodeContext(proj, wf, runContext, refNode.Context.DefaultPipelineParameters, refNode.Context.DefaultPayload, nil)
+		res, err = getBuildParameterFromNodeContext(proj, *wf, runContext, refNode.Context.DefaultPipelineParameters, refNode.Context.DefaultPayload, nil)
 		if err != nil {
 			return nil, sdk.WrapError(sdk.ErrWorkflowNodeNotFound, "getWorkflowTriggerConditionHandler> Unable to get workflow node parameters: %v", err)
 		}

@@ -10,10 +10,10 @@ import (
 	"net/http/pprof"
 	"os"
 	"path/filepath"
+	"sync"
 	"time"
 
 	"github.com/gorilla/mux"
-	"github.com/sirupsen/logrus"
 	"gopkg.in/square/go-jose.v2"
 
 	"github.com/ovh/cds/engine/api"
@@ -28,7 +28,9 @@ import (
 
 type Common struct {
 	service.Common
-	Router *api.Router
+	Router                        *api.Router
+	mapServiceNextLineNumberMutex sync.Mutex
+	mapServiceNextLineNumber      map[string]int64
 }
 
 const panicDumpDir = "panic_dumps"
@@ -160,16 +162,16 @@ func (c *Common) initRouter(ctx context.Context, h hatchery.Interface) {
 	r := c.Router
 	r.Background = ctx
 	r.URL = h.Configuration().URL
-	r.SetHeaderFunc = api.DefaultHeaders
-	r.Middlewares = append(r.Middlewares, service.CheckRequestSignatureMiddleware(c.ParsedAPIPublicKey))
+	r.SetHeaderFunc = service.DefaultHeaders
+	r.DefaultAuthMiddleware = service.CheckRequestSignatureMiddleware(c.ParsedAPIPublicKey)
 
-	r.Handle("/mon/version", nil, r.GET(api.VersionHandler, api.Auth(false)))
-	r.Handle("/mon/status", nil, r.GET(getStatusHandler(h), api.Auth(false)))
-	r.Handle("/mon/workers", nil, r.GET(getWorkersPoolHandler(h), api.Auth(false)))
-	r.Handle("/mon/metrics", nil, r.GET(service.GetPrometheustMetricsHandler(c), api.Auth(false)))
-	r.Handle("/mon/metrics/all", nil, r.GET(service.GetMetricsHandler, api.Auth(false)))
-	r.Handle("/mon/errors", nil, r.GET(c.getPanicDumpListHandler, api.Auth(false)))
-	r.Handle("/mon/errors/{id}", nil, r.GET(c.getPanicDumpHandler, api.Auth(false)))
+	r.Handle("/mon/version", nil, r.GET(service.VersionHandler, service.OverrideAuth(service.NoAuthMiddleware)))
+	r.Handle("/mon/status", nil, r.GET(getStatusHandler(h), service.OverrideAuth(service.NoAuthMiddleware)))
+	r.Handle("/mon/workers", nil, r.GET(getWorkersPoolHandler(h), service.OverrideAuth(service.NoAuthMiddleware)))
+	r.Handle("/mon/metrics", nil, r.GET(service.GetPrometheustMetricsHandler(c), service.OverrideAuth(service.NoAuthMiddleware)))
+	r.Handle("/mon/metrics/all", nil, r.GET(service.GetMetricsHandler, service.OverrideAuth(service.NoAuthMiddleware)))
+	r.Handle("/mon/errors", nil, r.GET(c.getPanicDumpListHandler, service.OverrideAuth(service.NoAuthMiddleware)))
+	r.Handle("/mon/errors/{id}", nil, r.GET(c.getPanicDumpHandler, service.OverrideAuth(service.NoAuthMiddleware)))
 
 	r.Mux.HandleFunc("/debug/pprof/cmdline", pprof.Cmdline)
 	r.Mux.HandleFunc("/debug/pprof/profile", pprof.Profile)
@@ -239,33 +241,48 @@ func (c *Common) RefreshServiceLogger(ctx context.Context) error {
 	return nil
 }
 
-func (c *Common) SendServiceLog(ctx context.Context, servicesLogs []sdk.ServiceLog, status string) {
+func (c *Common) SendServiceLog(ctx context.Context, servicesLogs []log.Message, terminated bool) {
+	if c.ServiceLogger == nil {
+		return
+	}
+
+	c.mapServiceNextLineNumberMutex.Lock()
+	defer c.mapServiceNextLineNumberMutex.Unlock()
+	if c.mapServiceNextLineNumber == nil {
+		c.mapServiceNextLineNumber = make(map[string]int64)
+	}
+
+	// Init missing service line counters
 	for _, s := range servicesLogs {
-		dataToSign := log.Signature{
-			Service: &log.SignatureService{
-				HatcheryID:      c.Service().ID,
-				HatcheryName:    c.ServiceName(),
-				RequirementID:   s.ServiceRequirementID,
-				RequirementName: s.ServiceRequirementName,
-				WorkerName:      s.WorkerName,
-			},
-			ProjectKey:   s.ProjectKey,
-			WorkflowName: s.WorkflowName,
-			WorkflowID:   s.WorkflowID,
-			RunID:        s.RunID,
-			NodeRunName:  s.NodeRunName,
-			JobName:      s.JobName,
-			JobID:        s.WorkflowNodeJobRunID,
-			NodeRunID:    s.WorkflowNodeRunID,
-			Timestamp:    time.Now().UnixNano(),
+		key := s.ServiceKey()
+		if _, ok := c.mapServiceNextLineNumber[key]; !ok {
+			c.mapServiceNextLineNumber[key] = 0
 		}
-		signature, err := jws.Sign(c.Signer, dataToSign)
+	}
+
+	// Iterate over service log and send value
+	for _, s := range servicesLogs {
+		sign, err := jws.Sign(c.Signer, s.Signature)
 		if err != nil {
-			log.Error(ctx, "SendServiceLog> unable to sign service log message: %v", err)
+			err = sdk.WrapError(err, "unable to sign service log message")
+			log.ErrorWithFields(ctx, log.Fields{"stack_trace": fmt.Sprintf("%+v", err)}, "%s", err)
 			continue
 		}
+		lineNumber := c.mapServiceNextLineNumber[s.ServiceKey()]
+		c.mapServiceNextLineNumber[s.ServiceKey()]++
 		if c.ServiceLogger != nil {
-			c.ServiceLogger.WithField("Signature", signature).WithField(log.ExtraFieldJobStatus, status).Log(logrus.InfoLevel, s.Val)
+			c.ServiceLogger.
+				WithField(log.ExtraFieldSignature, sign).
+				WithField(log.ExtraFieldLine, lineNumber).
+				WithField(log.ExtraFieldTerminated, terminated).
+				Log(s.Level, s.Value)
+		}
+	}
+
+	// If log status is terminated for given service, we can remove line counters
+	if terminated {
+		for _, s := range servicesLogs {
+			delete(c.mapServiceNextLineNumber, s.ServiceKey())
 		}
 	}
 }

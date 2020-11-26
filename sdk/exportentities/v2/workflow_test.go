@@ -8,6 +8,7 @@ import (
 
 	"github.com/fsamin/go-dump"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"gopkg.in/yaml.v2"
 
 	"github.com/ovh/cds/sdk"
@@ -140,13 +141,14 @@ func TestWorkflow_checkValidity(t *testing.T) {
 func TestWorkflow_GetWorkflow(t *testing.T) {
 	true := true
 	type fields struct {
-		Name          string
-		Description   string
-		Version       string
-		Workflow      map[string]v2.NodeEntry
-		Hooks         map[string][]v2.HookEntry
-		Permissions   map[string]int
-		HistoryLength int64
+		Name            string
+		Description     string
+		Version         string
+		Workflow        map[string]v2.NodeEntry
+		Hooks           map[string][]v2.HookEntry
+		Permissions     map[string]int
+		HistoryLength   int64
+		RetentionPolicy string
 	}
 	tsts := []struct {
 		name    string
@@ -182,6 +184,7 @@ func TestWorkflow_GetWorkflow(t *testing.T) {
 						},
 					}},
 				},
+				RetentionPolicy: "return false",
 			},
 			wantErr: false,
 			want: sdk.Workflow{
@@ -229,6 +232,7 @@ func TestWorkflow_GetWorkflow(t *testing.T) {
 						},
 					},
 				},
+				RetentionPolicy: "return false",
 			},
 		},
 		// root(pipeline-root) -> child(pipeline-child)
@@ -632,13 +636,14 @@ func TestWorkflow_GetWorkflow(t *testing.T) {
 	for _, tt := range tsts {
 		t.Run(tt.name, func(t *testing.T) {
 			w := v2.Workflow{
-				Name:          tt.fields.Name,
-				Description:   tt.fields.Description,
-				Version:       tt.fields.Version,
-				Workflow:      tt.fields.Workflow,
-				Hooks:         tt.fields.Hooks,
-				Permissions:   tt.fields.Permissions,
-				HistoryLength: &tt.fields.HistoryLength,
+				Name:            tt.fields.Name,
+				Description:     tt.fields.Description,
+				Version:         tt.fields.Version,
+				Workflow:        tt.fields.Workflow,
+				Hooks:           tt.fields.Hooks,
+				Permissions:     tt.fields.Permissions,
+				HistoryLength:   &tt.fields.HistoryLength,
+				RetentionPolicy: tt.fields.RetentionPolicy,
 			}
 			got, err := exportentities.ParseWorkflow(w)
 			if (err != nil) != tt.wantErr {
@@ -692,6 +697,21 @@ func TestFromYAMLToYAML(t *testing.T) {
 		yaml    string
 		wantErr bool
 	}{
+		{
+			name: "Retention policy",
+			yaml: `name: retention
+version: v2.0
+workflow:
+  1_start:
+    conditions:
+      check:
+      - variable: git.branch
+        operator: eq
+        value: master
+    pipeline: test
+retention_policy: return false
+`,
+		},
 		{
 			name: "1_start -> 2_webhook -> 3_after_webhook -> 4_fork_before_end -> 5_end",
 			yaml: `name: test1
@@ -1096,4 +1116,35 @@ workflow:
 			assert.Equal(t, tst.yaml, string(b))
 		})
 	}
+}
+
+func TestWOrkflowWith2RootsShouldFail(t *testing.T) {
+	input := `name: qa-infra
+version: v2.0
+workflow:
+    qa-infra-lint:
+      pipeline: qa-infra-lint
+      application: qa-infra
+    qa-infra-build:
+      pipeline: qa-infra
+      application: qa-infra
+      # Execute only when a user triggered the workflow through the UI
+      conditions:
+        script: return cds_manual == "true"
+      one_at_a_time: true
+metadata:
+    default_tags: git.branch,git.author 
+notifications:
+- type: vcs
+  settings:
+  on_success: always`
+
+	yamlWorkflow, err := exportentities.UnmarshalWorkflow([]byte(input), exportentities.FormatYAML)
+	require.NoError(t, err)
+
+	t.Logf("yamlWorkflow> %+v", yamlWorkflow)
+	_, err = exportentities.ParseWorkflow(yamlWorkflow)
+	require.Error(t, err)
+	t.Log(err)
+
 }

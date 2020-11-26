@@ -4,24 +4,12 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	"sync"
 
-	"go.opencensus.io/stats"
-
+	"github.com/go-gorp/gorp"
 	"github.com/ovh/cds/engine/cdn/storage"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
-	"github.com/ovh/cds/sdk/telemetry"
-)
-
-var (
-	onceMetrics               sync.Once
-	metricsErrors             *stats.Int64Measure
-	metricsHits               *stats.Int64Measure
-	metricsStepLogReceived    *stats.Int64Measure
-	metricsServiceLogReceived *stats.Int64Measure
-	metricsItemCompletedByGC  *stats.Int64Measure
 )
 
 func (s *Service) statusHandler() service.Handler {
@@ -65,13 +53,7 @@ func (s *Service) Status(ctx context.Context) *sdk.MonitoringStatus {
 	m.AddLine(s.getStatusSyncLogs()...)
 
 	for _, st := range s.Units.Storages {
-		m.AddLine(st.Status(ctx)...)
-		size, err := storage.CountItemUnitByUnit(db, st.ID())
-		if nbCompleted-size >= 100 {
-			m.AddLine(addMonitoringLine(size, "backend/"+st.Name()+"/items", err, sdk.MonitoringStatusWarn))
-		} else {
-			m.AddLine(addMonitoringLine(size, "backend/"+st.Name()+"/items", err, sdk.MonitoringStatusOK))
-		}
+		m.AddLine(s.computeStatusBackend(ctx, db, nbCompleted, st)...)
 	}
 
 	m.AddLine(s.DBConnectionFactory.Status(ctx))
@@ -79,19 +61,45 @@ func (s *Service) Status(ctx context.Context) *sdk.MonitoringStatus {
 	return m
 }
 
-func (s *Service) initMetrics(ctx context.Context) error {
-	var err error
-	onceMetrics.Do(func() {
-		metricsErrors = stats.Int64("cdn/tcp/router_errors", "number of errors", stats.UnitDimensionless)
-		metricsHits = stats.Int64("cdn/tcp/router_hits", "number of hits", stats.UnitDimensionless)
-		metricsStepLogReceived = stats.Int64("cdn/tcp/step/log/count", "number of worker log received", stats.UnitDimensionless)
-		metricsServiceLogReceived = stats.Int64("cdn/tcp/service/log/count", "number of service log received", stats.UnitDimensionless)
-		metricsItemCompletedByGC = stats.Int64("cdn/items/completed_by_gc", "number of items completed by GC", stats.UnitDimensionless)
+func (s *Service) computeStatusBackend(ctx context.Context, db *gorp.DbMap, nbCompleted int64, storageUnit storage.StorageUnit) []sdk.MonitoringStatusLine {
+	lines := storageUnit.Status(ctx)
 
-		err = telemetry.InitMetricsInt64(ctx, metricsErrors, metricsHits, metricsServiceLogReceived, metricsServiceLogReceived, metricsItemCompletedByGC)
-	})
+	currentSize, err := storage.CountItemUnitByUnit(db, storageUnit.ID())
+	if err != nil {
+		log.Info(ctx, "cdn:status: err:%v", err)
+		lines = append(lines, addMonitoringLine(currentSize, "backend/"+storageUnit.Name()+"/items", err, sdk.MonitoringStatusAlert))
+	} else {
+		lines = append(lines, addMonitoringLine(currentSize, "backend/"+storageUnit.Name()+"/items", err, sdk.MonitoringStatusOK))
+	}
 
-	log.Debug("cdn> Stats initialized")
+	var previousLag, previousSize int64
 
-	return err
+	lagKey := storageUnit.ID() + "lag"
+	sizeKey := storageUnit.ID() + "size"
+
+	// load previous values computed
+	r, ok := s.storageUnitLags.Load(lagKey)
+	if !ok {
+		previousLag = 0
+	} else {
+		previousLag = r.(int64)
+	}
+	siz, ok := s.storageUnitLags.Load(sizeKey)
+	if !ok {
+		previousSize = 0
+	} else {
+		previousSize = siz.(int64)
+	}
+
+	currentLag := nbCompleted - currentSize
+	// if we have less lag than previous compute or if the currentSize is greater than previous compute, it's OK
+	if currentLag == 0 || (currentLag > 0 && currentLag < previousLag || currentSize > previousSize) {
+		lines = append(lines, addMonitoringLine(currentLag, "backend/"+storageUnit.Name()+"/lag", err, sdk.MonitoringStatusOK))
+	} else {
+		lines = append(lines, addMonitoringLine(currentLag, "backend/"+storageUnit.Name()+"/lag", err, sdk.MonitoringStatusWarn))
+	}
+
+	s.storageUnitLags.Store(lagKey, currentLag)
+	s.storageUnitLags.Store(sizeKey, currentSize)
+	return lines
 }

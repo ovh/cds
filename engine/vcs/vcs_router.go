@@ -18,14 +18,15 @@ func (s *Service) initRouter(ctx context.Context) {
 	r := s.Router
 	r.Background = ctx
 	r.URL = s.Cfg.URL
-	r.SetHeaderFunc = api.DefaultHeaders
-	r.Middlewares = append(r.Middlewares, service.CheckRequestSignatureMiddleware(s.ParsedAPIPublicKey), s.authMiddleware, TracingMiddlewareFunc(s))
+	r.SetHeaderFunc = service.DefaultHeaders
+	r.DefaultAuthMiddleware = service.CheckRequestSignatureMiddleware(s.ParsedAPIPublicKey)
+	r.PostAuthMiddlewares = append(r.PostAuthMiddlewares, s.authMiddleware, TracingMiddlewareFunc(s))
 	r.PostMiddlewares = append(r.PostMiddlewares, api.TracingPostMiddleware)
 
-	r.Handle("/mon/version", nil, r.GET(api.VersionHandler, api.Auth(false)))
-	r.Handle("/mon/status", nil, r.GET(s.statusHandler, api.Auth(false)))
-	r.Handle("/mon/metrics", nil, r.GET(service.GetPrometheustMetricsHandler(s), api.Auth(false)))
-	r.Handle("/mon/metrics/all", nil, r.GET(service.GetMetricsHandler, api.Auth(false)))
+	r.Handle("/mon/version", nil, r.GET(service.VersionHandler, service.OverrideAuth(service.NoAuthMiddleware)))
+	r.Handle("/mon/status", nil, r.GET(s.statusHandler, service.OverrideAuth(service.NoAuthMiddleware)))
+	r.Handle("/mon/metrics", nil, r.GET(service.GetPrometheustMetricsHandler(s), service.OverrideAuth(service.NoAuthMiddleware)))
+	r.Handle("/mon/metrics/all", nil, r.GET(service.GetMetricsHandler, service.OverrideAuth(service.NoAuthMiddleware)))
 
 	r.Handle("/vcs", nil, r.GET(s.getAllVCSServersHandler))
 	r.Handle("/vcs/{name}", nil, r.GET(s.getVCSServersHandler))

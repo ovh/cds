@@ -24,9 +24,8 @@ import (
 
 // GoRoutines contains list of routines that have to stay up
 type GoRoutines struct {
-	mutex    sync.Mutex
-	status   map[string]bool
-	routines []string
+	mutex  sync.Mutex
+	status map[string]bool
 }
 
 // NewGoRoutines instanciates a new GoRoutineManager
@@ -81,8 +80,7 @@ func (m *GoRoutines) Exec(c context.Context, name string, fn func(ctx context.Co
 				buf := make([]byte, 1<<16)
 				runtime.Stack(buf, false)
 				uuid := UUID()
-				log.Error(ctx, "[PANIC][%s] %s Failed (%s)", hostname, name, uuid)
-				log.Error(ctx, "%s", string(buf))
+				log.ErrorWithFields(ctx, log.Fields{"stack_trace": string(buf)}, "[PANIC][%s] %s failed (%s)", hostname, name, uuid)
 
 				for _, f := range writerFactories {
 					w, err := f(uuid)

@@ -3,6 +3,7 @@ package cdn
 import (
 	"context"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/require"
 	"gopkg.in/h2non/gock.v1"
@@ -46,7 +47,11 @@ func TestSyncLog(t *testing.T) {
 		Token: "mytoken",
 	}
 
-	cdnUnits, err := storage.Init(context.TODO(), m, db.DbMap, sdk.NewGoRoutines(), storage.Configuration{
+	ctx, cancel := context.WithTimeout(context.TODO(), 5*time.Second)
+	t.Cleanup(cancel)
+
+	cdnUnits, err := storage.Init(ctx, m, db.DbMap, sdk.NewGoRoutines(), storage.Configuration{
+		HashLocatorSalt: "thisismysalt",
 		Buffer: storage.BufferConfiguration{
 			Name: "redis_buffer",
 			Redis: storage.RedisBufferConfiguration{
@@ -57,13 +62,12 @@ func TestSyncLog(t *testing.T) {
 		Storages: []storage.StorageConfiguration{
 			{
 				Name: "test-cds-backend",
-				Cron: "* * * * * ?",
 				CDS:  cdsConfig,
 			},
 		},
 	})
 	require.NoError(t, err)
-	require.NoError(t, cdnUnits.Start(context.TODO()))
+	cdnUnits.Start(context.TODO(), sdk.NewGoRoutines())
 	s.Units = cdnUnits
 
 	cdsStorage, ok := s.Units.Storages[0].(*cds.CDS)
@@ -71,6 +75,7 @@ func TestSyncLog(t *testing.T) {
 
 	// Mock Http route
 	gock.InterceptClient(cdsStorage.GetClient().HTTPClient())
+	t.Cleanup(gock.Off)
 
 	// 1 List project
 	// 3 features enabled
@@ -276,29 +281,31 @@ func TestSyncLog(t *testing.T) {
 		require.NoError(t, err)
 	}
 	defer func() {
-		_ = item.DeleteByIDs(db, []string{itm.ID})
+		_ = item.DeleteByID(db, itm.ID)
 	}()
 
 	unit, err := storage.LoadUnitByName(context.TODO(), s.Mapper, db, "test-cds-backend")
 	require.NoError(t, err)
 
 	// Clean before testing
-	ius, err := storage.LoadItemUnitsByUnit(context.TODO(), s.Mapper, db, unit.ID, 100)
+	oneHundred := 100
+
+	ius, err := storage.LoadItemUnitsByUnit(context.TODO(), s.Mapper, db, unit.ID, &oneHundred)
 	require.NoError(t, err)
 	for _, iu := range ius {
-		require.NoError(t, item.DeleteByIDs(db, []string{iu.ItemID}))
+		require.NoError(t, item.DeleteByID(db, iu.ItemID))
 	}
 
 	// Run Test
 	require.NoError(t, s.SyncLogs(context.TODO(), cdsStorage))
 
-	itemUnits, err := storage.LoadItemUnitsByUnit(context.TODO(), s.Mapper, db, unit.ID, 100)
+	itemUnits, err := storage.LoadItemUnitsByUnit(context.TODO(), s.Mapper, db, unit.ID, &oneHundred)
 	require.NoError(t, err)
 	require.Len(t, itemUnits, 3)
 
 	for _, i := range itemUnits {
 		t.Cleanup(func() {
-			_ = item.DeleteByIDs(db, []string{i.ItemID})
+			_ = item.DeleteByID(db, i.ItemID)
 		})
 	}
 

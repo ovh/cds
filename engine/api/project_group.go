@@ -66,7 +66,7 @@ func (api *API) putGroupRoleOnProjectHandler() service.Handler {
 		vars := mux.Vars(r)
 		key := vars[permProjectKey]
 		groupName := vars["groupName"]
-		onlyProject := FormBool(r, "onlyProject")
+		onlyProject := service.FormBool(r, "onlyProject")
 
 		var data sdk.GroupPermission
 		if err := service.UnmarshalBody(r, &data); err != nil {
@@ -152,7 +152,7 @@ func (api *API) postGroupInProjectHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		key := vars[permProjectKey]
-		onlyProject := FormBool(r, "onlyProject")
+		onlyProject := service.FormBool(r, "onlyProject")
 
 		var data sdk.GroupPermission
 		if err := service.UnmarshalBody(r, &data); err != nil {
@@ -229,7 +229,7 @@ func (api *API) postImportGroupsInProjectHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		key := vars[permProjectKey]
-		force := FormBool(r, "force")
+		force := service.FormBool(r, "force")
 
 		proj, err := project.Load(ctx, api.mustDB(), key)
 		if err != nil {

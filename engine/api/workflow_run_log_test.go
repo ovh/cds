@@ -1,14 +1,10 @@
 package api
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
-	"net/http"
 	"net/http/httptest"
-	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -67,7 +63,7 @@ func Test_getWorkflowNodeRunJobServiceLogHandler(t *testing.T) {
 	require.Equal(t, "098765432109876... truncated\n", log.Val)
 }
 
-func Test_getWorkflowNodeRunJobAccessHandler(t *testing.T) {
+func Test_getWorkflowNodeRunJobLinkHandler(t *testing.T) {
 	featureflipping.Init(gorpmapping.Mapper)
 
 	api, db, router := newTestAPI(t)
@@ -88,30 +84,7 @@ func Test_getWorkflowNodeRunJobAccessHandler(t *testing.T) {
 	mockCDNService, _ := assets.InitCDNService(t, db)
 	t.Cleanup(func() { _ = services.Delete(db, mockCDNService) })
 
-	//This is a mock for the cdn service
-	services.HTTPClient = mock(
-		func(r *http.Request) (*http.Response, error) {
-			t.Logf("[MOCK] %s %v", r.Method, r.URL)
-			body := new(bytes.Buffer)
-			w := new(http.Response)
-			enc := json.NewEncoder(body)
-			w.Body = ioutil.NopCloser(body)
-
-			if strings.HasPrefix(r.URL.String(), "/item/step-log/") {
-				var res interface{}
-				if err := enc.Encode(res); err != nil {
-					return writeError(w, err)
-				}
-				return w, nil
-			}
-
-			return writeError(w, sdk.NewError(sdk.ErrServiceUnavailable,
-				fmt.Errorf("route %s must not be called", r.URL.String()),
-			))
-		},
-	)
-
-	uri := router.GetRoute("GET", api.getWorkflowNodeRunJobStepAccessHandler, map[string]string{
+	uri := router.GetRoute("GET", api.getWorkflowNodeRunJobStepLinkHandler, map[string]string{
 		"key":              proj.Key,
 		"permWorkflowName": w1.Name,
 		"nodeRunID":        fmt.Sprintf("%d", lastRun.WorkflowNodeRuns[w1.WorkflowData.Node.ID][0].ID),
@@ -124,10 +97,9 @@ func Test_getWorkflowNodeRunJobAccessHandler(t *testing.T) {
 	router.Mux.ServeHTTP(rec, req)
 	require.Equal(t, 200, rec.Code)
 
-	var access sdk.CDNLogAccess
-	require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &access))
-	require.True(t, access.Exists)
-	require.Equal(t, "http://cdn.net:8080", access.CDNURL)
-	require.NotEmpty(t, access.DownloadPath)
-	require.NotEmpty(t, access.Token)
+	var link sdk.CDNLogLink
+	require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &link))
+	require.Equal(t, "http://cdn.net:8080", link.CDNURL)
+	require.Equal(t, sdk.CDNTypeItemStepLog, link.ItemType)
+	require.NotEmpty(t, link.APIRef)
 }

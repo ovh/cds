@@ -27,6 +27,10 @@ import (
 	"github.com/ovh/cds/sdk/telemetry"
 )
 
+const (
+	RetentionRule = "return (git_branch_exist == \"false\" and run_days_before < 2) or run_days_before < 365"
+)
+
 type PushSecrets struct {
 	ApplicationsSecrets map[int64][]sdk.Variable
 	EnvironmentdSecrets map[int64][]sdk.Variable
@@ -268,6 +272,11 @@ func LoadByID(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj 
 	return &ws, nil
 }
 
+func UpdateMaxRunsByID(db gorp.SqlExecutor, workflowID int64, maxRuns int64) error {
+	_, err := db.Exec("UPDATE workflow set max_runs = $1 WHERE id = $2", maxRuns, workflowID)
+	return sdk.WithStack(err)
+}
+
 // Insert inserts a new workflow
 func Insert(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store cache.Store, proj sdk.Project, w *sdk.Workflow) error {
 	if err := CompleteWorkflow(ctx, db, w, proj, LoadOptions{}); err != nil {
@@ -288,14 +297,16 @@ func Insert(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store cache.St
 	if w.HistoryLength == 0 {
 		w.HistoryLength = sdk.DefaultHistoryLength
 	}
+	w.MaxRuns = maxRuns
+	w.RetentionPolicy = RetentionRule
 
 	w.LastModified = time.Now()
 	if err := db.QueryRow(`INSERT INTO workflow (
-		name, description, icon, project_id, history_length, from_repository, purge_tags, workflow_data, metadata
+		name, description, icon, project_id, history_length, from_repository, purge_tags, workflow_data, metadata, retention_policy, max_runs
 	)
-	VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+	VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
 	RETURNING id`,
-		w.Name, w.Description, w.Icon, w.ProjectID, w.HistoryLength, w.FromRepository, w.PurgeTags, w.WorkflowData, w.Metadata).Scan(&w.ID); err != nil {
+		w.Name, w.Description, w.Icon, w.ProjectID, w.HistoryLength, w.FromRepository, w.PurgeTags, w.WorkflowData, w.Metadata, w.RetentionPolicy, w.MaxRuns).Scan(&w.ID); err != nil {
 		return sdk.WrapError(err, "Unable to insert workflow %s/%s", w.ProjectKey, w.Name)
 	}
 
@@ -585,6 +596,10 @@ func Update(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store cache.St
 		return err
 	}
 
+	if wf.RetentionPolicy == "" {
+		wf.RetentionPolicy = RetentionRule
+	}
+
 	if err := CheckValidity(ctx, db, wf); err != nil {
 		return err
 	}
@@ -602,6 +617,10 @@ func Update(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store cache.St
 	if err != nil {
 		return sdk.WrapError(err, "Unable to load existing workflow with proj:%s ID:%d", proj.Key, wf.ID)
 	}
+
+	// Keep MaxRun
+	wf.MaxRuns = oldWf.MaxRuns
+
 	if err := DeleteWorkflowData(db, *oldWf); err != nil {
 		return sdk.WrapError(err, "unable to delete from old workflow data(%d - %s)", wf.ID, wf.Name)
 	}
@@ -633,6 +652,13 @@ func Update(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store cache.St
 				return err
 			}
 		}
+	} else {
+		for i := range wf.WorkflowData.Node.Hooks {
+			h := &wf.WorkflowData.Node.Hooks[i]
+			if h.UUID == "" {
+				h.UUID = sdk.UUID()
+			}
+		}
 	}
 
 	if err := InsertWorkflowData(db, wf); err != nil {
@@ -658,18 +684,17 @@ func Update(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store cache.St
 }
 
 // MarkAsDelete marks a workflow to be deleted
-func MarkAsDelete(db gorp.SqlExecutor, key, name string) error {
-	query := `UPDATE workflow
-			SET to_delete = true
-			FROM project
-			WHERE
-				workflow.name = $1 AND
-				project.id = workflow.project_id AND
-				project.projectkey = $2`
-	if _, err := db.Exec(query, name, key); err != nil {
-		return sdk.WrapError(err, "Unable to mark as delete workflow %s/%s", key, name)
+func MarkAsDelete(ctx context.Context, db gorpmapper.SqlExecutorWithTx, cache cache.Store, proj sdk.Project, wkf *sdk.Workflow) error {
+	// Remove references of dependencies to be able to delete them before workflow deletion
+	nodes := wkf.WorkflowData.Array()
+	for _, n := range nodes {
+		n.Context.ApplicationID = 0
+		n.Context.PipelineID = 0
+		n.Context.EnvironmentID = 0
+		n.Context.ProjectIntegrationID = 0
 	}
-	return nil
+	wkf.ToDelete = true
+	return Update(ctx, db, cache, proj, wkf, UpdateOptions{DisableHookManagement: true})
 }
 
 // Delete workflow

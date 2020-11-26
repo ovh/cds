@@ -89,6 +89,7 @@ var (
 	MsgWorkflowErrorBadVCSStrategy          = &Message{"MsgWorkflowErrorBadVCSStrategy", trad{FR: "Vos informations vcs_* sont incorrectes", EN: "Your vcs_* fields are incorrects"}, nil, RunInfoTypeError}
 	MsgWorkflowDeprecatedVersion            = &Message{"MsgWorkflowDeprecatedVersion", trad{FR: "La configuration yaml de votre workflow est dans un format déprécié. Exportez le avec la CLI `cdsctl workflow export %s %s`", EN: "The yaml workflow configuration format is deprecated. Export your workflow with CLI `cdsctl workflow export %s %s`"}, nil, RunInfoTypeWarning}
 	MsgWorkflowGeneratedFromTemplateVersion = &Message{"MsgWorkflowGeneratedFromTemplateVersion", trad{FR: "Le workflow a été généré à partir du modèle de workflow: %s.", EN: "The workflow was generated from the template: %s"}, nil, RunInfoTypInfo}
+	MsgTooMuchWorkflowRun                   = &Message{"MsgTooMuchWorkflowRun", trad{FR: "L'exécution de ce workflow est suspendu. Vous dépassez le nombre maximum d'éxécution autorisé (%.f). Merci de revoir la politique de retention de ce workflow", EN: "Workflow run is delayed. The maximum number of runs for this workflow has been reached ( %.f ). Please update your workflow retention policy"}, nil, RunInfoTypeWarning}
 )
 
 // Messages contains all sdk Messages
@@ -162,6 +163,7 @@ var Messages = map[string]*Message{
 	MsgWorkflowErrorBadVCSStrategy.ID:          MsgWorkflowErrorBadVCSStrategy,
 	MsgWorkflowDeprecatedVersion.ID:            MsgWorkflowDeprecatedVersion,
 	MsgWorkflowGeneratedFromTemplateVersion.ID: MsgWorkflowGeneratedFromTemplateVersion,
+	MsgTooMuchWorkflowRun.ID:                   MsgTooMuchWorkflowRun,
 }
 
 //Message represent a struc format translated messages
@@ -170,6 +172,10 @@ type Message struct {
 	Format trad
 	Args   []interface{}
 	Type   string
+}
+
+func (m Message) ToSpawnMsg() SpawnMsg {
+	return SpawnMsg{ID: m.ID, Args: m.Args, Type: m.Type}
 }
 
 //NewMessage instanciantes a new message

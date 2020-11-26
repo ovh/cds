@@ -6,7 +6,6 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
-	"github.com/sirupsen/logrus"
 
 	"github.com/ovh/cds/engine/api/ascode"
 	"github.com/ovh/cds/engine/api/event"
@@ -71,7 +70,7 @@ func (api *API) postImportAsCodeHandler() service.Handler {
 
 		branches, err := client.Branches(ctx, ope.RepoFullName)
 		if err != nil {
-			return sdk.WrapError(err, "cannot list branches for %s/%s", ope.VCSServer, ope.RepoFullName)
+			return err
 		}
 		for _, b := range branches {
 			if b.Default {
@@ -91,27 +90,31 @@ func (api *API) postImportAsCodeHandler() service.Handler {
 		u := getAPIConsumer(ctx)
 
 		api.GoRoutines.Exec(context.Background(), fmt.Sprintf("postImportAsCodeHandler-%s", ope.UUID), func(ctx context.Context) {
-			globalOperation := sdk.Operation{
-				UUID: ope.UUID,
-			}
-
 			ope, err := operation.Poll(ctx, api.mustDB(), ope.UUID)
 			if err != nil {
 				isErrWithStack := sdk.IsErrorWithStack(err)
-				fields := logrus.Fields{}
+				fields := log.Fields{}
 				if isErrWithStack {
 					fields["stack_trace"] = fmt.Sprintf("%+v", err)
 				}
 				log.ErrorWithFields(ctx, fields, "%s", err)
-
-				globalOperation.Status = sdk.OperationStatusError
-				globalOperation.Error = sdk.ToOperationError(err)
-			} else {
-				globalOperation.Status = sdk.OperationStatusDone
-				globalOperation.LoadFiles = ope.LoadFiles
+				return
 			}
 
-			event.PublishOperation(ctx, p.Key, globalOperation, u)
+			if ope.Status == sdk.OperationStatusError {
+				log.Error(ctx, "repositories> operation %s error %+v", ope.UUID, ope.Error)
+			}
+
+			ope = &sdk.Operation{
+				UUID:         ope.UUID,
+				RepoFullName: ope.RepoFullName,
+				Date:         ope.Date,
+				LoadFiles:    ope.LoadFiles,
+				Status:       ope.Status,
+				Error:        ope.Error,
+			}
+
+			event.PublishOperation(ctx, p.Key, *ope, u)
 		}, api.PanicDump())
 
 		return service.WriteJSON(w, sdk.Operation{

@@ -26,7 +26,7 @@ func (api *API) getEnvironmentsHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		projectKey := vars[permProjectKey]
-		withUsage := FormBool(r, "withUsage")
+		withUsage := service.FormBool(r, "withUsage")
 
 		tx, errTx := api.mustDB().Begin()
 		if errTx != nil {
@@ -63,7 +63,7 @@ func (api *API) getEnvironmentHandler() service.Handler {
 		vars := mux.Vars(r)
 		projectKey := vars[permProjectKey]
 		environmentName := vars["environmentName"]
-		withUsage := FormBool(r, "withUsage")
+		withUsage := service.FormBool(r, "withUsage")
 
 		env, errEnv := environment.LoadEnvironmentByName(api.mustDB(), projectKey, environmentName)
 		if errEnv != nil {

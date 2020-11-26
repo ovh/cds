@@ -8,9 +8,9 @@ import (
 
 	"github.com/go-gorp/gorp"
 
-	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
+	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/exportentities"
@@ -75,7 +75,8 @@ func requestModifyDefaultNameAndRepositories(proj sdk.Project, repoURL string) T
 		for _, vcs := range proj.VCSServers {
 			repos, err := repositoriesmanager.GetReposForProjectVCSServer(ctx, db, store, proj, vcs.Name, repositoriesmanager.Options{})
 			if err != nil {
-				return err
+				log.Warning(ctx, "unable to list repos from %s: %v", vcs.Name, err)
+				continue
 			}
 			for _, r := range repos {
 				path := fmt.Sprintf("%s/%s", vcs.Name, r.Fullname)

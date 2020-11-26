@@ -19,11 +19,11 @@
             <div class="ui form">
                 <div class="field">
                     <label>{{ 'user_label_username' | translate }}</label>
-                    <input type="text" name="first-name" placeholder="First Name" [(ngModel)]="basicUser">
+                    <input type="text" name="first-name" placeholder="Username" [(ngModel)]="basicUser">
                 </div>
                 <div class="field">
                     <label>{{ 'user_label_password' | translate }}</label>
-                    <input type="password" name="last-name" placeholder="Last Name" [(ngModel)]="basicPassword">
+                    <input type="password" name="last-name" placeholder="Password" [(ngModel)]="basicPassword">
                 </div>
                 <button class="ui green button" name="validationbtn" [class.loading]="verificationLoading" (click)="sendBasicAuth()">{{ 'btn_validate' | translate }}</button>
             </div>

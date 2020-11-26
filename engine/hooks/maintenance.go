@@ -23,7 +23,7 @@ func (s *Service) listenMaintenance(c context.Context) error {
 				return sdk.WrapError(c.Err(), "listenMaintenance> Exiting")
 			}
 		case <-tick.C:
-			msg, err := s.Dao.store.GetMessageFromSubscription(c, pubSub)
+			msg, err := pubSub.GetMessage(c)
 			if err != nil {
 				log.Warning(c, "listenMaintenance> Cannot get message %s: %s", msg, err)
 				continue

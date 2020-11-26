@@ -2,11 +2,12 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"net/http"
 	"regexp"
 	"strings"
+	"time"
 
 	"github.com/spf13/cobra"
 
@@ -41,6 +42,7 @@ func workflowLog() *cobra.Command {
 	return cli.NewCommand(workflowLogCmd, nil, []*cobra.Command{
 		cli.NewCommand(workflowLogListCmd, workflowLogListRun, nil, withAllCommandModifiers()...),
 		cli.NewCommand(workflowLogDownloadCmd, workflowLogDownloadRun, nil, withAllCommandModifiers()...),
+		cli.NewCommand(workflowLogStreamCmd, workflowLogStreamRun, nil, withAllCommandModifiers()...),
 	})
 }
 
@@ -178,6 +180,9 @@ func workflowLogProcess(wr *sdk.WorkflowRun) []workflowLogDetail {
 				jobNames := map[string]int64{}
 				for _, runJob := range stage.RunJobs {
 					jobName := slug.Convert(runJob.Job.Job.Action.Name)
+					if runJob.Job.Job.Action.StepName != "" {
+						jobName = slug.Convert(runJob.Job.Job.Action.StepName)
+					}
 					countUsageJobName, ok := jobNames[jobName]
 					if !ok {
 						jobNames[jobName] = 1
@@ -295,12 +300,12 @@ func workflowLogDownloadRun(v cli.Values) error {
 		}
 
 		// If cdn logs is enabled for current project, first check if logs can be downloaded from it
-		var access *sdk.CDNLogAccess
+		var link *sdk.CDNLogLink
 		if feature.Enabled {
 			if log.detailType == workflowLogDetailTypeService {
-				access, err = client.WorkflowNodeRunJobServiceAccess(projectKey, workflowName, log.runID, log.jobID, log.serviceName)
+				link, err = client.WorkflowNodeRunJobServiceLink(context.Background(), projectKey, workflowName, log.runID, log.jobID, log.serviceName)
 			} else {
-				access, err = client.WorkflowNodeRunJobStepAccess(projectKey, workflowName, log.runID, log.jobID, log.stepOrder)
+				link, err = client.WorkflowNodeRunJobStepLink(context.Background(), projectKey, workflowName, log.runID, log.jobID, log.stepOrder)
 			}
 			if err != nil {
 				return err
@@ -308,22 +313,20 @@ func workflowLogDownloadRun(v cli.Values) error {
 		}
 
 		var data []byte
-		if access != nil && access.Exists {
-			data, _, _, err = client.Request(context.Background(), http.MethodGet, access.CDNURL+access.DownloadPath, nil, func(r *http.Request) {
-				r.Header.Add("Authorization", "Bearer "+access.Token)
-			})
+		if link != nil {
+			data, err = client.WorkflowLogDownload(context.Background(), *link)
 			if err != nil {
 				return err
 			}
 		} else {
 			if log.detailType == workflowLogDetailTypeService {
-				serviceLog, err := client.WorkflowNodeRunJobServiceLog(projectKey, workflowName, log.runID, log.jobID, log.serviceName)
+				serviceLog, err := client.WorkflowNodeRunJobServiceLog(context.Background(), projectKey, workflowName, log.runID, log.jobID, log.serviceName)
 				if err != nil {
 					return err
 				}
 				data = []byte(serviceLog.Val)
 			} else {
-				buildState, err := client.WorkflowNodeRunJobStepLog(projectKey, workflowName, log.runID, log.jobID, log.stepOrder)
+				buildState, err := client.WorkflowNodeRunJobStepLog(context.Background(), projectKey, workflowName, log.runID, log.jobID, log.stepOrder)
 				if err != nil {
 					return err
 				}
@@ -343,4 +346,137 @@ func workflowLogDownloadRun(v cli.Values) error {
 		return sdk.WithStack(fmt.Errorf("no log downloaded"))
 	}
 	return nil
+}
+
+var workflowLogStreamCmd = cli.Command{
+	Name:  "stream",
+	Short: "Stream logs for a job.",
+	Ctx: []cli.Arg{
+		{Name: _ProjectKey},
+		{Name: _WorkflowName},
+	},
+	OptionalArgs: []cli.Arg{
+		{
+			Name: "run-number",
+			IsValid: func(s string) bool {
+				match, _ := regexp.MatchString(`[0-9]?`, s)
+				return match
+			},
+		},
+	},
+}
+
+func workflowLogStreamRun(v cli.Values) error {
+	projectKey := v.GetString(_ProjectKey)
+	workflowName := v.GetString(_WorkflowName)
+
+	feature, err := client.FeatureEnabled("cdn-job-logs", map[string]string{
+		"project_key": projectKey,
+	})
+	if err != nil {
+		return err
+	}
+	if !feature.Enabled {
+		return sdk.WithStack(fmt.Errorf("cdn log processing is not active for given project"))
+	}
+
+	runNumber, err := workflowLogSearchNumber(v)
+	if err != nil {
+		return err
+	}
+
+	wr, err := client.WorkflowRunGet(projectKey, workflowName, runNumber)
+	if err != nil {
+		return err
+	}
+	logs := workflowLogProcess(wr)
+
+	mPipeline := make(map[string][]workflowLogDetail)
+	for i := range logs {
+		if _, ok := mPipeline[logs[i].pipelineName]; !ok {
+			mPipeline[logs[i].pipelineName] = nil
+		}
+		mPipeline[logs[i].pipelineName] = append(mPipeline[logs[i].pipelineName], logs[i])
+	}
+	pipelineNames := make([]string, 0, len(mPipeline))
+	for k := range mPipeline {
+		pipelineNames = append(pipelineNames, k)
+	}
+	choice := cli.AskChoice("Select a pipeline", pipelineNames...)
+	logs = mPipeline[pipelineNames[choice]]
+
+	mJob := make(map[string][]workflowLogDetail)
+	for i := range logs {
+		key := logs[i].jobName
+		if logs[i].countUsageJobName > 0 {
+			key = fmt.Sprintf("%s-%d", key, logs[i].countUsageJobName)
+		}
+		if _, ok := mJob[key]; !ok {
+			mJob[key] = nil
+		}
+		mJob[key] = append(mJob[key], logs[i])
+	}
+	jobNames := make([]string, 0, len(mJob))
+	for k := range mJob {
+		jobNames = append(jobNames, k)
+	}
+	choice = cli.AskChoice("Select a job", jobNames...)
+	logs = mJob[jobNames[choice]]
+
+	logNames := make([]string, len(logs))
+	for i := range logs {
+		logNames[i] = logs[i].getFilename()
+	}
+	choice = cli.AskChoice("Select a step or service", logNames...)
+
+	log := logs[choice]
+
+	// If cdn logs is enabled for current project, first check if logs can be downloaded from it
+	var link *sdk.CDNLogLink
+	if log.detailType == workflowLogDetailTypeService {
+		link, err = client.WorkflowNodeRunJobServiceLink(context.Background(), projectKey, workflowName, log.runID, log.jobID, log.serviceName)
+	} else {
+		link, err = client.WorkflowNodeRunJobStepLink(context.Background(), projectKey, workflowName, log.runID, log.jobID, log.stepOrder)
+	}
+	if err != nil {
+		return err
+	}
+
+	ctx := context.Background()
+	chanMessageToSend := make(chan json.RawMessage)
+	chanMsgReceived := make(chan json.RawMessage)
+	chanErrorReceived := make(chan error)
+
+	goRoutines := sdk.NewGoRoutines()
+	goRoutines.Exec(ctx, "WebsocketEventsListenCmd", func(ctx context.Context) {
+		for ctx.Err() == nil {
+			if err := client.RequestWebsocket(ctx, goRoutines, fmt.Sprintf("%s/item/stream", link.CDNURL), chanMessageToSend, chanMsgReceived, chanErrorReceived); err != nil {
+				fmt.Printf("Error: %s\n", err)
+			}
+			time.Sleep(1 * time.Second)
+		}
+	})
+
+	buf, err := json.Marshal(sdk.CDNStreamFilter{
+		ItemType: link.ItemType,
+		APIRef:   link.APIRef,
+	})
+	if err != nil {
+		return sdk.WithStack(err)
+	}
+	chanMessageToSend <- buf
+
+	for {
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		case err, ok := <-chanErrorReceived:
+			if !ok {
+				continue
+			}
+			fmt.Printf("Error: %s\n", err)
+		case m := <-chanMsgReceived:
+			fmt.Printf("%s", string(m))
+		}
+	}
 }

@@ -2,7 +2,6 @@ package item
 
 import (
 	"context"
-	"strconv"
 	"time"
 
 	"github.com/go-gorp/gorp"
@@ -71,7 +70,7 @@ func LoadIDsToDelete(db gorp.SqlExecutor, size int) ([]string, error) {
 	return ids, nil
 }
 
-func DeleteByIDs(db gorp.SqlExecutor, ids []string) error {
+func DeleteByID(db gorp.SqlExecutor, ids ...string) error {
 	query := `
 		DELETE FROM item WHERE id = ANY($1)
 	`
@@ -80,7 +79,10 @@ func DeleteByIDs(db gorp.SqlExecutor, ids []string) error {
 }
 
 func LoadAll(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlExecutor, size int, opts ...gorpmapper.GetOptionFunc) ([]sdk.CDNItem, error) {
-	query := gorpmapper.NewQuery("SELECT * FROM item ORDER BY created LIMIT $1").Args(size)
+	var query = gorpmapper.NewQuery("SELECT * FROM item WHERE to_delete = false ORDER BY created")
+	if size > 0 {
+		query = gorpmapper.NewQuery("SELECT * FROM item WHERE to_delete = false ORDER BY created LIMIT $1").Args(size)
+	}
 	return getItems(ctx, m, db, query, opts...)
 }
 
@@ -127,14 +129,6 @@ func Update(ctx context.Context, m *gorpmapper.Mapper, db gorpmapper.SqlExecutor
 	return nil
 }
 
-func MarkToDeleteByWorkflowID(db gorpmapper.SqlExecutorWithTx, workflowID int64) error {
-	query := `
-		UPDATE item SET to_delete = true WHERE (api_ref->>'workflow_id')::int = $1 
-	`
-	_, err := db.Exec(query, workflowID)
-	return sdk.WrapError(err, "unable to mark item to delete for workflow %s", strconv.Itoa(int(workflowID)))
-}
-
 func MarkToDeleteByRunIDs(db gorpmapper.SqlExecutorWithTx, runID int64) error {
 	query := `
 		UPDATE item SET to_delete = true WHERE (api_ref->>'run_id')::int = $1 
@@ -148,9 +142,9 @@ func LoadByAPIRefHashAndType(ctx context.Context, m *gorpmapper.Mapper, db gorp.
 	query := gorpmapper.NewQuery(`
 		SELECT *
 		FROM item
-		WHERE
-			api_ref_hash = $1 AND
-			type = $2
+		WHERE api_ref_hash = $1 
+		AND type = $2
+		AND to_delete = false
 	`).Args(hash, itemType)
 	return getItem(ctx, m, db, query, opts...)
 }
@@ -158,7 +152,7 @@ func LoadByAPIRefHashAndType(ctx context.Context, m *gorpmapper.Mapper, db gorp.
 // ComputeSizeByIDs returns the size used by givenn item IDs
 func ComputeSizeByIDs(db gorp.SqlExecutor, itemIDs []string) (int64, error) {
 	query := `
-		SELECT SUM(size) FROM item
+		SELECT COALESCE(SUM(size), 0) FROM item
 		WHERE id = ANY($1) 
 	`
 	size, err := db.SelectInt(query, pq.StringArray(itemIDs))
@@ -172,7 +166,7 @@ func ListNodeRunByProject(db gorp.SqlExecutor, projectKey string) ([]int64, erro
 	var IDs []int64
 	query := `
 		SELECT 
-			DISTINCT((api_ref->>'run_id')::int)
+			DISTINCT((api_ref->>'node_run_id')::int)
 		FROM item 
 		WHERE api_ref->>'project_key' = $1
 	`
@@ -193,4 +187,48 @@ func ComputeSizeByProjectKey(db gorp.SqlExecutor, projectKey string) (int64, err
 		return 0, sdk.WithStack(err)
 	}
 	return size, nil
+}
+
+type Stat struct {
+	Status string `db:"status"`
+	Type   string `db:"type"`
+	Number int64  `db:"number"`
+}
+
+func CountItems(db gorp.SqlExecutor) (res []Stat, err error) {
+	_, err = db.Select(&res, `
+	SELECT status, type, count(id) as "number" 
+	FROM item 
+	WHERE to_delete = false 
+	GROUP BY status, type`)
+	return res, sdk.WithStack(err)
+}
+
+func CountItemsToDelete(db gorp.SqlExecutor) (res []Stat, err error) {
+	_, err = db.Select(&res, `
+	SELECT type, count(id) as "number" 
+	FROM item 
+	WHERE to_delete = true 
+	GROUP BY type`)
+	return res, sdk.WithStack(err)
+}
+
+type StatItemPercentil struct {
+	Size       int64  `db:"size"`
+	Type       string `db:"type"`
+	Percentile int64  `db:"percentile"`
+}
+
+func CountItemSizePercentil(db gorp.SqlExecutor) (res []StatItemPercentil, err error) {
+	_, err = db.Select(&res, `
+	with bucket as (
+		select type, size, ntile(100) over (partition by type order by size) as percentile 
+		from item
+		where to_delete = false 
+	)
+	select bucket.type, bucket.percentile, max(bucket.size) as size
+	from bucket
+	group by bucket.type, bucket.percentile
+	order by bucket.type, bucket.percentile`)
+	return res, sdk.WithStack(err)
 }

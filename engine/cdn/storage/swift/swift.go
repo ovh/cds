@@ -9,14 +9,12 @@ import (
 
 	"github.com/go-gorp/gorp"
 	"github.com/ncw/swift"
-	"go.opencensus.io/stats"
 
 	"github.com/ovh/cds/engine/cdn/storage"
 	"github.com/ovh/cds/engine/cdn/storage/encryption"
 	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
-	"github.com/ovh/cds/sdk/telemetry"
 )
 
 type Swift struct {
@@ -27,19 +25,14 @@ type Swift struct {
 }
 
 var (
-	_                 storage.StorageUnit = new(Swift)
-	metricsContainers                     = stats.Int64("cdn/storage/swift/containers", "nb containers", stats.UnitDimensionless)
-	metricsObjects                        = stats.Int64("cdn/storage/swift/objects", "nb objects", stats.UnitDimensionless)
-	metricsSize                           = stats.Int64("cdn/storage/swift/size", "swift bytes used", stats.UnitDimensionless)
-	metricsReaders                        = stats.Int64("cdn/storage/swift/readers", "nb readers", stats.UnitDimensionless)
-	metricsWriters                        = stats.Int64("cdn/storage/swift/writers", "nb writers", stats.UnitDimensionless)
+	_ storage.StorageUnit = new(Swift)
 )
 
 func init() {
 	storage.RegisterDriver("swift", new(Swift))
 }
 
-func (s *Swift) Init(ctx context.Context, _ *sdk.GoRoutines, cfg interface{}) error {
+func (s *Swift) Init(ctx context.Context, cfg interface{}) error {
 	config, is := cfg.(*storage.SwiftStorageConfiguration)
 	if !is {
 		return sdk.WithStack(fmt.Errorf("invalid configuration: %T", cfg))
@@ -55,9 +48,6 @@ func (s *Swift) Init(ctx context.Context, _ *sdk.GoRoutines, cfg interface{}) er
 		ApiKey:   config.Password,
 	}
 
-	if err := telemetry.InitMetricsInt64(ctx, metricsContainers, metricsObjects, metricsSize, metricsReaders, metricsWriters); err != nil {
-		return err
-	}
 	return nil
 }
 
@@ -99,7 +89,6 @@ func (s *Swift) NewWriter(ctx context.Context, i sdk.CDNItemUnit) (io.WriteClose
 		return nil, sdk.WrapError(err, "SwiftStore> Unable to create object %s", object)
 	}
 
-	telemetry.Record(ctx, metricsWriters, 1)
 	return file, nil
 }
 
@@ -110,7 +99,8 @@ func (s *Swift) NewReader(ctx context.Context, i sdk.CDNItemUnit) (io.ReadCloser
 	}
 
 	pr, pw := io.Pipe()
-	go func() {
+	gr := sdk.NewGoRoutines()
+	gr.Exec(ctx, "swift.newReader", func(ctx context.Context) {
 		if _, err = s.client.ObjectGet(container, object, pw, true, nil); err != nil {
 			log.Error(context.Background(), "unable to get object %s/%s: %v", container, object, err)
 			return
@@ -119,9 +109,8 @@ func (s *Swift) NewReader(ctx context.Context, i sdk.CDNItemUnit) (io.ReadCloser
 			log.Error(context.Background(), "unable to close pipewriter %s/%s: %v", container, object, err)
 			return
 		}
-	}()
+	})
 
-	telemetry.Record(ctx, metricsReaders, 1)
 	return pr, nil
 }
 
@@ -147,12 +136,18 @@ func (s *Swift) Status(ctx context.Context) []sdk.MonitoringStatusLine {
 	if err != nil {
 		return []sdk.MonitoringStatusLine{{Component: "backend/" + s.Name(), Value: "Swift KO" + err.Error(), Status: sdk.MonitoringStatusAlert}}
 	}
-	telemetry.Record(ctx, metricsContainers, info.Containers)
-	telemetry.Record(ctx, metricsObjects, info.Objects)
-	telemetry.Record(ctx, metricsSize, info.BytesUsed)
 	return []sdk.MonitoringStatusLine{{
 		Component: "backend/" + s.Name(),
 		Value:     fmt.Sprintf("Swift OK (%d containers, %d objects, %d bytes used", info.Containers, info.Objects, info.BytesUsed),
 		Status:    sdk.MonitoringStatusOK,
 	}}
+}
+
+func (s *Swift) Remove(ctx context.Context, i sdk.CDNItemUnit) error {
+	container, object, err := s.getItemPath(i)
+	if err != nil {
+		return err
+	}
+
+	return sdk.WithStack(s.client.ObjectDelete(container, object))
 }

@@ -1,4 +1,4 @@
-import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { HttpClient } from '@angular/common/http';
 import {
     ChangeDetectionStrategy, ChangeDetectorRef,
     Component,
@@ -16,7 +16,7 @@ import {
 } from 'ansi_up';
 import { Action } from 'app/model/action.model';
 import { Job, StepStatus } from 'app/model/job.model';
-import { BuildResult, CDNLogAccess, Log, PipelineStatus } from 'app/model/pipeline.model';
+import { BuildResult, CDNLogLink, Log, PipelineStatus } from 'app/model/pipeline.model';
 import { WorkflowNodeJobRun } from 'app/model/workflow.run.model';
 import { WorkflowService } from 'app/service/workflow/workflow.service';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
@@ -42,10 +42,6 @@ export class WorkflowStepLogComponent implements OnInit, OnDestroy {
     job: Job;
     step: Action;
     stepStatus: StepStatus;
-
-    @Select(WorkflowState.getSelectedWorkflowNodeJobRun()) nodeJobRun$: Observable<WorkflowNodeJobRun>;
-    nodeJobRunSubs: Subscription;
-
     logs: Log;
     showLogs = false;
 
@@ -75,7 +71,6 @@ export class WorkflowStepLogComponent implements OnInit, OnDestroy {
     @ViewChild('logsContent') logsElt: ElementRef;
 
     constructor(
-        private _durationService: DurationService,
         private _router: Router,
         private _route: ActivatedRoute,
         private _hostElement: ElementRef,
@@ -91,9 +86,8 @@ export class WorkflowStepLogComponent implements OnInit, OnDestroy {
     ngOnDestroy(): void { } // Should be set to use @AutoUnsubscribe with AOT
 
     ngOnInit(): void {
-        this.nodeJobRunSubs = this.nodeJobRun$.subscribe(nrj => {
-            this.onNodeJobRunChange(nrj);
-        });
+        let njr = this._store.selectSnapshot(WorkflowState.getSelectedWorkflowNodeJobRun());
+        this.onNodeJobRunChange(njr);
 
         this.queryParamsSubscription = this._route.queryParams.subscribe((qps) => {
             if (!this.job) {
@@ -115,12 +109,12 @@ export class WorkflowStepLogComponent implements OnInit, OnDestroy {
         });
     }
 
-    async onNodeJobRunChange(nrj: WorkflowNodeJobRun) {
-        if (!nrj || !nrj.job.step_status) {
+    onNodeJobRunChange(njr: WorkflowNodeJobRun) {
+        if (!njr || !njr.job.step_status) {
             return;
         }
 
-        this.job = nrj.job;
+        this.job = njr.job;
 
         let invalidStepOrder = !(this.stepOrder < this.job.action.actions.length) || !(this.stepOrder < this.job.step_status.length);
         if (invalidStepOrder) {
@@ -131,8 +125,8 @@ export class WorkflowStepLogComponent implements OnInit, OnDestroy {
         let oldStepStatus = this.stepStatus;
         this.stepStatus = this.job.step_status[this.stepOrder];
 
-        if (this.currentNodeJobRunID !== nrj.id) {
-            this.currentNodeJobRunID = nrj.id;
+        if (this.currentNodeJobRunID !== njr.id) {
+            this.currentNodeJobRunID = njr.id;
 
             this.computeDuration();
             this.showLogs = false;
@@ -140,7 +134,7 @@ export class WorkflowStepLogComponent implements OnInit, OnDestroy {
                 this.stepStatus.status === this.pipelineBuildStatusEnum.WAITING ||
                 (this.stepStatus.status === this.pipelineBuildStatusEnum.FAIL && !this.step.optional)) {
                 this.showLogs = true;
-                await this.initWorker();
+                this.initWorker();
             }
 
             this._cd.markForCheck();
@@ -155,7 +149,7 @@ export class WorkflowStepLogComponent implements OnInit, OnDestroy {
 
         if (!oldStepStatus) {
             this.computeDuration();
-            await this.initWorker();
+            this.initWorker();
             this.showLogs = true;
         } else if (this.pipelineBuildStatusEnum.isActive(this.stepStatus.status) &&
             this.pipelineBuildStatusEnum.isDone(status)) {
@@ -178,7 +172,6 @@ export class WorkflowStepLogComponent implements OnInit, OnDestroy {
 
         let projectKey = this._store.selectSnapshot(ProjectState.projectSnapshot).key;
         let workflowName = this._store.selectSnapshot(WorkflowState.workflowSnapshot).name;
-        let runNumber = (<WorkflowStateModel>this._store.selectSnapshot(WorkflowState)).workflowNodeRun.num;
         let nodeRunId = (<WorkflowStateModel>this._store.selectSnapshot(WorkflowState)).workflowNodeRun.id;
         let runJobId = this.currentNodeJobRunID;
         if (!this.job.step_status) {
@@ -190,9 +183,9 @@ export class WorkflowStepLogComponent implements OnInit, OnDestroy {
             return !!f.results.find(r => r.enabled && r.paramString === JSON.stringify({ 'project_key': projectKey }));
         });
 
-        let logAccess: CDNLogAccess;
+        let logLink: CDNLogLink;
         if (cdnEnabled) {
-            logAccess = await this._workflowService.getStepAccess(projectKey, workflowName, nodeRunId, runJobId, stepOrder).toPromise();
+            logLink = await this._workflowService.getStepLink(projectKey, workflowName, nodeRunId, runJobId, stepOrder).toPromise();
         }
 
         let callback = (b: BuildResult) => {
@@ -207,15 +200,12 @@ export class WorkflowStepLogComponent implements OnInit, OnDestroy {
             this._cd.markForCheck();
         };
 
-        if (!cdnEnabled || !logAccess.exists) {
+        if (!cdnEnabled) {
             const stepLog = await this._workflowService.getStepLog(projectKey, workflowName,
                 nodeRunId, runJobId, stepOrder).toPromise();
             callback(stepLog);
         } else {
-            const data = await this._http.get('./cdscdn' + logAccess.download_path, {
-                responseType: 'text',
-                headers: new HttpHeaders({ 'Authorization': `Bearer ${logAccess.token}` })
-            }).toPromise();
+            const data = await this._workflowService.getLogDownload(logLink).toPromise();
             callback(<BuildResult>{ status: PipelineStatus.BUILDING, step_logs: { id: 1, val: data } });
         }
 
@@ -227,13 +217,11 @@ export class WorkflowStepLogComponent implements OnInit, OnDestroy {
         this._ngZone.runOutsideAngular(() => {
             this.pollingSubscription = Observable.interval(2000)
                 .mergeMap(_ => {
-                    if (!cdnEnabled || !logAccess.exists) {
+                    if (!cdnEnabled) {
                         return this._workflowService.getStepLog(projectKey, workflowName, nodeRunId, runJobId, stepOrder);
                     }
-                    return this._http.get('./cdscdn' + logAccess.download_path, {
-                        responseType: 'text',
-                        headers: new HttpHeaders({ 'Authorization': `Bearer ${logAccess.token}` })
-                    }).map(data => <BuildResult>{ status: PipelineStatus.BUILDING, step_logs: { id: 1, val: data } });
+                    return this._workflowService.getLogDownload(logLink)
+                        .map(data => <BuildResult>{ status: PipelineStatus.BUILDING, step_logs: { id: 1, val: data } });
                 })
                 .subscribe(build => {
                     this._ngZone.run(() => {
@@ -244,6 +232,10 @@ export class WorkflowStepLogComponent implements OnInit, OnDestroy {
                     });
                 });
         });
+    }
+
+    trackElement(index: number, element: { lineNumber: number, value: string }) {
+        return element ? element.lineNumber : null
     }
 
     stopWorker() {
@@ -336,11 +328,11 @@ export class WorkflowStepLogComponent implements OnInit, OnDestroy {
         }
 
         if (this.doneExec) {
-            this.duration = '(' + this._durationService.duration(this.startExec, this.doneExec) + ')';
+            this.duration = '(' + DurationService.duration(this.startExec, this.doneExec) + ')';
         }
     }
 
-    async toggleLogs() {
+    toggleLogs() {
         this._force = true;
         if (!this.showLogs && (!this.stepStatus || PipelineStatus.neverRun(this.stepStatus.status))) {
             return;
@@ -349,7 +341,7 @@ export class WorkflowStepLogComponent implements OnInit, OnDestroy {
         if (!this.showLogs) {
             this.stopWorker();
         } else {
-            await this.initWorker();
+            this.initWorker();
         }
     }
 

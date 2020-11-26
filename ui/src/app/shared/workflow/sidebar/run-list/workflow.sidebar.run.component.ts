@@ -4,7 +4,7 @@ import {
     Component,
     ElementRef,
     Input,
-    OnDestroy,
+    OnDestroy, OnInit,
     ViewChild
 } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -12,15 +12,17 @@ import { Select, Store } from '@ngxs/store';
 import { PipelineStatus } from 'app/model/pipeline.model';
 import { Project } from 'app/model/project.model';
 import { Workflow } from 'app/model/workflow.model';
-import { WorkflowRun, WorkflowRunTags } from 'app/model/workflow.run.model';
+import { WorkflowRun, WorkflowRunSummary, WorkflowRunTags } from 'app/model/workflow.run.model';
 import { WorkflowRunService } from 'app/service/workflow/run/workflow.run.service';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { DurationService } from 'app/shared/duration/duration.service';
 import { ProjectState } from 'app/store/project.state';
-import { CleanWorkflowRun, GetWorkflowRuns } from 'app/store/workflow.action';
+import { CleanWorkflowRun, ClearListRuns, SetWorkflowRuns } from 'app/store/workflow.action';
 import { WorkflowState } from 'app/store/workflow.state';
 import { Observable, Subscription } from 'rxjs';
 import { finalize, first } from 'rxjs/operators';
+
+const limitWorkflowRun = 30;
 
 @Component({
     selector: 'app-workflow-sidebar-run-list',
@@ -32,7 +34,6 @@ import { finalize, first } from 'rxjs/operators';
 export class WorkflowSidebarRunListComponent implements OnDestroy {
     @ViewChild('tagsList') tagsList: ElementRef;
 
-    workflowRuns = new Array<WorkflowRun>();
     _workflow: Workflow;
     @Input('workflow')
     set workflow(data: Workflow) {
@@ -42,21 +43,25 @@ export class WorkflowSidebarRunListComponent implements OnDestroy {
                 this._workflow = data;
                 this.deleteInterval();
                 this.initSelectableTags();
+                this.offset = 0;
+                this._store.dispatch(new ClearListRuns()).subscribe(() => {
+                    this.getRuns();
+                })
             }
             this._workflow = data;
         }
     }
     get workflow() { return this._workflow; }
 
-
-    @Select(WorkflowState.getListRuns()) listRuns$: Observable<Array<WorkflowRun>>;
+    @Select(WorkflowState.getSelectedWorkflowRun()) wrun$: Observable<WorkflowRun>
+    wrunSub: Subscription;
+    @Select(WorkflowState.getListRuns()) listRuns$: Observable<Array<WorkflowRunSummary>>;
     listRunSubs: Subscription;
-    @Select(WorkflowState.getLoadingRuns()) loadings$: Observable<boolean>;
-    loadingSubs: Subscription;
     @Select(WorkflowState.getRunSidebarFilters()) filters$: Observable<{}>;
     filtersSubs: Subscription;
 
     project: Project;
+    workflowRuns = new Array<WorkflowRunSummary>();
 
     // search part
     selectedTags: Array<string>;
@@ -65,7 +70,7 @@ export class WorkflowSidebarRunListComponent implements OnDestroy {
     pipelineStatusEnum = PipelineStatus;
     ready = false;
     filteredTags: { [key: number]: WorkflowRunTags[] } = {};
-    durationMap: { [key: number]: string} = {};
+    durationMap: { [key: number]: string } = {};
 
     durationIntervalID: number;
 
@@ -74,17 +79,22 @@ export class WorkflowSidebarRunListComponent implements OnDestroy {
 
     constructor(
         private _workflowRunService: WorkflowRunService,
-        private _duration: DurationService,
         private _router: Router,
         private _routerActivated: ActivatedRoute,
         private _store: Store,
         private _cd: ChangeDetectorRef
     ) {
         this.project = this._store.selectSnapshot(ProjectState.projectSnapshot);
-        this._routerActivated.params.subscribe(p => {
-            if (p['number']) {
-                this.currentWorkflowRunNumber = p['number'];
+
+        this.wrunSub = this.wrun$.subscribe(wr => {
+            if (!wr && !this.currentWorkflowRunNumber) {
+                return;
             }
+            if (wr?.num === this.currentWorkflowRunNumber) {
+                return;
+            }
+            this.currentWorkflowRunNumber = wr?.num;
+            this._cd.markForCheck();
         });
 
         this.listRunSubs = this.listRuns$.subscribe(runs => {
@@ -107,22 +117,24 @@ export class WorkflowSidebarRunListComponent implements OnDestroy {
             this._cd.markForCheck();
             return;
         });
-        this.loadingSubs = this.loadings$.subscribe( l => {
-           if (l !== !this.ready) {
-               this.ready = !l;
-               this._cd.markForCheck();
-           }
-        });
+    }
+
+    getRuns(filter?: any): void {
+        this._workflowRunService.runs(this.project.key, this.workflow.name, limitWorkflowRun.toString(), this.offset.toString(), filter)
+            .pipe(finalize(() => {
+                this.ready = true;
+                this._cd.markForCheck();
+            }))
+            .subscribe((runs) => {
+                this._store.dispatch(new SetWorkflowRuns(
+                    { projectKey: this.project.key, workflowName: this.workflow.name, runs: runs, filters: filter }))
+            });
     }
 
     scroll() {
         if (!Array.isArray(this.selectedTags) || !this.selectedTags.length) {
-            this.offset += 50;
-            this._workflowRunService.runs(this.project.key, this.workflow.name, '50', this.offset.toString())
-                .pipe(finalize(() => this._cd.markForCheck()))
-                .subscribe((runs) => {
-                    this.workflowRuns = this.workflowRuns.concat(runs);
-                });
+            this.offset = this.workflowRuns.length;
+            this.getRuns();
         }
     }
 
@@ -165,12 +177,12 @@ export class WorkflowSidebarRunListComponent implements OnDestroy {
 
     getDuration(status: string, start: string, done: string): string {
         if (status === PipelineStatus.BUILDING || status === PipelineStatus.WAITING) {
-            return this._duration.duration(new Date(start), new Date());
+            return DurationService.duration(new Date(start), new Date());
         }
         if (!done) {
             done = new Date().toString();
         }
-        return this._duration.duration(new Date(start), new Date(done));
+        return DurationService.duration(new Date(start), new Date(done));
     }
 
     filterRuns(): void {
@@ -187,10 +199,8 @@ export class WorkflowSidebarRunListComponent implements OnDestroy {
                 return prev;
             }, {});
         }
-
-        this._store.dispatch(new GetWorkflowRuns(
-            {projectKey: this.project.key, workflowName: this.workflow.name, limit: '50', offset: '0', filters})
-        );
+        this.offset = 0;
+        this.getRuns(filters)
     }
 
     refreshRun(): void {

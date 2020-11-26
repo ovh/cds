@@ -13,6 +13,25 @@ export class MonitoringStatusLine {
     status: string;
     component: string;
     value: string;
+    type: string;
+    service: string;
+    hostname: string;
+    session: string;
+    consumer: string;
+}
+
+export class MonitoringStatusLineUtil {
+    public static color(monitoringMetricsLine: MonitoringStatusLine): string {
+        switch (monitoringMetricsLine.status) {
+            case 'OK':
+                return 'green';
+            case 'AL':
+                return 'red';
+            case 'WARN':
+                return 'orange';
+        }
+        return 'blue';
+    }
 }
 
 export interface MonitoringMetricsLabel {
@@ -35,3 +54,4 @@ export interface MonitoringMetricsLine {
     type: number;
     metric: MonitoringMetricsMetric[];
 }
+

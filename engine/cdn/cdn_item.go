@@ -25,12 +25,21 @@ var (
 	rnd = rand.New(rs)
 )
 
-func (s *Service) downloadItem(ctx context.Context, t sdk.CDNItemType, apiRefHash string, w http.ResponseWriter) error {
+type downloadOpts struct {
+	Log struct {
+		Sort    int64
+		Refresh int64
+	}
+}
+
+func (s *Service) downloadItem(ctx context.Context, t sdk.CDNItemType, apiRefHash string, w http.ResponseWriter, opts downloadOpts) error {
+	t0 := time.Now()
+
 	if !t.IsLog() {
 		return sdk.NewErrorFrom(sdk.ErrNotImplemented, "only log item can be download for now")
 	}
 
-	rc, filename, err := s.getItemLogValue(ctx, t, apiRefHash, sdk.CDNReaderFormatText, 0, 0)
+	it, _, rc, filename, err := s.getItemLogValue(ctx, t, apiRefHash, sdk.CDNReaderFormatText, 0, 0, opts.Log.Sort)
 	if err != nil {
 		return err
 	}
@@ -38,60 +47,84 @@ func (s *Service) downloadItem(ctx context.Context, t sdk.CDNItemType, apiRefHas
 		return sdk.WrapError(sdk.ErrNotFound, "no storage found that contains given item %s", apiRefHash)
 	}
 	w.Header().Add("Content-Type", "text/plain")
-	w.Header().Add("Content-Disposition", fmt.Sprintf("attachment; filename=\"%s\"", filename))
+	if it.Status != sdk.CDNStatusItemCompleted && opts.Log.Refresh > 0 {
+		// This will allows to refresh the browser when opening the logs int a new tab
+		w.Header().Add("Refresh", fmt.Sprintf("%d", opts.Log.Refresh))
+	}
+	w.Header().Add("Content-Disposition", fmt.Sprintf("inline; filename=\"%s\"", filename))
 
 	if _, err := io.Copy(w, rc); err != nil {
 		return sdk.WithStack(err)
 	}
+	t1 := time.Now()
+
+	log.InfoWithFields(ctx, log.Fields{
+		"item_apiref":               it.APIRefHash,
+		"duration_milliseconds_num": t1.Sub(t0).Milliseconds(),
+	}, "downloadItem> item %s has been downloaded", it.ID)
 
 	return nil
 }
 
-func (s *Service) getItemLogValue(ctx context.Context, t sdk.CDNItemType, apiRefHash string, format sdk.CDNReaderFormat, from int64, size uint) (io.ReadCloser, string, error) {
+func (s *Service) getItemLogValue(ctx context.Context, t sdk.CDNItemType, apiRefHash string, format sdk.CDNReaderFormat, from int64, size uint, sort int64) (*sdk.CDNItem, int64, io.ReadCloser, string, error) {
 	it, err := item.LoadByAPIRefHashAndType(ctx, s.Mapper, s.mustDBWithCtx(ctx), apiRefHash, t)
 	if err != nil {
-		return nil, "", err
+		return nil, 0, nil, "", err
 	}
 
 	filename := it.APIRef.ToFilename()
 
 	itemUnit, err := storage.LoadItemUnitByUnit(ctx, s.Mapper, s.mustDBWithCtx(ctx), s.Units.Buffer.ID(), it.ID)
 	if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
-		return nil, "", err
+		return nil, 0, nil, "", err
 	}
 
 	// If item is in Buffer, get from it
 	if itemUnit != nil {
 		log.Debug("getItemLogValue> Getting logs from buffer")
-		rc, err := s.Units.Buffer.NewAdvancedReader(ctx, *itemUnit, format, from, size)
+		linesCount, err := s.Units.Buffer.Card(*itemUnit)
 		if err != nil {
-			return nil, "", err
+			return nil, 0, nil, "", err
 		}
-		return rc, filename, nil
+
+		rc, err := s.Units.Buffer.NewAdvancedReader(ctx, *itemUnit, format, from, size, sort)
+		if err != nil {
+			return nil, 0, nil, "", err
+		}
+
+		return it, int64(linesCount), rc, filename, nil
 	}
 
 	// Get from cache
-	if ok, _ := s.LogCache.Exist(it.ID); ok {
-		log.Debug("getItemLogValue> Getting logs from cache")
-		return s.LogCache.NewReader(it.ID, format, from, size), filename, nil
+	if ok, _ := s.LogCache.Exist(it.ID); !ok {
+		log.Debug("getItemLogValue> Getting logs from storage")
+		// Retrieve item and push it into the cache
+		if err := s.pushItemLogIntoCache(ctx, *it); err != nil {
+			return nil, 0, nil, "", err
+		}
 	}
 
-	log.Debug("getItemLogValue> Getting logs from storage")
-	// Retrieve item and push it into the cache
-	if err := s.pushItemLogIntoCache(ctx, *it); err != nil {
-		return nil, "", err
+	linesCount, err := s.LogCache.Card(it.ID)
+	if err != nil {
+		return nil, 0, nil, "", err
 	}
 
-	// Get from cache
-	return s.LogCache.NewReader(it.ID, format, from, size), filename, nil
+	log.Debug("getItemLogValue> Getting logs from cache")
+	return it, int64(linesCount), s.LogCache.NewReader(it.ID, format, from, size, sort), filename, nil
 }
 
-func (s *Service) pushItemLogIntoCache(ctx context.Context, item sdk.CDNItem) error {
+func (s *Service) pushItemLogIntoCache(ctx context.Context, it sdk.CDNItem) error {
+	t0 := time.Now()
 	// Search item in a storage unit
-	itemUnits, err := storage.LoadAllItemUnitsByItemID(ctx, s.Mapper, s.mustDBWithCtx(ctx), item.ID)
+	mapItemUnits, err := storage.LoadAllItemUnitsByItemIDs(ctx, s.Mapper, s.mustDBWithCtx(ctx), []string{it.ID})
 	if err != nil {
 		return err
 	}
+	itemUnits, has := mapItemUnits[it.ID]
+	if !has {
+		return sdk.WithStack(fmt.Errorf("unable to find item units"))
+	}
+
 	// Random pick a unit
 	idx := 0
 	if len(itemUnits) > 1 {
@@ -114,59 +147,34 @@ func (s *Service) pushItemLogIntoCache(ctx context.Context, item sdk.CDNItem) er
 		return sdk.WithStack(fmt.Errorf("unable to find unit %s", unit.Name))
 	}
 
+	t1 := time.Now()
+
 	// Create a reader
-	reader, err := unitStorage.NewReader(ctx, *refItemUnit)
+	storageReader, err := unitStorage.NewReader(ctx, *refItemUnit)
 	if err != nil {
 		return err
 	}
+	defer storageReader.Close()
 
 	// Create a writer for the cache
-	cacheWriter := s.LogCache.NewWriter(item.ID)
+	cacheWriter := s.LogCache.NewWriter(it.ID)
+	defer cacheWriter.Close()
 
 	// Write data in cache
-	chanError := make(chan error)
-	pr, pw := io.Pipe()
-
-	go func() {
-		defer pw.Close()
-		if err := unitStorage.Read(*refItemUnit, reader, pw); err != nil {
-			chanError <- err
-		}
-		close(chanError)
-	}()
-	if _, err := io.Copy(cacheWriter, pr); err != nil {
-		_ = pr.Close()
-		_ = reader.Close()
-		_ = cacheWriter.Close()
+	if err := unitStorage.Read(*refItemUnit, storageReader, cacheWriter); err != nil {
 		return err
 	}
 
-	if err := pr.Close(); err != nil {
-		_ = reader.Close()
-		_ = cacheWriter.Close()
-		return sdk.WithStack(err)
-	}
+	log.InfoWithFields(ctx, log.Fields{
+		"item_apiref":               it.APIRefHash,
+		"duration_milliseconds_num": t1.Sub(t0).Milliseconds(),
+	}, "item %s has been pushed to cache", it.ID)
 
-	if err := reader.Close(); err != nil {
-		_ = cacheWriter.Close()
-		return sdk.WithStack(err)
-	}
-
-	if err := cacheWriter.Close(); err != nil {
-		return sdk.WithStack(err)
-	}
-
-	for err := range chanError {
-		if err != nil {
-			return sdk.WithStack(err)
-		}
-	}
-
-	log.Info(ctx, "log %s has been pushed to cache", item.ID)
 	return nil
 }
 
 func (s *Service) completeItem(ctx context.Context, tx gorpmapper.SqlExecutorWithTx, itemUnit sdk.CDNItemUnit) error {
+	t0 := time.Now()
 	// We need to lock the item and set its status to complete and also generate data hash
 	it, err := item.LoadAndLockByID(ctx, s.Mapper, tx, itemUnit.ItemID)
 	if err != nil {
@@ -230,6 +238,14 @@ func (s *Service) completeItem(ctx context.Context, tx gorpmapper.SqlExecutorWit
 	if err := item.Update(ctx, s.Mapper, tx, it); err != nil {
 		return err
 	}
+
+	t1 := time.Now()
+
+	log.InfoWithFields(ctx, log.Fields{
+		"item_apiref":               it.APIRefHash,
+		"duration_milliseconds_num": t1.Sub(t0).Milliseconds(),
+		"item_size_num":             it.Size,
+	}, "completeItem> item %s has been completed", it.ID)
 
 	return nil
 }

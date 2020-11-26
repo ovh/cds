@@ -4,13 +4,11 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"strings"
 	"sync/atomic"
 	"time"
 
 	"github.com/Shopify/sarama"
 	"github.com/fsamin/go-dump"
-	cluster "gopkg.in/bsm/sarama-cluster.v2"
 
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
@@ -32,7 +30,7 @@ func (s *Service) saveKafkaExecution(t *sdk.Task, error string, nbError int64) {
 }
 
 func (s *Service) startKafkaHook(ctx context.Context, t *sdk.Task) error {
-	var kafkaIntegration, kafkaUser, projectKey, topic string
+	var kafkaIntegration, projectKey, topic string
 	for k, v := range t.Config {
 		switch k {
 		case sdk.HookModelIntegration:
@@ -49,70 +47,98 @@ func (s *Service) startKafkaHook(ctx context.Context, t *sdk.Task) error {
 		return sdk.WrapError(err, "Cannot get kafka configuration for %s/%s", projectKey, kafkaIntegration)
 	}
 
-	var password, broker string
-	for k, v := range pf.Config {
-		switch k {
-		case "password":
-			password = v.Value
-		case "broker url":
-			broker = v.Value
-		case "username":
-			kafkaUser = v.Value
-		}
-
-	}
-
 	var config = sarama.NewConfig()
-	config.Net.TLS.Enable = true
-	config.Net.SASL.Enable = true
-	config.Net.SASL.User = kafkaUser
-	config.Net.SASL.Password = password
-	config.Version = sarama.V0_10_0_1
-
-	config.ClientID = kafkaUser
-
-	clusterConfig := cluster.NewConfig()
-	clusterConfig.Config = *config
-	clusterConfig.Consumer.Return.Errors = true
-
-	var consumerGroup = fmt.Sprintf("%s.%s", kafkaUser, t.UUID)
-	var errConsumer error
-	consumer, errConsumer := cluster.NewConsumer(
-		strings.Split(broker, ","),
-		consumerGroup,
-		[]string{topic},
-		clusterConfig)
-
-	if errConsumer != nil {
-		_ = s.stopTask(ctx, t)
-		return fmt.Errorf("startKafkaHook>Error creating consumer: (%s %s %s %s): %v", broker, consumerGroup, topic, kafkaUser, errConsumer)
+	if _, ok := pf.Config["disableTLS"]; ok && pf.Config["disableTLS"].Value == "true" {
+		config.Net.TLS.Enable = false
+	} else {
+		config.Net.TLS.Enable = true
+	}
+	if _, ok := pf.Config["disableSASL"]; ok && pf.Config["disableSASL"].Value == "true" {
+		config.Net.SASL.Enable = false
+	} else {
+		config.Net.SASL.Enable = true
+		config.Net.SASL.User = pf.Config["username"].Value
+		config.Net.SASL.Password = pf.Config["password"].Value
+	}
+	if _, ok := pf.Config["user"]; ok && pf.Config["user"].Value != "" {
+		config.ClientID = pf.Config["user"].Value
+	} else {
+		config.ClientID = "cds"
 	}
 
-	// Consume errors
+	config.Consumer.Return.Errors = true
+	if v, ok := pf.Config["version"]; ok && v.Value != "" {
+		kafkaVersion, err := sarama.ParseKafkaVersion(pf.Config["version"].Value)
+		if err != nil {
+			return fmt.Errorf("error parsing Kafka version %v err:%s", kafkaVersion, err)
+		}
+		config.Version = kafkaVersion
+	} else {
+		config.Version = sarama.V0_10_2_0
+	}
+
+	var group = fmt.Sprintf("%s.%s", config.Net.SASL.User, t.UUID)
+	consumerGroup, err := sarama.NewConsumerGroup([]string{pf.Config["broker url"].Value}, group, config)
+	if err != nil {
+		_ = s.stopTask(ctx, t)
+		return fmt.Errorf("startKafkaHook>Error creating consumer: (%s %s %s %s): %v", pf.Config["broker url"].Value, consumerGroup, topic, config.Net.SASL.User, err)
+	}
+
+	// Track errors
 	go func() {
-		for err := range consumer.Errors() {
+		for err := range consumerGroup.Errors() {
 			s.saveKafkaExecution(t, err.Error(), 1)
 		}
 	}()
 
-	// consume message
-	go func() {
+	h := &handler{
+		task: t,
+		dao:  &s.Dao,
+	}
+
+	s.GoRoutines.Exec(context.Background(), "kafka-consume-"+topic, func(ctx context.Context) {
 		atomic.AddInt64(&nbKafkaConsumers, 1)
 		defer atomic.AddInt64(&nbKafkaConsumers, -1)
-		for msg := range consumer.Messages() {
-			exec := sdk.TaskExecution{
-				Status:    TaskExecutionScheduled,
-				Config:    t.Config,
-				Type:      TypeKafka,
-				UUID:      t.UUID,
-				Timestamp: time.Now().UnixNano(),
-				Kafka:     &sdk.KafkaTaskExecution{Message: msg.Value},
+		for {
+			if err := consumerGroup.Consume(ctx, []string{topic}, h); err != nil {
+				log.Error(ctx, "error on consume:%s", err)
 			}
-			s.Dao.SaveTaskExecution(&exec)
-			consumer.MarkOffset(msg, "delivered")
 		}
-	}()
+	})
 
+	return nil
+}
+
+// handler represents a Sarama consumer group consumer
+type handler struct {
+	task *sdk.Task
+	dao  *dao
+}
+
+// Setup is run at the beginning of a new session, before ConsumeClaim
+func (h *handler) Setup(s sarama.ConsumerGroupSession) error {
+	return nil
+}
+
+// Cleanup is run at the end of a session, once all ConsumeClaim goroutines have exited
+func (h *handler) Cleanup(sarama.ConsumerGroupSession) error {
+	return nil
+}
+
+// ConsumeClaim must start a consumer loop of ConsumerGroupClaim's Messages().
+func (h *handler) ConsumeClaim(session sarama.ConsumerGroupSession, claim sarama.ConsumerGroupClaim) error {
+	for message := range claim.Messages() {
+		exec := sdk.TaskExecution{
+			Status:    TaskExecutionScheduled,
+			Config:    h.task.Config,
+			Type:      TypeKafka,
+			UUID:      h.task.UUID,
+			Timestamp: time.Now().UnixNano(),
+			Kafka:     &sdk.KafkaTaskExecution{Message: message.Value},
+		}
+		h.dao.SaveTaskExecution(&exec)
+		session.MarkMessage(message, "delivered")
+	}
 	return nil
 }
 

@@ -53,6 +53,8 @@ export class EventType {
     static RUN_WORKFLOW_NODE = 'sdk.EventRunWorkflowNode';
     static RUN_WORKFLOW_OUTGOING_HOOK = 'sdk.EventRunWorkflowOutgoingHook';
 
+    static WORKFLOW_RETENTION_DRYRUN = 'sdk.EventRetentionWorkflowDryRun';
+
     static BROADCAST_PREFIX = 'sdk.EventBroadcast';
     static BROADCAST_ADD = 'sdk.EventBroadcastAdd';
     static BROADCAST_UPDATE = 'sdk.EventBroadcastUpdate';

@@ -343,7 +343,7 @@ func (c *vcsClient) Branches(ctx context.Context, fullname string) ([]sdk.VCSBra
 	branches := []sdk.VCSBranch{}
 	path := fmt.Sprintf("/vcs/%s/repos/%s/branches", c.name, fullname)
 	if _, err := c.doJSONRequest(ctx, "GET", path, nil, &branches); err != nil {
-		return nil, sdk.WrapError(err, "unable to find branches on repository %s from %s", fullname, c.name)
+		return nil, sdk.NewErrorFrom(err, "unable to find branches on repository %s from %s", fullname, c.name)
 	}
 
 	c.Cache().SetDefault("/branches/"+fullname, branches)
@@ -364,7 +364,7 @@ func (c *vcsClient) Branch(ctx context.Context, fullname string, branchName stri
 func DefaultBranch(ctx context.Context, c sdk.VCSAuthorizedClientCommon, fullname string) (sdk.VCSBranch, error) {
 	branches, err := c.Branches(ctx, fullname)
 	if err != nil {
-		return sdk.VCSBranch{}, sdk.WrapError(err, "Unable to list branches on repository %s", fullname)
+		return sdk.VCSBranch{}, err
 	}
 	for _, b := range branches {
 		if b.Default {
@@ -407,12 +407,12 @@ func (c *vcsClient) Commit(ctx context.Context, fullname, hash string) (sdk.VCSC
 	return commit, nil
 }
 
-func (c *vcsClient) PullRequest(ctx context.Context, fullname string, ID int) (sdk.VCSPullRequest, error) {
+func (c *vcsClient) PullRequest(ctx context.Context, fullname string, ID string) (sdk.VCSPullRequest, error) {
 	pr := sdk.VCSPullRequest{}
-	path := fmt.Sprintf("/vcs/%s/repos/%s/pullrequests/%d", c.name, fullname, ID)
+	path := fmt.Sprintf("/vcs/%s/repos/%s/pullrequests/%s", c.name, fullname, url.PathEscape(ID))
 	if code, err := c.doJSONRequest(ctx, "GET", path, nil, &pr); err != nil {
 		if code != http.StatusNotFound {
-			return pr, sdk.WrapError(err, "unable to find pullrequest %d on repository %s from %s", ID, fullname, c.name)
+			return pr, sdk.WrapError(err, "unable to find pullrequest %s on repository %s from %s", ID, fullname, c.name)
 		}
 		return pr, sdk.WithStack(sdk.ErrNotFound)
 	}

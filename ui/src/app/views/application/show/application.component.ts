@@ -90,7 +90,12 @@ export class ApplicationShowComponent implements OnInit, OnDestroy {
         this.workflowPipeline = this._routeActivated.snapshot.queryParams['wpipeline'];
 
         this.projectSubscription = this._store.select(ProjectState)
-            .subscribe((projectState: ProjectStateModel) => this.project = projectState.project);
+            .subscribe(
+                (projectState: ProjectStateModel) => {
+                    this.project = projectState.project;
+                    this._cd.markForCheck();
+                }
+            );
 
         this._routeParamsSub = this._routeActivated.params.subscribe(params => {
             let projectKey = params['key'];

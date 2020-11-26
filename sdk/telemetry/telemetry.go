@@ -100,6 +100,7 @@ func Init(ctx context.Context, cfg Configuration, s Service) (context.Context, e
 
 // Tags contants
 const (
+	TagHostname           = "hostname"
 	TagServiceType        = "service_type"
 	TagServiceName        = "service_name"
 	TagWorkflow           = "workflow"
@@ -114,6 +115,10 @@ const (
 	TagPipelineDeep       = "pipeline_deep"
 	TagWorker             = "worker"
 	TagPermission         = "permission"
+	TagStorage            = "storage"
+	TagType               = "type"
+	TagStatus             = "status"
+	TagPercentil          = "percentil"
 )
 
 func ContextWithTag(ctx context.Context, s ...interface{}) context.Context {

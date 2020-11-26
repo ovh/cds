@@ -65,6 +65,8 @@ func (g *githubClient) SetStatus(ctx context.Context, event sdk.Event) error {
 	}
 	buf := bytes.NewBuffer(b)
 
+	log.Debug("SetStatus> github post on %v body:%v", path, string(b))
+
 	res, err := g.post(path, "application/json", buf, nil)
 	if err != nil {
 		return sdk.WrapError(err, "Unable to post status")
@@ -76,6 +78,8 @@ func (g *githubClient) SetStatus(ctx context.Context, event sdk.Event) error {
 	if err != nil {
 		return sdk.WrapError(err, "Unable to read body")
 	}
+
+	log.Debug("SetStatus> github response for %v body:%v", path, string(body))
 
 	if res.StatusCode != 201 {
 		return sdk.WrapError(err, "Unable to create status on github. Status code : %d - Body: %s - target:%s", res.StatusCode, body, data.urlPipeline)

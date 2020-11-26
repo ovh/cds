@@ -1,0 +1,14 @@
+name: ITSCWRKFLW18-WORKFLOW
+version: v2.0
+workflow:
+  pipeline:
+    pipeline: ITSCWRKFLW18-PIPELINE
+hooks:
+  pipeline:
+    - type: Kafka hook
+      config:
+        integration: myKafkaHookIntegration
+        topic: test.hook
+notifications:
+  - type: event
+    integration: myKafkaIntegration

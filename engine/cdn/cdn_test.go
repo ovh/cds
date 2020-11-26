@@ -5,12 +5,16 @@ import (
 	"context"
 	"crypto/rsa"
 	"encoding/json"
-	"github.com/gorilla/mux"
-	"github.com/stretchr/testify/require"
-	"gopkg.in/spacemonkeygo/httpsig.v0"
+	"io/ioutil"
 	"net/http"
 	"sync"
 	"testing"
+	"time"
+
+	"github.com/go-gorp/gorp"
+	"github.com/gorilla/mux"
+	"github.com/stretchr/testify/require"
+	"gopkg.in/spacemonkeygo/httpsig.v0"
 
 	"github.com/ovh/cds/engine/api"
 	"github.com/ovh/cds/engine/cdn/item"
@@ -25,10 +29,9 @@ import (
 
 func newRouter(m *mux.Router, p string) *api.Router {
 	r := &api.Router{
-		Mux:        m,
-		Prefix:     p,
-		URL:        "",
-		Background: context.Background(),
+		Mux:    m,
+		Prefix: p,
+		URL:    "",
 	}
 	return r
 }
@@ -46,21 +49,23 @@ func newTestService(t *testing.T) (*Service, *test.FakeTransaction) {
 	t.Cleanup(end)
 
 	router := newRouter(mux.NewRouter(), "/"+test.GetTestName(t))
-	var cancel context.CancelFunc
-	router.Background, cancel = context.WithCancel(context.Background())
 	s := &Service{
 		Router:              router,
 		DBConnectionFactory: factory,
 		Cache:               cache,
 		Mapper:              m,
 	}
+	s.GoRoutines = sdk.NewGoRoutines()
 	if fakeAPIPrivateKey.key == nil {
 		fakeAPIPrivateKey.key, _ = jws.NewRandomRSAKey()
 	}
+	s.Common.GoRoutines = sdk.NewGoRoutines()
 	s.ParsedAPIPublicKey = &fakeAPIPrivateKey.key.PublicKey
-	s.initRouter(context.TODO())
 
-	t.Cleanup(func() { cancel() })
+	ctx, cancel := context.WithCancel(context.Background())
+	s.initRouter(ctx)
+	t.Cleanup(cancel)
+
 	return s, db
 }
 
@@ -97,3 +102,34 @@ var fakeAPIPrivateKey = struct {
 	sync.Mutex
 	key *rsa.PrivateKey
 }{}
+
+func newRunningStorageUnits(t *testing.T, m *gorpmapper.Mapper, dbMap *gorp.DbMap, ctx context.Context, maxStepSize int64) *storage.RunningStorageUnits {
+	cfg := test.LoadTestingConf(t, sdk.TypeCDN)
+	tmpDir, err := ioutil.TempDir("", t.Name()+"-cdn-1-*")
+	require.NoError(t, err)
+
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	t.Cleanup(cancel)
+
+	cdnUnits, err := storage.Init(ctx, m, dbMap, sdk.NewGoRoutines(), storage.Configuration{
+		HashLocatorSalt: "thisismysalt",
+		Buffer: storage.BufferConfiguration{
+			Name: "redis_buffer",
+			Redis: storage.RedisBufferConfiguration{
+				Host:     cfg["redisHost"],
+				Password: cfg["redisPassword"],
+			},
+		},
+		Storages: []storage.StorageConfiguration{
+			{
+				Name: "local_storage",
+				Local: &storage.LocalStorageConfiguration{
+					Path: tmpDir,
+				},
+			},
+		},
+	})
+	require.NoError(t, err)
+	cdnUnits.Start(ctx, sdk.NewGoRoutines())
+	return cdnUnits
+}

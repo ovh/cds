@@ -2,11 +2,10 @@ package storage
 
 import (
 	"context"
-	"fmt"
 	"io"
 	"time"
 
-	"github.com/sirupsen/logrus"
+	"github.com/fujiwara/shapeio"
 
 	"github.com/ovh/cds/engine/cdn/item"
 	"github.com/ovh/cds/engine/gorpmapper"
@@ -14,62 +13,57 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
-func (x *RunningStorageUnits) Run(ctx context.Context, s StorageUnit) error {
-	s.Lock()
-	defer s.Unlock()
-	_, err := LoadUnitByID(ctx, x.m, x.db, s.ID())
-	if err != nil {
+func (x *RunningStorageUnits) Run(ctx context.Context, s StorageUnit, nbItem int64) error {
+	if _, err := LoadUnitByID(ctx, x.m, x.db, s.ID()); err != nil {
 		return err
 	}
 
 	// Load items to sync
-	itemIDs, err := LoadAllItemIDUnknownByUnitOrderByUnitID(x.db, s.ID(), x.Buffer.ID(), 100)
+	itemIDs, err := LoadAllItemIDUnknownByUnitOrderByUnitID(x.db, s.ID(), x.Buffer.ID(), nbItem)
 	if err != nil {
 		return err
 	}
 
-	if len(itemIDs) > 0 {
-		log.Info(ctx, "storage.Run> unit %s has %d items to sync", s.Name(), len(itemIDs))
-	}
-
 	for _, id := range itemIDs {
-		tx, err := x.db.Begin()
-		if err != nil {
-			return err
-		}
-
-		it, err := item.LoadAndLockByID(ctx, x.m, tx, id, gorpmapper.GetOptions.WithDecryption)
-		if err != nil {
-			if !sdk.ErrorIs(err, sdk.ErrNotFound) {
-				log.ErrorWithFields(ctx, logrus.Fields{"stack_trace": fmt.Sprintf("%+v", err)}, "%s", err)
-			}
-			tx.Rollback() // nolint
-			continue
-		}
-
-		if err := x.runItem(ctx, tx, s, it); err != nil {
-			log.ErrorWithFields(ctx, logrus.Fields{"stack_trace": fmt.Sprintf("%+v", err)}, "%s", err)
-			tx.Rollback() // nolint
-			continue
-		}
-
-		if err := tx.Commit(); err != nil {
-			err = sdk.WrapError(err, "unable to commit txt")
-			log.ErrorWithFields(ctx, logrus.Fields{"stack_trace": fmt.Sprintf("%+v", err)}, "%s", err)
-			tx.Rollback() // nolint
+		select {
+		case s.SyncItemChannel() <- id:
+			log.Debug("unit %s should sync item %s", s.Name(), id)
+		default:
 			continue
 		}
 	}
 	return nil
 }
 
-func (x *RunningStorageUnits) runItem(ctx context.Context, tx gorpmapper.SqlExecutorWithTx, dest StorageUnit, item *sdk.CDNItem) error {
-	t0 := time.Now()
-	log.Debug("storage.runItem(%s, %s)", dest.Name(), item.ID)
-	defer func() {
-		log.Debug("storage.runItem(%s, %s): %fs", dest.Name(), item.ID, time.Since(t0).Seconds())
-	}()
+func (x *RunningStorageUnits) processItem(ctx context.Context, m *gorpmapper.Mapper, tx gorpmapper.SqlExecutorWithTx, s StorageUnit, id string) error {
+	it, err := item.LoadAndLockByID(ctx, x.m, tx, id, gorpmapper.GetOptions.WithDecryption)
+	if err != nil {
+		if !sdk.ErrorIs(err, sdk.ErrNotFound) {
+			return err
+		}
+		return nil
+	}
 
+	log.InfoWithFields(ctx, log.Fields{
+		"item_apiref":   it.APIRefHash,
+		"item_size_num": it.Size,
+	}, "processing item %s on %s", it.ID, s.Name())
+	if _, err = LoadItemUnitByUnit(ctx, x.m, tx, s.ID(), id); err == nil {
+		return err
+
+	}
+	if !sdk.ErrorIs(err, sdk.ErrNotFound) {
+		return err
+	}
+
+	if err := x.runItem(ctx, tx, s, it); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (x *RunningStorageUnits) runItem(ctx context.Context, tx gorpmapper.SqlExecutorWithTx, dest StorageUnit, item *sdk.CDNItem) error {
 	iu, err := x.NewItemUnit(ctx, dest, item)
 	if err != nil {
 		return err
@@ -81,11 +75,27 @@ func (x *RunningStorageUnits) runItem(ctx context.Context, tx gorpmapper.SqlExec
 		return err
 	}
 
+	// Check if the content (based on the locator) is already known from the destination unit
+	otherItemUnits, err := x.GetItemUnitByLocatorByUnit(ctx, iu.Locator, dest.ID())
+	if err != nil {
+		return err
+	}
+
+	if len(otherItemUnits) > 0 {
+		log.InfoWithFields(ctx, log.Fields{
+			"item_apiref":   item.APIRefHash,
+			"item_size_num": item.Size,
+		}, "item %s has been pushed to %s with deduplication", item.ID, dest.Name())
+		return nil
+	}
+
 	// Reload with decryption
 	iu, err = LoadItemUnitByID(ctx, x.m, tx, iu.ID, gorpmapper.GetOptions.WithDecryption)
 	if err != nil {
 		return err
 	}
+
+	t1 := time.Now()
 
 	// Prepare the destination
 	writer, err := dest.NewWriter(ctx, *iu)
@@ -95,6 +105,10 @@ func (x *RunningStorageUnits) runItem(ctx context.Context, tx gorpmapper.SqlExec
 	if writer == nil {
 		return nil
 	}
+
+	rateLimitWriter := shapeio.NewWriter(writer)
+	rateLimitWriter.SetRateLimit(dest.SyncBandwidth())
+	log.Debug("%s write ratelimit: %v", dest.Name(), dest.SyncBandwidth())
 
 	source, err := x.GetSource(ctx, item)
 	if err != nil {
@@ -106,18 +120,23 @@ func (x *RunningStorageUnits) runItem(ctx context.Context, tx gorpmapper.SqlExec
 		return err
 	}
 
+	rateLimitReader := shapeio.NewReader(reader)
+	rateLimitReader.SetRateLimit(source.SyncBandwidth())
+	log.Debug("%s read ratelimit: %v", source.Name(), source.SyncBandwidth())
+
 	chanError := make(chan error)
 	pr, pw := io.Pipe()
+	gr := sdk.NewGoRoutines()
 
-	go func() {
+	gr.Exec(ctx, "runningStorageUnits.runItem.read", func(ctx context.Context) {
 		defer pw.Close()
-		if err := source.Read(reader, pw); err != nil {
+		if err := source.Read(rateLimitReader, pw); err != nil {
 			chanError <- err
 		}
 		close(chanError)
-	}()
+	})
 
-	if err := dest.Write(*iu, pr, writer); err != nil {
+	if err := dest.Write(*iu, pr, rateLimitWriter); err != nil {
 		_ = pr.Close()
 		_ = reader.Close()
 		_ = writer.Close()
@@ -137,13 +156,24 @@ func (x *RunningStorageUnits) runItem(ctx context.Context, tx gorpmapper.SqlExec
 
 	_ = writer.Close()
 
+	t2 := time.Now()
+
 	for err := range chanError {
 		if err != nil {
 			return err
 		}
 	}
 
-	log.Info(ctx, "item %s has been pushed to %s", item.ID, dest.Name())
+	var throughput = item.Size / t2.Sub(t1).Milliseconds()
+
+	log.InfoWithFields(ctx, log.Fields{
+		"item_apiref":               item.APIRefHash,
+		"source":                    source.Name(),
+		"destination":               dest.Name(),
+		"duration_milliseconds_num": t2.Sub(t1).Milliseconds(),
+		"item_size_num":             item.Size,
+		"throughput_num":            throughput,
+	}, "item %s has been pushed to %s (%.3f s)", item.ID, dest.Name(), t2.Sub(t1).Seconds())
 	return nil
 }
 
@@ -154,15 +184,17 @@ func (x *RunningStorageUnits) NewItemUnit(_ context.Context, su Interface, i *sd
 		var err error
 		loc, err = suloc.NewLocator(i.Hash)
 		if err != nil {
-			return nil, sdk.WrapError(err, "unable to compyte convergent locator")
+			return nil, sdk.WrapError(err, "unable to compute convergent locator")
 		}
 	}
 
+	hashLocator := x.HashLocator(loc)
 	var iu = sdk.CDNItemUnit{
 		ItemID:       i.ID,
 		UnitID:       su.ID(),
 		LastModified: time.Now(),
 		Locator:      loc,
+		HashLocator:  hashLocator,
 		Item:         i,
 	}
 

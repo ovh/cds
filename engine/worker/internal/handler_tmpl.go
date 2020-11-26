@@ -44,17 +44,21 @@ func tmplHandler(ctx context.Context, wk *CurrentWorker) http.HandlerFunc {
 		for _, v := range wk.currentJob.params {
 			tmpvars[v.Name] = v.Value
 		}
+		for _, v := range wk.currentJob.secrets {
+			tmpvars[v.Name] = v.Value
+		}
 
 		res, err := interpolate.Do(string(btes), tmpvars)
 		if err != nil {
-			log.Error(ctx, "Unable to interpolate: %v", err)
+			log.Error(ctx, "tmpl> Unable to interpolate: %v", err)
 			newError := sdk.NewError(sdk.ErrWrongRequest, err)
 			writeError(w, r, newError)
 			return
 		}
 
 		if err := ioutil.WriteFile(a.Destination, []byte(res), os.FileMode(0644)); err != nil {
-			writeError(w, r, err)
+			log.Error(ctx, "tmpl> Unable to write file: %v", err)
+			writeError(w, r, sdk.NewError(sdk.ErrWrongRequest, err))
 			return
 		}
 	}

@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component } from '@angular/core';
-import { MonitoringStatus, MonitoringStatusLine } from 'app/model/monitoring.model';
+import { MonitoringStatus, MonitoringStatusLine, MonitoringStatusLineUtil } from 'app/model/monitoring.model';
+import { Column, ColumnType, Filter } from 'app/shared/table/data-table.component';
 import { forkJoin, Observable } from 'rxjs';
 import { finalize, tap } from 'rxjs/operators';
 import { Global, Service } from '../../../../model/service.model';
@@ -20,7 +21,8 @@ export class ServiceListComponent {
     services: Array<Service>;
     profiles: any;
     goroutines: any;
-    filteredStatusLines: Array<MonitoringStatusLine>;
+    columns: Array<Column<MonitoringStatusLine>>;
+    filteredStatusLines: Filter<MonitoringStatusLine>;
     globals: Array<Global> = [];
     globalStatus: Global;
     globalVersion: Global;
@@ -32,6 +34,67 @@ export class ServiceListComponent {
         private _cd: ChangeDetectorRef
     ) {
         this.loading = true;
+
+        this.columns = [
+            <Column<MonitoringStatusLine>>{
+                name: 'common_type',
+                selector: (c: MonitoringStatusLine) => c.type
+            },
+            <Column<MonitoringStatusLine>>{
+                name: 'common_service',
+                selector: (c: MonitoringStatusLine) => c.service
+            },
+            <Column<MonitoringStatusLine>>{
+                name: 'common_component',
+                selector: (c: MonitoringStatusLine) => c.component
+            },
+            <Column<MonitoringStatusLine>>{
+                name: 'common_hostname',
+                selector: (c: MonitoringStatusLine) => c.hostname
+            },
+            <Column<MonitoringStatusLine>>{
+                name: 'common_status',
+                type: ColumnType.LABEL,
+                selector: (c: MonitoringStatusLine) => {
+                    return {
+                        class: MonitoringStatusLineUtil.color(c),
+                        value: c.status
+                    };
+                }
+            },
+            <Column<MonitoringStatusLine>>{
+                name: 'common_value',
+                selector: (c: MonitoringStatusLine) => c.value
+            },
+            <Column<MonitoringStatusLine>>{
+                name: 'common_consumer',
+                selector: (c: MonitoringStatusLine) => c.consumer
+            },
+            <Column<MonitoringStatusLine>>{
+                name: 'common_session',
+                selector: (c: MonitoringStatusLine) => c.session
+            }
+        ];
+
+        this.filteredStatusLines = f => {
+            const lowerFilter = f.toLowerCase();
+            return (line: MonitoringStatusLine) => {
+                if (f === 'NOTICE') {
+                    return line.status.indexOf('AL') !== -1 || line.status.indexOf('WARN') !== -1;
+                }
+                if (f === 'AL' || f === 'WARN' || f === 'OK') {
+                    return line.status.toLowerCase().indexOf(lowerFilter) !== -1;
+                }
+                return line.status.toLowerCase().indexOf(lowerFilter) !== -1 ||
+                line.component.toLowerCase().indexOf(lowerFilter) !== -1 ||
+                line.value.toLowerCase().indexOf(lowerFilter) !== -1 ||
+                line.type.toLowerCase().indexOf(lowerFilter) !== -1 ||
+                (line.service && line.service.toLowerCase().indexOf(lowerFilter) !== -1) ||
+                (line.hostname && line.hostname.toLowerCase().indexOf(lowerFilter) !== -1) ||
+                (line.session && line.session.toLowerCase().indexOf(lowerFilter) !== -1) ||
+                (line.consumer && line.consumer.toLowerCase().indexOf(lowerFilter) !== -1);
+            }
+        };
 
         forkJoin(
             this.refreshProfiles(),
@@ -81,7 +144,6 @@ export class ServiceListComponent {
     refreshStatus(): Observable<any> {
         return this._monitoringService.getStatus().pipe(tap(r => {
             this.status = r;
-            this.filterChange();
         }));
     }
 
@@ -117,34 +179,5 @@ export class ServiceListComponent {
         return this._monitoringService.getGoroutines().pipe(tap(data => {
             this.goroutines = data;
         }));
-    }
-
-    filterChange(): void {
-        if (!this.filter) {
-            this.filteredStatusLines = this.status.lines;
-            return;
-        }
-
-        if (this.filter === 'NOTICE') {
-            this.filteredStatusLines = this.status.lines.filter(line => {
-                return line.status.indexOf('AL') !== -1 || line.status.indexOf('WARN') !== -1
-            });
-            return
-        }
-
-        if (this.filter === 'AL' || this.filter === 'WARN' || this.filter === 'OK') {
-            this.filteredStatusLines = this.status.lines.filter(line => {
-                return line.status.indexOf(this.filter) !== -1
-            });
-            return
-        }
-
-        const lowerFilter = this.filter.toLowerCase();
-
-        this.filteredStatusLines = this.status.lines.filter(line => {
-            return line.status.toLowerCase().indexOf(lowerFilter) !== -1 ||
-                line.component.toLowerCase().indexOf(lowerFilter) !== -1 ||
-                line.value.toLowerCase().indexOf(lowerFilter) !== -1
-        });
     }
 }

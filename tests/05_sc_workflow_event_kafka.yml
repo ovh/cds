@@ -1,0 +1,67 @@
+name: Workflow (ITSCWRKFLW18) should use the kafka integration
+version: "2"
+
+testcases:
+- name: assert filepath, your current directory must be at the root of this project
+  steps:
+  - script: '[ -f ./fixtures/ITSCWRKFLW18/pipeline.pip.yml ]'
+  - script: '[ -f ./fixtures/ITSCWRKFLW18/workflow.yml ]'
+
+- name: prepare test
+  steps:
+  - script: "{{.cdsctl}} -f {{.cdsctl.config}} project remove --force ITSCWRKFLW18"
+  - script: "{{.cdsctl}} -f {{.cdsctl.config}} group remove --force itscwrkflw18"
+  - script: "{{.cdsctl}} -f {{.cdsctl.config}} project add ITSCWRKFLW18 ITSCWRKFLW18"
+
+- name: import integrations
+  steps:
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} admin integration-model import ./fixtures/integrations/kafka-public.yml
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} project integration import ITSCWRKFLW18 ./fixtures/integrations/kafka.yml
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} project integration import ITSCWRKFLW18 ./fixtures/integrations/kafka-hook.yml
+
+- name: import workflow
+  steps:
+  - script:  {{.cdsctl}} -f {{.cdsctl.config}} workflow push ITSCWRKFLW18 ./fixtures/ITSCWRKFLW18/*.yml --skip-update-files
+
+- name: check if consumer kafka is started
+  steps:
+  - script: sleep 15 && {{.cdsctl}} -f {{.cdsctl.config}} admin services status --type=hooks|grep 'Hook Kafka Consumers' | grep OK
+  retry: 30
+  delay: 10
+
+- name: run workflow by sending a kafka event
+  steps:
+  - script: kafkacat -b localhost:9092 -t test.hook -T -P -l ./fixtures/ITSCWRKFLW18/input-kafka.json
+
+- name: check event in topic test.eventsproject
+  steps:
+  - script: kafkacat -b localhost:9092 -t test.eventsproject -C -o -1 -c 1
+    assertions:
+    - result.code ShouldEqual 0
+    - "result.systemoutjson.type_event ShouldContainSubstring sdk.EventRunWorkflowJob"
+    retry: 30
+    delay: 10
+
+- name: check event in topic test.eventspublic
+  steps:
+  - script: kafkacat -b localhost:9092 -t test.eventspublic -C -o -1 -c 1
+    assertions:
+    - result.code ShouldEqual 0
+    - "result.systemoutjson.type_event ShouldContainSubstring sdk.EventRunWorkflowJob"
+    retry: 30
+    delay: 10
+
+- name: check workflow
+  steps:
+  - script:  {{.cdsctl}} -f {{.cdsctl.config}} workflow status ITSCWRKFLW18 ITSCWRKFLW18-WORKFLOW 1 --format json
+    retry: 10
+    delay: 3
+    assertions:
+    - result.code ShouldEqual 0
+    - result.systemoutjson.last_execution ShouldNotBeEmpty
+    - result.systemoutjson.start ShouldNotBeEmpty
+    - result.systemoutjson.payload ShouldNotBeEmpty
+    - result.systemoutjson.payload ShouldContainSubstring fookafka:barkafka
+    - result.systemoutjson.num ShouldContainSubstring 1
+    - result.systemoutjson.status ShouldEqual Success
+    - result.systemoutjson.tags ShouldContainSubstring triggered_by

@@ -37,7 +37,12 @@ enableLogProcessing = true
 
 ```
 
-* Start CDN: it will begin to migrate all your logs from all your projects
+* Start CDN
+
+* Start migration using the command line
+```
+cdsctl admin cdn migrate
+```
 
 * You can follow the migration from CDN logs or with the CDS command line:
 

@@ -95,10 +95,8 @@ func CheckWorkerModelRegister(h Interface, modelPath string) error {
 	var m *sdk.Model
 	for i := range models {
 		m = &models[i]
-		year, month, day := m.LastRegistration.Date()
 		if m.Group.Name+"/"+m.Name == modelPath {
-			sendError = year == 1 && month == 1 && day == 1
-			log.Debug("checking last registration date of %s: %v (%v)", m.Name, m.LastRegistration, sendError)
+			sendError = m.NeedRegistration
 			break
 		}
 	}

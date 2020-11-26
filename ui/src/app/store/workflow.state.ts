@@ -2,13 +2,13 @@ import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Router } from '@angular/router';
 import { Action, createSelector, Selector, State, StateContext } from '@ngxs/store';
+import { RunToKeep } from 'app/model/purge.model';
 import { WNode, WNodeHook, WNodeTrigger, Workflow } from 'app/model/workflow.model';
-import { WorkflowNodeJobRun, WorkflowNodeRun, WorkflowRun } from 'app/model/workflow.run.model';
+import { WorkflowNodeJobRun, WorkflowNodeRun, WorkflowRun, WorkflowRunSummary } from 'app/model/workflow.run.model';
 import { NavbarService } from 'app/service/navbar/navbar.service';
 import { RouterService } from 'app/service/router/router.service';
 import { WorkflowRunService } from 'app/service/workflow/run/workflow.run.service';
 import { WorkflowService } from 'app/service/workflow/workflow.service';
-import { WorkflowSidebarMode } from 'app/service/workflow/workflow.sidebar.store';
 import * as actionAsCode from 'app/store/ascode.action';
 import cloneDeep from 'lodash-es/cloneDeep';
 import { finalize, first, tap } from 'rxjs/operators';
@@ -23,16 +23,17 @@ export class WorkflowStateModel {
     hook: WNodeHook; // selected hook
     editModal: boolean; // is edit modal is opened
     loadingWorkflow: boolean;
-    loadingWorkflowRuns: boolean;
     loadingWorkflowRun: boolean;
     loadingWorkflowNodeRun: boolean;
     canEdit: boolean; // user permission
 
-    sidebar: string;
+    retentionDryRunResults: Array<RunToKeep>;
+    retentionDryRunStatus: string;
+    retentionDryRunNbAnalyzedRuns: number;
     workflowRun: WorkflowRun;
     workflowNodeRun: WorkflowNodeRun;
     workflowNodeJobRun: WorkflowNodeJobRun;
-    listRuns: Array<WorkflowRun>;
+    listRuns: Array<WorkflowRunSummary>;
     filters?: {};
     editWorkflow: Workflow;
     editMode: boolean;
@@ -48,15 +49,16 @@ export function getInitialWorkflowState(): WorkflowStateModel {
         hook: null,
         editModal: false,
         loadingWorkflow: false,
-        loadingWorkflowRuns: false,
         loadingWorkflowRun: false,
         loadingWorkflowNodeRun: false,
         canEdit: false,
         workflowRun: null,
         workflowNodeRun: null,
         workflowNodeJobRun: null,
-        listRuns: new Array<WorkflowRun>(),
-        sidebar: WorkflowSidebarMode.RUNS,
+        retentionDryRunResults: new Array<RunToKeep>(),
+        retentionDryRunStatus: null,
+        retentionDryRunNbAnalyzedRuns: 0,
+        listRuns: new Array<WorkflowRunSummary>(),
         filters: {},
         editMode: false,
         editModeWorkflowChanged: false
@@ -130,14 +132,7 @@ export class WorkflowState {
     static getListRuns() {
         return createSelector(
             [WorkflowState],
-            (state: WorkflowStateModel): Array<WorkflowRun> => state.listRuns
-        );
-    }
-
-    static getLoadingRuns() {
-        return createSelector(
-            [WorkflowState],
-            (state: WorkflowStateModel): boolean => state.loadingWorkflowRuns
+            (state: WorkflowStateModel): Array<WorkflowRunSummary> => state.listRuns
         );
     }
 
@@ -145,13 +140,6 @@ export class WorkflowState {
         return createSelector(
             [WorkflowState],
             (state: WorkflowStateModel): {} => state.filters
-        );
-    }
-
-    static getSidebarMode() {
-        return createSelector(
-            [WorkflowState],
-            (state: WorkflowStateModel): string => state.sidebar
         );
     }
 
@@ -230,6 +218,27 @@ export class WorkflowState {
             }
             return j.job.step_status[stepNum];
         };
+    }
+
+    static getRetentionStatus() {
+        return createSelector(
+            [WorkflowState],
+            (state: WorkflowStateModel): string => state.retentionDryRunStatus
+        );
+    }
+
+    static getRetentionDryRunResults() {
+        return createSelector(
+            [WorkflowState],
+            (state: WorkflowStateModel): Array<RunToKeep> => state.retentionDryRunResults
+        );
+    }
+
+    static getRetentionProgress() {
+        return createSelector(
+            [WorkflowState],
+            (state: WorkflowStateModel): number => state.retentionDryRunNbAnalyzedRuns
+        );
     }
 
     @Action(actionWorkflow.OpenEditModal)
@@ -781,15 +790,10 @@ export class WorkflowState {
     @Action(actionWorkflow.SelectHook)
     selectHook(ctx: StateContext<WorkflowStateModel>, action: actionWorkflow.SelectHook) {
         const state = ctx.getState();
-        let sidebar = WorkflowSidebarMode.EDIT_HOOK;
-        if (state.workflowRun) {
-            sidebar = WorkflowSidebarMode.RUN_HOOK;
-        }
         ctx.setState({
             ...state,
             node: action.payload.node,
             hook: action.payload.hook,
-            sidebar: sidebar
         });
     }
 
@@ -1008,7 +1012,7 @@ export class WorkflowState {
     }
 
     @Action(actionWorkflow.ExternalChangeWorkflow)
-    externalChange(ctx: StateContext<WorkflowStateModel>, action: actionWorkflow.ExternalChangeWorkflow) {
+    externalChange(ctx: StateContext<WorkflowStateModel>, _: actionWorkflow.ExternalChangeWorkflow) {
         const state = ctx.getState();
         ctx.setState({
             ...state,
@@ -1057,7 +1061,6 @@ export class WorkflowState {
                     workflowRun: null,
                     workflowNodeRun: null,
                     canEdit: state.workflowRun ? false : canEdit,
-                    sidebar: WorkflowSidebarMode.RUNS,
                     editMode: editMode
                 });
             }));
@@ -1105,7 +1108,7 @@ export class WorkflowState {
     }
 
     @Action(actionWorkflow.CleanWorkflowState)
-    clearCache(ctx: StateContext<WorkflowStateModel>, action: actionWorkflow.CleanWorkflowState) {
+    clearCache(ctx: StateContext<WorkflowStateModel>, _: actionWorkflow.CleanWorkflowState) {
         ctx.setState(getInitialWorkflowState());
     }
 
@@ -1115,8 +1118,7 @@ export class WorkflowState {
         ctx.setState({
             ...state,
             workflowNodeRun: null,
-            canEdit: false,
-            sidebar: WorkflowSidebarMode.RUNS
+            canEdit: false
         });
     }
 
@@ -1171,41 +1173,36 @@ export class WorkflowState {
         }));
     }
 
-    @Action(actionWorkflow.GetWorkflowRuns)
-    getWorkflowRuns(ctx: StateContext<WorkflowStateModel>, action: actionWorkflow.GetWorkflowRuns) {
+    @Action(actionWorkflow.RemoveWorkflowRunFromList)
+    removeWorkflowRunFromList(ctx: StateContext<WorkflowStateModel>, action: actionWorkflow.RemoveWorkflowRunFromList) {
         const state = ctx.getState();
+        if (state.workflow.name !== action.payload.workflowName || state.projectKey !== action.payload.projectKey) {
+            return;
+        }
         ctx.setState({
             ...state,
-            loadingWorkflowRuns: true,
-            filters: action.payload.filters
+            listRuns: state.listRuns.filter(r => r.num !== action.payload.num)
         });
-        return this._workflowRunService
-            .runs(action.payload.projectKey,
-                action.payload.workflowName,
-                action.payload.limit,
-                action.payload.offset,
-                action.payload.filters).pipe(first(),
-                    finalize(() => {
-                        const stateFin = ctx.getState();
-                        ctx.setState({
-                            ...stateFin,
-                            loadingWorkflowRuns: false
-                        });
-                    }),
-                    tap((wrs: Array<WorkflowRun>) => {
-                        let routeParams = this._routerService.getRouteSnapshotParams({}, this._router.routerState.snapshot.root);
-                        if (action.payload.projectKey !== routeParams['key'] ||
-                            action.payload.workflowName !== routeParams['workflowName']) {
-                            return;
-                        }
-                        const stateRun = ctx.getState();
-                        ctx.setState({
-                            ...stateRun,
-                            projectKey: action.payload.projectKey,
-                            listRuns: wrs,
-                        });
-                    }));
+    }
 
+    @Action(actionWorkflow.SetWorkflowRuns)
+    setWorkflowRuns(ctx: StateContext<WorkflowStateModel>, action: actionWorkflow.SetWorkflowRuns) {
+        let routeParams = this._routerService.getRouteSnapshotParams({}, this._router.routerState.snapshot.root);
+        if (action.payload.projectKey !== routeParams['key'] ||
+            action.payload.workflowName !== routeParams['workflowName']) {
+            return;
+        }
+
+        const state = ctx.getState();
+        let runs = state.listRuns;
+        if (!runs || action.payload.filters !== state.filters) {
+            runs = new Array<WorkflowRunSummary>();
+        }
+        ctx.setState({
+            ...state,
+            filters: action.payload.filters,
+            listRuns: runs.concat(action.payload.runs)
+        });
     }
 
     @Action(actionWorkflow.GetWorkflowNodeRun)
@@ -1243,7 +1240,6 @@ export class WorkflowState {
                     projectKey: action.payload.projectKey,
                     workflowNodeRun: wnr,
                     node: node,
-                    sidebar: WorkflowSidebarMode.RUN_NODE
                 });
                 if (stateNR.workflowNodeJobRun) {
                     ctx.dispatch(new SelectWorkflowNodeRunJob({ jobID: stateNR.workflowNodeJobRun.job.pipeline_action_id }));
@@ -1252,7 +1248,7 @@ export class WorkflowState {
     }
 
     @Action(actionWorkflow.CleanWorkflowRun)
-    cleanWorkflowRun(ctx: StateContext<WorkflowStateModel>, action: actionWorkflow.CleanWorkflowRun) {
+    cleanWorkflowRun(ctx: StateContext<WorkflowStateModel>, _: actionWorkflow.CleanWorkflowRun) {
         const state = ctx.getState();
         ctx.setState({
             ...state,
@@ -1260,34 +1256,41 @@ export class WorkflowState {
             workflowNodeRun: null,
             workflowNodeJobRun: null,
             node: null,
-            canEdit: state.workflow.permissions.writable,
-            sidebar: WorkflowSidebarMode.RUNS
+            canEdit: state.workflow.permissions.writable
         });
+    }
 
+    @Action(actionWorkflow.ClearListRuns)
+    cleanListRuns(ctx: StateContext<WorkflowStateModel>, _: actionWorkflow.CleanWorkflowRun) {
+        const state = ctx.getState();
+        ctx.setState({
+            ...state,
+            listRuns: [],
+        });
     }
 
     @Action(actionWorkflow.UpdateWorkflowRunList)
     updateWorkflowRunList(ctx: StateContext<WorkflowStateModel>, action: actionWorkflow.UpdateWorkflowRunList) {
         const state = ctx.getState();
-        let runs = cloneDeep(state.listRuns);
-        let index = runs.findIndex(wklwRun => wklwRun.id === action.payload.workflowRun.id);
+        let index = state.listRuns.findIndex(wklwRun => wklwRun.id === action.payload.workflowRun.id);
         if (index === -1) {
-            runs.push(action.payload.workflowRun);
             ctx.setState({
                 ...state,
-                listRuns: runs.sort((a, b) => b.num - a.num)
+                listRuns: state.listRuns.concat(WorkflowRun.Summary(action.payload.workflowRun)).sort((a, b) => b.num - a.num)
             });
             return
 
         }
-        if (runs[index].status === action.payload.workflowRun.status
-            && runs[index].tags.length === action.payload.workflowRun.tags.length) {
+        if (state.listRuns[index].status === action.payload.workflowRun.status
+            && state.listRuns[index].tags?.length === action.payload.workflowRun.tags?.length) {
             return;
         }
-        runs[index] = action.payload.workflowRun;
+
         ctx.setState({
             ...state,
-            listRuns: runs
+            listRuns: [...state.listRuns.slice(0, index),
+                WorkflowRun.Summary(action.payload.workflowRun),
+                ...state.listRuns.slice(index + 1)]
         });
     }
 
@@ -1300,8 +1303,7 @@ export class WorkflowState {
         ctx.setState({
             ...state,
             workflowNodeRun: null,
-            node: action.payload.node,
-            sidebar: WorkflowSidebarMode.RUNS
+            node: action.payload.node
         });
     }
 
@@ -1312,8 +1314,7 @@ export class WorkflowState {
         ctx.setState({
             ...state,
             workflowNodeRun: action.payload.workflowNodeRun,
-            node: action.payload.node,
-            sidebar: WorkflowSidebarMode.RUN_NODE
+            node: action.payload.node
         });
     }
 
@@ -1352,17 +1353,8 @@ export class WorkflowState {
         }
     }
 
-    @Action(actionWorkflow.SidebarRunsMode)
-    sidebarRunsMode(ctx: StateContext<WorkflowStateModel>, action: actionWorkflow.SidebarRunsMode) {
-        const state = ctx.getState();
-        ctx.setState({
-            ...state,
-            sidebar: WorkflowSidebarMode.RUNS
-        });
-    }
-
     @Action(actionWorkflow.CancelWorkflowEditMode)
-    cancelWorkflowEditMode(ctx: StateContext<WorkflowStateModel>, action: actionWorkflow.CancelWorkflowEditMode) {
+    cancelWorkflowEditMode(ctx: StateContext<WorkflowStateModel>, _: actionWorkflow.CancelWorkflowEditMode) {
         const state = ctx.getState();
         let editMode = false;
         if (state.workflow.from_repository) {
@@ -1408,5 +1400,33 @@ export class WorkflowState {
             return;
         }
         ctx.dispatch(new actionWorkflow.GetWorkflow({ projectKey: state.projectKey, workflowName: state.workflow.name }));
+    }
+
+    @Action(actionWorkflow.CleanRetentionDryRun)
+    cleanRetentionDryRunEvent(ctx: StateContext<WorkflowStateModel>, _: actionWorkflow.CleanRetentionDryRun) {
+        const state = ctx.getState();
+        ctx.setState({
+            ...state,
+            retentionDryRunResults: new Array<RunToKeep>(),
+            retentionDryRunStatus: null,
+            retentionDryRunNbAnalyzedRuns: 0
+        });
+    }
+
+
+    @Action(actionWorkflow.ComputeRetentionDryRunEvent)
+    receivedRetentionDryRunEvent(ctx: StateContext<WorkflowStateModel>, action: actionWorkflow.ComputeRetentionDryRunEvent) {
+        const state = ctx.getState();
+
+        let runsKept = state.retentionDryRunResults;
+        if (action.payload.event.runs && action.payload.event.runs.length > 0) {
+            runsKept = state.retentionDryRunResults.concat(action.payload.event.runs);
+        }
+        ctx.setState({
+            ...state,
+            retentionDryRunResults: runsKept,
+            retentionDryRunStatus: action.payload.event.status,
+            retentionDryRunNbAnalyzedRuns: state.retentionDryRunNbAnalyzedRuns + action.payload.event.nb_runs_analyzed
+        });
     }
 }

@@ -51,6 +51,7 @@ import (
 	"github.com/ovh/cds/engine/featureflipping"
 	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/engine/service"
+	"github.com/ovh/cds/engine/websocket"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/ovh/cds/sdk/jws"
@@ -78,7 +79,7 @@ type Configuration struct {
 			Host     string `toml:"host" default:"localhost:6379" comment:"If your want to use a redis-sentinel based cluster, follow this syntax! <clustername>@sentinel1:26379,sentinel2:26379,sentinel3:26379" json:"host"`
 			Password string `toml:"password" json:"-"`
 		} `toml:"redis" comment:"Connect CDS to a redis cache If you more than one CDS instance and to avoid losing data at startup" json:"redis"`
-	} `toml:"cache" comment:"######################\n CDS Cache Settings \n#####################\n" json:"cache"`
+	} `toml:"cache" comment:"######################\n CDS Cache Settings \n#####################" json:"cache"`
 	Directories struct {
 		Download string `toml:"download" default:"/var/lib/cds-engine" json:"download"`
 	} `toml:"directories" json:"directories"`
@@ -146,13 +147,14 @@ type Configuration struct {
 		} `toml:"oidc" json:"oidc" comment:"#######\n CDS <-> Open ID Connect Auth. Documentation on https://ovh.github.io/cds/docs/integrations/openid-connect/ \n######"`
 	} `toml:"auth" comment:"##############################\n CDS Authentication Settings# \n#############################" json:"auth"`
 	SMTP struct {
-		Disable  bool   `toml:"disable" default:"true" json:"disable" comment:"Set to false to enable the internal SMTP client"`
-		Host     string `toml:"host" json:"host" comment:"smtp host"`
-		Port     string `toml:"port" json:"port" comment:"smtp port"`
-		TLS      bool   `toml:"tls" json:"tls"`
-		User     string `toml:"user" json:"user"`
-		Password string `toml:"password" json:"-"`
-		From     string `toml:"from" default:"no-reply@cds.local" json:"from"`
+		Disable               bool   `toml:"disable" default:"true" json:"disable" comment:"Set to false to enable the internal SMTP client. If false, emails will be displayed in CDS API Log."`
+		Host                  string `toml:"host" json:"host" comment:"smtp host"`
+		Port                  string `toml:"port" json:"port" comment:"smtp port"`
+		ModeTLS               string `toml:"modeTLS" json:"modeTLS" default:"" comment:"possible values: empty, tls, starttls"`
+		InsecureSkipVerifyTLS bool   `toml:"insecureSkipVerifyTLS" json:"insecureSkipVerifyTLS" default:"false" comment:"skip TLS verification with TLS / StartTLS mode"`
+		User                  string `toml:"user" json:"user" comment:"smtp username"`
+		Password              string `toml:"password" json:"-" comment:"smtp password"`
+		From                  string `toml:"from" default:"no-reply@cds.local" json:"from" comment:"smtp from"`
 	} `toml:"smtp" comment:"#####################\n# CDS SMTP Settings \n####################" json:"smtp"`
 	Artifact struct {
 		Mode  string `toml:"mode" default:"local" comment:"swift, awss3 or local" json:"mode"`
@@ -200,6 +202,9 @@ type Configuration struct {
 		Content string `toml:"content" comment:"Help Content. Warning: this message could be view by anonymous user. Markdown accepted." json:"content" default:""`
 		Error   string `toml:"error" comment:"Help displayed to user on each error. Warning: this message could be view by anonymous user. Markdown accepted." json:"error" default:""`
 	} `toml:"help" comment:"######################\n 'Help' informations \n######################" json:"help"`
+	Workflow struct {
+		MaxRuns int64 `toml:"maxRuns" comment:"Maximum of runs by workflow" json:"maxRuns" default:"255"`
+	} `toml:"workflow" comment:"######################\n 'Workflow' global configuration \n######################" json:"workflow"`
 }
 
 // DefaultValues is the struc for API Default configuration default values
@@ -244,7 +249,8 @@ type API struct {
 	SharedStorage       objectstore.Driver
 	StartupTime         time.Time
 	Maintenance         bool
-	websocketBroker     *websocketBroker
+	WSBroker            *websocket.Broker
+	WSServer            *websocketServer
 	Cache               cache.Store
 	Metrics             struct {
 		WorkflowRunFailed        *stats.Int64Measure
@@ -362,15 +368,30 @@ func (a *API) CheckConfiguration(config interface{}) error {
 	return nil
 }
 
+type StartupConfigConsumerType string
+
+const (
+	StartupConfigConsumerTypeUI            StartupConfigConsumerType = "ui"
+	StartupConfigConsumerTypeHatchery      StartupConfigConsumerType = "hatchery"
+	StartupConfigConsumerTypeHooks         StartupConfigConsumerType = "hooks"
+	StartupConfigConsumerTypeRepositories  StartupConfigConsumerType = "repositories"
+	StartupConfigConsumerTypeDBMigrate     StartupConfigConsumerType = "db-migrate"
+	StartupConfigConsumerTypeVCS           StartupConfigConsumerType = "vcs"
+	StartupConfigConsumerTypeCDN           StartupConfigConsumerType = "cdn"
+	StartupConfigConsumerTypeCDNStorageCDS StartupConfigConsumerType = "cdn-storage-cds"
+	StartupConfigConsumerTypeElasticsearch StartupConfigConsumerType = "elasticsearch"
+)
+
 type StartupConfig struct {
-	Consumers []StartupConfigService `json:"consumers"`
-	IAT       int64                  `json:"iat"`
+	Consumers []StartupConfigConsumer `json:"consumers"`
+	IAT       int64                   `json:"iat"`
 }
-type StartupConfigService struct {
-	ID          string `json:"id"`
-	Name        string `json:"name"`
-	Description string `json:"description"`
-	ServiceType string `json:"service_type"`
+
+type StartupConfigConsumer struct {
+	ID          string                    `json:"id"`
+	Name        string                    `json:"name"`
+	Description string                    `json:"description"`
+	Type        StartupConfigConsumerType `json:"type"`
 }
 
 // Serve will start the http api server
@@ -427,7 +448,8 @@ func (a *API) Serve(ctx context.Context) error {
 		a.Config.SMTP.From,
 		a.Config.SMTP.Host,
 		a.Config.SMTP.Port,
-		a.Config.SMTP.TLS,
+		a.Config.SMTP.ModeTLS,
+		a.Config.SMTP.InsecureSkipVerifyTLS,
 		a.Config.SMTP.Disable)
 
 	//Initialize artifacts storage
@@ -522,7 +544,7 @@ func (a *API) Serve(ctx context.Context) error {
 		a.Config.Cache.Redis.Password,
 		a.Config.Cache.TTL)
 	if err != nil {
-		return fmt.Errorf("cannot connect to cache store: %v", err)
+		return sdk.WrapError(err, "cannot connect to cache store")
 	}
 
 	log.Info(ctx, "Initializing HTTP router")
@@ -532,6 +554,9 @@ func (a *API) Serve(ctx context.Context) error {
 		Background: ctx,
 	}
 	a.InitRouter()
+	if err := a.initWebsocket(event.DefaultPubSubKey); err != nil {
+		return err
+	}
 	if err := InitRouterMetrics(ctx, a); err != nil {
 		log.Error(ctx, "unable to init router metrics: %v", err)
 	}
@@ -626,12 +651,11 @@ func (a *API) Serve(ctx context.Context) error {
 	log.Info(ctx, "Initializing event broker...")
 	if err := event.Initialize(ctx, a.mustDB(), a.Cache); err != nil {
 		log.Error(ctx, "error while initializing event system: %s", err)
-	} else {
-		go event.DequeueEvent(ctx, a.mustDB())
 	}
 
-	// here the generated name of API is ready, we set ServerName with that
-	a.Common.ServiceName = event.GetCDSName()
+	a.GoRoutines.Run(ctx, "event.dequeue", func(ctx context.Context) {
+		event.DequeueEvent(ctx, a.mustDB())
+	}, a.PanicDump())
 
 	log.Info(ctx, "Initializing internal routines...")
 	a.GoRoutines.Run(ctx, "maintenance.Subscribe", func(ctx context.Context) {
@@ -774,7 +798,7 @@ func (a *API) Serve(ctx context.Context) error {
 		}, a.PanicDump())
 	a.GoRoutines.Run(ctx, "workflow.Initialize",
 		func(ctx context.Context) {
-			workflow.Initialize(ctx, a.DBConnectionFactory.GetDBMap(gorpmapping.Mapper), a.Cache, a.Config.URL.UI, a.Config.DefaultOS, a.Config.DefaultArch, a.Config.Log.StepMaxSize)
+			workflow.Initialize(ctx, a.DBConnectionFactory.GetDBMap(gorpmapping.Mapper), a.Cache, a.Config.URL.UI, a.Config.DefaultOS, a.Config.DefaultArch, a.Config.Log.StepMaxSize, a.Config.Workflow.MaxRuns)
 		}, a.PanicDump())
 	a.GoRoutines.Run(ctx, "PushInElasticSearch",
 		func(ctx context.Context) {
@@ -784,9 +808,17 @@ func (a *API) Serve(ctx context.Context) error {
 		func(ctx context.Context) {
 			metrics.Init(ctx, a.DBConnectionFactory.GetDBMap(gorpmapping.Mapper))
 		}, a.PanicDump())
-	a.GoRoutines.Run(ctx, "Purge",
+	a.GoRoutines.Run(ctx, "Purge-MarkRuns",
 		func(ctx context.Context) {
-			purge.Initialize(ctx, a.Cache, a.DBConnectionFactory.GetDBMap(gorpmapping.Mapper), a.SharedStorage, a.Metrics.WorkflowRunsMarkToDelete, a.Metrics.WorkflowRunsDeleted)
+			purge.MarkRunsAsDelete(ctx, a.Cache, a.DBConnectionFactory.GetDBMap(gorpmapping.Mapper), a.Metrics.WorkflowRunsMarkToDelete)
+		}, a.PanicDump())
+	a.GoRoutines.Run(ctx, "Purge-Runs",
+		func(ctx context.Context) {
+			purge.WorkflowRuns(ctx, a.DBConnectionFactory.GetDBMap(gorpmapping.Mapper), a.SharedStorage, a.Metrics.WorkflowRunsMarkToDelete, a.Metrics.WorkflowRunsDeleted)
+		}, a.PanicDump())
+	a.GoRoutines.Run(ctx, "Purge-Workflow",
+		func(ctx context.Context) {
+			purge.Workflow(ctx, a.Cache, a.DBConnectionFactory.GetDBMap(gorpmapping.Mapper), a.Metrics.WorkflowRunsMarkToDelete)
 		}, a.PanicDump())
 
 	// Check maintenance on redis

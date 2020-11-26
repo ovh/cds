@@ -249,7 +249,7 @@ vcs_ssh_key: proj-blabla
 	errP := workflow.PurgeWorkflowRun(context.TODO(), db, *w1)
 	test.NoError(t, errP)
 
-	_, _, _, count, errRuns := workflow.LoadRuns(db, proj.Key, w1.Name, 0, 10, nil)
+	_, _, _, count, errRuns := workflow.LoadRunsSummaries(db, proj.Key, w1.Name, 0, 10, nil)
 	test.NoError(t, errRuns)
 	test.Equal(t, 2, count, "Number of workflow runs isn't correct")
 }
@@ -338,18 +338,9 @@ func TestPurgeWorkflowRunWithRunningStatus(t *testing.T) {
 	errP := workflow.PurgeWorkflowRun(context.TODO(), db, *w1)
 	test.NoError(t, errP)
 
-	wruns, _, _, count, errRuns := workflow.LoadRuns(db, proj.Key, w1.Name, 0, 10, nil)
+	_, _, _, count, errRuns := workflow.LoadRunsSummaries(db, proj.Key, w1.Name, 0, 10, nil)
 	test.NoError(t, errRuns)
 	test.Equal(t, 5, count, "Number of workflow runs isn't correct")
-
-	toDeleteNb := 0
-	for _, wfRun := range wruns {
-		if wfRun.ToDelete {
-			toDeleteNb++
-		}
-	}
-
-	test.Equal(t, 0, toDeleteNb, "Number of workflow runs to be purged isn't correct")
 }
 
 func TestPurgeWorkflowRunWithOneSuccessWorkflowRun(t *testing.T) {
@@ -541,7 +532,7 @@ vcs_ssh_key: proj-blabla
 	errP := workflow.PurgeWorkflowRun(context.TODO(), db, *w1)
 	test.NoError(t, errP)
 
-	wruns, _, _, count, errRuns := workflow.LoadRuns(db, proj.Key, w1.Name, 0, 10, nil)
+	wruns, _, _, count, errRuns := workflow.LoadRunsSummaries(db, proj.Key, w1.Name, 0, 10, nil)
 	test.NoError(t, errRuns)
 	test.Equal(t, 3, count, "Number of workflow runs isn't correct")
 	wfInSuccess := false
@@ -721,7 +712,7 @@ vcs_ssh_key: proj-blabla
 	n := workflow.CountWorkflowRunsMarkToDelete(context.TODO(), db, nil)
 	assert.True(t, n >= 3, "At least 3 runs must be mark to delete")
 
-	_, _, _, count, errRuns := workflow.LoadRuns(db, proj.Key, w1.Name, 0, 10, nil)
+	_, _, _, count, errRuns := workflow.LoadRunsSummaries(db, proj.Key, w1.Name, 0, 10, nil)
 	test.NoError(t, errRuns)
 	test.Equal(t, 2, count, "Number of workflow runs isn't correct")
 }
@@ -807,7 +798,7 @@ func TestPurgeWorkflowRunWithoutTags(t *testing.T) {
 	errP := workflow.PurgeWorkflowRun(context.TODO(), db, *w1)
 	test.NoError(t, errP)
 
-	_, _, _, count, errRuns := workflow.LoadRuns(db, proj.Key, w1.Name, 0, 10, nil)
+	_, _, _, count, errRuns := workflow.LoadRunsSummaries(db, proj.Key, w1.Name, 0, 10, nil)
 	test.NoError(t, errRuns)
 	test.Equal(t, 3, count, "Number of workflow runs isn't correct")
 }
@@ -893,16 +884,51 @@ func TestPurgeWorkflowRunWithoutTagsBiggerHistoryLength(t *testing.T) {
 	errP := workflow.PurgeWorkflowRun(context.TODO(), db, *w1)
 	test.NoError(t, errP)
 
-	wruns, _, _, count, errRuns := workflow.LoadRuns(db, proj.Key, w1.Name, 0, 10, nil)
+	_, _, _, count, errRuns := workflow.LoadRunsSummaries(db, proj.Key, w1.Name, 0, 10, nil)
 	test.NoError(t, errRuns)
 	test.Equal(t, 10, count, "Number of workflow runs isn't correct")
+}
 
-	toDeleteNb := 0
-	for _, wfRun := range wruns {
-		if wfRun.ToDelete {
-			toDeleteNb++
-		}
-	}
+func TestLoadRunsIDsToDelete(t *testing.T) {
+	db, cache := test.SetupPG(t, bootstrap.InitiliazeDB)
 
-	test.Equal(t, 0, toDeleteNb, "Number of workflow runs to be purged isn't correct (because it should keep at least one in success)")
+	_, _ = db.Exec("update workflow_run set to_delete=false ")
+
+	key := sdk.RandomString(10)
+	proj := assets.InsertTestProject(t, db, cache, key, key)
+
+	w := assets.InsertTestWorkflow(t, db, cache, proj, sdk.RandomString(10))
+
+	wr1, err := workflow.CreateRun(db.DbMap, w, sdk.WorkflowRunPostHandlerOption{Hook: &sdk.WorkflowNodeRunHookEvent{}})
+	assert.NoError(t, err)
+
+	wr2, err := workflow.CreateRun(db.DbMap, w, sdk.WorkflowRunPostHandlerOption{Hook: &sdk.WorkflowNodeRunHookEvent{}})
+	assert.NoError(t, err)
+
+	wr1.ToDelete = true
+	wr2.ToDelete = true
+
+	require.NoError(t, workflow.UpdateWorkflowRun(context.TODO(), db, wr1))
+	require.NoError(t, workflow.UpdateWorkflowRun(context.TODO(), db, wr2))
+
+	ids, offset, limit, count, err := workflow.LoadRunsIDsToDelete(db, 0, 1)
+	require.NoError(t, err)
+	require.Len(t, ids, 1)
+	require.Equal(t, ids[0], wr1.ID)
+	require.Equal(t, int64(0), offset)
+	require.Equal(t, int64(1), limit)
+	require.Equal(t, int64(2), count)
+
+	ids, offset, limit, count, err = workflow.LoadRunsIDsToDelete(db, 1, 1)
+	require.NoError(t, err)
+	require.Len(t, ids, 1)
+	require.Equal(t, ids[0], wr2.ID)
+	require.Equal(t, int64(1), offset)
+	require.Equal(t, int64(1), limit)
+	require.Equal(t, int64(2), count)
+
+	ids, offset, limit, count, err = workflow.LoadRunsIDsToDelete(db, 0, 50)
+	require.NoError(t, err)
+	require.Len(t, ids, 2)
+
 }

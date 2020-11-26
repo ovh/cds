@@ -20,13 +20,14 @@ func (s *Service) initRouter(ctx context.Context) {
 	r := s.Router
 	r.Background = ctx
 	r.URL = s.Cfg.URL
-	r.SetHeaderFunc = api.DefaultHeaders
+	r.SetHeaderFunc = service.DefaultHeaders
+	r.DefaultAuthMiddleware = service.NoAuthMiddleware
 	r.PostMiddlewares = append(r.PostMiddlewares, api.TracingPostMiddleware)
 
-	r.Handle(s.Cfg.DeployURL+"/mon/version", nil, r.GET(api.VersionHandler, api.Auth(false)))
-	r.Handle(s.Cfg.DeployURL+"/mon/status", nil, r.GET(s.statusHandler, api.Auth(false)))
-	r.Handle(s.Cfg.DeployURL+"/mon/metrics", nil, r.GET(service.GetPrometheustMetricsHandler(s), api.Auth(false)))
-	r.Handle(s.Cfg.DeployURL+"/mon/metrics/all", nil, r.GET(service.GetMetricsHandler, api.Auth(false)))
+	r.Handle(s.Cfg.DeployURL+"/mon/version", nil, r.GET(service.VersionHandler))
+	r.Handle(s.Cfg.DeployURL+"/mon/status", nil, r.GET(s.statusHandler))
+	r.Handle(s.Cfg.DeployURL+"/mon/metrics", nil, r.GET(service.GetPrometheustMetricsHandler(s)))
+	r.Handle(s.Cfg.DeployURL+"/mon/metrics/all", nil, r.GET(service.GetMetricsHandler))
 
 	// proxypass
 	r.Mux.PathPrefix(s.Cfg.DeployURL + "/cdsapi").Handler(s.getReverseProxy(s.Cfg.DeployURL+"/cdsapi", s.Cfg.API.HTTP.URL))

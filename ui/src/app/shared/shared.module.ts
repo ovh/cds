@@ -38,7 +38,6 @@ import { ChartComponentComponent } from './chart/chart.component';
 import { CommitListComponent } from './commit/commit.list.component';
 import { DiffItemComponent } from './diff/item/diff.item.component';
 import { DiffListComponent } from './diff/list/diff.list.component';
-import { DurationService } from './duration/duration.service';
 import { FavoriteCardsComponent } from './favorite-cards/favorite-cards.component';
 import { KeysFormComponent } from './keys/form/keys.form.component';
 import { KeysListComponent } from './keys/list/keys.list.component';
@@ -53,6 +52,7 @@ import { ParameterValueComponent } from './parameter/value/parameter.value.compo
 import { PermissionFormComponent } from './permission/form/permission.form.component';
 import { PermissionListComponent } from './permission/list/permission.list.component';
 import { PermissionService } from './permission/permission.service';
+import { AnsiPipe } from './pipes/ansi.pipe';
 import { CutPipe } from './pipes/cut.pipe';
 import { KeysPipe } from './pipes/keys.pipe';
 import { ForMapPipe } from './pipes/map.pipe';
@@ -95,13 +95,7 @@ import { WorkflowTriggerComponent } from './workflow/modal/node-add/workflow.tri
 import { WorkflowNodeEditModalComponent } from './workflow/modal/node-edit/node.edit.modal.component';
 import { WorkflowNodeHookDetailsComponent } from './workflow/node/hook/details/hook.details.component';
 import { WorkflowNodeRunParamComponent } from './workflow/node/run/node.run.param.component';
-import { WorkflowSidebarHookComponent } from './workflow/sidebar/edit-hook/workflow.sidebar.hook.component';
-import { WorkflowSidebarRunHookComponent } from './workflow/sidebar/run-hook/workflow.sidebar.run.hook.component';
 import { WorkflowSidebarRunListComponent } from './workflow/sidebar/run-list/workflow.sidebar.run.component';
-import { ActionStepSummaryComponent } from './workflow/sidebar/run-node/stage/job/action/action.summary.component';
-import { JobStepSummaryComponent } from './workflow/sidebar/run-node/stage/job/job.summary.component';
-import { StageStepSummaryComponent } from './workflow/sidebar/run-node/stage/stage.summary.component';
-import { WorkflowSidebarRunNodeComponent } from './workflow/sidebar/run-node/workflow.sidebar.run.node.component';
 import { WorkflowWizardNodeContextComponent } from './workflow/wizard/context/wizard.context.component';
 import { WorkflowNodeHookFormComponent } from './workflow/wizard/hook/hook.form.component';
 import { WorkflowWizardNodeInputComponent } from './workflow/wizard/input/wizard.input.component';
@@ -138,7 +132,6 @@ import { ZoneComponent } from './zone/zone.component';
         ActionComponent,
         ActionStepComponent,
         ActionStepFormComponent,
-        ActionStepSummaryComponent,
         AsCodeEventComponent,
         AuditListComponent,
         AutoFocusInputComponent,
@@ -158,7 +151,6 @@ import { ZoneComponent } from './zone/zone.component';
         FavoriteCardsComponent,
         ForMapPipe,
         GroupFormComponent,
-        JobStepSummaryComponent,
         KeysFormComponent,
         KeysListComponent,
         KeysPipe,
@@ -175,11 +167,11 @@ import { ZoneComponent } from './zone/zone.component';
         RequirementsListComponent,
         RepoManagerFormComponent,
         SafeHtmlPipe,
+        AnsiPipe,
         SelectFilterComponent,
         SelectorPipe,
         SelectPipe,
         ScrollviewComponent,
-        StageStepSummaryComponent,
         StatusIconComponent,
         TabsComponent,
         TruncatePipe,
@@ -209,10 +201,7 @@ import { ZoneComponent } from './zone/zone.component';
         WorkflowNodeHookDetailsComponent,
         WorkflowNodeHookFormComponent,
         WorkflowNodeRunParamComponent,
-        WorkflowSidebarHookComponent,
         WorkflowSidebarRunListComponent,
-        WorkflowSidebarRunHookComponent,
-        WorkflowSidebarRunNodeComponent,
         WorkflowTemplateApplyFormComponent,
         WorkflowTemplateApplyModalComponent,
         WorkflowTemplateBulkModalComponent,
@@ -237,7 +226,6 @@ import { ZoneComponent } from './zone/zone.component';
         ToastHTTPErrorComponent
     ],
     providers: [
-        DurationService,
         PermissionService,
         SharedService,
         ToastService,
@@ -292,6 +280,7 @@ import { ZoneComponent } from './zone/zone.component';
         TranslateModule,
         TruncatePipe,
         SafeHtmlPipe,
+        AnsiPipe,
         AsCodeSaveModalComponent,
         AsCodeSaveFormComponent,
         VariableComponent,
@@ -304,10 +293,7 @@ import { ZoneComponent } from './zone/zone.component';
         ConfirmModalComponent,
         LabelsEditComponent,
         WorkflowWNodeComponent,
-        WorkflowSidebarHookComponent,
         WorkflowSidebarRunListComponent,
-        WorkflowSidebarRunNodeComponent,
-        WorkflowSidebarRunHookComponent,
         WorkflowWNodeMenuEditComponent,
         WorkflowNodeAddWizardComponent,
         WorkflowDeleteNodeComponent,

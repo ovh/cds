@@ -21,7 +21,7 @@ func (api *API) getWorkflowExportHandler() service.Handler {
 		vars := mux.Vars(r)
 		key := vars["key"]
 		name := vars["permWorkflowName"]
-		withPermissions := FormBool(r, "withPermissions")
+		withPermissions := service.FormBool(r, "withPermissions")
 
 		format := FormString(r, "format")
 		if format == "" {
@@ -64,7 +64,7 @@ func (api *API) getWorkflowPullHandler() service.Handler {
 		vars := mux.Vars(r)
 		key := vars["key"]
 		name := vars["permWorkflowName"]
-		withPermissions := FormBool(r, "withPermissions")
+		withPermissions := service.FormBool(r, "withPermissions")
 
 		opts := make([]v2.ExportOptions, 0)
 		if withPermissions {
@@ -82,7 +82,7 @@ func (api *API) getWorkflowPullHandler() service.Handler {
 		}
 
 		// early returns as json if param set
-		if FormBool(r, "json") {
+		if service.FormBool(r, "json") {
 			raw, err := pull.ToRaw()
 			if err != nil {
 				return err

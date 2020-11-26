@@ -23,16 +23,10 @@ import (
 	"github.com/ovh/cds/sdk/telemetry"
 )
 
-// VersionHandler returns version of current uservice
-func VersionHandler() service.Handler {
-	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		return service.WriteJSON(w, sdk.VersionCurrent(), http.StatusOK)
-	}
-}
-
 // Status returns status, implements interface service.Service
 func (api *API) Status(ctx context.Context) *sdk.MonitoringStatus {
 	m := api.NewMonitoringStatus()
+	m.ServiceName = event.GetCDSName()
 
 	m.AddLine(sdk.MonitoringStatusLine{Component: "Hostname", Value: event.GetHostname(), Status: sdk.MonitoringStatusOK})
 	m.AddLine(sdk.MonitoringStatusLine{Component: "CDSName", Value: api.Name(), Status: sdk.MonitoringStatusOK})
@@ -126,21 +120,19 @@ func (api *API) computeGlobalStatus(srvs []sdk.Service) sdk.MonitoringStatus {
 					})
 				}
 			}
-
-			if strings.Contains(l.Component, "CDSName") {
-				t := resume[s.Type]
-				t.nbOK += nbOK
-				t.nbWarn += nbWarn
-				t.nbAlerts += nbAlert
-				t.nbSrv++
-				resume[s.Type] = t
-
-				nbg.nbOK += nbOK
-				nbg.nbWarn += nbWarn
-				nbg.nbAlerts += nbAlert
-				nbg.nbSrv++
-			}
 		}
+
+		t := resume[s.Type]
+		t.nbOK += nbOK
+		t.nbWarn += nbWarn
+		t.nbAlerts += nbAlert
+		t.nbSrv++
+		resume[s.Type] = t
+
+		nbg.nbOK += nbOK
+		nbg.nbWarn += nbWarn
+		nbg.nbAlerts += nbAlert
+		nbg.nbSrv++
 	}
 
 	if versionOk {

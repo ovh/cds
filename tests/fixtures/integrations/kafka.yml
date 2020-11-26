@@ -1,0 +1,24 @@
+name: myKafkaIntegration
+model:
+  name: Kafka
+  identifier: github.com/ovh/cds/integration/builtin/kafka
+  event: true
+config:
+  broker url:
+    type: string
+    value: localhost:9092
+  password:
+    type: password
+    value: ""
+  username:
+    type: string
+    value: ""
+  topic:
+    type: string
+    value: test.eventsproject
+  disableTLS:
+    type: string
+    value: "true"
+  disableSASL:
+    type: string
+    value: "true"
