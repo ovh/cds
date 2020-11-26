@@ -165,12 +165,28 @@ func (s *Service) getItemLogsLinesHandler() service.Handler {
 
 		apiRef := vars["apiRef"]
 
-		// offset can be lower than 0 if we want the n last lines
-		offset := service.FormInt64(r, "offset")
-		limit := service.FormUInt(r, "limit")
-		sort := service.FormInt64(r, "sort") // < 0 for latest logs first, >= 0 for older logs first
+		opts := getItemLogOptions{
+			format:      sdk.CDNReaderFormatJSON,
+			from:        service.FormInt64(r, "offset"), // offset can be lower than 0 if we want the n last lines
+			size:        service.FormUInt(r, "limit"),
+			sort:        service.FormInt64(r, "sort"), // < 0 for latest logs first, >= 0 for older logs first
+			cacheClean:  service.FormBool(r, "cacheClean"),
+			cacheSource: r.FormValue("cacheSource"),
+		}
 
-		_, linesCount, rc, _, err := s.getItemLogValue(ctx, itemType, apiRef, sdk.CDNReaderFormatJSON, offset, limit, sort)
+		// Only admin can use the parameter 'cacheRefresh*'
+		if opts.cacheClean || opts.cacheSource != "" {
+			sessionID := s.sessionID(ctx)
+			data, err := s.Client.AuthSessionGet(sessionID)
+			if err != nil {
+				return err
+			}
+			if data.Consumer.AuthentifiedUser.Ring != sdk.UserRingAdmin {
+				return sdk.WithStack(sdk.ErrUnauthorized)
+			}
+		}
+
+		_, linesCount, rc, _, err := s.getItemLogValue(ctx, itemType, apiRef, opts)
 		if err != nil {
 			return err
 		}

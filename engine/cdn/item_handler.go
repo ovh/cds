@@ -3,7 +3,6 @@ package cdn
 import (
 	"bytes"
 	"context"
-	"fmt"
 	"net/http"
 
 	"github.com/gorilla/mux"
@@ -185,10 +184,10 @@ func (s *Service) getItemCheckSyncHandler() service.Handler {
 		}
 
 		if len(itemsUnits) != 1 {
-			return sdk.ErrNotFound
+			return sdk.WithStack(sdk.ErrNotFound)
 		}
 
-		var contents = map[string]bytes.Buffer{}
+		var contents = map[string]*bytes.Buffer{}
 		for _, iu := range itemsUnits[it.ID] {
 			src, err := s.Units.NewSource(ctx, iu)
 			if err != nil {
@@ -198,10 +197,11 @@ func (s *Service) getItemCheckSyncHandler() service.Handler {
 			if err != nil {
 				return err
 			}
-			buf := contents[src.Name()]
-			if err := src.Read(reader, &buf); err != nil {
+			buf := new(bytes.Buffer)
+			if err := src.Read(reader, buf); err != nil {
 				return err
 			}
+			contents[src.Name()] = buf
 		}
 
 		var lastContent string
@@ -211,10 +211,10 @@ func (s *Service) getItemCheckSyncHandler() service.Handler {
 				continue
 			}
 			if lastContent != buffer.String() {
-				return sdk.WithStack(fmt.Errorf("content of %s on %s doesn't match", apiRef, storage))
+				return sdk.NewErrorFrom(sdk.ErrInvalidData, "content of %s on %s doesn't match", apiRef, storage)
 			}
 		}
 
-		return nil
+		return service.WriteJSON(w, nil, http.StatusOK)
 	}
 }
