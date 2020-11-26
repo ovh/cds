@@ -29,6 +29,10 @@ var (
 
 var globalRateLimit *rateLimiter
 
+type GetWorkerOptions struct {
+	NeedPrivateKey bool
+}
+
 // Start TCP Server
 func (s *Service) runTCPLogServer(ctx context.Context) error {
 	// Init hatcheries cache
@@ -166,7 +170,7 @@ func (s *Service) handleWorkerLog(ctx context.Context, workerName string, worker
 	var signature log.Signature
 
 	// Get worker data from cache
-	workerData, err := s.getClearWorker(ctx, workerName)
+	workerData, err := s.getClearWorker(ctx, workerName, GetWorkerOptions{NeedPrivateKey: true})
 	if err != nil {
 		return err
 	}
@@ -282,8 +286,7 @@ func (s *Service) handleServiceLog(ctx context.Context, hatcheryID int64, hatche
 	}
 
 	// Get worker + check hatchery ID
-	w, err := s.getClearWorker(ctx, workerName)
-
+	w, err := s.getClearWorker(ctx, workerName, GetWorkerOptions{NeedPrivateKey: false})
 	if err != nil {
 		return err
 	}
@@ -313,12 +316,12 @@ func (s *Service) handleServiceLog(ctx context.Context, hatcheryID int64, hatche
 	return nil
 }
 
-func (s *Service) getClearWorker(ctx context.Context, workerName string) (sdk.Worker, error) {
+func (s *Service) getClearWorker(ctx context.Context, workerName string, opts GetWorkerOptions) (sdk.Worker, error) {
 	workerKey := fmt.Sprintf("worker-%s", workerName)
 
 	// Get worker from cache
 	cacheData, ok := logCache.Get(workerKey)
-	if ok {
+	if ok && (!opts.NeedPrivateKey || len(cacheData.(sdk.Worker).PrivateKey) > 0) {
 		return cacheData.(sdk.Worker), nil
 	}
 
@@ -327,11 +330,11 @@ func (s *Service) getClearWorker(ctx context.Context, workerName string) (sdk.Wo
 	if err != nil {
 		return sdk.Worker{}, err
 	}
-	publicKeyDecoded, err := base64.StdEncoding.DecodeString(string(w.PrivateKey))
+	privateKeyDecoded, err := base64.StdEncoding.DecodeString(string(w.PrivateKey))
 	if err != nil {
 		return sdk.Worker{}, sdk.WithStack(err)
 	}
-	w.PrivateKey = publicKeyDecoded
+	w.PrivateKey = privateKeyDecoded
 	logCache.Set(workerKey, *w, gocache.DefaultExpiration)
 
 	return *w, nil
