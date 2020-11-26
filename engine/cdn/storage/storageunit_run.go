@@ -75,6 +75,12 @@ func (x *RunningStorageUnits) runItem(ctx context.Context, tx gorpmapper.SqlExec
 		return err
 	}
 
+	// Reload the item unit
+	iu, err = LoadItemUnitByID(ctx, x.m, tx, iu.ID, gorpmapper.GetOptions.WithDecryption)
+	if err != nil {
+		return err
+	}
+
 	// Check if the content (based on the locator) is already known from the destination unit
 	otherItemUnits, err := x.GetItemUnitByLocatorByUnit(ctx, iu.Locator, dest.ID())
 	if err != nil {
@@ -87,12 +93,6 @@ func (x *RunningStorageUnits) runItem(ctx context.Context, tx gorpmapper.SqlExec
 			"item_size_num": item.Size,
 		}, "item %s has been pushed to %s with deduplication", item.ID, dest.Name())
 		return nil
-	}
-
-	// Reload with decryption
-	iu, err = LoadItemUnitByID(ctx, x.m, tx, iu.ID, gorpmapper.GetOptions.WithDecryption)
-	if err != nil {
-		return err
 	}
 
 	t1 := time.Now()
