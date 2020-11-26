@@ -67,7 +67,7 @@ func TestStoreNewStepLog(t *testing.T) {
 	}
 
 	content := buildMessage(hm)
-	require.NoError(t, s.storeLogs(context.TODO(), sdk.CDNTypeItemStepLog, hm.Signature, false, content, 0))
+	require.NoError(t, s.storeLogs(context.TODO(), sdk.CDNTypeItemStepLog, hm.Signature, false, content))
 
 	apiRef := sdk.CDNLogAPIRef{
 		ProjectKey:     hm.Signature.ProjectKey,
@@ -174,7 +174,7 @@ func TestStoreLastStepLog(t *testing.T) {
 
 	}()
 	content := buildMessage(hm)
-	err = s.storeLogs(context.TODO(), sdk.CDNTypeItemStepLog, hm.Signature, hm.IsTerminated, content, 0)
+	err = s.storeLogs(context.TODO(), sdk.CDNTypeItemStepLog, hm.Signature, hm.IsTerminated, content)
 	require.NoError(t, err)
 
 	itemDB, err := item.LoadByID(context.TODO(), s.Mapper, db, it.ID)
@@ -235,7 +235,7 @@ func TestStoreNewServiceLog(t *testing.T) {
 	}
 
 	content := buildMessage(hm)
-	require.NoError(t, s.storeLogs(context.TODO(), sdk.CDNTypeItemServiceLog, hm.Signature, hm.IsTerminated, content, 0))
+	require.NoError(t, s.storeLogs(context.TODO(), sdk.CDNTypeItemServiceLog, hm.Signature, hm.IsTerminated, content))
 
 	apiRef := sdk.CDNLogAPIRef{
 		ProjectKey:     hm.Signature.ProjectKey,
