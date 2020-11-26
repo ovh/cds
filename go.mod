@@ -92,7 +92,7 @@ require (
 	github.com/opencontainers/image-spec v1.0.1 // indirect
 	github.com/ovh/cds/sdk/interpolate v0.0.0-20190319104452-71125b036b25
 	github.com/ovh/configstore v0.3.3-0.20200701085609-a539fcf61db5
-	github.com/ovh/symmecrypt v0.5.1-0.20201126101809-0194ee087ebf
+	github.com/ovh/symmecrypt v0.5.1
 	github.com/ovh/venom v0.25.0
 	github.com/patrickmn/go-cache v2.1.0+incompatible
 	github.com/pborman/uuid v0.0.0-20170612153648-e790cca94e6c
