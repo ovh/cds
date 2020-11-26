@@ -95,6 +95,19 @@ func (r RunningStorageUnits) GetSource(ctx context.Context, i *sdk.CDNItem) (Sou
 	return &iuSource{iu: refItemUnit, source: unit}, nil
 }
 
+func (r RunningStorageUnits) NewSource(ctx context.Context, refItemUnit sdk.CDNItemUnit) (Source, error) {
+	refUnit, err := LoadUnitByID(ctx, r.m, r.db, refItemUnit.UnitID)
+	if err != nil {
+		return nil, err
+	}
+	unit := r.Storage(refUnit.Name)
+	if unit == nil {
+		return nil, sdk.WithStack(fmt.Errorf("unable to find unit %s", refUnit.Name))
+	}
+
+	return &iuSource{iu: refItemUnit, source: unit}, nil
+}
+
 func (r RunningStorageUnits) GetItemUnitByLocatorByUnit(ctx context.Context, locator string, unitID string, opts ...gorpmapper.GetOptionFunc) ([]sdk.CDNItemUnit, error) {
 	// Load all the itemUnit for the unit and the same hashLocator
 	hashLocator := r.HashLocator(locator)

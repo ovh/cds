@@ -1,7 +1,9 @@
 package cdn
 
 import (
+	"bytes"
 	"context"
+	"fmt"
 	"net/http"
 
 	"github.com/gorilla/mux"
@@ -163,5 +165,56 @@ func (s *Service) deleteItemHandler() service.Handler {
 		}
 
 		return sdk.WithStack(tx.Commit())
+	}
+}
+
+func (s *Service) getItemCheckSyncHandler() service.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		vars := mux.Vars(r)
+		itemType := sdk.CDNItemType(vars["type"])
+		apiRef := vars["apiRef"]
+
+		it, err := item.LoadByAPIRefHashAndType(ctx, s.Mapper, s.mustDBWithCtx(ctx), apiRef, itemType, gorpmapper.GetOptions.WithDecryption)
+		if err != nil {
+			return err
+		}
+
+		itemsUnits, err := storage.LoadAllItemUnitsByItemIDs(ctx, s.Mapper, s.mustDBWithCtx(ctx), []string{it.ID}, gorpmapper.GetOptions.WithDecryption)
+		if err != nil {
+			return err
+		}
+
+		if len(itemsUnits) != 1 {
+			return sdk.ErrNotFound
+		}
+
+		var contents = map[string]bytes.Buffer{}
+		for _, iu := range itemsUnits[it.ID] {
+			src, err := s.Units.NewSource(ctx, iu)
+			if err != nil {
+				return err
+			}
+			reader, err := src.NewReader(ctx)
+			if err != nil {
+				return err
+			}
+			buf := contents[src.Name()]
+			if err := src.Read(reader, &buf); err != nil {
+				return err
+			}
+		}
+
+		var lastContent string
+		for storage, buffer := range contents {
+			if lastContent == "" {
+				lastContent = buffer.String()
+				continue
+			}
+			if lastContent != buffer.String() {
+				return sdk.WithStack(fmt.Errorf("content of %s on %s doesn't match", apiRef, storage))
+			}
+		}
+
+		return nil
 	}
 }
