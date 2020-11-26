@@ -62,7 +62,7 @@ func TestGetItemLogsLinesHandler(t *testing.T) {
 	}
 
 	content := buildMessage(hm)
-	err := s.storeLogs(context.TODO(), sdk.CDNTypeItemStepLog, hm.Signature, hm.IsTerminated, content, 2)
+	err := s.storeLogs(context.TODO(), sdk.CDNTypeItemStepLog, hm.Signature, hm.IsTerminated, content)
 	require.NoError(t, err)
 
 	signer, err := authentication.NewSigner("cdn-test", test.SigningKey)
@@ -112,7 +112,7 @@ func TestGetItemLogsLinesHandler(t *testing.T) {
 	var lines []redis.Line
 	require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &lines))
 	require.Len(t, lines, 1)
-	require.Equal(t, int64(2), lines[0].Number)
+	require.Equal(t, int64(0), lines[0].Number)
 	require.Equal(t, "[EMERGENCY] this is a message\n", lines[0].Value)
 
 	time.Sleep(1 * time.Second)
@@ -190,7 +190,7 @@ func TestGetItemLogsStreamHandler(t *testing.T) {
 			Signature:    signature,
 		}
 		content := buildMessage(hm)
-		err = s.storeLogs(context.TODO(), sdk.CDNTypeItemStepLog, hm.Signature, hm.IsTerminated, content, messageCounter)
+		err = s.storeLogs(context.TODO(), sdk.CDNTypeItemStepLog, hm.Signature, hm.IsTerminated, content)
 		require.NoError(t, err)
 		messageCounter++
 	}

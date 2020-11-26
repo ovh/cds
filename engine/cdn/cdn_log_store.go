@@ -3,10 +3,8 @@ package cdn
 import (
 	"context"
 	"fmt"
-	"strconv"
 	"time"
 
-	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/engine/cdn/item"
 	"github.com/ovh/cds/engine/cdn/storage"
 	"github.com/ovh/cds/engine/gorpmapper"
@@ -76,15 +74,6 @@ func (s *Service) sendToBufferWithRetry(ctx context.Context, hms []handledMessag
 		return nil
 	}
 
-	jobID := strconv.Itoa(int(hms[0].Signature.JobID))
-	lineKey := cache.Key(keyJobLogLines, jobID)
-	if hms[0].Signature.Service != nil {
-		lineKey = cache.Key(keyJobLogLines, fmt.Sprintf("%s-%d", jobID, hms[0].Signature.Service.RequirementID))
-	}
-	var currentLine int64
-	if _, err := s.Cache.Get(lineKey, &currentLine); err != nil {
-		return sdk.WithStack(err)
-	}
 	// Browse all messages
 	for _, hm := range hms {
 		var itemType sdk.CDNItemType
@@ -96,7 +85,7 @@ func (s *Service) sendToBufferWithRetry(ctx context.Context, hms []handledMessag
 		currentLog := buildMessage(hm)
 		cpt := 0
 		for {
-			if err := s.storeLogs(ctx, itemType, hm.Signature, hm.IsTerminated, currentLog, currentLine); err != nil {
+			if err := s.storeLogs(ctx, itemType, hm.Signature, hm.IsTerminated, currentLog); err != nil {
 				if sdk.ErrorIs(err, sdk.ErrLocked) && cpt < 10 {
 					cpt++
 					time.Sleep(250 * time.Millisecond)
@@ -106,19 +95,11 @@ func (s *Service) sendToBufferWithRetry(ctx context.Context, hms []handledMessag
 			}
 			break
 		}
-		if hm.IsTerminated {
-			_ = s.Cache.Delete(lineKey)
-		} else {
-			currentLine++
-			if err := s.Cache.SetWithTTL(lineKey, &currentLine, 3600*24); err != nil {
-				return err
-			}
-		}
 	}
 	return nil
 }
 
-func (s *Service) storeLogs(ctx context.Context, itemType sdk.CDNItemType, signature log.Signature, terminated bool, content string, line int64) error {
+func (s *Service) storeLogs(ctx context.Context, itemType sdk.CDNItemType, signature log.Signature, terminated bool, content string) error {
 	it, err := s.loadOrCreateItem(ctx, itemType, signature)
 	if err != nil {
 		return err
@@ -135,7 +116,11 @@ func (s *Service) storeLogs(ctx context.Context, itemType sdk.CDNItemType, signa
 		return nil
 	}
 
-	if err := s.Units.Buffer.Add(*iu, uint(line), content); err != nil {
+	countLine, err := s.Units.Buffer.Card(*iu)
+	if err != nil {
+		return err
+	}
+	if err := s.Units.Buffer.Add(*iu, uint(countLine), content); err != nil {
 		return err
 	}
 
@@ -143,22 +128,6 @@ func (s *Service) storeLogs(ctx context.Context, itemType sdk.CDNItemType, signa
 	s.GoRoutines.Exec(ctx, "storeLogsPublishWSEvent", func(ctx context.Context) {
 		s.publishWSEvent(*it)
 	})
-
-	maxLineKey := cache.Key("cdn", "log", "size", it.ID)
-	maxItemLine := -1
-	if terminated {
-		maxItemLine = int(line)
-
-		// store the score of last line
-		if err := s.Cache.SetWithTTL(maxLineKey, maxItemLine, ItemLogGC); err != nil {
-			return err
-		}
-	} else {
-		_, err = s.Cache.Get(maxLineKey, &maxItemLine)
-		if err != nil {
-			log.Warning(ctx, "cdn:storeLogs: unable to get max line expected for current job: %v", err)
-		}
-	}
 
 	// If we have all lines or buffer is full and we received the last line
 	if terminated {
@@ -174,8 +143,8 @@ func (s *Service) storeLogs(ctx context.Context, itemType sdk.CDNItemType, signa
 		if err := tx.Commit(); err != nil {
 			return sdk.WithStack(err)
 		}
-		_ = s.Cache.Delete(maxLineKey)
 	}
+
 	return nil
 }
 

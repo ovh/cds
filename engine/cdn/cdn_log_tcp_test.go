@@ -106,7 +106,7 @@ func TestWorkerLogCDNEnabled(t *testing.T) {
 	require.NoError(t, err)
 
 	message := `{"level": 1, "version": "1", "short": "this", "_facility": "fa", "_file": "file",
-	"host": "host", "_line":1, "_pid": 1, "_prefix": "prefix", "full_message": "this is my message", "_Signature": "%s"}`
+	"host": "host", "_pid": 1, "_prefix": "prefix", "full_message": "this is my message", "_Signature": "%s"}`
 	message = fmt.Sprintf(message, signatureField)
 
 	s.Client = cdsclient.New(cdsclient.Config{
@@ -335,14 +335,14 @@ func TestStoreTruncatedLogs(t *testing.T) {
 
 	}()
 	content := buildMessage(hm)
-	err = s.storeLogs(context.TODO(), sdk.CDNTypeItemStepLog, hm.Signature, hm.IsTerminated, content, 0)
+	err = s.storeLogs(context.TODO(), sdk.CDNTypeItemStepLog, hm.Signature, hm.IsTerminated, content)
 	require.NoError(t, err)
 
 	hm.IsTerminated = true
 	hm.Msg.Full = "End of step"
 
 	content = buildMessage(hm)
-	err = s.storeLogs(context.TODO(), sdk.CDNTypeItemStepLog, hm.Signature, hm.IsTerminated, content, 1)
+	err = s.storeLogs(context.TODO(), sdk.CDNTypeItemStepLog, hm.Signature, hm.IsTerminated, content)
 	require.NoError(t, err)
 
 	itemDB, err := item.LoadByID(context.TODO(), s.Mapper, db, it.ID)

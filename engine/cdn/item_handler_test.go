@@ -134,7 +134,7 @@ func TestGetItemLogsDownloadHandler(t *testing.T) {
 	}
 
 	content := buildMessage(hm)
-	err := s.storeLogs(context.TODO(), sdk.CDNTypeItemStepLog, hm.Signature, hm.IsTerminated, content, 2)
+	err := s.storeLogs(context.TODO(), sdk.CDNTypeItemStepLog, hm.Signature, hm.IsTerminated, content)
 	require.NoError(t, err)
 
 	signer, err := authentication.NewSigner("cdn-test", test.SigningKey)
