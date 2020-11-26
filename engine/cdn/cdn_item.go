@@ -44,11 +44,6 @@ func (s *Service) downloadItemFromUnit(ctx context.Context, t sdk.CDNItemType, a
 	if err != nil {
 		return err
 	}
-	// Get Storage unit
-	unitStorage := s.Units.Storage(unit.Name)
-	if unitStorage == nil {
-		return sdk.NewErrorFrom(sdk.ErrNotFound, "unable to find unit %s", unit.Name)
-	}
 
 	// Load item unit
 	itemUnit, err := storage.LoadItemUnitByUnit(ctx, s.Mapper, s.mustDBWithCtx(ctx), unit.ID, it.ID, gorpmapper.GetOptions.WithDecryption)
@@ -56,19 +51,31 @@ func (s *Service) downloadItemFromUnit(ctx context.Context, t sdk.CDNItemType, a
 		return err
 	}
 
-	storageReader, err := unitStorage.NewReader(ctx, *itemUnit)
+	// Get reader from unit
+	var unitStorage storage.Unit
+	if s.Units.Buffer.Name() == unit.Name {
+		unitStorage = s.Units.Buffer
+	} else {
+		unitStorage = s.Units.Storage(unit.Name)
+	}
+	if unitStorage == nil {
+		return sdk.NewErrorFrom(sdk.ErrNotFound, "unable to find unit %s", unit.Name)
+	}
+
+	reader, err := unitStorage.NewReader(ctx, *itemUnit)
 	if err != nil {
 		return err
 	}
 	defer func() {
-		if err := storageReader.Close(); err != nil {
+		if err := reader.Close(); err != nil {
 			log.Error(ctx, "downloadItemFromUnit> can't close reader: %+v", err)
 		}
 	}()
 
-	if err := unitStorage.Read(*itemUnit, storageReader, w); err != nil {
+	if err := unitStorage.Read(*itemUnit, reader, w); err != nil {
 		return err
 	}
+
 	w.Header().Add("Content-Type", "text/plain")
 	w.Header().Add("Content-Disposition", fmt.Sprintf("inline; filename=\"%s\"", it.APIRef.ToFilename()))
 	return nil
