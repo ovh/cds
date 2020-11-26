@@ -5,16 +5,17 @@ import (
 	"context"
 	"encoding/base64"
 	"fmt"
-	"github.com/mitchellh/hashstructure"
-	"github.com/ovh/cds/engine/cdn/item"
-	"github.com/ovh/cds/engine/cdn/storage"
-	cdntest "github.com/ovh/cds/engine/cdn/test"
-	"github.com/ovh/cds/sdk/log/hook"
 	"io"
 	"io/ioutil"
 	"strconv"
 	"testing"
 	"time"
+
+	"github.com/mitchellh/hashstructure"
+	"github.com/ovh/cds/engine/cdn/item"
+	"github.com/ovh/cds/engine/cdn/storage"
+	cdntest "github.com/ovh/cds/engine/cdn/test"
+	"github.com/ovh/cds/sdk/log/hook"
 
 	gocache "github.com/patrickmn/go-cache"
 	"github.com/stretchr/testify/require"
@@ -360,7 +361,12 @@ func TestStoreTruncatedLogs(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, itemUnit)
 
-	_, lineCount, rc, _, err := s.getItemLogValue(ctx, sdk.CDNTypeItemStepLog, strconv.FormatUint(hashRef, 10), sdk.CDNReaderFormatText, 0, 10000, 1)
+	_, lineCount, rc, _, err := s.getItemLogValue(ctx, sdk.CDNTypeItemStepLog, strconv.FormatUint(hashRef, 10), getItemLogOptions{
+		format: sdk.CDNReaderFormatText,
+		from:   0,
+		size:   10000,
+		sort:   1,
+	})
 	buf := new(bytes.Buffer)
 	_, err = io.Copy(buf, rc)
 	require.NoError(t, err)
