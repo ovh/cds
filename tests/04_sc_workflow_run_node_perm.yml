@@ -20,7 +20,7 @@ testcases:
 
 - name: grant new group in workflow
   steps:
-  - script: {{.cdsctl}} -f {{.cdsctl.config}} group member add ITSCWRKFLW10-ro {{.ro_username}}
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} group member add ITSCWRKFLW10-ro {{.ro_username}} false
   - script: {{.cdsctl}} -f {{.cdsctl.config}} group grant ITSCWRKFLW10 ITSCWRKFLW10-ro 4 --only-project
   - script: {{.cdsctl}} -f {{.cdsctl.config}} group grant ITSCWRKFLW10 ITSCWRKFLW10-ro 7 --workflow ITSCWRKFLW10-WORKFLOW
 
