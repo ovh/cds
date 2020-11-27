@@ -321,8 +321,11 @@ func (s *Service) getWorker(ctx context.Context, workerName string, opts GetWork
 
 	// Get worker from cache
 	cacheData, ok := logCache.Get(workerKey)
-	if ok && (!opts.NeedPrivateKey || len(cacheData.(sdk.Worker).PrivateKey) > 0) {
-		return cacheData.(sdk.Worker), nil
+	if ok {
+	    w, ok := cacheData.(sdk.Worker)
+	    if ok && (!opts.NeedPrivateKey || len(w.PrivateKey) > 0) {
+		      return w, nil
+		  }
 	}
 
 	// Get worker from API
