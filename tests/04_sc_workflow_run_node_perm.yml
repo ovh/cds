@@ -29,7 +29,7 @@ testcases:
   - script: {{.cdsctl}} -f {{.cdsctl.config_ro_user}} workflow run ITSCWRKFLW10 ITSCWRKFLW10-WORKFLOW
     assertions:
     - result.code ShouldNotEqual 0
-    - "result.systemout ShouldContainSubstring forbidden"
+    - "result.systemout ShouldContainSubstring you don't have execution right"
 
 - name: add user in right group
   steps:
