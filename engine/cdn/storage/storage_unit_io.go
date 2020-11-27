@@ -87,9 +87,13 @@ func (r RunningStorageUnits) GetSource(ctx context.Context, i *sdk.CDNItem) (Sou
 		return nil, err
 	}
 
-	unit := r.Storage(refUnit.Name)
+	var unit source = r.Storage(refUnit.Name)
 	if unit == nil {
-		return nil, sdk.WithStack(fmt.Errorf("unable to find unit %s", refUnit.Name))
+		if r.Buffer.Name() == refUnit.Name {
+			unit = r.Buffer
+		} else {
+			return nil, sdk.WithStack(fmt.Errorf("unable to find unit %s", refUnit.Name))
+		}
 	}
 
 	return &iuSource{iu: refItemUnit, source: unit}, nil
@@ -100,9 +104,13 @@ func (r RunningStorageUnits) NewSource(ctx context.Context, refItemUnit sdk.CDNI
 	if err != nil {
 		return nil, err
 	}
-	unit := r.Storage(refUnit.Name)
+	var unit source = r.Storage(refUnit.Name)
 	if unit == nil {
-		return nil, sdk.WithStack(fmt.Errorf("unable to find unit %s", refUnit.Name))
+		if r.Buffer.Name() == refUnit.Name {
+			unit = r.Buffer
+		} else {
+			return nil, sdk.WithStack(fmt.Errorf("unable to find unit %s", refUnit.Name))
+		}
 	}
 
 	return &iuSource{iu: refItemUnit, source: unit}, nil
