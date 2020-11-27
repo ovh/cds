@@ -223,7 +223,8 @@ func LoadAllItemUnitsByItemIDs(ctx context.Context, m *gorpmapper.Mapper, db gor
 		return nil, err
 	}
 	var res = make(map[string][]sdk.CDNItemUnit, len(itemID))
-	for _, itemUnit := range allItemUnits {
+	for i := range allItemUnits {
+		var itemUnit = allItemUnits[i]
 		res[itemUnit.ItemID] = append(res[itemUnit.ItemID], itemUnit)
 	}
 	return res, nil

@@ -52,17 +52,12 @@ func (s *Service) downloadItemFromUnit(ctx context.Context, t sdk.CDNItemType, a
 	}
 
 	// Get reader from unit
-	var unitStorage storage.Unit
-	if s.Units.Buffer.Name() == unit.Name {
-		unitStorage = s.Units.Buffer
-	} else {
-		unitStorage = s.Units.Storage(unit.Name)
-	}
-	if unitStorage == nil {
-		return sdk.NewErrorFrom(sdk.ErrNotFound, "unable to find unit %s", unit.Name)
+	source, err := s.Units.NewSource(ctx, *itemUnit)
+	if err != nil {
+		return err
 	}
 
-	reader, err := unitStorage.NewReader(ctx, *itemUnit)
+	reader, err := source.NewReader(ctx)
 	if err != nil {
 		return err
 	}
@@ -72,7 +67,7 @@ func (s *Service) downloadItemFromUnit(ctx context.Context, t sdk.CDNItemType, a
 		}
 	}()
 
-	if err := unitStorage.Read(*itemUnit, reader, w); err != nil {
+	if err := source.Read(reader, w); err != nil {
 		return err
 	}
 

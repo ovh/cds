@@ -3,6 +3,7 @@ package cdn
 import (
 	"bytes"
 	"context"
+	"encoding/hex"
 	"net/http"
 
 	"github.com/gorilla/mux"
@@ -207,14 +208,26 @@ func (s *Service) getItemCheckSyncHandler() service.Handler {
 		var lastContent string
 		for storage, buffer := range contents {
 			if lastContent == "" {
-				lastContent = buffer.String()
+				lastContent = hex.EncodeToString(buffer.Bytes())
 				continue
 			}
-			if lastContent != buffer.String() {
+			if lastContent != hex.EncodeToString(buffer.Bytes()) {
 				return sdk.NewErrorFrom(sdk.ErrInvalidData, "content of %s on %s doesn't match", apiRef, storage)
 			}
 		}
 
-		return service.WriteJSON(w, nil, http.StatusOK)
+		var result = struct {
+			ID         string
+			APIRefHash string
+			SHA512     string
+			Content    string
+		}{
+			ID:         it.ID,
+			APIRefHash: it.APIRefHash,
+			SHA512:     it.Hash,
+			Content:    lastContent,
+		}
+
+		return service.WriteJSON(w, result, http.StatusOK)
 	}
 }
