@@ -170,7 +170,7 @@ func (s *Service) handleWorkerLog(ctx context.Context, workerName string, worker
 	var signature log.Signature
 
 	// Get worker data from cache
-	workerData, err := s.getClearWorker(ctx, workerName, GetWorkerOptions{NeedPrivateKey: true})
+	workerData, err := s.getWorker(ctx, workerName, GetWorkerOptions{NeedPrivateKey: true})
 	if err != nil {
 		return err
 	}
@@ -286,7 +286,7 @@ func (s *Service) handleServiceLog(ctx context.Context, hatcheryID int64, hatche
 	}
 
 	// Get worker + check hatchery ID
-	w, err := s.getClearWorker(ctx, workerName, GetWorkerOptions{NeedPrivateKey: false})
+	w, err := s.getWorker(ctx, workerName, GetWorkerOptions{NeedPrivateKey: false})
 	if err != nil {
 		return err
 	}
@@ -316,7 +316,7 @@ func (s *Service) handleServiceLog(ctx context.Context, hatcheryID int64, hatche
 	return nil
 }
 
-func (s *Service) getClearWorker(ctx context.Context, workerName string, opts GetWorkerOptions) (sdk.Worker, error) {
+func (s *Service) getWorker(ctx context.Context, workerName string, opts GetWorkerOptions) (sdk.Worker, error) {
 	workerKey := fmt.Sprintf("worker-%s", workerName)
 
 	// Get worker from cache
