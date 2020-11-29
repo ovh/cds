@@ -1,5 +1,4 @@
 name: Action Command TestSuite with cdsctl
-version: "2"
 testcases:
 - name: cdsctl admin services list
   steps:

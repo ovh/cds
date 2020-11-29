@@ -1,5 +1,4 @@
 name: Template apply detached command TestSuite with cdsctl
-version: "2"
 testcases:
 - name: delete template if exists
   steps:

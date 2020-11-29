@@ -1,5 +1,4 @@
 name: Push a template and run this template
-version: "2"
 testcases:
 - name: prepare test
   steps:

@@ -1,5 +1,4 @@
 name: Template bulk command TestSuite with cdsctl
-version: "2"
 testcases:
 - name: push example simple
   steps:

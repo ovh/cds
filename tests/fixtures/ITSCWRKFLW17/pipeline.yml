@@ -2,7 +2,6 @@ version: v1.0
 name: ITSCWRKFLW17-PIPELINE
 
 jobs:
-
 - job: Test
   steps:
   - script:

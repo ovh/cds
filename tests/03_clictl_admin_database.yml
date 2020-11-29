@@ -1,5 +1,4 @@
 name: Database Commands TestSuite
-version: "2"
 testcases:
 - name: delete an invalid row from gorp_migration
   steps:

@@ -1,5 +1,4 @@
 name: Group Command TestSuite
-version: "2"
 testcases:
 - name: prepare test
   steps:
