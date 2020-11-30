@@ -1,6 +1,6 @@
 import { HttpRequest } from '@angular/common/http';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
-import { async, TestBed } from '@angular/core/testing';
+import { TestBed, waitForAsync } from '@angular/core/testing';
 import { NgxsModule, Store } from '@ngxs/store';
 import { Application, Overview } from 'app/model/application.model';
 import { IntegrationModel, ProjectIntegration } from 'app/model/integration.model';
@@ -28,7 +28,7 @@ describe('Applications', () => {
     let store: Store;
     let testProjectKey = 'test1';
 
-    beforeEach(async(() => {
+    beforeEach(waitForAsync(() => {
         TestBed.configureTestingModule({
             providers: [
                 RouterService,
@@ -66,7 +66,7 @@ describe('Applications', () => {
         // store.reset(getInitialApplicationsState());
     }));
 
-    it('fetch application', async(() => {
+    it('fetch application', waitForAsync(() => {
         const http = TestBed.get(HttpTestingController);
         store.dispatch(new ActionApplication.FetchApplication({
             projectKey: testProjectKey,
@@ -86,7 +86,7 @@ describe('Applications', () => {
         });
     }));
 
-    it('add application', async(() => {
+    it('add application', waitForAsync(() => {
         const http = TestBed.get(HttpTestingController);
         let application = new Application();
         application.name = 'app1';
@@ -126,7 +126,7 @@ describe('Applications', () => {
         });
     }));
 
-    it('update an application', async(() => {
+    it('update an application', waitForAsync(() => {
         const http = TestBed.get(HttpTestingController);
         let application = new Application();
         application.name = 'app1';
@@ -175,7 +175,7 @@ describe('Applications', () => {
         });
     }));
 
-    it('clone an application', async(() => {
+    it('clone an application', waitForAsync(() => {
         const http = TestBed.get(HttpTestingController);
         let application = new Application();
         application.name = 'app1';
@@ -223,7 +223,7 @@ describe('Applications', () => {
         });
     }));
 
-    it('delete an application', async(() => {
+    it('delete an application', waitForAsync(() => {
         const http = TestBed.get(HttpTestingController);
         let application = new Application();
         application.name = 'app1';
@@ -260,7 +260,7 @@ describe('Applications', () => {
         });
     }));
 
-    it('fetch an overview application', async(() => {
+    it('fetch an overview application', waitForAsync(() => {
         const http = TestBed.get(HttpTestingController);
         store.dispatch(new ActionApplication.FetchApplicationOverview({
             projectKey: testProjectKey,
@@ -278,7 +278,7 @@ describe('Applications', () => {
     }));
 
     //  ------- Variables --------- //
-    it('add a variable on application', async(() => {
+    it('add a variable on application', waitForAsync(() => {
         const http = TestBed.get(HttpTestingController);
         let application = new Application();
         application.name = 'app1';
@@ -324,7 +324,7 @@ describe('Applications', () => {
         });
     }));
 
-    it('update a variable on application', async(() => {
+    it('update a variable on application', waitForAsync(() => {
         const http = TestBed.get(HttpTestingController);
         let application = new Application();
         application.name = 'app1';
@@ -372,7 +372,7 @@ describe('Applications', () => {
         });
     }));
 
-    it('delete a variable on application', async(() => {
+    it('delete a variable on application', waitForAsync(() => {
         const http = TestBed.get(HttpTestingController);
         let application = new Application();
         application.name = 'app1';
@@ -425,7 +425,7 @@ describe('Applications', () => {
     }));
 
     //  ------- Keys --------- //
-    it('add a key on application', async(() => {
+    it('add a key on application', waitForAsync(() => {
         const http = TestBed.get(HttpTestingController);
         let application = new Application();
         application.name = 'app1';
@@ -464,7 +464,7 @@ describe('Applications', () => {
         });
     }));
 
-    it('delete a key on application', async(() => {
+    it('delete a key on application', waitForAsync(() => {
         const http = TestBed.get(HttpTestingController);
         let application = new Application();
         application.name = 'app1';
@@ -520,7 +520,7 @@ describe('Applications', () => {
     }));
 
     //  ------- Deployment strategies --------- //
-    it('add a deployment on application', async(() => {
+    it('add a deployment on application', waitForAsync(() => {
         const http = TestBed.get(HttpTestingController);
         let application = new Application();
         application.name = 'app1';
@@ -569,7 +569,7 @@ describe('Applications', () => {
     }));
 
     //  ------- VCS strategies --------- //
-    it('connect a repository on application', async(() => {
+    it('connect a repository on application', waitForAsync(() => {
         const http = TestBed.get(HttpTestingController);
         let application = new Application();
         application.name = 'app1';
@@ -609,7 +609,7 @@ describe('Applications', () => {
         });
     }));
 
-    it('delete a repository on application', async(() => {
+    it('delete a repository on application', waitForAsync(() => {
         const http = TestBed.get(HttpTestingController);
         let application = new Application();
         application.name = 'app1';
@@ -648,7 +648,7 @@ describe('Applications', () => {
     }));
 
     //  ------- Misc --------- //
-    it('mark an external change on application', async(() => {
+    it('mark an external change on application', waitForAsync(() => {
         const http = TestBed.get(HttpTestingController);
         let application = new Application();
         application.name = 'app1';
@@ -677,7 +677,7 @@ describe('Applications', () => {
         });
     }));
 
-    it('delete application from cache', async(() => {
+    it('delete application from cache', waitForAsync(() => {
         const http = TestBed.get(HttpTestingController);
         let application = new Application();
         application.name = 'app1';
@@ -705,7 +705,7 @@ describe('Applications', () => {
         });
     }));
 
-    it('resync application from cache', async(() => {
+    it('resync application from cache', waitForAsync(() => {
         const http = TestBed.get(HttpTestingController);
         let application = new Application();
         application.name = 'app1';

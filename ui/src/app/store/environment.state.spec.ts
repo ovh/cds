@@ -1,6 +1,6 @@
 import { HttpRequest } from '@angular/common/http';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
-import { async, TestBed } from '@angular/core/testing';
+import { TestBed, waitForAsync } from '@angular/core/testing';
 import { NgxsModule, Store } from '@ngxs/store';
 import { Environment } from 'app/model/environment.model';
 import { Project } from 'app/model/project.model';
@@ -34,7 +34,7 @@ describe('Environment', () => {
     let store: Store;
     let http: HttpTestingController;
 
-    beforeEach(async(() => {
+    beforeEach(waitForAsync(() => {
         TestBed.configureTestingModule({
             providers: [NavbarService, WorkflowService, WorkflowRunService, ProjectStore, RouterService,
                 ProjectService, PipelineService, EnvironmentService, ApplicationService, EnvironmentService],
@@ -49,7 +49,7 @@ describe('Environment', () => {
     }));
 
     //  ------- Environment --------- //
-    it('add environment in project', async(() => {
+    it('add environment in project', waitForAsync(() => {
         let project = new Project();
         project.name = 'proj1';
         project.key = 'test1';
@@ -78,7 +78,7 @@ describe('Environment', () => {
         });
     }));
 
-    it('fetch environment in project', async(() => {
+    it('fetch environment in project', waitForAsync(() => {
         const http = TestBed.inject(HttpTestingController);
         let project = new Project();
         project.name = 'proj1';
@@ -105,7 +105,7 @@ describe('Environment', () => {
         });
     }));
 
-    it('update environment in project', async(() => {
+    it('update environment in project', waitForAsync(() => {
         let project = new Project();
         project.name = 'proj1';
         project.key = 'test1';
@@ -143,7 +143,7 @@ describe('Environment', () => {
         });
     }));
 
-    it('add environment variable in project', async(() => {
+    it('add environment variable in project', waitForAsync(() => {
         let project = new Project();
         project.name = 'proj1';
         project.key = 'test1';
@@ -184,7 +184,7 @@ describe('Environment', () => {
         });
     }));
 
-    it('update environment variable in project', async(() => {
+    it('update environment variable in project', waitForAsync(() => {
         let project = new Project();
         project.name = 'proj1';
         project.key = 'test1';
@@ -230,7 +230,7 @@ describe('Environment', () => {
         });
     }));
 
-    it('delete environment variable in project', async(() => {
+    it('delete environment variable in project', waitForAsync(() => {
         let project = new Project();
         project.name = 'proj1';
         project.key = 'test1';

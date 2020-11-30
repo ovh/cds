@@ -1,6 +1,6 @@
 import { HttpRequest } from '@angular/common/http';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
-import { async, TestBed } from '@angular/core/testing';
+import { TestBed, waitForAsync } from '@angular/core/testing';
 import { NgxsModule, Store } from '@ngxs/store';
 import { AuditWorkflow } from 'app/model/audit.model';
 import { Label, Project } from 'app/model/project.model';
@@ -26,7 +26,7 @@ describe('Workflows', () => {
     let store: Store;
     let testProjectKey = 'test1';
     let routerService: RouterService;
-    beforeEach(async(() => {
+    beforeEach(waitForAsync(() => {
         TestBed.configureTestingModule({
             providers: [
                 RouterService,
@@ -65,7 +65,7 @@ describe('Workflows', () => {
         });
     }));
 
-    it('fetch workflow', async(() => {
+    it('fetch workflow', waitForAsync(() => {
         spyOn(routerService, 'getRouteSnapshotParams').and.callFake(() => {
             return {'key': testProjectKey, 'workflowName': 'wf1'};
         });
@@ -92,7 +92,7 @@ describe('Workflows', () => {
         });
     }));
 
-    it('add workflow', async(() => {
+    it('add workflow', waitForAsync(() => {
         const http = TestBed.get(HttpTestingController);
         let workflow = new Workflow();
         workflow.name = 'wf1';
@@ -118,7 +118,7 @@ describe('Workflows', () => {
         });
     }));
 
-    it('update a workflow', async(() => {
+    it('update a workflow', waitForAsync(() => {
         const http = TestBed.get(HttpTestingController);
         let workflow = new Workflow();
         workflow.name = 'wf1';
@@ -159,7 +159,7 @@ describe('Workflows', () => {
         });
     }));
 
-    it('delete a workflow', async(() => {
+    it('delete a workflow', waitForAsync(() => {
         const http = TestBed.get(HttpTestingController);
         let workflow = new Workflow();
         workflow.name = 'wf1';
@@ -196,7 +196,7 @@ describe('Workflows', () => {
         });
     }));
 
-    it('update a workflow icon', async(() => {
+    it('update a workflow icon', waitForAsync(() => {
         const http = TestBed.get(HttpTestingController);
         let workflow = new Workflow();
         workflow.name = 'wf1';
@@ -240,7 +240,7 @@ describe('Workflows', () => {
         });
     }));
 
-    it('delete a workflow icon', async(() => {
+    it('delete a workflow icon', waitForAsync(() => {
         const http = TestBed.get(HttpTestingController);
         let workflow = new Workflow();
         workflow.name = 'wf1';
@@ -283,7 +283,7 @@ describe('Workflows', () => {
         });
     }));
 
-    it('fetch audits', async(() => {
+    it('fetch audits', waitForAsync(() => {
         spyOn(routerService, 'getRouteSnapshotParams').and.callFake(() => {
             return {'key': testProjectKey, 'workflowName': 'wf1'};
         });
@@ -340,7 +340,7 @@ describe('Workflows', () => {
         });
     }));
 
-    it('rollback', async(() => {
+    it('rollback', waitForAsync(() => {
         const http = TestBed.get(HttpTestingController);
         let workflow = new Workflow();
         workflow.name = 'wf1';
@@ -383,7 +383,7 @@ describe('Workflows', () => {
         });
     }));
 
-    it('fetch as code', async(() => {
+    it('fetch as code', waitForAsync(() => {
         const http = TestBed.get(HttpTestingController);
         let workflow = new Workflow();
         workflow.name = 'wf1';
@@ -423,7 +423,7 @@ description: some description`;
         });
     }));
 
-    it('preview', async(() => {
+    it('preview', waitForAsync(() => {
         const http = TestBed.get(HttpTestingController);
         let workflow = new Workflow();
         workflow.name = 'wf1';
@@ -464,7 +464,7 @@ description: some description`;
         });
     }));
 
-    it('update favorite', async(() => {
+    it('update favorite', waitForAsync(() => {
         const http = TestBed.get(HttpTestingController);
         let workflow = new Workflow();
         workflow.name = 'wf1';
