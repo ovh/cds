@@ -31,6 +31,9 @@ testcases:
   steps:
   - type: readfile
     path: ./fixtures/template/simple/workflow/*.yml
+    vars:
+      md5sum_fixtures_template_simple_workflow_itcliwkf:
+        from: result.md5sum.fixtures_template_simple_workflow_itcliwkf.yml
     assertions:
     - result.err ShouldEqual ""
 
@@ -40,7 +43,7 @@ testcases:
     path: ./fixtures/template/simple/export/*.yml
     assertions:
     - result.err ShouldEqual ""
-    - result.md5sum.fixtures_template_simple_export_itcliwkf.yml ShouldEqual "{{.readWorkflowSourceFiles.result.md5sum.fixtures_template_simple_workflow_itcliwkf.yml}}"
+    - result.md5sum.fixtures_template_simple_export_itcliwkf.yml ShouldEqual "{{.readWorkflowSourceFiles.md5sum_fixtures_template_simple_workflow_itcliwkf}}"
 
 - name: cdsctl template instances
   steps:
