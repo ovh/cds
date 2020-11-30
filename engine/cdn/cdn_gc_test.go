@@ -178,8 +178,6 @@ func TestCleanSynchronizedItem(t *testing.T) {
 	iusRedisAfter, err := storage.LoadItemUnitsByUnit(context.TODO(), s.Mapper, db, s.Units.Buffer.ID(), &oneHundred)
 	require.NoError(t, err)
 	require.Equal(t, 2, len(iusRedisAfter))
-	require.Equal(t, item2RedisFs.ID, iusRedisAfter[0].ItemID)
-	require.Equal(t, item4Redis.ID, iusRedisAfter[1].ItemID)
 
 	iusFS2After, err := storage.LoadItemUnitsByUnit(context.TODO(), s.Mapper, db, s.Units.Storages[0].ID(), &oneHundred)
 	require.NoError(t, err)
