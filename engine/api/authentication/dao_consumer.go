@@ -70,7 +70,6 @@ func getConsumer(ctx context.Context, db gorp.SqlExecutor, q gorpmapping.Query, 
 	}
 
 	ac := consumer.AuthConsumer
-
 	for i := range opts {
 		if err := opts[i](ctx, db, &ac); err != nil {
 			return nil, err

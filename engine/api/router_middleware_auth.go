@@ -101,7 +101,8 @@ func (api *API) authOptionalMiddleware(ctx context.Context, w http.ResponseWrite
 	}
 
 	// If the driver was disabled for the consumer that was found, ignore it
-	if _, ok := api.AuthenticationDrivers[consumer.Type]; ok {
+	authDriver, ok := api.AuthenticationDrivers[consumer.Type]
+	if ok {
 		// Add contacts for consumer's user
 		if err := user.LoadOptions.WithContacts(ctx, api.mustDB(), consumer.AuthentifiedUser); err != nil {
 			return ctx, err
@@ -124,6 +125,10 @@ func (api *API) authOptionalMiddleware(ctx context.Context, w http.ResponseWrite
 	if consumer == nil {
 		log.Debug("api.authOptionalMiddleware> no consumer found in context")
 		return ctx, nil
+	}
+
+	if authDriver != nil && consumer.Type == sdk.ConsumerCorporateSSO {
+		consumer.SupportMFA = api.Config.Auth.CorporateSSO.MFASupportEnabled
 	}
 
 	ctx = context.WithValue(ctx, contextAPIConsumer, consumer)

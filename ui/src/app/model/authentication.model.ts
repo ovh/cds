@@ -78,6 +78,7 @@ export class AuthConsumer {
     groups: Array<Group>;
     disabled: boolean;
     warnings: Array<AuthConsumerWarning>;
+    support_mfa: boolean;
 
     // UI fields
     parent: AuthConsumer;
@@ -91,6 +92,7 @@ export class AuthSession {
     expire_at: string;
     created: string;
     current: boolean;
+    mfa; boolean;
 
     // UI fields
     consumer: AuthConsumer;
