@@ -263,7 +263,7 @@ func getAllItemUnits(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlExecu
 	itemIDs := make([]string, len(verifiedItems))
 	for i := range verifiedItems {
 		itemUnits[i] = verifiedItems[i].CDNItemUnit
-		itemIDs = append(itemIDs, itemUnits[i].ItemID)
+		itemIDs[i] = itemUnits[i].ItemID
 	}
 
 	items, err := item.LoadByIDs(ctx, m, db, itemIDs, opts...)
