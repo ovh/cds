@@ -20,7 +20,7 @@ testcases:
     vars:
       bulkid:
         from: result.systemout
-        regex: Bulk request with id ([0-9]+) successfully created for template shared.infra/example-simple with ([0-9]+) operations
+        regex: Bulk request with id ([0-9]+) successfully created for template shared.infra/example-simple with (?:[0-9]+) operations
     assertions:
       - result.code ShouldEqual 0
 
