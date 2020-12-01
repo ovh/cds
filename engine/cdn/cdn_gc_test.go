@@ -95,7 +95,7 @@ func TestCleanSynchronizedItem(t *testing.T) {
 	iu1FS := sdk.CDNItemUnit{UnitID: s.Units.Storages[0].ID(), ItemID: item1CDSFs.ID}
 	require.NoError(t, storage.InsertItemUnit(context.TODO(), s.Mapper, db, &iu1FS))
 
-	// Add Item in Redis and FS
+	// Add Item in Redis and FS - have to stay in redis
 	item2RedisFs := sdk.CDNItem{
 		ID:         sdk.UUID(),
 		Type:       sdk.CDNTypeItemStepLog,
@@ -119,7 +119,7 @@ func TestCleanSynchronizedItem(t *testing.T) {
 	iu3FS := sdk.CDNItemUnit{UnitID: s.Units.Storages[0].ID(), ItemID: item3Fs.ID}
 	require.NoError(t, storage.InsertItemUnit(context.TODO(), s.Mapper, db, &iu3FS))
 
-	// Add Item in redis only
+	// Add Item in redis only - have to stay in redis
 	item4Redis := sdk.CDNItem{
 		ID:         sdk.UUID(),
 		Type:       sdk.CDNTypeItemStepLog,
@@ -141,7 +141,7 @@ func TestCleanSynchronizedItem(t *testing.T) {
 	iu5CDS := sdk.CDNItemUnit{UnitID: s.Units.Storages[1].ID(), ItemID: item5CDS.ID}
 	require.NoError(t, storage.InsertItemUnit(context.TODO(), s.Mapper, db, &iu5CDS))
 
-	// Add Item in redis / fs/ cds
+	// Add Item in redis / fs/ cds -will be delete from redis
 	item6RedisFSCDS := sdk.CDNItem{
 		ID:         sdk.UUID(),
 		Type:       sdk.CDNTypeItemStepLog,
@@ -169,12 +169,15 @@ func TestCleanSynchronizedItem(t *testing.T) {
 	require.Equal(t, 3, len(iusCDS))
 
 	// RUN TEST
+	iusRedisBefore, err := storage.LoadItemUnitsByUnit(context.TODO(), s.Mapper, db, s.Units.Buffer.ID(), &oneHundred)
+	require.NoError(t, err)
+	require.Equal(t, 3, len(iusRedisBefore))
+
 	require.NoError(t, s.cleanBuffer(context.TODO()))
 
 	iusRedisAfter, err := storage.LoadItemUnitsByUnit(context.TODO(), s.Mapper, db, s.Units.Buffer.ID(), &oneHundred)
 	require.NoError(t, err)
-	require.Equal(t, 1, len(iusRedisAfter))
-	require.Equal(t, item4Redis.ID, iusRedisAfter[0].ItemID)
+	require.Equal(t, 2, len(iusRedisAfter))
 
 	iusFS2After, err := storage.LoadItemUnitsByUnit(context.TODO(), s.Mapper, db, s.Units.Storages[0].ID(), &oneHundred)
 	require.NoError(t, err)
