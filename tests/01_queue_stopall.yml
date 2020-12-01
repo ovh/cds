@@ -1,5 +1,4 @@
 name: Queue stop all
-version: "2"
 testcases:
 - name: cdsctl queue stopall
   steps:

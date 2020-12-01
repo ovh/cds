@@ -1,5 +1,4 @@
 name: cdsctl admin metadata Command TestSuite
-version: "2"
 testcases:
 - name: admin meta
   steps:

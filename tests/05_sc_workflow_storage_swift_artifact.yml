@@ -1,6 +1,4 @@
 name: Workflow (ITSCWRKFLW11) should use the action artifact upload / download with integration openstack
-version: "2"
-
 testcases:
 - name: assert filepath, your current directory must be at the root of this project
   steps:
@@ -15,7 +13,8 @@ testcases:
 
 - name: import integration
   steps:
-  - script: {{.cdsctl}} -f {{.cdsctl.config}} project integration import ITSCWRKFLW11 {{expandEnv ./fixtures/integrations/openstackIntegration.yml}}
+  - script: envsubst < ./fixtures/integrations/openstackIntegration.yml > ./fixtures/integrations/openstackIntegration.replaced.yml
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} project integration import ITSCWRKFLW11 ./fixtures/integrations/openstackIntegration.replaced.yml
 
 - name: import workflow
   steps:

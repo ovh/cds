@@ -1,5 +1,4 @@
 name: signup tests
-
 vars:
   api.url: 'http://localhost:8081'
   ui.url: 'http://localhost:8080'
@@ -11,7 +10,6 @@ vars:
   email: it-user-rw@localhost.local
   fullname: IT_User_RW
   password: "123456&éçà(§"
-
 
 testcases:
 - name: Check SMTP mock
@@ -34,7 +32,6 @@ testcases:
     body: |-
       { "username": "{{.username}}", "fullname": "{{.fullname}}", "email":"{{.email}}", "password": "{{.password}}" }
 
-
 - name: post-create-user
   steps:
   - type: http
@@ -48,7 +45,6 @@ testcases:
       verify: 
         from: result.bodyjson.content-decoded
         regex: cdsctl signup verify --api-url (?:.*) (.*)
-
 
 - name: prepare-cdsctl-config-file
   steps:

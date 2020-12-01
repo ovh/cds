@@ -1,9 +1,7 @@
 name: Smoke tests
-
 vars:
   api.url: 'http://localhost:8081'
   cdsctl : 'cdsctl'
-
 
 testcases:
 - name: Check API is UP and RUNNING
