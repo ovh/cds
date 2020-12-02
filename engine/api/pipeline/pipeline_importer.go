@@ -26,7 +26,9 @@ func ImportUpdate(ctx context.Context, db gorp.SqlExecutor, proj sdk.Project, pi
 		return sdk.WrapError(err, "Unable to load pipeline %s %s", proj.Key, pip.Name)
 	}
 
-	if !opts.Force && oldPipeline.FromRepository != "" && pip.FromRepository != oldPipeline.FromRepository {
+	if opts.Force && opts.FromRepository == "" {
+		log.Debug("ImportUpdate>> Force import pipeline %s in project %s without fromRepository", pip.Name, proj.Key)
+	} else if oldPipeline.FromRepository != "" && pip.FromRepository != oldPipeline.FromRepository {
 		return sdk.WrapError(sdk.ErrPipelineAsCodeOverride, "unable to update as code pipeline %s/%s.", oldPipeline.FromRepository, pip.FromRepository)
 	}
 

@@ -44,7 +44,9 @@ func ParseAndImport(db gorpmapper.SqlExecutorWithTx, proj sdk.Project, eenv expo
 		exist = true
 	}
 
-	if oldEnv != nil && oldEnv.FromRepository != "" && opts.FromRepository != oldEnv.FromRepository {
+	if opts.Force && opts.FromRepository == "" {
+		log.Debug("ParseAndImport>> Force import environment %s in project %s without fromRepository", eenv.Name, proj.Key)
+	} else if oldEnv != nil && oldEnv.FromRepository != "" && opts.FromRepository != oldEnv.FromRepository {
 		return nil, nil, nil, sdk.NewErrorFrom(sdk.ErrEnvironmentAsCodeOverride, "unable to update existing ascode environment from %s", oldEnv.FromRepository)
 	}
 

@@ -6,8 +6,8 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/engine/api/keys"
+	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/exportentities"
@@ -32,7 +32,7 @@ func ParseAndImport(ctx context.Context, db gorpmapper.SqlExecutorWithTx, cache 
 		return nil, nil, msgList, sdk.WrapError(sdk.ErrInvalidApplicationPattern, "application name %s do not respect pattern %s", eapp.Name, sdk.NamePattern)
 	}
 
-	//Check if app exist
+	//Check if app exists
 	oldApp, err := LoadByName(db, proj.Key, eapp.Name,
 		LoadOptions.WithVariablesWithClearPassword,
 		LoadOptions.WithClearKeys,
@@ -42,12 +42,14 @@ func ParseAndImport(ctx context.Context, db gorpmapper.SqlExecutorWithTx, cache 
 		return nil, nil, msgList, sdk.WrapError(err, "unable to load application")
 	}
 
-	//If the application exist and we don't want to force, raise an error
+	//If the application exists and we don't want to force, raise an error
 	if oldApp != nil && !opts.Force {
 		return nil, nil, msgList, sdk.WithStack(sdk.ErrApplicationExist)
 	}
 
-	if oldApp != nil && oldApp.FromRepository != "" && opts.FromRepository != oldApp.FromRepository {
+	if opts.Force && opts.FromRepository == "" {
+		log.Debug("ParseAndImport>> Force import application %s in project %s without fromRepository", eapp.Name, proj.Key)
+	} else if oldApp != nil && oldApp.FromRepository != "" && opts.FromRepository != oldApp.FromRepository {
 		return nil, nil, msgList, sdk.NewErrorFrom(sdk.ErrApplicationAsCodeOverride, "unable to update existing ascode application from %s", oldApp.FromRepository)
 	}
 

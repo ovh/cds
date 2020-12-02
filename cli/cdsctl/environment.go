@@ -90,6 +90,12 @@ func environmentDeleteRun(v cli.Values) error {
 var environmentImportCmd = cli.Command{
 	Name:  "import",
 	Short: "Import an environment with local filepath or URL",
+	Long: `PATH: Path or URL of environment to import
+
+Without --force, CDS won't update an existing environment.
+With --force, CDS will allow you to update an existing environment. If this environment is managed 'as-code', CDS will
+override it. This environment will be detached from the repository, until it is re-imported again following a commit on the repo.
+`,
 	Ctx: []cli.Arg{
 		{Name: _ProjectKey},
 	},

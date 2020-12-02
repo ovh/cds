@@ -16,6 +16,9 @@ In case you want to import just your workflow. Instead of use a local file you c
 
 If you want to update also dependencies likes pipelines, applications or environments at same time you have to use workflow push instead workflow import.
 
+Without --force, CDS won't update an existing workflow.
+With --force, CDS will allow you to update an existing workflow. If this workflow is managed 'as-code', CDS will
+override it. This workflow will be detached from the repository, until it is re-imported again following a commit on the repo.
 	`,
 	Ctx: []cli.Arg{
 		{Name: _ProjectKey},
