@@ -180,12 +180,12 @@ func (s *Service) getItemLogValue(ctx context.Context, t sdk.CDNItemType, apiRef
 func (s *Service) pushItemLogIntoCache(ctx context.Context, it sdk.CDNItem, unitName string) error {
 	t0 := time.Now()
 	// Search item in a storage unit
-	mapItemUnits, err := storage.LoadAllItemUnitsByItemIDs(ctx, s.Mapper, s.mustDBWithCtx(ctx), []string{it.ID})
+	itemUnits, err := storage.LoadAllItemUnitsByItemIDs(ctx, s.Mapper, s.mustDBWithCtx(ctx), it.ID)
 	if err != nil {
 		return err
 	}
-	itemUnits, has := mapItemUnits[it.ID]
-	if !has {
+
+	if len(itemUnits) == 0 {
 		return sdk.WithStack(fmt.Errorf("unable to find item units for item with id: %s", it.ID))
 	}
 
