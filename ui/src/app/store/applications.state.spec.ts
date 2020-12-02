@@ -63,7 +63,6 @@ describe('Applications', () => {
             expect(projState.project).toBeTruthy();
             expect(projState.project.key).toBeTruthy();
         });
-        // store.reset(getInitialApplicationsState());
     }));
 
     it('fetch application', waitForAsync(() => {
