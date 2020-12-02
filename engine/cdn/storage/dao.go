@@ -227,7 +227,7 @@ func LoadAllItemUnitsIDsByItemIDsAndUnitID(db gorp.SqlExecutor, unitID string, i
 	return IDs, nil
 }
 
-func LoadAllItemUnitsIDsByItemIDs(db gorp.SqlExecutor, itemID string) ([]string, error) {
+func LoadAllItemUnitsIDsByItemID(db gorp.SqlExecutor, itemID string) ([]string, error) {
 	var IDs []string
 	query := "SELECT storage_unit_item.id FROM storage_unit_item WHERE item_id = $1 AND to_delete = false"
 	if _, err := db.Select(&IDs, query, itemID); err != nil {

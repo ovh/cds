@@ -58,7 +58,7 @@ func (s *Service) itemsGC(ctx context.Context) {
 
 func (s *Service) markUnitItemToDeleteByItemID(ctx context.Context, itemID string) (int, error) {
 	db := s.mustDBWithCtx(ctx)
-	itemUnitIDs, err := storage.LoadAllItemUnitsIDsByItemIDs(db, itemID)
+	itemUnitIDs, err := storage.LoadAllItemUnitsIDsByItemID(db, itemID)
 	if err != nil {
 		return 0, err
 	}
