@@ -64,12 +64,11 @@ func (r RunningStorageUnits) GetSource(ctx context.Context, i *sdk.CDNItem) (Sou
 	}
 
 	// Find a storage unit where the item is complete
-	mapItemUnits, err := LoadAllItemUnitsByItemIDs(ctx, r.m, r.db, []string{i.ID}, gorpmapper.GetOptions.WithDecryption)
+	itemUnits, err := LoadAllItemUnitsByItemIDs(ctx, r.m, r.db, i.ID, gorpmapper.GetOptions.WithDecryption)
 	if err != nil {
 		return nil, err
 	}
 
-	var itemUnits = mapItemUnits[i.ID]
 	if len(itemUnits) == 0 {
 		log.Warning(ctx, "item %s can't be found. No unit knows it...", i.ID)
 		return nil, sdk.WithStack(sdk.ErrNotFound)
@@ -116,8 +115,8 @@ func (r RunningStorageUnits) NewSource(ctx context.Context, refItemUnit sdk.CDNI
 	return &iuSource{iu: refItemUnit, source: unit}, nil
 }
 
-func (r RunningStorageUnits) GetItemUnitByLocatorByUnit(ctx context.Context, locator string, unitID string, opts ...gorpmapper.GetOptionFunc) ([]sdk.CDNItemUnit, error) {
+func (r RunningStorageUnits) GetItemUnitByLocatorByUnit(ctx context.Context, locator string, unitID string) (int64, error) {
 	// Load all the itemUnit for the unit and the same hashLocator
 	hashLocator := r.HashLocator(locator)
-	return LoadItemUnitsByUnitAndHashLocator(ctx, r.m, r.db, unitID, hashLocator, nil, opts...)
+	return CountItemUnitsByUnitAndHashLocator(r.db, unitID, hashLocator, nil)
 }

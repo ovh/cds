@@ -58,18 +58,9 @@ func (s *Service) itemsGC(ctx context.Context) {
 
 func (s *Service) markUnitItemToDeleteByItemID(ctx context.Context, itemID string) (int, error) {
 	db := s.mustDBWithCtx(ctx)
-	mapItemUnits, err := storage.LoadAllItemUnitsByItemIDs(ctx, s.Mapper, db, []string{itemID})
+	itemUnitIDs, err := storage.LoadAllItemUnitsIDsByItemIDs(db, itemID)
 	if err != nil {
 		return 0, err
-	}
-	uis, has := mapItemUnits[itemID]
-	if !has {
-		return 0, nil
-	}
-
-	ids := make([]string, len(uis))
-	for i := range uis {
-		ids[i] = uis[i].ID
 	}
 
 	tx, err := db.Begin()
@@ -79,7 +70,7 @@ func (s *Service) markUnitItemToDeleteByItemID(ctx context.Context, itemID strin
 
 	defer tx.Rollback() // nolint
 
-	n, err := storage.MarkItemUnitToDelete(tx, ids)
+	n, err := storage.MarkItemUnitToDelete(tx, itemUnitIDs)
 	if err != nil {
 		return 0, err
 	}
@@ -107,14 +98,14 @@ func (s *Service) cleanItemToDelete(ctx context.Context) error {
 		// If and only If there is not more unit item to mark as delete,
 		// let's delete the item in database
 		if nbUnitItemToDelete == 0 {
-			itemUnits, err := storage.LoadAllItemUnitsToDeleteByID(ctx, s.Mapper, s.mustDBWithCtx(ctx), id)
+			nbItemUnits, err := storage.CountItemUnitsToDeleteByItemID(s.mustDBWithCtx(ctx), id)
 			if err != nil {
 				log.Error(ctx, "unable to count unit item %q to delete: %v", id, err)
 				continue
 			}
 
-			if len(itemUnits) > 0 {
-				log.Debug("cdn:purge:item: %d unit items to delete for item %s", len(itemUnits), id)
+			if nbItemUnits > 0 {
+				log.Debug("cdn:purge:item: %d unit items to delete for item %s", nbItemUnits, id)
 			} else {
 				if err := s.LogCache.Remove([]string{id}); err != nil {
 					return err

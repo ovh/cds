@@ -179,17 +179,13 @@ func (s *Service) getItemCheckSyncHandler() service.Handler {
 			return err
 		}
 
-		itemsUnits, err := storage.LoadAllItemUnitsByItemIDs(ctx, s.Mapper, s.mustDBWithCtx(ctx), []string{it.ID}, gorpmapper.GetOptions.WithDecryption)
+		itemsUnits, err := storage.LoadAllItemUnitsByItemIDs(ctx, s.Mapper, s.mustDBWithCtx(ctx), it.ID, gorpmapper.GetOptions.WithDecryption)
 		if err != nil {
 			return err
 		}
 
-		if len(itemsUnits) != 1 {
-			return sdk.WithStack(sdk.ErrNotFound)
-		}
-
 		var contents = map[string]*bytes.Buffer{}
-		for _, iu := range itemsUnits[it.ID] {
+		for _, iu := range itemsUnits {
 			src, err := s.Units.NewSource(ctx, iu)
 			if err != nil {
 				return err
