@@ -25,13 +25,9 @@ export let errorFactory = () => {
         }
 
         let tags = {};
-        let userStr = localStorage.getItem('CDS-USER');
-        if (userStr) {
-            try {
-                tags['CDS_USER'] = JSON.parse(userStr).username;
-            } catch (e) {
-
-            }
+        let username = localStorage.getItem('CDS-USER');
+        if (username) {
+            tags['CDS_USER'] = username;
         }
 
         Raven
