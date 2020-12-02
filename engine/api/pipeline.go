@@ -351,7 +351,7 @@ func (api *API) getPipelineHandler() service.Handler {
 			}
 		}
 
-		if withAsCodeEvent && p.WorkflowAscodeHolder != nil {
+		if withAsCodeEvent && p.WorkflowAscodeHolder != nil && p.FromRepository != "" {
 			events, err := ascode.LoadEventsByWorkflowID(ctx, api.mustDB(), p.WorkflowAscodeHolder.ID)
 			if err != nil {
 				return err
