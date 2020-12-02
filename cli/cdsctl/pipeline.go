@@ -97,7 +97,12 @@ func pipelineExportRun(v cli.Values) error {
 var pipelineImportCmd = cli.Command{
 	Name:  "import",
 	Short: "Import CDS pipeline",
-	Long:  "PATH: Path or URL of pipeline to import",
+	Long: `PATH: Path or URL of pipeline to import
+
+Without --force, CDS won't update an existing pipeline.
+With --force, CDS will allow you to update an existing pipeline. If this pipeline is managed 'as-code', CDS will
+override it. This pipeline will be detached from the repository, until it is re-imported again following a commit on the repo.
+	`,
 	Ctx: []cli.Arg{
 		{Name: _ProjectKey},
 	},

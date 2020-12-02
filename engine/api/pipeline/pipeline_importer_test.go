@@ -8,12 +8,12 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/ovh/cds/engine/api/bootstrap"
-	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/api/test/assets"
+	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
@@ -22,6 +22,7 @@ type args struct {
 	pkey string
 	pip  *sdk.Pipeline
 	u    *sdk.AuthentifiedUser
+	opts pipeline.ImportOptions
 }
 
 type testcase struct {
@@ -55,7 +56,7 @@ func testImportUpdate(t *testing.T, db gorp.SqlExecutor, store cache.Store, tt t
 	proj, err := project.Load(context.TODO(), db, tt.args.pip.ProjectKey, nil)
 	test.NoError(t, err)
 
-	if err := pipeline.ImportUpdate(context.TODO(), db, *proj, tt.args.pip, msgChan); (err != nil) != tt.wantErr {
+	if err := pipeline.ImportUpdate(context.TODO(), db, *proj, tt.args.pip, msgChan, tt.args.opts); (err != nil) != tt.wantErr {
 		t.Errorf("%q. ImportUpdate() error = %v, wantErr %v", tt.name, err, tt.wantErr)
 	}
 
@@ -651,8 +652,93 @@ func TestImportUpdate(t *testing.T) {
 		},
 	}
 
+	var test10 = testcase{
+		name:    "import an ascode pipeline with force update",
+		wantErr: false,
+		args: args{
+			u:    u,
+			pkey: sdk.RandomString(7),
+			pip:  &sdk.Pipeline{},
+			opts: pipeline.ImportOptions{Force: true},
+		},
+		setup: func(t *testing.T, args args) {
+			proj := assets.InsertTestProject(t, db, cache, args.pkey, args.pkey)
+
+			pipExisting := sdk.Pipeline{
+				Name:           sdk.RandomString(10),
+				ProjectID:      proj.ID,
+				FromRepository: "myrepofrom",
+			}
+			assert.NoError(t, pipeline.InsertPipeline(db, &pipExisting))
+
+			args.pip.Name = pipExisting.Name
+			args.pip.ProjectID = proj.ID
+			args.pip.ProjectKey = proj.Key
+			args.pip.Stages = []sdk.Stage{
+				{
+					BuildOrder: 1,
+					Enabled:    true,
+					Jobs: []sdk.Job{
+						{
+							Enabled: false,
+							Action: sdk.Action{
+								Name:        "Job 1",
+								Description: "This is the first job",
+							},
+						},
+					},
+					Name: "This is the first stage",
+				},
+			}
+		},
+		asserts: func(t *testing.T, pip sdk.Pipeline) {
+			assert.Equal(t, 1, len(pip.Stages))
+			assert.Equal(t, 1, len(pip.Stages[0].Jobs))
+		},
+	}
+
+	var test11 = testcase{
+		name:    "import an ascode pipeline without force update",
+		wantErr: true,
+		args: args{
+			u:    u,
+			pkey: sdk.RandomString(7),
+			pip:  &sdk.Pipeline{},
+		},
+		setup: func(t *testing.T, args args) {
+			proj := assets.InsertTestProject(t, db, cache, args.pkey, args.pkey)
+
+			pipExisting := sdk.Pipeline{
+				Name:           sdk.RandomString(10),
+				ProjectID:      proj.ID,
+				FromRepository: "myrepofrom",
+			}
+			assert.NoError(t, pipeline.InsertPipeline(db, &pipExisting))
+
+			args.pip.Name = pipExisting.Name
+			args.pip.ProjectID = proj.ID
+			args.pip.ProjectKey = proj.Key
+			args.pip.Stages = []sdk.Stage{
+				{
+					BuildOrder: 1,
+					Enabled:    true,
+					Jobs: []sdk.Job{
+						{
+							Enabled: false,
+							Action: sdk.Action{
+								Name:        "Job 1",
+								Description: "This is the first job",
+							},
+						},
+					},
+					Name: "This is the first stage",
+				},
+			}
+		},
+	}
+
 	//Run the tests
-	var tests = []testcase{test1, test2, test3, test4, test5, test6, test7, test8, test9}
+	var tests = []testcase{test1, test2, test3, test4, test5, test6, test7, test8, test9, test10, test11}
 	for _, tt := range tests {
 		testImportUpdate(t, db, cache, tt)
 	}
