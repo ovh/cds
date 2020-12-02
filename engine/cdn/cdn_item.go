@@ -185,6 +185,10 @@ func (s *Service) pushItemLogIntoCache(ctx context.Context, it sdk.CDNItem, unit
 		return err
 	}
 
+	if len(itemUnits) == 0 {
+		return sdk.WithStack(fmt.Errorf("unable to find item units for item with id: %s", it.ID))
+	}
+
 	var unit *sdk.CDNUnit
 	var selectedItemUnit *sdk.CDNItemUnit
 	if unitName != "" {

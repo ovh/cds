@@ -62,6 +62,9 @@ func (s *Service) markUnitItemToDeleteByItemID(ctx context.Context, itemID strin
 	if err != nil {
 		return 0, err
 	}
+	if len(itemUnitIDs) == 0 {
+		return 0, nil
+	}
 
 	tx, err := db.Begin()
 	if err != nil {

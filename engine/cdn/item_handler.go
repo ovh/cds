@@ -184,6 +184,10 @@ func (s *Service) getItemCheckSyncHandler() service.Handler {
 			return err
 		}
 
+		if len(itemsUnits) == 0 {
+			return sdk.WithStack(sdk.ErrNotFound)
+		}
+
 		var contents = map[string]*bytes.Buffer{}
 		for _, iu := range itemsUnits {
 			src, err := s.Units.NewSource(ctx, iu)
