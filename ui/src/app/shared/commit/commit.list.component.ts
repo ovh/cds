@@ -28,13 +28,11 @@ export class CommitListComponent implements OnInit, OnDestroy {
                 type: ColumnType.IMG_TEXT,
                 name: 'commit_author',
                 class: 'middle',
-                selector: (commit: Commit) => {
-                    return {
+                selector: (commit: Commit) => ({
                         img: commit.author.avatar,
                         valueclass: 'author',
                         value: commit.author.displayName
-                    };
-                }
+                    })
             },
             <Column<Commit>>{
                 type: ColumnType.LINK,

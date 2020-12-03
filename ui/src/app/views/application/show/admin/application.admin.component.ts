@@ -91,7 +91,7 @@ export class ApplicationAdminComponent implements OnInit {
             }))
             .subscribe(() => {
                 this._toast.success('', this._translate.instant('application_deleted'));
-                this._router.navigate(['/project', this.project.key], { queryParams: { 'tab': 'applications' } });
+                this._router.navigate(['/project', this.project.key], { queryParams: { tab: 'applications' } });
             });
     }
 

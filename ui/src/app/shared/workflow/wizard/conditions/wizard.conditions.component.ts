@@ -3,7 +3,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { Select, Store } from '@ngxs/store';
 import { PipelineStatus } from 'app/model/pipeline.model';
 import { Project } from 'app/model/project.model';
-// tslint:disable-next-line: max-line-length
+// eslint-disable-next-line max-len
 import { WNode, WNodeContext, WNodeHook, Workflow, WorkflowNodeCondition, WorkflowNodeConditions, WorkflowTriggerConditionCache } from 'app/model/workflow.model';
 import { ThemeStore } from 'app/service/theme/theme.store';
 import { WorkflowService } from 'app/service/workflow/workflow.service';

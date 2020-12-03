@@ -11,7 +11,7 @@ import cloneDeep from 'lodash-es/cloneDeep';
 import { first } from 'rxjs/operators';
 import { Subscription } from 'rxjs/Subscription';
 
-declare var CodeMirror: any;
+declare let CodeMirror: any;
 
 @Component({
     selector: 'app-parameter-value',

@@ -59,9 +59,7 @@ export class WorkflowNodeRunHistoryComponent implements OnInit {
             <Column<WorkflowNodeRun>>{
                 type: ColumnType.TEXT,
                 name: 'common_version',
-                selector: (nodeRun: WorkflowNodeRun) => {
-                    return `${nodeRun.num}.${nodeRun.subnumber}`;
-                }
+                selector: (nodeRun: WorkflowNodeRun) => `${nodeRun.num}.${nodeRun.subnumber}`
             },
             <Column<WorkflowNodeRun>>{
                 type: ColumnType.TEXT,

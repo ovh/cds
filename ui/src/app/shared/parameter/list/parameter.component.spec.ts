@@ -13,8 +13,8 @@ import { ParameterEvent } from '../parameter.event.model';
 import { ParameterListComponent } from './parameter.component';
 
 describe('CDS: Parameter List Component', () => {
-    beforeEach(() => {
-        TestBed.configureTestingModule({
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
             declarations: [
             ],
             providers: [
@@ -32,7 +32,7 @@ describe('CDS: Parameter List Component', () => {
                 TranslateModule.forRoot(),
                 HttpClientTestingModule
             ]
-        });
+        }).compileComponents();
     });
 
 
@@ -46,9 +46,7 @@ describe('CDS: Parameter List Component', () => {
         let component = fixture.debugElement.componentInstance;
         expect(component).toBeTruthy();
 
-        http.expectOne(((req: HttpRequest<any>) => {
-            return req.url === '/parameter/type';
-        })).flush(typeMock);
+        http.expectOne(((req: HttpRequest<any>) => req.url === '/parameter/type')).flush(typeMock);
 
         let params: Parameter[] = [];
         let p: Parameter = new Parameter();

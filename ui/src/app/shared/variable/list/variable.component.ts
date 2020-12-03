@@ -84,6 +84,7 @@ export class VariableComponent extends Table<Variable> {
 
     /**
      * Send Event to parent component.
+     *
      * @param type Type of event (update, delete)
      * @param variable Variable data
      */

@@ -26,7 +26,7 @@ import { Validator } from 'jsonschema';
 import { Subscription } from 'rxjs';
 import { finalize, first } from 'rxjs/operators';
 
-declare var CodeMirror: any;
+declare let CodeMirror: any;
 
 @Component({
     selector: 'app-workflow-sidebar-code',

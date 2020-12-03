@@ -16,7 +16,8 @@ export class RepoManagerService {
 
     /**
      * Get all available repositories manager
-     * @returns {Observable<RepositoriesManager[]>}
+     *
+     * @returns
      */
     getAll(): Observable<string[]> {
         return this._http.get<string[]>('/repositories_manager');
@@ -24,14 +25,15 @@ export class RepoManagerService {
 
     /**
      * Get all the repositories for the given repository manager.
+     *
      * @param key Project unique key
      * @param repoManName Repository manager name
-     * @returns {Observable<Repository[]>}
+     * @returns
      */
     getRepositories(key: string, repoManName: string, sync: boolean): Observable<Repository[]> {
         let params = new HttpParams();
         params = params.append('synchronize', sync.toString());
-        return this._http.get<Repository[]>('/project/' + key + '/repositories_manager/' + repoManName + '/repos', { params: params });
+        return this._http.get<Repository[]>('/project/' + key + '/repositories_manager/' + repoManName + '/repos', { params });
     }
 
     getDependencies(key: string, repoManName: string): Observable<IdName[]> {

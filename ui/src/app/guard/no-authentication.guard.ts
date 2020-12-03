@@ -4,6 +4,7 @@ import { Store } from '@ngxs/store';
 import { FetchCurrentAuth } from 'app/store/authentication.action';
 import { AuthenticationState } from 'app/store/authentication.state';
 import { Observable } from 'rxjs';
+import { filter, first, map } from 'rxjs/operators';
 
 @Injectable()
 export class NoAuthenticationGuard implements CanActivate {
@@ -15,21 +16,21 @@ export class NoAuthenticationGuard implements CanActivate {
 
     getCurrentAuth(): Observable<boolean> {
         return this._store.select(AuthenticationState.error)
-            .map((e: any): boolean => {
-                if (!e) {
-                    this._store.dispatch(new FetchCurrentAuth()).subscribe(
-                        () => {
-                            this._router.navigate(['/']);
-                        }
-                    );
-                    return null;
-                }
-                return true;
-            })
-            .filter(exists => {
-                return exists !== null;
-            })
-            .first();
+            .pipe(
+                map((e: any): boolean => {
+                    if (!e) {
+                        this._store.dispatch(new FetchCurrentAuth()).subscribe(
+                            () => {
+                                this._router.navigate(['/']);
+                            }
+                        );
+                        return null;
+                    }
+                    return true;
+                }),
+                filter(exists => exists !== null),
+                first()
+            );
     }
 
     canActivate(

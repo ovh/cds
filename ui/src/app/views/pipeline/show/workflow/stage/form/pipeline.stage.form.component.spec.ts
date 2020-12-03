@@ -1,4 +1,4 @@
-/* tslint:disable:no-unused-variable */
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
@@ -10,16 +10,16 @@ import { WorkflowService } from 'app/service/workflow/workflow.service';
 import { NgxsStoreModule } from 'app/store/store.module';
 import 'rxjs/add/observable/of';
 import { Observable } from 'rxjs/Observable';
-import { SharedModule } from '../../../../../../shared/shared.module';
-import { PipelineModule } from '../../../../pipeline.module';
 import { ApplicationService } from 'app/service/application/application.service';
 import { EnvironmentService } from 'app/service/environment/environment.service';
+import { SharedModule } from '../../../../../../shared/shared.module';
+import { PipelineModule } from '../../../../pipeline.module';
 
 
 describe('CDS: Stage From component', () => {
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
             declarations: [],
             providers: [
                 { provide: ActivatedRoute, useClass: MockActivatedRoutes },
@@ -40,7 +40,7 @@ describe('CDS: Stage From component', () => {
                 SharedModule,
                 HttpClientTestingModule
             ]
-        });
+        }).compileComponents();
     });
 });
 

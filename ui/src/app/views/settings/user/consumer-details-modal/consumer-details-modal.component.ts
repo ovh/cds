@@ -82,14 +82,12 @@ export class ConsumerDetailsModalComponent {
 
         this.filterChildren = f => {
             const lowerFilter = f.toLowerCase();
-            return (c: AuthConsumer) => {
-                return c.name.toLowerCase().indexOf(lowerFilter) !== -1 ||
+            return (c: AuthConsumer) => c.name.toLowerCase().indexOf(lowerFilter) !== -1 ||
                     c.description.toLowerCase().indexOf(lowerFilter) !== -1 ||
                     c.id.toLowerCase().indexOf(lowerFilter) !== -1 ||
                     c.scope_details.map(s => s.scope).join(' ').toLowerCase().indexOf(lowerFilter) !== -1 ||
                     (c.groups && c.groups.map(g => g.name).join(' ').toLowerCase().indexOf(lowerFilter) !== -1) ||
-                    (!c.groups && lowerFilter === '*');
-            }
+                    (!c.groups && lowerFilter === '*')
         };
 
         this.columnsConsumers = [
@@ -121,24 +119,22 @@ export class ConsumerDetailsModalComponent {
                 type: ColumnType.BUTTON,
                 name: 'common_action',
                 class: 'two right aligned',
-                selector: (c: AuthConsumer) => {
-                    return {
+                selector: (c: AuthConsumer) => ({
                         title: 'common_details',
-                        click: () => { this.clickConsumerDetails(c) }
-                    };
-                }
+                        click: () => {
+ this.clickConsumerDetails(c)
+}
+                    })
             }
         ];
 
         this.filterSessions = f => {
             const lowerFilter = f.toLowerCase();
-            return (s: AuthSession) => {
-                return s.consumer.name.toLowerCase().indexOf(lowerFilter) !== -1 ||
+            return (s: AuthSession) => s.consumer.name.toLowerCase().indexOf(lowerFilter) !== -1 ||
                     s.id.toLowerCase().indexOf(lowerFilter) !== -1 ||
                     s.consumer_id.toLowerCase().indexOf(lowerFilter) !== -1 ||
                     s.created.toLowerCase().indexOf(lowerFilter) !== -1 ||
-                    s.expire_at.toLowerCase().indexOf(lowerFilter) !== -1;
-            }
+                    s.expire_at.toLowerCase().indexOf(lowerFilter) !== -1
         };
 
         this.columnsSessions = [
@@ -181,8 +177,12 @@ export class ConsumerDetailsModalComponent {
         const config = new TemplateModalConfig<boolean, boolean, void>(this.consumerDetailsModal);
         config.mustScroll = true;
         this.modal = this._modalService.open(config);
-        this.modal.onApprove(_ => { this.closeCallback() });
-        this.modal.onDeny(_ => { this.closeCallback() });
+        this.modal.onApprove(_ => {
+ this.closeCallback()
+});
+        this.modal.onDeny(_ => {
+ this.closeCallback()
+});
 
         this.init();
     }

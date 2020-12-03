@@ -20,9 +20,7 @@ export class GroupService {
         if (withoutDefault === true) {
             params = params.append('withoutDefault', 'true');
         }
-        return this._http.get<Group[]>('/group', { params: params }).map(gs => {
-            return gs.map(g => Object.assign(new Group(), g));
-        });
+        return this._http.get<Group[]>('/group', { params }).pipe(map(gs => gs.map(g => Object.assign(new Group(), g))));
     }
 
     create(group: Group): Observable<Group> {
@@ -34,9 +32,7 @@ export class GroupService {
     }
 
     delete(name: string): Observable<boolean> {
-        return this._http.delete(`/group/${name}`).pipe(map(() => {
-            return true;
-        }));
+        return this._http.delete(`/group/${name}`).pipe(map(() => true));
     }
 
     addMember(name: string, member: GroupMember): Observable<Group> {

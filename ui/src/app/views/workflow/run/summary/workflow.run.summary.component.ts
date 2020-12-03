@@ -62,7 +62,7 @@ export class WorkflowRunSummaryComponent implements OnInit, OnDestroy {
     loadingAction = false;
     loadingDelete = false;
     showInfos = false;
-    ansi_up = new AU.default;
+    ansi_up = new AU.default();
 
     pipelineStatusEnum = PipelineStatus;
 

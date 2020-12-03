@@ -33,13 +33,13 @@ export class WorkflowTemplateApplyModalComponent implements OnChanges {
     modal: SuiActiveModal<boolean, boolean, void>;
     open: boolean;
 
-    // tslint:disable-next-line: no-input-rename
+    // eslint-disable-next-line @angular-eslint/no-input-rename
     @Input('project') projectIn: Project;
-    // tslint:disable-next-line: no-input-rename
+    // eslint-disable-next-line @angular-eslint/no-input-rename
     @Input('workflow') workflowIn: Workflow;
-    // tslint:disable-next-line: no-input-rename
+    // eslint-disable-next-line @angular-eslint/no-input-rename
     @Input('workflowTemplate') workflowTemplateIn: WorkflowTemplate;
-    // tslint:disable-next-line: no-input-rename
+    // eslint-disable-next-line @angular-eslint/no-input-rename
     @Input('workflowTemplateInstance') workflowTemplateInstanceIn: WorkflowTemplateInstance;
     @Output() close = new EventEmitter();
 

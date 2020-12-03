@@ -6,15 +6,15 @@ import { Parameter } from 'app/model/parameter.model';
 import { ParameterService } from 'app/service/parameter/parameter.service';
 import { RepoManagerService } from 'app/service/repomanager/project.repomanager.service';
 import { ThemeStore } from 'app/service/theme/theme.store';
+import { Observable, of } from 'rxjs';
 import { SharedModule } from '../../shared.module';
 import { ParameterEvent } from '../parameter.event.model';
 import { ParameterFormComponent } from './parameter.form';
-import { Observable, of } from 'rxjs';
 
 describe('CDS: parameter From Component', () => {
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
             declarations: [
             ],
             providers: [
@@ -32,7 +32,7 @@ describe('CDS: parameter From Component', () => {
                 RouterTestingModule.withRoutes([]),
                 HttpClientTestingModule
             ]
-        });
+        }).compileComponents();
     });
 
 
@@ -83,6 +83,6 @@ class MockParameterService {
     }
 
     getTypesFromAPI(): Observable<string[]> {
-        return of(["string", "password"])
+        return of(['string', 'password'])
     }
 }

@@ -19,7 +19,8 @@ import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { FeatureState } from 'app/store/feature.state';
 import { ProjectState } from 'app/store/project.state';
 import { WorkflowState, WorkflowStateModel } from 'app/store/workflow.state';
-import { Observable, Subscription } from 'rxjs';
+import { interval, Subscription } from 'rxjs';
+import { map, mergeMap } from 'rxjs/operators';
 
 @Component({
     selector: 'app-workflow-service-log',
@@ -45,7 +46,7 @@ export class WorkflowServiceLogComponent implements OnInit, OnDestroy {
     loading = true;
     zone: NgZone;
 
-    ansi_up = new AU.default;
+    ansi_up = new AU.default();
 
     constructor(
         private _store: Store,
@@ -99,9 +100,7 @@ export class WorkflowServiceLogComponent implements OnInit, OnDestroy {
         let nodeRunId = (<WorkflowStateModel>this._store.selectSnapshot(WorkflowState)).workflowNodeRun.id;
         let runJobId = this.currentRunJobID;
 
-        const cdnEnabled = !!this._store.selectSnapshot(FeatureState.feature('cdn-job-logs')).find(f => {
-            return !!f.results.find(r => r.enabled && r.paramString === JSON.stringify({ 'project_key': projectKey }));
-        });
+        const cdnEnabled = !!this._store.selectSnapshot(FeatureState.feature('cdn-job-logs')).find(f => !!f.results.find(r => r.enabled && r.paramString === JSON.stringify({ project_key: projectKey })));
 
         let logLink: CDNLogLink;
         if (cdnEnabled) {
@@ -135,14 +134,16 @@ export class WorkflowServiceLogComponent implements OnInit, OnDestroy {
 
         this.stopPolling();
         this._ngZone.runOutsideAngular(() => {
-            this.pollingSubscription = Observable.interval(2000)
-                .mergeMap(_ => {
-                    if (!cdnEnabled) {
-                        return this._workflowService.getServiceLog(projectKey, workflowName, nodeRunId,
-                            runJobId, this.serviceName);
-                    }
-                    return this._workflowService.getLogDownload(logLink).map(data => <ServiceLog>{ val: data });
-                })
+            this.pollingSubscription = interval(2000)
+                .pipe(
+                    mergeMap(() => {
+                        if (!cdnEnabled) {
+                            return this._workflowService.getServiceLog(projectKey, workflowName, nodeRunId,
+                                runJobId, this.serviceName);
+                        }
+                        return this._workflowService.getLogDownload(logLink).pipe(map(data => <ServiceLog>{ val: data }));
+                    })
+                )
                 .subscribe(serviceLogs => {
                     this.zone.run(() => {
                         callback(serviceLogs);
@@ -153,6 +154,7 @@ export class WorkflowServiceLogComponent implements OnInit, OnDestroy {
                         }
                     });
                 });
+
         });
     }
 

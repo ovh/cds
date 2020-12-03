@@ -65,7 +65,7 @@ export class PipelineAdminComponent implements OnInit {
                 if (this.oldName !== this.editablePipeline.name) {
                     this._router.navigate(
                         ['project', this.project.key, 'pipeline', this.editablePipeline.name],
-                        { queryParams: { 'tab': 'advanced' } }
+                        { queryParams: { tab: 'advanced' } }
                     );
                 }
             });
@@ -84,7 +84,7 @@ export class PipelineAdminComponent implements OnInit {
                 this._toast.success('', this._translate.instant('pipeline_deleted'));
                 this._router.navigate(
                     ['project', this.project.key],
-                    { queryParams: { 'tab': 'pipelines' } }
+                    { queryParams: { tab: 'pipelines' } }
                 );
             });
     }

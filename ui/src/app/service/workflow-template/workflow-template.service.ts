@@ -12,6 +12,7 @@ import {
 } from 'app/model/workflow-template.model';
 import { Workflow } from 'app/model/workflow.model';
 import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
 
 @Injectable()
 export class WorkflowTemplateService {
@@ -39,13 +40,13 @@ export class WorkflowTemplateService {
 
     apply(groupName: string, templateSlug: string, req: WorkflowTemplateRequest): Observable<WorkflowTemplateApplyResult> {
         return this._http.post<Array<string>>(`/template/${groupName}/${templateSlug}/apply?import=true`,
-            req, { observe: 'response' }).pipe().map(res => {
+            req, { observe: 'response' }).pipe(map(res => {
                 let headers: HttpHeaders = res.headers;
                 let result = new WorkflowTemplateApplyResult();
                 result.workflow_name = headers.get('X-Api-Workflow-Name');
                 result.msgs = res.body;
                 return result;
-            });
+            }));
     }
 
     applyAsCode(groupName: string, templateSlug: string, req: WorkflowTemplateRequest,
@@ -76,7 +77,7 @@ export class WorkflowTemplateService {
 
     getInstances(groupName: string, templateSlug: string): Observable<Array<WorkflowTemplateInstance>> {
         return this._http.get<Array<WorkflowTemplateInstance>>(`/template/${groupName}/${templateSlug}/instance`)
-            .map(wtis => wtis.map(wti => new WorkflowTemplateInstance(wti)));
+            .pipe(map(wtis => wtis.map(wti => new WorkflowTemplateInstance(wti))));
     }
 
     bulk(groupName: string, templateSlug: string, req: WorkflowTemplateBulk): Observable<WorkflowTemplateBulk> {

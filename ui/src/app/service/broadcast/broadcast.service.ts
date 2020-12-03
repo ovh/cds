@@ -7,8 +7,8 @@ import { map } from 'rxjs/operators';
 @Injectable()
 export class BroadcastService {
     private broadcasts = [
-        { 'name': 'info', 'value': 'info' },
-        { 'name': 'warning', 'value': 'warning' }
+        { name: 'info', value: 'info' },
+        { name: 'warning', value: 'warning' }
     ];
 
     constructor(private _http: HttpClient) { }
@@ -22,9 +22,7 @@ export class BroadcastService {
     }
 
     deleteBroadcast(broadcast: Broadcast): Observable<boolean> {
-        return this._http.delete(`/broadcast/${broadcast.id}`).pipe(map(() => {
-            return true;
-        }));
+        return this._http.delete(`/broadcast/${broadcast.id}`).pipe(map(() => true));
     }
 
     updateBroadcast(broadcast: Broadcast): Observable<Broadcast> {

@@ -377,6 +377,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
 
     /**
      * Navigate to the selected project.
+     *
      * @param key Project unique key get by the event
      */
     navigateToProject(key): void {
@@ -405,7 +406,9 @@ export class NavbarComponent implements OnInit, OnDestroy {
 
     clickLogout(): void {
         this._store.dispatch(new SignoutCurrentUser()).subscribe(
-            () => { this._router.navigate(['/auth/signin']); }
+            () => {
+ this._router.navigate(['/auth/signin']);
+}
         );
     }
 }

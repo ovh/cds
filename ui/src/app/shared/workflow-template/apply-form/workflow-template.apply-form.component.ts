@@ -27,7 +27,7 @@ import { ParamData as AsCodeParamData } from 'app/shared/ascode/save-form/ascode
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { EventState } from 'app/store/event.state';
 import { Subscription } from 'rxjs';
-import { finalize, first } from 'rxjs/operators';
+import { filter, finalize, first, map } from 'rxjs/operators';
 
 @Component({
     selector: 'app-workflow-template-apply-form',
@@ -148,14 +148,16 @@ export class WorkflowTemplateApplyFormComponent implements OnChanges, OnDestroy 
 
     startPollingOperation() {
         this.pollingOperationSub = this._store.select(EventState.last)
-            .filter(e => e && e.type_event === EventType.OPERATION && e.project_key === this.project.key)
-            .map(e => e.payload as Operation)
-            .filter(o => o.uuid === this.asCodeOperation.uuid)
-            .first(o => o.status > 1)
-            .pipe(finalize(() => {
-                this.loading = false;
-                this._cd.markForCheck();
-            }))
+            .pipe(
+                filter(e => e && e.type_event === EventType.OPERATION && e.project_key === this.project.key),
+                map(e => e.payload as Operation),
+                filter(o => o.uuid === this.asCodeOperation.uuid),
+                first(o => o.status > 1),
+                finalize(() => {
+                    this.loading = false;
+                    this._cd.markForCheck();
+                })
+            )
             .subscribe(o => {
                 this.asCodeOperation = o;
             });

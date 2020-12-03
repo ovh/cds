@@ -1,4 +1,4 @@
-// tslint:disable-next-line: max-line-length
+// eslint-disable-next-line max-len
 import { AfterViewInit, ChangeDetectionStrategy, ChangeDetectorRef, Component, ComponentFactoryResolver, ComponentRef, EventEmitter, HostListener, Input, OnDestroy, Output, ViewChild, ViewContainerRef } from '@angular/core';
 import * as d3 from 'd3';
 import * as dagreD3 from 'dagre-d3';
@@ -44,7 +44,9 @@ export class WorkflowGraphComponent implements AfterViewInit, OnDestroy {
         this._workflowStore.setDirection(this.project.key, this.workflow.name, this.direction);
         this.changeDisplay();
     }
-    get direction() { return this._direction; }
+    get direction() {
+ return this._direction;
+}
 
     @Output() deleteJoinSrcEvent = new EventEmitter<{ source: any, target: any }>();
 
@@ -214,7 +216,7 @@ export class WorkflowGraphComponent implements AfterViewInit, OnDestroy {
         this.svgContainer.insert(componentRef.hostView, 0);
         this.g.setNode('node-' + node.ref, <any>{
             label: () => componentRef.location.nativeElement,
-            shape: shape,
+            shape,
             labelStyle: `width: ${width}px;height: ${height}px;`
         });
 

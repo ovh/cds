@@ -10,8 +10,8 @@ import { DurationService } from 'app/shared/duration/duration.service';
 import { ProjectState } from 'app/store/project.state';
 import { WorkflowState } from 'app/store/workflow.state';
 import * as moment from 'moment';
-import { Observable, Subject, Subscription } from 'rxjs';
-import { delay, retryWhen } from 'rxjs/operators';
+import { from, interval, Observable, Subject, Subscription } from 'rxjs';
+import { delay, mergeMap, retryWhen } from 'rxjs/operators';
 import { webSocket, WebSocketSubject } from 'rxjs/webSocket';
 import { WorkflowRunJobVariableComponent } from '../variables/job.variables.component';
 
@@ -73,8 +73,12 @@ export class WorkflowRunJobComponent implements OnInit, OnDestroy {
 
     @ViewChild('jobVariable') jobVariable: WorkflowRunJobVariableComponent;
 
-    @Input() set nodeJobRun(data: WorkflowNodeJobRun) { this.subjectChannel.next(data); }
-    get nodeJobRun(): WorkflowNodeJobRun { return this._nodeJobRun; }
+    @Input() set nodeJobRun(data: WorkflowNodeJobRun) {
+ this.subjectChannel.next(data);
+}
+    get nodeJobRun(): WorkflowNodeJobRun {
+ return this._nodeJobRun;
+}
     _nodeJobRun: WorkflowNodeJobRun;
     @Output() onScroll = new EventEmitter<ScrollTarget>();
 
@@ -99,20 +103,23 @@ export class WorkflowRunJobComponent implements OnInit, OnDestroy {
         private _router: Router
     ) {
         this.subjectChannel = new Subject<WorkflowNodeJobRun>();
-        this.subscriptionChannel = this.subjectChannel.mergeMap(data => {
-            return Observable.from(this.onNodeJobRunChange(data));
-        }).subscribe();
+        this.subscriptionChannel = this.subjectChannel.pipe(
+            mergeMap(data => from(this.onNodeJobRunChange(data)))
+        ).subscribe();
     }
 
     ngOnInit(): void {
-        this.pollingSpawnInfoSubscription = Observable.interval(2000)
-            .mergeMap(_ => Observable.from(this.loadSpawnInfo())).subscribe();
+        this.pollingSpawnInfoSubscription = interval(2000)
+            .pipe(mergeMap(_ => from(this.loadSpawnInfo())))
+            .subscribe();
     }
 
     ngOnDestroy(): void { } // Should be set to use @AutoUnsubscribe with AOT
 
     async onNodeJobRunChange(data: WorkflowNodeJobRun) {
-        if (!data) { return; }
+        if (!data) {
+ return;
+}
         this._nodeJobRun = data;
 
         if (this.previousNodeJobRun && this.previousNodeJobRun.id !== this.nodeJobRun.id) {
@@ -246,7 +253,9 @@ export class WorkflowRunJobComponent implements OnInit, OnDestroy {
         this._cd.markForCheck();
     }
 
-    clickScroll(target: ScrollTarget): void { this.onScroll.emit(target); }
+    clickScroll(target: ScrollTarget): void {
+ this.onScroll.emit(target);
+}
 
     async loadSpawnInfo() {
         if (!this.nodeJobRun || PipelineStatus.isDone(this.nodeJobRun.status)) {
@@ -274,9 +283,13 @@ export class WorkflowRunJobComponent implements OnInit, OnDestroy {
         this._cd.markForCheck();
     }
 
-    trackStepElement(index: number, element: LogBlock) { return index; }
+    trackStepElement(index: number, element: LogBlock) {
+ return index;
+}
 
-    trackLineElement(index: number, element: CDNLine) { return element ? element.number : null; }
+    trackLineElement(index: number, element: CDNLine) {
+ return element ? element.number : null;
+}
 
     computeStepFirstLineNumbers(): void {
         let nestFirstLineNumber = 1;
@@ -322,9 +335,7 @@ export class WorkflowRunJobComponent implements OnInit, OnDestroy {
             { offset: `-${step.endLines.length + this.expandLoadLinesCount}`, limit: `${this.expandLoadLinesCount}` }
         ).toPromise();
         this.steps[index].totalLinesCount = result.totalCount;
-        this.steps[index].endLines = result.lines.filter(l => {
-            return !step.lines.find(line => line.number === l.number) && !step.endLines.find(line => line.number === l.number);
-        }).concat(step.endLines);
+        this.steps[index].endLines = result.lines.filter(l => !step.lines.find(line => line.number === l.number) && !step.endLines.find(line => line.number === l.number)).concat(step.endLines);
         this._cd.markForCheck();
     }
 
@@ -479,9 +490,7 @@ export class WorkflowRunJobComponent implements OnInit, OnDestroy {
             limit: `${this.expandLoadLinesCount}`
         }).toPromise();
         this.services[index].totalLinesCount = result.totalCount;
-        this.services[index].endLines = result.lines.filter(l => {
-            return !service.lines.find(line => line.number === l.number) && !service.endLines.find(line => line.number === l.number);
-        }).concat(service.endLines);
+        this.services[index].endLines = result.lines.filter(l => !service.lines.find(line => line.number === l.number) && !service.endLines.find(line => line.number === l.number)).concat(service.endLines);
         this._cd.markForCheck();
     }
 

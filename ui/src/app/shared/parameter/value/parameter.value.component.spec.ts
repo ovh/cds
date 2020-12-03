@@ -7,8 +7,8 @@ import { SharedService } from '../../shared.service';
 import { ParameterValueComponent } from './parameter.value.component';
 
 describe('CDS: Parameter Value Component', () => {
-    beforeEach(() => {
-        TestBed.configureTestingModule({
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
             declarations: [
             ],
             providers: [
@@ -20,7 +20,7 @@ describe('CDS: Parameter Value Component', () => {
                 SharedModule,
                 HttpClientTestingModule
             ]
-        });
+        }).compileComponents();
     });
 
     it('should create an input text', fakeAsync(() => {

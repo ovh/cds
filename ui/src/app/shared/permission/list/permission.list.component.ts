@@ -54,7 +54,7 @@ export class PermissionListComponent extends Table<GroupPermission> {
 
     formatPermission() {
         let translate = this._translate;
-        return function (event) {
+        return function(event) {
             return translate.instant(event.name);
         };
     }

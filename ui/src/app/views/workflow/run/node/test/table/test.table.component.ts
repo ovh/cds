@@ -83,13 +83,11 @@ export class WorkflowRunTestTableComponent implements OnInit {
                 type: ColumnType.BUTTON,
                 name: '',
                 class: 'two right aligned',
-                selector: (tc: TestCase, index?: number) => {
-                    return {
+                selector: (tc: TestCase, index?: number) => ({
                         icon: 'eye',
                         class: 'icon small',
                         click: () => this.clickTestCase(tc, index)
-                    };
-                },
+                    }),
             },
         ];
     }

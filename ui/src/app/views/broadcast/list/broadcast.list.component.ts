@@ -25,9 +25,7 @@ export class BroadcastListComponent implements OnDestroy {
     set filter(filter: string) {
         let filterLower = filter.toLowerCase();
         let broadcasts = this.recentView ? this.recentBroadcasts : this.oldBroadcasts;
-        this.filteredBroadcasts = broadcasts.filter((br) => {
-            return br.title.toLowerCase().indexOf(filterLower) !== -1 || br.level === filter;
-        });
+        this.filteredBroadcasts = broadcasts.filter((br) => br.title.toLowerCase().indexOf(filterLower) !== -1 || br.level === filter);
     }
 
     constructor(private _broadcastStore: BroadcastStore, private _cd: ChangeDetectorRef) {
@@ -52,13 +50,9 @@ export class BroadcastListComponent implements OnDestroy {
         }
         this.recentView = recent;
         if (recent) {
-            this.filteredBroadcasts = this.recentBroadcasts.filter((br) => {
-                return br.title.toLowerCase().indexOf(filterLower) !== -1 || br.level === this.filter;
-            });
+            this.filteredBroadcasts = this.recentBroadcasts.filter((br) => br.title.toLowerCase().indexOf(filterLower) !== -1 || br.level === this.filter);
         } else {
-            this.filteredBroadcasts = this.oldBroadcasts.filter((br) => {
-                return br.title.toLowerCase().indexOf(filterLower) !== -1 || br.level === this.filter;
-            });
+            this.filteredBroadcasts = this.oldBroadcasts.filter((br) => br.title.toLowerCase().indexOf(filterLower) !== -1 || br.level === this.filter);
         }
     }
 

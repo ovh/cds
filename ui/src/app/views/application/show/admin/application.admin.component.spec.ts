@@ -45,8 +45,8 @@ describe('CDS: Application Admin Component', () => {
     let injector: Injector;
     let router: Router;
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
             declarations: [
                 DummyComponent
             ],
@@ -86,7 +86,7 @@ describe('CDS: Application Admin Component', () => {
                 TranslateModule.forRoot(),
                 HttpClientTestingModule
             ]
-        });
+        }).compileComponents();
 
 
         injector = getTestBed();

@@ -57,20 +57,16 @@ export class HookTaskShowComponent {
             },
             <Column<TaskExecution>>{
                 name: 'proceed at',
-                selector: (d: TaskExecution) => {
-                    return d.processing_timestamp ?
-                        formatDate(new Date(d.processing_timestamp / 1000000), 'short', this._translate.currentLang) : '-';
-                }
+                selector: (d: TaskExecution) => d.processing_timestamp ?
+                        formatDate(new Date(d.processing_timestamp / 1000000), 'short', this._translate.currentLang) : '-'
             },
             <Column<TaskExecution>>{
                 type: ColumnType.LINK_CLICK,
                 name: 'action',
-                selector: (d: TaskExecution) => {
-                    return {
+                selector: (d: TaskExecution) => ({
                         callback: this.selectExecution(d),
                         value: 'open'
-                    };
-                }
+                    })
             }
         ];
 

@@ -1,4 +1,4 @@
-/* tslint:disable:no-unused-variable */
+/* eslint-disable @typescript-eslint/no-unused-vars */
 
 import {fakeAsync, TestBed} from '@angular/core/testing';
 import {Parameter} from './parameter.model';
@@ -6,13 +6,13 @@ import {Pipeline} from './pipeline.model';
 
 describe('CDS: Pipeline Model', () => {
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
             declarations: [],
             providers: [
             ],
             imports: []
-        });
+        }).compileComponents();
     });
 
 

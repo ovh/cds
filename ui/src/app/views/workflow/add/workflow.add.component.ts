@@ -21,7 +21,7 @@ import { EventState } from 'app/store/event.state';
 import { ProjectState, ProjectStateModel } from 'app/store/project.state';
 import { CreateWorkflow, ImportWorkflow } from 'app/store/workflow.action';
 import { Subscription } from 'rxjs';
-import { filter, finalize, first } from 'rxjs/operators';
+import { filter, finalize, first, map } from 'rxjs/operators';
 
 @Component({
     selector: 'app-workflow-add',
@@ -191,12 +191,10 @@ workflow:
         }
 
         let lowerQuery = query.toLowerCase();
-        return options.filter(wt => {
-            return wt.name.toLowerCase().indexOf(lowerQuery) !== -1 ||
+        return options.filter(wt => wt.name.toLowerCase().indexOf(lowerQuery) !== -1 ||
                 wt.slug.toLowerCase().indexOf(lowerQuery) !== -1 ||
                 wt.group.name.toLowerCase().indexOf(lowerQuery) !== -1 ||
-                `${wt.group.name}/${wt.slug}`.toLowerCase().indexOf(lowerQuery) !== -1;
-        }).sort();
+                `${wt.group.name}/${wt.slug}`.toLowerCase().indexOf(lowerQuery) !== -1).sort();
     }
 
     createWorkflowFromRepo() {
@@ -224,14 +222,16 @@ workflow:
 
     startOperationWorker(uuid: string): void {
         this.webworkerSub = this._store.select(EventState.last)
-            .filter(e => e && e.type_event === EventType.OPERATION && e.project_key === this.project.key)
-            .map(e => e.payload as Operation)
-            .filter(o => o.uuid === this.pollingResponse.uuid)
-            .first(o => o.status > 1)
-            .pipe(finalize(() => {
-                this.pollingImport = false;
-                this._cd.markForCheck();
-            }))
+            .pipe(
+                filter(e => e && e.type_event === EventType.OPERATION && e.project_key === this.project.key),
+                map(e => e.payload as Operation),
+                filter(o => o.uuid === this.pollingResponse.uuid),
+                first(o => o.status > 1),
+                finalize(() => {
+                    this.pollingImport = false;
+                    this._cd.markForCheck();
+                })
+            )
             .subscribe(o => {
                 this.pollingResponse = o;
             });

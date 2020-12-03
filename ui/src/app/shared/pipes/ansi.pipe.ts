@@ -10,7 +10,7 @@ export class AnsiPipe implements PipeTransform {
             return value;
         }
 
-        let ansiUp = new AU.default;
+        let ansiUp = new AU.default();
         return ansiUp.ansi_to_html(value);
     }
 }

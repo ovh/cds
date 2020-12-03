@@ -14,7 +14,7 @@ export class QueueService {
                 params = params.append('status', s);
             });
         }
-        return this._http.get<Array<WorkflowNodeJobRun>>('/queue/workflows', { params: params });
+        return this._http.get<Array<WorkflowNodeJobRun>>('/queue/workflows', { params });
     }
 
     getJobInfos(jobID: number): Observable<WorkflowNodeJobRun> {

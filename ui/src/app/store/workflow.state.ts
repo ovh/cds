@@ -540,7 +540,7 @@ export class WorkflowState {
             };
             ctx.setState({
                 ...state,
-                editWorkflow: editWorkflow,
+                editWorkflow,
                 editModeWorkflowChanged: true
             });
             return;
@@ -577,7 +577,7 @@ export class WorkflowState {
             };
             ctx.setState({
                 ...state,
-                editWorkflow: editWorkflow,
+                editWorkflow,
                 editModeWorkflowChanged: true
             });
             return;
@@ -608,13 +608,11 @@ export class WorkflowState {
         if (state.workflow && state.editMode) {
             const editWorkflow: Workflow = {
                 ...state.editWorkflow,
-                notifications: state.editWorkflow.notifications.filter(no => {
-                    return action.payload.notification.id !== no.id;
-                })
+                notifications: state.editWorkflow.notifications.filter(no => action.payload.notification.id !== no.id)
             };
             ctx.setState({
                 ...state,
-                editWorkflow: editWorkflow,
+                editWorkflow,
                 editModeWorkflowChanged: true
             });
             return;
@@ -622,9 +620,7 @@ export class WorkflowState {
 
         const workflow: Workflow = {
             ...state.workflow,
-            notifications: state.workflow.notifications.filter(no => {
-                return action.payload.notification.id !== no.id;
-            })
+            notifications: state.workflow.notifications.filter(no => action.payload.notification.id !== no.id)
         };
 
         return ctx.dispatch(new actionWorkflow.UpdateWorkflow({
@@ -646,7 +642,7 @@ export class WorkflowState {
             };
             ctx.setState({
                 ...state,
-                editWorkflow: editWorkflow,
+                editWorkflow,
                 editModeWorkflowChanged: true
             });
             return;
@@ -675,7 +671,7 @@ export class WorkflowState {
             };
             ctx.setState({
                 ...state,
-                editWorkflow: editWorkflow,
+                editWorkflow,
                 editModeWorkflowChanged: true
             });
             return;
@@ -762,7 +758,7 @@ export class WorkflowState {
             };
             ctx.setState({
                 ...state,
-                editWorkflow: editWorkflow,
+                editWorkflow,
                 editModeWorkflowChanged: true
             });
             return;
@@ -818,7 +814,7 @@ export class WorkflowState {
             };
             ctx.setState({
                 ...state,
-                editWorkflow: editWorkflow,
+                editWorkflow,
                 editModeWorkflowChanged: true
             });
             return;
@@ -864,7 +860,7 @@ export class WorkflowState {
             };
             ctx.setState({
                 ...state,
-                editWorkflow: editWorkflow,
+                editWorkflow,
                 editModeWorkflowChanged: true
             });
             return;
@@ -910,7 +906,7 @@ export class WorkflowState {
             };
             ctx.setState({
                 ...state,
-                editWorkflow: editWorkflow,
+                editWorkflow,
                 editModeWorkflowChanged: true
             });
             return;
@@ -963,7 +959,7 @@ export class WorkflowState {
             const state = ctx.getState();
             ctx.setState({
                 ...state,
-                workflow: workflow,
+                workflow,
             });
             return ctx.dispatch(new actionWorkflow.FetchWorkflowAudits({
                 projectKey: action.payload.projectKey,
@@ -1057,11 +1053,11 @@ export class WorkflowState {
                     ...state,
                     projectKey: action.payload.projectKey,
                     workflow: wf,
-                    editWorkflow: editWorkflow,
+                    editWorkflow,
                     workflowRun: null,
                     workflowNodeRun: null,
                     canEdit: state.workflowRun ? false : canEdit,
-                    editMode: editMode
+                    editMode
                 });
             }));
     }
@@ -1102,8 +1098,8 @@ export class WorkflowState {
         }
         ctx.setState({
             ...state,
-            node: node,
-            hook: hook
+            node,
+            hook
         });
     }
 
@@ -1239,7 +1235,7 @@ export class WorkflowState {
                     ...stateNR,
                     projectKey: action.payload.projectKey,
                     workflowNodeRun: wnr,
-                    node: node,
+                    node,
                 });
                 if (stateNR.workflowNodeJobRun) {
                     ctx.dispatch(new SelectWorkflowNodeRunJob({ jobID: stateNR.workflowNodeJobRun.job.pipeline_action_id }));
@@ -1370,8 +1366,8 @@ export class WorkflowState {
         ctx.setState({
             ...state,
             editModeWorkflowChanged: false,
-            editMode: editMode,
-            editWorkflow: editWorkflow
+            editMode,
+            editWorkflow
         });
     }
 

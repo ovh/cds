@@ -153,6 +153,7 @@ export class EnvironmentShowComponent implements OnInit, OnDestroy {
 
     /**
      * Event on variable
+     *
      * @param event
      */
     variableEvent(event: VariableEvent): void {

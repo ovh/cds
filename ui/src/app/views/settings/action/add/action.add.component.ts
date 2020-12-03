@@ -75,9 +75,9 @@ export class ActionAddComponent implements OnInit, OnDestroy {
             .pipe(finalize(() => this._cd.markForCheck()))
             .subscribe(p => {
             this.pipeline = p;
-            this.stage = this.pipeline.stages.find((s: Stage) => { return s.id === stageID; });
+            this.stage = this.pipeline.stages.find((s: Stage) => s.id === stageID);
             if (this.stage) {
-                this.job = this.stage.jobs.find((j: Job) => { return j.action.name === jobName; });
+                this.job = this.stage.jobs.find((j: Job) => j.action.name === jobName);
                 if (this.job) {
                     this.action = <Action>{
                         editable: true,

@@ -19,7 +19,8 @@ import { WorkflowService } from 'app/service/workflow/workflow.service';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { ProjectState } from 'app/store/project.state';
 import { WorkflowState, WorkflowStateModel } from 'app/store/workflow.state';
-import { Observable, Subscription } from 'rxjs';
+import { interval, Observable, Subscription } from 'rxjs';
+import { mergeMap } from 'rxjs/operators';
 import { WorkflowRunJobVariableComponent } from '../variables/job.variables.component';
 
 @Component({
@@ -60,7 +61,7 @@ export class WorkflowRunJobSpawnInfoComponent implements OnInit, OnDestroy {
     show = true;
     displayServiceLogsLink = false;
     _displayServiceLogs: boolean;
-    ansi_up = new AU.default;
+    ansi_up = new AU.default();
 
     constructor(
         private _translate: TranslateService,
@@ -152,11 +153,16 @@ export class WorkflowRunJobSpawnInfoComponent implements OnInit, OnDestroy {
 
         this.stopWorker();
         this._ngZone.runOutsideAngular(() => {
-            this.pollingSubscription = Observable.interval(4000)
-                .mergeMap(_ => this._workflowService.getNodeJobRunInfo(projectKey, workflowName,
-                    runNumber, nodeRunID, runJobId)).subscribe(spawnInfos => {
-                        this._ngZone.run(() => { callback(spawnInfos); });
+            this.pollingSubscription = interval(4000)
+                .pipe(
+                    mergeMap(_ =>
+                        this._workflowService.getNodeJobRunInfo(projectKey, workflowName, runNumber, nodeRunID, runJobId))
+                )
+                .subscribe(spawnInfos => {
+                    this._ngZone.run(() => {
+                        callback(spawnInfos);
                     });
+                });
         });
     }
 

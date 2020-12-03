@@ -20,6 +20,7 @@ export class PipelineService {
 
     /**
      * Get the given pipeline from API
+     *
      * @param key Project unique key
      * @param pipName Pipeline Name
      */
@@ -29,14 +30,15 @@ export class PipelineService {
         params = params.append('withWorkflows', 'true');
         params = params.append('withEnvironments', 'true');
         params = params.append('withAsCodeEvents', 'true');
-        return this._http.get<Pipeline>(`/project/${key}/pipeline/${pipName}`, { params: params });
+        return this._http.get<Pipeline>(`/project/${key}/pipeline/${pipName}`, { params });
     }
 
     /**
      * Get the list of condition names for a given pipeline
+     *
      * @param key Project unique key
      * @param pipName Pipeline name
-     * @returns {Observable<WorkflowTriggerConditionCache>}
+     * @returns
      */
     getStageConditionsName(key: string, pipName: string): Observable<WorkflowTriggerConditionCache> {
         return this._http.get<WorkflowTriggerConditionCache>('/project/' + key + '/pipeline/' + pipName + '/stage/condition');
@@ -51,10 +53,11 @@ export class PipelineService {
 
     /**
      * Update the given stage
+     *
      * @param key Project unique key
      * @param pipName Pipeline Name
      * @param stage Stage to update
-     * @returns {Observable<Pipeline>}
+     * @returns
      */
     updateStage(key: string, pipName: string, stage: Stage): Observable<Pipeline> {
         return this._http.put<Pipeline>('/project/' + key + '/pipeline/' + pipName + '/stage/' + stage.id, stage);
@@ -62,10 +65,11 @@ export class PipelineService {
 
     /**
      * Delete a stage
+     *
      * @param key Project unique key
      * @param pipName Pipeline Name
      * @param stage Stage to delete
-     * @returns {Observable<Pipeline>}
+     * @returns
      */
     deleteStage(key: string, pipName: string, stage: Stage): Observable<Pipeline> {
         return this._http.delete<Pipeline>('/project/' + key + '/pipeline/' + pipName + '/stage/' + stage.id);
@@ -73,11 +77,12 @@ export class PipelineService {
 
     /**
      * Add a job
+     *
      * @param key Project unique key
      * @param pipName Pipeline name
      * @param stageID Stage ID
      * @param action Job to add
-     * @returns {Observable<Pipeline>}
+     * @returns
      */
     addJob(key: string, pipName: string, stageID: number, job: Job): Observable<Pipeline> {
         return this._http.post<Pipeline>('/project/' + key + '/pipeline/' + pipName + '/stage/' + stageID + '/job', job);
@@ -85,11 +90,12 @@ export class PipelineService {
 
     /**
      * Update a job
+     *
      * @param key Project unique key
      * @param pipName Pipeline name
      * @param stageID Stage ID
      * @param action Job to update
-     * @returns {Observable<Pipeline>}
+     * @returns
      */
     updateJob(key: string, pipName: string, stageID: number, job: Job): Observable<Pipeline> {
         let url = '/project/' + key + '/pipeline/' + pipName + '/stage/' + stageID + '/job/' + job.pipeline_action_id;

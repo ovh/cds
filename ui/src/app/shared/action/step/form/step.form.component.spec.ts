@@ -1,4 +1,4 @@
-/* tslint:disable:no-unused-variable */
+/* eslint-disable @typescript-eslint/no-unused-vars */
 
 import { APP_BASE_HREF } from '@angular/common';
 import { fakeAsync, TestBed, tick } from '@angular/core/testing';
@@ -13,8 +13,8 @@ import { ActionStepFormComponent } from './step.form.component';
 
 describe('CDS: Step Form Component', () => {
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
             declarations: [
             ],
             providers: [
@@ -30,7 +30,7 @@ describe('CDS: Step Form Component', () => {
                 TranslateModule.forRoot(),
                 SharedModule
             ]
-        });
+        }).compileComponents();
     });
 
     it('should send add step event', fakeAsync(() => {

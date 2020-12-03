@@ -10,7 +10,7 @@
   "scripts": {
     "ng": "ng",
     "start": "ng serve -c development",
-    "test": "ng lint && ng test --watch false --code-coverage",
+    "test": "ng test --watch false --code-coverage",
     "e2e": "testcafe chromium:headless ./e2e/tests/* -S -s screenshots",
     "doc": "./node_modules/.bin/compodoc -p tsconfig.json -s",
     "build:prod": "ng build --prod",
@@ -24,7 +24,7 @@
       "*.ts": "ng lint"
     },
     "relative": true,
-    "fileFlag": "--files",
+    "fileFlag": "--lint-file-patterns",
     "ignore": [
       "**/*.spec.ts"
     ]
@@ -120,7 +120,7 @@
     "jasmine-spec-reporter": "5.0.0",
     "karma": "5.1.1",
     "karma-chrome-launcher": "3.1.0",
-    "karma-coverage-istanbul-reporter": "3.0.2",
+    "karma-coverage": "2.0.3",
     "karma-jasmine": "4.0.0",
     "karma-jasmine-html-reporter": "1.5.0",
     "karma-junit-reporter": "1.2.0",
@@ -130,7 +130,18 @@
     "typescript": "4.0.2",
     "webdriver-manager": "12.1.7",
     "webpack-bundle-analyzer": "3.3.2",
-    "wrench-sui": "0.0.3"
+    "wrench-sui": "0.0.3",
+    "eslint": "^7.6.0",
+    "eslint-plugin-import": "2.22.1",
+    "eslint-plugin-jsdoc": "30.7.6",
+    "eslint-plugin-prefer-arrow": "1.2.2",
+    "@angular-eslint/builder": "0.8.0-beta.3",
+    "@angular-eslint/eslint-plugin": "0.8.0-beta.3",
+    "@angular-eslint/eslint-plugin-template": "0.8.0-beta.3",
+    "@angular-eslint/schematics": "^0.8.0-beta.3",
+    "@angular-eslint/template-parser": "0.8.0-beta.3",
+    "@typescript-eslint/eslint-plugin": "4.3.0",
+    "@typescript-eslint/parser": "4.3.0"
   },
   "husky": {
     "hooks": {

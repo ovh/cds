@@ -1,17 +1,17 @@
-/* tslint:disable:no-unused-variable */
+/* eslint-disable @typescript-eslint/no-unused-vars */
 
 import {fakeAsync, TestBed} from '@angular/core/testing';
 import {WNode, WNodeJoin, WNodeTrigger, Workflow} from './workflow.model';
 
 describe('CDS: Workflow Model', () => {
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
             declarations: [],
             providers: [
             ],
             imports: []
-        });
+        }).compileComponents();
     });
 
 
@@ -232,7 +232,7 @@ describe('CDS: Workflow Model', () => {
 
         expect(ok).toBeTruthy();
         expect(workflow.workflow_data.joins[0].parents.length).toBe(2);
-        expect(workflow.workflow_data.joins[0].parents[0].parent_id + workflow.workflow_data.joins[0].parents[1].parent_id).toBe(3, "Parent must be id 1 and 2, got "+ JSON.stringify(workflow.workflow_data.joins[0].parents));
+        expect(workflow.workflow_data.joins[0].parents[0].parent_id + workflow.workflow_data.joins[0].parents[1].parent_id).toBe(3, 'Parent must be id 1 and 2, got '+ JSON.stringify(workflow.workflow_data.joins[0].parents));
     }));
 
     /**

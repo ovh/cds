@@ -5,7 +5,7 @@ import { Stage } from './stage.model';
 import { Usage } from './usage.model';
 import { Workflow } from './workflow.model';
 
-export const pipelineNamePattern: RegExp = new RegExp('^[a-zA-Z0-9._-]+$');
+export const pipelineNamePattern = new RegExp('^[a-zA-Z0-9._-]+$');
 
 export class PipelineStatus {
     static BUILDING = 'Building';
@@ -87,9 +87,7 @@ export class Pipeline {
 
     public static hasParameterWithoutValue(pipeline: Pipeline) {
         if (pipeline.parameters) {
-            let emptyParams = pipeline.parameters.filter(p => {
-                return !p.value || p.value === '';
-            });
+            let emptyParams = pipeline.parameters.filter(p => !p.value || p.value === '');
             return emptyParams.length > 0;
         }
         return false;
@@ -117,6 +115,7 @@ export class Pipeline {
     }
     /**
      * Merge parameters
+     *
      * @param ref
      * @param current
      */
@@ -150,9 +149,7 @@ export class Pipeline {
                         let loopAgain = true;
                         do {
                             nextJobRef = Math.random();
-                            loopAgain = editPipeline.stages.findIndex(st => {
-                                return st.jobs.findIndex(jb => jb.ref === nextRef) !== -1
-                            }) !== -1;
+                            loopAgain = editPipeline.stages.findIndex(st => st.jobs.findIndex(jb => jb.ref === nextRef) !== -1) !== -1;
                         } while (loopAgain);
                         j.ref = nextJobRef;
                     })

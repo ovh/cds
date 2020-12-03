@@ -30,8 +30,8 @@ describe('CDS: Pipeline Admin Component', () => {
 
     let injector: Injector;
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
             declarations: [],
             providers: [
                 PipelineService,
@@ -61,7 +61,7 @@ describe('CDS: Pipeline Admin Component', () => {
                 TranslateModule.forRoot(),
                 HttpClientTestingModule
             ]
-        });
+        }).compileComponents();
 
         injector = getTestBed();
     });
@@ -94,9 +94,7 @@ describe('CDS: Pipeline Admin Component', () => {
         tick(250);
 
         let store: Store = injector.get(Store);
-        spyOn(store, 'dispatch').and.callFake(() => {
-            return of(null);
-        });
+        spyOn(store, 'dispatch').and.callFake(() => of(null));
         fixture.debugElement.nativeElement.querySelector('.ui.button.green.button').click();
 
         expect(store.dispatch).toHaveBeenCalledTimes(1);

@@ -42,12 +42,10 @@ export class ActionListComponent {
             <Column<Action>>{
                 type: ColumnType.ROUTER_LINK,
                 name: 'common_name',
-                selector: (a: Action) => {
-                    return {
+                selector: (a: Action) => ({
                         link: `/settings/action/${a.group.name}/${a.name}`,
                         value: a.name
-                    };
-                }
+                    })
             },
             <Column<Action>>{
                 name: 'common_group',
@@ -64,12 +62,10 @@ export class ActionListComponent {
             <Column<Action>>{
                 type: ColumnType.ROUTER_LINK,
                 name: 'common_name',
-                selector: (a: Action) => {
-                    return {
+                selector: (a: Action) => ({
                         link: `/settings/action-builtin/${a.name}`,
                         value: a.name
-                    };
-                }
+                    })
             },
             <Column<Action>>{
                 type: ColumnType.MARKDOWN,
@@ -93,7 +89,9 @@ export class ActionListComponent {
                 this.loading = false;
                 this._cd.markForCheck();
             }))
-            .subscribe(as => { this.actions = as; });
+            .subscribe(as => {
+ this.actions = as;
+});
     }
 
     getActionBuiltins() {
@@ -103,7 +101,9 @@ export class ActionListComponent {
                 this.loadingBuiltin = false;
                 this._cd.markForCheck();
             }))
-            .subscribe(as => { this.actionsBuiltin = as; });
+            .subscribe(as => {
+ this.actionsBuiltin = as;
+});
     }
 
     filter(f: string) {

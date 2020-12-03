@@ -105,7 +105,7 @@ export class ApplicationsState {
             currentProjectKey: action.payload.project_key,
             application: action.payload,
             editApplication: cloneDeep(action.payload),
-            editMode: editMode,
+            editMode,
             loading: false,
         });
     }
@@ -191,7 +191,7 @@ export class ApplicationsState {
         ).pipe(tap((overview) => {
             ctx.setState({
                 ...state,
-                overview: overview
+                overview
             });
         }));
     }
@@ -552,8 +552,8 @@ export class ApplicationsState {
         let editApplication = cloneDeep(state.application);
         ctx.setState({
             ...state,
-            editApplication: editApplication,
-            editMode: editMode,
+            editApplication,
+            editMode,
         });
     }
 }

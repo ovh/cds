@@ -31,8 +31,8 @@ describe('CDS: Project RepoManager Form Component', () => {
     let injector: Injector;
     let projectStore: ProjectStore;
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
             providers: [
                 ApplicationService,
                 TranslateLoader,
@@ -64,7 +64,7 @@ describe('CDS: Project RepoManager Form Component', () => {
             schemas: [
                 CUSTOM_ELEMENTS_SCHEMA
             ]
-        });
+        }).compileComponents();
         injector = getTestBed();
         projectStore = injector.get(ProjectStore);
 
@@ -95,9 +95,7 @@ describe('CDS: Project RepoManager Form Component', () => {
         // Create Project RepoManager Form Component
         let fixture = TestBed.createComponent(RepoManagerFormComponent);
         let component = fixture.debugElement.componentInstance;
-        http.expectOne(((req: HttpRequest<any>) => {
-            return req.url === '/repositories_manager';
-        })).flush(repoManMock);
+        http.expectOne(((req: HttpRequest<any>) => req.url === '/repositories_manager')).flush(repoManMock);
         expect(component).toBeTruthy();
 
         fixture.detectChanges();
@@ -110,8 +108,6 @@ describe('CDS: Project RepoManager Form Component', () => {
 
         // Load project
         projectStore.getProjects('key1').subscribe(() => { });
-        http.expectOne(((req: HttpRequest<any>) => {
-            return req.url === '/project/key1';
-        })).flush(repoManMock);
+        http.expectOne(((req: HttpRequest<any>) => req.url === '/project/key1')).flush(repoManMock);
     }));
 });

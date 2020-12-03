@@ -31,7 +31,7 @@ jobs:
     - echo "I'm the first step"
 `;
 
-    pipelineNamePattern: RegExp = new RegExp('^[a-zA-Z0-9._-]{1,}$');
+    pipelineNamePattern = new RegExp('^[a-zA-Z0-9._-]{1,}$');
     pipPatternError = false;
 
     project: Project;

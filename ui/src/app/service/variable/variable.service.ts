@@ -23,7 +23,8 @@ export class VariableService {
 
     /**
      * Get variable type
-     * @returns {any}
+     *
+     * @returns
      */
     getTypesFromCache(): string[] {
         return this.variablesType;
@@ -31,7 +32,8 @@ export class VariableService {
 
     /**
      * Get all types of variables
-     * @returns {Observable<string[]>}
+     *
+     * @returns
      */
     getTypesFromAPI(): Observable<string[]> {
         return this._http.get<string[]>('/variable/type').pipe(map(vts => {
@@ -42,8 +44,9 @@ export class VariableService {
 
     /**
      * Get all available variable
+     *
      * @param key
-     * @returns {Observable<Array<string>>}
+     * @returns
      */
     getContextVariable(key: string, pipelineId?: number): Observable<Array<string>> {
         let params = new HttpParams();
@@ -51,6 +54,6 @@ export class VariableService {
             params = params.append('pipId', pipelineId.toString());
         }
 
-        return this._http.get<Array<string>>('/suggest/variable/' + key, {params: params});
+        return this._http.get<Array<string>>('/suggest/variable/' + key, {params});
     }
 }

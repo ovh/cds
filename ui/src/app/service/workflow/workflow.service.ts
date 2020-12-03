@@ -4,7 +4,8 @@ import { Operation } from 'app/model/operation.model';
 import { BuildResult, CDNLine, CDNLinesResponse, CDNLogLink, ServiceLog, SpawnInfo } from 'app/model/pipeline.model';
 import { WorkflowRetentoinDryRunResponse } from 'app/model/purge.model';
 import { Workflow, WorkflowPull, WorkflowTriggerConditionCache } from 'app/model/workflow.model';
-import { Observable } from 'rxjs';
+import { Observable, of } from 'rxjs';
+import { catchError, map } from 'rxjs/operators';
 
 @Injectable()
 export class WorkflowService {
@@ -67,19 +68,19 @@ export class WorkflowService {
 
     getLogLines(link: CDNLogLink, params?: { [key: string]: string }): Observable<CDNLinesResponse> {
         return this._http.get(`./cdscdn/item/${link.item_type}/${link.api_ref}/lines`, { params, observe: 'response' })
-            .map(res => {
+            .pipe(map(res => {
                 let headers: HttpHeaders = res.headers;
                 return <CDNLinesResponse>{
                     totalCount: parseInt(headers.get('X-Total-Count'), 10),
                     lines: res.body as Array<CDNLine>,
                     found: true
                 };
-            })
-            .catch(err => {
+            }),
+            catchError(err => {
                 if (err.status === 404) {
-                    return Observable.of(<CDNLinesResponse>{ lines: [], totalCount: 0, found: false });
+                    return of(<CDNLinesResponse>{ lines: [], totalCount: 0, found: false });
                 }
-            });
+            }));
     }
 
     getLogDownload(link: CDNLogLink): Observable<string> {

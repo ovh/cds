@@ -5,8 +5,8 @@ import { SharedModule } from 'app/shared/shared.module';
 import { GroupFormComponent } from './group.form.component';
 
 describe('CDS: Group form component', () => {
-    beforeEach(() => {
-        TestBed.configureTestingModule({
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
             declarations: [
             ],
             providers: [
@@ -19,7 +19,7 @@ describe('CDS: Group form component', () => {
                 TranslateModule.forRoot(),
                 RouterTestingModule.withRoutes([])
             ]
-        });
+        }).compileComponents();
 
     });
 

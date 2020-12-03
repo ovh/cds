@@ -1,6 +1,6 @@
-import {SafeHtmlPipe} from './safeHtml.pipe';
 import { SecurityContext } from '@angular/core';
 import {ɵDomSanitizerImpl, DomSanitizer} from '@angular/platform-browser';
+import {SafeHtmlPipe} from './safeHtml.pipe';
 
 describe('Pipe: Default', () => {
   let pipe: SafeHtmlPipe;

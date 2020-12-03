@@ -8,7 +8,7 @@ import { Table } from 'app/shared/table/table';
 import { CodemirrorComponent } from 'ng2-codemirror-typescript/Codemirror';
 import { Subscription } from 'rxjs/Subscription';
 
-declare var CodeMirror: any;
+declare let CodeMirror: any;
 
 @Component({
     selector: 'app-conditions',
@@ -21,9 +21,7 @@ export class ConditionsComponent extends Table<WorkflowNodeCondition> implements
     @Input('triggerConditions') set triggerConditions(data: WorkflowTriggerConditionCache) {
         this._triggerCondition = data;
         if (data) {
-            this.operators = Object.keys(data.operators).map(k => {
-                return { key: k, value: data.operators[k] };
-            });
+            this.operators = Object.keys(data.operators).map(k => ({ key: k, value: data.operators[k] }));
             this.conditionNames = data.names;
             if (this.conditionNames) {
                 this.suggest = this.conditionNames.map((d) => d.replace(/-|\./g, '_'));

@@ -55,12 +55,10 @@ export class ServiceListComponent {
             <Column<MonitoringStatusLine>>{
                 name: 'common_status',
                 type: ColumnType.LABEL,
-                selector: (c: MonitoringStatusLine) => {
-                    return {
+                selector: (c: MonitoringStatusLine) => ({
                         class: MonitoringStatusLineUtil.color(c),
                         value: c.status
-                    };
-                }
+                    })
             },
             <Column<MonitoringStatusLine>>{
                 name: 'common_value',

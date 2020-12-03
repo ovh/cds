@@ -75,9 +75,7 @@ export class PipelineWorkflowComponent implements OnInit, OnDestroy {
                     if (data && data.stages) {
                         stageFound = this.selectedStage && data.stages && data.stages.find((stage) => stage.id === this.selectedStage.id);
                         if (stageFound && this.selectedJob && stageFound.jobs) {
-                            jobFound = stageFound.jobs.find((job) => {
-                                return job.pipeline_action_id === this.selectedJob.pipeline_action_id;
-                            });
+                            jobFound = stageFound.jobs.find((job) => job.pipeline_action_id === this.selectedJob.pipeline_action_id);
                         } else {
                             delete this.selectedJob;
                         }
@@ -128,10 +126,10 @@ export class PipelineWorkflowComponent implements OnInit, OnDestroy {
         private _cd: ChangeDetectorRef
     ) {
         this._dragularService.createGroup('bag-stage', {
-            moves: function (el, source, handle) {
+            moves(el, source, handle) {
                 return handle.classList.contains('move');
             },
-            accepts: function (el, target, source, sibling) {
+            accepts(el, target, source, sibling) {
                 if (sibling === null) {
                     return false;
                 }
@@ -262,6 +260,7 @@ export class PipelineWorkflowComponent implements OnInit, OnDestroy {
 
     /**
      * Event on stage
+     *
      * @param type Type of event (update/delete)
      */
     stageEvent(type: string): void {
@@ -337,6 +336,7 @@ export class PipelineWorkflowComponent implements OnInit, OnDestroy {
 
     /**
      * Manage action from jobs
+     *
      * @param event
      */
     jobEvent(event: ActionEvent): void {

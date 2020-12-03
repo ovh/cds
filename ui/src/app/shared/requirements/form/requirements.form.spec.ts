@@ -1,21 +1,21 @@
-/* tslint:disable:no-unused-variable */
+/* eslint-disable @typescript-eslint/no-unused-vars */
 
 import {TestBed, tick, fakeAsync} from '@angular/core/testing';
 import {TranslateService, TranslateLoader, TranslateParser, TranslateModule} from '@ngx-translate/core';
 import {RouterTestingModule} from '@angular/router/testing';
-import {SharedModule} from '../../shared.module';
-import {RequirementsFormComponent} from './requirements.form.component';
+import {HttpClientTestingModule, HttpTestingController} from '@angular/common/http/testing';
 import {Requirement} from '../../../model/requirement.model';
 import {RequirementEvent} from '../requirement.event.model';
 import {WorkerModelService} from '../../../service/worker-model/worker-model.service';
-import {HttpClientTestingModule, HttpTestingController} from '@angular/common/http/testing';
+import {SharedModule} from '../../shared.module';
 import {RequirementService} from '../../../service/requirement/requirement.service';
 import {RequirementStore} from '../../../service/requirement/requirement.store';
+import {RequirementsFormComponent} from './requirements.form.component';
 
 describe('CDS: Requirement Form Component', () => {
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
             declarations: [
             ],
             providers: [
@@ -32,7 +32,7 @@ describe('CDS: Requirement Form Component', () => {
                 RouterTestingModule.withRoutes([]),
                 HttpClientTestingModule
             ]
-        });
+        }).compileComponents();
     });
 
     it('should create a new requirement and auto write name', fakeAsync( () => {

@@ -117,7 +117,7 @@ export class CdsctlComponent implements OnInit, OnDestroy {
             variant = '?variant=nokeychain'
         }
         this.tutorials['part1'] = this._translate.instant('cdsctl_part_1',
-            { apiURL: this.apiURL, osChoice: this.osChoice, archChoice: this.archChoice, variant: variant });
+            { apiURL: this.apiURL, osChoice: this.osChoice, archChoice: this.archChoice, variant });
         this.tutorials['part2'] = this._translate.instant('cdsctl_part_2',
             { apiURL: this.apiURL, username: this.currentUser.username });
         this.tutorials['part3'] = this._translate.instant('cdsctl_part_3');

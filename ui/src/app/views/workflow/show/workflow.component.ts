@@ -110,9 +110,7 @@ export class WorkflowShowComponent implements OnInit, OnDestroy {
                     return;
                 }
 
-                this.usageCount = Object.keys(this.detailedWorkflow.usage).reduce((total, key) => {
-                    return total + this.detailedWorkflow.usage[key].length;
-                }, 0);
+                this.usageCount = Object.keys(this.detailedWorkflow.usage).reduce((total, key) => total + this.detailedWorkflow.usage[key].length, 0);
             }
         });
 

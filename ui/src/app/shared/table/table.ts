@@ -7,7 +7,8 @@ export abstract class Table<T> {
 
     /**
      * Get the data for the current page.
-     * @returns {any[]}
+     *
+     * @returns
      */
     getDataForCurrentPage(): Array<T> {
         let indexStart = 0;
@@ -23,7 +24,8 @@ export abstract class Table<T> {
 
     /**
      * Calculate the number of pages
-     * @returns {number}
+     *
+     * @returns
      */
     getNbOfPages(): number {
         if (!this.getData()) {
@@ -51,6 +53,7 @@ export abstract class Table<T> {
 
     /**
      * Go to the given page
+     *
      * @param page Page to go
      */
     goTopage(page: number): void {

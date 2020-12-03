@@ -1,8 +1,8 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { NavbarProjectData } from 'app/model/navbar.model';
-import { BehaviorSubject } from 'rxjs';
-import { Observable } from 'rxjs/Rx';
+import { BehaviorSubject, Observable } from 'rxjs';
+
 
 /**
  * Service to access Navbar from API.
@@ -20,7 +20,8 @@ export class NavbarService {
 
   /**
    * Get the navbar data from API.
-   * @returns {Observable<Array<NavbarProjectData>>}
+   *
+   * @returns
    */
   refreshData(): void {
     this._http.get<Array<NavbarProjectData>>('/ui/navbar')

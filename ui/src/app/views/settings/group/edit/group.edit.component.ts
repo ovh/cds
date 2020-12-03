@@ -26,7 +26,7 @@ export class GroupEditComponent implements OnInit {
     currentUserIsAdminOnGroup: boolean;
     addUserUsername: string;
     users: Array<AuthentifiedUser>;
-    private groupnamePattern: RegExp = new RegExp('^[a-zA-Z0-9._-]{1,}$');
+    private groupnamePattern = new RegExp('^[a-zA-Z0-9._-]{1,}$');
     groupPatternError = false;
     path: Array<PathItem>;
 

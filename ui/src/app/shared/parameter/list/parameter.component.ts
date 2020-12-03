@@ -104,6 +104,7 @@ export class ParameterListComponent extends Table<Parameter> implements OnInit {
 
     /**
      * Send Event to parent component.
+     *
      * @param type Type of event (delete)
      * @param param parameter data
      */

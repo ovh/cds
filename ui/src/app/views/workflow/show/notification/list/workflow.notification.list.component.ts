@@ -6,7 +6,7 @@ import { Project } from 'app/model/project.model';
 import { Workflow, WorkflowNotification } from 'app/model/workflow.model';
 import { NotificationService } from 'app/service/notification/notification.service';
 import { ToastService } from 'app/shared/toast/ToastService';
-// tslint:disable-next-line: max-line-length
+// eslint-disable-next-line max-len
 import { AddNotificationWorkflow, DeleteEventIntegrationWorkflow, DeleteNotificationWorkflow, UpdateEventIntegrationsWorkflow, UpdateNotificationWorkflow } from 'app/store/workflow.action';
 import cloneDeep from 'lodash-es/cloneDeep';
 import { finalize, first } from 'rxjs/operators';
@@ -194,7 +194,7 @@ export class WorkflowNotificationListComponent {
         this.store.dispatch(new UpdateEventIntegrationsWorkflow({
             projectKey: this.project.key,
             workflowName: this.workflow.name,
-            eventIntegrations: eventIntegrations
+            eventIntegrations
         })).pipe(finalize(() => {
             this.loading = false;
             this._cd.markForCheck();

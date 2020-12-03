@@ -116,9 +116,7 @@ export class WorkflowWNodeMenuEditComponent implements OnInit, OnDestroy {
         if (this.noderun && this.workflowrun && this.workflowrun.nodes) {
             let nodesRun = this.workflowrun.nodes[this.noderun.workflow_node_id];
             if (nodesRun) {
-                let nodeRun = nodesRun.find(n => {
-                    return n.id === this.noderun.id;
-                });
+                let nodeRun = nodesRun.find(n => n.id === this.noderun.id);
                 if (nodeRun) {
                     return nodeRun.can_be_run;
                 }
