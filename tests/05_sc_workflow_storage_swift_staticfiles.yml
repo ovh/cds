@@ -1,6 +1,4 @@
 name: Workflow (ITSCWRKFLW12) should use the staticfiles with integration openstack
-version: "2"
-
 vars:
   os_auth_url: ''
   os_username: ''
@@ -23,7 +21,8 @@ testcases:
 
 - name: import integration
   steps:
-  - script: {{.cdsctl}} -f {{.cdsctl.config}} project integration import ITSCWRKFLW12 {{expandEnv ./fixtures/integrations/openstackIntegration.yml}}
+  - script: envsubst < ./fixtures/integrations/openstackIntegration.yml > ./fixtures/integrations/openstackIntegration.replaced.yml
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} project integration import ITSCWRKFLW12 ./fixtures/integrations/openstackIntegration.replaced.yml
 
 - name: import workflow
   steps:

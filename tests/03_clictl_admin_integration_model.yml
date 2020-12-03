@@ -1,5 +1,4 @@
 name: Integration model admin
-version: "2"
 testcases:
 - name: prepare test
   steps:

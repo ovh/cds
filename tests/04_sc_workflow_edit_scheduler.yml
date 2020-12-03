@@ -1,5 +1,4 @@
 name: Workflow (ITSCWRKFLW16) update workflow with scheduler
-version: "2"
 testcases:
   - name: assert filepath
     steps:

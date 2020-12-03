@@ -1,6 +1,4 @@
 name: run_workflow_through_marathon (ITSCWRKFLW17)
-version: "2"
-
 testcases:
 - name: assert_fixtures
   steps:
@@ -17,7 +15,8 @@ testcases:
 
 - name: import_pipeline
   steps:
-  - script: {{.cdsctl}} -f {{.cdsctl.config}} pipeline import --force ITSCWRKFLW17 {{expandEnv ./fixtures/ITSCWRKFLW17/pipeline.yml}}
+  - script: envsubst < ./fixtures/ITSCWRKFLW17/pipeline.yml > ./fixtures/ITSCWRKFLW17/pipeline.replaced.yml
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} pipeline import --force ITSCWRKFLW17 ./fixtures/ITSCWRKFLW17/pipeline.replaced.yml
 
 - name: import_workflow
   steps:

@@ -7,14 +7,14 @@ import (
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/action"
-	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/engine/api/group"
+	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
 
 //ImportUpdate import and update the pipeline in the project
-func ImportUpdate(ctx context.Context, db gorp.SqlExecutor, proj sdk.Project, pip *sdk.Pipeline, msgChan chan<- sdk.Message) error {
+func ImportUpdate(ctx context.Context, db gorp.SqlExecutor, proj sdk.Project, pip *sdk.Pipeline, msgChan chan<- sdk.Message, opts ImportOptions) error {
 	t := time.Now()
 	log.Debug("ImportUpdate> Begin")
 	defer log.Debug("ImportUpdate> End (%d ns)", time.Since(t).Nanoseconds())
@@ -26,7 +26,7 @@ func ImportUpdate(ctx context.Context, db gorp.SqlExecutor, proj sdk.Project, pi
 		return sdk.WrapError(err, "Unable to load pipeline %s %s", proj.Key, pip.Name)
 	}
 
-	if oldPipeline.FromRepository != "" && pip.FromRepository != oldPipeline.FromRepository {
+	if !opts.Force && oldPipeline.FromRepository != "" && pip.FromRepository != oldPipeline.FromRepository {
 		return sdk.WrapError(sdk.ErrPipelineAsCodeOverride, "unable to update as code pipeline %s/%s.", oldPipeline.FromRepository, pip.FromRepository)
 	}
 

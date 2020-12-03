@@ -1,5 +1,4 @@
 name: Template command TestSuite with cdsctl
-version: "2"
 testcases:
 - name: push example with repository
   steps:
@@ -18,6 +17,19 @@ testcases:
   steps:
   - type: readfile
     path: ./fixtures/template/with_repository/*.yml
+    vars:
+      md5sum_fixtures_template_with_repository_1.application:
+        from: result.md5sum.fixtures_template_with_repository_1.application.yml
+      md5sum_fixtures_template_with_repository_1.environment:
+        from: result.md5sum.fixtures_template_with_repository_1.environment.yml
+      md5sum_fixtures_template_with_repository_1.pipeline:
+        from: result.md5sum.fixtures_template_with_repository_1.pipeline.yml
+      md5sum_fixtures_template_with_repository_2.pipeline:
+        from: result.md5sum.fixtures_template_with_repository_2.pipeline.yml
+      md5sum_fixtures_template_with_repository_example-with-repository:
+        from: result.md5sum.fixtures_template_with_repository_example-with-repository.yml
+      md5sum_fixtures_template_with_repository_workflow:
+        from: result.md5sum.fixtures_template_with_repository_workflow.yml
     assertions:
     - result.err ShouldEqual ""
 
@@ -27,9 +39,9 @@ testcases:
     path: ./fixtures/template/with_repository/export/*.yml
     assertions:
     - result.err ShouldEqual ""
-    - result.md5sum.fixtures_template_with_repository_export_1.application.yml ShouldEqual "{{.readTemplateSourceFiles.result.md5sum.fixtures_template_with_repository_1.application.yml}}"
-    - result.md5sum.fixtures_template_with_repository_export_1.environment.yml ShouldEqual "{{.readTemplateSourceFiles.result.md5sum.fixtures_template_with_repository_1.environment.yml}}"
-    - result.md5sum.fixtures_template_with_repository_export_1.pipeline.yml ShouldEqual "{{.readTemplateSourceFiles.result.md5sum.fixtures_template_with_repository_1.pipeline.yml}}"
-    - result.md5sum.fixtures_template_with_repository_export_2.pipeline.yml ShouldEqual "{{.readTemplateSourceFiles.result.md5sum.fixtures_template_with_repository_2.pipeline.yml}}"
-    - result.md5sum.fixtures_template_with_repository_export_example-with-repository.yml ShouldEqual "{{.readTemplateSourceFiles.result.md5sum.fixtures_template_with_repository_example-with-repository.yml}}"
-    - result.md5sum.fixtures_template_with_repository_export_workflow.yml ShouldEqual "{{.readTemplateSourceFiles.result.md5sum.fixtures_template_with_repository_workflow.yml}}"
+    - result.md5sum.fixtures_template_with_repository_export_1.application.yml ShouldEqual "{{.readTemplateSourceFiles.md5sum_fixtures_template_with_repository_1.application}}"
+    - result.md5sum.fixtures_template_with_repository_export_1.environment.yml ShouldEqual "{{.readTemplateSourceFiles.md5sum_fixtures_template_with_repository_1.environment}}"
+    - result.md5sum.fixtures_template_with_repository_export_1.pipeline.yml ShouldEqual "{{.readTemplateSourceFiles.md5sum_fixtures_template_with_repository_1.pipeline}}"
+    - result.md5sum.fixtures_template_with_repository_export_2.pipeline.yml ShouldEqual "{{.readTemplateSourceFiles.md5sum_fixtures_template_with_repository_2.pipeline}}"
+    - result.md5sum.fixtures_template_with_repository_export_example-with-repository.yml ShouldEqual "{{.readTemplateSourceFiles.md5sum_fixtures_template_with_repository_example-with-repository}}"
+    - result.md5sum.fixtures_template_with_repository_export_workflow.yml ShouldEqual "{{.readTemplateSourceFiles.md5sum_fixtures_template_with_repository_workflow}}"

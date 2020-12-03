@@ -1,6 +1,4 @@
 name: Create a simple workflow (04SCWorkflowRunNotif) that use worker export command, then check notif send
-version: "2"
-
 vars :
   smtpmock.url: 'http://localhost:2024'
 

@@ -7,7 +7,6 @@ import (
 
 	"github.com/ovh/cds/engine/cdn/item"
 	"github.com/ovh/cds/engine/cdn/storage"
-	"github.com/ovh/cds/engine/cdn/storage/cds"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk/telemetry"
@@ -59,18 +58,12 @@ func (s *Service) itemsGC(ctx context.Context) {
 
 func (s *Service) markUnitItemToDeleteByItemID(ctx context.Context, itemID string) (int, error) {
 	db := s.mustDBWithCtx(ctx)
-	mapItemUnits, err := storage.LoadAllItemUnitsByItemIDs(ctx, s.Mapper, db, []string{itemID})
+	itemUnitIDs, err := storage.LoadAllItemUnitsIDsByItemID(db, itemID)
 	if err != nil {
 		return 0, err
 	}
-	uis, has := mapItemUnits[itemID]
-	if !has {
+	if len(itemUnitIDs) == 0 {
 		return 0, nil
-	}
-
-	ids := make([]string, len(uis))
-	for i := range uis {
-		ids[i] = uis[i].ID
 	}
 
 	tx, err := db.Begin()
@@ -80,7 +73,7 @@ func (s *Service) markUnitItemToDeleteByItemID(ctx context.Context, itemID strin
 
 	defer tx.Rollback() // nolint
 
-	n, err := storage.MarkItemUnitToDelete(ctx, s.Mapper, tx, ids)
+	n, err := storage.MarkItemUnitToDelete(tx, itemUnitIDs)
 	if err != nil {
 		return 0, err
 	}
@@ -108,14 +101,14 @@ func (s *Service) cleanItemToDelete(ctx context.Context) error {
 		// If and only If there is not more unit item to mark as delete,
 		// let's delete the item in database
 		if nbUnitItemToDelete == 0 {
-			itemUnits, err := storage.LoadAllItemUnitsToDeleteByID(ctx, s.Mapper, s.mustDBWithCtx(ctx), id)
+			nbItemUnits, err := storage.CountItemUnitsToDeleteByItemID(s.mustDBWithCtx(ctx), id)
 			if err != nil {
 				log.Error(ctx, "unable to count unit item %q to delete: %v", id, err)
 				continue
 			}
 
-			if len(itemUnits) > 0 {
-				log.Debug("cdn:purge:item: %d unit items to delete for item %s", len(itemUnits), id)
+			if nbItemUnits > 0 {
+				log.Debug("cdn:purge:item: %d unit items to delete for item %s", nbItemUnits, id)
 			} else {
 				if err := s.LogCache.Remove([]string{id}); err != nil {
 					return err
@@ -134,53 +127,21 @@ func (s *Service) cleanItemToDelete(ctx context.Context) error {
 }
 
 func (s *Service) cleanBuffer(ctx context.Context) error {
-	var cdsBackendID string
-	for _, sto := range s.Units.Storages {
-		_, ok := sto.(*cds.CDS)
-		if !ok {
-			continue
-		}
-		cdsBackendID = sto.ID()
-		break
-	}
-
-	itemIDs, err := storage.LoadAllSynchronizedItemIDs(s.mustDBWithCtx(ctx))
+	storageCount := int64(len(s.Units.Storages) + 1)
+	itemIDs, err := storage.LoadAllSynchronizedItemIDs(s.mustDBWithCtx(ctx), storageCount)
 	if err != nil {
 		return err
 	}
 
-	var itemUnitIDsToRemove []string
-	mapItemunits, err := storage.LoadAllItemUnitsByItemIDs(ctx, s.Mapper, s.mustDBWithCtx(ctx), itemIDs)
+	log.Debug("item to remove from buffer: %d", len(itemIDs))
+	if len(itemIDs) == 0 {
+		return nil
+	}
+
+	itemUnitsIDs, err := storage.LoadAllItemUnitsIDsByItemIDsAndUnitID(s.mustDBWithCtx(ctx), s.Units.Buffer.ID(), itemIDs)
 	if err != nil {
 		return err
 	}
-
-	if len(mapItemunits) == 0 {
-		return nil
-	}
-
-	for _, itemunits := range mapItemunits {
-		var countWithoutCDSBackend = len(itemunits)
-		var bufferItemUnit string
-		for _, iu := range itemunits {
-			switch iu.UnitID {
-			case cdsBackendID:
-				countWithoutCDSBackend--
-			case s.Units.Buffer.ID():
-				bufferItemUnit = iu.ID
-			}
-
-			if countWithoutCDSBackend > 1 {
-				itemUnitIDsToRemove = append(itemUnitIDsToRemove, bufferItemUnit)
-			}
-		}
-	}
-
-	if len(itemUnitIDsToRemove) == 0 {
-		return nil
-	}
-
-	log.Debug("removing %d from buffer unit", len(itemUnitIDsToRemove))
 
 	tx, err := s.mustDBWithCtx(ctx).Begin()
 	if err != nil {
@@ -188,7 +149,7 @@ func (s *Service) cleanBuffer(ctx context.Context) error {
 	}
 	defer tx.Rollback() //nolint
 
-	if _, err := storage.MarkItemUnitToDelete(ctx, s.Mapper, tx, itemUnitIDsToRemove); err != nil {
+	if _, err := storage.MarkItemUnitToDelete(tx, itemUnitsIDs); err != nil {
 		return err
 	}
 

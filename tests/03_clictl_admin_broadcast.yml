@@ -1,5 +1,4 @@
 name: Broadcast Command TestSuite
-version: "2"
 testcases:
 - name: broadcast
   steps:
@@ -11,4 +10,3 @@ testcases:
   - script: {{.cdsctl}} -f {{.cdsctl.config}} admin broadcasts list | grep "the title"
   - script: {{.cdsctl}} -f {{.cdsctl.config}} admin broadcasts show `{{.cdsctl}} -f {{.cdsctl.config}} admin broadcasts list | grep "the title" | cut -d "|" -f6|head -n 1`
   - script: {{.cdsctl}} -f {{.cdsctl.config}} admin broadcasts delete `{{.cdsctl}} -f {{.cdsctl.config}} admin broadcasts list | grep "the title" | cut -d "|" -f6|head -n 1`
-

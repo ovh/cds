@@ -1,5 +1,4 @@
 name: Plugins Command TestSuite with cdsctl
-version: "2"
 testcases:
 - name: cdsctl admin plugins list
   steps:

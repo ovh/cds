@@ -25,13 +25,13 @@ func (x *RunningStorageUnits) Purge(ctx context.Context, s Interface) error {
 			return err
 		}
 		if exists {
-			otherItemUnits, err := x.GetItemUnitByLocatorByUnit(ctx, ui.Locator, s.ID())
+			nbItemUnits, err := x.GetItemUnitByLocatorByUnit(ctx, ui.Locator, s.ID())
 			if err != nil {
 				return err
 			}
 
-			if len(otherItemUnits) > 0 {
-				log.Debug("cdn:purge:%s: item unit %s content will not be deleted because there is %d other item units with the same content ", s.Name(), ui.ID, len(otherItemUnits))
+			if nbItemUnits > 0 {
+				log.Debug("cdn:purge:%s: item unit %s content will not be deleted because there is %d other item units with the same content ", s.Name(), ui.ID, nbItemUnits)
 			} else {
 				if err := s.Remove(ctx, ui); err != nil {
 					log.ErrorWithFields(ctx, log.Fields{

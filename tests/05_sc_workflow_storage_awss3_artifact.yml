@@ -1,6 +1,4 @@
 name: Workflow (ITSCWRKFLW11) should use the action artifact upload / download with integration aws s3
-version: "2"
-
 vars:
   aws_default_region: ''
   s3_bucket: ''
@@ -22,7 +20,8 @@ testcases:
 
 - name: import integration
   steps:
-  - script: {{.cdsctl}} -f {{.cdsctl.config}} project integration import ITSCWRKFLW11 {{expandEnv ./fixtures/integrations/s3Integration.yml}}
+  - script: envsubst < ./fixtures/integrations/s3Integration.yml > ./fixtures/integrations/s3Integration.replaced.yml
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} project integration import ITSCWRKFLW11 ./fixtures/integrations/s3Integration.replaced.yml
 
 - name: import workflow
   steps:

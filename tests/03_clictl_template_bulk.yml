@@ -1,5 +1,4 @@
 name: Template bulk command TestSuite with cdsctl
-version: "2"
 testcases:
 - name: push example simple
   steps:
@@ -18,14 +17,16 @@ testcases:
 - name: sendTemplateBulkRequest
   steps:
   - script: {{.cdsctl}} -f {{.cdsctl.config}} template bulk --instances-file ./fixtures/template/bulk_request.yml --no-interactive
+    vars:
+      bulkid:
+        from: result.systemout
+        regex: Bulk request with id ([0-9]+) successfully created for template shared.infra/example-simple with (?:[0-9]+) operations
     assertions:
       - result.code ShouldEqual 0
-    extracts:
-      result.systemout: Bulk request with id {{bulkID=[0-9]+}} successfully created for template shared.infra/example-simple with {{operationCount=[0-9]+}} operations
 
 - name: check bulk request status
   steps:
-  - script: {{.cdsctl}} -f {{.cdsctl.config}} admin curl /template/shared.infra/example-simple/bulk/{{.sendTemplateBulkRequest.bulkID}}
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} admin curl /template/shared.infra/example-simple/bulk/{{.sendTemplateBulkRequest.bulkid}}
     retry: 10
     delay: 2
     assertions:

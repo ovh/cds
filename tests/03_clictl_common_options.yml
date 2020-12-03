@@ -1,5 +1,4 @@
 name: Common options test for cdsctl
-version: "2"
 testcases:
 - name: prepare test data
   steps:
