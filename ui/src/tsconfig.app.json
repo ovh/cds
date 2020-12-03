@@ -29,6 +29,6 @@
     "../node_modules/angular2-prettyjson/**/*.ts"
   ],
   "angularCompilerOptions": {
-    "enableIvy": false
+    "enableIvy": true
   }
 }

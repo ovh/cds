@@ -1,6 +1,6 @@
 import { HttpRequest } from '@angular/common/http';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
-import { async, TestBed } from '@angular/core/testing';
+import { TestBed, waitForAsync } from '@angular/core/testing';
 import { NgxsModule, Store } from '@ngxs/store';
 import { Application } from 'app/model/application.model';
 import { Group, GroupPermission } from 'app/model/group.model';
@@ -31,7 +31,7 @@ describe('Project', () => {
     let store: Store;
     let http: HttpTestingController;
 
-    beforeEach(async(() => {
+    beforeEach(waitForAsync(() => {
         TestBed.configureTestingModule({
             providers: [NavbarService, WorkflowService, WorkflowRunService, ProjectStore, RouterService,
                 ProjectService, PipelineService, EnvironmentService, ApplicationService],
@@ -45,7 +45,7 @@ describe('Project', () => {
         http =  TestBed.inject(HttpTestingController);
     }));
 
-    it('fetch project', async(() => {
+    it('fetch project', waitForAsync(() => {
         store.dispatch(new ProjectAction.FetchProject({
             projectKey: 'test1',
             opts: []
@@ -63,7 +63,7 @@ describe('Project', () => {
         });
     }));
 
-    it('fetch project with options', async(() => {
+    it('fetch project with options', waitForAsync(() => {
         store.dispatch(new ProjectAction.FetchProject({
             projectKey: 'test1',
             opts: []
@@ -116,7 +116,7 @@ describe('Project', () => {
         });
     }));
 
-    it('add project', async(() => {
+    it('add project', waitForAsync(() => {
         let project = new Project();
         project.name = 'proj1';
         project.key = 'test1';
@@ -134,7 +134,7 @@ describe('Project', () => {
         });
     }));
 
-    it('update project', async(() => {
+    it('update project', waitForAsync(() => {
         let project = new Project();
         project.name = 'proj1';
         project.key = 'test1';
@@ -162,7 +162,7 @@ describe('Project', () => {
         });
     }));
 
-    it('delete project', async(() => {
+    it('delete project', waitForAsync(() => {
         let project = new Project();
         project.name = 'proj1';
         project.key = 'test1';
@@ -186,7 +186,7 @@ describe('Project', () => {
 
     //  ------- Application --------- //
 
-    it('add application in project', async(() => {
+    it('add application in project', waitForAsync(() => {
         let project = new Project();
         project.name = 'proj1';
         project.key = 'test1';
@@ -213,7 +213,7 @@ describe('Project', () => {
         });
     }));
 
-    it('update application in project', async(() => {
+    it('update application in project', waitForAsync(() => {
         let project = new Project();
         project.name = 'proj1';
         project.key = 'test1';
@@ -253,7 +253,7 @@ describe('Project', () => {
         });
     }));
 
-    it('delete application in project', async(() => {
+    it('delete application in project', waitForAsync(() => {
         let project = new Project();
         project.name = 'proj1';
         project.key = 'test1';
@@ -279,7 +279,7 @@ describe('Project', () => {
 
     //  ------- Workflow --------- //
 
-    it('add workflow in project', async(() => {
+    it('add workflow in project', waitForAsync(() => {
         let project = new Project();
         project.name = 'proj1';
         project.key = 'test1';
@@ -306,7 +306,7 @@ describe('Project', () => {
         });
     }));
 
-    it('update workflow in project', async(() => {
+    it('update workflow in project', waitForAsync(() => {
         let project = new Project();
         project.name = 'proj1';
         project.key = 'test1';
@@ -339,7 +339,7 @@ describe('Project', () => {
         });
     }));
 
-    it('delete workflow in project', async(() => {
+    it('delete workflow in project', waitForAsync(() => {
         let project = new Project();
         project.name = 'proj1';
         project.key = 'test1';
@@ -365,7 +365,7 @@ describe('Project', () => {
 
     //  ------- Pipeline --------- //
 
-    it('add pipeline in project', async(() => {
+    it('add pipeline in project', waitForAsync(() => {
         let project = new Project();
         project.name = 'proj1';
         project.key = 'test1';
@@ -391,7 +391,7 @@ describe('Project', () => {
         });
     }));
 
-    it('update pipeline in project', async(() => {
+    it('update pipeline in project', waitForAsync(() => {
         let project = new Project();
         project.name = 'proj1';
         project.key = 'test1';
@@ -424,7 +424,7 @@ describe('Project', () => {
         });
     }));
 
-    it('delete pipeline in project', async(() => {
+    it('delete pipeline in project', waitForAsync(() => {
         let project = new Project();
         project.name = 'proj1';
         project.key = 'test1';
@@ -449,7 +449,7 @@ describe('Project', () => {
     }));
 
     //  ------- Label --------- //
-    it('add label to workflow in project', async(() => {
+    it('add label to workflow in project', waitForAsync(() => {
         let project = new Project();
         project.name = 'proj1';
         project.key = 'test1';
@@ -506,7 +506,7 @@ describe('Project', () => {
         });
     }));
 
-    it('delete label to workflow in project', async(() => {
+    it('delete label to workflow in project', waitForAsync(() => {
         let project = new Project();
         project.name = 'proj1';
         project.key = 'test1';
@@ -546,7 +546,7 @@ describe('Project', () => {
     }));
 
     //  ------- Variable --------- //
-    it('add variable in project', async(() => {
+    it('add variable in project', waitForAsync(() => {
         let project = new Project();
         project.name = 'proj1';
         project.key = 'test1';
@@ -577,7 +577,7 @@ describe('Project', () => {
         });
     }));
 
-    it('update variable in project', async(() => {
+    it('update variable in project', waitForAsync(() => {
         let project = new Project();
         project.name = 'proj1';
         project.key = 'test1';
@@ -615,7 +615,7 @@ describe('Project', () => {
         });
     }));
 
-    it('delete variable in project', async(() => {
+    it('delete variable in project', waitForAsync(() => {
         let project = new Project();
         project.name = 'proj1';
         project.key = 'test1';
@@ -646,7 +646,7 @@ describe('Project', () => {
         });
     }));
 
-    it('fetch variable in project', async(() => {
+    it('fetch variable in project', waitForAsync(() => {
         let project = new Project();
         project.name = 'proj1';
         project.key = 'test1';
@@ -679,7 +679,7 @@ describe('Project', () => {
     }));
 
     //  ------- Group --------- //
-    it('add group permission in project', async(() => {
+    it('add group permission in project', waitForAsync(() => {
         let project = new Project();
         project.name = 'proj1';
         project.key = 'test1';
@@ -713,7 +713,7 @@ describe('Project', () => {
         });
     }));
 
-    it('delete group permission in project', async(() => {
+    it('delete group permission in project', waitForAsync(() => {
         let project = new Project();
         project.name = 'proj1';
         project.key = 'test1';
@@ -746,7 +746,7 @@ describe('Project', () => {
         });
     }));
 
-    it('update group permission in project', async(() => {
+    it('update group permission in project', waitForAsync(() => {
         let project = new Project();
         project.name = 'proj1';
         project.key = 'test1';
@@ -783,7 +783,7 @@ describe('Project', () => {
     }));
 
     //  ------- Key --------- //
-    it('add key in project', async(() => {
+    it('add key in project', waitForAsync(() => {
         let project = new Project();
         project.name = 'proj1';
         project.key = 'test1';
@@ -814,7 +814,7 @@ describe('Project', () => {
         });
     }));
 
-    it('delete key in project', async(() => {
+    it('delete key in project', waitForAsync(() => {
         let project = new Project();
         project.name = 'proj1';
         project.key = 'test1';
@@ -846,7 +846,7 @@ describe('Project', () => {
     }));
 
     //  ------- Integration --------- //
-    it('add integration in project', async(() => {
+    it('add integration in project', waitForAsync(() => {
         let project = new Project();
         project.name = 'proj1';
         project.key = 'test1';
@@ -875,7 +875,7 @@ describe('Project', () => {
         });
     }));
 
-    it('update integration in project', async(() => {
+    it('update integration in project', waitForAsync(() => {
         let project = new Project();
         project.name = 'proj1';
         project.key = 'test1';
@@ -911,7 +911,7 @@ describe('Project', () => {
         });
     }));
 
-    it('delete integration in project', async(() => {
+    it('delete integration in project', waitForAsync(() => {
         let project = new Project();
         project.name = 'proj1';
         project.key = 'test1';
@@ -942,7 +942,7 @@ describe('Project', () => {
     }));
 
     //  ------- Repository Manager --------- //
-    it('connect repository manager variable in project', async(() => {
+    it('connect repository manager variable in project', waitForAsync(() => {
         let project = new Project();
         project.name = 'proj1';
         project.key = 'test1';
@@ -975,7 +975,7 @@ describe('Project', () => {
         });
     }));
 
-    it('callback repository manager basic auth in project', async(() => {
+    it('callback repository manager basic auth in project', waitForAsync(() => {
         let project = new Project();
         project.name = 'proj1';
         project.key = 'test1';
@@ -1013,7 +1013,7 @@ describe('Project', () => {
     }));
 
 
-    it('callback repository manager variable in project', async(() => {
+    it('callback repository manager variable in project', waitForAsync(() => {
         let project = new Project();
         project.name = 'proj1';
         project.key = 'test1';
@@ -1050,7 +1050,7 @@ describe('Project', () => {
         });
     }));
 
-    it('disconnect repository manager variable in project', async(() => {
+    it('disconnect repository manager variable in project', waitForAsync(() => {
         let project = new Project();
         project.name = 'proj1';
         project.key = 'test1';

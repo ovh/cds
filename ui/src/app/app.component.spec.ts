@@ -6,6 +6,11 @@ import { RouterTestingModule } from '@angular/router/testing';
 import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
 import { ToasterModule } from 'angular2-toaster-sgu';
+import { EventService } from 'app/event.service';
+import { MonitoringStatus } from 'app/model/monitoring.model';
+import { EnvironmentService } from 'app/service/environment/environment.service';
+import { HelpService } from 'app/service/help/help.service';
+import { MonitoringService } from 'app/service/monitoring/monitoring.service';
 import { WorkflowRunService } from 'app/service/workflow/run/workflow.run.service';
 import { WorkflowService } from 'app/service/workflow/workflow.service';
 import { of } from 'rxjs';
@@ -51,7 +56,11 @@ describe('App: CDS', () => {
                 WorkflowRunService,
                 UserService,
                 NavbarService,
+                HelpService,
+                MonitoringService,
+                EventService,
                 ProjectStore,
+                EnvironmentService,
                 AuthenticationService,
                 LanguageStore,
                 ThemeStore,
@@ -103,10 +112,16 @@ describe('App: CDS', () => {
 
         fixture.componentInstance.ngOnInit();
 
+        const http = TestBed.get(HttpTestingController);
+
+        http.expectOne((req: HttpRequest<any>) => {
+            return req.url === '/mon/status'
+        }).flush(<MonitoringStatus>{});
+
         const store = TestBed.get(Store);
         store.dispatch(new FetchCurrentUser());
 
-        const http = TestBed.get(HttpTestingController);
+
         http.expectOne(((req: HttpRequest<any>) => {
             return req.url === '/user/me';
         })).flush(<AuthentifiedUser>{

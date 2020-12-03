@@ -18,18 +18,18 @@ import { AddProject } from 'app/store/project.action';
 import { NgxsStoreModule } from 'app/store/store.module';
 import { of } from 'rxjs';
 import 'rxjs/add/observable/of';
-import { Group, GroupPermission } from '../../../model/group.model';
-import { Project } from '../../../model/project.model';
-import { EnvironmentService } from '../../../service/environment/environment.service';
-import { GroupService } from '../../../service/group/group.service';
-import { NavbarService } from '../../../service/navbar/navbar.service';
-import { PipelineService } from '../../../service/pipeline/pipeline.service';
-import { ProjectService } from '../../../service/project/project.service';
-import { ProjectStore } from '../../../service/project/project.store';
-import { RepoManagerService } from '../../../service/repomanager/project.repomanager.service';
-import { VariableService } from '../../../service/variable/variable.service';
-import { SharedModule } from '../../../shared/shared.module';
-import { ToastService } from '../../../shared/toast/ToastService';
+import { Group, GroupPermission } from 'app/model/group.model';
+import { Project } from 'app/model/project.model';
+import { EnvironmentService } from 'app/service/environment/environment.service';
+import { GroupService } from 'app/service/group/group.service';
+import { NavbarService } from 'app/service/navbar/navbar.service';
+import { PipelineService } from 'app/service/pipeline/pipeline.service';
+import { ProjectService } from 'app/service/project/project.service';
+import { ProjectStore } from 'app/service/project/project.store';
+import { RepoManagerService } from 'app/service/repomanager/project.repomanager.service';
+import { VariableService } from 'app/service/variable/variable.service';
+import { SharedModule } from 'app/shared/shared.module';
+import { ToastService } from 'app/shared/toast/ToastService';
 import { ProjectModule } from '../project.module';
 import { ProjectAddComponent } from './project.add.component';
 
@@ -92,7 +92,7 @@ describe('CDS: Project Show Component', () => {
         });
 
         spyOn(router, 'navigate').and.callFake(() => {
-            return;
+            return new Promise(() => {return true});
         });
 
         // Create Project RepoManager Form Component

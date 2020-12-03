@@ -15,7 +15,33 @@ import { ServicesModule } from './service/services.module';
 import { SharedModule } from './shared/shared.module';
 import { NavbarModule } from './views/navbar/navbar.module';
 
-let ngModule: NgModule = {
+export let errorFactory = () => {
+    if ((<any>window).cds_sentry_url) {
+        class RavenErrorHandler implements ErrorHandler {
+            handleError(err: any): void {
+                console.error(err);
+                Raven.captureException(err);
+            }
+        }
+
+        let tags = {};
+        let username = localStorage.getItem('CDS-USER');
+        if (username) {
+            tags['CDS_USER'] = username;
+        }
+
+        Raven
+            .config((<any>window).cds_sentry_url, { release: (<any>window).cds_version, tags })
+            .install();
+
+        return new RavenErrorHandler();
+    } else {
+        return new ErrorHandler();
+    }
+}
+
+
+@NgModule({
     declarations: [
         AppComponent
     ],
@@ -43,40 +69,11 @@ let ngModule: NgModule = {
     providers: [
         AppService,
         EventService,
+        { provide: ErrorHandler, useFactory: errorFactory},
         { provide: LOCALE_ID, useValue: navigator.language.match(/fr/) ? 'fr' : 'en' }
     ],
     bootstrap: [AppComponent]
-};
-
-if ((<any>window).cds_sentry_url) {
-    class RavenErrorHandler implements ErrorHandler {
-        handleError(err: any): void {
-            console.error(err);
-            Raven.captureException(err);
-        }
-    }
-
-    let tags = {};
-    let userStr = localStorage.getItem('CDS-USER');
-    if (userStr) {
-        try {
-            tags['CDS_USER'] = JSON.parse(userStr).username;
-        } catch (e) {
-
-        }
-    }
-
-    Raven
-        .config((<any>window).cds_sentry_url, { release: (<any>window).cds_version, tags })
-        .install();
-
-    ngModule.providers.unshift({ provide: ErrorHandler, useClass: RavenErrorHandler });
-}
-
-
-
-
-@NgModule(ngModule)
+})
 export class AppModule {
 }
 

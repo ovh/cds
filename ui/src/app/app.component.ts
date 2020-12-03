@@ -136,6 +136,7 @@ export class AppComponent implements OnInit, OnDestroy {
             } else {
                 this.user = user;
                 this.isConnected = true;
+                localStorage.setItem('CDS-USER', this.user.username);
                 this._eventService.startWebsocket();
             }
         });
