@@ -48,6 +48,9 @@ func ParseAndImport(ctx context.Context, db gorpmapper.SqlExecutorWithTx, cache 
 	}
 
 	if opts.Force && opts.FromRepository == "" {
+		if opts.FromRepository != "" {
+			msgList = append(msgList, sdk.NewMessage(sdk.MsgApplicationDetached, eapp.Name, oldApp.FromRepository))
+		}
 		log.Debug("ParseAndImport>> Force import application %s in project %s without fromRepository", eapp.Name, proj.Key)
 	} else if oldApp != nil && oldApp.FromRepository != "" && opts.FromRepository != oldApp.FromRepository {
 		return nil, nil, msgList, sdk.NewErrorFrom(sdk.ErrApplicationAsCodeOverride, "unable to update existing ascode application from %s", oldApp.FromRepository)

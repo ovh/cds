@@ -23,6 +23,8 @@ func ParseAndImport(db gorpmapper.SqlExecutorWithTx, proj sdk.Project, eenv expo
 	log.Debug("ParseAndImport>> Import environment %s in project %s (force=%v)", eenv.Name, proj.Key, opts.Force)
 	log.Debug("ParseAndImport>> Env: %+v", eenv)
 
+	msgList := []sdk.Message{}
+
 	// Check valid application name
 	rx := sdk.NamePatternRegex
 	if !rx.MatchString(eenv.Name) {
@@ -45,6 +47,9 @@ func ParseAndImport(db gorpmapper.SqlExecutorWithTx, proj sdk.Project, eenv expo
 	}
 
 	if opts.Force && opts.FromRepository == "" {
+		if oldEnv.FromRepository != "" {
+			msgList = append(msgList, sdk.NewMessage(sdk.MsgApplicationDetached, eenv.Name, oldEnv.FromRepository))
+		}
 		log.Debug("ParseAndImport>> Force import environment %s in project %s without fromRepository", eenv.Name, proj.Key)
 	} else if oldEnv != nil && oldEnv.FromRepository != "" && opts.FromRepository != oldEnv.FromRepository {
 		return nil, nil, nil, sdk.NewErrorFrom(sdk.ErrEnvironmentAsCodeOverride, "unable to update existing ascode environment from %s", oldEnv.FromRepository)
@@ -144,7 +149,7 @@ func ParseAndImport(db gorpmapper.SqlExecutorWithTx, proj sdk.Project, eenv expo
 	done := new(sync.WaitGroup)
 	done.Add(1)
 	msgChan := make(chan sdk.Message)
-	msgList := []sdk.Message{}
+
 	go func(array *[]sdk.Message) {
 		defer done.Done()
 		for m := range msgChan {

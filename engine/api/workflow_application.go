@@ -64,7 +64,7 @@ func (api *API) releaseApplicationWorkflowHandler() service.Handler {
 		app := workflowRun.Workflow.Applications[node.Context.ApplicationID]
 
 		if app.VCSServer == "" {
-			return sdk.WithStack(sdk.ErrNoReposManager)
+			return sdk.NewErrorFrom(sdk.ErrNoReposManager, "app.VCSServer is empty")
 		}
 
 		tx, err := api.mustDB().Begin()
