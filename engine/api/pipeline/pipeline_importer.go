@@ -7,6 +7,7 @@ import (
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/action"
+	"github.com/ovh/cds/engine/api/ascode"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/sdk"
@@ -28,6 +29,9 @@ func ImportUpdate(ctx context.Context, db gorp.SqlExecutor, proj sdk.Project, pi
 
 	if opts.Force && opts.FromRepository == "" {
 		if oldPipeline.FromRepository != "" {
+			if err := ascode.DeleteEventsPipelineOnlyFromPipelineName(ctx, db, oldPipeline.FromRepository, oldPipeline.ID, oldPipeline.Name); err != nil {
+				return sdk.WrapError(err, "unable to delete as_code_event for %s on repo %s", pip.Name, pip.FromRepository)
+			}
 			msgChan <- sdk.NewMessage(sdk.MsgPipelineDetached, pip.Name, oldPipeline.FromRepository)
 		}
 		log.Debug("ImportUpdate>> Force import pipeline %s in project %s without fromRepository", pip.Name, proj.Key)

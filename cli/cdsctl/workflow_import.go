@@ -18,7 +18,8 @@ If you want to update also dependencies likes pipelines, applications or environ
 
 Without --force, CDS won't update an existing workflow.
 With --force, CDS will allow you to update an existing workflow. If this workflow is managed 'as-code', CDS will
-override it. This workflow will be detached from the repository, until it is re-imported again following a commit on the repo.
+override it. This workflow and its components (applications, pipelines, environments) will be detached from the 
+repository, until it is re-imported again following a commit on the repo.
 	`,
 	Ctx: []cli.Arg{
 		{Name: _ProjectKey},

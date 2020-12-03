@@ -1,6 +1,7 @@
 package environment_test
 
 import (
+	"context"
 	"testing"
 
 	"github.com/ovh/cds/engine/api/environment"
@@ -36,12 +37,12 @@ name: ` + envName + `
 	errenv := yaml.Unmarshal(body, eenv)
 	require.NoError(t, errenv)
 
-	_, _, _, globalError := environment.ParseAndImport(db, *proj, *eenv, environment.ImportOptions{Force: false}, nil, u)
+	_, _, _, globalError := environment.ParseAndImport(context.TODO(), db, *proj, *eenv, environment.ImportOptions{Force: false}, nil, u)
 	require.Error(t, globalError)
 
-	_, _, _, globalError2 := environment.ParseAndImport(db, *proj, *eenv, environment.ImportOptions{Force: true, FromRepository: "bar"}, nil, u)
+	_, _, _, globalError2 := environment.ParseAndImport(context.TODO(), db, *proj, *eenv, environment.ImportOptions{Force: true, FromRepository: "bar"}, nil, u)
 	require.Error(t, globalError2)
 
-	_, _, _, globalError3 := environment.ParseAndImport(db, *proj, *eenv, environment.ImportOptions{Force: true}, nil, u)
+	_, _, _, globalError3 := environment.ParseAndImport(context.TODO(), db, *proj, *eenv, environment.ImportOptions{Force: true}, nil, u)
 	require.NoError(t, globalError3)
 }
