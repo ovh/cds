@@ -48,16 +48,18 @@ func ParseAndImport(ctx context.Context, db gorpmapper.SqlExecutorWithTx, proj s
 		exist = true
 	}
 
-	if opts.Force && opts.FromRepository == "" {
-		if oldEnv.FromRepository != "" {
-			if err := ascode.DeleteEventsEnvironmentOnlyFromPipelineName(ctx, db, oldEnv.FromRepository, oldEnv.ID, oldEnv.Name); err != nil {
-				return nil, nil, msgList, sdk.WrapError(err, "unable to delete as_code_event for %s on repo %s", oldEnv.Name, oldEnv.FromRepository)
+	if oldEnv != nil {
+		if opts.Force && opts.FromRepository == "" {
+			if oldEnv.FromRepository != "" {
+				if err := ascode.DeleteEventsEnvironmentOnlyFromPipelineName(ctx, db, oldEnv.FromRepository, oldEnv.ID, oldEnv.Name); err != nil {
+					return nil, nil, msgList, sdk.WrapError(err, "unable to delete as_code_event for %s on repo %s", oldEnv.Name, oldEnv.FromRepository)
+				}
+				msgList = append(msgList, sdk.NewMessage(sdk.MsgEnvironmentDetached, eenv.Name, oldEnv.FromRepository))
 			}
-			msgList = append(msgList, sdk.NewMessage(sdk.MsgEnvironmentDetached, eenv.Name, oldEnv.FromRepository))
+			log.Debug("ParseAndImport>> Force import environment %s in project %s without fromRepository", eenv.Name, proj.Key)
+		} else if oldEnv.FromRepository != "" && opts.FromRepository != oldEnv.FromRepository {
+			return nil, nil, nil, sdk.NewErrorFrom(sdk.ErrEnvironmentAsCodeOverride, "unable to update existing ascode environment from %s", oldEnv.FromRepository)
 		}
-		log.Debug("ParseAndImport>> Force import environment %s in project %s without fromRepository", eenv.Name, proj.Key)
-	} else if oldEnv != nil && oldEnv.FromRepository != "" && opts.FromRepository != oldEnv.FromRepository {
-		return nil, nil, nil, sdk.NewErrorFrom(sdk.ErrEnvironmentAsCodeOverride, "unable to update existing ascode environment from %s", oldEnv.FromRepository)
 	}
 
 	env := new(sdk.Environment)
