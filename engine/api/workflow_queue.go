@@ -716,7 +716,7 @@ func (api *API) postWorkflowJobStepStatusHandler() service.Handler {
 			log.Warning(ctx, "postWorkflowJobStepStatusHandler> Unable to load workflow run for event: %v", err)
 			return nil
 		}
-		nodeRun.Translate(r.Header.Get("Accept-Language"))
+		nodeRun.Translate()
 		eventsNotifs := notification.GetUserWorkflowEvents(ctx, api.mustDB(), api.Cache, wr.Workflow.ProjectID, wr.Workflow.ProjectKey, work.Name, wr.Workflow.Notifications, nil, nodeRun)
 		event.PublishWorkflowNodeRun(context.Background(), nodeRun, wr.Workflow, eventsNotifs)
 		return nil

@@ -277,7 +277,7 @@ func (api *API) getLatestWorkflowRunHandler() service.Handler {
 		if err != nil {
 			return sdk.WrapError(err, "Unable to load last workflow run")
 		}
-		run.Translate(r.Header.Get("Accept-Language"))
+		run.Translate()
 		return service.WriteJSON(w, run, http.StatusOK)
 	}
 }
@@ -304,7 +304,6 @@ func (api *API) getWorkflowRunHandler() service.Handler {
 				WithArtifacts:           true,
 				WithLightTests:          true,
 				DisableDetailledNodeRun: !isService && withDetailledNodeRun != "true",
-				Language:                r.Header.Get("Accept-Language"),
 			},
 		)
 		if err != nil {
@@ -325,7 +324,7 @@ func (api *API) getWorkflowRunHandler() service.Handler {
 			}
 		}
 
-		run.Translate(r.Header.Get("Accept-Language"))
+		run.Translate()
 
 		return service.WriteJSON(w, run, http.StatusOK)
 	}
@@ -806,7 +805,7 @@ func (api *API) getWorkflowNodeRunHandler() service.Handler {
 			return sdk.WrapError(err, "Unable to load last workflow run")
 		}
 
-		run.Translate(r.Header.Get("Accept-Language"))
+		run.Translate()
 		return service.WriteJSON(w, run, http.StatusOK)
 	}
 }
@@ -1275,7 +1274,7 @@ func failInitWorkflowRun(ctx context.Context, db *gorp.DbMap, wfRun *sdk.Workflo
 			wfRun.Status = sdk.StatusNeverBuilt
 		}
 	} else {
-		httpErr := sdk.ExtractHTTPError(err, "")
+		httpErr := sdk.ExtractHTTPError(err)
 		isErrWithStack := sdk.IsErrorWithStack(err)
 		fields := log.Fields{}
 		if isErrWithStack {
@@ -1471,11 +1470,10 @@ func (api *API) getWorkflowNodeRunJobSpawnInfosHandler() service.Handler {
 			return sdk.WrapError(err, "cannot load spawn infos for node run job id %d", runJobID)
 		}
 
-		l := r.Header.Get("Accept-Language")
 		for ki, info := range spawnInfos {
 			if _, ok := sdk.Messages[info.Message.ID]; ok {
 				m := sdk.NewMessage(sdk.Messages[info.Message.ID], info.Message.Args...)
-				spawnInfos[ki].UserMessage = m.String(l)
+				spawnInfos[ki].UserMessage = m.String()
 			}
 		}
 		return service.WriteJSON(w, spawnInfos, http.StatusOK)

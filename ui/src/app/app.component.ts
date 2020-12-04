@@ -16,7 +16,6 @@ import { Subscription } from 'rxjs/Subscription';
 import * as format from 'string-format-obj';
 import { AppService } from './app.service';
 import { AuthentifiedUser } from './model/user.model';
-import { LanguageStore } from './service/language/language.store';
 import { NotificationService } from './service/notification/notification.service';
 import { HelpService, MonitoringService } from './service/services.module';
 import { ThemeStore } from './service/theme/theme.store';
@@ -58,7 +57,6 @@ export class AppComponent implements OnInit, OnDestroy {
 
     constructor(
         _translate: TranslateService,
-        private _language: LanguageStore,
         private _theme: ThemeStore,
         private _activatedRoute: ActivatedRoute,
         private _titleService: Title,

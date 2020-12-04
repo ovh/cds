@@ -87,13 +87,13 @@ func (api *API) importPipelineHandler() service.Handler {
 
 		pip, allMsg, globalError := pipeline.ParseAndImport(ctx, tx, api.Cache, *proj, data, getAPIConsumer(ctx),
 			pipeline.ImportOptions{Force: force})
-		msgListString := translate(r, allMsg)
+		msgListString := translate(allMsg)
 		if globalError != nil {
 			globalError = sdk.WrapError(globalError, "unable to import pipeline")
 			if sdk.ErrorIsUnknown(globalError) {
 				return globalError
 			}
-			sdkErr := sdk.ExtractHTTPError(globalError, r.Header.Get("Accept-Language"))
+			sdkErr := sdk.ExtractHTTPError(globalError)
 			return service.WriteJSON(w, append(msgListString, sdkErr.Message), sdkErr.Status)
 		}
 
@@ -147,7 +147,7 @@ func (api *API) putImportPipelineHandler() service.Handler {
 		defer tx.Rollback() // nolint
 
 		pip, allMsg, err := pipeline.ParseAndImport(ctx, tx, api.Cache, *proj, data, getAPIConsumer(ctx), pipeline.ImportOptions{Force: true, PipelineName: pipelineName})
-		msgListString := translate(r, allMsg)
+		msgListString := translate(allMsg)
 		if err != nil {
 			return sdk.NewErrorWithStack(err, sdk.NewErrorFrom(sdk.ErrInvalidPipeline, "unable to parse and import pipeline"))
 		}

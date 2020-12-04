@@ -177,7 +177,7 @@ name: Environment-[[if .id]]`)),
 
 	_, err := workflowtemplate.Parse(tmpl)
 	assert.NotNil(t, err)
-	e := sdk.ExtractHTTPError(err, "")
+	e := sdk.ExtractHTTPError(err)
 	assert.Equal(t, sdk.ErrCannotParseTemplate.ID, e.ID)
 	errs := []sdk.WorkflowTemplateError{{
 		Type:    "workflow",

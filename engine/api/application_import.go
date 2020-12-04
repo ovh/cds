@@ -63,13 +63,13 @@ func (api *API) postApplicationImportHandler() service.Handler {
 		defer tx.Rollback() // nolint
 
 		newApp, _, msgList, globalError := application.ParseAndImport(ctx, tx, api.Cache, *proj, eapp, application.ImportOptions{Force: force}, project.DecryptWithBuiltinKey, getAPIConsumer(ctx))
-		msgListString := translate(r, msgList)
+		msgListString := translate(msgList)
 		if globalError != nil {
 			globalError = sdk.WrapError(globalError, "Unable to import application %s", eapp.Name)
 			if sdk.ErrorIsUnknown(globalError) {
 				return globalError
 			}
-			sdkErr := sdk.ExtractHTTPError(globalError, r.Header.Get("Accept-Language"))
+			sdkErr := sdk.ExtractHTTPError(globalError)
 			return service.WriteJSON(w, append(msgListString, sdkErr.Message), sdkErr.Status)
 		}
 

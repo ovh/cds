@@ -198,11 +198,11 @@ func (w WorkflowRunVersion) IsValid() error {
 }
 
 // Translate translates messages in WorkflowNodeRun
-func (r *WorkflowRun) Translate(lang string) {
+func (r *WorkflowRun) Translate() {
 	for ki, info := range r.Infos {
 		if _, ok := Messages[info.Message.ID]; ok {
 			m := NewMessage(Messages[info.Message.ID], info.Message.Args...)
-			r.Infos[ki].UserMessage = m.String(lang)
+			r.Infos[ki].UserMessage = m.String()
 		}
 	}
 }
@@ -428,10 +428,10 @@ type WorkflowNodeTriggerRun struct {
 }
 
 // Translate translates messages in WorkflowNodeRun
-func (nr *WorkflowNodeRun) Translate(lang string) {
+func (nr *WorkflowNodeRun) Translate() {
 	for ks := range nr.Stages {
 		for kj := range nr.Stages[ks].RunJobs {
-			nr.Stages[ks].RunJobs[kj].Translate(lang)
+			nr.Stages[ks].RunJobs[kj].Translate()
 		}
 	}
 }
@@ -550,11 +550,11 @@ type WorkflowNodeJobRunBooked struct {
 }
 
 // Translate translates messages in WorkflowNodeJobRun
-func (wnjr *WorkflowNodeJobRun) Translate(lang string) {
+func (wnjr *WorkflowNodeJobRun) Translate() {
 	for ki, info := range wnjr.SpawnInfos {
 		if _, ok := Messages[info.Message.ID]; ok {
 			m := NewMessage(Messages[info.Message.ID], info.Message.Args...)
-			wnjr.SpawnInfos[ki].UserMessage = m.String(lang)
+			wnjr.SpawnInfos[ki].UserMessage = m.String()
 		}
 	}
 }

@@ -206,19 +206,8 @@ var (
 )
 
 //String returns formated string for the specified language
-func (m *Message) String(al string) string {
-	acceptedLanguages, _, err := language.ParseAcceptLanguage(al)
-	if err != nil {
-		return fmt.Sprintf(m.Format[EN], m.Args...)
-	}
-
-	t, _, _ := matcher.Match(acceptedLanguages...)
-	switch t {
-	case language.French, language.AmericanEnglish:
-		return fmt.Sprintf(m.Format[lang(t)], m.Args...)
-	default:
-		return fmt.Sprintf(m.Format[EN], m.Args...)
-	}
+func (m *Message) String() string {
+	return fmt.Sprintf(m.Format[EN], m.Args...)
 }
 
 // MessagesToError returns a translated slices of messages as an error
@@ -228,14 +217,14 @@ func MessagesToError(messages []Message) error {
 		if i != 0 {
 			s += "; "
 		}
-		s += err.String(language.AmericanEnglish.String())
+		s += err.String()
 	}
 	return errors.New(s)
 }
 
 // ErrorToMessage returns message from an error if possible
 func ErrorToMessage(err error) (Message, bool) {
-	cdsError := ExtractHTTPError(err, "EN")
+	cdsError := ExtractHTTPError(err)
 	switch cdsError.ID {
 	case ErrPipelineNotFound.ID:
 		return NewMessage(MsgWorkflowErrorBadPipelineName, cdsError.Data), true

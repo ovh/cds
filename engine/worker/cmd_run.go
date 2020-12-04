@@ -68,7 +68,7 @@ func runCmd() func(cmd *cobra.Command, args []string) {
 			fields := log.Fields{}
 			if isErrWithStack {
 				fields["stack_trace"] = fmt.Sprintf("%+v", err)
-				fields["request_id"] = sdk.ExtractHTTPError(err, "").RequestID
+				fields["request_id"] = sdk.ExtractHTTPError(err).RequestID
 			}
 			log.ErrorWithFields(ctx, fields, "%v", err)
 			time.Sleep(2 * time.Second)

@@ -136,7 +136,7 @@ checkImage:
 			next()
 			hatchery.SendSpawnInfo(ctx, h, spawnArgs.JobID, sdk.SpawnMsg{
 				ID:   sdk.MsgSpawnInfoHatcheryEndDockerPullErr.ID,
-				Args: []interface{}{h.Name(), cArgs.image, sdk.ExtractHTTPError(err, "").Error()},
+				Args: []interface{}{h.Name(), cArgs.image, sdk.ExtractHTTPError(err).Error()},
 			})
 			return sdk.WrapError(err, "Unable to pull image %s on %s", cArgs.image, dockerClient.name)
 		}
