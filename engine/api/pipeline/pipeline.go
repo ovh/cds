@@ -312,7 +312,7 @@ func LoadAllNames(db gorp.SqlExecutor, projID int64) (sdk.IDNames, error) {
 		if err == sql.ErrNoRows {
 			return res, nil
 		}
-		return nil, sdk.WrapError(err, "application.loadpipelinenames")
+		return nil, sdk.WrapError(err, "pipeline.loadpipelinenames")
 	}
 
 	return res, nil
@@ -383,4 +383,35 @@ func ExistPipeline(db gorp.SqlExecutor, projectID int64, name string) (bool, err
 		return true, nil
 	}
 	return false, nil
+}
+
+// LoadAllNamesByFromRepository returns all pipeline names for a repository
+func LoadAllNamesByFromRepository(db gorp.SqlExecutor, projID int64, fromRepository string) (sdk.IDNames, error) {
+	if fromRepository == "" {
+		return nil, sdk.WithData(sdk.ErrUnknownError, "could not call LoadAllNamesByFromRepository with empty fromRepository")
+	}
+	query := `SELECT pipeline.id, pipeline.name
+			  FROM pipeline
+			  WHERE project_id = $1 AND from_repository = $2
+			  ORDER BY pipeline.name`
+
+	var res sdk.IDNames
+	if _, err := db.Select(&res, query, projID, fromRepository); err != nil {
+		if err == sql.ErrNoRows {
+			return res, nil
+		}
+		return nil, sdk.WrapError(err, "pipeline.LoadAllNamesByFromRepository")
+	}
+
+	return res, nil
+}
+
+// ResetFromRepository reset fromRepository for all pipelines using the same fromRepository in a given project
+func ResetFromRepository(db gorp.SqlExecutor, projID int64, fromRepository string) error {
+	if fromRepository == "" {
+		return sdk.WithData(sdk.ErrUnknownError, "could not call LoadAllNamesByFromRepository with empty fromRepository")
+	}
+	query := `UPDATE pipeline SET from_repository='' WHERE project_id = $1 AND from_repository = $2`
+	_, err := db.Exec(query, projID, fromRepository)
+	return sdk.WithStack(err)
 }

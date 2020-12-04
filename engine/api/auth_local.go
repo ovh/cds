@@ -131,6 +131,10 @@ func initBuiltinConsumersFromStartupConfig(ctx context.Context, tx gorpmapper.Sq
 			scopes = sdk.NewAuthConsumerScopeDetails(sdk.AuthConsumerScopeService, sdk.AuthConsumerScopeWorker, sdk.AuthConsumerScopeRunExecution)
 		case StartupConfigConsumerTypeCDNStorageCDS:
 			scopes = sdk.NewAuthConsumerScopeDetails(sdk.AuthConsumerScopeService, sdk.AuthConsumerScopeWorker, sdk.AuthConsumerScopeRunExecution)
+		case StartupConfigConsumerTypeVCS:
+			scopes = sdk.NewAuthConsumerScopeDetails(sdk.AuthConsumerScopeProject, sdk.AuthConsumerScopeRun, sdk.AuthConsumerScopeService)
+		case StartupConfigConsumerTypeRepositories:
+			scopes = sdk.NewAuthConsumerScopeDetails(sdk.AuthConsumerScopeProject, sdk.AuthConsumerScopeRun, sdk.AuthConsumerScopeService)
 		default:
 			scopes = sdk.NewAuthConsumerScopeDetails(sdk.AuthConsumerScopeProject, sdk.AuthConsumerScopeRun)
 		}

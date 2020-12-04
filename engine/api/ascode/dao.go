@@ -4,9 +4,8 @@ import (
 	"context"
 	"database/sql"
 
-	"github.com/lib/pq"
-
 	"github.com/go-gorp/gorp"
+	"github.com/lib/pq"
 
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/sdk"
@@ -30,6 +29,7 @@ func LoadEventByWorkflowIDAndPullRequest(ctx context.Context, db gorp.SqlExecuto
 	return &event, nil
 }
 
+// LoadEventsByWorkflowIDs loads all events attached to a workflow_id
 func LoadEventsByWorkflowIDs(ctx context.Context, db gorp.SqlExecutor, workflowIDs []int64) ([]sdk.AsCodeEvent, error) {
 	query := gorpmapping.NewQuery("SELECT * FROM as_code_events where workflow_id = ANY($1)").Args(pq.Int64Array(workflowIDs))
 	var events []dbAsCodeEvents
@@ -94,4 +94,46 @@ func deleteEvent(db gorp.SqlExecutor, event *sdk.AsCodeEvent) error {
 		return sdk.WrapError(err, "unable to delete as code event")
 	}
 	return nil
+}
+
+// DeleteAsCodeEventByWorkflowID removes all as_code_event from workflow_id
+func DeleteAsCodeEventByWorkflowID(db gorp.SqlExecutor, id int64) error {
+	_, err := db.Exec("DELETE FROM as_code_events WHERE workflow_id = $1", id)
+	return sdk.WrapError(err, "unable to delete as_code_events with workflow_id %s", id)
+}
+
+func DeleteEventsPipelineOnlyFromRepoName(ctx context.Context, db gorp.SqlExecutor, fromRepository string, pipID int64, pipName string) error {
+	query := `DELETE FROM as_code_events 
+	WHERE from_repository=$1
+	AND (data -> 'pipelines' ->> $2)::text = $3
+	AND (data -> 'workflows')::text = 'null'
+	AND (data -> 'environments')::text = 'null'
+	AND (data -> 'applications')::text = 'null'
+	`
+	_, err := db.Exec(query, fromRepository, pipID, pipName)
+	return sdk.WithStack(err)
+}
+
+func DeleteEventsApplicationOnlyFromRepoName(ctx context.Context, db gorp.SqlExecutor, fromRepository string, appID int64, appName string) error {
+	query := `DELETE FROM as_code_events 
+	WHERE from_repository=$1
+	AND (data -> 'applications' ->> $2)::text = $3
+	AND (data -> 'workflows')::text = 'null'
+	AND (data -> 'environments')::text = 'null'
+	AND (data -> 'pipelines')::text = 'null'
+	`
+	_, err := db.Exec(query, fromRepository, appID, appName)
+	return sdk.WithStack(err)
+}
+
+func DeleteEventsEnvironmentOnlyFromRepoName(ctx context.Context, db gorp.SqlExecutor, fromRepository string, envID int64, envName string) error {
+	query := `DELETE FROM as_code_events 
+	WHERE from_repository=$1
+	AND (data -> 'environments' ->> $2)::text = $3
+	AND (data -> 'workflows')::text = 'null'
+	AND (data -> 'pipelines')::text = 'null'
+	AND (data -> 'applications')::text = 'null'
+	`
+	_, err := db.Exec(query, fromRepository, envID, envName)
+	return sdk.WithStack(err)
 }

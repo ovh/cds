@@ -121,6 +121,12 @@ func applicationDeleteRun(v cli.Values) error {
 var applicationImportCmd = cli.Command{
 	Name:  "import",
 	Short: "Import an application with a local filepath or an URL",
+	Long: `PATH: Path or URL of application to import
+
+Without --force, CDS won't update an existing application.
+With --force, CDS will allow you to update an existing application. If this application is managed 'as-code', CDS will
+override it. This application will be detached from the repository, until it is re-imported again following a commit on the repo.
+`,
 	Ctx: []cli.Arg{
 		{Name: _ProjectKey},
 	},

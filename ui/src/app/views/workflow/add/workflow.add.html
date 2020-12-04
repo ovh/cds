@@ -211,7 +211,8 @@
                                                             </app-vcs-strategy>
                                                         </div>
                                                         <div class="right aligned field"
-                                                            *ngIf="!pollingResponse && selectedRepo">
+                                                            *ngIf="!pollingResponse && selectedRepo ||
+                                                            (selectedRepo && pollingResponse?.error_details?.message !== '')">
                                                             <button class="ui green button" type="button"
                                                                 [class.loading]="loading" [disabled]="loading"
                                                                 (click)="createWorkflowFromRepo()">{{
@@ -225,7 +226,7 @@
                                                             </ng-container>
 
                                                             <div class="ui error message"
-                                                                *ngIf="pollingResponse.status === 3">
+                                                                *ngIf="pollingResponse.status === 3 && !loading">
                                                                 {{pollingResponse.error_details.message}} - 
                                                                 {{pollingResponse.error_details.from}}                                                            </div>
                                                             <ng-container
