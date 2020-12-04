@@ -102,7 +102,7 @@ func DeleteAsCodeEventByWorkflowID(db gorp.SqlExecutor, id int64) error {
 	return sdk.WrapError(err, "unable to delete as_code_events with workflow_id %s", id)
 }
 
-func DeleteEventsPipelineOnlyFromPipelineName(ctx context.Context, db gorp.SqlExecutor, fromRepository string, pipID int64, pipName string) error {
+func DeleteEventsPipelineOnlyFromRepoName(ctx context.Context, db gorp.SqlExecutor, fromRepository string, pipID int64, pipName string) error {
 	query := `DELETE FROM as_code_events 
 	WHERE from_repository=$1
 	AND (data -> 'pipelines' ->> $2)::text = $3
@@ -114,7 +114,7 @@ func DeleteEventsPipelineOnlyFromPipelineName(ctx context.Context, db gorp.SqlEx
 	return sdk.WithStack(err)
 }
 
-func DeleteEventsApplicationOnlyFromPipelineName(ctx context.Context, db gorp.SqlExecutor, fromRepository string, appID int64, appName string) error {
+func DeleteEventsApplicationOnlyFromRepoName(ctx context.Context, db gorp.SqlExecutor, fromRepository string, appID int64, appName string) error {
 	query := `DELETE FROM as_code_events 
 	WHERE from_repository=$1
 	AND (data -> 'applications' ->> $2)::text = $3
@@ -126,7 +126,7 @@ func DeleteEventsApplicationOnlyFromPipelineName(ctx context.Context, db gorp.Sq
 	return sdk.WithStack(err)
 }
 
-func DeleteEventsEnvironmentOnlyFromPipelineName(ctx context.Context, db gorp.SqlExecutor, fromRepository string, envID int64, envName string) error {
+func DeleteEventsEnvironmentOnlyFromRepoName(ctx context.Context, db gorp.SqlExecutor, fromRepository string, envID int64, envName string) error {
 	query := `DELETE FROM as_code_events 
 	WHERE from_repository=$1
 	AND (data -> 'environments' ->> $2)::text = $3
