@@ -311,12 +311,6 @@
             </div>
         </ng-template>
 
-        <sm-select class="languageSelect" [options]="{'fullTextSearch': true}" [(model)]="currentCountry"
-            (modelChange)="changeCountry()">
-            <option value="fr"><i class="france flag"></i></option>
-            <option value="en"><i class="gb flag"></i></option>
-        </sm-select>
-
         <sm-dropdown icon="settings" *ngIf="currentUser">
             <a sm-item href="#"
                 [routerLink]="['settings', 'user', currentUser.username]">{{ 'navbar_profile' | translate }}</a>
