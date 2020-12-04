@@ -106,10 +106,14 @@ func TestPostUpdateWorkflowAsCodeHandler(t *testing.T) {
 					return writeError(w, err)
 				}
 			case "/vcs/github/repos/foo/myrepo/branches":
-				bs := make([]sdk.VCSBranch, 1)
+				bs := make([]sdk.VCSBranch, 2)
 				bs[0] = sdk.VCSBranch{
 					DisplayID: "master",
 					Default:   true,
+				}
+				bs[1] = sdk.VCSBranch{
+					DisplayID: "foo",
+					Default:   false,
 				}
 				if err := enc.Encode(bs); err != nil {
 					return writeError(w, err)
@@ -213,7 +217,7 @@ func TestPostUpdateWorkflowAsCodeHandler(t *testing.T) {
 
 	req := assets.NewJWTAuthentifiedRequest(t, jwt, "POST", uri, w)
 	q := req.URL.Query()
-	q.Set("branch", "master")
+	q.Set("branch", "foo")
 	q.Set("message", "my message")
 	req.URL.RawQuery = q.Encode()
 
@@ -301,10 +305,14 @@ func TestPostMigrateWorkflowAsCodeHandler(t *testing.T) {
 					return writeError(w, err)
 				}
 			case "/vcs/github/repos/foo/myrepo/branches":
-				bs := make([]sdk.VCSBranch, 1)
+				bs := make([]sdk.VCSBranch, 2)
 				bs[0] = sdk.VCSBranch{
 					DisplayID: "master",
 					Default:   true,
+				}
+				bs[1] = sdk.VCSBranch{
+					DisplayID: "foo",
+					Default:   false,
 				}
 				if err := enc.Encode(bs); err != nil {
 					return writeError(w, err)
@@ -413,7 +421,7 @@ func TestPostMigrateWorkflowAsCodeHandler(t *testing.T) {
 	req := assets.NewJWTAuthentifiedRequest(t, jwt, "POST", uri, nil)
 	q := req.URL.Query()
 	q.Set("migrate", "true")
-	q.Set("branch", "master")
+	q.Set("branch", "foo")
 	q.Set("message", "my message")
 	req.URL.RawQuery = q.Encode()
 

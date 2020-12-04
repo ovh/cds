@@ -144,7 +144,7 @@ func TestUpdateAsCodeApplicationHandler(t *testing.T) {
 			bs = append(bs, b)
 			out = bs
 			return nil, 200, nil
-		}).Times(1)
+		}).Times(2)
 
 	servicesClients.EXPECT().
 		DoJSONRequest(gomock.Any(), "POST", "/vcs/github/repos/foo/myrepo/hooks", gomock.Any(), gomock.Any(), gomock.Any()).
