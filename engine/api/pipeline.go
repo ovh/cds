@@ -15,6 +15,7 @@ import (
 	"github.com/ovh/cds/engine/api/operation"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/project"
+	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
@@ -43,7 +44,7 @@ func (api *API) updateAsCodePipelineHandler() service.Handler {
 		// check pipeline name pattern
 		regexp := sdk.NamePatternRegex
 		if !regexp.MatchString(p.Name) {
-			return sdk.WrapError(sdk.ErrInvalidPipelinePattern, "updateAsCodePipelineHandler: Pipeline name %s do not respect pattern", p.Name)
+			return sdk.WrapError(sdk.ErrInvalidPipelinePattern, "updateAsCodePipelineHandler: pipeline name %s do not respect pattern", p.Name)
 		}
 
 		tx, err := api.mustDB().Begin()
@@ -90,6 +91,27 @@ func (api *API) updateAsCodePipelineHandler() service.Handler {
 		}
 		if rootApp == nil {
 			return sdk.NewErrorFrom(sdk.ErrWrongRequest, "cannot find the root application of the workflow %s that hold the pipeline", wkHolder.Name)
+		}
+
+		vcsServer, err := repositoriesmanager.LoadProjectVCSServerLinkByProjectKeyAndVCSServerName(ctx, tx, key, rootApp.VCSServer)
+		if err != nil {
+			return sdk.WrapError(sdk.ErrNoReposManagerClientAuth, "updateAsCodePipelineHandler> cannot get client got %s %s : %v", key, rootApp.VCSServer, err)
+		}
+
+		client, err := repositoriesmanager.AuthorizedClient(ctx, tx, api.Cache, key, vcsServer)
+		if err != nil {
+			return sdk.WrapError(sdk.ErrNoReposManagerClientAuth, "updateAsCodePipelineHandler> cannot get client got %s %s : %v", key, rootApp.VCSServer, err)
+		}
+
+		branches, err := client.Branches(ctx, rootApp.RepositoryFullname)
+		if err != nil {
+			return err
+		}
+
+		for _, b := range branches {
+			if (b.ID == branch || b.DisplayID == branch) && b.Default {
+				return sdk.NewErrorFrom(sdk.ErrForbidden, "cannot push the the default branch on your git repository")
+			}
 		}
 
 		u := getAPIConsumer(ctx)

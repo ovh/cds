@@ -11,6 +11,7 @@ import (
 	"github.com/ovh/cds/engine/api/ascode"
 	"github.com/ovh/cds/engine/api/operation"
 	"github.com/ovh/cds/engine/api/project"
+	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
@@ -33,8 +34,14 @@ func (api *API) postWorkflowAsCodeHandler() service.Handler {
 			return sdk.NewErrorFrom(sdk.ErrWrongRequest, "missing branch or message data")
 		}
 
+		tx1, err := api.mustDB().Begin()
+		if err != nil {
+			return sdk.WithStack(err)
+		}
+		defer tx1.Rollback() // nolint
+
 		u := getAPIConsumer(ctx)
-		p, err := project.Load(ctx, api.mustDB(), key,
+		p, err := project.Load(ctx, tx1, key,
 			project.LoadOptions.WithApplicationWithDeploymentStrategies,
 			project.LoadOptions.WithPipelines,
 			project.LoadOptions.WithEnvironments,
@@ -45,7 +52,7 @@ func (api *API) postWorkflowAsCodeHandler() service.Handler {
 			return err
 		}
 
-		wfDB, err := workflow.Load(ctx, api.mustDB(), api.Cache, *p, workflowName, workflow.LoadOptions{
+		wfDB, err := workflow.Load(ctx, tx1, api.Cache, *p, workflowName, workflow.LoadOptions{
 			DeepPipeline:          migrate,
 			WithAsCodeUpdateEvent: migrate,
 			WithTemplate:          true,
@@ -56,13 +63,34 @@ func (api *API) postWorkflowAsCodeHandler() service.Handler {
 
 		var rootApp *sdk.Application
 		if wfDB.WorkflowData.Node.Context != nil && wfDB.WorkflowData.Node.Context.ApplicationID != 0 {
-			rootApp, err = application.LoadByIDWithClearVCSStrategyPassword(api.mustDB(), wfDB.WorkflowData.Node.Context.ApplicationID)
+			rootApp, err = application.LoadByIDWithClearVCSStrategyPassword(tx1, wfDB.WorkflowData.Node.Context.ApplicationID)
 			if err != nil {
 				return err
 			}
 		}
 		if rootApp == nil {
 			return sdk.NewErrorFrom(sdk.ErrWrongRequest, "cannot find the root application of the workflow")
+		}
+
+		vcsServer, err := repositoriesmanager.LoadProjectVCSServerLinkByProjectKeyAndVCSServerName(ctx, tx1, key, rootApp.VCSServer)
+		if err != nil {
+			return sdk.WrapError(sdk.ErrNoReposManagerClientAuth, "postWorkflowAsCodeHandler> cannot get client got %s %s : %v", key, rootApp.VCSServer, err)
+		}
+
+		client, err := repositoriesmanager.AuthorizedClient(ctx, tx1, api.Cache, key, vcsServer)
+		if err != nil {
+			return sdk.WrapError(sdk.ErrNoReposManagerClientAuth, "postWorkflowAsCodeHandler> cannot get client got %s %s : %v", key, rootApp.VCSServer, err)
+		}
+
+		branches, err := client.Branches(ctx, rootApp.RepositoryFullname)
+		if err != nil {
+			return err
+		}
+
+		for _, b := range branches {
+			if (b.ID == branch || b.DisplayID == branch) && b.Default {
+				return sdk.NewErrorFrom(sdk.ErrForbidden, "cannot push the the default branch on your git repository")
+			}
 		}
 
 		if migrate {
@@ -85,13 +113,13 @@ func (api *API) postWorkflowAsCodeHandler() service.Handler {
 			return err
 		}
 
-		if err := workflow.RenameNode(ctx, api.mustDB(), &wf); err != nil {
+		if err := workflow.RenameNode(ctx, tx1, &wf); err != nil {
 			return err
 		}
-		if err := workflow.CheckValidity(ctx, api.mustDB(), &wf); err != nil {
+		if err := workflow.CheckValidity(ctx, tx1, &wf); err != nil {
 			return err
 		}
-		if err := workflow.CompleteWorkflow(ctx, api.mustDB(), &wf, *p, workflow.LoadOptions{DeepPipeline: true}); err != nil {
+		if err := workflow.CompleteWorkflow(ctx, tx1, &wf, *p, workflow.LoadOptions{DeepPipeline: true}); err != nil {
 			return err
 		}
 
@@ -101,18 +129,18 @@ func (api *API) postWorkflowAsCodeHandler() service.Handler {
 			return err
 		}
 
-		tx, err := api.mustDB().Begin()
+		tx2, err := api.mustDB().Begin()
 		if err != nil {
 			return sdk.WithStack(err)
 		}
-		defer tx.Rollback() // nolint
+		defer tx2.Rollback() // nolint
 
-		ope, err := operation.PushOperationUpdate(ctx, tx, api.Cache, *p, data, rootApp.VCSServer, rootApp.RepositoryFullname, branch, message, rootApp.RepositoryStrategy, u)
+		ope, err := operation.PushOperationUpdate(ctx, tx2, api.Cache, *p, data, rootApp.VCSServer, rootApp.RepositoryFullname, branch, message, rootApp.RepositoryStrategy, u)
 		if err != nil {
 			return err
 		}
 
-		if err := tx.Commit(); err != nil {
+		if err := tx2.Commit(); err != nil {
 			return sdk.WithStack(err)
 		}
 
