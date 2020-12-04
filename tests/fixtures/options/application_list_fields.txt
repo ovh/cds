@@ -1,7 +1,7 @@
-+------------------+-------------+
-|       NAME       | PROJECT KEY |
-+------------------+-------------+
-| ITCLIAPPPRJ-APP1 | ITCLIAPPPRJ |
-| ITCLIAPPPRJ-APP2 | ITCLIAPPPRJ |
-| ITCLIAPPPRJ-APP3 | ITCLIAPPPRJ |
-+------------------+-------------+
++------------------+
+|       NAME       |
++------------------+
+| ITCLIAPPPRJ-APP1 |
+| ITCLIAPPPRJ-APP2 |
+| ITCLIAPPPRJ-APP3 |
++------------------+

@@ -21,8 +21,7 @@ func Test_DAOKey(t *testing.T) {
 	app := sdk.Application{
 		Name: "my-app",
 	}
-
-	require.NoError(t, application.Insert(db, *proj, &app))
+	require.NoError(t, application.Insert(db, proj.ID, &app))
 
 	k := &sdk.ApplicationKey{
 		Name:          "mykey-ssh",
@@ -38,12 +37,12 @@ func Test_DAOKey(t *testing.T) {
 	require.NoError(t, application.InsertKey(db, k))
 	assert.Equal(t, sdk.PasswordPlaceholder, k.Private)
 
-	ks, err := application.LoadAllKeys(db, app.ID)
+	ks, err := application.LoadAllKeys(context.TODO(), db, app.ID)
 	require.NoError(t, err)
 
 	assert.Equal(t, sdk.PasswordPlaceholder, ks[0].Private)
 
-	ks, err = application.LoadAllKeysWithPrivateContent(db, app.ID)
+	ks, err = application.LoadKeysWithPrivateContent(context.TODO(), db, app.ID)
 	require.NoError(t, err)
 
 	assert.Equal(t, kssh.Private, ks[0].Private)
@@ -62,8 +61,8 @@ func Test_DAOAllKeysAllApps(t *testing.T) {
 	app2 := sdk.Application{
 		Name: "my-app2",
 	}
-	require.NoError(t, application.Insert(db, *proj, &app1))
-	require.NoError(t, application.Insert(db, *proj, &app2))
+	require.NoError(t, application.Insert(db, proj.ID, &app1))
+	require.NoError(t, application.Insert(db, proj.ID, &app2))
 
 	ssh1, err := keys.GenerateSSHKey("ssh1")
 	require.NoError(t, err)

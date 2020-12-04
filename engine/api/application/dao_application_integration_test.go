@@ -4,11 +4,10 @@ import (
 	"context"
 	"testing"
 
-	"github.com/ovh/cds/engine/api/application"
-	"github.com/ovh/cds/engine/api/integration"
-
 	"github.com/stretchr/testify/require"
 
+	"github.com/ovh/cds/engine/api/application"
+	"github.com/ovh/cds/engine/api/integration"
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/api/test/assets"
 	"github.com/ovh/cds/sdk"
@@ -25,8 +24,8 @@ func Test_LoadAllDeploymentAllApps(t *testing.T) {
 	app2 := sdk.Application{
 		Name: "my-app2",
 	}
-	require.NoError(t, application.Insert(db, *proj, &app1))
-	require.NoError(t, application.Insert(db, *proj, &app2))
+	require.NoError(t, application.Insert(db, proj.ID, &app1))
+	require.NoError(t, application.Insert(db, proj.ID, &app2))
 
 	pfname := sdk.RandomString(10)
 	pf := sdk.IntegrationModel{

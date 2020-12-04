@@ -198,7 +198,7 @@ func TestUpdateAsCodeEnvironmentHandler(t *testing.T) {
 		VCSServer:          "github",
 		FromRepository:     "myrepofrom",
 	}
-	require.NoError(t, application.Insert(db, *proj, &app))
+	require.NoError(t, application.Insert(db, proj.ID, &app))
 	require.NoError(t, repositoriesmanager.InsertForApplication(db, &app))
 
 	env := sdk.Environment{

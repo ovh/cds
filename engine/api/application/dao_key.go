@@ -45,8 +45,7 @@ func UpdateKey(ctx context.Context, db gorpmapper.SqlExecutorWithTx, key *sdk.Ap
 	return nil
 }
 
-func getAllKeys(db gorp.SqlExecutor, query gorpmapping.Query) ([]sdk.ApplicationKey, error) {
-	var ctx = context.Background()
+func getKeys(ctx context.Context, db gorp.SqlExecutor, query gorpmapping.Query) ([]sdk.ApplicationKey, error) {
 	var res []dbApplicationKey
 	keys := make([]sdk.ApplicationKey, 0, len(res))
 
@@ -68,18 +67,19 @@ func getAllKeys(db gorp.SqlExecutor, query gorpmapping.Query) ([]sdk.Application
 	return keys, nil
 }
 
-// LoadAllKeys load all keys for the given application
-func LoadAllKeys(db gorp.SqlExecutor, appID int64) ([]sdk.ApplicationKey, error) {
+// LoadAllKeys load all keys for the given application.
+func LoadAllKeys(ctx context.Context, db gorp.SqlExecutor, appID int64) ([]sdk.ApplicationKey, error) {
 	query := gorpmapping.NewQuery(`
-	SELECT *
-	FROM application_key
-	WHERE application_id = $1`).Args(appID)
-	return getAllKeys(db, query)
+  	SELECT *
+	  FROM application_key
+    WHERE application_id = $1
+  `).Args(appID)
+	return getKeys(ctx, db, query)
 }
 
-// LoadAllKeysWithPrivateContent load all keys for the given application
-func LoadAllKeysWithPrivateContent(db gorp.SqlExecutor, appID int64) ([]sdk.ApplicationKey, error) {
-	keys, err := LoadAllKeys(db, appID)
+// LoadKeysWithPrivateContent load all keys for the given application.
+func LoadKeysWithPrivateContent(ctx context.Context, db gorp.SqlExecutor, appID int64) ([]sdk.ApplicationKey, error) {
+	keys, err := LoadAllKeys(ctx, db, appID)
 	if err != nil {
 		return nil, err
 	}
@@ -161,4 +161,13 @@ func loadAllKeysForApps(ctx context.Context, db gorp.SqlExecutor, appsID []int64
 func DeleteKey(db gorp.SqlExecutor, appID int64, keyName string) error {
 	_, err := db.Exec("DELETE FROM application_key WHERE application_id = $1 AND name = $2", appID, keyName)
 	return sdk.WrapError(err, "Cannot delete key %s", keyName)
+}
+
+// DeleteKeysByApplicationID deletes all application keys.
+func DeleteKeysByApplicationID(db gorp.SqlExecutor, applicationID int64) error {
+	query := `DELETE FROM application_key WHERE application_id = $1`
+	if _, err := db.Exec(query, applicationID); err != nil {
+		return sdk.WrapError(err, "cannot delete application key")
+	}
+	return nil
 }

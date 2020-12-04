@@ -15,20 +15,20 @@ import (
 func (api *API) getApplicationMetricHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
-		key := vars[permProjectKey]
+		projectKey := vars[permProjectKey]
 		appName := vars["applicationName"]
 		metricName := vars["metricName"]
 
-		app, errA := application.LoadByName(api.mustDB(), key, appName)
-		if errA != nil {
-			return sdk.WrapError(errA, "getApplicationMetricHandler> unable to load application")
-		}
-
-		result, err := metrics.GetMetrics(ctx, api.mustDB(), key, app.ID, metricName)
+		app, err := application.LoadByProjectKeyAndName(ctx, api.mustDB(), projectKey, appName)
 		if err != nil {
-			return sdk.WrapError(err, "Cannot get metrics")
-
+			return err
 		}
+
+		result, err := metrics.GetMetrics(ctx, api.mustDB(), projectKey, app.ID, metricName)
+		if err != nil {
+			return sdk.WrapError(err, "cannot get metrics")
+		}
+
 		return service.WriteJSON(w, result, http.StatusOK)
 	}
 }

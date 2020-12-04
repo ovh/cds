@@ -1,6 +1,7 @@
 package application
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/go-gorp/gorp"
@@ -10,8 +11,8 @@ import (
 )
 
 // Export an application
-func Export(db gorp.SqlExecutor, key string, appName string, encryptFunc sdk.EncryptFunc) (exportentities.Application, error) {
-	app, err := LoadByNameWithClearVCSStrategyPassword(db, key, appName,
+func Export(ctx context.Context, db gorp.SqlExecutor, projectKey string, appName string, encryptFunc sdk.EncryptFunc) (exportentities.Application, error) {
+	app, err := LoadByProjectKeyAndNameWithClearVCSStrategyPassword(ctx, db, projectKey, appName,
 		LoadOptions.WithVariablesWithClearPassword,
 		LoadOptions.WithClearKeys,
 		LoadOptions.WithClearDeploymentStrategies,

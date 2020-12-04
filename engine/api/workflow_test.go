@@ -53,7 +53,7 @@ func Test_getWorkflowsHandler(t *testing.T) {
 		Name:       "pip1",
 	}
 
-	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), &pip))
+	require.NoError(t, pipeline.InsertPipeline(api.mustDB(), &pip))
 
 	wf := sdk.Workflow{
 		Name:       "workflow1",
@@ -75,7 +75,7 @@ func Test_getWorkflowsHandler(t *testing.T) {
 		"permProjectKey": proj.Key,
 	}
 	uri := api.Router.GetRoute("GET", api.getWorkflowsHandler, vars)
-	test.NotEmpty(t, uri)
+	require.NotEmpty(t, uri)
 	req := assets.NewAuthentifiedRequest(t, u, pass, "GET", uri, nil)
 
 	//Do the request
@@ -84,7 +84,7 @@ func Test_getWorkflowsHandler(t *testing.T) {
 	assert.Equal(t, 200, w.Code)
 
 	wfList := []sdk.Workflow{}
-	test.NoError(t, json.Unmarshal(w.Body.Bytes(), &wfList))
+	require.NoError(t, json.Unmarshal(w.Body.Bytes(), &wfList))
 	require.Len(t, wfList, 1)
 	for _, w := range wfList {
 		assert.Equal(t, true, w.Permissions.Readable, "readable should be true")
@@ -97,7 +97,7 @@ func Test_getWorkflowsHandler(t *testing.T) {
 	userAdmin, passAdmin := assets.InsertAdminUser(t, db)
 	uri = api.Router.GetRoute("GET", api.getWorkflowsHandler, vars)
 	req, err = http.NewRequest("GET", uri, nil)
-	test.NoError(t, err)
+	require.NoError(t, err)
 	assets.AuthentifyRequest(t, req, userAdmin, passAdmin)
 
 	// Do the request
@@ -543,7 +543,7 @@ func Test_postWorkflowHandlerWithRootShouldSuccess(t *testing.T) {
 		"permProjectKey": proj.Key,
 	}
 	uri := router.GetRoute("POST", api.postWorkflowHandler, vars)
-	test.NotEmpty(t, uri)
+	require.NotEmpty(t, uri)
 
 	// Insert application
 	app := sdk.Application{
@@ -551,7 +551,7 @@ func Test_postWorkflowHandlerWithRootShouldSuccess(t *testing.T) {
 		RepositoryFullname: "test/app1",
 		VCSServer:          "github",
 	}
-	require.NoError(t, application.Insert(db, *proj, &app))
+	require.NoError(t, application.Insert(db, proj.ID, &app))
 
 	var workflow = &sdk.Workflow{
 		Name:        "Name",
@@ -573,14 +573,14 @@ func Test_postWorkflowHandlerWithRootShouldSuccess(t *testing.T) {
 	router.Mux.ServeHTTP(w, req)
 	assert.Equal(t, 201, w.Code)
 
-	test.NoError(t, json.Unmarshal(w.Body.Bytes(), &workflow))
+	require.NoError(t, json.Unmarshal(w.Body.Bytes(), &workflow))
 	assert.NotEqual(t, 0, workflow.ID)
 
 	assert.NotEqual(t, 0, workflow.WorkflowData.Node.Context.ApplicationID)
 	assert.NotNil(t, workflow.WorkflowData.Node.Context.DefaultPayload)
 
 	payload, err := workflow.WorkflowData.Node.Context.DefaultPayloadToMap()
-	test.NoError(t, err)
+	require.NoError(t, err)
 
 	assert.NotEmpty(t, payload["git.branch"], "git.branch should not be empty")
 }
@@ -604,7 +604,7 @@ func Test_postWorkflowHandlerWithBadPayloadShouldFail(t *testing.T) {
 		"permProjectKey": proj.Key,
 	}
 	uri := router.GetRoute("POST", api.postWorkflowHandler, vars)
-	test.NotEmpty(t, uri)
+	require.NotEmpty(t, uri)
 
 	// Insert application
 	app := sdk.Application{
@@ -612,7 +612,7 @@ func Test_postWorkflowHandlerWithBadPayloadShouldFail(t *testing.T) {
 		RepositoryFullname: "test/app1",
 		VCSServer:          "github",
 	}
-	require.NoError(t, application.Insert(db, *proj, &app))
+	require.NoError(t, application.Insert(db, proj.ID, &app))
 
 	var workflow = &sdk.Workflow{
 		Name:        "Name",
@@ -755,8 +755,8 @@ func Test_putWorkflowHandler(t *testing.T) {
 		RepositoryFullname: "foo/bar",
 		VCSServer:          "github",
 	}
-	assert.NoError(t, application.Insert(db, *proj, &app))
-	assert.NoError(t, repositoriesmanager.InsertForApplication(db, &app))
+	require.NoError(t, application.Insert(db, proj.ID, &app))
+	require.NoError(t, repositoriesmanager.InsertForApplication(db, &app))
 
 	//Prepare request
 	vars := map[string]string{
@@ -922,7 +922,7 @@ func Test_deleteWorkflowEventIntegrationHandler(t *testing.T) {
 		"permWorkflowName": "Name",
 	}
 	uri = router.GetRoute("PUT", api.putWorkflowHandler, vars)
-	test.NotEmpty(t, uri)
+	require.NotEmpty(t, uri)
 
 	// Insert application
 	app := sdk.Application{
@@ -930,7 +930,7 @@ func Test_deleteWorkflowEventIntegrationHandler(t *testing.T) {
 		RepositoryFullname: "test/app1",
 		VCSServer:          "github",
 	}
-	require.NoError(t, application.Insert(db, *proj, &app))
+	require.NoError(t, application.Insert(db, proj.ID, &app))
 
 	model := sdk.IntegrationModel{
 		Name:  sdk.RandomString(10),
@@ -1124,7 +1124,7 @@ func Test_postWorkflowRollbackHandler(t *testing.T) {
 		RepositoryFullname: "test/app1",
 		VCSServer:          "github",
 	}
-	require.NoError(t, application.Insert(db, *proj, &app))
+	require.NoError(t, application.Insert(db, proj.ID, &app))
 
 	var workflow1 = &sdk.Workflow{
 		ID:          wf.ID,
@@ -1384,14 +1384,12 @@ func TestBenchmarkGetWorkflowsWithoutAPIAsAdmin(t *testing.T) {
 		Name:      "pipeline1",
 		ProjectID: proj.ID,
 	}
-
 	assert.NoError(t, pipeline.InsertPipeline(db, &pip))
 
 	app := sdk.Application{
 		Name: sdk.RandomString(10),
 	}
-
-	assert.NoError(t, application.Insert(db, *proj, &app))
+	require.NoError(t, application.Insert(db, proj.ID, &app))
 
 	prj, err := project.Load(context.TODO(), db, proj.Key,
 		project.LoadOptions.WithPipelines,
@@ -1457,8 +1455,7 @@ func TestBenchmarkGetWorkflowsWithAPI(t *testing.T) {
 	app := sdk.Application{
 		Name: sdk.RandomString(10),
 	}
-
-	assert.NoError(t, application.Insert(db, *proj, &app))
+	require.NoError(t, application.Insert(db, proj.ID, &app))
 
 	prj, err := project.Load(context.TODO(), db, proj.Key,
 		project.LoadOptions.WithPipelines,
@@ -1774,7 +1771,7 @@ func Test_getWorkflowsHandler_FilterByRepo(t *testing.T) {
 		Name:               sdk.RandomString(10),
 		RepositoryFullname: "ovh/" + repofullName,
 	}
-	require.NoError(t, application.Insert(db, *proj, app))
+	require.NoError(t, application.Insert(db, proj.ID, app))
 
 	pip := sdk.Pipeline{
 		ProjectID:  proj.ID,
@@ -1826,7 +1823,6 @@ func Test_getWorkflowsHandler_FilterByRepo(t *testing.T) {
 	require.Equal(t, wf.Name, wfs[0].Name)
 	require.Equal(t, app.ID, wfs[0].WorkflowData.Node.Context.ApplicationID)
 	require.Equal(t, pip.ID, wfs[0].WorkflowData.Node.Context.PipelineID)
-
 }
 
 func Test_getSearchWorkflowHandler(t *testing.T) {
@@ -1855,7 +1851,7 @@ func Test_getSearchWorkflowHandler(t *testing.T) {
 		Name:               sdk.RandomString(10),
 		RepositoryFullname: "ovh/" + repofullName,
 	}
-	require.NoError(t, application.Insert(db, *proj, app))
+	require.NoError(t, application.Insert(db, proj.ID, app))
 
 	pip := sdk.Pipeline{
 		ProjectID:  proj.ID,

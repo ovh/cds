@@ -18,6 +18,7 @@ import (
 	"github.com/ovh/cds/engine/api/test/assets"
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/sdk"
+	"github.com/stretchr/testify/require"
 )
 
 type mockHTTPClient struct {
@@ -69,7 +70,7 @@ func TestImport(t *testing.T) {
 	app := &sdk.Application{
 		Name: sdk.RandomString(10),
 	}
-	test.NoError(t, application.Insert(db, *proj, app))
+	require.NoError(t, application.Insert(db, proj.ID, app))
 
 	//Environment
 	envName := sdk.RandomString(10)

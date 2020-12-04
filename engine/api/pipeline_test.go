@@ -173,11 +173,11 @@ func TestUpdateAsCodePipelineHandler(t *testing.T) {
 		VCSServer:          "github",
 		FromRepository:     "myrepofrom",
 	}
-	assert.NoError(t, application.Insert(db, *proj, &app))
-	assert.NoError(t, repositoriesmanager.InsertForApplication(db, &app))
+	require.NoError(t, application.Insert(db, proj.ID, &app))
+	require.NoError(t, repositoriesmanager.InsertForApplication(db, &app))
 
 	repoModel, err := workflow.LoadHookModelByName(db, sdk.RepositoryWebHookModelName)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	wk := initWorkflow(t, db, proj, &app, &pip, repoModel)
 	wk.FromRepository = "myrepofrom"

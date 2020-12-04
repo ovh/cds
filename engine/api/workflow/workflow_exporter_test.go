@@ -18,6 +18,7 @@ import (
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/exportentities"
+	"github.com/stretchr/testify/require"
 )
 
 func TestPull(t *testing.T) {
@@ -74,7 +75,7 @@ func TestPull(t *testing.T) {
 	app := &sdk.Application{
 		Name: sdk.RandomString(10),
 	}
-	test.NoError(t, application.Insert(db, *proj, app))
+	require.NoError(t, application.Insert(db, proj.ID, app))
 
 	//Environment
 	envName := sdk.RandomString(10)

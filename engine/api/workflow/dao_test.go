@@ -153,24 +153,20 @@ func TestInsertSimpleWorkflowWithApplicationAndEnv(t *testing.T) {
 		ProjectKey: proj.Key,
 		Name:       "pip1",
 	}
-
-	test.NoError(t, pipeline.InsertPipeline(db, &pip))
+	require.NoError(t, pipeline.InsertPipeline(db, &pip))
 
 	app := sdk.Application{
-		ProjectID:  proj.ID,
-		ProjectKey: proj.Key,
-		Name:       "app1",
+		ProjectID: proj.ID,
+		Name:      "app1",
 	}
-
-	test.NoError(t, application.Insert(db, *proj, &app))
+	require.NoError(t, application.Insert(db, proj.ID, &app))
 
 	env := sdk.Environment{
 		ProjectID:  proj.ID,
 		ProjectKey: proj.Key,
 		Name:       "env1",
 	}
-
-	test.NoError(t, environment.InsertEnvironment(db, &env))
+	require.NoError(t, environment.InsertEnvironment(db, &env))
 
 	proj, _ = project.LoadByID(db, proj.ID, project.LoadOptions.WithApplications, project.LoadOptions.WithPipelines, project.LoadOptions.WithEnvironments, project.LoadOptions.WithGroups)
 
@@ -193,10 +189,10 @@ func TestInsertSimpleWorkflowWithApplicationAndEnv(t *testing.T) {
 		},
 	}
 
-	test.NoError(t, workflow.Insert(context.TODO(), db, cache, *proj, &w))
+	require.NoError(t, workflow.Insert(context.TODO(), db, cache, *proj, &w))
 
 	w1, err := workflow.Load(context.TODO(), db, cache, *proj, "test_1", workflow.LoadOptions{})
-	test.NoError(t, err)
+	require.NoError(t, err)
 
 	assert.Equal(t, w.ID, w1.ID)
 	require.NotNil(t, w.ID, w1.WorkflowData)
@@ -497,8 +493,7 @@ func TestUpdateSimpleWorkflowWithApplicationEnvPipelineParametersAndPayload(t *t
 			},
 		},
 	}
-
-	test.NoError(t, pipeline.InsertPipeline(db, &pip))
+	require.NoError(t, pipeline.InsertPipeline(db, &pip))
 
 	pip2 := sdk.Pipeline{
 		ProjectID:  proj.ID,
@@ -512,40 +507,33 @@ func TestUpdateSimpleWorkflowWithApplicationEnvPipelineParametersAndPayload(t *t
 			},
 		},
 	}
-
-	test.NoError(t, pipeline.InsertPipeline(db, &pip2))
+	require.NoError(t, pipeline.InsertPipeline(db, &pip2))
 
 	pip3 := sdk.Pipeline{
 		ProjectID:  proj.ID,
 		ProjectKey: proj.Key,
 		Name:       "pip3",
 	}
-
-	test.NoError(t, pipeline.InsertPipeline(db, &pip3))
+	require.NoError(t, pipeline.InsertPipeline(db, &pip3))
 
 	app := sdk.Application{
-		ProjectID:  proj.ID,
-		ProjectKey: proj.Key,
-		Name:       "app1",
+		ProjectID: proj.ID,
+		Name:      "app1",
 	}
-
-	test.NoError(t, application.Insert(db, *proj, &app))
+	require.NoError(t, application.Insert(db, proj.ID, &app))
 
 	app2 := sdk.Application{
-		ProjectID:  proj.ID,
-		ProjectKey: proj.Key,
-		Name:       "app2",
+		ProjectID: proj.ID,
+		Name:      "app2",
 	}
-
-	test.NoError(t, application.Insert(db, *proj, &app2))
+	require.NoError(t, application.Insert(db, proj.ID, &app2))
 
 	env := sdk.Environment{
 		ProjectID:  proj.ID,
 		ProjectKey: proj.Key,
 		Name:       "env1",
 	}
-
-	test.NoError(t, environment.InsertEnvironment(db, &env))
+	require.NoError(t, environment.InsertEnvironment(db, &env))
 
 	proj, _ = project.LoadByID(db, proj.ID, project.LoadOptions.WithApplications, project.LoadOptions.WithPipelines, project.LoadOptions.WithEnvironments, project.LoadOptions.WithGroups)
 
@@ -589,11 +577,10 @@ func TestUpdateSimpleWorkflowWithApplicationEnvPipelineParametersAndPayload(t *t
 			},
 		},
 	}
-
-	test.NoError(t, workflow.Insert(context.TODO(), db, cache, *proj, &w))
+	require.NoError(t, workflow.Insert(context.TODO(), db, cache, *proj, &w))
 
 	w1, err := workflow.Load(context.TODO(), db, cache, *proj, "test_1", workflow.LoadOptions{})
-	test.NoError(t, err)
+	require.NoError(t, err)
 
 	t.Logf("Modifying workflow... with %d instead of %d", app2.ID, app.ID)
 
@@ -601,11 +588,11 @@ func TestUpdateSimpleWorkflowWithApplicationEnvPipelineParametersAndPayload(t *t
 	w1.WorkflowData.Node.Context.PipelineID = pip2.ID
 	w1.WorkflowData.Node.Context.ApplicationID = app2.ID
 
-	test.NoError(t, workflow.Update(context.TODO(), db, cache, *proj, w1, workflow.UpdateOptions{}))
+	require.NoError(t, workflow.Update(context.TODO(), db, cache, *proj, w1, workflow.UpdateOptions{}))
 
 	t.Logf("Reloading workflow...")
 	w2, err := workflow.LoadByID(context.TODO(), db, cache, *proj, w1.ID, workflow.LoadOptions{})
-	test.NoError(t, err)
+	require.NoError(t, err)
 
 	assert.Equal(t, w1.ID, w2.ID)
 	assert.Equal(t, app2.ID, w2.WorkflowData.Node.Context.ApplicationID)

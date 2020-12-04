@@ -209,7 +209,7 @@ func adminMetadataApplicationExportRun(c cli.Values) error {
 			}
 
 			lines = append(lines, lineMetadata{
-				key:          a.ProjectKey,
+				key:          p.Key,
 				name:         a.Name,
 				lastModified: a.LastModified,
 				metadata:     m,

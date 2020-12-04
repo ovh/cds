@@ -149,11 +149,10 @@ func TestLoadByWorkflowID(t *testing.T) {
 
 	proj := assets.InsertTestProject(t, db, cache, key, key)
 	app := sdk.Application{
-		Name:       "my-app",
-		ProjectKey: proj.Key,
-		ProjectID:  proj.ID,
+		Name:      "my-app",
+		ProjectID: proj.ID,
 	}
-	test.NoError(t, application.Insert(db, *proj, &app))
+	require.NoError(t, application.Insert(db, proj.ID, &app))
 
 	pip := sdk.Pipeline{
 		ProjectID:  proj.ID,
@@ -161,7 +160,7 @@ func TestLoadByWorkflowID(t *testing.T) {
 		Name:       "pip1",
 	}
 
-	test.NoError(t, pipeline.InsertPipeline(db, &pip))
+	require.NoError(t, pipeline.InsertPipeline(db, &pip))
 
 	w := sdk.Workflow{
 		Name:       "test_1",
@@ -178,11 +177,11 @@ func TestLoadByWorkflowID(t *testing.T) {
 		},
 	}
 
-	test.NoError(t, workflow.RenameNode(context.TODO(), db, &w))
+	require.NoError(t, workflow.RenameNode(context.TODO(), db, &w))
 
 	proj, _ = project.LoadByID(db, proj.ID, project.LoadOptions.WithApplications, project.LoadOptions.WithPipelines, project.LoadOptions.WithEnvironments, project.LoadOptions.WithGroups)
 
-	test.NoError(t, workflow.Insert(context.TODO(), db, cache, *proj, &w))
+	require.NoError(t, workflow.Insert(context.TODO(), db, cache, *proj, &w))
 
 	actuals, err := pipeline.LoadByWorkflowID(db, w.ID)
 	assert.NoError(t, err)

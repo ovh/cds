@@ -254,13 +254,12 @@ version: v1.0`),
 	}
 
 	app := sdk.Application{
-		ProjectKey:         proj.Key,
 		ProjectID:          proj.ID,
 		Name:               "app-ascode",
 		VCSServer:          "github",
 		RepositoryFullname: "myrepo",
 	}
-	require.NoError(t, application.Insert(db, *proj, &app))
+	require.NoError(t, application.Insert(db, proj.ID, &app))
 	require.NoError(t, repositoriesmanager.InsertForApplication(db, &app))
 
 	env := sdk.Environment{

@@ -747,7 +747,7 @@ func CompleteWorkflow(ctx context.Context, db gorp.SqlExecutor, w *sdk.Workflow,
 		if err := checkPipeline(ctx, db, proj, w, n, opts); err != nil {
 			return err
 		}
-		if err := checkApplication(db, proj, w, n); err != nil {
+		if err := checkApplication(ctx, db, proj, w, n); err != nil {
 			return err
 		}
 		if err := checkEnvironment(db, proj, w, n); err != nil {
@@ -1009,16 +1009,20 @@ func checkEnvironment(db gorp.SqlExecutor, proj sdk.Project, w *sdk.Workflow, n 
 }
 
 // CheckApplication checks application data
-func checkApplication(db gorp.SqlExecutor, proj sdk.Project, w *sdk.Workflow, n *sdk.Node) error {
+func checkApplication(ctx context.Context, db gorp.SqlExecutor, proj sdk.Project, w *sdk.Workflow, n *sdk.Node) error {
 	if n.Context.ApplicationID != 0 {
 		app, ok := w.Applications[n.Context.ApplicationID]
 		if !ok {
-			appDB, errA := application.LoadByID(db, n.Context.ApplicationID, application.LoadOptions.WithDeploymentStrategies, application.LoadOptions.WithVariables, application.LoadOptions.WithKeys)
-			if errA != nil {
-				return errA
+			appDB, err := application.LoadByID(ctx, db, n.Context.ApplicationID,
+				application.LoadOptions.WithDeploymentStrategies,
+				application.LoadOptions.WithVariables,
+				application.LoadOptions.WithKeys,
+			)
+			if err != nil {
+				return err
 			}
 			app = *appDB
-			if app.ProjectKey != proj.Key {
+			if app.ProjectID != proj.ID {
 				return sdk.NewErrorFrom(sdk.ErrResourceNotInProject, "can not found a application with id %d", n.Context.ApplicationID)
 			}
 
@@ -1027,7 +1031,11 @@ func checkApplication(db gorp.SqlExecutor, proj sdk.Project, w *sdk.Workflow, n 
 		return nil
 	}
 	if n.Context.ApplicationName != "" {
-		appDB, err := application.LoadByName(db, proj.Key, n.Context.ApplicationName, application.LoadOptions.WithDeploymentStrategies, application.LoadOptions.WithVariables, application.LoadOptions.WithKeys)
+		appDB, err := application.LoadByProjectKeyAndName(ctx, db, proj.Key, n.Context.ApplicationName,
+			application.LoadOptions.WithDeploymentStrategies,
+			application.LoadOptions.WithVariables,
+			application.LoadOptions.WithKeys,
+		)
 		if err != nil {
 			if sdk.ErrorIs(err, sdk.ErrNotFound) {
 				return sdk.NewErrorFrom(sdk.WithData(sdk.ErrNotFound, n.Context.ApplicationName), "cannot find application with name: %s", n.Context.ApplicationName)
@@ -1200,7 +1208,7 @@ func Push(ctx context.Context, db *gorp.DbMap, store cache.Store, proj *sdk.Proj
 			if app.FromRepository != "" {
 				continue
 			}
-			appSecrets, err := LoadApplicationSecrets(db, id)
+			appSecrets, err := LoadApplicationSecrets(ctx, db, id)
 			if err != nil {
 				return nil, nil, nil, nil, err
 			}
@@ -1220,7 +1228,7 @@ func Push(ctx context.Context, db *gorp.DbMap, store cache.Store, proj *sdk.Proj
 
 	if wf.WorkflowData.Node.Context.ApplicationID != 0 {
 		app := wf.Applications[wf.WorkflowData.Node.Context.ApplicationID]
-		if err := application.Update(tx, &app); err != nil {
+		if err := application.Update(ctx, tx, &app); err != nil {
 			return nil, nil, nil, nil, sdk.WrapError(err, "Unable to update application vcs datas")
 		}
 		wf.Applications[wf.WorkflowData.Node.Context.ApplicationID] = app

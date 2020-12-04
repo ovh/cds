@@ -156,10 +156,10 @@ func interactiveChooseApplication(pkey, repoFullname, repoName string) (string, 
 
 	for i, a := range apps {
 		if a.RepositoryFullname == repoFullname {
-			fmt.Printf(" * application %s/%s (%s) found in CDS\n", cli.Magenta(a.ProjectKey), cli.Magenta(a.Name), cli.Magenta(a.RepositoryFullname))
+			fmt.Printf(" * application %s/%s (%s) found in CDS\n", cli.Magenta(pkey), cli.Magenta(a.Name), cli.Magenta(a.RepositoryFullname))
 			return a.Name, &apps[i], nil
 		} else if a.Name == repoName {
-			fmt.Printf(" * application %s/%s found in CDS.\n", cli.Magenta(a.ProjectKey), cli.Magenta(a.Name))
+			fmt.Printf(" * application %s/%s found in CDS.\n", cli.Magenta(pkey), cli.Magenta(a.Name))
 			fmt.Println(cli.Red(" * but it's not linked to repository"), cli.Red(repoFullname))
 			if !cli.AskConfirm(cli.Red("Do you want to overwrite it?")) {
 				return "", nil, fmt.Errorf("operation aborted")

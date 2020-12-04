@@ -32,7 +32,6 @@ import (
 
 func Test_postApplicationMetadataHandler_AsProvider(t *testing.T) {
 	api, db, tsURL := newTestServer(t)
-
 	u, _ := assets.InsertAdminUser(t, db)
 	localConsumer, err := authentication.LoadConsumerByTypeAndUserID(context.TODO(), api.mustDB(), sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
 	require.NoError(t, err)
@@ -54,23 +53,21 @@ func Test_postApplicationMetadataHandler_AsProvider(t *testing.T) {
 			"a1": "a1",
 		},
 	}
-	if err := application.Insert(db, *proj, app); err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, application.Insert(db, proj.ID, app))
 
 	sdkclient := cdsclient.NewProviderClient(cdsclient.ProviderConfig{
 		Host:  tsURL,
 		Token: jws,
 	})
 
-	test.NoError(t, sdkclient.ApplicationMetadataUpdate(pkey, app.Name, "b1", "b1"))
-	app, err = application.LoadByName(api.mustDB(), pkey, app.Name)
-	test.NoError(t, err)
+	require.NoError(t, sdkclient.ApplicationMetadataUpdate(pkey, app.Name, "b1", "b1"))
+	app, err = application.LoadByProjectKeyAndName(context.TODO(), api.mustDB(), proj.Key, app.Name)
+	require.NoError(t, err)
 	assert.Equal(t, "a1", app.Metadata["a1"])
 	assert.Equal(t, "b1", app.Metadata["b1"])
 
 	apps, err := sdkclient.ApplicationsList(pkey, cdsclient.FilterByUser(u.Username), cdsclient.FilterByWritablePermission())
-	test.NoError(t, err)
+	require.NoError(t, err)
 	assert.Equal(t, 1, len(apps))
 }
 
@@ -246,7 +243,7 @@ func TestUpdateAsCodeApplicationHandler(t *testing.T) {
 		VCSServer:          "github",
 		FromRepository:     "myrepofrom",
 	}
-	assert.NoError(t, application.Insert(db, *proj, &app))
+	assert.NoError(t, application.Insert(db, proj.ID, &app))
 	assert.NoError(t, repositoriesmanager.InsertForApplication(db, &app))
 
 	repoModel, err := workflow.LoadHookModelByName(db, sdk.RepositoryWebHookModelName)

@@ -26,7 +26,7 @@ testcases:
 
 - name: test fields
   steps:
-  - script: {{.cdsctl}} -f {{.cdsctl.config}} application list ITCLIAPPPRJ --fields name,project_key > ./fixtures/options/output/application_list_fields.txt
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} application list ITCLIAPPPRJ --fields name > ./fixtures/options/output/application_list_fields.txt
     assertions:
     - result.code ShouldEqual 0
 
@@ -38,13 +38,13 @@ testcases:
 
 - name: test combined
   steps:
-  - script: {{.cdsctl}} -f {{.cdsctl.config}} application list ITCLIAPPPRJ --fields name,project_key --filter name=ITCLIAPPPRJ-APP2 > ./fixtures/options/output/application_list_combined.txt
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} application list ITCLIAPPPRJ --fields name --filter name=ITCLIAPPPRJ-APP2 > ./fixtures/options/output/application_list_combined.txt
     assertions:
     - result.code ShouldEqual 0
 
 - name: test combined quiet
   steps:
-  - script: {{.cdsctl}} -f {{.cdsctl.config}} application list ITCLIAPPPRJ --fields name,project_key --filter name=ITCLIAPPPRJ-APP2 -q > ./fixtures/options/output/application_list_combined_quiet.txt
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} application list ITCLIAPPPRJ --fields name --filter name=ITCLIAPPPRJ-APP2 -q > ./fixtures/options/output/application_list_combined_quiet.txt
     assertions:
     - result.code ShouldEqual 0
 
@@ -55,17 +55,17 @@ testcases:
     assertions:
     - result.err ShouldEqual ""
     vars:
-      md5sum_tests_fixtures_options_output_application_list: 
+      md5sum_tests_fixtures_options_output_application_list:
         from: result.md5sum.fixtures_options_application_list.txt
-      md5sum_tests_fixtures_options_output_application_list_quiet: 
+      md5sum_tests_fixtures_options_output_application_list_quiet:
         from: result.md5sum.fixtures_options_application_list_quiet.txt
-      md5sum_tests_fixtures_options_output_application_list_fields: 
+      md5sum_tests_fixtures_options_output_application_list_fields:
         from: result.md5sum.fixtures_options_application_list_fields.txt
-      md5sum_tests_fixtures_options_output_application_list_filter: 
+      md5sum_tests_fixtures_options_output_application_list_filter:
         from: result.md5sum.fixtures_options_application_list_filter.txt
-      md5sum_tests_fixtures_options_output_application_list_combined: 
+      md5sum_tests_fixtures_options_output_application_list_combined:
         from: result.md5sum.fixtures_options_application_list_combined.txt
-      md5sum_tests_fixtures_options_output_application_list_combined_quiet: 
+      md5sum_tests_fixtures_options_output_application_list_combined_quiet:
         from: result.md5sum.fixtures_options_application_list_combined_quiet.txt
   - type: readfile
     path: ./fixtures/options/output/*.txt

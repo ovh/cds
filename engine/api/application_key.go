@@ -17,10 +17,10 @@ import (
 func (api *API) getKeysInApplicationHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
-		key := vars[permProjectKey]
+		projectKey := vars[permProjectKey]
 		appName := vars["applicationName"]
 
-		app, err := application.LoadByName(api.mustDB(), key, appName, application.LoadOptions.WithKeys)
+		app, err := application.LoadByProjectKeyAndName(ctx, api.mustDB(), projectKey, appName, application.LoadOptions.WithKeys)
 		if err != nil {
 			return err
 		}
@@ -32,21 +32,21 @@ func (api *API) getKeysInApplicationHandler() service.Handler {
 func (api *API) deleteKeyInApplicationHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
-		key := vars[permProjectKey]
+		projectKey := vars[permProjectKey]
 		appName := vars["applicationName"]
 		keyName := vars["name"]
 
-		app, errA := application.LoadByName(api.mustDB(), key, appName, application.LoadOptions.WithKeys)
-		if errA != nil {
-			return sdk.WrapError(errA, "deleteKeyInApplicationHandler> Cannot load application")
+		app, err := application.LoadByProjectKeyAndName(ctx, api.mustDB(), projectKey, appName, application.LoadOptions.WithKeys)
+		if err != nil {
+			return err
 		}
 		if app.FromRepository != "" {
 			return sdk.WithStack(sdk.ErrForbidden)
 		}
 
-		tx, errT := api.mustDB().Begin()
-		if errT != nil {
-			return sdk.WrapError(errT, "v> Cannot start transaction")
+		tx, err := api.mustDB().Begin()
+		if err != nil {
+			return sdk.WrapError(err, "cannot start transaction")
 		}
 		defer tx.Rollback() // nolint
 
@@ -55,7 +55,7 @@ func (api *API) deleteKeyInApplicationHandler() service.Handler {
 			if k.Name == keyName {
 				keyToDelete = k
 				if err := application.DeleteKey(tx, app.ID, keyName); err != nil {
-					return sdk.WrapError(err, "Cannot delete key %s", k.Name)
+					return sdk.WrapError(err, "cannot delete key %s", k.Name)
 				}
 			}
 		}
@@ -67,7 +67,7 @@ func (api *API) deleteKeyInApplicationHandler() service.Handler {
 		if err := tx.Commit(); err != nil {
 			return sdk.WithStack(err)
 		}
-		event.PublishApplicationKeyDelete(ctx, key, *app, keyToDelete, getAPIConsumer(ctx))
+		event.PublishApplicationKeyDelete(ctx, projectKey, *app, keyToDelete, getAPIConsumer(ctx))
 
 		return service.WriteJSON(w, nil, http.StatusOK)
 	}
@@ -76,7 +76,7 @@ func (api *API) deleteKeyInApplicationHandler() service.Handler {
 func (api *API) addKeyInApplicationHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
-		key := vars[permProjectKey]
+		projectKey := vars[permProjectKey]
 		appName := vars["applicationName"]
 
 		var newKey sdk.ApplicationKey
@@ -90,9 +90,9 @@ func (api *API) addKeyInApplicationHandler() service.Handler {
 			return sdk.WrapError(sdk.ErrInvalidKeyPattern, "addKeyInApplicationHandler: Key name %s do not respect pattern %s", newKey.Name, sdk.NamePattern)
 		}
 
-		app, errA := application.LoadByName(api.mustDB(), key, appName)
-		if errA != nil {
-			return sdk.WrapError(errA, "addKeyInApplicationHandler> Cannot load application")
+		app, err := application.LoadByProjectKeyAndName(ctx, api.mustDB(), projectKey, appName)
+		if err != nil {
+			return err
 		}
 		newKey.ApplicationID = app.ID
 
@@ -126,7 +126,7 @@ func (api *API) addKeyInApplicationHandler() service.Handler {
 			return sdk.WithStack(err)
 		}
 
-		event.PublishApplicationKeyAdd(ctx, key, *app, newKey, getAPIConsumer(ctx))
+		event.PublishApplicationKeyAdd(ctx, projectKey, *app, newKey, getAPIConsumer(ctx))
 
 		return service.WriteJSON(w, newKey, http.StatusOK)
 	}

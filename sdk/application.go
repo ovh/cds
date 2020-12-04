@@ -11,14 +11,13 @@ type Repository struct {
 	Hook bool
 }
 
-// Application represent an application in a project
+// Application represent an application in a project.
 type Application struct {
 	ID                   int64                        `json:"id" db:"id"`
 	Name                 string                       `json:"name" db:"name" cli:"name,key"`
 	Description          string                       `json:"description" db:"description"`
 	Icon                 string                       `json:"icon" db:"icon"`
 	ProjectID            int64                        `json:"-" db:"project_id"`
-	ProjectKey           string                       `json:"project_key" db:"-" cli:"project_key"`
 	Variables            []ApplicationVariable        `json:"variables,omitempty" db:"-"`
 	Notifications        []UserNotification           `json:"notifications,omitempty" db:"-"`
 	LastModified         time.Time                    `json:"last_modified" db:"last_modified" mapstructure:"-"`
@@ -28,8 +27,8 @@ type Application struct {
 	Metadata             Metadata                     `json:"metadata" yaml:"metadata" db:"metadata"`
 	Keys                 []ApplicationKey             `json:"keys" yaml:"keys" db:"-"`
 	Usage                *Usage                       `json:"usage,omitempty" db:"-" cli:"-"`
-	DeploymentStrategies map[string]IntegrationConfig `json:"deployment_strategies,omitempty" db:"-" cli:"-"`
 	Vulnerabilities      []Vulnerability              `json:"vulnerabilities,omitempty" db:"-" cli:"-"`
+	DeploymentStrategies map[string]IntegrationConfig `json:"deployment_strategies,omitempty" db:"-" cli:"-"`
 	FromRepository       string                       `json:"from_repository,omitempty" db:"from_repository" cli:"-"`
 	// aggregate
 	WorkflowAscodeHolder *Workflow `json:"workflow_ascode_holder,omitempty" cli:"-" db:"-"`

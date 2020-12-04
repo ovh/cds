@@ -12,6 +12,8 @@ import (
 	"time"
 
 	"github.com/go-gorp/gorp"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/ascode"
@@ -33,8 +35,6 @@ import (
 	"github.com/ovh/cds/engine/featureflipping"
 	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 func Test_getWorkflowNodeRunHistoryHandler(t *testing.T) {
@@ -700,7 +700,7 @@ func Test_getWorkflowNodeRunHandler(t *testing.T) {
 		ProjectID: proj.ID,
 		Name:      "app",
 	}
-	require.NoError(t, application.Insert(db, *proj, &app))
+	require.NoError(t, application.Insert(db, proj.ID, &app))
 
 	//First pipeline
 	pip := sdk.Pipeline{
@@ -951,9 +951,8 @@ func Test_postWorkflowRunHandler(t *testing.T) {
 	assert.NotEqual(t, 0, p.ID)
 
 	app := sdk.Application{
-		ProjectKey: proj.Key,
-		ProjectID:  proj.ID,
-		Name:       sdk.RandomString(10),
+		ProjectID: proj.ID,
+		Name:      sdk.RandomString(10),
 		Variables: []sdk.ApplicationVariable{
 			{
 				Name:  "app-password",
@@ -990,7 +989,7 @@ func Test_postWorkflowRunHandler(t *testing.T) {
 			},
 		},
 	}
-	require.NoError(t, application.Insert(db, *proj, &app))
+	require.NoError(t, application.Insert(db, proj.ID, &app))
 	require.NoError(t, application.InsertVariable(db, app.ID, &app.Variables[0], u))
 	app.Keys[0].ApplicationID = app.ID
 	require.NoError(t, application.InsertKey(db, &app.Keys[0]))
@@ -1263,7 +1262,7 @@ func Test_postWorkflowRunAsyncFailedHandler(t *testing.T) {
 			ConnectionType: "ssh",
 		},
 	}
-	require.NoError(t, application.Insert(db, *proj, &app))
+	require.NoError(t, application.Insert(db, proj.ID, &app))
 	require.NoError(t, repositoriesmanager.InsertForApplication(db, &app))
 
 	w := sdk.Workflow{

@@ -51,7 +51,7 @@ func TestParseAndImport(t *testing.T) {
 	app := &sdk.Application{
 		Name: sdk.RandomString(10),
 	}
-	test.NoError(t, application.Insert(db, *proj, app))
+	require.NoError(t, application.Insert(db, proj.ID, app))
 
 	//Environment
 	envName := sdk.RandomString(10)
@@ -236,7 +236,7 @@ func TestParseAndImportFromRepository(t *testing.T) {
 		RepositoryFullname: "foo/myrepo",
 		VCSServer:          "github",
 	}
-	test.NoError(t, application.Insert(db, *proj, app))
+	require.NoError(t, application.Insert(db, proj.ID, app))
 
 	//Environment
 	envName := sdk.RandomString(10)

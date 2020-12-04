@@ -15,7 +15,7 @@ import (
 func (api *API) getApplicationExportHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
-		key := vars[permProjectKey]
+		projectKey := vars[permProjectKey]
 		appName := vars["applicationName"]
 
 		format := FormString(r, "format")
@@ -27,9 +27,9 @@ func (api *API) getApplicationExportHandler() service.Handler {
 			return err
 		}
 
-		app, err := application.Export(api.mustDB(), key, appName, project.EncryptWithBuiltinKey)
+		app, err := application.Export(ctx, api.mustDB(), projectKey, appName, project.EncryptWithBuiltinKey)
 		if err != nil {
-			return sdk.WithStack(err)
+			return err
 		}
 		buf, err := exportentities.Marshal(app, f)
 		if err != nil {

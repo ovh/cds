@@ -568,7 +568,11 @@ func (dao WorkflowDAO) withApplications(db gorp.SqlExecutor, ws *[]Workflow) err
 		ids = append(ids, id)
 	}
 
-	apps, err := application.LoadAllByIDs(db, ids, application.LoadOptions.WithVariables, application.LoadOptions.WithDeploymentStrategies, application.LoadOptions.WithKeys)
+	apps, err := application.LoadAllByIDs(context.TODO(), db, ids,
+		application.LoadOptions.WithVariables,
+		application.LoadOptions.WithDeploymentStrategies,
+		application.LoadOptions.WithKeys,
+	)
 	if err != nil {
 		return err
 	}

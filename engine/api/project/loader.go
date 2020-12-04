@@ -1,9 +1,11 @@
 package project
 
 import (
+	"context"
 	"database/sql"
 
 	"github.com/go-gorp/gorp"
+
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/group"
@@ -84,7 +86,7 @@ func loadApplications(db gorp.SqlExecutor, proj *sdk.Project) error {
 }
 
 func loadApplicationNames(db gorp.SqlExecutor, proj *sdk.Project) error {
-	apps, err := application.LoadAllNames(db, proj.ID)
+	apps, err := application.LoadAllNames(db, proj.Key)
 	if err != nil {
 		return sdk.WithStack(err)
 	}
@@ -100,7 +102,7 @@ func loadApplicationWithDeploymentStrategies(db gorp.SqlExecutor, proj *sdk.Proj
 	}
 	for i := range proj.Applications {
 		a := &proj.Applications[i]
-		if err := (*application.LoadOptions.WithDeploymentStrategies)(db, a); err != nil {
+		if err := application.LoadOptions.WithDeploymentStrategies(context.TODO(), db, a); err != nil {
 			return sdk.WithStack(err)
 		}
 	}
@@ -134,7 +136,7 @@ func loadApplicationVariables(db gorp.SqlExecutor, proj *sdk.Project) error {
 	}
 
 	for _, a := range proj.Applications {
-		if err := (*application.LoadOptions.WithVariables)(db, &a); err != nil {
+		if err := application.LoadOptions.WithVariables(context.TODO(), db, &a); err != nil {
 			return sdk.WithStack(err)
 		}
 	}
@@ -150,7 +152,7 @@ func loadApplicationKeys(db gorp.SqlExecutor, proj *sdk.Project) error {
 	}
 
 	for _, a := range proj.Applications {
-		if err := (*application.LoadOptions.WithKeys)(db, &a); err != nil {
+		if err := application.LoadOptions.WithKeys(context.TODO(), db, &a); err != nil {
 			return sdk.WithStack(err)
 		}
 	}
@@ -213,7 +215,7 @@ func loadWorkflowNames(db gorp.SqlExecutor, proj *sdk.Project) error {
 }
 
 func loadApplicationsWithOpts(db gorp.SqlExecutor, proj *sdk.Project, opts ...application.LoadOptionFunc) error {
-	apps, err := application.LoadAll(db, proj.Key, opts...)
+	apps, err := application.LoadAllByProjectKey(context.TODO(), db, proj.Key, opts...)
 	if err != nil && sdk.Cause(err) != sql.ErrNoRows && !sdk.ErrorIs(err, sdk.ErrNotFound) {
 		return sdk.WithStack(err)
 	}

@@ -83,7 +83,7 @@ func Test_getProjectsHandler(t *testing.T) {
 		RepositoryFullname: repofullname,
 	}
 	u, pass := assets.InsertAdminUser(t, db)
-	test.NoError(t, application.Insert(db, *proj, app))
+	require.NoError(t, application.Insert(db, proj.ID, app))
 
 	vars := map[string]string{}
 	uri := api.Router.GetRoute("GET", api.getProjectsHandler, vars)
@@ -338,7 +338,7 @@ func Test_getprojectsHandler_AsProviderWithRequestedUsername(t *testing.T) {
 	app := &sdk.Application{
 		Name: sdk.RandomString(10),
 	}
-	require.NoError(t, application.Insert(db, *proj, app))
+	require.NoError(t, application.Insert(db, proj.ID, app))
 
 	// Call with an admin
 	sdkclientAdmin := cdsclient.NewProviderClient(cdsclient.ProviderConfig{
@@ -453,7 +453,7 @@ func Test_getProjectsHandler_FilterByRepo(t *testing.T) {
 		Name:               sdk.RandomString(10),
 		RepositoryFullname: "ovh/" + repofullName,
 	}
-	require.NoError(t, application.Insert(db, *proj, app))
+	require.NoError(t, application.Insert(db, proj.ID, app))
 
 	pip := sdk.Pipeline{
 		ProjectID:  proj.ID,

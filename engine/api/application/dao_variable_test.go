@@ -21,10 +21,9 @@ func Test_DAOVariable(t *testing.T) {
 	app := sdk.Application{
 		Name: "my-app",
 	}
+	require.NoError(t, application.Insert(db, proj.ID, &app))
 
 	u, _ := assets.InsertLambdaUser(t, db, &proj.ProjectGroups[0].Group)
-
-	require.NoError(t, application.Insert(db, *proj, &app))
 
 	v1 := &sdk.ApplicationVariable{Name: "clear", Type: sdk.TextVariable, Value: "clear_value"}
 	v2 := &sdk.ApplicationVariable{Name: "secret", Type: sdk.SecretVariable, Value: "secret_value"}
@@ -35,33 +34,33 @@ func Test_DAOVariable(t *testing.T) {
 	require.NoError(t, application.InsertVariable(db, app.ID, v2, u))
 	assert.Equal(t, sdk.PasswordPlaceholder, v2.Value)
 
-	vs, err := application.LoadAllVariables(db, app.ID)
+	vs, err := application.LoadVariables(context.TODO(), db, app.ID)
 	require.NoError(t, err)
 	assert.Equal(t, "clear_value", vs[0].Value)
 	assert.Equal(t, sdk.PasswordPlaceholder, vs[1].Value)
 
-	vs, err = application.LoadAllVariablesWithDecrytion(db, app.ID)
+	vs, err = application.LoadVariablesWithDecrytion(context.TODO(), db, app.ID)
 	require.NoError(t, err)
 	assert.Equal(t, "clear_value", vs[0].Value)
 	assert.Equal(t, "secret_value", vs[1].Value)
 
 	require.NoError(t, application.UpdateVariable(db, app.ID, &vs[1], &vs[1], u))
 
-	v1, err = application.LoadVariable(db, app.ID, "clear")
+	v1, err = application.LoadVariable(context.TODO(), db, app.ID, "clear")
 	require.NoError(t, err)
 	assert.Equal(t, "clear_value", v1.Value)
 
-	v2, err = application.LoadVariable(db, app.ID, "secret")
+	v2, err = application.LoadVariable(context.TODO(), db, app.ID, "secret")
 	require.NoError(t, err)
 	assert.Equal(t, sdk.PasswordPlaceholder, v2.Value)
 
-	v2, err = application.LoadVariableWithDecryption(db, app.ID, v2.ID, "secret")
+	v2, err = application.LoadVariableWithDecryption(context.TODO(), db, app.ID, v2.ID, "secret")
 	require.NoError(t, err)
 	assert.Equal(t, "secret_value", v2.Value)
 
 	require.NoError(t, application.DeleteVariable(db, app.ID, v2, u))
 
-	require.NoError(t, application.DeleteAllVariables(db, app.ID))
+	require.NoError(t, application.DeleteVariablesByApplicationID(db, app.ID))
 
 }
 
@@ -75,11 +74,11 @@ func Test_DAOAllVarsAllProjects(t *testing.T) {
 	app1 := sdk.Application{
 		Name: "my-app",
 	}
-	require.NoError(t, application.Insert(db, *proj, &app1))
+	require.NoError(t, application.Insert(db, proj.ID, &app1))
 	app2 := sdk.Application{
 		Name: "my-app2",
 	}
-	require.NoError(t, application.Insert(db, *proj, &app2))
+	require.NoError(t, application.Insert(db, proj.ID, &app2))
 
 	v1 := &sdk.ApplicationVariable{Name: "clear", Type: sdk.TextVariable, Value: "clear_value1"}
 	v2 := &sdk.ApplicationVariable{Name: "secret", Type: sdk.SecretVariable, Value: "secret_value1"}
