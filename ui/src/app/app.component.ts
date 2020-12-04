@@ -39,7 +39,6 @@ export class AppComponent implements OnInit, OnDestroy {
     heartbeatToken: number;
     zone: NgZone;
     showUIUpdatedBanner: boolean;
-    languageSubscriber: Subscription;
     themeSubscriber: Subscription;
     versionWorkerSubscription: Subscription;
     _routerSubscription: Subscription;
@@ -82,14 +81,6 @@ export class AppComponent implements OnInit, OnDestroy {
         let browserLang = navigator.language.match(/fr/) ? 'fr' : 'en';
         _translate.use(browserLang.match(/en|fr/) ? browserLang : 'en');
         registerLocaleData(browserLang.match(/fr/) ? localeFR : localeEN);
-
-        this.languageSubscriber = this._language.get().subscribe(l => {
-            if (l) {
-                _translate.use(l);
-            } else {
-                _language.set(browserLang.match(/en|fr/) ? browserLang : 'en');
-            }
-        });
 
         this.themeSubscriber = this._theme.get().subscribe(t => {
             if (t) {

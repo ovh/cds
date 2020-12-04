@@ -1,10 +1,10 @@
 /* tslint:disable:no-unused-variable */
-import {TestBed, fakeAsync} from '@angular/core/testing';
+import {fakeAsync, TestBed} from '@angular/core/testing';
 import {RouterTestingModule} from '@angular/router/testing';
-import {TranslateService, TranslateLoader, TranslateParser, TranslateModule} from '@ngx-translate/core';
+import {TranslateLoader, TranslateModule, TranslateParser, TranslateService} from '@ngx-translate/core';
 import {SharedModule} from '../../../../../shared/shared.module';
-import {WorkflowRunArtifactListComponent} from './artifact.list.component';
 import {WorkflowModule} from '../../../workflow.module';
+import {WorkflowRunArtifactListComponent} from './artifact.list.component';
 
 describe('CDS: Artifact List', () => {
 

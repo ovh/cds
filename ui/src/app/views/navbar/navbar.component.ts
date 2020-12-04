@@ -10,8 +10,6 @@ import { Project } from 'app/model/project.model';
 import { AuthentifiedUser } from 'app/model/user.model';
 import { ApplicationStore } from 'app/service/application/application.store';
 import { BroadcastStore } from 'app/service/broadcast/broadcast.store';
-import { HelpService } from 'app/service/help/help.service';
-import { LanguageStore } from 'app/service/language/language.store';
 import { NavbarService } from 'app/service/navbar/navbar.service';
 import { RouterService } from 'app/service/router/router.service';
 import { ProjectStore } from 'app/service/services.module';
@@ -47,7 +45,6 @@ export class NavbarComponent implements OnInit, OnDestroy {
     previousBroadcastsToDisplay: Array<Broadcast> = new Array<Broadcast>();
     loading = true;
     listWorkflows: List<NavbarRecentData>;
-    currentCountry: string;
     langSubscription: Subscription;
     navbarSubscription: Subscription;
     userSubscription: Subscription;
@@ -75,18 +72,12 @@ export class NavbarComponent implements OnInit, OnDestroy {
         private _workflowStore: WorkflowStore,
         private _broadcastStore: BroadcastStore,
         private _router: Router,
-        private _language: LanguageStore,
         private _theme: ThemeStore,
         private _routerService: RouterService,
         private _cd: ChangeDetectorRef
     ) {
         this.userSubscription = this._store.select(AuthenticationState.user).subscribe(u => {
             this.currentUser = u;
-            this._cd.markForCheck();
-        });
-
-        this.langSubscription = this._language.get().subscribe(l => {
-            this.currentCountry = l;
             this._cd.markForCheck();
         });
 
@@ -112,10 +103,6 @@ export class NavbarComponent implements OnInit, OnDestroy {
     }
 
     ngOnDestroy(): void {} // Should be set to use @AutoUnsubscribe with AOT
-
-    changeCountry() {
-        this._language.set(this.currentCountry);
-    }
 
     changeTheme() {
         let darkActive = !!this.themeSwitch.value;
