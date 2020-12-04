@@ -50,7 +50,7 @@ func ParseAndImport(ctx context.Context, db gorpmapper.SqlExecutorWithTx, proj s
 
 	if opts.Force && opts.FromRepository == "" {
 		if oldEnv.FromRepository != "" {
-			if err := ascode.DeleteEventsApplicationOnlyFromPipelineName(ctx, db, oldEnv.FromRepository, oldEnv.ID, oldEnv.Name); err != nil {
+			if err := ascode.DeleteEventsEnvironmentOnlyFromPipelineName(ctx, db, oldEnv.FromRepository, oldEnv.ID, oldEnv.Name); err != nil {
 				return nil, nil, msgList, sdk.WrapError(err, "unable to delete as_code_event for %s on repo %s", oldEnv.Name, oldEnv.FromRepository)
 			}
 			msgList = append(msgList, sdk.NewMessage(sdk.MsgEnvironmentDetached, eenv.Name, oldEnv.FromRepository))

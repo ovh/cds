@@ -1,4 +1,4 @@
-package environment_test
+package pipeline_test
 
 import (
 	"context"
@@ -7,7 +7,7 @@ import (
 
 	"github.com/ovh/cds/engine/api/action"
 	"github.com/ovh/cds/engine/api/ascode"
-	"github.com/ovh/cds/engine/api/environment"
+	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/api/test/assets"
 	"github.com/ovh/cds/sdk"
@@ -22,32 +22,32 @@ func TestParseAndImport(t *testing.T) {
 	u, _ := assets.InsertAdminUser(t, db)
 
 	key := sdk.RandomString(10)
-	envName := sdk.RandomString(10)
+	pipName := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, cache, key, key)
-	env1 := sdk.Environment{
-		Name:           envName,
+	pip1 := sdk.Pipeline{
+		Name:           pipName,
 		FromRepository: "foo",
 		ProjectID:      proj.ID,
 		ProjectKey:     proj.Key,
 	}
-	require.NoError(t, environment.InsertEnvironment(db, &env1))
+	require.NoError(t, pipeline.InsertPipeline(db, &pip1))
 
-	var eenv = new(exportentities.Environment)
+	var epip = new(exportentities.PipelineV1)
 
 	body := []byte(`
 version: v1.0
-name: ` + envName + `
+name: ` + pipName + `
 `)
-	errenv := yaml.Unmarshal(body, eenv)
+	errenv := yaml.Unmarshal(body, epip)
 	require.NoError(t, errenv)
 
-	_, _, _, globalError := environment.ParseAndImport(context.TODO(), db, *proj, *eenv, environment.ImportOptions{Force: false}, nil, u)
+	_, _, globalError := pipeline.ParseAndImport(context.TODO(), db, cache, *proj, *epip, u, pipeline.ImportOptions{Force: false})
 	require.Error(t, globalError)
 
-	_, _, _, globalError2 := environment.ParseAndImport(context.TODO(), db, *proj, *eenv, environment.ImportOptions{Force: true, FromRepository: "bar"}, nil, u)
+	_, _, globalError2 := pipeline.ParseAndImport(context.TODO(), db, cache, *proj, *epip, u, pipeline.ImportOptions{Force: true, FromRepository: "bar"})
 	require.Error(t, globalError2)
 
-	_, _, _, globalError3 := environment.ParseAndImport(context.TODO(), db, *proj, *eenv, environment.ImportOptions{Force: true}, nil, u)
+	_, _, globalError3 := pipeline.ParseAndImport(context.TODO(), db, cache, *proj, *epip, u, pipeline.ImportOptions{Force: true})
 	require.NoError(t, globalError3)
 }
 func TestParseAndImportCleanAsCode(t *testing.T) {
@@ -55,23 +55,23 @@ func TestParseAndImportCleanAsCode(t *testing.T) {
 	u, _ := assets.InsertAdminUser(t, db)
 
 	key := sdk.RandomString(10)
-	envName := sdk.RandomString(10)
+	pipName := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, cache, key, key)
-	env1 := sdk.Environment{
-		Name:           envName,
+	pip1 := sdk.Pipeline{
+		Name:           pipName,
 		FromRepository: "myfoorepoenv",
 		ProjectID:      proj.ID,
 		ProjectKey:     proj.Key,
 	}
-	require.NoError(t, environment.InsertEnvironment(db, &env1))
+	require.NoError(t, pipeline.InsertPipeline(db, &pip1))
 
-	var eenv = new(exportentities.Environment)
+	var epip = new(exportentities.PipelineV1)
 
 	body := []byte(`
 version: v1.0
-name: ` + envName + `
+name: ` + pipName + `
 `)
-	errenv := yaml.Unmarshal(body, eenv)
+	errenv := yaml.Unmarshal(body, epip)
 	require.NoError(t, errenv)
 
 	require.NoError(t, action.CreateBuiltinActions(db))
@@ -84,8 +84,8 @@ name: ` + envName + `
 		CreateDate: time.Now(),
 		FromRepo:   "myfoorepoenv",
 		Data: sdk.AsCodeEventData{
-			Environments: map[int64]string{
-				env1.ID: env1.Name,
+			Pipelines: map[int64]string{
+				pip1.ID: pip1.Name,
 			},
 		},
 	}
@@ -95,7 +95,7 @@ name: ` + envName + `
 	assert.Equal(t, 1, len(events))
 
 	// try to import with force, without a repo, it's ok
-	_, _, _, globalError3 := environment.ParseAndImport(context.TODO(), db, *proj, *eenv, environment.ImportOptions{Force: true}, nil, u)
+	_, _, globalError3 := pipeline.ParseAndImport(context.TODO(), db, cache, *proj, *epip, u, pipeline.ImportOptions{Force: true})
 	require.NoError(t, globalError3)
 
 	events, err = ascode.LoadEventsByWorkflowID(context.TODO(), db, wf.ID)

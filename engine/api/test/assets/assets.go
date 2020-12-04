@@ -63,6 +63,8 @@ func InsertTestProject(t *testing.T, db gorpmapper.SqlExecutorWithTx, store cach
 
 	require.NoError(t, project.Insert(db, proj))
 
+	require.NoError(t, group.InitializeDefaultGroupName(db, ""))
+
 	require.NoError(t, group.InsertLinkGroupProject(context.TODO(), db, &group.LinkGroupProject{
 		GroupID:   g.ID,
 		ProjectID: proj.ID,
