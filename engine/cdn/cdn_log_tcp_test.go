@@ -285,7 +285,7 @@ func TestStoreTruncatedLogs(t *testing.T) {
 
 	ctx, ccl := context.WithCancel(context.TODO())
 	t.Cleanup(ccl)
-	cdnUnits := newRunningStorageUnits(t, m, db.DbMap, ctx, 10)
+	cdnUnits := newRunningStorageUnits(t, m, db.DbMap, ctx)
 	s.Units = cdnUnits
 
 	hm := handledMessage{
