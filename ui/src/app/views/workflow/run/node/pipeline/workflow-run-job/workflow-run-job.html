@@ -17,7 +17,7 @@
     <!-- Display job steps -->
     <ng-container *ngIf="currentTabIndex === 0">
         <div class="step" *ngFor="let step of steps; trackBy: trackStepElement; let i = index">
-            <div class="line info" (click)="step.clickOpen()">
+            <div class="line info" (click)="clickOpen(step)">
                 <div class="number">
                     <i *ngIf="step.lines.length > 0" class="caret icon" [class.down]="step.open"
                         [class.right]="!step.open"></i>
