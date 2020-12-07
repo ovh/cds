@@ -144,7 +144,22 @@ func TestUpdateAsCodeApplicationHandler(t *testing.T) {
 			bs = append(bs, b)
 			out = bs
 			return nil, 200, nil
-		}).Times(2)
+		}).Times(1)
+
+	servicesClients.EXPECT().
+		DoJSONRequest(gomock.Any(), "GET", "/vcs/github/repos/foo/myrepo/branches/?branch=master", gomock.Any(), gomock.Any(), gomock.Any()).
+		DoAndReturn(
+			func(ctx context.Context, method, path string, in interface{}, out interface{}, _ interface{}) (http.Header, int, error) {
+				bs := []sdk.VCSBranch{}
+				b := sdk.VCSBranch{
+					DisplayID: "master",
+					Default:   false,
+				}
+				bs = append(bs, b)
+				out = bs
+				return nil, 404, nil
+			},
+		).MaxTimes(1)
 
 	servicesClients.EXPECT().
 		DoJSONRequest(gomock.Any(), "POST", "/vcs/github/repos/foo/myrepo/hooks", gomock.Any(), gomock.Any(), gomock.Any()).

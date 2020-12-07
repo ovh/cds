@@ -118,6 +118,14 @@ func TestPostUpdateWorkflowAsCodeHandler(t *testing.T) {
 				if err := enc.Encode(bs); err != nil {
 					return writeError(w, err)
 				}
+			case "/vcs/github/repos/foo/myrepo/branches/?branch=foo":
+				b := sdk.VCSBranch{
+					DisplayID: "foo",
+					Default:   false,
+				}
+				if err := enc.Encode(b); err != nil {
+					return writeError(w, err)
+				}
 			case "/vcs/github/webhooks":
 				hookInfo := repositoriesmanager.WebhooksInfos{
 					WebhooksSupported: true,

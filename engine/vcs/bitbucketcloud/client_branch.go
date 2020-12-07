@@ -78,6 +78,9 @@ func (client *bitbucketcloudClient) Branch(ctx context.Context, fullname, theBra
 	if err != nil {
 		return nil, err
 	}
+	if status == 404 {
+		return nil, sdk.WithStack(sdk.ErrNoBranch)
+	}
 	if status >= 400 {
 		return nil, sdk.NewError(sdk.ErrUnknownError, errorAPI(body))
 	}

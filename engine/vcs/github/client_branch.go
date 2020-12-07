@@ -111,6 +111,9 @@ func (g *githubClient) Branch(ctx context.Context, fullname, theBranch string) (
 		}
 		return nil, err
 	}
+	if status == 404 {
+		return nil, sdk.WithStack(sdk.ErrNoBranch)
+	}
 	if status >= 400 {
 		if err := g.Cache.Delete(cacheBranchKey); err != nil {
 			log.Error(ctx, "githubClient.Branch> unable to delete cache key %v: %v", cacheBranchKey, err)

@@ -35,8 +35,11 @@ func (c *gitlabClient) Branches(ctx context.Context, fullname string) ([]sdk.VCS
 //Branch retrieves the branch
 func (c *gitlabClient) Branch(ctx context.Context, fullname, branchName string) (*sdk.VCSBranch, error) {
 
-	b, _, err := c.client.Branches.GetBranch(fullname, branchName)
+	b, g, err := c.client.Branches.GetBranch(fullname, branchName)
 	if err != nil {
+		if g != nil && g.StatusCode == 404 {
+			return nil, sdk.WithStack(sdk.ErrNoBranch)
+		}
 		return nil, err
 	}
 

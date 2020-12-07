@@ -301,15 +301,13 @@ func (api *API) updateAsCodeEnvironmentHandler() service.Handler {
 			return sdk.WrapError(sdk.ErrNoReposManagerClientAuth, "updateAsCodeEnvironmentHandler> Cannot get client got %s %s : %v", key, rootApp.VCSServer, err)
 		}
 
-		branches, err := client.Branches(ctx, rootApp.RepositoryFullname)
-		if err != nil {
+		b, err := client.Branch(ctx, rootApp.RepositoryFullname, branch)
+		if err != nil && !sdk.ErrorIs(err, sdk.ErrNoBranch) {
 			return err
 		}
 
-		for _, b := range branches {
-			if (b.ID == branch || b.DisplayID == branch) && b.Default {
-				return sdk.NewErrorFrom(sdk.ErrForbidden, "cannot push the the default branch on your git repository")
-			}
+		if b != nil && b.Default {
+			return sdk.NewErrorFrom(sdk.ErrForbidden, "cannot push the the default branch on your git repository")
 		}
 
 		// create keys

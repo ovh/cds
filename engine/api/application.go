@@ -485,15 +485,13 @@ func (api *API) updateAsCodeApplicationHandler() service.Handler {
 			return sdk.WrapError(sdk.ErrNoReposManagerClientAuth, "updateAsCodeApplicationHandler> Cannot get client got %s %s : %v", key, appDB.VCSServer, err)
 		}
 
-		branches, err := client.Branches(ctx, appDB.RepositoryFullname)
-		if err != nil {
+		b, err := client.Branch(ctx, appDB.RepositoryFullname, branch)
+		if err != nil && !sdk.ErrorIs(err, sdk.ErrNoBranch) {
 			return err
 		}
 
-		for _, b := range branches {
-			if (b.ID == branch || b.DisplayID == branch) && b.Default {
-				return sdk.NewErrorFrom(sdk.ErrForbidden, "cannot push the the default branch on your git repository")
-			}
+		if b != nil && b.Default {
+			return sdk.NewErrorFrom(sdk.ErrForbidden, "cannot push the the default branch on your git repository")
 		}
 
 		wkHolder, err := workflow.LoadByRepo(ctx, tx, *proj, appDB.FromRepository, workflow.LoadOptions{
