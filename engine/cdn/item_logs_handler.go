@@ -167,7 +167,6 @@ func (s *Service) getItemsAllLogsLinesHandler() service.Handler {
 		resp := make([]sdk.CDNLogsLines, 0)
 
 		for _, hash := range refsHash {
-			log.Info(ctx, "Hash: %s", hash)
 			linesCount, err := s.getItemLogLinesCount(ctx, itemType, hash)
 			if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
 				return err

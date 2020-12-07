@@ -231,30 +231,6 @@ export class WorkflowRunJobComponent implements OnInit, OnDestroy {
                 this.steps[steporder].loading = false;
             })
         }
-        /*
-        for (let i = 1; i < this.steps.length; i++) {
-            // We want to load initial data (first 5 and last 5 lines) for ended steps never loaded
-            if (PipelineStatus.isActive(this.nodeJobRun.job.step_status[i - 1].status)) {
-                break;
-            }
-            if (this.steps[i].link) {
-                continue;
-            }
-            if (this.steps[i].disabled) {
-                continue;
-            }
-
-            let results = await Promise.all([
-                this._workflowService.getLogLines(this.steps[i].link, { limit: `${this.initLoadLinesCount}` }).toPromise(),
-                this._workflowService.getLogLines(this.steps[i].link, { offset: `-${this.initLoadLinesCount}` }).toPromise()
-            ]);
-            this.steps[i].lines = results[0].lines;
-            this.steps[i].endLines = results[1].lines.filter(l => !results[0].lines.find(line => line.number === l.number));
-            this.steps[i].totalLinesCount = results[0].totalCount;
-            this.steps[i].open = true;
-            this.steps[i].loading = false;
-        }
-         */
 
         this.computeStepFirstLineNumbers();
         this._cd.markForCheck();
