@@ -162,11 +162,10 @@ func requestVarInt(r *http.Request, s string) (int64, error) {
 	return id, nil
 }
 
-func translate(r *http.Request, msgList []sdk.Message) []string {
-	al := r.Header.Get("Accept-Language")
+func translate(msgList []sdk.Message) []string {
 	msgListString := []string{}
 	for _, m := range msgList {
-		s := m.String(al)
+		s := m.String()
 		if s != "" {
 			msgListString = append(msgListString, s)
 		}

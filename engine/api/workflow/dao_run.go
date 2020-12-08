@@ -54,7 +54,6 @@ type LoadRunOptions struct {
 	WithVulnerabilities     bool
 	WithDeleted             bool
 	DisableDetailledNodeRun bool
-	Language                string
 }
 
 // insertWorkflowRun inserts in table "workflow_run""
@@ -955,11 +954,7 @@ func syncNodeRuns(db gorp.SqlExecutor, wr *sdk.WorkflowRun, loadOpts LoadRunOpti
 			}
 			wnr.Coverage = cov
 		}
-		var l = loadOpts.Language
-		if l == "" {
-			l = "en"
-		}
-		wnr.Translate(l)
+		wnr.Translate()
 		wr.WorkflowNodeRuns[wnr.WorkflowNodeID] = append(wr.WorkflowNodeRuns[wnr.WorkflowNodeID], *wnr)
 	}
 

@@ -99,7 +99,7 @@ func deleteEvent(db gorp.SqlExecutor, event *sdk.AsCodeEvent) error {
 // DeleteAsCodeEventByWorkflowID removes all as_code_event from workflow_id
 func DeleteAsCodeEventByWorkflowID(db gorp.SqlExecutor, id int64) error {
 	_, err := db.Exec("DELETE FROM as_code_events WHERE workflow_id = $1", id)
-	return sdk.WrapError(err, "unable to delete as_code_events with workflow_id %s", id)
+	return sdk.WrapError(err, "unable to delete as_code_events with workflow_id %d", id)
 }
 
 func DeleteEventsPipelineOnlyFromRepoName(ctx context.Context, db gorp.SqlExecutor, fromRepository string, pipID int64, pipName string) error {

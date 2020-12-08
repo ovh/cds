@@ -110,8 +110,7 @@ type ErrorResponse struct {
 
 // WriteError is a helper function to return error in a language the called understand
 func WriteError(ctx context.Context, w http.ResponseWriter, r *http.Request, err error) {
-	al := r.Header.Get("Accept-Language")
-	httpErr := sdk.ExtractHTTPError(err, al)
+	httpErr := sdk.ExtractHTTPError(err)
 	isErrWithStack := sdk.IsErrorWithStack(err)
 
 	fields := log.Fields{}

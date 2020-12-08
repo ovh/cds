@@ -45,7 +45,7 @@ func testImportUpdate(t *testing.T, db gorp.SqlExecutor, store cache.Store, tt t
 				done <- true
 				return
 			}
-			log.Debug("[TEST] %s >>> %s", tt.name, msg.String("en"))
+			log.Debug("[TEST] %s >>> %s", tt.name, msg.String())
 		}
 	}()
 
