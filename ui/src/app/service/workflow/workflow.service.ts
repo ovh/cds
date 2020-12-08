@@ -1,7 +1,16 @@
 import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Operation } from 'app/model/operation.model';
-import { BuildResult, CDNLine, CDNLinesResponse, CDNLogLink, ServiceLog, SpawnInfo } from 'app/model/pipeline.model';
+import {
+    BuildResult,
+    CDNLine,
+    CDNLinesResponse,
+    CDNLogLink,
+    CDNLogLinks,
+    CDNLogsLines,
+    ServiceLog,
+    SpawnInfo
+} from 'app/model/pipeline.model';
 import { WorkflowRetentoinDryRunResponse } from 'app/model/purge.model';
 import { Workflow, WorkflowPull, WorkflowTriggerConditionCache } from 'app/model/workflow.model';
 import { Observable } from 'rxjs';
@@ -63,6 +72,19 @@ export class WorkflowService {
     getStepLink(projectKey: string, workflowName: string, nodeRunID: number,
         jobRunID: number, stepOrder: number): Observable<CDNLogLink> {
         return this._http.get<CDNLogLink>(`/project/${projectKey}/workflows/${workflowName}/nodes/${nodeRunID}/job/${jobRunID}/step/${stepOrder}/link`);
+    }
+
+    getAllStepsLinks(projectKey: string, workflowName: string, nodeRunID: number, jobRunID: number): Observable<CDNLogLinks> {
+        return this._http.get<CDNLogLinks>(`/project/${projectKey}/workflows/${workflowName}/nodes/${nodeRunID}/job/${jobRunID}/links`);
+    }
+
+    getLogsLinesCount(links: CDNLogLinks, limit: number): Observable<Array<CDNLogsLines>> {
+        let params = new HttpParams();
+        links.datas.map(l => l.api_ref).forEach(ref => {
+            params = params.append('apiRefHash', ref)
+        })
+        params.append('limit', limit.toString());
+        return this._http.get<Array<CDNLogsLines>>(`./cdscdn/item/${links.item_type}/lines`, { params })
     }
 
     getLogLines(link: CDNLogLink, params?: { [key: string]: string }): Observable<CDNLinesResponse> {

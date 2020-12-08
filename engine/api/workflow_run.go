@@ -47,7 +47,7 @@ func (api *API) getWorkflowsRunsAndNodesIDshandler() service.Handler {
 			return err
 		}
 
-		ids, err := workflow.LoadNodeRunIDs(api.mustDB(), p.WorkflowNames.IDs())
+		ids, err := workflow.LoadNodeRunIDs(api.mustDB(), p.WorkflowNames.IDs(), []string{sdk.StatusFail, sdk.StatusStopped, sdk.StatusSuccess})
 		if err != nil {
 			return err
 		}

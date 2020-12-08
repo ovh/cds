@@ -46,7 +46,7 @@ func (s *Service) waitingJobs(ctx context.Context) {
 				keyParts := strings.Split(k, ":")
 				queueIdentifier := keyParts[len(keyParts)-1]
 
-				jobQueueKey, err := s.canDequeue(queueIdentifier)
+				jobQueueKey, err := s.canDequeue(ctx, queueIdentifier)
 				if err != nil {
 					err = sdk.WrapError(err, "unable to check canDequeue %s", jobQueueKey)
 					log.ErrorWithFields(ctx, log.Fields{"stack_trace": fmt.Sprintf("%+v", err)}, "%s", err)
@@ -69,13 +69,13 @@ func (s *Service) waitingJobs(ctx context.Context) {
 
 // Run dequeue of a job log
 func (s *Service) dequeueMessages(ctx context.Context, jobLogsQueueKey string, queueIdentifier string) error {
-	log.Info(ctx, "dequeueJobMessages: Dequeue %s", jobLogsQueueKey)
+	log.Info(ctx, "dequeueJobMessages: %s BEGIN dequeue", jobLogsQueueKey)
 	var t0 = time.Now()
 	var t1 = time.Now()
 	var nbMessages int
 	defer func() {
 		delta := t1.Sub(t0)
-		log.Info(ctx, "dequeueJobMessages: processLogs[%s] - %d messages received in %v", jobLogsQueueKey, nbMessages, delta)
+		log.Info(ctx, "dequeueJobMessages: %s END dequeue - %d messages received in %v", jobLogsQueueKey, nbMessages, delta)
 	}()
 
 	defer func() {
@@ -150,9 +150,9 @@ func (s *Service) dequeueMessages(ctx context.Context, jobLogsQueueKey string, q
 }
 
 // Return queue name if jobID need to be dequeue or empty
-func (s *Service) canDequeue(jobID string) (string, error) {
+func (s *Service) canDequeue(ctx context.Context, jobID string) (string, error) {
 	jobQueueKey := cache.Key(keyJobLogQueue, jobID)
-	heatbeatKey := cache.Key(keyJobHearbeat, jobID)
+	heartbeatKey := cache.Key(keyJobHearbeat, jobID)
 
 	// Take a lock
 	lockKey := cache.Key(keyJobLock, jobID)
@@ -167,7 +167,7 @@ func (s *Service) canDequeue(jobID string) (string, error) {
 		return "", nil
 	}
 
-	exist, err := s.Cache.Exist(heatbeatKey)
+	exist, err := s.Cache.Exist(heartbeatKey)
 	if err != nil {
 		return "", err
 	}
@@ -177,7 +177,7 @@ func (s *Service) canDequeue(jobID string) (string, error) {
 	}
 
 	//hearbeat
-	heartbeatKey := cache.Key(keyJobHearbeat, jobID)
+	log.Info(ctx, "heartbeat: take job %s", jobQueueKey)
 	if err := s.Cache.SetWithTTL(heartbeatKey, true, 30); err != nil {
 		return "", err
 	}

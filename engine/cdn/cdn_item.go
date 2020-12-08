@@ -124,6 +124,37 @@ type getItemLogOptions struct {
 	cacheSource string
 }
 
+func (s *Service) getItemLogLinesCount(ctx context.Context, t sdk.CDNItemType, apiRefHash string) (int64, error) {
+	it, err := item.LoadByAPIRefHashAndType(ctx, s.Mapper, s.mustDBWithCtx(ctx), apiRefHash, t)
+	if err != nil {
+		return 0, err
+	}
+
+	itemUnit, err := storage.LoadItemUnitByUnit(ctx, s.Mapper, s.mustDBWithCtx(ctx), s.Units.Buffer.ID(), it.ID)
+	if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
+		return 0, err
+	}
+
+	// If item is in Buffer, get from it
+	if itemUnit != nil {
+		log.Debug("getItemLogLines> Getting logs from buffer")
+		lines, err := s.Units.Buffer.Card(*itemUnit)
+		return int64(lines), err
+	}
+
+	// Get from cache
+	if ok, _ := s.LogCache.Exist(it.ID); !ok {
+		log.Debug("getItemLogLines> Getting logs from storage and push to cache")
+		// Retrieve item and push it into the cache
+		if err := s.pushItemLogIntoCache(ctx, *it, ""); err != nil {
+			return 0, err
+		}
+	}
+
+	linesCount, err := s.LogCache.Card(it.ID)
+	return int64(linesCount), err
+}
+
 func (s *Service) getItemLogValue(ctx context.Context, t sdk.CDNItemType, apiRefHash string, opts getItemLogOptions) (*sdk.CDNItem, int64, io.ReadCloser, string, error) {
 	it, err := item.LoadByAPIRefHashAndType(ctx, s.Mapper, s.mustDBWithCtx(ctx), apiRefHash, t)
 	if err != nil {

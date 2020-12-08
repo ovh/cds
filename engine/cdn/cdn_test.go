@@ -103,7 +103,7 @@ var fakeAPIPrivateKey = struct {
 	key *rsa.PrivateKey
 }{}
 
-func newRunningStorageUnits(t *testing.T, m *gorpmapper.Mapper, dbMap *gorp.DbMap, ctx context.Context, maxStepSize int64) *storage.RunningStorageUnits {
+func newRunningStorageUnits(t *testing.T, m *gorpmapper.Mapper, dbMap *gorp.DbMap, ctx context.Context) *storage.RunningStorageUnits {
 	cfg := test.LoadTestingConf(t, sdk.TypeCDN)
 	tmpDir, err := ioutil.TempDir("", t.Name()+"-cdn-1-*")
 	require.NoError(t, err)

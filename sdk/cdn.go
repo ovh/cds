@@ -43,6 +43,23 @@ type CDNUnit struct {
 	Config  ServiceConfig `json:"config" db:"config"`
 }
 
+type CDNLogsLines struct {
+	APIRef     string `json:"api_ref"`
+	LinesCount int64  `json:"lines_count"`
+}
+
+type CDNLogLinks struct {
+	CDNURL   string           `json:"cdn_url,omitempty"`
+	ItemType CDNItemType      `json:"item_type"`
+	Data     []CDNLogLinkData `json:"datas"`
+}
+
+type CDNLogLinkData struct {
+	APIRef        string `json:"api_ref"`
+	StepOrder     int64  `json:"step_order"`
+	RequirementID int64  `json:"requirement_id,omitempty"`
+}
+
 type CDNLogLink struct {
 	CDNURL   string      `json:"cdn_url,omitempty"`
 	ItemType CDNItemType `json:"item_type"`
