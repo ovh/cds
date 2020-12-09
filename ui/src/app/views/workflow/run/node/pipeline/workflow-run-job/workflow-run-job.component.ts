@@ -135,6 +135,9 @@ export class WorkflowRunJobComponent implements OnInit, OnDestroy {
                 return;
             }
         }
+        if (this.previousNodeJobRun.id !== this.nodeJobRun.id) {
+            this.currentTabIndex = 0;
+        }
         this.previousNodeJobRun = this.nodeJobRun;
 
         let requirements = (this.nodeJobRun.job.action.requirements ? this.nodeJobRun.job.action.requirements : []);
