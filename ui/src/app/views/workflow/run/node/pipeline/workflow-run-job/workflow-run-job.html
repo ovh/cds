@@ -19,7 +19,7 @@
         <div class="step" *ngFor="let step of steps; trackBy: trackStepElement; let i = index">
             <div class="line info" (click)="clickOpen(step)">
                 <div class="number">
-                    <i *ngIf="step.lines.length > 0" class="caret icon" [class.down]="step.open"
+                    <i *ngIf="step.totalLinesCount > 0" class="caret icon" [class.down]="step.open"
                         [class.right]="!step.open"></i>
                     <div *ngIf="step.lines.length === 0 && step.loading" class="ui mini loader"></div>
                     {{step.firstDisplayedLineNumber ? step.firstDisplayedLineNumber : ''}}

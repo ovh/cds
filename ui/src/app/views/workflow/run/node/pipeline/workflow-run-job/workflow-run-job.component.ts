@@ -181,7 +181,13 @@ export class WorkflowRunJobComponent implements OnInit, OnDestroy {
                 await this.loadSpawnInfo();
             }
             await this.loadEndedSteps();
-            await this.startListenLastActiveStep();
+
+            if (PipelineStatus.isDone(this.nodeJobRun.status)) {
+                await this.loadFirstFailedOrLastStep();
+            } else {
+                await this.startListenLastActiveStep();
+            }
+
         } else {
             await this.loadOrListenService();
         }
@@ -321,6 +327,22 @@ export class WorkflowRunJobComponent implements OnInit, OnDestroy {
     stopWebsocketSubscription(): void {
         if (this.websocketSubscription) {
             this.websocketSubscription.unsubscribe();
+        }
+    }
+
+    async loadFirstFailedOrLastStep() {
+        if (this.steps.length <= 1) {
+            return;
+        }
+        if (PipelineStatus.SUCCESS === this.nodeJobRun.status) {
+            await this.clickOpen(this.steps[this.steps.length - 1]);
+            return;
+        }
+        for (let i = 1; i < this.steps.length; i++) {
+            if (this.steps[i].failed) {
+                await this.clickOpen(this.steps[i]);
+                return;
+            }
         }
     }
 
