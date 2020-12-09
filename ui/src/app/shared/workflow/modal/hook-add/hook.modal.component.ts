@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, EventEmitter, Input, OnDestroy, Output, ViewChild } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, EventEmitter, Input, OnDestroy, Output, ViewChild } from '@angular/core';
 import { Store } from '@ngxs/store';
 import { ModalTemplate, SuiActiveModal, SuiModalService, TemplateModalConfig } from '@richardlt/ng2-semantic-ui';
 import { Project } from 'app/model/project.model';
@@ -33,7 +33,7 @@ export class WorkflowHookModalComponent implements OnDestroy {
     @ViewChild('hookFormComponent')
     hookFormComponent: WorkflowNodeHookFormComponent;
 
-    constructor(private _modalService: SuiModalService, private _store: Store) {
+    constructor(private _modalService: SuiModalService, private _store: Store, private _cd: ChangeDetectorRef) {
         this.editMode = this._store.selectSnapshot(WorkflowState).editMode;
     }
 
@@ -44,11 +44,13 @@ export class WorkflowHookModalComponent implements OnDestroy {
             this.modalConfig = new TemplateModalConfig<boolean, boolean, void>(this.hookModalComponent);
             this.modalConfig.mustScroll = true;
             this.modal = this._modalService.open(this.modalConfig);
+            this._cd.detectChanges();
         }
     }
 
     saveHook(): void {
         let updatedHook = this.hookFormComponent.hook;
         this.hookEvent.emit(updatedHook);
+        this.modal.approve(true);
     }
 }

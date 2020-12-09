@@ -41,6 +41,7 @@ export class WorkflowNodeAddWizardComponent implements OnInit {
   get project(): Project {
     return this._project;
   }
+  @Input() display: boolean;
   @Input() hideCancel: boolean;
   @Input() hideNext: boolean;
   @Input() loading: boolean;

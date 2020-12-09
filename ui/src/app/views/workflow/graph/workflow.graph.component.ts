@@ -41,7 +41,7 @@ export class WorkflowGraphComponent implements AfterViewInit, OnDestroy {
     @Input('direction')
     set direction(data: string) {
         this._direction = data;
-        this._workflowStore.setDirection(this.project?.key, this.workflow?.name, this.direction);
+        this._workflowStore.setDirection(this.project.key, this.workflow.name, this.direction);
         this.changeDisplay();
     }
     get direction() { return this._direction; }
@@ -87,9 +87,6 @@ export class WorkflowGraphComponent implements AfterViewInit, OnDestroy {
     }
 
     initWorkflow() {
-        if (!this.workflow) {
-            return;
-        }
         // https://github.com/cpettitt/dagre/wiki#configuring-the-layout
         this.g = new dagreD3.graphlib.Graph().setGraph({ rankdir: this.direction, nodesep: 10, ranksep: 15, edgesep: 5 });
         // Create all nodes
