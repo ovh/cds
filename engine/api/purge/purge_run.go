@@ -151,7 +151,7 @@ func applyRetentionPolicyOnRun(ctx context.Context, db *gorp.DbMap, wf sdk.Workf
 	}
 
 	if err := luacheck.Perform(wf.RetentionPolicy); err != nil {
-		return true, sdk.NewErrorFrom(sdk.ErrWrongRequest, "%v", err)
+		return true, sdk.NewErrorFrom(sdk.ErrWrongRequest, "unable to apply retention policy on workflow %s/%s: %v", wf.ProjectKey, wf.Name, err)
 	}
 
 	if luacheck.Result {
