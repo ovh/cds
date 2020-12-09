@@ -53,7 +53,7 @@ export class AsCodeSaveFormComponent implements OnInit, OnDestroy {
             }))
             .subscribe(vcsinfos => {
                 if (vcsinfos && vcsinfos.branches) {
-                    this.branches = vcsinfos.branches.map(b => b.display_id);
+                    this.branches = vcsinfos.branches.filter(b => !b.default).map(b => b.display_id);
                 }
             });
     }

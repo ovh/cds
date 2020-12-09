@@ -2,7 +2,8 @@
     <div class="header">{{ 'ascode_modal_title' | translate }}</div>
     <div class="content">
         <div *ngIf="repositoryFullname" class="ui blue message">
-            {{'ascode_save_modal_info_line_1' | translate: {repo: repositoryFullname} }}
+            A pull request will be created to the repository {{repositoryFullname}}.<br>
+            Notice that you can't push on the default branch of your git repository.
         </div>
         <app-ascode-save-form [project]="project" [workflow]="workflow" [operation]="asCodeOperation"
             (paramChange)="onParamChange($event)">

@@ -238,8 +238,8 @@ func (api *API) getApplicationVCSInfosHandler() service.Handler {
 		if remote != "" && remote != app.RepositoryFullname {
 			repositoryFullname = remote
 		}
-		branches, errb := client.Branches(ctx, repositoryFullname)
-		if errb != nil {
+		branches, err := client.Branches(ctx, repositoryFullname)
+		if err != nil {
 			return err
 		}
 		resp.Branches = branches
@@ -473,6 +473,25 @@ func (api *API) updateAsCodeApplicationHandler() service.Handler {
 		}
 		if appDB.FromRepository != a.FromRepository {
 			return sdk.NewErrorFrom(sdk.ErrForbidden, "you can't use this repository to update your application: %s", a.FromRepository)
+		}
+
+		vcsServer, err := repositoriesmanager.LoadProjectVCSServerLinkByProjectKeyAndVCSServerName(ctx, tx, key, appDB.VCSServer)
+		if err != nil {
+			return sdk.WrapError(sdk.ErrNoReposManagerClientAuth, "updateAsCodeApplicationHandler> Cannot get client got %s %s : %v", key, appDB.VCSServer, err)
+		}
+
+		client, err := repositoriesmanager.AuthorizedClient(ctx, tx, api.Cache, key, vcsServer)
+		if err != nil {
+			return sdk.WrapError(sdk.ErrNoReposManagerClientAuth, "updateAsCodeApplicationHandler> Cannot get client got %s %s : %v", key, appDB.VCSServer, err)
+		}
+
+		b, err := client.Branch(ctx, appDB.RepositoryFullname, branch)
+		if err != nil && !sdk.ErrorIs(err, sdk.ErrNoBranch) {
+			return err
+		}
+
+		if b != nil && b.Default {
+			return sdk.NewErrorFrom(sdk.ErrForbidden, "cannot push the the default branch on your git repository")
 		}
 
 		wkHolder, err := workflow.LoadByRepo(ctx, tx, *proj, appDB.FromRepository, workflow.LoadOptions{
