@@ -44,7 +44,6 @@ func TestUpdate(t *testing.T) {
 		WorkflowNodeID: wk.WorkflowData.Node.ID,
 	}
 	require.NoError(t, db.Insert(&nodeRun))
-
 	jobRun := sdk.WorkflowNodeJobRun{
 		ID:                1,
 		ProjectID:         proj.ID,
@@ -54,6 +53,9 @@ func TestUpdate(t *testing.T) {
 	require.NoError(t, dbj.ToJobRun(&jobRun))
 	require.NoError(t, db.Insert(dbj))
 	jobRun.ID = dbj.ID
+	t.Cleanup(func() {
+		workflow.DeleteNodeJobRun(db, jobRun.ID)
+	})
 
 	w := sdk.Worker{
 		ID:         sdk.UUID(),
