@@ -52,7 +52,7 @@ export class WorkflowGraphComponent implements AfterViewInit, OnDestroy {
     _direction: string;
 
     // workflow graph
-    @ViewChild('svgGraph', { read: ViewContainerRef }) svgContainer: any;
+    @ViewChild('svgGraph', { read: ViewContainerRef }) svgContainer: ViewContainerRef;
     g: dagreD3.graphlib.Graph;
     render = new dagreD3.render();
 
@@ -162,7 +162,7 @@ export class WorkflowGraphComponent implements AfterViewInit, OnDestroy {
             let componentRef = this.hooksComponent.get(hookId);
             if (!componentRef) {
                 let hookComponent = this.componentFactoryResolver.resolveComponentFactory(WorkflowNodeHookComponent);
-                componentRef = hookComponent.create(this.svgContainer.parentInjector);
+                componentRef = this.svgContainer.createComponent<WorkflowNodeHookComponent>(hookComponent);
             }
             componentRef.instance.hook = h;
             componentRef.instance.workflow = this.workflow;
@@ -170,7 +170,6 @@ export class WorkflowGraphComponent implements AfterViewInit, OnDestroy {
             componentRef.changeDetectorRef.detectChanges();
             this.hooksComponent.set(hookId, componentRef);
 
-            this.svgContainer.insert(componentRef.hostView, 0);
             this.g.setNode(
                 'hook-' + node.ref + '-' + hookId, <any>{
                     label: () => componentRef.location.nativeElement,
@@ -211,7 +210,6 @@ export class WorkflowGraphComponent implements AfterViewInit, OnDestroy {
                 break;
         }
 
-        this.svgContainer.insert(componentRef.hostView, 0);
         this.g.setNode('node-' + node.ref, <any>{
             label: () => componentRef.location.nativeElement,
             shape: shape,
@@ -249,8 +247,8 @@ export class WorkflowGraphComponent implements AfterViewInit, OnDestroy {
     }
 
     createNodeComponent(node: WNode): ComponentRef<WorkflowWNodeComponent> {
-        let nodeComponentFactory = this.componentFactoryResolver.resolveComponentFactory(WorkflowWNodeComponent);
-        let componentRef = nodeComponentFactory.create(this.svgContainer.parentInjector);
+        const nodeComponentFactory = this.componentFactoryResolver.resolveComponentFactory(WorkflowWNodeComponent);
+        const componentRef = this.svgContainer.createComponent<WorkflowWNodeComponent>(nodeComponentFactory);
         componentRef.instance.node = node;
         componentRef.instance.workflow = this.workflow;
         componentRef.instance.project = this.project;
