@@ -83,14 +83,20 @@ func getVariableFromBitbucketServerChange(payload map[string]interface{}, change
 	payload[GIT_HASH_SHORT] = sdk.StringFirstN(change.ToHash, 7)
 }
 
-func getVariableFromBitbucketServerRepository(payload map[string]interface{}, repo *sdk.BitbucketServerRepository) {
+func getVariableFromBitbucketServerDestRepository(payload map[string]interface{}, repo *sdk.BitbucketServerRepository) {
 	if repo == nil {
 		return
 	}
 	payload[GIT_REPOSITORY_DEST] = fmt.Sprintf("%s/%s", repo.Project.Key, repo.Slug)
 }
-
 func getVariableFromBitbucketServerSrcRepository(payload map[string]interface{}, repo *sdk.BitbucketServerRepository) {
+	if repo == nil {
+		return
+	}
+	payload[GIT_REPOSITORY_BEFORE] = fmt.Sprintf("%s/%s", repo.Project.Key, repo.Slug)
+}
+
+func getVariableFromBitbucketServerRepository(payload map[string]interface{}, repo *sdk.BitbucketServerRepository) {
 	if repo == nil {
 		return
 	}
@@ -112,17 +118,28 @@ func getVariableFromBitbucketServerPullRequest(payload map[string]interface{}, p
 	if pr == nil {
 		return
 	}
+
 	payload[PR_ID] = pr.ID
 	payload[PR_STATE] = pr.State
 	payload[PR_TITLE] = pr.Title
-	payload[GIT_BRANCH] = pr.FromRef.DisplayID
-	payload[GIT_HASH] = pr.FromRef.LatestCommit
-	payload[GIT_BRANCH_DEST] = pr.ToRef.DisplayID
-	payload[GIT_HASH_DEST] = pr.ToRef.LatestCommit
-	payload[GIT_HASH_SHORT] = sdk.StringFirstN(pr.FromRef.LatestCommit, 7)
 
-	getVariableFromBitbucketServerRepository(payload, &pr.ToRef.Repository)
-	getVariableFromBitbucketServerSrcRepository(payload, &pr.FromRef.Repository)
+	if payload[GIT_EVENT] == "pr:merged" {
+		payload[GIT_BRANCH] = pr.ToRef.DisplayID
+		payload[GIT_HASH] = pr.ToRef.LatestCommit
+		payload[GIT_HASH_SHORT] = sdk.StringFirstN(pr.ToRef.LatestCommit, 7)
+		payload[GIT_BRANCH_BEFORE] = pr.FromRef.DisplayID
+		payload[GIT_HASH_BEFORE] = pr.FromRef.LatestCommit
+		getVariableFromBitbucketServerRepository(payload, &pr.ToRef.Repository)
+		getVariableFromBitbucketServerSrcRepository(payload, &pr.FromRef.Repository)
+	} else {
+		payload[GIT_BRANCH] = pr.FromRef.DisplayID
+		payload[GIT_HASH] = pr.FromRef.LatestCommit
+		payload[GIT_HASH_SHORT] = sdk.StringFirstN(pr.FromRef.LatestCommit, 7)
+		payload[GIT_BRANCH_DEST] = pr.ToRef.DisplayID
+		payload[GIT_HASH_DEST] = pr.ToRef.LatestCommit
+		getVariableFromBitbucketServerRepository(payload, &pr.FromRef.Repository)
+		getVariableFromBitbucketServerDestRepository(payload, &pr.ToRef.Repository)
+	}
 }
 
 func getPayloadFromBitbucketServerPRComment(payload map[string]interface{}, comment *sdk.BitbucketServerComment) {
