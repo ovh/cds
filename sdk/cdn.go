@@ -55,9 +55,8 @@ type CDNLogLinks struct {
 }
 
 type CDNLogLinkData struct {
-	APIRef        string `json:"api_ref"`
-	StepOrder     int64  `json:"step_order"`
-	RequirementID int64  `json:"requirement_id,omitempty"`
+	APIRef    string `json:"api_ref"`
+	StepOrder int64  `json:"step_order"`
 }
 
 type CDNLogLink struct {

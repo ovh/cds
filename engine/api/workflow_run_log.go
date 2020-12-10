@@ -116,82 +116,63 @@ func (api *API) getWorkflowNodeRunJobServiceLinkHandler() service.Handler {
 
 func (api *API) getWorkflowNodeRunJobStepLinksHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		return api.getWorkflowNodeRunJobLogLinksHandler(ctx, w, r, sdk.CDNTypeItemStepLog)
-	}
-}
+		vars := mux.Vars(r)
 
-func (api *API) getWorkflowNodeRunJobStepLinkHandler() service.Handler {
-	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		return api.getWorkflowNodeRunJobLogLinkHandler(ctx, w, r, sdk.CDNTypeItemStepLog)
-	}
-}
+		projectKey := vars["key"]
+		enabled := featureflipping.IsEnabled(ctx, gorpmapping.Mapper, api.mustDB(), "cdn-job-logs", map[string]string{
+			"project_key": projectKey,
+		})
+		if !enabled {
+			return sdk.NewErrorFrom(sdk.ErrNotFound, "cdn is not enable for project %s", projectKey)
+		}
 
-func (api *API) getWorkflowNodeRunJobLogLinksHandler(ctx context.Context, w http.ResponseWriter, r *http.Request, itemType sdk.CDNItemType) error {
-	vars := mux.Vars(r)
+		workflowName := vars["permWorkflowName"]
+		nodeRunID, err := requestVarInt(r, "nodeRunID")
+		if err != nil {
+			return sdk.NewErrorFrom(err, "invalid node run id")
+		}
+		runJobID, err := requestVarInt(r, "runJobID")
+		if err != nil {
+			return sdk.NewErrorFrom(err, "invalid node job id")
+		}
 
-	projectKey := vars["key"]
-	enabled := featureflipping.IsEnabled(ctx, gorpmapping.Mapper, api.mustDB(), "cdn-job-logs", map[string]string{
-		"project_key": projectKey,
-	})
-	if !enabled {
-		return sdk.NewErrorFrom(sdk.ErrNotFound, "cdn is not enable for project %s", projectKey)
-	}
+		httpURL, err := services.GetCDNPublicHTTPAdress(ctx, api.mustDB())
+		if err != nil {
+			return err
+		}
 
-	workflowName := vars["permWorkflowName"]
-	nodeRunID, err := requestVarInt(r, "nodeRunID")
-	if err != nil {
-		return sdk.NewErrorFrom(err, "invalid node run id")
-	}
-	runJobID, err := requestVarInt(r, "runJobID")
-	if err != nil {
-		return sdk.NewErrorFrom(err, "invalid node job id")
-	}
-
-	httpURL, err := services.GetCDNPublicHTTPAdress(ctx, api.mustDB())
-	if err != nil {
-		return err
-	}
-
-	nodeRun, err := workflow.LoadNodeRun(api.mustDB(), projectKey, workflowName, nodeRunID, workflow.LoadRunOptions{DisableDetailledNodeRun: true})
-	if err != nil {
-		return sdk.WrapError(err, "cannot find nodeRun %d for workflow %s in project %s", nodeRunID, workflowName, projectKey)
-	}
-	var runJob *sdk.WorkflowNodeJobRun
-	for _, s := range nodeRun.Stages {
-		for _, rj := range s.RunJobs {
-			if rj.ID == runJobID {
-				runJob = &rj
+		nodeRun, err := workflow.LoadNodeRun(api.mustDB(), projectKey, workflowName, nodeRunID, workflow.LoadRunOptions{DisableDetailledNodeRun: true})
+		if err != nil {
+			return sdk.WrapError(err, "cannot find nodeRun %d for workflow %s in project %s", nodeRunID, workflowName, projectKey)
+		}
+		var runJob *sdk.WorkflowNodeJobRun
+		for _, s := range nodeRun.Stages {
+			for _, rj := range s.RunJobs {
+				if rj.ID == runJobID {
+					runJob = &rj
+					break
+				}
+			}
+			if runJob != nil {
 				break
 			}
 		}
-		if runJob != nil {
-			break
+		if runJob == nil {
+			return sdk.NewErrorFrom(sdk.ErrNotFound, "cannot find run job for id %d", runJobID)
 		}
-	}
-	if runJob == nil {
-		return sdk.NewErrorFrom(sdk.ErrNotFound, "cannot find run job for id %d", runJobID)
-	}
 
-	refs := make([]sdk.CDNLogAPIRef, 0)
-	apiRef := sdk.CDNLogAPIRef{
-		ProjectKey:     projectKey,
-		WorkflowName:   workflowName,
-		WorkflowID:     nodeRun.WorkflowID,
-		RunID:          nodeRun.WorkflowRunID,
-		NodeRunName:    nodeRun.WorkflowNodeName,
-		NodeRunID:      nodeRun.ID,
-		NodeRunJobName: runJob.Job.Action.Name,
-		NodeRunJobID:   runJob.ID,
-	}
-
-	if itemType == sdk.CDNTypeItemServiceLog {
-		for _, r := range runJob.Job.Action.Requirements {
-			ref := apiRef
-			ref.RequirementServiceID = r.ID
-			ref.RequirementServiceName = r.Name
-			refs = append(refs, ref)
+		refs := make([]sdk.CDNLogAPIRef, 0)
+		apiRef := sdk.CDNLogAPIRef{
+			ProjectKey:     projectKey,
+			WorkflowName:   workflowName,
+			WorkflowID:     nodeRun.WorkflowID,
+			RunID:          nodeRun.WorkflowRunID,
+			NodeRunName:    nodeRun.WorkflowNodeName,
+			NodeRunID:      nodeRun.ID,
+			NodeRunJobName: runJob.Job.Action.Name,
+			NodeRunJobID:   runJob.ID,
 		}
-	} else {
+
 		for _, s := range runJob.Job.StepStatus {
 			ref := apiRef
 			ref.StepName = runJob.Job.Action.Actions[int64(s.StepOrder)].Name
@@ -201,28 +182,33 @@ func (api *API) getWorkflowNodeRunJobLogLinksHandler(ctx context.Context, w http
 			ref.StepOrder = int64(s.StepOrder)
 			refs = append(refs, ref)
 		}
-	}
 
-	datas := make([]sdk.CDNLogLinkData, 0, len(refs))
+		datas := make([]sdk.CDNLogLinkData, 0, len(refs))
 
-	for _, r := range refs {
-		apiRefHashU, err := hashstructure.Hash(r, nil)
-		if err != nil {
-			return sdk.WithStack(err)
+		for _, r := range refs {
+			apiRefHashU, err := hashstructure.Hash(r, nil)
+			if err != nil {
+				return sdk.WithStack(err)
+			}
+			apiRefHash := strconv.FormatUint(apiRefHashU, 10)
+			datas = append(datas, sdk.CDNLogLinkData{
+				APIRef:    apiRefHash,
+				StepOrder: r.StepOrder,
+			})
 		}
-		apiRefHash := strconv.FormatUint(apiRefHashU, 10)
-		datas = append(datas, sdk.CDNLogLinkData{
-			APIRef:        apiRefHash,
-			StepOrder:     r.StepOrder,
-			RequirementID: r.RequirementServiceID,
-		})
-	}
 
-	return service.WriteJSON(w, sdk.CDNLogLinks{
-		CDNURL:   httpURL,
-		ItemType: itemType,
-		Data:     datas,
-	}, http.StatusOK)
+		return service.WriteJSON(w, sdk.CDNLogLinks{
+			CDNURL:   httpURL,
+			ItemType: sdk.CDNTypeItemStepLog,
+			Data:     datas,
+		}, http.StatusOK)
+	}
+}
+
+func (api *API) getWorkflowNodeRunJobStepLinkHandler() service.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		return api.getWorkflowNodeRunJobLogLinkHandler(ctx, w, r, sdk.CDNTypeItemStepLog)
+	}
 }
 
 func (api *API) getWorkflowNodeRunJobLogLinkHandler(ctx context.Context, w http.ResponseWriter, r *http.Request, itemType sdk.CDNItemType) error {
