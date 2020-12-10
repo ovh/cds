@@ -54,7 +54,7 @@ func (g *githubClient) CreateHook(ctx context.Context, repo string, hook *sdk.VC
 		if strings.Contains(string(body), "Hook already exists on this repository") {
 			return nil
 		}
-		err := fmt.Errorf("Unable to create webhook on github. Status code : %d - ResponseBody: %s - url:%v - request:%v", res.StatusCode, body, url, string(b))
+		err := fmt.Errorf("Unable to create webhook on github. Status code : %d - ResponseBody: %s - url:%v", res.StatusCode, body, url)
 		return sdk.WrapError(err, "github.CreateHook. Data: %s", b)
 	}
 
