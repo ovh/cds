@@ -317,7 +317,7 @@
 
                                     <!-- ######### WORKFLOW PIPELINE SECOND STEP ######### -->
                                     <ng-container *ngSwitchCase="1">
-                                        <app-workflow-node-add-wizard [project]="project" [loading]="loading" [canCreateFork]="true"
+                                        <app-workflow-node-add-wizard [project]="project" [loading]="loading" [canCreateFork]="true" [display]="true"
                                             (nodeCreated)="createWorkflow($event)"></app-workflow-node-add-wizard>
                                     </ng-container>
                                 </div>
