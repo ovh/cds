@@ -28,7 +28,7 @@ func (g *githubClient) CreateHook(ctx context.Context, repo string, hook *sdk.VC
 		hook.Events = sdk.GitHubEventsDefault
 	}
 
-	r := WebhookCreate{
+	webhookCreate := WebhookCreate{
 		Name:   "web",
 		Active: true,
 		Events: hook.Events,
@@ -37,9 +37,9 @@ func (g *githubClient) CreateHook(ctx context.Context, repo string, hook *sdk.VC
 			ContentType: "json",
 		},
 	}
-	b, err := json.Marshal(r)
+	b, err := json.Marshal(webhookCreate)
 	if err != nil {
-		return sdk.WrapError(err, "Cannot marshal body %+v", r)
+		return sdk.WrapError(err, "Cannot marshal body %+v", webhookCreate)
 	}
 	res, err := g.post(url, "application/json", bytes.NewBuffer(b), nil)
 	if err != nil {
@@ -54,14 +54,15 @@ func (g *githubClient) CreateHook(ctx context.Context, repo string, hook *sdk.VC
 		if strings.Contains(string(body), "Hook already exists on this repository") {
 			return nil
 		}
-		err := fmt.Errorf("Unable to create webhook on github. Status code : %d - Body: %s. ", res.StatusCode, body)
-		return sdk.WrapError(err, "github.CreateHook. Data : %s", b)
+		err := fmt.Errorf("Unable to create webhook on github. Status code : %d - ResponseBody: %s - url:%v - request:%v", res.StatusCode, body, url, string(b))
+		return sdk.WrapError(err, "github.CreateHook. Data: %s", b)
 	}
 
-	if err := json.Unmarshal(body, &r); err != nil {
+	webhookResponse := WebhookCreate{}
+	if err := json.Unmarshal(body, &webhookResponse); err != nil {
 		return sdk.WrapError(err, "Cannot unmarshal response")
 	}
-	hook.ID = fmt.Sprintf("%d", r.ID)
+	hook.ID = fmt.Sprintf("%d", webhookResponse.ID)
 	return nil
 }
 
