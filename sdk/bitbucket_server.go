@@ -22,11 +22,21 @@ type BitbucketServerPullRequest struct {
 		Status             string               `json:"status"`
 	} `json:"reviewers,omitempty"`
 	Participants []BitbucketServerParticipant `json:"participants,omitempty"`
+	Properties   PullRequestProperties        `json:"properties,omitempty"`
 	Links        struct {
 		Self []struct {
 			Href string `json:"href"`
 		} `json:"self"`
 	} `json:"links"`
+}
+
+type PullRequestProperties struct {
+	MergeCommit MergeCommitProperty `json:"mergeCommit"`
+}
+
+type MergeCommitProperty struct {
+	ID        string `json:"id"`
+	DisplayID string `json:"displayId"`
 }
 
 type BitbucketServerParticipant struct {

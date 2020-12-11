@@ -125,8 +125,8 @@ func getVariableFromBitbucketServerPullRequest(payload map[string]interface{}, p
 
 	if payload[GIT_EVENT] == "pr:merged" {
 		payload[GIT_BRANCH] = pr.ToRef.DisplayID
-		payload[GIT_HASH] = pr.ToRef.LatestCommit
-		payload[GIT_HASH_SHORT] = sdk.StringFirstN(pr.ToRef.LatestCommit, 7)
+		payload[GIT_HASH] = pr.Properties.MergeCommit.ID
+		payload[GIT_HASH_SHORT] = sdk.StringFirstN(pr.Properties.MergeCommit.ID, 7)
 		payload[GIT_BRANCH_BEFORE] = pr.FromRef.DisplayID
 		payload[GIT_HASH_BEFORE] = pr.FromRef.LatestCommit
 		getVariableFromBitbucketServerRepository(payload, &pr.ToRef.Repository)
