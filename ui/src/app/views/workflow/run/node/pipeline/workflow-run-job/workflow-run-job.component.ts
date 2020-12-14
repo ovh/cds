@@ -184,13 +184,6 @@ export class WorkflowRunJobComponent implements OnInit, OnDestroy {
                 await this.loadSpawnInfo();
             }
             await this.loadEndedSteps();
-
-            if (PipelineStatus.isDone(this.nodeJobRun.status)) {
-                await this.loadFirstFailedOrLastStep();
-            } else {
-                await this.startListenLastActiveStep();
-            }
-
         } else {
             await this.loadOrListenService();
         }
@@ -242,6 +235,13 @@ export class WorkflowRunJobComponent implements OnInit, OnDestroy {
         }
 
         this.computeStepFirstLineNumbers();
+
+        if (PipelineStatus.isDone(this.nodeJobRun.status)) {
+            await this.loadFirstFailedOrLastStep();
+        } else {
+            await this.startListenLastActiveStep();
+        }
+
         this._cd.markForCheck();
     }
 
