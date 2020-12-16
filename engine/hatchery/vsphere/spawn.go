@@ -39,7 +39,11 @@ func (h *HatcheryVSphere) SpawnWorker(ctx context.Context, spawnArgs hatchery.Sp
 
 	if errM != nil || spawnArgs.Model.NeedRegistration {
 		// Generate worker model vm
-		vm, errV = h.createVMModel(*spawnArgs.Model)
+		vm, errV = h.createVMModel(*spawnArgs.Model, spawnArgs.WorkerName)
+		if errV != nil {
+			log.Error(ctx, "Unable to create VM Model: %v", errV)
+			return errV
+		}
 	}
 
 	if vm == nil || errV != nil {
@@ -58,7 +62,7 @@ func (h *HatcheryVSphere) SpawnWorker(ctx context.Context, spawnArgs hatchery.Sp
 		Created:                 time.Now(),
 	}
 
-	cloneSpec, folder, errCfg := h.createVMConfig(vm, annot)
+	cloneSpec, folder, errCfg := h.createVMConfig(vm, annot, spawnArgs.WorkerName)
 	if errCfg != nil {
 		return sdk.WrapError(errCfg, "cannot create VM configuration")
 	}
@@ -79,9 +83,12 @@ func (h *HatcheryVSphere) SpawnWorker(ctx context.Context, spawnArgs hatchery.Sp
 }
 
 // createVMModel create a model for a specific worker model
-func (h *HatcheryVSphere) createVMModel(model sdk.Model) (*object.VirtualMachine, error) {
+func (h *HatcheryVSphere) createVMModel(model sdk.Model, workerName string) (*object.VirtualMachine, error) {
 	ctx := context.Background()
-	log.Info(ctx, "Create vm model %s", model.Name)
+	log.Info(ctx, "Create vm model %s from %s", model.Name, model.ModelVirtualMachine.Image)
+	defer func() {
+		log.Info(ctx, "Create vm model %s from %s DONE", model.Name, model.ModelVirtualMachine.Image)
+	}()
 
 	vm, errV := h.finder.VirtualMachine(ctx, model.ModelVirtualMachine.Image)
 	if errV != nil {
@@ -96,7 +103,7 @@ func (h *HatcheryVSphere) createVMModel(model sdk.Model) (*object.VirtualMachine
 		Created:                 time.Now(),
 	}
 
-	cloneSpec, folder, errCfg := h.createVMConfig(vm, annot)
+	cloneSpec, folder, errCfg := h.createVMConfig(vm, annot, workerName)
 	if errCfg != nil {
 		return vm, sdk.WrapError(errCfg, "createVMModel> cannot create VM configuration")
 	}
@@ -113,11 +120,12 @@ func (h *HatcheryVSphere) createVMModel(model sdk.Model) (*object.VirtualMachine
 
 	vm = object.NewVirtualMachine(h.vclient.Client, info.Result.(types.ManagedObjectReference))
 
-	if _, errW := vm.WaitForIP(ctx); errW != nil {
+	_, errW := vm.WaitForIP(ctx, true)
+	if errW != nil {
 		return vm, sdk.WrapError(errW, "createVMModel> cannot get an ip")
 	}
 
-	if _, errS := h.launchClientOp(vm, model.ModelVirtualMachine.PreCmd+"; \n"+model.ModelVirtualMachine.Cmd+"; \n"+model.ModelVirtualMachine.PostCmd, nil); errS != nil {
+	if _, errS := h.launchClientOp(vm, model.ModelVirtualMachine.PostCmd, nil); errS != nil {
 		log.Warning(ctx, "createVMModel> cannot start program %s", errS)
 		annot := annotation{ToDelete: true}
 		if annotStr, err := json.Marshal(annot); err == nil {
@@ -132,12 +140,11 @@ func (h *HatcheryVSphere) createVMModel(model sdk.Model) (*object.VirtualMachine
 	if err := vm.WaitForPowerState(ctxTo, types.VirtualMachinePowerStatePoweredOff); err != nil {
 		return nil, sdk.WrapError(err, "cannot wait for power state result")
 	}
-	log.Info(ctx, "createVMModel> model %s is build", model.Name)
 
-	modelFound, errM := h.getModelByName(ctx, model.Name)
-	if errM == nil {
-		if errD := h.deleteServer(modelFound); errD != nil {
-			log.Warning(ctx, "createVMModel> Cannot delete previous model %s : %s", model.Name, errD)
+	modelFound, err := h.getModelByName(ctx, model.Name)
+	if err == nil {
+		if err := h.deleteServer(modelFound); err != nil {
+			log.Warning(ctx, "createVMModel> Cannot delete previous model %s : %s", model.Name, err)
 		}
 	}
 
@@ -152,6 +159,10 @@ func (h *HatcheryVSphere) createVMModel(model sdk.Model) (*object.VirtualMachine
 	defer cancel()
 	if _, err := task.WaitForResult(ctxTo, nil); err != nil {
 		return vm, sdk.WrapError(err, "error on waiting result for vm renaming %s", model.Name)
+	}
+
+	if err := vm.MarkAsTemplate(ctx); err != nil {
+		return vm, sdk.WrapError(err, "createVMModel> unable to mark %s as a tempalte", model.Name)
 	}
 
 	return vm, nil
@@ -181,7 +192,7 @@ func (h *HatcheryVSphere) launchScriptWorker(name string, jobID int64, token str
 	if registerOnly {
 		udata += " register"
 	}
-	udata += ("\n" + model.ModelVirtualMachine.PostCmd)
+	udata += "\n" + model.ModelVirtualMachine.PostCmd
 
 	tmpl, errt := template.New("udata").Parse(udata)
 	if errt != nil {

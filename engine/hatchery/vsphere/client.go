@@ -11,6 +11,7 @@ import (
 	"github.com/vmware/govmomi/guest"
 	"github.com/vmware/govmomi/object"
 	"github.com/vmware/govmomi/view"
+	"github.com/vmware/govmomi/vim25/methods"
 	"github.com/vmware/govmomi/vim25/mo"
 	"github.com/vmware/govmomi/vim25/types"
 
@@ -53,7 +54,7 @@ func (h *HatcheryVSphere) getServers() []mo.VirtualMachine {
 	defer cancelR()
 	// Retrieve summary property for all machines
 	// Reference: http://pubs.vmware.com/vsphere-60/topic/com.vmware.wssdk.apiref.doc/vim.VirtualMachine.html
-	if err := v.Retrieve(ctxR, []string{"VirtualMachine"}, []string{"name", "summary", "config"}, &vms); err != nil {
+	if err := v.Retrieve(ctxR, []string{"VirtualMachine"}, []string{"name", "summary", "guest", "config"}, &vms); err != nil {
 		log.Warning(ctx, "Unable to retrieve virtual machines from vsphere %s", err)
 		return lservers.list
 	}
@@ -188,7 +189,7 @@ func (h *HatcheryVSphere) deleteServer(s mo.VirtualMachine) error {
 }
 
 // createVMConfig create a basic configuration in order to create a vm
-func (h *HatcheryVSphere) createVMConfig(vm *object.VirtualMachine, annot annotation) (*types.VirtualMachineCloneSpec, *object.Folder, error) {
+func (h *HatcheryVSphere) createVMConfig(vm *object.VirtualMachine, annot annotation, workerName string) (*types.VirtualMachineCloneSpec, *object.Folder, error) {
 	ctx := context.Background()
 	ctxC, cancelC := context.WithTimeout(ctx, reqTimeout)
 	defer cancelC()
@@ -197,7 +198,6 @@ func (h *HatcheryVSphere) createVMConfig(vm *object.VirtualMachine, annot annota
 	if errF != nil {
 		return nil, folder, sdk.WrapError(errF, "createVMConfig> cannot find folder")
 	}
-
 	ctxC, cancelC = context.WithTimeout(ctx, reqTimeout)
 	defer cancelC()
 	devices, errD := vm.Device(ctxC)
@@ -225,7 +225,7 @@ func (h *HatcheryVSphere) createVMConfig(vm *object.VirtualMachine, annot annota
 		return nil, folder, sdk.WrapError(errB, "createVMConfig> cannot have ethernet backing info")
 	}
 
-	device, errE := object.EthernetCardTypes().CreateEthernetCard(h.cardName, backing)
+	device, errE := object.EthernetCardTypes().CreateEthernetCard(h.Config.VSphereCardName, backing)
 	if errE != nil {
 		return nil, folder, sdk.WrapError(errE, "createVMConfig> cannot create ethernet card")
 	}
@@ -239,15 +239,20 @@ func (h *HatcheryVSphere) createVMConfig(vm *object.VirtualMachine, annot annota
 			Device:    card,
 		},
 	}
+	resPool, err := h.finder.DefaultResourcePool(ctx)
+	if err != nil {
+		return nil, folder, sdk.WrapError(err, "unable to get default resource pool")
+	}
 
 	relocateSpec := types.VirtualMachineRelocateSpec{
 		DeviceChange: configSpecs,
 		DiskMoveType: string(types.VirtualMachineRelocateDiskMoveOptionsMoveChildMostDiskBacking),
+		Pool:         types.NewReference(resPool.Reference()),
 	}
 
 	ctxC, cancelC = context.WithTimeout(ctx, reqTimeout)
 	defer cancelC()
-	datastore, errD := h.finder.DatastoreOrDefault(ctxC, h.datastoreString)
+	datastore, errD := h.finder.DatastoreOrDefault(ctxC, h.Config.VSphereDatastoreString)
 	if errD != nil {
 		return nil, folder, sdk.WrapError(errD, "createVMConfig> cannot find datastore")
 	}
@@ -259,6 +264,7 @@ func (h *HatcheryVSphere) createVMConfig(vm *object.VirtualMachine, annot annota
 	}
 
 	afterPO := true
+
 	cloneSpec := &types.VirtualMachineCloneSpec{
 		Location: relocateSpec,
 		PowerOn:  true,
@@ -273,6 +279,45 @@ func (h *HatcheryVSphere) createVMConfig(vm *object.VirtualMachine, annot annota
 			},
 		},
 	}
+
+	customSpec := &types.CustomizationSpec{
+		Identity: &types.CustomizationLinuxPrep{
+			HostName: new(types.CustomizationVirtualMachineName),
+		},
+	}
+	// Ip len(ipsInfos.ips) > 0, specify one of those
+	if len(ipsInfos.ips) > 0 {
+		var err error
+		ip, err := h.findAvailableIP(workerName)
+		if err != nil {
+			return nil, folder, sdk.WithStack(err)
+		}
+		log.Debug("Found %s as available IP", ip)
+		customSpec.NicSettingMap = []types.CustomizationAdapterMapping{
+			{
+				Adapter: types.CustomizationIPSettings{
+					Ip:         &types.CustomizationFixedIp{IpAddress: ip},
+					SubnetMask: "255.255.255.0",
+				},
+			},
+		}
+		if h.Config.Gateway != "" {
+			customSpec.NicSettingMap[0].Adapter.Gateway = []string{h.Config.Gateway}
+		}
+		if h.Config.DNS != "" {
+			customSpec.NicSettingMap[0].Adapter.DnsServerList = []string{h.Config.DNS}
+		}
+	}
+	cloneSpec.Customization = customSpec
+
+	// FIXME Windows Identity
+	/*
+		customSpec.Identity = &types.CustomizationSysprep{
+			UserData: types.CustomizationUserData{
+				ComputerName: new(types.CustomizationVirtualMachineName),
+			},
+		}
+	*/
 
 	// Set the destination datastore
 	cloneSpec.Location.Datastore = &datastoreref
@@ -296,16 +341,15 @@ func (h *HatcheryVSphere) launchClientOp(vm *object.VirtualMachine, script strin
 
 	opman := guest.NewOperationsManager(h.vclient.Client, vm.Reference())
 
-	auth := types.NamePasswordAuthentication{
-		Username: "root",
-		Password: "",
-	}
-
-	ctxC, cancelC = context.WithTimeout(ctx, reqTimeout)
-	defer cancelC()
 	procman, errPr := opman.ProcessManager(ctxC)
 	if errPr != nil {
 		return -1, sdk.WrapError(errPr, "launchClientOp> cannot create processManager")
+	}
+
+	// FIXME
+	auth := types.NamePasswordAuthentication{
+		Username: "root",
+		Password: "",
 	}
 
 	guestspec := types.GuestProgramSpec{
@@ -315,8 +359,19 @@ func (h *HatcheryVSphere) launchClientOp(vm *object.VirtualMachine, script strin
 		EnvVariables:     env,
 	}
 
-	ctxTo, cancel := context.WithTimeout(ctx, 4*time.Minute)
-	defer cancel()
+	req := types.StartProgramInGuest{
+		This: procman.Reference(),
+		Vm:   vm.Reference(),
+		Auth: &auth,
+		Spec: &guestspec,
+	}
 
-	return procman.StartProgram(ctxTo, &auth, &guestspec)
+	res, err := methods.StartProgramInGuest(ctx, procman.Client(), &req)
+	if err != nil {
+		return 0, err
+	}
+	if res.Returnval != 0 {
+		log.Warning(ctx, "return code not equal to 0: %d", res.Returnval)
+	}
+	return res.Returnval, nil
 }
