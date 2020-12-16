@@ -168,6 +168,11 @@ func (h *HatcheryVSphere) createVMModel(model sdk.Model, workerName string) (*ob
 	if _, err := task.WaitForResult(ctxTo, nil); err != nil {
 		return vm, sdk.WrapError(err, "error on waiting result for vm renaming %s", model.Name)
 	}
+
+	if err := vm.MarkAsTemplate(ctx); err != nil {
+		return vm, sdk.WrapError(err, "unable to mark vm as template")
+	}
+
 	return vm, nil
 }
 
