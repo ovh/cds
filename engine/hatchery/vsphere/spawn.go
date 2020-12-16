@@ -79,7 +79,15 @@ func (h *HatcheryVSphere) SpawnWorker(ctx context.Context, spawnArgs hatchery.Sp
 		return sdk.WrapError(errW, "state in error")
 	}
 
-	return h.launchScriptWorker(spawnArgs.WorkerName, spawnArgs.JobID, spawnArgs.WorkerToken, *spawnArgs.Model, spawnArgs.RegisterOnly, info.Result.(types.ManagedObjectReference))
+	// Wait for IP
+	vmWorker := object.NewVirtualMachine(h.vclient.Client, info.Result.(types.ManagedObjectReference))
+	ip, errW := vmWorker.WaitForIP(ctx, true)
+	if errW != nil {
+		return sdk.WrapError(errW, "SpawnWorker> cannot get an ip")
+	}
+	log.Debug("SpawnWorker>  New IP: %s", ip)
+
+	return h.launchScriptWorker(spawnArgs.WorkerName, spawnArgs.JobID, spawnArgs.WorkerToken, *spawnArgs.Model, spawnArgs.RegisterOnly, vmWorker)
 }
 
 // createVMModel create a model for a specific worker model
@@ -160,19 +168,12 @@ func (h *HatcheryVSphere) createVMModel(model sdk.Model, workerName string) (*ob
 	if _, err := task.WaitForResult(ctxTo, nil); err != nil {
 		return vm, sdk.WrapError(err, "error on waiting result for vm renaming %s", model.Name)
 	}
-
-	if err := vm.MarkAsTemplate(ctx); err != nil {
-		return vm, sdk.WrapError(err, "createVMModel> unable to mark %s as a tempalte", model.Name)
-	}
-
 	return vm, nil
 }
 
 // launchScriptWorker launch a script on the worker
-func (h *HatcheryVSphere) launchScriptWorker(name string, jobID int64, token string, model sdk.Model, registerOnly bool, vmInfo types.ManagedObjectReference) error {
+func (h *HatcheryVSphere) launchScriptWorker(name string, jobID int64, token string, model sdk.Model, registerOnly bool, vm *object.VirtualMachine) error {
 	ctx := context.Background()
-	// Retrieve the new VM
-	vm := object.NewVirtualMachine(h.vclient.Client, vmInfo)
 
 	ctxTo, cancel := context.WithTimeout(ctx, 2*time.Minute)
 	defer cancel()

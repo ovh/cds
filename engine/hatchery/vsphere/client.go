@@ -232,6 +232,15 @@ func (h *HatcheryVSphere) createVMConfig(vm *object.VirtualMachine, annot annota
 	//set backing info
 	card.Backing = device.(types.BaseVirtualEthernetCard).GetVirtualEthernetCard().Backing
 
+	/* FIXME
+	if card.Connectable == nil {
+		card.Connectable = &types.VirtualDeviceConnectInfo{}
+	}
+	card.Connectable.StartConnected = true
+	card.Connectable.Connected = true
+
+	*/
+
 	// prepare virtual device config spec for network card
 	configSpecs := []types.BaseVirtualDeviceConfigSpec{
 		&types.VirtualDeviceConfigSpec{
@@ -305,8 +314,9 @@ func (h *HatcheryVSphere) createVMConfig(vm *object.VirtualMachine, annot annota
 			customSpec.NicSettingMap[0].Adapter.Gateway = []string{h.Config.Gateway}
 		}
 		if h.Config.DNS != "" {
-			customSpec.NicSettingMap[0].Adapter.DnsServerList = []string{h.Config.DNS}
+			customSpec.GlobalIPSettings = types.CustomizationGlobalIPSettings{DnsServerList: []string{h.Config.DNS}}
 		}
+		log.Debug("%s / %+v / %+v", ip, customSpec.NicSettingMap[0].Adapter.Gateway, customSpec.NicSettingMap[0].Adapter.DnsServerList)
 	}
 	cloneSpec.Customization = customSpec
 
@@ -369,9 +379,6 @@ func (h *HatcheryVSphere) launchClientOp(vm *object.VirtualMachine, script strin
 	res, err := methods.StartProgramInGuest(ctx, procman.Client(), &req)
 	if err != nil {
 		return 0, err
-	}
-	if res.Returnval != 0 {
-		log.Warning(ctx, "return code not equal to 0: %d", res.Returnval)
 	}
 	return res.Returnval, nil
 }
