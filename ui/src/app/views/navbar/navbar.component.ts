@@ -53,7 +53,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
     recentView = true;
     currentUser: AuthentifiedUser;
     themeSubscription: Subscription;
-    themeSwitch = new FormControl();
+    darkActive: boolean;
     searchValue: string;
     searchProjects: Array<NavbarSearchItem>;
     searchApplications: Array<NavbarSearchItem>;
@@ -82,7 +82,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
         });
 
         this.themeSubscription = this._theme.get().subscribe(t => {
-            this.themeSwitch.setValue(t === 'night');
+            this.darkActive = t === 'night';
             this._cd.markForCheck();
         });
 
@@ -105,8 +105,9 @@ export class NavbarComponent implements OnInit, OnDestroy {
     ngOnDestroy(): void {} // Should be set to use @AutoUnsubscribe with AOT
 
     changeTheme() {
-        let darkActive = !!this.themeSwitch.value;
-        this._theme.set(darkActive ? 'night' : 'light');
+        this.darkActive = !this.darkActive;
+        this._theme.set(this.darkActive ? 'night' : 'light');
+        this._cd.markForCheck();
     }
 
     ngOnInit() {
