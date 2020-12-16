@@ -9,6 +9,7 @@ import (
 
 	"github.com/ovh/cds/engine/worker/pkg/workerruntime"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/log"
 )
 
 func RunRelease(ctx context.Context, wk workerruntime.Runtime, a sdk.Action, secrets []sdk.Variable) (sdk.Result, error) {
@@ -65,8 +66,15 @@ func RunRelease(ctx context.Context, wk workerruntime.Runtime, a sdk.Action, sec
 		Artifacts:      artSplitted,
 	}
 
-	if err := wk.Client().WorkflowNodeRunRelease(pkey.Value, wName.Value, wRunNumber, jobID, req); err != nil {
-		return res, fmt.Errorf("Cannot make workflow node run release: %s", err)
+	jobrun, err := wk.Client().QueueJobInfo(ctx, jobID)
+	if err != nil {
+		return res, fmt.Errorf("unable to get job info: %v", err)
+	}
+
+	log.Info(ctx, "RunRelease> jobRunID=%v WorkflowNodeRunID:%v", jobID, jobrun.WorkflowNodeRunID)
+
+	if err := wk.Client().WorkflowNodeRunRelease(pkey.Value, wName.Value, wRunNumber, jobrun.WorkflowNodeRunID, req); err != nil {
+		return res, fmt.Errorf("unable to make workflow node run release: %v", err)
 	}
 
 	return sdk.Result{Status: sdk.StatusSuccess}, nil

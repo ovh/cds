@@ -514,7 +514,7 @@ func (s *stack) String() string {
 			} else {
 				name = sp[1]
 			}
-			ignoredNames := StringSlice{"NewError", "NewErrorFrom", "WithStack", "WrapError", "Append", "NewErrorWithStack"}
+			ignoredNames := StringSlice{"NewError", "NewErrorFrom", "WithStack", "WrapError", "Append", "NewErrorWithStack", "extractBodyErrorFromResponse", "Stream"}
 			if !ignoredNames.Contains(name) {
 				names = append(names, name)
 			}

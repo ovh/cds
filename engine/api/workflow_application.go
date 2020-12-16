@@ -21,29 +21,29 @@ func (api *API) releaseApplicationWorkflowHandler() service.Handler {
 		vars := mux.Vars(r)
 		key := vars["key"]
 		name := vars["permWorkflowName"]
-		nodeRunID, errN := requestVarInt(r, "nodeRunID")
-		if errN != nil {
-			return errN
+		nodeRunID, err := requestVarInt(r, "nodeRunID")
+		if err != nil {
+			return err
 		}
 
 		var req sdk.WorkflowNodeRunRelease
-		if errU := service.UnmarshalBody(r, &req); errU != nil {
-			return errU
+		if err := service.UnmarshalBody(r, &req); err != nil {
+			return err
 		}
 
-		proj, errprod := project.Load(ctx, api.mustDB(), key)
-		if errprod != nil {
-			return sdk.WrapError(errprod, "releaseApplicationWorkflowHandler")
+		proj, err := project.Load(ctx, api.mustDB(), key)
+		if err != nil {
+			return err
 		}
 		loadOpts := workflow.LoadRunOptions{WithArtifacts: true}
-		wNodeRun, errWNR := workflow.LoadNodeRun(api.mustDB(), key, name, nodeRunID, loadOpts)
-		if errWNR != nil {
-			return sdk.WrapError(errWNR, "releaseApplicationWorkflowHandler")
+		wNodeRun, err := workflow.LoadNodeRun(api.mustDB(), key, name, nodeRunID, loadOpts)
+		if err != nil {
+			return err
 		}
 
-		workflowRun, errWR := workflow.LoadRunByIDAndProjectKey(api.mustDB(), key, wNodeRun.WorkflowRunID, loadOpts)
-		if errWR != nil {
-			return sdk.WrapError(errWR, "releaseApplicationWorkflowHandler")
+		workflowRun, err := workflow.LoadRunByIDAndProjectKey(api.mustDB(), key, wNodeRun.WorkflowRunID, loadOpts)
+		if err != nil {
+			return err
 		}
 
 		workflowArtifacts := []sdk.WorkflowNodeRunArtifact{}
