@@ -10,6 +10,7 @@ import (
 
 	"github.com/go-gorp/gorp"
 
+	"github.com/ovh/cds/engine/cdn/storage/cds"
 	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
@@ -248,6 +249,10 @@ func (r *RunningStorageUnits) Start(ctx context.Context, gorts *sdk.GoRoutines) 
 			case <-tickr.C:
 				for i := range r.Storages {
 					s := r.Storages[i]
+					_, ok := s.(*cds.CDS)
+					if ok {
+						continue
+					}
 					gorts.Exec(ctx, "RunningStorageUnits.run."+s.Name(),
 						func(ctx context.Context) {
 							if err := r.Run(ctx, s, 100); err != nil {
