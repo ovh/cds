@@ -345,7 +345,8 @@ func Test_postAuthSigninHandler_WithCorporateSSO(t *testing.T) {
 		requestedJWS = redirectInfo.Body["request"]
 		var data = sdk.AuthConsumerSigninRequest{}
 		data["state"] = requestedJWS
-		require.NoError(t, api.AuthenticationDrivers[sdk.ConsumerCorporateSSO].(sdk.AuthDriverWithSigninStateToken).CheckSigninStateToken(data))
+		err := api.AuthenticationDrivers[sdk.ConsumerCorporateSSO].(sdk.AuthDriverWithSigninStateToken).CheckSigninStateToken(data)
+		require.NoError(t, err)
 	})
 
 	t.Run("Test_postAuthSigninHandler_WithCorporateSSO", func(t *testing.T) {

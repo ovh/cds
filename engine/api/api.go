@@ -109,12 +109,13 @@ type Configuration struct {
 			SignupAllowedDomains string `toml:"signupAllowedDomains" default:"" comment:"Allow signup from selected domains only - comma separated. Example: your-domain.com,another-domain.com" commented:"true" json:"signupAllowedDomains"`
 		} `toml:"local" json:"local"`
 		CorporateSSO struct {
-			Enabled        bool   `json:"enabled" default:"false" toml:"enabled"`
-			SignupDisabled bool   `json:"signupDisabled" default:"false" toml:"signupDisabled"`
-			MailDomain     string `json:"mailDomain" toml:"mailDomain"`
-			RedirectMethod string `json:"redirect_method" toml:"redirectMethod"`
-			RedirectURL    string `json:"redirect_url" toml:"redirectURL"`
-			Keys           struct {
+			MFASupportEnabled bool   `json:"mfa_support_enabled" default:"false" toml:"mfaSupportEnabled"`
+			Enabled           bool   `json:"enabled" default:"false" toml:"enabled"`
+			SignupDisabled    bool   `json:"signupDisabled" default:"false" toml:"signupDisabled"`
+			MailDomain        string `json:"mailDomain" toml:"mailDomain"`
+			RedirectMethod    string `json:"redirect_method" toml:"redirectMethod"`
+			RedirectURL       string `json:"redirect_url" toml:"redirectURL"`
+			Keys              struct {
 				RequestSigningKey  string `json:"-" toml:"requestSigningKey"`
 				TokenSigningKey    string `json:"-" toml:"tokenSigningKey"`
 				TokenKeySigningKey struct {
@@ -636,7 +637,8 @@ func (a *API) Serve(ctx context.Context) error {
 
 	if a.Config.Auth.CorporateSSO.Enabled {
 		driverConfig := corpsso.Config{
-			MailDomain: a.Config.Auth.CorporateSSO.MailDomain,
+			MailDomain:        a.Config.Auth.CorporateSSO.MailDomain,
+			MFASupportEnabled: a.Config.Auth.CorporateSSO.MFASupportEnabled,
 		}
 		driverConfig.Request.Keys.RequestSigningKey = a.Config.Auth.CorporateSSO.Keys.RequestSigningKey
 		driverConfig.Request.RedirectMethod = a.Config.Auth.CorporateSSO.RedirectMethod
@@ -835,14 +837,12 @@ func (a *API) Serve(ctx context.Context) error {
 	}
 
 	go func() {
-		select {
-		case <-ctx.Done():
-			log.Warning(ctx, "Cleanup SQL connections")
-			s.Shutdown(ctx)
-			a.DBConnectionFactory.Close()
-			event.Publish(ctx, sdk.EventEngine{Message: "shutdown"}, nil)
-			event.Close(ctx)
-		}
+		<-ctx.Done()
+		log.Warning(ctx, "Cleanup SQL connections")
+		s.Shutdown(ctx)               // nolint
+		a.DBConnectionFactory.Close() // nolint
+		event.Publish(ctx, sdk.EventEngine{Message: "shutdown"}, nil)
+		event.Close(ctx)
 	}()
 
 	event.Publish(ctx, sdk.EventEngine{Message: fmt.Sprintf("started - listen on %d", a.Config.HTTP.Port)}, nil)

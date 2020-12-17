@@ -14,7 +14,7 @@ import (
 // AuthDriver interface.
 type AuthDriver interface {
 	GetManifest() AuthDriverManifest
-	GetSessionDuration() time.Duration
+	GetSessionDuration(AuthDriverUserInfo, AuthConsumer) time.Duration
 	CheckSigninRequest(AuthConsumerSigninRequest) error
 	GetUserInfo(context.Context, AuthConsumerSigninRequest) (AuthDriverUserInfo, error)
 }
@@ -397,6 +397,7 @@ type AuthConsumer struct {
 	Groups           Groups            `json:"groups,omitempty" db:"-"`
 	Service          *Service          `json:"-" db:"-"`
 	Worker           *Worker           `json:"-" db:"-"`
+	SupportMFA       bool              `json:"support_mfa" db:"-"`
 }
 
 // IsValid returns validity for auth consumer.
@@ -496,7 +497,8 @@ type AuthSession struct {
 
 // AuthSessionJWTClaims is the specific claims format for JWT session.
 type AuthSessionJWTClaims struct {
-	ID string
+	ID  string
+	MFA bool
 	jwt.StandardClaims
 }
 

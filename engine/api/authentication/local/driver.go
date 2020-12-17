@@ -39,7 +39,7 @@ func (d AuthDriver) GetManifest() sdk.AuthDriverManifest {
 }
 
 // GetSessionDuration .
-func (d AuthDriver) GetSessionDuration() time.Duration {
+func (d AuthDriver) GetSessionDuration(_ sdk.AuthDriverUserInfo, _ sdk.AuthConsumer) time.Duration {
 	return time.Hour * 24 * 30 // 1 month session
 }
 

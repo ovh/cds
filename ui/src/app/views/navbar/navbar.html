@@ -311,9 +311,9 @@
             </div>
         </ng-template>
 
-        <sm-dropdown icon="settings" *ngIf="currentUser">
-            <a sm-item href="#" [routerLink]="['settings', 'user', currentUser.username]">{{ 'navbar_profile' |
-                translate }}</a>
+        <sm-dropdown icon="settings" *ngIf="currentUser && currentSession && currentConsumer">
+            <a sm-item href="#"
+                [routerLink]="['settings', 'user', currentUser.username]">{{ 'navbar_profile' | translate }}</a>
             <a sm-item href="#" [routerLink]="['settings', 'cdsctl']">{{ 'navbar_cdsctl' | translate }}</a>
             <a sm-item href="#" [routerLink]="['settings', 'action']">{{ 'navbar_actions' | translate }}</a>
             <a sm-item href="#" [routerLink]="['settings', 'user']">{{ 'navbar_users' | translate }}</a>
@@ -331,6 +331,7 @@
             <sui-checkbox class="toggle theme-switch" [ngModel]="darkActive" (ngModelChange)="changeTheme()">
                 {{'navbar_dark_mode' | translate}}</sui-checkbox>
             <div class="divider"></div>
+            <a sm-item (click)="mfaLogin()" *ngIf="isMFAavailable()"> {{ 'navbar_mfa' | translate }} </a>
             <a sm-item (click)="clickLogout()">{{ 'navbar_disconnect' | translate }}</a>
         </sm-dropdown>
 
