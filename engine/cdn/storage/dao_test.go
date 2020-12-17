@@ -104,6 +104,7 @@ func TestLoadOldItemUnitByItemStatusAndDuration(t *testing.T) {
 }
 
 func TestLoadAllItemIDUnknownByUnitOrderByUnitID(t *testing.T) {
+	t.SkipNow()
 	m := gorpmapper.New()
 	item.InitDBMapping(m)
 	storage.InitDBMapping(m)
