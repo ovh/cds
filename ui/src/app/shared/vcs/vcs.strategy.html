@@ -29,7 +29,7 @@
                             </app-parameter-value>
                         </div>
                     </div>
-                    <div class="one wide field">
+                    <div class="one wide field" *ngIf="selectedPublicKey">
                         <button class="ui icon button copyButton" [title]="'key_copy_public' | translate" ngxClipboard
                             [cbContent]="selectedPublicKey" (click)="clickCopyKey()">
                             <i class="copy icon"></i>
