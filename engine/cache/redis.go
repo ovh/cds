@@ -486,6 +486,15 @@ func (s *RedisStore) Size(key string) (int64, error) {
 	return oct, sdk.WithStack(err)
 }
 
+func (s *RedisStore) ScoredSetGetScore(key string, member interface{}) (float64, error) {
+	bts, err := json.Marshal(member)
+	if err != nil {
+		return 0, nil
+	}
+	score, err := s.Client.ZScore(key, string(bts)).Result()
+	return score, sdk.WithStack(err)
+}
+
 func (s *RedisStore) ScoredSetAppend(ctx context.Context, key string, value interface{}) error {
 	highItem, err := s.Client.ZRevRange(key, 0, 0).Result()
 	if err != nil {
