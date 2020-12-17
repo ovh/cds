@@ -46,7 +46,7 @@ func replaceDockerRegistryPassword(db gorp.SqlExecutor, dbmodel *workerModel) (b
 		dbmodel.ModelDocker.Username = ""
 		dbmodel.ModelDocker.Password = ""
 		if dbmodel.ID > 0 {
-			if err := DeleteSecretRegistryPasswordForModelID(db, dbmodel.ID, registryPasswordSecretName); err != nil {
+			if err := DeleteSecretForModelID(db, dbmodel.ID, registryPasswordSecretName); err != nil {
 				return false, "", err
 			}
 		}
@@ -72,7 +72,7 @@ func replaceVSphereVMPassword(db gorp.SqlExecutor, dbmodel *workerModel) (bool, 
 		dbmodel.ModelVirtualMachine.User = ""
 		dbmodel.ModelVirtualMachine.Password = ""
 		if dbmodel.ID > 0 {
-			if err := DeleteSecretRegistryPasswordForModelID(db, dbmodel.ID, vpsherePasswordSecretName); err != nil {
+			if err := DeleteSecretForModelID(db, dbmodel.ID, vpsherePasswordSecretName); err != nil {
 				return false, "", err
 			}
 		}
