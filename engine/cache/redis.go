@@ -489,7 +489,7 @@ func (s *RedisStore) Size(key string) (int64, error) {
 func (s *RedisStore) ScoredSetGetScore(key string, member interface{}) (float64, error) {
 	bts, err := json.Marshal(member)
 	if err != nil {
-		return 0, nil
+		return 0, sdk.WithStack(err)
 	}
 	score, err := s.Client.ZScore(key, string(bts)).Result()
 	return score, sdk.WithStack(err)
