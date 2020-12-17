@@ -30,6 +30,10 @@ func init() {
 	storage.RegisterDriver("redis", new(Redis))
 }
 
+func (s *Redis) CanBeSync() bool {
+	return false
+}
+
 func (s *Redis) Init(_ context.Context, cfg interface{}) error {
 	config, is := cfg.(storage.RedisBufferConfiguration)
 	if !is {

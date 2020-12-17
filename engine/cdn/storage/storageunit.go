@@ -10,7 +10,6 @@ import (
 
 	"github.com/go-gorp/gorp"
 
-	"github.com/ovh/cds/engine/cdn/storage/cds"
 	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
@@ -200,6 +199,9 @@ func Init(ctx context.Context, m *gorpmapper.Mapper, db *gorp.DbMap, gorts *sdk.
 func (r *RunningStorageUnits) Start(ctx context.Context, gorts *sdk.GoRoutines) {
 	for i := range r.Storages {
 		s := r.Storages[i]
+		if !s.CanBeSync() {
+			continue
+		}
 		// Start the sync processes
 		for x := 0; x < cap(s.SyncItemChannel()); x++ {
 			gorts.Run(ctx, fmt.Sprintf("RunningStorageUnits.process.%s.%d", s.Name(), x),
@@ -249,8 +251,7 @@ func (r *RunningStorageUnits) Start(ctx context.Context, gorts *sdk.GoRoutines) 
 			case <-tickr.C:
 				for i := range r.Storages {
 					s := r.Storages[i]
-					_, ok := s.(*cds.CDS)
-					if ok {
+					if !s.CanBeSync() {
 						continue
 					}
 					gorts.Exec(ctx, "RunningStorageUnits.run."+s.Name(),

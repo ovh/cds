@@ -45,6 +45,7 @@ type Interface interface {
 	ItemExists(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlExecutor, i sdk.CDNItem) (bool, error)
 	Status(ctx context.Context) []sdk.MonitoringStatusLine
 	SyncBandwidth() float64
+	CanBeSync() bool
 	Remove(ctx context.Context, i sdk.CDNItemUnit) error
 }
 

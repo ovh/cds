@@ -29,6 +29,10 @@ func (c *CDS) GetClient() cdsclient.Interface {
 	return c.client
 }
 
+func (c *CDS) CanBeSync() bool {
+	return false
+}
+
 func (c *CDS) Init(ctx context.Context, cfg interface{}) error {
 	config, is := cfg.(*storage.CDSStorageConfiguration)
 	if !is {
