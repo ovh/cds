@@ -299,22 +299,32 @@ func CountItemUnitByUnit(db gorp.SqlExecutor, unitID string) (int64, error) {
 }
 
 func LoadAllItemIDUnknownByUnitOrderByUnitID(db gorp.SqlExecutor, unitID string, orderUnitID string, limit int64) ([]string, error) {
+	/*
+		query := `
+		WITH filteredItem as (
+				SELECT item.id, sui.unit_id
+				FROM item
+				JOIN storage_unit_item sui ON item.id = sui.item_id
+				LEFT JOIN storage_unit_item iu2 ON item.id = iu2.item_id AND iu2.unit_id = $1
+				WHERE item.status = $3 AND iu2.unit_id is null
+				AND item.to_delete = false
+		)
+		SELECT id FROM filteredItem
+		ORDER BY CASE WHEN unit_id = $4 THEN 1
+					  ELSE 2
+				  END
+		LIMIT $2`
+	*/
 	query := `
-	WITH filteredItem as (
-			SELECT item.id, sui.unit_id
-			FROM item
-			JOIN storage_unit_item sui ON item.id = sui.item_id
-			LEFT JOIN storage_unit_item iu2 ON item.id = iu2.item_id AND iu2.unit_id = $1
-			WHERE item.status = $3 AND iu2.unit_id is null
-			AND item.to_delete = false
-	)
-	SELECT id FROM filteredItem
-	ORDER BY CASE WHEN unit_id = $4 THEN 1
-				  ELSE 2
-			  END
-	LIMIT $2`
+	  SELECT item.id
+	  FROM item
+	  LEFT JOIN storage_unit_item sui ON item.id = sui.item_id AND sui.unit_id = $1
+	  WHERE item.status = $3 AND sui.unit_id is null
+	  AND item.to_delete = false
+	  LIMIT $2
+	`
 	var res []string
-	if _, err := db.Select(&res, query, unitID, limit, sdk.CDNStatusItemCompleted, orderUnitID); err != nil {
+	if _, err := db.Select(&res, query, unitID, limit, sdk.CDNStatusItemCompleted); err != nil {
 		return nil, sdk.WithStack(err)
 	}
 
