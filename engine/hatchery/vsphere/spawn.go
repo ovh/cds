@@ -133,7 +133,7 @@ func (h *HatcheryVSphere) createVMModel(model sdk.Model, workerName string) (*ob
 		return vm, sdk.WrapError(errW, "createVMModel> cannot get an ip")
 	}
 
-	if _, errS := h.launchClientOp(vm, model.ModelVirtualMachine.PostCmd, nil); errS != nil {
+	if _, errS := h.launchClientOp(vm, model.ModelVirtualMachine, model.ModelVirtualMachine.PostCmd, nil); errS != nil {
 		log.Warning(ctx, "createVMModel> cannot start program %s", errS)
 		annot := annotation{ToDelete: true}
 		if annotStr, err := json.Marshal(annot); err == nil {
@@ -224,7 +224,7 @@ func (h *HatcheryVSphere) launchScriptWorker(name string, jobID int64, token str
 		return err
 	}
 
-	if _, errS := h.launchClientOp(vm, buffer.String(), env); errS != nil {
+	if _, errS := h.launchClientOp(vm, model.ModelVirtualMachine, buffer.String(), env); errS != nil {
 		log.Warning(ctx, "launchScript> cannot start program %s", errS)
 
 		// tag vm to delete

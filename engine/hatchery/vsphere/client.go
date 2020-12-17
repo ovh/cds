@@ -232,15 +232,6 @@ func (h *HatcheryVSphere) createVMConfig(vm *object.VirtualMachine, annot annota
 	//set backing info
 	card.Backing = device.(types.BaseVirtualEthernetCard).GetVirtualEthernetCard().Backing
 
-	/* FIXME
-	if card.Connectable == nil {
-		card.Connectable = &types.VirtualDeviceConnectInfo{}
-	}
-	card.Connectable.StartConnected = true
-	card.Connectable.Connected = true
-
-	*/
-
 	// prepare virtual device config spec for network card
 	configSpecs := []types.BaseVirtualDeviceConfigSpec{
 		&types.VirtualDeviceConfigSpec{
@@ -336,7 +327,7 @@ func (h *HatcheryVSphere) createVMConfig(vm *object.VirtualMachine, annot annota
 }
 
 // launchClientOp launch a script on the virtual machine given in parameters
-func (h *HatcheryVSphere) launchClientOp(vm *object.VirtualMachine, script string, env []string) (int64, error) {
+func (h *HatcheryVSphere) launchClientOp(vm *object.VirtualMachine, model sdk.ModelVirtualMachine, script string, env []string) (int64, error) {
 	ctx := context.Background()
 	ctxC, cancelC := context.WithTimeout(ctx, reqTimeout)
 	defer cancelC()
@@ -356,10 +347,9 @@ func (h *HatcheryVSphere) launchClientOp(vm *object.VirtualMachine, script strin
 		return -1, sdk.WrapError(errPr, "launchClientOp> cannot create processManager")
 	}
 
-	// FIXME
 	auth := types.NamePasswordAuthentication{
-		Username: "root",
-		Password: "",
+		Username: model.User,
+		Password: model.Password,
 	}
 
 	guestspec := types.GuestProgramSpec{

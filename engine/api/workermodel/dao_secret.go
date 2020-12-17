@@ -96,7 +96,7 @@ func UpdateSecret(ctx context.Context, db gorpmapper.SqlExecutorWithTx, s *sdk.W
 }
 
 // DeleteSecretRegistryPasswordForModelID remove registry secret from database for given model.
-func DeleteSecretRegistryPasswordForModelID(db gorp.SqlExecutor, workerModelID int64) error {
-	_, err := db.Exec("DELETE FROM worker_model_secret WHERE worker_model_id = $1 AND name = $2", workerModelID, registryPasswordSecretName)
-	return sdk.WrapError(err, "unable to remove worker model secret for docker registry with worker model id %d", workerModelID)
+func DeleteSecretRegistryPasswordForModelID(db gorp.SqlExecutor, workerModelID int64, field string) error {
+	_, err := db.Exec("DELETE FROM worker_model_secret WHERE worker_model_id = $1 AND name = $2", workerModelID, field)
+	return sdk.WrapError(err, "unable to remove worker model secret for worker model id %d", workerModelID)
 }
