@@ -132,6 +132,9 @@ func TestGetItemsAllLogsLinesHandler(t *testing.T) {
 
 	unit, err := storage.LoadUnitByName(ctx, s.Mapper, s.mustDBWithCtx(ctx), s.Units.Storages[0].Name())
 	require.NoError(t, err)
+
+	require.NoError(t, s.Units.Run(ctx, s.Units.Storages[0], 1000))
+
 	cpt := 0
 	for {
 		cpt++
