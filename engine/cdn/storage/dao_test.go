@@ -200,7 +200,7 @@ func TestLoadAllItemIDUnknownByUnitOrderByUnitID(t *testing.T) {
 	}
 	require.NoError(t, storage.InsertItemUnit(context.TODO(), m, db, &iu4))
 
-	itemIDS, err := storage.LoadAllItemIDUnknownByUnitOrderByUnitID(db, cdnUnits.Storages[0].ID(), cdnUnits.Buffer.ID(), 100)
+	itemIDS, err := storage.LoadAllItemIDUnknownByUnit(db, cdnUnits.Storages[0].ID(), 100)
 	require.NoError(t, err)
 
 	require.Equal(t, 3, len(itemIDS))
