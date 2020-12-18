@@ -30,7 +30,7 @@ func (c *CDS) GetClient() cdsclient.Interface {
 }
 
 func (c *CDS) CanBeSync() bool {
-	return false
+	return true
 }
 
 func (c *CDS) Init(ctx context.Context, cfg interface{}) error {
