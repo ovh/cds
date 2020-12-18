@@ -147,6 +147,10 @@ func TestRun(t *testing.T) {
 	require.NoError(t, err)
 	require.False(t, exists)
 
+	require.NoError(t, cdnUnits.Run(ctx, cdnUnits.Storages[0], 1000))
+	time.Sleep(250 * time.Millisecond)
+	require.NoError(t, cdnUnits.Run(ctx, cdnUnits.Storages[1], 1000))
+
 	<-ctx.Done()
 
 	// Check that the first unit has been resync
