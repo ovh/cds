@@ -240,7 +240,7 @@ func (r *RunningStorageUnits) Start(ctx context.Context, gorts *sdk.GoRoutines) 
 
 	// 	Feed the sync processes with a ticker
 	gorts.Run(ctx, "RunningStorageUnits.Start", func(ctx context.Context) {
-		tickr := time.NewTicker(time.Second)
+		tickr := time.NewTicker(5 * time.Minute)
 		tickrPurge := time.NewTicker(30 * time.Second)
 
 		defer tickr.Stop()
@@ -259,7 +259,7 @@ func (r *RunningStorageUnits) Start(ctx context.Context, gorts *sdk.GoRoutines) 
 					gorts.Exec(ctx, "RunningStorageUnits.run."+s.Name(),
 						func(ctx context.Context) {
 							wg.Add(1)
-							if err := r.Run(ctx, s, 100); err != nil {
+							if err := r.Run(ctx, s, 1000); err != nil {
 								log.ErrorWithFields(ctx, log.Fields{"stack_trace": fmt.Sprintf("%+v", err)}, "RunningStorageUnits.run> error: %v", err)
 							}
 							wg.Done()
