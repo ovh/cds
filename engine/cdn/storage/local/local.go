@@ -28,6 +28,10 @@ func init() {
 	storage.RegisterDriver("local", new(Local))
 }
 
+func (s *Local) CanBeSync() bool {
+	return true
+}
+
 func (s *Local) Init(ctx context.Context, cfg interface{}) error {
 	config, is := cfg.(*storage.LocalStorageConfiguration)
 	if !is {

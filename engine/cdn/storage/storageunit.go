@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"math"
+	"sync"
 	"time"
 
 	"github.com/go-gorp/gorp"
@@ -199,6 +200,9 @@ func Init(ctx context.Context, m *gorpmapper.Mapper, db *gorp.DbMap, gorts *sdk.
 func (r *RunningStorageUnits) Start(ctx context.Context, gorts *sdk.GoRoutines) {
 	for i := range r.Storages {
 		s := r.Storages[i]
+		if !s.CanBeSync() {
+			continue
+		}
 		// Start the sync processes
 		for x := 0; x < cap(s.SyncItemChannel()); x++ {
 			gorts.Run(ctx, fmt.Sprintf("RunningStorageUnits.process.%s.%d", s.Name(), x),
@@ -246,16 +250,23 @@ func (r *RunningStorageUnits) Start(ctx context.Context, gorts *sdk.GoRoutines) 
 			case <-ctx.Done():
 				return
 			case <-tickr.C:
+				wg := sync.WaitGroup{}
 				for i := range r.Storages {
 					s := r.Storages[i]
+					if !s.CanBeSync() {
+						continue
+					}
 					gorts.Exec(ctx, "RunningStorageUnits.run."+s.Name(),
 						func(ctx context.Context) {
+							wg.Add(1)
 							if err := r.Run(ctx, s, 100); err != nil {
 								log.ErrorWithFields(ctx, log.Fields{"stack_trace": fmt.Sprintf("%+v", err)}, "RunningStorageUnits.run> error: %v", err)
 							}
+							wg.Done()
 						},
 					)
 				}
+				wg.Wait()
 			case <-tickrPurge.C:
 				gorts.Exec(ctx, "RunningStorageUnits.purge."+r.Buffer.Name(),
 					func(ctx context.Context) {

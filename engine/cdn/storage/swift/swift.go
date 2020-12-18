@@ -32,6 +32,10 @@ func init() {
 	storage.RegisterDriver("swift", new(Swift))
 }
 
+func (s *Swift) CanBeSync() bool {
+	return true
+}
+
 func (s *Swift) Init(_ context.Context, cfg interface{}) error {
 	config, is := cfg.(*storage.SwiftStorageConfiguration)
 	if !is {
