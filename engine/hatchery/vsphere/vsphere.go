@@ -125,7 +125,7 @@ func (h *HatcheryVSphere) CheckConfiguration(cfg interface{}) error {
 	if hconfig.IPRange != "" {
 		ips, err := sdk.IPinRanges(context.Background(), hconfig.IPRange)
 		if err != nil {
-			return fmt.Errorf("flag or environment variable openstack-ip-range error: %s", err)
+			return fmt.Errorf("flag or environment variable openstack-ip-range error: %v", err)
 		}
 		for _, ip := range ips {
 			ipsInfos.ips[ip] = ipInfos{}

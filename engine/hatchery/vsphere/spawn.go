@@ -34,22 +34,20 @@ func (h *HatcheryVSphere) SpawnWorker(ctx context.Context, spawnArgs hatchery.Sp
 	}
 
 	var vm *object.VirtualMachine
-	var errV error
-	_, errM := h.getModelByName(ctx, spawnArgs.Model.Name)
+	_, err := h.getModelByName(ctx, spawnArgs.Model.Name)
 
-	if errM != nil || spawnArgs.Model.NeedRegistration {
+	if err != nil || spawnArgs.Model.NeedRegistration {
 		// Generate worker model vm
-		vm, errV = h.createVMModel(*spawnArgs.Model, spawnArgs.WorkerName)
-		if errV != nil {
-			log.Error(ctx, "Unable to create VM Model: %v", errV)
-			return errV
+		vm, err = h.createVMModel(*spawnArgs.Model, spawnArgs.WorkerName)
+		if err != nil {
+			log.Error(ctx, "Unable to create VM Model: %v", err)
+			return err
 		}
 	}
 
-	if vm == nil || errV != nil {
-		spawnArgs.Model.NeedRegistration = errV != nil // if we haven't registered
-		if vm, errV = h.finder.VirtualMachine(ctx, spawnArgs.Model.Name); errV != nil {
-			return sdk.WrapError(errV, "cannot find virtual machine with this model")
+	if vm == nil {
+		if vm, err = h.finder.VirtualMachine(ctx, spawnArgs.Model.Name); err != nil {
+			return sdk.WrapError(err, "cannot find virtual machine with this model")
 		}
 	}
 
@@ -62,9 +60,9 @@ func (h *HatcheryVSphere) SpawnWorker(ctx context.Context, spawnArgs hatchery.Sp
 		Created:                 time.Now(),
 	}
 
-	cloneSpec, folder, errCfg := h.createVMConfig(vm, annot, spawnArgs.WorkerName)
-	if errCfg != nil {
-		return sdk.WrapError(errCfg, "cannot create VM configuration")
+	cloneSpec, folder, err := h.createVMConfig(vm, annot, spawnArgs.WorkerName)
+	if err != nil {
+		return sdk.WrapError(err, "cannot create VM configuration")
 	}
 
 	log.Info(ctx, "Create vm to exec worker %s", spawnArgs.WorkerName)
@@ -74,16 +72,16 @@ func (h *HatcheryVSphere) SpawnWorker(ctx context.Context, spawnArgs hatchery.Sp
 		return sdk.WrapError(errC, "cannot clone VM")
 	}
 
-	info, errW := task.WaitForResult(ctx, nil)
-	if errW != nil || info.State == types.TaskInfoStateError {
-		return sdk.WrapError(errW, "state in error")
+	info, err := task.WaitForResult(ctx, nil)
+	if err != nil || info.State == types.TaskInfoStateError {
+		return sdk.WrapError(err, "state in error")
 	}
 
 	// Wait for IP
 	vmWorker := object.NewVirtualMachine(h.vclient.Client, info.Result.(types.ManagedObjectReference))
-	ip, errW := vmWorker.WaitForIP(ctx, true)
-	if errW != nil {
-		return sdk.WrapError(errW, "SpawnWorker> cannot get an ip")
+	ip, err := vmWorker.WaitForIP(ctx, true)
+	if err != nil {
+		return sdk.WrapError(err, "SpawnWorker> cannot get an ip")
 	}
 	log.Debug("SpawnWorker>  New IP: %s", ip)
 
