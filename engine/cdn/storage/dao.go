@@ -305,7 +305,7 @@ func LoadAllItemIDUnknownByUnit(db gorp.SqlExecutor, unitID string, limit int64)
 	  LEFT JOIN storage_unit_item sui ON item.id = sui.item_id AND sui.unit_id = $1
 	  WHERE item.status = $3 AND sui.unit_id is null
 	  AND item.to_delete = false
-      ORDER BY item.last_modified ASC
+      ORDER BY item.created DESC
 	  LIMIT $2
 	`
 	var res []string
