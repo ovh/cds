@@ -135,7 +135,7 @@ func DeleteItemUnit(m *gorpmapper.Mapper, db gorpmapper.SqlExecutorWithTx, iu *s
 func LoadAllSynchronizedItemIDs(db gorp.SqlExecutor, maxStorageCount int64) ([]string, error) {
 	var itemIDs []string
 	query := `
-	SELECT item_id 
+	SELECT item_id
 	FROM storage_unit_item
 	GROUP BY item_id
 	HAVING COUNT(unit_id) = $1
@@ -287,28 +287,64 @@ func getAllItemUnits(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlExecu
 }
 
 func CountItemCompleted(db gorp.SqlExecutor) (int64, error) {
-	return db.SelectInt("SELECT COUNT(*) from item WHERE item.status = $1 AND to_delete = false", sdk.CDNStatusItemCompleted)
+	return db.SelectInt("SELECT COUNT(id) from item WHERE item.status = $1 AND to_delete = false", sdk.CDNStatusItemCompleted)
 }
 
 func CountItemIncoming(db gorp.SqlExecutor) (int64, error) {
-	return db.SelectInt("SELECT COUNT(*) from item WHERE item.status <> $1", sdk.CDNStatusItemCompleted)
+	return db.SelectInt("SELECT COUNT(id) from item WHERE item.status <> $1", sdk.CDNStatusItemCompleted)
 }
 
 func CountItemUnitByUnit(db gorp.SqlExecutor, unitID string) (int64, error) {
-	return db.SelectInt("SELECT COUNT(*) from storage_unit_item WHERE unit_id = $1", unitID)
+	return db.SelectInt("SELECT COUNT(unit_id) from storage_unit_item WHERE unit_id = $1", unitID)
 }
 
-func LoadAllItemIDUnknownByUnit(db gorp.SqlExecutor, unitID string, limit int64) ([]string, error) {
-	query := `
-	  SELECT item.id
-	  FROM item
-	  LEFT JOIN storage_unit_item sui ON item.id = sui.item_id AND sui.unit_id = $1
-	  WHERE item.status = $3 AND sui.unit_id is null
-	  AND item.to_delete = false
-      ORDER BY sui.unit_id NULLS FIRST, item.created DESC
-	  LIMIT $2
-	`
+func LoadAllItemIDUnknownByUnit(db gorp.SqlExecutor, unitID string, maxLimit int64) ([]string, error) {
 	var res []string
+
+	countItems, err := CountItemCompleted(db)
+	if err != nil {
+		return res, err
+	}
+	countStorageUnitItems, err := CountItemUnitByUnit(db, unitID)
+	if err != nil {
+		return res, err
+	}
+
+	// Compute the diff to evaluate the count of items to sync for given unit
+	expectedCountItemToSync := countItems - countStorageUnitItems
+	if expectedCountItemToSync <= 0 {
+		return res, nil
+	}
+
+	limit := expectedCountItemToSync
+	if expectedCountItemToSync > maxLimit {
+		limit = maxLimit
+	}
+
+	// When diff is greater than limit we also order by unit_id to improve query response time
+	var query string
+	if expectedCountItemToSync > maxLimit {
+		query = `
+      SELECT item.id
+      FROM item
+      LEFT JOIN storage_unit_item sui ON item.id = sui.item_id AND sui.unit_id = $1
+      WHERE item.status = $3 AND sui.unit_id is null
+      AND item.to_delete = false
+      ORDER BY sui.unit_id NULLS FIRST, item.created DESC
+      LIMIT $2
+    `
+	} else {
+		query = `
+      SELECT item.id
+      FROM item
+      LEFT JOIN storage_unit_item sui ON item.id = sui.item_id AND sui.unit_id = $1
+      WHERE item.status = $3 AND sui.unit_id is null
+      AND item.to_delete = false
+      ORDER BY item.created DESC
+      LIMIT $2
+    `
+	}
+
 	if _, err := db.Select(&res, query, unitID, limit, sdk.CDNStatusItemCompleted); err != nil {
 		return nil, sdk.WithStack(err)
 	}
@@ -323,8 +359,8 @@ type Stat struct {
 }
 
 func CountItems(db gorp.SqlExecutor) (res []Stat, err error) {
-	_, err = db.Select(&res, `select storage_unit.name as "storage_name", item.type, count(storage_unit_item.id) as "number" 
-	from storage_unit_item 
+	_, err = db.Select(&res, `select storage_unit.name as "storage_name", item.type, count(storage_unit_item.id) as "number"
+	from storage_unit_item
 	join item on item.id = storage_unit_item.item_id
 	join storage_unit on storage_unit.id = storage_unit_item.unit_id AND storage_unit_item.to_delete = false
 	group by storage_unit.name, item.type`)
@@ -332,8 +368,8 @@ func CountItems(db gorp.SqlExecutor) (res []Stat, err error) {
 }
 
 func CountItemUnitToDelete(db gorp.SqlExecutor) (res []Stat, err error) {
-	_, err = db.Select(&res, `select storage_unit.name as "storage_name", item.type, count(storage_unit_item.id) as "number" 
-	from storage_unit_item 
+	_, err = db.Select(&res, `select storage_unit.name as "storage_name", item.type, count(storage_unit_item.id) as "number"
+	from storage_unit_item
 	join item on item.id = storage_unit_item.item_id
 	join storage_unit on storage_unit.id = storage_unit_item.unit_id AND storage_unit_item.to_delete = true
 	group by storage_unit.name, item.type`)
@@ -344,7 +380,7 @@ func CountUnknownItemsByStorage(db gorp.SqlExecutor) (res []Stat, err error) {
 	_, err = db.Select(&res, `
 	WITH
 		nb_item_by_unit AS (
-			SELECT storage_unit.name, item.type, count(storage_unit_item.id) 
+			SELECT storage_unit.name, item.type, count(storage_unit_item.id)
 			FROM storage_unit_item
 			JOIN storage_unit on storage_unit.id = storage_unit_item.unit_id
 			JOIN item on item.id = storage_unit_item.item_id AND storage_unit_item.to_delete = false
