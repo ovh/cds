@@ -4,13 +4,14 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/ovh/cds/engine/cdn/item"
-	"github.com/ovh/cds/engine/cdn/storage"
 	"net/http"
 	"net/http/httptest"
 	"strconv"
 	"testing"
 	"time"
+
+	"github.com/ovh/cds/engine/cdn/item"
+	"github.com/ovh/cds/engine/cdn/storage"
 
 	"github.com/dgrijalva/jwt-go"
 	"github.com/mitchellh/hashstructure"
@@ -133,7 +134,7 @@ func TestGetItemsAllLogsLinesHandler(t *testing.T) {
 	unit, err := storage.LoadUnitByName(ctx, s.Mapper, s.mustDBWithCtx(ctx), s.Units.Storages[0].Name())
 	require.NoError(t, err)
 
-	require.NoError(t, s.Units.Run(ctx, s.Units.Storages[0], 1000))
+	require.NoError(t, s.Units.Run(ctx, s.Units.Storages[0], 0, 1000))
 
 	cpt := 0
 	for {
