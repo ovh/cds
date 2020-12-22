@@ -298,7 +298,7 @@ func CountItemUnitByUnit(db gorp.SqlExecutor, unitID string) (int64, error) {
 	return db.SelectInt("SELECT COUNT(unit_id) from storage_unit_item WHERE unit_id = $1", unitID)
 }
 
-func LoadAllItemIDUnknownByUnit(db gorp.SqlExecutor, unitID string, maxLimit int64) ([]string, error) {
+func LoadAllItemIDUnknownByUnit(db gorp.SqlExecutor, unitID string, syncMinNbElements, maxLimit int64) ([]string, error) {
 	var res []string
 
 	countItems, err := CountItemCompleted(db)
@@ -312,7 +312,7 @@ func LoadAllItemIDUnknownByUnit(db gorp.SqlExecutor, unitID string, maxLimit int
 
 	// Compute the diff to evaluate the count of items to sync for given unit
 	expectedCountItemToSync := countItems - countStorageUnitItems
-	if expectedCountItemToSync <= 0 {
+	if expectedCountItemToSync <= syncMinNbElements {
 		return res, nil
 	}
 

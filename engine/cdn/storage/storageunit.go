@@ -58,6 +58,10 @@ func Init(ctx context.Context, m *gorpmapper.Mapper, db *gorp.DbMap, gorts *sdk.
 		config.SyncSeconds = 30
 	}
 
+	if config.SyncMinNbElements <= 0 {
+		config.SyncMinNbElements = 0
+	}
+
 	// Start by initializing the buffer unit
 	d := GetDriver("redis")
 	if d == nil {
@@ -267,7 +271,7 @@ func (r *RunningStorageUnits) Start(ctx context.Context, gorts *sdk.GoRoutines) 
 					gorts.Exec(ctx, "RunningStorageUnits.run."+s.Name(),
 						func(ctx context.Context) {
 							wg.Add(1)
-							if err := r.Run(ctx, s, r.config.SyncNbElements); err != nil {
+							if err := r.Run(ctx, s, r.config.SyncNbElements, r.config.SyncMinNbElements); err != nil {
 								log.ErrorWithFields(ctx, log.Fields{"stack_trace": fmt.Sprintf("%+v", err)}, "RunningStorageUnits.run> error: %v", err)
 							}
 							wg.Done()

@@ -117,11 +117,12 @@ type StorageUnitWithLocator interface {
 }
 
 type Configuration struct {
-	HashLocatorSalt string                 `toml:"hashLocatorSalt" json:"hash_locator_salt" mapstructure:"hashLocatorSalt"`
-	Buffer          BufferConfiguration    `toml:"buffer" json:"buffer" mapstructure:"buffer"`
-	Storages        []StorageConfiguration `toml:"storages" json:"storages" mapstructure:"storages"`
-	SyncSeconds     int                    `toml:"syncSeconds" default:"30" json:"syncSeconds" comment:"each n seconds, all storage backends will have to start a synchronization with the buffer"`
-	SyncNbElements  int64                  `toml:"syncNbElements" default:"100" json:"syncNbElements" comment:"nb items to synchronize from the buffer"`
+	HashLocatorSalt   string                 `toml:"hashLocatorSalt" json:"hash_locator_salt" mapstructure:"hashLocatorSalt"`
+	Buffer            BufferConfiguration    `toml:"buffer" json:"buffer" mapstructure:"buffer"`
+	Storages          []StorageConfiguration `toml:"storages" json:"storages" mapstructure:"storages"`
+	SyncSeconds       int                    `toml:"syncSeconds" default:"30" json:"syncSeconds" comment:"each n seconds, all storage backends will have to start a synchronization with the buffer"`
+	SyncNbElements    int64                  `toml:"syncNbElements" default:"100" json:"syncNbElements" comment:"nb items to synchronize from the buffer"`
+	SyncMinNbElements int64                  `toml:"syncMinNbElements" default:"10" json:"syncMinNbElements" comment:"if nb items to sync > syncMinNbElements, run the sync."`
 }
 
 type BufferConfiguration struct {
