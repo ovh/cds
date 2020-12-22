@@ -55,7 +55,7 @@ func Init(ctx context.Context, m *gorpmapper.Mapper, db *gorp.DbMap, gorts *sdk.
 	}
 
 	if config.SyncSeconds <= 0 {
-		config.SyncSeconds = 10
+		config.SyncSeconds = 30
 	}
 
 	// Start by initializing the buffer unit
