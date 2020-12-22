@@ -51,7 +51,7 @@ func Init(ctx context.Context, m *gorpmapper.Mapper, db *gorp.DbMap, gorts *sdk.
 	}
 
 	if config.SyncNbElements < 0 || config.SyncNbElements > 1000 {
-		config.SyncNbElements = 10
+		config.SyncNbElements = 100
 	}
 
 	if config.SyncSeconds <= 0 {
