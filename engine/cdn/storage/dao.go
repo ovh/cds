@@ -132,15 +132,21 @@ func DeleteItemUnit(m *gorpmapper.Mapper, db gorpmapper.SqlExecutorWithTx, iu *s
 	return nil
 }
 
-func LoadAllSynchronizedItemIDs(db gorp.SqlExecutor, maxStorageCount int64) ([]string, error) {
+func LoadAllSynchronizedItemIDs(db gorp.SqlExecutor, bufferUnitID string, maxStorageCount int64) ([]string, error) {
 	var itemIDs []string
 	query := `
+	WITH inBuffer as (
+		SELECT item_id 
+		FROM storage_unit_item
+		WHERE unit_id = $2
+	)
 	SELECT item_id
 	FROM storage_unit_item
+	WHERE item_id = ANY (select item_id from inBuffer)
 	GROUP BY item_id
 	HAVING COUNT(unit_id) = $1
 	`
-	if _, err := db.Select(&itemIDs, query, maxStorageCount); err != nil {
+	if _, err := db.Select(&itemIDs, query, maxStorageCount, bufferUnitID); err != nil {
 		return nil, sdk.WrapError(err, "unable to get item ids")
 	}
 	return itemIDs, nil
