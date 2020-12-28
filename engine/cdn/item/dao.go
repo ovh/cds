@@ -219,16 +219,59 @@ type StatItemPercentil struct {
 	Percentile int64  `db:"percentile"`
 }
 
-func CountItemSizePercentil(db gorp.SqlExecutor) (res []StatItemPercentil, err error) {
-	_, err = db.Select(&res, `
-	with bucket as (
-		select type, size, ntile(100) over (partition by type order by size) as percentile 
-		from item
-		where to_delete = false 
-	)
-	select bucket.type, bucket.percentile, max(bucket.size) as size
-	from bucket
-	group by bucket.type, bucket.percentile
-	order by bucket.type, bucket.percentile`)
+func CountItemSizePercentil(db gorp.SqlExecutor) ([]StatItemPercentil, error) {
+	type DBResult struct {
+		Type      string  `db:"type"`
+		Percent99 float64 `db:"percentile_99"`
+		Percent90 float64 `db:"percentile_90"`
+		Percent80 float64 `db:"percentile_80"`
+		Percent50 float64 `db:"percentile_50"`
+		Percent10 float64 `db:"percentile_10"`
+	}
+	var result []DBResult
+
+	query := `
+    SELECT type,
+		percentile_cont(0.99) within group (order by size) as percentile_99,
+		percentile_cont(0.90) within group (order by size) as percentile_90,
+		percentile_cont(0.80) within group (order by size) as percentile_80,
+		percentile_cont(0.50) within group (order by size) as percentile_50,
+		percentile_cont(0.10) within group (order by size) as percentile_10
+	FROM item
+	GROUP BY type
+	`
+	_, err := db.Select(&result, query)
+	if err != nil {
+		return nil, sdk.WithStack(err)
+	}
+
+	res := make([]StatItemPercentil, 0, 5*len(result))
+	for _, r := range result {
+		res = append(res, StatItemPercentil{
+			Type:       r.Type,
+			Percentile: 99,
+			Size:       int64(r.Percent99),
+		})
+		res = append(res, StatItemPercentil{
+			Type:       r.Type,
+			Percentile: 90,
+			Size:       int64(r.Percent90),
+		})
+		res = append(res, StatItemPercentil{
+			Type:       r.Type,
+			Percentile: 80,
+			Size:       int64(r.Percent80),
+		})
+		res = append(res, StatItemPercentil{
+			Type:       r.Type,
+			Percentile: 50,
+			Size:       int64(r.Percent50),
+		})
+		res = append(res, StatItemPercentil{
+			Type:       r.Type,
+			Percentile: 10,
+			Size:       int64(r.Percent10),
+		})
+	}
 	return res, sdk.WithStack(err)
 }
