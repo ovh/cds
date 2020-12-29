@@ -359,7 +359,7 @@ func LoadAllItemIDUnknownByUnit(db gorp.SqlExecutor, unitID string, syncMinNbEle
 }
 
 type Stat struct {
-	StorageName string `db:"-"`
+	StorageName string `db:"storage_name"`
 	Type        string `db:"type"`
 	Number      int64  `db:"number"`
 }
