@@ -221,22 +221,24 @@ type StatItemPercentil struct {
 
 func CountItemSizePercentil(db gorp.SqlExecutor) ([]StatItemPercentil, error) {
 	type DBResult struct {
-		Type      string  `db:"type"`
-		Percent99 float64 `db:"percentile_99"`
-		Percent90 float64 `db:"percentile_90"`
-		Percent80 float64 `db:"percentile_80"`
-		Percent50 float64 `db:"percentile_50"`
-		Percent10 float64 `db:"percentile_10"`
+		Type       string  `db:"type"`
+		Percent100 float64 `db:"percentile_100"`
+		Percent99  float64 `db:"percentile_99"`
+		Percent95  float64 `db:"percentile_95"`
+		Percent90  float64 `db:"percentile_90"`
+		Percent75  float64 `db:"percentile_75"`
+		Percent50  float64 `db:"percentile_50"`
 	}
 	var result []DBResult
 
 	query := `
     SELECT type,
+		percentile_cont(1) within group (order by size) as percentile_100,
 		percentile_cont(0.99) within group (order by size) as percentile_99,
+		percentile_cont(0.95) within group (order by size) as percentile_95,
 		percentile_cont(0.90) within group (order by size) as percentile_90,
-		percentile_cont(0.80) within group (order by size) as percentile_80,
-		percentile_cont(0.50) within group (order by size) as percentile_50,
-		percentile_cont(0.10) within group (order by size) as percentile_10
+		percentile_cont(0.75) within group (order by size) as percentile_75,
+		percentile_cont(0.50) within group (order by size) as percentile_50
 	FROM item
 	GROUP BY type
 	`
@@ -249,8 +251,18 @@ func CountItemSizePercentil(db gorp.SqlExecutor) ([]StatItemPercentil, error) {
 	for _, r := range result {
 		res = append(res, StatItemPercentil{
 			Type:       r.Type,
+			Percentile: 100,
+			Size:       int64(r.Percent100),
+		})
+		res = append(res, StatItemPercentil{
+			Type:       r.Type,
 			Percentile: 99,
 			Size:       int64(r.Percent99),
+		})
+		res = append(res, StatItemPercentil{
+			Type:       r.Type,
+			Percentile: 95,
+			Size:       int64(r.Percent95),
 		})
 		res = append(res, StatItemPercentil{
 			Type:       r.Type,
@@ -259,18 +271,13 @@ func CountItemSizePercentil(db gorp.SqlExecutor) ([]StatItemPercentil, error) {
 		})
 		res = append(res, StatItemPercentil{
 			Type:       r.Type,
-			Percentile: 80,
-			Size:       int64(r.Percent80),
+			Percentile: 75,
+			Size:       int64(r.Percent75),
 		})
 		res = append(res, StatItemPercentil{
 			Type:       r.Type,
 			Percentile: 50,
 			Size:       int64(r.Percent50),
-		})
-		res = append(res, StatItemPercentil{
-			Type:       r.Type,
-			Percentile: 10,
-			Size:       int64(r.Percent10),
 		})
 	}
 	return res, sdk.WithStack(err)

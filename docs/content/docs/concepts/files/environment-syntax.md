@@ -8,7 +8,7 @@ card:
 
 ## Definition
 
-An environnement is a way to declare and manipulate sets of environment variables and attach them to pipelines within a workflow.
+An environment is a way to declare and manipulate sets of environment variables and attach them to pipelines within a workflow.
 It is also a way to organize your workflow and keep it clear and still readable.
 
 ## Format
