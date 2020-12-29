@@ -34,11 +34,15 @@ func (x *RunningStorageUnits) Purge(ctx context.Context, s Interface) error {
 				log.Debug("cdn:purge:%s: item unit %s content will not be deleted because there is %d other item units with the same content ", s.Name(), ui.ID, nbItemUnits)
 			} else {
 				if err := s.Remove(ctx, ui); err != nil {
+					if sdk.ErrorIs(err, sdk.ErrNotFound) {
+						log.Info(ctx, "Item %s has already been deleted from %s", ui.ItemID, s.Name())
+						continue
+					}
 					log.ErrorWithFields(ctx, log.Fields{
 						"item_apiref":   ui.Item.APIRefHash,
 						"item_size_num": ui.Item.Size,
 						"stack_trace":   fmt.Sprintf("%+v", err),
-					}, "unable to remote item %s on %s: %v", ui.ID, s.Name(), err)
+					}, "unable to remove item %s on %s: %v", ui.ID, s.Name(), err)
 					continue
 				}
 			}

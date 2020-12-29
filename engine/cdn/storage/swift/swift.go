@@ -129,5 +129,11 @@ func (s *Swift) Status(ctx context.Context) []sdk.MonitoringStatusLine {
 
 func (s *Swift) Remove(ctx context.Context, i sdk.CDNItemUnit) error {
 	container, object := s.getItemPath(i)
-	return sdk.WithStack(s.client.ObjectDelete(container, object))
+	if err := s.client.ObjectDelete(container, object); err != nil {
+		if strings.Contains(err.Error(), "Object Not Found") {
+			return sdk.ErrNotFound
+		}
+		return sdk.WithStack(err)
+	}
+	return nil
 }
