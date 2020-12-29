@@ -128,7 +128,7 @@ func (s *Service) cleanItemToDelete(ctx context.Context) error {
 
 func (s *Service) cleanBuffer(ctx context.Context) error {
 	storageCount := int64(len(s.Units.Storages) + 1)
-	itemIDs, err := storage.LoadAllSynchronizedItemIDs(s.mustDBWithCtx(ctx), storageCount)
+	itemIDs, err := storage.LoadAllSynchronizedItemIDs(s.mustDBWithCtx(ctx), s.Units.Buffer.ID(), storageCount)
 	if err != nil {
 		return err
 	}
