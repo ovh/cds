@@ -232,7 +232,7 @@ See $ engine config command for more details.
 				names = append(names, conf.Repositories.Name)
 				types = append(types, sdk.TypeRepositories)
 
-			case "elasticsearch":
+			case sdk.TypeElasticsearch:
 				if conf.ElasticSearch == nil {
 					sdk.Exit("Unable to start: missing service %s configuration", a)
 				}
