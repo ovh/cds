@@ -54,7 +54,7 @@ func (s *Local) Init(ctx context.Context, cfg interface{}) error {
 func (s *Local) filename(i sdk.CDNItemUnit) (string, error) {
 	loc := i.Locator
 	if err := os.MkdirAll(filepath.Join(s.config.Path, loc[:3]), os.FileMode(0700)); err != nil {
-		return "", nil
+		return "", sdk.WithStack(err)
 	}
 	return filepath.Join(s.config.Path, loc[:3], loc), nil
 }
@@ -170,5 +170,11 @@ func (s *Local) Remove(_ context.Context, i sdk.CDNItemUnit) error {
 		return err
 	}
 	log.Debug("[%T] remove %s", s, path)
-	return sdk.WithStack(os.Remove(path))
+	if err := os.Remove(path); err != nil {
+		if os.IsNotExist(err) {
+			return sdk.ErrNotFound
+		}
+		return sdk.WithStack(err)
+	}
+	return nil
 }
