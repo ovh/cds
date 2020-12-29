@@ -26,14 +26,15 @@ type CDNItem struct {
 }
 
 type CDNItemUnit struct {
-	ID           string    `json:"id" db:"id"`
-	ItemID       string    `json:"item_id" db:"item_id"`
-	UnitID       string    `json:"unit_id" db:"unit_id"`
-	LastModified time.Time `json:"last_modified" db:"last_modified"`
-	Locator      string    `json:"locator" db:"cipher_locator" gorpmapping:"encrypted,UnitID,ItemID"`
-	HashLocator  string    `json:"hash_locator" db:"hash_locator"`
-	Item         *CDNItem  `json:"-" db:"-"`
-	ToDelete     bool      `json:"to_delete" db:"to_delete"`
+	ID           string      `json:"id" db:"id"`
+	Type         CDNItemType `json:"type" db:"type"`
+	ItemID       string      `json:"item_id" db:"item_id"`
+	UnitID       string      `json:"unit_id" db:"unit_id"`
+	LastModified time.Time   `json:"last_modified" db:"last_modified"`
+	Locator      string      `json:"locator" db:"cipher_locator" gorpmapping:"encrypted,UnitID,ItemID"`
+	HashLocator  string      `json:"hash_locator" db:"hash_locator"`
+	Item         *CDNItem    `json:"-" db:"-"`
+	ToDelete     bool        `json:"to_delete" db:"to_delete"`
 }
 
 type CDNUnit struct {

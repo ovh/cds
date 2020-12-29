@@ -359,17 +359,15 @@ func LoadAllItemIDUnknownByUnit(db gorp.SqlExecutor, unitID string, syncMinNbEle
 }
 
 type Stat struct {
-	StorageName string `db:"storage_name"`
+	StorageName string `db:"-"`
 	Type        string `db:"type"`
 	Number      int64  `db:"number"`
 }
 
-func CountItems(db gorp.SqlExecutor) (res []Stat, err error) {
-	_, err = db.Select(&res, `select storage_unit.name as "storage_name", item.type, count(storage_unit_item.id) as "number"
+func CountItemsByUnit(db gorp.SqlExecutor, unitID string) (res []Stat, err error) {
+	_, err = db.Select(&res, `select type, count(id) as "number"
 	from storage_unit_item
-	join item on item.id = storage_unit_item.item_id
-	join storage_unit on storage_unit.id = storage_unit_item.unit_id AND storage_unit_item.to_delete = false
-	group by storage_unit.name, item.type`)
+	group by type`)
 	return res, sdk.WithStack(err)
 }
 

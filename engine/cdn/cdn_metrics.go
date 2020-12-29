@@ -104,12 +104,30 @@ func (s *Service) ComputeMetrics(ctx context.Context) {
 				telemetry.Record(ctxItem, s.Metrics.itemInDatabaseCount, stat.Number)
 			}
 
-			storageStats, err := storage.CountItems(s.mustDBWithCtx(ctx))
+			var storageStats []storage.Stat
+
+			bufferStats, err := storage.CountItemsByUnit(s.mustDBWithCtx(ctx), s.Units.Buffer.ID())
 			if err != nil {
-				log.Error(ctx, "cdn> Unable to compute metrics: %v", err)
+				log.Error(ctx, "cdn> Unable to compute CountItemsByUnit for %s: %v", s.Units.Buffer.Name(), err)
 				continue
 			}
-
+			for i := range bufferStats {
+				b := bufferStats[i]
+				b.StorageName = s.Units.Buffer.Name()
+				storageStats = append(storageStats, b)
+			}
+			for _, su := range s.Units.Storages {
+				suStats, err := storage.CountItemsByUnit(s.mustDBWithCtx(ctx), su.ID())
+				if err != nil {
+					log.Error(ctx, "cdn> Unable to compute CountItemsByUnit for %s: %v", su.Name(), err)
+					continue
+				}
+				for i := range suStats {
+					s := suStats[i]
+					s.StorageName = su.Name()
+					storageStats = append(storageStats, s)
+				}
+			}
 			for _, stat := range storageStats {
 				ctxItem := telemetry.ContextWithTag(ctx, telemetry.TagType, stat.Type, telemetry.TagStorage, stat.StorageName)
 				telemetry.Record(ctxItem, s.Metrics.itemPerStorageUnitCount, stat.Number)
