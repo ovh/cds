@@ -198,8 +198,7 @@ type Stat struct {
 func CountItems(db gorp.SqlExecutor) (res []Stat, err error) {
 	_, err = db.Select(&res, `
 	SELECT status, type, count(id) as "number" 
-	FROM item 
-	WHERE to_delete = false 
+	FROM item
 	GROUP BY status, type`)
 	return res, sdk.WithStack(err)
 }

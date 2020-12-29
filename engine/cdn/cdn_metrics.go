@@ -93,19 +93,19 @@ func (s *Service) ComputeMetrics(ctx context.Context) {
 		case <-ctx.Done():
 			return
 		default:
-			stats, err := item.CountItems(s.mustDBWithCtx(ctx))
+			// All Items by type
+			allItemsByType, err := item.CountItems(s.mustDBWithCtx(ctx))
 			if err != nil {
 				log.Error(ctx, "cdn> Unable to compute metrics: %v", err)
 				continue
 			}
-
-			for _, stat := range stats {
+			for _, stat := range allItemsByType {
 				ctxItem := telemetry.ContextWithTag(ctx, telemetry.TagType, stat.Type, telemetry.TagStatus, stat.Status)
 				telemetry.Record(ctxItem, s.Metrics.itemInDatabaseCount, stat.Number)
 			}
 
+			// Count all unit_item by type
 			var storageStats []storage.Stat
-
 			bufferStats, err := storage.CountItemsForUnit(s.mustDBWithCtx(ctx), s.Units.Buffer.ID())
 			if err != nil {
 				log.Error(ctx, "cdn> Unable to compute CountItemsByUnit for %s: %v", s.Units.Buffer.Name(), err)
@@ -131,15 +131,23 @@ func (s *Service) ComputeMetrics(ctx context.Context) {
 			for _, stat := range storageStats {
 				ctxItem := telemetry.ContextWithTag(ctx, telemetry.TagType, stat.Type, telemetry.TagStorage, stat.StorageName)
 				telemetry.Record(ctxItem, s.Metrics.itemPerStorageUnitCount, stat.Number)
+
+				// to synchronized
+				for _, allItems := range allItemsByType {
+					if allItems.Type == stat.Type {
+						ctxItem := telemetry.ContextWithTag(ctx, telemetry.TagStorage, stat.StorageName, telemetry.TagType, stat.Type)
+						telemetry.Record(ctxItem, s.Metrics.ItemToSyncCount, allItems.Number-stat.Number)
+						break
+					}
+				}
 			}
 
-			statsSize, err := item.CountItemSizePercentil(s.mustDBWithCtx(ctx))
+			statsPercentils, err := item.CountItemSizePercentil(s.mustDBWithCtx(ctx))
 			if err != nil {
 				log.Error(ctx, "cdn> Unable to compute metrics: %v", err)
 				continue
 			}
-
-			for _, stat := range statsSize {
+			for _, stat := range statsPercentils {
 				// Export only 50, 75, 90, 95, 99, 100 percentil
 				switch stat.Percentile {
 				case 50, 75, 90, 95, 99, 100:
@@ -148,24 +156,13 @@ func (s *Service) ComputeMetrics(ctx context.Context) {
 				}
 			}
 
-			statsItemToSync, err := storage.CountUnknownItemsByStorage(s.mustDBWithCtx(ctx))
+			itemsToDelete, err := item.CountItemsToDelete(s.mustDBWithCtx(ctx))
 			if err != nil {
 				log.Error(ctx, "cdn> Unable to compute metrics: %v", err)
 				continue
 			}
 
-			for _, stat := range statsItemToSync {
-				ctxItem := telemetry.ContextWithTag(ctx, telemetry.TagStorage, stat.StorageName, telemetry.TagType, stat.Type)
-				telemetry.Record(ctxItem, s.Metrics.ItemToSyncCount, stat.Number)
-			}
-
-			stats, err = item.CountItemsToDelete(s.mustDBWithCtx(ctx))
-			if err != nil {
-				log.Error(ctx, "cdn> Unable to compute metrics: %v", err)
-				continue
-			}
-
-			for _, stat := range stats {
+			for _, stat := range itemsToDelete {
 				ctxItem := telemetry.ContextWithTag(ctx, telemetry.TagType, stat.Type)
 				telemetry.Record(ctxItem, s.Metrics.ItemToDelete, stat.Number)
 			}

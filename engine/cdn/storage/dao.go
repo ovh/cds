@@ -380,28 +380,3 @@ func CountItemUnitToDelete(db gorp.SqlExecutor) (res []Stat, err error) {
 	group by storage_unit.name, item.type`)
 	return res, sdk.WithStack(err)
 }
-
-func CountUnknownItemsByStorage(db gorp.SqlExecutor) (res []Stat, err error) {
-	_, err = db.Select(&res, `
-	WITH
-		nb_item_by_unit AS (
-			SELECT storage_unit.name, item.type, count(storage_unit_item.id)
-			FROM storage_unit_item
-			JOIN storage_unit on storage_unit.id = storage_unit_item.unit_id
-			JOIN item on item.id = storage_unit_item.item_id AND storage_unit_item.to_delete = false
-			GROUP BY storage_unit.name, item.type
-		),
-		nb_item AS (
-			SELECT item.type, count(id)
-			FROM item
-			WHERE status = $1
-			AND to_delete = false
-			GROUP BY item.type
-		)
-	SELECT 	storage_unit.name as storage_name, nb_item.type as type, (nb_item.count - nb_item_by_unit.count) as number
-	FROM 	storage_unit, nb_item, nb_item_by_unit
-	WHERE  	storage_unit.name = nb_item_by_unit.name
-	AND 	nb_item.type = nb_item_by_unit.type
-`, sdk.CDNStatusItemCompleted)
-	return res, sdk.WithStack(err)
-}
