@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output, ViewChild } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, EventEmitter, Input, Output, ViewChild } from '@angular/core';
 import { Store } from '@ngxs/store';
 import { ModalTemplate, SuiActiveModal, SuiModalService, TemplateModalConfig } from '@richardlt/ng2-semantic-ui';
 import { Application } from 'app/model/application.model';
@@ -33,8 +33,8 @@ export class WorkflowTriggerComponent {
     @ViewChild('triggerModal')
     triggerModal: ModalTemplate<boolean, boolean, void>;
     modal: SuiActiveModal<boolean, boolean, void>;
-    @ViewChild('nodeWizard')
-    nodeWizard: WorkflowNodeAddWizardComponent;
+
+    @ViewChild('nodeWizard') nodeWizard: WorkflowNodeAddWizardComponent;
     @ViewChild('worklflowAddOutgoingHook')
     worklflowAddOutgoingHook: WorkflowWizardOutgoingHookComponent;
 
@@ -51,7 +51,7 @@ export class WorkflowTriggerComponent {
     isParent: boolean;
 
     constructor(private _modalService: SuiModalService, private _pipService: PipelineService, private _store: Store,
-                private _envService: EnvironmentService, private _appService: ApplicationService) { }
+                private _envService: EnvironmentService, private _appService: ApplicationService, private _cd: ChangeDetectorRef) { }
 
     show(t: string, isP: boolean): void {
         this.selectedType = t;
@@ -59,6 +59,7 @@ export class WorkflowTriggerComponent {
         const config = new TemplateModalConfig<boolean, boolean, void>(this.triggerModal);
         config.mustScroll = true;
         this.modal = this._modalService.open(config);
+        this._cd.detectChanges();
     }
 
     hide(): void {

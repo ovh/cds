@@ -56,7 +56,7 @@
                             <app-workflow-node-input [workflow]="workflow" [readonly]="readonly" (inputChange)="pushChange($event)"></app-workflow-node-input>
                         </ng-container>
                         <ng-container *ngSwitchCase="'outgoinghook'">
-                            <app-workflow-node-outgoinghook [workflow]="workflow" [mode]="readonly?'ro':'update'" (outgoinghookChange)="pushChange($event)"></app-workflow-node-outgoinghook>
+                            <app-workflow-node-outgoinghook [workflow]="workflow" [mode]="readonly?'ro':'update'" (outgoinghookChange)="pushChange($event)" [display]="true"></app-workflow-node-outgoinghook>
                         </ng-container>
                         <ng-container *ngSwitchCase="'conditions'">
                             <app-workflow-node-conditions [workflow]="workflow" [readonly]="readonly" (conditionsChange)="pushChange($event)"></app-workflow-node-conditions>

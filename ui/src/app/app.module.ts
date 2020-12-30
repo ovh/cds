@@ -69,8 +69,8 @@ export let errorFactory = () => {
     providers: [
         AppService,
         EventService,
-        { provide: ErrorHandler, useFactory: errorFactory},
-        { provide: LOCALE_ID, useValue: navigator.language.match(/fr/) ? 'fr' : 'en' }
+        { provide: ErrorHandler, useFactory: errorFactory },
+        { provide: LOCALE_ID, useValue: 'en' }
     ],
     bootstrap: [AppComponent]
 })

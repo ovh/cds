@@ -147,6 +147,10 @@ func TestRun(t *testing.T) {
 	require.NoError(t, err)
 	require.False(t, exists)
 
+	require.NoError(t, cdnUnits.Run(ctx, cdnUnits.Storages[0], 0, 1000))
+	time.Sleep(250 * time.Millisecond)
+	require.NoError(t, cdnUnits.Run(ctx, cdnUnits.Storages[1], 0, 1000))
+
 	<-ctx.Done()
 
 	// Check that the first unit has been resync
@@ -171,7 +175,7 @@ func TestRun(t *testing.T) {
 	actual := btes.String()
 	require.Equal(t, "this is the first log\nthis is the second log\n", actual, "item %s content should match", i.ID)
 
-	itemIDs, err := storage.LoadAllItemIDUnknownByUnitOrderByUnitID(db, localUnitDriver.ID(), cdnUnits.Buffer.ID(), 100)
+	itemIDs, err := storage.LoadAllItemIDUnknownByUnit(db, localUnitDriver.ID(), 0, 100)
 	require.NoError(t, err)
 	require.Len(t, itemIDs, 0)
 
@@ -189,7 +193,7 @@ func TestRun(t *testing.T) {
 	actual = btes.String()
 	require.Equal(t, "this is the first log\nthis is the second log\n", actual, "item %s content should match", i.ID)
 
-	itemIDs, err = storage.LoadAllItemIDUnknownByUnitOrderByUnitID(db, localUnitDriver2.ID(), cdnUnits.Buffer.ID(), 100)
+	itemIDs, err = storage.LoadAllItemIDUnknownByUnit(db, localUnitDriver2.ID(), 0, 100)
 	require.NoError(t, err)
 	require.Len(t, itemIDs, 0)
 }

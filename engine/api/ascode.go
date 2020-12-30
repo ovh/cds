@@ -206,7 +206,7 @@ func (api *API) postPerformImportAsCodeHandler() service.Handler {
 		if err := workflowtemplate.UpdateTemplateInstanceWithWorkflow(ctx, api.mustDB(), *wrkflw, *consumer, wti); err != nil {
 			return err
 		}
-		msgListString := translate(r, allMsg)
+		msgListString := translate(allMsg)
 
 		tx, err := api.mustDB().Begin()
 		if err != nil {

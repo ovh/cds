@@ -58,25 +58,25 @@ workflow_node_run.callback
 const nodeRunTestsField string = ", workflow_node_run.tests"
 const withLightNodeRunTestsField string = ", json_build_object('ko', workflow_node_run.tests->'ko', 'ok', workflow_node_run.tests->'ok', 'skipped', workflow_node_run.tests->'skipped', 'total', workflow_node_run.tests->'total') AS tests"
 
-func LoadNodeRunIDs(db gorp.SqlExecutor, wIDs []int64) ([]sdk.WorkflowNodeRunIdentifiers, error) {
+func LoadNodeRunIDs(db gorp.SqlExecutor, wIDs []int64, status []string) ([]sdk.WorkflowNodeRunIdentifiers, error) {
 	query := `
 		SELECT workflow_run.id, workflow_run.workflow_id, workflow.name, workflow_run.num, workflow_node_run.id as node_run_id
 		FROM workflow_run
 		JOIN workflow ON workflow.id = workflow_run.workflow_id
 		JOIN workflow_node_run ON workflow_node_run.workflow_run_id = workflow_run.id
-		WHERE workflow_run.workflow_id = ANY($1)
+		WHERE workflow_run.workflow_id = ANY($1) AND workflow_node_run.status = ANY($2)
 		ORDER BY workflow_id, id, node_run_id;
 	`
 
 	var ids []sdk.WorkflowNodeRunIdentifiers
-	if _, err := db.Select(&ids, query, pq.Int64Array(wIDs)); err != nil {
+	if _, err := db.Select(&ids, query, pq.Int64Array(wIDs), pq.StringArray(status)); err != nil {
 		return nil, err
 	}
 	return ids, nil
 }
 
 //LoadNodeRun load a specific node run on a workflow
-func LoadNodeRun(db gorp.SqlExecutor, projectkey, workflowname string, id int64, loadOpts LoadRunOptions) (*sdk.WorkflowNodeRun, error) {
+func LoadNodeRun(db gorp.SqlExecutor, projectkey, workflowname string, noderunID int64, loadOpts LoadRunOptions) (*sdk.WorkflowNodeRun, error) {
 	var rr = NodeRun{}
 	var testsField string
 	if loadOpts.WithTests {
@@ -94,8 +94,8 @@ func LoadNodeRun(db gorp.SqlExecutor, projectkey, workflowname string, id int64,
 	and workflow.name = $2
 	and workflow_node_run.id = $3`, nodeRunFields, testsField)
 
-	if err := db.SelectOne(&rr, query, projectkey, workflowname, id); err != nil {
-		return nil, sdk.WrapError(err, "Unable to load workflow_node_run proj=%s, workflow=%s, node=%d", projectkey, workflowname, id)
+	if err := db.SelectOne(&rr, query, projectkey, workflowname, noderunID); err != nil {
+		return nil, sdk.WrapError(err, "Unable to load workflow_node_run proj=%s, workflow=%s, noderun_id=%d", projectkey, workflowname, noderunID)
 	}
 
 	r, err := fromDBNodeRun(rr, loadOpts)

@@ -1,5 +1,5 @@
 import { OnDestroy, Output, ViewChild } from '@angular/core';
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, EventEmitter, Input, OnChanges, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, EventEmitter, Input, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { Store } from '@ngxs/store';
 import { CDNLine, CDNLogLink, CDNStreamFilter, PipelineStatus, SpawnInfo } from 'app/model/pipeline.model';
@@ -10,7 +10,7 @@ import { DurationService } from 'app/shared/duration/duration.service';
 import { ProjectState } from 'app/store/project.state';
 import { WorkflowState } from 'app/store/workflow.state';
 import * as moment from 'moment';
-import { from, interval, Observable, Subject, Subscription } from 'rxjs';
+import { from, interval, Subject, Subscription } from 'rxjs';
 import { delay, mergeMap, retryWhen } from 'rxjs/operators';
 import { webSocket, WebSocketSubject } from 'rxjs/webSocket';
 import { WorkflowRunJobVariableComponent } from '../variables/job.variables.component';
@@ -141,6 +141,9 @@ export class WorkflowRunJobComponent implements OnInit, OnDestroy {
             if (!shouldUpdate) {
                 return;
             }
+            if (this.previousNodeJobRun.id !== this.nodeJobRun.id) {
+                this.currentTabIndex = 0;
+            }
         }
         this.previousNodeJobRun = this.nodeJobRun;
 
@@ -188,7 +191,6 @@ export class WorkflowRunJobComponent implements OnInit, OnDestroy {
                 await this.loadSpawnInfo();
             }
             await this.loadEndedSteps();
-            await this.startListenLastActiveStep();
         } else {
             await this.loadOrListenService();
         }
@@ -222,33 +224,30 @@ export class WorkflowRunJobComponent implements OnInit, OnDestroy {
             return;
         }
 
-        for (let i = 1; i < this.steps.length; i++) {
-            // We want to load initial data (first 5 and last 5 lines) for ended steps never loaded
-            if (PipelineStatus.isActive(this.nodeJobRun.job.step_status[i - 1].status)) {
-                break;
-            }
-            if (this.steps[i].link) {
-                continue;
-            }
-            if (this.steps[i].disabled) {
-                continue;
-            }
+        let links = await this._workflowService
+            .getAllStepsLinks(projectKey, workflowName, this.nodeJobRun.workflow_node_run_id, this.nodeJobRun.id).toPromise();
+        let results = await this._workflowService.getLogsLinesCount(links, this.initLoadLinesCount).toPromise();
 
-            this.steps[i].link = await this._workflowService
-                .getStepLink(projectKey, workflowName, this.nodeJobRun.workflow_node_run_id, this.nodeJobRun.id, i - 1)
-                .toPromise();
-            let results = await Promise.all([
-                this._workflowService.getLogLines(this.steps[i].link, { limit: `${this.initLoadLinesCount}` }).toPromise(),
-                this._workflowService.getLogLines(this.steps[i].link, { offset: `-${this.initLoadLinesCount}` }).toPromise()
-            ]);
-            this.steps[i].lines = results[0].lines;
-            this.steps[i].endLines = results[1].lines.filter(l => !results[0].lines.find(line => line.number === l.number));
-            this.steps[i].totalLinesCount = results[0].totalCount;
-            this.steps[i].open = true;
-            this.steps[i].loading = false;
+        if (results) {
+            results.forEach(r => {
+                let steporder = links?.datas?.find(d => d.api_ref === r.api_ref)?.step_order + 1;
+                if (!steporder) {
+                    return
+                }
+                this.steps[steporder].link = <CDNLogLink>{api_ref: r.api_ref, item_type: links.item_type}
+                this.steps[steporder].totalLinesCount = r.lines_count;
+                this.steps[steporder].open = false;
+                this.steps[steporder].loading = false;
+            })
         }
 
         this.computeStepFirstLineNumbers();
+
+        if (PipelineStatus.isDone(this.nodeJobRun.status)) {
+            await this.loadFirstFailedOrLastStep();
+        } else {
+            await this.startListenLastActiveStep();
+        }
 
         this._cd.markForCheck();
     }
@@ -283,7 +282,7 @@ export class WorkflowRunJobComponent implements OnInit, OnDestroy {
         this._cd.markForCheck();
     }
 
-    trackStepElement(index: number, element: LogBlock) {
+    trackStepElement(index: number, _: LogBlock) {
  return index;
 }
 
@@ -342,6 +341,22 @@ export class WorkflowRunJobComponent implements OnInit, OnDestroy {
     stopWebsocketSubscription(): void {
         if (this.websocketSubscription) {
             this.websocketSubscription.unsubscribe();
+        }
+    }
+
+    async loadFirstFailedOrLastStep() {
+        if (this.steps.length <= 1) {
+            return;
+        }
+        if (PipelineStatus.SUCCESS === this.nodeJobRun.status) {
+            await this.clickOpen(this.steps[this.steps.length - 1]);
+            return;
+        }
+        for (let i = 1; i < this.steps.length; i++) {
+            if (this.steps[i].failed) {
+                await this.clickOpen(this.steps[i]);
+                return;
+            }
         }
     }
 
@@ -498,5 +513,24 @@ export class WorkflowRunJobComponent implements OnInit, OnDestroy {
         if (this.jobVariable) {
             this.jobVariable.show();
         }
+    }
+
+    async clickOpen(step: LogBlock) {
+        if (step?.lines?.length > 0 || step.open) {
+            step.clickOpen();
+            return
+        }
+
+        step.loading = true;
+        let results = await Promise.all([
+            this._workflowService.getLogLines(step.link, { limit: `${this.initLoadLinesCount}` }).toPromise(),
+            this._workflowService.getLogLines(step.link, { offset: `-${this.initLoadLinesCount}` }).toPromise()
+        ]);
+        step.lines = results[0].lines;
+        step.endLines = results[1].lines.filter(l => !results[0].lines.find(line => line.number === l.number));
+        step.totalLinesCount = results[0].totalCount;
+        step.open = true;
+        step.loading = false;
+        this._cd.markForCheck()
     }
 }

@@ -12,9 +12,9 @@
                     <div class="eight wide field" [ngSwitch]="parameter.type">
                         <input *ngSwitchDefault type="text" name="parameter-{{parameter.key}}"
                             [(ngModel)]="parameterValues[parameter.key]" (change)="changeParam()">
-                        <sm-checkbox *ngSwitchCase="'boolean'" name="parameter-{{parameter.key}}"
-                            [control]="parameterValues[parameter.key]" type="toggle" label=" " (change)="changeParam()">
-                        </sm-checkbox>
+                        <sui-checkbox *ngSwitchCase="'boolean'" name="parameter-{{parameter.key}}"
+                            [(ngModel)]="parameterValues[parameter.key]" class="toggle" (ngModelChange)="changeParam()">
+                        </sui-checkbox>
                         <sui-select *ngSwitchCase="'repository'" class="selection" name="parameter-{{parameter.key}}"
                             placeholder="{{'workflow_wizard_select_repo_man' | translate}}" [options]="vcsNames"
                             isSearchable="true" [(ngModel)]="parameterValues[parameter.key]"

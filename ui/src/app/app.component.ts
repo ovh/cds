@@ -1,6 +1,5 @@
 import { registerLocaleData } from '@angular/common';
 import localeEN from '@angular/common/locales/en';
-import localeFR from '@angular/common/locales/fr';
 import { Component, NgZone, OnDestroy, OnInit } from '@angular/core';
 import { Title } from '@angular/platform-browser';
 import { ActivatedRoute, NavigationEnd, NavigationStart, ResolveEnd, ResolveStart, Router } from '@angular/router';
@@ -16,7 +15,6 @@ import { Subscription } from 'rxjs/Subscription';
 import * as format from 'string-format-obj';
 import { AppService } from './app.service';
 import { AuthentifiedUser } from './model/user.model';
-import { LanguageStore } from './service/language/language.store';
 import { NotificationService } from './service/notification/notification.service';
 import { HelpService, MonitoringService } from './service/services.module';
 import { ThemeStore } from './service/theme/theme.store';
@@ -39,7 +37,6 @@ export class AppComponent implements OnInit, OnDestroy {
     heartbeatToken: number;
     zone: NgZone;
     showUIUpdatedBanner: boolean;
-    languageSubscriber: Subscription;
     themeSubscriber: Subscription;
     versionWorkerSubscription: Subscription;
     _routerSubscription: Subscription;
@@ -59,7 +56,6 @@ export class AppComponent implements OnInit, OnDestroy {
 
     constructor(
         _translate: TranslateService,
-        private _language: LanguageStore,
         private _theme: ThemeStore,
         private _activatedRoute: ActivatedRoute,
         private _titleService: Title,
@@ -77,19 +73,10 @@ export class AppComponent implements OnInit, OnDestroy {
         this.toasterConfigDefault = this._toastService.getConfigDefault();
         this.toasterConfigErrorHTTP = this._toastService.getConfigErrorHTTP();
         this.toasterConfigErrorHTTPLocked = this._toastService.getConfigErrorHTTPLocked();
-        _translate.addLangs(['en', 'fr']);
+        _translate.addLangs(['en']);
         _translate.setDefaultLang('en');
-        let browserLang = navigator.language.match(/fr/) ? 'fr' : 'en';
-        _translate.use(browserLang.match(/en|fr/) ? browserLang : 'en');
-        registerLocaleData(browserLang.match(/fr/) ? localeFR : localeEN);
-
-        this.languageSubscriber = this._language.get().subscribe(l => {
-            if (l) {
-                _translate.use(l);
-            } else {
-                _language.set(browserLang.match(/en|fr/) ? browserLang : 'en');
-            }
-        });
+        _translate.use('en');
+        registerLocaleData(localeEN);
 
         this.themeSubscriber = this._theme.get().subscribe(t => {
             if (t) {

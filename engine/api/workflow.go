@@ -199,8 +199,7 @@ func (api *API) postWorkflowRetentionPolicyDryRun() service.Handler {
 		api.GoRoutines.Exec(api.Router.Background, "workflow-retention-dryrun", func(ctx context.Context) {
 			if err := purge.ApplyRetentionPolicyOnWorkflow(ctx, api.Cache, api.mustDBWithCtx(ctx), *wf, purge.MarkAsDeleteOptions{DryRun: true}, u.AuthentifiedUser); err != nil {
 				log.ErrorWithFields(ctx, log.Fields{"stack_trace": fmt.Sprintf("%+v", err)}, "%s", err)
-				al := r.Header.Get("Accept-Language")
-				httpErr := sdk.ExtractHTTPError(err, al)
+				httpErr := sdk.ExtractHTTPError(err)
 				event.PublishWorkflowRetentionDryRun(ctx, key, name, "ERROR", httpErr.Error(), nil, 0, u.AuthentifiedUser)
 			}
 		})

@@ -71,6 +71,9 @@ export class WorkflowStore {
     }
 
     setDirection(key: string, name: string, o: string) {
+        if (!key || !name) {
+            return;
+        }
         let ls = localStorage.getItem(this.WORKFLOW_ORIENTATION_KEY);
         let j = {};
         if (ls) {

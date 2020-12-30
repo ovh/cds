@@ -6,8 +6,9 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/ovh/cds/engine/cache"
+	"github.com/ovh/cds/engine/api/ascode"
 	"github.com/ovh/cds/engine/api/keys"
+	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/exportentities"
@@ -32,7 +33,7 @@ func ParseAndImport(ctx context.Context, db gorpmapper.SqlExecutorWithTx, cache 
 		return nil, nil, msgList, sdk.WrapError(sdk.ErrInvalidApplicationPattern, "application name %s do not respect pattern %s", eapp.Name, sdk.NamePattern)
 	}
 
-	//Check if app exist
+	//Check if app exists
 	oldApp, err := LoadByName(db, proj.Key, eapp.Name,
 		LoadOptions.WithVariablesWithClearPassword,
 		LoadOptions.WithClearKeys,
@@ -42,13 +43,23 @@ func ParseAndImport(ctx context.Context, db gorpmapper.SqlExecutorWithTx, cache 
 		return nil, nil, msgList, sdk.WrapError(err, "unable to load application")
 	}
 
-	//If the application exist and we don't want to force, raise an error
+	//If the application exists and we don't want to force, raise an error
 	if oldApp != nil && !opts.Force {
 		return nil, nil, msgList, sdk.WithStack(sdk.ErrApplicationExist)
 	}
 
-	if oldApp != nil && oldApp.FromRepository != "" && opts.FromRepository != oldApp.FromRepository {
-		return nil, nil, msgList, sdk.NewErrorFrom(sdk.ErrApplicationAsCodeOverride, "unable to update existing ascode application from %s", oldApp.FromRepository)
+	if oldApp != nil {
+		if opts.Force && opts.FromRepository == "" {
+			if oldApp.FromRepository != "" {
+				if err := ascode.DeleteEventsApplicationOnlyFromRepoName(ctx, db, oldApp.FromRepository, oldApp.ID, oldApp.Name); err != nil {
+					return nil, nil, msgList, sdk.WrapError(err, "unable to delete as_code_event for %s on repo %s", oldApp.Name, oldApp.FromRepository)
+				}
+				msgList = append(msgList, sdk.NewMessage(sdk.MsgApplicationDetached, eapp.Name, oldApp.FromRepository))
+			}
+			log.Debug("ParseAndImport>> force import application %s in project %s without fromRepository", eapp.Name, proj.Key)
+		} else if oldApp.FromRepository != "" && opts.FromRepository != oldApp.FromRepository {
+			return nil, nil, msgList, sdk.NewErrorFrom(sdk.ErrApplicationAsCodeOverride, "unable to update existing ascode application from %s", oldApp.FromRepository)
+		}
 	}
 
 	//Craft the application

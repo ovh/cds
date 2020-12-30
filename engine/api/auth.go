@@ -11,6 +11,7 @@ import (
 	"github.com/ovh/cds/engine/api/user"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/log"
 )
 
 func (api *API) getAuthDriversHandler() service.Handler {
@@ -261,10 +262,13 @@ func (api *API) postAuthSigninHandler() service.Handler {
 		}
 
 		// Generate a new session for consumer
-		session, err := authentication.NewSession(ctx, tx, consumer, driver.GetSessionDuration(), userInfo.MFA)
+		sessionDuration := driver.GetSessionDuration(userInfo, *consumer)
+		session, err := authentication.NewSession(ctx, tx, consumer, sessionDuration, userInfo.MFA)
 		if err != nil {
 			return err
 		}
+
+		log.Debug("postAuthSigninHandler> new session %s created for %.2f seconds: %+v", session.ID, sessionDuration.Seconds(), session)
 
 		// Generate a jwt for current session
 		jwt, err := authentication.NewSessionJWT(session)

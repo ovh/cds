@@ -1,5 +1,4 @@
-import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output } from '@angular/core';
-import { FormControl } from '@angular/forms';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, EventEmitter, Input, Output } from '@angular/core';
 import { Group } from 'app/model/group.model';
 import {
     WorkflowTemplate,
@@ -30,8 +29,7 @@ export class WorkflowTemplateFormComponent {
             this._workflowTemplate = <WorkflowTemplate>{ editable: true };
         }
 
-        this.importFromURLControl.setValue(!!this._workflowTemplate.import_url)
-        this.importFromURL = this.importFromURLControl.value;
+        this.importFromURL = !!this._workflowTemplate.import_url;
 
         this.changeMessage = null;
 
@@ -127,10 +125,12 @@ export class WorkflowTemplateFormComponent {
     environmentErrors: { [key: number]: WorkflowTemplateError; };
     environmentKeys: Array<number>;
     changeMessage: string;
-    importFromURLControl = new FormControl();
     importFromURL: boolean;
 
-    constructor(private _sharedService: SharedService) {
+    constructor(
+        private _sharedService: SharedService,
+        private _cd: ChangeDetectorRef
+    ) {
         this.templateParameterTypes = ['boolean', 'string', 'repository', 'json', 'ssh-key', 'pgp-key'];
 
         this.resetParameterValue();
@@ -231,6 +231,7 @@ export class WorkflowTemplateFormComponent {
     }
 
     changeFromURL() {
-        this.importFromURL = this.importFromURLControl.value;
+        this.importFromURL = !this.importFromURL;
+        this._cd.markForCheck();
     }
 }

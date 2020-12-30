@@ -58,14 +58,14 @@ func (api *API) postEnvironmentImportHandler() service.Handler {
 		}
 		defer tx.Rollback() // nolint
 
-		_, _, msgList, globalError := environment.ParseAndImport(tx, *proj, data, environment.ImportOptions{Force: force}, project.DecryptWithBuiltinKey, getAPIConsumer(ctx))
-		msgListString := translate(r, msgList)
+		_, _, msgList, globalError := environment.ParseAndImport(ctx, tx, *proj, data, environment.ImportOptions{Force: force}, project.DecryptWithBuiltinKey, getAPIConsumer(ctx))
+		msgListString := translate(msgList)
 		if globalError != nil {
 			globalError = sdk.WrapError(globalError, "Unable to import environment %s", data.Name)
 			if sdk.ErrorIsUnknown(globalError) {
 				return globalError
 			}
-			sdkErr := sdk.ExtractHTTPError(globalError, r.Header.Get("Accept-Language"))
+			sdkErr := sdk.ExtractHTTPError(globalError)
 			return service.WriteJSON(w, append(msgListString, sdkErr.Message), sdkErr.Status)
 		}
 
@@ -136,7 +136,7 @@ func (api *API) importNewEnvironmentHandler() service.Handler {
 		close(msgChan)
 		<-done
 
-		msgListString := translate(r, allMsg)
+		msgListString := translate(allMsg)
 
 		if err := tx.Commit(); err != nil {
 			return sdk.WithStack(err)
@@ -209,7 +209,7 @@ func (api *API) importIntoEnvironmentHandler() service.Handler {
 		close(msgChan)
 		<-done
 
-		msgListString := translate(r, allMsg)
+		msgListString := translate(allMsg)
 
 		if err := tx.Commit(); err != nil {
 			return sdk.WithStack(err)

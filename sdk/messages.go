@@ -54,6 +54,10 @@ var (
 	MsgPipelineJobUpdated                   = &Message{"MsgPipelineJobUpdated", trad{FR: "Le job %s du stage %s a été mis à jour", EN: "Job %s in stage %s updated"}, nil, RunInfoTypInfo}
 	MsgPipelineJobAdded                     = &Message{"MsgPipelineJobAdded", trad{FR: "Le job %s du stage %s a été ajouté", EN: "Job %s in stage %s added"}, nil, RunInfoTypInfo}
 	MsgPipelineJobDeleted                   = &Message{"MsgPipelineJobDeleted", trad{FR: "Le job %s du stage %s a été supprimé", EN: "Job %s in stage %s deleted"}, nil, RunInfoTypInfo}
+	MsgPipelineDetached                     = &Message{"MsgPipelineDetached", trad{FR: "Le pipeline %s est détaché du repository %s", EN: "The pipeline %s is detached from repository %s"}, nil, RunInfoTypInfo}
+	MsgApplicationDetached                  = &Message{"MsgApplicationDetached", trad{FR: "L'application %s est détachée du repository %s", EN: "The application %s is detached from repository %s"}, nil, RunInfoTypInfo}
+	MsgEnvironmentDetached                  = &Message{"MsgEnvironmentDetached", trad{FR: "L'environnement %s est détaché du repository %s", EN: "The environment %s is detached from repository %s"}, nil, RunInfoTypInfo}
+	MsgWorkflowDetached                     = &Message{"MsgWorkflowDetached", trad{FR: "Le workflow %s est détaché du repository %s", EN: "The workflow %s is detached from repository %s"}, nil, RunInfoTypInfo}
 	MsgSpawnInfoHatcheryStarts              = &Message{"MsgSpawnInfoHatcheryStarts", trad{FR: "La Hatchery %s a démarré le lancement du worker avec le modèle %s", EN: "Hatchery %s starts spawn worker with model %s"}, nil, RunInfoTypInfo}
 	MsgSpawnInfoHatcheryErrorSpawn          = &Message{"MsgSpawnInfoHatcheryErrorSpawn", trad{FR: "Une erreur est survenue lorsque la Hatchery %s a démarré un worker avec le modèle %s après %s, err:%s", EN: "Error while Hatchery %s spawn worker with model %s after %s, err:%s"}, nil, RunInfoTypeError}
 	MsgSpawnInfoHatcheryStartsSuccessfully  = &Message{"MsgSpawnInfoHatcheryStartsSuccessfully", trad{FR: "La Hatchery %s a démarré le worker %s avec succès en %s", EN: "Hatchery %s spawn worker %s successfully in %s"}, nil, RunInfoTypInfo}
@@ -128,6 +132,10 @@ var Messages = map[string]*Message{
 	MsgPipelineJobUpdated.ID:                   MsgPipelineJobUpdated,
 	MsgPipelineJobAdded.ID:                     MsgPipelineJobAdded,
 	MsgPipelineJobDeleted.ID:                   MsgPipelineJobDeleted,
+	MsgPipelineDetached.ID:                     MsgPipelineDetached,
+	MsgApplicationDetached.ID:                  MsgApplicationDetached,
+	MsgEnvironmentDetached.ID:                  MsgEnvironmentDetached,
+	MsgWorkflowDetached.ID:                     MsgWorkflowDetached,
 	MsgSpawnInfoHatcheryStarts.ID:              MsgSpawnInfoHatcheryStarts,
 	MsgSpawnInfoHatcheryErrorSpawn.ID:          MsgSpawnInfoHatcheryErrorSpawn,
 	MsgSpawnInfoHatcheryStartsSuccessfully.ID:  MsgSpawnInfoHatcheryStartsSuccessfully,
@@ -198,19 +206,8 @@ var (
 )
 
 //String returns formated string for the specified language
-func (m *Message) String(al string) string {
-	acceptedLanguages, _, err := language.ParseAcceptLanguage(al)
-	if err != nil {
-		return fmt.Sprintf(m.Format[EN], m.Args...)
-	}
-
-	t, _, _ := matcher.Match(acceptedLanguages...)
-	switch t {
-	case language.French, language.AmericanEnglish:
-		return fmt.Sprintf(m.Format[lang(t)], m.Args...)
-	default:
-		return fmt.Sprintf(m.Format[EN], m.Args...)
-	}
+func (m *Message) String() string {
+	return fmt.Sprintf(m.Format[EN], m.Args...)
 }
 
 // MessagesToError returns a translated slices of messages as an error
@@ -220,14 +217,14 @@ func MessagesToError(messages []Message) error {
 		if i != 0 {
 			s += "; "
 		}
-		s += err.String(language.AmericanEnglish.String())
+		s += err.String()
 	}
 	return errors.New(s)
 }
 
 // ErrorToMessage returns message from an error if possible
 func ErrorToMessage(err error) (Message, bool) {
-	cdsError := ExtractHTTPError(err, "EN")
+	cdsError := ExtractHTTPError(err)
 	switch cdsError.ID {
 	case ErrPipelineNotFound.ID:
 		return NewMessage(MsgWorkflowErrorBadPipelineName, cdsError.Data), true

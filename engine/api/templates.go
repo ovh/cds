@@ -480,7 +480,7 @@ func (api *API) postTemplateApplyHandler() service.Handler {
 			return err
 		}
 
-		msgStrings := translate(r, msgs)
+		msgStrings := translate(msgs)
 
 		log.Debug("postTemplateApplyHandler> importing the workflow %s from template %s", wkf.Name, wt.Slug)
 
@@ -976,7 +976,7 @@ func (api *API) postTemplatePushHandler() service.Handler {
 		w.Header().Add(sdk.ResponseTemplateGroupNameHeader, wt.Group.Name)
 		w.Header().Add(sdk.ResponseTemplateSlugHeader, wt.Slug)
 
-		return service.WriteJSON(w, translate(r, msgs), http.StatusOK)
+		return service.WriteJSON(w, translate(msgs), http.StatusOK)
 	}
 }
 

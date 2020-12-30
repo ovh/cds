@@ -34,8 +34,6 @@ import { HookService } from './hook/hook.service';
 import { ImportAsCodeService } from './import-as-code/import.service';
 import { IntegrationService } from './integration/integration.service';
 import { KeyService } from './keys/keys.service';
-import { LanguageInterceptor } from './language/language.interceptor';
-import { LanguageStore } from './language/language.store';
 import { MonitoringService } from './monitoring/monitoring.service';
 import { NavbarService } from './navbar/navbar.service';
 import { NotificationService } from './notification/notification.service';
@@ -104,7 +102,6 @@ export class ServicesModule {
                 BroadcastService,
                 BroadcastStore,
                 KeyService,
-                LanguageStore,
                 ThemeStore,
                 NavbarService,
                 NotificationService,
@@ -145,11 +142,6 @@ export class ServicesModule {
                 },
                 {
                     provide: HTTP_INTERCEPTORS,
-                    useClass: LanguageInterceptor,
-                    multi: true
-                },
-                {
-                    provide: HTTP_INTERCEPTORS,
                     useClass: LogoutInterceptor,
                     multi: true
                 },
@@ -180,7 +172,6 @@ export {
     ImportAsCodeService,
     BroadcastStore,
     KeyService,
-    LanguageStore,
     ThemeStore,
     ParameterService,
     MonitoringService,

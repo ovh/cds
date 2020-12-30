@@ -491,18 +491,19 @@ func Test_doWebHookExecutionBitbucketPRMerged(t *testing.T) {
 	test.Equal(t, "john.doe", hs[0].Payload[GIT_AUTHOR])
 	test.Equal(t, "john.doe@targate.fr", hs[0].Payload[GIT_AUTHOR_EMAIL])
 
-	test.Equal(t, "dest_branch", hs[0].Payload[GIT_BRANCH_DEST])
-	test.Equal(t, "my/repo", hs[0].Payload[GIT_REPOSITORY_DEST])
-	test.Equal(t, "654321654321", hs[0].Payload[GIT_HASH_DEST])
+	test.Equal(t, "dest_branch", hs[0].Payload[GIT_BRANCH])
+	test.Equal(t, "my/repo", hs[0].Payload[GIT_REPOSITORY])
+	test.Equal(t, "7e48f426f0a6e47c5b5e862c31be6ca965f82c9c", hs[0].Payload[GIT_HASH])
+	test.Equal(t, "7e48f42", hs[0].Payload[GIT_HASH_SHORT])
 
-	test.Equal(t, "pr:opened", hs[0].Payload[GIT_EVENT])
-	test.Equal(t, "src_branch", hs[0].Payload[GIT_BRANCH])
-	test.Equal(t, "12345671234567", hs[0].Payload[GIT_HASH])
-	test.Equal(t, "1234567", hs[0].Payload[GIT_HASH_SHORT])
+	test.Equal(t, "pr:merged", hs[0].Payload[GIT_EVENT])
+	test.Equal(t, "src_branch", hs[0].Payload[GIT_BRANCH_BEFORE])
+	test.Equal(t, "12345671234567", hs[0].Payload[GIT_HASH_BEFORE])
+
 	test.Equal(t, "666", hs[0].Payload[PR_ID])
 	test.Equal(t, "MERGED", hs[0].Payload[PR_STATE])
 	test.Equal(t, "My First PR", hs[0].Payload[PR_TITLE])
-	test.Equal(t, "fork/repo", hs[0].Payload[GIT_REPOSITORY])
+	test.Equal(t, "fork/repo", hs[0].Payload[GIT_REPOSITORY_BEFORE])
 
 }
 
@@ -2226,7 +2227,7 @@ var bitbucketPrModified = `
 }`
 var bitbucketPrMerged = `
 {
-    "eventKey": "pr:opened",
+    "eventKey": "pr:merged",
     "date": "2019-10-15T09:33:38+0200",
     "actor": {
         "name": "john.doe",
@@ -2398,7 +2399,28 @@ var bitbucketPrMerged = `
             "status": "UNAPPROVED"
         },
         "reviewers": [],
-        "participants": [],
+        "participants":[  
+		  {  
+			"user":{  
+			  "name":"user",
+			  "emailAddress":"user@example.com",
+			  "id":2,
+			  "displayName":"User",
+			  "active":true,
+			  "slug":"user",
+			  "type":"NORMAL"
+			},
+			"role":"PARTICIPANT",
+			"approved":false,
+			"status":"UNAPPROVED"
+		  }
+		],
+		"properties":{  
+		  "mergeCommit":{  
+			"displayId":"7e48f426f0a",
+			"id":"7e48f426f0a6e47c5b5e862c31be6ca965f82c9c"
+		  }
+		},
         "links": {
             "self": [
                 {

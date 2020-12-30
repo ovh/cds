@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"math"
+	"sync"
 	"time"
 
 	"github.com/go-gorp/gorp"
@@ -47,6 +48,18 @@ func Init(ctx context.Context, m *gorpmapper.Mapper, db *gorp.DbMap, gorts *sdk.
 
 	if len(config.Storages) == 0 {
 		return nil, fmt.Errorf("invalid CDN configuration. Missing storage unit")
+	}
+
+	if config.SyncNbElements < 0 || config.SyncNbElements > 1000 {
+		config.SyncNbElements = 100
+	}
+
+	if config.SyncSeconds <= 0 {
+		config.SyncSeconds = 30
+	}
+
+	if config.SyncMinNbElements <= 0 {
+		config.SyncMinNbElements = 0
 	}
 
 	// Start by initializing the buffer unit
@@ -199,6 +212,9 @@ func Init(ctx context.Context, m *gorpmapper.Mapper, db *gorp.DbMap, gorts *sdk.
 func (r *RunningStorageUnits) Start(ctx context.Context, gorts *sdk.GoRoutines) {
 	for i := range r.Storages {
 		s := r.Storages[i]
+		if !s.CanBeSync() {
+			continue
+		}
 		// Start the sync processes
 		for x := 0; x < cap(s.SyncItemChannel()); x++ {
 			gorts.Run(ctx, fmt.Sprintf("RunningStorageUnits.process.%s.%d", s.Name(), x),
@@ -236,7 +252,7 @@ func (r *RunningStorageUnits) Start(ctx context.Context, gorts *sdk.GoRoutines) 
 
 	// 	Feed the sync processes with a ticker
 	gorts.Run(ctx, "RunningStorageUnits.Start", func(ctx context.Context) {
-		tickr := time.NewTicker(time.Second)
+		tickr := time.NewTicker(time.Duration(r.config.SyncSeconds) * time.Second)
 		tickrPurge := time.NewTicker(30 * time.Second)
 
 		defer tickr.Stop()
@@ -246,16 +262,23 @@ func (r *RunningStorageUnits) Start(ctx context.Context, gorts *sdk.GoRoutines) 
 			case <-ctx.Done():
 				return
 			case <-tickr.C:
+				wg := sync.WaitGroup{}
 				for i := range r.Storages {
 					s := r.Storages[i]
+					if !s.CanBeSync() {
+						continue
+					}
 					gorts.Exec(ctx, "RunningStorageUnits.run."+s.Name(),
 						func(ctx context.Context) {
-							if err := r.Run(ctx, s, 100); err != nil {
+							wg.Add(1)
+							if err := r.Run(ctx, s, r.config.SyncMinNbElements, r.config.SyncNbElements); err != nil {
 								log.ErrorWithFields(ctx, log.Fields{"stack_trace": fmt.Sprintf("%+v", err)}, "RunningStorageUnits.run> error: %v", err)
 							}
+							wg.Done()
 						},
 					)
 				}
+				wg.Wait()
 			case <-tickrPurge.C:
 				gorts.Exec(ctx, "RunningStorageUnits.purge."+r.Buffer.Name(),
 					func(ctx context.Context) {

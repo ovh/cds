@@ -40,7 +40,7 @@ func ToOperationError(err error) *OperationError {
 	if err == nil {
 		return nil
 	}
-	sdkError := ExtractHTTPError(err, "")
+	sdkError := ExtractHTTPError(err)
 	return &OperationError{
 		ID:         sdkError.ID,
 		Status:     sdkError.Status,

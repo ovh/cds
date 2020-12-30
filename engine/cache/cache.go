@@ -83,6 +83,7 @@ type ScoredSetStore interface {
 	ScoredSetScanMaxScore(ctx context.Context, key string) (*SetValueWithScore, error)
 	ScoredSetRange(ctx context.Context, key string, from, to int64, dest interface{}) error
 	ScoredSetRem(ctx context.Context, key string, members ...string) error
+	ScoredSetGetScore(key string, member interface{}) (float64, error)
 	SetCard(key string) (int, error)
 	Eval(expr string, args ...string) (string, error)
 	HealthStore

@@ -138,10 +138,10 @@ func (api *API) postWorkflowImportHandler() service.Handler {
 		}
 
 		wrkflw, msgList, globalError := workflow.ParseAndImport(ctx, tx, api.Cache, *proj, wf, ew, getAPIConsumer(ctx), workflow.ImportOptions{Force: force})
-		msgListString := translate(r, msgList)
+		msgListString := translate(msgList)
 		if globalError != nil {
 			if len(msgListString) != 0 {
-				sdkErr := sdk.ExtractHTTPError(globalError, r.Header.Get("Accept-Language"))
+				sdkErr := sdk.ExtractHTTPError(globalError)
 				return service.WriteJSON(w, append(msgListString, sdkErr.Message), sdkErr.Status)
 			}
 			return sdk.WrapError(globalError, "Unable to import workflow %s", ew.GetName())
@@ -222,10 +222,10 @@ func (api *API) putWorkflowImportHandler() service.Handler {
 		defer tx.Rollback() //nolint
 
 		wrkflw, msgList, globalError := workflow.ParseAndImport(ctx, tx, api.Cache, *proj, wf, ew, u, workflow.ImportOptions{Force: true, WorkflowName: wfName})
-		msgListString := translate(r, msgList)
+		msgListString := translate(msgList)
 		if globalError != nil {
 			if len(msgListString) != 0 {
-				sdkErr := sdk.ExtractHTTPError(globalError, r.Header.Get("Accept-Language"))
+				sdkErr := sdk.ExtractHTTPError(globalError)
 				return service.WriteJSON(w, append(msgListString, sdkErr.Error()), sdkErr.Status)
 			}
 			return sdk.WrapError(globalError, "unable to import workflow %s", ew.GetName())
@@ -325,7 +325,7 @@ func (api *API) postWorkflowPushHandler() service.Handler {
 			return err
 		}
 
-		msgListString := translate(r, allMsg)
+		msgListString := translate(allMsg)
 
 		if wrkflw != nil {
 			w.Header().Add(sdk.ResponseWorkflowIDHeader, fmt.Sprintf("%d", wrkflw.ID))

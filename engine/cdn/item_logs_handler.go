@@ -155,6 +155,31 @@ func (s *Service) sendLogsToWSClient(ctx context.Context, wsClient websocket.Cli
 	return nil
 }
 
+func (s *Service) getItemsAllLogsLinesHandler() service.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		vars := mux.Vars(r)
+		itemType := sdk.CDNItemType(vars["type"])
+		if !itemType.IsLog() {
+			return sdk.NewErrorFrom(sdk.ErrWrongRequest, "invalid item log type")
+		}
+		refsHash := r.URL.Query()["apiRefHash"]
+
+		resp := make([]sdk.CDNLogsLines, 0)
+
+		for _, hash := range refsHash {
+			linesCount, err := s.getItemLogLinesCount(ctx, itemType, hash)
+			if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
+				return err
+			}
+			if err != nil && sdk.ErrorIs(err, sdk.ErrNotFound) {
+				break
+			}
+			resp = append(resp, sdk.CDNLogsLines{APIRef: hash, LinesCount: linesCount})
+		}
+		return service.WriteJSON(w, resp, http.StatusOK)
+	}
+}
+
 func (s *Service) getItemLogsLinesHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)

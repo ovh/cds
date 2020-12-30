@@ -79,7 +79,7 @@ export class WorkflowTemplateParamFormComponent implements OnInit, OnDestroy {
             });
     }
 
-    ngOnDestroy(): void {} // Should be set to use @AutoUnsubscribe with AOT
+    ngOnDestroy(): void { } // Should be set to use @AutoUnsubscribe with AOT
 
     ngOnInit(): void {
         this.initProject();
@@ -100,7 +100,7 @@ export class WorkflowTemplateParamFormComponent implements OnInit, OnDestroy {
         if (this.workflowTemplate && this.workflowTemplate.parameters) {
             this.workflowTemplate.parameters.forEach(parameter => {
                 if (parameter.type === 'boolean') {
-                    this.parameterValues[parameter.key] = new FormControl();
+                    this.parameterValues[parameter.key] = false;
                 }
             });
         }
@@ -152,7 +152,7 @@ export class WorkflowTemplateParamFormComponent implements OnInit, OnDestroy {
                 if (v) {
                     switch (parameter.type) {
                         case 'boolean':
-                            this.parameterValues[parameter.key].setValue(v === 'true');
+                            this.parameterValues[parameter.key] = v === 'true';
                             break;
                         case 'repository':
                             let s = v.split('/');
@@ -194,8 +194,7 @@ export class WorkflowTemplateParamFormComponent implements OnInit, OnDestroy {
         this.workflowTemplate.parameters.forEach(parameter => {
             switch (parameter.type) {
                 case 'boolean':
-                    parameters[parameter.key] = this.parameterValues[parameter.key] &&
-                        !!this.parameterValues[parameter.key].value ? 'true' : 'false';
+                    parameters[parameter.key] = this.parameterValues[parameter.key] ? 'true' : 'false';
                     break;
                 case 'repository':
                     if (this.parameterValues[parameter.key + '-repository']) {

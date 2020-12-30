@@ -10,6 +10,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/ovh/cds/engine/cdn/item"
+	"github.com/ovh/cds/engine/cdn/storage"
+
 	"github.com/dgrijalva/jwt-go"
 	"github.com/mitchellh/hashstructure"
 	"github.com/stretchr/testify/assert"
@@ -26,6 +29,165 @@ import (
 	"github.com/ovh/cds/sdk/log/hook"
 )
 
+func TestGetItemsAllLogsLinesHandler(t *testing.T) {
+	projectKey := sdk.RandomString(10)
+	s, db := newTestService(t)
+
+	ctx, cancel := context.WithCancel(context.TODO())
+	t.Cleanup(cancel)
+	s.Units = newRunningStorageUnits(t, s.Mapper, db.DbMap, ctx)
+
+	// Add step 1
+	hm1 := handledMessage{
+		Msg: hook.Message{
+			Full: "this is a message",
+		},
+		IsTerminated: sdk.StatusTerminated,
+		Signature: log.Signature{
+			ProjectKey:   projectKey,
+			WorkflowID:   1,
+			WorkflowName: "MyWorkflow",
+			RunID:        1,
+			NodeRunID:    1,
+			NodeRunName:  "MyPipeline",
+			JobName:      "MyJob",
+			JobID:        1,
+			Worker: &log.SignatureWorker{
+				StepName:  "script1",
+				StepOrder: 0,
+			},
+		},
+	}
+	content := buildMessage(hm1)
+	err := s.storeLogs(context.TODO(), sdk.CDNTypeItemStepLog, hm1.Signature, hm1.IsTerminated, content)
+	require.NoError(t, err)
+	hash1 := sdk.CDNLogAPIRef{
+		ProjectKey:     hm1.Signature.ProjectKey,
+		WorkflowName:   hm1.Signature.WorkflowName,
+		WorkflowID:     hm1.Signature.WorkflowID,
+		RunID:          hm1.Signature.RunID,
+		NodeRunName:    hm1.Signature.NodeRunName,
+		NodeRunID:      hm1.Signature.NodeRunID,
+		NodeRunJobName: hm1.Signature.JobName,
+		NodeRunJobID:   hm1.Signature.JobID,
+		StepOrder:      hm1.Signature.Worker.StepOrder,
+		StepName:       hm1.Signature.Worker.StepName,
+	}
+	hashRef1, err := hash1.ToHash()
+	require.NoError(t, err)
+
+	// Add step 2
+	hm2 := hm1
+	hm2.Signature.Worker.StepOrder = 1
+	content = buildMessage(hm2)
+	err = s.storeLogs(context.TODO(), sdk.CDNTypeItemStepLog, hm2.Signature, hm2.IsTerminated, content)
+	require.NoError(t, err)
+	hash2 := sdk.CDNLogAPIRef{
+		ProjectKey:     hm2.Signature.ProjectKey,
+		WorkflowName:   hm2.Signature.WorkflowName,
+		WorkflowID:     hm2.Signature.WorkflowID,
+		RunID:          hm2.Signature.RunID,
+		NodeRunName:    hm2.Signature.NodeRunName,
+		NodeRunID:      hm2.Signature.NodeRunID,
+		NodeRunJobName: hm2.Signature.JobName,
+		NodeRunJobID:   hm2.Signature.JobID,
+		StepOrder:      hm2.Signature.Worker.StepOrder,
+		StepName:       hm2.Signature.Worker.StepName,
+	}
+	hashRef2, err := hash2.ToHash()
+	require.NoError(t, err)
+
+	// Add step 3
+	hm3 := hm1
+	hm3.Signature.Worker.StepOrder = 2
+	hm3.Msg.Full = "First Line"
+	hm3.IsTerminated = false
+	content = buildMessage(hm3)
+	err = s.storeLogs(context.TODO(), sdk.CDNTypeItemStepLog, hm3.Signature, hm3.IsTerminated, content)
+	require.NoError(t, err)
+	hash3 := sdk.CDNLogAPIRef{
+		ProjectKey:     hm3.Signature.ProjectKey,
+		WorkflowName:   hm3.Signature.WorkflowName,
+		WorkflowID:     hm3.Signature.WorkflowID,
+		RunID:          hm3.Signature.RunID,
+		NodeRunName:    hm3.Signature.NodeRunName,
+		NodeRunID:      hm3.Signature.NodeRunID,
+		NodeRunJobName: hm3.Signature.JobName,
+		NodeRunJobID:   hm3.Signature.JobID,
+		StepOrder:      hm3.Signature.Worker.StepOrder,
+		StepName:       hm3.Signature.Worker.StepName,
+	}
+
+	hm4 := hm3
+	hm4.Msg.Full = "Second Line"
+	hm4.IsTerminated = true
+	content = buildMessage(hm4)
+	err = s.storeLogs(context.TODO(), sdk.CDNTypeItemStepLog, hm4.Signature, hm4.IsTerminated, content)
+	require.NoError(t, err)
+
+	hashRef3, err := hash3.ToHash()
+	require.NoError(t, err)
+
+	it, err := item.LoadByAPIRefHashAndType(ctx, s.Mapper, s.mustDBWithCtx(ctx), hashRef3, sdk.CDNTypeItemStepLog)
+	require.NoError(t, err)
+
+	unit, err := storage.LoadUnitByName(ctx, s.Mapper, s.mustDBWithCtx(ctx), s.Units.Storages[0].Name())
+	require.NoError(t, err)
+
+	require.NoError(t, s.Units.Run(ctx, s.Units.Storages[0], 0, 1000))
+
+	cpt := 0
+	for {
+		cpt++
+		_, err = storage.LoadItemUnitByUnit(ctx, s.Mapper, s.mustDBWithCtx(ctx), unit.ID, it.ID)
+		if sdk.ErrorIs(err, sdk.ErrNotFound) {
+			if cpt == 10 {
+				t.Fail()
+			}
+			time.Sleep(250 * time.Millisecond)
+			continue
+		}
+		if err != nil {
+			t.Fail()
+		}
+		break
+	}
+
+	signer, err := authentication.NewSigner("cdn-test", test.SigningKey)
+	require.NoError(t, err)
+	s.Common.ParsedAPIPublicKey = signer.GetVerifyKey()
+	jwtToken := jwt.NewWithClaims(jwt.SigningMethodRS512, sdk.AuthSessionJWTClaims{
+		ID: sdk.UUID(),
+		StandardClaims: jwt.StandardClaims{
+			Issuer:    "test",
+			Subject:   sdk.UUID(),
+			Id:        sdk.UUID(),
+			IssuedAt:  time.Now().Unix(),
+			ExpiresAt: time.Now().Add(time.Minute).Unix(),
+		},
+	})
+	jwtTokenRaw, err := signer.SignJWT(jwtToken)
+	require.NoError(t, err)
+
+	uri := fmt.Sprintf("%s?apiRefHash=%s&apiRefHash=%s&apiRefHash=%s", s.Router.GetRoute("GET", s.getItemsAllLogsLinesHandler, map[string]string{
+		"type": string(sdk.CDNTypeItemStepLog),
+	}), hashRef1, hashRef2, hashRef3)
+	require.NotEmpty(t, uri)
+	req := assets.NewJWTAuthentifiedRequest(t, jwtTokenRaw, "GET", uri, nil)
+	rec := httptest.NewRecorder()
+	s.Router.Mux.ServeHTTP(rec, req)
+	require.Equal(t, 200, rec.Code)
+
+	var logslines []sdk.CDNLogsLines
+	require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &logslines))
+	require.Len(t, logslines, 3)
+
+	require.Equal(t, int64(1), logslines[0].LinesCount)
+	require.Equal(t, int64(1), logslines[1].LinesCount)
+	require.Equal(t, int64(2), logslines[2].LinesCount)
+
+}
+
 func TestGetItemLogsLinesHandler(t *testing.T) {
 	projectKey := sdk.RandomString(10)
 
@@ -38,7 +200,7 @@ func TestGetItemLogsLinesHandler(t *testing.T) {
 
 	ctx, cancel := context.WithCancel(context.TODO())
 	t.Cleanup(cancel)
-	s.Units = newRunningStorageUnits(t, s.Mapper, db.DbMap, ctx, 1000)
+	s.Units = newRunningStorageUnits(t, s.Mapper, db.DbMap, ctx)
 
 	hm := handledMessage{
 		Msg: hook.Message{
@@ -133,7 +295,7 @@ func TestGetItemLogsStreamHandler(t *testing.T) {
 
 	ctx, cancel := context.WithCancel(context.TODO())
 	t.Cleanup(cancel)
-	s.Units = newRunningStorageUnits(t, s.Mapper, db.DbMap, ctx, 1000)
+	s.Units = newRunningStorageUnits(t, s.Mapper, db.DbMap, ctx)
 
 	signature := log.Signature{
 		ProjectKey:   projectKey,

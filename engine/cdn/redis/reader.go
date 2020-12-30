@@ -163,6 +163,10 @@ func (r *Reader) loadMoreLines() error {
 }
 
 func (r *Reader) Read(p []byte) (n int, err error) {
+	if r.readEOF {
+		return 0, io.EOF
+	}
+
 	lengthToRead := len(p)
 
 	// If we don't have enough bytes in current buffer we will load some line from Redis

@@ -196,6 +196,23 @@ export class CDNLogLink {
     api_ref: string;
 }
 
+export class CDNLogsLines {
+    api_ref: string
+    lines_count: number
+}
+
+export class CDNLogLinks {
+    item_type: string;
+    datas: Array<CDNLogLinkData>;
+}
+
+
+export class CDNLogLinkData {
+    api_ref: string
+    step_order: number
+    requirement_id: number
+}
+
 export class CDNLinesResponse {
     totalCount: number;
     lines: Array<CDNLine>;

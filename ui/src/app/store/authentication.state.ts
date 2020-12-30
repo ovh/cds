@@ -47,6 +47,11 @@ export class AuthenticationState {
         return state.consumer;
     }
 
+    @Selector()
+    static session(state: AuthenticationStateModel) {
+        return state.session;
+    }
+
     @Action(ActionAuthentication.FetchCurrentUser)
     fetchCurrentUser(ctx: StateContext<AuthenticationStateModel>, action: ActionAuthentication.FetchCurrentUser) {
         ctx.patchState({ loading: true });

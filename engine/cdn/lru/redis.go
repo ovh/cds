@@ -38,8 +38,14 @@ func NewRedisLRU(db *gorp.DbMap, maxSize int64, host string, password string) (*
 
 // Exist returns true is the item ID exists
 func (r *Redis) Exist(itemID string) (bool, error) {
-	itemKey := cache.Key(redisLruKeyCacheKey, itemID)
-	return r.store.Exist(itemKey)
+	s, err := r.store.ScoredSetGetScore(redisLruKeyCacheKey, itemID)
+	if err != nil {
+		if err.Error() == "redis: nil" {
+			return false, nil
+		}
+		return false, err
+	}
+	return s > 0, nil
 }
 
 // Remove remove an itemID

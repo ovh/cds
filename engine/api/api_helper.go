@@ -48,7 +48,8 @@ func isAdmin(ctx context.Context) bool {
 	if c == nil {
 		return false
 	}
-	return c.Admin()
+	var dontNeedMFA = !c.SupportMFA
+	return c.Admin() && (dontNeedMFA || isMFA(ctx))
 }
 
 func isService(ctx context.Context) bool {
@@ -81,6 +82,14 @@ func isCDN(ctx context.Context) bool {
 		return false
 	}
 	return c.Service != nil && c.Service.Type == sdk.TypeCDN
+}
+
+func isMFA(ctx context.Context) bool {
+	s := getAuthSession(ctx)
+	if s == nil {
+		return false
+	}
+	return s.MFA
 }
 
 func getAPIConsumer(c context.Context) *sdk.AuthConsumer {

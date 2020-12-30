@@ -15,6 +15,7 @@ import (
 	"github.com/ovh/cds/engine/api/keys"
 	"github.com/ovh/cds/engine/api/operation"
 	"github.com/ovh/cds/engine/api/project"
+	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
@@ -288,6 +289,25 @@ func (api *API) updateAsCodeEnvironmentHandler() service.Handler {
 		}
 		if rootApp == nil {
 			return sdk.NewErrorFrom(sdk.ErrWrongRequest, "cannot find the root application of the workflow %s that hold the pipeline", wkHolder.Name)
+		}
+
+		vcsServer, err := repositoriesmanager.LoadProjectVCSServerLinkByProjectKeyAndVCSServerName(ctx, tx, key, rootApp.VCSServer)
+		if err != nil {
+			return sdk.WrapError(sdk.ErrNoReposManagerClientAuth, "updateAsCodeEnvironmentHandler> Cannot get client got %s %s : %v", key, rootApp.VCSServer, err)
+		}
+
+		client, err := repositoriesmanager.AuthorizedClient(ctx, tx, api.Cache, key, vcsServer)
+		if err != nil {
+			return sdk.WrapError(sdk.ErrNoReposManagerClientAuth, "updateAsCodeEnvironmentHandler> Cannot get client got %s %s : %v", key, rootApp.VCSServer, err)
+		}
+
+		b, err := client.Branch(ctx, rootApp.RepositoryFullname, branch)
+		if err != nil && !sdk.ErrorIs(err, sdk.ErrNoBranch) {
+			return err
+		}
+
+		if b != nil && b.Default {
+			return sdk.NewErrorFrom(sdk.ErrForbidden, "cannot push the the default branch on your git repository")
 		}
 
 		// create keys

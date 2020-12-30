@@ -33,7 +33,7 @@
                     <div class="field">
                         <label>{{'common_version' | translate}}</label>
                         <input class="ui input" type="text" name="version" [ngModel]="workflowTemplate.version"
-                               [disabled]="true">
+                            [disabled]="true">
                     </div>
                 </div>
                 <div class="field">
@@ -49,11 +49,12 @@
             <div *ngIf="workflowTemplate.editable || importFromURL" class="sixteen wide column">
                 <div class="wide fields">
                     <div class="four wide field centeredField">
-                        <sm-checkbox *ngIf="workflowTemplate.editable" name="import-from-url"
-                            [control]="importFromURLControl" (change)="changeFromURL()" type="toggle"
-                            label="{{'workflow_template_import_from_url' | translate}}"></sm-checkbox>
+                        <sui-checkbox *ngIf="workflowTemplate.editable" name="import-from-url" [ngModel]="importFromURL"
+                            class="toggle" (ngModelChange)="changeFromURL()">
+                            {{'workflow_template_import_from_url' | translate}}
+                        </sui-checkbox>
                         <span *ngIf="!workflowTemplate.editable">{{'workflow_template_imported_from_url' |
-                                    translate}}</span>
+                            translate}}</span>
                     </div>
                     <div class="twelve wide field">
                         <input class="ui input" type="text" name="import-url" placeholder="https://host/my-template.yml"

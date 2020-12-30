@@ -29,6 +29,7 @@ minio_start: $(MINIO_RC)
 
 minio_reset_bucket:
 	@docker run --rm --link minio1:minio --entrypoint sh minio/mc -c "\
+		microdnf update --nodocs; microdnf install nc --nodocs; \
 		while ! nc -z minio 9000; do echo 'Wait minio to startup...' && sleep 0.1; done; \
 		sleep 5 && \
 		mc config host add myminio http://minio:9000 AKIAIOSFODNN7EXAMPLE wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY && \

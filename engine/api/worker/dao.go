@@ -103,13 +103,13 @@ func LoadByConsumerID(ctx context.Context, db gorp.SqlExecutor, id string) (*sdk
 	return get(ctx, db, query)
 }
 
-func LoadByID(ctx context.Context, db gorp.SqlExecutor, id string) (*sdk.Worker, error) {
+func LoadByID(ctx context.Context, db gorp.SqlExecutor, id string, opts ...gorpmapping.GetOptionFunc) (*sdk.Worker, error) {
 	query := gorpmapping.NewQuery(`
     SELECT *
     FROM worker
     WHERE id = $1
   `).Args(id)
-	return get(ctx, db, query)
+	return get(ctx, db, query, opts...)
 }
 
 func LoadAll(ctx context.Context, db gorp.SqlExecutor) ([]sdk.Worker, error) {
@@ -144,7 +144,7 @@ func LoadDeadWorkers(ctx context.Context, db gorp.SqlExecutor, timeout float64, 
 
 // SetStatus sets job_run_id and status to building on given worker
 func SetStatus(ctx context.Context, db gorpmapper.SqlExecutorWithTx, workerID string, status string) error {
-	w, err := LoadByID(ctx, db, workerID)
+	w, err := LoadByID(ctx, db, workerID, gorpmapping.GetOptions.WithDecryption)
 	if err != nil {
 		return err
 	}

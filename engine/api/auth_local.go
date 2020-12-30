@@ -131,6 +131,10 @@ func initBuiltinConsumersFromStartupConfig(ctx context.Context, tx gorpmapper.Sq
 			scopes = sdk.NewAuthConsumerScopeDetails(sdk.AuthConsumerScopeService, sdk.AuthConsumerScopeWorker, sdk.AuthConsumerScopeRunExecution)
 		case StartupConfigConsumerTypeCDNStorageCDS:
 			scopes = sdk.NewAuthConsumerScopeDetails(sdk.AuthConsumerScopeService, sdk.AuthConsumerScopeWorker, sdk.AuthConsumerScopeRunExecution)
+		case StartupConfigConsumerTypeVCS:
+			scopes = sdk.NewAuthConsumerScopeDetails(sdk.AuthConsumerScopeProject, sdk.AuthConsumerScopeRun, sdk.AuthConsumerScopeService)
+		case StartupConfigConsumerTypeRepositories:
+			scopes = sdk.NewAuthConsumerScopeDetails(sdk.AuthConsumerScopeProject, sdk.AuthConsumerScopeRun, sdk.AuthConsumerScopeService)
 		default:
 			scopes = sdk.NewAuthConsumerScopeDetails(sdk.AuthConsumerScopeProject, sdk.AuthConsumerScopeRun)
 		}
@@ -198,8 +202,13 @@ func (api *API) postAuthLocalSigninHandler() service.Handler {
 			return sdk.NewErrorWithStack(err, sdk.ErrUnauthorized)
 		}
 
+		userInfo, err := driver.GetUserInfo(ctx, nil) // local auth driver doens't handle signinRequest
+		if err != nil {
+			return err
+		}
+
 		// Generate a new session for consumer
-		session, err := authentication.NewSession(ctx, tx, consumer, driver.GetSessionDuration(), false)
+		session, err := authentication.NewSession(ctx, tx, consumer, driver.GetSessionDuration(userInfo, *consumer), false)
 		if err != nil {
 			return err
 		}
@@ -324,8 +333,13 @@ func (api *API) postAuthLocalVerifyHandler() service.Handler {
 			}
 		}
 
+		userInfo, err := driver.GetUserInfo(ctx, nil) // local auth driver doens't handle signinRequest
+		if err != nil {
+			return err
+		}
+
 		// Generate a new session for consumer
-		session, err := authentication.NewSession(ctx, tx, consumer, driver.GetSessionDuration(), false)
+		session, err := authentication.NewSession(ctx, tx, consumer, driver.GetSessionDuration(userInfo, *consumer), false)
 		if err != nil {
 			return err
 		}
@@ -492,8 +506,13 @@ func (api *API) postAuthLocalResetHandler() service.Handler {
 			return err
 		}
 
+		userInfo, err := driver.GetUserInfo(ctx, nil) // local auth driver doens't handle signinRequest
+		if err != nil {
+			return err
+		}
+
 		// Generate a new session for consumer
-		session, err := authentication.NewSession(ctx, tx, consumer, driver.GetSessionDuration(), false)
+		session, err := authentication.NewSession(ctx, tx, consumer, driver.GetSessionDuration(userInfo, *consumer), false)
 		if err != nil {
 			return err
 		}

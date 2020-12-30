@@ -22,7 +22,7 @@ import { AddFeatureResult, FeaturePayload } from 'app/store/feature.action';
 import { ProjectState, ProjectStateModel } from 'app/store/project.state';
 import {
     CleanWorkflowRun,
-    CleanWorkflowState, ClearListRuns,
+    CleanWorkflowState,
     GetWorkflow,
     SelectHook,
     UpdateFavoriteWorkflow

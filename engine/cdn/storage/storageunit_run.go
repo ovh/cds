@@ -13,13 +13,13 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
-func (x *RunningStorageUnits) Run(ctx context.Context, s StorageUnit, nbItem int64) error {
+func (x *RunningStorageUnits) Run(ctx context.Context, s StorageUnit, syncMinNbItems, nbItem int64) error {
 	if _, err := LoadUnitByID(ctx, x.m, x.db, s.ID()); err != nil {
 		return err
 	}
 
 	// Load items to sync
-	itemIDs, err := LoadAllItemIDUnknownByUnitOrderByUnitID(x.db, s.ID(), x.Buffer.ID(), nbItem)
+	itemIDs, err := LoadAllItemIDUnknownByUnit(x.db, s.ID(), syncMinNbItems, nbItem)
 	if err != nil {
 		return err
 	}
