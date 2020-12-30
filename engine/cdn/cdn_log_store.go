@@ -255,7 +255,7 @@ func (s *Service) loadOrCreateItemUnitBuffer(ctx context.Context, itemID string)
 
 		itemUnit, err = storage.LoadItemUnitByUnit(ctx, s.Mapper, s.mustDBWithCtx(ctx), unit.ID, itemID, gorpmapper.GetOptions.WithDecryption)
 		if err != nil {
-			return nil, err
+			return nil, sdk.WrapError(err, "unable to load item unit %s/%s", unit.ID, itemID)
 		}
 	}
 
