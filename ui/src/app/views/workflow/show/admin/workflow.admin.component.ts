@@ -45,7 +45,7 @@ export class WorkflowAdminComponent implements OnInit, OnDestroy {
     @Input() project: Project;
 
     _workflow: Workflow;
-    @Input('workflow')
+    @Input()
     set workflow(data: Workflow) {
         if (data) {
             this._workflow = cloneDeep(data);

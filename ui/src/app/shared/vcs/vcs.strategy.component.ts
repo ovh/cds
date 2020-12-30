@@ -39,7 +39,7 @@ export class VCSStrategyComponent implements OnInit {
     selectedPublicKey: string;
 
     _strategy: VCSStrategy;
-    @Input('strategy')
+    @Input()
     set strategy(data: VCSStrategy) {
         if (data) {
             this._strategy = data;

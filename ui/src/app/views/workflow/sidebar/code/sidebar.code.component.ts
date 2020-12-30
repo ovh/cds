@@ -42,7 +42,7 @@ export class WorkflowSidebarCodeComponent implements OnInit, AfterViewInit, OnDe
     @Input() project: Project;
     @Input() workflow: Workflow;
     // Flag indicate if sidebar is open
-    @Input('open')
+    @Input()
     set open(data: boolean) {
         if (data && !this.updated) {
             this.loadingGet = true;

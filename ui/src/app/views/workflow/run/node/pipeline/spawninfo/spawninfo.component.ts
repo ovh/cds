@@ -32,7 +32,7 @@ import { WorkflowRunJobVariableComponent } from '../variables/job.variables.comp
 @AutoUnsubscribe()
 export class WorkflowRunJobSpawnInfoComponent implements OnInit, OnDestroy {
 
-    @Input('displayServicesLogs')
+    @Input()
     set displayServicesLogs(data: boolean) {
         this._displayServiceLogs = data;
         this.displayServicesLogsChange.emit(data);

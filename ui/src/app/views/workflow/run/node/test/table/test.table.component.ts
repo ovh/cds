@@ -32,7 +32,7 @@ export class WorkflowRunTestTableComponent implements OnInit {
 
     _tests: Tests;
     testcases: Array<TestCase>;
-    @Input('tests')
+    @Input()
     set tests(data: Tests) {
         this._tests = cloneDeep(data);
         if (this._tests && this._tests.ko > 0 && (!this.filterInput || this.filterInput === '')) {

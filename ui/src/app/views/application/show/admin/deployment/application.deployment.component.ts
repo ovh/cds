@@ -23,7 +23,7 @@ import { ToastService } from '../../../../../shared/toast/ToastService';
 export class ApplicationDeploymentComponent {
 
     _project: Project;
-    @Input('project')
+    @Input()
     set project(project: Project) {
         this._project = project;
         if (project.integrations) {

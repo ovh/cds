@@ -23,7 +23,7 @@ import { finalize } from 'rxjs/operators';
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ParameterListComponent extends Table<Parameter> implements OnInit {
-    @Input('parameters')
+    @Input()
     set parameters(newP: Array<Parameter>) {
         if (Array.isArray(newP)) {
             this._parameters = newP.map((d) => {

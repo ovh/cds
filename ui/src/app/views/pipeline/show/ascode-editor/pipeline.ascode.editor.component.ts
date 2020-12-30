@@ -41,7 +41,7 @@ export class PipelineAsCodeEditorComponent implements OnInit, AfterViewInit, OnD
     @Input() project: Project;
     @Input() pipeline: Pipeline;
     // Flag indicate if sidebar is open
-    @Input('open')
+    @Input()
     set open(data: boolean) {
         if (data && !this.updated) {
             this.store.dispatch(new FetchAsCodePipeline({

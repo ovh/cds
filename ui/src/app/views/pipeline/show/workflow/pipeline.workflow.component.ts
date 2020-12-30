@@ -32,7 +32,7 @@ export class PipelineWorkflowComponent implements OnInit, OnDestroy {
     @Input() editMode: boolean;
     @Input() readOnly: boolean;
 
-    @Input('currentPipeline')
+    @Input()
     set currentPipeline(data: Pipeline) {
         this.pipeline = cloneDeep(data);
 

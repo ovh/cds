@@ -35,7 +35,7 @@ export class WorkflowSidebarRunListComponent implements OnDestroy {
     @ViewChild('tagsList') tagsList: ElementRef;
 
     _workflow: Workflow;
-    @Input('workflow')
+    @Input()
     set workflow(data: Workflow) {
         if (data) {
             if (!this._workflow || this._workflow.id !== data.id) {

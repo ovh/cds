@@ -24,7 +24,7 @@ export class ParameterValueComponent implements OnInit, AfterViewChecked, OnDest
 
     editableValue: string | number | boolean;
     @Input() type: string;
-    @Input('keys')
+    @Input()
     set keys(data: AllKeys) {
         this._keys = data;
         if (data) {
@@ -34,7 +34,7 @@ export class ParameterValueComponent implements OnInit, AfterViewChecked, OnDest
     get keys(): AllKeys {
         return this._keys;
     }
-    @Input('value')
+    @Input()
     set value(data: string | number | boolean) {
         this.castValue(data);
     }
@@ -44,7 +44,7 @@ export class ParameterValueComponent implements OnInit, AfterViewChecked, OnDest
     @Input() suggest: Array<string>;
     @Input() projectKey: string;
 
-    @Input('ref')
+    @Input()
     set ref(data: Parameter | Array<string>) {
         if (data && (<Parameter>data).type === 'list') {
             this.refValue = (<Parameter>data).value.split(';');
@@ -54,7 +54,7 @@ export class ParameterValueComponent implements OnInit, AfterViewChecked, OnDest
     }
     refValue: Array<string>;
 
-    @Input('project')
+    @Input()
     set project(data: Project) {
         this.repositoriesManager = new Array<RepositoriesManager>();
         if (data && data.vcs_servers) {

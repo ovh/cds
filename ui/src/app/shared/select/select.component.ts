@@ -9,7 +9,7 @@ import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output } from 
 export class SelectFilterComponent {
 
     _value: string;
-    @Input('value') set value(d: string) {
+    @Input() set value(d: string) {
         this._value = d;
         if (d && this.options) {
             if (this.options.findIndex( o => o === d) === -1) {
@@ -21,7 +21,7 @@ export class SelectFilterComponent {
         return this._value;
     }
     _options: Array<string>;
-    @Input('options') set options(d: Array<string>) {
+    @Input() set options(d: Array<string>) {
         if (d && this.value) {
             if (d.findIndex( o => o === this.value) === -1) {
                 d.push(this.value);

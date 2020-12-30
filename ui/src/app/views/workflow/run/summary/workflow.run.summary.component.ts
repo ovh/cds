@@ -33,7 +33,7 @@ import { Subscription } from 'rxjs/Subscription';
 })
 @AutoUnsubscribe()
 export class WorkflowRunSummaryComponent implements OnInit, OnDestroy {
-    @Input('direction')
+    @Input()
     set direction(val) {
         this._direction = val;
         this.directionChange.emit(val);

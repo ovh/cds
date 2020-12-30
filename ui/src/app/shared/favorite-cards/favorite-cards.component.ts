@@ -16,7 +16,7 @@ export class FavoriteCardsComponent {
 
     @Input() favorites: Array<Bookmark>;
     @Input() centered = true;
-    @Input('projects')
+    @Input()
     set projects(projects: Array<NavbarProjectData>) {
         this._projects = projects;
         if (projects) {

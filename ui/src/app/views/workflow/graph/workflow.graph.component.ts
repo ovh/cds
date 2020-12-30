@@ -2,13 +2,13 @@
 import { AfterViewInit, ChangeDetectionStrategy, ChangeDetectorRef, Component, ComponentFactoryResolver, ComponentRef, EventEmitter, HostListener, Input, OnDestroy, Output, ViewChild, ViewContainerRef } from '@angular/core';
 import * as d3 from 'd3';
 import * as dagreD3 from 'dagre-d3';
-import { Project } from '../../../model/project.model';
-import { WNode, Workflow } from '../../../model/workflow.model';
-import { WorkflowCoreService } from '../../../service/workflow/workflow.core.service';
-import { WorkflowStore } from '../../../service/workflow/workflow.store';
-import { AutoUnsubscribe } from '../../../shared/decorator/autoUnsubscribe';
-import { WorkflowNodeHookComponent } from '../../../shared/workflow/wnode/hook/hook.component';
-import { WorkflowWNodeComponent } from '../../../shared/workflow/wnode/wnode.component';
+import { Project } from 'app/model/project.model';
+import { WNode, Workflow } from 'app/model/workflow.model';
+import { WorkflowCoreService } from 'app/service/workflow/workflow.core.service';
+import { WorkflowStore } from 'app/service/workflow/workflow.store';
+import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
+import { WorkflowNodeHookComponent } from 'app/shared/workflow/wnode/hook/hook.component';
+import { WorkflowWNodeComponent } from 'app/shared/workflow/wnode/wnode.component';
 
 @Component({
     selector: 'app-workflow-graph',
@@ -28,7 +28,7 @@ export class WorkflowGraphComponent implements AfterViewInit, OnDestroy {
     static maxOriginScale = 1;
 
     workflow: Workflow;
-    @Input('workflowData')
+    @Input()
     set workflowData(data: Workflow) {
         this.workflow = data;
         this.nodesComponent = new Map<string, ComponentRef<WorkflowWNodeComponent>>();
@@ -38,7 +38,7 @@ export class WorkflowGraphComponent implements AfterViewInit, OnDestroy {
 
     @Input() project: Project;
 
-    @Input('direction')
+    @Input()
     set direction(data: string) {
         this._direction = data;
         this._workflowStore.setDirection(this.project.key, this.workflow.name, this.direction);

@@ -14,7 +14,7 @@ import { finalize } from 'rxjs/operators';
 })
 export class ProjectWorkflowListLabelsComponent {
 
-  @Input('project')
+  @Input()
   set project(project: Project) {
     this._project = cloneDeep(project);
     if (project) {
@@ -30,7 +30,7 @@ export class ProjectWorkflowListLabelsComponent {
   get project(): Project {
     return this._project;
   }
-  @Input('workflows')
+  @Input()
   set workflows(workflows: IdName[]) {
     this._workflows = workflows;
     this.workflowLabelsMap = {};
@@ -61,7 +61,7 @@ export class ProjectWorkflowListLabelsComponent {
   get workflows(): IdName[] {
     return this._workflows;
   }
-  @Input('labels')
+  @Input()
   set labels(labels: Label[]) {
     this._labels = labels;
     if (labels) {

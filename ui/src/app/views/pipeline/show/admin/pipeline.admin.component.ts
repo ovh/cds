@@ -23,7 +23,7 @@ export class PipelineAdminComponent implements OnInit {
 
     @Input() project;
 
-    @Input('pipeline')
+    @Input()
     set pipeline(data: Pipeline) {
         this.oldName = data.name;
         this.editablePipeline = cloneDeep(data);

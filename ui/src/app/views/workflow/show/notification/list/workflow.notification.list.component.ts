@@ -30,7 +30,7 @@ export class WorkflowNotificationListComponent {
     @Input() editMode: boolean;
     @Input() readOnly: boolean;
 
-    @Input('workflow')
+    @Input()
     set workflow(data: Workflow) {
         if (data) {
             this._workflow = data;

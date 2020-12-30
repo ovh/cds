@@ -13,7 +13,7 @@ import { finalize } from 'rxjs/operators';
 })
 export class LabelsEditComponent {
     _project: Project;
-    @Input('project') set project(data: Project) {
+    @Input() set project(data: Project) {
         this._project = data;
         if (this._project) {
             this.labels = cloneDeep(this.project.labels);
