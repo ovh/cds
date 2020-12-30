@@ -41,9 +41,6 @@
         "prefer-arrow/prefer-arrow-functions": [
           "off"
         ],
-        "@angular-eslint/no-input-rename": [
-          "off"
-        ],
         "@typescript-eslint/consistent-type-assertions": [
           "off"
         ],
