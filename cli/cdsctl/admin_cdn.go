@@ -21,7 +21,21 @@ func adminCdn() *cobra.Command {
 		adminCdnItem(),
 		cli.NewListCommand(adminCdnStatusCmd, adminCdnStatusRun, nil),
 		cli.NewCommand(adminCdnMigFromCDSCmd, adminCdnMigFromCDS, nil),
+		cli.NewCommand(adminCdnSyncBufferCmd, adminCdnSyncBuffer, nil),
 	})
+}
+
+var adminCdnSyncBufferCmd = cli.Command{
+	Name:    "sync-buffer",
+	Short:   "run synchronization of cdn buffer",
+	Example: "cdsctl admin cdn sync-buffer",
+}
+
+func adminCdnSyncBuffer(_ cli.Values) error {
+	if _, err := client.ServiceCallPOST(sdk.TypeCDN, "/sync/buffer", nil); err != nil {
+		return err
+	}
+	return nil
 }
 
 var adminCdnMigFromCDSCmd = cli.Command{

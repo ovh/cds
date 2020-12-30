@@ -35,6 +35,7 @@ func (s *Service) initRouter(ctx context.Context) {
 	r.Handle("/item/{type}/{apiRef}/lines", nil, r.GET(s.getItemLogsLinesHandler, service.OverrideAuth(s.itemAccessMiddleware)))
 
 	r.Handle("/sync/projects", nil, r.POST(s.syncProjectsHandler))
+	r.Handle("/sync/buffer", nil, r.POST(s.syncBufferHandler))
 
 	r.Handle("/size/item/project/{projectKey}", nil, r.GET(s.getSizeByProjectHandler))
 }
