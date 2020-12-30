@@ -55,11 +55,11 @@ func (s *Service) SyncBuffer(ctx context.Context) {
 		}
 		if sdk.ErrorIs(err, sdk.ErrNotFound) {
 			if err := s.Units.Buffer.Remove(ctx, sdk.CDNItemUnit{ItemID: itemID}); err != nil {
-				log.Error(ctx, "[SyncBuffer] unable to remove item %s from buffer: %v", err)
+				log.Error(ctx, "[SyncBuffer] unable to remove item %s from buffer: %v", itemID, err)
 				continue
 			}
 			keysDeleted++
-			log.Info(ctx, "[SyncBuffer] item %d remove from redis", itemID)
+			log.Info(ctx, "[SyncBuffer] item %s remove from redis", itemID)
 		}
 	}
 	log.Info(ctx, "[SyncBuffer] Done - %d keys deleted", keysDeleted)
