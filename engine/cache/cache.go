@@ -24,7 +24,6 @@ func Key(args ...string) string {
 
 //Store is an interface
 type Store interface {
-	Keys(pattern string) ([]string, error)
 	Get(key string, value interface{}) (bool, error)
 	Set(key string, value interface{}) error
 	SetWithTTL(key string, value interface{}, ttl int) error
@@ -46,6 +45,7 @@ type HealthStore interface {
 	Ping() error
 	DBSize() (int64, error)
 	Size(key string) (int64, error)
+	Keys(pattern string) ([]string, error)
 }
 
 type QueueStore interface {

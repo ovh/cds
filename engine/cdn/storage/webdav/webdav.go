@@ -32,10 +32,6 @@ func init() {
 	storage.RegisterDriver("webdav", new(Webdav))
 }
 
-func (s *Webdav) CanBeSync() bool {
-	return true
-}
-
 func (s *Webdav) Init(ctx context.Context, cfg interface{}) error {
 	config, is := cfg.(*storage.WebdavStorageConfiguration)
 	if !is {

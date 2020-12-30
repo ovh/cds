@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/ovh/cds/engine/cache"
@@ -32,6 +33,36 @@ var statusSync struct {
 
 func (s *Service) startCDSSync(ctx context.Context) error {
 	return s.Cache.Publish(ctx, cdsSyncQueue, "true")
+}
+
+func (s *Service) SyncBuffer(ctx context.Context) {
+	log.Info(ctx, "[SyncBuffer] Start")
+	keysDeleted := 0
+	keys, err := s.Units.Buffer.Keys()
+	if err != nil {
+		log.Error(ctx, "[SyncBuffer] unable to list keys: %v", err)
+		return
+	}
+	log.Info(ctx, "[SyncBuffer] Found %d keys", len(keys))
+	for _, k := range keys {
+		keySplitted := strings.Split(k, ":")
+		if len(keySplitted) != 3 {
+			continue
+		}
+		itemID := keySplitted[2]
+		if _, err := storage.LoadItemUnitByUnit(ctx, s.Mapper, s.mustDBWithCtx(ctx), s.Units.Buffer.ID(), itemID); err == nil {
+			continue
+		}
+		if sdk.ErrorIs(err, sdk.ErrNotFound) {
+			if err := s.Units.Buffer.Remove(ctx, sdk.CDNItemUnit{ItemID: itemID}); err != nil {
+				log.Error(ctx, "[SyncBuffer] unable to remove item %s from buffer: %v", itemID, err)
+				continue
+			}
+			keysDeleted++
+			log.Info(ctx, "[SyncBuffer] item %s remove from redis", itemID)
+		}
+	}
+	log.Info(ctx, "[SyncBuffer] Done - %d keys deleted", keysDeleted)
 }
 
 func (s *Service) listenCDSSync(ctx context.Context, cdsStorage *cds.CDS) error {

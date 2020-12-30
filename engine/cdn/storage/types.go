@@ -45,7 +45,6 @@ type Interface interface {
 	ItemExists(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlExecutor, i sdk.CDNItem) (bool, error)
 	Status(ctx context.Context) []sdk.MonitoringStatusLine
 	SyncBandwidth() float64
-	CanBeSync() bool
 	Remove(ctx context.Context, i sdk.CDNItemUnit) error
 }
 
@@ -100,6 +99,7 @@ type BufferUnit interface {
 	Size(i sdk.CDNItemUnit) (int64, error)
 	NewAdvancedReader(ctx context.Context, i sdk.CDNItemUnit, format sdk.CDNReaderFormat, from int64, size uint, sort int64) (io.ReadCloser, error)
 	Read(i sdk.CDNItemUnit, r io.Reader, w io.Writer) error
+	Keys() ([]string, error)
 }
 
 type StorageUnit interface {
