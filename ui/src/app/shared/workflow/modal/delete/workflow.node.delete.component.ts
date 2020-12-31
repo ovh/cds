@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output, ViewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, EventEmitter, Input, OnInit, Output, ViewChild } from '@angular/core';
 import { ModalTemplate, SuiActiveModal, SuiModalService, TemplateModalConfig } from '@richardlt/ng2-semantic-ui';
 import { WNode, Workflow } from 'app/model/workflow.model';
 import cloneDeep from 'lodash-es/cloneDeep';
@@ -9,7 +9,7 @@ import cloneDeep from 'lodash-es/cloneDeep';
     styleUrls: ['./workflow.node.delete.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class WorkflowDeleteNodeComponent {
+export class WorkflowDeleteNodeComponent implements OnInit {
 
     @ViewChild('deleteModal')
     deleteModalTemplate: ModalTemplate<boolean, boolean, void>;
@@ -21,8 +21,13 @@ export class WorkflowDeleteNodeComponent {
     @Output() deleteEvent = new EventEmitter<Workflow>();
 
     deleteAll = 'only';
+    isRoot = false;
 
     constructor(private _modalService: SuiModalService) { }
+
+    ngOnInit(): void {
+        this.isRoot = this.node?.id === this.workflow?.workflow_data?.node?.id;
+    }
 
     show(): void {
         const config = new TemplateModalConfig<boolean, boolean, void>(this.deleteModalTemplate);

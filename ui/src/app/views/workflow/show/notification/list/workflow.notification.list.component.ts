@@ -27,6 +27,8 @@ export class WorkflowNotificationListComponent {
     mapNodesNotif: Map<number, Array<string>>;
     _workflow: Workflow;
 
+    selectedIntegration: ProjectIntegration;
+
     @Input() editMode: boolean;
     @Input() readOnly: boolean;
 

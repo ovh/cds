@@ -1,6 +1,6 @@
 
 export abstract class Table<T> {
-    protected currentPage = 1;
+    public currentPage = 1;
     public nbElementsByPage = 10;
 
     abstract getData(): Array<T>;

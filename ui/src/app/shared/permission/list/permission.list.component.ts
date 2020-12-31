@@ -22,7 +22,7 @@ export class PermissionListComponent extends Table<GroupPermission> {
     @Output() event = new EventEmitter<PermissionEvent>();
     @Output() permissionChange = new EventEmitter<boolean>();
 
-    private permissionsList;
+    public permissionsList;
 
     constructor(_permService: PermissionService, private _translate: TranslateService) {
         super();

@@ -102,7 +102,7 @@
                                                             translate }}
                                                         </button>
                                                         <button class="ui right floated green button" type="button"
-                                                            (click)="goToNextStep()"
+                                                            (click)="goToNextStep(null)"
                                                             [disabled]="!workflow.name || name.invalid || duplicateWorkflowName"
                                                             [class.loading]="loading">{{ 'btn_next' | translate }}
                                                         </button>

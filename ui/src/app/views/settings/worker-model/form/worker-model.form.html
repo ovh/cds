@@ -131,7 +131,7 @@
                             <label>{{'worker_model_type' | translate}} *</label>
                             <sm-select class="fluid search" name="type" *ngIf="types && workerModel.editable"
                                 [disabled]="loading" [(model)]="workerModel.type" [options]="{'fullTextSearch': true}"
-                                (onChange)="typeChange($event)">
+                                (onChange)="typeChange()">
                                 <option *ngFor="let type of types" [value]="type">{{type}}</option>
                             </sm-select>
                             <input *ngIf="!workerModel.editable" class="ui input" type="text" name="type"
@@ -291,8 +291,7 @@
                         </div>
                     </ng-container>
                     <div *ngIf="workerModel.editable" class="field">
-                        <app-delete-button *ngIf="workerModel.id" class="left floated" (event)="clickDelete()"
-                            [loading]="deleteLoading"></app-delete-button>
+                        <app-delete-button *ngIf="workerModel.id" class="left floated" (event)="clickDelete()"></app-delete-button>
                         <button class="ui green right floated button" [class.loading]="loading"
                             [class.disabled]="!canSave()" (click)="clickSave()">
                             <i class="save icon"></i>{{ 'btn_save' | translate }}
@@ -310,8 +309,7 @@
                         <div class="ui active centered inline loader" *ngIf="loadingAsCode"></div>
                     </div>
                     <div *ngIf="workerModel.editable" class="field">
-                        <app-delete-button *ngIf="workerModel.id" class="left floated" (event)="clickDelete()"
-                            [loading]="deleteLoading"></app-delete-button>
+                        <app-delete-button *ngIf="workerModel.id" class="left floated" (event)="clickDelete()"></app-delete-button>
                         <button class="ui green right floated button" [class.loading]="loading"
                             (click)="clickSaveAsCode()" [class.disabled]="!workerModel.editable">
                             <i class="save icon"></i>{{ 'btn_save' | translate }}

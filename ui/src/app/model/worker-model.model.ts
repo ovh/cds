@@ -19,8 +19,7 @@ export class WorkerModel {
     group_id: number;
     nb_spawn_err: number;
     last_spawn_err: string;
-    nb_spawn_err_log: string;
-    date_last_spawn_err: string;
+    last_spawn_err_log: string
     is_deprecated: boolean;
     model_virtual_machine: ModelVirtualMachine;
     model_docker: ModelDocker;

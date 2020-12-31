@@ -18,6 +18,7 @@ export class PipelineAddComponent {
     loadingCreate = false;
     newPipeline = new Pipeline();
     asCode = false;
+    updated = false;
 
     codeMirrorConfig: any;
     pipToImport = `# Pipeline example

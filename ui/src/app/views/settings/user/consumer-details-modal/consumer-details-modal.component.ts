@@ -53,6 +53,7 @@ export class ConsumerDetailsModalComponent {
     @Input() consumer: AuthConsumer;
     @Output() close = new EventEmitter<CloseEvent>();
 
+    loading: boolean;
     currentUser: AuthentifiedUser;
     scopes: string;
     groups: string;
@@ -284,9 +285,12 @@ export class ConsumerDetailsModalComponent {
     }
 
     clickDetach(): void {
+        this.loading = true;
         this._authenticationService.detach(this.consumer.type).subscribe(() => {
             this.consumerDeletedOrDetached = true;
+            this.loading = false;
             this.modal.approve(true);
+
         });
     }
 
