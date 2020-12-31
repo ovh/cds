@@ -30,10 +30,6 @@ func init() {
 	storage.RegisterDriver("redis", new(Redis))
 }
 
-func (s *Redis) CanBeSync() bool {
-	return false
-}
-
 func (s *Redis) Init(_ context.Context, cfg interface{}) error {
 	config, is := cfg.(storage.RedisBufferConfiguration)
 	if !is {
@@ -47,6 +43,10 @@ func (s *Redis) Init(_ context.Context, cfg interface{}) error {
 	}
 
 	return nil
+}
+
+func (s *Redis) Keys() ([]string, error) {
+	return s.store.Keys(cache.Key(keyBuffer, "*"))
 }
 
 func (s *Redis) ItemExists(_ context.Context, _ *gorpmapper.Mapper, _ gorp.SqlExecutor, i sdk.CDNItem) (bool, error) {

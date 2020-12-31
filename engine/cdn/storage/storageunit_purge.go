@@ -25,13 +25,21 @@ func (x *RunningStorageUnits) Purge(ctx context.Context, s Interface) error {
 			return err
 		}
 		if exists {
-			nbItemUnits, err := x.GetItemUnitByLocatorByUnit(ctx, ui.Locator, s.ID())
-			if err != nil {
-				return err
+			var nbItemUnits int64
+			if _, hasLocator := s.(StorageUnitWithLocator); hasLocator {
+				var err error
+				nbItemUnits, err = x.GetItemUnitByLocatorByUnit(ctx, ui.Locator, s.ID())
+				if err != nil {
+					return err
+				}
 			}
 
 			if nbItemUnits > 0 {
 				log.Debug("cdn:purge:%s: item unit %s content will not be deleted because there is %d other item units with the same content ", s.Name(), ui.ID, nbItemUnits)
+				log.InfoWithFields(ctx, log.Fields{
+					"item_apiref":   ui.Item.APIRefHash,
+					"item_size_num": ui.Item.Size,
+				}, "item %s will not be deleted from %s", ui.ID, s.Name())
 			} else {
 				if err := s.Remove(ctx, ui); err != nil {
 					if sdk.ErrorIs(err, sdk.ErrNotFound) {
@@ -45,12 +53,11 @@ func (x *RunningStorageUnits) Purge(ctx context.Context, s Interface) error {
 					}, "unable to remove item %s on %s: %v", ui.ID, s.Name(), err)
 					continue
 				}
+				log.InfoWithFields(ctx, log.Fields{
+					"item_apiref":   ui.Item.APIRefHash,
+					"item_size_num": ui.Item.Size,
+				}, "item %s deleted on %s", ui.ID, s.Name())
 			}
-
-			log.InfoWithFields(ctx, log.Fields{
-				"item_apiref":   ui.Item.APIRefHash,
-				"item_size_num": ui.Item.Size,
-			}, "item %s deleted on %s", ui.ID, s.Name())
 		}
 
 		tx, err := x.db.Begin()

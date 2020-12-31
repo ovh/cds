@@ -18,6 +18,60 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
+func TestSyncBuffer(t *testing.T) {
+	m := gorpmapper.New()
+	item.InitDBMapping(m)
+	storage.InitDBMapping(m)
+	db, factory, cache, end := commontest.SetupPGToCancel(t, m, sdk.TypeCDN)
+	t.Cleanup(end)
+	cfg := commontest.LoadTestingConf(t, sdk.TypeCDN)
+
+	cdntest.ClearItem(t, context.Background(), m, db)
+	cdntest.ClearUnits(t, context.Background(), m, db)
+
+	// Create cdn service
+	s := Service{
+		DBConnectionFactory: factory,
+		Cache:               cache,
+		Mapper:              m,
+		Cfg: Configuration{
+			EnableLogProcessing: true,
+		},
+		Common: service.Common{
+			GoRoutines: sdk.NewGoRoutines(),
+		},
+	}
+	cdsConfig := &storage.CDSStorageConfiguration{
+		Host:  "http://lolcat.host:8081",
+		Token: "mytoken",
+	}
+	cdnUnits, err := storage.Init(context.Background(), m, db.DbMap, sdk.NewGoRoutines(), storage.Configuration{
+		HashLocatorSalt: "thisismysalt",
+		Buffer: storage.BufferConfiguration{
+			Name: "redis_buffer",
+			Redis: storage.RedisBufferConfiguration{
+				Host:     cfg["redisHost"],
+				Password: cfg["redisPassword"],
+			},
+		},
+		Storages: []storage.StorageConfiguration{
+			{
+				Name: "test-cds-backend",
+				CDS:  cdsConfig,
+			},
+		},
+	})
+	require.NoError(t, err)
+	s.Units = cdnUnits
+
+	cache.Set("cdn:buffer:my-item", "foo")
+
+	s.SyncBuffer(context.Background())
+
+	b, err := cache.Exist("cdn:buffer:my-item")
+	require.NoError(t, err)
+	require.False(t, b)
+}
 func TestSyncLog(t *testing.T) {
 	m := gorpmapper.New()
 	item.InitDBMapping(m)

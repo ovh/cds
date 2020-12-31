@@ -510,6 +510,7 @@ func (s *Service) Status(ctx context.Context) *sdk.MonitoringStatus {
 	if errQ != nil {
 		log.Error(ctx, "Status> Unable to retrieve queue len: %v", errQ)
 	}
+
 	if size >= 100 {
 		status = sdk.MonitoringStatusAlert
 	} else if size >= 10 {
@@ -519,6 +520,7 @@ func (s *Service) Status(ctx context.Context) *sdk.MonitoringStatus {
 
 	// hook balance in status
 	in, out := s.Dao.TaskExecutionsBalance()
+
 	status = sdk.MonitoringStatusOK
 	if float64(in) > float64(out) {
 		status = sdk.MonitoringStatusWarn
@@ -539,40 +541,6 @@ func (s *Service) Status(ctx context.Context) *sdk.MonitoringStatus {
 
 		if t.Stopped {
 			m.Lines = append(m.Lines, sdk.MonitoringStatusLine{Component: "Task Stopped", Value: t.UUID, Status: sdk.MonitoringStatusWarn})
-		}
-
-		execs, err := s.Dao.FindAllTaskExecutions(ctx, &t)
-		if err != nil {
-			log.Error(ctx, "Status> Unable to find all task executions (%s): %v", t.UUID, err)
-			continue
-		}
-
-		var nbTodo, nbTotal int
-		for _, e := range execs {
-			if e.ProcessingTimestamp == 0 {
-				nbTodo++
-			}
-		}
-		nbTotal = len(execs)
-
-		if nbTodo >= 20 {
-			status = sdk.MonitoringStatusAlert
-		} else if nbTodo > 10 {
-			status = sdk.MonitoringStatusWarn
-		}
-
-		if nbTodo > 10 {
-			m.Lines = append(m.Lines, sdk.MonitoringStatusLine{Component: "Execs Todo " + t.UUID, Value: fmt.Sprintf("%d", nbTodo), Status: status})
-		}
-
-		if nbTotal >= s.Cfg.ExecutionHistory*10 {
-			status = sdk.MonitoringStatusAlert
-		} else if nbTotal >= s.Cfg.ExecutionHistory*5 {
-			status = sdk.MonitoringStatusWarn
-		}
-
-		if nbTotal >= s.Cfg.ExecutionHistory*2 {
-			m.Lines = append(m.Lines, sdk.MonitoringStatusLine{Component: "Execs Total " + t.UUID, Value: fmt.Sprintf("%d", nbTotal), Status: status})
 		}
 	}
 

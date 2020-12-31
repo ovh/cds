@@ -326,7 +326,7 @@ func (s *Service) getWorker(ctx context.Context, workerName string, opts GetWork
 	// Get worker from API
 	w, err := s.Client.WorkerGet(ctx, workerName, cdsclient.WithQueryParameter("withKey", "true"))
 	if err != nil {
-		return sdk.Worker{}, err
+		return sdk.Worker{}, sdk.WrapError(err, "unable to get worker %s", workerName)
 	}
 	privateKeyDecoded, err := base64.StdEncoding.DecodeString(string(w.PrivateKey))
 	if err != nil {
