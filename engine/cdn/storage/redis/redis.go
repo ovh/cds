@@ -45,6 +45,10 @@ func (s *Redis) Init(_ context.Context, cfg interface{}) error {
 	return nil
 }
 
+func (s *Redis) Keys() ([]string, error) {
+	return s.store.Keys(cache.Key(keyBuffer, "*"))
+}
+
 func (s *Redis) ItemExists(_ context.Context, _ *gorpmapper.Mapper, _ gorp.SqlExecutor, i sdk.CDNItem) (bool, error) {
 	size, _ := s.store.SetCard(cache.Key(keyBuffer, i.ID))
 	return size > 0, nil

@@ -45,7 +45,8 @@ type Config struct {
 			SigningKeyClaim string `json:"signing_key_claim"`
 		} `json:"key_signing_key,omitempty"`
 	} `json:"token"`
-	MailDomain string `json:"mail_domain"`
+	MailDomain        string `json:"mail_domain"`
+	MFASupportEnabled bool   `json:"mfa_support"`
 }
 
 func NewDriver(cfg Config) sdk.AuthDriver {
@@ -88,7 +89,10 @@ func (d authDriver) GetSigninURI(state sdk.AuthSigninConsumerToken) (sdk.AuthDri
 	return result, nil
 }
 
-func (d authDriver) GetSessionDuration() time.Duration {
+func (d authDriver) GetSessionDuration(req sdk.AuthDriverUserInfo, c sdk.AuthConsumer) time.Duration {
+	if d.Config.MFASupportEnabled && req.MFA {
+		return time.Hour
+	}
 	return 24 * time.Hour
 }
 

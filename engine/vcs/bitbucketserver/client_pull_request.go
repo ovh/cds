@@ -95,6 +95,11 @@ func (b *bitbucketClient) PullRequestComment(ctx context.Context, repo string, p
 	if err != nil {
 		return sdk.WithStack(err)
 	}
+
+	if len(prRequest.Message) >= 32768 {
+		prRequest.Message = prRequest.Message[0:32750] + "\n[truncated]"
+	}
+
 	payload := map[string]string{
 		"text": prRequest.Message,
 	}

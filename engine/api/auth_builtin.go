@@ -53,7 +53,7 @@ func (api *API) postAuthBuiltinSigninHandler() service.Handler {
 		}
 
 		// Generate a new session for consumer
-		session, err := authentication.NewSession(ctx, tx, consumer, driver.GetSessionDuration(), false)
+		session, err := authentication.NewSession(ctx, tx, consumer, driver.GetSessionDuration(userInfo, *consumer), false)
 		if err != nil {
 			return err
 		}

@@ -59,7 +59,7 @@ func (d authDriver) GetSigninURI(signinState sdk.AuthSigninConsumerToken) (sdk.A
 	return result, nil
 }
 
-func (d authDriver) GetSessionDuration() time.Duration {
+func (d authDriver) GetSessionDuration(_ sdk.AuthDriverUserInfo, _ sdk.AuthConsumer) time.Duration {
 	return time.Hour * 24 * 30 // 1 month session
 }
 

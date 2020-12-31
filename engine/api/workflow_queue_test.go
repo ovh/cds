@@ -55,7 +55,9 @@ type testRunWorkflowCtx struct {
 	model         *sdk.Model
 }
 
-func testRunWorkflow(t *testing.T, api *API, router *Router) testRunWorkflowCtx {
+type testRunWorkflowOptions func(*testing.T, gorpmapper.SqlExecutorWithTx, *sdk.Pipeline, *sdk.Application)
+
+func testRunWorkflow(t *testing.T, api *API, router *Router, optsF ...testRunWorkflowOptions) testRunWorkflowCtx {
 	db, err := api.mustDB().Begin()
 	require.NoError(t, err)
 
@@ -111,6 +113,10 @@ func testRunWorkflow(t *testing.T, api *API, router *Router) testRunWorkflowCtx 
 	}
 	if err := application.Insert(db, *proj, app); err != nil {
 		t.Fatal(err)
+	}
+
+	for _, opt := range optsF {
+		opt(t, db, &pip, app)
 	}
 
 	k := &sdk.ApplicationKey{

@@ -1,7 +1,6 @@
 import { registerLocaleData } from '@angular/common';
 import localeEN from '@angular/common/locales/en';
-import localeFR from '@angular/common/locales/fr';
-import { Component, ElementRef, NgZone, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { Component, NgZone, OnDestroy, OnInit } from '@angular/core';
 import { Title } from '@angular/platform-browser';
 import { ActivatedRoute, NavigationEnd, NavigationStart, ResolveEnd, ResolveStart, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
@@ -74,11 +73,10 @@ export class AppComponent implements OnInit, OnDestroy {
         this.toasterConfigDefault = this._toastService.getConfigDefault();
         this.toasterConfigErrorHTTP = this._toastService.getConfigErrorHTTP();
         this.toasterConfigErrorHTTPLocked = this._toastService.getConfigErrorHTTPLocked();
-        _translate.addLangs(['en', 'fr']);
+        _translate.addLangs(['en']);
         _translate.setDefaultLang('en');
-        let browserLang = navigator.language.match(/fr/) ? 'fr' : 'en';
-        _translate.use(browserLang.match(/en|fr/) ? browserLang : 'en');
-        registerLocaleData(browserLang.match(/fr/) ? localeFR : localeEN);
+        _translate.use('en');
+        registerLocaleData(localeEN);
 
         this.themeSubscriber = this._theme.get().subscribe(t => {
             if (t) {

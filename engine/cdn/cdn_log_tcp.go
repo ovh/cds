@@ -35,11 +35,6 @@ type GetWorkerOptions struct {
 
 // Start TCP Server
 func (s *Service) runTCPLogServer(ctx context.Context) error {
-	// Init hatcheries cache
-	if err := s.refreshHatcheriesPK(ctx); err != nil {
-		return sdk.WrapError(err, "unable to init hatcheries cache")
-	}
-
 	globalRateLimit = NewRateLimiter(ctx, float64(s.Cfg.TCP.GlobalTCPRateLimit), 1024)
 
 	// Start TCP server
@@ -322,16 +317,16 @@ func (s *Service) getWorker(ctx context.Context, workerName string, opts GetWork
 	// Get worker from cache
 	cacheData, ok := logCache.Get(workerKey)
 	if ok {
-	    w, ok := cacheData.(sdk.Worker)
-	    if ok && (!opts.NeedPrivateKey || len(w.PrivateKey) > 0) {
-		      return w, nil
-		  }
+		w, ok := cacheData.(sdk.Worker)
+		if ok && (!opts.NeedPrivateKey || len(w.PrivateKey) > 0) {
+			return w, nil
+		}
 	}
 
 	// Get worker from API
 	w, err := s.Client.WorkerGet(ctx, workerName, cdsclient.WithQueryParameter("withKey", "true"))
 	if err != nil {
-		return sdk.Worker{}, err
+		return sdk.Worker{}, sdk.WrapError(err, "unable to get worker %s", workerName)
 	}
 	privateKeyDecoded, err := base64.StdEncoding.DecodeString(string(w.PrivateKey))
 	if err != nil {

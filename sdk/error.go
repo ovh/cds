@@ -216,7 +216,7 @@ var errorsAmericanEnglish = map[int]string{
 	ErrForbidden.ID:                                     "forbidden",
 	ErrPipelineNotFound.ID:                              "pipeline does not exist",
 	ErrPipelineNotAttached.ID:                           "pipeline is not attached to application",
-	ErrNoEnvironmentProvided.ID:                         "deployment and testing pipelines require an environnement",
+	ErrNoEnvironmentProvided.ID:                         "deployment and testing pipelines require an environment",
 	ErrEnvironmentProvided.ID:                           "build pipeline are not compatible with environment usage",
 	ErrUnknownEnv.ID:                                    "unknown environment",
 	ErrEnvironmentExist.ID:                              "environment already exists",
@@ -514,7 +514,7 @@ func (s *stack) String() string {
 			} else {
 				name = sp[1]
 			}
-			ignoredNames := StringSlice{"NewError", "NewErrorFrom", "WithStack", "WrapError", "Append", "NewErrorWithStack"}
+			ignoredNames := StringSlice{"NewError", "NewErrorFrom", "WithStack", "WrapError", "Append", "NewErrorWithStack", "extractBodyErrorFromResponse", "Stream"}
 			if !ignoredNames.Contains(name) {
 				names = append(names, name)
 			}

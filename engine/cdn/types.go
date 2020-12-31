@@ -82,7 +82,7 @@ type Configuration struct {
 	} `toml:"cache" comment:"######################\n CDN Cache Settings \n######################" json:"cache"`
 	API   service.APIServiceConfiguration `toml:"api" comment:"######################\n CDS API Settings \n######################" json:"api"`
 	Log   storage.LogConfig               `toml:"log" json:"log" comment:"###########################\n Log settings.\n##########################"`
-	Units storage.Configuration           `toml:"storageUnits" json:"storageUnits" mapstructure:"storageUnits"`
+	Units storage.Configuration           `toml:"storageUnits" json:"storageUnits" mapstructure:"storageUnits" comment:"###########################\n Storage Units settings.\n##########################"`
 }
 
 type rateLimiter struct {

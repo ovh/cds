@@ -20,7 +20,12 @@ func TestRunRelease(t *testing.T) {
 
 	wk, ctx := SetupTest(t)
 
-	gock.New("http://lolcat.host").Post("/project/projKey/workflows/workflowName/runs/999/nodes/666/release").
+	gock.New("http://lolcat.host").Get("/queue/workflows/666/infos").
+		Reply(200).JSON(
+		sdk.WorkflowNodeJobRun{
+			WorkflowNodeRunID: 6,
+		})
+	gock.New("http://lolcat.host").Post("/project/projKey/workflows/workflowName/runs/999/nodes/6/release").
 		Reply(200)
 
 	var checkRequest gock.ObserverFunc = func(request *http.Request, mock gock.Mock) {
@@ -30,7 +35,7 @@ func TestRunRelease(t *testing.T) {
 		if mock != nil {
 			t.Logf("%s %s - Body: %s", mock.Request().Method, mock.Request().URLStruct.String(), string(bodyContent))
 			switch mock.Request().URLStruct.String() {
-			case "http://lolcat.host/queue/workflows/666/coverage":
+			case "http://lolcat.host/project/projKey/workflows/workflowName/runs/999/nodes/6/release":
 				var releaseRequest sdk.WorkflowNodeRunRelease
 				err := json.Unmarshal(bodyContent, &releaseRequest)
 				assert.NoError(t, err)
@@ -38,6 +43,7 @@ func TestRunRelease(t *testing.T) {
 				require.Equal(t, "My Title", releaseRequest.ReleaseTitle)
 				require.Equal(t, "My description", releaseRequest.ReleaseContent)
 				require.Equal(t, []string{"*.deb"}, releaseRequest.Artifacts)
+				t.Logf("release request: %+v", releaseRequest)
 			}
 		}
 	}
@@ -45,6 +51,7 @@ func TestRunRelease(t *testing.T) {
 
 	gock.InterceptClient(wk.Client().(cdsclient.Raw).HTTPClient())
 	gock.InterceptClient(wk.Client().(cdsclient.Raw).HTTPSSEClient())
+
 	wk.Params = append(wk.Params, []sdk.Parameter{
 		{
 			Name:  "cds.project",

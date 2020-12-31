@@ -183,6 +183,7 @@ func (s *dbmigservice) Status(ctx context.Context) *sdk.MonitoringStatus {
 func (s *dbmigservice) initRouter(ctx context.Context) {
 	log.Debug("DBMigrate> Router initialized")
 	r := s.Router
+	r.Background = ctx
 	r.SetHeaderFunc = service.DefaultHeaders
 	r.DefaultAuthMiddleware = service.CheckRequestSignatureMiddleware(s.ParsedAPIPublicKey)
 
