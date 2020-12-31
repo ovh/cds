@@ -52,7 +52,7 @@ func (s *Service) SyncBuffer(ctx context.Context) {
 		itemID := keySplitted[2]
 		_, err := storage.LoadItemUnitByUnit(ctx, s.Mapper, s.mustDBWithCtx(ctx), s.Units.Buffer.ID(), itemID)
 		if err == nil {
-			log.Info(ctx, "[SyncBuffer] Item %s exist on database ", itemID)
+			log.Info(ctx, "[SyncBuffer] Item %s exists in database ", itemID)
 			continue
 		}
 		if sdk.ErrorIs(err, sdk.ErrNotFound) {
