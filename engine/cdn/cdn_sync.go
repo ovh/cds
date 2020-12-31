@@ -50,7 +50,9 @@ func (s *Service) SyncBuffer(ctx context.Context) {
 			continue
 		}
 		itemID := keySplitted[2]
-		if _, err := storage.LoadItemUnitByUnit(ctx, s.Mapper, s.mustDBWithCtx(ctx), s.Units.Buffer.ID(), itemID); err == nil {
+		_, err := storage.LoadItemUnitByUnit(ctx, s.Mapper, s.mustDBWithCtx(ctx), s.Units.Buffer.ID(), itemID)
+		if err == nil {
+			log.Info(ctx, "[SyncBuffer] Item %s exist on database ", itemID)
 			continue
 		}
 		if sdk.ErrorIs(err, sdk.ErrNotFound) {
@@ -60,6 +62,8 @@ func (s *Service) SyncBuffer(ctx context.Context) {
 			}
 			keysDeleted++
 			log.Info(ctx, "[SyncBuffer] item %s remove from redis", itemID)
+		} else {
+			log.Error(ctx, "[SyncBuffer] unable to load item %s", itemID)
 		}
 	}
 	log.Info(ctx, "[SyncBuffer] Done - %d keys deleted", keysDeleted)
