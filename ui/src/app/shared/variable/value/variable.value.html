@@ -17,7 +17,7 @@
 
     <!-- Text -->
     <div class="ui form" *ngSwitchCase="'text'">
-        <textarea [disabled]="disabled" rows="{{_sharedService.getTextAreaheight(value.toString())}}" [(ngModel)]="value" (change)="valueChanged()" (keydown)="sendValueChanged()" name="value"></textarea>
+        <textarea [disabled]="disabled" rows="{{_sharedService.getTextAreaheight(value?.toString())}}" [(ngModel)]="value" (change)="valueChanged()" (keydown)="sendValueChanged()" name="value"></textarea>
     </div>
 
     <!-- Key -->
