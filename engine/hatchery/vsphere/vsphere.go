@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"sync"
 
 	"strings"
 	"time"
@@ -19,6 +20,16 @@ import (
 	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/ovh/cds/sdk/hatchery"
 	"github.com/ovh/cds/sdk/log"
+)
+
+var (
+	ipsInfos = struct {
+		mu  sync.RWMutex
+		ips map[string]ipInfos
+	}{
+		mu:  sync.RWMutex{},
+		ips: map[string]ipInfos{},
+	}
 )
 
 // New instanciates a new Hatchery vsphere
@@ -111,6 +122,15 @@ func (h *HatcheryVSphere) CheckConfiguration(cfg interface{}) error {
 		return fmt.Errorf("vsphere-datacenter is mandatory")
 	}
 
+	if hconfig.IPRange != "" {
+		ips, err := sdk.IPinRanges(context.Background(), hconfig.IPRange)
+		if err != nil {
+			return fmt.Errorf("flag or environment variable openstack-ip-range error: %v", err)
+		}
+		for _, ip := range ips {
+			ipsInfos.ips[ip] = ipInfos{}
+		}
+	}
 	return nil
 }
 

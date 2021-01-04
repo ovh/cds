@@ -20,6 +20,7 @@ export class WorkerModel {
     nb_spawn_err: number;
     last_spawn_err: string;
     nb_spawn_err_log: string;
+    last_spawn_err_log: string;
     date_last_spawn_err: string;
     is_deprecated: boolean;
     model_virtual_machine: ModelVirtualMachine;
@@ -54,6 +55,8 @@ export class ModelVirtualMachine {
     pre_cmd: string;
     cmd: string;
     post_cmd: string;
+    user: string;
+    password: string;
 }
 
 export class ModelPattern {

@@ -206,11 +206,22 @@ func Insert(ctx context.Context, db gorpmapper.SqlExecutorWithTx, model *sdk.Mod
 	if err != nil {
 		return err
 	}
+
+	needSaveVSpherePassword, vspherePassword, err := replaceVSphereVMPassword(db, &dbmodel)
+	if err != nil {
+		return err
+	}
+
 	if err := gorpmapping.InsertAndSign(ctx, db, &dbmodel); err != nil {
 		return sdk.WithStack(err)
 	}
 	if needSaveRegistryPassword {
-		if err := storeDockerRegistryPassword(ctx, db, dbmodel.ID, dockerRegistryPassword); err != nil {
+		if err := storeModelSecret(ctx, db, dbmodel.ID, dockerRegistryPassword, registryPasswordSecretName); err != nil {
+			return err
+		}
+	}
+	if needSaveVSpherePassword {
+		if err := storeModelSecret(ctx, db, dbmodel.ID, vspherePassword, vpsherePasswordSecretName); err != nil {
 			return err
 		}
 	}
@@ -241,11 +252,20 @@ func UpdateDB(ctx context.Context, db gorpmapper.SqlExecutorWithTx, model *sdk.M
 	if err != nil {
 		return err
 	}
+	needSaveVSpherePassword, vspherePassword, err := replaceVSphereVMPassword(db, &dbmodel)
+	if err != nil {
+		return err
+	}
 	if err := gorpmapping.UpdateAndSign(ctx, db, &dbmodel); err != nil {
 		return sdk.WithStack(err)
 	}
 	if needSaveRegistryPassword {
-		if err := storeDockerRegistryPassword(ctx, db, dbmodel.ID, dockerRegistryPassword); err != nil {
+		if err := storeModelSecret(ctx, db, dbmodel.ID, dockerRegistryPassword, registryPasswordSecretName); err != nil {
+			return err
+		}
+	}
+	if needSaveVSpherePassword {
+		if err := storeModelSecret(ctx, db, dbmodel.ID, vspherePassword, vpsherePasswordSecretName); err != nil {
 			return err
 		}
 	}

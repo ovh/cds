@@ -1,15 +1,14 @@
-package openstack
+package vsphere
 
 import (
-	"context"
 	"fmt"
 	"math/rand"
 	"time"
 )
 
 // for each ip in the range, look for the first free ones
-func (h *HatcheryOpenstack) findAvailableIP(ctx context.Context, workerName string) (string, error) {
-	srvs := h.getServers(ctx)
+func (h *HatcheryVSphere) findAvailableIP(workerName string) (string, error) {
+	srvs := h.getServers()
 
 	ipsInfos.mu.Lock()
 	defer ipsInfos.mu.Unlock()
@@ -37,33 +36,19 @@ func (h *HatcheryOpenstack) findAvailableIP(ctx context.Context, workerName stri
 		if ipsInfos.ips[ip].workerName != "" {
 			continue // ip already used by a worker
 		}
+	serverLoop:
 		for _, s := range srvs {
-			if len(s.Addresses) == 0 {
+			if s.Guest == nil {
 				continue
 			}
-
-			for k, v := range s.Addresses {
-				if k != h.Config.NetworkString {
-					continue
-				}
-				switch v.(type) {
-				case []interface{}:
-					for _, z := range v.([]interface{}) {
-						var addr string
-						for x, y := range z.(map[string]interface{}) {
-							if x == "addr" {
-								addr = y.(string)
-							}
-						}
-						if addr == ip {
-							free = false
-						}
+			for _, n := range s.Guest.Net {
+				for _, vmIP := range n.IpAddress {
+					if vmIP == ip {
+						free = false
+						break serverLoop
 					}
 				}
-			}
 
-			if !free {
-				break
 			}
 		}
 		if free {
@@ -72,7 +57,7 @@ func (h *HatcheryOpenstack) findAvailableIP(ctx context.Context, workerName stri
 	}
 
 	if len(freeIP) == 0 {
-		return "", fmt.Errorf("No IP left")
+		return "", fmt.Errorf("no IP left")
 	}
 
 	ipToBook := freeIP[rand.Intn(len(freeIP))]

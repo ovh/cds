@@ -9,14 +9,11 @@ import (
 	"github.com/vmware/govmomi/vim25/soap"
 
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/log"
 )
 
 // InitHatchery create new client for vsphere
 func (h *HatcheryVSphere) InitHatchery(ctx context.Context) error {
-	h.user = h.Config.VSphereUser
-	h.password = h.Config.VSpherePassword
-	h.endpoint = h.Config.VSphereEndpoint
-
 	// Connect and login to ESX or vCenter
 	c, err := h.newClient(ctx)
 	if err != nil {
@@ -27,13 +24,17 @@ func (h *HatcheryVSphere) InitHatchery(ctx context.Context) error {
 	finder := find.NewFinder(h.vclient.Client, false)
 	h.finder = finder
 
-	if h.datacenter, err = finder.DatacenterOrDefault(ctx, h.datacenterString); err != nil {
-		return fmt.Errorf("Unable to find datacenter %s: %v", h.datacenterString, err)
+	if h.datacenter, err = finder.DatacenterOrDefault(ctx, h.Config.VSphereDatacenterString); err != nil {
+		return fmt.Errorf("unable to find datacenter %s: %v", h.Config.VSphereDatacenterString, err)
 	}
 	finder.SetDatacenter(h.datacenter)
 
-	if h.network, err = finder.NetworkOrDefault(ctx, h.networkString); err != nil {
-		return fmt.Errorf("Unable to find network %s: %v", h.networkString, err)
+	if h.network, err = finder.NetworkOrDefault(ctx, h.Config.VSphereNetworkString); err != nil {
+		return fmt.Errorf("unable to find network %s: %v", h.Config.VSphereNetworkString, err)
+	}
+
+	if err := h.initIPStatus(ctx); err != nil {
+		log.Warning(ctx, "Error on initIPStatus(): %v", err)
 	}
 
 	if err := h.RefreshServiceLogger(ctx); err != nil {
@@ -49,11 +50,43 @@ func (h *HatcheryVSphere) InitHatchery(ctx context.Context) error {
 // newClient creates a govmomi.Client for use in the examples
 func (h *HatcheryVSphere) newClient(ctx context.Context) (*govmomi.Client, error) {
 	// Parse URL from string
-	u, err := soap.ParseURL("https://" + h.user + ":" + h.password + "@" + h.endpoint)
+	u, err := soap.ParseURL("https://" + h.Config.VSphereUser + ":" + h.Config.VSpherePassword + "@" + h.Config.VSphereEndpoint)
 	if err != nil {
 		return nil, sdk.WrapError(err, "cannot parse url")
 	}
 
 	// Connect and log in to ESX or vCenter
 	return govmomi.NewClient(ctx, u, false)
+}
+
+// initIPStatus initializes ipsInfos to
+// add workername on ip belong to openstack-ip-range
+// this func is called once, when hatchery is starting
+func (h *HatcheryVSphere) initIPStatus(ctx context.Context) error {
+	srvs := h.getServers()
+	log.Info(ctx, "initIPStatus> %d srvs", len(srvs))
+ipLoop:
+	for ip := range ipsInfos.ips {
+		log.Info(ctx, "initIPStatus> checking %s", ip)
+		for _, s := range srvs {
+			if s.Guest == nil {
+				log.Info(ctx, "initIPStatus> server %s - 0 addr", s.Name)
+				continue
+			}
+			for _, n := range s.Guest.Net {
+				for _, vmIP := range n.IpAddress {
+					log.Debug("initIPStatus> server %s - address %s (checking %s)", s.Name, vmIP, ip)
+					if vmIP != "" && vmIP == ip {
+						log.Info(ctx, "initIPStatus> worker %s - use IP: %s", s.Name, vmIP)
+						ipsInfos.ips[ip] = ipInfos{workerName: s.Name}
+						continue ipLoop
+					}
+				}
+
+			}
+			log.Info(ctx, "initIPStatus> server %s - 0 addr", s.Name)
+			continue
+		}
+	}
+	return nil
 }
