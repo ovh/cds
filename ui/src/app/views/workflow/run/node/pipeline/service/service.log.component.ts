@@ -42,7 +42,7 @@ export class WorkflowServiceLogComponent implements OnInit, OnDestroy {
     currentRunJobID: number;
     currentRunJobStatus: string;
 
-    showLog = {};
+    showLog: boolean;
     loading = true;
     zone: NgZone;
 
