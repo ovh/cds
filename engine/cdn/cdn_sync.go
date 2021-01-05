@@ -66,7 +66,7 @@ func (s *Service) SyncBuffer(ctx context.Context) {
 				keysDeleted++
 				log.Info(ctx, "[SyncBuffer] item %s remove from redis", itemID)
 			} else {
-				log.Error(ctx, "[SyncBuffer] unable to load item %s", itemID)
+				log.Error(ctx, "[SyncBuffer] unable to load item %s: %v", itemID, err)
 			}
 		}
 		log.Info(ctx, "[SyncBuffer] Done - %d keys deleted", keysDeleted)
