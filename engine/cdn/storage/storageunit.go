@@ -89,6 +89,8 @@ func Init(ctx context.Context, m *gorpmapper.Mapper, db *gorp.DbMap, gorts *sdk.
 				return nil, err
 			}
 			bufferUnit = bd
+		default:
+			return nil, sdk.WithStack(errors.New("unsupported buffer units"))
 		}
 
 		result.Buffers = append(result.Buffers, bufferUnit)

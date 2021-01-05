@@ -130,7 +130,7 @@ type BufferConfiguration struct {
 	Name       string                    `toml:"name" default:"redis" json:"name"`
 	Redis      *RedisBufferConfiguration `toml:"redis" json:"redis" mapstructure:"redis"`
 	Local      *LocalBufferConfiguration `toml:"local" json:"local" mapstructure:"local"`
-	BufferType CDNBufferType             `toml:"type" json:"type" default:"log" comment:"it can be 'log'' to receive logs or binary to receive artifacts"`
+	BufferType CDNBufferType             `toml:"bufferType" json:"bufferType" default:"log" comment:"it can be 'log' to receive logs or 'binary' to receive artifacts"`
 }
 
 type CDNBufferType string
