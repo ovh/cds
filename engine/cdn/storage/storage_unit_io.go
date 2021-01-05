@@ -109,6 +109,7 @@ func (r RunningStorageUnits) NewSource(ctx context.Context, refItemUnit sdk.CDNI
 		for _, bu := range r.Buffers {
 			if bu.Name() == refUnit.Name {
 				unit = bu
+				break
 			}
 		}
 		if unit == nil {

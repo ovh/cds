@@ -316,6 +316,7 @@ func (s *Service) completeItem(ctx context.Context, tx gorpmapper.SqlExecutorWit
 			if err != nil {
 				return err
 			}
+			break
 		}
 	}
 	if reader == nil {
