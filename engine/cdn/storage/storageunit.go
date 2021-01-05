@@ -42,8 +42,17 @@ func Init(ctx context.Context, m *gorpmapper.Mapper, db *gorp.DbMap, gorts *sdk.
 		return nil, fmt.Errorf("invalid CDN configuration. HashLocatorSalt is too short")
 	}
 
-	if config.Buffer.Name == "" {
-		return nil, fmt.Errorf("invalid CDN configuration. Missing buffer name")
+	countLogBuffer := 0
+	for _, bu := range config.Buffers {
+		if bu.BufferType == CDNBufferTypeLog {
+			countLogBuffer++
+		}
+		if bu.Name == "" {
+			return nil, fmt.Errorf("invalid CDN configuration. Missing buffer name")
+		}
+	}
+	if countLogBuffer == 0 || countLogBuffer > 1 {
+		return nil, fmt.Errorf("missing or too much CDN Buffer for log items")
 	}
 
 	if len(config.Storages) == 0 {
@@ -62,50 +71,55 @@ func Init(ctx context.Context, m *gorpmapper.Mapper, db *gorp.DbMap, gorts *sdk.
 		config.SyncMinNbElements = 0
 	}
 
-	// Start by initializing the buffer unit
-	d := GetDriver("redis")
-	if d == nil {
-		return nil, fmt.Errorf("redis driver is not available")
-	}
-	bd, is := d.(BufferUnit)
-	if !is {
-		return nil, fmt.Errorf("redis driver is not a buffer unit driver")
-	}
-
-	bd.New(gorts, 1, math.MaxFloat64)
-
-	if err := bd.Init(ctx, config.Buffer.Redis); err != nil {
-		return nil, err
-	}
-	result.Buffer = bd
-
-	tx, err := db.Begin()
-	if err != nil {
-		return nil, err
-	}
-	defer tx.Rollback() // nolint
-
-	u, err := LoadUnitByName(ctx, m, tx, config.Buffer.Name)
-	if sdk.ErrorIs(err, sdk.ErrNotFound) {
-		var srvConfig sdk.ServiceConfig
-		b, _ := json.Marshal(config.Buffer.Redis)
-		_ = json.Unmarshal(b, &srvConfig) // nolint
-		u = &sdk.CDNUnit{
-			ID:      sdk.UUID(),
-			Created: time.Now(),
-			Name:    config.Buffer.Name,
-			Config:  srvConfig,
+	for _, bu := range config.Buffers {
+		var bufferUnit BufferUnit
+		switch {
+		case bu.Redis != nil:
+			// Start by initializing the buffer unit
+			d := GetDriver("redis")
+			if d == nil {
+				return nil, fmt.Errorf("redis driver is not available")
+			}
+			bd, is := d.(BufferUnit)
+			if !is {
+				return nil, fmt.Errorf("redis driver is not a buffer unit driver")
+			}
+			bd.New(gorts, 1, math.MaxFloat64)
+			if err := bd.Init(ctx, bu.Redis, bu.BufferType); err != nil {
+				return nil, err
+			}
+			bufferUnit = bd
 		}
-		if err := InsertUnit(ctx, m, tx, u); err != nil {
+
+		result.Buffers = append(result.Buffers, bufferUnit)
+		tx, err := db.Begin()
+		if err != nil {
 			return nil, err
 		}
-	} else if err != nil {
-		return nil, err
-	}
-	bd.Set(*u)
+		defer tx.Rollback() // nolint
 
-	if err := tx.Commit(); err != nil {
-		return nil, err
+		u, err := LoadUnitByName(ctx, m, tx, bu.Name)
+		if sdk.ErrorIs(err, sdk.ErrNotFound) {
+			var srvConfig sdk.ServiceConfig
+			b, _ := json.Marshal(bu)
+			_ = json.Unmarshal(b, &srvConfig) // nolint
+			u = &sdk.CDNUnit{
+				ID:      sdk.UUID(),
+				Created: time.Now(),
+				Name:    bu.Name,
+				Config:  srvConfig,
+			}
+			if err := InsertUnit(ctx, m, tx, u); err != nil {
+				return nil, err
+			}
+		} else if err != nil {
+			return nil, err
+		}
+		bufferUnit.Set(*u)
+
+		if err := tx.Commit(); err != nil {
+			return nil, err
+		}
 	}
 
 	// Then initialize the storages unit
@@ -274,13 +288,16 @@ func (r *RunningStorageUnits) Start(ctx context.Context, gorts *sdk.GoRoutines) 
 				}
 				wg.Wait()
 			case <-tickrPurge.C:
-				gorts.Exec(ctx, "RunningStorageUnits.purge."+r.Buffer.Name(),
-					func(ctx context.Context) {
-						if err := r.Purge(ctx, r.Buffer); err != nil {
-							log.ErrorWithFields(ctx, log.Fields{"stack_trace": fmt.Sprintf("%+v", err)}, "RunningStorageUnits.purge> error: %v", err)
-						}
-					},
-				)
+				for i := range r.Buffers {
+					b := r.Buffers[i]
+					gorts.Exec(ctx, "RunningStorageUnits.purge."+b.Name(),
+						func(ctx context.Context) {
+							if err := r.Purge(ctx, b); err != nil {
+								log.ErrorWithFields(ctx, log.Fields{"stack_trace": fmt.Sprintf("%+v", err)}, "RunningStorageUnits.purge> error: %v", err)
+							}
+						},
+					)
+				}
 
 				for i := range r.Storages {
 					s := r.Storages[i]

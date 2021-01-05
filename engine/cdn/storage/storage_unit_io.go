@@ -50,17 +50,18 @@ func (s *iuSource) SyncBandwidth() float64 {
 }
 
 func (r RunningStorageUnits) GetSource(ctx context.Context, i *sdk.CDNItem) (Source, error) {
-	ok, err := r.Buffer.ItemExists(ctx, r.m, r.db, *i)
+	bufferUnit := r.GetBuffer(i.Type)
+	ok, err := bufferUnit.ItemExists(ctx, r.m, r.db, *i)
 	if err != nil {
 		return nil, err
 	}
 
 	if ok {
-		iu, err := LoadItemUnitByUnit(ctx, r.m, r.db, r.Buffer.ID(), i.ID, gorpmapper.GetOptions.WithDecryption)
+		iu, err := LoadItemUnitByUnit(ctx, r.m, r.db, bufferUnit.ID(), i.ID, gorpmapper.GetOptions.WithDecryption)
 		if err != nil {
 			return nil, err
 		}
-		return &iuSource{iu: *iu, source: r.Buffer}, nil
+		return &iuSource{iu: *iu, source: bufferUnit}, nil
 	}
 
 	// Find a storage unit where the item is complete
@@ -88,8 +89,8 @@ func (r RunningStorageUnits) GetSource(ctx context.Context, i *sdk.CDNItem) (Sou
 
 	var unit source = r.Storage(refUnit.Name)
 	if unit == nil {
-		if r.Buffer.Name() == refUnit.Name {
-			unit = r.Buffer
+		if bufferUnit.Name() == refUnit.Name {
+			unit = bufferUnit
 		} else {
 			return nil, sdk.WithStack(fmt.Errorf("unable to find unit %s", refUnit.Name))
 		}
@@ -105,9 +106,12 @@ func (r RunningStorageUnits) NewSource(ctx context.Context, refItemUnit sdk.CDNI
 	}
 	var unit source = r.Storage(refUnit.Name)
 	if unit == nil {
-		if r.Buffer.Name() == refUnit.Name {
-			unit = r.Buffer
-		} else {
+		for _, bu := range r.Buffers {
+			if bu.Name() == refUnit.Name {
+				unit = bu
+			}
+		}
+		if unit == nil {
 			return nil, sdk.WithStack(fmt.Errorf("unable to find unit %s", refUnit.Name))
 		}
 	}

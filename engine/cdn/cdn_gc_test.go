@@ -49,11 +49,14 @@ func TestCleanSynchronizedItem(t *testing.T) {
 
 	cdnUnits, err := storage.Init(ctx, m, db.DbMap, sdk.NewGoRoutines(), storage.Configuration{
 		HashLocatorSalt: "thisismysalt",
-		Buffer: storage.BufferConfiguration{
-			Name: "redis_buffer",
-			Redis: storage.RedisBufferConfiguration{
-				Host:     cfg["redisHost"],
-				Password: cfg["redisPassword"],
+		Buffers: []storage.BufferConfiguration{
+			{
+				Name: "redis_buffer",
+				Redis: &storage.RedisBufferConfiguration{
+					Host:     cfg["redisHost"],
+					Password: cfg["redisPassword"],
+				},
+				BufferType: storage.CDNBufferTypeLog,
 			},
 		},
 		Storages: []storage.StorageConfiguration{
@@ -103,7 +106,7 @@ func TestCleanSynchronizedItem(t *testing.T) {
 		APIRefHash: sdk.RandomString(10),
 	}
 	require.NoError(t, item.Insert(context.TODO(), s.Mapper, db, &item2RedisFs))
-	iu2Redis := sdk.CDNItemUnit{UnitID: s.Units.Buffer.ID(), ItemID: item2RedisFs.ID}
+	iu2Redis := sdk.CDNItemUnit{UnitID: s.Units.LogsBuffer().ID(), ItemID: item2RedisFs.ID}
 	require.NoError(t, storage.InsertItemUnit(context.TODO(), s.Mapper, db, &iu2Redis))
 	iu2FS := sdk.CDNItemUnit{UnitID: s.Units.Storages[0].ID(), ItemID: item2RedisFs.ID}
 	require.NoError(t, storage.InsertItemUnit(context.TODO(), s.Mapper, db, &iu2FS))
@@ -127,7 +130,7 @@ func TestCleanSynchronizedItem(t *testing.T) {
 		APIRefHash: sdk.RandomString(10),
 	}
 	require.NoError(t, item.Insert(context.TODO(), s.Mapper, db, &item4Redis))
-	iu4Redis := sdk.CDNItemUnit{UnitID: s.Units.Buffer.ID(), ItemID: item4Redis.ID}
+	iu4Redis := sdk.CDNItemUnit{UnitID: s.Units.LogsBuffer().ID(), ItemID: item4Redis.ID}
 	require.NoError(t, storage.InsertItemUnit(context.TODO(), s.Mapper, db, &iu4Redis))
 
 	// Add Item in cds only
@@ -151,12 +154,12 @@ func TestCleanSynchronizedItem(t *testing.T) {
 	require.NoError(t, item.Insert(context.TODO(), s.Mapper, db, &item6RedisFSCDS))
 	iu6CDS := sdk.CDNItemUnit{UnitID: s.Units.Storages[1].ID(), ItemID: item6RedisFSCDS.ID}
 	require.NoError(t, storage.InsertItemUnit(context.TODO(), s.Mapper, db, &iu6CDS))
-	iu6Redis := sdk.CDNItemUnit{UnitID: s.Units.Buffer.ID(), ItemID: item6RedisFSCDS.ID}
+	iu6Redis := sdk.CDNItemUnit{UnitID: s.Units.LogsBuffer().ID(), ItemID: item6RedisFSCDS.ID}
 	require.NoError(t, storage.InsertItemUnit(context.TODO(), s.Mapper, db, &iu6Redis))
 	iu6FS := sdk.CDNItemUnit{UnitID: s.Units.Storages[0].ID(), ItemID: item6RedisFSCDS.ID}
 	require.NoError(t, storage.InsertItemUnit(context.TODO(), s.Mapper, db, &iu6FS))
 	oneHundred := 100
-	iusRedis, err := storage.LoadItemUnitsByUnit(context.TODO(), s.Mapper, db, s.Units.Buffer.ID(), &oneHundred)
+	iusRedis, err := storage.LoadItemUnitsByUnit(context.TODO(), s.Mapper, db, s.Units.LogsBuffer().ID(), &oneHundred)
 	require.NoError(t, err)
 	require.Equal(t, 3, len(iusRedis))
 
@@ -169,13 +172,13 @@ func TestCleanSynchronizedItem(t *testing.T) {
 	require.Equal(t, 3, len(iusCDS))
 
 	// RUN TEST
-	iusRedisBefore, err := storage.LoadItemUnitsByUnit(context.TODO(), s.Mapper, db, s.Units.Buffer.ID(), &oneHundred)
+	iusRedisBefore, err := storage.LoadItemUnitsByUnit(context.TODO(), s.Mapper, db, s.Units.LogsBuffer().ID(), &oneHundred)
 	require.NoError(t, err)
 	require.Equal(t, 3, len(iusRedisBefore))
 
 	require.NoError(t, s.cleanBuffer(context.TODO()))
 
-	iusRedisAfter, err := storage.LoadItemUnitsByUnit(context.TODO(), s.Mapper, db, s.Units.Buffer.ID(), &oneHundred)
+	iusRedisAfter, err := storage.LoadItemUnitsByUnit(context.TODO(), s.Mapper, db, s.Units.LogsBuffer().ID(), &oneHundred)
 	require.NoError(t, err)
 	require.Equal(t, 2, len(iusRedisAfter))
 
@@ -223,7 +226,7 @@ func TestCleanWaitingItem(t *testing.T) {
 
 	iu := sdk.CDNItemUnit{
 		ItemID: it.ID,
-		UnitID: s.Units.Buffer.ID(),
+		UnitID: s.Units.LogsBuffer().ID(),
 	}
 	require.NoError(t, storage.InsertItemUnit(context.TODO(), s.Mapper, db, &iu))
 

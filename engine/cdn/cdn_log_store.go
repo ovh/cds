@@ -105,7 +105,7 @@ func (s *Service) storeLogs(ctx context.Context, itemType sdk.CDNItemType, signa
 		return err
 	}
 
-	iu, err := s.loadOrCreateItemUnitBuffer(ctx, it.ID)
+	iu, err := s.loadOrCreateItemUnitBuffer(ctx, it.ID, itemType)
 	if err != nil {
 		return err
 	}
@@ -116,11 +116,12 @@ func (s *Service) storeLogs(ctx context.Context, itemType sdk.CDNItemType, signa
 		return nil
 	}
 
-	countLine, err := s.Units.Buffer.Card(*iu)
+	bufferUnit := s.Units.LogsBuffer()
+	countLine, err := bufferUnit.Card(*iu)
 	if err != nil {
 		return err
 	}
-	if err := s.Units.Buffer.Add(*iu, uint(countLine), content); err != nil {
+	if err := bufferUnit.Add(*iu, uint(countLine), content); err != nil {
 		return err
 	}
 
@@ -216,8 +217,13 @@ func (s *Service) loadOrCreateItem(ctx context.Context, itemType sdk.CDNItemType
 	return it, nil
 }
 
-func (s *Service) loadOrCreateItemUnitBuffer(ctx context.Context, itemID string) (*sdk.CDNItemUnit, error) {
-	unit, err := storage.LoadUnitByName(ctx, s.Mapper, s.mustDBWithCtx(ctx), s.Units.Buffer.Name())
+func (s *Service) loadOrCreateItemUnitBuffer(ctx context.Context, itemID string, itemType sdk.CDNItemType) (*sdk.CDNItemUnit, error) {
+	var bufferUnit storage.BufferUnit
+	switch itemType {
+	default:
+		bufferUnit = s.Units.LogsBuffer()
+	}
+	unit, err := storage.LoadUnitByName(ctx, s.Mapper, s.mustDBWithCtx(ctx), bufferUnit.Name())
 	if err != nil {
 		return nil, err
 	}
@@ -233,7 +239,7 @@ func (s *Service) loadOrCreateItemUnitBuffer(ctx context.Context, itemID string)
 			return nil, err
 		}
 
-		itemUnit, err = s.Units.NewItemUnit(ctx, s.Units.Buffer, it)
+		itemUnit, err = s.Units.NewItemUnit(ctx, bufferUnit, it)
 		if err != nil {
 			return nil, err
 		}

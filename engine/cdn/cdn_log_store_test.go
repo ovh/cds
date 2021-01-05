@@ -91,10 +91,10 @@ func TestStoreNewStepLog(t *testing.T) {
 	}()
 	require.Equal(t, sdk.CDNStatusItemIncoming, it.Status)
 
-	iu, err := storage.LoadItemUnitByUnit(context.TODO(), s.Mapper, db, s.Units.Buffer.ID(), it.ID, gorpmapper.GetOptions.WithDecryption)
+	iu, err := storage.LoadItemUnitByUnit(context.TODO(), s.Mapper, db, s.Units.LogsBuffer().ID(), it.ID, gorpmapper.GetOptions.WithDecryption)
 	require.NoError(t, err)
 
-	bufferReader, err := s.Units.Buffer.NewReader(context.TODO(), *iu)
+	bufferReader, err := s.Units.LogsBuffer().NewReader(context.TODO(), *iu)
 	require.NoError(t, err)
 
 	buf := new(strings.Builder)
@@ -185,7 +185,7 @@ func TestStoreLastStepLog(t *testing.T) {
 	require.NotEmpty(t, itemDB.MD5)
 	require.NotZero(t, itemDB.Size)
 
-	unit, err := storage.LoadUnitByName(context.TODO(), m, db, s.Units.Buffer.Name())
+	unit, err := storage.LoadUnitByName(context.TODO(), m, db, s.Units.LogsBuffer().Name())
 	require.NoError(t, err)
 	require.NotNil(t, unit)
 
@@ -257,10 +257,10 @@ func TestStoreNewServiceLog(t *testing.T) {
 	}()
 	require.Equal(t, sdk.CDNStatusItemIncoming, it.Status)
 
-	iu, err := storage.LoadItemUnitByUnit(context.TODO(), s.Mapper, db, s.Units.Buffer.ID(), it.ID, gorpmapper.GetOptions.WithDecryption)
+	iu, err := storage.LoadItemUnitByUnit(context.TODO(), s.Mapper, db, s.Units.LogsBuffer().ID(), it.ID, gorpmapper.GetOptions.WithDecryption)
 	require.NoError(t, err)
 
-	bufferReader, err := s.Units.Buffer.NewReader(context.TODO(), *iu)
+	bufferReader, err := s.Units.LogsBuffer().NewReader(context.TODO(), *iu)
 	require.NoError(t, err)
 
 	buf := new(strings.Builder)
