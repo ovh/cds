@@ -14,6 +14,7 @@ import (
 
 	util "github.com/aokoli/goutils"
 	"github.com/huandu/xstrings"
+	"github.com/spf13/cast"
 )
 
 // InterpolateHelperFuncs is a list of funcs that can be used in go templates.
@@ -63,6 +64,13 @@ func init() {
 		"b64enc":       base64encode,
 		"b64dec":       base64decode,
 		"escape":       escape,
+		"add": func(i ...interface{}) int64 {
+			var a int64 = 0
+			for _, b := range i {
+				a += toInt64(b)
+			}
+			return a
+		},
 	})
 }
 
@@ -359,4 +367,9 @@ func escape(s string) string {
 	s1 = strings.Replace(s1, "/", "-", -1)
 	s1 = strings.Replace(s1, ".", "-", -1)
 	return s1
+}
+
+// toInt64 converts integer types to 64-bit integers
+func toInt64(v interface{}) int64 {
+	return cast.ToInt64(v)
 }

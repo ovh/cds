@@ -437,6 +437,15 @@ func TestDo(t *testing.T) {
 			want:   `test_myWorkflow_863ddke1`,
 			enable: true,
 		},
+		{
+			name: "add",
+			args: args{
+				input: "my value {{.cds.app.value | add 3}} {{ add 2 2 }}",
+				vars:  map[string]string{"cds.app.value": "1"},
+			},
+			want:   "my value 4 4",
+			enable: true,
+		},
 	}
 	for _, tt := range tests {
 		if !tt.enable {
