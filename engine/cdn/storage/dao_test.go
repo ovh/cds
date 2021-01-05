@@ -176,6 +176,7 @@ func TestLoadAllItemIDUnknownByUnitOrderByUnitID(t *testing.T) {
 		ID:     sdk.UUID(),
 		ItemID: i1.ID,
 		UnitID: cdnUnits.Storages[1].ID(),
+		Type:   i1.Type,
 	}
 	require.NoError(t, storage.InsertItemUnit(context.TODO(), m, db, &iu1))
 
@@ -183,6 +184,7 @@ func TestLoadAllItemIDUnknownByUnitOrderByUnitID(t *testing.T) {
 		ID:     sdk.UUID(),
 		ItemID: i2.ID,
 		UnitID: cdnUnits.Buffer.ID(),
+		Type:   i2.Type,
 	}
 	require.NoError(t, storage.InsertItemUnit(context.TODO(), m, db, &iu2))
 
@@ -190,6 +192,7 @@ func TestLoadAllItemIDUnknownByUnitOrderByUnitID(t *testing.T) {
 		ID:     sdk.UUID(),
 		ItemID: i3.ID,
 		UnitID: cdnUnits.Storages[0].ID(),
+		Type:   i3.Type,
 	}
 	require.NoError(t, storage.InsertItemUnit(context.TODO(), m, db, &iu3))
 
@@ -197,6 +200,7 @@ func TestLoadAllItemIDUnknownByUnitOrderByUnitID(t *testing.T) {
 		ID:     sdk.UUID(),
 		ItemID: i4.ID,
 		UnitID: cdnUnits.Storages[1].ID(),
+		Type:   i4.Type,
 	}
 	require.NoError(t, storage.InsertItemUnit(context.TODO(), m, db, &iu4))
 
