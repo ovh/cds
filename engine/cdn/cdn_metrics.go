@@ -106,16 +106,19 @@ func (s *Service) ComputeMetrics(ctx context.Context) {
 
 			// Count all unit_item by type
 			var storageStats []storage.Stat
-			bufferStats, err := storage.CountItemsForUnit(s.mustDBWithCtx(ctx), s.Units.Buffer.ID())
-			if err != nil {
-				log.Error(ctx, "cdn> Unable to compute CountItemsByUnit for %s: %v", s.Units.Buffer.Name(), err)
-				continue
+			for _, bu := range s.Units.Buffers {
+				bufferStats, err := storage.CountItemsForUnit(s.mustDBWithCtx(ctx), bu.ID())
+				if err != nil {
+					log.Error(ctx, "cdn> Unable to compute CountItemsByUnit for %s: %v", bu.Name(), err)
+					continue
+				}
+				for i := range bufferStats {
+					b := bufferStats[i]
+					b.StorageName = bu.Name()
+					storageStats = append(storageStats, b)
+				}
 			}
-			for i := range bufferStats {
-				b := bufferStats[i]
-				b.StorageName = s.Units.Buffer.Name()
-				storageStats = append(storageStats, b)
-			}
+
 			for _, su := range s.Units.Storages {
 				suStats, err := storage.CountItemsForUnit(s.mustDBWithCtx(ctx), su.ID())
 				if err != nil {
