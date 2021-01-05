@@ -218,11 +218,7 @@ func (s *Service) loadOrCreateItem(ctx context.Context, itemType sdk.CDNItemType
 }
 
 func (s *Service) loadOrCreateItemUnitBuffer(ctx context.Context, itemID string, itemType sdk.CDNItemType) (*sdk.CDNItemUnit, error) {
-	var bufferUnit storage.BufferUnit
-	switch itemType {
-	default:
-		bufferUnit = s.Units.LogsBuffer()
-	}
+	bufferUnit := s.Units.GetBuffer(itemType)
 	unit, err := storage.LoadUnitByName(ctx, s.Mapper, s.mustDBWithCtx(ctx), bufferUnit.Name())
 	if err != nil {
 		return nil, err
