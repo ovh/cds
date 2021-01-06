@@ -89,9 +89,13 @@ func (api *API) setWorkflowURLs(w1 *sdk.Workflow) {
 
 	for j := range w1.Runs {
 		r1 := &w1.Runs[j]
-		r1.URLs.APIURL = api.Config.URL.API + api.Router.GetRoute("GET", api.getWorkflowRunHandler, map[string]string{"key": w1.ProjectKey, "permWorkflowName": w1.Name, "number": strconv.FormatInt(r1.Number, 10)})
-		r1.URLs.UIURL = api.Config.URL.UI + "/project/" + w1.ProjectKey + "/workflow/" + w1.Name + "/run/" + strconv.FormatInt(r1.Number, 10)
+		api.setWorkflowRunURLs(r1)
 	}
+}
+
+func (api *API) setWorkflowRunURLs(r1 *sdk.WorkflowRun) {
+	r1.URLs.APIURL = api.Config.URL.API + api.Router.GetRoute("GET", api.getWorkflowRunHandler, map[string]string{"key": r1.Workflow.ProjectKey, "permWorkflowName": r1.Workflow.Name, "number": strconv.FormatInt(r1.Number, 10)})
+	r1.URLs.UIURL = api.Config.URL.UI + "/project/" + r1.Workflow.ProjectKey + "/workflow/" + r1.Workflow.Name + "/run/" + strconv.FormatInt(r1.Number, 10)
 }
 
 func (api *API) getRetentionPolicySuggestionHandler() service.Handler {
