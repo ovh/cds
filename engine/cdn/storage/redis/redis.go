@@ -22,26 +22,27 @@ var (
 
 type Redis struct {
 	storage.AbstractUnit
-	config storage.RedisBufferConfiguration
-	store  cache.ScoredSetStore
+	config     storage.RedisBufferConfiguration
+	store      cache.ScoredSetStore
+	bufferType storage.CDNBufferType
 }
 
 func init() {
 	storage.RegisterDriver("redis", new(Redis))
 }
 
-func (s *Redis) Init(_ context.Context, cfg interface{}) error {
-	config, is := cfg.(storage.RedisBufferConfiguration)
+func (s *Redis) Init(_ context.Context, cfg interface{}, bufferType storage.CDNBufferType) error {
+	config, is := cfg.(*storage.RedisBufferConfiguration)
 	if !is {
 		return sdk.WithStack(fmt.Errorf("invalid configuration: %T", cfg))
 	}
-	s.config = config
+	s.config = *config
 	var err error
 	s.store, err = cache.New(s.config.Host, s.config.Password, 60)
 	if err != nil {
 		return err
 	}
-
+	s.bufferType = bufferType
 	return nil
 }
 
@@ -66,6 +67,10 @@ func (s *Redis) Add(i sdk.CDNItemUnit, index uint, value string) error {
 
 func (s *Redis) Card(i sdk.CDNItemUnit) (int, error) {
 	return s.store.SetCard(cache.Key(keyBuffer, i.ItemID))
+}
+
+func (s *Redis) IsLogsBuffer() bool {
+	return s.bufferType == storage.CDNBufferTypeLog
 }
 
 // NewReader instanciate a reader that it able to iterate over Redis storage unit

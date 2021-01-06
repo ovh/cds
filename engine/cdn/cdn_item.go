@@ -130,7 +130,7 @@ func (s *Service) getItemLogLinesCount(ctx context.Context, t sdk.CDNItemType, a
 		return 0, err
 	}
 
-	itemUnit, err := storage.LoadItemUnitByUnit(ctx, s.Mapper, s.mustDBWithCtx(ctx), s.Units.Buffer.ID(), it.ID)
+	itemUnit, err := storage.LoadItemUnitByUnit(ctx, s.Mapper, s.mustDBWithCtx(ctx), s.Units.LogsBuffer().ID(), it.ID)
 	if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
 		return 0, err
 	}
@@ -138,7 +138,7 @@ func (s *Service) getItemLogLinesCount(ctx context.Context, t sdk.CDNItemType, a
 	// If item is in Buffer, get from it
 	if itemUnit != nil {
 		log.Debug("getItemLogLines> Getting logs from buffer")
-		lines, err := s.Units.Buffer.Card(*itemUnit)
+		lines, err := s.Units.LogsBuffer().Card(*itemUnit)
 		return int64(lines), err
 	}
 
@@ -163,7 +163,7 @@ func (s *Service) getItemLogValue(ctx context.Context, t sdk.CDNItemType, apiRef
 
 	filename := it.APIRef.ToFilename()
 
-	itemUnit, err := storage.LoadItemUnitByUnit(ctx, s.Mapper, s.mustDBWithCtx(ctx), s.Units.Buffer.ID(), it.ID)
+	itemUnit, err := storage.LoadItemUnitByUnit(ctx, s.Mapper, s.mustDBWithCtx(ctx), s.Units.LogsBuffer().ID(), it.ID)
 	if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
 		return nil, 0, nil, "", err
 	}
@@ -171,12 +171,12 @@ func (s *Service) getItemLogValue(ctx context.Context, t sdk.CDNItemType, apiRef
 	// If item is in Buffer, get from it
 	if itemUnit != nil {
 		log.Debug("getItemLogValue> Getting logs from buffer")
-		linesCount, err := s.Units.Buffer.Card(*itemUnit)
+		linesCount, err := s.Units.LogsBuffer().Card(*itemUnit)
 		if err != nil {
 			return nil, 0, nil, "", err
 		}
 
-		rc, err := s.Units.Buffer.NewAdvancedReader(ctx, *itemUnit, opts.format, opts.from, opts.size, opts.sort)
+		rc, err := s.Units.LogsBuffer().NewAdvancedReader(ctx, *itemUnit, opts.format, opts.from, opts.size, opts.sort)
 		if err != nil {
 			return nil, 0, nil, "", err
 		}
@@ -310,14 +310,16 @@ func (s *Service) completeItem(ctx context.Context, tx gorpmapper.SqlExecutorWit
 	it.Status = sdk.CDNStatusItemCompleted
 
 	var reader io.ReadCloser
-	switch itemUnit.UnitID {
-	case s.Units.Buffer.ID():
-		// Get all data from buffer and add manually last line
-		reader, err = s.Units.Buffer.NewReader(ctx, itemUnit)
-		if err != nil {
-			return err
+	for _, unit := range s.Units.Buffers {
+		if unit.ID() == itemUnit.UnitID {
+			reader, err = unit.NewReader(ctx, itemUnit)
+			if err != nil {
+				return err
+			}
+			break
 		}
-	default:
+	}
+	if reader == nil {
 		for _, unit := range s.Units.Storages {
 			if unit.ID() == itemUnit.UnitID {
 				reader, err = unit.NewReader(ctx, itemUnit)

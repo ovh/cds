@@ -128,32 +128,37 @@ func (s *Service) cleanItemToDelete(ctx context.Context) error {
 
 func (s *Service) cleanBuffer(ctx context.Context) error {
 	storageCount := int64(len(s.Units.Storages) + 1)
-	itemIDs, err := storage.LoadAllSynchronizedItemIDs(s.mustDBWithCtx(ctx), s.Units.Buffer.ID(), storageCount)
-	if err != nil {
-		return err
-	}
+	for _, bu := range s.Units.Buffers {
+		itemIDs, err := storage.LoadAllSynchronizedItemIDs(s.mustDBWithCtx(ctx), bu.ID(), storageCount)
+		if err != nil {
+			return err
+		}
+		log.Debug("item to remove from buffer: %d", len(itemIDs))
+		if len(itemIDs) == 0 {
+			return nil
+		}
 
-	log.Debug("item to remove from buffer: %d", len(itemIDs))
-	if len(itemIDs) == 0 {
-		return nil
-	}
+		itemUnitsIDs, err := storage.LoadAllItemUnitsIDsByItemIDsAndUnitID(s.mustDBWithCtx(ctx), bu.ID(), itemIDs)
+		if err != nil {
+			return err
+		}
 
-	itemUnitsIDs, err := storage.LoadAllItemUnitsIDsByItemIDsAndUnitID(s.mustDBWithCtx(ctx), s.Units.Buffer.ID(), itemIDs)
-	if err != nil {
-		return err
-	}
+		tx, err := s.mustDBWithCtx(ctx).Begin()
+		if err != nil {
+			return sdk.WrapError(err, "unable to start transaction")
+		}
 
-	tx, err := s.mustDBWithCtx(ctx).Begin()
-	if err != nil {
-		return sdk.WrapError(err, "unable to start transaction")
-	}
-	defer tx.Rollback() //nolint
+		if _, err := storage.MarkItemUnitToDelete(tx, itemUnitsIDs); err != nil {
+			_ = tx.Rollback()
+			return err
+		}
 
-	if _, err := storage.MarkItemUnitToDelete(tx, itemUnitsIDs); err != nil {
-		return err
+		if err := tx.Commit(); err != nil {
+			_ = tx.Rollback()
+			return sdk.WithStack(err)
+		}
 	}
-
-	return sdk.WithStack(tx.Commit())
+	return nil
 }
 
 func (s *Service) cleanWaitingItem(ctx context.Context, duration int) error {

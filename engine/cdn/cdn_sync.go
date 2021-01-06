@@ -38,35 +38,39 @@ func (s *Service) startCDSSync(ctx context.Context) error {
 func (s *Service) SyncBuffer(ctx context.Context) {
 	log.Info(ctx, "[SyncBuffer] Start")
 	keysDeleted := 0
-	keys, err := s.Units.Buffer.Keys()
-	if err != nil {
-		log.Error(ctx, "[SyncBuffer] unable to list keys: %v", err)
-		return
-	}
-	log.Info(ctx, "[SyncBuffer] Found %d keys", len(keys))
-	for _, k := range keys {
-		keySplitted := strings.Split(k, ":")
-		if len(keySplitted) != 3 {
-			continue
+
+	for _, bu := range s.Units.Buffers {
+		keys, err := bu.Keys()
+		if err != nil {
+			log.Error(ctx, "[SyncBuffer] unable to list keys: %v", err)
+			return
 		}
-		itemID := keySplitted[2]
-		_, err := storage.LoadItemUnitByUnit(ctx, s.Mapper, s.mustDBWithCtx(ctx), s.Units.Buffer.ID(), itemID)
-		if err == nil {
-			log.Info(ctx, "[SyncBuffer] Item %s exists in database ", itemID)
-			continue
-		}
-		if sdk.ErrorIs(err, sdk.ErrNotFound) {
-			if err := s.Units.Buffer.Remove(ctx, sdk.CDNItemUnit{ItemID: itemID}); err != nil {
-				log.Error(ctx, "[SyncBuffer] unable to remove item %s from buffer: %v", itemID, err)
+		log.Info(ctx, "[SyncBuffer] Found %d keys", len(keys))
+
+		for _, k := range keys {
+			keySplitted := strings.Split(k, ":")
+			if len(keySplitted) != 3 {
 				continue
 			}
-			keysDeleted++
-			log.Info(ctx, "[SyncBuffer] item %s remove from redis", itemID)
-		} else {
-			log.Error(ctx, "[SyncBuffer] unable to load item %s", itemID)
+			itemID := keySplitted[2]
+			_, err := storage.LoadItemUnitByUnit(ctx, s.Mapper, s.mustDBWithCtx(ctx), bu.ID(), itemID)
+			if err == nil {
+				log.Info(ctx, "[SyncBuffer] Item %s exists in database ", itemID)
+				continue
+			}
+			if sdk.ErrorIs(err, sdk.ErrNotFound) {
+				if err := bu.Remove(ctx, sdk.CDNItemUnit{ItemID: itemID}); err != nil {
+					log.Error(ctx, "[SyncBuffer] unable to remove item %s from buffer: %v", itemID, err)
+					continue
+				}
+				keysDeleted++
+				log.Info(ctx, "[SyncBuffer] item %s remove from redis", itemID)
+			} else {
+				log.Error(ctx, "[SyncBuffer] unable to load item %s: %v", itemID, err)
+			}
 		}
+		log.Info(ctx, "[SyncBuffer] Done - %d keys deleted", keysDeleted)
 	}
-	log.Info(ctx, "[SyncBuffer] Done - %d keys deleted", keysDeleted)
 }
 
 func (s *Service) listenCDSSync(ctx context.Context, cdsStorage *cds.CDS) error {

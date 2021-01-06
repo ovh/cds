@@ -112,12 +112,16 @@ func newRunningStorageUnits(t *testing.T, m *gorpmapper.Mapper, dbMap *gorp.DbMa
 	t.Cleanup(cancel)
 
 	cdnUnits, err := storage.Init(ctx, m, dbMap, sdk.NewGoRoutines(), storage.Configuration{
+		SyncSeconds:     10,
 		HashLocatorSalt: "thisismysalt",
-		Buffer: storage.BufferConfiguration{
-			Name: "redis_buffer",
-			Redis: storage.RedisBufferConfiguration{
-				Host:     cfg["redisHost"],
-				Password: cfg["redisPassword"],
+		Buffers: []storage.BufferConfiguration{
+			{
+				Name: "redis_buffer",
+				Redis: &storage.RedisBufferConfiguration{
+					Host:     cfg["redisHost"],
+					Password: cfg["redisPassword"],
+				},
+				BufferType: storage.CDNBufferTypeLog,
 			},
 		},
 		Storages: []storage.StorageConfiguration{

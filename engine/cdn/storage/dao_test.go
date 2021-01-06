@@ -35,11 +35,14 @@ func TestLoadOldItemUnitByItemStatusAndDuration(t *testing.T) {
 
 	cdnUnits, err := storage.Init(ctx, m, db.DbMap, sdk.NewGoRoutines(), storage.Configuration{
 		HashLocatorSalt: "thisismysalt",
-		Buffer: storage.BufferConfiguration{
-			Name: "redis_buffer",
-			Redis: storage.RedisBufferConfiguration{
-				Host:     cfg["redisHost"],
-				Password: cfg["redisPassword"],
+		Buffers: []storage.BufferConfiguration{
+			{
+				Name: "redis_buffer",
+				Redis: &storage.RedisBufferConfiguration{
+					Host:     cfg["redisHost"],
+					Password: cfg["redisPassword"],
+				},
+				BufferType: storage.CDNBufferTypeLog,
 			},
 		},
 		Storages: []storage.StorageConfiguration{
@@ -75,7 +78,7 @@ func TestLoadOldItemUnitByItemStatusAndDuration(t *testing.T) {
 		_ = item.DeleteByID(db, i1.ID)
 	}()
 
-	itemUnit1, err := cdnUnits.NewItemUnit(context.TODO(), cdnUnits.Buffer, i1)
+	itemUnit1, err := cdnUnits.NewItemUnit(context.TODO(), cdnUnits.LogsBuffer(), i1)
 	require.NoError(t, err)
 	require.NoError(t, storage.InsertItemUnit(context.TODO(), m, db, itemUnit1))
 
@@ -90,7 +93,7 @@ func TestLoadOldItemUnitByItemStatusAndDuration(t *testing.T) {
 	defer func() {
 		_ = item.DeleteByID(db, i2.ID)
 	}()
-	itemUnit2, err := cdnUnits.NewItemUnit(context.TODO(), cdnUnits.Buffer, i2)
+	itemUnit2, err := cdnUnits.NewItemUnit(context.TODO(), cdnUnits.LogsBuffer(), i2)
 	require.NoError(t, err)
 
 	require.NoError(t, storage.InsertItemUnit(context.TODO(), m, db, itemUnit2))
@@ -103,8 +106,7 @@ func TestLoadOldItemUnitByItemStatusAndDuration(t *testing.T) {
 	require.Equal(t, i2.ID, itemUnits[0].ItemID)
 }
 
-func TestLoadAllItemIDUnknownByUnitOrderByUnitID(t *testing.T) {
-	t.SkipNow()
+func TestLoadAllItemIDUnknownByUnit(t *testing.T) {
 	m := gorpmapper.New()
 	item.InitDBMapping(m)
 	storage.InitDBMapping(m)
@@ -134,11 +136,14 @@ func TestLoadAllItemIDUnknownByUnitOrderByUnitID(t *testing.T) {
 
 	cdnUnits, err := storage.Init(ctx, m, db.DbMap, sdk.NewGoRoutines(), storage.Configuration{
 		HashLocatorSalt: "thisismysalt",
-		Buffer: storage.BufferConfiguration{
-			Name: "redis_buffer",
-			Redis: storage.RedisBufferConfiguration{
-				Host:     cfg["redisHost"],
-				Password: cfg["redisPassword"],
+		Buffers: []storage.BufferConfiguration{
+			{
+				Name: "redis_buffer",
+				Redis: &storage.RedisBufferConfiguration{
+					Host:     cfg["redisHost"],
+					Password: cfg["redisPassword"],
+				},
+				BufferType: storage.CDNBufferTypeLog,
 			},
 		},
 		Storages: []storage.StorageConfiguration{
@@ -183,7 +188,7 @@ func TestLoadAllItemIDUnknownByUnitOrderByUnitID(t *testing.T) {
 	iu2 := sdk.CDNItemUnit{
 		ID:     sdk.UUID(),
 		ItemID: i2.ID,
-		UnitID: cdnUnits.Buffer.ID(),
+		UnitID: cdnUnits.LogsBuffer().ID(),
 		Type:   i2.Type,
 	}
 	require.NoError(t, storage.InsertItemUnit(context.TODO(), m, db, &iu2))
@@ -208,6 +213,5 @@ func TestLoadAllItemIDUnknownByUnitOrderByUnitID(t *testing.T) {
 	require.NoError(t, err)
 
 	require.Equal(t, 3, len(itemIDS))
-	// Check that redis one is the first
-	require.Equal(t, i2.ID, itemIDS[0])
+
 }

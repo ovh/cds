@@ -93,13 +93,14 @@ type Unit interface {
 type BufferUnit interface {
 	Interface
 	Unit
-	Init(ctx context.Context, cfg interface{}) error
+	Init(ctx context.Context, cfg interface{}, bufferType CDNBufferType) error
 	Add(i sdk.CDNItemUnit, score uint, value string) error
 	Card(i sdk.CDNItemUnit) (int, error)
 	Size(i sdk.CDNItemUnit) (int64, error)
 	NewAdvancedReader(ctx context.Context, i sdk.CDNItemUnit, format sdk.CDNReaderFormat, from int64, size uint, sort int64) (io.ReadCloser, error)
 	Read(i sdk.CDNItemUnit, r io.Reader, w io.Writer) error
 	Keys() ([]string, error)
+	IsLogsBuffer() bool
 }
 
 type StorageUnit interface {
@@ -118,7 +119,7 @@ type StorageUnitWithLocator interface {
 
 type Configuration struct {
 	HashLocatorSalt   string                 `toml:"hashLocatorSalt" json:"hash_locator_salt" mapstructure:"hashLocatorSalt"`
-	Buffer            BufferConfiguration    `toml:"buffer" json:"buffer" mapstructure:"buffer"`
+	Buffers           []BufferConfiguration  `toml:"buffers" json:"buffers" mapstructure:"buffers"`
 	Storages          []StorageConfiguration `toml:"storages" json:"storages" mapstructure:"storages"`
 	SyncSeconds       int                    `toml:"syncSeconds" default:"30" json:"syncSeconds" comment:"each n seconds, all storage backends will have to start a synchronization with the buffer"`
 	SyncNbElements    int64                  `toml:"syncNbElements" default:"100" json:"syncNbElements" comment:"nb items to synchronize from the buffer"`
@@ -126,9 +127,18 @@ type Configuration struct {
 }
 
 type BufferConfiguration struct {
-	Name  string                   `toml:"name" default:"redis" json:"name"`
-	Redis RedisBufferConfiguration `toml:"redis" json:"redis" mapstructure:"redis"`
+	Name       string                    `toml:"name" default:"redis" json:"name"`
+	Redis      *RedisBufferConfiguration `toml:"redis" json:"redis" mapstructure:"redis"`
+	Local      *LocalBufferConfiguration `toml:"local" json:"local" mapstructure:"local"`
+	BufferType CDNBufferType             `toml:"bufferType" json:"bufferType" default:"log" comment:"it can be 'log' to receive logs or 'binary' to receive artifacts"`
 }
+
+type CDNBufferType string
+
+const (
+	CDNBufferTypeLog    CDNBufferType = "log"
+	CDNBufferTypeBinary CDNBufferType = "binary"
+)
 
 type StorageConfiguration struct {
 	Name          string                      `toml:"name" json:"name"`
@@ -175,11 +185,15 @@ type RedisBufferConfiguration struct {
 	Password string `toml:"password" json:"-"`
 }
 
+type LocalBufferConfiguration struct {
+	Path string `toml:"path" json:"path"`
+}
+
 type RunningStorageUnits struct {
 	m        *gorpmapper.Mapper
 	db       *gorp.DbMap
 	config   Configuration
-	Buffer   BufferUnit
+	Buffers  []BufferUnit
 	Storages []StorageUnit
 }
 
@@ -187,6 +201,22 @@ func (x RunningStorageUnits) HashLocator(loc string) string {
 	salt := []byte(x.config.HashLocatorSalt)
 	hashLocator := hex.EncodeToString(pbkdf2.Key([]byte(loc), salt, 4096, 32, sha1.New))
 	return hashLocator
+}
+
+func (x RunningStorageUnits) LogsBuffer() BufferUnit {
+	for _, u := range x.Buffers {
+		if u.IsLogsBuffer() {
+			return u
+		}
+	}
+	return nil
+}
+
+func (x RunningStorageUnits) GetBuffer(bufferType sdk.CDNItemType) BufferUnit {
+	switch bufferType {
+	default:
+		return x.LogsBuffer()
+	}
 }
 
 type LogConfig struct {

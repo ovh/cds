@@ -40,12 +40,16 @@ func TestRun(t *testing.T) {
 	require.NoError(t, err)
 
 	cdnUnits, err := storage.Init(ctx, m, db.DbMap, sdk.NewGoRoutines(), storage.Configuration{
+		SyncSeconds:     10,
 		HashLocatorSalt: "thisismysalt",
-		Buffer: storage.BufferConfiguration{
-			Name: "redis_buffer",
-			Redis: storage.RedisBufferConfiguration{
-				Host:     cfg["redisHost"],
-				Password: cfg["redisPassword"],
+		Buffers: []storage.BufferConfiguration{
+			{
+				Name: "redis_buffer",
+				Redis: &storage.RedisBufferConfiguration{
+					Host:     cfg["redisHost"],
+					Password: cfg["redisPassword"],
+				},
+				BufferType: storage.CDNBufferTypeLog,
 			},
 		},
 		Storages: []storage.StorageConfiguration{
@@ -104,7 +108,7 @@ func TestRun(t *testing.T) {
 		_ = item.DeleteByID(db, i.ID)
 	}()
 
-	itemUnit, err := cdnUnits.NewItemUnit(ctx, cdnUnits.Buffer, i)
+	itemUnit, err := cdnUnits.NewItemUnit(ctx, cdnUnits.LogsBuffer(), i)
 	require.NoError(t, err)
 
 	err = storage.InsertItemUnit(ctx, m, db, itemUnit)
@@ -113,11 +117,11 @@ func TestRun(t *testing.T) {
 	itemUnit, err = storage.LoadItemUnitByID(ctx, m, db, itemUnit.ID, gorpmapper.GetOptions.WithDecryption)
 	require.NoError(t, err)
 
-	require.NoError(t, cdnUnits.Buffer.Add(*itemUnit, 1.0, "this is the first log\n"))
+	require.NoError(t, cdnUnits.LogsBuffer().Add(*itemUnit, 1.0, "this is the first log\n"))
 
-	require.NoError(t, cdnUnits.Buffer.Add(*itemUnit, 2.0, "this is the second log\n"))
+	require.NoError(t, cdnUnits.LogsBuffer().Add(*itemUnit, 2.0, "this is the second log\n"))
 
-	reader, err := cdnUnits.Buffer.NewReader(context.TODO(), *itemUnit)
+	reader, err := cdnUnits.LogsBuffer().NewReader(context.TODO(), *itemUnit)
 	require.NoError(t, err)
 
 	h, err := convergent.NewHash(reader)

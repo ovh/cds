@@ -62,11 +62,14 @@ func TestWorkerLogCDNEnabled(t *testing.T) {
 	require.NoError(t, err)
 	cdnUnits, err := storage.Init(context.TODO(), m, db.DbMap, sdk.NewGoRoutines(), storage.Configuration{
 		HashLocatorSalt: "thisismysalt",
-		Buffer: storage.BufferConfiguration{
-			Name: "redis_buffer",
-			Redis: storage.RedisBufferConfiguration{
-				Host:     cfg["redisHost"],
-				Password: cfg["redisPassword"],
+		Buffers: []storage.BufferConfiguration{
+			{
+				Name: "redis_buffer",
+				Redis: &storage.RedisBufferConfiguration{
+					Host:     cfg["redisHost"],
+					Password: cfg["redisPassword"],
+				},
+				BufferType: storage.CDNBufferTypeLog,
 			},
 		},
 		Storages: []storage.StorageConfiguration{
@@ -176,11 +179,14 @@ func TestServiceLogCDNDisabled(t *testing.T) {
 	require.NoError(t, err)
 	cdnUnits, err := storage.Init(context.TODO(), m, db.DbMap, sdk.NewGoRoutines(), storage.Configuration{
 		HashLocatorSalt: "thisismysalt",
-		Buffer: storage.BufferConfiguration{
-			Name: "redis_buffer",
-			Redis: storage.RedisBufferConfiguration{
-				Host:     cfg["redisHost"],
-				Password: cfg["redisPassword"],
+		Buffers: []storage.BufferConfiguration{
+			{
+				Name: "redis_buffer",
+				Redis: &storage.RedisBufferConfiguration{
+					Host:     cfg["redisHost"],
+					Password: cfg["redisPassword"],
+				},
+				BufferType: storage.CDNBufferTypeLog,
 			},
 		},
 		Storages: []storage.StorageConfiguration{
@@ -353,7 +359,7 @@ func TestStoreTruncatedLogs(t *testing.T) {
 	require.NotEmpty(t, itemDB.MD5)
 	require.NotZero(t, itemDB.Size)
 
-	unit, err := storage.LoadUnitByName(context.TODO(), m, db, s.Units.Buffer.Name())
+	unit, err := storage.LoadUnitByName(context.TODO(), m, db, s.Units.LogsBuffer().Name())
 	require.NoError(t, err)
 	require.NotNil(t, unit)
 
