@@ -396,6 +396,8 @@ export class WorkflowNodeRunParamComponent implements AfterViewInit, OnDestroy {
     }
 
     changeCodeMirror(codemirror: any, eventRoot: Event): void {
+        this.invalidJSON = false;
+
         let num = this.num;
         if (!codemirror || !codemirror.instance) {
             return;
