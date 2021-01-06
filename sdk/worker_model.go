@@ -171,6 +171,9 @@ func (m Model) IsValidType() error {
 		if m.PatternName == "" && m.ModelVirtualMachine.Cmd == "" {
 			return WrapError(ErrWrongRequest, "invalid worker model command")
 		}
+		if m.ModelVirtualMachine.User == "" || m.ModelVirtualMachine.Password == "" {
+			return WrapError(ErrWrongRequest, "missing vm user and password")
+		}
 	default:
 		return NewErrorFrom(ErrWrongRequest, "invalid worker model type")
 	}
@@ -192,11 +195,13 @@ func ComputeWorkerModelPath(groupName, modelName string) string {
 
 // ModelVirtualMachine for openstack or vsphere.
 type ModelVirtualMachine struct {
-	Image   string `json:"image,omitempty"`
-	Flavor  string `json:"flavor,omitempty"`
-	PreCmd  string `json:"pre_cmd,omitempty"`
-	Cmd     string `json:"cmd,omitempty"`
-	PostCmd string `json:"post_cmd,omitempty"`
+	Image    string `json:"image,omitempty"`
+	Flavor   string `json:"flavor,omitempty"`
+	PreCmd   string `json:"pre_cmd,omitempty"`
+	Cmd      string `json:"cmd,omitempty"`
+	PostCmd  string `json:"post_cmd,omitempty"`
+	User     string `json:"user,omitempty"`
+	Password string `json:"password,omitempty"`
 }
 
 // Value returns driver.Value from model virtual machine.

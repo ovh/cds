@@ -115,7 +115,9 @@ func (s *Service) getItemHandler() service.Handler {
 		res.CDNItem = *it
 		res.Location = make(map[string]sdk.CDNItemUnit)
 
-		iu, err := storage.LoadItemUnitByUnit(ctx, s.Mapper, s.mustDBWithCtx(ctx), s.Units.Buffer.ID(), it.ID, opts...)
+		bufferUnit := s.Units.GetBuffer(itemType)
+
+		iu, err := storage.LoadItemUnitByUnit(ctx, s.Mapper, s.mustDBWithCtx(ctx), bufferUnit.ID(), it.ID, opts...)
 		if err != nil {
 			if !sdk.ErrorIs(err, sdk.ErrNotFound) {
 				return err
@@ -123,7 +125,7 @@ func (s *Service) getItemHandler() service.Handler {
 		}
 
 		if iu != nil {
-			res.Location[s.Units.Buffer.Name()] = *iu
+			res.Location[bufferUnit.Name()] = *iu
 		}
 
 		for _, strg := range s.Units.Storages {

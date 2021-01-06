@@ -49,11 +49,14 @@ func TestCleanSynchronizedItem(t *testing.T) {
 
 	cdnUnits, err := storage.Init(ctx, m, db.DbMap, sdk.NewGoRoutines(), storage.Configuration{
 		HashLocatorSalt: "thisismysalt",
-		Buffer: storage.BufferConfiguration{
-			Name: "redis_buffer",
-			Redis: storage.RedisBufferConfiguration{
-				Host:     cfg["redisHost"],
-				Password: cfg["redisPassword"],
+		Buffers: []storage.BufferConfiguration{
+			{
+				Name: "redis_buffer",
+				Redis: &storage.RedisBufferConfiguration{
+					Host:     cfg["redisHost"],
+					Password: cfg["redisPassword"],
+				},
+				BufferType: storage.CDNBufferTypeLog,
 			},
 		},
 		Storages: []storage.StorageConfiguration{
@@ -90,9 +93,9 @@ func TestCleanSynchronizedItem(t *testing.T) {
 		APIRefHash: sdk.RandomString(10),
 	}
 	require.NoError(t, item.Insert(context.TODO(), s.Mapper, db, &item1CDSFs))
-	iu1CDS := sdk.CDNItemUnit{UnitID: s.Units.Storages[1].ID(), ItemID: item1CDSFs.ID}
+	iu1CDS := sdk.CDNItemUnit{UnitID: s.Units.Storages[1].ID(), ItemID: item1CDSFs.ID, Type: item1CDSFs.Type}
 	require.NoError(t, storage.InsertItemUnit(context.TODO(), s.Mapper, db, &iu1CDS))
-	iu1FS := sdk.CDNItemUnit{UnitID: s.Units.Storages[0].ID(), ItemID: item1CDSFs.ID}
+	iu1FS := sdk.CDNItemUnit{UnitID: s.Units.Storages[0].ID(), ItemID: item1CDSFs.ID, Type: item1CDSFs.Type}
 	require.NoError(t, storage.InsertItemUnit(context.TODO(), s.Mapper, db, &iu1FS))
 
 	// Add Item in Redis and FS - have to stay in redis
@@ -103,9 +106,9 @@ func TestCleanSynchronizedItem(t *testing.T) {
 		APIRefHash: sdk.RandomString(10),
 	}
 	require.NoError(t, item.Insert(context.TODO(), s.Mapper, db, &item2RedisFs))
-	iu2Redis := sdk.CDNItemUnit{UnitID: s.Units.Buffer.ID(), ItemID: item2RedisFs.ID}
+	iu2Redis := sdk.CDNItemUnit{UnitID: s.Units.LogsBuffer().ID(), ItemID: item2RedisFs.ID, Type: item2RedisFs.Type}
 	require.NoError(t, storage.InsertItemUnit(context.TODO(), s.Mapper, db, &iu2Redis))
-	iu2FS := sdk.CDNItemUnit{UnitID: s.Units.Storages[0].ID(), ItemID: item2RedisFs.ID}
+	iu2FS := sdk.CDNItemUnit{UnitID: s.Units.Storages[0].ID(), ItemID: item2RedisFs.ID, Type: item2RedisFs.Type}
 	require.NoError(t, storage.InsertItemUnit(context.TODO(), s.Mapper, db, &iu2FS))
 
 	// Add Item in FS only
@@ -116,7 +119,7 @@ func TestCleanSynchronizedItem(t *testing.T) {
 		APIRefHash: sdk.RandomString(10),
 	}
 	require.NoError(t, item.Insert(context.TODO(), s.Mapper, db, &item3Fs))
-	iu3FS := sdk.CDNItemUnit{UnitID: s.Units.Storages[0].ID(), ItemID: item3Fs.ID}
+	iu3FS := sdk.CDNItemUnit{UnitID: s.Units.Storages[0].ID(), ItemID: item3Fs.ID, Type: item3Fs.Type}
 	require.NoError(t, storage.InsertItemUnit(context.TODO(), s.Mapper, db, &iu3FS))
 
 	// Add Item in redis only - have to stay in redis
@@ -127,7 +130,7 @@ func TestCleanSynchronizedItem(t *testing.T) {
 		APIRefHash: sdk.RandomString(10),
 	}
 	require.NoError(t, item.Insert(context.TODO(), s.Mapper, db, &item4Redis))
-	iu4Redis := sdk.CDNItemUnit{UnitID: s.Units.Buffer.ID(), ItemID: item4Redis.ID}
+	iu4Redis := sdk.CDNItemUnit{UnitID: s.Units.LogsBuffer().ID(), ItemID: item4Redis.ID, Type: item4Redis.Type}
 	require.NoError(t, storage.InsertItemUnit(context.TODO(), s.Mapper, db, &iu4Redis))
 
 	// Add Item in cds only
@@ -138,7 +141,7 @@ func TestCleanSynchronizedItem(t *testing.T) {
 		APIRefHash: sdk.RandomString(10),
 	}
 	require.NoError(t, item.Insert(context.TODO(), s.Mapper, db, &item5CDS))
-	iu5CDS := sdk.CDNItemUnit{UnitID: s.Units.Storages[1].ID(), ItemID: item5CDS.ID}
+	iu5CDS := sdk.CDNItemUnit{UnitID: s.Units.Storages[1].ID(), ItemID: item5CDS.ID, Type: item5CDS.Type}
 	require.NoError(t, storage.InsertItemUnit(context.TODO(), s.Mapper, db, &iu5CDS))
 
 	// Add Item in redis / fs/ cds -will be delete from redis
@@ -149,14 +152,14 @@ func TestCleanSynchronizedItem(t *testing.T) {
 		APIRefHash: sdk.RandomString(10),
 	}
 	require.NoError(t, item.Insert(context.TODO(), s.Mapper, db, &item6RedisFSCDS))
-	iu6CDS := sdk.CDNItemUnit{UnitID: s.Units.Storages[1].ID(), ItemID: item6RedisFSCDS.ID}
+	iu6CDS := sdk.CDNItemUnit{UnitID: s.Units.Storages[1].ID(), ItemID: item6RedisFSCDS.ID, Type: item6RedisFSCDS.Type}
 	require.NoError(t, storage.InsertItemUnit(context.TODO(), s.Mapper, db, &iu6CDS))
-	iu6Redis := sdk.CDNItemUnit{UnitID: s.Units.Buffer.ID(), ItemID: item6RedisFSCDS.ID}
+	iu6Redis := sdk.CDNItemUnit{UnitID: s.Units.LogsBuffer().ID(), ItemID: item6RedisFSCDS.ID, Type: item6RedisFSCDS.Type}
 	require.NoError(t, storage.InsertItemUnit(context.TODO(), s.Mapper, db, &iu6Redis))
-	iu6FS := sdk.CDNItemUnit{UnitID: s.Units.Storages[0].ID(), ItemID: item6RedisFSCDS.ID}
+	iu6FS := sdk.CDNItemUnit{UnitID: s.Units.Storages[0].ID(), ItemID: item6RedisFSCDS.ID, Type: item6RedisFSCDS.Type}
 	require.NoError(t, storage.InsertItemUnit(context.TODO(), s.Mapper, db, &iu6FS))
 	oneHundred := 100
-	iusRedis, err := storage.LoadItemUnitsByUnit(context.TODO(), s.Mapper, db, s.Units.Buffer.ID(), &oneHundred)
+	iusRedis, err := storage.LoadItemUnitsByUnit(context.TODO(), s.Mapper, db, s.Units.LogsBuffer().ID(), &oneHundred)
 	require.NoError(t, err)
 	require.Equal(t, 3, len(iusRedis))
 
@@ -169,13 +172,13 @@ func TestCleanSynchronizedItem(t *testing.T) {
 	require.Equal(t, 3, len(iusCDS))
 
 	// RUN TEST
-	iusRedisBefore, err := storage.LoadItemUnitsByUnit(context.TODO(), s.Mapper, db, s.Units.Buffer.ID(), &oneHundred)
+	iusRedisBefore, err := storage.LoadItemUnitsByUnit(context.TODO(), s.Mapper, db, s.Units.LogsBuffer().ID(), &oneHundred)
 	require.NoError(t, err)
 	require.Equal(t, 3, len(iusRedisBefore))
 
 	require.NoError(t, s.cleanBuffer(context.TODO()))
 
-	iusRedisAfter, err := storage.LoadItemUnitsByUnit(context.TODO(), s.Mapper, db, s.Units.Buffer.ID(), &oneHundred)
+	iusRedisAfter, err := storage.LoadItemUnitsByUnit(context.TODO(), s.Mapper, db, s.Units.LogsBuffer().ID(), &oneHundred)
 	require.NoError(t, err)
 	require.Equal(t, 2, len(iusRedisAfter))
 
@@ -223,7 +226,8 @@ func TestCleanWaitingItem(t *testing.T) {
 
 	iu := sdk.CDNItemUnit{
 		ItemID: it.ID,
-		UnitID: s.Units.Buffer.ID(),
+		UnitID: s.Units.LogsBuffer().ID(),
+		Type:   it.Type,
 	}
 	require.NoError(t, storage.InsertItemUnit(context.TODO(), s.Mapper, db, &iu))
 

@@ -1,12 +1,14 @@
 package vsphere
 
 import (
-	"github.com/ovh/cds/engine/service"
+	"time"
+
 	"github.com/vmware/govmomi"
 	"github.com/vmware/govmomi/find"
 	"github.com/vmware/govmomi/object"
 
 	hatcheryCommon "github.com/ovh/cds/engine/hatchery"
+	"github.com/ovh/cds/engine/service"
 )
 
 // HatcheryConfiguration is the configuration for hatchery
@@ -34,6 +36,13 @@ type HatcheryConfiguration struct {
 	// CardName vsphere-ethernet-card Name of the virtual ethernet card
 	VSphereCardName string `mapstructure:"cardName" toml:"cardName" default:"e1000" commented:"false" comment:"Name of the virtual ethernet card" json:"cardName"`
 
+	// IPRange IP Range
+	IPRange string `mapstructure:"iprange" toml:"iprange" default:"" commented:"false" comment:"Optional. IP Range for spawned workers. \n Format: a.a.a.a/b,c.c.c.c/e \n Hatchery will use an IP from this range to create Virtual Machine (Fixed IP Attribute).\nIf not set, you have to set it in your worker model template" json:"iprange,omitempty"`
+
+	Gateway string `mapstructure:"gateway" toml:"gateway" default:"" commented:"false" comment:"Optional. Gateway IP for spawned workers." json:"gateway,omitempty"`
+
+	DNS string `mapstructure:"dns" toml:"dns" default:"" commented:"false" comment:"Optional. DNS IP" json:"dns,omitempty"`
+
 	// WorkerTTL Worker TTL (minutes)
 	WorkerTTL int `mapstructure:"workerTTL" toml:"workerTTL" default:"30" commented:"false" comment:"Worker TTL (minutes)" json:"workerTTL"`
 
@@ -53,17 +62,9 @@ type HatcheryVSphere struct {
 	finder     *find.Finder
 	network    object.NetworkReference
 	vclient    *govmomi.Client
+}
 
-	// User provided parameters
-	endpoint           string
-	user               string
-	password           string
-	host               string
-	datacenterString   string
-	datastoreString    string
-	networkString      string
-	cardName           string
-	workerTTL          int
-	disableCreateImage bool
-	createImageTimeout int
+type ipInfos struct {
+	workerName     string
+	dateLastBooked time.Time
 }

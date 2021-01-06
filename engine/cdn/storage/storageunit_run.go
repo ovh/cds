@@ -191,6 +191,7 @@ func (x *RunningStorageUnits) NewItemUnit(_ context.Context, su Interface, i *sd
 	hashLocator := x.HashLocator(loc)
 	var iu = sdk.CDNItemUnit{
 		ItemID:       i.ID,
+		Type:         i.Type,
 		UnitID:       su.ID(),
 		LastModified: time.Now(),
 		Locator:      loc,

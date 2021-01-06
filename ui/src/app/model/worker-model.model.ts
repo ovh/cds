@@ -19,7 +19,9 @@ export class WorkerModel {
     group_id: number;
     nb_spawn_err: number;
     last_spawn_err: string;
-    last_spawn_err_log: string
+    nb_spawn_err_log: string;
+    last_spawn_err_log: string;
+    date_last_spawn_err: string;
     is_deprecated: boolean;
     model_virtual_machine: ModelVirtualMachine;
     model_docker: ModelDocker;
@@ -53,6 +55,8 @@ export class ModelVirtualMachine {
     pre_cmd: string;
     cmd: string;
     post_cmd: string;
+    user: string;
+    password: string;
 }
 
 export class ModelPattern {
