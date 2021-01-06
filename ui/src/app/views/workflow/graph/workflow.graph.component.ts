@@ -71,7 +71,7 @@ export class WorkflowGraphComponent implements AfterViewInit, OnDestroy {
         private _workflowCore: WorkflowCoreService,
     ) { }
 
-    ngOnDestroy(): void {} // Should be set to use @AutoUnsubscribe with AOT
+    ngOnDestroy(): void { } // Should be set to use @AutoUnsubscribe with AOT
 
     ngAfterViewInit(): void {
         this.ready = true;
@@ -102,14 +102,13 @@ export class WorkflowGraphComponent implements AfterViewInit, OnDestroy {
             });
         }
 
-        // Run the renderer. This is what draws the final graph.
-        this.svg = d3.select('svg');
-        let oldG = this.svg.select('g');
-        if (oldG) {
-            oldG.remove();
-        }
-        let g = this.svg.append('g');
+        d3.select('svg').remove();
+        const element = this.svgContainer.element.nativeElement;
+        this.svg = d3.select(element).append('svg')
+            .attr('width', element.offsetWidth)
+            .attr('height', element.offsetHeight);
 
+        let g = this.svg.append('g');
         this.render(g, this.g);
 
         this.zoom = d3.zoom().scaleExtent([
@@ -129,11 +128,11 @@ export class WorkflowGraphComponent implements AfterViewInit, OnDestroy {
     }
 
     clickOrigin() {
-        if (!this.svgContainer?.element?.nativeElement?.width?.baseVal || !this.svgContainer?.element?.nativeElement?.height?.baseVal) {
+        if (!this.svgContainer?.element?.nativeElement?.offsetWidth || !this.svgContainer?.element?.nativeElement?.offsetHeight) {
             return;
         }
-        let w = this.svgContainer.element.nativeElement.width.baseVal.value - WorkflowGraphComponent.margin;
-        let h = this.svgContainer.element.nativeElement.height.baseVal.value - WorkflowGraphComponent.margin;
+        let w = this.svgContainer.element.nativeElement.offsetWidth - WorkflowGraphComponent.margin;
+        let h = this.svgContainer.element.nativeElement.offsetHeight - WorkflowGraphComponent.margin;
         let gw = this.g.graph().width;
         let gh = this.g.graph().height;
         let oScale = Math.min(w / gw, h / gh); // calculate optimal scale for current graph

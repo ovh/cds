@@ -134,7 +134,7 @@ export class WorkflowRunComponent implements OnInit, OnDestroy {
         });
     }
 
-    ngOnDestroy(): void {} // Should be set to use @AutoUnsubscribe with AOT
+    ngOnDestroy(): void { } // Should be set to use @AutoUnsubscribe with AOT
 
     ngOnInit(): void {
         this.direction = this._workflowStore.getDirection(this.project.key, this.workflowName);
