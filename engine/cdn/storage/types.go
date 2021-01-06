@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/sha1"
 	"encoding/hex"
+	"github.com/ovh/symmecrypt/keyloader"
 	"io"
 	"math"
 	"reflect"
@@ -186,7 +187,8 @@ type RedisBufferConfiguration struct {
 }
 
 type LocalBufferConfiguration struct {
-	Path string `toml:"path" json:"path"`
+	Path       string `toml:"path" json:"path"`
+	Encryption []*keyloader.KeyConfig
 }
 
 type RunningStorageUnits struct {

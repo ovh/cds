@@ -29,7 +29,7 @@ func (c *CDS) GetClient() cdsclient.Interface {
 	return c.client
 }
 
-func (c *CDS) Init(ctx context.Context, cfg interface{}) error {
+func (c *CDS) Init(_ context.Context, cfg interface{}) error {
 	config, is := cfg.(*storage.CDSStorageConfiguration)
 	if !is {
 		return sdk.WithStack(fmt.Errorf("invalid configuration: %T", cfg))
@@ -45,7 +45,7 @@ func (c *CDS) Init(ctx context.Context, cfg interface{}) error {
 	return nil
 }
 
-func (c *CDS) ItemExists(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlExecutor, i sdk.CDNItem) (bool, error) {
+func (c *CDS) ItemExists(_ context.Context, _ *gorpmapper.Mapper, _ gorp.SqlExecutor, _ sdk.CDNItem) (bool, error) {
 	return true, nil
 }
 
@@ -104,7 +104,7 @@ func (c *CDS) Status(_ context.Context) []sdk.MonitoringStatusLine {
 	}}
 }
 
-func (c *CDS) Remove(ctx context.Context, i sdk.CDNItemUnit) error {
+func (c *CDS) Remove(_ context.Context, _ sdk.CDNItemUnit) error {
 	return nil
 }
 
@@ -113,6 +113,6 @@ func (c *CDS) Read(_ sdk.CDNItemUnit, r io.Reader, w io.Writer) error {
 	return sdk.WithStack(err)
 }
 
-func (c *CDS) Write(_ sdk.CDNItemUnit, r io.Reader, w io.Writer) error {
+func (c *CDS) Write(_ sdk.CDNItemUnit, _ io.Reader, _ io.Writer) error {
 	return nil
 }
