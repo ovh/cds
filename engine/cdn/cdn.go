@@ -160,7 +160,7 @@ func (s *Service) Serve(c context.Context) error {
 			return err
 		}
 
-		s.Units.Start(ctx, s.GoRoutines)
+		s.Units.Start(ctx, s.GoRoutines, s.Cache)
 
 		s.GoRoutines.Run(ctx, "service.cdn-gc-items", func(ctx context.Context) {
 			s.itemsGC(ctx)

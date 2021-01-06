@@ -564,6 +564,35 @@ func (s *RedisStore) ScoredSetRange(_ context.Context, key string, from, to int6
 	return nil
 }
 
+func (s *RedisStore) ScoredSetRevRange(_ context.Context, key string, offset int64, limit int64, dest interface{}) error {
+	values, err := s.Client.ZRevRange(key, offset, limit).Result()
+	if err != nil {
+		return fmt.Errorf("redis zrevrange error: %v", err)
+	}
+
+	v := reflect.ValueOf(dest)
+	if v.Kind() != reflect.Ptr {
+		return fmt.Errorf("non-pointer %v", v.Type())
+	}
+	v = v.Elem()
+	if v.Kind() != reflect.Slice {
+		return errors.New("the interface is not a slice")
+	}
+
+	typ := reflect.TypeOf(v.Interface())
+	v.Set(reflect.MakeSlice(typ, len(values), len(values)))
+
+	for i := 0; i < v.Len(); i++ {
+		m := v.Index(i).Interface()
+		if err := json.Unmarshal([]byte(values[i]), &m); err != nil {
+			return sdk.WrapError(err, "redis> cannot unmarshal %s", values[i])
+		}
+		v.Index(i).Set(reflect.ValueOf(m))
+	}
+
+	return nil
+}
+
 func (s *RedisStore) ScoredSetScan(_ context.Context, key string, from, to float64, dest interface{}) error {
 	min := "-inf"
 	if from != MIN {

@@ -127,7 +127,7 @@ func TestSyncLog(t *testing.T) {
 		},
 	})
 	require.NoError(t, err)
-	cdnUnits.Start(context.TODO(), sdk.NewGoRoutines())
+	cdnUnits.Start(context.TODO(), sdk.NewGoRoutines(), cache)
 	s.Units = cdnUnits
 
 	cdsStorage, ok := s.Units.Storages[0].(*cds.CDS)

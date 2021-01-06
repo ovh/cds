@@ -26,7 +26,7 @@ func TestRun(t *testing.T) {
 	item.InitDBMapping(m)
 	storage.InitDBMapping(m)
 
-	db, _ := commontest.SetupPGWithMapper(t, m, sdk.TypeCDN)
+	db, cache := commontest.SetupPGWithMapper(t, m, sdk.TypeCDN)
 	cfg := commontest.LoadTestingConf(t, sdk.TypeCDN)
 
 	cdntest.ClearItem(t, context.TODO(), m, db)
@@ -82,7 +82,7 @@ func TestRun(t *testing.T) {
 	})
 	require.NoError(t, err)
 	require.NotNil(t, cdnUnits)
-	cdnUnits.Start(ctx, sdk.NewGoRoutines())
+	cdnUnits.Start(ctx, sdk.NewGoRoutines(), cache)
 
 	units, err := storage.LoadAllUnits(ctx, m, db.DbMap)
 	require.NoError(t, err)

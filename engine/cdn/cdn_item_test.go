@@ -46,7 +46,7 @@ func TestGetItemValue(t *testing.T) {
 	t.Cleanup(cancel)
 
 	cfg := test.LoadTestingConf(t, sdk.TypeCDN)
-	cdnUnits := newRunningStorageUnits(t, m, s.DBConnectionFactory.GetDBMap(m)(), ctx)
+	cdnUnits := newRunningStorageUnits(t, m, s.DBConnectionFactory.GetDBMap(m)(), ctx, cache)
 	s.Units = cdnUnits
 	var err error
 	s.LogCache, err = lru.NewRedisLRU(db.DbMap, 1000, cfg["redisHost"], cfg["redisPassword"])
@@ -204,7 +204,7 @@ func TestGetItemValue_ThousandLines(t *testing.T) {
 
 	ctx, cancel := context.WithCancel(context.TODO())
 	t.Cleanup(cancel)
-	cdnUnits := newRunningStorageUnits(t, m, db.DbMap, ctx)
+	cdnUnits := newRunningStorageUnits(t, m, db.DbMap, ctx, cache)
 	s.Units = cdnUnits
 	var err error
 	s.LogCache, err = lru.NewRedisLRU(db.DbMap, 1000, cfg["redisHost"], cfg["redisPassword"])
@@ -311,7 +311,7 @@ func TestGetItemValue_Reverse(t *testing.T) {
 
 	ctx, cancel := context.WithCancel(context.TODO())
 	t.Cleanup(cancel)
-	cdnUnits := newRunningStorageUnits(t, m, db.DbMap, ctx)
+	cdnUnits := newRunningStorageUnits(t, m, db.DbMap, ctx, cache)
 	s.Units = cdnUnits
 	var err error
 	s.LogCache, err = lru.NewRedisLRU(db.DbMap, 1000, cfg["redisHost"], cfg["redisPassword"])
@@ -421,7 +421,7 @@ func TestGetItemValue_ThousandLinesReverse(t *testing.T) {
 
 	ctx, cancel := context.WithCancel(context.TODO())
 	t.Cleanup(cancel)
-	cdnUnits := newRunningStorageUnits(t, m, db.DbMap, ctx)
+	cdnUnits := newRunningStorageUnits(t, m, db.DbMap, ctx, cache)
 	s.Units = cdnUnits
 	var err error
 	s.LogCache, err = lru.NewRedisLRU(db.DbMap, 1000, cfg["redisHost"], cfg["redisPassword"])

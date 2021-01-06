@@ -11,6 +11,7 @@ import (
 
 	"github.com/go-gorp/gorp"
 
+	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
@@ -65,10 +66,6 @@ func Init(ctx context.Context, m *gorpmapper.Mapper, db *gorp.DbMap, gorts *sdk.
 
 	if config.SyncSeconds <= 0 {
 		config.SyncSeconds = 30
-	}
-
-	if config.SyncMinNbElements <= 0 {
-		config.SyncMinNbElements = 0
 	}
 
 	for _, bu := range config.Buffers {
@@ -225,7 +222,7 @@ func Init(ctx context.Context, m *gorpmapper.Mapper, db *gorp.DbMap, gorts *sdk.
 	return &result, nil
 }
 
-func (r *RunningStorageUnits) Start(ctx context.Context, gorts *sdk.GoRoutines) {
+func (r *RunningStorageUnits) Start(ctx context.Context, gorts *sdk.GoRoutines, store cache.Store) {
 	for i := range r.Storages {
 		s := r.Storages[i]
 		// Start the sync processes
@@ -241,7 +238,7 @@ func (r *RunningStorageUnits) Start(ctx context.Context, gorts *sdk.GoRoutines) 
 							continue
 						}
 
-						if err := r.processItem(ctx, r.m, tx, s, id); err != nil {
+						if err := r.processItem(ctx, tx, s, id); err != nil {
 							t1 := time.Now()
 							log.ErrorWithFields(ctx, log.Fields{
 								"stack_trace":               fmt.Sprintf("%+v", err),
@@ -256,6 +253,14 @@ func (r *RunningStorageUnits) Start(ctx context.Context, gorts *sdk.GoRoutines) 
 							log.ErrorWithFields(ctx, log.Fields{"stack_trace": fmt.Sprintf("%+v", err)}, "%s", err)
 							_ = tx.Rollback()
 							continue
+						}
+
+						// Remove from redis
+						k := cache.Key(KeyBackendSync, s.Name())
+						bts, _ := json.Marshal(id)
+						if err := store.ScoredSetRem(ctx, k, string(bts)); err != nil {
+							err = sdk.WrapError(err, "unable to remove sync item %s from redis %s", id, k)
+							log.ErrorWithFields(ctx, log.Fields{"stack_trace": fmt.Sprintf("%+v", err)}, "%s", err)
 						}
 					}
 				},
@@ -281,7 +286,7 @@ func (r *RunningStorageUnits) Start(ctx context.Context, gorts *sdk.GoRoutines) 
 					gorts.Exec(ctx, "RunningStorageUnits.run."+s.Name(),
 						func(ctx context.Context) {
 							wg.Add(1)
-							if err := r.Run(ctx, s, r.config.SyncMinNbElements, r.config.SyncNbElements); err != nil {
+							if err := r.FillSyncItemChannel(ctx, store, s, r.config.SyncNbElements); err != nil {
 								log.ErrorWithFields(ctx, log.Fields{"stack_trace": fmt.Sprintf("%+v", err)}, "RunningStorageUnits.run> error: %v", err)
 							}
 							wg.Done()

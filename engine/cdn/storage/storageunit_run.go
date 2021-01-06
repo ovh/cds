@@ -7,11 +7,33 @@ import (
 
 	"github.com/fujiwara/shapeio"
 
+	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/engine/cdn/item"
 	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
+
+var (
+	KeyBackendSync = "cdn:backend:sync"
+)
+
+func (x *RunningStorageUnits) FillSyncItemChannel(ctx context.Context, store cache.Store, s StorageUnit, nbItem int64) error {
+	var itemIDs []string
+	if err := store.ScoredSetRevRange(ctx, cache.Key(KeyBackendSync, s.Name()), 0, nbItem, &itemIDs); err != nil {
+		return err
+	}
+	log.Info(ctx, "FillSyncItemChannel> Item to sync for %s: %d", s.Name(), len(itemIDs))
+	for _, id := range itemIDs {
+		select {
+		case s.SyncItemChannel() <- id:
+			log.Debug("unit %s should sync item %s", s.Name(), id)
+		default:
+			continue
+		}
+	}
+	return nil
+}
 
 func (x *RunningStorageUnits) Run(ctx context.Context, s StorageUnit, syncMinNbItems, nbItem int64) error {
 	if _, err := LoadUnitByID(ctx, x.m, x.db, s.ID()); err != nil {
@@ -35,7 +57,7 @@ func (x *RunningStorageUnits) Run(ctx context.Context, s StorageUnit, syncMinNbI
 	return nil
 }
 
-func (x *RunningStorageUnits) processItem(ctx context.Context, m *gorpmapper.Mapper, tx gorpmapper.SqlExecutorWithTx, s StorageUnit, id string) error {
+func (x *RunningStorageUnits) processItem(ctx context.Context, tx gorpmapper.SqlExecutorWithTx, s StorageUnit, id string) error {
 	it, err := item.LoadAndLockByID(ctx, x.m, tx, id, gorpmapper.GetOptions.WithDecryption)
 	if err != nil {
 		if !sdk.ErrorIs(err, sdk.ErrNotFound) {
@@ -49,7 +71,8 @@ func (x *RunningStorageUnits) processItem(ctx context.Context, m *gorpmapper.Map
 		"item_size_num": it.Size,
 	}, "processing item %s on %s", it.ID, s.Name())
 	if _, err = LoadItemUnitByUnit(ctx, x.m, tx, s.ID(), id); err == nil {
-		return err
+		log.Info(ctx, "Item %s already sync on %s", id, s.Name())
+		return nil
 
 	}
 	if !sdk.ErrorIs(err, sdk.ErrNotFound) {

@@ -212,7 +212,7 @@ func TestCleanWaitingItem(t *testing.T) {
 
 	ctx, cancel := context.WithCancel(context.TODO())
 	t.Cleanup(cancel)
-	s.Units = newRunningStorageUnits(t, m, s.DBConnectionFactory.GetDBMap(m)(), ctx)
+	s.Units = newRunningStorageUnits(t, m, s.DBConnectionFactory.GetDBMap(m)(), ctx, cache)
 
 	it := sdk.CDNItem{
 		ID:     sdk.UUID(),
