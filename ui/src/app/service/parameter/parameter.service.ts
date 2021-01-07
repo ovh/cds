@@ -17,7 +17,8 @@ export class ParameterService {
 
     /**
      * Get variable type
-     * @returns {any}
+     *
+     * @returns
      */
     getTypesFromCache(): string[] {
         return this.parametersType;
@@ -25,7 +26,8 @@ export class ParameterService {
 
     /**
      * Get all types of parameters
-     * @returns {Observable<string[]>}
+     *
+     * @returns
      */
     getTypesFromAPI(): Observable<string[]> {
         return this._http.get<string[]>('/parameter/type').pipe(map( pts => {

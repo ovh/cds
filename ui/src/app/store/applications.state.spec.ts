@@ -12,17 +12,17 @@ import { ProjectService } from 'app/service/project/project.service';
 import { ProjectStore } from 'app/service/project/project.store';
 import { WorkflowRunService } from 'app/service/workflow/run/workflow.run.service';
 import { WorkflowService } from 'app/service/workflow/workflow.service';
+import { PipelineService } from 'app/service/pipeline/pipeline.service';
+import { EnvironmentService } from 'app/service/environment/environment.service';
+import { ApplicationService } from 'app/service/application/application.service';
+import { RouterService } from 'app/service/router/router.service';
+import { RouterTestingModule } from '@angular/router/testing';
 import * as ActionApplication from './applications.action';
 import { ApplicationsState, ApplicationStateModel } from './applications.state';
 import { PipelinesState } from './pipelines.state';
 import { AddProject } from './project.action';
 import { ProjectState, ProjectStateModel } from './project.state';
 import { WorkflowState } from './workflow.state';
-import { PipelineService } from 'app/service/pipeline/pipeline.service';
-import { EnvironmentService } from 'app/service/environment/environment.service';
-import { ApplicationService } from 'app/service/application/application.service';
-import { RouterService } from 'app/service/router/router.service';
-import { RouterTestingModule } from '@angular/router/testing';
 
 describe('Applications', () => {
     let store: Store;
@@ -53,9 +53,7 @@ describe('Applications', () => {
         project.name = testProjectKey;
         store.dispatch(new AddProject(project));
         const http = TestBed.get(HttpTestingController);
-        http.expectOne(((req: HttpRequest<any>) => {
-            return req.url === '/project';
-        })).flush(<Project>{
+        http.expectOne(((req: HttpRequest<any>) => req.url === '/project')).flush(<Project>{
             name: testProjectKey,
             key: testProjectKey,
         });
@@ -71,9 +69,7 @@ describe('Applications', () => {
             projectKey: testProjectKey,
             applicationName: 'app1'
         }));
-        http.expectOne(((req: HttpRequest<any>) => {
-            return req.url === '/project/test1/application/app1';
-        })).flush({
+        http.expectOne(((req: HttpRequest<any>) => req.url === '/project/test1/application/app1')).flush({
             name: 'app1',
             project_key: testProjectKey,
             vcs_strategy: {}
@@ -94,9 +90,7 @@ describe('Applications', () => {
             projectKey: testProjectKey,
             application
         }));
-        http.expectOne(((req: HttpRequest<any>) => {
-            return req.url === '/project/test1/applications';
-        })).flush({
+        http.expectOne(((req: HttpRequest<any>) => req.url === '/project/test1/applications')).flush({
             name: 'app1',
             project_key: testProjectKey,
             vcs_strategy: {}
@@ -134,9 +128,7 @@ describe('Applications', () => {
             projectKey: testProjectKey,
             application
         }));
-        http.expectOne(((req: HttpRequest<any>) => {
-            return req.url === '/project/test1/applications';
-        })).flush({
+        http.expectOne(((req: HttpRequest<any>) => req.url === '/project/test1/applications')).flush({
             name: 'app1',
             project_key: testProjectKey,
             vcs_strategy: {}
@@ -153,9 +145,7 @@ describe('Applications', () => {
             applicationName: 'app1',
             changes: application
         }));
-        http.expectOne(((req: HttpRequest<any>) => {
-            return req.url === '/project/test1/application/app1';
-        })).flush({
+        http.expectOne(((req: HttpRequest<any>) => req.url === '/project/test1/application/app1')).flush({
             name: 'app1bis',
             project_key: testProjectKey,
             vcs_strategy: {}
@@ -183,9 +173,7 @@ describe('Applications', () => {
             projectKey: testProjectKey,
             application
         }));
-        http.expectOne(((req: HttpRequest<any>) => {
-            return req.url === '/project/test1/applications';
-        })).flush({
+        http.expectOne(((req: HttpRequest<any>) => req.url === '/project/test1/applications')).flush({
             name: 'app1',
             project_key: testProjectKey,
             vcs_strategy: {}
@@ -202,9 +190,7 @@ describe('Applications', () => {
             clonedAppName: 'app1',
             newApplication: application
         }));
-        http.expectOne(((req: HttpRequest<any>) => {
-            return req.url === '/project/test1/application/app1/clone';
-        })).flush({
+        http.expectOne(((req: HttpRequest<any>) => req.url === '/project/test1/application/app1/clone')).flush({
             name: 'app1cloned',
             project_key: testProjectKey,
             vcs_strategy: {}
@@ -231,9 +217,7 @@ describe('Applications', () => {
             projectKey: testProjectKey,
             application
         }));
-        http.expectOne(((req: HttpRequest<any>) => {
-            return req.url === '/project/test1/applications';
-        })).flush({
+        http.expectOne(((req: HttpRequest<any>) => req.url === '/project/test1/applications')).flush({
             name: 'app1',
             project_key: testProjectKey,
             vcs_strategy: {}
@@ -248,9 +232,7 @@ describe('Applications', () => {
             projectKey: testProjectKey,
             applicationName: 'app1'
         }));
-        http.expectOne(((req: HttpRequest<any>) => {
-            return req.url === '/project/test1/application/app1';
-        })).flush(null);
+        http.expectOne(((req: HttpRequest<any>) => req.url === '/project/test1/application/app1')).flush(null);
 
         store.selectOnce(ProjectState).subscribe((projState: ProjectStateModel) => {
             expect(projState.project).toBeTruthy();
@@ -267,9 +249,7 @@ describe('Applications', () => {
         }));
         let overview = new Overview();
         overview.git_url = 'git+ssh://thisisatest';
-        http.expectOne(((req: HttpRequest<any>) => {
-            return req.url === '/ui/project/test1/application/app1/overview';
-        })).flush(overview);
+        http.expectOne(((req: HttpRequest<any>) => req.url === '/ui/project/test1/application/app1/overview')).flush(overview);
         store.selectOnce(ApplicationsState.selectOverview()).subscribe(o => {
             expect(o).toBeTruthy();
             expect(o.git_url).toEqual('git+ssh://thisisatest');
@@ -286,9 +266,7 @@ describe('Applications', () => {
             projectKey: testProjectKey,
             application
         }));
-        http.expectOne(((req: HttpRequest<any>) => {
-            return req.url === '/project/test1/applications';
-        })).flush({
+        http.expectOne(((req: HttpRequest<any>) => req.url === '/project/test1/applications')).flush({
             name: 'app1',
             project_key: testProjectKey,
             vcs_strategy: {}
@@ -310,9 +288,7 @@ describe('Applications', () => {
             applicationName: 'app1',
             variable
         }));
-        http.expectOne(((req: HttpRequest<any>) => {
-            return req.url === '/project/test1/application/app1/variable/testvar';
-        })).flush(variable);
+        http.expectOne(((req: HttpRequest<any>) => req.url === '/project/test1/application/app1/variable/testvar')).flush(variable);
         store.selectOnce(ApplicationsState.currentState()).subscribe((s) => {
             expect(s.application).toBeTruthy();
             expect(s.application.name).toEqual('app1');
@@ -332,9 +308,7 @@ describe('Applications', () => {
             projectKey: testProjectKey,
             application
         }));
-        http.expectOne(((req: HttpRequest<any>) => {
-            return req.url === '/project/test1/applications';
-        })).flush({
+        http.expectOne(((req: HttpRequest<any>) => req.url === '/project/test1/applications')).flush({
             name: 'app1',
             project_key: testProjectKey,
             vcs_strategy: {}
@@ -350,9 +324,7 @@ describe('Applications', () => {
             applicationName: 'app1',
             variable
         }));
-        http.expectOne(((req: HttpRequest<any>) => {
-            return req.url === '/project/test1/application/app1/variable/testvar';
-        })).flush(variable);
+        http.expectOne(((req: HttpRequest<any>) => req.url === '/project/test1/application/app1/variable/testvar')).flush(variable);
 
         variable.name = 'testvarrenamed';
         store.dispatch(new ActionApplication.UpdateApplicationVariable({
@@ -380,9 +352,7 @@ describe('Applications', () => {
             projectKey: testProjectKey,
             application
         }));
-        http.expectOne(((req: HttpRequest<any>) => {
-            return req.url === '/project/test1/applications';
-        })).flush({
+        http.expectOne(((req: HttpRequest<any>) => req.url === '/project/test1/applications')).flush({
             name: 'app1',
             project_key: testProjectKey,
             vcs_strategy: {}
@@ -398,18 +368,14 @@ describe('Applications', () => {
             applicationName: 'app1',
             variable
         }));
-        http.expectOne(((req: HttpRequest<any>) => {
-            return req.url === '/project/test1/application/app1/variable/testvar';
-        })).flush(variable);
+        http.expectOne(((req: HttpRequest<any>) => req.url === '/project/test1/application/app1/variable/testvar')).flush(variable);
 
         store.dispatch(new ActionApplication.DeleteApplicationVariable({
             projectKey: testProjectKey,
             applicationName: 'app1',
             variable
         }));
-        http.expectOne(((req: HttpRequest<any>) => {
-            return req.url === '/project/test1/application/app1/variable/testvar';
-        })).flush(<Application>{
+        http.expectOne(((req: HttpRequest<any>) => req.url === '/project/test1/application/app1/variable/testvar')).flush(<Application>{
             name: 'app1',
             project_key: testProjectKey,
             variables: [],
@@ -433,9 +399,7 @@ describe('Applications', () => {
             projectKey: testProjectKey,
             application
         }));
-        http.expectOne(((req: HttpRequest<any>) => {
-            return req.url === '/project/test1/applications';
-        })).flush({
+        http.expectOne(((req: HttpRequest<any>) => req.url === '/project/test1/applications')).flush({
             name: 'app1',
             project_key: testProjectKey,
             vcs_strategy: {}
@@ -450,9 +414,7 @@ describe('Applications', () => {
             applicationName: 'app1',
             key
         }));
-        http.expectOne(((req: HttpRequest<any>) => {
-            return req.url === '/project/test1/application/app1/keys';
-        })).flush(key);
+        http.expectOne(((req: HttpRequest<any>) => req.url === '/project/test1/application/app1/keys')).flush(key);
         store.selectOnce(ApplicationsState.currentState()).subscribe((s) => {
             expect(s.application).toBeTruthy();
             expect(s.application.name).toEqual('app1');
@@ -472,9 +434,7 @@ describe('Applications', () => {
             projectKey: testProjectKey,
             application
         }));
-        http.expectOne(((req: HttpRequest<any>) => {
-            return req.url === '/project/test1/applications';
-        })).flush({
+        http.expectOne(((req: HttpRequest<any>) => req.url === '/project/test1/applications')).flush({
             name: 'app1',
             project_key: testProjectKey,
             vcs_strategy: {}
@@ -489,9 +449,7 @@ describe('Applications', () => {
             applicationName: 'app1',
             key
         }));
-        http.expectOne(((req: HttpRequest<any>) => {
-            return req.url === '/project/test1/application/app1/keys';
-        })).flush(key);
+        http.expectOne(((req: HttpRequest<any>) => req.url === '/project/test1/application/app1/keys')).flush(key);
         store.selectOnce(ApplicationsState.currentState()).subscribe((s) => {
             expect(s.application).toBeTruthy();
             expect(s.application.name).toEqual('app1');
@@ -506,9 +464,7 @@ describe('Applications', () => {
             applicationName: 'app1',
             key
         }));
-        http.expectOne(((req: HttpRequest<any>) => {
-            return req.url === '/project/test1/application/app1/keys/app-mykey';
-        })).flush(null);
+        http.expectOne(((req: HttpRequest<any>) => req.url === '/project/test1/application/app1/keys/app-mykey')).flush(null);
         store.selectOnce(ApplicationsState.currentState()).subscribe((s) => {
             expect(s.application).toBeTruthy();
             expect(s.application.name).toEqual('app1');
@@ -528,9 +484,7 @@ describe('Applications', () => {
             projectKey: testProjectKey,
             application
         }));
-        http.expectOne(((req: HttpRequest<any>) => {
-            return req.url === '/project/test1/applications';
-        })).flush({
+        http.expectOne(((req: HttpRequest<any>) => req.url === '/project/test1/applications')).flush({
             name: 'app1',
             project_key: testProjectKey,
             vcs_strategy: {}
@@ -544,7 +498,7 @@ describe('Applications', () => {
         integration.name = 'testintegration';
         integration.model = new IntegrationModel();
         integration.model.deployment_default_config = {
-            'key1': 'value'
+            key1: 'value'
         };
 
         store.dispatch(new ActionApplication.AddApplicationDeployment({
@@ -552,9 +506,7 @@ describe('Applications', () => {
             applicationName: 'app1',
             integration
         }));
-        http.expectOne(((req: HttpRequest<any>) => {
-            return req.url === '/project/test1/application/app1/deployment/config/testintegration';
-        })).flush(<Application>{
+        http.expectOne(((req: HttpRequest<any>) => req.url === '/project/test1/application/app1/deployment/config/testintegration')).flush(<Application>{
             name: 'app1',
             project_key: testProjectKey,
             deployment_strategies: {},
@@ -577,9 +529,7 @@ describe('Applications', () => {
             projectKey: testProjectKey,
             application
         }));
-        http.expectOne(((req: HttpRequest<any>) => {
-            return req.url === '/project/test1/applications';
-        })).flush({
+        http.expectOne(((req: HttpRequest<any>) => req.url === '/project/test1/applications')).flush({
             name: 'app1',
             project_key: testProjectKey,
             vcs_strategy: {}
@@ -591,9 +541,7 @@ describe('Applications', () => {
             repoManager: 'github',
             repoFullName: 'cds'
         }));
-        http.expectOne(((req: HttpRequest<any>) => {
-            return req.url === '/project/test1/repositories_manager/github/application/app1/attach';
-        })).flush(<Application>{
+        http.expectOne(((req: HttpRequest<any>) => req.url === '/project/test1/repositories_manager/github/application/app1/attach')).flush(<Application>{
             name: 'app1',
             project_key: testProjectKey,
             vcs_server: 'github',
@@ -617,9 +565,7 @@ describe('Applications', () => {
             projectKey: testProjectKey,
             application
         }));
-        http.expectOne(((req: HttpRequest<any>) => {
-            return req.url === '/project/test1/applications';
-        })).flush({
+        http.expectOne(((req: HttpRequest<any>) => req.url === '/project/test1/applications')).flush({
             name: 'app1',
             project_key: testProjectKey,
             vcs_strategy: {}
@@ -630,9 +576,7 @@ describe('Applications', () => {
             applicationName: 'app1',
             repoManager: 'github'
         }));
-        http.expectOne(((req: HttpRequest<any>) => {
-            return req.url === '/project/test1/repositories_manager/github/application/app1/detach';
-        })).flush(<Application>{
+        http.expectOne(((req: HttpRequest<any>) => req.url === '/project/test1/repositories_manager/github/application/app1/detach')).flush(<Application>{
             name: 'app1',
             project_key: testProjectKey
         });
@@ -656,9 +600,7 @@ describe('Applications', () => {
             projectKey: testProjectKey,
             application
         }));
-        http.expectOne(((req: HttpRequest<any>) => {
-            return req.url === '/project/test1/applications';
-        })).flush({
+        http.expectOne(((req: HttpRequest<any>) => req.url === '/project/test1/applications')).flush({
             name: 'app1',
             project_key: testProjectKey,
             vcs_strategy: {}
@@ -685,9 +627,7 @@ describe('Applications', () => {
             projectKey: testProjectKey,
             application
         }));
-        http.expectOne(((req: HttpRequest<any>) => {
-            return req.url === '/project/test1/applications';
-        })).flush({
+        http.expectOne(((req: HttpRequest<any>) => req.url === '/project/test1/applications')).flush({
             name: 'app1',
             project_key: testProjectKey,
             vcs_strategy: {}
@@ -713,9 +653,7 @@ describe('Applications', () => {
             projectKey: testProjectKey,
             application
         }));
-        http.expectOne(((req: HttpRequest<any>) => {
-            return req.url === '/project/test1/applications';
-        })).flush({
+        http.expectOne(((req: HttpRequest<any>) => req.url === '/project/test1/applications')).flush({
             name: 'app1',
             project_key: testProjectKey,
             vcs_strategy: {}
@@ -731,9 +669,7 @@ describe('Applications', () => {
             projectKey: testProjectKey,
             applicationName: 'app1'
         }));
-        http.expectOne(((req: HttpRequest<any>) => {
-            return req.url === '/project/test1/application/app1';
-        })).flush({
+        http.expectOne(((req: HttpRequest<any>) => req.url === '/project/test1/application/app1')).flush({
             name: 'app1',
             project_key: testProjectKey,
             vcs_server: 'github'

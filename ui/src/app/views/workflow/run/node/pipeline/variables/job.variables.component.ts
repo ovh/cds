@@ -14,7 +14,7 @@ export class WorkflowRunJobVariableComponent {
     modal: SuiActiveModal<boolean, boolean, void>;
     open: boolean;
 
-    @Input('variables')
+    @Input()
     set variables(data: Array<Parameter>) {
         this.init();
         if (data) {

@@ -26,8 +26,8 @@ import { ActionEvent } from './action.event.model';
 import { StepEvent } from './step/step.event';
 
 describe('CDS: Action Component', () => {
-    beforeEach(() => {
-        TestBed.configureTestingModule({
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
             declarations: [],
             providers: [
                 SharedService,
@@ -51,7 +51,7 @@ describe('CDS: Action Component', () => {
                 TranslateModule.forRoot(),
                 HttpClientTestingModule
             ]
-        });
+        }).compileComponents();
     });
 
 
@@ -216,9 +216,7 @@ describe('CDS: Action Component', () => {
         // })).flush(actionMock);
 
         fixture.componentInstance.ngOnInit();
-        http.expectOne(((req: HttpRequest<any>) => {
-            return req.url === '/project/key/action';
-        })).flush(actionMock);
+        http.expectOne(((req: HttpRequest<any>) => req.url === '/project/key/action')).flush(actionMock);
 
         let action: Action = <Action>{
             name: 'FooAction',

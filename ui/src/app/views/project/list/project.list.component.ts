@@ -20,9 +20,7 @@ export class ProjectListComponent implements OnDestroy {
 
     set filter(filter: string) {
         let filterLower = filter.toLowerCase();
-        this.filteredProjects = this.projects.filter((proj) => {
-          return proj.name.toLowerCase().indexOf(filterLower) !== -1 || proj.key === filter;
-        });
+        this.filteredProjects = this.projects.filter((proj) => proj.name.toLowerCase().indexOf(filterLower) !== -1 || proj.key === filter);
     }
 
     constructor(private _projectStore: ProjectStore, private _cd: ChangeDetectorRef) {

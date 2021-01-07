@@ -5,8 +5,9 @@ export class SharedService {
 
     /**
      * Get the height for a textarea.
+     *
      * @param value Value to display
-     * @returns {number}
+     * @returns
      */
     getTextAreaheight(value: string): number {
         let size = 0;

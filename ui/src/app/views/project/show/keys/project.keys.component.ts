@@ -17,7 +17,7 @@ import { finalize } from 'rxjs/operators';
 export class ProjectKeysComponent implements OnInit {
 
     _project: Project;
-    @Input('project')
+    @Input()
     set project(data: Project) {
         if (data) {
             this._project = data;

@@ -35,6 +35,7 @@ export class EnvironmentService {
 
     /**
      * Update environment as code
+     *
      * @param key Project key
      * @param environment Environment to update
      * @param branch Branch name to create the PR

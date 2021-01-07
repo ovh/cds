@@ -14,7 +14,8 @@ export class DownloadService {
 
     /**
      * Get the list of available downloas
-     * @returns {Observable<DownloadableResource[]>}
+     *
+     * @returns
      */
     getDownloads(): Observable<Array<DownloadableResource>> {
         return this._http.get<Array<DownloadableResource>>('/download');

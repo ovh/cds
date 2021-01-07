@@ -1,21 +1,21 @@
-/* tslint:disable:no-unused-variable */
+/* eslint-disable @typescript-eslint/no-unused-vars */
 
 import {TestBed} from '@angular/core/testing';
 import {RouterTestingModule} from '@angular/router/testing';
 import {TranslateService, TranslateLoader, TranslateParser, TranslateModule} from '@ngx-translate/core';
+import {Component, NO_ERRORS_SCHEMA} from '@angular/core';
 import {SharedService} from '../shared.service';
 import {SharedModule} from '../shared.module';
-import {UsageComponent} from './usage.component';
 import {Workflow} from '../../model/workflow.model';
 import {Application} from '../../model/application.model';
 import {Environment} from '../../model/environment.model';
-import {Component, NO_ERRORS_SCHEMA} from '@angular/core';
 import {Project} from '../../model/project.model';
+import {UsageComponent} from './usage.component';
 
 describe('CDS: Usage Component', () => {
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
             declarations: [
                 DummyComponent
             ],
@@ -37,7 +37,7 @@ describe('CDS: Usage Component', () => {
                 ])
             ],
             schemas: [ NO_ERRORS_SCHEMA ]
-        });
+        }).compileComponents();
     });
 
     it('should display workflows linked', () => {

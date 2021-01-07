@@ -42,12 +42,10 @@ export class AuditListComponent implements OnInit {
                 type: ColumnType.CONFIRM_BUTTON,
                 name: '',
                 disabled: !this.canRollback,
-                selector: (audit: AuditWorkflow) => {
-                    return {
+                selector: (audit: AuditWorkflow) => ({
                         title: 'common_rollback',
                         click: () => this.rollback.emit(audit.id)
-                    };
-                },
+                    }),
             },
         ];
     }

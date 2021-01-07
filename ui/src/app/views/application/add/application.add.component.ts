@@ -35,7 +35,7 @@ export class ApplicationAddComponent implements OnInit, OnDestroy {
 
     loadingCreate = false;
 
-    applicationNamePattern: RegExp = new RegExp('^[a-zA-Z0-9._-]{1,}$');
+    applicationNamePattern = new RegExp('^[a-zA-Z0-9._-]{1,}$');
     appPatternError = false;
 
     suggestion: Array<string>;

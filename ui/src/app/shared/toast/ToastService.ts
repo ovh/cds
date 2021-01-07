@@ -41,19 +41,19 @@ export class ToastService {
 
     success(title: string, msg: string) {
         this._toasterService.pop(
-            { type: 'success', title: title, body: msg, toastContainerId: 1 }
+            { type: 'success', title, body: msg, toastContainerId: 1 }
         );
     }
 
     info(title: string, msg: string) {
         this._toasterService.pop(
-            { type: 'info', title: title, body: msg, toastContainerId: 1 }
+            { type: 'info', title, body: msg, toastContainerId: 1 }
         );
     }
 
     error(title: string, msg: string) {
         this._toasterService.pop(
-            { type: 'error', title: title, body: msg, toastContainerId: 1 }
+            { type: 'error', title, body: msg, toastContainerId: 1 }
         );
     }
 
@@ -71,9 +71,9 @@ export class ToastService {
                     bodyOutputType: BodyOutputType.Component,
                     toastContainerId: status < 500 ? 2 : 3,
                     data: <ToastHTTPErrorData>{
-                        status: status,
-                        from: from,
-                        request_id: request_id,
+                        status,
+                        from,
+                        request_id,
                         help: help.error
                     }
                 }

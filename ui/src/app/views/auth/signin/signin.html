@@ -54,14 +54,6 @@
                                 <label>{{ 'user_label_email' | translate }}*</label>
                                 <input type="email" name="email" ngModel required>
                             </div>
-                            <div class="field" [class.error]="passwordShowError">
-                                <label>{{ 'user_label_password' | translate }}*</label>
-                                <input type="password" name="password" (keyup)="onChangeSignupPassword($event)" ngModel
-                                    required>
-                                <sui-progress *ngIf="!passwordError && passwordLevel !== null"
-                                    class="bottom attached indicating active" [maximum]="5" [value]="passwordLevel + 1">
-                                </sui-progress>
-                            </div>
                             <div *ngIf="passwordError" class="ui error message">
                                 <p>{{ passwordError | translate }}</p>
                             </div>

@@ -12,7 +12,7 @@
         <label>{{ ' '}}</label>
     </div>
     <div *ngSwitchCase="'ssh-key'">
-        <ng-container *ngIf="keys && keys.ssh && (keyExist(editableValue) || !editableValue)">
+        <ng-container *ngIf="keys && keys.ssh && (keyExist(editableValue.toString()) || !editableValue)">
             <sui-select class="selection" name="type" [(ngModel)]="editableValue"
                 (ngModelChange)="valueChanged();sendValueChanged()" [options]="keys.ssh" labelField="name"
                 valueField="name" [isSearchable]="true" #sshkey>
@@ -20,7 +20,7 @@
                 </sui-select-option>
             </sui-select>
         </ng-container>
-        <ng-container *ngIf="!keys || (editableValue && keys && keys.ssh && !keyExist(editableValue))">
+        <ng-container *ngIf="!keys || (editableValue && keys && keys.ssh && !keyExist(editableValue.toString()))">
             <input type="text" [(ngModel)]="editableValue" (change)="valueChanged()" (keydown)="sendValueChanged()"
                 name="value">
         </ng-container>
@@ -100,7 +100,7 @@
 </ng-container>
 <ng-container [ngSwitch]="type" *ngIf="!edit">
     <div *ngSwitchCase="'text'" class="ui form">
-        <textarea readonly rows="{{_sharedService.getTextAreaheight(editableValue)}}">{{editableValue}}</textarea>
+        <textarea readonly rows="{{_sharedService.getTextAreaheight(editableValue.toString())}}">{{editableValue}}</textarea>
     </div>
     <div *ngSwitchCase="'boolean'" class="ui checkbox">
         <input disabled type="checkbox" [(ngModel)]="editableValue" (change)="valueChanged()"

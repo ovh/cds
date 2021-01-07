@@ -10,7 +10,7 @@
   "scripts": {
     "ng": "ng",
     "start": "ng serve -c development",
-    "test": "ng lint && ng test --watch false --code-coverage",
+    "test": "ng test --watch false --code-coverage",
     "e2e": "testcafe chromium:headless ./e2e/tests/* -S -s screenshots",
     "doc": "./node_modules/.bin/compodoc -p tsconfig.json -s",
     "build:prod": "ng build --prod",
@@ -24,22 +24,22 @@
       "*.ts": "ng lint"
     },
     "relative": true,
-    "fileFlag": "--files",
+    "fileFlag": "--lint-file-patterns",
     "ignore": [
       "**/*.spec.ts"
     ]
   },
   "private": true,
   "dependencies": {
-    "@angular/animations": "11.0.2",
-    "@angular/cdk": "9.2.1",
-    "@angular/common": "11.0.2",
-    "@angular/compiler": "11.0.2",
-    "@angular/core": "11.0.2",
-    "@angular/forms": "11.0.2",
-    "@angular/platform-browser": "11.0.2",
-    "@angular/platform-browser-dynamic": "11.0.2",
-    "@angular/router": "11.0.2",
+    "@angular/animations": "11.0.5",
+    "@angular/cdk": "11.0.3",
+    "@angular/common": "11.0.5",
+    "@angular/compiler": "11.0.5",
+    "@angular/core": "11.0.5",
+    "@angular/forms": "11.0.5",
+    "@angular/platform-browser": "11.0.5",
+    "@angular/platform-browser-dynamic": "11.0.5",
+    "@angular/router": "11.0.5",
     "@icholy/duration": "5.0.0",
     "@ngui/auto-complete": "3.0.0",
     "@ngx-translate/core": "12.1.2",
@@ -98,10 +98,10 @@
     "zxcvbn": "4.4.2"
   },
   "devDependencies": {
-    "@angular-builders/custom-webpack": "9.1.0",
-    "@angular-devkit/build-angular": "0.1100.2",
-    "@angular/cli": "11.0.2",
-    "@angular/compiler-cli": "11.0.2",
+    "@angular-builders/custom-webpack": "11.0.0",
+    "@angular-devkit/build-angular": "0.1100.5",
+    "@angular/cli": "11.0.5",
+    "@angular/compiler-cli": "11.0.5",
     "@commitlint/cli": "8.3.5",
     "@commitlint/config-conventional": "8.3.4",
     "@compodoc/compodoc": "1.1.11",
@@ -120,7 +120,7 @@
     "jasmine-spec-reporter": "5.0.0",
     "karma": "5.1.1",
     "karma-chrome-launcher": "3.1.0",
-    "karma-coverage-istanbul-reporter": "3.0.2",
+    "karma-coverage": "2.0.3",
     "karma-jasmine": "4.0.0",
     "karma-jasmine-html-reporter": "1.5.0",
     "karma-junit-reporter": "1.2.0",
@@ -130,7 +130,18 @@
     "typescript": "4.0.2",
     "webdriver-manager": "12.1.7",
     "webpack-bundle-analyzer": "3.3.2",
-    "wrench-sui": "0.0.3"
+    "wrench-sui": "0.0.3",
+    "eslint": "^7.6.0",
+    "eslint-plugin-import": "2.22.1",
+    "eslint-plugin-jsdoc": "30.7.6",
+    "eslint-plugin-prefer-arrow": "1.2.2",
+    "@angular-eslint/builder": "0.8.0-beta.3",
+    "@angular-eslint/eslint-plugin": "0.8.0-beta.3",
+    "@angular-eslint/eslint-plugin-template": "0.8.0-beta.3",
+    "@angular-eslint/schematics": "^0.8.0-beta.3",
+    "@angular-eslint/template-parser": "0.8.0-beta.3",
+    "@typescript-eslint/eslint-plugin": "4.3.0",
+    "@typescript-eslint/parser": "4.3.0"
   },
   "husky": {
     "hooks": {

@@ -85,9 +85,7 @@ export class HomeHeatmapComponent implements AfterViewInit, OnDestroy {
                             const allowed = ['workflow_name', 'status', 'tag'];
                             this.properties = Object.keys(event).filter(p => allowed.indexOf(p) !== -1);
                             if (event['tag']) {
-                                event['tag'] = event['tag'].map((tag) => {
-                                    return tag.value ? tag.value : tag;
-                                });
+                                event['tag'] = event['tag'].map((tag) => tag.value ? tag.value : tag);
                             }
                             if (!this.unfilteredGroupedEvents[event.project_key]) {
                                 this.unfilteredGroupedEvents[event.project_key] = new Object();
@@ -167,9 +165,7 @@ export class HomeHeatmapComponent implements AfterViewInit, OnDestroy {
         if (this.heatmapSearch) {
             // filter projects list
             if (this.heatmapSearch.projects && this.heatmapSearch.projects.length > 0) {
-                this.projects = Object.keys(this.groupedEvents).filter((p) => {
-                    return this.heatmapSearch.projects.indexOf(p) !== -1;
-                }).sort();
+                this.projects = Object.keys(this.groupedEvents).filter((p) => this.heatmapSearch.projects.indexOf(p) !== -1).sort();
                 const projectsToFilter = Object.keys(this.unfilteredWorkflows).filter(proj => this.projects.indexOf(proj) === -1);
                 projectsToFilter.forEach(proj => {
                     delete this.workflows[proj];
@@ -205,9 +201,7 @@ export class HomeHeatmapComponent implements AfterViewInit, OnDestroy {
                 projectsToFilter.forEach(proj => {
                     delete this.workflows[proj];
                 });
-                this.projects = Object.keys(this.groupedEvents).filter((p) => {
-                    return projectsToFilter.indexOf(p) === -1;
-                }).sort();
+                this.projects = Object.keys(this.groupedEvents).filter((p) => projectsToFilter.indexOf(p) === -1).sort();
             }
         }
     }

@@ -29,7 +29,9 @@ export class WorkerModelFormComponent implements OnInit, OnDestroy {
             }
         }
     }
-    get workerModel(): WorkerModel { return this._workerModel; }
+    get workerModel(): WorkerModel {
+ return this._workerModel;
+}
     @Input() currentUser: AuthentifiedUser;
     @Input() loading: boolean;
     @Input() types: Array<string>;

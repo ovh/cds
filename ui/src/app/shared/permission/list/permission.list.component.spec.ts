@@ -1,4 +1,4 @@
-/* tslint:disable:no-unused-variable */
+/* eslint-disable @typescript-eslint/no-unused-vars */
 
 import { fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { RouterTestingModule } from '@angular/router/testing';
@@ -12,8 +12,8 @@ import { PermissionListComponent } from './permission.list.component';
 
 describe('CDS: Permission List Component', () => {
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
             declarations: [
             ],
             providers: [
@@ -28,7 +28,7 @@ describe('CDS: Permission List Component', () => {
                 RouterTestingModule.withRoutes([]),
                 TranslateModule.forRoot()
             ]
-        });
+        }).compileComponents();
     });
 
     it('should delete a permission', fakeAsync( () => {

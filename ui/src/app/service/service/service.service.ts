@@ -15,8 +15,9 @@ export class ServiceService {
 
     /**
      * Get one specific service from API.
+     *
      * @param name name of the service
-     * @returns {Observable<Service>}
+     * @returns
      */
     getService(name: string): Observable<Service> {
         return this._http.get<Service>('/admin/service/' + name);
@@ -24,7 +25,8 @@ export class ServiceService {
 
     /**
      * Get all services that the user can access.
-     * @returns {Observable<Service[]>}
+     *
+     * @returns
      */
     getServices(): Observable<Service[]> {
         return this._http.get<Service[]>('/admin/services');

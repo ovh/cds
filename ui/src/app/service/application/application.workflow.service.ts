@@ -11,10 +11,11 @@ export class ApplicationWorkflowService {
 
     /**
      * Get the list of branch for the application
+     *
      * @param key Project unique key
      * @param appName Application Name
      * @param remote Remote Name
-     * @returns {Observable<VCSInfos>}
+     * @returns
      */
     getVCSInfos(key: string, appName: string, remote?: string): Observable<VCSInfos> {
         let params = new HttpParams();

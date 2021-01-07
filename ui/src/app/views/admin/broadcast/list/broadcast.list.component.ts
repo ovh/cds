@@ -21,12 +21,10 @@ export class BroadcastListComponent {
     ) {
         this.filter = f => {
             const lowerFilter = f.toLowerCase();
-            return d => {
-                return d.id.toString().indexOf(lowerFilter) !== -1 ||
+            return d => d.id.toString().indexOf(lowerFilter) !== -1 ||
                     d.title.toLowerCase().indexOf(lowerFilter) !== -1 ||
                     d.level.toLowerCase().indexOf(lowerFilter) !== -1 ||
-                    d.project_key.toLowerCase().indexOf(lowerFilter) !== -1;
-            }
+                    d.project_key.toLowerCase().indexOf(lowerFilter) !== -1
         };
 
         this.path = [<PathItem>{
@@ -41,12 +39,10 @@ export class BroadcastListComponent {
                 type: ColumnType.ROUTER_LINK,
                 name: 'broadcast_id',
                 class: 'one',
-                selector: (b: Broadcast) => {
-                    return {
+                selector: (b: Broadcast) => ({
                         link: `/admin/broadcast/${b.id}`,
                         value: b.id
-                    };
-                }
+                    })
             },
             <Column<Broadcast>>{
                 type: ColumnType.DATE,
@@ -72,7 +68,7 @@ export class BroadcastListComponent {
                     return {
                         link: `/admin/broadcast/${b.id}`,
                         value: b.title,
-                        icons: icons
+                        icons
                     };
                 }
             },

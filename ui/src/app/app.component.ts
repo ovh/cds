@@ -8,8 +8,8 @@ import { Store } from '@ngxs/store';
 import { EventService } from 'app/event.service';
 import { GetCDSStatus } from 'app/store/cds.action';
 import { CDSState } from 'app/store/cds.state';
-import { Observable } from 'rxjs';
 import { WebSocketSubject } from 'rxjs/internal-compatibility';
+import { interval, Observable, of, zip } from 'rxjs';
 import { filter, map, mergeMap } from 'rxjs/operators';
 import { Subscription } from 'rxjs/Subscription';
 import * as format from 'string-format-obj';
@@ -107,7 +107,9 @@ export class AppComponent implements OnInit, OnDestroy {
             err => {
                 this.isAPIAvailable = false;
                 this.loading = false;
-                setTimeout(() => { window.location.reload() }, 30000);
+                setTimeout(() => {
+                    window.location.reload()
+                }, 30000);
             }
         );
     }
@@ -158,10 +160,10 @@ export class AppComponent implements OnInit, OnDestroy {
                     Object.assign(params, route.snapshot.params, route.snapshot.queryParams);
                 }
                 this._appService.updateRoute(params);
-                return { route, params: Observable.of(params) };
+                return { route, params: of(params) };
             }))
             .pipe(filter((event) => event.route.outlet === 'primary'))
-            .pipe(mergeMap((event) => Observable.zip(event.route.data, event.params)))
+            .pipe(mergeMap((event) => zip(event.route.data, event.params)))
             .subscribe((routeData) => {
                 if (!Array.isArray(routeData) || routeData.length < 2) {
                     return;
@@ -181,8 +183,7 @@ export class AppComponent implements OnInit, OnDestroy {
 
     startVersionWorker(): void {
         this._ngZone.runOutsideAngular(() => {
-            this.versionWorkerSubscription = Observable.interval(60000)
-                .mergeMap(_ => this._monitoringService.getVersion())
+            this.versionWorkerSubscription = interval(60000).pipe(mergeMap(_ => this._monitoringService.getVersion()))
                 .subscribe(v => {
                     this._ngZone.run(() => {
                         if ((<any>window).cds_version !== v.version) {
@@ -194,6 +195,8 @@ export class AppComponent implements OnInit, OnDestroy {
     }
 
     refresh(): void {
-        this.zone.runOutsideAngular(() => { location.reload(); });
+        this.zone.runOutsideAngular(() => {
+            location.reload();
+        });
     }
 }

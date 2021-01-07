@@ -45,7 +45,7 @@ export class ProjectEnvironmentListComponent implements OnInit {
 
     ngOnInit(): void {
         let opts: Array<LoadOpts> = [new LoadOpts('withEnvironmentNames', 'environment_names')];
-        this.store.dispatch(new ResyncProject({ projectKey: this.project.key, opts: opts }))
+        this.store.dispatch(new ResyncProject({ projectKey: this.project.key, opts }))
             .pipe(finalize(() => {
                 this.loading = false;
                 this._cd.markForCheck();

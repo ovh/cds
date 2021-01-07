@@ -18,8 +18,9 @@ export class ProjectService {
 
     /**
      * Get one specific project from API.
+     *
      * @param key Unique key of the project
-     * @returns {Observable<Project>}
+     * @returns
      */
     getProject(key: string, opts: LoadOpts[]): Observable<Project> {
         let params = new HttpParams();
@@ -39,12 +40,13 @@ export class ProjectService {
         opts.push(new LoadOpts('withIntegrations', 'integrations'));
         opts.forEach((opt) => params = params.append(opt.queryParam, 'true'));
 
-        return this._http.get<Project>('/project/' + key, { params: params });
+        return this._http.get<Project>('/project/' + key, { params });
     }
 
     /**
      * Get all projects that the user can access.
-     * @returns {Observable<Project[]>}
+     *
+     * @returns
      */
     getProjects(): Observable<Project[]> {
         let params = new HttpParams();
@@ -54,16 +56,17 @@ export class ProjectService {
 
     /**
      * Send verifier code to link repomanager to project.
+     *
      * @param key Project unique key
      * @param repoName Repository manager name
      * @param token access token
      * @param verifier code verifier
-     * @returns {Observable<Project>}
+     * @returns
      */
     callback(key: string, repoName: string, token: string, verifier: string): Observable<Project> {
         let request = {
-            'request_token': token,
-            'verifier': verifier
+            request_token: token,
+            verifier
         };
         let url = '/project/' + key + '/repositories_manager/' + repoName + '/authorize/callback';
         return this._http.post<Project>(url, request);
@@ -71,9 +74,10 @@ export class ProjectService {
 
     /**
      * Add a project key
+     *
      * @param projKey Project unique key
      * @param key Key to add
-     * @returns {Observable<Key>}
+     * @returns
      */
     addKey(projKey: string, key: Key): Observable<Key> {
         return this._http.post<Key>('/project/' + projKey + '/keys', key);
@@ -81,9 +85,10 @@ export class ProjectService {
 
     /**
      * Update project integration configuration
+     *
      * @param key Project unique key
      * @param integration Integration to update
-     * @returns {Observable<ProjectIntegration>}
+     * @returns
      */
     updateIntegration(key: string, integration: ProjectIntegration): Observable<ProjectIntegration> {
         return this._http.put<ProjectIntegration>('/project/' + key + '/integrations/' + integration.name, integration);

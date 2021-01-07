@@ -46,12 +46,10 @@ export class HookTaskListComponent {
             <Column<WorkflowHookTask>>{
                 type: ColumnType.ROUTER_LINK,
                 name: 'UUID',
-                selector: (d: WorkflowHookTask) => {
-                    return {
+                selector: (d: WorkflowHookTask) => ({
                         link: '/admin/hooks-tasks/' + d.uuid,
                         value: d.uuid
-                    };
-                }
+                    })
             },
             <Column<WorkflowHookTask>>{
                 name: 'common_type',

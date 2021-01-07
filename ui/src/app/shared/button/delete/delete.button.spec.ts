@@ -1,4 +1,4 @@
-/* tslint:disable:no-unused-variable */
+/* eslint-disable @typescript-eslint/no-unused-vars */
 
 import {TestBed, tick, fakeAsync} from '@angular/core/testing';
 import {TranslateService, TranslateLoader, TranslateParser, TranslateModule} from '@ngx-translate/core';
@@ -7,8 +7,8 @@ import {SharedModule} from '../../shared.module';
 
 describe('CDS: Delete Button', () => {
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
             declarations: [
             ],
             providers: [
@@ -20,7 +20,7 @@ describe('CDS: Delete Button', () => {
                 SharedModule,
                 TranslateModule.forRoot()
             ]
-        });
+        }).compileComponents();
     });
 
     it('Test emit delete event', fakeAsync( () => {

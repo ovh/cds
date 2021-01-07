@@ -34,7 +34,7 @@ export class WorkflowTemplateParamFormComponent implements OnInit, OnDestroy {
     @ViewChild('codemirror') codemirror: any;
 
     _project: Project;
-    @Input('project') set project(data: Project) {
+    @Input() set project(data: Project) {
         this._project = data;
         this.initProject();
     }

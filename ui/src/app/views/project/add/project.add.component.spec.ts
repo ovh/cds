@@ -37,8 +37,8 @@ describe('CDS: Project Show Component', () => {
 
     let injector: Injector;
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
             declarations: [],
             providers: [
                 TranslateLoader,
@@ -74,7 +74,7 @@ describe('CDS: Project Show Component', () => {
             schemas: [
                 CUSTOM_ELEMENTS_SCHEMA
             ]
-        });
+        }).compileComponents();
         injector = getTestBed();
     });
 
@@ -87,13 +87,9 @@ describe('CDS: Project Show Component', () => {
         let store: Store = injector.get(Store);
         let router: Router = injector.get(Router);
 
-        spyOn(store, 'dispatch').and.callFake(() => {
-            return of(null);
-        });
+        spyOn(store, 'dispatch').and.callFake(() => of(null));
 
-        spyOn(router, 'navigate').and.callFake(() => {
-            return new Promise(() => {return true});
-        });
+        spyOn(router, 'navigate').and.callFake(() => new Promise(() => true));
 
         // Create Project RepoManager Form Component
         let fixture = TestBed.createComponent(ProjectAddComponent);

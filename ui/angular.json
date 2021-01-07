@@ -79,7 +79,6 @@
               "optimization": true,
               "outputHashing": "all",
               "sourceMap": true,
-              "extractCss": true,
               "namedChunks": false,
               "aot": true,
               "extractLicenses": true,
@@ -171,19 +170,11 @@
           }
         },
         "lint": {
-          "builder": "@angular-devkit/build-angular:tslint",
+          "builder": "@angular-eslint/builder:lint",
           "options": {
-            "tsConfig": [
-              "src/tsconfig.lint.json"
-            ],
-            "files": [
-              "src/**/*.ts"
-            ],
-            "exclude": [
-              "src/**/*.spec.ts",
-              "src/test.ts",
-              "../node_modules/**/*",
-              "e2e/**/*.ts"
+            "lintFilePatterns": [
+              "src/app/**/*.ts",
+              "src/app/**/*.html"
             ]
           }
         }

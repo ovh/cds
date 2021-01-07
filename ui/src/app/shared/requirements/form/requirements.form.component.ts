@@ -25,7 +25,9 @@ export class RequirementsFormComponent implements OnInit {
             this._suggest = [];
         }
     }
-    get suggest() { return this._suggest; }
+    get suggest() {
+ return this._suggest;
+}
 
     _workerModels: Array<WorkerModel>;
     @Input() set workerModels(wms: Array<WorkerModel>) {
@@ -40,7 +42,9 @@ export class RequirementsFormComponent implements OnInit {
             }).concat(this._suggest);
         }
     }
-    get workerModels() { return this._workerModels; }
+    get workerModels() {
+ return this._workerModels;
+}
 
 
     @Input() modal: SemanticModalComponent;

@@ -3,6 +3,7 @@ import {Injectable} from '@angular/core';
 import {Event} from 'app/model/event.model';
 import {TimelineFilter} from 'app/model/timeline.model';
 import {Observable} from 'rxjs/Observable';
+import { map } from 'rxjs/operators';
 
 @Injectable()
 export class TimelineService {
@@ -20,6 +21,6 @@ export class TimelineService {
     }
 
     saveFilter(f: TimelineFilter): Observable<boolean> {
-        return this._http.post<boolean>('/user/timeline/filter', f).map(() => true);
+        return this._http.post<boolean>('/user/timeline/filter', f).pipe(map(() => true));
     }
 }

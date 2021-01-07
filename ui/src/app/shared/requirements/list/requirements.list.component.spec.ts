@@ -1,4 +1,4 @@
-/* tslint:disable:no-unused-variable */
+/* eslint-disable @typescript-eslint/no-unused-vars */
 
 import { APP_BASE_HREF } from '@angular/common';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
@@ -15,8 +15,8 @@ import { RequirementsListComponent } from './requirements.list.component';
 
 describe('CDS: Requirement List Component', () => {
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
             declarations: [
             ],
             providers: [
@@ -34,7 +34,7 @@ describe('CDS: Requirement List Component', () => {
                 SharedModule,
                 HttpClientTestingModule
             ]
-        });
+        }).compileComponents();
     });
 
 

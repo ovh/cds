@@ -31,7 +31,7 @@ import { DragulaService } from 'ng2-dragula-sgu';
 import { forkJoin, Observable, Subscription } from 'rxjs';
 import { finalize, first } from 'rxjs/operators';
 
-declare var CodeMirror: any;
+declare let CodeMirror: any;
 
 @Component({
     selector: 'app-workflow-admin',
@@ -45,13 +45,15 @@ export class WorkflowAdminComponent implements OnInit, OnDestroy {
     @Input() project: Project;
 
     _workflow: Workflow;
-    @Input('workflow')
+    @Input()
     set workflow(data: Workflow) {
         if (data) {
             this._workflow = cloneDeep(data);
         }
     }
-    get workflow() { return this._workflow }
+    get workflow() {
+ return this._workflow
+}
 
     @Input() editMode: boolean;
 
@@ -114,7 +116,7 @@ export class WorkflowAdminComponent implements OnInit, OnDestroy {
         private _eventService: EventService
     ) {
         this._dragularService.createGroup('bag-tag', {
-            accepts: function (el, target, source, sibling) {
+            accepts(el, target, source, sibling) {
                 return sibling !== null;
             }
         });
@@ -195,7 +197,7 @@ export class WorkflowAdminComponent implements OnInit, OnDestroy {
         this.initDryRunSubscription();
 
         let featMaxRunsResult = this.store.selectSnapshot(FeatureState.featureProject('workflow-retention-maxruns',
-            JSON.stringify({ 'project_key': this.project.key })))
+            JSON.stringify({ project_key: this.project.key })))
         this.maxRunsEnabled = featMaxRunsResult?.enabled;
 
         this._cd.markForCheck();

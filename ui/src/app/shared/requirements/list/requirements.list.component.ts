@@ -27,7 +27,9 @@ export class RequirementsListComponent extends Table<Requirement> implements OnI
             this._suggest = [];
         }
     }
-    get suggest() { return this._suggest; }
+    get suggest() {
+ return this._suggest;
+}
 
     _workerModels: Array<WorkerModel>;
     @Input() set workerModels(wms: Array<WorkerModel>) {
@@ -42,7 +44,9 @@ export class RequirementsListComponent extends Table<Requirement> implements OnI
             }).concat(this._suggest);
         }
     }
-    get workerModels() { return this._workerModels; }
+    get workerModels() {
+ return this._workerModels;
+}
 
     @Output() event = new EventEmitter<RequirementEvent>();
     @Output() onChange = new EventEmitter<Requirement[]>();

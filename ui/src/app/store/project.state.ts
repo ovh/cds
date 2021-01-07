@@ -106,7 +106,7 @@ export class ProjectState {
         opts.push(new LoadOpts('withIntegrations', 'integrations'));
         opts.push(new LoadOpts('withLabels', 'labels'));
 
-        return ctx.dispatch(new ProjectAction.ResyncProject({projectKey: action.payload.projectKey, opts: opts}));
+        return ctx.dispatch(new ProjectAction.ResyncProject({projectKey: action.payload.projectKey, opts}));
     }
 
     @Action(ProjectAction.ResyncProject)
@@ -874,8 +874,8 @@ export class ProjectState {
         action: ProjectAction.CallbackRepositoryManagerBasicAuthInProject) {
         const state = ctx.getState();
         let data = {
-            'username': action.payload.basicUser,
-            'secret': action.payload.basicPassword
+            username: action.payload.basicUser,
+            secret: action.payload.basicPassword
         };
         return this._http.post<Project>(
             '/project/' + action.payload.projectKey + '/repositories_manager/' +
@@ -893,8 +893,8 @@ export class ProjectState {
     callbackRepositoryManager(ctx: StateContext<ProjectStateModel>, action: ProjectAction.CallbackRepositoryManagerInProject) {
         const state = ctx.getState();
         let data = {
-            'request_token': action.payload.requestToken,
-            'verifier': action.payload.code
+            request_token: action.payload.requestToken,
+            verifier: action.payload.code
         };
         return this._http.post<Project>(
             '/project/' + action.payload.projectKey + '/repositories_manager/' +

@@ -75,7 +75,7 @@ export class ProjectWorkflowListComponent implements OnInit {
     ngOnInit(): void {
         this.viewMode = this._projectStore.getWorkflowViewMode(this.project.key);
         let opts: Array<LoadOpts> = [new LoadOpts('withWorkflowNames', 'workflow_names')];
-        this.store.dispatch(new ResyncProject({projectKey: this.project.key, opts: opts}))
+        this.store.dispatch(new ResyncProject({projectKey: this.project.key, opts}))
             .pipe(finalize(() => {
                 this.loading = false;
                 this._cd.markForCheck();

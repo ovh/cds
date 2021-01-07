@@ -87,7 +87,7 @@ export class WorkerModelListComponent {
                     return {
                         link: `/settings/worker-model/${wm.group.name}/${wm.name}`,
                         value: wm.name,
-                        icons: icons
+                        icons
                     };
                 }
             },

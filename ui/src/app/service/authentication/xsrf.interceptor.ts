@@ -32,11 +32,7 @@ export class XSRFInterceptor implements HttpInterceptor {
         return document.cookie
             .split(';')
             .map(c => c.trim())
-            .filter(cookie => {
-                return cookie.substring(0, nameLenPlus) === `${name}=`;
-            })
-            .map(cookie => {
-                return decodeURIComponent(cookie.substring(nameLenPlus));
-            })[0] || null;
+            .filter(cookie => cookie.substring(0, nameLenPlus) === `${name}=`)
+            .map(cookie => decodeURIComponent(cookie.substring(nameLenPlus)))[0] || null;
     }
 }

@@ -43,12 +43,10 @@ export class WorkflowTemplateListComponent {
                 type: ColumnType.ROUTER_LINK,
                 name: 'common_name',
                 class: 'four',
-                selector: (wt: WorkflowTemplate) => {
-                    return {
+                selector: (wt: WorkflowTemplate) => ({
                         link: `/settings/workflow-template/${wt.group.name}/${wt.slug}`,
                         value: wt.name
-                    };
-                }
+                    })
             },
             <Column<WorkflowTemplate>>{
                 type: ColumnType.MARKDOWN,

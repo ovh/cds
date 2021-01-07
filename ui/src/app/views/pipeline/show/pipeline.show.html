@@ -8,7 +8,7 @@
                 <a class="ui label small basic"
                     [class.green]="pipeline && pipeline.from_repository && (!pipeline.ascode_events || pipeline.ascode_events.length ===0)"
                     [class.orange]="pipeline && pipeline.from_repository && pipeline?.ascode_events?.length > 0"
-                    [class.grey]="pipeline && !pipeline.from_repository && (!pipeline.as_code_events || pipeline.as_code_events.length === 0)"
+                    [class.grey]="pipeline && !pipeline.from_repository && (!pipeline.ascode_events || pipeline.ascode_events.length === 0)"
                     suiPopup [popupTemplate]="popupFromRepository" popupPlacement="bottom right"
                     popupTrigger="outsideClick" #popup="suiPopup">
                     <i class="code icon"></i>as code
@@ -83,7 +83,7 @@
                         </app-parameter-list>
                         <ng-container *ngIf="!readOnly">
                             <h3>{{ 'pipeline_parameters_form_title' | translate }}</h3>
-                            <app-parameter-form [project]="project" [loading]="paramFormLoading"
+                            <app-parameter-form [project]="project"
                                 (createParameterEvent)="parameterEvent($event)" [keys]="keys"></app-parameter-form>
                         </ng-container>
                         <app-warning-modal [title]="_translate.instant('warning_modal_title')"
@@ -104,7 +104,7 @@
             </div>
         </div>
     </div>
-    <section class="content-wrap" [class.expanded]="!sidebarOpen" *ngIf="!loading && pipeline != null">
+    <section class="content-wrap" *ngIf="pipeline != null">
         <app-pipeline-ascode-editor [project]="project" [pipeline]="pipeline" [open]="asCodeEditorOpen">
         </app-pipeline-ascode-editor>
     </section>

@@ -26,7 +26,8 @@ export class ApplicationStore {
 
     /**
      * Get recent application.
-     * @returns {Observable<immutable.List<Application>>}
+     *
+     * @returns
      */
     getRecentApplications(): Observable<immutable.List<Application>> {
         return new Observable<immutable.List<Application>>(fn => this._recentApplications.subscribe(fn));
@@ -34,6 +35,7 @@ export class ApplicationStore {
 
     /**
      * Update recent application viewed.
+     *
      * @param key Project unique key
      * @param application Application to add
      */

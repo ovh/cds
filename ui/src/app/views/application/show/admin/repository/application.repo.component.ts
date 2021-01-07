@@ -76,9 +76,7 @@ export class ApplicationRepositoryComponent implements OnInit {
 
     filterRepositories(filter: string): void {
         if (filter.length >= 3) {
-            this.reposFiltered = this.repos.filter(r => {
-                return r.fullname.toLowerCase().indexOf(filter.toLowerCase()) !== -1;
-            });
+            this.reposFiltered = this.repos.filter(r => r.fullname.toLowerCase().indexOf(filter.toLowerCase()) !== -1);
         } else {
             this.reposFiltered = this.repos.slice(0, 50);
         }

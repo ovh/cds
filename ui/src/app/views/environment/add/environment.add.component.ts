@@ -24,7 +24,7 @@ export class EnvironmentAddComponent implements OnDestroy {
     envPatternError = false;
     loading = false;
     dataSubscription: Subscription;
-    environmentNamePattern: RegExp = new RegExp('^[a-zA-Z0-9._-]{1,}$');
+    environmentNamePattern = new RegExp('^[a-zA-Z0-9._-]{1,}$');
 
     constructor(
         private store: Store,

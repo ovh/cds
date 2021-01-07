@@ -9,7 +9,7 @@ module.exports = function (config) {
             require('karma-jasmine'),
             require('karma-chrome-launcher'),
             require('karma-jasmine-html-reporter'),
-            require('karma-coverage-istanbul-reporter'),
+            require('karma-coverage'),
             require('karma-junit-reporter'),
             require('@angular-devkit/build-angular/plugins/karma')
         ],
@@ -24,20 +24,25 @@ module.exports = function (config) {
         client: {
             clearContext: false // leave Jasmine Spec Runner output visible in browser
         },
+        jasmineHtmlReporter: {
+            suppressAll: true // removes the duplicated traces
+        },
         junitReporter: {
             outputDir: 'tests', // results will be saved as $outputDir/$browserName.xml
             outputFile: 'results.xml', // if included, results will be saved as $outputDir/$browserName/$outputFile
             suite: 'testSuite'
         },
-        coverageIstanbulReporter: {
+        coverageReporter: {
             dir: require('path').join(__dirname, 'coverage'),
-            reports: ['html', 'lcovonly'],
-            fixWebpackSourcePaths: true
+            reporters: [
+                { type: 'html' },
+                { type: 'lcovonly', subdir: '.', file: 'lcov.info' },
+            ]
         },
-        reporters: ['progress', 'coverage-istanbul', 'junit', 'kjhtml'],
+        reporters: ['progress', 'coverage', 'junit', 'kjhtml'],
         port: 9876,
         colors: true,
-        logLevel: config.LOG_INFO,
+        logLevel: config.LOG_WARN,
         autoWatch: true,
         concurrency: 1,
         browsers: ['ChromeHeadless'],

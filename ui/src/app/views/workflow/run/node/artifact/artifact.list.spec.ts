@@ -1,15 +1,15 @@
-/* tslint:disable:no-unused-variable */
-import {fakeAsync, TestBed} from '@angular/core/testing';
+/* eslint-disable @typescript-eslint/no-unused-vars */
+import {TestBed, fakeAsync} from '@angular/core/testing';
 import {RouterTestingModule} from '@angular/router/testing';
 import {TranslateLoader, TranslateModule, TranslateParser, TranslateService} from '@ngx-translate/core';
-import {SharedModule} from '../../../../../shared/shared.module';
-import {WorkflowModule} from '../../../workflow.module';
+import {SharedModule} from 'app/shared/shared.module';
+import {WorkflowModule} from 'app/views/workflow/workflow.module';
 import {WorkflowRunArtifactListComponent} from './artifact.list.component';
 
 describe('CDS: Artifact List', () => {
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
             declarations: [],
             providers: [
                 TranslateService,
@@ -22,7 +22,7 @@ describe('CDS: Artifact List', () => {
                 RouterTestingModule.withRoutes([]),
                 SharedModule
             ]
-        });
+        }).compileComponents();
     });
 
     it('should load component', fakeAsync(() => {

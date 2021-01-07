@@ -16,7 +16,7 @@ export class ActionStepComponent {
     stepURL: Array<string>;
     withAdvanced: boolean;
     collapsed_advanced = false;
-    @Input('step')
+    @Input()
     set step(step: Action) {
         this._step = step;
         if (step) {
@@ -39,7 +39,7 @@ export class ActionStepComponent {
     @Input() edit: boolean;
     @Input() suggest: Array<string>;
     @Input() keys: AllKeys;
-    @Input('publicActions')
+    @Input()
     set publicActions(data: Array<Action>) {
         if (data) {
             let originalAction = data.find(a => a.name === this.step.name);

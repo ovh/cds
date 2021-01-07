@@ -35,8 +35,8 @@ import { PipelineShowComponent } from './pipeline.show.component';
 
 describe('CDS: Pipeline Show', () => {
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
             declarations: [],
             providers: [
                 KeyService,
@@ -67,7 +67,7 @@ describe('CDS: Pipeline Show', () => {
                 SharedModule,
                 HttpClientTestingModule
             ]
-        });
+        }).compileComponents();
     });
 
     it('should load component', fakeAsync(() => {
@@ -86,9 +86,7 @@ describe('CDS: Pipeline Show', () => {
             projectKey: 'key1',
             pipelineName: 'pip1'
         }));
-        http.expectOne(((req: HttpRequest<any>) => {
-            return req.url === '/project/key1/pipeline/pip1';
-        })).flush(pipelineMock);
+        http.expectOne(((req: HttpRequest<any>) => req.url === '/project/key1/pipeline/pip1')).flush(pipelineMock);
 
         let project = new Project();
         project.key = 'key1';
@@ -128,9 +126,7 @@ describe('CDS: Pipeline Show', () => {
 
         let event: ParameterEvent = new ParameterEvent('add', param);
         let store: Store = TestBed.get(Store);
-        spyOn(store, 'dispatch').and.callFake(() => {
-            return of(new Pipeline());
-        });
+        spyOn(store, 'dispatch').and.callFake(() => of(new Pipeline()));
         fixture.componentInstance.parameterEvent(event, true);
         expect(store.dispatch).toHaveBeenCalledWith(new AddPipelineParameter({
             projectKey: 'key1',
@@ -174,14 +170,14 @@ class MockActivatedRoutes extends ActivatedRoute {
         this.snapshot = new ActivatedRouteSnapshot();
         this.snapshot.queryParams = {};
         this.snapshot.params = {
-            'key': 'key1',
-            'pipName': 'pip1'
+            key: 'key1',
+            pipName: 'pip1'
         };
 
         let project = new Project();
         project.key = 'key1';
         this.snapshot.data = {
-            project: project
+            project
         };
     }
 }

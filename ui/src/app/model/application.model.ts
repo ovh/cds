@@ -6,7 +6,7 @@ import { VCSStrategy } from './vcs.model';
 import { Notification, Workflow } from './workflow.model';
 import { WorkflowRunSummary } from './workflow.run.model';
 
-export const applicationNamePattern: RegExp = new RegExp('^[a-zA-Z0-9._-]+$');
+export const applicationNamePattern = new RegExp('^[a-zA-Z0-9._-]+$');
 
 export class Application {
     id: number;

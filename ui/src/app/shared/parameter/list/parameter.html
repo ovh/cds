@@ -45,11 +45,11 @@
                 <td>
                     <app-parameter-value [project]="project" [suggest]="suggest" [ref]="p.ref"
                         [editList]="mode !== 'launcher'" [edit]="mode !== 'ro' && mode !== 'job'" [keys]="keys"
-                        [type]="p.type" [(value)]="p.value" (valueUpdating)="p.hasChanged = true; sendEvent()">
+                        [type]="p.type" [(value)]="p.value" (valueUpdating)="p.hasChanged = true;">
                     </app-parameter-value>
                 </td>
                 <td *ngIf="mode !== 'launcher' && mode !== 'job'">
-                    <textarea *ngIf="mode !== launcher" class="ui textarea" (keydown)="p.hasChanged = true; sendEvent()"
+                    <textarea *ngIf="mode !== 'launcher'" class="ui textarea" (keydown)="p.hasChanged = true;"
                         [class.lock]="mode !== 'edit'" [(ngModel)]="p.description"
                         rows="{{_sharedService.getTextAreaheight(p.description)}}" [readonly]="mode === 'launcher'">
                 </textarea>

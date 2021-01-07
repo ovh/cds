@@ -70,9 +70,7 @@ export class QueueComponent implements OnDestroy {
 
         this.queueSubscription = this._store.select(QueueState.jobs).subscribe(js => {
             let fitlers = this.status.length > 0 ? this.status : this.statusOptions;
-            this.nodeJobRuns = js.filter(j => {
-                return !!fitlers.find(f => f === j.status);
-            }).sort((a: WorkflowNodeJobRun, b: WorkflowNodeJobRun) => moment(a.queued).isBefore(moment(b.queued)) ? -1 : 1);
+            this.nodeJobRuns = js.filter(j => !!fitlers.find(f => f === j.status)).sort((a: WorkflowNodeJobRun, b: WorkflowNodeJobRun) => moment(a.queued).isBefore(moment(b.queued)) ? -1 : 1);
             if (this.nodeJobRuns.length > 0) {
                 this.requirementsList = [];
                 this.bookedOrBuildingByList = [];

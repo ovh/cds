@@ -5,6 +5,7 @@ import { AuthentifiedUser } from 'app/model/user.model';
 import { FetchCurrentUser } from 'app/store/authentication.action';
 import { AuthenticationState } from 'app/store/authentication.state';
 import { Observable } from 'rxjs';
+import { filter, first, map } from 'rxjs/operators';
 
 @Injectable()
 export class AuthenticationGuard implements CanActivate, CanActivateChild {
@@ -16,27 +17,25 @@ export class AuthenticationGuard implements CanActivate, CanActivateChild {
 
     getCurrentUser(state: RouterStateSnapshot): Observable<boolean> {
         return this._store.select(AuthenticationState.user)
-            .map((u: AuthentifiedUser): boolean => {
-                if (!u) {
-                    this._store.dispatch(new FetchCurrentUser()).subscribe(
-                        () => { },
-                        () => {
-                            this._router.navigate(['/auth/signin'], <NavigationExtras>{
-                                queryParams: {
-                                    redirect: state.url
-                                }
-                            });
-                        }
-                    );
-                    return null;
-                }
-
-                return true;
-            })
-            .filter(exists => {
-                return exists !== null;
-            })
-            .first();
+            .pipe(
+                map((u: AuthentifiedUser): boolean => {
+                    if (!u) {
+                        this._store.dispatch(new FetchCurrentUser()).subscribe(
+                            () => { },
+                            () => {
+                                this._router.navigate(['/auth/signin'], <NavigationExtras>{
+                                    queryParams: {
+                                        redirect: state.url
+                                    }
+                                });
+                            }
+                        );
+                        return null;
+                    }
+                    return true;
+                }),
+                filter(exists => exists !== null),
+                first())
     }
 
     canActivate(

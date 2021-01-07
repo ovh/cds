@@ -18,6 +18,7 @@ export class PipelineAddComponent {
     loadingCreate = false;
     newPipeline = new Pipeline();
     asCode = false;
+    updated = false;
 
     codeMirrorConfig: any;
     pipToImport = `# Pipeline example
@@ -31,7 +32,7 @@ jobs:
     - echo "I'm the first step"
 `;
 
-    pipelineNamePattern: RegExp = new RegExp('^[a-zA-Z0-9._-]{1,}$');
+    pipelineNamePattern = new RegExp('^[a-zA-Z0-9._-]{1,}$');
     pipPatternError = false;
 
     project: Project;
