@@ -33,6 +33,7 @@ func TestGetItemValue(t *testing.T) {
 	t.Cleanup(cancel)
 
 	cdntest.ClearItem(t, context.TODO(), m, db)
+	cdntest.ClearSyncRedisSet(t, cache, "local_storage")
 
 	// Create cdn service
 	s := Service{
@@ -118,7 +119,8 @@ func TestGetItemValue(t *testing.T) {
 	require.Equal(t, 0, n)
 
 	// Sync FS
-	require.NoError(t, cdnUnits.Run(context.TODO(), cdnUnits.Storages[0], 0, 100))
+	require.NoError(t, cdnUnits.FillWithUnknownItems(ctx, cdnUnits.Storages[0], 100))
+	require.NoError(t, cdnUnits.FillSyncItemChannel(ctx, cdnUnits.Storages[0], 100))
 	time.Sleep(1 * time.Second)
 
 	_, err = storage.LoadItemUnitByUnit(context.TODO(), s.Mapper, db, s.Units.Storages[0].ID(), it.ID)

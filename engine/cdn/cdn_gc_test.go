@@ -47,7 +47,7 @@ func TestCleanSynchronizedItem(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.TODO(), 5*time.Second)
 	t.Cleanup(cancel)
 
-	cdnUnits, err := storage.Init(ctx, m, db.DbMap, sdk.NewGoRoutines(), storage.Configuration{
+	cdnUnits, err := storage.Init(ctx, m, cache, db.DbMap, sdk.NewGoRoutines(), storage.Configuration{
 		HashLocatorSalt: "thisismysalt",
 		Buffers: []storage.BufferConfiguration{
 			{

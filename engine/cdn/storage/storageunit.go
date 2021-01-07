@@ -26,7 +26,7 @@ func (r RunningStorageUnits) Storage(name string) StorageUnit {
 	return nil
 }
 
-func Init(ctx context.Context, m *gorpmapper.Mapper, db *gorp.DbMap, gorts *sdk.GoRoutines, config Configuration) (*RunningStorageUnits, error) {
+func Init(ctx context.Context, m *gorpmapper.Mapper, store cache.Store, db *gorp.DbMap, gorts *sdk.GoRoutines, config Configuration) (*RunningStorageUnits, error) {
 	for i := range config.Storages {
 		if config.Storages[i].SyncParallel <= 0 {
 			config.Storages[i].SyncParallel = 1
@@ -36,6 +36,7 @@ func Init(ctx context.Context, m *gorpmapper.Mapper, db *gorp.DbMap, gorts *sdk.
 	var result = RunningStorageUnits{
 		m:      m,
 		db:     db,
+		cache:  store,
 		config: config,
 	}
 
@@ -222,10 +223,17 @@ func Init(ctx context.Context, m *gorpmapper.Mapper, db *gorp.DbMap, gorts *sdk.
 	return &result, nil
 }
 
-func (r *RunningStorageUnits) Start(ctx context.Context, gorts *sdk.GoRoutines, store cache.Store) {
+func (r *RunningStorageUnits) Start(ctx context.Context, gorts *sdk.GoRoutines) {
+	// Get Unknown items
+	for _, s := range r.Storages {
+		if err := r.FillWithUnknownItems(ctx, s, r.config.SyncNbElements); err != nil {
+			log.Error(ctx, "Start> unable to get unknown items: %v", err)
+		}
+	}
+
+	// Start the sync processes
 	for i := range r.Storages {
 		s := r.Storages[i]
-		// Start the sync processes
 		for x := 0; x < cap(s.SyncItemChannel()); x++ {
 			gorts.Run(ctx, fmt.Sprintf("RunningStorageUnits.process.%s.%d", s.Name(), x),
 				func(ctx context.Context) {
@@ -258,7 +266,7 @@ func (r *RunningStorageUnits) Start(ctx context.Context, gorts *sdk.GoRoutines, 
 						// Remove from redis
 						k := cache.Key(KeyBackendSync, s.Name())
 						bts, _ := json.Marshal(id)
-						if err := store.ScoredSetRem(ctx, k, string(bts)); err != nil {
+						if err := r.cache.ScoredSetRem(ctx, k, string(bts)); err != nil {
 							err = sdk.WrapError(err, "unable to remove sync item %s from redis %s", id, k)
 							log.ErrorWithFields(ctx, log.Fields{"stack_trace": fmt.Sprintf("%+v", err)}, "%s", err)
 						}
@@ -286,7 +294,7 @@ func (r *RunningStorageUnits) Start(ctx context.Context, gorts *sdk.GoRoutines, 
 					gorts.Exec(ctx, "RunningStorageUnits.run."+s.Name(),
 						func(ctx context.Context) {
 							wg.Add(1)
-							if err := r.FillSyncItemChannel(ctx, store, s, r.config.SyncNbElements); err != nil {
+							if err := r.FillSyncItemChannel(ctx, s, r.config.SyncNbElements); err != nil {
 								log.ErrorWithFields(ctx, log.Fields{"stack_trace": fmt.Sprintf("%+v", err)}, "RunningStorageUnits.run> error: %v", err)
 							}
 							wg.Done()

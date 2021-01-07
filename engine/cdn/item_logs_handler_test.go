@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	cdntest "github.com/ovh/cds/engine/cdn/test"
 	"net/http"
 	"net/http/httptest"
 	"strconv"
@@ -33,8 +34,11 @@ func TestGetItemsAllLogsLinesHandler(t *testing.T) {
 	projectKey := sdk.RandomString(10)
 	s, db := newTestService(t)
 
-	ctx, cancel := context.WithCancel(context.TODO())
+	ctx, cancel := context.WithTimeout(context.TODO(), 5*time.Second)
 	t.Cleanup(cancel)
+
+	cdntest.ClearSyncRedisSet(t, s.Cache, "local_storage")
+
 	s.Units = newRunningStorageUnits(t, s.Mapper, db.DbMap, ctx, s.Cache)
 
 	// Add step 1
@@ -134,7 +138,9 @@ func TestGetItemsAllLogsLinesHandler(t *testing.T) {
 	unit, err := storage.LoadUnitByName(ctx, s.Mapper, s.mustDBWithCtx(ctx), s.Units.Storages[0].Name())
 	require.NoError(t, err)
 
-	require.NoError(t, s.Units.Run(ctx, s.Units.Storages[0], 0, 1000))
+	require.NoError(t, s.Units.FillWithUnknownItems(ctx, s.Units.Storages[0], 1000))
+	require.NoError(t, s.Units.FillSyncItemChannel(ctx, s.Units.Storages[0], 1000))
+	time.Sleep(1 * time.Second)
 
 	cpt := 0
 	for {
@@ -185,7 +191,6 @@ func TestGetItemsAllLogsLinesHandler(t *testing.T) {
 	require.Equal(t, int64(1), logslines[0].LinesCount)
 	require.Equal(t, int64(1), logslines[1].LinesCount)
 	require.Equal(t, int64(2), logslines[2].LinesCount)
-
 }
 
 func TestGetItemLogsLinesHandler(t *testing.T) {

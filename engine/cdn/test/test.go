@@ -2,6 +2,7 @@ package test
 
 import (
 	"context"
+	"github.com/ovh/cds/engine/cache"
 	"testing"
 
 	"github.com/ovh/cds/engine/cdn/item"
@@ -9,6 +10,10 @@ import (
 	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/stretchr/testify/require"
 )
+
+func ClearSyncRedisSet(t *testing.T, store cache.Store, name string) {
+	require.NoError(t, store.Delete(cache.Key(storage.KeyBackendSync, name)))
+}
 
 func ClearItem(t *testing.T, ctx context.Context, m *gorpmapper.Mapper, db gorpmapper.SqlExecutorWithTx) {
 	// clear datas

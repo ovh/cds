@@ -147,7 +147,7 @@ func (s *Service) storeLogs(ctx context.Context, itemType sdk.CDNItemType, signa
 		}
 
 		for _, sto := range s.Units.Storages {
-			if err := s.Cache.ScoredSetAdd(ctx, cache.Key(storage.KeyBackendSync, sto.Name()), it.ID, float64(time.Now().UnixNano())); err != nil {
+			if err := s.Cache.ScoredSetAdd(ctx, cache.Key(storage.KeyBackendSync, sto.Name()), it.ID, float64(it.Created.Unix())); err != nil {
 				log.InfoWithFields(ctx, log.Fields{
 					"item_apiref": it.APIRefHash,
 				}, "storeLogs> cannot push item %s into scoredset for unit %s", it.ID, sto.Name())

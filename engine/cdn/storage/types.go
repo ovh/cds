@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/sha1"
 	"encoding/hex"
+	"github.com/ovh/cds/engine/cache"
 	"io"
 	"math"
 	"reflect"
@@ -191,6 +192,7 @@ type LocalBufferConfiguration struct {
 type RunningStorageUnits struct {
 	m        *gorpmapper.Mapper
 	db       *gorp.DbMap
+	cache    cache.Store
 	config   Configuration
 	Buffers  []BufferUnit
 	Storages []StorageUnit

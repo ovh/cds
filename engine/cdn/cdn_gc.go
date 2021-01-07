@@ -182,7 +182,7 @@ func (s *Service) cleanWaitingItem(ctx context.Context, duration int) error {
 			return err
 		}
 		for _, sto := range s.Units.Storages {
-			if err := s.Cache.ScoredSetAdd(ctx, cache.Key(storage.KeyBackendSync, sto.Name()), itemUnit.ItemID, float64(time.Now().UnixNano())); err != nil {
+			if err := s.Cache.ScoredSetAdd(ctx, cache.Key(storage.KeyBackendSync, sto.Name()), itemUnit.ItemID, float64(itemUnit.Item.Created.Unix())); err != nil {
 				log.InfoWithFields(ctx, log.Fields{
 					"item_apiref": itemUnit.Item.APIRefHash,
 				}, "cleanWaitingItem> cannot push item %s into scoredset for unit %s", itemUnit.ItemID, sto.Name())

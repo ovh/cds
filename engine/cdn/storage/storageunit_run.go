@@ -18,9 +18,9 @@ var (
 	KeyBackendSync = "cdn:backend:sync"
 )
 
-func (x *RunningStorageUnits) FillSyncItemChannel(ctx context.Context, store cache.Store, s StorageUnit, nbItem int64) error {
+func (x *RunningStorageUnits) FillSyncItemChannel(ctx context.Context, s StorageUnit, nbItem int64) error {
 	var itemIDs []string
-	if err := store.ScoredSetRevRange(ctx, cache.Key(KeyBackendSync, s.Name()), 0, nbItem, &itemIDs); err != nil {
+	if err := x.cache.ScoredSetRevRange(ctx, cache.Key(KeyBackendSync, s.Name()), 0, nbItem, &itemIDs); err != nil {
 		return err
 	}
 	log.Info(ctx, "FillSyncItemChannel> Item to sync for %s: %d", s.Name(), len(itemIDs))
@@ -35,24 +35,42 @@ func (x *RunningStorageUnits) FillSyncItemChannel(ctx context.Context, store cac
 	return nil
 }
 
-func (x *RunningStorageUnits) Run(ctx context.Context, s StorageUnit, syncMinNbItems, nbItem int64) error {
-	if _, err := LoadUnitByID(ctx, x.m, x.db, s.ID()); err != nil {
-		return err
-	}
-
-	// Load items to sync
-	itemIDs, err := LoadAllItemIDUnknownByUnit(x.db, s.ID(), syncMinNbItems, nbItem)
+func (x *RunningStorageUnits) FillWithUnknownItems(ctx context.Context, s StorageUnit, maxItemByLoop int64) error {
+	lockKey := cache.Key("cdn", "backend", "lock", "sync")
+	b, err := x.cache.Lock(lockKey, 10*time.Minute, 0, 1)
 	if err != nil {
 		return err
 	}
-
-	for _, id := range itemIDs {
-		select {
-		case s.SyncItemChannel() <- id:
-			log.Debug("unit %s should sync item %s", s.Name(), id)
-		default:
-			continue
+	if !b {
+		return nil
+	}
+	defer func() {
+		if err := x.cache.Unlock(lockKey); err != nil {
+			log.Error(ctx, "unable to release lock %s", lockKey)
 		}
+	}()
+
+	log.Info(ctx, "Getting lock for backend %s sync", s.Name())
+
+	offset := int64(0)
+	for {
+		itemsToSync, err := LoadAllItemIDUnknownByUnit(x.db, s.ID(), offset, maxItemByLoop)
+		if err != nil {
+			return err
+		}
+		k := cache.Key(KeyBackendSync, s.Name())
+		for _, item := range itemsToSync {
+			if err := x.cache.ScoredSetAdd(ctx, k, item.ItemID, float64(item.Created.Unix())); err != nil {
+				log.ErrorWithFields(ctx, log.Fields{
+					"item_id": item.ItemID,
+				}, "FillWithUnknownItems> unable to push item %s into %s", item.ItemID, k)
+				continue
+			}
+		}
+		if int64(len(itemsToSync)) < maxItemByLoop {
+			break
+		}
+		offset += int64(len(itemsToSync))
 	}
 	return nil
 }

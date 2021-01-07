@@ -155,12 +155,12 @@ func (s *Service) Serve(c context.Context) error {
 		}
 
 		// Init storage units
-		s.Units, err = storage.Init(ctx, s.Mapper, s.mustDBWithCtx(ctx), s.GoRoutines, s.Cfg.Units)
+		s.Units, err = storage.Init(ctx, s.Mapper, s.Cache, s.mustDBWithCtx(ctx), s.GoRoutines, s.Cfg.Units)
 		if err != nil {
 			return err
 		}
 
-		s.Units.Start(ctx, s.GoRoutines, s.Cache)
+		s.Units.Start(ctx, s.GoRoutines)
 
 		s.GoRoutines.Run(ctx, "service.cdn-gc-items", func(ctx context.Context) {
 			s.itemsGC(ctx)

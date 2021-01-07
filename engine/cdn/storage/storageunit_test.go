@@ -39,7 +39,7 @@ func TestRun(t *testing.T) {
 	tmpDir2, err := ioutil.TempDir("", t.Name()+"-cdn-2-*")
 	require.NoError(t, err)
 
-	cdnUnits, err := storage.Init(ctx, m, db.DbMap, sdk.NewGoRoutines(), storage.Configuration{
+	cdnUnits, err := storage.Init(ctx, m, cache, db.DbMap, sdk.NewGoRoutines(), storage.Configuration{
 		SyncSeconds:     10,
 		HashLocatorSalt: "thisismysalt",
 		Buffers: []storage.BufferConfiguration{
@@ -82,7 +82,7 @@ func TestRun(t *testing.T) {
 	})
 	require.NoError(t, err)
 	require.NotNil(t, cdnUnits)
-	cdnUnits.Start(ctx, sdk.NewGoRoutines(), cache)
+	cdnUnits.Start(ctx, sdk.NewGoRoutines())
 
 	units, err := storage.LoadAllUnits(ctx, m, db.DbMap)
 	require.NoError(t, err)
@@ -151,9 +151,12 @@ func TestRun(t *testing.T) {
 	require.NoError(t, err)
 	require.False(t, exists)
 
-	require.NoError(t, cdnUnits.Run(ctx, cdnUnits.Storages[0], 0, 1000))
-	time.Sleep(250 * time.Millisecond)
-	require.NoError(t, cdnUnits.Run(ctx, cdnUnits.Storages[1], 0, 1000))
+	require.NoError(t, cdnUnits.FillWithUnknownItems(ctx, cdnUnits.Storages[0], 100))
+	require.NoError(t, cdnUnits.FillSyncItemChannel(ctx, cdnUnits.Storages[0], 100))
+	time.Sleep(1 * time.Second)
+	require.NoError(t, cdnUnits.FillWithUnknownItems(ctx, cdnUnits.Storages[1], 100))
+	require.NoError(t, cdnUnits.FillSyncItemChannel(ctx, cdnUnits.Storages[1], 100))
+	time.Sleep(1 * time.Second)
 
 	<-ctx.Done()
 
