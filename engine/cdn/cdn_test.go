@@ -128,7 +128,8 @@ func newRunningStorageUnits(t *testing.T, m *gorpmapper.Mapper, dbMap *gorp.DbMa
 		},
 		Storages: []storage.StorageConfiguration{
 			{
-				Name: "local_storage",
+				Name:         "local_storage",
+				SyncParallel: 10,
 				Local: &storage.LocalStorageConfiguration{
 					Path: tmpDir,
 				},

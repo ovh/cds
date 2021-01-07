@@ -37,6 +37,7 @@ func TestGetItemsAllLogsLinesHandler(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.TODO(), 5*time.Second)
 	t.Cleanup(cancel)
 
+	cdntest.ClearItem(t, ctx, s.Mapper, db)
 	cdntest.ClearSyncRedisSet(t, s.Cache, "local_storage")
 
 	s.Units = newRunningStorageUnits(t, s.Mapper, db.DbMap, ctx, s.Cache)
@@ -282,7 +283,6 @@ func TestGetItemLogsLinesHandler(t *testing.T) {
 	require.Equal(t, int64(0), lines[0].Number)
 	require.Equal(t, "[EMERGENCY] this is a message\n", lines[0].Value)
 
-	time.Sleep(1 * time.Second)
 }
 
 func TestGetItemLogsStreamHandler(t *testing.T) {
