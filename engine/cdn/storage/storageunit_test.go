@@ -30,6 +30,8 @@ func TestRun(t *testing.T) {
 	cfg := commontest.LoadTestingConf(t, sdk.TypeCDN)
 
 	cdntest.ClearItem(t, context.TODO(), m, db)
+	cdntest.ClearSyncRedisSet(t, cache, "local_storage")
+	cdntest.ClearSyncRedisSet(t, cache, "local_storage_2")
 
 	ctx, cancel := context.WithTimeout(context.TODO(), 3*time.Second)
 	t.Cleanup(cancel)
@@ -41,6 +43,7 @@ func TestRun(t *testing.T) {
 
 	cdnUnits, err := storage.Init(ctx, m, cache, db.DbMap, sdk.NewGoRoutines(), storage.Configuration{
 		SyncSeconds:     10,
+		SyncNbElements:  100,
 		HashLocatorSalt: "thisismysalt",
 		Buffers: []storage.BufferConfiguration{
 			{

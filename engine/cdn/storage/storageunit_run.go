@@ -36,7 +36,7 @@ func (x *RunningStorageUnits) FillSyncItemChannel(ctx context.Context, s Storage
 }
 
 func (x *RunningStorageUnits) FillWithUnknownItems(ctx context.Context, s StorageUnit, maxItemByLoop int64) error {
-	lockKey := cache.Key("cdn", "backend", "lock", "sync")
+	lockKey := cache.Key("cdn", "backend", "lock", "sync", s.Name())
 	b, err := x.cache.Lock(lockKey, 10*time.Minute, 0, 1)
 	if err != nil {
 		return err

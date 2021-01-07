@@ -238,6 +238,16 @@ func (r *RunningStorageUnits) Start(ctx context.Context, gorts *sdk.GoRoutines) 
 			gorts.Run(ctx, fmt.Sprintf("RunningStorageUnits.process.%s.%d", s.Name(), x),
 				func(ctx context.Context) {
 					for id := range s.SyncItemChannel() {
+						for {
+							lockKey := cache.Key("cdn", "backend", "lock", "sync", s.Name())
+							if b, err := r.cache.Exist(lockKey); err != nil || b {
+								log.Info(ctx, "RunningStorageUnits.Start.%s > waiting for processItem %s: %v", s.Name(), id, err)
+								time.Sleep(30 * time.Second)
+								continue
+							}
+							break
+						}
+
 						t0 := time.Now()
 						tx, err := r.db.Begin()
 						if err != nil {
