@@ -50,7 +50,7 @@ func (x *RunningStorageUnits) FillWithUnknownItems(ctx context.Context, s Storag
 		}
 	}()
 
-	log.Info(ctx, "Getting lock for backend %s sync", s.Name())
+	log.Info(ctx, "FillWithUnknownItems> Getting lock for backend %s sync", s.Name())
 
 	offset := int64(0)
 	for {
@@ -58,6 +58,7 @@ func (x *RunningStorageUnits) FillWithUnknownItems(ctx context.Context, s Storag
 		if err != nil {
 			return err
 		}
+		log.Info(ctx, "FillWithUnknownItems> Get %d items", len(itemsToSync))
 		k := cache.Key(KeyBackendSync, s.Name())
 		for _, item := range itemsToSync {
 			if err := x.cache.ScoredSetAdd(ctx, k, item.ItemID, float64(item.Created.Unix())); err != nil {
