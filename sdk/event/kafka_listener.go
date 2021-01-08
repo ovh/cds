@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strings"
 
 	"github.com/Shopify/sarama"
 
@@ -30,7 +31,7 @@ func ConsumeKafka(ctx context.Context, kafkaVersion, addr, topic, group, user, p
 		config.Version = sarama.V0_10_2_0
 	}
 
-	consumerGroup, err := sarama.NewConsumerGroup([]string{addr}, group, config)
+	consumerGroup, err := sarama.NewConsumerGroup(strings.Split(addr, ","), group, config)
 	if err != nil {
 		return fmt.Errorf("Error creating consumer: %s", err)
 	}
