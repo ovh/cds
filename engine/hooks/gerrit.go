@@ -283,7 +283,7 @@ func ListenGerritStreamEvent(ctx context.Context, store cache.Store, goRoutines 
 
 	stdoutreader := bufio.NewReader(r)
 
-	goRoutines.Exec(ctx, "gerrit-ssh-run", func(ctx context.Context) {
+	goRoutines.Run(ctx, "gerrit-ssh-run", func(ctx context.Context) {
 		// Run command
 		log.Debug("Listening to gerrit event stream %s", v.URL)
 		if err := session.Run("gerrit stream-events"); err != nil {
