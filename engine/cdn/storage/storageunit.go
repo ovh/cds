@@ -238,6 +238,7 @@ func (r *RunningStorageUnits) Start(ctx context.Context, gorts *sdk.GoRoutines) 
 			gorts.Run(ctx, fmt.Sprintf("RunningStorageUnits.process.%s.%d", s.Name(), x),
 				func(ctx context.Context) {
 					for id := range s.SyncItemChannel() {
+						log.Debug("processItem: %s", id)
 						for {
 							lockKey := cache.Key("cdn", "backend", "lock", "sync", s.Name())
 							if b, err := r.cache.Exist(lockKey); err != nil || b {
@@ -247,7 +248,6 @@ func (r *RunningStorageUnits) Start(ctx context.Context, gorts *sdk.GoRoutines) 
 							}
 							break
 						}
-
 						t0 := time.Now()
 						tx, err := r.db.Begin()
 						if err != nil {
@@ -257,11 +257,13 @@ func (r *RunningStorageUnits) Start(ctx context.Context, gorts *sdk.GoRoutines) 
 						}
 
 						if err := r.processItem(ctx, tx, s, id); err != nil {
-							t1 := time.Now()
-							log.ErrorWithFields(ctx, log.Fields{
-								"stack_trace":               fmt.Sprintf("%+v", err),
-								"duration_milliseconds_num": t1.Sub(t0).Milliseconds(),
-							}, "error processing item id=%q: %v", id, err)
+							if !sdk.ErrorIs(err, sdk.ErrNotFound) {
+								t1 := time.Now()
+								log.ErrorWithFields(ctx, log.Fields{
+									"stack_trace":               fmt.Sprintf("%+v", err),
+									"duration_milliseconds_num": t1.Sub(t0).Milliseconds(),
+								}, "error processing item id=%q: %v", id, err)
+							}
 							_ = tx.Rollback()
 							continue
 						}

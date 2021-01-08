@@ -79,10 +79,7 @@ func (x *RunningStorageUnits) FillWithUnknownItems(ctx context.Context, s Storag
 func (x *RunningStorageUnits) processItem(ctx context.Context, tx gorpmapper.SqlExecutorWithTx, s StorageUnit, id string) error {
 	it, err := item.LoadAndLockByID(ctx, x.m, tx, id, gorpmapper.GetOptions.WithDecryption)
 	if err != nil {
-		if !sdk.ErrorIs(err, sdk.ErrNotFound) {
-			return err
-		}
-		return nil
+		return err
 	}
 
 	log.InfoWithFields(ctx, log.Fields{
