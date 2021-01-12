@@ -19,20 +19,15 @@ import (
 
 type AbstractLocal struct {
 	storage.AbstractUnit
-	size int64
-	path string
+	size     int64
+	path     string
+	isBuffer bool
 }
 
 type Local struct {
 	AbstractLocal
 	config storage.LocalStorageConfiguration
 	encryption.ConvergentEncryption
-}
-
-type Buffer struct {
-	AbstractLocal
-	config storage.LocalBufferConfiguration
-	encryption.NoConvergentEncryption
 }
 
 func init() {
@@ -59,33 +54,18 @@ func (s *Local) Init(ctx context.Context, cfg interface{}) error {
 	return nil
 }
 
-func (b Buffer) Init(ctx context.Context, cfg interface{}) error {
-	config, is := cfg.(*storage.LocalBufferConfiguration)
-	if !is {
-		return sdk.WithStack(fmt.Errorf("invalid configuration: %T", cfg))
-	}
-	b.path = b.config.Path
-	b.config = *config
-	b.NoConvergentEncryption = encryption.NewNoConvergentEncryption(config.Encryption)
-
-	if err := os.MkdirAll(b.config.Path, os.FileMode(0700)); err != nil {
-		return sdk.WithStack(err)
-	}
-
-	b.GoRoutines.Run(ctx, "cdn-local-compute-size", func(ctx context.Context) {
-		b.computeSize(ctx)
-	})
-
-	return nil
-
-}
-
 func (s *AbstractLocal) filename(i sdk.CDNItemUnit) (string, error) {
-	loc := i.Locator
-	if err := os.MkdirAll(filepath.Join(s.path, loc[:3]), os.FileMode(0700)); err != nil {
+	if !s.isBuffer {
+		loc := i.Locator
+		if err := os.MkdirAll(filepath.Join(s.path, loc[:3]), os.FileMode(0700)); err != nil {
+			return "", sdk.WithStack(err)
+		}
+		return filepath.Join(s.path, loc[:3], loc), nil
+	}
+	if err := os.MkdirAll(filepath.Join(s.path, string(i.Type)), os.FileMode(0700)); err != nil {
 		return "", sdk.WithStack(err)
 	}
-	return filepath.Join(s.path, loc[:3], loc), nil
+	return filepath.Join(s.path, string(i.Type), i.Item.APIRefHash), nil
 }
 
 func (s *AbstractLocal) ItemExists(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlExecutor, i sdk.CDNItem) (bool, error) {

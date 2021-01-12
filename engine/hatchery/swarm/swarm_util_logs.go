@@ -12,6 +12,7 @@ import (
 	"github.com/sirupsen/logrus"
 
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/cdn"
 	"github.com/ovh/cds/sdk/hatchery"
 	"github.com/ovh/cds/sdk/log"
 )
@@ -65,8 +66,8 @@ func (h *HatcherySwarm) getServicesLogs() error {
 
 				commonMessage := log.Message{
 					Level: logrus.InfoLevel,
-					Signature: log.Signature{
-						Service: &log.SignatureService{
+					Signature: cdn.Signature{
+						Service: &cdn.SignatureService{
 							HatcheryID:      h.Service().ID,
 							HatcheryName:    h.ServiceName(),
 							RequirementID:   jobIdentifiers.ServiceID,

@@ -11,6 +11,7 @@ import (
 
 	"github.com/sirupsen/logrus"
 
+	"github.com/ovh/cds/sdk/cdn"
 	"github.com/ovh/cds/sdk/log/hook"
 )
 
@@ -284,40 +285,11 @@ func newEntry(ctx context.Context, fields Fields) *logrus.Entry {
 type Message struct {
 	Value     string
 	Level     logrus.Level
-	Signature Signature
+	Signature cdn.Signature
 }
 
 func (m Message) ServiceKey() string {
 	return fmt.Sprintf("%d-%d", m.Signature.NodeRunID, m.Signature.Service.RequirementID)
-}
-
-type Signature struct {
-	Worker       *SignatureWorker
-	Service      *SignatureService
-	JobName      string
-	JobID        int64
-	ProjectKey   string
-	WorkflowName string
-	WorkflowID   int64
-	RunID        int64
-	NodeRunName  string
-	NodeRunID    int64
-	Timestamp    int64
-}
-
-type SignatureWorker struct {
-	WorkerID   string
-	WorkerName string
-	StepOrder  int64
-	StepName   string
-}
-
-type SignatureService struct {
-	HatcheryID      int64
-	HatcheryName    string
-	RequirementID   int64
-	RequirementName string
-	WorkerName      string
 }
 
 func New(ctx context.Context, graylogcfg *hook.Config) (*logrus.Logger, *hook.Hook, error) {

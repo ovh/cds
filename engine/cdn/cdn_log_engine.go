@@ -187,7 +187,7 @@ func (s *Service) canDequeue(ctx context.Context, jobID string) (string, error) 
 // Check if storage on CDN is enabled
 func (s *Service) cdnEnabled(ctx context.Context, projectKey string) bool {
 	cacheKey := fmt.Sprintf("cdn-job-logs-enabled-project-%s", projectKey)
-	enabled, has := logCache.Get(cacheKey)
+	enabled, has := runCache.Get(cacheKey)
 	if !has {
 		m := make(map[string]string, 1)
 		m["project_key"] = projectKey
@@ -196,7 +196,7 @@ func (s *Service) cdnEnabled(ctx context.Context, projectKey string) bool {
 			log.Error(ctx, "unable to get job logs feature for project %s: %v", projectKey, err)
 			return false
 		}
-		logCache.Set(cacheKey, resp.Enabled, gocache.DefaultExpiration)
+		runCache.Set(cacheKey, resp.Enabled, gocache.DefaultExpiration)
 		return resp.Enabled
 	}
 	return enabled.(bool)

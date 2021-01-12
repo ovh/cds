@@ -9,6 +9,8 @@ import (
 	"time"
 
 	"github.com/mitchellh/hashstructure"
+
+	"github.com/ovh/cds/sdk/cdn"
 )
 
 type CDNItem struct {
@@ -81,12 +83,42 @@ type CDNLogAPIRef struct {
 	NodeRunJobName string `json:"node_run_job_name"`
 
 	// for workers
-	StepOrder int64  `json:"step_order"`
-	StepName  string `json:"step_name,omitempty"`
+	StepOrder    int64   `json:"step_order"`
+	StepName     string  `json:"step_name,omitempty"`
+	ArtifactName *string `json:"artifact_name,omitempty"`
 
 	// for hatcheries
 	RequirementServiceID   int64  `json:"service_id,omitempty"`
 	RequirementServiceName string `json:"service_name,omitempty"`
+}
+
+func NewCDNApiRef(t CDNItemType, signature cdn.Signature) CDNLogAPIRef {
+	// Build cds api ref
+	apiRef := CDNLogAPIRef{
+		ProjectKey:     signature.ProjectKey,
+		WorkflowName:   signature.WorkflowName,
+		WorkflowID:     signature.WorkflowID,
+		RunID:          signature.RunID,
+		NodeRunJobName: signature.JobName,
+		NodeRunJobID:   signature.JobID,
+	}
+	if signature.Worker != nil {
+		apiRef.StepName = signature.Worker.StepName
+		apiRef.StepOrder = signature.Worker.StepOrder
+	}
+	if signature.Service != nil {
+		apiRef.RequirementServiceID = signature.Service.RequirementID
+		apiRef.RequirementServiceName = signature.Service.RequirementName
+	}
+
+	switch t {
+	case CDNTypeItemStepLog, CDNTypeItemServiceLog:
+		apiRef.NodeRunName = signature.NodeRunName
+		apiRef.NodeRunID = signature.NodeRunID
+	case CDNTypeItemArtifact:
+		apiRef.ArtifactName = &signature.Worker.ArtifactName
+	}
+	return apiRef
 }
 
 type CDNItemResume struct {
@@ -144,7 +176,7 @@ type CDNItemType string
 
 func (t CDNItemType) Validate() error {
 	switch t {
-	case CDNTypeItemStepLog, CDNTypeItemServiceLog:
+	case CDNTypeItemStepLog, CDNTypeItemServiceLog, CDNTypeItemArtifact:
 		return nil
 	}
 	return NewErrorFrom(ErrWrongRequest, "invalid item type")
@@ -161,6 +193,7 @@ func (t CDNItemType) IsLog() bool {
 const (
 	CDNTypeItemStepLog     CDNItemType = "step-log"
 	CDNTypeItemServiceLog  CDNItemType = "service-log"
+	CDNTypeItemArtifact    CDNItemType = "artifact"
 	CDNStatusItemIncoming              = "Incoming"
 	CDNStatusItemCompleted             = "Completed"
 )

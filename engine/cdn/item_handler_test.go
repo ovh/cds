@@ -20,8 +20,8 @@ import (
 	cdntest "github.com/ovh/cds/engine/cdn/test"
 	"github.com/ovh/cds/engine/test"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/cdn"
 	"github.com/ovh/cds/sdk/cdsclient"
-	"github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk/log/hook"
 )
 
@@ -117,7 +117,7 @@ func TestGetItemLogsDownloadHandler(t *testing.T) {
 			Full: "this is a message",
 		},
 		IsTerminated: sdk.StatusTerminated,
-		Signature: log.Signature{
+		Signature: cdn.Signature{
 			ProjectKey:   projectKey,
 			WorkflowID:   1,
 			WorkflowName: "MyWorkflow",
@@ -126,7 +126,7 @@ func TestGetItemLogsDownloadHandler(t *testing.T) {
 			NodeRunName:  "MyPipeline",
 			JobName:      "MyJob",
 			JobID:        1,
-			Worker: &log.SignatureWorker{
+			Worker: &cdn.SignatureWorker{
 				StepName:  "script1",
 				StepOrder: 1,
 			},

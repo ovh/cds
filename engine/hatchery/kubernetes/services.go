@@ -2,6 +2,7 @@ package kubernetes
 
 import (
 	"context"
+	"github.com/ovh/cds/sdk/cdn"
 	"strconv"
 	"strings"
 	"time"
@@ -57,8 +58,8 @@ func (h *HatcheryKubernetes) getServicesLogs(ctx context.Context) error {
 
 			commonMessage := log.Message{
 				Level: logrus.InfoLevel,
-				Signature: log.Signature{
-					Service: &log.SignatureService{
+				Signature: cdn.Signature{
+					Service: &cdn.SignatureService{
 						HatcheryID:      h.Service().ID,
 						HatcheryName:    h.ServiceName(),
 						RequirementID:   reqServiceID,

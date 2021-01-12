@@ -43,9 +43,13 @@ func Init(ctx context.Context, m *gorpmapper.Mapper, db *gorp.DbMap, gorts *sdk.
 	}
 
 	countLogBuffer := 0
+	countFileBuffer := 0
 	for _, bu := range config.Buffers {
-		if bu.BufferType == CDNBufferTypeLog {
+		switch bu.BufferType {
+		case CDNBufferTypeLog:
 			countLogBuffer++
+		case CDNBufferTypeFile:
+			countFileBuffer++
 		}
 		if bu.Name == "" {
 			return nil, fmt.Errorf("invalid CDN configuration. Missing buffer name")
@@ -53,6 +57,9 @@ func Init(ctx context.Context, m *gorpmapper.Mapper, db *gorp.DbMap, gorts *sdk.
 	}
 	if countLogBuffer == 0 || countLogBuffer > 1 {
 		return nil, fmt.Errorf("missing or too much CDN Buffer for log items")
+	}
+	if countFileBuffer > 1 {
+		return nil, fmt.Errorf("too much CDN Buffer for file items")
 	}
 
 	if len(config.Storages) == 0 {
@@ -86,6 +93,20 @@ func Init(ctx context.Context, m *gorpmapper.Mapper, db *gorp.DbMap, gorts *sdk.
 			}
 			bd.New(gorts, 1, math.MaxFloat64)
 			if err := bd.Init(ctx, bu.Redis, bu.BufferType); err != nil {
+				return nil, err
+			}
+			bufferUnit = bd
+		case bu.Local != nil:
+			d := GetDriver("local-buffer")
+			if d == nil {
+				return nil, fmt.Errorf("local driver is not available")
+			}
+			bd, is := d.(BufferUnit)
+			if !is {
+				return nil, fmt.Errorf("local driver is not a buffer unit driver")
+			}
+			bd.New(gorts, 1, math.MaxFloat64)
+			if err := bd.Init(ctx, bu.Local, bu.BufferType); err != nil {
 				return nil, err
 			}
 			bufferUnit = bd

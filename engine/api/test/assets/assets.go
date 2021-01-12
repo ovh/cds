@@ -335,6 +335,51 @@ func GetBuiltinOrPluginActionByName(t *testing.T, db gorp.SqlExecutor, name stri
 	return a
 }
 
+func NewMultipartRequest(t *testing.T, method, uri string, path string, partName, fileName string, params map[string]string, additionalHeaders map[string]string) *http.Request {
+	file, err := os.Open(path)
+	if err != nil {
+		t.Fail()
+	}
+	defer file.Close()
+	body := &bytes.Buffer{}
+	writer := multipart.NewWriter(body)
+	part, err := writer.CreateFormFile(partName, filepath.Base(path))
+	if err != nil {
+		t.Fail()
+	}
+	if _, err := io.Copy(part, file); err != nil {
+		t.Fail()
+	}
+
+	for key, val := range params {
+		_ = writer.WriteField(key, val)
+	}
+
+	contextType := writer.FormDataContentType()
+
+	if err := writer.Close(); err != nil {
+		t.Fail()
+	}
+
+	req, err := http.NewRequest(method, uri, body)
+	if err != nil {
+		t.Fail()
+	}
+	req.Header.Set("Content-Type", contextType)
+	req.Header.Set("Content-Disposition", fmt.Sprintf("attachment; filename=\"%s\"", fileName))
+	req.Header.Set("ARTIFACT-FILENAME", fileName)
+
+	for k, v := range additionalHeaders {
+		req.Header.Set(k, v)
+	}
+
+	date := sdk.FormatDateRFC5322(time.Now())
+	req.Header.Set("Date", date)
+	req.Header.Set("X-CDS-RemoteTime", date)
+
+	return req
+}
+
 func NewJWTAuthentifiedMultipartRequest(t *testing.T, jwt string, method, uri string, path string, fileName string, params map[string]string) *http.Request {
 	file, err := os.Open(path)
 	if err != nil {

@@ -15,6 +15,7 @@ import (
 	"github.com/ovh/cds/engine/cdn/item"
 	"github.com/ovh/cds/engine/cdn/storage"
 	cdntest "github.com/ovh/cds/engine/cdn/test"
+	"github.com/ovh/cds/sdk/cdn"
 	"github.com/ovh/cds/sdk/log/hook"
 
 	gocache "github.com/patrickmn/go-cache"
@@ -42,7 +43,7 @@ func TestWorkerLogCDNEnabled(t *testing.T) {
 	defer store.Delete(jobQueueKey)
 	heatbeatKey := cache.Key(keyJobHearbeat, "1")
 	defer store.Delete(heatbeatKey)
-	defer logCache.Flush()
+	defer runCache.Flush()
 
 	// Create worker private key
 	key, err := jws.NewRandomSymmetricKey(32)
@@ -87,8 +88,8 @@ func TestWorkerLogCDNEnabled(t *testing.T) {
 	s.Cfg.Log.StepMaxSize = 1000
 	s.GoRoutines = sdk.NewGoRoutines()
 
-	signature := log.Signature{
-		Worker: &log.SignatureWorker{
+	signature := cdn.Signature{
+		Worker: &cdn.SignatureWorker{
 			WorkerID:   "abcdef-123456",
 			StepOrder:  0,
 			WorkerName: "myworker",
@@ -98,7 +99,7 @@ func TestWorkerLogCDNEnabled(t *testing.T) {
 		NodeRunID:  1,
 		Timestamp:  time.Now().UnixNano(),
 	}
-	logCache.Set(fmt.Sprintf("worker-%s", signature.Worker.WorkerName), sdk.Worker{
+	runCache.Set(fmt.Sprintf("worker-%s", signature.Worker.WorkerName), sdk.Worker{
 		Name:       signature.Worker.WorkerName,
 		ID:         signature.Worker.WorkerID,
 		PrivateKey: key,
@@ -140,7 +141,7 @@ func TestWorkerLogCDNEnabled(t *testing.T) {
 	}
 
 	// Check that service log is disabled
-	featureEnabled, has := logCache.Get("cdn-job-logs-enabled-project-PKEY")
+	featureEnabled, has := runCache.Get("cdn-job-logs-enabled-project-PKEY")
 	require.True(t, has)
 	require.True(t, featureEnabled.(bool))
 }
@@ -157,7 +158,7 @@ func TestServiceLogCDNDisabled(t *testing.T) {
 	defer store.Delete(serviceQueueKey)
 	heatbeatKey := cache.Key(keyJobHearbeat, "1")
 	defer store.Delete(heatbeatKey)
-	defer logCache.Flush()
+	defer runCache.Flush()
 
 	// Create hatchery private key
 	key, err := jws.NewRandomRSAKey()
@@ -201,8 +202,8 @@ func TestServiceLogCDNDisabled(t *testing.T) {
 	require.NoError(t, err)
 	s.Units = cdnUnits
 
-	signature := log.Signature{
-		Service: &log.SignatureService{
+	signature := cdn.Signature{
+		Service: &cdn.SignatureService{
 			WorkerName:      "my-worker-name",
 			HatcheryID:      1,
 			HatcheryName:    "my-hatchery-name",
@@ -224,8 +225,8 @@ func TestServiceLogCDNDisabled(t *testing.T) {
 		JobRunID:   &signature.JobID,
 	}
 
-	logCache.Set(fmt.Sprintf("hatchery-key-%d", signature.Service.HatcheryID), &key.PublicKey, gocache.DefaultExpiration)
-	logCache.Set(fmt.Sprintf("worker-%s", signature.Service.WorkerName), w, gocache.DefaultExpiration)
+	runCache.Set(fmt.Sprintf("hatchery-key-%d", signature.Service.HatcheryID), &key.PublicKey, gocache.DefaultExpiration)
+	runCache.Set(fmt.Sprintf("worker-%s", signature.Service.WorkerName), w, gocache.DefaultExpiration)
 
 	signatureField, err := jws.Sign(sign, signature)
 	require.NoError(t, err)
@@ -264,7 +265,7 @@ func TestServiceLogCDNDisabled(t *testing.T) {
 	}
 
 	// Check that service log is disabled
-	featureEnabled, has := logCache.Get("cdn-job-logs-enabled-project-PKEY")
+	featureEnabled, has := runCache.Get("cdn-job-logs-enabled-project-PKEY")
 	require.True(t, has)
 	require.False(t, featureEnabled.(bool))
 }
@@ -299,7 +300,7 @@ func TestStoreTruncatedLogs(t *testing.T) {
 			Full: "Bim bam boum",
 		},
 		IsTerminated: false,
-		Signature: log.Signature{
+		Signature: cdn.Signature{
 			ProjectKey:   sdk.RandomString(10),
 			WorkflowID:   1,
 			WorkflowName: "MyWorklow",
@@ -308,7 +309,7 @@ func TestStoreTruncatedLogs(t *testing.T) {
 			NodeRunName:  "MyPipeline",
 			JobName:      "MyJob",
 			JobID:        1,
-			Worker: &log.SignatureWorker{
+			Worker: &cdn.SignatureWorker{
 				StepName:  "script1",
 				StepOrder: 1,
 			},

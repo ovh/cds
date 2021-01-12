@@ -95,13 +95,22 @@ type BufferUnit interface {
 	Interface
 	Unit
 	Init(ctx context.Context, cfg interface{}, bufferType CDNBufferType) error
+	Size(i sdk.CDNItemUnit) (int64, error)
+	Read(i sdk.CDNItemUnit, r io.Reader, w io.Writer) error
+	BufferType() CDNBufferType
+}
+
+type LogBufferUnit interface {
+	BufferUnit
 	Add(i sdk.CDNItemUnit, score uint, value string) error
 	Card(i sdk.CDNItemUnit) (int, error)
-	Size(i sdk.CDNItemUnit) (int64, error)
 	NewAdvancedReader(ctx context.Context, i sdk.CDNItemUnit, format sdk.CDNReaderFormat, from int64, size uint, sort int64) (io.ReadCloser, error)
-	Read(i sdk.CDNItemUnit, r io.Reader, w io.Writer) error
 	Keys() ([]string, error)
-	IsLogsBuffer() bool
+}
+
+type FileBufferUnit interface {
+	BufferUnit
+	NewWriter(ctx context.Context, i sdk.CDNItemUnit) (io.WriteCloser, error)
 }
 
 type StorageUnit interface {
@@ -131,14 +140,14 @@ type BufferConfiguration struct {
 	Name       string                    `toml:"name" default:"redis" json:"name"`
 	Redis      *RedisBufferConfiguration `toml:"redis" json:"redis" mapstructure:"redis"`
 	Local      *LocalBufferConfiguration `toml:"local" json:"local" mapstructure:"local"`
-	BufferType CDNBufferType             `toml:"bufferType" json:"bufferType" default:"log" comment:"it can be 'log' to receive logs or 'binary' to receive artifacts"`
+	BufferType CDNBufferType             `toml:"bufferType" json:"bufferType" default:"log" comment:"it can be 'log' to receive logs or 'file' to receive artifacts"`
 }
 
 type CDNBufferType string
 
 const (
-	CDNBufferTypeLog    CDNBufferType = "log"
-	CDNBufferTypeBinary CDNBufferType = "binary"
+	CDNBufferTypeLog  CDNBufferType = "log"
+	CDNBufferTypeFile CDNBufferType = "file"
 )
 
 type StorageConfiguration struct {
@@ -187,8 +196,8 @@ type RedisBufferConfiguration struct {
 }
 
 type LocalBufferConfiguration struct {
-	Path       string `toml:"path" json:"path"`
-	Encryption []*keyloader.KeyConfig
+	Path       string                 `toml:"path" json:"path"`
+	Encryption []*keyloader.KeyConfig `toml:"encryption" json:"-" mapstructure:"encryption"`
 }
 
 type RunningStorageUnits struct {
@@ -205,10 +214,19 @@ func (x RunningStorageUnits) HashLocator(loc string) string {
 	return hashLocator
 }
 
-func (x RunningStorageUnits) LogsBuffer() BufferUnit {
+func (x RunningStorageUnits) FileBuffer() FileBufferUnit {
 	for _, u := range x.Buffers {
-		if u.IsLogsBuffer() {
-			return u
+		if u.BufferType() == CDNBufferTypeFile {
+			return u.(FileBufferUnit)
+		}
+	}
+	return nil
+}
+
+func (x RunningStorageUnits) LogsBuffer() LogBufferUnit {
+	for _, u := range x.Buffers {
+		if u.BufferType() == CDNBufferTypeLog {
+			return u.(LogBufferUnit)
 		}
 	}
 	return nil
@@ -216,6 +234,8 @@ func (x RunningStorageUnits) LogsBuffer() BufferUnit {
 
 func (x RunningStorageUnits) GetBuffer(bufferType sdk.CDNItemType) BufferUnit {
 	switch bufferType {
+	case sdk.CDNTypeItemArtifact:
+		return x.FileBuffer()
 	default:
 		return x.LogsBuffer()
 	}

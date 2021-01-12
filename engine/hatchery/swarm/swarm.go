@@ -24,6 +24,7 @@ import (
 	"github.com/ovh/cds/engine/api"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/cdn"
 	"github.com/ovh/cds/sdk/hatchery"
 	"github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk/telemetry"
@@ -751,8 +752,8 @@ func (h *HatcherySwarm) killAwolWorker(ctx context.Context) error {
 			endLog := log.Message{
 				Level: logrus.InfoLevel,
 				Value: string("End of Job"),
-				Signature: log.Signature{
-					Service: &log.SignatureService{
+				Signature: cdn.Signature{
+					Service: &cdn.SignatureService{
 						HatcheryID:      h.Service().ID,
 						HatcheryName:    h.ServiceName(),
 						RequirementID:   jobIdentifiers.ServiceID,

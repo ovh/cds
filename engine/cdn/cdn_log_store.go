@@ -9,6 +9,7 @@ import (
 	"github.com/ovh/cds/engine/cdn/storage"
 	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/cdn"
 	"github.com/ovh/cds/sdk/log"
 )
 
@@ -99,7 +100,7 @@ func (s *Service) sendToBufferWithRetry(ctx context.Context, hms []handledMessag
 	return nil
 }
 
-func (s *Service) storeLogs(ctx context.Context, itemType sdk.CDNItemType, signature log.Signature, terminated bool, content string) error {
+func (s *Service) storeLogs(ctx context.Context, itemType sdk.CDNItemType, signature cdn.Signature, terminated bool, content string) error {
 	it, err := s.loadOrCreateItem(ctx, itemType, signature)
 	if err != nil {
 		return err
@@ -149,27 +150,9 @@ func (s *Service) storeLogs(ctx context.Context, itemType sdk.CDNItemType, signa
 	return nil
 }
 
-func (s *Service) loadOrCreateItem(ctx context.Context, itemType sdk.CDNItemType, signature log.Signature) (*sdk.CDNItem, error) {
+func (s *Service) loadOrCreateItem(ctx context.Context, itemType sdk.CDNItemType, signature cdn.Signature) (*sdk.CDNItem, error) {
 	// Build cds api ref
-	apiRef := sdk.CDNLogAPIRef{
-		ProjectKey:     signature.ProjectKey,
-		WorkflowName:   signature.WorkflowName,
-		WorkflowID:     signature.WorkflowID,
-		RunID:          signature.RunID,
-		NodeRunName:    signature.NodeRunName,
-		NodeRunID:      signature.NodeRunID,
-		NodeRunJobName: signature.JobName,
-		NodeRunJobID:   signature.JobID,
-	}
-	if signature.Worker != nil {
-		apiRef.StepName = signature.Worker.StepName
-		apiRef.StepOrder = signature.Worker.StepOrder
-	}
-	if signature.Service != nil {
-		apiRef.RequirementServiceID = signature.Service.RequirementID
-		apiRef.RequirementServiceName = signature.Service.RequirementName
-	}
-
+	apiRef := sdk.NewCDNApiRef(itemType, signature)
 	hashRef, err := apiRef.ToHash()
 	if err != nil {
 		return nil, err
