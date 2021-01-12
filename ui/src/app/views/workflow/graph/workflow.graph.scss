@@ -1,4 +1,12 @@
 @import '../../../../common';
+
+:host {
+  display: block;
+  overflow: hidden;
+  width: 100%;
+  height: 100%;
+}
+
 .svg-wrapper {
   width: 100%;
   display: block;
