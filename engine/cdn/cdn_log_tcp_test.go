@@ -60,7 +60,7 @@ func TestWorkerLogCDNEnabled(t *testing.T) {
 	}
 	tmpDir, err := ioutil.TempDir("", t.Name()+"-cdn-1-*")
 	require.NoError(t, err)
-	cdnUnits, err := storage.Init(context.TODO(), m, db.DbMap, sdk.NewGoRoutines(), storage.Configuration{
+	cdnUnits, err := storage.Init(context.TODO(), m, store, db.DbMap, sdk.NewGoRoutines(), storage.Configuration{
 		HashLocatorSalt: "thisismysalt",
 		Buffers: []storage.BufferConfiguration{
 			{
@@ -177,7 +177,7 @@ func TestServiceLogCDNDisabled(t *testing.T) {
 	s.GoRoutines = sdk.NewGoRoutines()
 	tmpDir, err := ioutil.TempDir("", t.Name()+"-cdn-1-*")
 	require.NoError(t, err)
-	cdnUnits, err := storage.Init(context.TODO(), m, db.DbMap, sdk.NewGoRoutines(), storage.Configuration{
+	cdnUnits, err := storage.Init(context.TODO(), m, store, db.DbMap, sdk.NewGoRoutines(), storage.Configuration{
 		HashLocatorSalt: "thisismysalt",
 		Buffers: []storage.BufferConfiguration{
 			{
@@ -291,7 +291,7 @@ func TestStoreTruncatedLogs(t *testing.T) {
 
 	ctx, ccl := context.WithCancel(context.TODO())
 	t.Cleanup(ccl)
-	cdnUnits := newRunningStorageUnits(t, m, db.DbMap, ctx)
+	cdnUnits := newRunningStorageUnits(t, m, db.DbMap, ctx, cache)
 	s.Units = cdnUnits
 
 	hm := handledMessage{

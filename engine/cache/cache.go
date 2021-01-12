@@ -82,6 +82,7 @@ type ScoredSetStore interface {
 	ScoredSetScanWithScores(ctx context.Context, key string, from, to float64) ([]SetValueWithScore, error)
 	ScoredSetScanMaxScore(ctx context.Context, key string) (*SetValueWithScore, error)
 	ScoredSetRange(ctx context.Context, key string, from, to int64, dest interface{}) error
+	ScoredSetRevRange(_ context.Context, key string, offset int64, limit int64, dest interface{}) error
 	ScoredSetRem(ctx context.Context, key string, members ...string) error
 	ScoredSetGetScore(key string, member interface{}) (float64, error)
 	SetCard(key string) (int, error)

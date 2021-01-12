@@ -33,6 +33,7 @@ func TestGetItemValue(t *testing.T) {
 	t.Cleanup(cancel)
 
 	cdntest.ClearItem(t, context.TODO(), m, db)
+	cdntest.ClearSyncRedisSet(t, cache, "local_storage")
 
 	// Create cdn service
 	s := Service{
@@ -46,7 +47,7 @@ func TestGetItemValue(t *testing.T) {
 	t.Cleanup(cancel)
 
 	cfg := test.LoadTestingConf(t, sdk.TypeCDN)
-	cdnUnits := newRunningStorageUnits(t, m, s.DBConnectionFactory.GetDBMap(m)(), ctx)
+	cdnUnits := newRunningStorageUnits(t, m, s.DBConnectionFactory.GetDBMap(m)(), ctx, cache)
 	s.Units = cdnUnits
 	var err error
 	s.LogCache, err = lru.NewRedisLRU(db.DbMap, 1000, cfg["redisHost"], cfg["redisPassword"])
@@ -118,7 +119,8 @@ func TestGetItemValue(t *testing.T) {
 	require.Equal(t, 0, n)
 
 	// Sync FS
-	require.NoError(t, cdnUnits.Run(context.TODO(), cdnUnits.Storages[0], 0, 100))
+	require.NoError(t, cdnUnits.FillWithUnknownItems(ctx, cdnUnits.Storages[0], 100))
+	require.NoError(t, cdnUnits.FillSyncItemChannel(ctx, cdnUnits.Storages[0], 100))
 	time.Sleep(1 * time.Second)
 
 	_, err = storage.LoadItemUnitByUnit(context.TODO(), s.Mapper, db, s.Units.Storages[0].ID(), it.ID)
@@ -204,7 +206,7 @@ func TestGetItemValue_ThousandLines(t *testing.T) {
 
 	ctx, cancel := context.WithCancel(context.TODO())
 	t.Cleanup(cancel)
-	cdnUnits := newRunningStorageUnits(t, m, db.DbMap, ctx)
+	cdnUnits := newRunningStorageUnits(t, m, db.DbMap, ctx, cache)
 	s.Units = cdnUnits
 	var err error
 	s.LogCache, err = lru.NewRedisLRU(db.DbMap, 1000, cfg["redisHost"], cfg["redisPassword"])
@@ -311,7 +313,7 @@ func TestGetItemValue_Reverse(t *testing.T) {
 
 	ctx, cancel := context.WithCancel(context.TODO())
 	t.Cleanup(cancel)
-	cdnUnits := newRunningStorageUnits(t, m, db.DbMap, ctx)
+	cdnUnits := newRunningStorageUnits(t, m, db.DbMap, ctx, cache)
 	s.Units = cdnUnits
 	var err error
 	s.LogCache, err = lru.NewRedisLRU(db.DbMap, 1000, cfg["redisHost"], cfg["redisPassword"])
@@ -421,7 +423,7 @@ func TestGetItemValue_ThousandLinesReverse(t *testing.T) {
 
 	ctx, cancel := context.WithCancel(context.TODO())
 	t.Cleanup(cancel)
-	cdnUnits := newRunningStorageUnits(t, m, db.DbMap, ctx)
+	cdnUnits := newRunningStorageUnits(t, m, db.DbMap, ctx, cache)
 	s.Units = cdnUnits
 	var err error
 	s.LogCache, err = lru.NewRedisLRU(db.DbMap, 1000, cfg["redisHost"], cfg["redisPassword"])

@@ -155,7 +155,7 @@ func (s *Service) Serve(c context.Context) error {
 		}
 
 		// Init storage units
-		s.Units, err = storage.Init(ctx, s.Mapper, s.mustDBWithCtx(ctx), s.GoRoutines, s.Cfg.Units)
+		s.Units, err = storage.Init(ctx, s.Mapper, s.Cache, s.mustDBWithCtx(ctx), s.GoRoutines, s.Cfg.Units)
 		if err != nil {
 			return err
 		}

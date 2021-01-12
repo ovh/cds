@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/sha1"
 	"encoding/hex"
+	"github.com/ovh/cds/engine/cache"
 	"io"
 	"math"
 	"reflect"
@@ -118,12 +119,11 @@ type StorageUnitWithLocator interface {
 }
 
 type Configuration struct {
-	HashLocatorSalt   string                 `toml:"hashLocatorSalt" json:"hash_locator_salt" mapstructure:"hashLocatorSalt"`
-	Buffers           []BufferConfiguration  `toml:"buffers" json:"buffers" mapstructure:"buffers"`
-	Storages          []StorageConfiguration `toml:"storages" json:"storages" mapstructure:"storages"`
-	SyncSeconds       int                    `toml:"syncSeconds" default:"30" json:"syncSeconds" comment:"each n seconds, all storage backends will have to start a synchronization with the buffer"`
-	SyncNbElements    int64                  `toml:"syncNbElements" default:"100" json:"syncNbElements" comment:"nb items to synchronize from the buffer"`
-	SyncMinNbElements int64                  `toml:"syncMinNbElements" default:"10" json:"syncMinNbElements" comment:"if nb items to sync > syncMinNbElements, run the sync."`
+	HashLocatorSalt string                 `toml:"hashLocatorSalt" json:"hash_locator_salt" mapstructure:"hashLocatorSalt"`
+	Buffers         []BufferConfiguration  `toml:"buffers" json:"buffers" mapstructure:"buffers"`
+	Storages        []StorageConfiguration `toml:"storages" json:"storages" mapstructure:"storages"`
+	SyncSeconds     int                    `toml:"syncSeconds" default:"30" json:"syncSeconds" comment:"each n seconds, all storage backends will have to start a synchronization with the buffer"`
+	SyncNbElements  int64                  `toml:"syncNbElements" default:"100" json:"syncNbElements" comment:"nb items to synchronize from the buffer"`
 }
 
 type BufferConfiguration struct {
@@ -192,6 +192,7 @@ type LocalBufferConfiguration struct {
 type RunningStorageUnits struct {
 	m        *gorpmapper.Mapper
 	db       *gorp.DbMap
+	cache    cache.Store
 	config   Configuration
 	Buffers  []BufferUnit
 	Storages []StorageUnit

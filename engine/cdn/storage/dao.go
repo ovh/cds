@@ -13,6 +13,11 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
+type ItemToSync struct {
+	ItemID  string    `db:"id"`
+	Created time.Time `db:"created"`
+}
+
 func getUnit(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlExecutor, q gorpmapper.Query) (*sdk.CDNUnit, error) {
 	var u unitDB
 	found, err := m.Get(ctx, db, q, &u)
@@ -304,54 +309,25 @@ func CountItemUnitByUnit(db gorp.SqlExecutor, unitID string) (int64, error) {
 	return db.SelectInt("SELECT COUNT(unit_id) from storage_unit_item WHERE unit_id = $1", unitID)
 }
 
-func LoadAllItemIDUnknownByUnit(db gorp.SqlExecutor, unitID string, syncMinNbElements, maxLimit int64) ([]string, error) {
-	var res []string
+func LoadAllItemIDUnknownByUnit(db gorp.SqlExecutor, unitID string, offset int64, limit int64) ([]ItemToSync, error) {
+	var res []ItemToSync
 
-	countItems, err := CountItemCompleted(db)
-	if err != nil {
-		return res, err
-	}
-	countStorageUnitItems, err := CountItemUnitByUnit(db, unitID)
-	if err != nil {
-		return res, err
-	}
+	query := `
+		WITH inUnit as (
+    		SELECT item_id, unit_id
+    		FROM storage_unit_item
+    		WHERE unit_id = $1
+		)
+		SELECT item.id, item.created
+		FROM item
+		LEFT JOIN inUnit on item.id = inUnit.item_id
+		WHERE inUnit.unit_id is NULL AND item.status = $2 AND item.to_delete = false
+		ORDER BY inUnit.item_id NULLS FIRST,  item.created ASC
+		OFFSET $3
+		LIMIT $4;
+	`
 
-	// Compute the diff to evaluate the count of items to sync for given unit
-	expectedCountItemToSync := countItems - countStorageUnitItems
-	if expectedCountItemToSync <= syncMinNbElements {
-		return res, nil
-	}
-
-	limit := expectedCountItemToSync
-	if expectedCountItemToSync > maxLimit {
-		limit = maxLimit
-	}
-
-	// When diff is greater than limit we also order by unit_id to improve query response time
-	var query string
-	if expectedCountItemToSync > maxLimit {
-		query = `
-      SELECT item.id
-      FROM item
-      LEFT JOIN storage_unit_item sui ON item.id = sui.item_id AND sui.unit_id = $1
-      WHERE item.status = $3 AND sui.unit_id is null
-      AND item.to_delete = false
-      ORDER BY sui.unit_id NULLS FIRST, item.created DESC
-      LIMIT $2
-    `
-	} else {
-		query = `
-      SELECT item.id
-      FROM item
-      LEFT JOIN storage_unit_item sui ON item.id = sui.item_id AND sui.unit_id = $1
-      WHERE item.status = $3 AND sui.unit_id is null
-      AND item.to_delete = false
-      ORDER BY item.created DESC
-      LIMIT $2
-    `
-	}
-
-	if _, err := db.Select(&res, query, unitID, limit, sdk.CDNStatusItemCompleted); err != nil {
+	if _, err := db.Select(&res, query, unitID, sdk.CDNStatusItemCompleted, offset, limit); err != nil {
 		return nil, sdk.WithStack(err)
 	}
 

@@ -5,6 +5,7 @@ import (
 	"context"
 	"crypto/rsa"
 	"encoding/json"
+	"github.com/ovh/cds/engine/cache"
 	"io/ioutil"
 	"net/http"
 	"sync"
@@ -103,7 +104,7 @@ var fakeAPIPrivateKey = struct {
 	key *rsa.PrivateKey
 }{}
 
-func newRunningStorageUnits(t *testing.T, m *gorpmapper.Mapper, dbMap *gorp.DbMap, ctx context.Context) *storage.RunningStorageUnits {
+func newRunningStorageUnits(t *testing.T, m *gorpmapper.Mapper, dbMap *gorp.DbMap, ctx context.Context, store cache.Store) *storage.RunningStorageUnits {
 	cfg := test.LoadTestingConf(t, sdk.TypeCDN)
 	tmpDir, err := ioutil.TempDir("", t.Name()+"-cdn-1-*")
 	require.NoError(t, err)
@@ -111,8 +112,9 @@ func newRunningStorageUnits(t *testing.T, m *gorpmapper.Mapper, dbMap *gorp.DbMa
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	t.Cleanup(cancel)
 
-	cdnUnits, err := storage.Init(ctx, m, dbMap, sdk.NewGoRoutines(), storage.Configuration{
+	cdnUnits, err := storage.Init(ctx, m, store, dbMap, sdk.NewGoRoutines(), storage.Configuration{
 		SyncSeconds:     10,
+		SyncNbElements:  100,
 		HashLocatorSalt: "thisismysalt",
 		Buffers: []storage.BufferConfiguration{
 			{
@@ -126,7 +128,8 @@ func newRunningStorageUnits(t *testing.T, m *gorpmapper.Mapper, dbMap *gorp.DbMa
 		},
 		Storages: []storage.StorageConfiguration{
 			{
-				Name: "local_storage",
+				Name:         "local_storage",
+				SyncParallel: 10,
 				Local: &storage.LocalStorageConfiguration{
 					Path: tmpDir,
 				},

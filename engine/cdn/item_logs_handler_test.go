@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	cdntest "github.com/ovh/cds/engine/cdn/test"
 	"net/http"
 	"net/http/httptest"
 	"strconv"
@@ -33,9 +34,13 @@ func TestGetItemsAllLogsLinesHandler(t *testing.T) {
 	projectKey := sdk.RandomString(10)
 	s, db := newTestService(t)
 
-	ctx, cancel := context.WithCancel(context.TODO())
+	ctx, cancel := context.WithTimeout(context.TODO(), 5*time.Second)
 	t.Cleanup(cancel)
-	s.Units = newRunningStorageUnits(t, s.Mapper, db.DbMap, ctx)
+
+	cdntest.ClearItem(t, ctx, s.Mapper, db)
+	cdntest.ClearSyncRedisSet(t, s.Cache, "local_storage")
+
+	s.Units = newRunningStorageUnits(t, s.Mapper, db.DbMap, ctx, s.Cache)
 
 	// Add step 1
 	hm1 := handledMessage{
@@ -134,7 +139,9 @@ func TestGetItemsAllLogsLinesHandler(t *testing.T) {
 	unit, err := storage.LoadUnitByName(ctx, s.Mapper, s.mustDBWithCtx(ctx), s.Units.Storages[0].Name())
 	require.NoError(t, err)
 
-	require.NoError(t, s.Units.Run(ctx, s.Units.Storages[0], 0, 1000))
+	require.NoError(t, s.Units.FillWithUnknownItems(ctx, s.Units.Storages[0], 1000))
+	require.NoError(t, s.Units.FillSyncItemChannel(ctx, s.Units.Storages[0], 1000))
+	time.Sleep(1 * time.Second)
 
 	cpt := 0
 	for {
@@ -185,7 +192,6 @@ func TestGetItemsAllLogsLinesHandler(t *testing.T) {
 	require.Equal(t, int64(1), logslines[0].LinesCount)
 	require.Equal(t, int64(1), logslines[1].LinesCount)
 	require.Equal(t, int64(2), logslines[2].LinesCount)
-
 }
 
 func TestGetItemLogsLinesHandler(t *testing.T) {
@@ -200,7 +206,7 @@ func TestGetItemLogsLinesHandler(t *testing.T) {
 
 	ctx, cancel := context.WithCancel(context.TODO())
 	t.Cleanup(cancel)
-	s.Units = newRunningStorageUnits(t, s.Mapper, db.DbMap, ctx)
+	s.Units = newRunningStorageUnits(t, s.Mapper, db.DbMap, ctx, s.Cache)
 
 	hm := handledMessage{
 		Msg: hook.Message{
@@ -277,7 +283,6 @@ func TestGetItemLogsLinesHandler(t *testing.T) {
 	require.Equal(t, int64(0), lines[0].Number)
 	require.Equal(t, "[EMERGENCY] this is a message\n", lines[0].Value)
 
-	time.Sleep(1 * time.Second)
 }
 
 func TestGetItemLogsStreamHandler(t *testing.T) {
@@ -295,7 +300,7 @@ func TestGetItemLogsStreamHandler(t *testing.T) {
 
 	ctx, cancel := context.WithCancel(context.TODO())
 	t.Cleanup(cancel)
-	s.Units = newRunningStorageUnits(t, s.Mapper, db.DbMap, ctx)
+	s.Units = newRunningStorageUnits(t, s.Mapper, db.DbMap, ctx, s.Cache)
 
 	signature := log.Signature{
 		ProjectKey:   projectKey,
