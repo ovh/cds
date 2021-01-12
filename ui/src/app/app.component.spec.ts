@@ -44,8 +44,8 @@ import { NavbarModule } from './views/navbar/navbar.module';
 
 describe('App: CDS', () => {
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
             declarations: [
                 AppComponent
             ],
@@ -91,7 +91,7 @@ describe('App: CDS', () => {
                     }
                 }),
             ]
-        });
+        }).compileComponents();
     });
 
     it('should create the app', () => {
@@ -112,17 +112,13 @@ describe('App: CDS', () => {
 
         const http = TestBed.get(HttpTestingController);
 
-        http.expectOne((req: HttpRequest<any>) => {
-            return req.url === '/mon/status'
-        }).flush(<MonitoringStatus>{});
+        http.expectOne((req: HttpRequest<any>) => req.url === '/mon/status').flush(<MonitoringStatus>{});
 
         const store = TestBed.get(Store);
         store.dispatch(new FetchCurrentUser());
 
 
-        http.expectOne(((req: HttpRequest<any>) => {
-            return req.url === '/user/me';
-        })).flush(<AuthentifiedUser>{
+        http.expectOne(((req: HttpRequest<any>) => req.url === '/user/me')).flush(<AuthentifiedUser>{
             username: 'someone',
         });
 
@@ -140,9 +136,9 @@ class MockActivatedRoutes {
     constructor() {
         this.snapshot = {
             params: {
-                'key': 'key1',
-                'appName': 'app2',
-                'pipName': 'pip2'
+                key: 'key1',
+                appName: 'app2',
+                pipName: 'pip2'
             }
         };
     }

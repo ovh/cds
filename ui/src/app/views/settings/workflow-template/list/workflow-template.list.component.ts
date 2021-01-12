@@ -3,7 +3,7 @@ import { WorkflowTemplate } from 'app/model/workflow-template.model';
 import { WorkflowTemplateService } from 'app/service/workflow-template/workflow-template.service';
 import { PathItem } from 'app/shared/breadcrumb/breadcrumb.component';
 import { Column, ColumnType, Filter } from 'app/shared/table/data-table.component';
-import { finalize } from 'rxjs/internal/operators/finalize';
+import { finalize } from 'rxjs/operators';
 
 @Component({
     selector: 'app-workflow-template-list',
@@ -43,12 +43,10 @@ export class WorkflowTemplateListComponent {
                 type: ColumnType.ROUTER_LINK,
                 name: 'common_name',
                 class: 'four',
-                selector: (wt: WorkflowTemplate) => {
-                    return {
+                selector: (wt: WorkflowTemplate) => ({
                         link: `/settings/workflow-template/${wt.group.name}/${wt.slug}`,
                         value: wt.name
-                    };
-                }
+                    })
             },
             <Column<WorkflowTemplate>>{
                 type: ColumnType.MARKDOWN,

@@ -35,8 +35,8 @@ describe('CDS: Pipeline Add Component', () => {
     let injector: Injector;
     let store: Store;
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
             declarations: [
             ],
             providers: [
@@ -69,7 +69,7 @@ describe('CDS: Pipeline Add Component', () => {
                 TranslateModule.forRoot(),
                 HttpClientTestingModule
             ]
-        });
+        }).compileComponents();
 
         injector = getTestBed();
         store = injector.get(Store);
@@ -100,9 +100,7 @@ describe('CDS: Pipeline Add Component', () => {
         fixture.componentInstance.newPipeline = new Pipeline();
         fixture.componentInstance.newPipeline.name = 'myPip';
 
-        spyOn(store, 'dispatch').and.callFake(() => {
-            return of(null);
-        });
+        spyOn(store, 'dispatch').and.callFake(() => of(null));
 
         fixture.componentInstance.createPipeline();
         expect(store.dispatch).toHaveBeenCalledWith(new AddPipeline({
@@ -134,9 +132,9 @@ class MockActivatedRoutes extends ActivatedRoute {
         let project = new Project();
         project.key = 'key1';
         this.snapshot.data = {
-            project: project
+            project
         };
 
-        this.data = of({ project: project });
+        this.data = of({ project });
     }
 }

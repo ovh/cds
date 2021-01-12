@@ -93,7 +93,7 @@
             </div>
         </ng-container>
         <ng-container *ngIf="workflowRunData['workflow'] && workflowRunData['workflow'].workflow_data">
-            <app-workflow-graph class="graph" [direction]="direction" [project]="project"
+            <app-workflow-graph [direction]="direction" [project]="project"
                 [workflowData]="workflowRunData['workflow']">
             </app-workflow-graph>
         </ng-container>

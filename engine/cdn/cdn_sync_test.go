@@ -45,7 +45,7 @@ func TestSyncBuffer(t *testing.T) {
 		Host:  "http://lolcat.host:8081",
 		Token: "mytoken",
 	}
-	cdnUnits, err := storage.Init(context.Background(), m, db.DbMap, sdk.NewGoRoutines(), storage.Configuration{
+	cdnUnits, err := storage.Init(context.Background(), m, cache, db.DbMap, sdk.NewGoRoutines(), storage.Configuration{
 		HashLocatorSalt: "thisismysalt",
 		Buffers: []storage.BufferConfiguration{
 			{
@@ -59,7 +59,7 @@ func TestSyncBuffer(t *testing.T) {
 		},
 		Storages: []storage.StorageConfiguration{
 			{
-				Name: "test-cds-backend",
+				Name: "test-cds-backend.TestSyncBuffer",
 				CDS:  cdsConfig,
 			},
 		},
@@ -107,8 +107,11 @@ func TestSyncLog(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.TODO(), 5*time.Second)
 	t.Cleanup(cancel)
 
-	cdnUnits, err := storage.Init(ctx, m, db.DbMap, sdk.NewGoRoutines(), storage.Configuration{
+	cdnUnits, err := storage.Init(ctx, m, cache, db.DbMap, sdk.NewGoRoutines(), storage.Configuration{
 		HashLocatorSalt: "thisismysalt",
+		SyncNbElements:  100,
+		SyncSeconds:     1,
+
 		Buffers: []storage.BufferConfiguration{
 			{
 				Name: "redis_buffer",
@@ -121,13 +124,14 @@ func TestSyncLog(t *testing.T) {
 		},
 		Storages: []storage.StorageConfiguration{
 			{
-				Name: "test-cds-backend",
+				Name: "test-cds-backend.TestSyncLog",
 				CDS:  cdsConfig,
 			},
 		},
 	})
 	require.NoError(t, err)
-	cdnUnits.Start(context.TODO(), sdk.NewGoRoutines())
+
+	cdnUnits.Start(ctx, sdk.NewGoRoutines())
 	s.Units = cdnUnits
 
 	cdsStorage, ok := s.Units.Storages[0].(*cds.CDS)
@@ -344,7 +348,7 @@ func TestSyncLog(t *testing.T) {
 		_ = item.DeleteByID(db, itm.ID)
 	}()
 
-	unit, err := storage.LoadUnitByName(context.TODO(), s.Mapper, db, "test-cds-backend")
+	unit, err := storage.LoadUnitByName(context.TODO(), s.Mapper, db, "test-cds-backend.TestSyncLog")
 	require.NoError(t, err)
 
 	// Clean before testing

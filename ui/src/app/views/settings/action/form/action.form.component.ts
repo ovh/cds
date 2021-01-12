@@ -55,7 +55,9 @@ export class ActionFormComponent implements OnDestroy {
 
         this.refreshActions();
     }
-    get action(): Action { return this._action; }
+    get action(): Action {
+ return this._action;
+}
 
     @Output() save = new EventEmitter<Action>();
     @Output() delete = new EventEmitter();
@@ -75,14 +77,10 @@ export class ActionFormComponent implements OnDestroy {
         private _cd: ChangeDetectorRef
     ) {
         dragulaService.createGroup('bag-nonfinal', {
-            moves: (el, source, handle) => {
-                return handle.classList.contains('move');
-            },
+            moves: (el, source, handle) => handle.classList.contains('move'),
         });
         dragulaService.createGroup('bag-final', {
-            moves: (el, source, handle) => {
-                return handle.classList.contains('move');
-            },
+            moves: (el, source, handle) => handle.classList.contains('move'),
             direction: 'vertical'
         });
         this.dragulaService.drop().subscribe(() => {
@@ -126,6 +124,7 @@ export class ActionFormComponent implements OnDestroy {
 
     /**
      * Manage Requirement Event
+     *
      * @param r event
      */
     requirementEvent(r: RequirementEvent): void {
@@ -213,6 +212,7 @@ export class ActionFormComponent implements OnDestroy {
 
     /**
      * Manage Parameter Event
+     *
      * @param p event
      */
     parameterEvent(p: ParameterEvent): void {

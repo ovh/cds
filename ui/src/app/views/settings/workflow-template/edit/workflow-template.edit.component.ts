@@ -3,7 +3,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { AuditWorkflowTemplate } from 'app/model/audit.model';
 import { Group } from 'app/model/group.model';
-// tslint:disable-next-line: max-line-length
+// eslint-disable-next-line max-len
 import {
     InstanceStatus,
     InstanceStatusUtil,
@@ -24,7 +24,7 @@ import { ToastService } from 'app/shared/toast/ToastService';
 import { WorkflowTemplateApplyModalComponent } from 'app/shared/workflow-template/apply-modal/workflow-template.apply-modal.component';
 import { WorkflowTemplateBulkModalComponent } from 'app/shared/workflow-template/bulk-modal/workflow-template.bulk-modal.component';
 import { Subscription } from 'rxjs';
-import { finalize } from 'rxjs/internal/operators/finalize';
+import { finalize } from 'rxjs/operators';
 import { first } from 'rxjs/operators';
 
 @Component({
@@ -174,15 +174,13 @@ export class WorkflowTemplateEditComponent implements OnInit, OnDestroy {
                 type: ColumnType.BUTTON,
                 name: 'common_action',
                 class: 'two right aligned',
-                selector: (i: WorkflowTemplateInstance) => {
-                    return {
+                selector: (i: WorkflowTemplateInstance) => ({
                         title: 'common_update',
                         class: 'primary small',
                         click: () => {
                             this.clickUpdate(i);
                         }
-                    };
-                }
+                    })
             }
         ];
 
@@ -212,14 +210,12 @@ export class WorkflowTemplateEditComponent implements OnInit, OnDestroy {
                         type: ColumnType.CONFIRM_BUTTON,
                         name: 'common_action',
                         class: 'two right aligned',
-                        selector: (a: AuditWorkflowTemplate) => {
-                            return {
+                        selector: (a: AuditWorkflowTemplate) => ({
                                 title: 'common_rollback',
                                 click: () => {
                                     this.clickRollback(a)
                                 }
-                            };
-                        }
+                            })
                     });
                 }
 

@@ -8,7 +8,7 @@ import { Table } from 'app/shared/table/table';
 import { CodemirrorComponent } from 'ng2-codemirror-typescript/Codemirror';
 import { Subscription } from 'rxjs/Subscription';
 
-declare var CodeMirror: any;
+declare let CodeMirror: any;
 
 @Component({
     selector: 'app-conditions',
@@ -18,12 +18,10 @@ declare var CodeMirror: any;
 })
 @AutoUnsubscribe()
 export class ConditionsComponent extends Table<WorkflowNodeCondition> implements OnInit, OnDestroy {
-    @Input('triggerConditions') set triggerConditions(data: WorkflowTriggerConditionCache) {
+    @Input() set triggerConditions(data: WorkflowTriggerConditionCache) {
         this._triggerCondition = data;
         if (data) {
-            this.operators = Object.keys(data.operators).map(k => {
-                return { key: k, value: data.operators[k] };
-            });
+            this.operators = Object.keys(data.operators).map(k => ({ key: k, value: data.operators[k] }));
             this.conditionNames = data.names;
             if (this.conditionNames) {
                 this.suggest = this.conditionNames.map((d) => d.replace(/-|\./g, '_'));
@@ -40,7 +38,7 @@ export class ConditionsComponent extends Table<WorkflowNodeCondition> implements
     get triggerConditions(): WorkflowTriggerConditionCache {
         return this._triggerCondition;
     }
-    @Input('conditions') set conditions(conditions: WorkflowNodeConditions) {
+    @Input() set conditions(conditions: WorkflowNodeConditions) {
         this._conditions = conditions;
         if (this._conditions.lua_script && this._conditions.lua_script !== '') {
             this.isAdvanced = true;

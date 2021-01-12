@@ -28,7 +28,7 @@
                         [title]="'workflow_template_detach'"></app-delete-button>
                     <div class="ui checked checkbox" *ngIf="!workflowTemplateInstance && !result">
                         <input type="checkbox" [ngModel]="detached" [ngModelOptions]="{standalone: true}"
-                            (ngModelChange)="onSelectDetachChange($event)">
+                            (ngModelChange)="onSelectDetachChange()">
                         <label>{{'workflow_template_apply_detach' | translate}}</label>
                     </div>
                     <button class="ui green button right floated" type="button" (click)="applyTemplate()"

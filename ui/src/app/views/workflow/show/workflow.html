@@ -104,10 +104,8 @@
                     <div class="two wide column"></div>
                 </div>
             </div>
-            <div *ngIf="detailedWorkflow" class="graph">
-                <app-workflow-graph [workflowData]="previewWorkflow || detailedWorkflow" [project]="project"
-                    [direction]="direction" #workflowGraph></app-workflow-graph>
-            </div>
+            <app-workflow-graph *ngIf="detailedWorkflow" [workflowData]="previewWorkflow || detailedWorkflow"
+                [project]="project" [direction]="direction"></app-workflow-graph>
         </div>
         <app-scrollview class="scrollview" *ngIf="selectedTab !== 'workflows'" [ngSwitch]="selectedTab">
             <div *ngSwitchCase="'notifications'">

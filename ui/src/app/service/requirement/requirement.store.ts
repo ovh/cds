@@ -13,9 +13,10 @@ export class RequirementStore {
     }
 
     /**
-     /**
+     * /**
      * Get the list of all available requirement.
-     * @returns {Observable<List<string>>}
+     *
+     * @returns
      */
     getAvailableRequirements(): Observable<List<string>> {
         let store = this._requirementsType.getValue();
@@ -29,10 +30,11 @@ export class RequirementStore {
     }
 
      /**
-     * Get the list of available requirements values for a type
-     * @param type Type of requirement
-     * @returns {Observable<string[]>}
-     */
+      * Get the list of available requirements values for a type
+      *
+      * @param type Type of requirement
+      * @returns
+      */
     getRequirementsTypeValues(type: string): Observable<string[]> {
         return new Observable<string[]>(fn => this._requirementService.getRequirementsTypeValues(type).subscribe(fn));
     }

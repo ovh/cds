@@ -19,11 +19,11 @@
                 <div class="ui grid">
                     <div class="four wide column">
                         <div class="grouped fields">
-                            <label for="os">{{ 'cdsctl_choice_os' | translate }}</label>
+                            <label>{{ 'cdsctl_choice_os' | translate }}</label>
                             <ng-container *ngFor="let o of os">
                                 <div class="field">
                                     <div class="ui radio checkbox">
-                                        <sui-radio-button type="radio" id="os-{{a}}" name="os" [value]="o"
+                                        <sui-radio-button type="radio" id="os-{{o}}" name="os" [value]="o"
                                             [(ngModel)]="osChoice" (ngModelChange)="buildData()">
                                             {{o}}
                                         </sui-radio-button>

@@ -44,7 +44,8 @@ export class ProjectStore {
 
     /**
      * Get recent projects.
-     * @returns {Observable<List<Project>>}
+     *
+     * @returns
      */
     getRecentProjects(): Observable<List<NavbarRecentData>> {
         return new Observable<List<NavbarRecentData>>(fn => this._recentProjects.subscribe(fn));
@@ -52,6 +53,7 @@ export class ProjectStore {
 
     /**
      * Update recent project viewed.
+     *
      * @param prj Project
      */
     updateRecentProject(prj: Project): void {
@@ -98,8 +100,9 @@ export class ProjectStore {
 
     /**
      * Get all projects
+     *
      * @param key Project unique key you want to fetch
-     * @returns {Project}
+     * @returns
      */
     getProjects(key?: string, opts?: LoadOpts[]): Observable<Map<string, Project>> {
         // If Store contain the project, get IT

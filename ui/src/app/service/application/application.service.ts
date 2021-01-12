@@ -28,6 +28,7 @@ export class ApplicationService {
 
     /**
      * Add a key
+     *
      * @param key Project unique key
      * @param appName Application name
      * @param k Key to add
@@ -37,10 +38,11 @@ export class ApplicationService {
     }
 
     /**
-    * Get application deployment strategies
-    * @param key Project unique key
-    * @param appName Application name
-    */
+     * Get application deployment strategies
+     *
+     * @param key Project unique key
+     * @param appName Application name
+     */
     getDeploymentStrategies(key: string, appName: string): Observable<Map<string, any>> {
         let url = '/project/' + key + '/application/' + appName + '/deployment/config';
         return this._http.get<Map<string, any>>(url);
@@ -48,6 +50,7 @@ export class ApplicationService {
 
     /**
      * Ignore vulnerability
+     *
      * @param key project unique key
      * @param appName application name
      * @param id identifiant of the vulnerability
@@ -59,6 +62,7 @@ export class ApplicationService {
 
     /**
      * Update application as code
+     *
      * @param key Project key
      * @param application Application to update
      * @param branch Branch name to create the PR

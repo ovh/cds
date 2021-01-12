@@ -24,10 +24,8 @@ export class WorkerModelPatternListComponent {
     ) {
         this.filter = f => {
             const lowerFilter = f.toLowerCase();
-            return d => {
-                return d.name.toLowerCase().indexOf(lowerFilter) !== -1 ||
-                    d.type.toLowerCase().indexOf(lowerFilter) !== -1;
-            }
+            return d => d.name.toLowerCase().indexOf(lowerFilter) !== -1 ||
+                    d.type.toLowerCase().indexOf(lowerFilter) !== -1
         };
 
         this.path = [<PathItem>{
@@ -41,12 +39,10 @@ export class WorkerModelPatternListComponent {
             <Column<ModelPattern>>{
                 type: ColumnType.ROUTER_LINK,
                 name: 'common_name',
-                selector: (mp: ModelPattern) => {
-                    return {
+                selector: (mp: ModelPattern) => ({
                         link: `/admin/worker-model-pattern/${mp.type}/${mp.name}`,
                         value: mp.name
-                    };
-                }
+                    })
             },
             <Column<ModelPattern>>{
                 name: 'common_type',

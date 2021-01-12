@@ -16,16 +16,16 @@ import { ProjectService } from 'app/service/project/project.service';
 import { ProjectStore } from 'app/service/project/project.store';
 import { WorkflowRunService } from 'app/service/workflow/run/workflow.run.service';
 import { WorkflowService } from 'app/service/workflow/workflow.service';
-import { ApplicationsState } from './applications.state';
-import { PipelinesState } from './pipelines.state';
-import * as ProjectAction from './project.action';
-import { ProjectState, ProjectStateModel } from './project.state';
-import { WorkflowState } from './workflow.state';
 import { PipelineService } from 'app/service/pipeline/pipeline.service';
 import { EnvironmentService } from 'app/service/environment/environment.service';
 import { ApplicationService } from 'app/service/application/application.service';
 import { RouterService } from 'app/service/router/router.service';
 import { RouterTestingModule } from '@angular/router/testing';
+import { ApplicationsState } from './applications.state';
+import { PipelinesState } from './pipelines.state';
+import * as ProjectAction from './project.action';
+import { ProjectState, ProjectStateModel } from './project.state';
+import { WorkflowState } from './workflow.state';
 
 describe('Project', () => {
     let store: Store;
@@ -50,9 +50,7 @@ describe('Project', () => {
             projectKey: 'test1',
             opts: []
         }));
-        http.expectOne(((req: HttpRequest<any>) => {
-            return req.url === '/project/test1';
-        })).flush(<Project>{
+        http.expectOne(((req: HttpRequest<any>) => req.url === '/project/test1')).flush(<Project>{
             name: 'test1',
             key: 'test1'
         });
@@ -68,9 +66,7 @@ describe('Project', () => {
             projectKey: 'test1',
             opts: []
         }));
-        http.expectOne(((req: HttpRequest<any>) => {
-            return req.url === '/project/test1';
-        })).flush(<Project>{
+        http.expectOne(((req: HttpRequest<any>) => req.url === '/project/test1')).flush(<Project>{
             name: 'test1',
             key: 'test1'
         });
@@ -85,9 +81,7 @@ describe('Project', () => {
             projectKey: 'test1',
             opts: [new LoadOpts('withWorkflowNames', 'workflow_names')]
         }));
-        http.expectOne(((req: HttpRequest<any>) => {
-            return req.url === '/project/test1';
-        })).flush(<Project>{
+        http.expectOne(((req: HttpRequest<any>) => req.url === '/project/test1')).flush(<Project>{
             name: 'test1',
             key: 'test1',
             workflow_names: [{ id: 0, name: 'testworkflow', mute: false }]
@@ -121,9 +115,7 @@ describe('Project', () => {
         project.name = 'proj1';
         project.key = 'test1';
         store.dispatch(new ProjectAction.AddProject(project));
-        http.expectOne(((req: HttpRequest<any>) => {
-            return req.url === '/project';
-        })).flush(<Project>{
+        http.expectOne(((req: HttpRequest<any>) => req.url === '/project')).flush(<Project>{
             name: 'proj1',
             key: 'test1',
         });
@@ -139,18 +131,14 @@ describe('Project', () => {
         project.name = 'proj1';
         project.key = 'test1';
         store.dispatch(new ProjectAction.AddProject(project));
-        http.expectOne(((req: HttpRequest<any>) => {
-            return req.url === '/project';
-        })).flush(<Project>{
+        http.expectOne(((req: HttpRequest<any>) => req.url === '/project')).flush(<Project>{
             name: 'proj1',
             key: 'test1',
         });
 
         project.name = 'proj1updated';
         store.dispatch(new ProjectAction.UpdateProject(project));
-        http.expectOne(((req: HttpRequest<any>) => {
-            return req.url === '/project/test1';
-        })).flush(<Project>{
+        http.expectOne(((req: HttpRequest<any>) => req.url === '/project/test1')).flush(<Project>{
             name: 'proj1updated',
             key: 'test1',
         });
@@ -167,17 +155,13 @@ describe('Project', () => {
         project.name = 'proj1';
         project.key = 'test1';
         store.dispatch(new ProjectAction.AddProject(project));
-        http.expectOne(((req: HttpRequest<any>) => {
-            return req.url === '/project';
-        })).flush(<Project>{
+        http.expectOne(((req: HttpRequest<any>) => req.url === '/project')).flush(<Project>{
             name: 'proj1',
             key: 'test1',
         });
 
         store.dispatch(new ProjectAction.DeleteProject({ projectKey: 'test1' }));
-        http.expectOne(((req: HttpRequest<any>) => {
-            return req.url === '/project/test1';
-        })).flush(null);
+        http.expectOne(((req: HttpRequest<any>) => req.url === '/project/test1')).flush(null);
 
         store.selectOnce(ProjectState).subscribe(state => {
             expect(state.project).toBeFalsy();
@@ -191,9 +175,7 @@ describe('Project', () => {
         project.name = 'proj1';
         project.key = 'test1';
         store.dispatch(new ProjectAction.AddProject(project));
-        http.expectOne(((req: HttpRequest<any>) => {
-            return req.url === '/project';
-        })).flush(<Project>{
+        http.expectOne(((req: HttpRequest<any>) => req.url === '/project')).flush(<Project>{
             name: 'proj1',
             key: 'test1',
         });
@@ -218,9 +200,7 @@ describe('Project', () => {
         project.name = 'proj1';
         project.key = 'test1';
         store.dispatch(new ProjectAction.AddProject(project));
-        http.expectOne(((req: HttpRequest<any>) => {
-            return req.url === '/project';
-        })).flush(<Project>{
+        http.expectOne(((req: HttpRequest<any>) => req.url === '/project')).flush(<Project>{
             name: 'proj1',
             key: 'test1',
         });
@@ -258,9 +238,7 @@ describe('Project', () => {
         project.name = 'proj1';
         project.key = 'test1';
         store.dispatch(new ProjectAction.AddProject(project));
-        http.expectOne(((req: HttpRequest<any>) => {
-            return req.url === '/project';
-        })).flush(<Project>{
+        http.expectOne(((req: HttpRequest<any>) => req.url === '/project')).flush(<Project>{
             name: 'proj1',
             key: 'test1',
             application_names: [{ id: 1, name: 'myApp' }]
@@ -284,9 +262,7 @@ describe('Project', () => {
         project.name = 'proj1';
         project.key = 'test1';
         store.dispatch(new ProjectAction.AddProject(project));
-        http.expectOne(((req: HttpRequest<any>) => {
-            return req.url === '/project';
-        })).flush(<Project>{
+        http.expectOne(((req: HttpRequest<any>) => req.url === '/project')).flush(<Project>{
             name: 'proj1',
             key: 'test1',
         });
@@ -313,9 +289,7 @@ describe('Project', () => {
         let workflow = new Workflow();
         workflow.name = 'myWorkflow';
         store.dispatch(new ProjectAction.AddProject(project));
-        http.expectOne(((req: HttpRequest<any>) => {
-            return req.url === '/project';
-        })).flush(<Project>{
+        http.expectOne(((req: HttpRequest<any>) => req.url === '/project')).flush(<Project>{
             name: 'proj1',
             key: 'test1',
             workflow_names: [{ id: 1, name: workflow.name }]
@@ -344,9 +318,7 @@ describe('Project', () => {
         project.name = 'proj1';
         project.key = 'test1';
         store.dispatch(new ProjectAction.AddProject(project));
-        http.expectOne(((req: HttpRequest<any>) => {
-            return req.url === '/project';
-        })).flush(<Project>{
+        http.expectOne(((req: HttpRequest<any>) => req.url === '/project')).flush(<Project>{
             name: 'proj1',
             key: 'test1',
             workflow_names: [{ id: 1, name: 'myWorkflow' }]
@@ -370,9 +342,7 @@ describe('Project', () => {
         project.name = 'proj1';
         project.key = 'test1';
         store.dispatch(new ProjectAction.AddProject(project));
-        http.expectOne(((req: HttpRequest<any>) => {
-            return req.url === '/project';
-        })).flush(<Project>{
+        http.expectOne(((req: HttpRequest<any>) => req.url === '/project')).flush(<Project>{
             name: 'proj1',
             key: 'test1',
         });
@@ -398,9 +368,7 @@ describe('Project', () => {
         store.dispatch(new ProjectAction.AddProject(project));
         let pip = new Pipeline();
         pip.name = 'myPipeline';
-        http.expectOne(((req: HttpRequest<any>) => {
-            return req.url === '/project';
-        })).flush(<Project>{
+        http.expectOne(((req: HttpRequest<any>) => req.url === '/project')).flush(<Project>{
             name: 'proj1',
             key: 'test1',
             pipeline_names: [{ id: 1, name: pip.name }]
@@ -429,9 +397,7 @@ describe('Project', () => {
         project.name = 'proj1';
         project.key = 'test1';
         store.dispatch(new ProjectAction.AddProject(project));
-        http.expectOne(((req: HttpRequest<any>) => {
-            return req.url === '/project';
-        })).flush(<Project>{
+        http.expectOne(((req: HttpRequest<any>) => req.url === '/project')).flush(<Project>{
             name: 'proj1',
             key: 'test1',
             pipeline_names: [{ id: 1, name: 'myPipeline' }]
@@ -454,9 +420,7 @@ describe('Project', () => {
         project.name = 'proj1';
         project.key = 'test1';
         store.dispatch(new ProjectAction.AddProject(project));
-        http.expectOne(((req: HttpRequest<any>) => {
-            return req.url === '/project';
-        })).flush(<Project>{
+        http.expectOne(((req: HttpRequest<any>) => req.url === '/project')).flush(<Project>{
             name: 'proj1',
             key: 'test1',
         });
@@ -471,14 +435,10 @@ describe('Project', () => {
         label.color = 'red';
         store.dispatch(new ProjectAction.AddLabelWorkflowInProject({ workflowName: 'myWorkflow', label }));
 
-        http.expectOne(((req: HttpRequest<any>) => {
-            return req.url === '/project/test1/workflows/myWorkflow/label';
-        })).flush(<Label>{
+        http.expectOne(((req: HttpRequest<any>) => req.url === '/project/test1/workflows/myWorkflow/label')).flush(<Label>{
             name: 'testLabel'
         });
-        http.expectOne(((req: HttpRequest<any>) => {
-            return req.url === '/project/test1';
-        })).flush(<Project>{
+        http.expectOne(((req: HttpRequest<any>) => req.url === '/project/test1')).flush(<Project>{
             name: 'proj1',
             key: 'test1',
             workflow_names: [
@@ -511,9 +471,7 @@ describe('Project', () => {
         project.name = 'proj1';
         project.key = 'test1';
         store.dispatch(new ProjectAction.AddProject(project));
-        http.expectOne(((req: HttpRequest<any>) => {
-            return req.url === '/project';
-        })).flush(<Project>{
+        http.expectOne(((req: HttpRequest<any>) => req.url === '/project')).flush(<Project>{
             name: 'proj1',
             key: 'test1',
         });
@@ -529,9 +487,7 @@ describe('Project', () => {
         store.dispatch(new ProjectAction.AddWorkflowInProject(workflow));
 
         store.dispatch(new ProjectAction.DeleteLabelWorkflowInProject({ workflowName: 'myWorkflow', labelId: label.id }));
-        http.expectOne(((req: HttpRequest<any>) => {
-            return req.url === '/project/test1/workflows/myWorkflow/label/25';
-        })).flush(<any>{
+        http.expectOne(((req: HttpRequest<any>) => req.url === '/project/test1/workflows/myWorkflow/label/25')).flush(<any>{
         });
 
         store.selectOnce(ProjectState).subscribe((state: ProjectStateModel) => {
@@ -551,9 +507,7 @@ describe('Project', () => {
         project.name = 'proj1';
         project.key = 'test1';
         store.dispatch(new ProjectAction.AddProject(project));
-        http.expectOne(((req: HttpRequest<any>) => {
-            return req.url === '/project';
-        })).flush(<Project>{
+        http.expectOne(((req: HttpRequest<any>) => req.url === '/project')).flush(<Project>{
             name: 'proj1',
             key: 'test1',
         });
@@ -562,9 +516,7 @@ describe('Project', () => {
         variable.name = 'myVar';
         variable.value = 'myValue';
         store.dispatch(new ProjectAction.AddVariableInProject(variable));
-        http.expectOne(((req: HttpRequest<any>) => {
-            return req.url === '/project/test1/variable/myVar';
-        })).flush(variable);
+        http.expectOne(((req: HttpRequest<any>) => req.url === '/project/test1/variable/myVar')).flush(variable);
 
         store.selectOnce(ProjectState).subscribe((state: ProjectStateModel) => {
             expect(state.project).toBeTruthy();
@@ -586,9 +538,7 @@ describe('Project', () => {
         variable.value = 'myValue';
 
         store.dispatch(new ProjectAction.AddProject(project));
-        http.expectOne(((req: HttpRequest<any>) => {
-            return req.url === '/project';
-        })).flush(<Project>{
+        http.expectOne(((req: HttpRequest<any>) => req.url === '/project')).flush(<Project>{
             name: 'proj1',
             key: 'test1',
             variables: [variable]
@@ -600,9 +550,7 @@ describe('Project', () => {
             variableName: 'myVar',
             changes: variable
         }));
-        http.expectOne(((req: HttpRequest<any>) => {
-            return req.url === '/project/test1/variable/myVar';
-        })).flush(variable);
+        http.expectOne(((req: HttpRequest<any>) => req.url === '/project/test1/variable/myVar')).flush(variable);
 
         store.selectOnce(ProjectState).subscribe((state: ProjectStateModel) => {
             expect(state.project).toBeTruthy();
@@ -624,18 +572,14 @@ describe('Project', () => {
         variable.name = 'myVar';
         variable.value = 'myValue';
         store.dispatch(new ProjectAction.AddProject(project));
-        http.expectOne(((req: HttpRequest<any>) => {
-            return req.url === '/project';
-        })).flush(<Project>{
+        http.expectOne(((req: HttpRequest<any>) => req.url === '/project')).flush(<Project>{
             name: 'proj1',
             key: 'test1',
             variables: [variable]
         });
 
         store.dispatch(new ProjectAction.DeleteVariableInProject(variable));
-        http.expectOne(((req: HttpRequest<any>) => {
-            return req.url === '/project/test1/variable/myVar';
-        })).flush(null);
+        http.expectOne(((req: HttpRequest<any>) => req.url === '/project/test1/variable/myVar')).flush(null);
 
         store.selectOnce(ProjectState).subscribe((state: ProjectStateModel) => {
             expect(state.project).toBeTruthy();
@@ -655,17 +599,13 @@ describe('Project', () => {
         variable.name = 'myVar';
         variable.value = 'myValue';
         store.dispatch(new ProjectAction.AddProject(project));
-        http.expectOne(((req: HttpRequest<any>) => {
-            return req.url === '/project';
-        })).flush(<Project>{
+        http.expectOne(((req: HttpRequest<any>) => req.url === '/project')).flush(<Project>{
             name: 'proj1',
             key: 'test1'
         });
 
         store.dispatch(new ProjectAction.FetchVariablesInProject({ projectKey: project.key }));
-        http.expectOne(((req: HttpRequest<any>) => {
-            return req.url === '/project/test1/variable';
-        })).flush([variable]);
+        http.expectOne(((req: HttpRequest<any>) => req.url === '/project/test1/variable')).flush([variable]);
 
         store.selectOnce(ProjectState).subscribe((state: ProjectStateModel) => {
             expect(state.project).toBeTruthy();
@@ -684,9 +624,7 @@ describe('Project', () => {
         project.name = 'proj1';
         project.key = 'test1';
         store.dispatch(new ProjectAction.AddProject(project));
-        http.expectOne(((req: HttpRequest<any>) => {
-            return req.url === '/project';
-        })).flush(<Project>{
+        http.expectOne(((req: HttpRequest<any>) => req.url === '/project')).flush(<Project>{
             name: 'proj1',
             key: 'test1',
         });
@@ -697,9 +635,7 @@ describe('Project', () => {
         group.group.name = 'admin';
         group.permission = 7;
         store.dispatch(new ProjectAction.AddGroupInProject({ projectKey: project.key, group }));
-        http.expectOne(((req: HttpRequest<any>) => {
-            return req.url === '/project/test1/group';
-        })).flush([group]);
+        http.expectOne(((req: HttpRequest<any>) => req.url === '/project/test1/group')).flush([group]);
 
         store.selectOnce(ProjectState).subscribe((state: ProjectStateModel) => {
             expect(state.project).toBeTruthy();
@@ -724,18 +660,14 @@ describe('Project', () => {
         group.permission = 7;
 
         store.dispatch(new ProjectAction.AddProject(project));
-        http.expectOne(((req: HttpRequest<any>) => {
-            return req.url === '/project';
-        })).flush(<Project>{
+        http.expectOne(((req: HttpRequest<any>) => req.url === '/project')).flush(<Project>{
             name: 'proj1',
             key: 'test1',
             groups: [group]
         });
 
         store.dispatch(new ProjectAction.DeleteGroupInProject({ projectKey: project.key, group }));
-        http.expectOne(((req: HttpRequest<any>) => {
-            return req.url === '/project/test1/group/admin';
-        })).flush(null);
+        http.expectOne(((req: HttpRequest<any>) => req.url === '/project/test1/group/admin')).flush(null);
 
         store.selectOnce(ProjectState).subscribe((state: ProjectStateModel) => {
             expect(state.project).toBeTruthy();
@@ -757,9 +689,7 @@ describe('Project', () => {
         group.permission = 7;
 
         store.dispatch(new ProjectAction.AddProject(project));
-        http.expectOne(((req: HttpRequest<any>) => {
-            return req.url === '/project';
-        })).flush(<Project>{
+        http.expectOne(((req: HttpRequest<any>) => req.url === '/project')).flush(<Project>{
             name: 'proj1',
             key: 'test1',
             groups: [group]
@@ -767,9 +697,7 @@ describe('Project', () => {
 
         group.permission = 4;
         store.dispatch(new ProjectAction.UpdateGroupInProject({ projectKey: project.key, group }));
-        http.expectOne(((req: HttpRequest<any>) => {
-            return req.url === '/project/test1/group/admin';
-        })).flush(group);
+        http.expectOne(((req: HttpRequest<any>) => req.url === '/project/test1/group/admin')).flush(group);
 
         store.selectOnce(ProjectState).subscribe((state: ProjectStateModel) => {
             expect(state.project).toBeTruthy();
@@ -788,9 +716,7 @@ describe('Project', () => {
         project.name = 'proj1';
         project.key = 'test1';
         store.dispatch(new ProjectAction.AddProject(project));
-        http.expectOne(((req: HttpRequest<any>) => {
-            return req.url === '/project';
-        })).flush(<Project>{
+        http.expectOne(((req: HttpRequest<any>) => req.url === '/project')).flush(<Project>{
             name: 'proj1',
             key: 'test1',
         });
@@ -799,9 +725,7 @@ describe('Project', () => {
         key.type = 'ssh';
         key.name = 'proj-test';
         store.dispatch(new ProjectAction.AddKeyInProject({ projectKey: project.key, key }));
-        http.expectOne(((req: HttpRequest<any>) => {
-            return req.url === '/project/test1/keys' && req.body === key;
-        })).flush(key);
+        http.expectOne(((req: HttpRequest<any>) => req.url === '/project/test1/keys' && req.body === key)).flush(key);
 
         store.selectOnce(ProjectState).subscribe((state: ProjectStateModel) => {
             expect(state.project).toBeTruthy();
@@ -823,18 +747,14 @@ describe('Project', () => {
         key.name = 'proj-test';
 
         store.dispatch(new ProjectAction.AddProject(project));
-        http.expectOne(((req: HttpRequest<any>) => {
-            return req.url === '/project';
-        })).flush(<Project>{
+        http.expectOne(((req: HttpRequest<any>) => req.url === '/project')).flush(<Project>{
             name: 'proj1',
             key: 'test1',
             keys: [key]
         });
 
         store.dispatch(new ProjectAction.DeleteKeyInProject({ projectKey: project.key, key }));
-        http.expectOne(((req: HttpRequest<any>) => {
-            return req.url === '/project/test1/keys/proj-test';
-        })).flush(null);
+        http.expectOne(((req: HttpRequest<any>) => req.url === '/project/test1/keys/proj-test')).flush(null);
 
         store.selectOnce(ProjectState).subscribe((state: ProjectStateModel) => {
             expect(state.project).toBeTruthy();
@@ -851,9 +771,7 @@ describe('Project', () => {
         project.name = 'proj1';
         project.key = 'test1';
         store.dispatch(new ProjectAction.AddProject(project));
-        http.expectOne(((req: HttpRequest<any>) => {
-            return req.url === '/project';
-        })).flush(<Project>{
+        http.expectOne(((req: HttpRequest<any>) => req.url === '/project')).flush(<Project>{
             name: 'proj1',
             key: 'test1',
         });
@@ -861,9 +779,7 @@ describe('Project', () => {
         let integration = new ProjectIntegration();
         integration.name = 'myIntegration';
         store.dispatch(new ProjectAction.AddIntegrationInProject({ projectKey: project.key, integration }));
-        http.expectOne(((req: HttpRequest<any>) => {
-            return req.url === '/project/test1/integrations';
-        })).flush(integration);
+        http.expectOne(((req: HttpRequest<any>) => req.url === '/project/test1/integrations')).flush(integration);
 
         store.selectOnce(ProjectState).subscribe((state: ProjectStateModel) => {
             expect(state.project).toBeTruthy();
@@ -883,9 +799,7 @@ describe('Project', () => {
         integration.name = 'myIntegration';
 
         store.dispatch(new ProjectAction.AddProject(project));
-        http.expectOne(((req: HttpRequest<any>) => {
-            return req.url === '/project';
-        })).flush(<Project>{
+        http.expectOne(((req: HttpRequest<any>) => req.url === '/project')).flush(<Project>{
             name: 'proj1',
             key: 'test1',
             integrations: [integration]
@@ -897,9 +811,7 @@ describe('Project', () => {
             integrationName: 'myIntegration',
             changes: integration
         }));
-        http.expectOne(((req: HttpRequest<any>) => {
-            return req.url === '/project/test1/integrations/myIntegration';
-        })).flush(integration);
+        http.expectOne(((req: HttpRequest<any>) => req.url === '/project/test1/integrations/myIntegration')).flush(integration);
 
         store.selectOnce(ProjectState).subscribe((state: ProjectStateModel) => {
             expect(state.project).toBeTruthy();
@@ -919,18 +831,14 @@ describe('Project', () => {
         integration.name = 'myIntegration';
 
         store.dispatch(new ProjectAction.AddProject(project));
-        http.expectOne(((req: HttpRequest<any>) => {
-            return req.url === '/project';
-        })).flush(<Project>{
+        http.expectOne(((req: HttpRequest<any>) => req.url === '/project')).flush(<Project>{
             name: 'proj1',
             key: 'test1',
             integrations: [integration]
         });
 
         store.dispatch(new ProjectAction.DeleteIntegrationInProject({ projectKey: project.key, integration }));
-        http.expectOne(((req: HttpRequest<any>) => {
-            return req.url === '/project/test1/integrations/myIntegration';
-        })).flush(null);
+        http.expectOne(((req: HttpRequest<any>) => req.url === '/project/test1/integrations/myIntegration')).flush(null);
 
         store.selectOnce(ProjectState).subscribe((state: ProjectStateModel) => {
             expect(state.project).toBeTruthy();
@@ -947,9 +855,7 @@ describe('Project', () => {
         project.name = 'proj1';
         project.key = 'test1';
         store.dispatch(new ProjectAction.AddProject(project));
-        http.expectOne(((req: HttpRequest<any>) => {
-            return req.url === '/project';
-        })).flush(<Project>{
+        http.expectOne(((req: HttpRequest<any>) => req.url === '/project')).flush(<Project>{
             name: 'proj1',
             key: 'test1',
         });
@@ -958,9 +864,7 @@ describe('Project', () => {
             projectKey: project.key,
             repoManager: 'github'
         }));
-        http.expectOne(((req: HttpRequest<any>) => {
-            return req.url === '/project/test1/repositories_manager/github/authorize';
-        })).flush({
+        http.expectOne(((req: HttpRequest<any>) => req.url === '/project/test1/repositories_manager/github/authorize')).flush({
             url: 'https://github.com',
             request_token: 'XXX'
         });
@@ -980,9 +884,7 @@ describe('Project', () => {
         project.name = 'proj1';
         project.key = 'test1';
         store.dispatch(new ProjectAction.AddProject(project));
-        http.expectOne(((req: HttpRequest<any>) => {
-            return req.url === '/project';
-        })).flush(<Project>{
+        http.expectOne(((req: HttpRequest<any>) => req.url === '/project')).flush(<Project>{
             name: 'proj1',
             key: 'test1',
         });
@@ -995,9 +897,7 @@ describe('Project', () => {
         }));
         let repoMan = new RepositoriesManager();
         repoMan.name = 'gerrit';
-        http.expectOne(((req: HttpRequest<any>) => {
-            return req.url === '/project/test1/repositories_manager/gerrit/authorize/basicauth';
-        })).flush(<Project>{
+        http.expectOne(((req: HttpRequest<any>) => req.url === '/project/test1/repositories_manager/gerrit/authorize/basicauth')).flush(<Project>{
             ...project,
             vcs_servers: [repoMan]
         });
@@ -1018,9 +918,7 @@ describe('Project', () => {
         project.name = 'proj1';
         project.key = 'test1';
         store.dispatch(new ProjectAction.AddProject(project));
-        http.expectOne(((req: HttpRequest<any>) => {
-            return req.url === '/project';
-        })).flush(<Project>{
+        http.expectOne(((req: HttpRequest<any>) => req.url === '/project')).flush(<Project>{
             name: 'proj1',
             key: 'test1',
         });
@@ -1033,9 +931,7 @@ describe('Project', () => {
         }));
         let repoMan = new RepositoriesManager();
         repoMan.name = 'github';
-        http.expectOne(((req: HttpRequest<any>) => {
-            return req.url === '/project/test1/repositories_manager/github/authorize/callback';
-        })).flush(<Project>{
+        http.expectOne(((req: HttpRequest<any>) => req.url === '/project/test1/repositories_manager/github/authorize/callback')).flush(<Project>{
             ...project,
             vcs_servers: [repoMan]
         });
@@ -1058,9 +954,7 @@ describe('Project', () => {
         repoMan.name = 'github';
 
         store.dispatch(new ProjectAction.AddProject(project));
-        http.expectOne(((req: HttpRequest<any>) => {
-            return req.url === '/project';
-        })).flush(<Project>{
+        http.expectOne(((req: HttpRequest<any>) => req.url === '/project')).flush(<Project>{
             name: 'proj1',
             key: 'test1',
             vcs_servers: [repoMan]
@@ -1070,9 +964,7 @@ describe('Project', () => {
             projectKey: project.key,
             repoManager: 'github'
         }));
-        http.expectOne(((req: HttpRequest<any>) => {
-            return req.url === '/project/test1/repositories_manager/github';
-        })).flush(<Project>{
+        http.expectOne(((req: HttpRequest<any>) => req.url === '/project/test1/repositories_manager/github')).flush(<Project>{
             ...project,
             vcs_servers: []
         });

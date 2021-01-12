@@ -7,14 +7,15 @@ export class PermissionService {
     private rwx = 7;
 
     private permissions = [
-        { 'name': 'permission_read', 'value': this.r },
-        { 'name': 'permission_read_execute', 'value': this.rx },
-        { 'name': 'permission_read_write_execute', 'value': this.rwx }
+        { name: 'permission_read', value: this.r },
+        { name: 'permission_read_execute', value: this.rx },
+        { name: 'permission_read_write_execute', value: this.rwx }
     ];
 
     /**
      * Get ReadWriteExecture permission code
-     * @returns {number}
+     *
+     * @returns
      */
     getRWX(): number {
       return this.rwx;
@@ -22,7 +23,8 @@ export class PermissionService {
 
     /**
      * Get permissions list
-     * @returns {number}
+     *
+     * @returns
      */
     getPermissions() {
         return this.permissions;

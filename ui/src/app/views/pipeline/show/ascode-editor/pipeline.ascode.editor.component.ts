@@ -25,7 +25,7 @@ import { Validator } from 'jsonschema';
 import { Subscription } from 'rxjs';
 import { finalize, first } from 'rxjs/operators';
 
-declare var CodeMirror: any;
+declare let CodeMirror: any;
 
 @Component({
     selector: 'app-pipeline-ascode-editor',
@@ -41,7 +41,7 @@ export class PipelineAsCodeEditorComponent implements OnInit, AfterViewInit, OnD
     @Input() project: Project;
     @Input() pipeline: Pipeline;
     // Flag indicate if sidebar is open
-    @Input('open')
+    @Input()
     set open(data: boolean) {
         if (data && !this.updated) {
             this.store.dispatch(new FetchAsCodePipeline({

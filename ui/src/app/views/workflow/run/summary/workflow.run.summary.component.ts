@@ -33,7 +33,7 @@ import { Subscription } from 'rxjs/Subscription';
 })
 @AutoUnsubscribe()
 export class WorkflowRunSummaryComponent implements OnInit, OnDestroy {
-    @Input('direction')
+    @Input()
     set direction(val) {
         this._direction = val;
         this.directionChange.emit(val);
@@ -62,7 +62,7 @@ export class WorkflowRunSummaryComponent implements OnInit, OnDestroy {
     loadingAction = false;
     loadingDelete = false;
     showInfos = false;
-    ansi_up = new AU.default;
+    ansi_up = new AU.default();
 
     pipelineStatusEnum = PipelineStatus;
 

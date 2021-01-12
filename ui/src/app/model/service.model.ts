@@ -1,3 +1,4 @@
+import { Group } from 'app/model/group.model';
 import { MonitoringStatus } from './monitoring.model';
 
 
@@ -20,4 +21,5 @@ export class Service {
   status: string;
   version: string;
   up_to_date: boolean;
+  group: Group;
 }

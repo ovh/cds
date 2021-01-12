@@ -30,7 +30,7 @@ export class AuthenticationService {
         if (requireMFA) {
             params = params.append('require_mfa', String(requireMFA));
         }
-        return this._http.get<AuthDriverSigningRedirect>(`/auth/consumer/${consumerType}/askSignin`, { params: params });
+        return this._http.get<AuthDriverSigningRedirect>(`/auth/consumer/${consumerType}/askSignin`, { params });
     }
 
     getDrivers(): Observable<AuthDriverManifests> {

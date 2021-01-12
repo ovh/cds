@@ -42,8 +42,8 @@ describe('CDS: Application Repo Component', () => {
     let injector: Injector;
     let toast: ToastService;
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
             declarations: [
                 DummyComponent
             ],
@@ -84,7 +84,7 @@ describe('CDS: Application Repo Component', () => {
                 HttpClientTestingModule
             ],
             schemas: [NO_ERRORS_SCHEMA]
-        });
+        }).compileComponents();
 
 
         injector = getTestBed();
@@ -99,11 +99,11 @@ describe('CDS: Application Repo Component', () => {
     it('Load component + select repository', fakeAsync(() => {
         const http = TestBed.get(HttpTestingController);
         let mockResponse = [
-            { 'name': 'repo1', 'fullname': 'frepo1' },
-            { 'name': 'repo2', 'fullname': 'frepo2' },
-            { 'name': 'repo3', 'fullname': 'frepo3' },
-            { 'name': 'repo4', 'fullname': 'frepo4' },
-            { 'name': 'repo5', 'fullname': 'frepo5' }
+            { name: 'repo1', fullname: 'frepo1' },
+            { name: 'repo2', fullname: 'frepo2' },
+            { name: 'repo3', fullname: 'frepo3' },
+            { name: 'repo4', fullname: 'frepo4' },
+            { name: 'repo5', fullname: 'frepo5' }
         ];
 
         let fixture = TestBed.createComponent(ApplicationRepositoryComponent);
@@ -124,9 +124,7 @@ describe('CDS: Application Repo Component', () => {
         fixture.componentInstance.project = p;
 
         fixture.componentInstance.ngOnInit();
-        http.expectOne(((req: HttpRequest<any>) => {
-            return req.url === '/project/key1/repositories_manager/RepoManager/repos';
-        })).flush(mockResponse);
+        http.expectOne(((req: HttpRequest<any>) => req.url === '/project/key1/repositories_manager/RepoManager/repos')).flush(mockResponse);
 
         expect(fixture.componentInstance.selectedRepoManager).toBe('RepoManager');
         expect(fixture.componentInstance.repos.length).toBe(5, 'Must have 5 repositories in list');
@@ -141,9 +139,7 @@ describe('CDS: Application Repo Component', () => {
 
         let compiled = fixture.debugElement.nativeElement;
         compiled.querySelector('button[name="addrepobtn"]').click();
-        http.expectOne(((req: HttpRequest<any>) => {
-            return req.url === '/project/key1/repositories_manager/RepoManager/application/app/attach';
-        })).flush({
+        http.expectOne(((req: HttpRequest<any>) => req.url === '/project/key1/repositories_manager/RepoManager/application/app/attach')).flush({
             name: 'app',
             vcs_server: 'RepoManager',
             repository_fullname: 'frepo3'
@@ -164,9 +160,7 @@ describe('CDS: Application Repo Component', () => {
         fixture.detectChanges();
         tick(50);
         compiled.querySelector('.ui.red.button.active').click();
-        http.expectOne(((req: HttpRequest<any>) => {
-            return req.url === '/project/key1/repositories_manager/RepoManager/application/app/detach';
-        })).flush({
+        http.expectOne(((req: HttpRequest<any>) => req.url === '/project/key1/repositories_manager/RepoManager/application/app/detach')).flush({
             name: 'app',
         });
         tick(100);

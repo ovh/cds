@@ -585,9 +585,9 @@ export class PipelinesState {
             ctx.setState({
                 ...state,
                 pipeline: pip,
-                editPipeline: editPipeline,
+                editPipeline,
                 currentProjectKey: action.payload.projectKey,
-                editMode: editMode,
+                editMode,
             });
         }));
     }
@@ -608,8 +608,8 @@ export class PipelinesState {
         Pipeline.InitRef(editPipeline);
         ctx.setState({
             ...state,
-            editPipeline: editPipeline,
-            editMode: editMode,
+            editPipeline,
+            editMode,
         });
     }
 

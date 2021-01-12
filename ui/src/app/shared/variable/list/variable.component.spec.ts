@@ -1,25 +1,25 @@
-/* tslint:disable:no-unused-variable */
+/* eslint-disable @typescript-eslint/no-unused-vars */
 
 import {TestBed, tick, fakeAsync} from '@angular/core/testing';
-import {VariableComponent} from './variable.component';
-import {VariableService} from '../../../service/variable/variable.service';
 import {TranslateService, TranslateLoader, TranslateParser, TranslateModule} from '@ngx-translate/core';
-import {SharedService} from '../../shared.service';
 import {RouterTestingModule} from '@angular/router/testing';
+import {HttpClientTestingModule, HttpTestingController} from '@angular/common/http/testing';
+import {HttpRequest} from '@angular/common/http';
+import {APP_BASE_HREF} from '@angular/common';
+import {VariableService} from '../../../service/variable/variable.service';
+import {SharedService} from '../../shared.service';
 import {Variable} from '../../../model/variable.model';
 import {SharedModule} from '../../shared.module';
 import {VariableEvent} from '../variable.event.model';
 import {ProjectAuditService} from '../../../service/project/project.audit.service';
 import {EnvironmentAuditService} from '../../../service/environment/environment.audit.service';
 import {ApplicationAuditService} from '../../../service/application/application.audit.service';
-import {HttpClientTestingModule, HttpTestingController} from '@angular/common/http/testing';
-import {HttpRequest} from '@angular/common/http';
-import {APP_BASE_HREF} from '@angular/common';
+import {VariableComponent} from './variable.component';
 
 describe('CDS: Variable List Component', () => {
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
             declarations: [
             ],
             providers: [
@@ -39,7 +39,7 @@ describe('CDS: Variable List Component', () => {
                 TranslateModule.forRoot(),
                 HttpClientTestingModule
             ]
-        });
+        }).compileComponents();
     });
 
 
@@ -53,9 +53,7 @@ describe('CDS: Variable List Component', () => {
         let component = fixture.debugElement.componentInstance;
         expect(component).toBeTruthy();
 
-        http.expectOne(((req: HttpRequest<any>) => {
-            return req.url === '/variable/type';
-        })).flush(mock);
+        http.expectOne(((req: HttpRequest<any>) => req.url === '/variable/type')).flush(mock);
 
         let vars: Variable[] = [];
         let variable: Variable = new Variable();

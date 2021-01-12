@@ -26,7 +26,7 @@ import { finalize } from 'rxjs/operators';
 })
 export class VariableComponent extends Table<Variable> {
 
-    @Input('variables')
+    @Input()
     set variables(data: Variable[]) {
         this._variables = data;
         this.goTopage(1);
@@ -34,7 +34,7 @@ export class VariableComponent extends Table<Variable> {
     get variables() {
         return this._variables;
     }
-    @Input('maxPerPage')
+    @Input()
     set maxPerPage(data: number) {
         this.nbElementsByPage = data;
     }
@@ -84,6 +84,7 @@ export class VariableComponent extends Table<Variable> {
 
     /**
      * Send Event to parent component.
+     *
      * @param type Type of event (update, delete)
      * @param variable Variable data
      */

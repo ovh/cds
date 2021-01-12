@@ -24,7 +24,7 @@ func TestLoadOldItemUnitByItemStatusAndDuration(t *testing.T) {
 	m := gorpmapper.New()
 	item.InitDBMapping(m)
 	storage.InitDBMapping(m)
-	db, _ := test.SetupPGWithMapper(t, m, sdk.TypeCDN)
+	db, store := test.SetupPGWithMapper(t, m, sdk.TypeCDN)
 	cfg := test.LoadTestingConf(t, sdk.TypeCDN)
 
 	cdntest.ClearItem(t, context.TODO(), m, db)
@@ -33,7 +33,7 @@ func TestLoadOldItemUnitByItemStatusAndDuration(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.TODO(), 5*time.Second)
 	t.Cleanup(cancel)
 
-	cdnUnits, err := storage.Init(ctx, m, db.DbMap, sdk.NewGoRoutines(), storage.Configuration{
+	cdnUnits, err := storage.Init(ctx, m, store, db.DbMap, sdk.NewGoRoutines(), storage.Configuration{
 		HashLocatorSalt: "thisismysalt",
 		Buffers: []storage.BufferConfiguration{
 			{
@@ -110,7 +110,7 @@ func TestLoadAllItemIDUnknownByUnit(t *testing.T) {
 	m := gorpmapper.New()
 	item.InitDBMapping(m)
 	storage.InitDBMapping(m)
-	db, _ := test.SetupPGWithMapper(t, m, sdk.TypeCDN)
+	db, store := test.SetupPGWithMapper(t, m, sdk.TypeCDN)
 	cfg := test.LoadTestingConf(t, sdk.TypeCDN)
 
 	cdntest.ClearItem(t, context.TODO(), m, db)
@@ -134,7 +134,7 @@ func TestLoadAllItemIDUnknownByUnit(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.TODO(), 5*time.Second)
 	t.Cleanup(cancel)
 
-	cdnUnits, err := storage.Init(ctx, m, db.DbMap, sdk.NewGoRoutines(), storage.Configuration{
+	cdnUnits, err := storage.Init(ctx, m, store, db.DbMap, sdk.NewGoRoutines(), storage.Configuration{
 		HashLocatorSalt: "thisismysalt",
 		Buffers: []storage.BufferConfiguration{
 			{

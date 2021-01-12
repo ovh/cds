@@ -140,18 +140,12 @@ export class DiffItemComponent implements OnInit, OnChanges, OnDestroy {
         this.diff = diff;
 
         if (this.mode === Mode.UNIFIED) {
-            this.contentLeft = diff.reduce((v, part) => {
-                return v + part.value;
-            }, '');
+            this.contentLeft = diff.reduce((v, part) => v + part.value, '');
             return;
         }
 
-        this.contentLeft = diff.reduce((v, part) => {
-            return v + (part.added ? '\n'.repeat(part.count) : part.value);
-        }, '');
+        this.contentLeft = diff.reduce((v, part) => v + (part.added ? '\n'.repeat(part.count) : part.value), '');
 
-        this.contentRight = diff.reduce((v, part) => {
-            return v + (part.removed ? '\n'.repeat(part.count) : part.value);
-        }, '');
+        this.contentRight = diff.reduce((v, part) => v + (part.removed ? '\n'.repeat(part.count) : part.value), '');
     }
 }

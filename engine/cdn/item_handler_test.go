@@ -110,7 +110,7 @@ func TestGetItemLogsDownloadHandler(t *testing.T) {
 
 	ctx, cancel := context.WithCancel(context.TODO())
 	t.Cleanup(cancel)
-	s.Units = newRunningStorageUnits(t, s.Mapper, db.DbMap, ctx)
+	s.Units = newRunningStorageUnits(t, s.Mapper, db.DbMap, ctx, s.Cache)
 
 	hm := handledMessage{
 		Msg: hook.Message{

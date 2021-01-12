@@ -17,7 +17,7 @@ import { GroupService } from 'app/service/group/group.service';
 import { UserService } from 'app/service/user/user.service';
 import { Column, Select } from 'app/shared/table/data-table.component';
 import { ToastService } from 'app/shared/toast/ToastService';
-import { finalize } from 'rxjs/operators/finalize';
+import { finalize } from 'rxjs/operators';
 
 export enum CloseEventType {
     CREATED = 'CREATED',
@@ -88,8 +88,12 @@ export class ConsumerCreateModalComponent {
         const config = new TemplateModalConfig<boolean, boolean, void>(this.consumerDetailsModal);
         config.mustScroll = true;
         this.modal = this._modalService.open(config);
-        this.modal.onApprove(_ => { this.closeCallback() });
-        this.modal.onDeny(_ => { this.closeCallback() });
+        this.modal.onApprove(_ => {
+ this.closeCallback()
+});
+        this.modal.onDeny(_ => {
+ this.closeCallback()
+});
 
         this.init();
     }
@@ -171,9 +175,7 @@ export class ConsumerCreateModalComponent {
 
     filterGroups(f: string) {
         const lowerFilter = f.toLowerCase();
-        return (g: Group) => {
-            return g.name.toLowerCase().indexOf(lowerFilter) !== -1;
-        }
+        return (g: Group) => g.name.toLowerCase().indexOf(lowerFilter) !== -1
     }
 
     clickBack() {

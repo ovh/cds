@@ -17,7 +17,7 @@ import { WorkflowTemplateService } from 'app/service/workflow-template/workflow-
 import { WorkflowService } from 'app/service/workflow/workflow.service';
 import { calculateWorkflowTemplateDiff } from 'app/shared/diff/diff';
 import { Item } from 'app/shared/diff/list/diff.list.component';
-import { forkJoin } from 'rxjs/internal/observable/forkJoin';
+import { forkJoin } from 'rxjs';
 import { finalize } from 'rxjs/operators';
 
 @Component({
@@ -33,13 +33,13 @@ export class WorkflowTemplateApplyModalComponent implements OnChanges {
     modal: SuiActiveModal<boolean, boolean, void>;
     open: boolean;
 
-    // tslint:disable-next-line: no-input-rename
+    // eslint-disable-next-line @angular-eslint/no-input-rename
     @Input('project') projectIn: Project;
-    // tslint:disable-next-line: no-input-rename
+    // eslint-disable-next-line @angular-eslint/no-input-rename
     @Input('workflow') workflowIn: Workflow;
-    // tslint:disable-next-line: no-input-rename
+    // eslint-disable-next-line @angular-eslint/no-input-rename
     @Input('workflowTemplate') workflowTemplateIn: WorkflowTemplate;
-    // tslint:disable-next-line: no-input-rename
+    // eslint-disable-next-line @angular-eslint/no-input-rename
     @Input('workflowTemplateInstance') workflowTemplateInstanceIn: WorkflowTemplateInstance;
     @Output() close = new EventEmitter();
 

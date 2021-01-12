@@ -1,8 +1,8 @@
 import { Injectable } from '@angular/core';
 import { Broadcast } from 'app/model/broadcast.model';
 import * as immutable from 'immutable';
-import { BehaviorSubject } from 'rxjs/BehaviorSubject';
-import { Observable } from 'rxjs/Observable';
+import { Observable, BehaviorSubject } from 'rxjs';
+import { map } from 'rxjs/operators';
 import { BroadcastService } from './broadcast.service';
 
 /**
@@ -18,10 +18,10 @@ export class BroadcastStore {
     }
 
     create(broadcast: Broadcast): Observable<Broadcast> {
-        return this._broadcastService.createBroadcast(broadcast).map(bc => {
+        return this._broadcastService.createBroadcast(broadcast).pipe(map(bc => {
             this.addBroadcastInCache(bc);
             return bc;
-        });
+        }));
     }
 
     addBroadcastInCache(bc: Broadcast): void {
@@ -29,10 +29,10 @@ export class BroadcastStore {
     }
 
     delete(broadcast: Broadcast): Observable<boolean> {
-        return this._broadcastService.deleteBroadcast(broadcast).map(b => {
+        return this._broadcastService.deleteBroadcast(broadcast).pipe(map(b => {
             this.removeBroadcastFromCache(broadcast.id);
             return b;
-        });
+        }));
     }
 
     removeBroadcastFromCache(bcID: number): void {
@@ -40,27 +40,28 @@ export class BroadcastStore {
     }
 
     update(broadcast: Broadcast): Observable<Broadcast> {
-        return this._broadcastService.updateBroadcast(broadcast).map(bc => {
+        return this._broadcastService.updateBroadcast(broadcast).pipe(map(bc => {
             this.addBroadcastInCache(bc);
             return bc;
-        });
+        }));
     }
 
     markAsRead(broadcastId: number): Observable<boolean> {
-        return this._broadcastService.markAsRead(broadcastId).map(b => {
+        return this._broadcastService.markAsRead(broadcastId).pipe(map(b => {
             let bc = this._broadcasts.getValue().get(broadcastId);
             if (bc) {
                 bc.read = true;
             }
             this.addBroadcastInCache(bc);
             return b;
-        })
+        }))
     }
 
 
     /**
      * Get the list of availablen broadcasts
-     * @returns {Observable<Broadcast[]>}
+     *
+     * @returns
      */
     getBroadcasts(id?: number): Observable<immutable.Map<number, Broadcast>> {
         if (id && !this._broadcasts.getValue().get(id)) {

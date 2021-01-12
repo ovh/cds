@@ -1,0 +1,116 @@
+{
+  "root": true,
+  "ignorePatterns": [
+    "projects/**/*"
+  ],
+  "overrides": [
+    {
+      "files": [
+        "*.ts"
+      ],
+      "parserOptions": {
+        "project": [
+          "tsconfig.json"
+        ],
+        "createDefaultProgram": true
+      },
+      "extends": [
+        "plugin:@angular-eslint/ng-cli-compat",
+        "plugin:@angular-eslint/ng-cli-compat--formatting-add-on",
+        "plugin:@angular-eslint/template/process-inline-templates"
+      ],
+      "rules": {
+        "@typescript-eslint/ban-types": [
+          "off"
+        ],
+        "@angular-eslint/no-output-native": [
+          "off"
+        ],
+        "no-shadow": [
+          "off"
+        ],
+        "@angular-eslint/no-output-on-prefix": [
+          "off"
+        ],
+        "@typescript-eslint/prefer-for-of": [
+          "off"
+        ],
+        "max-len": [
+          "off"
+        ],
+        "prefer-arrow/prefer-arrow-functions": [
+          "off"
+        ],
+        "@typescript-eslint/consistent-type-assertions": [
+          "off"
+        ],
+        "@typescript-eslint/naming-convention": [
+          "off"
+        ],
+        "@typescript-eslint/member-ordering": [
+          "off"
+        ],
+        "@angular-eslint/component-selector": [
+          "error",
+          {
+            "type": "element",
+            "prefix": "app",
+            "style": "kebab-case"
+          }
+        ],
+        "@angular-eslint/directive-selector": [
+          "error",
+          {
+            "type": "attribute",
+            "prefix": "app",
+            "style": "camelCase"
+          }
+        ],
+        "@typescript-eslint/consistent-type-definitions": "error",
+        "@typescript-eslint/dot-notation": "off",
+        "@typescript-eslint/explicit-member-accessibility": [
+          "off",
+          {
+            "accessibility": "explicit"
+          }
+        ],
+        "@typescript-eslint/member-delimiter-style": [
+          "off",
+          {
+            "multiline": {
+              "delimiter": "none",
+              "requireLast": true
+            },
+            "singleline": {
+              "delimiter": "semi",
+              "requireLast": false
+            }
+          }
+        ],
+        "@typescript-eslint/semi": [
+          "off",
+          null
+        ],
+        "brace-style": [
+          "error",
+          "1tbs"
+        ],
+        "id-blacklist": "off",
+        "id-match": "off",
+        "import/order": "error",
+        "no-redeclare": "error",
+        "no-underscore-dangle": "off",
+        "prefer-const": "off"
+      }
+    },
+    {
+      "files": [
+        "*.html"
+      ],
+      "extends": [
+        "plugin:@angular-eslint/template/recommended"
+      ],
+      "rules": {}
+    }
+  ]
+}

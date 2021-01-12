@@ -1,15 +1,15 @@
-/* tslint:disable:no-unused-variable */
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import {TestBed, fakeAsync} from '@angular/core/testing';
 import {RouterTestingModule} from '@angular/router/testing';
 import {TranslateService, TranslateLoader, TranslateParser, TranslateModule} from '@ngx-translate/core';
-import {CommitListComponent} from './commit.list.component';
-import {SharedModule} from '../shared.module';
 import {APP_BASE_HREF} from '@angular/common';
+import {SharedModule} from '../shared.module';
+import {CommitListComponent} from './commit.list.component';
 
 describe('CDS: Commit List', () => {
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
             declarations: [],
             providers: [
                 TranslateService,
@@ -22,7 +22,7 @@ describe('CDS: Commit List', () => {
                 TranslateModule.forRoot(),
                 SharedModule
             ]
-        });
+        }).compileComponents();
     });
 
     it('should load component', fakeAsync(() => {

@@ -26,10 +26,8 @@ export class WorkflowRunArtifactListComponent implements OnInit, OnDestroy {
     constructor(private _cd: ChangeDetectorRef) {
         this.filter = f => {
             const lowerFilter = f.toLowerCase();
-            return d => {
-                return d.name.toLowerCase().indexOf(lowerFilter) !== -1 ||
-                    d.sha512sum.toLowerCase().indexOf(lowerFilter) !== -1;
-            }
+            return d => d.name.toLowerCase().indexOf(lowerFilter) !== -1 ||
+                    d.sha512sum.toLowerCase().indexOf(lowerFilter) !== -1
         };
 
         this.columns = [

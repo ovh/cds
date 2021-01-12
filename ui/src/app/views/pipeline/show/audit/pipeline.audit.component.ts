@@ -79,12 +79,10 @@ export class PipelineAuditComponent implements OnInit {
                 type: ColumnType.CONFIRM_BUTTON,
                 name: '',
                 disabled: !this.project.permissions.writable,
-                selector: (audit: PipelineAudit) => {
-                    return {
+                selector: (audit: PipelineAudit) => ({
                         title: 'common_rollback',
                         click: () => this.rollback(audit.id)
-                    };
-                },
+                    }),
             },
         ];
     }
@@ -145,14 +143,12 @@ export class PipelineAuditComponent implements OnInit {
             }
         });
 
-        this.items = this.currentCompare.map(c => {
-            return <Item>{
+        this.items = this.currentCompare.map(c => <Item>{
                 name: c.title,
                 before: c.before,
                 after: c.after,
                 type: c.type === 'json' ? 'application/json' : 'text/plain'
-            }
-        });
+            });
     }
 
     getAddJobDiff(path: Array<string>, pipTo: Pipeline): PipelineAuditDiff {

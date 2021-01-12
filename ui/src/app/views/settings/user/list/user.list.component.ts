@@ -3,7 +3,7 @@ import { AuthentifiedUser } from 'app/model/user.model';
 import { UserService } from 'app/service/user/user.service';
 import { PathItem } from 'app/shared/breadcrumb/breadcrumb.component';
 import { Column, ColumnType } from 'app/shared/table/data-table.component';
-import { finalize } from 'rxjs/operators/finalize';
+import { finalize } from 'rxjs/operators';
 
 @Component({
     selector: 'app-user-list',
@@ -25,24 +25,22 @@ export class UserListComponent {
             <Column<AuthentifiedUser>>{
                 type: ColumnType.ICON,
                 class: 'one',
-                selector: (u: AuthentifiedUser) => { return u.isAdmin() ? ['user', 'outline', 'icon'] : ['user', 'icon']; }
+                selector: (u: AuthentifiedUser) => u.isAdmin() ? ['user', 'outline', 'icon'] : ['user', 'icon']
             },
             <Column<AuthentifiedUser>>{
                 type: ColumnType.ROUTER_LINK,
                 class: 'six',
                 name: 'user_label_username',
-                selector: (u: AuthentifiedUser) => {
-                    return {
+                selector: (u: AuthentifiedUser) => ({
                         link: `/settings/user/${u.username}`,
                         value: u.username
-                    };
-                }
+                    })
             },
             <Column<AuthentifiedUser>>{
                 type: ColumnType.TEXT,
                 class: 'six',
                 name: 'user_label_fullname',
-                selector: (u: AuthentifiedUser) => { return u.username; }
+                selector: (u: AuthentifiedUser) => u.username
             }
         ];
         this.getUsers();
@@ -62,14 +60,14 @@ export class UserListComponent {
                 this.loading = false;
                 this._cd.markForCheck();
             }))
-            .subscribe(us => { this.users = us; });
+            .subscribe(us => {
+ this.users = us;
+});
     }
 
     filter(f: string) {
         const lowerFilter = f.toLowerCase();
-        return (u: AuthentifiedUser) => {
-            return u.username.toLowerCase().indexOf(lowerFilter) !== -1 ||
-                u.fullname.toLowerCase().indexOf(lowerFilter) !== -1;
-        }
+        return (u: AuthentifiedUser) => u.username.toLowerCase().indexOf(lowerFilter) !== -1 ||
+                u.fullname.toLowerCase().indexOf(lowerFilter) !== -1
     }
 }

@@ -4,6 +4,7 @@ import { Store } from '@ngxs/store';
 import { AuthentifiedUser } from 'app/model/user.model';
 import { AuthenticationState } from 'app/store/authentication.state';
 import { Observable } from 'rxjs';
+import { filter, first, map } from 'rxjs/operators';
 
 @Injectable()
 export class AdminGuard implements CanActivate, CanActivateChild {
@@ -15,18 +16,20 @@ export class AdminGuard implements CanActivate, CanActivateChild {
 
     isAdmin(): Observable<boolean> {
         return this._store.select(AuthenticationState.user)
-            .map((u: AuthentifiedUser): boolean => {
-                if (!u) {
-                    return null;
-                }
-                if (!u.isAdmin()) {
-                    this._router.navigate(['/']);
-                    return null;
-                }
-                return true;
-            })
-            .filter(exists => exists !== null)
-            .first();
+            .pipe(
+                map((u: AuthentifiedUser): boolean => {
+                    if (!u) {
+                        return null;
+                    }
+                    if (!u.isAdmin()) {
+                        this._router.navigate(['/']);
+                        return null;
+                    }
+                    return true;
+                }),
+                filter(exists => exists !== null),
+                first()
+            );
     }
 
     canActivate(

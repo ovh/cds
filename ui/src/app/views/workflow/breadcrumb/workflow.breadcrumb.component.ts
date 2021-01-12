@@ -21,14 +21,18 @@ export class WorkflowBreadCrumbComponent implements OnInit, OnDestroy {
         this._project = p;
         this.updatePath();
     }
-    get project() { return this._project; }
+    get project() {
+ return this._project;
+}
 
     _workflow: Workflow;
     @Input() set workflow(w: Workflow) {
         this._workflow = w;
         this.updatePath();
     }
-    get workflow() { return this._workflow; }
+    get workflow() {
+ return this._workflow;
+}
 
     @Select(WorkflowState.getSelectedWorkflowRun()) workflowRun$: Observable<WorkflowRun>;
     workflowRunSub: Subscription;

@@ -27,15 +27,11 @@ export class FeatureState {
     constructor() { }
 
     static feature(key: string) {
-        return createSelector([FeatureState], (state: FeatureStateModel) => {
-            return state.features.filter(f => f.key === key);
-        });
+        return createSelector([FeatureState], (state: FeatureStateModel) => state.features.filter(f => f.key === key));
     }
 
     static featureProject(key: string, params: string) {
-        return createSelector([FeatureState], (state: FeatureStateModel) => {
-            return state.features.find(f => f.key === key)?.results.find(r => r.paramString === params);
-        });
+        return createSelector([FeatureState], (state: FeatureStateModel) => state.features.find(f => f.key === key)?.results.find(r => r.paramString === params));
     }
 
 

@@ -26,7 +26,7 @@ import { Validator } from 'jsonschema';
 import { Subscription } from 'rxjs';
 import { finalize, first } from 'rxjs/operators';
 
-declare var CodeMirror: any;
+declare let CodeMirror: any;
 
 @Component({
     selector: 'app-workflow-sidebar-code',
@@ -42,7 +42,7 @@ export class WorkflowSidebarCodeComponent implements OnInit, AfterViewInit, OnDe
     @Input() project: Project;
     @Input() workflow: Workflow;
     // Flag indicate if sidebar is open
-    @Input('open')
+    @Input()
     set open(data: boolean) {
         if (data && !this.updated) {
             this.loadingGet = true;

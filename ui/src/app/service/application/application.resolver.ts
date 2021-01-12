@@ -37,9 +37,7 @@ export class ApplicationQueryParamResolver implements Resolve<Application> {
                 applicationName: route.queryParams['application']
             })).pipe(
                 flatMap(() => this.store.selectOnce(ApplicationsState.currentState())),
-                catchError(() => {
-                    return observableOf(null);
-                })
+                catchError(() => observableOf(null))
             );
         } else {
             return observableOf(null);

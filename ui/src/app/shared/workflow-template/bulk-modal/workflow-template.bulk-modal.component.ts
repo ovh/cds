@@ -24,8 +24,8 @@ import { WorkflowTemplateService } from 'app/service/workflow-template/workflow-
 import { ParamData as AsCodeParamData } from 'app/shared/ascode/save-form/ascode.save-form.component';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { Column, ColumnType, Select } from 'app/shared/table/data-table.component';
-import { Observable, Subscription } from 'rxjs';
-import { finalize } from 'rxjs/internal/operators/finalize';
+import { interval, Observable, Subscription } from 'rxjs';
+import { finalize } from 'rxjs/operators';
 
 @Component({
     selector: 'app-workflow-template-bulk-modal',
@@ -92,12 +92,10 @@ export class WorkflowTemplateBulkModalComponent implements OnDestroy {
                 type: ColumnType.LABEL,
                 name: 'common_status',
                 class: 'right aligned',
-                selector: (i: WorkflowTemplateBulkOperation) => {
-                    return {
+                selector: (i: WorkflowTemplateBulkOperation) => ({
                         class: OperationStatusUtil.color(i.status),
                         value: OperationStatusUtil.translate(i.status)
-                    };
-                }
+                    })
             }
         ];
 
@@ -223,7 +221,7 @@ export class WorkflowTemplateBulkModalComponent implements OnDestroy {
     }
 
     startPollingStatus() {
-        this.pollingStatusSub = Observable.interval(1000).subscribe(() => {
+        this.pollingStatusSub = interval(1000).subscribe(() => {
             this._workflowTemplateService.getBulk(this.workflowTemplate.group.name,
                 this.workflowTemplate.slug, this.response.id)
                 .pipe(finalize(() => this._cd.markForCheck()))

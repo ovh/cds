@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component } from '@angular/core';
-import { finalize } from 'rxjs/operators/finalize';
+import { finalize } from 'rxjs/operators';
 import { Group } from '../../../../model/group.model';
 import { GroupService } from '../../../../service/group/group.service';
 import { PathItem } from '../../../../shared/breadcrumb/breadcrumb.component';
@@ -25,12 +25,10 @@ export class GroupListComponent {
             <Column<Group>>{
                 type: ColumnType.ROUTER_LINK,
                 name: 'common_name',
-                selector: (g: Group) => {
-                    return {
+                selector: (g: Group) => ({
                         link: '/settings/group/' + g.name,
                         value: g.name
-                    };
-                }
+                    })
             }
         ];
         this.getGroups();
@@ -50,13 +48,13 @@ export class GroupListComponent {
                 this.loading = false;
                 this._cd.markForCheck();
             }))
-            .subscribe(gs => { this.groups = gs; });
+            .subscribe(gs => {
+ this.groups = gs;
+});
     }
 
     filter(f: string) {
         const lowerFilter = f.toLowerCase();
-        return (g: Group) => {
-            return g.name.toLowerCase().indexOf(lowerFilter) !== -1;
-        }
+        return (g: Group) => g.name.toLowerCase().indexOf(lowerFilter) !== -1
     }
 }

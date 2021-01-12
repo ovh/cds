@@ -7,7 +7,7 @@ import { WorkerModelService } from 'app/service/worker-model/worker-model.servic
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { SharedService } from 'app/shared/shared.service';
 import omit from 'lodash-es/omit';
-import { finalize } from 'rxjs/operators/finalize';
+import { finalize } from 'rxjs/operators';
 import { Subscription } from 'rxjs/Subscription';
 
 @Component({
@@ -29,7 +29,9 @@ export class WorkerModelFormComponent implements OnInit, OnDestroy {
             }
         }
     }
-    get workerModel(): WorkerModel { return this._workerModel; }
+    get workerModel(): WorkerModel {
+ return this._workerModel;
+}
     @Input() currentUser: AuthentifiedUser;
     @Input() loading: boolean;
     @Input() types: Array<string>;

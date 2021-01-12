@@ -63,6 +63,16 @@
               "node_modules/ansi_up/ansi_up.js",
               "node_modules/sanitize-html/dist/sanitize-html.min.js",
               "node_modules/prismjs/prism.js"
+            ],
+            "allowedCommonJsDependencies": [
+                "raven-js",
+                "dragula",
+                "js-yaml",
+                "jsonschema",
+                "dagre-d3",
+                "ansi_up",
+                "fast-json-patch",
+                "zxcvbn"
             ]
           },
           "configurations": {
@@ -79,7 +89,6 @@
               "optimization": true,
               "outputHashing": "all",
               "sourceMap": true,
-              "extractCss": true,
               "namedChunks": false,
               "aot": true,
               "extractLicenses": true,
@@ -171,19 +180,11 @@
           }
         },
         "lint": {
-          "builder": "@angular-devkit/build-angular:tslint",
+          "builder": "@angular-eslint/builder:lint",
           "options": {
-            "tsConfig": [
-              "src/tsconfig.lint.json"
-            ],
-            "files": [
-              "src/**/*.ts"
-            ],
-            "exclude": [
-              "src/**/*.spec.ts",
-              "src/test.ts",
-              "../node_modules/**/*",
-              "e2e/**/*.ts"
+            "lintFilePatterns": [
+              "src/app/**/*.ts",
+              "src/app/**/*.html"
             ]
           }
         }

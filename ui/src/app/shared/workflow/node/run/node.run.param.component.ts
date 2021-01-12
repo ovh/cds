@@ -17,7 +17,7 @@ import cloneDeep from 'lodash-es/cloneDeep';
 import { debounceTime, finalize, first } from 'rxjs/operators';
 import { Subscription } from 'rxjs/Subscription';
 
-declare var CodeMirror: any;
+declare let CodeMirror: any;
 
 @Component({
     selector: 'app-workflow-node-run-param',
@@ -203,8 +203,12 @@ export class WorkflowNodeRunParamComponent implements AfterViewInit, OnDestroy {
         }
 
         this.modal = this._modalService.open(config);
-        this.modal.onApprove(() => { this.open = false; });
-        this.modal.onDeny(() => { this.open = false; });
+        this.modal.onApprove(() => {
+ this.open = false;
+});
+        this.modal.onDeny(() => {
+ this.open = false;
+});
 
         this.codeMirrorConfig = Object.assign({}, this.codeMirrorConfig, { readOnly: this.readOnly });
 
@@ -236,7 +240,7 @@ export class WorkflowNodeRunParamComponent implements AfterViewInit, OnDestroy {
         if (!this.linkedToRepo) {
             return;
         }
-        let branch, hash, repository;
+        let branch; let hash; let repository;
         let currentContext = this.getCurrentPayload();
 
         if (change && this.payloadString) {
@@ -396,6 +400,8 @@ export class WorkflowNodeRunParamComponent implements AfterViewInit, OnDestroy {
     }
 
     changeCodeMirror(codemirror: any, eventRoot: Event): void {
+        this.invalidJSON = false;
+
         let num = this.num;
         if (!codemirror || !codemirror.instance) {
             return;

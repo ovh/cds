@@ -14,7 +14,8 @@ export class RequirementService {
 
     /**
      * Get the list of available requirements
-     * @returns {Observable<string[]>}
+     *
+     * @returns
      */
     getRequirementsTypes(): Observable<string[]> {
         return this._http.get<string[]>('/requirement/types');
@@ -22,8 +23,9 @@ export class RequirementService {
 
     /**
      * Get the list of available requirements values for a type
+     *
      * @param type Type of requirement
-     * @returns {Observable<string[]>}
+     * @returns
      */
     getRequirementsTypeValues(type: string): Observable<string[]> {
         return this._http.get<string[]>('/requirement/types/' + type);

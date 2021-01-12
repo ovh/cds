@@ -35,7 +35,7 @@ export class WorkflowSidebarRunListComponent implements OnDestroy {
     @ViewChild('tagsList') tagsList: ElementRef;
 
     _workflow: Workflow;
-    @Input('workflow')
+    @Input()
     set workflow(data: Workflow) {
         if (data) {
             if (!this._workflow || this._workflow.id !== data.id) {
@@ -51,7 +51,9 @@ export class WorkflowSidebarRunListComponent implements OnDestroy {
             this._workflow = data;
         }
     }
-    get workflow() { return this._workflow; }
+    get workflow() {
+ return this._workflow;
+}
 
     @Select(WorkflowState.getSelectedWorkflowRun()) wrun$: Observable<WorkflowRun>
     wrunSub: Subscription;
@@ -127,7 +129,7 @@ export class WorkflowSidebarRunListComponent implements OnDestroy {
             }))
             .subscribe((runs) => {
                 this._store.dispatch(new SetWorkflowRuns(
-                    { projectKey: this.project.key, workflowName: this.workflow.name, runs: runs, filters: filter }))
+                    { projectKey: this.project.key, workflowName: this.workflow.name, runs, filters: filter }))
             });
     }
 

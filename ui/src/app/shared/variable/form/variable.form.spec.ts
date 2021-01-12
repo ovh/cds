@@ -1,22 +1,22 @@
-/* tslint:disable:no-unused-variable */
+/* eslint-disable @typescript-eslint/no-unused-vars */
 
 import {TestBed, tick, fakeAsync} from '@angular/core/testing';
-import {VariableService} from '../../../service/variable/variable.service';
 import {TranslateService, TranslateLoader, TranslateParser, TranslateModule} from '@ngx-translate/core';
-import {SharedService} from '../../shared.service';
 import {RouterTestingModule} from '@angular/router/testing';
-import {VariableFormComponent} from './variable.form';
+import {HttpClientTestingModule} from '@angular/common/http/testing';
+import { Observable, of } from 'rxjs';
 import {GroupService} from '../../../service/group/group.service';
 import {Variable} from '../../../model/variable.model';
 import {VariableEvent} from '../variable.event.model';
 import {SharedModule} from '../../shared.module';
-import {HttpClientTestingModule} from '@angular/common/http/testing';
-import { Observable, of } from 'rxjs';
+import {SharedService} from '../../shared.service';
+import {VariableService} from '../../../service/variable/variable.service';
+import {VariableFormComponent} from './variable.form';
 
 describe('CDS: Variable From Component', () => {
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
             declarations: [
             ],
             providers: [
@@ -33,7 +33,7 @@ describe('CDS: Variable From Component', () => {
                 RouterTestingModule.withRoutes([]),
                 HttpClientTestingModule
             ]
-        });
+        }).compileComponents();
     });
 
 
@@ -89,6 +89,6 @@ class MockApplicationService {
     }
 
     getTypesFromAPI(): Observable<string[]> {
-        return of(["string", "password"])
+        return of(['string', 'password'])
     }
 }

@@ -79,12 +79,12 @@ export class ActionComponent implements OnDestroy, OnInit {
         public _cd: ChangeDetectorRef
     ) {
         dragulaService.createGroup('bag-nonfinal', {
-            moves: function (el, source, handle) {
+            moves(el, source, handle) {
                 return handle.classList.contains('move');
             },
         });
         dragulaService.createGroup('bag-final', {
-            moves: function (el, source, handle) {
+            moves(el, source, handle) {
                 return handle.classList.contains('move');
             },
             direction: 'vertical'
@@ -123,6 +123,7 @@ export class ActionComponent implements OnDestroy, OnInit {
 
     /**
      * Manage Requirement Event
+     *
      * @param r event
      */
     requirementEvent(r: RequirementEvent): void {
@@ -210,6 +211,7 @@ export class ActionComponent implements OnDestroy, OnInit {
 
     /**
      * Manage Parameter Event
+     *
      * @param p event
      */
     parameterEvent(p: ParameterEvent): void {

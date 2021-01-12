@@ -12,8 +12,8 @@ import { PermissionFormComponent } from './permission.form.component';
 
 describe('CDS: Permission From Component', () => {
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
             declarations: [
             ],
             providers: [
@@ -29,7 +29,7 @@ describe('CDS: Permission From Component', () => {
                 RouterTestingModule.withRoutes([]),
                 HttpClientTestingModule
             ]
-        });
+        }).compileComponents();
 
     });
 
@@ -51,9 +51,7 @@ describe('CDS: Permission From Component', () => {
         let component = fixture.debugElement.componentInstance;
         expect(component).toBeTruthy();
 
-        http.expectOne(((req: HttpRequest<any>) => {
-            return req.url === '/group';
-        })).flush(groupsMock);
+        http.expectOne(((req: HttpRequest<any>) => req.url === '/group')).flush(groupsMock);
 
         fixture.detectChanges();
         tick(50);

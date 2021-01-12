@@ -67,7 +67,7 @@ export class WorkflowRunNodePipelineComponent implements OnInit, OnDestroy {
 
     ngOnInit() {
         let featCDN = this._store.selectSnapshot(FeatureState.featureProject('cdn-job-logs',
-            JSON.stringify({ 'project_key': this.project.key })))
+            JSON.stringify({ project_key: this.project.key })))
         this.cdnEnabled = featCDN?.enabled;
 
         this.nodeJobRunSubs = this.nodeJobRun$.subscribe(rj => {
@@ -131,7 +131,7 @@ export class WorkflowRunNodePipelineComponent implements OnInit, OnDestroy {
         if (this.currentJob && jobID === this.currentJob.pipeline_action_id) {
             return;
         }
-        this._store.dispatch(new SelectWorkflowNodeRunJob({ jobID: jobID }));
+        this._store.dispatch(new SelectWorkflowNodeRunJob({ jobID }));
     }
 
     refreshNodeRun(data: WorkflowNodeRun): boolean {

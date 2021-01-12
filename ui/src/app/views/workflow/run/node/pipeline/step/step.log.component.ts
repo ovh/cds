@@ -25,7 +25,8 @@ import { FeatureState } from 'app/store/feature.state';
 import { ProjectState } from 'app/store/project.state';
 import { WorkflowState, WorkflowStateModel } from 'app/store/workflow.state';
 import cloneDeep from 'lodash-es/cloneDeep';
-import { Observable, Subscription } from 'rxjs';
+import { interval, Observable, Subscription } from 'rxjs';
+import { map, mergeMap } from 'rxjs/operators';
 
 @Component({
     selector: 'app-workflow-step-log',
@@ -179,9 +180,7 @@ export class WorkflowStepLogComponent implements OnInit, OnDestroy {
         }
         let stepOrder = this.stepOrder < this.job.step_status.length ? this.stepOrder : this.job.step_status.length - 1;
 
-        const cdnEnabled = !!this._store.selectSnapshot(FeatureState.feature('cdn-job-logs')).find(f => {
-            return !!f.results.find(r => r.enabled && r.paramString === JSON.stringify({ 'project_key': projectKey }));
-        });
+        const cdnEnabled = !!this._store.selectSnapshot(FeatureState.feature('cdn-job-logs')).find(f => !!f.results.find(r => r.enabled && r.paramString === JSON.stringify({ project_key: projectKey })));
 
         let logLink: CDNLogLink;
         if (cdnEnabled) {
@@ -215,14 +214,16 @@ export class WorkflowStepLogComponent implements OnInit, OnDestroy {
 
         this.stopWorker();
         this._ngZone.runOutsideAngular(() => {
-            this.pollingSubscription = Observable.interval(2000)
-                .mergeMap(_ => {
-                    if (!cdnEnabled) {
-                        return this._workflowService.getStepLog(projectKey, workflowName, nodeRunId, runJobId, stepOrder);
-                    }
-                    return this._workflowService.getLogDownload(logLink)
-                        .map(data => <BuildResult>{ status: PipelineStatus.BUILDING, step_logs: { id: 1, val: data } });
-                })
+            this.pollingSubscription = interval(2000)
+                .pipe(
+                    mergeMap(_ => {
+                        if (!cdnEnabled) {
+                            return this._workflowService.getStepLog(projectKey, workflowName, nodeRunId, runJobId, stepOrder);
+                        }
+                        return this._workflowService.getLogDownload(logLink)
+                            .pipe(map(data => <BuildResult>{ status: PipelineStatus.BUILDING, step_logs: { id: 1, val: data } }));
+                    })
+                )
                 .subscribe(build => {
                     this._ngZone.run(() => {
                         callback(build);

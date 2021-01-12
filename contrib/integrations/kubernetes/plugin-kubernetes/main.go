@@ -484,7 +484,7 @@ func executeHelmV3(binaryName, kubeCfg string, q *integrationplugin.DeployQuery)
 		fmt.Println("timeout is not a duration, setting timeout to " + timeoutStr)
 	}
 
-	cmdRepoAdd := exec.Command(binaryName, "repo", "add", "stable", "https://kubernetes-charts.storage.googleapis.com/")
+	cmdRepoAdd := exec.Command(binaryName, "repo", "add", "stable", "https://charts.helm.sh/stable")
 	cmdRepoAdd.Env = os.Environ()
 	cmdRepoAdd.Stderr = os.Stderr
 	cmdRepoAdd.Stdout = os.Stdout

@@ -44,7 +44,7 @@
             <ng-container *ngIf="step.open">
                 <div class="line" *ngFor="let line of step.lines; trackBy: trackLineElement; let j = index">
                     <div class="number">{{step.firstDisplayedLineNumber + j + 1}}</div>
-                    <div class="value" [innerHTML]="line.value | ansi:(this.mode !== displayModes.ANSI) | safeHtml">
+                    <div class="value" [innerHTML]="line.value | ansi: (this.mode !== displayModes.ANSI) | safeHtml: false">
                     </div>
                     <div class="extra" *ngIf="line.extra">
                         <div *ngFor="let extra of line.extra">{{extra}}</div>
@@ -69,7 +69,7 @@
                     <div class="number">
                         {{((step.firstDisplayedLineNumber + step.totalLinesCount) - step.endLines.length) + j + 1}}
                     </div>
-                    <div class="value" [innerHTML]="line.value | ansi:(this.mode !== displayModes.ANSI) | safeHtml">
+                    <div class="value" [innerHTML]="line.value | ansi:(this.mode !== displayModes.ANSI) | safeHtml : false">
                     </div>
                     <div class="extra" *ngIf="line.extra">
                         <div *ngFor="let extra of line.extra">{{extra}}</div>
@@ -83,7 +83,7 @@
         <div class="line"
             *ngFor="let line of services[currentTabIndex-1].lines; trackBy: trackLineElement; let j = index">
             <div class="number">{{j + 1}}</div>
-            <div class="value" [innerHTML]="line.value | ansi:(this.mode !== displayModes.ANSI) | safeHtml">
+            <div class="value" [innerHTML]="line.value | ansi:(this.mode !== displayModes.ANSI) | safeHtml: false">
             </div>
         </div>
         <div class="line expand"
@@ -106,7 +106,7 @@
             <div class="number">
                 {{((services[currentTabIndex-1].totalLinesCount) - services[currentTabIndex-1].endLines.length) + j + 1}}
             </div>
-            <div class="value" [innerHTML]="line.value | ansi:(this.mode !== displayModes.ANSI) | safeHtml">
+            <div class="value" [innerHTML]="line.value | ansi:(this.mode !== displayModes.ANSI) | safeHtml: false">
             </div>
         </div>
     </div>

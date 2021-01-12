@@ -96,7 +96,7 @@ export class WorkflowComponent implements OnInit, OnDestroy {
                 return;
             }
 
-            let data = { 'project_key': this.project.key };
+            let data = { project_key: this.project.key };
             this._featureService.isEnabled('cdn-job-logs', data).subscribe(f => {
                 this._store.dispatch(new AddFeatureResult(<FeaturePayload>{
                     key: f.name,

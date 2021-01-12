@@ -16,7 +16,6 @@ import { WorkflowNodeRunParamComponent } from 'app/shared/workflow/node/run/node
 import * as actionsWorkflow from 'app/store/workflow.action';
 import { CancelWorkflowEditMode } from 'app/store/workflow.action';
 import { WorkflowState, WorkflowStateModel } from 'app/store/workflow.state';
-import { WorkflowGraphComponent } from 'app/views/workflow/graph/workflow.graph.component';
 import cloneDeep from 'lodash-es/cloneDeep';
 import { Subscription } from 'rxjs';
 import { finalize } from 'rxjs/operators';
@@ -44,8 +43,6 @@ export class WorkflowShowComponent implements OnInit, OnDestroy {
     editModeWorkflowChanged: boolean;
     isReadOnly: boolean;
 
-    @ViewChild('workflowGraph')
-    workflowGraph: WorkflowGraphComponent;
     @ViewChild('workflowStartParam')
     runWithParamComponent: WorkflowNodeRunParamComponent;
     @ViewChild('permWarning')
@@ -74,7 +71,7 @@ export class WorkflowShowComponent implements OnInit, OnDestroy {
         private _cd: ChangeDetectorRef
     ) { }
 
-    ngOnDestroy(): void {} // Should be set to use @AutoUnsubscribe with AOT
+    ngOnDestroy(): void { } // Should be set to use @AutoUnsubscribe with AOT
 
     ngOnInit(): void {
         // Update data if route change
@@ -110,9 +107,7 @@ export class WorkflowShowComponent implements OnInit, OnDestroy {
                     return;
                 }
 
-                this.usageCount = Object.keys(this.detailedWorkflow.usage).reduce((total, key) => {
-                    return total + this.detailedWorkflow.usage[key].length;
-                }, 0);
+                this.usageCount = Object.keys(this.detailedWorkflow.usage).reduce((total, key) => total + this.detailedWorkflow.usage[key].length, 0);
             }
         });
 

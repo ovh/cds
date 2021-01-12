@@ -14,7 +14,7 @@ import { finalize } from 'rxjs/operators';
 export class ProjectWorkflowListBlocsComponent {
 
   _project: Project;
-  @Input('project') set project(data: Project) {
+  @Input() set project(data: Project) {
       this._project = data;
       if (data && data.labels) {
           let labelFilter = this.labelFilter.toLowerCase();
@@ -25,7 +25,7 @@ export class ProjectWorkflowListBlocsComponent {
       return this._project;
   }
 
-  @Input('workflows')
+  @Input()
   set workflows(workflows: IdName[]) {
     this._workflows = workflows;
     if (workflows) {

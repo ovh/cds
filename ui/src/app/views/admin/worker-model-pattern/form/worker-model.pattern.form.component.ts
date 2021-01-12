@@ -5,7 +5,7 @@ import { ModelPattern } from 'app/model/worker-model.model';
 import { WorkerModelService } from 'app/service/worker-model/worker-model.service';
 import { AuthenticationState } from 'app/store/authentication.state';
 import omit from 'lodash-es/omit';
-import { finalize } from 'rxjs/operators/finalize';
+import { finalize } from 'rxjs/operators';
 
 @Component({
     selector: 'app-worker-model-pattern-form',

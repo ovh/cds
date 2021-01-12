@@ -1,9 +1,9 @@
 export function AutoUnsubscribe( blackList = [] ) {
 
-    return function ( constructor ) {
+    return function( constructor ) {
         const original = constructor.prototype.ngOnDestroy;
 
-        constructor.prototype.ngOnDestroy = function () {
+        constructor.prototype.ngOnDestroy = function() {
             for ( let prop in this ) {
                 if (prop) {
                     const property = this[ prop ];

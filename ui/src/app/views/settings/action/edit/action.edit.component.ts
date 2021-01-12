@@ -87,12 +87,12 @@ export class ActionEditComponent implements OnInit, OnDestroy {
                 type: ColumnType.CONFIRM_BUTTON,
                 name: 'common_action',
                 class: 'two right aligned',
-                selector: (aa: AuditAction) => {
-                    return {
+                selector: (aa: AuditAction) => ({
                         title: 'common_rollback',
-                        click: () => { this.clickRollback(aa) }
-                    };
-                }
+                        click: () => {
+ this.clickRollback(aa)
+}
+                    })
             }
         ];
 

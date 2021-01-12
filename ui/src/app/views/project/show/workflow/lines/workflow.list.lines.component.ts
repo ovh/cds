@@ -14,7 +14,7 @@ import { finalize } from 'rxjs/operators';
 export class ProjectWorkflowListLinesComponent {
 
   @Input() project: Project;
-  @Input('workflows')
+  @Input()
   set workflows(workflows: IdName[]) {
     this._workflows = workflows;
     if (workflows) {
@@ -35,7 +35,7 @@ export class ProjectWorkflowListLinesComponent {
   get workflows(): IdName[] {
     return this._workflows;
   }
-  @Input('labels')
+  @Input()
   set labels(labels: Label[]) {
     this._labels = labels;
     if (labels) {

@@ -12,14 +12,13 @@ export class KeyService {
 
     /**
      * Get all keys (project/application) from the given project
+     *
      * @param projectKey Project unique key
-     * @returns {Observable<AllKeys>}
+     * @returns
      */
     getAllKeys(projectKey: string, appName?: string): Observable<AllKeys> {
         if (!appName) {
-            return this._http.get<Key[]>('/project/' + projectKey + '/keys').pipe(map(keys => {
-                return formatKeysForSelect(...keys);
-            }));
+            return this._http.get<Key[]>('/project/' + projectKey + '/keys').pipe(map(keys => formatKeysForSelect(...keys)));
         }
 
         return forkJoin({

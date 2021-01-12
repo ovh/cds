@@ -135,7 +135,7 @@ export class EnvironmentState {
             currentProjectKey: action.payload.projectKey,
             environment: action.payload.env,
             editEnvironment: cloneDeep(action.payload.env),
-            editMode: editMode,
+            editMode,
             loading: false,
         });
     }
@@ -143,9 +143,7 @@ export class EnvironmentState {
     @Action(ActionEnvironment.ResyncEnvironment)
     resync(ctx: StateContext<EnvironmentStateModel>, action: ActionEnvironment.ResyncEnvironment) {
         return this._envService.getEnvironment(action.payload.projectKey, action.payload.envName)
-            .pipe(tap((environment: Environment) => {
-                return ctx.dispatch(new ActionEnvironment.LoadEnvironment({projectKey: action.payload.projectKey, env: environment}));
-            }));
+            .pipe(tap((environment: Environment) => ctx.dispatch(new ActionEnvironment.LoadEnvironment({projectKey: action.payload.projectKey, env: environment}))));
     }
 
     // VARIABLES

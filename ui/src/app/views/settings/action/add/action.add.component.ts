@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnIni
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Subscription } from 'rxjs';
-import { finalize } from 'rxjs/internal/operators/finalize';
+import { finalize } from 'rxjs/operators';
 import { Action } from '../../../../model/action.model';
 import { Group } from '../../../../model/group.model';
 import { Job } from '../../../../model/job.model';
@@ -75,9 +75,9 @@ export class ActionAddComponent implements OnInit, OnDestroy {
             .pipe(finalize(() => this._cd.markForCheck()))
             .subscribe(p => {
             this.pipeline = p;
-            this.stage = this.pipeline.stages.find((s: Stage) => { return s.id === stageID; });
+            this.stage = this.pipeline.stages.find((s: Stage) => s.id === stageID);
             if (this.stage) {
-                this.job = this.stage.jobs.find((j: Job) => { return j.action.name === jobName; });
+                this.job = this.stage.jobs.find((j: Job) => j.action.name === jobName);
                 if (this.job) {
                     this.action = <Action>{
                         editable: true,

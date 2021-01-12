@@ -34,8 +34,8 @@ describe('CDS: Project RepoManager List Component', () => {
 
     let injector: Injector;
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
             declarations: [
             ],
             providers: [
@@ -71,7 +71,7 @@ describe('CDS: Project RepoManager List Component', () => {
             schemas: [
                 CUSTOM_ELEMENTS_SCHEMA
             ]
-        });
+        }).compileComponents();
         injector = getTestBed();
 
     });
@@ -102,9 +102,7 @@ describe('CDS: Project RepoManager List Component', () => {
         fixture.detectChanges(true);
 
         let store: Store = injector.get(Store);
-        spyOn(store, 'dispatch').and.callFake(() => {
-            return of(null);
-        });
+        spyOn(store, 'dispatch').and.callFake(() => of(null));
 
         let compiled = fixture.debugElement.nativeElement;
         compiled.querySelector('.ui.red.button').click();

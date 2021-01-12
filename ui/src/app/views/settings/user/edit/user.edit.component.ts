@@ -14,8 +14,8 @@ import { Item } from 'app/shared/menu/menu.component';
 import { Column, ColumnType, Filter } from 'app/shared/table/data-table.component';
 import { ToastService } from 'app/shared/toast/ToastService';
 import { AuthenticationState } from 'app/store/authentication.state';
-import { forkJoin } from 'rxjs/internal/observable/forkJoin';
-import { finalize } from 'rxjs/operators/finalize';
+import { forkJoin } from 'rxjs';
+import { finalize } from 'rxjs/operators';
 import { CloseEventType, ConsumerCreateModalComponent } from '../consumer-create-modal/consumer-create-modal.component';
 import {
     CloseEvent,
@@ -32,7 +32,7 @@ const defaultMenuItems = [<Item>{
     key: 'groups'
 }];
 
-const usernamePattern: RegExp = new RegExp('^[a-zA-Z0-9._-]{1,}$');
+const usernamePattern = new RegExp('^[a-zA-Z0-9._-]{1,}$');
 
 @Component({
     selector: 'app-user-edit',
@@ -102,12 +102,10 @@ export class UserEditComponent implements OnInit {
             <Column<Group>>{
                 type: ColumnType.ROUTER_LINK,
                 name: 'common_name',
-                selector: (g: Group) => {
-                    return {
+                selector: (g: Group) => ({
                         link: '/settings/group/' + g.name,
                         value: g.name
-                    };
-                }
+                    })
             },
             <Column<Group>>{
                 name: 'user_group_role',
@@ -145,14 +143,12 @@ export class UserEditComponent implements OnInit {
 
         this.filterConsumers = f => {
             const lowerFilter = f.toLowerCase();
-            return (c: AuthConsumer) => {
-                return c.name.toLowerCase().indexOf(lowerFilter) !== -1 ||
+            return (c: AuthConsumer) => c.name.toLowerCase().indexOf(lowerFilter) !== -1 ||
                     c.description.toLowerCase().indexOf(lowerFilter) !== -1 ||
                     c.id.toLowerCase().indexOf(lowerFilter) !== -1 ||
                     c.scope_details.map(s => s.scope).join(' ').toLowerCase().indexOf(lowerFilter) !== -1 ||
                     (c.groups && c.groups.map(g => g.name).join(' ').toLowerCase().indexOf(lowerFilter) !== -1) ||
-                    (!c.groups && lowerFilter === '*');
-            }
+                    (!c.groups && lowerFilter === '*')
         };
 
         this.columnsConsumers = [
@@ -216,24 +212,22 @@ export class UserEditComponent implements OnInit {
                 type: ColumnType.BUTTON,
                 name: 'common_action',
                 class: 'two right aligned',
-                selector: (c: AuthConsumer) => {
-                    return {
+                selector: (c: AuthConsumer) => ({
                         title: 'common_details',
-                        click: () => { this.clickConsumerDetails(c) }
-                    };
-                }
+                        click: () => {
+ this.clickConsumerDetails(c)
+}
+                    })
             }
         ];
 
         this.filterSessions = f => {
             const lowerFilter = f.toLowerCase();
-            return (s: AuthSession) => {
-                return s.consumer.name.toLowerCase().indexOf(lowerFilter) !== -1 ||
+            return (s: AuthSession) => s.consumer.name.toLowerCase().indexOf(lowerFilter) !== -1 ||
                     s.id.toLowerCase().indexOf(lowerFilter) !== -1 ||
                     s.consumer_id.toLowerCase().indexOf(lowerFilter) !== -1 ||
                     s.created.toLowerCase().indexOf(lowerFilter) !== -1 ||
-                    s.expire_at.toLowerCase().indexOf(lowerFilter) !== -1;
-            }
+                    s.expire_at.toLowerCase().indexOf(lowerFilter) !== -1
         };
 
         this.columnsSessions = [
@@ -311,13 +305,13 @@ export class UserEditComponent implements OnInit {
                 name: 'common_action',
                 class: 'two right aligned',
                 disabled: true,
-                selector: (s: AuthSession) => {
-                    return {
+                selector: (s: AuthSession) => ({
                         title: 'user_auth_revoke_btn',
                         color: 'red',
-                        click: () => { this.clickSessionRevoke(s) }
-                    };
-                }
+                        click: () => {
+ this.clickSessionRevoke(s)
+}
+                    })
             }
         ];
     }

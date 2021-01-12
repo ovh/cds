@@ -160,9 +160,7 @@ export class AppService {
         }
         this._store.selectOnce(ProjectState)
             .pipe(
-                filter((projState: ProjectStateModel) => {
-                    return projState && projState.project && projState.project.key === event.project_key;
-                })
+                filter((projState: ProjectStateModel) => projState && projState.project && projState.project.key === event.project_key)
             )
             .subscribe((projectState: ProjectStateModel) => {
                 let projectInCache = projectState.project;
@@ -378,9 +376,7 @@ export class AppService {
                 break;
             case EventType.RUN_WORKFLOW_NODE:
                 // Refresh node run if user is listening on it
-                const wnr = this._store.selectSnapshot<WorkflowNodeRun>((state) => {
-                    return state.workflow.workflowNodeRun;
-                });
+                const wnr = this._store.selectSnapshot<WorkflowNodeRun>((state) => state.workflow.workflowNodeRun);
                 let wnrEvent = <WorkflowNodeRun>event.payload;
                 if (wnr && wnr.id === wnrEvent.id) {
                     this._store.dispatch(

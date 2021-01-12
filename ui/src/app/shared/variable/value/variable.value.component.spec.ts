@@ -1,4 +1,4 @@
-/* tslint:disable:no-unused-variable */
+/* eslint-disable @typescript-eslint/no-unused-vars */
 
 import {TestBed, tick, fakeAsync} from '@angular/core/testing';
 import {VariableValueComponent} from '../value/variable.value.component';
@@ -7,8 +7,8 @@ import {SharedModule} from '../../shared.module';
 
 describe('CDS: Variable Value Component', () => {
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
             declarations: [
             ],
             providers: [
@@ -17,7 +17,7 @@ describe('CDS: Variable Value Component', () => {
             imports : [
                 SharedModule
             ]
-        });
+        }).compileComponents();
     });
 
     it('Load Component string', fakeAsync( () => {

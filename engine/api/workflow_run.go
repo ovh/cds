@@ -277,6 +277,7 @@ func (api *API) getLatestWorkflowRunHandler() service.Handler {
 		if err != nil {
 			return sdk.WrapError(err, "Unable to load last workflow run")
 		}
+		api.setWorkflowRunURLs(run)
 		run.Translate()
 		return service.WriteJSON(w, run, http.StatusOK)
 	}
@@ -324,6 +325,7 @@ func (api *API) getWorkflowRunHandler() service.Handler {
 			}
 		}
 
+		api.setWorkflowRunURLs(run)
 		run.Translate()
 
 		return service.WriteJSON(w, run, http.StatusOK)
@@ -949,6 +951,8 @@ func (api *API) postWorkflowRunHandler() service.Handler {
 				return errCreateRun
 			}
 		}
+
+		api.setWorkflowRunURLs(lastRun)
 
 		return service.WriteJSON(w, lastRun, http.StatusAccepted)
 	}

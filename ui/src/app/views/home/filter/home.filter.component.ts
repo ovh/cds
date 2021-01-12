@@ -24,7 +24,7 @@ export class HomeFilterComponent implements OnDestroy {
     _filter: TimelineFilter;
     filterToEdit: TimelineFilter;
 
-    @Input('filter')
+    @Input()
     set filter(data: TimelineFilter) {
         if (data) {
             this._filter = data;

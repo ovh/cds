@@ -44,7 +44,7 @@ func TestStoreNewStepLog(t *testing.T) {
 
 	ctx, cancel := context.WithCancel(context.TODO())
 	t.Cleanup(cancel)
-	cdnUnits := newRunningStorageUnits(t, m, db.DbMap, ctx)
+	cdnUnits := newRunningStorageUnits(t, m, db.DbMap, ctx, cache)
 	s.Units = cdnUnits
 
 	hm := handledMessage{
@@ -127,7 +127,7 @@ func TestStoreLastStepLog(t *testing.T) {
 
 	ctx, cancel := context.WithCancel(context.TODO())
 	t.Cleanup(cancel)
-	cdnUnits := newRunningStorageUnits(t, m, db.DbMap, ctx)
+	cdnUnits := newRunningStorageUnits(t, m, db.DbMap, ctx, cache)
 	s.Units = cdnUnits
 
 	hm := handledMessage{
@@ -216,7 +216,7 @@ func TestStoreNewServiceLog(t *testing.T) {
 
 	ctx, cancel := context.WithCancel(context.TODO())
 	t.Cleanup(cancel)
-	cdnUnits := newRunningStorageUnits(t, m, db.DbMap, ctx)
+	cdnUnits := newRunningStorageUnits(t, m, db.DbMap, ctx, cache)
 	s.Units = cdnUnits
 
 	hm := handledMessage{

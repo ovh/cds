@@ -49,8 +49,8 @@ describe('CDS: Application', () => {
     let store: Store;
     let router: Router;
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
             declarations: [
             ],
             providers: [
@@ -87,7 +87,7 @@ describe('CDS: Application', () => {
                 TranslateModule.forRoot(),
                 HttpClientTestingModule
             ]
-        });
+        }).compileComponents();
 
         injector = getTestBed();
         appStore = injector.get(ApplicationStore);
@@ -147,9 +147,7 @@ describe('CDS: Application', () => {
         let component = fixture.debugElement.componentInstance;
         expect(component).toBeTruthy();
 
-        http.expectOne(((req: HttpRequest<any>) => {
-            return req.url === '/project/key1/application/app1';
-        })).flush({ 'name': 'app1' }, { status: 404, statusText: 'App does not exist' });
+        http.expectOne(((req: HttpRequest<any>) => req.url === '/project/key1/application/app1')).flush({ name: 'app1' }, { status: 404, statusText: 'App does not exist' });
 
         tick(250);
 
@@ -186,9 +184,7 @@ describe('CDS: Application', () => {
 
         fixture.componentInstance.ngOnInit();
 
-        spyOn(store, 'dispatch').and.callFake(() => {
-            return of();
-        });
+        spyOn(store, 'dispatch').and.callFake(() => of());
 
         let v: Variable = new Variable();
         v.name = 'foo';
@@ -231,9 +227,7 @@ describe('CDS: Application', () => {
 
         fixture.componentInstance.ngOnInit();
 
-        spyOn(store, 'dispatch').and.callFake(() => {
-            return of();
-        });
+        spyOn(store, 'dispatch').and.callFake(() => of());
 
         let v: Variable = new Variable();
         v.name = 'foo';
@@ -275,9 +269,7 @@ describe('CDS: Application', () => {
         expect(component).toBeTruthy();
 
         fixture.componentInstance.ngOnInit();
-        spyOn(store, 'dispatch').and.callFake(() => {
-            return of();
-        });
+        spyOn(store, 'dispatch').and.callFake(() => of());
 
         let v: Variable = new Variable();
         v.name = 'foo';
@@ -319,10 +311,10 @@ class MockActivatedRoutes extends ActivatedRoute {
         let project = new Project();
         project.key = 'key1';
         this.snapshot.data = {
-            project: project
+            project
         };
         this.snapshot.queryParams = { key: 'key1', appName: 'app1', version: 0, branch: 'master' };
 
-        this.data = of({ project: project });
+        this.data = of({ project });
     }
 }

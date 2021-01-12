@@ -37,10 +37,8 @@ export class FavoriteComponent implements OnDestroy {
             if (Array.isArray(data)) {
                 let favorites = data.filter((fav) => fav.favorite);
                 this.projects = data.filter((elt) => elt.type === 'project');
-                this.workflows = data.filter((elt) => {
-                return elt.type === 'workflow' &&
-                    !favorites.find((fav) => fav.type === 'workflow' && fav.workflow_name === elt.workflow_name);
-                });
+                this.workflows = data.filter((elt) => elt.type === 'workflow' &&
+                    !favorites.find((fav) => fav.type === 'workflow' && fav.workflow_name === elt.workflow_name));
             }
         });
     }

@@ -123,7 +123,7 @@
                 </div>
             </div>
             <codemirror [(ngModel)]="conditions.lua_script" (ngModelChange)="pushChange('codemirror', $event)"
-                (change)="changeCodeMirror($event)" [config]="codeMirrorConfig" #textareaCodeMirror>
+                (change)="changeCodeMirror()" [config]="codeMirrorConfig" #textareaCodeMirror>
             </codemirror>
         </div>
     </ng-container>
