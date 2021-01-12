@@ -6,20 +6,7 @@ import (
 	"crypto/sha512"
 	"encoding/base64"
 	"encoding/hex"
-	"github.com/ovh/cds/engine/api/test/assets"
-	"github.com/ovh/cds/engine/cdn/item"
-	"github.com/ovh/cds/engine/cdn/storage"
-	"github.com/ovh/cds/engine/gorpmapper"
-	"github.com/ovh/cds/engine/test"
-	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/cdn"
-	"github.com/ovh/cds/sdk/cdsclient"
-	"github.com/ovh/cds/sdk/jws"
-	"github.com/ovh/symmecrypt/ciphers/aesgcm"
-	"github.com/ovh/symmecrypt/convergent"
 	"github.com/ovh/symmecrypt/keyloader"
-	"github.com/stretchr/testify/assert"
-	"gopkg.in/h2non/gock.v1"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -30,9 +17,22 @@ import (
 	"testing"
 	"time"
 
+	"github.com/ovh/symmecrypt/ciphers/aesgcm"
+	"github.com/ovh/symmecrypt/convergent"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"gopkg.in/h2non/gock.v1"
 
+	"github.com/ovh/cds/engine/api/test/assets"
+	"github.com/ovh/cds/engine/cdn/item"
+	"github.com/ovh/cds/engine/cdn/storage"
 	cdntest "github.com/ovh/cds/engine/cdn/test"
+	"github.com/ovh/cds/engine/gorpmapper"
+	"github.com/ovh/cds/engine/test"
+	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/cdn"
+	"github.com/ovh/cds/sdk/cdsclient"
+	"github.com/ovh/cds/sdk/jws"
 )
 
 func TestPostUploadHandler(t *testing.T) {
@@ -43,9 +43,11 @@ func TestPostUploadHandler(t *testing.T) {
 
 	cdntest.ClearItem(t, context.TODO(), s.Mapper, db)
 	cdntest.ClearItem(t, context.TODO(), s.Mapper, db)
+	cdntest.ClearSyncRedisSet(t, s.Cache, "local_storage")
 
 	// Start CDN
-	ctx := context.Background()
+	ctx, cancel := context.WithCancel(context.Background())
+	t.Cleanup(cancel)
 	tmpDir, err := ioutil.TempDir("", t.Name()+"-cdn-1-*")
 	require.NoError(t, err)
 
@@ -54,8 +56,9 @@ func TestPostUploadHandler(t *testing.T) {
 
 	t.Logf(tmpDir)
 	t.Logf(tmpDir2)
-	cdnUnits, err := storage.Init(ctx, s.Mapper, db.DbMap, sdk.NewGoRoutines(), storage.Configuration{
-		SyncSeconds:     10,
+	cdnUnits, err := storage.Init(ctx, s.Mapper, s.Cache, db.DbMap, sdk.NewGoRoutines(), storage.Configuration{
+		SyncSeconds:     1,
+		SyncNbElements:  1000,
 		HashLocatorSalt: "thisismysalt",
 		Buffers: []storage.BufferConfiguration{
 			{
@@ -72,7 +75,7 @@ func TestPostUploadHandler(t *testing.T) {
 					Path: tmpDir,
 					Encryption: []*keyloader.KeyConfig{
 						{
-							Key:        "jesuisunecle",
+							Key:        "iamakey.iamakey.iamakey.iamakey.",
 							Cipher:     aesgcm.CipherName,
 							Identifier: "local-bukker-id",
 						},
@@ -83,7 +86,9 @@ func TestPostUploadHandler(t *testing.T) {
 		},
 		Storages: []storage.StorageConfiguration{
 			{
-				Name: "local_storage",
+				Name:          "local_storage",
+				SyncParallel:  10,
+				SyncBandwidth: int64(1024 * 1024),
 				Local: &storage.LocalStorageConfiguration{
 					Path: tmpDir2,
 					Encryption: []convergent.ConvergentEncryptionConfig{
@@ -99,6 +104,7 @@ func TestPostUploadHandler(t *testing.T) {
 	})
 	require.NoError(t, err)
 	s.Units = cdnUnits
+	cdnUnits.Start(ctx, sdk.NewGoRoutines())
 
 	// Mock cds client
 	s.Client = cdsclient.New(cdsclient.Config{Host: "http://lolcat.api", InsecureSkipVerifyTLS: false})
@@ -150,7 +156,7 @@ func TestPostUploadHandler(t *testing.T) {
 	require.NoError(t, err)
 
 	// Create artifact
-	fileContent := []byte("Hi, I am foo")
+	fileContent := []byte("Hi, I am foo.")
 	myartifact, errF := os.Create(path.Join(os.TempDir(), "myartifact"))
 	defer os.RemoveAll(path.Join(os.TempDir(), "myartifact"))
 	require.NoError(t, errF)
@@ -203,4 +209,26 @@ func TestPostUploadHandler(t *testing.T) {
 	require.Equal(t, md5Sum, its[0].MD5)
 	require.Equal(t, int64(len(fileContent)), its[0].Size)
 	require.Equal(t, sdk.CDNStatusItemCompleted, its[0].Status)
+
+	unit, err := storage.LoadUnitByName(ctx, s.Mapper, db, s.Units.Storages[0].Name())
+	require.NoError(t, err)
+	// Waiting FS sync
+	cpt := 0
+	for {
+		ids, err := storage.LoadAllItemUnitsIDsByItemIDsAndUnitID(db, unit.ID, []string{its[0].ID})
+		require.NoError(t, err)
+		if len(ids) == 1 {
+			break
+		}
+		if cpt == 10 {
+			t.Logf("No sync in FS")
+			t.Fail()
+			return
+		}
+		if len(ids) != 1 {
+			cpt++
+			time.Sleep(500 * time.Millisecond)
+			continue
+		}
+	}
 }

@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/engine/cdn/item"
 	"github.com/ovh/cds/engine/cdn/storage"
 	"github.com/ovh/cds/engine/gorpmapper"
@@ -147,14 +146,7 @@ func (s *Service) storeLogs(ctx context.Context, itemType sdk.CDNItemType, signa
 			return sdk.WithStack(err)
 		}
 
-		for _, sto := range s.Units.Storages {
-			if err := s.Cache.ScoredSetAdd(ctx, cache.Key(storage.KeyBackendSync, sto.Name()), it.ID, float64(it.Created.Unix())); err != nil {
-				log.InfoWithFields(ctx, log.Fields{
-					"item_apiref": it.APIRefHash,
-				}, "storeLogs> cannot push item %s into scoredset for unit %s", it.ID, sto.Name())
-				continue
-			}
-		}
+		s.PushInSyncQueue(ctx, it.ID, it.APIRefHash, it.Created)
 	}
 
 	return nil

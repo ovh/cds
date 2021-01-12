@@ -113,6 +113,7 @@ type LogBufferUnit interface {
 type FileBufferUnit interface {
 	BufferUnit
 	NewWriter(ctx context.Context, i sdk.CDNItemUnit) (io.WriteCloser, error)
+	Write(i sdk.CDNItemUnit, r io.Reader, w io.Writer) error
 }
 
 type StorageUnit interface {

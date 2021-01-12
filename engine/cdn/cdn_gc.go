@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/engine/cdn/item"
 	"github.com/ovh/cds/engine/cdn/storage"
 	"github.com/ovh/cds/sdk"
@@ -181,14 +180,7 @@ func (s *Service) cleanWaitingItem(ctx context.Context, duration int) error {
 			_ = tx.Rollback()
 			return err
 		}
-		for _, sto := range s.Units.Storages {
-			if err := s.Cache.ScoredSetAdd(ctx, cache.Key(storage.KeyBackendSync, sto.Name()), itemUnit.ItemID, float64(itemUnit.Item.Created.Unix())); err != nil {
-				log.InfoWithFields(ctx, log.Fields{
-					"item_apiref": itemUnit.Item.APIRefHash,
-				}, "cleanWaitingItem> cannot push item %s into scoredset for unit %s", itemUnit.ItemID, sto.Name())
-				continue
-			}
-		}
+		s.PushInSyncQueue(ctx, itemUnit.ItemID, itemUnit.Item.APIRefHash, itemUnit.Item.Created)
 		telemetry.Record(ctx, s.Metrics.itemCompletedByGCCount, 1)
 	}
 	return nil

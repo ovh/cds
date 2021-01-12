@@ -102,3 +102,12 @@ func (r *rateLimiter) WaitN(n int) error {
 	defer r.mutex.Unlock()
 	return sdk.WithStack(r.limiter.WaitN(r.ctx, n))
 }
+
+type SizeWriter struct {
+	Size int64
+}
+
+func (s *SizeWriter) Write(data []byte) (n int, err error) {
+	s.Size += int64(len(data))
+	return len(data), nil
+}
