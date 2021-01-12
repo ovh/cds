@@ -3,7 +3,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { GroupService } from 'app/service/group/group.service';
 import { Subscription } from 'rxjs';
-import { finalize } from 'rxjs/internal/operators/finalize';
+import { finalize } from 'rxjs/operators';
 import { Group } from '../../../../model/group.model';
 import { PipelineTemplate, WorkflowTemplate, WorkflowTemplateError } from '../../../../model/workflow-template.model';
 import { WorkflowTemplateService } from '../../../../service/workflow-template/workflow-template.service';

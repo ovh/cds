@@ -1,5 +1,5 @@
 import { HttpErrorResponse, HttpEvent, HttpHandler, HttpInterceptor, HttpRequest } from '@angular/common/http';
-import { Injectable } from '@angular/core';
+import { Injectable, NgZone } from '@angular/core';
 import { NavigationExtras, Router } from '@angular/router';
 import { Observable, throwError as observableThrowError } from 'rxjs';
 import { catchError } from 'rxjs/operators';
@@ -8,8 +8,9 @@ import { catchError } from 'rxjs/operators';
 export class LogoutInterceptor implements HttpInterceptor {
 
     constructor(
-        private _router: Router) {
-    }
+        private _router: Router,
+        private _ngZone: NgZone
+    ) { }
 
     intercept(req: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
         return next.handle(req).pipe(
@@ -25,7 +26,9 @@ export class LogoutInterceptor implements HttpInterceptor {
                             navigationExtras.queryParams = { redirect: this._router.routerState.snapshot.url };
                         }
 
-                        this._router.navigate(['/auth/signin'], navigationExtras);
+                        this._ngZone.run(_ => {
+                            this._router.navigate(['/auth/signin'], navigationExtras);
+                        });
                     }
                     return observableThrowError(e);
                 }

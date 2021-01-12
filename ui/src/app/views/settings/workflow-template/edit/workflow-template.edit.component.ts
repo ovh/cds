@@ -24,7 +24,7 @@ import { ToastService } from 'app/shared/toast/ToastService';
 import { WorkflowTemplateApplyModalComponent } from 'app/shared/workflow-template/apply-modal/workflow-template.apply-modal.component';
 import { WorkflowTemplateBulkModalComponent } from 'app/shared/workflow-template/bulk-modal/workflow-template.bulk-modal.component';
 import { Subscription } from 'rxjs';
-import { finalize } from 'rxjs/internal/operators/finalize';
+import { finalize } from 'rxjs/operators';
 import { first } from 'rxjs/operators';
 
 @Component({

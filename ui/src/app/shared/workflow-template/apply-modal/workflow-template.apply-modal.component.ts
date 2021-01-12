@@ -17,7 +17,7 @@ import { WorkflowTemplateService } from 'app/service/workflow-template/workflow-
 import { WorkflowService } from 'app/service/workflow/workflow.service';
 import { calculateWorkflowTemplateDiff } from 'app/shared/diff/diff';
 import { Item } from 'app/shared/diff/list/diff.list.component';
-import { forkJoin } from 'rxjs/internal/observable/forkJoin';
+import { forkJoin } from 'rxjs';
 import { finalize } from 'rxjs/operators';
 
 @Component({

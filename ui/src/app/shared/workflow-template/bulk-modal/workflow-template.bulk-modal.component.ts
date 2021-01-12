@@ -25,7 +25,7 @@ import { ParamData as AsCodeParamData } from 'app/shared/ascode/save-form/ascode
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { Column, ColumnType, Select } from 'app/shared/table/data-table.component';
 import { interval, Observable, Subscription } from 'rxjs';
-import { finalize } from 'rxjs/internal/operators/finalize';
+import { finalize } from 'rxjs/operators';
 
 @Component({
     selector: 'app-workflow-template-bulk-modal',
