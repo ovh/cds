@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strings"
 	"sync/atomic"
 	"time"
 
@@ -78,7 +79,7 @@ func (s *Service) startKafkaHook(ctx context.Context, t *sdk.Task) error {
 	}
 
 	var group = fmt.Sprintf("%s.%s", config.Net.SASL.User, t.UUID)
-	consumerGroup, err := sarama.NewConsumerGroup([]string{pf.Config["broker url"].Value}, group, config)
+	consumerGroup, err := sarama.NewConsumerGroup(strings.Split(pf.Config["broker url"].Value, ","), group, config)
 	if err != nil {
 		_ = s.stopTask(ctx, t)
 		return fmt.Errorf("startKafkaHook>Error creating consumer: (%s %s %s %s): %v", pf.Config["broker url"].Value, consumerGroup, topic, config.Net.SASL.User, err)
