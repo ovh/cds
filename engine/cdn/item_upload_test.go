@@ -1,6 +1,7 @@
 package cdn
 
 import (
+	"bytes"
 	"context"
 	"crypto/md5"
 	"crypto/sha512"
@@ -214,10 +215,12 @@ func TestPostUploadHandler(t *testing.T) {
 	require.NoError(t, err)
 	// Waiting FS sync
 	cpt := 0
+	var iuID string
 	for {
 		ids, err := storage.LoadAllItemUnitsIDsByItemIDsAndUnitID(db, unit.ID, []string{its[0].ID})
 		require.NoError(t, err)
 		if len(ids) == 1 {
+			iuID = ids[0]
 			break
 		}
 		if cpt == 10 {
@@ -231,4 +234,16 @@ func TestPostUploadHandler(t *testing.T) {
 			continue
 		}
 	}
+
+	iu, err := storage.LoadItemUnitByID(ctx, s.Mapper, db, iuID, gorpmapper.GetOptions.WithDecryption)
+	buf := &bytes.Buffer{}
+
+	uiRead, err := s.Units.Storages[0].NewReader(ctx, *iu)
+	defer uiRead.Close()
+	require.NoError(t, err)
+
+	require.NoError(t, s.Units.Storages[0].Read(*iu, uiRead, buf))
+	uiRead.Close()
+
+	require.Equal(t, string(fileContent), buf.String())
 }

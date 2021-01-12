@@ -30,7 +30,7 @@ func (b *Buffer) Init(ctx context.Context, cfg interface{}, bufferType storage.C
 	if !is {
 		return sdk.WithStack(fmt.Errorf("invalid configuration: %T", cfg))
 	}
-	b.path = b.config.Path
+	b.path = config.Path
 	b.config = *config
 	b.NoConvergentEncryption = encryption.NewNoConvergentEncryption(config.Encryption)
 	b.bufferType = bufferType

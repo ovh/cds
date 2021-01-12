@@ -39,7 +39,7 @@ func (s *Local) Init(ctx context.Context, cfg interface{}) error {
 	if !is {
 		return sdk.WithStack(fmt.Errorf("invalid configuration: %T", cfg))
 	}
-	s.path = s.config.Path
+	s.path = config.Path
 	s.config = *config
 	s.ConvergentEncryption = encryption.New(config.Encryption)
 
