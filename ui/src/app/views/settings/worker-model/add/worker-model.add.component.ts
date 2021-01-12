@@ -3,7 +3,7 @@ import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
 import { AuthenticationState } from 'app/store/authentication.state';
-import { forkJoin } from 'rxjs/internal/observable/forkJoin';
+import { forkJoin } from 'rxjs';
 import { finalize } from 'rxjs/operators';
 import { Group } from '../../../../model/group.model';
 import { AuthentifiedUser } from '../../../../model/user.model';

@@ -3,7 +3,7 @@ import { WorkflowTemplate } from 'app/model/workflow-template.model';
 import { WorkflowTemplateService } from 'app/service/workflow-template/workflow-template.service';
 import { PathItem } from 'app/shared/breadcrumb/breadcrumb.component';
 import { Column, ColumnType, Filter } from 'app/shared/table/data-table.component';
-import { finalize } from 'rxjs/internal/operators/finalize';
+import { finalize } from 'rxjs/operators';
 
 @Component({
     selector: 'app-workflow-template-list',

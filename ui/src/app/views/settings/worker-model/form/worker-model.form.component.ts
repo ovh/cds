@@ -7,7 +7,7 @@ import { WorkerModelService } from 'app/service/worker-model/worker-model.servic
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { SharedService } from 'app/shared/shared.service';
 import omit from 'lodash-es/omit';
-import { finalize } from 'rxjs/operators/finalize';
+import { finalize } from 'rxjs/operators';
 import { Subscription } from 'rxjs/Subscription';
 
 @Component({

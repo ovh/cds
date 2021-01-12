@@ -3,7 +3,7 @@ import { AuthentifiedUser } from 'app/model/user.model';
 import { UserService } from 'app/service/user/user.service';
 import { PathItem } from 'app/shared/breadcrumb/breadcrumb.component';
 import { Column, ColumnType } from 'app/shared/table/data-table.component';
-import { finalize } from 'rxjs/operators/finalize';
+import { finalize } from 'rxjs/operators';
 
 @Component({
     selector: 'app-user-list',

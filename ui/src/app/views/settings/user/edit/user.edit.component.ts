@@ -14,8 +14,8 @@ import { Item } from 'app/shared/menu/menu.component';
 import { Column, ColumnType, Filter } from 'app/shared/table/data-table.component';
 import { ToastService } from 'app/shared/toast/ToastService';
 import { AuthenticationState } from 'app/store/authentication.state';
-import { forkJoin } from 'rxjs/internal/observable/forkJoin';
-import { finalize } from 'rxjs/operators/finalize';
+import { forkJoin } from 'rxjs';
+import { finalize } from 'rxjs/operators';
 import { CloseEventType, ConsumerCreateModalComponent } from '../consumer-create-modal/consumer-create-modal.component';
 import {
     CloseEvent,

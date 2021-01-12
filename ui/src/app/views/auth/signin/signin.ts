@@ -3,7 +3,7 @@ import { NgForm } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { AuthDriverManifest } from 'app/model/authentication.model';
 import { AuthenticationService } from 'app/service/authentication/authentication.service';
-import { finalize } from 'rxjs/operators/finalize';
+import { finalize } from 'rxjs/operators';
 import * as zxcvbn from 'zxcvbn';
 
 @Component({

@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component } from '@angular/core';
-import { finalize } from 'rxjs/internal/operators/finalize';
+import { finalize } from 'rxjs/operators';
 import { Action } from '../../../../model/action.model';
 import { ActionService } from '../../../../service/action/action.service';
 import { PathItem } from '../../../../shared/breadcrumb/breadcrumb.component';

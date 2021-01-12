@@ -63,6 +63,16 @@
               "node_modules/ansi_up/ansi_up.js",
               "node_modules/sanitize-html/dist/sanitize-html.min.js",
               "node_modules/prismjs/prism.js"
+            ],
+            "allowedCommonJsDependencies": [
+                "raven-js",
+                "dragula",
+                "js-yaml",
+                "jsonschema",
+                "dagre-d3",
+                "ansi_up",
+                "fast-json-patch",
+                "zxcvbn"
             ]
           },
           "configurations": {
