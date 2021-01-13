@@ -66,19 +66,19 @@ export class LogBlock {
 })
 @AutoUnsubscribe()
 export class WorkflowRunJobComponent implements OnInit, OnDestroy {
-    readonly initLoadLinesCount = 5;
-    readonly expandLoadLinesCount = 20;
+    readonly initLoadLinesCount = 10;
+    readonly expandLoadLinesCount = 100;
     readonly displayModes = DisplayMode;
     readonly scrollTargets = ScrollTarget
 
     @ViewChild('jobVariable') jobVariable: WorkflowRunJobVariableComponent;
 
     @Input() set nodeJobRun(data: WorkflowNodeJobRun) {
- this.subjectChannel.next(data);
-}
+        this.subjectChannel.next(data);
+    }
     get nodeJobRun(): WorkflowNodeJobRun {
- return this._nodeJobRun;
-}
+        return this._nodeJobRun;
+    }
     _nodeJobRun: WorkflowNodeJobRun;
     @Output() onScroll = new EventEmitter<ScrollTarget>();
 
@@ -118,8 +118,8 @@ export class WorkflowRunJobComponent implements OnInit, OnDestroy {
 
     async onNodeJobRunChange(data: WorkflowNodeJobRun) {
         if (!data) {
- return;
-}
+            return;
+        }
         this._nodeJobRun = data;
 
         if (this.previousNodeJobRun && this.previousNodeJobRun.id !== this.nodeJobRun.id) {
@@ -234,7 +234,7 @@ export class WorkflowRunJobComponent implements OnInit, OnDestroy {
                 if (!steporder) {
                     return
                 }
-                this.steps[steporder].link = <CDNLogLink>{api_ref: r.api_ref, item_type: links.item_type}
+                this.steps[steporder].link = <CDNLogLink>{ api_ref: r.api_ref, item_type: links.item_type }
                 this.steps[steporder].totalLinesCount = r.lines_count;
                 this.steps[steporder].open = false;
                 this.steps[steporder].loading = false;
@@ -253,8 +253,8 @@ export class WorkflowRunJobComponent implements OnInit, OnDestroy {
     }
 
     clickScroll(target: ScrollTarget): void {
- this.onScroll.emit(target);
-}
+        this.onScroll.emit(target);
+    }
 
     async loadSpawnInfo() {
         if (!this.nodeJobRun || PipelineStatus.isDone(this.nodeJobRun.status)) {
@@ -283,12 +283,12 @@ export class WorkflowRunJobComponent implements OnInit, OnDestroy {
     }
 
     trackStepElement(index: number, _: LogBlock) {
- return index;
-}
+        return index;
+    }
 
     trackLineElement(index: number, element: CDNLine) {
- return element ? element.number : null;
-}
+        return element ? element.number : null;
+    }
 
     computeStepFirstLineNumbers(): void {
         let nestFirstLineNumber = 1;

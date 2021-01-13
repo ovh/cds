@@ -4,7 +4,7 @@
         <div class="ui grid">
             <div class="twelve wide column">
                 <app-worker-model-form mode="edit" [loading]="loading" [workerModel]="workerModel" [groups]="groups"
-                    [currentUser]="currentUser" [patterns]="patterns" [types]="types"
+                    [currentAuthSummary]="currentAuthSummary" [patterns]="patterns" [types]="types"
                     (save)="saveWorkerModel($event)" (saveAsCode)="saveWorkerModelAsCode($event)">
                 </app-worker-model-form>
             </div>

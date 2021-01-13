@@ -1,6 +1,6 @@
 import { CUSTOM_ELEMENTS_SCHEMA, NgModule } from '@angular/core';
 import { RouterModule } from '@angular/router';
-import { AdminGuard } from 'app/guard/admin.guard';
+import { MaintainerGuard } from 'app/guard/admin.guard';
 import { SharedModule } from '../../shared/shared.module';
 import { AdminComponent } from './admin.component';
 import { AdminRouting } from './admin.routing';
@@ -37,7 +37,7 @@ import { WorkerModelPatternListComponent } from './worker-model-pattern/list/wor
         AdminRouting
     ],
     providers: [
-        AdminGuard,
+        MaintainerGuard,
     ],
     schemas: [
         CUSTOM_ELEMENTS_SCHEMA

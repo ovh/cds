@@ -4,7 +4,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
 import { Broadcast } from 'app/model/broadcast.model';
 import { NavbarProjectData } from 'app/model/navbar.model';
-import { AuthentifiedUser } from 'app/model/user.model';
+import { AuthSummary } from 'app/model/user.model';
 import { BroadcastService } from 'app/service/broadcast/broadcast.service';
 import { BroadcastStore } from 'app/service/broadcast/broadcast.store';
 import { NavbarService } from 'app/service/navbar/navbar.service';
@@ -28,7 +28,7 @@ export class BroadcastEditComponent implements OnDestroy {
     deleteLoading = false;
     broadcast: Broadcast;
     broadcastSub: Subscription;
-    currentUser: AuthentifiedUser;
+    currentAuthSummary: AuthSummary;
     canEdit = false;
     broadcastLevelsList: any;
     levels = Array<string>();
@@ -49,7 +49,7 @@ export class BroadcastEditComponent implements OnDestroy {
         private _broadcastService: BroadcastService,
         private _cd: ChangeDetectorRef
     ) {
-        this.currentUser = this._store.selectSnapshot(AuthenticationState.user);
+        this.currentAuthSummary = this._store.selectSnapshot(AuthenticationState.summary);
         this.broadcastLevelsList = this._broadcastService.getBroadcastLevels()
         this.broadcastLevelsList.forEach(element => {
             this.levels.push(element.value);
@@ -62,7 +62,7 @@ export class BroadcastEditComponent implements OnDestroy {
                     voidProj.type = 'project';
                     voidProj.name = ' ';
                     this.projects = [voidProj].concat(data.filter((elt) => elt.type === 'project'));
-                    this.currentUser = this._store.selectSnapshot(AuthenticationState.user);
+                    this.currentAuthSummary = this._store.selectSnapshot(AuthenticationState.summary);
                 }
                 this._cd.markForCheck();
             });
@@ -73,7 +73,7 @@ export class BroadcastEditComponent implements OnDestroy {
                 let broadcast = bcs.get(id)
                 if (broadcast) {
                     this.broadcast = broadcast;
-                    this.canEdit = this.currentUser.isAdmin();
+                    this.canEdit = this.currentAuthSummary.isAdmin();
                     this.updatePath();
                 }
             });
@@ -81,7 +81,7 @@ export class BroadcastEditComponent implements OnDestroy {
         });
     }
 
-    ngOnDestroy(): void {} // Should be set to use @AutoUnsubscribe with AOT
+    ngOnDestroy(): void { } // Should be set to use @AutoUnsubscribe with AOT
 
     clickDeleteButton(): void {
         this.deleteLoading = true;

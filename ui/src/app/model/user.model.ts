@@ -1,19 +1,40 @@
+import { AuthConsumer, AuthSession } from './authentication.model';
+
+export class AuthSummary {
+    user: AuthentifiedUser;
+    consumer: AuthConsumer;
+    session: AuthSession;
+
+    constructor() { }
+
+    isComplete(): boolean {
+        return !!this.user && !!this.consumer && !!this.session;
+    }
+
+    isAdmin(): boolean {
+        if (!this.isComplete()) {
+            return false;
+        }
+        const dontNeedMFA = !this.consumer.support_mfa;
+        return this.user.ring === 'ADMIN' && (dontNeedMFA || this.session.mfa);
+    }
+
+    isMaintainer(): boolean {
+        return this.isComplete()
+            && (this.user.ring === 'MAINTAINER' || this.user.ring === 'ADMIN');
+    }
+
+    isMFAavailable(): boolean {
+        return this.isComplete() && this.consumer.support_mfa && !this.session.mfa;
+    }
+}
+
 export class AuthentifiedUser {
     id: string;
     created: string;
     username: string;
     fullname: string;
     ring: string;
-
-    constructor() { }
-
-    isAdmin(): boolean {
-        return this.ring === 'ADMIN';
-    }
-
-    isMaintainer(): boolean {
-        return this.ring === 'MAINTAINER' || this.isAdmin();
-    }
 }
 
 export class User {

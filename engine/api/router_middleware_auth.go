@@ -39,8 +39,25 @@ func (api *API) authAdminMiddleware(ctx context.Context, w http.ResponseWriter, 
 		return ctx, err
 	}
 
-	// Excluse consumers not admin or admin that are used for services
+	// Exclude consumers not admin or admin that are used for services
 	if !isAdmin(ctx) || isService(ctx) {
+		return ctx, sdk.WithStack(sdk.ErrForbidden)
+	}
+
+	return ctx, nil
+}
+
+func (api *API) authMaintainerMiddleware(ctx context.Context, w http.ResponseWriter, req *http.Request, rc *service.HandlerConfig) (context.Context, error) {
+	ctx, end := telemetry.Span(ctx, "router.authMaintainerMiddleware")
+	defer end()
+
+	ctx, err := api.authMiddleware(ctx, w, req, rc)
+	if err != nil {
+		return ctx, err
+	}
+
+	// Excluse consumers not maintainer or admin that are used for services
+	if !isMaintainer(ctx) || isService(ctx) {
 		return ctx, sdk.WithStack(sdk.ErrForbidden)
 	}
 

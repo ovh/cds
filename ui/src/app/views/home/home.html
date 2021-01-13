@@ -26,7 +26,8 @@
                 </div>
                 <div class="five wide column">
                     <div>
-                        <a class="fluid ui blue basic button link" href="https://ovh.github.io/cds" target="_blank" rel="noopener noreferrer">
+                        <a class="fluid ui blue basic button link" href="https://ovh.github.io/cds" target="_blank"
+                            rel="noopener noreferrer">
                             <i class="book icon"></i>Guide
                         </a>
                     </div>
@@ -41,9 +42,7 @@
                             <i class="book icon"></i>{{'navbar_favorites' | translate}}
                         </a>
                     </div>
-                    <ng-container *ngIf="user.isAdmin()">
-                        <app-home-favorite [bookmarks]="favorites"></app-home-favorite>
-                    </ng-container>
+                    <app-home-favorite [bookmarks]="favorites"></app-home-favorite>
                 </div>
             </div>
         </div>

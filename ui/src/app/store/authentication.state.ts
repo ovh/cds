@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Action, Selector, State, StateContext } from '@ngxs/store';
 import { AuthConsumer, AuthCurrentConsumerResponse, AuthSession } from 'app/model/authentication.model';
-import { AuthentifiedUser } from 'app/model/user.model';
+import { AuthentifiedUser, AuthSummary } from 'app/model/user.model';
 import { AuthenticationService } from 'app/service/authentication/authentication.service';
 import { UserService } from 'app/service/user/user.service';
 import { throwError } from 'rxjs';
@@ -50,6 +50,15 @@ export class AuthenticationState {
     @Selector()
     static session(state: AuthenticationStateModel) {
         return state.session;
+    }
+
+    @Selector()
+    static summary(state: AuthenticationStateModel) {
+        let s = new AuthSummary();
+        s.user = state.user;
+        s.consumer = state.consumer;
+        s.session = state.session;
+        return s;
     }
 
     @Action(ActionAuthentication.FetchCurrentUser)

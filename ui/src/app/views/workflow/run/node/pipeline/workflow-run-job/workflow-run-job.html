@@ -1,4 +1,4 @@
-<div class="job">
+<div *ngIf="nodeJobRun" class="job">
     <div class="header">
         <div class="menu left">
             <ng-container *ngIf="tabs && tabs.length > 1">
@@ -19,7 +19,7 @@
         <div class="step" *ngFor="let step of steps; trackBy: trackStepElement; let i = index">
             <div class="line info" (click)="clickOpen(step)">
                 <div class="number">
-                    <i *ngIf="step.totalLinesCount > 0" class="caret icon" [class.down]="step.open"
+                    <i *ngIf="step.totalLinesCount > 0 && !step.loading" class="caret icon" [class.down]="step.open"
                         [class.right]="!step.open"></i>
                     <div *ngIf="step.lines.length === 0 && step.loading" class="ui mini loader"></div>
                     {{step.firstDisplayedLineNumber ? step.firstDisplayedLineNumber : ''}}
@@ -44,7 +44,8 @@
             <ng-container *ngIf="step.open">
                 <div class="line" *ngFor="let line of step.lines; trackBy: trackLineElement; let j = index">
                     <div class="number">{{step.firstDisplayedLineNumber + j + 1}}</div>
-                    <div class="value" [innerHTML]="line.value | ansi: (this.mode !== displayModes.ANSI) | safeHtml: false">
+                    <div class="value"
+                        [innerHTML]="line.value | ansi: (this.mode !== displayModes.ANSI) | safeHtml: false">
                     </div>
                     <div class="extra" *ngIf="line.extra">
                         <div *ngFor="let extra of line.extra">{{extra}}</div>
@@ -52,16 +53,16 @@
                 </div>
                 <div class="line expand" *ngIf="step.lines.length + step.endLines.length < step.totalLinesCount"
                     (click)="clickExpandStepDown(i)">
-                    <div class="number"><i
-                            class="caret icon down"></i>{{step.firstDisplayedLineNumber + step.lines.length + 1}}
+                    <div class="number"><i class="caret icon down"></i>{{step.firstDisplayedLineNumber +
+                        step.lines.length + 1}}
                     </div>
                     <div class="value">…</div>
                 </div>
                 <div class="line expand"
                     *ngIf="step.lines.length + step.endLines.length < (step.totalLinesCount - expandLoadLinesCount) - 1"
                     (click)="clickExpandStepUp(i)">
-                    <div class="number"><i
-                            class="caret icon up"></i>{{(step.firstDisplayedLineNumber + step.totalLinesCount) - step.endLines.length}}
+                    <div class="number"><i class="caret icon up"></i>{{(step.firstDisplayedLineNumber +
+                        step.totalLinesCount) - step.endLines.length}}
                     </div>
                     <div class="value">…</div>
                 </div>
@@ -69,7 +70,8 @@
                     <div class="number">
                         {{((step.firstDisplayedLineNumber + step.totalLinesCount) - step.endLines.length) + j + 1}}
                     </div>
-                    <div class="value" [innerHTML]="line.value | ansi:(this.mode !== displayModes.ANSI) | safeHtml : false">
+                    <div class="value"
+                        [innerHTML]="line.value | ansi:(this.mode !== displayModes.ANSI) | safeHtml : false">
                     </div>
                     <div class="extra" *ngIf="line.extra">
                         <div *ngFor="let extra of line.extra">{{extra}}</div>
@@ -96,15 +98,16 @@
         <div class="line expand"
             *ngIf="services[currentTabIndex-1].lines.length + services[currentTabIndex-1].endLines.length < (services[currentTabIndex-1].totalLinesCount - expandLoadLinesCount) - 1"
             (click)="clickExpandServiceUp(currentTabIndex-1)">
-            <div class="number"><i
-                    class="caret icon up"></i>{{(services[currentTabIndex-1].totalLinesCount) - services[currentTabIndex-1].endLines.length}}
+            <div class="number"><i class="caret icon up"></i>{{(services[currentTabIndex-1].totalLinesCount) -
+                services[currentTabIndex-1].endLines.length}}
             </div>
             <div class="value">…</div>
         </div>
         <div class="line"
             *ngFor="let line of services[currentTabIndex-1].endLines; trackBy: trackLineElement; let j = index">
             <div class="number">
-                {{((services[currentTabIndex-1].totalLinesCount) - services[currentTabIndex-1].endLines.length) + j + 1}}
+                {{((services[currentTabIndex-1].totalLinesCount) - services[currentTabIndex-1].endLines.length) + j +
+                1}}
             </div>
             <div class="value" [innerHTML]="line.value | ansi:(this.mode !== displayModes.ANSI) | safeHtml: false">
             </div>
@@ -115,4 +118,4 @@
         <div class="goto" (click)="clickScroll(scrollTargets.TOP)">Top<i class="caret icon up"></i></div>
     </div>
 </div>
-<app-workflow-run-job-variable [variables]="nodeJobRun.parameters" #jobVariable></app-workflow-run-job-variable>
+<app-workflow-run-job-variable [variables]="nodeJobRun?.parameters" #jobVariable></app-workflow-run-job-variable>

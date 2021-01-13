@@ -26,9 +26,11 @@
                             <th class="two wide">by</th>
                             <th class="one wide">run</th>
                             <th class="two wide">project/workflow</th>
-                            <th [ngClass]="{'four wide': !user.isAdmin(), 'one wide': user.isAdmin()}">node</th>
+                            <th
+                                [ngClass]="{'four wide': !currentAuthSummary.isAdmin(), 'one wide': currentAuthSummary.isAdmin()}">
+                                node</th>
                             <th class="two wide">triggered_by</th>
-                            <th class="three wide" *ngIf="user.isAdmin()">requirements</th>
+                            <th class="three wide" *ngIf="currentAuthSummary.isAdmin()">requirements</th>
                             <th class="two wide"></th>
                         </tr>
                     </thead>
@@ -44,13 +46,15 @@
                                 {{bookedOrBuildingByList[index]}}
                             </td>
                             <td>
-                                <a class="ui" [routerLink]="['/project', parametersMaps[index]['cds.project'], 'workflow', parametersMaps[index]['cds.workflow'], 'run', parametersMaps[index]['cds.run.number']]"
+                                <a class="ui"
+                                    [routerLink]="['/project', parametersMaps[index]['cds.project'], 'workflow', parametersMaps[index]['cds.workflow'], 'run', parametersMaps[index]['cds.run.number']]"
                                     *ngIf="parametersMaps[index] != null">
                                     {{parametersMaps[index]['cds.run.number']}}
                                 </a>
                             </td>
                             <td>
-                                <a class="ui" [routerLink]="['/project', parametersMaps[index]['cds.project'], 'workflow', parametersMaps[index]['cds.workflow']]"
+                                <a class="ui"
+                                    [routerLink]="['/project', parametersMaps[index]['cds.project'], 'workflow', parametersMaps[index]['cds.workflow']]"
                                     *ngIf="parametersMaps[index] != null">
                                     {{parametersMaps[index]['cds.project']}}/{{parametersMaps[index]['cds.workflow']}}
                                 </a>
@@ -66,8 +70,9 @@
                                     parametersMaps[index]['cds.triggered_by.username']}}
                                 </span>
                             </td>
-                            <td *ngIf="user.isAdmin()">
-                                <span *ngIf="wNodeJobRun.job != null && wNodeJobRun.job.action != null && wNodeJobRun.job.action.requirements != null">
+                            <td *ngIf="currentAuthSummary.isAdmin()">
+                                <span
+                                    *ngIf="wNodeJobRun.job != null && wNodeJobRun.job.action != null && wNodeJobRun.job.action.requirements != null">
                                     {{requirementsList[index]}}
                                 </span>
                             </td>
