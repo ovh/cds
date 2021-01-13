@@ -89,7 +89,11 @@ func (s *Service) itemAccessCheck(ctx context.Context, item sdk.CDNItem) error {
 		return nil
 	}
 
-	if err := s.Client.WorkflowLogAccess(ctx, item.APIRef.ProjectKey, item.APIRef.WorkflowName, sessionID); err != nil {
+	logRef, is := item.APIRef.(*sdk.CDNLogAPIRef)
+	if !is {
+		return sdk.WrapError(sdk.ErrInfiniteTriggerLoop, "item is not a log")
+	}
+	if err := s.Client.WorkflowLogAccess(ctx, logRef.ProjectKey, logRef.WorkflowName, sessionID); err != nil {
 		return sdk.NewErrorWithStack(err, sdk.ErrNotFound)
 	}
 

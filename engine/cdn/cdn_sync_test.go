@@ -321,7 +321,7 @@ func TestSyncLog(t *testing.T) {
 	})
 
 	// Insert item for wkf1, 1000
-	apiRef1000 := sdk.CDNLogAPIRef{
+	apiRef1000 := &sdk.CDNLogAPIRef{
 		ProjectKey:     "key2",
 		WorkflowName:   "wkf1",
 		WorkflowID:     1000,

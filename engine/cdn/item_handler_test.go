@@ -33,7 +33,7 @@ func TestMarkItemToDeleteHandler(t *testing.T) {
 	item1 := sdk.CDNItem{
 		ID:   sdk.UUID(),
 		Type: sdk.CDNTypeItemStepLog,
-		APIRef: sdk.CDNLogAPIRef{
+		APIRef: &sdk.CDNLogAPIRef{
 			RunID:      1,
 			WorkflowID: 1,
 		},
@@ -43,7 +43,7 @@ func TestMarkItemToDeleteHandler(t *testing.T) {
 	item2 := sdk.CDNItem{
 		ID:   sdk.UUID(),
 		Type: sdk.CDNTypeItemStepLog,
-		APIRef: sdk.CDNLogAPIRef{
+		APIRef: &sdk.CDNLogAPIRef{
 			RunID:      2,
 			WorkflowID: 2,
 		},
@@ -54,7 +54,7 @@ func TestMarkItemToDeleteHandler(t *testing.T) {
 	item3 := sdk.CDNItem{
 		ID:   sdk.UUID(),
 		Type: sdk.CDNTypeItemStepLog,
-		APIRef: sdk.CDNLogAPIRef{
+		APIRef: &sdk.CDNLogAPIRef{
 			RunID:      3,
 			WorkflowID: 2,
 		},

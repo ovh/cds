@@ -29,7 +29,7 @@ func Test_itemAccessMiddleware(t *testing.T) {
 	myItem := sdk.CDNItem{
 		ID:   sdk.UUID(),
 		Type: sdk.CDNTypeItemStepLog,
-		APIRef: sdk.CDNLogAPIRef{
+		APIRef: &sdk.CDNLogAPIRef{
 			RunID:      1,
 			WorkflowID: 1,
 		},

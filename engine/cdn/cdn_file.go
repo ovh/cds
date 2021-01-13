@@ -26,7 +26,10 @@ func (s *Service) storeFile(ctx context.Context, sig cdn.Signature, reader io.Re
 	bufferUnit := s.Units.FileBuffer()
 
 	// Item and ItemUnit creation
-	apiRef := sdk.NewCDNApiRef(itemType, sig)
+	apiRef, err := sdk.NewCDNApiRef(itemType, sig)
+	if err != nil {
+		return err
+	}
 	hashRef, err := apiRef.ToHash()
 	if err != nil {
 		return err

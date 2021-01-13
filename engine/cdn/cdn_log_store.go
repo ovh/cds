@@ -154,7 +154,10 @@ func (s *Service) storeLogs(ctx context.Context, itemType sdk.CDNItemType, signa
 
 func (s *Service) loadOrCreateItem(ctx context.Context, itemType sdk.CDNItemType, signature cdn.Signature) (*sdk.CDNItem, error) {
 	// Build cds api ref
-	apiRef := sdk.NewCDNApiRef(itemType, signature)
+	apiRef, err := sdk.NewCDNApiRef(itemType, signature)
+	if err != nil {
+		return nil, err
+	}
 	hashRef, err := apiRef.ToHash()
 	if err != nil {
 		return nil, err

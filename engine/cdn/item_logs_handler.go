@@ -104,7 +104,13 @@ func (s *Service) sendLogsToWSClient(ctx context.Context, wsClient websocket.Cli
 		}
 
 		if err := s.itemAccessCheck(ctx, *it); err != nil {
-			return sdk.WrapError(err, "client %s can't access logs for workflow %s/%s", wsClient.UUID(), it.APIRef.ProjectKey, it.APIRef.WorkflowName)
+			var projectKey, workflow string
+			logRef, is := it.APIRef.(*sdk.CDNLogAPIRef)
+			if is {
+				projectKey = logRef.ProjectKey
+				workflow = logRef.WorkflowName
+			}
+			return sdk.WrapError(err, "client %s can't access logs for workflow %s/%s", wsClient.UUID(), projectKey, workflow)
 		}
 
 		iu, err := storage.LoadItemUnitByUnit(ctx, s.Mapper, s.mustDBWithCtx(ctx), s.Units.LogsBuffer().ID(), it.ID)

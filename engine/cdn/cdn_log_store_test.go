@@ -148,7 +148,7 @@ func TestStoreLastStepLog(t *testing.T) {
 			},
 		},
 	}
-	apiRef := sdk.CDNLogAPIRef{
+	apiRef := &sdk.CDNLogAPIRef{
 		ProjectKey:     hm.Signature.ProjectKey,
 		WorkflowName:   hm.Signature.WorkflowName,
 		WorkflowID:     hm.Signature.WorkflowID,

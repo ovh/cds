@@ -14,17 +14,17 @@ import (
 )
 
 type CDNItem struct {
-	ID           string       `json:"id" db:"id"`
-	Created      time.Time    `json:"created" db:"created"`
-	LastModified time.Time    `json:"last_modified" db:"last_modified"`
-	Hash         string       `json:"hash" db:"cipher_hash" gorpmapping:"encrypted,ID,APIRefHash,Type"`
-	APIRef       CDNLogAPIRef `json:"api_ref" db:"api_ref"`
-	APIRefHash   string       `json:"api_ref_hash" db:"api_ref_hash"`
-	Status       string       `json:"status" db:"status"`
-	Type         CDNItemType  `json:"type" db:"type"`
-	Size         int64        `json:"size" db:"size"`
-	MD5          string       `json:"md5" db:"md5"`
-	ToDelete     bool         `json:"to_delete" db:"to_delete"`
+	ID           string      `json:"id" db:"id"`
+	Created      time.Time   `json:"created" db:"created"`
+	LastModified time.Time   `json:"last_modified" db:"last_modified"`
+	Hash         string      `json:"hash" db:"cipher_hash" gorpmapping:"encrypted,ID,APIRefHash,Type"`
+	APIRef       CDNApiRef   `json:"api_ref" db:"-"`
+	APIRefHash   string      `json:"api_ref_hash" db:"api_ref_hash"`
+	Status       string      `json:"status" db:"status"`
+	Type         CDNItemType `json:"type" db:"type"`
+	Size         int64       `json:"size" db:"size"`
+	MD5          string      `json:"md5" db:"md5"`
+	ToDelete     bool        `json:"to_delete" db:"to_delete"`
 }
 
 type CDNItemUnit struct {
@@ -72,6 +72,11 @@ type CDNMarkDelete struct {
 	RunID int64 `json:"run_id,omitempty"`
 }
 
+type CDNApiRef interface {
+	ToHash() (string, error)
+	ToFilename() string
+}
+
 type CDNLogAPIRef struct {
 	ProjectKey     string `json:"project_key"`
 	WorkflowName   string `json:"workflow_name"`
@@ -83,16 +88,49 @@ type CDNLogAPIRef struct {
 	NodeRunJobName string `json:"node_run_job_name"`
 
 	// for workers
-	StepOrder    int64   `json:"step_order"`
-	StepName     string  `json:"step_name,omitempty"`
-	ArtifactName *string `json:"artifact_name,omitempty"`
+	StepOrder int64  `json:"step_order"`
+	StepName  string `json:"step_name,omitempty"`
 
 	// for hatcheries
 	RequirementServiceID   int64  `json:"service_id,omitempty"`
 	RequirementServiceName string `json:"service_name,omitempty"`
 }
 
-func NewCDNApiRef(t CDNItemType, signature cdn.Signature) CDNLogAPIRef {
+type CDNArtifactAPIRef struct {
+	ProjectKey     string `json:"project_key"`
+	WorkflowName   string `json:"workflow_name"`
+	WorkflowID     int64  `json:"workflow_id"`
+	RunID          int64  `json:"run_id"`
+	NodeRunJobID   int64  `json:"node_run_job_id"`
+	NodeRunJobName string `json:"node_run_job_name"`
+	ArtifactName   string `json:"artifact_name,omitempty"`
+}
+
+func NewCDNApiRef(t CDNItemType, signature cdn.Signature) (CDNApiRef, error) {
+	switch t {
+	case CDNTypeItemStepLog, CDNTypeItemServiceLog:
+		return NewCDNLogApiRef(signature), nil
+	case CDNTypeItemArtifact:
+		return NewCDNArtifactApiRef(signature), nil
+	}
+	return nil, WrapError(ErrInvalidData, "item type unknown")
+}
+
+func NewCDNArtifactApiRef(signature cdn.Signature) CDNApiRef {
+	// Build cds api ref
+	apiRef := CDNArtifactAPIRef{
+		ProjectKey:     signature.ProjectKey,
+		WorkflowName:   signature.WorkflowName,
+		WorkflowID:     signature.WorkflowID,
+		RunID:          signature.RunID,
+		NodeRunJobName: signature.JobName,
+		NodeRunJobID:   signature.JobID,
+	}
+	apiRef.ArtifactName = signature.Worker.ArtifactName
+	return &apiRef
+}
+
+func NewCDNLogApiRef(signature cdn.Signature) CDNApiRef {
 	// Build cds api ref
 	apiRef := CDNLogAPIRef{
 		ProjectKey:     signature.ProjectKey,
@@ -110,15 +148,9 @@ func NewCDNApiRef(t CDNItemType, signature cdn.Signature) CDNLogAPIRef {
 		apiRef.RequirementServiceID = signature.Service.RequirementID
 		apiRef.RequirementServiceName = signature.Service.RequirementName
 	}
-
-	switch t {
-	case CDNTypeItemStepLog, CDNTypeItemServiceLog:
-		apiRef.NodeRunName = signature.NodeRunName
-		apiRef.NodeRunID = signature.NodeRunID
-	case CDNTypeItemArtifact:
-		apiRef.ArtifactName = &signature.Worker.ArtifactName
-	}
-	return apiRef
+	apiRef.NodeRunName = signature.NodeRunName
+	apiRef.NodeRunID = signature.NodeRunID
+	return &apiRef
 }
 
 type CDNItemResume struct {
@@ -126,7 +158,7 @@ type CDNItemResume struct {
 	Location map[string]CDNItemUnit `json:"location,omitempty"`
 }
 
-func (a CDNLogAPIRef) ToFilename() string {
+func (a *CDNLogAPIRef) ToFilename() string {
 	jobName := strings.Replace(a.NodeRunJobName, " ", "", -1)
 
 	isService := a.RequirementServiceID > 0 && a.RequirementServiceName != ""
@@ -146,8 +178,29 @@ func (a CDNLogAPIRef) ToFilename() string {
 	)
 }
 
-func (a CDNLogAPIRef) ToHash() (string, error) {
+func (a *CDNLogAPIRef) ToHash() (string, error) {
 	hashRefU, err := hashstructure.Hash(a, nil)
+	if err != nil {
+		return "", WithStack(err)
+	}
+	return strconv.FormatUint(hashRefU, 10), nil
+}
+
+func (a *CDNArtifactAPIRef) ToFilename() string {
+	return a.ArtifactName
+}
+
+func (a *CDNArtifactAPIRef) ToHash() (string, error) {
+	m := make(map[string]string, 7)
+	m["project_key"] = a.ProjectKey
+	m["workflow_name"] = a.WorkflowName
+	m["workflow_id"] = strconv.Itoa(int(a.WorkflowID))
+	m["run_id"] = strconv.Itoa(int(a.RunID))
+	m["node_run_job_id"] = strconv.Itoa(int(a.NodeRunJobID))
+	m["node_run_job_name"] = a.NodeRunJobName
+	m["artifact_name"] = a.ArtifactName
+
+	hashRefU, err := hashstructure.Hash(m, nil)
 	if err != nil {
 		return "", WithStack(err)
 	}

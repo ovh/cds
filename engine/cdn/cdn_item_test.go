@@ -54,7 +54,7 @@ func TestGetItemValue(t *testing.T) {
 	require.NoError(t, err)
 	require.NoError(t, s.LogCache.Clear())
 
-	apiRef := sdk.CDNLogAPIRef{
+	apiRef := &sdk.CDNLogAPIRef{
 		ProjectKey:     sdk.RandomString(10),
 		WorkflowName:   sdk.RandomString(10),
 		WorkflowID:     1,
@@ -213,7 +213,7 @@ func TestGetItemValue_ThousandLines(t *testing.T) {
 	require.NoError(t, err)
 	require.NoError(t, s.LogCache.Clear())
 
-	apiRef := sdk.CDNLogAPIRef{
+	apiRef := &sdk.CDNLogAPIRef{
 		ProjectKey:     sdk.RandomString(10),
 		WorkflowName:   sdk.RandomString(10),
 		WorkflowID:     1,
@@ -320,7 +320,7 @@ func TestGetItemValue_Reverse(t *testing.T) {
 	require.NoError(t, err)
 	require.NoError(t, s.LogCache.Clear())
 
-	apiRef := sdk.CDNLogAPIRef{
+	apiRef := &sdk.CDNLogAPIRef{
 		ProjectKey:     sdk.RandomString(10),
 		WorkflowName:   sdk.RandomString(10),
 		WorkflowID:     1,
@@ -430,7 +430,7 @@ func TestGetItemValue_ThousandLinesReverse(t *testing.T) {
 	require.NoError(t, err)
 	require.NoError(t, s.LogCache.Clear())
 
-	apiRef := sdk.CDNLogAPIRef{
+	apiRef := &sdk.CDNLogAPIRef{
 		ProjectKey:     sdk.RandomString(10),
 		WorkflowName:   sdk.RandomString(10),
 		WorkflowID:     1,

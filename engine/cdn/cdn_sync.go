@@ -335,7 +335,7 @@ func (s *Service) syncNodeRun(ctx context.Context, cdsStorage *cds.CDS, pKey str
 func (s *Service) syncServiceLogs(ctx context.Context, tx gorpmapper.SqlExecutorWithTx, cdsStorage *cds.CDS, pKey string, nodeRun *sdk.WorkflowNodeRun, nodeRunIdentifier sdk.WorkflowNodeRunIdentifiers, rj sdk.WorkflowNodeJobRun, dict map[string]int64) ([]string, error) {
 	var itemsIDs []string
 	for k, v := range dict {
-		apiRef := sdk.CDNLogAPIRef{
+		apiRef := &sdk.CDNLogAPIRef{
 			NodeRunID:              nodeRun.ID,
 			WorkflowName:           nodeRunIdentifier.WorkflowName,
 			WorkflowID:             nodeRunIdentifier.WorkflowID,
@@ -357,7 +357,7 @@ func (s *Service) syncServiceLogs(ctx context.Context, tx gorpmapper.SqlExecutor
 }
 
 func (s *Service) syncStepLog(ctx context.Context, tx gorpmapper.SqlExecutorWithTx, su storage.Interface, pKey string, nodeRun *sdk.WorkflowNodeRun, nodeRunIdentifier sdk.WorkflowNodeRunIdentifiers, rj sdk.WorkflowNodeJobRun, ss sdk.StepStatus, stepName string) (string, error) {
-	apiRef := sdk.CDNLogAPIRef{
+	apiRef := &sdk.CDNLogAPIRef{
 		StepOrder:      int64(ss.StepOrder),
 		NodeRunID:      nodeRun.ID,
 		WorkflowName:   nodeRunIdentifier.WorkflowName,
@@ -372,7 +372,7 @@ func (s *Service) syncStepLog(ctx context.Context, tx gorpmapper.SqlExecutorWith
 	return s.syncItem(ctx, tx, su, sdk.CDNTypeItemStepLog, apiRef)
 }
 
-func (s *Service) syncItem(ctx context.Context, tx gorpmapper.SqlExecutorWithTx, su storage.Interface, itemType sdk.CDNItemType, apiRef sdk.CDNLogAPIRef) (string, error) {
+func (s *Service) syncItem(ctx context.Context, tx gorpmapper.SqlExecutorWithTx, su storage.Interface, itemType sdk.CDNItemType, apiRef sdk.CDNApiRef) (string, error) {
 	apirefHash, err := apiRef.ToHash()
 	if err != nil {
 		return "", err

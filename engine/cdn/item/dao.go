@@ -28,7 +28,12 @@ func getItems(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlExecutor, q 
 			log.Error(ctx, "item.get> item %s data corrupted", i.ID)
 			continue
 		}
-		verifiedItems = append(verifiedItems, i.CDNItem)
+		item, err := i.ToCDSItem()
+		if err != nil {
+			return nil, err
+		}
+
+		verifiedItems = append(verifiedItems, item)
 	}
 
 	return verifiedItems, nil
@@ -52,7 +57,8 @@ func getItem(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlExecutor, q g
 		log.Error(ctx, "item.get> item %s data corrupted", i.ID)
 		return nil, sdk.WithStack(sdk.ErrNotFound)
 	}
-	return &i.CDNItem, nil
+	item, err := i.ToCDSItem()
+	return &item, sdk.WithStack(err)
 }
 
 func LoadIDsToDelete(db gorp.SqlExecutor, size int) ([]string, error) {
@@ -114,7 +120,11 @@ func Insert(ctx context.Context, m *gorpmapper.Mapper, db gorpmapper.SqlExecutor
 	if err := m.InsertAndSign(ctx, db, cdnItem); err != nil {
 		return sdk.WrapError(err, "unable to insert item item %s", i.ID)
 	}
-	*i = cdnItem.CDNItem
+	var err error
+	*i, err = cdnItem.ToCDSItem()
+	if err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -125,7 +135,11 @@ func Update(ctx context.Context, m *gorpmapper.Mapper, db gorpmapper.SqlExecutor
 	if err := m.UpdateAndSign(ctx, db, cdnItem); err != nil {
 		return sdk.WrapError(err, "unable to update item item")
 	}
-	*i = cdnItem.CDNItem
+	var err error
+	*i, err = cdnItem.ToCDSItem()
+	if err != nil {
+		return err
+	}
 	return nil
 }
 
