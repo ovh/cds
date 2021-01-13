@@ -44,6 +44,7 @@ type containerArgs struct {
 	cmd, env                           []string
 	labels                             map[string]string
 	memory                             int64
+	memorySwap                         int64
 	dockerOpts                         dockerOpts
 	entryPoint                         strslice.StrSlice
 }
@@ -86,7 +87,7 @@ func (h *HatcherySwarm) createAndStartContainer(ctx context.Context, dockerClien
 	}
 	hostConfig.Resources = container.Resources{
 		Memory:     cArgs.memory * 1024 * 1024, //from MB to B
-		MemorySwap: -1,
+		MemorySwap: cArgs.memorySwap,
 	}
 
 	networkingConfig := &network.NetworkingConfig{

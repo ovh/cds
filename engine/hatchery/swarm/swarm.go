@@ -294,6 +294,10 @@ func (h *HatcherySwarm) SpawnWorker(ctx context.Context, spawnArgs hatchery.Spaw
 						serviceMemory = int64(i)
 					}
 				}
+				serviceMemorySwap := int64(-1)
+				if h.Config.DisableMemorySwap {
+					serviceMemorySwap = 0
+				}
 
 				var cmdArgs []string
 				if sa, ok := envm["CDS_SERVICE_ARGS"]; ok {
@@ -328,7 +332,6 @@ func (h *HatcherySwarm) SpawnWorker(ctx context.Context, spawnArgs hatchery.Spaw
 					labels[hatchery.LabelServiceJobID] = fmt.Sprintf("%d", spawnArgs.JobID)
 					labels[hatchery.LabelServiceID] = fmt.Sprintf("%d", r.ID)
 					labels[hatchery.LabelServiceReqName] = r.Name
-
 				}
 
 				//Start the services
@@ -341,6 +344,7 @@ func (h *HatcherySwarm) SpawnWorker(ctx context.Context, spawnArgs hatchery.Spaw
 					env:          env,
 					labels:       labels,
 					memory:       serviceMemory,
+					memorySwap:   serviceMemorySwap,
 					entryPoint:   nil,
 				}
 

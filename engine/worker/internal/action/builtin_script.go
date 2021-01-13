@@ -30,8 +30,15 @@ type script struct {
 }
 
 func prepareScriptContent(parameters []sdk.Parameter, basedir afero.Fs, workdir afero.File) (*script, error) {
-	var script = script{
-		shell: "/bin/sh",
+	var script = script{}
+
+	// Set default shell based on os
+	if isWindows() {
+		script.shell = "PowerShell"
+		script.opts = []string{"-ExecutionPolicy", "Bypass", "-Command"}
+	} else {
+		script.shell = "/bin/sh"
+		script.opts = []string{"-e"}
 	}
 
 	// Get script content
@@ -39,12 +46,7 @@ func prepareScriptContent(parameters []sdk.Parameter, basedir afero.Fs, workdir 
 	a := sdk.ParameterFind(parameters, "script")
 	scriptContent = a.Value
 
-	// except on windows where it's powershell
-	if isWindows() {
-		script.shell = "PowerShell"
-		script.opts = []string{"-ExecutionPolicy", "Bypass", "-Command"}
-		// on windows, we add ErrorActionPreference just below
-	} else if strings.HasPrefix(scriptContent, "#!") { // If user wants a specific shell, use it
+	if strings.HasPrefix(scriptContent, "#!") { // If user wants a specific shell, use it
 		t := strings.SplitN(scriptContent, "\n", 2)
 		script.shell = strings.TrimPrefix(t[0], "#!")             // Find out the shebang
 		script.shell = strings.TrimRight(script.shell, " \t\r\n") // Remove all the trailing shit
@@ -52,15 +54,15 @@ func prepareScriptContent(parameters []sdk.Parameter, basedir afero.Fs, workdir 
 		script.shell = splittedShell[0]
 		script.opts = splittedShell[1:]
 		// if it's a shell, we add set -e to failed job when a command is failed
-		if isShell(script.shell) && len(splittedShell) == 1 {
-			script.opts = append(script.opts, "-e")
+		if !isWindows() && isShell(script.shell) && len(splittedShell) == 1 {
+			script.opts = []string{"-e"}
+		}
+		if isWindows() && isPowerShell(script.shell) && len(splittedShell) == 1 {
+			script.opts = []string{"-ExecutionPolicy", "Bypass", "-Command"}
 		}
 		if len(t) > 1 {
 			scriptContent = t[1]
 		}
-
-	} else {
-		script.opts = []string{"-e"}
 	}
 
 	script.content = []byte(scriptContent)
@@ -143,8 +145,8 @@ func writeScriptContent(ctx context.Context, script *script, fs afero.Fs, basedi
 		}
 	}
 
-	if isWindows() {
-		//This aims to stop a the very first error and return the right exit code
+	if isWindows() && isPowerShell(script.shell) {
+		// This aims to stop a the very first error and return the right exit code
 		psCommand := fmt.Sprintf("& { $ErrorActionPreference='Stop'; & %s ;exit $LastExitCode}", realScriptPath)
 		script.opts = append(script.opts, psCommand)
 	} else {
@@ -307,6 +309,15 @@ func RunScriptAction(ctx context.Context, wk workerruntime.Runtime, a sdk.Action
 
 func isShell(in string) bool {
 	for _, v := range []string{"ksh", "bash", "sh", "zsh"} {
+		if strings.HasSuffix(in, v) {
+			return true
+		}
+	}
+	return false
+}
+
+func isPowerShell(in string) bool {
+	for _, v := range []string{"PowerShell", "pwsh.exe", "powershell.exe"} {
 		if strings.HasSuffix(in, v) {
 			return true
 		}
