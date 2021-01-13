@@ -10,8 +10,7 @@ import * as ActionAuthentication from './authentication.action';
 
 export class AuthenticationStateModel {
     public error: any;
-    public consumer: AuthConsumer;
-    public session: AuthSession;
+    public summary: AuthSummary;
     public user: AuthentifiedUser;
     public loading: boolean;
 }
@@ -43,22 +42,8 @@ export class AuthenticationState {
     }
 
     @Selector()
-    static consumer(state: AuthenticationStateModel) {
-        return state.consumer;
-    }
-
-    @Selector()
-    static session(state: AuthenticationStateModel) {
-        return state.session;
-    }
-
-    @Selector()
     static summary(state: AuthenticationStateModel) {
-        let s = new AuthSummary();
-        s.user = state.user;
-        s.consumer = state.consumer;
-        s.session = state.session;
-        return s;
+        return state.summary;
     }
 
     @Action(ActionAuthentication.FetchCurrentUser)
@@ -94,16 +79,18 @@ export class AuthenticationState {
                 ctx.patchState({ loading: false });
             }),
             tap((res: AuthCurrentConsumerResponse) => {
+                let s = new AuthSummary();
+                s.user = res.user;
+                s.consumer = res.consumer;
+                s.session = res.session;
                 ctx.patchState({
-                    consumer: res.consumer,
-                    session: res.session,
+                    summary: s,
                     error: null
                 });
             }),
             catchError(err => {
                 ctx.patchState({
-                    consumer: null,
-                    session: null,
+                    summary: null,
                     error: err
                 })
                 return throwError(err);

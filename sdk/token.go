@@ -259,8 +259,9 @@ type AuthDriverUserInfo struct {
 
 // AuthCurrentConsumerResponse describe the current consumer and the current session
 type AuthCurrentConsumerResponse struct {
-	Consumer AuthConsumer `json:"consumer"`
-	Session  AuthSession  `json:"session"`
+	User     AuthentifiedUser `json:"user"`
+	Consumer AuthConsumer     `json:"consumer"`
+	Session  AuthSession      `json:"session"`
 }
 
 // AuthConsumerType constant to identify what is the driver used to create a consumer.

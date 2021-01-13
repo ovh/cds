@@ -365,7 +365,14 @@ func (api *API) getAuthMe() service.Handler {
 		if c == nil || s == nil {
 			return sdk.WithStack(sdk.ErrUnauthorized)
 		}
+
+		// Clean user and consumer aggregated data
+		u := *c.AuthentifiedUser
+		u.Groups = nil
+		c.AuthentifiedUser = nil
+
 		return service.WriteJSON(w, sdk.AuthCurrentConsumerResponse{
+			User:     u,
 			Consumer: *c,
 			Session:  *s,
 		}, http.StatusOK)

@@ -45,6 +45,7 @@ export class AuthDriverManifest {
 }
 
 export class AuthCurrentConsumerResponse {
+    user: AuthentifiedUser;
     consumer: AuthConsumer;
     session: AuthSession;
 }

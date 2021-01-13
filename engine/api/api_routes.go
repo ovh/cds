@@ -31,7 +31,7 @@ func (api *API) InitRouter() {
 
 	// Auth
 	r.Handle("/auth/driver", ScopeNone(), r.GET(api.getAuthDriversHandler, service.OverrideAuth(service.NoAuthMiddleware)))
-	r.Handle("/auth/me", Scope(sdk.AuthConsumerScopeAction), r.GET(api.getAuthMe))
+	r.Handle("/auth/me", ScopeNone(), r.GET(api.getAuthMe))
 	r.Handle("/auth/scope", ScopeNone(), r.GET(api.getAuthScopesHandler, service.OverrideAuth(service.NoAuthMiddleware)))
 	r.Handle("/auth/consumer/local/signup", ScopeNone(), r.POST(api.postAuthLocalSignupHandler, service.OverrideAuth(service.NoAuthMiddleware)))
 	r.Handle("/auth/consumer/local/signin", ScopeNone(), r.POST(api.postAuthLocalSigninHandler, service.OverrideAuth(service.NoAuthMiddleware), MaintenanceAware()))

@@ -7,25 +7,13 @@ export class AuthSummary {
 
     constructor() { }
 
-    isComplete(): boolean {
-        return !!this.user && !!this.consumer && !!this.session;
-    }
-
     isAdmin(): boolean {
-        if (!this.isComplete()) {
-            return false;
-        }
         const dontNeedMFA = !this.consumer.support_mfa;
         return this.user.ring === 'ADMIN' && (dontNeedMFA || this.session.mfa);
     }
 
     isMaintainer(): boolean {
-        return this.isComplete()
-            && (this.user.ring === 'MAINTAINER' || this.user.ring === 'ADMIN');
-    }
-
-    isMFAavailable(): boolean {
-        return this.isComplete() && this.consumer.support_mfa && !this.session.mfa;
+        return this.user.ring === 'MAINTAINER' || this.user.ring === 'ADMIN';
     }
 }
 

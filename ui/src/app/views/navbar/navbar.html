@@ -64,6 +64,17 @@
         {{ 'navbar_project_create' | translate }}
     </a>
     <div class="right menu details">
+        <div class="ring" *ngIf="currentAuthSummary">
+            <div *ngIf="currentAuthSummary.isMaintainer() && currentAuthSummary.user.ring !== 'ADMIN'"
+                class="ui orange horizontal label">Maintainer</div>
+            <div *ngIf="currentAuthSummary.user.ring === 'ADMIN' && !currentAuthSummary.isAdmin()"
+                class="ui label orange">
+                Maintainer
+                <a class="detail" (click)="mfaLogin()" title="Elevate to admin"><i class="key icon"></i></a>
+            </div>
+            <div *ngIf="currentAuthSummary.isAdmin()" class="ui red horizontal label">Admin</div>
+        </div>
+
         <div class="ui search" suiPopup popupPlacement="bottom" [popupTemplate]="popupSearchTemplate"
             popupTrigger="outsideClick" #popup="suiPopup">
             <div class="ui icon input">
@@ -312,8 +323,8 @@
         </ng-template>
 
         <sm-dropdown icon="settings" *ngIf="currentAuthSummary">
-            <a sm-item href="#"
-                [routerLink]="['settings', 'user', currentAuthSummary.user.username]">{{ 'navbar_profile' | translate }}</a>
+            <a sm-item href="#" [routerLink]="['settings', 'user', currentAuthSummary.user.username]">{{
+                'navbar_profile' | translate }}</a>
             <a sm-item href="#" [routerLink]="['settings', 'cdsctl']">{{ 'navbar_cdsctl' | translate }}</a>
             <a sm-item href="#" [routerLink]="['settings', 'action']">{{ 'navbar_actions' | translate }}</a>
             <a sm-item href="#" [routerLink]="['settings', 'user']">{{ 'navbar_users' | translate }}</a>
@@ -331,7 +342,6 @@
             <sui-checkbox class="toggle theme-switch" [ngModel]="darkActive" (ngModelChange)="changeTheme()">
                 {{'navbar_dark_mode' | translate}}</sui-checkbox>
             <div class="divider"></div>
-            <a sm-item (click)="mfaLogin()" *ngIf="currentAuthSummary.isMFAavailable()"> {{ 'navbar_mfa' | translate }} </a>
             <a sm-item (click)="clickLogout()">{{ 'navbar_disconnect' | translate }}</a>
         </sm-dropdown>
 

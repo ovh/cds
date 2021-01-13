@@ -46,7 +46,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
     listWorkflows: List<NavbarRecentData>;
     langSubscription: Subscription;
     navbarSubscription: Subscription;
-    userSubscription: Subscription;
+    authSubscription: Subscription;
     sessionSubcription: Subscription;
     consumerSubcription: Subscription;
     broadcastSubscription: Subscription;
@@ -77,9 +77,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
         private _routerService: RouterService,
         private _cd: ChangeDetectorRef
     ) {
-        this._store.dispatch(new FetchCurrentAuth());
-
-        this.userSubscription = this._store.select(AuthenticationState.summary).subscribe(s => {
+        this.authSubscription = this._store.select(AuthenticationState.summary).subscribe(s => {
             this.currentAuthSummary = s;
             this._cd.markForCheck();
         });
