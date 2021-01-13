@@ -42,7 +42,7 @@ func (s *Service) ApplyConfiguration(config interface{}) error {
 	s.ServiceName = s.Cfg.Name
 	s.ServiceType = sdk.TypeElasticsearch
 	s.MaxHeartbeatFailures = s.Cfg.API.MaxHeartbeatFailures
-	s.ServiceName = "cds-elasticsearch"
+
 	return nil
 }
 
