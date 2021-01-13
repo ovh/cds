@@ -3,16 +3,15 @@ package migrate
 import (
 	"context"
 	"fmt"
-	"io"
 	"strings"
 	"sync"
 	"time"
 
 	"github.com/blang/semver"
 	"github.com/go-gorp/gorp"
+	"github.com/rockbears/log"
 
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 )
 
 // MinCompatibleRelease represent the minimum release which is working with these migrations, need to update when we delete migration in our codebase
@@ -39,7 +38,7 @@ func Add(ctx context.Context, migration sdk.Migration) {
 }
 
 // Run run all local migrations
-func Run(ctx context.Context, db gorp.SqlExecutor, panicDump func(s string) (io.WriteCloser, error)) {
+func Run(ctx context.Context, db gorp.SqlExecutor) {
 	var wg = new(sync.WaitGroup)
 	for _, migration := range migrations {
 		func(currentMigration sdk.Migration) {
@@ -97,7 +96,7 @@ func Run(ctx context.Context, db gorp.SqlExecutor, panicDump func(s string) (io.
 					log.Error(ctx, "Cannot update migration %s : %v", currentMigration.Name, err)
 				}
 				log.Info(ctx, "Migration [%s]: Done", currentMigration.Name)
-			}, panicDump)
+			})
 		}(migration)
 	}
 	wg.Wait()

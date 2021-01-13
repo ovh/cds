@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
+	"github.com/rockbears/log"
 
 	types "github.com/docker/docker/api/types"
 	context "golang.org/x/net/context"
@@ -17,7 +17,7 @@ import (
 
 func (h *HatcherySwarm) pullImage(dockerClient *dockerClient, img string, timeout time.Duration, model sdk.Model) error {
 	t0 := time.Now()
-	log.Debug("hatchery> swarm> pullImage> pulling image %s on %s", img, dockerClient.name)
+	log.Debug(context.TODO(), "hatchery> swarm> pullImage> pulling image %s on %s", img, dockerClient.name)
 
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
@@ -42,7 +42,7 @@ func (h *HatcherySwarm) pullImage(dockerClient *dockerClient, img string, timeou
 	}
 	res, err := dockerClient.ImageCreate(ctx, img, opts)
 	if err != nil {
-		log.Warning(ctx, "hatchery> swarm> pullImage> Unable to pull image %s on %s: %s", img, dockerClient.name, err)
+		log.Warn(ctx, "hatchery> swarm> pullImage> Unable to pull image %s on %s: %s", img, dockerClient.name, err)
 		return sdk.WithStack(err)
 	}
 
@@ -60,7 +60,7 @@ func (h *HatcherySwarm) pullImage(dockerClient *dockerClient, img string, timeou
 		return sdk.WrapError(err, "error closing the buffer")
 	}
 
-	log.Debug(buff.String())
+	log.Debug(ctx, buff.String())
 	log.Info(ctx, "hatchery> swarm> pullImage> pulling image %s on %s - %.3f seconds elapsed", img, dockerClient.name, time.Since(t0).Seconds())
 
 	return nil

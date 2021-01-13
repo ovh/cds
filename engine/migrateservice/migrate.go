@@ -7,12 +7,12 @@ import (
 	"os"
 
 	"github.com/go-gorp/gorp"
+	"github.com/rockbears/log"
 	migrate "github.com/rubenv/sql-migrate"
 
 	"github.com/ovh/cds/engine/api/database/dbmigrate"
 	"github.com/ovh/cds/engine/database"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 )
 
 func doMigrateAll(ctx context.Context, cfg Configuration) ([]sdk.DatabaseMigrationStatus, error) {

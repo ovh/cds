@@ -6,11 +6,11 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/rockbears/log"
 	"github.com/spf13/afero"
 
 	"github.com/ovh/cds/engine/worker/pkg/workerruntime"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 )
 
 func RunInstallKey(ctx context.Context, wk workerruntime.Runtime, a sdk.Action, secrets []sdk.Variable) (sdk.Result, error) {
@@ -55,7 +55,7 @@ func RunInstallKey(ctx context.Context, wk workerruntime.Runtime, a sdk.Action, 
 		abs = workdir.Name()
 	}
 
-	log.Debug("worker.RunInstallKeyW> absolute path is %s", abs)
+	log.Debug(ctx, "worker.RunInstallKeyW> absolute path is %s", abs)
 
 	if !sdk.PathIsAbs(filename.Value) {
 		fpath = filepath.Join(abs, filename.Value)

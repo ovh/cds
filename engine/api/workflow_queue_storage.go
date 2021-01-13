@@ -9,13 +9,13 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
+	"github.com/rockbears/log"
 
 	"github.com/ovh/cds/engine/api/objectstore"
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 )
 
 func (api *API) postWorkflowJobStaticFilesHandler() service.Handler {
@@ -166,7 +166,7 @@ func (api *API) postWorkflowJobArtifactHandler() service.Handler {
 		}
 
 		if fileName == "" {
-			log.Warning(ctx, "Content-Disposition header is not set")
+			log.Warn(ctx, "Content-Disposition header is not set")
 			return sdk.WrapError(sdk.ErrWrongRequest, "Content-Disposition header is not set")
 		}
 
@@ -237,7 +237,7 @@ func (api *API) postWorkflowJobArtifactHandler() service.Handler {
 				file.Close()
 				return sdk.WrapError(err, "Cannot store artifact")
 			}
-			log.Debug("objectpath=%s\n", objectPath)
+			log.Debug(ctx, "objectpath=%s\n", objectPath)
 			art.ObjectPath = objectPath
 			file.Close()
 		}
@@ -375,7 +375,7 @@ func (api *API) postWorkflowJobArtifacWithTempURLHandler() service.Handler {
 		for i := 0; i < retryURL; i++ {
 			url, key, errorStoreURL = store.StoreURL(&art, "")
 			if errorStoreURL != nil {
-				log.Warning(ctx, "Error on store.StoreURL: %v - Try %d/%d", errorStoreURL, i, retryURL)
+				log.Warn(ctx, "Error on store.StoreURL: %v - Try %d/%d", errorStoreURL, i, retryURL)
 			} else {
 				// no error
 				break

@@ -13,6 +13,7 @@ import (
 	"testing"
 
 	"github.com/fsamin/go-dump"
+	"github.com/rockbears/log"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/yaml.v2"
@@ -30,7 +31,6 @@ import (
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/exportentities"
-	"github.com/ovh/cds/sdk/log"
 )
 
 func TestLoadAllShouldNotReturnAnyWorkflows(t *testing.T) {
@@ -813,10 +813,10 @@ func TestInsertComplexeWorkflowWithJoinsAndExport(t *testing.T) {
 	assert.Equal(t, pip3.ID, w.WorkflowData.Node.Triggers[0].ChildNode.Triggers[0].ChildNode.Context.PipelineID)
 	assert.Equal(t, pip4.ID, w.WorkflowData.Node.Triggers[0].ChildNode.Triggers[0].ChildNode.Triggers[0].ChildNode.Context.PipelineID)
 
-	log.Warning(context.Background(), "%d-%d", w1.WorkflowData.Node.Triggers[0].ChildNode.Triggers[0].ChildNode.ID,
+	log.Warn(context.Background(), "%d-%d", w1.WorkflowData.Node.Triggers[0].ChildNode.Triggers[0].ChildNode.ID,
 		w1.WorkflowData.Node.Triggers[0].ChildNode.Triggers[0].ChildNode.Triggers[0].ChildNode.ID)
 
-	log.Warning(context.Background(), "%+v", w1.WorkflowData.Joins[0].JoinContext)
+	log.Warn(context.Background(), "%+v", w1.WorkflowData.Joins[0].JoinContext)
 	test.EqualValuesWithoutOrder(t, []int64{
 		w1.WorkflowData.Node.Triggers[0].ChildNode.Triggers[0].ChildNode.ID,
 		w1.WorkflowData.Node.Triggers[0].ChildNode.Triggers[0].ChildNode.Triggers[0].ChildNode.ID,

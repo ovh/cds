@@ -13,13 +13,13 @@ import (
 
 	"github.com/go-gorp/gorp"
 	gocache "github.com/patrickmn/go-cache"
+	"github.com/rockbears/log"
 
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk/telemetry"
 )
 
@@ -78,7 +78,7 @@ type Options struct {
 }
 
 func GetReposForProjectVCSServer(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store cache.Store, proj sdk.Project, vcsServerName string, opts Options) ([]sdk.VCSRepo, error) {
-	log.Debug("GetReposForProjectVCSServer> Loading repo for %s", vcsServerName)
+	log.Debug(ctx, "GetReposForProjectVCSServer> Loading repo for %s", vcsServerName)
 
 	vcsServer, err := LoadProjectVCSServerLinkByProjectKeyAndVCSServerName(ctx, db, proj.Key, vcsServerName)
 	if err != nil {

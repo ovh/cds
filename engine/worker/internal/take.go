@@ -9,8 +9,9 @@ import (
 	"github.com/ovh/cds/engine/worker/pkg/workerruntime"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/jws"
-	"github.com/ovh/cds/sdk/log"
+	cdslog "github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk/log/hook"
+	"github.com/rockbears/log"
 )
 
 func (w *CurrentWorker) Take(ctx context.Context, job sdk.WorkflowNodeJobRun) error {
@@ -64,7 +65,7 @@ func (w *CurrentWorker) Take(ctx context.Context, job sdk.WorkflowNodeJobRun) er
 		},
 	}
 
-	l, h, err := log.New(ctx, graylogCfg)
+	l, h, err := cdslog.New(ctx, graylogCfg)
 	if err != nil {
 		return sdk.WithStack(err)
 	}
@@ -157,7 +158,7 @@ func (w *CurrentWorker) Take(ctx context.Context, job sdk.WorkflowNodeJobRun) er
 			log.Info(ctx, "takeWorkflowJob> Cannot send build result: HTTP %v - worker cancelled - giving up", lasterr)
 			return nil
 		}
-		log.Warning(ctx, "takeWorkflowJob> Cannot send build result for job id %d: HTTP %v - try: %d - new try in 15s", job.ID, lasterr, try)
+		log.Warn(ctx, "takeWorkflowJob> Cannot send build result for job id %d: HTTP %v - try: %d - new try in 15s", job.ID, lasterr, try)
 		time.Sleep(15 * time.Second)
 	}
 	log.Error(ctx, "takeWorkflowJob> Could not send built result 10 times, giving up. job: %d", job.ID)

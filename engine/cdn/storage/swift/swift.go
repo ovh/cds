@@ -9,12 +9,12 @@ import (
 
 	"github.com/go-gorp/gorp"
 	"github.com/ncw/swift"
+	"github.com/rockbears/log"
 
 	"github.com/ovh/cds/engine/cdn/storage"
 	"github.com/ovh/cds/engine/cdn/storage/encryption"
 	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 )
 
 type Swift struct {
@@ -75,7 +75,7 @@ func (s *Swift) NewWriter(ctx context.Context, i sdk.CDNItemUnit) (io.WriteClose
 	if err := s.client.ContainerCreate(container, nil); err != nil {
 		return nil, sdk.WrapError(err, "Unable to create container %s", container)
 	}
-	log.Debug("[%T] writing to %s/%s", s, container, object)
+	log.Debug(ctx, "[%T] writing to %s/%s", s, container, object)
 	file, err := s.client.ObjectCreate(container, object, true, "", "application/octet-stream", nil)
 	if err != nil {
 		return nil, sdk.WrapError(err, "SwiftStore> Unable to create object %s", object)
@@ -84,9 +84,9 @@ func (s *Swift) NewWriter(ctx context.Context, i sdk.CDNItemUnit) (io.WriteClose
 	return file, nil
 }
 
-func (s *Swift) NewReader(_ context.Context, i sdk.CDNItemUnit) (io.ReadCloser, error) {
+func (s *Swift) NewReader(ctx context.Context, i sdk.CDNItemUnit) (io.ReadCloser, error) {
 	container, object := s.getItemPath(i)
-	log.Debug("[%T] reading from %s/%s", s, container, object)
+	log.Debug(ctx, "[%T] reading from %s/%s", s, container, object)
 	file, _, err := s.client.ObjectOpen(container, object, true, nil)
 	if err != nil {
 		return nil, sdk.WithStack(err)

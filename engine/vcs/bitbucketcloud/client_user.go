@@ -5,9 +5,10 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/rockbears/log"
+
 	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 )
 
 // User Get a single user
@@ -16,14 +17,14 @@ func (client *bitbucketcloudClient) User(ctx context.Context, username string) (
 	url := fmt.Sprintf("/users/%s", username)
 	status, body, _, err := client.get(url)
 	if err != nil {
-		log.Warning(ctx, "bitbucketcloudClient.User> Error %s", err)
+		log.Warn(ctx, "bitbucketcloudClient.User> Error %s", err)
 		return user, err
 	}
 	if status >= 400 {
 		return user, sdk.NewError(sdk.ErrRepoNotFound, errorAPI(body))
 	}
 	if err := json.Unmarshal(body, &user); err != nil {
-		log.Warning(ctx, "bitbucketcloudClient.User> Unable to parse bitbucket cloud commit: %s", err)
+		log.Warn(ctx, "bitbucketcloudClient.User> Unable to parse bitbucket cloud commit: %s", err)
 		return user, err
 	}
 
@@ -43,7 +44,7 @@ func (client *bitbucketcloudClient) CurrentUser(ctx context.Context) (User, erro
 	if !find {
 		status, body, _, err := client.get(url)
 		if err != nil {
-			log.Warning(ctx, "bitbucketcloudClient.CurrentUser> Error %s", err)
+			log.Warn(ctx, "bitbucketcloudClient.CurrentUser> Error %s", err)
 			return user, sdk.WithStack(err)
 		}
 		if status >= 400 {
@@ -74,7 +75,7 @@ func (client *bitbucketcloudClient) Teams(ctx context.Context) (Teams, error) {
 	if !find {
 		status, body, _, err := client.get(url)
 		if err != nil {
-			log.Warning(ctx, "bitbucketcloudClient.Teams> Error %s", err)
+			log.Warn(ctx, "bitbucketcloudClient.Teams> Error %s", err)
 			return teams, sdk.WithStack(err)
 		}
 		if status >= 400 {

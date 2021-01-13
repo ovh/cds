@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/gorilla/mux"
+	"github.com/rockbears/log"
 
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/engine/api/project"
@@ -17,7 +18,6 @@ import (
 	"github.com/ovh/cds/engine/featureflipping"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 )
 
 func (api *API) postMaintenanceHandler() service.Handler {
@@ -146,7 +146,7 @@ func selectDeleteAdminServiceCallHandler(api *API, method string) service.Handle
 		}
 		reader := bytes.NewReader(btes)
 
-		log.Debug("selectDeleteAdminServiceCallHandler> %s : %s", query, string(btes))
+		log.Debug(ctx, "selectDeleteAdminServiceCallHandler> %s : %s", query, string(btes))
 
 		if strings.HasPrefix(query, "/debug/pprof/") {
 			return service.Write(w, reader, code, "text/plain")

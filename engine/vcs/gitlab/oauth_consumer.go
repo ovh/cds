@@ -10,10 +10,10 @@ import (
 	"strings"
 	"time"
 
+	"github.com/rockbears/log"
 	"github.com/xanzy/go-gitlab"
 
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 )
 
 type authorizeResponse struct {
@@ -87,7 +87,7 @@ func (g *gitlabConsumer) postForm(path string, data url.Values, headers map[stri
 //AuthorizeToken returns the authorized token (and its secret)
 //from the request token and the verifier got on authorize url
 func (g *gitlabConsumer) AuthorizeToken(ctx context.Context, state, code string) (string, string, error) {
-	log.Debug("GitlabDriver.AuthorizeToken: state:%s code:%s", state, code)
+	log.Debug(ctx, "GitlabDriver.AuthorizeToken: state:%s code:%s", state, code)
 
 	params := url.Values{}
 	params.Add("client_id", g.appID)

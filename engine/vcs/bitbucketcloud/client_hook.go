@@ -9,8 +9,9 @@ import (
 	"net/url"
 	"strings"
 
+	"github.com/rockbears/log"
+
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 )
 
 func (client *bitbucketcloudClient) CreateHook(ctx context.Context, repo string, hook *sdk.VCSHook) error {

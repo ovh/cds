@@ -11,13 +11,14 @@ import (
 
 	"github.com/go-gorp/gorp"
 	"github.com/golang/mock/gomock"
+	"github.com/rockbears/log"
+
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/engine/api/services/mock_services"
 	"github.com/ovh/cds/engine/api/test/assets"
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -307,7 +308,7 @@ version: v1.0`),
 	require.Len(t, wk.WorkflowData.GetHooks(), 1)
 
 	for _, h := range wk.WorkflowData.GetHooks() {
-		log.Debug("--> %T %+v", h, h)
+		log.Debug(context.TODO(), "--> %T %+v", h, h)
 		require.Equal(t, "RepositoryWebHook", h.HookModelName)
 		require.Equal(t, "push", h.Config["eventFilter"].Value)
 		require.Equal(t, "Github", h.Config["hookIcon"].Value)
@@ -364,7 +365,7 @@ version: v1.0`),
 	require.Len(t, wk.WorkflowData.GetHooks(), 1)
 
 	for _, h := range wk.WorkflowData.GetHooks() {
-		log.Debug("--> %T %+v", h, h)
+		log.Debug(context.TODO(), "--> %T %+v", h, h)
 		require.Equal(t, "RepositoryWebHook", h.HookModelName)
 		require.Equal(t, "push", h.Config["eventFilter"].Value)
 		require.Equal(t, "Github", h.Config["hookIcon"].Value)

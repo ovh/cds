@@ -3,6 +3,7 @@ package test
 import (
 	"testing"
 
+	"github.com/rockbears/log"
 	"github.com/stretchr/testify/require"
 
 	"github.com/ovh/cds/engine/api/authentication"
@@ -11,7 +12,6 @@ import (
 	"github.com/ovh/cds/engine/database"
 	"github.com/ovh/cds/engine/test"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 )
 
 // SetupPG setup PG DB for test and use gorpmapping singleton's mapper.
@@ -21,7 +21,7 @@ func SetupPG(t *testing.T, bootstrapFunc ...test.Bootstrapf) (*test.FakeTransact
 }
 
 func SetupPGWithFactory(t *testing.T, bootstrapFunc ...test.Bootstrapf) (*test.FakeTransaction, *database.DBConnectionFactory, cache.Store) {
-	log.SetLogger(t)
+	log.Factory = log.NewTestingWrapper(t)
 	db, factory, cache, cancel := test.SetupPGToCancel(t, gorpmapping.Mapper, sdk.TypeAPI, bootstrapFunc...)
 	t.Cleanup(cancel)
 

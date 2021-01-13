@@ -8,13 +8,13 @@ import (
 	"path/filepath"
 
 	"github.com/go-gorp/gorp"
+	"github.com/rockbears/log"
 	"github.com/studio-b12/gowebdav"
 
 	"github.com/ovh/cds/engine/cdn/storage"
 	"github.com/ovh/cds/engine/cdn/storage/encryption"
 	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 )
 
 type Webdav struct {

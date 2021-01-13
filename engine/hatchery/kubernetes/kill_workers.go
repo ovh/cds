@@ -6,12 +6,13 @@ import (
 	"strings"
 	"time"
 
+	"github.com/rockbears/log"
 	"github.com/sirupsen/logrus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/hatchery"
-	"github.com/ovh/cds/sdk/log"
+	cdslog "github.com/ovh/cds/sdk/log"
 )
 
 func (h *HatcheryKubernetes) killAwolWorkers(ctx context.Context) error {
@@ -36,7 +37,7 @@ func (h *HatcheryKubernetes) killAwolWorkers(ctx context.Context) error {
 		jobIdentifiers := h.getJobIdentiers(labels)
 		if jobIdentifiers != nil {
 			// Browse container to send end log for each service
-			servicesLogs := make([]log.Message, 0)
+			servicesLogs := make([]cdslog.Message, 0)
 			for _, container := range pod.Spec.Containers {
 				subsStr := containerServiceNameRegexp.FindAllStringSubmatch(container.Name, -1)
 				if len(subsStr) < 1 {
@@ -47,11 +48,11 @@ func (h *HatcheryKubernetes) killAwolWorkers(ctx context.Context) error {
 					continue
 				}
 				reqServiceID, _ := strconv.ParseInt(subsStr[0][1], 10, 64)
-				finalLog := log.Message{
+				finalLog := cdslog.Message{
 					Level: logrus.InfoLevel,
 					Value: string("End of Job"),
-					Signature: log.Signature{
-						Service: &log.SignatureService{
+					Signature: cdslog.Signature{
+						Service: &cdslog.SignatureService{
 							HatcheryID:      h.Service().ID,
 							HatcheryName:    h.ServiceName(),
 							RequirementID:   reqServiceID,

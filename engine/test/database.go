@@ -9,13 +9,14 @@ import (
 	"time"
 
 	"github.com/go-gorp/gorp"
+	"github.com/rockbears/log"
 	"github.com/stretchr/testify/require"
 
 	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/engine/database"
 	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
+	cdslog "github.com/ovh/cds/sdk/log"
 )
 
 type Bootstrapf func(context.Context, sdk.DefaultValues, func() *gorp.DbMap) error
@@ -24,7 +25,7 @@ var mDBConnectionFactoriesMutex sync.RWMutex
 var mDBConnectionFactories map[string]*database.DBConnectionFactory
 
 func init() {
-	log.Initialize(context.TODO(), &log.Conf{Level: "debug"})
+	cdslog.Initialize(context.TODO(), &cdslog.Conf{Level: "debug"})
 	mDBConnectionFactories = map[string]*database.DBConnectionFactory{}
 }
 
@@ -65,7 +66,7 @@ func (f *FakeTransaction) Rollback() error { return nil }
 func (f *FakeTransaction) Commit() error   { return nil }
 
 func SetupPGWithMapper(t *testing.T, m *gorpmapper.Mapper, serviceType string, bootstrapFunc ...Bootstrapf) (*FakeTransaction, cache.Store) {
-	log.SetLogger(t)
+	log.Factory = log.NewTestingWrapper(t)
 	db, _, cache, cancel := SetupPGToCancel(t, m, serviceType, bootstrapFunc...)
 	t.Cleanup(cancel)
 	return db, cache

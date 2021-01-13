@@ -1,14 +1,15 @@
 package websocket
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"sync"
 
 	"github.com/gorilla/websocket"
+	"github.com/rockbears/log"
 
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 )
 
 var Upgrader = websocket.Upgrader{
@@ -25,14 +26,14 @@ type Server struct {
 }
 
 func (s *Server) AddClient(c Client) {
-	log.Debug("websocket.Server.AddClient> add client %s", c.UUID())
+	log.Debug(context.Background(), "websocket.Server.AddClient> add client %s", c.UUID())
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 	s.clients[c.UUID()] = c
 }
 
 func (s *Server) RemoveClient(uuid string) {
-	log.Debug("websocket.Server.RemoveClient> remove client %s", uuid)
+	log.Debug(context.Background(), "websocket.Server.RemoveClient> remove client %s", uuid)
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 	c, has := s.clients[uuid]

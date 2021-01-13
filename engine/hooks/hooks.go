@@ -7,12 +7,12 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
+	"github.com/rockbears/log"
 
 	"github.com/ovh/cds/engine/api"
 	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
-	"github.com/ovh/cds/sdk/log"
 )
 
 // New returns a new service
@@ -147,7 +147,7 @@ func (s *Service) Serve(c context.Context) error {
 	//Start the http server
 	log.Info(ctx, "Hooks> Starting HTTP Server on port %d", s.Cfg.HTTP.Port)
 	if err := server.ListenAndServe(); err != nil {
-		log.Fatalf("Hooks> Cannot start cds-hooks: %s", err)
+		log.Fatal(ctx, "Hooks> Cannot start cds-hooks: %s", err)
 	}
 
 	return ctx.Err()

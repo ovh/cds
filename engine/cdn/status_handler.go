@@ -6,10 +6,11 @@ import (
 	"net/http"
 
 	"github.com/go-gorp/gorp"
+	"github.com/rockbears/log"
+
 	"github.com/ovh/cds/engine/cdn/storage"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 )
 
 func (s *Service) statusHandler() service.Handler {

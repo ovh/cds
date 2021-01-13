@@ -7,10 +7,10 @@ import (
 	"time"
 
 	"github.com/go-gorp/gorp"
+	"github.com/rockbears/log"
 
 	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 )
 
 const (
@@ -74,7 +74,7 @@ func updateAllToCheckRegistration(db gorp.SqlExecutor) error {
 	if err != nil {
 		return sdk.WithStack(err)
 	}
-	log.Debug("updateAllToCheckRegistration> %d worker model(s) check registration", rows)
+	log.Debug(context.Background(), "updateAllToCheckRegistration> %d worker model(s) check registration", rows)
 	return nil
 }
 
@@ -111,7 +111,7 @@ func UpdateRegistration(ctx context.Context, db gorp.SqlExecutor, store cache.St
 	if err != nil {
 		return sdk.WithStack(err)
 	}
-	log.Debug("UpdateRegistration> %d worker model updated", rows)
+	log.Debug(ctx, "UpdateRegistration> %d worker model updated", rows)
 	UnbookForRegister(ctx, store, modelID)
 	return nil
 }
@@ -128,7 +128,7 @@ func UpdateOSAndArch(db gorp.SqlExecutor, modelID int64, OS, arch string) error 
 	if err != nil {
 		return sdk.WithStack(err)
 	}
-	log.Debug("updateOSAndArch> %d worker model updated", rows)
+	log.Debug(context.Background(), "updateOSAndArch> %d worker model updated", rows)
 	return nil
 }
 
@@ -180,7 +180,7 @@ func UpdateCapabilities(ctx context.Context, db gorp.SqlExecutor, modelID int64,
 		}
 	}
 	if len(newCapas) > 0 {
-		log.Debug("Updating model %d binary capabilities with %d capabilities", modelID, len(newCapas))
+		log.Debug(ctx, "Updating model %d binary capabilities with %d capabilities", modelID, len(newCapas))
 		for _, b := range newCapas {
 			if err := InsertCapabilityForModelID(db, modelID, &sdk.Requirement{
 				Type:  sdk.BinaryRequirement,
@@ -207,18 +207,18 @@ func UpdateCapabilities(ctx context.Context, db gorp.SqlExecutor, modelID int64,
 	}
 
 	if len(capaToDelete) > 0 {
-		log.Debug("Updating model %d binary capabilities with %d capabilities to delete", modelID, len(capaToDelete))
+		log.Debug(ctx, "Updating model %d binary capabilities with %d capabilities to delete", modelID, len(capaToDelete))
 		query := `DELETE FROM worker_capability WHERE worker_model_id=$1 AND name=ANY(string_to_array($2, ',')::text[]) AND type=$3`
 		if _, err := db.Exec(query, modelID, strings.Join(capaToDelete, ","), string(sdk.BinaryRequirement)); err != nil {
 			//Ignore errors because we let the database to check constraints...
-			log.Warning(ctx, "registerWorker> Cannot delete from worker_capability: %v", err)
+			log.Warn(ctx, "registerWorker> Cannot delete from worker_capability: %v", err)
 			return sdk.WithStack(err)
 		}
 	}
 
 	if registrationForm.OS != "" && registrationForm.Arch != "" {
 		if err := UpdateOSAndArch(db, modelID, registrationForm.OS, registrationForm.Arch); err != nil {
-			log.Warning(ctx, "registerWorker> Cannot update os and arch for worker model %d : %s", modelID, err)
+			log.Warn(ctx, "registerWorker> Cannot update os and arch for worker model %d : %s", modelID, err)
 			return sdk.WithStack(err)
 		}
 	}

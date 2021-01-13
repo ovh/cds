@@ -5,9 +5,10 @@ import (
 	"fmt"
 	"net/url"
 
+	"github.com/rockbears/log"
+
 	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 )
 
 func (b *bitbucketClient) Commits(ctx context.Context, repo, branch, since, until string) ([]sdk.VCSCommit, error) {

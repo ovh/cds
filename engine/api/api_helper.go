@@ -6,11 +6,11 @@ import (
 	"time"
 
 	"github.com/go-gorp/gorp"
+	"github.com/rockbears/log"
 
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 )
 
 // group should have members aggregated and authentified user old user struct should be set.
@@ -21,7 +21,7 @@ func isGroupAdmin(ctx context.Context, g *sdk.Group) bool {
 	}
 	member := g.IsMember(c.GetGroupIDs())
 	admin := g.IsAdmin(*c.AuthentifiedUser)
-	log.Debug("api.isGroupAdmin> member:%t admin:%t", member, admin)
+	log.Debug(ctx, "api.isGroupAdmin> member:%t admin:%t", member, admin)
 	return member && admin
 }
 
@@ -92,10 +92,10 @@ func isMFA(ctx context.Context) bool {
 	return s.MFA
 }
 
-func getAPIConsumer(c context.Context) *sdk.AuthConsumer {
-	i := c.Value(contextAPIConsumer)
+func getAPIConsumer(ctx context.Context) *sdk.AuthConsumer {
+	i := ctx.Value(contextAPIConsumer)
 	if i == nil {
-		log.Debug("api.getAPIConsumer> no auth consumer found in context")
+		log.Debug(ctx, "api.getAPIConsumer> no auth consumer found in context")
 		return nil
 	}
 	consumer, ok := i.(*sdk.AuthConsumer)
@@ -117,15 +117,15 @@ func getRemoteTime(c context.Context) time.Time {
 	return t
 }
 
-func getAuthSession(c context.Context) *sdk.AuthSession {
-	i := c.Value(contextSession)
+func getAuthSession(ctx context.Context) *sdk.AuthSession {
+	i := ctx.Value(contextSession)
 	if i == nil {
-		log.Debug("api.getAuthSession> no AuthSession found in context")
+		log.Debug(ctx, "api.getAuthSession> no AuthSession found in context")
 		return nil
 	}
 	u, ok := i.(*sdk.AuthSession)
 	if !ok {
-		log.Debug("api.getAuthSession> AuthSession type in context is invalid")
+		log.Debug(ctx, "api.getAuthSession> AuthSession type in context is invalid")
 		return nil
 	}
 	return u

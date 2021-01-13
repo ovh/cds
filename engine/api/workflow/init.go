@@ -5,9 +5,9 @@ import (
 	"time"
 
 	"github.com/go-gorp/gorp"
+	"github.com/rockbears/log"
 
 	"github.com/ovh/cds/engine/cache"
-	"github.com/ovh/cds/sdk/log"
 )
 
 var baseUIURL, defaultOS, defaultArch string
@@ -34,11 +34,11 @@ func Initialize(ctx context.Context, DBFunc func() *gorp.DbMap, store cache.Stor
 			}
 		case <-tickHeart.C:
 			if err := manageDeadJob(ctx, DBFunc, store, maxLogSize); err != nil {
-				log.Warning(ctx, "workflow.manageDeadJob> Error on restartDeadJob : %v", err)
+				log.Warn(ctx, "workflow.manageDeadJob> Error on restartDeadJob : %v", err)
 			}
 		case <-tickStop.C:
 			if err := stopRunsBlocked(ctx, db); err != nil {
-				log.Warning(ctx, "workflow.stopRunsBlocked> Error on stopRunsBlocked : %v", err)
+				log.Warn(ctx, "workflow.stopRunsBlocked> Error on stopRunsBlocked : %v", err)
 			}
 		}
 	}

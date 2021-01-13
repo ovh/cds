@@ -7,6 +7,7 @@ import (
 
 	jwt "github.com/dgrijalva/jwt-go"
 	"github.com/gorilla/mux"
+	"github.com/rockbears/log"
 
 	"github.com/ovh/cds/engine/api/authentication"
 	"github.com/ovh/cds/engine/api/services"
@@ -14,7 +15,6 @@ import (
 	"github.com/ovh/cds/engine/api/worker"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk/telemetry"
 )
 
@@ -72,7 +72,7 @@ func (api *API) authOptionalMiddleware(ctx context.Context, w http.ResponseWrite
 	// If a JWT is given, we also checks that there are a valid session and consumer for it
 	jwt, ok := ctx.Value(service.ContextJWT).(*jwt.Token)
 	if !ok {
-		log.Debug("api.authOptionalMiddleware> no jwt token found in context")
+		log.Debug(ctx, "api.authOptionalMiddleware> no jwt token found in context")
 		return ctx, nil
 	}
 	claims := jwt.Claims.(*sdk.AuthSessionJWTClaims)
@@ -81,10 +81,10 @@ func (api *API) authOptionalMiddleware(ctx context.Context, w http.ResponseWrite
 	// Check for session based on jwt from context
 	session, err := authentication.CheckSession(ctx, api.mustDB(), sessionID)
 	if err != nil {
-		log.Warning(ctx, "authMiddleware> cannot find a valid session for given JWT: %v", err)
+		log.Warn(ctx, "authMiddleware> cannot find a valid session for given JWT: %v", err)
 	}
 	if session == nil {
-		log.Debug("api.authOptionalMiddleware> no session found in context")
+		log.Debug(ctx, "api.authOptionalMiddleware> no session found in context")
 		return ctx, nil
 	}
 	ctx = context.WithValue(ctx, contextSession, session)
@@ -123,7 +123,7 @@ func (api *API) authOptionalMiddleware(ctx context.Context, w http.ResponseWrite
 		consumer.Worker = w
 	}
 	if consumer == nil {
-		log.Debug("api.authOptionalMiddleware> no consumer found in context")
+		log.Debug(ctx, "api.authOptionalMiddleware> no consumer found in context")
 		return ctx, nil
 	}
 

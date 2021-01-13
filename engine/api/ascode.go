@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
+	"github.com/rockbears/log"
 
 	"github.com/ovh/cds/engine/api/ascode"
 	"github.com/ovh/cds/engine/api/event"
@@ -17,7 +18,6 @@ import (
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/exportentities"
-	"github.com/ovh/cds/sdk/log"
 )
 
 // postImportAsCodeHandler
@@ -92,12 +92,8 @@ func (api *API) postImportAsCodeHandler() service.Handler {
 		api.GoRoutines.Exec(context.Background(), fmt.Sprintf("postImportAsCodeHandler-%s", ope.UUID), func(ctx context.Context) {
 			ope, err := operation.Poll(ctx, api.mustDB(), ope.UUID)
 			if err != nil {
-				isErrWithStack := sdk.IsErrorWithStack(err)
-				fields := log.Fields{}
-				if isErrWithStack {
-					fields["stack_trace"] = fmt.Sprintf("%+v", err)
-				}
-				log.ErrorWithFields(ctx, fields, "%s", err)
+				ctx = sdk.ContextWithStacktrace(ctx, err)
+				log.Error(ctx, "%v", err)
 				return
 			}
 
@@ -115,7 +111,7 @@ func (api *API) postImportAsCodeHandler() service.Handler {
 			}
 
 			event.PublishOperation(ctx, p.Key, *ope, u)
-		}, api.PanicDump())
+		})
 
 		return service.WriteJSON(w, sdk.Operation{
 			UUID:   ope.UUID,

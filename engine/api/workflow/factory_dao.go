@@ -7,6 +7,7 @@ import (
 
 	"github.com/go-gorp/gorp"
 	"github.com/lib/pq"
+	"github.com/rockbears/log"
 
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/ascode"
@@ -18,7 +19,6 @@ import (
 	"github.com/ovh/cds/engine/api/workflowtemplate"
 	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 )
 
 // LoadOptions custom option for loading workflow
@@ -203,7 +203,7 @@ func (dao WorkflowDAO) Query() gorpmapping.Query {
 
 	q := gorpmapping.NewQuery(queryString).Args(args...)
 
-	log.Debug("workflow.WorkflowDAO.Query> %v", q)
+	log.Debug(context.TODO(), "workflow.WorkflowDAO.Query> %v", q)
 
 	return q
 }
@@ -473,7 +473,7 @@ func (dao WorkflowDAO) withIntegrations(db gorp.SqlExecutor, ws *[]Workflow) err
 		nodesArray := w.WorkflowData.Array()
 		for _, n := range nodesArray {
 			if n.Context != nil && n.Context.ProjectIntegrationID != 0 {
-				log.Debug("found ProjectIntegrationID=%d(%s) on workflow %d, node=%d", n.Context.ProjectIntegrationID, n.Context.ProjectIntegrationName, w.ID, n.ID)
+				log.Debug(context.TODO(), "found ProjectIntegrationID=%d(%s) on workflow %d, node=%d", n.Context.ProjectIntegrationID, n.Context.ProjectIntegrationName, w.ID, n.ID)
 				if _, ok := mapIDs[n.Context.ProjectIntegrationID]; !ok {
 					mapIDs[n.Context.ProjectIntegrationID] = nil
 				}

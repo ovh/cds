@@ -8,12 +8,12 @@ import (
 
 	"github.com/go-gorp/gorp"
 	"github.com/gorilla/mux"
+	"github.com/rockbears/log"
 	"go.opencensus.io/trace"
 
 	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/engine/featureflipping"
 	"github.com/ovh/cds/engine/gorpmapper"
-	"github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk/telemetry"
 )
 
@@ -83,7 +83,7 @@ func Start(ctx context.Context, s telemetry.Service, w http.ResponseWriter, req 
 		trace.StringAttribute(telemetry.UserAgentAttribute, req.UserAgent()),
 	)
 
-	log.Debug("# %s saving main span: %+v", opt.Name, span)
+	log.Debug(ctx, "# %s saving main span: %+v", opt.Name, span)
 	ctx = context.WithValue(ctx, telemetry.ContextMainSpan, span)
 
 	ctx = telemetry.SpanContextToContext(ctx, span.SpanContext())

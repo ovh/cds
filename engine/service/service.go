@@ -6,10 +6,11 @@ import (
 	"os"
 	"time"
 
+	"github.com/rockbears/log"
+
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/ovh/cds/sdk/jws"
-	"github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk/telemetry"
 )
 
@@ -168,7 +169,7 @@ func (c *Common) Heartbeat(ctx context.Context, status func(ctx context.Context)
 			return ctx.Err()
 		case <-ticker.C:
 			if err := c.Client.ServiceHeartbeat(status(ctx)); err != nil {
-				log.Warning(ctx, "%s> Heartbeat failure: %v", c.Name(), err)
+				log.Warn(ctx, "%s> Heartbeat failure: %v", c.Name(), err)
 				heartbeatFailures++
 
 				// if register failed too many time, stop heartbeat

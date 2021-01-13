@@ -5,12 +5,12 @@ import (
 	"fmt"
 
 	"github.com/go-gorp/gorp"
+	"github.com/rockbears/log"
 
-	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/engine/api/user"
+	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/interpolate"
-	"github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk/luascript"
 )
 
@@ -128,7 +128,7 @@ func GetUserWorkflowEvents(ctx context.Context, db gorp.SqlExecutor, store cache
 				if err != nil {
 					log.Error(ctx, "notification.GetUserWorkflowEvents> unable to handle event %+v: %v", jn, err)
 				}
-				log.Debug("GetUserWorkflowEvents> will send mail notifications: %+v", notif)
+				log.Debug(ctx, "GetUserWorkflowEvents> will send mail notifications: %+v", notif)
 				go sendMailNotif(ctx, notif)
 			}
 		}

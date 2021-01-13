@@ -6,10 +6,10 @@ import (
 
 	jwt "github.com/dgrijalva/jwt-go"
 	"github.com/go-gorp/gorp"
+	"github.com/rockbears/log"
 
 	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 )
 
 // NewSession returns a new session for a given auth consumer.
@@ -35,7 +35,7 @@ func CheckSession(ctx context.Context, db gorp.SqlExecutor, sessionID string) (*
 		return nil, sdk.NewErrorWithStack(err, sdk.NewErrorFrom(sdk.ErrUnauthorized, "cannot load session for id: %s", sessionID))
 	}
 	if session == nil {
-		log.Debug("authentication.sessionMiddleware> no session found for id: %s", sessionID)
+		log.Debug(ctx, "authentication.sessionMiddleware> no session found for id: %s", sessionID)
 		return nil, sdk.WithStack(sdk.ErrUnauthorized)
 	}
 
@@ -83,7 +83,7 @@ func SessionCleaner(ctx context.Context, dbFunc func() *gorp.DbMap, tickerDurati
 				if err := DeleteSessionByID(db, s.ID); err != nil {
 					log.Error(ctx, "SessionCleaner> unable to delete session %s: %v", s.ID, err)
 				}
-				log.Debug("SessionCleaner> expired session %s deleted", s.ID)
+				log.Debug(ctx, "SessionCleaner> expired session %s deleted", s.ID)
 			}
 		case <-tickCorruped.C:
 			// This part of the goroutine should be remove in a next release
@@ -95,7 +95,7 @@ func SessionCleaner(ctx context.Context, dbFunc func() *gorp.DbMap, tickerDurati
 				if err := DeleteSessionByID(db, s.ID); err != nil {
 					log.Error(ctx, "SessionCleaner> unable to delete session %s: %v", s.ID, err)
 				}
-				log.Debug("SessionCleaner> corrupted session %s deleted", s.ID)
+				log.Debug(ctx, "SessionCleaner> corrupted session %s deleted", s.ID)
 			}
 		}
 	}

@@ -1,15 +1,15 @@
 package workflow
 
 import (
+	"context"
 	"database/sql"
 	"time"
 
-	"github.com/lib/pq"
-
 	"github.com/go-gorp/gorp"
+	"github.com/lib/pq"
+	"github.com/rockbears/log"
 
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 )
 
 // ExistsStepLog returns the size of step log if exists.
@@ -33,7 +33,7 @@ func ExistsStepLog(db gorp.SqlExecutor, id int64, order int64) (bool, int64, err
 
 //LoadStepLogs load logs (workflow_node_run_job_logs) for a job (workflow_node_run_job) for a specific step_order
 func LoadStepLogs(db gorp.SqlExecutor, id int64, order int64) (*sdk.Log, error) {
-	log.Debug("LoadStepLogs> workflow_node_run_job_id = %d", id)
+	log.Debug(context.TODO(), "LoadStepLogs> workflow_node_run_job_id = %d", id)
 	query := `
 		SELECT id, workflow_node_run_job_id, workflow_node_run_id, start, last_modified, done, step_order, value
 		FROM workflow_node_run_job_logs

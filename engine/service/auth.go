@@ -6,8 +6,9 @@ import (
 	"strings"
 
 	"github.com/dgrijalva/jwt-go"
+	"github.com/rockbears/log"
+
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 )
 
 const JWTCookieName = "jwt_token"
@@ -38,14 +39,14 @@ func JWTMiddleware(ctx context.Context, w http.ResponseWriter, req *http.Request
 	}
 	// If no jwt is given, simply return empty context without error
 	if jwtRaw == "" {
-		log.Debug("service.JWTMiddleware> no jwt token found in request")
+		log.Debug(ctx, "service.JWTMiddleware> no jwt token found in request")
 		return ctx, nil
 	}
 
 	jwt, claims, err := CheckSessionJWT(jwtRaw, keyFunc)
 	if err != nil {
 		// If the given JWT is not valid log the error and return
-		log.Warning(ctx, "service.JWTMiddleware> invalid given jwt token [%s]: %+v", req.URL.String(), err)
+		log.Warn(ctx, "service.JWTMiddleware> invalid given jwt token [%s]: %+v", req.URL.String(), err)
 		return ctx, nil
 	}
 

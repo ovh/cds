@@ -1,18 +1,19 @@
 package swarm
 
 import (
+	"context"
 	"fmt"
 	"io/ioutil"
 	"strings"
 	"time"
 
 	types "github.com/docker/docker/api/types"
+	"github.com/rockbears/log"
 	"github.com/sirupsen/logrus"
-	context "golang.org/x/net/context"
 
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/hatchery"
-	"github.com/ovh/cds/sdk/log"
+	cdslog "github.com/ovh/cds/sdk/log"
 )
 
 const (
@@ -27,7 +28,7 @@ func (h *HatcherySwarm) killAndRemove(ctx context.Context, dockerClient *dockerC
 	if err != nil {
 		//If there is an error, we try to remove the container
 		if strings.Contains(err.Error(), "No such container") {
-			log.Debug("hatchery> swarm> killAndRemove> cannot InspectContainer: %v on %s", err, dockerClient.name)
+			log.Debug(ctx, "hatchery> swarm> killAndRemove> cannot InspectContainer: %v on %s", err, dockerClient.name)
 			return nil
 		}
 		log.Info(ctx, "hatchery> swarm> killAndRemove> cannot InspectContainer: %v on %s", err, dockerClient.name)
@@ -102,7 +103,7 @@ func (h *HatcherySwarm) killAndRemove(ctx context.Context, dockerClient *dockerC
 
 		// If we succeed to get the network, kill and remove all the container on the network
 		if netname, ok := network.Labels["worker_net"]; ok {
-			log.Debug("hatchery> swarm> killAndRemove> Remove network %s", netname)
+			log.Debug(ctx, "hatchery> swarm> killAndRemove> Remove network %s", netname)
 			for id := range network.Containers {
 
 				c := h.getContainer(containers, id)
@@ -113,11 +114,11 @@ func (h *HatcherySwarm) killAndRemove(ctx context.Context, dockerClient *dockerC
 						log.Error(ctx, "killAwolWorker> unable to get identifiers from containers labels")
 						continue
 					}
-					endLog := log.Message{
+					endLog := cdslog.Message{
 						Level: logrus.InfoLevel,
 						Value: string("End of Job"),
-						Signature: log.Signature{
-							Service: &log.SignatureService{
+						Signature: cdslog.Signature{
+							Service: &cdslog.SignatureService{
 								HatcheryID:      h.Service().ID,
 								HatcheryName:    h.ServiceName(),
 								RequirementID:   jobIdentifiers.ServiceID,
@@ -135,7 +136,7 @@ func (h *HatcherySwarm) killAndRemove(ctx context.Context, dockerClient *dockerC
 							Timestamp:    time.Now().UnixNano(),
 						},
 					}
-					h.Common.SendServiceLog(ctx, []log.Message{endLog}, sdk.StatusTerminated)
+					h.Common.SendServiceLog(ctx, []cdslog.Message{endLog}, sdk.StatusTerminated)
 				}
 
 				if err := h.killAndRemoveContainer(ctx, dockerClient, id); err != nil {
@@ -156,7 +157,7 @@ func (h *HatcherySwarm) killAndRemove(ctx context.Context, dockerClient *dockerC
 }
 
 func (h *HatcherySwarm) killAndRemoveContainer(ctx context.Context, dockerClient *dockerClient, ID string) error {
-	log.Debug("hatchery> swarm> killAndRemove> remove container %s on %s", ID, dockerClient.name)
+	log.Debug(ctx, "hatchery> swarm> killAndRemove> remove container %s on %s", ID, dockerClient.name)
 	ctxDocker, cancelList := context.WithTimeout(context.Background(), 20*time.Second)
 	defer cancelList()
 	if err := dockerClient.ContainerKill(ctxDocker, ID, "SIGKILL"); err != nil {
@@ -184,7 +185,7 @@ func (h *HatcherySwarm) killAwolNetworks(ctx context.Context) error {
 		defer cancelList()
 		nets, errLN := dockerClient.NetworkList(ctxDocker, types.NetworkListOptions{})
 		if errLN != nil {
-			log.Warning(ctx, "hatchery> swarm> killAwolNetworks> Cannot get networks on %s: %s", dockerClient.name, errLN)
+			log.Warn(ctx, "hatchery> swarm> killAwolNetworks> Cannot get networks on %s: %s", dockerClient.name, errLN)
 			return errLN
 		}
 
@@ -193,7 +194,7 @@ func (h *HatcherySwarm) killAwolNetworks(ctx context.Context) error {
 			defer cancelList()
 			n, err := dockerClient.NetworkInspect(ctxDocker, nets[i].ID, types.NetworkInspectOptions{})
 			if err != nil {
-				log.Warning(ctx, "hatchery> swarm> killAwolNetworks> Unable to get network info: %v", err)
+				log.Warn(ctx, "hatchery> swarm> killAwolNetworks> Unable to get network info: %v", err)
 				continue
 			}
 
@@ -218,7 +219,7 @@ func (h *HatcherySwarm) killAwolNetworks(ctx context.Context) error {
 			ctxDocker2, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 			defer cancel()
 			if err := dockerClient.NetworkRemove(ctxDocker2, n.ID); err != nil {
-				log.Warning(ctx, "hatchery> swarm> killAwolNetworks> Unable to delete network %s err:%s", n.Name, err)
+				log.Warn(ctx, "hatchery> swarm> killAwolNetworks> Unable to delete network %s err:%s", n.Name, err)
 			}
 		}
 	}

@@ -21,12 +21,12 @@ import (
 	"io"
 	"net/http"
 
+	"github.com/rockbears/log"
 	"go.opencensus.io/stats"
 	"go.opencensus.io/stats/view"
 	"go.opencensus.io/tag"
 
 	"github.com/ovh/cds/engine/service"
-	"github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk/telemetry"
 )
 
@@ -132,7 +132,7 @@ func InitRouterMetrics(ctx context.Context, s service.NamedService) error {
 		)
 	})
 
-	log.Debug("router> Stats initialized")
+	log.Debug(ctx, "router> Stats initialized")
 
 	return err
 }

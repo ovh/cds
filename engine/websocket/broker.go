@@ -2,12 +2,12 @@ package websocket
 
 import (
 	"context"
-	"io"
 	"time"
+
+	"github.com/rockbears/log"
 
 	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 )
 
 func NewBroker() *Broker {
@@ -22,19 +22,19 @@ type Broker struct {
 func (b *Broker) OnMessage(f func(m []byte)) { b.onMessage = f }
 
 //Init the websocketBroker
-func (b *Broker) Init(ctx context.Context, gorts *sdk.GoRoutines, pubSub cache.PubSub, panicCallback ...func(s string) (io.WriteCloser, error)) {
+func (b *Broker) Init(ctx context.Context, gorts *sdk.GoRoutines, pubSub cache.PubSub) {
 	// Start cache Subscription
 	gorts.Run(ctx, "websocket.Broker.Init.cacheSubscribe", func(ctx context.Context) {
 		b.subscribe(ctx, pubSub)
-	}, panicCallback...)
+	})
 
 	gorts.Run(ctx, "websocket.Broker.Init.start", func(ctx context.Context) {
-		b.start(ctx, gorts, panicCallback...)
-	}, panicCallback...)
+		b.start(ctx, gorts)
+	})
 }
 
 // Start the broker
-func (b *Broker) start(ctx context.Context, gorts *sdk.GoRoutines, panicCallback ...func(s string) (io.WriteCloser, error)) {
+func (b *Broker) start(ctx context.Context, gorts *sdk.GoRoutines) {
 	for {
 		select {
 		case <-ctx.Done():
@@ -60,7 +60,7 @@ func (b *Broker) subscribe(ctx context.Context, pubSub cache.PubSub) {
 			}
 			msg, err := pubSub.GetMessage(ctx)
 			if err != nil {
-				log.Warning(ctx, "websocket.Broker> cannot get message from pubsub %s: %s", msg, err)
+				log.Warn(ctx, "websocket.Broker> cannot get message from pubsub %s: %s", msg, err)
 				continue
 			}
 			b.chanMessages <- []byte(msg)

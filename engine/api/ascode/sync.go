@@ -5,12 +5,12 @@ import (
 	"strconv"
 
 	"github.com/go-gorp/gorp"
+	"github.com/rockbears/log"
 
 	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 )
 
 type SyncResult struct {
@@ -71,7 +71,7 @@ func SyncEvents(ctx context.Context, db *gorp.DbMap, store cache.Store, proj sdk
 		prNotFound := sdk.ErrorIs(err, sdk.ErrNotFound)
 
 		if prNotFound {
-			log.Debug("Pull request %s #%d not found", rootApp.RepositoryFullname, int(ascodeEvt.PullRequestID))
+			log.Debug(ctx, "Pull request %s #%d not found", rootApp.RepositoryFullname, int(ascodeEvt.PullRequestID))
 		}
 
 		// If the PR was merged we want to set the repo url on the workflow

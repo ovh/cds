@@ -17,7 +17,8 @@ import (
 	"sync"
 
 	panicparsestack "github.com/maruel/panicparse/stack"
-	"github.com/ovh/cds/sdk/log"
+	cdslog "github.com/ovh/cds/sdk/log"
+	"github.com/rockbears/log"
 
 	"github.com/pkg/errors"
 )
@@ -37,11 +38,11 @@ func NewGoRoutines() *GoRoutines {
 }
 
 // Run runs the function within a goroutine with a panic recovery, and keep GoRoutine status.
-func (m *GoRoutines) Run(c context.Context, name string, fn func(ctx context.Context), writerFactories ...func(s string) (io.WriteCloser, error)) {
+func (m *GoRoutines) Run(c context.Context, name string, fn func(ctx context.Context)) {
 	m.mutex.Lock()
 	m.status[name] = true
 	m.mutex.Unlock()
-	m.Exec(c, name, fn, writerFactories...)
+	m.Exec(c, name, fn)
 }
 
 // GetStatus returns the monitoring status of goroutines that should be running
@@ -68,9 +69,11 @@ func (m *GoRoutines) GetStatus() []MonitoringStatusLine {
 }
 
 // Exec runs the function within a goroutine with a panic recovery
-func (m *GoRoutines) Exec(c context.Context, name string, fn func(ctx context.Context), writerFactories ...func(s string) (io.WriteCloser, error)) {
+func (m *GoRoutines) Exec(c context.Context, name string, fn func(ctx context.Context)) {
 	hostname, _ := os.Hostname()
 	go func(ctx context.Context) {
+		ctx = context.WithValue(ctx, cdslog.Goroutine, name)
+
 		labels := pprof.Labels("goroutine-name", name, "goroutine-hostname", hostname, "goroutine-id", fmt.Sprintf("%d", GoroutineID()))
 		goroutineCtx := pprof.WithLabels(ctx, labels)
 		pprof.SetGoroutineLabels(goroutineCtx)
@@ -79,23 +82,8 @@ func (m *GoRoutines) Exec(c context.Context, name string, fn func(ctx context.Co
 			if r := recover(); r != nil {
 				buf := make([]byte, 1<<16)
 				runtime.Stack(buf, false)
-				uuid := UUID()
-				log.ErrorWithFields(ctx, log.Fields{"stack_trace": string(buf)}, "[PANIC][%s] %s failed (%s)", hostname, name, uuid)
-
-				for _, f := range writerFactories {
-					w, err := f(uuid)
-					if err != nil {
-						log.Error(ctx, "unable open writer %s ¯\\_(ツ)_/¯ (%v)", uuid, err)
-						continue
-					}
-					if _, err := io.Copy(w, bytes.NewReader(buf)); err != nil {
-						log.Error(ctx, "unable to write %s ¯\\_(ツ)_/¯ (%v)", uuid, err)
-						continue
-					}
-					if err := w.Close(); err != nil {
-						log.Error(ctx, "unable to close %s ¯\\_(ツ)_/¯ (%v)", uuid, err)
-					}
-				}
+				ctx = context.WithValue(ctx, cdslog.Stacktrace, string(buf))
+				log.Error(ctx, "[PANIC][%s] %s failed", hostname, name)
 			}
 			m.mutex.Lock()
 			if _, ok := m.status[name]; ok {

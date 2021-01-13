@@ -8,9 +8,10 @@ import (
 	"fmt"
 	"io"
 
+	"github.com/rockbears/log"
+
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/exportentities"
-	"github.com/ovh/cds/sdk/log"
 )
 
 func exportTemplate(wt sdk.WorkflowTemplate) (exportentities.Template, error) {

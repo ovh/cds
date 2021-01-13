@@ -5,12 +5,12 @@ import (
 	"encoding/json"
 
 	"github.com/go-gorp/gorp"
+	"github.com/rockbears/log"
 	"gopkg.in/olivere/elastic.v6"
 
-	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/engine/api/services"
+	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 )
 
 // PushInElasticSearch pushes event to an elasticsearch

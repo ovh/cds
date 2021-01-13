@@ -4,11 +4,11 @@ import (
 	"archive/tar"
 	"bytes"
 	"context"
-	"fmt"
 	"path/filepath"
 
 	"github.com/fsamin/go-dump"
 	"github.com/go-gorp/gorp"
+	"github.com/rockbears/log"
 
 	"github.com/ovh/cds/engine/api/keys"
 	"github.com/ovh/cds/engine/api/operation"
@@ -16,7 +16,6 @@ import (
 	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/exportentities"
-	"github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk/telemetry"
 )
 
@@ -55,23 +54,15 @@ func CreateFromRepository(ctx context.Context, db *gorp.DbMap, store cache.Store
 	ope, err := operation.Poll(ctx, db, newOperation.UUID)
 
 	if err != nil {
-		isErrWithStack := sdk.IsErrorWithStack(err)
-		fields := log.Fields{}
-		if isErrWithStack {
-			fields["stack_trace"] = fmt.Sprintf("%+v", err)
-		}
-		log.ErrorWithFields(ctx, fields, "cannot analyse repository (operation %s for workflow %s/%s): %v", newOperation.UUID, p.Key, wf.Name, err)
+		ctx = sdk.ContextWithStacktrace(ctx, err)
+		log.Error(ctx, "cannot analyse repository (operation %s for workflow %s/%s): %v", newOperation.UUID, p.Key, wf.Name, err)
 		return nil, nil, sdk.NewError(sdk.ErrRepoAnalyzeFailed, err)
 	}
 
 	if ope.Status == sdk.OperationStatusError {
 		err := ope.Error.ToError()
-		isErrWithStack := sdk.IsErrorWithStack(err)
-		fields := log.Fields{}
-		if isErrWithStack {
-			fields["stack_trace"] = fmt.Sprintf("%+v", err)
-		}
-		log.ErrorWithFields(ctx, fields, "cannot analyse repository (operation %s for workflow %s/%s): %v", newOperation.UUID, p.Key, wf.Name, err)
+		ctx = sdk.ContextWithStacktrace(ctx, err)
+		log.Error(ctx, "cannot analyse repository (operation %s for workflow %s/%s): %v", newOperation.UUID, p.Key, wf.Name, err)
 		return nil, nil, sdk.NewError(sdk.ErrRepoAnalyzeFailed, err)
 	}
 
@@ -151,7 +142,7 @@ func extractWorkflow(ctx context.Context, db *gorp.DbMap, store cache.Store, p *
 	*wf = *workflowPushed
 
 	if wf.Name != workflowPushed.Name {
-		log.Debug("workflow.extractWorkflow> Workflow has been renamed from %s to %s", wf.Name, workflowPushed.Name)
+		log.Debug(ctx, "workflow.extractWorkflow> Workflow has been renamed from %s to %s", wf.Name, workflowPushed.Name)
 	}
 
 	return secrets, allMsgs, nil
@@ -165,7 +156,7 @@ func ReadCDSFiles(files map[string][]byte) (*tar.Reader, error) {
 	tw := tar.NewWriter(buf)
 	// Add some files to the archive.
 	for fname, fcontent := range files {
-		log.Debug("ReadCDSFiles> Reading %s", fname)
+		log.Debug(context.TODO(), "ReadCDSFiles> Reading %s", fname)
 		hdr := &tar.Header{
 			Name: filepath.Base(fname),
 			Mode: 0600,

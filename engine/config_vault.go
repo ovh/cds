@@ -5,9 +5,9 @@ import (
 	"fmt"
 
 	vault "github.com/hashicorp/vault/api"
+	"github.com/rockbears/log"
 
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 )
 
 type VaultSecret struct {
@@ -38,13 +38,13 @@ func (secret *VaultSecret) GetFromVault(s string) (string, error) {
 	if err != nil {
 		return "", sdk.WithStack(err)
 	} else if conf == nil {
-		log.Warning(context.Background(), "vault> no value found at %q", s)
+		log.Warn(context.Background(), "vault> no value found at %q", s)
 		return "", nil
 	}
 
 	value, exists := conf.Data["data"]
 	if !exists {
-		log.Warning(context.Background(), "vault> no 'data' field found for %q (you must add a field with a key named data)", s)
+		log.Warn(context.Background(), "vault> no 'data' field found for %q (you must add a field with a key named data)", s)
 		return "", nil
 	}
 

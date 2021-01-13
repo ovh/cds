@@ -5,8 +5,6 @@ import (
 	"context"
 	"text/template"
 	"time"
-
-	"github.com/ovh/cds/sdk/log"
 )
 
 const (
@@ -124,7 +122,6 @@ func (w *Warning) ComputeMessage(ctx context.Context, language string) {
 	// Execute template
 	t := template.Must(template.New("warning").Parse(tmplBody))
 	if err := t.Execute(&buffer, w.MessageParams); err != nil {
-		log.Warning(ctx, "Unable to compute warning message: %+v: %v", w, err)
 		return
 	}
 	// Set message value

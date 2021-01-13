@@ -6,12 +6,12 @@ import (
 	"time"
 
 	"github.com/fujiwara/shapeio"
+	"github.com/rockbears/log"
 
 	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/engine/cdn/item"
 	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 )
 
 var (
@@ -27,7 +27,7 @@ func (x *RunningStorageUnits) FillSyncItemChannel(ctx context.Context, s Storage
 	for _, id := range itemIDs {
 		select {
 		case s.SyncItemChannel() <- id:
-			log.Debug("unit %s should sync item %s", s.Name(), id)
+			log.Debug(ctx, "unit %s should sync item %s", s.Name(), id)
 		default:
 			continue
 		}
@@ -61,10 +61,9 @@ func (x *RunningStorageUnits) FillWithUnknownItems(ctx context.Context, s Storag
 		log.Info(ctx, "FillWithUnknownItems> Get %d items", len(itemsToSync))
 		k := cache.Key(KeyBackendSync, s.Name())
 		for _, item := range itemsToSync {
+			ctx = context.WithValue(ctx, FielID, item.ItemID)
 			if err := x.cache.ScoredSetAdd(ctx, k, item.ItemID, float64(item.Created.Unix())); err != nil {
-				log.ErrorWithFields(ctx, log.Fields{
-					"item_id": item.ItemID,
-				}, "FillWithUnknownItems> unable to push item %s into %s", item.ItemID, k)
+				log.Error(ctx, "FillWithUnknownItems> unable to push item %s into %s", item.ItemID, k)
 				continue
 			}
 		}
@@ -81,11 +80,9 @@ func (x *RunningStorageUnits) processItem(ctx context.Context, tx gorpmapper.Sql
 	if err != nil {
 		return err
 	}
-
-	log.InfoWithFields(ctx, log.Fields{
-		"item_apiref":   it.APIRefHash,
-		"item_size_num": it.Size,
-	}, "processing item %s on %s", it.ID, s.Name())
+	ctx = context.WithValue(ctx, FieldAPIRef, it.APIRef)
+	ctx = context.WithValue(ctx, FieldSize, it.Size)
+	log.Info(ctx, "processing item %s on %s", it.ID, s.Name())
 	if _, err = LoadItemUnitByUnit(ctx, x.m, tx, s.ID(), id); err == nil {
 		log.Info(ctx, "Item %s already sync on %s", id, s.Name())
 		return nil
@@ -127,10 +124,7 @@ func (x *RunningStorageUnits) runItem(ctx context.Context, tx gorpmapper.SqlExec
 	}
 
 	if nbItemUnits > 0 {
-		log.InfoWithFields(ctx, log.Fields{
-			"item_apiref":   item.APIRefHash,
-			"item_size_num": item.Size,
-		}, "item %s has been pushed to %s with deduplication", item.ID, dest.Name())
+		log.Info(ctx, "item %s has been pushed to %s with deduplication", item.ID, dest.Name())
 		return nil
 	}
 
@@ -147,7 +141,7 @@ func (x *RunningStorageUnits) runItem(ctx context.Context, tx gorpmapper.SqlExec
 
 	rateLimitWriter := shapeio.NewWriter(writer)
 	rateLimitWriter.SetRateLimit(dest.SyncBandwidth())
-	log.Debug("%s write ratelimit: %v", dest.Name(), dest.SyncBandwidth())
+	log.Debug(ctx, "%s write ratelimit: %v", dest.Name(), dest.SyncBandwidth())
 
 	source, err := x.GetSource(ctx, item)
 	if err != nil {
@@ -161,7 +155,7 @@ func (x *RunningStorageUnits) runItem(ctx context.Context, tx gorpmapper.SqlExec
 
 	rateLimitReader := shapeio.NewReader(reader)
 	rateLimitReader.SetRateLimit(source.SyncBandwidth())
-	log.Debug("%s read ratelimit: %v", source.Name(), source.SyncBandwidth())
+	log.Debug(ctx, "%s read ratelimit: %v", source.Name(), source.SyncBandwidth())
 
 	chanError := make(chan error)
 	pr, pw := io.Pipe()
@@ -203,16 +197,7 @@ func (x *RunningStorageUnits) runItem(ctx context.Context, tx gorpmapper.SqlExec
 		}
 	}
 
-	var throughput = item.Size / t2.Sub(t1).Milliseconds()
-
-	log.InfoWithFields(ctx, log.Fields{
-		"item_apiref":               item.APIRefHash,
-		"source":                    source.Name(),
-		"destination":               dest.Name(),
-		"duration_milliseconds_num": t2.Sub(t1).Milliseconds(),
-		"item_size_num":             item.Size,
-		"throughput_num":            throughput,
-	}, "item %s has been pushed to %s (%.3f s)", item.ID, dest.Name(), t2.Sub(t1).Seconds())
+	log.Info(ctx, "item %s has been pushed to %s (%.3f s)", item.ID, dest.Name(), t2.Sub(t1).Seconds())
 	return nil
 }
 

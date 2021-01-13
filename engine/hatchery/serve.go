@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
+	"github.com/rockbears/log"
 	"gopkg.in/square/go-jose.v2"
 
 	"github.com/ovh/cds/engine/api"
@@ -22,7 +23,7 @@ import (
 	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/ovh/cds/sdk/hatchery"
 	"github.com/ovh/cds/sdk/jws"
-	"github.com/ovh/cds/sdk/log"
+	cdslog "github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk/log/hook"
 )
 
@@ -56,7 +57,7 @@ func init() {
 			time.Sleep(1 * time.Minute)
 			dir, err := os.Getwd()
 			if err != nil {
-				log.Warning(context.Background(), "unable to get working directory: %v", err)
+				log.Warn(context.Background(), "unable to get working directory: %v", err)
 				continue
 			}
 
@@ -65,7 +66,7 @@ func init() {
 
 			files, err := ioutil.ReadDir(path)
 			if err != nil {
-				log.Warning(context.Background(), "unable to list files in %s: %v", path, err)
+				log.Warn(context.Background(), "unable to list files in %s: %v", path, err)
 				break
 			}
 
@@ -73,12 +74,12 @@ func init() {
 				filename := filepath.Join(path, f.Name())
 				file, err := os.Stat(filename)
 				if err != nil {
-					log.Warning(context.Background(), "unable to get file %s info: %v", f.Name(), err)
+					log.Warn(context.Background(), "unable to get file %s info: %v", f.Name(), err)
 					continue
 				}
 				if file.ModTime().Before(time.Now().Add(-15 * time.Minute)) {
 					if err := os.Remove(filename); err != nil {
-						log.Warning(context.Background(), "unable to remove file %s: %v", filename, err)
+						log.Warn(context.Background(), "unable to remove file %s: %v", filename, err)
 					}
 				}
 			}
@@ -158,7 +159,7 @@ func (c *Common) CommonServe(ctx context.Context, h hatchery.Interface) error {
 }
 
 func (c *Common) initRouter(ctx context.Context, h hatchery.Interface) {
-	log.Debug("%s> Router initialized", c.Name())
+	log.Debug(ctx, "%s> Router initialized", c.Name())
 	r := c.Router
 	r.Background = ctx
 	r.URL = h.Configuration().URL
@@ -227,13 +228,13 @@ func (c *Common) RefreshServiceLogger(ctx context.Context) error {
 	}
 
 	if c.ServiceLogger == nil {
-		logger, _, err := log.New(ctx, graylogCfg)
+		logger, _, err := cdslog.New(ctx, graylogCfg)
 		if err != nil {
 			return sdk.WithStack(err)
 		}
 		c.ServiceLogger = logger
 	} else {
-		if err := log.ReplaceAllHooks(context.Background(), c.ServiceLogger, graylogCfg); err != nil {
+		if err := cdslog.ReplaceAllHooks(context.Background(), c.ServiceLogger, graylogCfg); err != nil {
 			return sdk.WithStack(err)
 		}
 	}
@@ -241,7 +242,7 @@ func (c *Common) RefreshServiceLogger(ctx context.Context) error {
 	return nil
 }
 
-func (c *Common) SendServiceLog(ctx context.Context, servicesLogs []log.Message, terminated bool) {
+func (c *Common) SendServiceLog(ctx context.Context, servicesLogs []cdslog.Message, terminated bool) {
 	if c.ServiceLogger == nil {
 		return
 	}
@@ -265,16 +266,17 @@ func (c *Common) SendServiceLog(ctx context.Context, servicesLogs []log.Message,
 		sign, err := jws.Sign(c.Signer, s.Signature)
 		if err != nil {
 			err = sdk.WrapError(err, "unable to sign service log message")
-			log.ErrorWithFields(ctx, log.Fields{"stack_trace": fmt.Sprintf("%+v", err)}, "%s", err)
+			ctx = sdk.ContextWithStacktrace(ctx, err)
+			log.Error(ctx, err.Error())
 			continue
 		}
 		lineNumber := c.mapServiceNextLineNumber[s.ServiceKey()]
 		c.mapServiceNextLineNumber[s.ServiceKey()]++
 		if c.ServiceLogger != nil {
 			c.ServiceLogger.
-				WithField(log.ExtraFieldSignature, sign).
-				WithField(log.ExtraFieldLine, lineNumber).
-				WithField(log.ExtraFieldTerminated, terminated).
+				WithField(cdslog.ExtraFieldSignature, sign).
+				WithField(cdslog.ExtraFieldLine, lineNumber).
+				WithField(cdslog.ExtraFieldTerminated, terminated).
 				Log(s.Level, s.Value)
 		}
 	}

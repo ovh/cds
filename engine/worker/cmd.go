@@ -8,13 +8,13 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/rockbears/log"
 	"github.com/spf13/afero"
-
 	"github.com/spf13/cobra"
 
 	"github.com/ovh/cds/engine/worker/internal"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
+	cdslog "github.com/ovh/cds/sdk/log"
 )
 
 const (
@@ -118,7 +118,7 @@ func initFromFlags(cmd *cobra.Command, w *internal.CurrentWorker) {
 		basedir = os.TempDir()
 	}
 
-	log.Initialize(context.Background(), &log.Conf{
+	cdslog.Initialize(context.Background(), &cdslog.Conf{
 		Level:                      FlagString(cmd, flagLogLevel),
 		GraylogProtocol:            FlagString(cmd, flagGraylogProtocol),
 		GraylogHost:                FlagString(cmd, flagGraylogHost),
@@ -152,7 +152,7 @@ func initFromFlags(cmd *cobra.Command, w *internal.CurrentWorker) {
 	}
 
 	fs := afero.NewOsFs()
-	log.Debug("creating basedir %s", basedir)
+	log.Debug(context.TODO(), "creating basedir %s", basedir)
 	if err := fs.MkdirAll(basedir, os.FileMode(0755)); err != nil {
 		log.Error(context.TODO(), "basedir error: %v", err)
 		os.Exit(5)

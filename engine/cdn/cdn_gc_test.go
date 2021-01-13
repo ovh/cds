@@ -6,6 +6,11 @@ import (
 	"testing"
 	"time"
 
+	"github.com/ovh/symmecrypt/ciphers/aesgcm"
+	"github.com/ovh/symmecrypt/convergent"
+	"github.com/rockbears/log"
+	"github.com/stretchr/testify/require"
+
 	"github.com/ovh/cds/engine/cdn/item"
 	"github.com/ovh/cds/engine/cdn/lru"
 	"github.com/ovh/cds/engine/cdn/storage"
@@ -13,10 +18,6 @@ import (
 	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/engine/test"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
-	"github.com/ovh/symmecrypt/ciphers/aesgcm"
-	"github.com/ovh/symmecrypt/convergent"
-	"github.com/stretchr/testify/require"
 )
 
 func TestCleanSynchronizedItem(t *testing.T) {
@@ -24,7 +25,7 @@ func TestCleanSynchronizedItem(t *testing.T) {
 	item.InitDBMapping(m)
 	storage.InitDBMapping(m)
 
-	log.SetLogger(t)
+	log.Factory = log.NewTestingWrapper(t)
 	db, factory, cache, cancel := test.SetupPGToCancel(t, m, sdk.TypeCDN)
 	t.Cleanup(cancel)
 
@@ -196,7 +197,7 @@ func TestCleanWaitingItem(t *testing.T) {
 	item.InitDBMapping(m)
 	storage.InitDBMapping(m)
 
-	log.SetLogger(t)
+	log.Factory = log.NewTestingWrapper(t)
 	db, factory, cache, cancel := test.SetupPGToCancel(t, m, sdk.TypeCDN)
 	t.Cleanup(cancel)
 
@@ -246,7 +247,7 @@ func TestPurgeItem(t *testing.T) {
 	item.InitDBMapping(m)
 	storage.InitDBMapping(m)
 
-	log.SetLogger(t)
+	log.Factory = log.NewTestingWrapper(t)
 	db, factory, cache, cancel := test.SetupPGToCancel(t, m, sdk.TypeCDN)
 	t.Cleanup(cancel)
 

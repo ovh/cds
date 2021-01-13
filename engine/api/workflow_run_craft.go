@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
+	"github.com/rockbears/log"
 	"go.opencensus.io/trace"
 
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
@@ -16,7 +17,6 @@ import (
 	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/engine/featureflipping"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk/telemetry"
 )
 
@@ -45,7 +45,6 @@ func (api *API) WorkflowRunCraft(ctx context.Context, tick time.Duration) error 
 							log.Error(ctx, "WorkflowRunCraft> error on workflow run %d: %v", id, err)
 						}
 					},
-					api.PanicDump(),
 				)
 			}
 		}
@@ -62,7 +61,7 @@ func (api *API) workflowRunCraft(ctx context.Context, id int64) error {
 		return err
 	}
 	if !b {
-		log.Debug("api.workflowRunCraft> run %d is locked in cache", id)
+		log.Debug(ctx, "api.workflowRunCraft> run %d is locked in cache", id)
 		next()
 		return nil
 	}
@@ -156,7 +155,7 @@ func (api *API) workflowRunCraft(ctx context.Context, id int64) error {
 
 	}
 
-	log.Debug("api.workflowRunCraft> crafting workflow %s/%s #%d.%d (%d)", proj.Key, wf.Name, run.Number, run.LastSubNumber, run.ID)
+	log.Debug(ctx, "api.workflowRunCraft> crafting workflow %s/%s #%d.%d (%d)", proj.Key, wf.Name, run.Number, run.LastSubNumber, run.ID)
 
 	api.initWorkflowRun(ctx, proj.Key, wf, run, *run.ToCraftOpts)
 

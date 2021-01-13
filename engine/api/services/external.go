@@ -7,10 +7,11 @@ import (
 	"net/url"
 	"time"
 
+	"github.com/rockbears/log"
+
 	"github.com/go-gorp/gorp"
 	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 )
 
 // ExternalService represents an external service
@@ -47,7 +48,7 @@ func Pings(ctx context.Context, dbFunc func() *gorp.DbMap, ss []ExternalService)
 			for _, s := range ss {
 				tx, err := db.Begin()
 				if err != nil {
-					log.Warning(ctx, "services.Ping> Unable to start transaction")
+					log.Warn(ctx, "services.Ping> Unable to start transaction")
 					continue
 				}
 				if err := ping(ctx, tx, s); err != nil {
@@ -91,7 +92,7 @@ func ping(ctx context.Context, db gorpmapper.SqlExecutorWithTx, s ExternalServic
 		return sdk.WithStack(err)
 	}
 
-	log.Debug("services.ping> Checking service %s (%v)", s.Name, u.String())
+	log.Debug(ctx, "services.ping> Checking service %s (%v)", s.Name, u.String())
 
 	_, _, code, err := doRequestFromURL(context.Background(), db, "GET", u, nil)
 	if err != nil || code >= 400 {
@@ -105,11 +106,11 @@ func ping(ctx context.Context, db gorpmapper.SqlExecutorWithTx, s ExternalServic
 	srv.LastHeartbeat = time.Now()
 	srv.MonitoringStatus = mon
 	if err := Update(ctx, db, srv); err != nil {
-		log.Warning(ctx, "services.ping> unable to update external service: %v", err)
+		log.Warn(ctx, "services.ping> unable to update external service: %v", err)
 		return err
 	}
 	if err := UpsertStatus(db, *srv, ""); err != nil {
-		log.Warning(ctx, "services.ping> unable to update monitoring status: %v", err)
+		log.Warn(ctx, "services.ping> unable to update monitoring status: %v", err)
 		return err
 	}
 	return nil
@@ -132,7 +133,7 @@ func initExternal(ctx context.Context, db *gorp.DbMap, s ExternalService) error 
 	}
 	defer tx.Rollback() // nolint
 
-	log.Debug("services.InitExternal> Initializing service %s", s.Name)
+	log.Debug(ctx, "services.InitExternal> Initializing service %s", s.Name)
 
 	old, err := LoadByName(ctx, tx, s.Name)
 	if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {

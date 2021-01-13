@@ -5,9 +5,10 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/rockbears/log"
+
 	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 )
 
 func (a *API) listenMaintenance(c context.Context) error {
@@ -26,12 +27,12 @@ func (a *API) listenMaintenance(c context.Context) error {
 		case <-tick.C:
 			msg, err := pubSub.GetMessage(c)
 			if err != nil {
-				log.Warning(c, "listenMaintenance> Cannot get message %s: %s", msg, err)
+				log.Warn(c, "listenMaintenance> Cannot get message %s: %s", msg, err)
 				continue
 			}
 			b, err := strconv.ParseBool(msg)
 			if err != nil {
-				log.Warning(c, "listenMaintenance> Cannot parse value %s: %s", msg, err)
+				log.Warn(c, "listenMaintenance> Cannot parse value %s: %s", msg, err)
 			}
 			a.Maintenance = b
 			event.PublishMaintenanceEvent(c, sdk.EventMaintenance{Enable: b})

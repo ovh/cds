@@ -8,6 +8,7 @@ import (
 	"sync"
 
 	"github.com/gorilla/mux"
+	"github.com/rockbears/log"
 
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/ascode"
@@ -20,7 +21,6 @@ import (
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/exportentities"
-	"github.com/ovh/cds/sdk/log"
 )
 
 func (api *API) updateAsCodePipelineHandler() service.Handler {
@@ -137,7 +137,7 @@ func (api *API) updateAsCodePipelineHandler() service.Handler {
 				OperationUUID: ope.UUID,
 			}
 			ascode.UpdateAsCodeResult(ctx, api.mustDB(), api.Cache, api.GoRoutines, *proj, *wkHolder, *rootApp, ed, u)
-		}, api.PanicDump())
+		})
 
 		return service.WriteJSON(w, sdk.Operation{
 			UUID:   ope.UUID,
@@ -401,7 +401,7 @@ func (api *API) getPipelinesHandler() service.Handler {
 		project, err := project.Load(ctx, api.mustDB(), key, project.LoadOptions.Default)
 		if err != nil {
 			if !sdk.ErrorIs(err, sdk.ErrNoProject) {
-				log.Warning(ctx, "getPipelinesHandler: Cannot load %s: %s\n", key, err)
+				log.Warn(ctx, "getPipelinesHandler: Cannot load %s: %s\n", key, err)
 			}
 			return err
 		}
@@ -409,7 +409,7 @@ func (api *API) getPipelinesHandler() service.Handler {
 		pip, err := pipeline.LoadPipelines(api.mustDB(), project.ID, true)
 		if err != nil {
 			if !sdk.ErrorIs(err, sdk.ErrPipelineNotFound) {
-				log.Warning(ctx, "getPipelinesHandler>Cannot load pipelines: %s\n", err)
+				log.Warn(ctx, "getPipelinesHandler>Cannot load pipelines: %s\n", err)
 			}
 			return err
 		}

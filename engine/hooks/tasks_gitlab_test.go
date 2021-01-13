@@ -4,20 +4,21 @@ import (
 	"context"
 	"testing"
 
+	"github.com/rockbears/log"
 	"github.com/stretchr/testify/assert"
 	"github.com/xanzy/go-gitlab"
 
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
+	cdslog "github.com/ovh/cds/sdk/log"
 )
 
 func init() {
-	log.Initialize(context.TODO(), &log.Conf{Level: "debug"})
+	cdslog.Initialize(context.TODO(), &cdslog.Conf{Level: "debug"})
 }
 
 func Test_doWebHookExecutionGitlab(t *testing.T) {
-	log.SetLogger(t)
+	log.Factory = log.NewTestingWrapper(t)
 	s, cancel := setupTestHookService(t)
 	defer cancel()
 	task := &sdk.TaskExecution{

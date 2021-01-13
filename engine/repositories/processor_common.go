@@ -5,9 +5,9 @@ import (
 	"strings"
 
 	"github.com/fsamin/go-repo"
+	"github.com/rockbears/log"
 
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 )
 
 func (s *Service) processGitClone(ctx context.Context, op *sdk.Operation) (gitRepo repo.Repo, basedir string, currentBranch string, err error) {
@@ -17,13 +17,13 @@ func (s *Service) processGitClone(ctx context.Context, op *sdk.Operation) (gitRe
 	}
 
 	// Get the git repository
-	opts := []repo.Option{repo.WithVerbose(log.InfoWithoutCtx)}
+	opts := []repo.Option{repo.WithVerbose(func(format string, args ...interface{}) { log.Info(ctx, format, args...) })}
 
 	if op.RepositoryStrategy.ConnectionType == "ssh" {
-		log.Debug("processGitClone> %s > using ssh key %s", op.UUID, op.RepositoryStrategy.SSHKey)
+		log.Debug(ctx, "processGitClone> %s > using ssh key %s", op.UUID, op.RepositoryStrategy.SSHKey)
 		opts = append(opts, repo.WithSSHAuth([]byte(op.RepositoryStrategy.SSHKeyContent)))
 	} else if op.RepositoryStrategy.User != "" && op.RepositoryStrategy.Password != "" {
-		log.Debug("processGitClone> %s > using user %s", op.UUID, op.RepositoryStrategy.User)
+		log.Debug(ctx, "processGitClone> %s > using user %s", op.UUID, op.RepositoryStrategy.User)
 		opts = append(opts, repo.WithHTTPAuth(op.RepositoryStrategy.User, op.RepositoryStrategy.Password))
 	}
 

@@ -6,11 +6,11 @@ import (
 	"testing"
 	"time"
 
+	"github.com/rockbears/log"
 	"github.com/stretchr/testify/require"
 
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 )
 
 func init() {
@@ -18,7 +18,7 @@ func init() {
 }
 
 func Test_doWebHookExecutionGithub(t *testing.T) {
-	log.SetLogger(t)
+	log.Factory = log.NewTestingWrapper(t)
 	s, cancel := setupTestHookService(t)
 	defer cancel()
 	task := &sdk.TaskExecution{
@@ -43,7 +43,7 @@ func Test_doWebHookExecutionGithub(t *testing.T) {
 }
 
 func Test_doWebHookExecutionTagGithub(t *testing.T) {
-	log.SetLogger(t)
+	log.Factory = log.NewTestingWrapper(t)
 	s, cancel := setupTestHookService(t)
 	defer cancel()
 	task := &sdk.TaskExecution{

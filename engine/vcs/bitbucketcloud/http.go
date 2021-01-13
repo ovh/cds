@@ -12,9 +12,10 @@ import (
 	"strings"
 	"time"
 
+	"github.com/rockbears/log"
+
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
-	"github.com/ovh/cds/sdk/log"
 )
 
 //Github http var
@@ -73,7 +74,7 @@ func (client *bitbucketcloudClient) post(path string, bodyType string, body io.R
 	req.Header.Add("Accept", "application/json")
 	req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", client.OAuthToken))
 
-	log.Debug("Bitbucket Cloud API>> Request URL %s", req.URL.String())
+	log.Debug(context.TODO(), "Bitbucket Cloud API>> Request URL %s", req.URL.String())
 
 	return httpClient.Do(req)
 }
@@ -88,7 +89,7 @@ func (client *bitbucketcloudClient) put(path string, bodyType string, body io.Re
 	req.Header.Add("Accept", "application/json")
 	req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", client.OAuthToken))
 
-	log.Debug("Bitbucket Cloud API>> Request URL %s", req.URL.String())
+	log.Debug(context.TODO(), "Bitbucket Cloud API>> Request URL %s", req.URL.String())
 
 	return httpClient.Do(req)
 }
@@ -119,7 +120,7 @@ func (client *bitbucketcloudClient) get(path string) (int, []byte, http.Header, 
 	case http.StatusMovedPermanently, http.StatusTemporaryRedirect, http.StatusFound:
 		location := res.Header.Get("Location")
 		if location != "" {
-			log.Debug("Bitbucket Cloud API>> Response Follow redirect :%s", location)
+			log.Debug(context.TODO(), "Bitbucket Cloud API>> Response Follow redirect :%s", location)
 			return client.get(location)
 		}
 	case http.StatusUnauthorized:
@@ -141,7 +142,7 @@ func (client *bitbucketcloudClient) delete(path string) error {
 	}
 
 	req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", client.OAuthToken))
-	log.Debug("Bitbucket Cloud API>> Request URL %s", req.URL.String())
+	log.Debug(context.TODO(), "Bitbucket Cloud API>> Request URL %s", req.URL.String())
 
 	res, err := httpClient.Do(req)
 	if err != nil {
@@ -210,7 +211,7 @@ func (client *bitbucketcloudClient) do(ctx context.Context, method, api, path st
 	case 401:
 		return sdk.WithStack(sdk.ErrUnauthorized)
 	case 400:
-		log.Warning(ctx, "bitbucketClient.do> %s", string(body))
+		log.Warn(ctx, "bitbucketClient.do> %s", string(body))
 		return sdk.WithStack(sdk.ErrWrongRequest)
 	}
 

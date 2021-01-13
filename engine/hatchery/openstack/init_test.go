@@ -4,14 +4,13 @@ import (
 	"testing"
 
 	"github.com/gophercloud/gophercloud/openstack/compute/v2/flavors"
+	"github.com/rockbears/log"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-
-	"github.com/ovh/cds/sdk/log"
 )
 
 func TestHatcheryOpenstack_initFlavors(t *testing.T) {
-	log.SetLogger(t)
+	log.Factory = log.NewTestingWrapper(t)
 
 	h := &HatcheryOpenstack{}
 

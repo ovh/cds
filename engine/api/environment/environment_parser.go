@@ -6,12 +6,13 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/rockbears/log"
+
 	"github.com/ovh/cds/engine/api/ascode"
 	"github.com/ovh/cds/engine/api/keys"
 	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/exportentities"
-	"github.com/ovh/cds/sdk/log"
 )
 
 // ImportOptions are options to import environment
@@ -22,8 +23,8 @@ type ImportOptions struct {
 
 // ParseAndImport parse an exportentities.Environment and insert or update the environment in database
 func ParseAndImport(ctx context.Context, db gorpmapper.SqlExecutorWithTx, proj sdk.Project, eenv exportentities.Environment, opts ImportOptions, decryptFunc keys.DecryptFunc, u sdk.Identifiable) (*sdk.Environment, []sdk.Variable, []sdk.Message, error) {
-	log.Debug("ParseAndImport>> Import environment %s in project %s (force=%v)", eenv.Name, proj.Key, opts.Force)
-	log.Debug("ParseAndImport>> Env: %+v", eenv)
+	log.Debug(ctx, "ParseAndImport>> Import environment %s in project %s (force=%v)", eenv.Name, proj.Key, opts.Force)
+	log.Debug(ctx, "ParseAndImport>> Env: %+v", eenv)
 
 	msgList := []sdk.Message{}
 
@@ -56,7 +57,7 @@ func ParseAndImport(ctx context.Context, db gorpmapper.SqlExecutorWithTx, proj s
 				}
 				msgList = append(msgList, sdk.NewMessage(sdk.MsgEnvironmentDetached, eenv.Name, oldEnv.FromRepository))
 			}
-			log.Debug("ParseAndImport>> Force import environment %s in project %s without fromRepository", eenv.Name, proj.Key)
+			log.Debug(ctx, "ParseAndImport>> Force import environment %s in project %s without fromRepository", eenv.Name, proj.Key)
 		} else if oldEnv.FromRepository != "" && opts.FromRepository != oldEnv.FromRepository {
 			return nil, nil, nil, sdk.NewErrorFrom(sdk.ErrEnvironmentAsCodeOverride, "unable to update existing ascode environment from %s", oldEnv.FromRepository)
 		}
@@ -167,7 +168,7 @@ func ParseAndImport(ctx context.Context, db gorpmapper.SqlExecutorWithTx, proj s
 	var globalError error
 
 	if exist {
-		globalError = ImportInto(db, env, oldEnv, msgChan, u)
+		globalError = ImportInto(ctx, db, env, oldEnv, msgChan, u)
 	} else {
 		globalError = Import(db, proj, env, msgChan, u)
 	}

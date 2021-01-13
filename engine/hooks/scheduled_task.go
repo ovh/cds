@@ -5,12 +5,13 @@ import (
 	"encoding/json"
 
 	dump "github.com/fsamin/go-dump"
+	"github.com/rockbears/log"
+
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 )
 
 func (s *Service) doScheduledTaskExecution(ctx context.Context, t *sdk.TaskExecution) (*sdk.WorkflowNodeRunHookEvent, error) {
-	log.Debug("Hooks> Processing scheduled task %s", t.UUID)
+	log.Debug(ctx, "Hooks> Processing scheduled task %s", t.UUID)
 
 	// Prepare a struct to send to CDS API
 	h := sdk.WorkflowNodeRunHookEvent{

@@ -1,6 +1,7 @@
 package vcs
 
 import (
+	"context"
 	"encoding/base64"
 	"encoding/json"
 	"net/http"
@@ -8,12 +9,12 @@ import (
 	"net/http/httputil"
 	"testing"
 
-	"github.com/ovh/cds/engine/test"
-	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
-
+	"github.com/rockbears/log"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/ovh/cds/engine/test"
+	"github.com/ovh/cds/sdk"
 )
 
 func Test_getAllVCSServersHandler(t *testing.T) {
@@ -65,7 +66,7 @@ func Test_getAllVCSServersHandler(t *testing.T) {
 
 	assert.Len(t, servers, 3)
 
-	log.Debug("Body: %s", rec.Body.String())
+	log.Debug(context.TODO(), "Body: %s", rec.Body.String())
 
 	//Prepare request
 	vars = map[string]string{
@@ -498,7 +499,7 @@ func checkConfigGithub(cfg map[string]string, t *testing.T) {
 	}
 
 	if cfg["githubClientID"] == "" || cfg["githubClientSecret"] == "" {
-		log.Debug("Skip Github Test - no configuration")
+		log.Debug(context.TODO(), "Skip Github Test - no configuration")
 		t.SkipNow()
 	}
 }

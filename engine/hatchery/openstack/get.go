@@ -9,9 +9,9 @@ import (
 	"github.com/gophercloud/gophercloud/openstack/compute/v2/flavors"
 	"github.com/gophercloud/gophercloud/openstack/compute/v2/images"
 	"github.com/gophercloud/gophercloud/openstack/compute/v2/servers"
+	"github.com/rockbears/log"
 
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 )
 
 // Find image ID from image name
@@ -60,7 +60,7 @@ var limages = struct {
 
 func (h *HatcheryOpenstack) getImages(ctx context.Context) []images.Image {
 	t := time.Now()
-	defer log.Debug("getImages(): %fs", time.Since(t).Seconds())
+	defer log.Debug(ctx, "getImages(): %fs", time.Since(t).Seconds())
 
 	limages.mu.RLock()
 	nbImages := len(limages.list)
@@ -80,9 +80,9 @@ func (h *HatcheryOpenstack) getImages(ctx context.Context) []images.Image {
 
 		activeImages := []images.Image{}
 		for i := range imgs {
-			log.Debug("getImages> image %s status %s progress %d all:%+v", imgs[i].Name, imgs[i].Status, imgs[i].Progress, imgs[i])
+			log.Debug(ctx, "getImages> image %s status %s progress %d all:%+v", imgs[i].Name, imgs[i].Status, imgs[i].Progress, imgs[i])
 			if imgs[i].Status == "ACTIVE" {
-				log.Debug("getImages> add %s to activeImages", imgs[i].Name)
+				log.Debug(ctx, "getImages> add %s to activeImages", imgs[i].Name)
 				activeImages = append(activeImages, imgs[i])
 			}
 		}
@@ -117,7 +117,7 @@ var lservers = struct {
 
 func (h *HatcheryOpenstack) getServers(ctx context.Context) []servers.Server {
 	t := time.Now()
-	defer log.Debug("getServers() : %fs", time.Since(t).Seconds())
+	defer log.Debug(ctx, "getServers() : %fs", time.Since(t).Seconds())
 
 	lservers.mu.RLock()
 	nbServers := len(lservers.list)

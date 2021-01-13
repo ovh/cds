@@ -12,6 +12,7 @@ import (
 
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gorilla/mux"
+	"github.com/rockbears/log"
 	"github.com/sirupsen/logrus"
 	apiv1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -27,7 +28,6 @@ import (
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/ovh/cds/sdk/hatchery"
-	"github.com/ovh/cds/sdk/log"
 )
 
 // New instanciates a new hatchery local
@@ -233,7 +233,7 @@ func (h *HatcheryKubernetes) CanSpawn(ctx context.Context, model *sdk.Model, job
 	// Service and Hostname requirement are not supported
 	for _, r := range requirements {
 		if r.Type == sdk.HostnameRequirement {
-			log.Debug("CanSpawn> Job %d has a hostname requirement. Kubernetes can't spawn a worker for this job", jobID)
+			log.Debug(ctx, "CanSpawn> Job %d has a hostname requirement. Kubernetes can't spawn a worker for this job", jobID)
 			return false
 		}
 	}
@@ -262,7 +262,7 @@ func (h *HatcheryKubernetes) SpawnWorker(ctx context.Context, spawnArgs hatchery
 			var err error
 			memory, err = strconv.ParseInt(r.Value, 10, 64)
 			if err != nil {
-				log.Warning(ctx, "spawnKubernetesDockerWorker> %s unable to parse memory requirement %d: %v", logJob, memory, err)
+				log.Warn(ctx, "spawnKubernetesDockerWorker> %s unable to parse memory requirement %d: %v", logJob, memory, err)
 				return err
 			}
 		}
@@ -406,7 +406,7 @@ func (h *HatcheryKubernetes) SpawnWorker(ctx context.Context, spawnArgs hatchery
 		if sm, ok := envm["CDS_SERVICE_MEMORY"]; ok {
 			mq, err := resource.ParseQuantity(sm)
 			if err != nil {
-				log.Warning(ctx, "hatchery> kubernetes> SpawnWorker> Unable to parse CDS_SERVICE_MEMORY value '%s': %s", sm, err)
+				log.Warn(ctx, "hatchery> kubernetes> SpawnWorker> Unable to parse CDS_SERVICE_MEMORY value '%s': %s", sm, err)
 				continue
 			}
 			servContainer.Resources = apiv1.ResourceRequirements{
@@ -444,7 +444,7 @@ func (h *HatcheryKubernetes) SpawnWorker(ctx context.Context, spawnArgs hatchery
 
 	_, err := h.k8sClient.CoreV1().Pods(h.Config.Namespace).Create(&podSchema)
 
-	log.Debug("hatchery> kubernetes> SpawnWorker> %s > Pod created", spawnArgs.WorkerName)
+	log.Debug(ctx, "hatchery> kubernetes> SpawnWorker> %s > Pod created", spawnArgs.WorkerName)
 
 	return err
 }
@@ -458,7 +458,7 @@ func (h *HatcheryKubernetes) GetLogger() *logrus.Logger {
 func (h *HatcheryKubernetes) WorkersStarted(ctx context.Context) []string {
 	list, err := h.k8sClient.CoreV1().Pods(h.Config.Namespace).List(metav1.ListOptions{LabelSelector: LABEL_HATCHERY_NAME})
 	if err != nil {
-		log.Warning(ctx, "WorkersStarted> unable to list pods on namespace %s", h.Config.Namespace)
+		log.Warn(ctx, "WorkersStarted> unable to list pods on namespace %s", h.Config.Namespace)
 		return nil
 	}
 	workerNames := make([]string, 0, list.Size())

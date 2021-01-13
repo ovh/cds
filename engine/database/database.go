@@ -9,10 +9,10 @@ import (
 
 	"github.com/go-gorp/gorp"
 	"github.com/lib/pq"
+	"github.com/rockbears/log"
 
 	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 )
 
 // DBConnectionFactory is a database connection factory on postgres with gorp
@@ -41,10 +41,9 @@ func (f *DBConnectionFactory) DB() *sql.DB {
 		}
 		newF, err := Init(context.TODO(), f.DBUser, f.DBRole, f.DBPassword, f.DBName, f.DBSchema, f.DBHost, f.DBPort, f.DBSSLMode, f.DBConnectTimeout, f.DBTimeout, f.DBMaxConn)
 		if err != nil {
-			err = sdk.WrapError(err, "cannot init db connection")
-			log.ErrorWithFields(context.TODO(), log.Fields{
-				"stack_trace": fmt.Sprintf("%+v", err),
-			}, "%s", err)
+			err = sdk.WithStack(err)
+			ctx := sdk.ContextWithStacktrace(context.TODO(), err)
+			log.Error(ctx, "unable to init db connection: %v", err)
 			return nil
 		}
 		*f = *newF
@@ -144,7 +143,7 @@ func Init(ctx context.Context, user, role, password, name, schema, host string, 
 
 	// Set role if specified
 	if role != "" {
-		log.Debug("database> setting role %s on database", role)
+		log.Debug(ctx, "database> setting role %s on database", role)
 		if _, err := f.Database.Exec("SET ROLE '" + role + "'"); err != nil {
 			log.Error(ctx, "unable to set role %s on database: %v", role, err)
 			return nil, sdk.WrapError(err, "unable to set role %s", role)

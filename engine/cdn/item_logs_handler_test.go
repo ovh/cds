@@ -4,12 +4,13 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	cdntest "github.com/ovh/cds/engine/cdn/test"
 	"net/http"
 	"net/http/httptest"
 	"strconv"
 	"testing"
 	"time"
+
+	cdntest "github.com/ovh/cds/engine/cdn/test"
 
 	"github.com/ovh/cds/engine/cdn/item"
 	"github.com/ovh/cds/engine/cdn/storage"
@@ -26,7 +27,7 @@ import (
 	"github.com/ovh/cds/engine/test"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
-	"github.com/ovh/cds/sdk/log"
+	cdslog "github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk/log/hook"
 )
 
@@ -48,7 +49,7 @@ func TestGetItemsAllLogsLinesHandler(t *testing.T) {
 			Full: "this is a message",
 		},
 		IsTerminated: sdk.StatusTerminated,
-		Signature: log.Signature{
+		Signature: cdslog.Signature{
 			ProjectKey:   projectKey,
 			WorkflowID:   1,
 			WorkflowName: "MyWorkflow",
@@ -57,7 +58,7 @@ func TestGetItemsAllLogsLinesHandler(t *testing.T) {
 			NodeRunName:  "MyPipeline",
 			JobName:      "MyJob",
 			JobID:        1,
-			Worker: &log.SignatureWorker{
+			Worker: &cdslog.SignatureWorker{
 				StepName:  "script1",
 				StepOrder: 0,
 			},
@@ -213,7 +214,7 @@ func TestGetItemLogsLinesHandler(t *testing.T) {
 			Full: "this is a message",
 		},
 		IsTerminated: sdk.StatusTerminated,
-		Signature: log.Signature{
+		Signature: cdslog.Signature{
 			ProjectKey:   projectKey,
 			WorkflowID:   1,
 			WorkflowName: "MyWorkflow",
@@ -222,7 +223,7 @@ func TestGetItemLogsLinesHandler(t *testing.T) {
 			NodeRunName:  "MyPipeline",
 			JobName:      "MyJob",
 			JobID:        1,
-			Worker: &log.SignatureWorker{
+			Worker: &cdslog.SignatureWorker{
 				StepName:  "script1",
 				StepOrder: 1,
 			},
@@ -302,7 +303,7 @@ func TestGetItemLogsStreamHandler(t *testing.T) {
 	t.Cleanup(cancel)
 	s.Units = newRunningStorageUnits(t, s.Mapper, db.DbMap, ctx, s.Cache)
 
-	signature := log.Signature{
+	signature := cdslog.Signature{
 		ProjectKey:   projectKey,
 		WorkflowID:   1,
 		WorkflowName: "MyWorkflow",
@@ -311,7 +312,7 @@ func TestGetItemLogsStreamHandler(t *testing.T) {
 		NodeRunName:  "MyPipeline",
 		JobName:      "MyJob",
 		JobID:        1,
-		Worker: &log.SignatureWorker{
+		Worker: &cdslog.SignatureWorker{
 			StepName:  "script1",
 			StepOrder: 1,
 		},

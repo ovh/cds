@@ -16,11 +16,11 @@ import (
 	"time"
 
 	"github.com/golang/protobuf/ptypes/empty"
-	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
-
+	"github.com/rockbears/log"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
+
+	"github.com/ovh/cds/sdk"
 )
 
 // readyString have to be written by plugin, worker read it
@@ -79,7 +79,7 @@ func StartPlugin(ctx context.Context, pluginName string, workdir, cmd string, ar
 		}
 		if errs != nil {
 			if time.Now().Before(tsStart.Add(5 * time.Second)) {
-				log.Warning(ctx, "plugin:%s error on ReadString, retry in 500ms...", pluginName)
+				log.Warn(ctx, "plugin:%s error on ReadString, retry in 500ms...", pluginName)
 				time.Sleep(500 * time.Millisecond)
 				continue
 			}

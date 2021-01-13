@@ -8,8 +8,9 @@ import (
 	"strings"
 	"time"
 
+	"github.com/rockbears/log"
+
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 )
 
 type statusData struct {
@@ -23,7 +24,7 @@ type statusData struct {
 
 func (b *bitbucketClient) SetStatus(ctx context.Context, event sdk.Event) error {
 	if b.consumer.disableStatus {
-		log.Warning(ctx, "bitbucketClient.SetStatus>  ⚠ Bitbucket statuses are disabled")
+		log.Warn(ctx, "bitbucketClient.SetStatus>  ⚠ Bitbucket statuses are disabled")
 		return nil
 	}
 

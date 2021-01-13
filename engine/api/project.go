@@ -7,10 +7,9 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/ovh/cds/sdk/slug"
-
 	"github.com/go-gorp/gorp"
 	"github.com/gorilla/mux"
+	"github.com/rockbears/log"
 
 	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/group"
@@ -22,7 +21,7 @@ import (
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
+	"github.com/ovh/cds/sdk/slug"
 )
 
 func (api *API) getProjectsHandler_FilterByRepo(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
@@ -161,7 +160,7 @@ func (api *API) getProjectsHandler() service.Handler {
 				return sdk.WrapError(errG, "unable to load user '%s' groups", requestedUserName)
 			}
 			requestedUser.Groups = groups
-			log.Debug("load all projects for user %s", requestedUser.Fullname)
+			log.Debug(ctx, "load all projects for user %s", requestedUser.Fullname)
 			projects, err = project.LoadAllByGroupIDs(ctx, api.mustDB(), api.Cache, requestedUser.GetGroupIDs(), opts...)
 		default:
 			projects, err = project.LoadAllByGroupIDs(ctx, api.mustDB(), api.Cache, getAPIConsumer(ctx).GetGroupIDs(), opts...)

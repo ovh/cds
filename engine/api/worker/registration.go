@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/go-gorp/gorp"
+	"github.com/rockbears/log"
 
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/workermodel"
@@ -14,7 +15,6 @@ import (
 	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/hatchery"
-	"github.com/ovh/cds/sdk/log"
 )
 
 // ErrNoWorker means the given worker ID is not found
@@ -119,7 +119,7 @@ func RegisterWorker(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store 
 			}
 		}
 		if err := workermodel.UpdateRegistration(ctx, db, store, model.ID); err != nil {
-			log.Warning(ctx, "registerWorker> Unable to update registration: %s", err)
+			log.Warn(ctx, "registerWorker> Unable to update registration: %s", err)
 		}
 	}
 

@@ -7,9 +7,9 @@ import (
 	"time"
 
 	"github.com/ncw/swift"
+	"github.com/rockbears/log"
 
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 )
 
 // SwiftStore implements ObjectStore interface with openstack swift implementation
@@ -75,7 +75,7 @@ func (s *SwiftStore) ServeStaticFiles(o Object, entrypoint string, data io.ReadC
 	container := s.containerPrefix + o.GetPath()
 	object := o.GetName()
 	escape(container, object)
-	log.Debug("SwiftStore> Storing /%s/%s\n", container, object)
+	log.Debug(context.Background(), "SwiftStore> Storing /%s/%s\n", container, object)
 
 	if entrypoint == "" {
 		entrypoint = "index.html"
@@ -88,12 +88,12 @@ func (s *SwiftStore) ServeStaticFiles(o Object, entrypoint string, data io.ReadC
 		"X-Delete-After":                fmt.Sprintf("%d", time.Now().Add(time.Hour*1500).Unix()), //TODO: to delete when purge will be developed
 	}
 
-	log.Debug("SwiftStore> creating container %s", container)
+	log.Debug(context.Background(), "SwiftStore> creating container %s", container)
 	if err := s.ContainerCreate(container, headers); err != nil {
 		return "", sdk.WrapError(err, "Unable to create container %s", container)
 	}
 
-	log.Debug("SwiftStore> creating object %s/%s", container, object)
+	log.Debug(context.Background(), "SwiftStore> creating object %s/%s", container, object)
 	res, errU := s.BulkUpload(container, data, "tar", nil)
 	if errU != nil {
 		return "", sdk.WrapError(errU, "SwiftStore> Unable to bulk upload %s : %v : %+v", object, errU, res.Errors)
@@ -112,20 +112,20 @@ func (s *SwiftStore) Store(o Object, data io.ReadCloser) (string, error) {
 	container := s.containerPrefix + o.GetPath()
 	object := o.GetName()
 	escape(container, object)
-	log.Debug("SwiftStore> Storing /%s/%s\n", container, object)
-	log.Debug("SwiftStore> creating container %s", container)
+	log.Debug(context.Background(), "SwiftStore> Storing /%s/%s\n", container, object)
+	log.Debug(context.Background(), "SwiftStore> creating container %s", container)
 	if err := s.ContainerCreate(container, nil); err != nil {
 		return "", sdk.WrapError(err, "Unable to create container %s", container)
 	}
 
-	log.Debug("SwiftStore> creating object %s/%s", container, object)
+	log.Debug(context.Background(), "SwiftStore> creating object %s/%s", container, object)
 
 	file, errC := s.ObjectCreate(container, object, false, "", "application/octet-stream", nil)
 	if errC != nil {
 		return "", sdk.WrapError(errC, "SwiftStore> Unable to create object %s", object)
 	}
 
-	log.Debug("SwiftStore> copy object %s/%s", container, object)
+	log.Debug(context.Background(), "SwiftStore> copy object %s/%s", container, object)
 	if _, err := io.Copy(file, data); err != nil {
 		_ = file.Close()
 		_ = data.Close()
@@ -150,16 +150,16 @@ func (s *SwiftStore) Fetch(ctx context.Context, o Object) (io.ReadCloser, error)
 	escape(container, object)
 
 	pipeReader, pipeWriter := io.Pipe()
-	log.Debug("SwiftStore> Fetching /%s/%s\n", container, object)
+	log.Debug(ctx, "SwiftStore> Fetching /%s/%s\n", container, object)
 
 	go func() {
-		log.Debug("SwiftStore> downloading object %s/%s", container, object)
+		log.Debug(ctx, "SwiftStore> downloading object %s/%s", container, object)
 
 		if _, err := s.ObjectGet(container, object, pipeWriter, false, nil); err != nil {
 			log.Error(ctx, "SwiftStore> Unable to get object %s/%s: %s", container, object, err)
 		}
 
-		log.Debug("SwiftStore> object %s%s downloaded", container, object)
+		log.Debug(ctx, "SwiftStore> object %s%s downloaded", container, object)
 		pipeWriter.Close()
 	}()
 	return pipeReader, nil
@@ -193,7 +193,7 @@ func (s *SwiftStore) DeleteContainer(ctx context.Context, containerPath string) 
 		}
 		return sdk.WrapError(err, "Unable to delete container")
 	}
-	log.Debug("Delete.SwiftStore: %s is deleted", container)
+	log.Debug(ctx, "Delete.SwiftStore: %s is deleted", container)
 	return nil
 }
 
@@ -255,10 +255,10 @@ func (s *SwiftStore) containerKey(container string) (string, error) {
 
 	key := headers["X-Container-Meta-Temp-Url-Key"]
 	if key == "" {
-		log.Debug("SwiftStore> Creating new session key for %s", container)
+		log.Debug(context.Background(), "SwiftStore> Creating new session key for %s", container)
 		key = sdk.UUID()
 
-		log.Debug("SwiftStore> Update container %s metadata", container)
+		log.Debug(context.Background(), "SwiftStore> Update container %s metadata", container)
 		if err := s.ContainerUpdate(container, swift.Headers{"X-Container-Meta-Temp-Url-Key": key}); err != nil {
 			return "", sdk.WrapError(err, "Unable to update container metadata %s", container)
 		}
@@ -280,6 +280,6 @@ func (s *SwiftStore) FetchURL(o Object) (string, string, error) {
 
 	url := s.ObjectTempUrl(container, object, string(key), "GET", time.Now().Add(time.Hour))
 
-	log.Debug("SwiftStore> Fetch URL: %s", string(url))
+	log.Debug(context.Background(), "SwiftStore> Fetch URL: %s", string(url))
 	return url + "&extract-archive=tar.gz", string(key), nil
 }

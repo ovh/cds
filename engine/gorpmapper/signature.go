@@ -9,9 +9,9 @@ import (
 
 	"github.com/go-gorp/gorp"
 	"github.com/ovh/symmecrypt"
+	"github.com/rockbears/log"
 
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 )
 
 // Constant for gorp mapping.

@@ -170,7 +170,7 @@ func SpanFromMain(ctx context.Context, name string, tags ...trace.Attribute) (co
 
 // Span start a new span from the parent context
 func Span(ctx context.Context, name string, tags ...trace.Attribute) (context.Context, func()) {
-	// log.Debug("# %s - begin", name)
+	// log.Debug(ctx, "# %s - begin", name)
 	if ctx == nil {
 		return context.Background(), func() {}
 	}
@@ -181,7 +181,7 @@ func Span(ctx context.Context, name string, tags ...trace.Attribute) (context.Co
 	}
 	ctx = SpanContextToContext(ctx, span.SpanContext())
 	return ctx, func() {
-		// log.Debug("# %s - end", name)
+		// log.Debug(ctx, "# %s - end", name)
 		span.End()
 	}
 }

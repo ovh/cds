@@ -5,12 +5,14 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/rockbears/log"
+
 	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/engine/cdn/item"
 	"github.com/ovh/cds/engine/cdn/storage"
 	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
+	cdslog "github.com/ovh/cds/sdk/log"
 )
 
 func (s *Service) sendToCDS(ctx context.Context, msgs []handledMessage) error {
@@ -100,11 +102,13 @@ func (s *Service) sendToBufferWithRetry(ctx context.Context, hms []handledMessag
 	return nil
 }
 
-func (s *Service) storeLogs(ctx context.Context, itemType sdk.CDNItemType, signature log.Signature, terminated bool, content string) error {
+func (s *Service) storeLogs(ctx context.Context, itemType sdk.CDNItemType, signature cdslog.Signature, terminated bool, content string) error {
 	it, err := s.loadOrCreateItem(ctx, itemType, signature)
 	if err != nil {
 		return err
 	}
+
+	ctx = context.WithValue(ctx, storage.FieldAPIRef, it.APIRefHash)
 
 	iu, err := s.loadOrCreateItemUnitBuffer(ctx, it.ID, itemType)
 	if err != nil {
@@ -113,7 +117,7 @@ func (s *Service) storeLogs(ctx context.Context, itemType sdk.CDNItemType, signa
 
 	// In case where the item was marked as complete we don't allow append of other logs
 	if it.Status == sdk.CDNStatusItemCompleted {
-		log.WarningWithFields(ctx, log.Fields{"item_apiref": it.APIRefHash}, "cdn:storeLogs: a log was received for item %s but status in already complete", it.ID)
+		log.Warn(ctx, "cdn:storeLogs: a log was received for item %s but status in already complete", it.ID)
 		return nil
 	}
 
@@ -148,9 +152,7 @@ func (s *Service) storeLogs(ctx context.Context, itemType sdk.CDNItemType, signa
 
 		for _, sto := range s.Units.Storages {
 			if err := s.Cache.ScoredSetAdd(ctx, cache.Key(storage.KeyBackendSync, sto.Name()), it.ID, float64(it.Created.Unix())); err != nil {
-				log.InfoWithFields(ctx, log.Fields{
-					"item_apiref": it.APIRefHash,
-				}, "storeLogs> cannot push item %s into scoredset for unit %s", it.ID, sto.Name())
+				log.Info(ctx, "storeLogs> cannot push item %s into scoredset for unit %s", it.ID, sto.Name())
 				continue
 			}
 		}
@@ -159,7 +161,7 @@ func (s *Service) storeLogs(ctx context.Context, itemType sdk.CDNItemType, signa
 	return nil
 }
 
-func (s *Service) loadOrCreateItem(ctx context.Context, itemType sdk.CDNItemType, signature log.Signature) (*sdk.CDNItem, error) {
+func (s *Service) loadOrCreateItem(ctx context.Context, itemType sdk.CDNItemType, signature cdslog.Signature) (*sdk.CDNItem, error) {
 	// Build cds api ref
 	apiRef := sdk.CDNLogAPIRef{
 		ProjectKey:     signature.ProjectKey,
@@ -204,13 +206,13 @@ func (s *Service) loadOrCreateItem(ctx context.Context, itemType sdk.CDNItemType
 		}
 		defer tx.Rollback() // nolint
 
+		ctx = context.WithValue(ctx, storage.FieldAPIRef, it.APIRefHash)
+
 		if errInsert := item.Insert(ctx, s.Mapper, tx, it); errInsert == nil {
 			if err := tx.Commit(); err != nil {
 				return nil, sdk.WithStack(err)
 			}
-			log.InfoWithFields(ctx, log.Fields{
-				"item_apiref": it.APIRefHash,
-			}, "storeLogs> new item %s has been stored", it.ID)
+			log.Info(ctx, "storeLogs> new item %s has been stored", it.ID)
 
 			return it, nil
 		} else if !sdk.ErrorIs(errInsert, sdk.ErrConflictData) {

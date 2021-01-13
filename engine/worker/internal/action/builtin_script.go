@@ -15,11 +15,11 @@ import (
 	"strings"
 
 	"github.com/kardianos/osext"
+	"github.com/rockbears/log"
 	"github.com/spf13/afero"
 
 	"github.com/ovh/cds/engine/worker/pkg/workerruntime"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 )
 
 type script struct {
@@ -71,7 +71,7 @@ func prepareScriptContent(parameters []sdk.Parameter, basedir afero.Fs, workdir 
 		script.dir = workdir.Name()
 	}
 
-	log.Debug("prepareScriptContent> script.dir is %s", script.dir)
+	log.Debug(context.TODO(), "prepareScriptContent> script.dir is %s", script.dir)
 
 	return &script, nil
 }
@@ -97,30 +97,30 @@ func writeScriptContent(ctx context.Context, script *script, fs afero.Fs, basedi
 		return nil, err
 	}
 	tmpFileName := hex.EncodeToString(bs)[0:16]
-	log.Debug("writeScriptContent> Basedir name is %s (%T)", basedir.Name(), basedir)
+	log.Debug(ctx, "writeScriptContent> Basedir name is %s (%T)", basedir.Name(), basedir)
 
 	if isWindows() {
 		tmpFileName += ".PS1"
-		log.Debug("runScriptAction> renaming powershell script to %s", tmpFileName)
+		log.Debug(ctx, "runScriptAction> renaming powershell script to %s", tmpFileName)
 	}
 
 	scriptPath := filepath.Join(path.Dir(basedir.Name()), tmpFileName)
-	log.Debug("writeScriptContent> Opening file %s", scriptPath)
+	log.Debug(ctx, "writeScriptContent> Opening file %s", scriptPath)
 
 	tmpscript, err := fs.OpenFile(scriptPath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0700)
 	if err != nil {
-		log.Warning(ctx, "writeScriptContent> Cannot create tmp file: %s", err)
+		log.Warn(ctx, "writeScriptContent> Cannot create tmp file: %s", err)
 		return nil, fmt.Errorf("cannot create temporary file, aborting: %v", err)
 	}
-	log.Debug("runScriptAction> writeScriptContent> Writing script to %s", tmpscript.Name())
+	log.Debug(ctx, "runScriptAction> writeScriptContent> Writing script to %s", tmpscript.Name())
 
 	// Put script in file
 	n, errw := tmpscript.Write(script.content)
 	if errw != nil || n != len(script.content) {
 		if errw != nil {
-			log.Warning(ctx, "writeScriptContent> cannot write script: %s", errw)
+			log.Warn(ctx, "writeScriptContent> cannot write script: %s", errw)
 		} else {
-			log.Warning(ctx, "writeScriptContent> cannot write all script: %d/%d", n, len(script.content))
+			log.Warn(ctx, "writeScriptContent> cannot write all script: %d/%d", n, len(script.content))
 		}
 		return nil, errors.New("cannot write script in temporary file, aborting")
 	}
@@ -151,12 +151,12 @@ func writeScriptContent(ctx context.Context, script *script, fs afero.Fs, basedi
 		script.opts = append(script.opts, realScriptPath)
 	}
 
-	log.Debug("writeScriptContent> script realpath is %s", realScriptPath)
-	log.Debug("writeScriptContent> script directory is %s", script.dir)
+	log.Debug(ctx, "writeScriptContent> script realpath is %s", realScriptPath)
+	log.Debug(ctx, "writeScriptContent> script directory is %s", script.dir)
 
 	deferFunc := func() {
 		filename := filepath.Join(path.Dir(basedir.Name()), tmpFileName)
-		log.Debug("writeScriptContent> removing file %s", filename)
+		log.Debug(ctx, "writeScriptContent> removing file %s", filename)
 		if err := fs.Remove(filename); err != nil {
 			log.Error(ctx, "unable to remove %s: %v", filename, err)
 		}
@@ -164,7 +164,7 @@ func writeScriptContent(ctx context.Context, script *script, fs afero.Fs, basedi
 
 	// Chmod file
 	if err := fs.Chmod(tmpscript.Name(), 0755); err != nil {
-		log.Warning(ctx, "runScriptAction> cannot chmod script %s: %s", tmpscript.Name(), err)
+		log.Warn(ctx, "runScriptAction> cannot chmod script %s: %s", tmpscript.Name(), err)
 		return deferFunc, fmt.Errorf("cannot chmod script %s: %v, aborting", tmpscript.Name(), err)
 	}
 
@@ -216,7 +216,7 @@ func RunScriptAction(ctx context.Context, wk workerruntime.Runtime, a sdk.Action
 			return
 		}
 
-		log.Debug("runScriptAction> Worker binary path: %s", path.Dir(workerpath))
+		log.Debug(ctx, "runScriptAction> Worker binary path: %s", path.Dir(workerpath))
 		for i := range cmd.Env {
 			if strings.HasPrefix(cmd.Env[i], "PATH") {
 				cmd.Env[i] = fmt.Sprintf("%s:%s", cmd.Env[i], path.Dir(workerpath))

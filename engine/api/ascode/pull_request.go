@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/go-gorp/gorp"
+	"github.com/rockbears/log"
 
 	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/operation"
@@ -13,7 +14,6 @@ import (
 	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 )
 
 // EventType type for as code events.
@@ -77,12 +77,8 @@ func UpdateAsCodeResult(ctx context.Context, db *gorp.DbMap, store cache.Store, 
 	}
 
 	if globalErr != nil {
-		isErrWithStack := sdk.IsErrorWithStack(globalErr)
-		fields := log.Fields{}
-		if isErrWithStack {
-			fields["stack_trace"] = fmt.Sprintf("%+v", globalErr)
-		}
-		log.ErrorWithFields(ctx, fields, "%s", globalErr)
+		ctx = sdk.ContextWithStacktrace(ctx, globalErr)
+		log.Error(ctx, "%v", globalErr)
 	}
 
 	if ope == nil {

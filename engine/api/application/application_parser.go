@@ -6,13 +6,14 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/rockbears/log"
+
 	"github.com/ovh/cds/engine/api/ascode"
 	"github.com/ovh/cds/engine/api/keys"
 	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/exportentities"
-	"github.com/ovh/cds/sdk/log"
 )
 
 // ImportOptions are options to import application
@@ -56,7 +57,7 @@ func ParseAndImport(ctx context.Context, db gorpmapper.SqlExecutorWithTx, cache 
 				}
 				msgList = append(msgList, sdk.NewMessage(sdk.MsgApplicationDetached, eapp.Name, oldApp.FromRepository))
 			}
-			log.Debug("ParseAndImport>> force import application %s in project %s without fromRepository", eapp.Name, proj.Key)
+			log.Debug(ctx, "ParseAndImport>> force import application %s in project %s without fromRepository", eapp.Name, proj.Key)
 		} else if oldApp.FromRepository != "" && opts.FromRepository != oldApp.FromRepository {
 			return nil, nil, msgList, sdk.NewErrorFrom(sdk.ErrApplicationAsCodeOverride, "unable to update existing ascode application from %s", oldApp.FromRepository)
 		}
@@ -107,14 +108,14 @@ func ParseAndImport(ctx context.Context, db gorpmapper.SqlExecutorWithTx, cache 
 		//If application doesn't exist, skip the regen mecanism to generate key
 		if oldApp == nil {
 			kval.Regen = nil
-			log.Debug("ParseAndImport> Skipping regen feature")
+			log.Debug(ctx, "ParseAndImport> Skipping regen feature")
 		} else {
 			//If application exist, check the key exist
 			oldKey = oldApp.GetKey(kname)
 			//If the key doesn't exist, skip the regen mecanism to generate key
 			if oldKey == nil {
 				kval.Regen = nil
-				log.Debug("ParseAndImport> Skipping regen feature")
+				log.Debug(ctx, "ParseAndImport> Skipping regen feature")
 			}
 		}
 

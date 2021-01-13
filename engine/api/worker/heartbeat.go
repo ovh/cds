@@ -4,9 +4,9 @@ import (
 	"context"
 
 	"github.com/go-gorp/gorp"
+	"github.com/rockbears/log"
 
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 )
 
 const workerHeartbeatTimeout = 300.0
@@ -24,10 +24,10 @@ func DisableDeadWorkers(ctx context.Context, db *gorp.DbMap) error {
 			continue
 		}
 
-		log.Debug("Disable worker %s[%s] LastBeat:%v status:%s", workers[i].Name, workers[i].ID, workers[i].LastBeat, workers[i].Status)
+		log.Debug(ctx, "Disable worker %s[%s] LastBeat:%v status:%s", workers[i].Name, workers[i].ID, workers[i].LastBeat, workers[i].Status)
 		if errD := SetStatus(ctx, tx, workers[i].ID, sdk.StatusDisabled); errD != nil {
 			_ = tx.Rollback()
-			log.Warning(ctx, "Cannot disable worker %v: %v", workers[i].ID, errD)
+			log.Warn(ctx, "Cannot disable worker %v: %v", workers[i].ID, errD)
 			continue
 		}
 
@@ -48,7 +48,7 @@ func DeleteDeadWorkers(ctx context.Context, db *gorp.DbMap) error {
 		return sdk.WrapError(err, "Cannot load dead workers")
 	}
 	for i := range workers {
-		log.Debug("deleteDeadWorkers> Delete worker %s[%s] LastBeat:%v status:%s", workers[i].Name, workers[i].ID, workers[i].LastBeat, workers[i].Status)
+		log.Debug(ctx, "deleteDeadWorkers> Delete worker %s[%s] LastBeat:%v status:%s", workers[i].Name, workers[i].ID, workers[i].LastBeat, workers[i].Status)
 		tx, err := db.Begin()
 		if err != nil {
 			log.Error(ctx, "deleteDeadWorkers> Cannot create transaction")
@@ -56,7 +56,7 @@ func DeleteDeadWorkers(ctx context.Context, db *gorp.DbMap) error {
 		}
 
 		if errD := Delete(tx, workers[i].ID); errD != nil {
-			log.Warning(ctx, "deleteDeadWorkers> Cannot delete worker %v: %v", workers[i].ID, errD)
+			log.Warn(ctx, "deleteDeadWorkers> Cannot delete worker %v: %v", workers[i].ID, errD)
 			_ = tx.Rollback()
 			continue
 		}

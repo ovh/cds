@@ -7,8 +7,9 @@ import (
 	"strings"
 
 	"github.com/go-gorp/gorp"
+	"github.com/rockbears/log"
+
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 )
 
 var (
@@ -35,7 +36,7 @@ func ComputeAudit(ctx context.Context, DBFunc func() *gorp.DbMap, chanEvent chan
 
 			if audit, ok := audits[e.EventType]; ok {
 				if err := audit.Compute(ctx, db, e); err != nil {
-					log.Warning(ctx, "%v", sdk.WrapError(err, "unable to compute audit on event %s", e.EventType))
+					log.Warn(ctx, "%v", sdk.WrapError(err, "unable to compute audit on event %s", e.EventType))
 				}
 			}
 		}

@@ -9,6 +9,8 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
+	"github.com/rockbears/log"
+
 	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/workflow"
@@ -16,7 +18,6 @@ import (
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/exportentities"
-	"github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk/telemetry"
 )
 
@@ -269,7 +270,7 @@ func (api *API) postWorkflowPushHandler() service.Handler {
 		}
 		defer r.Body.Close()
 
-		log.Debug("Read %d bytes from body", len(btes))
+		log.Debug(ctx, "Read %d bytes from body", len(btes))
 		tr := tar.NewReader(bytes.NewReader(btes))
 
 		var pushOptions *workflow.PushOption

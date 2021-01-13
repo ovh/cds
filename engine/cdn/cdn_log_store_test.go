@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/mitchellh/hashstructure"
+	"github.com/rockbears/log"
 	"github.com/stretchr/testify/require"
 
 	"github.com/ovh/cds/engine/cdn/item"
@@ -18,7 +19,7 @@ import (
 	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/engine/test"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
+	cdslog "github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk/log/hook"
 )
 
@@ -27,7 +28,7 @@ func TestStoreNewStepLog(t *testing.T) {
 	item.InitDBMapping(m)
 	storage.InitDBMapping(m)
 
-	log.SetLogger(t)
+	log.Factory = log.NewTestingWrapper(t)
 	db, factory, cache, cancel := test.SetupPGToCancel(t, m, sdk.TypeCDN)
 	t.Cleanup(cancel)
 
@@ -50,7 +51,7 @@ func TestStoreNewStepLog(t *testing.T) {
 		Msg: hook.Message{
 			Full: "this is a message",
 		},
-		Signature: log.Signature{
+		Signature: cdslog.Signature{
 			ProjectKey:   sdk.RandomString(10),
 			WorkflowID:   1,
 			WorkflowName: "MyWorklow",
@@ -59,7 +60,7 @@ func TestStoreNewStepLog(t *testing.T) {
 			NodeRunName:  "MyPipeline",
 			JobName:      "MyJob",
 			JobID:        1,
-			Worker: &log.SignatureWorker{
+			Worker: &cdslog.SignatureWorker{
 				StepName:  "script1",
 				StepOrder: 1,
 			},
@@ -110,7 +111,7 @@ func TestStoreLastStepLog(t *testing.T) {
 	item.InitDBMapping(m)
 	storage.InitDBMapping(m)
 
-	log.SetLogger(t)
+	log.Factory = log.NewTestingWrapper(t)
 	db, factory, cache, cancel := test.SetupPGToCancel(t, m, sdk.TypeCDN)
 	t.Cleanup(cancel)
 
@@ -132,7 +133,7 @@ func TestStoreLastStepLog(t *testing.T) {
 	hm := handledMessage{
 		Msg:          hook.Message{},
 		IsTerminated: sdk.StatusTerminated,
-		Signature: log.Signature{
+		Signature: cdslog.Signature{
 			ProjectKey:   sdk.RandomString(10),
 			WorkflowID:   1,
 			WorkflowName: "MyWorklow",
@@ -141,7 +142,7 @@ func TestStoreLastStepLog(t *testing.T) {
 			NodeRunName:  "MyPipeline",
 			JobName:      "MyJob",
 			JobID:        1,
-			Worker: &log.SignatureWorker{
+			Worker: &cdslog.SignatureWorker{
 				StepName:  "script1",
 				StepOrder: 1,
 			},
@@ -199,7 +200,7 @@ func TestStoreNewServiceLog(t *testing.T) {
 	item.InitDBMapping(m)
 	storage.InitDBMapping(m)
 
-	log.SetLogger(t)
+	log.Factory = log.NewTestingWrapper(t)
 	db, factory, cache, cancel := test.SetupPGToCancel(t, m, sdk.TypeCDN)
 	t.Cleanup(cancel)
 
@@ -222,7 +223,7 @@ func TestStoreNewServiceLog(t *testing.T) {
 		Msg: hook.Message{
 			Full: "this is a message",
 		},
-		Signature: log.Signature{
+		Signature: cdslog.Signature{
 			ProjectKey:   sdk.RandomString(10),
 			WorkflowID:   1,
 			WorkflowName: "MyWorklow",

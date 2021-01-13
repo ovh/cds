@@ -2,18 +2,18 @@ package swarm
 
 import (
 	"context"
-	"fmt"
 	"io/ioutil"
 	"strconv"
 	"strings"
 	"time"
 
 	"github.com/docker/docker/api/types"
+	"github.com/rockbears/log"
 	"github.com/sirupsen/logrus"
 
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/hatchery"
-	"github.com/ovh/cds/sdk/log"
+	cdslog "github.com/ovh/cds/sdk/log"
 )
 
 func (h *HatcherySwarm) getServicesLogs() error {
@@ -23,7 +23,7 @@ func (h *HatcherySwarm) getServicesLogs() error {
 			return sdk.WrapError(err, "Cannot get containers list from %s", dockerClient.name)
 		}
 
-		servicesLogs := make([]log.Message, 0, len(containers))
+		servicesLogs := make([]cdslog.Message, 0, len(containers))
 		for _, cnt := range containers {
 			if _, has := cnt.Labels[hatchery.LabelServiceID]; !has {
 				continue
@@ -40,8 +40,8 @@ func (h *HatcherySwarm) getServicesLogs() error {
 			logsReader, err := dockerClient.ContainerLogs(ctx, cnt.ID, logsOpts)
 			if err != nil {
 				err = sdk.WrapError(err, "cannot get logs from docker for containers service %s %v", cnt.ID, cnt.Names)
-				log.ErrorWithFields(ctx, log.Fields{"stack_trace": fmt.Sprintf("%+v", err)}, "%s", err)
-				cancel()
+				ctx := sdk.ContextWithStacktrace(ctx, err)
+				log.Error(ctx, err.Error())
 				continue
 			}
 
@@ -49,8 +49,8 @@ func (h *HatcherySwarm) getServicesLogs() error {
 			if err != nil {
 				logsReader.Close() // nolint
 				err = sdk.WrapError(err, "cannot read logs for containers service %s %v", cnt.ID, cnt.Names)
-				log.ErrorWithFields(ctx, log.Fields{"stack_trace": fmt.Sprintf("%+v", err)}, "%s", err)
-				cancel()
+				ctx := sdk.ContextWithStacktrace(ctx, err)
+				log.Error(ctx, err.Error())
 				continue
 			}
 
@@ -63,10 +63,10 @@ func (h *HatcherySwarm) getServicesLogs() error {
 					continue
 				}
 
-				commonMessage := log.Message{
+				commonMessage := cdslog.Message{
 					Level: logrus.InfoLevel,
-					Signature: log.Signature{
-						Service: &log.SignatureService{
+					Signature: cdslog.Signature{
+						Service: &cdslog.SignatureService{
 							HatcheryID:      h.Service().ID,
 							HatcheryName:    h.ServiceName(),
 							RequirementID:   jobIdentifiers.ServiceID,

@@ -4,10 +4,10 @@ import (
 	"context"
 	"sync"
 
+	"github.com/rockbears/log"
 	"go.opencensus.io/stats"
 	"go.opencensus.io/tag"
 
-	"github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk/telemetry"
 )
 
@@ -22,7 +22,7 @@ func GetMetrics() *Metrics {
 }
 
 func initMetrics(ctx context.Context) error {
-	log.Debug("hatchery> initializing metrics")
+	log.Debug(ctx, "hatchery> initializing metrics")
 	var err error
 	onceMetrics.Do(func() {
 		metrics.Jobs = stats.Int64("cds/jobs", "number of analyzed jobs", stats.UnitDimensionless)

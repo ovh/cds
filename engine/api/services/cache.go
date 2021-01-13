@@ -3,16 +3,15 @@ package services
 import (
 	"context"
 	"encoding/json"
-	"io"
 	"sync"
 	"time"
 
 	"github.com/lib/pq"
+	"github.com/rockbears/log"
 
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/engine/database"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 )
 
 type event struct {
@@ -30,15 +29,15 @@ type iCache struct {
 var internalCache iCache
 
 // Initialize the service package
-func Initialize(c context.Context, dbF *database.DBConnectionFactory, goRoutines *sdk.GoRoutines, panicCallback func(s string) (io.WriteCloser, error)) {
+func Initialize(c context.Context, dbF *database.DBConnectionFactory, goRoutines *sdk.GoRoutines) {
 	internalCache = iCache{
 		chanEvent:     make(chan event),
 		data:          make(map[string][]sdk.Service),
 		dbConnFactory: dbF,
 		mutex:         sync.RWMutex{},
 	}
-	goRoutines.Run(c, "service.internalCache.doUpdateData", internalCache.doUpdateData, panicCallback)
-	goRoutines.Run(c, "service.internalCache.doListenDatabase", internalCache.doListenDatabase, panicCallback)
+	goRoutines.Run(c, "service.internalCache.doUpdateData", internalCache.doUpdateData)
+	goRoutines.Run(c, "service.internalCache.doListenDatabase", internalCache.doListenDatabase)
 }
 
 func (c *iCache) updateCache(s sdk.Service) {
@@ -135,7 +134,7 @@ func (c *iCache) doListenDatabase(ctx context.Context) {
 		case n := <-listener.Notify:
 			e := map[string]interface{}{}
 			if err := json.Unmarshal([]byte(n.Extra), &e); err != nil {
-				log.Warning(ctx, "unable to unmarshal received event: %v", err)
+				log.Warn(ctx, "unable to unmarshal received event: %v", err)
 				continue
 			}
 
@@ -187,7 +186,7 @@ func (c *iCache) doListenDatabase(ctx context.Context) {
 			}
 
 		case <-time.After(90 * time.Second):
-			log.Debug("Received no events for 90 seconds, checking connection")
+			log.Debug(ctx, "Received no events for 90 seconds, checking connection")
 			go func() {
 				listener.Ping() // nolint
 			}()

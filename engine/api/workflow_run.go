@@ -13,6 +13,7 @@ import (
 
 	"github.com/go-gorp/gorp"
 	"github.com/gorilla/mux"
+	"github.com/rockbears/log"
 
 	"github.com/ovh/cds/engine/api/ascode"
 	"github.com/ovh/cds/engine/api/authentication"
@@ -28,7 +29,6 @@ import (
 	"github.com/ovh/cds/engine/featureflipping"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk/luascript"
 	"github.com/ovh/cds/sdk/telemetry"
 )
@@ -446,7 +446,7 @@ func (api *API) stopWorkflowRun(ctx context.Context, p *sdk.Project, run *sdk.Wo
 		for _, wnr := range wn {
 			if wnr.SubNumber != run.LastSubNumber || (wnr.Status == sdk.StatusSuccess ||
 				wnr.Status == sdk.StatusFail || wnr.Status == sdk.StatusSkipped) {
-				log.Debug("stopWorkflowRun> cannot stop this workflow node run with current status %s", wnr.Status)
+				log.Debug(ctx, "stopWorkflowRun> cannot stop this workflow node run with current status %s", wnr.Status)
 				continue
 			}
 
@@ -672,7 +672,7 @@ func (api *API) getWorkflowCommitsHandler() service.Handler {
 		}
 		defer tx.Rollback() // nolint
 
-		log.Debug("getWorkflowCommitsHandler> VCSHash: %s VCSBranch: %s", wfNodeRun.VCSHash, wfNodeRun.VCSBranch)
+		log.Debug(ctx, "getWorkflowCommitsHandler> VCSHash: %s VCSBranch: %s", wfNodeRun.VCSHash, wfNodeRun.VCSBranch)
 		commits, _, err := workflow.GetNodeRunBuildCommits(ctx, tx, api.Cache, *proj, *wf, nodeName, number, wfNodeRun, &app, &env)
 		if err != nil {
 			return sdk.WrapError(err, "unable to load commits")
@@ -897,7 +897,7 @@ func (api *API) postWorkflowRunHandler() service.Handler {
 			}
 
 			if opts.Manual != nil && opts.Manual.Resync {
-				log.Debug("Resync workflow %d for run %d", lastRun.Workflow.ID, lastRun.ID)
+				log.Debug(ctx, "Resync workflow %d for run %d", lastRun.Workflow.ID, lastRun.ID)
 				if err := workflow.Resync(ctx, api.mustDB(), api.Cache, *p, lastRun); err != nil {
 					return err
 				}
@@ -924,7 +924,7 @@ func (api *API) postWorkflowRunHandler() service.Handler {
 			// Workflow Run initialization
 			api.GoRoutines.Exec(context.Background(), fmt.Sprintf("api.initWorkflowRun-%d", lastRun.ID), func(ctx context.Context) {
 				api.initWorkflowRun(ctx, p.Key, wf, lastRun, opts)
-			}, api.PanicDump())
+			})
 
 		} else {
 			var err error
@@ -1028,7 +1028,7 @@ func (api *API) initWorkflowRun(ctx context.Context, projKey string, wf *sdk.Wor
 			wf.WorkflowData.Node.GetHook(opts.Hook.WorkflowNodeHookUUID).HookModelName == sdk.RepositoryWebHookModelName
 
 		if wf.FromRepository != "" && (workflowStartedByRepoWebHook || opts.Manual != nil) {
-			log.Debug("initWorkflowRun> rebuild workflow %s/%s from as code configuration", p.Key, wf.Name)
+			log.Debug(ctx, "initWorkflowRun> rebuild workflow %s/%s from as code configuration", p.Key, wf.Name)
 			p1, err := project.Load(ctx, api.mustDB(), projKey,
 				project.LoadOptions.WithVariables,
 				project.LoadOptions.WithGroups,
@@ -1047,7 +1047,7 @@ func (api *API) initWorkflowRun(ctx context.Context, projKey string, wf *sdk.Wor
 			}
 
 			// Get workflow from repository
-			log.Debug("workflow.CreateFromRepository> %s", wf.Name)
+			log.Debug(ctx, "workflow.CreateFromRepository> %s", wf.Name)
 			oldWf := *wf
 			var asCodeInfosMsg []sdk.Message
 			workflowSecrets, asCodeInfosMsg, err = workflow.CreateFromRepository(ctx, api.mustDB(), api.Cache, p1, wf, opts, *c, project.DecryptWithBuiltinKey)
@@ -1124,7 +1124,7 @@ func (api *API) initWorkflowRun(ctx context.Context, projKey string, wf *sdk.Wor
 				return
 			}
 			workflow.CountWorkflowRunsMarkToDelete(ctx, api.mustDB(), api.Metrics.WorkflowRunsMarkToDelete)
-		}, api.PanicDump())
+		})
 	}
 
 	// Update parent
@@ -1279,12 +1279,8 @@ func failInitWorkflowRun(ctx context.Context, db *gorp.DbMap, wfRun *sdk.Workflo
 		}
 	} else {
 		httpErr := sdk.ExtractHTTPError(err)
-		isErrWithStack := sdk.IsErrorWithStack(err)
-		fields := log.Fields{}
-		if isErrWithStack {
-			fields["stack_trace"] = fmt.Sprintf("%+v", err)
-		}
-		log.ErrorWithFields(ctx, fields, "failInitWorkflowRun error: %v", err)
+		ctx = sdk.ContextWithStacktrace(ctx, err)
+		log.Error(ctx, "failInitWorkflowRun error: %v", err)
 		wfRun.Status = sdk.StatusFail
 		info = sdk.SpawnMsgNew(*sdk.MsgWorkflowError, httpErr)
 	}

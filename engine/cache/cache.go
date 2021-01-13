@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/ovh/cds/sdk/log"
+	"github.com/rockbears/log"
 )
 
 // PubSub represents a subscriber

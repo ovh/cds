@@ -8,15 +8,15 @@ import (
 
 	"github.com/ovh/symmecrypt/ciphers/aesgcm"
 	"github.com/ovh/symmecrypt/convergent"
+	"github.com/rockbears/log"
 	"github.com/stretchr/testify/require"
 
 	"github.com/ovh/cds/engine/cdn/storage"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 )
 
 func TestSwift(t *testing.T) {
-	log.SetLogger(t)
+	log.Factory = log.NewTestingWrapper(t)
 	var driver = new(Swift)
 	err := driver.Init(context.TODO(), &storage.SwiftStorageConfiguration{
 		Encryption: []convergent.ConvergentEncryptionConfig{

@@ -11,10 +11,11 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
+	"github.com/rockbears/log"
 
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
+	cdslog "github.com/ovh/cds/sdk/log"
 )
 
 func muxVar(r *http.Request, s string) string {
@@ -39,7 +40,7 @@ func (s *Service) postOperationHandler() service.Handler {
 			}
 		}
 
-		requestID := ctx.Value(log.ContextLoggingRequestIDKey)
+		requestID := ctx.Value(cdslog.ContextLoggingRequestIDKey)
 		log.Info(ctx, "setting request_id:%s on operation:%s", requestID, op.UUID)
 		op.RequestID, _ = requestID.(string)
 

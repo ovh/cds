@@ -6,9 +6,9 @@ import (
 	"time"
 
 	"github.com/go-gorp/gorp"
+	"github.com/rockbears/log"
 
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 )
 
 //Audit constants
@@ -126,7 +126,7 @@ func PurgeAudits(ctx context.Context, db gorp.SqlExecutor) error {
 	}
 
 	for _, r := range nbAuditsPerPipelinewID {
-		log.Debug("purgeAudits> deleting audits for pipeline %d (%d audits)", r.PipelineD, r.NbAudits)
+		log.Debug(ctx, "purgeAudits> deleting audits for pipeline %d (%d audits)", r.PipelineD, r.NbAudits)
 		var ids []int64
 		query = `select id from pipeline_audit where pipeline_id = $1 order by versionned desc offset $2`
 		if _, err := db.Select(&ids, query, r.PipelineD, keepAudits); err != nil {

@@ -15,13 +15,13 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
+	"github.com/rockbears/log"
 	"github.com/spf13/afero"
 
 	"github.com/ovh/cds/cli"
 	"github.com/ovh/cds/engine/api"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
-	"github.com/ovh/cds/sdk/log"
 )
 
 // New returns a new service
@@ -156,7 +156,7 @@ func (s *Service) Serve(ctx context.Context) error {
 // filename;shar512values
 // for each line, we check that the files in dist have the same sha512
 func (s *Service) checkChecksumFiles() error {
-	log.Debug("ui> checking checksum files...")
+	log.Debug(context.Background(), "ui> checking checksum files...")
 
 	filesUI := filepath.Join(s.HTMLDir, "FILES_UI")
 	content, err := ioutil.ReadFile(filesUI)
@@ -178,7 +178,7 @@ func (s *Service) checkChecksumFiles() error {
 			return fmt.Errorf("file %s sha512:%s computed:%s", line[0], line[1], sha512sum)
 		}
 	}
-	log.Debug("ui> checking checksum files OK")
+	log.Debug(context.Background(), "ui> checking checksum files OK")
 	return nil
 }
 
@@ -186,7 +186,7 @@ func (s *Service) checkStaticFiles(ctx context.Context) error {
 	fs := http.Dir(s.HTMLDir)
 
 	if _, err := fs.Open("index.html"); os.IsNotExist(err) {
-		log.Warning(ctx, "ui> CDS UI static files were not found in directory %v", s.HTMLDir)
+		log.Warn(ctx, "ui> CDS UI static files were not found in directory %v", s.HTMLDir)
 
 		if err := s.askForGettingStaticFiles(ctx, sdk.VERSION); err != nil {
 			return err

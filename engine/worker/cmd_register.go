@@ -4,10 +4,9 @@ import (
 	"context"
 
 	"github.com/ovh/cds/engine/worker/internal"
+	"github.com/rockbears/log"
 
 	"github.com/spf13/cobra"
-
-	"github.com/ovh/cds/sdk/log"
 )
 
 func cmdRegister() *cobra.Command {

@@ -1,6 +1,7 @@
 package sdk
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -9,6 +10,7 @@ import (
 	"runtime"
 	"strings"
 
+	cdslog "github.com/ovh/cds/sdk/log"
 	"github.com/pkg/errors"
 )
 
@@ -487,6 +489,13 @@ func ErrorWithFallback(err error, httpError Error, from string, args ...interfac
 		return NewErrorWithStack(err, NewError(ErrWrongRequest, fmt.Errorf(from, args...)))
 	}
 	return err
+}
+
+func ContextWithStacktrace(ctx context.Context, err error) context.Context {
+	if IsErrorWithStack(err) {
+		return context.WithValue(ctx, cdslog.Stacktrace, fmt.Sprintf("%+v", err))
+	}
+	return ctx
 }
 
 // IsErrorWithStack returns true if given error is an errorWithStack.

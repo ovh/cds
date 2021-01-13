@@ -18,8 +18,8 @@ import (
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 	"github.com/pkg/errors"
+	"github.com/rockbears/log"
 	uuid "github.com/satori/go.uuid"
-	"github.com/sirupsen/logrus"
 	"go.opencensus.io/stats"
 	"go.opencensus.io/tag"
 
@@ -27,7 +27,7 @@ import (
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/doc"
 	docSDK "github.com/ovh/cds/sdk/doc"
-	"github.com/ovh/cds/sdk/log"
+	cdslog "github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk/telemetry"
 )
 
@@ -116,7 +116,8 @@ func (r *Router) setRequestID(h http.HandlerFunc) http.HandlerFunc {
 		}
 
 		ctx := r.Context()
-		ctx = context.WithValue(ctx, log.ContextLoggingRequestIDKey, requestID)
+		ctx = context.WithValue(ctx, cdslog.ContextLoggingRequestIDKey, requestID)
+		ctx = context.WithValue(ctx, cdslog.RequestID, requestID)
 		r = r.WithContext(ctx)
 
 		w.Header().Set(requestIDHeader, requestID)
@@ -278,7 +279,7 @@ func (r *Router) handle(uri string, scope HandlerScope, handlers ...*service.Han
 		ctx = telemetry.ContextWithTelemetry(r.Background, ctx)
 
 		var requestID string
-		iRequestID := ctx.Value(log.ContextLoggingRequestIDKey)
+		iRequestID := ctx.Value(cdslog.ContextLoggingRequestIDKey)
 		if iRequestID != nil {
 			if id, ok := iRequestID.(string); ok {
 				requestID = id
@@ -339,59 +340,41 @@ func (r *Router) handle(uri string, scope HandlerScope, handlers ...*service.Han
 			telemetry.Method, req.Method)
 
 		// Prepare logging fields
-		ctx = context.WithValue(ctx, log.ContextLoggingFuncKey, func(ctx context.Context) logrus.Fields {
-			fields := make(logrus.Fields)
-
-			// Add consumer info if exists
-			iConsumer := ctx.Value(contextAPIConsumer)
-			if iConsumer != nil {
-				if consumer, ok := iConsumer.(*sdk.AuthConsumer); ok {
-					fields["auth_user_id"] = consumer.AuthentifiedUserID
-					fields["auth_consumer_id"] = consumer.ID
-				}
-			}
-
-			// Add session info if exists
-			iSession := ctx.Value(contextSession)
-			if iSession != nil {
-				if session, ok := iSession.(*sdk.AuthSession); ok {
-					fields["auth_session_id"] = session.ID
-				}
-			}
-
-			return fields
-		})
+		apiConsumer := getAPIConsumer(ctx)
+		if apiConsumer != nil {
+			ctx = context.WithValue(ctx, cdslog.AuthUserID, apiConsumer.AuthentifiedUserID)
+			ctx = context.WithValue(ctx, cdslog.AuthConsumerID, apiConsumer.ID)
+		}
+		session := getAuthSession(ctx)
+		if session != nil {
+			ctx = context.WithValue(ctx, cdslog.AuthSessionID, session.ID)
+		}
+		ctx = context.WithValue(ctx, cdslog.Method, req.Method)
+		ctx = context.WithValue(ctx, cdslog.Route, cleanURL)
+		ctx = context.WithValue(ctx, cdslog.RequestURI, req.RequestURI)
+		ctx = context.WithValue(ctx, cdslog.Deprecated, rc.IsDeprecated)
+		ctx = context.WithValue(ctx, cdslog.Handler, rc.Name)
 
 		// Log request start
 		start := time.Now()
-		log.InfoWithFields(ctx, log.Fields{
-			"method":      req.Method,
-			"route":       cleanURL,
-			"request_uri": req.RequestURI,
-			"deprecated":  rc.IsDeprecated,
-			"handler":     rc.Name,
-		}, "%s | BEGIN | %s [%s]", req.Method, req.URL, rc.Name)
+		log.Info(ctx, "%s | BEGIN | %s [%s]", req.Method, req.URL, rc.Name)
 
 		// Defer log request end
 		deferFunc := func(ctx context.Context) {
 			if responseWriter.statusCode == 0 {
 				responseWriter.statusCode = 200
 			}
+
 			ctx = telemetry.ContextWithTag(ctx, telemetry.StatusCode, responseWriter.statusCode)
 			end := time.Now()
 			latency := end.Sub(start)
 
-			log.InfoWithFields(ctx, log.Fields{
-				"method":      req.Method,
-				"latency_num": latency.Nanoseconds(),
-				"latency":     latency,
-				"status_num":  responseWriter.statusCode,
-				"status":      responseWriter.statusCode,
-				"route":       cleanURL,
-				"request_uri": req.RequestURI,
-				"deprecated":  rc.IsDeprecated,
-				"handler":     rc.Name,
-			}, "%s | END   | %s [%s] | [%d]", req.Method, req.URL, rc.Name, responseWriter.statusCode)
+			ctx = context.WithValue(ctx, cdslog.Latency, latency)
+			ctx = context.WithValue(ctx, cdslog.LatencyNum, latency.Nanoseconds())
+			ctx = context.WithValue(ctx, cdslog.Status, responseWriter.statusCode)
+			ctx = context.WithValue(ctx, cdslog.StatusNum, responseWriter.statusCode)
+
+			log.Info(ctx, "%s | END   | %s [%s] | [%d]", req.Method, req.URL, rc.Name, responseWriter.statusCode)
 
 			telemetry.RecordFloat64(ctx, ServerLatency, float64(latency)/float64(time.Millisecond))
 			telemetry.Record(ctx, ServerRequestBytes, responseWriter.reqSize)
@@ -494,69 +477,6 @@ func (r *asynchronousRequest) do(ctx context.Context, h service.AsynchronousHand
 		r.nbErrors++
 	}
 	return r.err
-}
-
-func processAsyncRequests(ctx context.Context, chanRequest chan asynchronousRequest, handlerFunc service.AsynchronousHandlerFunc, retry int) {
-	handler := handlerFunc()
-	for {
-		select {
-		case req := <-chanRequest:
-			if iRequestID, ok := req.contextValues[log.ContextLoggingRequestIDKey]; ok {
-				if requestID, ok := iRequestID.(string); ok {
-					ctx = context.WithValue(ctx, log.ContextLoggingRequestIDKey, requestID)
-				}
-			}
-			if err := req.do(ctx, handler); err != nil {
-				isErrWithStack := sdk.IsErrorWithStack(err)
-				fields := log.Fields{}
-				if isErrWithStack {
-					fields["stack_trace"] = fmt.Sprintf("%+v", err)
-				}
-				myError, ok := err.(sdk.Error)
-				if ok && myError.Status >= 500 {
-					if req.nbErrors > retry {
-						log.ErrorWithFields(ctx, fields, "Asynchronous Request on Error: %v with status: %d", err, myError.Status)
-					} else {
-						chanRequest <- req
-					}
-				} else {
-					log.ErrorWithFields(ctx, fields, "Asynchronous Request on Error: %v", err)
-				}
-			}
-		case <-ctx.Done():
-			return
-		}
-	}
-}
-
-// Asynchronous handles an AsynchronousHandlerFunc
-func (r *Router) Asynchronous(handler service.AsynchronousHandlerFunc, retry int, goRoutines *sdk.GoRoutines) service.HandlerFunc {
-	chanRequest := make(chan asynchronousRequest, 1000)
-	goRoutines.Exec(r.Background, "", func(ctx context.Context) {
-		processAsyncRequests(ctx, chanRequest, handler, retry)
-	})
-	return func() service.Handler {
-		return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-			async := asynchronousRequest{
-				contextValues: map[interface{}]interface{}{
-					log.ContextLoggingRequestIDKey: ctx.Value(log.ContextLoggingRequestIDKey),
-					contextSession:                 ctx.Value(contextSession),
-					contextAPIConsumer:             ctx.Value(contextAPIConsumer),
-					service.ContextJWT:             ctx.Value(service.ContextJWT),
-					service.ContextJWTRaw:          ctx.Value(service.ContextJWTRaw),
-					service.ContextJWTFromCookie:   ctx.Value(service.ContextJWTFromCookie),
-				},
-				request: *r,
-				vars:    mux.Vars(r),
-			}
-			if btes, err := ioutil.ReadAll(r.Body); err == nil {
-				async.body = bytes.NewBuffer(btes)
-			}
-			log.Debug("Router> Asynchronous call of %s", r.URL.String())
-			chanRequest <- async
-			return service.Accepted(w)
-		}
-	}
 }
 
 // DEPRECATED marks the handler as deprecated

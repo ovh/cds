@@ -10,11 +10,12 @@ import (
 	"time"
 
 	"github.com/go-gorp/gorp"
+	"github.com/rockbears/log"
 
 	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
+	cdslog "github.com/ovh/cds/sdk/log"
 )
 
 func (r RunningStorageUnits) Storage(name string) StorageUnit {
@@ -238,7 +239,7 @@ func (r *RunningStorageUnits) Start(ctx context.Context, gorts *sdk.GoRoutines) 
 			gorts.Run(ctx, fmt.Sprintf("RunningStorageUnits.process.%s.%d", s.Name(), x),
 				func(ctx context.Context) {
 					for id := range s.SyncItemChannel() {
-						log.Debug("processItem: %s", id)
+						log.Debug(ctx, "processItem: %s", id)
 						for {
 							lockKey := cache.Key("cdn", "backend", "lock", "sync", s.Name())
 							if b, err := r.cache.Exist(lockKey); err != nil || b {
@@ -252,17 +253,17 @@ func (r *RunningStorageUnits) Start(ctx context.Context, gorts *sdk.GoRoutines) 
 						tx, err := r.db.Begin()
 						if err != nil {
 							err = sdk.WrapError(err, "unable to begin tx")
-							log.ErrorWithFields(ctx, log.Fields{"stack_trace": fmt.Sprintf("%+v", err)}, "%s", err)
+							ctx = sdk.ContextWithStacktrace(ctx, err)
+							log.Error(ctx, "%v", err)
 							continue
 						}
 
 						if err := r.processItem(ctx, tx, s, id); err != nil {
 							if !sdk.ErrorIs(err, sdk.ErrNotFound) {
 								t1 := time.Now()
-								log.ErrorWithFields(ctx, log.Fields{
-									"stack_trace":               fmt.Sprintf("%+v", err),
-									"duration_milliseconds_num": t1.Sub(t0).Milliseconds(),
-								}, "error processing item id=%q: %v", id, err)
+								ctx = sdk.ContextWithStacktrace(ctx, err)
+								ctx = context.WithValue(ctx, cdslog.Duration, t1.Sub(t0).Milliseconds())
+								log.Error(ctx, "error processing item id=%q: %v", id, err)
 							}
 							_ = tx.Rollback()
 							continue
@@ -270,7 +271,8 @@ func (r *RunningStorageUnits) Start(ctx context.Context, gorts *sdk.GoRoutines) 
 
 						if err := tx.Commit(); err != nil {
 							err = sdk.WrapError(err, "unable to commit tx")
-							log.ErrorWithFields(ctx, log.Fields{"stack_trace": fmt.Sprintf("%+v", err)}, "%s", err)
+							ctx = sdk.ContextWithStacktrace(ctx, err)
+							log.Error(ctx, "%v", err)
 							_ = tx.Rollback()
 							continue
 						}
@@ -280,7 +282,8 @@ func (r *RunningStorageUnits) Start(ctx context.Context, gorts *sdk.GoRoutines) 
 						bts, _ := json.Marshal(id)
 						if err := r.cache.ScoredSetRem(ctx, k, string(bts)); err != nil {
 							err = sdk.WrapError(err, "unable to remove sync item %s from redis %s", id, k)
-							log.ErrorWithFields(ctx, log.Fields{"stack_trace": fmt.Sprintf("%+v", err)}, "%s", err)
+							ctx = sdk.ContextWithStacktrace(ctx, err)
+							log.Error(ctx, "%v", err)
 						}
 					}
 				},
@@ -307,7 +310,8 @@ func (r *RunningStorageUnits) Start(ctx context.Context, gorts *sdk.GoRoutines) 
 						func(ctx context.Context) {
 							wg.Add(1)
 							if err := r.FillSyncItemChannel(ctx, s, r.config.SyncNbElements); err != nil {
-								log.ErrorWithFields(ctx, log.Fields{"stack_trace": fmt.Sprintf("%+v", err)}, "RunningStorageUnits.run> error: %v", err)
+								ctx = sdk.ContextWithStacktrace(ctx, err)
+								log.Error(ctx, "RunningStorageUnits.run> error: %v", err)
 							}
 							wg.Done()
 						},
@@ -320,7 +324,8 @@ func (r *RunningStorageUnits) Start(ctx context.Context, gorts *sdk.GoRoutines) 
 					gorts.Exec(ctx, "RunningStorageUnits.purge."+b.Name(),
 						func(ctx context.Context) {
 							if err := r.Purge(ctx, b); err != nil {
-								log.ErrorWithFields(ctx, log.Fields{"stack_trace": fmt.Sprintf("%+v", err)}, "RunningStorageUnits.purge> error: %v", err)
+								ctx = sdk.ContextWithStacktrace(ctx, err)
+								log.Error(ctx, "RunningStorageUnits.purge> error: %v", err)
 							}
 						},
 					)
@@ -331,7 +336,8 @@ func (r *RunningStorageUnits) Start(ctx context.Context, gorts *sdk.GoRoutines) 
 					gorts.Exec(ctx, "RunningStorageUnits.purge."+s.Name(),
 						func(ctx context.Context) {
 							if err := r.Purge(ctx, s); err != nil {
-								log.ErrorWithFields(ctx, log.Fields{"stack_trace": fmt.Sprintf("%+v", err)}, "RunningStorageUnits.purge> error: %v", err)
+								ctx = sdk.ContextWithStacktrace(ctx, err)
+								log.Error(ctx, "RunningStorageUnits.purge> error: %v", err)
 							}
 						},
 					)

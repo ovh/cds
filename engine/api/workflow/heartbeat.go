@@ -4,10 +4,10 @@ import (
 	"context"
 
 	"github.com/go-gorp/gorp"
+	"github.com/rockbears/log"
 
 	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 )
 
 const maxRetry = 3
@@ -42,7 +42,7 @@ func manageDeadJob(ctx context.Context, DBFunc func() *gorp.DbMap, store cache.S
 				}
 			} else {
 				if err := RestartWorkflowNodeJob(ctx, tx, deadJob, maxLogSize); err != nil {
-					log.Warning(ctx, "manageDeadJob> Cannot restart node job run %d: %v", deadJob.ID, err)
+					log.Warn(ctx, "manageDeadJob> Cannot restart node job run %d: %v", deadJob.ID, err)
 					_ = tx.Rollback()
 					continue
 				}

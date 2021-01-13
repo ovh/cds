@@ -11,14 +11,13 @@ import (
 	"strings"
 
 	"github.com/golang/protobuf/ptypes/empty"
-	"github.com/ovh/cds/sdk/grpcplugin/actionplugin"
-
-	"github.com/ovh/cds/engine/worker/pkg/workerruntime"
+	"github.com/rockbears/log"
 	"github.com/spf13/afero"
 
+	"github.com/ovh/cds/engine/worker/pkg/workerruntime"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/grpcplugin"
-	"github.com/ovh/cds/sdk/log"
+	"github.com/ovh/cds/sdk/grpcplugin/actionplugin"
 )
 
 type startGRPCPluginOptions struct {
@@ -134,7 +133,7 @@ func RunGRPCPlugin(ctx context.Context, actionName string, params []sdk.Paramete
 		actionPluginClientStop(ctx, actionPluginClient, stopLogs)
 		return
 	}
-	log.Debug("plugin successfully initialized: %#v", manifest)
+	log.Debug(ctx, "plugin successfully initialized: %#v", manifest)
 
 	w.SendLog(ctx, workerruntime.LevelInfo, fmt.Sprintf("# Plugin %s version %s is ready", manifest.Name, manifest.Version))
 
@@ -185,14 +184,14 @@ func startGRPCPlugin(ctx context.Context, pluginName string, w workerruntime.Run
 	// then try to download the plugin
 	pluginBinary := binary.Name
 	if _, err := w.BaseDir().Stat(pluginBinary); os.IsNotExist(err) {
-		log.Debug("Downloading the plugin %s", binary.PluginName)
+		log.Debug(ctx, "Downloading the plugin %s", binary.PluginName)
 		//If the file doesn't exist. Download it.
 		fi, err := w.BaseDir().OpenFile(pluginBinary, os.O_CREATE|os.O_RDWR, os.FileMode(binary.Perm))
 		if err != nil {
 			return nil, sdk.WrapError(err, "unable to create the file %s", pluginBinary)
 		}
 
-		log.Debug("Get the binary plugin %s", binary.PluginName)
+		log.Debug(ctx, "Get the binary plugin %s", binary.PluginName)
 		//TODO: put afero in the client
 		if err := w.Client().PluginGetBinary(binary.PluginName, currentOS, currentARCH, fi); err != nil {
 			_ = fi.Close()
@@ -201,7 +200,7 @@ func startGRPCPlugin(ctx context.Context, pluginName string, w workerruntime.Run
 		//It's downloaded. Close the file
 		_ = fi.Close()
 	} else {
-		log.Debug("plugin binary is in cache %s", pluginBinary)
+		log.Debug(ctx, "plugin binary is in cache %s", pluginBinary)
 	}
 
 	c := pluginClientSocket{}

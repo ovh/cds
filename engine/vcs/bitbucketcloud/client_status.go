@@ -8,8 +8,9 @@ import (
 	"io/ioutil"
 	"strings"
 
+	"github.com/rockbears/log"
+
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 )
 
 type statusData struct {
@@ -25,7 +26,7 @@ type statusData struct {
 //SetStatus Users with push access can create commit statuses for a given ref:
 func (client *bitbucketcloudClient) SetStatus(ctx context.Context, event sdk.Event) error {
 	if client.DisableStatus {
-		log.Warning(ctx, "bitbucketcloud.SetStatus>  ⚠ bitbucketcloud statuses are disabled")
+		log.Warn(ctx, "bitbucketcloud.SetStatus>  ⚠ bitbucketcloud statuses are disabled")
 		return nil
 	}
 
@@ -43,7 +44,7 @@ func (client *bitbucketcloudClient) SetStatus(ctx context.Context, event sdk.Eve
 	}
 
 	if data.status == "" {
-		log.Debug("bitbucketcloud.SetStatus> Do not process event for current status: %v", event)
+		log.Debug(ctx, "bitbucketcloud.SetStatus> Do not process event for current status: %v", event)
 		return nil
 	}
 
@@ -81,7 +82,7 @@ func (client *bitbucketcloudClient) SetStatus(ctx context.Context, event sdk.Eve
 		return sdk.WrapError(err, "Unable to unmarshal body")
 	}
 
-	log.Debug("bitbucketcloud.SetStatus> Status %s %s created at %v", resp.UUID, resp.Links.Self.Href, resp.CreatedOn)
+	log.Debug(ctx, "bitbucketcloud.SetStatus> Status %s %s created at %v", resp.UUID, resp.Links.Self.Href, resp.CreatedOn)
 
 	return nil
 }

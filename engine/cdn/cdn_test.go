@@ -5,15 +5,17 @@ import (
 	"context"
 	"crypto/rsa"
 	"encoding/json"
-	"github.com/ovh/cds/engine/cache"
 	"io/ioutil"
 	"net/http"
 	"sync"
 	"testing"
 	"time"
 
+	"github.com/ovh/cds/engine/cache"
+
 	"github.com/go-gorp/gorp"
 	"github.com/gorilla/mux"
+	"github.com/rockbears/log"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/spacemonkeygo/httpsig.v0"
 
@@ -25,7 +27,6 @@ import (
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/ovh/cds/sdk/jws"
-	"github.com/ovh/cds/sdk/log"
 )
 
 func newRouter(m *mux.Router, p string) *api.Router {
@@ -45,7 +46,7 @@ func newTestService(t *testing.T) (*Service, *test.FakeTransaction) {
 	item.InitDBMapping(m)
 	storage.InitDBMapping(m)
 
-	log.SetLogger(t)
+	log.Factory = log.NewTestingWrapper(t)
 	db, factory, cache, end := test.SetupPGToCancel(t, m, sdk.TypeCDN)
 	t.Cleanup(end)
 

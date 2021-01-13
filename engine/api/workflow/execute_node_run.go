@@ -10,6 +10,7 @@ import (
 
 	"github.com/fsamin/go-dump"
 	"github.com/go-gorp/gorp"
+	"github.com/rockbears/log"
 
 	"github.com/ovh/cds/engine/api/action"
 	"github.com/ovh/cds/engine/api/group"
@@ -19,7 +20,6 @@ import (
 	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk/telemetry"
 )
 
@@ -175,13 +175,13 @@ func executeNodeRun(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store 
 			} else {
 				// Add job to Queue
 				// Insert data in workflow_node_run_job
-				log.Debug("workflow.executeNodeRun> stage %s call addJobsToQueue", stage.Name)
+				log.Debug(ctx, "workflow.executeNodeRun> stage %s call addJobsToQueue", stage.Name)
 				r, err := addJobsToQueue(ctx, db, stage, wr, workflowNodeRun, &previousStage)
 				report.Merge(ctx, r)
 				if err != nil {
 					return report, err
 				}
-				log.Debug("workflow.executeNodeRun> stage %s status after call to addJobsToQueue %s", stage.Name, stage.Status)
+				log.Debug(ctx, "workflow.executeNodeRun> stage %s status after call to addJobsToQueue %s", stage.Name, stage.Status)
 			}
 
 			// Check for failure caused by action not usable or requirements problem
@@ -209,7 +209,7 @@ func executeNodeRun(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store 
 
 		//If stage is waiting, nothing to do
 		if stage.Status == sdk.StatusWaiting {
-			log.Debug("workflow.executeNodeRun> stage %s status:%s - nothing to do", stage.Name, stage.Status)
+			log.Debug(ctx, "workflow.executeNodeRun> stage %s status:%s - nothing to do", stage.Name, stage.Status)
 			break
 		}
 
@@ -334,9 +334,8 @@ func releaseMutex(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store ca
 	waitingRunID, err := db.SelectInt(mutexQuery, workflowID, nodeName, string(sdk.StatusWaiting))
 	if err != nil && err != sql.ErrNoRows {
 		err = sdk.WrapError(err, "unable to load mutex-locked workflow node run id")
-		log.ErrorWithFields(ctx, log.Fields{
-			"stack_trace": fmt.Sprintf("%+v", err),
-		}, "%s", err)
+		ctx = sdk.ContextWithStacktrace(ctx, err)
+		log.Error(ctx, "%v", err)
 		return nil, nil
 	}
 	if waitingRunID == 0 {
@@ -347,9 +346,8 @@ func releaseMutex(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store ca
 	waitingRun, errRun := LoadNodeRunByID(db, waitingRunID, LoadRunOptions{})
 	if errRun != nil && sdk.Cause(errRun) != sql.ErrNoRows {
 		err = sdk.WrapError(err, "unable to load mutex-locked workflow node run")
-		log.ErrorWithFields(ctx, log.Fields{
-			"stack_trace": fmt.Sprintf("%+v", err),
-		}, "%s", err)
+		ctx = sdk.ContextWithStacktrace(ctx, err)
+		log.Error(ctx, err.Error())
 		return nil, nil
 	}
 	if waitingRun == nil {
@@ -360,9 +358,8 @@ func releaseMutex(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store ca
 	workflowRun, err := LoadRunByID(db, waitingRun.WorkflowRunID, LoadRunOptions{})
 	if err != nil {
 		err = sdk.WrapError(err, "unable to load mutex-locked workflow run")
-		log.ErrorWithFields(ctx, log.Fields{
-			"stack_trace": fmt.Sprintf("%+v", err),
-		}, "%s", err)
+		ctx = sdk.ContextWithStacktrace(ctx, err)
+		log.Error(ctx, err.Error())
 		return nil, nil
 	}
 
@@ -372,7 +369,7 @@ func releaseMutex(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store ca
 		return nil, sdk.WrapError(err, "unable to update workflow run %d after mutex release", workflowRun.ID)
 	}
 
-	log.Debug("workflow.execute> process the node run %d because mutex has been released", waitingRun.ID)
+	log.Debug(ctx, "workflow.execute> process the node run %d because mutex has been released", waitingRun.ID)
 	r, err := executeNodeRun(ctx, db, store, proj, waitingRun)
 	if err != nil {
 		return r, sdk.WrapError(err, "unable to reprocess workflow")
@@ -655,7 +652,7 @@ func syncStage(ctx context.Context, db gorp.SqlExecutor, store cache.Store, stag
 			}
 		}
 	}
-	log.Debug("syncStage> stage %s stageEnd:%t len(stage.RunJobs):%d", stage.Name, stageEnd, len(stage.RunJobs))
+	log.Debug(ctx, "syncStage> stage %s stageEnd:%t len(stage.RunJobs):%d", stage.Name, stageEnd, len(stage.RunJobs))
 
 	if stageEnd || len(stage.RunJobs) == 0 {
 		finalStatus = sdk.StatusSuccess
@@ -686,7 +683,7 @@ func syncStage(ctx context.Context, db gorp.SqlExecutor, store cache.Store, stag
 			}
 		}
 	}
-	log.Debug("syncStage> set stage %s from %s to %s", stage.Name, stage.Status, finalStatus)
+	log.Debug(ctx, "syncStage> set stage %s from %s to %s", stage.Name, stage.Status, finalStatus)
 	stage.Status = finalStatus
 	return stageEnd, nil
 }
@@ -926,7 +923,7 @@ func stopWorkflowNodeRunStages(ctx context.Context, db gorp.SqlExecutor, nodeRun
 			runj := &stag.RunJobs[iR]
 			spawnInfos, err := LoadNodeRunJobInfo(ctx, db, runj.ID)
 			if err != nil {
-				log.Warning(ctx, "unable to load spawn infos for runj ID: %d", runj.ID)
+				log.Warn(ctx, "unable to load spawn infos for runj ID: %d", runj.ID)
 			} else {
 				runj.SpawnInfos = spawnInfos
 			}
@@ -1071,7 +1068,7 @@ func getVCSInfos(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store cac
 		log.Error(ctx, "cannot get from cache %s: %v", cacheKey, err)
 	}
 	if find && vcsInfos.Branch != "" && vcsInfos.Hash != "" {
-		log.Debug("completeVCSInfos> load from cache: %s", cacheKey)
+		log.Debug(ctx, "completeVCSInfos> load from cache: %s", cacheKey)
 		return &vcsInfos, nil
 	}
 

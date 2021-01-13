@@ -15,9 +15,9 @@ import (
 	"time"
 
 	"github.com/go-redis/redis"
+	"github.com/rockbears/log"
 
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 )
 
 //RedisStore a redis client and a default ttl
@@ -353,7 +353,7 @@ func (s *RedisStore) Publish(ctx context.Context, channel string, value interfac
 		if errP == nil {
 			break
 		}
-		log.Warning(ctx, "redis.Publish> Unable to publish in channel %s: %v", channel, errP)
+		log.Warn(ctx, "redis.Publish> Unable to publish in channel %s: %v", channel, errP)
 		time.Sleep(100 * time.Millisecond)
 	}
 	return nil

@@ -5,8 +5,9 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/rockbears/log"
+
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 )
 
 var (
@@ -15,7 +16,7 @@ var (
 
 func checkCapacities(ctx context.Context, h Interface) bool {
 	t := time.Now()
-	defer log.Debug("hatchery> checkCapacities> %.3f seconds elapsed", time.Since(t).Seconds())
+	defer log.Debug(ctx, "hatchery> checkCapacities> %.3f seconds elapsed", time.Since(t).Seconds())
 
 	workerPool, err := WorkerPool(ctx, h, sdk.StatusChecking, sdk.StatusWaiting, sdk.StatusBuilding, sdk.StatusWorkerPending, sdk.StatusWorkerRegistering)
 	if err != nil {
@@ -24,10 +25,10 @@ func checkCapacities(ctx context.Context, h Interface) bool {
 	}
 
 	if len(workerPool) >= h.Configuration().Provision.MaxWorker {
-		log.Debug("hatchery> checkCapacities> %s has reached the max worker: %d (max: %d)", h.Service().Name, len(workerPool), h.Configuration().Provision.MaxWorker)
+		log.Debug(ctx, "hatchery> checkCapacities> %s has reached the max worker: %d (max: %d)", h.Service().Name, len(workerPool), h.Configuration().Provision.MaxWorker)
 		if len(workerPool) > h.Configuration().Provision.MaxWorker {
 			for _, w := range workerPool {
-				log.Debug("hatchery> checkCapacities> %s > pool > %s (status=%v)", h.Service().Name, w.Name, w.Status)
+				log.Debug(ctx, "hatchery> checkCapacities> %s > pool > %s (status=%v)", h.Service().Name, w.Name, w.Status)
 			}
 		}
 		return false

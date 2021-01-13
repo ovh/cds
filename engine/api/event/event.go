@@ -10,10 +10,10 @@ import (
 
 	"github.com/go-gorp/gorp"
 	gocache "github.com/patrickmn/go-cache"
+	"github.com/rockbears/log"
 
 	"github.com/ovh/cds/engine/api/integration"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk/namesgenerator"
 )
 
@@ -166,7 +166,7 @@ func DequeueEvent(ctx context.Context, db *gorp.DbMap) {
 		// Send into public brokers
 		for _, b := range publicBrokersConnectionCache {
 			if err := b.sendEvent(&e); err != nil {
-				log.Warning(ctx, "Error while sending message [%s: %s/%s/%s/%s/%s]: %s", e.EventType, e.ProjectKey, e.WorkflowName, e.ApplicationName, e.PipelineName, e.EnvironmentName, err)
+				log.Warn(ctx, "Error while sending message [%s: %s/%s/%s/%s/%s]: %s", e.EventType, e.ProjectKey, e.WorkflowName, e.ApplicationName, e.PipelineName, e.EnvironmentName, err)
 			}
 		}
 		for _, eventIntegrationID := range e.EventIntegrationsID {
@@ -204,7 +204,7 @@ func DequeueEvent(ctx context.Context, db *gorp.DbMap) {
 
 			// Send into external brokers
 			if err := broker.sendEvent(&e); err != nil {
-				log.Warning(ctx, "Error while sending message [%s: %s/%s/%s/%s/%s]: %s", e.EventType, e.ProjectKey, e.WorkflowName, e.ApplicationName, e.PipelineName, e.EnvironmentName, err)
+				log.Warn(ctx, "Error while sending message [%s: %s/%s/%s/%s/%s]: %s", e.EventType, e.ProjectKey, e.WorkflowName, e.ApplicationName, e.PipelineName, e.EnvironmentName, err)
 			}
 		}
 	}

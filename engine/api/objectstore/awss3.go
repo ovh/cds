@@ -14,9 +14,9 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
+	"github.com/rockbears/log"
 
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 )
 
 // AWSS3Store implements ObjectStore interface with filesystem driver
@@ -60,7 +60,7 @@ func newS3Store(ctx context.Context, integration sdk.ProjectIntegration, conf Co
 }
 
 func (s *AWSS3Store) account() (*s3.ListObjectsOutput, error) {
-	log.Debug("AWS-S3-Store> Getting bucket info")
+	log.Debug(context.Background(), "AWS-S3-Store> Getting bucket info")
 	s3n := s3.New(s.sess)
 	out, err := s3n.ListObjects(&s3.ListObjectsInput{
 		Bucket: aws.String(s.bucketName),
@@ -103,14 +103,14 @@ func (s *AWSS3Store) Status(ctx context.Context) sdk.MonitoringStatusLine {
 
 func (s *AWSS3Store) Store(o Object, data io.ReadCloser) (string, error) {
 	defer data.Close()
-	log.Debug("AWS-S3-Store> Setting up uploader")
+	log.Debug(context.Background(), "AWS-S3-Store> Setting up uploader")
 	uploader := s3manager.NewUploader(s.sess)
 	b, e := ioutil.ReadAll(data)
 	if e != nil {
 		return "", sdk.WrapError(e, "AWS-S3-Store> Unable to read data from input object")
 	}
 
-	log.Debug("AWS-S3-Store> Uploading object %s to bucket %s", s.getObjectPath(o), s.bucketName)
+	log.Debug(context.Background(), "AWS-S3-Store> Uploading object %s to bucket %s", s.getObjectPath(o), s.bucketName)
 	out, err := uploader.Upload(&s3manager.UploadInput{
 		Key:    aws.String(s.getObjectPath(o)),
 		Bucket: aws.String(s.bucketName),
@@ -119,13 +119,13 @@ func (s *AWSS3Store) Store(o Object, data io.ReadCloser) (string, error) {
 	if err != nil {
 		return "", sdk.WrapError(err, "AWS-S3-Store> Unable to create object %s", s.getObjectPath(o))
 	}
-	log.Debug("AWS-S3-Store> Successfully uploaded object %s to bucket %s", s.getObjectPath(o), s.bucketName)
+	log.Debug(context.Background(), "AWS-S3-Store> Successfully uploaded object %s to bucket %s", s.getObjectPath(o), s.bucketName)
 	return out.Location, nil
 }
 
 // StoreURL returns a temporary url and a secret key to store an object
 func (s *AWSS3Store) StoreURL(o Object, contentType string) (string, string, error) {
-	log.Debug("AWS-S3-Store> StoreURL")
+	log.Debug(context.Background(), "AWS-S3-Store> StoreURL")
 	s3n := s3.New(s.sess)
 	key := aws.String(s.getObjectPath(o))
 	req, _ := s3n.PutObjectRequest(&s3.PutObjectInput{
@@ -141,13 +141,13 @@ func (s *AWSS3Store) StoreURL(o Object, contentType string) (string, string, err
 	if err != nil {
 		return "", "", sdk.WrapError(err, "failed to sign request")
 	}
-	log.Debug("AWS-S3-Store> StoreURL urlStr:%v", urlStr)
+	log.Debug(context.Background(), "AWS-S3-Store> StoreURL urlStr:%v", urlStr)
 	return urlStr, *key, nil
 }
 
 func (s *AWSS3Store) Fetch(ctx context.Context, o Object) (io.ReadCloser, error) {
 	s3n := s3.New(s.sess)
-	log.Debug("AWS-S3-Store> Fetching object %s from bucket %s", s.getObjectPath(o), s.bucketName)
+	log.Debug(ctx, "AWS-S3-Store> Fetching object %s from bucket %s", s.getObjectPath(o), s.bucketName)
 	out, err := s3n.GetObject(&s3.GetObjectInput{
 		Key:    aws.String(s.getObjectPath(o)),
 		Bucket: aws.String(s.bucketName),
@@ -155,14 +155,14 @@ func (s *AWSS3Store) Fetch(ctx context.Context, o Object) (io.ReadCloser, error)
 	if err != nil {
 		return nil, sdk.WrapError(err, "AWS-S3-Store> Unable to download object %s", s.getObjectPath(o))
 	}
-	log.Debug("AWS-S3-Store> Successfully retrieved object %s from bucket %s", s.getObjectPath(o), s.bucketName)
+	log.Debug(ctx, "AWS-S3-Store> Successfully retrieved object %s from bucket %s", s.getObjectPath(o), s.bucketName)
 	return out.Body, nil
 }
 
 // Delete deletes an artifact from a bucket
 func (s *AWSS3Store) Delete(ctx context.Context, o Object) error {
 	s3n := s3.New(s.sess)
-	log.Debug("AWS-S3-Store> Deleting object %s from bucket %s", s.getObjectPath(o), s.bucketName)
+	log.Debug(ctx, "AWS-S3-Store> Deleting object %s from bucket %s", s.getObjectPath(o), s.bucketName)
 	_, err := s3n.DeleteObject(&s3.DeleteObjectInput{
 		Key:    aws.String(s.getObjectPath(o)),
 		Bucket: aws.String(s.bucketName),
@@ -170,14 +170,14 @@ func (s *AWSS3Store) Delete(ctx context.Context, o Object) error {
 	if err != nil {
 		return sdk.WrapError(err, "AWS-S3-Store> Unable to delete object %s", s.getObjectPath(o))
 	}
-	log.Debug("AWS-S3-Store> Successfully Deleted object %s/%s", s.bucketName, s.getObjectPath(o))
+	log.Debug(ctx, "AWS-S3-Store> Successfully Deleted object %s/%s", s.bucketName, s.getObjectPath(o))
 	return nil
 }
 
 // DeleteContainer deletes an artifact container (= directory) from a bucket
 func (s *AWSS3Store) DeleteContainer(ctx context.Context, path string) error {
 	s3n := s3.New(s.sess)
-	log.Debug("AWS-S3-Store> Deleting container %s from bucket %s", s.getContainerPath(path), s.bucketName)
+	log.Debug(ctx, "AWS-S3-Store> Deleting container %s from bucket %s", s.getContainerPath(path), s.bucketName)
 	_, err := s3n.DeleteObject(&s3.DeleteObjectInput{
 		Key:    aws.String(s.getContainerPath(path)),
 		Bucket: aws.String(s.bucketName),
@@ -185,13 +185,13 @@ func (s *AWSS3Store) DeleteContainer(ctx context.Context, path string) error {
 	if err != nil {
 		return sdk.WrapError(err, "AWS-S3-Store> Unable to delete object %s", s.getContainerPath(path))
 	}
-	log.Debug("AWS-S3-Store> Successfully Deleted object %s/%s", s.bucketName, s.getContainerPath(path))
+	log.Debug(ctx, "AWS-S3-Store> Successfully Deleted object %s/%s", s.bucketName, s.getContainerPath(path))
 	return nil
 }
 
 // FetchURL returns a temporary url and a secret key to fetch an object
 func (s *AWSS3Store) FetchURL(o Object) (string, string, error) {
-	log.Debug("AWS-S3-Store> FetchURL")
+	log.Debug(context.Background(), "AWS-S3-Store> FetchURL")
 	s3n := s3.New(s.sess)
 	key := aws.String(s.getObjectPath(o))
 	req, _ := s3n.GetObjectRequest(&s3.GetObjectInput{
@@ -202,7 +202,7 @@ func (s *AWSS3Store) FetchURL(o Object) (string, string, error) {
 	if err != nil {
 		return "", "", sdk.WrapError(err, "failed to sign request")
 	}
-	log.Debug("AWS-S3-Store> FetchURL urlStr:%v key:%v", urlStr, *key)
+	log.Debug(context.Background(), "AWS-S3-Store> FetchURL urlStr:%v key:%v", urlStr, *key)
 	return urlStr, *key, nil
 }
 

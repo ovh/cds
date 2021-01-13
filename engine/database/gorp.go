@@ -1,6 +1,7 @@
 package database
 
 import (
+	"context"
 	"database/sql"
 	"errors"
 	"os"
@@ -9,14 +10,16 @@ import (
 	"github.com/go-gorp/gorp"
 	"github.com/golang/protobuf/ptypes"
 	"github.com/golang/protobuf/ptypes/timestamp"
+	"github.com/rockbears/log"
 
 	"github.com/ovh/cds/engine/gorpmapper"
-	"github.com/ovh/cds/sdk/log"
 )
 
 type gorpLogger struct{}
 
-func (g gorpLogger) Printf(format string, v ...interface{}) { log.Debug(format, v...) }
+func (g gorpLogger) Printf(format string, v ...interface{}) {
+	log.Debug(context.Background(), format, v...)
+}
 
 var (
 	lastDB     *sql.DB

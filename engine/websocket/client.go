@@ -7,10 +7,10 @@ import (
 	"sync"
 
 	"github.com/gorilla/websocket"
+	"github.com/rockbears/log"
 	"github.com/tevino/abool"
 
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 )
 
 func NewClient(conn *websocket.Conn) Client {
@@ -62,7 +62,8 @@ func (c *CommonClient) Send(m interface{}) (err error) {
 			return sdk.WithStack(err)
 		}
 		err = sdk.WrapError(err, "can't send to client %s", c.uuid)
-		log.ErrorWithFields(context.Background(), log.Fields{"stack_trace": fmt.Sprintf("%+v", err)}, "%s", err)
+		ctx := sdk.ContextWithStacktrace(context.Background(), err)
+		log.Error(ctx, "%v", err)
 	}
 
 	return nil
@@ -81,7 +82,7 @@ func (c *CommonClient) Listen(ctx context.Context, gorts *sdk.GoRoutines) error 
 		for {
 			select {
 			case <-ctx.Done():
-				log.Debug("websocket.Client.Listen> read in messages routine context done")
+				log.Debug(ctx, "websocket.Client.Listen> read in messages routine context done")
 				return
 			case m, more := <-inMessageChan:
 				if !more {
@@ -103,9 +104,10 @@ func (c *CommonClient) Listen(ctx context.Context, gorts *sdk.GoRoutines) error 
 		if err != nil {
 			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
 				err = sdk.WrapError(err, "websocket unexpected error occured")
-				log.InfoWithFields(ctx, log.Fields{"stack_trace": fmt.Sprintf("%+v", err)}, "%s", err)
+				ctx = sdk.ContextWithStacktrace(ctx, err)
+				log.Error(ctx, "%v", err)
 			}
-			log.Debug("websocket.Client.Listen> client %s disconnected", c.uuid)
+			log.Debug(ctx, "websocket.Client.Listen> client %s disconnected", c.uuid)
 			break
 		}
 

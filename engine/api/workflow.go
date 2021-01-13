@@ -12,6 +12,7 @@ import (
 	"github.com/fsamin/go-dump"
 	"github.com/go-gorp/gorp"
 	"github.com/gorilla/mux"
+	"github.com/rockbears/log"
 
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/environment"
@@ -26,7 +27,6 @@ import (
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/exportentities"
-	"github.com/ovh/cds/sdk/log"
 )
 
 // getWorkflowsHandler returns ID and name of workflows for a given project/user
@@ -202,7 +202,9 @@ func (api *API) postWorkflowRetentionPolicyDryRun() service.Handler {
 		u := getAPIConsumer(ctx)
 		api.GoRoutines.Exec(api.Router.Background, "workflow-retention-dryrun", func(ctx context.Context) {
 			if err := purge.ApplyRetentionPolicyOnWorkflow(ctx, api.Cache, api.mustDBWithCtx(ctx), *wf, purge.MarkAsDeleteOptions{DryRun: true}, u.AuthentifiedUser); err != nil {
-				log.ErrorWithFields(ctx, log.Fields{"stack_trace": fmt.Sprintf("%+v", err)}, "%s", err)
+				ctx = sdk.ContextWithStacktrace(ctx, err)
+				log.Error(ctx, err.Error())
+
 				httpErr := sdk.ExtractHTTPError(err)
 				event.PublishWorkflowRetentionDryRun(ctx, key, name, "ERROR", httpErr.Error(), nil, 0, u.AuthentifiedUser)
 			}
@@ -739,7 +741,7 @@ func (api *API) deleteWorkflowHandler() service.Handler {
 					log.Error(ctx, "deleteWorkflowHandler> Cannot commit transaction: %v", err)
 				}
 				event.PublishWorkflowDelete(ctx, key, oldW, consumer)
-			}, api.PanicDump())
+			})
 
 		return service.WriteJSON(w, nil, http.StatusOK)
 	}

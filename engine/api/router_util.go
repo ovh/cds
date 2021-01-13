@@ -9,10 +9,10 @@ import (
 	"strings"
 
 	"github.com/gorilla/mux"
+	"github.com/rockbears/log"
 
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 )
 
 // writeNoContentPostMiddleware writes StatusNoContent (204) for each response with No Header Content-Type
@@ -59,7 +59,7 @@ func (r *Router) GetRoute(method string, handler service.HandlerFunc, vars map[s
 	}
 
 	if url == "" {
-		log.Debug("Cant find route for Handler %s %v", method, handler)
+		log.Debug(context.Background(), "Cant find route for Handler %s %v", method, handler)
 	}
 
 	return url

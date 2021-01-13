@@ -7,6 +7,7 @@ import (
 
 	"github.com/go-gorp/gorp"
 	"github.com/gorilla/mux"
+	"github.com/rockbears/log"
 
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/ascode"
@@ -20,7 +21,6 @@ import (
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/exportentities"
-	"github.com/ovh/cds/sdk/log"
 )
 
 func (api *API) getEnvironmentsHandler() service.Handler {
@@ -195,7 +195,7 @@ func (api *API) deleteEnvironmentHandler() service.Handler {
 		env, errEnv := environment.LoadEnvironmentByName(api.mustDB(), projectKey, environmentName)
 		if errEnv != nil {
 			if !sdk.ErrorIs(errEnv, sdk.ErrEnvironmentNotFound) {
-				log.Warning(ctx, "deleteEnvironmentHandler> Cannot load environment %s: %v", environmentName, errEnv)
+				log.Warn(ctx, "deleteEnvironmentHandler> Cannot load environment %s: %v", environmentName, errEnv)
 			}
 			return errEnv
 		}
@@ -350,7 +350,7 @@ func (api *API) updateAsCodeEnvironmentHandler() service.Handler {
 				OperationUUID: ope.UUID,
 			}
 			ascode.UpdateAsCodeResult(ctx, api.mustDB(), api.Cache, api.GoRoutines, *proj, *wkHolder, *rootApp, ed, u)
-		}, api.PanicDump())
+		})
 
 		return service.WriteJSON(w, sdk.Operation{
 			UUID:   ope.UUID,

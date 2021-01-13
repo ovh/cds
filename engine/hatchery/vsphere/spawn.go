@@ -8,12 +8,12 @@ import (
 	"html/template"
 	"time"
 
+	"github.com/rockbears/log"
 	"github.com/vmware/govmomi/object"
 	"github.com/vmware/govmomi/vim25/types"
 
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/hatchery"
-	"github.com/ovh/cds/sdk/log"
 )
 
 type annotation struct {
@@ -83,7 +83,7 @@ func (h *HatcheryVSphere) SpawnWorker(ctx context.Context, spawnArgs hatchery.Sp
 	if err != nil {
 		return sdk.WrapError(err, "SpawnWorker> cannot get an ip")
 	}
-	log.Debug("SpawnWorker>  New IP: %s", ip)
+	log.Debug(ctx, "SpawnWorker>  New IP: %s", ip)
 
 	return h.launchScriptWorker(spawnArgs.WorkerName, spawnArgs.JobID, spawnArgs.WorkerToken, *spawnArgs.Model, spawnArgs.RegisterOnly, vmWorker)
 }
@@ -132,7 +132,7 @@ func (h *HatcheryVSphere) createVMModel(model sdk.Model, workerName string) (*ob
 	}
 
 	if _, errS := h.launchClientOp(vm, model.ModelVirtualMachine, model.ModelVirtualMachine.PostCmd, nil); errS != nil {
-		log.Warning(ctx, "createVMModel> cannot start program %s", errS)
+		log.Warn(ctx, "createVMModel> cannot start program %s", errS)
 		annot := annotation{ToDelete: true}
 		if annotStr, err := json.Marshal(annot); err == nil {
 			vm.Reconfigure(ctx, types.VirtualMachineConfigSpec{
@@ -150,7 +150,7 @@ func (h *HatcheryVSphere) createVMModel(model sdk.Model, workerName string) (*ob
 	modelFound, err := h.getModelByName(ctx, model.Name)
 	if err == nil {
 		if err := h.deleteServer(modelFound); err != nil {
-			log.Warning(ctx, "createVMModel> Cannot delete previous model %s : %s", model.Name, err)
+			log.Warn(ctx, "createVMModel> Cannot delete previous model %s : %s", model.Name, err)
 		}
 	}
 
@@ -223,7 +223,7 @@ func (h *HatcheryVSphere) launchScriptWorker(name string, jobID int64, token str
 	}
 
 	if _, errS := h.launchClientOp(vm, model.ModelVirtualMachine, buffer.String(), env); errS != nil {
-		log.Warning(ctx, "launchScript> cannot start program %s", errS)
+		log.Warn(ctx, "launchScript> cannot start program %s", errS)
 
 		// tag vm to delete
 		annot := annotation{ToDelete: true}

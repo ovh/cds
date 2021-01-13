@@ -7,10 +7,10 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/rockbears/log"
 	"github.com/xanzy/go-gitlab"
 
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 )
 
 func (c *gitlabClient) GetHook(ctx context.Context, repo, id string) (sdk.VCSHook, error) {
@@ -96,7 +96,7 @@ func (c *gitlabClient) CreateHook(ctx context.Context, repo string, hook *sdk.VC
 		EnableSSLVerification: &f,
 	}
 
-	log.Debug("GitlabClient.CreateHook: %s %s\n", repo, *opt.URL)
+	log.Debug(ctx, "GitlabClient.CreateHook: %s %s\n", repo, *opt.URL)
 	ph, resp, err := c.client.Projects.AddProjectHook(repo, &opt)
 	if err != nil {
 		return sdk.WrapError(err, "cannot create gitlab project hook with url: %s", url)
@@ -155,7 +155,7 @@ func (c *gitlabClient) UpdateHook(ctx context.Context, repo string, hook *sdk.VC
 		ConfidentialIssuesEvents: &gitlabHook.ConfidentialIssuesEvents,
 	}
 
-	log.Debug("GitlabClient.UpdateHook: %s %s", repo, *opt.URL)
+	log.Debug(ctx, "GitlabClient.UpdateHook: %s %s", repo, *opt.URL)
 	_, resp, err := c.client.Projects.EditProjectHook(repo, gitlabHook.ID, &opt)
 	if err != nil {
 		return sdk.WrapError(err, "cannot update gitlab project hook %s", hook.ID)
@@ -189,9 +189,9 @@ func (c *gitlabClient) DeleteHook(ctx context.Context, repo string, hook sdk.VCS
 			return sdk.WrapError(err, "ListProjectHooks")
 		}
 
-		log.Debug("GitlabClient.DeleteHook: Got '%s'", url)
+		log.Debug(ctx, "GitlabClient.DeleteHook: Got '%s'", url)
 		for _, h := range hooks {
-			log.Debug("GitlabClient.DeleteHook: Found '%s'", h.URL)
+			log.Debug(ctx, "GitlabClient.DeleteHook: Found '%s'", h.URL)
 			if h.URL == url {
 				_, err = c.client.Projects.DeleteProjectHook(repo, h.ID)
 				return sdk.WrapError(err, "DeleteProjectHook")

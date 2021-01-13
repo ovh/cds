@@ -12,22 +12,21 @@ import (
 	"time"
 
 	"github.com/mitchellh/hashstructure"
+	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/engine/cdn/item"
 	"github.com/ovh/cds/engine/cdn/storage"
 	cdntest "github.com/ovh/cds/engine/cdn/test"
-	"github.com/ovh/cds/sdk/log/hook"
-
-	gocache "github.com/patrickmn/go-cache"
-	"github.com/stretchr/testify/require"
-	"gopkg.in/h2non/gock.v1"
-
-	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/engine/test"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/ovh/cds/sdk/jws"
-	"github.com/ovh/cds/sdk/log"
+	cdslog "github.com/ovh/cds/sdk/log"
+	"github.com/ovh/cds/sdk/log/hook"
+	gocache "github.com/patrickmn/go-cache"
+	"github.com/rockbears/log"
+	"github.com/stretchr/testify/require"
+	"gopkg.in/h2non/gock.v1"
 )
 
 func TestWorkerLogCDNEnabled(t *testing.T) {
@@ -87,8 +86,8 @@ func TestWorkerLogCDNEnabled(t *testing.T) {
 	s.Cfg.Log.StepMaxSize = 1000
 	s.GoRoutines = sdk.NewGoRoutines()
 
-	signature := log.Signature{
-		Worker: &log.SignatureWorker{
+	signature := cdslog.Signature{
+		Worker: &cdslog.SignatureWorker{
 			WorkerID:   "abcdef-123456",
 			StepOrder:  0,
 			WorkerName: "myworker",
@@ -201,8 +200,8 @@ func TestServiceLogCDNDisabled(t *testing.T) {
 	require.NoError(t, err)
 	s.Units = cdnUnits
 
-	signature := log.Signature{
-		Service: &log.SignatureService{
+	signature := cdslog.Signature{
+		Service: &cdslog.SignatureService{
 			WorkerName:      "my-worker-name",
 			HatcheryID:      1,
 			HatcheryName:    "my-hatchery-name",
@@ -275,7 +274,7 @@ func TestStoreTruncatedLogs(t *testing.T) {
 	item.InitDBMapping(m)
 	storage.InitDBMapping(m)
 
-	log.SetLogger(t)
+	log.Factory = log.NewTestingWrapper(t)
 	db, factory, cache, cancel := test.SetupPGToCancel(t, m, sdk.TypeCDN)
 	t.Cleanup(cancel)
 
@@ -299,7 +298,7 @@ func TestStoreTruncatedLogs(t *testing.T) {
 			Full: "Bim bam boum",
 		},
 		IsTerminated: false,
-		Signature: log.Signature{
+		Signature: cdslog.Signature{
 			ProjectKey:   sdk.RandomString(10),
 			WorkflowID:   1,
 			WorkflowName: "MyWorklow",
@@ -308,7 +307,7 @@ func TestStoreTruncatedLogs(t *testing.T) {
 			NodeRunName:  "MyPipeline",
 			JobName:      "MyJob",
 			JobID:        1,
-			Worker: &log.SignatureWorker{
+			Worker: &cdslog.SignatureWorker{
 				StepName:  "script1",
 				StepOrder: 1,
 			},

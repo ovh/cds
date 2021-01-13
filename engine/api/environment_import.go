@@ -6,13 +6,13 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
+	"github.com/rockbears/log"
 
 	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/exportentities"
-	"github.com/ovh/cds/sdk/log"
 )
 
 // postEnvironmentImportHandler import an environment yml file
@@ -115,7 +115,7 @@ func (api *API) importNewEnvironmentHandler() service.Handler {
 		go func() {
 			for {
 				msg, ok := <-msgChan
-				log.Debug("importNewEnvironmentHandler >>> %v", msg)
+				log.Debug(ctx, "importNewEnvironmentHandler >>> %v", msg)
 				allMsg = append(allMsg, msg)
 				if !ok {
 					done <- true
@@ -194,7 +194,7 @@ func (api *API) importIntoEnvironmentHandler() service.Handler {
 		go func() {
 			for {
 				msg, ok := <-msgChan
-				log.Debug("importIntoEnvironmentHandler >>> %v", msg)
+				log.Debug(ctx, "importIntoEnvironmentHandler >>> %v", msg)
 				allMsg = append(allMsg, msg)
 				if !ok {
 					done <- true
@@ -202,7 +202,7 @@ func (api *API) importIntoEnvironmentHandler() service.Handler {
 			}
 		}()
 
-		if err := environment.ImportInto(tx, newEnv, env, msgChan, getAPIConsumer(ctx)); err != nil {
+		if err := environment.ImportInto(ctx, tx, newEnv, env, msgChan, getAPIConsumer(ctx)); err != nil {
 			return sdk.WithStack(err)
 		}
 

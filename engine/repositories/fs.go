@@ -6,8 +6,9 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/rockbears/log"
+
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 )
 
 func (s *Service) checkOrCreateRootFS() error {

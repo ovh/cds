@@ -7,13 +7,13 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
+	"github.com/rockbears/log"
 
 	"github.com/ovh/cds/engine/api"
 	"github.com/ovh/cds/engine/database"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
-	"github.com/ovh/cds/sdk/log"
 )
 
 type dbmigservice struct {
@@ -181,7 +181,7 @@ func (s *dbmigservice) Status(ctx context.Context) *sdk.MonitoringStatus {
 }
 
 func (s *dbmigservice) initRouter(ctx context.Context) {
-	log.Debug("DBMigrate> Router initialized")
+	log.Debug(ctx, "DBMigrate> Router initialized")
 	r := s.Router
 	r.Background = ctx
 	r.SetHeaderFunc = service.DefaultHeaders
