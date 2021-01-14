@@ -54,7 +54,7 @@ func Test_doWebHookExecutionWithRequestBody(t *testing.T) {
 		WebHook: &sdk.WebHookExecution{
 			RequestMethod: string(http.MethodPost),
 			RequestHeader: map[string][]string{
-				"Content-Type": []string{
+				"Content-Type": {
 					"application/json",
 				},
 			},
