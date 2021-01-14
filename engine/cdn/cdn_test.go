@@ -27,7 +27,12 @@ import (
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/ovh/cds/sdk/jws"
+	cdslog "github.com/ovh/cds/sdk/log"
 )
+
+func init() {
+	cdslog.Initialize(context.TODO(), &cdslog.Conf{Level: "debug"})
+}
 
 func newRouter(m *mux.Router, p string) *api.Router {
 	r := &api.Router{
