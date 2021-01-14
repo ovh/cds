@@ -26,8 +26,23 @@ const (
 
 func init() {
 	log.RegisterField(
+		AuthUserID,
+		AuthConsumerID,
+		AuthSessionID,
+		Method,
+		Route,
+		RequestURI,
+		Deprecated,
+		Handler,
+		Latency,
+		LatencyNum,
+		Status,
+		StatusNum,
+		Goroutine,
 		RequestID,
 		Service,
 		Stacktrace,
+		Duration,
+		Size,
 	)
 }
