@@ -4,16 +4,11 @@ import (
 	"context"
 	"crypto/rsa"
 	"fmt"
-	"io"
-	"io/ioutil"
 	"net/http"
 	"net/http/pprof"
-	"os"
-	"path/filepath"
 	"sync"
 	"time"
 
-	"github.com/gorilla/mux"
 	"github.com/rockbears/log"
 	"gopkg.in/square/go-jose.v2"
 
@@ -32,71 +27,6 @@ type Common struct {
 	Router                        *api.Router
 	mapServiceNextLineNumberMutex sync.Mutex
 	mapServiceNextLineNumber      map[string]int64
-}
-
-const panicDumpDir = "panic_dumps"
-
-func (c *Common) servePanicDumpList() ([]string, error) {
-	dir, _ := os.Getwd()
-	path := filepath.Join(dir, panicDumpDir)
-	files, err := ioutil.ReadDir(path)
-	if err != nil {
-		return nil, err
-	}
-	res := make([]string, len(files))
-	for i, f := range files {
-		res[i] = f.Name()
-	}
-	return res, nil
-}
-
-func init() {
-	// This go routine deletes panic dumps older than 15 minutes
-	go func() {
-		for {
-			time.Sleep(1 * time.Minute)
-			dir, err := os.Getwd()
-			if err != nil {
-				log.Warn(context.Background(), "unable to get working directory: %v", err)
-				continue
-			}
-
-			path := filepath.Join(dir, panicDumpDir)
-			_ = os.MkdirAll(path, os.FileMode(0755))
-
-			files, err := ioutil.ReadDir(path)
-			if err != nil {
-				log.Warn(context.Background(), "unable to list files in %s: %v", path, err)
-				break
-			}
-
-			for _, f := range files {
-				filename := filepath.Join(path, f.Name())
-				file, err := os.Stat(filename)
-				if err != nil {
-					log.Warn(context.Background(), "unable to get file %s info: %v", f.Name(), err)
-					continue
-				}
-				if file.ModTime().Before(time.Now().Add(-15 * time.Minute)) {
-					if err := os.Remove(filename); err != nil {
-						log.Warn(context.Background(), "unable to remove file %s: %v", filename, err)
-					}
-				}
-			}
-		}
-	}()
-}
-
-func (c *Common) servePanicDump(f string) (io.ReadCloser, error) {
-	dir, _ := os.Getwd()
-	path := filepath.Join(dir, panicDumpDir, f)
-	return os.OpenFile(path, os.O_RDONLY, os.FileMode(0644))
-}
-
-func (c *Common) PanicDumpDirectory() (string, error) {
-	dir, _ := os.Getwd()
-	path := filepath.Join(dir, panicDumpDir)
-	return path, os.MkdirAll(path, os.FileMode(0755))
 }
 
 func (c *Common) Service() *sdk.Service {
@@ -171,8 +101,6 @@ func (c *Common) initRouter(ctx context.Context, h hatchery.Interface) {
 	r.Handle("/mon/workers", nil, r.GET(getWorkersPoolHandler(h), service.OverrideAuth(service.NoAuthMiddleware)))
 	r.Handle("/mon/metrics", nil, r.GET(service.GetPrometheustMetricsHandler(c), service.OverrideAuth(service.NoAuthMiddleware)))
 	r.Handle("/mon/metrics/all", nil, r.GET(service.GetMetricsHandler, service.OverrideAuth(service.NoAuthMiddleware)))
-	r.Handle("/mon/errors", nil, r.GET(c.getPanicDumpListHandler, service.OverrideAuth(service.NoAuthMiddleware)))
-	r.Handle("/mon/errors/{id}", nil, r.GET(c.getPanicDumpHandler, service.OverrideAuth(service.NoAuthMiddleware)))
 
 	r.Mux.HandleFunc("/debug/pprof/cmdline", pprof.Cmdline)
 	r.Mux.HandleFunc("/debug/pprof/profile", pprof.Profile)
@@ -187,16 +115,6 @@ func (c *Common) initRouter(ctx context.Context, h hatchery.Interface) {
 
 func (c *Common) GetPrivateKey() *rsa.PrivateKey {
 	return c.Common.PrivateKey
-}
-
-func (c *Common) getPanicDumpListHandler() service.Handler {
-	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		l, err := c.servePanicDumpList()
-		if err != nil {
-			return err
-		}
-		return service.WriteJSON(w, l, http.StatusOK)
-	}
 }
 
 func (c *Common) RefreshServiceLogger(ctx context.Context) error {
@@ -286,27 +204,6 @@ func (c *Common) SendServiceLog(ctx context.Context, servicesLogs []cdslog.Messa
 		for _, s := range servicesLogs {
 			delete(c.mapServiceNextLineNumber, s.ServiceKey())
 		}
-	}
-}
-
-func (c *Common) getPanicDumpHandler() service.Handler {
-	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		vars := mux.Vars(r)
-		id := vars["id"]
-		f, err := c.servePanicDump(id)
-		if err != nil {
-			return err
-		}
-		defer f.Close() // nolint
-
-		if _, err := io.Copy(w, f); err != nil {
-			return err
-		}
-
-		w.Header().Set("Content-Type", "application/octet-stream")
-		w.WriteHeader(http.StatusOK)
-
-		return nil
 	}
 }
 
