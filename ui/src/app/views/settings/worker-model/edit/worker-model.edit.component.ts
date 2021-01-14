@@ -8,7 +8,7 @@ import { finalize } from 'rxjs/operators';
 import { Subscription } from 'rxjs/Subscription';
 import { Group } from '../../../../model/group.model';
 import { Pipeline } from '../../../../model/pipeline.model';
-import { AuthentifiedUser } from '../../../../model/user.model';
+import { AuthSummary } from '../../../../model/user.model';
 import { ModelPattern, WorkerModel } from '../../../../model/worker-model.model';
 import { GroupService } from '../../../../service/group/group.service';
 import { WorkerModelService } from '../../../../service/worker-model/worker-model.service';
@@ -31,7 +31,7 @@ export class WorkerModelEditComponent implements OnInit, OnDestroy {
     types: Array<string>;
     groups: Array<Group>;
     patterns: Array<ModelPattern>;
-    currentUser: AuthentifiedUser;
+    currentAuthSummary: AuthSummary;
     usages: Array<Pipeline>;
     path: Array<PathItem>;
     paramsSub: Subscription;
@@ -51,7 +51,7 @@ export class WorkerModelEditComponent implements OnInit, OnDestroy {
         private _cd: ChangeDetectorRef
     ) { }
 
-    ngOnDestroy(): void {} // Should be set to use @AutoUnsubscribe with AOT
+    ngOnDestroy(): void { } // Should be set to use @AutoUnsubscribe with AOT
 
     selectTab(tab: Tab): void {
         switch (tab.key) {
@@ -78,7 +78,7 @@ export class WorkerModelEditComponent implements OnInit, OnDestroy {
             key: 'usage'
         }];
 
-        this.currentUser = this._store.selectSnapshot(AuthenticationState.user);
+        this.currentAuthSummary = this._store.selectSnapshot(AuthenticationState.summary);
         this.getGroups();
         this.getWorkerModelComponents();
 

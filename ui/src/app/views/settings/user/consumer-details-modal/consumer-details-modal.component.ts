@@ -12,7 +12,7 @@ import { Store } from '@ngxs/store';
 import { ModalTemplate, SuiActiveModal, SuiModalService, TemplateModalConfig } from '@richardlt/ng2-semantic-ui';
 import { AuthConsumer, AuthSession } from 'app/model/authentication.model';
 import { Group } from 'app/model/group.model';
-import { AuthentifiedUser } from 'app/model/user.model';
+import { AuthentifiedUser, AuthSummary } from 'app/model/user.model';
 import { AuthenticationService } from 'app/service/authentication/authentication.service';
 import { UserService } from 'app/service/user/user.service';
 import { Item } from 'app/shared/menu/menu.component';
@@ -54,7 +54,7 @@ export class ConsumerDetailsModalComponent {
     @Output() close = new EventEmitter<CloseEvent>();
 
     loading: boolean;
-    currentUser: AuthentifiedUser;
+    currentAuthSummary: AuthSummary;
     scopes: string;
     groups: string;
     columnsConsumers: Array<Column<AuthConsumer>>;
@@ -77,7 +77,7 @@ export class ConsumerDetailsModalComponent {
         private _store: Store,
         private _translate: TranslateService
     ) {
-        this.currentUser = this._store.selectSnapshot(AuthenticationState.user);
+        this.currentAuthSummary = this._store.selectSnapshot(AuthenticationState.summary);
 
         this.menuItems = [].concat(defaultMenuItems);
 

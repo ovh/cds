@@ -21,7 +21,7 @@ import { AppService } from './app.service';
 import { Application } from './model/application.model';
 import { Pipeline } from './model/pipeline.model';
 import { Project } from './model/project.model';
-import { AuthentifiedUser } from './model/user.model';
+import { AuthSummary } from './model/user.model';
 import { ApplicationService } from './service/application/application.service';
 import { AuthenticationService } from './service/authentication/authentication.service';
 import { BroadcastService } from './service/broadcast/broadcast.service';
@@ -38,7 +38,7 @@ import { TimelineStore } from './service/timeline/timeline.store';
 import { UserService } from './service/user/user.service';
 import { SharedModule } from './shared/shared.module';
 import { ToastService } from './shared/toast/ToastService';
-import { FetchCurrentUser } from './store/authentication.action';
+import { FetchCurrentAuth } from './store/authentication.action';
 import { NgxsStoreModule } from './store/store.module';
 import { NavbarModule } from './views/navbar/navbar.module';
 
@@ -115,11 +115,11 @@ describe('App: CDS', () => {
         http.expectOne((req: HttpRequest<any>) => req.url === '/mon/status').flush(<MonitoringStatus>{});
 
         const store = TestBed.get(Store);
-        store.dispatch(new FetchCurrentUser());
+        store.dispatch(new FetchCurrentAuth());
 
 
-        http.expectOne(((req: HttpRequest<any>) => req.url === '/user/me')).flush(<AuthentifiedUser>{
-            username: 'someone',
+        http.expectOne(((req: HttpRequest<any>) => req.url === '/auth/me')).flush(<AuthSummary>{
+            user: { username: 'someone' }
         });
 
         expect(fixture.componentInstance.isConnected).toBeTruthy('IsConnected flag must be true');

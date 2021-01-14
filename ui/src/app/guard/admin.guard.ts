@@ -1,27 +1,27 @@
 import { Injectable } from '@angular/core';
 import { ActivatedRouteSnapshot, CanActivate, CanActivateChild, Router, RouterStateSnapshot } from '@angular/router';
 import { Store } from '@ngxs/store';
-import { AuthentifiedUser } from 'app/model/user.model';
+import { AuthentifiedUser, AuthSummary } from 'app/model/user.model';
 import { AuthenticationState } from 'app/store/authentication.state';
 import { Observable } from 'rxjs';
 import { filter, first, map } from 'rxjs/operators';
 
 @Injectable()
-export class AdminGuard implements CanActivate, CanActivateChild {
+export class MaintainerGuard implements CanActivate, CanActivateChild {
 
     constructor(
         private _store: Store,
         private _router: Router
     ) { }
 
-    isAdmin(): Observable<boolean> {
-        return this._store.select(AuthenticationState.user)
+    isMaintainer(): Observable<boolean> {
+        return this._store.select(AuthenticationState.summary)
             .pipe(
-                map((u: AuthentifiedUser): boolean => {
-                    if (!u) {
+                map((s: AuthSummary): boolean => {
+                    if (!s) {
                         return null;
                     }
-                    if (!u.isAdmin()) {
+                    if (!s.isMaintainer()) {
                         this._router.navigate(['/']);
                         return null;
                     }
@@ -36,13 +36,13 @@ export class AdminGuard implements CanActivate, CanActivateChild {
         route: ActivatedRouteSnapshot,
         state: RouterStateSnapshot
     ): Observable<boolean> | Promise<boolean> | boolean {
-        return this.isAdmin();
+        return this.isMaintainer();
     }
 
     canActivateChild(
         route: ActivatedRouteSnapshot,
         state: RouterStateSnapshot
     ): Observable<boolean> | Promise<boolean> | boolean {
-        return this.isAdmin();
+        return this.isMaintainer();
     }
 }

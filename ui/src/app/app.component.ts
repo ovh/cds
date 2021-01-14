@@ -9,12 +9,12 @@ import { EventService } from 'app/event.service';
 import { GetCDSStatus } from 'app/store/cds.action';
 import { CDSState } from 'app/store/cds.state';
 import { WebSocketSubject } from 'rxjs/internal-compatibility';
-import { interval, Observable, of, zip } from 'rxjs';
+import { interval, of, zip } from 'rxjs';
 import { filter, map, mergeMap } from 'rxjs/operators';
 import { Subscription } from 'rxjs/Subscription';
 import * as format from 'string-format-obj';
 import { AppService } from './app.service';
-import { AuthentifiedUser } from './model/user.model';
+import { AuthSummary } from './model/user.model';
 import { NotificationService } from './service/notification/notification.service';
 import { HelpService, MonitoringService } from './service/services.module';
 import { ThemeStore } from './service/theme/theme.store';
@@ -49,7 +49,7 @@ export class AppComponent implements OnInit, OnDestroy {
     eventsRouteSubscription: Subscription;
     maintenance: boolean;
     cdsstateSub: Subscription;
-    user: AuthentifiedUser;
+    currentAuthSummary: AuthSummary;
     previousURL: string;
     websocket: WebSocketSubject<any>;
     loading = true;
@@ -117,15 +117,15 @@ export class AppComponent implements OnInit, OnDestroy {
     load(): void {
         this._helpService.getHelp().subscribe(h => this._store.dispatch(new AddHelp(h)));
         this._store.dispatch(new GetCDSStatus());
-        this._store.select(AuthenticationState.user).subscribe(user => {
-            if (!user) {
-                delete this.user;
+        this._store.select(AuthenticationState.summary).subscribe(s => {
+            if (!s) {
+                this.currentAuthSummary = null;
                 this.isConnected = false;
                 this._eventService.stopWebsocket();
             } else {
-                this.user = user;
+                this.currentAuthSummary = s;
                 this.isConnected = true;
-                localStorage.setItem('CDS-USER', this.user.username);
+                localStorage.setItem('CDS-USER', this.currentAuthSummary.user.username);
                 this._eventService.startWebsocket();
             }
         });

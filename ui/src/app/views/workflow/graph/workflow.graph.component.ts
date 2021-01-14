@@ -104,7 +104,6 @@ export class WorkflowGraphComponent implements AfterViewInit, OnDestroy {
             });
         }
 
-        d3.select('svg').remove();
         const element = this.svgContainer.element.nativeElement;
         this.svg = d3.select(element).append('svg')
             .attr('width', element.offsetWidth)

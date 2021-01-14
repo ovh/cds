@@ -3,7 +3,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
 import { EventType } from 'app/model/event.model';
 import { PipelineStatus } from 'app/model/pipeline.model';
-import { AuthentifiedUser } from 'app/model/user.model';
+import { AuthSummary } from 'app/model/user.model';
 import { WorkflowNodeJobRun } from 'app/model/workflow.run.model';
 import { QueueService } from 'app/service/queue/queue.service';
 import { WorkflowRunService } from 'app/service/workflow/run/workflow.run.service';
@@ -27,7 +27,7 @@ import { finalize } from 'rxjs/operators';
 @AutoUnsubscribe()
 export class QueueComponent implements OnDestroy {
     queueSubscription: Subscription;
-    user: AuthentifiedUser;
+    currentAuthSummary: AuthSummary;
     nodeJobRuns: Array<WorkflowNodeJobRun> = [];
     parametersMaps: Array<{}> = [];
     requirementsList: Array<string> = [];
@@ -45,7 +45,7 @@ export class QueueComponent implements OnDestroy {
         private _translate: TranslateService,
         private _cd: ChangeDetectorRef
     ) {
-        this.user = this._store.selectSnapshot(AuthenticationState.user);
+        this.currentAuthSummary = this._store.selectSnapshot(AuthenticationState.summary);
         this.status = [this.statusOptions[0]];
 
         this.path = [<PathItem>{
@@ -75,7 +75,7 @@ export class QueueComponent implements OnDestroy {
                 this.requirementsList = [];
                 this.bookedOrBuildingByList = [];
                 this.parametersMaps = this.nodeJobRuns.map((nj) => {
-                    if (this.user.ring === 'ADMIN' && nj.job && nj.job.action && nj.job.action.requirements) {
+                    if (this.currentAuthSummary.user.ring === 'ADMIN' && nj.job && nj.job.action && nj.job.action.requirements) {
                         let requirements = nj.job.action.requirements
                             .reduce((reqs, req) => `type: ${req.type}, value: ${req.value}; ${reqs}`, '');
                         this.requirementsList.push(requirements);
@@ -104,7 +104,7 @@ export class QueueComponent implements OnDestroy {
         this.loadAll();
     }
 
-    ngOnDestroy(): void {} // Should be set to use @AutoUnsubscribe with AOT
+    ngOnDestroy(): void { } // Should be set to use @AutoUnsubscribe with AOT
 
     statusFilterChange() {
         this.loadAll();

@@ -25,16 +25,16 @@ export class UserListComponent {
             <Column<AuthentifiedUser>>{
                 type: ColumnType.ICON,
                 class: 'one',
-                selector: (u: AuthentifiedUser) => u.isAdmin() ? ['user', 'outline', 'icon'] : ['user', 'icon']
+                selector: (u: AuthentifiedUser) => u.ring === 'ADMIN' ? ['user', 'outline', 'icon'] : ['user', 'icon']
             },
             <Column<AuthentifiedUser>>{
                 type: ColumnType.ROUTER_LINK,
                 class: 'six',
                 name: 'user_label_username',
                 selector: (u: AuthentifiedUser) => ({
-                        link: `/settings/user/${u.username}`,
-                        value: u.username
-                    })
+                    link: `/settings/user/${u.username}`,
+                    value: u.username
+                })
             },
             <Column<AuthentifiedUser>>{
                 type: ColumnType.TEXT,
@@ -61,13 +61,13 @@ export class UserListComponent {
                 this._cd.markForCheck();
             }))
             .subscribe(us => {
- this.users = us;
-});
+                this.users = us;
+            });
     }
 
     filter(f: string) {
         const lowerFilter = f.toLowerCase();
         return (u: AuthentifiedUser) => u.username.toLowerCase().indexOf(lowerFilter) !== -1 ||
-                u.fullname.toLowerCase().indexOf(lowerFilter) !== -1
+            u.fullname.toLowerCase().indexOf(lowerFilter) !== -1
     }
 }
