@@ -15,7 +15,8 @@ type HatcheryConfiguration struct {
 	MaxContainers int `mapstructure:"maxContainers" toml:"maxContainers" default:"10" commented:"false" comment:"Max Containers on Host managed by this Hatchery" json:"maxContainers"`
 
 	// DefaultMemory Worker default memory
-	DefaultMemory int `mapstructure:"defaultMemory" toml:"defaultMemory" default:"1024" commented:"false" comment:"Worker default memory in Mo" json:"defaultMemory"`
+	DefaultMemory     int  `mapstructure:"defaultMemory" toml:"defaultMemory" default:"1024" commented:"false" comment:"Worker default memory in Mo" json:"defaultMemory"`
+	DisableMemorySwap bool `mapstructure:"disableMemorySwap" toml:"disableMemorySwap" default:"false" commented:"true" comment:"Set to true to disable memory swap" json:"disableMemorySwap"`
 
 	// WorkerTTL Worker TTL (minutes)
 	WorkerTTL int `mapstructure:"workerTTL" toml:"workerTTL" default:"10" commented:"false" comment:"Worker TTL (minutes)" json:"workerTTL"`

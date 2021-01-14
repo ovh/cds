@@ -110,11 +110,12 @@ func Test_computeDockerOpts(t *testing.T) {
 func TestHatcherySwarm_createAndStartContainer(t *testing.T) {
 	h := testSwarmHatchery(t)
 	args := containerArgs{
-		name:   "my-nginx",
-		image:  "nginx:latest",
-		env:    []string{"FROM_CDS", "FROM_CDS"},
-		labels: map[string]string{"FROM_CDS": "FROM_CDS"},
-		memory: 256,
+		name:       "my-nginx",
+		image:      "nginx:latest",
+		env:        []string{"FROM_CDS", "FROM_CDS"},
+		labels:     map[string]string{"FROM_CDS": "FROM_CDS"},
+		memory:     256,
+		memorySwap: -1,
 	}
 
 	// RegisterOnly = true, this will pull image if image is not found
@@ -138,12 +139,13 @@ func TestHatcherySwarm_createAndStartContainer(t *testing.T) {
 func TestHatcherySwarm_createAndStartContainerWithMount(t *testing.T) {
 	h := testSwarmHatchery(t)
 	args := containerArgs{
-		name:   "my-nginx",
-		image:  "nginx:latest",
-		cmd:    []string{"uname"},
-		env:    []string{"FROM_CDS", "FROM_CDS"},
-		labels: map[string]string{"FROM_CDS": "FROM_CDS"},
-		memory: 256,
+		name:       "my-nginx",
+		image:      "nginx:latest",
+		cmd:        []string{"uname"},
+		env:        []string{"FROM_CDS", "FROM_CDS"},
+		labels:     map[string]string{"FROM_CDS": "FROM_CDS"},
+		memory:     256,
+		memorySwap: -1,
 		dockerOpts: dockerOpts{
 			mounts: []mount.Mount{
 				{
@@ -188,6 +190,7 @@ func TestHatcherySwarm_createAndStartContainerWithNetwork(t *testing.T) {
 		env:          []string{"FROM_CDS", "FROM_CDS"},
 		labels:       map[string]string{"FROM_CDS": "FROM_CDS"},
 		memory:       256,
+		memorySwap:   -1,
 		network:      "my-network",
 		networkAlias: "my-container",
 	}

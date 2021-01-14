@@ -47,19 +47,18 @@ func (h *HatcherySwarm) killAndRemove(ctx context.Context, dockerClient *dockerC
 					Since:      "10s",
 				}
 				var spawnErr = sdk.SpawnErrorForm{
-					Error: err.Error(),
+					Error: sdk.NewErrorFrom(err, "an error occurred when registering the model with container name: %s", container.Name).Error(),
 				}
 
 				logsReader, errL := dockerClient.ContainerLogs(ctx, container.ID, logsOpts)
 				if errL != nil {
 					log.Error(ctx, "hatchery> swarm> killAndRemove> cannot get logs from docker for containers service %s %v : %v", container.ID, container.Name, errL)
 					spawnErr.Logs = []byte(fmt.Sprintf("unable to get container logs: %v", errL))
-
 				} else if logsReader != nil {
 					defer logsReader.Close()
 					logs, errR := ioutil.ReadAll(logsReader)
 					if errR != nil {
-						log.Error(ctx, "hatchery> swarm> killAndRemove> cannot read logs for containers service %s %v : %v", container.ID, container.Name, errR)
+						spawnErr.Logs = []byte(fmt.Sprintf("unable to get read container logs: %v", errR))
 					} else if logs != nil {
 						spawnErr.Logs = logs
 					}

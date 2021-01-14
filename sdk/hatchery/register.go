@@ -92,15 +92,13 @@ loopModels:
 // CheckWorkerModelRegister checks if a model has been registered, if not it raises an error on the API
 func CheckWorkerModelRegister(h Interface, modelPath string) error {
 	var sendError bool
-	var m *sdk.Model
 	for i := range models {
-		m = &models[i]
-		if m.Group.Name+"/"+m.Name == modelPath {
-			sendError = m.NeedRegistration
+		if models[i].Group.Name+"/"+models[i].Name == modelPath {
+			sendError = models[i].NeedRegistration
 			break
 		}
 	}
-	if m != nil && sendError {
+	if sendError {
 		return sdk.WithStack(sdk.ErrWorkerModelDeploymentFailed)
 	}
 	return nil
