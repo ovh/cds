@@ -284,6 +284,8 @@ See $ engine config command for more details.
 		//Configure the services
 		for i := range serviceConfs {
 			s := serviceConfs[i]
+
+			ctx := context.WithValue(ctx, cdslog.Service, s.service.Name())
 			if err := s.service.ApplyConfiguration(s.cfg); err != nil {
 				sdk.Exit("Unable to init service %s: %v", s.arg, err)
 			}
@@ -296,7 +298,8 @@ See $ engine config command for more details.
 				}
 			}
 
-			ctx, err := telemetry.Init(ctx, conf.Telemetry, s.service)
+			var err error
+			ctx, err = telemetry.Init(ctx, conf.Telemetry, s.service)
 			if err != nil {
 				sdk.Exit("Unable to start tracing exporter: %v", err)
 			}
