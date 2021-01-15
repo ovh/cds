@@ -17,6 +17,10 @@ export class WorkerModelPatternFormComponent {
     @Input() loading: boolean;
 
     @Input() set pattern(p: ModelPattern) {
+        if (!p) {
+            return;
+        }
+
         this._pattern = p;
 
         this.envNames = [];
@@ -49,6 +53,7 @@ export class WorkerModelPatternFormComponent {
         this.currentUser = this._store.selectSnapshot(AuthenticationState.user);
 
         this.loadingPatterns = true;
+        this._cd.markForCheck();
         this._workerModelService.getTypes()
             .pipe(finalize(() => {
                 this.loadingPatterns = false;
