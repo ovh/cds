@@ -32,10 +32,7 @@ type Conf struct {
 }
 
 const (
-	HeaderRequestID            = "Request-ID"
-	ContextLoggingRequestIDKey = "ctx-logging-request-id"
-	ContextLoggingFuncKey      = "ctx-logging-func"
-
+	HeaderRequestID      = "Request-ID"
 	ExtraFieldSignature  = "Signature"
 	ExtraFieldLine       = "Line"
 	ExtraFieldTerminated = "Terminated"

@@ -18,7 +18,7 @@ func (s *Service) processor(ctx context.Context) error {
 		}
 		if uuid != "" {
 			op := s.dao.loadOperation(ctx, uuid)
-			ctx = context.WithValue(ctx, cdslog.ContextLoggingRequestIDKey, op.RequestID)
+			ctx = context.WithValue(ctx, cdslog.RequestID, op.RequestID)
 			if err := s.do(ctx, *op); err != nil {
 				if err == errLockUnavailable {
 					s.GoRoutines.Exec(ctx, "operation "+uuid+" retry", func(ctx context.Context) {

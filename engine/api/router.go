@@ -101,12 +101,10 @@ func (r *Router) compress(fn http.HandlerFunc) http.HandlerFunc {
 	}
 }
 
-const requestIDHeader = "Request-ID"
-
 func (r *Router) setRequestID(h http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var requestID string
-		if existingRequestID := r.Header.Get(requestIDHeader); existingRequestID != "" {
+		if existingRequestID := r.Header.Get(cdslog.HeaderRequestID); existingRequestID != "" {
 			if _, err := uuid.FromString(existingRequestID); err == nil {
 				requestID = existingRequestID
 			}
@@ -116,11 +114,10 @@ func (r *Router) setRequestID(h http.HandlerFunc) http.HandlerFunc {
 		}
 
 		ctx := r.Context()
-		ctx = context.WithValue(ctx, cdslog.ContextLoggingRequestIDKey, requestID)
 		ctx = context.WithValue(ctx, cdslog.RequestID, requestID)
 		r = r.WithContext(ctx)
 
-		w.Header().Set(requestIDHeader, requestID)
+		w.Header().Set(cdslog.HeaderRequestID, requestID)
 
 		h(w, r)
 	}
@@ -278,14 +275,7 @@ func (r *Router) handle(uri string, scope HandlerScope, handlers ...*service.Han
 
 		ctx = telemetry.ContextWithTelemetry(r.Background, ctx)
 
-		var requestID string
-		iRequestID := ctx.Value(cdslog.ContextLoggingRequestIDKey)
-		if iRequestID != nil {
-			if id, ok := iRequestID.(string); ok {
-				requestID = id
-			}
-		}
-
+		var requestID = cdslog.ContextValue(ctx, cdslog.RequestID)
 		dateRFC5322 := req.Header.Get("Date")
 		dateReq, err := sdk.ParseDateRFC5322(dateRFC5322)
 		if err == nil {
@@ -340,15 +330,6 @@ func (r *Router) handle(uri string, scope HandlerScope, handlers ...*service.Han
 			telemetry.Method, req.Method)
 
 		// Prepare logging fields
-		apiConsumer := getAPIConsumer(ctx)
-		if apiConsumer != nil {
-			ctx = context.WithValue(ctx, cdslog.AuthUserID, apiConsumer.AuthentifiedUserID)
-			ctx = context.WithValue(ctx, cdslog.AuthConsumerID, apiConsumer.ID)
-		}
-		session := getAuthSession(ctx)
-		if session != nil {
-			ctx = context.WithValue(ctx, cdslog.AuthSessionID, session.ID)
-		}
 		ctx = context.WithValue(ctx, cdslog.Method, req.Method)
 		ctx = context.WithValue(ctx, cdslog.Route, cleanURL)
 		ctx = context.WithValue(ctx, cdslog.RequestURI, req.RequestURI)

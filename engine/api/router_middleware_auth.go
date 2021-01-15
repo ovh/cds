@@ -15,6 +15,7 @@ import (
 	"github.com/ovh/cds/engine/api/worker"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
+	cdslog "github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk/telemetry"
 )
 
@@ -57,8 +58,25 @@ func (api *API) authMiddleware(ctx context.Context, w http.ResponseWriter, req *
 	}
 
 	// We should have a consumer in the context to validate the auth
-	if getAPIConsumer(ctx) == nil {
+	var apiConsumer = getAPIConsumer(ctx)
+	if apiConsumer == nil {
 		return ctx, sdk.WithStack(sdk.ErrUnauthorized)
+	}
+
+	// Set context values
+	if isService(ctx) {
+		ctx = context.WithValue(ctx, cdslog.AuthServiceName, apiConsumer.Service.Name)
+	} else if isWorker(ctx) {
+		ctx = context.WithValue(ctx, cdslog.AuthWorkerName, apiConsumer.Worker.Name)
+	} else {
+		ctx = context.WithValue(ctx, cdslog.AuthUsername, apiConsumer.AuthentifiedUser.Username)
+	}
+
+	ctx = context.WithValue(ctx, cdslog.AuthUserID, apiConsumer.AuthentifiedUserID)
+	ctx = context.WithValue(ctx, cdslog.AuthConsumerID, apiConsumer.ID)
+	session := getAuthSession(ctx)
+	if session != nil {
+		ctx = context.WithValue(ctx, cdslog.AuthSessionID, session.ID)
 	}
 
 	return ctx, nil

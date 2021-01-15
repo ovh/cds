@@ -113,13 +113,8 @@ type ErrorResponse struct {
 func WriteError(ctx context.Context, w http.ResponseWriter, r *http.Request, err error) {
 	httpErr := sdk.ExtractHTTPError(err)
 
-	requestID := ctx.Value(cdslog.ContextLoggingRequestIDKey)
-	if requestID != nil {
-		ctx = context.WithValue(ctx, cdslog.RequestID, requestID)
-		if s, ok := requestID.(string); ok {
-			httpErr.RequestID = s
-		}
-	}
+	requestID := cdslog.ContextValue(ctx, cdslog.RequestID)
+	httpErr.RequestID = requestID
 
 	ctx = sdk.ContextWithStacktrace(ctx, err)
 

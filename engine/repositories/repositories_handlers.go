@@ -40,9 +40,9 @@ func (s *Service) postOperationHandler() service.Handler {
 			}
 		}
 
-		requestID := ctx.Value(cdslog.ContextLoggingRequestIDKey)
+		requestID := cdslog.ContextValue(ctx, cdslog.RequestID)
 		log.Info(ctx, "setting request_id:%s on operation:%s", requestID, op.UUID)
-		op.RequestID, _ = requestID.(string)
+		op.RequestID = requestID
 
 		uuid := sdk.UUID()
 		op.UUID = uuid

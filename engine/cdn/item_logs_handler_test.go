@@ -472,4 +472,6 @@ func TestGetItemLogsStreamHandler(t *testing.T) {
 	require.Equal(t, int64(15), lines[0].Number)
 	require.Equal(t, "[EMERGENCY] message 19\n", lines[4].Value)
 	require.Equal(t, int64(19), lines[4].Number)
+
+	time.Sleep(3 * time.Second)
 }

@@ -304,11 +304,9 @@ func doRequestFromURL(ctx context.Context, db gorp.SqlExecutor, method string, c
 		}
 	}
 
-	iRequestID := ctx.Value(cdslog.ContextLoggingRequestIDKey)
-	if iRequestID != nil {
-		if requestID, ok := iRequestID.(string); ok {
-			req.Header.Set(cdslog.HeaderRequestID, requestID)
-		}
+	requestID := cdslog.ContextValue(ctx, cdslog.RequestID)
+	if requestID != "" {
+		req.Header.Set(cdslog.HeaderRequestID, requestID)
 	}
 
 	// Sign the http request with API private RSA Key
