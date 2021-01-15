@@ -82,7 +82,6 @@ func (c *CommonClient) Listen(ctx context.Context, gorts *sdk.GoRoutines) error 
 		for {
 			select {
 			case <-ctx.Done():
-				log.Debug(ctx, "websocket.Client.Listen> read in messages routine context done")
 				return
 			case m, more := <-inMessageChan:
 				if !more {
