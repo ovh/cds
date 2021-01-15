@@ -10,6 +10,7 @@ import (
 
 	"github.com/go-gorp/gorp"
 	"github.com/gorilla/mux"
+	"github.com/rockbears/log"
 
 	"github.com/ovh/cds/engine/api/authentication"
 	workerauth "github.com/ovh/cds/engine/api/authentication/worker"
@@ -18,7 +19,6 @@ import (
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 )
 
 func (api *API) postRegisterWorkerHandler() service.Handler {
@@ -84,7 +84,7 @@ func (api *API) postRegisterWorkerHandler() service.Handler {
 			)
 		}
 
-		log.Debug("New worker: [%s] - %s", wk.ID, wk.Name)
+		log.Debug(ctx, "New worker: [%s] - %s", wk.ID, wk.Name)
 
 		workerSession, err := authentication.NewSession(ctx, tx, workerConsumer, workerauth.SessionDuration, false)
 		if err != nil {
@@ -107,7 +107,7 @@ func (api *API) postRegisterWorkerHandler() service.Handler {
 		}
 
 		// Set the JWT token as a header
-		log.Debug("worker.registerWorkerHandler> X-CDS-JWT:%s", sdk.StringFirstN(jwt, 12))
+		log.Debug(ctx, "worker.registerWorkerHandler> X-CDS-JWT:%s", sdk.StringFirstN(jwt, 12))
 		w.Header().Add("X-CDS-JWT", jwt)
 
 		// Return worker info to worker itself
@@ -242,7 +242,7 @@ func (api *API) workerWaitingHandler() service.Handler {
 		}
 
 		if wk.Status != sdk.StatusChecking && wk.Status != sdk.StatusBuilding {
-			log.Debug("workerWaitingHandler> Worker %s cannot be Waiting. Current status: %s", wk.Name, wk.Status)
+			log.Debug(ctx, "workerWaitingHandler> Worker %s cannot be Waiting. Current status: %s", wk.Name, wk.Status)
 			return nil
 		}
 
@@ -275,7 +275,7 @@ func DisableWorker(ctx context.Context, db *gorp.DbMap, id string, maxLogSize in
 	var st, name string
 	var jobID sql.NullInt64
 	if err := tx.QueryRow(query, id).Scan(&name, &st, &jobID); err != nil {
-		log.Debug("DisableWorker[%s]> Cannot lock worker: %v", id, err)
+		log.Debug(ctx, "DisableWorker[%s]> Cannot lock worker: %v", id, err)
 		return nil
 	}
 
@@ -285,7 +285,7 @@ func DisableWorker(ctx context.Context, db *gorp.DbMap, id string, maxLogSize in
 		wNodeJob, errL := workflow.LoadNodeJobRun(ctx, tx, nil, jobID.Int64)
 		if errL == nil && wNodeJob.Retry < 3 {
 			if err := workflow.RestartWorkflowNodeJob(context.TODO(), db, *wNodeJob, maxLogSize); err != nil {
-				log.Warning(ctx, "DisableWorker[%s]> Cannot restart workflow node run: %v", name, err)
+				log.Warn(ctx, "DisableWorker[%s]> Cannot restart workflow node run: %v", name, err)
 			} else {
 				log.Info(ctx, "DisableWorker[%s]> WorkflowNodeRun %d restarted after crash", name, jobID.Int64)
 			}

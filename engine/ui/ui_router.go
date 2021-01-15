@@ -12,11 +12,11 @@ import (
 
 	"github.com/ovh/cds/engine/api"
 	"github.com/ovh/cds/engine/service"
-	"github.com/ovh/cds/sdk/log"
+	"github.com/rockbears/log"
 )
 
 func (s *Service) initRouter(ctx context.Context) {
-	log.Debug("ui> Router initialized")
+	log.Debug(ctx, "ui> Router initialized")
 	r := s.Router
 	r.Background = ctx
 	r.URL = s.Cfg.URL

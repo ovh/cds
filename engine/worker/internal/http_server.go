@@ -10,9 +10,9 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
+	"github.com/rockbears/log"
 
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 )
 
 func returnHTTPError(ctx context.Context, w http.ResponseWriter, code int, e error) {
@@ -26,7 +26,7 @@ func returnHTTPError(ctx context.Context, w http.ResponseWriter, code int, e err
 
 func LogMiddleware(h http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		log.Debug("[Worker HTTP Server] " + r.Method + " " + r.URL.String())
+		log.Debug(context.TODO(), "[Worker HTTP Server] "+r.Method+" "+r.URL.String())
 		h(w, r)
 	}
 }

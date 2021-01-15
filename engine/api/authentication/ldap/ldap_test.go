@@ -5,11 +5,11 @@ import (
 	"strconv"
 	"testing"
 
+	"github.com/rockbears/log"
 	"github.com/stretchr/testify/require"
 
 	"github.com/ovh/cds/engine/test"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 )
 
 /*
@@ -31,7 +31,7 @@ import (
 */
 
 func TestGetUserInfo(t *testing.T) {
-	log.SetLogger(t)
+	log.Factory = log.NewTestingWrapper(t)
 	cfg := test.LoadTestingConf(t, sdk.TypeAPI)
 	ldapConfig := Config{
 		RootDN:          cfg["ldapRootDN"],

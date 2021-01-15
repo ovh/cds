@@ -7,8 +7,9 @@ import (
 	"net/url"
 	"strings"
 
+	"github.com/rockbears/log"
+
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 )
 
 // Commits returns the commits list on a branch between a commit SHA (since) until another commit SHA (until). The branch is given by the branch of the first commit SHA (since)
@@ -84,7 +85,7 @@ func (client *bitbucketcloudClient) Commit(ctx context.Context, repo, hash strin
 	url := fmt.Sprintf("/repositories/%s/commit/%s", repo, hash)
 	status, body, _, err := client.get(url)
 	if err != nil {
-		log.Warning(ctx, "bitbucketcloudClient.Commit> Error %s", err)
+		log.Warn(ctx, "bitbucketcloudClient.Commit> Error %s", err)
 		return commit, err
 	}
 	if status >= 400 {
@@ -92,7 +93,7 @@ func (client *bitbucketcloudClient) Commit(ctx context.Context, repo, hash strin
 	}
 	var c Commit
 	if err := json.Unmarshal(body, &c); err != nil {
-		log.Warning(ctx, "bitbucketcloudClient.Commit> Unable to parse bitbucket cloud commit: %s", err)
+		log.Warn(ctx, "bitbucketcloudClient.Commit> Unable to parse bitbucket cloud commit: %s", err)
 		return sdk.VCSCommit{}, err
 	}
 

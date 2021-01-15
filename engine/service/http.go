@@ -13,11 +13,12 @@ import (
 	"sync"
 	"time"
 
+	"github.com/rockbears/log"
 	"gopkg.in/spacemonkeygo/httpsig.v0"
 
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
-	"github.com/ovh/cds/sdk/log"
+	cdslog "github.com/ovh/cds/sdk/log"
 )
 
 // Handler defines the HTTP handler used in CDS engine
@@ -111,25 +112,16 @@ type ErrorResponse struct {
 // WriteError is a helper function to return error in a language the called understand
 func WriteError(ctx context.Context, w http.ResponseWriter, r *http.Request, err error) {
 	httpErr := sdk.ExtractHTTPError(err)
-	isErrWithStack := sdk.IsErrorWithStack(err)
 
-	fields := log.Fields{}
-	if isErrWithStack {
-		fields["stack_trace"] = fmt.Sprintf("%+v", err)
-	}
+	requestID := cdslog.ContextValue(ctx, cdslog.RequestID)
+	httpErr.RequestID = requestID
+
+	ctx = sdk.ContextWithStacktrace(ctx, err)
 
 	if httpErr.Status < 500 {
-		log.InfoWithFields(ctx, fields, "%s", err)
+		log.Info(ctx, "%s", err)
 	} else {
-		log.ErrorWithFields(ctx, fields, "%s", err)
-	}
-
-	// Add request info if exists
-	iRequestID := ctx.Value(log.ContextLoggingRequestIDKey)
-	if iRequestID != nil {
-		if requestID, ok := iRequestID.(string); ok {
-			httpErr.RequestID = requestID
-		}
+		log.Error(ctx, "%s", err)
 	}
 
 	// safely ignore error returned by WriteJSON
@@ -186,7 +178,7 @@ func CheckRequestSignatureMiddleware(pubKey *rsa.PublicKey) Middleware {
 			return ctx, sdk.NewError(sdk.ErrUnauthorized, err)
 		}
 
-		log.Debug("Request has been successfully verified")
+		log.Debug(ctx, "Request has been successfully verified")
 		return ctx, nil
 	}
 }

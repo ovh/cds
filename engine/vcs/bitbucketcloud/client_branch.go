@@ -6,8 +6,9 @@ import (
 	"fmt"
 	"net/url"
 
+	"github.com/rockbears/log"
+
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 )
 
 // Branches returns list of branches for a repo
@@ -87,7 +88,7 @@ func (client *bitbucketcloudClient) Branch(ctx context.Context, fullname, theBra
 
 	var branch Branch
 	if err := json.Unmarshal(body, &branch); err != nil {
-		log.Warning(ctx, "bitbucketcloudClient.Branch> Unable to parse github branch: %s", err)
+		log.Warn(ctx, "bitbucketcloudClient.Branch> Unable to parse github branch: %s", err)
 		return nil, err
 	}
 

@@ -3,14 +3,14 @@ package cdn
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"math/rand"
 	"sync"
 	"time"
 
+	"github.com/rockbears/log"
+
 	"github.com/ovh/cds/engine/websocket"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk/telemetry"
 )
 
@@ -35,7 +35,8 @@ func (s *Service) initWebsocket() error {
 		var e sdk.CDNWSEvent
 		if err := json.Unmarshal(m, &e); err != nil {
 			err = sdk.WrapError(err, "cannot parse event from WS broker")
-			log.WarningWithFields(s.Router.Background, log.Fields{"stack_trace": fmt.Sprintf("%+v", err)}, "%s", err)
+			ctx := sdk.ContextWithStacktrace(context.TODO(), err)
+			log.Warn(ctx, err.Error())
 			return
 		}
 
@@ -57,7 +58,8 @@ func (s *Service) initWebsocket() error {
 				telemetry.Record(s.Router.Background, s.Metrics.WSClients, int64(len(s.WSServer.server.ClientIDs())))
 			case <-tickerPublish.C:
 				if err := s.sendWSEvent(ctx); err != nil {
-					log.ErrorWithFields(ctx, log.Fields{"stack_trace": fmt.Sprintf("%+v", err)}, "%s", err)
+					ctx = sdk.ContextWithStacktrace(ctx, err)
+					log.Error(ctx, err.Error())
 				}
 			}
 		}

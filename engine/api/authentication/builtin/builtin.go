@@ -4,10 +4,11 @@ import (
 	"context"
 	"time"
 
+	"github.com/rockbears/log"
+
 	"github.com/ovh/cds/engine/api/authentication"
 	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 )
 
 var _ sdk.AuthDriver = new(AuthDriver)
@@ -44,7 +45,7 @@ func (d AuthDriver) GetUserInfo(ctx context.Context, req sdk.AuthConsumerSigninR
 		return userInfo, err
 	}
 
-	log.Debug("builtin.GetUserInfo> %s", consumerID)
+	log.Debug(ctx, "builtin.GetUserInfo> %s", consumerID)
 
 	return sdk.AuthDriverUserInfo{
 		ExternalID: consumerID,

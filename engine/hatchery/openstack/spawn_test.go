@@ -6,15 +6,15 @@ import (
 
 	"github.com/gophercloud/gophercloud/openstack/compute/v2/flavors"
 	"github.com/gophercloud/gophercloud/openstack/compute/v2/servers"
+	"github.com/rockbears/log"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 )
 
 func TestHatcheryOpenstack_checkSpawnLimits_MaxWorker(t *testing.T) {
-	log.SetLogger(t)
+	log.Factory = log.NewTestingWrapper(t)
 
 	h := &HatcheryOpenstack{}
 	h.Config.Provision.MaxWorker = 3
@@ -49,7 +49,7 @@ func TestHatcheryOpenstack_checkSpawnLimits_MaxWorker(t *testing.T) {
 }
 
 func TestHatcheryOpenstack_checkSpawnLimits_MaxCPUs(t *testing.T) {
-	log.SetLogger(t)
+	log.Factory = log.NewTestingWrapper(t)
 
 	h := &HatcheryOpenstack{}
 	h.Config.Provision.MaxWorker = 10
@@ -85,7 +85,7 @@ func TestHatcheryOpenstack_checkSpawnLimits_MaxCPUs(t *testing.T) {
 }
 
 func TestHatcheryOpenstack_checkSpawnLimits_CountSmallerFlavorToKeep(t *testing.T) {
-	log.SetLogger(t)
+	log.Factory = log.NewTestingWrapper(t)
 
 	h := &HatcheryOpenstack{}
 	h.Config.Provision.MaxWorker = 10

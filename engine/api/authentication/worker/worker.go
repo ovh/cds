@@ -6,12 +6,12 @@ import (
 
 	"github.com/dgrijalva/jwt-go"
 	"github.com/go-gorp/gorp"
+	"github.com/rockbears/log"
 
 	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/hatchery"
 	"github.com/ovh/cds/sdk/jws"
-	"github.com/ovh/cds/sdk/log"
 )
 
 // SessionDuration the life time of a worker session.
@@ -30,7 +30,7 @@ func VerifyToken(ctx context.Context, db gorp.SqlExecutor, s string) (*hatchery.
 
 	claims, ok := unsafeToken.Claims.(*hatchery.WorkerJWTClaims)
 	if ok {
-		log.Debug("worker.VerifyToken> unsafe token is valid - issuer: %v expiresAt: %v", claims.Issuer, claims.StandardClaims.ExpiresAt)
+		log.Debug(ctx, "worker.VerifyToken> unsafe token is valid - issuer: %v expiresAt: %v", claims.Issuer, claims.StandardClaims.ExpiresAt)
 	} else {
 		return nil, sdk.NewErrorWithStack(err, sdk.ErrUnauthorized)
 	}
@@ -54,15 +54,15 @@ func VerifyToken(ctx context.Context, db gorp.SqlExecutor, s string) (*hatchery.
 			return publicKey, nil
 		})
 	if err != nil {
-		log.Debug("worker.VerifyToken> invalid token parse: %s", s)
+		log.Debug(ctx, "worker.VerifyToken> invalid token parse: %s", s)
 		return nil, sdk.NewErrorWithStack(err, sdk.ErrForbidden)
 	}
 
 	claims, ok = token.Claims.(*hatchery.WorkerJWTClaims)
 	if ok && token.Valid {
-		log.Debug("worker.VerifyToken> token is valid %v %v", claims.Issuer, claims.StandardClaims.ExpiresAt)
+		log.Debug(ctx, "worker.VerifyToken> token is valid %v %v", claims.Issuer, claims.StandardClaims.ExpiresAt)
 	} else {
-		log.Debug("worker.VerifyToken> invalid token: %s", s)
+		log.Debug(ctx, "worker.VerifyToken> invalid token: %s", s)
 		return nil, sdk.ErrUnauthorized
 	}
 

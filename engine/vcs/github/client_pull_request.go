@@ -10,9 +10,10 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/rockbears/log"
+
 	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 )
 
 func (g *githubClient) PullRequest(ctx context.Context, fullname string, id string) (sdk.VCSPullRequest, error) {
@@ -57,13 +58,13 @@ func (g *githubClient) PullRequest(ctx context.Context, fullname string, id stri
 
 		} else {
 			if err := json.Unmarshal(body, &pr); err != nil {
-				log.Warning(ctx, "githubClient.PullRequest> Unable to parse github pullrequest: %s", err)
+				log.Warn(ctx, "githubClient.PullRequest> Unable to parse github pullrequest: %s", err)
 				return sdk.VCSPullRequest{}, sdk.WithStack(err)
 			}
 		}
 
 		if strconv.Itoa(pr.Number) != id {
-			log.Warning(ctx, "githubClient.PullRequest> Cannot find pullrequest %s", id)
+			log.Warn(ctx, "githubClient.PullRequest> Cannot find pullrequest %s", id)
 			if err := g.Cache.Delete(cachePullRequestKey); err != nil {
 				log.Error(ctx, "githubclient.PullRequest > unable to delete cache key %v: %v", cachePullRequestKey, err)
 			}
@@ -94,7 +95,7 @@ func (g *githubClient) PullRequests(ctx context.Context, fullname string, opts s
 
 		status, body, headers, err := g.get(ctx, nextPage, githubOpts...)
 		if err != nil {
-			log.Warning(ctx, "githubClient.PullRequests> Error %s", err)
+			log.Warn(ctx, "githubClient.PullRequests> Error %s", err)
 			return nil, err
 		}
 		if status >= 400 {
@@ -118,7 +119,7 @@ func (g *githubClient) PullRequests(ctx context.Context, fullname string, opts s
 			break
 		} else {
 			if err := json.Unmarshal(body, &nextPullRequests); err != nil {
-				log.Warning(ctx, "githubClient.Branches> Unable to parse github branches: %s", err)
+				log.Warn(ctx, "githubClient.Branches> Unable to parse github branches: %s", err)
 				return nil, err
 			}
 		}
@@ -161,7 +162,7 @@ func (g *githubClient) PullRequests(ctx context.Context, fullname string, opts s
 // PullRequestComment push a new comment on a pull request
 func (g *githubClient) PullRequestComment(ctx context.Context, repo string, prReq sdk.VCSPullRequestCommentRequest) error {
 	if g.DisableStatus {
-		log.Warning(ctx, "github.PullRequestComment>  ⚠ Github statuses are disabled")
+		log.Warn(ctx, "github.PullRequestComment>  ⚠ Github statuses are disabled")
 		return nil
 	}
 
@@ -180,7 +181,7 @@ func (g *githubClient) PullRequestComment(ctx context.Context, repo string, prRe
 		"body": prReq.Message,
 	}
 	values, _ := json.Marshal(payload)
-	res, err := g.post(path, "application/json", bytes.NewReader(values), &postOptions{skipDefaultBaseURL: false, asUser: true})
+	res, err := g.post(ctx, path, "application/json", bytes.NewReader(values), &postOptions{skipDefaultBaseURL: false, asUser: true})
 	if err != nil {
 		return sdk.WrapError(err, "Unable to post status")
 	}
@@ -192,7 +193,7 @@ func (g *githubClient) PullRequestComment(ctx context.Context, repo string, prRe
 		return sdk.WrapError(err, "Unable to read body")
 	}
 
-	log.Debug("%v", string(body))
+	log.Debug(ctx, "%v", string(body))
 
 	if res.StatusCode != 201 {
 		return sdk.WrapError(err, "Unable to create status on github. Status code : %d - Body: %s", res.StatusCode, body)
@@ -219,7 +220,7 @@ func (g *githubClient) PullRequestCreate(ctx context.Context, repo string, pr sd
 		"base":  pr.Base.Branch.DisplayID,
 	}
 	values, _ := json.Marshal(payload)
-	res, err := g.post(path, "application/json", bytes.NewReader(values), &postOptions{skipDefaultBaseURL: false, asUser: true})
+	res, err := g.post(ctx, path, "application/json", bytes.NewReader(values), &postOptions{skipDefaultBaseURL: false, asUser: true})
 	if err != nil {
 		return sdk.VCSPullRequest{}, sdk.WrapError(err, "Unable to post status")
 	}

@@ -22,12 +22,7 @@ import (
 	"github.com/ovh/cds/engine/api/authentication"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/jws"
-	"github.com/ovh/cds/sdk/log"
 )
-
-func init() {
-	log.Initialize(context.TODO(), &log.Conf{Level: "debug"})
-}
 
 func InitWebsocketTestServer(t *testing.T) *httptest.Server {
 	upgrader := websocket.Upgrader{}

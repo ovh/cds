@@ -8,11 +8,11 @@ import (
 	"sync"
 	"time"
 
+	"github.com/rockbears/log"
 	"github.com/spf13/afero"
 
 	"github.com/ovh/cds/engine/worker/pkg/workerruntime"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 )
 
 func RunArtifactUpload(ctx context.Context, wk workerruntime.Runtime, a sdk.Action, secrets []sdk.Variable) (sdk.Result, error) {
@@ -78,11 +78,11 @@ func RunArtifactUpload(ctx context.Context, wk workerruntime.Runtime, a sdk.Acti
 	wg.Add(len(filesPath))
 	for _, p := range filesPath {
 		go func(path string) {
-			log.Debug("worker.RunArtifactUpload> Uploading %s projectKey:%v integrationName:%v job:%d", path, projectKey, integrationName, jobID)
+			log.Debug(ctx, "worker.RunArtifactUpload> Uploading %s projectKey:%v integrationName:%v job:%d", path, projectKey, integrationName, jobID)
 			defer wg.Done()
 			throughTempURL, duration, err := wk.Client().QueueArtifactUpload(ctx, projectKey, integrationName, jobID, tag.Value, path)
 			if err != nil {
-				log.Warning(ctx, "worker.RunArtifactUpload> QueueArtifactUpload(%s, %s, %d, %s, %s) failed: %v", projectKey, integrationName, jobID, tag.Value, path, err)
+				log.Warn(ctx, "worker.RunArtifactUpload> QueueArtifactUpload(%s, %s, %d, %s, %s) failed: %v", projectKey, integrationName, jobID, tag.Value, path, err)
 				chanError <- sdk.WrapError(err, "Error while uploading artifact %s", path)
 				wgErrors.Add(1)
 				return

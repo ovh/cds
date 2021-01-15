@@ -14,13 +14,13 @@ import (
 
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gorilla/mux"
+	"github.com/rockbears/log"
 	"github.com/sirupsen/logrus"
 
 	"github.com/ovh/cds/engine/api"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
-	"github.com/ovh/cds/sdk/log"
 )
 
 // New instanciates a new hatchery local
@@ -117,7 +117,7 @@ func (h *HatcheryLocal) CheckConfiguration(cfg interface{}) error {
 func (h *HatcheryLocal) Serve(ctx context.Context) error {
 	h.BasedirDedicated = filepath.Dir(filepath.Join(h.Config.Basedir, h.Configuration().Name))
 	if ok, err := sdk.DirectoryExists(h.BasedirDedicated); !ok {
-		log.Debug("creating directory %s", h.BasedirDedicated)
+		log.Debug(ctx, "creating directory %s", h.BasedirDedicated)
 		if err := os.MkdirAll(h.BasedirDedicated, 0700); err != nil {
 			return sdk.WrapError(err, "error while creating directory %s", h.BasedirDedicated)
 		}
@@ -135,7 +135,7 @@ func (h *HatcheryLocal) Serve(ctx context.Context) error {
 func (h *HatcheryLocal) downloadWorker() error {
 	urlBinary := h.Client.DownloadURLFromAPI("worker", sdk.GOOS, sdk.GOARCH, "")
 
-	log.Debug("Downloading worker binary from %s", urlBinary)
+	log.Debug(context.TODO(), "Downloading worker binary from %s", urlBinary)
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Minute)
 	defer cancel()
 
@@ -151,13 +151,13 @@ func (h *HatcheryLocal) downloadWorker() error {
 	workerFullPath := path.Join(h.BasedirDedicated, h.getWorkerBinaryName())
 
 	if _, err := os.Stat(workerFullPath); err == nil {
-		log.Debug("removing existing worker binary from %s", workerFullPath)
+		log.Debug(ctx, "removing existing worker binary from %s", workerFullPath)
 		if err := os.Remove(workerFullPath); err != nil {
 			return sdk.WrapError(err, "error while removing existing worker binary %s", workerFullPath)
 		}
 	}
 
-	log.Debug("copy worker binary into %s", workerFullPath)
+	log.Debug(ctx, "copy worker binary into %s", workerFullPath)
 	fp, err := os.OpenFile(workerFullPath, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0700)
 	if err != nil {
 		return sdk.WithStack(err)
@@ -190,23 +190,23 @@ func (h *HatcheryLocal) CanSpawn(ctx context.Context, _ *sdk.Model, jobID int64,
 	for _, r := range requirements {
 		ok, err := h.checkRequirement(r)
 		if err != nil || !ok {
-			log.Debug("CanSpawn false hatchery.checkRequirement ok:%v err:%v r:%v", ok, err, r)
+			log.Debug(ctx, "CanSpawn false hatchery.checkRequirement ok:%v err:%v r:%v", ok, err, r)
 			return false
 		}
 	}
 
 	for _, r := range requirements {
 		if r.Type == sdk.ServiceRequirement || r.Type == sdk.MemoryRequirement {
-			log.Debug("CanSpawn false service or memory")
+			log.Debug(ctx, "CanSpawn false service or memory")
 			return false
 		}
 
 		if r.Type == sdk.OSArchRequirement && r.Value != (runtime.GOOS+"/"+runtime.GOARCH) {
-			log.Debug("CanSpawn> job %d cannot spawn on this OSArch.", jobID)
+			log.Debug(ctx, "CanSpawn> job %d cannot spawn on this OSArch.", jobID)
 			return false
 		}
 	}
-	log.Debug("CanSpawn true for job %d", jobID)
+	log.Debug(ctx, "CanSpawn true for job %d", jobID)
 	return true
 }
 
@@ -256,7 +256,7 @@ func (h *HatcheryLocal) routines(ctx context.Context) {
 		case <-ticker.C:
 			h.GoRoutines.Exec(ctx, "local-killAwolWorkers", func(ctx context.Context) {
 				if err := h.killAwolWorkers(); err != nil {
-					log.Warning(ctx, "Cannot kill awol workers: %s", err)
+					log.Warn(ctx, "Cannot kill awol workers: %s", err)
 				}
 			})
 			h.GoRoutines.Exec(ctx, "local-refreshCDNConfiguration", func(ctx context.Context) {
@@ -282,7 +282,7 @@ func (h *HatcheryLocal) localWorkerIndexCleanup() {
 	for name, workerCmd := range h.workers {
 		// check if worker is still alive
 		if workerCmd.cmd.ProcessState != nil && workerCmd.cmd.ProcessState.Exited() {
-			log.Debug("process %s has been removed", name)
+			log.Debug(context.TODO(), "process %s has been removed", name)
 			needToDeleteWorkers = append(needToDeleteWorkers, name)
 		}
 	}
@@ -317,7 +317,7 @@ func (h *HatcheryLocal) killAwolWorkers() error {
 		if w, ok := mAPIWorkers[name]; !ok {
 			// if no name on api, and worker create less than 10 seconds, don't kill it
 			if time.Now().Unix()-10 < workerCmd.created.Unix() {
-				log.Debug("killAwolWorkers> Avoid killing baby worker %s born at %s", name, workerCmd.created)
+				log.Debug(ctx, "killAwolWorkers> Avoid killing baby worker %s born at %s", name, workerCmd.created)
 				continue
 			}
 			log.Info(ctx, "Killing AWOL worker %s", name)
@@ -329,7 +329,7 @@ func (h *HatcheryLocal) killAwolWorkers() error {
 
 		if kill {
 			if err := h.killWorker(ctx, name, workerCmd); err != nil {
-				log.Warning(ctx, "Error killing worker %s :%s", name, err)
+				log.Warn(ctx, "Error killing worker %s :%s", name, err)
 			}
 			killedWorkers = append(killedWorkers, name)
 		}
@@ -347,7 +347,7 @@ func (h *HatcheryLocal) checkRequirement(r sdk.Requirement) (bool, error) {
 	switch r.Type {
 	case sdk.BinaryRequirement:
 		if _, err := exec.LookPath(r.Value); err != nil {
-			log.Debug("checkRequirement> %v not in path", r.Value)
+			log.Debug(context.TODO(), "checkRequirement> %v not in path", r.Value)
 			// Return nil because the error contains 'Exit status X', that's what we wanted
 			return false, nil
 		}
@@ -356,7 +356,7 @@ func (h *HatcheryLocal) checkRequirement(r sdk.Requirement) (bool, error) {
 		return true, nil
 	case sdk.RegionRequirement:
 		if r.Value != h.Configuration().Provision.Region {
-			log.Debug("checkRequirement> job with region requirement: cannot spawn. hatchery-region:%s prerequisite:%s", h.Configuration().Provision.Region, r.Value)
+			log.Debug(context.TODO(), "checkRequirement> job with region requirement: cannot spawn. hatchery-region:%s prerequisite:%s", h.Configuration().Provision.Region, r.Value)
 			return false, nil
 		}
 		return true, nil
@@ -373,7 +373,7 @@ func (h *HatcheryLocal) checkRequirement(r sdk.Requirement) (bool, error) {
 		}
 		return h == r.Value, nil
 	default:
-		log.Debug("checkRequirement> %v don't work on this hatchery", r.Type)
+		log.Debug(context.TODO(), "checkRequirement> %v don't work on this hatchery", r.Type)
 		return false, nil
 	}
 }

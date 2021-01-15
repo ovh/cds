@@ -1,4 +1,4 @@
-package log
+package cdslog
 
 import (
 	"context"
@@ -9,6 +9,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/rockbears/log"
 	"github.com/sirupsen/logrus"
 
 	"github.com/ovh/cds/sdk/log/hook"
@@ -17,6 +18,7 @@ import (
 // Conf contains log configuration
 type Conf struct {
 	Level                      string
+	Format                     string
 	GraylogHost                string
 	GraylogPort                string
 	GraylogProtocol            string
@@ -30,17 +32,13 @@ type Conf struct {
 }
 
 const (
-	HeaderRequestID            = "Request-ID"
-	ContextLoggingRequestIDKey = "ctx-logging-request-id"
-	ContextLoggingFuncKey      = "ctx-logging-func"
-
+	HeaderRequestID      = "Request-ID"
 	ExtraFieldSignature  = "Signature"
 	ExtraFieldLine       = "Line"
 	ExtraFieldTerminated = "Terminated"
 )
 
 var (
-	logger      Logger
 	graylogHook *hook.Hook
 )
 
@@ -86,31 +84,6 @@ func (t *TestingLogger) Fatalf(fmt string, values ...interface{}) {
 	t.t.Fatalf(fmt, values...)
 }
 
-// SetLogger replace logrus logger with custom one.
-func SetLogger(l Logger) {
-	t, isTesting := l.(*testing.T)
-	if isTesting {
-		logger = &TestingLogger{t: t}
-		return
-	}
-	logger = l
-}
-
-func logWithLogger(level string, fields Fields, format string, values ...interface{}) {
-	var fString string
-	for k, m := range fields {
-		if k != "stack_trace" {
-			fString = fmt.Sprintf("%s %s:%v", fString, k, m)
-		}
-	}
-	logger.Logf("["+level+"] "+format+fString, values...)
-	if fields != nil {
-		if v, ok := fields["stack_trace"]; ok {
-			logger.Logf("%s", v)
-		}
-	}
-}
-
 // Initialize init log level
 func Initialize(ctx context.Context, conf *Conf) {
 	switch conf.Level {
@@ -125,160 +98,77 @@ func Initialize(ctx context.Context, conf *Conf) {
 	default:
 		logrus.SetLevel(logrus.InfoLevel)
 	}
-	logrus.SetFormatter(&CDSFormatter{})
+
+	switch conf.Format {
+	case "discard":
+		logrus.SetOutput(ioutil.Discard)
+	case "json":
+		logrus.SetFormatter(&logrus.JSONFormatter{})
+	case "default":
+		logrus.SetFormatter(&CDSFormatter{})
+	}
 
 	if conf.GraylogHost != "" && conf.GraylogPort != "" {
-		graylogcfg := &hook.Config{
-			Addr:      fmt.Sprintf("%s:%s", conf.GraylogHost, conf.GraylogPort),
-			Protocol:  conf.GraylogProtocol,
-			TLSConfig: &tls.Config{ServerName: conf.GraylogHost},
-		}
-
-		extra := map[string]interface{}{}
-		if conf.GraylogExtraKey != "" && conf.GraylogExtraValue != "" {
-			keys := strings.Split(conf.GraylogExtraKey, ",")
-			values := strings.Split(conf.GraylogExtraValue, ",")
-			if len(keys) != len(values) {
-				logrus.Errorf("Error while initialize log: extraKey (len:%d) does not have same corresponding number of values on extraValue (len:%d)", len(keys), len(values))
-			} else {
-				for i := range keys {
-					extra[keys[i]] = values[i]
-				}
-			}
-		}
-
-		if conf.GraylogFieldCDSServiceName != "" {
-			extra["CDSName"] = conf.GraylogFieldCDSServiceName
-		}
-		if conf.GraylogFieldCDSServiceName != "" {
-			extra["CDSService"] = conf.GraylogFieldCDSServiceType
-		}
-		if conf.GraylogFieldCDSVersion != "" {
-			extra["CDSVersion"] = conf.GraylogFieldCDSVersion
-		}
-		if conf.GraylogFieldCDSOS != "" {
-			extra["CDSOS"] = conf.GraylogFieldCDSOS
-		}
-		if conf.GraylogFieldCDSArch != "" {
-			extra["CDSArch"] = conf.GraylogFieldCDSArch
-		}
-
-		// no need to check error here
-		hostname, _ := os.Hostname()
-		extra["CDSHostname"] = hostname
-
-		var errhook error
-		graylogHook, errhook = hook.NewHook(ctx, graylogcfg, extra)
-
-		if errhook != nil {
-			logrus.Errorf("Error while initialize graylog hook: %v", errhook)
-		} else {
-			logrus.AddHook(graylogHook)
-			logrus.SetOutput(ioutil.Discard)
+		if err := initGraylokHook(ctx, conf); err != nil {
+			logrus.Error(err)
 		}
 	}
+}
+
+func initGraylokHook(ctx context.Context, conf *Conf) error {
+	graylogcfg := &hook.Config{
+		Addr:      fmt.Sprintf("%s:%s", conf.GraylogHost, conf.GraylogPort),
+		Protocol:  conf.GraylogProtocol,
+		TLSConfig: &tls.Config{ServerName: conf.GraylogHost},
+	}
+
+	extra := map[string]interface{}{}
+	if conf.GraylogExtraKey != "" && conf.GraylogExtraValue != "" {
+		keys := strings.Split(conf.GraylogExtraKey, ",")
+		values := strings.Split(conf.GraylogExtraValue, ",")
+		if len(keys) != len(values) {
+			return fmt.Errorf("Error while initialize log: extraKey (len:%d) does not have same corresponding number of values on extraValue (len:%d)", len(keys), len(values))
+		} else {
+			for i := range keys {
+				extra[keys[i]] = values[i]
+			}
+		}
+	}
+
+	if conf.GraylogFieldCDSServiceName != "" {
+		extra["CDSName"] = conf.GraylogFieldCDSServiceName
+	}
+	if conf.GraylogFieldCDSServiceName != "" {
+		extra["CDSService"] = conf.GraylogFieldCDSServiceType
+	}
+	if conf.GraylogFieldCDSVersion != "" {
+		extra["CDSVersion"] = conf.GraylogFieldCDSVersion
+	}
+	if conf.GraylogFieldCDSOS != "" {
+		extra["CDSOS"] = conf.GraylogFieldCDSOS
+	}
+	if conf.GraylogFieldCDSArch != "" {
+		extra["CDSArch"] = conf.GraylogFieldCDSArch
+	}
+
+	// no need to check error here
+	hostname, _ := os.Hostname()
+	extra["CDSHostname"] = hostname
+
+	var err error
+	graylogHook, err = hook.NewHook(ctx, graylogcfg, extra)
+	if err != nil {
+		return fmt.Errorf("unable to initialize graylog hook: %v", err)
+	}
+	logrus.AddHook(graylogHook)
 
 	go func() {
 		<-ctx.Done()
-		Info(ctx, "Draining logs...")
-		if graylogHook != nil {
-			graylogHook.Flush()
-		}
+		log.Info(ctx, "Draining logs...")
+		graylogHook.Flush()
 	}()
-}
 
-// Debug prints debug log
-func Debug(format string, values ...interface{}) {
-	if logger != nil {
-		logWithLogger("DEBUG", nil, format, values...)
-		return
-	}
-	logrus.Debugf(format, values...)
-}
-
-// InfoWithoutCtx prints information logrus.
-func InfoWithoutCtx(format string, values ...interface{}) {
-	Info(context.Background(), format, values...)
-}
-
-// Info prints information logrus.
-func Info(ctx context.Context, format string, values ...interface{}) {
-	InfoWithFields(ctx, nil, format, values...)
-}
-
-// InfoWithFields print info log with given logrus fields.
-func InfoWithFields(ctx context.Context, fields Fields, format string, values ...interface{}) {
-	if logger != nil {
-		logWithLogger("INFO", fields, format, values...)
-		return
-	}
-	newEntry(ctx, fields).Infof(format, values...)
-}
-
-// Warning prints warnings logrus.
-func Warning(ctx context.Context, format string, values ...interface{}) {
-	WarningWithFields(ctx, nil, format, values...)
-}
-
-// WarningWithFields print warning log with given logrus fields.
-func WarningWithFields(ctx context.Context, fields Fields, format string, values ...interface{}) {
-	if logger != nil {
-		logWithLogger("WARN", fields, format, values...)
-		return
-	}
-	newEntry(ctx, fields).Warningf(format, values...)
-}
-
-// Error prints error logrus.
-func Error(ctx context.Context, format string, values ...interface{}) {
-	ErrorWithFields(ctx, nil, format, values...)
-}
-
-// ErrorWithFields print error log with given logrus fields.
-func ErrorWithFields(ctx context.Context, fields Fields, format string, values ...interface{}) {
-	if logger != nil {
-		logWithLogger("ERROR", fields, format, values...)
-		return
-	}
-	newEntry(ctx, fields).Errorf(format, values...)
-}
-
-// Fatalf prints fatal informations, then os.Exit(1)
-func Fatalf(format string, values ...interface{}) {
-	if logger != nil {
-		logWithLogger("FATAL", nil, format, values...)
-		return
-	}
-	logrus.Fatalf(format, values...)
-}
-
-func newEntry(ctx context.Context, fields Fields) *logrus.Entry {
-	entry := logrus.NewEntry(logrus.StandardLogger())
-	if fields != nil {
-		entry = entry.WithFields(logrus.Fields(fields))
-	}
-	if ctx == nil {
-		return entry
-	}
-
-	// Add request info if exists
-	iRequestID := ctx.Value(ContextLoggingRequestIDKey)
-	if iRequestID != nil {
-		if requestID, ok := iRequestID.(string); ok {
-			entry = entry.WithField("request_id", requestID)
-		}
-	}
-
-	// If a logging func exists in context, execute it
-	iFunc := ctx.Value(ContextLoggingFuncKey)
-	if iFunc != nil {
-		if f, ok := iFunc.(func(ctx context.Context) logrus.Fields); ok {
-			contextFields := f(ctx)
-			entry = entry.WithFields(contextFields)
-		}
-	}
-
-	return entry
+	return nil
 }
 
 type Message struct {

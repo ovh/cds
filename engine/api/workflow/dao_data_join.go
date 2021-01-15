@@ -1,10 +1,12 @@
 package workflow
 
 import (
+	"context"
+
 	"github.com/go-gorp/gorp"
+	"github.com/rockbears/log"
 
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 )
 
 func insertNodeJoinData(db gorp.SqlExecutor, w *sdk.Workflow, n *sdk.Node) error {
@@ -22,9 +24,9 @@ func insertNodeJoinData(db gorp.SqlExecutor, w *sdk.Workflow, n *sdk.Node) error
 		if foundRef == nil {
 			return sdk.WrapError(sdk.ErrWorkflowNodeRef, "insertNodeJoinData> Invalid joins references %s", j.ParentName)
 		}
-		log.Debug("insertNodeJoinData> Found reference %s: %d", j.ParentName, foundRef.ID)
+		log.Debug(context.TODO(), "insertNodeJoinData> Found reference %s: %d", j.ParentName, foundRef.ID)
 		if foundRef.ID == 0 {
-			log.Debug("insertNodeJoinData> insertreference node (%d) %s", foundRef.ID, foundRef.Name)
+			log.Debug(context.TODO(), "insertNodeJoinData> insertreference node (%d) %s", foundRef.ID, foundRef.Name)
 			if errN := insertNodeData(db, w, foundRef, true); errN != nil {
 				return sdk.WrapError(errN, "insertNodeJoinData> Unable to insert or update source node %s", foundRef.Name)
 			}

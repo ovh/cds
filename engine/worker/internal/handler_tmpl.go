@@ -7,10 +7,11 @@ import (
 	"net/http"
 	"os"
 
+	"github.com/rockbears/log"
+
 	"github.com/ovh/cds/engine/worker/pkg/workerruntime"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/interpolate"
-	"github.com/ovh/cds/sdk/log"
 )
 
 func tmplHandler(ctx context.Context, wk *CurrentWorker) http.HandlerFunc {

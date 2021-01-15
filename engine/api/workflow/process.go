@@ -5,8 +5,9 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/rockbears/log"
+
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk/luascript"
 )
 
@@ -46,7 +47,7 @@ func checkCondition(ctx context.Context, wr *sdk.WorkflowRun, conditions sdk.Wor
 	} else {
 		luacheck, err := luascript.NewCheck()
 		if err != nil {
-			log.Warning(ctx, "processWorkflowNodeRun> WorkflowCheckConditions error: %s", err)
+			log.Warn(ctx, "processWorkflowNodeRun> WorkflowCheckConditions error: %s", err)
 			AddWorkflowRunInfo(wr, sdk.SpawnMsgNew(*sdk.MsgWorkflowError, fmt.Sprintf("Error init LUA System: %v", err)))
 		}
 		luacheck.SetVariables(sdk.ParametersToMap(params))
@@ -54,7 +55,7 @@ func checkCondition(ctx context.Context, wr *sdk.WorkflowRun, conditions sdk.Wor
 		conditionsOK = luacheck.Result
 	}
 	if errc != nil {
-		log.Warning(ctx, "processWorkflowNodeRun> WorkflowCheckConditions error: %s", errc)
+		log.Warn(ctx, "processWorkflowNodeRun> WorkflowCheckConditions error: %s", errc)
 		AddWorkflowRunInfo(wr, sdk.SpawnMsgNew(*sdk.MsgWorkflowError, fmt.Sprintf("Error on LUA Condition: %v", errc)))
 		return false
 	}

@@ -5,6 +5,8 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/rockbears/log"
+
 	"github.com/ovh/cds/engine/api/authentication"
 	"github.com/ovh/cds/engine/api/authentication/local"
 	"github.com/ovh/cds/engine/api/group"
@@ -13,7 +15,6 @@ import (
 	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 )
 
 // postAuthLocalSignupHandler creates a new registration that need to be verified to create a new user.
@@ -112,7 +113,7 @@ func initBuiltinConsumersFromStartupConfig(ctx context.Context, tx gorpmapper.Sq
 		return sdk.NewErrorWithStack(err, sdk.NewErrorFrom(sdk.ErrWrongRequest, "invalid given init token"))
 	}
 
-	log.Warning(ctx, "Magic token detected !: %s", initToken)
+	log.Warn(ctx, "Magic token detected !: %s", initToken)
 
 	if startupConfig.IAT == 0 || startupConfig.IAT > time.Now().Unix() {
 		return sdk.NewErrorFrom(sdk.ErrWrongRequest, "invalid given init token, issued at value should be set and can not be in the future")
@@ -411,7 +412,7 @@ func (api *API) postAuthLocalAskResetHandler() service.Handler {
 		if err != nil {
 			// If there is no contact for given email, return ok to prevent email exploration
 			if sdk.ErrorIs(err, sdk.ErrNotFound) {
-				log.Warning(ctx, "api.postAuthLocalAskResetHandler> no contact found for email %s: %v", email, err)
+				log.Warn(ctx, "api.postAuthLocalAskResetHandler> no contact found for email %s: %v", email, err)
 				return service.WriteJSON(w, nil, http.StatusOK)
 			}
 			return err

@@ -8,13 +8,13 @@ import (
 	"strings"
 
 	"github.com/fsamin/go-dump"
+	"github.com/rockbears/log"
 
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk/telemetry"
 )
 
@@ -164,7 +164,7 @@ func hookRegistration(ctx context.Context, db gorpmapper.SqlExecutorWithTx, stor
 			return err
 		}
 		hookToUpdate[h.UUID] = *h
-		log.Debug("workflow.hookrRegistration> following hook must be updated: %+v", h)
+		log.Debug(ctx, "workflow.hookrRegistration> following hook must be updated: %+v", h)
 	}
 
 	if len(hookToUpdate) > 0 {
@@ -188,7 +188,7 @@ func hookRegistration(ctx context.Context, db gorpmapper.SqlExecutorWithTx, stor
 			}
 			v, ok := h.Config[sdk.HookConfigWebHookID]
 			if h.IsRepositoryWebHook() {
-				log.Debug("workflow.hookRegistration> managing vcs configuration: %+v", h)
+				log.Debug(ctx, "workflow.hookRegistration> managing vcs configuration: %+v", h)
 			}
 			if h.IsRepositoryWebHook() && h.Config["vcsServer"].Value != "" {
 				if !ok || v.Value == "" {
@@ -201,7 +201,7 @@ func hookRegistration(ctx context.Context, db gorpmapper.SqlExecutorWithTx, stor
 						// hook not found on VCS, perhaps manually deleted on vcs
 						// we try to create a new hook
 						if sdk.ErrorIs(err, sdk.ErrNotFound) {
-							log.Warning(ctx, "hook %s not found on %s/%s", v.Value, h.Config["vcsServer"].Value, h.Config["repoFullName"].Value)
+							log.Warn(ctx, "hook %s not found on %s/%s", v.Value, h.Config["vcsServer"].Value, h.Config["repoFullName"].Value)
 							if err := createVCSConfiguration(ctx, db, store, proj, h); err != nil {
 								return err
 							}
@@ -293,7 +293,7 @@ func createVCSConfiguration(ctx context.Context, db gorpmapper.SqlExecutorWithTx
 	// Call VCS to know if repository allows webhook and get the configuration fields
 	projectVCSServer, err := repositoriesmanager.LoadProjectVCSServerLinkByProjectKeyAndVCSServerName(ctx, db, proj.Key, h.Config["vcsServer"].Value)
 	if err != nil {
-		log.Debug("createVCSConfiguration> No vcsServer found: %v", err)
+		log.Debug(ctx, "createVCSConfiguration> No vcsServer found: %v", err)
 		return nil
 	}
 
@@ -357,7 +357,7 @@ func updateVCSConfiguration(ctx context.Context, db gorpmapper.SqlExecutorWithTx
 	// Call VCS to know if repository allows webhook and get the configuration fields
 	projectVCSServer, err := repositoriesmanager.LoadProjectVCSServerLinkByProjectKeyAndVCSServerName(ctx, db, proj.Key, h.Config["vcsServer"].Value)
 	if err != nil {
-		log.Debug("createVCSConfiguration> No vcsServer found: %v", err)
+		log.Debug(ctx, "createVCSConfiguration> No vcsServer found: %v", err)
 		return nil
 	}
 

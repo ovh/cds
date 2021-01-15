@@ -3,12 +3,13 @@ package elasticsearch
 import (
 	"context"
 
+	"github.com/rockbears/log"
+
 	"github.com/ovh/cds/engine/service"
-	"github.com/ovh/cds/sdk/log"
 )
 
 func (s *Service) initRouter(ctx context.Context) {
-	log.Debug("Repositories> Router initialized")
+	log.Debug(ctx, "Repositories> Router initialized")
 	r := s.Router
 	r.Background = ctx
 	r.URL = s.Cfg.URL

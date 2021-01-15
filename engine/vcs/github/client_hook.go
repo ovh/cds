@@ -10,9 +10,10 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/rockbears/log"
+
 	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 )
 
 func (g *githubClient) CreateHook(ctx context.Context, repo string, hook *sdk.VCSHook) error {
@@ -41,7 +42,7 @@ func (g *githubClient) CreateHook(ctx context.Context, repo string, hook *sdk.VC
 	if err != nil {
 		return sdk.WrapError(err, "Cannot marshal body %+v", r)
 	}
-	res, err := g.post(url, "application/json", bytes.NewBuffer(b), nil)
+	res, err := g.post(ctx, url, "application/json", bytes.NewBuffer(b), nil)
 	if err != nil {
 		return sdk.WrapError(err, "github.CreateHook")
 	}
@@ -88,7 +89,7 @@ func (g *githubClient) UpdateHook(ctx context.Context, repo string, hook *sdk.VC
 	if err != nil {
 		return sdk.WrapError(err, "Cannot marshal body %+v", githubWebHook)
 	}
-	res, err := g.patch(url, "application/json", bytes.NewBuffer(b), nil)
+	res, err := g.patch(ctx, url, "application/json", bytes.NewBuffer(b), nil)
 	if err != nil {
 		return sdk.WrapError(err, "github.UpdateHook")
 	}
@@ -117,7 +118,7 @@ func (g *githubClient) getHooks(ctx context.Context, fullname string) ([]Webhook
 
 		status, body, headers, err := g.get(ctx, nextPage, opts...)
 		if err != nil {
-			log.Warning(ctx, "githubClient.PullRequests> Error %s", err)
+			log.Warn(ctx, "githubClient.PullRequests> Error %s", err)
 			return nil, sdk.WithStack(err)
 		}
 		if status >= 400 {
@@ -141,7 +142,7 @@ func (g *githubClient) getHooks(ctx context.Context, fullname string) ([]Webhook
 			break
 		} else {
 			if err := json.Unmarshal(body, &nextHooks); err != nil {
-				log.Warning(ctx, "githubClient.getHooks> Unable to parse github hooks: %s", err)
+				log.Warn(ctx, "githubClient.getHooks> Unable to parse github hooks: %s", err)
 				return nil, err
 			}
 		}
@@ -186,7 +187,7 @@ func (g *githubClient) getHookByID(ctx context.Context, fullname, id string) (We
 
 	status, body, _, err := g.get(ctx, url, opts...)
 	if err != nil {
-		log.Warning(ctx, "githubClient.PullRequests> Error %v", err)
+		log.Warn(ctx, "githubClient.PullRequests> Error %v", err)
 		return webhook, sdk.WithStack(err)
 	}
 	if status >= 400 {
@@ -206,7 +207,7 @@ func (g *githubClient) getHookByID(ctx context.Context, fullname, id string) (We
 		}
 	} else {
 		if err := json.Unmarshal(body, &webhook); err != nil {
-			log.Warning(ctx, "githubClient.getHookByID> Unable to parse github hook: %v", err)
+			log.Warn(ctx, "githubClient.getHookByID> Unable to parse github hook: %v", err)
 			return webhook, err
 		}
 	}
@@ -219,5 +220,5 @@ func (g *githubClient) getHookByID(ctx context.Context, fullname, id string) (We
 }
 
 func (g *githubClient) DeleteHook(ctx context.Context, repo string, hook sdk.VCSHook) error {
-	return g.delete("/repos/" + repo + "/hooks/" + hook.ID)
+	return g.delete(ctx, "/repos/"+repo+"/hooks/"+hook.ID)
 }

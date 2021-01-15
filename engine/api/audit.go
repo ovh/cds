@@ -5,8 +5,7 @@ import (
 	"time"
 
 	"github.com/go-gorp/gorp"
-
-	"github.com/ovh/cds/sdk/log"
+	"github.com/rockbears/log"
 )
 
 const (
@@ -29,7 +28,7 @@ func auditCleanerRoutine(ctx context.Context, DBFunc func() *gorp.DbMap) {
 			if db != nil {
 				err := actionAuditCleaner(DBFunc())
 				if err != nil {
-					log.Warning(ctx, "AuditCleanerRoutine> Action clean failed: %s", err)
+					log.Warn(ctx, "AuditCleanerRoutine> Action clean failed: %s", err)
 				}
 			}
 		}

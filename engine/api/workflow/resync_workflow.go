@@ -4,10 +4,10 @@ import (
 	"context"
 
 	"github.com/go-gorp/gorp"
+	"github.com/rockbears/log"
 
 	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 )
 
 // Resync a workflow in the given workflow run
@@ -70,7 +70,7 @@ func ResyncWorkflowRunStatus(ctx context.Context, db gorp.SqlExecutor, wr *sdk.W
 		newStatus = getRunStatus(counterStatus)
 	}
 
-	log.Debug("ResyncWorkflowRunStatus> %s/%s %+v", newStatus, wr.Status, counterStatus)
+	log.Debug(ctx, "ResyncWorkflowRunStatus> %s/%s %+v", newStatus, wr.Status, counterStatus)
 
 	if newStatus != wr.Status {
 		wr.Status = newStatus

@@ -6,13 +6,13 @@ import (
 	"time"
 
 	"github.com/go-gorp/gorp"
+	"github.com/ovh/venom"
+	"github.com/rockbears/log"
 	"github.com/sguiheux/go-coverage"
 	"gopkg.in/olivere/elastic.v6"
 
 	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
-	"github.com/ovh/venom"
 )
 
 var metricsChan chan sdk.Metric

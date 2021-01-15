@@ -6,8 +6,9 @@ import (
 	"io/ioutil"
 	"net/http"
 
+	"github.com/rockbears/log"
+
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 )
 
 func addBuildVarHandler(ctx context.Context, wk *CurrentWorker) http.HandlerFunc {
@@ -29,6 +30,6 @@ func addBuildVarHandler(ctx context.Context, wk *CurrentWorker) http.HandlerFunc
 		v.Name = "cds.build." + v.Name
 
 		wk.currentJob.newVariables = append(wk.currentJob.newVariables, v)
-		log.Debug("Variable %s added to %+v", v.Name, wk.currentJob.newVariables)
+		log.Debug(ctx, "Variable %s added to %+v", v.Name, wk.currentJob.newVariables)
 	}
 }

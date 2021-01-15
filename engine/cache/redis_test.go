@@ -5,15 +5,15 @@ import (
 	"testing"
 	"time"
 
+	"github.com/rockbears/log"
 	"github.com/stretchr/testify/require"
 
 	testConfig "github.com/ovh/cds/engine/test/config"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 )
 
 func TestSortedSet(t *testing.T) {
-	log.SetLogger(t)
+	log.Factory = log.NewTestingWrapper(t)
 	cfg := testConfig.LoadTestingConf(t, sdk.TypeAPI)
 	redisHost := cfg["redisHost"]
 	redisPassword := cfg["redisPassword"]
@@ -29,7 +29,7 @@ func TestSortedSet(t *testing.T) {
 }
 
 func TestDequeueJSONRawMessagesWithContext(t *testing.T) {
-	log.SetLogger(t)
+	log.Factory = log.NewTestingWrapper(t)
 	cfg := testConfig.LoadTestingConf(t, sdk.TypeAPI)
 	redisHost := cfg["redisHost"]
 	redisPassword := cfg["redisPassword"]
@@ -67,7 +67,7 @@ func TestDequeueJSONRawMessagesWithContext(t *testing.T) {
 }
 
 func TestDequeueJSONRawMessagesWithContextMaxTimeout(t *testing.T) {
-	log.SetLogger(t)
+	log.Factory = log.NewTestingWrapper(t)
 	cfg := testConfig.LoadTestingConf(t, sdk.TypeAPI)
 	redisHost := cfg["redisHost"]
 	redisPassword := cfg["redisPassword"]

@@ -9,8 +9,8 @@ import (
 	"go.opencensus.io/stats"
 
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk/telemetry"
+	"github.com/rockbears/log"
 )
 
 // WorkerPool returns all the worker owned by the hatchery h, registered or not on the CDS API

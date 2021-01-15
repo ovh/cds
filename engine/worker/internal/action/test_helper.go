@@ -9,6 +9,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/rockbears/log"
 	"github.com/spf13/afero"
 	"github.com/stretchr/testify/require"
 
@@ -16,7 +17,6 @@ import (
 	"github.com/ovh/cds/engine/worker/pkg/workerruntime"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
-	"github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk/vcs"
 )
 
@@ -127,7 +127,7 @@ var _ workerruntime.Runtime = new(TestWorker)
 func SetupTest(t *testing.T) (*TestWorker, context.Context) {
 	fs := afero.NewOsFs()
 	basedir := "test-" + test.GetTestName(t) + "-" + sdk.RandomString(10) + "-" + fmt.Sprintf("%d", time.Now().Unix())
-	log.Debug("creating basedir %s", basedir)
+	log.Debug(context.TODO(), "creating basedir %s", basedir)
 	require.NoError(t, fs.MkdirAll(basedir, os.FileMode(0755)))
 
 	wk := TestWorker{

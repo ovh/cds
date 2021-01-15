@@ -5,8 +5,7 @@ import (
 	"time"
 
 	"github.com/go-gorp/gorp"
-
-	"github.com/ovh/cds/sdk/log"
+	"github.com/rockbears/log"
 )
 
 // KillDeadServices must be run as a goroutine. It Deletes all dead workers
@@ -21,7 +20,7 @@ func KillDeadServices(ctx context.Context, dbFunc func() *gorp.DbMap) {
 				log.Error(ctx, "KillDeadServices> Unable to find dead services: %v", errdead)
 				continue
 			}
-			log.Debug("services.KillDeadServices> %d services to remove", len(services))
+			log.Debug(ctx, "services.KillDeadServices> %d services to remove", len(services))
 			for i := range services {
 				tx, err := db.Begin()
 				if err != nil {

@@ -12,6 +12,7 @@ import (
 	"strconv"
 
 	"github.com/gorilla/mux"
+	"github.com/rockbears/log"
 
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/ascode"
@@ -24,7 +25,6 @@ import (
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/exportentities"
-	"github.com/ovh/cds/sdk/log"
 )
 
 func (api *API) getTemplatesHandler() service.Handler {
@@ -441,7 +441,7 @@ func (api *API) postTemplateApplyHandler() service.Handler {
 							OperationUUID: ope.UUID,
 						}
 						ascode.UpdateAsCodeResult(ctx, api.mustDB(), api.Cache, api.GoRoutines, *p, *existingWorkflow, *rootApp, ed, consumer)
-					}, api.PanicDump())
+					})
 
 					return service.WriteJSON(w, sdk.Operation{
 						UUID:   ope.UUID,
@@ -462,7 +462,7 @@ func (api *API) postTemplateApplyHandler() service.Handler {
 			return err
 		}
 
-		log.Debug("postTemplateApplyHandler> template %s applied (withImport=%v)", wt.Slug, withImport)
+		log.Debug(ctx, "postTemplateApplyHandler> template %s applied (withImport=%v)", wt.Slug, withImport)
 
 		if !withImport {
 			buf := new(bytes.Buffer)
@@ -482,7 +482,7 @@ func (api *API) postTemplateApplyHandler() service.Handler {
 
 		msgStrings := translate(msgs)
 
-		log.Debug("postTemplateApplyHandler> importing the workflow %s from template %s", wkf.Name, wt.Slug)
+		log.Debug(ctx, "postTemplateApplyHandler> importing the workflow %s from template %s", wkf.Name, wt.Slug)
 
 		if w != nil {
 			w.Header().Add(sdk.ResponseWorkflowIDHeader, fmt.Sprintf("%d", wkf.ID))
@@ -580,9 +580,8 @@ func (api *API) postTemplateBulkHandler() service.Handler {
 					errorDefer := func(err error) error {
 						if err != nil {
 							err = sdk.WrapError(err, "error occurred in template bulk with id %d", bulk.ID)
-							log.ErrorWithFields(ctx, log.Fields{
-								"stack_trace": fmt.Sprintf("%+v", err),
-							}, "%s", err)
+							ctx = sdk.ContextWithStacktrace(ctx, err)
+							log.Error(ctx, "%v", err)
 							bulk.Operations[i].Status = sdk.OperationStatusError
 							bulk.Operations[i].Error = fmt.Sprintf("%s", sdk.Cause(err))
 							if err := workflowtemplate.UpdateBulk(api.mustDB(), &bulk); err != nil {

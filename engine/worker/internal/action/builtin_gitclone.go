@@ -15,7 +15,6 @@ import (
 
 	"github.com/ovh/cds/engine/worker/pkg/workerruntime"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk/vcs"
 	"github.com/ovh/cds/sdk/vcs/git"
 )
@@ -172,7 +171,7 @@ func gitClone(ctx context.Context, w workerruntime.Runtime, params []sdk.Paramet
 		Stdout: stdOut,
 	}
 
-	git.LogFunc = log.InfoWithoutCtx
+	//git.LogFunc = log.InfoWithoutCtx
 	//Perform the git clone
 	userLogCommand, err := git.Clone(url, basedir, dir, auth, clone, output)
 

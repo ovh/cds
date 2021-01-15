@@ -4,12 +4,12 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/rockbears/log"
 	"github.com/vmware/govmomi"
 	"github.com/vmware/govmomi/find"
 	"github.com/vmware/govmomi/vim25/soap"
 
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 )
 
 // InitHatchery create new client for vsphere
@@ -34,7 +34,7 @@ func (h *HatcheryVSphere) InitHatchery(ctx context.Context) error {
 	}
 
 	if err := h.initIPStatus(ctx); err != nil {
-		log.Warning(ctx, "Error on initIPStatus(): %v", err)
+		log.Warn(ctx, "Error on initIPStatus(): %v", err)
 	}
 
 	if err := h.RefreshServiceLogger(ctx); err != nil {
@@ -75,7 +75,7 @@ ipLoop:
 			}
 			for _, n := range s.Guest.Net {
 				for _, vmIP := range n.IpAddress {
-					log.Debug("initIPStatus> server %s - address %s (checking %s)", s.Name, vmIP, ip)
+					log.Debug(ctx, "initIPStatus> server %s - address %s (checking %s)", s.Name, vmIP, ip)
 					if vmIP != "" && vmIP == ip {
 						log.Info(ctx, "initIPStatus> worker %s - use IP: %s", s.Name, vmIP)
 						ipsInfos.ips[ip] = ipInfos{workerName: s.Name}

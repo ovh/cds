@@ -1,13 +1,15 @@
 package keys
 
 import (
+	"context"
 	"io/ioutil"
 	"strings"
 
 	"github.com/go-gorp/gorp"
+	"github.com/rockbears/log"
+
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/exportentities"
-	"github.com/ovh/cds/sdk/log"
 )
 
 type DecryptFunc func(gorp.SqlExecutor, int64, string) (string, error)
@@ -66,7 +68,7 @@ func Parse(db gorp.SqlExecutor, projID int64, kname string, kval exportentities.
 		}
 		k = &ktemp
 	} else {
-		log.Debug("keys.Parse> Skip key regeneration")
+		log.Debug(context.Background(), "keys.Parse> Skip key regeneration")
 	}
 	return k, nil
 }

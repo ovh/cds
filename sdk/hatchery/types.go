@@ -79,7 +79,6 @@ type Interface interface {
 	CDSClient() cdsclient.Interface
 	Configuration() service.HatcheryCommonConfiguration
 	Serve(ctx context.Context) error
-	PanicDumpDirectory() (string, error)
 	GetPrivateKey() *rsa.PrivateKey
 	GetLogger() *logrus.Logger
 	GetGoRoutines() *sdk.GoRoutines

@@ -4,10 +4,10 @@ import (
 	"context"
 
 	"github.com/go-gorp/gorp"
+	"github.com/rockbears/log"
 
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 )
 
 // CountPipeline Count the number of workflow that use the given pipeline
@@ -20,7 +20,7 @@ func CountPipeline(db gorp.SqlExecutor, pipelineID int64) (bool, error) {
 
 // DeleteWorkflowData delete the relation representation of the workflow
 func DeleteWorkflowData(db gorp.SqlExecutor, wf sdk.Workflow) error {
-	log.Debug("DeleteWorkflowData> deleting workflow data %d", wf.ID)
+	log.Debug(context.TODO(), "DeleteWorkflowData> deleting workflow data %d", wf.ID)
 
 	// Delete all JOINs
 	for _, j := range wf.WorkflowData.Joins {
@@ -76,7 +76,7 @@ func InsertWorkflowData(db gorp.SqlExecutor, w *sdk.Workflow) error {
 }
 
 func insertNodeData(db gorp.SqlExecutor, w *sdk.Workflow, n *sdk.Node, skipDependencies bool) error {
-	log.Debug("insertNodeData> insert node %s %d (%s)", n.Name, n.ID, n.Ref)
+	log.Debug(context.TODO(), "insertNodeData> insert node %s %d (%s)", n.Name, n.ID, n.Ref)
 
 	if !nodeNamePattern.MatchString(n.Name) {
 		return sdk.WrapError(sdk.ErrInvalidNodeNamePattern, "insertNodeData> node has a wrong name %s", n.Name)

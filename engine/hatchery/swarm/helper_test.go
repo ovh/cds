@@ -5,6 +5,7 @@ import (
 	"time"
 
 	docker "github.com/docker/docker/client"
+	"github.com/rockbears/log"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/net/context"
 	"gopkg.in/h2non/gock.v1"
@@ -12,15 +13,15 @@ import (
 	"github.com/ovh/cds/engine/hatchery"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
-	"github.com/ovh/cds/sdk/log"
+	cdslog "github.com/ovh/cds/sdk/log"
 )
 
 func init() {
-	log.Initialize(context.TODO(), &log.Conf{Level: "debug"})
+	cdslog.Initialize(context.TODO(), &cdslog.Conf{Level: "debug"})
 }
 
 func testSwarmHatchery(t *testing.T) *HatcherySwarm {
-	log.SetLogger(t)
+	log.Factory = log.NewTestingWrapper(t)
 	c, err := docker.NewClientWithOpts(docker.FromEnv)
 	if err != nil {
 		t.Skipf("unable to get docker client: %v. Skipping this test", err)

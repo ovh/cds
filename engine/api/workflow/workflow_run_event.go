@@ -8,11 +8,11 @@ import (
 	"time"
 
 	"github.com/go-gorp/gorp"
+	"github.com/rockbears/log"
 
-	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
+	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk/telemetry"
 )
 
@@ -94,7 +94,7 @@ loopNotif:
 
 	vcsServer, err := repositoriesmanager.LoadProjectVCSServerLinkByProjectKeyAndVCSServerName(ctx, tx, proj.Key, vcsServerName)
 	if err != nil {
-		log.Debug("SendVCSEvent> No vcsServer found: %v", err)
+		log.Debug(ctx, "SendVCSEvent> No vcsServer found: %v", err)
 		return nil
 	}
 
@@ -185,7 +185,7 @@ func (e *VCSEventMessenger) sendVCSEventStatus(ctx context.Context, db gorp.SqlE
 		return nil
 	}
 
-	log.Debug("Send status for node run %d", nodeRun.ID)
+	log.Debug(ctx, "Send status for node run %d", nodeRun.ID)
 	var app sdk.Application
 	var pip sdk.Pipeline
 	var env sdk.Environment
@@ -316,7 +316,7 @@ func (e *VCSEventMessenger) sendVCSPullRequestComment(ctx context.Context, db go
 		return nil
 	}
 
-	log.Debug("Send pull-request comment for node run %d", nodeRun.ID)
+	log.Debug(ctx, "Send pull-request comment for node run %d", nodeRun.ID)
 
 	var app sdk.Application
 	node := wr.Workflow.WorkflowData.NodeByID(nodeRun.WorkflowNodeID)

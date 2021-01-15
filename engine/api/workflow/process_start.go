@@ -4,10 +4,11 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/rockbears/log"
+
 	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 )
 
 func processStartFromNode(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store cache.Store, proj sdk.Project,
@@ -25,7 +26,7 @@ func processStartFromNode(ctx context.Context, db gorpmapper.SqlExecutorWithTx, 
 	if ok && len(nodeRuns) > 0 {
 		nextSubNumber++
 	}
-	log.Debug("processWorkflowRun> starting from node %v", startingFromNode)
+	log.Debug(ctx, "processWorkflowRun> starting from node %v", startingFromNode)
 
 	// Find ancestors
 	nodeIds := start.Ancestors(wr.Workflow.WorkflowData)
@@ -51,7 +52,7 @@ func processStartFromNode(ctx context.Context, db gorpmapper.SqlExecutorWithTx, 
 }
 
 func processStartFromRootNode(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store cache.Store, proj sdk.Project, wr *sdk.WorkflowRun, mapNodes map[int64]*sdk.Node, hookEvent *sdk.WorkflowNodeRunHookEvent, manual *sdk.WorkflowNodeRunManual) (*ProcessorReport, bool, error) {
-	log.Debug("processWorkflowRun> starting from the root: %d (pipeline %s)", wr.Workflow.WorkflowData.Node.ID, wr.Workflow.Pipelines[wr.Workflow.WorkflowData.Node.Context.PipelineID].Name)
+	log.Debug(ctx, "processWorkflowRun> starting from the root: %d (pipeline %s)", wr.Workflow.WorkflowData.Node.ID, wr.Workflow.Pipelines[wr.Workflow.WorkflowData.Node.Context.PipelineID].Name)
 	report := new(ProcessorReport)
 	//Run the root: manual or from an event
 	AddWorkflowRunInfo(wr, sdk.SpawnMsgNew(*sdk.MsgWorkflowStarting, wr.Workflow.Name, fmt.Sprintf("%d.%d", wr.Number, 0)))

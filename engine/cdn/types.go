@@ -17,12 +17,12 @@ import (
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/engine/websocket"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
+	cdslog "github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk/log/hook"
 )
 
 type handledMessage struct {
-	Signature    log.Signature
+	Signature    cdslog.Signature
 	Msg          hook.Message
 	IsTerminated bool
 }

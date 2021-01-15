@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/ovh/cds/sdk"
+	"github.com/rockbears/log"
 
 	"github.com/pkg/browser"
 	"github.com/stretchr/testify/assert"
@@ -14,7 +15,6 @@ import (
 
 	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/engine/test"
-	"github.com/ovh/cds/sdk/log"
 )
 
 var currentAccessToken string
@@ -27,7 +27,7 @@ func TestNewClient(t *testing.T) {
 }
 
 func getNewConsumer(t *testing.T) sdk.VCSServer {
-	log.SetLogger(t)
+	log.Factory = log.NewTestingWrapper(t)
 	cfg := test.LoadTestingConf(t, sdk.TypeAPI)
 	clientID := cfg["bitbucketCloudClientID"]
 	clientSecret := cfg["bitbucketCloudClientSecret"]
@@ -49,7 +49,7 @@ func getNewConsumer(t *testing.T) sdk.VCSServer {
 }
 
 func getNewAuthorizedClient(t *testing.T) sdk.VCSAuthorizedClient {
-	log.SetLogger(t)
+	log.Factory = log.NewTestingWrapper(t)
 	cfg := test.LoadTestingConf(t, sdk.TypeAPI)
 	clientID := cfg["bitbucketCloudClientID"]
 	clientSecret := cfg["bitbucketCloudClientSecret"]

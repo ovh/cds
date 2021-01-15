@@ -11,6 +11,7 @@ import (
 
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gorilla/mux"
+	"github.com/rockbears/log"
 	"github.com/sirupsen/logrus"
 	"github.com/vmware/govmomi/vim25/types"
 
@@ -19,7 +20,6 @@ import (
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/ovh/cds/sdk/hatchery"
-	"github.com/ovh/cds/sdk/log"
 )
 
 var (
@@ -189,7 +189,7 @@ func (h *HatcheryVSphere) WorkersStartedByModel(ctx context.Context, model *sdk.
 			x++
 		}
 	}
-	log.Debug("WorkersStartedByModel> %s : %d", model.Name, x)
+	log.Debug(ctx, "WorkersStartedByModel> %s : %d", model.Name, x)
 
 	return x
 }
@@ -256,9 +256,9 @@ func (h *HatcheryVSphere) updateServerList() {
 	for k, s := range status {
 		st += fmt.Sprintf("%d %s ", s, k)
 	}
-	log.Debug("Got %d servers %s", total, st)
+	log.Debug(context.TODO(), "Got %d servers %s", total, st)
 	if total > 0 {
-		log.Debug(out)
+		log.Debug(context.TODO(), out)
 	}
 }
 
@@ -300,7 +300,7 @@ func (h *HatcheryVSphere) killAwolServers() {
 
 		if annot.ToDelete || (s.Summary.Runtime.PowerState != types.VirtualMachinePowerStatePoweredOn && (!annot.Model || annot.RegisterOnly)) {
 			if err := h.deleteServer(s); err != nil {
-				log.Warning(context.Background(), "killAwolServers> cannot delete server %s", s.Name)
+				log.Warn(context.Background(), "killAwolServers> cannot delete server %s", s.Name)
 			}
 		}
 	}

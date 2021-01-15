@@ -6,8 +6,7 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
-
-	"github.com/ovh/cds/sdk/log"
+	"github.com/rockbears/log"
 )
 
 func serviceHandler(ctx context.Context, wk *CurrentWorker) http.HandlerFunc {
@@ -15,10 +14,10 @@ func serviceHandler(ctx context.Context, wk *CurrentWorker) http.HandlerFunc {
 		vars := mux.Vars(r)
 		serviceType := vars["type"]
 
-		log.Debug("Getting service configuration...")
+		log.Debug(ctx, "Getting service configuration...")
 		servicesConfig, err := wk.Client().ServiceConfigurationGet(ctx, serviceType)
 		if err != nil {
-			log.Warning(ctx, "unable to get data: %v", err)
+			log.Warn(ctx, "unable to get data: %v", err)
 			writeError(w, r, fmt.Errorf("unable to get service configuration"))
 		}
 		writeJSON(w, servicesConfig, http.StatusOK)

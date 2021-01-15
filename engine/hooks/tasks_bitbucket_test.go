@@ -4,14 +4,15 @@ import (
 	"context"
 	"testing"
 
+	"github.com/rockbears/log"
+
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 	"github.com/stretchr/testify/assert"
 )
 
 func Test_doWebHookExecutionBitbucket(t *testing.T) {
-	log.SetLogger(t)
+	log.Factory = log.NewTestingWrapper(t)
 	s, cancel := setupTestHookService(t)
 	defer cancel()
 	task := &sdk.TaskExecution{
@@ -36,7 +37,7 @@ func Test_doWebHookExecutionBitbucket(t *testing.T) {
 }
 
 func Test_doWebHookExecutionBitbucketPRReviewerUpdated(t *testing.T) {
-	log.SetLogger(t)
+	log.Factory = log.NewTestingWrapper(t)
 	s, cancel := setupTestHookService(t)
 	defer cancel()
 	task := &sdk.TaskExecution{
@@ -79,7 +80,7 @@ func Test_doWebHookExecutionBitbucketPRReviewerUpdated(t *testing.T) {
 }
 
 func Test_doWebHookExecutionBitbucketPRReviewerApproved(t *testing.T) {
-	log.SetLogger(t)
+	log.Factory = log.NewTestingWrapper(t)
 	s, cancel := setupTestHookService(t)
 	defer cancel()
 	task := &sdk.TaskExecution{
@@ -128,7 +129,7 @@ func Test_doWebHookExecutionBitbucketPRReviewerApproved(t *testing.T) {
 }
 
 func Test_doWebHookExecutionBitbucketPRReviewerUnapproved(t *testing.T) {
-	log.SetLogger(t)
+	log.Factory = log.NewTestingWrapper(t)
 	s, cancel := setupTestHookService(t)
 	defer cancel()
 	task := &sdk.TaskExecution{
@@ -177,7 +178,7 @@ func Test_doWebHookExecutionBitbucketPRReviewerUnapproved(t *testing.T) {
 }
 
 func Test_doWebHookExecutionBitbucketPRReviewerNeedsWork(t *testing.T) {
-	log.SetLogger(t)
+	log.Factory = log.NewTestingWrapper(t)
 	s, cancel := setupTestHookService(t)
 	defer cancel()
 	task := &sdk.TaskExecution{
@@ -226,7 +227,7 @@ func Test_doWebHookExecutionBitbucketPRReviewerNeedsWork(t *testing.T) {
 }
 
 func Test_doWebHookExecutionBitbucketPRCommentAdded(t *testing.T) {
-	log.SetLogger(t)
+	log.Factory = log.NewTestingWrapper(t)
 	s, cancel := setupTestHookService(t)
 	defer cancel()
 	task := &sdk.TaskExecution{
@@ -274,7 +275,7 @@ func Test_doWebHookExecutionBitbucketPRCommentAdded(t *testing.T) {
 }
 
 func Test_doWebHookExecutionBitbucketPRCommentDeleted(t *testing.T) {
-	log.SetLogger(t)
+	log.Factory = log.NewTestingWrapper(t)
 	s, cancel := setupTestHookService(t)
 	defer cancel()
 	task := &sdk.TaskExecution{
@@ -322,7 +323,7 @@ func Test_doWebHookExecutionBitbucketPRCommentDeleted(t *testing.T) {
 }
 
 func Test_doWebHookExecutionBitbucketPRCommentModified(t *testing.T) {
-	log.SetLogger(t)
+	log.Factory = log.NewTestingWrapper(t)
 	s, cancel := setupTestHookService(t)
 	defer cancel()
 	task := &sdk.TaskExecution{
@@ -372,7 +373,7 @@ func Test_doWebHookExecutionBitbucketPRCommentModified(t *testing.T) {
 }
 
 func Test_doWebHookExecutionBitbucketPROpened(t *testing.T) {
-	log.SetLogger(t)
+	log.Factory = log.NewTestingWrapper(t)
 	s, cancel := setupTestHookService(t)
 	defer cancel()
 	task := &sdk.TaskExecution{
@@ -416,7 +417,7 @@ func Test_doWebHookExecutionBitbucketPROpened(t *testing.T) {
 }
 
 func Test_doWebHookExecutionBitbucketPRModified(t *testing.T) {
-	log.SetLogger(t)
+	log.Factory = log.NewTestingWrapper(t)
 	s, cancel := setupTestHookService(t)
 	defer cancel()
 	task := &sdk.TaskExecution{
@@ -463,7 +464,7 @@ func Test_doWebHookExecutionBitbucketPRModified(t *testing.T) {
 }
 
 func Test_doWebHookExecutionBitbucketPRMerged(t *testing.T) {
-	log.SetLogger(t)
+	log.Factory = log.NewTestingWrapper(t)
 	s, cancel := setupTestHookService(t)
 	defer cancel()
 	task := &sdk.TaskExecution{
@@ -508,7 +509,7 @@ func Test_doWebHookExecutionBitbucketPRMerged(t *testing.T) {
 }
 
 func Test_doWebHookExecutionBitbucketPRDeleted(t *testing.T) {
-	log.SetLogger(t)
+	log.Factory = log.NewTestingWrapper(t)
 	s, cancel := setupTestHookService(t)
 	defer cancel()
 	task := &sdk.TaskExecution{
@@ -551,7 +552,7 @@ func Test_doWebHookExecutionBitbucketPRDeleted(t *testing.T) {
 }
 
 func Test_doWebHookExecutionBitbucketPRDeclined(t *testing.T) {
-	log.SetLogger(t)
+	log.Factory = log.NewTestingWrapper(t)
 	s, cancel := setupTestHookService(t)
 	defer cancel()
 	task := &sdk.TaskExecution{
@@ -594,7 +595,7 @@ func Test_doWebHookExecutionBitbucketPRDeclined(t *testing.T) {
 }
 
 func Test_doWebHookExecutionBitbucketMultiple(t *testing.T) {
-	log.SetLogger(t)
+	log.Factory = log.NewTestingWrapper(t)
 	s, cancel := setupTestHookService(t)
 	defer cancel()
 	task := &sdk.TaskExecution{

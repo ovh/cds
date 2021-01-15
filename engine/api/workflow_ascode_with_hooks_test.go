@@ -11,6 +11,7 @@ import (
 
 	"github.com/go-gorp/gorp"
 	"github.com/golang/mock/gomock"
+	"github.com/rockbears/log"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -20,7 +21,6 @@ import (
 	"github.com/ovh/cds/engine/api/test/assets"
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 )
 
 func Test_WorkflowAsCodeWithNoHook_ShouldGive_AnAutomaticRepoWebHook(t *testing.T) {
@@ -166,7 +166,7 @@ version: v1.0`),
 		DoJSONRequest(gomock.Any(), "POST", "/vcs/github/repos/fsamin/go-repo/hooks", gomock.Any(), gomock.Any(), gomock.Any()).
 		DoAndReturn(
 			func(ctx context.Context, method, path string, in interface{}, out interface{}, _ interface{}) (http.Header, int, error) {
-				log.Debug("--> %T %+v", in, in)
+				log.Debug(ctx, "--> %T %+v", in, in)
 
 				vcsHooks, ok := in.(*sdk.VCSHook)
 				require.True(t, ok)
@@ -218,7 +218,7 @@ version: v1.0`),
 	require.Len(t, wk.WorkflowData.GetHooks(), 1)
 
 	for _, h := range wk.WorkflowData.GetHooks() {
-		log.Debug("--> %T %+v", h, h)
+		log.Debug(context.TODO(), "--> %T %+v", h, h)
 		assert.Equal(t, "RepositoryWebHook", h.HookModelName)
 		assert.Equal(t, "push", h.Config["eventFilter"].Value)
 		assert.Equal(t, "Github", h.Config["hookIcon"].Value)
@@ -398,7 +398,7 @@ version: v1.0`),
 		DoJSONRequest(gomock.Any(), "POST", "/vcs/github/repos/fsamin/go-repo/hooks", gomock.Any(), gomock.Any(), gomock.Any()).
 		DoAndReturn(
 			func(ctx context.Context, method, path string, in interface{}, out interface{}, _ interface{}) (http.Header, int, error) {
-				log.Debug("--> %T %+v", in, in)
+				log.Debug(ctx, "--> %T %+v", in, in)
 
 				vcsHooks, ok := in.(*sdk.VCSHook)
 				require.True(t, ok)
@@ -446,7 +446,7 @@ version: v1.0`),
 	require.Len(t, wk.WorkflowData.GetHooks(), 1)
 
 	for _, h := range wk.WorkflowData.GetHooks() {
-		log.Debug("--> %T %+v", h, h)
+		log.Debug(context.TODO(), "--> %T %+v", h, h)
 		require.Equal(t, "RepositoryWebHook", h.HookModelName)
 		require.Equal(t, "push", h.Config["eventFilter"].Value)
 		require.Equal(t, "Github", h.Config["hookIcon"].Value)
@@ -491,7 +491,7 @@ version: v1.0`),
 	require.Len(t, wk.WorkflowData.GetHooks(), 1)
 
 	for _, h := range wk.WorkflowData.GetHooks() {
-		log.Debug("--> %T %+v", h, h)
+		log.Debug(context.TODO(), "--> %T %+v", h, h)
 		assert.Equal(t, "RepositoryWebHook", h.HookModelName)
 		assert.Equal(t, "push", h.Config["eventFilter"].Value)
 		assert.Equal(t, "Github", h.Config["hookIcon"].Value)
@@ -704,7 +704,7 @@ version: v1.0`),
 		DoJSONRequest(gomock.Any(), "POST", "/vcs/github/repos/fsamin/go-repo/hooks", gomock.Any(), gomock.Any(), gomock.Any()).
 		DoAndReturn(
 			func(ctx context.Context, method, path string, in interface{}, out interface{}, _ interface{}) (http.Header, int, error) {
-				log.Debug("--> %T %+v", in, in)
+				log.Debug(ctx, "--> %T %+v", in, in)
 
 				vcsHooks, ok := in.(*sdk.VCSHook)
 				require.True(t, ok)
@@ -761,7 +761,7 @@ version: v1.0`),
 	require.Len(t, wk.WorkflowData.GetHooks(), 2)
 
 	for _, h := range wk.WorkflowData.GetHooks() {
-		log.Debug("--> %T %+v", h, h)
+		log.Debug(context.TODO(), "--> %T %+v", h, h)
 
 		switch h.HookModelName {
 		case "RepositoryWebHook":
@@ -1235,7 +1235,7 @@ version: v1.0`),
 		DoJSONRequest(gomock.Any(), "POST", "/vcs/github/repos/fsamin/go-repo/hooks", gomock.Any(), gomock.Any(), gomock.Any()).
 		DoAndReturn(
 			func(ctx context.Context, method, path string, in interface{}, out interface{}, _ interface{}) (http.Header, int, error) {
-				log.Debug("--> %T %+v", in, in)
+				log.Debug(ctx, "--> %T %+v", in, in)
 
 				vcsHooks, ok := in.(*sdk.VCSHook)
 				require.True(t, ok)
@@ -1288,7 +1288,7 @@ version: v1.0`),
 
 	var repositoryWebHookFound, schedulerFound bool
 	for _, h := range wk.WorkflowData.GetHooks() {
-		log.Debug("--> %T %+v", h, h)
+		log.Debug(context.TODO(), "--> %T %+v", h, h)
 
 		switch h.HookModelName {
 		case "RepositoryWebHook":

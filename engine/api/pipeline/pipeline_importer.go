@@ -5,20 +5,20 @@ import (
 	"time"
 
 	"github.com/go-gorp/gorp"
+	"github.com/rockbears/log"
 
 	"github.com/ovh/cds/engine/api/action"
 	"github.com/ovh/cds/engine/api/ascode"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 )
 
 //ImportUpdate import and update the pipeline in the project
 func ImportUpdate(ctx context.Context, db gorp.SqlExecutor, proj sdk.Project, pip *sdk.Pipeline, msgChan chan<- sdk.Message, opts ImportOptions) error {
 	t := time.Now()
-	log.Debug("ImportUpdate> Begin")
-	defer log.Debug("ImportUpdate> End (%d ns)", time.Since(t).Nanoseconds())
+	log.Debug(ctx, "ImportUpdate> Begin")
+	defer log.Debug(ctx, "ImportUpdate> End (%d ns)", time.Since(t).Nanoseconds())
 
 	oldPipeline, err := LoadPipeline(ctx, db,
 		proj.Key,
@@ -34,7 +34,7 @@ func ImportUpdate(ctx context.Context, db gorp.SqlExecutor, proj sdk.Project, pi
 			}
 			msgChan <- sdk.NewMessage(sdk.MsgPipelineDetached, pip.Name, oldPipeline.FromRepository)
 		}
-		log.Debug("ImportUpdate>> Force import pipeline %s in project %s without fromRepository", pip.Name, proj.Key)
+		log.Debug(ctx, "ImportUpdate>> Force import pipeline %s in project %s without fromRepository", pip.Name, proj.Key)
 	} else if oldPipeline.FromRepository != "" && pip.FromRepository != oldPipeline.FromRepository {
 		return sdk.WrapError(sdk.ErrPipelineAsCodeOverride, "unable to update as code pipeline %s/%s.", oldPipeline.FromRepository, pip.FromRepository)
 	}
@@ -70,7 +70,7 @@ func ImportUpdate(ctx context.Context, db gorp.SqlExecutor, proj sdk.Project, pi
 		}
 
 		//Insert stage
-		log.Debug("Inserting stage %s", s.Name)
+		log.Debug(ctx, "Inserting stage %s", s.Name)
 		s.PipelineID = pip.ID
 		if err := InsertStage(db, s); err != nil {
 			return sdk.WrapError(err, "Unable to insert stage %s in %s", s.Name, pip.Name)
@@ -79,7 +79,7 @@ func ImportUpdate(ctx context.Context, db gorp.SqlExecutor, proj sdk.Project, pi
 		for x := range s.Jobs {
 			jobAction := &s.Jobs[x]
 			if errs := CheckJob(ctx, db, jobAction); errs != nil {
-				log.Debug("CheckJob > %s", errs)
+				log.Debug(ctx, "CheckJob > %s", errs)
 				return errs
 			}
 			if err := action.CheckChildrenForGroupIDs(ctx, db, &jobAction.Action, groupIDs); err != nil {
@@ -87,7 +87,7 @@ func ImportUpdate(ctx context.Context, db gorp.SqlExecutor, proj sdk.Project, pi
 			}
 			jobAction.PipelineStageID = s.ID
 			jobAction.Action.Type = sdk.JoinedAction
-			log.Debug("Creating job %s on stage %s on pipeline %s", jobAction.Action.Name, s.Name, pip.Name)
+			log.Debug(ctx, "Creating job %s on stage %s on pipeline %s", jobAction.Action.Name, s.Name, pip.Name)
 			if err := InsertJob(db, jobAction, s.ID, pip); err != nil {
 				return sdk.WrapError(err, "Unable to insert job %s in %s", jobAction.Action.Name, pip.Name)
 			}
@@ -159,7 +159,7 @@ func importNew(ctx context.Context, db gorp.SqlExecutor, proj sdk.Project, pip *
 		groupIDs = append(groupIDs, proj.ProjectGroups[i].Group.ID)
 	}
 
-	log.Debug("pipeline.importNew> Creating pipeline %s", pip.Name)
+	log.Debug(ctx, "pipeline.importNew> Creating pipeline %s", pip.Name)
 	//Insert pipeline
 	if err := InsertPipeline(db, pip); err != nil {
 		return err
@@ -167,7 +167,7 @@ func importNew(ctx context.Context, db gorp.SqlExecutor, proj sdk.Project, pip *
 
 	//Insert stages
 	for i, s := range pip.Stages {
-		log.Debug("pipeline.importNew> Creating stage %s on pipeline %s", s.Name, pip.Name)
+		log.Debug(ctx, "pipeline.importNew> Creating stage %s on pipeline %s", s.Name, pip.Name)
 		if s.BuildOrder == 0 {
 			//Set default build order
 			s.BuildOrder = i + 1
@@ -186,7 +186,7 @@ func importNew(ctx context.Context, db gorp.SqlExecutor, proj sdk.Project, pip *
 			jobAction.Enabled = true
 			jobAction.Action.Enabled = true
 			if errs := CheckJob(ctx, db, jobAction); errs != nil {
-				log.Warning(ctx, "pipeline.importNew.CheckJob > %s", errs)
+				log.Warn(ctx, "pipeline.importNew.CheckJob > %s", errs)
 				return errs
 			}
 			if err := action.CheckChildrenForGroupIDs(ctx, db, &jobAction.Action, groupIDs); err != nil {
@@ -194,7 +194,7 @@ func importNew(ctx context.Context, db gorp.SqlExecutor, proj sdk.Project, pip *
 			}
 
 			jobAction.PipelineStageID = s.ID
-			log.Debug("pipeline.importNew> Creating job %s on stage %s on pipeline %s", jobAction.Action.Name, s.Name, pip.Name)
+			log.Debug(ctx, "pipeline.importNew> Creating job %s on stage %s on pipeline %s", jobAction.Action.Name, s.Name, pip.Name)
 			if err := InsertJob(db, jobAction, s.ID, pip); err != nil {
 				return err
 			}

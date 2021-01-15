@@ -12,10 +12,11 @@ import (
 	"strings"
 	"time"
 
+	"github.com/rockbears/log"
+
 	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
-	"github.com/ovh/cds/sdk/log"
 )
 
 var (
@@ -155,7 +156,7 @@ func (c *bitbucketClient) do(ctx context.Context, method, api, path string, para
 	case 401:
 		return sdk.WithStack(sdk.ErrUnauthorized)
 	case 400:
-		log.Warning(ctx, "bitbucketClient.do> %s", string(body))
+		log.Warn(ctx, "bitbucketClient.do> %s", string(body))
 		return sdk.WithStack(sdk.ErrWrongRequest)
 	}
 

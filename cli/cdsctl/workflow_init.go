@@ -13,13 +13,13 @@ import (
 	"strings"
 
 	repo "github.com/fsamin/go-repo"
+	"github.com/rockbears/log"
 	giturls "github.com/whilp/git-urls"
 
 	"github.com/ovh/cds/cli"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/ovh/cds/sdk/exportentities"
-	"github.com/ovh/cds/sdk/log"
 )
 
 var workflowInitCmd = cli.Command{
@@ -207,7 +207,7 @@ func checkRepositoryExists(proj sdk.Project, repoURL string) error {
 		for {
 			repos, err := client.RepositoriesList(proj.Key, vcs.Name, resync)
 			if err != nil {
-				log.Warning(context.Background(), "unable to list repositories from %s: %v", vcs.Name, err)
+				log.Warn(context.Background(), "unable to list repositories from %s: %v", vcs.Name, err)
 				break vcs
 			}
 			for _, r := range repos {

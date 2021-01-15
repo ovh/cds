@@ -6,12 +6,13 @@ import (
 	"sort"
 	"time"
 
-	"github.com/ovh/cds/engine/cache"
+	"github.com/rockbears/log"
+
 	"github.com/ovh/cds/engine/api/services"
+	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/interpolate"
-	"github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk/telemetry"
 )
 
@@ -33,10 +34,10 @@ func processNodeOutGoingHook(ctx context.Context, db gorpmapper.SqlExecutorWithT
 		}
 		// If the hookrun is at status terminated, let's trigger outgoing children
 		if exitingNodeRun != nil && !sdk.StatusIsTerminated(exitingNodeRun.Status) {
-			log.Debug("hook %d already processed", node.ID)
+			log.Debug(ctx, "hook %d already processed", node.ID)
 			return nil, false, nil
 		} else if exitingNodeRun != nil && exitingNodeRun.Status != sdk.StatusStopped {
-			log.Debug("hook %d is over, we have to reprocess al the things", node.ID)
+			log.Debug(ctx, "hook %d is over, we have to reprocess al the things", node.ID)
 			r1, _, err := processWorkflowDataRun(ctx, db, store, proj, wr, nil, nil, nil)
 			if err != nil {
 				return nil, false, sdk.WrapError(err, "unable to process workflow run after outgoing hooks")
@@ -129,13 +130,13 @@ func processNodeOutGoingHook(ctx context.Context, db gorpmapper.SqlExecutorWithT
 	}
 
 	if !checkCondition(ctx, wr, node.Context.Conditions, hookRun.BuildParameters) {
-		log.Debug("Condition failed on processNodeOutGoingHook %d/%d %+v", wr.ID, node.ID, hookRun.BuildParameters)
+		log.Debug(ctx, "Condition failed on processNodeOutGoingHook %d/%d %+v", wr.ID, node.ID, hookRun.BuildParameters)
 		return report, false, nil
 	}
 
 	var task sdk.Task
 	if _, _, err := services.NewClient(db, srvs).DoJSONRequest(ctx, "POST", "/task/execute", hookRun, &task); err != nil {
-		log.Warning(ctx, "outgoing hook execution failed: %v", err)
+		log.Warn(ctx, "outgoing hook execution failed: %v", err)
 		hookRun.Status = sdk.StatusFail
 	}
 

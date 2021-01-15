@@ -10,7 +10,6 @@ import (
 	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/engine/test"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 )
 
 /**
@@ -38,7 +37,6 @@ func BenchmarkGetWithoutDecryption(b *testing.B) {
 
 	m.Register(m.NewTableMapping(gorpmapper.TestEncryptedData{}, "test_encrypted_data", true, "id"))
 
-	log.SetLogger(b)
 	db, _, _, end := test.SetupPGToCancel(b, m, sdk.TypeAPI)
 	b.Cleanup(end)
 
@@ -63,7 +61,6 @@ func BenchmarkGetWithDecryption(b *testing.B) {
 
 	m.Register(m.NewTableMapping(gorpmapper.TestEncryptedData{}, "test_encrypted_data", true, "id"))
 
-	log.SetLogger(b)
 	db, _, _, end := test.SetupPGToCancel(b, m, sdk.TypeAPI)
 	b.Cleanup(end)
 
@@ -88,7 +85,6 @@ func BenchmarkInsertWithoutSignature(b *testing.B) {
 
 	m.Register(m.NewTableMapping(gorpmapper.TestEncryptedData{}, "test_encrypted_data", true, "id"))
 
-	log.SetLogger(b)
 	db, _, _, end := test.SetupPGToCancel(b, m, sdk.TypeAPI)
 	b.Cleanup(end)
 
@@ -108,7 +104,6 @@ func BenchmarkInsertWithSignature(b *testing.B) {
 
 	m.Register(m.NewTableMapping(gorpmapper.TestEncryptedData{}, "test_encrypted_data", true, "id"))
 
-	log.SetLogger(b)
 	db, _, _, end := test.SetupPGToCancel(b, m, sdk.TypeAPI)
 	b.Cleanup(end)
 
@@ -128,7 +123,6 @@ func BenchmarkCheckSignature(b *testing.B) {
 
 	m.Register(m.NewTableMapping(gorpmapper.TestEncryptedData{}, "test_encrypted_data", true, "id"))
 
-	log.SetLogger(b)
 	db, _, _, end := test.SetupPGToCancel(b, m, sdk.TypeAPI)
 	b.Cleanup(end)
 

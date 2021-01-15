@@ -12,13 +12,14 @@ import (
 	"time"
 
 	gocache "github.com/patrickmn/go-cache"
+	"github.com/rockbears/log"
 	"github.com/spf13/cast"
 
 	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/ovh/cds/sdk/jws"
-	"github.com/ovh/cds/sdk/log"
+	cdslog "github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk/log/hook"
 	"github.com/ovh/cds/sdk/telemetry"
 )
@@ -89,15 +90,14 @@ func (s *Service) handleConnection(ctx context.Context, conn net.Conn) {
 	for {
 		// Can i try to read the next 1024B
 		if err := globalRateLimit.WaitN(1024); err != nil {
-			fields := log.Fields{}
-			fields["stack_trace"] = fmt.Sprintf("%+v", err)
-			log.ErrorWithFields(ctx, fields, "cdn.log> %v", err)
+			ctx = sdk.ContextWithStacktrace(ctx, err)
+			log.Error(ctx, err.Error())
 			continue
 		}
 
 		n, err := bufReader.Read(b)
 		if err != nil {
-			log.Debug("client left: (%v) %v", conn.RemoteAddr(), err)
+			log.Debug(ctx, "client left: (%v) %v", conn.RemoteAddr(), err)
 			return
 		}
 
@@ -110,19 +110,14 @@ func (s *Service) handleConnection(ctx context.Context, conn net.Conn) {
 
 			// Check if we can send line
 			if err := lineRateLimiter.WaitN(1); err != nil {
-				fields := log.Fields{}
-				fields["stack_trace"] = fmt.Sprintf("%+v", err)
-				log.ErrorWithFields(ctx, fields, "cdn.log> %v", err)
+				ctx = sdk.ContextWithStacktrace(ctx, err)
+				log.Error(ctx, err.Error())
 				continue
 			}
 			if err := s.handleLogMessage(ctx, currentBuffer); err != nil {
 				telemetry.Record(ctx, s.Metrics.tcpServerErrorsCount, 1)
-				isErrWithStack := sdk.IsErrorWithStack(err)
-				fields := log.Fields{}
-				if isErrWithStack {
-					fields["stack_trace"] = fmt.Sprintf("%+v", err)
-				}
-				log.ErrorWithFields(ctx, fields, "cdn.log> %v", err)
+				ctx = sdk.ContextWithStacktrace(ctx, err)
+				log.Error(ctx, err.Error())
 			}
 			currentBuffer = make([]byte, 0)
 		}
@@ -137,13 +132,13 @@ func (s *Service) handleLogMessage(ctx context.Context, messageReceived []byte) 
 	}
 
 	// Extract Signature
-	sig, ok := m.Extra["_"+log.ExtraFieldSignature]
+	sig, ok := m.Extra["_"+cdslog.ExtraFieldSignature]
 	if !ok || sig == "" {
 		return sdk.WithStack(fmt.Errorf("signature not found on log message: %+v", m))
 	}
 
 	// Unsafe parse of signature to get datas
-	var signature log.Signature
+	var signature cdslog.Signature
 	if err := jws.UnsafeParse(sig.(string), &signature); err != nil {
 		return err
 	}
@@ -162,7 +157,7 @@ func (s *Service) handleLogMessage(ctx context.Context, messageReceived []byte) 
 
 // Handle Message from worker (job logs). Enqueue in Redis
 func (s *Service) handleWorkerLog(ctx context.Context, workerName string, workerID string, sig interface{}, m hook.Message) error {
-	var signature log.Signature
+	var signature cdslog.Signature
 
 	// Get worker data from cache
 	workerData, err := s.getWorker(ctx, workerName, GetWorkerOptions{NeedPrivateKey: true})
@@ -178,7 +173,7 @@ func (s *Service) handleWorkerLog(ctx context.Context, workerName string, worker
 		return sdk.WithStack(sdk.ErrForbidden)
 	}
 
-	terminatedI := m.Extra["_"+log.ExtraFieldTerminated]
+	terminatedI := m.Extra["_"+cdslog.ExtraFieldTerminated]
 	terminated := cast.ToBool(terminatedI)
 
 	hm := handledMessage{
@@ -258,7 +253,7 @@ func getLevelString(level int32) string {
 
 //
 func (s *Service) handleServiceLog(ctx context.Context, hatcheryID int64, hatcheryName string, workerName string, sig interface{}, m hook.Message) error {
-	var signature log.Signature
+	var signature cdslog.Signature
 	var pk *rsa.PublicKey
 
 	// Get hatchery public key from cache
@@ -292,7 +287,7 @@ func (s *Service) handleServiceLog(ctx context.Context, hatcheryID int64, hatche
 		return sdk.WrapError(sdk.ErrWrongRequest, "cannot send service log for worker %s from hatchery (expected: %d/actual: %d)", w.ID, *w.HatcheryID, signature.Service.HatcheryID)
 	}
 
-	terminatedI := m.Extra["_"+log.ExtraFieldTerminated]
+	terminatedI := m.Extra["_"+cdslog.ExtraFieldTerminated]
 	terminated := cast.ToBool(terminatedI)
 
 	hm := handledMessage{

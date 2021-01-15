@@ -7,14 +7,15 @@ import (
 	"runtime"
 	"strings"
 
+	"github.com/rockbears/log"
+
 	"github.com/ovh/cds/engine/api"
 	"github.com/ovh/cds/engine/service"
-	"github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk/telemetry"
 )
 
 func (s *Service) initRouter(ctx context.Context) {
-	log.Debug("VCS> Router initialized")
+	log.Debug(ctx, "VCS> Router initialized")
 	r := s.Router
 	r.Background = ctx
 	r.URL = s.Cfg.URL

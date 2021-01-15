@@ -1,13 +1,14 @@
 package workflow
 
 import (
+	"context"
 	"database/sql"
 	"encoding/json"
 
 	"github.com/go-gorp/gorp"
+	"github.com/rockbears/log"
 
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 )
 
 //PostInsert is a db hook
@@ -64,12 +65,12 @@ func CreateBuiltinWorkflowOutgoingHookModels(db *gorp.DbMap) error {
 		}
 
 		if !ok {
-			log.Debug("CreateBuiltinWorkflowOutgoingHookModels> inserting hooks config: %s", h.Name)
+			log.Debug(context.Background(), "CreateBuiltinWorkflowOutgoingHookModels> inserting hooks config: %s", h.Name)
 			if err := InsertOutgoingHookModel(tx, h); err != nil {
 				return sdk.WrapError(err, "CreateBuiltinWorkflowOutgoingHookModels error on insert")
 			}
 		} else {
-			log.Debug("CreateBuiltinWorkflowOutgoingHookModels> updating hooks config: %s", h.Name)
+			log.Debug(context.Background(), "CreateBuiltinWorkflowOutgoingHookModels> updating hooks config: %s", h.Name)
 			// update default values
 			if err := UpdateOutgoingHookModel(tx, h); err != nil {
 				return sdk.WrapError(err, "CreateBuiltinWorkflowOutgoingHookModels  error on update")

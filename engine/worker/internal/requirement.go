@@ -10,10 +10,10 @@ import (
 	"strings"
 	"time"
 
+	"github.com/rockbears/log"
 	"github.com/shirou/gopsutil/mem"
 
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 )
 
 var requirementCheckFuncs = map[string]func(w *CurrentWorker, r sdk.Requirement) (bool, error){
@@ -31,11 +31,11 @@ func checkRequirements(ctx context.Context, w *CurrentWorker, a *sdk.Action) (bo
 	requirementsOK := true
 	errRequirements := []sdk.Requirement{}
 
-	log.Debug("requirements for %s >>> %+v\n", a.Name, a.Requirements)
+	log.Debug(ctx, "requirements for %s >>> %+v\n", a.Name, a.Requirements)
 	for _, r := range a.Requirements {
 		ok, err := checkRequirement(w, r)
 		if err != nil {
-			log.Warning(ctx, "checkQueue> error on checkRequirement %s", err)
+			log.Warn(ctx, "checkQueue> error on checkRequirement %s", err)
 		}
 		if !ok {
 			requirementsOK = false
@@ -44,7 +44,7 @@ func checkRequirements(ctx context.Context, w *CurrentWorker, a *sdk.Action) (bo
 		}
 	}
 
-	log.Debug("checkRequirements> checkRequirements:%t errRequirements:%v", requirementsOK, errRequirements)
+	log.Debug(ctx, "checkRequirements> checkRequirements:%t errRequirements:%v", requirementsOK, errRequirements)
 	return requirementsOK, errRequirements
 }
 
@@ -57,6 +57,7 @@ func checkRequirement(w *CurrentWorker, r sdk.Requirement) (bool, error) {
 }
 
 func checkPluginRequirement(w *CurrentWorker, r sdk.Requirement) (bool, error) {
+	var ctx = context.TODO()
 	var currentOS = strings.ToLower(sdk.GOOS)
 	var currentARCH = strings.ToLower(sdk.GOARCH)
 
@@ -67,13 +68,13 @@ func checkPluginRequirement(w *CurrentWorker, r sdk.Requirement) (bool, error) {
 
 	// then try to download the plugin
 	if _, err := w.BaseDir().Stat(binary.Name); os.IsNotExist(err) {
-		log.Debug("Downloading the plugin %s", binary.Name)
+		log.Debug(ctx, "Downloading the plugin %s", binary.Name)
 		//If the file doesn't exist. Download it.
 		fi, err := w.BaseDir().OpenFile(binary.Name, os.O_CREATE|os.O_RDWR, os.FileMode(binary.Perm))
 		if err != nil {
 			return false, err
 		}
-		log.Debug("Get the binary plugin %s", r.Name)
+		log.Debug(ctx, "Get the binary plugin %s", r.Name)
 		if err := w.client.PluginGetBinary(r.Name, currentOS, currentARCH, fi); err != nil {
 			_ = fi.Close()
 			return false, err
@@ -81,7 +82,7 @@ func checkPluginRequirement(w *CurrentWorker, r sdk.Requirement) (bool, error) {
 		//It's downloaded. Close the file
 		_ = fi.Close()
 	} else {
-		log.Debug("plugin binary is in cache %s", binary.Name)
+		log.Debug(ctx, "plugin binary is in cache %s", binary.Name)
 	}
 
 	return true, nil
@@ -133,7 +134,7 @@ func checkServiceRequirement(w *CurrentWorker, r sdk.Requirement) (bool, error) 
 	for attempt := 0; attempt < retry; attempt++ {
 		ips, err := net.LookupIP(r.Name)
 		if err != nil {
-			log.Debug("Error checking requirement : %s", err)
+			log.Debug(context.TODO(), "Error checking requirement : %s", err)
 			time.Sleep(2 * time.Second)
 			continue
 		}
@@ -205,7 +206,7 @@ func checkPluginDeployment(ctx context.Context, w *CurrentWorker, job sdk.Workfl
 		return true, nil
 	}
 
-	log.Debug("Checking plugins...(%#v)", job.IntegrationPluginBinaries)
+	log.Debug(ctx, "Checking plugins...(%#v)", job.IntegrationPluginBinaries)
 
 	// first check OS and Architecture
 	for _, b := range job.IntegrationPluginBinaries {
@@ -222,7 +223,7 @@ func checkPluginDeployment(ctx context.Context, w *CurrentWorker, job sdk.Workfl
 	for _, r := range binary.Requirements {
 		ok, err := checkRequirement(w, r)
 		if err != nil {
-			log.Warning(ctx, "checkQueue> error on checkRequirement %s", err)
+			log.Warn(ctx, "checkQueue> error on checkRequirement %s", err)
 		}
 		if !ok {
 			return false, fmt.Errorf("plugin requirement %s does not match", r.Name)
@@ -232,7 +233,7 @@ func checkPluginDeployment(ctx context.Context, w *CurrentWorker, job sdk.Workfl
 	// then try to download the plugin
 	//integrationPluginBinary := path.Join(w.BaseDir().Name(), binary.Name)
 	if _, err := w.BaseDir().Stat(binary.Name); os.IsNotExist(err) {
-		log.Debug("Downloading the plugin %s", binary.PluginName)
+		log.Debug(ctx, "Downloading the plugin %s", binary.PluginName)
 		//If the file doesn't exist. Download it.
 		fi, err := w.BaseDir().OpenFile(binary.Name, os.O_CREATE|os.O_RDWR, os.FileMode(binary.Perm))
 		if err != nil {
@@ -246,7 +247,7 @@ func checkPluginDeployment(ctx context.Context, w *CurrentWorker, job sdk.Workfl
 		//It's downloaded. Close the file
 		_ = fi.Close()
 	} else {
-		log.Debug("plugin binary is in cache")
+		log.Debug(ctx, "plugin binary is in cache")
 	}
 
 	log.Info(ctx, "plugin successfully downloaded: %#v", binary.Name)

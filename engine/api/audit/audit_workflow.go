@@ -6,11 +6,11 @@ import (
 	"time"
 
 	"github.com/go-gorp/gorp"
+	"github.com/rockbears/log"
 
 	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 )
 
 // ComputeWorkflowAudit Compute audit on workflow
@@ -39,7 +39,7 @@ func ComputeWorkflowAudit(ctx context.Context, DBFunc func() *gorp.DbMap) {
 
 			if audit, ok := workflow.Audits[e.EventType]; ok {
 				if err := audit.Compute(ctx, db, e); err != nil {
-					log.Warning(ctx, "ComputeAudit> Unable to compute audit on event %s: %v", e.EventType, err)
+					log.Warn(ctx, "ComputeAudit> Unable to compute audit on event %s: %v", e.EventType, err)
 				}
 			}
 		}

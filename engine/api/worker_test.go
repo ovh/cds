@@ -8,6 +8,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/rockbears/log"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/ovh/cds/engine/api/group"
@@ -18,7 +19,6 @@ import (
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/hatchery"
 	"github.com/ovh/cds/sdk/jws"
-	"github.com/ovh/cds/sdk/log"
 )
 
 func RegisterWorker(t *testing.T, api *API, db gorpmapper.SqlExecutorWithTx, groupID int64, existingWorkerModelName string, jobID int64, registerOnly bool) (*sdk.Worker, string) {
@@ -37,7 +37,7 @@ func RegisterWorker(t *testing.T, api *API, db gorpmapper.SqlExecutorWithTx, gro
 	if err != nil {
 		t.Fatalf("RegisterWorker> Error exporting public key : %s", err)
 	}
-	log.Debug("hatchery public key is %s", string(hPubKey))
+	log.Debug(context.TODO(), "hatchery public key is %s", string(hPubKey))
 
 	jwt, err := hatchery.NewWorkerToken(hSrv.Name, hPrivKey, time.Now().Add(time.Hour), hatchery.SpawnArguments{
 		HatcheryName: hSrv.Name,
@@ -149,7 +149,7 @@ func TestPostInvalidRegister(t *testing.T) {
 	if err != nil {
 		t.Fatalf("RegisterWorker> Error exporting public key : %s", err)
 	}
-	log.Debug("hatchery public key is %s", string(hPubKey))
+	log.Debug(context.TODO(), "hatchery public key is %s", string(hPubKey))
 
 	jwt, err := hatchery.NewWorkerToken(hSrv.Name, hPrivKey, time.Now().Add(time.Hour), hatchery.SpawnArguments{
 		HatcheryName: hSrv.Name,

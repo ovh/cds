@@ -7,8 +7,9 @@ import (
 	"sort"
 	"time"
 
+	"github.com/rockbears/log"
+
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 )
 
 func (s *Service) vacuumCleaner(ctx context.Context) error {
@@ -77,20 +78,20 @@ func (s *Service) vacuumFilesystemCleanerRun(ctx context.Context) error {
 }
 
 func (s *Service) vacuumFileSystemCleanerFunc(ctx context.Context, repoUUID string) error {
-	log.Debug("vacuumFileSystemCleanerFunc> Checking %s", repoUUID)
+	log.Debug(ctx, "vacuumFileSystemCleanerFunc> Checking %s", repoUUID)
 
 	if err := s.dao.lock(repoUUID); err == errLockUnavailable {
-		log.Debug("vacuumFileSystemCleanerFunc> %s is locked. skipping", repoUUID)
+		log.Debug(ctx, "vacuumFileSystemCleanerFunc> %s is locked. skipping", repoUUID)
 		return nil
 	}
 
 	if !s.dao.isExpired(ctx, repoUUID) {
-		log.Debug("vacuumFileSystemCleanerFunc> %s is not expired. skipping", repoUUID)
+		log.Debug(ctx, "vacuumFileSystemCleanerFunc> %s is not expired. skipping", repoUUID)
 		_ = s.dao.unlock(ctx, repoUUID, 24*time.Hour*time.Duration(s.Cfg.RepositoriesRetention))
 		return nil
 	}
 
-	log.Debug("vacuumFileSystemCleanerFunc> Removing %s", repoUUID)
+	log.Debug(ctx, "vacuumFileSystemCleanerFunc> Removing %s", repoUUID)
 
 	path := filepath.Join(s.Cfg.Basedir, repoUUID)
 	if err := os.RemoveAll(path); err != nil {

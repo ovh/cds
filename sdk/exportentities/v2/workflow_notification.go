@@ -5,7 +5,7 @@ import (
 	"sort"
 
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
+	"github.com/rockbears/log"
 )
 
 // Booleans

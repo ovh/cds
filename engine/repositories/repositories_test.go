@@ -13,6 +13,7 @@ import (
 	"testing"
 
 	"github.com/gorilla/mux"
+	"github.com/rockbears/log"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/spacemonkeygo/httpsig.v0"
@@ -22,17 +23,12 @@ import (
 	"github.com/ovh/cds/engine/test"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/jws"
-	"github.com/ovh/cds/sdk/log"
 )
 
 var (
 	RedisHost     string
 	RedisPassword string
 )
-
-func init() {
-	log.Initialize(context.TODO(), &log.Conf{Level: "debug"})
-}
 
 func newTestService(t *testing.T) (*Service, error) {
 	//Read the test config file
@@ -41,7 +37,7 @@ func newTestService(t *testing.T) (*Service, error) {
 		RedisHost = cfg["redisHost"]
 		RedisPassword = cfg["redisPassword"]
 	}
-	log.SetLogger(t)
+	log.Factory = log.NewTestingWrapper(t)
 
 	//Prepare the configuration
 	cfg := Configuration{}

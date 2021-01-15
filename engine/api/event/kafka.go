@@ -7,9 +7,9 @@ import (
 	"strings"
 
 	"github.com/Shopify/sarama"
+	"github.com/rockbears/log"
 
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 )
 
 // KafkaClient enbeddes the Kafka connecion
@@ -55,7 +55,7 @@ func (c *KafkaClient) initialize(ctx context.Context, options interface{}) (Brok
 func (c *KafkaClient) close(ctx context.Context) {
 	if c.producer != nil {
 		if err := c.producer.Close(); err != nil {
-			log.Warning(ctx, "closeKafka> Error while closing kafka producer:%v", err)
+			log.Warn(ctx, "closeKafka> Error while closing kafka producer:%v", err)
 		}
 	}
 }
@@ -82,7 +82,7 @@ func (c *KafkaClient) initProducer() error {
 		return fmt.Errorf("initKafka> Error with init sarama:%v (newSyncProducer on %s user:%s)", err, c.options.BrokerAddresses, c.options.User)
 	}
 
-	log.Debug("initKafka> Kafka used at %s on topic:%s", c.options.BrokerAddresses, c.options.Topic)
+	log.Debug(context.Background(), "initKafka> Kafka used at %s on topic:%s", c.options.BrokerAddresses, c.options.Topic)
 	c.producer = producer
 	return nil
 }

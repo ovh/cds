@@ -5,10 +5,11 @@ import (
 	"time"
 
 	"github.com/go-gorp/gorp"
-	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
-	"github.com/ovh/cds/sdk/luascript"
 	gocache "github.com/patrickmn/go-cache"
+	"github.com/rockbears/log"
+
+	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/luascript"
 
 	"github.com/ovh/cds/engine/gorpmapper"
 )
@@ -33,7 +34,7 @@ func IsEnabled(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlExecutor, n
 		cacheFeature.SetDefault(name, f)
 		cachedFeatureI = f
 	} else {
-		log.Debug("featureflipping.IsEnabled> feature_flipping '%s' loaded from cache", name)
+		log.Debug(ctx, "featureflipping.IsEnabled> feature_flipping '%s' loaded from cache", name)
 	}
 
 	cachedFeature := cachedFeatureI.(sdk.Feature)

@@ -10,6 +10,7 @@ import (
 
 	"github.com/go-gorp/gorp"
 	"github.com/ovh/venom"
+	"github.com/rockbears/log"
 	"github.com/sguiheux/go-coverage"
 
 	"github.com/ovh/cds/engine/api/authentication"
@@ -27,7 +28,6 @@ import (
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/jws"
-	"github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk/telemetry"
 )
 
@@ -406,7 +406,7 @@ func (api *API) postWorkflowJobResultHandler() service.Handler {
 					// job result already send as job is no more in database
 					// this log is here to stats it and we returns nil for unlock the worker
 					// and avoid a "worker timeout"
-					log.Warning(ctx, "NodeJobRun not found: %d err:%v", id, err)
+					log.Warn(ctx, "NodeJobRun not found: %d err:%v", id, err)
 					return nil
 				}
 				return sdk.WrapError(err, "cannot load NodeJobRun %d", id)
@@ -479,7 +479,7 @@ func (api *API) postJobResult(ctx context.Context, proj *sdk.Project, wr *sdk.Wo
 
 	// Manage build variables, we have to push them on the job and to propagate on the node above
 	for _, v := range res.NewVariables {
-		log.Debug("postJobResult> managing new variable %s on job %d", v.Name, job.ID)
+		log.Debug(ctx, "postJobResult> managing new variable %s on job %d", v.Name, job.ID)
 		found := false
 		for i := range job.Parameters {
 			currentV := &job.Parameters[i]
@@ -490,7 +490,7 @@ func (api *API) postJobResult(ctx context.Context, proj *sdk.Project, wr *sdk.Wo
 			}
 		}
 		if !found {
-			log.Debug("postJobResult> adding new variable %s on job %d", v.Name, job.ID)
+			log.Debug(ctx, "postJobResult> adding new variable %s on job %d", v.Name, job.ID)
 			sdk.AddParameter(&job.Parameters, v.Name, sdk.StringParameter, v.Value)
 		}
 	}
@@ -507,7 +507,7 @@ func (api *API) postJobResult(ctx context.Context, proj *sdk.Project, wr *sdk.Wo
 		mustUpdateNodeRunParams := false
 
 		for _, v := range res.NewVariables {
-			log.Debug("postJobResult> managing new variable %s on node %d", v.Name, nodeRun.ID)
+			log.Debug(ctx, "postJobResult> managing new variable %s on node %d", v.Name, nodeRun.ID)
 			found := false
 			for i := range nodeRun.BuildParameters {
 				currentV := &nodeRun.BuildParameters[i]
@@ -518,7 +518,7 @@ func (api *API) postJobResult(ctx context.Context, proj *sdk.Project, wr *sdk.Wo
 				}
 			}
 			if !found {
-				log.Debug("postJobResult> add new key on node run %s", v.Name)
+				log.Debug(ctx, "postJobResult> add new key on node run %s", v.Name)
 				mustUpdateNodeRunParams = true
 				sdk.AddParameter(&nodeRun.BuildParameters, v.Name, sdk.StringParameter, v.Value)
 			}
@@ -538,7 +538,7 @@ func (api *API) postJobResult(ctx context.Context, proj *sdk.Project, wr *sdk.Wo
 	}
 
 	// Update action status
-	log.Debug("postJobResult> Updating %d to %s in queue", job.ID, res.Status)
+	log.Debug(ctx, "postJobResult> Updating %d to %s in queue", job.ID, res.Status)
 	report, err := workflow.UpdateNodeJobRunStatus(ctx, tx, api.Cache, *proj, job, res.Status)
 	if err != nil {
 		return nil, sdk.WrapError(err, "cannot update NodeJobRun %d status", job.ID)
@@ -589,8 +589,8 @@ func (api *API) postWorkflowJobLogsHandler() service.Handler {
 	}
 }
 
-func (api *API) postWorkflowJobServiceLogsHandler() service.AsynchronousHandler {
-	return func(ctx context.Context, r *http.Request) error {
+func (api *API) postWorkflowJobServiceLogsHandler() service.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		if !isCDN(ctx) {
 			return sdk.WithStack(sdk.ErrForbidden)
 		}
@@ -683,7 +683,7 @@ func (api *API) postWorkflowJobStepStatusHandler() service.Handler {
 				return sdk.WrapError(err, "unable to sync nodeJobRun. JobID on handler: %d", id)
 			}
 			if !sync {
-				log.Warning(ctx, "postWorkflowJobStepStatusHandler> sync doesn't find a nodeJobRun. JobID on handler: %d", id)
+				log.Warn(ctx, "postWorkflowJobStepStatusHandler> sync doesn't find a nodeJobRun. JobID on handler: %d", id)
 			}
 			if err := workflow.UpdateNodeRun(tx, nodeRun); err != nil {
 				return sdk.WrapError(err, "cannot update node run. JobID on handler: %d", id)
@@ -697,7 +697,7 @@ func (api *API) postWorkflowJobStepStatusHandler() service.Handler {
 		if nodeRun.ID == 0 {
 			nodeRunP, err := workflow.LoadNodeRunByID(api.mustDB(), nodeJobRun.WorkflowNodeRunID, workflow.LoadRunOptions{DisableDetailledNodeRun: true})
 			if err != nil {
-				log.Warning(ctx, "postWorkflowJobStepStatusHandler> Unable to load node run for event: %v", err)
+				log.Warn(ctx, "postWorkflowJobStepStatusHandler> Unable to load node run for event: %v", err)
 				return nil
 			}
 			nodeRun = *nodeRunP
@@ -705,7 +705,7 @@ func (api *API) postWorkflowJobStepStatusHandler() service.Handler {
 
 		work, err := workflow.LoadWorkflowFromWorkflowRunID(api.mustDB(), nodeRun.WorkflowRunID)
 		if err != nil {
-			log.Warning(ctx, "postWorkflowJobStepStatusHandler> Unable to load workflow for event: %v", err)
+			log.Warn(ctx, "postWorkflowJobStepStatusHandler> Unable to load workflow for event: %v", err)
 			return nil
 		}
 
@@ -713,7 +713,7 @@ func (api *API) postWorkflowJobStepStatusHandler() service.Handler {
 			DisableDetailledNodeRun: true,
 		})
 		if err != nil {
-			log.Warning(ctx, "postWorkflowJobStepStatusHandler> Unable to load workflow run for event: %v", err)
+			log.Warn(ctx, "postWorkflowJobStepStatusHandler> Unable to load workflow run for event: %v", err)
 			return nil
 		}
 		nodeRun.Translate()

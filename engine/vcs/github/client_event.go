@@ -10,9 +10,9 @@ import (
 	"time"
 
 	"github.com/mitchellh/mapstructure"
+	"github.com/rockbears/log"
 
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 )
 
 // ErrNoNewEvents for no new events
@@ -22,20 +22,20 @@ var (
 
 //GetEvents calls Github et returns GithubEvents as []interface{}
 func (g *githubClient) GetEvents(ctx context.Context, fullname string, dateRef time.Time) ([]interface{}, time.Duration, error) {
-	log.Debug("githubClient.GetEvents> loading events for %s after %v", fullname, dateRef)
+	log.Debug(ctx, "githubClient.GetEvents> loading events for %s after %v", fullname, dateRef)
 	var events = []interface{}{}
 
 	interval := 60 * time.Second
 
 	status, body, headers, err := g.get(ctx, "/repos/"+fullname+"/events")
 	if err != nil {
-		log.Warning(ctx, "githubClient.GetEvents> Error %s", err)
+		log.Warn(ctx, "githubClient.GetEvents> Error %s", err)
 		return nil, interval, err
 	}
 
 	if status >= http.StatusBadRequest {
 		err := sdk.NewError(sdk.ErrUnknownError, errorAPI(body))
-		log.Warning(ctx, "githubClient.GetEvents> Error http %s", err)
+		log.Warn(ctx, "githubClient.GetEvents> Error http %s", err)
 		return nil, interval, err
 	}
 
@@ -45,11 +45,11 @@ func (g *githubClient) GetEvents(ctx context.Context, fullname string, dateRef t
 
 	nextEvents := []Event{}
 	if err := json.Unmarshal(body, &nextEvents); err != nil {
-		log.Warning(ctx, "githubClient.GetEvents> Unable to parse github events: %s", err)
+		log.Warn(ctx, "githubClient.GetEvents> Unable to parse github events: %s", err)
 		return nil, interval, fmt.Errorf("Unable to parse github events %s: %s", string(body), err)
 	}
 
-	log.Debug("githubClient.GetEvents> Found %d events...", len(nextEvents))
+	log.Debug(ctx, "githubClient.GetEvents> Found %d events...", len(nextEvents))
 	//Check here only events after the reference date and only of type PushEvent or CreateEvent
 	for _, e := range nextEvents {
 		var skipEvent bool
@@ -145,10 +145,10 @@ func (g *githubClient) PushEvents(ctx context.Context, fullname string, iEvents 
 	for b, c := range lastCommitPerBranch {
 		branch, err := g.Branch(ctx, fullname, b)
 		if err != nil && strings.Contains(err.Error(), "Branch not found") {
-			log.Debug("githubClient.PushEvents> Unable to find branch %s in %s : %s", b, fullname, err)
+			log.Debug(ctx, "githubClient.PushEvents> Unable to find branch %s in %s : %s", b, fullname, err)
 			continue
 		} else if err != nil || branch == nil {
-			log.Warning(ctx, "githubClient.PushEvents> Unable to find branch %s in %s : %s", b, fullname, err)
+			log.Warn(ctx, "githubClient.PushEvents> Unable to find branch %s in %s : %s", b, fullname, err)
 			continue
 		}
 		res = append(res, sdk.VCSPushEvent{
@@ -182,9 +182,9 @@ func (g *githubClient) CreateEvents(ctx context.Context, fullname string, iEvent
 		if err != nil || branch == nil {
 			errtxt := fmt.Sprintf("githubClient.CreateEvents> Unable to find branch %s in %s : %s", b, fullname, err)
 			if err != nil && !strings.Contains(errtxt, "Branch not found") {
-				log.Warning(ctx, errtxt)
+				log.Warn(ctx, errtxt)
 			} else {
-				log.Debug(errtxt)
+				log.Debug(ctx, errtxt)
 			}
 			continue
 		}
@@ -194,7 +194,7 @@ func (g *githubClient) CreateEvents(ctx context.Context, fullname string, iEvent
 
 		c, err := g.Commit(ctx, fullname, branch.LatestCommit)
 		if err != nil {
-			log.Warning(ctx, "githubClient.CreateEvents> Unable to find commit %s in %s : %s", branch.LatestCommit, fullname, err)
+			log.Warn(ctx, "githubClient.CreateEvents> Unable to find commit %s in %s : %s", branch.LatestCommit, fullname, err)
 			continue
 		}
 		event.Commit = c
@@ -202,7 +202,7 @@ func (g *githubClient) CreateEvents(ctx context.Context, fullname string, iEvent
 		res = append(res, event)
 	}
 
-	log.Debug("githubClient.CreateEvents> found %d create events : %#v", len(res), res)
+	log.Debug(ctx, "githubClient.CreateEvents> found %d create events : %#v", len(res), res)
 
 	return res, nil
 }
@@ -231,7 +231,7 @@ func (g *githubClient) DeleteEvents(ctx context.Context, fullname string, iEvent
 		res = append(res, event)
 	}
 
-	log.Debug("githubClient.DeleteEvents> found %d delete events : %#v", len(res), res)
+	log.Debug(ctx, "githubClient.DeleteEvents> found %d delete events : %#v", len(res), res)
 	return res, nil
 }
 
@@ -297,7 +297,7 @@ func (g *githubClient) PullRequestEvents(ctx context.Context, fullname string, i
 		res = append(res, event)
 	}
 
-	log.Debug("githubClient.PullRequestEvents> found %d pull request events : %#v", len(res), res)
+	log.Debug(ctx, "githubClient.PullRequestEvents> found %d pull request events : %#v", len(res), res)
 
 	return res, nil
 }

@@ -5,9 +5,10 @@ import (
 	"encoding/json"
 	"net/http"
 
+	"github.com/rockbears/log"
+
 	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 )
 
 // User Get a single user
@@ -16,7 +17,7 @@ func (g *githubClient) User(ctx context.Context, username string) (User, error) 
 	url := "/users/" + username
 	status, body, _, err := g.get(ctx, url)
 	if err != nil {
-		log.Warning(ctx, "githubClient.User> Error %s", err)
+		log.Warn(ctx, "githubClient.User> Error %s", err)
 		return User{}, err
 	}
 	if status >= 400 {

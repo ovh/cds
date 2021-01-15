@@ -23,6 +23,7 @@ type Configuration struct {
 	// common
 	Log struct {
 		Level   string `toml:"level" default:"warning" comment:"Log Level: debug, info, warning, notice, critical" json:"level"`
+		Format  string `toml:"format" default:"text" comment:"Stdout format: text, json, discard" json:"format"`
 		Graylog struct {
 			Host       string `toml:"host" comment:"Example: thot.ovh.com" json:"host"`
 			Port       int    `toml:"port" comment:"Example: 12202" json:"port"`

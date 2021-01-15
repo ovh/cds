@@ -1,10 +1,12 @@
 package integration
 
 import (
+	"context"
+
 	"github.com/go-gorp/gorp"
+	"github.com/rockbears/log"
 
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 )
 
 var (
@@ -37,12 +39,12 @@ func CreateBuiltinModels(db *gorp.DbMap) error {
 		}
 
 		if !ok {
-			log.Debug("CreateBuiltinModels> inserting integration config: %s", p.Name)
+			log.Debug(context.Background(), "CreateBuiltinModels> inserting integration config: %s", p.Name)
 			if err := InsertModel(tx, p); err != nil {
 				return sdk.WrapError(err, "error on insert")
 			}
 		} else {
-			log.Debug("CreateBuiltinModels> updating integration config: %s", p.Name)
+			log.Debug(context.Background(), "CreateBuiltinModels> updating integration config: %s", p.Name)
 			oldM, err := LoadModelByName(tx, p.Name)
 			if err != nil {
 				return sdk.WrapError(err, "error on load")
