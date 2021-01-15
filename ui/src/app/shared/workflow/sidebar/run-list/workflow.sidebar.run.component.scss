@@ -51,54 +51,76 @@
                     display: flex;
                     flex-direction: column;
 
-                    .number {
-                        white-space: nowrap;
-                        overflow: hidden;
-                        text-overflow: ellipsis;
+                    .number-wrapper {
+                        display: flex;
+                        flex-direction: row;
 
-                        .hash {
-                            font-size: 1.2em;
-                            line-height: 1em;
-                            color: $polar_grey_3;
-                            margin-right: 1px;
+                        &:hover {
+                            a {
+                                display: block;
+                            }
                         }
 
-                        .count {
-                            font-size: 1.3em;
-                            line-height: 1em;
-
+                        a {
+                            display: none;
+                            text-decoration: none;
+                            color: $polar_grey_1;
                             :host-context(.night) & {
+                                color: $darkTheme_grey_5;
+                            }
+
+                            &:hover {
+                                color: $polar_grey_3;
+                                :host-context(.night) & {
+                                    color: $polar_grey_5;
+                                }
+                            }
+                        }
+
+                        .number {
+                            flex: 1;
+                            white-space: nowrap;
+                            overflow: hidden;
+                            text-overflow: ellipsis;
+
+                            .hash {
+                                font-size: 1.2em;
+                                line-height: 1em;
+                                color: $polar_grey_3;
+                                margin-right: 1px;
+                            }
+
+                            .count {
+                                font-size: 1.3em;
+                                line-height: 1em;
+
+                                :host-context(.night) & {
+                                    &.success {
+                                        color: $darkTheme_green;
+                                    }
+                                    &.running {
+                                        color: $darkTheme_blue;
+                                    }
+                                    &.fail {
+                                        color: $darkTheme_red;
+                                    }
+                                    &.waiting {
+                                        color: $darkTheme_blue;
+                                    }
+                                }
+
                                 &.success {
-                                    color: $darkTheme_green;
+                                    color: $cds_color_green;
                                 }
-
                                 &.running {
-                                    color: $darkTheme_blue;
+                                    color: $cds_color_teal;
                                 }
-
                                 &.fail {
-                                    color: $darkTheme_red;
+                                    color: $cds_color_red;
                                 }
-
                                 &.waiting {
-                                    color: $darkTheme_blue;
+                                    color: $cds_color_teal;
                                 }
-                            }
-
-                            &.success {
-                                color: $cds_color_green;
-                            }
-
-                            &.running {
-                                color: $cds_color_teal;
-                            }
-
-                            &.fail {
-                                color: $cds_color_red;
-                            }
-
-                            &.waiting {
-                                color: $cds_color_teal;
                             }
                         }
                     }

@@ -16,6 +16,7 @@ import { WorkflowRun, WorkflowRunSummary, WorkflowRunTags } from 'app/model/work
 import { WorkflowRunService } from 'app/service/workflow/run/workflow.run.service';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { DurationService } from 'app/shared/duration/duration.service';
+import { ToastService } from 'app/shared/toast/ToastService';
 import { ProjectState } from 'app/store/project.state';
 import { CleanWorkflowRun, ClearListRuns, SetWorkflowRuns } from 'app/store/workflow.action';
 import { WorkflowState } from 'app/store/workflow.state';
@@ -52,8 +53,8 @@ export class WorkflowSidebarRunListComponent implements OnDestroy {
         }
     }
     get workflow() {
- return this._workflow;
-}
+        return this._workflow;
+    }
 
     @Select(WorkflowState.getSelectedWorkflowRun()) wrun$: Observable<WorkflowRun>
     wrunSub: Subscription;
@@ -75,14 +76,13 @@ export class WorkflowSidebarRunListComponent implements OnDestroy {
     durationMap: { [key: number]: string } = {};
 
     durationIntervalID: number;
-
     currentWorkflowRunNumber: number;
     offset = 0;
 
     constructor(
         private _workflowRunService: WorkflowRunService,
         private _router: Router,
-        private _routerActivated: ActivatedRoute,
+        private _toast: ToastService,
         private _store: Store,
         private _cd: ChangeDetectorRef
     ) {
@@ -261,5 +261,9 @@ export class WorkflowSidebarRunListComponent implements OnDestroy {
         }
         let queryLowerCase = query.toLowerCase();
         return options.filter(o => o.toLowerCase().indexOf(queryLowerCase) !== -1);
+    }
+
+    confirmCopy() {
+        this._toast.success('', 'Workflow run version copied!');
     }
 }

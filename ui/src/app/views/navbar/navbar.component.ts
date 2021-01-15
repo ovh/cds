@@ -113,8 +113,8 @@ export class NavbarComponent implements OnInit, OnDestroy {
 
     ngOnInit() {
         // Listen list of nav project
-        this._store.selectOnce(AuthenticationState.user).subscribe(user => {
-            if (user) {
+        this._store.selectOnce(AuthenticationState.summary).subscribe(s => {
+            if (s) {
                 this.getData();
             }
         });

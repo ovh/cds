@@ -169,10 +169,6 @@ export class ConsumerCreateModalComponent {
             });
     }
 
-    confirmCopy() {
-        this._toast.success('', this._translate.instant('auth_value_copied'));
-    }
-
     filterGroups(f: string) {
         const lowerFilter = f.toLowerCase();
         return (g: Group) => g.name.toLowerCase().indexOf(lowerFilter) !== -1
