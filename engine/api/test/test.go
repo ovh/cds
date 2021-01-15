@@ -22,6 +22,7 @@ func SetupPG(t *testing.T, bootstrapFunc ...test.Bootstrapf) (*test.FakeTransact
 
 func SetupPGWithFactory(t *testing.T, bootstrapFunc ...test.Bootstrapf) (*test.FakeTransaction, *database.DBConnectionFactory, cache.Store) {
 	log.Factory = log.NewTestingWrapper(t)
+	log.UnregisterField(log.FieldCaller, log.FieldSourceFile, log.FieldSourceLine)
 	db, factory, cache, cancel := test.SetupPGToCancel(t, gorpmapping.Mapper, sdk.TypeAPI, bootstrapFunc...)
 	t.Cleanup(cancel)
 
